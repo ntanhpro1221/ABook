@@ -1348,6 +1348,460 @@ def test_semantic_delivery_rejects_v8_collapsed_happy_batch() -> None:
     assert "notes" in issues["v8s6"]
 
 
+def test_semantic_delivery_rejects_v9_all_neutral_zero_template() -> None:
+    rows = [
+        ("‘Không được ngủ… sẽ chết mất.’", "thought"),
+        ("‘Tỉnh dậy, phải tỉnh dậy!’", "thought"),
+        <removed>
+        ("Cậu bật dậy thở dốc sau cảnh hỏa hoạn kinh hoàng.", "narration"),
+        ("Nghĩ lại cậu vẫn tim đập chân run.", "narration"),
+        ("Cảnh tượng khiến cậu đực mặt ra.", "narration"),
+        ("Tim thắt lại, cậu cuống quýt đứng dậy.", "narration"),
+        ("Chiếc giường gỗ nằm cạnh cửa sổ.", "narration"),
+    ]
+    group = [
+        {
+            "stable_id": f"v9s{index}",
+            "text": text,
+            "kind_hint": kind,
+        }
+        for index, (text, kind) in enumerate(rows)
+    ]
+    validated = {
+        str(row["stable_id"]): {
+            **analysis_item(str(row["stable_id"])),
+            "kind": row["kind_hint"],
+            "emotion": "neutral",
+            "intensity": 0,
+            "notes": "Mô tả diễn biến của cảnh hiện tại.",
+        }
+        for row in group
+    }
+
+    issues, batch_collapsed = _semantic_delivery_issues(group, validated)
+
+    assert batch_collapsed is True
+    assert {"v9s0", "v9s2", "v9s3", "v9s4", "v9s5", "v9s6"} <= set(issues)
+    assert 'afraid="sẽ chết mất"' in issues["v9s0"]
+
+
+def test_semantic_delivery_does_not_collapse_v9_varied_neutral_one_batch() -> None:
+    rows = [
+        (
+            <removed>
+            <removed>
+            "narration",
+            "neutral",
+            1,
+            "normal",
+        ),
+        (
+            <removed>
+            <removed>
+            <removed>
+            "narration",
+            "neutral",
+            1,
+            "normal",
+        ),
+        (
+            <removed>
+            <removed>
+            <removed>
+            "narration",
+            "neutral",
+            1,
+            "normal",
+        ),
+        (
+            <removed>
+            <removed>
+            <removed>
+            "narration",
+            "neutral",
+            1,
+            "normal",
+        ),
+        (
+            <removed>
+            <removed>
+            "narration",
+            "neutral",
+            1,
+            "normal",
+        ),
+        ("‘Đây rốt cuộc là nơi nào?!", "thought", "neutral", 1, "normal"),
+        (
+            <removed>
+            <removed>
+            "thought",
+            "neutral",
+            1,
+            "normal",
+        ),
+        (
+            <removed>
+            <removed>
+            <removed>
+            "narration",
+            "neutral",
+            1,
+            "normal",
+        ),
+        (
+            <removed>
+            <removed>
+            <removed>
+            "narration",
+            "neutral",
+            1,
+            "normal",
+        ),
+        (
+            <removed>
+            "dialogue",
+            "angry",
+            3,
+            "loud",
+        ),
+        ("“Mọi người mau đi xem!”", "dialogue", "neutral", 1, "normal"),
+        (
+            <removed>
+            "dialogue",
+            "angry",
+            3,
+            "loud",
+        ),
+        (
+            <removed>
+            <removed>
+            "narration",
+            "neutral",
+            1,
+            "normal",
+        ),
+        <removed>
+        (
+            <removed>
+            <removed>
+            <removed>
+            <removed>
+            "narration",
+            "neutral",
+            1,
+            "normal",
+        ),
+        ("“Anh Lucien!”", "dialogue", "happy", 2, "normal"),
+        (
+            <removed>
+            <removed>
+            "narration",
+            "neutral",
+            1,
+            "normal",
+        ),
+        ("“Anh tỉnh rồi?”", "dialogue", "happy", 2, "normal"),
+        (
+            <removed>
+            <removed>
+            "narration",
+            "neutral",
+            1,
+            "normal",
+        ),
+        (
+            <removed>
+            <removed>
+            "thought",
+            "neutral",
+            1,
+            "normal",
+        ),
+    ]
+    group = [
+        {"stable_id": f"v9s{index + 20}", "text": text}
+        for index, (text, _kind, _emotion, _intensity, _volume) in enumerate(rows)
+    ]
+    validated = {
+        str(row["stable_id"]): {
+            **analysis_item(str(row["stable_id"])),
+            "kind": kind,
+            "emotion": emotion,
+            "intensity": intensity,
+            "pace": "normal",
+            "volume": volume,
+            "notes": "Phân tích riêng diễn biến và cách thể hiện của segment.",
+        }
+        for row, (_text, kind, emotion, intensity, volume) in zip(
+            group, rows, strict=True
+        )
+    }
+
+    issues, batch_collapsed = _semantic_delivery_issues(group, validated)
+
+    assert issues == {}
+    assert batch_collapsed is False
+
+
+def test_semantic_delivery_does_not_treat_recalled_terms_as_performed_anger() -> None:
+    group = [
+        {
+            "stable_id": "recalled-terms",
+            <removed>
+        }
+    ]
+    validated = {
+        "recalled-terms": {
+            **analysis_item("recalled-terms"),
+            "kind": "thought",
+            "emotion": "neutral",
+            "intensity": 1,
+            "notes": "Nhân vật đang liệt kê các khái niệm vừa nghe thấy.",
+        }
+    }
+
+    assert _semantic_delivery_issues(group, validated) == ({}, False)
+
+
+@pytest.mark.parametrize(
+    ("emotion", "intensity"),
+    [("happy", 2), ("neutral", 0)],
+)
+def test_semantic_delivery_rejects_direct_burn_command(
+    emotion: str,
+    intensity: int,
+) -> None:
+    group = [{"stable_id": "burn-command", "text": "“Thiêu chết hắn!”"}]
+    validated = {
+        "burn-command": {
+            **analysis_item("burn-command"),
+            "kind": "dialogue",
+            "emotion": emotion,
+            "intensity": intensity,
+            "notes": "Người nói trực tiếp ra lệnh thiêu một người.",
+        }
+    }
+
+    issues, batch_collapsed = _semantic_delivery_issues(group, validated)
+
+    assert batch_collapsed is False
+    assert 'angry="Thiêu chết"' in issues["burn-command"]
+
+
+def test_semantic_delivery_keeps_neutral_physical_recovery_thought() -> None:
+    group = [
+        {
+            "stable_id": "physical-recovery",
+            <removed>
+        }
+    ]
+    validated = {
+        "physical-recovery": {
+            **analysis_item("physical-recovery"),
+            "kind": "thought",
+            "emotion": "neutral",
+            "intensity": 1,
+            "notes": "Nhân vật nhận xét trạng thái thể chất sau khi hồi phục.",
+        }
+    }
+
+    assert _semantic_delivery_issues(group, validated) == ({}, False)
+
+
+def test_semantic_delivery_rejects_neutral_direct_emotion_but_keeps_mixed_narration() -> None:
+    group = [
+        {"stable_id": "fear", "text": "‘Mình sẽ chết mất.’"},
+        {
+            "stable_id": "mixed-narration",
+            <removed>
+        },
+    ]
+    validated = {
+        "fear": {
+            **analysis_item("fear"),
+            "kind": "thought",
+            "emotion": "neutral",
+            "notes": "Nhân vật trực tiếp nghĩ về cái chết.",
+        },
+        "mixed-narration": {
+            **analysis_item("mixed-narration"),
+            "kind": "narration",
+            "emotion": "neutral",
+            "notes": "Người kể mô tả hai cảm xúc đối lập.",
+        },
+    }
+
+    issues, batch_collapsed = _semantic_delivery_issues(group, validated)
+
+    assert set(issues) == {"fear"}
+    assert batch_collapsed is False
+
+
+def test_semantic_delivery_accepts_neutral_zero_mixed_affect_batch() -> None:
+    group = [
+        {
+            "stable_id": f"mixed-{index}",
+            "text": f"Sợ hãi và phấn khích cùng hiện rõ trong giọng nói số {index}.",
+        }
+        for index in range(8)
+    ]
+    validated = {
+        str(row["stable_id"]): {
+            **analysis_item(str(row["stable_id"])),
+            "kind": "narration",
+            "emotion": "neutral",
+            "intensity": 0,
+            "notes": "Người kể mô tả hai cảm xúc đối lập cùng tồn tại.",
+        }
+        for row in group
+    }
+
+    assert _semantic_delivery_issues(group, validated) == ({}, False)
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Cô vừa sợ hãi vừa phấn khích.",
+        "Trong lòng cậu, nỗi sợ hãi xen lẫn niềm vui.",
+    ],
+)
+def test_semantic_delivery_accepts_explicit_same_experiencer_mixed_affect(
+    text: str,
+) -> None:
+    group = [{"stable_id": "mixed-explicit", "text": text}]
+    validated = {
+        "mixed-explicit": {
+            **analysis_item("mixed-explicit"),
+            "emotion": "neutral",
+            "intensity": 0,
+            "notes": "Hai cảm xúc đối lập được nối rõ trong cùng một mệnh đề.",
+        }
+    }
+
+    assert _semantic_delivery_issues(group, validated) == ({}, False)
+
+
+def test_semantic_delivery_rejects_multiple_same_valence_cues_in_thought() -> None:
+    group = [
+        {
+            "stable_id": "same-valence",
+            "text": "‘Mình vừa sợ hãi vừa tuyệt vọng, không còn đường thoát.’",
+        }
+    ]
+    validated = {
+        "same-valence": {
+            **analysis_item("same-valence"),
+            "kind": "thought",
+            "emotion": "neutral",
+            "intensity": 1,
+            "notes": "Hai cảm xúc tiêu cực được nêu trực tiếp trong suy nghĩ.",
+        }
+    }
+
+    issues, batch_collapsed = _semantic_delivery_issues(group, validated)
+
+    assert batch_collapsed is False
+    assert 'afraid="sợ hãi"' in issues["same-valence"]
+    assert 'sad="tuyệt vọng"' in issues["same-valence"]
+
+
+def test_semantic_delivery_rejects_neutral_zero_physical_distress_in_narration() -> None:
+    group = [
+        {
+            "stable_id": "distressed-narration",
+            <removed>
+        }
+    ]
+    validated = {
+        "distressed-narration": {
+            **analysis_item("distressed-narration"),
+            "kind": "narration",
+            "emotion": "neutral",
+            "intensity": 0,
+            "notes": "Người kể mô tả trạng thái thể chất suy kiệt rõ ràng.",
+        }
+    }
+
+    issues, batch_collapsed = _semantic_delivery_issues(group, validated)
+
+    assert batch_collapsed is False
+    assert 'distressed="choáng váng"' in issues["distressed-narration"]
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Cậu không tuyệt vọng trước tin xấu.",
+        "Cô không vui trước tin ấy.",
+        "Anh chẳng còn tuyệt vọng.",
+        "Cậu chẳng hề kinh ngạc trước kết quả.",
+        "Cậu chưa từng tuyệt vọng trong hoàn cảnh đó.",
+        "Cô chưa từng kinh ngạc.",
+        "Cô chưa từng vui trong căn nhà ấy.",
+        "Sau lời giải thích, cậu hết tuyệt vọng.",
+        "Nỗi tuyệt vọng đã hết khi mọi người trở về.",
+        "Nỗi lo sợ đã hoàn toàn tan biến.",
+        "‘Đừng giết anh ấy đi.’",
+        "‘Chớ thiêu cô ấy thành tro đi.’",
+        "‘Không được giết người vô tội đi.’",
+        "‘Không được phép giết hắn đi.’",
+        "‘Đừng vui mừng quá sớm.’",
+        "Dòng chữ “KHÔNG THỂ TIN” hiện trên tờ giấy.",
+        "Ông giải thích rằng “tuyệt vọng” là một danh từ.",
+        "Anh đã từng sợ hãi, nhưng giờ hoàn toàn bình tĩnh.",
+    ],
+)
+def test_semantic_delivery_masks_only_scoped_negated_affect_cues(text: str) -> None:
+    group = [{"stable_id": "negated", "text": text}]
+    validated = {
+        "negated": {
+            **analysis_item("negated"),
+            "kind": "dialogue",
+            "emotion": "neutral",
+            "intensity": 0,
+            "notes": "Câu phủ định hoặc ngăn cấm chính cue bề mặt.",
+        }
+    }
+
+    assert _semantic_delivery_issues(group, validated) == ({}, False)
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Cậu không nói gì. Trong lòng cậu vẫn tuyệt vọng.",
+        "‘Đừng nói nữa; giết hắn đi!’",
+        "‘Đừng giết hắn. Giết nó đi!’",
+        "‘Không thể tin chuyện này lại xảy ra!’",
+        "Cô chưa hết sợ hãi.",
+        "Cô không khỏi sợ hãi.",
+        "Cô không thể không vui mừng.",
+        "Không chỉ sợ hãi mà còn tuyệt vọng.",
+        "Cô không còn sợ hãi nhưng vẫn tuyệt vọng.",
+        "Nhớ lại chuyện ấy, anh lại sợ hãi đến run rẩy.",
+        "Ta vui vì ngươi tuyệt vọng.",
+        "Cậu sợ hãi. Cô phấn khích.",
+    ],
+)
+def test_semantic_delivery_does_not_mask_distant_or_intrinsic_cues(text: str) -> None:
+    group = [{"stable_id": "unmasked", "text": text}]
+    validated = {
+        "unmasked": {
+            **analysis_item("unmasked"),
+            "kind": "thought",
+            "emotion": "neutral",
+            "intensity": 1,
+            "notes": "Cue cảm xúc không nằm trong phạm vi phủ định cục bộ.",
+        }
+    }
+
+    issues, batch_collapsed = _semantic_delivery_issues(group, validated)
+
+    assert batch_collapsed is False
+    assert "unmasked" in issues
+
+
 def test_semantic_delivery_accepts_coherent_happy_and_neutral_batches() -> None:
     happy_group = [
         {
@@ -1378,7 +1832,12 @@ def test_semantic_delivery_accepts_coherent_happy_and_neutral_batches() -> None:
 
 
 def test_semantic_delivery_does_not_treat_negated_fear_as_happy_contradiction() -> None:
-    group = [{"stable_id": "relieved", "text": "Cô không còn sợ, trong lòng vui mừng nhẹ nhõm."}]
+    group = [
+        {
+            "stable_id": "relieved",
+            "text": "Cô không còn sợ hãi, trong lòng vui mừng nhẹ nhõm.",
+        }
+    ]
     validated = {
         "relieved": {
             **analysis_item("relieved"),
@@ -1561,6 +2020,54 @@ def test_persistent_semantic_delivery_failure_splits_until_singletons(monkeypatc
     assert request_sizes == [4, 4, 2, 2, 1, 1, 2, 2, 1, 1]
     assert len(db.updated) == 4
     assert any("vẫn không qua semantic" in message for message in logs)
+
+
+def test_persistent_neutral_zero_template_never_checkpoints_after_split(monkeypatch) -> None:
+    db = FakeDB()
+    db.rows = [
+        {
+            "id": index,
+            "stable_id": f"neutral-zero-{index}",
+            "chapter_id": 1,
+            "text": f"Cậu vẫn sợ hãi và tuyệt vọng ở lần {index}.",
+            "kind_hint": "narration",
+            "status": "pending",
+            "speaker": None,
+        }
+        for index in range(1, 9)
+    ]
+    settings = build_settings(
+        overrides={"analysis": {"batch_segments": 8, "batch_chars": 10000, "max_retries": 2}}
+    )
+    analyzer = OllamaBookAnalyzer(settings, db, lambda _message: None)
+    monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
+    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    request_sizes: list[int] = []
+
+    def request(group, **_kwargs):
+        request_sizes.append(len(group))
+        return {
+            "segments": [
+                {
+                    **analysis_item(str(row["stable_id"])),
+                    "emotion": "neutral",
+                    "intensity": 0,
+                    "pace": "normal",
+                    "volume": "normal",
+                    "notes": "Mô tả diễn biến chung của cảnh hiện tại.",
+                }
+                for row in group
+            ]
+        }
+
+    monkeypatch.setattr(analyzer, "_request", request)
+
+    with pytest.raises(RuntimeError, match="Phân tích bắt buộc thất bại"):
+        analyzer.analyze_all(lambda: False)
+
+    assert request_sizes == [8, 8, 4, 4, 2, 2, 1, 1]
+    assert db.updated == []
+    assert any(event[1] == "REQUIRED_ANALYSIS_BATCH_FAILED" for event in db.events)
 
 
 def test_every_thought_uses_narrator_without_character_identity() -> None:
