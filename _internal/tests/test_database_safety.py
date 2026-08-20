@@ -25,6 +25,8 @@ from ebook_reader.database import (
     SEGMENT_AUDIO_QUALITY_STAGE,
     SEGMENT_PERCEPTUAL_QUALITY_STAGE,
     ProjectDB,
+    analysis_source_has_recalled_persistent_fear,
+    analysis_source_has_stunned_blank_mind,
     canonical_analysis_note,
 )
 from ebook_reader.io_utils import sha256_file, sha256_text
@@ -42,6 +44,35 @@ ANALYSIS_MODEL_COMMIT = {
 ANALYSIS_POLICY_FINGERPRINT = "director-policy-v2"
 ANALYSIS_GROUP_FINGERPRINT = "group-source-v1"
 ANALYSIS_CONTEXT_HASH = "group-context-v1"
+RECALLED_PERSISTENT_FEAR_TEXT = (
+    <removed>
+    <removed>
+    <removed>
+)
+STUNNED_BLANK_MIND_TEXT = (
+    <removed>
+    <removed>
+    <removed>
+    <removed>
+)
+DIRECT_NARRATION_AFFECT_LOCK_CASES = (
+    (
+        RECALLED_PERSISTENT_FEAR_TEXT,
+        "narration_recalled_persistent_fear",
+        "recalled_persistent_fear",
+        ("afraid",),
+        "afraid",
+        "surprised",
+    ),
+    (
+        STUNNED_BLANK_MIND_TEXT,
+        "narration_stunned_blank_mind",
+        "stunned_blank_mind",
+        ("surprised",),
+        "surprised",
+        "afraid",
+    ),
+)
 
 
 def _canonical_analysis_data(**overrides: object) -> dict:
@@ -1456,34 +1487,548 @@ def test_analysis_candidate_rejects_mandatory_heading_lock_when_omitted(
         )
 
 
+def test_direct_narration_affect_source_authority_accepts_exact_smoke_rows() -> None:
+    assert ANALYSIS_HOST_AFFECT_POLICY_VERSION == "host_affect_v6"
+    assert ANALYSIS_HOST_SEMANTIC_POLICY_VERSION == "host_semantic_lock_v3"
+    assert analysis_source_has_recalled_persistent_fear(
+        RECALLED_PERSISTENT_FEAR_TEXT
+    )
+    assert analysis_source_has_stunned_blank_mind(STUNNED_BLANK_MIND_TEXT)
+    assert not analysis_source_has_stunned_blank_mind(
+        RECALLED_PERSISTENT_FEAR_TEXT
+    )
+    assert not analysis_source_has_recalled_persistent_fear(
+        STUNNED_BLANK_MIND_TEXT
+    )
+    assert analysis_source_has_recalled_persistent_fear(
+        <removed>
+    )
+    assert analysis_source_has_recalled_persistent_fear(
+        <removed>
+    )
+    assert analysis_source_has_recalled_persistent_fear(
+        "Giấc mơ ấy chân thực đến dị thường, làm cho Hạ Phong nghĩ lại "
+        "vẫn tim đập chân run."
+    )
+    assert analysis_source_has_stunned_blank_mind(
+        <removed>
+    )
+    assert analysis_source_has_stunned_blank_mind(
+        <removed>
+    )
+    assert analysis_source_has_stunned_blank_mind(
+        "0. Câu thử đã gỡ. 0."
+        "0. Câu thử đã gỡ. 0."
+    )
+
+
 @pytest.mark.parametrize(
-    ("text", "kind_hint"),
+    "text",
+    (
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        "Hạ Phong vẫn tim đập chân run.",
+        <removed>
+        (
+            <removed>
+            <removed>
+        ),
+    ),
+)
+def test_recalled_persistent_fear_source_authority_excludes_ambiguous_rows(
+    text: str,
+) -> None:
+    assert not analysis_source_has_recalled_persistent_fear(text)
+
+
+@pytest.mark.parametrize(
+    "text",
+    (
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        <removed>
+        (
+            <removed>
+            "tim đập chân run."
+        ),
+        <removed>
+        "Cậu đực mặt ra.",
+        "Đầu óc cậu một mảng trắng xóa rồi cậu đực mặt ra.",
+        <removed>
+    ),
+)
+def test_stunned_blank_mind_source_authority_excludes_ambiguous_rows(
+    text: str,
+) -> None:
+    assert not analysis_source_has_stunned_blank_mind(text)
+
+
+@pytest.mark.parametrize(
+    "suffix",
+    (
+        ", nếu lời đồn là đúng.",
+        ", theo lời đồn.",
+        ", có lẽ vậy.",
+        ", người ta nói thế.",
+        ", nhưng đó chỉ là lời đồn.",
+        ", nhưng điều đó không đúng.",
+        ", nhưng đó không phải sự thật.",
+        ", nhưng cậu chỉ giả vờ.",
+        ", nhưng thực ra cậu hoàn toàn bình tĩnh.",
+        "; tuy nhiên đó chỉ là giả thuyết.",
+        ": đó chỉ là ví dụ.",
+    ),
+)
+def test_direct_narration_affect_source_authority_rejects_outer_scope_suffix(
+    suffix: str,
+) -> None:
+    assert not analysis_source_has_recalled_persistent_fear(
+        <removed>
+    )
+    assert not analysis_source_has_stunned_blank_mind(
+        <removed>
+    )
+
+
+@pytest.mark.parametrize(
+    "text",
+    (
+        "Cậu đực mặt ra, nhưng đó chỉ là giả vờ, đầu óc một mảng trắng xóa.",
+        "Cậu đực mặt ra, người ta nói đầu óc một mảng trắng xóa.",
+        "Cậu đực mặt ra, đầu óc có lẽ một mảng trắng xóa.",
+        "Cậu đực mặt ra, đầu óc được đồn là trắng xóa.",
+        "Cậu đực mặt ra, đầu óc không hề trắng xóa.",
+        "Cậu đực mặt ra, đầu óc chưa từng trắng xóa.",
+        "Cậu đực mặt ra, đầu óc giả vờ trắng xóa.",
+    ),
+)
+def test_stunned_blank_mind_source_authority_rejects_nonassertive_bridge(
+    text: str,
+) -> None:
+    assert not analysis_source_has_stunned_blank_mind(text)
+
+
+@pytest.mark.parametrize(
+    (
+        "text",
+        "rule",
+        "cue_class",
+        "allowed_emotions",
+        "candidate_emotion",
+        "wrong_emotion",
+    ),
+    DIRECT_NARRATION_AFFECT_LOCK_CASES,
+)
+def test_analysis_candidate_accepts_source_bound_direct_narration_affect_lock(
+    tmp_path: Path,
+    text: str,
+    rule: str,
+    cue_class: str,
+    allowed_emotions: tuple[str, ...],
+    candidate_emotion: str,
+    wrong_emotion: str,
+) -> None:
+    del wrong_emotion
+    db, source_rows = _analysis_batch_db(tmp_path, texts=(text,))
+    envelope = _semantic_lock_envelope(
+        source_rows,
+        candidate_emotion=candidate_emotion,
+    )
+    clearance = _host_semantic_clearance(
+        envelope,
+        rule=rule,
+        cue_class=cue_class,
+        allowed_emotions=list(allowed_emotions),
+    )
+
+    candidate = _allocate_analysis_candidate(
+        db,
+        source_rows,
+        candidate=envelope,
+        deterministic_issues=clearance,
+    )
+
+    durable_clearance = json.loads(str(candidate["deterministic_issue_json"]))[
+        "host_affect_clearance"
+    ]
+    assert candidate["state"] == "allocated"
+    assert durable_clearance["policy_version"] == "host_affect_v6"
+    assert durable_clearance["semantic_locks"] == clearance[
+        "host_affect_clearance"
+    ]["semantic_locks"]
+
+
+@pytest.mark.parametrize(
+    (
+        "text",
+        "rule",
+        "cue_class",
+        "allowed_emotions",
+        "candidate_emotion",
+        "wrong_emotion",
+    ),
+    DIRECT_NARRATION_AFFECT_LOCK_CASES,
+)
+def test_analysis_candidate_rejects_invalid_direct_narration_affect_emotion(
+    tmp_path: Path,
+    text: str,
+    rule: str,
+    cue_class: str,
+    allowed_emotions: tuple[str, ...],
+    candidate_emotion: str,
+    wrong_emotion: str,
+) -> None:
+    del rule, cue_class, allowed_emotions, candidate_emotion
+    db, source_rows = _analysis_batch_db(tmp_path, texts=(text,))
+    envelope = _analysis_acceptance_envelope(source_rows, emotion=wrong_emotion)
+
+    with pytest.raises(RuntimeError, match="mandatory host semantic emotion"):
+        _allocate_analysis_candidate(db, source_rows, candidate=envelope)
+
+
+@pytest.mark.parametrize(
+    ("forged_field", "forged_value", "expected_error"),
+    (
+        ("rule", "forged_direct_narration_rule", "unknown rule"),
+        ("cue_class", "forged_direct_affect", "source-bound"),
+        ("allowed_emotions", ["afraid", "neutral"], "source-bound"),
+        ("text_sha256", "f" * 64, "source-bound"),
+    ),
+)
+@pytest.mark.parametrize(
+    (
+        "text",
+        "rule",
+        "cue_class",
+        "allowed_emotions",
+        "candidate_emotion",
+        "wrong_emotion",
+    ),
+    DIRECT_NARRATION_AFFECT_LOCK_CASES,
+)
+def test_analysis_candidate_rejects_forged_direct_narration_affect_lock(
+    tmp_path: Path,
+    text: str,
+    rule: str,
+    cue_class: str,
+    allowed_emotions: tuple[str, ...],
+    candidate_emotion: str,
+    wrong_emotion: str,
+    forged_field: str,
+    forged_value: object,
+    expected_error: str,
+) -> None:
+    del wrong_emotion
+    db, source_rows = _analysis_batch_db(tmp_path, texts=(text,))
+    envelope = _semantic_lock_envelope(
+        source_rows,
+        candidate_emotion=candidate_emotion,
+    )
+    clearance = _host_semantic_clearance(
+        envelope,
+        rule=rule,
+        cue_class=cue_class,
+        allowed_emotions=list(allowed_emotions),
+    )
+    host_clearance = clearance["host_affect_clearance"]
+    host_clearance["semantic_locks"][0][forged_field] = forged_value
+    host_clearance["evidence"][0][forged_field] = forged_value
+
+    with pytest.raises(RuntimeError, match=expected_error):
+        _allocate_analysis_candidate(
+            db,
+            source_rows,
+            candidate=envelope,
+            deterministic_issues=clearance,
+        )
+
+
+@pytest.mark.parametrize(
+    (
+        "text",
+        "rule",
+        "cue_class",
+        "allowed_emotions",
+        "candidate_emotion",
+        "wrong_emotion",
+    ),
+    DIRECT_NARRATION_AFFECT_LOCK_CASES,
+)
+def test_analysis_candidate_revalidates_direct_narration_affect_lock_on_reopen(
+    tmp_path: Path,
+    text: str,
+    rule: str,
+    cue_class: str,
+    allowed_emotions: tuple[str, ...],
+    candidate_emotion: str,
+    wrong_emotion: str,
+) -> None:
+    db, source_rows = _analysis_batch_db(tmp_path, texts=(text,))
+    envelope = _semantic_lock_envelope(
+        source_rows,
+        candidate_emotion=candidate_emotion,
+    )
+    clearance = _host_semantic_clearance(
+        envelope,
+        rule=rule,
+        cue_class=cue_class,
+        allowed_emotions=list(allowed_emotions),
+    )
+    candidate = _allocate_analysis_candidate(
+        db,
+        source_rows,
+        candidate=envelope,
+        deterministic_issues=clearance,
+    )
+    tampered = json.loads(str(candidate["deterministic_issue_json"]))
+    forged_allowed = [*allowed_emotions, wrong_emotion]
+    host_clearance = tampered["host_affect_clearance"]
+    host_clearance["semantic_locks"][0]["allowed_emotions"] = forged_allowed
+    host_clearance["evidence"][0]["allowed_emotions"] = forged_allowed
+    tampered_json = json.dumps(
+        tampered,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    )
+    with db.connect() as conn:
+        conn.execute(
+            "UPDATE analysis_candidates SET deterministic_issue_json=?,"
+            "deterministic_issue_hash=? WHERE id=?",
+            (tampered_json, sha256_text(tampered_json), int(candidate["id"])),
+        )
+
+    with pytest.raises(RuntimeError, match="semantic clearance is not source-bound"):
+        ProjectDB(db.path).get_analysis_candidate(int(candidate["id"]))
+
+
+@pytest.mark.parametrize(
+    (
+        "text",
+        "rule",
+        "cue_class",
+        "allowed_emotions",
+        "candidate_emotion",
+        "wrong_emotion",
+    ),
+    DIRECT_NARRATION_AFFECT_LOCK_CASES,
+)
+def test_direct_narration_affect_critic_dissent_cannot_override_commit(
+    tmp_path: Path,
+    text: str,
+    rule: str,
+    cue_class: str,
+    allowed_emotions: tuple[str, ...],
+    candidate_emotion: str,
+    wrong_emotion: str,
+) -> None:
+    db, source_rows = _analysis_batch_db(tmp_path, texts=(text,))
+    envelope = _semantic_lock_envelope(
+        source_rows,
+        candidate_emotion=candidate_emotion,
+    )
+    clearance = _host_semantic_clearance(
+        envelope,
+        rule=rule,
+        cue_class=cue_class,
+        allowed_emotions=list(allowed_emotions),
+    )
+    candidate = _allocate_analysis_candidate(
+        db,
+        source_rows,
+        candidate=envelope,
+        deterministic_issues=clearance,
+    )
+    candidate_id = int(candidate["id"])
+    attempt = db.reserve_analysis_critic_attempt(
+        candidate_id,
+        expected_state="allocated",
+        max_attempts=2,
+        intent={"candidate_hash": str(candidate["candidate_hash"])},
+        contract=_accepted_critic_contract(),
+    )
+    evidence = _semantic_override_evidence(
+        envelope,
+        clearance,
+        corrected_emotion=wrong_emotion,
+    )
+    evidence["segments"][0]["critic"]["evidence_quote"] = text[-160:]
+    db.complete_analysis_critic_attempt(
+        candidate_id,
+        1,
+        expected_intent_hash=str(attempt["intent_hash"]),
+        expected_contract_hash=str(attempt["contract_hash"]),
+        result_state="critic_accepted",
+        outcome={"accepted": True, "host_semantic_override": True},
+        evidence=evidence,
+        commit_envelope=envelope,
+    )
+
+    reopened = ProjectDB(db.path)
+    snapshot = reopened.analysis_candidate_acceptance_envelope(candidate_id)
+    stored_item = snapshot["critic_evidence"]["segments"][0]
+    assert stored_item["critic"]["emotion"] == wrong_emotion
+    assert stored_item["host_semantic_override"]["allowed_values"] == list(
+        allowed_emotions
+    )
+    assert (
+        snapshot["commit_envelope"]["segments"][0]["data"]["emotion"]
+        == candidate_emotion
+    )
+    batch = [
+        {
+            "segment_id": segment["segment_id"],
+            "stable_id": segment["stable_id"],
+            "text_sha256": segment["text_sha256"],
+            "expected_status": "pending",
+            "data": dict(segment["data"]),
+        }
+        for segment in snapshot["commit_envelope"]["segments"]
+    ]
+    reopened.update_analysis_batch_with_event(
+        batch,
+        low_confidence_threshold=0.65,
+        event_level="info",
+        event_code="ANALYSIS_DIRECTOR_CRITIC_ACCEPTED",
+        event_message="host-locked direct affect accepted",
+        event_details={"candidate_hash": str(candidate["candidate_hash"])},
+        **ANALYSIS_MODEL_COMMIT,
+        analysis_candidate_id=candidate_id,
+        analysis_policy_fingerprint=ANALYSIS_POLICY_FINGERPRINT,
+        analysis_group_fingerprint=ANALYSIS_GROUP_FINGERPRINT,
+        analysis_context_hash=ANALYSIS_CONTEXT_HASH,
+    )
+
+    committed = reopened.list_segments()[0]
+    assert committed["status"] == "analyzed"
+    assert committed["emotion"] == candidate_emotion
+    assert reopened.get_analysis_candidate(candidate_id)["state"] == "accepted"
+
+
+@pytest.mark.parametrize(
+    ("text", "kind_hint", "candidate_emotion"),
     (
         (
             <removed>
             "thought",
+            "afraid",
         ),
         (
             <removed>
             "narration",
+            "afraid",
         ),
         (
             <removed>
             "narration",
+            "afraid",
         ),
+        (RECALLED_PERSISTENT_FEAR_TEXT, "narration", "afraid"),
+        (STUNNED_BLANK_MIND_TEXT, "narration", "surprised"),
     ),
 )
 def test_analysis_candidate_rejects_mandatory_semantic_lock_when_omitted(
     tmp_path: Path,
     text: str,
     kind_hint: str,
+    candidate_emotion: str,
 ) -> None:
     db, source_rows = _analysis_batch_db(
         tmp_path,
         texts=(text,),
         kind_hints=(kind_hint,),
     )
-    envelope = _semantic_lock_envelope(source_rows)
+    envelope = _semantic_lock_envelope(
+        source_rows,
+        candidate_emotion=candidate_emotion,
+    )
     envelope["critic_rows"][0]["host_locked_fields"] = {}
 
     with pytest.raises(RuntimeError, match="source-derived mandatory locks"):
@@ -1614,6 +2159,18 @@ def test_analysis_candidate_rejects_desperate_exertion_lock_on_ambiguous_source(
                 <removed>
                 "Ánh sáng vẫn ở phía trước.",
             ),
+            ("narration", "narration"),
+            0,
+            (),
+        ),
+        (
+            (RECALLED_PERSISTENT_FEAR_TEXT, "Nội dung tiếp theo."),
+            ("narration", "narration"),
+            0,
+            (),
+        ),
+        (
+            (STUNNED_BLANK_MIND_TEXT, "Nội dung tiếp theo."),
             ("narration", "narration"),
             0,
             (),
@@ -2192,6 +2749,20 @@ def test_analysis_candidate_rejects_tampered_host_clearance_metadata(
             "narration_desperate_exertion",
             "desperate_exertion",
             ["afraid", "sad", "tired"],
+        ),
+        (
+            "Hạ Phong bình tĩnh đọc sách trong thư viện.",
+            "narration",
+            "narration_recalled_persistent_fear",
+            "recalled_persistent_fear",
+            ["afraid"],
+        ),
+        (
+            "Hạ Phong bình tĩnh đọc sách trong thư viện.",
+            "narration",
+            "narration_stunned_blank_mind",
+            "stunned_blank_mind",
+            ["surprised"],
         ),
     ),
 )
