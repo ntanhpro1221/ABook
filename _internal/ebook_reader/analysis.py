@@ -5153,16 +5153,25 @@ class OllamaBookAnalyzer:
             except (KeyError, TypeError):
                 paragraph_index = 0
             previous_text, next_text = _neighbor_texts(group, index, original_context)
-            rows.append(
-                {
-                    "id": batch_id,
-                    "paragraph": paragraph_index,
-                    "hint": row["kind_hint"],
-                    "previous_text": previous_text,
-                    "text": row["text"],
-                    "next_text": next_text,
-                }
-            )
+            request_row = {
+                "id": batch_id,
+                "paragraph": paragraph_index,
+                "hint": row["kind_hint"],
+                "previous_text": previous_text,
+                "text": row["text"],
+                "next_text": next_text,
+            }
+            # The host reads affect cues straight out of the text and will refuse a
+            # neutral answer that contradicts them. It used to keep that to itself until
+            # the retry, so a batch was routinely spent learning a constraint the host
+            # had already computed - "emotion=neutral mâu thuẫn với cue trực tiếp" was
+            # the single most common rejection in a real run. Stating it up front is the
+            # same constraint from the same function, one round earlier; the model still
+            # picks within the set, which is all it could ever have kept.
+            allowed_emotions = _direct_cue_allowed_emotions(str(row["text"]))
+            if allowed_emotions:
+                request_row["allowed_emotions"] = list(allowed_emotions)
+            rows.append(request_row)
         prompt = (
             f"Các chương hiện tại: {', '.join(chapter_titles)}\n\n"
             f"Nhân vật đã biết từ các phần trước:\n{self._known_summary()}\n\n"
