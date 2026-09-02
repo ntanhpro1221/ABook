@@ -14,7 +14,9 @@ import json
 
 from ebook_reader.asr import (
     ASR_MIN_VERIFIABLE_CHARS,
+    ASR_TRANSCRIPT_TIMELINE_IMPOSSIBLE,
     ASR_UNVERIFIABLE_SHORT_TEXT,
+    asr_answer_is_about_other_audio,
     asr_verdict_is_unverifiable,
 )
 from ebook_reader.pipeline import BookPipeline
@@ -121,3 +123,23 @@ def test_perceptual_failure_still_outranks_unverifiable_text() -> None:
     assert source.index("elif perceptual_review_exhausted:") < source.index(
         "elif asr_only_failure"
     )
+
+
+def test_a_transcript_about_other_audio_is_also_unanswerable() -> None:
+    """Whisper's own timestamps ran past the end of the file, so it left the audio.
+
+    <removed>
+    - the sign-off of a video, which is what the model was trained on - from two separately
+    generated takes with different seeds. The reference is 18 characters, well above the
+    short-text floor, so the existing branch could not reach it and the chapter stayed
+    unpublished over evidence about Whisper rather than about the reading.
+    """
+    assert asr_answer_is_about_other_audio(ASR_TRANSCRIPT_TIMELINE_IMPOSSIBLE)
+    assert not asr_answer_is_about_other_audio("ASR_MISMATCH_UNRESOLVED")
+    assert not asr_answer_is_about_other_audio("")
+
+
+def test_the_off_audio_warning_does_not_block_a_high_quality_chapter() -> None:
+    from ebook_reader.pipeline import HIGH_QUALITY_ALLOWED_SEGMENT_WARNINGS
+
+    assert ASR_TRANSCRIPT_TIMELINE_IMPOSSIBLE in HIGH_QUALITY_ALLOWED_SEGMENT_WARNINGS
