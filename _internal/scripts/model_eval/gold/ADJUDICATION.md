@@ -150,3 +150,15 @@ B tự liệt kê các câu kém chắc chắn nhất; A soát toàn bộ. B ch�
 
 Góp ý luật của B (nhận): họ + kính xưng là tên khi nhân vật không có tên riêng (quy tắc 11); tên cải trang nửa điểm trên
 câu nói, không điểm trên câu nghĩ (quy tắc 13).
+
+## Vòng 8 (20-09 01:3x): TMA 418 cả hai làm mù; TMA 385, Two Childhood Friends 013 B gán - A soát
+
+TMA 418 (làm mù): người nói ưu tiên trùng 97,0% (33 câu), loại 89/89, cảm xúc ưu tiên 98,9%.
+
+| câu | kết luận | lý do |
+|---|---|---|
+<removed>
+| 418:41 hai học trò cùng chào, gọi tên ở 44 | **A thua**: NPC* đủ -> `NPC*~` | quy tắc 5: người được gọi tên sau trong chương; LILLIAN, ISAAC đủ |
+<removed>
+| 385:123 Lucien trong hình Aska | LUCIEN, ASKA đều đủ | quy tắc 13: chương gọi "Aska", nhưng đã lộ ngầm trước câu (Aska thật bất tỉnh ở 119) |
+| Two Childhood 013 | không đổi | soát từng câu với nguồn |
