@@ -49,6 +49,37 @@ def load_rows(path: Path, only: str) -> list[dict]:
     return [{"messages": row["messages"]} for row in rows]
 
 
+def answer_logits_trainer(base: type) -> type:
+    """`SFTTrainer` chỉ dựng logits cho phần ĐÁP ÁN, không cho cả chuỗi.
+
+    Giả thuyết cho bức tường VRAM (26-09): với từ vựng 151.936 của Qwen3, một mẫu 3,2k token dựng ma trận logits
+    ~0,5 tỉ phần tử - ~1 GB bf16, ~2 GB khi hàm loss nâng lên fp32, cộng gradient cùng cỡ. Trên 8 GB, cộng model
+    4-bit (~2,8 GB) là tràn, và driver Windows lặng lẽ đẩy phần tràn sang RAM chứ không báo OOM - khớp với
+    "38 token/s ở VRAM 95%" đã đo 21-09. Mà `assistant_only_loss` chỉ cần logits ở ~360-600 vị trí cuối (đáp án
+    luôn là lượt cuối của mẫu), nên `logits_to_keep` cắt ma trận ấy 5-9 lần mà không đổi một giá trị loss nào.
+    """
+    import torch.nn.functional as F  # noqa: PLC0415
+
+    class AnswerLogitsTrainer(base):
+        def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
+            labels = inputs.pop("labels")
+            if labels.shape[0] != 1:
+                raise ValueError("--logits answer cần đúng 1 mẫu mỗi bước (per_device_train_batch_size=1)")
+            answer = (labels[0] != -100).nonzero()
+            first = int(answer[0]) if len(answer) else labels.shape[1] - 1
+            keep = labels.shape[1] - first + 1  # +1: logit ở ngay TRƯỚC token đáp án đầu tiên dự đoán token ấy
+            inputs["use_cache"] = False
+            outputs = model(**inputs, logits_to_keep=keep)
+            logits = outputs.logits[:, :-1, :].float()
+            target = labels[:, -keep:][:, 1:]
+            loss = F.cross_entropy(logits.reshape(-1, logits.shape[-1]), target.reshape(-1),
+                                   ignore_index=-100, reduction="sum")
+            loss = loss / (num_items_in_batch if num_items_in_batch is not None else (target != -100).sum())
+            return (loss, outputs) if return_outputs else loss
+
+    return AnswerLogitsTrainer
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--base", default=DEFAULT_BASE)
@@ -66,6 +97,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--optim", default="paged_adamw_8bit",
                         help="paged_adamw_8bit (mặc định) hay adamw_8bit - bản `paged` đẩy trạng thái qua PCIe khi "
                              "VRAM chật, và trên 8 GB đó có thể là nút cổ chai lớn nhất")
+    parser.add_argument("--logits", choices=("all", "answer"), default="all",
+                        help="answer = chỉ dựng logits cho phần đáp án (xem answer_logits_trainer); all = như TRL mặc định")
     args = parser.parse_args(argv)
 
     from scripts.pending_patches.apply_all import _runs_in_flight  # noqa: PLC0415  (dùng lại bộ canh đã đo)
@@ -123,8 +156,11 @@ def main(argv: list[str] | None = None) -> int:
         model_init_kwargs={"quantization_config": quantization, "dtype": torch.bfloat16},
         report_to=[],
         seed=1234,
+        # Chế độ `answer` trả logits ngắn hơn nhãn: chỉ giữ loss khi eval, đừng gom logits.
+        prediction_loss_only=args.logits == "answer",
     )
-    trainer = SFTTrainer(
+    trainer_class = answer_logits_trainer(SFTTrainer) if args.logits == "answer" else SFTTrainer
+    trainer = trainer_class(
         model=args.base,
         args=config,
         train_dataset=Dataset.from_list(train_rows),
@@ -139,7 +175,14 @@ def main(argv: list[str] | None = None) -> int:
             target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
         ),
     )
-    trainer.train()
+    torch.cuda.reset_peak_memory_stats()
+    result = trainer.train()
+    metrics = result.metrics
+    total = torch.cuda.get_device_properties(0).total_memory / 2**30
+    print(f"  logits={args.logits} | {metrics.get('train_runtime', 0):.0f} s cho {config.max_steps if args.smoke else '?'} bước "
+          f"x accum {args.accum} | {metrics.get('train_samples_per_second', 0):.3f} mẫu/s | VRAM đỉnh: cấp phát "
+          f"{torch.cuda.max_memory_allocated() / 2**30:.2f} GiB, giữ {torch.cuda.max_memory_reserved() / 2**30:.2f} GiB "
+          f"trên {total:.2f} GiB")
     trainer.save_model(str(out))
     tokenizer.save_pretrained(str(out))
     print(f"  đã lưu adapter vào {out}")
