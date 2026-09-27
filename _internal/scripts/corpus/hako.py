@@ -36,7 +36,8 @@ from lxml import html
 
 SOURCES = ("https://docln.net", "https://docln.sbs", "https://ln.hako.vn")
 CORPUS = Path("D:/Novels/Ebook Reader/Corpus")
-SURVEY_DIR = Path(__file__).resolve().parents[2] / "data" / "corpus"
+# Khảo sát nằm CÙNG kho (repo riêng tư, xem scripts/corpus/manifest.py): có bình luận người đọc chép từ Hako.
+SURVEY_DIR = CORPUS / "_survey"
 # Bộ lọc của trang danh sách Hako: truyện dịch bởi người, AI dịch ("convert"), sáng tác tiếng Việt.
 KINDS = ("truyendich", "convert", "sangtac")
 PAUSE_SECONDS = 0.4
