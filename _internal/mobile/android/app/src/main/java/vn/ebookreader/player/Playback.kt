@@ -320,6 +320,7 @@ object Playback {
         if (!playing) {
             pausedAtMs = System.currentTimeMillis()
             saveNow()
+            StateSync.pushSoon(appContext, bookId, force = true)
             closeSession()
         } else {
             openSession()
@@ -353,7 +354,10 @@ object Playback {
                     return
                 }
                 beats += 1
-                if (beats % 10 == 0) saveNow()
+                if (beats % 10 == 0) {
+                    saveNow()
+                    StateSync.pushSoon(appContext, bookId, force = false)
+                }
                 if (beats % 60 == 0) SleepTimer.maybeSafetyStop(lastInteractionMs)
                 Bedtime.checkpoint()
                 emit("tick")

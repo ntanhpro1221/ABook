@@ -27,8 +27,10 @@ bắt đầu nhỏ dần, lúc tự dừng - kèm vị trí. Sáng dậy, thẻ 
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
+import re
 import threading
 import time
 import uuid
@@ -50,6 +52,8 @@ MAX_SESSIONS = 200
 FORMAT_VERSION = 2
 DEFAULT_RECORD_NAME = "Mặc định"
 MAX_RECORD_NAME = 60
+RECORD_ID = re.compile(r"r-[0-9a-f]{16}")
+SYNC_KEYS = ("record", "recordName", "activeAt", "book", "records", "active", "activeState")
 
 
 def listening_path() -> Path:
@@ -64,6 +68,13 @@ def _new_record_id() -> str:
     return "r-" + uuid.uuid4().hex[:16]
 
 
+def default_record_id(book: str) -> str:
+    """Mã hồ sơ "Mặc định" của một cuốn - app tự tạo khi nghe lần đầu hay khi chuyển bản lưu cũ. Suy từ mã sách theo MỘT
+    công thức ở mọi máy (Android: Store.defaultRecordId), nên máy tính và điện thoại cùng nghe một cuốn là cùng MỘT hồ
+    sơ, gộp được với nhau - không tách đôi chỗ nghe. Hồ sơ người dùng tự tạo thêm thì mã ngẫu nhiên."""
+    return "r-" + hashlib.sha256(f"default:{book}".encode()).hexdigest()[:16]
+
+
 def _upgrade(raw: Any) -> dict[str, Any]:
     """Bản lưu nào cũng thành dạng hồ sơ + liên kết. Bản cũ {mã sách: state}: mỗi sách một hồ sơ "Mặc định"."""
     if isinstance(raw, dict) and raw.get("version") == FORMAT_VERSION:
@@ -74,7 +85,7 @@ def _upgrade(raw: Any) -> dict[str, Any]:
     for book, state in (raw.items() if isinstance(raw, dict) else []):
         if not isinstance(state, dict):
             continue
-        record = _new_record_id()
+        record = default_record_id(str(book))
         data["records"][record] = {"name": DEFAULT_RECORD_NAME,
                                    "createdAt": float(state.get("updatedAt") or time.time()), "state": state}
         data["links"][str(book)] = {"records": [record], "active": record}
@@ -100,7 +111,9 @@ class Listening:
         if record is None:
             if not create:
                 return None
-            record_id = _new_record_id()
+            record_id = default_record_id(book)
+            if record_id in self._data["records"]:  # hồ sơ mặc định đã bị chuyển sang sách khác
+                record_id = _new_record_id()
             record = self._data["records"][record_id] = {"name": DEFAULT_RECORD_NAME, "createdAt": time.time(),
                                                           "state": _empty_state()}
             link = self._data["links"].setdefault(book, {"records": []})
@@ -141,6 +154,7 @@ class Listening:
             self._data["records"][record_id] = {"name": label, "createdAt": time.time(), "state": _empty_state()}
             link["records"] = [*link.get("records", []), record_id]
             link["active"] = record_id
+            link["activeAt"] = time.time()
             self._save()
             return {"id": record_id, "name": label, "active": True}
 
@@ -150,6 +164,7 @@ class Listening:
             if not link or record_id not in link.get("records", []) or record_id not in self._data["records"]:
                 return False
             link["active"] = record_id
+            link["activeAt"] = time.time()
             self._save()
             return True
 
@@ -381,6 +396,46 @@ class Listening:
             entry.update(merged)
             self._save()
             return json.loads(json.dumps(merged))
+
+    def merge_record(self, book: str, record_id: str, incoming: dict[str, Any], *, name: str = "",
+                     active_at: float = 0.0) -> dict[str, Any]:
+        """Gộp MỘT hồ sơ từ thiết bị khác - đúng hồ sơ ấy, không phải hồ sơ đang dùng ở đây (đổi hồ sơ ở máy này đúng
+        lúc điện thoại gửi lên thì không trộn hai hồ sơ). Hồ sơ lạ (tạo trên điện thoại) được nhận, cùng mã, gắn vào
+        `book`. Hồ sơ đang dùng: bên chọn sau thắng (`active_at` là lúc điện thoại chọn hồ sơ này).
+
+        Trả trạng thái đã gộp, kèm `record`, `book` (sách hồ sơ gắn ở đây - có thể đã được chuyển), danh sách hồ sơ của
+        sách, `active` {record, at}; hồ sơ đang dùng ở đây khác hồ sơ vừa gộp thì kèm luôn `activeState` của nó."""
+        with self._lock:
+            record = self._data["records"].get(record_id)
+            if record is None:
+                record = self._data["records"][record_id] = {"name": name.strip()[:MAX_RECORD_NAME] or DEFAULT_RECORD_NAME,
+                                                              "createdAt": time.time(), "state": _empty_state()}
+            owner = self._owner(record_id)
+            if owner is None:
+                owner = book
+                link = self._data["links"].setdefault(book, {"records": []})
+                link["records"] = [*link.get("records", []), record_id]
+                if not link.get("active") or link["active"] not in self._data["records"]:
+                    link["active"] = record_id
+            link = self._data["links"][owner]
+            if active_at and float(active_at) > float(link.get("activeAt") or 0):
+                link["active"] = record_id
+                link["activeAt"] = float(active_at)
+            state = record.setdefault("state", _empty_state())
+            merged = merge_states(state, incoming)
+            state.clear()
+            state.update(merged)
+            self._save()
+            reply = json.loads(json.dumps(merged))
+            reply.update({"record": record_id, "recordName": record.get("name") or DEFAULT_RECORD_NAME, "book": owner,
+                          "records": [{"id": item, "name": (self._data["records"].get(item) or {}).get("name")
+                                       or DEFAULT_RECORD_NAME} for item in link.get("records", [])
+                                      if item in self._data["records"]],
+                          "active": {"record": link.get("active"), "at": float(link.get("activeAt") or 0)}})
+            if link.get("active") and link["active"] != record_id:
+                active = self._data["records"].get(link["active"]) or {}
+                reply["activeState"] = json.loads(json.dumps(active.get("state") or _empty_state()))
+            return reply
 
     def _save(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)

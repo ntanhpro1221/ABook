@@ -404,12 +404,11 @@ class LibraryPlugin : Plugin() {
         call.resolve()
     }
 
-    /** Gửi trạng thái nghe lên máy tính, nhận bản đã gộp (mới-hơn-thắng) - im lặng nếu không có mạng. */
-    private fun pushState(id: String) {
-        if (prefs.getString("token", "").isNullOrBlank()) return
-        val merged = runCatching { JSONObject(request("POST", "/sync/v1/books/$id/state", Store.state(id))) }.getOrNull() ?: return
-        Store.replaceState(id, merged)
-    }
+    /**
+     * Gửi hồ sơ nghe đang dùng của cuốn lên máy tính (kèm mã, tên hồ sơ, lúc chọn nó), nhận bản đã gộp của ĐÚNG hồ sơ ấy
+     * cùng lựa chọn hồ sơ bên kia - bên chọn sau thắng (Store.applySync). Im lặng nếu không có mạng.
+     */
+    private fun pushState(id: String) = StateSync.pushNow(context, id)
 
     @PluginMethod
     fun syncState(call: PluginCall) = background(call) {
