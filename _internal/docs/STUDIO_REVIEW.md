@@ -1,0 +1,59 @@
+# "Việc cần anh" - người can thiệp vào sản xuất mà không chặn dây chuyền
+
+Chủ sách, 27-09: *"quy trình sản xuất phải cho phép người dùng can thiệp ở mức sâu một cách dễ dàng, đơn giản, trên mọi
+khía cạnh, tại mọi thời điểm mà có thể cần người dùng, thậm chí sort các phần cần can thiệp theo mức độ để người dùng can
+thiệp ít nhất mà lại hiệu quả nhất, thậm chí đưa ra các option để chọn, mô tả vấn đề đang cần can thiệp. nhưng cũng không
+phải theo dạng luôn bắt người dùng phải thao tác chọn chọn mới sang bước tiếp theo"*.
+
+Vì sao cần: model không bao giờ đúng 100% (652/1.827 câu gold có hơn một người nói hợp lý; cảm xúc là cảm nhận), nhưng nó
+BIẾT câu nào không chắc - bộ chấm đã hiệu chỉnh: tin cậy >= 0,95 đúng 100%, < 0,5 chỉ đúng 33% (ANALYSIS_RESEARCH.md).
+Người duyệt đúng những câu ấy là cách rẻ nhất để đạt 100% với người nghe.
+
+## Nguyên tắc
+
+1. **Không bao giờ chặn.** Máy luôn tự quyết trước (lựa chọn tốt nhất của nó) và chạy tiếp; AGENTS.md cấm hỏi giữa job.
+   Can thiệp là GHI ĐÈ đặt lên quyết định của máy, áp ở ranh giới an toàn gần nhất.
+2. **Xếp theo lợi trên mỗi lần bấm**, không theo thứ tự thời gian: `lợi = số câu bị ảnh hưởng x khả năng máy sai x độ chói
+   tai`, cộng thưởng **khẩn**: câu SẮP được thu âm đứng trước (sửa trước khi thu thì không tốn thu lại).
+3. **Mỗi việc tự giải thích**: vấn đề là gì, vì sao máy nghi ngờ (bằng chứng: câu dẫn, hai nguồn bất đồng, độ tin cậy),
+   các lựa chọn kèm độ tin cậy, lựa chọn đang áp, nghe thử (câu mẫu giọng, câu thu thử cách đọc tên).
+4. **Gom việc giống nhau**: "Khổng Minh / Gia-cát Lượng là một người?" sửa một lần cho 300 câu; "giọng của Tào Tháo"
+   là một việc, không phải 400 việc.
+5. **Mọi khía cạnh**, mọi lúc: sau phân tích, sau phân vai, sau thu âm, cả khi sách đã xong (sửa rồi thu lại phần đổi).
+6. **Chỉ thu lại phần bị đổi**, tất định: ghi đè gắn đúng câu (stable ID + băm văn bản), vào dấu vân tay stage như mọi
+   thay đổi casting, nên dừng/chạy tiếp không đổi kết quả.
+7. **Mỗi lần sửa là một nhãn**: xuất thành dòng kiểu gold -> dữ liệu học cho LoRA và bộ chấm, đúng chỗ model yếu nhất (học
+   chủ động).
+
+## Danh mục việc
+
+| # | Khía cạnh | Máy nghi ngờ khi | Lựa chọn đưa ra | Áp bằng (đã có trong SQLite?) | Chi phí khi sửa |
+|---|---|---|---|---|---|
+| 1 | Giọng / giới / tuổi của nhân vật | độ tin cậy giới thấp; hai nhân vật dùng chung giọng (voice_pool_pressure); nhân vật chính mang giọng chung chung | preset + cao độ, nghe thử từng giọng; nam/nữ/chưa rõ; tuổi | `characters.locked_voice_key`, `locked` (giới), `locked_age` - CÓ | thu lại mọi câu của nhân vật |
+| 2 | Bí danh: một người hay hai? | hai tên cùng giới, ít khi cùng cảnh, tên này chứa họ/tự của tên kia (Khổng Minh / Gia-cát Lượng, Vân-trường / Quan Vũ) | gộp vào X / để riêng | `character_aliases` - CÓ | thu lại câu của tên bị gộp |
+| 3 | Ai nói câu này | tin cậy thấp; bộ chấm và LLM bất đồng; nhãn NPC mà chương có người được gọi tên sau đó | 3 ứng viên hàng đầu + người kể + "người không tên" | bảng ghi đè theo câu - CHƯA | thu lại một câu |
+| 4 | Loại đoạn: kể / thoại / nội tâm | "nói thầm", "khen thầm", ngoặc nhấn mạnh, thoại gạch ngang lạ | 3 loại | bảng ghi đè theo câu - CHƯA | thu lại một câu |
+| 5 | Cảm xúc, cường độ, nhịp, âm lượng | critic bất đồng; luật host từ chối; tin cậy thấp | vài cảm xúc hàng đầu + nghe thử | bảng ghi đè theo câu - CHƯA | thu lại một câu |
+| 6 | Cách đọc tên riêng | tin cậy phiên âm thấp; Whisper nghe tên khác xa (hàng chờ "Cần nghe lại") | 2-3 cách đọc, mỗi cách một câu thu thử | `pronunciations.locked` - CÓ | thu lại mọi câu có tên ấy |
+| 7 | Lỗi chữ / văn bản nguồn lạ | Whisper lệch có hệ thống ở cùng một từ; từ không có trong từ điển | sửa chữ (chỉ `spoken_text`, không đụng nguồn) | ghi đè `spoken_text` - CHƯA | thu lại câu có chữ ấy |
+| 8 | Bản thu lỗi | hàng chờ "Cần nghe lại" (hỏng, chưa kiểm được, tên lệch) | ổn / thu lại (seed khác) / đổi cách đọc | `listener_audio_acceptances` + danh sách đúc lại - CÓ | thu lại một câu |
+| 9 | Truyện ngôi thứ nhất | tỉ lệ "tôi" trong lời kể cao | "tôi" là ai (gợi ý tên) | `voices.first_person_identity` - CÓ (27-09) | phân tích lại |
+
+## Luồng dữ liệu
+
+- Dây chuyền (worker) là nơi DUY NHẤT ghi SQLite của sách. Giao diện ghi YÊU CẦU vào file riêng cạnh sách (như
+  `reviews.json` của hàng chờ "Cần nghe lại"); worker đọc và áp ở ranh giới an toàn, ghi `runtime_events` từng lần áp.
+- Ghi đè theo câu khoá bằng `stable_id` + `text_sha256`: nguồn đổi thì ghi đè tự rơi (không áp nhầm câu khác).
+- Câu chưa thu: áp ngay trước khi thu, không tốn gì. Câu đã thu: vào danh sách đúc lại của ranh giới kế tiếp (đúng cơ chế
+  đúc lại đang có), chỉ các câu ấy, rồi dựng lại MP3 của chương.
+- Việc được tính lại sau mỗi stage (phân tích, phân vai, thu chương); việc đã xử lý không hiện lại trừ khi bằng chứng đổi.
+
+## Thứ tự làm
+
+1. **Hộp việc chỉ đọc**: dựng danh mục việc 1-2-3-6-8 từ SQLite đang có (độ tin cậy, sổ nhân vật, bí danh, phiên âm, hàng
+   chờ), xếp hạng, giải thích, nghe thử. Chưa sửa được, nhưng đo được: bao nhiêu việc, lợi dự kiến bao nhiêu.
+2. **Sửa cấp nhân vật** (1, 2, 6): các cột ghim đã có - chỉ thiếu giao diện + đường áp ở ranh giới + đúc lại có chọn lọc.
+3. **Sửa cấp câu** (3, 4, 5, 7): bảng ghi đè mới trong SQLite (thay đổi `database.py`/`pipeline.py` - kèm test crash/reopen
+   như AGENTS.md đòi).
+4. **Vòng học**: xuất mọi lần sửa thành dòng kiểu gold, đưa vào dữ liệu LoRA/bộ chấm; đo model mới trên chính những câu
+   người đã sửa.
