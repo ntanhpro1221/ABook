@@ -9,17 +9,19 @@ import http.client
 import json
 import socket
 import sqlite3
+import threading
 import time
 from pathlib import Path
 
 import pytest
 
 from ebook_reader.webui import humanize, listen_view, store
+from ebook_reader.webui import sync as sync_module
 from ebook_reader.webui.library import Library, Preferences, book_id
 from ebook_reader.webui.listening import Listening, book_progress, merge_states
 from ebook_reader.webui.server import App, Server
 from ebook_reader.webui.actions import FakeRunner
-from ebook_reader.webui.sync import PAIRING_ATTEMPTS, Devices, SyncApp, SyncServer, manifest
+from ebook_reader.webui.sync import PAIRING_ATTEMPTS, Devices, Remote, SyncApp, SyncServer, manifest, remote_command
 
 
 def make_project(root: Path, title: str = "Sách thử · Tập 1") -> Path:
@@ -298,6 +300,127 @@ def test_the_ui_server_rejects_other_hosts_and_missing_tokens(library, tmp_path:
         assert status == 403, "Host lạ (DNS rebinding) phải bị từ chối"
     finally:
         server.stop()
+
+
+# ---- điều khiển điện thoại từ máy tính (PLAYER_RESEARCH #12) -----------------------------------------------
+
+
+def _waiting(remote: Remote) -> bool:
+    """Chờ tới khi luồng "điện thoại" đã vào hỏi dài. `view()` lấy cùng khoá mà `report()` chỉ nhả khi đã vào
+    `wait()`, nên thấy được điện thoại tức là nó đang chờ."""
+    deadline = time.monotonic() + 5
+    while not remote.view() and time.monotonic() < deadline:
+        time.sleep(0.01)
+    return bool(remote.view())
+
+
+def test_a_command_reaches_a_waiting_phone_at_once() -> None:
+    """Điện thoại "hỏi dài": bấm dừng trên máy tính thì điện thoại nhận ngay, không đợi hết 25 giây chờ."""
+    remote = Remote()
+    got: list[list[dict]] = []
+    state = {"state": {"bookId": "abc", "chapterId": 3, "position": 61.5, "playing": True}}
+    waiter = threading.Thread(target=lambda: got.append(remote.report("dev1", "Pixel", state, wait=20)))
+    started = time.monotonic()
+    waiter.start()
+    assert _waiting(remote) and [phone["device"] for phone in remote.view()] == ["dev1"], "đang hỏi dài là đang có mặt"
+    remote.send("dev1", {"action": "pause"})
+    waiter.join(5)
+    assert got and got[0][0]["action"] == "pause" and time.monotonic() - started < 3
+    assert remote.report("dev1", "Pixel", state) == [], "lệnh đã giao thì không giao lại"
+
+
+def test_commands_never_go_to_a_phone_that_left_or_arrive_late(monkeypatch) -> None:
+    remote = Remote()
+    with pytest.raises(LookupError):
+        remote.send("dev1", {"action": "pause"})
+    clock = [1000.0]
+    monkeypatch.setattr(sync_module.time, "time", lambda: clock[0])
+    remote.report("dev1", "Pixel", {"state": {"playing": True}})
+    remote.send("dev1", {"action": "pause"})
+    clock[0] += sync_module.COMMAND_SECONDS + 1
+    assert remote.report("dev1", "Pixel", {}) == [], "\"dừng\" tới trễ là cú giật mình - bỏ"
+    clock[0] += sync_module.PRESENCE_SECONDS + 1
+    assert remote.view() == []
+    with pytest.raises(LookupError):
+        remote.send("dev1", {"action": "pause"})
+
+
+def test_turning_sync_off_answers_every_waiting_phone() -> None:
+    remote = Remote()
+    got: list[list[dict]] = []
+    waiter = threading.Thread(target=lambda: got.append(remote.report("dev1", "Pixel", {}, wait=20)))
+    waiter.start()
+    assert _waiting(remote)
+    remote.reset()
+    waiter.join(3)
+    assert got == [[]] and remote.view() == []
+
+
+def test_what_a_phone_reports_is_typed_and_bounded() -> None:
+    """Dữ liệu từ mạng LAN: chỉ trường biết, đúng kiểu, có trần - không chuỗi dài, không NaN, không id lạ."""
+    remote = Remote()
+    remote.report("dev1", "Pixel", {
+        "state": {"bookId": "../../etc", "chapterId": True, "chapterTitle": "x" * 5000, "position": float("nan"),
+                  "duration": "12", "playing": "yes", "rate": 9, "extra": {"a": 1}},
+        "books": ["ok_id", "bad id", 7, "x" * 800],
+        "acks": [{"id": "c1", "ok": False, "message": "Điện thoại chưa tải chương này"}, "rác"],
+    })
+    phone = remote.view()[0]
+    assert phone["bookId"] == "" and phone["chapterId"] is None and len(phone["chapterTitle"]) == 200
+    assert phone["position"] == 0.0 and phone["duration"] == 12.0 and phone["playing"] is False and phone["rate"] == 3.0
+    assert "extra" not in phone and phone["books"] == ["ok_id"]
+    assert phone["acks"] == [{"id": "c1", "ok": False, "message": "Điện thoại chưa tải chương này"}]
+    assert remote_command({"action": "skip", "seconds": -15}) == {"action": "skip", "seconds": -15.0}
+    assert remote_command({"action": "load", "bookId": "abc", "chapterId": 4, "seconds": 90, "x": 1}) == {
+        "action": "load", "seconds": 90.0, "chapterId": 4, "bookId": "abc"}
+    for bad in ({"action": "format_disk"}, {"action": "jump"}, {"action": "load", "chapterId": 1, "bookId": "a/b"}):
+        with pytest.raises(ValueError):
+            remote_command(bad)
+
+
+def test_the_desktop_sees_the_phone_and_its_pause_arrives(library, tmp_path: Path) -> None:
+    """Trọn vòng qua HTTP thật: điện thoại báo đang phát → giao diện máy tính thấy (kèm "có trong thư viện") →
+    bấm dừng → lần hỏi kế của điện thoại nhận lệnh. Gỡ ghép thì điện thoại biến khỏi danh sách."""
+    lib, project, listening = library
+    app = App(preferences=lib.preferences, runner=FakeRunner(), token="t", listening=listening)
+    app.sync_host, app.sync_port = "127.0.0.1", 0
+    app.set_sync(True)
+    ui = Server(app, port=0).start()
+    headers = {"X-Ebook-Token": "t"}
+    try:
+        sync_port = app.sync_server.port
+        code = app.devices.start_pairing()["code"]
+        _status, data, _ = _request(sync_port, "POST", "/sync/v1/pair", body={"code": code, "device": "Pixel"})
+        token = json.loads(data)["token"]
+        identifier = book_id(project)
+        report = {"state": {"bookId": identifier, "bookTitle": "Sách thử", "chapterId": 1, "chapterTitle": "Chương 645",
+                            "position": 42.0, "duration": 600.0, "playing": True, "rate": 1.25}, "books": [identifier]}
+        status, data, _ = _request(sync_port, "POST", "/sync/v1/remote", token, body={**report, "wait": 0})
+        assert status == 200 and json.loads(data) == {"commands": []}
+
+        _status, data, _ = _request(ui.port, "GET", "/api/remote", headers=headers)
+        phone = json.loads(data)["phones"][0]
+        assert phone["name"] == "Pixel" and phone["known"] and phone["playing"] and phone["position"] == 42.0
+        status, data, _ = _request(ui.port, "POST", f"/api/remote/{phone['device']}", headers=headers,
+                                   body={"action": "pause"})
+        assert status == 200 and json.loads(data)["id"]
+        status, _data, _ = _request(ui.port, "POST", f"/api/remote/{phone['device']}", headers=headers,
+                                    body={"action": "format_disk"})
+        assert status == 400
+        status, data, _ = _request(sync_port, "POST", "/sync/v1/remote", token, body={**report, "wait": 5})
+        assert [command["action"] for command in json.loads(data)["commands"]] == ["pause"]
+
+        status, _data, _ = _request(sync_port, "POST", "/sync/v1/remote", "sai-ma", body=report)
+        assert status == 401, "chỉ điện thoại đã ghép mới báo được"
+        _request(ui.port, "DELETE", f"/api/sync/devices/{phone['device']}", headers=headers)
+        _status, data, _ = _request(ui.port, "GET", "/api/remote", headers=headers)
+        assert json.loads(data)["phones"] == []
+        status, _data, _ = _request(ui.port, "POST", f"/api/remote/{phone['device']}", headers=headers,
+                                    body={"action": "play"})
+        assert status == 409, "lệnh gửi vào khoảng không phải báo cho người dùng"
+    finally:
+        ui.stop()
+        app.close()
 
 
 def test_the_listen_view_lists_only_chapters_you_can_hear(library) -> None:

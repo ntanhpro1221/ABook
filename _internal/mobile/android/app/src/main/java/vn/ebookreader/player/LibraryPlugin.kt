@@ -29,7 +29,7 @@ import java.util.concurrent.Executors
 class LibraryPlugin : Plugin() {
     private val io = Executors.newSingleThreadExecutor()
     private val downloads = Executors.newSingleThreadExecutor()
-    private val prefs by lazy { context.getSharedPreferences("sync", Context.MODE_PRIVATE) }
+    private val prefs by lazy { SyncLink.prefs(context) }
 
     override fun load() {
         Playback.init(context)
@@ -48,28 +48,10 @@ class LibraryPlugin : Plugin() {
 
     // ---- ghép nối --------------------------------------------------------------------------------------------
 
-    private fun base(): String = "http://${prefs.getString("host", "")}:${prefs.getInt("port", 47630)}"
+    private fun base(): String = SyncLink.base(context)
 
-    private fun request(method: String, path: String, body: JSONObject? = null, auth: Boolean = true, root: String = base()): String {
-        val connection = URL(root + path).openConnection() as HttpURLConnection
-        connection.requestMethod = method
-        connection.connectTimeout = 5000
-        connection.readTimeout = 20000
-        if (auth) connection.setRequestProperty("Authorization", "Bearer ${prefs.getString("token", "")}")
-        if (body != null) {
-            connection.doOutput = true
-            connection.setRequestProperty("Content-Type", "application/json; charset=utf-8")
-            connection.outputStream.use { it.write(body.toString().toByteArray()) }
-        }
-        val code = connection.responseCode
-        val text = (if (code < 400) connection.inputStream else connection.errorStream)?.bufferedReader()?.use { it.readText() } ?: ""
-        connection.disconnect()
-        if (code >= 400) {
-            val message = runCatching { JSONObject(text).optString("error") }.getOrNull()
-            throw IllegalStateException(message?.ifBlank { null } ?: "Máy tính trả lỗi $code")
-        }
-        return text
-    }
+    private fun request(method: String, path: String, body: JSONObject? = null, auth: Boolean = true, root: String = base()): String =
+        SyncLink.request(context, method, path, body, auth, root)
 
     /** Tìm máy tính đang bật đồng bộ trong cùng mạng Wi-Fi (UDP broadcast). */
     @PluginMethod
@@ -111,7 +93,8 @@ class LibraryPlugin : Plugin() {
         val body = JSONObject().put("code", call.getString("code") ?: "").put("device", device)
         val reply = JSONObject(request("POST", "/sync/v1/pair", body, auth = false, root = "http://$host:$port"))
         prefs.edit().putString("host", host).putInt("port", port).putString("token", reply.getString("token"))
-            .putString("name", reply.optString("name")).apply()
+            .putString("name", reply.optString("name")).commit()
+        Remote.ensure()
         call.resolve(JSObject().put("name", reply.optString("name")))
     }
 
