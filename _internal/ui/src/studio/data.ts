@@ -7,6 +7,7 @@ import {
   type BookSummary,
   type Cast,
   type Chapter,
+  type FirstPersonHint,
   type Preferences,
   type ScanResult,
   type Script,
@@ -136,10 +137,20 @@ export function useScan() {
   });
 }
 
+/** Truyện kể ngôi thứ nhất? - đọc ~20 chương đầu một lần cho mỗi bộ file đã chọn. */
+export function useFirstPersonHint(paths: string[]) {
+  return useQuery({
+    queryKey: ["first-person", paths.join("\n")],
+    queryFn: () => api<FirstPersonHint>("/api/first-person", { method: "POST", body: { paths } }),
+    enabled: paths.length > 0,
+    staleTime: Infinity,
+  });
+}
+
 export function useCreateBook() {
   const refresh = useRefresh();
   return useMutation({
-    mutationFn: (body: { paths: string[]; title: string; profile: string; narrator: string; start: boolean }) =>
+    mutationFn: (body: { paths: string[]; title: string; profile: string; narrator: string; firstPerson: string; start: boolean }) =>
       api<{ id: string }>("/api/books", { method: "POST", body }),
     onSuccess: () => refresh(),
   });

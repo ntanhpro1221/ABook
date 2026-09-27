@@ -26,7 +26,7 @@ import { cn } from "@/shared/cn";
 import { formatLength, formatNumber } from "@/shared/format";
 import { Button, Segmented, Vu, radioGroupKeys, radioTabIndex } from "@/shared/ui";
 import type { ScanResult, Voice } from "@/studio/api";
-import { pickFiles, pickFolder, useAppInfo, useCreateBook, useScan, useVoices } from "@/studio/data";
+import { pickFiles, pickFolder, useAppInfo, useCreateBook, useFirstPersonHint, useScan, useVoices } from "@/studio/data";
 
 type Profile = "fast" | "balanced" | "high_quality";
 
@@ -92,12 +92,16 @@ interface Draft {
   title: string;
   titleEdited: boolean;
   narrator: string;
+  /** Người xưng "tôi" ở truyện kể ngôi thứ nhất ("" = ngôi thứ ba). */
+  firstPerson: string;
   profile: Profile;
   startNow: boolean;
 }
 
 const DRAFT_KEY = "ebook-reader-new-book-draft";
-const EMPTY_DRAFT: Draft = { paths: [], excluded: [], title: "", titleEdited: false, narrator: "", profile: "high_quality", startNow: true };
+const EMPTY_DRAFT: Draft = {
+  paths: [], excluded: [], title: "", titleEdited: false, narrator: "", firstPerson: "", profile: "high_quality", startNow: true,
+};
 
 function loadDraft(): Draft {
   try {
@@ -400,7 +404,81 @@ function VoiceCard({
   );
 }
 
-function VoiceStep({ narrator, setNarrator }: { narrator: string; setNarrator: (name: string) => void }) {
+/**
+ * "'Tôi' là ai?" - truyện kể ngôi thứ nhất không bao giờ gọi tên người kể trong lời kể, nên máy không biết câu thoại
+ * của nhân vật chính là của ai: đo 27-09, model gán 22 câu của người kể cho chính người đang nói chuyện với anh ta và
+ * chỉ đúng 34% người nói; biết tên người kể thì 89%. Máy đoán được TRUYỆN NÀO kể ngôi thứ nhất, còn tên chỉ gợi ý.
+ */
+function FirstPersonQuestion({ paths, value, onChange }: { paths: string[]; value: string; onChange: (name: string) => void }) {
+  const { data: hint, isLoading } = useFirstPersonHint(paths);
+  const [opened, setOpened] = useState(false);
+  if (!hint?.firstPerson && !value && !opened) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpened(true)}
+        className="mt-3 text-sm font-medium text-accent-text underline underline-offset-2 disabled:opacity-60"
+        disabled={isLoading}
+      >
+        Truyện kể ở ngôi thứ nhất (người kể xưng “tôi”)?
+      </button>
+    );
+  }
+  return (
+    <section aria-labelledby="first-person-title" className="mt-5 max-w-2xl rounded-2xl border border-line bg-panel p-4 sm:p-5">
+      <h3 id="first-person-title" className="font-semibold">“Tôi” là ai?</h3>
+      <p className="mt-1 text-sm text-fg-2 text-pretty">
+        {hint?.firstPerson
+          ? `Truyện có vẻ kể ở ngôi thứ nhất: ${Math.round(hint.rate * 100)}% đoạn lời kể có “tôi”. `
+          : "Nếu người kể chuyện xưng “tôi”, cho biết đó là nhân vật nào. "}
+        Biết tên người kể thì lời thoại của nhân vật chính được đọc bằng đúng giọng của họ - không thì dễ bị gán cho người
+        đang nói chuyện với họ.
+      </p>
+      {Boolean(hint?.suggestions.length) && (
+        <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Gợi ý tên người kể">
+          {hint!.suggestions.map((name) => (
+            <button
+              key={name}
+              type="button"
+              aria-pressed={value === name}
+              onClick={() => onChange(value === name ? "" : name)}
+              className={cn(
+                "rounded-full border px-3 py-1.5 text-sm font-medium",
+                value === name ? "border-accent bg-accent/10 text-accent-text" : "border-line text-fg hover:border-fg-3",
+              )}
+            >
+              {name}
+            </button>
+          ))}
+        </div>
+      )}
+      <label className="mt-3 block text-sm text-fg-2">
+        Tên người kể
+        <input
+          id="first-person-name"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder="Tên nhân vật xưng “tôi” (để trống nếu kể ngôi thứ ba)"
+          className="mt-1.5 h-11 w-full rounded-xl border border-line bg-panel px-3.5 text-[15px] font-medium text-fg outline-none focus:border-accent"
+        />
+      </label>
+    </section>
+  );
+}
+
+function VoiceStep({
+  narrator,
+  setNarrator,
+  paths,
+  firstPerson,
+  setFirstPerson,
+}: {
+  narrator: string;
+  setNarrator: (name: string) => void;
+  paths: string[];
+  firstPerson: string;
+  setFirstPerson: (name: string) => void;
+}) {
   const { data: voices } = useVoices();
   const [gender, setGender] = useState("all");
   const [region, setRegion] = useState("all");
@@ -428,6 +506,7 @@ function VoiceStep({ narrator, setNarrator }: { narrator: string; setNarrator: (
         Giọng này đọc toàn bộ lời dẫn truyện. Mỗi nhân vật sẽ được tự động trao một giọng riêng sau bước phân tích - bạn
         không cần chọn trước.
       </p>
+      <FirstPersonQuestion paths={paths} value={firstPerson} onChange={setFirstPerson} />
       <div className="mt-5 flex flex-wrap items-center gap-3">
         <Segmented label="Giới tính" value={gender} onChange={setGender} options={[
           { value: "all", label: "Mọi giọng" },
@@ -545,6 +624,7 @@ function ConfirmStep({
   title,
   scan,
   narrator,
+  firstPerson,
   profile,
   startNow,
   setStartNow,
@@ -552,6 +632,7 @@ function ConfirmStep({
   title: string;
   scan: ScanResult;
   narrator: string;
+  firstPerson: string;
   profile: Profile;
   startNow: boolean;
   setStartNow: (value: boolean) => void;
@@ -563,6 +644,7 @@ function ConfirmStep({
     ["Chương", `${scan.files.length} chương · ${formatNumber(scan.totals.words)} chữ`],
     ["Độ dài audio", `khoảng ${formatLength(scan.totals.audioSeconds)}`],
     ["Giọng kể", narrator],
+    ...(firstPerson ? ([["Người kể “tôi”", firstPerson]] as [string, string][]) : []),
     ["Nhân vật", "Tự động phân vai sau khi phân tích"],
     ["Chất lượng", option.title],
     ...(measured
@@ -690,7 +772,14 @@ export function NewProjectScreen() {
     }
     submitting.current = true;
     create.mutate(
-      { paths: scan.files.map((file) => file.path), title: title.trim(), profile: draft.profile, narrator: draft.narrator, start: draft.startNow },
+      {
+        paths: scan.files.map((file) => file.path),
+        title: title.trim(),
+        profile: draft.profile,
+        narrator: draft.narrator,
+        firstPerson: draft.firstPerson.trim(),
+        start: draft.startNow,
+      },
       {
         onSuccess: (result) => {
           saveDraft(null);
@@ -752,7 +841,15 @@ export function NewProjectScreen() {
               problem={problem}
             />
           )}
-          {step === 1 && <VoiceStep narrator={draft.narrator} setNarrator={(narrator) => update({ narrator })} />}
+          {step === 1 && (
+            <VoiceStep
+              narrator={draft.narrator}
+              setNarrator={(narrator) => update({ narrator })}
+              paths={scan?.files.map((file) => file.path) ?? []}
+              firstPerson={draft.firstPerson}
+              setFirstPerson={(firstPerson) => update({ firstPerson })}
+            />
+          )}
           {step === 2 && scan && (
             <QualityStep profile={draft.profile} setProfile={(profile) => update({ profile })} words={scan.totals.words} chapters={scan.files.length} />
           )}
@@ -761,6 +858,7 @@ export function NewProjectScreen() {
               title={title.trim()}
               scan={scan}
               narrator={draft.narrator}
+              firstPerson={draft.firstPerson.trim()}
               profile={draft.profile}
               startNow={draft.startNow}
               setStartNow={(startNow) => update({ startNow })}

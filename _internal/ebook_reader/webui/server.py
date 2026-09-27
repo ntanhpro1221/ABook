@@ -193,7 +193,7 @@ class App:
         paths = [str(item) for item in body.get("paths", [])]
         root = actions.create_book(
             self.library.root, paths, str(body.get("title", "")), str(body.get("profile", "high_quality")),
-            str(body.get("narrator", "")),
+            str(body.get("narrator", "")), str(body.get("firstPerson", "")),
         )
         self.preferences.add_recent(root)
         if body.get("start"):
@@ -714,6 +714,10 @@ class Handler(BaseHTTPRequestHandler):
         body = self._body()
         self._send_json(HTTPStatus.OK, actions.scan_inputs([str(item) for item in body.get("paths", [])]))
 
+    def post_first_person(self, _query: dict[str, list[str]]) -> None:
+        body = self._body()
+        self._send_json(HTTPStatus.OK, actions.first_person_hint([str(item) for item in body.get("paths", [])]))
+
     def get_voices(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.voices())
 
@@ -782,6 +786,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(r"/api/preferences"), Handler.get_preferences),
     ("PUT", re.compile(r"/api/preferences"), Handler.put_preferences),
     ("POST", re.compile(r"/api/scan"), Handler.post_scan),
+    ("POST", re.compile(r"/api/first-person"), Handler.post_first_person),
     ("POST", re.compile(r"/api/books"), Handler.post_create),
     ("POST", re.compile(r"/api/books/open"), Handler.post_open),
     ("POST", re.compile(r"/api/dialog/folder"), Handler.post_pick_folder),
