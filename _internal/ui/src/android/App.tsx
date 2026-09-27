@@ -1,6 +1,6 @@
 import { App as CapacitorApp } from "@capacitor/app";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { Download, Library, Settings } from "lucide-react";
+import { Download, FileAudio, Library, Settings } from "lucide-react";
 import { useEffect, useMemo, useRef, type ReactNode } from "react";
 import { HashRouter, NavLink, Route, Routes, useLocation, useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -16,6 +16,7 @@ import { PlayerProvider, useNowPlaying, usePlayer } from "@/listen/player";
 import { SourceProvider } from "@/listen/source";
 import { usePageEnter } from "@/shared/motion";
 import { watchDownloads } from "./downloads";
+import { pickBookFile, watchImports } from "./imports";
 import { cn } from "@/shared/cn";
 import { Button, EmptyState, TooltipProvider } from "@/shared/ui";
 import { androidSource } from "./androidSource";
@@ -32,6 +33,14 @@ import { applyTheme, loadSettings, pushSettings } from "./settings";
 function DownloadWatcher() {
   const client = useQueryClient();
   useEffect(() => watchDownloads(client), [client]);
+  return null;
+}
+
+/** Mở file sách .abook từ ngoài app (android/imports.ts): báo "Đã thêm sách", nút mở trang sách. */
+function ImportWatcher() {
+  const client = useQueryClient();
+  const navigate = useNavigate();
+  useEffect(() => watchImports(client, (bookId) => navigate(`/book/${bookId}`)), [client, navigate]);
   return null;
 }
 
@@ -102,12 +111,18 @@ function EmptyLibrary() {
       title="Chưa có sách trên máy"
       className="mt-10"
       action={
-        <Button variant="primary" size="lg" icon={Download} onClick={() => navigate("/devices")}>
-          Tải sách từ máy tính
-        </Button>
+        <div className="flex flex-col items-center gap-2">
+          <Button variant="primary" size="lg" icon={Download} onClick={() => navigate("/devices")}>
+            Tải sách từ máy tính
+          </Button>
+          <Button variant="ghost" icon={FileAudio} onClick={() => void pickBookFile()}>
+            Mở file sách (.abook)
+          </Button>
+        </div>
       }
     >
-      Kết nối với Ebook Reader trên máy tính qua Wi-Fi rồi tải sách về - nghe được cả khi không có mạng.
+      Kết nối với Ebook Reader trên máy tính qua Wi-Fi rồi tải sách về - nghe được cả khi không có mạng. Có file sách
+      .abook (bạn bè gửi, tải về)? Mở nó bằng app là sách vào Thư viện.
     </EmptyState>
   );
 }
@@ -161,6 +176,7 @@ export function AndroidApp() {
             <HashRouter>
               <BackButton />
               <DownloadWatcher />
+              <ImportWatcher />
               <MobileShell>
                 <Routes>
                   <Route path="/" element={<LibraryPage />} />
