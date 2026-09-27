@@ -328,6 +328,11 @@ GENERIC_CHILD_LABELS = {"trẻ em", "đứa bé", "đứa trẻ", "trẻ nhỏ"}
 DIALOGUE_OPENERS = frozenset({'"', "'", "“", "‘", "『"})
 DIALOGUE_CLOSERS = frozenset({'"', "'", "”", "’", "』"})
 DIALOGUE_OUTER_QUOTE_PAIRS = {"“": "”", '"': '"'}
+# Dòng mở bằng gạch đầu dòng ("- Bẩm ông lớn...") là một LƯỢT thoại mới: lối viết thoại của văn Việt (Tắt đèn) và nhiều
+# bản dịch truyện Trung (Tam quốc); text_processing khoá cả dòng ấy là thoại theo đúng mẫu này. Thiếu nó, khoá "thoại
+# nối tiếp cùng người nói" gán câu trả lời cho chính người vừa hỏi: phát lại đáp án Tắt đèn 20, 21, 24 (28-09) - 11
+# trên 112 câu thoại bị đè, đúng mọi cặp hỏi - đáp không lời dẫn.
+DIALOGUE_DASH_TURN_PATTERN = re.compile(r"^[—–-]\s*\S")
 SCOPED_AFFECT_NEGATION_PREFIX_PATTERN = re.compile(
     r"(?:\b(?:không|chẳng|chưa)"
     r"(?:\s+(?:còn|hề|bao\s+giờ|từng|hoàn\s+toàn)){0,2}"
@@ -1856,6 +1861,8 @@ def _repair_continued_dialogue_speakers(
         if not previous_text or not text:
             continue
         if text[0] in DIALOGUE_OPENERS or previous_text[-1] in DIALOGUE_CLOSERS:
+            continue
+        if DIALOGUE_DASH_TURN_PATTERN.match(text):
             continue
         data["speaker"] = previous["speaker"]
         data["gender"] = previous["gender"]

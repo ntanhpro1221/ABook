@@ -97,6 +97,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Danh sách nhân vật viết tên theo đúng chữ của sách ("HOÀNG CÁI", không còn "HOANG CAI" hay "KHỐNG MINH" khi model phân
   tích viết thiếu hay sai dấu).
 - Dựng sổ nhân vật cho cuốn dài nhanh hơn khoảng 20 giây (đếm tên trong sách).
+- Truyện viết thoại bằng gạch đầu dòng (văn Việt): câu trả lời không còn bị đọc bằng giọng của chính người vừa hỏi khi
+  hai lượt nói liền nhau không có lời dẫn. Thử trên Tắt đèn: 11 trên 112 câu thoại của ba chương.
+- Người được gọi theo tên chồng hay tên con ("chị Dậu", "mẹ Dần") không còn bị gộp chung một giọng với người mang tên ấy.
 
 ### Lưu ý khi nâng cấp
 
