@@ -26,7 +26,7 @@ function Brand() {
           <span className="h-[10px] w-[3px] rounded-sm bg-current" />
         </span>
       </div>
-      <div className="text-[15px] font-bold tracking-tight">Ebook Reader</div>
+      <div className="text-[15px] font-bold tracking-tight">ABook</div>
     </div>
   );
 }

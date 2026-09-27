@@ -44,7 +44,7 @@ def main(argv: list[str] | None = None) -> int:
         app.sync_host = args.sync_host
         app.set_sync(True)
     server = Server(app, port=args.port).start()
-    print(f"Ebook Reader UI: {server.url}  (thư viện: {preferences.get()['libraryRoot']})", flush=True)
+    print(f"ABook UI: {server.url}  (thư viện: {preferences.get()['libraryRoot']})", flush=True)
     try:
         threading.Event().wait()
     except KeyboardInterrupt:
