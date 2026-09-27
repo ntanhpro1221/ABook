@@ -6,7 +6,8 @@
 #   powershell -ExecutionPolicy Bypass -File _internal\scripts\register_file_types.ps1 [-DryRun] [-Unregister]
 #
 # -DryRun: chỉ in những gì sẽ ghi, không đụng registry. -Unregister: gỡ đúng những khoá này.
-# Chưa có lệnh "mở" (double-click): app máy tính chưa nhận file .abook - khi có sẽ thêm shell\open\command.
+# Bấm đúp .abook mở ABook (shell\open\command -> Ebook Reader.vbs "<file>" -> app.py -> desktop.py nhập và mở cuốn ấy;
+# app đang mở thì cửa sổ đang chạy mở nó). .abookproj chưa có lệnh mở: app chưa đọc được dự án đóng gói.
 param(
     [switch]$DryRun,
     [switch]$Unregister
@@ -21,11 +22,12 @@ $Classes = "HKCU:\Software\Classes"
 $HandlerClsid = "{8464156A-A4BD-4FDE-9FDD-57CB16936684}"  # windows/thumbnail/abook_thumbnail.h
 $ThumbnailShellEx = "{e357fccd-a995-4576-b01f-234630154e96}"  # IThumbnailProvider
 
+$Launcher = Join-Path $Internal "Ebook Reader.vbs"
 $Types = @(
     @{ Extension = ".abook"; ProgId = "ABook.Book"; Name = "Sách nói ABook"; Icon = "book_file.ico";
-       ContentType = "application/vnd.ngdtuanh.abook+zip" },
+       ContentType = "application/vnd.ngdtuanh.abook+zip"; Opens = $true },
     @{ Extension = ".abookproj"; ProgId = "ABook.Project"; Name = "Dự án sách nói ABook"; Icon = "project_file.ico";
-       ContentType = "application/vnd.ngdtuanh.abookproj+zip" }
+       ContentType = "application/vnd.ngdtuanh.abookproj+zip"; Opens = $false }
 )
 
 function Set-Value([string]$Key, [string]$Name, $Value, [string]$Kind = "String") {
@@ -84,6 +86,12 @@ if ($Unregister) {
         Set-Value (Join-Path $ProgIdKey "DefaultIcon") "" "$Icon,0"
         # icon loại file nhỏ ở góc thumbnail: hai loại file cùng một bìa, nhìn góc là phân biệt
         Set-Value $ProgIdKey "TypeOverlay" "$Icon,0"
+        if ($Type.Opens) {
+            # wscript chạy trình khởi động không hiện cửa sổ đen; đường dẫn file đi tiếp tới app.py
+            Set-Value (Join-Path $ProgIdKey "shell") "" "open"
+            Set-Value (Join-Path $ProgIdKey "shell\open") "" "Mở bằng ABook"
+            Set-Value (Join-Path $ProgIdKey "shell\open\command") "" "`"$env:WINDIR\System32\wscript.exe`" `"$Launcher`" `"%1`""
+        }
     }
 }
 

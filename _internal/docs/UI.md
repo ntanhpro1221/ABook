@@ -47,7 +47,14 @@ Studio (máy tính):
 ## Máy tính: web trong Qt WebEngine
 
 - Cửa sổ: `ebook_reader/desktop.py` - `QWebEngineView` (PySide6 đã có sẵn, **không thêm gói Python**: đổi
-  `pyproject.toml`/`uv.lock` là đổi hash chất lượng của dây chuyền giữa cuốn sách).
+  `pyproject.toml`/`uv.lock` là đổi hash chất lượng của dây chuyền giữa cuốn sách). Là cửa sổ mặc định của lối tắt
+  (`app.py`; giao diện cũ: `app.py --classic`). Phục vụ bản dựng `webui/static/` - dựng tại máy, không commit.
+- File sách `.abook` (`webui/packages.py`): bấm đúp trong Explorer (`register_file_types.ps1` đăng ký lệnh mở:
+  `Ebook Reader.vbs "<file>"` -> `start_windows.ps1 -OpenFile` -> `app.py "<file>"`) hay nút "Mở file sách". Cuốn giải
+  nén vào `<thư viện>/Sách đã nhập/`, `book.json` của gói đã là hình dạng phía nghe. Mở lần hai khi app đang chạy: đường
+  dẫn đi qua khoá một phiên bản (`desktop_shell.open_file_message`), cửa sổ báo trang web bằng sự kiện `abook-opened`.
+  Chống trùng bằng dấu vân tay audio: file do dự án trong thư viện xuất -> mở dự án ấy; đã nhập -> về cuốn ấy (bản nhiều
+  chương hơn thay tại chỗ, giữ mã và dữ liệu nghe).
 - Server: `ebook_reader/webui/server.py`, stdlib `ThreadingHTTPServer`, chỉ nghe `127.0.0.1`, mọi `/api` và
   `/media` cần mã phiên, `Host` phải là chính server (chặn DNS rebinding).
 - Dữ liệu sách: `webui/store.py` chỉ đọc (`mode=ro` + `query_only`), không dùng `_ReadOnlyProjectDB` của CLI vì

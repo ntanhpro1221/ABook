@@ -526,7 +526,11 @@ export function BookScreen({
           {!book.complete && (
             <p className="mt-2 inline-flex flex-wrap items-center gap-2 rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent-text">
               {book.producing && <Vu className="h-2.5" />}
-              {book.producing ? "Đang thu âm - chương mới tự hiện ra khi xong" : "Chưa hoàn thành - Studio đang dừng"}
+              {book.producing
+                ? "Đang thu âm - chương mới tự hiện ra khi xong"
+                : book.imported
+                  ? "Chưa hoàn thành - file sách này chỉ có các chương đã làm; mở bản mới hơn để nghe tiếp"
+                  : "Chưa hoàn thành - Studio đang dừng"}
               {studioLink?.(book)}
             </p>
           )}

@@ -408,7 +408,10 @@ Tên kỹ thuật duy nhất là `ebook_reader`; tên hiển thị là `Ebook Re
 
 Module chính:
 
-- `gui.py`: UI/controller, không chứa model logic.
+- `desktop.py`: cửa sổ app mặc định (`app.py`) - giao diện web (`webui/`) trong Qt WebEngine; mở kèm file `.abook`
+  thì nhập (`webui/packages.py`) và mở cuốn ấy, lần mở thứ hai chuyển file qua khoá một phiên bản. Phục vụ bản dựng
+  `webui/static/` (npm run build trong `ui/`, không commit).
+- `gui.py`: giao diện cũ (`app.py --classic`), UI/controller, không chứa model logic.
 - `worker.py`: process, heartbeat, watchdog, exception boundary.
 - `cli.py`: CLI headless create/run/resume/status/stop/log/validate/report/doctor/test; nhánh quan sát là read-only.
 - `background_runner.py`: supervisor ẩn, handshake, process identity, persistent stop request và event log.
