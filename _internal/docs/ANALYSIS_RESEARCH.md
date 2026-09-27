@@ -79,6 +79,27 @@ KHÔNG đủ tin để tự áp: Love Unseen -> "Sorano" (họ của Kakeru - đ
 bằng tỉ lệ "tôi" trong lời kể (phần này đáng tin), GỢI Ý các tên hay gặp nhất, chủ sách chọn MỘT lần trong Studio, khoá
 như cài đặt của sách; hoặc suy bằng N7b theo sổ nhân vật sau vài chương đầu rồi phân tích lại các chương ấy.
 
+## Phát hiện 27-09 17:2x - giá trị thật của bộ chấm có thể là ĐO ĐỘ KHÔNG CHẮC
+
+Độ tin cậy do LLM tự báo gần như vô dụng để biết câu nào cần người duyệt: trên Tập 18 (sản xuất) câu thoại trung bình
+0,91, chỉ 14/1.157 câu dưới 0,8 - nó quá tự tin. Bộ chấm ứng viên thì hiệu chỉnh tốt (tin cậy >= 0,95 đúng 100%, < 0,5
+đúng 33%). Trong hệ kết hợp nó chỉ thêm +2 điểm độ đúng trên nền LoRA, nhưng cho hộp "Việc cần anh" (docs/STUDIO_REVIEW.md)
+nó là nguồn xếp hạng tốt nhất: chỉ ra ĐÚNG câu nào người nên nghe lại. **ĐÃ ĐO (27-09 17:3x, `quote_scorer/review_curve.py`, 143 câu test TMA, chấm chặt):**
+
+| người duyệt | 10% câu | 20% | 30% | 50% |
+|---|---|---|---|---|
+| LoRA một mình 74,8% -> xếp theo bộ chấm (bất đồng chắc trước) | 80,4% | **84,6%** | **89,5%** | **98,6%** |
+| ... xếp theo tin cậy LLM tự báo | 75,5% | 79,7% | 83,2% | 88,1% |
+| ... ngẫu nhiên (500 lần) | 77,3% | 79,9% | 82,4% | 87,4% |
+| ... trần (câu sai trước) | 84,6% | 95,1% | 100% | 100% |
+| qwen3:8b một mình 67,1% -> bộ chấm / LLM tự báo / ngẫu nhiên, duyệt 20% | | 81,1 / 72,7 / 73,7% | | |
+
+Tin cậy LLM tự báo KHÔNG hơn ngẫu nhiên; bộ chấm cho lợi gấp ~2 lần ngẫu nhiên. **Đổi quyết định 17:0x "gác bộ chấm"**:
+vai của nó là CHỌN CÂU CHO NGƯỜI DUYỆT trong hộp "Việc cần anh" - chỉ xếp hạng, không đổi nhãn, nên chạy được phía
+Studio (đọc SQLite chỉ đọc) mà không đụng file khoá/dấu vân tay của dây chuyền. Cần: suy luận mmBERT trong runtime app.
+Cũng 27-09: 3 câu mở đầu bằng lời gọi ("Heidi, các cậu đi đâu vậy?") vẫn bị gán cho chính người được gọi - luật host
+"tên trong lời gọi là người nghe" (AGENTS.md) còn lọt; hộp việc bắt được bằng một luật chữ đơn giản.
+
 ## Tài liệu
 
 Đã đọc (27-09):
