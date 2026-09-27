@@ -60,6 +60,11 @@ def main() -> int:
                         help="giai đoạn 1 (curriculum): học trước trên dữ liệu này (vd che dấu hiệu N1 - chỉ có câu CÓ TÊN, "
                              "trộn thẳng vào thì lựa chọn 'không ai' bị bỏ đói: dev người kể/NPC 0%% ở 27-09), rồi mới tới gold")
     parser.add_argument("--pretrain-epochs", type=int, default=2)
+    parser.add_argument("--fold", type=int, default=None,
+                        help="kiểm chứng chéo (make_folds.py): test = fold<k>.jsonl, train = các fold còn lại; dev chỉ để "
+                             "theo dõi (= chính fold ấy) - so cấu hình bằng epoch cuối (epochs/), không chọn theo dev")
+    parser.add_argument("--init", type=Path, default=None,
+                        help="nạp encoder/ + head.pt của một lần chạy trước (vd lần chỉ học trước PDNC) rồi mới huấn luyện")
     parser.add_argument("--extra-train", type=Path, nargs="*", default=[],
                         help="thêm cửa sổ huấn luyện (vd dữ liệu che dấu hiệu N1: data/quote_vi_cue/train.jsonl)")
     args = parser.parse_args()
@@ -82,7 +87,14 @@ def main() -> int:
     encoder.get_input_embeddings().weight.requires_grad_(False)
     trainable = [parameter for parameter in encoder.parameters() if parameter.requires_grad]
 
-    train, dev, test = (load(args.data / f"{name}.jsonl") for name in ("train", "dev", "test"))
+    if args.fold is None:
+        train, dev, test = (load(args.data / f"{name}.jsonl") for name in ("train", "dev", "test"))
+    else:
+        folds = sorted(args.data.glob("fold*.jsonl"))
+        test = load(args.data / f"fold{args.fold}.jsonl")
+        train = [window for path in folds if path.name != f"fold{args.fold}.jsonl" for window in load(path)]
+        dev = test
+        print(f"kiểm chứng chéo: fold {args.fold}/{len(folds)} làm test (dev = chính nó, chỉ để theo dõi)", flush=True)
     for extra in args.extra_train:
         train += load(extra)
     pretrain = [window for path in args.pretrain for window in load(path)]
@@ -106,6 +118,10 @@ def main() -> int:
             return torch.cat([scores, self.null(quote)], dim=0)  # phần tử cuối = "không ai"
 
     head = Head().to(device)
+    if args.init:
+        encoder.load_state_dict(AutoModel.from_pretrained(args.init / "encoder", dtype=torch.float32).state_dict())
+        head.load_state_dict(torch.load(args.init / "head.pt")["head"])
+        print(f"nạp mô hình khởi đầu từ {args.init}", flush=True)
 
     def encode(window: dict):
         batch = tokenizer(window["text"], return_offsets_mapping=True, return_tensors="pt", truncation=True,
@@ -229,16 +245,33 @@ def main() -> int:
             optimizer.step()
             schedule.step()
             losses.append(float(loss))
-        scores_dev = evaluate(dev)
+        # Ghi dự đoán dev + test MỖI epoch (27-09): dev 68 câu không có truyện ngôi thứ nhất, nên chọn checkpoint theo dev
+        # từng chọn epoch 3 chưa học "tôi = người kể" (YMP 92,9% -> 59,5%) - so cấu hình phải bằng một quy tắc định
+        # trước (epoch cuối), chọn sau trên các tệp này, không theo dev.
+        dumps: dict[str, list] = {"dev": [], "test": []}
+        scores_dev = evaluate(dev, dumps["dev"])
+        scores_test = evaluate(test, dumps["test"])
+        (args.out / "epochs").mkdir(parents=True, exist_ok=True)
+        for name, rows in dumps.items():
+            with (args.out / "epochs" / f"{epoch + 1}_{name}_predictions.jsonl").open("w", encoding="utf-8") as handle:
+                handle.writelines(json.dumps(row, ensure_ascii=False) + "\n" for row in rows)
         line = (f"epoch {epoch + 1}: loss {sum(losses) / max(1, len(losses)):.4f} | dev {json.dumps(scores_dev)} | "
-                f"{time.time() - started:.0f}s | {phase}")
+                f"{time.time() - started:.0f}s | {phase} | test {scores_test['all']:.3f}")
         print(line, flush=True)
         log.write(line + "\n")
         log.flush()
-        if scores_dev["all"] > best:
+        if args.fold is None and scores_dev["all"] > best:
             best = scores_dev["all"]
             torch.save({"head": head.state_dict()}, args.out / "head.pt")
             encoder.save_pretrained(args.out / "encoder")
+    if args.fold is not None:
+        # Kiểm chứng chéo: dev chính là test, nên "tốt nhất trên dev" là nhìn trộm - không lưu checkpoint (1,2 GB mỗi lần),
+        # kết quả là epoch cuối (epochs/<cuối>_test_predictions.jsonl).
+        line = f"TEST (epoch cuối, fold {args.fold}): {json.dumps(scores_test)}"
+        print(line, flush=True)
+        log.write(line + "\n")
+        (args.out / "test.json").write_text(json.dumps(scores_test, indent=2), encoding="utf-8")
+        return 0
     head.load_state_dict(torch.load(args.out / "head.pt")["head"])
     encoder.load_state_dict(AutoModel.from_pretrained(args.out / "encoder", dtype=torch.float32).state_dict())
     for name, windows in (("dev", dev), ("test", test)):
