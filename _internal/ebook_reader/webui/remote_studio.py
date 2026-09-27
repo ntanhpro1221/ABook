@@ -45,6 +45,7 @@ ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = tuple((method, re.compile(pat
     ("GET", r"/api/voices"),
     ("GET", r"/api/preferences"),
     ("POST", r"/api/scan"),
+    ("POST", r"/api/sources/upload"),
     ("POST", r"/api/first-person"),
     ("POST", r"/api/books"),
     ("GET", _BOOK),

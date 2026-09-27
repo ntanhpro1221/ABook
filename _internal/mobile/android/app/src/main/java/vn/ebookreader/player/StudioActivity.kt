@@ -29,8 +29,12 @@ import androidx.core.view.WindowInsetsCompat
 class StudioActivity : AppCompatActivity() {
     private lateinit var web: WebView
     private var pendingFiles: ValueCallback<Array<Uri>>? = null
-    private val pickImage = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+    private val pickOne = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         pendingFiles?.onReceiveValue(uri?.let { arrayOf(it) } ?: arrayOf())
+        pendingFiles = null
+    }
+    private val pickMany = registerForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
+        pendingFiles?.onReceiveValue(uris.toTypedArray())
         pendingFiles = null
     }
 
@@ -69,7 +73,8 @@ class StudioActivity : AppCompatActivity() {
             }
         }
         web.webChromeClient = object : WebChromeClient() {
-            // "Đổi ảnh bìa" trong Studio: chọn ảnh trong máy.
+            // "Đổi ảnh bìa" (một ảnh) và "Chọn các file TXT" khi tạo sách (nhiều file; trình quản lý file hay gắn .txt
+            // là octet-stream, nên không lọc theo loại - trang tự bỏ file không phải .txt).
             override fun onShowFileChooser(
                 view: WebView,
                 callback: ValueCallback<Array<Uri>>,
@@ -77,7 +82,8 @@ class StudioActivity : AppCompatActivity() {
             ): Boolean {
                 pendingFiles?.onReceiveValue(arrayOf())
                 pendingFiles = callback
-                pickImage.launch("image/*")
+                val type = if (params.acceptTypes.any { it.startsWith("image") }) "image/*" else "*/*"
+                if (params.mode == FileChooserParams.MODE_OPEN_MULTIPLE) pickMany.launch(type) else pickOne.launch(type)
                 return true
             }
         }

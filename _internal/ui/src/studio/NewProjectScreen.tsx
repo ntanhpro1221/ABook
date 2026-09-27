@@ -13,6 +13,7 @@ import {
   Play,
   Sparkles,
   Trash2,
+  Upload,
   Wand2,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
@@ -27,6 +28,7 @@ import { formatLength, formatNumber } from "@/shared/format";
 import { Button, Segmented, Vu, radioGroupKeys, radioTabIndex } from "@/shared/ui";
 import type { ScanResult, Voice } from "@/studio/api";
 import { pickFiles, pickFolder, useAppInfo, useCreateBook, useFirstPersonHint, useScan, useVoices } from "@/studio/data";
+import { uploadChapters } from "@/studio/upload";
 
 type Profile = "fast" | "balanced" | "high_quality";
 
@@ -188,6 +190,20 @@ function SourceStep({
 }) {
   const { data: info } = useAppInfo();
   const [typed, setTyped] = useState("");
+  // Studio từ xa: máy đang xem không có đường dẫn nào trên máy tính - nó gửi các chương đi (studio/upload.ts).
+  const uploadInput = useRef<HTMLInputElement | null>(null);
+  const [uploading, setUploading] = useState<{ done: number; total: number } | null>(null);
+  const upload = async (list: FileList | null) => {
+    if (!list?.length) return;
+    setUploading({ done: 0, total: list.length });
+    try {
+      onPaths([await uploadChapters([...list], (done, total) => setUploading({ done, total }))]);
+    } catch (error) {
+      toast.error("Không gửi được các chương", { description: (error as Error).message });
+    } finally {
+      setUploading(null);
+    }
+  };
   const chooseFolder = async () => {
     const path = await pickFolder("Chọn thư mục chứa các chương TXT").catch((error: Error) => {
       toast.error(error.message);
@@ -214,8 +230,34 @@ function SourceStep({
           <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-accent-soft text-accent-text">
             {scanning ? <Loader2 className="size-7 animate-spin" /> : <FolderInput className="size-7" strokeWidth={1.75} />}
           </div>
-          <p className="mt-4 font-medium">{scanning ? "Đang đọc các chương…" : "Chọn thư mục chứa truyện"}</p>
-          <p className="mt-1 text-sm text-fg-2">Chỉ lấy file .txt nằm ngay trong thư mục, không quét thư mục con.</p>
+          <p className="mt-4 font-medium">
+            {scanning ? "Đang đọc các chương…" : info?.remote ? "Gửi các chương từ máy này" : "Chọn thư mục chứa truyện"}
+          </p>
+          <p className="mt-1 text-sm text-fg-2">
+            {info?.remote
+              ? "Chọn cùng lúc mọi file .txt của truyện. Máy tính giữ chúng trong thư viện, mục “Nguồn tải lên”."
+              : "Chỉ lấy file .txt nằm ngay trong thư mục, không quét thư mục con."}
+          </p>
+          {info?.remote && (
+            <div className="mt-6 flex justify-center">
+              <input
+                ref={uploadInput}
+                type="file"
+                multiple
+                accept=".txt,text/plain"
+                className="sr-only"
+                tabIndex={-1}
+                aria-hidden
+                onChange={(event) => {
+                  void upload(event.target.files);
+                  event.target.value = "";
+                }}
+              />
+              <Button variant="primary" icon={Upload} loading={Boolean(uploading)} onClick={() => uploadInput.current?.click()}>
+                {uploading ? `Đang gửi ${uploading.done}/${uploading.total} chương` : "Chọn các file TXT"}
+              </Button>
+            </div>
+          )}
           {info?.dialogs && (
             <div className="mt-6 flex justify-center gap-2">
               <Button variant="primary" icon={Folder} onClick={() => void chooseFolder()}>

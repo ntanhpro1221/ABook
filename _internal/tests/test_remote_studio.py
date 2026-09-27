@@ -2,6 +2,7 @@
 công tắc riêng, chỉ các đường trong danh sách trắng, trình duyệt ghép bằng mã 6 số và mang mã thiết bị trong cookie."""
 from __future__ import annotations
 
+import base64
 import http.client
 import json
 from pathlib import Path
@@ -108,7 +109,9 @@ def test_what_only_makes_sense_on_the_computer_never_passes(studio) -> None:
     # Trang lạ trong trình duyệt chỉ gửi được form/chữ thường sang cổng này mà không qua CORS: không nhận.
     connection = http.client.HTTPConnection("127.0.0.1", port, timeout=10)
     connection.request("POST", "/api/scan", body=b"x", headers={**cookie, "Content-Type": "text/plain"})
-    assert connection.getresponse().status == 415
+    response = connection.getresponse()
+    response.read()
+    assert response.status == 415
     connection.close()
 
 
@@ -124,6 +127,28 @@ def test_a_paired_phone_uses_its_token_and_switching_off_closes_at_once(studio) 
     app.set_remote_studio(False)
     status, _data, _ = _request(port, "GET", "/api/library", phone)
     assert status == 403, "tắt công tắc là đóng ngay, không cần khởi động lại cổng"
+
+
+def test_a_phone_sends_chapters_then_creates_the_book_from_them(studio) -> None:
+    app, _project = studio
+    app.set_remote_studio(True)
+    port = app.sync_server.port
+    cookie = {"Cookie": _pair_browser(app)}
+    chapter = "Chương 1\n\nTrời đã sáng.".encode("utf-16")  # byte nguyên vẹn: bảng mã do dây chuyền nhận, không do trang
+    for name in ("001.txt", "..\\..\\002.txt"):
+        status, data, _ = _request(port, "POST", "/api/sources/upload", headers=cookie, body={
+            "folder": "../Truyện của Anh", "name": name, "data": base64.b64encode(chapter).decode("ascii")})
+        assert status == 200, data
+    folder = Path(json.loads(data)["folder"])
+    root = Path(app.preferences.get()["libraryRoot"])
+    assert folder == root / "Nguồn tải lên" / "Truyện của Anh", "không ra ngoài thư mục tải lên"
+    assert sorted(path.name for path in folder.iterdir()) == ["001.txt", "002.txt"]
+    assert (folder / "001.txt").read_bytes() == chapter
+    status, data, _ = _request(port, "POST", "/api/scan", headers=cookie, body={"paths": [str(folder)]})
+    assert status == 200 and len(json.loads(data)["files"]) == 2, "trình tạo sách đi tiếp như khi chọn thư mục"
+    status, data, _ = _request(port, "POST", "/api/sources/upload", headers=cookie, body={
+        "folder": "x", "name": "anh.jpg", "data": base64.b64encode(b"\xff\xd8").decode("ascii")})
+    assert status == 400 and ".txt" in json.loads(data)["error"]
 
 
 def test_every_allowed_route_exists_on_the_computer() -> None:
