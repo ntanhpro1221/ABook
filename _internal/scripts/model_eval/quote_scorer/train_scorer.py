@@ -63,6 +63,8 @@ def main() -> int:
     parser.add_argument("--fold", type=int, default=None,
                         help="kiểm chứng chéo (make_folds.py): test = fold<k>.jsonl, train = các fold còn lại; dev chỉ để "
                              "theo dõi (= chính fold ấy) - so cấu hình bằng epoch cuối (epochs/), không chọn theo dev")
+    parser.add_argument("--fold-prefix", default="fold",
+                        help="fold (theo chương) hoặc bookfold (theo truyện: chấm một truyện chưa từng thấy) - make_folds.py")
     parser.add_argument("--init", type=Path, default=None,
                         help="nạp encoder/ + head.pt của một lần chạy trước (vd lần chỉ học trước PDNC) rồi mới huấn luyện")
     parser.add_argument("--extra-train", type=Path, nargs="*", default=[],
@@ -90,11 +92,12 @@ def main() -> int:
     if args.fold is None:
         train, dev, test = (load(args.data / f"{name}.jsonl") for name in ("train", "dev", "test"))
     else:
-        folds = sorted(args.data.glob("fold*.jsonl"))
-        test = load(args.data / f"fold{args.fold}.jsonl")
-        train = [window for path in folds if path.name != f"fold{args.fold}.jsonl" for window in load(path)]
+        folds = sorted(args.data.glob(f"{args.fold_prefix}*.jsonl"))
+        held_out = f"{args.fold_prefix}{args.fold}.jsonl"
+        test = load(args.data / held_out)
+        train = [window for path in folds if path.name != held_out for window in load(path)]
         dev = test
-        print(f"kiểm chứng chéo: fold {args.fold}/{len(folds)} làm test (dev = chính nó, chỉ để theo dõi)", flush=True)
+        print(f"kiểm chứng chéo: {held_out} ({len(folds)} phần) làm test (dev = chính nó, chỉ để theo dõi)", flush=True)
     for extra in args.extra_train:
         train += load(extra)
     pretrain = [window for path in args.pretrain for window in load(path)]
@@ -250,7 +253,10 @@ def main() -> int:
         # trước (epoch cuối), chọn sau trên các tệp này, không theo dev.
         dumps: dict[str, list] = {"dev": [], "test": []}
         scores_dev = evaluate(dev, dumps["dev"])
-        scores_test = evaluate(test, dumps["test"])
+        if test is dev:  # kiểm chứng chéo: cùng một tập, chấm một lần
+            scores_test, dumps["test"] = scores_dev, dumps["dev"]
+        else:
+            scores_test = evaluate(test, dumps["test"])
         (args.out / "epochs").mkdir(parents=True, exist_ok=True)
         for name, rows in dumps.items():
             with (args.out / "epochs" / f"{epoch + 1}_{name}_predictions.jsonl").open("w", encoding="utf-8") as handle:

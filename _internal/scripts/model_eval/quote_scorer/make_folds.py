@@ -22,6 +22,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("data", type=Path)
     parser.add_argument("--folds", type=int, default=5)
+    parser.add_argument("--by", choices=("chapter", "book"), default="chapter",
+                        help="book: MỖI TRUYỆN một phần (bookfold<k>.jsonl) - học trên các truyện khác, chấm một truyện "
+                             "chưa từng thấy, đúng như app gặp một cuốn mới; chapter: chương cùng truyện có thể nằm ở train "
+                             "(bộ chấm học thuộc được nhân vật - lạc quan hơn thực tế)")
     args = parser.parse_args()
 
     windows = []
@@ -34,21 +38,32 @@ def main() -> int:
         assert len(chapters) == 1, chapters
         by_chapter[chapters.pop()].append(window)
     size = {key: sum(len(window["quotes"]) for window in group) for key, group in by_chapter.items()}
-    load = [0] * args.folds
     assignment: dict[str, int] = {}
-    for key in sorted(size, key=lambda key: (-size[key], key)):
-        fold = min(range(args.folds), key=lambda index: (load[index], index))
-        assignment["/".join(key)] = fold
-        load[fold] += size[key]
+    prefix = "fold"
+    if args.by == "book":
+        prefix = "bookfold"
+        books = sorted({book for book, _ in by_chapter})
+        args.folds = len(books)
+        load = [0] * args.folds
+        for key in size:
+            assignment["/".join(key)] = books.index(key[0])
+            load[books.index(key[0])] += size[key]
+    else:
+        load = [0] * args.folds
+        for key in sorted(size, key=lambda key: (-size[key], key)):
+            fold = min(range(args.folds), key=lambda index: (load[index], index))
+            assignment["/".join(key)] = fold
+            load[fold] += size[key]
     for fold in range(args.folds):
-        with (args.data / f"fold{fold}.jsonl").open("w", encoding="utf-8") as handle:
+        with (args.data / f"{prefix}{fold}.jsonl").open("w", encoding="utf-8") as handle:
             for key, group in sorted(by_chapter.items()):
                 if assignment["/".join(key)] == fold:
                     handle.writelines(json.dumps(window, ensure_ascii=False) + "\n" for window in group)
-        books = sorted({key.split("/")[0] for key, value in assignment.items() if value == fold})
-        print(f"fold{fold}: {load[fold]} câu, {sum(v == fold for v in assignment.values())} chương, {len(books)} truyện")
-    (args.data / "folds.json").write_text(json.dumps(assignment, ensure_ascii=False, indent=1, sort_keys=True),
-                                          encoding="utf-8")
+        members = sorted({key.split("/")[0] for key, value in assignment.items() if value == fold})
+        print(f"{prefix}{fold}: {load[fold]} câu, {sum(v == fold for v in assignment.values())} chương, "
+              f"{len(members)} truyện ({', '.join(member[:24] for member in members)})")
+    (args.data / f"{prefix}s.json").write_text(json.dumps(assignment, ensure_ascii=False, indent=1, sort_keys=True),
+                                               encoding="utf-8")
     return 0
 
 
