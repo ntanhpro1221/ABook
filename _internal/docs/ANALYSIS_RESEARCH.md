@@ -161,6 +161,54 @@ Việc kế (theo thứ tự lợi):
 3. **Thêm truyện tên thuần Việt/Hán Việt vào gold** (đa thể loại, xem mục "Bộ phân tích phải đa thể loại").
 4. Tên tự/tên gọi tắt (Tử-long = Triệu Vân, Du = Chu Du): cần sổ bí danh theo truyện - câu hỏi riêng.
 
+## MỘT NGƯỜI MỘT GIỌNG 27-09 23:xx - chấm thứ người nghe nghe, không chấm chữ trên nhãn
+
+**Đính chính mục trên:** "`HOANG CAI` thành nhân vật MỚI, giọng khác" là SAI phần lớn. Trước khi khoá giọng, sổ nhân vật
+đã gom tên (`character_registry`): bản rơi dấu về bản đủ dấu (`merge_dropped_mark_variants`), "tên + họ bịa" về tên,
+tên vắng mặt trong sách về tên có mặt. Một người viết lúc có dấu lúc không vẫn là MỘT giọng; chỉ viết không dấu suốt thì
+là một giọng mang tên xấu trong danh sách nhân vật (lỗi hiển thị cho chủ sách, không phải lỗi người nghe). Nhãn chặt
+(`score_models`) chấm CHỮ; người nghe nghe GIỌNG.
+
+Thước mới `scripts/model_eval/voice_identity.py`: nhãn của model qua ĐÚNG các lượt gom tên của dây chuyền (gọi thẳng
+`character_registry.canonical_speaker_names`, gộp các chương đo như một cuốn), rồi chấm câu thoại theo cụm bằng B-cubed
+(Bagga & Baldwin 1998): độ chính xác thấp = hai người chung giọng, độ phủ thấp = một người hai giọng. `--gold-check` chạy
+các lượt gom trên chính nhãn đáp án của 11 truyện - gom hai người khác nhau làm một là phá.
+
+F1 giọng (trước luật tên gọi dưới đây; YMP có dòng người kể "tôi = SAMAEL" như Studio hỏi):
+
+| bộ test | qwen3:8b | LoRA v1 | LoRA v2 | nhãn chặt qwen / v2 |
+|---|---|---|---|---|
+| TMA 351 363 378 381 (156 câu) | 55,8 | 60,2 | 59,8 | 65,4 / 75,0 |
+| YMP 248 có người kể (47 câu) | 56,1 | 79,7 | **82,8** | 61,7 / 91,5 |
+| Tam quốc 50-52 (219 câu) | 69,2 | 68,7 | **71,1** | 79,5 / 43,4 |
+
+Trên Tam quốc, nhãn chặt nói qwen3:8b hơn v2 36 điểm; giọng nói v2 hơn 1,9. Khoảng cách gần như toàn là chính tả.
+
+Lỗi giọng lớn nhất của CẢ BA model trên Tam quốc: gọi người bằng TÊN (chữ cuối) - "DU" 16-24 câu cho Chu Du, "THÁO"
+17-18 câu cho Tào Tháo, "NHÂN" cho Tào Nhân - dây chuyền chưa gom loại này (luật "họ bịa" chỉ gom tên kiểu Âu, chữ
+ĐẦU). Luật mới `character_registry.merge_given_names` (nhánh dev/given-names): nhãn một chữ là chữ CUỐI của đúng một tên
+nhiều chữ trong sổ -> tên ấy; chỉ tên kiểu Việt/Hán Việt (mọi chữ là âm tiết tiếng Việt - tên kiểu Âu thì chữ cuối là
+HỌ chung cả nhà); nhãn không dấu so theo chữ bỏ dấu, có dấu so đúng dấu; bỏ qua tước đứng sau tên (lão, ca, huynh, gia...).
+
+| Tam quốc, F1 giọng | trước | sau | 050 | 051 | 052 |
+|---|---|---|---|---|---|
+| qwen3:8b | 69,2 | **74,8** | 74,7 -> 74,7 | 69,7 -> 76,0 | 76,9 -> 80,7 |
+| LoRA v2 | 71,1 | 74,2 | 73,8 -> 78,7 | 76,7 -> 79,9 | 72,2 -> 73,8 |
+| LoRA v1 | 68,7 | 74,6 | 77,0 -> 78,5 | 84,6 -> 89,0 | 68,9 -> 69,1 |
+
+Độ phủ +8 đến +10, độ chính xác -0,5 đến -1,4 (vài câu gán nhầm tên gọi đi theo người mang tên ấy). Không chương nào
+tụt. TMA, YMP: không đổi (tên kiểu Âu/Nhật - luật không chạm). `--gold-check`: 11 truyện không nhập hai người nào. Trên
+nhãn của các project sản xuất cũ (cuốn 2 lô 17: 48 nhân vật, các bản alpha): luật không gom gì.
+
+Chuyện chọn model, theo thước giọng + luật mới: v2 thắng 5/8 chương (TMA 2-2, Tam quốc 2-1, YMP 1-0), gộp TMA +4,0,
+YMP +26,7, Tam quốc -0,6 (hoà); cảm xúc hơn 6-9 điểm; nhanh 1,5 lần. Cổng "v2 >= qwen3:8b trên truyện chưa thấy" đo bằng
+giọng: hoà, không đạt rõ -> **vẫn giữ qwen3:8b**, nhưng lý do đã khác hẳn lúc 21:xx. Việc kế:
+1. Gộp luật tên gọi vào dây chuyền (lợi cho mọi model; đổi hash - không lô nào cần resume).
+2. Thước chính của mọi phép đo người nói từ nay là F1 giọng; nhãn chặt vẫn báo kèm (tên hiển thị trong Studio).
+3. Neo cách viết tên vào văn bản cho phần HIỂN THỊ (`HOANG CAI` -> "Hoàng Cái" theo sách) - để chữ xấu của LoRA không
+   lộ ra danh sách nhân vật.
+4. Một truyện chưa thấy nữa, tên thuần Việt (văn học Việt hết bản quyền, wikisource), 2-3 chương gold, chạy lại cổng.
+
 ## Tài liệu
 
 Đã đọc (27-09):

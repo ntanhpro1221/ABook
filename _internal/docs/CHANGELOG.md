@@ -84,6 +84,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   lưu vị trí trước khi kịp nạp audio).
 - Điện thoại: mở trang sách là hỏi máy tính chỗ nghe, hồ sơ mới nhất - trước đây chỉ biết khi chính điện thoại phát hay
   dừng cuốn ấy.
+- Truyện Trung, Việt: nhân vật được gọi bằng tên ("Du", "Tháo") không còn thành giọng thứ hai của chính người ấy (Chu
+  Du, Tào Tháo). Thử trên Tam quốc diễn nghĩa: số câu đọc đúng giọng người nói tăng rõ ở mọi model phân tích.
 
 ### Lưu ý khi nâng cấp
 
