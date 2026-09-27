@@ -653,6 +653,14 @@ class TTSCoordinator:
             "pitch_semitones": int(profile["pitch_semitones"] or 0),
         }
 
+    def forget_pronunciations(self) -> None:
+        """Đọc lại bảng cách đọc ở lần dựng chuỗi nói kế tiếp.
+
+        Bảng được nạp một lần rồi giữ cho cả tiến trình. Người nghe sửa một cách đọc giữa hai chương
+        (`pipeline._apply_listener_overrides`) thì bản giữ ấy đã cũ - mà nó dựng cả chuỗi giao cho giọng
+        lẫn chuỗi ASR phải nghe thấy, nên giữ nó là thu tên mới rồi chấm theo tên cũ."""
+        self._pronunciation_pattern = None
+
     def _load_pronunciations(self) -> None:
         if self._pronunciation_pattern is None:
             minimum = float(self.settings["analysis"].get("low_confidence_threshold", 0.58))

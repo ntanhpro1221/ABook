@@ -125,7 +125,7 @@ def test_it_reports_failure_rather_than_a_write_that_did_not_happen(
     from ebook_reader import cli
 
     monkeypatch.setattr(
-        ProjectDB, "set_listener_pronunciation", lambda self, **kwargs: None
+        ProjectDB, "apply_listener_pronunciation", lambda self, **kwargs: None
     )
     result = cli._command_pronounce(
         argparse.Namespace(project_root=project, surface="Deck", spoken="Đéc", json=False)
