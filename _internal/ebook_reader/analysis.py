@@ -7196,8 +7196,18 @@ class OllamaBookAnalyzer:
             if allowed_emotions:
                 request_row["allowed_emotions"] = list(allowed_emotions)
             rows.append(request_row)
+        # THÍ NGHIỆM N7b (nhánh dev/pov-prompt, 27-09): truyện kể ngôi thứ nhất - LLM gán câu của người kể cho người đối
+        # thoại (LoRA: VINCE 13 lần ở YMP 248) hoặc nhãn "tôi" (-> giọng NPC). Cho model biết "tôi" là ai.
+        narrator = os.environ.get("EBOOK_READER_NARRATOR", "").strip()
+        narrator_line = (
+            f"Truyện kể ở ngôi thứ nhất: người kể chuyện xưng \"tôi\" (hoặc \"mình\", \"tớ\") trong lời kể là {narrator}. "
+            f"Câu thoại và nội tâm của chính người kể phải dùng speaker={narrator} - không dùng \"tôi\", NARRATOR hay tên "
+            f"người đang nói chuyện với {narrator}.\n\n"
+            if narrator else ""
+        )
         prompt = (
             f"Các chương hiện tại: {', '.join(chapter_titles)}\n\n"
+            f"{narrator_line}"
             f"Nhân vật đã biết từ các phần trước:\n{self._known_summary()}\n\n"
             f"Các đoạn liên tiếp:\n{json.dumps(rows, ensure_ascii=False, indent=2)}"
         )
