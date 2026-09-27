@@ -47,6 +47,7 @@ import {
 import { CastList } from "@/listen/BookScreen";
 import { CoverEditor } from "./CoverEditor";
 import { ReviewQueue, useReviewCount } from "./ReviewQueue";
+import { WorkInbox, useWorkCount } from "./WorkInbox";
 import { usePlayer } from "@/listen/player";
 import { useSource } from "@/listen/source";
 
@@ -461,8 +462,9 @@ export function ProjectScreen() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const tab = ["chapters", "review", "cast", "activity"].includes(params.get("tab") ?? "") ? params.get("tab")! : "chapters";
+  const tab = ["chapters", "work", "review", "cast", "activity"].includes(params.get("tab") ?? "") ? params.get("tab")! : "chapters";
   const reviewCount = useReviewCount(id ?? "");
+  const workCount = useWorkCount(id ?? "");
   const { data, isLoading, error } = useBook(id);
   usePageTitle(data ? `${data.book.title} · Studio` : undefined);
 
@@ -532,6 +534,9 @@ export function ProjectScreen() {
           <TabsTrigger value="chapters" count={chapters.length}>
             Chương
           </TabsTrigger>
+          <TabsTrigger value="work" count={workCount || undefined}>
+            Việc cần anh
+          </TabsTrigger>
           <TabsTrigger value="review" count={reviewCount || undefined}>
             Cần nghe lại
           </TabsTrigger>
@@ -540,6 +545,9 @@ export function ProjectScreen() {
         </TabsList>
         <TabsContent value="chapters">
           <ChapterList book={book} chapters={chapters} />
+        </TabsContent>
+        <TabsContent value="work">
+          <WorkInbox bookId={book.id} onOpenReview={() => setParams({ tab: "review" }, { replace: true })} />
         </TabsContent>
         <TabsContent value="review">
           <ReviewQueue bookId={book.id} />

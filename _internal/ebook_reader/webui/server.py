@@ -22,6 +22,7 @@ from . import actions, cover_search, covers, listen_view, store
 from .library import Library, Preferences, book_id
 from .listening import Listening
 from .reviews import Reviews, review_view
+from .work_items import work_items
 from .sync import Devices, ExclusiveHTTPServer, Remote, SyncApp, SyncServer, local_addresses, remote_command, SYNC_PORT
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
@@ -542,6 +543,10 @@ class Handler(BaseHTTPRequestHandler):
         verdicts = self.app.reviews.get(value)
         self._send_json(HTTPStatus.OK, review_view(project, verdicts, include_minor=query.get("all") == ["1"]))
 
+    def get_work(self, _query: dict[str, list[str]], value: str) -> None:
+        # "Việc cần anh" (docs/STUDIO_REVIEW.md): chỗ máy nghi ngờ, xếp theo lợi trên mỗi lần bấm - chỉ đọc.
+        self._send_json(HTTPStatus.OK, work_items(self.app._book(value)))
+
     def post_review(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._book(value)
         body = self._body()
@@ -800,6 +805,7 @@ ROUTES: list[Route] = [
     ("POST", re.compile(BOOK + r"/reveal"), Handler.post_reveal),
     ("POST", re.compile(BOOK + r"/export"), Handler.post_export),
     ("GET", re.compile(BOOK + r"/review"), Handler.get_review),
+    ("GET", re.compile(BOOK + r"/work"), Handler.get_work),
     ("POST", re.compile(BOOK + r"/review"), Handler.post_review),
     ("GET", re.compile(BOOK + r"/cover/search"), Handler.get_cover_search),
     ("PUT", re.compile(BOOK + r"/cover"), Handler.put_cover),
