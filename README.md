@@ -21,7 +21,7 @@ Thay đổi của từng bản phát hành: [`_internal/docs/CHANGELOG.md`](_int
 ## Bắt đầu
 
 1. Giải nén toàn bộ ZIP vào SSD còn đủ dung lượng.
-2. Double-click shortcut **`Ebook Reader`** ở thư mục gốc hoặc mở **Ebook Reader** từ Start Menu.
+2. Double-click shortcut **`ABook`** ở thư mục gốc hoặc mở **ABook** từ Start Menu.
 3. Lần đầu, file này tự cài môi trường và tải model; khi nâng cấp, setup tái sử dụng venv/model cache thay vì xóa runtime cũ.
 4. Trong ứng dụng, chọn nhiều file TXT hoặc chọn một folder chứa các chapter TXT.
 
@@ -79,7 +79,7 @@ khoảng 40 giây. Hết timeout chỉ hủy đúng cây process vừa khởi đ
 
 ```text
 Ebook Reader/
-├── Ebook Reader.lnk  # shortcut ứng dụng có icon, trỏ thẳng tới _internal\Ebook Reader.vbs
+├── ABook.lnk     # shortcut ứng dụng có icon, trỏ thẳng tới _internal\Ebook Reader.vbs
 ├── README.md     # hướng dẫn sử dụng
 └── _internal/    # chứa Ebook Reader.vbs, source, setup, test, model cache và tài liệu kỹ thuật
 ```

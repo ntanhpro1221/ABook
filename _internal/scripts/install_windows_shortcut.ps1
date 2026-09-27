@@ -5,7 +5,9 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$AppName = "Ebook Reader"
+$AppName = "ABook"
+# Tên cũ của app (trước 27-09): lối tắt mang tên này mà trỏ đúng trình khởi động dưới đây thì gỡ, để không còn hai mục.
+$LegacyNames = @("Ebook Reader")
 $Launcher = Join-Path $ProjectRoot "_internal\Ebook Reader.vbs"
 $Icon = Join-Path $ProjectRoot "_internal\ebook_reader\assets\ebook_reader.ico"
 $ProgramsRoot = [Environment]::GetFolderPath([Environment+SpecialFolder]::Programs)
@@ -44,9 +46,18 @@ function Set-AppShortcut([string]$ShortcutPath) {
     }
 }
 
+function Remove-LegacyShortcut([string]$ShortcutPath) {
+    if (-not (Test-Path -LiteralPath $ShortcutPath -PathType Leaf)) {
+        return
+    }
+    if ($Shell.CreateShortcut($ShortcutPath).TargetPath -eq $Launcher) {
+        Remove-Item -LiteralPath $ShortcutPath -Force
+    }
+}
+
 # Windows maps the app window to its Start Menu entry through the AppUserModelID the app sets on itself
 # (ebook_reader/desktop_shell.py: APP_USER_MODEL_ID). Without the same ID on the shortcut, the media card in
-# Windows+A (and the media key overlay) cannot show the "Ebook Reader" name and icon for the player.
+# Windows+A (and the media key overlay) cannot show the "ABook" name and icon for the player.
 $AppUserModelId = "EbookReader.Desktop"
 
 function Get-ShortcutAppId([string]$ShortcutPath) {
@@ -108,6 +119,10 @@ public static class EbookReaderShortcutIdentity {
 
 Set-AppShortcut $RootShortcutPath
 Set-AppShortcut $StartMenuShortcutPath
+foreach ($LegacyName in $LegacyNames) {
+    Remove-LegacyShortcut (Join-Path $ProjectRoot "$LegacyName.lnk")
+    Remove-LegacyShortcut (Join-Path $ProgramsRoot "$LegacyName.lnk")
+}
 # Only the Start Menu entry: Windows resolves the ID there, and the root shortcut is a tracked file in the repo.
 Set-ShortcutAppId $StartMenuShortcutPath
 Write-Output $RootShortcutPath, $StartMenuShortcutPath

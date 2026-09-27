@@ -10,7 +10,7 @@ $utf8 = New-Object System.Text.UTF8Encoding($false)
 [Console]::OutputEncoding = $utf8
 $OutputEncoding = $utf8
 try {
-    $Host.UI.RawUI.WindowTitle = "Ebook Reader"
+    $Host.UI.RawUI.WindowTitle = "ABook"
 } catch {
     # Một số host không hỗ trợ đổi tiêu đề; việc mở app vẫn tiếp tục bình thường.
 }
@@ -110,9 +110,9 @@ function Stop-StartupLogging {
 
 function Show-StartupHeader {
     Write-Host "============================================================"
-    Write-Host "                    EBOOK READER"
+    Write-Host "                        ABOOK"
     Write-Host "============================================================"
-    Write-Host "Đang khởi động Ebook Reader..." -ForegroundColor Cyan
+    Write-Host "Đang khởi động ABook..." -ForegroundColor Cyan
     Write-Host ""
 }
 
@@ -132,7 +132,7 @@ function Wait-AppWindow(
             if ($Process.ExitCode -eq 0) {
                 return
             }
-            throw "Tiến trình Ebook Reader đã kết thúc với exit code $($Process.ExitCode)."
+            throw "Tiến trình ABook đã kết thúc với exit code $($Process.ExitCode)."
         }
         $Process.Refresh()
         if ($Process.MainWindowHandle -ne [IntPtr]::Zero) {
@@ -141,13 +141,13 @@ function Wait-AppWindow(
         $now = [DateTime]::UtcNow
         if ($now -ge $nextProgress) {
             $elapsed = [int]($now - $startedAt).TotalSeconds
-            Write-Host "Ebook Reader vẫn đang khởi động... ${elapsed}s"
+            Write-Host "ABook vẫn đang khởi động... ${elapsed}s"
             $nextProgress = $now.AddSeconds($StartupProgressIntervalSeconds)
         }
         Start-Sleep -Milliseconds $StartupPollMilliseconds
     }
 
-    throw "Ebook Reader chưa hiển thị cửa sổ sau $StartupWindowTimeoutSeconds giây."
+    throw "ABook chưa hiển thị cửa sổ sau $StartupWindowTimeoutSeconds giây."
 }
 
 function Start-App {
@@ -161,7 +161,7 @@ function Start-App {
         }
         $process = Start-Process -FilePath $Pythonw -ArgumentList $arguments -WorkingDirectory $ProjectRoot -PassThru
         Wait-AppWindow $process $StartupReadyFile
-        Write-Host "Cửa sổ Ebook Reader đã sẵn sàng." -ForegroundColor Green
+        Write-Host "Cửa sổ ABook đã sẵn sàng." -ForegroundColor Green
     } finally {
         Remove-Item -Force -LiteralPath $StartupReadyFile -ErrorAction SilentlyContinue
         Remove-Item Env:EBOOK_READER_READY_FILE -ErrorAction SilentlyContinue
@@ -229,7 +229,7 @@ try {
 } catch {
     $launcherExitCode = 1
     Write-Host ""
-    Write-Host "KHÔNG THỂ KHỞI ĐỘNG EBOOK READER." -ForegroundColor Red
+    Write-Host "KHÔNG THỂ KHỞI ĐỘNG ABOOK." -ForegroundColor Red
     Write-Host "Không có project audiobook nào bị thay đổi."
     Write-Host "Chi tiết: $($_.Exception.Message)" -ForegroundColor Red
     Write-Host "Log khởi động: $StartupLog" -ForegroundColor Yellow
