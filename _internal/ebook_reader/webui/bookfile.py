@@ -49,9 +49,9 @@ from typing import Any, Self
 from . import covers, store, sync
 from .library import book_id
 
-# Đuôi file (27-09, chờ chủ sách chốt): `.audiobook` là của chuẩn Readium (Thorium mở được), `.ab` là file sao lưu
+# Đuôi file - chủ sách chốt `.abook` 27-09. `.audiobook` là của chuẩn Readium (Thorium mở được), `.ab` là file sao lưu
 # `adb backup` của Android, `.vbook` trùng app đọc truyện vBook, `.aubook` trùng app AuBook - không cái nào độc quyền
-# được. `.abook` chưa thấy ai dùng. Đổi được tới trước bản phát hành đầu tiên; sau đó file đã nằm trên máy người khác.
+# được; `.abook` chưa thấy ai dùng. Sau bản phát hành đầu tiên thì không đổi được nữa: file đã nằm trên máy người khác.
 EXTENSION = ".abook"
 MIMETYPE = "application/vnd.ebookreader.audiobook+zip"
 FORMAT = "ebook-reader-book"

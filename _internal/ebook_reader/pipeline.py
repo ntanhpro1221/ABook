@@ -1002,6 +1002,7 @@ class BookPipeline:
             self._recover()
         if self._completed_noop:
             self._safe_export_reports(incremental=False)
+            self._export_book_file(only_if_missing=True)
             self._state("completed", "Project đã hoàn tất; artifact đã được xác minh.")
             return
         self.db.begin_run_generation()
@@ -1076,6 +1077,37 @@ class BookPipeline:
         self._progress("Xuất báo cáo", 0, 1)
         self._export_reports()
         self._progress("Xuất báo cáo", 1, 1)
+        self._export_book_file()
+
+    def _export_book_file(self, *, only_if_missing: bool = False) -> None:
+        """Đầu ra của máy sản xuất (chủ sách 27-09): cuốn đã XONG thành một file của app (webui/bookfile.py) trong
+        `output/` - bìa, chữ có tag, audio, nhân vật - mở bằng app ở máy khác.
+
+        Không bao giờ làm hỏng cuốn sách: audio, MP3 chương và báo cáo đã commit trước bước này, và file làm lại được bất
+        cứ lúc nào từ Studio. Lỗi đóng gói chỉ thành một sự kiện. Sách xong từ trước khi có bước này thì nhận file ở lần
+        chạy kế tiếp (`only_if_missing`, đường tắt của sách đã xong)."""
+        try:
+            book = self.db.book()
+            if str(book["status"]) != BookStatus.COMPLETED.value:
+                return
+            from .webui.bookfile import default_name, pack
+
+            target = self.paths.output / default_name(str(book["title"]))
+            if only_if_missing and target.exists():
+                return
+            path = pack(self.paths.root, target)
+            self.log(f"Đã xuất file sách: {path}")
+            self.db.event(
+                "info",
+                "BOOK_FILE_EXPORTED",
+                f"Đã xuất file sách {path.name}",
+                {"path": str(path), "size": path.stat().st_size},
+            )
+        except Exception as exc:  # noqa: BLE001 - xem docstring
+            try:
+                self.db.event("warning", "BOOK_FILE_EXPORT_FAILED", f"Không đóng gói được file sách: {exc}")
+            except Exception:  # noqa: BLE001 - sổ sự kiện hỏng cũng không được làm hỏng cuốn sách
+                self.log(f"Không đóng gói được file sách: {exc}")
 
     def _process_all_chapters(self, verifier: WhisperVerifier) -> None:
         chapters = self.db.list_chapters()
