@@ -1,17 +1,26 @@
-"""Trạng thái NGHE của người dùng: đã nghe tới đâu từng chương, dấu trang, tốc độ riêng mỗi cuốn.
+"""Dữ liệu NGHE của người dùng: HỒ SƠ NGHE độc lập với sách, app giữ liên kết giữa hai bên (chủ sách 27-09).
 
-Tách khỏi dữ liệu sản xuất (SQLite của sách là của dây chuyền, giao diện không ghi vào đó) và khỏi tuỳ chọn app.
-Cùng một hình dạng với trạng thái mà trình phát Android giữ trên điện thoại, để hai bên đồng bộ được với nhau
-(`merge`: mỗi mục mang mốc thời gian, mục mới hơn thắng; dấu trang hợp theo id).
+Sách (thư mục sản xuất, file .abook) không biết gì về việc nghe; hồ sơ nghe không biết mình thuộc sách nào. App giữ
+bảng LIÊN KẾT: một sách có nhiều hồ sơ (1-N - hai người nghe chung máy, nghe lại từ đầu mà giữ lần trước...), mỗi hồ
+sơ gắn với đúng một sách, mỗi sách có một hồ sơ đang dùng. Mã sách, mã hồ sơ chỉ sống trong bảng này.
 
-    {"<bookId>": {
+    {"version": 2,
+     "records": {"<mã hồ sơ>": {"name": "Mặc định", "createdAt": ..., "state": {...}}},
+     "links": {"<mã sách của app>": {"records": ["<mã hồ sơ>", ...], "active": "<mã hồ sơ>"}}}
+
+`state` của một hồ sơ - cùng hình dạng với trạng thái trình phát Android giữ, để hai bên đồng bộ được với nhau
+(`merge`: mỗi mục mang mốc thời gian, mục mới hơn thắng; dấu trang hợp theo id):
+
         "last": {"chapterId": 3, "seconds": 812.4, "at": 1790...},
         "chapters": {"3": {"heard": 812.4, "done": false, "at": ...}},
         "rate": 1.25,
         "finished": false,
         "bookmarks": [{"id": "...", "chapterId": 3, "seconds": 64.0, "note": "", "at": ...}],
         "night": {"id": "...", "startedAt": ..., "endedAt": ..., "events": [...], "timeline": [...]},
-        "updatedAt": ...}}
+        "updatedAt": ...
+
+Mọi hàm nhận MÃ SÁCH (progress, add_bookmark...) làm việc trên hồ sơ đang dùng của sách ấy - nơi gọi không phải biết
+có hồ sơ. Bản lưu cũ ({mã sách: state}) được chuyển sang khi mở: mỗi sách một hồ sơ "Mặc định".
 
 `night` là nhật ký của lần nghe có hẹn giờ ngủ gần nhất (thiết bị nào cũng được): lúc hẹn giờ, những lần chạm, lúc
 bắt đầu nhỏ dần, lúc tự dừng - kèm vị trí. Sáng dậy, thẻ "Tối qua" dựng lại từ đó (MorningRecap).
@@ -38,10 +47,38 @@ BOOKMARK_MERGE_SECONDS = 5.0
 NIGHT_RECENT_SECONDS = 20 * 3600
 NIGHT_MAX_POINTS = 480
 MAX_SESSIONS = 200
+FORMAT_VERSION = 2
+DEFAULT_RECORD_NAME = "Mặc định"
+MAX_RECORD_NAME = 60
 
 
 def listening_path() -> Path:
     return preferences_path().with_name("listening.json")
+
+
+def _empty_state() -> dict[str, Any]:
+    return {"chapters": {}, "bookmarks": []}
+
+
+def _new_record_id() -> str:
+    return "r-" + uuid.uuid4().hex[:16]
+
+
+def _upgrade(raw: Any) -> dict[str, Any]:
+    """Bản lưu nào cũng thành dạng hồ sơ + liên kết. Bản cũ {mã sách: state}: mỗi sách một hồ sơ "Mặc định"."""
+    if isinstance(raw, dict) and raw.get("version") == FORMAT_VERSION:
+        records = raw.get("records") if isinstance(raw.get("records"), dict) else {}
+        links = raw.get("links") if isinstance(raw.get("links"), dict) else {}
+        return {"version": FORMAT_VERSION, "records": records, "links": links}
+    data: dict[str, Any] = {"version": FORMAT_VERSION, "records": {}, "links": {}}
+    for book, state in (raw.items() if isinstance(raw, dict) else []):
+        if not isinstance(state, dict):
+            continue
+        record = _new_record_id()
+        data["records"][record] = {"name": DEFAULT_RECORD_NAME,
+                                   "createdAt": float(state.get("updatedAt") or time.time()), "state": state}
+        data["links"][str(book)] = {"records": [record], "active": record}
+    return data
 
 
 class Listening:
@@ -49,23 +86,136 @@ class Listening:
         self.path = path or listening_path()
         self._lock = threading.Lock()
         try:
-            self._data: dict[str, Any] = json.loads(self.path.read_text(encoding="utf-8"))
+            raw: Any = json.loads(self.path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
-            self._data = {}
+            raw = {}
+        self._data = _upgrade(raw)
+
+    # ---- liên kết sách - hồ sơ ---------------------------------------------------------------------------------
+
+    def _active(self, book: str, *, create: bool = True) -> dict[str, Any] | None:
+        """State của hồ sơ đang dùng cho `book`; chưa có thì (create) tạo hồ sơ "Mặc định" và gắn vào."""
+        link = self._data["links"].get(book)
+        record = self._data["records"].get(link.get("active")) if link and link.get("active") else None
+        if record is None:
+            if not create:
+                return None
+            record_id = _new_record_id()
+            record = self._data["records"][record_id] = {"name": DEFAULT_RECORD_NAME, "createdAt": time.time(),
+                                                          "state": _empty_state()}
+            link = self._data["links"].setdefault(book, {"records": []})
+            link["records"] = [item for item in link.get("records", []) if item in self._data["records"]
+                               and item != record_id] + [record_id]
+            link["active"] = record_id
+        state = record.setdefault("state", _empty_state())
+        state.setdefault("chapters", {})
+        state.setdefault("bookmarks", [])
+        return state
 
     def _book(self, book: str) -> dict[str, Any]:
-        entry = self._data.setdefault(book, {})
-        entry.setdefault("chapters", {})
-        entry.setdefault("bookmarks", [])
-        return entry
+        state = self._active(book)
+        assert state is not None
+        return state
+
+    def records(self, book: str) -> list[dict[str, Any]]:
+        """Các hồ sơ gắn với `book`: mã, tên, lúc tạo, lúc nghe gần nhất, có đang dùng không."""
+        with self._lock:
+            link = self._data["links"].get(book) or {}
+            found = []
+            for record_id in link.get("records", []):
+                record = self._data["records"].get(record_id)
+                if record is None:
+                    continue
+                state = record.get("state") or {}
+                found.append({"id": record_id, "name": record.get("name") or DEFAULT_RECORD_NAME,
+                              "createdAt": record.get("createdAt"), "updatedAt": state.get("updatedAt"),
+                              "active": record_id == link.get("active")})
+            return found
+
+    def create_record(self, book: str, name: str = "") -> dict[str, Any]:
+        """Hồ sơ mới cho `book` (nghe từ đầu), thành hồ sơ đang dùng; hồ sơ cũ giữ nguyên."""
+        with self._lock:
+            link = self._data["links"].setdefault(book, {"records": []})
+            record_id = _new_record_id()
+            label = name.strip()[:MAX_RECORD_NAME] or f"Hồ sơ {len(link.get('records', [])) + 1}"
+            self._data["records"][record_id] = {"name": label, "createdAt": time.time(), "state": _empty_state()}
+            link["records"] = [*link.get("records", []), record_id]
+            link["active"] = record_id
+            self._save()
+            return {"id": record_id, "name": label, "active": True}
+
+    def activate(self, book: str, record_id: str) -> bool:
+        with self._lock:
+            link = self._data["links"].get(book)
+            if not link or record_id not in link.get("records", []) or record_id not in self._data["records"]:
+                return False
+            link["active"] = record_id
+            self._save()
+            return True
+
+    def rename_record(self, record_id: str, name: str) -> bool:
+        with self._lock:
+            record = self._data["records"].get(record_id)
+            if record is None or not name.strip():
+                return False
+            record["name"] = name.strip()[:MAX_RECORD_NAME]
+            self._save()
+            return True
+
+    def book_of(self, record_id: str) -> str | None:
+        with self._lock:
+            return self._owner(record_id)
+
+    def move_record(self, record_id: str, to_book: str) -> bool:
+        """Gắn hồ sơ sang sách khác (vd. bản sản xuất mới của cùng truyện), thành hồ sơ đang dùng ở đó."""
+        with self._lock:
+            if record_id not in self._data["records"]:
+                return False
+            self._unlink(record_id)
+            link = self._data["links"].setdefault(to_book, {"records": []})
+            link["records"] = [*link.get("records", []), record_id]
+            link["active"] = record_id
+            self._save()
+            return True
+
+    def delete_record(self, record_id: str) -> bool:
+        with self._lock:
+            if record_id not in self._data["records"]:
+                return False
+            self._unlink(record_id)
+            del self._data["records"][record_id]
+            self._save()
+            return True
+
+    def _owner(self, record_id: str) -> str | None:
+        return next((book for book, link in self._data["links"].items() if record_id in link.get("records", [])),
+                    None)
+
+    def _unlink(self, record_id: str) -> None:
+        book = self._owner(record_id)
+        if book is None:
+            return
+        link = self._data["links"][book]
+        link["records"] = [item for item in link["records"] if item != record_id]
+        if link.get("active") == record_id:
+            def heard_at(item: str) -> float:
+                return float((((self._data["records"].get(item) or {}).get("state")) or {}).get("updatedAt") or 0)
+
+            remaining = sorted(link["records"], key=heard_at)
+            link["active"] = remaining[-1] if remaining else None
+        if not link["records"]:
+            del self._data["links"][book]
+
+    # ---- trạng thái nghe của hồ sơ đang dùng ---------------------------------------------------------------------
 
     def get(self, book: str) -> dict[str, Any]:
         with self._lock:
-            return json.loads(json.dumps(self._data.get(book) or {"chapters": {}, "bookmarks": []}))
+            return json.loads(json.dumps(self._active(book, create=False) or _empty_state()))
 
     def all(self) -> dict[str, Any]:
+        """{mã sách: state của hồ sơ đang dùng}."""
         with self._lock:
-            return json.loads(json.dumps(self._data))
+            return json.loads(json.dumps({book: self._active(book, create=False) for book in self._data["links"]}))
 
     def progress(self, book: str, chapter_id: int, seconds: float, duration: float) -> dict[str, Any]:
         now = time.time()
@@ -180,7 +330,7 @@ class Listening:
 
     def sessions(self, book: str) -> list[dict[str, Any]]:
         with self._lock:
-            return json.loads(json.dumps((self._data.get(book) or {}).get("sessions", [])))
+            return json.loads(json.dumps((self._active(book, create=False) or {}).get("sessions", [])))
 
     def set_reading(self, book: str, chapter_id: int, index: int) -> None:
         """Chỗ đọc dở ở chế độ đọc: câu thứ `index` của chương."""
@@ -199,12 +349,12 @@ class Listening:
             self._save()
 
     def latest_night(self, now: float | None = None) -> dict[str, Any] | None:
-        """Đêm gần nhất chưa bị gạt đi, của bất kỳ cuốn nào: `{"bookId", "night"}`."""
+        """Đêm gần nhất chưa bị gạt đi, trong hồ sơ đang dùng của bất kỳ cuốn nào: `{"bookId", "night"}`."""
         now = time.time() if now is None else now
         with self._lock:
             found: tuple[str, dict[str, Any]] | None = None
-            for book, entry in self._data.items():
-                night = entry.get("night")
+            for book in self._data["links"]:
+                night = (self._active(book, create=False) or {}).get("night")
                 if not night or night.get("dismissed") or not night.get("events"):
                     continue
                 if now - float(night.get("endedAt") or night.get("startedAt") or 0) > NIGHT_RECENT_SECONDS:
@@ -215,19 +365,20 @@ class Listening:
 
     def dismiss_night(self, book: str, night_id: str) -> None:
         with self._lock:
-            night = self._book(book).get("night")
+            night = (self._active(book, create=False) or {}).get("night")
             if night and night.get("id") == night_id:
                 night["dismissed"] = True
                 night["dismissedAt"] = time.time()
                 self._save()
 
     def merge(self, book: str, incoming: dict[str, Any]) -> dict[str, Any]:
-        """Gộp trạng thái từ thiết bị khác (điện thoại). Mỗi phần mang mốc thời gian riêng, bên mới hơn thắng;
-        dấu trang hợp theo id, dấu trang đã xoá ở một bên (tombstone) thì xoá ở cả hai."""
+        """Gộp trạng thái từ thiết bị khác (điện thoại) vào hồ sơ đang dùng của `book`. Mỗi phần mang mốc thời gian
+        riêng, bên mới hơn thắng; dấu trang hợp theo id, dấu trang đã xoá ở một bên (tombstone) thì xoá ở cả hai."""
         with self._lock:
             entry = self._book(book)
             merged = merge_states(entry, incoming)
-            self._data[book] = merged
+            entry.clear()
+            entry.update(merged)
             self._save()
             return json.loads(json.dumps(merged))
 
