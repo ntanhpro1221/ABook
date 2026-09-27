@@ -67,7 +67,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   (`http://<máy tính>:47630`) - xem tiến độ, bắt đầu hay dừng, tạo sách, duyệt "Việc cần anh" và "Cần nghe lại", đặt
   bìa, nghe sách. Bật trong Cài đặt → Điện thoại và thiết bị ("Cho phép điều khiển sản xuất từ thiết bị đã ghép"), tắt
   mặc định; trình duyệt ghép bằng mã 6 số như điện thoại. Những gì chỉ có nghĩa trên chính máy tính (mở thư mục, đổi
-  cài đặt, ghép thiết bị) không làm được từ xa.
+  cài đặt, ghép thiết bị) không làm được từ xa. App Android có nút **"Studio của máy tính"** trong Tải sách - mở thẳng,
+  không phải ghép lần hai. Trên màn hẹp, Studio dùng thanh tab dưới đáy và xếp các bảng thành cột.
 
 ### Studio (sản xuất sách nói)
 
