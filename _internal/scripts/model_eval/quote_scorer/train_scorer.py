@@ -191,7 +191,11 @@ def main() -> int:
                     else:
                         best = int(scores.argmax())
                         predicted = None if best == len(entities) else entities[best]
-                    correct = (predicted is None) if gold is None else (predicted is not None and gold in predicted)
+                    accepted = quote.get("accept")
+                    if accepted:  # gold nhiều đáp án (build_vi 27-09): mọi người nói đủ điểm đều đúng
+                        correct = (None in accepted) if predicted is None else any(name in accepted for name in predicted)
+                    else:
+                        correct = (predicted is None) if gold is None else (predicted is not None and gold in predicted)
                     if dump is not None:
                         # Xác suất biên từng thực thể = tổng softmax các chỗ nhắc trỏ tới nó (cùng dạng với loss),
                         # để N3 (giải mã cả hội thoại), N5 (bỏ phiếu trắng) và N6 (xếp chồng với LLM) dùng lại.
@@ -242,7 +246,15 @@ def main() -> int:
                 if scores is None:
                     continue
                 gold = quote["speaker"]
-                if gold is None:
+                accepted = quote.get("accept")
+                if accepted:  # mọi người nói đủ điểm là đáp án (log-likelihood biên trên cả tập)
+                    indices = [i for i, names in enumerate(entities) if any(name in accepted for name in names)]
+                    if None in accepted:
+                        indices.append(len(entities))
+                    if not indices:
+                        continue  # không ai trong tập đáp án nằm trong ứng viên
+                    positive = torch.tensor(indices, device=device, dtype=torch.long)
+                elif gold is None:
                     positive = torch.tensor([len(entities)], device=device)
                 else:
                     positive = torch.tensor([i for i, e in enumerate(entities) if gold in e], device=device,

@@ -37,6 +37,7 @@ def main() -> int:
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--layout", choices=("line", "paragraph"), default="paragraph")
     parser.add_argument("--cast", action="store_true")
+    parser.add_argument("--case-sensitive", action="store_true", help="như build_vi.py: chỉ khớp tên viết hoa")
     parser.add_argument("--max-chapters", type=int, default=0, help="0 = tất cả; chọn các chương GẦN gold nhất trước")
     parser.add_argument("--tokenizer", default="jhu-clsp/mmBERT-base")
     parser.add_argument("--budget", type=int, default=1024)
@@ -80,11 +81,11 @@ def main() -> int:
             segments = [(int(seq), str(text)) for seq, text, _, _ in rows]
             paragraph_of = {int(seq): int(paragraph) for seq, _, _, paragraph in rows}
             quotes = {int(seq): ("D", "?") for seq, _, kind, _ in rows if kind == "dialogue"}
-            cast = chapter_cast(segments, aliases, None) if args.cast else []
+            cast = chapter_cast(segments, aliases, None, args.case_sensitive) if args.cast else []
             stats["chương"] += 1
             for lo, hi, seqs in windows_for(segments, quotes, args.budget, count_tokens):
                 text, offsets = join_segments(segments[lo:hi + 1], paragraph_of if args.layout == "paragraph" else None)
-                mentions = mention_spans(text, aliases)
+                mentions = mention_spans(text, aliases, args.case_sensitive)
                 if args.cast:
                     text, offsets, mentions = with_cast(text, offsets, mentions, cast, display)
                 items = [{"start": offsets[seq][0], "end": offsets[seq][1], "speaker": None, "unlabeled": True, "kind": "D",

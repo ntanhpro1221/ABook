@@ -31,7 +31,7 @@ sys.path.insert(0, str(HERE.parent))
 from build_training_set import SPLIT  # noqa: E402
 
 GOLD_ROOT = HERE.parent / "gold"
-NULL_SPEAKERS = ("NARRATOR", "NPC", "?")
+NULL_SPEAKERS = ("NARRATOR", "NPC", "?", "UNKNOWN")
 # Ngôi thứ nhất (N7, 27-09): truyện mạng/light novel hay kể bằng "tôi" - nhân vật kể KHÔNG BAO GIỜ được gọi tên
 # trong lời kể, nên 118/138 câu có người nói nằm ngoài ứng viên là của chính người kể. PDNC (tiểu thuyết cổ điển,
 # hầu hết ngôi thứ ba) không có chuyện này. "tôi/mình/tớ" TRONG LỜI KỂ (không phải trong thoại) = chỗ nhắc người kể.
@@ -41,20 +41,41 @@ FIRST_PERSON_CUE = re.compile(r"(?<!\w)(tôi|mình|tớ)\s+(?:\w+\s+){0,2}?(nói
                               r"đáp lời|hỏi lại|nói tiếp|giải thích|xác nhận|phản bác|chen vào)(?!\w)", re.IGNORECASE)
 
 
-def gold_quotes(path: Path) -> dict[int, tuple[str, str]]:
-    """seq -> (loại, người nói đầu tiên) cho các đoạn thoại/nội tâm của một chương gold."""
+def gold_speakers(path: Path) -> dict[int, tuple[str, list[str]]]:
+    """seq -> (loại, mọi lựa chọn người nói theo thứ tự đã viết; lựa chọn nửa điểm mang dấu ~).
+
+    Tên có dấu cách ("TRỊNH VĨNH MONG") nên tách từ PHẢI như score_models.parse_gold: 5 trường cuối cố định. Bản cũ lấy
+    `parts[2]` - chỉ CHỮ ĐẦU của tên: 250/2.023 câu gold bị cắt (27-09), "TRỊNH VĨNH MONG" và "TRỊNH LÃO" nhập làm một
+    "TRỊNH", "DẠ OANH" thành "DẠ" nên bí danh "dạ" khớp cả chữ "dạ" lễ phép trong mọi câu thoại."""
     rows = {}
     for line in path.read_text(encoding="utf-8").splitlines():
         if not line or line.startswith("#"):
             continue
         parts = line.split()
-        if len(parts) >= 3 and parts[1][:1] in "DT":
-            rows[int(parts[0])] = (parts[1][:1], parts[2].split(",")[0])
+        if len(parts) >= 8 and parts[1][:1] in "DT":
+            rows[int(parts[0])] = (parts[1][:1], " ".join(parts[2:-5]).split(","))
     return rows
+
+
+def gold_quotes(path: Path) -> dict[int, tuple[str, str]]:
+    """seq -> (loại, người nói đầu tiên) cho các đoạn thoại/nội tâm của một chương gold."""
+    return {seq: (kind, options[0].rstrip("~")) for seq, (kind, options) in gold_speakers(path).items()}
 
 
 def entity_of(label: str) -> str | None:
     return None if label.startswith(NULL_SPEAKERS) else label
+
+
+def accepted_entities(options: list[str]) -> list[str | None]:
+    """Mọi người nói ĐỦ ĐIỂM (None = người kể/NPC/không rõ): 658/1.831 câu gold nhận hơn một người (câu cả đám nói, NPC
+    được nêu tên trong lời dẫn...). Học và chấm với cả tập này, như score_models chấm LLM."""
+    full = [option for option in options if not option.endswith("~")] or [options[0].rstrip("~")]
+    out: list[str | None] = []
+    for option in full:
+        entity = entity_of(option)
+        if entity not in out:
+            out.append(entity)
+    return out
 
 
 def aliases_for(entities: set[str], display: dict[str, str]) -> dict[str, set[str]]:
@@ -71,11 +92,17 @@ def aliases_for(entities: set[str], display: dict[str, str]) -> dict[str, set[st
     return table
 
 
-def mention_spans(text: str, aliases: dict[str, set[str]]) -> list[dict]:
+def mention_spans(text: str, aliases: dict[str, set[str]], case_sensitive: bool = False) -> list[dict]:
+    """case_sensitive (27-09): chỉ khớp dạng VIẾT HOA từng chữ ("Chu Mặc", "Mặc") - tên Hán-Việt ghép từ âm tiết thông
+    dụng, không phân biệt hoa thường thì "mặc" (áo), "chu đáo", "hạ" (mùa hạ) đều thành chỗ nhắc nhân vật."""
     if not aliases:
         return []
     ordered = sorted(aliases, key=len, reverse=True)  # "alva bullard" trước "alva"
-    pattern = re.compile(r"(?<!\w)(" + "|".join(re.escape(name) for name in ordered) + r")(?!\w)", re.IGNORECASE)
+    if case_sensitive:
+        forms = [" ".join(word[:1].upper() + word[1:] for word in name.split()) for name in ordered]
+        pattern = re.compile(r"(?<!\w)(" + "|".join(re.escape(form) for form in forms) + r")(?!\w)")
+    else:
+        pattern = re.compile(r"(?<!\w)(" + "|".join(re.escape(name) for name in ordered) + r")(?!\w)", re.IGNORECASE)
     return [{"start": m.start(), "end": m.end(), "entities": sorted(aliases[m.group(0).lower()])}
             for m in pattern.finditer(text)]
 
@@ -125,11 +152,12 @@ def point_of_view(segments_by_chapter: dict, golds: dict) -> dict[str, str]:
 CAST_LABEL = "Nhân vật trong chương: "
 
 
-def chapter_cast(segments: list[tuple[int, str]], aliases: dict[str, set[str]], pov: str | None) -> list[str]:
+def chapter_cast(segments: list[tuple[int, str]], aliases: dict[str, set[str]], pov: str | None,
+                 case_sensitive: bool = False) -> list[str]:
     """Thực thể được nhắc (khớp bí danh không mơ hồ) ở bất kỳ đâu trong chương, theo thứ tự lần nhắc đầu; thêm người
     kể "tôi" nếu có. Khi chạy thật đây là danh sách nhân vật app đã có sau pha đọc chương - cùng thứ LLM được đưa."""
     order: list[str] = [pov] if pov else []
-    for mention in mention_spans("\n".join(text for _, text in segments), aliases):
+    for mention in mention_spans("\n".join(text for _, text in segments), aliases, case_sensitive):
         if len(mention["entities"]) == 1 and mention["entities"][0] not in order:
             order.append(mention["entities"][0])
     return order
@@ -220,6 +248,8 @@ def main() -> int:
     parser.add_argument("--no-pov", action="store_true", help="tắt ứng viên ngôi thứ nhất (để so với mốc)")
     parser.add_argument("--layout", choices=("line", "paragraph"), default="line",
                         help="line: mỗi đoạn một dòng (mốc 27-09); paragraph: đoạn cùng paragraph nối bằng dấu cách (N8)")
+    parser.add_argument("--case-sensitive", action="store_true",
+                        help="chỉ khớp tên VIẾT HOA (tên Hán-Việt trùng âm tiết thông dụng: mặc, hạ, chu...)")
     parser.add_argument("--cast", action="store_true",
                         help="N9: đầu mỗi cửa sổ là danh sách nhân vật được nhắc trong CẢ chương - ứng viên cho người nói "
                              "không được gọi tên gần câu (chỗ nhắc đánh dấu cast, bộ chấm cho một xô khoảng cách riêng)")
@@ -242,8 +272,12 @@ def main() -> int:
         chapters = connection.execute("SELECT id, title FROM chapters ORDER BY chapter_index").fetchall()
         golds = {title: gold_quotes(GOLD_ROOT / book / f"{title}.txt") for _, title in chapters
                  if (GOLD_ROOT / book / f"{title}.txt").is_file()}
+        accepts = {title: {seq: accepted_entities(options)
+                           for seq, (_, options) in gold_speakers(GOLD_ROOT / book / f"{title}.txt").items()}
+                   for title in golds}
         entities = {entity for quotes in golds.values() for _, label in quotes.values()
                     if (entity := entity_of(label))} | set(display)
+        entities |= {entity for chapter in accepts.values() for options in chapter.values() for entity in options if entity}
         aliases = aliases_for(entities, display)
         segments_by_chapter = {
             title: [(int(seq), str(text), str(kind or "")) for seq, text, kind in connection.execute(
@@ -264,11 +298,11 @@ def main() -> int:
             kinds = {seq: kind for seq, _, kind in segments_by_chapter[title]}
             pov = povs.get(title)
             segments = [(seq, text) for seq, text, _ in segments_by_chapter[title]]
-            casts = {title: chapter_cast(segments, aliases, pov)} if args.cast else {}
+            casts = {title: chapter_cast(segments, aliases, pov, args.case_sensitive)} if args.cast else {}
             for lo, hi, seqs in windows_for(segments, quotes, args.budget, count_tokens):
                 text, offsets = join_segments(segments[lo:hi + 1],
                                               paragraph_of[title] if args.layout == "paragraph" else None)
-                mentions = mention_spans(text, aliases)
+                mentions = mention_spans(text, aliases, args.case_sensitive)
                 if pov:
                     for seq, (begin, finish) in offsets.items():
                         if kinds.get(seq) == "dialogue":
@@ -288,7 +322,7 @@ def main() -> int:
                     stats[(split, "covered")] += covered
                     stats[(split, "named")] += speaker is not None
                     rows.append({"start": offsets[seq][0], "end": offsets[seq][1], "speaker": speaker, "kind": kind,
-                                 "book": book, "chapter": title, "seq": seq})
+                                 "accept": accepts[title][seq], "book": book, "chapter": title, "seq": seq})
                 writers[split].write(json.dumps({"text": text, "quotes": rows, "mentions": mentions},
                                                 ensure_ascii=False) + "\n")
                 stats[(split, "windows")] += 1
