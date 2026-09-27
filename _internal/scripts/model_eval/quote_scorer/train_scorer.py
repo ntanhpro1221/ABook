@@ -54,6 +54,8 @@ def main() -> int:
     parser.add_argument("--head-lr", type=float, default=1e-3)
     parser.add_argument("--seed", type=int, default=1234)
     parser.add_argument("--vram-cap", type=float, default=0.9)
+    parser.add_argument("--predict-only", action="store_true",
+                        help="không huấn luyện: nạp mô hình đã lưu trong --out, chấm test, ghi test_predictions.jsonl")
     parser.add_argument("--extra-train", type=Path, nargs="*", default=[],
                         help="thêm cửa sổ huấn luyện (vd dữ liệu che dấu hiệu N1: data/quote_vi_cue/train.jsonl)")
     args = parser.parse_args()
@@ -71,6 +73,10 @@ def main() -> int:
     # Trọng số gốc fp32 (AdamW trên bf16 làm tròn mất các bước nhỏ), lan xuôi bf16 qua autocast: ~5,5 GB với mmBERT-base.
     encoder = AutoModel.from_pretrained(args.encoder, dtype=torch.float32).to(device)
     size = encoder.config.hidden_size
+    # mmBERT: ~197 triệu / 307 triệu tham số là bảng embedding từ vựng 256 nghìn (tokenizer Gemma 2) - fp32 + Adam riêng
+    # nó ~3 GB, cả bộ hết 8 GB (OOM 27-09). Bài toán không cần học lại nghĩa từ: đóng băng embedding.
+    encoder.get_input_embeddings().weight.requires_grad_(False)
+    trainable = [parameter for parameter in encoder.parameters() if parameter.requires_grad]
 
     class Head(nn.Module):
         def __init__(self) -> None:
@@ -130,14 +136,14 @@ def main() -> int:
         train += load(extra)
     print(f"train {len(train)} cửa sổ, dev {len(dev)}, test {len(test)}", flush=True)
     optimizer = torch.optim.AdamW([
-        {"params": encoder.parameters(), "lr": args.lr},
+        {"params": trainable, "lr": args.lr},
         {"params": head.parameters(), "lr": args.head_lr},
     ], weight_decay=0.01)
     total_steps = args.epochs * len(train)
     schedule = torch.optim.lr_scheduler.LambdaLR(
         optimizer, lambda step: min(1.0, (step + 1) / max(1, total_steps // 20)) * max(0.0, 1 - step / total_steps))
 
-    def evaluate(windows: list[dict]) -> dict:
+    def evaluate(windows: list[dict], dump: list | None = None) -> dict:
         encoder.eval()
         head.eval()
         tally = {"all": [0, 0], "named": [0, 0], "null": [0, 0], "uncovered": 0}
@@ -152,6 +158,9 @@ def main() -> int:
                         best = int(scores.argmax())
                         predicted = None if best == len(entities) else entities[best]
                     correct = (predicted is None) if gold is None else (predicted is not None and gold in predicted)
+                    if dump is not None:
+                        dump.append({key: quote[key] for key in ("book", "chapter", "seq", "kind")}
+                                    | {"gold": gold, "predicted": predicted, "correct": bool(correct)})
                     key = "null" if gold is None else "named"
                     tally["all"][0] += correct
                     tally["all"][1] += 1
@@ -165,7 +174,7 @@ def main() -> int:
     args.out.mkdir(parents=True, exist_ok=True)
     log = (args.out / "train.log").open("a", encoding="utf-8")
     best = -1.0
-    for epoch in range(args.epochs):
+    for epoch in range(0 if args.predict_only else args.epochs):
         encoder.train()
         head.train()
         random.shuffle(train)
@@ -190,7 +199,7 @@ def main() -> int:
             loss = torch.stack(terms).mean()
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(list(encoder.parameters()) + list(head.parameters()), 1.0)
+            torch.nn.utils.clip_grad_norm_(trainable + list(head.parameters()), 1.0)
             optimizer.step()
             schedule.step()
             losses.append(float(loss))
@@ -206,7 +215,11 @@ def main() -> int:
             encoder.save_pretrained(args.out / "encoder")
     head.load_state_dict(torch.load(args.out / "head.pt")["head"])
     encoder.load_state_dict(AutoModel.from_pretrained(args.out / "encoder", dtype=torch.float32).state_dict())
-    result = evaluate(test)
+    predictions: list = []
+    result = evaluate(test, predictions)
+    with (args.out / "test_predictions.jsonl").open("w", encoding="utf-8") as handle:
+        for row in predictions:
+            handle.write(json.dumps(row, ensure_ascii=False) + "\n")
     line = f"TEST (mô hình tốt nhất trên dev): {json.dumps(result)}"
     print(line, flush=True)
     log.write(line + "\n")
