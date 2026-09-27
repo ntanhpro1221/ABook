@@ -75,10 +75,44 @@ def ensemble(runs: list[dict[Key, dict]]) -> dict[Key, dict]:
                     totals[name] += p / len(rows)
             predicted = max(totals, key=lambda name: totals[name])
             correct = (predicted is None) if gold is None else predicted == gold
+            out[key] = {**rows[0], "correct": bool(correct), "predicted": None if predicted is None else [predicted]}
         else:
             correct = sum(bool(row["correct"]) for row in rows) * 2 > len(rows)
-        out[key] = {**rows[0], "correct": bool(correct)}
+            out[key] = {**rows[0], "correct": bool(correct)}
     return out
+
+
+def official_gold() -> dict[Key, set[str]]:
+    """(truyện, chương, seq) -> MỌI người nói đủ điểm trong gold (score_models.parse_gold), không chỉ lựa chọn đầu.
+
+    Dữ liệu bộ chấm (build_vi.gold_quotes) chỉ giữ lựa chọn ĐẦU, nhưng 658/1.831 câu gold có hơn một người nói đủ điểm
+    (câu cả đám nói, NPC được nêu tên trong lời dẫn...) - chấm theo lựa chọn đầu khắt khe hơn cách chấm chính thức."""
+    from score_models import GOLD_ROOT, parse_gold  # noqa: PLC0415
+
+    out: dict[Key, set[str]] = {}
+    for folder in GOLD_ROOT.iterdir():
+        if folder.is_dir():
+            for path in folder.glob("*.txt"):
+                for row in parse_gold(path):
+                    if row.spoken:
+                        out[(folder.name, row.chapter, row.seq)] = {name for name, credit in row.speakers if credit >= 1.0}
+    return out
+
+
+def rescore(row: dict, accepted: set[str]) -> bool:
+    """Đúng nếu lựa chọn của hệ là một người nói đủ điểm; "không ai" đúng nếu gold nhận người kể/NPC/không rõ."""
+    from score_models import speaker_key  # noqa: PLC0415
+
+    predicted = row.get("predicted")
+    labels = predicted if isinstance(predicted, list) else [predicted]
+    for label in labels:
+        key = None if label is None else speaker_key(label)
+        if key is None or key in NULL_KEYS:
+            if accepted & NULL_KEYS:
+                return True
+        elif key in accepted:
+            return True
+    return False
 
 
 def mcnemar(only_a: int, only_b: int) -> float:
@@ -122,6 +156,8 @@ def main() -> int:
                         help="tên=lần_chạy[,lần_chạy...] (nhiều seed -> ensemble); lần chạy = thư_mục[@epoch], hoặc "
                              "fold+fold / mẫu glob (kiểm chứng chéo); hệ đầu tiên là mốc")
     parser.add_argument("--llm", nargs="*", default=[], help="tên model=thư mục gốc eval_models[@truyện]")
+    parser.add_argument("--official", action="store_true",
+                        help="chấm lại MỌI hệ theo gold đầy đủ: người nói nào đủ điểm cũng đúng (như score_models)")
     parser.add_argument("--split", default="test")
     args = parser.parse_args()
 
@@ -142,6 +178,13 @@ def main() -> int:
         # cùng tên model ở nhiều gốc (vd TMA và YMP chạy riêng) -> gộp thành một hệ
         systems.setdefault(name, {}).update(llm_rows(name, Path(root), book or "throne_of_magical_arcana", reference))
 
+    if args.official:
+        accepted = official_gold()
+        for name, rows in systems.items():
+            for key, row in rows.items():
+                if key in accepted:
+                    row["correct"] = rescore(row, accepted[key])
+        print("(chấm theo gold ĐẦY ĐỦ: mọi người nói đủ điểm đều đúng)")
     books = sorted({key[0] for key in reference})
     header = f"{'hệ':28s} {'tất cả':>14s} {'có tên':>14s} {'không ai':>12s} " + " ".join(f"{b[:10]:>12s}" for b in books)
     print(header)
