@@ -37,6 +37,8 @@ SOURCES = {
     "Nageki no Bourei wa Intai Shitai": "Thùng rác D: (Text_Tmp Nageki no Bourei wa Intai Shitai, xoá 13-09-2026)",
     "Năng lực bá đạo của tôi trong game tử thần là những thiếu nữ xinh đẹp": "Thùng rác D: (xoá 25-07-2026)",
     "Love Unseen Beneath the Clear Night Sky": "Thùng rác D: (D:/Novels/Tools/Text, xoá 01-08-2026)",
+    "Tam quốc diễn nghĩa (Phan Kế Bính)": "vi.wikisource, hồi 45-54 (bản dịch 1909, hết bản quyền), 27-09",
+    "Tắt đèn (Ngô Tất Tố)": "vi.wikisource, đủ 27 chương (1937-1939, hết bản quyền), 28-09",
 }
 
 
