@@ -4,6 +4,7 @@ import android.content.Context
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+import java.security.MessageDigest
 import java.util.UUID
 
 /**
@@ -193,35 +194,111 @@ object Store {
     @Synchronized
     fun deleteBook(id: String) {
         bookDir(id).deleteRecursively()
+        val all = printsBook()
+        if (all.has(id)) {
+            all.remove(id)
+            writeAtomic(printsFile, all.toString())
+        }
     }
 
     // ---- một cuốn, hai đường đến -----------------------------------------------------------------------------
+    //
+    // Sách không mang mã nào (chủ sách 27-09: sách và dữ liệu nghe không biết đến mã; mã chỉ là thứ app dùng để liên
+    // kết). App nhận ra cùng một lần sản xuất bằng audio từng chương: chung một chương giống hệt từng byte (tên, cỡ, mã
+    // băm) là cùng một cuốn. Sổ của app `prints.json` - nằm NGOÀI thư mục sách - ghi cỡ + mã băm các chương đã biết của
+    // từng cuốn, và cuốn nào mở từ file mà chưa gắn với cuốn nào của máy tính.
 
-    private val PACKAGE_ID = Regex("bk-[0-9a-f]{24}")
+    private val printsFile get() = File(root, "prints.json")
 
-    fun isPackageId(value: String) = PACKAGE_ID.matches(value)
+    private fun printsBook(): JSONObject =
+        if (printsFile.isFile) runCatching { JSONObject(printsFile.readText()) }.getOrElse { JSONObject() } else JSONObject()
 
-    /** Cuốn đã có trên máy (đã tải hay đang nghe thẳng) mang mã sách cố định `packageId` nhưng mã máy tính khác. */
     @Synchronized
-    fun findByPackage(packageId: String): JSONObject? =
-        playableBooks().firstOrNull { it.optString("packageId") == packageId && it.optString("id") != packageId }
+    fun rememberChapters(id: String, chapters: JSONObject, imported: Boolean) {
+        val all = printsBook()
+        val entry = all.optJSONObject(id) ?: JSONObject()
+        val known = entry.optJSONObject("chapters") ?: JSONObject()
+        for (name in chapters.keys()) known.put(name, chapters.getJSONObject(name))
+        all.put(id, entry.put("chapters", known).put("imported", imported))
+        writeAtomic(printsFile, all.toString())
+    }
+
+    @Synchronized
+    fun isImported(id: String) = printsBook().optJSONObject(id)?.optBoolean("imported") == true
+
+    /** Cuốn mở từ file còn trên máy mà chưa gắn với cuốn nào của máy tính. */
+    @Synchronized
+    fun importedBooks(): List<String> {
+        val all = printsBook()
+        return all.keys().asSequence().filter { all.getJSONObject(it).optBoolean("imported") && manifest(it) != null }.toList()
+    }
+
+    /** Cỡ + mã băm các chương của một cuốn, như đã ghi trong sổ. */
+    @Synchronized
+    fun chapterPrints(id: String): JSONObject = printsBook().optJSONObject(id)?.optJSONObject("chapters") ?: JSONObject()
 
     /**
-     * Cùng một cuốn đến bằng hai đường - mở từ file .abook (thư mục mang mã sách cố định `bk-...`) rồi máy tính cho biết
-     * cuốn của nó có đúng mã ấy - là MỘT cuốn: thư mục đổi sang mã máy tính để chỗ nghe, dấu trang tiếp tục đồng bộ, audio
-     * đã có không phải tải lại. Trạng thái nghe đi theo nếu mã máy tính chưa có trạng thái riêng; hai bản đã cùng tải về
-     * (từ trước bản sửa này) thì để nguyên - không xoá gì của người nghe.
+     * Cuốn đã có trên máy (tải qua Wi-Fi hay mở từ file) có chung ít nhất một chương audio với `chapters`
+     * ({"chapters/x.mp3": {size, sha256}}). Chỉ băm file trùng tên và cỡ, rồi ghi vào sổ để lần sau khỏi băm.
      */
     @Synchronized
-    fun adopt(packageId: String, syncId: String) {
-        if (packageId == syncId || !isPackageId(packageId) || manifest(packageId) == null || manifest(syncId) != null) return
+    fun findByChapters(chapters: JSONObject): String? {
+        for (book in books()) {
+            val id = book.optString("id")
+            if (id.isBlank()) continue
+            val known = chapterPrints(id)
+            for (name in chapters.keys()) {
+                val wanted = chapters.getJSONObject(name)
+                val local = runCatching { file(id, name) }.getOrNull() ?: continue
+                if (!local.isFile || local.length() != wanted.optLong("size", -1)) continue
+                val recorded = known.optJSONObject(name)
+                val sha256 = if (recorded != null && recorded.optLong("size") == local.length()) {
+                    recorded.optString("sha256")
+                } else {
+                    sha256(local).also {
+                        rememberChapters(id, JSONObject().put(name, JSONObject().put("size", local.length()).put("sha256", it)),
+                            isImported(id))
+                    }
+                }
+                if (sha256 == wanted.optString("sha256")) return id
+            }
+        }
+        return null
+    }
+
+    private fun sha256(file: File): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        file.inputStream().use { input ->
+            val buffer = ByteArray(1 shl 16)
+            while (true) {
+                val read = input.read(buffer)
+                if (read < 0) break
+                digest.update(buffer, 0, read)
+            }
+        }
+        return digest.digest().joinToString("") { "%02x".format(it) }
+    }
+
+    /**
+     * Cuốn mở từ file mà máy tính cho biết là cuốn `syncId` của nó (cùng audio): MỘT cuốn - thư mục đổi sang mã máy tính
+     * để chỗ nghe, dấu trang tiếp tục đồng bộ, audio đã có không phải tải lại. Trạng thái nghe đi theo nếu mã máy tính
+     * chưa có trạng thái riêng; hai bản đã cùng tải về thì để nguyên - không xoá gì của người nghe.
+     */
+    @Synchronized
+    fun adopt(localId: String, syncId: String) {
+        if (localId == syncId || !isImported(localId) || manifest(localId) == null || manifest(syncId) != null) return
         val target = bookDir(syncId)
         target.deleteRecursively() // chỉ là bộ nhớ đệm nghe thẳng (stream.json + file nhỏ): lấy lại được
-        if (!bookDir(packageId).renameTo(target)) return
+        if (!bookDir(localId).renameTo(target)) return
         val book = manifest(syncId) ?: return
-        writeAtomic(File(target, "book.json"), book.put("id", syncId).put("packageId", packageId).toString())
-        val imported = stateFile(packageId)
+        writeAtomic(File(target, "book.json"), book.put("id", syncId).toString())
+        val imported = stateFile(localId)
         if (imported.isFile && !stateFile(syncId).exists()) imported.renameTo(stateFile(syncId))
+        val all = printsBook()
+        val entry = all.optJSONObject(localId)
+        all.remove(localId)
+        if (entry != null) all.put(syncId, entry.put("imported", false))
+        writeAtomic(printsFile, all.toString())
     }
 
     fun sizeOf(dir: File): Long = dir.walkTopDown().filter { it.isFile }.sumOf { it.length() }
