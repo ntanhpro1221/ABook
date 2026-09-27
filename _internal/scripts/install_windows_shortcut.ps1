@@ -44,6 +44,70 @@ function Set-AppShortcut([string]$ShortcutPath) {
     }
 }
 
+# Windows maps the app window to its Start Menu entry through the AppUserModelID the app sets on itself
+# (ebook_reader/desktop_shell.py: APP_USER_MODEL_ID). Without the same ID on the shortcut, the media card in
+# Windows+A (and the media key overlay) cannot show the "Ebook Reader" name and icon for the player.
+$AppUserModelId = "EbookReader.Desktop"
+
+function Get-ShortcutAppId([string]$ShortcutPath) {
+    $ShellApp = New-Object -ComObject Shell.Application
+    $Folder = $ShellApp.Namespace((Split-Path -Parent $ShortcutPath))
+    $Item = $Folder.ParseName((Split-Path -Leaf $ShortcutPath))
+    return [string]$Item.ExtendedProperty("System.AppUserModel.ID")
+}
+
+function Set-ShortcutAppId([string]$ShortcutPath) {
+    if ((Get-ShortcutAppId $ShortcutPath) -eq $AppUserModelId) {
+        return
+    }
+    # Compiled only when the ID is missing: this script runs on every start.
+    if (-not ("EbookReaderShortcutIdentity" -as [type])) {
+        Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+
+public static class EbookReaderShortcutIdentity {
+    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    struct PropertyKey { public Guid FormatId; public int PropertyId; }
+
+    [StructLayout(LayoutKind.Explicit)]
+    struct PropVariant { [FieldOffset(0)] public ushort Type; [FieldOffset(8)] public IntPtr Pointer; }
+
+    [ComImport, Guid("886D8EEB-8CF2-4446-8D02-CDBA1DBDCF99"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    interface IPropertyStore {
+        [PreserveSig] int GetCount(out uint count);
+        [PreserveSig] int GetAt(uint index, out PropertyKey key);
+        [PreserveSig] int GetValue(ref PropertyKey key, out PropVariant value);
+        [PreserveSig] int SetValue(ref PropertyKey key, ref PropVariant value);
+        [PreserveSig] int Commit();
+    }
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode, PreserveSig = false)]
+    static extern void SHGetPropertyStoreFromParsingName(string path, IntPtr bindContext, int flags, ref Guid riid,
+        [MarshalAs(UnmanagedType.Interface)] out IPropertyStore store);
+
+    public static void Set(string path, string id) {
+        Guid iid = typeof(IPropertyStore).GUID;
+        IPropertyStore store;
+        SHGetPropertyStoreFromParsingName(path, IntPtr.Zero, 2, ref iid, out store); // GPS_READWRITE
+        PropertyKey key = new PropertyKey { FormatId = new Guid("9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3"), PropertyId = 5 };
+        PropVariant value = new PropVariant { Type = 31, Pointer = Marshal.StringToCoTaskMemUni(id) }; // VT_LPWSTR
+        try {
+            Marshal.ThrowExceptionForHR(store.SetValue(ref key, ref value));
+            Marshal.ThrowExceptionForHR(store.Commit());
+        } finally {
+            Marshal.FreeCoTaskMem(value.Pointer);
+            Marshal.ReleaseComObject(store);
+        }
+    }
+}
+'@
+    }
+    [EbookReaderShortcutIdentity]::Set($ShortcutPath, $AppUserModelId)
+}
+
 Set-AppShortcut $RootShortcutPath
 Set-AppShortcut $StartMenuShortcutPath
+# Only the Start Menu entry: Windows resolves the ID there, and the root shortcut is a tracked file in the repo.
+Set-ShortcutAppId $StartMenuShortcutPath
 Write-Output $RootShortcutPath, $StartMenuShortcutPath
