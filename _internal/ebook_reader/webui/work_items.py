@@ -1,8 +1,9 @@
-"""Hộp "Việc cần anh" của Studio (docs/STUDIO_REVIEW.md), bước 1: CHỈ ĐỌC.
+"""Hộp "Việc cần anh" của Studio (docs/STUDIO_REVIEW.md).
 
 Dựng danh sách chỗ máy nghi ngờ từ SQLite của sách (mở chỉ đọc như mọi phần của webui), mỗi việc tự giải thích và xếp
 theo LỢI TRÊN MỖI LẦN BẤM: `số câu bị ảnh hưởng x khả năng máy sai x độ chói tai`. Không việc nào chặn dây chuyền - máy
-đã tự quyết và đang chạy tiếp; bước sau mới cho sửa (ghi đè áp ở ranh giới an toàn).
+đã tự quyết và đang chạy tiếp. Sửa được ngay: cách đọc tên (bước 2) - giao diện ghi mong muốn vào `overrides.json`, dây
+chuyền áp ở ranh giới an toàn (listener_overrides.py); việc đã áp thì biến khỏi danh sách.
 
 Độ tin cậy do LLM tự báo KHÔNG dùng để xếp: đo trên Tập 18, câu thoại trung bình 0,91 và chỉ 14/1.157 câu dưới 0,8 - nó
 quá tự tin. Các tín hiệu ở đây là tín hiệu có cấu trúc, kiểm được bằng mắt.
@@ -16,6 +17,7 @@ from contextlib import closing
 from pathlib import Path
 from typing import Any
 
+from ..listener_overrides import pronunciation_requests, read_overrides, surface_key
 from . import store
 from .reviews import review_items, speaker_label
 
@@ -47,6 +49,8 @@ def _example(row: Any, names: dict[int, dict[str, Any]]) -> dict[str, Any]:
         "seq": int(row["seq"]),
         "text": str(row["text"]),
         "speaker": speaker_label(str(row["speaker"])),
+        # Chỉ câu đã có bản thu mới nghe được; câu chưa thu vẫn là ví dụ ngữ cảnh.
+        "hasAudio": bool(row["wav_path"]) if "wav_path" in row.keys() else True,
     }
 
 
@@ -69,12 +73,19 @@ def work_items(project_root: Path) -> dict[str, Any]:
         pronunciations = connection.execute(
             "SELECT surface, spoken_form, confidence, locked FROM pronunciations WHERE confidence < 0.9"
         ).fetchall() if "pronunciations" in store._table_names(connection) else []
-        # Cách đọc một tên sai là sai ở MỌI câu có tên ấy: đếm số câu một lượt (phiên âm lưu theo từng từ - AGENTS.md).
+        # Cách đọc một tên sai là sai ở MỌI câu có tên ấy: đếm số câu một lượt (phiên âm lưu theo từng từ - AGENTS.md),
+        # và giữ vài câu làm ví dụ - ưu tiên câu đã thu, để người nghe nghe máy đang đọc tên ấy thế nào.
         word_segments: dict[str, int] = defaultdict(int)
+        word_examples: dict[str, list[Any]] = defaultdict(list)
         if pronunciations:
-            for (text,) in connection.execute("SELECT text FROM segments"):
-                for word in set(re.findall(r"\w+", str(text))):
+            surfaces = {str(row["surface"]) for row in pronunciations}
+            for row in connection.execute(
+                "SELECT id, chapter_id, seq, text, speaker, wav_path FROM segments ORDER BY wav_path IS NULL, chapter_id, seq"
+            ):
+                for word in set(re.findall(r"\w+", str(row["text"]))):
                     word_segments[word] += 1
+                    if word in surfaces and len(word_examples[word]) < EXAMPLES:
+                        word_examples[word].append(row)
     lines_by_speaker: dict[str, list[Any]] = defaultdict(list)
     for row in spoken:
         lines_by_speaker[str(row["speaker"])].append(row)
@@ -218,7 +229,10 @@ def work_items(project_root: Path) -> dict[str, Any]:
             "examples": [_example(row, names) for row in rows[:EXAMPLES]],
         })
 
-    # 6. Cách đọc tên riêng máy chưa chắc.
+    # 6. Cách đọc tên riêng máy chưa chắc. Người nghe sửa ngay trên thẻ; mong muốn chưa áp thì hiện "đang chờ", áp rồi thì
+    #    dòng cách đọc thành của người nghe (tin cậy 1,0) và việc tự rơi khỏi danh sách.
+    requested = {surface_key(entry["surface"]): entry["spoken_form"]
+                 for entry in pronunciation_requests(read_overrides(project_root))}
     for row in pronunciations:
         occurrences = word_segments.get(str(row["surface"]), 0)
         if occurrences == 0:
@@ -233,7 +247,9 @@ def work_items(project_root: Path) -> dict[str, Any]:
             "doubt": round(1 - float(row["confidence"]), 2),
             "options": ["Đúng rồi", "Đọc cách khác"],
             "current": str(row["spoken_form"]),
-            "examples": [],
+            "surface": str(row["surface"]),
+            "requested": requested.get(surface_key(str(row["surface"]))),
+            "examples": [_example(example, names) for example in word_examples.get(str(row["surface"]), [])],
         })
 
     # 7. Bản thu lỗi (hàng chờ "Cần nghe lại"), gom theo chương.

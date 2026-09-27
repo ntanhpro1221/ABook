@@ -1,6 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
-import { AudioLines, Pause, Play } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AudioLines, Check, Pause, Play } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
@@ -8,7 +9,8 @@ import { Button, EmptyState, Segmented } from "@/shared/ui";
 import { api, urls } from "./api";
 
 // "Việc cần anh" (docs/STUDIO_REVIEW.md, webui/work_items.py): chỗ máy nghi ngờ, xếp theo lợi trên mỗi lần bấm. Máy đã tự
-// quyết và dây chuyền KHÔNG chờ ai - đây là nơi người sửa ít nhất mà được nhiều nhất. Bước 1 chỉ đọc; sửa trực tiếp là bước 2.
+// quyết và dây chuyền KHÔNG chờ ai - đây là nơi người sửa ít nhất mà được nhiều nhất. Cách đọc tên sửa được ngay trên thẻ
+// (bước 2): mong muốn ghi vào overrides.json, dây chuyền áp ở ranh giới chương và thu lại những câu có tên ấy.
 
 type WorkKind = "speaker" | "gender" | "vocative" | "alias" | "shared-voice" | "pronunciation" | "unnamed" | "audio";
 
@@ -19,6 +21,8 @@ interface WorkExample {
   seq: number;
   text: string;
   speaker: string;
+  /** Câu đã có bản thu (nghe được); câu chưa thu chỉ là ví dụ ngữ cảnh. */
+  hasAudio: boolean;
 }
 
 interface WorkItem {
@@ -32,6 +36,9 @@ interface WorkItem {
   options: string[];
   current: string;
   examples: WorkExample[];
+  /** Việc cách đọc tên: chữ gốc trong sách, và cách đọc người nghe đã ghi mà dây chuyền chưa áp (nếu có). */
+  surface?: string;
+  requested?: string | null;
 }
 
 interface WorkView {
@@ -68,14 +75,18 @@ function Example({ bookId, example }: { bookId: string; example: WorkExample }) 
   const playing = clip.current === id;
   return (
     <li className="flex items-start gap-2 text-sm">
-      <button
-        type="button"
-        onClick={() => clip.toggle(id, urls.sample(bookId, example.segmentId))}
-        aria-label={playing ? "Dừng" : `Nghe câu: ${example.text}`}
-        className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full bg-hover text-fg-2 hover:text-fg"
-      >
-        {playing ? <Pause className="size-3.5" fill="currentColor" strokeWidth={0} /> : <Play className="size-3.5 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}
-      </button>
+      {example.hasAudio ? (
+        <button
+          type="button"
+          onClick={() => clip.toggle(id, urls.sample(bookId, example.segmentId))}
+          aria-label={playing ? "Dừng" : `Nghe câu: ${example.text}`}
+          className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full bg-hover text-fg-2 hover:text-fg"
+        >
+          {playing ? <Pause className="size-3.5" fill="currentColor" strokeWidth={0} /> : <Play className="size-3.5 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}
+        </button>
+      ) : (
+        <span className="mt-0.5 size-7 shrink-0" aria-hidden />
+      )}
       <div className="min-w-0">
         <div className="text-xs text-fg-3">
           {example.chapterTitle} · câu {example.seq}
@@ -84,6 +95,71 @@ function Example({ bookId, example }: { bookId: string; example: WorkExample }) 
         <p className="text-fg">{example.text}</p>
       </div>
     </li>
+  );
+}
+
+// Sửa cách đọc một tên ngay trên thẻ. Không chờ gì: ghi xong là xong phần người; dây chuyền áp ở ranh giới chương kế
+// tiếp (hoặc lần chạy tới) và thu lại đúng những câu có tên ấy - kể cả sách đã xong.
+function PronunciationFix({ bookId, item }: { bookId: string; item: WorkItem }) {
+  const client = useQueryClient();
+  const [value, setValue] = useState(item.requested ?? item.current);
+  const save = useMutation({
+    mutationFn: (spokenForm: string) =>
+      api<{ surface: string; spokenForm: string }>(`/api/books/${bookId}/pronunciation`, {
+        method: "POST",
+        body: { surface: item.surface, spokenForm },
+      }),
+    onSuccess: ({ spokenForm }) => {
+      void client.invalidateQueries({ queryKey: ["work", bookId] });
+      toast.success(`Đã ghi: "${item.surface}" đọc là "${spokenForm}"`, {
+        description: "Áp ở ranh giới chương kế tiếp, hoặc lần chạy tới; câu đã thu có tên này sẽ được thu lại.",
+      });
+    },
+    onError: (error: Error) => toast.error("Chưa ghi được cách đọc", { description: error.message }),
+  });
+  const typed = value.trim();
+  const inputId = `spoken-${item.key}`;
+  return (
+    <div className="mt-3">
+      {item.requested && (
+        <p className="mb-2 flex items-center gap-1.5 text-xs text-fg-2">
+          <Check className="size-3.5 text-success" />
+          Đã ghi "{item.requested}" - chờ dây chuyền áp ở ranh giới chương kế tiếp.
+        </p>
+      )}
+      <form
+        className="flex flex-wrap items-center gap-2"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (typed) save.mutate(typed);
+        }}
+      >
+        <Button size="sm" variant="secondary" disabled={save.isPending} onClick={() => save.mutate(item.current)}>
+          Đúng rồi, giữ "{item.current}"
+        </Button>
+        <label htmlFor={inputId} className="text-xs text-fg-2">
+          hoặc đọc là
+        </label>
+        <input
+          id={inputId}
+          aria-label={`Cách đọc mới cho ${item.surface}`}
+          value={value}
+          onChange={(event) => setValue(event.target.value)}
+          spellCheck={false}
+          autoComplete="off"
+          className="h-8 w-40 rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-accent"
+        />
+        <Button
+          size="sm"
+          variant="primary"
+          type="submit"
+          loading={save.isPending}
+          disabled={!typed || typed === item.current || typed === item.requested}
+        >
+          Đọc thế này
+        </Button>
+      </form>
+    </div>
   );
 }
 
@@ -107,6 +183,8 @@ function Card({ bookId, item, onOpenReview }: { bookId: string; item: WorkItem; 
         <Button size="sm" variant="secondary" icon={AudioLines} className="mt-3" onClick={onOpenReview}>
           Nghe ở tab Cần nghe lại
         </Button>
+      ) : item.kind === "pronunciation" && item.surface ? (
+        <PronunciationFix bookId={bookId} item={item} />
       ) : (
         <div className="mt-3 flex flex-wrap gap-1.5" aria-label="Lựa chọn">
           {item.options.map((option) => (
@@ -148,7 +226,8 @@ export function WorkInbox({ bookId, onOpenReview }: { bookId: string; onOpenRevi
     <div className="mt-5">
       <p className="max-w-3xl text-sm text-fg-2">
         Máy đã tự quyết và đang chạy tiếp - không có gì phải chờ anh. Đây là những chỗ nó không chắc, xếp theo lợi: việc ở
-        trên sửa một lần được nhiều câu nhất. Bước này để xem; sửa trực tiếp từng việc sẽ có ở bước kế.
+        trên sửa một lần được nhiều câu nhất. Cách đọc tên sửa được ngay tại đây, không phải dừng sách; các loại việc khác
+        sẽ sửa được ở bước kế.
       </p>
       <div className="mt-4 overflow-x-auto">
         <Segmented<WorkKind | "all">

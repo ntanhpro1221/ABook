@@ -90,3 +90,55 @@ def test_the_second_scorer_flags_only_confident_disagreements_on_current_labels(
     assert [item["key"] for item in speakers] == ["speaker:c"], "chỉ bất đồng chắc trên đúng nhãn đang dùng"
     item = speakers[0]
     assert item["current"] == "Lucien" and item["options"][:2] == ["Rhine", "Lucien"] and "Người kể" in item["options"]
+
+
+def test_a_pronunciation_card_has_lines_to_hear_and_shows_a_waiting_request(tmp_path: Path) -> None:
+    """Bước 2: người nghe nghe máy đang đọc tên thế nào (câu đã thu trước), sửa ngay trên thẻ; mong muốn chưa áp thì thẻ
+    nói "đang chờ" thay vì im lặng như chưa sửa."""
+    from ebook_reader.listener_overrides import request_pronunciation
+
+    project = make_book(tmp_path)
+    db = sqlite3.connect(project / "project.sqlite3")
+    db.execute("UPDATE segments SET wav_path='chunks/8.wav' WHERE id=8")
+    db.commit()
+    db.close()
+    card = next(item for item in work_items(project)["items"] if item["kind"] == "pronunciation")
+    assert card["surface"] == "Hailkes" and card["requested"] is None
+    assert card["examples"][0]["text"].startswith("Hailkes") and card["examples"][0]["hasAudio"] is True
+
+    request_pronunciation(project, "Hailkes", "Hên-khơ", now=time.time())
+    card = next(item for item in work_items(project)["items"] if item["kind"] == "pronunciation")
+    assert card["requested"] == "Hên-khơ", "dây chuyền chưa áp: thẻ vẫn đó, kèm cách đọc đang chờ"
+
+
+def test_the_studio_writes_the_request_and_refuses_a_reading_the_voice_cannot_say(tmp_path: Path) -> None:
+    """Giao diện không ghi SQLite của sách: chỉ ghi overrides.json. Cách đọc không phải âm tiết tiếng Việt bị từ chối NGAY,
+    kèm lý do đọc được - không để tới ranh giới chương mới lặng lẽ bỏ qua."""
+    from ebook_reader.listener_overrides import pronunciation_requests, read_overrides
+    from ebook_reader.webui.library import Preferences, book_id
+    from ebook_reader.webui.listening import Listening
+    from ebook_reader.webui.server import App, Server
+    from tests.test_webui_listen_and_sync import FakeRunner, _request
+
+    project = make_book(tmp_path)
+    preferences = Preferences(tmp_path / "prefs" / "preferences.json")
+    preferences.update({"libraryRoot": str(tmp_path)})
+    app = App(preferences=preferences, runner=FakeRunner(), token="t", listening=Listening(tmp_path / "prefs" / "l.json"))
+    server = Server(app, port=0).start()
+    headers = {"X-Ebook-Token": "t"}
+    path = f"/api/books/{book_id(project)}/pronunciation"
+    before = (project / "project.sqlite3").read_bytes()
+    try:
+        status, data, _ = _request(server.port, "POST", path, headers=headers,
+                                   body={"surface": "Hailkes", "spokenForm": " Hên-khơ "})
+        assert status == 200 and json.loads(data)["spokenForm"] == "Hên-khơ"
+        assert pronunciation_requests(read_overrides(project)) == [{"surface": "Hailkes", "spoken_form": "Hên-khơ"}]
+        status, data, _ = _request(server.port, "POST", path, headers=headers,
+                                   body={"surface": "Hailkes", "spokenForm": "Hlkx"})
+        assert status == 400 and "âm tiết tiếng Việt" in json.loads(data)["error"]
+        status, data, _ = _request(server.port, "POST", path, headers=headers,
+                                   body={"surface": "Lucien Evans", "spokenForm": "Lu-si-en"})
+        assert status == 400 and "MỘT từ" in json.loads(data)["error"]
+    finally:
+        server.stop()
+    assert (project / "project.sqlite3").read_bytes() == before, "chỉ dây chuyền được ghi SQLite của sách"
