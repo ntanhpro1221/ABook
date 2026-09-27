@@ -244,7 +244,7 @@ def _existing_project_paths(project_root: Path | str) -> ProjectPaths:
     settings = root / "book_settings.json"
     if not db.is_file() or not settings.is_file():
         raise FileNotFoundError(
-            f"Not an Ebook Reader project (project.sqlite3/book_settings.json missing): {root}"
+            f"Not an ABook project (project.sqlite3/book_settings.json missing): {root}"
         )
     return ProjectPaths(
         root=root,
@@ -1414,7 +1414,7 @@ def _add_json_argument(parser: argparse.ArgumentParser) -> None:
 def build_parser() -> argparse.ArgumentParser:
     parser = HeadlessArgumentParser(
         prog="ebook-reader-headless",
-        description="Headless project creation, execution, validation, and QA for Ebook Reader.",
+        description="Headless project creation, execution, validation, and QA for ABook.",
     )
     _add_json_argument(parser)
     subparsers = parser.add_subparsers(dest="command", required=True)

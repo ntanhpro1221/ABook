@@ -11,7 +11,7 @@ import os
 from pathlib import Path
 from typing import Any, Callable
 
-APP_NAME = "Ebook Reader"
+APP_NAME = "ABook"
 APP_USER_MODEL_ID = "EbookReader.Desktop"
 INSTANCE_SERVER_NAME = f"{APP_USER_MODEL_ID}.SingleInstance"
 INSTANCE_ACTIVATE_MESSAGE = b"activate"

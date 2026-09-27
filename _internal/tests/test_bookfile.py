@@ -12,8 +12,9 @@ import pytest
 
 from ebook_reader.webui import bookfile
 from ebook_reader.webui.bookfile import MIMETYPE, BookFile, BookFileError
-from ebook_reader.webui.library import book_id
+from ebook_reader.webui.library import Library, Preferences, book_id
 from ebook_reader.webui.listening import Listening
+from ebook_reader.webui.sync import Devices, SyncApp, manifest
 from tests.test_webui_listen_and_sync import make_project
 
 
@@ -33,7 +34,6 @@ def test_one_file_carries_the_whole_book_and_the_phone_layout(tmp_path: Path) ->
         assert audio.compress_type == zipfile.ZIP_STORED, "audio không nén: phát và tua thẳng trong gói"
     with BookFile(path) as book:
         book.verify()
-        assert book.identity.startswith("bk-") and book.book["id"] == book.identity
         assert set(book.content) == {"cast.json", "chapters/00001_645.mp3", "scripts/1.json", "scripts/2.json",
                                      "samples/3.wav"}
         assert book.read("chapters/00001_645.mp3") == (project / "output" / "chapters" / "00001_645.mp3").read_bytes()
@@ -60,11 +60,45 @@ def test_the_file_never_carries_anyones_listening(tmp_path: Path) -> None:
     assert "42.5" not in everything and "bí mật" not in everything and '"done": true' not in everything
 
 
-def test_the_same_production_keeps_its_identity_when_exported_again(tmp_path: Path) -> None:
+def test_the_book_carries_no_id_of_any_app(tmp_path: Path) -> None:
+    """Chủ sách 27-09: sách và dữ liệu nghe không biết đến mã; mã là việc của app. Gói không mang mã nào - kể cả mã
+    của máy làm ra nó (đường dẫn thư mục, lộ cả tên ổ đĩa)."""
+    project, path = _pack(tmp_path)
+    with zipfile.ZipFile(path) as archive:
+        book = json.loads(archive.read("book.json"))
+        everything = "".join(archive.read(name).decode("utf-8") for name in archive.namelist() if name.endswith(".json"))
+    assert "id" not in book and "packageId" not in book and "id" not in book["package"]
+    assert book_id(project) not in everything and "bk-" not in everything
+    assert manifest(project, book_id(project), Listening(tmp_path / "listening.json")).get("packageId") is None
+
+
+def test_exporting_again_gives_the_same_content(tmp_path: Path) -> None:
     project, first = _pack(tmp_path)
     second = bookfile.pack(project, tmp_path / f"lai{bookfile.EXTENSION}")
     with BookFile(first) as a, BookFile(second) as b:
-        assert a.identity == b.identity
+        assert a.chapter_prints == b.chapter_prints and a.content_key == b.content_key
+        assert a.content_key.startswith("f-")
+
+
+def test_the_computer_recognises_its_own_book_in_a_file(tmp_path: Path) -> None:
+    """Điện thoại hỏi "cuốn tôi mở từ file là cuốn nào của máy tính" (POST /sync/v1/match): máy tính so audio từng
+    chương rồi trả mã của mình; audio khác thì không nhận. Mã băm nhớ trong kho của app, không ghi vào thư mục sách."""
+    root = tmp_path / "thu_vien"
+    root.mkdir()
+    project = make_project(root)
+    preferences = Preferences(tmp_path / "preferences.json")
+    preferences.update({"libraryRoot": str(root)})
+    app = SyncApp(Library(preferences), Listening(tmp_path / "listening.json"), Devices(tmp_path / "devices.json"),
+                  "Máy thử")
+    with BookFile(bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}")) as book:
+        prints = book.chapter_prints
+
+    assert app.match([{"key": "f-cua-dien-thoai", "chapters": prints}]) == {"f-cua-dien-thoai": book_id(project)}
+    other = {name: {**meta, "sha256": "0" * 64} for name, meta in prints.items()}
+    assert app.match([{"key": "f-khac", "chapters": other}]) == {}
+    assert app.match("rác") == {} and app.match([{"key": 1}, "x"]) == {}
+    assert (tmp_path / "fingerprints.json").is_file()
+    assert not [p for p in project.rglob("*") if "fingerprint" in p.name]
 
 
 def test_extracting_gives_the_folder_a_downloaded_book_has(tmp_path: Path) -> None:
@@ -72,7 +106,7 @@ def test_extracting_gives_the_folder_a_downloaded_book_has(tmp_path: Path) -> No
     with BookFile(path) as book:
         folder = book.extract(tmp_path / "thu_vien")
         again = book.extract(tmp_path / "thu_vien")  # nhập lại cùng cuốn: thay, không nhân đôi
-    assert folder == again and folder.name.startswith("bk-")
+    assert folder == again and folder.name == book.content_key
     assert (folder / "chapters" / "00001_645.mp3").is_file() and (folder / "book.json").is_file()
     assert [child.name for child in (tmp_path / "thu_vien").iterdir()] == [folder.name], "không để lại thư mục tạm"
 

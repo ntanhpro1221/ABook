@@ -21,7 +21,7 @@ from urllib.parse import parse_qs, unquote, urlsplit
 from .. import listener_overrides
 from . import actions, bookfile, cover_search, covers, listen_view, store
 from .library import Library, Preferences, book_id
-from .listening import Listening
+from .listening import RECORD_ID, Listening
 from .reviews import Reviews, review_view
 from .work_items import work_items
 from .sync import Devices, ExclusiveHTTPServer, Remote, SyncApp, SyncServer, local_addresses, remote_command, SYNC_PORT
@@ -71,6 +71,12 @@ class ApiError(Exception):
         super().__init__(message)
         self.status = status
         self.message = message
+
+
+def _held_record(body: dict[str, Any]) -> str | None:
+    """Hồ sơ nghe mà trình phát đang phát (nó ghi vào đúng hồ sơ ấy, xem `Listening._held`); không có thì None."""
+    record = body.get("record")
+    return record if isinstance(record, str) and RECORD_ID.fullmatch(record) else None
 
 
 class App:
@@ -219,7 +225,7 @@ class App:
     def open_existing(self, body: dict[str, Any]) -> dict[str, Any]:
         path = Path(str(body.get("path", ""))).expanduser()
         if not store.is_project(path):
-            raise ApiError(HTTPStatus.BAD_REQUEST, "Thư mục này không phải một sách của Ebook Reader")
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Thư mục này không phải một sách của ABook")
         self.preferences.add_recent(path.resolve())
         return {"id": book_id(path.resolve())}
 
@@ -312,7 +318,9 @@ class App:
 
     def listen_book(self, value: str) -> dict[str, Any]:
         path = self._book(value)
-        return listen_view.book(path, value, self.summary(path), self.listening.get(value))
+        view = listen_view.book(path, value, self.summary(path), self.listening.get(value))
+        view["records"] = self.listening.records(value)  # hồ sơ nghe gắn với cuốn này (webui/listening.py)
+        return view
 
     def voices(self) -> list[dict[str, Any]]:
         from ..voice_catalog import DEFAULT_NARRATOR_BY_GENDER, VOICE_PREVIEW_FILENAMES, narrator_presets
@@ -702,7 +710,8 @@ class Handler(BaseHTTPRequestHandler):
         self.app._book(value)
         body = self._body()
         state = self.app.listening.progress(
-            value, int(body.get("chapterId", 0)), float(body.get("seconds", 0)), float(body.get("duration", 0))
+            value, int(body.get("chapterId", 0)), float(body.get("seconds", 0)), float(body.get("duration", 0)),
+            record=_held_record(body),
         )
         self._send_json(HTTPStatus.OK, state)
 
@@ -724,7 +733,8 @@ class Handler(BaseHTTPRequestHandler):
         self.app._book(value)
         body = self._body()
         mark = self.app.listening.add_bookmark(
-            value, int(body.get("chapterId", 0)), float(body.get("seconds", 0)), str(body.get("note", ""))
+            value, int(body.get("chapterId", 0)), float(body.get("seconds", 0)), str(body.get("note", "")),
+            record=_held_record(body),
         )
         self._send_json(HTTPStatus.CREATED, mark)
 
@@ -745,13 +755,53 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Dấu trang không hợp lệ")
         self._send_json(HTTPStatus.OK, self.app.listening.restore_bookmark(value, body))
 
+    # ---- hồ sơ nghe: độc lập với sách, app giữ liên kết (webui/listening.py) ----------------------------------------
+
+    def _own_record(self, value: str, record: str) -> None:
+        self.app._book(value)
+        if self.app.listening.book_of(record) != value:
+            raise ApiError(HTTPStatus.NOT_FOUND, "Không có hồ sơ nghe này")
+
+    def get_records(self, _query: dict[str, list[str]], value: str) -> None:
+        self.app._book(value)
+        self._send_json(HTTPStatus.OK, {"records": self.app.listening.records(value)})
+
+    def post_record(self, _query: dict[str, list[str]], value: str) -> None:
+        self.app._book(value)
+        self.app.listening.create_record(value, str(self._body().get("name", "")))
+        self._send_json(HTTPStatus.CREATED, {"records": self.app.listening.records(value)})
+
+    def post_record_activate(self, _query: dict[str, list[str]], value: str, record: str) -> None:
+        self._own_record(value, record)
+        self.app.listening.activate(value, record)
+        self._send_json(HTTPStatus.OK, {"records": self.app.listening.records(value)})
+
+    def put_record(self, _query: dict[str, list[str]], value: str, record: str) -> None:
+        self._own_record(value, record)
+        if not self.app.listening.rename_record(record, str(self._body().get("name", ""))):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Tên hồ sơ không được để trống")
+        self._send_json(HTTPStatus.OK, {"records": self.app.listening.records(value)})
+
+    def post_record_move(self, _query: dict[str, list[str]], value: str, record: str) -> None:
+        self._own_record(value, record)
+        target = str(self._body().get("book", ""))
+        self.app._book(target)
+        self.app.listening.move_record(record, target)
+        self._send_json(HTTPStatus.OK, {"records": self.app.listening.records(value)})
+
+    def delete_record(self, _query: dict[str, list[str]], value: str, record: str) -> None:
+        self._own_record(value, record)
+        self.app.listening.delete_record(record)
+        self._send_json(HTTPStatus.OK, {"records": self.app.listening.records(value)})
+
     def get_sessions(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._book(value)
         self._send_json(HTTPStatus.OK, self.app.listening.sessions(value))
 
     def post_session(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._book(value)
-        self.app.listening.add_session(value, self._body())
+        body = self._body()
+        self.app.listening.add_session(value, body, record=_held_record(body))
         self._send_json(HTTPStatus.OK, {"ok": True})
 
     def post_reading(self, _query: dict[str, list[str]], value: str) -> None:
@@ -895,6 +945,12 @@ ROUTES: list[Route] = [
     ("PUT", re.compile(LISTEN + r"/bookmarks/([0-9a-f]+)"), Handler.put_bookmark),
     ("DELETE", re.compile(LISTEN + r"/bookmarks/([0-9a-f]+)"), Handler.delete_bookmark),
     ("POST", re.compile(LISTEN + r"/bookmarks/restore"), Handler.post_bookmark_restore),
+    ("GET", re.compile(LISTEN + r"/records"), Handler.get_records),
+    ("POST", re.compile(LISTEN + r"/records"), Handler.post_record),
+    ("POST", re.compile(LISTEN + r"/records/(r-[0-9a-f]{16})/activate"), Handler.post_record_activate),
+    ("PUT", re.compile(LISTEN + r"/records/(r-[0-9a-f]{16})"), Handler.put_record),
+    ("POST", re.compile(LISTEN + r"/records/(r-[0-9a-f]{16})/move"), Handler.post_record_move),
+    ("DELETE", re.compile(LISTEN + r"/records/(r-[0-9a-f]{16})"), Handler.delete_record),
     ("POST", re.compile(LISTEN + r"/night"), Handler.post_night),
     ("POST", re.compile(LISTEN + r"/reading"), Handler.post_reading),
     ("GET", re.compile(LISTEN + r"/sessions"), Handler.get_sessions),

@@ -1,14 +1,14 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, CircleDashed, History, Laptop, Loader2, MoreHorizontal, Pause, Play, RotateCcw } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, History, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, Trash2, UserRound } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import { usePageTitle } from "@/shared/title";
 import { formatClock, formatLength, formatNumber } from "@/shared/format";
-import { Button, EmptyState, IconButton, Progress, Skeleton, Tabs, TabsContent, TabsList, TabsTrigger, Tooltip, Vu } from "@/shared/ui";
+import { Button, Dialog, EmptyState, IconButton, Progress, Skeleton, Tabs, TabsContent, TabsList, TabsTrigger, Tooltip, Vu } from "@/shared/ui";
 import { useClip } from "./clip";
 import { bookStatusText, usePlayListenBook } from "./LibraryScreen";
 import { chapterHeard, resumePoint, type CastMember, type ListenBook, type ListenChapter } from "./model";
@@ -323,6 +323,127 @@ function HistoryTab({ book }: { book: ListenBook }) {
   );
 }
 
+/**
+ * Hồ sơ nghe của cuốn: dữ liệu nghe độc lập với sách, app giữ liên kết - một cuốn nhiều hồ sơ (nghe lại từ đầu mà giữ
+ * lần trước, mỗi người trong nhà một hồ sơ). Cuốn đang nạp trong trình phát thì trình phát theo sang hồ sơ mới.
+ */
+function RecordPicker({ book }: { book: ListenBook }) {
+  const source = useSource();
+  const player = usePlayer();
+  const mutations = useListenMutations(book.id);
+  const [dialog, setDialog] = useState<{ kind: "create" | "rename" | "delete"; name: string } | null>(null);
+  const records = book.records ?? [];
+  const active = records.find((record) => record.active);
+  if (!source.records || !active) return null;
+  const done = (message: string) => (promise: Promise<unknown>) =>
+    promise.then(() => toast(message)).catch((error: unknown) => toast.error(error instanceof Error ? error.message : String(error)));
+  const switchTo = (change: () => Promise<unknown>, message: string, startOver = false) =>
+    void done(message)(player.switchRecord(book.id, change, startOver));
+  const submit = () => {
+    if (!dialog) return;
+    const name = dialog.name.trim();
+    if (dialog.kind === "create") switchTo(() => mutations.createRecord.mutateAsync(name), `Hồ sơ mới “${name || "không tên"}” - nghe từ chương đầu`, true);
+    if (dialog.kind === "rename" && name) void done("Đã đổi tên hồ sơ")(mutations.renameRecord.mutateAsync({ recordId: active.id, name }));
+    if (dialog.kind === "delete") switchTo(() => mutations.removeRecord.mutateAsync(active.id), `Đã xoá hồ sơ “${active.name}”`);
+    setDialog(null);
+  };
+  return (
+    <>
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger asChild>
+          <button
+            type="button"
+            className="mt-3 inline-flex h-8 max-w-full items-center gap-1.5 rounded-full border border-line px-3 text-xs text-fg-2 hover:bg-hover hover:text-fg"
+          >
+            <UserRound className="size-3.5 shrink-0" />
+            <span className="shrink-0">Hồ sơ nghe:</span>
+            <span className="truncate font-medium text-fg">{active.name}</span>
+            <ChevronDown className="size-3.5 shrink-0" />
+          </button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Portal>
+          <DropdownMenu.Content align="start" sideOffset={6} className="z-50 w-72 rounded-xl border border-line bg-panel p-1.5 shadow-float">
+            <p className="px-2 pb-1.5 pt-1 text-xs text-fg-2">
+              Mỗi hồ sơ giữ chỗ nghe, dấu trang và lịch sử riêng - để nghe lại từ đầu mà giữ lần trước, hay mỗi người một hồ sơ.
+            </p>
+            {records.map((record) => (
+              <DropdownMenu.Item
+                key={record.id}
+                onSelect={() => {
+                  if (!record.active) switchTo(() => mutations.activateRecord.mutateAsync(record.id), `Đang dùng hồ sơ “${record.name}”`);
+                }}
+                className={cn(MENU_ITEM, "h-auto py-1.5")}
+              >
+                <Check className={cn("size-4 shrink-0", record.active ? "opacity-100" : "opacity-0")} />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate">{record.name}</span>
+                  <span className="block text-xs text-fg-3">
+                    {record.updatedAt ? `nghe gần nhất ${dayLabel(record.updatedAt).toLowerCase()}` : "chưa nghe"}
+                  </span>
+                </span>
+              </DropdownMenu.Item>
+            ))}
+            <DropdownMenu.Separator className="my-1 h-px bg-line" />
+            <DropdownMenu.Item onSelect={() => setDialog({ kind: "create", name: `Lần nghe ${records.length + 1}` })} className={MENU_ITEM}>
+              <Plus className="size-4" /> Nghe lại từ đầu (hồ sơ mới)…
+            </DropdownMenu.Item>
+            <DropdownMenu.Item onSelect={() => setDialog({ kind: "rename", name: active.name })} className={MENU_ITEM}>
+              <Pencil className="size-4" /> Đổi tên hồ sơ này…
+            </DropdownMenu.Item>
+            <DropdownMenu.Item onSelect={() => setDialog({ kind: "delete", name: active.name })} className={cn(MENU_ITEM, "text-danger")}>
+              <Trash2 className="size-4" /> Xoá hồ sơ này…
+            </DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu.Portal>
+      </DropdownMenu.Root>
+      <Dialog
+        open={dialog !== null}
+        onOpenChange={(open) => !open && setDialog(null)}
+        title={dialog?.kind === "create" ? "Nghe lại từ đầu" : dialog?.kind === "rename" ? "Đổi tên hồ sơ" : `Xoá hồ sơ “${active.name}”?`}
+        description={
+          dialog?.kind === "create"
+            ? "Hồ sơ mới bắt đầu từ chương đầu; hồ sơ đang dùng giữ nguyên chỗ nghe, dấu trang, lịch sử - quay lại lúc nào cũng được."
+            : dialog?.kind === "delete"
+              ? `Chỗ nghe, dấu trang và lịch sử của hồ sơ này mất hẳn, trên mọi máy đã ghép nối. Sách không bị ảnh hưởng${
+                  records.length > 1 ? " - cuốn chuyển sang hồ sơ nghe gần nhất còn lại." : "; đây là hồ sơ duy nhất nên cuốn sẽ như chưa nghe lần nào."
+                }`
+              : undefined
+        }
+        width="max-w-md"
+      >
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            submit();
+          }}
+          className="flex flex-col gap-4"
+        >
+          {dialog?.kind !== "delete" && (
+            <input
+              id="record-name"
+              autoFocus
+              maxLength={60}
+              aria-label="Tên hồ sơ"
+              placeholder="Tên hồ sơ"
+              value={dialog?.name ?? ""}
+              onChange={(event) => setDialog((current) => (current ? { ...current, name: event.target.value } : current))}
+              className="h-10 rounded-lg border border-line bg-panel px-3 text-sm outline-none focus:border-accent"
+            />
+          )}
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="ghost" onClick={() => setDialog(null)}>
+              Huỷ
+            </Button>
+            <Button type="submit" variant={dialog?.kind === "delete" ? "danger" : "primary"} disabled={dialog?.kind === "rename" && !dialog.name.trim()}>
+              {dialog?.kind === "create" ? "Tạo và nghe từ đầu" : dialog?.kind === "delete" ? "Xoá hồ sơ" : "Lưu"}
+            </Button>
+          </div>
+        </form>
+      </Dialog>
+    </>
+  );
+}
+
 export function BookScreen({
   extraActions,
   studioLink,
@@ -340,7 +461,15 @@ export function BookScreen({
   const player = usePlayer();
   const playBook = usePlayListenBook();
   const mutations = useListenMutations(id ?? "");
+  const source = useSource();
+  const client = useQueryClient();
   usePageTitle(book?.title);
+  // Điện thoại: mở sách là hỏi máy tính đã ghép bản mới nhất của hồ sơ nghe (chỗ nghe, tên, hồ sơ vừa chọn bên ấy) -
+  // không thì chỉ biết khi chính điện thoại phát hay dừng cuốn này.
+  useEffect(() => {
+    if (!id || !source.refreshListening) return;
+    void source.refreshListening(id).then(() => client.invalidateQueries({ queryKey: ["listen", "book", id] })).catch(() => undefined);
+  }, [client, id, source]);
 
   if (isLoading) {
     return (
@@ -412,6 +541,7 @@ export function BookScreen({
               <span>{book.progress.finished || book.progress.caughtUp ? bookStatusText(book) : heard > 0 ? `Đã nghe ${formatLength(heard)}` : "Chưa nghe"}</span>
               {!book.progress.finished && !book.progress.caughtUp && heard > 0 && <span>còn {formatLength(left)}</span>}
             </div>
+            <RecordPicker book={book} />
           </div>
           <div className="mt-5 flex flex-wrap items-center gap-2 max-sm:justify-center">
             {point && !caughtUp && (

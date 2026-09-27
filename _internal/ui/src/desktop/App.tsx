@@ -186,7 +186,7 @@ export function App() {
   const { data: preferences } = usePreferences();
   useTheme(preferences?.theme ?? info?.theme);
   const engine = useMemo(() => new WebAudioEngine(), []);
-  if (!info) return <div className="grid h-full place-items-center text-fg-3">Đang mở Ebook Reader…</div>;
+  if (!info) return <div className="grid h-full place-items-center text-fg-3">Đang mở ABook…</div>;
   return (
     <TooltipProvider delayDuration={350} skipDelayDuration={150}>
       <SourceProvider source={httpSource}>
