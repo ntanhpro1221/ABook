@@ -14,6 +14,10 @@ riêng cho việc này (model đặt tên gì cũng được, vd `gold:replay`).
 
 Chỉ chạy `analyze_all`; hai lượt hoà giải (danh tính NPC, cách đọc tên) chưa có đáp án nên bỏ qua.
 Không gọi mạng, không cần GPU.
+
+`--book-spelling` (LoRA v3, 28-09): câu trả lời ghi tên như SÁCH viết ("Triệu Vân", "Tử-long") thay vì chữ HOA của đáp
+án ("TRIỆU VÂN"). LoRA v2 học trên chữ HOA và rơi dấu hàng loạt ("HUYEN DUC", "TRINH PHU") - chữ hoa có dấu tiếng Việt
+hiếm trong dữ liệu gốc của model. Dây chuyền so tên không phân biệt hoa thường, nên chỉ cách viết đổi.
 """
 from __future__ import annotations
 
@@ -21,6 +25,7 @@ import argparse
 import json
 import re
 import sys
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -52,12 +57,21 @@ def _branch_for(schema: dict, batch_id: str) -> dict | None:
     return None
 
 
+def _title(name: str) -> str:
+    """"TRIỆU TỬ-LONG" -> "Triệu Tử-long": hoa chữ đầu mỗi âm tiết cách bằng dấu cách, như văn bản Việt viết tên."""
+    return " ".join(word[:1].upper() + word[1:].lower() for word in name.split(" "))
+
+
 class Replayer:
-    def __init__(self, db: ProjectDB, gold: dict, out: Path | None, gold_name: str = "") -> None:
+    def __init__(self, db: ProjectDB, gold: dict, out: Path | None, gold_name: str = "",
+                 book_spelling: bool = False) -> None:
         self.gold = gold
         self.gold_name = gold_name
         self.out = out.open("w", encoding="utf-8") if out else None
         self.segments = [dict(row) for row in db.list_segments()]
+        self.book_spelling = book_spelling
+        self.text = "\n".join(str(segment["text"]) for segment in self.segments)
+        self.spelling: dict[str, str] = {}
         self.chapter_titles = {int(row["id"]): str(row["title"]) for row in db.list_chapters()}
         self.known_gender = {
             str(row["canonical_name"]).upper(): str(row["gender"]) for row in db.list_characters()
@@ -76,6 +90,16 @@ class Replayer:
 
     def _gold_for(self, segment: dict):
         return self.gold.get((self.chapter_titles[int(segment["chapter_id"])], int(segment["seq"])))
+
+    def _spelled(self, speaker: str) -> str:
+        """--book-spelling: dạng viết hoa chữ đầu mà các chương này dùng nhiều nhất; sách không viết thì `_title`."""
+        if not self.book_spelling or speaker in ("NARRATOR", "UNKNOWN") or speaker.startswith("NPC_LOCAL"):
+            return speaker
+        if speaker not in self.spelling:
+            pattern = re.compile(rf"(?<!\w){re.escape(speaker)}(?!\w)", re.IGNORECASE)
+            forms = Counter(found.group(0) for found in pattern.finditer(self.text) if found.group(0)[:1].isupper())
+            self.spelling[speaker] = forms.most_common(1)[0][0] if forms else _title(speaker)
+        return self.spelling[speaker]
 
     # --- câu trả lời ------------------------------------------------------------------------
     def generator(self, request: dict) -> dict:
@@ -113,7 +137,7 @@ class Replayer:
             gender = GENDER.get(gold.gender) or self.known_gender.get(speaker.upper(), "unknown")
             if speaker in ("NARRATOR", "UNKNOWN") or gender not in ("male", "female"):
                 gender = "unknown"
-            answer.append({"id": row["id"], "kind": kind, "speaker": speaker, "gender": gender, "age": "unknown",
+            answer.append({"id": row["id"], "kind": kind, "speaker": self._spelled(speaker), "gender": gender, "age": "unknown",
                            "emotion": emotion, "intensity": intensity, "pace": gold.pace_order[0],
                            "volume": gold.volume_order[0], "confidence": 0.9})
         return {"segments": answer, "pronunciations": []}
@@ -169,6 +193,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("project", type=Path)
     parser.add_argument("--gold", required=True)
     parser.add_argument("--out", type=Path)
+    parser.add_argument("--book-spelling", action="store_true", help="tên trong câu trả lời viết như sách viết")
     args = parser.parse_args(argv)
 
     paths = ProjectPaths.build(args.project.resolve())
@@ -184,7 +209,7 @@ def main(argv: list[str] | None = None) -> int:
     segment(db, settings, print)
     if args.out:
         args.out.parent.mkdir(parents=True, exist_ok=True)
-    replay = Replayer(db, load_gold(GOLD_ROOT / args.gold), args.out, args.gold)
+    replay = Replayer(db, load_gold(GOLD_ROOT / args.gold), args.out, args.gold, book_spelling=args.book_spelling)
 
     def fake_available(self) -> bool:
         self._model_digest = FAKE_DIGEST
