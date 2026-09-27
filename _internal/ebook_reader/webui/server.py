@@ -19,7 +19,8 @@ from typing import Any, Callable, Protocol
 from urllib.parse import parse_qs, unquote, urlsplit
 
 from .. import listener_overrides
-from . import actions, bookfile, cover_search, covers, listen_view, store
+from . import actions, bookfile, cover_search, covers, listen_view, packages, store
+from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id
 from .listening import RECORD_ID, Listening
 from .reviews import Reviews, review_view
@@ -27,6 +28,13 @@ from .work_items import work_items
 from .sync import Devices, ExclusiveHTTPServer, Remote, SyncApp, SyncServer, local_addresses, remote_command, SYNC_PORT
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
+MISSING_UI_PAGE = (
+    "<!doctype html><html lang='vi'><meta charset='utf-8'><title>ABook</title>"
+    "<body style='font-family:system-ui,sans-serif;background:#0e1115;color:#e8eaed;padding:48px;line-height:1.6'>"
+    "<h1 style='font-size:22px'>Chưa dựng giao diện của ABook</h1>"
+    "<p>Chạy <code>npm run build</code> trong thư mục <code>_internal\\ui</code> rồi mở lại ABook.</p>"
+    "<p>Trong lúc chờ, giao diện cũ vẫn mở được: <code>app.py --classic</code>.</p></body></html>"
+)
 ASSET_DIR = Path(__file__).resolve().parents[1] / "assets"
 VOICE_PREVIEW_DIR = ASSET_DIR / "voice_previews"
 CHUNK = 256 * 1024
@@ -50,6 +58,7 @@ TYPES = {
 class Dialogs(Protocol):
     def pick_folder(self, title: str, start: str) -> str | None: ...
     def pick_files(self, title: str, start: str) -> list[str]: ...
+    def pick_book_file(self, title: str, start: str) -> str | None: ...
 
 
 # Câu chữ cho người đọc của các mã từ chối. listener_overrides.py giữ mã (file khoá chất lượng), câu chữ ở đây để sửa
@@ -94,6 +103,7 @@ class App:
     ) -> None:
         self.preferences = preferences
         self.listening = listening or Listening(preferences.path.with_name("listening.json"))
+        self.fingerprints = Fingerprints(self.listening.path.with_name("fingerprints.json"))
         self.devices = Devices(preferences.path.with_name("devices.json"))
         self.remote = Remote()
         self.sync_server: SyncServer | None = None
@@ -124,6 +134,31 @@ class App:
         if path is None:
             raise ApiError(HTTPStatus.NOT_FOUND, "Không tìm thấy sách này trong thư viện")
         return path
+
+    def _listenable(self, value: str) -> Path:
+        """Phía Nghe: dự án hoặc cuốn mở từ file `.abook` (webui/packages.py). Studio vẫn chỉ dùng `_book`."""
+        path = self.library.resolve_listenable(value)
+        if path is None:
+            raise ApiError(HTTPStatus.NOT_FOUND, "Không tìm thấy sách này trong thư viện")
+        return path
+
+    def open_book_file(self, path: str = "") -> dict[str, Any]:
+        """Mở một file `.abook`: chọn bằng hộp thoại của cửa sổ app, hoặc đường dẫn có sẵn (bấm đúp file trong
+        Explorer - desktop.py chuyển tới). Trả mã cuốn trong thư viện và cách mở (`packages.import_file`)."""
+        self._mutating()
+        if not path:
+            if self.dialogs is None:
+                raise ApiError(HTTPStatus.BAD_REQUEST, "Mở file sách trong cửa sổ app ABook")
+            path = self.dialogs.pick_book_file("Mở file sách", str(Path.home())) or ""
+            if not path:
+                return {"id": None}
+        if not Path(path).is_file():
+            raise ApiError(HTTPStatus.NOT_FOUND, "Không tìm thấy file sách này - có thể nó đã bị chuyển hay xoá")
+        try:
+            target, how = packages.import_file(Path(path), self.library.root, self.library.projects(), self.fingerprints)
+        except bookfile.BookFileError as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+        return {"id": book_id(target), "how": how}
 
     def summary(self, path: Path) -> dict[str, Any]:
         running = self.runner.running(path)
@@ -312,13 +347,22 @@ class App:
             view = listen_view.book(path, summary["id"], summary, self.listening.get(summary["id"]), with_chapters=False)
             view["eta"] = summary.get("eta")
             books.append(view)
+        for path in self.library.packages():
+            value = book_id(path)
+            try:
+                books.append(packages.listen(path, value, self.listening.get(value), with_chapters=False))
+            except (OSError, ValueError):  # gói hỏng: bỏ qua, như sách hỏng
+                continue
         books.sort(key=lambda item: ((item["state"].get("last") or {}).get("at") or 0, item.get("updatedAt") or 0),
                    reverse=True)
         return books
 
     def listen_book(self, value: str) -> dict[str, Any]:
-        path = self._book(value)
-        view = listen_view.book(path, value, self.summary(path), self.listening.get(value))
+        path = self._listenable(value)
+        if packages.is_package(path):
+            view = packages.listen(path, value, self.listening.get(value))
+        else:
+            view = listen_view.book(path, value, self.summary(path), self.listening.get(value))
         view["records"] = self.listening.records(value)  # hồ sơ nghe gắn với cuốn này (webui/listening.py)
         return view
 
@@ -446,7 +490,13 @@ class Handler(BaseHTTPRequestHandler):
         if not candidate.is_file():
             candidate = root / "index.html"
         if not candidate.is_file():
-            self._send_json(HTTPStatus.NOT_FOUND, {"error": "Chưa build giao diện (npm run build trong ui/)"})
+            # Cửa sổ app (desktop.py) mở thẳng trang này: nói cách sửa bằng trang đọc được, không phải JSON thô.
+            body = MISSING_UI_PAGE.encode("utf-8")
+            self.send_response(HTTPStatus.SERVICE_UNAVAILABLE)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
             return
         self._send_file(candidate, cache="/assets/" in candidate.as_posix())
 
@@ -525,14 +575,17 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.OK, self.app.book_view(value))
 
     def get_cast(self, _query: dict[str, list[str]], value: str) -> None:
-        self._send_json(HTTPStatus.OK, store.cast(self.app._book(value)))
+        path = self.app._listenable(value)
+        self._send_json(HTTPStatus.OK, packages.cast(path) if packages.is_package(path) else store.cast(path))
 
     def get_activity(self, query: dict[str, list[str]], value: str) -> None:
         technical = (query.get("technical") or ["0"])[0] == "1"
         self._send_json(HTTPStatus.OK, store.activity(self.app._book(value), technical=technical))
 
     def get_script(self, _query: dict[str, list[str]], value: str, chapter: str) -> None:
-        script = store.chapter_script(self.app._book(value), int(chapter))
+        path = self.app._listenable(value)
+        script = (packages.script(path, int(chapter)) if packages.is_package(path)
+                  else store.chapter_script(path, int(chapter)))
         if script is None:
             raise ApiError(HTTPStatus.NOT_FOUND, "Không có chương này")
         self._send_json(HTTPStatus.OK, script)
@@ -653,7 +706,7 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.OK, {"cover": None})
 
     def media_cover(self, _query: dict[str, list[str]], value: str) -> None:
-        path = covers.cover_file(self.app._book(value))
+        path = covers.cover_file(self.app._listenable(value))
         if path is None:
             raise ApiError(HTTPStatus.NOT_FOUND, "Sách này chưa có ảnh bìa")
         self._send_file(path, cache=True)
@@ -703,11 +756,14 @@ class Handler(BaseHTTPRequestHandler):
     def get_listen_library(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.listen_library())
 
+    def post_open_book_file(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.open_book_file(str(self._body().get("path") or "")))
+
     def get_listen_book(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.listen_book(value))
 
     def post_progress(self, _query: dict[str, list[str]], value: str) -> None:
-        self.app._book(value)
+        self.app._listenable(value)
         body = self._body()
         state = self.app.listening.progress(
             value, int(body.get("chapterId", 0)), float(body.get("seconds", 0)), float(body.get("duration", 0)),
@@ -716,21 +772,21 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.OK, state)
 
     def post_chapter_done(self, _query: dict[str, list[str]], value: str, chapter: str) -> None:
-        self.app._book(value)
+        self.app._listenable(value)
         state = self.app.listening.set_chapter_done(value, int(chapter), bool(self._body().get("done", True)))
         self._send_json(HTTPStatus.OK, state)
 
     def post_finished(self, _query: dict[str, list[str]], value: str) -> None:
-        self.app._book(value)
+        self.app._listenable(value)
         self._send_json(HTTPStatus.OK, self.app.listening.set_finished(value, bool(self._body().get("finished", True))))
 
     def post_rate(self, _query: dict[str, list[str]], value: str) -> None:
-        self.app._book(value)
+        self.app._listenable(value)
         self.app.listening.set_rate(value, float(self._body().get("rate", 1.0)))
         self._send_json(HTTPStatus.OK, {"ok": True})
 
     def post_bookmark(self, _query: dict[str, list[str]], value: str) -> None:
-        self.app._book(value)
+        self.app._listenable(value)
         body = self._body()
         mark = self.app.listening.add_bookmark(
             value, int(body.get("chapterId", 0)), float(body.get("seconds", 0)), str(body.get("note", "")),
@@ -739,17 +795,17 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.CREATED, mark)
 
     def put_bookmark(self, _query: dict[str, list[str]], value: str, mark: str) -> None:
-        self.app._book(value)
+        self.app._listenable(value)
         self.app.listening.update_bookmark(value, mark, str(self._body().get("note", "")))
         self._send_json(HTTPStatus.OK, {"ok": True})
 
     def delete_bookmark(self, _query: dict[str, list[str]], value: str, mark: str) -> None:
-        self.app._book(value)
+        self.app._listenable(value)
         self.app.listening.delete_bookmark(value, mark)
         self._send_json(HTTPStatus.OK, {"ok": True})
 
     def post_bookmark_restore(self, _query: dict[str, list[str]], value: str) -> None:
-        self.app._book(value)
+        self.app._listenable(value)
         body = self._body()
         if not re.fullmatch(r"[0-9a-f]{6,40}", str(body.get("id", ""))):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Dấu trang không hợp lệ")
@@ -758,16 +814,16 @@ class Handler(BaseHTTPRequestHandler):
     # ---- hồ sơ nghe: độc lập với sách, app giữ liên kết (webui/listening.py) ----------------------------------------
 
     def _own_record(self, value: str, record: str) -> None:
-        self.app._book(value)
+        self.app._listenable(value)
         if self.app.listening.book_of(record) != value:
             raise ApiError(HTTPStatus.NOT_FOUND, "Không có hồ sơ nghe này")
 
     def get_records(self, _query: dict[str, list[str]], value: str) -> None:
-        self.app._book(value)
+        self.app._listenable(value)
         self._send_json(HTTPStatus.OK, {"records": self.app.listening.records(value)})
 
     def post_record(self, _query: dict[str, list[str]], value: str) -> None:
-        self.app._book(value)
+        self.app._listenable(value)
         self.app.listening.create_record(value, str(self._body().get("name", "")))
         self._send_json(HTTPStatus.CREATED, {"records": self.app.listening.records(value)})
 
@@ -785,7 +841,7 @@ class Handler(BaseHTTPRequestHandler):
     def post_record_move(self, _query: dict[str, list[str]], value: str, record: str) -> None:
         self._own_record(value, record)
         target = str(self._body().get("book", ""))
-        self.app._book(target)
+        self.app._listenable(target)
         self.app.listening.move_record(record, target)
         self._send_json(HTTPStatus.OK, {"records": self.app.listening.records(value)})
 
@@ -795,23 +851,23 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.OK, {"records": self.app.listening.records(value)})
 
     def get_sessions(self, _query: dict[str, list[str]], value: str) -> None:
-        self.app._book(value)
+        self.app._listenable(value)
         self._send_json(HTTPStatus.OK, self.app.listening.sessions(value))
 
     def post_session(self, _query: dict[str, list[str]], value: str) -> None:
-        self.app._book(value)
+        self.app._listenable(value)
         body = self._body()
         self.app.listening.add_session(value, body, record=_held_record(body))
         self._send_json(HTTPStatus.OK, {"ok": True})
 
     def post_reading(self, _query: dict[str, list[str]], value: str) -> None:
-        self.app._book(value)
+        self.app._listenable(value)
         body = self._body()
         self.app.listening.set_reading(value, int(body.get("chapterId", 0)), int(body.get("index", 0)))
         self._send_json(HTTPStatus.OK, {"ok": True})
 
     def post_night(self, _query: dict[str, list[str]], value: str) -> None:
-        self.app._book(value)
+        self.app._listenable(value)
         self.app.listening.save_night(value, self._body())
         self._send_json(HTTPStatus.OK, {"ok": True})
 
@@ -884,13 +940,17 @@ class Handler(BaseHTTPRequestHandler):
         self._send_file(path, cache=True)
 
     def media_chapter(self, _query: dict[str, list[str]], value: str, chapter: str) -> None:
-        path = store.chapter_audio_path(self.app._book(value), int(chapter))
+        book = self.app._listenable(value)
+        path = (packages.chapter_file(book, int(chapter)) if packages.is_package(book)
+                else store.chapter_audio_path(book, int(chapter)))
         if path is None:
             raise ApiError(HTTPStatus.NOT_FOUND, "Chương này chưa nghe được")
         self._send_file(path)
 
     def media_sample(self, _query: dict[str, list[str]], value: str, segment: str) -> None:
-        path = store.sample_audio_path(self.app._book(value), int(segment))
+        book = self.app._listenable(value)
+        path = (packages.sample_file(book, int(segment)) if packages.is_package(book)
+                else store.sample_audio_path(book, int(segment)))
         if path is None:
             raise ApiError(HTTPStatus.NOT_FOUND, "Không có câu mẫu")
         self._send_file(path)
@@ -936,6 +996,7 @@ ROUTES: list[Route] = [
     ("DELETE", re.compile(r"/api/sync/pairing"), Handler.delete_sync_pairing),
     ("DELETE", re.compile(r"/api/sync/devices/([0-9a-f]+)"), Handler.delete_sync_device),
     ("GET", re.compile(r"/api/listen/library"), Handler.get_listen_library),
+    ("POST", re.compile(r"/api/listen/open-book-file"), Handler.post_open_book_file),
     ("GET", re.compile(LISTEN), Handler.get_listen_book),
     ("POST", re.compile(LISTEN + r"/progress"), Handler.post_progress),
     ("POST", re.compile(LISTEN + r"/chapters/(\d+)/done"), Handler.post_chapter_done),

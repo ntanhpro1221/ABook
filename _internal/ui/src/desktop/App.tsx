@@ -1,6 +1,7 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { useQueryClient } from "@tanstack/react-query";
 import { BookPlus, Clapperboard, Compass, FileAudio, FolderDown, Headphones } from "lucide-react";
-import { useEffect, useMemo, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { HashRouter, Route, Routes, useNavigate } from "react-router";
 import { Toaster, toast } from "sonner";
 import { BookScreen } from "@/listen/BookScreen";
@@ -49,12 +50,16 @@ function EmptyLibrary() {
       title="Chưa có sách để nghe"
       className="mt-12 rounded-2xl border border-dashed border-line"
       action={
-        <Button variant="primary" size="lg" icon={BookPlus} onClick={() => navigate("/studio/new")}>
-          Tạo sách nói đầu tiên
-        </Button>
+        <div className="flex flex-wrap justify-center gap-2">
+          <Button variant="primary" size="lg" icon={BookPlus} onClick={() => navigate("/studio/new")}>
+            Tạo sách nói đầu tiên
+          </Button>
+          <OpenBookFileButton variant="ghost" />
+        </div>
       }
     >
-      Sách xuất hiện ở đây ngay khi chương đầu tiên thu xong - không cần chờ cả cuốn.
+      Sách xuất hiện ở đây ngay khi chương đầu tiên thu xong - không cần chờ cả cuốn. Có file sách (.abook) từ máy khác
+      thì mở thẳng.
     </EmptyState>
   );
 }
@@ -147,6 +152,74 @@ function BookFileMenuItem({ book }: { book: ListenBook }) {
   );
 }
 
+/** Kết quả mở một file sách (`POST /api/listen/open-book-file`, hay cửa sổ app khi bấm đúp file .abook - desktop.py). */
+interface OpenedBook {
+  id: string | null;
+  how?: "new" | "existing" | "updated" | "project";
+  error?: string;
+  file?: string;
+}
+
+const OPENED_SAID: Record<NonNullable<OpenedBook["how"]>, [string, string | undefined]> = {
+  new: ["Đã thêm sách vào thư viện", "Sách đã chép vào thư viện - xoá file gốc cũng không sao."],
+  existing: ["Cuốn này đã có trong thư viện", undefined],
+  updated: ["Đã cập nhật lên bản nhiều chương hơn", "Chỗ đang nghe, dấu trang vẫn giữ nguyên."],
+  project: ["Đây là sách do Studio máy này làm", "Mở đúng cuốn ấy, không chép thêm bản nào."],
+};
+
+function useOpenedBook() {
+  const navigate = useNavigate();
+  const client = useQueryClient();
+  return useCallback(
+    (result: OpenedBook) => {
+      if (result.error) {
+        toast.error("Không mở được file sách", { description: result.file ? `${result.file}: ${result.error}` : result.error });
+        return;
+      }
+      if (!result.id) return;
+      void client.invalidateQueries({ queryKey: ["listen"] });
+      navigate(`/book/${result.id}`);
+      const [title, description] = OPENED_SAID[result.how ?? "new"];
+      toast.success(title, { description });
+    },
+    [client, navigate],
+  );
+}
+
+/** Cửa sổ app mở một file sách (bấm đúp .abook trong Explorer, kể cả khi app đang mở): desktop.py báo qua sự kiện. */
+function OpenedBookListener() {
+  const opened = useOpenedBook();
+  useEffect(() => {
+    const listener = (event: Event) => opened((event as CustomEvent<OpenedBook>).detail);
+    window.addEventListener("abook-opened", listener);
+    return () => window.removeEventListener("abook-opened", listener);
+  }, [opened]);
+  return null;
+}
+
+/** "Mở file sách": hộp chọn file của Windows (chỉ có trong cửa sổ app), nhập vào thư viện, mở trang sách. */
+function OpenBookFileButton({ variant = "secondary" }: { variant?: "secondary" | "ghost" }) {
+  const { data: info } = useAppInfo();
+  const opened = useOpenedBook();
+  const [busy, setBusy] = useState(false);
+  if (!info?.dialogs) return null;
+  const run = async () => {
+    setBusy(true);
+    try {
+      opened(await api<OpenedBook>("/api/listen/open-book-file", { method: "POST", body: {} }));
+    } catch (error) {
+      toast.error("Không mở được file sách", { description: (error as Error).message });
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Button variant={variant} icon={FileAudio} disabled={busy} onClick={() => void run()}>
+      {busy ? "Đang mở…" : "Mở file sách"}
+    </Button>
+  );
+}
+
 function StudioChipLink({ id }: { id: string }) {
   const navigate = useNavigate();
   return (
@@ -161,6 +234,7 @@ function LibraryRoute() {
   return (
     <LibraryScreen
       empty={<EmptyLibrary />}
+      header={<OpenBookFileButton />}
       recap={<MorningRecap className="mt-6" />}
       onOpenUpcoming={(book) => navigate(`/studio/${book.id}`)}
     />
@@ -201,6 +275,7 @@ export function App() {
         >
           <ClipBridge>
             <HashRouter>
+              <OpenedBookListener />
               <Shell>
                 <Routes>
                   <Route path="/" element={<LibraryRoute />} />
@@ -208,14 +283,16 @@ export function App() {
                     path="/book/:id"
                     element={
                       <BookScreen
-                        extraActions={(book) => (
-                          <>
-                            <BookFileMenuItem book={book} />
-                            <ExportMenuItem book={book} />
-                            <StudioMenuItem id={book.id} />
-                          </>
-                        )}
-                        studioLink={(book) => <StudioChipLink id={book.id} />}
+                        extraActions={(book) =>
+                          book.imported ? null : (
+                            <>
+                              <BookFileMenuItem book={book} />
+                              <ExportMenuItem book={book} />
+                              <StudioMenuItem id={book.id} />
+                            </>
+                          )
+                        }
+                        studioLink={(book) => (book.imported ? null : <StudioChipLink id={book.id} />)}
                       />
                     }
                   />

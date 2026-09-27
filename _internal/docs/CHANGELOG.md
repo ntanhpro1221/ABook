@@ -17,6 +17,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - **File sách `.abook`**: mỗi cuốn làm xong là một file duy nhất - bìa, văn bản có tag cảm xúc, audio từng chương, nhân
   vật và câu mẫu giọng - mở bằng ABook ở máy khác. Studio tự ghi file này khi sách xong và có nút "Xuất file sách". File
   được kiểm từng phần khi mở: hỏng hay bị sửa thì từ chối, không bao giờ vào thư viện nửa cuốn.
+- **Máy tính mở file `.abook`**: bấm đúp file trong Explorer (kể cả khi ABook đang mở) hoặc nút "Mở file sách" trong
+  Thư viện. Cuốn được chép vào thư viện (`Sách đã nhập`) và nghe đầy đủ: chương, đọc theo, nhân vật, câu mẫu, dấu trang,
+  hồ sơ nghe. Không thành hai cuốn: file do chính Studio máy này xuất ra mở đúng dự án ấy; mở lại cuốn đã có thì về cuốn
+  ấy, bản nhiều chương hơn thì cập nhật tại chỗ (chỗ đang nghe giữ nguyên).
+- Máy tính: ABook mở bằng **cửa sổ mới** (giao diện Nghe + Studio mới). Giao diện cũ vẫn mở được bằng
+  `app.py --classic`.
 
 ### Nghe sách - máy tính và điện thoại
 
