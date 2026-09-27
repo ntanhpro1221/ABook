@@ -121,6 +121,10 @@ DIRECTOR_CRITIC_SCHEMA_CONFIDENCE_MAX = ANALYSIS_CRITIC_CONFIDENCE_MAX
 DIRECTOR_CRITIC_POLICY_VERSION = ANALYSIS_DIRECTOR_CRITIC_POLICY_VERSION
 HOST_AFFECT_POLICY_VERSION = ANALYSIS_HOST_AFFECT_POLICY_VERSION
 ANALYSIS_LEDGER_POLICY_VERSION = "analysis_ledger_v26"
+# Singular first-person pronouns: a `voices.first_person_identity` equal to one of these names
+# nobody. Mirrors character_registry.FIRST_PERSON_PRONOUNS, which cannot be imported here because
+# character_registry imports this module.
+FIRST_PERSON_PRONOUNS = frozenset({"tôi", "ta", "mình", "tớ", "tao", "tui", "me", "i"})
 # Bumped when the schema began constraining kind per segment. A request built under the
 # old policy lets the model cross a source boundary that the checks downstream assume it
 # cannot, so the two versions must not be mistaken for each other.
@@ -5371,6 +5375,7 @@ def _analysis_group_fingerprint(
 def _analysis_policy_fingerprint(
     settings: dict[str, Any],
     quality_policy_hash: str | None,
+    first_person_identity: str = "",
 ) -> str:
     material = {
         "version": ANALYSIS_LEDGER_POLICY_VERSION,
@@ -5409,6 +5414,11 @@ def _analysis_policy_fingerprint(
             settings.get("low_confidence_threshold", 0.58)
         ),
     }
+    if first_person_identity:
+        # The batch prompt names the narrator (``_narrator_line``), so a candidate generated
+        # under one identity must never be reused under another. Only added when set, so the
+        # ledger fingerprint of every third-person book is exactly what it was.
+        material["first_person_identity"] = first_person_identity
     return sha256_text(
         json.dumps(material, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     )
@@ -6820,9 +6830,14 @@ class OllamaBookAnalyzer:
     ) -> None:
         self.settings = settings["analysis"]
         self.quality_profile = str(settings.get("quality_profile", "balanced"))
+        # Who "tôi" is in a first-person book - the same setting the registry uses after the
+        # analysis to fold pronoun labels into that character (resolve_first_person_labels).
+        identity = str(settings.get("voices", {}).get("first_person_identity", "") or "").strip()
+        self.first_person_identity = "" if identity.casefold() in FIRST_PERSON_PRONOUNS else identity
         self.analysis_policy_fingerprint = _analysis_policy_fingerprint(
             self.settings,
             quality_policy_hash,
+            self.first_person_identity,
         )
         self.allow_downloads = bool(settings.get("safety", {}).get("allow_network_downloads_during_job", False))
         self.db = db
@@ -7008,6 +7023,26 @@ class OllamaBookAnalyzer:
             return matched is not None
         except (OSError, subprocess.CalledProcessError):
             return False
+
+    def _narrator_line(self) -> str:
+        """The first-person narrator, when the book names one (``voices.first_person_identity``).
+
+        In a first-person book the narrator is never named in the narration, so a batch sees
+        "tôi" and nothing that says who that is. Measured on the first-person YMP test
+        chapter: the fine-tuned model gave the narrator's own 22 lines to the people he was
+        talking to (VINCE 13 times) and scored 34.0% on speakers; with this one line it
+        scored 89.4% (qwen3:8b 31.9% -> 61.7%). Folding pronoun labels afterwards cannot
+        recover that, because those lines never carried a pronoun label. Unset means third
+        person and the prompt is exactly what it was.
+        """
+        narrator = self.first_person_identity
+        if not narrator:
+            return ""
+        return (
+            f"Truyện kể ở ngôi thứ nhất: người kể chuyện xưng \"tôi\" (hoặc \"mình\", \"tớ\") trong lời kể "
+            f"là {narrator}. Câu thoại và nội tâm của chính người kể phải dùng speaker={narrator} - không "
+            f"dùng \"tôi\", NARRATOR hay tên người đang nói chuyện với {narrator}.\n\n"
+        )
 
     def _known_summary(self) -> str:
         if not self._speaker_counts:
@@ -7198,6 +7233,7 @@ class OllamaBookAnalyzer:
             rows.append(request_row)
         prompt = (
             f"Các chương hiện tại: {', '.join(chapter_titles)}\n\n"
+            f"{self._narrator_line()}"
             f"Nhân vật đã biết từ các phần trước:\n{self._known_summary()}\n\n"
             f"Các đoạn liên tiếp:\n{json.dumps(rows, ensure_ascii=False, indent=2)}"
         )
