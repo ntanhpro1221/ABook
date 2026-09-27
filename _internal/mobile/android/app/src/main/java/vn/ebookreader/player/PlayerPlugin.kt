@@ -3,6 +3,7 @@ package vn.ebookreader.player
 import android.Manifest
 import android.content.ComponentName
 import android.os.Build
+import android.os.Looper
 import androidx.core.content.ContextCompat
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
@@ -42,11 +43,17 @@ class PlayerPlugin : Plugin() {
         super.handleOnDestroy()
     }
 
-    /** Bảo đảm dịch vụ phát đã chạy rồi mới làm việc (lần đầu mất vài chục ms). */
+    /**
+     * Bảo đảm dịch vụ phát đã chạy rồi mới làm việc (lần đầu mất vài chục ms).
+     *
+     * Lệnh plugin của Capacitor chạy trên luồng nền của nó, còn MediaController gắn với luồng đã dựng nó: dựng ở đó thì
+     * `handleOnDestroy` (luồng chính) giải phóng nó là Media3 ném "called from a wrong thread" - app crash mỗi lần thoát
+     * (thấy 27-09 trên máy ảo). Nên ghim controller vào luồng chính.
+     */
     private fun withService(block: () -> Unit) {
         val future = controller ?: MediaController.Builder(
             context, SessionToken(context, ComponentName(context, PlaybackService::class.java)),
-        ).buildAsync().also { controller = it }
+        ).setApplicationLooper(Looper.getMainLooper()).buildAsync().also { controller = it }
         future.addListener({ Playback.onMain(block) }, MoreExecutors.directExecutor())
     }
 
