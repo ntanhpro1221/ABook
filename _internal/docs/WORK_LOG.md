@@ -13,7 +13,8 @@ chạy, tôi đứng im cho tới khi có người nói. Đó không phải lư�
 hoạt động, và nó giải thích khoảng trống **07:40 → 10:35** ngày 2026-09-01.
 
 Cách chặn: **luôn để một việc nền đang chạy**. Khi nó kết thúc, hệ thống tự đánh thức và
-lượt mới bắt đầu. Một run nhiều chương vừa là công việc thật vừa là đồng hồ đánh thức.
+lượt mới bắt đầu. Một việc dài (lượt đo model, trước đây là một run nhiều chương) vừa là công việc thật vừa là
+đồng hồ đánh thức - nhưng chỉ khi chính việc ấy phục vụ phát triển (27-09: lô không phải mục tiêu).
 
 Từ 2026-09-26 cái đồng hồ ấy là **hai chuông song song** (yêu cầu của chủ sách): **A**
 `scripts/heartbeat_event.py` reo đúng lúc một việc rời xong (dòng "xong (mã N)" trong
@@ -28,6 +29,16 @@ Bố cục hai thư mục làm việc này khả thi:
 |---|---|
 | `D:\Novels\Ebook Reader` | chạy run thật (không sửa mã khi đang chạy) |
 | `D:\Novels\Ebook Reader_dev` | worktree git, sửa mã và chạy test song song |
+
+## 2026-09-27
+
+| giờ | việc | bằng chứng |
+|---|---|---|
+| 23:4x (26-09) | Chủ sách: *"chưa bao giờ tôi bảo bắt đầu sản xuất cả, tất cả chỉ là phục vụ phát triển app"*. Kiểm bằng git: 20-21/09 có 91 commit (LLM + bản vá host), 22-25/09 chỉ 8 - gần hết là công cụ giữ lô chạy, trong khi nhánh LLM đứng im. **Từ nay lô chỉ là công cụ phát triển**: gỡ ranh giới 19 (lô 20 không tự chạy), lô 19 cho hết pha phân tích rồi `cli stop` 01:33 (thu âm resume trung thành) | `git log`, `runtime_events` lô 19 |
+| 23:5x | Giả thuyết cho bức tường VRAM 21-09: ma trận logits (151.936 từ vựng x 3,2k vị trí) chứ không phải độ dài prompt. `train_lora.py --logits answer` chỉ dựng logits cho phần đáp án; loss khớp bản đầy đủ (lệch 9,5e-7, Qwen3 tí hon trên CPU) | 80277ee |
+| 01:3x | `paired.py`: so theo cặp từng chương, tái lập đúng kết quả 21-09 (4b vs 8b: 3-6-1, người nói -0,62 ± 1,97, thời gian 0,73) | 4f7f8ff |
+| 01:41 | **Phép đo huấn luyện làm SẬP MÁY**: BSOD 0x1E trong `nvlddmkm.sys` (driver 592.47, RTX 5060 Laptop), khởi động lại 01:57, mất cả đêm, không có số đo. BSOD duy nhất trong 30 ngày; nvlddmkm cũng báo lỗi 153 lúc 21-09 03:05 - đúng giờ đo huấn luyện hôm ấy. Huấn luyện trên máy này dừng tới khi chủ sách quyết | Event Log 41/1001/1019, `C:/Windows/Minidump/092726-20390-01.dmp` |
+| 07:24 | Hàng đo 6 model qua Ollama (cùng loại việc với 2 tuần sản xuất), 10 chương TMA, thả rời: qwen3.5:4b, qwen3.5:9b, gemma4:e4b, lfm2.5:8b, ornith-1.5:9b, ministral-3:8b | `_model_eval_v2/27-09/night.log`, `runtime/detached_runs.log` |
 
 ## 2026-09-26
 
