@@ -22,14 +22,15 @@ def make_book(root: Path) -> Path:
         CREATE TABLE chapters (id INTEGER PRIMARY KEY, chapter_index INTEGER, title TEXT);
         CREATE TABLE segments (id INTEGER PRIMARY KEY, stable_id TEXT, chapter_id INTEGER, seq INTEGER, text TEXT,
                                kind TEXT, speaker TEXT, voice_profile_id INTEGER, canonical_character_id INTEGER,
-                               status TEXT, asr_text TEXT, asr_similarity REAL, warning_code TEXT, wav_path TEXT);
+                               status TEXT, asr_text TEXT, asr_similarity REAL, warning_code TEXT, wav_path TEXT,
+                               text_sha256 TEXT, gender TEXT);
         CREATE TABLE characters (id INTEGER PRIMARY KEY, canonical_name TEXT, display_name TEXT, gender TEXT,
-                                 locked INTEGER);
+                                 locked INTEGER, age TEXT);
         CREATE TABLE pronunciations (surface TEXT, spoken_form TEXT, confidence REAL, locked INTEGER);
         """
     )
     db.execute("INSERT INTO chapters VALUES (1, 1, '001')")
-    db.executemany("INSERT INTO characters VALUES (?,?,?,?,?)", [
+    db.executemany("INSERT INTO characters (id, canonical_name, display_name, gender, locked) VALUES (?,?,?,?,?)", [
         (1, "LUCIEN", "Lucien", "male", 0),
         (2, "HEIDI", "Heidi", "female", 0),
         (3, "ÁO CHOÀNG ĐEN", "Áo choàng đen", "unknown", 0),
@@ -50,6 +51,7 @@ def make_book(root: Path) -> Path:
         " canonical_character_id, status) VALUES (?,?,?,?,?,?,?,?,?, 'verified')",
         rows,
     )
+    db.execute("UPDATE segments SET text_sha256='sha-' || stable_id")
     db.execute("INSERT INTO pronunciations VALUES ('Hailkes', 'Hain', 0.72, 1)")
     db.execute("INSERT INTO pronunciations VALUES ('Lucien', 'Lu-xi-ên', 0.99, 1)")
     db.commit()
@@ -142,3 +144,62 @@ def test_the_studio_writes_the_request_and_refuses_a_reading_the_voice_cannot_sa
     finally:
         server.stop()
     assert (project / "project.sqlite3").read_bytes() == before, "chỉ dây chuyền được ghi SQLite của sách"
+
+
+def test_a_speaker_card_offers_clickable_choices_and_hides_once_the_listener_keeps_it(tmp_path: Path) -> None:
+    """"Ai nói câu này" bấm được: mỗi lựa chọn mang giá trị máy hiểu (khoá tên, NARRATOR, UNNAMED) và thẻ mang mã câu + băm
+    chữ. Chọn một người thì thẻ nói "đang chờ"; chọn giữ nguyên thì thẻ biến mất - đã có người quyết."""
+    from ebook_reader.listener_overrides import NARRATOR, UNNAMED, request_speaker
+
+    project = make_book(tmp_path)
+    (project / "doubt.json").write_text(json.dumps({"segments": {
+        "c": {"llm": "LUCIEN", "choice": "RHINE", "certainty": 0.91, "top": [["RHINE", 0.91], ["LUCIEN", 0.05]],
+              "disagree": True},
+    }}), encoding="utf-8")
+
+    card = next(item for item in work_items(project)["items"] if item["kind"] == "speaker")
+    assert (card["stableId"], card["textSha256"], card["currentValue"]) == ("c", "sha-c", "LUCIEN")
+    assert [choice["value"] for choice in card["choices"]] == ["RHINE", NARRATOR, UNNAMED], "người đang giữ câu có nút Giữ"
+
+    request_speaker(project, "c", "sha-c", "RHINE", now=time.time())
+    card = next(item for item in work_items(project)["items"] if item["kind"] == "speaker")
+    assert card["requested"] == "Rhine"
+
+    request_speaker(project, "c", "sha-c", "LUCIEN", now=time.time())
+    assert not [item for item in work_items(project)["items"] if item["kind"] == "speaker"]
+
+
+def test_the_studio_refuses_on_the_spot_a_speaker_the_pipeline_would_refuse(tmp_path: Path) -> None:
+    """Giao diện hỏi bằng ĐÚNG phép dây chuyền dùng (`listener_overrides.speaker_target`), nên không có yêu cầu nào được
+    ghi rồi lặng lẽ bị bỏ ở ranh giới chương. Và vẫn không ghi SQLite của sách."""
+    from ebook_reader.listener_overrides import read_overrides, speaker_requests
+    from ebook_reader.webui.library import Preferences, book_id
+    from ebook_reader.webui.listening import Listening
+    from ebook_reader.webui.server import App, Server
+    from tests.test_webui_listen_and_sync import FakeRunner, _request
+
+    project = make_book(tmp_path)
+    before = (project / "project.sqlite3").read_bytes()
+    preferences = Preferences(tmp_path / "prefs" / "preferences.json")
+    preferences.update({"libraryRoot": str(tmp_path)})
+    app = App(preferences=preferences, runner=FakeRunner(), token="t", listening=Listening(tmp_path / "prefs" / "l.json"))
+    server = Server(app, port=0).start()
+    headers = {"X-Ebook-Token": "t"}
+    path = f"/api/books/{book_id(project)}/speaker"
+    try:
+        refused = {
+            ("c", "sha-khac", "RHINE"): "đã đổi",
+            ("a", "sha-a", "RHINE"): "lời kể",
+            ("c", "sha-c", "KHONG CO AI"): "chưa có giọng",
+        }
+        for (stable_id, text_sha256, speaker), reason in refused.items():
+            status, data, _ = _request(server.port, "POST", path, headers=headers,
+                                       body={"stableId": stable_id, "textSha256": text_sha256, "speaker": speaker})
+            assert status == 400 and reason in json.loads(data)["error"], (speaker, data)
+        status, _data, _ = _request(server.port, "POST", path, headers=headers,
+                                    body={"stableId": "c", "textSha256": "sha-c", "speaker": "RHINE"})
+        assert status == 200
+    finally:
+        server.stop()
+    assert speaker_requests(read_overrides(project)) == [{"stable_id": "c", "speaker": "RHINE", "text_sha256": "sha-c"}]
+    assert (project / "project.sqlite3").read_bytes() == before

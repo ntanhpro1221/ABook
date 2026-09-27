@@ -61,5 +61,14 @@ Người duyệt đúng những câu ấy là cách rẻ nhất để đạt 100
      chương (70 câu còn lại chưa thu, tự đọc cách mới).
 3. **Sửa cấp câu** (3, 4, 5, 7): bảng ghi đè mới trong SQLite (thay đổi `database.py`/`pipeline.py` - kèm test crash/reopen
    như AGENTS.md đòi).
+   - **3 (ai nói câu này) XONG 27-09**, không cần bảng mới: thẻ có một nút cho mỗi ứng viên + "Giữ" -> `overrides.json`
+     `speakers` (mã câu + băm chữ) -> `ProjectDB.apply_listener_speaker`: câu mượn đúng nhãn và giọng sẵn có của người
+     được chọn (`listener_overrides.speaker_target`, dùng chung với giao diện để từ chối tại chỗ), nên "một người một
+     giọng" vẫn đúng; thu lại chỉ khi giọng đổi. Thử trên bản sao Tập 18: câu nội tâm chương 734 Người kể -> Nasdell,
+     `assert_voice_stability` cả cuốn vẫn qua. Lưu ý: nội tâm hiện vẫn đọc bằng giọng người kể (`tts._spoken_row`), nên
+     với câu nội tâm lần thu lại cho ra cùng giọng cho tới khi bản vá "nội tâm = giọng người nghĩ" được áp.
+   - Trên đường làm, lộ một lỗi có sẵn: câu bị đặt lại vẫn giữ ứng viên vòng sửa `promoted` của bản thu đã bỏ, và
+     recovery lần sau chết ("promoted candidate is not the current segment artifact"). Đã sửa: đặt lại câu xoá lịch sử
+     vòng sửa của nó, trong một transaction (`tests/test_a_reset_line_forgets_its_repairs.py`).
 4. **Vòng học**: xuất mọi lần sửa thành dòng kiểu gold, đưa vào dữ liệu LoRA/bộ chấm; đo model mới trên chính những câu
    người đã sửa.

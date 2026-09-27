@@ -17,7 +17,7 @@ from contextlib import closing
 from pathlib import Path
 from typing import Any
 
-from ..listener_overrides import pronunciation_requests, read_overrides, surface_key
+from ..listener_overrides import NARRATOR, UNNAMED, pronunciation_requests, read_overrides, speaker_requests, surface_key
 from . import store
 from .reviews import review_items, speaker_label
 
@@ -63,7 +63,8 @@ def work_items(project_root: Path) -> dict[str, Any]:
     with closing(store.connect(project_root)) as connection:
         names = store.chapter_names(connection)
         spoken = connection.execute(
-            "SELECT id, stable_id, chapter_id, seq, text, speaker, kind, voice_profile_id, canonical_character_id FROM segments"
+            "SELECT id, stable_id, chapter_id, seq, text, text_sha256, speaker, kind, voice_profile_id, canonical_character_id"
+            " FROM segments"
             " WHERE kind != 'narration' ORDER BY chapter_id, seq"
         ).fetchall()
         characters = {
@@ -93,6 +94,8 @@ def work_items(project_root: Path) -> dict[str, Any]:
     # 0. Ai nói câu này: bộ chấm ứng viên (doubt.json, scripts/model_eval/quote_scorer/doubt_for_book.py) CHẮC về một người
     #    có tên khác nhãn LLM. Đây là tín hiệu xếp hạng tốt nhất đã đo (review_curve.py: duyệt 20% câu theo nó 74,8 -> 84,6%,
     #    theo tin cậy LLM tự báo chỉ 79,7% = ngẫu nhiên). Bộ chấm không đổi nhãn nào - chỉ chỉ chỗ cho người nghe lại.
+    overrides = read_overrides(project_root)
+    speaker_wishes = {entry["stable_id"]: entry for entry in speaker_requests(overrides)}
     doubt_path = project_root / "doubt.json"
     if doubt_path.is_file():
         try:
@@ -109,6 +112,13 @@ def work_items(project_root: Path) -> dict[str, Any]:
                 continue
             choice = speaker_label(str(doubt.get("choice") or ""))
             options = [speaker_label(str(name)) for name, _ in doubt.get("top", []) if name] + ["Người kể", "Vai phụ không tên"]
+            # Lựa chọn bấm được: giá trị là khoá tên chuẩn (như doubt.json và sổ nhân vật), NARRATOR hay UNNAMED. Người nghe
+            # đã chọn thì thẻ nói "đang chờ" tới khi dây chuyền áp; chọn giữ nguyên thì thẻ biến mất (đã có người quyết).
+            choices = [{"label": speaker_label(str(name)), "value": str(name)} for name, _ in doubt.get("top", []) if name]
+            choices += [{"label": "Người kể", "value": NARRATOR}, {"label": "Vai phụ không tên", "value": UNNAMED}]
+            wish = speaker_wishes.get(stable_id)
+            if wish is not None and wish["speaker"].casefold() == str(row["speaker"]).casefold():
+                continue
             items.append({
                 "kind": "speaker",
                 "key": f"speaker:{stable_id}",
@@ -120,6 +130,13 @@ def work_items(project_root: Path) -> dict[str, Any]:
                 "options": list(dict.fromkeys(options)),
                 "current": speaker_label(str(row["speaker"])),
                 "examples": [_example(row, names)],
+                "stableId": stable_id,
+                "textSha256": str(row["text_sha256"] or ""),
+                # Người đang giữ câu không phải một lựa chọn: đã có nút "Giữ" riêng.
+                "choices": [entry for entry in {entry["value"]: entry for entry in choices}.values()
+                            if entry["value"].casefold() != str(row["speaker"]).casefold()],
+                "currentValue": str(row["speaker"]),
+                "requested": speaker_label(wish["speaker"]) if wish else None,
             })
 
     # 1. Chưa rõ nam hay nữ mà có lời: giọng sai giới là lỗi người nghe nhận ra ngay.
@@ -231,8 +248,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
 
     # 6. Cách đọc tên riêng máy chưa chắc. Người nghe sửa ngay trên thẻ; mong muốn chưa áp thì hiện "đang chờ", áp rồi thì
     #    dòng cách đọc thành của người nghe (tin cậy 1,0) và việc tự rơi khỏi danh sách.
-    requested = {surface_key(entry["surface"]): entry["spoken_form"]
-                 for entry in pronunciation_requests(read_overrides(project_root))}
+    requested = {surface_key(entry["surface"]): entry["spoken_form"] for entry in pronunciation_requests(overrides)}
     for row in pronunciations:
         occurrences = word_segments.get(str(row["surface"]), 0)
         if occurrences == 0:

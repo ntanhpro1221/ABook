@@ -58,6 +58,12 @@ PRONUNCIATION_PROBLEMS = {
     listener_overrides.MULTI_WORD: "Chỉ sửa được cách đọc của MỘT từ - cách đọc lưu theo từng từ.",
     listener_overrides.NOT_VIETNAMESE: "Cách đọc phải là các âm tiết tiếng Việt nối bằng gạch nối, ví dụ Hên-khơ.",
 }
+SPEAKER_PROBLEMS = {
+    listener_overrides.UNKNOWN_LINE: "Không còn câu này trong sách.",
+    listener_overrides.SOURCE_CHANGED: "Chữ của câu này đã đổi từ lúc máy chấm - tải lại danh sách việc.",
+    listener_overrides.NOT_SPEECH: "Câu này là lời kể, không có người nói để đổi.",
+    listener_overrides.NO_VOICE: "Người này chưa có giọng trong sách (chưa nói câu nào) - chưa gán được.",
+}
 
 
 class ApiError(Exception):
@@ -572,6 +578,24 @@ class Handler(BaseHTTPRequestHandler):
         listener_overrides.request_pronunciation(path, surface, spoken, now=time.time())
         self._send_json(HTTPStatus.OK, {"surface": surface, "spokenForm": spoken})
 
+    def post_speaker(self, _query: dict[str, list[str]], value: str) -> None:
+        # "Ai nói câu này": như cách đọc tên - ghi mong muốn vào overrides.json, dây chuyền áp ở ranh giới chương. Hỏi
+        # SQLite (chỉ đọc) ngay bây giờ để từ chối tại chỗ những gì dây chuyền chắc chắn sẽ từ chối: câu đã đổi chữ, câu
+        # không phải lời nói, người chưa có giọng.
+        self.app._mutating()
+        path = self.app._book(value)
+        body = self._body()
+        stable_id = str(body.get("stableId", "")).strip()[:120]
+        text_sha256 = str(body.get("textSha256", "")).strip()[:64]
+        speaker = str(body.get("speaker", "")).strip()[:200]
+        if not stable_id or not text_sha256 or not speaker:
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu câu hoặc người nói")
+        problem = store.speaker_request_problem(path, stable_id, text_sha256, speaker)
+        if problem is not None:
+            raise ApiError(HTTPStatus.BAD_REQUEST, SPEAKER_PROBLEMS.get(problem, "Không đổi được người nói câu này"))
+        listener_overrides.request_speaker(path, stable_id, text_sha256, speaker, now=time.time())
+        self._send_json(HTTPStatus.OK, {"stableId": stable_id, "speaker": speaker})
+
     def post_review(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._book(value)
         body = self._body()
@@ -833,6 +857,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(BOOK + r"/work"), Handler.get_work),
     ("POST", re.compile(BOOK + r"/review"), Handler.post_review),
     ("POST", re.compile(BOOK + r"/pronunciation"), Handler.post_pronunciation),
+    ("POST", re.compile(BOOK + r"/speaker"), Handler.post_speaker),
     ("GET", re.compile(BOOK + r"/cover/search"), Handler.get_cover_search),
     ("PUT", re.compile(BOOK + r"/cover"), Handler.put_cover),
     ("DELETE", re.compile(BOOK + r"/cover"), Handler.delete_cover),
