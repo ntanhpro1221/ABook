@@ -183,6 +183,9 @@ Kết quả đầu (27-09):
   truyện dịch app đọc - cộng JY (Kim Dung) và WP: 78.623 câu -> 54.963 cửa sổ (`build_csi.py`; dữ liệu gốc là hỏi-đáp
   trích đoạn, ứng viên dựng lại từ từ điển tên của chính bộ dữ liệu, bỏ chuỗi đáp án gán nhầm như 东西 "đồ vật"). **Giấy
   phép: dữ liệu CSI chỉ cho nghiên cứu phi thương mại** - không commit dữ liệu; phát hành mô hình học từ nó phải hỏi chủ sách.
+  Kết quả 0-shot (1 epoch 20k cửa sổ, chưa thấy câu tiếng Việt nào): test **40,0%** (có tên 43,6%) - kém xa PDNC (73,5%,
+  có tên 80,6%). Tiếng Trung chuyển sang tiếng Việt kém dù cùng thể loại gốc: ngữ cảnh chỉ ~270 chữ, ~10% chữ bị che, ứng
+  viên dựng lại từ từ điển tên (không có danh sách nhân vật thật). Giá trị làm điểm khởi đầu: chờ kiểm chứng chéo theo truyện.
 
 - **N6 với LoRA** (143 câu TMA test, chấm chính thức, ngưỡng chọn bằng kiểm chứng chéo bỏ-một-chương): bộ chấm mốc
   79,0% -> 81,1% khi câu tin cậy thấp lấy của LoRA (θ chọn 0,6-0,7); bộ chấm PDNC 84,6% -> **không lợi** (CV chọn θ = 0:
