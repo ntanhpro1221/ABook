@@ -1,6 +1,8 @@
 import tomllib
 from pathlib import Path
 
+from ebook_reader.desktop_shell import APP_USER_MODEL_ID
+
 
 INTERNAL_ROOT = Path(__file__).resolve().parents[1]
 PROJECT_ROOT = INTERNAL_ROOT.parent
@@ -103,6 +105,12 @@ def test_one_click_startup_contract() -> None:
     assert "wscript.exe" not in shortcut.lower()
     assert '"_internal\\ebook_reader\\assets\\ebook_reader.ico"' in shortcut
     assert "$Shortcut.IconLocation = $IconLocation" in shortcut
+    # Thẻ media ở Windows+A tra tên và biểu tượng app qua mã này trên shortcut Start Menu: phải trùng mã cửa sổ tự đặt.
+    assert f'$AppUserModelId = "{APP_USER_MODEL_ID}"' in shortcut
+    assert "Set-ShortcutAppId $StartMenuShortcutPath" in shortcut
+    assert shortcut[shortcut.index("$AppUserModelId"):].isascii(), (
+        "script không có BOM: Windows PowerShell đọc nó bằng bảng mã ANSI, phần C# phải thuần ASCII"
+    )
     project = tomllib.loads((INTERNAL_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     assert project["project"]["dependencies"] == [
         "PySide6==6.11.2",
