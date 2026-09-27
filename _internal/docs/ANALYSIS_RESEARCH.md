@@ -42,6 +42,23 @@ Tự học so với đối chứng trên 847 câu: 43 câu chỉ tự học đú
 (34,5% -> 62,2%); trọng số x3 MỘT MÌNH không giúp (81,7%), chỉ khuếch đại nhãn tạm "không ai" của chính cuốn sách.
 Tự học chọn nhãn tạm theo xác suất (bão hoà) thì CÓ HẠI (vòng 2: 80,0%, p 0,02) - cách chọn nhãn tạm là tất cả.
 
+**ĐÍNH CHÍNH (27-09 15:0x) - bảng trên chấm DỄ DÃI ở câu "không ai", con số cho app nhỏ hơn.** `--official` coi lựa chọn
+"không ai" của bộ chấm là đúng nếu gold nhận BẤT KỲ nhãn người kể/NPC nào; cách chấm chính thức của dự án (score_models)
+thì NARRATOR và NPC* là hai giọng khác nhau, và trong app "không ai" phải thành MỘT giọng cụ thể. Bộ chấm không đặt được
+nhãn ấy - đơn vị đúng để đo là HỆ KẾT HỢP: bộ chấm quyết người nói có tên khi đủ chắc, còn lại theo nhãn của LLM. Chấm
+CHẶT trên 143 câu test TMA (ngưỡng tin cậy chọn bằng kiểm chứng chéo bỏ-một-chương):
+
+| hệ | người nói, chấm chặt |
+|---|---|
+| qwen3:8b một mình | 67,1% |
+| **qwen3:8b + bộ chấm tự học** | **74,8%** (+7,7) |
+| LoRA 27-09 một mình | 74,8% |
+| **LoRA + bộ chấm tự học** | **76,9%** (+2,1) |
+
+Bản tự học có "không ai" x3 đoán "không ai" QUÁ TAY (40/143 câu, 20 trong số đó gold là người có tên) - dưới cách chấm dễ
+dãi nó trông tốt nhất, dưới cách chấm chặt thì bản cân lớp không x3 kết hợp tốt hơn. Lợi thật cho app: ~+8 điểm so với
+model sản xuất hiện tại, ~+2 so với LoRA; phần còn lại nằm ở quyết định giọng người kể vs NPC (chưa ai làm tốt).
+
 ## Tài liệu
 
 Đã đọc (27-09):
