@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
-import { BookCover } from "@/shared/BookCover";
 import {
   Button,
   Dialog,
@@ -46,6 +45,7 @@ import {
   formatTime,
 } from "@/shared/format";
 import { CastList } from "@/listen/BookScreen";
+import { CoverEditor } from "./CoverEditor";
 import { ReviewQueue, useReviewCount } from "./ReviewQueue";
 import { usePlayer } from "@/listen/player";
 import { useSource } from "@/listen/source";
@@ -508,7 +508,7 @@ export function ProjectScreen() {
         <ArrowLeft className="size-4" /> Studio
       </button>
       <header className="mt-5 flex gap-7">
-        <BookCover title={book.title} size="lg" className="w-44" />
+        <CoverEditor book={book} />
         <div className="min-w-0 flex-1 pt-1">
           <StatusPill label={book.starting ? "Đang khởi động" : book.statusLabel} tone={phaseTone(book.phase, live)} live={live} />
           <h1 className="mt-3 text-[30px] font-bold leading-tight tracking-tight">{book.title}</h1>

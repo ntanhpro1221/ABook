@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
-import { coverArtwork } from "@/shared/cover";
+import { coverArtwork, type CoverImage } from "@/shared/cover";
 import { formatClock } from "@/shared/format";
 import { Clock, ClockContext } from "./clock";
 import { isNative, type AudioEngine } from "./engine";
@@ -36,6 +36,7 @@ export type { SleepMode, SleepRequest } from "./sleep";
 export interface Track {
   bookId: string;
   bookTitle: string;
+  bookCover?: CoverImage | null;
   narrator: string;
   chapterId: number;
   chapterTitle: string;
@@ -78,7 +79,7 @@ export function scheduleWindow(schedule: SleepSchedule | null, now = new Date())
   return start.toDateString();
 }
 
-type BookRef = Pick<ListenBook, "id" | "title" | "narrator" | "state"> & { complete?: boolean };
+type BookRef = Pick<ListenBook, "id" | "title" | "narrator" | "state" | "cover"> & { complete?: boolean };
 
 interface PlayerState {
   track: Track | null;
@@ -287,7 +288,8 @@ export function PlayerProvider({
         title: next.chapterTitle,
         album: next.bookTitle,
         artist: next.narrator,
-        artwork: coverArtwork(next.bookTitle),
+        // Ảnh bìa thật cho bảng điều khiển media của hệ điều hành (đường dẫn tuyệt đối); không có thì vẽ từ tên.
+        artwork: next.bookCover ? new URL(next.bookCover.url, window.location.href).href : coverArtwork(next.bookTitle),
       },
       at,
       autoplay,
@@ -336,7 +338,7 @@ export function PlayerProvider({
     const current = refs.current.track;
     const sameSpot = current && current.bookId === book.id && current.chapterId === chapterId && at === undefined;
     const bookRate = adoptBook(book, chapters, extra?.purpose ?? "listen");
-    const next: Track = { bookId: book.id, bookTitle: book.title, narrator: book.narrator, chapterId, chapterTitle: chapter.fullTitle };
+    const next: Track = { bookId: book.id, bookTitle: book.title, bookCover: book.cover ?? null, narrator: book.narrator, chapterId, chapterTitle: chapter.fullTitle };
     if (native) {
       setTrack(next);
       refs.current.track = next;
@@ -362,7 +364,7 @@ export function PlayerProvider({
     const chapter = chapters.find((item) => item.id === chapterId && item.available);
     if (!chapter) return;
     const bookRate = adoptBook(book, chapters, "listen");
-    const next: Track = { bookId: book.id, bookTitle: book.title, narrator: book.narrator, chapterId, chapterTitle: chapter.fullTitle };
+    const next: Track = { bookId: book.id, bookTitle: book.title, bookCover: book.cover ?? null, narrator: book.narrator, chapterId, chapterTitle: chapter.fullTitle };
     setTrack(next);
     refs.current.track = next;
     if (native) {

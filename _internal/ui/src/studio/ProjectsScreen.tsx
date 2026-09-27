@@ -34,7 +34,7 @@ function ProjectRow({ book }: { book: BookSummary }) {
       onClick={() => navigate(`/studio/${book.id}`)}
       className="grid w-full grid-cols-[48px_minmax(0,1fr)_160px_170px] xl:grid-cols-[48px_minmax(0,1fr)_170px_200px_110px] items-center gap-4 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-hover"
     >
-      <BookCover title={book.title} size="sm" className="size-12" />
+      <BookCover title={book.title} size="sm" image={book.cover} className="size-12" />
       <div className="min-w-0">
         <div className="truncate font-semibold">{book.title}</div>
         <div className="truncate text-xs text-fg-2">

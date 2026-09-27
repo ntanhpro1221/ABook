@@ -1,5 +1,6 @@
 import * as Popover from "@radix-ui/react-popover";
 import { Capacitor } from "@capacitor/core";
+import { coverStyle } from "@/shared/cover";
 import * as Slider from "@radix-ui/react-slider";
 import { useQueries, useQueryClient } from "@tanstack/react-query";
 import {
@@ -593,7 +594,7 @@ export function PlayerBar({ compact = false }: { compact?: boolean }) {
         <FadingNotice className="mx-3 mt-2" />
         <div className="flex h-16 items-center gap-3 px-3">
           <button type="button" onClick={() => setExpanded(true)} className="flex min-w-0 flex-1 items-center gap-3 text-left" aria-label="Mở màn hình đang nghe">
-            <BookCover title={track.bookTitle} size="sm" className="size-11" />
+            <BookCover title={track.bookTitle} image={track.bookCover} size="sm" className="size-11" />
             <div className="min-w-0">
               <div className="truncate text-sm font-semibold">{track.chapterTitle}</div>
               <div className="truncate text-xs text-fg-2">
@@ -625,7 +626,7 @@ export function PlayerBar({ compact = false }: { compact?: boolean }) {
           className="flex min-w-0 items-center gap-3 rounded-lg p-1 text-left hover:bg-hover"
           aria-label="Mở màn hình đang nghe"
         >
-          <BookCover title={track.bookTitle} size="sm" className="size-12" />
+          <BookCover title={track.bookTitle} image={track.bookCover} size="sm" className="size-12" />
           <div className="min-w-0">
             <div className="truncate text-sm font-semibold">{track.chapterTitle}</div>
             <div className="truncate text-xs text-fg-2">
@@ -1168,7 +1169,14 @@ export function NowPlaying({ mobile = false }: { mobile?: boolean }) {
       className={cn("now-playing absolute inset-0 z-30 flex bg-bg", mobile && "flex-col")}
       aria-label="Đang nghe"
     >
-      <aside className={cn("flex shrink-0 flex-col bg-panel", mobile ? "min-h-0 flex-1 px-6 pb-6 pt-3" : "w-[400px] border-r border-line px-8 pb-8 pt-5")}>
+      <aside
+        className={cn("flex shrink-0 flex-col bg-panel", mobile ? "min-h-0 flex-1 px-6 pb-6 pt-3" : "w-[400px] border-r border-line px-8 pb-8 pt-5")}
+        // Mỗi cuốn một sắc: màu chủ đạo của ảnh bìa thật (máy chủ tính sẵn), không có thì màu của bìa vẽ từ tên.
+        // Nhạt dần trước khi tới chữ và nút, nên không đụng tới độ tương phản của chúng.
+        style={{
+          backgroundImage: `linear-gradient(180deg, color-mix(in oklab, ${track.bookCover?.color || coverStyle(track.bookTitle).from} 42%, transparent) 0%, transparent 58%)`,
+        }}
+      >
         <div className="flex items-center justify-between">
           <IconButton label="Thu nhỏ (Esc)" icon={ChevronDown} onClick={() => setExpanded(false)} />
           <span className="text-xs font-semibold uppercase tracking-[0.08em] text-fg-2">Đang nghe</span>
@@ -1178,7 +1186,7 @@ export function NowPlaying({ mobile = false }: { mobile?: boolean }) {
           <div className="-mx-6 mt-2 min-h-0 flex-1 border-y border-line">{panelBody}</div>
         ) : (
           <div className="mt-4 flex min-h-0 flex-1 flex-col items-center justify-center">
-            <BookCover title={track.bookTitle} size="xl" className="w-full max-w-[300px]" />
+            <BookCover title={track.bookTitle} image={track.bookCover} size="xl" className="w-full max-w-[300px]" />
           </div>
         )}
         <div className="mt-5 w-full text-center">

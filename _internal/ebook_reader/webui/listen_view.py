@@ -9,7 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from . import store
+from . import covers, store
 from .listening import book_progress
 
 FORMAT = "ebook-reader-audiobook/1"
@@ -69,6 +69,7 @@ def book(project_root: Path, book_id: str, summary: dict[str, Any], state: dict[
         "state": state,
         "progress": book_progress(state, available, complete=complete),
         # Thẻ "Đang nghe dở" nói rõ chương nào, kể cả khi danh sách không kèm chương.
+        "cover": covers.cover_view(project_root, book_id),
         "lastChapterTitle": next((chapter["fullTitle"] for chapter in items
                                   if chapter["id"] == (state.get("last") or {}).get("chapterId")), ""),
     }

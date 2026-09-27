@@ -1,5 +1,6 @@
 import { cn } from "@/shared/cn";
-import { coverLabel, coverStyle, splitTitle } from "@/shared/cover";
+import { useState } from "react";
+import { coverLabel, coverStyle, splitTitle, type CoverImage } from "@/shared/cover";
 import { Vu } from "@/shared/ui";
 
 // Bìa vuông kiểu album sách nói. Hoạ tiết là các vòng sóng âm lan ra từ góc - thứ duy nhất sách TXT
@@ -12,13 +13,20 @@ export function BookCover({
   title,
   size = "md",
   playing = false,
+  image,
   className,
 }: {
   title: string;
   size?: "xs" | "sm" | "md" | "lg" | "xl";
   playing?: boolean;
+  /** Ảnh bìa thật; ảnh không tải được thì quay về bìa vẽ, không để ô trống. */
+  image?: CoverImage | null;
   className?: string;
 }) {
+  const [failed, setFailed] = useState<string | null>(null);
+  if (image?.url && failed !== image.url) {
+    return <PhotoCover image={image} playing={playing} className={className} onError={() => setFailed(image.url)} />;
+  }
   const style = coverStyle(title);
   const [main, sub] = splitTitle(title);
   const small = size === "xs" || size === "sm";
@@ -77,6 +85,49 @@ export function BookCover({
       </div>
       {playing && (
         <span className="absolute bottom-1.5 right-1.5 grid place-items-center rounded-md bg-black/45 px-1 py-0.5" style={{ color: style.ink }}>
+          <Vu className="h-3" />
+        </span>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Bìa là ảnh thật. Khung luôn vuông như bìa album; bìa sách thường dọc (2:3) nên không cắt mất tên ở trên - đặt trọn
+ * ảnh ở giữa, hai bên là chính ảnh ấy phóng to và làm mờ, cách các app sách nói vẫn làm.
+ */
+function PhotoCover({
+  image,
+  playing,
+  className,
+  onError,
+}: {
+  image: CoverImage;
+  playing: boolean;
+  className?: string;
+  onError: () => void;
+}) {
+  const ratio = image.width && image.height ? image.width / image.height : 1;
+  const square = Math.abs(ratio - 1) < 0.08;
+  return (
+    <div
+      className={cn("relative aspect-square shrink-0 overflow-hidden rounded-lg shadow-card", className)}
+      style={{ background: image.color || "var(--color-hover)" }}
+      aria-hidden
+    >
+      {!square && (
+        <img src={image.url} alt="" draggable={false} className="absolute inset-0 size-full scale-125 object-cover opacity-60 blur-xl" />
+      )}
+      <img
+        src={image.url}
+        alt=""
+        draggable={false}
+        decoding="async"
+        onError={onError}
+        className={cn("relative size-full", square ? "object-cover" : "object-contain")}
+      />
+      {playing && (
+        <span className="absolute bottom-1.5 right-1.5 grid place-items-center rounded-md bg-black/45 px-1 py-0.5 text-white">
           <Vu className="h-3" />
         </span>
       )}

@@ -117,3 +117,13 @@ export function coverArtwork(title: string): string | undefined {
     return undefined;
   }
 }
+
+/** Ảnh bìa thật người dùng đặt (webui/covers.py). Không có thì mọi nơi vẽ bìa từ tên sách như trên. */
+export interface CoverImage {
+  url: string;
+  /** Màu chủ đạo máy chủ tính sẵn - để nhuộm nền, cùng một màu trên máy tính và điện thoại. */
+  color?: string;
+  width?: number;
+  height?: number;
+  version?: number;
+}
