@@ -157,7 +157,7 @@ def file_icon(*, small: bool = False, dashed: bool = False) -> str:
     phản chiếu qua nếp gấp - nên đầu vạt giữ đúng bán kính bo của ba góc kia (chủ sách 27-09: đầu vạt không được nhọn
     hơn chính nó lúc chưa gập).
     """
-    inset, fold, r = 64.0, 272.0, 150.0
+    inset, fold, r = 64.0, 272.0, 896 * 228 / 1024  # cùng độ tròn với icon app (22% cạnh ô)
     x0, y0, x1, y1 = inset, inset, 1024 - inset, 1024 - inset
     a, b = (x1 - fold, y0), (x1, y0 + fold)  # hai đầu nếp gấp
     outline = (f"M {x0 + r} {y0} H {a[0]} L {b[0]} {b[1]} V {y1 - r} A {r} {r} 0 0 1 {x1 - r} {y1}"
