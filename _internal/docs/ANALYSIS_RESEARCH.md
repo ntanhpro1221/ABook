@@ -398,6 +398,19 @@ Kết quả đầu (27-09):
   79,0% -> 81,1% khi câu tin cậy thấp lấy của LoRA (θ chọn 0,6-0,7); bộ chấm PDNC 84,6% -> **không lợi** (CV chọn θ = 0:
   không bao giờ chuyển; ngay trong nhóm tin cậy < 0,5 bộ chấm PDNC đúng 18/31, LoRA 13/31). Tạm kết luận kiến trúc:
   người nói = bộ chấm (PDNC), các trục còn lại = LoRA - chờ kiểm chứng chéo theo truyện xác nhận.
+- **Kiểm chứng chéo THEO TRUYỆN (hàng c3, xong 28-09 02:0x)**: 10 lượt, mỗi lượt học 9 truyện (dữ liệu dàn trang
+  paragraph + dàn nhân vật), chấm truyện thứ 10 chưa từng thấy - đúng tình huống của app. Epoch cuối, 1.827 câu:
+
+  | học trước | trung bình theo truyện | theo câu | hơn / hoà / thua "không học trước" (theo truyện) |
+  |---|---|---|---|
+  | không (para_cast) | 50,5% | 48,2% | - |
+  | tiếng Trung CSI (zh) | 49,6% | 52,8% | 4 / 0 / 6 |
+  | tiếng Anh PDNC + Trung (enzh) | **58,3%** | **68,5%** | **8 / 1 / 1** |
+
+  Học trước tiếng Anh là thứ mang lợi (+7,8 điểm trung bình theo truyện; con số theo câu phồng vì truyện đông câu nhất -
+  847 câu - nhảy 42 -> 80%); tiếng Trung một mình không giúp gì, khớp kết quả 0-shot 40% ở trên. Chênh giữa các truyện rất
+  lớn (35-80%): con số cho một truyện mới là khoảng rộng, không phải một điểm. Biến thể không đặc trưng dàn trang (base) và
+  kiểm chứng theo chương (cv) đang chạy.
 
 Công cụ: `compare_predictions.py` (so theo cặp từng câu, ensemble nhiều seed, McNemar, đọc cả dự đoán LLM từ project
 eval) tái lập đúng số 74,1 / 67,8 / 22-13 / p 0,1755 ở trên. Mọi lần chạy bộ chấm ghi `dev/test_predictions.jsonl` có xác
