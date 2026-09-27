@@ -33,7 +33,7 @@ import {
 import type { BookSummary, Chapter } from "@/studio/api";
 import { cn } from "@/shared/cn";
 import { usePageTitle } from "@/shared/title";
-import { phaseTone, useActivity, useBook, useReveal, useStart, useStop } from "@/studio/data";
+import { phaseTone, useActivity, useAppInfo, useBook, useReveal, useStart, useStop } from "@/studio/data";
 import {
   formatClock,
   formatDate,
@@ -230,6 +230,7 @@ function StopDialog({ book, open, onOpenChange }: { book: BookSummary; open: boo
 function Actions({ book }: { book: BookSummary }) {
   const start = useStart();
   const reveal = useReveal();
+  const remote = Boolean(useAppInfo().data?.remote);
   const navigate = useNavigate();
   const [confirmStop, setConfirmStop] = useState(false);
   const live = book.running;
@@ -267,7 +268,7 @@ function Actions({ book }: { book: BookSummary }) {
           Tiếp tục tạo
         </Button>
       ) : null}
-      <IconButton label="Mở thư mục sách" icon={FolderOpen} onClick={() => reveal.mutate(book.id)} />
+      {!remote && <IconButton label="Mở thư mục sách" icon={FolderOpen} onClick={() => reveal.mutate(book.id)} />}
       <StopDialog book={book} open={confirmStop} onOpenChange={setConfirmStop} />
     </div>
   );
