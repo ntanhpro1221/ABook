@@ -1,0 +1,96 @@
+# Đáp án chuẩn - Tắt đèn (Ngô Tất Tố, 1937-1939; hết bản quyền, vi.wikisource), Chương XX.
+# Truyện Việt viết thẳng bằng tiếng Việt, không qua bản dịch - cổng đo "truyện Việt chưa từng thấy" (28-09), cùng ba
+# model của cổng Tam quốc. Thoại gạch đầu dòng sau lời dẫn "X nói:", nhiều cặp hỏi - đáp không lời dẫn.
+# Nhân vật gọi bằng CHỨC DANH suốt cả cuốn, không có tên riêng: quan Phủ, lý trưởng, cai lệ, thủ quỹ -> dạng ấy là tên
+# (quy tắc 11, như "Trịnh lão"), đủ điểm; NPC*~ nửa điểm vì họ nói ở nhiều chương (quy tắc 5). "Tư Ân" (chương 26) là
+# tên phủ, không phải tên người.
+# Chị Dậu: cả cuốn gọi chị theo tên chồng - "chị Dậu" là tên của chị, không phải "chị" + tên riêng. CHỊ DẬU đủ, THỊ ĐÀO
+# (tên thật, lý trưởng khai ở câu 15, 20) đủ. DẬU trơn là CHỒNG chị: không điểm - hai vợ chồng chung một giọng là lỗi
+# nặng nhất cuốn này có thể mắc. Anh Dậu: DẬU / NGUYỄN VĂN DẬU đủ; ANH DẬU nửa điểm (tiền tố xưng hô bị prompt cấm, quy
+# tắc 11 - nhưng lời kể không bao giờ viết "Dậu" trơn cho anh). Thằng Dần: DẦN đủ, THẰNG DẦN nửa điểm, cùng lý do.
+# 31: trả lời ngay sau câu quan "vặn anh Dậu" -> anh Dậu (tiền do chị nộp, nhưng không có lời dẫn nào cho chị).
+# 49: lý trưởng giải thích (50-51 quan hỏi gặng chính lý trưởng). 80: “xin ông lớn thương” là cuối câu kể (quy tắc 8).
+0 H
+1 N
+2 N
+3 N
+4 N
+5 N NARRATOR neutral,afraid,sarcastic 0-1 normal normal u
+6 N NARRATOR neutral,sarcastic 0-1 normal normal u
+7 N NARRATOR neutral,sarcastic 0-1 normal normal u
+8 N NARRATOR neutral,sarcastic 0-1 normal normal u
+9 N NARRATOR neutral,sarcastic 0-1 normal normal u
+10 N NARRATOR neutral,sarcastic 0-1 normal normal u
+11 N
+12 N
+13 D CAI LỆ,NPC*~ angry,afraid,sad 1-2 fast,normal normal,loud m
+14 N
+15 D LÝ TRƯỞNG,NPC*~ angry,neutral,afraid 1-2 fast,normal normal,loud m
+16 D LÝ TRƯỞNG,NPC*~ angry,afraid,sad 1-2 fast,normal normal,loud m
+17 N NARRATOR neutral,angry 0-1 normal normal u
+18 D QUAN PHỦ,NPC*~ angry 2-3 fast,normal loud m
+19 N NARRATOR neutral,sad,afraid 0-1 normal normal u
+20 D LÝ TRƯỞNG,NPC*~ neutral,excited,afraid 0-2 normal,fast normal,loud m
+21 N
+22 D QUAN PHỦ,NPC*~ angry 2-3 normal,fast loud m
+23 N NARRATOR neutral,afraid 0-1 normal normal u
+24 D DẬU,NGUYỄN VĂN DẬU,ANH DẬU~ afraid,tired,sad 1-2 slow,normal soft,normal m
+25 N NARRATOR neutral,angry 0-1 normal normal u
+26 D QUAN PHỦ,NPC*~ angry 1-2 normal,fast loud,normal m
+27 N NARRATOR neutral,afraid 0-1 normal normal u
+28 D LÝ TRƯỞNG,NPC*~ afraid,angry,surprised 1-2 fast,normal normal,loud m
+29 N NARRATOR neutral,angry 0-1 normal normal u
+30 D QUAN PHỦ,NPC*~ angry,neutral 1-2 normal loud,normal m
+31 D DẬU,NGUYỄN VĂN DẬU,ANH DẬU~ afraid,sad,tired 1-2 normal,slow soft,normal m
+32 N
+33 D QUAN PHỦ,NPC*~ neutral,angry 0-2 normal normal,loud m
+34 N NARRATOR neutral,afraid 0-1 normal normal u
+35 D THỦ QUỸ,NPC*~ neutral,afraid 0-1 normal normal,soft m
+36 N
+37 D DẦN,THẰNG DẦN~ sad,afraid,angry 1-2 fast,normal normal,loud m
+38 N NARRATOR neutral,angry 0-1 normal normal u
+39 D QUAN PHỦ,NPC*~ angry 2-3 fast,normal loud m
+40 N NARRATOR neutral,afraid 0-1 normal normal u
+41 N NARRATOR neutral,sad 0-1 normal normal u
+42 N
+43 D QUAN PHỦ,NPC*~ neutral,angry 0-2 normal normal,loud m
+44 D THỦ QUỸ,NPC*~ neutral,afraid 0-1 normal normal,soft m
+45 N
+46 D LÝ TRƯỞNG,NPC*~ neutral,afraid 0-1 fast,normal normal m
+47 N NARRATOR neutral,angry 0-1 normal normal u
+48 D QUAN PHỦ,NPC*~ angry,neutral,surprised 1-2 normal normal,loud m
+49 D LÝ TRƯỞNG,NPC*~ neutral,afraid 0-1 normal normal m
+50 N
+51 D QUAN PHỦ,NPC*~ angry 1-2 normal,fast loud,normal m
+52 N
+53 D QUAN PHỦ,NPC*~ neutral,angry 0-2 slow,normal normal m
+54 N NARRATOR neutral,afraid 0-1 normal normal u
+55 D LÝ TRƯỞNG,NPC*~ afraid,sad 1-2 normal,slow soft,normal m
+56 N NARRATOR neutral,angry 0-1 normal normal u
+57 D QUAN PHỦ,NPC*~ angry 2-3 fast,normal loud m
+58 N NARRATOR neutral,afraid,sad 0-1 normal normal u
+59 D LÝ TRƯỞNG,NPC*~ afraid,sad 1-2 slow,normal soft,normal m
+60 N
+61 D QUAN PHỦ,NPC*~ neutral,sarcastic 0-1 normal,slow normal,soft m
+62 N NARRATOR neutral,afraid 0-1 normal normal u
+63 N
+64 D QUAN PHỦ,NPC*~ angry,neutral 1-2 normal loud,normal m
+65 N NARRATOR neutral,afraid 0-1 normal normal u
+66 D CHỊ DẬU,THỊ ĐÀO,ĐÀO afraid,sad 1-2 normal,slow soft,normal f
+67 N
+68 D LÝ TRƯỞNG,NPC*~ angry,neutral 1-2 fast,normal normal,loud m
+69 N NARRATOR neutral,angry 0-1 normal normal u
+70 D QUAN PHỦ,NPC*~ angry 2-3 fast,normal loud m
+71 N NARRATOR neutral,angry 0-1 normal normal u
+72 D QUAN PHỦ,NPC*~ angry 2-3 fast,normal loud m
+73 N NARRATOR neutral,afraid 0-1 normal normal u
+74 D QUAN PHỦ,NPC*~ angry 1-2 normal,fast loud m
+75 N
+76 N
+77 N NARRATOR neutral,angry 0-1 normal normal u
+78 D QUAN PHỦ,NPC*~ angry 2-3 normal,fast loud m
+79 N NARRATOR neutral,afraid 0-1 normal normal u
+80 D NARRATOR,LÝ TRƯỞNG~ neutral,afraid,sad 0-1 normal normal,soft u
+81 N
+82 D QUAN PHỦ,NPC*~ neutral,tender,happy,sarcastic 0-1 normal normal m
+83 N

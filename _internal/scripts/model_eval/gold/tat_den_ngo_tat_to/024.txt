@@ -1,0 +1,81 @@
+# Đáp án chuẩn - Tắt đèn (Ngô Tất Tố), Chương XXIV. Quy ước tên như 020.txt. Ở phủ: CAI LỆ (cũng nói ở chương 23, nên
+# NPC*~ nửa điểm), BIỆN LỆ (nguồn viết lẫn "Biên lệ" - cả hai đủ; chỉ nói ở chương này nên NPC* đủ), ông huyện MINH HẢO
+# (tên huyện, nhân vật được gọi theo nó: "quan Minh Hảo"; gọi tên ở 7-8 trước khi nói -> NPC*~), QUAN PHỦ (45: "Quan
+# chủ tiễn quan khách... ông kia đã lên ngồi ô tô, ông này còn nắm tay lại và dặn" - ông này là chủ nhà).
+# Đối đáp không lời dẫn: 18-22 cai lệ - biện lệ - cai lệ - biện lệ - cai lệ (19 "Tao vào bẩm" là biện lệ, người vừa lên
+# nhà tư ở 15; câu trích “Kệ hắn! Ông ăn xong đã!” nằm trong lời biện lệ, đọc bằng giọng hắn); 28-30 chị Dậu - biện lệ -
+# chị Dậu; 38-39 biện lệ - chị Dậu; 59-60 chị Dậu - biện lệ.
+0 H
+1 N
+2 D CAI LỆ,NPC*~ happy,excited,sarcastic 1-2 normal,fast normal m
+3 N
+4 D BIỆN LỆ,BIÊN LỆ,NPC* happy,sarcastic,excited 1-2 normal normal m
+5 N
+6 N
+7 D BIỆN LỆ,BIÊN LỆ,NPC* whispering,neutral 0-1 normal soft m
+8 N
+9 D MINH HẢO,HUYỆN MINH HẢO,NPC*~ happy,neutral 0-1 normal normal m
+10 N
+11 D BIỆN LỆ,BIÊN LỆ,NPC* neutral 0-1 normal normal,soft m
+12 N
+13 D MINH HẢO,HUYỆN MINH HẢO,NPC*~ neutral,surprised,happy 0-1 normal normal,loud m
+14 N
+15 N
+16 D BIỆN LỆ,BIÊN LỆ,NPC* sarcastic,neutral,afraid 0-2 normal normal m
+17 N
+18 D CAI LỆ,NPC*~ sarcastic,neutral 0-1 normal normal m
+19 D BIỆN LỆ,BIÊN LỆ,NPC* sarcastic,neutral,happy 0-2 normal normal m
+20 D CAI LỆ,NPC*~ neutral,sarcastic 0-1 normal normal m
+21 D BIỆN LỆ,BIÊN LỆ,NPC* sarcastic,neutral,happy 0-1 normal normal m
+22 D CAI LỆ,NPC*~ sarcastic,happy,neutral 0-2 normal normal m
+23 N
+24 D BIỆN LỆ,BIÊN LỆ,NPC* angry,neutral 1-2 normal,fast loud,normal m
+25 N
+26 D BIỆN LỆ,BIÊN LỆ,NPC* angry 2-2 fast,normal loud m
+27 N NARRATOR neutral,surprised,afraid 0-1 normal normal u
+28 D CHỊ DẬU,THỊ ĐÀO,ĐÀO surprised,afraid,neutral 0-1 normal normal,soft f
+29 D BIỆN LỆ,BIÊN LỆ,NPC* angry,sarcastic 1-2 fast,normal loud m
+30 D CHỊ DẬU,THỊ ĐÀO,ĐÀO neutral,afraid,surprised 0-1 normal normal,soft f
+31 N NARRATOR neutral,angry 0-1 normal normal u
+32 D BIỆN LỆ,BIÊN LỆ,NPC* angry 2-3 fast loud m
+33 N NARRATOR neutral,angry 0-1 normal normal u
+34 D CAI LỆ,NPC*~ angry,sarcastic 1-2 normal,fast normal,loud m
+35 N NARRATOR neutral,afraid 0-1 normal normal u
+36 D CHỊ DẬU,THỊ ĐÀO,ĐÀO afraid 1-2 fast,normal soft,normal f
+37 N
+38 D BIỆN LỆ,BIÊN LỆ,NPC* neutral,sarcastic 0-1 normal,slow normal,soft m
+39 D CHỊ DẬU,THỊ ĐÀO,ĐÀO sad,afraid 1-2 normal soft,normal f
+40 N NARRATOR neutral,angry 0-1 normal normal u
+41 D BIỆN LỆ,BIÊN LỆ,NPC* angry 1-2 normal loud,normal m
+42 N
+43 D BIỆN LỆ,BIÊN LỆ,NPC* angry,sarcastic 1-2 normal normal,loud m
+44 N
+45 D QUAN PHỦ,NPC*~ happy,neutral 0-1 normal normal m
+46 N
+47 N
+48 N NARRATOR neutral,sad,afraid 0-1 normal normal u
+49 D BIỆN LỆ,BIÊN LỆ,NPC* neutral,whispering 0-1 normal normal,soft m
+50 N NARRATOR neutral,surprised,afraid 0-1 normal normal u
+51 D CHỊ DẬU,THỊ ĐÀO,ĐÀO afraid,surprised 1-2 normal normal,soft f
+52 N
+53 D BIỆN LỆ,BIÊN LỆ,NPC* neutral,angry 0-1 normal normal m
+54 N NARRATOR neutral,afraid 0-1 normal normal u
+55 D CHỊ DẬU,THỊ ĐÀO,ĐÀO afraid 1-2 normal,slow soft,normal f
+56 N NARRATOR neutral,angry 0-1 normal normal u
+57 D BIỆN LỆ,BIÊN LỆ,NPC* angry 1-2 normal,fast loud,normal m
+58 N NARRATOR neutral,afraid 0-1 normal normal u
+59 D CHỊ DẬU,THỊ ĐÀO,ĐÀO afraid,sad 1-2 normal,slow soft,normal f
+60 D BIỆN LỆ,BIÊN LỆ,NPC* angry 1-2 fast,normal loud m
+61 N NARRATOR neutral,afraid 0-1 normal normal u
+62 N
+63 D CAI LỆ,NPC*~ angry 2-3 fast loud m
+64 N NARRATOR neutral,sad,afraid 0-1 normal normal u
+65 N NARRATOR neutral,sad 0-1 normal normal u
+66 D CHỊ DẬU,THỊ ĐÀO,ĐÀO sad,afraid 2-3 fast normal,loud f
+67 N
+68 D BIỆN LỆ,BIÊN LỆ,NPC* sarcastic,happy,angry 1-2 normal normal,loud m
+69 N
+70 D BIỆN LỆ,BIÊN LỆ,NPC* sarcastic,neutral,angry 0-2 normal normal m
+71 N NARRATOR neutral,sad 0-1 normal normal u
+72 D CHỊ DẬU,THỊ ĐÀO,ĐÀO sad,afraid,tired 1-2 slow,normal soft f
+73 N

@@ -1,0 +1,93 @@
+# Đáp án chuẩn - Tắt đèn (Ngô Tất Tố), Chương XXI. Quy ước tên như 020.txt: CHỊ DẬU / THỊ ĐÀO là chị (DẬU trơn là chồng
+# chị - không điểm); DẬU / NGUYỄN VĂN DẬU là anh (ANH DẬU nửa điểm); DẦN (THẰNG DẦN nửa điểm); LÝ TRƯỞNG, và "bà lão
+# láng giềng" - không tên, nói ở chương 19, 21, 26: BÀ LÃO LÁNG GIỀNG / BÀ LÃO đủ, NPC*~ nửa điểm (quy tắc 5, 11).
+# Chương này là bài thử đối đáp KHÔNG lời dẫn: 43-45 (anh Dậu - bà lão - anh Dậu, "nó" ở 45 là vợ anh, 46 "Rồi anh dấp
+# dính nước mắt"), 60-61 (chị Dậu đáp, rồi bà lão: "để tôi ẵm cháu cho"), 76 (chị Dậu vừa húp cháo vừa ứa nước mắt, bà
+# lão đáp ở 78), 21 (chị Dậu, 22 "Chị Dậu đương nói dở câu").
+0 H
+1 N NARRATOR neutral,afraid 0-1 normal normal u
+2 N
+3 N
+4 N NARRATOR neutral,sad 0-1 normal normal u
+5 D DẦN,THẰNG DẦN~ sad,afraid 1-2 normal normal m
+6 N
+7 D CHỊ DẬU,THỊ ĐÀO,ĐÀO whispering,neutral,tender 0-1 normal soft f
+8 N
+9 N
+10 D BÀ LÃO LÁNG GIỀNG,BÀ LÃO,NPC*~ surprised,neutral 0-1 normal normal f
+11 N
+12 D BÀ LÃO LÁNG GIỀNG,BÀ LÃO,NPC*~ surprised,neutral,happy,sarcastic 0-2 normal normal f
+13 N NARRATOR neutral,sad 0-1 normal normal u
+14 D CHỊ DẬU,THỊ ĐÀO,ĐÀO sad,angry,neutral 1-2 normal normal f
+15 N
+16 D BÀ LÃO LÁNG GIỀNG,BÀ LÃO,NPC*~ angry,neutral,sad 1-2 normal normal f
+17 N
+18 D CHỊ DẬU,THỊ ĐÀO,ĐÀO neutral,sad,tired 0-1 normal normal,soft f
+19 N
+20 D BÀ LÃO LÁNG GIỀNG,BÀ LÃO,NPC*~ neutral,afraid 0-1 normal normal f
+21 D CHỊ DẬU,THỊ ĐÀO,ĐÀO neutral,sad 0-1 normal normal f
+22 N NARRATOR neutral,sad 0-1 normal normal u
+23 N NARRATOR neutral,sad 0-1 normal normal u
+24 N NARRATOR neutral,sad 0-1 normal normal u
+25 D BÀ LÃO LÁNG GIỀNG,BÀ LÃO,NPC*~ sad,surprised,afraid 1-2 normal normal f
+26 N NARRATOR neutral,sad,tired 0-1 normal normal u
+27 D DẬU,NGUYỄN VĂN DẬU,ANH DẬU~ tired,sad 1-2 slow soft,normal m
+28 N
+29 D CHỊ DẬU,THỊ ĐÀO,ĐÀO neutral,tender 0-1 normal normal,soft f
+30 N
+31 D CHỊ DẬU,THỊ ĐÀO,ĐÀO tender,neutral,sad 0-1 normal soft,normal f
+32 N NARRATOR neutral,sad,tired 0-1 normal normal u
+33 D DẬU,NGUYỄN VĂN DẬU,ANH DẬU~ tired,sad 1-2 slow soft m
+34 N
+35 D BÀ LÃO LÁNG GIỀNG,BÀ LÃO,NPC*~ neutral,happy,tender 0-1 normal,fast normal f
+36 N
+37 D CHỊ DẬU,THỊ ĐÀO,ĐÀO neutral,tender 0-1 normal soft,normal f
+38 N
+39 N NARRATOR neutral,sad,tired 0-1 normal normal u
+40 D DẬU,NGUYỄN VĂN DẬU,ANH DẬU~ sad,angry,tired 1-2 slow,normal soft,normal m
+41 N
+42 D BÀ LÃO LÁNG GIỀNG,BÀ LÃO,NPC*~ angry,neutral,sarcastic 1-2 normal normal f
+43 D DẬU,NGUYỄN VĂN DẬU,ANH DẬU~ neutral,tired 0-1 slow,normal soft,normal m
+44 D BÀ LÃO LÁNG GIỀNG,BÀ LÃO,NPC*~ neutral,afraid 0-1 normal normal f
+45 D DẬU,NGUYỄN VĂN DẬU,ANH DẬU~ sad 1-2 slow soft,normal m
+46 N NARRATOR neutral,sad 0-1 normal normal u
+47 N
+48 D BÀ LÃO LÁNG GIỀNG,BÀ LÃO,NPC*~ tender,sad,neutral 0-1 normal,slow soft,normal f
+49 N
+50 N
+51 N
+52 D BÀ LÃO LÁNG GIỀNG,BÀ LÃO,NPC*~ neutral,surprised 0-1 normal normal f
+53 N
+54 D CHỊ DẬU,THỊ ĐÀO,ĐÀO neutral,excited 0-1 fast,normal normal f
+55 N
+56 D BÀ LÃO LÁNG GIỀNG,BÀ LÃO,NPC*~ happy,neutral 0-1 normal normal f
+57 N
+58 D BÀ LÃO LÁNG GIỀNG,BÀ LÃO,NPC*~ neutral,tender 0-1 normal normal f
+59 N
+60 D CHỊ DẬU,THỊ ĐÀO,ĐÀO sad,neutral 0-1 normal normal,soft f
+61 D BÀ LÃO LÁNG GIỀNG,BÀ LÃO,NPC*~ neutral,tender 0-1 normal normal f
+62 N
+63 D DẬU,NGUYỄN VĂN DẬU,ANH DẬU~ tired,sad 0-1 slow soft m
+64 N
+65 D BÀ LÃO LÁNG GIỀNG,BÀ LÃO,NPC*~ neutral,tender 0-1 normal normal f
+66 N
+67 D CHỊ DẬU,THỊ ĐÀO,ĐÀO tender,neutral 0-1 normal normal f
+68 N
+69 D CHỊ DẬU,THỊ ĐÀO,ĐÀO tender,neutral 0-1 normal,slow soft,normal f
+70 N NARRATOR neutral,tired 0-1 normal normal u
+71 N
+72 D BÀ LÃO LÁNG GIỀNG,BÀ LÃO,NPC*~ neutral,tender 0-1 normal normal f
+73 N
+74 D DẬU,NGUYỄN VĂN DẬU,ANH DẬU~ tired,neutral,tender 0-1 slow soft,normal m
+75 N NARRATOR neutral,sad 0-1 normal normal u
+76 D CHỊ DẬU,THỊ ĐÀO,ĐÀO sad 1-2 slow,normal soft,normal f
+77 N
+78 D BÀ LÃO LÁNG GIỀNG,BÀ LÃO,NPC*~ tender,neutral,happy 0-1 normal normal f
+79 N NARRATOR neutral,angry,afraid 0-1 normal normal u
+80 D LÝ TRƯỞNG,NPC*~ angry 2-3 fast loud m
+81 N NARRATOR neutral,afraid 0-1 normal normal u
+82 D BÀ LÃO LÁNG GIỀNG,BÀ LÃO,NPC*~ afraid,neutral,sad 0-2 fast,normal normal f
+83 N NARRATOR neutral,angry 0-1 normal normal u
+84 D LÝ TRƯỞNG,NPC*~ angry 2-3 fast loud m
+85 N NARRATOR neutral,angry 0-1 normal normal u
+86 D LÝ TRƯỞNG,NPC*~ angry 2-3 fast,normal loud m
