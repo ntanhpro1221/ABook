@@ -53,6 +53,12 @@ Người duyệt đúng những câu ấy là cách rẻ nhất để đạt 100
 1. **Hộp việc chỉ đọc**: dựng danh mục việc 1-2-3-6-8 từ SQLite đang có (độ tin cậy, sổ nhân vật, bí danh, phiên âm, hàng
    chờ), xếp hạng, giải thích, nghe thử. Chưa sửa được, nhưng đo được: bao nhiêu việc, lợi dự kiến bao nhiêu.
 2. **Sửa cấp nhân vật** (1, 2, 6): các cột ghim đã có - chỉ thiếu giao diện + đường áp ở ranh giới + đúc lại có chọn lọc.
+   - **6 (cách đọc tên) XONG 27-09**: thẻ có câu đã thu để nghe, "Đúng rồi" hoặc gõ cách đọc khác -> `overrides.json`
+     (`listener_overrides.py`, file là trạng thái mong muốn, áp lại không làm gì) -> dây chuyền áp lúc khởi động và ở mỗi
+     ranh giới chương sau khi phân vai khoá (`pipeline._apply_listener_overrides`): ghim + đặt lại câu đã thu có tên ấy
+     trong MỘT transaction (`ProjectDB.apply_listener_pronunciation`), chương đã qua được thu lại ở vòng sau, sách đã xong
+     cũng vậy. `cli pronounce` đi cùng đường. Thử trên bản sao Tập 18: "Hailkes" Hain -> Hên-khơ đặt lại 23 câu đã thu ở 4
+     chương (70 câu còn lại chưa thu, tự đọc cách mới).
 3. **Sửa cấp câu** (3, 4, 5, 7): bảng ghi đè mới trong SQLite (thay đổi `database.py`/`pipeline.py` - kèm test crash/reopen
    như AGENTS.md đòi).
 4. **Vòng học**: xuất mọi lần sửa thành dòng kiểu gold, đưa vào dữ liệu LoRA/bộ chấm; đo model mới trên chính những câu
