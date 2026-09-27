@@ -10,6 +10,23 @@ Tôi (Claude) chịu trách nhiệm làm **bộ đáp án chuẩn** (gold) cho k
 Việc chạy CPU (gom sách, làm gold, dựng kho, viết script) làm liên tục. Việc chạy GPU (đo, huấn luyện)
 phải chen vào ranh giới lô, vì sản xuất dùng GPU gần như suốt ngày.
 
+## KẾT QUẢ LORA ĐẦU TIÊN (27-09 13:1x): huấn luyện trên gold THẮNG chính model nền ở mọi trục, nhanh gấp đôi
+
+`lora27-4b:latest` = Qwen3-4B-Instruct-2507 + QLoRA 1 epoch trên gold train (8.140 s trên RTX 5060 8 GB, xem mục BỨC
+TƯỜNG ĐÃ PHÁ), gộp -> GGUF q8_0 -> Ollama; đối chứng `base27-4b:latest` = CÙNG model nền, cùng đường GGUF, không LoRA.
+Tập test 4 chương TMA (351 363 378 381), host hiện hành, `eval_models.py` + `paired.py`:
+
+| | điểm tổng | người nói | cảm xúc | giây (4 chương) |
+|---|---|---|---|---|
+| **lora27-4b** | **86,0** | **72,8%** | **96,5%** | **1.474** |
+| base27-4b | 79,3 | 63,8% | 87,5% | 2.952 |
+
+Theo cặp: LoRA thắng **4/4 chương**, Δ điểm tổng +6,60 (sai số chuẩn 1,33), Δ người nói +9,23 (2,39), thời gian 0,50x.
+Không lần nào phải thử lại vì thiếu ID. Chấm TỪNG CÂU chính thức (`compare_predictions.py --official`, 143 câu):
+LoRA 76,9% vs nền 66,4% vs qwen3:8b / qwen3:4b 68,5% (đo 21-09); bộ chấm ứng viên (docs/ANALYSIS_RESEARCH.md) 79,0%
+(mốc) và 84,6% (học trước PDNC). Lưu ý: các chương TMA KHÁC nằm trong dữ liệu huấn luyện LoRA - so với nền là sạch
+(cùng tập test), so với model chưa huấn luyện trên truyện này thì LoRA có lợi thế "đã quen truyện".
+
 ## Công cụ (`scripts/model_eval/`)
 
 | file | việc |
