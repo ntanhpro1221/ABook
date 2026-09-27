@@ -682,6 +682,7 @@ export function PlayerProvider({
       engine.on("duration", syncClock),
       engine.on("play", () => {
         setPlaying(true);
+        setError(""); // phát lại được (vd có mạng lại khi nghe thẳng): thông báo lỗi cũ không còn đúng
         refs.current.pausedAt = 0;
         openSession();
         if (!native) applySleep(sleepResumed(refs.current.sleep, Date.now()));
@@ -729,7 +730,8 @@ export function PlayerProvider({
         });
       }),
       engine.on("error", () => {
-        setError("Không phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại.");
+        // Lõi Android nói đúng lý do (nghe thẳng mà mất kết nối với máy tính khác hẳn file hỏng).
+        setError(native?.error || "Không phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại.");
         setBuffering(false);
       }),
       engine.on("chapter", () => {

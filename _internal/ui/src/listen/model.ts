@@ -71,6 +71,8 @@ export interface ListenBook {
   /** Sách đang làm: ước lượng của giai đoạn hiện tại (máy tính). */
   eta?: { phase: string; seconds: number } | null;
   chapters?: ListenChapter[];
+  /** Điện thoại: cuốn này nằm trên máy tính, nghe thẳng qua mạng (chưa tải về). */
+  remote?: boolean;
 }
 
 /** Bộ và số tập từ tên sách ("Throne of Magical Arcana · Tập 16" -> bộ "Throne of Magical Arcana", tập 16). */

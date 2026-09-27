@@ -29,8 +29,10 @@ export interface RemotePhone {
   playing: boolean;
   buffering: boolean;
   rate: number;
-  /** Sách đã tải xong về điện thoại - chỉ những cuốn này mới "Phát trên điện thoại" được. */
+  /** Sách đã tải xong về điện thoại (nghe được cả khi mất mạng). */
   books: string[];
+  /** Điện thoại nghe thẳng được mọi cuốn của máy tính (stream play) - bản app cũ thì chỉ cuốn đã tải. */
+  stream: boolean;
   acks: { id: string; ok: boolean; message: string }[];
   /** Số giây kể từ lần điện thoại báo cuối. */
   age: number;
@@ -275,14 +277,14 @@ export function RemoteBars() {
   );
 }
 
-/** "Phát trên điện thoại" ở thanh phát máy tính: chỉ hiện khi có điện thoại đang kết nối đã tải cuốn đang nghe. */
+/** "Phát trên điện thoại" ở thanh phát máy tính: có điện thoại đang kết nối nghe được cuốn này (nghe thẳng, hoặc đã tải). */
 export function HandOffButton({ className }: { className?: string }) {
   const { data } = useRemotePhones();
   const command = useRemoteCommand();
   const player = usePlayer();
   const readPosition = useClockReader();
   const track = player.track;
-  const phone = track ? data?.phones.find((candidate) => candidate.books.includes(track.bookId)) : undefined;
+  const phone = track ? data?.phones.find((candidate) => candidate.stream || candidate.books.includes(track.bookId)) : undefined;
   if (!phone || !track) return null;
   // Không cần thông báo "đã chuyển": thanh "Đang phát trên <điện thoại>" hiện ra sau một lượt mạng chính là lời xác nhận.
   const handOff = () => {

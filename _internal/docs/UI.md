@@ -71,6 +71,14 @@ Capacitor bọc giao diện Nghe; mọi thứ phải chạy khi tắt màn hình
 - `PlayerWidget.kt`: widget trình phát thu nhỏ (nhỏ: bìa + phát; lớn: chương, tiến độ, lùi/phát/tới, hẹn giờ).
 - `LibraryPlugin.kt` + `webui/sync.py`: tìm máy tính bằng UDP broadcast, ghép nối bằng mã 6 số một lần, tải gói
   sách (tải tiếp được), đồng bộ trạng thái nghe hai chiều (mới-hơn-thắng, dấu trang xoá có tombstone).
+- `Streaming.kt` (stream play): sách trên máy tính CHƯA tải cũng nằm trong Thư viện điện thoại (nhãn "Máy tính") và dùng
+  được đầy đủ - chương, đọc theo, chế độ đọc, nhân vật + câu mẫu, dấu trang, lịch sử, tốc độ, hẹn giờ. Chương nào đã có
+  file thì phát file, chưa có thì ExoPlayer phát thẳng `/sync/v1/books/<id>/files/...` (mang mã thiết bị, bộ đệm đĩa
+  1 GB, khoá đệm kèm kích thước chương để chương thu lại không phát nhầm bản cũ). Gói sách cất ở `stream.json` (không
+  bao giờ bị tính là đã tải); văn bản, dàn nhân vật, câu mẫu, bìa lấy theo nhu cầu và nằm đúng chỗ của sách đã tải, nên
+  "Tải về máy" chỉ việc thêm audio + `book.json`. Mất kết nối giữa chừng: báo đúng lý do, bấm phát lại là chuẩn bị lại
+  và phát tiếp đúng chỗ. Máy tính không trả lời thì các cuốn ấy tạm ẩn khỏi Thư viện. Điện thoại báo `stream: true`
+  nên máy tính mời "Phát trên điện thoại" với MỌI cuốn, không chỉ cuốn đã tải.
 - `Remote.kt` + `webui/sync.py: Remote` + `desktop/RemotePhone.tsx`: máy tính điều khiển điện thoại đang phát
   (kiểu Spotify Connect). Điện thoại "hỏi dài" `POST /sync/v1/remote` (trạng thái đang phát + sách đã tải + kết quả
   lệnh, treo tới 25 giây) khi app đang mở, đang phát hoặc vừa dừng dưới 10 phút; đổi trạng thái thì báo thêm một lần

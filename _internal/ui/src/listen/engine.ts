@@ -73,6 +73,8 @@ export interface NativeEngine extends AudioEngine {
   readonly bookTitle: string;
   readonly chapterId: number | null;
   readonly chapterTitle: string;
+  /** Lỗi gần nhất của lõi native, nói đúng lý do (vd mất kết nối khi nghe thẳng); rỗng khi ổn. */
+  readonly error: string;
   readonly rate: number;
 }
 
