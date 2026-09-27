@@ -6,6 +6,8 @@ phải là chính server - không thì một trang web bất kỳ trong trình d
 """
 from __future__ import annotations
 
+import base64
+import binascii
 import json
 import mimetypes
 import re
@@ -907,6 +909,19 @@ class Handler(BaseHTTPRequestHandler):
         body = self._body()
         self._send_json(HTTPStatus.OK, actions.scan_inputs([str(item) for item in body.get("paths", [])]))
 
+    def post_source_upload(self, _query: dict[str, list[str]]) -> None:
+        # Studio từ xa: điện thoại không có đường dẫn nào trên máy này để gõ - nó gửi từng chương TXT, rồi trình tạo sách
+        # đi tiếp như khi chọn thư mục. Byte giữ nguyên (base64): dây chuyền tự nhận bảng mã như với file trên máy.
+        self.app._mutating()
+        body = self._body(limit=actions.MAX_SOURCE_UPLOAD * 4 // 3 + 4096)
+        try:
+            data = base64.b64decode(str(body.get("data", "")), validate=True)
+        except (ValueError, binascii.Error) as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Dữ liệu file không hợp lệ") from error
+        folder = actions.upload_source(Path(self.app.preferences.get()["libraryRoot"]), str(body.get("folder", "")),
+                                       str(body.get("name", "")), data)
+        self._send_json(HTTPStatus.OK, {"folder": str(folder)})
+
     def post_first_person(self, _query: dict[str, list[str]]) -> None:
         body = self._body()
         self._send_json(HTTPStatus.OK, actions.first_person_hint([str(item) for item in body.get("paths", [])]))
@@ -983,6 +998,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(r"/api/preferences"), Handler.get_preferences),
     ("PUT", re.compile(r"/api/preferences"), Handler.put_preferences),
     ("POST", re.compile(r"/api/scan"), Handler.post_scan),
+    ("POST", re.compile(r"/api/sources/upload"), Handler.post_source_upload),
     ("POST", re.compile(r"/api/first-person"), Handler.post_first_person),
     ("POST", re.compile(r"/api/books"), Handler.post_create),
     ("POST", re.compile(r"/api/books/open"), Handler.post_open),
