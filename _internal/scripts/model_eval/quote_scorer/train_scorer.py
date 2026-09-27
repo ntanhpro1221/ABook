@@ -66,6 +66,9 @@ def main() -> int:
     parser.add_argument("--fold-prefix", default="fold",
                         help="fold (theo chương) hoặc bookfold (theo truyện: chấm một truyện chưa từng thấy) - make_folds.py")
     parser.add_argument("--save-last", action="store_true", help="kiểm chứng chéo: vẫn lưu mô hình epoch cuối")
+    parser.add_argument("--null-weight", type=float, default=1.0,
+                        help="trọng số loss của câu mà đáp án DUY NHẤT là 'không ai' (người kể/NPC ~10% câu; học lâu thì "
+                             "độ đúng loại này tụt 75% -> 45%, 27-09)")
     parser.add_argument("--predict-file", type=Path, default=None,
                         help="không huấn luyện: nạp --init, chấm tệp cửa sổ này, ghi <out>/predictions.jsonl có xác suất")
     parser.add_argument("--init", type=Path, default=None,
@@ -241,7 +244,7 @@ def main() -> int:
         started, losses = time.time(), []
         for window in windows:
             results, entities = score_window(window)
-            terms = []
+            terms, weights = [], []
             for quote, scores in zip(window["quotes"], results):
                 if scores is None:
                     continue
@@ -261,10 +264,14 @@ def main() -> int:
                                             dtype=torch.long)
                     if positive.numel() == 0:
                         continue  # người nói không nằm trong ứng viên: không có gì để học
-                terms.append(torch.logsumexp(scores, 0) - torch.logsumexp(scores[positive], 0))
+                term = torch.logsumexp(scores, 0) - torch.logsumexp(scores[positive], 0)
+                only_nobody = bool(positive.numel() == 1 and int(positive[0]) == len(entities))
+                weights.append(args.null_weight if only_nobody else 1.0)
+                terms.append(term)
             if not terms:
                 continue
-            loss = torch.stack(terms).mean()
+            weight = torch.tensor(weights, device=device)
+            loss = (torch.stack(terms) * weight).sum() / weight.sum()
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
             torch.nn.utils.clip_grad_norm_(trainable + list(head.parameters()), 1.0)
