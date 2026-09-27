@@ -39,11 +39,13 @@ def slug(model: str) -> str:
 
 
 def run_chapter(model: str, chapter: str, root: Path, book: str | None, timeout: int, no_think: bool,
-                known_variant: str = "") -> dict:
+                known_variant: str = "", first_person: str = "") -> dict:
     where = root / slug(model) / chapter
     make = [sys.executable, "scripts/model_eval/make_eval_project.py", model, "--chapters", chapter, "--root", str(where)]
     if book:
         make += ["--book", book]
+    if first_person:
+        make += ["--first-person", first_person]
     subprocess.run(make, cwd=str(ROOT), capture_output=True, text=True, encoding="utf-8", errors="replace")
     project = next(where.rglob("project.sqlite3"), None)
     if project is None:
@@ -78,6 +80,8 @@ def main() -> None:
     parser.add_argument("--chapters", nargs="+", default=["351", "363", "378", "381"])
     parser.add_argument("--book", default=None, help="thư mục truyện trong Corpus/ (mặc định cuốn 2)")
     parser.add_argument("--gold", default="throne_of_magical_arcana")
+    parser.add_argument("--first-person", default="",
+                        help="'tôi' là ai (truyện kể ngôi thứ nhất): prompt mỗi batch nói cho model biết - make_eval_project")
     parser.add_argument("--timeout", type=int, default=1200, help="giây cho MỘT chương")
     parser.add_argument("--no-think-for", nargs="*", default=["qwen3"], help="tiền tố tên model được gửi think=false")
     parser.add_argument("--known-list", default="baseline",
@@ -101,7 +105,7 @@ def main() -> None:
         runs = []
         for chapter in args.chapters:
             result = run_chapter(model, chapter, args.root, args.book, args.timeout, no_think,
-                                 known_variant=known_variant)
+                                 known_variant=known_variant, first_person=args.first_person)
             runs.append(result)
             print(f"{model} {chapter}: {'OK' if result['ok'] else 'HỎNG'} {result.get('seconds', '')}s "
                   f"thử lại vì thiếu ID {result.get('id_retries', 0)} {result.get('why', '')}", flush=True)

@@ -159,14 +159,36 @@ def scan_inputs(paths: list[str]) -> dict[str, Any]:
     }
 
 
-def create_book(library_root: Path, paths: list[str], title: str, profile: str, narrator: str) -> Path:
+def first_person_hint(paths: list[str]) -> dict[str, Any]:
+    """Truyện kể ngôi thứ nhất? + gợi ý "tôi" là ai, cho câu hỏi của bước chọn giọng (first_person.py)."""
+    from ..first_person import first_person_hint as hint
+
+    files = [Path(row["path"]) for row in scan_inputs(paths)["files"]]
+    if not files:
+        return {"rate": 0.0, "firstPerson": False, "suggestions": []}
+    return hint(files)
+
+
+def create_book(library_root: Path, paths: list[str], title: str, profile: str, narrator: str,
+                first_person: str = "") -> Path:
+    from ..character_registry import PRONOUNS, normalize_name
     from ..config import build_settings
     from ..project import create_or_open_project
 
     files = [Path(row["path"]) for row in scan_inputs(paths)["files"]]
     if not files:
         raise ValueError("Chưa có file TXT nào để làm sách")
-    settings = build_settings(profile, {"voices": {"narrator_voice": narrator}} if narrator else None)
+    first_person = first_person.strip()
+    if first_person and normalize_name(first_person) in PRONOUNS:
+        raise ValueError(f'"{first_person}" là một đại từ, không phải một nhân vật - điền tên của người xưng "tôi"')
+    voices: dict[str, Any] = {}
+    if narrator:
+        voices["narrator_voice"] = narrator
+    if first_person:
+        # Cùng cài đặt với `cli create --first-person`: prompt phân tích nói cho model biết "tôi" là ai, và sau phân
+        # tích các nhãn đại từ được gộp về người ấy.
+        voices["first_person_identity"] = first_person
+    settings = build_settings(profile, {"voices": voices} if voices else None)
     library_root.mkdir(parents=True, exist_ok=True)
     paths_created, _db, _settings = create_or_open_project(files, library_root, settings, title.strip() or None)
     return paths_created.root

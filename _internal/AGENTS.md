@@ -219,6 +219,13 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
 - `segment_endpoint_floor_dbfs` đo trên WAV **đã cân mức** nên phải dịch theo anchor loudness; còn
   `segment_active_floor_dbfs` đo trên waveform **trước gain** nên phải giữ nguyên. Trộn hai cái này lại sẽ âm thầm
   làm gate "endpoint còn hoạt động ở trần frame" mất độ nhạy.
+- Truyện kể ngôi thứ nhất: `voices.first_person_identity` (câu hỏi "'Tôi' là ai?" lúc tạo sách, `cli create
+  --first-person`) được đưa vào prompt phân tích MỖI batch (`analysis._narrator_line`) và vào dấu vân tay sổ ứng viên
+  (`_analysis_policy_fingerprint`); không đặt thì prompt và dấu vân tay y hệt trước, để sách cũ resume nguyên vẹn. Đo
+  27-09 trên chương ngôi thứ nhất YMP 248: model tinh chỉnh 34,0% -> 89,4% người nói - không có dòng ấy, lời của người
+  kể bị gán cho chính người đang nói chuyện với anh ta (không mang nhãn đại từ nào, nên `resolve_first_person_labels`
+  sau phân tích không cứu được). Máy chỉ ĐOÁN truyện nào kể ngôi thứ nhất (`first_person.py`), tên người kể do người
+  dùng chọn từ gợi ý - đoán tên từ văn bản thô từng ra "Portal".
 - Ngoặc kép kéo dài qua nhiều paragraph phải giữ state hội thoại; ngoặc đơn cong `‘…’` là hint
   độc thoại nội tâm và mọi segment `thought` bắt buộc dùng `NARRATOR`, không gắn với character identity.
 - Với profile `high_quality`, batching phải giữ nguyên source unit gồm các segment cùng paragraph và phần tiếp nối của
