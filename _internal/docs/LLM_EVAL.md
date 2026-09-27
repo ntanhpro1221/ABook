@@ -601,6 +601,27 @@ Vậy muốn tự huấn luyện trên máy này thì phải chọn một trong 
 
 Tối nay tôi chọn (3) để không đốt cả đêm vào một epoch 40 giờ, và ghi lại (1)(2) kèm số đo để chủ sách quyết.
 
+## Tài liệu về ĐÚNG bài toán này - lẽ ra phải đọc trước khi chọn LoRA (27-09)
+
+Chủ sách hỏi: *"đây là bài toán cụ thể về nhận dạng người nói, đã có paper nào đưa ra lý thuyết huấn luyện cho model
+như này chưa?"* Có - tên là **quotation attribution** (speaker identification in novels). Tôi đã chọn QLoRA vì đó là
+cách chuẩn tinh chỉnh LLM trên máy yếu, KHÔNG tra tài liệu riêng cho bài toán. Các dòng chính:
+
+| hướng | công trình | ý chính |
+|---|---|---|
+| luật + đặc trưng | He, Barbosa, Kondrak 2013 (ACL); Muzny và cs. 2017 (EACL, "sàng hai tầng") | tầng 1 luật chắc chắn gán câu thoại vào tên nhắc gần đó, tầng 2 mới đoán - chính là "luật host" của ta |
+| dữ liệu chuẩn | PDNC, Vishnubhotla, Hammond, Hirst 2022 (LREC) | 35.978 câu thoại / 22 tiểu thuyết tiếng Anh, gán người nói, người nghe, kiểu câu (tường minh / đại từ / ngầm) |
+| mổ bài toán | Vishnubhotla và cs. 2023 (arXiv 2307.03734) | nút thắt là NHẬN NHÂN VẬT và đồng tham chiếu, không phải khâu gán |
+| sinh tên bằng mô hình tinh chỉnh | SIG (arXiv 2312.14590); prompt learning (arXiv 2408.09452, Trung + Anh) | mô hình viết ra tên người nói - đúng kiểu LoRA của ta; hơn ChatGPT zero-shot ~9% |
+| LLM | Michel và cs., NAACL 2025 | Llama-3-8B 89,8% trên PDNC |
+| **tốt nhất 8/2026** | "Fast and Accurate Quotation Attribution in Literary Texts" (arXiv 2608.02359) | **không sinh**: ModernBERT-large mã hoá cửa sổ 2.000 token MỘT lần rồi CHẤM ĐIỂM mọi ứng viên (chỗ nhắc nhân vật) cho mọi câu thoại cùng lúc - "joint scoring", mượn từ đồng tham chiếu span-based, NLL trên softmax ứng viên. **94,5%** so với 89,8% của Llama-3-8B; câu ngầm 89,3 / 81,8; **nhanh 1.000 lần**; 9,2 GB VRAM (A100). Giới hạn: chỉ tiếng Anh, cần coreference của BookNLP (2% câu không có ứng viên) |
+
+Hệ quả cho ta: khâu hay sai nhất (người nói) có thể làm bằng một bộ CHẤM ỨNG VIÊN thay vì LLM sinh tên - đúng hơn và
+nhanh hơn nhiều bậc so với 4,5 giờ phân tích mỗi lô. Cần bộ mã hoá BIẾT TIẾNG VIỆT (ModernBERT chỉ tiếng Anh; ứng
+viên: XLM-R, bản đa ngữ của ModernBERT), ứng viên lấy từ sổ nhân vật + chỗ nhắc trong ngữ cảnh, học trước trên PDNC
+rồi tinh chỉnh trên đáp án tiếng Việt. Chỉ thay phần NGƯỜI NÓI; cảm xúc/cường độ/nhịp vẫn cần LLM hoặc đầu phân loại
+riêng. Lượt LoRA 27-09 vẫn chạy trọn để làm điểm so sánh.
+
 #### BỨC TƯỜNG ĐÃ PHÁ (27-09): không phải prompt, không phải logits - là attention rơi về đường MATH
 
 Đo lại bằng `scripts/model_eval/profile_train_memory.py` (một mẫu, lan xuôi + lan ngược, PyTorch bị chặn ở 95% VRAM
