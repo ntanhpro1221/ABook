@@ -39,6 +39,13 @@ def test_a_courtesy_name_with_a_hyphen_is_one_word() -> None:
     assert merge_given_names(reps("TỬ-LONG", "TRIỆU TỬ-LONG")) == {"tử-long": "TRIỆU TỬ-LONG"}
 
 
+def test_a_wife_called_by_her_husbands_name_never_takes_his_voice() -> None:
+    # Tắt đèn: "chị Dậu" là vợ anh Dậu. Chữ cuối của tên mở bằng chữ xưng hô có thể là tên của người khác.
+    assert merge_given_names(reps("DẬU", "CHỊ DẬU")) == {}
+    assert merge_given_names(reps("DẬU", "CHỊ DẬU", "NGUYỄN VĂN DẬU")) == {"dậu": "NGUYỄN VĂN DẬU"}
+    assert merge_given_names(reps("CẢ", "BÁC CẢ", "DẦN", "MẸ DẦN")) == {}
+
+
 def test_a_title_after_a_name_is_not_a_given_name() -> None:
     # "Trịnh lão" là ông lão họ Trịnh; một mình "LÃO" là ông lão nào đó, không phải tên riêng
     assert merge_given_names(reps("LÃO", "TRỊNH LÃO", "CA", "LÝ CA")) == {}

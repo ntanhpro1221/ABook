@@ -170,7 +170,8 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   Chỉ gom các DẠNG VIẾT của cùng một tên (`character_registry.canonical_speaker_names`, một hàm dùng chung cho dây
   chuyền và công cụ đo `scripts/model_eval/voice_identity.py`): rơi dấu, "tên + họ bịa" (tên kiểu Âu, chữ đầu), tên
   vắng mặt trong sách, và tên gọi kiểu Việt/Hán Việt ("DU" -> "CHU DU": nhãn một chữ là chữ CUỐI của đúng một tên
-  nhiều chữ mà mọi chữ là âm tiết tiếng Việt; tên kiểu Âu thì chữ cuối là họ chung cả nhà, không gom). Lượt cuối chỉ
+  nhiều chữ mà mọi chữ là âm tiết tiếng Việt; tên kiểu Âu thì chữ cuối là họ chung cả nhà, không gom; tên đích mở bằng
+  chữ xưng hô thì không làm đích - "CHỊ DẬU" là vợ anh Dậu, không phải "Dậu"). Lượt cuối chỉ
   đổi CHỮ hiển thị, một tên thành một tên: tên sách không viết như thế mà bỏ dấu ra khớp đúng một cách viết tên trong
   sách -> cách của sách ("HOANG CAI" -> "HOÀNG CÁI"). Luật gom mới phải qua `voice_identity.py --gold-check`: không được
   nhập hai người của đáp án làm một. Văn bản cả cuốn không bao giờ `unicodedata.normalize` một lần - CPython chậm vượt

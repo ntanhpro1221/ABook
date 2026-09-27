@@ -502,6 +502,15 @@ def _bare_word(word: str) -> str:
 # không phải tên riêng của ai - không gom theo nó.
 NAME_SUFFIX_TITLES = frozenset({"lão", "ca", "tỷ", "tỉ", "huynh", "đệ", "muội", "thúc", "gia", "nương"})
 
+# Chữ xưng hô đứng TRƯỚC tên ("chị Dậu", "bác Cả", "mẹ Dần"): văn Việt gọi người theo tên chồng, tên con, chức vụ, nên
+# chữ cuối có thể là tên của NGƯỜI KHÁC - "CHỊ DẬU" là vợ anh Dậu. Gom nhãn "DẬU" về đó là cho chồng đọc bằng giọng vợ
+# (đáp án Tắt đèn, `voice_identity.py --gold-check`, 28-09). Tên như thế không làm đích gom. Cái giá: "DẬU" không gom
+# về "ANH DẬU" khi sổ chỉ có anh - một người hai giọng, nhẹ hơn hai người một giọng.
+NAME_PREFIX_TITLES = frozenset({
+    "anh", "chị", "ông", "bà", "cô", "chú", "bác", "dì", "cậu", "mợ", "thím", "dượng", "cụ", "u", "bu", "bầm", "mẹ",
+    "cha", "bố", "o", "mệ",
+})
+
 
 def merge_given_names(representatives: dict[str, str]) -> dict[str, str]:
     """Trỏ "DU" về "CHU DU", "THÁO" về "TÀO THÁO". Trả về {key thua: đại diện thắng}.
@@ -515,13 +524,14 @@ def merge_given_names(representatives: dict[str, str]) -> dict[str, str]:
     Chỉ tên kiểu Việt, cả nhãn lẫn tên đích (`_vietnamese_order_name`): tên kiểu Âu thì chữ cuối là họ chung của cả
     nhà, gom "EVANS" về "LUCIEN EVANS" là nhập cha với con. Chỉ khi đúng MỘT tên nhiều chữ trong sổ có chữ cuối ấy -
     hai tên cùng chữ cuối thì không đoán. Nhãn không mang dấu nào so theo chữ đã bỏ dấu ("VAN" -> "TRIỆU VÂN": model
-    rơi dấu), nhãn có dấu so đúng dấu ("VÂN" không bao giờ thành "... VĂN").
+    rơi dấu), nhãn có dấu so đúng dấu ("VÂN" không bao giờ thành "... VĂN"). Tên mở bằng chữ xưng hô
+    (`NAME_PREFIX_TITLES`, "CHỊ DẬU") không làm đích.
     """
     exact: dict[str, set[str]] = defaultdict(set)
     bare: dict[str, set[str]] = defaultdict(set)
     for name in set(representatives.values()):
         words = normalize_name(name).split()
-        if len(words) >= 2 and _vietnamese_order_name(name):
+        if len(words) >= 2 and _vietnamese_order_name(name) and words[0] not in NAME_PREFIX_TITLES:
             exact[words[-1]].add(name)
             bare[_bare_word(words[-1])].add(name)
     redirected: dict[str, str] = {}
