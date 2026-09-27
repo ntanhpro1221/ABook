@@ -137,7 +137,7 @@ function ProductionPanel({ book }: { book: BookSummary }) {
           {eta && <span className="text-fg-3"> · {eta}</span>}
         </div>
       </div>
-      <div className="flex gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row">
         <Step
           index={1}
           state={analysis}
@@ -506,15 +506,16 @@ export function ProjectScreen() {
   ].filter(Boolean);
 
   return (
-    <div className="mx-auto max-w-[1180px] px-10 pb-16 pt-7">
+    <div className="mx-auto max-w-[1180px] px-4 pb-16 pt-7 sm:px-10">
       <button type="button" onClick={() => navigate("/studio")} className="inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
         <ArrowLeft className="size-4" /> Studio
       </button>
-      <header className="mt-5 flex gap-7">
+      {/* Màn hẹp (Studio từ xa trên điện thoại): bìa trên, tên và nút dưới - cạnh nhau thì nút tràn mép. */}
+      <header className="mt-5 flex flex-col gap-5 sm:flex-row sm:gap-7">
         <CoverEditor book={book} />
         <div className="min-w-0 flex-1 pt-1">
           <StatusPill label={book.starting ? "Đang khởi động" : book.statusLabel} tone={phaseTone(book.phase, live)} live={live} />
-          <h1 className="mt-3 text-[30px] font-bold leading-tight tracking-tight">{book.title}</h1>
+          <h1 className="mt-3 text-2xl font-bold leading-tight tracking-tight sm:text-[30px]">{book.title}</h1>
           <p className="mt-2 text-sm text-fg-2">{meta.join(" · ")}</p>
           {book.phase === "done" || book.audioSeconds > 0 ? (
             <p className="tabular mt-1 text-sm text-fg-2">

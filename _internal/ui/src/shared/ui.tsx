@@ -220,7 +220,12 @@ export const TabsContent = TabsPrimitive.Content;
 
 export function TabsList({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <TabsPrimitive.List className={cn("flex gap-1 border-b border-line", className)}>{children}</TabsPrimitive.List>
+    // Màn hẹp (Studio từ xa trên điện thoại): hàng tab cuộn ngang thay vì tràn ra ngoài trang.
+    <TabsPrimitive.List
+      className={cn("flex gap-1 border-b border-line max-md:overflow-x-auto max-md:overflow-y-hidden max-md:[scrollbar-width:none]", className)}
+    >
+      {children}
+    </TabsPrimitive.List>
   );
 }
 
@@ -228,7 +233,7 @@ export function TabsTrigger({ value, children, count }: { value: string; childre
   return (
     <TabsPrimitive.Trigger
       value={value}
-      className="relative -mb-px inline-flex h-11 items-center gap-2 border-b-2 border-transparent px-3 text-sm font-medium text-fg-2 transition-colors hover:text-fg data-[state=active]:border-accent data-[state=active]:text-fg"
+      className="relative -mb-px inline-flex h-11 shrink-0 items-center gap-2 whitespace-nowrap border-b-2 border-transparent px-3 text-sm font-medium text-fg-2 transition-colors hover:text-fg data-[state=active]:border-accent data-[state=active]:text-fg"
     >
       {children}
       {count !== undefined && (

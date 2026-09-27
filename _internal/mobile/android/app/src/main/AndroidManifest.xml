@@ -56,6 +56,14 @@
 
         </activity>
 
+        <!-- Studio từ xa: trang Studio của máy tính đã ghép (StudioActivity.kt). Chỉ mở từ trong app. -->
+        <activity
+            android:name=".StudioActivity"
+            android:label="Studio của máy tính"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|screenLayout|uiMode"
+            android:exported="false" />
+
         <!-- Dịch vụ phát nền: thông báo, màn hình khoá, nút tai nghe (Media3). -->
         <service
             android:name=".PlaybackService"
