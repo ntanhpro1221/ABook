@@ -89,6 +89,7 @@ from .listener_overrides import (
     pronunciation_problem,
     pronunciation_requests,
     read_overrides,
+    speaker_requests,
     surface_key,
 )
 from .models import BookStatus, ChapterStatus, ProjectPaths, ResourceLevel, SegmentStatus
@@ -1106,28 +1107,28 @@ class BookPipeline:
             chapters = [row for row in self.db.list_chapters() if int(row["id"]) in revisit]
 
     def _apply_listener_overrides(self) -> set[int]:
-        """Áp cách đọc người nghe sửa trong Studio (`overrides.json`, xem listener_overrides.py).
+        """Áp những gì người nghe sửa trong Studio (`overrides.json`, xem listener_overrides.py): cách đọc tên, ai nói câu
+        nào.
 
-        Chỉ khi phân vai đã khoá: trước đó cách đọc là ĐẦU VÀO của phân tích và của bước chuẩn hoá tên, và đổi nó
-        giữa pha phân tích là đổi quyển sách (AGENTS.md). Yêu cầu đến sớm nằm chờ trong file tới ranh giới đầu tiên
-        sau khi phân vai khoá. Trả các chương có câu đã thu vừa bị đặt lại; tập rỗng khi không có gì đổi.
+        Chỉ khi phân vai đã khoá: trước đó cách đọc là ĐẦU VÀO của phân tích và của bước chuẩn hoá tên, người nói là thứ
+        phân tích đang quyết, và đổi chúng giữa pha phân tích là đổi quyển sách (AGENTS.md); giọng để gán thì chưa có.
+        Yêu cầu đến sớm nằm chờ trong file tới ranh giới đầu tiên sau khi phân vai khoá. Trả các chương có câu đã thu vừa
+        bị đặt lại; tập rỗng khi không có gì đổi.
         """
         if not self.db.casting_is_finalized():
             return set()
+        overrides = read_overrides(self.paths.root)
         changed = False
         reset_chapters: set[int] = set()
-        for request in pronunciation_requests(read_overrides(self.paths.root)):
+        for request in pronunciation_requests(overrides):
             surface, spoken = request["surface"], request["spoken_form"]
             problem = pronunciation_problem(surface, spoken)
             if problem is not None:
-                if (surface, spoken) not in self._rejected_listener_overrides:
-                    self._rejected_listener_overrides.add((surface, spoken))
-                    self.db.event(
-                        "warning",
-                        "LISTENER_OVERRIDE_REJECTED",
-                        f"Không áp được cách đọc {spoken!r} cho {surface!r} ({problem}).",
-                        {"surface": surface, "spoken_form": spoken, "problem": problem},
-                    )
+                self._report_rejected_override(
+                    (surface, spoken),
+                    f"Không áp được cách đọc {spoken!r} cho {surface!r} ({problem}).",
+                    {"surface": surface, "spoken_form": spoken, "problem": problem},
+                )
                 continue
             result = self.db.apply_listener_pronunciation(
                 surface=surface,
@@ -1147,7 +1148,36 @@ class BookPipeline:
             forget = getattr(self.tts, "forget_pronunciations", None)
             if callable(forget):
                 forget()
+        for request in speaker_requests(overrides):
+            stable_id, speaker = request["stable_id"], request["speaker"]
+            result = self.db.apply_listener_speaker(
+                stable_id=stable_id,
+                text_sha256=request["text_sha256"],
+                speaker=speaker,
+            )
+            if result is None:
+                continue
+            if "problem" in result:
+                self._report_rejected_override(
+                    (stable_id, speaker),
+                    f"Không gán được câu {stable_id} cho {speaker!r} ({result['problem']}).",
+                    {"stable_id": stable_id, "speaker": speaker, "problem": result["problem"]},
+                )
+                continue
+            if result["reset"]:
+                reset_chapters.add(int(result["chapter_id"]))
+            self.log(
+                f"Người nghe gán câu {stable_id} cho {result['speaker']} (trước là {result['previous_speaker']})"
+                + ("; thu lại bằng giọng mới." if result["reset"] else ".")
+            )
         return reset_chapters
+
+    def _report_rejected_override(self, key: tuple[str, str], message: str, details: dict[str, Any]) -> None:
+        """Một lần mỗi lần chạy: file yêu cầu được đọc lại ở MỌI ranh giới chương."""
+        if key in self._rejected_listener_overrides:
+            return
+        self._rejected_listener_overrides.add(key)
+        self.db.event("warning", "LISTENER_OVERRIDE_REJECTED", message, details)
 
     def _next_chapter_quality_attempt(self, chapter_id: int) -> int:
         latest = self.db.latest_quality_check(

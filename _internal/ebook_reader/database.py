@@ -8606,6 +8606,85 @@ class ProjectDB:
             )
         return details
 
+    def apply_listener_speaker(
+        self,
+        *,
+        stable_id: str,
+        text_sha256: str,
+        speaker: str,
+    ) -> dict[str, Any] | None:
+        """Gán một câu cho người người nghe chọn, và đặt lại câu nếu giọng đổi - một transaction.
+
+        Đích do `listener_overrides.speaker_target` chọn, cùng phép giao diện đã dùng để từ chối tại chỗ: một nhân vật đã
+        có giọng, câu mượn đúng nhãn và giọng các câu khác của người ấy đang dùng, nên không phải phân vai lại và "một
+        người một giọng" vẫn đúng. Chỉ thu lại khi GIỌNG đổi: đổi nhãn mà giọng như cũ thì bản thu vẫn đúng.
+
+        Trả None khi câu đã thuộc người ấy (kể cả "giữ nguyên"), `{"problem": mã}` khi không áp được (không đổi gì), hay
+        chi tiết lần áp.
+        """
+        from .listener_overrides import speaker_target
+
+        now = time.time()
+        with self.transaction() as conn:
+            target, problem = speaker_target(conn, stable_id=stable_id, text_sha256=text_sha256, speaker=speaker)
+            if target is None:
+                return {"problem": problem}
+            line = target["line"]
+            if (
+                line["canonical_character_id"] == target["character_id"]
+                and line["voice_profile_id"] == target["voice_profile_id"]
+            ):
+                return None
+            conn.execute(
+                """
+                UPDATE segments SET speaker=?,canonical_character_id=?,voice_profile_id=?,gender=?,age=?,updated_at=?
+                WHERE id=?
+                """,
+                (
+                    target["speaker"],
+                    target["character_id"],
+                    target["voice_profile_id"],
+                    target["gender"],
+                    target["age"],
+                    now,
+                    int(line["id"]),
+                ),
+            )
+            chapter_id = int(line["chapter_id"])
+            revoice = line["voice_profile_id"] != target["voice_profile_id"] and str(line["status"]) in {
+                SegmentStatus.SIGNAL_PASSED.value,
+                SegmentStatus.ASR_PASSED.value,
+                SegmentStatus.VERIFIED.value,
+                SegmentStatus.WARNING.value,
+                SegmentStatus.FAILED.value,
+            }
+            reason = f"Người nghe gán câu cho {target['speaker']!r}: thu lại bằng giọng của người ấy"
+            if revoice:
+                self._reset_segment_pending_conn(conn, int(line["id"]), reason, now)
+                self._refresh_chapter_counts_conn(conn, chapter_id)
+                conn.execute(
+                    "UPDATE chapters SET status='warning', last_error=? WHERE id=? AND status=?",
+                    (reason, chapter_id, ChapterStatus.COMPLETED.value),
+                )
+            details = {
+                "stable_id": stable_id,
+                "speaker": target["speaker"],
+                "previous_speaker": str(line["speaker"]),
+                "reset": revoice,
+                "chapter_id": chapter_id,
+            }
+            conn.execute(
+                "INSERT INTO runtime_events(timestamp,level,code,message,details_json) VALUES(?,?,?,?,?)",
+                (
+                    now,
+                    "info",
+                    "SPEAKER_SET_BY_LISTENER",
+                    f"Người nghe gán câu {stable_id} cho {target['speaker']!r} (trước là {line['speaker']!r}).",
+                    json.dumps(details, ensure_ascii=False),
+                ),
+            )
+        return details
+
     def upsert_pronunciation(
         self,
         *,
