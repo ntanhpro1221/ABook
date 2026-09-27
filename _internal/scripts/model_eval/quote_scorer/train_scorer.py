@@ -54,6 +54,8 @@ def main() -> int:
     parser.add_argument("--head-lr", type=float, default=1e-3)
     parser.add_argument("--seed", type=int, default=1234)
     parser.add_argument("--vram-cap", type=float, default=0.9)
+    parser.add_argument("--extra-train", type=Path, nargs="*", default=[],
+                        help="thêm cửa sổ huấn luyện (vd dữ liệu che dấu hiệu N1: data/quote_vi_cue/train.jsonl)")
     args = parser.parse_args()
 
     import torch  # noqa: PLC0415
@@ -124,6 +126,9 @@ def main() -> int:
         return results, entities
 
     train, dev, test = (load(args.data / f"{name}.jsonl") for name in ("train", "dev", "test"))
+    for extra in args.extra_train:
+        train += load(extra)
+    print(f"train {len(train)} cửa sổ, dev {len(dev)}, test {len(test)}", flush=True)
     optimizer = torch.optim.AdamW([
         {"params": encoder.parameters(), "lr": args.lr},
         {"params": head.parameters(), "lr": args.head_lr},
