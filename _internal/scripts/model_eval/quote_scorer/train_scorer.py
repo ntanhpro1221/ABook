@@ -129,7 +129,7 @@ def main() -> int:
     head = Head().to(device)
     if args.init:
         encoder.load_state_dict(AutoModel.from_pretrained(args.init / "encoder", dtype=torch.float32).state_dict())
-        head.load_state_dict(torch.load(args.init / "head.pt")["head"])
+        head.load_state_dict(torch.load(args.init / "head.pt", map_location="cpu")["head"])
         print(f"nạp mô hình khởi đầu từ {args.init}", flush=True)
 
     def encode(window: dict):
@@ -178,7 +178,7 @@ def main() -> int:
     ], weight_decay=0.01)
     total_steps = args.epochs * len(train) + args.pretrain_epochs * len(pretrain)
     schedule = torch.optim.lr_scheduler.LambdaLR(
-        optimizer, lambda step: min(1.0, (step + 1) / max(1, total_steps // 20)) * max(0.0, 1 - step / total_steps))
+        optimizer, lambda step: min(1.0, (step + 1) / max(1, total_steps // 20)) * max(0.0, 1 - step / max(1, total_steps)))
 
     def evaluate(windows: list[dict], dump: list | None = None) -> dict:
         encoder.eval()
@@ -311,7 +311,7 @@ def main() -> int:
             encoder.save_pretrained(args.out / "encoder")
         (args.out / "test.json").write_text(json.dumps(scores_test, indent=2), encoding="utf-8")
         return 0
-    head.load_state_dict(torch.load(args.out / "head.pt")["head"])
+    head.load_state_dict(torch.load(args.out / "head.pt", map_location="cpu")["head"])
     encoder.load_state_dict(AutoModel.from_pretrained(args.out / "encoder", dtype=torch.float32).state_dict())
     for name, windows in (("dev", dev), ("test", test)):
         predictions: list = []
