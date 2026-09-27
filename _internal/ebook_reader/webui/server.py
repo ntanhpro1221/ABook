@@ -585,16 +585,19 @@ class Handler(BaseHTTPRequestHandler):
         self.app._mutating()
         path = self.app._book(value)
         body = self._body()
-        stable_id = str(body.get("stableId", "")).strip()[:120]
-        text_sha256 = str(body.get("textSha256", "")).strip()[:64]
         speaker = str(body.get("speaker", "")).strip()[:200]
-        if not stable_id or not text_sha256 or not speaker:
+        # Một câu ("Ai nói câu này") hay cả nhóm câu của một vai phụ; cả nhóm được nhận hoặc cả nhóm bị từ chối.
+        raw_lines = body.get("lines") if isinstance(body.get("lines"), list) else [body]
+        lines = [(str(line.get("stableId", "")).strip()[:120], str(line.get("textSha256", "")).strip()[:64])
+                 for line in raw_lines[:2000] if isinstance(line, dict)]
+        if not speaker or not lines or not all(stable_id and text_sha256 for stable_id, text_sha256 in lines):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu câu hoặc người nói")
-        problem = store.speaker_request_problem(path, stable_id, text_sha256, speaker)
-        if problem is not None:
-            raise ApiError(HTTPStatus.BAD_REQUEST, SPEAKER_PROBLEMS.get(problem, "Không đổi được người nói câu này"))
-        listener_overrides.request_speaker(path, stable_id, text_sha256, speaker, now=time.time())
-        self._send_json(HTTPStatus.OK, {"stableId": stable_id, "speaker": speaker})
+        for stable_id, text_sha256 in lines:
+            problem = store.speaker_request_problem(path, stable_id, text_sha256, speaker)
+            if problem is not None:
+                raise ApiError(HTTPStatus.BAD_REQUEST, SPEAKER_PROBLEMS.get(problem, "Không đổi được người nói câu này"))
+        listener_overrides.request_speakers(path, lines, speaker, now=time.time())
+        self._send_json(HTTPStatus.OK, {"lines": len(lines), "speaker": speaker})
 
     def post_review(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._book(value)
