@@ -25,6 +25,23 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
 - Nên thêm (theo PDNC): tách độ đúng người nói theo KIỂU câu thoại - tường minh ("Lucien nói"), đại từ ("hắn nói"),
   ngầm (không có dấu hiệu) - vì mỗi hướng mạnh/yếu ở kiểu khác nhau.
 
+## KẾT QUẢ CHÍNH 27-09 14:3x - phép so đúng với tình huống thật của app
+
+TMA làm truyện MỚI với bộ chấm (không một nhãn TMA nào): học trước PDNC -> gold 9 truyện khác -> tự học trên 150 chương
+TMA không nhãn (nhãn tạm cân từng lớp, xếp theo margin, trọng số "không ai" x3). Chấm chính thức từng câu:
+
+| hệ | 847 câu gold TMA | 143 câu 4 chương test TMA |
+|---|---|---|
+| **bộ chấm + tự học theo cuốn** | **84,9%** (không ai 62,2%) | **82,5%** |
+| bộ chấm, đối chứng cùng số epoch, không tự học | 82,2% (không ai 34,5%) | 76,9% |
+| LoRA 27-09 (ĐÃ học trên các chương TMA có nhãn) | - | 76,9% (p 0,20) |
+| qwen3:8b (model sản xuất) | - | 68,5% (**p 0,001**) |
+| qwen3:4b | - | 68,5% (p 0,005) |
+
+Tự học so với đối chứng trên 847 câu: 43 câu chỉ tự học đúng, 20 ngược lại, **p = 0,005**. Phần lợi nằm ở người kể/NPC
+(34,5% -> 62,2%); trọng số x3 MỘT MÌNH không giúp (81,7%), chỉ khuếch đại nhãn tạm "không ai" của chính cuốn sách.
+Tự học chọn nhãn tạm theo xác suất (bão hoà) thì CÓ HẠI (vòng 2: 80,0%, p 0,02) - cách chọn nhãn tạm là tất cả.
+
 ## Tài liệu
 
 Đã đọc (27-09):
