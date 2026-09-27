@@ -201,9 +201,13 @@ function Transport({ large = false }: { large?: boolean }) {
         {buffering && playing ? (
           <Loader2 className={cn("animate-spin", large ? "size-7" : "size-5")} />
         ) : playing ? (
-          <Pause className={large ? "size-7" : "size-5"} fill="currentColor" strokeWidth={0} />
+          <span key="pause" className="icon-pop">
+            <Pause className={large ? "size-7" : "size-5"} fill="currentColor" strokeWidth={0} />
+          </span>
         ) : (
-          <Play className={cn(large ? "size-7" : "size-5", "translate-x-[1px]")} fill="currentColor" strokeWidth={0} />
+          <span key="play" className="icon-pop">
+            <Play className={cn(large ? "size-7" : "size-5", "translate-x-[1px]")} fill="currentColor" strokeWidth={0} />
+          </span>
         )}
       </button>
       <IconButton label={`Tới ${SKIP_SECONDS} giây (→)`} icon={Forward15} size={size} onClick={() => skip(SKIP_SECONDS)} {...keepFocus} />
@@ -300,7 +304,9 @@ export function SleepMenu() {
       width="w-64"
       trigger={
         <>
-          <Moon className="size-4" />
+          <SleepRing fraction={sleep.kind === "minutes" && sleep.minutes > 0 && left !== null ? left / (sleep.minutes * 60_000) : null}>
+            <Moon className="size-4" />
+          </SleepRing>
           {active && <span className="tabular">{sleepLabel(sleep, now)}</span>}
         </>
       }
@@ -511,6 +517,34 @@ function BookmarkShortcut() {
   return null;
 }
 
+/** Vòng đếm ngược quanh biểu tượng hẹn giờ: phần còn lại của khoảng đã đặt, liếc là biết sắp tắt chưa. */
+function SleepRing({ fraction, children }: { fraction: number | null; children: ReactNode }) {
+  if (fraction === null) return <>{children}</>;
+  const radius = 10;
+  const length = 2 * Math.PI * radius;
+  const shown = Math.max(0, Math.min(1, fraction));
+  return (
+    <span className="relative grid size-6 place-items-center">
+      <svg className="absolute inset-0 -rotate-90" viewBox="0 0 24 24" aria-hidden>
+        <circle cx="12" cy="12" r={radius} fill="none" stroke="currentColor" strokeOpacity={0.22} strokeWidth="2" />
+        <circle
+          cx="12"
+          cy="12"
+          r={radius}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeDasharray={length}
+          strokeDashoffset={length * (1 - shown)}
+          className="transition-[stroke-dashoffset] duration-500 ease-linear"
+        />
+      </svg>
+      <span className="scale-[0.8]">{children}</span>
+    </span>
+  );
+}
+
 // Cách gia hạn khác nhau theo máy: máy tính bắt phím/chuột; điện thoại bắt cú LẮC (SleepTimer.kt) và nút "Nghe thêm"
 // trên thông báo - chạm màn hình ở đó chỉ ghi nhận cho tính năng tự dừng, không gia hạn (27-09, thấy trên máy ảo).
 const EXTEND_GESTURE = Capacitor.isNativePlatform() ? "lắc máy hoặc bấm “Nghe thêm” trên thông báo" : "chạm phím hoặc chuột";
@@ -585,7 +619,7 @@ function FurtherElsewhere() {
 
 export function PlayerBar({ compact = false }: { compact?: boolean }) {
   const { track, close, playing, toggle } = usePlayer();
-  const { setExpanded } = useNowPlaying();
+  const { expanded, setExpanded } = useNowPlaying();
   if (!track) return null;
   if (compact) {
     return (
@@ -594,7 +628,7 @@ export function PlayerBar({ compact = false }: { compact?: boolean }) {
         <FadingNotice className="mx-3 mt-2" />
         <div className="flex h-16 items-center gap-3 px-3">
           <button type="button" onClick={() => setExpanded(true)} className="flex min-w-0 flex-1 items-center gap-3 text-left" aria-label="Mở màn hình đang nghe">
-            <BookCover title={track.bookTitle} image={track.bookCover} size="sm" className="size-11" />
+            <BookCover title={track.bookTitle} image={track.bookCover} size="sm" className={cn("size-11", !expanded && "cover-morph")} />
             <div className="min-w-0">
               <div className="truncate text-sm font-semibold">{track.chapterTitle}</div>
               <div className="truncate text-xs text-fg-2">
@@ -626,7 +660,7 @@ export function PlayerBar({ compact = false }: { compact?: boolean }) {
           className="flex min-w-0 items-center gap-3 rounded-lg p-1 text-left hover:bg-hover"
           aria-label="Mở màn hình đang nghe"
         >
-          <BookCover title={track.bookTitle} image={track.bookCover} size="sm" className="size-12" />
+          <BookCover title={track.bookTitle} image={track.bookCover} size="sm" className={cn("size-12", !expanded && "cover-morph")} />
           <div className="min-w-0">
             <div className="truncate text-sm font-semibold">{track.chapterTitle}</div>
             <div className="truncate text-xs text-fg-2">
@@ -1186,7 +1220,7 @@ export function NowPlaying({ mobile = false }: { mobile?: boolean }) {
           <div className="-mx-6 mt-2 min-h-0 flex-1 border-y border-line">{panelBody}</div>
         ) : (
           <div className="mt-4 flex min-h-0 flex-1 flex-col items-center justify-center">
-            <BookCover title={track.bookTitle} image={track.bookCover} size="xl" className="w-full max-w-[300px]" />
+            <BookCover title={track.bookTitle} image={track.bookCover} size="xl" className="cover-morph w-full max-w-[300px]" />
           </div>
         )}
         <div className="mt-5 w-full text-center">

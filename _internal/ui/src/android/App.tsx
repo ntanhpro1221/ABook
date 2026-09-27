@@ -1,6 +1,6 @@
 import { App as CapacitorApp } from "@capacitor/app";
 import { Download, Library, Settings } from "lucide-react";
-import { useEffect, useMemo, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, type ReactNode } from "react";
 import { HashRouter, NavLink, Route, Routes, useLocation, useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { Toaster } from "sonner";
@@ -11,6 +11,7 @@ import { ReaderScreen } from "@/listen/ReaderScreen";
 import { NowPlaying, PlayerBar } from "@/listen/PlayerViews";
 import { PlayerProvider, useNowPlaying, usePlayer } from "@/listen/player";
 import { SourceProvider } from "@/listen/source";
+import { usePageEnter } from "@/shared/motion";
 import { watchDownloads } from "./downloads";
 import { cn } from "@/shared/cn";
 import { Button, EmptyState, TooltipProvider } from "@/shared/ui";
@@ -63,12 +64,18 @@ function Tab({ to, icon: Icon, label }: { to: string; icon: typeof Library; labe
 
 function MobileShell({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
-  const { setExpanded } = useNowPlaying();
+  const { expanded, setExpanded } = useNowPlaying();
   useRestoreLastListening();
-  useEffect(() => setExpanded(false), [pathname, setExpanded]);
+  const expandedNow = useRef(expanded);
+  expandedNow.current = expanded;
+  useEffect(() => {
+    if (expandedNow.current) setExpanded(false);
+  }, [pathname, setExpanded]);
+  const main = useRef<HTMLElement | null>(null);
+  usePageEnter(main, pathname);
   return (
     <div className="relative flex h-full flex-col" style={{ paddingTop: "env(safe-area-inset-top)" }}>
-      <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</main>
+      <main ref={main} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</main>
       <PlayerBar compact />
       <nav
         className="flex h-16 shrink-0 border-t border-line bg-panel"

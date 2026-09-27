@@ -1,11 +1,12 @@
 import { Clapperboard, Library, Plus, Settings } from "lucide-react";
-import { useEffect, useLayoutEffect, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router";
 import { useRestoreLastListening } from "@/listen/LibraryScreen";
 import { useNowPlaying } from "@/listen/player";
 import { NowPlaying, PlayerBar } from "@/listen/PlayerViews";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
+import { usePageEnter } from "@/shared/motion";
 import { APP_TITLE } from "@/shared/title";
 import { formatPercent } from "@/shared/format";
 import { Progress, Vu } from "@/shared/ui";
@@ -107,9 +108,14 @@ export function Shell({ children }: { children: ReactNode }) {
   useRestoreLastListening();
 
   // Bấm mục thanh bên khi màn "Đang nghe" đang mở: trang mới phải hiện ra, không bị lớp phủ che.
+  const expandedNow = useRef(expanded);
+  expandedNow.current = expanded;
   useEffect(() => {
-    setExpanded(false);
+    // Chỉ thu "Đang nghe" khi nó đang mở: gọi thừa sẽ chạy một View Transition rỗng mỗi lần chuyển trang.
+    if (expandedNow.current) setExpanded(false);
   }, [pathname, setExpanded]);
+  const main = useRef<HTMLElement | null>(null);
+  usePageEnter(main, pathname);
 
   // Tên chung theo đường dẫn; màn nào biết tên cụ thể (sách, chương, dự án) thì `usePageTitle` ghi đè sau đó.
   useLayoutEffect(() => {
@@ -144,7 +150,7 @@ export function Shell({ children }: { children: ReactNode }) {
         </div>
       </aside>
       <div className="relative flex min-w-0 flex-1 flex-col">
-        <main className="min-h-0 flex-1 overflow-y-auto" inert={expanded}>
+        <main ref={main} className="min-h-0 flex-1 overflow-y-auto" inert={expanded}>
           {children}
         </main>
         <PlayerBar />

@@ -282,7 +282,67 @@
   animation-delay: -0.2s;
 }
 
+/* Mở/đóng "Đang nghe": bìa bay giữa thanh phát và màn hình lớn (View Transitions, player.tsx setExpandedAnimated).
+   Chỉ MỘT phần tử mang tên này ở mỗi trạng thái: bìa nhỏ bỏ tên khi màn lớn đang mở. */
+.cover-morph {
+  view-transition-name: now-playing-cover;
+}
+::view-transition-group(now-playing-cover) {
+  animation-duration: 0.34s;
+  animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.24s;
+  animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+/* Có View Transitions thì nó lo cả lúc mở lẫn lúc đóng; hoạt ảnh trượt lên cũ chỉ còn là đường dự phòng. */
+@supports (view-transition-name: none) {
+  .now-playing {
+    animation: none;
+  }
+}
+
+/* Chuyển trang: nội dung trang mới hiện dần và nhích lên (Shell/App gọi animatePage khi đường dẫn đổi). */
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+/* Danh sách/lưới sách: các thẻ hiện lần lượt khi mở màn (tối đa ~10 thẻ đầu, phần sau hiện ngay). */
+.rise-in {
+  animation: page-in 0.32s cubic-bezier(0.2, 0, 0, 1) both;
+  animation-delay: calc(min(var(--i, 0), 10) * 28ms);
+}
+/* Biểu tượng đổi trạng thái (phát <-> dừng): nhún nhẹ khi hiện. */
+@keyframes icon-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6) rotate(-12deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.icon-pop {
+  display: inline-grid;
+  animation: icon-pop 0.2s cubic-bezier(0.2, 0, 0, 1.3);
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .rise-in,
+  .icon-pop,
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
   .sheen::after,
   .vu > span,
   .now-playing {
