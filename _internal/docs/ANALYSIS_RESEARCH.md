@@ -110,6 +110,57 @@ Hướng dẫn sinh tồn 47,3%, Yamiyo 56,5%, Nise 57,8%, Năng lực bá đạ
 Đã bảo là 74,0%, TMA 83,8%. Trung bình che mất những truyện model còn rất yếu - đúng yêu cầu chủ sách 27-09 "nhiều thể
 loại, phong cách, trình độ viết": luôn báo theo truyện, và gold/huấn luyện phải phủ những kiểu viết đang yếu.
 
+## CỔNG TAM QUỐC 27-09 21:xx - giữ qwen3:8b; LoRA mất phần lớn điểm vì VIẾT SAI TÊN, không phải vì nhận sai người
+
+Cổng đổi model: Tam quốc diễn nghĩa (Phan Kế Bính) Hồi 50-52, 219 câu thoại gold - truyện chưa từng thấy, khác hẳn thể
+loại tập huấn luyện. Luật đổi model (v2 >= qwen3:8b) không đạt -> **giữ qwen3:8b làm mặc định**. Kết quả đủ 3 hồi
+(22:19, `score_models`):
+
+| model | điểm | người nói | cảm xúc | giây |
+|---|---|---|---|---|
+| qwen3:8b | **87,2** | **79,2** | 88,7 | 2.748 |
+| LoRA v2 | 72,9 | 43,2 | 95,1 | 1.809 |
+| LoRA v1 | 64,0 | 30,1 | **95,3** | 1.825 |
+
+v2 hơn v1 rõ (+13 người nói), cảm xúc của cả hai LoRA vẫn hơn qwen3:8b 6 điểm, nhanh hơn 1,5 lần - chỉ trục người nói
+kéo tụt, và phần lớn vì chính tả tên (dưới).
+
+Mổ lỗi (`scratchpad/tamquoc_errors.py`, `tamquoc_folded.py`): phần lớn câu LoRA "sai" là **nhân vật đúng, chuỗi tên sai**:
+
+- Rơi dấu: `HOANG CAI`, `KHONG MINH`, `LO TUC`, `HUYEN-THUC` (đáp án Hoàng Cái, Khổng Minh, Lỗ Túc...). Chấm lại bỏ qua
+  dấu và gạch nối (`scripts/model_eval/name_form.py`, câu thoại, đủ 219 câu):
+
+  | model | chặt | bỏ qua dấu | 050 | 051 | 052 |
+  |---|---|---|---|---|---|
+  | qwen3:8b | 79,5% | 79,5% | 65,0 / 65,0 | 80,5 / 80,5 | 89,0 / 89,0 |
+  | LoRA v2 | 43,4% | **76,3%** | 63,3 / **75,0** | 63,6 / 77,9 | **9,8** / 75,6 |
+  | LoRA v1 | 30,1% | 67,1% | 48,3 / 61,7 | 36,4 / 66,2 | 11,0 / 72,0 |
+
+  qwen3:8b chép tên đúng như văn bản nên không mất gì. v2 mất 33 điểm chỉ vì chính tả; bỏ qua dấu thì v2 kém qwen3:8b
+  3,2 điểm, và **hơn nó 10 điểm ở hồi 50**. Lỗi theo CHƯƠNG, không theo câu: hồi 52 v2 viết gần như MỌI tên không dấu
+  (chặt 9,8%, bỏ dấu 75,6%) - một khi bắt đầu rơi dấu trong một chương, nó rơi đến hết chương.
+- Tên ngắn thay tên đủ (v2 hồi 52): `TUC` 16 câu, `VAN` 8, `DU` 5, `PHAM` 5 - model chép chữ gọi tại chỗ ("Túc nói")
+  thay tên đủ (Lỗ Túc, Triệu Vân, Chu Du, Triệu Phạm); qwen3:8b viết tên đủ. Có cả phiên âm lạc: `DIAO VINH` (Đạo-vinh).
+- Tên tự thay tên chính: "Triệu Tử-long" cho Triệu Vân, "Cam Hưng-bá" cho Cam Ninh - model chép đúng chữ trong câu
+  ("Ta là Triệu Tử-long"), đáp án dùng tên chính.
+- Dữ liệu huấn luyện KHÔNG bỏ dấu (18% nhãn là tên có dấu: HẠ TỬ CƯỜNG, DẠ OANH...). Nghi phạm: nhãn tên viết IN HOA.
+  Chữ Việt in hoa có dấu hiếm trong dữ liệu tiền huấn luyện; bị ép in hoa, model 4B hay rơi dấu với tên chưa gặp.
+  qwen3:8b không bị ép in hoa nên viết đúng.
+
+Hệ quả trong dây chuyền thật: `HOANG CAI` không khớp nhân vật "Hoàng Cái" -> thành nhân vật MỚI, giọng khác - lỗi người
+nghe nghe ra, không chỉ là lỗi bộ chấm.
+
+Việc kế (theo thứ tự lợi):
+1. **Neo tên vào văn bản gốc** (host, lợi cho MỌI model): tên người nói không có nguyên văn trong chương mà khớp DUY NHẤT
+   một tên trong chương khi bỏ dấu/gạch nối -> thay bằng đúng chữ trong văn bản; rồi tên ngắn là đuôi của DUY NHẤT một
+   tên đủ đã biết (sổ nhân vật / cùng chương) -> tên đủ. Trần đo được: v2 43,4% -> 76,3% trên Tam quốc (chưa tính phần
+   tên ngắn). Nằm trong `analysis.py` (file khoá) -> làm ở nhánh dev, đo bằng replay trên gold, khi hàng GPU rảnh; phải đo
+   cả phần PHÁ (tên ngắn trùng đuôi hai người, "Phạm" / "Triệu Phạm").
+2. **Huấn luyện lại với tên giữ nguyên dạng văn bản** (không in hoa; host lo so không phân biệt hoa thường) - kiểm giả
+   thuyết in hoa.
+3. **Thêm truyện tên thuần Việt/Hán Việt vào gold** (đa thể loại, xem mục "Bộ phân tích phải đa thể loại").
+4. Tên tự/tên gọi tắt (Tử-long = Triệu Vân, Du = Chu Du): cần sổ bí danh theo truyện - câu hỏi riêng.
+
 ## Tài liệu
 
 Đã đọc (27-09):
