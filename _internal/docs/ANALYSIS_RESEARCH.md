@@ -59,6 +59,13 @@ Bản tự học có "không ai" x3 đoán "không ai" QUÁ TAY (40/143 câu, 20
 dãi nó trông tốt nhất, dưới cách chấm chặt thì bản cân lớp không x3 kết hợp tốt hơn. Lợi thật cho app: ~+8 điểm so với
 model sản xuất hiện tại, ~+2 so với LoRA; phần còn lại nằm ở quyết định giọng người kể vs NPC (chưa ai làm tốt).
 
+Công cụ `combine_eval.py` (chấm chặt hệ kết hợp, θ kiểm chứng chéo, McNemar với LLM một mình), 143 câu test TMA:
+qwen3:8b 67,1% -> + bộ chấm đối chứng (chưa từng thấy TMA, không tự học) **74,8% (15 vs 4, p 0,02)**, + bộ chấm tự học
+74,8% (20 vs 9, p 0,06); LoRA 74,8% -> 75,5% / 76,9% (không đáng kể). **Trong hệ kết hợp tự học gần như không thêm gì**:
+lợi của nó nằm ở câu người kể/NPC, phần mà hệ kết hợp giao cho LLM. Thứ tự thay đổi đáng làm cho app: (1) thay
+qwen3:8b bằng LoRA (+7,7 người nói, +9 cảm xúc, nhanh gấp đôi); (2) N7b "tôi là ai" cho truyện ngôi thứ nhất (~30% ->
+?); (3) bộ chấm cho câu có tên (+2 trên nền LoRA).
+
 ## Tài liệu
 
 Đã đọc (27-09):
