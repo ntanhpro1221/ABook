@@ -1,5 +1,5 @@
 import { Headphones, Pause, Play, Search } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode, type CSSProperties } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
@@ -196,8 +196,10 @@ function UpcomingCard({ book, onOpen }: { book: ListenBook; onOpen?: (book: List
 function Shelf({ books }: { books: ListenBook[] }) {
   return (
     <div className="grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-6">
-      {books.map((book) => (
-        <BookTile key={book.id} book={book} />
+      {books.map((book, index) => (
+        <div key={book.id} className="rise-in" style={{ "--i": index } as CSSProperties}>
+          <BookTile book={book} />
+        </div>
       ))}
     </div>
   );
