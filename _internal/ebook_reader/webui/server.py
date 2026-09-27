@@ -312,7 +312,9 @@ class App:
 
     def listen_book(self, value: str) -> dict[str, Any]:
         path = self._book(value)
-        return listen_view.book(path, value, self.summary(path), self.listening.get(value))
+        view = listen_view.book(path, value, self.summary(path), self.listening.get(value))
+        view["records"] = self.listening.records(value)  # hồ sơ nghe gắn với cuốn này (webui/listening.py)
+        return view
 
     def voices(self) -> list[dict[str, Any]]:
         from ..voice_catalog import DEFAULT_NARRATOR_BY_GENDER, VOICE_PREVIEW_FILENAMES, narrator_presets
@@ -745,6 +747,45 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Dấu trang không hợp lệ")
         self._send_json(HTTPStatus.OK, self.app.listening.restore_bookmark(value, body))
 
+    # ---- hồ sơ nghe: độc lập với sách, app giữ liên kết (webui/listening.py) ----------------------------------------
+
+    def _own_record(self, value: str, record: str) -> None:
+        self.app._book(value)
+        if self.app.listening.book_of(record) != value:
+            raise ApiError(HTTPStatus.NOT_FOUND, "Không có hồ sơ nghe này")
+
+    def get_records(self, _query: dict[str, list[str]], value: str) -> None:
+        self.app._book(value)
+        self._send_json(HTTPStatus.OK, {"records": self.app.listening.records(value)})
+
+    def post_record(self, _query: dict[str, list[str]], value: str) -> None:
+        self.app._book(value)
+        self.app.listening.create_record(value, str(self._body().get("name", "")))
+        self._send_json(HTTPStatus.CREATED, {"records": self.app.listening.records(value)})
+
+    def post_record_activate(self, _query: dict[str, list[str]], value: str, record: str) -> None:
+        self._own_record(value, record)
+        self.app.listening.activate(value, record)
+        self._send_json(HTTPStatus.OK, {"records": self.app.listening.records(value)})
+
+    def put_record(self, _query: dict[str, list[str]], value: str, record: str) -> None:
+        self._own_record(value, record)
+        if not self.app.listening.rename_record(record, str(self._body().get("name", ""))):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Tên hồ sơ không được để trống")
+        self._send_json(HTTPStatus.OK, {"records": self.app.listening.records(value)})
+
+    def post_record_move(self, _query: dict[str, list[str]], value: str, record: str) -> None:
+        self._own_record(value, record)
+        target = str(self._body().get("book", ""))
+        self.app._book(target)
+        self.app.listening.move_record(record, target)
+        self._send_json(HTTPStatus.OK, {"records": self.app.listening.records(value)})
+
+    def delete_record(self, _query: dict[str, list[str]], value: str, record: str) -> None:
+        self._own_record(value, record)
+        self.app.listening.delete_record(record)
+        self._send_json(HTTPStatus.OK, {"records": self.app.listening.records(value)})
+
     def get_sessions(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._book(value)
         self._send_json(HTTPStatus.OK, self.app.listening.sessions(value))
@@ -895,6 +936,12 @@ ROUTES: list[Route] = [
     ("PUT", re.compile(LISTEN + r"/bookmarks/([0-9a-f]+)"), Handler.put_bookmark),
     ("DELETE", re.compile(LISTEN + r"/bookmarks/([0-9a-f]+)"), Handler.delete_bookmark),
     ("POST", re.compile(LISTEN + r"/bookmarks/restore"), Handler.post_bookmark_restore),
+    ("GET", re.compile(LISTEN + r"/records"), Handler.get_records),
+    ("POST", re.compile(LISTEN + r"/records"), Handler.post_record),
+    ("POST", re.compile(LISTEN + r"/records/(r-[0-9a-f]{16})/activate"), Handler.post_record_activate),
+    ("PUT", re.compile(LISTEN + r"/records/(r-[0-9a-f]{16})"), Handler.put_record),
+    ("POST", re.compile(LISTEN + r"/records/(r-[0-9a-f]{16})/move"), Handler.post_record_move),
+    ("DELETE", re.compile(LISTEN + r"/records/(r-[0-9a-f]{16})"), Handler.delete_record),
     ("POST", re.compile(LISTEN + r"/night"), Handler.post_night),
     ("POST", re.compile(LISTEN + r"/reading"), Handler.post_reading),
     ("GET", re.compile(LISTEN + r"/sessions"), Handler.get_sessions),

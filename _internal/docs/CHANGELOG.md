@@ -74,10 +74,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   bản thu hỏng, hay người nghe sửa cách đọc tên).
 - Điện thoại: một cuốn mở từ file `.abook` và cùng cuốn ấy trên máy tính không còn thành hai cuốn trong thư viện - gộp
   làm một, chỗ nghe đồng bộ tiếp với máy tính, audio đã có không phải tải lại.
+- Điện thoại: nghe bằng trình phát (màn hình khoá, tai nghe) giờ báo chỗ nghe về máy tính - mỗi phút khi đang phát và
+  ngay khi dừng. Trước đây chỉ dấu trang và thao tác trên màn hình mới đồng bộ.
 
 ### Lưu ý khi nâng cấp
 
 - Sách đang làm dở từ bản trước **không tiếp tục được** (khâu phân tích đã đổi) - tạo sách mới từ cùng nguồn.
+- Dữ liệu nghe (chỗ đang nghe, dấu trang, lịch sử) chuyển sang dạng **hồ sơ nghe** độc lập với sách, tự động khi mở app:
+  mỗi cuốn đang nghe thành một hồ sơ "Mặc định", máy tính và điện thoại nhận ra là cùng một hồ sơ. Không mất gì.
 - Android: app đổi mã thành `com.ngdtuanh.abook`, nên ABook cài thành **một app mới** bên cạnh "Ebook Reader" cũ, không
   mang theo sách đã tải hay chỗ đang nghe. Ghép nối lại với máy tính, tải lại sách (chỗ nghe đồng bộ từ máy tính về), rồi
   gỡ app cũ.
