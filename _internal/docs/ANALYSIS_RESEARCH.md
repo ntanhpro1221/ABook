@@ -212,6 +212,9 @@ dựng sổ nhân vật đã trả 21 giây ấy cho mỗi cuốn.
 qwen3:8b 81,6 / v2 80,7 / v1 79,9; TMA qwen3:8b 59,7 / **qwen3:4b 63,3** / v1 64,4 / v2 64,0 / nền 4B 59,0 / gemma4
 e2b 57,6; YMP không đổi (không có câu vô danh). Lạ: qwen3:4b hơn qwen3:8b trên TMA theo giọng ở cả hai cách chấm -
 hàng GPU g (tự chạy sau c3) đo qwen3:4b trên Tam quốc và YMP có người kể.
+**Kết quả (28-09 05:4x): KHÔNG đổi sang qwen3:4b.** Tam quốc (truyện chưa thấy) F1 giọng **56,4%** vs qwen3:8b 74,8% -
+thua cả ba hồi (65,9 / 58,8 / 56,2 vs 74,7 / 76,0 / 80,7), nhãn chặt 63,9 vs 79,5%. YMP 248 có người kể (47 câu): 59,6
+vs 56,1% - ngang, còn hai LoRA 79,7 / 82,8%. Lợi thế trên TMA là của riêng truyện ấy, không chuyển sang truyện khác.
 
 Chuyện chọn model, theo thước giọng + luật mới: v2 thắng 5/8 chương (TMA 2-2, Tam quốc 2-1, YMP 1-0), gộp TMA +4,0,
 YMP +26,7, Tam quốc -0,6 (hoà); cảm xúc hơn 6-9 điểm; nhanh 1,5 lần. Cổng "v2 >= qwen3:8b trên truyện chưa thấy" đo bằng
