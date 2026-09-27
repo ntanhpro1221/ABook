@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Download, FileAudio, Laptop, Loader2, RefreshCw, Search, Unplug, Wifi } from "lucide-react";
+import { CheckCircle2, Clapperboard, Download, FileAudio, Laptop, Loader2, RefreshCw, Search, Unplug, Wifi } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
@@ -208,6 +208,15 @@ export function DevicesScreen() {
                 <RefreshCw className={cn("size-4", remote.isFetching && "animate-spin")} />
               </button>
             </div>
+            {/* Studio từ xa: điện thoại không sản xuất, nhưng điều khiển được việc sản xuất của máy tính. */}
+            <Button
+              variant="secondary"
+              icon={Clapperboard}
+              className="mt-3 w-full"
+              onClick={() => void EbookLibrary.openStudio().catch((error: Error) => toast.error(error.message))}
+            >
+              Studio của máy tính
+            </Button>
             <div className="mt-5 divide-y divide-line">
               {remote.data?.books.length ? (
                 remote.data.books.map((book) => (

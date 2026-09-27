@@ -140,6 +140,8 @@ export interface EbookLibraryPlugin {
   pair(options: { host: string; port: number; code: string; device?: string }): Promise<{ name: string }>;
   connection(): Promise<{ paired: boolean; host: string; port: number; name: string }>;
   unpair(): Promise<void>;
+  /** Studio từ xa: mở trang Studio của máy tính đã ghép (StudioActivity.kt, webui/remote_studio.py). */
+  openStudio(): Promise<void>;
   remoteLibrary(): Promise<{ name: string; books: RemoteBook[] }>;
   download(options: { bookId: string }): Promise<{ bookId: string }>;
   localBooks(): Promise<{ books: LocalBook[] }>;

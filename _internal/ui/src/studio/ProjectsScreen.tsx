@@ -32,9 +32,10 @@ function ProjectRow({ book }: { book: BookSummary }) {
     <button
       type="button"
       onClick={() => navigate(`/studio/${book.id}`)}
-      className="grid w-full grid-cols-[48px_minmax(0,1fr)_160px_170px] xl:grid-cols-[48px_minmax(0,1fr)_170px_200px_110px] items-center gap-4 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-hover"
+      className="grid w-full grid-cols-[48px_minmax(0,1fr)] items-center gap-x-4 gap-y-1.5 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-hover md:grid-cols-[48px_minmax(0,1fr)_160px_170px] md:gap-y-4 xl:grid-cols-[48px_minmax(0,1fr)_170px_200px_110px]"
     >
-      <BookCover title={book.title} size="sm" image={book.cover} className="size-12" />
+      {/* Màn hẹp (Studio từ xa trên điện thoại): trạng thái và tiến độ xếp dưới tên, không chia cột. */}
+      <BookCover title={book.title} size="sm" image={book.cover} className="row-span-3 size-12 self-start md:row-span-1 md:self-center" />
       <div className="min-w-0">
         <div className="truncate font-semibold">{book.title}</div>
         <div className="truncate text-xs text-fg-2">
@@ -42,14 +43,14 @@ function ProjectRow({ book }: { book: BookSummary }) {
           {book.settings.profileLabel}
         </div>
       </div>
-      <div>
+      <div className="col-start-2 md:col-start-auto">
         <StatusPill
           label={book.queuePosition ? `Xếp hàng · thứ ${book.queuePosition}` : book.starting ? "Đang khởi động" : book.statusLabel}
           tone={book.queuePosition ? "warning" : phaseTone(book.phase, live)}
           live={live}
         />
       </div>
-      <div>
+      <div className="col-start-2 min-w-0 md:col-start-auto">
         {book.phase === "done" ? (
           <span className="text-xs text-fg-2">{detail}</span>
         ) : (
@@ -145,7 +146,7 @@ export function ProjectsScreen() {
             </section>
           )}
           <section className="mt-8">
-            <div className="grid grid-cols-[48px_minmax(0,1fr)_160px_170px] xl:grid-cols-[48px_minmax(0,1fr)_170px_200px_110px] gap-4 border-b border-line px-3 pb-2 text-xs font-semibold uppercase tracking-[0.06em] text-fg-2">
+            <div className="hidden grid-cols-[48px_minmax(0,1fr)_160px_170px] gap-4 border-b border-line px-3 pb-2 text-xs font-semibold uppercase tracking-[0.06em] text-fg-2 md:grid xl:grid-cols-[48px_minmax(0,1fr)_170px_200px_110px]">
               <span />
               <span>Dự án</span>
               <span>Trạng thái</span>

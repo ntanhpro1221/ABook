@@ -62,6 +62,27 @@ function NavItem({ to, icon: Icon, match, children }: { to: string; icon: typeof
   );
 }
 
+/** Màn hẹp (Studio từ xa trên điện thoại - webui/remote_studio.py): thanh bên nhường chỗ cho thanh tab dưới đáy. */
+function TabItem({ to, icon: Icon, match, children }: { to: string; icon: typeof Library; match: (path: string) => boolean; children: ReactNode }) {
+  const { pathname } = useLocation();
+  const { setExpanded } = useNowPlaying();
+  const active = match(pathname);
+  return (
+    <NavLink
+      to={to}
+      onClick={() => setExpanded(false)}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "flex min-w-0 flex-1 flex-col items-center gap-1 py-2 text-[11px] font-medium",
+        active ? "text-accent-text" : "text-fg-2",
+      )}
+    >
+      <Icon className="size-5" />
+      <span className="truncate">{children}</span>
+    </NavLink>
+  );
+}
+
 function Producing() {
   const { pathname } = useLocation();
   const { data } = useLibrary({ live: pathname.startsWith("/studio") });
@@ -128,7 +149,7 @@ export function Shell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex h-full">
-      <aside className="flex w-[236px] shrink-0 flex-col border-r border-line bg-sunken px-3 pb-4 pt-5">
+      <aside className="hidden w-[236px] shrink-0 flex-col border-r border-line bg-sunken px-3 pb-4 pt-5 md:flex">
         <Brand />
         <nav aria-label="Điều hướng">
           <Section title="Nghe">
@@ -158,6 +179,20 @@ export function Shell({ children }: { children: ReactNode }) {
         </main>
         {!remote && <RemoteBars />}
         <PlayerBar extra={remote ? undefined : <HandOffButton />} />
+        <nav aria-label="Điều hướng" className="flex border-t border-line bg-sunken pb-[env(safe-area-inset-bottom)] md:hidden">
+          <TabItem to="/" icon={Library} match={(path) => path === "/" || path.startsWith("/book/")}>
+            Thư viện
+          </TabItem>
+          <TabItem to="/studio" icon={Clapperboard} match={(path) => path.startsWith("/studio") && path !== "/studio/new"}>
+            Dự án
+          </TabItem>
+          <TabItem to="/studio/new" icon={Plus} match={(path) => path === "/studio/new"}>
+            Tạo sách
+          </TabItem>
+          <TabItem to="/settings" icon={Settings} match={(path) => path.startsWith("/settings")}>
+            Cài đặt
+          </TabItem>
+        </nav>
         <NowPlaying />
       </div>
     </div>

@@ -157,6 +157,17 @@ class LibraryPlugin : Plugin() {
         call.resolve()
     }
 
+    /** Studio từ xa (StudioActivity.kt): trang Studio của máy tính đã ghép, mang sẵn mã thiết bị. */
+    @PluginMethod
+    fun openStudio(call: PluginCall) {
+        if (prefs.getString("token", "").isNullOrBlank()) {
+            call.reject("Chưa ghép với máy tính nào")
+            return
+        }
+        activity.startActivity(Intent(activity, StudioActivity::class.java))
+        call.resolve()
+    }
+
     @PluginMethod
     fun remoteLibrary(call: PluginCall) = background(call) {
         val reply = JSONObject(request("GET", "/sync/v1/library"))
