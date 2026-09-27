@@ -170,8 +170,11 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   Chỉ gom các DẠNG VIẾT của cùng một tên (`character_registry.canonical_speaker_names`, một hàm dùng chung cho dây
   chuyền và công cụ đo `scripts/model_eval/voice_identity.py`): rơi dấu, "tên + họ bịa" (tên kiểu Âu, chữ đầu), tên
   vắng mặt trong sách, và tên gọi kiểu Việt/Hán Việt ("DU" -> "CHU DU": nhãn một chữ là chữ CUỐI của đúng một tên
-  nhiều chữ mà mọi chữ là âm tiết tiếng Việt; tên kiểu Âu thì chữ cuối là họ chung cả nhà, không gom). Luật gom mới
-  phải qua `voice_identity.py --gold-check`: không được nhập hai người của đáp án làm một.
+  nhiều chữ mà mọi chữ là âm tiết tiếng Việt; tên kiểu Âu thì chữ cuối là họ chung cả nhà, không gom). Lượt cuối chỉ
+  đổi CHỮ hiển thị, một tên thành một tên: tên sách không viết như thế mà bỏ dấu ra khớp đúng một cách viết tên trong
+  sách -> cách của sách ("HOANG CAI" -> "HOÀNG CÁI"). Luật gom mới phải qua `voice_identity.py --gold-check`: không được
+  nhập hai người của đáp án làm một. Văn bản cả cuốn không bao giờ `unicodedata.normalize` một lần - CPython chậm vượt
+  tuyến tính trên chuỗi dài (21 giây cho 11 triệu ký tự); chuẩn hoá từng dòng hay từng ký tự khác nhau.
 - Cảm xúc chỉ thay đổi sampling, pace và mức âm lượng mục tiêu trên cùng preset. Không dùng cue phi ngôn ngữ thử nghiệm
   của VieNeu và không thay identity giọng để giả lập cảm xúc.
 - Chuẩn hóa các cách viết như `haizzzzz`, `hừmmmm` hoặc `[thở dài]` chỉ được áp dụng lên `spoken_text` dùng chung cho
