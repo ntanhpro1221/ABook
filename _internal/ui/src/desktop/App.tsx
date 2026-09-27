@@ -95,7 +95,8 @@ function ExportMenuItem({ book }: { book: ListenBook }) {
       toast.success(`Đã xuất ${result.files} chương`, {
         id: pending,
         description: result.files < result.chaptersTotal ? "Các chương chưa làm xong sẽ không có trong bản xuất." : result.folder,
-        action: {
+        // Studio từ xa: thư mục nằm trên máy tính, không mở được từ máy đang xem.
+        action: info?.remote ? undefined : {
           label: "Mở thư mục",
           onClick: () => void api("/api/reveal-export", { method: "POST", body: { folder: result.folder } }),
         },
@@ -133,7 +134,7 @@ function BookFileMenuItem({ book }: { book: ListenBook }) {
       toast.success("Đã xuất file sách", {
         id: pending,
         description: `${result.file} · ${Math.round(result.size / 1048576)} MB`,
-        action: {
+        action: info?.remote ? undefined : {
           label: "Mở thư mục",
           onClick: () => void api("/api/reveal-export", { method: "POST", body: { folder: result.folder } }),
         },

@@ -23,6 +23,7 @@ from . import actions, bookfile, cover_search, covers, listen_view, packages, st
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id
 from .listening import RECORD_ID, Listening
+from .remote_studio import StudioGate
 from .reviews import Reviews, review_view
 from .work_items import work_items
 from .sync import Devices, ExclusiveHTTPServer, Remote, SyncApp, SyncServer, local_addresses, remote_command, SYNC_PORT
@@ -126,6 +127,8 @@ class App:
         self.queue: list[str] = []
         self._queue_lock = threading.RLock()  # summary() lấy lại khoá này từ trong start/stop
         self._queue_thread: threading.Thread | None = None
+        # Cổng của chính máy chủ giao diện này (Server đặt) - Studio từ xa chuyển tiếp API về đây. 0: chưa chạy.
+        self.local_port = 0
 
     # ---- sách ------------------------------------------------------------------------------------------
 
@@ -278,14 +281,24 @@ class App:
             "pairing": self.devices.pairing() if running else None,
             "pairingBlocked": running and self.devices.blocked,
             "devices": sorted(self.devices.list(), key=lambda device: -float(device.get("lastSeen") or 0)),
+            # Studio từ xa (remote_studio.py): công tắc riêng, tách khỏi quyền nghe của điện thoại.
+            "remoteStudio": bool(self.preferences.get().get("remoteStudio")),
         }
+
+    def set_remote_studio(self, enabled: bool) -> dict[str, Any]:
+        """Cho / thôi cho thiết bị đã ghép điều khiển sản xuất. Cổng đồng bộ đọc lại công tắc mỗi yêu cầu: tắt là đóng
+        ngay, kể cả với trang Studio đang mở trên điện thoại."""
+        self.preferences.update({"remoteStudio": enabled})
+        return self.sync_view()
 
     def set_sync(self, enabled: bool) -> dict[str, Any]:
         """Bật/tắt đồng bộ. Tuỳ chọn lưu Ý MUỐN của người dùng, không lưu kết quả: cổng bận một lần lúc khởi
         động không được tự tắt đồng bộ vĩnh viễn - lần mở sau thử lại."""
         if enabled and self.sync_server is None:
             try:
-                app = SyncApp(self.library, self.listening, self.devices, socket_name(), self.remote)
+                studio = StudioGate(allowed=lambda: bool(self.preferences.get().get("remoteStudio")),
+                                    port=lambda: self.local_port, token=self.token, static_dir=self.static_dir)
+                app = SyncApp(self.library, self.listening, self.devices, socket_name(), self.remote, studio=studio)
                 self.sync_server = SyncServer(app, host=self.sync_host, port=self.sync_port).start()
                 self.sync_error = ""
             except OSError as error:
@@ -725,6 +738,11 @@ class Handler(BaseHTTPRequestHandler):
         self._mutating_guard()
         self._send_json(HTTPStatus.OK, self.app.set_sync(bool(self._body().get("enabled"))))
 
+    def post_sync_studio(self, _query: dict[str, list[str]]) -> None:
+        # Chỉ trên chính máy này: remote_studio.ALLOWED không có đường /api/sync nào.
+        self._mutating_guard()
+        self._send_json(HTTPStatus.OK, self.app.set_remote_studio(bool(self._body().get("enabled"))))
+
     def post_sync_pairing(self, _query: dict[str, list[str]]) -> None:
         self._mutating_guard()
         if self.app.sync_server is None:
@@ -991,6 +1009,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(r"/api/sync"), Handler.get_sync),
     ("POST", re.compile(r"/api/sync"), Handler.post_sync),
     ("POST", re.compile(r"/api/sync/pairing"), Handler.post_sync_pairing),
+    ("POST", re.compile(r"/api/sync/studio"), Handler.post_sync_studio),
     ("GET", re.compile(r"/api/remote"), Handler.get_remote),
     ("POST", re.compile(r"/api/remote/([0-9a-f]{12})"), Handler.post_remote),
     ("DELETE", re.compile(r"/api/sync/pairing"), Handler.delete_sync_pairing),
@@ -1034,6 +1053,7 @@ class Server:
         handler.port = self.httpd.server_address[1]
         self.app = app
         self.port = int(self.httpd.server_address[1])
+        app.local_port = self.port
         self._thread: threading.Thread | None = None
 
     @property

@@ -61,12 +61,21 @@ export function SettingsScreen() {
       toast.error((error as Error).message);
     }
   };
+  const remote = Boolean(info?.remote);
   const fade = String(preferences?.sleepFadeSeconds ?? 30) as "10" | "30" | "60";
   const extend = String(preferences?.sleepExtendMinutes ?? 10) as "5" | "10" | "15";
   return (
     <div className="mx-auto max-w-[1180px] px-4 pb-16 pt-6 sm:px-10 sm:pt-9">
       <h1 className="text-2xl font-bold tracking-tight sm:text-[28px]">Cài đặt</h1>
       <div className="mt-2 max-w-[980px]">
+        {remote && (
+          <Section title="Điều khiển từ xa" description="Bạn đang dùng ABook của máy tính qua mạng.">
+            <p className="max-w-xl text-sm text-fg-2 text-pretty">
+              Sách, dự án và việc sản xuất ở đây là của máy tính. Cài đặt của máy tính - thư mục thư viện, giao diện, hẹn giờ
+              ngủ, thiết bị đã ghép - chỉ đổi được trên chính máy tính.
+            </p>
+          </Section>
+        )}
         <Section title="Thư viện" description="Thư mục chứa các sách. Sách mới được tạo trong thư mục này.">
           <div className="flex items-center gap-2">
             <div className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-lg bg-sunken px-3 text-sm text-fg-2">
@@ -80,6 +89,8 @@ export function SettingsScreen() {
             )}
           </div>
         </Section>
+        {!remote && (
+        <>
         <Section title="Giao diện" description="Màu sáng hay tối. Theo Windows sẽ tự đổi cùng hệ thống.">
           <div
             role="radiogroup"
@@ -209,11 +220,13 @@ export function SettingsScreen() {
         </Section>
         <Section
           id="phone"
-          title="Điện thoại"
-          description="Nghe tiếp trên điện thoại Android: tải sách về để nghe không cần mạng, chỗ đang nghe và dấu trang tự đồng bộ hai chiều."
+          title="Điện thoại và thiết bị"
+          description="Nghe tiếp trên điện thoại Android: tải sách về để nghe không cần mạng, chỗ đang nghe và dấu trang tự đồng bộ hai chiều. Nếu cho phép, thiết bị đã ghép còn điều khiển được việc sản xuất của máy này qua trình duyệt."
         >
           <PhoneSync />
         </Section>
+        </>
+        )}
         <Section title="Phím tắt" description="Dùng được ở mọi màn hình, trừ khi đang gõ chữ.">
           <dl className="max-w-md space-y-2.5 text-sm">
             {SHORTCUTS.map(([keys, label]) => (

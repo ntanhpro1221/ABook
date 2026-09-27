@@ -9,7 +9,8 @@ import { cn } from "@/shared/cn";
 import { formatDate, formatRelative } from "@/shared/format";
 
 // Hợp đồng với server (webui/server.py: sync_view). Máy chủ đồng bộ chỉ chạy khi người dùng bật; mã ghép nối chỉ
-// có khi người dùng bấm "Ghép điện thoại", sống 5 phút, dùng một lần, sai 5 lần là bị huỷ.
+// có khi người dùng bấm "Ghép thiết bị mới", sống 5 phút, dùng một lần, sai 5 lần là bị huỷ. Cùng mã ghép cả điện
+// thoại lẫn trình duyệt của Studio từ xa (webui/remote_studio.py).
 
 export interface SyncDevice {
   id: string;
@@ -28,6 +29,13 @@ export interface SyncView {
   pairing: { code: string; expiresAt: number } | null;
   pairingBlocked: boolean;
   devices: SyncDevice[];
+  /** Studio từ xa (webui/remote_studio.py): thiết bị đã ghép được điều khiển sản xuất. */
+  remoteStudio: boolean;
+}
+
+/** Địa chỉ mở Studio từ xa trên trình duyệt của máy khác. */
+function studioUrls(sync: SyncView): string[] {
+  return sync.addresses.map((address) => `http://${address}:${sync.port}`);
 }
 
 function useSync() {
@@ -55,7 +63,12 @@ function useSync() {
     onSuccess,
     onError,
   });
-  return { ...query, toggle, pair, cancel, revoke };
+  const studio = useMutation({
+    mutationFn: (enabled: boolean) => api<SyncView>("/api/sync/studio", { method: "POST", body: { enabled } }),
+    onSuccess,
+    onError,
+  });
+  return { ...query, toggle, pair, cancel, revoke, studio };
 }
 
 function useSecondsLeft(until: number | undefined): number {
@@ -113,6 +126,11 @@ function PairingPanel({ sync, onPair, onCancel, busy }: { sync: SyncView; onPair
               </li>
               <li>Gõ mã bên cạnh. Mã chỉ dùng được một lần.</li>
             </ol>
+            {sync.remoteStudio && (
+              <p className="mt-2 text-[13px] text-fg-2">
+                Trình duyệt: mở <span className="font-medium text-fg tabular-nums">{studioUrls(sync)[0]}</span> rồi gõ mã.
+              </p>
+            )}
           </div>
           <div className="text-right">
             <div
@@ -155,14 +173,14 @@ function PairingPanel({ sync, onPair, onCancel, busy }: { sync: SyncView; onPair
   }
   return (
     <Button icon={Smartphone} onClick={onPair} loading={busy}>
-      Ghép điện thoại mới
+      Ghép thiết bị mới
     </Button>
   );
 }
 
 /** Mục "Điện thoại" trong Cài đặt: bật đồng bộ, ghép nối bằng mã 6 số, quản lý điện thoại đã ghép. */
 export function PhoneSync() {
-  const { data: sync, toggle, pair, cancel, revoke } = useSync();
+  const { data: sync, toggle, pair, cancel, revoke, studio } = useSync();
   const [removing, setRemoving] = useState<SyncDevice | null>(null);
   const known = useRef<Set<string> | null>(null);
 
@@ -178,6 +196,7 @@ export function PhoneSync() {
   if (!sync) return <Skeleton className="h-20" />;
   const wanted = toggle.isPending ? Boolean(toggle.variables) : sync.wanted;
   const failing = sync.wanted && !sync.enabled;
+  const studioWanted = studio.isPending ? Boolean(studio.variables) : sync.remoteStudio;
 
   return (
     <div className="space-y-5">
@@ -209,10 +228,32 @@ export function PhoneSync() {
             onPair={() => pair.mutate()}
             onCancel={() => cancel.mutate()}
           />
+          <div className="flex items-start justify-between gap-6">
+            <label htmlFor="remote-studio" className="min-w-0 cursor-pointer">
+              <span className="block text-sm font-medium">Cho phép điều khiển sản xuất từ thiết bị đã ghép</span>
+              <span className="mt-0.5 block text-[13px] text-fg-2 text-pretty">
+                {studioWanted ? (
+                  <>
+                    Trên điện thoại, máy tính bảng hay máy tính khác cùng mạng, mở{" "}
+                    <span className="font-medium text-fg tabular-nums">{studioUrls(sync).join(" hoặc ")}</span> để xem tiến
+                    độ, bắt đầu hay dừng, duyệt “Việc cần anh” và nghe sách. Lần đầu nhập mã ghép như điện thoại.
+                  </>
+                ) : (
+                  "Đang tắt - thiết bị đã ghép chỉ tải và nghe sách."
+                )}
+              </span>
+            </label>
+            <Switch
+              id="remote-studio"
+              checked={studioWanted}
+              disabled={studio.isPending}
+              onCheckedChange={(value) => studio.mutate(value)}
+            />
+          </div>
           <div>
-            <h3 className="text-xs font-semibold uppercase tracking-[0.06em] text-fg-3">Điện thoại đã ghép</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-[0.06em] text-fg-3">Thiết bị đã ghép</h3>
             {sync.devices.length === 0 ? (
-              <p className="mt-2 text-[13px] text-fg-2">Chưa có điện thoại nào.</p>
+              <p className="mt-2 text-[13px] text-fg-2">Chưa có thiết bị nào.</p>
             ) : (
               <ul className="mt-2 divide-y divide-line rounded-xl border border-line">
                 {sync.devices.map((device) => (

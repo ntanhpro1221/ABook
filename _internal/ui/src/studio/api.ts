@@ -158,6 +158,9 @@ export interface AppInfo {
   version: string;
   readOnly: boolean;
   dialogs: boolean;
+  /** Đang điều khiển ABook của máy khác qua Studio từ xa (webui/remote_studio.py): ẩn những gì chỉ có nghĩa trên chính
+   * máy ấy - mở thư mục, đổi cài đặt của máy, ghép điện thoại, thanh điện thoại đang phát. */
+  remote?: boolean;
   libraryRoot: string;
   theme: "system" | "light" | "dark";
   playbackRate: number;
