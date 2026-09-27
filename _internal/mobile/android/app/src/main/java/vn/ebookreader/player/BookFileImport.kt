@@ -18,8 +18,8 @@ import java.util.zip.ZipFile
  * tên: hỏng giữa chừng không bao giờ để lại nửa cuốn. Nhập lại cùng cuốn thì thay bản cũ.
  */
 object BookFileImport {
-    const val MIMETYPE = "application/vnd.ebookreader.audiobook+zip"
-    private const val FORMAT = "ebook-reader-book"
+    const val MIMETYPE = "application/vnd.ngdtuanh.abook+zip"
+    private const val FORMAT = "abook"
     private const val FORMAT_VERSION = 1
     private const val MAX_ENTRIES = 20_000
     private const val MAX_TOTAL_BYTES = 64L shl 30

@@ -51,7 +51,7 @@ def test_gui_has_compact_header_nested_splitters_and_one_stop(tmp_path: Path) ->
     assert window.start_button.text() == "Bắt đầu"
     assert window.start_button.isEnabled() is False
     assert window.new_book_button.isEnabled() is False
-    assert "Ebook Reader" not in {label.text() for label in window.findChildren(QLabel)}
+    assert "ABook" not in {label.text() for label in window.findChildren(QLabel)}
     assert window.file_list.selectionMode() == QAbstractItemView.SelectionMode.ExtendedSelection
     assert window.main_splitter.orientation() == Qt.Orientation.Vertical
     assert window.source_splitter.orientation() == Qt.Orientation.Horizontal
@@ -71,7 +71,7 @@ def test_gui_has_compact_header_nested_splitters_and_one_stop(tmp_path: Path) ->
     assert window.add_files_button.text() == "Thêm file"
     assert window.open_project_button.text() == "Mở sách khác"
     assert window.open_folder_button.text() == "Hiển thị sách trong Explorer"
-    assert window.show_action.text() == "Hiện Ebook Reader"
+    assert window.show_action.text() == "Hiện ABook"
     assert window.hide_action.text() == "Ẩn xuống system tray"
     assert window.quit_action.text() == "Thoát hoàn toàn"
     assert window.narrator_gender_combo.currentData() == ""
@@ -394,7 +394,7 @@ def test_finished_worker_error_restores_window_and_opens_modal(
     assert restored == [True]
     assert dialogs == [
         (
-            "Ebook Reader đã dừng vì lỗi",
+            "ABook đã dừng vì lỗi",
             "Chuẩn hóa tên thất bại.\n\nCác checkpoint đã hoàn tất vẫn được giữ nguyên.",
         )
     ]

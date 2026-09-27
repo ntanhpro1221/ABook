@@ -106,7 +106,7 @@ function PairingPanel({ sync, onPair, onCancel, busy }: { sync: SyncView; onPair
             <p className="text-sm font-semibold">Nhập mã này trên điện thoại</p>
             <ol className="mt-2 list-decimal space-y-1 pl-4 text-[13px] text-fg-2">
               <li>
-                Mở Ebook Reader trên điện thoại, vào <span className="font-medium text-fg">Tải sách</span>.
+                Mở ABook trên điện thoại, vào <span className="font-medium text-fg">Tải sách</span>.
               </li>
               <li>
                 Chọn máy <span className="font-medium text-fg">{sync.name}</span>.

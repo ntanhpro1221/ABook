@@ -73,7 +73,7 @@ class PlayerWidget : AppWidgetProvider() {
                     state.optBoolean("playing"), sleepText, sleep.optString("mode") != "off",
                 )
             }
-            val recent = Playback.lastListened() ?: return View("Ebook Reader", "Chưa nghe sách nào", 0.0, false, "", false)
+            val recent = Playback.lastListened() ?: return View("ABook", "Chưa nghe sách nào", 0.0, false, "", false)
             val (manifest, last) = recent
             val chapter = chapterOf(manifest, last.optInt("chapterId"))
             val duration = chapter?.optDouble("duration") ?: 0.0

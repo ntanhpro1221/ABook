@@ -110,7 +110,7 @@ def run_desktop() -> int:
 
     set_windows_app_identity()
     app = QApplication(sys.argv)
-    app.setApplicationName(APP_NAME)
+    app.setApplicationName("Ebook Reader")  # định danh lưu trữ QtWebEngine - giữ nguyên, xem desktop_shell.APP_NAME
     app.setWindowIcon(QIcon(str(APP_ICON_PATH)))
     instance_server = claim_single_instance(app)
     if instance_server is None:

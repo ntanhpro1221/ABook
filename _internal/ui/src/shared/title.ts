@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-export const APP_TITLE = "Ebook Reader";
+export const APP_TITLE = "ABook";
 
 /** Tên trang cụ thể (tên sách, tên chương...) cho thanh tiêu đề và thanh tác vụ.
  *

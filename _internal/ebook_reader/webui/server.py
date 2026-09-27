@@ -219,7 +219,7 @@ class App:
     def open_existing(self, body: dict[str, Any]) -> dict[str, Any]:
         path = Path(str(body.get("path", ""))).expanduser()
         if not store.is_project(path):
-            raise ApiError(HTTPStatus.BAD_REQUEST, "Thư mục này không phải một sách của Ebook Reader")
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Thư mục này không phải một sách của ABook")
         self.preferences.add_recent(path.resolve())
         return {"id": book_id(path.resolve())}
 

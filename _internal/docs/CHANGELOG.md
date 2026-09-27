@@ -7,6 +7,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- **Tên mới: ABook** (trước là Ebook Reader), trên máy tính lẫn điện thoại.
+- **File sách `.abook`**: mỗi cuốn làm xong là một file duy nhất - bìa, văn bản có tag cảm xúc, audio từng chương, nhân
+  vật và câu mẫu giọng - mở bằng ABook ở máy khác. Studio tự ghi file này khi sách xong và có nút "Xuất file sách". File
+  được kiểm từng phần khi mở: hỏng hay bị sửa thì từ chối, không bao giờ vào thư viện nửa cuốn.
+
 ### Nghe sách - máy tính và điện thoại
 
 - Giao diện nghe mới, giống nhau trên hai nền tảng: thư viện theo bộ truyện (tập kế tiếp tự nối), trang sách, màn "Đang
@@ -31,6 +36,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - **Nghe thẳng thư viện máy tính, không cần tải về**: sách trên máy tính hiện trong Thư viện điện thoại (nhãn "Máy tính")
   và dùng được đầy đủ - chương, đọc theo, chế độ đọc, nhân vật và câu mẫu giọng, dấu trang, lịch sử. Có bộ nhớ đệm; mất
   kết nối thì báo đúng lý do và bấm phát lại là nghe tiếp đúng chỗ. "Tải về máy" để nghe cả khi không có mạng.
+- **Mở file `.abook`** từ trình quản lý file, Zalo, Drive, email ("Mở bằng" hoặc "Chia sẻ" sang ABook), hoặc nút "Mở file
+  sách" trong app.
 
 ### Liên kết máy tính và điện thoại
 
@@ -63,6 +70,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Lưu ý khi nâng cấp
 
 - Sách đang làm dở từ bản trước **không tiếp tục được** (khâu phân tích đã đổi) - tạo sách mới từ cùng nguồn.
+- Android: app đổi mã thành `com.ngdtuanh.abook`, nên ABook cài thành **một app mới** bên cạnh "Ebook Reader" cũ, không
+  mang theo sách đã tải hay chỗ đang nghe. Ghép nối lại với máy tính, tải lại sách (chỗ nghe đồng bộ từ máy tính về), rồi
+  gỡ app cũ.
 
 ## [0.3.0] và trước
 

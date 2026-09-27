@@ -20,7 +20,7 @@ from typing import Any, Callable
 from . import covers
 
 TIMEOUT = 8
-USER_AGENT = "EbookReader/1 (cover search)"
+USER_AGENT = "ABook/1 (cover search)"
 ALLOWED_IMAGE_HOSTS = re.compile(
     r"^(is\d+-ssl\.mzstatic\.com|covers\.openlibrary\.org|books\.google\.com|books\.googleusercontent\.com)$"
 )
