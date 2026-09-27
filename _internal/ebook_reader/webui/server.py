@@ -21,7 +21,7 @@ from urllib.parse import parse_qs, unquote, urlsplit
 from .. import listener_overrides
 from . import actions, bookfile, cover_search, covers, listen_view, store
 from .library import Library, Preferences, book_id
-from .listening import Listening
+from .listening import RECORD_ID, Listening
 from .reviews import Reviews, review_view
 from .work_items import work_items
 from .sync import Devices, ExclusiveHTTPServer, Remote, SyncApp, SyncServer, local_addresses, remote_command, SYNC_PORT
@@ -71,6 +71,12 @@ class ApiError(Exception):
         super().__init__(message)
         self.status = status
         self.message = message
+
+
+def _held_record(body: dict[str, Any]) -> str | None:
+    """Hồ sơ nghe mà trình phát đang phát (nó ghi vào đúng hồ sơ ấy, xem `Listening._held`); không có thì None."""
+    record = body.get("record")
+    return record if isinstance(record, str) and RECORD_ID.fullmatch(record) else None
 
 
 class App:
@@ -704,7 +710,8 @@ class Handler(BaseHTTPRequestHandler):
         self.app._book(value)
         body = self._body()
         state = self.app.listening.progress(
-            value, int(body.get("chapterId", 0)), float(body.get("seconds", 0)), float(body.get("duration", 0))
+            value, int(body.get("chapterId", 0)), float(body.get("seconds", 0)), float(body.get("duration", 0)),
+            record=_held_record(body),
         )
         self._send_json(HTTPStatus.OK, state)
 
@@ -726,7 +733,8 @@ class Handler(BaseHTTPRequestHandler):
         self.app._book(value)
         body = self._body()
         mark = self.app.listening.add_bookmark(
-            value, int(body.get("chapterId", 0)), float(body.get("seconds", 0)), str(body.get("note", ""))
+            value, int(body.get("chapterId", 0)), float(body.get("seconds", 0)), str(body.get("note", "")),
+            record=_held_record(body),
         )
         self._send_json(HTTPStatus.CREATED, mark)
 
@@ -792,7 +800,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def post_session(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._book(value)
-        self.app.listening.add_session(value, self._body())
+        body = self._body()
+        self.app.listening.add_session(value, body, record=_held_record(body))
         self._send_json(HTTPStatus.OK, {"ok": True})
 
     def post_reading(self, _query: dict[str, list[str]], value: str) -> None:

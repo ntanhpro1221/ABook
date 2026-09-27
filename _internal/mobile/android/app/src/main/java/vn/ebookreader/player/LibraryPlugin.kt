@@ -21,7 +21,10 @@ import java.net.HttpURLConnection
 import java.net.InetAddress
 import java.net.SocketTimeoutException
 import java.net.URL
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
+import java.util.concurrent.FutureTask
+import java.util.concurrent.TimeUnit
 
 /**
  * Thư viện trên điện thoại + đồng bộ với máy tính qua Wi-Fi (ebook_reader/webui/sync.py).
@@ -309,7 +312,61 @@ class LibraryPlugin : Plugin() {
         val id = call.getString("id") ?: throw IllegalArgumentException("thiếu id")
         val local = Store.manifest(id)
         val manifest = local ?: openStreamed(id)
-        call.resolve(JSObject.fromJSONObject(manifest).put("state", JSObject.fromJSONObject(Store.state(id))).put("streamed", local == null))
+        call.resolve(JSObject.fromJSONObject(manifest).put("state", JSObject.fromJSONObject(Store.state(id))).put("streamed", local == null)
+            .put("records", Store.records(id)))
+    }
+
+    // ---- hồ sơ nghe (độc lập với sách, app giữ liên kết - Store) -----------------------------------------------
+
+    /** Trả danh sách hồ sơ mới, rồi báo máy tính: hồ sơ vừa rời trước (`left` - chỗ nghe cuối của nó, lưu lúc đổi, chưa
+     *  tới máy tính: điện thoại chỉ đẩy hồ sơ đang dùng), rồi hồ sơ đang dùng (lựa chọn, tên, bia mộ). */
+    private fun resolveRecords(call: PluginCall, records: JSONArray, left: String? = null) {
+        call.resolve(JSObject().put("records", records))
+        val id = call.getString("id") ?: return
+        io.execute {
+            if (left != null && left != Store.knownActiveRecord(id) && Store.hasRecord(left)) {
+                runCatching { StateSync.pushNow(context, id, left) }
+            }
+            runCatching { pushState(id) }
+        }
+    }
+
+    /** Đổi hồ sơ của một cuốn: cuốn đang nạp trong trình phát thì qua Playback trên luồng chính (trình phát theo sang
+     *  hồ sơ mới), cuốn khác thì đổi thẳng. */
+    private fun switching(id: String, change: () -> JSONArray): JSONArray {
+        if (Playback.bookId != id) return change()
+        val task = FutureTask { Playback.switchRecord(id, change) }
+        Playback.onMain { task.run() }
+        return try {
+            task.get(10, TimeUnit.SECONDS)
+        } catch (error: ExecutionException) {
+            throw error.cause ?: error
+        }
+    }
+
+    @PluginMethod
+    fun createRecord(call: PluginCall) = background(call) {
+        val id = call.getString("id")!!
+        val left = Store.knownActiveRecord(id)
+        resolveRecords(call, switching(id) { Store.createRecord(id, call.getString("name") ?: "") }, left)
+    }
+
+    @PluginMethod
+    fun activateRecord(call: PluginCall) = background(call) {
+        val id = call.getString("id")!!
+        val left = Store.knownActiveRecord(id)
+        resolveRecords(call, switching(id) { Store.activateRecord(id, call.getString("record")!!) }, left)
+    }
+
+    @PluginMethod
+    fun renameRecord(call: PluginCall) = background(call) {
+        resolveRecords(call, Store.renameRecord(call.getString("id")!!, call.getString("record")!!, call.getString("name") ?: ""))
+    }
+
+    @PluginMethod
+    fun deleteRecord(call: PluginCall) = background(call) {
+        val id = call.getString("id")!!
+        resolveRecords(call, switching(id) { Store.deleteRecord(id, call.getString("record")!!) })
     }
 
     /** Mở một cuốn chưa tải: gói sách mới nhất từ máy tính (mạng lỗi thì bản đã cất), bìa ngay; dàn nhân vật và câu mẫu

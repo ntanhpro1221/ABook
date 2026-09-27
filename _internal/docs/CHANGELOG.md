@@ -28,6 +28,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   ngủ quên (tự dừng sau 2 giờ không chạm máy), thẻ **"Tối qua bạn nghe tới đâu?"** mỗi sáng.
 - Dấu trang có ghi chú, **lịch sử nghe** theo ngày, tiến độ cả cuốn ("còn 3 giờ 48 ở 1,5×"), tốc độ đọc theo từng sách.
 - Hỏi khi thiết bị kia đã nghe xa hơn, thay vì lặng lẽ nhảy chỗ.
+- **Hồ sơ nghe**: một cuốn có nhiều hồ sơ, mỗi hồ sơ giữ chỗ nghe, dấu trang và lịch sử riêng. Ô "Hồ sơ nghe" trong trang
+  sách: đổi hồ sơ, **nghe lại từ đầu bằng hồ sơ mới** (lần nghe trước còn nguyên), đổi tên, xoá. Dùng được cả khi cuốn
+  đang phát - chỗ đang nghe lưu vào hồ sơ cũ rồi trình phát chuyển sang chỗ của hồ sơ mới. Hồ sơ, tên và việc xoá đồng bộ
+  giữa máy tính và điện thoại; chọn hồ sơ ở máy này thì máy kia theo (đang phát thì chờ dừng rồi mới theo).
 - Xuất MP3 có tag đúng (sách, chương, giọng kể, ảnh bìa) để nghe ở app khác.
 - Hoạt ảnh: bìa bay vào trình phát, trang và kệ sách chuyển mượt; theo chế độ sáng/tối của hệ thống.
 
@@ -76,6 +80,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   làm một, chỗ nghe đồng bộ tiếp với máy tính, audio đã có không phải tải lại.
 - Điện thoại: nghe bằng trình phát (màn hình khoá, tai nghe) giờ báo chỗ nghe về máy tính - mỗi phút khi đang phát và
   ngay khi dừng. Trước đây chỉ dấu trang và thao tác trên màn hình mới đồng bộ.
+- Máy tính: mở lại app không còn ghi chỗ nghe dở của cuốn gần nhất về 0:00 của chương (trình phát nạp sẵn cuốn ấy nhưng
+  lưu vị trí trước khi kịp nạp audio).
+- Điện thoại: mở trang sách là hỏi máy tính chỗ nghe, hồ sơ mới nhất - trước đây chỉ biết khi chính điện thoại phát hay
+  dừng cuốn ấy.
 
 ### Lưu ý khi nâng cấp
 

@@ -29,7 +29,7 @@ def test_the_old_file_becomes_one_default_record_per_book(tmp_path: Path) -> Non
     assert record["name"] == DEFAULT_RECORD_NAME and record["active"]
     listening.progress("sach-a", 3, 900.0, 1000.0)
     saved = json.loads(path.read_text(encoding="utf-8"))
-    assert saved["version"] == 2 and set(saved) == {"version", "records", "links"}
+    assert saved["version"] == 2 and set(saved) == {"version", "records", "links", "deleted"}
     assert "sach-a" not in json.dumps(saved["records"]), "hồ sơ không biết mình thuộc sách nào"
 
 
@@ -156,8 +156,14 @@ def test_the_ui_manages_the_records_of_a_book(library) -> None:  # noqa: F811 - 
         assert status == 201 and [(item["name"], item["active"]) for item in records] == [
             (DEFAULT_RECORD_NAME, False), ("Con", True)]
         first = records[0]["id"]
+        _request(server.port, "POST", base + "/progress", headers=headers,
+                 body={"chapterId": 1, "seconds": 9.0, "duration": 100.0, "record": first})
+        _status, data, _ = _request(server.port, "GET", base, headers=headers)
+        assert "last" not in json.loads(data)["state"], "trình phát đang phát hồ sơ cũ: lần lưu vào hồ sơ ấy"
         _status, data, _ = _request(server.port, "POST", f"{base}/records/{first}/activate", headers=headers)
         assert json.loads(data)["records"][0]["active"]
+        _status, data, _ = _request(server.port, "GET", base, headers=headers)
+        assert json.loads(data)["state"]["last"]["seconds"] == 9.0
         _status, data, _ = _request(server.port, "PUT", f"{base}/records/{first}", headers=headers, body={"name": "Bố"})
         assert json.loads(data)["records"][0]["name"] == "Bố"
         status, _data, _ = _request(server.port, "PUT", f"{base}/records/{first}", headers=headers, body={"name": " "})
@@ -189,3 +195,69 @@ def test_both_devices_share_one_default_record_per_book(tmp_path: Path) -> None:
     fresh = Listening(tmp_path / "moi.json")
     fresh.progress("sach-moi", 1, 3.0, 100.0)
     assert fresh.records("sach-moi")[0]["id"] == default_record_id("sach-moi")
+
+
+def test_names_follow_the_later_rename_across_devices(tmp_path: Path) -> None:
+    listening = Listening(tmp_path / "listening.json")
+    record = "r-" + "d" * 16
+    listening.merge_record("sach", record, {}, name="Điện thoại", name_at=10.0)
+    assert listening.rename_record(record, "Máy tính đặt")
+
+    older = listening.merge_record("sach", record, {}, name="Tên cũ ở điện thoại", name_at=11.0)
+    assert older["recordName"] == "Máy tính đặt", "đổi tên ở máy tính sau hơn, giữ tên máy tính"
+    newer = listening.merge_record("sach", record, {}, name="Con", name_at=10**10)
+    assert newer["recordName"] == "Con" and listening.records("sach")[0]["name"] == "Con"
+    assert newer["records"][0]["nameAt"] == 10**10
+
+
+def test_a_deleted_record_stays_deleted_on_every_device(tmp_path: Path) -> None:
+    """Bia mộ: xoá ở một máy, máy kia gửi lại cũng không sống lại; xoá ở điện thoại thì máy tính xoá theo."""
+    listening = Listening(tmp_path / "listening.json")
+    kept, gone = "r-" + "1" * 16, "r-" + "2" * 16
+    listening.merge_record("sach", kept, {"last": {"chapterId": 1, "seconds": 1.0, "at": 1.0}}, name="Giữ")
+    listening.merge_record("sach", gone, {}, name="Bỏ")
+    assert listening.delete_record(gone)
+
+    back = listening.merge_record("sach", gone, {"last": {"chapterId": 9, "seconds": 9.0, "at": 9.0}})
+    assert back["deleted"] is True and gone in back["deletedRecords"]
+    assert [record["id"] for record in listening.records("sach")] == [kept]
+
+    other = "r-" + "3" * 16
+    listening.merge_record("sach", other, {}, name="Sẽ xoá ở điện thoại")
+    reply = listening.merge_record("sach", kept, {}, deleted={other: 99.0, "rác": 1})
+    assert other in reply["deletedRecords"] and [record["id"] for record in listening.records("sach")] == [kept]
+
+    listening.delete_record(kept)
+    assert listening.progress("sach", 1, 2.0, 100.0)["last"]["seconds"] == 2.0
+    assert listening.records("sach")[0]["id"] == default_record_id("sach")
+    listening.delete_record(default_record_id("sach"))
+    listening.progress("sach", 1, 3.0, 100.0)
+    assert listening.records("sach")[0]["id"] != default_record_id("sach"), "mã mặc định đã có bia mộ: mã mới"
+
+
+def test_the_player_writes_into_the_record_it_is_playing(tmp_path: Path) -> None:
+    """Máy khác đổi hồ sơ đang dùng giữa lúc máy này đang phát: chỗ nghe, phiên nghe, dấu trang của trình phát vẫn vào
+    hồ sơ nó đang phát, không rơi sang hồ sơ mới; hồ sơ ấy bị xoá thì lần lưu bị bỏ (dấu trang thì vào hồ sơ đang dùng)."""
+    listening = Listening(tmp_path / "listening.json")
+    listening.progress("sach", 3, 100.0, 1000.0)
+    playing = listening.records("sach")[0]["id"]
+    chosen = listening.merge_record("sach", "r-" + "9" * 16, {}, name="Điện thoại", active_at=9e9)["record"]
+    assert [record["id"] for record in listening.records("sach") if record["active"]] == [chosen]
+
+    listening.progress("sach", 3, 160.0, 1000.0, record=playing)
+    listening.add_session("sach", {"id": "phien1", "listened": 60, "from": {"chapterId": 3, "seconds": 100},
+                                   "to": {"chapterId": 3, "seconds": 160}}, record=playing)
+    listening.add_bookmark("sach", 3, 150.0, "hay", record=playing)
+    assert "last" not in listening.get("sach"), "hồ sơ mới chọn trên máy khác không bị đè"
+    assert listening.activate("sach", playing)
+    held = listening.get("sach")
+    assert held["last"]["seconds"] == 160.0 and [item["id"] for item in held["sessions"]] == ["phien1"]
+    assert [mark["note"] for mark in held["bookmarks"]] == ["hay"]
+
+    assert listening.delete_record(playing)
+    listening.progress("sach", 3, 200.0, 1000.0, record=playing)
+    listening.add_session("sach", {"id": "phien2", "listened": 40}, record=playing)
+    assert "last" not in listening.get("sach") and not listening.get("sach").get("sessions"), "hồ sơ đã xoá: bỏ lần ghi"
+    assert listening.add_bookmark("sach", 3, 210.0, "vẫn giữ", record=playing)["note"] == "vẫn giữ"
+    assert [mark["note"] for mark in listening.get("sach")["bookmarks"]] == ["vẫn giữ"]
+    assert playing not in json.dumps(listening.records("sach")), "không sống lại"

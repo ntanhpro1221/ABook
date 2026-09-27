@@ -53,7 +53,8 @@ FORMAT_VERSION = 2
 DEFAULT_RECORD_NAME = "Mặc định"
 MAX_RECORD_NAME = 60
 RECORD_ID = re.compile(r"r-[0-9a-f]{16}")
-SYNC_KEYS = ("record", "recordName", "activeAt", "book", "records", "active", "activeState")
+SYNC_KEYS = ("record", "recordName", "nameAt", "activeAt", "book", "records", "active", "activeState", "deleted",
+             "deletedRecords")
 
 
 def listening_path() -> Path:
@@ -80,8 +81,9 @@ def _upgrade(raw: Any) -> dict[str, Any]:
     if isinstance(raw, dict) and raw.get("version") == FORMAT_VERSION:
         records = raw.get("records") if isinstance(raw.get("records"), dict) else {}
         links = raw.get("links") if isinstance(raw.get("links"), dict) else {}
-        return {"version": FORMAT_VERSION, "records": records, "links": links}
-    data: dict[str, Any] = {"version": FORMAT_VERSION, "records": {}, "links": {}}
+        deleted = raw.get("deleted") if isinstance(raw.get("deleted"), dict) else {}
+        return {"version": FORMAT_VERSION, "records": records, "links": links, "deleted": deleted}
+    data: dict[str, Any] = {"version": FORMAT_VERSION, "records": {}, "links": {}, "deleted": {}}
     for book, state in (raw.items() if isinstance(raw, dict) else []):
         if not isinstance(state, dict):
             continue
@@ -112,7 +114,8 @@ class Listening:
             if not create:
                 return None
             record_id = default_record_id(book)
-            if record_id in self._data["records"]:  # hồ sơ mặc định đã bị chuyển sang sách khác
+            # hồ sơ mặc định đã bị chuyển sang sách khác, hay đã bị xoá (bia mộ còn đồng bộ): mã mới
+            if record_id in self._data["records"] or record_id in self._data["deleted"]:
                 record_id = _new_record_id()
             record = self._data["records"][record_id] = {"name": DEFAULT_RECORD_NAME, "createdAt": time.time(),
                                                           "state": _empty_state()}
@@ -128,6 +131,19 @@ class Listening:
     def _book(self, book: str) -> dict[str, Any]:
         state = self._active(book)
         assert state is not None
+        return state
+
+    def _held(self, book: str, record: str | None) -> dict[str, Any] | None:
+        """State để trình phát ghi: đúng hồ sơ nó đang phát (`record`), không phải hồ sơ đang dùng - máy khác đổi hồ sơ
+        giữa lúc đang phát thì chỗ nghe vẫn vào hồ sơ cũ. Hồ sơ ấy đã xoá hay đã chuyển sang sách khác: None (bỏ lần
+        ghi). Không nói hồ sơ nào (điện thoại cũ, lời gọi cũ): hồ sơ đang dùng."""
+        if record is None:
+            return self._book(book)
+        if self._owner(record) != book:
+            return None
+        state = self._data["records"][record].setdefault("state", _empty_state())
+        state.setdefault("chapters", {})
+        state.setdefault("bookmarks", [])
         return state
 
     def records(self, book: str) -> list[dict[str, Any]]:
@@ -151,7 +167,8 @@ class Listening:
             link = self._data["links"].setdefault(book, {"records": []})
             record_id = _new_record_id()
             label = name.strip()[:MAX_RECORD_NAME] or f"Hồ sơ {len(link.get('records', [])) + 1}"
-            self._data["records"][record_id] = {"name": label, "createdAt": time.time(), "state": _empty_state()}
+            self._data["records"][record_id] = {"name": label, "createdAt": time.time(), "nameAt": time.time(),
+                                                "state": _empty_state()}
             link["records"] = [*link.get("records", []), record_id]
             link["active"] = record_id
             link["activeAt"] = time.time()
@@ -174,6 +191,7 @@ class Listening:
             if record is None or not name.strip():
                 return False
             record["name"] = name.strip()[:MAX_RECORD_NAME]
+            record["nameAt"] = time.time()  # đổi tên sau thắng khi đồng bộ
             self._save()
             return True
 
@@ -199,6 +217,7 @@ class Listening:
                 return False
             self._unlink(record_id)
             del self._data["records"][record_id]
+            self._data["deleted"][record_id] = time.time()  # bia mộ: máy kia gửi lại cũng không sống lại
             self._save()
             return True
 
@@ -232,10 +251,13 @@ class Listening:
         with self._lock:
             return json.loads(json.dumps({book: self._active(book, create=False) for book in self._data["links"]}))
 
-    def progress(self, book: str, chapter_id: int, seconds: float, duration: float) -> dict[str, Any]:
+    def progress(self, book: str, chapter_id: int, seconds: float, duration: float,
+                 record: str | None = None) -> dict[str, Any]:
         now = time.time()
         with self._lock:
-            entry = self._book(book)
+            entry = self._held(book, record)
+            if entry is None:
+                return json.loads(json.dumps(self._active(book, create=False) or _empty_state()))
             entry["last"] = {"chapterId": int(chapter_id), "seconds": round(float(seconds), 1), "at": now}
             chapter = entry["chapters"].setdefault(str(int(chapter_id)), {"heard": 0.0, "done": False})
             chapter["heard"] = round(max(float(chapter.get("heard", 0.0)), float(seconds)), 1)
@@ -273,12 +295,14 @@ class Listening:
             entry["rateAt"] = entry["updatedAt"] = time.time()
             self._save()
 
-    def add_bookmark(self, book: str, chapter_id: int, seconds: float, note: str = "") -> dict[str, Any]:
-        """Dấu trang mới - hoặc dấu đã có ngay chỗ ấy (±5 giây cùng chương), kèm cờ `existing`."""
+    def add_bookmark(self, book: str, chapter_id: int, seconds: float, note: str = "",
+                     record: str | None = None) -> dict[str, Any]:
+        """Dấu trang mới - hoặc dấu đã có ngay chỗ ấy (±5 giây cùng chương), kèm cờ `existing`. Đặt từ trình phát thì
+        vào hồ sơ đang phát (`record`, xem `_held`); hồ sơ ấy vừa bị xoá thì vào hồ sơ đang dùng - người nghe đã bấm."""
         mark = {"id": uuid.uuid4().hex[:12], "chapterId": int(chapter_id), "seconds": round(float(seconds), 1),
                 "note": note.strip()[:500], "at": time.time()}
         with self._lock:
-            entry = self._book(book)
+            entry = self._held(book, record) or self._book(book)
             for current in entry["bookmarks"]:
                 if (int(current.get("chapterId", -1)) == mark["chapterId"]
                         and abs(float(current.get("seconds", 0.0)) - mark["seconds"]) <= BOOKMARK_MERGE_SECONDS):
@@ -322,13 +346,14 @@ class Listening:
             self._save()
             return restored
 
-    def add_session(self, book: str, session: dict[str, Any]) -> None:
-        """Một phiên nghe (bấm phát tới lúc dừng): giờ, thiết bị, từ đâu tới đâu - cho tab "Lịch sử" và thống kê."""
+    def add_session(self, book: str, session: dict[str, Any], record: str | None = None) -> None:
+        """Một phiên nghe (bấm phát tới lúc dừng): giờ, thiết bị, từ đâu tới đâu - cho tab "Lịch sử" và thống kê;
+        vào đúng hồ sơ đã phát phiên ấy (`record`, xem `_held`)."""
         def place(value: Any) -> dict[str, Any]:
             value = value if isinstance(value, dict) else {}
             return {"chapterId": int(value.get("chapterId") or 0), "seconds": round(float(value.get("seconds") or 0), 1)}
 
-        record = {
+        played = {
             "id": str(session.get("id") or uuid.uuid4().hex[:12])[:40],
             "device": str(session.get("device") or "")[:20],
             "startedAt": float(session.get("startedAt") or time.time()),
@@ -338,8 +363,10 @@ class Listening:
             "to": place(session.get("to")),
         }
         with self._lock:
-            entry = self._book(book)
-            sessions = [item for item in entry.get("sessions", []) if item.get("id") != record["id"]] + [record]
+            entry = self._held(book, record)
+            if entry is None:
+                return
+            sessions = [item for item in entry.get("sessions", []) if item.get("id") != played["id"]] + [played]
             entry["sessions"] = sorted(sessions, key=lambda item: item["startedAt"])[-MAX_SESSIONS:]
             self._save()
 
@@ -398,18 +425,35 @@ class Listening:
             return json.loads(json.dumps(merged))
 
     def merge_record(self, book: str, record_id: str, incoming: dict[str, Any], *, name: str = "",
-                     active_at: float = 0.0) -> dict[str, Any]:
+                     name_at: float = 0.0, active_at: float = 0.0,
+                     deleted: dict[str, Any] | None = None) -> dict[str, Any]:
         """Gộp MỘT hồ sơ từ thiết bị khác - đúng hồ sơ ấy, không phải hồ sơ đang dùng ở đây (đổi hồ sơ ở máy này đúng
         lúc điện thoại gửi lên thì không trộn hai hồ sơ). Hồ sơ lạ (tạo trên điện thoại) được nhận, cùng mã, gắn vào
-        `book`. Hồ sơ đang dùng: bên chọn sau thắng (`active_at` là lúc điện thoại chọn hồ sơ này).
+        `book`. Hồ sơ đang dùng: bên chọn sau thắng (`active_at` là lúc điện thoại chọn hồ sơ này); tên: bên đổi sau
+        thắng (`name_at`). `deleted`: bia mộ của những hồ sơ điện thoại đã xoá - ở đây xoá theo; hồ sơ vừa gửi đã bị xoá
+        ở đây thì không sống lại (trả `deleted: true`).
 
         Trả trạng thái đã gộp, kèm `record`, `book` (sách hồ sơ gắn ở đây - có thể đã được chuyển), danh sách hồ sơ của
-        sách, `active` {record, at}; hồ sơ đang dùng ở đây khác hồ sơ vừa gộp thì kèm luôn `activeState` của nó."""
+        sách (tên + lúc đặt tên), `active` {record, at}, mọi bia mộ đã biết (`deletedRecords`); hồ sơ đang dùng ở đây
+        khác hồ sơ vừa gộp thì kèm luôn `activeState` của nó."""
         with self._lock:
+            for gone, at in (deleted or {}).items():
+                if isinstance(gone, str) and RECORD_ID.fullmatch(gone):
+                    if gone in self._data["records"]:
+                        self._unlink(gone)
+                        del self._data["records"][gone]
+                    self._data["deleted"][gone] = max(float(self._data["deleted"].get(gone) or 0), float(at or 0))
+            if record_id in self._data["deleted"]:
+                self._save()
+                return {"record": record_id, "deleted": True, "deletedRecords": dict(self._data["deleted"])}
             record = self._data["records"].get(record_id)
             if record is None:
                 record = self._data["records"][record_id] = {"name": name.strip()[:MAX_RECORD_NAME] or DEFAULT_RECORD_NAME,
-                                                              "createdAt": time.time(), "state": _empty_state()}
+                                                              "createdAt": time.time(), "nameAt": float(name_at or 0),
+                                                              "state": _empty_state()}
+            elif name.strip() and float(name_at or 0) > float(record.get("nameAt") or 0):
+                record["name"] = name.strip()[:MAX_RECORD_NAME]
+                record["nameAt"] = float(name_at)
             owner = self._owner(record_id)
             if owner is None:
                 owner = book
@@ -428,10 +472,12 @@ class Listening:
             self._save()
             reply = json.loads(json.dumps(merged))
             reply.update({"record": record_id, "recordName": record.get("name") or DEFAULT_RECORD_NAME, "book": owner,
-                          "records": [{"id": item, "name": (self._data["records"].get(item) or {}).get("name")
-                                       or DEFAULT_RECORD_NAME} for item in link.get("records", [])
-                                      if item in self._data["records"]],
-                          "active": {"record": link.get("active"), "at": float(link.get("activeAt") or 0)}})
+                          "records": [{"id": item,
+                                       "name": self._data["records"][item].get("name") or DEFAULT_RECORD_NAME,
+                                       "nameAt": float(self._data["records"][item].get("nameAt") or 0)}
+                                      for item in link.get("records", []) if item in self._data["records"]],
+                          "active": {"record": link.get("active"), "at": float(link.get("activeAt") or 0)},
+                          "deletedRecords": dict(self._data["deleted"])})
             if link.get("active") and link["active"] != record_id:
                 active = self._data["records"].get(link["active"]) or {}
                 reply["activeState"] = json.loads(json.dumps(active.get("state") or _empty_state()))

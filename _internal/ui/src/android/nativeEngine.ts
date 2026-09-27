@@ -29,7 +29,8 @@ export class NativeAudioEngine implements NativeEngine {
     const previous = this.current;
     this.current = next;
     this.receivedAt = Date.now();
-    if (!previous || previous.chapterId !== next.chapterId || previous.bookId !== next.bookId) this.fire("chapter");
+    // "record": máy khác đổi hồ sơ nghe của cuốn đang nạp, lõi đã nạp lại chỗ của hồ sơ mới - làm mới như đổi chương
+    if (!previous || previous.chapterId !== next.chapterId || previous.bookId !== next.bookId || next.kind === "record") this.fire("chapter");
     if (!previous || previous.playing !== next.playing) this.fire(next.playing ? "play" : "pause");
     if (!previous || previous.duration !== next.duration) this.fire("duration");
     if (!previous || JSON.stringify(previous.sleep) !== JSON.stringify(next.sleep)) this.fire("sleep");

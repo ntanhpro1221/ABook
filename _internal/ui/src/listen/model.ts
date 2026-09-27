@@ -51,6 +51,16 @@ export interface BookProgress {
   caughtUp?: boolean;
 }
 
+/** Một hồ sơ nghe gắn với cuốn: dữ liệu nghe độc lập với sách, app giữ liên kết - một cuốn nhiều hồ sơ
+ *  (webui/listening.py, Android Store). `updatedAt`: lần nghe gần nhất của hồ sơ. */
+export interface ListeningRecord {
+  id: string;
+  name: string;
+  createdAt?: number | null;
+  updatedAt?: number | null;
+  active: boolean;
+}
+
 export interface ListenBook {
   id: string;
   title: string;
@@ -73,6 +83,8 @@ export interface ListenBook {
   chapters?: ListenChapter[];
   /** Điện thoại: cuốn này nằm trên máy tính, nghe thẳng qua mạng (chưa tải về). */
   remote?: boolean;
+  /** Hồ sơ nghe gắn với cuốn này (chưa nghe lần nào thì rỗng). */
+  records?: ListeningRecord[];
 }
 
 /** Bộ và số tập từ tên sách ("Throne of Magical Arcana · Tập 16" -> bộ "Throne of Magical Arcana", tập 16). */

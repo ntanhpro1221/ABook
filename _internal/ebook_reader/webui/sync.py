@@ -511,9 +511,11 @@ class SyncHandler(BaseHTTPRequestHandler):
                 state = {key: value for key, value in body.items() if key not in SYNC_KEYS}
                 if isinstance(record, str) and RECORD_ID.fullmatch(record):
                     # điện thoại biết hồ sơ: gộp đúng hồ sơ ấy (webui/listening.py merge_record)
+                    deleted = body.get("deletedRecords")
                     self._json(HTTPStatus.OK, self.app.listening.merge_record(
                         book, record, state, name=str(body.get("recordName") or ""),
-                        active_at=float(body.get("activeAt") or 0)))
+                        name_at=float(body.get("nameAt") or 0), active_at=float(body.get("activeAt") or 0),
+                        deleted=deleted if isinstance(deleted, dict) else None))
                 else:  # điện thoại đời trước: hồ sơ đang dùng
                     self._json(HTTPStatus.OK, self.app.listening.merge(book, state))
             elif method == "GET" and match.group(3):
