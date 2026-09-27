@@ -106,6 +106,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Truyện viết thoại bằng gạch đầu dòng (văn Việt): câu trả lời không còn bị đọc bằng giọng của chính người vừa hỏi khi
   hai lượt nói liền nhau không có lời dẫn. Thử trên Tắt đèn: 11 trên 112 câu thoại của ba chương.
 - Người được gọi theo tên chồng hay tên con ("chị Dậu", "mẹ Dần") không còn bị gộp chung một giọng với người mang tên ấy.
+- Tên nhân vật bị viết sai một chữ cái vẫn về đúng giọng của người ấy, kể cả khi cái tên sai tình cờ nằm trong một chữ
+  khác của sách ("An Dậu" trong "Văn Dậu"); tên Việt không còn bị nhập nhầm sang một họ khác chỉ vì lệch một chữ cái
+  ("Tương" / "Lương").
 
 ### Lưu ý khi nâng cấp
 

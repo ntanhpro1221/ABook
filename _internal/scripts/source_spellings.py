@@ -84,11 +84,30 @@ def source_text(project: Path, *, whole_book: bool = True) -> str:
 
 
 def occurrences(name: str, folded_source: str) -> int:
-    """Số lần một cái tên xuất hiện trong nguồn đã bỏ dấu."""
+    """Số lần một cái tên xuất hiện NGUYÊN CHỮ trong nguồn đã bỏ dấu - cùng phép đếm với
+    `character_registry.source_occurrences` ("AN DẬU" không có mặt chỉ vì nằm trong "Văn Dậu")."""
     needle = fold(name).strip()
     if not needle or not folded_source:
         return 0
-    return len(re.findall(re.escape(needle), folded_source))
+    hits, start, width, size = 0, 0, len(needle), len(folded_source)
+    while True:
+        index = folded_source.find(needle, start)
+        if index < 0:
+            return hits
+        end = index + width
+        if (index == 0 or not folded_source[index - 1].isalnum()) and (end == size or not folded_source[end].isalnum()):
+            hits += 1
+            start = end
+        else:
+            start = index + 1
+
+
+def _vietnamese_order_name(name: str) -> bool:
+    """Mọi chữ là âm tiết tiếng Việt - như `character_registry._vietnamese_order_name`."""
+    from ebook_reader.analysis import is_vietnamese_syllable
+
+    parts = [part for part in re.split(r"[\s-]+", " ".join(name.strip().casefold().split())) if part]
+    return bool(parts) and all(is_vietnamese_syllable(part) for part in parts)
 
 
 def _within_one_edit(left: str, right: str) -> bool:
@@ -127,7 +146,8 @@ def fold_to_source_spelling(
         if hits:
             continue
         folded_name = fold(name).strip()
-        first_word = folded_name.split()[0] if folded_name.split() else ""
+        # "Tên + họ bịa" chỉ là lỗi của tên kiểu Âu; tên kiểu Việt mở bằng họ ("Tương" / "Lương" là hai họ).
+        first_word = folded_name.split()[0] if folded_name.split() and not _vietnamese_order_name(name) else ""
         candidates = [
             other
             for other in present
