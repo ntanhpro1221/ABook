@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -40,6 +41,31 @@ DEFAULT_DATA = Path(r"D:/Novels/LLM_Train/data")
 DEFAULT_OUT = Path(r"D:/Novels/LLM_Train/runs")
 # Trên mọi mẫu đã đo, mẫu dài nhất là 4.276 token; để trần cao hơn nó một nhịp.
 DEFAULT_MAX_LENGTH = 4352
+# Hai lần tái hiện y hệt (27-09 01:41 và 07:37): hết bước 3, Trainer lưu checkpoint, `optimizer.pt` đứng ở 12 MB rồi
+# 29 MB (đủ là ~66 MB), driver ghi `nvlddmkm` 14 "\Device\UVMLiteProcess1 | GPU recovery action changed from 0x0 (None)
+# to 0x2 (Node Reboot Required)", rồi máy BSOD 0x1E (c0000005, đọc 0x28) ở cùng một chỗ trong mã cả hai lần. UVM là bộ
+# nhớ CUDA dùng chung (managed memory) - thứ duy nhất trong script dùng nó là trạng thái của optimizer `paged_*` của
+# bitsandbytes, và lúc lưu là lúc CPU đọc vùng ấy ra.
+# Bức tường VRAM 21-09 ("38 token/s ở VRAM 95%, ~40 giờ một epoch") đo lại 27-09 bằng profile_train_memory.py:
+# PyTorch cho Windows KHÔNG có flash attention, kernel memory-efficient từ chối GQA (Qwen3: 32 đầu query, 8 đầu k/v),
+# cuDNN bị tắt mặc định - nên SDPA rơi về đường MATH, dựng cả ma trận chú ý: +5,2 GB cho MỘT lớp (xuôi + ngược) so
+# với +0,24 GB của cuDNN. Một mẫu 3.213 token: đỉnh 4,73 GiB và 6,1 s với cuDNN, so với OOM ở trần 7,56 GiB (và
+# 65-233 s khi để driver tràn sang RAM). Loss lan xuôi khớp: 0,24411 (math) / 0,24364 (cuDNN).
+ATTENTION_NOTE = "attention ghim vào cuDNN (xem pin_attention_kernel)"
+
+
+def pin_attention_kernel(torch) -> None:
+    """Chỉ cho SDPA dùng cuDNN: đường math không được lặng lẽ quay lại - thiếu kernel thì phải báo lỗi."""
+    torch.backends.cuda.enable_cudnn_sdp(True)
+    torch.backends.cuda.enable_math_sdp(False)
+    torch.backends.cuda.enable_mem_efficient_sdp(False)
+    torch.backends.cuda.enable_flash_sdp(False)
+
+
+PAGED_OPTIMIZER_CRASH = (
+    "từ chối: optimizer `paged_*` (bộ nhớ CUDA UVM) làm máy này BSOD khi lưu checkpoint - hai lần 27-09, driver 592.47, "
+    "RTX 5060 Laptop (xem docs/LLM_EVAL.md). Dùng --optim adamw_8bit."
+)
 
 
 def load_rows(path: Path, only: str) -> list[dict]:
@@ -80,6 +106,57 @@ def answer_logits_trainer(base: type) -> type:
     return AnswerLogitsTrainer
 
 
+def trace_callback(path: Path):
+    """Nhật ký từng pha của vòng huấn luyện, fsync mỗi dòng - để một lần SẬP MÁY vẫn để lại dấu vết.
+
+    27-09 01:41 phép đo `--smoke 8 --accum 2 --logits answer` làm máy BSOD (0x1E, nvlddmkm.sys) và không để lại gì:
+    stdout đi qua `tail`, còn log của Trainer chỉ in mỗi 5 bước. Dòng cuối cùng trong file này cho biết máy chết
+    ở pha nào (nạp model, lan xuôi/ngược một mẫu, bước tối ưu) và VRAM PyTorch đang giữ bao nhiêu lúc ấy.
+    """
+    import os  # noqa: PLC0415
+    import time  # noqa: PLC0415
+
+    import torch  # noqa: PLC0415
+    from transformers import TrainerCallback  # noqa: PLC0415
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    handle = path.open("a", encoding="utf-8")
+    start = time.monotonic()
+
+    def write(event: str) -> None:
+        memory = ""
+        if torch.cuda.is_available():
+            memory = (f" | cấp phát {torch.cuda.memory_allocated() / 2**30:.2f} GiB, giữ "
+                      f"{torch.cuda.memory_reserved() / 2**30:.2f} GiB, đỉnh {torch.cuda.max_memory_allocated() / 2**30:.2f} GiB")
+        handle.write(f"{time.strftime('%H:%M:%S')} +{time.monotonic() - start:7.1f}s {event}{memory}\n")
+        handle.flush()
+        os.fsync(handle.fileno())
+
+    class Trace(TrainerCallback):
+        def on_train_begin(self, args, state, control, **kwargs):
+            write("bắt đầu huấn luyện")
+
+        def on_step_begin(self, args, state, control, **kwargs):
+            write(f"bước {state.global_step + 1} bắt đầu")
+
+        def on_substep_end(self, args, state, control, **kwargs):
+            write("xong lan ngược một mẫu")
+
+        def on_pre_optimizer_step(self, args, state, control, **kwargs):
+            write("lan ngược mẫu cuối xong, trước bước tối ưu")
+
+        def on_optimizer_step(self, args, state, control, **kwargs):
+            write("sau bước tối ưu")
+
+        def on_step_end(self, args, state, control, **kwargs):
+            write(f"bước {state.global_step} xong")
+
+        def on_train_end(self, args, state, control, **kwargs):
+            write("kết thúc huấn luyện")
+
+    return Trace(), write
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--base", default=DEFAULT_BASE)
@@ -94,12 +171,20 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--accum", type=int, default=8, help="batch hiệu dụng = accum (batch mỗi bước luôn là 1)")
     parser.add_argument("--smoke", type=int, default=0, help="chỉ N mẫu và 3 bước - kiểm đường ống, không huấn luyện")
     parser.add_argument("--force", action="store_true", help="chạy dù có lượt sản xuất đang bay (sẽ tranh VRAM)")
-    parser.add_argument("--optim", default="paged_adamw_8bit",
-                        help="paged_adamw_8bit (mặc định) hay adamw_8bit - bản `paged` đẩy trạng thái qua PCIe khi "
-                             "VRAM chật, và trên 8 GB đó có thể là nút cổ chai lớn nhất")
-    parser.add_argument("--logits", choices=("all", "answer"), default="all",
+    parser.add_argument("--optim", default="adamw_8bit",
+                        help="adamw_8bit (mặc định). Bản `paged_*` bị CHẶN trên Windows - xem PAGED_OPTIMIZER_CRASH")
+    parser.add_argument("--logits", choices=("all", "answer"), default="answer",
                         help="answer = chỉ dựng logits cho phần đáp án (xem answer_logits_trainer); all = như TRL mặc định")
+    parser.add_argument("--vram-cap", type=float, default=0.95,
+                        help="phần VRAM thật PyTorch được giữ; vượt là OOM thay vì để driver Windows tràn sang RAM "
+                             "(chậm 17-80 lần, và là nền của lần BSOD 27-09)")
+    parser.add_argument("--attention", choices=("cudnn", "auto"), default="cudnn",
+                        help="cudnn = ghim kernel cuDNN (mặc định); auto = để PyTorch tự chọn (rơi về math trên máy này)")
+    parser.add_argument("--trace", type=Path, default=None,
+                        help="ghi từng pha của vòng huấn luyện vào file này, fsync mỗi dòng (xem trace_callback)")
     args = parser.parse_args(argv)
+    if os.name == "nt" and args.optim.startswith("paged_"):
+        raise SystemExit(PAGED_OPTIMIZER_CRASH)
 
     from scripts.pending_patches.apply_all import _runs_in_flight  # noqa: PLC0415  (dùng lại bộ canh đã đo)
 
@@ -115,6 +200,9 @@ def main(argv: list[str] | None = None) -> int:
     from transformers import AutoTokenizer, BitsAndBytesConfig
     from trl import SFTConfig, SFTTrainer
 
+    torch.cuda.set_per_process_memory_fraction(args.vram_cap)
+    if args.attention == "cudnn":
+        pin_attention_kernel(torch)
     train_rows = load_rows(args.data / "train.jsonl", args.only)
     dev_rows = load_rows(args.data / "dev.jsonl", args.only)
     if args.smoke:
@@ -160,6 +248,9 @@ def main(argv: list[str] | None = None) -> int:
         prediction_loss_only=args.logits == "answer",
     )
     trainer_class = answer_logits_trainer(SFTTrainer) if args.logits == "answer" else SFTTrainer
+    trace, note = trace_callback(args.trace) if args.trace else (None, lambda _event: None)
+    note(f"nạp model {args.base} (logits={args.logits}, optim={args.optim}, attention={args.attention}, "
+         f"trần VRAM={args.vram_cap:.0%}, accum={args.accum}, smoke={args.smoke})")
     trainer = trainer_class(
         model=args.base,
         args=config,
@@ -174,7 +265,9 @@ def main(argv: list[str] | None = None) -> int:
             task_type="CAUSAL_LM",
             target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
         ),
+        callbacks=[trace] if trace else None,
     )
+    note("model đã nạp, trainer sẵn sàng")
     torch.cuda.reset_peak_memory_stats()
     result = trainer.train()
     metrics = result.metrics
