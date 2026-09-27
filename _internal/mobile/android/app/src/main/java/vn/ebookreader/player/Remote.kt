@@ -104,7 +104,9 @@ object Remote {
     }
 
     private fun report(wait: Int): JSONArray? {
-        val body = JSONObject().put("state", snapshot()).put("books", downloadedBooks()).put("wait", wait)
+        val body = JSONObject().put("state", snapshot()).put("books", downloadedBooks())
+            .put("stream", true) // nghe thẳng được mọi cuốn của máy tính, không chỉ cuốn đã tải
+            .put("wait", wait)
         synchronized(acks) {
             val now = System.currentTimeMillis()
             while (acks.isNotEmpty() && now - acks.first().first > ACK_MS) acks.removeFirst()
@@ -127,17 +129,29 @@ object Remote {
         return result.get()
     }
 
-    /** Sách đã tải xong về máy (có book.json) - máy tính chỉ mời "Phát trên điện thoại" với những cuốn này. */
+    /** Sách đã tải xong về máy (có book.json) - máy tính biết cuốn nào nghe được cả khi mất mạng. */
     private fun downloadedBooks(): JSONArray = JSONArray().also { array ->
         File(Store.root, "books").listFiles()?.filter { File(it, "book.json").isFile }?.forEach { array.put(it.name) }
     }
 
     private fun execute(commands: JSONArray?) {
         if (commands == null || commands.length() == 0) return
+        // Việc mạng làm ở đây (luồng hỏi), trước khi sang luồng chính: "Phát trên điện thoại" một cuốn chưa tải thì lấy
+        // gói sách từ máy tính để nghe thẳng.
+        val fetchProblems = mutableMapOf<String, String>()
+        for (index in 0 until commands.length()) {
+            val command = commands.optJSONObject(index) ?: continue
+            val id = command.optString("bookId")
+            if (command.optString("action") == "load" && Store.manifest(id) == null) {
+                runCatching { Streaming.fetchManifest(context, id) }
+                    .onFailure { fetchProblems[command.optString("id")] = "Không lấy được sách từ máy tính: ${it.message}" }
+            }
+        }
         Playback.onMain {
             for (index in 0 until commands.length()) {
                 val command = commands.optJSONObject(index) ?: continue
-                val problem = runCatching { apply(command) }.getOrElse { it.message ?: it.javaClass.simpleName }
+                val problem = fetchProblems[command.optString("id")]
+                    ?: runCatching { apply(command) }.getOrElse { it.message ?: it.javaClass.simpleName }
                 val ack = JSONObject().put("id", command.optString("id")).put("ok", problem == null).put("message", problem ?: "")
                 synchronized(acks) { acks.addLast(System.currentTimeMillis() to ack) }
             }
@@ -168,13 +182,13 @@ object Remote {
         return null
     }
 
-    /** "Phát trên điện thoại": nạp đúng cuốn, đúng chương, đúng giây máy tính đang nghe. */
+    /** "Phát trên điện thoại": nạp đúng cuốn, đúng chương, đúng giây máy tính đang nghe - chương chưa tải thì nghe thẳng. */
     private fun load(command: JSONObject): String? {
         val id = command.optString("bookId")
-        val manifest = Store.manifest(id) ?: return "Điện thoại chưa tải cuốn này"
-        val chapters = Playback.chaptersOf(manifest).filter { Store.file(id, it.file).isFile }
+        val manifest = Store.playableManifest(id) ?: return "Điện thoại chưa có cuốn này"
+        val chapters = Playback.chaptersOf(manifest)
         val chapterId = command.optInt("chapterId")
-        if (chapters.none { it.id == chapterId }) return "Điện thoại chưa tải chương này - mở Thư viện trên điện thoại để cập nhật"
+        if (chapters.none { it.id == chapterId }) return "Chương này chưa nghe được trên điện thoại"
         val rate = Store.state(id).optDouble("rate", 1.0)
         withService {
             Playback.load(id, manifest.optString("title"), manifest.optString("narrator"), chapters, chapterId,

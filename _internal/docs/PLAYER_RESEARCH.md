@@ -80,4 +80,21 @@ track, ảnh bìa) hoặc gộp thành một file M4B có mốc chương.
 | 14 | Chạm vào bìa lớn để phát/dừng | SABP | Mục tiêu to nhất màn hình. Đã làm 27-09 |
 | 15 | Độ nhạy lắc (nhẹ tay / vừa / mạnh tay) | SABP (rất thấp → rất cao) | Trở mình bị tính là lắc, hoặc lắc mãi không ăn. Đã làm 27-09 |
 
+## Liên kết giữa các máy (chủ sách 27-09)
+
+Chủ sách: "một bên có thể play, xem, sử dụng lib của một bên khác mà không cần phải thực sự có lib đó trong bộ nhớ",
+qua LAN, Wi-Fi, USB - và giữa MỌI cặp: điện thoại <-> máy tính, điện thoại <-> điện thoại, máy tính <-> máy tính. Hướng:
+mỗi app là một trạm hai vai (phục vụ thư viện của mình cho máy đã ghép + kết nối trạm khác).
+
+| bước | việc | trạng thái |
+|---|---|---|
+| 0 | Điều khiển điện thoại đang phát từ máy tính, chuyển chỗ nghe giữa hai máy (#12) | xong 27-09 |
+| 1 | Điện thoại nghe thẳng thư viện máy tính, đầy đủ như sách đã tải (Streaming.kt) | xong 27-09 |
+| 2 | Điện thoại có vai phục vụ (máy chủ nhỏ trong app, trả lời tìm máy) -> máy tính nghe thư viện điện thoại, điện thoại <-> điện thoại | chưa |
+| 3 | Máy tính có vai kết nối (mục "Trên thiết bị khác") -> máy tính <-> máy tính | chưa |
+| 4 | Điều khiển từ xa hai chiều trên cùng giao thức (điện thoại điều khiển trình phát máy tính) | chưa |
+
+USB: bật chia sẻ kết nối qua USB trên Android là có đường mạng, cùng giao thức. Ngoài nhà: địa chỉ nhập tay qua Tailscale /
+ZeroTier / NetBird (không trói vào dịch vụ nào); không đẩy audio lên cloud (một tập ~40 chương ~750 MB).
+
 Không học: hộp thoại xin chấm sao, lặp đoạn (học ngoại ngữ), cân bằng âm (giọng đọc đã được cân mức ở dây chuyền).

@@ -15,6 +15,8 @@ object SyncLink {
 
     fun paired(context: Context): Boolean = !prefs(context).getString("token", "").isNullOrBlank()
 
+    fun token(context: Context): String = prefs(context).getString("token", "") ?: ""
+
     fun base(context: Context): String {
         val prefs = prefs(context)
         return "http://${prefs.getString("host", "")}:${prefs.getInt("port", 47630)}"
@@ -28,10 +30,11 @@ object SyncLink {
         auth: Boolean = true,
         root: String = base(context),
         readTimeoutMs: Int = 20_000,
+        connectTimeoutMs: Int = 5000,
     ): String {
         val connection = URL(root + path).openConnection() as HttpURLConnection
         connection.requestMethod = method
-        connection.connectTimeout = 5000
+        connection.connectTimeout = connectTimeoutMs
         connection.readTimeout = readTimeoutMs
         if (auth) connection.setRequestProperty("Authorization", "Bearer ${prefs(context).getString("token", "")}")
         if (body != null) {

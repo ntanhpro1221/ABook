@@ -363,12 +363,13 @@ def test_what_a_phone_reports_is_typed_and_bounded() -> None:
         "state": {"bookId": "../../etc", "chapterId": True, "chapterTitle": "x" * 5000, "position": float("nan"),
                   "duration": "12", "playing": "yes", "rate": 9, "extra": {"a": 1}},
         "books": ["ok_id", "bad id", 7, "x" * 800],
+        "stream": "yes",
         "acks": [{"id": "c1", "ok": False, "message": "Điện thoại chưa tải chương này"}, "rác"],
     })
     phone = remote.view()[0]
     assert phone["bookId"] == "" and phone["chapterId"] is None and len(phone["chapterTitle"]) == 200
     assert phone["position"] == 0.0 and phone["duration"] == 12.0 and phone["playing"] is False and phone["rate"] == 3.0
-    assert "extra" not in phone and phone["books"] == ["ok_id"]
+    assert "extra" not in phone and phone["books"] == ["ok_id"] and phone["stream"] is False
     assert phone["acks"] == [{"id": "c1", "ok": False, "message": "Điện thoại chưa tải chương này"}]
     assert remote_command({"action": "skip", "seconds": -15}) == {"action": "skip", "seconds": -15.0}
     assert remote_command({"action": "load", "bookId": "abc", "chapterId": 4, "seconds": 90, "x": 1}) == {

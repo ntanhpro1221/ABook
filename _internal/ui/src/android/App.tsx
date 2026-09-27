@@ -1,9 +1,12 @@
 import { App as CapacitorApp } from "@capacitor/app";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Download, Library, Settings } from "lucide-react";
 import { useEffect, useMemo, useRef, type ReactNode } from "react";
 import { HashRouter, NavLink, Route, Routes, useLocation, useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Toaster } from "sonner";
+import { Toaster, toast } from "sonner";
+import type { ListenBook } from "@/listen/model";
+import { EbookLibrary } from "./plugins";
 import { BookScreen } from "@/listen/BookScreen";
 import { ClipProvider } from "@/listen/clip";
 import { LibraryScreen, useRestoreLastListening } from "@/listen/LibraryScreen";
@@ -113,6 +116,21 @@ function LibraryPage() {
   return <LibraryScreen empty={<EmptyLibrary />} recap={<MorningRecap className="mt-5" />} />;
 }
 
+/** Sách đang nghe thẳng từ máy tính: tải hẳn về để nghe cả khi không có mạng (tiến độ hiện ở tab Tải sách). */
+function DownloadMenuItem({ book }: { book: ListenBook }) {
+  return (
+    <DropdownMenu.Item
+      onSelect={() => {
+        toast("Đang tải về máy", { description: "Xem tiến độ ở tab Tải sách" });
+        void EbookLibrary.download({ bookId: book.id }).catch((error: Error) => toast.error("Không tải được", { description: error.message }));
+      }}
+      className="flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[highlighted]:bg-hover"
+    >
+      <Download className="size-4" /> Tải về máy
+    </DropdownMenu.Item>
+  );
+}
+
 function ClipBridge({ children }: { children: ReactNode }) {
   const player = usePlayer();
   return <ClipProvider onStart={() => player.playing && player.toggle()}>{children}</ClipProvider>;
@@ -146,7 +164,7 @@ export function AndroidApp() {
               <MobileShell>
                 <Routes>
                   <Route path="/" element={<LibraryPage />} />
-                  <Route path="/book/:id" element={<BookScreen />} />
+                  <Route path="/book/:id" element={<BookScreen extraActions={(book) => (book.remote ? <DownloadMenuItem book={book} /> : null)} />} />
                   <Route path="/book/:id/read/:chapterId?" element={<ReaderScreen />} />
                   <Route path="/devices" element={<DevicesScreen />} />
                   <Route path="/settings" element={<SettingsScreen />} />
