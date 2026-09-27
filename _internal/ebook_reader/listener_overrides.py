@@ -193,14 +193,21 @@ def request_pronunciation(project_root: Path, surface: str, spoken_form: str, *,
 
 def request_speaker(project_root: Path, stable_id: str, text_sha256: str, speaker: str, *, now: float) -> None:
     """Giao diện gọi: ghi (hoặc thay) mong muốn cho một câu. Băm chữ đi kèm để yêu cầu tự rơi khi câu đổi chữ."""
+    request_speakers(project_root, [(stable_id, text_sha256)], speaker, now=now)
+
+
+def request_speakers(project_root: Path, lines: list[tuple[str, str]], speaker: str, *, now: float) -> None:
+    """Một người cho cả nhóm câu (mọi câu của một vai phụ không tên), trong MỘT lần ghi file: dây chuyền đọc file giữa
+    hai lần ghi thì không bao giờ thấy nhóm câu nửa đã gán nửa chưa."""
     data = read_overrides(project_root)
     entries = data.get("speakers")
     entries = dict(entries) if isinstance(entries, dict) else {}
-    entries[str(stable_id)] = {
-        "speaker": str(speaker).strip(),
-        "text_sha256": str(text_sha256).strip(),
-        "requested_at": float(now),
-    }
+    for stable_id, text_sha256 in lines:
+        entries[str(stable_id)] = {
+            "speaker": str(speaker).strip(),
+            "text_sha256": str(text_sha256).strip(),
+            "requested_at": float(now),
+        }
     data["speakers"] = entries
     _write(project_root, data)
 
