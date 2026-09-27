@@ -57,8 +57,10 @@ track, ảnh bìa) hoặc gộp thành một file M4B có mốc chương.
 
 ## Áp dụng - theo thứ tự đáng làm
 
-Đã làm ngay tối 26-09 (nhánh ui/redesign): #1 (máy tính + lõi Android), #2, #3 (máy tính), #4 (chế độ đọc),
-#5, #6 (xuất MP3 có tag). Còn lại: #7 trở đi.
+Đã làm tối 26-09 (nhánh ui/redesign): #1 (máy tính + lõi Android), #2, #3 (máy tính), #4 (chế độ đọc),
+#5, #6 (xuất MP3 có tag), #7 (lịch sử nghe), #10 (số phút tuỳ chỉnh). Ngày 27-09: #8 (lắc = cộng thêm/đặt lại + độ nhạy),
+#9 (úp máy để dừng - chỉ tính khi úp VÀ nằm yên, cầm tay giơ lên xem không tính), #11 (nút tai nghe lùi/tới 15 giây),
+#13-#15 bên dưới; tất cả thử trên máy ảo bằng cảm biến/phím media giả lập. Còn lại: #12.
 
 | # | Ý tưởng | Học từ | Vì sao với ta |
 |---|---|---|---|
@@ -74,5 +76,8 @@ track, ảnh bìa) hoặc gộp thành một file M4B có mốc chương.
 | 10 | Tấm hẹn giờ có số tuỳ chỉnh + "Ngắn hơn/Dài hơn"; báo rung khi bắt đầu nhỏ dần | Voice, SABP | Tinh chỉnh |
 | 11 | Nút tai nghe Bluetooth Trước/Sau = lùi/tới (tuỳ chọn) | SABP | Sách nói ít khi cần nhảy chương |
 | 12 | Điều khiển điện thoại đang phát từ máy tính | Spotify Connect | Làm sau cùng |
+| 13 | **Ảnh bìa thật**: đặt từ file/kéo thả/dán, hoặc **tìm trên mạng** (iTunes, Open Library, Google Books) rồi chọn; màu chủ đạo nhuộm màn "Đang nghe" | SABP (cover art downloader), Audiobookshelf (match bìa qua nhiều nguồn) | Sách TXT không có bìa; truyện mạng dịch hiếm khi có trên các nguồn - chỉ gợi ý, không tự đặt. Đã làm 27-09 |
+| 14 | Chạm vào bìa lớn để phát/dừng | SABP | Mục tiêu to nhất màn hình. Đã làm 27-09 |
+| 15 | Độ nhạy lắc (nhẹ tay / vừa / mạnh tay) | SABP (rất thấp → rất cao) | Trở mình bị tính là lắc, hoặc lắc mãi không ăn. Đã làm 27-09 |
 
 Không học: hộp thoại xin chấm sao, lặp đoạn (học ngoại ngữ), cân bằng âm (giọng đọc đã được cân mức ở dây chuyền).
