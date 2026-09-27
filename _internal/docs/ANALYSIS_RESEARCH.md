@@ -220,9 +220,34 @@ giọng: hoà, không đạt rõ -> **vẫn giữ qwen3:8b**, nhưng lý do đã
 2. Thước chính của mọi phép đo người nói từ nay là F1 giọng; nhãn chặt vẫn báo kèm (tên hiển thị trong Studio).
 3. ~~Neo cách viết tên vào văn bản cho phần HIỂN THỊ~~ - xong (`restore_source_marks`, trên).
 4. Một truyện chưa thấy nữa, tên thuần Việt (văn học Việt hết bản quyền, wikisource), 2-3 chương gold, chạy lại cổng.
+   -> Tắt đèn, mục dưới.
 5. Tên tự (Tử-long = Triệu Vân, Công-cẩn = Chu Du): sách Trung giới thiệu bằng "<tên>, tự (là) <tên tự>" ("Bàng Thống
    tự là Sĩ-nguyên", "Hoàng Trung, tự Hán-thăng" - Tam quốc 047, 053) - một luật đọc câu giới thiệu ấy thành sổ bí danh
    theo cuốn; đo được bằng chính các bí danh đáp án Tam quốc đã ghi ("CHU DU,DU,CHU CÔNG-CẨN,...").
+
+## TRUYỆN VIỆT 28-09 01:xx - Tắt đèn lộ hai lỗi của HOST trước cả khi chạy model
+
+Tắt đèn (Ngô Tất Tố, vi.wikisource, hết bản quyền): truyện đầu tiên VIẾT bằng tiếng Việt chứ không dịch. Đáp án chương
+XX, XXI, XXIV (`gold/tat_den_ngo_tat_to/`): 245 đoạn, 112 câu thoại. Ba cái khó mà mười truyện dịch không có: thoại gạch
+đầu dòng với rất nhiều cặp hỏi - đáp KHÔNG lời dẫn; nhân vật chỉ có chức danh suốt cuốn (quan Phủ, lý trưởng, cai lệ -
+dạng ấy là tên, như "Trịnh lão"); vợ gọi theo tên chồng ("chị Dậu" - "DẬU" trơn là chồng chị).
+
+1. **Khoá "thoại nối tiếp cùng người nói"** (`_repair_continued_dialogue_speakers`, từ 10-08) coi hai đoạn thoại liền
+   nhau không mở bằng ngoặc là MỘT lời nói kéo dài. Đúng với ngoặc kép bỏ ngỏ qua nhiều đoạn; sai hoàn toàn với gạch
+   đầu dòng, nơi mỗi dòng là một lượt mới: câu trả lời mang tên người vừa hỏi. Phát lại đáp án (`replay_all.py`, Ollama
+   giả trả lời đúng): Tắt đèn **90,2% -> 100%** người nói (11/112 câu bị đè, đúng mọi cặp hỏi - đáp liền); 11 truyện
+   còn lại không đổi một số nào. Câu trả lời thô đã ghi của ba model trên Tam quốc 50-52 phát lại qua luật mới
+   (`replay_from_candidates.py`): không đổi - thoại Tam quốc gần như luôn có "X nói:" đứng trước. Sửa: dòng mở bằng
+   gạch đầu dòng (`DIALOGUE_DASH_TURN_PATTERN`, cùng mẫu bộ tách câu dùng để khoá dòng ấy là thoại) là một lượt mới.
+2. **Luật tên gọi** (`merge_given_names`, 27-09) gom nhãn "DẬU" về "CHỊ DẬU" - chữ cuối của đúng một tên nhiều chữ -
+   tức chồng đọc bằng giọng vợ. `voice_identity.py --gold-check` bắt được ngay trên nhãn đáp án. Sửa: tên mở bằng chữ
+   xưng hô (`NAME_PREFIX_TITLES`: chị, anh, bác, cụ, mẹ...) không làm đích gom. Cái giá: "DẬU" không gom về "ANH DẬU"
+   khi sổ chỉ có anh (một người hai giọng - nhẹ hơn hai người một giọng); có "NGUYỄN VĂN DẬU" thì vẫn gom về đó.
+   `--gold-check`: 12 truyện không nhập hai người nào.
+
+Cả hai lỗi nằm ngoài model: model nào cũng bị trừ như nhau, nên không đổi thứ hạng nào đã đo, nhưng mọi con số tuyệt
+đối trên truyện Việt thuần trước bản sửa đều thấp oan. Việc kế: chạy cổng (qwen3:8b, LoRA v2, qwen3:4b) trên ba chương
+này sau hàng GPU c3/g, chấm bằng F1 giọng.
 
 ## Tài liệu
 
