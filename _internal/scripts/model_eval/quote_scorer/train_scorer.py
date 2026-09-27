@@ -56,6 +56,10 @@ def main() -> int:
     parser.add_argument("--vram-cap", type=float, default=0.9)
     parser.add_argument("--predict-only", action="store_true",
                         help="không huấn luyện: nạp mô hình đã lưu trong --out, chấm test, ghi test_predictions.jsonl")
+    parser.add_argument("--pretrain", type=Path, nargs="*", default=[],
+                        help="giai đoạn 1 (curriculum): học trước trên dữ liệu này (vd che dấu hiệu N1 - chỉ có câu CÓ TÊN, "
+                             "trộn thẳng vào thì lựa chọn 'không ai' bị bỏ đói: dev người kể/NPC 0%% ở 27-09), rồi mới tới gold")
+    parser.add_argument("--pretrain-epochs", type=int, default=2)
     parser.add_argument("--extra-train", type=Path, nargs="*", default=[],
                         help="thêm cửa sổ huấn luyện (vd dữ liệu che dấu hiệu N1: data/quote_vi_cue/train.jsonl)")
     args = parser.parse_args()
@@ -78,10 +82,19 @@ def main() -> int:
     encoder.get_input_embeddings().weight.requires_grad_(False)
     trainable = [parameter for parameter in encoder.parameters() if parameter.requires_grad]
 
+    train, dev, test = (load(args.data / f"{name}.jsonl") for name in ("train", "dev", "test"))
+    for extra in args.extra_train:
+        train += load(extra)
+    pretrain = [window for path in args.pretrain for window in load(path)]
+    # N9: chỗ nhắc trong danh sách nhân vật đầu cửa sổ không có khoảng cách thật tới câu - một xô riêng. Chỉ thêm xô
+    # khi dữ liệu có cast, để các lần chạy không cast khởi tạo y hệt trước (cùng seed -> cùng số ngẫu nhiên).
+    has_cast = any(mention.get("cast") for window in train + dev + test for mention in window["mentions"])
+    cast_bucket = len(DISTANCE_BUCKETS) + 1
+
     class Head(nn.Module):
         def __init__(self) -> None:
             super().__init__()
-            self.distance = nn.Embedding(len(DISTANCE_BUCKETS) + 1, 32)
+            self.distance = nn.Embedding(len(DISTANCE_BUCKETS) + 1 + has_cast, 32)
             self.pair = nn.Sequential(nn.Linear(6 * size + 32, 2 * size), nn.GELU(), nn.Linear(2 * size, 1))
             self.null = nn.Sequential(nn.Linear(2 * size, size), nn.GELU(), nn.Linear(size, 1))
 
@@ -110,12 +123,13 @@ def main() -> int:
     def score_window(window: dict):
         """(điểm từng câu, danh sách thực thể của từng chỗ nhắc) cho một cửa sổ."""
         hidden, token_span = encode(window)
-        spans, entities = [], []
+        spans, entities, cast = [], [], []
         for mention in window["mentions"]:
             span = token_span(mention["start"], mention["end"])
             if span:
                 spans.append(span)
                 entities.append(mention["entities"])
+                cast.append(bool(mention.get("cast")))
         if spans:
             m_repr = torch.stack([torch.cat([hidden[a], hidden[b]]) for a, b in spans])
         else:
@@ -127,19 +141,17 @@ def main() -> int:
                 results.append(None)
                 continue
             q_repr = torch.cat([hidden[span[0]], hidden[span[1]]])
-            distances = torch.tensor([bucket(a - span[0]) for a, _ in spans], device=device, dtype=torch.long)
+            distances = torch.tensor([cast_bucket if is_cast else bucket(a - span[0])
+                                      for (a, _), is_cast in zip(spans, cast)], device=device, dtype=torch.long)
             results.append(head(q_repr, m_repr, distances))
         return results, entities
 
-    train, dev, test = (load(args.data / f"{name}.jsonl") for name in ("train", "dev", "test"))
-    for extra in args.extra_train:
-        train += load(extra)
     print(f"train {len(train)} cửa sổ, dev {len(dev)}, test {len(test)}", flush=True)
     optimizer = torch.optim.AdamW([
         {"params": trainable, "lr": args.lr},
         {"params": head.parameters(), "lr": args.head_lr},
     ], weight_decay=0.01)
-    total_steps = args.epochs * len(train)
+    total_steps = args.epochs * len(train) + args.pretrain_epochs * len(pretrain)
     schedule = torch.optim.lr_scheduler.LambdaLR(
         optimizer, lambda step: min(1.0, (step + 1) / max(1, total_steps // 20)) * max(0.0, 1 - step / total_steps))
 
@@ -159,8 +171,19 @@ def main() -> int:
                         predicted = None if best == len(entities) else entities[best]
                     correct = (predicted is None) if gold is None else (predicted is not None and gold in predicted)
                     if dump is not None:
+                        # Xác suất biên từng thực thể = tổng softmax các chỗ nhắc trỏ tới nó (cùng dạng với loss),
+                        # để N3 (giải mã cả hội thoại), N5 (bỏ phiếu trắng) và N6 (xếp chồng với LLM) dùng lại.
+                        probs: dict[str, float] = {}
+                        p_null = None
+                        if scores is not None:
+                            softmax = torch.softmax(scores, 0).tolist()
+                            p_null = softmax[-1]
+                            for index, names in enumerate(entities):
+                                for name in names:
+                                    probs[name] = probs.get(name, 0.0) + softmax[index]
                         dump.append({key: quote[key] for key in ("book", "chapter", "seq", "kind")}
-                                    | {"gold": gold, "predicted": predicted, "correct": bool(correct)})
+                                    | {"gold": gold, "predicted": predicted, "correct": bool(correct),
+                                       "p_null": p_null, "probs": dict(sorted(probs.items(), key=lambda kv: -kv[1])[:8])})
                     key = "null" if gold is None else "named"
                     tally["all"][0] += correct
                     tally["all"][1] += 1
@@ -174,12 +197,15 @@ def main() -> int:
     args.out.mkdir(parents=True, exist_ok=True)
     log = (args.out / "train.log").open("a", encoding="utf-8")
     best = -1.0
-    for epoch in range(0 if args.predict_only else args.epochs):
+    phases = [] if args.predict_only else (
+        [("học trước", pretrain)] * (args.pretrain_epochs if pretrain else 0) + [("gold", train)] * args.epochs)
+    for epoch, (phase, windows) in enumerate(phases):
         encoder.train()
         head.train()
-        random.shuffle(train)
+        windows = list(windows)
+        random.shuffle(windows)
         started, losses = time.time(), []
-        for window in train:
+        for window in windows:
             results, entities = score_window(window)
             terms = []
             for quote, scores in zip(window["quotes"], results):
@@ -205,7 +231,7 @@ def main() -> int:
             losses.append(float(loss))
         scores_dev = evaluate(dev)
         line = (f"epoch {epoch + 1}: loss {sum(losses) / max(1, len(losses)):.4f} | dev {json.dumps(scores_dev)} | "
-                f"{time.time() - started:.0f}s")
+                f"{time.time() - started:.0f}s | {phase}")
         print(line, flush=True)
         log.write(line + "\n")
         log.flush()
@@ -215,11 +241,12 @@ def main() -> int:
             encoder.save_pretrained(args.out / "encoder")
     head.load_state_dict(torch.load(args.out / "head.pt")["head"])
     encoder.load_state_dict(AutoModel.from_pretrained(args.out / "encoder", dtype=torch.float32).state_dict())
-    predictions: list = []
-    result = evaluate(test, predictions)
-    with (args.out / "test_predictions.jsonl").open("w", encoding="utf-8") as handle:
-        for row in predictions:
-            handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+    for name, windows in (("dev", dev), ("test", test)):
+        predictions: list = []
+        result = evaluate(windows, predictions)
+        with (args.out / f"{name}_predictions.jsonl").open("w", encoding="utf-8") as handle:
+            for row in predictions:
+                handle.write(json.dumps(row, ensure_ascii=False) + "\n")
     line = f"TEST (mô hình tốt nhất trên dev): {json.dumps(result)}"
     print(line, flush=True)
     log.write(line + "\n")

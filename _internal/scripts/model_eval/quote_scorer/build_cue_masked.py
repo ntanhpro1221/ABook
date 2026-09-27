@@ -27,7 +27,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE.parent))
 
-from build_vi import GOLD_ROOT, aliases_for, mention_spans, windows_for  # noqa: E402
+from build_vi import GOLD_ROOT, aliases_for, join_segments, mention_spans, windows_for  # noqa: E402
 from cues import explicit_labels  # noqa: E402
 
 MAX_TAG_CHARS = 60  # đoạn chứa thẻ dài hơn thì trong đó còn nội dung khác - không xoá được sạch
@@ -47,6 +47,7 @@ def main() -> int:
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--tokenizer", default="jhu-clsp/mmBERT-base")
     parser.add_argument("--budget", type=int, default=1024)
+    parser.add_argument("--layout", choices=("line", "paragraph"), default="line", help="như build_vi.py (N8)")
     args = parser.parse_args()
 
     from transformers import AutoTokenizer  # noqa: PLC0415
@@ -75,6 +76,8 @@ def main() -> int:
                 seen_chapters.add(str(title))
                 segments = [(int(seq), str(text), str(kind or "")) for seq, text, kind in connection.execute(
                     "SELECT seq, text, kind FROM segments WHERE chapter_id = ? ORDER BY seq", (chapter_id,))]
+                paragraph_of = dict(connection.execute(
+                    "SELECT seq, paragraph_index FROM segments WHERE chapter_id = ?", (chapter_id,)).fetchall())
                 labels = explicit_labels(segments, aliases)
                 stats["chương"] += 1
                 for quote_seq, (entity, tag_seq) in labels.items():
@@ -85,12 +88,8 @@ def main() -> int:
                     masked = [(seq, text) for seq, text, _ in segments if seq != tag_seq]
                     quotes = {quote_seq: ("D", entity)}
                     for lo, hi, seqs in windows_for(masked, quotes, args.budget, count_tokens):
-                        offsets, parts, cursor = {}, [], 0
-                        for seq, text in masked[lo:hi + 1]:
-                            offsets[seq] = (cursor, cursor + len(text))
-                            parts.append(text)
-                            cursor += len(text) + 1
-                        text = "\n".join(parts)
+                        text, offsets = join_segments(masked[lo:hi + 1],
+                                                      paragraph_of if args.layout == "paragraph" else None)
                         mentions = mention_spans(text, aliases)
                         covered = any(entity in mention["entities"] for mention in mentions)
                         stats["câu che"] += 1
