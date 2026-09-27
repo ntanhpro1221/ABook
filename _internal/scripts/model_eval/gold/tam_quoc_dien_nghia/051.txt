@@ -1,0 +1,201 @@
+# Đáp án chuẩn - Tam quốc diễn nghĩa (Phan Kế Bính dịch), Hồi 51 - truyện chưa thấy, cổng đo LoRA 27-09.
+# Bí danh cùng người đủ điểm (Du/Chu Du/Công-cẩn/Chu lang; Túc/Lỗ Túc/Tử-kính; Huyền-đức/Lưu Bị/Dự-châu...).
+# 133 thầy thuốc, 141 "các tướng bẩm", 174 lính hàng, 185/187 thám mã = NPC*. 136: Ngưu Kim được nêu tên trong lời
+# dẫn câu cả đám hò reo -> NGƯU KIM và NPC* đều đủ điểm. 163-167: Chu Du bảo thầm Trình Phổ -> soft/whispering.
+0 H
+1 N
+2 N
+3 N
+4 D LƯU BỊ,HUYỀN-ĐỨC,HUYỀN ĐỨC,LƯU HUYỀN-ĐỨC,LƯU HUYỀN ĐỨC sad,tender,neutral 1-2 normal normal m
+5 N
+6 N
+7 N NARRATOR neutral,happy 0-1 normal normal u
+8 D TÔN CÀN,CÀN neutral,happy 0-1 normal normal m
+9 N
+10 D CHU DU,DU,CHU CÔNG-CẨN,CHU CÔNG CẨN,CÔNG-CẨN,CÔNG CẨN,CHU LANG neutral 0-1 normal normal m
+11 N
+12 D TÔN CÀN,CÀN neutral 0-1 normal normal m
+13 N
+14 D CHU DU,DU,CHU CÔNG-CẨN,CHU CÔNG CẨN,CÔNG-CẨN,CÔNG CẨN,CHU LANG surprised,afraid,neutral 1-2 normal,fast normal m
+15 N
+16 D TÔN CÀN,CÀN neutral 0-1 normal normal m
+17 N
+18 D CHU DU,DU,CHU CÔNG-CẨN,CHU CÔNG CẨN,CÔNG-CẨN,CÔNG CẨN,CHU LANG neutral 0-1 normal normal m
+19 N
+20 N
+21 D LỖ TÚC,TÚC,TỬ-KÍNH,TỬ KÍNH,LỖ TỬ-KÍNH,LỖ TỬ KÍNH surprised,neutral 0-1 normal normal m
+22 N
+23 D CHU DU,DU,CHU CÔNG-CẨN,CHU CÔNG CẨN,CÔNG-CẨN,CÔNG CẨN,CHU LANG angry 1-3 normal normal,loud m
+24 N
+25 D LỖ TÚC,TÚC,TỬ-KÍNH,TỬ KÍNH,LỖ TỬ-KÍNH,LỖ TỬ KÍNH neutral 0-1 normal normal m
+26 N
+27 D CHU DU,DU,CHU CÔNG-CẨN,CHU CÔNG CẨN,CÔNG-CẨN,CÔNG CẨN,CHU LANG angry,neutral 1-2 normal normal m
+28 N
+29 D LỖ TÚC,TÚC,TỬ-KÍNH,TỬ KÍNH,LỖ TỬ-KÍNH,LỖ TỬ KÍNH neutral 0-1 normal normal m
+30 N
+31 N
+32 D LƯU BỊ,HUYỀN-ĐỨC,HUYỀN ĐỨC,LƯU HUYỀN-ĐỨC,LƯU HUYỀN ĐỨC neutral,afraid 0-1 normal normal m
+33 N
+34 D KHỔNG MINH,GIA-CÁT LƯỢNG,GIA CÁT LƯỢNG,GIA-CÁT KHỔNG MINH,GIA CÁT KHỔNG MINH happy,sarcastic,neutral 0-1 normal normal m
+35 N
+36 D LƯU BỊ,HUYỀN-ĐỨC,HUYỀN ĐỨC,LƯU HUYỀN-ĐỨC,LƯU HUYỀN ĐỨC afraid,neutral 0-1 normal normal m
+37 N
+38 D KHỔNG MINH,GIA-CÁT LƯỢNG,GIA CÁT LƯỢNG,GIA-CÁT KHỔNG MINH,GIA CÁT KHỔNG MINH neutral,happy 0-1 normal normal m
+39 N
+40 N
+41 N
+42 D CHU DU,DU,CHU CÔNG-CẨN,CHU CÔNG CẨN,CÔNG-CẨN,CÔNG CẨN,CHU LANG neutral,sarcastic 0-1 normal normal m
+43 N
+44 D LƯU BỊ,HUYỀN-ĐỨC,HUYỀN ĐỨC,LƯU HUYỀN-ĐỨC,LƯU HUYỀN ĐỨC neutral 0-1 normal normal m
+45 N
+46 D CHU DU,DU,CHU CÔNG-CẨN,CHU CÔNG CẨN,CÔNG-CẨN,CÔNG CẨN,CHU LANG happy,sarcastic,neutral 0-1 normal normal m
+47 N
+48 D LƯU BỊ,HUYỀN-ĐỨC,HUYỀN ĐỨC,LƯU HUYỀN-ĐỨC,LƯU HUYỀN ĐỨC neutral 0-1 normal normal m
+49 N
+50 D CHU DU,DU,CHU CÔNG-CẨN,CHU CÔNG CẨN,CÔNG-CẨN,CÔNG CẨN,CHU LANG neutral,happy 0-1 normal normal m
+51 N
+52 D LƯU BỊ,HUYỀN-ĐỨC,HUYỀN ĐỨC,LƯU HUYỀN-ĐỨC,LƯU HUYỀN ĐỨC neutral 0-1 normal normal m
+53 N
+54 D CHU DU,DU,CHU CÔNG-CẨN,CHU CÔNG CẨN,CÔNG-CẨN,CÔNG CẨN,CHU LANG neutral,happy 0-1 normal normal m
+55 N
+56 D KHỔNG MINH,GIA-CÁT LƯỢNG,GIA CÁT LƯỢNG,GIA-CÁT KHỔNG MINH,GIA CÁT KHỔNG MINH neutral,happy 0-1 normal normal m
+57 N
+58 N
+59 D LƯU BỊ,HUYỀN-ĐỨC,HUYỀN ĐỨC,LƯU HUYỀN-ĐỨC,LƯU HUYỀN ĐỨC sad,afraid,neutral 0-2 normal normal m
+60 N
+61 D KHỔNG MINH,GIA-CÁT LƯỢNG,GIA CÁT LƯỢNG,GIA-CÁT KHỔNG MINH,GIA CÁT KHỔNG MINH happy,sarcastic 1-2 normal normal m
+62 N
+63 D LƯU BỊ,HUYỀN-ĐỨC,HUYỀN ĐỨC,LƯU HUYỀN-ĐỨC,LƯU HUYỀN ĐỨC neutral 0-1 normal normal m
+64 N
+65 D KHỔNG MINH,GIA-CÁT LƯỢNG,GIA CÁT LƯỢNG,GIA-CÁT KHỔNG MINH,GIA CÁT KHỔNG MINH happy,neutral 0-1 normal normal m
+66 N
+67 D LƯU BỊ,HUYỀN-ĐỨC,HUYỀN ĐỨC,LƯU HUYỀN-ĐỨC,LƯU HUYỀN ĐỨC neutral,surprised 0-1 normal normal m
+68 N
+69 D KHỔNG MINH,GIA-CÁT LƯỢNG,GIA CÁT LƯỢNG,GIA-CÁT KHỔNG MINH,GIA CÁT KHỔNG MINH neutral,whispering 0-1 normal,slow normal,soft m
+70 N NARRATOR neutral,happy 0-1 normal normal u
+71 N
+72 D LỖ TÚC,TÚC,TỬ-KÍNH,TỬ KÍNH,LỖ TỬ-KÍNH,LỖ TỬ KÍNH surprised,neutral 0-1 normal normal m
+73 N
+74 D CHU DU,DU,CHU CÔNG-CẨN,CHU CÔNG CẨN,CÔNG-CẨN,CÔNG CẨN,CHU LANG happy,sarcastic 0-2 normal normal m
+75 N
+76 D CHU DU,DU,CHU CÔNG-CẨN,CHU CÔNG CẨN,CÔNG-CẨN,CÔNG CẨN,CHU LANG neutral,excited 0-1 normal normal,loud m
+77 N
+78 N
+79 D CHU DU,DU,CHU CÔNG-CẨN,CHU CÔNG CẨN,CÔNG-CẨN,CÔNG CẨN,CHU LANG neutral 0-1 normal normal m
+80 N
+81 D TÀO NHÂN,NHÂN neutral 0-1 normal normal m
+82 N
+83 D NGƯU KIM,KIM angry,excited 1-2 normal normal,loud m
+84 N
+85 N
+86 N
+87 N
+88 D CAM NINH,CAM HƯNG-BÁ,CAM HƯNG BÁ,HƯNG-BÁ,HƯNG BÁ,NINH neutral 0-1 normal normal m
+89 N
+90 D TRẦN KIỀU,KIỀU neutral,afraid 0-1 normal normal m
+91 N
+92 N
+93 N
+94 D TRÌNH PHỔ,PHỔ,TRÌNH ĐỨC-MƯU,TRÌNH ĐỨC MƯU,ĐỨC-MƯU afraid,excited 1-2 fast,normal normal,loud m
+95 N
+96 D CHU DU,DU,CHU CÔNG-CẨN,CHU CÔNG CẨN,CÔNG-CẨN,CÔNG CẨN,CHU LANG afraid,neutral 0-1 normal normal m
+97 N
+98 D LÃ MÔNG,MÔNG angry,neutral 1-2 normal normal m
+99 N
+100 D CHU DU,DU,CHU CÔNG-CẨN,CHU CÔNG CẨN,CÔNG-CẨN,CÔNG CẨN,CHU LANG neutral 0-1 normal normal m
+101 N
+102 D LÃ MÔNG,MÔNG neutral,happy 0-1 normal normal m
+103 N
+104 D CHU DU,DU,CHU CÔNG-CẨN,CHU CÔNG CẨN,CÔNG-CẨN,CÔNG CẨN,CHU LANG neutral 0-1 normal normal m
+105 N
+106 D LĂNG THỐNG,LĂNG CÔNG-TỤC,LĂNG CÔNG TỤC,CÔNG-TỤC,CÔNG TỤC,THỐNG neutral 0-1 normal normal m
+107 N NARRATOR neutral,happy 0-1 normal normal u
+108 N
+109 D LÃ MÔNG,MÔNG neutral 0-1 normal normal m
+110 N
+111 D CHU DU,DU,CHU CÔNG-CẨN,CHU CÔNG CẨN,CÔNG-CẨN,CÔNG CẨN,CHU LANG neutral,excited 0-1 normal normal,loud m
+112 N
+113 D CHU THÁI,THÁI neutral,excited 0-1 normal normal m
+114 N
+115 N
+116 N
+117 N
+118 N
+119 D TÀO HỒNG,HỒNG afraid,neutral 1-2 normal normal m
+120 N
+121 D TÀO NHÂN,NHÂN happy,neutral 0-1 normal normal m
+122 N NARRATOR neutral,happy 0-1 normal normal u
+123 D TÀO NHÂN,NHÂN happy,neutral 0-1 normal normal,loud m
+124 N
+125 N
+126 N
+127 N
+128 N NARRATOR neutral,happy 0-1 normal normal u
+129 D TRẦN KIỀU,KIỀU happy,excited 1-2 normal normal,soft m
+130 N
+131 N
+132 N NARRATOR neutral,sad 0-1 normal normal u
+133 D NPC*,UNKNOWN~ neutral 0-1 normal normal m
+134 N
+135 N
+136 D NGƯU KIM,KIM,NPC*,UNKNOWN~ angry,excited 2-3 normal loud m
+137 N
+138 N
+139 D CHU DU,DU,CHU CÔNG-CẨN,CHU CÔNG CẨN,CÔNG-CẨN,CÔNG CẨN,CHU LANG surprised,neutral 0-1 normal normal m
+140 N
+141 D NPC*,UNKNOWN~ neutral 0-1 normal normal m
+142 N
+143 D CHU DU,DU,CHU CÔNG-CẨN,CHU CÔNG CẨN,CÔNG-CẨN,CÔNG CẨN,CHU LANG angry 2-3 normal loud m
+144 N
+145 N
+146 D TRÌNH PHỔ,PHỔ,TRÌNH ĐỨC-MƯU,TRÌNH ĐỨC MƯU,ĐỨC-MƯU neutral,afraid 0-1 normal normal m
+147 N
+148 D CHU DU,DU,CHU CÔNG-CẨN,CHU CÔNG CẨN,CÔNG-CẨN,CÔNG CẨN,CHU LANG angry,neutral 1-2 normal normal m
+149 N
+150 D TRÌNH PHỔ,PHỔ,TRÌNH ĐỨC-MƯU,TRÌNH ĐỨC MƯU,ĐỨC-MƯU neutral 0-1 normal normal m
+151 N
+152 D CHU DU,DU,CHU CÔNG-CẨN,CHU CÔNG CẨN,CÔNG-CẨN,CÔNG CẨN,CHU LANG angry,excited 2-3 normal loud m
+153 N
+154 D TÀO NHÂN,NHÂN angry,sarcastic 2-3 normal loud m
+155 N
+156 D CHU DU,DU,CHU CÔNG-CẨN,CHU CÔNG CẨN,CÔNG-CẨN,CÔNG CẨN,CHU LANG angry 2-3 normal loud m
+157 N
+158 D TÀO NHÂN,NHÂN angry,excited 1-2 normal loud m
+159 N NARRATOR neutral,surprised,afraid 0-1 normal normal u
+160 N
+161 D TRÌNH PHỔ,PHỔ,TRÌNH ĐỨC-MƯU,TRÌNH ĐỨC MƯU,ĐỨC-MƯU afraid,sad 1-2 normal normal,soft m
+162 N
+163 D CHU DU,DU,CHU CÔNG-CẨN,CHU CÔNG CẨN,CÔNG-CẨN,CÔNG CẨN,CHU LANG happy,whispering,neutral 0-1 normal soft m
+164 N
+165 D TRÌNH PHỔ,PHỔ,TRÌNH ĐỨC-MƯU,TRÌNH ĐỨC MƯU,ĐỨC-MƯU surprised,whispering,neutral 0-1 normal soft,normal m
+166 N
+167 D CHU DU,DU,CHU CÔNG-CẨN,CHU CÔNG CẨN,CÔNG-CẨN,CÔNG CẨN,CHU LANG neutral,whispering 0-1 normal soft,normal m
+168 N
+169 D TRÌNH PHỔ,PHỔ,TRÌNH ĐỨC-MƯU,TRÌNH ĐỨC MƯU,ĐỨC-MƯU happy,excited 0-1 normal soft,normal m
+170 N NARRATOR neutral,sad 0-1 normal normal u
+171 N
+172 D TÀO NHÂN,NHÂN happy 1-2 normal normal m
+173 N
+174 D NPC*,UNKNOWN~ neutral,afraid 0-1 normal normal m
+175 N NARRATOR neutral,happy 0-1 normal normal u
+176 N
+177 D TRẦN KIỀU,KIỀU excited,neutral 0-1 normal normal m
+178 N
+179 N
+180 N
+181 N
+182 N
+183 D TRIỆU VÂN,TRIỆU TỬ-LONG,TRIỆU TỬ LONG,TỬ-LONG,TỬ LONG,NPC*~ happy,sarcastic,neutral 0-1 normal loud,normal m
+184 N
+185 D NPC*,UNKNOWN~ afraid,neutral 0-1 fast,normal normal m
+186 N
+187 D NPC*,UNKNOWN~ afraid,neutral 0-1 fast,normal normal m
+188 N
+189 D CHU DU,DU,CHU CÔNG-CẨN,CHU CÔNG CẨN,CÔNG-CẨN,CÔNG CẨN,CHU LANG angry,surprised 1-2 normal normal m
+190 N
+191 D TRÌNH PHỔ,PHỔ,TRÌNH ĐỨC-MƯU,TRÌNH ĐỨC MƯU,ĐỨC-MƯU angry,sad,neutral 0-2 normal normal m
+192 N NARRATOR neutral,surprised,afraid 0-1 normal normal u
+193 N
+194 N
+195 N
+196 N

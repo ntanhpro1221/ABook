@@ -1,0 +1,178 @@
+# Đáp án chuẩn - Tam quốc diễn nghĩa (Phan Kế Bính dịch, Bùi Kỷ hiệu đính; hết bản quyền, vi.wikisource), Hồi 50.
+# Truyện CHƯA TỪNG có trong dữ liệu huấn luyện - cổng đo "truyện chưa thấy, khác thể loại" để quyết đổi qwen3:8b -> LoRA
+# (27-09). Văn dịch 1909: thoại gạch đầu dòng sau lời dẫn "X nói:", xưng hô cổ (ta/ngươi, thừa tướng, tướng quân).
+# Bí danh cùng một người đều đủ điểm (Tháo/Tào Tháo/Mạnh Đức, Vân-trường/Quan Vũ/Quan-công, Khổng Minh/Gia-cát Lượng,
+# Tử-long/Triệu Vân, Dực-đức/Trương Phi, Hưng-bá/Cam Ninh) - việc một người bị tách thành hai giọng đo riêng.
+# "Các tướng hỏi/Quân sĩ bẩm/Tả hữu" (cả nhóm, không nêu tên) = NPC*. 5: tiếng Hoàng Cái gọi Hàn Đương. 26/28/32/44:
+# tướng tự xưng tên ("Lăng Thống ở đây!") -> người ấy. 114: câu trong ngoặc giữa đoạn kể, Quan Vũ bảo quân sĩ.
+# 168-169: chú thích cuối hồi (Dữu-công nói).
+0 H
+1 N
+2 N
+3 N
+4 N
+5 D HOÀNG CÁI,CÁI,NPC*~ afraid,sad 1-2 fast,normal loud,normal m
+6 N
+7 N
+8 N
+9 N
+10 N
+11 N
+12 N
+13 N
+14 N
+15 N
+16 N
+17 N
+18 N
+19 N
+20 N
+21 N
+22 D TRƯƠNG LIÊU neutral,afraid 0-1 normal,fast normal m
+23 N
+24 D NPC*,LÃ MÔNG~,UNKNOWN~ angry,excited 1-3 fast,normal loud m
+25 N
+26 D LĂNG THỐNG,LĂNG CÔNG-TỤC,LĂNG CÔNG TỤC,CÔNG-TỤC,THỐNG,NPC*,UNKNOWN~ angry,excited 1-3 normal,fast loud m
+27 N NARRATOR neutral,afraid 0-1 normal normal u
+28 D TỪ HOẢNG,NPC*,UNKNOWN~ excited,neutral,angry 1-2 fast,normal loud,normal m
+29 N
+30 N
+31 N
+32 D CAM NINH,CAM HƯNG-BÁ,CAM HƯNG BÁ,HƯNG-BÁ,HƯNG BÁ,NINH,NPC*~ angry,excited 1-3 normal,fast loud m
+33 N NARRATOR neutral,angry 0-1 normal normal u
+34 N
+35 N
+36 D TÀO THÁO,THÁO,TÀO MẠNH ĐỨC,MẠNH ĐỨC neutral,tired 0-1 normal normal m
+37 N
+38 D NPC*,UNKNOWN~ neutral 0-1 normal normal m
+39 N
+40 D NPC*,UNKNOWN~,TỪ HOẢNG~,TRƯƠNG CÁP~ surprised,neutral 0-1 normal normal m
+41 N
+42 D TÀO THÁO,THÁO,TÀO MẠNH ĐỨC,MẠNH ĐỨC happy,sarcastic 1-2 normal normal m
+43 N NARRATOR neutral,afraid 0-1 normal normal u
+44 D TRIỆU VÂN,TRIỆU TỬ-LONG,TRIỆU TỬ LONG,TỬ-LONG,TỬ LONG,NPC*~ angry,excited 1-3 normal,fast loud m
+45 N
+46 N
+47 N NARRATOR neutral,afraid,happy 0-1 normal normal u
+48 D TÀO THÁO,THÁO,TÀO MẠNH ĐỨC,MẠNH ĐỨC neutral,happy 0-1 normal,fast normal m
+49 N
+50 D NPC*,UNKNOWN~ neutral 0-1 normal normal m
+51 N
+52 D TÀO THÁO,THÁO,TÀO MẠNH ĐỨC,MẠNH ĐỨC neutral 0-1 normal normal m
+53 N
+54 D NPC*,UNKNOWN~ neutral 0-1 normal normal m
+55 N
+56 N
+57 N
+58 D NPC*,UNKNOWN~,LÝ ĐIỂN~,HỨA CHỬ~,TRƯƠNG LIÊU~,TỪ HOẢNG~ surprised,afraid,neutral 0-2 normal normal m
+59 N
+60 D TÀO THÁO,THÁO,TÀO MẠNH ĐỨC,MẠNH ĐỨC happy,sarcastic 1-2 normal normal m
+61 N NARRATOR neutral,afraid 0-1 normal normal u
+62 D TRƯƠNG PHI,TRƯƠNG DỰC-ĐỨC,TRƯƠNG DỰC ĐỨC,DỰC-ĐỨC,DỰC ĐỨC angry 2-3 normal,fast loud m
+63 N NARRATOR neutral,afraid 0-1 normal normal u
+64 N
+65 D NPC*,UNKNOWN~ neutral 0-1 normal normal m
+66 N
+67 D TÀO THÁO,THÁO,TÀO MẠNH ĐỨC,MẠNH ĐỨC neutral 0-1 normal normal m
+68 N
+69 D NPC*,UNKNOWN~ neutral 0-1 normal normal m
+70 N
+71 D NPC*,UNKNOWN~ neutral 0-1 normal normal m
+72 N
+73 N
+74 D NPC*,UNKNOWN~,TRƯƠNG LIÊU~,HỨA CHỬ~,TỪ HOẢNG~ surprised,afraid,neutral 0-2 normal normal m
+75 N
+76 D TÀO THÁO,THÁO,TÀO MẠNH ĐỨC,MẠNH ĐỨC happy,sarcastic,neutral 0-2 normal normal m
+77 N
+78 D NPC*,UNKNOWN~,TRƯƠNG LIÊU~,HỨA CHỬ~,TỪ HOẢNG~ happy,excited 1-2 normal normal m
+79 N
+80 N
+81 N
+82 D NPC*,UNKNOWN~ neutral,tired 0-1 normal normal m
+83 N NARRATOR neutral,angry 0-1 normal normal u
+84 D TÀO THÁO,THÁO,TÀO MẠNH ĐỨC,MẠNH ĐỨC angry 2-3 normal,fast loud m
+85 N
+86 N NARRATOR neutral,sad 0-1 normal normal u
+87 N
+88 D TÀO THÁO,THÁO,TÀO MẠNH ĐỨC,MẠNH ĐỨC angry 2-3 normal,fast loud m
+89 N
+90 D NPC*,UNKNOWN~ tired,sad 1-2 normal,slow normal m
+91 N
+92 D TÀO THÁO,THÁO,TÀO MẠNH ĐỨC,MẠNH ĐỨC neutral,angry 0-2 normal normal,loud m
+93 N
+94 D NPC*,UNKNOWN~ surprised,neutral 0-1 normal normal m
+95 N
+96 D TÀO THÁO,THÁO,TÀO MẠNH ĐỨC,MẠNH ĐỨC happy,sarcastic 1-2 normal normal m
+97 N NARRATOR neutral,afraid 0-1 normal normal u
+98 D TÀO THÁO,THÁO,TÀO MẠNH ĐỨC,MẠNH ĐỨC afraid,sad,angry 1-2 normal,fast normal,loud m
+99 N
+100 D NPC*,UNKNOWN~ sad,afraid,tired 1-2 normal normal m
+101 N
+102 D TRÌNH DỤC neutral 0-1 normal normal m
+103 N
+104 D TÀO THÁO,THÁO,TÀO MẠNH ĐỨC,MẠNH ĐỨC tender,neutral 0-1 normal,slow normal,soft m
+105 N
+106 D QUAN VÂN-TRƯỜNG,VÂN-TRƯỜNG,QUAN VÂN TRƯỜNG,VÂN TRƯỜNG,QUAN VŨ,QUAN-CÔNG~,QUAN CÔNG~ neutral 0-1 normal normal m
+107 N
+108 D TÀO THÁO,THÁO,TÀO MẠNH ĐỨC,MẠNH ĐỨC sad,afraid,tender 1-2 slow,normal normal,soft m
+109 N
+110 D QUAN VÂN-TRƯỜNG,VÂN-TRƯỜNG,QUAN VÂN TRƯỜNG,VÂN TRƯỜNG,QUAN VŨ,QUAN-CÔNG~,QUAN CÔNG~ neutral,sad 0-1 normal normal m
+111 N
+112 D TÀO THÁO,THÁO,TÀO MẠNH ĐỨC,MẠNH ĐỨC sad,tender,neutral 1-2 normal normal m
+113 N NARRATOR neutral,sad 0-1 normal normal u
+114 D QUAN VÂN-TRƯỜNG,VÂN-TRƯỜNG,QUAN VÂN TRƯỜNG,VÂN TRƯỜNG,QUAN VŨ,QUAN-CÔNG~,QUAN CÔNG~ neutral 0-2 normal normal,loud m
+115 N NARRATOR neutral,angry,sad 0-1 normal normal u
+116 N
+117 N
+118 N
+119 N
+120 N
+121 N
+122 N
+123 N NARRATOR neutral,afraid 0-1 normal normal u
+124 D TÀO THÁO,THÁO,TÀO MẠNH ĐỨC,MẠNH ĐỨC afraid,sad 2-3 normal,fast normal,loud m
+125 N
+126 N
+127 D TÀO NHÂN neutral 0-1 normal normal m
+128 N
+129 D TÀO THÁO,THÁO,TÀO MẠNH ĐỨC,MẠNH ĐỨC happy,sad,tender 1-2 normal normal m
+130 N
+131 N NARRATOR neutral,sad 0-1 normal normal u
+132 D NPC*,UNKNOWN~,TRÌNH DỤC~ surprised,neutral 0-1 normal normal m
+133 N
+134 D TÀO THÁO,THÁO,TÀO MẠNH ĐỨC,MẠNH ĐỨC sad 1-2 normal,slow normal m
+135 N NARRATOR neutral,sad 0-1 normal normal u
+136 D TÀO THÁO,THÁO,TÀO MẠNH ĐỨC,MẠNH ĐỨC sad 2-3 slow,normal loud,normal m
+137 N
+138 N
+139 D TÀO THÁO,THÁO,TÀO MẠNH ĐỨC,MẠNH ĐỨC neutral 0-1 normal normal m
+140 N
+141 D TÀO NHÂN neutral 0-1 normal normal m
+142 N
+143 D TÀO THÁO,THÁO,TÀO MẠNH ĐỨC,MẠNH ĐỨC neutral 0-1 normal normal m
+144 N
+145 N NARRATOR neutral,happy 0-1 normal normal u
+146 D KHỔNG MINH,GIA-CÁT LƯỢNG,GIA CÁT LƯỢNG,GIA-CÁT KHỔNG MINH,GIA CÁT KHỔNG MINH happy,sarcastic 1-2 normal normal m
+147 N
+148 D KHỔNG MINH,GIA-CÁT LƯỢNG,GIA CÁT LƯỢNG,GIA-CÁT KHỔNG MINH,GIA CÁT KHỔNG MINH sarcastic,neutral 0-2 normal normal m
+149 N
+150 D KHỔNG MINH,GIA-CÁT LƯỢNG,GIA CÁT LƯỢNG,GIA-CÁT KHỔNG MINH,GIA CÁT KHỔNG MINH angry,sarcastic,neutral 0-2 normal normal m
+151 N
+152 D QUAN VÂN-TRƯỜNG,VÂN-TRƯỜNG,QUAN VÂN TRƯỜNG,VÂN TRƯỜNG,QUAN VŨ,QUAN-CÔNG~,QUAN CÔNG~ sad,neutral 0-1 normal,slow normal,soft m
+153 N
+154 D KHỔNG MINH,GIA-CÁT LƯỢNG,GIA CÁT LƯỢNG,GIA-CÁT KHỔNG MINH,GIA CÁT KHỔNG MINH sarcastic,neutral,surprised 0-1 normal normal m
+155 N
+156 D QUAN VÂN-TRƯỜNG,VÂN-TRƯỜNG,QUAN VÂN TRƯỜNG,VÂN TRƯỜNG,QUAN VŨ,QUAN-CÔNG~,QUAN CÔNG~ sad,neutral 0-1 normal,slow normal,soft m
+157 N
+158 D KHỔNG MINH,GIA-CÁT LƯỢNG,GIA CÁT LƯỢNG,GIA-CÁT KHỔNG MINH,GIA CÁT KHỔNG MINH neutral,sarcastic 0-1 normal normal m
+159 N
+160 D QUAN VÂN-TRƯỜNG,VÂN-TRƯỜNG,QUAN VÂN TRƯỜNG,VÂN TRƯỜNG,QUAN VŨ,QUAN-CÔNG~,QUAN CÔNG~ sad,neutral 0-1 normal,slow normal,soft m
+161 N
+162 D KHỔNG MINH,GIA-CÁT LƯỢNG,GIA CÁT LƯỢNG,GIA-CÁT KHỔNG MINH,GIA CÁT KHỔNG MINH angry 1-3 normal normal,loud m
+163 N NARRATOR neutral,angry 0-1 normal normal u
+164 N
+165 N
+166 N
+167 N
+168 N
+169 D DỮU-CÔNG CHI-TƯ,DỮU-CÔNG,DỮU CÔNG,DỮU CÔNG CHI TƯ,NARRATOR neutral 0-1 normal normal m

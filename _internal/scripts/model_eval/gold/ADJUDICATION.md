@@ -310,3 +310,19 @@ một câu kể chen giữa nói về cùng người ấy". Trông rất giống
 loại bẫy dễ mắc - một ví dụ sống động (`351:57` đọc lên là thấy ngay ai nói) không phải một luật, và chỉ
 phép đếm mới phân biệt được hai thứ đó. Mẫu quá lỏng vì câu kể chen giữa có thể đổi hẳn người: đại từ
 ngôi ba ở đầu câu không hứa rằng nó chỉ người vừa nói.
+
+## Tam quốc diễn nghĩa (Phan Kế Bính) Hồi 50-52 - truyện chưa thấy, cổng đổi model (27-09)
+
+A: Claude (vòng chính). B: agent soát đối kháng (xem A). **B không thấy câu nào sai người nói chính.** Đã áp:
+- 32 câu lời kể có từ gợi cảm xúc mà luật host cấm neutral ("quát", "khóc", "mừng lắm", "hoảng quá"...): thêm cảm xúc của
+  cảnh vào tập, giữ neutral (đúng GOLD_GUIDE "lời kể trong cảnh căng"); thêm afraid cho "rụng rời hồn vía", "ba hồn bảy vía".
+- Câu cả toán quân hô ("một toán quân... gọi to lên rằng"): NPC* đủ điểm cả khi câu tự xưng tên tướng (050:26, 28), tướng
+  tự xưng mà lúc nói chưa được nêu tên: NPC*~ (050:5, 32; 051:183; 052:75, 81, 83). Câu "các tướng hỏi": người có mặt được
+  nêu tên gần đó thêm `~` (050:40, 58, 74, 78, 132; 052:15). 051:136: thêm UNKNOWN~.
+- Danh xưng: "Dự-châu" là chức (quy tắc 11: danh hiệu trơn khi đã biết tên) - bỏ; "Quan-công" (họ + tôn xưng) nửa điểm.
+  Thêm biến thể không gạch nối còn thiếu (LỖ TỬ KÍNH, ĐỨC MƯU, MÃ QUÝ THƯỜNG, LĂNG CÔNG TỤC...) - `speaker_key` không bỏ gạch.
+- 050:169 chú thích cuối hồi của người dịch: NARRATOR đủ điểm (cùng Dữu-công). 052:21 "Túc khen thầm": `T,D` (quy tắc 9).
+- Giữ, ghi **host sai**: 050:88 "Sống chết có số, việc gì mà phải khóc? Hễ đứa nào khóc nữa thì chém!" - host cho sad vì chữ
+  "khóc" nằm trong phạm vi CẤM (AGENTS.md đòi tôn trọng phủ định/ngăn cấm); gold giữ angry. 050:132 "việc gì phải khóc?" -
+  tiếng khóc là của Tào Tháo, không phải của các mưu sĩ đang hỏi; gold giữ surprised/neutral.
+
