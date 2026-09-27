@@ -32,6 +32,13 @@ from build_training_set import SPLIT  # noqa: E402
 
 GOLD_ROOT = HERE.parent / "gold"
 NULL_SPEAKERS = ("NARRATOR", "NPC", "?")
+# Ngôi thứ nhất (N7, 27-09): truyện mạng/light novel hay kể bằng "tôi" - nhân vật kể KHÔNG BAO GIỜ được gọi tên
+# trong lời kể, nên 118/138 câu có người nói nằm ngoài ứng viên là của chính người kể. PDNC (tiểu thuyết cổ điển,
+# hầu hết ngôi thứ ba) không có chuyện này. "tôi/mình/tớ" TRONG LỜI KỂ (không phải trong thoại) = chỗ nhắc người kể.
+FIRST_PERSON = re.compile(r"(?<!\w)(tôi|mình|tớ)(?!\w)", re.IGNORECASE)
+FIRST_PERSON_CUE = re.compile(r"(?<!\w)(tôi|mình|tớ)\s+(?:\w+\s+){0,2}?(nói|hỏi|đáp|gọi|lên tiếng|thì thầm|hét|la|thốt|bảo|trả lời|"
+                              r"lẩm bẩm|nhắc|cười|cất tiếng|mở lời|kêu|gắt|quát|thở dài|lầm bầm|càu nhàu|"
+                              r"đáp lời|hỏi lại|nói tiếp|giải thích|xác nhận|phản bác|chen vào)(?!\w)", re.IGNORECASE)
 
 
 def gold_quotes(path: Path) -> dict[int, tuple[str, str]]:
@@ -71,6 +78,48 @@ def mention_spans(text: str, aliases: dict[str, set[str]]) -> list[dict]:
     pattern = re.compile(r"(?<!\w)(" + "|".join(re.escape(name) for name in ordered) + r")(?!\w)", re.IGNORECASE)
     return [{"start": m.start(), "end": m.end(), "entities": sorted(aliases[m.group(0).lower()])}
             for m in pattern.finditer(text)]
+
+
+def point_of_view(segments_by_chapter: dict, golds: dict) -> dict[str, str]:
+    """Nhân vật "tôi" của một truyện: người nói gold gặp nhiều nhất ở câu thoại NGAY SAU lời kể có "tôi nói/hỏi/...".
+
+    Khi chạy thật không có gold: đây sẽ là câu hỏi của Studio ("Truyện kể ngôi thứ nhất? 'Tôi' là ai?") hoặc lấy từ
+    chính bộ chấm trên các câu tường minh - ở đây dùng gold để đo TRẦN của hướng này trước."""
+    votes: dict[str, Counter] = {}
+    for chapter, segments in segments_by_chapter.items():
+        quotes = golds.get(chapter, {})
+        votes[chapter] = Counter()
+        for index, (seq, text, kind) in enumerate(segments):
+            # Chỉ khi "tôi nói/hỏi..." là mệnh đề CUỐI của lời kể và câu thoại đứng NGAY SAU: "tôi hỏi. / <câu trả
+            # lời của người kia>" từng làm Lucy, Sitri bị nhận là người kể (27-09).
+            if kind == "dialogue":
+                continue
+            cues = list(FIRST_PERSON_CUE.finditer(text))
+            if not cues:
+                continue
+            # Thẻ lời nói gắn với câu thoại nào tuỳ vị trí và dấu câu (quy ước truyện dịch):
+            #   "tôi nói:" ở CUỐI lời kể, câu thoại ngay SAU      -> thẻ của câu sau;
+            #   "tôi nói." ở ĐẦU lời kể, ngay sau một câu thoại  -> thẻ của câu TRƯỚC ("…," tôi nói.).
+            # Lấy nhầm câu sau trong trường hợp thứ hai từng nhận người đối thoại làm người kể (Fuyutsuki, 27-09).
+            target = None
+            if text.rstrip().endswith(":") and len(text) - cues[-1].end() <= 12 and index + 1 < len(segments):
+                target = segments[index + 1][0]
+            elif cues[0].start() <= 15 and index > 0 and segments[index - 1][2] == "dialogue":
+                target = segments[index - 1][0]
+            label = quotes.get(target, (None, None))[1] if target is not None else None
+            if label and entity_of(label):
+                votes[chapter][entity_of(label)] += 1
+    # Có truyện đổi người kể theo chương (Yamiyo no Hotaru: Tomobe / Kaede / Yuusei): "tôi" xác định theo CHƯƠNG, lấy
+    # cả truyện làm dự phòng cho chương không có câu "tôi nói" nào.
+    total = sum(votes.values(), Counter())
+    ranked = total.most_common(2)
+    # Thắng rõ: >= 3 phiếu và gấp đôi người thứ hai - không thì thà không đoán người kể.
+    book = ranked[0][0] if ranked and ranked[0][1] >= 3 and (len(ranked) < 2 or ranked[0][1] >= 2 * ranked[1][1]) else None
+    result = {}
+    for chapter, counts in votes.items():
+        best = counts.most_common(1)[0] if counts else (None, 0)
+        result[chapter] = best[0] if best[1] >= 2 else book
+    return {chapter: entity for chapter, entity in result.items() if entity}
 
 
 def split_of(book: str, chapter: str) -> str:
@@ -119,6 +168,7 @@ def main() -> int:
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--tokenizer", default="jhu-clsp/mmBERT-base")
     parser.add_argument("--budget", type=int, default=1024, help="token mỗi cửa sổ")
+    parser.add_argument("--no-pov", action="store_true", help="tắt ứng viên ngôi thứ nhất (để so với mốc)")
     args = parser.parse_args()
 
     from transformers import AutoTokenizer  # noqa: PLC0415
@@ -141,13 +191,21 @@ def main() -> int:
         entities = {entity for quotes in golds.values() for _, label in quotes.values()
                     if (entity := entity_of(label))} | set(display)
         aliases = aliases_for(entities, display)
+        segments_by_chapter = {
+            title: [(int(seq), str(text), str(kind or "")) for seq, text, kind in connection.execute(
+                "SELECT seq, text, kind FROM segments WHERE chapter_id = ? ORDER BY seq", (chapter_id,))]
+            for chapter_id, title in chapters if title in golds}
+        povs = {} if args.no_pov else point_of_view(segments_by_chapter, golds)
+        if povs:
+            print(f"  {book}: 'tôi' theo chương = {povs}")
         for chapter_id, title in chapters:
             quotes = golds.get(title)
             if not quotes:
                 continue
             split = split_of(book, title)
-            segments = [(int(seq), str(text)) for seq, text in connection.execute(
-                "SELECT seq, text FROM segments WHERE chapter_id = ? ORDER BY seq", (chapter_id,))]
+            kinds = {seq: kind for seq, _, kind in segments_by_chapter[title]}
+            pov = povs.get(title)
+            segments = [(seq, text) for seq, text, _ in segments_by_chapter[title]]
             for lo, hi, seqs in windows_for(segments, quotes, args.budget, count_tokens):
                 offsets, parts, cursor = {}, [], 0
                 for seq, text in segments[lo:hi + 1]:
@@ -156,6 +214,13 @@ def main() -> int:
                     cursor += len(text) + 1
                 text = "\n".join(parts)
                 mentions = mention_spans(text, aliases)
+                if pov:
+                    for seq, (begin, finish) in offsets.items():
+                        if kinds.get(seq) == "dialogue":
+                            continue  # "tôi" trong ngoặc thoại là chính người đang nói, không phải người kể
+                        for match in FIRST_PERSON.finditer(text, begin, finish):
+                            mentions.append({"start": match.start(), "end": match.end(), "entities": [pov]})
+                    mentions.sort(key=lambda mention: mention["start"])
                 rows = []
                 for seq in seqs:
                     kind, label = quotes[seq]
