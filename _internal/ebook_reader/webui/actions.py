@@ -10,6 +10,7 @@ gần nhất; AGENTS.md: GUI chỉ có MỘT lệnh Dừng).
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import threading
 import time
@@ -22,6 +23,32 @@ from . import humanize
 # Tiếng Việt đọc ~4,3 âm tiết/giây ở tốc độ kể chuyện; một "từ" tách bằng dấu cách là một âm tiết.
 SYLLABLES_PER_SECOND = 4.3
 SCAN_WORD_LIMIT_BYTES = 4 * 1024 * 1024
+# Studio từ xa: chương TXT gửi từ máy khác nằm ở đây, trong thư viện - dây chuyền còn đọc lại nguồn mỗi lần chạy tiếp.
+UPLOAD_FOLDER = "Nguồn tải lên"
+MAX_SOURCE_UPLOAD = 8 * 1024 * 1024  # một chương; chương dài nhất của kho truyện ~200 KB
+_UNSAFE_NAME = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
+
+
+def upload_source(library_root: Path, folder: str, name: str, data: bytes) -> Path:
+    """Ghi một chương TXT gửi từ máy khác vào `<thư viện>/Nguồn tải lên/<thư mục>/`, trả thư mục ấy.
+
+    Chỉ lấy TÊN file (không đường dẫn), chỉ `.txt`, tên thư mục và tên file bỏ ký tự Windows không nhận - không có
+    cách nào ghi ra ngoài thư mục tải lên. Byte giữ nguyên: bảng mã do dây chuyền nhận như với file trên máy."""
+    if not str(library_root) or not library_root.is_dir():
+        raise ValueError("Máy tính chưa có thư mục thư viện")
+    if len(data) > MAX_SOURCE_UPLOAD:
+        raise ValueError("File quá lớn - tối đa 8 MB một chương")
+    folder_name = " ".join(_UNSAFE_NAME.sub(" ", folder).split()).strip(" .")[:80] or "Tải lên"
+    file_name = " ".join(_UNSAFE_NAME.sub(" ", name.replace("\\", "/").rsplit("/", 1)[-1]).split()).strip(" .")[:120]
+    if not file_name.lower().endswith(".txt"):
+        raise ValueError("Chỉ nhận file .txt - mỗi file là một chương")
+    target_dir = library_root / UPLOAD_FOLDER / folder_name
+    target_dir.mkdir(parents=True, exist_ok=True)
+    target = target_dir / file_name
+    temporary = target_dir / f".{file_name}.part"
+    temporary.write_bytes(data)
+    os.replace(temporary, target)
+    return target_dir
 
 
 class Runner(Protocol):
