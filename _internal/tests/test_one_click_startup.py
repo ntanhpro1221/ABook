@@ -32,7 +32,12 @@ def test_one_click_startup_contract() -> None:
     shortcut = shortcut_path.read_text(encoding="utf-8")
 
     assert 'scripts\\start_windows.ps1' in start
-    assert "shell.Run command, 1, False" in start
+    assert "shell.Run command, windowStyle, False" in start and "windowStyle = 1" in start
+    # Bấm đúp file .abook: đường dẫn đi VBS -> start_windows.ps1 -OpenFile -> app.py "<file>" -> desktop.py.
+    assert '" -OpenFile """ & WScript.Arguments(0)' in start
+    assert "[string]$OpenFile" in launcher and '$arguments += " `"$OpenFile`""' in launcher
+    app = (INTERNAL_ROOT / "app.py").read_text(encoding="utf-8")
+    assert "from ebook_reader.desktop import run_desktop" in app and '"--classic"' in app
     assert '$SetupMarker = Join-Path $RuntimeRoot ".setup_complete"' in launcher
     assert '[switch]$SetupConsole' not in launcher
     assert "Start-SetupConsole" not in launcher

@@ -15,6 +15,7 @@ APP_NAME = "ABook"
 APP_USER_MODEL_ID = "EbookReader.Desktop"
 INSTANCE_SERVER_NAME = f"{APP_USER_MODEL_ID}.SingleInstance"
 INSTANCE_ACTIVATE_MESSAGE = b"activate"
+INSTANCE_OPEN_PREFIX = b"open\n"
 INSTANCE_CONNECT_TIMEOUT_MS = 250
 STARTUP_READY_FILE_ENV = "EBOOK_READER_READY_FILE"
 APP_ASSET_DIR = Path(__file__).resolve().parent / "assets"
@@ -32,7 +33,19 @@ def set_windows_app_identity() -> None:
         pass
 
 
-def notify_running_instance(server_name: str = INSTANCE_SERVER_NAME) -> bool:
+def open_file_message(path: str) -> bytes:
+    """Lần mở thứ hai mang theo một file (bấm đúp file `.abook` khi app đang mở): cửa sổ đang chạy mở file ấy."""
+    return INSTANCE_OPEN_PREFIX + path.encode("utf-8")
+
+
+def instance_message_file(message: bytes) -> str:
+    """Đường dẫn file trong một lời nhắn của lần mở thứ hai, hoặc "" (chỉ gọi cửa sổ lên)."""
+    if not message.startswith(INSTANCE_OPEN_PREFIX):
+        return ""
+    return message[len(INSTANCE_OPEN_PREFIX):].decode("utf-8", "replace").strip()
+
+
+def notify_running_instance(server_name: str = INSTANCE_SERVER_NAME, message: bytes = INSTANCE_ACTIVATE_MESSAGE) -> bool:
     from PySide6.QtNetwork import QLocalSocket
 
     socket = QLocalSocket()
@@ -40,23 +53,25 @@ def notify_running_instance(server_name: str = INSTANCE_SERVER_NAME) -> bool:
     if not socket.waitForConnected(INSTANCE_CONNECT_TIMEOUT_MS):
         socket.abort()
         return False
-    socket.write(INSTANCE_ACTIVATE_MESSAGE)
+    socket.write(message)
     socket.flush()
     socket.waitForBytesWritten(INSTANCE_CONNECT_TIMEOUT_MS)
     socket.disconnectFromServer()
     return True
 
 
-def claim_single_instance(app: Any, server_name: str = INSTANCE_SERVER_NAME) -> Any | None:
-    """QLocalServer giữ khoá, hoặc None nếu đã có một cửa sổ app đang chạy (và đã được gọi lên trước)."""
+def claim_single_instance(app: Any, server_name: str = INSTANCE_SERVER_NAME,
+                          message: bytes = INSTANCE_ACTIVATE_MESSAGE) -> Any | None:
+    """QLocalServer giữ khoá, hoặc None nếu đã có một cửa sổ app đang chạy (và đã nhận `message`: gọi lên trước,
+    hay mở một file)."""
     from PySide6.QtNetwork import QLocalServer
 
-    if notify_running_instance(server_name):
+    if notify_running_instance(server_name, message):
         return None
     server = QLocalServer(app)
     if server.listen(server_name):
         return server
-    if notify_running_instance(server_name):
+    if notify_running_instance(server_name, message):
         return None
     QLocalServer.removeServer(server_name)
     if server.listen(server_name):
@@ -75,21 +90,31 @@ def signal_startup_ready() -> None:
         pass
 
 
-def connect_instance_activation(server: Any, show: Callable[[], None]) -> None:
-    """Lần mở thứ hai của app gửi "activate" qua khoá: gọi `show` để đưa cửa sổ đang chạy lên trước."""
+def connect_instance_activation(server: Any, show: Callable[[], None],
+                                open_file: Callable[[str], None] | None = None) -> None:
+    """Lần mở thứ hai của app gửi lời nhắn qua khoá: gọi `show` để đưa cửa sổ đang chạy lên trước, và `open_file` nếu
+    lời nhắn mang một file (`open_file_message`)."""
     from PySide6.QtCore import QTimer
 
     def activate_pending_instance() -> None:
         received = False
+        files: list[str] = []
         while server.hasPendingConnections():
             connection = server.nextPendingConnection()
             if connection is None:
                 continue
-            connection.readAll()
+            if not connection.bytesAvailable():
+                connection.waitForReadyRead(INSTANCE_CONNECT_TIMEOUT_MS)  # lời nhắn có thể tới sau tín hiệu kết nối
+            file = instance_message_file(bytes(connection.readAll()))
+            if file:
+                files.append(file)
             connection.disconnectFromServer()
             received = True
         if received:
             show()
+        if open_file is not None:
+            for file in files:
+                open_file(file)
 
     server.newConnection.connect(activate_pending_instance)
     QTimer.singleShot(0, activate_pending_instance)

@@ -1,4 +1,9 @@
-﻿$ErrorActionPreference = "Stop"
+﻿param(
+    # Bấm đúp một file sách (.abook): Ebook Reader.vbs chuyển đường dẫn tới đây, app.py mở file ấy.
+    [string]$OpenFile = ""
+)
+
+$ErrorActionPreference = "Stop"
 
 $utf8 = New-Object System.Text.UTF8Encoding($false)
 [Console]::InputEncoding = $utf8
@@ -150,7 +155,11 @@ function Start-App {
     Remove-Item -Force -LiteralPath $StartupReadyFile -ErrorAction SilentlyContinue
     $env:EBOOK_READER_READY_FILE = $StartupReadyFile
     try {
-        $process = Start-Process -FilePath $Pythonw -ArgumentList "`"$AppScript`"" -WorkingDirectory $ProjectRoot -PassThru
+        $arguments = "`"$AppScript`""
+        if ($OpenFile) {
+            $arguments += " `"$OpenFile`""
+        }
+        $process = Start-Process -FilePath $Pythonw -ArgumentList $arguments -WorkingDirectory $ProjectRoot -PassThru
         Wait-AppWindow $process $StartupReadyFile
         Write-Host "Cửa sổ Ebook Reader đã sẵn sàng." -ForegroundColor Green
     } finally {

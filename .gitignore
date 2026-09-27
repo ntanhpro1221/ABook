@@ -48,6 +48,8 @@ Desktop.ini
 
 # Frontend giao diện: cài bằng npm, không commit
 _internal/ui/node_modules/
+# Bản dựng giao diện máy tính (npm run build trong _internal/ui) - cửa sổ app phục vụ nó; dựng tại máy
+_internal/ebook_reader/webui/static/
 
 # App Android: file sinh tự động
 _internal/mobile/node_modules/

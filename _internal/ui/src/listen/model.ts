@@ -72,6 +72,8 @@ export interface ListenBook {
   producing: boolean;
   /** Chưa làm xong và cũng không đang làm (Studio đã dừng). */
   paused?: boolean;
+  /** Máy tính: cuốn mở từ file `.abook` (webui/packages.py) - nghe được, không có dự án trong Studio. */
+  imported?: boolean;
   updatedAt: number | null;
   state: ListeningState;
   progress: BookProgress;

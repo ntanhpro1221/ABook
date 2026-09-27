@@ -154,6 +154,22 @@ class Library:
         allowed = {_key(project): project for project in self.projects()}
         return allowed.get(_key(path))
 
+    def packages(self) -> list[Path]:
+        """Cuốn mở từ file `.abook` (webui/packages.py) - nghe được, không phải dự án của Studio."""
+        from . import packages  # packages -> listening -> library: nhập lúc gọi, không lúc nạp module
+
+        return packages.folders(self.root)
+
+    def resolve_listenable(self, value: str) -> Path | None:
+        """Như `resolve`, cho phía Nghe: dự án hoặc cuốn đã nhập từ file."""
+        project = self.resolve(value)
+        if project is not None:
+            return project
+        path = _decode_id(value)
+        if path is None:
+            return None
+        return {_key(package): package for package in self.packages()}.get(_key(path))
+
     def summary(self, project: Path, *, running: bool, starting: bool = False) -> dict[str, Any]:
         stamp = store.touched(project)
         key = _key(project)
