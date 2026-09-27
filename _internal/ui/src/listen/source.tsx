@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, useContext, type ReactNode } from "react";
-import type { Bookmark, Cast, ListenBook, ListeningSession, ListeningState, NightSession, Script } from "./model";
+import type { Bookmark, Cast, ListenBook, ListeningRecord, ListeningSession, ListeningState, NightSession, Script } from "./model";
 
 // Nguồn dữ liệu của phía Nghe. Giao diện chỉ nói chuyện với giao diện này:
 // máy tính cài bằng HTTP tới server cục bộ, Android cài bằng file gói sách trên máy.
@@ -14,11 +14,14 @@ export interface ListenSource {
   audioUrl(bookId: string, chapterId: number): string;
   sampleUrl(bookId: string, sampleId: number): string;
   voiceUrl(name: string): string;
-  saveProgress(bookId: string, chapterId: number, seconds: number, duration: number): Promise<ListeningState | void>;
+  /** `record`: hồ sơ nghe mà trình phát đang phát - ghi vào đúng hồ sơ ấy dù máy khác vừa đổi hồ sơ đang dùng. */
+  saveProgress(bookId: string, chapterId: number, seconds: number, duration: number, record?: string): Promise<ListeningState | void>;
   setChapterDone(bookId: string, chapterId: number, done: boolean): Promise<ListeningState>;
   setFinished(bookId: string, finished: boolean): Promise<ListeningState>;
   setRate(bookId: string, rate: number): Promise<void>;
-  addBookmark(bookId: string, chapterId: number, seconds: number, note: string): Promise<Bookmark>;
+  addBookmark(bookId: string, chapterId: number, seconds: number, note: string, record?: string): Promise<Bookmark>;
+  /** Hỏi thiết bị kia bản mới nhất của hồ sơ nghe đang dùng (điện thoại hỏi máy tính đã ghép); máy tính là nơi giữ. */
+  refreshListening?(bookId: string): Promise<void>;
   updateBookmark(bookId: string, id: string, note: string): Promise<void>;
   deleteBookmark(bookId: string, id: string): Promise<void>;
   /** Hoàn tác xoá dấu trang. */
@@ -30,11 +33,18 @@ export interface ListenSource {
   saveNight?(bookId: string, night: NightSession): Promise<void>;
   /** Lịch sử phiên nghe (nguồn nào chưa có thì tab Lịch sử ẩn đi). */
   sessions?(bookId: string): Promise<ListeningSession[]>;
-  addSession?(bookId: string, session: ListeningSession): Promise<void>;
+  addSession?(bookId: string, session: ListeningSession, record?: string): Promise<void>;
   /** Gửi được cả lúc trang đang đóng (fetch keepalive). */
-  addSessionOnExit?(bookId: string, session: ListeningSession): void;
+  addSessionOnExit?(bookId: string, session: ListeningSession, record?: string): void;
   /** Chỗ đọc dở ở chế độ đọc (nguồn nào không có thì giao diện tự nhớ trong máy). */
   saveReading?(bookId: string, chapterId: number, index: number): Promise<void>;
+  /** Hồ sơ nghe (nguồn nào chưa có thì giao diện ẩn đi); mỗi lệnh trả danh sách hồ sơ mới của cuốn. */
+  records?: {
+    create(bookId: string, name: string): Promise<ListeningRecord[]>;
+    activate(bookId: string, recordId: string): Promise<ListeningRecord[]>;
+    rename(bookId: string, recordId: string, name: string): Promise<ListeningRecord[]>;
+    remove(bookId: string, recordId: string): Promise<ListeningRecord[]>;
+  };
 }
 
 const SourceContext = createContext<ListenSource | null>(null);
@@ -126,6 +136,22 @@ export function useListenMutations(bookId: string) {
     }),
     restoreBookmark: useMutation({
       mutationFn: (mark: Bookmark) => source.restoreBookmark(bookId, mark),
+      onSuccess: refresh,
+    }),
+    createRecord: useMutation({
+      mutationFn: (name: string) => source.records!.create(bookId, name),
+      onSuccess: refresh,
+    }),
+    activateRecord: useMutation({
+      mutationFn: (recordId: string) => source.records!.activate(bookId, recordId),
+      onSuccess: refresh,
+    }),
+    renameRecord: useMutation({
+      mutationFn: ({ recordId, name }: { recordId: string; name: string }) => source.records!.rename(bookId, recordId, name),
+      onSuccess: refresh,
+    }),
+    removeRecord: useMutation({
+      mutationFn: (recordId: string) => source.records!.remove(bookId, recordId),
       onSuccess: refresh,
     }),
   };
