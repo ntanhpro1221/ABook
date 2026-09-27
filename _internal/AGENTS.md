@@ -167,6 +167,11 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   không đổi cách đọc theo giọng, chapter, confidence threshold hoặc lần resume.
 - Mọi normalized speaker name dùng đúng một character và một voice profile trên toàn sách; cùng tên không được
   đổi preset theo chapter, cảm xúc hoặc khi resume. Không hợp nhất hai tên khác nhau vì đổi tên/thân phận/chuyển sinh.
+  Chỉ gom các DẠNG VIẾT của cùng một tên (`character_registry.canonical_speaker_names`, một hàm dùng chung cho dây
+  chuyền và công cụ đo `scripts/model_eval/voice_identity.py`): rơi dấu, "tên + họ bịa" (tên kiểu Âu, chữ đầu), tên
+  vắng mặt trong sách, và tên gọi kiểu Việt/Hán Việt ("DU" -> "CHU DU": nhãn một chữ là chữ CUỐI của đúng một tên
+  nhiều chữ mà mọi chữ là âm tiết tiếng Việt; tên kiểu Âu thì chữ cuối là họ chung cả nhà, không gom). Luật gom mới
+  phải qua `voice_identity.py --gold-check`: không được nhập hai người của đáp án làm một.
 - Cảm xúc chỉ thay đổi sampling, pace và mức âm lượng mục tiêu trên cùng preset. Không dùng cue phi ngôn ngữ thử nghiệm
   của VieNeu và không thay identity giọng để giả lập cảm xúc.
 - Chuẩn hóa các cách viết như `haizzzzz`, `hừmmmm` hoặc `[thở dài]` chỉ được áp dụng lên `spoken_text` dùng chung cho
