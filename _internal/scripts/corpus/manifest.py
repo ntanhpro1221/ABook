@@ -1,11 +1,15 @@
-r"""Bảng kê kho truyện `D:/Novels/Ebook Reader/Corpus/` -> `data/corpus/manifest.json`.
+r"""Bảng kê kho truyện `D:/Novels/Ebook Reader/Corpus/` -> `Corpus/manifest.json`.
 
     python scripts/corpus/manifest.py            # quét lại, ghi bảng kê
     python scripts/corpus/manifest.py --check    # so kho với bảng kê đã ghi (file mất / đổi nội dung)
 
-Mỗi truyện: số chương, số từ (tách theo khoảng trắng), sha256 từng file. Kho đi cùng repo (chủ sách chốt
-19-09: dữ liệu phải được đẩy lên, laptop hỏng thì không mất công gom và làm đáp án); bảng kê để biết chắc
-cái đang có là cái đã gom, và để các tập train/dev/test chỉ đích danh chương theo mã băm.
+Mỗi truyện: số chương, số từ (tách theo khoảng trắng), sha256 từng file. Bảng kê để biết chắc cái đang có
+là cái đã gom, và để các tập train/dev/test chỉ đích danh chương theo mã băm.
+
+Kho là một repo RIÊNG TƯ, `ntanhpro1221/EbookReader-Corpus`, clone vào đúng `Corpus/` (repo chính bỏ qua thư mục
+này). Chủ sách chốt 19-09: dữ liệu phải được đẩy lên, laptop hỏng thì không mất công gom và làm đáp án. 27-09:
+repo chính công khai mà truyện còn bản quyền - một thông báo DMCA khoá cả repo, kéo theo trang tải APK và bộ cập
+nhật của app - nên kho sang repo riêng tư, còn lịch sử repo chính được viết lại cho sạch.
 
 Nguồn từng truyện ghi ở `SOURCES` (lúc gom) hoặc trong `metadata.json` cạnh truyện (tải từ Hako).
 """
@@ -19,7 +23,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 CORPUS = ROOT.parent / "Corpus"
-MANIFEST = ROOT / "data" / "corpus" / "manifest.json"
+MANIFEST = CORPUS / "manifest.json"
 
 # Nguồn lúc gom 19-09 (docs/LLM_EVAL.md, mục "Kho dữ liệu").
 SOURCES = {
@@ -38,7 +42,8 @@ SOURCES = {
 
 def scan(corpus: Path = CORPUS) -> dict:
     books = {}
-    for folder in sorted(path for path in corpus.iterdir() if path.is_dir()):
+    # `_survey/` (khảo sát Hako) và `.git/` không phải truyện.
+    for folder in sorted(path for path in corpus.iterdir() if path.is_dir() and path.name[:1] not in "._"):
         chapters = sorted(folder.glob("*.txt"))
         words = 0
         files = {}
