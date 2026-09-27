@@ -13,6 +13,7 @@ from .analysis import (
     _canonical_speaker,
     _explicit_speaker_attribution,
     is_local_speaker,
+    is_vietnamese_syllable,
     local_speaker_display,
     local_speaker_label,
 )
@@ -408,11 +409,64 @@ def fold_to_source_spelling(
     return redirected
 
 
-def _canonicalize_named_speakers(
-    db: ProjectDB,
-    log: Callable[[str], None],
-) -> dict[str, set[str]]:
-    counts = Counter(str(row["speaker"]) for row in db.list_segments())
+def _vietnamese_order_name(name: str) -> bool:
+    """Tên kiểu Việt / Hán Việt: mọi chữ (tách cả gạch nối) là một âm tiết tiếng Việt - "Tào Tháo", "Chu Du",
+    "Triệu Tử-long". Tên kiểu Âu ("Lucien Evans") không qua: ở đó chữ CUỐI là họ, cả nhà dùng chung."""
+    parts = [part for part in re.split(r"[\s-]+", normalize_name(name)) if part]
+    return bool(parts) and all(is_vietnamese_syllable(part) for part in parts)
+
+
+def _bare_word(word: str) -> str:
+    return fold_for_source_search(word).replace("đ", "d")
+
+
+# Chữ đứng sau tên như một tước, một lời xưng ("Trịnh lão", "Lý ca", "Vương gia"): một mình nó là "ông lão", "anh",
+# không phải tên riêng của ai - không gom theo nó.
+NAME_SUFFIX_TITLES = frozenset({"lão", "ca", "tỷ", "tỉ", "huynh", "đệ", "muội", "thúc", "gia", "nương"})
+
+
+def merge_given_names(representatives: dict[str, str]) -> dict[str, str]:
+    """Trỏ "DU" về "CHU DU", "THÁO" về "TÀO THÁO". Trả về {key thua: đại diện thắng}.
+
+    Truyện Trung, Việt gọi người bằng TÊN - chữ cuối - và model chép đúng chữ gọi tại chỗ ("Du nói"), nên một người
+    thành hai nhân vật, hai giọng. Đo 27-09 trên Tam quốc Hồi 50-52 (219 câu thoại có đáp án, ba model): "DU" 16-24
+    câu, "THÁO" 17-18 câu; gom thì độ phủ B-cubed "một người một giọng" +10 điểm, F1 +4,5 đến +7 ở cả ba model
+    (`scripts/model_eval/voice_identity.py`); TMA và YMP (tên kiểu Âu, Nhật) không đổi; nhãn đáp án của 11 truyện
+    không nhập hai người nào.
+
+    Chỉ tên kiểu Việt, cả nhãn lẫn tên đích (`_vietnamese_order_name`): tên kiểu Âu thì chữ cuối là họ chung của cả
+    nhà, gom "EVANS" về "LUCIEN EVANS" là nhập cha với con. Chỉ khi đúng MỘT tên nhiều chữ trong sổ có chữ cuối ấy -
+    hai tên cùng chữ cuối thì không đoán. Nhãn không mang dấu nào so theo chữ đã bỏ dấu ("VAN" -> "TRIỆU VÂN": model
+    rơi dấu), nhãn có dấu so đúng dấu ("VÂN" không bao giờ thành "... VĂN").
+    """
+    exact: dict[str, set[str]] = defaultdict(set)
+    bare: dict[str, set[str]] = defaultdict(set)
+    for name in set(representatives.values()):
+        words = normalize_name(name).split()
+        if len(words) >= 2 and _vietnamese_order_name(name):
+            exact[words[-1]].add(name)
+            bare[_bare_word(words[-1])].add(name)
+    redirected: dict[str, str] = {}
+    for key, name in representatives.items():
+        words = normalize_name(name).split()
+        if len(words) != 1 or not _vietnamese_order_name(name) or words[0] in NAME_SUFFIX_TITLES:
+            continue
+        word = words[0]
+        targets = exact.get(word) or (bare.get(word) if _bare_word(word) == word else None) or set()
+        if len(targets) == 1:
+            redirected[key] = next(iter(targets))
+    return redirected
+
+
+def canonical_speaker_names(
+    counts: "Counter[str]",
+    folded_source: str,
+    log: Callable[[str], None] = lambda _message: None,
+) -> dict[str, str]:
+    """{nhãn người nói gốc: nhân vật} sau bốn lượt gom tên - dùng chung cho dây chuyền (`_canonicalize_named_speakers`)
+    và công cụ đo (`scripts/model_eval/voice_identity.py`), để phép đo chấm đúng thứ người nghe sẽ nghe. `counts`: số
+    câu của từng nhãn; `folded_source`: văn bản nguồn đã bỏ dấu (`_folded_source_text`, "" thì tắt lượt đánh vần theo
+    sách). Nhãn cục bộ, NARRATOR/UNKNOWN và đại từ không có trong kết quả."""
     cleaned_counts: Counter[str] = Counter()
     cleaned_by_original: dict[str, str] = {}
     for original, count in counts.items():
@@ -453,7 +507,7 @@ def _canonicalize_named_speakers(
     # được trỏ tới - không cần đi vòng nào để nối hai luật lại.
     source_folded = fold_to_source_spelling(
         sorted(set(representatives.values())),
-        _folded_source_text(db),
+        folded_source,
         cleaned_counts,
     )
     if source_folded:
@@ -463,8 +517,13 @@ def _canonicalize_named_speakers(
         for loser, winner in sorted(source_folded.items()):
             log(f"  Tên {loser} không có trong sách; đọc thành {winner}.")
 
-    aliases_by_target: dict[str, set[str]] = defaultdict(set)
-    rewritten_segments = 0
+    # Tên gọi (chữ cuối) về tên đủ - sau lượt đánh vần theo sách, để so trên cách viết đã sửa.
+    given_names = merge_given_names(representatives)
+    for key, winner in sorted(given_names.items()):
+        log(f"  {representatives[key]} là tên gọi của {winner}: cùng một nhân vật.")
+        representatives[key] = winner
+
+    targets: dict[str, str] = {}
     for original, cleaned in cleaned_by_original.items():
         normalized = identity_key(cleaned)
         if (
@@ -479,8 +538,20 @@ def _canonicalize_named_speakers(
             honorific_key = identity_key(honorific_target)
             if honorific_key in representatives:
                 target_key = honorific_key
-        target = representatives[target_key]
-        aliases_by_target[target].update((original, cleaned))
+        targets[original] = representatives[target_key]
+    return targets
+
+
+def _canonicalize_named_speakers(
+    db: ProjectDB,
+    log: Callable[[str], None],
+) -> dict[str, set[str]]:
+    counts = Counter(str(row["speaker"]) for row in db.list_segments())
+    targets = canonical_speaker_names(counts, _folded_source_text(db), log)
+    aliases_by_target: dict[str, set[str]] = defaultdict(set)
+    rewritten_segments = 0
+    for original, target in targets.items():
+        aliases_by_target[target].update((original, _canonical_speaker(original)))
         if original != target:
             rewritten_segments += db.rewrite_speaker(original, target)
 
