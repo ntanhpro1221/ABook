@@ -125,6 +125,16 @@ export function AndroidApp() {
     applyTheme(settings.theme);
     void pushSettings(settings);
   }, []);
+  // "Theo hệ thống" phải theo cả khi đang mở app: Activity khai uiMode trong configChanges nên KHÔNG dựng lại khi
+  // điện thoại chuyển sáng/tối (vd tự tối lúc chiều) - trước đây app giữ nguyên giao diện cũ tới lần mở sau.
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const follow = () => {
+      if (loadSettings().theme === "system") applyTheme("system");
+    };
+    media.addEventListener("change", follow);
+    return () => media.removeEventListener("change", follow);
+  }, []);
   return (
     <TooltipProvider delayDuration={500}>
       <SourceProvider source={androidSource}>
