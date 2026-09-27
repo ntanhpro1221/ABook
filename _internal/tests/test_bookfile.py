@@ -130,3 +130,33 @@ def test_a_file_that_is_not_ours_is_refused(tmp_path: Path) -> None:
     (tmp_path / f"rac{bookfile.EXTENSION}").write_bytes(b"not a zip")
     with pytest.raises(BookFileError, match="không phải file sách"):
         BookFile(tmp_path / f"rac{bookfile.EXTENSION}")
+
+
+def test_a_book_with_nothing_to_hear_is_not_packed(tmp_path: Path) -> None:
+    project = make_project(tmp_path)
+    (project / "output" / "chapters" / "00001_645.mp3").unlink()
+    with pytest.raises(BookFileError, match="chưa có chương nào"):
+        bookfile.pack(project, tmp_path / f"rong{bookfile.EXTENSION}")
+    assert not list(tmp_path.glob(f"*{bookfile.EXTENSION}*")), "không để lại file dở"
+
+
+def test_the_studio_exports_the_book_file_where_the_user_picked(tmp_path: Path) -> None:
+    from ebook_reader.webui.library import Preferences
+    from ebook_reader.webui.server import App, Server
+    from tests.test_webui_listen_and_sync import FakeRunner, _request
+
+    project = make_project(tmp_path / "thu_vien")
+    preferences = Preferences(tmp_path / "prefs" / "preferences.json")
+    preferences.update({"libraryRoot": str(tmp_path / "thu_vien")})
+    app = App(preferences=preferences, runner=FakeRunner(), token="t", listening=Listening(tmp_path / "prefs" / "l.json"))
+    server = Server(app, port=0).start()
+    try:
+        status, data, _ = _request(server.port, "POST", f"/api/books/{book_id(project)}/bookfile",
+                                   headers={"X-Ebook-Token": "t"}, body={"target": str(tmp_path / "xuat")})
+    finally:
+        server.stop()
+    result = json.loads(data)
+    assert status == 200 and Path(result["file"]).parent == tmp_path / "xuat"
+    assert Path(result["file"]).name == f"Sách thử · Tập 1{bookfile.EXTENSION}"
+    with BookFile(Path(result["file"])) as book:
+        book.verify()

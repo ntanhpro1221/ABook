@@ -1,5 +1,5 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { BookPlus, Clapperboard, Compass, FolderDown, Headphones } from "lucide-react";
+import { BookPlus, Clapperboard, Compass, FileAudio, FolderDown, Headphones } from "lucide-react";
 import { useEffect, useMemo, type ReactNode } from "react";
 import { HashRouter, Route, Routes, useNavigate } from "react-router";
 import { Toaster, toast } from "sonner";
@@ -109,6 +109,44 @@ function ExportMenuItem({ book }: { book: ListenBook }) {
   );
 }
 
+/** Một cuốn trong một file của app (webui/bookfile.py): bìa, chữ có tag, audio, nhân vật - mở bằng app ở máy khác. */
+function BookFileMenuItem({ book }: { book: ListenBook }) {
+  const { data: info } = useAppInfo();
+  const run = async () => {
+    let target = "";
+    if (info?.dialogs) {
+      const picked = await pickFolder("Chọn nơi lưu file sách", "").catch(() => null);
+      if (!picked) return;
+      target = picked;
+    }
+    const pending = toast.loading("Đang đóng gói sách…", { description: `${book.chaptersAvailable} chương` });
+    try {
+      const result = await api<{ file: string; folder: string; size: number }>(`/api/books/${book.id}/bookfile`, {
+        method: "POST",
+        body: { target },
+      });
+      toast.success("Đã xuất file sách", {
+        id: pending,
+        description: `${result.file} · ${Math.round(result.size / 1048576)} MB`,
+        action: {
+          label: "Mở thư mục",
+          onClick: () => void api("/api/reveal-export", { method: "POST", body: { folder: result.folder } }),
+        },
+      });
+    } catch (error) {
+      toast.error("Không xuất được file sách", { id: pending, description: (error as Error).message });
+    }
+  };
+  return (
+    <DropdownMenu.Item
+      onSelect={() => void run()}
+      className="flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[highlighted]:bg-hover"
+    >
+      <FileAudio className="size-4" /> Xuất file sách (mở bằng app ở máy khác)
+    </DropdownMenu.Item>
+  );
+}
+
 function StudioChipLink({ id }: { id: string }) {
   const navigate = useNavigate();
   return (
@@ -172,6 +210,7 @@ export function App() {
                       <BookScreen
                         extraActions={(book) => (
                           <>
+                            <BookFileMenuItem book={book} />
                             <ExportMenuItem book={book} />
                             <StudioMenuItem id={book.id} />
                           </>

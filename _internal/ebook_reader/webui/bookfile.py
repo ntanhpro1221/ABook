@@ -122,6 +122,8 @@ def pack(project_root: Path, out: Path | None = None, *, producer: str = "Ebook 
             files[name] = path
             samples.append(name)
     book["samples"] = samples
+    if not any(name.startswith("chapters/") for name in files):
+        raise BookFileError("Sách chưa có chương nào nghe được để xuất.")
     book["id"] = identity
     book["package"] = {
         "format": FORMAT,

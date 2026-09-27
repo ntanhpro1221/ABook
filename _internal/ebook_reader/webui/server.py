@@ -19,7 +19,7 @@ from typing import Any, Callable, Protocol
 from urllib.parse import parse_qs, unquote, urlsplit
 
 from .. import listener_overrides
-from . import actions, cover_search, covers, listen_view, store
+from . import actions, bookfile, cover_search, covers, listen_view, store
 from .library import Library, Preferences, book_id
 from .listening import Listening
 from .reviews import Reviews, review_view
@@ -553,6 +553,18 @@ class Handler(BaseHTTPRequestHandler):
         self.app.exports.add(result["folder"])
         self._send_json(HTTPStatus.OK, result)
 
+    def post_bookfile(self, _query: dict[str, list[str]], value: str) -> None:
+        # Một cuốn trong một file (bookfile.py) - mở bằng app ở máy khác, gửi cho người khác.
+        project = self.app._book(value)
+        target = str(self._body().get("target") or "").strip()
+        root = Path(target) if target else Path(self.app.preferences.get()["libraryRoot"]) / "Đã xuất"
+        try:
+            path = bookfile.pack(project, root / bookfile.default_name(store.summarize(project)["title"] or project.name))
+        except bookfile.BookFileError as error:
+            raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
+        self.app.exports.add(str(path.parent))
+        self._send_json(HTTPStatus.OK, {"file": str(path), "folder": str(path.parent), "size": path.stat().st_size})
+
     def get_review(self, query: dict[str, list[str]], value: str) -> None:
         project = self.app._book(value)
         verdicts = self.app.reviews.get(value)
@@ -860,6 +872,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(BOOK + r"/work"), Handler.get_work),
     ("POST", re.compile(BOOK + r"/review"), Handler.post_review),
     ("POST", re.compile(BOOK + r"/pronunciation"), Handler.post_pronunciation),
+    ("POST", re.compile(BOOK + r"/bookfile"), Handler.post_bookfile),
     ("POST", re.compile(BOOK + r"/speaker"), Handler.post_speaker),
     ("GET", re.compile(BOOK + r"/cover/search"), Handler.get_cover_search),
     ("PUT", re.compile(BOOK + r"/cover"), Handler.put_cover),
