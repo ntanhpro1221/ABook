@@ -28,6 +28,8 @@ object Playback {
         internal set
     lateinit var appContext: Context
         private set
+    /** Nút Trước/Sau từ ngoài app (tai nghe, đồng hồ, xe hơi) = lùi/tới 15 giây thay vì nhảy chương (Cài đặt). */
+    var headsetSkips = false
 
     var bookId: String = ""
         private set
