@@ -72,7 +72,10 @@ tranh chấp và kết luận ghi ở `scripts/model_eval/gold/ADJUDICATION.md`.
    các dạng, đều đủ điểm. KHÔNG tính dạng có tiền tố vai vế/xưng hô ("CHÚ LƯU ĐẠT", "NGÀI X", "GIÁO SƯ GLAST") hay
    danh hiệu trơn khi đã biết tên ("THÁNH NỮ" cho Magali) - prompt dự án cấm chúng, và nhãn danh hiệu thành giọng thứ
    hai của cùng người (vòng 4). Tên viết nhầm trong chính bản dịch ("Eris" cho Eria) được nửa điểm ở câu nó dẫn. Nhân vật
-   không có tên riêng mà cả truyện gọi bằng họ + kính xưng ("Trịnh lão") thì dạng ấy là tên, đủ điểm (vòng 7).
+   không có tên riêng mà cả truyện gọi bằng họ + kính xưng ("Trịnh lão") thì dạng ấy là tên, đủ điểm (vòng 7); cũng thế
+   với chức danh trọn cuốn ("QUAN PHỦ", "LÝ TRƯỞNG" - Tắt đèn). Người được gọi theo tên chồng, tên con ("chị Dậu" là vợ
+   anh Dậu): cả cụm là tên của người ấy, đủ điểm; tên trơn ("DẬU") là NGƯỜI KIA, không điểm. Tiền tố xưng hô trên tên thật
+   mà lời kể của sách không bao giờ bỏ ("ANH DẬU", "THẰNG DẦN"): nửa điểm (Tắt đèn, `ADJUDICATION.md`).
 12. **Không** cho điểm tên nổi tiếng chỉ vì họ có trong danh sách đã biết - đây là lỗi model hay mắc nhất.
 13. **Nhập xác, cải trang, danh tính ẩn**: tên mà CHƯƠNG NÀY gọi người nói đủ điểm; danh tính thật chỉ lộ ở chương sau
    nửa điểm (Beyer / Rudolf II ở 407). Nếu chính chương đã lộ danh tính thật trước câu nói thì danh tính thật đủ điểm.
