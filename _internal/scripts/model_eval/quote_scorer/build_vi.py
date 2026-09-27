@@ -149,6 +149,55 @@ def point_of_view(segments_by_chapter: dict, golds: dict) -> dict[str, str]:
     return {chapter: entity for chapter, entity in result.items() if entity}
 
 
+# "mình" sau "của"/"tự" là PHẢN THÂN ("Tamaki kìm nén cảm xúc của mình") - có đầy trong truyện ngôi thứ ba: Yamiyo 155
+# đếm được 13% lời kể "có tôi" chỉ nhờ nó. Đo tỉ lệ ngôi thứ nhất bằng mẫu này, không bằng FIRST_PERSON.
+NARRATOR_I = re.compile(r"(?<!của )(?<!tự )(?<!\w)(tôi|tớ|mình)(?!\w)", re.IGNORECASE)
+
+
+def point_of_view_auto(segments_by_chapter: dict, aliases: dict[str, set[str]], case_sensitive: bool = True,
+                       min_rate: float = 0.30, min_dialogue: int = 5, min_ratio: float = 3.0,
+                       chapter_rate: float = 0.20) -> dict[str, str]:
+    """N7b - người kể "tôi" KHÔNG cần gold: người kể không bao giờ tự gọi tên mình trong lời kể, nhưng người khác gọi
+    tên anh ta trong thoại ("Samael, nằm xuống!"). Chỉ xét truyện có >= 30% đoạn lời kể chứa "tôi/mình/tớ" (gold 27-09:
+    ngôi thứ nhất 34-58%, ngôi thứ ba 10-24%); người kể = tên có (lần nhắc trong thoại + 1) / (lần nhắc trong lời kể + 1)
+    >= 3 và >= 5 lần trong thoại. Theo CHƯƠNG trước (Yamiyo đổi người kể theo chương; ngưỡng thoại 3), thiếu thì lấy
+    người của cả truyện. Bí danh cùng người ("KRAI" / "KRAI ANDREY" - gold ghi cả hai) gộp về tên ngắn nhất."""
+    def first_person_rate(segments) -> float:
+        narration = [text for _, text, kind in segments if kind != "dialogue"]
+        return sum(bool(NARRATOR_I.search(text)) for text in narration) / max(1, len(narration))
+
+    if first_person_rate([segment for segments in segments_by_chapter.values() for segment in segments]) < min_rate:
+        return {}
+
+    def counts(segments) -> tuple[Counter, Counter]:
+        in_dialogue, in_narration = Counter(), Counter()
+        for _, text, kind in segments:
+            for mention in mention_spans(text, aliases, case_sensitive):
+                key = min(mention["entities"], key=len)
+                (in_dialogue if kind == "dialogue" else in_narration)[key] += 1
+        return in_dialogue, in_narration
+
+    def pick(in_dialogue: Counter, in_narration: Counter, least: int) -> str | None:
+        scored = [(entity, (in_dialogue[entity] + 1) / (in_narration[entity] + 1)) for entity in in_dialogue
+                  if in_dialogue[entity] >= least]
+        scored = [(entity, ratio) for entity, ratio in scored if ratio >= min_ratio]
+        return max(scored, key=lambda item: (item[1], in_dialogue[item[0]]))[0] if scored else None
+
+    book = pick(*counts([segment for segments in segments_by_chapter.values() for segment in segments]), min_dialogue)
+    result = {}
+    for chapter, segments in segments_by_chapter.items():
+        in_dialogue, in_narration = counts(segments)
+        own = pick(in_dialogue, in_narration, 3)
+        # Lùi về người kể của cả truyện chỉ khi CHÍNH chương ấy kể ngôi thứ nhất: YMP 199 (29% lời kể có "tôi", không ai
+        # gọi tên người kể trong chương) thì có; Yamiyo 155 và nageki 73 là chương ngôi THỨ BA (điểm nhìn Tamaki / Kule) thì
+        # không - bộ suy từ gold cũ đã gán nhầm KRAI cho nageki 73.
+        if own is None and book and first_person_rate(segments) >= chapter_rate:
+            own = book
+        if own:
+            result[chapter] = own
+    return result
+
+
 CAST_LABEL = "Nhân vật trong chương: "
 
 
@@ -246,6 +295,9 @@ def main() -> int:
     parser.add_argument("--tokenizer", default="jhu-clsp/mmBERT-base")
     parser.add_argument("--budget", type=int, default=1024, help="token mỗi cửa sổ")
     parser.add_argument("--no-pov", action="store_true", help="tắt ứng viên ngôi thứ nhất (để so với mốc)")
+    parser.add_argument("--pov-auto", action="store_true",
+                        help="N7b: người kể 'tôi' suy KHÔNG dùng gold (tên được gọi trong thoại mà không có trong lời kể) - "
+                             "mặc định suy từ gold = trần của hướng này")
     parser.add_argument("--layout", choices=("line", "paragraph"), default="line",
                         help="line: mỗi đoạn một dòng (mốc 27-09); paragraph: đoạn cùng paragraph nối bằng dấu cách (N8)")
     parser.add_argument("--case-sensitive", action="store_true",
@@ -287,7 +339,12 @@ def main() -> int:
             title: dict(connection.execute(
                 "SELECT seq, paragraph_index FROM segments WHERE chapter_id = ?", (chapter_id,)).fetchall())
             for chapter_id, title in chapters if title in golds}
-        povs = {} if args.no_pov else point_of_view(segments_by_chapter, golds)
+        if args.no_pov:
+            povs = {}
+        elif args.pov_auto:
+            povs = point_of_view_auto(segments_by_chapter, aliases, args.case_sensitive)
+        else:
+            povs = point_of_view(segments_by_chapter, golds)
         if povs:
             print(f"  {book}: 'tôi' theo chương = {povs}")
         for chapter_id, title in chapters:

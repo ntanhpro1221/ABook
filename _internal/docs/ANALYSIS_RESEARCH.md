@@ -139,6 +139,14 @@ Kết quả đầu (27-09):
   như score_models chấm LLM; (3) "UNKNOWN" là không-ai. Chấm lại theo gold đầy đủ (`compare_predictions --official`):
   test cố định bộ chấm PDNC 86,5% (TMA 84,6%) vs qwen3 68,5% - bộ chấm được cộng nhiều hơn vì hay chọn đúng người được
   nêu tên trong lời dẫn của câu cả đám nói.
+- **N7b tự suy người kể - KHÔNG dùng gold, và đúng hơn cách suy từ gold** (`build_vi.py --pov-auto`, 27-09 13:4x): truyện
+  có >= 30% lời kể chứa "tôi/tớ/mình" (bỏ "mình" phản thân sau "của/tự" - Yamiyo 155 ngôi thứ ba đếm được 13% chỉ nhờ nó);
+  người kể = tên được gọi trong thoại mà không có trong lời kể (tỉ lệ >= 3, >= 5 lần thoại; theo chương, lùi về người của
+  cả truyện chỉ khi chính chương ấy >= 20% "tôi"). Kết quả: YMP 134/188/199/248 SAMAEL, nageki 20 KRAI, Love Unseen 09
+  KAKERU ("tôi hỏi." kề câu của KAKERU), Yamiyo 189 TOMOBE; để trống đúng ở nageki 73 và Yamiyo 155 (chương ngôi thứ BA,
+  điểm nhìn Kule / Tamaki - cách suy từ gold cũ đã gán nhầm KRAI cho nageki 73). Độ phủ train 97,9% (từ gold: 96,6%).
+  Từ 13:46 mọi bộ dữ liệu bộ chấm (`quote_vi_pov`, `quote_vi_para`, `quote_vi_para_cast`) dùng cách này - phép đo không
+  còn dùng gold ở khâu nào ngoài nhãn; bản suy-từ-gold giữ ở `*_goldpov`.
 - **N4' tự học theo cuốn** (mới, đúng luồng app: phân tích CẢ cuốn trước khi đọc): TMA làm truyện mới (học trên 9 truyện
   kia), bộ chấm chấm 150 chương TMA không nhãn (4.440 câu, `build_unlabeled.py`), giữ nửa câu chắc nhất làm nhãn tạm
   (`pseudo_label.py`), học thêm 2 epoch, đo trên 847 câu gold TMA; đối chứng = cùng +2 epoch không nhãn tạm; 2 vòng.
