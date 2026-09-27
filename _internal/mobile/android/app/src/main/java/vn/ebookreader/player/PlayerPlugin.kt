@@ -128,6 +128,10 @@ class PlayerPlugin : Plugin() {
         call.getInt("sleepExtendMinutes")?.let { SleepTimer.extendMinutes = it }
         call.getInt("sleepFadeSeconds")?.let { SleepTimer.fadeMs = it * 1000L }
         call.getBoolean("shakeToExtend")?.let { SleepTimer.shakeEnabled = it }
+        call.getString("shakeAction")?.let { SleepTimer.shakeResets = it == "reset" }
+        call.getString("shakeSensitivity")?.let {
+            SleepTimer.shakeThresholdG = when (it) { "gentle" -> 1.6; "firm" -> 2.8; else -> 2.2 }
+        }
         call.getDouble("safetyStopHours")?.let { SleepTimer.safetyStopHours = it }
         if (call.data.has("schedule")) {
             val schedule = call.getObject("schedule")
