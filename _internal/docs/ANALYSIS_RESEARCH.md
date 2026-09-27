@@ -188,6 +188,22 @@ Bộ chấm chỉ thay TRỤC NGƯỜI NÓI; loại đoạn, cảm xúc, cườn
 - Mô hình là một artifact mới -> đi vào `QUALITY_IMPLEMENTATION_FILES`/hash như mọi thứ quyết định đầu ra; làm trên nhánh
   dev, không đụng sách đang cần resume.
 
+**Chỗ cắm cụ thể (đọc code 27-09 14:0x):** `pipeline.py` sau `analyzer.analyze_all(...)` đã có chuỗi bước "sau khi phân tích
+CẢ cuốn": `reconcile_local_speaker_identities` (hỏi LLM một lần: nhãn NPC mô tả có phải nhân vật được nêu tên sau đó
+không) -> `reconcile_name_pronunciations` -> `build_registry_and_cast` -> `finalize_casting`. Bộ chấm là một bước mới
+cùng khuôn, ĐẦU chuỗi ấy:
+1. `ebook_reader/speaker_scorer.py` (chỉ suy luận): dựng cửa sổ theo chương từ `segments` (seq, kind, paragraph_index,
+   dàn trang paragraph), bí danh từ tên nhân vật phân tích đã gặp + bảng `characters`, dòng danh sách nhân vật chương (N9),
+   người kể "tôi" (N7b tự suy, hoặc câu trả lời Studio); ra cho mỗi đoạn thoại/nội tâm: thực thể, độ tin cậy đã hiệu
+   chỉnh, xác suất "không ai".
+2. Bước pipeline `reconcile_speakers_with_scorer`: đoạn nào bộ chấm CHẮC (ngưỡng chọn bằng kiểm chứng chéo) và chọn một
+   nhân vật có tên khác LLM -> `db.rewrite_segment_speakers(...)` (giới tính/tuổi theo sổ nhân vật), ghi `db.event` từng
+   lần sửa để soát như các bước reconcile khác; bộ chấm nói "không ai" -> giữ nhãn NPC/người kể của LLM.
+3. Kết quả bộ chấm lưu bền trong SQLite theo chương (resume không chấm lại - GPU bf16 có thể lệch bit giữa hai lần chạy);
+   hash trọng số + phiên bản thuật toán đi vào dấu vân tay `ANALYSIS_CASTING_STAGE` (quality_policy.py) để resume bằng
+   mô hình khác bị từ chối như mọi thay đổi casting.
+4. Trọng số (~1,2 GB) tải theo revision ghim như các model khác, không commit.
+
 ## Máy và giới hạn
 
 RTX 5060 Laptop 8 GB, Windows. PyTorch Windows không có flash attention; huấn luyện phải ghim attention cuDNN và KHÔNG
