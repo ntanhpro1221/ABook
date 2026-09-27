@@ -68,6 +68,7 @@ from .database import _asr_only_failure_codes
 from .database import (
     GENERATION_STRATEGY_DIRECT,
     KEEP_LOCKED_READING_ACTION,
+    LISTENER_PRONUNCIATION_SOURCE,
     LOCKED_NAME_ANCHOR_CODES,
     GENERATION_STRATEGY_SPLIT,
     QUALITY_SCOPE_CHAPTER,
@@ -84,6 +85,12 @@ from .database import (
     segment_candidate_split_seed_salt,
 )
 from .io_utils import sha256_file
+from .listener_overrides import (
+    pronunciation_problem,
+    pronunciation_requests,
+    read_overrides,
+    surface_key,
+)
 from .models import BookStatus, ChapterStatus, ProjectPaths, ResourceLevel, SegmentStatus
 from .notifier import WindowsNotifier
 from .expression import narrative_break_ms, shape_segment
@@ -408,6 +415,8 @@ class BookPipeline:
         self._perceptual_prefetch: dict[str, Any] | None = None
         self._last_resource_level: ResourceLevel | None = None
         self._completed_noop = False
+        # Yêu cầu của người nghe không áp được đã báo một lần trong lần chạy này; không báo lại ở mọi ranh giới chương.
+        self._rejected_listener_overrides: set[tuple[str, str]] = set()
         self._last_tts_failure_signature: str | None = None
         self._tts_failure_streak = 0
         self.quality_policy = build_quality_policy(settings)
@@ -872,6 +881,9 @@ class BookPipeline:
             policy_version=QUALITY_POLICY_VERSION,
             policy=self.quality_policy,
         )
+        # Trước recovery: câu bị đặt lại vì cách đọc mới làm chương "xong" thành cần dựng lại, nên một sách đã xong
+        # không đi đường tắt của recovery mà bỏ quên yêu cầu của người nghe.
+        self._apply_listener_overrides()
         report = recover_project(
             self.paths,
             self.db,
@@ -1066,19 +1078,76 @@ class BookPipeline:
 
     def _process_all_chapters(self, verifier: WhisperVerifier) -> None:
         chapters = self.db.list_chapters()
-        for chapter_no, chapter in enumerate(chapters, 1):
-            self._wait_pause_or_stop()
-            try:
-                self._process_chapter(chapter, verifier)
-            except AudioQualityError as exc:
-                self._record_chapter_quality_failure(chapter, exc)
-            finally:
-                self.perceptual_qa.unload()
-            self.emit(
-                "chapter_progress",
-                {"done": chapter_no, "total": len(chapters), "chapter_id": int(chapter["id"])},
+        while chapters:
+            # Chương đã qua ở vòng này (hay ở lần chạy trước) mà một cách đọc mới vừa đặt lại câu của nó.
+            revisit: set[int] = set()
+            for chapter_no, chapter in enumerate(chapters, 1):
+                self._wait_pause_or_stop()
+                # Ranh giới chương: không câu nào đang bay, nên cách đọc người nghe vừa sửa áp được ở đây - cho chương
+                # này trở đi; chương đã thu có từ ấy thì được đặt lại và thu lại ở vòng sau.
+                changed = self._apply_listener_overrides()
+                if changed:
+                    ahead = {int(row["id"]) for row in chapters[chapter_no - 1:]}
+                    revisit |= changed - ahead
+                    chapter = next(
+                        row for row in self.db.list_chapters() if int(row["id"]) == int(chapter["id"])
+                    )
+                try:
+                    self._process_chapter(chapter, verifier)
+                except AudioQualityError as exc:
+                    self._record_chapter_quality_failure(chapter, exc)
+                finally:
+                    self.perceptual_qa.unload()
+                self.emit(
+                    "chapter_progress",
+                    {"done": chapter_no, "total": len(chapters), "chapter_id": int(chapter["id"])},
+                )
+                self._safe_export_reports(incremental=True)
+            chapters = [row for row in self.db.list_chapters() if int(row["id"]) in revisit]
+
+    def _apply_listener_overrides(self) -> set[int]:
+        """Áp cách đọc người nghe sửa trong Studio (`overrides.json`, xem listener_overrides.py).
+
+        Chỉ khi phân vai đã khoá: trước đó cách đọc là ĐẦU VÀO của phân tích và của bước chuẩn hoá tên, và đổi nó
+        giữa pha phân tích là đổi quyển sách (AGENTS.md). Yêu cầu đến sớm nằm chờ trong file tới ranh giới đầu tiên
+        sau khi phân vai khoá. Trả các chương có câu đã thu vừa bị đặt lại; tập rỗng khi không có gì đổi.
+        """
+        if not self.db.casting_is_finalized():
+            return set()
+        changed = False
+        reset_chapters: set[int] = set()
+        for request in pronunciation_requests(read_overrides(self.paths.root)):
+            surface, spoken = request["surface"], request["spoken_form"]
+            problem = pronunciation_problem(surface, spoken)
+            if problem is not None:
+                if (surface, spoken) not in self._rejected_listener_overrides:
+                    self._rejected_listener_overrides.add((surface, spoken))
+                    self.db.event(
+                        "warning",
+                        "LISTENER_OVERRIDE_REJECTED",
+                        f"Không áp được cách đọc {spoken!r} cho {surface!r} ({problem}).",
+                        {"surface": surface, "spoken_form": spoken, "problem": problem},
+                    )
+                continue
+            result = self.db.apply_listener_pronunciation(
+                surface=surface,
+                normalized_surface=surface_key(surface),
+                spoken_form=spoken,
+                source=LISTENER_PRONUNCIATION_SOURCE,
             )
-            self._safe_export_reports(incremental=True)
+            if result is None:
+                continue
+            changed = True
+            reset_chapters.update(int(chapter_id) for chapter_id in result["chapters"])
+            self.log(
+                f"Người nghe đổi cách đọc {surface}: {result['previous_spoken_form'] or '(chưa có)'} -> {spoken}; "
+                f"thu lại {result['reset_segments']} câu ở {len(result['chapters'])} chương."
+            )
+        if changed:
+            forget = getattr(self.tts, "forget_pronunciations", None)
+            if callable(forget):
+                forget()
+        return reset_chapters
 
     def _next_chapter_quality_attempt(self, chapter_id: int) -> int:
         latest = self.db.latest_quality_check(

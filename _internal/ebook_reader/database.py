@@ -36,7 +36,12 @@ from .audio_transform_contract import (
     POSTPROCESS_TEMPO_NUMERATOR,
 )
 from .io_utils import sha256_file, sha256_text, stable_int
-from .models import BookStatus, ChapterStatus, SegmentStatus
+from .models import (
+    CONTEXTUAL_ENGLISH_NAME_PRONUNCIATION_SOURCE,
+    BookStatus,
+    ChapterStatus,
+    SegmentStatus,
+)
 from .perceptual_contract import (
     PERCEPTUAL_BASELINE_PITCH_SEMITONES,
     NATURALNESS_IMPROVEMENT_REQUIREMENT,
@@ -7844,28 +7849,37 @@ class ProjectDB:
 
     def reset_segment_pending(self, segment_id: int, reason: str) -> None:
         with self.connect() as conn:
-            conn.execute(
-                """
-                UPDATE segments SET status=(
-                        CASE WHEN voice_profile_id IS NOT NULL AND kind IS NOT NULL AND speaker IS NOT NULL
-                            THEN ? ELSE ? END
-                    ),wav_path=NULL,wav_sha256=NULL,wav_duration=NULL,
-                    signal_json=NULL,asr_text=NULL,asr_similarity=NULL,asr_wer=NULL,
-                    warning_code=NULL,generation_seed=NULL,generation_delivery_mode='primary',
-                    generation_repair_round=NULL,generation_policy_hash=NULL,error=?,updated_at=?
-                WHERE id=?
-                """,
-                (
-                    SegmentStatus.ANALYZED.value,
-                    SegmentStatus.PENDING.value,
-                    reason[-2000:],
-                    time.time(),
-                    segment_id,
-                ),
-            )
+            self._reset_segment_pending_conn(conn, segment_id, reason, time.time())
             row = conn.execute("SELECT chapter_id FROM segments WHERE id=?", (segment_id,)).fetchone()
             if row is not None:
                 self._refresh_chapter_counts_conn(conn, int(row["chapter_id"]))
+
+    @staticmethod
+    def _reset_segment_pending_conn(
+        conn: sqlite3.Connection,
+        segment_id: int,
+        reason: str,
+        now: float,
+    ) -> None:
+        conn.execute(
+            """
+            UPDATE segments SET status=(
+                    CASE WHEN voice_profile_id IS NOT NULL AND kind IS NOT NULL AND speaker IS NOT NULL
+                        THEN ? ELSE ? END
+                ),wav_path=NULL,wav_sha256=NULL,wav_duration=NULL,
+                signal_json=NULL,asr_text=NULL,asr_similarity=NULL,asr_wer=NULL,
+                warning_code=NULL,generation_seed=NULL,generation_delivery_mode='primary',
+                generation_repair_round=NULL,generation_policy_hash=NULL,error=?,updated_at=?
+            WHERE id=?
+            """,
+            (
+                SegmentStatus.ANALYZED.value,
+                SegmentStatus.PENDING.value,
+                reason[-2000:],
+                now,
+                segment_id,
+            ),
+        )
 
     def retry_failed_segments(
         self,
@@ -8479,6 +8493,110 @@ class ProjectDB:
                 """,
                 (surface, normalized_surface, spoken_form, source, now, now),
             )
+
+    def apply_listener_pronunciation(
+        self,
+        *,
+        surface: str,
+        normalized_surface: str,
+        spoken_form: str,
+        source: str,
+    ) -> dict[str, Any] | None:
+        """Ghim cách đọc người nghe chọn VÀ đặt lại mọi câu đã thu có từ ấy, trong MỘT transaction.
+
+        `set_listener_pronunciation` chỉ ghi cách đọc; câu đã thu thì chờ recovery của lần chạy sau thấy chuỗi nói lệch
+        (`pipeline._spoken_text_drifted`). Cách ấy hụt hai chỗ. Sách đã XONG đi đường tắt của recovery nên không câu nào
+        được kiểm lại: cách đọc mới nằm trong SQLite còn audio vẫn đọc tên cũ. Và giữa hai bước (ghi cách đọc, đặt lại
+        câu) một cú crash để lại sách nói "xong" với cách đọc cũ. Ở đây cả hai cùng commit hoặc cùng không.
+
+        Câu được chọn bằng đúng phép khớp của TTS (`tts._load_pronunciations`: nguyên từ, không phân biệt hoa thường),
+        kể cả câu `failed` - cách đọc sai có khi chính là lý do nó trượt ASR. Chương đã xong có câu bị đặt lại chuyển
+        sang cần dựng lại MP3, như recovery làm với chương mất checkpoint. Câu nào lọt phép chọn thì phép kiểm chuỗi
+        nói của recovery vẫn là lưới thứ hai.
+
+        Người nghe XÁC NHẬN cách đọc máy đã dùng ("Đúng rồi") thì chỉ ghim, không đặt lại câu nào: chuỗi nói không đổi,
+        thu lại là tốn GPU để ra đúng thứ đã có. Ngoại lệ là dòng máy ghi PHÂN BIỆT hoa thường (tên trùng một từ tiếng
+        Anh thường): ghi đè của người nghe khớp không phân biệt hoa thường như `cli pronounce`, nên chỗ viết thường của
+        từ ấy từ nay cũng đổi chuỗi nói.
+
+        Trả None khi cách đọc ấy đã được ghim y như vậy: áp lại một yêu cầu là không làm gì.
+        """
+        word = re.compile(r"(?<!\w)" + re.escape(surface) + r"(?!\w)", re.IGNORECASE)
+        now = time.time()
+        with self.transaction() as conn:
+            current = conn.execute(
+                "SELECT spoken_form, source, locked FROM pronunciations WHERE normalized_surface=?",
+                (normalized_surface,),
+            ).fetchone()
+            if (
+                current is not None
+                and int(current["locked"])
+                and str(current["source"]) == source
+                and str(current["spoken_form"]) == spoken_form
+            ):
+                return None
+            conn.execute(
+                """
+                INSERT INTO pronunciations(
+                    surface,normalized_surface,spoken_form,confidence,source,locked,
+                    created_at,updated_at
+                ) VALUES(?,?,?,1.0,?,1,?,?)
+                ON CONFLICT(normalized_surface) DO UPDATE SET
+                    surface=excluded.surface,
+                    spoken_form=excluded.spoken_form,
+                    confidence=1.0,
+                    source=excluded.source,
+                    locked=1,
+                    updated_at=excluded.updated_at
+                """,
+                (surface, normalized_surface, spoken_form, source, now, now),
+            )
+            respeak = (
+                current is None
+                or str(current["spoken_form"]) != spoken_form
+                or str(current["source"]) == CONTEXTUAL_ENGLISH_NAME_PRONUNCIATION_SOURCE
+            )
+            recorded = conn.execute(
+                "SELECT id, chapter_id, text FROM segments WHERE status IN (?,?,?,?,?)",
+                (
+                    SegmentStatus.SIGNAL_PASSED.value,
+                    SegmentStatus.ASR_PASSED.value,
+                    SegmentStatus.VERIFIED.value,
+                    SegmentStatus.WARNING.value,
+                    SegmentStatus.FAILED.value,
+                ),
+            ).fetchall()
+            affected = [row for row in recorded if word.search(str(row["text"]))] if respeak else []
+            reason = f"Người nghe đổi cách đọc {surface!r} thành {spoken_form!r}: thu lại với cách đọc mới"
+            for row in affected:
+                self._reset_segment_pending_conn(conn, int(row["id"]), reason, now)
+            chapters = sorted({int(row["chapter_id"]) for row in affected})
+            for chapter_id in chapters:
+                self._refresh_chapter_counts_conn(conn, chapter_id)
+                conn.execute(
+                    "UPDATE chapters SET status='warning', last_error=? WHERE id=? AND status=?",
+                    (reason, chapter_id, ChapterStatus.COMPLETED.value),
+                )
+            details = {
+                "surface": surface,
+                "spoken_form": spoken_form,
+                "source": source,
+                "previous_spoken_form": str(current["spoken_form"]) if current is not None else None,
+                "previous_source": str(current["source"]) if current is not None else None,
+                "reset_segments": len(affected),
+                "chapters": chapters,
+            }
+            conn.execute(
+                "INSERT INTO runtime_events(timestamp,level,code,message,details_json) VALUES(?,?,?,?,?)",
+                (
+                    now,
+                    "info",
+                    "PRONUNCIATION_SET_BY_LISTENER",
+                    f"Người nghe chốt cách đọc {surface!r} là {spoken_form!r}; đặt lại {len(affected)} câu đã thu.",
+                    json.dumps(details, ensure_ascii=False),
+                ),
+            )
+        return details
 
     def upsert_pronunciation(
         self,

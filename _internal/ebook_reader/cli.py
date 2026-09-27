@@ -1119,7 +1119,12 @@ def _command_pronounce(args: argparse.Namespace) -> CommandResult:
         for row in database.list_pronunciations(0.0)
         if str(row["surface"]) == surface
     }
-    database.set_listener_pronunciation(
+    # The same write the Studio's requests go through (listener_overrides.py): pin the reading
+    # AND send every recorded line containing the word back for recording, in one transaction.
+    # Pinning alone left a finished book reading the old name for good - its recovery takes
+    # the completed fast path and never asks whether a recording's spoken text still holds.
+    # It also writes the PRONUNCIATION_SET_BY_LISTENER event, inside that transaction.
+    applied = database.apply_listener_pronunciation(
         surface=surface,
         normalized_surface=normalize_name(surface),
         spoken_form=spoken,
@@ -1141,12 +1146,6 @@ def _command_pronounce(args: argparse.Namespace) -> CommandResult:
             exit_code=EXIT_VALIDATION_FAILED,
             error=f"Pronunciation for {surface!r} did not take: stored {stored!r}",
         )
-    database.event(
-        "info",
-        "PRONUNCIATION_SET_BY_LISTENER",
-        f"Người nghe chốt cách đọc {surface!r} là {spoken!r}.",
-        {"surface": surface, "spoken_form": spoken},
-    )
     return CommandResult(
         data={
             "project_root": str(paths.root),
@@ -1158,6 +1157,7 @@ def _command_pronounce(args: argparse.Namespace) -> CommandResult:
             "previous_spoken_form": (
                 str(next(iter(before.values()))["spoken_form"]) if before else None
             ),
+            "reset_segments": int(applied["reset_segments"]) if applied else 0,
         }
     )
 

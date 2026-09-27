@@ -49,6 +49,7 @@ QUALITY_IMPLEMENTATION_FILES = (
     "config.py",
     "database.py",
     "expression.py",
+    "listener_overrides.py",
     "models.py",
     "pipeline.py",
     "perceptual_qa.py",
