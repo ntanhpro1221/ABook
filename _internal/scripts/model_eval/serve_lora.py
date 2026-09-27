@@ -36,12 +36,19 @@ GGUF_DIR = Path(r"D:/Novels/LLM_Train/runs")
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--adapter", type=Path, required=True, help="thư mục adapter do train_lora.py lưu")
+    parser.add_argument("--adapter", type=Path, default=None, help="thư mục adapter do train_lora.py lưu")
+    parser.add_argument("--base-only", action="store_true",
+                        help="chuyển model nền KHÔNG adapter - đối chứng cùng đường GGUF/lượng tử hoá với bản LoRA, để "
+                             "chênh lệch đo được là của LoRA chứ không phải của q8_0 hay mẫu chat")
     parser.add_argument("--base", default=None, help="mặc định đọc từ adapter_config.json")
     parser.add_argument("--name", required=True, help="tên model trong Ollama")
     parser.add_argument("--outtype", default="q8_0", choices=("f16", "bf16", "q8_0"))
     parser.add_argument("--keep-merged", action="store_true", help="giữ thư mục safetensors đã gộp (nặng)")
     args = parser.parse_args(argv)
+    if not args.base_only and args.adapter is None:
+        parser.error("cần --adapter (hoặc --base-only với --base)")
+    if args.base_only and not args.base:
+        parser.error("--base-only cần --base")
 
     import torch
     from peft import PeftModel
@@ -52,16 +59,23 @@ def main(argv: list[str] | None = None) -> int:
     base = args.base or PeftConfig.from_pretrained(str(args.adapter)).base_model_name_or_path
     merged = GGUF_DIR / f"{args.name}-merged"
     gguf = GGUF_DIR / f"{args.name}.gguf"
-    print(f"  nền {base} + adapter {args.adapter.name} -> {gguf.name} ({args.outtype})")
+    if args.base_only:
+        from huggingface_hub import snapshot_download  # noqa: PLC0415
 
-    print("  gộp trên CPU (bf16)...")
-    model = AutoModelForCausalLM.from_pretrained(base, dtype=torch.bfloat16, device_map="cpu")
-    model = PeftModel.from_pretrained(model, str(args.adapter))
-    model = model.merge_and_unload()
-    model.save_pretrained(str(merged), safe_serialization=True)
-    AutoTokenizer.from_pretrained(str(args.adapter) if (args.adapter / "tokenizer.json").is_file() else base
-                                  ).save_pretrained(str(merged))
-    del model
+        # Chuyển thẳng bản tải sẵn trong bộ nhớ đệm HF: không gộp gì, không ghi lại 8 GB.
+        merged = Path(snapshot_download(base, local_files_only=True,
+                                        allow_patterns=["*.json", "*.safetensors", "*.txt", "*.jinja"]))
+        print(f"  nền {base} (KHÔNG adapter) -> {gguf.name} ({args.outtype})")
+    else:
+        print(f"  nền {base} + adapter {args.adapter.name} -> {gguf.name} ({args.outtype})")
+        print("  gộp trên CPU (bf16)...")
+        model = AutoModelForCausalLM.from_pretrained(base, dtype=torch.bfloat16, device_map="cpu")
+        model = PeftModel.from_pretrained(model, str(args.adapter))
+        model = model.merge_and_unload()
+        model.save_pretrained(str(merged), safe_serialization=True)
+        AutoTokenizer.from_pretrained(str(args.adapter) if (args.adapter / "tokenizer.json").is_file() else base
+                                      ).save_pretrained(str(merged))
+        del model
 
     print("  chuyển GGUF...")
     convert = subprocess.run(
@@ -80,7 +94,7 @@ def main(argv: list[str] | None = None) -> int:
     if create.returncode != 0:
         print(create.stdout[-2000:], create.stderr[-2000:])
         raise SystemExit("ollama create thất bại")
-    if not args.keep_merged:
+    if not args.keep_merged and not args.base_only:
         shutil.rmtree(merged, ignore_errors=True)
     print(f"  xong: ollama model `{args.name}`")
     print(f"  chấm: runtime/.venv/Scripts/python.exe scripts/model_eval/eval_models.py --models {args.name} ...")
