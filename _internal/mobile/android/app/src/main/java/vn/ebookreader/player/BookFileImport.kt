@@ -10,7 +10,8 @@ import java.util.zip.ZipFile
 
 /**
  * Mở một file sách của app (.abook - ebook_reader/webui/bookfile.py): kiểm y như máy tính rồi giải nén vào
- * books/<mã sách>/, đúng chỗ sách tải qua Wi-Fi nằm - thư viện, trình phát, đọc theo dùng lại nguyên vẹn.
+ * books/<thư mục>/, đúng chỗ sách tải qua Wi-Fi nằm - thư viện, trình phát, đọc theo dùng lại nguyên vẹn. Sách không mang
+ * mã nào: tên thư mục do app đặt (suy từ nội dung, hoặc đúng cuốn cùng lần sản xuất đã có trên máy).
  *
  * File đến từ bất kỳ đâu (Zalo, Drive, email, thẻ nhớ), nên coi là dữ liệu của người lạ: chỉ nhận đúng các tên mục của
  * định dạng (không đường dẫn tuyệt đối, không ".."), số mục và cỡ có trần, định dạng mới hơn app thì nhắc cập nhật, và
@@ -25,7 +26,6 @@ object BookFileImport {
     private const val MAX_TOTAL_BYTES = 64L shl 30
     private const val MAX_JSON_BYTES = 32L shl 20
     private val CONTENT = Regex("""cast\.json|cover\.jpg|chapters/[0-9A-Za-z_.\-]+\.mp3|scripts/\d+\.json|samples/\d+\.wav""")
-    private val IDENTITY = Regex("bk-[0-9a-f]{24}")
     private val DESCRIPTIONS = setOf("mimetype", "book.json", "manifest.json")
 
     /** Lý do không nhận file - câu chữ để người dùng đọc. */
@@ -82,25 +82,27 @@ object BookFileImport {
             val version = pack.optInt("version", -1)
             if (version < 1) throw Refused("File sách có phiên bản định dạng không hợp lệ.")
             if (version > FORMAT_VERSION) throw Refused("Sách này được làm bằng bản app mới hơn. Hãy cập nhật app để mở.")
-            val id = pack.optString("id")
-            if (!IDENTITY.matches(id)) throw Refused("File sách có mã sách không hợp lệ.")
             val files = pack.optJSONObject("files") ?: throw Refused("Danh sách file trong sách không khớp nội dung gói.")
             val content = names - DESCRIPTIONS
             if (files.keys().asSequence().toSet() != content) {
                 throw Refused("Danh sách file trong sách không khớp nội dung gói.")
             }
-            // Cùng cuốn đã có trên máy dưới mã máy tính (tải qua Wi-Fi, hay đang nghe thẳng): nhập VÀO đúng cuốn ấy, giữ mã
-            // máy tính để chỗ nghe vẫn đồng bộ - không thành hai cuốn trong thư viện. Bản trên máy đã tải và nhiều chương
-            // hơn file thì giữ nguyên bản trên máy.
-            val existing = Store.findByPackage(id)
-            val target = existing?.optString("id")?.takeIf { it.isNotBlank() } ?: id
-            if (existing != null && Store.manifest(target) != null &&
-                existing.optInt("chaptersAvailable") > book.optInt("chaptersAvailable")
-            ) {
-                return Imported(target, existing.optString("title"))
+            // Sách không mang mã nào (chủ sách 27-09): app nhận ra cùng một lần sản xuất bằng audio từng chương.
+            val chapters = JSONObject()
+            for (name in content.filter { it.startsWith("chapters/") }) {
+                val meta = files.getJSONObject(name)
+                chapters.put(name, JSONObject().put("size", meta.optLong("size")).put("sha256", meta.optString("sha256")))
+            }
+            // Cùng cuốn đã có trên máy (tải qua Wi-Fi, hay mở từ file trước đó): nhập VÀO đúng cuốn ấy, giữ mã của nó để
+            // chỗ nghe vẫn nối - không thành hai cuốn. Bản trên máy nhiều chương hơn file thì giữ nguyên bản trên máy.
+            val existing = Store.findByChapters(chapters)
+            val target = existing ?: contentKey(chapters)
+            val current = existing?.let { Store.manifest(it) }
+            if (current != null && current.optInt("chaptersAvailable") > book.optInt("chaptersAvailable")) {
+                return Imported(target, current.optString("title"))
             }
             val books = File(Store.root, "books").apply { mkdirs() }
-            val staging = File(books, ".$id.${System.nanoTime()}.part")
+            val staging = File(books, ".$target.${System.nanoTime()}.part")
             try {
                 for (name in DESCRIPTIONS.filter { it != "mimetype" && it in names } + content.sorted()) {
                     val (size, sha256) = extract(zip, name, File(staging, name))
@@ -109,14 +111,26 @@ object BookFileImport {
                         throw Refused("File sách bị hỏng hoặc bị sửa ($name). Hãy chép lại file từ nguồn.")
                     }
                 }
-                // book.json không nằm trong danh sách mã băm (nó chứa danh sách ấy): ghi lại mã thư mục + mã sách cố định.
-                Store.writeAtomic(File(staging, "book.json"), book.put("id", target).put("packageId", id).toString())
-                replace(books, staging, Store.bookDir(target), id)
+                // Bản sách của app trên máy mang mã thư mục của app (book.json không nằm trong danh sách mã băm).
+                Store.writeAtomic(File(staging, "book.json"), book.put("id", target).toString())
+                replace(books, staging, Store.bookDir(target), target)
             } finally {
                 staging.deleteRecursively()
             }
+            Store.rememberChapters(target, chapters, imported = existing == null || Store.isImported(existing))
             return Imported(target, book.optString("title"))
         }
+    }
+
+    /**
+     * Tên thư mục cho cuốn mở từ file, suy từ nội dung - mở lại đúng file ấy thì trùng tên. Đúng công thức của máy tính
+     * (ebook_reader/webui/fingerprints.py: content_key): "f-" + 24 hex đầu của sha256("tên:sha256" các chương, xếp tên).
+     */
+    fun contentKey(chapters: JSONObject): String {
+        val text = chapters.keys().asSequence().sorted()
+            .joinToString("\n") { "$it:${chapters.getJSONObject(it).optString("sha256")}" }
+        val digest = MessageDigest.getInstance("SHA-256").digest(text.toByteArray(Charsets.UTF_8))
+        return "f-" + digest.joinToString("") { "%02x".format(it) }.take(24)
     }
 
     private fun extract(zip: ZipFile, name: String, target: File): Pair<Long, String> {

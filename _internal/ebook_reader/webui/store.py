@@ -10,7 +10,6 @@ cho "đã thu", `chapters.completed_at` cho mốc chương xong. Nhãn tiếng V
 """
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 import sqlite3
@@ -56,24 +55,6 @@ def connect(project_root: Path) -> sqlite3.Connection:
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA query_only=ON")
     return connection
-
-
-def package_identity(project_root: Path) -> str | None:
-    """Mã sách đi theo cuốn sang mọi máy (`bk-` + 24 hex): file sách `.abook` mang nó, gói đồng bộ Wi-Fi cũng mang nó
-    (`packageId`) để điện thoại biết một cuốn tải qua Wi-Fi và cùng cuốn ấy mở từ file là MỘT. Mã của webui
-    (`library.book_id`) là đường dẫn thư mục, không mang đi được.
-
-    Băm từ nguồn (mã băm các file TXT) và lúc tạo project: cùng một lần sản xuất thì cùng mã (xuất lại không thành sách
-    mới), hai lần sản xuất cùng nguồn là hai cuốn (chương, mốc thời gian khác nhau - chỗ đang nghe không dùng chung được).
-    None nếu thư mục chưa có dòng `book`.
-    """
-    with closing(connect(project_root)) as connection:
-        row = connection.execute("SELECT * FROM book WHERE id = 1").fetchone()
-    if row is None:
-        return None
-    # sqlite3.Row: `in` hỏi GIÁ TRỊ, không hỏi tên cột.
-    source = row["input_manifest_hash"] if "input_manifest_hash" in set(row.keys()) else row["title"]
-    return "bk-" + hashlib.sha256(f"{source}:{row['created_at']!r}".encode()).hexdigest()[:24]
 
 
 def speaker_request_problem(project_root: Path, stable_id: str, text_sha256: str, speaker: str) -> str | None:

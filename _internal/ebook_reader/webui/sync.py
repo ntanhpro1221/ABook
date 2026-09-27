@@ -33,6 +33,7 @@ from typing import Any
 from urllib.parse import unquote, urlsplit
 
 from . import covers, listen_view, store
+from .fingerprints import Fingerprints
 from .library import Library, book_id
 from .listening import Listening
 
@@ -316,8 +317,6 @@ def manifest(project_root: Path, book: str, listening: Listening) -> dict[str, A
     return {
         "format": listen_view.FORMAT,
         "id": book,
-        # Mã sách cố định (cùng mã file .abook mang): điện thoại gộp cuốn tải qua Wi-Fi với cùng cuốn mở từ file.
-        "packageId": store.package_identity(project_root),
         "title": view["title"],
         "narrator": view["narrator"],
         "duration": view["duration"],
@@ -334,15 +333,33 @@ def manifest(project_root: Path, book: str, listening: Listening) -> dict[str, A
 
 class SyncApp:
     def __init__(self, library: Library, listening: Listening, devices: Devices, name: str,
-                 remote: Remote | None = None) -> None:
+                 remote: Remote | None = None, fingerprints: Fingerprints | None = None) -> None:
         self.library = library
         self.listening = listening
         self.devices = devices
         self.name = name
         self.remote = remote or Remote()
+        self.fingerprints = fingerprints or Fingerprints(listening.path.with_name("fingerprints.json"))
 
     def book(self, value: str) -> Path | None:
         return self.library.resolve(value)
+
+    def match(self, books: Any) -> dict[str, str]:
+        """Cuốn điện thoại mở từ file là cuốn nào của máy này (mã máy này), so bằng audio từng chương - sách không mang
+        mã nào (fingerprints.py). `books`: [{"key": mã phía điện thoại, "chapters": {"chapters/x.mp3": {size, sha256}}}]."""
+        found: dict[str, str] = {}
+        if not isinstance(books, list):
+            return found
+        projects = list(self.library.projects())
+        for item in books[:200]:
+            if not isinstance(item, dict) or not isinstance(item.get("key"), str) or not isinstance(
+                    item.get("chapters"), dict):
+                continue
+            for path in projects:
+                if self.fingerprints.shares_a_chapter(path, item["chapters"]):
+                    found[item["key"]] = book_id(path)
+                    break
+        return found
 
     def library_view(self) -> list[dict[str, Any]]:
         out = []
@@ -358,7 +375,6 @@ class SyncApp:
             view = listen_view.book(path, identifier, summary, self.listening.get(identifier), with_chapters=False)
             entry = {key: view[key] for key in ("id", "title", "narrator", "duration", "chaptersTotal",
                                                  "chaptersAvailable", "complete", "updatedAt")}
-            entry["packageId"] = store.package_identity(path)
             meta = covers.cover_meta(path)
             entry["cover"] = {"color": meta["color"], "version": meta["version"]} if meta else None
             out.append(entry)
@@ -477,6 +493,9 @@ class SyncHandler(BaseHTTPRequestHandler):
                 return
             if method == "GET" and path == "/sync/v1/library":
                 self._json(HTTPStatus.OK, {"name": self.app.name, "books": self.app.library_view()})
+                return
+            if method == "POST" and path == "/sync/v1/match":
+                self._json(HTTPStatus.OK, {"matches": self.app.match(self._body().get("books"))})
                 return
             match = re.fullmatch(r"/sync/v1/books/([A-Za-z0-9_-]+)/(manifest|state|files/(.+))", path)
             project = self.app.book(match.group(1)) if match else None
