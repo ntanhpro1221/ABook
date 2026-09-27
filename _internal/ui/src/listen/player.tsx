@@ -1,5 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { flushSync } from "react-dom";
 import { toast } from "sonner";
 import { coverArtwork, type CoverImage } from "@/shared/cover";
 import { formatClock } from "@/shared/format";
@@ -733,11 +734,12 @@ export function PlayerProvider({
       }),
       engine.on("chapter", () => {
         if (!native || native.chapterId === null || !native.bookId) return;
-        const narrator = refs.current.track?.bookId === native.bookId ? refs.current.track.narrator : "";
+        const same = refs.current.track?.bookId === native.bookId ? refs.current.track : null;
         const next: Track = {
           bookId: native.bookId,
           bookTitle: native.bookTitle,
-          narrator,
+          bookCover: same?.bookCover ?? null,
+          narrator: same?.narrator ?? "",
           chapterId: native.chapterId,
           chapterTitle: native.chapterTitle,
         };
@@ -745,6 +747,18 @@ export function PlayerProvider({
         setTrack(next);
         setAtEnd("none");
         refreshLists(native.bookId);
+        // Lõi native khôi phục bài đang nghe (mở lại app) chỉ biết tên sách: hỏi kho sách để có ảnh bìa và giọng kể,
+        // nếu không thanh phát và màn "Đang nghe" hiện bìa vẽ dù sách có ảnh bìa thật (27-09, thấy trên máy ảo).
+        if (!same) {
+          const bookId = native.bookId;
+          void source.book(bookId).then((book) => {
+            const current = refs.current.track;
+            if (!current || current.bookId !== bookId) return;
+            const filled = { ...current, bookCover: book.cover ?? null, narrator: current.narrator || book.narrator };
+            refs.current.track = filled;
+            setTrack(filled);
+          }).catch(() => undefined);
+        }
       }),
       engine.on("sleep", () => {
         if (!native) return;
@@ -1004,7 +1018,18 @@ export function PlayerProvider({
     canGoBack, error, options, play, prepare, toggle, resume, pause, seek, skip, next, previous, jumpTo, goBack, setRate,
     setVolume, setSleep, extendSleep, addBookmark, close, positionStamp]);
 
-  const nowPlaying = useMemo(() => ({ expanded, setExpanded }), [expanded]);
+  // Mở/đóng "Đang nghe" qua View Transitions: bìa ở thanh phát bay lên thành bìa lớn (và bay về), phần còn lại mờ
+  // chéo - xem .cover-morph trong styles.css. Không có API (trình duyệt cũ) hay người dùng xin giảm chuyển động thì
+  // đổi thẳng, không hoạt ảnh.
+  const setExpandedAnimated = useCallback((value: boolean) => {
+    const start = (document as Document & { startViewTransition?: (update: () => void) => unknown }).startViewTransition;
+    if (!start || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      setExpanded(value);
+      return;
+    }
+    start.call(document, () => flushSync(() => setExpanded(value)));
+  }, []);
+  const nowPlaying = useMemo(() => ({ expanded, setExpanded: setExpandedAnimated }), [expanded, setExpandedAnimated]);
 
   return (
     <ClockContext.Provider value={clock}>
