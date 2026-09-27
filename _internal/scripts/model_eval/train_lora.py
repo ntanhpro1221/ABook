@@ -180,6 +180,10 @@ def main(argv: list[str] | None = None) -> int:
                              "(chậm 17-80 lần, và là nền của lần BSOD 27-09)")
     parser.add_argument("--attention", choices=("cudnn", "auto"), default="cudnn",
                         help="cudnn = ghim kernel cuDNN (mặc định); auto = để PyTorch tự chọn (rơi về math trên máy này)")
+    parser.add_argument("--save-steps", type=int, default=50,
+                        help="lưu checkpoint mỗi N bước (50 bước x accum 8 = 400 mẫu, ~35 phút): máy khởi động lại chỉ mất chừng ấy")
+    parser.add_argument("--resume", action="store_true",
+                        help="chạy tiếp từ checkpoint mới nhất trong --out nếu có (không có thì bắt đầu từ đầu)")
     parser.add_argument("--trace", type=Path, default=None,
                         help="ghi từng pha của vòng huấn luyện vào file này, fsync mỗi dòng (xem trace_callback)")
     args = parser.parse_args(argv)
@@ -229,7 +233,7 @@ def main(argv: list[str] | None = None) -> int:
         # TRL 1.13 ở venv này KHÔNG có `warmup_ratio` (chỉ `warmup_steps`) - đã thử và nó ném TypeError.
         warmup_steps=max(5, int(0.03 * len(train_rows) / max(1, args.accum))),
         logging_steps=5,
-        save_steps=200,
+        save_steps=args.save_steps,
         save_total_limit=2,
         eval_strategy="steps" if dev_rows else "no",
         eval_steps=100,
@@ -269,7 +273,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     note("model đã nạp, trainer sẵn sàng")
     torch.cuda.reset_peak_memory_stats()
-    result = trainer.train()
+    checkpoints = sorted(out.glob("checkpoint-*"), key=lambda path: int(path.name.split("-")[-1])) if args.resume else []
+    note(f"chạy tiếp từ {checkpoints[-1].name}" if checkpoints else "bắt đầu từ đầu")
+    result = trainer.train(resume_from_checkpoint=str(checkpoints[-1]) if checkpoints else None)
     metrics = result.metrics
     total = torch.cuda.get_device_properties(0).total_memory / 2**30
     print(f"  logits={args.logits} | {metrics.get('train_runtime', 0):.0f} s cho {config.max_steps if args.smoke else '?'} bước "
