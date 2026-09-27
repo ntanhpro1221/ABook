@@ -10,6 +10,7 @@ quá tự tin. Các tín hiệu ở đây là tín hiệu có cấu trúc, kiể
 from __future__ import annotations
 
 import re
+import json
 from collections import defaultdict
 from contextlib import closing
 from pathlib import Path
@@ -20,6 +21,7 @@ from .reviews import review_items, speaker_label
 
 # Độ chói tai khi máy sai ở khía cạnh ấy (1 = người nghe nhận ra ngay: giọng sai người, sai giới).
 SEVERITY = {
+    "speaker": 1.0,
     "gender": 1.0,
     "vocative": 0.9,
     "alias": 0.8,
@@ -57,7 +59,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
     with closing(store.connect(project_root)) as connection:
         names = store.chapter_names(connection)
         spoken = connection.execute(
-            "SELECT id, chapter_id, seq, text, speaker, kind, voice_profile_id, canonical_character_id FROM segments"
+            "SELECT id, stable_id, chapter_id, seq, text, speaker, kind, voice_profile_id, canonical_character_id FROM segments"
             " WHERE kind != 'narration' ORDER BY chapter_id, seq"
         ).fetchall()
         characters = {
@@ -76,6 +78,38 @@ def work_items(project_root: Path) -> dict[str, Any]:
     lines_by_speaker: dict[str, list[Any]] = defaultdict(list)
     for row in spoken:
         lines_by_speaker[str(row["speaker"])].append(row)
+
+    # 0. Ai nói câu này: bộ chấm ứng viên (doubt.json, scripts/model_eval/quote_scorer/doubt_for_book.py) CHẮC về một người
+    #    có tên khác nhãn LLM. Đây là tín hiệu xếp hạng tốt nhất đã đo (review_curve.py: duyệt 20% câu theo nó 74,8 -> 84,6%,
+    #    theo tin cậy LLM tự báo chỉ 79,7% = ngẫu nhiên). Bộ chấm không đổi nhãn nào - chỉ chỉ chỗ cho người nghe lại.
+    doubt_path = project_root / "doubt.json"
+    if doubt_path.is_file():
+        try:
+            doubts = json.loads(doubt_path.read_text(encoding="utf-8")).get("segments", {})
+        except (OSError, ValueError):
+            doubts = {}
+        by_stable = {str(row["stable_id"]): row for row in spoken}
+        for stable_id, doubt in doubts.items():
+            row = by_stable.get(stable_id)
+            if row is None or str(row["speaker"]) != doubt.get("llm") or not doubt.get("disagree"):
+                continue  # câu đổi nhãn sau lần chấm, hay bộ chấm đồng ý
+            certainty = float(doubt.get("certainty") or 0)
+            if certainty < 0.5:
+                continue
+            choice = speaker_label(str(doubt.get("choice") or ""))
+            options = [speaker_label(str(name)) for name, _ in doubt.get("top", []) if name] + ["Người kể", "Vai phụ không tên"]
+            items.append({
+                "kind": "speaker",
+                "key": f"speaker:{stable_id}",
+                "title": f"Ai nói câu này - {speaker_label(str(row['speaker']))} hay {choice}?",
+                "problem": f"Máy đọc (LLM) gán cho {speaker_label(str(row['speaker']))}; bộ chấm thứ hai chắc"
+                           f" {round(certainty * 100)}% là {choice}.",
+                "affected": 1,
+                "doubt": round(certainty, 3),
+                "options": list(dict.fromkeys(options)),
+                "current": speaker_label(str(row["speaker"])),
+                "examples": [_example(row, names)],
+            })
 
     # 1. Chưa rõ nam hay nữ mà có lời: giọng sai giới là lỗi người nghe nhận ra ngay.
     for character_id, character in characters.items():

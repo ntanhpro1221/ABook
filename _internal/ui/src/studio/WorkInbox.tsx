@@ -10,7 +10,7 @@ import { api, urls } from "./api";
 // "Việc cần anh" (docs/STUDIO_REVIEW.md, webui/work_items.py): chỗ máy nghi ngờ, xếp theo lợi trên mỗi lần bấm. Máy đã tự
 // quyết và dây chuyền KHÔNG chờ ai - đây là nơi người sửa ít nhất mà được nhiều nhất. Bước 1 chỉ đọc; sửa trực tiếp là bước 2.
 
-type WorkKind = "gender" | "vocative" | "alias" | "shared-voice" | "pronunciation" | "unnamed" | "audio";
+type WorkKind = "speaker" | "gender" | "vocative" | "alias" | "shared-voice" | "pronunciation" | "unnamed" | "audio";
 
 interface WorkExample {
   segmentId: number;
@@ -40,6 +40,7 @@ interface WorkView {
 }
 
 const KIND_LABEL: Record<WorkKind, string> = {
+  speaker: "Ai nói câu này",
   pronunciation: "Cách đọc tên",
   gender: "Nam hay nữ",
   vocative: "Người gọi hay người nói",

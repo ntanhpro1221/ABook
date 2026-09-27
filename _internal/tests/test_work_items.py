@@ -4,6 +4,7 @@ Project SQLite tối thiểu trong thư mục tạm - chỉ các bảng/cột m�
 """
 from __future__ import annotations
 
+import json
 import sqlite3
 import time
 from pathlib import Path
@@ -72,3 +73,20 @@ def test_the_inbox_finds_each_kind_of_doubt_and_ranks_by_benefit(tmp_path: Path)
     scores = [item["score"] for item in view["items"]]
     assert scores == sorted(scores, reverse=True), "xếp theo lợi trên mỗi lần bấm"
     assert time.time() - started < 5
+
+
+def test_the_second_scorer_flags_only_confident_disagreements_on_current_labels(tmp_path: Path) -> None:
+    """doubt.json (doubt_for_book.py): bộ chấm chắc một người có tên KHÁC nhãn LLM -> việc "Ai nói câu này?". Đồng ý, không
+    chắc, hay nhãn đã đổi từ sau lần chấm (dây chuyền phân tích lại) thì không làm phiền người nghe."""
+    project = make_book(tmp_path)
+    (project / "doubt.json").write_text(json.dumps({"segments": {
+        "c": {"llm": "LUCIEN", "choice": "RHINE", "certainty": 0.91, "top": [["RHINE", 0.91], ["LUCIEN", 0.05]],
+              "disagree": True},
+        "f": {"llm": "RHINE", "choice": "RHINE", "certainty": 0.97, "top": [["RHINE", 0.97]], "disagree": False},
+        "d": {"llm": "ÁO CHOÀNG ĐEN", "choice": "LUCIEN", "certainty": 0.3, "top": [["LUCIEN", 0.3]], "disagree": True},
+        "b": {"llm": "LUCIEN", "choice": "RHINE", "certainty": 0.95, "top": [["RHINE", 0.95]], "disagree": True},
+    }}), encoding="utf-8")
+    speakers = [item for item in work_items(project)["items"] if item["kind"] == "speaker"]
+    assert [item["key"] for item in speakers] == ["speaker:c"], "chỉ bất đồng chắc trên đúng nhãn đang dùng"
+    item = speakers[0]
+    assert item["current"] == "Lucien" and item["options"][:2] == ["Rhine", "Lucien"] and "Người kể" in item["options"]
