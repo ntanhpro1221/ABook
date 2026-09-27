@@ -1,6 +1,16 @@
 # Test report
 
-Ngày cập nhật: 2026-08-30
+Ngày cập nhật: 2026-09-27
+
+Truyện kể ngôi thứ nhất (nhánh `feat/narrator`, 2026-09-27): `voices.first_person_identity` giờ vào prompt phân tích mỗi
+batch và dấu vân tay sổ ứng viên (chỉ khi có đặt); Studio hỏi "'Tôi' là ai?" ở bước chọn giọng khi ~20 chương đầu có >= 30%
+đoạn lời kể chứa "tôi", kèm gợi ý tên. Test mới: `test_a_first_person_book_names_its_narrator_to_the_model.py` (prompt thật
+gửi Ollama có dòng người kể; ngôi thứ ba và danh tính là đại từ thấy prompt + dấu vân tay y hệt trước) và
+`test_first_person_question.py` (nhận ra truyện, "mình" phản thân không tính, câu trả lời lưu vào cài đặt sách, đại từ bị
+từ chối) - 9/9 qua. Toàn bộ pytest: mọi test qua trừ `test_doctor_uses_actual_critical_dependency_and_runtime_contract_checks`,
+hỏng vì worktree mới không có `runtime/` (file model VieNeu) - cùng test ấy qua trên cây chính. Kiểm bằng mắt trong
+trình duyệt: YMP gợi ý Samael đầu tiên, bước xác nhận có dòng "Người kể 'tôi'"; TMA (ngôi thứ ba) chỉ có liên kết mở tay.
+Đo trên model thật (docs/LLM_EVAL.md): LoRA 34,0% -> 89,4% người nói ở YMP 248 khi biết người kể.
 
 Đợt sửa confidence contract V22: **634/634 test trọng tâm pass** cho analysis bắt buộc,
 database safety và quality policy trên Python 3.11.9. Compileall cho source/test, `git diff --check`

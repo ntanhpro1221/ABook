@@ -134,6 +134,15 @@ export interface ScannedFile {
   bytes: number;
 }
 
+/** Truyện kể ngôi thứ nhất? (ebook_reader/first_person.py) - cho câu hỏi "'Tôi' là ai?" ở bước chọn giọng. */
+export interface FirstPersonHint {
+  /** Tỉ lệ đoạn lời kể có "tôi/tớ/mình" trong ~20 chương đầu. */
+  rate: number;
+  firstPerson: boolean;
+  /** Tên viết hoa hay gặp nhất - gợi ý để chọn, không phải đáp án. */
+  suggestions: string[];
+}
+
 export interface ScanResult {
   files: ScannedFile[];
   skipped: string[];

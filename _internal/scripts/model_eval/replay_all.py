@@ -43,6 +43,16 @@ def run(args: list[str]) -> str:
     return result.stdout + result.stderr
 
 
+# Truyện kể ngôi thứ nhất -> "tôi" là ai (voices.first_person_identity): prompt mỗi batch nói cho model biết, nên dữ liệu
+# huấn luyện phải có đúng dòng ấy (27-09: LoRA 34,0% -> 89,4% người nói ở YMP 248 khi được biết). Người kể suy bằng N7b
+# (ANALYSIS_RESEARCH.md) và soát tay; Yamiyo đổi người kể theo chương nên không đặt được một danh tính cho cả truyện.
+FIRST_PERSON: dict[str, str] = {
+    "young_masters_pov": "SAMAEL",
+    "nageki_no_bourei": "KRAI",
+    "love_unseen": "KAKERU",
+}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--root", type=Path, required=True, help="thư mục mới cho các project phát lại")
@@ -66,6 +76,8 @@ def main() -> None:
         make = ["scripts/model_eval/make_eval_project.py", "gold-replay:all", "--chapters", *chapters, "--root", str(where)]
         if book:
             make += ["--book", book]
+        if gold in FIRST_PERSON:
+            make += ["--first-person", FIRST_PERSON[gold]]
         run(make)
         project = next(where.rglob("project.sqlite3"), None)
         if project is None:
