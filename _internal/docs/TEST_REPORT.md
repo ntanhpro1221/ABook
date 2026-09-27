@@ -421,6 +421,12 @@ bằng interpreter `.venv` rõ ràng; sau toàn bộ run/probe `OpenWith.exe` gi
   gửi lên bị lọc kiểu và có trần (không NaN, không chuỗi dài, không mã sách lạ); trọn vòng HTTP thật ghép nối →
   báo đang phát → giao diện thấy → bấm dừng → điện thoại nhận, gỡ ghép là biến mất. Thử tay trên máy ảo với app
   thật: dừng/phát, lùi 15 giây, "Nghe trên máy tính" và "Phát trên điện thoại" đúng chương, đúng giây.
+- nghe thẳng thư viện máy tính trên điện thoại (27-09, thử tay trên máy ảo với app thật): cuốn chưa tải hiện trong Thư
+  viện với nhãn "Máy tính"; máy tính ra lệnh phát một cuốn chưa tải -> điện thoại lấy gói sách và phát qua mạng đúng
+  chương, đúng giây (thư mục sách không có MP3, bộ đệm ghi 2,1 MB); trang sách, tab Nhân vật (45 người + câu mẫu) và
+  chế độ Đọc chạy như sách đã tải; tắt máy chủ rồi tua ra ngoài phần đã đệm -> "Mất kết nối với máy tính - kiểm tra
+  Wi-Fi rồi bấm phát lại"; bật lại máy chủ, bấm phát -> phát tiếp từ đúng giây lỗi. Máy chủ chỉ nhận cờ `stream` khi là
+  đúng kiểu boolean (`test_what_a_phone_reports_is_typed_and_bounded`).
 
 GUI PySide6 đã mở thực tế trên Windows. Test6 đã chạy thật xuyên suốt bằng VieNeu-TTS và Whisper Turbo
 trên CUDA: **11/11 chapter**, **1.080/1.080 segment**, **0 segment lỗi**, **11/11 MP3** giải mã/xác minh;

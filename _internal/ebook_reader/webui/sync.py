@@ -84,6 +84,8 @@ def _presence(report: dict[str, Any]) -> dict[str, Any]:
         "buffering": state.get("buffering") is True,
         "rate": _number(state.get("rate"), 0.5, 3.0),
         "books": [item for item in books[:500] if isinstance(item, str) and BOOK_ID.fullmatch(item)],
+        # Điện thoại nghe thẳng được mọi cuốn của máy tính (stream play), không chỉ cuốn đã tải.
+        "stream": report.get("stream") is True,
         "acks": [{"id": _text(ack.get("id"), 24), "ok": ack.get("ok") is True, "message": _text(ack.get("message"))}
                  for ack in acks[:10] if isinstance(ack, dict)],
     }
