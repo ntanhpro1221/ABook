@@ -100,6 +100,16 @@ Studio (đọc SQLite chỉ đọc) mà không đụng file khoá/dấu vân tay
 Cũng 27-09: 3 câu mở đầu bằng lời gọi ("Heidi, các cậu đi đâu vậy?") vẫn bị gán cho chính người được gọi - luật host
 "tên trong lời gọi là người nghe" (AGENTS.md) còn lọt; hộp việc bắt được bằng một luật chữ đơn giản.
 
+## Công thức đầy đủ trên 10 truyện chưa thấy (27-09 17:3x) - tự học theo cuốn: DỪNG
+
+Mỗi truyện lần lượt làm truyện MỚI (học trước PDNC -> gold 9 truyện kia), 1.827 câu, chấm gold đầy đủ (`--official`):
+m0 **73,3%** (có tên 77,1%, không ai 38,5%); đối chứng +2 epoch gold 72,7%; tự học trên chính truyện mới 72,1%
+(107 câu chỉ m0 đúng vs 85 chỉ tự học đúng, p 0,13). Kết quả vòng TMA (84,9 vs 82,2, p 0,005) KHÔNG lặp lại trên truyện
+khác - tự học theo cuốn dừng hẳn. Quan trọng hơn: **độ đúng theo truyện chênh cực lớn** - m0: Two Childhood Friends 42,9%,
+Hướng dẫn sinh tồn 47,3%, Yamiyo 56,5%, Nise 57,8%, Năng lực bá đạo 65,6%, Love Unseen 68,0%, Nageki 71,4%, YMP 72,6%,
+Đã bảo là 74,0%, TMA 83,8%. Trung bình che mất những truyện model còn rất yếu - đúng yêu cầu chủ sách 27-09 "nhiều thể
+loại, phong cách, trình độ viết": luôn báo theo truyện, và gold/huấn luyện phải phủ những kiểu viết đang yếu.
+
 ## Tài liệu
 
 Đã đọc (27-09):
