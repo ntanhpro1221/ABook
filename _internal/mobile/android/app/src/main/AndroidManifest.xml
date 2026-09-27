@@ -23,6 +23,37 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- File sách .abook (webui/bookfile.py, BookFileImport.kt): mở từ trình quản lý file, trình duyệt, Drive.
+                 Nơi gửi biết loại riêng của ta thì khớp bộ lọc đầu; không biết (đuôi lạ -> octet-stream/zip) thì khớp
+                 theo đuôi file ở bộ lọc sau. Không nhận "*/*": app không chen vào mọi lệnh "Mở bằng". -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="application/vnd.ebookreader.audiobook+zip" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:host="*" />
+                <data android:mimeType="application/octet-stream" />
+                <data android:mimeType="application/zip" />
+                <data android:pathPattern=".*\\.abook" />
+                <data android:pathPattern=".*\\..*\\.abook" />
+                <data android:pathPattern=".*\\..*\\..*\\.abook" />
+            </intent-filter>
+            <!-- Chia sẻ một file sách tới app (Zalo, Telegram, email). -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/vnd.ebookreader.audiobook+zip" />
+            </intent-filter>
+
         </activity>
 
         <!-- Dịch vụ phát nền: thông báo, màn hình khoá, nút tai nghe (Media3). -->

@@ -1,12 +1,16 @@
 package vn.ebookreader.player
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
+import androidx.activity.result.ActivityResult
 import com.getcapacitor.JSArray
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
+import com.getcapacitor.annotation.ActivityCallback
 import com.getcapacitor.annotation.CapacitorPlugin
 import org.json.JSONArray
 import org.json.JSONObject
@@ -45,6 +49,43 @@ class LibraryPlugin : Plugin() {
 
     @PluginMethod
     fun info(call: PluginCall) = call.resolve(JSObject().put("root", Store.root.absolutePath))
+
+    // ---- mở file sách (.abook) -------------------------------------------------------------------------------
+
+    /**
+     * Nhập một file sách (BookFileImport) ở luồng nền rồi báo "import" lên giao diện: mở từ trình quản lý file, Zalo,
+     * Drive (MainActivity) hay nút "Nhập sách". Sự kiện được GIỮ tới khi giao diện nghe: mở app lạnh bằng file thì
+     * việc nhập có thể xong trước khi trang web kịp gắn listener.
+     */
+    fun importFrom(uri: Uri) = io.execute {
+        val event = try {
+            val imported = BookFileImport.import(context, uri)
+            JSObject().put("bookId", imported.id).put("title", imported.title)
+        } catch (error: BookFileImport.Refused) {
+            JSObject().put("error", error.message)
+        } catch (error: Exception) {
+            JSObject().put("error", "Không mở được file sách: ${error.message ?: error.javaClass.simpleName}")
+        }
+        notifyListeners("import", event, true)
+    }
+
+    /** Nút "Nhập sách": chọn file bằng bộ chọn của hệ thống (mọi loại - trình quản lý file không biết đuôi .abook). */
+    @PluginMethod
+    fun pickBook(call: PluginCall) {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*")
+        startActivityForResult(call, intent, "pickedBook")
+    }
+
+    @ActivityCallback
+    private fun pickedBook(call: PluginCall?, result: ActivityResult) {
+        val uri = result.data?.data
+        if (uri == null) {
+            call?.resolve(JSObject().put("picked", false))
+            return
+        }
+        importFrom(uri)
+        call?.resolve(JSObject().put("picked", true))
+    }
 
     // ---- ghép nối --------------------------------------------------------------------------------------------
 

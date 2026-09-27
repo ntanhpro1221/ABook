@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Download, Laptop, Loader2, RefreshCw, Search, Unplug, Wifi } from "lucide-react";
+import { CheckCircle2, Download, FileAudio, Laptop, Loader2, RefreshCw, Search, Unplug, Wifi } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
@@ -7,6 +7,7 @@ import { cn } from "@/shared/cn";
 import { formatLength } from "@/shared/format";
 import { Button, EmptyState, Progress } from "@/shared/ui";
 import { useDownloadProgress } from "./downloads";
+import { pickBookFile } from "./imports";
 import { EbookLibrary, type DownloadEvent, type RemoteBook } from "./plugins";
 
 // "Tải sách": lấy sách từ máy tính qua Wi-Fi. Ghép nối một lần bằng mã 6 số hiện trong Cài đặt của máy tính;
@@ -184,7 +185,12 @@ export function DevicesScreen() {
 
   return (
     <div className="px-4 pb-8 pt-4">
-      <h1 className="text-2xl font-bold tracking-tight">Tải sách</h1>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold tracking-tight">Tải sách</h1>
+        <Button size="sm" variant="secondary" icon={FileAudio} onClick={() => void pickBookFile()}>
+          Mở file sách
+        </Button>
+      </div>
       <div className="mt-5">
         {!connection.data?.paired ? (
           <PairPanel />

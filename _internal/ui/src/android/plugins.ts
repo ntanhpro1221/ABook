@@ -156,6 +156,16 @@ export interface EbookLibraryPlugin {
   deleteBookmark(options: { id: string; markId: string }): Promise<void>;
   syncState(options: { id: string }): Promise<ListeningState>;
   addListener(event: "download", handler: (event: DownloadEvent) => void): Promise<PluginListenerHandle>;
+  /** Bộ chọn file của hệ thống để mở một file sách .abook; kết quả về qua sự kiện "import". */
+  pickBook(): Promise<{ picked: boolean }>;
+  addListener(event: "import", handler: (event: ImportEvent) => void): Promise<PluginListenerHandle>;
+}
+
+/** Kết quả mở một file sách (.abook): mã sách vừa vào Thư viện, hay lý do không nhận. */
+export interface ImportEvent {
+  bookId?: string;
+  title?: string;
+  error?: string;
 }
 
 export const EbookPlayer = registerPlugin<EbookPlayerPlugin>("EbookPlayer");
