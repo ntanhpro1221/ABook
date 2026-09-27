@@ -35,11 +35,16 @@ export class NativeAudioEngine implements NativeEngine {
     if (!previous || JSON.stringify(previous.sleep) !== JSON.stringify(next.sleep)) this.fire("sleep");
     if (!previous || previous.buffering !== next.buffering) this.fire(next.buffering ? "waiting" : "playing");
     if (next.kind === "ended") this.fire("ended");
+    if (next.kind === "error") this.fire("error");
     this.fire("time");
   }
 
   get state(): NativeState | null {
     return this.current;
+  }
+
+  get error(): string {
+    return this.current?.error ?? "";
   }
 
   loadQueue(queue: NativeQueue): void {

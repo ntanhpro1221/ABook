@@ -7,6 +7,7 @@ import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.CommandButton
@@ -46,6 +47,8 @@ class PlaybackService : MediaSessionService() {
             .setWakeMode(C.WAKE_MODE_LOCAL)
             .setSeekBackIncrementMs(15_000)
             .setSeekForwardIncrementMs(15_000)
+            // Chương chưa tải thì phát thẳng từ máy tính (Streaming), có bộ đệm đĩa.
+            .setMediaSourceFactory(Streaming.mediaSourceFactory(this))
             .build()
         player.addListener(object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -63,6 +66,8 @@ class PlaybackService : MediaSessionService() {
                 if (state == Player.STATE_ENDED) Playback.onEnded()
                 Playback.emit("state")
             }
+
+            override fun onPlayerError(error: PlaybackException) = Playback.onError()
         })
         Playback.player = player
         val openApp = PendingIntent.getActivity(
@@ -150,7 +155,7 @@ class PlaybackService : MediaSessionService() {
             val chapters = Playback.chaptersOf(manifest)
             Playback.onMain { Playback.resumeLast() }
             val index = chapters.indexOfFirst { it.id == last.optInt("chapterId") }.coerceAtLeast(0)
-            val items = chapters.map { MediaItem.Builder().setMediaId(it.id.toString()).setUri(android.net.Uri.fromFile(Store.file(manifest.getString("id"), it.file))).build() }
+            val items = Playback.mediaItems(manifest.getString("id"), manifest.optString("title"), manifest.optString("narrator"), chapters)
             return Futures.immediateFuture(
                 MediaSession.MediaItemsWithStartPosition(items, index, (last.optDouble("seconds") * 1000).toLong()),
             )

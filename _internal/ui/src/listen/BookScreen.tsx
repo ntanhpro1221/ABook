@@ -1,6 +1,6 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, CircleDashed, History, Loader2, MoreHorizontal, Pause, Play, RotateCcw } from "lucide-react";
+import { ArrowLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, CircleDashed, History, Laptop, Loader2, MoreHorizontal, Pause, Play, RotateCcw } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
@@ -399,6 +399,11 @@ export function BookScreen({
               {book.producing && <Vu className="h-2.5" />}
               {book.producing ? "Đang thu âm - chương mới tự hiện ra khi xong" : "Chưa hoàn thành - Studio đang dừng"}
               {studioLink?.(book)}
+            </p>
+          )}
+          {book.remote && (
+            <p className="mt-2 inline-flex flex-wrap items-center gap-1.5 rounded-full bg-info-soft px-3 py-1 text-xs font-medium text-info">
+              <Laptop className="size-3.5" /> Nghe thẳng từ máy tính - tải về để nghe cả khi không có mạng
             </p>
           )}
           <div className="mt-4 max-w-md max-sm:mx-auto">

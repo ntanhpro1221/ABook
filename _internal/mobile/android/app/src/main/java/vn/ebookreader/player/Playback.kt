@@ -1,13 +1,14 @@
 package vn.ebookreader.player
 
 import android.content.Context
-import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import org.json.JSONArray
 import org.json.JSONObject
@@ -118,9 +119,10 @@ object Playback {
         if (kind != "tick") Remote.kick()
     }
 
-    /** Cuốn nghe gần nhất trên máy: (book.json, mốc "last") - cho widget và cho tiếp tục phát sau khi khởi động lại. */
+    /** Cuốn nghe gần nhất trên máy (kể cả sách nghe thẳng từ máy tính): (gói sách, mốc "last") - cho widget và cho tiếp
+     *  tục phát sau khi khởi động lại. */
     fun lastListened(): Pair<JSONObject, JSONObject>? =
-        Store.books().mapNotNull { manifest ->
+        Store.playableBooks().mapNotNull { manifest ->
             val last = Store.state(manifest.getString("id")).optJSONObject("last") ?: return@mapNotNull null
             manifest to last
         }.maxByOrNull { it.second.optDouble("at") }
@@ -163,20 +165,34 @@ object Playback {
             .put("buffering", exo?.playbackState == Player.STATE_BUFFERING)
             .put("rate", exo?.playbackParameters?.speed?.toDouble() ?: 1.0)
             .put("sleep", SleepTimer.describe())
+            .put("error", lastError)
     }
 
-    /** Nạp một cuốn: cả danh sách chương vào hàng đợi, bắt đầu ở chương/giây đã chọn. */
-    fun load(id: String, title: String, narratorName: String, items: List<Chapter>, startChapterId: Int, startSeconds: Double, rate: Double, autoplay: Boolean = true) {
-        val exo = player ?: return
+    /** Lỗi phát gần nhất, cho giao diện - rỗng khi đang ổn. */
+    var lastError: String = ""
+        private set
+
+    /** ExoPlayer dừng vì lỗi: chương phát qua mạng thì gần như chắc là mất kết nối với máy tính - nói đúng lý do. */
+    fun onError() {
+        val streamed = player?.currentMediaItem?.localConfiguration?.uri?.scheme == "http"
+        lastError = if (streamed) {
+            "Mất kết nối với máy tính - kiểm tra Wi-Fi rồi bấm phát lại"
+        } else {
+            "Không phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại."
+        }
         saveNow()
-        bookId = id
-        bookTitle = title
-        narrator = narratorName
-        chapters = items
-        val media = items.map { chapter ->
+        emit("error")
+    }
+
+    /** Hàng đợi của một cuốn: chương có file trên máy phát file, chưa có thì phát thẳng từ máy tính (Streaming). */
+    @androidx.annotation.OptIn(UnstableApi::class)
+    fun mediaItems(id: String, title: String, narratorName: String, items: List<Chapter>): List<MediaItem> {
+        val artwork = Artwork.cover(title, id)
+        return items.map { chapter ->
             MediaItem.Builder()
                 .setMediaId(chapter.id.toString())
-                .setUri(Uri.fromFile(Store.file(id, chapter.file)))
+                .setUri(Streaming.chapterUri(appContext, id, chapter.file))
+                .setCustomCacheKey(Streaming.cacheKey(id, chapter.file))
                 .setMediaMetadata(
                     MediaMetadata.Builder()
                         .setTitle(chapter.title)
@@ -184,11 +200,25 @@ object Playback {
                         .setAlbumTitle(title)
                         .setDisplayTitle(chapter.title)
                         .setSubtitle(title)
-                        .setArtworkData(Artwork.cover(title, id), MediaMetadata.PICTURE_TYPE_FRONT_COVER)
+                        .setArtworkData(artwork, MediaMetadata.PICTURE_TYPE_FRONT_COVER)
                         .build(),
                 )
                 .build()
         }
+    }
+
+    /** Nạp một cuốn: cả danh sách chương vào hàng đợi, bắt đầu ở chương/giây đã chọn. */
+    fun load(id: String, title: String, narratorName: String, items: List<Chapter>, startChapterId: Int, startSeconds: Double, rate: Double, autoplay: Boolean = true) {
+        val exo = player ?: return
+        saveNow()
+        lastError = ""
+        bookId = id
+        bookTitle = title
+        narrator = narratorName
+        chapters = items
+        val media = mediaItems(id, title, narratorName, items)
+        // Có chương phát qua mạng thì giữ Wi-Fi thức khi tắt màn hình; sách đã tải hết thì không tốn pin cho việc ấy.
+        exo.setWakeMode(if (media.any { it.localConfiguration?.uri?.scheme == "http" }) C.WAKE_MODE_NETWORK else C.WAKE_MODE_LOCAL)
         val index = items.indexOfFirst { it.id == startChapterId }.coerceAtLeast(0)
         exo.setMediaItems(media, index, (startSeconds * 1000).toLong())
         exo.playbackParameters = PlaybackParameters(rate.toFloat())
@@ -205,6 +235,11 @@ object Playback {
         val exo = player ?: return
         if (pausedAtMs > 0 && System.currentTimeMillis() - pausedAtMs > autoRewindAfterMs) {
             exo.seekTo((exo.currentPosition - (autoRewindSeconds * 1000).toLong()).coerceAtLeast(0))
+        }
+        // Sau một lỗi (mất mạng khi nghe thẳng) ExoPlayer nằm ở IDLE: phải chuẩn bị lại thì mới phát tiếp đúng chỗ.
+        if (exo.playbackState == Player.STATE_IDLE) {
+            lastError = ""
+            exo.prepare()
         }
         exo.play()
         Bedtime.interaction("play")

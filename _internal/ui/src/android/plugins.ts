@@ -24,6 +24,8 @@ export interface NativeState {
   buffering: boolean;
   rate: number;
   sleep: NativeSleep;
+  /** Lỗi phát gần nhất (Playback.onError): mất kết nối khi nghe thẳng, hay file hỏng. Rỗng khi ổn. */
+  error?: string;
 }
 
 // Nhật ký đêm của lõi native - cùng hình dạng với listen/model.ts (NightSession).
@@ -116,6 +118,8 @@ export interface LocalBook {
   cover?: { file: string; version: number; color: string; width: number; height: number } | null;
   state: ListeningState;
   bytes?: number;
+  /** Chưa tải: nghe thẳng từ máy tính (Streaming.kt) - gói sách đã cất ở stream.json. */
+  streamed?: boolean;
 }
 
 export interface DownloadEvent {
@@ -137,6 +141,8 @@ export interface EbookLibraryPlugin {
   remoteLibrary(): Promise<{ name: string; books: RemoteBook[] }>;
   download(options: { bookId: string }): Promise<{ bookId: string }>;
   localBooks(): Promise<{ books: LocalBook[] }>;
+  /** Sách trên máy tính chưa tải mà nghe thẳng được; máy tính không trả lời thì rỗng. */
+  streamableBooks(): Promise<{ books: LocalBook[] }>;
   book(options: { id: string }): Promise<LocalBook>;
   readText(options: { id: string; path: string }): Promise<{ text: string }>;
   deleteBook(options: { id: string }): Promise<void>;
