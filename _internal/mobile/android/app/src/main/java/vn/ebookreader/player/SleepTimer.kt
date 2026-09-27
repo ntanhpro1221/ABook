@@ -91,7 +91,7 @@ object SleepTimer {
         Playback.player?.pauseAtEndOfMediaItems = false
         restoreVolume()
         Bedtime.timerSet(value, reason)
-        Motion.start(Playback.appContext)
+        Motion.refresh()
         tick()
         Playback.emit("sleep")
     }
@@ -102,7 +102,7 @@ object SleepTimer {
         Playback.player?.pauseAtEndOfMediaItems = true
         restoreVolume()
         Bedtime.timerSet(-1)
-        Motion.start(Playback.appContext)
+        Motion.refresh()
         tick()
         Playback.emit("sleep")
     }
@@ -113,7 +113,7 @@ object SleepTimer {
         mode = Mode.OFF
         Playback.player?.pauseAtEndOfMediaItems = false
         restoreVolume()
-        Motion.stop()
+        Motion.refresh()
         Playback.emit("sleep")
     }
 
@@ -131,6 +131,9 @@ object SleepTimer {
         tick()
         Playback.emit("sleep")
     }
+
+    /** Vừa tự dừng chưa tới 2 phút: cảm biến còn nghe để "lắc để nghe tiếp". */
+    fun stoppedRecently(now: Long = System.currentTimeMillis()) = stoppedAtMs > 0 && now - stoppedAtMs < 125_000L
 
     /** Lắc máy: đang hẹn giờ thì nghe thêm; vừa tự dừng (< 2 phút) thì phát tiếp và hẹn lại. */
     fun onShake() {
@@ -169,7 +172,7 @@ object SleepTimer {
         Bedtime.stopped()
         buzz(longArrayOf(0, 40))
         // Cảm biến còn nghe thêm 2 phút để "lắc để nghe tiếp" vẫn chạy.
-        main.postDelayed({ if (mode == Mode.OFF) Motion.stop() }, 125_000L)
+        main.postDelayed({ Motion.refresh() }, 125_000L)
         Playback.emit("sleep")
     }
 
@@ -255,6 +258,26 @@ object SleepTimer {
 object Motion : SensorEventListener {
     private var manager: SensorManager? = null
     private var running = false
+
+    /** Úp máy để tạm dừng, lật lên (trong `FLIP_RESUME_MS`) để nghe tiếp - Cài đặt, mặc định tắt. */
+    var flipEnabled = false
+    private const val FLIP_RESUME_MS = 10 * 60_000L
+    private var faceDownSinceMs = 0L
+    private var flipPausedAtMs = 0L
+    // Độ lệch độ lớn gia tốc trong ~1 giây gần nhất: nằm yên trên bàn/nệm gần 0; cầm trên tay (kể cả nằm ngửa giơ máy
+    // lên xem - màn hình cũng úp xuống!) luôn rung nhẹ. Chỉ tính là "úp" khi úp VÀ yên.
+    private val recent = ArrayDeque<Pair<Long, Double>>()
+
+    /**
+     * Bật cảm biến khi có ai cần: hẹn giờ đang chạy (lắc để nghe thêm), vừa tự dừng < 2 phút (lắc để nghe tiếp), hoặc
+     * đang phát / vừa úp máy dừng mà người dùng bật "úp máy để tạm dừng". Không ai cần thì tắt - đỡ pin.
+     */
+    fun refresh() {
+        val now = System.currentTimeMillis()
+        val wanted = SleepTimer.mode != SleepTimer.Mode.OFF || SleepTimer.stoppedRecently(now) ||
+            (flipEnabled && (Playback.player?.isPlaying == true || (flipPausedAtMs > 0 && now - flipPausedAtMs < FLIP_RESUME_MS)))
+        if (wanted) start(Playback.appContext) else stop()
+    }
     private val peaks = ArrayDeque<Long>()
     private var lastShakeMs = 0L
     // Cửa sổ 30 giây: độ lệch của độ lớn gia tốc - rất nhỏ nghĩa là máy nằm yên.
@@ -282,6 +305,7 @@ object Motion : SensorEventListener {
         val (x, y, z) = Triple(event.values[0], event.values[1], event.values[2])
         val magnitude = sqrt((x * x + y * y + z * z).toDouble())
         val now = System.currentTimeMillis()
+        if (flipEnabled) watchFlip(z.toDouble(), magnitude, now)
         // Lắc: hai đỉnh vượt ngưỡng (mặc định 2,2 g) trong 800 ms, cách lần lắc trước > 2 giây.
         if (magnitude / SensorManager.GRAVITY_EARTH > SleepTimer.shakeThresholdG) {
             peaks.addLast(now)
@@ -304,6 +328,29 @@ object Motion : SensorEventListener {
             count = 0
             sum = 0.0
             sumSquares = 0.0
+        }
+    }
+
+    private fun watchFlip(z: Double, magnitude: Double, now: Long) {
+        recent.addLast(now to magnitude)
+        while (recent.isNotEmpty() && now - recent.first().first > 1000) recent.removeFirst()
+        val mean = recent.sumOf { it.second } / recent.size
+        val still = recent.size >= 5 && recent.all { kotlin.math.abs(it.second - mean) < 0.35 }
+        val playing = Playback.player?.isPlaying == true
+        if (z < -8.0 && still) {
+            if (faceDownSinceMs == 0L) faceDownSinceMs = now
+            if (playing && now - faceDownSinceMs > 1500) {
+                faceDownSinceMs = 0L
+                flipPausedAtMs = now
+                Playback.onMain { Playback.pause() }
+            }
+        } else if (z >= -8.0) {
+            faceDownSinceMs = 0L
+        }
+        if (z > 7.0 && flipPausedAtMs > 0 && !playing) {
+            val pausedFor = now - flipPausedAtMs
+            flipPausedAtMs = 0L
+            if (pausedFor < FLIP_RESUME_MS) Playback.onMain { Playback.play() }
         }
     }
 
