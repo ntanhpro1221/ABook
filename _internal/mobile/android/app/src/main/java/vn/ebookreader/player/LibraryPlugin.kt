@@ -139,6 +139,7 @@ class LibraryPlugin : Plugin() {
             val local = Store.manifest(book.getString("id"))
             book.put("downloaded", local != null)
             book.put("localChapters", local?.optInt("chaptersAvailable") ?: 0)
+            book.put("localCoverVersion", local?.optJSONObject("cover")?.optLong("version") ?: 0L)
         }
         call.resolve(JSObject().put("name", reply.optString("name")).put("books", books))
     }
@@ -189,6 +190,10 @@ class LibraryPlugin : Plugin() {
                 files += "cast.json" to 0L
                 val samples = manifest.optJSONArray("samples") ?: JSONArray()
                 for (index in 0 until samples.length()) files += samples.getString(index) to 0L
+                // Ảnh bìa thật (webui/covers.py): tải lại mỗi lần (vài trăm KB); máy tính đã bỏ bìa thì xoá bản cũ.
+                val cover = manifest.optJSONObject("cover")
+                if (cover != null) files += cover.optString("file", "cover.jpg") to 0L
+                else Store.file(id, "cover.jpg").delete()
                 val total = files.sumOf { it.second }
                 var done = 0L
                 files.forEachIndexed { index, (relative, size) ->

@@ -1,6 +1,7 @@
 package vn.ebookreader.player
 
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.LinearGradient
@@ -33,6 +34,44 @@ object Artwork {
             value = (value * 16777619L) and 0xffffffffL
         }
         return value
+    }
+
+    /**
+     * Bìa cho màn hình khoá, thông báo, widget: ảnh bìa thật nếu sách có (`cover.jpg` tải về cùng gói), không thì vẽ
+     * từ tên như bản web. Ảnh dọc không bị cắt: đặt trọn ở giữa khung vuông, nền là chính ảnh ấy phóng to và nhoè.
+     */
+    fun cover(title: String, bookId: String?): ByteArray {
+        val file = bookId?.let { Store.file(it, "cover.jpg") }
+        if (file == null || !file.isFile) return cover(title)
+        return cache.getOrPut("${file.path}:${file.lastModified()}") { photo(file) ?: cover(title) }
+    }
+
+    private fun photo(file: java.io.File): ByteArray? {
+        val size = 512
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(file.path, bounds)
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
+        var sample = 1
+        while (maxOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= size) sample *= 2
+        val source = BitmapFactory.decodeFile(file.path, BitmapFactory.Options().apply { inSampleSize = sample }) ?: return null
+        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+        // Nền: thu ảnh về 12 điểm rồi phóng lại - nhoè đủ để làm nền mà không cần RenderScript.
+        val tiny = Bitmap.createScaledBitmap(source, 12, 12, true)
+        canvas.drawBitmap(tiny, null, android.graphics.Rect(0, 0, size, size), paint)
+        tiny.recycle()
+        val scale = minOf(size.toFloat() / source.width, size.toFloat() / source.height)
+        val width = source.width * scale
+        val height = source.height * scale
+        val left = (size - width) / 2f
+        val top = (size - height) / 2f
+        canvas.drawBitmap(source, null, android.graphics.RectF(left, top, left + width, top + height), paint)
+        source.recycle()
+        val stream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream)
+        bitmap.recycle()
+        return stream.toByteArray()
     }
 
     fun cover(title: String): ByteArray = cache.getOrPut(title) {
