@@ -200,14 +200,29 @@ HỌ chung cả nhà); nhãn không dấu so theo chữ bỏ dấu, có dấu so
 tụt. TMA, YMP: không đổi (tên kiểu Âu/Nhật - luật không chạm). `--gold-check`: 11 truyện không nhập hai người nào. Trên
 nhãn của các project sản xuất cũ (cuốn 2 lô 17: 48 nhân vật, các bản alpha): luật không gom gì.
 
+Chữ hiển thị (danh sách nhân vật trong Studio) - luật `restore_source_marks`, lượt cuối, chỉ đổi chữ (một tên thành
+một tên): tên mà sách không viết như thế, nhưng bỏ dấu ra khớp ĐÚNG MỘT cách viết tên trong sách (mọi chữ viết hoa đầu;
+tên một chữ không tính chỗ đầu câu) -> cách của sách: `HOANG CAI` -> `HOÀNG CÁI`, `KHỐNG MINH` -> `KHỔNG MINH`. Tên
+hiển thị đúng đáp án trên Tam quốc: LoRA v2 43,4% -> **71,7%**, v1 30,1% -> 61,6%, qwen3:8b 79,5% (vốn viết đúng); F1
+giọng không đổi; TMA, YMP không đổi. Nhân tiện: đếm tên trong sách nhanh 50 lần - `unicodedata.normalize` của CPython
+chậm vượt tuyến tính trên chuỗi dài (cuốn 2, 11 triệu ký tự: 21 giây cả cuốn, 0,05 giây từng dòng, kết quả y hệt), và
+dựng sổ nhân vật đã trả 21 giây ấy cho mỗi cuốn.
+
+Độ vững: bỏ các câu đáp án là người vô danh (NPC* - không có danh tính để giữ giọng), kết luận giữ nguyên: Tam quốc
+qwen3:8b 81,6 / v2 80,7 / v1 79,9; TMA qwen3:8b 59,7 / **qwen3:4b 63,3** / v1 64,4 / v2 64,0 / nền 4B 59,0 / gemma4
+e2b 57,6; YMP không đổi (không có câu vô danh). Lạ: qwen3:4b hơn qwen3:8b trên TMA theo giọng ở cả hai cách chấm -
+hàng GPU g (tự chạy sau c3) đo qwen3:4b trên Tam quốc và YMP có người kể.
+
 Chuyện chọn model, theo thước giọng + luật mới: v2 thắng 5/8 chương (TMA 2-2, Tam quốc 2-1, YMP 1-0), gộp TMA +4,0,
 YMP +26,7, Tam quốc -0,6 (hoà); cảm xúc hơn 6-9 điểm; nhanh 1,5 lần. Cổng "v2 >= qwen3:8b trên truyện chưa thấy" đo bằng
 giọng: hoà, không đạt rõ -> **vẫn giữ qwen3:8b**, nhưng lý do đã khác hẳn lúc 21:xx. Việc kế:
 1. Gộp luật tên gọi vào dây chuyền (lợi cho mọi model; đổi hash - không lô nào cần resume).
 2. Thước chính của mọi phép đo người nói từ nay là F1 giọng; nhãn chặt vẫn báo kèm (tên hiển thị trong Studio).
-3. Neo cách viết tên vào văn bản cho phần HIỂN THỊ (`HOANG CAI` -> "Hoàng Cái" theo sách) - để chữ xấu của LoRA không
-   lộ ra danh sách nhân vật.
+3. ~~Neo cách viết tên vào văn bản cho phần HIỂN THỊ~~ - xong (`restore_source_marks`, trên).
 4. Một truyện chưa thấy nữa, tên thuần Việt (văn học Việt hết bản quyền, wikisource), 2-3 chương gold, chạy lại cổng.
+5. Tên tự (Tử-long = Triệu Vân, Công-cẩn = Chu Du): sách Trung giới thiệu bằng "<tên>, tự (là) <tên tự>" ("Bàng Thống
+   tự là Sĩ-nguyên", "Hoàng Trung, tự Hán-thăng" - Tam quốc 047, 053) - một luật đọc câu giới thiệu ấy thành sổ bí danh
+   theo cuốn; đo được bằng chính các bí danh đáp án Tam quốc đã ghi ("CHU DU,DU,CHU CÔNG-CẨN,...").
 
 ## Tài liệu
 

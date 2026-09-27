@@ -86,6 +86,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   dừng cuốn ấy.
 - Truyện Trung, Việt: nhân vật được gọi bằng tên ("Du", "Tháo") không còn thành giọng thứ hai của chính người ấy (Chu
   Du, Tào Tháo). Thử trên Tam quốc diễn nghĩa: số câu đọc đúng giọng người nói tăng rõ ở mọi model phân tích.
+- Danh sách nhân vật viết tên theo đúng chữ của sách ("HOÀNG CÁI", không còn "HOANG CAI" hay "KHỐNG MINH" khi model phân
+  tích viết thiếu hay sai dấu).
+- Dựng sổ nhân vật cho cuốn dài nhanh hơn khoảng 20 giây (đếm tên trong sách).
 
 ### Lưu ý khi nâng cấp
 

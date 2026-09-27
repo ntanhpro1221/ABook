@@ -35,11 +35,11 @@ for path in (HERE, ROOT):
 from score_models import GOLD_ROOT, load_gold, read_project, speaker_credit, speaker_key  # noqa: E402
 
 from ebook_reader import character_registry  # noqa: E402
-from ebook_reader.character_registry import canonical_speaker_names, fold_for_source_search, is_local_speaker  # noqa: E402
+from ebook_reader.character_registry import canonical_speaker_names, is_local_speaker  # noqa: E402
 
 
 def source_text(projects: list[Path]) -> str:
-    """Như `_folded_source_text`: mọi .txt cùng thư mục với các chương của project, bỏ dấu, chữ thường."""
+    """Như `character_registry._source_text`: mọi .txt cùng thư mục với các chương của project, nguyên chữ."""
     folders: set[Path] = set()
     for project in projects:
         connection = sqlite3.connect(f"file:{project / 'project.sqlite3'}?mode=ro", uri=True)
@@ -51,7 +51,7 @@ def source_text(projects: list[Path]) -> str:
             connection.close()
     chunks = [path.read_text(encoding="utf-8", errors="replace")
               for folder in sorted(folders) for path in sorted(folder.glob("*.txt"))]
-    return fold_for_source_search("\n".join(chunks))
+    return "\n".join(chunks)
 
 
 def voice_of(label: str, chapter: str, mapping: dict[str, str]) -> str:
@@ -112,7 +112,7 @@ def main(argv: list[str]) -> int:
             rows.update({(str(row["chapter"]), int(row["seq"])): row for row in found})
         labels = Counter(str(row["speaker"] or "") for row in rows.values())
         mapping = canonical_speaker_names(labels, source_text(projects))
-        points, places, strict = [], [], 0
+        points, places, strict, shown = [], [], 0, 0
         split: dict[str, set[str]] = defaultdict(set)
         merged: dict[str, set[str]] = defaultdict(set)
         for key, entry in gold.items():
@@ -123,6 +123,7 @@ def main(argv: list[str]) -> int:
             points.append((person, voice))
             places.append(key[0])
             strict += speaker_credit(entry, label) > 0
+            shown += speaker_credit(entry, mapping.get(label, label)) > 0
             split[person].add(voice)
             merged[voice].add(person)
         if not points:
@@ -134,7 +135,8 @@ def main(argv: list[str]) -> int:
             f"{chapter}:{bcubed([point for point, where in zip(points, places) if where == chapter])[2]:.1%}"
             for chapter in chapters if chapter in places
         )
-        print(f"{model_dir.name:24s} {len(points):4d} câu | nhãn chặt {strict / len(points):6.1%} | "
+        print(f"{model_dir.name:24s} {len(points):4d} câu | nhãn chặt {strict / len(points):6.1%} "
+              f"-> sau gom {shown / len(points):6.1%} | "
               f"giọng B3 P {precision:6.1%} R {recall:6.1%} F1 {f1:6.1%} | "
               f"người >1 giọng {len(split_people)}/{len(split)} | giọng >1 người "
               f"{sum(len(people) > 1 for people in merged.values())}/{len(merged)} | F1 từng chương {per_chapter}")
