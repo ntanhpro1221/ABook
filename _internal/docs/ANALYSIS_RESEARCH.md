@@ -252,6 +252,28 @@ Cả hai lỗi nằm ngoài model: model nào cũng bị trừ như nhau, nên k
 đối trên truyện Việt thuần trước bản sửa đều thấp oan. Việc kế: chạy cổng (qwen3:8b, LoRA v2, qwen3:4b) trên ba chương
 này sau hàng GPU c3/g, chấm bằng F1 giọng.
 
+**Cổng Tắt đèn (28-09 06:3x, 112 câu thoại, host đã sửa):**
+
+| | F1 giọng | từng chương (XX / XXI / XXIV) | nhãn chặt -> sau gom | giây (3 chương) |
+|---|---|---|---|---|
+| qwen3:8b | **73,3%** | 74,3 / 80,4 / 72,0 | 75,9 -> 79,5% | 1.335 |
+| LoRA v2 | 72,3% | 80,3 / 76,6 / 68,0 | 51,8 -> 78,6% | 797 |
+| qwen3:4b | 47,4% | 65,0 / 46,7 / 51,6 | 54,5% | 855 |
+
+Như Tam quốc: qwen3:8b và LoRA v2 ngang nhau về giọng (LoRA nhanh 1,7 lần, thua ở cách viết tên cho tới khi được gom),
+qwen3:4b tụt xa -> giữ qwen3:8b. Nỗi lo "prompt cấm tiền tố xưng hô nên model ghi vợ là DẬU" không xảy ra: cả qwen3:8b
+lẫn LoRA v2 ghi "CHỊ DẬU" / "ANH DẬU".
+
+3. **Tên sai nằm lọt trong chữ khác** (lộ ra ở cổng này): qwen3:8b ghi "AN DẬU" cho 3 câu của anh Dậu. Bỏ dấu là "an
+   dau" - chuỗi con của "Nguyễn Văn Dậu" ("v|an dau") - nên luật gom tên vắng mặt coi nó là có trong sách. Sửa:
+   `source_occurrences` đếm NGUYÊN CHỮ (`str.find` rồi xét ranh giới, giữ tốc độ). Việc ấy làm lộ luật thứ hai: nhánh
+   "chữ đầu lệch một ký tự" (dành cho tên kiểu Âu + họ bịa, `SELNE VALKRYN` -> `SELENE`) trỏ "TƯƠNG TỬ" về "LUONG" và -
+   từ trước đó - "DONG VINH", "HỒNG CÁI" về "PHÁO LONG": với tên kiểu Việt chữ đầu là HỌ, lệch một chữ là họ khác. Nhánh
+   ấy nay chỉ cho tên kiểu Âu. Đo lại 17 lượt (mọi model, TMA / YMP / Tam quốc / Tắt đèn): chỉ 3 lượt đổi, đều tăng -
+   Tắt đèn qwen3:8b 72,7 -> 73,3, Tam quốc LoRA v1 74,6 -> 75,0, v2 74,2 -> 74,5; `--gold-check` sạch. Bản sao của luật
+   trong `scripts/source_spellings.py` (gieo ở ranh giới lô) sửa cùng lúc - `test_source_spellings_agree` giữ hai bản
+   khớp nhau.
+
 ## Tài liệu
 
 Đã đọc (27-09):

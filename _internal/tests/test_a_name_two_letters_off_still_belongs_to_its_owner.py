@@ -1,7 +1,7 @@
 """Nhãn vắng mặt trong sách lệch hai ký tự thì gom, nhưng chỉ khi đích duy nhất và nhãn đủ dài."""
 from __future__ import annotations
 
-from ebook_reader.character_registry import fold_for_source_search, fold_to_source_spelling
+from ebook_reader.character_registry import fold_for_source_search, fold_to_source_spelling, source_occurrences
 
 SOURCE = fold_for_source_search(
     "Jocelyn quay sang Artil. Artil im lặng. Jocelyn nói với Artil rằng Norman đã tới. "
@@ -22,6 +22,13 @@ def test_two_different_targets_are_not_guessed() -> None:
     source = fold_for_source_search("Marina và Karina cùng bước vào. Marina nói. Karina đáp.")
     # "SARINO" lệch đúng hai ký tự với CẢ Marina lẫn Karina -> hai đích khác nhau, không đoán.
     assert fold_to_source_spelling(["Marina", "Karina", "SARINO"], source) == {}
+
+
+def test_a_misspelling_hidden_inside_other_words_is_still_absent() -> None:
+    # Tắt đèn: "AN DẬU" bỏ dấu là "an dau", chuỗi con của "Nguyễn Văn Dậu" - nhưng không có NGUYÊN CHỮ nào như thế.
+    source = fold_for_source_search("Nguyễn Văn Dậu nợ sưu. Anh Dậu run như cầy sấy. Chị Dậu can chồng.")
+    assert source_occurrences("AN DẬU", source) == 0 and source_occurrences("ANH DẬU", source) == 1
+    assert fold_to_source_spelling(["ANH DẬU", "AN DẬU", "CHỊ DẬU"], source) == {"AN DẬU": "ANH DẬU"}
 
 
 def test_a_short_label_is_not_folded_by_two_edits() -> None:
