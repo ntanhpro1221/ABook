@@ -11,6 +11,7 @@ Gói sách (`book.json`) cùng hình dạng với phía Nghe trên máy tính (l
     scripts/<chapterId>.json  văn bản + mốc thời gian để đọc theo
     cast.json               dàn nhân vật
     samples/<segmentId>.wav   câu mẫu của từng nhân vật
+    cover.jpg               ảnh bìa thật, chỉ khi người dùng đã đặt (webui/covers.py)
 """
 from __future__ import annotations
 
@@ -28,7 +29,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import unquote, urlsplit
 
-from . import listen_view, store
+from . import covers, listen_view, store
 from .library import Library, book_id
 from .listening import Listening
 
@@ -162,7 +163,10 @@ def manifest(project_root: Path, book: str, listening: Listening) -> dict[str, A
         })
     cast = store.cast(project_root)
     samples = sorted({person["sampleId"] for person in cast["characters"] + cast["extras"] if person.get("sampleId")})
-    version = hashlib.sha256(json.dumps([(c["id"], c["size"]) for c in chapters]).encode()).hexdigest()[:16]
+    cover = covers.cover_meta(project_root)
+    # Đổi ảnh bìa cũng là một phiên bản mới của gói: điện thoại thấy "có cập nhật" và tải lại bìa.
+    version = hashlib.sha256(json.dumps([[(c["id"], c["size"]) for c in chapters],
+                                         cover["version"] if cover else 0]).encode()).hexdigest()[:16]
     return {
         "format": listen_view.FORMAT,
         "id": book,
@@ -176,6 +180,7 @@ def manifest(project_root: Path, book: str, listening: Listening) -> dict[str, A
         "chapters": chapters,
         "cast": "cast.json",
         "samples": [f"samples/{sample}.wav" for sample in samples],
+        "cover": {**cover, "file": covers.COVER_FILE} if cover else None,
     }
 
 
@@ -201,14 +206,19 @@ class SyncApp:
             identifier = book_id(path)
             summary["id"] = identifier
             view = listen_view.book(path, identifier, summary, self.listening.get(identifier), with_chapters=False)
-            out.append({key: view[key] for key in ("id", "title", "narrator", "duration", "chaptersTotal",
-                                                    "chaptersAvailable", "complete", "updatedAt")})
+            entry = {key: view[key] for key in ("id", "title", "narrator", "duration", "chaptersTotal",
+                                                 "chaptersAvailable", "complete", "updatedAt")}
+            meta = covers.cover_meta(path)
+            entry["cover"] = {"color": meta["color"], "version": meta["version"]} if meta else None
+            out.append(entry)
         return out
 
     def resolve_file(self, project_root: Path, relative: str) -> Path | bytes | None:
         """Đường dẫn file của gói (chỉ các tên trong manifest; không đi ra ngoài thư mục sách)."""
         if relative == "cast.json":
             return json.dumps(store.cast(project_root), ensure_ascii=False).encode("utf-8")
+        if relative == covers.COVER_FILE:
+            return covers.cover_file(project_root)
         match = re.fullmatch(r"scripts/(\d+)\.json", relative)
         if match:
             script = store.chapter_script(project_root, int(match.group(1)))

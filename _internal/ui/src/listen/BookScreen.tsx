@@ -385,7 +385,7 @@ export function BookScreen({
         <ArrowLeft className="size-4" /> Thư viện
       </button>
       <header className="mt-5 flex flex-col gap-5 sm:flex-row sm:gap-7">
-        <BookCover title={book.title} size="lg" playing={listening && player.playing} className="w-40 max-sm:mx-auto sm:w-44" />
+        <BookCover title={book.title} size="lg" image={book.cover} playing={listening && player.playing} className="w-40 max-sm:mx-auto sm:w-44" />
         <div className="min-w-0 flex-1 max-sm:text-center">
           <h1 className="text-2xl font-bold leading-tight tracking-tight sm:text-[30px]">{book.title}</h1>
           <p className="tabular mt-2 text-sm text-fg-2">

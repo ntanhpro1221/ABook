@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any, Callable, Protocol
 from urllib.parse import parse_qs, unquote, urlsplit
 
-from . import actions, listen_view, store
+from . import actions, covers, listen_view, store
 from .library import Library, Preferences, book_id
 from .listening import Listening
 from .reviews import Reviews, review_view
@@ -106,6 +106,7 @@ class App:
         running = self.runner.running(path)
         result = self.library.summary(path, running=running, starting=self.jobs.starting(path))
         result["startError"] = self.jobs.error(path)
+        result["cover"] = covers.cover_view(path, result["id"])
         result.pop("position", None)
         with self._queue_lock:
             result["queuePosition"] = self.queue.index(result["id"]) + 1 if result["id"] in self.queue else None
@@ -333,9 +334,9 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def _body(self) -> dict[str, Any]:
+    def _body(self, limit: int = MAX_BODY) -> dict[str, Any]:
         length = int(self.headers.get("Content-Length") or 0)
-        if length > MAX_BODY:
+        if length > limit:
             raise ApiError(HTTPStatus.REQUEST_ENTITY_TOO_LARGE, "Yêu cầu quá lớn")
         if not length:
             return {}
@@ -524,6 +525,28 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Phán quyết không hợp lệ")
         self.app.reviews.set(value, str(body.get("stableId", ""))[:80], verdict, int(body.get("chapterId", 0)))
         self._send_json(HTTPStatus.OK, {"ok": True})
+
+    def put_cover(self, _query: dict[str, list[str]], value: str) -> None:
+        self.app._mutating()
+        path = self.app._book(value)
+        # Ảnh chụp điện thoại vài MB thành data URL còn to hơn 1/3: trần riêng cho đúng yêu cầu này.
+        body = self._body(limit=covers.MAX_UPLOAD_BYTES * 4 // 3 + 4096)
+        try:
+            covers.save_cover(path, str(body.get("image", "")))
+        except covers.CoverError as exc:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(exc)) from exc
+        self._send_json(HTTPStatus.OK, {"cover": covers.cover_view(path, value)})
+
+    def delete_cover(self, _query: dict[str, list[str]], value: str) -> None:
+        self.app._mutating()
+        covers.remove_cover(self.app._book(value))
+        self._send_json(HTTPStatus.OK, {"cover": None})
+
+    def media_cover(self, _query: dict[str, list[str]], value: str) -> None:
+        path = covers.cover_file(self.app._book(value))
+        if path is None:
+            raise ApiError(HTTPStatus.NOT_FOUND, "Sách này chưa có ảnh bìa")
+        self._send_file(path, cache=True)
 
     def post_reveal_export(self, _query: dict[str, list[str]]) -> None:
         folder = str(self._body().get("folder", ""))
@@ -732,6 +755,8 @@ ROUTES: list[Route] = [
     ("POST", re.compile(BOOK + r"/export"), Handler.post_export),
     ("GET", re.compile(BOOK + r"/review"), Handler.get_review),
     ("POST", re.compile(BOOK + r"/review"), Handler.post_review),
+    ("PUT", re.compile(BOOK + r"/cover"), Handler.put_cover),
+    ("DELETE", re.compile(BOOK + r"/cover"), Handler.delete_cover),
     ("POST", re.compile(r"/api/reveal-export"), Handler.post_reveal_export),
     ("GET", re.compile(r"/api/sync"), Handler.get_sync),
     ("POST", re.compile(r"/api/sync"), Handler.post_sync),
@@ -757,6 +782,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(r"/media/voices/([^/]+)"), Handler.media_voice),
     ("GET", re.compile(r"/media/books/([A-Za-z0-9_-]+)/chapters/(\d+)"), Handler.media_chapter),
     ("GET", re.compile(r"/media/books/([A-Za-z0-9_-]+)/samples/(\d+)"), Handler.media_sample),
+    ("GET", re.compile(r"/media/books/([A-Za-z0-9_-]+)/cover"), Handler.media_cover),
 ]
 
 

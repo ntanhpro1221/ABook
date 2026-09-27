@@ -1,3 +1,4 @@
+import type { CoverImage } from "@/shared/cover";
 // Hợp đồng với server Python (ebook_reader/webui/server.py). Mọi chữ hiển thị đã được server dịch sẵn
 // sang tiếng Việt (humanize.py); ở đây chỉ định kiểu và gọi.
 
@@ -35,6 +36,8 @@ export interface BookSummary {
   /** Đang xếp hàng chờ cuốn khác chạy xong (thứ tự trong hàng), hoặc null. */
   queuePosition?: number | null;
   broken?: string;
+  /** Ảnh bìa thật (webui/covers.py), hoặc null khi dùng bìa vẽ từ tên. */
+  cover?: CoverImage | null;
 }
 
 export interface Chapter {
