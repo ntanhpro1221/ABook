@@ -1,0 +1,354 @@
+@import "tailwindcss";
+@import "@fontsource/be-vietnam-pro/400.css";
+@import "@fontsource/be-vietnam-pro/500.css";
+@import "@fontsource/be-vietnam-pro/600.css";
+@import "@fontsource/be-vietnam-pro/700.css";
+
+/* Chữ số đều độ rộng cắt từ chính Be Vietnam Pro (ui/scripts/make_tabular_digits.py): bản fontsource không có
+   tính năng tnum nên đồng hồ trình phát nhảy vị trí mỗi giây. Chỉ áp cho chữ số, qua lớp .tabular. */
+@font-face {
+  font-family: "Be Vietnam Pro Digits";
+  src: url("./assets/fonts/be-vietnam-pro-digits-400.woff") format("woff");
+  font-weight: 400;
+  unicode-range: U+0030-0039;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Be Vietnam Pro Digits";
+  src: url("./assets/fonts/be-vietnam-pro-digits-500.woff") format("woff");
+  font-weight: 500;
+  unicode-range: U+0030-0039;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Be Vietnam Pro Digits";
+  src: url("./assets/fonts/be-vietnam-pro-digits-600.woff") format("woff");
+  font-weight: 600;
+  unicode-range: U+0030-0039;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Be Vietnam Pro Digits";
+  src: url("./assets/fonts/be-vietnam-pro-digits-700.woff") format("woff");
+  font-weight: 700;
+  unicode-range: U+0030-0039;
+  font-display: swap;
+}
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/*
+  Bảng màu: phòng thu ban đêm. Nền than xanh, một màu nhấn hổ phách ấm như đèn ON AIR / kim VU
+  dùng cho hành động chính và tiến độ đang chạy. Xanh lá = nghe được/xong, đỏ = lỗi, xám = dừng.
+  Mọi màu đi qua token; giao diện sáng định nghĩa lại token chứ không lật ngược máy móc.
+*/
+:root {
+  --bg: #f4f5f7;
+  --bg-sunken: #eceef2;
+  --panel: #ffffff;
+  --panel-2: #f7f8fa;
+  --hover: #eef0f4;
+  --line: #e2e5ea;
+  --line-strong: #cfd4db;
+  --text: #14181d;
+  --text-2: #4f5965;
+  --text-3: #666f7b;
+  --accent: #e39a2d;
+  --accent-hover: #d18a1f;
+  --accent-ink: #1d1304;
+  --accent-text: #93560a;
+  --accent-soft: #fbeedb;
+  --success: #15835c;
+  --success-soft: #dff3ea;
+  --danger: #c53a3a;
+  --danger-soft: #fbe4e4;
+  --warning: #9a6212;
+  --warning-soft: #fcf1dc;
+  --info: #3b6fd8;
+  --info-soft: #e3ebfb;
+  --nav-active: #ffffff;
+  --nav-active-ring: rgb(20 24 29 / 0.08);
+  --read-along: color-mix(in oklab, var(--accent) 26%, transparent);
+  --avatar-bg-l: 0.93;
+  --avatar-fg-l: 0.43;
+  --shadow: 0 1px 2px rgb(20 24 29 / 0.06), 0 8px 24px -12px rgb(20 24 29 / 0.16);
+  --shadow-lg: 0 24px 64px -24px rgb(20 24 29 / 0.35);
+  --scrim: rgb(15 18 22 / 0.45);
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --bg: #0e1115;
+  --bg-sunken: #0a0c0f;
+  --panel: #151a20;
+  --panel-2: #1a2028;
+  --hover: #1f262f;
+  --line: #252d37;
+  --line-strong: #333d49;
+  --text: #e9ecf0;
+  --text-2: #a3acb7;
+  --text-3: #8a94a1;
+  --accent: #f2a93f;
+  --accent-hover: #ffba5a;
+  --accent-ink: #1b1204;
+  --accent-text: #f5b65a;
+  --accent-soft: rgb(242 169 63 / 0.13);
+  --success: #43c496;
+  --success-soft: rgb(67 196 150 / 0.13);
+  --danger: #f06b6b;
+  --danger-soft: rgb(240 107 107 / 0.13);
+  --warning: #e8b64c;
+  --warning-soft: rgb(232 182 76 / 0.13);
+  --info: #6f9bf5;
+  --info-soft: rgb(111 155 245 / 0.13);
+  --nav-active: #1f262f;
+  --nav-active-ring: transparent;
+  --read-along: color-mix(in oklab, var(--accent) 22%, transparent);
+  --avatar-bg-l: 0.33;
+  --avatar-fg-l: 0.84;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 30px -14px rgb(0 0 0 / 0.7);
+  --shadow-lg: 0 30px 80px -20px rgb(0 0 0 / 0.75);
+  --scrim: rgb(4 6 8 / 0.62);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-sunken: var(--bg-sunken);
+  --color-panel: var(--panel);
+  --color-panel-2: var(--panel-2);
+  --color-hover: var(--hover);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-fg: var(--text);
+  --color-fg-2: var(--text-2);
+  --color-fg-3: var(--text-3);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-text: var(--accent-text);
+  --color-accent-soft: var(--accent-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-scrim: var(--scrim);
+  --color-nav-active: var(--nav-active);
+  /* Gốc chữ 16px (Tailwind text-xs = 12px, text-sm = 14px - đánh giá 26-09: 10,5px là quá nhỏ cho app đọc/nghe);
+     khoảng cách giữ nguyên 3,5px mỗi bậc như trước, nên bố cục không phình ra. */
+  --spacing: 0.21875rem;
+  --shadow-card: var(--shadow);
+  --shadow-float: var(--shadow-lg);
+  --font-sans: "Be Vietnam Pro", ui-sans-serif, "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "Cascadia Mono", "Cascadia Code", ui-monospace, Consolas, monospace;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  html {
+    font-size: 16px;
+  }
+  body {
+    margin: 0;
+    font-size: 14px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01" 0;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow: hidden;
+  }
+  ::selection {
+    background: var(--accent-soft);
+    color: var(--text);
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+    letter-spacing: -0.01em;
+  }
+  button {
+    cursor: default;
+  }
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-strong) transparent;
+  }
+  input[type="search"]::-webkit-search-cancel-button {
+    appearance: none;
+  }
+}
+
+@layer utilities {
+  .tabular {
+    font-family: "Be Vietnam Pro Digits", var(--font-sans);
+    font-variant-numeric: tabular-nums;
+  }
+  .text-pretty {
+    text-wrap: pretty;
+  }
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Câu đang đọc ở Đọc theo: đủ đậm để nổi lên ở cả hai giao diện (giao diện sáng trước đây chỉ 1,06:1). */
+.read-along-active {
+  background: var(--read-along);
+  color: var(--text);
+}
+
+/* Chữ cái đầu của nhân vật: cùng độ sáng cho mọi màu (OKLCH), chỉ đổi sắc - đủ tương phản ở cả hai giao diện. */
+.avatar {
+  background: oklch(var(--avatar-bg-l) 0.05 var(--hue, 250));
+  color: oklch(var(--avatar-fg-l) 0.13 var(--hue, 250));
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes now-playing-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.now-playing {
+  animation: now-playing-in 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Thanh đang chạy: vạch sáng trượt qua, như băng đang quay. Tắt khi người dùng xin giảm chuyển động. */
+@keyframes run-sheen {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+.sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.35), transparent);
+  animation: run-sheen 1.8s ease-in-out infinite;
+}
+
+/* Cột VU nhảy khi đang thu/đang phát. */
+@keyframes vu {
+  0%,
+  100% {
+    transform: scaleY(0.3);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+.vu > span {
+  transform-origin: bottom;
+  animation: vu 1s ease-in-out infinite;
+}
+.vu > span:nth-child(2) {
+  animation-delay: -0.35s;
+}
+.vu > span:nth-child(3) {
+  animation-delay: -0.7s;
+}
+.vu > span:nth-child(4) {
+  animation-delay: -0.2s;
+}
+
+/* Mở/đóng "Đang nghe": bìa bay giữa thanh phát và màn hình lớn (View Transitions, player.tsx setExpandedAnimated).
+   Chỉ MỘT phần tử mang tên này ở mỗi trạng thái: bìa nhỏ bỏ tên khi màn lớn đang mở. */
+.cover-morph {
+  view-transition-name: now-playing-cover;
+}
+::view-transition-group(now-playing-cover) {
+  animation-duration: 0.34s;
+  animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.24s;
+  animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+/* Có View Transitions thì nó lo cả lúc mở lẫn lúc đóng; hoạt ảnh trượt lên cũ chỉ còn là đường dự phòng. */
+@supports (view-transition-name: none) {
+  .now-playing {
+    animation: none;
+  }
+}
+
+/* Chuyển trang: nội dung trang mới hiện dần và nhích lên (Shell/App gọi animatePage khi đường dẫn đổi). */
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+/* Danh sách/lưới sách: các thẻ hiện lần lượt khi mở màn (tối đa ~10 thẻ đầu, phần sau hiện ngay). */
+.rise-in {
+  animation: page-in 0.32s cubic-bezier(0.2, 0, 0, 1) both;
+  animation-delay: calc(min(var(--i, 0), 10) * 28ms);
+}
+/* Biểu tượng đổi trạng thái (phát <-> dừng): nhún nhẹ khi hiện. */
+@keyframes icon-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6) rotate(-12deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.icon-pop {
+  display: inline-grid;
+  animation: icon-pop 0.2s cubic-bezier(0.2, 0, 0, 1.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise-in,
+  .icon-pop,
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+  .sheen::after,
+  .vu > span,
+  .now-playing {
+    animation: none;
+  }
+  * {
+    transition-duration: 0ms !important;
+  }
+}
