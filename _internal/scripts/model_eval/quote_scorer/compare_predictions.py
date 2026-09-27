@@ -139,7 +139,8 @@ def main() -> int:
     for spec in args.llm:
         name, _, where = spec.partition("=")
         root, _, book = where.partition("@")
-        systems[name] = llm_rows(name, Path(root), book or "throne_of_magical_arcana", reference)
+        # cùng tên model ở nhiều gốc (vd TMA và YMP chạy riêng) -> gộp thành một hệ
+        systems.setdefault(name, {}).update(llm_rows(name, Path(root), book or "throne_of_magical_arcana", reference))
 
     books = sorted({key[0] for key in reference})
     header = f"{'hệ':28s} {'tất cả':>14s} {'có tên':>14s} {'không ai':>12s} " + " ".join(f"{b[:10]:>12s}" for b in books)
