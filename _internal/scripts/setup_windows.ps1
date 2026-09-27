@@ -63,10 +63,10 @@ function Ensure-WingetPackage([string]$Command, [string]$PackageId, [string]$Dis
 }
 
 function Install-AppDependencies {
-    Write-Host "Cài Ebook Reader và các dependency Python..."
+    Write-Host "Cài ABook và các dependency Python..."
     Invoke-NativeChecked {
         & $Python -m pip install --no-build-isolation -e $InternalRoot
-    } "Cài Ebook Reader"
+    } "Cài ABook"
     & $Python -c "import importlib.metadata as m, json; direct=json.loads(m.distribution('utmosv2').read_text('direct_url.json') or '{}'); vcs=direct.get('vcs_info', {}); source=direct.get('url', '').removeprefix('git+').rstrip('/').removesuffix('.git').casefold(); expected='https://github.com/sarulab-speech/UTMOSv2.git'.rstrip('/').removesuffix('.git').casefold(); assert source == expected, source; assert vcs.get('commit_id', '').casefold() == '$UtmosSourceCommit'.casefold()" 2>$null
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Cài lại UTMOSv2 từ commit chính thức đã khóa..."
@@ -173,7 +173,7 @@ if ($DependenciesOnly) {
     if (-not (Test-Path -LiteralPath $Python -PathType Leaf)) {
         throw "Không thể repair dependency vì runtime Python chưa tồn tại."
     }
-    Write-Host "=== Ebook Reader - repair dependency Python ===" -ForegroundColor Cyan
+    Write-Host "=== ABook - repair dependency Python ===" -ForegroundColor Cyan
     Write-Host "Xác minh dependency, PyTorch CUDA và cache model; giữ nguyên dữ liệu sách."
     Install-PytorchCudaStack
     Install-AppDependencies
@@ -183,7 +183,7 @@ if ($DependenciesOnly) {
     return
 }
 
-Write-Host "=== Ebook Reader - cài đặt Windows ===" -ForegroundColor Cyan
+Write-Host "=== ABook - cài đặt Windows ===" -ForegroundColor Cyan
 Write-Host "Môi trường và model được lưu gọn trong _internal\runtime."
 Write-Host "Máy nên đang cắm sạc và SSD nên còn tối thiểu 30-40 GB."
 
@@ -256,7 +256,7 @@ Write-SetupMarker
 
 Write-Host ""
 Write-Host "CÀI ĐẶT HOÀN TẤT" -ForegroundColor Green
-Write-Host "Ebook Reader sẽ được mở tự động."
+Write-Host "ABook sẽ được mở tự động."
 if (-not $NoPause) {
     Read-Host "Nhấn Enter để đóng"
 }

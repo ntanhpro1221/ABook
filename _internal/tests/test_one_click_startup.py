@@ -16,7 +16,7 @@ def test_one_click_startup_contract() -> None:
     start = start_bytes.decode("utf-8")
     assert not (PROJECT_ROOT / "START.bat").exists()
     assert not (PROJECT_ROOT / "START.vbs").exists()
-    assert (PROJECT_ROOT / "Ebook Reader.lnk").is_file()
+    assert (PROJECT_ROOT / "ABook.lnk").is_file()
 
     launcher_path = INTERNAL_ROOT / "scripts" / "start_windows.ps1"
     launcher_bytes = launcher_path.read_bytes()
@@ -58,12 +58,12 @@ def test_one_click_startup_contract() -> None:
     assert '$env:EBOOK_READER_READY_FILE = $StartupReadyFile' in launcher
     assert "Test-Path -LiteralPath $ReadyFile -PathType Leaf" in launcher
     assert "$Process.ExitCode -eq 0" in launcher
-    assert "Đang khởi động Ebook Reader..." in launcher
-    assert "Ebook Reader vẫn đang khởi động..." in launcher
+    assert "Đang khởi động ABook..." in launcher
+    assert "ABook vẫn đang khởi động..." in launcher
     assert "Install-AppShortcuts" in launcher
     assert '& $Python $AppScript' not in launcher
     assert "Lần chạy đầu hoặc môi trường cần được sửa." in launcher
-    assert "KHÔNG THỂ KHỞI ĐỘNG EBOOK READER." in launcher
+    assert "KHÔNG THỂ KHỞI ĐỘNG ABOOK." in launcher
     assert '$StartupLog = Join-Path $LogsRoot "startup.log"' in launcher
     assert "Start-Transcript -Path $StartupLog -Append" in launcher
     assert "Stop-StartupLogging" in launcher
@@ -101,7 +101,8 @@ def test_one_click_startup_contract() -> None:
     assert "snapshot_download" in setup
     assert "revision='$Wav2Vec2Revision'" in setup
     assert "revision='$TimmBackboneRevision'" in setup
-    assert '$AppName = "Ebook Reader"' in shortcut
+    assert '$AppName = "ABook"' in shortcut
+    assert '$LegacyNames = @("Ebook Reader")' in shortcut and "Remove-LegacyShortcut" in shortcut
     assert '$Launcher = Join-Path $ProjectRoot "_internal\\Ebook Reader.vbs"' in shortcut
     assert '$RootShortcutPath = Join-Path $ProjectRoot "$AppName.lnk"' in shortcut
     assert '$StartMenuShortcutPath = Join-Path $ProgramsRoot "$AppName.lnk"' in shortcut

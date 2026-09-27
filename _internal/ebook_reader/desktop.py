@@ -152,7 +152,9 @@ def run_desktop() -> int:
 
     set_windows_app_identity()
     app = QApplication(sys.argv)
-    app.setApplicationName("Ebook Reader")  # định danh lưu trữ QtWebEngine - giữ nguyên, xem desktop_shell.APP_NAME
+    # Định danh lưu trữ của QtWebEngine (%LOCALAPPDATA%/ABook: bộ nhớ đệm, localStorage của trang) - cùng thư mục với
+    # tuỳ chọn của app (webui/library.py). Trước 28-09 là "Ebook Reader"; trang chỉ để tiện lợi ở đó, không cần chuyển.
+    app.setApplicationName(APP_NAME)
     app.setWindowIcon(QIcon(str(APP_ICON_PATH)))
     book_file = book_file_argument(sys.argv)
     instance_server = claim_single_instance(

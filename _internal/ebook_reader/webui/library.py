@@ -4,7 +4,8 @@ Thư viện = các thư mục sách nằm TRỰC TIẾP trong thư mục thư vi
 ("gần đây"). Server chỉ đọc sách nằm trong tập ấy: mã sách là đường dẫn mã hoá, nên không có tập cho phép thì
 bất kỳ trang nào gọi được server cũng đọc được mọi file SQLite trên máy.
 
-Tuỳ chọn và vị trí nghe dở lưu ở `%LOCALAPPDATA%/Ebook Reader/preferences.json` - ghi atomic.
+Tuỳ chọn và vị trí nghe dở lưu ở `%LOCALAPPDATA%/ABook/preferences.json` - ghi atomic. (Tên cũ của thư mục là
+"Ebook Reader": lần đầu mở với tên mới, các file của app được chuyển sang - `preferences_path`.)
 """
 from __future__ import annotations
 
@@ -37,13 +38,43 @@ DEFAULT_PREFERENCES: dict[str, Any] = {
 MAX_RECENTS = 30
 
 
+APP_DATA_FOLDER = "ABook"
+LEGACY_APP_DATA_FOLDERS = ("Ebook Reader",)
+# File của app nằm cạnh preferences.json (tuỳ chọn, dữ liệu nghe, máy đã ghép, phán quyết nghe lại, dấu vân tay audio).
+APP_DATA_FILES = ("preferences.json", "listening.json", "devices.json", "reviews.json", "fingerprints.json")
+
+
 def preferences_path() -> Path:
     override = os.environ.get("EBOOK_READER_PREFERENCES")
     if override:
         return Path(override)
     base = os.environ.get("LOCALAPPDATA")
-    root = Path(base) / "Ebook Reader" if base else Path.home() / ".ebook_reader"
+    if not base:
+        return Path.home() / ".ebook_reader" / "preferences.json"
+    root = Path(base) / APP_DATA_FOLDER
+    _move_legacy_app_data(Path(base), root)
     return root / "preferences.json"
+
+
+def _move_legacy_app_data(base: Path, root: Path) -> None:
+    """Thư mục dữ liệu mang tên cũ của app: chuyển các file của app sang thư mục tên mới, một lần - khi thư mục mới
+    chưa có tuỳ chọn nào. Chỉ chuyển file của app (không đụng bộ nhớ đệm của trình duyệt nhúng)."""
+    if (root / "preferences.json").exists():
+        return
+    for name in LEGACY_APP_DATA_FOLDERS:
+        legacy = base / name
+        files = [legacy / file for file in APP_DATA_FILES if (legacy / file).is_file()]
+        if not files:
+            continue
+        root.mkdir(parents=True, exist_ok=True)
+        for file in files:
+            if (root / file.name).exists():
+                continue  # thư mục mới đã có bản của nó: không đè
+            try:
+                os.replace(file, root / file.name)
+            except OSError:
+                continue  # file đang bị giữ: lần sau thử lại, app vẫn mở với tuỳ chọn mặc định
+        return
 
 
 def _legacy_output_folder() -> str:

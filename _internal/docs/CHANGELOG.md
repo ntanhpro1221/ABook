@@ -7,7 +7,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
-- **Tên mới: ABook** (trước là Ebook Reader), trên máy tính lẫn điện thoại.
+- **Tên mới: ABook** (trước là Ebook Reader), trên máy tính lẫn điện thoại: lối tắt ở thư mục gốc và Start Menu tên
+  "ABook" (lối tắt tên cũ tự gỡ khi mở app), cửa sổ khởi động, dữ liệu app ở `%LOCALAPPDATA%\ABook` (tự chuyển từ thư
+  mục tên cũ nếu có).
 - **Icon mới**: cuốn sách mở xoè thành cái loa (nền xanh rừng, bìa đất nung), dùng chung cho Windows và Android. File
   `.abook` và `.abookproj` có icon riêng cùng họ - ô icon app gấp góc trang; dự án đang làm thì hai nét sóng là nét đứt
   (sách chưa thành tiếng). Android có icon thích ứng theo mọi dáng launcher và icon đơn sắc nhuộm theo hình nền.

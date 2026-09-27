@@ -1,4 +1,4 @@
-# AGENTS.md — Ebook Reader
+# AGENTS.md — ABook
 
 Đọc file này trước khi sửa code. Không tạo tài liệu agent song song; cập nhật trực tiếp file này khi invariant hoặc kiến trúc thay đổi.
 
@@ -8,7 +8,7 @@
 
 Yêu cầu bắt buộc:
 
-- workflow GUI mở shortcut **Ebook Reader** ở root hoặc trong Start Menu; workflow tự động dùng
+- workflow GUI mở shortcut **ABook** ở root hoặc trong Start Menu (tên cũ "Ebook Reader" tự gỡ khi khởi động); workflow tự động dùng
   `python -m ebook_reader.cli`/entrypoint `ebook-reader-headless` và tuyệt đối không điều khiển cửa sổ;
 - không hỏi người dùng trong lúc job đang chạy;
 - settings, model, voice mapping, seed và threshold bị khóa theo book;
@@ -389,7 +389,7 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
 ## Cấu trúc source
 
 ```text
-Ebook Reader.lnk
+ABook.lnk
 README.md
 _internal/
 ├── Ebook Reader.vbs   # launcher thật; shortcut root/Start Menu trỏ trực tiếp vào đây
@@ -404,7 +404,7 @@ _internal/
 └── LICENSE
 ```
 
-Tên kỹ thuật duy nhất là `ebook_reader`; tên hiển thị là `Ebook Reader`. Không đưa file kỹ thuật mới ra root nếu không thật sự cần cho người dùng.
+Tên kỹ thuật duy nhất là `ebook_reader`; tên hiển thị là `ABook` (tên cũ `Ebook Reader` còn ở tên thư mục repo, `Ebook Reader.vbs`, dấu log Ollama trong file khoá chất lượng). Không đưa file kỹ thuật mới ra root nếu không thật sự cần cho người dùng.
 
 Module chính:
 
@@ -549,7 +549,7 @@ python -m pytest
 Definition of done:
 
 - test liên quan pass;
-- các mục root hiện cho người dùng vẫn chỉ có `Ebook Reader.lnk`, `README.md`, `_internal`; metadata Git ẩn được phép trong checkout;
+- các mục root hiện cho người dùng vẫn chỉ có `ABook.lnk`, `README.md`, `_internal`; metadata Git ẩn được phép trong checkout;
 - không tạo prompt giữa job;
 - kill ở ranh giới bất kỳ không làm hỏng artifact đã commit;
 - resume giữ settings và voice mapping;
