@@ -2,6 +2,20 @@
 
 Ứng dụng Windows chạy local, chuyển một hoặc nhiều chapter `.txt` tiếng Việt thành audiobook MP3 có phân vai và cảm xúc.
 
+## Tính năng chính
+
+- **Sản xuất sách nói (Studio)**: đọc cả truyện để nhận ra lời thoại, ai đang nói và cảm xúc từng câu; mỗi nhân vật một
+  giọng riêng khoá theo sách; thu âm từng câu rồi tự nghe lại bằng nhận dạng giọng nói và thu lại câu lệch. Truyện kể ngôi
+  thứ nhất: Studio hỏi "tôi" là ai. Hộp **"Việc cần anh"** chỉ ra những chỗ máy không chắc, xếp theo lợi trên mỗi lần bấm -
+  máy vẫn tự quyết và chạy tiếp, không bắt ai chờ.
+- **Nghe** trên máy tính và điện thoại Android với cùng một giao diện: thư viện theo bộ truyện, văn bản đọc theo, chế độ
+  đọc sách, ảnh bìa thật, hẹn giờ ngủ đầy đủ, dấu trang, lịch sử nghe, xuất MP3 có tag.
+- **Máy tính và điện thoại làm việc cùng nhau** qua Wi-Fi: tải sách về điện thoại, hoặc **nghe thẳng thư viện máy tính
+  không cần tải**; đồng bộ chỗ nghe và dấu trang; điều khiển điện thoại đang phát từ máy tính; chuyển máy đang nghe đúng
+  chương, đúng giây.
+
+Thay đổi của từng bản phát hành: [`_internal/docs/CHANGELOG.md`](_internal/docs/CHANGELOG.md).
+
 ## Bắt đầu
 
 1. Giải nén toàn bộ ZIP vào SSD còn đủ dung lượng.
@@ -245,3 +259,16 @@ không cần khởi động Ollama, không băm lại toàn bộ WAV hoặc ghé
 Kiến trúc, recovery, resource policy và pipeline mock đã có test. Các model thực, Windows notification và hành vi CUDA/RTX 5060 vẫn cần smoke test trên máy đích với một chapter khoảng 2.000–5.000 từ trước khi chạy book rất lớn.
 
 Tài liệu kỹ thuật và kết quả test nằm trong `_internal/docs/`.
+
+## Ứng dụng điện thoại (Android)
+
+Cài APK đi kèm bản phát hành. Trên máy tính, bật "Cho phép điện thoại kết nối" trong Cài đặt rồi bấm "Ghép điện thoại";
+trên điện thoại mở tab **Tải sách**, chọn máy tính tìm thấy trong cùng mạng Wi-Fi và nhập mã 6 số. Sau đó sách trên máy
+tính hiện ngay trong Thư viện điện thoại (nhãn "Máy tính") để nghe thẳng, hoặc tải về để nghe khi không có mạng. Ngoài nhà,
+mọi cách nối điện thoại với máy tính ở nhà bằng một mạng riêng (Tailscale, ZeroTier, NetBird...) đều dùng được.
+
+## Giấy phép
+
+Ebook Reader phát hành theo giấy phép MIT - xem [`_internal/LICENSE`](_internal/LICENSE). Thành phần bên thứ ba (thư viện,
+font, model) giữ giấy phép riêng, liệt kê ở [`_internal/docs/THIRD_PARTY.md`](_internal/docs/THIRD_PARTY.md). Quy trình phát
+hành: [`_internal/docs/RELEASING.md`](_internal/docs/RELEASING.md).
