@@ -66,6 +66,12 @@ lợi của nó nằm ở câu người kể/NPC, phần mà hệ kết hợp gi
 qwen3:8b bằng LoRA (+7,7 người nói, +9 cảm xúc, nhanh gấp đôi); (2) N7b "tôi là ai" cho truyện ngôi thứ nhất (~30% ->
 ?); (3) bộ chấm cho câu có tên (+2 trên nền LoRA).
 
+## KẾT QUẢ LỚN NHẤT 27-09 15:2x - MỘT DÒNG PROMPT cho truyện ngôi thứ nhất (chi tiết docs/LLM_EVAL.md)
+
+YMP 248: cho LLM biết "người kể xưng 'tôi' là SAMAEL" -> **LoRA 34,0% -> 89,4% người nói** (điểm tổng 67,3 -> 87,8),
+qwen3:8b 31,9% -> 61,7%. Người kể suy được KHÔNG cần gold (N7b). Đây là thay đổi đáng làm NHẤT cho app: lớn hơn mọi cải
+tiến bộ chấm ở trên, và chỉ cần một câu hỏi/gợi ý trong Studio + một dòng prompt.
+
 ## Tài liệu
 
 Đã đọc (27-09):
