@@ -27,6 +27,13 @@ LoRA 76,9% vs nền 66,4% vs qwen3:8b / qwen3:4b 68,5% (đo 21-09); bộ chấm 
 (mốc) và 84,6% (học trước PDNC). Lưu ý: các chương TMA KHÁC nằm trong dữ liệu huấn luyện LoRA - so với nền là sạch
 (cùng tập test), so với model chưa huấn luyện trên truyện này thì LoRA có lợi thế "đã quen truyện".
 
+**Truyện kể NGÔI THỨ NHẤT - lỗ lớn nhất của cả dây chuyền (YMP 248, 42 câu, người kể "tôi" = Samael):** người nói
+LoRA **28,6%**, nền 31,0% (điểm tổng 67,3 vs 56,3; LoRA vẫn nhanh gấp 2,3 và cảm xúc 94,6 vs 81,4%) - trong khi bộ
+chấm ứng viên 92,9%. Không công bằng hoàn toàn: bộ chấm được biết "tôi" là ai (N7 suy từ gold - tức TRẦN khi app biết
+người kể), LLM thì không. Hệ quả sản phẩm: truyện ngôi thứ nhất (rất nhiều light novel / truyện mạng) hiện sai người nói
+~70% câu; sửa rẻ nhất là MỘT câu hỏi trong Studio ("Truyện kể ngôi thứ nhất? 'Tôi' là ai?") đưa cho cả prompt LLM lẫn
+bộ chấm.
+
 ## Công cụ (`scripts/model_eval/`)
 
 | file | việc |
