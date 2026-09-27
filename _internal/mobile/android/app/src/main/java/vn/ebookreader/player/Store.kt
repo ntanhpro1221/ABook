@@ -195,5 +195,34 @@ object Store {
         bookDir(id).deleteRecursively()
     }
 
+    // ---- một cuốn, hai đường đến -----------------------------------------------------------------------------
+
+    private val PACKAGE_ID = Regex("bk-[0-9a-f]{24}")
+
+    fun isPackageId(value: String) = PACKAGE_ID.matches(value)
+
+    /** Cuốn đã có trên máy (đã tải hay đang nghe thẳng) mang mã sách cố định `packageId` nhưng mã máy tính khác. */
+    @Synchronized
+    fun findByPackage(packageId: String): JSONObject? =
+        playableBooks().firstOrNull { it.optString("packageId") == packageId && it.optString("id") != packageId }
+
+    /**
+     * Cùng một cuốn đến bằng hai đường - mở từ file .abook (thư mục mang mã sách cố định `bk-...`) rồi máy tính cho biết
+     * cuốn của nó có đúng mã ấy - là MỘT cuốn: thư mục đổi sang mã máy tính để chỗ nghe, dấu trang tiếp tục đồng bộ, audio
+     * đã có không phải tải lại. Trạng thái nghe đi theo nếu mã máy tính chưa có trạng thái riêng; hai bản đã cùng tải về
+     * (từ trước bản sửa này) thì để nguyên - không xoá gì của người nghe.
+     */
+    @Synchronized
+    fun adopt(packageId: String, syncId: String) {
+        if (packageId == syncId || !isPackageId(packageId) || manifest(packageId) == null || manifest(syncId) != null) return
+        val target = bookDir(syncId)
+        target.deleteRecursively() // chỉ là bộ nhớ đệm nghe thẳng (stream.json + file nhỏ): lấy lại được
+        if (!bookDir(packageId).renameTo(target)) return
+        val book = manifest(syncId) ?: return
+        writeAtomic(File(target, "book.json"), book.put("id", syncId).put("packageId", packageId).toString())
+        val imported = stateFile(packageId)
+        if (imported.isFile && !stateFile(syncId).exists()) imported.renameTo(stateFile(syncId))
+    }
+
     fun sizeOf(dir: File): Long = dir.walkTopDown().filter { it.isFile }.sumOf { it.length() }
 }

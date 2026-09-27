@@ -69,6 +69,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Windows: shortcut Start Menu mang mã nhận diện của app, để bảng media và thanh tác vụ hiện đúng tên, biểu tượng.
 - Sách không còn kẹt ở lần chạy tiếp theo sau khi một câu từng được thu lại cho rõ bị thu lại lần nữa (khi chữ đọc đổi,
   bản thu hỏng, hay người nghe sửa cách đọc tên).
+- Điện thoại: một cuốn mở từ file `.abook` và cùng cuốn ấy trên máy tính không còn thành hai cuốn trong thư viện - gộp
+  làm một, chỗ nghe đồng bộ tiếp với máy tính, audio đã có không phải tải lại.
 
 ### Lưu ý khi nâng cấp
 

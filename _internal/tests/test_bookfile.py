@@ -12,8 +12,9 @@ import pytest
 
 from ebook_reader.webui import bookfile
 from ebook_reader.webui.bookfile import MIMETYPE, BookFile, BookFileError
-from ebook_reader.webui.library import book_id
+from ebook_reader.webui.library import Library, Preferences, book_id
 from ebook_reader.webui.listening import Listening
+from ebook_reader.webui.sync import Devices, SyncApp, manifest
 from tests.test_webui_listen_and_sync import make_project
 
 
@@ -65,6 +66,27 @@ def test_the_same_production_keeps_its_identity_when_exported_again(tmp_path: Pa
     second = bookfile.pack(project, tmp_path / f"lai{bookfile.EXTENSION}")
     with BookFile(first) as a, BookFile(second) as b:
         assert a.identity == b.identity
+
+
+def test_wifi_and_the_file_carry_the_same_book_identity(tmp_path: Path) -> None:
+    """Điện thoại gộp cuốn tải qua Wi-Fi với cùng cuốn mở từ file (BookFileImport, Store.adopt): danh sách thư viện và
+    gói sách Wi-Fi mang đúng mã sách cố định mà file .abook mang - khác mã máy tính (đường dẫn thư mục)."""
+    root = tmp_path / "thu_vien"
+    root.mkdir()
+    project = make_project(root)
+    preferences = Preferences(tmp_path / "preferences.json")
+    preferences.update({"libraryRoot": str(root)})
+    listening = Listening(tmp_path / "listening.json")
+    app = SyncApp(Library(preferences), listening, Devices(tmp_path / "devices.json"), "Máy thử")
+
+    path = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}")
+
+    with BookFile(path) as book:
+        identity = book.identity
+        assert book.book["packageId"] == identity
+    assert [entry["packageId"] for entry in app.library_view()] == [identity]
+    assert manifest(project, book_id(project), listening)["packageId"] == identity
+    assert identity != book_id(project)
 
 
 def test_extracting_gives_the_folder_a_downloaded_book_has(tmp_path: Path) -> None:

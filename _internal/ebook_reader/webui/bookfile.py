@@ -41,7 +41,6 @@ import shutil
 import sys
 import time
 import zipfile
-from contextlib import closing
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Self
@@ -79,18 +78,11 @@ class _NoListening:
 
 
 def book_identity(project_root: Path) -> str:
-    """Mã sách đi theo file sang mọi máy. Mã của webui (`library.book_id`) là đường dẫn thư mục, không mang đi được.
-
-    Băm từ nguồn (mã băm các file TXT) và lúc tạo project: cùng một lần sản xuất thì cùng mã (xuất lại không thành sách
-    mới), hai lần sản xuất cùng nguồn là hai cuốn (chương, mốc thời gian khác nhau - chỗ đang nghe không dùng chung được).
-    """
-    with closing(store.connect(project_root)) as connection:
-        row = connection.execute("SELECT * FROM book WHERE id = 1").fetchone()
-    if row is None:
+    """Mã sách đi theo file sang mọi máy (`store.package_identity`)."""
+    identity = store.package_identity(project_root)
+    if identity is None:
         raise BookFileError("Thư mục này không phải một cuốn sách của app.")
-    # sqlite3.Row: `in` hỏi GIÁ TRỊ, không hỏi tên cột.
-    source = row["input_manifest_hash"] if "input_manifest_hash" in set(row.keys()) else row["title"]
-    return "bk-" + hashlib.sha256(f"{source}:{row['created_at']!r}".encode()).hexdigest()[:24]
+    return identity
 
 
 def default_name(title: str) -> str:
@@ -125,6 +117,7 @@ def pack(project_root: Path, out: Path | None = None, *, producer: str = "ABook"
     if not any(name.startswith("chapters/") for name in files):
         raise BookFileError("Sách chưa có chương nào nghe được để xuất.")
     book["id"] = identity
+    book["packageId"] = identity
     book["package"] = {
         "format": FORMAT,
         "version": FORMAT_VERSION,

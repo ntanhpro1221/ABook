@@ -89,6 +89,16 @@ object BookFileImport {
             if (files.keys().asSequence().toSet() != content) {
                 throw Refused("Danh sách file trong sách không khớp nội dung gói.")
             }
+            // Cùng cuốn đã có trên máy dưới mã máy tính (tải qua Wi-Fi, hay đang nghe thẳng): nhập VÀO đúng cuốn ấy, giữ mã
+            // máy tính để chỗ nghe vẫn đồng bộ - không thành hai cuốn trong thư viện. Bản trên máy đã tải và nhiều chương
+            // hơn file thì giữ nguyên bản trên máy.
+            val existing = Store.findByPackage(id)
+            val target = existing?.optString("id")?.takeIf { it.isNotBlank() } ?: id
+            if (existing != null && Store.manifest(target) != null &&
+                existing.optInt("chaptersAvailable") > book.optInt("chaptersAvailable")
+            ) {
+                return Imported(target, existing.optString("title"))
+            }
             val books = File(Store.root, "books").apply { mkdirs() }
             val staging = File(books, ".$id.${System.nanoTime()}.part")
             try {
@@ -99,11 +109,13 @@ object BookFileImport {
                         throw Refused("File sách bị hỏng hoặc bị sửa ($name). Hãy chép lại file từ nguồn.")
                     }
                 }
-                replace(books, staging, Store.bookDir(id), id)
+                // book.json không nằm trong danh sách mã băm (nó chứa danh sách ấy): ghi lại mã thư mục + mã sách cố định.
+                Store.writeAtomic(File(staging, "book.json"), book.put("id", target).put("packageId", id).toString())
+                replace(books, staging, Store.bookDir(target), id)
             } finally {
                 staging.deleteRecursively()
             }
-            return Imported(id, book.optString("title"))
+            return Imported(target, book.optString("title"))
         }
     }
 

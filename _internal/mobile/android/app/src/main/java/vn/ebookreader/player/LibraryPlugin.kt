@@ -160,12 +160,22 @@ class LibraryPlugin : Plugin() {
         val books = reply.getJSONArray("books")
         for (index in 0 until books.length()) {
             val book = books.getJSONObject(index)
+            adoptImported(book)
             val local = Store.manifest(book.getString("id"))
             book.put("downloaded", local != null)
             book.put("localChapters", local?.optInt("chaptersAvailable") ?: 0)
             book.put("localCoverVersion", local?.optJSONObject("cover")?.optLong("version") ?: 0L)
         }
         call.resolve(JSObject().put("name", reply.optString("name")).put("books", books))
+    }
+
+    /**
+     * Cuốn máy tính gửi mà điện thoại đã có từ file .abook (cùng mã sách cố định): gộp làm một (Store.adopt). Cuốn đang
+     * nằm trong trình phát thì để lần sau - đổi thư mục dưới tay trình phát là mất chương kế tiếp và chỗ đang nghe.
+     */
+    private fun adoptImported(remote: JSONObject) {
+        val packageId = remote.optString("packageId")
+        if (Store.isPackageId(packageId) && Playback.bookId != packageId) Store.adopt(packageId, remote.getString("id"))
     }
 
     // ---- tải sách --------------------------------------------------------------------------------------------
@@ -201,6 +211,7 @@ class LibraryPlugin : Plugin() {
         downloads.execute {
             try {
                 val manifest = JSONObject(request("GET", "/sync/v1/books/$id/manifest"))
+                adoptImported(manifest) // đã mở cuốn này từ file: audio sẵn trên máy, chỉ tải phần còn thiếu
                 val chapters = manifest.getJSONArray("chapters")
                 val files = mutableListOf<Pair<String, Long>>()
                 for (index in 0 until chapters.length()) {
@@ -268,6 +279,7 @@ class LibraryPlugin : Plugin() {
         for (index in 0 until remote.length()) {
             val entry = remote.getJSONObject(index)
             val id = entry.getString("id")
+            adoptImported(entry)
             if (Store.manifest(id) != null) continue
             val cached = Store.streamManifest(id)
             val stale = cached == null ||

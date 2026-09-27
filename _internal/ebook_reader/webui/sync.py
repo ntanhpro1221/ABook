@@ -316,6 +316,8 @@ def manifest(project_root: Path, book: str, listening: Listening) -> dict[str, A
     return {
         "format": listen_view.FORMAT,
         "id": book,
+        # Mã sách cố định (cùng mã file .abook mang): điện thoại gộp cuốn tải qua Wi-Fi với cùng cuốn mở từ file.
+        "packageId": store.package_identity(project_root),
         "title": view["title"],
         "narrator": view["narrator"],
         "duration": view["duration"],
@@ -356,6 +358,7 @@ class SyncApp:
             view = listen_view.book(path, identifier, summary, self.listening.get(identifier), with_chapters=False)
             entry = {key: view[key] for key in ("id", "title", "narrator", "duration", "chaptersTotal",
                                                  "chaptersAvailable", "complete", "updatedAt")}
+            entry["packageId"] = store.package_identity(path)
             meta = covers.cover_meta(path)
             entry["cover"] = {"color": meta["color"], "version": meta["version"]} if meta else None
             out.append(entry)
