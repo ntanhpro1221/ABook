@@ -307,6 +307,9 @@ def audio_duration(path: Path) -> float | None:
     return _DURATION_CACHE[key]
 
 
+DELIVERY_TAGS = ("emotion", "intensity", "pace", "volume")
+
+
 def chapter_script(project_root: Path, chapter_id: int) -> dict[str, Any] | None:
     """Văn bản chương theo từng câu, kèm mốc thời gian trong file MP3 - cho chế độ "đọc theo".
 
@@ -321,9 +324,14 @@ def chapter_script(project_root: Path, chapter_id: int) -> dict[str, Any] | None
         ).fetchone()
         if chapter is None:
             return None
+        # Tag trình bày của từng câu (cảm xúc, cường độ, nhịp, âm lượng) - có ở mọi sách làm bằng dây chuyền hiện nay,
+        # sách rất cũ thì không: chỉ lấy cột nào có.
+        columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(segments)")}
+        tags = [column for column in DELIVERY_TAGS if column in columns]
         rows = connection.execute(
             "SELECT id, seq, paragraph_index, text, kind, speaker, wav_duration, break_ms, status"
-            " FROM segments WHERE chapter_id = ? ORDER BY seq",
+            + "".join(f", {column}" for column in tags)
+            + " FROM segments WHERE chapter_id = ? ORDER BY seq",
             (chapter_id,),
         ).fetchall()
         names = {
@@ -357,6 +365,7 @@ def chapter_script(project_root: Path, chapter_id: int) -> dict[str, Any] | None
             "start": round(start, 3) if timed else None,
             "end": round(end, 3) if timed else None,
             "status": str(row["status"]),
+            **{column: row[column] for column in tags if row[column] is not None},
         })
     return {
         "chapterId": int(chapter["id"]),
