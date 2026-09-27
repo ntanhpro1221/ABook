@@ -776,7 +776,9 @@ Việc còn lại cho cửa sổ GPU, theo đúng thứ tự: `train_lora.py --s
 
 ## Kho dữ liệu (`D:/Novels/Ebook Reader/Corpus/`)
 
-Gom 19-09 (chỉ SAO CHÉP; bản trong Tools và Thùng rác giữ nguyên), đẩy lên repo:
+Gom 19-09 (chỉ SAO CHÉP; bản trong Tools và Thùng rác giữ nguyên). Từ 27-09 kho là repo RIÊNG TƯ
+`ntanhpro1221/EbookReader-Corpus`, clone vào đúng `Corpus/` (repo chính công khai bỏ qua thư mục này và lịch sử của nó
+đã được viết lại cho sạch: phần lớn các truyện còn bản quyền, một thông báo DMCA sẽ khoá cả repo):
 
 | truyện | chương | nguồn |
 |---|---|---|
@@ -791,7 +793,8 @@ Gom 19-09 (chỉ SAO CHÉP; bản trong Tools và Thùng rác giữ nguyên), đ
 | Năng lực bá đạo của tôi trong game tử thần ... | 1.590 | Thùng rác (D:) |
 | Love Unseen Beneath the Clear Night Sky | 14 | Thùng rác (D:) |
 
-`data/corpus/manifest.json` (`scripts/corpus/manifest.py --check`): 10 truyện, 4.110 chương, 12,95 triệu từ.
+`Corpus/manifest.json` (`scripts/corpus/manifest.py --check`): 11 truyện (thêm Tam quốc diễn nghĩa 27-09), 4.120
+chương, 12,99 triệu từ.
 Tên nhận ra bằng nội dung chương đầu và số chương khớp số mp3 trong `D:/Novels/Reading`. Thêm truyện từ Hako
-bằng `scripts/corpus/hako.py` (khảo sát: `data/corpus/hako_survey_*.json`; dịch bởi người, AI dịch, sáng tác),
+bằng `scripts/corpus/hako.py` (khảo sát: `Corpus/_survey/hako_survey_*.json`; dịch bởi người, AI dịch, sáng tác),
 **né các truyện đã có trong `Reading`/`Completed`** theo lệnh chủ sách.

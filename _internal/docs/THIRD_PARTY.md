@@ -40,5 +40,7 @@ của chính thành phần ấy.
 - Bộ chấm ứng viên người nói trên nền mmBERT (jhu-clsp) - xem model card trước khi phân phối; học trước trên PDNC (tiểu
   thuyết tiếng Anh). Dữ liệu CSI (truyện mạng tiếng Trung) chỉ cho nghiên cứu phi thương mại: KHÔNG phát hành model học từ
   nó khi chưa được chủ dự án đồng ý.
-- Văn bản thử nghiệm Tam quốc diễn nghĩa (Phan Kế Bính dịch, Bùi Kỷ hiệu đính) lấy từ Wikisource tiếng Việt - đã hết thời
-  hạn bảo hộ.
+- Kho truyện nghiên cứu (văn bản truyện dùng để đo và huấn luyện) KHÔNG nằm trong repo này hay bất kỳ bản phát hành nào:
+  phần lớn còn bản quyền, nên kho ở một repo riêng tư. Repo này chỉ giữ đáp án chuẩn (số thứ tự câu và nhãn người nói,
+  cảm xúc), không chép văn bản truyện. Bản duy nhất hết bảo hộ trong kho là Tam quốc diễn nghĩa (Phan Kế Bính dịch, Bùi
+  Kỷ hiệu đính), lấy từ Wikisource tiếng Việt.
