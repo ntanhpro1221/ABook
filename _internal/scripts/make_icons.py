@@ -150,40 +150,21 @@ def app_icon(*, small: bool = False, round_: bool = False) -> str:
     return _svg(shape + _placed(glyph(small=small), scale), _forest())
 
 
-def _rounded(points: list[Pt], cuts: list[float]) -> str:
-    """Đa giác kín, mỗi đỉnh bo bằng một đường cong bậc hai, cắt `cuts[i]` dọc hai cạnh kề."""
-
-    def toward(a: Pt, b: Pt, distance: float) -> Pt:
-        length = math.dist(a, b)
-        return a[0] + (b[0] - a[0]) * distance / length, a[1] + (b[1] - a[1]) * distance / length
-
-    count = len(points)
-    corners = [(toward(points[i], points[i - 1], cuts[i]), points[i], toward(points[i], points[(i + 1) % count], cuts[i]))
-               for i in range(count)]
-    path = f"M {corners[0][2][0]:.1f} {corners[0][2][1]:.1f}"
-    for i in range(1, count + 1):
-        start, vertex, end = corners[i % count]
-        path += (f" L {start[0]:.1f} {start[1]:.1f} Q {vertex[0]:.1f} {vertex[1]:.1f} {end[0]:.1f} {end[1]:.1f}")
-    return path + " Z"
-
-
 def file_icon(*, small: bool = False, dashed: bool = False) -> str:
     """Ô icon app, nhỏ hơn một chút như icon tài liệu, góc trên phải gấp xuống (mặt sau là giấy).
 
-    Góc gấp bo tròn cùng tinh thần với ba góc kia: chỗ nếp gấp gặp mép trên, mép phải, và cả ba góc của vạt giấy.
+    Gấp như gấp giấy thật: nếp gấp là một nhát thẳng (hai đầu sắc), còn vạt lật xuống CHÍNH LÀ góc bo cũ của ô,
+    phản chiếu qua nếp gấp - nên đầu vạt giữ đúng bán kính bo của ba góc kia (chủ sách 27-09: đầu vạt không được nhọn
+    hơn chính nó lúc chưa gập).
     """
-    inset, fold, r, soft, flap_corner = 64.0, 216.0, 150.0, 58.0, 70.0
+    inset, fold, r = 64.0, 216.0, 150.0
     x0, y0, x1, y1 = inset, inset, 1024 - inset, 1024 - inset
-    a, b, c = (x1 - fold, y0), (x1, y0 + fold), (x1 - fold, y0 + fold)  # hai đầu nếp gấp, góc vuông của vạt
-    diagonal = soft / math.sqrt(2)
-    outline = (f"M {x0 + r} {y0} H {a[0] - soft} Q {a[0]} {a[1]} {a[0] + diagonal:.1f} {a[1] + diagonal:.1f}"
-               f" L {b[0] - diagonal:.1f} {b[1] - diagonal:.1f} Q {b[0]} {b[1]} {b[0]} {b[1] + soft}"
-               f" V {y1 - r} A {r} {r} 0 0 1 {x1 - r} {y1} H {x0 + r} A {r} {r} 0 0 1 {x0} {y1 - r}"
-               f" V {y0 + r} A {r} {r} 0 0 1 {x0 + r} {y0} Z")
-    flap_path = _rounded([a, c, b], [soft, flap_corner, soft])
-    shadow_path = _rounded([(a[0] + 26, a[1] + 26), (c[0] + 22, c[1] + 26), (b[0], b[1] + 30)],
-                           [soft, flap_corner, soft])
-    shadow = f'<path d="{shadow_path}" fill="#000000" opacity="0.22"/>'
+    a, b = (x1 - fold, y0), (x1, y0 + fold)  # hai đầu nếp gấp
+    outline = (f"M {x0 + r} {y0} H {a[0]} L {b[0]} {b[1]} V {y1 - r} A {r} {r} 0 0 1 {x1 - r} {y1}"
+               f" H {x0 + r} A {r} {r} 0 0 1 {x0} {y1 - r} V {y0 + r} A {r} {r} 0 0 1 {x0 + r} {y0} Z")
+    # góc bo (tâm (x1 - r, y0 + r)) lật qua đường a-b: tâm sang (x1 - fold + r, y0 + fold - r), bán kính giữ nguyên
+    flap_path = (f"M {a[0]} {a[1]} V {y0 + fold - r} A {r} {r} 0 0 0 {x1 - fold + r} {y0 + fold} H {b[0]} Z")
+    shadow = f'<path d="{flap_path}" fill="#000000" opacity="0.22" transform="translate(-8 14)"/>'
     flap = (f'<path d="{flap_path}" fill="{FLAP}" stroke="{FLAP_EDGE}" stroke-width="6"'
             f' stroke-linejoin="round"/>')
     body = _placed(glyph(small=small, dashed=dashed), 0.92 if small else 0.88, (512.0, 530.0))
