@@ -18,6 +18,7 @@ NPC ("không ai") thì LLM phải nói người kể/NPC - cùng độ dễ dãi
 from __future__ import annotations
 
 import argparse
+import glob
 import json
 import math
 import statistics
@@ -32,10 +33,32 @@ NULL_KEYS = {"NARRATOR", "NPC*", "NPC", "?", "UNKNOWN"}
 Key = tuple[str, str, int]  # (truyện, chương, seq)
 
 
-def load_rows(run: Path, split: str) -> dict[Key, dict]:
-    path = run / f"{split}_predictions.jsonl"
+def load_rows(run: Path | str, split: str) -> dict[Key, dict]:
+    """`thư mục` = mô hình tốt nhất trên dev; `thư mục@last` = epoch cuối; `thư mục@3` = epoch 3 (runs/<x>/epochs/)."""
+    run, _, epoch = str(run).partition("@")
+    run = Path(run)
+    if epoch:
+        files = {int(path.name.split("_")[0]): path for path in (run / "epochs").glob(f"*_{split}_predictions.jsonl")}
+        if not files:
+            raise SystemExit(f"{run} không có dự đoán từng epoch (chạy trước bản vá 27-09 11:26)")
+        path = files[max(files)] if epoch == "last" else files[int(epoch)]
+    else:
+        path = run / f"{split}_predictions.jsonl"
     rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
     return {(row["book"], str(row["chapter"]), int(row["seq"])): row for row in rows}
+
+
+def load_seed(spec: str, split: str) -> dict[Key, dict]:
+    """Một lần chạy = hợp các fold: `a@last+b@last` hoặc mẫu `D:/runs/cv_para_f*@last` (kiểm chứng chéo)."""
+    rows: dict[Key, dict] = {}
+    for part in spec.split("+"):
+        path, _, epoch = part.partition("@")
+        folders = sorted(glob.glob(path)) if any(char in path for char in "*?[") else [path]
+        if not folders:
+            raise SystemExit(f"không thấy thư mục nào khớp {path}")
+        for folder in folders:
+            rows.update(load_rows(folder + (f"@{epoch}" if epoch else ""), split))
+    return rows
 
 
 def ensemble(runs: list[dict[Key, dict]]) -> dict[Key, dict]:
@@ -95,7 +118,9 @@ def accuracy(rows: dict[Key, dict], keys) -> tuple[int, int]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("systems", nargs="+", help="tên=thư_mục[,thư_mục...] (hệ đầu tiên là mốc)")
+    parser.add_argument("systems", nargs="+",
+                        help="tên=lần_chạy[,lần_chạy...] (nhiều seed -> ensemble); lần chạy = thư_mục[@epoch], hoặc "
+                             "fold+fold / mẫu glob (kiểm chứng chéo); hệ đầu tiên là mốc")
     parser.add_argument("--llm", nargs="*", default=[], help="tên model=thư mục gốc eval_models[@truyện]")
     parser.add_argument("--split", default="test")
     args = parser.parse_args()
@@ -103,7 +128,7 @@ def main() -> int:
     systems: dict[str, dict[Key, dict]] = {}
     for spec in args.systems:
         name, _, paths = spec.partition("=")
-        runs = [load_rows(Path(path), args.split) for path in paths.split(",")]
+        runs = [load_seed(path, args.split) for path in paths.split(",")]
         if len(runs) > 1:
             each = [sum(row["correct"] for row in run.values()) / len(run) for run in runs]
             print(f"{name}: {len(runs)} seed, từng lần {statistics.mean(each):.1%} ± {statistics.stdev(each):.1%} "
