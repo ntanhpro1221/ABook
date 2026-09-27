@@ -186,6 +186,7 @@ class LibraryPlugin : Plugin() {
                         .put("files", index + 1).put("filesTotal", files.size))
                 }
                 Store.writeAtomic(File(Store.bookDir(id), "book.json"), manifest.toString())
+                File(Store.bookDir(id), "stream.json").delete() // từng nghe thẳng: nay đã tải hẳn
                 pushState(id)
                 notifyListeners("download", JSObject().put("bookId", id).put("finished", true))
                 call.resolve(JSObject().put("bookId", id))
@@ -211,16 +212,69 @@ class LibraryPlugin : Plugin() {
         call.resolve(JSObject().put("books", books))
     }
 
+    /**
+     * Sách trên máy tính CHƯA tải mà nghe thẳng được (Streaming). Gói sách chỉ lấy lại khi máy tính có thêm chương, đổi
+     * tên hay đổi bìa, còn lại dùng bản đã cất. Máy tính không trả lời thì trả danh sách rỗng: những cuốn ấy không nằm trên
+     * điện thoại, hiện ra mà bấm không nghe được thì chỉ làm người nghe bối rối.
+     */
     @PluginMethod
-    fun book(call: PluginCall) = background(call) {
-        val id = call.getString("id") ?: throw IllegalArgumentException("thiếu id")
-        val manifest = Store.manifest(id) ?: throw IllegalStateException("Sách chưa được tải về máy")
-        call.resolve(JSObject.fromJSONObject(manifest).put("state", JSObject.fromJSONObject(Store.state(id))))
+    fun streamableBooks(call: PluginCall) = background(call) {
+        val books = JSArray()
+        val reply = if (SyncLink.paired(context)) {
+            runCatching { JSONObject(SyncLink.request(context, "GET", "/sync/v1/library", readTimeoutMs = 10_000, connectTimeoutMs = 1500)) }.getOrNull()
+        } else null
+        val remote = reply?.optJSONArray("books") ?: JSONArray()
+        for (index in 0 until remote.length()) {
+            val entry = remote.getJSONObject(index)
+            val id = entry.getString("id")
+            if (Store.manifest(id) != null) continue
+            val cached = Store.streamManifest(id)
+            val stale = cached == null ||
+                cached.optInt("chaptersAvailable") != entry.optInt("chaptersAvailable") ||
+                cached.optString("title") != entry.optString("title") ||
+                cached.optJSONObject("cover")?.optLong("version") != entry.optJSONObject("cover")?.optLong("version")
+            val manifest = (if (stale) runCatching { Streaming.fetchManifest(context, id) }.getOrNull() else null) ?: cached ?: continue
+            if (manifest.optJSONObject("cover") != null && (stale || !Store.file(id, "cover.jpg").isFile)) {
+                Streaming.fetchSmall(context, id, "cover.jpg")
+            }
+            books.put(JSObject.fromJSONObject(manifest).put("state", JSObject.fromJSONObject(Store.state(id))).put("streamed", true))
+        }
+        call.resolve(JSObject().put("books", books))
     }
 
     @PluginMethod
+    fun book(call: PluginCall) = background(call) {
+        val id = call.getString("id") ?: throw IllegalArgumentException("thiếu id")
+        val local = Store.manifest(id)
+        val manifest = local ?: openStreamed(id)
+        call.resolve(JSObject.fromJSONObject(manifest).put("state", JSObject.fromJSONObject(Store.state(id))).put("streamed", local == null))
+    }
+
+    /** Mở một cuốn chưa tải: gói sách mới nhất từ máy tính (mạng lỗi thì bản đã cất), bìa ngay; dàn nhân vật và câu mẫu
+     *  lấy ở luồng nền để màn sách hiện ra không phải chờ chúng. */
+    private fun openStreamed(id: String): JSONObject {
+        val manifest = runCatching { Streaming.fetchManifest(context, id) }.getOrNull()
+            ?: Store.streamManifest(id)
+            ?: throw IllegalStateException("Cuốn này nằm trên máy tính - kết nối cùng mạng với máy tính để nghe")
+        if (manifest.optJSONObject("cover") != null && !Store.file(id, "cover.jpg").isFile) Streaming.fetchSmall(context, id, "cover.jpg")
+        downloads.execute {
+            if (!Store.file(id, "cast.json").isFile) Streaming.fetchSmall(context, id, "cast.json")
+            val samples = manifest.optJSONArray("samples") ?: JSONArray()
+            for (index in 0 until samples.length()) {
+                val sample = samples.getString(index)
+                if (!Store.file(id, sample).isFile) Streaming.fetchSmall(context, id, sample)
+            }
+        }
+        return manifest
+    }
+
+    /** Văn bản trong gói (chương để đọc theo, dàn nhân vật). Sách nghe thẳng thì lấy từ máy tính lần đầu rồi cất lại. */
+    @PluginMethod
     fun readText(call: PluginCall) = background(call) {
-        val file = Store.file(call.getString("id") ?: "", call.getString("path") ?: "")
+        val id = call.getString("id") ?: ""
+        val path = call.getString("path") ?: ""
+        var file = Store.file(id, path)
+        if (!file.isFile && Store.manifest(id) == null && SyncLink.paired(context)) file = Streaming.fetchSmall(context, id, path) ?: file
         call.resolve(JSObject().put("text", if (file.isFile) file.readText() else ""))
     }
 

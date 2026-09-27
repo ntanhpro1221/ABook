@@ -41,6 +41,24 @@ object Store {
     fun books(): List<JSONObject> =
         File(root, "books").listFiles()?.mapNotNull { dir -> manifest(dir.name) } ?: emptyList()
 
+    /**
+     * Sách nghe thẳng từ máy tính, chưa tải (Streaming): gói sách cất ở `stream.json` - KHÔNG phải `book.json` - nên
+     * không bao giờ bị tính là đã tải; các file nhỏ (bìa, văn bản đọc theo, dàn nhân vật, câu mẫu) nằm cạnh đúng chỗ của
+     * sách đã tải, nên giao diện đọc chúng như nhau và tải hẳn về sau chỉ việc ghi thêm audio + `book.json`.
+     */
+    @Synchronized
+    fun streamManifest(id: String): JSONObject? {
+        val file = File(bookDir(id), "stream.json")
+        return if (file.isFile) runCatching { JSONObject(file.readText()) }.getOrNull() else null
+    }
+
+    /** Gói sách phát được: đã tải thì bản đã tải, không thì bản nghe thẳng đã cất. */
+    fun playableManifest(id: String): JSONObject? = manifest(id) ?: streamManifest(id)
+
+    @Synchronized
+    fun playableBooks(): List<JSONObject> =
+        File(root, "books").listFiles()?.mapNotNull { dir -> playableManifest(dir.name) } ?: emptyList()
+
     fun writeAtomic(target: File, text: String) {
         target.parentFile?.mkdirs()
         val temporary = File(target.path + ".part")
