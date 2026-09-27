@@ -174,3 +174,16 @@ def test_the_pipeline_applies_a_speaker_request_at_a_boundary(tmp_path: Path) ->
     with db.connect() as conn:
         rejected = conn.execute("SELECT COUNT(*) FROM runtime_events WHERE code='LISTENER_OVERRIDE_REJECTED'").fetchone()
     assert rejected[0] == 1
+
+
+def test_a_group_of_lines_goes_to_one_person_in_one_write(tmp_path: Path) -> None:
+    """"Vai phụ không tên" là ai: mọi câu của vai ấy về một người, ghi một lần (dây chuyền không bao giờ thấy nửa nhóm)."""
+    from ebook_reader.listener_overrides import read_overrides, request_speakers, speaker_requests
+
+    paths, db = _book(tmp_path)
+    request_speakers(paths.root, [("c1s1", "sha-c1s1"), ("c1s2", "sha-c1s2")], "NATASHA", now=1.0)
+
+    assert [entry["stable_id"] for entry in speaker_requests(read_overrides(paths.root))] == ["c1s1", "c1s2"]
+    assert _Pipeline(paths, db)._apply_listener_overrides() == {1}
+    assert {_segment(db, stable_id)["voice_key"] for stable_id in ("c1s1", "c1s2")} == {"v_natasha"}
+    _one_voice_per_person(db)
