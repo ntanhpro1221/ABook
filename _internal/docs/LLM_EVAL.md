@@ -601,6 +601,40 @@ Vậy muốn tự huấn luyện trên máy này thì phải chọn một trong 
 
 Tối nay tôi chọn (3) để không đốt cả đêm vào một epoch 40 giờ, và ghi lại (1)(2) kèm số đo để chủ sách quyết.
 
+#### BỨC TƯỜNG ĐÃ PHÁ (27-09): không phải prompt, không phải logits - là attention rơi về đường MATH
+
+Đo lại bằng `scripts/model_eval/profile_train_memory.py` (một mẫu, lan xuôi + lan ngược, PyTorch bị chặn ở 95% VRAM
+thật để vượt là OOM chứ không tràn sang RAM):
+
+| backend attention trên máy này (torch 2.11+cu128, RTX 5060 Laptop, sm_120) | một lớp, xuôi + ngược |
+|---|---|
+| flash | không có - bản PyTorch cho Windows không biên dịch flash |
+| memory-efficient | chạy khi q/k/v cùng số đầu; TỪ CHỐI GQA (Qwen3: 32 đầu query, 8 đầu k/v) |
+| **cuDNN** | **chạy, cả GQA: +243 MiB** - nhưng bị tắt mặc định |
+| math (đường dự phòng) | **+5.217 MiB** - dựng cả ma trận chú ý 32 x L x L |
+
+Nên SDPA lặng lẽ rơi về math. Trên model thật (mẫu trung vị 3.213 token): model 2,62 GiB, riêng lan xuôi đã 6,26 GiB,
+lan ngược OOM - cùng cảnh "VRAM 95%, 38 token/s" của 21-09, vì driver Windows cho PyTorch mượn RAM (đo được: PyTorch
+giữ 17,66 GiB trên card 8 GB, ~11,6 GB là RAM). Ghim cuDNN: đỉnh cả mẫu **4,73 GiB, 6,1 s**; mẫu dài nhất (4.276
+token) **5,04 GiB, 8,0 s**. Loss lan xuôi khớp (0,24411 math / 0,24364 cuDNN). Logits cả chuỗi vẫn OOM kể cả với cuDNN,
+nên `--logits answer` (80277ee) cũng cần - chỉ không phải thủ phạm chính như tôi đoán đêm 26-09.
+
+`train_lora.py` nay mặc định: attention ghim cuDNN (math tắt - thiếu kernel thì BÁO LỖI chứ không quay lại), logits
+chỉ phần đáp án, trần VRAM 95% (`--vram-cap`), optimizer `adamw_8bit`. Phép thử `--smoke 8 --accum 2` (27-09 08:08):
+6 mẫu ~4-6 s mỗi mẫu, đỉnh 4,48 GiB, giữ 5,23 GiB, checkpoint lưu TRỌN (optimizer.pt 67,7 MB), driver không một dòng
+lỗi. Quy ra: **một epoch (1.727 mẫu) ~2,5-3 giờ** thay vì ~40 giờ - ba lựa chọn "rút prompt / nền 2B / bỏ" ở trên
+không còn cần.
+
+#### Và vì sao máy SẬP (27-09): optimizer `paged_*` dùng bộ nhớ UVM
+
+Hai lần BSOD 0x1E (01:41 và ~07:52, cùng một chỗ trong `nvlddmkm.sys`) và một lần tiến trình treo: cả ba đúng lúc
+Trainer lưu checkpoint, `optimizer.pt` đứt ở 12 MB rồi 29 MB (đủ là ~66 MB), và cả hai lần driver ghi `nvlddmkm` 14
+`\Device\UVMLiteProcess1 | GPU recovery action changed from 0x0 (None) to 0x2 (Node Reboot Required)` (21-09 03:05,
+lúc đo huấn luyện lần đầu, cũng một lỗi UVMLite). UVM là bộ nhớ CUDA dùng chung CPU-GPU; trong script chỉ trạng thái
+của optimizer `paged_adamw_8bit` (bitsandbytes) nằm ở đó, và lưu checkpoint là lúc CPU đọc nó ra. Nhiệt độ loại trừ:
+GPU cao nhất 69°C / 90 W lúc huấn luyện, 47-49°C lúc sập, không lần hạ xung nào (nvsmi 0,5 s). `train_lora.py` nay
+TỪ CHỐI `paged_*` trên Windows; `--trace` ghi từng pha (fsync) để lần sau có sập vẫn còn dấu vết.
+
 #### Mổ prompt: 42,5% mỗi token huấn luyện là MỘT TRONG HAI khối chỉ dẫn tĩnh (21-09 04:2x)
 
 Câu "2,9k trong 3,2k token là prompt" ở trên đúng nhưng còn thô. Đếm bằng chính tokenizer của model nền
