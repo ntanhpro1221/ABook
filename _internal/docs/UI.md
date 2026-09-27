@@ -71,6 +71,13 @@ Capacitor bọc giao diện Nghe; mọi thứ phải chạy khi tắt màn hình
 - `PlayerWidget.kt`: widget trình phát thu nhỏ (nhỏ: bìa + phát; lớn: chương, tiến độ, lùi/phát/tới, hẹn giờ).
 - `LibraryPlugin.kt` + `webui/sync.py`: tìm máy tính bằng UDP broadcast, ghép nối bằng mã 6 số một lần, tải gói
   sách (tải tiếp được), đồng bộ trạng thái nghe hai chiều (mới-hơn-thắng, dấu trang xoá có tombstone).
+- `Remote.kt` + `webui/sync.py: Remote` + `desktop/RemotePhone.tsx`: máy tính điều khiển điện thoại đang phát
+  (kiểu Spotify Connect). Điện thoại "hỏi dài" `POST /sync/v1/remote` (trạng thái đang phát + sách đã tải + kết quả
+  lệnh, treo tới 25 giây) khi app đang mở, đang phát hoặc vừa dừng dưới 10 phút; đổi trạng thái thì báo thêm một lần
+  không chờ. Giao diện máy tính hỏi `GET /api/remote` 1,5 giây/lần và gửi `POST /api/remote/<thiết bị>`
+  (`toggle|play|pause|skip|seek|next|previous|jump|rate|load`). Lệnh quá 15 giây chưa giao thì bỏ; điện thoại im quá
+  40 giây coi như đã đi. Trình phát máy tính đã đẩy Media Session lên Windows (Windows+A, phím media): Qt WebEngine
+  6.11 chuyển nó sang SMTC - đo 27-09.
 
 ## Phát triển
 

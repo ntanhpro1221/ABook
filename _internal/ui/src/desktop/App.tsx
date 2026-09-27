@@ -194,7 +194,8 @@ export function App() {
       </SourceProvider>
       <Toaster
         position="bottom-right"
-        offset={96}
+        // Đáy nâng lên khi có thanh "Đang phát trên điện thoại" (RemotePhone.tsx đặt --toast-bottom).
+        offset={{ top: 96, right: 96, left: 96, bottom: "var(--toast-bottom, 96px)" }}
         containerAriaLabel="Thông báo"
         toastOptions={{
           classNames: {

@@ -22,7 +22,7 @@ from . import actions, cover_search, covers, listen_view, store
 from .library import Library, Preferences, book_id
 from .listening import Listening
 from .reviews import Reviews, review_view
-from .sync import Devices, ExclusiveHTTPServer, SyncApp, SyncServer, local_addresses, SYNC_PORT
+from .sync import Devices, ExclusiveHTTPServer, Remote, SyncApp, SyncServer, local_addresses, remote_command, SYNC_PORT
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 ASSET_DIR = Path(__file__).resolve().parents[1] / "assets"
@@ -73,6 +73,7 @@ class App:
         self.preferences = preferences
         self.listening = listening or Listening(preferences.path.with_name("listening.json"))
         self.devices = Devices(preferences.path.with_name("devices.json"))
+        self.remote = Remote()
         self.sync_server: SyncServer | None = None
         self.sync_host = "0.0.0.0"
         self.sync_port = SYNC_PORT
@@ -227,7 +228,7 @@ class App:
         động không được tự tắt đồng bộ vĩnh viễn - lần mở sau thử lại."""
         if enabled and self.sync_server is None:
             try:
-                app = SyncApp(self.library, self.listening, self.devices, socket_name())
+                app = SyncApp(self.library, self.listening, self.devices, socket_name(), self.remote)
                 self.sync_server = SyncServer(app, host=self.sync_host, port=self.sync_port).start()
                 self.sync_error = ""
             except OSError as error:
@@ -235,18 +236,42 @@ class App:
         elif not enabled:
             self.sync_error = ""
             self.devices.cancel_pairing()
-            if self.sync_server is not None:
-                self.sync_server.stop()
-                self.sync_server = None
+            self._stop_sync()
         if self.preferences.get().get("syncEnabled") != enabled:
             self.preferences.update({"syncEnabled": enabled})
         return self.sync_view()
 
-    def close(self) -> None:
-        """App đóng: tắt cổng đồng bộ nhưng giữ nguyên lựa chọn của người dùng cho lần mở sau."""
+    def _stop_sync(self) -> None:
+        # Trả lời ngay các lần "hỏi dài" đang treo, rồi mới tắt máy chủ - không để luồng nào đợi 25 giây vô ích.
+        self.remote.reset()
         if self.sync_server is not None:
             self.sync_server.stop()
             self.sync_server = None
+
+    def close(self) -> None:
+        """App đóng: tắt cổng đồng bộ nhưng giữ nguyên lựa chọn của người dùng cho lần mở sau."""
+        self._stop_sync()
+
+    def remote_view(self) -> dict[str, Any]:
+        """Điện thoại đang có sách trên trình phát (PLAYER_RESEARCH #12), kèm những gì máy tính biết về cuốn ấy: có
+        trong thư viện không (để "Nghe trên máy tính") và ảnh bìa. Giao diện hỏi mỗi 1,5 giây nên ở đây không mở SQLite."""
+        phones = []
+        for phone in self.remote.view() if self.sync_server is not None else []:
+            path = self.library.resolve(phone["bookId"]) if phone["bookId"] else None
+            phone["known"] = path is not None
+            phone["cover"] = covers.cover_view(path, phone["bookId"]) if path is not None else None
+            phones.append(phone)
+        return {"phones": phones}
+
+    def remote_send(self, device: str, body: dict[str, Any]) -> dict[str, Any]:
+        try:
+            command = remote_command(body)
+        except ValueError as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+        try:
+            return {"id": self.remote.send(device, command)["id"]}
+        except LookupError as error:
+            raise ApiError(HTTPStatus.CONFLICT, "Điện thoại không còn kết nối - mở app trên điện thoại rồi thử lại") from error
 
     # ---- nghe ------------------------------------------------------------------------------------------
 
@@ -584,7 +609,15 @@ class Handler(BaseHTTPRequestHandler):
     def delete_sync_device(self, _query: dict[str, list[str]], device: str) -> None:
         self._mutating_guard()
         self.app.devices.revoke(device)
+        self.app.remote.forget(device)
         self._send_json(HTTPStatus.OK, self.app.sync_view())
+
+    def get_remote(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.remote_view())
+
+    def post_remote(self, _query: dict[str, list[str]], device: str) -> None:
+        self._mutating_guard()
+        self._send_json(HTTPStatus.OK, self.app.remote_send(device, self._body()))
 
     def _mutating_guard(self) -> None:
         if self.app.read_only:
@@ -770,6 +803,8 @@ ROUTES: list[Route] = [
     ("GET", re.compile(r"/api/sync"), Handler.get_sync),
     ("POST", re.compile(r"/api/sync"), Handler.post_sync),
     ("POST", re.compile(r"/api/sync/pairing"), Handler.post_sync_pairing),
+    ("GET", re.compile(r"/api/remote"), Handler.get_remote),
+    ("POST", re.compile(r"/api/remote/([0-9a-f]{12})"), Handler.post_remote),
     ("DELETE", re.compile(r"/api/sync/pairing"), Handler.delete_sync_pairing),
     ("DELETE", re.compile(r"/api/sync/devices/([0-9a-f]+)"), Handler.delete_sync_device),
     ("GET", re.compile(r"/api/listen/library"), Handler.get_listen_library),

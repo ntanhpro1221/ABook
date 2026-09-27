@@ -405,6 +405,12 @@ bằng interpreter `.venv` rõ ràng; sau toàn bộ run/probe `OpenWith.exe` gi
   chỉ xóa ở commit `verified`;
 - FFmpeg thật: ghép, khoảng nghỉ, encode và decode verify.
 - Windows `fsync` cho WAV/silence dùng descriptor read-write, được bao phủ bởi test FFmpeg thật.
+- điều khiển điện thoại từ máy tính (`tests/test_webui_listen_and_sync.py`, 27-09): lệnh tới điện thoại đang "hỏi
+  dài" ngay chứ không đợi hết lượt chờ; lệnh quá 15 giây chưa giao bị bỏ, điện thoại im quá 40 giây không nhận lệnh
+  (giao diện được báo 409 thay vì tưởng đã dừng); tắt đồng bộ trả lời ngay mọi lượt đang treo; trạng thái điện thoại
+  gửi lên bị lọc kiểu và có trần (không NaN, không chuỗi dài, không mã sách lạ); trọn vòng HTTP thật ghép nối →
+  báo đang phát → giao diện thấy → bấm dừng → điện thoại nhận, gỡ ghép là biến mất. Thử tay trên máy ảo với app
+  thật: dừng/phát, lùi 15 giây, "Nghe trên máy tính" và "Phát trên điện thoại" đúng chương, đúng giây.
 
 GUI PySide6 đã mở thực tế trên Windows. Test6 đã chạy thật xuyên suốt bằng VieNeu-TTS và Whisper Turbo
 trên CUDA: **11/11 chapter**, **1.080/1.080 segment**, **0 segment lỗi**, **11/11 MP3** giải mã/xác minh;
