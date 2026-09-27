@@ -72,6 +72,13 @@ YMP 248: cho LLM biết "người kể xưng 'tôi' là SAMAEL" -> **LoRA 34,0% 
 qwen3:8b 31,9% -> 61,7%. Người kể suy được KHÔNG cần gold (N7b). Đây là thay đổi đáng làm NHẤT cho app: lớn hơn mọi cải
 tiến bộ chấm ở trên, và chỉ cần một câu hỏi/gợi ý trong Studio + một dòng prompt.
 
+Đoán người kể TỪ VĂN BẢN THÔ lúc nhập sách (`narrator_raw.py`: ứng viên = cụm viết hoa không đứng đầu câu, 40 chương đầu)
+KHÔNG đủ tin để tự áp: Love Unseen -> "Sorano" (họ của Kakeru - đúng), Yamiyo -> "Tomobe-san" (đúng), 5 truyện ngôi thứ ba
+đều không đoán bừa (tỉ lệ "tôi" 7-23%), nhưng YMP -> "Portal" (sai): 40 chương đầu YMP nhắc "Samael" 103 lần trong LỜI KỂ
+(giả định "người kể không tự gọi tên mình" chỉ đúng ở các chương sau). Thiết kế cho app: phát hiện truyện ngôi thứ nhất
+bằng tỉ lệ "tôi" trong lời kể (phần này đáng tin), GỢI Ý các tên hay gặp nhất, chủ sách chọn MỘT lần trong Studio, khoá
+như cài đặt của sách; hoặc suy bằng N7b theo sổ nhân vật sau vài chương đầu rồi phân tích lại các chương ấy.
+
 ## Tài liệu
 
 Đã đọc (27-09):
