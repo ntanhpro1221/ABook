@@ -34,6 +34,21 @@ người kể), LLM thì không. Hệ quả sản phẩm: truyện ngôi thứ n
 ~70% câu; sửa rẻ nhất là MỘT câu hỏi trong Studio ("Truyện kể ngôi thứ nhất? 'Tôi' là ai?") đưa cho cả prompt LLM lẫn
 bộ chấm.
 
+**ĐÃ ĐO (27-09 15:2x) - MỘT DÒNG PROMPT sửa được lỗ này.** Nhánh `dev/pov-prompt` (worktree `Ebook Reader_pov`) thêm vào
+prompt mỗi batch: *"Truyện kể ở ngôi thứ nhất: người kể chuyện xưng 'tôi' trong lời kể là SAMAEL. Câu thoại và nội tâm
+của chính người kể phải dùng speaker=SAMAEL - không dùng 'tôi', NARRATOR hay tên người đang nói chuyện với SAMAEL."*
+YMP 248, chấm chặt:
+
+| model | không có dòng ấy | có dòng ấy |
+|---|---|---|
+| **lora27-4b** | người nói 34,0% (16/47), điểm tổng 67,3 | **89,4% (42/47), điểm tổng 87,8** |
+| qwen3:8b | 31,9%, điểm tổng 63,5 | 61,7%, điểm tổng 76,5 |
+
+Câu của Samael (22 câu): LoRA không có dòng ấy 0 đúng (VINCE 13, NARRATOR 6, JULIANA 6...), có dòng ấy 20 đúng. LoRA hưởng
+lợi gấp gần hai lần qwen3:8b - nó đã học bám đúng định dạng. Người kể suy tự động được (N7b, ANALYSIS_RESEARCH.md): nên
+app chỉ cần một gợi ý trong Studio ("Có vẻ 'tôi' là Samael - đúng không?"), dòng prompt, và đưa dòng ấy vào dữ liệu huấn
+luyện LoRA cho các truyện ngôi thứ nhất.
+
 ## Công cụ (`scripts/model_eval/`)
 
 | file | việc |
