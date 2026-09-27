@@ -158,6 +158,16 @@ export function SettingsScreen() {
       </Group>
 
       <Group title="Nghe">
+        <Row label="Nút tai nghe lùi/tới" hint="Nút Trước/Sau trên tai nghe Bluetooth, đồng hồ, xe hơi: lùi/tới 15 giây thay vì nhảy cả chương.">
+          <Switch.Root
+            checked={settings.headsetSkips ?? false}
+            onCheckedChange={(value) => change({ headsetSkips: value })}
+            aria-label="Nút tai nghe lùi/tới"
+            className="relative h-7 w-12 rounded-full bg-line-strong transition-colors data-[state=checked]:bg-accent"
+          >
+            <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
+          </Switch.Root>
+        </Row>
         <Row label="Tự lùi khi nghe lại" hint={`Tạm dừng quá ${settings.rewindAfterMinutes} phút rồi nghe tiếp thì lùi lại một chút để bắt mạch truyện.`}>
           <Segmented
             label="Tự lùi"

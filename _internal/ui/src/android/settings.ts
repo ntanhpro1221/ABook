@@ -14,6 +14,8 @@ export interface PlayerSettings {
   shakeSensitivity: "gentle" | "normal" | "firm";
   /** Úp màn hình xuống để tạm dừng, lật lên trong 10 phút để nghe tiếp. */
   flipToPause: boolean;
+  /** Nút Trước/Sau trên tai nghe, đồng hồ, xe hơi = lùi/tới 15 giây thay vì nhảy chương. */
+  headsetSkips: boolean;
   rewindSeconds: number;
   rewindAfterMinutes: number;
   /** Phát liên tục chừng này giờ không ai chạm máy thì tự nhỏ dần rồi dừng (0 = tắt). */
@@ -30,6 +32,7 @@ export const DEFAULT_SETTINGS: PlayerSettings = {
   shakeAction: "extend",
   shakeSensitivity: "normal",
   flipToPause: false,
+  headsetSkips: false,
   rewindSeconds: 5,
   rewindAfterMinutes: 5,
   safetyStopHours: 2,
@@ -63,6 +66,7 @@ export async function pushSettings(settings: PlayerSettings): Promise<void> {
     shakeAction: settings.shakeAction ?? "extend",
     shakeSensitivity: settings.shakeSensitivity ?? "normal",
     flipToPause: settings.flipToPause ?? false,
+    headsetSkips: settings.headsetSkips ?? false,
     rewindSeconds: settings.rewindSeconds,
     rewindAfterMinutes: settings.rewindAfterMinutes,
     safetyStopHours: settings.safetyStopHours,

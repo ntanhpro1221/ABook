@@ -129,6 +129,7 @@ class PlayerPlugin : Plugin() {
         call.getInt("sleepFadeSeconds")?.let { SleepTimer.fadeMs = it * 1000L }
         call.getBoolean("shakeToExtend")?.let { SleepTimer.shakeEnabled = it }
         call.getString("shakeAction")?.let { SleepTimer.shakeResets = it == "reset" }
+        call.getBoolean("headsetSkips")?.let { Playback.headsetSkips = it }
         call.getBoolean("flipToPause")?.let {
             Motion.flipEnabled = it
             Motion.refresh()

@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
+import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
@@ -68,7 +69,7 @@ class PlaybackService : MediaSessionService() {
             this, 0, Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-        session = MediaSession.Builder(this, player)
+        session = MediaSession.Builder(this, HeadsetSkips(player))
             .setSessionActivity(openApp)
             .setCallback(Callback())
             .setMediaButtonPreferences(buttons())
@@ -94,6 +95,36 @@ class PlaybackService : MediaSessionService() {
 
     fun refreshButtons() {
         session?.setMediaButtonPreferences(buttons())
+    }
+
+    /**
+     * Lệnh "trước/sau" từ tai nghe Bluetooth, đồng hồ, xe hơi, màn hình khoá đều đi qua phiên media, tức qua lớp này.
+     * Bật "Nút tai nghe lùi/tới" thì chúng thành lùi/tới 15 giây (sách nói hiếm khi cần nhảy cả chương - Smart
+     * AudioBook Player có tuỳ chọn này). Nút trong app gọi thẳng player gốc nên vẫn nhảy chương như cũ.
+     */
+    private class HeadsetSkips(player: Player) : ForwardingPlayer(player) {
+        // Ở chương cuối không có "bài sau" nên Media3 coi lệnh ấy không khả dụng và bỏ phím trước khi tới đây (thấy
+        // 27-09 trên máy ảo: "Trước" lùi 15 giây, "Sau" im). Bật tuỳ chọn thì hai lệnh luôn khả dụng.
+        private val skips = Player.Commands.Builder().addAll(
+            Player.COMMAND_SEEK_TO_NEXT, Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM,
+            Player.COMMAND_SEEK_TO_PREVIOUS, Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM,
+        ).build()
+
+        override fun getAvailableCommands(): Player.Commands {
+            val base = super.getAvailableCommands()
+            if (!Playback.headsetSkips) return base
+            val builder = base.buildUpon()
+            for (index in 0 until skips.size()) builder.add(skips.get(index))
+            return builder.build()
+        }
+
+        override fun isCommandAvailable(command: Int): Boolean =
+            (Playback.headsetSkips && skips.contains(command)) || super.isCommandAvailable(command)
+
+        override fun seekToNext() = if (Playback.headsetSkips) seekForward() else super.seekToNext()
+        override fun seekToNextMediaItem() = if (Playback.headsetSkips) seekForward() else super.seekToNextMediaItem()
+        override fun seekToPrevious() = if (Playback.headsetSkips) seekBack() else super.seekToPrevious()
+        override fun seekToPreviousMediaItem() = if (Playback.headsetSkips) seekBack() else super.seekToPreviousMediaItem()
     }
 
     private inner class Callback : MediaSession.Callback {
