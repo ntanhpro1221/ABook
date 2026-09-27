@@ -1,4 +1,4 @@
-import { Headphones, Pause, Play, Search } from "lucide-react";
+import { Headphones, Laptop, Pause, Play, Search } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode, type CSSProperties } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -20,6 +20,12 @@ function stateOf(book: ListenBook): Filter {
 
 /** Dòng trạng thái của một cuốn, cùng một bộ từ ở Thư viện, trang sách và thẻ nghe dở. */
 export function bookStatusText(book: ListenBook): string {
+  const status = progressText(book);
+  // Điện thoại: cuốn nằm trên máy tính, nghe thẳng qua mạng - người nghe cần biết mất Wi-Fi thì không nghe được.
+  return book.remote ? `Trên máy tính · ${status}` : status;
+}
+
+function progressText(book: ListenBook): string {
   const chapters = `${book.chaptersAvailable}/${book.chaptersTotal} chương`;
   if (book.progress.finished) return "Đã nghe xong";
   if (book.progress.caughtUp) return `Đã nghe hết phần đã có · ${chapters}`;
@@ -110,6 +116,11 @@ function BookTile({ book }: { book: ListenBook }) {
           <div className="absolute inset-x-0 bottom-0 h-1 overflow-hidden rounded-b-lg bg-black/40">
             <div className="h-full bg-accent" style={{ width: `${book.progress.fraction * 100}%` }} />
           </div>
+        )}
+        {book.remote && (
+          <span className="pointer-events-none absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white">
+            <Laptop className="size-3" /> Máy tính
+          </span>
         )}
       </div>
       <button type="button" onClick={() => navigate(`/book/${book.id}`)} className="mt-2.5 block w-full text-left">
