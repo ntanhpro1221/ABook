@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any, Callable, Protocol
 from urllib.parse import parse_qs, unquote, urlsplit
 
+from .. import listener_overrides
 from . import actions, cover_search, covers, listen_view, store
 from .library import Library, Preferences, book_id
 from .listening import Listening
@@ -49,6 +50,14 @@ TYPES = {
 class Dialogs(Protocol):
     def pick_folder(self, title: str, start: str) -> str | None: ...
     def pick_files(self, title: str, start: str) -> list[str]: ...
+
+
+# Câu chữ cho người đọc của các mã từ chối. listener_overrides.py giữ mã (file khoá chất lượng), câu chữ ở đây để sửa
+# chữ không đổi hash chất lượng.
+PRONUNCIATION_PROBLEMS = {
+    listener_overrides.MULTI_WORD: "Chỉ sửa được cách đọc của MỘT từ - cách đọc lưu theo từng từ.",
+    listener_overrides.NOT_VIETNAMESE: "Cách đọc phải là các âm tiết tiếng Việt nối bằng gạch nối, ví dụ Hên-khơ.",
+}
 
 
 class ApiError(Exception):
@@ -544,8 +553,24 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.OK, review_view(project, verdicts, include_minor=query.get("all") == ["1"]))
 
     def get_work(self, _query: dict[str, list[str]], value: str) -> None:
-        # "Việc cần anh" (docs/STUDIO_REVIEW.md): chỗ máy nghi ngờ, xếp theo lợi trên mỗi lần bấm - chỉ đọc.
+        # "Việc cần anh" (docs/STUDIO_REVIEW.md): chỗ máy nghi ngờ, xếp theo lợi trên mỗi lần bấm.
         self._send_json(HTTPStatus.OK, work_items(self.app._book(value)))
+
+    def post_pronunciation(self, _query: dict[str, list[str]], value: str) -> None:
+        # Sửa cách đọc một tên. Giao diện KHÔNG ghi SQLite của sách: nó ghi mong muốn vào overrides.json, dây chuyền áp
+        # ở ranh giới chương kế tiếp (hoặc lần chạy tới) và thu lại mọi câu đã thu có tên ấy - listener_overrides.py.
+        self.app._mutating()
+        path = self.app._book(value)
+        body = self._body()
+        surface = str(body.get("surface", "")).strip()[:80]
+        spoken = " ".join(str(body.get("spokenForm", "")).split())[:120]
+        if not surface or not spoken:
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu tên hoặc cách đọc")
+        problem = listener_overrides.pronunciation_problem(surface, spoken)
+        if problem is not None:
+            raise ApiError(HTTPStatus.BAD_REQUEST, PRONUNCIATION_PROBLEMS.get(problem, "Cách đọc này không dùng được"))
+        listener_overrides.request_pronunciation(path, surface, spoken, now=time.time())
+        self._send_json(HTTPStatus.OK, {"surface": surface, "spokenForm": spoken})
 
     def post_review(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._book(value)
@@ -807,6 +832,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(BOOK + r"/review"), Handler.get_review),
     ("GET", re.compile(BOOK + r"/work"), Handler.get_work),
     ("POST", re.compile(BOOK + r"/review"), Handler.post_review),
+    ("POST", re.compile(BOOK + r"/pronunciation"), Handler.post_pronunciation),
     ("GET", re.compile(BOOK + r"/cover/search"), Handler.get_cover_search),
     ("PUT", re.compile(BOOK + r"/cover"), Handler.put_cover),
     ("DELETE", re.compile(BOOK + r"/cover"), Handler.delete_cover),
