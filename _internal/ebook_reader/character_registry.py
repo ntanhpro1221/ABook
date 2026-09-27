@@ -272,7 +272,12 @@ def merge_stray_surnames(
 
 
 def _folded_source_text(db: ProjectDB) -> str:
-    """Văn bản nguồn của chính project, bỏ dấu và hạ chữ, để đếm một cái tên trong đó.
+    """`_source_text` bỏ dấu và hạ chữ, để đếm một cái tên trong đó."""
+    return fold_for_source_search(_source_text(db))
+
+
+def _source_text(db: ProjectDB) -> str:
+    """Văn bản nguồn của chính project, nguyên chữ.
 
     Đọc **mọi** file .txt cùng thư mục với các chương của project, không chỉ những chương
     project ấy chạy: một project vá một chương chỉ trỏ tới một file, và hỏi "cái tên này có
@@ -298,13 +303,86 @@ def _folded_source_text(db: ProjectDB) -> str:
             chunks.append(path.read_text(encoding="utf-8", errors="replace"))
         except OSError:
             continue
-    return fold_for_source_search("\n".join(chunks))
+    return "\n".join(chunks)
 
 
 def fold_for_source_search(text: str) -> str:
     """Chữ thường, bỏ hết dấu - để so một cái tên với văn xuôi viết hoa/thường tuỳ chỗ."""
-    lowered = unicodedata.normalize("NFD", text.lower())
-    return "".join(char for char in lowered if not unicodedata.combining(char))
+    lowered = text.lower()
+    # Tách dấu TỪNG ký tự khác nhau (vài trăm) rồi dịch cả cuốn bằng `translate`: `normalize("NFD")` trên cả cuốn 11
+    # triệu ký tự tốn 21 giây, mỗi lần dựng sổ nhân vật. Kết quả y hệt (đo 27-09 trên cuốn 2).
+    table: dict[int, str] = {}
+    for char in set(lowered):
+        folded = "".join(part for part in unicodedata.normalize("NFD", char) if not unicodedata.combining(part))
+        if folded != char:
+            table[ord(char)] = folded
+    return lowered.translate(table)
+
+
+def _fold_each_char(text: str) -> str:
+    """Bỏ dấu, hạ chữ TỪNG ký tự (đ -> d), giữ nguyên độ dài: vị trí trong bản gấp là vị trí trong văn bản (NFC)."""
+    table: dict[int, str] = {}
+    for char in set(text):  # vài trăm ký tự khác nhau; dịch cả cuốn bằng `translate` (một cuốn là hàng triệu ký tự)
+        base = "d" if char in "đĐ" else unicodedata.normalize("NFD", char)[0].lower()[:1]
+        if base and base != char:
+            table[ord(char)] = base
+    return text.translate(table)
+
+
+SENTENCE_OPENERS = ".!?…:;\"'“”‘’«»()[]-–—"
+
+
+def _opens_a_sentence(text: str, start: int) -> bool:
+    """Chữ ở `start` đứng đầu câu (đầu dòng, sau dấu chấm, sau gạch đầu lời thoại): viết hoa ở đó không nói nó là tên."""
+    index = start - 1
+    while index >= 0 and text[index] in " \t":
+        index -= 1
+    return index < 0 or text[index] in "\r\n" or text[index] in SENTENCE_OPENERS
+
+
+def restore_source_marks(names: "Iterable[str]", source: str) -> dict[str, str]:
+    """Tên mà sách không viết như thế, nhưng bỏ dấu ra chỉ khớp ĐÚNG MỘT cách viết tên trong sách -> cách của sách.
+    Trả về {tên: tên theo sách}.
+
+    Model 4B tinh chỉnh rơi dấu cả chương với tên chưa gặp - "HOANG CAI" cho Hoàng Cái - hay đặt sai dấu - "KHỐNG MINH"
+    cho Khổng Minh (Tam quốc Hồi 50-52, 27-09). Giọng không sai vì thế (các lượt gom trước gom mọi cách viết của một
+    người); sai là CHỮ trong danh sách nhân vật chủ sách đọc. Chỉ đếm chỗ sách viết như tên riêng - mọi chữ viết hoa
+    đầu, và với tên một chữ thì không tính chỗ đầu câu - để "MINH" không thành đại từ "Mình" đầu câu; sách có viết đúng
+    như nhãn ("Minh", "Du", "Hoàng Cái") thì giữ; bỏ dấu ra khớp nhiều cách viết ("Vân", "Văn" cho "VAN") thì không
+    đoán. Kiểu chữ theo nhãn: nhãn in hoa ra in hoa, còn lại lấy đúng chữ của sách.
+    """
+    if not source:
+        return {}
+    # NFC từng dòng: `normalize` trên cả cuốn chậm vượt tuyến tính (21 giây cho cuốn 2, từng dòng 0,05 giây, y hệt)
+    text = "\n".join(unicodedata.normalize("NFC", line) for line in source.split("\n"))
+    folded = _fold_each_char(text)
+    restored: dict[str, str] = {}
+    for name in names:
+        own = unicodedata.normalize("NFC", normalize_name(name))
+        words = _fold_each_char(own).split()
+        if not words or own.title() in text or own.upper() in text:
+            continue  # sách viết đúng như nhãn (lối tắt: khỏi quét cả cuốn cho mỗi tên đã đúng)
+        # Ranh giới trái kiểm ngoài regex: mẫu mở đầu bằng lookbehind mất lối tìm chữ nhanh của `re` (22 giây/cuốn 2).
+        pattern = re.compile(r"\s+".join(re.escape(word) for word in words) + r"(?!\w)")
+        spellings: Counter[str] = Counter()
+        for match in pattern.finditer(folded):
+            before = folded[match.start() - 1] if match.start() else ""
+            if before.isalnum() or before == "_":
+                continue
+            spelling = " ".join(text[match.start():match.end()].split())
+            if not all(word[:1].isupper() for word in spelling.split()):
+                continue
+            if len(words) == 1 and _opens_a_sentence(text, match.start()):
+                continue
+            spellings[spelling] += 1
+        forms = {spelling.casefold() for spelling in spellings}
+        if len(forms) != 1 or own in forms:
+            continue
+        if name.isupper():
+            restored[name] = next(iter(forms)).upper()
+        else:
+            restored[name] = max(spellings, key=lambda spelling: (spellings[spelling], spelling))
+    return restored
 
 
 def source_occurrences(name: str, folded_source: str) -> int:
@@ -312,7 +390,7 @@ def source_occurrences(name: str, folded_source: str) -> int:
     needle = fold_for_source_search(name).strip()
     if not needle or not folded_source:
         return 0
-    return len(re.findall(re.escape(needle), folded_source))
+    return folded_source.count(needle)  # cùng phép đếm không chồng lấn của `re.findall`, nhanh hơn hẳn trên cả cuốn
 
 
 def _within_one_edit(left: str, right: str) -> bool:
@@ -460,13 +538,14 @@ def merge_given_names(representatives: dict[str, str]) -> dict[str, str]:
 
 def canonical_speaker_names(
     counts: "Counter[str]",
-    folded_source: str,
+    source: str,
     log: Callable[[str], None] = lambda _message: None,
 ) -> dict[str, str]:
-    """{nhãn người nói gốc: nhân vật} sau bốn lượt gom tên - dùng chung cho dây chuyền (`_canonicalize_named_speakers`)
+    """{nhãn người nói gốc: nhân vật} sau các lượt gom tên - dùng chung cho dây chuyền (`_canonicalize_named_speakers`)
     và công cụ đo (`scripts/model_eval/voice_identity.py`), để phép đo chấm đúng thứ người nghe sẽ nghe. `counts`: số
-    câu của từng nhãn; `folded_source`: văn bản nguồn đã bỏ dấu (`_folded_source_text`, "" thì tắt lượt đánh vần theo
-    sách). Nhãn cục bộ, NARRATOR/UNKNOWN và đại từ không có trong kết quả."""
+    câu của từng nhãn; `source`: văn bản nguồn nguyên chữ (`_source_text`; "" thì tắt hai lượt theo sách - đánh vần
+    và khôi phục dấu). Nhãn cục bộ, NARRATOR/UNKNOWN và đại từ không có trong kết quả."""
+    folded_source = fold_for_source_search(source)
     cleaned_counts: Counter[str] = Counter()
     cleaned_by_original: dict[str, str] = {}
     for original, count in counts.items():
@@ -523,6 +602,14 @@ def canonical_speaker_names(
         log(f"  {representatives[key]} là tên gọi của {winner}: cùng một nhân vật.")
         representatives[key] = winner
 
+    # Sau cùng, chỉ đổi CHỮ hiển thị (một tên thành một tên): tên rơi hết dấu viết lại theo sách.
+    marked = restore_source_marks(sorted(set(representatives.values())), source)
+    for key, name in list(representatives.items()):
+        if name in marked:
+            representatives[key] = marked[name]
+    for plain, restored in sorted(marked.items()):
+        log(f"  Tên {plain} viết theo sách: {restored}.")
+
     targets: dict[str, str] = {}
     for original, cleaned in cleaned_by_original.items():
         normalized = identity_key(cleaned)
@@ -547,7 +634,7 @@ def _canonicalize_named_speakers(
     log: Callable[[str], None],
 ) -> dict[str, set[str]]:
     counts = Counter(str(row["speaker"]) for row in db.list_segments())
-    targets = canonical_speaker_names(counts, _folded_source_text(db), log)
+    targets = canonical_speaker_names(counts, _source_text(db), log)
     aliases_by_target: dict[str, set[str]] = defaultdict(set)
     rewritten_segments = 0
     for original, target in targets.items():
