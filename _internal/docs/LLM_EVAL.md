@@ -27,6 +27,11 @@ LoRA 76,9% vs nền 66,4% vs qwen3:8b / qwen3:4b 68,5% (đo 21-09); bộ chấm 
 (mốc) và 84,6% (học trước PDNC). Lưu ý: các chương TMA KHÁC nằm trong dữ liệu huấn luyện LoRA - so với nền là sạch
 (cùng tập test), so với model chưa huấn luyện trên truyện này thì LoRA có lợi thế "đã quen truyện".
 
+**LoRA sai ở đâu** (143 câu test TMA, chấm chặt; qwen3:8b trong ngoặc): đúng 107 (96); nhầm sang người có tên khác 14
+(26) - LoRA giảm gần nửa; đoán người kể/NPC khi gold là người có tên 13 (12) - KHÔNG giảm, điển hình danh xưng không nối
+được với tên ("đại trưởng lão" = Augustus); gán tên khi gold là người kể/NPC 6 (7); lẫn NARRATOR/NPC* 3 (2). Hướng cho dữ
+liệu LoRA vòng sau: danh sách nhân vật trong prompt kèm danh xưng/bí danh đã gặp; bộ chấm bù đúng loại lỗi thứ hai.
+
 **Truyện kể NGÔI THỨ NHẤT - lỗ lớn nhất của cả dây chuyền (YMP 248, 42 câu, người kể "tôi" = Samael):** người nói
 LoRA **28,6%**, nền 31,0% (điểm tổng 67,3 vs 56,3; LoRA vẫn nhanh gấp 2,3 và cảm xúc 94,6 vs 81,4%) - trong khi bộ
 chấm ứng viên 92,9%. Không công bằng hoàn toàn: bộ chấm được biết "tôi" là ai (N7 suy từ gold - tức TRẦN khi app biết
