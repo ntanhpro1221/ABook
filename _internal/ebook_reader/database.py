@@ -7848,7 +7848,9 @@ class ProjectDB:
             self._refresh_chapter_counts_conn(conn, chapter_id)
 
     def reset_segment_pending(self, segment_id: int, reason: str) -> None:
-        with self.connect() as conn:
+        # Một transaction: câu đã đặt lại mà ứng viên vòng sửa còn đó là lần khởi động sau chết trong recovery
+        # (xem `_reset_segment_pending_conn`); câu còn nguyên mà ứng viên đã mất là mất bằng chứng của bản thu đang dùng.
+        with self.transaction() as conn:
             self._reset_segment_pending_conn(conn, segment_id, reason, time.time())
             row = conn.execute("SELECT chapter_id FROM segments WHERE id=?", (segment_id,)).fetchone()
             if row is not None:
@@ -7880,6 +7882,12 @@ class ProjectDB:
                 segment_id,
             ),
         )
+        # Lịch sử vòng sửa gắn với bản thu vừa bỏ nên bỏ theo. `promoted` là trạng thái cuối, không bao giờ bị vô hiệu,
+        # và recovery kiểm MỌI ứng viên promoted "vẫn là bản thu hiện tại của câu" mà không bắt lỗi: để nó lại thì lần
+        # khởi động sau chết ngay trong recovery. Ứng viên vòng 0 của đời trước còn làm cấp phát vòng 0 của bản thu mới
+        # từ chối (khác bản gốc), và các vòng cũ tiêu mất ngân sách sửa của câu. Ở Tập 18, 720/3.682 câu có ứng viên
+        # promoted (tests/test_a_reset_line_forgets_its_repairs.py). File WAV của ứng viên cũ vẫn nằm trên đĩa.
+        conn.execute("DELETE FROM segment_candidates WHERE segment_id=?", (segment_id,))
 
     def retry_failed_segments(
         self,

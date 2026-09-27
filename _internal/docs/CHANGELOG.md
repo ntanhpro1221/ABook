@@ -55,6 +55,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Android: nút Back đóng màn "Đang nghe" thay vì thoát app; không còn crash khi thoát.
 - Windows: shortcut Start Menu mang mã nhận diện của app, để bảng media và thanh tác vụ hiện đúng tên, biểu tượng.
+- Sách không còn kẹt ở lần chạy tiếp theo sau khi một câu từng được thu lại cho rõ bị thu lại lần nữa (khi chữ đọc đổi,
+  bản thu hỏng, hay người nghe sửa cách đọc tên).
 
 ### Lưu ý khi nâng cấp
 
