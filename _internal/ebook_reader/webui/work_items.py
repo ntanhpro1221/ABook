@@ -54,6 +54,36 @@ def _example(row: Any, names: dict[int, dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _cast_choices(spoken: list[Any], chapter_ids: set[int], leave_out: set[str]) -> list[dict[str, str]]:
+    """Người có tên nói nhiều nhất trong những chương ấy - ứng viên hợp lý nhất khi máy không có ý kiến riêng."""
+    counts: dict[str, int] = defaultdict(int)
+    for row in spoken:
+        speaker = str(row["speaker"])
+        if int(row["chapter_id"]) in chapter_ids and _is_named(speaker) and speaker.casefold() not in leave_out:
+            counts[speaker] += 1
+    ranked = sorted(counts, key=lambda speaker: (-counts[speaker], speaker.casefold()))[:4]
+    return [{"label": speaker_label(speaker), "value": speaker} for speaker in ranked]
+
+
+def _speaker_fix(rows: list[Any], choices: list[dict[str, str]], current: str,
+                 wishes: dict[str, dict[str, str]]) -> dict[str, Any] | None:
+    """Phần "sửa được" của một thẻ gán người nói cho một nhóm câu, hoặc None khi người nghe đã quyết GIỮ cả nhóm.
+
+    Mỗi câu mang mã ổn định + băm chữ, để yêu cầu không bao giờ áp nhầm câu đã đổi chữ. Nhóm đang chờ áp một người thì
+    thẻ nói "đang chờ"."""
+    asked = [wishes.get(str(row["stable_id"])) for row in rows]
+    if all(wish is not None and wish["speaker"].casefold() == current.casefold() for wish in asked):
+        return None
+    pending = {wish["speaker"] for wish in asked if wish is not None}
+    return {
+        "lines": [{"stableId": str(row["stable_id"]), "textSha256": str(row["text_sha256"] or "")} for row in rows],
+        "choices": [choice for choice in {choice["value"]: choice for choice in choices}.values()
+                    if choice["value"].casefold() != current.casefold()],
+        "currentValue": current,
+        "requested": speaker_label(next(iter(pending))) if len(pending) == 1 and None not in asked else None,
+    }
+
+
 def _tokens(name: str) -> list[str]:
     return [token for token in re.split(r"[\s\-]+", name.upper()) if token]
 
@@ -116,8 +146,8 @@ def work_items(project_root: Path) -> dict[str, Any]:
             # đã chọn thì thẻ nói "đang chờ" tới khi dây chuyền áp; chọn giữ nguyên thì thẻ biến mất (đã có người quyết).
             choices = [{"label": speaker_label(str(name)), "value": str(name)} for name, _ in doubt.get("top", []) if name]
             choices += [{"label": "Người kể", "value": NARRATOR}, {"label": "Vai phụ không tên", "value": UNNAMED}]
-            wish = speaker_wishes.get(stable_id)
-            if wish is not None and wish["speaker"].casefold() == str(row["speaker"]).casefold():
+            fix = _speaker_fix([row], choices, str(row["speaker"]), speaker_wishes)
+            if fix is None:
                 continue
             items.append({
                 "kind": "speaker",
@@ -130,13 +160,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
                 "options": list(dict.fromkeys(options)),
                 "current": speaker_label(str(row["speaker"])),
                 "examples": [_example(row, names)],
-                "stableId": stable_id,
-                "textSha256": str(row["text_sha256"] or ""),
-                # Người đang giữ câu không phải một lựa chọn: đã có nút "Giữ" riêng.
-                "choices": [entry for entry in {entry["value"]: entry for entry in choices}.values()
-                            if entry["value"].casefold() != str(row["speaker"]).casefold()],
-                "currentValue": str(row["speaker"]),
-                "requested": speaker_label(wish["speaker"]) if wish else None,
+                **fix,
             })
 
     # 1. Chưa rõ nam hay nữ mà có lời: giọng sai giới là lỗi người nghe nhận ra ngay.
@@ -166,6 +190,11 @@ def work_items(project_root: Path) -> dict[str, Any]:
         name = speaker_label(speaker)
         text = LEADING.sub("", str(row["text"]))
         if name and text.upper().startswith(name.upper() + ","):
+            choices = _cast_choices(spoken, {int(row["chapter_id"])}, {speaker.casefold()})
+            choices += [{"label": "Người kể", "value": NARRATOR}, {"label": "Vai phụ không tên", "value": UNNAMED}]
+            fix = _speaker_fix([row], choices, speaker, speaker_wishes)
+            if fix is None:
+                continue
             items.append({
                 "kind": "vocative",
                 "key": f"vocative:{row['id']}",
@@ -176,6 +205,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
                 "options": ["Chọn người nói khác", "Giữ nguyên"],
                 "current": name,
                 "examples": [_example(row, names)],
+                **fix,
             })
 
     # 3. Nghi là MỘT người mang hai tên (bí danh): tên này nằm trọn trong tên kia, cùng giới.
@@ -233,6 +263,11 @@ def work_items(project_root: Path) -> dict[str, Any]:
     for speaker, rows in lines_by_speaker.items():
         if not speaker.startswith("NPC_LOCAL"):
             continue
+        # Chọn một người có tên thì MỌI câu của vai này về người ấy (giọng của họ); "Đúng là vai phụ" giữ cả nhóm.
+        choices = _cast_choices(spoken, {int(row["chapter_id"]) for row in rows}, set())
+        fix = _speaker_fix(rows, choices, speaker, speaker_wishes)
+        if fix is None:
+            continue
         items.append({
             "kind": "unnamed",
             "key": f"unnamed:{speaker}",
@@ -244,6 +279,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
             "options": ["Là một nhân vật có tên", "Đúng là vai phụ"],
             "current": "Vai phụ không tên",
             "examples": [_example(row, names) for row in rows[:EXAMPLES]],
+            **fix,
         })
 
     # 6. Cách đọc tên riêng máy chưa chắc. Người nghe sửa ngay trên thẻ; mong muốn chưa áp thì hiện "đang chờ", áp rồi thì

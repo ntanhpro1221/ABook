@@ -158,7 +158,7 @@ def test_a_speaker_card_offers_clickable_choices_and_hides_once_the_listener_kee
     }}), encoding="utf-8")
 
     card = next(item for item in work_items(project)["items"] if item["kind"] == "speaker")
-    assert (card["stableId"], card["textSha256"], card["currentValue"]) == ("c", "sha-c", "LUCIEN")
+    assert (card["lines"], card["currentValue"]) == ([{"stableId": "c", "textSha256": "sha-c"}], "LUCIEN")
     assert [choice["value"] for choice in card["choices"]] == ["RHINE", NARRATOR, UNNAMED], "người đang giữ câu có nút Giữ"
 
     request_speaker(project, "c", "sha-c", "RHINE", now=time.time())
@@ -203,3 +203,53 @@ def test_the_studio_refuses_on_the_spot_a_speaker_the_pipeline_would_refuse(tmp_
         server.stop()
     assert speaker_requests(read_overrides(project)) == [{"stable_id": "c", "speaker": "RHINE", "text_sha256": "sha-c"}]
     assert (project / "project.sqlite3").read_bytes() == before
+
+
+def test_the_called_person_and_the_unnamed_extra_get_the_chapters_speakers_as_choices(tmp_path: Path) -> None:
+    """Người gọi hay người nói, vai phụ không tên: sửa bằng cùng cơ chế gán người nói. Ứng viên là người có tên nói nhiều
+    nhất trong chương (không phải người bị gọi); vai phụ thì chọn một lần cho MỌI câu của vai ấy."""
+    from ebook_reader.listener_overrides import NARRATOR, UNNAMED, request_speakers
+
+    project = make_book(tmp_path)
+    items = {item["kind"]: item for item in work_items(project)["items"]}
+    vocative, unnamed = items["vocative"], items["unnamed"]
+    assert [choice["value"] for choice in vocative["choices"]] == ["ÁO CHOÀNG ĐEN", "LUCIEN", "RHINE", NARRATOR, UNNAMED]
+    assert vocative["lines"] == [{"stableId": "b", "textSha256": "sha-b"}] and vocative["currentValue"] == "HEIDI"
+    assert [choice["value"] for choice in unnamed["choices"]] == ["ÁO CHOÀNG ĐEN", "HEIDI", "LUCIEN", "RHINE"]
+
+    request_speakers(project, [(line["stableId"], line["textSha256"]) for line in unnamed["lines"]], "RHINE",
+                     now=time.time())
+    assert next(item for item in work_items(project)["items"] if item["kind"] == "unnamed")["requested"] == "Rhine"
+    request_speakers(project, [(line["stableId"], line["textSha256"]) for line in unnamed["lines"]],
+                     unnamed["currentValue"], now=time.time())
+    assert not [item for item in work_items(project)["items"] if item["kind"] == "unnamed"], "giữ nguyên thì đóng việc"
+
+
+def test_a_group_request_is_taken_whole_or_refused_whole(tmp_path: Path) -> None:
+    from ebook_reader.listener_overrides import read_overrides, speaker_requests
+    from ebook_reader.webui.library import Preferences, book_id
+    from ebook_reader.webui.listening import Listening
+    from ebook_reader.webui.server import App, Server
+    from tests.test_webui_listen_and_sync import FakeRunner, _request
+
+    project = make_book(tmp_path)
+    preferences = Preferences(tmp_path / "prefs" / "preferences.json")
+    preferences.update({"libraryRoot": str(tmp_path)})
+    app = App(preferences=preferences, runner=FakeRunner(), token="t", listening=Listening(tmp_path / "prefs" / "l.json"))
+    server = Server(app, port=0).start()
+    path = f"/api/books/{book_id(project)}/speaker"
+    try:
+        status, data, _ = _request(server.port, "POST", path, headers={"X-Ebook-Token": "t"}, body={
+            "speaker": "RHINE",
+            "lines": [{"stableId": "g", "textSha256": "sha-g"}, {"stableId": "e", "textSha256": "sha-khac"}],
+        })
+        assert status == 400 and "đã đổi" in json.loads(data)["error"]
+        assert speaker_requests(read_overrides(project)) == [], "một câu hỏng thì cả nhóm không được ghi"
+        status, data, _ = _request(server.port, "POST", path, headers={"X-Ebook-Token": "t"}, body={
+            "speaker": "RHINE",
+            "lines": [{"stableId": "g", "textSha256": "sha-g"}, {"stableId": "e", "textSha256": "sha-e"}],
+        })
+        assert status == 200 and json.loads(data)["lines"] == 2
+    finally:
+        server.stop()
+    assert [entry["stable_id"] for entry in speaker_requests(read_overrides(project))] == ["e", "g"]

@@ -39,9 +39,9 @@ interface WorkItem {
   /** Việc cách đọc tên: chữ gốc trong sách, và cách đọc người nghe đã ghi mà dây chuyền chưa áp (nếu có). */
   surface?: string;
   requested?: string | null;
-  /** Việc "Ai nói câu này": câu (mã ổn định + băm chữ, để yêu cầu không áp nhầm câu đã đổi) và các lựa chọn bấm được. */
-  stableId?: string;
-  textSha256?: string;
+  /** Việc gán người nói ("Ai nói câu này", người gọi, vai phụ không tên): các câu (mã ổn định + băm chữ, để yêu cầu
+   *  không áp nhầm câu đã đổi) và các lựa chọn bấm được. */
+  lines?: { stableId: string; textSha256: string }[];
   choices?: { label: string; value: string }[];
   currentValue?: string;
 }
@@ -168,24 +168,26 @@ function PronunciationFix({ bookId, item }: { bookId: string; item: WorkItem }) 
   );
 }
 
-// "Ai nói câu này": mỗi ứng viên một nút, người bộ chấm chọn đứng đầu. Không chờ gì - ghi xong là xong phần người; dây
-// chuyền gán câu cho người ấy (mượn đúng giọng sẵn có của họ) ở ranh giới chương, câu đã thu thì thu lại.
+// Gán người nói - một câu ("Ai nói câu này", người gọi) hay mọi câu của một vai phụ: mỗi ứng viên một nút, người máy nghi
+// nhất đứng đầu. Không chờ gì - ghi xong là xong phần người; dây chuyền gán câu cho người ấy (mượn đúng giọng sẵn có của
+// họ) ở ranh giới chương, câu đã thu thì thu lại.
 function SpeakerFix({ bookId, item }: { bookId: string; item: WorkItem }) {
   const client = useQueryClient();
   const save = useMutation({
     mutationFn: (speaker: string) =>
-      api<{ stableId: string; speaker: string }>(`/api/books/${bookId}/speaker`, {
+      api<{ lines: number; speaker: string }>(`/api/books/${bookId}/speaker`, {
         method: "POST",
-        body: { stableId: item.stableId, textSha256: item.textSha256, speaker },
+        body: { lines: item.lines, speaker },
       }),
     onSuccess: ({ speaker }) => {
       void client.invalidateQueries({ queryKey: ["work", bookId] });
+      const which = (item.lines?.length ?? 1) > 1 ? `${item.lines?.length} câu này` : "câu này";
       if (speaker === item.currentValue) {
-        toast.success(`Giữ nguyên: câu này của ${item.current}`, { description: "Việc này sẽ không hiện lại." });
+        toast.success(`Giữ nguyên: ${which} của ${item.current}`, { description: "Việc này sẽ không hiện lại." });
         return;
       }
       const label = item.choices?.find((choice) => choice.value === speaker)?.label ?? speaker;
-      toast.success(`Đã ghi: câu này của ${label}`, {
+      toast.success(`Đã ghi: ${which} của ${label}`, {
         description: "Áp ở ranh giới chương kế tiếp; câu đã thu sẽ được thu lại bằng giọng của người ấy.",
       });
     },
@@ -243,7 +245,7 @@ function Card({ bookId, item, onOpenReview }: { bookId: string; item: WorkItem; 
         </Button>
       ) : item.kind === "pronunciation" && item.surface ? (
         <PronunciationFix bookId={bookId} item={item} />
-      ) : item.kind === "speaker" && item.stableId && item.choices ? (
+      ) : item.lines && item.choices ? (
         <SpeakerFix bookId={bookId} item={item} />
       ) : (
         <div className="mt-3 flex flex-wrap gap-1.5" aria-label="Lựa chọn">
