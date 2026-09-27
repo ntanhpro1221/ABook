@@ -57,6 +57,8 @@ export interface EbookPlayerPlugin {
     sleepExtendMinutes?: number;
     sleepFadeSeconds?: number;
     shakeToExtend?: boolean;
+    shakeAction?: "extend" | "reset";
+    shakeSensitivity?: "gentle" | "normal" | "firm";
     rewindAfterMinutes?: number;
     rewindSeconds?: number;
     safetyStopHours?: number;

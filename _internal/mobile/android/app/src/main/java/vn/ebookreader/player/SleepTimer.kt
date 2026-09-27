@@ -44,6 +44,10 @@ object SleepTimer {
     var fadeMs = 30_000L
     var extendMinutes = 10
     var shakeEnabled = true
+    /** Lắc = đặt lại từ đầu khoảng đã hẹn (như Smart AudioBook Player), thay vì cộng thêm `extendMinutes`. */
+    var shakeResets = false
+    /** Ngưỡng một cú lắc, tính bằng g: nhỏ = nhẹ tay cũng tính (Cài đặt: nhẹ tay 1,6 / vừa 2,2 / mạnh tay 2,8). */
+    var shakeThresholdG = 2.2
     private var ticking = false
 
     fun describe(): JSONObject {
@@ -134,7 +138,7 @@ object SleepTimer {
         val now = System.currentTimeMillis()
         when {
             mode != Mode.OFF -> {
-                extend()
+                if (shakeResets && mode == Mode.MINUTES && minutes > 0) setMinutes(minutes) else extend()
                 Bedtime.event("shake")
                 buzz(longArrayOf(0, 60, 80, 60))
             }
@@ -278,8 +282,8 @@ object Motion : SensorEventListener {
         val (x, y, z) = Triple(event.values[0], event.values[1], event.values[2])
         val magnitude = sqrt((x * x + y * y + z * z).toDouble())
         val now = System.currentTimeMillis()
-        // Lắc: hai đỉnh > 2,2 g trong 800 ms, cách lần lắc trước > 2 giây.
-        if (magnitude / SensorManager.GRAVITY_EARTH > 2.2) {
+        // Lắc: hai đỉnh vượt ngưỡng (mặc định 2,2 g) trong 800 ms, cách lần lắc trước > 2 giây.
+        if (magnitude / SensorManager.GRAVITY_EARTH > SleepTimer.shakeThresholdG) {
             peaks.addLast(now)
             while (peaks.isNotEmpty() && now - peaks.first() > 800) peaks.removeFirst()
             if (peaks.size >= 2 && now - lastShakeMs > 2000) {

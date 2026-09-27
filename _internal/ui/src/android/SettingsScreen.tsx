@@ -47,6 +47,33 @@ export function SettingsScreen() {
             <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
           </Switch.Root>
         </Row>
+        {settings.shakeToExtend && (
+          <>
+            <Row label="Khi lắc" hint="Cộng thêm: mỗi cú lắc thêm vài phút. Đặt lại: hẹn giờ quay về từ đầu (vd lại đủ 30 phút).">
+              <Segmented
+                label="Khi lắc"
+                value={settings.shakeAction ?? "extend"}
+                onChange={(value) => change({ shakeAction: value })}
+                options={[
+                  { value: "extend", label: "Cộng thêm" },
+                  { value: "reset", label: "Đặt lại" },
+                ]}
+              />
+            </Row>
+            <Row label="Độ nhạy" hint="Hay bị tính nhầm khi trở mình thì chọn Mạnh tay; lắc mãi không ăn thì chọn Nhẹ tay.">
+              <Segmented
+                label="Độ nhạy lắc"
+                value={settings.shakeSensitivity ?? "normal"}
+                onChange={(value) => change({ shakeSensitivity: value })}
+                options={[
+                  { value: "gentle", label: "Nhẹ tay" },
+                  { value: "normal", label: "Vừa" },
+                  { value: "firm", label: "Mạnh tay" },
+                ]}
+              />
+            </Row>
+          </>
+        )}
         <Row label="Mỗi lần thêm">
           <Segmented
             label="Mỗi lần thêm"

@@ -8,6 +8,10 @@ export interface PlayerSettings {
   sleepExtendMinutes: number;
   sleepFadeSeconds: number;
   shakeToExtend: boolean;
+  /** Lắc = cộng thêm "Mỗi lần thêm" hay đặt lại từ đầu khoảng đã hẹn (Smart AudioBook Player). */
+  shakeAction: "extend" | "reset";
+  /** Nhẹ tay cũng tính (gentle) … phải lắc mạnh (firm): tránh lắc nhầm khi trở mình. */
+  shakeSensitivity: "gentle" | "normal" | "firm";
   rewindSeconds: number;
   rewindAfterMinutes: number;
   /** Phát liên tục chừng này giờ không ai chạm máy thì tự nhỏ dần rồi dừng (0 = tắt). */
@@ -21,6 +25,8 @@ export const DEFAULT_SETTINGS: PlayerSettings = {
   sleepExtendMinutes: 10,
   sleepFadeSeconds: 30,
   shakeToExtend: true,
+  shakeAction: "extend",
+  shakeSensitivity: "normal",
   rewindSeconds: 5,
   rewindAfterMinutes: 5,
   safetyStopHours: 2,
@@ -51,6 +57,8 @@ export async function pushSettings(settings: PlayerSettings): Promise<void> {
     sleepExtendMinutes: settings.sleepExtendMinutes,
     sleepFadeSeconds: settings.sleepFadeSeconds,
     shakeToExtend: settings.shakeToExtend,
+    shakeAction: settings.shakeAction ?? "extend",
+    shakeSensitivity: settings.shakeSensitivity ?? "normal",
     rewindSeconds: settings.rewindSeconds,
     rewindAfterMinutes: settings.rewindAfterMinutes,
     safetyStopHours: settings.safetyStopHours,
