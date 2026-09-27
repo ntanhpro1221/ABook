@@ -74,6 +74,16 @@ export function SettingsScreen() {
             </Row>
           </>
         )}
+        <Row label="Úp máy để tạm dừng" hint="Úp màn hình xuống (lên bàn, lên nệm) là dừng; lật lên trong 10 phút là nghe tiếp. Cầm máy trên tay thì không tính.">
+          <Switch.Root
+            checked={settings.flipToPause ?? false}
+            onCheckedChange={(value) => change({ flipToPause: value })}
+            aria-label="Úp máy để tạm dừng"
+            className="relative h-7 w-12 rounded-full bg-line-strong transition-colors data-[state=checked]:bg-accent"
+          >
+            <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
+          </Switch.Root>
+        </Row>
         <Row label="Mỗi lần thêm">
           <Segmented
             label="Mỗi lần thêm"

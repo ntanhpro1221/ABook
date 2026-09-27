@@ -12,6 +12,8 @@ export interface PlayerSettings {
   shakeAction: "extend" | "reset";
   /** Nhẹ tay cũng tính (gentle) … phải lắc mạnh (firm): tránh lắc nhầm khi trở mình. */
   shakeSensitivity: "gentle" | "normal" | "firm";
+  /** Úp màn hình xuống để tạm dừng, lật lên trong 10 phút để nghe tiếp. */
+  flipToPause: boolean;
   rewindSeconds: number;
   rewindAfterMinutes: number;
   /** Phát liên tục chừng này giờ không ai chạm máy thì tự nhỏ dần rồi dừng (0 = tắt). */
@@ -27,6 +29,7 @@ export const DEFAULT_SETTINGS: PlayerSettings = {
   shakeToExtend: true,
   shakeAction: "extend",
   shakeSensitivity: "normal",
+  flipToPause: false,
   rewindSeconds: 5,
   rewindAfterMinutes: 5,
   safetyStopHours: 2,
@@ -59,6 +62,7 @@ export async function pushSettings(settings: PlayerSettings): Promise<void> {
     shakeToExtend: settings.shakeToExtend,
     shakeAction: settings.shakeAction ?? "extend",
     shakeSensitivity: settings.shakeSensitivity ?? "normal",
+    flipToPause: settings.flipToPause ?? false,
     rewindSeconds: settings.rewindSeconds,
     rewindAfterMinutes: settings.rewindAfterMinutes,
     safetyStopHours: settings.safetyStopHours,

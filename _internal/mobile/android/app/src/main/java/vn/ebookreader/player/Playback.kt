@@ -275,6 +275,7 @@ object Playback {
         // Phát/dừng hầu như luôn do người nghe bấm (app, thông báo, tai nghe, widget): tính là còn thức.
         touched()
         SleepTimer.onPlaying(playing)
+        Motion.refresh()
         if (!playing) {
             pausedAtMs = System.currentTimeMillis()
             saveNow()
