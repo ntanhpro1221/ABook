@@ -35,7 +35,7 @@ from urllib.parse import unquote, urlsplit
 from . import covers, listen_view, store
 from .fingerprints import Fingerprints
 from .library import Library, book_id
-from .listening import Listening
+from .listening import RECORD_ID, SYNC_KEYS, Listening
 
 SYNC_PORT = 47630
 DISCOVERY_PORT = 47631
@@ -506,7 +506,16 @@ class SyncHandler(BaseHTTPRequestHandler):
             if method == "GET" and match.group(2) == "manifest":
                 self._json(HTTPStatus.OK, manifest(project, book, self.app.listening))
             elif method == "POST" and match.group(2) == "state":
-                self._json(HTTPStatus.OK, self.app.listening.merge(book, self._body()))
+                body = self._body()
+                record = body.get("record")
+                state = {key: value for key, value in body.items() if key not in SYNC_KEYS}
+                if isinstance(record, str) and RECORD_ID.fullmatch(record):
+                    # điện thoại biết hồ sơ: gộp đúng hồ sơ ấy (webui/listening.py merge_record)
+                    self._json(HTTPStatus.OK, self.app.listening.merge_record(
+                        book, record, state, name=str(body.get("recordName") or ""),
+                        active_at=float(body.get("activeAt") or 0)))
+                else:  # điện thoại đời trước: hồ sơ đang dùng
+                    self._json(HTTPStatus.OK, self.app.listening.merge(book, state))
             elif method == "GET" and match.group(3):
                 target = self.app.resolve_file(project, unquote(match.group(3)))
                 if target is None:
