@@ -50,6 +50,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   người gọi hay người nói, vai phụ không tên, ai nói câu này, bản thu lỗi. Máy vẫn tự quyết và chạy tiếp.
 - **Sửa cách đọc tên ngay trong "Việc cần anh"**: nghe máy đang đọc tên ấy thế nào, bấm "Đúng rồi" hoặc gõ cách đọc khác.
   Không phải dừng sách: dây chuyền áp ở chương kế tiếp và thu lại đúng những câu đã thu có tên ấy - kể cả sách đã xong.
+- **Sửa "ai nói câu này" ngay trong "Việc cần anh"**: mỗi người máy nghi là một nút (cùng "Người kể", "Vai phụ không
+  tên", "Giữ nguyên"). Câu chuyển sang đúng giọng sẵn có của người ấy và được thu lại ở chương kế tiếp.
 
 ### Sửa lỗi
 
