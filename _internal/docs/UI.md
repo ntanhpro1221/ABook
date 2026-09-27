@@ -63,6 +63,15 @@ Studio (máy tính):
 - GPU của trang bị tắt (`--disable-gpu`): phân tích cần ~6,2 GB trên card 8 GB (xem THROUGHPUT.md, mục Unity).
 - Tên chương lấy từ dòng tiêu đề trong văn bản, không từ tên file: nguồn cuốn 2 đánh số file lệch một.
 - Đọc theo: mốc từng câu dựng từ `wav_duration + break_ms` (lệch 0,14 s trên 13 phút), co giãn theo độ dài MP3.
+- **Studio từ xa** (`webui/remote_studio.py`, 28-09): cổng đồng bộ (`sync.py`, nghe trên LAN) phục vụ luôn bản dựng
+  giao diện web và CHUYỂN TIẾP API của nó về máy chủ cục bộ ở trên - không viết lại đường nào, mọi kiểm tra đầu vào
+  giữ nguyên. Điện thoại, máy tính bảng, máy tính khác mở `http://<máy>:47630` trong trình duyệt: cả Studio lẫn phần
+  Nghe. Ba lớp chặn: thiết bị đã ghép (mã thiết bị; trình duyệt ghép bằng mã 6 số, mã về cookie HttpOnly SameSite=Strict
+  qua `/sync/v1/pair-browser`), công tắc `remoteStudio` (tắt mặc định, đọc lại mỗi yêu cầu), và danh sách trắng
+  `ALLOWED` - hộp thoại chọn file, mở Explorer, đổi cài đặt, ghép / gỡ thiết bị, điều khiển điện thoại, mở file theo
+  đường dẫn không bao giờ đi qua (test `test_every_allowed_route_exists_on_the_computer` giữ danh sách khớp `ROUTES`).
+  POST chỉ nhận JSON (trang lạ không gửi được JSON qua CORS). `/api/app` trả `remote: true, dialogs: false` để giao
+  diện ẩn nút "Mở thư mục", thanh điện thoại đang phát, cài đặt của máy.
 
 ## Android: `mobile/`
 

@@ -10,7 +10,7 @@ import { usePageEnter } from "@/shared/motion";
 import { APP_TITLE } from "@/shared/title";
 import { formatPercent } from "@/shared/format";
 import { Progress, Vu } from "@/shared/ui";
-import { useLibrary } from "@/studio/data";
+import { useAppInfo, useLibrary } from "@/studio/data";
 import { HandOffButton, RemoteBars } from "./RemotePhone";
 
 // Máy tính = phía Nghe (giống hệt trình phát Android) + Studio sản xuất. Thanh bên tách hai khu rõ ràng.
@@ -106,6 +106,8 @@ const TITLES: [RegExp, string][] = [
 export function Shell({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const { expanded, setExpanded } = useNowPlaying();
+  // Studio từ xa: thanh "Đang phát trên điện thoại" là việc của chính máy tính, cổng từ xa không mở đường ấy.
+  const remote = Boolean(useAppInfo().data?.remote);
   useRestoreLastListening();
 
   // Bấm mục thanh bên khi màn "Đang nghe" đang mở: trang mới phải hiện ra, không bị lớp phủ che.
@@ -154,8 +156,8 @@ export function Shell({ children }: { children: ReactNode }) {
         <main ref={main} className="min-h-0 flex-1 overflow-y-auto" inert={expanded}>
           {children}
         </main>
-        <RemoteBars />
-        <PlayerBar extra={<HandOffButton />} />
+        {!remote && <RemoteBars />}
+        <PlayerBar extra={remote ? undefined : <HandOffButton />} />
         <NowPlaying />
       </div>
     </div>

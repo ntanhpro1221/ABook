@@ -15,6 +15,9 @@ Gói sách (`book.json`) cùng hình dạng với phía Nghe trên máy tính (l
 
 Điều khiển từ xa (`Remote`): điện thoại đang có sách trên trình phát thì báo "đang phát gì" lên đây, máy tính thấy và
 gửi lệnh phát/dừng/tua ngược lại - kể cả chuyển chỗ nghe giữa hai máy.
+
+Studio từ xa (remote_studio.py): mọi đường ngoài `/sync/` - giao diện web và API của nó - chỉ mở khi người dùng bật công
+tắc riêng, cho thiết bị đã ghép, theo danh sách trắng.
 """
 from __future__ import annotations
 
@@ -32,10 +35,11 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import unquote, urlsplit
 
-from . import covers, listen_view, store
+from . import covers, listen_view, remote_studio, store
 from .fingerprints import Fingerprints
 from .library import Library, book_id
 from .listening import RECORD_ID, SYNC_KEYS, Listening
+from .remote_studio import StudioGate
 
 SYNC_PORT = 47630
 DISCOVERY_PORT = 47631
@@ -333,13 +337,15 @@ def manifest(project_root: Path, book: str, listening: Listening) -> dict[str, A
 
 class SyncApp:
     def __init__(self, library: Library, listening: Listening, devices: Devices, name: str,
-                 remote: Remote | None = None, fingerprints: Fingerprints | None = None) -> None:
+                 remote: Remote | None = None, fingerprints: Fingerprints | None = None,
+                 studio: StudioGate | None = None) -> None:
         self.library = library
         self.listening = listening
         self.devices = devices
         self.name = name
         self.remote = remote or Remote()
         self.fingerprints = fingerprints or Fingerprints(listening.path.with_name("fingerprints.json"))
+        self.studio = studio  # None: cổng chỉ đồng bộ (test, máy không có giao diện)
 
     def book(self, value: str) -> Path | None:
         return self.library.resolve(value)
@@ -433,7 +439,36 @@ class SyncHandler(BaseHTTPRequestHandler):
 
     def _device(self) -> dict[str, str] | None:
         header = self.headers.get("Authorization") or ""
-        return self.app.devices.identify(header[7:].strip()) if header.startswith("Bearer ") else None
+        if header.startswith("Bearer "):
+            return self.app.devices.identify(header[7:].strip())
+        # Trình duyệt (Studio từ xa) mang mã thiết bị trong cookie HttpOnly - cùng mã, cùng danh sách thiết bị.
+        token = remote_studio.cookie_token(self.headers.get("Cookie"))
+        return self.app.devices.identify(token) if token else None
+
+    def _studio(self, method: str, path: str) -> None:
+        """Mọi đường ngoài `/sync/`: giao diện web và API của nó (remote_studio.py)."""
+        studio = self.app.studio
+        if studio is None or not studio.allowed():
+            if path.startswith(("/api/", "/media/")):
+                self._json(HTTPStatus.FORBIDDEN, {"error": "Máy tính chưa cho phép điều khiển từ xa"})
+            else:
+                remote_studio.send_page(self, HTTPStatus.FORBIDDEN, remote_studio.closed_page(self.app.name))
+            return
+        device = self._device()
+        if path.startswith(("/api/", "/media/")):
+            if device is None:
+                self._json(HTTPStatus.UNAUTHORIZED, {"error": "Thiết bị chưa ghép nối"})
+            elif not remote_studio.permitted(method, path):
+                self._json(HTTPStatus.FORBIDDEN, {"error": "Việc này chỉ làm được trên chính máy tính"})
+            else:
+                remote_studio.forward(self, method, self.path, studio)
+            return
+        if method not in ("GET", "HEAD"):
+            self._json(HTTPStatus.METHOD_NOT_ALLOWED, {"error": "Không hỗ trợ"})
+        elif device is None:
+            remote_studio.send_page(self, HTTPStatus.OK, remote_studio.pairing_page(self.app.name))
+        else:
+            remote_studio.serve_static(self, studio.static_dir, path)
 
     def _file(self, path: Path) -> None:
         size = path.stat().st_size
@@ -473,6 +508,9 @@ class SyncHandler(BaseHTTPRequestHandler):
     def _route(self, method: str) -> None:
         path = urlsplit(self.path).path
         try:
+            if not path.startswith("/sync/"):
+                self._studio(method, path)
+                return
             if method == "POST" and path == "/sync/v1/pair":
                 body = self._body()
                 token = self.app.devices.pair(str(body.get("code", "")), str(body.get("device", "")))
@@ -480,6 +518,20 @@ class SyncHandler(BaseHTTPRequestHandler):
                     self._json(HTTPStatus.FORBIDDEN, {"error": "Mã ghép nối sai hoặc đã hết hạn"})
                 else:
                     self._json(HTTPStatus.OK, {"token": token, "name": self.app.name})
+                return
+            if method == "POST" and path == "/sync/v1/pair-browser":
+                # Trang ghép của Studio từ xa: cùng mã 6 số, nhưng mã thiết bị về cookie HttpOnly thay vì về tay trang.
+                if self.app.studio is None or not self.app.studio.allowed():
+                    self._json(HTTPStatus.FORBIDDEN, {"error": "Máy tính chưa cho phép điều khiển từ xa"})
+                    return
+                body = self._body()
+                token = self.app.devices.pair(str(body.get("code", "")), str(body.get("device", "")) or "Trình duyệt")
+                if token is None:
+                    self._json(HTTPStatus.FORBIDDEN, {"error": "Mã ghép nối sai hoặc đã hết hạn"})
+                else:
+                    remote_studio.send_bytes(self, HTTPStatus.OK, json.dumps({"name": self.app.name}).encode("utf-8"),
+                                             "application/json; charset=utf-8",
+                                             extra={"Set-Cookie": remote_studio.device_cookie(token)})
                 return
             device = self._device()
             if device is None:
@@ -542,6 +594,16 @@ class SyncHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:  # noqa: N802
         self._route("POST")
+
+    # Chỉ Studio từ xa dùng ba phương thức này (sửa dấu trang, đặt bìa, audio hỏi trước kích thước).
+    def do_PUT(self) -> None:  # noqa: N802
+        self._route("PUT")
+
+    def do_DELETE(self) -> None:  # noqa: N802
+        self._route("DELETE")
+
+    def do_HEAD(self) -> None:  # noqa: N802
+        self._route("HEAD")
 
 
 class Discovery(threading.Thread):

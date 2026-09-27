@@ -63,6 +63,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - **Chuyển máy đang nghe**: "Nghe trên máy tính" (dừng điện thoại, máy tính phát tiếp đúng giây) và "Phát trên điện
   thoại" (ngược lại) - với mọi cuốn, kể cả cuốn điện thoại chưa tải.
 - Máy tính: trình phát hiện ở bảng media của Windows (Windows+A) và nhận phím media.
+- **Studio từ xa**: điện thoại, máy tính bảng hay máy tính khác cùng mạng mở ABook của máy tính trong trình duyệt
+  (`http://<máy tính>:47630`) - xem tiến độ, bắt đầu hay dừng, tạo sách, duyệt "Việc cần anh" và "Cần nghe lại", đặt
+  bìa, nghe sách. Bật trong Cài đặt → Điện thoại và thiết bị ("Cho phép điều khiển sản xuất từ thiết bị đã ghép"), tắt
+  mặc định; trình duyệt ghép bằng mã 6 số như điện thoại. Những gì chỉ có nghĩa trên chính máy tính (mở thư mục, đổi
+  cài đặt, ghép thiết bị) không làm được từ xa.
 
 ### Studio (sản xuất sách nói)
 
