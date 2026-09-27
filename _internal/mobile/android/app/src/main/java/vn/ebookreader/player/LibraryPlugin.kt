@@ -157,10 +157,10 @@ class LibraryPlugin : Plugin() {
     @PluginMethod
     fun remoteLibrary(call: PluginCall) = background(call) {
         val reply = JSONObject(request("GET", "/sync/v1/library"))
+        matchImported()
         val books = reply.getJSONArray("books")
         for (index in 0 until books.length()) {
             val book = books.getJSONObject(index)
-            adoptImported(book)
             val local = Store.manifest(book.getString("id"))
             book.put("downloaded", local != null)
             book.put("localChapters", local?.optInt("chaptersAvailable") ?: 0)
@@ -170,12 +170,21 @@ class LibraryPlugin : Plugin() {
     }
 
     /**
-     * Cuốn máy tính gửi mà điện thoại đã có từ file .abook (cùng mã sách cố định): gộp làm một (Store.adopt). Cuốn đang
-     * nằm trong trình phát thì để lần sau - đổi thư mục dưới tay trình phát là mất chương kế tiếp và chỗ đang nghe.
+     * Cuốn mở từ file mà máy tính cũng có: hỏi máy tính (POST /sync/v1/match, gửi cỡ + mã băm audio từng chương - sách
+     * không mang mã nào) rồi gộp làm một (Store.adopt). Cuốn đang nằm trong trình phát thì để lần sau - đổi thư mục dưới
+     * tay trình phát là mất chương kế tiếp và chỗ đang nghe. Máy tính không trả lời thì thôi, lần sau hỏi lại.
      */
-    private fun adoptImported(remote: JSONObject) {
-        val packageId = remote.optString("packageId")
-        if (Store.isPackageId(packageId) && Playback.bookId != packageId) Store.adopt(packageId, remote.getString("id"))
+    private fun matchImported() {
+        val waiting = Store.importedBooks().filter { it != Playback.bookId }
+        if (waiting.isEmpty()) return
+        val books = JSONArray()
+        for (id in waiting) books.put(JSONObject().put("key", id).put("chapters", Store.chapterPrints(id)))
+        val reply = runCatching { JSONObject(request("POST", "/sync/v1/match", JSONObject().put("books", books))) }
+            .getOrNull() ?: return
+        val matches = reply.optJSONObject("matches") ?: return
+        for (key in matches.keys()) {
+            if (key in waiting) Store.adopt(key, matches.getString(key))
+        }
     }
 
     // ---- tải sách --------------------------------------------------------------------------------------------
@@ -210,8 +219,8 @@ class LibraryPlugin : Plugin() {
         call.setKeepAlive(true)
         downloads.execute {
             try {
+                matchImported() // đã mở cuốn này từ file: audio sẵn trên máy, chỉ tải phần còn thiếu
                 val manifest = JSONObject(request("GET", "/sync/v1/books/$id/manifest"))
-                adoptImported(manifest) // đã mở cuốn này từ file: audio sẵn trên máy, chỉ tải phần còn thiếu
                 val chapters = manifest.getJSONArray("chapters")
                 val files = mutableListOf<Pair<String, Long>>()
                 for (index in 0 until chapters.length()) {
@@ -276,10 +285,10 @@ class LibraryPlugin : Plugin() {
             runCatching { JSONObject(SyncLink.request(context, "GET", "/sync/v1/library", readTimeoutMs = 10_000, connectTimeoutMs = 1500)) }.getOrNull()
         } else null
         val remote = reply?.optJSONArray("books") ?: JSONArray()
+        if (reply != null) matchImported()
         for (index in 0 until remote.length()) {
             val entry = remote.getJSONObject(index)
             val id = entry.getString("id")
-            adoptImported(entry)
             if (Store.manifest(id) != null) continue
             val cached = Store.streamManifest(id)
             val stale = cached == null ||

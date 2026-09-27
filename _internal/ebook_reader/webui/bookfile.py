@@ -7,7 +7,7 @@ Hình dạng - một gói ZIP:
 
     mimetype                 MIMETYPE, mục ĐẦU TIÊN, không nén: nhận ra loại file mà không phải mở gói (như EPUB)
     book.json                gói sách của app: đúng `book.json` điện thoại tải qua Wi-Fi (`sync.manifest`), cộng mục
-                             `package` (mã sách cố định, phiên bản định dạng, ai làm ra, cỡ + mã băm từng file)
+                             `package` (phiên bản định dạng, ai làm ra, cỡ + mã băm từng file)
     manifest.json            cùng cuốn sách theo chuẩn mở Readium Audiobook: app sách nói khác (Thorium...) đọc được
                              phần audio, nếu sau này cần đưa sách ra ngoài
     cover.jpg                bìa thật, nếu có
@@ -19,7 +19,9 @@ Hình dạng - một gói ZIP:
 
 Đường dẫn giữ y như gói điện thoại đang tải, nên nhập một file chỉ là giải nén vào chỗ sách tải về.
 
-KHÔNG chứa dữ liệu cá nhân: chỗ đang nghe, dấu trang, lịch sử đi theo app và đồng bộ, gắn vào mã sách.
+KHÔNG chứa dữ liệu nghe (chỗ đang nghe, dấu trang, lịch sử) và KHÔNG mang mã sách nào (chủ sách 27-09: sách và dữ
+liệu nghe độc lập, không biết đến mã; app giữ liên kết giữa chúng). Muốn biết hai file có phải cùng một lần sản xuất,
+app so mã băm audio từng chương (`fingerprints.py`) - chính mã băm dùng để kiểm file hỏng, không phải thêm gì.
 
 Mở một file là mở dữ liệu của người khác: mọi tên mục phải thuộc đúng danh sách trên (không đường dẫn tuyệt đối, không
 `..`), số mục và cỡ có trần, mọi file phải có cỡ và mã băm khớp `book.json`, định dạng mới hơn app thì từ chối kèm lời
@@ -46,6 +48,7 @@ from pathlib import Path
 from typing import Any, Self
 
 from . import covers, store, sync
+from .fingerprints import content_key
 from .library import book_id
 
 # Đuôi file - chủ sách chốt `.abook` 27-09. `.audiobook` là của chuẩn Readium (Thorium mở được), `.ab` là file sao lưu
@@ -60,7 +63,6 @@ READIUM_MANIFEST = "manifest.json"
 MAX_ENTRIES = 20_000
 MAX_JSON_BYTES = 32 * 1024 * 1024
 MAX_TOTAL_BYTES = 64 * 1024**3
-IDENTITY = re.compile(r"bk-[0-9a-f]{24}")
 _CONTENT = re.compile(r"cast\.json|cover\.jpg|chapters/[0-9A-Za-z_.\-]+\.mp3|scripts/\d+\.json|samples/\d+\.wav")
 _STORED = (".mp3", ".jpg", ".wav")  # đã nén sẵn hay cần đọc thẳng: nén thêm chỉ tốn công khi phát
 _CHUNK = 1024 * 1024
@@ -77,14 +79,6 @@ class _NoListening:
         return {}
 
 
-def book_identity(project_root: Path) -> str:
-    """Mã sách đi theo file sang mọi máy (`store.package_identity`)."""
-    identity = store.package_identity(project_root)
-    if identity is None:
-        raise BookFileError("Thư mục này không phải một cuốn sách của app.")
-    return identity
-
-
 def default_name(title: str) -> str:
     """Tên file từ tên sách, giữ tiếng Việt, bỏ ký tự Windows cấm."""
     name = re.sub(r'[\\/:*?"<>|\x00-\x1f]+', " ", str(title)).strip(" .") or "Sách nói"
@@ -94,8 +88,8 @@ def default_name(title: str) -> str:
 def pack(project_root: Path, out: Path | None = None, *, producer: str = "ABook") -> Path:
     """Gói một cuốn thành một file; ghi file tạm cạnh đích rồi thay nguyên tử. Trả đường dẫn file."""
     project_root = Path(project_root)
-    identity = book_identity(project_root)
     book = sync.manifest(project_root, book_id(project_root), _NoListening())
+    book.pop("id", None)  # mã của máy này (đường dẫn thư mục): việc của app ở đây, không đi theo sách
     files: dict[str, Path | bytes] = {"cast.json": _json_bytes(store.cast(project_root))}
     cover = covers.cover_file(project_root)
     if cover is not None:
@@ -116,12 +110,9 @@ def pack(project_root: Path, out: Path | None = None, *, producer: str = "ABook"
     book["samples"] = samples
     if not any(name.startswith("chapters/") for name in files):
         raise BookFileError("Sách chưa có chương nào nghe được để xuất.")
-    book["id"] = identity
-    book["packageId"] = identity
     book["package"] = {
         "format": FORMAT,
         "version": FORMAT_VERSION,
-        "id": identity,
         "createdAt": datetime.now(UTC).isoformat(timespec="seconds"),
         "producer": producer,
         "files": {name: _describe(source) for name, source in sorted(files.items())},
@@ -178,8 +169,15 @@ class BookFile:
         self._zip.close()
 
     @property
-    def identity(self) -> str:
-        return str(self.book["package"]["id"])
+    def chapter_prints(self) -> dict[str, dict[str, Any]]:
+        """Cỡ + mã băm audio từng chương - app so với sách đã có để nhận ra cùng một lần sản xuất (fingerprints.py)."""
+        return {name: {"size": meta["size"], "sha256": meta["sha256"]}
+                for name, meta in self.book["package"]["files"].items() if name.startswith("chapters/")}
+
+    @property
+    def content_key(self) -> str:
+        """Tên thư mục app đặt cho cuốn này khi mở từ file - suy từ nội dung, không phải mã nằm trong sách."""
+        return content_key({name: meta["sha256"] for name, meta in self.chapter_prints.items()})
 
     @property
     def content(self) -> list[str]:
@@ -202,22 +200,23 @@ class BookFile:
             if size != expected["size"] or digest.hexdigest() != expected["sha256"]:
                 raise BookFileError(f"File sách bị hỏng hoặc bị sửa ({name}). Hãy chép lại file từ nguồn.")
 
-    def extract(self, library: Path) -> Path:
-        """Kiểm rồi giải nén vào `library/<mã sách>/`: thư mục tạm rồi đổi tên, không bao giờ để lại nửa cuốn.
-        Cuốn cùng mã đã có thì được thay (xuất lại từ cùng lần sản xuất = bản mới của cùng cuốn)."""
+    def extract(self, library: Path, folder: str | None = None) -> Path:
+        """Kiểm rồi giải nén vào `library/<folder>/` (mặc định: tên suy từ nội dung): thư mục tạm rồi đổi tên, không bao
+        giờ để lại nửa cuốn. Thư mục ấy đã có thì được thay - app chọn `folder` là cuốn cùng lần sản xuất đã có."""
         self.verify()
         library = Path(library)
         library.mkdir(parents=True, exist_ok=True)
-        target = library / self.identity
-        staging = library / f".{self.identity}.{secrets.token_hex(4)}.part"
+        name = folder or self.content_key
+        target = library / name
+        staging = library / f".{name}.{secrets.token_hex(4)}.part"
         try:
-            for name in [MANIFEST, READIUM_MANIFEST, *self.content]:
-                destination = staging.joinpath(*name.split("/"))
+            for entry in [MANIFEST, READIUM_MANIFEST, *self.content]:
+                destination = staging.joinpath(*entry.split("/"))
                 destination.parent.mkdir(parents=True, exist_ok=True)
-                with self._zip.open(name) as source, destination.open("wb") as sink:
+                with self._zip.open(entry) as source, destination.open("wb") as sink:
                     shutil.copyfileobj(source, sink, _CHUNK)
             if target.exists():
-                retired = library / f".{self.identity}.{secrets.token_hex(4)}.old"
+                retired = library / f".{name}.{secrets.token_hex(4)}.old"
                 os.replace(target, retired)
                 os.replace(staging, target)
                 shutil.rmtree(retired, ignore_errors=True)
@@ -259,8 +258,6 @@ class BookFile:
             raise BookFileError("File sách có phiên bản định dạng không hợp lệ.")
         if version > FORMAT_VERSION:
             raise BookFileError("Sách này được làm bằng bản app mới hơn. Hãy cập nhật app để mở.")
-        if not isinstance(package.get("id"), str) or not IDENTITY.fullmatch(package["id"]):
-            raise BookFileError("File sách có mã sách không hợp lệ.")
         files = package.get("files")
         content = names - {"mimetype", MANIFEST, READIUM_MANIFEST}
         if not isinstance(files, dict) or set(files) != content:
@@ -298,7 +295,6 @@ def _readium(book: dict[str, Any]) -> dict[str, Any]:
         "metadata": {
             "@type": "http://schema.org/Audiobook",
             "conformsTo": "https://readium.org/webpub-manifest/profiles/audiobook",
-            "identifier": f"urn:abook:{book['package']['id']}",
             "title": book["title"],
             "language": "vi",
             "readBy": book.get("narrator") or "",
@@ -359,7 +355,7 @@ def main(argv: list[str] | None = None) -> int:
             if args.command == "verify":
                 book.verify()
             chapters = book.book.get("chapters") or []
-            print(f"{book.book['title']} · {book.identity} · {sum(1 for c in chapters if c.get('file'))}/{len(chapters)}"
+            print(f"{book.book['title']} · {book.content_key} · {sum(1 for c in chapters if c.get('file'))}/{len(chapters)}"
                   f" chương có audio · {len(book.content)} file{' · mã băm khớp' if args.command == 'verify' else ''}")
         return 0
     except BookFileError as exc:
