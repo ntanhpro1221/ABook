@@ -53,8 +53,8 @@ from .library import book_id
 # `adb backup` của Android, `.vbook` trùng app đọc truyện vBook, `.aubook` trùng app AuBook - không cái nào độc quyền
 # được; `.abook` chưa thấy ai dùng. Sau bản phát hành đầu tiên thì không đổi được nữa: file đã nằm trên máy người khác.
 EXTENSION = ".abook"
-MIMETYPE = "application/vnd.ebookreader.audiobook+zip"
-FORMAT = "ebook-reader-book"
+MIMETYPE = "application/vnd.ngdtuanh.abook+zip"
+FORMAT = "abook"
 FORMAT_VERSION = 1
 MANIFEST = "book.json"
 READIUM_MANIFEST = "manifest.json"
@@ -99,7 +99,7 @@ def default_name(title: str) -> str:
     return " ".join(name.split())[:150] + EXTENSION
 
 
-def pack(project_root: Path, out: Path | None = None, *, producer: str = "Ebook Reader") -> Path:
+def pack(project_root: Path, out: Path | None = None, *, producer: str = "ABook") -> Path:
     """Gói một cuốn thành một file; ghi file tạm cạnh đích rồi thay nguyên tử. Trả đường dẫn file."""
     project_root = Path(project_root)
     identity = book_identity(project_root)
@@ -305,7 +305,7 @@ def _readium(book: dict[str, Any]) -> dict[str, Any]:
         "metadata": {
             "@type": "http://schema.org/Audiobook",
             "conformsTo": "https://readium.org/webpub-manifest/profiles/audiobook",
-            "identifier": f"urn:ebook-reader:{book['package']['id']}",
+            "identifier": f"urn:abook:{book['package']['id']}",
             "title": book["title"],
             "language": "vi",
             "readBy": book.get("narrator") or "",

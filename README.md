@@ -1,6 +1,8 @@
-# Ebook Reader
+# ABook
 
-Ứng dụng Windows chạy local, chuyển một hoặc nhiều chapter `.txt` tiếng Việt thành audiobook MP3 có phân vai và cảm xúc.
+Ứng dụng sách nói: sản xuất trên máy Windows chạy local - chuyển một hoặc nhiều chapter `.txt` tiếng Việt thành sách
+nói có phân vai và cảm xúc - và nghe trên máy tính lẫn điện thoại Android. Mỗi cuốn đã làm xong là một file `.abook`
+(bìa, văn bản có tag, audio, nhân vật) mở bằng ABook ở máy khác. Tên cũ của dự án: Ebook Reader.
 
 ## Tính năng chính
 
@@ -30,7 +32,7 @@ Không cần tự mở PowerShell hoặc chạy file setup riêng. Launcher hi�
 liên tục báo trạng thái trong lúc GUI đang nạp và tự đóng console ngay khi chính GUI báo đã hiển thị.
 Nếu source mới chỉ thiếu dependency Python, launcher repair tăng dần mà không cài lại PyTorch/model.
 Mọi phiên khởi động được ghi vào `_internal/runtime/logs/startup.log`; khi lỗi, console không tự đóng.
-Nếu Ebook Reader đã chạy, lần mở tiếp theo chỉ đưa cửa sổ hiện có lên trước thay vì tạo instance thứ hai.
+Nếu ABook đã chạy, lần mở tiếp theo chỉ đưa cửa sổ hiện có lên trước thay vì tạo instance thứ hai.
 
 ## Chạy hoàn toàn nền
 
@@ -207,7 +209,7 @@ Người dùng bình thường không cần mở `_internal`. Tài liệu dành 
 - Whisper đọc và resample WAV ngay trong process, không bật FFmpeg console theo từng segment.
 - Phản hồi JSON từ Ollama có giới hạn schema, token và thời gian theo batch. Trong lúc chờ, app ghi
   nhịp hoạt động mỗi phút; bấm **Dừng** sẽ đóng stream thay vì đợi hết timeout dài.
-- Khi Ollama chưa chạy, Ebook Reader tự mở `ollama serve` ở chế độ ẩn và tự dừng tiến trình đó sau khi
+- Khi Ollama chưa chạy, ABook tự mở `ollama serve` ở chế độ ẩn và tự dừng tiến trình đó sau khi
   phân tích/phân vai xong. Một Ollama đã chạy từ trước được coi là tiến trình bên ngoài và không bị tự ý kill.
 - Sau mỗi lần VieNeu tạo audio hoặc trả lỗi, app thu hồi cache inference. Nếu RAM tụt tới mức critical giữa hai
   segment, app unload model/cache rồi đo lại; chỉ tự dừng, giữ checkpoint và gửi Windows notification khi RAM
@@ -269,6 +271,6 @@ mọi cách nối điện thoại với máy tính ở nhà bằng một mạng 
 
 ## Giấy phép
 
-Ebook Reader phát hành theo giấy phép MIT - xem [`_internal/LICENSE`](_internal/LICENSE). Thành phần bên thứ ba (thư viện,
+ABook phát hành theo giấy phép MIT - xem [`_internal/LICENSE`](_internal/LICENSE). Thành phần bên thứ ba (thư viện,
 font, model) giữ giấy phép riêng, liệt kê ở [`_internal/docs/THIRD_PARTY.md`](_internal/docs/THIRD_PARTY.md). Quy trình phát
 hành: [`_internal/docs/RELEASING.md`](_internal/docs/RELEASING.md).
