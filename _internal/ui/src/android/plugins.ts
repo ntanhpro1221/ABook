@@ -78,6 +78,9 @@ export interface RemoteBook {
   updatedAt: number | null;
   downloaded: boolean;
   localChapters: number;
+  /** Bìa trên máy tính (phiên bản) và bìa đã tải: khác nhau là có ảnh bìa mới để tải. */
+  cover?: { color: string; version: number } | null;
+  localCoverVersion: number;
 }
 
 export interface ManifestChapter {
@@ -105,6 +108,8 @@ export interface LocalBook {
   version: string;
   chapters: ManifestChapter[];
   samples: string[];
+  /** Ảnh bìa thật tải về cùng gói (webui/covers.py), hoặc null. */
+  cover?: { file: string; version: number; color: string; width: number; height: number } | null;
   state: ListeningState;
   bytes?: number;
 }

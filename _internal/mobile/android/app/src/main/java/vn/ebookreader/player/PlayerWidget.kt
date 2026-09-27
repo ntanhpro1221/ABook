@@ -94,7 +94,7 @@ class PlayerWidget : AppWidgetProvider() {
 
         private fun build(context: Context, layout: Int, view: View): RemoteViews {
             val views = RemoteViews(context.packageName, layout)
-            val cover = Artwork.cover(view.book)
+            val cover = Artwork.cover(view.book, Playback.bookId.ifEmpty { null })
             views.setImageViewBitmap(R.id.widget_cover, BitmapFactory.decodeByteArray(cover, 0, cover.size))
             views.setTextViewText(R.id.widget_chapter, view.chapter.ifBlank { view.book })
             views.setImageViewResource(R.id.widget_toggle, if (view.playing) R.drawable.ic_widget_pause else R.drawable.ic_widget_play)

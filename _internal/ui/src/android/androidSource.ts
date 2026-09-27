@@ -42,6 +42,9 @@ function toListenBook(book: LocalBook, withChapters: boolean): ListenBook {
     state,
     progress: bookProgress(state, chapters.filter((chapter) => chapter.available), book.complete),
     lastChapterTitle: chapters.find((chapter) => chapter.id === state.last?.chapterId)?.fullTitle ?? "",
+    cover: book.cover
+      ? { url: `${fileUrl(book.id, book.cover.file)}?v=${book.cover.version}`, color: book.cover.color, width: book.cover.width, height: book.cover.height }
+      : null,
     chapters: withChapters ? chapters : undefined,
   };
 }

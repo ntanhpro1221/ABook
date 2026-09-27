@@ -2,6 +2,7 @@ import { App as CapacitorApp } from "@capacitor/app";
 import { Download, Library, Settings } from "lucide-react";
 import { useEffect, useMemo, type ReactNode } from "react";
 import { HashRouter, NavLink, Route, Routes, useLocation, useNavigate } from "react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import { BookScreen } from "@/listen/BookScreen";
 import { ClipProvider } from "@/listen/clip";
@@ -10,6 +11,7 @@ import { ReaderScreen } from "@/listen/ReaderScreen";
 import { NowPlaying, PlayerBar } from "@/listen/PlayerViews";
 import { PlayerProvider, useNowPlaying, usePlayer } from "@/listen/player";
 import { SourceProvider } from "@/listen/source";
+import { watchDownloads } from "./downloads";
 import { cn } from "@/shared/cn";
 import { Button, EmptyState, TooltipProvider } from "@/shared/ui";
 import { androidSource } from "./androidSource";
@@ -21,6 +23,13 @@ import { applyTheme, loadSettings, pushSettings } from "./settings";
 
 // Vỏ Android: cùng các màn hình Nghe với máy tính, bố cục một tay - điều hướng dưới đáy, trình phát thu nhỏ ngay
 // trên thanh điều hướng, nút Back của máy đóng màn hình đang nghe trước rồi mới lùi trang.
+
+/** Theo dõi mọi lượt tải từ lúc app mở, không phụ thuộc màn đang xem (android/downloads.ts). */
+function DownloadWatcher() {
+  const client = useQueryClient();
+  useEffect(() => watchDownloads(client), [client]);
+  return null;
+}
 
 function BackButton() {
   const navigate = useNavigate();
@@ -116,6 +125,7 @@ export function AndroidApp() {
           <ClipBridge>
             <HashRouter>
               <BackButton />
+              <DownloadWatcher />
               <MobileShell>
                 <Routes>
                   <Route path="/" element={<LibraryPage />} />

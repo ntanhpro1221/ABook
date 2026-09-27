@@ -6,6 +6,7 @@ import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import { formatLength } from "@/shared/format";
 import { Button, EmptyState, Progress } from "@/shared/ui";
+import { useDownloadProgress } from "./downloads";
 import { EbookLibrary, type DownloadEvent, type RemoteBook } from "./plugins";
 
 // "Tải sách": lấy sách từ máy tính qua Wi-Fi. Ghép nối một lần bằng mã 6 số hiện trong Cài đặt của máy tính;
@@ -135,6 +136,7 @@ function PairPanel() {
 
 function RemoteRow({ book, progress, onDownload }: { book: RemoteBook; progress?: DownloadEvent; onDownload: () => void }) {
   const newChapters = book.downloaded ? book.chaptersAvailable - book.localChapters : 0;
+  const newCover = book.downloaded && (book.cover?.version ?? 0) !== (book.localCoverVersion ?? 0);
   const downloading = progress && !progress.finished && !progress.error;
   const fraction = progress?.total ? (progress.done ?? 0) / progress.total : (progress?.files ?? 0) / Math.max(1, progress?.filesTotal ?? 1);
   return (
@@ -150,13 +152,13 @@ function RemoteRow({ book, progress, onDownload }: { book: RemoteBook; progress?
       </div>
       {downloading ? (
         <span className="tabular w-12 text-right text-xs font-semibold text-accent-text">{Math.round(fraction * 100)}%</span>
-      ) : book.downloaded && newChapters <= 0 ? (
+      ) : book.downloaded && newChapters <= 0 && !newCover ? (
         <span className="flex items-center gap-1 text-xs text-success">
           <CheckCircle2 className="size-4" /> Đã tải
         </span>
       ) : (
         <Button size="sm" variant={book.downloaded ? "secondary" : "primary"} icon={Download} onClick={onDownload}>
-          {book.downloaded ? `+${newChapters} chương` : "Tải"}
+          {!book.downloaded ? "Tải" : newChapters > 0 ? `+${newChapters} chương` : "Cập nhật bìa"}
         </Button>
       )}
     </div>
@@ -173,21 +175,7 @@ export function DevicesScreen() {
     retry: 0,
   });
   const storage = useQuery({ queryKey: ["storage"], queryFn: () => EbookLibrary.storage() });
-  const [progress, setProgress] = useState<Record<string, DownloadEvent>>({});
-
-  useEffect(() => {
-    const handle = EbookLibrary.addListener("download", (event) => {
-      setProgress((current) => ({ ...current, [event.bookId]: event }));
-      if (event.finished) {
-        toast.success("Đã tải xong", { description: "Sách đã có trong Thư viện, nghe được cả khi không có mạng." });
-        void client.invalidateQueries({ queryKey: ["remote"] });
-        void client.invalidateQueries({ queryKey: ["listen"] });
-        void client.invalidateQueries({ queryKey: ["storage"] });
-      }
-      if (event.error) toast.error("Tải bị gián đoạn", { description: event.error });
-    });
-    return () => void handle.then((listener) => listener.remove());
-  }, [client]);
+  const progress = useDownloadProgress();
 
   const unpair = async () => {
     await EbookLibrary.unpair();

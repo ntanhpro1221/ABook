@@ -179,7 +179,7 @@ object Playback {
                         .setAlbumTitle(title)
                         .setDisplayTitle(chapter.title)
                         .setSubtitle(title)
-                        .setArtworkData(Artwork.cover(title), MediaMetadata.PICTURE_TYPE_FRONT_COVER)
+                        .setArtworkData(Artwork.cover(title, id), MediaMetadata.PICTURE_TYPE_FRONT_COVER)
                         .build(),
                 )
                 .build()
