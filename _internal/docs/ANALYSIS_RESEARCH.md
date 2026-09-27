@@ -150,6 +150,18 @@ Kết quả đầu (27-09):
 - **N4' tự học theo cuốn** (mới, đúng luồng app: phân tích CẢ cuốn trước khi đọc): TMA làm truyện mới (học trên 9 truyện
   kia), bộ chấm chấm 150 chương TMA không nhãn (4.440 câu, `build_unlabeled.py`), giữ nửa câu chắc nhất làm nhãn tạm
   (`pseudo_label.py`), học thêm 2 epoch, đo trên 847 câu gold TMA; đối chứng = cùng +2 epoch không nhãn tạm; 2 vòng.
+  **Kết quả vòng 1-2 (27-09 14:1x, 847 câu gold TMA, TMA là truyện MỚI với mô hình):**
+
+  | | tất cả | có tên | không ai |
+  |---|---|---|---|
+  | m0: PDNC -> 9 truyện khác | **82,6%** | 89,6% | **40,3%** |
+  | đối chứng: +2 epoch, không nhãn tạm | 82,2% | 90,0% | 34,5% |
+  | vòng 1: +2 epoch + 2.220 nhãn tạm | 81,3% | 90,4% | 26,1% |
+  | vòng 2: nhãn tạm từ mô hình vòng 1 | 80,0% | **91,1%** | 12,6% |
+
+  Tự học giúp ĐÚNG loại câu nó có nhãn tạm: câu có tên tăng đều (89,6 -> 91,1%), nhưng nhãn tạm chọn theo xác suất
+  (bão hoà ở 1,0) toàn là câu có tên (2.220/2.220), nên "không ai" sụp. Vòng 3 (`pseudo_label.py --rank margin
+  --balance`: 2.074 có tên + 145 không ai) và biến thể nhân 3 trọng số "không ai" đang chạy.
 - **Học trước tiếng TRUNG** (mới): CSI (Yu và cs., NAACL 2022) là TRUYỆN MẠNG Trung Quốc - đúng thể loại gốc của phần lớn
   truyện dịch app đọc - cộng JY (Kim Dung) và WP: 78.623 câu -> 54.963 cửa sổ (`build_csi.py`; dữ liệu gốc là hỏi-đáp
   trích đoạn, ứng viên dựng lại từ từ điển tên của chính bộ dữ liệu, bỏ chuỗi đáp án gán nhầm như 东西 "đồ vật"). **Giấy
