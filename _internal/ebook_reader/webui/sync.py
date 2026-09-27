@@ -12,6 +12,9 @@ Gói sách (`book.json`) cùng hình dạng với phía Nghe trên máy tính (l
     cast.json               dàn nhân vật
     samples/<segmentId>.wav   câu mẫu của từng nhân vật
     cover.jpg               ảnh bìa thật, chỉ khi người dùng đã đặt (webui/covers.py)
+
+Điều khiển từ xa (`Remote`): điện thoại đang có sách trên trình phát thì báo "đang phát gì" lên đây, máy tính thấy và
+gửi lệnh phát/dừng/tua ngược lại - kể cả chuyển chỗ nghe giữa hai máy.
 """
 from __future__ import annotations
 
@@ -40,10 +43,147 @@ PAIRING_SECONDS = 300
 PAIRING_ATTEMPTS = 5
 CHUNK = 256 * 1024
 MAX_BODY = 2 * 1024 * 1024
+REMOTE_WAIT_SECONDS = 25  # trần của một lần "hỏi dài"; điện thoại đặt thời gian chờ đọc dài hơn thế
+PRESENCE_SECONDS = 40  # quá ngần này không nghe tin (hỏi dài chỉ kéo 25 giây) là điện thoại đã đi
+COMMAND_SECONDS = 15  # lệnh chưa tới tay điện thoại sau ngần này thì bỏ: "dừng" tới trễ hai phút là một cú giật mình
+REMOTE_ACTIONS = frozenset({"play", "pause", "toggle", "skip", "seek", "next", "previous", "jump", "rate", "load"})
+BOOK_ID = re.compile(r"[A-Za-z0-9_-]{1,700}")  # base64 của đường dẫn thư mục sách (library.book_id)
 
 
 def _hash(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def _number(value: Any, low: float, high: float) -> float:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return low
+    return min(high, max(low, number)) if number == number else low  # NaN != NaN
+
+
+def _text(value: Any, limit: int = 200) -> str:
+    return value[:limit] if isinstance(value, str) else ""
+
+
+def _presence(report: dict[str, Any]) -> dict[str, Any]:
+    """Trạng thái điện thoại gửi lên, chỉ giữ đúng các trường biết, đúng kiểu, có trần: đây là dữ liệu từ mạng LAN."""
+    state = report.get("state") if isinstance(report.get("state"), dict) else {}
+    book = _text(state.get("bookId"), 700)
+    chapter = state.get("chapterId")
+    books = report.get("books") if isinstance(report.get("books"), list) else []
+    acks = report.get("acks") if isinstance(report.get("acks"), list) else []
+    return {
+        "bookId": book if BOOK_ID.fullmatch(book) else "",
+        "bookTitle": _text(state.get("bookTitle")),
+        "chapterId": chapter if isinstance(chapter, int) and not isinstance(chapter, bool) else None,
+        "chapterTitle": _text(state.get("chapterTitle")),
+        "position": _number(state.get("position"), 0.0, 86_400.0),
+        "duration": _number(state.get("duration"), 0.0, 86_400.0),
+        "playing": state.get("playing") is True,
+        "buffering": state.get("buffering") is True,
+        "rate": _number(state.get("rate"), 0.5, 3.0),
+        "books": [item for item in books[:500] if isinstance(item, str) and BOOK_ID.fullmatch(item)],
+        "acks": [{"id": _text(ack.get("id"), 24), "ok": ack.get("ok") is True, "message": _text(ack.get("message"))}
+                 for ack in acks[:10] if isinstance(ack, dict)],
+    }
+
+
+def remote_command(body: dict[str, Any]) -> dict[str, Any]:
+    """Lệnh máy tính gửi điện thoại, kiểm và rút gọn: chỉ lệnh biết, đúng kiểu, mới đi qua mạng."""
+    action = body.get("action")
+    if action not in REMOTE_ACTIONS:
+        raise ValueError("Lệnh không hỗ trợ")
+    command: dict[str, Any] = {"action": action}
+    if action in ("skip", "seek", "jump", "load"):
+        command["seconds"] = _number(body.get("seconds"), -3600.0 if action == "skip" else 0.0, 86_400.0)
+    if action in ("jump", "load"):
+        chapter = body.get("chapterId")
+        if not isinstance(chapter, int) or isinstance(chapter, bool):
+            raise ValueError("Thiếu chương")
+        command["chapterId"] = chapter
+    if action == "load":
+        book = _text(body.get("bookId"), 700)
+        if not BOOK_ID.fullmatch(book):
+            raise ValueError("Thiếu sách")
+        command["bookId"] = book
+    if action == "rate":
+        command["rate"] = _number(body.get("rate"), 0.5, 3.0)
+    return command
+
+
+class Remote:
+    """Điều khiển điện thoại đang phát từ máy tính - kiểu Spotify Connect, gói trong mạng nhà (PLAYER_RESEARCH #12).
+
+    Điện thoại không mở cổng nào (máy chủ vẫn chỉ là máy tính), nên lệnh đi theo lối "hỏi dài": khi có sách trên trình
+    phát, điện thoại gửi trạng thái lên `/sync/v1/remote` và để yêu cầu treo tới `wait` giây; có lệnh là máy tính trả
+    lời NGAY, nên bấm "dừng" trên máy tính thì điện thoại dừng sau một lượt mạng chứ không đợi tới nhịp hỏi sau. Điện
+    thoại đổi trạng thái (phát, dừng, tua, sang chương) thì gửi thêm một lần `wait=0` để máy tính thấy liền.
+    """
+
+    def __init__(self) -> None:
+        self._changed = threading.Condition()
+        self._presence: dict[str, dict[str, Any]] = {}
+        self._commands: dict[str, list[dict[str, Any]]] = {}
+        self._generation = 0
+
+    def report(self, device: str, name: str, report: dict[str, Any], wait: Any = 0.0) -> list[dict[str, Any]]:
+        """Ghi trạng thái của một điện thoại, trả các lệnh đang chờ nó (chờ tối đa `wait` giây nếu chưa có)."""
+        deadline = time.time() + _number(wait, 0.0, REMOTE_WAIT_SECONDS)
+        with self._changed:
+            generation = self._generation
+            self._presence[device] = {**_presence(report), "device": device, "name": name, "at": time.time()}
+            while self._generation == generation and not self._pending(device):
+                left = deadline - time.time()
+                if left <= 0:
+                    break
+                self._changed.wait(left)
+            commands = self._pending(device)
+            self._commands.pop(device, None)
+            return commands
+
+    def _pending(self, device: str) -> list[dict[str, Any]]:
+        fresh = [command for command in self._commands.get(device, []) if time.time() - command["at"] <= COMMAND_SECONDS]
+        if fresh:
+            self._commands[device] = fresh
+        else:
+            self._commands.pop(device, None)
+        return fresh
+
+    def send(self, device: str, command: dict[str, Any]) -> dict[str, Any]:
+        """Xếp một lệnh cho điện thoại. `LookupError` nếu nó không còn ở đó: lệnh gửi vào khoảng không thì người dùng
+        phải được biết, chứ không được tưởng là điện thoại đã dừng."""
+        with self._changed:
+            seen = self._presence.get(device)
+            if seen is None or time.time() - seen["at"] > PRESENCE_SECONDS:
+                raise LookupError(device)
+            entry = {**command, "id": secrets.token_hex(6), "at": time.time()}
+            self._commands.setdefault(device, []).append(entry)
+            self._changed.notify_all()
+            return entry
+
+    def view(self) -> list[dict[str, Any]]:
+        """Các điện thoại đang có mặt, mới nhất trước; `age` = số giây kể từ lần báo cuối (để nội suy vị trí)."""
+        now = time.time()
+        with self._changed:
+            phones = [{**entry, "age": round(now - entry["at"], 2)} for entry in self._presence.values()
+                      if now - entry["at"] <= PRESENCE_SECONDS]
+        return sorted(phones, key=lambda entry: entry["age"])
+
+    def forget(self, device: str) -> None:
+        """Gỡ ghép một điện thoại: nó không còn được thấy, lệnh chờ nó bỏ hết."""
+        with self._changed:
+            self._presence.pop(device, None)
+            self._commands.pop(device, None)
+            self._changed.notify_all()
+
+    def reset(self) -> None:
+        """Tắt đồng bộ: trả lời ngay mọi lần hỏi đang treo, quên hết."""
+        with self._changed:
+            self._generation += 1
+            self._presence.clear()
+            self._commands.clear()
+            self._changed.notify_all()
 
 
 class ExclusiveHTTPServer(ThreadingHTTPServer):
@@ -120,15 +260,19 @@ class Devices:
             return token
 
     def check(self, token: str) -> bool:
+        return self.identify(token) is not None
+
+    def identify(self, token: str) -> dict[str, str] | None:
+        """Thiết bị mang mã này: `{"id", "name"}` (id là 12 ký tự đầu của băm, như trong danh sách), hoặc None."""
         key = _hash(token)
         with self._lock:
             device = self._data["devices"].get(key)
             if device is None:
-                return False
+                return None
             if time.time() - device.get("lastSeen", 0) > 60:
                 device["lastSeen"] = time.time()
                 self._save()
-            return True
+            return {"id": key[:12], "name": str(device.get("name") or "Điện thoại")}
 
     def list(self) -> list[dict[str, Any]]:
         with self._lock:
@@ -185,11 +329,13 @@ def manifest(project_root: Path, book: str, listening: Listening) -> dict[str, A
 
 
 class SyncApp:
-    def __init__(self, library: Library, listening: Listening, devices: Devices, name: str) -> None:
+    def __init__(self, library: Library, listening: Listening, devices: Devices, name: str,
+                 remote: Remote | None = None) -> None:
         self.library = library
         self.listening = listening
         self.devices = devices
         self.name = name
+        self.remote = remote or Remote()
 
     def book(self, value: str) -> Path | None:
         return self.library.resolve(value)
@@ -264,9 +410,9 @@ class SyncHandler(BaseHTTPRequestHandler):
             return {}
         return data if isinstance(data, dict) else {}
 
-    def _authorized(self) -> bool:
+    def _device(self) -> dict[str, str] | None:
         header = self.headers.get("Authorization") or ""
-        return header.startswith("Bearer ") and self.app.devices.check(header[7:].strip())
+        return self.app.devices.identify(header[7:].strip()) if header.startswith("Bearer ") else None
 
     def _file(self, path: Path) -> None:
         size = path.stat().st_size
@@ -314,8 +460,15 @@ class SyncHandler(BaseHTTPRequestHandler):
                 else:
                     self._json(HTTPStatus.OK, {"token": token, "name": self.app.name})
                 return
-            if not self._authorized():
+            device = self._device()
+            if device is None:
                 self._json(HTTPStatus.UNAUTHORIZED, {"error": "Thiết bị chưa ghép nối"})
+                return
+            if method == "POST" and path == "/sync/v1/remote":
+                body = self._body()
+                commands = self.app.remote.report(device["id"], device["name"], body, body.get("wait", 0))
+                self._json(HTTPStatus.OK, {"commands": [{key: value for key, value in command.items() if key != "at"}
+                                                        for command in commands]})
                 return
             if method == "GET" and path == "/sync/v1/library":
                 self._json(HTTPStatus.OK, {"name": self.app.name, "books": self.app.library_view()})

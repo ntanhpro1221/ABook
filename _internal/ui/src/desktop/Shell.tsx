@@ -11,6 +11,7 @@ import { APP_TITLE } from "@/shared/title";
 import { formatPercent } from "@/shared/format";
 import { Progress, Vu } from "@/shared/ui";
 import { useLibrary } from "@/studio/data";
+import { HandOffButton, RemoteBars } from "./RemotePhone";
 
 // Máy tính = phía Nghe (giống hệt trình phát Android) + Studio sản xuất. Thanh bên tách hai khu rõ ràng.
 
@@ -153,7 +154,8 @@ export function Shell({ children }: { children: ReactNode }) {
         <main ref={main} className="min-h-0 flex-1 overflow-y-auto" inert={expanded}>
           {children}
         </main>
-        <PlayerBar />
+        <RemoteBars />
+        <PlayerBar extra={<HandOffButton />} />
         <NowPlaying />
       </div>
     </div>

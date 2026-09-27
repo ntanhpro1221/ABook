@@ -749,6 +749,7 @@ export function PlayerProvider({
         refreshLists(native.bookId);
         // Lõi native khôi phục bài đang nghe (mở lại app) chỉ biết tên sách: hỏi kho sách để có ảnh bìa và giọng kể,
         // nếu không thanh phát và màn "Đang nghe" hiện bìa vẽ dù sách có ảnh bìa thật (27-09, thấy trên máy ảo).
+        // Máy tính bấm "Phát trên điện thoại" cũng đổi sách từ lõi: khi ấy danh sách chương còn là của cuốn cũ.
         if (!same) {
           const bookId = native.bookId;
           void source.book(bookId).then((book) => {
@@ -757,6 +758,11 @@ export function PlayerProvider({
             const filled = { ...current, bookCover: book.cover ?? null, narrator: current.narrator || book.narrator };
             refs.current.track = filled;
             setTrack(filled);
+            if (book.chapters && refs.current.book?.id !== bookId) {
+              setQueue(book.chapters);
+              refs.current.queue = book.chapters;
+              refs.current.book = { id: book.id, title: book.title, complete: book.complete };
+            }
           }).catch(() => undefined);
         }
       }),

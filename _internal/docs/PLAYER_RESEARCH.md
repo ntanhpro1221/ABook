@@ -60,7 +60,7 @@ track, ảnh bìa) hoặc gộp thành một file M4B có mốc chương.
 Đã làm tối 26-09 (nhánh ui/redesign): #1 (máy tính + lõi Android), #2, #3 (máy tính), #4 (chế độ đọc),
 #5, #6 (xuất MP3 có tag), #7 (lịch sử nghe), #10 (số phút tuỳ chỉnh). Ngày 27-09: #8 (lắc = cộng thêm/đặt lại + độ nhạy),
 #9 (úp máy để dừng - chỉ tính khi úp VÀ nằm yên, cầm tay giơ lên xem không tính), #11 (nút tai nghe lùi/tới 15 giây),
-#13-#15 bên dưới; tất cả thử trên máy ảo bằng cảm biến/phím media giả lập. Còn lại: #12.
+#13-#15 bên dưới; tất cả thử trên máy ảo bằng cảm biến/phím media giả lập. Chiều 27-09: #12 - xong cả danh sách.
 
 | # | Ý tưởng | Học từ | Vì sao với ta |
 |---|---|---|---|
@@ -75,7 +75,7 @@ track, ảnh bìa) hoặc gộp thành một file M4B có mốc chương.
 | 9 | Úp máy để dừng / lật lên nghe tiếp; khoá nút khi bỏ túi | SABP | Điện thoại |
 | 10 | Tấm hẹn giờ có số tuỳ chỉnh + "Ngắn hơn/Dài hơn"; báo rung khi bắt đầu nhỏ dần | Voice, SABP | Tinh chỉnh |
 | 11 | Nút tai nghe Bluetooth Trước/Sau = lùi/tới (tuỳ chọn) | SABP | Sách nói ít khi cần nhảy chương |
-| 12 | Điều khiển điện thoại đang phát từ máy tính | Spotify Connect | Làm sau cùng |
+| 12 | **Điều khiển điện thoại đang phát từ máy tính**: thanh "Đang phát trên <điện thoại>" (phát/dừng, lùi/tới 15 giây), **"Nghe trên máy tính"** (dừng điện thoại, máy tính phát tiếp đúng giây) và ngược lại **"Phát trên điện thoại"** ở thanh phát máy tính | Spotify Connect | Điện thoại không mở cổng nào: nó "hỏi dài" máy tính (treo 25 giây, có lệnh là trả ngay) khi app đang mở, đang phát hoặc vừa dừng dưới 10 phút. Lệnh quá 15 giây chưa tới tay thì bỏ. Đã làm 27-09, thử trên máy ảo |
 | 13 | **Ảnh bìa thật**: đặt từ file/kéo thả/dán, hoặc **tìm trên mạng** (iTunes, Open Library, Google Books) rồi chọn; màu chủ đạo nhuộm màn "Đang nghe" | SABP (cover art downloader), Audiobookshelf (match bìa qua nhiều nguồn) | Sách TXT không có bìa; truyện mạng dịch hiếm khi có trên các nguồn - chỉ gợi ý, không tự đặt. Đã làm 27-09 |
 | 14 | Chạm vào bìa lớn để phát/dừng | SABP | Mục tiêu to nhất màn hình. Đã làm 27-09 |
 | 15 | Độ nhạy lắc (nhẹ tay / vừa / mạnh tay) | SABP (rất thấp → rất cao) | Trở mình bị tính là lắc, hoặc lắc mãi không ăn. Đã làm 27-09 |

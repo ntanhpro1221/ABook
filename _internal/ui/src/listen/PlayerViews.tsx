@@ -172,8 +172,8 @@ function skipIcon(Base: typeof RotateCcw) {
     );
   };
 }
-const Back15 = skipIcon(RotateCcw);
-const Forward15 = skipIcon(RotateCw);
+export const Back15 = skipIcon(RotateCcw);
+export const Forward15 = skipIcon(RotateCw);
 
 function Transport({ large = false }: { large?: boolean }) {
   const { playing, buffering, toggle, skip, next, previous, queue, track } = usePlayer();
@@ -617,7 +617,8 @@ function FurtherElsewhere() {
 
 // ---- Thanh phát nhỏ ------------------------------------------------------------------------------------
 
-export function PlayerBar({ compact = false }: { compact?: boolean }) {
+/** `extra`: nút riêng của từng nền, đặt trước nhóm nút phải (máy tính: "Phát trên điện thoại"). */
+export function PlayerBar({ compact = false, extra }: { compact?: boolean; extra?: ReactNode }) {
   const { track, close, playing, toggle } = usePlayer();
   const { expanded, setExpanded } = useNowPlaying();
   if (!track) return null;
@@ -673,6 +674,7 @@ export function PlayerBar({ compact = false }: { compact?: boolean }) {
           <SeekBar />
         </div>
         <div className="flex min-w-0 items-center justify-end gap-0.5">
+          {extra}
           <SpeedMenu />
           <SleepMenu />
           <BookmarkButton />

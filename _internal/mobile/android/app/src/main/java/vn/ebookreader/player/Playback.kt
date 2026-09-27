@@ -100,6 +100,7 @@ object Playback {
     fun init(context: Context) {
         appContext = context.applicationContext
         Store.init(appContext)
+        Remote.init(appContext)
     }
 
     fun onMain(block: () -> Unit) {
@@ -113,6 +114,8 @@ object Playback {
         val event = state().put("kind", kind)
         listeners.toList().forEach { runCatching { it(event) } }
         if (::appContext.isInitialized) runCatching { PlayerWidget.refresh(appContext, tick = kind == "tick") }
+        // Máy tính đang xem điện thoại phát gì (Remote): mọi đổi trừ nhịp đồng hồ đều báo ngay.
+        if (kind != "tick") Remote.kick()
     }
 
     /** Cuốn nghe gần nhất trên máy: (book.json, mốc "last") - cho widget và cho tiếp tục phát sau khi khởi động lại. */
@@ -278,6 +281,7 @@ object Playback {
         touched()
         SleepTimer.onPlaying(playing)
         Motion.refresh()
+        Remote.onPlaying(playing)
         if (!playing) {
             pausedAtMs = System.currentTimeMillis()
             saveNow()
