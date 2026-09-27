@@ -122,6 +122,55 @@ def point_of_view(segments_by_chapter: dict, golds: dict) -> dict[str, str]:
     return {chapter: entity for chapter, entity in result.items() if entity}
 
 
+CAST_LABEL = "Nhân vật trong chương: "
+
+
+def chapter_cast(segments: list[tuple[int, str]], aliases: dict[str, set[str]], pov: str | None) -> list[str]:
+    """Thực thể được nhắc (khớp bí danh không mơ hồ) ở bất kỳ đâu trong chương, theo thứ tự lần nhắc đầu; thêm người
+    kể "tôi" nếu có. Khi chạy thật đây là danh sách nhân vật app đã có sau pha đọc chương - cùng thứ LLM được đưa."""
+    order: list[str] = [pov] if pov else []
+    for mention in mention_spans("\n".join(text for _, text in segments), aliases):
+        if len(mention["entities"]) == 1 and mention["entities"][0] not in order:
+            order.append(mention["entities"][0])
+    return order
+
+
+def with_cast(text: str, offsets: dict, mentions: list[dict], cast: list[str], display: dict[str, str]
+              ) -> tuple[str, dict, list[dict]]:
+    """Chèn "Nhân vật trong chương: A, B, C." làm dòng đầu cửa sổ; dời mọi vị trí; thêm chỗ nhắc cast."""
+    names = [(entity, (display.get(entity) or entity).replace("_", " ").title()) for entity in cast]
+    prefix, cast_mentions = CAST_LABEL, []
+    for index, (entity, name) in enumerate(names):
+        if index:
+            prefix += ", "
+        cast_mentions.append({"start": len(prefix), "end": len(prefix) + len(name), "entities": [entity], "cast": True})
+        prefix += name
+    prefix += ".\n"
+    shift = len(prefix)
+    offsets = {seq: (start + shift, end + shift) for seq, (start, end) in offsets.items()}
+    mentions = cast_mentions + [{**mention, "start": mention["start"] + shift, "end": mention["end"] + shift}
+                                for mention in mentions]
+    return prefix + text, offsets, mentions
+
+
+def join_segments(segments: list[tuple[int, str]], paragraph_of: dict[int, int] | None = None
+                  ) -> tuple[str, dict[int, tuple[int, int]]]:
+    """Văn bản cửa sổ + vị trí từng đoạn. paragraph_of=None: mỗi đoạn một dòng (mốc). Có paragraph_of (N8, 27-09):
+    đoạn CÙNG paragraph nối bằng dấu cách - giữ nguyên dàn trang của truyện, nơi xuống dòng thường là đổi người nói
+    ("“Chào anh,” Lucien nói, “hôm nay…”" là MỘT người). TMA có 38% đoạn nằm chung paragraph với đoạn khác."""
+    offsets, parts, cursor, previous = {}, [], 0, None
+    for seq, text in segments:
+        if parts:
+            same = paragraph_of is not None and paragraph_of.get(seq) == paragraph_of.get(previous)
+            parts.append(" " if same else "\n")
+            cursor += 1
+        offsets[seq] = (cursor, cursor + len(text))
+        parts.append(text)
+        cursor += len(text)
+        previous = seq
+    return "".join(parts), offsets
+
+
 def split_of(book: str, chapter: str) -> str:
     for name, books in SPLIT.items():
         if chapter in books.get(book, set()):
@@ -169,6 +218,11 @@ def main() -> int:
     parser.add_argument("--tokenizer", default="jhu-clsp/mmBERT-base")
     parser.add_argument("--budget", type=int, default=1024, help="token mỗi cửa sổ")
     parser.add_argument("--no-pov", action="store_true", help="tắt ứng viên ngôi thứ nhất (để so với mốc)")
+    parser.add_argument("--layout", choices=("line", "paragraph"), default="line",
+                        help="line: mỗi đoạn một dòng (mốc 27-09); paragraph: đoạn cùng paragraph nối bằng dấu cách (N8)")
+    parser.add_argument("--cast", action="store_true",
+                        help="N9: đầu mỗi cửa sổ là danh sách nhân vật được nhắc trong CẢ chương - ứng viên cho người nói "
+                             "không được gọi tên gần câu (chỗ nhắc đánh dấu cast, bộ chấm cho một xô khoảng cách riêng)")
     args = parser.parse_args()
 
     from transformers import AutoTokenizer  # noqa: PLC0415
@@ -195,6 +249,10 @@ def main() -> int:
             title: [(int(seq), str(text), str(kind or "")) for seq, text, kind in connection.execute(
                 "SELECT seq, text, kind FROM segments WHERE chapter_id = ? ORDER BY seq", (chapter_id,))]
             for chapter_id, title in chapters if title in golds}
+        paragraph_of = {
+            title: dict(connection.execute(
+                "SELECT seq, paragraph_index FROM segments WHERE chapter_id = ?", (chapter_id,)).fetchall())
+            for chapter_id, title in chapters if title in golds}
         povs = {} if args.no_pov else point_of_view(segments_by_chapter, golds)
         if povs:
             print(f"  {book}: 'tôi' theo chương = {povs}")
@@ -206,13 +264,10 @@ def main() -> int:
             kinds = {seq: kind for seq, _, kind in segments_by_chapter[title]}
             pov = povs.get(title)
             segments = [(seq, text) for seq, text, _ in segments_by_chapter[title]]
+            casts = {title: chapter_cast(segments, aliases, pov)} if args.cast else {}
             for lo, hi, seqs in windows_for(segments, quotes, args.budget, count_tokens):
-                offsets, parts, cursor = {}, [], 0
-                for seq, text in segments[lo:hi + 1]:
-                    offsets[seq] = (cursor, cursor + len(text))
-                    parts.append(text)
-                    cursor += len(text) + 1
-                text = "\n".join(parts)
+                text, offsets = join_segments(segments[lo:hi + 1],
+                                              paragraph_of[title] if args.layout == "paragraph" else None)
                 mentions = mention_spans(text, aliases)
                 if pov:
                     for seq, (begin, finish) in offsets.items():
@@ -221,6 +276,8 @@ def main() -> int:
                         for match in FIRST_PERSON.finditer(text, begin, finish):
                             mentions.append({"start": match.start(), "end": match.end(), "entities": [pov]})
                     mentions.sort(key=lambda mention: mention["start"])
+                if args.cast:
+                    text, offsets, mentions = with_cast(text, offsets, mentions, casts[title], display)
                 rows = []
                 for seq in seqs:
                     kind, label = quotes[seq]
