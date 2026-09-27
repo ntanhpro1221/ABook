@@ -1,4 +1,5 @@
 import * as Popover from "@radix-ui/react-popover";
+import { Capacitor } from "@capacitor/core";
 import * as Slider from "@radix-ui/react-slider";
 import { useQueries, useQueryClient } from "@tanstack/react-query";
 import {
@@ -403,7 +404,7 @@ export function SleepMenu() {
         </button>
       </Popover.Close>
       <p className="px-2 pb-1 pt-2 text-xs leading-snug text-fg-2">
-        Tiếng nhỏ dần {options.fadeSeconds} giây trước khi dừng. Lúc đó chạm phím hoặc chuột để nghe thêm {options.extendMinutes} phút.
+        Tiếng nhỏ dần {options.fadeSeconds} giây trước khi dừng. Lúc đó {EXTEND_GESTURE} để nghe thêm {options.extendMinutes} phút.
         Sáng hôm sau, thẻ “Tối qua” giúp tìm lại đoạn bạn còn nhớ.
       </p>
     </MenuShell>
@@ -509,6 +510,10 @@ function BookmarkShortcut() {
   return null;
 }
 
+// Cách gia hạn khác nhau theo máy: máy tính bắt phím/chuột; điện thoại bắt cú LẮC (SleepTimer.kt) và nút "Nghe thêm"
+// trên thông báo - chạm màn hình ở đó chỉ ghi nhận cho tính năng tự dừng, không gia hạn (27-09, thấy trên máy ảo).
+const EXTEND_GESTURE = Capacitor.isNativePlatform() ? "lắc máy hoặc bấm “Nghe thêm” trên thông báo" : "chạm phím hoặc chuột";
+
 /** Đang nhỏ dần trước khi tắt: nói rõ và cho nghe thêm bằng một chạm. */
 function FadingNotice({ className }: { className?: string }) {
   const { fading, extendSleep, options } = usePlayer();
@@ -516,7 +521,7 @@ function FadingNotice({ className }: { className?: string }) {
   return (
     <div className={cn("flex items-center gap-3 rounded-xl bg-accent-soft px-3 py-2 text-sm text-accent-text", className)} role="status">
       <Moon className="size-4 shrink-0" />
-      <span className="min-w-0 flex-1">Sắp tắt · chạm phím hoặc chuột để nghe thêm {options.extendMinutes} phút</span>
+      <span className="min-w-0 flex-1">Sắp tắt · {EXTEND_GESTURE} để nghe thêm {options.extendMinutes} phút</span>
       <button type="button" onClick={() => extendSleep()} className="shrink-0 rounded-lg bg-accent px-2.5 py-1 text-xs font-semibold text-accent-ink">
         +{options.extendMinutes} phút
       </button>
