@@ -11,11 +11,12 @@ from __future__ import annotations
 import base64
 import os
 import re
+import shutil
 from pathlib import Path
 from typing import Any
 
 from ..io_utils import ffmpeg_executable, run_hidden
-from . import listen_view, store
+from . import covers, listen_view, store
 
 _UNSAFE = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 
@@ -40,6 +41,16 @@ def _cover_file(folder: Path, cover: str | None) -> Path | None:
     return path
 
 
+def _real_cover(project_root: Path, folder: Path) -> Path | None:
+    """Ảnh bìa thật người dùng đã đặt (covers.py) thắng bìa tự vẽ mà giao diện gửi kèm."""
+    source = covers.cover_file(project_root)
+    if source is None:
+        return None
+    target = folder / covers.COVER_FILE
+    shutil.copyfile(source, target)
+    return target
+
+
 def export_book(project_root: Path, target_root: Path, *, cover: str | None = None) -> dict[str, Any]:
     summary = store.summarize(project_root)
     title = summary["title"] or project_root.name
@@ -49,7 +60,7 @@ def export_book(project_root: Path, target_root: Path, *, cover: str | None = No
         raise ValueError("Sách chưa có chương nào nghe được để xuất")
     folder = target_root / safe_name(title)
     folder.mkdir(parents=True, exist_ok=True)
-    cover_path = _cover_file(folder, cover)
+    cover_path = _real_cover(project_root, folder) or _cover_file(folder, cover)
     ffmpeg = ffmpeg_executable()
     total = len(chapters)
     width = max(2, len(str(total)))

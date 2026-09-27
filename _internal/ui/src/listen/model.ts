@@ -1,3 +1,4 @@
+import type { CoverImage } from "@/shared/cover";
 // Hợp đồng dữ liệu của phía NGHE - chung cho máy tính và Android.
 // Máy tính: server cục bộ dựng từ project (ebook_reader/webui/listen_view.py).
 // Android: đọc từ gói sách đã tải về (book.json cùng hình dạng).
@@ -65,6 +66,8 @@ export interface ListenBook {
   state: ListeningState;
   progress: BookProgress;
   lastChapterTitle?: string;
+  /** Ảnh bìa thật (webui/covers.py); không có thì vẽ bìa từ tên. */
+  cover?: CoverImage | null;
   /** Sách đang làm: ước lượng của giai đoạn hiện tại (máy tính). */
   eta?: { phase: string; seconds: number } | null;
   chapters?: ListenChapter[];
