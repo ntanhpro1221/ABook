@@ -1116,7 +1116,7 @@ function CaughtUpNotice() {
 // ---- Màn hình đang nghe ------------------------------------------------------------------------------------
 
 export function NowPlaying({ mobile = false }: { mobile?: boolean }) {
-  const { track, sleep, canGoBack, goBack } = usePlayer();
+  const { track, sleep, canGoBack, goBack, playing, toggle } = usePlayer();
   const { expanded, setExpanded } = useNowPlaying();
   const [panel, setPanelState] = useState<Panel>(initialPanel);
   const [showPanel, setShowPanel] = useState(!mobile);
@@ -1220,7 +1220,15 @@ export function NowPlaying({ mobile = false }: { mobile?: boolean }) {
           <div className="-mx-6 mt-2 min-h-0 flex-1 border-y border-line">{panelBody}</div>
         ) : (
           <div className="mt-4 flex min-h-0 flex-1 flex-col items-center justify-center">
-            <BookCover title={track.bookTitle} image={track.bookCover} size="xl" className="cover-morph w-full max-w-[300px]" />
+            {/* Chạm bìa để phát/dừng (SABP): mục tiêu lớn nhất màn hình, dễ trúng khi đang nằm và mắt nhắm mắt mở. */}
+            <button
+              type="button"
+              onClick={toggle}
+              aria-label={playing ? "Tạm dừng (chạm bìa)" : "Phát (chạm bìa)"}
+              className="w-full max-w-[300px] rounded-lg transition-transform active:scale-[0.98]"
+            >
+              <BookCover title={track.bookTitle} image={track.bookCover} size="xl" className="cover-morph w-full" />
+            </button>
           </div>
         )}
         <div className="mt-5 w-full text-center">
