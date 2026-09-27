@@ -1,6 +1,6 @@
 {
-  "appId": "vn.ebookreader.player",
-  "appName": "Ebook Reader",
+  "appId": "com.ngdtuanh.abook",
+  "appName": "ABook",
   "webDir": "www",
   "android": {
     "allowMixedContent": false,

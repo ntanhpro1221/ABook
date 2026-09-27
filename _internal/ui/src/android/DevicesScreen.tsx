@@ -62,7 +62,7 @@ function PairPanel() {
           </div>
         </div>
         <ol className="mt-4 space-y-1.5 text-sm text-fg-2">
-          <li>1. Trên máy tính: mở Ebook Reader → Cài đặt → bật “Cho phép điện thoại kết nối”.</li>
+          <li>1. Trên máy tính: mở ABook → Cài đặt → bật “Cho phép điện thoại kết nối”.</li>
           <li>2. Chọn máy tính bên dưới và nhập mã 6 số đang hiện ở đó.</li>
         </ol>
       </div>

@@ -121,7 +121,7 @@ function EmptyLibrary() {
         </div>
       }
     >
-      Kết nối với Ebook Reader trên máy tính qua Wi-Fi rồi tải sách về - nghe được cả khi không có mạng. Có file sách
+      Kết nối với ABook trên máy tính qua Wi-Fi rồi tải sách về - nghe được cả khi không có mạng. Có file sách
       .abook (bạn bè gửi, tải về)? Mở nó bằng app là sách vào Thư viện.
     </EmptyState>
   );

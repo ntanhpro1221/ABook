@@ -6,7 +6,7 @@ import { coverArtwork, type CoverImage } from "@/shared/cover";
 import { formatClock } from "@/shared/format";
 import { Clock, ClockContext } from "./clock";
 import { isNative, type AudioEngine } from "./engine";
-import type { Bookmark, ListenBook, ListenChapter, NightPosition } from "./model";
+import { resumePoint, type Bookmark, type ListenBook, type ListenChapter, type NightPosition } from "./model";
 import { NightRecorder } from "./night";
 import {
   DEFAULT_EXTEND_MINUTES,
@@ -41,6 +41,8 @@ export interface Track {
   narrator: string;
   chapterId: number;
   chapterTitle: string;
+  /** Hồ sơ nghe đang phát (bộ máy web): mọi lần lưu vào đúng hồ sơ này, kể cả khi máy khác vừa đổi hồ sơ đang dùng. */
+  recordId?: string;
 }
 
 /** "review": nghe kiểm trong Studio - không ghi đè chỗ đang nghe dở của người nghe. */
@@ -80,7 +82,11 @@ export function scheduleWindow(schedule: SleepSchedule | null, now = new Date())
   return start.toDateString();
 }
 
-type BookRef = Pick<ListenBook, "id" | "title" | "narrator" | "state" | "cover"> & { complete?: boolean };
+type BookRef = Pick<ListenBook, "id" | "title" | "narrator" | "state" | "cover" | "records"> & { complete?: boolean };
+
+function activeRecord(book: BookRef): string | undefined {
+  return book.records?.find((record) => record.active)?.id;
+}
 
 interface PlayerState {
   track: Track | null;
@@ -122,6 +128,9 @@ interface PlayerActions {
   extendSleep: (minutes?: number) => void;
   addBookmark: (note?: string) => Promise<Bookmark | null>;
   close: () => void;
+  /** Đổi hồ sơ nghe của một cuốn (`change` gọi máy chủ); cuốn đang nạp thì trình phát theo sang hồ sơ mới.
+   *  `startOver`: xong thì phát từ chương đầu (nghe lại từ đầu bằng hồ sơ mới). */
+  switchRecord: (bookId: string, change: () => Promise<unknown>, startOver?: boolean) => Promise<void>;
   /** Lần cuối vị trí trên máy này được nạp hoặc lưu (ms) - vị trí trên máy chủ mới hơn mốc này là từ thiết bị khác. */
   positionStamp: () => number;
 }
@@ -234,7 +243,9 @@ export function PlayerProvider({
     bookmarking: false,
     muted: 0,
     stamp: 0,
-    session: null as { id: string; startedAt: number; from: { chapterId: number; seconds: number }; bookId: string; listened: number; mark: number } | null,
+    /** Chỗ lần gần nhất đã lưu (hay vừa nạp từ chỗ đã lưu) - đổi hồ sơ mà trình phát chưa nhúc nhích thì khỏi lưu lại. */
+    savedSpot: null as { chapterId: number; seconds: number } | null,
+    session: null as { id: string; startedAt: number; from: { chapterId: number; seconds: number }; bookId: string; recordId?: string; listened: number; mark: number } | null,
     lastActivity: Date.now(),
     lastActivityPosition: null as NightPosition | null,
     scheduleOffFor: "",
@@ -271,7 +282,8 @@ export function PlayerProvider({
     if (!force && now - refs.current.lastSaved < SAVE_EVERY_MS) return;
     refs.current.lastSaved = now;
     refs.current.stamp = now;
-    void source.saveProgress(current.bookId, current.chapterId, engine.time, engine.duration).catch(() => undefined);
+    refs.current.savedSpot = { chapterId: current.chapterId, seconds: engine.time };
+    void source.saveProgress(current.bookId, current.chapterId, engine.time, engine.duration, current.recordId).catch(() => undefined);
     if (force) refreshLists(current.bookId);
   }, [engine, native, source, refreshLists]);
 
@@ -281,6 +293,7 @@ export function PlayerProvider({
     setAtEnd("none");
     setTrack(next);
     refs.current.track = next;
+    refs.current.savedSpot = { chapterId: next.chapterId, seconds: at };
     clock.set(at, 0);
     refs.current.stamp = Date.now();
     engine.load(
@@ -339,7 +352,8 @@ export function PlayerProvider({
     const current = refs.current.track;
     const sameSpot = current && current.bookId === book.id && current.chapterId === chapterId && at === undefined;
     const bookRate = adoptBook(book, chapters, extra?.purpose ?? "listen");
-    const next: Track = { bookId: book.id, bookTitle: book.title, bookCover: book.cover ?? null, narrator: book.narrator, chapterId, chapterTitle: chapter.fullTitle };
+    const next: Track = { bookId: book.id, bookTitle: book.title, bookCover: book.cover ?? null, narrator: book.narrator, chapterId, chapterTitle: chapter.fullTitle,
+      recordId: native ? undefined : activeRecord(book) };
     if (native) {
       setTrack(next);
       refs.current.track = next;
@@ -365,10 +379,11 @@ export function PlayerProvider({
     const chapter = chapters.find((item) => item.id === chapterId && item.available);
     if (!chapter) return;
     const bookRate = adoptBook(book, chapters, "listen");
-    const next: Track = { bookId: book.id, bookTitle: book.title, bookCover: book.cover ?? null, narrator: book.narrator, chapterId, chapterTitle: chapter.fullTitle };
-    setTrack(next);
-    refs.current.track = next;
+    const next: Track = { bookId: book.id, bookTitle: book.title, bookCover: book.cover ?? null, narrator: book.narrator, chapterId, chapterTitle: chapter.fullTitle,
+      recordId: native ? undefined : activeRecord(book) };
     if (native) {
+      setTrack(next);
+      refs.current.track = next;
       if (!native.bookId) {
         native.loadQueue({ bookId: book.id, bookTitle: book.title, narrator: book.narrator, chapters, chapterId, at, rate: bookRate, autoplay: false });
       }
@@ -377,6 +392,8 @@ export function PlayerProvider({
     const last = book.state?.last;
     const back = last ? rewindAfter(Date.now() - last.at * 1000) : 0;
     refs.current.pausedAt = 0;
+    // `load` tự gắn cuốn vào trình phát SAU lần lưu chỗ cũ của nó; gắn trước thì lần lưu ấy ghi 0:00 (chưa nạp audio)
+    // vào chỗ nghe dở của chính cuốn này - mỗi lần mở lại app là mất chỗ nghe.
     load(next, Math.max(0, at - back), false);
   }, [adoptBook, load, native]);
 
@@ -562,7 +579,7 @@ export function PlayerProvider({
     try {
       const mark = native
         ? await native.addBookmark(note)
-        : await source.addBookmark(current.bookId, current.chapterId, engine.time, note);
+        : await source.addBookmark(current.bookId, current.chapterId, engine.time, note ?? "", current.recordId);
       night.touch("bookmark", position(), true);
       refreshLists(current.bookId);
       return mark;
@@ -596,7 +613,7 @@ export function PlayerProvider({
   const openSession = useCallback(() => {
     const current = refs.current.track;
     if (native || !current || refs.current.purpose !== "listen" || !source.addSession) return;
-    if (refs.current.session && refs.current.session.bookId === current.bookId) {
+    if (refs.current.session && refs.current.session.bookId === current.bookId && refs.current.session.recordId === current.recordId) {
       refs.current.session.mark = Date.now();
       return;
     }
@@ -605,12 +622,13 @@ export function PlayerProvider({
       startedAt: Date.now() / 1000,
       from: { chapterId: current.chapterId, seconds: engine.time },
       bookId: current.bookId,
+      recordId: current.recordId,
       listened: 0,
       mark: Date.now(),
     };
   }, [engine, native, source]);
 
-  const closeSession = useCallback((leaving = false) => {
+  const closeSession = useCallback((leaving = false): Promise<unknown> | undefined => {
     const session = refs.current.session;
     const current = refs.current.track;
     if (!session || !current || !source.addSession) return;
@@ -627,10 +645,10 @@ export function PlayerProvider({
         listened: session.listened,
         from: session.from,
         to: { chapterId: current.chapterId, seconds: engine.time },
-      });
+      }, session.recordId);
       return;
     }
-    void source
+    return source
       .addSession(session.bookId, {
         id: session.id,
         device: "desktop",
@@ -639,9 +657,50 @@ export function PlayerProvider({
         listened: session.listened,
         from: session.from,
         to: { chapterId: current.chapterId, seconds: engine.time },
-      })
+      }, session.recordId)
       .catch(() => undefined);
   }, [engine, source]);
+
+  // Chỗ nghe, phiên nghe của cuốn đang nạp vào hồ sơ CŨ (mọi lần lưu mang theo hồ sơ đang phát), ghi và chờ, gỡ cuốn
+  // khỏi trình phát, đổi, rồi nạp lại đúng chỗ của hồ sơ mới ở trạng thái dừng. Trình phát chưa nhúc nhích từ lần lưu
+  // trước thì khỏi lưu: lưu lại là đóng dấu giờ mới lên chỗ CŨ, đè chỗ mới hơn mà máy khác vừa đồng bộ tới.
+  // Lõi Android làm cả lượt ấy trên luồng chính của nó (Playback.switchRecord), ở đây chỉ việc chờ máy chủ.
+  const switchRecord = useCallback<PlayerActions["switchRecord"]>(async (bookId, change, startOver = false) => {
+    const current = refs.current.track;
+    const loaded = !native && current?.bookId === bookId && refs.current.purpose === "listen";
+    if (current && loaded) {
+      const saved = refs.current.savedSpot;
+      const moved = !engine.paused || !saved || saved.chapterId !== current.chapterId || Math.abs(saved.seconds - engine.time) > 1;
+      const writes = [
+        moved
+          ? source.saveProgress(current.bookId, current.chapterId, engine.time, engine.duration, current.recordId).catch(() => undefined)
+          : undefined,
+        closeSession(),
+      ];
+      refs.current.lastSaved = Date.now();
+      night.cancel(position());
+      engine.stop();
+      refs.current.track = null;
+      setTrack(null);
+      setPlaying(false);
+      endFade();
+      applySleep({ kind: "off" });
+      refs.current.history = [];
+      setCanGoBack(false);
+      await Promise.all(writes);
+    }
+    await change();
+    if (!loaded && !startOver) return;
+    const book = await source.book(bookId);
+    const chapters = book.chapters ?? [];
+    if (startOver) {
+      const first = chapters.find((chapter) => chapter.available);
+      if (first) play(book, chapters, first.id, 0);
+      return;
+    }
+    const point = resumePoint(book, chapters);
+    if (point) prepare(book, chapters, point.chapter.id, point.at);
+  }, [applySleep, closeSession, endFade, engine, native, night, play, position, prepare, source]);
 
   splitSessionRef.current = (at) => {
     const session = refs.current.session;
@@ -652,7 +711,7 @@ export function PlayerProvider({
     if (session.listened >= 20 && source.addSession) {
       void source
         .addSession(book, { id: session.id, device: "desktop", startedAt: session.startedAt, endedAt: Date.now() / 1000,
-          listened: session.listened, from: session.from, to: at })
+          listened: session.listened, from: session.from, to: at }, session.recordId)
         .catch(() => undefined);
     }
     if (!engine.paused) window.setTimeout(() => openSession(), 0);
@@ -714,7 +773,7 @@ export function PlayerProvider({
           if (target) {
             load({ ...current, chapterId: target.id, chapterTitle: target.fullTitle }, 0, false);
             if (refs.current.purpose === "listen") {
-              void source.saveProgress(current.bookId, target.id, 0, target.duration).then(() => refreshLists(current.bookId)).catch(() => undefined);
+              void source.saveProgress(current.bookId, target.id, 0, target.duration, current.recordId).then(() => refreshLists(current.bookId)).catch(() => undefined);
             }
           }
           return;
@@ -1021,10 +1080,10 @@ export function PlayerProvider({
     track, queue, playing, buffering, rate, volume, sleep, fading, sleepStoppedAt, lastSleepMinutes, purpose, atEnd,
     canGoBack, error, options,
     play, prepare, toggle, resume, pause, seek, skip, next, previous, jumpTo, goBack, setRate, setVolume, setSleep,
-    extendSleep, addBookmark, close, positionStamp,
+    extendSleep, addBookmark, close, switchRecord, positionStamp,
   }), [track, queue, playing, buffering, rate, volume, sleep, fading, sleepStoppedAt, lastSleepMinutes, purpose, atEnd,
     canGoBack, error, options, play, prepare, toggle, resume, pause, seek, skip, next, previous, jumpTo, goBack, setRate,
-    setVolume, setSleep, extendSleep, addBookmark, close, positionStamp]);
+    setVolume, setSleep, extendSleep, addBookmark, close, switchRecord, positionStamp]);
 
   // Mở/đóng "Đang nghe" qua View Transitions: bìa ở thanh phát bay lên thành bìa lớn (và bay về), phần còn lại mờ
   // chéo - xem .cover-morph trong styles.css. Không có API (trình duyệt cũ) hay người dùng xin giảm chuyển động thì

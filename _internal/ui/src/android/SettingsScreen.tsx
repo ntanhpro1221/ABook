@@ -197,7 +197,7 @@ export function SettingsScreen() {
         </Row>
       </Group>
 
-      <p className="mt-10 text-center text-xs text-fg-3">Ebook Reader · trình nghe sách nói</p>
+      <p className="mt-10 text-center text-xs text-fg-3">ABook · trình nghe sách nói</p>
     </div>
   );
 }

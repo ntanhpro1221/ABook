@@ -66,7 +66,7 @@ from .worker import run_worker
 
 
 WORKER_TERMINATION_GRACE_SECONDS = 0.5
-APP_NAME = "Ebook Reader"
+APP_NAME = "ABook"
 APP_USER_MODEL_ID = "EbookReader.Desktop"
 INSTANCE_SERVER_NAME = f"{APP_USER_MODEL_ID}.SingleInstance"
 INSTANCE_ACTIVATE_MESSAGE = b"activate"
@@ -1168,7 +1168,7 @@ class MainWindow(QMainWindow):
         self._show_from_tray()
         QMessageBox.critical(
             self,
-            "Ebook Reader đã dừng vì lỗi",
+            "ABook đã dừng vì lỗi",
             f"{reason}\n\nCác checkpoint đã hoàn tất vẫn được giữ nguyên.",
         )
 
@@ -1288,7 +1288,7 @@ def run_gui() -> int:
     mp.freeze_support()
     _set_windows_app_identity()
     app = QApplication(sys.argv)
-    app.setApplicationName(APP_NAME)
+    app.setApplicationName("Ebook Reader")  # định danh lưu trữ - giữ nguyên khi đổi tên hiển thị
     app.setWindowIcon(QIcon(str(APP_ICON_PATH)))
     instance_server = _claim_single_instance(app)
     if instance_server is None:

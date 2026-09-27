@@ -595,8 +595,11 @@ function FurtherElsewhere() {
   const readClock = useClockReader();
   const asked = useRef("");
   const last = book?.state.last;
+  const active = book?.records?.find((record) => record.active)?.id;
   useEffect(() => {
     if (!track || !last || playing || purpose !== "listen") return;
+    // chỗ nghe trên máy chủ là của hồ sơ khác (máy khác vừa đổi hồ sơ): FollowRecord lo, đây không phải "nghe xa hơn"
+    if (track.recordId && active && track.recordId !== active) return;
     const key = `${track.bookId}:${last.at}`;
     if (asked.current === key || last.at * 1000 <= positionStamp() + 1000) return;
     const here = readClock().time;
@@ -611,7 +614,36 @@ function FurtherElsewhere() {
       action: { label: "Nghe tiếp từ đó", onClick: () => jumpTo(last.chapterId, last.seconds) },
       cancel: { label: "Ở lại đây", onClick: () => undefined },
     });
-  }, [jumpTo, last, playing, positionStamp, purpose, queue, readClock, track]);
+  }, [active, jumpTo, last, playing, positionStamp, purpose, queue, readClock, track]);
+  return null;
+}
+
+/** Máy khác (điện thoại) đổi hồ sơ nghe của cuốn đang nạp ở đây: đang dừng thì theo sang - nạp lại đúng chỗ của hồ sơ
+ *  mới. Đang phát thì phát tiếp hồ sơ cũ (mọi lần lưu vẫn vào hồ sơ ấy), dừng rồi mới theo. */
+function FollowRecord() {
+  const source = useSource();
+  const { track, playing, purpose, switchRecord } = usePlayer();
+  const { data: book } = useListenBook(track?.bookId);
+  const active = book?.records?.find((record) => record.active)?.id;
+  const following = useRef("");
+  useEffect(() => {
+    if (!track?.recordId || !active || track.recordId === active || playing || purpose !== "listen") return;
+    const key = `${track.bookId}:${track.recordId}>${active}`;
+    if (following.current === key) return;
+    following.current = key;
+    const { bookId, recordId: held } = track;
+    // hỏi lại máy chủ: bộ nhớ đệm có thể còn là lúc trước khi chính máy này vừa đổi hồ sơ
+    void source
+      .book(bookId)
+      .then((fresh) => {
+        const chosen = fresh.records?.find((record) => record.active);
+        if (!chosen || chosen.id === held) return;
+        return switchRecord(bookId, async () => undefined).then(() =>
+          toast(`Đang dùng hồ sơ nghe “${chosen.name}”`, { description: "Vừa chọn trên thiết bị khác." }),
+        );
+      })
+      .catch(() => undefined);
+  }, [active, playing, purpose, source, switchRecord, track]);
   return null;
 }
 
@@ -653,6 +685,7 @@ export function PlayerBar({ compact = false, extra }: { compact?: boolean; extra
     <section aria-label="Trình phát" className="relative z-20 shrink-0 border-t border-line bg-panel">
       <BookmarkShortcut />
       <FurtherElsewhere />
+      <FollowRecord />
       <FadingNotice className="mx-4 mt-2" />
       <div className="grid h-[76px] grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4 px-4">
         <button

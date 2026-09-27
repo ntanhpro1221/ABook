@@ -226,7 +226,7 @@ export function SettingsScreen() {
         </Section>
         <Section title="Giới thiệu">
           <p className="text-sm text-fg-2 text-pretty">
-            Ebook Reader {info?.version} - studio sách nói tiếng Việt chạy hoàn toàn trên máy của bạn: phân tích truyện, phân vai, thu âm và
+            ABook {info?.version} - studio sách nói tiếng Việt chạy hoàn toàn trên máy của bạn: phân tích truyện, phân vai, thu âm và
             kiểm tra từng câu.
           </p>
         </Section>

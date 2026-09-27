@@ -986,7 +986,7 @@ def run_supervisor(
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Internal detached supervisor for Ebook Reader")
+    parser = argparse.ArgumentParser(description="Internal detached supervisor for ABook")
     subparsers = parser.add_subparsers(dest="command", required=True)
     supervise = subparsers.add_parser(SUPERVISOR_COMMAND, help=argparse.SUPPRESS)
     supervise.add_argument("--project-root", required=True)

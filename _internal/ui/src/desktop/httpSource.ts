@@ -1,4 +1,4 @@
-import type { Bookmark, Cast, ListenBook, ListeningSession, ListeningState, NightSession, Script } from "@/listen/model";
+import type { Bookmark, Cast, ListenBook, ListeningRecord, ListeningSession, ListeningState, NightSession, Script } from "@/listen/model";
 import type { ListenSource } from "@/listen/source";
 import { api, mediaUrl } from "@/studio/api";
 
@@ -12,8 +12,8 @@ export const httpSource: ListenSource = {
   audioUrl: (bookId, chapterId) => mediaUrl(`/media/books/${bookId}/chapters/${chapterId}`),
   sampleUrl: (bookId, sampleId) => mediaUrl(`/media/books/${bookId}/samples/${sampleId}`),
   voiceUrl: (name) => mediaUrl(`/media/voices/${encodeURIComponent(name)}`),
-  saveProgress: (bookId, chapterId, seconds, duration) =>
-    api<ListeningState>(`/api/listen/books/${bookId}/progress`, { method: "POST", body: { chapterId, seconds, duration } }),
+  saveProgress: (bookId, chapterId, seconds, duration, record) =>
+    api<ListeningState>(`/api/listen/books/${bookId}/progress`, { method: "POST", body: { chapterId, seconds, duration, record } }),
   setChapterDone: (bookId, chapterId, done) =>
     api<ListeningState>(`/api/listen/books/${bookId}/chapters/${chapterId}/done`, { method: "POST", body: { done } }),
   setFinished: (bookId, finished) =>
@@ -21,8 +21,8 @@ export const httpSource: ListenSource = {
   setRate: async (bookId, rate) => {
     await api(`/api/listen/books/${bookId}/rate`, { method: "POST", body: { rate } });
   },
-  addBookmark: (bookId, chapterId, seconds, note) =>
-    api<Bookmark>(`/api/listen/books/${bookId}/bookmarks`, { method: "POST", body: { chapterId, seconds, note } }),
+  addBookmark: (bookId, chapterId, seconds, note, record) =>
+    api<Bookmark>(`/api/listen/books/${bookId}/bookmarks`, { method: "POST", body: { chapterId, seconds, note, record } }),
   updateBookmark: async (bookId, id, note) => {
     await api(`/api/listen/books/${bookId}/bookmarks/${id}`, { method: "PUT", body: { note } });
   },
@@ -37,21 +37,31 @@ export const httpSource: ListenSource = {
     await api("/api/listen/night/dismiss", { method: "POST", body: { bookId, id } });
   },
   sessions: (bookId) => api<ListeningSession[]>(`/api/listen/books/${bookId}/sessions`),
-  addSessionOnExit: (bookId, session) => {
+  addSessionOnExit: (bookId, session, record) => {
     void fetch(mediaUrl(`/api/listen/books/${bookId}/sessions`), {
       method: "POST",
       keepalive: true,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(session),
+      body: JSON.stringify({ ...session, record }),
     }).catch(() => undefined);
   },
-  addSession: async (bookId, session) => {
-    await api(`/api/listen/books/${bookId}/sessions`, { method: "POST", body: session });
+  addSession: async (bookId, session, record) => {
+    await api(`/api/listen/books/${bookId}/sessions`, { method: "POST", body: { ...session, record } });
   },
   saveReading: async (bookId, chapterId, index) => {
     await api(`/api/listen/books/${bookId}/reading`, { method: "POST", body: { chapterId, index } });
   },
   saveNight: async (bookId, night) => {
     await api(`/api/listen/books/${bookId}/night`, { method: "POST", body: night });
+  },
+  records: {
+    create: async (bookId, name) =>
+      (await api<{ records: ListeningRecord[] }>(`/api/listen/books/${bookId}/records`, { method: "POST", body: { name } })).records,
+    activate: async (bookId, recordId) =>
+      (await api<{ records: ListeningRecord[] }>(`/api/listen/books/${bookId}/records/${recordId}/activate`, { method: "POST" })).records,
+    rename: async (bookId, recordId, name) =>
+      (await api<{ records: ListeningRecord[] }>(`/api/listen/books/${bookId}/records/${recordId}`, { method: "PUT", body: { name } })).records,
+    remove: async (bookId, recordId) =>
+      (await api<{ records: ListeningRecord[] }>(`/api/listen/books/${bookId}/records/${recordId}`, { method: "DELETE" })).records,
   },
 };
