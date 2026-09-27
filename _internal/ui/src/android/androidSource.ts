@@ -47,6 +47,7 @@ function toListenBook(book: LocalBook, withChapters: boolean): ListenBook {
       : null,
     chapters: withChapters ? chapters : undefined,
     remote: Boolean(book.streamed),
+    records: book.records,
   };
 }
 
@@ -83,6 +84,9 @@ export const androidSource: ListenSource = {
   setFinished: (id, finished) => EbookLibrary.setFinished({ id, finished }),
   setRate: (id, rate) => EbookLibrary.setRate({ id, rate }),
   addBookmark: (id, chapterId, seconds, note) => EbookLibrary.addBookmark({ id, chapterId, seconds, note }),
+  refreshListening: async (id) => {
+    await EbookLibrary.syncState({ id });
+  },
   updateBookmark: (id, markId, note) => EbookLibrary.updateBookmark({ id, markId, note }),
   deleteBookmark: (id, markId) => EbookLibrary.deleteBookmark({ id, markId }),
   restoreBookmark: async (id, mark) => {
@@ -97,4 +101,10 @@ export const androidSource: ListenSource = {
     return session?.bookId ? { bookId: session.bookId, night: session } : null;
   },
   dismissNight: () => EbookPlayer.dismissLastNight(),
+  records: {
+    create: async (id, name) => (await EbookLibrary.createRecord({ id, name })).records,
+    activate: async (id, record) => (await EbookLibrary.activateRecord({ id, record })).records,
+    rename: async (id, record, name) => (await EbookLibrary.renameRecord({ id, record, name })).records,
+    remove: async (id, record) => (await EbookLibrary.deleteRecord({ id, record })).records,
+  },
 };

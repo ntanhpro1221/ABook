@@ -41,6 +41,13 @@ object Playback {
     var chapters: List<Chapter> = emptyList()
         private set
     private var pausedAtMs = 0L
+    /** Đang phát - đọc được từ luồng khác (đồng bộ); ExoPlayer chỉ được hỏi trên luồng chính. */
+    @Volatile
+    var isPlaying = false
+        private set
+    /** Chỗ lần gần nhất đã lưu (hay vừa nạp từ chỗ đã lưu): (chương, mili giây). Đổi hồ sơ mà trình phát chưa nhúc nhích
+     *  từ đó thì khỏi lưu lại - lưu lại là đóng dấu giờ mới lên chỗ CŨ, đè chỗ mới hơn mà máy khác vừa đồng bộ tới. */
+    private var savedPlace: Pair<Int, Long>? = null
     private var autoRewindAfterMs = 5 * 60_000L
     private var autoRewindSeconds = 5.0
     private val listeners = mutableSetOf<(JSONObject) -> Unit>()
@@ -221,6 +228,7 @@ object Playback {
         exo.setWakeMode(if (media.any { it.localConfiguration?.uri?.scheme == "http" }) C.WAKE_MODE_NETWORK else C.WAKE_MODE_LOCAL)
         val index = items.indexOfFirst { it.id == startChapterId }.coerceAtLeast(0)
         exo.setMediaItems(media, index, (startSeconds * 1000).toLong())
+        savedPlace = items.getOrNull(index)?.let { it.id to (startSeconds * 1000).toLong() }
         exo.playbackParameters = PlaybackParameters(rate.toFloat())
         exo.prepare()
         // Mở lại app: nạp sẵn đúng chỗ đang nghe dở ở trạng thái dừng, người nghe bấm phát khi sẵn sàng.
@@ -312,6 +320,7 @@ object Playback {
     // ---- sự kiện từ ExoPlayer ------------------------------------------------------------------------------
 
     fun onPlayingChanged(playing: Boolean) {
+        isPlaying = playing
         // Phát/dừng hầu như luôn do người nghe bấm (app, thông báo, tai nghe, widget): tính là còn thức.
         touched()
         SleepTimer.onPlaying(playing)
@@ -366,11 +375,57 @@ object Playback {
         })
     }
 
+    /**
+     * Đổi hồ sơ nghe của cuốn đang nạp (chọn hồ sơ khác, nghe lại từ đầu bằng hồ sơ mới, xoá hồ sơ đang dùng): chỗ đang
+     * nghe và phiên nghe ghi vào hồ sơ CŨ, đổi, rồi nạp lại đúng chỗ của hồ sơ mới ở trạng thái dừng. Cả lượt chạy trên
+     * luồng chính và `bookId` rỗng trong lúc đổi, nên lần lưu muộn nào (sự kiện dừng của ExoPlayer) cũng không rơi sang
+     * hồ sơ mới. Cuốn không nạp thì chỉ việc đổi.
+     */
+    fun <T> switchRecord(id: String, change: () -> T): T {
+        val exo = player
+        if (exo == null || id.isEmpty() || bookId != id) return change()
+        val playing = exo.isPlaying
+        pause()
+        if (playing || moved()) saveNow()
+        closeSession()
+        return reloadAfter(id, change)
+    }
+
+    /** Máy khác đổi hồ sơ nghe của cuốn đang nạp, lúc đang dừng (Store.applySync đã đổi): nạp lại đúng chỗ của hồ sơ
+     *  mới, không lưu gì - chỗ của hồ sơ cũ đã lưu lúc dừng, lưu bây giờ là ghi nó vào hồ sơ mới. */
+    fun follow(id: String) {
+        if (player == null || bookId != id || player?.isPlaying == true) return
+        reloadAfter(id) { }
+        emit("record")
+    }
+
+    private fun <T> reloadAfter(id: String, change: () -> T): T {
+        val items = chapters
+        val title = bookTitle
+        val narratorName = narrator
+        bookId = ""
+        try {
+            return change()
+        } finally {
+            val state = Store.state(id)
+            val last = state.optJSONObject("last")?.takeIf { last -> items.any { it.id == last.optInt("chapterId") } }
+            load(id, title, narratorName, items, last?.optInt("chapterId") ?: items.firstOrNull()?.id ?: 0,
+                last?.optDouble("seconds") ?: 0.0, state.optDouble("rate", 1.0), autoplay = false)
+        }
+    }
+
+    private fun moved(): Boolean {
+        val chapter = currentChapter ?: return false
+        val saved = savedPlace ?: return true
+        return saved.first != chapter.id || kotlin.math.abs(saved.second - (player?.currentPosition ?: 0L)) > 1000
+    }
+
     fun saveNow() {
         val chapter = currentChapter ?: return
         if (bookId.isEmpty()) return
         val duration = player?.duration?.takeIf { it > 0 }?.div(1000.0) ?: chapter.duration
         Store.progress(bookId, chapter.id, positionSeconds, duration)
+        savedPlace = chapter.id to (player?.currentPosition ?: 0L)
     }
 
     fun chaptersJson(): JSONArray = JSONArray().also { array ->

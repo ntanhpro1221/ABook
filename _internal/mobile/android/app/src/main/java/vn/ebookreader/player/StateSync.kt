@@ -18,11 +18,11 @@ object StateSync {
     private val io = Executors.newSingleThreadExecutor()
     @Volatile private var lastPushMs = 0L
 
-    /** Đẩy ngay trên luồng hiện tại (đã ở luồng nền). */
-    fun pushNow(context: Context, bookId: String) {
+    /** Đẩy ngay trên luồng hiện tại (đã ở luồng nền). `only`: đúng hồ sơ ấy thay vì hồ sơ đang dùng (xem Store.syncBody). */
+    fun pushNow(context: Context, bookId: String, only: String? = null) {
         if (bookId.isBlank() || !SyncLink.paired(context)) return
         val reply = runCatching {
-            JSONObject(SyncLink.request(context, "POST", "/sync/v1/books/$bookId/state", Store.syncBody(bookId),
+            JSONObject(SyncLink.request(context, "POST", "/sync/v1/books/$bookId/state", Store.syncBody(bookId, only),
                 readTimeoutMs = 10_000, connectTimeoutMs = 3000))
         }.getOrNull() ?: return
         lastPushMs = SystemClock.elapsedRealtime()
