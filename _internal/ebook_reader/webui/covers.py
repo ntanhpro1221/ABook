@@ -99,9 +99,15 @@ def dominant_color(image: Any) -> str:
 
 
 def save_cover(project_root: Path, data_url: str) -> dict[str, Any]:
+    return save_cover_bytes(project_root, _decode(data_url))
+
+
+def save_cover_bytes(project_root: Path, raw: bytes) -> dict[str, Any]:
+    """Chuẩn hoá và lưu một ảnh bìa từ byte thô (ảnh người dùng gửi lên, hay ảnh tải về từ cover_search)."""
     from PIL import Image, ImageOps, UnidentifiedImageError  # noqa: PLC0415 - Pillow chỉ cần khi có người đặt bìa
 
-    raw = _decode(data_url)
+    if len(raw) > MAX_UPLOAD_BYTES:
+        raise CoverError(f"Ảnh quá lớn (tối đa {MAX_UPLOAD_BYTES // 2**20} MB)")
     try:
         image = Image.open(io.BytesIO(raw))
         image.seek(0)

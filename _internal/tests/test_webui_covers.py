@@ -67,3 +67,35 @@ def test_the_colour_prefers_a_hue_over_a_grey_background(tmp_path: Path) -> None
     meta = covers.save_cover(tmp_path, data_url(poster))
     red, green, blue = (int(meta["color"][i:i + 2], 16) for i in (1, 3, 5))
     assert blue > red, f"màu nhuộm phải là màu xanh của hình, không phải nền xám: {meta['color']}"
+
+
+def test_only_the_providers_image_hosts_can_be_fetched() -> None:
+    from ebook_reader.webui import cover_search
+
+    assert cover_search.allowed_image_url("https://is1-ssl.mzstatic.com/image/thumb/x/1000x1000bb.jpg")
+    assert cover_search.allowed_image_url("https://covers.openlibrary.org/b/id/42-L.jpg")
+    for bad in ("http://covers.openlibrary.org/b/id/42-L.jpg", "https://127.0.0.1/x.jpg", "https://evil.example/x.jpg",
+                "file:///C:/Windows/win.ini", "https://covers.openlibrary.org.evil.example/x.jpg"):
+        assert not cover_search.allowed_image_url(bad), bad
+    with pytest.raises(covers.CoverError):
+        cover_search.download_image("http://192.168.1.1/admin.png")
+
+
+def test_a_failing_provider_does_not_spoil_the_search(monkeypatch: pytest.MonkeyPatch) -> None:
+    from ebook_reader.webui import cover_search
+
+    def works(query: str) -> list[dict]:
+        hit = {"provider": "A", "title": query, "author": "", "thumb": "https://covers.openlibrary.org/b/id/1-M.jpg",
+               "url": "https://covers.openlibrary.org/b/id/1-L.jpg"}
+        return [hit, dict(hit), {**hit, "url": "https://evil.example/2.jpg"}]
+
+    def breaks(query: str) -> list[dict]:
+        raise OSError("429 quota")
+
+    monkeypatch.setattr(cover_search, "PROVIDERS", [works, breaks])
+    found = cover_search.search("  Tên   sách ")
+    assert found["query"] == "Tên sách"
+    assert [item["url"] for item in found["results"]] == ["https://covers.openlibrary.org/b/id/1-L.jpg"], \
+        "trùng thì gộp, host lạ thì bỏ"
+    assert found["failed"] == ["breaks"]
+    assert cover_search.search("x")["results"] == []

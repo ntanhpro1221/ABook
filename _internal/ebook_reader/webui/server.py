@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any, Callable, Protocol
 from urllib.parse import parse_qs, unquote, urlsplit
 
-from . import actions, covers, listen_view, store
+from . import actions, cover_search, covers, listen_view, store
 from .library import Library, Preferences, book_id
 from .listening import Listening
 from .reviews import Reviews, review_view
@@ -532,10 +532,18 @@ class Handler(BaseHTTPRequestHandler):
         # Ảnh chụp điện thoại vài MB thành data URL còn to hơn 1/3: trần riêng cho đúng yêu cầu này.
         body = self._body(limit=covers.MAX_UPLOAD_BYTES * 4 // 3 + 4096)
         try:
-            covers.save_cover(path, str(body.get("image", "")))
+            if body.get("url"):
+                # Ảnh chọn từ kết quả "Tìm bìa trên mạng": máy chủ tự tải, chỉ từ các nguồn đã cho phép.
+                covers.save_cover_bytes(path, cover_search.download_image(str(body["url"])))
+            else:
+                covers.save_cover(path, str(body.get("image", "")))
         except covers.CoverError as exc:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(exc)) from exc
         self._send_json(HTTPStatus.OK, {"cover": covers.cover_view(path, value)})
+
+    def get_cover_search(self, query: dict[str, list[str]], value: str) -> None:
+        self.app._book(value)
+        self._send_json(HTTPStatus.OK, cover_search.search((query.get("q") or [""])[0]))
 
     def delete_cover(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._mutating()
@@ -755,6 +763,7 @@ ROUTES: list[Route] = [
     ("POST", re.compile(BOOK + r"/export"), Handler.post_export),
     ("GET", re.compile(BOOK + r"/review"), Handler.get_review),
     ("POST", re.compile(BOOK + r"/review"), Handler.post_review),
+    ("GET", re.compile(BOOK + r"/cover/search"), Handler.get_cover_search),
     ("PUT", re.compile(BOOK + r"/cover"), Handler.put_cover),
     ("DELETE", re.compile(BOOK + r"/cover"), Handler.delete_cover),
     ("POST", re.compile(r"/api/reveal-export"), Handler.post_reveal_export),
