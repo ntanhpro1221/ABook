@@ -403,14 +403,15 @@ Kết quả đầu (27-09):
 
   | học trước | trung bình theo truyện | theo câu | hơn / hoà / thua "không học trước" (theo truyện) |
   |---|---|---|---|
+  | không, và bỏ dàn trang + dàn nhân vật (base) | 47,1% | 46,6% | 2 / 1 / 7 |
   | không (para_cast) | 50,5% | 48,2% | - |
   | tiếng Trung CSI (zh) | 49,6% | 52,8% | 4 / 0 / 6 |
   | tiếng Anh PDNC + Trung (enzh) | **58,3%** | **68,5%** | **8 / 1 / 1** |
 
   Học trước tiếng Anh là thứ mang lợi (+7,8 điểm trung bình theo truyện; con số theo câu phồng vì truyện đông câu nhất -
   847 câu - nhảy 42 -> 80%); tiếng Trung một mình không giúp gì, khớp kết quả 0-shot 40% ở trên. Chênh giữa các truyện rất
-  lớn (35-80%): con số cho một truyện mới là khoảng rộng, không phải một điểm. Biến thể không đặc trưng dàn trang (base) và
-  kiểm chứng theo chương (cv) đang chạy.
+  lớn (35-80%): con số cho một truyện mới là khoảng rộng, không phải một điểm. Dàn trang paragraph + dàn nhân vật cũng
+  có ích (+3,4, hơn 7/10 truyện so với base). Kiểm chứng theo chương (cv) đang chạy.
 
 Công cụ: `compare_predictions.py` (so theo cặp từng câu, ensemble nhiều seed, McNemar, đọc cả dự đoán LLM từ project
 eval) tái lập đúng số 74,1 / 67,8 / 22-13 / p 0,1755 ở trên. Mọi lần chạy bộ chấm ghi `dev/test_predictions.jsonl` có xác
