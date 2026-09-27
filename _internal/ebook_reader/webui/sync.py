@@ -33,8 +33,9 @@ from typing import Any
 from urllib.parse import unquote, urlsplit
 
 from . import covers, listen_view, store
+from .fingerprints import Fingerprints
 from .library import Library, book_id
-from .listening import Listening
+from .listening import RECORD_ID, SYNC_KEYS, Listening
 
 SYNC_PORT = 47630
 DISCOVERY_PORT = 47631
@@ -332,15 +333,33 @@ def manifest(project_root: Path, book: str, listening: Listening) -> dict[str, A
 
 class SyncApp:
     def __init__(self, library: Library, listening: Listening, devices: Devices, name: str,
-                 remote: Remote | None = None) -> None:
+                 remote: Remote | None = None, fingerprints: Fingerprints | None = None) -> None:
         self.library = library
         self.listening = listening
         self.devices = devices
         self.name = name
         self.remote = remote or Remote()
+        self.fingerprints = fingerprints or Fingerprints(listening.path.with_name("fingerprints.json"))
 
     def book(self, value: str) -> Path | None:
         return self.library.resolve(value)
+
+    def match(self, books: Any) -> dict[str, str]:
+        """Cuốn điện thoại mở từ file là cuốn nào của máy này (mã máy này), so bằng audio từng chương - sách không mang
+        mã nào (fingerprints.py). `books`: [{"key": mã phía điện thoại, "chapters": {"chapters/x.mp3": {size, sha256}}}]."""
+        found: dict[str, str] = {}
+        if not isinstance(books, list):
+            return found
+        projects = list(self.library.projects())
+        for item in books[:200]:
+            if not isinstance(item, dict) or not isinstance(item.get("key"), str) or not isinstance(
+                    item.get("chapters"), dict):
+                continue
+            for path in projects:
+                if self.fingerprints.shares_a_chapter(path, item["chapters"]):
+                    found[item["key"]] = book_id(path)
+                    break
+        return found
 
     def library_view(self) -> list[dict[str, Any]]:
         out = []
@@ -475,6 +494,9 @@ class SyncHandler(BaseHTTPRequestHandler):
             if method == "GET" and path == "/sync/v1/library":
                 self._json(HTTPStatus.OK, {"name": self.app.name, "books": self.app.library_view()})
                 return
+            if method == "POST" and path == "/sync/v1/match":
+                self._json(HTTPStatus.OK, {"matches": self.app.match(self._body().get("books"))})
+                return
             match = re.fullmatch(r"/sync/v1/books/([A-Za-z0-9_-]+)/(manifest|state|files/(.+))", path)
             project = self.app.book(match.group(1)) if match else None
             if not match or project is None:
@@ -484,7 +506,18 @@ class SyncHandler(BaseHTTPRequestHandler):
             if method == "GET" and match.group(2) == "manifest":
                 self._json(HTTPStatus.OK, manifest(project, book, self.app.listening))
             elif method == "POST" and match.group(2) == "state":
-                self._json(HTTPStatus.OK, self.app.listening.merge(book, self._body()))
+                body = self._body()
+                record = body.get("record")
+                state = {key: value for key, value in body.items() if key not in SYNC_KEYS}
+                if isinstance(record, str) and RECORD_ID.fullmatch(record):
+                    # điện thoại biết hồ sơ: gộp đúng hồ sơ ấy (webui/listening.py merge_record)
+                    deleted = body.get("deletedRecords")
+                    self._json(HTTPStatus.OK, self.app.listening.merge_record(
+                        book, record, state, name=str(body.get("recordName") or ""),
+                        name_at=float(body.get("nameAt") or 0), active_at=float(body.get("activeAt") or 0),
+                        deleted=deleted if isinstance(deleted, dict) else None))
+                else:  # điện thoại đời trước: hồ sơ đang dùng
+                    self._json(HTTPStatus.OK, self.app.listening.merge(book, state))
             elif method == "GET" and match.group(3):
                 target = self.app.resolve_file(project, unquote(match.group(3)))
                 if target is None:

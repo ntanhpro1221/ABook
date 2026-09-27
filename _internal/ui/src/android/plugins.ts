@@ -1,5 +1,5 @@
 import { registerPlugin, type PluginListenerHandle } from "@capacitor/core";
-import type { Bookmark, ListeningState, NightSession } from "@/listen/model";
+import type { Bookmark, ListeningRecord, ListeningState, NightSession } from "@/listen/model";
 
 // Hai plugin native của app Android (mobile/android/app/src/main/java/vn/ebookreader/player):
 //  EbookPlayer  - lõi phát Media3: hàng đợi chương, hẹn giờ ngủ, lắc để nghe thêm, nhật ký đêm.
@@ -120,6 +120,8 @@ export interface LocalBook {
   bytes?: number;
   /** Chưa tải: nghe thẳng từ máy tính (Streaming.kt) - gói sách đã cất ở stream.json. */
   streamed?: boolean;
+  /** Hồ sơ nghe gắn với cuốn (Store.records) - chỉ có khi mở một cuốn. */
+  records?: ListeningRecord[];
 }
 
 export interface DownloadEvent {
@@ -155,6 +157,10 @@ export interface EbookLibraryPlugin {
   updateBookmark(options: { id: string; markId: string; note: string }): Promise<void>;
   deleteBookmark(options: { id: string; markId: string }): Promise<void>;
   syncState(options: { id: string }): Promise<ListeningState>;
+  createRecord(options: { id: string; name: string }): Promise<{ records: ListeningRecord[] }>;
+  activateRecord(options: { id: string; record: string }): Promise<{ records: ListeningRecord[] }>;
+  renameRecord(options: { id: string; record: string; name: string }): Promise<{ records: ListeningRecord[] }>;
+  deleteRecord(options: { id: string; record: string }): Promise<{ records: ListeningRecord[] }>;
   addListener(event: "download", handler: (event: DownloadEvent) => void): Promise<PluginListenerHandle>;
   /** Bộ chọn file của hệ thống để mở một file sách .abook; kết quả về qua sự kiện "import". */
   pickBook(): Promise<{ picked: boolean }>;

@@ -129,7 +129,7 @@ export function ProjectsScreen() {
             </Button>
           }
         >
-          Chọn thư mục chứa các chương TXT. Ebook Reader đọc cả truyện, nhận ra từng nhân vật, trao cho mỗi người một
+          Chọn thư mục chứa các chương TXT. ABook đọc cả truyện, nhận ra từng nhân vật, trao cho mỗi người một
           giọng riêng rồi thu thành MP3 theo chương.
         </EmptyState>
       ) : (

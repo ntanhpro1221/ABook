@@ -21,7 +21,10 @@ import java.net.HttpURLConnection
 import java.net.InetAddress
 import java.net.SocketTimeoutException
 import java.net.URL
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
+import java.util.concurrent.FutureTask
+import java.util.concurrent.TimeUnit
 
 /**
  * Thư viện trên điện thoại + đồng bộ với máy tính qua Wi-Fi (ebook_reader/webui/sync.py).
@@ -157,6 +160,7 @@ class LibraryPlugin : Plugin() {
     @PluginMethod
     fun remoteLibrary(call: PluginCall) = background(call) {
         val reply = JSONObject(request("GET", "/sync/v1/library"))
+        matchImported()
         val books = reply.getJSONArray("books")
         for (index in 0 until books.length()) {
             val book = books.getJSONObject(index)
@@ -166,6 +170,24 @@ class LibraryPlugin : Plugin() {
             book.put("localCoverVersion", local?.optJSONObject("cover")?.optLong("version") ?: 0L)
         }
         call.resolve(JSObject().put("name", reply.optString("name")).put("books", books))
+    }
+
+    /**
+     * Cuốn mở từ file mà máy tính cũng có: hỏi máy tính (POST /sync/v1/match, gửi cỡ + mã băm audio từng chương - sách
+     * không mang mã nào) rồi gộp làm một (Store.adopt). Cuốn đang nằm trong trình phát thì để lần sau - đổi thư mục dưới
+     * tay trình phát là mất chương kế tiếp và chỗ đang nghe. Máy tính không trả lời thì thôi, lần sau hỏi lại.
+     */
+    private fun matchImported() {
+        val waiting = Store.importedBooks().filter { it != Playback.bookId }
+        if (waiting.isEmpty()) return
+        val books = JSONArray()
+        for (id in waiting) books.put(JSONObject().put("key", id).put("chapters", Store.chapterPrints(id)))
+        val reply = runCatching { JSONObject(request("POST", "/sync/v1/match", JSONObject().put("books", books))) }
+            .getOrNull() ?: return
+        val matches = reply.optJSONObject("matches") ?: return
+        for (key in matches.keys()) {
+            if (key in waiting) Store.adopt(key, matches.getString(key))
+        }
     }
 
     // ---- tải sách --------------------------------------------------------------------------------------------
@@ -200,6 +222,7 @@ class LibraryPlugin : Plugin() {
         call.setKeepAlive(true)
         downloads.execute {
             try {
+                matchImported() // đã mở cuốn này từ file: audio sẵn trên máy, chỉ tải phần còn thiếu
                 val manifest = JSONObject(request("GET", "/sync/v1/books/$id/manifest"))
                 val chapters = manifest.getJSONArray("chapters")
                 val files = mutableListOf<Pair<String, Long>>()
@@ -265,6 +288,7 @@ class LibraryPlugin : Plugin() {
             runCatching { JSONObject(SyncLink.request(context, "GET", "/sync/v1/library", readTimeoutMs = 10_000, connectTimeoutMs = 1500)) }.getOrNull()
         } else null
         val remote = reply?.optJSONArray("books") ?: JSONArray()
+        if (reply != null) matchImported()
         for (index in 0 until remote.length()) {
             val entry = remote.getJSONObject(index)
             val id = entry.getString("id")
@@ -288,7 +312,61 @@ class LibraryPlugin : Plugin() {
         val id = call.getString("id") ?: throw IllegalArgumentException("thiếu id")
         val local = Store.manifest(id)
         val manifest = local ?: openStreamed(id)
-        call.resolve(JSObject.fromJSONObject(manifest).put("state", JSObject.fromJSONObject(Store.state(id))).put("streamed", local == null))
+        call.resolve(JSObject.fromJSONObject(manifest).put("state", JSObject.fromJSONObject(Store.state(id))).put("streamed", local == null)
+            .put("records", Store.records(id)))
+    }
+
+    // ---- hồ sơ nghe (độc lập với sách, app giữ liên kết - Store) -----------------------------------------------
+
+    /** Trả danh sách hồ sơ mới, rồi báo máy tính: hồ sơ vừa rời trước (`left` - chỗ nghe cuối của nó, lưu lúc đổi, chưa
+     *  tới máy tính: điện thoại chỉ đẩy hồ sơ đang dùng), rồi hồ sơ đang dùng (lựa chọn, tên, bia mộ). */
+    private fun resolveRecords(call: PluginCall, records: JSONArray, left: String? = null) {
+        call.resolve(JSObject().put("records", records))
+        val id = call.getString("id") ?: return
+        io.execute {
+            if (left != null && left != Store.knownActiveRecord(id) && Store.hasRecord(left)) {
+                runCatching { StateSync.pushNow(context, id, left) }
+            }
+            runCatching { pushState(id) }
+        }
+    }
+
+    /** Đổi hồ sơ của một cuốn: cuốn đang nạp trong trình phát thì qua Playback trên luồng chính (trình phát theo sang
+     *  hồ sơ mới), cuốn khác thì đổi thẳng. */
+    private fun switching(id: String, change: () -> JSONArray): JSONArray {
+        if (Playback.bookId != id) return change()
+        val task = FutureTask { Playback.switchRecord(id, change) }
+        Playback.onMain { task.run() }
+        return try {
+            task.get(10, TimeUnit.SECONDS)
+        } catch (error: ExecutionException) {
+            throw error.cause ?: error
+        }
+    }
+
+    @PluginMethod
+    fun createRecord(call: PluginCall) = background(call) {
+        val id = call.getString("id")!!
+        val left = Store.knownActiveRecord(id)
+        resolveRecords(call, switching(id) { Store.createRecord(id, call.getString("name") ?: "") }, left)
+    }
+
+    @PluginMethod
+    fun activateRecord(call: PluginCall) = background(call) {
+        val id = call.getString("id")!!
+        val left = Store.knownActiveRecord(id)
+        resolveRecords(call, switching(id) { Store.activateRecord(id, call.getString("record")!!) }, left)
+    }
+
+    @PluginMethod
+    fun renameRecord(call: PluginCall) = background(call) {
+        resolveRecords(call, Store.renameRecord(call.getString("id")!!, call.getString("record")!!, call.getString("name") ?: ""))
+    }
+
+    @PluginMethod
+    fun deleteRecord(call: PluginCall) = background(call) {
+        val id = call.getString("id")!!
+        resolveRecords(call, switching(id) { Store.deleteRecord(id, call.getString("record")!!) })
     }
 
     /** Mở một cuốn chưa tải: gói sách mới nhất từ máy tính (mạng lỗi thì bản đã cất), bìa ngay; dàn nhân vật và câu mẫu
@@ -383,12 +461,11 @@ class LibraryPlugin : Plugin() {
         call.resolve()
     }
 
-    /** Gửi trạng thái nghe lên máy tính, nhận bản đã gộp (mới-hơn-thắng) - im lặng nếu không có mạng. */
-    private fun pushState(id: String) {
-        if (prefs.getString("token", "").isNullOrBlank()) return
-        val merged = runCatching { JSONObject(request("POST", "/sync/v1/books/$id/state", Store.state(id))) }.getOrNull() ?: return
-        Store.replaceState(id, merged)
-    }
+    /**
+     * Gửi hồ sơ nghe đang dùng của cuốn lên máy tính (kèm mã, tên hồ sơ, lúc chọn nó), nhận bản đã gộp của ĐÚNG hồ sơ ấy
+     * cùng lựa chọn hồ sơ bên kia - bên chọn sau thắng (Store.applySync). Im lặng nếu không có mạng.
+     */
+    private fun pushState(id: String) = StateSync.pushNow(context, id)
 
     @PluginMethod
     fun syncState(call: PluginCall) = background(call) {
