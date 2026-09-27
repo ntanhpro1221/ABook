@@ -326,3 +326,19 @@ A: Claude (vòng chính). B: agent soát đối kháng (xem A). **B không thấ
   "khóc" nằm trong phạm vi CẤM (AGENTS.md đòi tôn trọng phủ định/ngăn cấm); gold giữ angry. 050:132 "việc gì phải khóc?" -
   tiếng khóc là của Tào Tháo, không phải của các mưu sĩ đang hỏi; gold giữ surprised/neutral.
 
+
+## Tắt đèn (Ngô Tất Tố) chương XX, XXI, XXIV - truyện Việt chưa thấy, cổng thứ hai (28-09)
+
+A gán ba chương (245 đoạn, 112 câu thoại), B (agent Sonnet) soát đối kháng: lần lại độc lập mọi câu thoại, kể cả các
+cặp hỏi - đáp không lời dẫn (020:20, 31, 49; 021:21-22, 43-45, 60-61, 76; 024:18-22, 28-30, 38-39, 59-60) - không lệch
+người nói nào; loại đoạn khớp bộ tách khoá 100%; nhân vật "nói ở nhiều chương" kiểm bằng grep cả 27 chương. Phát lại
+đáp án (`gold_replay.py`): không LỆCH LUẬT; người nói 90,2% vì khoá thoại nối tiếp của host đè 11 câu gạch đầu dòng -
+host sai, đã sửa (7ca7ef7), sau sửa 100%.
+
+| câu | kết luận | lý do |
+|---|---|---|
+| 024:9, 13 (ông huyện Minh Hảo) | **B thua**: giữ `NPC*~` | B: chỉ nói ở chương này, như biện lệ (NPC* đủ). Nhưng "Minh Hảo" là tên riêng (tên huyện dùng làm danh xưng, "quan Minh Hảo sang chơi"), gọi ra ở 7-8 TRƯỚC câu nói; prompt bắt nhân vật có tên dùng tên, và quy tắc 5 chỉ cho `NPC*~` cả khi tên đến sau câu nói. Biện lệ không có tên riêng nào - chức danh là tất cả những gì truyện gọi hắn |
+
+Quy ước mới cho truyện Việt (ghi ở đầu 020.txt): chức danh trọn cuốn là tên (QUAN PHỦ, LÝ TRƯỞNG - như "Trịnh lão");
+người gọi theo tên chồng: "CHỊ DẬU" đủ, "DẬU" trơn không điểm (là chồng chị); tiền tố xưng hô trên tên thật ("ANH DẬU",
+"THẰNG DẦN") nửa điểm - khác "CHÚ LƯU ĐẠT" (quy tắc 11, không điểm) ở chỗ lời kể của sách không bao giờ viết tên trơn.
