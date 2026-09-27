@@ -65,6 +65,9 @@ def main() -> int:
                              "theo dõi (= chính fold ấy) - so cấu hình bằng epoch cuối (epochs/), không chọn theo dev")
     parser.add_argument("--fold-prefix", default="fold",
                         help="fold (theo chương) hoặc bookfold (theo truyện: chấm một truyện chưa từng thấy) - make_folds.py")
+    parser.add_argument("--save-last", action="store_true", help="kiểm chứng chéo: vẫn lưu mô hình epoch cuối")
+    parser.add_argument("--predict-file", type=Path, default=None,
+                        help="không huấn luyện: nạp --init, chấm tệp cửa sổ này, ghi <out>/predictions.jsonl có xác suất")
     parser.add_argument("--init", type=Path, default=None,
                         help="nạp encoder/ + head.pt của một lần chạy trước (vd lần chỉ học trước PDNC) rồi mới huấn luyện")
     parser.add_argument("--extra-train", type=Path, nargs="*", default=[],
@@ -214,6 +217,14 @@ def main() -> int:
                 for name, value in tally.items()} | {"n": tally["all"][1]}
 
     args.out.mkdir(parents=True, exist_ok=True)
+    if args.predict_file:
+        rows: list = []
+        evaluate(load(args.predict_file), rows)
+        with (args.out / "predictions.jsonl").open("w", encoding="utf-8") as handle:
+            handle.writelines(json.dumps(row, ensure_ascii=False) + "\n" for row in rows)
+        print(f"đã chấm {len(rows)} câu của {args.predict_file} -> {args.out / 'predictions.jsonl'}", flush=True)
+        (args.out / "test.json").write_text(json.dumps({"predicted": len(rows)}), encoding="utf-8")
+        return 0
     log = (args.out / "train.log").open("a", encoding="utf-8")
     best = -1.0
     phases = [] if args.predict_only else (
@@ -276,6 +287,9 @@ def main() -> int:
         line = f"TEST (epoch cuối, fold {args.fold}): {json.dumps(scores_test)}"
         print(line, flush=True)
         log.write(line + "\n")
+        if args.save_last:  # mô hình để chấm tiếp (vd tự học theo cuốn: chấm các chương không nhãn của truyện bị giữ lại)
+            torch.save({"head": head.state_dict()}, args.out / "head.pt")
+            encoder.save_pretrained(args.out / "encoder")
         (args.out / "test.json").write_text(json.dumps(scores_test, indent=2), encoding="utf-8")
         return 0
     head.load_state_dict(torch.load(args.out / "head.pt")["head"])
