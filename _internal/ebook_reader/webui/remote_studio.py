@@ -71,6 +71,7 @@ ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = tuple((method, re.compile(pat
     ("POST", _BOOK + r"/pronunciation"),
     ("POST", _BOOK + r"/speaker"),
     ("POST", _BOOK + r"/voice"),
+    ("POST", _BOOK + r"/line"),
     ("GET", _BOOK + r"/voices"),
     ("GET", _BOOK + r"/cover/search"),
     ("PUT", _BOOK + r"/cover"),

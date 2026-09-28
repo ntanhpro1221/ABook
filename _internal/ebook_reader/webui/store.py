@@ -67,6 +67,21 @@ def speaker_request_problem(project_root: Path, stable_id: str, text_sha256: str
     return problem
 
 
+def line_request_problem(project_root: Path, stable_id: str, text_sha256: str, *, kind: str = "", emotion: str = "",
+                         intensity: int | None = None, speaker: str = "") -> str | None:
+    """Mã lý do dây chuyền sẽ từ chối yêu cầu sửa cách đọc một câu (và người nói đi kèm khi câu từ lời kể thành lời thoại),
+    hoặc None - hỏi bằng ĐÚNG phép dây chuyền dùng (`line_target`, `speaker_target`), trên SQLite chỉ đọc."""
+    from ..listener_overrides import line_target, speaker_target
+
+    with closing(connect(project_root)) as connection:
+        target, problem = line_target(connection, stable_id=stable_id, text_sha256=text_sha256, kind=kind,
+                                      emotion=emotion, intensity=intensity)
+        if problem is None and speaker and target is not None:
+            _speaker, problem = speaker_target(connection, stable_id=stable_id, text_sha256=text_sha256, speaker=speaker,
+                                               as_kind=target["kind"])
+    return problem
+
+
 def voice_request_problem(project_root: Path, character: str, *, preset: str = "", gender: str = "",
                           avoid: str = "") -> str | None:
     """Mã lý do dây chuyền sẽ từ chối yêu cầu giọng/giới của một nhân vật, hoặc None - hỏi bằng ĐÚNG phép dây chuyền dùng
