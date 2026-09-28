@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Button, Kbd, Segmented, radioGroupKeys, radioTabIndex } from "@/shared/ui";
 import { cn } from "@/shared/cn";
 import { pickFolder, useAppInfo, usePreferences } from "@/studio/data";
+import { OtherComputers } from "./OtherComputers";
 import { PhoneSync, Switch } from "./PhoneSync";
 
 function Section({ id, title, description, children }: { id?: string; title: string; description?: string; children: ReactNode }) {
@@ -224,6 +225,13 @@ export function SettingsScreen() {
           description="Nghe tiếp trên điện thoại Android: tải sách về để nghe không cần mạng, chỗ đang nghe và dấu trang tự đồng bộ hai chiều. Nếu cho phép, thiết bị đã ghép còn điều khiển được việc sản xuất của máy này qua trình duyệt."
         >
           <PhoneSync />
+        </Section>
+        <Section
+          id="computers"
+          title="Máy tính khác"
+          description="Nghe sách trên máy tính khác cùng mạng (hay qua Tailscale) mà không phải chép sang: sách của máy ấy hiện trong Thư viện, chương tải về lần đầu nghe tới."
+        >
+          <OtherComputers />
         </Section>
         </>
         )}

@@ -31,7 +31,7 @@ tiếp tục được. Chỉ đổi khi không có sách nào cần tiếp tục
 
 - `python -m pytest` toàn bộ và `npx tsc --noEmit` của `ui/` đều qua; kiểm tra tay trên máy ảo Android (`docs/UI.md`).
 - Không có gì bị cấm lọt vào gói: khoá ký (Android keystore, khoá updater), audio, dữ liệu cá nhân (`listening.json`,
-  `devices.json`, `reviews.json`, tuỳ chọn), token, văn bản truyện (kho nghiên cứu ở repo riêng tư, clone vào `Corpus/`
+  `devices.json`, `computers.json` - mã thiết bị máy tính khác cấp, `reviews.json`, tuỳ chọn), token, văn bản truyện (kho nghiên cứu ở repo riêng tư, clone vào `Corpus/`
   - thư mục này bị bỏ qua; một thông báo DMCA sẽ khoá cả repo công khai lẫn trang tải bản phát hành).
 
 ## Đóng gói và đăng
