@@ -5384,10 +5384,37 @@ def _analysis_group_fingerprint(
     )
 
 
+def _chapter_index_of(row: Any) -> int:
+    try:
+        return int(row["chapter_index"])
+    except (KeyError, IndexError, TypeError, ValueError):
+        return int(row["id"])
+
+
+def first_person_chapters(settings: dict[str, Any]) -> dict[int, str]:
+    """`voices.first_person_chapters`: người kể "tôi" của TỪNG chương (khoá = `chapters.chapter_index`), đè người kể cả
+    cuốn (`first_person_identity`). Light novel hay có chương đổi góc kể ("Chương 11: Yuuko Hayase" kể bằng "tôi" của
+    Hayase trong một cuốn Kakeru kể): một người kể cho cả cuốn thì prompt nói sai người ở đúng những chương ấy. Giá trị
+    rỗng = chương ấy kể ở ngôi thứ ba. Đại từ ("tôi", "ME") không phải một danh tính - bỏ qua như first_person_identity."""
+    raw = settings.get("voices", {}).get("first_person_chapters") if isinstance(settings.get("voices"), dict) else None
+    chapters: dict[int, str] = {}
+    for key, value in (raw.items() if isinstance(raw, dict) else ()):
+        try:
+            index = int(key)
+        except (TypeError, ValueError):
+            continue
+        name = str(value or "").strip()
+        if name.casefold() in FIRST_PERSON_PRONOUNS:
+            continue
+        chapters[index] = name
+    return chapters
+
+
 def _analysis_policy_fingerprint(
     settings: dict[str, Any],
     quality_policy_hash: str | None,
     first_person_identity: str = "",
+    chapter_narrators: dict[int, str] | None = None,
 ) -> str:
     material = {
         "version": ANALYSIS_LEDGER_POLICY_VERSION,
@@ -5431,6 +5458,9 @@ def _analysis_policy_fingerprint(
         # under one identity must never be reused under another. Only added when set, so the
         # ledger fingerprint of every third-person book is exactly what it was.
         material["first_person_identity"] = first_person_identity
+    if chapter_narrators:
+        # Cùng lý do, theo chương; chỉ thêm khi có, nên sổ ứng viên của mọi cuốn không đặt người kể theo chương giữ nguyên.
+        material["first_person_chapters"] = {str(index): name for index, name in sorted(chapter_narrators.items())}
     return sha256_text(
         json.dumps(material, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     )
@@ -6846,10 +6876,12 @@ class OllamaBookAnalyzer:
         # analysis to fold pronoun labels into that character (resolve_first_person_labels).
         identity = str(settings.get("voices", {}).get("first_person_identity", "") or "").strip()
         self.first_person_identity = "" if identity.casefold() in FIRST_PERSON_PRONOUNS else identity
+        self.first_person_chapters = first_person_chapters(settings)
         self.analysis_policy_fingerprint = _analysis_policy_fingerprint(
             self.settings,
             quality_policy_hash,
             self.first_person_identity,
+            self.first_person_chapters,
         )
         self.allow_downloads = bool(settings.get("safety", {}).get("allow_network_downloads_during_job", False))
         self.db = db
@@ -6903,9 +6935,10 @@ class OllamaBookAnalyzer:
             self._speaker_counts[name] = mentions
             self._speaker_genders[name][gender] = mentions
 
-        self._chapter_titles = {
-            int(row["id"]): str(row["title"]) for row in self.db.list_chapters()
-        }
+        chapters = list(self.db.list_chapters())
+        self._chapter_titles = {int(row["id"]): str(row["title"]) for row in chapters}
+        # Khoá của người kể theo chương là chapter_index (thứ tự nguồn); DB cũ/giả không có cột ấy thì dùng id.
+        self._chapter_indexes = {int(row["id"]): _chapter_index_of(row) for row in chapters}
 
     def _available(self) -> bool:
         try:
@@ -7056,7 +7089,14 @@ class OllamaBookAnalyzer:
                             ollama_address=self.base_url)
         setup.install_published_model(self.model, report=self.log)
 
-    def _narrator_line(self) -> str:
+    def _narrator_of(self, chapter_id: int) -> str:
+        """Người kể "tôi" của một chương: người kể theo chương nếu đặt (rỗng = ngôi thứ ba), không thì của cả cuốn."""
+        index = self._chapter_indexes.get(int(chapter_id))
+        if index is not None and index in self.first_person_chapters:
+            return self.first_person_chapters[index]
+        return self.first_person_identity
+
+    def _narrator_line(self, group: list[Any] | None = None) -> str:
         """The first-person narrator, when the book names one (``voices.first_person_identity``).
 
         In a first-person book the narrator is never named in the narration, so a batch sees
@@ -7067,7 +7107,28 @@ class OllamaBookAnalyzer:
         recover that, because those lines never carried a pronoun label. Unset means third
         person and the prompt is exactly what it was.
         """
-        narrator = self.first_person_identity
+        if self.first_person_chapters and group:
+            chapters: list[int] = []
+            for row in group:
+                chapter_id = int(row["chapter_id"])
+                if chapter_id not in chapters:
+                    chapters.append(chapter_id)
+            narrators = [self._narrator_of(chapter_id) for chapter_id in chapters]
+            if len(set(narrators)) > 1:
+                # Lô vắt qua hai chương khác người kể: nói cho từng chương, theo đúng tên chương ở dòng đầu prompt.
+                parts = [
+                    f'- chương "{self._chapter_titles.get(chapter_id, "")}": '
+                    + (f"người kể xưng \"tôi\" là {narrator}" if narrator else "kể ở ngôi thứ ba, không có người kể xưng \"tôi\"")
+                    for chapter_id, narrator in zip(chapters, narrators)
+                ]
+                return (
+                    "Truyện đổi người kể theo chương:\n" + "\n".join(parts) + "\n"
+                    "Câu thoại và nội tâm của chính người kể phải dùng speaker là tên người kể của CHƯƠNG ấy - không "
+                    "dùng \"tôi\", NARRATOR hay tên người đang nói chuyện với người kể.\n\n"
+                )
+            narrator = narrators[0] if narrators else self.first_person_identity
+        else:
+            narrator = self.first_person_identity
         if not narrator:
             return ""
         return (
@@ -7269,7 +7330,7 @@ class OllamaBookAnalyzer:
             rows.append(request_row)
         prompt = (
             f"Các chương hiện tại: {', '.join(chapter_titles)}\n\n"
-            f"{self._narrator_line()}"
+            f"{self._narrator_line(group)}"
             f"Nhân vật đã biết từ các phần trước:\n{self._known_summary()}\n\n"
             f"Các đoạn liên tiếp:\n{json.dumps(rows, ensure_ascii=False, indent=2)}"
         )

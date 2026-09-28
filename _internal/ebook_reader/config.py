@@ -580,6 +580,12 @@ def validate_settings(settings: dict[str, Any]) -> None:
         preset_by_name(former)
         if former == narrator_voice:
             raise ValueError("voices.other_narrators cannot name the current narrator")
+    # Người kể "tôi" theo chương (analysis.first_person_chapters): {chapter_index: tên, "" = ngôi thứ ba}.
+    chapter_narrators = voices.get("first_person_chapters", {})
+    if not isinstance(chapter_narrators, dict) or not all(
+        str(key).strip().lstrip("-").isdigit() and isinstance(name, str) for key, name in chapter_narrators.items()
+    ):
+        raise ValueError("voices.first_person_chapters must map chapter numbers to narrator names")
     max_pitch_shift = int(voices.get("max_character_pitch_semitones", -1))
     if not 0 <= max_pitch_shift <= 2:
         raise ValueError("voices.max_character_pitch_semitones must be between 0 and 2")

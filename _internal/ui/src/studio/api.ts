@@ -141,6 +141,8 @@ export interface FirstPersonHint {
   firstPerson: boolean;
   /** Tên viết hoa hay gặp nhất - gợi ý để chọn, không phải đáp án. */
   suggestions: string[];
+  /** Chương đổi góc kể: tiêu đề là tên một nhân vật và chương kể bằng "tôi" (số chương theo thứ tự trong sách, từ 1). */
+  chapters?: { chapter: number; title: string; name: string }[];
 }
 
 export interface ScanResult {
