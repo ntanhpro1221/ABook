@@ -253,3 +253,72 @@ def test_a_group_request_is_taken_whole_or_refused_whole(tmp_path: Path) -> None
     finally:
         server.stop()
     assert [entry["stable_id"] for entry in speaker_requests(read_overrides(project))] == ["e", "g"]
+
+
+def make_dialogue_book(root: Path, first_person: str = "") -> Path:
+    """Một cảnh đối đáp như Hướng dẫn sinh tồn 062 (28-09): máy gán cả ba câu liền nhau cho GLAST."""
+    project = root / "doi_dap"
+    project.mkdir(parents=True)
+    voices = {"first_person_identity": first_person} if first_person else {}
+    (project / "book_settings.json").write_text(json.dumps({"voices": voices}), encoding="utf-8")
+    db = sqlite3.connect(project / "project.sqlite3")
+    db.executescript(
+        """
+        CREATE TABLE chapters (id INTEGER PRIMARY KEY, chapter_index INTEGER, title TEXT);
+        CREATE TABLE segments (id INTEGER PRIMARY KEY, stable_id TEXT, chapter_id INTEGER, seq INTEGER,
+                               paragraph_index INTEGER, text TEXT, kind TEXT, speaker TEXT, voice_profile_id INTEGER,
+                               canonical_character_id INTEGER, status TEXT, asr_text TEXT, asr_similarity REAL,
+                               warning_code TEXT, wav_path TEXT, text_sha256 TEXT, gender TEXT);
+        CREATE TABLE characters (id INTEGER PRIMARY KEY, canonical_name TEXT, display_name TEXT, gender TEXT,
+                                 locked INTEGER, age TEXT);
+        """
+    )
+    db.execute("INSERT INTO chapters VALUES (1, 1, '062')")
+    db.executemany("INSERT INTO characters (id, canonical_name, display_name, gender, locked) VALUES (?,?,?,?,?)", [
+        (1, "GLAST", "Glast", "male", 0), (2, "ED ROSTAILER", "Ed Rostailer", "male", 0),
+    ])
+    rows = [
+        # seq, đoạn, chữ, loại, người nói (máy)
+        (0, 0, "Giáo sư Glast lại ngước nhìn trời đêm.", "narration", "NARRATOR"),
+        (1, 1, "“Cuối cùng, kế hoạch nào rồi cũng thất bại.”", "dialogue", "GLAST"),
+        (2, 2, "“Ai biết ạ?”", "dialogue", "GLAST"),
+        (3, 3, "“Ai biết được.”", "dialogue", "GLAST"),
+        # Đoạn có lời dẫn riêng: máy có căn cứ, không nghi.
+        (4, 4, "“Chỉ điểm chính xác đấy.”", "dialogue", "GLAST"),
+        (5, 4, "Glast gật đầu.", "narration", "NARRATOR"),
+        (6, 5, "“Ta vẫn nhớ ngày đầu làm giáo sư,", "dialogue", "ED ROSTAILER"),
+        # Ngoặc để ngỏ ở đoạn trước: lời nói tiếp của cùng người, không phải lượt mới.
+        (7, 6, "khi Obel còn là học trò.”", "dialogue", "ED ROSTAILER"),
+        (8, 7, "“Hả?”", "dialogue", "NPC_LOCAL::c00001::r1::lính gác"),
+        (9, 8, "“Hả?”", "dialogue", "NPC_LOCAL::c00001::r1::lính gác"),
+        (10, 9, "“Đi thôi.”", "dialogue", "ED ROSTAILER"),
+        (11, 10, "“Vâng.”", "dialogue", "GLAST"),
+    ]
+    db.executemany(
+        "INSERT INTO segments (id, stable_id, chapter_id, seq, paragraph_index, text, kind, speaker, status)"
+        " VALUES (?,?,1,?,?,?,?,?, 'verified')",
+        [(seq + 1, f"s{seq}", seq, paragraph, text, kind, speaker) for seq, paragraph, text, kind, speaker in rows],
+    )
+    db.execute("UPDATE segments SET text_sha256='sha-' || stable_id")
+    db.commit()
+    db.close()
+    return project
+
+
+def test_two_quoted_paragraphs_in_a_row_given_to_one_person_ask_who_answered(tmp_path: Path) -> None:
+    view = work_items(make_dialogue_book(tmp_path, first_person="ED ROSTAILER"))
+    turns = [item for item in view["items"] if item["kind"] == "turn"]
+    assert [item["key"] for item in turns] == ["turn:s2", "turn:s3"], "chỉ cặp đóng ngoặc -> mở ngoặc, đoạn sau không lời dẫn"
+    card = turns[0]
+    assert card["title"] == "Hai câu liền nhau đều là của Glast?"
+    assert [example["text"] for example in card["examples"]] == ["“Cuối cùng, kế hoạch nào rồi cũng thất bại.”", "“Ai biết ạ?”"]
+    assert card["choices"][0] == {"label": "Ed Rostailer", "value": "ED ROSTAILER"}, "truyện ngôi thứ nhất: 'tôi' đứng đầu"
+    assert [line["stableId"] for line in card["lines"]] == ["s2"], "sửa câu SAU, câu trước giữ người của nó"
+    assert card["score"] > 0.8, "đo 28-09: 38/42 cặp như thế máy sai - xếp trên lời gọi đầu câu"
+
+
+def test_a_book_without_paragraph_numbers_or_a_narrator_still_builds_its_inbox(tmp_path: Path) -> None:
+    assert not [item for item in work_items(make_book(tmp_path))["items"] if item["kind"] == "turn"]
+    third_person = work_items(make_dialogue_book(tmp_path / "ba", first_person=""))
+    card = next(item for item in third_person["items"] if item["kind"] == "turn")
+    assert card["choices"][0]["value"] == "ED ROSTAILER", "không có 'tôi' thì là người có tên nói nhiều nhất chương"
