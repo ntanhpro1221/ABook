@@ -14,6 +14,8 @@
 # N; giữ để segment_diff.py gán người nói khi bộ tách mới tách thành thoại). 31 tách được vì trong ngoặc có "…". Host sai
 # (giữ đáp án): 6 "Khóc" nằm trong tên nhóm "Vong Linh Than Khóc". B soát 28-09, A nhận: tên gọi SIDDY/ANSSY/LIZZY/LUCY
 # (quy tắc 11), 29/30/106 N,T, 75 NARRATOR~ NPC*~, 103 bỏ Lucia (người đề xuất).
+# 28-09 22:xx - CHUYỂN sang cách tách mới (dev/comma-dialogue): 45, 74, 90, 101 (số cũ) tách thành thoại + lời dẫn
+# (45, 75, 92, 104 mới) - số seq trong các ghi chú bên trên là số CŨ.
 0 H
 1 D LUKE,LUKE SYKOL excited,happy 1-2 normal,fast loud,normal m
 2 N
@@ -59,68 +61,72 @@
 42 D KRAI,KRAI ANDREY happy,afraid,excited 0-2 normal,fast normal,loud m
 43 D LUCIA,LUCIA ROGIER,LUCY tired,sad,angry 0-1 normal,slow normal,soft f
 44 N
-45 N NARRATOR,LIZ~ neutral,happy 0-1 normal normal u
-46 D LIZ,LIZ SMART,LIZZY excited,happy 1-2 normal normal,loud f
-47 D TINO,TINO SHADE afraid,surprised 0-1 normal,fast normal,soft f
-48 N
-49 D LIZ,LIZ SMART,LIZZY excited,happy 1-2 normal normal,loud f
-50 D TINO,TINO SHADE afraid,surprised 2-3 fast,normal loud f
-51 N NARRATOR neutral,afraid 0-1 normal normal u
-52 N,T NARRATOR,KRAI,KRAI ANDREY tired,sarcastic,neutral 0-1 normal normal u
-53 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sarcastic 0-1 normal normal u
-54 N,T NARRATOR,KRAI,KRAI ANDREY surprised,sarcastic,neutral 0-1 normal normal u
-55 N
+45 D LIZ,LIZ SMART,LIZZY neutral,happy 0-1 normal normal f
+46 N
+47 D LIZ,LIZ SMART,LIZZY excited,happy 1-2 normal normal,loud f
+48 D TINO,TINO SHADE afraid,surprised 0-1 normal,fast normal,soft f
+49 N
+50 D LIZ,LIZ SMART,LIZZY excited,happy 1-2 normal normal,loud f
+51 D TINO,TINO SHADE afraid,surprised 2-3 fast,normal loud f
+52 N NARRATOR neutral,afraid 0-1 normal normal u
+53 N,T NARRATOR,KRAI,KRAI ANDREY tired,sarcastic,neutral 0-1 normal normal u
+54 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sarcastic 0-1 normal normal u
+55 N,T NARRATOR,KRAI,KRAI ANDREY surprised,sarcastic,neutral 0-1 normal normal u
 56 N
-57 D SITRI,SITRI SMART,SIDDY happy,neutral 0-1 normal normal f
-58 N
-59 D KRAI,KRAI ANDREY neutral,surprised 0-1 normal normal m
-60 N
-61 D SITRI,SITRI SMART,SIDDY neutral,happy 0-1 normal normal f
-62 N,T NARRATOR,KRAI,KRAI ANDREY surprised,sarcastic,neutral 0-1 normal normal u
-63 N,T NARRATOR,KRAI,KRAI ANDREY neutral,tired 0-1 normal normal u
-64 N,T NARRATOR,KRAI,KRAI ANDREY neutral,tired,tender 0-1 normal normal u
-65 N,T NARRATOR,KRAI,KRAI ANDREY sarcastic,neutral 0-1 normal normal u
-66 D NARRATOR,KRAI,KRAI ANDREY,SITRI~,SITRI SMART~ sarcastic,neutral 0-1 normal normal u
-67 N,T NARRATOR,KRAI,KRAI ANDREY sarcastic,neutral 0-1 normal normal u
-68 D LUKE,LUKE SYKOL excited,happy 1-2 normal normal,loud m
-69 N
-70 D LIZ,LIZ SMART,LIZZY excited,happy 1-2 normal normal,loud f
-71 N
-72 D TINO,TINO SHADE,NARRATOR~ afraid,surprised 2-3 normal,fast loud f
-73 N
-74 N NARRATOR,SITRI~ neutral,happy 0-1 normal normal u
-75 D KILLIAM,KILLIAM SMART,NARRATOR~,NPC*~ neutral,happy,excited 0-1 normal normal m
+57 N
+58 D SITRI,SITRI SMART,SIDDY happy,neutral 0-1 normal normal f
+59 N
+60 D KRAI,KRAI ANDREY neutral,surprised 0-1 normal normal m
+61 N
+62 D SITRI,SITRI SMART,SIDDY neutral,happy 0-1 normal normal f
+63 N,T NARRATOR,KRAI,KRAI ANDREY surprised,sarcastic,neutral 0-1 normal normal u
+64 N,T NARRATOR,KRAI,KRAI ANDREY neutral,tired 0-1 normal normal u
+65 N,T NARRATOR,KRAI,KRAI ANDREY neutral,tired,tender 0-1 normal normal u
+66 N,T NARRATOR,KRAI,KRAI ANDREY sarcastic,neutral 0-1 normal normal u
+67 D NARRATOR,KRAI,KRAI ANDREY,SITRI~,SITRI SMART~ sarcastic,neutral 0-1 normal normal u
+68 N,T NARRATOR,KRAI,KRAI ANDREY sarcastic,neutral 0-1 normal normal u
+69 D LUKE,LUKE SYKOL excited,happy 1-2 normal normal,loud m
+70 N
+71 D LIZ,LIZ SMART,LIZZY excited,happy 1-2 normal normal,loud f
+72 N
+73 D TINO,TINO SHADE,NARRATOR~ afraid,surprised 2-3 normal,fast loud f
+74 N
+75 D SITRI,SITRI SMART,SIDDY neutral,happy 0-1 normal normal f
 76 N
-77 N
+77 D KILLIAM,KILLIAM SMART,NARRATOR~,NPC*~ neutral,happy,excited 0-1 normal normal m
 78 N
-79 D KRAI,KRAI ANDREY neutral,tender 0-1 normal normal m
+79 N
 80 N
-81 N
+81 D KRAI,KRAI ANDREY neutral,tender 0-1 normal normal m
 82 N
 83 N
 84 N
 85 N
-86 D NARRATOR,ANSEM~ neutral 0-1 normal normal,soft u
+86 N
 87 N
-88 N
+88 D NARRATOR,ANSEM~ neutral 0-1 normal normal,soft u
 89 N
-90 N NARRATOR,SITRI~ neutral 0-1 normal normal u
-91 D LIZ,LIZ SMART,LIZZY neutral,happy,sarcastic 0-1 normal normal f
-92 N
-93 D LUKE,LUKE SYKOL neutral,happy 0-1 normal normal m
-94 N
-95 D ANSEM,ANSEM SMART,ANSSY,KRAI~,KRAI ANDREY~ neutral,tired 0-1 normal normal,soft m
-96 N
+90 N
+91 N
+92 D SITRI,SITRI SMART,SIDDY neutral 0-1 normal normal f
+93 N
+94 D LIZ,LIZ SMART,LIZZY neutral,happy,sarcastic 0-1 normal normal f
+95 N
+96 D LUKE,LUKE SYKOL neutral,happy 0-1 normal normal m
 97 N
-98 N
+98 D ANSEM,ANSEM SMART,ANSSY,KRAI~,KRAI ANDREY~ neutral,tired 0-1 normal normal,soft m
 99 N
-100 N,T NARRATOR,KRAI,KRAI ANDREY neutral,tender,sad 0-1 normal normal u
-101 N NARRATOR,LUCIA~ neutral 0-1 normal normal u
-102 D LUCIA,LUCIA ROGIER,LUCY neutral,happy,sarcastic 0-1 normal normal f
-103 D NPC*,UNKNOWN~,LUKE~,LUKE SYKOL~,LIZ~,LIZ SMART~,SITRI~,SITRI SMART~ excited,happy 1-2 normal loud,normal u
-104 N
-105 N,T NARRATOR,KRAI,KRAI ANDREY tired,sarcastic,neutral 0-1 normal normal u
-106 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sarcastic,tired 0-1 normal normal u
-107 D ANSEM,ANSEM SMART,ANSSY happy,neutral 0-1 normal normal m
+100 N
+101 N
+102 N
+103 N,T NARRATOR,KRAI,KRAI ANDREY neutral,tender,sad 0-1 normal normal u
+104 D LUCIA,LUCIA ROGIER,LUCY neutral 0-1 normal normal f
+105 N
+106 D LUCIA,LUCIA ROGIER,LUCY neutral,happy,sarcastic 0-1 normal normal f
+107 D NPC*,UNKNOWN~,LUKE~,LUKE SYKOL~,LIZ~,LIZ SMART~,SITRI~,SITRI SMART~ excited,happy 1-2 normal loud,normal u
 108 N
-109 N
+109 N,T NARRATOR,KRAI,KRAI ANDREY tired,sarcastic,neutral 0-1 normal normal u
+110 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sarcastic,tired 0-1 normal normal u
+111 D ANSEM,ANSEM SMART,ANSSY happy,neutral 0-1 normal normal m
+112 N
+113 N
