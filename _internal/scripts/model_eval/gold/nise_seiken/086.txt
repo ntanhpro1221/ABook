@@ -1,0 +1,132 @@
+# "Nise Seiken Monogatari" file 086 ("Chương 85: Hồn Xiêu Phách Lạc"). Bộ đo LN MỞ RỘNG 29-09 (chương chưa học, cách 111
+# (train) 25 chương, 132 (test) 46 chương). Claude gán (A), agent soát (B). NGÔI BA. ALISTAR (m, "Anh Hùng"); MAGALI (f,
+# "Thánh Nữ" - danh hiệu, không điểm, quy tắc 11); RUBON / RUBON STREAM (m, giáo chủ, cha của Elizabeth); ELIZABETH /
+# ELIZABETH STREAM (f; 077:39 "Rubon Stream, cha đứa trẻ này"). Lính Toà án dị giáo không tên -> NPC* (UNKNOWN~); tiếng
+# kêu không lời thêm NARRATOR~ (quy tắc 8). Thanh kiếm nói bằng dòng "[...]" (119 chương): cả cuốn gọi "Nguyền Kiếm" (533 lần,
+# tên Alistar đặt - 009:243-245, 010:127-129; chương 085 chỉ dùng tên này) và "Thánh Kiếm" (429 lần, tên nó tự nhận); tên thật
+# bị giấu (008:299) -> cả hai là tên (quy tắc 7c/11). Parser KHOÁ N -> NARRATOR, THÁNH KIẾM~, NGUYỀN KIẾM~ (quy tắc 10). Nội tâm "(...)" bị khoá T: màn "đấu khẩu thầm lặng" Alistar - Magali (7-9, 31-32, 96-99, 100 "màn
+# đấu khẩu thầm lặng") -> người nghĩ theo mạch (ai cứu ai, ai "lườm nguýt"). 44 "Alistar…" = Elizabeth ngưỡng mộ, 45 kèm
+# "(Ta nghe thấy lòng dạ của ngươi hết rồi)" = Magali giận (46) -> ELIZABETH đủ, MAGALI~. 34 Alistar hỏi về Herge (Herge
+# Hubner, kỵ sĩ hộ tống Thánh Nữ - 002), 35 Magali đáp "bảo vệ tớ". 65 dấu nháy không đóng: 66 là lời kể bị khoá D ->
+# NARRATOR đủ, NPC*~ (quy tắc 10). 67 nội tâm trong "(...)" bị khoá D -> T,D ALISTAR. 83 "Ugh!" = Elizabeth (84 "cơ thể cô bé
+# run rẩy"), ALISTAR~ (85 cũng giật mình). 103 "(Không! Hắn ta đáng sợ lắm!)" = Alistar đáp Thánh Kiếm (104-105).
+# Host sai (giữ đáp án): dấu nháy mở ở 65 không đóng nên host NỐI LỜI (_repair_continued_dialogue_speakers) gán cả 66 và
+# 67 cho người lính ở 65 - 67 "(Khôngggggg! Tránh xa ta ra! ...)" là tiếng thét trong đầu Alistar (xưng "ta" như 25, 31, 75,
+# 93). 66 là lời kể: NARRATOR, không nửa điểm cho người lính (lỗi host, như LU 07:90). Nhánh dev/curse-noun (82ed7a7) sửa
+# host: đoạn mở bằng "(" là lượt mới - 67 về ALISTAR. 83 "Ugh!": Elizabeth run rẩy (84) và Alistar giật mình (85), "Ugh!?"
+# là tiếng của Alistar ở 071:167 -> cả hai đủ, Elizabeth trước. 5 "Im lặng chính là thừa nhận. Rubon nghĩa vậy" và 60 "...cơ
+# chứ" -> N,T, người nghĩ ~ (quy tắc 4 ngôi ba).
+0 H
+1 N
+2 N
+3 D RUBON,RUBON STREAM sarcastic,happy 0-1 normal normal m
+4 N
+5 N,T NARRATOR,RUBON~,RUBON STREAM~ neutral,happy,sarcastic 0-1 normal normal u
+6 N,T NARRATOR,RUBON~,RUBON STREAM~ neutral,happy 0-1 normal normal u
+7 T MAGALI angry 1-2 fast,normal normal,loud f
+8 T ALISTAR neutral,sarcastic 0-1 normal normal m
+9 T MAGALI angry,surprised 0-1 normal normal f
+10 N
+11 N NARRATOR neutral,sarcastic 0-1 normal normal u
+12 D RUBON,RUBON STREAM tender,neutral,sarcastic 0-1 normal normal m
+13 N NARRATOR neutral,sarcastic 0-1 normal normal u
+14 D ELIZABETH,ELIZABETH STREAM angry,sarcastic 1-2 normal,fast normal,loud f
+15 N NARRATOR neutral,angry 0-1 normal normal u
+16 D RUBON,RUBON STREAM angry,surprised,sad 0-1 normal normal m
+17 D ELIZABETH,ELIZABETH STREAM angry,sarcastic 0-1 normal normal f
+18 N
+19 N
+20 D RUBON,RUBON STREAM angry,neutral 0-1 normal normal m
+21 T ALISTAR angry,surprised 1-2 fast,normal normal,loud m
+22 N NARRATOR neutral,angry 0-1 normal normal u
+23 N NARRATOR neutral,sarcastic 0-1 normal normal u
+24 D RUBON,RUBON STREAM neutral,sarcastic 0-1 normal normal m
+25 T ALISTAR angry 1-2 fast,normal normal,loud m
+26 D RUBON,RUBON STREAM neutral,sarcastic 0-1 normal normal m
+27 D ALISTAR neutral,surprised 0-1 normal normal m
+28 N
+29 N
+30 D RUBON,RUBON STREAM neutral,sarcastic 0-1 normal normal m
+31 T ALISTAR neutral,happy,sarcastic 0-1 normal normal m
+32 T MAGALI angry 0-1 normal normal f
+33 N NARRATOR neutral,angry 0-1 normal normal u
+34 D ALISTAR neutral 0-1 normal normal m
+35 D MAGALI sad,neutral 0-1 normal normal,soft f
+36 D RUBON,RUBON STREAM neutral,sarcastic 0-1 normal normal m
+37 T ALISTAR tired,angry,sarcastic 0-1 normal normal m
+38 N NARRATOR neutral,sad 0-1 normal normal u
+39 N
+40 T MAGALI angry 1-2 fast,normal loud,normal f
+41 N
+42 N NARRATOR neutral,afraid 0-1 normal normal u
+43 D ALISTAR neutral,angry 0-1 normal normal m
+44 D ELIZABETH,ELIZABETH STREAM,MAGALI~ tender,surprised,happy 0-1 normal normal,soft f
+45 D MAGALI angry,sarcastic 0-1 normal normal,soft f
+46 N NARRATOR neutral,happy,angry 0-1 normal normal u
+47 D RUBON,RUBON STREAM angry 1-2 normal,fast normal,loud m
+48 N NARRATOR neutral,angry 0-1 normal normal u
+49 N
+50 N NARRATOR neutral,sarcastic 0-1 normal normal u
+51 D NPC*,UNKNOWN~,NARRATOR~ surprised,afraid,angry,sad 1-2 fast normal,loud u
+52 D NPC*,UNKNOWN~,NARRATOR~ surprised,afraid,angry,sad 1-2 fast normal,loud u
+53 D NPC*,UNKNOWN~,NARRATOR~ afraid,surprised,angry,sad 2-3 fast loud u
+54 D RUBON,RUBON STREAM surprised,afraid 1-2 normal,fast normal,loud m
+55 N NARRATOR neutral,surprised,afraid 0-1 normal normal u
+56 T ALISTAR neutral,surprised,angry 0-1 normal normal m
+57 N NARRATOR,THÁNH KIẾM~,NGUYỀN KIẾM~ neutral 0-1 normal normal u
+58 D ALISTAR neutral,surprised 0-1 normal soft,normal m
+59 N
+60 N,T NARRATOR,ALISTAR~ neutral,sarcastic 0-1 normal normal u
+61 N
+62 T ALISTAR afraid,angry 1-2 fast,normal normal,loud m
+63 N NARRATOR neutral,sad,afraid 0-1 normal normal u
+64 N NARRATOR neutral,sad,angry,tired 0-1 normal normal u
+65 D NPC*,UNKNOWN~ angry,afraid,sad,surprised 1-2 fast,normal normal,loud u
+66 D NARRATOR neutral 0-1 normal normal u
+67 T,D ALISTAR afraid 2-3 fast loud,normal m
+68 D NPC*,UNKNOWN~,NARRATOR~ surprised,afraid,sad,angry 1-2 fast normal,loud u
+69 D NPC*,UNKNOWN~,NARRATOR~ afraid,surprised 0-1 normal soft,normal u
+70 N NARRATOR neutral,sarcastic,afraid 0-1 normal normal u
+71 D RUBON,RUBON STREAM surprised,afraid 1-2 normal,fast normal,loud m
+72 D ELIZABETH,ELIZABETH STREAM sad,tender,angry 1-2 normal loud,normal f
+73 N NARRATOR neutral,surprised 0-1 normal normal u
+74 D ELIZABETH,ELIZABETH STREAM tender,sad,neutral 0-1 normal normal f
+75 T ALISTAR angry,sarcastic 0-1 normal normal m
+76 N NARRATOR,THÁNH KIẾM~,NGUYỀN KIẾM~ angry,surprised,neutral 0-1 normal normal u
+77 N NARRATOR neutral,angry,sarcastic 0-1 normal normal u
+78 N
+79 D RUBON,RUBON STREAM sad,surprised,afraid,whispering 0-1 slow,normal soft m
+80 N
+81 N NARRATOR neutral,sad,tender 0-1 normal normal u
+82 D RUBON,RUBON STREAM angry 2-3 fast,normal loud m
+83 D ELIZABETH,ELIZABETH STREAM,ALISTAR,NARRATOR~ afraid,surprised 1-2 fast normal,loud f
+84 N NARRATOR neutral,afraid,angry 0-1 normal normal u
+85 N NARRATOR neutral,surprised,afraid 0-1 normal normal u
+86 D RUBON,RUBON STREAM angry 2-3 fast,normal loud m
+87 D RUBON,RUBON STREAM angry 2-3 fast,normal loud m
+88 T ALISTAR afraid,surprised 1-2 normal,fast normal m
+89 N NARRATOR neutral,sarcastic 0-1 normal normal u
+90 N NARRATOR neutral,sarcastic 0-1 normal normal u
+91 D ELIZABETH,ELIZABETH STREAM afraid,sad,surprised 2-3 fast loud f
+92 D RUBON,RUBON STREAM angry 2-3 fast loud m
+93 T ALISTAR afraid,surprised 1-2 fast normal,loud m
+94 N NARRATOR neutral,afraid 0-1 normal normal u
+95 N
+96 T ALISTAR angry,surprised 1-2 fast,normal normal m
+97 T MAGALI sarcastic,neutral 0-1 normal normal f
+98 T ALISTAR angry 1-2 fast,normal normal,loud m
+99 T MAGALI angry 1-2 fast,normal normal,loud f
+100 N
+101 N
+102 N NARRATOR,THÁNH KIẾM~,NGUYỀN KIẾM~ angry,neutral 0-1 normal normal u
+103 T ALISTAR afraid 1-2 fast,normal normal m
+104 N NARRATOR,THÁNH KIẾM~,NGUYỀN KIẾM~ angry,neutral 0-1 normal normal u
+105 D ALISTAR,NARRATOR~ surprised,afraid,sad 1-2 fast normal,soft m
+106 N NARRATOR neutral,afraid,surprised 0-1 normal normal u
+107 N NARRATOR neutral,sad 0-1 normal normal u
+108 D NPC*,UNKNOWN~,NARRATOR~ sad,afraid,surprised,angry 0-2 normal normal,loud u
+109 D NPC*,UNKNOWN~,NARRATOR~ sad,afraid,surprised,angry 1-2 normal,fast normal,loud u
+110 N NARRATOR neutral,afraid 0-1 normal normal u
+111 D ALISTAR,NARRATOR~ surprised,afraid 0-1 slow,normal soft,normal m
+112 N NARRATOR neutral,afraid,surprised 0-1 normal normal u
+113 N

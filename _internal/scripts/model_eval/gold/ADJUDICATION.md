@@ -534,3 +534,41 @@ thầy bói có thể chính là "Con Mắt Thần" của Astral Divinarium đư
 hiệu ấy dùng chung cho nhiều nhà chiêm tinh (66:1311) -> NPC* đủ vẫn đứng, CON MẮT CỦA THẦN không điểm. B cũng bắt lỗ hổng
 quy trình: chương đo chưa vào `SPLIT["test"]` thì lần dựng dữ liệu sau sẽ lọt vào train - đã thêm. `voice_identity
 --gold-check`: nageki 20 người, không nhập ai. Phát lại: 62 không lệch (hai chỗ lệch còn lại của cuốn là 73, có từ trước).
+
+**Two Childhood Friends 060 (29-09 02:xx) - bộ đo LN MỞ RỘNG** (ngôi ba rồi ngôi thứ nhất trong một chương; sát thủ Linlin
+"Ngộ... yo/ne/aru"; 11 dòng 『』 của ký sinh trùng). A = Claude, B = agent soát đối kháng (chỉ đọc; tự dò cue host và lint
+nhãn). B đồng ý người nói ưu tiên 113/113 (52 D/T/T,D + 61 N,T); trọn tập 99/113. A nhận:
+
+| chỗ | A ghi | kết luận | bằng chứng |
+|---|---|---|---|
+| 11 dòng 『』 | KÝ SINH TRÙNG, CON KÝ SINH TRÙNG, NPC*~ | thêm UNKNOWN~, NARRATOR~ | cho khớp 042:64, 082:94 - hai chương test cùng truyện chấm như nhau |
+| 16, 57 "Hự!?", 110 "Tou!", 67 "Hừm?" | người nói | thêm NARRATOR~ | tiếng kêu/hô, quy tắc 8; tiền lệ 082:79, Yamiyo 141:18, LU 07:13 |
+| 96 / 69 | N | N,T (Yoshihito đủ) / N,T (Yoshihito ~) | giữa chuỗi lập luận tức thời 94-97; 69 nửa tiếng lòng nửa lời kể |
+| 54, 8, 17, 27, 63, 25 / 40, 179 / 41 | neutral | thêm afraid / surprised / angry / afraid | host bắt "hoảng loạn" ở 54; "chết lặng", "giật mình", "bối rối", "ngơ ngác", "hoang mang"; "phẫn nộ", "điên tiết"; "nhát gan, sợ" |
+| 6 "Tiếp theo là mày đó yo." | neutral,happy,excited | bỏ happy | câu đe doạ - GOLD_GUIDE lấy chính "happy cho câu đe doạ" làm ví dụ đọc sai |
+| 132, 123, 71, 75, 87, 149 | ... | thêm whispering / surprised / happy / sarcastic / tired / sarcastic | "lẩm bẩm"; câu bỏ lửng; "đắc thắng"; "cười khẩy"; "ngán ngẩm"; "cười nhạo" |
+
+A giữ: 13 "Vậy thì, tại sao?" Kirako chỉ ~ (người kể tự hỏi về Kirako - 10 "...Mà không hẳn." là người kể tự sửa lời); 152
+"Vừa phải thôi." (khoá N) Yoshihito vặc lại trong đầu (cùng cụm ở 056:151). Chưa thêm AIDA MASAMICHI~ (tên thật lộ ở 107) cho
+cả cuốn: chấm từng chương, model không thể biết. Đầu file sửa khoảng cách chương, góc ngôi ba, chữ "tiếng lòng". B chỉ ra chương
+đo phải vào SPLIT["test"] - đã thêm. `voice_identity --gold-check`: two_childhood_friends 10 người, không nhập ai. Phát lại:
+100/100.
+
+**Nise Seiken 086 (29-09 02:xx) - bộ đo LN MỞ RỘNG** (ngôi ba; "đấu khẩu thầm lặng" Alistar - Magali bằng "(...)", Rubon và
+Elizabeth Stream, lính Toà án dị giáo, thanh kiếm nói bằng "[...]"). A = Claude, B = agent soát đối kháng (chỉ đọc; grep 158
+file, dò cue host). B đồng ý người nói ưu tiên 60/60 (41 D + 19 T); trọn tập 49/60. A nhận:
+
+| chỗ | A ghi | kết luận | bằng chứng |
+|---|---|---|---|
+| 57, 76, 102, 104 "[...]" | NARRATOR, THÁNH KIẾM~ | thêm NGUYỀN KIẾM~ | "Nguyền Kiếm" 533 lần/104 file (tên Alistar đặt, 009:243-245, 010:127-129; 085 chỉ dùng tên này) > "Thánh Kiếm" 429 lần; tên thật bị giấu (008:299) |
+| 66 (lời kể bị khoá D) | NARRATOR, NPC*~ | chỉ NARRATOR | NPC là lỗi host nối lời; tiền lệ LU 07:90 - người bị gán nhầm không được điểm |
+| 10 tiếng kêu (51-53, 68, 69, 83, 105, 108, 109, 111) | người kêu | thêm NARRATOR~ | quy tắc 8; tiền lệ Yamiyo 141, LU 07, TMA 378:79 |
+| 83 "Ugh!" | ELIZABETH, ALISTAR~ | cả hai đủ, Elizabeth trước | 084 "cơ thể cô bé run rẩy" / 085 Alistar "giật nảy mình"; "Ugh!?" là tiếng của Alistar ở 071:167 |
+| 111 "Ehh…" | ALISTAR, MAGALI~ | bỏ MAGALI~ | 112 "Alistar hồn xiêu phách lạc"; Magali "nôn nhẹ" (113); "Eehhhh.." là tật của Alistar (085:119) |
+| 5 / 60 | N | N,T, người nghĩ ~ | "Im lặng chính là thừa nhận. Rubon nghĩa vậy" (lời dẫn liền sau); "...cơ chứ" (tiền lệ 132:30) |
+| 64, 73, 106, 48, 77, 70, 11, 13, 23, 50, 89, 90 / tiếng kêu / Rubon 24, 26, 30 / 91 | neutral | thêm theo cue | "ghét cay ghét đắng", "sự bất ngờ", "khẽ hét", "nhăn nhó", "ác cảm", "tàn ác", lời kể mỉa; kêu đau cho sad/angry; Rubon giả nhân nghĩa (25 vặn lại); "Cha!!" |
+
+Host sai (giữ đáp án): 66-67 - dấu nháy mở ở 65 không đóng, host nối lời gán lời kể 66 và tiếng thét trong đầu Alistar 67
+cho người lính; nhánh dev/curse-noun (82ed7a7) sửa 67 ("(" mở lượt mới). B xác nhận các khẳng định còn lại (RUBON STREAM 077:39,
+ELIZABETH STREAM 071:213..., Herge Hubner 002:241, "tớ/cậu" giữa Alistar - Magali 005:69...). `voice_identity --gold-check`:
+nise_seiken 9 người, không nhập ai. Phát lại: chỉ 66, 67 lệch (host).
