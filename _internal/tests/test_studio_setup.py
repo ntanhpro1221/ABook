@@ -28,6 +28,8 @@ def _zip_with(path: Path, files: dict[str, bytes]) -> Path:
 
 class FakeOllama(BaseHTTPRequestHandler):
     pulled: list[str] = []
+    blobs: dict[str, int] = {}  # digest -> số byte đã nhận (chỉ khi đúng băm, như Ollama thật)
+    created: list[dict] = []
 
     def log_message(self, *_args: object) -> None:
         pass
@@ -35,10 +37,31 @@ class FakeOllama(BaseHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802
         self.send_response(HTTPStatus.OK)
         self.end_headers()
-        self.wfile.write(b'{"models": []}')
+        self.wfile.write(json.dumps({"models": [{"name": body["model"], "model": body["model"]}
+                                                for body in FakeOllama.created]}).encode())
+
+    def do_HEAD(self) -> None:  # noqa: N802
+        found = self.path.rsplit("/", 1)[-1] in FakeOllama.blobs
+        self.send_response(HTTPStatus.OK if found else HTTPStatus.NOT_FOUND)
+        self.end_headers()
 
     def do_POST(self) -> None:  # noqa: N802
-        body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+        data = self.rfile.read(int(self.headers["Content-Length"]))
+        if self.path.startswith("/api/blobs/"):
+            digest = self.path.rsplit("/", 1)[-1]
+            right = digest == "sha256:" + hashlib.sha256(data).hexdigest()
+            if right:
+                FakeOllama.blobs[digest] = len(data)
+            self.send_response(HTTPStatus.CREATED if right else HTTPStatus.BAD_REQUEST)
+            self.end_headers()
+            return
+        body = json.loads(data)
+        if self.path == "/api/create":
+            FakeOllama.created.append(body)
+            self.send_response(HTTPStatus.OK)
+            self.end_headers()
+            self.wfile.write(b'{"status": "success"}')
+            return
         FakeOllama.pulled.append(body["model"])
         self.send_response(HTTPStatus.OK)
         self.end_headers()
@@ -51,7 +74,7 @@ class FakeOllama(BaseHTTPRequestHandler):
 def ollama():
     server = ThreadingHTTPServer(("127.0.0.1", 0), FakeOllama)
     threading.Thread(target=server.serve_forever, daemon=True).start()
-    FakeOllama.pulled = []
+    FakeOllama.pulled, FakeOllama.blobs, FakeOllama.created = [], {}, []
     yield f"http://127.0.0.1:{server.server_address[1]}"
     server.shutdown()
 
@@ -315,3 +338,66 @@ def test_the_studio_carries_its_own_vc_runtime_next_to_its_python(tmp_path: Path
     setup._step_vcruntime()
     assert (base / "msvcp140_1.dll").read_bytes() == b"bo-cai"
     assert (base / "vcruntime140.dll").read_bytes() == b"cua-python", "không đè file của bản dựng Python"
+
+
+def _published(monkeypatch: pytest.MonkeyPatch, weights: bytes, *, split: int) -> studio_setup.PublishedModel:
+    pieces = [weights[:split], weights[split:]]
+    parts = tuple(Download(f"abook-test.gguf.part{index}", f"https://example.invalid/part{index}",
+                           hashlib.sha256(piece).hexdigest(), len(piece)) for index, piece in enumerate(pieces, start=1))
+    model = studio_setup.PublishedModel("abook-test:v1", parts, hashlib.sha256(weights).hexdigest(), len(weights))
+    monkeypatch.setitem(studio_setup.PUBLISHED_MODELS, model.name, model)
+    return model
+
+
+def _serving(pieces: list[bytes], fetched: list[str]):
+    def fetch(item: Download, target: Path, progress, cancelled) -> Path:
+        fetched.append(item.name)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(pieces[int(item.name[-1]) - 1])
+        progress(item.size, item.size)
+        return target
+
+    return fetch
+
+
+def test_the_projects_own_model_comes_from_its_release_into_the_studios_ollama(tmp_path: Path, ollama: str,
+                                                                              monkeypatch: pytest.MonkeyPatch) -> None:
+    """Model tự huấn luyện (chủ sách 28-09: đăng công khai để Studio tải về) không có trong kho Ollama: tải từng phần từ
+    GitHub Release, Ollama nhận CẢ file đúng băm (ghép trên đường truyền), model tạo từ đúng file ấy; không để lại phần
+    tải nào trên đĩa, và cài tiếp không tải lại."""
+    weights = bytes(range(256)) * 40
+    model = _published(monkeypatch, weights, split=6000)
+    fetched: list[str] = []
+    setup = StudioSetup(tmp_path / "Studio", tmp_path, fetch=_serving([weights[:6000], weights[6000:]], fetched),
+                        gpu=lambda: {"name": "Card thử", "memory": 8 << 30}, analysis_model=model.name,
+                        ollama_address=ollama)
+    setup._step_llm()
+    digest = f"sha256:{model.sha256}"
+    assert FakeOllama.pulled == [], "không kéo gì từ kho Ollama"
+    assert FakeOllama.blobs == {digest: len(weights)}
+    assert FakeOllama.created == [{"model": "abook-test:v1", "files": {"abook-test-v1.gguf": digest}, "stream": False}]
+    assert fetched == ["abook-test.gguf.part1", "abook-test.gguf.part2"]
+    assert not list((setup.root / "downloads").iterdir()), "Ollama giữ bản của nó - không để hai bản 4 GB"
+
+    fetched.clear()
+    setup._step_llm()
+    assert fetched == [] and len(FakeOllama.created) == 1, "model đã có: không tải, không tạo lại"
+
+
+def test_a_published_model_that_does_not_add_up_is_refused_by_ollama(tmp_path: Path, ollama: str,
+                                                                    monkeypatch: pytest.MonkeyPatch) -> None:
+    """Từng phần đúng băm của nó mà ghép lại sai (phần tải nhầm bản) thì Ollama từ chối - lỗi nói bấm Cài tiếp; tải lại
+    xong thì còn đúng bước tạo, không tải lại phần blob đã nhận."""
+    weights = bytes(range(256)) * 40
+    model = _published(monkeypatch, weights, split=6000)
+    fetched: list[str] = []
+    setup = StudioSetup(tmp_path / "Studio", tmp_path, fetch=_serving([weights[:6000], b"x" * 4240], fetched),
+                        gpu=lambda: None, analysis_model=model.name, ollama_address=ollama)
+    with pytest.raises(SetupError, match="Ollama không nhận model abook-test:v1"):
+        setup._step_llm()
+    assert FakeOllama.blobs == {} and FakeOllama.created == []
+
+    FakeOllama.blobs[f"sha256:{model.sha256}"] = len(weights)  # lần trước đã đẩy xong, hỏng ở bước tạo
+    fetched.clear()
+    setup._step_llm()
+    assert fetched == [] and [body["model"] for body in FakeOllama.created] == ["abook-test:v1"]
