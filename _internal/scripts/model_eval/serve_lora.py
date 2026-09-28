@@ -44,6 +44,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--name", required=True, help="tên model trong Ollama")
     parser.add_argument("--outtype", default="q8_0", choices=("f16", "bf16", "q8_0"))
     parser.add_argument("--keep-merged", action="store_true", help="giữ thư mục safetensors đã gộp (nặng)")
+    parser.add_argument("--like", default="",
+                        help="chép Modelfile (khuôn chat, tham số) của model Ollama này, vd qwen3:8b - nền có chế độ "
+                             "nghĩ cần đúng khuôn của qwen3:8b để khối think rỗng y như lúc huấn luyện")
+    parser.add_argument("--quantize", default="",
+                        help="nén lúc `ollama create`, vd q4_K_M (dùng với --outtype f16): 8B ở q8_0 nặng 8,7 GB, "
+                             "không vừa card 8 GB")
     args = parser.parse_args(argv)
     if not args.base_only and args.adapter is None:
         parser.error("cần --adapter (hoặc --base-only với --base)")
@@ -88,9 +94,16 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit("chuyển GGUF thất bại")
 
     modelfile = GGUF_DIR / f"{args.name}.Modelfile"
-    modelfile.write_text(f"FROM {gguf}\n", encoding="utf-8")
-    create = subprocess.run(["ollama", "create", args.name, "-f", str(modelfile)],
-                            text=True, capture_output=True, encoding="utf-8", errors="replace")
+    if args.like:
+        from ollama_like import modelfile_like  # cùng thư mục scripts/model_eval (sys.path[0])
+
+        modelfile.write_text(modelfile_like(args.like, gguf), encoding="utf-8")
+    else:
+        modelfile.write_text(f"FROM {gguf}\n", encoding="utf-8")
+    command = ["ollama", "create", args.name, "-f", str(modelfile)]
+    if args.quantize:
+        command += ["--quantize", args.quantize]
+    create = subprocess.run(command, text=True, capture_output=True, encoding="utf-8", errors="replace")
     if create.returncode != 0:
         print(create.stdout[-2000:], create.stderr[-2000:])
         raise SystemExit("ollama create thất bại")
