@@ -67,5 +67,5 @@ băm trong `webui/studio_setup.py`):
   nó khi chưa được chủ dự án đồng ý.
 - Kho truyện nghiên cứu (văn bản truyện dùng để đo và huấn luyện) KHÔNG nằm trong repo này hay bất kỳ bản phát hành nào:
   phần lớn còn bản quyền, nên kho ở một repo riêng tư. Repo này chỉ giữ đáp án chuẩn (số thứ tự câu và nhãn người nói,
-  cảm xúc), không chép văn bản truyện. Bản duy nhất hết bảo hộ trong kho là Tam quốc diễn nghĩa (Phan Kế Bính dịch, Bùi
-  Kỷ hiệu đính), lấy từ Wikisource tiếng Việt.
+  cảm xúc), không chép văn bản truyện. Hai bản đã hết bảo hộ trong kho, lấy từ Wikisource tiếng Việt: Tam quốc diễn
+  nghĩa (Phan Kế Bính dịch 1909, Bùi Kỷ hiệu đính) và Tắt đèn (Ngô Tất Tố, 1937-1939).
