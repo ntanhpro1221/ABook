@@ -20,22 +20,29 @@ from pathlib import Path
 OLLAMA = "http://127.0.0.1:11434"
 
 
+def modelfile_like(like: str, gguf: Path) -> str:
+    """Modelfile của model `like` (khuôn chat, tham số, stop) với FROM trỏ sang `gguf`."""
+    request = urllib.request.Request(f"{OLLAMA}/api/show", data=json.dumps({"model": like}).encode(),
+                                     headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(request, timeout=60) as response:
+        modelfile = json.loads(response.read().decode("utf-8"))["modelfile"]
+    lines = [line for line in modelfile.splitlines() if not line.startswith("#")]
+    return "\n".join(f"FROM {gguf.as_posix()}" if re.match(r"FROM\s", line) else line for line in lines) + "\n"
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--gguf", type=Path, required=True)
     parser.add_argument("--name", required=True)
     parser.add_argument("--like", default="qwen3:8b")
+    parser.add_argument("--quantize", default="", help="nén lúc tạo, vd q4_K_M (GGUF vào phải là f16/bf16)")
     args = parser.parse_args(argv)
-    request = urllib.request.Request(f"{OLLAMA}/api/show", data=json.dumps({"model": args.like}).encode(),
-                                     headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(request, timeout=60) as response:
-        modelfile = json.loads(response.read().decode("utf-8"))["modelfile"]
-    lines = [line for line in modelfile.splitlines() if not line.startswith("#")]
-    lines = [f"FROM {args.gguf.as_posix()}" if re.match(r"FROM\s", line) else line for line in lines]
     target = args.gguf.with_suffix(".Modelfile")
-    target.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    create = subprocess.run(["ollama", "create", args.name, "-f", str(target)], text=True, capture_output=True,
-                            encoding="utf-8", errors="replace")
+    target.write_text(modelfile_like(args.like, args.gguf), encoding="utf-8")
+    command = ["ollama", "create", args.name, "-f", str(target)]
+    if args.quantize:
+        command += ["--quantize", args.quantize]
+    create = subprocess.run(command, text=True, capture_output=True, encoding="utf-8", errors="replace", check=False)
     sys.stdout.write(create.stdout[-1500:] + create.stderr[-1500:])
     return create.returncode
 
