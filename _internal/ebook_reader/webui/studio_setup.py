@@ -54,8 +54,12 @@ UV = Download("uv", "https://github.com/astral-sh/uv/releases/download/0.12.19/u
 MINGIT = Download("git", "https://github.com/git-for-windows/git/releases/download/v2.55.0.windows.5/"
                   "MinGit-2.55.0.5-64-bit.zip",
                   "56d7b226b7693196cfc71fef26568f536c4a021ab6c37ff2db4287bed908e96e", 38_989_688)
-OLLAMA = Download("ollama", "https://github.com/ollama/ollama/releases/download/v0.34.4/ollama-windows-amd64.zip",
-                  "535193f38f3344e5b08f5d1c171c31ce11aa17f0124ff69ae26d8ec7fe06fa62", 1_461_155_106)
+# Ollama: ĐÚNG bản dây chuyền đã được đo và kiểm (máy dev 0.33.2 - mọi lượt đo model, mọi cuốn đã làm), không phải bản
+# mới nhất. Thử thật 28-09 với 0.34.4: cùng prompt, qwen3:8b sinh 360 token thay vì 61 (bản mới cho model "suy nghĩ" trước
+# khi trả JSON) -> hết ngân sách đầu ra, cuốn thử hỏng ở khâu phân tích. Nâng Ollama là một phiên bản dây chuyền: đo lại
+# trên bộ LN rồi mới đổi ghim (Studio đã cài tự biết phải cập nhật - `outdated`).
+OLLAMA = Download("ollama", "https://github.com/ollama/ollama/releases/download/v0.33.2/ollama-windows-amd64.zip",
+                  "2439cbea65310b1aadf7d8fc41d7faf5d033f920d42e00a476c58bf9bff6950e", 1_460_134_793)
 
 # (mã, nhãn cho người dùng, ước lượng cho người dùng)
 STEPS: tuple[tuple[str, str, str], ...] = (
@@ -346,13 +350,27 @@ class StudioSetup:
         temporary.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
         os.replace(temporary, self.state_path)
 
-    def status(self) -> dict[str, Any]:
+    def _pins(self) -> dict[str, str]:
+        """Bản ghim của các bước tải công cụ/model. App lên bản mới đổi ghim (nâng uv, Git, Ollama, đổi model phân tích)
+        thì bước ấy phải chạy lại trên Studio đã cài - không thì Studio cứ chạy bản cũ mà app không hề biết."""
+        return {"uv": UV.sha256, "git": MINGIT.sha256, "ollama": OLLAMA.sha256, "llm": self.analysis_model}
+
+    def outdated(self) -> list[str]:
+        """Bước đã xong nhưng bằng bản ghim khác bản app này mang (Studio cài từ bản app cũ hơn)."""
         state = self._state()
         done = set(state.get("done") or [])
+        pins = state.get("pins") or {}
+        return [step for step, pin in self._pins().items() if step in done and pins.get(step) != pin]
+
+    def status(self) -> dict[str, Any]:
+        state = self._state()
+        outdated = set(self.outdated())
+        done = set(state.get("done") or []) - outdated
         running = self._thread is not None and self._thread.is_alive()
         progress = self._progress if running else None
         return {
             "installed": self.installed(),
+            "outdated": [label for step, label, _hint in STEPS if step in outdated],
             "running": running,
             "step": self._step if running else None,
             "steps": [{"id": step, "label": label, "hint": hint, "done": step in done} for step, label, hint in STEPS],
@@ -367,7 +385,7 @@ class StudioSetup:
 
     def start(self) -> dict[str, Any]:
         with self._lock:
-            if not (self._thread is not None and self._thread.is_alive()) and not self.installed():
+            if not (self._thread is not None and self._thread.is_alive()) and (not self.installed() or self.outdated()):
                 self._cancel.clear()
                 self._thread = threading.Thread(target=self._run_all, name="studio-setup", daemon=True)
                 self._thread.start()
@@ -399,12 +417,12 @@ class StudioSetup:
                 shutil.rmtree(self.root, onerror=writable)
         return self.status()
 
-    def stop_processes(self) -> list[int]:
-        """Dừng các tiến trình chạy từ thư mục Studio (theo đường dẫn file chạy, không theo tên - pythonw.exe của người
-        dùng không bị đụng). Trả mã các tiến trình đã dừng."""
+    def stop_processes(self, folder: Path | None = None) -> list[int]:
+        """Dừng các tiến trình chạy từ thư mục Studio - hay một thư mục con của nó (`folder`) - theo đường dẫn file chạy,
+        không theo tên: pythonw.exe của người dùng không bị đụng. Trả mã các tiến trình đã dừng."""
         import psutil
 
-        root = str(self.root.resolve()).casefold()
+        root = str((folder or self.root).resolve()).casefold()
         stopped: list[int] = []
         for process in psutil.process_iter(["pid", "exe"]):
             executable = str(process.info.get("exe") or "").casefold()
@@ -481,6 +499,9 @@ class StudioSetup:
             "UV_PYTHON_INSTALL_DIR": str(self.root / "python"),
             # Python riêng của Studio, không bám vào Python cài sẵn trên máy (gỡ Python ấy là Studio hỏng).
             "UV_PYTHON_PREFERENCE": "only-managed",
+            # Bộ nhớ đệm biên dịch JIT của CUDA (mặc định %APPDATA%\NVIDIA\ComputeCache): thử thật 28-09, một cuốn chạy
+            # bằng Studio ghi 21 mục vào đó - thứ bộ gỡ không dọn được. Trỏ vào Studio (biến chuẩn của driver CUDA).
+            "CUDA_CACHE_PATH": str(self.root / "cache" / "nvidia"),
             "PATH": os.pathsep.join(path + [os.environ.get("PATH", "")]),
         }
 
@@ -489,12 +510,18 @@ class StudioSetup:
     def _run_all(self) -> None:
         self._save(error=None)
         try:
+            outdated = set(self.outdated())
+            ran = False
             for step, _label, _hint in STEPS:
-                if step in set(self._state().get("done") or []):
+                fresh = step in set(self._state().get("done") or []) and step not in outdated
+                if fresh and not (step == "verify" and ran):  # cập nhật bước nào thì kiểm tra lần cuối lại
                     continue
+                ran = True
                 self._step, self._progress, self._detail = step, None, ""
                 getattr(self, f"_step_{step}")()
-                self._save(done=sorted(set(self._state().get("done") or []) | {step}))
+                state, pins = self._state(), self._pins()
+                self._save(done=sorted(set(state.get("done") or []) | {step}),
+                           pins={**(state.get("pins") or {}), **({step: pins[step]} if step in pins else {})})
             self._write_marker()
         except Cancelled:
             self._save(error="Đã dừng - bấm Cài tiếp để làm tiếp từ bước dở.")
@@ -516,6 +543,7 @@ class StudioSetup:
 
     def _install_archive(self, item: Download, folder: Path) -> None:
         archive = self._get(item)
+        self.stop_processes(folder)  # cập nhật: bản cũ đang chạy (Ollama riêng) thì không thay file được
         _unzip(archive, folder)
         archive.unlink(missing_ok=True)  # gói nén của Ollama 1,5 GB: không giữ hai bản
 
@@ -621,8 +649,7 @@ class StudioSetup:
         return {"analysis": {"base_url": self.ollama_address}}
 
     def _step_ollama(self) -> None:
-        if not (self.tools / "ollama" / "ollama.exe").is_file():
-            self._install_archive(OLLAMA, self.tools / "ollama")
+        self._install_archive(OLLAMA, self.tools / "ollama")
 
     def _step_llm(self) -> None:
         """Kéo model phân tích qua API của Ollama (không gọi CLI `ollama`: khi máy chủ tắt nó tự mở app khay)."""

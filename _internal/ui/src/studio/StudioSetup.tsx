@@ -19,6 +19,8 @@ interface SetupStep {
 
 interface SetupStatus {
   installed: boolean;
+  /** Bước đã cài bằng bản cũ hơn bản app này mang (nhãn) - "Cập nhật Studio" chạy lại đúng các bước ấy. */
+  outdated: string[];
   running: boolean;
   step: string | null;
   steps: SetupStep[];
@@ -33,11 +35,12 @@ function formatBytes(bytes: number): string {
   return bytes >= 1024 ** 3 ? `${(bytes / 1024 ** 3).toFixed(1)} GB` : `${Math.round(bytes / 1024 ** 2)} MB`;
 }
 
-/** Máy chưa cài Studio: thẻ ở đầu màn Dự án - cần gì, từng bước, tiến độ, lỗi đọc được, bấm lại là làm tiếp. */
+/** Máy chưa cài Studio (hay Studio cài từ bản app cũ cần cập nhật): thẻ ở đầu màn Dự án - cần gì, từng bước, tiến độ,
+ *  lỗi đọc được, bấm lại là làm tiếp. */
 export function StudioSetupCard({ className }: { className?: string }) {
   const { data: info } = useAppInfo();
   const client = useQueryClient();
-  const needed = Boolean(info?.studio && !info.studio.installed);
+  const needed = Boolean(info?.studio && (!info.studio.installed || info.studio.outdated));
   const { data: status } = useQuery({
     queryKey: ["studio-setup"],
     queryFn: () => api<SetupStatus>("/api/studio/setup"),
@@ -48,11 +51,11 @@ export function StudioSetupCard({ className }: { className?: string }) {
   useEffect(() => {
     if (!status) return;
     if (wasRunning.current && !status.running) {
-      if (status.installed) {
-        toast.success("Đã cài Studio", { description: "Giờ tạo và làm sách nói được trên máy này." });
+      if (status.installed && status.outdated.length === 0) {
+        toast.success("Studio đã sẵn sàng", { description: "Giờ tạo và làm sách nói được trên máy này." });
         void client.invalidateQueries({ queryKey: ["app"] });
       } else if (status.error) {
-        toast.error("Chưa cài xong Studio", { description: status.error });
+        toast.error("Studio chưa xong", { description: status.error });
       }
     }
     wasRunning.current = status.running;
@@ -66,6 +69,7 @@ export function StudioSetupCard({ className }: { className?: string }) {
       toast.error("Không cài được Studio", { description: (error as Error).message });
     }
   };
+  const update = status.installed && status.outdated.length > 0;
   const started = status.steps.some((step) => step.done);
   const current = status.steps.find((step) => step.id === status.step);
   const progress = status.progress && status.progress.total > 0 ? status.progress.done / status.progress.total : null;
@@ -77,12 +81,15 @@ export function StudioSetupCard({ className }: { className?: string }) {
         </div>
         <div className="min-w-0 flex-1">
           <h2 id="studio-setup-title" className="text-base font-semibold">
-            Cài Studio để làm sách nói trên máy này
+            {update ? "Cập nhật Studio" : "Cài Studio để làm sách nói trên máy này"}
           </h2>
           <p className="mt-1 max-w-2xl text-[13px] leading-relaxed text-fg-2 text-pretty">
-            Studio là phần biến truyện chữ thành sách nói: model đọc hiểu truyện, giọng đọc, nghe lại để kiểm từng câu. Cần card
-            đồ hoạ NVIDIA, tải khoảng 20 GB, ổ đĩa trống 30 GB. Cài một lần; nghe sách không cần Studio. Mất mạng hay tắt máy
-            giữa chừng thì bấm lại là làm tiếp.
+            {update
+              ? `Bản ABook này làm sách bằng ${status.outdated.join(", ")} khác với bản Studio đang có - cập nhật rồi làm sách
+                tiếp. Chỉ tải lại đúng phần ấy; sách đã làm và chỗ đang nghe giữ nguyên.`
+              : `Studio là phần biến truyện chữ thành sách nói: model đọc hiểu truyện, giọng đọc, nghe lại để kiểm từng câu. Cần
+                card đồ hoạ NVIDIA, tải khoảng 20 GB, ổ đĩa trống 30 GB. Cài một lần; nghe sách không cần Studio. Mất mạng hay
+                tắt máy giữa chừng thì bấm lại là làm tiếp.`}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -92,7 +99,7 @@ export function StudioSetupCard({ className }: { className?: string }) {
             </Button>
           ) : (
             <Button variant="primary" icon={Download} onClick={() => void call("/api/studio/setup")}>
-              {started ? "Cài tiếp" : "Cài Studio"}
+              {update ? "Cập nhật Studio" : started ? "Cài tiếp" : "Cài Studio"}
             </Button>
           )}
         </div>
@@ -183,6 +190,11 @@ export function StudioSettings() {
   return (
     <div className="max-w-xl">
       <p className="text-sm">Studio đã cài{status.gpu ? `, chạy trên ${status.gpu.name}` : ""}.</p>
+      {status.outdated.length > 0 && (
+        <p className="mt-1 text-[13px] text-fg-2">
+          Cần cập nhật {status.outdated.join(", ")} - vào Studio &gt; Dự án, bấm "Cập nhật Studio".
+        </p>
+      )}
       <p className="mt-1 break-all text-[13px] text-fg-2">{status.root}</p>
       <Button className="mt-3" variant={armed ? "danger" : "secondary"} icon={Trash2} disabled={busy} onClick={() => void remove()}>
         {busy ? "Đang gỡ…" : armed ? "Bấm lần nữa để gỡ" : "Gỡ Studio"}
