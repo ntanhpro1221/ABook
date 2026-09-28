@@ -16,7 +16,7 @@
 11 N
 12 N
 13 N
-14 D NPC*,KNOX~,UNKNOWN~ surprised,afraid 1-2 fast,normal normal,loud u
+14 D NPC*:người chứng kiến,KNOX~,UNKNOWN~ surprised,afraid 1-2 fast,normal normal,loud u
 15 N NARRATOR neutral,surprised 0-1 normal normal u
 16 N NARRATOR neutral,afraid 0-1 normal normal u
 17 N

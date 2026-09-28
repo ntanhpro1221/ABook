@@ -61,12 +61,12 @@
 55 D ERIA tender,excited,neutral 0-2 normal,slow soft,normal m
 56 N,T NARRATOR,MAGALI afraid 2-3 fast,normal loud,normal u
 57 N NARRATOR neutral,afraid 0-1 normal normal u
-58 D NPC*,UNKNOWN~ neutral 0-1 normal normal m
+58 D NPC*:kỵ sĩ hộ tống,UNKNOWN~ neutral 0-1 normal normal m
 59 N NARRATOR neutral,happy 0-1 normal normal u
 60 D ERIA angry 1-2 normal,fast normal,loud m
 61 N,T NARRATOR,MAGALI sarcastic,neutral 0-1 normal normal u
 62 N
-63 D NPC*,UNKNOWN~ neutral 0-1 normal normal m
+63 D NPC*:kỵ sĩ hộ tống,UNKNOWN~ neutral 0-1 normal normal m
 64 D ERIA surprised,neutral 0-1 normal normal m
 65 N,T NARRATOR,MAGALI happy,excited 1-2 normal,fast normal,loud u
 66 N

@@ -8,10 +8,10 @@
 # nói bằng dòng 『』 châm chọc "hai người" (072: "Giọng nói của con ký sinh trùng trong não, chẳng ai nghe thấy"). Câu 98
 # (Kakushigi, Grey) chỉ giải thích vì sao Yoshihito không quát Kirako; Kakushigi và Grey trong chương đều nói trong "".
 0 H
-1 D NPC*,UNKNOWN~ afraid,happy 1-2 fast loud u
-2 D NPC*,UNKNOWN~ excited,happy 1-2 normal,fast normal,loud u
+1 D NPC*:học sinh 1,UNKNOWN~ afraid,happy 1-2 fast loud u
+2 D NPC*:học sinh 2,UNKNOWN~ excited,happy 1-2 normal,fast normal,loud u
 3 D URAZUMI,URAZUMI SAKUKO,NPC*~ happy,neutral 0-1 normal normal f
-4 D NPC*,UNKNOWN~ happy,excited 2 fast loud u
+4 D NPC*:học sinh 2,UNKNOWN~ happy,excited 2 fast loud u
 5 N NARRATOR neutral,happy 0-1 normal normal u
 6 N
 7 N
@@ -19,12 +19,12 @@
 9 N NARRATOR neutral,happy 0-1 normal normal u
 10 N
 11 N NARRATOR neutral,happy,tender 0-1 normal normal u
-12 D NPC*,UNKNOWN~ happy,excited 1 normal normal,loud u
+12 D NPC*:bạn học của Shiramine,UNKNOWN~ happy,excited 1 normal normal,loud u
 13 D SHIRAMINE,SHIRAMINE KOUTA happy,tender 0-1 normal normal m
 14 N
 15 N
 16 N NARRATOR neutral,sarcastic 0-1 normal normal u
-17 D NPC* neutral,happy 0-1 normal normal u
+17 D NPC*:giáo viên đồng nghiệp neutral,happy 0-1 normal normal u
 18 D URAZUMI,URAZUMI SAKUKO neutral,sad 0-1 normal normal f
 19 N
 20 N
@@ -32,23 +32,23 @@
 22 N
 23 N NARRATOR neutral,afraid 0-1 normal normal u
 24 N
-25 D NPC* neutral,happy 0-1 normal normal u
+25 D NPC*:giáo viên đồng nghiệp neutral,happy 0-1 normal normal u
 26 D URAZUMI,URAZUMI SAKUKO neutral 0-1 normal normal f
-27 D NPC* neutral 0-1 normal normal u
+27 D NPC*:giáo viên đồng nghiệp neutral 0-1 normal normal u
 28 N
 29 N
-30 D NPC* happy,surprised 0-1 normal normal u
+30 D NPC*:giáo viên đồng nghiệp happy,surprised 0-1 normal normal u
 31 N
 32 N NARRATOR neutral,surprised 0-1 normal normal u
 33 N
 34 D URAZUMI,URAZUMI SAKUKO,NPC*~ neutral 0-1 normal normal f
-35 D NPC*,URAZUMI~,URAZUMI SAKUKO~ sarcastic,happy 0-1 normal normal u
+35 D NPC*:giáo viên đồng nghiệp,URAZUMI~,URAZUMI SAKUKO~ sarcastic,happy 0-1 normal normal u
 36 N
-37 D NPC* neutral 0-1 normal normal u
+37 D NPC*:giáo viên đồng nghiệp neutral 0-1 normal normal u
 38 D URAZUMI,URAZUMI SAKUKO neutral 0-1 normal normal f
 39 N
 40 N NARRATOR neutral,afraid 0-1 normal normal u
-41 D NPC* neutral 0-1 normal normal u
+41 D NPC*:giáo viên đồng nghiệp neutral 0-1 normal normal u
 42 D URAZUMI,URAZUMI SAKUKO afraid,neutral 0-1 normal soft,normal f
 43 N
 44 N NARRATOR neutral,afraid 0-1 normal normal u

@@ -14,6 +14,10 @@ họ nghe ra là (a) một người bị đọc bằng hai giọng (tách) và (
    chương của nó; NPC*/đại từ: một cụm "vô danh" chung), cụm đáp án = người nói ưu tiên của đáp án.
 3. B-cubed (Bagga & Baldwin 1998, thước đo chuẩn của đồng tham chiếu): độ chính xác = phần câu cùng giọng với câu này
    mà đúng là cùng người (thấp = NHẬP); độ phủ = phần câu cùng người với câu này mà được cùng giọng (thấp = TÁCH).
+   Câu đáp án `NPC*` ("bất kỳ NPC cục bộ nào", GOLD_GUIDE) KHÔNG nói hai người vô danh là một hay hai - từ 29-09 chỉ chấm
+   quan hệ đã biết: NPC* khác mọi người có tên (câu người lạ đọc bằng giọng nhân vật chính = NHẬP), còn giữa hai câu NPC*
+   thì không tính. Trước đó mọi câu NPC* là MỘT cụm: model tách đúng ba người lạ bị phạt, model gộp bừa được thưởng (LU 10:
+   10/39 câu nói là NPC*, Nageki 62: 25/83). `bcubed(..., anonymous_known=True)` cho cách cũ.
 
 Kèm độ đúng nhãn chặt (`score_models`) trên cùng các câu để thấy khoảng cách giữa "sai chữ" và "sai giọng".
 `--gold-check`: phần PHÁ - chạy các lượt gom trên chính nhãn đáp án của từng truyện; gom hai người làm một là lỗi.
@@ -63,13 +67,29 @@ def voice_of(label: str, chapter: str, mapping: dict[str, str]) -> str:
     return speaker_key(mapping.get(label, label))
 
 
-def bcubed(points: list[tuple[str, str]]) -> tuple[float, float, float]:
-    """(độ chính xác, độ phủ, F1) B-cubed; mỗi điểm là (cụm đáp án, cụm dự đoán)."""
+def bcubed(points: list[tuple[str, str]], *, anonymous_known: bool = False) -> tuple[float, float, float]:
+    """(độ chính xác, độ phủ, F1) B-cubed; mỗi điểm là (cụm đáp án, cụm dự đoán).
+
+    Điểm có đáp án `NPC*` là người vô danh chưa biết là ai: cặp NPC*-NPC* không tính (không phải cùng, không phải khác),
+    cặp NPC*-có tên là khác người. Nên với câu NPC*: độ phủ = 1 (không biết ai cùng người với nó), độ chính xác = 1 /
+    (1 + số câu có tên cùng giọng). Với câu có tên: như B-cubed thường, câu NPC* cùng giọng tính là khác người.
+    `anonymous_known=True`: cách trước 29-09 - mọi câu NPC* là một người.
+    """
+    # Bảng gộp nhiều chương đặt tên điểm là (chương, người) - người là phần tử cuối.
+    anonymous = {gold for gold, _ in points
+                 if not anonymous_known and speaker_key(gold[-1] if isinstance(gold, tuple) else gold) == "NPC*"}
     by_gold = Counter(gold for gold, _ in points)
     by_voice = Counter(voice for _, voice in points)
+    named_by_voice = Counter(voice for gold, voice in points if gold not in anonymous)
     both = Counter(points)
-    precision = sum(both[point] / by_voice[point[1]] for point in points) / len(points)
-    recall = sum(both[point] / by_gold[point[0]] for point in points) / len(points)
+    precision = sum(
+        1 / (1 + named_by_voice[voice]) if gold in anonymous else both[(gold, voice)] / by_voice[voice]
+        for gold, voice in points
+    ) / len(points)
+    recall = sum(
+        1.0 if gold in anonymous else both[(gold, voice)] / by_gold[gold]
+        for gold, voice in points
+    ) / len(points)
     return precision, recall, 2 * precision * recall / (precision + recall)
 
 

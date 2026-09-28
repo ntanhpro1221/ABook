@@ -10,7 +10,7 @@
 7 N
 8 D ANDY,NPC*~ angry,sarcastic 1 normal normal m
 9 N NARRATOR neutral,sarcastic 0-1 normal normal u
-10 D NPC*,MARTIN~,WILLIAM~,MICKEY~ neutral,whispering 0-1 normal soft m
+10 D NPC*:bạn của Andy,MARTIN~,WILLIAM~,MICKEY~ neutral,whispering 0-1 normal soft m
 11 N
 12 N
 13 D ANDY surprised 1 normal normal m
@@ -59,14 +59,14 @@
 56 N
 57 N,T NARRATOR,ANDY~ neutral,sad 0-1 normal normal u
 58 N
-59 D NPC*,NARRATOR~ excited,happy 0-1 normal normal u
-60 D NPC*,NARRATOR~ excited,happy 0-1 normal normal u
+59 D NPC*:quảng cáo radio,NARRATOR~ excited,happy 0-1 normal normal u
+60 D NPC*:quảng cáo radio,NARRATOR~ excited,happy 0-1 normal normal u
 61 D DẠ OANH,LOUISE~ neutral 0-1 normal normal f
 62 D DẠ OANH,LOUISE~ neutral,afraid 0-1 normal normal f
 63 N NARRATOR neutral,afraid 0-1 normal normal u
 64 D DẠ OANH,LOUISE~ neutral,afraid 0-1 normal normal f
 65 D DẠ OANH,LOUISE~ neutral 0-1 normal normal f
-66 D NPC*,UNKNOWN~ afraid,happy 1-2 fast,normal normal u
+66 D NPC*:người nghe radio,UNKNOWN~ afraid,happy 1-2 fast,normal normal u
 67 N
 68 N
 69 D SCARLET sad,afraid 2 normal,slow soft f
@@ -78,7 +78,7 @@
 75 D ANDY excited 1 normal normal m
 76 N
 77 N
-78 D NPC*,UNKNOWN~ sarcastic,happy 1 normal normal m
+78 D NPC*:người đàn ông lực lưỡng,UNKNOWN~ sarcastic,happy 1 normal normal m
 79 N
 80 D SCARLET whispering,happy 0-1 normal soft f
 81 N

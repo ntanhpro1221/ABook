@@ -123,7 +123,7 @@
 104 D LUCIA,LUCIA ROGIER,LUCY neutral 0-1 normal normal f
 105 N
 106 D LUCIA,LUCIA ROGIER,LUCY neutral,happy,sarcastic 0-1 normal normal f
-107 D NPC*,UNKNOWN~,LUKE~,LUKE SYKOL~,LIZ~,LIZ SMART~,SITRI~,SITRI SMART~ excited,happy 1-2 normal loud,normal u
+107 D NPC*:cả nhóm,UNKNOWN~,LUKE~,LUKE SYKOL~,LIZ~,LIZ SMART~,SITRI~,SITRI SMART~ excited,happy 1-2 normal loud,normal u
 108 N
 109 N,T NARRATOR,KRAI,KRAI ANDREY tired,sarcastic,neutral 0-1 normal normal u
 110 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sarcastic,tired 0-1 normal normal u

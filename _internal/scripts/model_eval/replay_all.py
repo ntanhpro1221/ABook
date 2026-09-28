@@ -59,8 +59,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--root", type=Path, required=True, help="thư mục mới cho các project phát lại")
     parser.add_argument("--only", nargs="*", default=None, help="chỉ các thư mục đáp án này")
-    parser.add_argument("--book-spelling", action="store_true",
-                        help="tên trong câu trả lời viết như sách viết, không chữ HOA (gold_replay.py, LoRA v3)")
+    parser.add_argument("--gold-capitals", action="store_true",
+                        help="ghi tên bằng chữ HOA của đáp án (chỉ để thí nghiệm; mặc định: như sách viết - gold_replay.py)")
+    parser.add_argument("--book-spelling", action="store_true", help=argparse.SUPPRESS)  # mặc định từ 29-09; giữ cho lệnh cũ
     args = parser.parse_args()
     if args.root.exists() and any(args.root.iterdir()):
         raise SystemExit(f"{args.root} đã có dữ liệu - chọn --root mới")
@@ -88,7 +89,7 @@ def main() -> None:
             table.append((gold, len(chapters), "KHÔNG TẠO ĐƯỢC PROJECT", ""))
             continue
         replay = run(["scripts/model_eval/gold_replay.py", str(project.parent), "--gold", gold,
-                      "--out", str(args.root / f"train_{gold}.jsonl"), *(["--book-spelling"] if args.book_spelling else [])])
+                      "--out", str(args.root / f"train_{gold}.jsonl"), *(["--gold-capitals"] if args.gold_capitals else [])])
         conflicts = [line.strip() for line in replay.splitlines() if "LỆCH LUẬT" in line]
         score = run(["scripts/model_eval/score_models.py", str(project.parent), "--gold", gold, "--misses", "20"])
         row = next((line for line in score.splitlines() if line.startswith("gold-replay:all")), "")

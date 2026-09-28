@@ -103,7 +103,7 @@
 93 N
 94 D KAKERU,KAKERU SORANO,SORANO surprised 0-1 normal normal m
 95 N
-96 D NPC*,UNKNOWN~ afraid,neutral 0-1 normal,fast normal u
+96 D NPC*:người phục vụ,UNKNOWN~ afraid,neutral 0-1 normal,fast normal u
 97 N
 98 D HAYASE,YUUKO HAYASE,YUUKO afraid,neutral 0-1 normal normal f
 99 D KAKERU,KAKERU SORANO,SORANO neutral,surprised,tired 0-1 normal,slow normal m
@@ -368,11 +368,11 @@
 358 N,T NARRATOR,KAKERU,KAKERU SORANO,SORANO excited,neutral 0-2 normal normal u
 359 D KAKERU,KAKERU SORANO,SORANO excited 2-3 normal loud m
 360 N
-361 D NPC*,UNKNOWN~ excited,happy 2-3 normal loud u
+361 D NPC*:đám khách,UNKNOWN~ excited,happy 2-3 normal loud u
 362 N
-363 D NPC*,UNKNOWN~ happy,excited 1-2 normal loud u
+363 D NPC*:khách 1,UNKNOWN~ happy,excited 1-2 normal loud u
 364 N
-365 D NPC*,UNKNOWN~ sarcastic,happy 0-1 normal normal,loud u
+365 D NPC*:khách 2,UNKNOWN~ sarcastic,happy 0-1 normal normal,loud u
 366 N
 367 D KAKERU,KAKERU SORANO,SORANO neutral,tired 0-1 normal normal m
 368 N
