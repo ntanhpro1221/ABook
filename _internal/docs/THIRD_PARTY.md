@@ -31,13 +31,17 @@ Bộ cài mang theo:
 - Python 3.14 embeddable (Python Software Foundation License).
 - Pillow (HPND), psutil (BSD-3-Clause), requests (Apache-2.0), urllib3 (MIT), certifi (MPL-2.0), charset-normalizer
   (MIT), idna (BSD-3-Clause) - đúng các bản trong `shell/python/requirements.txt`.
+- Thư viện chạy Microsoft Visual C++ (`msvcp140*.dll`, `vcruntime140*.dll`, `concrt140.dll` từ thư mục
+  `Microsoft.VC145.CRT` của Visual Studio) - thuộc "Distributable Code" của giấy phép Visual Studio, được phép phát hành
+  kèm ứng dụng; bộ cài chỉ mang để chép vào Python của Studio (máy chưa cài gói VC++ Redistributable vẫn chạy được).
 
 Studio tải thêm khi người dùng bấm "Cài Studio" (không nằm trong bộ cài; tải thẳng từ nơi phát hành chính thức, ghim
 băm trong `webui/studio_setup.py`):
 
 - uv (MIT hoặc Apache-2.0); Python 3.11 bản python-build-standalone (PSF License cùng giấy phép của từng thành phần).
 - MinGit / Git for Windows (GPL-2.0) - chỉ để cài UTMOSv2 từ đúng commit; ABook không sửa hay phân phối lại.
-- Ollama (MIT) khi máy chưa có; các thư viện của dây chuyền theo `shell/python/studio-requirements.txt` (giấy phép như mục
+- Ollama (MIT) - bản riêng của Studio, đúng bản dây chuyền đã kiểm, kể cả khi máy đã có Ollama; các thư viện của dây
+  chuyền theo `shell/python/studio-requirements.txt` (giấy phép như mục
   "App máy tính - dây chuyền sản xuất" ở trên); model tải từ Hugging Face / Ollama theo giấy phép của từng model.
 
 ## Giao diện (máy tính và điện thoại dùng chung)
