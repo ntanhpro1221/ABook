@@ -8612,6 +8612,8 @@ class ProjectDB:
         stable_id: str,
         text_sha256: str,
         speaker: str,
+        new_gender: str = "",
+        voices: dict[str, Any] | None = None,
     ) -> dict[str, Any] | None:
         """Gán một câu cho người người nghe chọn, và đặt lại câu nếu giọng đổi - một transaction.
 
@@ -8621,14 +8623,25 @@ class ProjectDB:
 
         Trả None khi câu đã thuộc người ấy (kể cả "giữ nguyên"), `{"problem": mã}` khi không áp được (không đổi gì), hay
         chi tiết lần áp.
+
+        Người nghe TẠO người nói mới (`new_gender`, chủ sách 28-09): cùng transaction tạo dòng `characters` (ghim giới và
+        giọng) và cấp giọng đúng phép bước phân vai chọn cho người mới với mọi người khác giữ nguyên, tránh giọng của
+        người cùng chương (`character_registry.listener_voice_choice`). Câu sau của cùng người mượn giọng ấy như thường.
         """
-        from .listener_overrides import speaker_target
+        from .listener_overrides import NO_VOICE, speaker_target
 
         now = time.time()
         with self.transaction() as conn:
-            target, problem = speaker_target(conn, stable_id=stable_id, text_sha256=text_sha256, speaker=speaker)
+            target, problem = speaker_target(
+                conn, stable_id=stable_id, text_sha256=text_sha256, speaker=speaker, new_gender=new_gender
+            )
             if target is None:
                 return {"problem": problem}
+            created = target.get("create")
+            if created is not None:
+                if voices is None:
+                    return {"problem": NO_VOICE}
+                target = self._create_listener_character_conn(conn, target, created, voices, now)
             line = target["line"]
             if (
                 line["canonical_character_id"] == target["character_id"]
@@ -8684,6 +8697,59 @@ class ProjectDB:
                 ),
             )
         return details
+
+    def _create_listener_character_conn(
+        self, conn: sqlite3.Connection, target: dict[str, Any], created: dict[str, Any], voices: dict[str, Any], now: float
+    ) -> dict[str, Any]:
+        """Nhân vật người nghe vừa tạo: dòng `characters` (giới + giọng ghim - lô sau phân vai ra đúng như vậy) và hồ sơ
+        giọng. Trả đích đã đủ `character_id`, `voice_profile_id` để bước áp gán câu như với một người đã có giọng."""
+        from .character_registry import listener_voice_choice
+
+        chapter_id = int(target["line"]["chapter_id"])
+        profile = listener_voice_choice(
+            conn, voices, str(created["canonical"]), gender=str(target["gender"]), age="unknown", chapters={chapter_id}
+        )
+        voice_key = str(profile["voice_key"])
+        character_id = created.get("existing_id")
+        if character_id is None:
+            character_id = int(conn.execute(
+                """
+                INSERT INTO characters(canonical_name,display_name,gender,age,importance,confidence,locked,
+                    locked_voice_key,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)
+                """,
+                (created["canonical"], created["display"], target["gender"], "unknown", "minor", 1.0,
+                 1 if target["gender"] in ("male", "female") else 0, voice_key, now, now),
+            ).lastrowid)
+        else:
+            conn.execute(
+                "UPDATE characters SET gender=?, locked_voice_key=?, locked=?, updated_at=? WHERE id=?",
+                (target["gender"], voice_key, 1 if target["gender"] in ("male", "female") else 0, now, int(character_id)),
+            )
+        existing = conn.execute("SELECT id FROM voice_profiles WHERE voice_key=?", (voice_key,)).fetchone()
+        if existing is not None:
+            profile_id = int(existing["id"])
+        else:
+            profile_id = int(conn.execute(
+                """
+                INSERT INTO voice_profiles(voice_key,engine,preset_name,description,seed,pitch_semitones,
+                    formant_ratio,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)
+                """,
+                (
+                    voice_key, profile["engine"], profile["preset_name"], profile["description"],
+                    int(profile["seed"]), int(profile["pitch_semitones"]), float(profile["formant_ratio"]),
+                    profile["status"], now, now,
+                ),
+            ).lastrowid)
+        conn.execute(
+            "INSERT INTO runtime_events(timestamp,level,code,message,details_json) VALUES(?,?,?,?,?)",
+            (
+                now, "info", "CHARACTER_CREATED_BY_LISTENER",
+                f"Người nghe tạo nhân vật {created['display']!r} ({target['gender']}), giọng {voice_key}.",
+                json.dumps({"character": created["display"], "gender": target["gender"], "voice_key": voice_key},
+                           ensure_ascii=False),
+            ),
+        )
+        return {**target, "character_id": int(character_id), "voice_profile_id": profile_id}
 
     def apply_listener_line(
         self,

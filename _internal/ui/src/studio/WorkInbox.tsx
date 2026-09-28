@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AudioLines, Check, Pause, Play } from "lucide-react";
+import { AudioLines, Check, Pause, Play, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useClip } from "@/listen/clip";
@@ -196,11 +196,15 @@ function PronunciationFix({ bookId, item }: { bookId: string; item: WorkItem }) 
 // họ) ở ranh giới chương, câu đã thu thì thu lại.
 function SpeakerFix({ bookId, item }: { bookId: string; item: WorkItem }) {
   const client = useQueryClient();
+  // "Người khác…": người nói chưa có trong lựa chọn - kể cả người máy CHƯA TỪNG gán câu nào (linh thể nói trong 『』):
+  // gõ tên + chọn giới, dây chuyền tạo người ấy và cấp giọng riêng như bước phân vai.
+  const [creating, setCreating] = useState(false);
+  const [name, setName] = useState("");
   const save = useMutation({
-    mutationFn: (speaker: string) =>
+    mutationFn: ({ speaker, newGender }: { speaker: string; newGender?: string }) =>
       api<{ lines: number; speaker: string }>(`/api/books/${bookId}/speaker`, {
         method: "POST",
-        body: { lines: item.lines, speaker },
+        body: { lines: item.lines, speaker, newGender: newGender ?? "" },
       }),
     onSuccess: ({ speaker }) => {
       void client.invalidateQueries({ queryKey: ["work", bookId] });
@@ -235,17 +239,49 @@ function SpeakerFix({ bookId, item }: { bookId: string; item: WorkItem }) {
             size="sm"
             variant={index === 0 ? "primary" : "secondary"}
             disabled={save.isPending}
-            onClick={() => save.mutate(choice.value)}
+            onClick={() => save.mutate({ speaker: choice.value })}
           >
             {choice.label}
           </Button>
         ))}
         {item.currentValue && (
-          <Button size="sm" variant="ghost" disabled={save.isPending} onClick={() => save.mutate(item.currentValue!)}>
+          <Button size="sm" variant="ghost" disabled={save.isPending} onClick={() => save.mutate({ speaker: item.currentValue! })}>
             {item.keepLabel ?? `Giữ ${item.current}`}
           </Button>
         )}
+        <Button size="sm" variant="ghost" icon={UserPlus} aria-expanded={creating} onClick={() => setCreating((value) => !value)}>
+          Người khác…
+        </Button>
       </div>
+      {creating && (
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          <input
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="Tên người nói (vd Tọa Phu Đồng Tử)"
+            aria-label="Tên người nói mới"
+            maxLength={80}
+            className="h-8 min-w-0 flex-1 rounded-lg border border-line bg-panel px-2.5 text-sm outline-none focus-visible:border-accent"
+          />
+          {(
+            [
+              ["male", "Nam"],
+              ["female", "Nữ"],
+              ["unknown", "Không rõ"],
+            ] as const
+          ).map(([gender, label]) => (
+            <Button
+              key={gender}
+              size="sm"
+              variant="secondary"
+              disabled={!name.trim() || save.isPending}
+              onClick={() => save.mutate({ speaker: name.trim(), newGender: gender })}
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

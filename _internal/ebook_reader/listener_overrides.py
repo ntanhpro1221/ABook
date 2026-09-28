@@ -44,6 +44,8 @@ LINE_KINDS = ("narration", "dialogue", "thought")
 NARRATOR = "NARRATOR"
 UNNAMED = "UNNAMED"
 SPEECH_KINDS = frozenset({"dialogue", "thought"})
+# Giới người nghe chọn khi TẠO một nhân vật mới ("Người mới…").
+NEW_CHARACTER_GENDERS = frozenset({"male", "female", "unknown"})
 
 
 def overrides_path(project_root: Path) -> Path:
@@ -114,7 +116,12 @@ def speaker_requests(overrides: dict[str, Any]) -> list[dict[str, str]]:
             continue
         speaker, text_sha256 = entry.get("speaker"), entry.get("text_sha256")
         if isinstance(speaker, str) and isinstance(text_sha256, str) and speaker.strip() and text_sha256.strip():
-            requests.append({"stable_id": str(stable_id), "speaker": speaker.strip(), "text_sha256": text_sha256.strip()})
+            new = entry.get("new") if isinstance(entry.get("new"), dict) else {}
+            new_gender = str(new.get("gender") or "")
+            request = {"stable_id": str(stable_id), "speaker": speaker.strip(), "text_sha256": text_sha256.strip()}
+            if new_gender in NEW_CHARACTER_GENDERS:
+                request["new_gender"] = new_gender  # chỉ khi người nghe TẠO người này
+            requests.append(request)
     return requests
 
 
@@ -125,13 +132,16 @@ def speaker_target(
     text_sha256: str,
     speaker: str,
     as_kind: str = "",
+    new_gender: str = "",
 ) -> tuple[dict[str, Any] | None, str | None]:
     """Người nói mà câu sẽ mang nếu áp yêu cầu: (đích, None), hoặc (None, mã lý do).
 
     Dùng chung cho giao diện (từ chối ngay, SQLite chỉ đọc) và dây chuyền (trong transaction áp), nên hai bên không bao giờ
     bất đồng về một yêu cầu. Đích luôn là một nhân vật ĐÃ CÓ giọng: câu mượn đúng nhãn và giọng mà các câu khác của người
     ấy đang dùng, nên "một người một giọng" (`character_registry.assert_voice_stability`) vẫn đúng mà không phân vai lại.
-    Người chưa từng nói câu nào thì chưa có giọng - gán cho họ là việc của phân vai, không phải của một lần bấm.
+    Người chưa từng nói câu nào thì chưa có giọng - trừ khi người nghe TẠO họ (`new_gender`: tên mới + giới, chủ sách
+    28-09 - linh thể 『』 của Yamiyo chưa từng được máy gán câu nào nên không chọn được): đích mang `create` và
+    `character_id` None; bước áp (database.apply_listener_speaker) tạo nhân vật và cấp giọng như bước phân vai.
 
     UNNAMED là nhóm vô danh CÙNG GIỚI với câu (giới của câu, không có thì của người đang giữ câu), rồi nhóm chưa rõ giới;
     không bao giờ mượn giọng vô danh khác giới.
@@ -183,6 +193,21 @@ def speaker_target(
             "speaker": label or str(voice["speaker"]),
             "gender": str(character["gender"] or "unknown"),
             "age": str(character["age"] or "unknown"),
+        }, None
+    if new_gender in NEW_CHARACTER_GENDERS and speaker != UNNAMED:
+        display = " ".join(speaker.split()).upper()
+        if not display or display in ("NARRATOR", "UNKNOWN") or display.startswith("ANONYMOUS_"):
+            return None, NO_VOICE
+        existing = conn.execute("SELECT id FROM characters WHERE canonical_name=?", (keys[0],)).fetchone()
+        return {
+            "line": line,
+            "character_id": None,
+            "voice_profile_id": None,
+            "speaker": display,
+            "gender": new_gender,
+            "age": "unknown",
+            "create": {"canonical": keys[0], "display": display,
+                       "existing_id": int(existing["id"]) if existing is not None else None},
         }, None
     return None, NO_VOICE
 
@@ -371,12 +396,14 @@ def request_pronunciation(project_root: Path, surface: str, spoken_form: str, *,
     _write(project_root, data)
 
 
-def request_speaker(project_root: Path, stable_id: str, text_sha256: str, speaker: str, *, now: float) -> None:
+def request_speaker(project_root: Path, stable_id: str, text_sha256: str, speaker: str, *, now: float,
+                    new_gender: str = "") -> None:
     """Giao diện gọi: ghi (hoặc thay) mong muốn cho một câu. Băm chữ đi kèm để yêu cầu tự rơi khi câu đổi chữ."""
-    request_speakers(project_root, [(stable_id, text_sha256)], speaker, now=now)
+    request_speakers(project_root, [(stable_id, text_sha256)], speaker, now=now, new_gender=new_gender)
 
 
-def request_speakers(project_root: Path, lines: list[tuple[str, str]], speaker: str, *, now: float) -> None:
+def request_speakers(project_root: Path, lines: list[tuple[str, str]], speaker: str, *, now: float,
+                     new_gender: str = "") -> None:
     """Một người cho cả nhóm câu (mọi câu của một vai phụ không tên), trong MỘT lần ghi file: dây chuyền đọc file giữa
     hai lần ghi thì không bao giờ thấy nhóm câu nửa đã gán nửa chưa."""
     data = read_overrides(project_root)
@@ -388,6 +415,9 @@ def request_speakers(project_root: Path, lines: list[tuple[str, str]], speaker: 
             "text_sha256": str(text_sha256).strip(),
             "requested_at": float(now),
         }
+        if new_gender in NEW_CHARACTER_GENDERS:
+            # Người nghe tạo người này (chưa có giọng): giới để bước áp chọn giọng như bước phân vai.
+            entries[str(stable_id)]["new"] = {"gender": new_gender}
     data["speakers"] = entries
     _write(project_root, data)
 

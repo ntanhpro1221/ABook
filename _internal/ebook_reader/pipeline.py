@@ -1213,6 +1213,9 @@ class BookPipeline:
                 stable_id=stable_id,
                 text_sha256=request["text_sha256"],
                 speaker=speaker,
+                new_gender=request.get("new_gender", ""),
+                # Chỉ người nghe TẠO người nói mới mới cần cấu hình giọng (để chọn giọng như bước phân vai).
+                voices=self.settings["voices"] if request.get("new_gender") else None,
             )
             if result is None:
                 continue
