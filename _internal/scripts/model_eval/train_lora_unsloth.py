@@ -59,6 +59,9 @@ def main() -> int:
     parser.add_argument("--save-steps", type=int, default=50,
                         help="lưu checkpoint mỗi N bước; 8B trên card 8 GB ~3 phút/bước nên 10 (~30 phút) - máy khởi "
                              "động lại chỉ mất chừng ấy")
+    parser.add_argument("--load-16bit", action="store_true",
+                        help="LoRA trên nền 16-bit thay vì QLoRA 4-bit - Unsloth KHÔNG khuyên 4-bit cho Qwen3.5 (sai số lượng "
+                             "tử lớn); Qwen3.5-9B cần ~22 GB (card L4/A10G 24 GB)")
     parser.add_argument("--time-limit-hours", type=float, default=0.0,
                         help="dừng gọn (lưu checkpoint, KHÔNG lưu adapter) sau chừng ấy giờ - phiên Kaggle bị cắt ở 12 giờ và "
                              "mất hết nếu chưa lưu; chạy lại với --resume từ checkpoint")
@@ -82,9 +85,12 @@ def main() -> int:
         return 0
 
     extra = {"offload_embedding": True} if args.offload_embedding else {}
+    precision = {"load_in_4bit": False, "load_in_16bit": True} if args.load_16bit else {"load_in_4bit": True}
     model, tokenizer = loader.from_pretrained(
-        model_name=args.base, max_seq_length=args.max_length, load_in_4bit=True, dtype=None, **extra
+        model_name=args.base, max_seq_length=args.max_length, dtype=None, **precision, **extra
     )
+    # Qwen3.5 (kiến trúc có thị giác) trả về processor; phần chữ nằm trong .tokenizer.
+    tokenizer = getattr(tokenizer, "tokenizer", tokenizer)
     rows = [json.loads(line) for line in (args.data / "train.jsonl").open(encoding="utf-8")]
     texts = [tokenizer.apply_chat_template(row["messages"], tokenize=False, enable_thinking=False) for row in rows]
     if args.render_only:
