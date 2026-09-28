@@ -124,6 +124,13 @@ lại mọi lượt bằng thước chính (`voice_identity.py`, F1 giọng B-cu
 - Dữ liệu huấn luyện chỉ là đáp án của chính dự án (`build_training_set.py` gom JSONL của `gold_replay`), không có
   CSI/PDNC (giấy phép phi thương mại).
 
+**Ollama 0.34 cho qwen3 "suy nghĩ" (28-09 20:4x, thử Studio tự chứa).** Cùng prompt, Ollama 0.34.4 sinh 360 token thay vì
+61 cho request đầu (suy nghĩ trước khi trả JSON dù request có `format`) -> hết ngân sách đầu ra, cuốn thử hỏng ở khâu phân
+tích; máy dev chạy 0.33.2 nên chưa từng gặp. Hai lớp chặn: Studio ghim đúng 0.33.2 (`studio_setup.OLLAMA`), và mọi request
+phân tích gửi `"think": false` (main 7a5f9d6, hash 73ef04cb -> ab2a5f39). A/B trên 0.33.2 (YMP 248, qwen3:8b, mã main vs
+nhánh): 130/130 đoạn trùng khít từng trường, điểm trùng (76,5 / 61,7 / 78,3 - cũng trùng lượt N7b ngày 27-09: dây chuyền
+tái lập qua ngày). Ollama của máy tự cập nhật lên 0.34 thì dây chuyền dev không còn hỏng theo.
+
 ## LƯỢT ĐỐI ĐÁP + HAI MODEL BẤT ĐỒNG 28-09 12:xx - hai tín hiệu lỗi đo được trên kết quả đã có (CPU, không tốn GPU)
 
 **Lượt đối đáp.** Cặp câu thoại liền kề ở hai đoạn văn liền nhau, chia theo dấu ngoặc (đáp án 7 truyện, bài làm qwen3:8b):
