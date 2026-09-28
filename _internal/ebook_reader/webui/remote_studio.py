@@ -21,18 +21,25 @@ from __future__ import annotations
 import html
 import http.client
 import json
+import ipaddress
 import re
+import socket
 from dataclasses import dataclass
 from http import HTTPStatus
-from http.cookies import CookieError, SimpleCookie
 from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import unquote, urlsplit
 
 COOKIE = "abook_device"
 COOKIE_SECONDS = 365 * 24 * 3600
-MAX_FORWARD_BODY = 16 * 1024 * 1024  # ảnh bìa chụp bằng điện thoại vài MB, thành data URL còn to hơn 1/3
+# Trên máy chủ cục bộ, yêu cầu mang header này là yêu cầu TỪ XA (chỉ `forward` gắn nó): `paths` chỉ được nằm trong
+# thư mục tải lên, `target` bị bỏ qua (server.py `_remote`). Soát bảo mật 28-09: danh sách trắng lọc ĐƯỜNG, còn tham số
+# thì mở cả ổ đĩa và đường UNC (máy khác trong mạng) cho thiết bị ở xa.
+REMOTE_HEADER = "X-Abook-Remote"
+MAX_FORWARD_BODY = 24 * 1024 * 1024  # ảnh bìa: máy chủ cục bộ nhận tới ~21,3 MB data URL (covers.MAX_UPLOAD_BYTES)
 CHUNK = 256 * 1024
+# Tuỳ chọn máy tính mà thiết bị ở xa không cần thấy: sách mở gần đây (đường dẫn), chỗ đang nghe theo đường dẫn.
+PRIVATE_PREFERENCES = ("recents", "positions")
 FORWARD_SECONDS = 120  # tìm bìa trên mạng, tạo sách từ vài trăm chương - không phải lời gọi nào cũng tức thì
 
 _BOOK = r"/api/books/[A-Za-z0-9_-]+"
@@ -120,14 +127,44 @@ def permitted(method: str, path: str) -> bool:
 
 
 def cookie_token(header: str | None) -> str:
-    if not header:
-        return ""
+    """Mã thiết bị trong cookie. Tự tách theo `;`: `SimpleCookie` dừng ở cookie hỏng đầu tiên (của trang khác cùng máy),
+    và trình duyệt đã ghép lại thấy trang nhập mã."""
+    for part in (header or "").split(";"):
+        name, _, value = part.strip().partition("=")
+        if name == COOKIE and value:
+            return value.strip().strip('"')
+    return ""
+
+
+def allowed_host(header: str | None) -> bool:
+    """Chặn DNS rebinding: trang của một tên miền lạ trỏ về IP LAN của máy này gửi `Host: ten-mien-la`. Chỉ nhận IP,
+    tên máy (`<máy>`, `<máy>.local`, `<máy>.lan`) và localhost."""
+    host = (header or "").strip().lower()
+    if host.startswith("["):  # IPv6 dạng [::1]:47630
+        host = host[1 : host.find("]")] if "]" in host else host
+    else:
+        host = host.rsplit(":", 1)[0] if host.count(":") == 1 else host
+    if not host:
+        return False
     try:
-        jar = SimpleCookie(header)
-    except CookieError:
-        return ""
-    morsel = jar.get(COOKIE)
-    return morsel.value if morsel is not None else ""
+        ipaddress.ip_address(host)
+        return True
+    except ValueError:
+        pass
+    machine = socket.gethostname().lower()
+    return host in {"localhost", machine, f"{machine}.local", f"{machine}.lan", f"{machine}.home"}
+
+
+def same_origin(headers: Any) -> bool:
+    """Lệnh GHI mang cookie phải đến từ chính trang Studio: `Sec-Fetch-Site` (trình duyệt đời mới, WebView) hay `Origin`
+    trùng `Host`. SameSite=Strict không phân biệt cổng - trang ở cổng khác của cùng IP vẫn là "same-site"."""
+    fetch_site = (headers.get("Sec-Fetch-Site") or "").lower()
+    if fetch_site:
+        return fetch_site in ("same-origin", "none")
+    origin = headers.get("Origin")
+    if origin:
+        return urlsplit(origin).netloc.lower() == (headers.get("Host") or "").lower()
+    return True  # không phải trình duyệt: không có cookie tự gửi kèm để lợi dụng
 
 
 def device_cookie(token: str) -> str:
@@ -158,15 +195,21 @@ def forward(handler: Any, method: str, target: str, gate: StudioGate) -> None:
     if not port:
         _json(handler, HTTPStatus.SERVICE_UNAVAILABLE, {"error": "Giao diện của máy tính chưa sẵn sàng"})
         return
-    length = int(handler.headers.get("Content-Length") or 0)
-    if length > MAX_FORWARD_BODY:
-        _json(handler, HTTPStatus.REQUEST_ENTITY_TOO_LARGE, {"error": "Yêu cầu quá lớn"})
+    try:
+        length = int(handler.headers.get("Content-Length") or 0)
+    except ValueError:
+        length = -1
+    if length < 0 or length > MAX_FORWARD_BODY:
+        # Âm thì `rfile.read(-1)` đọc tới hết kết nối - vượt mọi trần. Không đọc thân: đóng kết nối sau câu trả lời.
+        handler.close_connection = True
+        _json(handler, HTTPStatus.REQUEST_ENTITY_TOO_LARGE if length > 0 else HTTPStatus.BAD_REQUEST,
+              {"error": "Yêu cầu quá lớn" if length > 0 else "Content-Length không hợp lệ"})
         return
     body = handler.rfile.read(length) if length else None
     if body is not None and not (handler.headers.get("Content-Type") or "").startswith("application/json"):
         _json(handler, HTTPStatus.UNSUPPORTED_MEDIA_TYPE, {"error": "Chỉ nhận JSON"})
         return
-    headers = {"Host": f"127.0.0.1:{port}", "X-Ebook-Token": gate.token or ""}
+    headers = {"Host": f"127.0.0.1:{port}", "X-Ebook-Token": gate.token or "", REMOTE_HEADER: "1"}
     for name in ("Content-Type", "Range", "If-None-Match", "If-Modified-Since"):
         value = handler.headers.get(name)
         if value:
@@ -175,9 +218,13 @@ def forward(handler: Any, method: str, target: str, gate: StudioGate) -> None:
     try:
         connection.request(method, target, body=body, headers=headers)
         response = connection.getresponse()
-        if urlsplit(target).path == "/api/app" and response.status == HTTPStatus.OK:
+        path = urlsplit(target).path
+        if method == "GET" and path in ("/api/app", "/api/preferences") and response.status == HTTPStatus.OK:
             info = json.loads(response.read().decode("utf-8"))
-            info.update(dialogs=False, remote=True)
+            if path == "/api/app":
+                info.update(dialogs=False, remote=True)
+            for key in PRIVATE_PREFERENCES:
+                info.pop(key, None)
             _json(handler, HTTPStatus.OK, info)
             return
         handler.send_response(response.status)
@@ -200,6 +247,9 @@ def forward(handler: Any, method: str, target: str, gate: StudioGate) -> None:
 
 def serve_static(handler: Any, root: Path, path: str) -> None:
     relative = unquote(path).lstrip("/") or "index.html"
+    if "\\" in relative or ":" in relative:
+        # `\\máy\share` ghép thành đường UNC: Windows tự nối SMB (gửi NTLM) TRƯỚC khi `relative_to` kịp từ chối.
+        relative = "index.html"
     candidate = (root / relative).resolve()
     try:
         candidate.relative_to(root.resolve())
@@ -220,6 +270,12 @@ def closed_page(machine: str) -> str:
     return _page("Studio từ xa đang tắt", f"Máy tính <b>{html.escape(machine)}</b> chưa cho phép điều khiển từ xa. "
                  "Trên máy tính: Cài đặt → Điện thoại và thiết bị → bật “Cho phép điều khiển sản xuất từ thiết bị đã "
                  "ghép”.")
+
+
+def device_closed_page(machine: str) -> str:
+    return _page("Thiết bị chưa được phép", f"Thiết bị này đã ghép với <b>{html.escape(machine)}</b> để nghe sách, nhưng "
+                 "chưa được phép điều khiển sản xuất. Trên máy tính: Cài đặt → Điện thoại và thiết bị → bật "
+                 "“Điều khiển sản xuất” ở dòng của thiết bị này.")
 
 
 def pairing_page(machine: str) -> str:

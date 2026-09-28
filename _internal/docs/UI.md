@@ -72,6 +72,14 @@ Studio (máy tính):
   đường dẫn không bao giờ đi qua (test `test_every_allowed_route_exists_on_the_computer` giữ danh sách khớp `ROUTES`).
   POST chỉ nhận JSON (trang lạ không gửi được JSON qua CORS). `/api/app` trả `remote: true, dialogs: false` để giao
   diện ẩn nút "Mở thư mục", thanh điện thoại đang phát, cài đặt của máy.
+  Soát bảo mật 28-09 (agent đối kháng, 13 phát hiện) thêm: danh sách trắng lọc ĐƯỜNG nhưng tham số thì không - nên máy
+  chủ cục bộ nhận biết yêu cầu từ xa (header `X-Abook-Remote` chỉ `forward` gắn) và khi ấy `paths` phải nằm trong
+  `<thư viện>/Nguồn tải lên` (từ chối UNC và đường thiết bị trước khi chạm đĩa - Windows tự nối SMB), `target` của xuất
+  sách bị bỏ qua; quyền Studio theo TỪNG thiết bị (`devices.json` `studio`, công tắc trên dòng thiết bị; ghép lúc Studio
+  từ xa đang bật thì có sẵn); `Host` phải là IP hay tên máy (chống DNS rebinding); lệnh ghi mang cookie phải có
+  `Sec-Fetch-Site: same-origin` hay `Origin` trùng `Host`; cookie chỉ được nhận ở đường Studio, không ở `/sync/v1`;
+  `Content-Length` âm bị từ chối; tải lên không ghi đè và không nhận tên thiết bị của Windows. CÒN: mã thiết bị đi dạng
+  rõ qua HTTP trong LAN (như đồng bộ điện thoại từ trước) - TLS tự ký ghim vân tay lúc ghép là việc sau.
 
 ## Android: `mobile/`
 
