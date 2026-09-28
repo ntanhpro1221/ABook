@@ -34,8 +34,34 @@ ngôi ba). Claude gán, agent soát đối kháng; mọi file qua `gold_replay.p
   điểm (quy tắc 11: nhãn danh hiệu là giọng thứ hai của cùng người);
 - tên giả trước khi chương lộ tên thật (Killigan -> Killiam, quy tắc 13).
 Chạy ở hàng GPU: `scratchpad/ln_eval.sh`, đầu hàng i (v3, qwen3:8b, LoRA v2), hàng j (8B) và khảo sát E1 (đổi từ 10 chương
-TMA sang 5 chương này). Việc nghi sẵn: host chưa gom kính ngữ Nhật đứng SAU tên ("HINA-SAMA" -> "HINA"; `first_person.py`
-có danh sách hậu tố nhưng `character_registry` thì không) - chờ số liệu nhãn thật từ lượt đo LN rồi mới sửa.
+TMA sang 5 chương này). Soát đối kháng (3 agent) bắt HAI lỗi nặng cùng một kiểu trong đáp án của A - giọng 『』 trong đầu nhân
+vật gán cho cái tên gần tay (ký sinh trùng ở TCF, Tọa Phu Đồng Tử ở Yamiyo) - và danh tính Killiam đã lộ từ chương 60;
+thêm quy ước GOLD_GUIDE 7b (chuỗi bài đăng mạng xã hội: NARRATOR và NPC* đều đủ) và 7c (giọng trong đầu: lần hết cuốn tìm tên).
+
+**Mốc qwen3:8b (model app đang dùng) - lần đầu đo trên LN Nhật** (khởi đầu lạnh: không gieo sổ nhân vật như sản xuất giữa
+cuốn; mọi model đo cùng điều kiện):
+
+| chương | người nói (score_models) | cảm xúc | F1 giọng main | F1 giọng dev/ln-names |
+|---|---|---|---|---|
+| TCF 042 | 42,7% | 92,5% | 39,2% | 42,2% |
+| Nise 132 | 59,2% | 84,0% | 52,0% | 52,0% |
+| HDST 062 (Hàn) | 65,5% | 87,5% | 60,7% | **70,3%** |
+| Yamiyo 141 | 38,5% | 59,0% | 47,9% | 47,9% |
+| Nageki 65 | hết giờ (trần 20 phút/chương, 308 đoạn) - đo lại ở hàng i với trần 60 phút | | | |
+
+Lỗi của model (mổ bằng `score_models --misses` + `scratchpad/turn_taking.py`):
+- **Chộp tên quen**: người không tên hay chưa gọi tên lấy tên người đã biết - ông chú trong làng (Nise) thành Alistar/Magali;
+  Yamiyo: Sumire nói MỘT câu đầu chương rồi rời cảnh, model gán cho bà 22/41 câu của Tọa Phu Đồng Tử và 11/22 câu của Hina.
+- **Gộp lượt / lệch pha** trong đối đáp hai người không lời dẫn: lời Grey mang tên Yoshihito (TCF); Ed <-> Glast (HDST);
+  Magali <-> Alistar lệch một nhịp suốt đoạn (Nise). Cặp thoại liền nhau: gộp sai 16/44 (TCF 4/6, Nise 3/13, HDST 9/25), đáp
+  án thật sự cùng người chỉ 2/44 - nhưng lệch pha thì luật "đổi lượt" không cứu (model vẫn đổi, chỉ đổi sai chỗ): việc của MODEL.
+- **Một người nhiều nhãn** (-> nhiều giọng) - việc của HOST, nhánh `dev/ln-names`, ba luật, gold-check 16 truyện sạch, mọi
+  lượt đo cũ không đổi một số: (1) tên Nhật họ trước là tên kiểu Việt ("HINA" -> "ONIZUKI HINA", nhận bằng romaji); (2) nhãn
+  một chữ là họ HOẶC tên gọi của đúng một tên Nhật đủ mà SÁCH viết >= 2 lần ("Kuchinashi", "Yoshihito" -> KUCHINASHI YOSHIHITO -
+  sách viết 33 lần; họ Onizuki chung 8 người ở Yamiyo thì không đoán); (3) chức danh trước tên: "GIÁO SƯ GLAST" = "Glast"
+  (thêm chức danh học đường, hoàng tộc, quân đội, sư môn vào danh sách cũ chỉ có xưng hô gia đình + tước quý tộc).
+- Bỏ: khoá "(…)" ngay sau lời thoại thành nội tâm - 81 dòng ở Yamiyo nhưng ở truyện khác là ghi chú dịch ("(note: ...)"),
+  tiếng động ("(Tiếng sợ hãi)").
 
 ## LORA NỀN 8B TRÊN CARD 8 GB 28-09 (chủ sách: "sao không huấn luyện trên nền qwen3:8b?")
 
