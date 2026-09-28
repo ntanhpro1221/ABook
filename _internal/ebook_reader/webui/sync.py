@@ -360,9 +360,66 @@ class SyncApp:
         self.remote = remote or Remote()
         self.fingerprints = fingerprints or Fingerprints(listening.path.with_name("fingerprints.json"))
         self.studio = studio  # None: cổng chỉ đồng bộ (test, máy không có giao diện)
+        # Số "việc cần anh" của mỗi dự án, tính lại chỉ khi sách đổi (studio_view): điện thoại hỏi mỗi 15 phút.
+        self._work: dict[str, tuple[tuple[float, ...], int]] = {}  # đường dẫn -> (dấu thời gian, số việc)
+        self._work_lock = threading.Lock()
 
     def book(self, value: str) -> Path | None:
         return self.library.resolve(value)
+
+    def studio_view(self) -> list[dict[str, Any]]:
+        """Trạng thái sản xuất gọn cho điện thoại: mỗi dự án Studio một dòng - giai đoạn, còn chạy không, số chương xong,
+        số "việc cần anh", lỗi cuối. Điện thoại tự so với lần hỏi trước để báo "sách xong", "có việc mới cần anh", "dừng vì
+        lỗi" (StudioAlerts.kt); máy tính không phải nhớ gì cho từng điện thoại.
+
+        Đang chạy hay không đọc từ nhịp tim của worker trong DB (`store.summarize`), không từ bộ chạy của cửa sổ app - cổng
+        đồng bộ không có bộ chạy, và sách chạy bằng dòng lệnh cũng phải được báo."""
+        from .work_items import work_items
+
+        def stamp_of(path: Path) -> tuple[float, ...]:
+            stamps = [store.touched(path)]
+            for name in ("overrides.json", "doubt.json"):
+                try:
+                    stamps.append((path / name).stat().st_mtime)
+                except OSError:
+                    stamps.append(0.0)
+            return tuple(stamps)
+
+        def work_of(path: Path) -> int | None:
+            # Không đếm được (sách đời cũ, DB đang khoá) thì None - điện thoại coi là "không biết", không báo gì.
+            stamp = stamp_of(path)
+            with self._work_lock:
+                cached = self._work.get(str(path))
+            if cached is not None and cached[0] == stamp:
+                return cached[1]
+            try:
+                count = len(work_items(path)["items"])
+            except Exception:  # noqa: BLE001
+                return None
+            with self._work_lock:
+                self._work[str(path)] = (stamp, count)
+            return count
+
+        books = []
+        for path in self.library.projects():
+            try:
+                summary = self.library.summary(path, running=False)
+            except Exception:  # noqa: BLE001 - một sách hỏng không được làm mất cả danh sách
+                continue
+            work = work_of(path)
+            chapters = summary.get("chapters") or {}
+            books.append({
+                "id": summary["id"],
+                "title": str(summary.get("title") or path.name),
+                "phase": str(summary.get("phase") or ""),
+                "statusLabel": str(summary.get("statusLabel") or ""),
+                "running": bool(summary.get("running")),
+                "chapters": {"completed": int(chapters.get("completed") or 0), "total": int(chapters.get("total") or 0)},
+                "work": work,
+                "lastError": str(summary.get("lastError") or "")[:300],
+                "updatedAt": summary.get("updatedAt"),
+            })
+        return books
 
     def match(self, books: Any) -> dict[str, str]:
         """Cuốn điện thoại mở từ file là cuốn nào của máy này (mã máy này), so bằng audio từng chương - sách không mang
@@ -583,6 +640,16 @@ class SyncHandler(BaseHTTPRequestHandler):
                 commands = self.app.remote.report(device["id"], device["name"], body, body.get("wait", 0))
                 self._json(HTTPStatus.OK, {"commands": [{key: value for key, value in command.items() if key != "at"}
                                                         for command in commands]})
+                return
+            if method == "GET" and path == "/sync/v1/studio":
+                # Thông báo sản xuất trên điện thoại: thông tin của Studio, nên cùng hai điều kiện với Studio từ xa - công
+                # tắc trên máy tính bật, và thiết bị này được phép điều khiển sản xuất.
+                if self.app.studio is None or not self.app.studio.allowed():
+                    self._json(HTTPStatus.FORBIDDEN, {"error": "Máy tính chưa cho phép điều khiển từ xa"})
+                elif not device.get("studio"):
+                    self._json(HTTPStatus.FORBIDDEN, {"error": "Thiết bị này chưa được phép điều khiển sản xuất"})
+                else:
+                    self._json(HTTPStatus.OK, {"name": self.app.name, "at": time.time(), "books": self.app.studio_view()})
                 return
             if method == "GET" and path == "/sync/v1/library":
                 self._json(HTTPStatus.OK, {"name": self.app.name, "books": self.app.library_view()})
