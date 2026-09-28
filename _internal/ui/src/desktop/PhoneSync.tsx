@@ -157,8 +157,9 @@ function PairingPanel({ sync, onPair, onCancel, busy }: { sync: SyncView; onPair
           </div>
         </div>
         <div className="mt-4 flex justify-end">
+          {/* Chỉ huỷ mã đang hiện, không gỡ thiết bị nào - "Huỷ ghép" dễ hiểu thành gỡ thiết bị (soát UX 29-09). */}
           <Button size="sm" variant="ghost" onClick={onCancel}>
-            Huỷ ghép
+            Huỷ mã này
           </Button>
         </div>
       </div>
