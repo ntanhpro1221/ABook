@@ -84,7 +84,9 @@ export interface ListenBook {
   eta?: { phase: string; seconds: number } | null;
   chapters?: ListenChapter[];
   /** Điện thoại: cuốn này nằm trên máy tính, nghe thẳng qua mạng (chưa tải về). */
-  remote?: boolean;
+  /** Cuốn nằm ở máy khác, nghe thẳng qua mạng: điện thoại - `true` (trên máy tính đã ghép); máy tính - tên máy tính
+   *  kia (webui/remote_books.py). */
+  remote?: boolean | { computer: string };
   /** Hồ sơ nghe gắn với cuốn này (chưa nghe lần nào thì rỗng). */
   records?: ListeningRecord[];
 }
