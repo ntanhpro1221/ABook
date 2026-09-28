@@ -23,6 +23,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   nghe, đọc theo, nhân vật, dấu trang, hồ sơ nghe đều như sách của máy này. Chương được tải lần đầu nghe tới rồi giữ
   lại, nên phần đã nghe vẫn nghe được khi máy kia tắt. Chỗ đang nghe và dấu trang đi hai chiều: nghe
   ở máy nào thì mở ở máy kia cũng tiếp đúng chỗ. Thôi ghép là xoá phần đã giữ.
+- Điện thoại: **nghe thư viện của điện thoại khác** - màn Tải sách → "Thiết bị khác" → "Ghép thiết bị" (tự tìm trong
+  mạng, hay gõ địa chỉ) và nhập mã 6 số đang hiện trên máy kia. Sách của máy ấy hiện trong Thư viện với nhãn "Trên <tên
+  máy>": nghe thẳng, đọc theo, tải hẳn về; chỗ đang nghe và dấu trang đi hai chiều. Ghép được nhiều máy cùng lúc, cả
+  máy tính thứ hai; máy tính chính vẫn như trước.
+- Điện thoại: sửa lỗi app tự đóng lặp lại khi mở lại trong lúc trình phát còn giữ sách (đọc trạng thái trình phát sai
+  luồng).
 - Điện thoại: **cho máy khác nghe thư viện của điện thoại** - màn Tải sách → bật "Cho máy khác nghe thư viện này" →
   "Ghép máy mới" hiện mã 6 số và địa chỉ. Máy tính ghép như ghép một máy tính khác (Cài đặt → Máy tính khác; "Tìm máy
   trong mạng" hiện điện thoại với biểu tượng điện thoại) rồi nghe thẳng những cuốn chỉ có trên điện thoại. Điện thoại
