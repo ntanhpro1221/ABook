@@ -519,6 +519,70 @@ def _vietnamese_order_name(name: str) -> bool:
     return bool(parts) and all(is_vietnamese_syllable(part) for part in parts)
 
 
+# Tên riêng của sách làm đích cho `snap_to_source_names`: chữ ngắn hơn thế có quá nhiều hàng xóm cách một ký tự, và chữ
+# viết hoa giữa câu ít lần hơn thế thì chưa chắc là tên.
+SOURCE_NAME_MINIMUM_LENGTH = 4
+SOURCE_NAME_MINIMUM_COUNT = 3
+
+
+def _source_proper_nouns(source: str) -> dict[str, "Counter[str]"]:
+    """{chữ đã bỏ dấu, hạ chữ: {cách sách viết: số lần}} cho mọi chữ viết hoa đầu KHÔNG đứng đầu câu, đủ dài."""
+    text = "\n".join(unicodedata.normalize("NFC", line) for line in source.split("\n"))
+    seen: Counter[str] = Counter()
+    for match in re.finditer(r"[^\W\d_]+", text):
+        word = match.group(0)
+        if word[0].isupper() and len(word) >= SOURCE_NAME_MINIMUM_LENGTH and not _opens_a_sentence(text, match.start()):
+            seen[word] += 1
+    nouns: dict[str, Counter[str]] = defaultdict(Counter)
+    for word, count in seen.items():  # bỏ dấu từng chữ KHÁC NHAU, không từng lần gặp
+        nouns[fold_for_source_search(word)][word] += count
+    return nouns
+
+
+def snap_to_source_names(names: "Sequence[str]", source: str, folded_source: str) -> dict[str, str]:
+    """Nhãn KHÔNG có trong sách, và `fold_to_source_spelling` không có nhãn nào để trỏ về: trỏ về TÊN RIÊNG của sách
+    cách nó một ký tự. Trả về {nhãn: tên theo sách}.
+
+    LoRA v5 (29-09) chép "Glast" thành "GAST" ở mọi câu của ông ta (HDST 062: 21 câu) và không viết đúng lần nào - không
+    có nhãn "Glast" để gom về, nên người thầy thành một nhân vật tên lạ với giọng riêng. Mỗi chữ vắng mặt của nhãn phải
+    khớp ĐÚNG MỘT tên riêng của sách (viết hoa giữa câu từ `SOURCE_NAME_MINIMUM_COUNT` lần, dài từ
+    `SOURCE_NAME_MINIMUM_LENGTH`) cách một ký tự, và cả tên sau khi thay phải có trong sách ("Krai Andrei" -> "Krai
+    Andrey" chỉ khi sách viết "Krai Andrey"). Chỉ tên kiểu Âu / Nhật: tên Việt / Hán Việt mỗi chữ một âm tiết ngắn, lệch
+    một ký tự đã là họ khác ("Tương" / "Lương" - xem `fold_to_source_spelling`). Kiểu chữ theo nhãn như
+    `restore_source_marks`: nhãn in hoa ra in hoa, còn lại chữ thay lấy đúng chữ của sách.
+    """
+    if not source or not folded_source:
+        return {}
+    nouns: dict[str, Counter[str]] | None = None
+    snapped: dict[str, str] = {}
+    for name in names:
+        own = normalize_name(name)
+        if not own or source_occurrences(own, folded_source) or _vietnamese_order_name(name):
+            continue
+        replaced: list[str] = []
+        for word in name.split():
+            if source_occurrences(word, folded_source):
+                replaced.append(word)
+                continue
+            if nouns is None:
+                nouns = _source_proper_nouns(source)  # chỉ dựng khi có nhãn vắng mặt thật
+            folded_word = fold_for_source_search(word)
+            matches = [
+                folded
+                for folded, spellings in nouns.items()
+                if sum(spellings.values()) >= SOURCE_NAME_MINIMUM_COUNT and _within_one_edit(folded_word, folded)
+            ]
+            if len(matches) != 1:
+                break
+            spellings = nouns[matches[0]]
+            replaced.append(max(spellings, key=lambda spelling: (spellings[spelling], spelling)))
+        else:
+            candidate = " ".join(replaced)
+            if candidate != " ".join(name.split()) and source_occurrences(candidate, folded_source):
+                snapped[name] = candidate.upper() if name.isupper() else candidate
+    return snapped
+
+
 # Một chữ romaji Hepburn: chuỗi âm tiết (phụ âm đầu tuỳ chọn, có thể kép "kk"/"tch", hoặc ghép "ky"/"sh"/"ts"...) + nguyên
 # âm, hoặc "n" đứng riêng - "onizuki", "yuusei", "kuchinashi", "hokkaido". Tên Âu gần như luôn vấp một cụm phụ âm hay phụ âm
 # cuối không có trong tiếng Nhật ("lucien", "evans", "grey", "krai", "andrey"), tên Hàn cũng vậy ("kim", "dokja").
@@ -713,6 +777,15 @@ def canonical_speaker_names(
                 representatives[key] = source_folded[name]
         for loser, winner in sorted(source_folded.items()):
             log(f"  Tên {loser} không có trong sách; đọc thành {winner}.")
+
+    # Tên vắng mặt mà không nhãn nào gần nó (model viết sai MỌI lần - "GAST" cho Glast): trỏ về tên riêng của sách.
+    snapped = snap_to_source_names(sorted(set(representatives.values())), source, folded_source)
+    if snapped:
+        for key, name in list(representatives.items()):
+            if name in snapped:
+                representatives[key] = snapped[name]
+        for loser, winner in sorted(snapped.items()):
+            log(f"  Tên {loser} không có trong sách; sách viết {winner}.")
 
     # Tên gọi (chữ cuối) về tên đủ - sau lượt đánh vần theo sách, để so trên cách viết đã sửa.
     given_names = merge_given_names(representatives)
