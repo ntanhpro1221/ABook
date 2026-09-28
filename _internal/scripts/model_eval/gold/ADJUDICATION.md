@@ -461,3 +461,21 @@ LỆCH LUẬT. B không thấy câu nào sai hẳn người nói; A chấp nhậ
 
 Host sai (giữ đáp án): 35 - cue "đau lòng" trong câu hỏi tu từ BÁC BỎ việc đau lòng ("Tại sao phải đau lòng vì người khác
 chứ?"). `voice_identity --gold-check`: two_childhood_friends 9 người, không nhập ai.
+
+**Yamiyo no Hotaru 009 (28-09 22:xx) - đáp án HUẤN LUYỆN, vòng dữ liệu v5** (truyện ngắn Giao thừa: đối đáp Tomobe - Hina
+không lời dẫn, 『』 của Tọa Phu Đồng Tử chen giữa lời Magoroku/Mari, "ả" = Hina không gọi tên). A = Claude, B = agent soát
+(`scratchpad/review_yamiyo009.md`). B không thấy câu nào sai người nói chính; A nhận hết đề xuất:
+
+| chỗ | A ghi | kết luận | bằng chứng |
+|---|---|---|---|
+| 7, 129, 144 | tên đủ | thêm NPC*~ | nói trước khi lời kể gọi tên (10, 132, 153) - quy tắc 5, tiền lệ 141:38, 155:2-3 |
+| 13, 16, 17, 20, 28, 36-38, 48, 52, 75, 110, 120, 169, 176 | N | N,T NARRATOR,TOMOBE | tự nhủ / câu hỏi tu từ của người kể (quy tắc 4); 13 "thời Showa ư?" được Hina đáp ở 14 |
+| 186, 196, 197, 199, 202 / 200 | N | N,T HINA~ / HINA đủ | tiếng lòng xưng "ta" trong lời kể ngôi ba; 200 trọn là lời trong đầu |
+| 93, 135, 150, 152, 182, 192, 194, 204 | người nói | thêm NARRATOR~ | tiếng không lời (quy tắc 8, 141:173) |
+| 159 | MARI | thêm MAGOROKU~ | "anh em tôi thấy thật ái ngại" đáp câu "cảm ơn anh trai cô ấy" |
+| 8, 86, 122, 161, 188, 199, 200 | neutral | thêm surprised / afraid / happy / angry | "kinh ngạc", "bất an", "lo âu", "e sợ", "đê mê", "thống khoái" |
+| 84, 99 / 127 / 54, 85 | normal | soft + whispering / loud / 0-2 | "lẩm bẩm" / "gào" / "!!" |
+
+Host sai (giữ đáp án): 40 "vui vẻ" là CỐ TỎ RA vui; 128 "gào lên" là Hina đùa. "Ả" = Hina: "đứa em gái" = Aoi (079:299), "tảng
+mỡ thừa" = Uemon (079:207). `voice_identity --gold-check`: yamiyo 15 người, không nhập ai. Phát lại: 43 + 43 lượt, không
+LỆCH LUẬT.
