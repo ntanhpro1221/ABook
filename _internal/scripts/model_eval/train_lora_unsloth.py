@@ -59,6 +59,9 @@ def main() -> int:
     parser.add_argument("--save-steps", type=int, default=50,
                         help="lưu checkpoint mỗi N bước; 8B trên card 8 GB ~3 phút/bước nên 10 (~30 phút) - máy khởi "
                              "động lại chỉ mất chừng ấy")
+    parser.add_argument("--time-limit-hours", type=float, default=0.0,
+                        help="dừng gọn (lưu checkpoint, KHÔNG lưu adapter) sau chừng ấy giờ - phiên Kaggle bị cắt ở 12 giờ và "
+                             "mất hết nếu chưa lưu; chạy lại với --resume từ checkpoint")
     parser.add_argument("--offload-embedding", action="store_true",
                         help="nạp bằng FastModel và đẩy bảng embedding sang RAM (~1,2 GB với Qwen3-8B) - nhánh tối ưu "
                              "FastLanguageModel của Qwen3 lặng lẽ bỏ qua tuỳ chọn này")
@@ -119,10 +122,28 @@ def main() -> int:
                                       response_part="<|im_start|>assistant\n")
     torch.cuda.reset_peak_memory_stats()
     started = time.time()
+    stopped = {}
+    if args.time_limit_hours > 0:
+        from transformers import TrainerCallback
+
+        class TimeLimit(TrainerCallback):
+            def on_step_end(self, _args, state, control, **_kwargs):
+                if time.time() - started > args.time_limit_hours * 3600:
+                    control.should_save = True
+                    control.should_training_stop = True
+                    stopped.update(step=state.global_step, total=state.max_steps)
+                return control
+
+        trainer.add_callback(TimeLimit())
     resumable = args.resume and any(args.out.glob("checkpoint-*"))
     trainer.train(resume_from_checkpoint=True if resumable else None)
     peak = torch.cuda.max_memory_reserved() / 2**30
     print(f"xong {time.time() - started:.0f} s, đỉnh VRAM (đã giữ) {peak:.2f} GiB")
+    if stopped:
+        (args.out / "INCOMPLETE").write_text(f"{stopped['step']}/{stopped['total']}\n", encoding="utf-8")
+        print(f"DỪNG VÌ HẾT GIỜ ở bước {stopped['step']}/{stopped['total']} - chạy lại với --resume từ checkpoint")
+        return 3
+    (args.out / "INCOMPLETE").unlink(missing_ok=True)
     if not args.smoke:
         model.save_pretrained(str(args.out / "adapter"))
         tokenizer.save_pretrained(str(args.out / "adapter"))
