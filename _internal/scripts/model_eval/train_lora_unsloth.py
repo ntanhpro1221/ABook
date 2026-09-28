@@ -1,7 +1,7 @@
 """QLoRA trên nền 8B bằng Unsloth - chạy TRONG WSL2 (archlinux, môi trường ~/unsloth), 28-09.
 
     wsl.exe -d archlinux -- bash -lc ". ~/unsloth/bin/activate && python \
-        '/mnt/d/Novels/Ebook Reader/_internal/scripts/model_eval/train_lora_unsloth.py' \
+        '/mnt/d/Novels/ABook/_internal/scripts/model_eval/train_lora_unsloth.py' \
         --data /mnt/d/Novels/LLM_Train/data_v3 --out /mnt/d/Novels/LLM_Train/runs/qwen3-8b-lora-28-09 --smoke 8"
 
 Vì sao: `train_lora.py` (PyTorch trên Windows) vừa khít nền 4B trên card 8 GB (đỉnh 4,7-5,0 GiB); nền 8B cần ~8,5-9 GB
@@ -44,7 +44,18 @@ def main() -> int:
     parser.add_argument("--smoke", type=int, default=0, help="chỉ N mẫu dài nhất và 3 bước - đo VRAM, không huấn luyện")
     parser.add_argument("--render-only", action="store_true", help="in đuôi một mẫu đã dựng khuôn rồi thoát")
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--export-gguf", default="",
+                        help="không huấn luyện: gộp <out>/adapter vào nền 16-bit, xuất GGUF theo kiểu nén này (vd q4_k_m)")
     args = parser.parse_args()
+
+    if args.export_gguf:
+        # Q4_K_M như qwen3:8b đang chạy: bản q8_0 của 8B nặng 8,7 GB, không vừa card 8 GB lúc suy luận.
+        model, tokenizer = FastLanguageModel.from_pretrained(
+            model_name=str(args.out / "adapter"), max_seq_length=args.max_length, load_in_4bit=True, dtype=None
+        )
+        model.save_pretrained_gguf(str(args.out / "gguf"), tokenizer, quantization_method=args.export_gguf)
+        print("đã xuất", sorted(str(path) for path in (args.out / "gguf").rglob("*.gguf")))
+        return 0
 
     model, tokenizer = FastLanguageModel.from_pretrained(
         model_name=args.base, max_seq_length=args.max_length, load_in_4bit=True, dtype=None
@@ -80,7 +91,8 @@ def main() -> int:
                                       response_part="<|im_start|>assistant\n")
     torch.cuda.reset_peak_memory_stats()
     started = time.time()
-    trainer.train(resume_from_checkpoint=args.resume or None)
+    resumable = args.resume and any(args.out.glob("checkpoint-*"))
+    trainer.train(resume_from_checkpoint=True if resumable else None)
     peak = torch.cuda.max_memory_reserved() / 2**30
     print(f"xong {time.time() - started:.0f} s, đỉnh VRAM (đã giữ) {peak:.2f} GiB")
     if not args.smoke:
