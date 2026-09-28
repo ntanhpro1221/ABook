@@ -67,6 +67,14 @@ Người duyệt đúng những câu ấy là cách rẻ nhất để đạt 100
      giọng" vẫn đúng; thu lại chỉ khi giọng đổi. Thử trên bản sao Tập 18: câu nội tâm chương 734 Người kể -> Nasdell,
      `assert_voice_stability` cả cuốn vẫn qua. Lưu ý: nội tâm hiện vẫn đọc bằng giọng người kể (`tts._spoken_row`), nên
      với câu nội tâm lần thu lại cho ra cùng giọng cho tới khi bản vá "nội tâm = giọng người nghĩ" được áp.
+   - **Tab "Kịch bản" XONG 28-09** (`webui/casting_review.py`, `ui/src/studio/ScriptTab.tsx`): hộp việc chỉ đưa chỗ
+     máy nghi, tab này cho duyệt CẢ chương - mọi câu thoại/nội tâm có chip người nói bấm đổi được, đi đúng đường ghi đè
+     của mục 3 (không có đường ghi thứ hai). Chỗ nghi dùng chung tín hiệu với hộp việc (bộ chấm thứ hai, lượt đối đáp,
+     lời gọi); câu "liền nhau cùng người" gợi ý người khác gần nhất vừa nói trước cặp ấy. Xác nhận "Đúng là X" cũng
+     ghi thành yêu cầu (= nhãn cho vòng học, bước 4). Thử trên bản sao lô 18 cuốn 2: 43 chương, 31 chỗ nghi. Chương 725: hai
+     chỗ nghi đều là lỗi thật (khán giả trầm trồ mà gán cho Louise đang thuyết minh), và đọc quanh chúng thấy thêm hai
+     lỗi không tín hiệu nào bắt: câu giới thiệu của Louise gán cho người kể, câu Ali lắp bắp gán cho Louise - lý do tab
+     này cần có cạnh hộp việc.
    - Trên đường làm, lộ một lỗi có sẵn: câu bị đặt lại vẫn giữ ứng viên vòng sửa `promoted` của bản thu đã bỏ, và
      recovery lần sau chết ("promoted candidate is not the current segment artifact"). Đã sửa: đặt lại câu xoá lịch sử
      vòng sửa của nó, trong một transaction (`tests/test_a_reset_line_forgets_its_repairs.py`).
