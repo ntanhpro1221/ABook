@@ -13912,12 +13912,22 @@ class ProjectDB:
                 ),
             )
 
-    def rewrite_speaker(self, old_name: str, canonical_name: str) -> int:
+    def rewrite_speaker(self, old_name: str, canonical_name: str, *, chapter_ids: list[int] | None = None) -> int:
+        """Đổi nhãn người nói `old_name` -> `canonical_name`; `chapter_ids`: chỉ trong các chương ấy (người kể theo chương)."""
         with self.connect() as conn:
-            cursor = conn.execute(
-                "UPDATE segments SET speaker=?,updated_at=? WHERE speaker=?",
-                (canonical_name, time.time(), old_name),
-            )
+            if chapter_ids is None:
+                cursor = conn.execute(
+                    "UPDATE segments SET speaker=?,updated_at=? WHERE speaker=?",
+                    (canonical_name, time.time(), old_name),
+                )
+            else:
+                ids = [int(chapter_id) for chapter_id in chapter_ids]
+                if not ids:
+                    return 0
+                cursor = conn.execute(
+                    f"UPDATE segments SET speaker=?,updated_at=? WHERE speaker=? AND chapter_id IN ({','.join('?' for _ in ids)})",
+                    (canonical_name, time.time(), old_name, *ids),
+                )
             return int(cursor.rowcount)
 
     def rewrite_segment_speakers(
