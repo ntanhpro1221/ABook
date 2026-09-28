@@ -327,6 +327,9 @@ GENERIC_CHILD_LABELS = {"trẻ em", "đứa bé", "đứa trẻ", "trẻ nhỏ"}
 # nối tiếp cùng người nói" gán hai dòng 『…』 liền nhau cho một người - hai giọng qua loa nói liên tiếp là một ca thật.
 DIALOGUE_OPENERS = frozenset({'"', "'", "“", "‘", "『"})
 DIALOGUE_CLOSERS = frozenset({'"', "'", "”", "’", "』"})
+# Đoạn mở bằng ngoặc đơn là nội tâm - một lượt MỚI, không phải phần tiếp của lời thoại đoạn trước còn để ngỏ (Nise
+# 086:65-67: dấu nháy của người lính không đóng, rồi "(Khôngggggg! Tránh xa ta ra!...)" của Alistar bị chép người nói).
+PAREN_TURN_OPENERS = frozenset({"(", "（"})
 DIALOGUE_OUTER_QUOTE_PAIRS = {"“": "”", '"': '"'}
 # Dòng mở bằng gạch đầu dòng ("- Bẩm ông lớn...") là một LƯỢT thoại mới: lối viết thoại của văn Việt (Tắt đèn) và nhiều
 # bản dịch truyện Trung (Tam quốc); text_processing khoá cả dòng ấy là thoại theo đúng mẫu này. Thiếu nó, khoá "thoại
@@ -1862,7 +1865,7 @@ def _repair_continued_dialogue_speakers(
         text = str(row["text"]).lstrip()
         if not previous_text or not text:
             continue
-        if text[0] in DIALOGUE_OPENERS or previous_text[-1] in DIALOGUE_CLOSERS:
+        if text[0] in DIALOGUE_OPENERS or text[0] in PAREN_TURN_OPENERS or previous_text[-1] in DIALOGUE_CLOSERS:
             continue
         if DIALOGUE_DASH_TURN_PATTERN.match(text):
             continue
