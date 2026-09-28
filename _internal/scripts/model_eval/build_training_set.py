@@ -28,10 +28,12 @@ SPLIT: dict[str, dict[str, set[str]]] = {
         "two_childhood_friends": {"042"},
         "nise_seiken": {"132"},
         "huong_dan_sinh_ton": {"062"},
-        "yamiyo_no_hotaru": {"141"},
+        "yamiyo_no_hotaru": {"141", "225"},
         "nageki_no_bourei": {"65"},
         # Chương thứ 6 (28-09 13:xx): LN Nhật ngôi thứ nhất, đối đáp hai người không lời dẫn dài.
         "love_unseen": {"07"},
+        # Bộ LN MỞ RỘNG 29-09: 519 câu nhiễu ~±3 điểm, chưa đủ phân định v3/v5/8B/9B - thêm chương chưa học, xa mọi
+        # chương train/đo của cùng truyện: yamiyo 225 (ở trên).
     },
     "dev": {
         "throne_of_magical_arcana": {"344"},
