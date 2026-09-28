@@ -1,3 +1,4 @@
+import * as Switch from "@radix-ui/react-switch";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Clapperboard, Download, FileAudio, Laptop, Loader2, RefreshCw, Search, Unplug, Wifi } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -166,6 +167,44 @@ function RemoteRow({ book, progress, onDownload }: { book: RemoteBook; progress?
   );
 }
 
+// Báo về điện thoại khi máy tính sản xuất có tin (StudioAlerts.kt): sách xong, dừng vì lỗi, có việc mới cần anh.
+// Cần công tắc Studio từ xa trên máy tính và quyền điều khiển sản xuất cho điện thoại này - như chính trang Studio.
+function StudioAlertsRow() {
+  const client = useQueryClient();
+  const state = useQuery({ queryKey: ["studio-alerts"], queryFn: () => EbookLibrary.studioAlerts() });
+  const change = useMutation({
+    mutationFn: (enabled: boolean) => EbookLibrary.setStudioAlerts({ enabled }),
+    onSuccess: (data) => {
+      client.setQueryData(["studio-alerts"], data);
+      if (data.enabled && !data.permitted) toast.error("Android chưa cho ABook đăng thông báo", { description: "Bật lại trong Cài đặt của máy > Ứng dụng > ABook > Thông báo." });
+      else if (data.enabled) toast.success("Sẽ báo khi sách xong hay có việc cần anh", { description: "Máy tính cần bật \"Cho phép điều khiển sản xuất\"." });
+    },
+    onError: (error: Error) => toast.error("Chưa đổi được", { description: error.message }),
+  });
+  const enabled = state.data?.enabled ?? false;
+  return (
+    <div className="mt-3 flex items-center justify-between gap-4 rounded-2xl border border-line bg-panel px-4 py-3.5">
+      <div className="min-w-0">
+        <div className="text-[15px] font-medium">Báo khi sách xong hay có việc cần anh</div>
+        <div className="mt-0.5 text-xs leading-snug text-fg-2">
+          {enabled && state.data && !state.data.permitted
+            ? "Android đang chặn thông báo của ABook."
+            : "Điện thoại hỏi máy tính mỗi 15 phút và mỗi lần mở app."}
+        </div>
+      </div>
+      <Switch.Root
+        checked={enabled}
+        disabled={change.isPending || state.isLoading}
+        onCheckedChange={(value) => change.mutate(value)}
+        aria-label="Báo khi sách xong hay có việc cần anh"
+        className="relative h-7 w-12 shrink-0 rounded-full bg-line-strong transition-colors data-[state=checked]:bg-accent"
+      >
+        <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
+      </Switch.Root>
+    </div>
+  );
+}
+
 export function DevicesScreen() {
   const client = useQueryClient();
   const connection = useQuery({ queryKey: ["connection"], queryFn: () => EbookLibrary.connection() });
@@ -217,6 +256,7 @@ export function DevicesScreen() {
             >
               Studio của máy tính
             </Button>
+            <StudioAlertsRow />
             <div className="mt-5 divide-y divide-line">
               {remote.data?.books.length ? (
                 remote.data.books.map((book) => (

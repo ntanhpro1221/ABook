@@ -92,7 +92,9 @@ class StudioActivity : AppCompatActivity() {
                 if (web.canGoBack()) web.goBack() else finish()
             }
         })
-        if (savedInstanceState != null) web.restoreState(savedInstanceState) else web.loadUrl("$base/#/studio")
+        // Thông báo Studio (StudioAlerts.kt) mở thẳng đúng cuốn, đúng tab: "/#/studio/<mã>?tab=work".
+        val path = intent.getStringExtra("path")?.takeIf { it.startsWith("/#/studio") } ?: "/#/studio"
+        if (savedInstanceState != null) web.restoreState(savedInstanceState) else web.loadUrl(base + path)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
