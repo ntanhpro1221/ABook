@@ -37,6 +37,10 @@ SEVERITY = {
     "audio": 0.9,
 }
 EXAMPLES = 3
+# Thẻ biệt danh (3a): số lần sách viết danh hiệu SÁT tên (cách một dấu cách, hay "được mệnh danh/gọi là") mới hỏi.
+EPITHET_EVIDENCE = 3
+EPITHET_LINKS = ("được mệnh danh là", "được mệnh danh", "được gọi là", "được biết đến là")
+_BOOK_TEXT: dict[tuple, str] = {}  # văn bản sách đã bỏ dấu, theo (file, mtime, cỡ) - chỉ giữ cuốn gần nhất
 LEADING = re.compile(r"^[\s\-–—“”\"'‘’«»]+")
 
 
@@ -117,6 +121,73 @@ QUOTE_OPENERS = ("\"", "“", "『", "「", "«")
 QUOTE_CLOSERS = ("\"", "”", "』", "」", "»")
 
 
+def _folded_book(chapter_paths: list[str]) -> str:
+    """Cả cuốn (mọi .txt cùng thư mục với các chương, như character_registry._source_text), bỏ dấu, hạ chữ - giữ lại giữa
+    các lần mở hộp "Việc cần anh" (bỏ dấu cả cuốn mất vài giây)."""
+    from ..character_registry import fold_for_source_search
+
+    folders = sorted({Path(path).parent for path in chapter_paths if path and Path(path).parent.is_dir()})
+    files = [path for folder in folders for path in sorted(folder.glob("*.txt"))]
+    key = tuple((str(path), path.stat().st_mtime_ns, path.stat().st_size) for path in files)
+    if key not in _BOOK_TEXT:
+        _BOOK_TEXT.clear()
+        _BOOK_TEXT[key] = fold_for_source_search(
+            "\n".join(path.read_text(encoding="utf-8", errors="replace") for path in files))
+    return _BOOK_TEXT[key]
+
+
+def _word_positions(needle: str, text: str) -> list[int]:
+    """Chỗ bắt đầu của `needle` NGUYÊN CHỮ trong `text` (cả hai đã bỏ dấu, hạ chữ)."""
+    found, start = [], 0
+    while needle:
+        index = text.find(needle, start)
+        if index < 0:
+            return found
+        end = index + len(needle)
+        if (index == 0 or not text[index - 1].isalnum()) and (end == len(text) or not text[end].isalnum()):
+            found.append(index)
+        start = index + 1
+    return found
+
+
+def epithet_links(labels: list[str], folded_book: str) -> dict[tuple[str, str], int]:
+    """{(danh hiệu, tên): số lần sách viết chúng SÁT nhau}: "Thiên Biến Vạn Hóa Krai", "Krai Thiên Biến Vạn Hóa",
+    "Krai được mệnh danh Thiên Biến Vạn Hóa". Tên được so cả chữ đầu và chữ cuối ("Krai" của "Krai Andrey"). Dấu phẩy KHÔNG
+    tính: "Tino, Krai" hay "Lapis, Kris" là danh sách hai người (đo trên kho Nageki 29-09: cặp đúng 5 lần sát nhau, hai cặp
+    sai 0 lần sát, 9 và 5 lần cách dấu phẩy). Nhãn này nằm trong nhãn kia thì bỏ - thẻ "một người hai tên" lo."""
+    from ..character_registry import fold_for_source_search
+
+    folded = {label: fold_for_source_search(label).strip() for label in labels}
+    joins = [fold_for_source_search(link) for link in EPITHET_LINKS]  # cùng phép gấp với văn bản ("được" -> "đuoc")
+    forms: dict[str, set[str]] = {}
+    for label, text in folded.items():
+        words = text.split()
+        forms[label] = {text} | ({word for word in (words[0], words[-1]) if len(word) >= 3} if len(words) > 1 else set())
+    links: dict[tuple[str, str], int] = {}
+    for epithet, text in folded.items():
+        if not text:
+            continue
+        positions = _word_positions(text, folded_book)
+        if not positions:
+            continue
+        for name in labels:
+            other = folded[name]
+            if name == epithet or not other or text in other or other in text or set(text.split()) & set(other.split()):
+                continue
+            count = 0
+            for index in positions:
+                before, after = folded_book[max(0, index - 40):index], folded_book[index + len(text):index + len(text) + 40]
+                for form in forms[name]:
+                    if (after.startswith(f" {form}") and not after[len(form) + 1:len(form) + 2].isalnum()) or (
+                        before.endswith(f"{form} ") and not before[-len(form) - 2:-len(form) - 1].isalnum()
+                    ) or any(before.endswith(f"{form} {link} ") for link in joins):
+                        count += 1
+                        break
+            if count:
+                links[(epithet, name)] = count
+    return links
+
+
 def merged_turns(connection: Any, chapter_id: int | None = None) -> list[tuple[Any, Any]]:
     """Cặp câu thoại liền kề ở hai đoạn văn liền nhau - câu trước đóng ngoặc, câu sau mở ngoặc mới, đoạn sau chỉ có thoại
     (không lời dẫn riêng) - mà mang CÙNG một người có tên. Project cũ không có số đoạn văn thì không tìm."""
@@ -188,6 +259,10 @@ def work_items(project_root: Path) -> dict[str, Any]:
     items: list[dict[str, Any]] = []
     with closing(store.connect(project_root)) as connection:
         names = store.chapter_names(connection)
+        # Văn bản sách cho thẻ biệt danh (3a); sổ tối thiểu của test không có cột này.
+        chapter_paths = [
+            str(row[0] or "") for row in connection.execute("SELECT input_path FROM chapters")
+        ] if "input_path" in {row[1] for row in connection.execute("PRAGMA table_info(chapters)")} else []
         spoken = connection.execute(
             "SELECT id, stable_id, chapter_id, seq, text, text_sha256, speaker, kind, voice_profile_id, canonical_character_id"
             " FROM segments"
@@ -380,6 +455,56 @@ def work_items(project_root: Path) -> dict[str, Any]:
                            f" ({len(named[major])} câu).",
                 "affected": len(named[minor]),
                 "doubt": 0.6,
+                "options": [f"Gộp vào {into}", "Hai người khác nhau"],
+                "current": "Hai người khác nhau",
+                "keepLabel": "Hai người khác nhau",
+                "examples": [_example(row, names) for row in (named[minor][:2] + named[major][:1])],
+                **fix,
+            })
+
+    # 3a. Danh hiệu / biệt danh của một người: sách viết hai tên SÁT nhau ("Thiên Biến Vạn Hóa Krai") mà máy gán câu cho
+    #     cả hai - hai giọng cho một người (Nageki 65: 3 câu của người kể thành "Thiên Biến Vạn Hoá"). Thẻ trên chỉ bắt
+    #     tên ngắn nằm trong tên dài. Chỉ hỏi khi danh hiệu đứng sát ĐÚNG MỘT người (EPITHET_EVIDENCE lần trở lên) - sát
+    #     nhiều người là chức vụ chung ("Giáo sư"). Gộp như thẻ trên: người ít câu về người nhiều câu.
+    try:
+        folded_book = _folded_book(chapter_paths) if len(named) > 1 else ""
+    except OSError:
+        folded_book = ""
+    if folded_book:
+        top = sorted(named, key=lambda speaker: (-len(named[speaker]), speaker))[:40]
+        links = epithet_links(top, folded_book)
+        partners: dict[str, set[str]] = defaultdict(set)
+        for (epithet, name), count in links.items():
+            partners[epithet].add(name)
+            partners[name].add(epithet)
+        asked: set[frozenset[str]] = set()
+        for (epithet, name), count in sorted(links.items(), key=lambda item: -item[1]):
+            pair = frozenset((epithet, name))
+            # Một chỗ sát nhau được thấy từ CẢ HAI tên - lấy chiều thấy nhiều hơn, không cộng. Độc quyền cả hai phía: "Glast"
+            # chỉ sát "Giáo sư" nhưng "Giáo sư" sát cả Krayd - chức danh chung, không phải biệt danh.
+            both = max(links.get((epithet, name), 0), links.get((name, epithet), 0))
+            if pair in asked or both < EPITHET_EVIDENCE or partners[epithet] != {name} or partners[name] != {epithet}:
+                continue
+            asked.add(pair)
+            major, minor = sorted(pair, key=lambda speaker: (-len(named[speaker]), speaker))
+            a, b = by_character.get(major.upper()), by_character.get(minor.upper())
+            if a is not None and b is not None and "unknown" not in (a["gender"], b["gender"]) and a["gender"] != b["gender"]:
+                continue
+            into = speaker_label(major)
+            fix = _speaker_fix(named[minor], [{"label": f"Gộp vào {into}", "value": major, "name": into}], minor,
+                               speaker_wishes)
+            if fix is None:
+                continue
+            first, second = sorted((speaker_label(epithet), speaker_label(name)), key=len)
+            items.append({
+                "kind": "alias",
+                "key": f"alias:{major}|{minor}",
+                "title": f"\"{speaker_label(minor)}\" là tên khác của {into}?",
+                "problem": f"Sách viết hai tên này sát nhau {both} lần (như \"{second} {first}\") - thường là danh hiệu hay"
+                           f" biệt danh của một người. Máy đang cho {len(named[minor])} câu của {speaker_label(minor)} một"
+                           f" giọng riêng; gộp thì đọc bằng giọng của {into} ({len(named[major])} câu).",
+                "affected": len(named[minor]),
+                "doubt": 0.7,
                 "options": [f"Gộp vào {into}", "Hai người khác nhau"],
                 "current": "Hai người khác nhau",
                 "keepLabel": "Hai người khác nhau",
