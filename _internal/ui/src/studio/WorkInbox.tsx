@@ -42,8 +42,11 @@ interface WorkItem {
   /** Việc gán người nói ("Ai nói câu này", người gọi, vai phụ không tên): các câu (mã ổn định + băm chữ, để yêu cầu
    *  không áp nhầm câu đã đổi) và các lựa chọn bấm được. */
   lines?: { stableId: string; textSha256: string }[];
-  choices?: { label: string; value: string }[];
+  /** `name`: tên người khi nhãn nút không phải là tên ("Gộp vào Kati"). */
+  choices?: { label: string; value: string; name?: string }[];
   currentValue?: string;
+  /** Nhãn nút giữ nguyên khi "Giữ <người đang nói>" không đúng nghĩa (bí danh: "Hai người khác nhau"). */
+  keepLabel?: string;
 }
 
 interface WorkView {
@@ -184,10 +187,13 @@ function SpeakerFix({ bookId, item }: { bookId: string; item: WorkItem }) {
       void client.invalidateQueries({ queryKey: ["work", bookId] });
       const which = (item.lines?.length ?? 1) > 1 ? `${item.lines?.length} câu này` : "câu này";
       if (speaker === item.currentValue) {
-        toast.success(`Giữ nguyên: ${which} của ${item.current}`, { description: "Việc này sẽ không hiện lại." });
+        toast.success(item.keepLabel ? `Đã ghi: ${item.keepLabel}` : `Giữ nguyên: ${which} của ${item.current}`, {
+          description: "Việc này sẽ không hiện lại.",
+        });
         return;
       }
-      const label = item.choices?.find((choice) => choice.value === speaker)?.label ?? speaker;
+      const choice = item.choices?.find((option) => option.value === speaker);
+      const label = choice?.name ?? choice?.label ?? speaker;
       toast.success(`Đã ghi: ${which} của ${label}`, {
         description: "Áp ở ranh giới chương kế tiếp; câu đã thu sẽ được thu lại bằng giọng của người ấy.",
       });
@@ -199,7 +205,8 @@ function SpeakerFix({ bookId, item }: { bookId: string; item: WorkItem }) {
       {item.requested && (
         <p className="mb-2 flex items-center gap-1.5 text-xs text-fg-2">
           <Check className="size-3.5 text-success" />
-          Đã ghi: câu này của {item.requested} - chờ dây chuyền áp ở ranh giới chương kế tiếp.
+          Đã ghi: {(item.lines?.length ?? 1) > 1 ? `${item.lines?.length} câu này` : "câu này"} của {item.requested} - chờ dây
+          chuyền áp ở ranh giới chương kế tiếp.
         </p>
       )}
       <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Ai nói câu này">
@@ -216,7 +223,7 @@ function SpeakerFix({ bookId, item }: { bookId: string; item: WorkItem }) {
         ))}
         {item.currentValue && (
           <Button size="sm" variant="ghost" disabled={save.isPending} onClick={() => save.mutate(item.currentValue!)}>
-            Giữ {item.current}
+            {item.keepLabel ?? `Giữ ${item.current}`}
           </Button>
         )}
       </div>
@@ -289,8 +296,8 @@ export function WorkInbox({ bookId, onOpenReview }: { bookId: string; onOpenRevi
     <div className="mt-5">
       <p className="max-w-3xl text-sm text-fg-2">
         Máy đã tự quyết và đang chạy tiếp - không có gì phải chờ anh. Đây là những chỗ nó không chắc, xếp theo lợi: việc ở
-        trên sửa một lần được nhiều câu nhất. Cách đọc tên và người nói từng câu sửa được ngay tại đây, không phải dừng
-        sách; các loại việc khác sẽ sửa được ở bước kế.
+        trên sửa một lần được nhiều câu nhất. Cách đọc tên, người nói từng câu và gộp hai tên của một người sửa được ngay
+        tại đây, không phải dừng sách; giới tính và giọng nhân vật sẽ sửa được ở bước kế.
       </p>
       <div className="mt-4 overflow-x-auto">
         <Segmented<WorkKind | "all">

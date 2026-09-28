@@ -299,14 +299,19 @@ def work_items(project_root: Path) -> dict[str, Any]:
             **fix,
         })
 
-    # 3. Nghi là MỘT người mang hai tên (bí danh): tên này nằm trọn trong tên kia, cùng giới.
+    # 3. Nghi là MỘT người mang hai tên (bí danh): tên ngắn nằm trọn ở đầu hay cuối tên dài, không khác giới. Tên nào dài
+    #    hơn KHÔNG nói ai nhiều câu hơn ("Lucien" 500 câu, "Lucien Evans" 3 câu là trường hợp thường gặp nhất). Gộp thì câu
+    #    của người ÍT câu về người NHIỀU câu: người nghe đã quen giọng ấy, và ít câu phải thu lại nhất. Đi đúng đường ghi đè
+    #    nhóm câu của vai phụ; "Hai người khác nhau" giữ nguyên cả nhóm và thẻ không hiện lại.
     named = {speaker: rows for speaker, rows in lines_by_speaker.items() if _is_named(speaker)}
     by_character = {str(character["canonical_name"]).upper(): character for character in characters.values()}
-    speakers = sorted(named, key=lambda speaker: -len(named[speaker]))
-    for index, longer in enumerate(speakers):
-        long_tokens = _tokens(speaker_label(longer))
-        for shorter in speakers[index + 1:]:
-            short_tokens = _tokens(speaker_label(shorter))
+    speakers = sorted(named, key=lambda speaker: (-len(named[speaker]), speaker))
+    for index, major in enumerate(speakers):
+        for minor in speakers[index + 1:]:
+            longer, shorter = (
+                (major, minor) if len(_tokens(speaker_label(major))) > len(_tokens(speaker_label(minor))) else (minor, major)
+            )
+            long_tokens, short_tokens = _tokens(speaker_label(longer)), _tokens(speaker_label(shorter))
             if not short_tokens or len(short_tokens) >= len(long_tokens):
                 continue
             if short_tokens != long_tokens[-len(short_tokens):] and short_tokens != long_tokens[:len(short_tokens)]:
@@ -314,16 +319,25 @@ def work_items(project_root: Path) -> dict[str, Any]:
             a, b = by_character.get(longer.upper()), by_character.get(shorter.upper())
             if a is not None and b is not None and "unknown" not in (a["gender"], b["gender"]) and a["gender"] != b["gender"]:
                 continue
+            into = speaker_label(major)
+            fix = _speaker_fix(named[minor], [{"label": f"Gộp vào {into}", "value": major, "name": into}], minor,
+                               speaker_wishes)
+            if fix is None:
+                continue
             items.append({
                 "kind": "alias",
                 "key": f"alias:{longer}|{shorter}",
                 "title": f"\"{speaker_label(shorter)}\" và \"{speaker_label(longer)}\" là một người?",
-                "problem": "Hai tên này đang là hai nhân vật với hai giọng khác nhau, nhưng tên ngắn nằm trọn trong tên dài.",
-                "affected": min(len(named[longer]), len(named[shorter])),
+                "problem": "Hai tên này đang là hai nhân vật với hai giọng khác nhau, nhưng tên ngắn nằm trọn trong tên dài."
+                           f" Gộp thì {len(named[minor])} câu của {speaker_label(minor)} đọc bằng giọng của {into}"
+                           f" ({len(named[major])} câu).",
+                "affected": len(named[minor]),
                 "doubt": 0.6,
-                "options": [f"Gộp vào {speaker_label(longer)}", "Hai người khác nhau"],
+                "options": [f"Gộp vào {into}", "Hai người khác nhau"],
                 "current": "Hai người khác nhau",
-                "examples": [_example(row, names) for row in (named[shorter][:2] + named[longer][:1])],
+                "keepLabel": "Hai người khác nhau",
+                "examples": [_example(row, names) for row in (named[minor][:2] + named[major][:1])],
+                **fix,
             })
 
     # 4. Hai nhân vật có tên dùng CHUNG một giọng và cùng nói trong một chương: người nghe không phân biệt được.
