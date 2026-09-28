@@ -32,7 +32,11 @@ CREATE_NO_WINDOW = 0x08000000
 # Thư viện ~6 GB, model ~10 GB, Ollama ~1,5 GB, cộng chỗ cho bản tải dở và cache.
 MIN_FREE_BYTES = 30 * 1024**3
 PYTHON_VERSION = "3.11"
-OLLAMA_ADDRESS = "http://127.0.0.1:11434"
+# Ollama RIÊNG của Studio (chủ sách 28-09: phụ thuộc nằm trọn trong app, gỡ là gỡ hết): bản trong Studio\tools\ollama,
+# model trong Studio\models\ollama, "home" (khoá định danh) trong Studio\ollama-home, cổng riêng - không bao giờ dùng
+# hay đụng Ollama cài sẵn trên máy (máy có sẵn Ollama ở 11434 vẫn chạy song song được).
+OLLAMA_PORT = 11439
+OLLAMA_ADDRESS = f"http://127.0.0.1:{OLLAMA_PORT}"
 
 
 @dataclass(frozen=True)
@@ -59,8 +63,9 @@ STEPS: tuple[tuple[str, str, str], ...] = (
     ("uv", "Công cụ cài đặt", "18 MB"),
     ("git", "Git nhúng", "39 MB"),
     ("python", "Python 3.11", "30 MB"),
+    ("vcruntime", "Thư viện C++ của Microsoft", "2 MB - đi kèm bộ cài"),
     ("packages", "Thư viện làm sách", "~6 GB - bước lâu nhất"),
-    ("ollama", "Ollama", "1,5 GB - bỏ qua nếu máy đã có"),
+    ("ollama", "Ollama", "1,5 GB - bản riêng của Studio"),
     ("llm", "Model phân tích truyện", "~5 GB"),
     ("voice", "Model giọng đọc", "~1 GB"),
     ("asr", "Model nghe lại (Whisper)", "~3 GB"),
@@ -376,10 +381,12 @@ class StudioSetup:
         return self.status()
 
     def remove(self) -> dict[str, Any]:
-        """Gỡ Studio: xoá cả thư mục (thư viện, model, công cụ, bản mã của sách dở). Sách đã làm, chỗ nghe, dữ liệu
-        app nằm chỗ khác - giữ nguyên. Model Ollama dùng chung với Ollama có sẵn trên máy (nếu có) không bị đụng."""
+        """Gỡ Studio: dừng mọi tiến trình chạy từ thư mục Studio (Ollama riêng, worker) rồi xoá cả thư mục - thư viện,
+        model (kể cả model Ollama), công cụ, bản mã của sách dở. Sách đã làm, chỗ nghe, dữ liệu app nằm chỗ khác - giữ
+        nguyên. Ollama cài sẵn của người dùng (nếu có) không bao giờ bị đụng."""
         self.cancel()
         self.wait(30)
+        self.stop_processes()
 
         def writable(function: Callable[..., Any], path: str, _error: Any) -> None:
             os.chmod(path, 0o700)  # MinGit có file chỉ-đọc
@@ -391,6 +398,24 @@ class StudioSetup:
             else:  # Python dev 3.11 (Python nhúng của app là 3.14)
                 shutil.rmtree(self.root, onerror=writable)
         return self.status()
+
+    def stop_processes(self) -> list[int]:
+        """Dừng các tiến trình chạy từ thư mục Studio (theo đường dẫn file chạy, không theo tên - pythonw.exe của người
+        dùng không bị đụng). Trả mã các tiến trình đã dừng."""
+        import psutil
+
+        root = str(self.root.resolve()).casefold()
+        stopped: list[int] = []
+        for process in psutil.process_iter(["pid", "exe"]):
+            executable = str(process.info.get("exe") or "").casefold()
+            if executable.startswith(root + os.sep) and process.info["pid"] != os.getpid():
+                try:
+                    process.kill()
+                    stopped.append(int(process.info["pid"]))
+                except psutil.Error:
+                    continue
+        psutil.wait_procs([psutil.Process(pid) for pid in stopped if psutil.pid_exists(pid)], timeout=10)
+        return stopped
 
     def wait(self, timeout: float | None = None) -> None:
         thread = self._thread
@@ -432,13 +457,13 @@ class StudioSetup:
 
     def environment(self, code: Path | None = None) -> dict[str, str]:
         """Biến môi trường cho worker và các lệnh cài: runtime của Studio, mã (của cuốn đang chạy - `code_for`; mặc định
-        mã của app), Ollama + Git của Studio trong PATH (dây chuyền tìm `ollama` bằng shutil.which)."""
+        mã của app), Ollama + Git của Studio trong PATH (dây chuyền tìm `ollama` bằng shutil.which) - Ollama ấy nghe cổng
+        riêng và giữ model trong Studio, kể cả khi dây chuyền tự khởi động lại nó."""
         models = self.runtime / "models"
-        path = [str(self.tools / "git" / "cmd")]
-        ollama = self._ollama_folder()
-        if ollama is not None:
-            path.insert(0, str(ollama))
+        path = [str(self.tools / "ollama"), str(self.tools / "git" / "cmd")]
         return {
+            "OLLAMA_HOST": f"127.0.0.1:{self.ollama_address.rsplit(':', 1)[-1]}",
+            "OLLAMA_MODELS": str(models / "ollama"),
             "EBOOK_READER_RUNTIME": str(self.runtime),
             "PYTHONPATH": str(code or self.app_root),
             "PYTHONUTF8": "1",
@@ -547,6 +572,33 @@ class StudioSetup:
             # đòi setuptools<82; --seed cài bản mới nhất).
             self._run([self._uv(), "venv", "--python", PYTHON_VERSION, str(self.venv)], "Tạo Python 3.11")
 
+    def _base_python(self) -> Path | None:
+        """Thư mục Python gốc của venv (dòng `home` trong pyvenv.cfg) - thư mục ỨNG DỤNG của tiến trình Python thật (file
+        python.exe trong venv chỉ là trình chuyển tiếp), nơi Windows tìm DLL trước System32."""
+        try:
+            for line in (self.venv / "pyvenv.cfg").read_text(encoding="utf-8").splitlines():
+                key, _, value = line.partition("=")
+                if key.strip().lower() == "home" and value.strip():
+                    return Path(value.strip())
+        except OSError:
+            return None
+        return None
+
+    def _step_vcruntime(self) -> None:
+        """VC++ runtime app-local: đo 28-09 trên Studio cài thật, torch/onnxruntime... nạp msvcp140.dll, msvcp140_1.dll từ
+        System32 - tức cần VC++ Redistributable mà Windows sạch không có. Bộ cài mang sẵn đúng các file Microsoft cho phân
+        phối lại (`app\\vcruntime`, scripts/build_windows_app.ps1); chép vào thư mục Python gốc - nơi được tìm TRƯỚC
+        System32 - nên mọi thư viện dùng bản của Studio, máy có hay không có gói Redistributable cũng vậy. Không đè file
+        Python đã mang sẵn (vcruntime140.dll của chính bản dựng Python). Bản dev (không có thư mục ấy): bỏ qua."""
+        source = self.app_root / "vcruntime"
+        base = self._base_python()
+        if not source.is_dir() or base is None:
+            return
+        for dll in sorted(source.glob("*.dll")):
+            target = base / dll.name
+            if not target.exists():
+                shutil.copy2(dll, target)
+
     def _requirements(self) -> Path:
         for candidate in (self.app_root / "studio-requirements.txt",
                           self.app_root / "shell" / "python" / "studio-requirements.txt"):
@@ -564,23 +616,17 @@ class StudioSetup:
         except SetupError:
             pass
 
-    def _ollama_folder(self) -> Path | None:
-        bundled = self.tools / "ollama"
-        if (bundled / "ollama.exe").is_file():
-            return bundled
-        existing = shutil.which("ollama")
-        if existing:
-            return Path(existing).parent
-        installed = Path(os.environ.get("LOCALAPPDATA", "")) / "Programs" / "Ollama" / "ollama.exe"
-        return installed.parent if installed.is_file() else None
+    def settings_overrides(self) -> dict[str, Any]:
+        """Cài đặt riêng cho sách tạo trong app đóng gói: khâu phân tích nói chuyện với Ollama riêng của Studio."""
+        return {"analysis": {"base_url": self.ollama_address}}
 
     def _step_ollama(self) -> None:
-        if self._ollama_folder() is None:
+        if not (self.tools / "ollama" / "ollama.exe").is_file():
             self._install_archive(OLLAMA, self.tools / "ollama")
 
     def _step_llm(self) -> None:
         """Kéo model phân tích qua API của Ollama (không gọi CLI `ollama`: khi máy chủ tắt nó tự mở app khay)."""
-        self._ensure_ollama()
+        self.ensure_ollama()
         request = urllib.request.Request(f"{self.ollama_address}/api/pull", method="POST",
                                          data=json.dumps({"model": self.analysis_model, "stream": True}).encode("utf-8"),
                                          headers={"Content-Type": "application/json"})
@@ -598,17 +644,23 @@ class StudioSetup:
         except urllib.error.URLError as error:
             raise SetupError(f"Không nói chuyện được với Ollama ({error}) - bấm Cài tiếp để thử lại.") from error
 
-    def _ensure_ollama(self) -> None:
+    def ensure_ollama(self) -> None:
+        """Ollama riêng của Studio đang nghe cổng riêng; chưa thì khởi động nó ẩn. "Home" của nó (USERPROFILE: khoá định
+        danh, thư mục mặc định) đặt trong Studio, để gỡ Studio là không sót gì ở ~/.ollama - nơi có thể là Ollama của
+        chính người dùng (không bao giờ đụng)."""
         if self._ollama_alive():
             return
-        folder = self._ollama_folder()
-        if folder is None:
-            raise SetupError("Không thấy Ollama - bấm Cài tiếp để tải lại.")
-        log = self.root / "logs" / "ollama-setup.log"
+        executable = self.tools / "ollama" / "ollama.exe"
+        if not executable.is_file():
+            raise SetupError("Không thấy Ollama của Studio - bấm Cài tiếp để tải lại.")
+        home = self.root / "ollama-home"
+        home.mkdir(parents=True, exist_ok=True)
+        log = self.root / "logs" / "ollama.log"
         log.parent.mkdir(parents=True, exist_ok=True)
+        environment = {**os.environ, **self.environment(), "USERPROFILE": str(home), "HOME": str(home)}
         with log.open("ab") as handle:
-            subprocess.Popen([str(folder / "ollama.exe"), "serve"], stdout=handle, stderr=subprocess.STDOUT,
-                             creationflags=CREATE_NO_WINDOW if os.name == "nt" else 0)
+            subprocess.Popen([str(executable), "serve"], stdout=handle, stderr=subprocess.STDOUT, env=environment,
+                             cwd=str(home), creationflags=CREATE_NO_WINDOW if os.name == "nt" else 0)
         for _ in range(60):
             if self._ollama_alive():
                 return
