@@ -17,7 +17,8 @@ from pathlib import Path
 from typing import Any
 
 from ..listener_overrides import (
-    NARRATOR, NO_VOICE, NOT_SPEECH, SPEECH_KINDS, UNNAMED, read_overrides, speaker_requests, speaker_target,
+    NARRATOR, NO_VOICE, NOT_SPEECH, SPEECH_KINDS, UNNAMED, line_requests, line_target, read_overrides, speaker_requests,
+    speaker_target,
 )
 from . import store
 from .reviews import speaker_label
@@ -90,19 +91,34 @@ def _hints(connection: Any, project_root: Path, rows: list[Any], chapter_id: int
     return hints
 
 
-def _wish(connection: Any, row: Any, wish: dict[str, str] | None) -> dict[str, Any] | None:
+def _wish(connection: Any, row: Any, wish: dict[str, str] | None, as_kind: str = "") -> dict[str, Any] | None:
     """Yêu cầu của người nghe cho câu này và nó đang ở đâu: chờ ranh giới chương, đã áp, hay dây chuyền sẽ từ chối (hỏi
     bằng đúng phép dây chuyền dùng - `speaker_target`). Câu đã đổi chữ thì yêu cầu tự rơi: không có gì để hiện."""
     if wish is None or wish["text_sha256"] != str(row["text_sha256"] or ""):
         return None
     value = wish["speaker"]
     view: dict[str, Any] = {"value": value, "label": label(value)}
+    # `as_kind`: câu đang chờ đổi từ lời kể thành lời thoại (yêu cầu `lines`) - xét như dây chuyền sẽ xét sau bước ấy.
     target, problem = speaker_target(
-        connection, stable_id=str(row["stable_id"]), text_sha256=wish["text_sha256"], speaker=value
+        connection, stable_id=str(row["stable_id"]), text_sha256=wish["text_sha256"], speaker=value, as_kind=as_kind
     )
     if target is None:
         return {**view, "state": "refused", "reason": REFUSED.get(str(problem), "Dây chuyền sẽ không áp được yêu cầu này.")}
     return {**view, "state": "applied" if str(target["speaker"]) == str(row["speaker"]) else "pending"}
+
+
+def _line_wish(connection: Any, row: Any, wish: dict[str, Any] | None) -> dict[str, Any] | None:
+    """Yêu cầu sửa cách đọc câu này và nó đang ở đâu (chờ / đã áp / không áp được) - hỏi bằng `line_target`."""
+    if wish is None or wish["text_sha256"] != str(row["text_sha256"] or ""):
+        return None
+    view = {"kind": wish["kind"], "emotion": wish["emotion"], "intensity": wish["intensity"]}
+    target, problem = line_target(connection, stable_id=str(row["stable_id"]), text_sha256=wish["text_sha256"],
+                                  kind=wish["kind"], emotion=wish["emotion"], intensity=wish["intensity"])
+    if target is None:
+        return {**view, "state": "refused", "reason": REFUSED.get(str(problem), "Dây chuyền sẽ không áp được yêu cầu này.")}
+    applied = (str(row["kind"]) == target["kind"] and str(row["emotion"] or "neutral") == target["emotion"]
+               and int(row["intensity"] or 0) == target["intensity"])
+    return {**view, "state": "applied" if applied else "pending"}
 
 
 def casting_chapters(project_root: Path) -> dict[str, Any]:
@@ -149,7 +165,7 @@ def casting_chapter(project_root: Path, chapter_id: int) -> dict[str, Any] | Non
         if connection.execute("SELECT 1 FROM chapters WHERE id = ?", (chapter_id,)).fetchone() is None:
             return None
         columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(segments)")}
-        extra = [column for column in ("paragraph_index", "wav_path") if column in columns]
+        extra = [column for column in ("paragraph_index", "wav_path", "emotion", "intensity") if column in columns]
         rows = connection.execute(
             "SELECT id, stable_id, chapter_id, seq, text, text_sha256, speaker, kind"
             + "".join(f", {column}" for column in extra)
@@ -158,7 +174,18 @@ def casting_chapter(project_root: Path, chapter_id: int) -> dict[str, Any] | Non
         ).fetchall()
         hints = _hints(connection, project_root, rows, chapter_id)
         wishes = {entry["stable_id"]: entry for entry in speaker_requests(read_overrides(project_root))}
-        decided = {str(row["stable_id"]): _wish(connection, row, wishes.get(str(row["stable_id"]))) for row in rows}
+        line_wishes = {entry["stable_id"]: entry for entry in line_requests(read_overrides(project_root))}
+        decided = {
+            str(row["stable_id"]): _wish(
+                connection, row, wishes.get(str(row["stable_id"])),
+                as_kind=str((line_wishes.get(str(row["stable_id"])) or {}).get("kind") or ""),
+            )
+            for row in rows
+        }
+        delivery = (
+            {str(row["stable_id"]): _line_wish(connection, row, line_wishes.get(str(row["stable_id"]))) for row in rows}
+            if "emotion" in extra else {}
+        )
         # Chỉ người ĐÃ CÓ giọng mới gán được (speaker_target): trước bước phân vai thì chưa ai có.
         voiced = Counter(
             str(row["speaker"])
@@ -210,6 +237,9 @@ def casting_chapter(project_root: Path, chapter_id: int) -> dict[str, Any] | Non
             "hasAudio": bool(row["wav_path"]) if "wav_path" in extra else False,
             "hint": hints.get(stable_id),
             "wish": decided.get(stable_id),
+            "emotion": str(row["emotion"] or "neutral") if "emotion" in extra else None,
+            "intensity": int(row["intensity"] or 0) if "intensity" in extra else None,
+            "lineWish": delivery.get(stable_id),
         })
     return {
         "chapterId": chapter_id,
