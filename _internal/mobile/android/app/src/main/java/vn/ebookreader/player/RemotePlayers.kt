@@ -32,10 +32,12 @@ object RemotePlayers {
             val state = reply.optJSONObject("state")
             val remoteBook = state?.optString("bookId").orEmpty()
             val local = if (remoteBook.isEmpty()) "" else if (key == MAIN) remoteBook else Peers.localId(key, remoteBook)
-            out.put(reply.put("device", key)
-                .put("localBookId", local)
-                // Máy tính chính: mọi cuốn của nó nghe thẳng được; thiết bị ghép: cuốn có trong thư viện nó chia sẻ.
-                .put("known", local.isNotEmpty()))
+            // Máy tính (chính hay ghép): mọi cuốn của nó nghe thẳng được. Điện thoại ghép: chỉ cuốn nó đã tải (`books` -
+            // thứ LibraryServer của nó phục vụ); cuốn nó đang nghe thẳng từ máy khác thì ở đây không nghe tiếp được.
+            val served = reply.optJSONArray("books")
+            val known = local.isNotEmpty() && (key == MAIN || reply.optString("kind") != "phone" ||
+                (served != null && (0 until served.length()).any { served.optString(it) == remoteBook }))
+            out.put(reply.put("device", key).put("localBookId", local).put("known", known))
         }
         return out
     }
