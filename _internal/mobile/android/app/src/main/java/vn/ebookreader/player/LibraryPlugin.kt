@@ -647,7 +647,8 @@ class LibraryPlugin : Plugin() {
 
     @PluginMethod
     fun deleteBook(call: PluginCall) = background(call) {
-        Store.deleteBook(call.getString("id") ?: "")
+        // Thiếu mã thì từ chối (Store.deletableBookDir) - trước đây `?: ""` biến thành xoá CẢ thư mục sách.
+        Store.deleteBook(call.getString("id").orEmpty())
         call.resolve()
     }
 
