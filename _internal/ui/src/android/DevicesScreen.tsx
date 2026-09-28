@@ -248,7 +248,7 @@ function StudioAlertsRow() {
         disabled={change.isPending || state.isLoading}
         onCheckedChange={(value) => change.mutate(value)}
         aria-label="Báo khi sách xong hay có việc cần anh"
-        className="relative h-7 w-12 shrink-0 rounded-full bg-line-strong transition-colors data-[state=checked]:bg-accent"
+        className="relative h-7 w-12 shrink-0 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-accent"
       >
         <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
       </Switch.Root>
@@ -468,7 +468,7 @@ function SharePanel() {
           disabled={run.isPending || status.isLoading}
           onCheckedChange={(value) => run.mutate(() => EbookLibrary.setShare({ enabled: value }))}
           aria-label="Cho máy khác nghe thư viện này"
-          className="relative h-7 w-12 shrink-0 rounded-full bg-line-strong transition-colors data-[state=checked]:bg-accent"
+          className="relative h-7 w-12 shrink-0 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-accent"
         >
           <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
         </Switch.Root>

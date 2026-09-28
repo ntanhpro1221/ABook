@@ -50,6 +50,8 @@
   --hover: #eef0f4;
   --line: #e2e5ea;
   --line-strong: #cfd4db;
+  /* Rãnh công tắc đang tắt: ~3:1 trên nền sáng (soát UX 29-09: line-strong chỉ 1,4:1, công tắc tắt gần như vô hình). */
+  --switch-off: #8d97a5;
   --text: #14181d;
   --text-2: #4f5965;
   --text-3: #666f7b;
@@ -85,6 +87,7 @@
   --hover: #1f262f;
   --line: #252d37;
   --line-strong: #333d49;
+  --switch-off: #4b5563;
   --text: #e9ecf0;
   --text-2: #a3acb7;
   --text-3: #8a94a1;
@@ -120,6 +123,7 @@
   --color-hover: var(--hover);
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
+  --color-switch-off: var(--switch-off);
   --color-fg: var(--text);
   --color-fg-2: var(--text-2);
   --color-fg-3: var(--text-3);
