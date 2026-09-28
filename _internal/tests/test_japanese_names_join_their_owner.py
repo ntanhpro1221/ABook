@@ -67,3 +67,11 @@ def test_a_family_name_or_given_name_label_joins_the_full_name_the_book_writes()
 def test_a_pair_seen_once_is_not_a_name() -> None:
     mapping = canonical_speaker_names({"HINA": 3}, "Onizuki Hina bước vào.")
     assert mapping["HINA"] == "HINA"
+
+
+def test_a_title_before_the_name_is_not_a_second_person() -> None:
+    counts = {"GIÁO SƯ GLAST": 10, "Glast": 4, "CÔNG CHÚA MURINA": 2, "MURINA": 3, "TIỂU THƯ HINA": 1, "ED": 20}
+    mapping = canonical_speaker_names(counts, "")
+    assert mapping["GIÁO SƯ GLAST"] == mapping["Glast"]
+    assert mapping["CÔNG CHÚA MURINA"] == mapping["MURINA"] == "MURINA"
+    assert mapping["TIỂU THƯ HINA"] == "TIỂU THƯ HINA", "không có nhãn HINA trơn nào để gom về - giữ nguyên"
