@@ -47,8 +47,21 @@ Bên kia gửi quá tín dụng là sai giao thức - đóng luồng.
   Bluetooth" → chọn máy tính → mã 6 số. Kiểm: nghe thẳng một chương, đồng bộ chỗ nghe, điều khiển trình phát, tắt Bluetooth
   giữa chừng rồi bật lại.
 
+## Điện thoại phục vụ qua Bluetooth (29-09)
+
+Bật "Cho máy khác nghe thư viện này" thì điện thoại nghe RFCOMM cùng UUID (`BluetoothShare`, BluetoothLink.kt) - mỗi máy
+kết nối là một BtMux vai phục vụ nối vào LibraryServer. Điện thoại khác ghép nó ở "Thiết bị khác" → "Không chung Wi-Fi?
+Ghép qua Bluetooth" (Peers: host `bt:<địa chỉ>`, đi qua BluetoothLink như máy tính chính).
+
+**Đã thử trên HAI MÁY ẢO ghép Bluetooth ảo (netsim của Android Emulator)** - không cần phần cứng: ghép Bluetooth trong Cài
+đặt của máy ảo (một máy "cho tìm thấy", máy kia "Ghép thiết bị mới", xác nhận ở cả hai), rồi trong app: A ghép B bằng mã 6
+số qua Bluetooth; A đọc thư viện và trình phát của B; A **nghe thẳng** chương 725 của một cuốn chỉ có trên B (15 giây phát
+liền, không đứng đệm); A bấm phát/dừng trình phát của B. Bài học: `BluetoothAdapter.cancelDiscovery()` đòi `BLUETOOTH_SCAN`
+trên Android 12+ - mình chỉ xin `BLUETOOTH_CONNECT`, nên gọi nó trong `runCatching`.
+
 ## Còn lại
 
-- Điện thoại phục vụ qua Bluetooth (điện thoại <-> điện thoại, máy tính dùng thư viện điện thoại) - cùng BtMux vai phục vụ,
-  `listenUsingRfcommWithServiceRecord` nối vào LibraryServer.
+- Máy tính KẾT NỐI tới điện thoại qua Bluetooth (máy tính dùng thư viện điện thoại): cần tra SDP trên Windows
+  (WSALookupServiceBegin qua ctypes) để biết kênh RFCOMM của điện thoại.
+- Thử máy tính <-> điện thoại trên sóng thật (Bluetooth máy tính đang tắt đêm 28-09).
 - Tự chọn đường: Wi-Fi khi được, Bluetooth khi không (hiện chọn khi ghép).

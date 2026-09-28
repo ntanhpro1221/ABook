@@ -34,7 +34,29 @@ object Peers {
 
     fun link(context: Context, key: String): Link? {
         val peer = all(context).optJSONObject(key) ?: return null
-        return Link("http://${peer.optString("host")}:${peer.optInt("port", 47630)}", peer.optString("token"))
+        val host = peer.optString("host")
+        if (host.startsWith("bt:")) return Link(BluetoothLink.base(context, host.removePrefix("bt:")), peer.optString("token"))
+        return Link("http://$host:${peer.optInt("port", 47630)}", peer.optString("token"))
+    }
+
+    /** Ghép thiết bị đã ghép Bluetooth với điện thoại này (không chung Wi-Fi): cùng mã 6 số, đi qua đường hầm. */
+    fun pairBluetooth(context: Context, address: String, code: String): JSONObject {
+        val device = "${Build.MANUFACTURER} ${Build.MODEL}".trim()
+        val body = JSONObject().put("code", code.filter { it.isDigit() }).put("device", device)
+        val root = BluetoothLink.base(context, address)
+        val reply = try {
+            JSONObject(SyncLink.request(context, "POST", "/sync/v1/pair", body, auth = false, root = root))
+        } catch (error: Exception) {
+            throw IllegalStateException(BluetoothLink.lastError(address).ifBlank { error.message ?: "không kết nối được qua Bluetooth" })
+        }
+        val host = "bt:$address"
+        val peers = all(context)
+        val key = peers.keys().asSequence().firstOrNull { peers.getJSONObject(it).optString("host") == host }
+            ?: UUID.randomUUID().toString().replace("-", "").take(8)
+        peers.put(key, JSONObject().put("name", reply.optString("name", address)).put("host", host).put("port", 0)
+            .put("token", reply.getString("token")).put("pairedAt", System.currentTimeMillis() / 1000.0))
+        save(context, peers)
+        return JSONObject().put("key", key).put("name", reply.optString("name", address))
     }
 
     /** Mã sách cục bộ cho một cuốn của thiết bị ghép: chữ cái đầu "p" + mã thiết bị + mã sách bên ấy (mọi ký tự đều nằm
@@ -107,6 +129,11 @@ object Peers {
         val peers = all(context)
         for (key in peers.keys()) {
             val peer = peers.getJSONObject(key)
+            val host = peer.optString("host")
+            if (host.startsWith("bt:")) {
+                if (uri.toString().startsWith(BluetoothLink.base(context, host.removePrefix("bt:")))) return peer.optString("token")
+                continue
+            }
             if (peer.optString("host") == uri.host && peer.optInt("port", 47630) == uri.port) return peer.optString("token")
         }
         return null

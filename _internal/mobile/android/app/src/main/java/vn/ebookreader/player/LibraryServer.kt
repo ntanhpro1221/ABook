@@ -92,10 +92,13 @@ object LibraryServer {
                 bind(InetSocketAddress(DISCOVERY_PORT))
             }
         }.getOrNull()?.also { udp -> Thread({ answer(udp) }, "library-discovery").apply { isDaemon = true }.start() }
+        // Cùng lúc qua Bluetooth (máy không chung Wi-Fi): không mở được thì chỉ ghi lý do, cổng Wi-Fi vẫn chạy.
+        runCatching { BluetoothShare.start(context) }
     }
 
     @Synchronized
     fun stop() {
+        runCatching { BluetoothShare.stop() }
         runCatching { server?.close() }
         runCatching { discovery?.close() }
         server = null
