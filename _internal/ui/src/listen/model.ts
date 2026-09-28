@@ -167,6 +167,8 @@ export interface CastMember {
   voice: { key: string; preset: string; tone: string } | null;
   sampleId: number | null;
   firstChapter: string;
+  /** Giọng/giới người nghe đã chọn mà dây chuyền chưa áp (store.pending_voices). */
+  pendingVoice?: { preset: string; gender: string } | null;
 }
 
 export interface Cast {
