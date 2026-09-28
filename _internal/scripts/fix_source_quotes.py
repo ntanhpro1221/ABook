@@ -84,7 +84,7 @@ else:
     run(SCRATCH)
     target = SCRATCH
 
-sys.path.insert(0, r'D:\Novels\Ebook Reader\_internal')
+sys.path.insert(0, r'D:\Novels\ABook\_internal')
 from ebook_reader.text_processing import segment_chapter_text
 
 files = sorted(target.glob('*.txt'))

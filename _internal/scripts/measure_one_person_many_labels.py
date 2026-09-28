@@ -40,10 +40,10 @@ from pathlib import Path
 BOOK = sys.argv[1] if len(sys.argv) > 1 else "book2"
 if BOOK == "book2":
     VERSIONS = Path("D:/Novels/Audiobooks/book2/_versions")
-    SOURCE = Path("D:/Novels/Ebook Reader/Text_Tmp")
+    SOURCE = Path("D:/Novels/ABook/Text_Tmp")
 else:
     VERSIONS = Path("D:/Novels/Audiobooks/_versions")
-    SOURCE = Path("D:/Novels/Ebook Reader/Text")
+    SOURCE = Path("D:/Novels/ABook/Text")
 
 # Chỉ tên chữ La-tinh: nhãn mô tả tiếng Việt (`NGƯỜI TRẢ LỜI`, `TỬ TƯỚC CARENDIA`) là vai, và một
 # vai trùng chữ với một vai khác không có nghĩa gì.

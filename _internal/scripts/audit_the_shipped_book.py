@@ -26,7 +26,7 @@ import sys
 from pathlib import Path
 
 BOOK = Path(r"D:\Novels\Audiobooks\book2\_book")
-SOURCE = Path(r"D:\Novels\Ebook Reader\Text_Tmp")
+SOURCE = Path(r"D:\Novels\ABook\Text_Tmp")
 
 
 def duration_seconds(path: Path) -> float:

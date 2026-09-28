@@ -45,14 +45,14 @@ while [ $# -gt 0 ]; do
     *) echo "tham so la: $1" >&2; exit 2 ;;
   esac
 done
-ROOT="D:/Novels/Ebook Reader/_internal"
+ROOT="D:/Novels/ABook/_internal"
 PY="$ROOT/runtime/.venv/Scripts/python.exe"
 cd "$ROOT"
 # Goc CUON SACH dang san xuat - cung mot cau tra loi voi scripts/book_paths.py (xem docstring o do).
 AUDIOBOOKS_ROOT="${EBOOK_AUDIOBOOKS_ROOT:-D:/Novels/Audiobooks/book2}"
 VERSIONS="$AUDIOBOOKS_ROOT/_versions"
 TAG_PREFIX="${EBOOK_TAG_PREFIX:-v0.3.0}"
-SOURCE_DIR="${EBOOK_SOURCE_DIR:-D:/Novels/Ebook Reader/Text_Tmp}"
+SOURCE_DIR="${EBOOK_SOURCE_DIR:-D:/Novels/ABook/Text_Tmp}"
 PLAN="${EBOOK_PLAN:-$ROOT/docs/PRODUCTION_PLAN_book2.md}"
 
 # "Toi" trong cuon nay la ai (EBOOK_FIRST_PERSON, xem scripts/book_paths.py). Rong = ke ngoi thu

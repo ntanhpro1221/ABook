@@ -8,7 +8,7 @@ $ErrorActionPreference = "Stop"
 $AppName = "ABook"
 # Tên cũ của app (trước 27-09): lối tắt mang tên này mà trỏ đúng trình khởi động dưới đây thì gỡ, để không còn hai mục.
 $LegacyNames = @("Ebook Reader")
-$Launcher = Join-Path $ProjectRoot "_internal\Ebook Reader.vbs"
+$Launcher = Join-Path $ProjectRoot "_internal\ABook.vbs"
 $Icon = Join-Path $ProjectRoot "_internal\ebook_reader\assets\ebook_reader.ico"
 $ProgramsRoot = [Environment]::GetFolderPath([Environment+SpecialFolder]::Programs)
 $RootShortcutPath = Join-Path $ProjectRoot "$AppName.lnk"

@@ -39,7 +39,7 @@ người kể), LLM thì không. Hệ quả sản phẩm: truyện ngôi thứ n
 ~70% câu; sửa rẻ nhất là MỘT câu hỏi trong Studio ("Truyện kể ngôi thứ nhất? 'Tôi' là ai?") đưa cho cả prompt LLM lẫn
 bộ chấm.
 
-**ĐÃ ĐO (27-09 15:2x) - MỘT DÒNG PROMPT sửa được lỗ này.** Nhánh `dev/pov-prompt` (worktree `Ebook Reader_pov`) thêm vào
+**ĐÃ ĐO (27-09 15:2x) - MỘT DÒNG PROMPT sửa được lỗ này.** Nhánh `dev/pov-prompt` (worktree `ABook_pov`) thêm vào
 prompt mỗi batch: *"Truyện kể ở ngôi thứ nhất: người kể chuyện xưng 'tôi' trong lời kể là SAMAEL. Câu thoại và nội tâm
 của chính người kể phải dùng speaker=SAMAEL - không dùng 'tôi', NARRATOR hay tên người đang nói chuyện với SAMAEL."*
 YMP 248, chấm chặt:
@@ -774,16 +774,16 @@ Việc còn lại cho cửa sổ GPU, theo đúng thứ tự: `train_lora.py --s
   bitsandbytes 0.50.2). QLoRA 4-bit trên RTX 5060 8 GB, chạy trong cửa sổ GPU giữa hai lô.
 - Chọn model gốc sau lượt đo các model có sẵn.
 
-## Kho dữ liệu (`D:/Novels/Ebook Reader/Corpus/`)
+## Kho dữ liệu (`D:/Novels/ABook/Corpus/`)
 
 Gom 19-09 (chỉ SAO CHÉP; bản trong Tools và Thùng rác giữ nguyên). Từ 27-09 kho là repo RIÊNG TƯ
-`ntanhpro1221/EbookReader-Corpus`, clone vào đúng `Corpus/` (repo chính công khai bỏ qua thư mục này và lịch sử của nó
+`ntanhpro1221/ABook-Corpus`, clone vào đúng `Corpus/` (repo chính công khai bỏ qua thư mục này và lịch sử của nó
 đã được viết lại cho sạch: phần lớn các truyện còn bản quyền, một thông báo DMCA sẽ khoá cả repo):
 
 | truyện | chương | nguồn |
 |---|---|---|
-| Young Master's PoV (cuốn 1) | 478 | `Ebook Reader/Text` |
-| Throne of Magical Arcana (cuốn 2) | 915 | `Ebook Reader/Text_Tmp` |
+| Young Master's PoV (cuốn 1) | 478 | `ABook/Text` |
+| Throne of Magical Arcana (cuốn 2) | 915 | `ABook/Text_Tmp` |
 | Nise Seiken Monogatari | 158 | Tools |
 | Two Childhood Friends ... Dungeon ... | 119 | Tools |
 | Đã bảo là cùng nhau tự sát, cớ sao lại thành sống chung | 254 | Tools |

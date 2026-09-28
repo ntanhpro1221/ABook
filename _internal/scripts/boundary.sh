@@ -89,14 +89,14 @@ while [ $# -gt 0 ]; do
   esac
 done
 NEXT=$((BATCH + 1))
-ROOT="D:/Novels/Ebook Reader/_internal"
+ROOT="D:/Novels/ABook/_internal"
 PY="$ROOT/runtime/.venv/Scripts/python.exe"
 cd "$ROOT"
 # Goc CUON SACH dang san xuat - cung mot cau tra loi voi scripts/book_paths.py (xem docstring o do).
 AUDIOBOOKS_ROOT="${EBOOK_AUDIOBOOKS_ROOT:-D:/Novels/Audiobooks/book2}"
 VERSIONS="$AUDIOBOOKS_ROOT/_versions"
 TAG_PREFIX="${EBOOK_TAG_PREFIX:-v0.3.0}"
-SOURCE_DIR="${EBOOK_SOURCE_DIR:-D:/Novels/Ebook Reader/Text_Tmp}"
+SOURCE_DIR="${EBOOK_SOURCE_DIR:-D:/Novels/ABook/Text_Tmp}"
 PLAN="${EBOOK_PLAN:-$ROOT/docs/PRODUCTION_PLAN_book2.md}"
 mkdir -p "$ROOT/runtime"
 LOG="$ROOT/runtime/boundary_$(printf '%02d' "$BATCH").log"

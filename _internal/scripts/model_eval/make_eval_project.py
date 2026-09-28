@@ -43,9 +43,9 @@ PY = ROOT / "runtime" / ".venv" / "Scripts" / "python.exe"
 EVAL_ROOT = Path("D:/Novels/Audiobooks/_model_eval")
 REFERENCE = Path("D:/Novels/Audiobooks/book2/_versions/v0.3.0-lo08/lo08_270cda51cf")
 SEED = Path("D:/Novels/Audiobooks/book2/_versions/v0.3.0-lo06r/lo06r_266_22b5598370")
-SOURCE = Path("D:/Novels/Ebook Reader/Text_Tmp")
+SOURCE = Path("D:/Novels/ABook/Text_Tmp")
 CHAPTERS = ("351", "363", "378", "381")
-CORPUS = Path("D:/Novels/Ebook Reader/Corpus")
+CORPUS = Path("D:/Novels/ABook/Corpus")
 
 
 def book_slug(name: str) -> str:

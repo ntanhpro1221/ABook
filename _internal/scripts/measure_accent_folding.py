@@ -19,7 +19,7 @@ import sqlite3
 import sys
 from pathlib import Path
 
-ROOT = Path(r"D:\Novels\Ebook Reader\_internal")
+ROOT = Path(r"D:\Novels\ABook\_internal")
 sys.path.insert(0, str(ROOT))
 
 from ebook_reader.asr import (  # noqa: E402

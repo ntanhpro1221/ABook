@@ -11,7 +11,7 @@ một bước không chạy, không phải một bước thành công.
 ## Trước tiên: nó còn sống không, và nó đang ở đâu
 
 ```bash
-tail -n 40 "D:/Novels/Ebook Reader/_internal/runtime/boundary_05.log"
+tail -n 40 "D:/Novels/ABook/_internal/runtime/boundary_05.log"
 ```
 
 ```powershell
@@ -50,7 +50,7 @@ hoàn thành chưa?" trước khi làm gì.
 ## Kiểm sau khi nó xong
 
 ```bash
-cd "D:/Novels/Ebook Reader/_internal"
+cd "D:/Novels/ABook/_internal"
 py() { runtime/.venv/Scripts/python.exe "$@"; }
 
 py scripts/seed_chain.py 6 --batch            # lô mới đã có project chưa

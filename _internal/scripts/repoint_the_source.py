@@ -1,8 +1,8 @@
 """Trỏ lại nguồn .txt của project sau khi thư mục nguồn dời chỗ — có kiểm hash, có sổ để hoàn tác.
 
-    python scripts/repoint_the_source.py "D:/Novels/Ebook Reader/Text"                 # mọi project dưới VERSIONS của cuốn hiện tại, CHỈ XEM
-    python scripts/repoint_the_source.py "D:/Novels/Ebook Reader/Text" --apply         # ghi thật
-    python scripts/repoint_the_source.py "D:/Novels/Ebook Reader/Text" --project <dir> [--apply]
+    python scripts/repoint_the_source.py "D:/Novels/ABook/Text"                 # mọi project dưới VERSIONS của cuốn hiện tại, CHỈ XEM
+    python scripts/repoint_the_source.py "D:/Novels/ABook/Text" --apply         # ghi thật
+    python scripts/repoint_the_source.py "D:/Novels/ABook/Text" --project <dir> [--apply]
     python scripts/repoint_the_source.py --root <_versions> ...                         # gốc khác (cuốn khác): hoặc `source scripts/book1.env`
     python scripts/repoint_the_source.py --undo <project dir>                           # trả lại đường cũ theo sổ
 
