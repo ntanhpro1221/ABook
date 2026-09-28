@@ -114,3 +114,31 @@ def test_a_real_database_runs_the_chapter_scoped_rewrite(tmp_path) -> None:
     assert db.rewrite_speaker("Tôi", "YUUKO HAYASE", chapter_ids=[]) == 0
     assert db.rewrite_speaker("Tôi", "YUUKO HAYASE", chapter_ids=[1, 2]) == 0, "câu SQL theo chương chạy được"
     assert db.rewrite_speaker("Tôi", "YUUKO HAYASE") == 0
+
+
+def test_the_command_line_takes_chapter_narrators_and_refuses_what_cannot_work() -> None:
+    import argparse
+
+    import pytest
+
+    from ebook_reader.cli import CliUsageError, _settings_from_args
+    from ebook_reader.config import validate_settings
+
+    def _args(**overrides: Any) -> argparse.Namespace:
+        base: dict[str, Any] = {"settings_file": None, "profile": "high_quality", "first_person": "KAKERU SORANO",
+                                "first_person_chapter": None}
+        base.update(overrides)
+        return argparse.Namespace(**base)
+
+    assert "first_person_chapters" not in _settings_from_args(_args())["voices"], "chỉ ghi khi được nói ra"
+    chosen = _settings_from_args(_args(first_person_chapter=["11=YUUKO HAYASE", " 12 = USHIO NARUMI ", "13="]))
+    assert chosen["voices"]["first_person_chapters"] == {"11": "YUUKO HAYASE", "12": "USHIO NARUMI", "13": ""}
+    validate_settings(chosen)
+    for bad in (["11"], ["x=A"], ["11=tôi"]):
+        with pytest.raises(CliUsageError):
+            _settings_from_args(_args(first_person_chapter=bad))
+    with pytest.raises(CliUsageError):
+        _settings_from_args(_args(first_person="", first_person_chapter=["11=A"], settings_file="s.json"))
+    broken = _settings(chapters={"một": "A"})
+    with pytest.raises(ValueError, match="first_person_chapters"):
+        validate_settings(broken)

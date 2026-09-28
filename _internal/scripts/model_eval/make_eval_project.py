@@ -87,6 +87,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--no-seed", action="store_true", help="không gieo dàn nhân vật (chỉ để thử máy)")
     parser.add_argument("--book", help="thư mục truyện trong Corpus/ (mặc định: cuốn 2, nguồn sản xuất)")
     parser.add_argument("--first-person", default="", help="'tôi' là ai, cho truyện kể ngôi thứ nhất")
+    parser.add_argument("--first-person-chapter", action="append", default=[], metavar="N=TÊN",
+                        help="người kể của MỘT chương (số chương theo thứ tự trong project, từ 1; lặp được)")
     args = parser.parse_args(argv)
 
     source = SOURCE if not args.book else CORPUS / args.book
@@ -100,6 +102,13 @@ def main(argv: list[str] | None = None) -> int:
     settings = reference_settings(args.model)
     if args.first_person:
         settings["voices"]["first_person_identity"] = args.first_person
+        validate_settings(normalize_legacy_locked_settings(settings))
+    if args.first_person_chapter:
+        chapters = {}
+        for value in args.first_person_chapter:
+            index, _, name = value.partition("=")
+            chapters[str(int(index))] = name.strip()
+        settings["voices"]["first_person_chapters"] = chapters
         validate_settings(normalize_legacy_locked_settings(settings))
     if args.book:
         output_root = args.root / book_slug(args.book) / slug(args.model)
