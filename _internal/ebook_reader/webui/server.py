@@ -157,6 +157,9 @@ class App:
         self._remote_refreshed = 0.0
         self._remote_lock = threading.Lock()
         self._state_synced: dict[str, float] = {}
+        # App Windows đóng gói (webui/host.py): vỏ Tauri báo có bản mới (`update`), nhận lệnh cài qua `shell`.
+        self.update: dict[str, Any] | None = None
+        self.shell: Callable[[dict[str, Any]], None] | None = None
 
     # ---- sách ------------------------------------------------------------------------------------------
 
@@ -172,6 +175,13 @@ class App:
         if path is None:
             raise ApiError(HTTPStatus.NOT_FOUND, "Không tìm thấy sách này trong thư viện")
         return path
+
+    def install_update(self) -> dict[str, Any]:
+        """Người dùng bấm "Cập nhật": vỏ tải gói đã ký, dừng server này, chạy bộ cài rồi mở lại app (docs/PACKAGING.md)."""
+        if self.shell is None or not self.update:
+            raise ApiError(HTTPStatus.CONFLICT, "Không có bản mới để cài")
+        self.shell({"install_update": True})
+        return {"installing": str(self.update.get("version") or "")}
 
     def open_book_file(self, path: str = "") -> dict[str, Any]:
         """Mở một file `.abook`: chọn bằng hộp thoại của cửa sổ app, hoặc đường dẫn có sẵn (bấm đúp file trong
@@ -683,6 +693,8 @@ class Handler(BaseHTTPRequestHandler):
             "version": self.app.version,
             "readOnly": self.app.read_only,
             "dialogs": self.app.dialogs is not None,
+            # App Windows đóng gói: bản mới vỏ tìm thấy ({version, notes}), hay None.
+            "update": self.app.update,
             "libraryRoot": prefs["libraryRoot"],
             "theme": prefs["theme"],
             "playbackRate": prefs["playbackRate"],
@@ -1152,6 +1164,9 @@ class Handler(BaseHTTPRequestHandler):
                 allowed["sleepSchedule"] = {"from": schedule["from"], "to": schedule["to"], "minutes": schedule["minutes"]}
         self._send_json(HTTPStatus.OK, self.app.preferences.update(allowed))
 
+    def post_app_update(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.install_update())
+
     def post_pick_folder(self, _query: dict[str, list[str]]) -> None:
         if self.app.dialogs is None:
             raise ApiError(HTTPStatus.NOT_IMPLEMENTED, "Không có hộp thoại chọn thư mục ở chế độ này")
@@ -1193,6 +1208,7 @@ BOOK = r"/api/books/([A-Za-z0-9_-]+)"
 LISTEN = r"/api/listen/books/([A-Za-z0-9_-]+)"
 ROUTES: list[Route] = [
     ("GET", re.compile(r"/api/app"), Handler.get_app),
+    ("POST", re.compile(r"/api/app/update"), Handler.post_app_update),
     ("GET", re.compile(r"/api/library"), Handler.get_library),
     ("GET", re.compile(r"/api/voices"), Handler.get_voices),
     ("GET", re.compile(r"/api/preferences"), Handler.get_preferences),

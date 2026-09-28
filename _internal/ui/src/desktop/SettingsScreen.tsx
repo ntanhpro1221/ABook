@@ -1,8 +1,9 @@
-import { FolderOpen, Monitor, Moon, Sun } from "lucide-react";
-import type { ReactNode } from "react";
+import { Download, FolderOpen, Monitor, Moon, Sun } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { Button, Kbd, Segmented, radioGroupKeys, radioTabIndex } from "@/shared/ui";
 import { cn } from "@/shared/cn";
+import { api } from "@/studio/api";
 import { pickFolder, useAppInfo, usePreferences } from "@/studio/data";
 import { OtherComputers } from "./OtherComputers";
 import { PhoneSync, Switch } from "./PhoneSync";
@@ -48,6 +49,43 @@ const SHORTCUTS: [ReactNode, string][] = [
   [<Kbd key="esc">Esc</Kbd>, "Thu nhỏ màn hình đang nghe"],
 ];
 
+/** App Windows đóng gói: vỏ đã tìm thấy bản mới (đã ký) - cài chỉ khi người dùng bấm, vì app phải đóng rồi mở lại. */
+function UpdateSection({ update, current }: { update: { version: string; notes: string }; current: string }) {
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    // Vỏ tải hỏng (desktop/App.tsx báo lỗi): nút bấm lại được.
+    const failed = () => setBusy(false);
+    window.addEventListener("abook-update-failed", failed);
+    return () => window.removeEventListener("abook-update-failed", failed);
+  }, []);
+  const install = async () => {
+    setBusy(true);
+    try {
+      await api("/api/app/update", { method: "POST", body: {} });
+      toast.success(`Đang tải ABook ${update.version}`, {
+        description: "App tự đóng, cài bản mới rồi mở lại. Chỗ đang nghe, dấu trang và sách của bạn giữ nguyên.",
+        duration: 60_000,
+      });
+    } catch (error) {
+      setBusy(false);
+      toast.error("Chưa cập nhật được", { description: (error as Error).message });
+    }
+  };
+  return (
+    <Section id="update" title="Cập nhật" description="Bản mới tải từ trang phát hành của ABook, có chữ ký kiểm được.">
+      <div className="max-w-xl">
+        <p className="text-sm">
+          <span className="font-semibold">ABook {update.version}</span> đã có{current ? ` - máy này đang dùng ${current}` : ""}.
+        </p>
+        {update.notes && <p className="mt-2 whitespace-pre-line text-[13px] leading-relaxed text-fg-2 text-pretty">{update.notes}</p>}
+        <Button className="mt-3" icon={Download} disabled={busy} onClick={() => void install()}>
+          {busy ? "Đang tải bản mới…" : "Cập nhật và mở lại"}
+        </Button>
+      </div>
+    </Section>
+  );
+}
+
 export function SettingsScreen() {
   const { data: info } = useAppInfo();
   const { data: preferences, update } = usePreferences();
@@ -69,6 +107,7 @@ export function SettingsScreen() {
     <div className="mx-auto max-w-[1180px] px-4 pb-16 pt-6 sm:px-10 sm:pt-9">
       <h1 className="text-2xl font-bold tracking-tight sm:text-[28px]">Cài đặt</h1>
       <div className="mt-2 max-w-[980px]">
+        {!remote && info?.update && <UpdateSection update={info.update} current={info.version} />}
         {remote && (
           <Section title="Điều khiển từ xa" description="Bạn đang dùng ABook của máy tính qua mạng.">
             <p className="max-w-xl text-sm text-fg-2 text-pretty">
