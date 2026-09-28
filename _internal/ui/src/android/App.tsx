@@ -21,7 +21,7 @@ import { cn } from "@/shared/cn";
 import { Button, EmptyState, TooltipProvider } from "@/shared/ui";
 import { androidSource } from "./androidSource";
 import { DevicesScreen } from "./DevicesScreen";
-import { RemotePlayerBars } from "./RemotePlayers";
+import { PhoneHandOffButton, RemotePlayerBars } from "./RemotePlayers";
 import { MorningRecap } from "@/listen/MorningRecap";
 import { NativeAudioEngine } from "./nativeEngine";
 import { SettingsScreen } from "./SettingsScreen";
@@ -100,7 +100,7 @@ function MobileShell({ children }: { children: ReactNode }) {
         <Tab to="/devices" icon={Download} label="Tải sách" />
         <Tab to="/settings" icon={Settings} label="Cài đặt" />
       </nav>
-      <NowPlaying mobile />
+      <NowPlaying mobile actions={<PhoneHandOffButton />} />
     </div>
   );
 }
