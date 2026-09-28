@@ -39,11 +39,13 @@ def slug(model: str) -> str:
 
 
 def run_chapter(model: str, chapter: str, root: Path, book: str | None, timeout: int, no_think: bool,
-                known_variant: str = "", first_person: str = "") -> dict:
+                known_variant: str = "", first_person: str = "", seed_gold: str = "") -> dict:
     where = root / slug(model) / chapter
     make = [sys.executable, "scripts/model_eval/make_eval_project.py", model, "--chapters", chapter, "--root", str(where)]
     if book:
         make += ["--book", book]
+    if seed_gold:
+        make += ["--seed-gold-cast", seed_gold]
     if first_person:
         make += ["--first-person", first_person]
     subprocess.run(make, cwd=str(ROOT), capture_output=True, text=True, encoding="utf-8", errors="replace")
@@ -89,6 +91,9 @@ def main() -> None:
                         help="biến thể danh sách nhân vật đã biết, cho giả thuyết prompt tự gây thiên lệch "
                              "(docs/LLM_EVAL.md): `no-counts` bỏ cả con số lẫn thứ tự (và ~500 token), "
                              "`sorted-by-name` chỉ đổi thứ tự, `masked-counts` chỉ xoá con số")
+    parser.add_argument("--seed-gold-cast", action="store_true",
+                        help="cùng --book: project mỗi chương mở đầu với nhân vật đã biết từ đáp án các chương TRƯỚC "
+                             "(như sách thật tới chương ấy) thay vì sổ trống - seed_gold_cast.py")
     args = parser.parse_args()
     known_variant = {
         "baseline": "",
@@ -105,7 +110,8 @@ def main() -> None:
         runs = []
         for chapter in args.chapters:
             result = run_chapter(model, chapter, args.root, args.book, args.timeout, no_think,
-                                 known_variant=known_variant, first_person=args.first_person)
+                                 known_variant=known_variant, first_person=args.first_person,
+                                 seed_gold=args.gold if args.seed_gold_cast and args.book else "")
             runs.append(result)
             print(f"{model} {chapter}: {'OK' if result['ok'] else 'HỎNG'} {result.get('seconds', '')}s "
                   f"thử lại vì thiếu ID {result.get('id_retries', 0)} {result.get('why', '')}", flush=True)
@@ -117,6 +123,7 @@ def main() -> None:
         scored = score_rows(gold, rows) if rows else {"score": 0.0, "rates": {name: 0.0 for name in WEIGHTS}}
         entry = {
             "model": model, "no_think": no_think, "known_list": args.known_list,
+            "seed_gold_cast": bool(args.seed_gold_cast and args.book),
             "chapters_ok": sum(r["ok"] for r in runs), "chapters": len(runs),
             "id_retries": sum(r.get("id_retries", 0) for r in runs),
             "seconds_ok": round(sum(r.get("seconds", 0) for r in runs if r["ok"]), 1),
