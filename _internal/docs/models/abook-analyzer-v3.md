@@ -14,7 +14,7 @@ tags:
 - speaker-attribution
 ---
 
-# abook-analysis:v3
+# abook-analyzer:v3
 
 *Vietnamese audiobook analysis model for [ABook](https://github.com/ntanhpro1221/ABook): labels every segment of a
 Vietnamese novel with who speaks, narration / dialogue / thought, emotion, intensity, pace, volume and gender, as JSON
@@ -27,11 +27,11 @@ tâm, cảm xúc, cường độ, nhịp, âm lượng, giới tính. Chạy đ�
 
 **Studio của ABook tự tải** khi cài hoặc bấm "Cập nhật Studio" - không phải làm gì.
 
-Dùng tay: tải `abook-analysis-v3.Q8_0.gguf` và `Modelfile` vào cùng một thư mục, kiểm SHA-256
+Dùng tay: tải `abook-analyzer-v3.Q8_0.gguf` và `Modelfile` vào cùng một thư mục, kiểm SHA-256
 (`9545ce0bf921f3b771a796272b736d043dc4082cb14d1a51fcc93c55e4c53778`), rồi:
 
 ```
-ollama create abook-analysis:v3 -f Modelfile
+ollama create abook-analyzer:v3 -f Modelfile
 ```
 
 Đã đo với Ollama 0.33.2. Ollama 0.34 cho dòng qwen3 "suy nghĩ" trước khi trả JSON kể cả khi request có `format`: gửi
@@ -55,7 +55,7 @@ Model chỉ học prompt và schema của ABook (`ebook_reader/analysis.py`); h�
 Thước chính: F1 giọng B-cubed (người nghe nghe thấy đúng một giọng cho một người) / người nói đúng tuyệt đối. Cùng máy,
 cùng mã host, khởi đầu lạnh. Chi tiết: `docs/ANALYSIS_RESEARCH.md`.
 
-| bộ đo | câu | qwen3:8b gốc | **abook-analysis:v3** |
+| bộ đo | câu | qwen3:8b gốc | **abook-analyzer:v3** |
 |---|---|---|---|
 | Light novel Nhật/Hàn, 6 truyện, chương chưa học | 519 | 52,9 / 54,9 | **55,7 / 62,4** |
 | Young Master's PoV 248 (Hàn), ngôi thứ nhất | 47 | 56,1 / 61,7 | **85,5 / 93,6** |

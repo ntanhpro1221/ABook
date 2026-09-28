@@ -79,7 +79,18 @@ class PublishedModel:
 
 
 # Tên model trong cài đặt phân tích (config.py) -> nơi tải. Model không có ở đây kéo từ kho Ollama như cũ.
-PUBLISHED_MODELS: dict[str, PublishedModel] = {}
+PUBLISHED_MODELS: dict[str, PublishedModel] = {
+    # docs/models/abook-analyzer-v3.md - Qwen3-4B-Instruct-2507 + LoRA trên đáp án của dự án, GGUF Q8_0 (lora28v3-4b).
+    "abook-analyzer:v3": PublishedModel(
+        "abook-analyzer:v3",
+        (Download("abook-analyzer-v3.Q8_0.gguf",
+                  "https://huggingface.co/NGDtuanh/abook-analyzer/resolve/8b19e96c5e5b2bd8453ebdd2105ea4b44e7d8054/"
+                  "abook-analyzer-v3.Q8_0.gguf",
+                  "9545ce0bf921f3b771a796272b736d043dc4082cb14d1a51fcc93c55e4c53778", 4_280_403_328),),
+        "9545ce0bf921f3b771a796272b736d043dc4082cb14d1a51fcc93c55e4c53778",
+        4_280_403_328,
+    ),
+}
 
 # (mã, nhãn cho người dùng, ước lượng cho người dùng)
 STEPS: tuple[tuple[str, str, str], ...] = (
