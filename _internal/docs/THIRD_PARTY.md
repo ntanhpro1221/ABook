@@ -1,6 +1,6 @@
 # Thành phần bên thứ ba
 
-Ebook Reader phát hành theo giấy phép MIT (`_internal/LICENSE`). Mỗi thành phần bên thứ ba dưới đây giữ giấy phép riêng của
+ABook phát hành theo giấy phép MIT (`_internal/LICENSE`). Mỗi thành phần bên thứ ba dưới đây giữ giấy phép riêng của
 nó. Source không đóng gói model weights: lần cài đầu tải dependency và model về `_internal/runtime`. Khi phát hành gói cài
 đặt, APK hay model cache, người bảo trì phải kiểm lại phiên bản THẬT SỰ được đóng gói và đính kèm LICENSE/NOTICE tương ứng
 (`RELEASING.md`). Tên giấy phép ghi dưới đây là của bản đang dùng lúc viết - nguồn gốc cuối cùng luôn là file giấy phép
@@ -20,6 +20,25 @@ của chính thành phần ấy.
 - FFmpeg / imageio-ffmpeg (LGPL hoặc GPL tuỳ bản build).
 - CMU Pronouncing Dictionary (`cmudict.dict`, dữ liệu từ CMU Sphinx; sử dụng và phân phối không hạn chế, yêu cầu ghi nhận
   nguồn). Source đi kèm giữ nguyên `_internal/ebook_reader/assets/CMUDICT_LICENSE.txt`.
+
+## App Windows đóng gói (bộ cài NSIS, `docs/PACKAGING.md`)
+
+Bộ cài mang theo:
+
+- Tauri 2 và các plugin single-instance, dialog, updater (MIT hoặc Apache-2.0); WebView2 là của Windows (Microsoft) -
+  bộ cài chỉ tải trình cài WebView2 khi máy thiếu, không phân phối lại.
+- NSIS (giấy phép zlib/libpng) và `nsis_tauri_utils` (MIT hoặc Apache-2.0) - trình cài/gỡ.
+- Python 3.14 embeddable (Python Software Foundation License).
+- Pillow (HPND), psutil (BSD-3-Clause), requests (Apache-2.0), urllib3 (MIT), certifi (MPL-2.0), charset-normalizer
+  (MIT), idna (BSD-3-Clause) - đúng các bản trong `shell/python/requirements.txt`.
+
+Studio tải thêm khi người dùng bấm "Cài Studio" (không nằm trong bộ cài; tải thẳng từ nơi phát hành chính thức, ghim
+băm trong `webui/studio_setup.py`):
+
+- uv (MIT hoặc Apache-2.0); Python 3.11 bản python-build-standalone (PSF License cùng giấy phép của từng thành phần).
+- MinGit / Git for Windows (GPL-2.0) - chỉ để cài UTMOSv2 từ đúng commit; ABook không sửa hay phân phối lại.
+- Ollama (MIT) khi máy chưa có; các thư viện của dây chuyền theo `shell/python/studio-requirements.txt` (giấy phép như mục
+  "App máy tính - dây chuyền sản xuất" ở trên); model tải từ Hugging Face / Ollama theo giấy phép của từng model.
 
 ## Giao diện (máy tính và điện thoại dùng chung)
 
