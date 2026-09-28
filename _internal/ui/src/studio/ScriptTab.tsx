@@ -702,7 +702,20 @@ function ScriptRow({
   );
 }
 
-function ChapterScriptView({ bookId, script, filter, who }: { bookId: string; script: ChapterScript; filter: Filter; who: string | null }) {
+function ChapterScriptView({
+  bookId,
+  script,
+  filter,
+  who,
+  wantedLine = null,
+}: {
+  bookId: string;
+  script: ChapterScript;
+  filter: Filter;
+  who: string | null;
+  /** Mở từ thẻ "Việc cần anh" (Tìm trong truyện…): tới câu này và mở sẵn ô chọn người nói. */
+  wantedLine?: string | null;
+}) {
   const assign = useAssign(bookId, script.chapterId);
   const fixLine = useLineFix(bookId, script.chapterId);
   const [active, setActive] = useState<string | null>(null);
@@ -744,6 +757,20 @@ function ChapterScriptView({ bookId, script, filter, who }: { bookId: string; sc
     element?.focus({ preventScroll: true });
     element?.scrollIntoView({ block: "nearest" });
   };
+  // Câu được mở từ thẻ "Việc cần anh": tới đó một lần và mở ô chọn người nói (tìm được mọi người trong truyện).
+  const openedLine = useRef<string | null>(null);
+  useEffect(() => {
+    if (!wantedLine || openedLine.current === wantedLine) return;
+    const line = script.lines.find((entry) => entry.stableId === wantedLine);
+    if (!line) return;
+    openedLine.current = wantedLine;
+    requestAnimationFrame(() => {
+      focusRow(line);
+      if (script.castReady && line.editable) setMenu(line.stableId);
+    });
+    // focusRow đổi mỗi lần vẽ; chỉ chạy lại khi câu được mở hay nội dung chương đổi.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wantedLine, script.lines]);
   // Menu đóng (chọn xong hay Esc) thì tiêu điểm về lại câu, để ↑ ↓ và phím số làm tiếp từ đó.
   const backTo = (line: Line) => {
     setMenu(null);
@@ -987,7 +1014,7 @@ export function ScriptTab({ bookId }: { bookId: string }) {
               trên rồi sang câu kế · <Kbd>Enter</Kbd> mở danh sách
             </p>
           )}
-          <ChapterScriptView bookId={bookId} script={data} filter={filter} who={who} />
+          <ChapterScriptView bookId={bookId} script={data} filter={filter} who={who} wantedLine={params.get("line")} />
           <ChapterFooter bookId={bookId} script={data} onNext={() => go(data.next)} />
         </>
       )}
