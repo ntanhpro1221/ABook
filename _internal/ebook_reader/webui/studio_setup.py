@@ -13,6 +13,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -60,6 +61,36 @@ MINGIT = Download("git", "https://github.com/git-for-windows/git/releases/downlo
 # trên bộ LN rồi mới đổi ghim (Studio đã cài tự biết phải cập nhật - `outdated`).
 OLLAMA = Download("ollama", "https://github.com/ollama/ollama/releases/download/v0.33.2/ollama-windows-amd64.zip",
                   "2439cbea65310b1aadf7d8fc41d7faf5d033f920d42e00a476c58bf9bff6950e", 1_460_134_793)
+
+
+@dataclass(frozen=True)
+class PublishedModel:
+    """Model phân tích tự huấn luyện, đăng trên Hugging Face (chủ sách 28-09: đăng công khai để Studio tải về;
+    scripts/publish_model.py). Đường tải ghim theo commit. `parts`: thường một file; nhiều phần thì ghép theo thứ tự (nơi
+    đăng giới hạn cỡ mỗi tệp). `sha256` là băm của CẢ file, cũng là digest lớp model trong Ollama: Ollama kiểm lại khi
+    nhận, và model tạo từ đúng file ấy trùng từng byte bản đã đo trên máy dev (thử 28-09: /api/create chỉ với `files` cho
+    cùng lớp cấu hình và lớp model như `ollama create` của serve_lora.py).
+    """
+
+    name: str
+    parts: tuple[Download, ...]
+    sha256: str
+    size: int
+
+
+# Tên model trong cài đặt phân tích (config.py) -> nơi tải. Model không có ở đây kéo từ kho Ollama như cũ.
+PUBLISHED_MODELS: dict[str, PublishedModel] = {
+    # docs/models/abook-analyzer-v3.md - Qwen3-4B-Instruct-2507 + LoRA trên đáp án của dự án, GGUF Q8_0 (lora28v3-4b).
+    "abook-analyzer:v3": PublishedModel(
+        "abook-analyzer:v3",
+        (Download("abook-analyzer-v3.Q8_0.gguf",
+                  "https://huggingface.co/NGDtuanh/abook-analyzer/resolve/8b19e96c5e5b2bd8453ebdd2105ea4b44e7d8054/"
+                  "abook-analyzer-v3.Q8_0.gguf",
+                  "9545ce0bf921f3b771a796272b736d043dc4082cb14d1a51fcc93c55e4c53778", 4_280_403_328),),
+        "9545ce0bf921f3b771a796272b736d043dc4082cb14d1a51fcc93c55e4c53778",
+        4_280_403_328,
+    ),
+}
 
 # (mã, nhãn cho người dùng, ước lượng cho người dùng)
 STEPS: tuple[tuple[str, str, str], ...] = (
@@ -652,8 +683,13 @@ class StudioSetup:
         self._install_archive(OLLAMA, self.tools / "ollama")
 
     def _step_llm(self) -> None:
-        """Kéo model phân tích qua API của Ollama (không gọi CLI `ollama`: khi máy chủ tắt nó tự mở app khay)."""
+        """Kéo model phân tích qua API của Ollama (không gọi CLI `ollama`: khi máy chủ tắt nó tự mở app khay). Model của
+        dự án (PUBLISHED_MODELS) không có trong kho Ollama: tải từ Hugging Face rồi nạp vào Ollama riêng."""
         self.ensure_ollama()
+        published = PUBLISHED_MODELS.get(self.analysis_model)
+        if published is not None:
+            self._install_published(published)
+            return
         request = urllib.request.Request(f"{self.ollama_address}/api/pull", method="POST",
                                          data=json.dumps({"model": self.analysis_model, "stream": True}).encode("utf-8"),
                                          headers={"Content-Type": "application/json"})
@@ -670,6 +706,79 @@ class StudioSetup:
                     self._detail = str(event.get("status") or "")
         except urllib.error.URLError as error:
             raise SetupError(f"Không nói chuyện được với Ollama ({error}) - bấm Cài tiếp để thử lại.") from error
+
+    def _install_published(self, model: PublishedModel) -> None:
+        """Tải từng phần (kiểm băm từng phần, tải tiếp được), đẩy CẢ file vào Ollama bằng /api/blobs - ghép ngay trên
+        đường truyền, không ghi file ghép 4 GB ra đĩa - rồi /api/create. Cài tiếp sau khi hỏng giữa chừng: model đã có
+        thì thôi, blob đã có thì chỉ còn tạo."""
+        if self._ollama_has(model.name):
+            return
+        digest = f"sha256:{model.sha256}"
+        if not self._ollama_blob(digest):
+            parts: list[Path] = []
+            before = 0
+            for index, part in enumerate(model.parts, start=1):
+                self._detail = f"Tải phần {index}/{len(model.parts)}"
+                parts.append(self.fetch(part, self.root / "downloads" / part.name,
+                                        lambda done, _total, base=before: self._set_progress(base + done, model.size),
+                                        self._cancelled))
+                before += part.size
+            self._detail = "Nạp model vào Ollama"
+            sent = 0
+
+            def body():
+                nonlocal sent
+                for path in parts:
+                    with path.open("rb") as handle:
+                        while chunk := handle.read(1 << 20):
+                            if self._cancelled():
+                                raise Cancelled()
+                            sent += len(chunk)
+                            self._set_progress(sent, model.size)
+                            yield chunk
+
+            request = urllib.request.Request(f"{self.ollama_address}/api/blobs/{digest}", data=body(), method="POST",
+                                             headers={"Content-Length": str(model.size),
+                                                      "Content-Type": "application/octet-stream"})
+            try:
+                with urllib.request.urlopen(request, timeout=600):
+                    pass
+            except urllib.error.HTTPError as error:
+                raise SetupError(f"Ollama không nhận model {model.name} (HTTP {error.code}) - bấm Cài tiếp để tải lại.") from error
+            except urllib.error.URLError as error:
+                raise SetupError(f"Không nói chuyện được với Ollama ({error}) - bấm Cài tiếp để thử lại.") from error
+            for path in parts:
+                path.unlink(missing_ok=True)  # Ollama đã giữ bản của nó: không để hai bản 4 GB trên đĩa
+        self._detail = "Tạo model trong Ollama"
+        file = re.sub(r"[^A-Za-z0-9._-]+", "-", model.name) + ".gguf"
+        request = urllib.request.Request(
+            f"{self.ollama_address}/api/create", method="POST", headers={"Content-Type": "application/json"},
+            data=json.dumps({"model": model.name, "files": {file: digest}, "stream": False}).encode("utf-8"))
+        try:
+            with urllib.request.urlopen(request, timeout=600) as response:
+                reply = json.loads(response.read().decode("utf-8") or "{}")
+        except urllib.error.HTTPError as error:
+            raise SetupError(f"Ollama không tạo được model {model.name} (HTTP {error.code}).") from error
+        except urllib.error.URLError as error:
+            raise SetupError(f"Không nói chuyện được với Ollama ({error}) - bấm Cài tiếp để thử lại.") from error
+        if reply.get("status") != "success":
+            raise SetupError(f"Ollama không tạo được model {model.name}: {reply.get('error') or reply}")
+
+    def _ollama_has(self, name: str) -> bool:
+        try:
+            with urllib.request.urlopen(f"{self.ollama_address}/api/tags", timeout=10) as response:
+                models = json.loads(response.read().decode("utf-8")).get("models") or []
+        except (urllib.error.URLError, ValueError):
+            return False
+        return any(entry.get("name") == name or entry.get("model") == name for entry in models if isinstance(entry, dict))
+
+    def _ollama_blob(self, digest: str) -> bool:
+        try:
+            with urllib.request.urlopen(urllib.request.Request(f"{self.ollama_address}/api/blobs/{digest}", method="HEAD"),
+                                        timeout=10):
+                return True
+        except (urllib.error.URLError, ValueError):
+            return False
 
     def ensure_ollama(self) -> None:
         """Ollama riêng của Studio đang nghe cổng riêng; chưa thì khởi động nó ẩn. "Home" của nó (USERPROFILE: khoá định
