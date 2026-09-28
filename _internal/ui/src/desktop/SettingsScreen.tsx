@@ -1,7 +1,7 @@
 import { Download, FolderOpen, Monitor, Moon, Sun } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
-import { Button, Kbd, Segmented, radioGroupKeys, radioTabIndex } from "@/shared/ui";
+import { Button, Kbd, Segmented, TimeSelect, radioGroupKeys, radioTabIndex } from "@/shared/ui";
 import { cn } from "@/shared/cn";
 import { api } from "@/studio/api";
 import { pickFolder, useAppInfo, usePreferences } from "@/studio/data";
@@ -223,20 +223,18 @@ export function SettingsScreen() {
                 />
                 {preferences?.sleepSchedule && (
                   <>
-                    <input
-                      type="time"
-                      aria-label="Từ"
+                    <TimeSelect
+                      label="Từ"
                       value={preferences.sleepSchedule.from}
-                      onChange={(event) => event.target.value && update({ sleepSchedule: { ...preferences.sleepSchedule!, from: event.target.value } })}
-                      className="tabular h-9 rounded-lg border border-line bg-panel px-2"
+                      onChange={(value) => update({ sleepSchedule: { ...preferences.sleepSchedule!, from: value } })}
+                      className="h-9 rounded-lg border border-line bg-panel px-2"
                     />
                     <span className="text-fg-2">đến</span>
-                    <input
-                      type="time"
-                      aria-label="Đến"
+                    <TimeSelect
+                      label="Đến"
                       value={preferences.sleepSchedule.to}
-                      onChange={(event) => event.target.value && update({ sleepSchedule: { ...preferences.sleepSchedule!, to: event.target.value } })}
-                      className="tabular h-9 rounded-lg border border-line bg-panel px-2"
+                      onChange={(value) => update({ sleepSchedule: { ...preferences.sleepSchedule!, to: value } })}
+                      className="h-9 rounded-lg border border-line bg-panel px-2"
                     />
                     <span className="text-fg-2">hẹn</span>
                     <select
