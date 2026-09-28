@@ -21,8 +21,13 @@ function stateOf(book: ListenBook): Filter {
 /** Dòng trạng thái của một cuốn, cùng một bộ từ ở Thư viện, trang sách và thẻ nghe dở. */
 export function bookStatusText(book: ListenBook): string {
   const status = progressText(book);
-  // Điện thoại: cuốn nằm trên máy tính, nghe thẳng qua mạng - người nghe cần biết mất Wi-Fi thì không nghe được.
-  return book.remote ? `Trên máy tính · ${status}` : status;
+  // Cuốn nằm ở máy khác, nghe thẳng qua mạng - người nghe cần biết mất mạng hay máy kia tắt thì chương chưa tải không nghe được.
+  return book.remote ? `${remotePlace(book)} · ${status}` : status;
+}
+
+/** "Trên máy tính" (điện thoại nghe máy tính đã ghép) hay "Trên <tên máy>" (máy tính nghe máy tính khác). */
+export function remotePlace(book: ListenBook): string {
+  return typeof book.remote === "object" && book.remote ? `Trên ${book.remote.computer || "máy khác"}` : "Trên máy tính";
 }
 
 function progressText(book: ListenBook): string {
@@ -119,7 +124,7 @@ function BookTile({ book }: { book: ListenBook }) {
         )}
         {book.remote && (
           <span className="pointer-events-none absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white">
-            <Laptop className="size-3" /> Máy tính
+            <Laptop className="size-3" /> {typeof book.remote === "object" && book.remote?.computer ? book.remote.computer : "Máy tính"}
           </span>
         )}
       </div>
