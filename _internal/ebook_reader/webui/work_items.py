@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import re
 import json
-from collections import defaultdict
+from collections import Counter, defaultdict
 from contextlib import closing
 from pathlib import Path
 from typing import Any
@@ -30,6 +30,7 @@ SEVERITY = {
     "vocative": 0.9,
     "turn": 1.0,
     "alias": 0.8,
+    "bracket": 1.0,  # sai người nói ở cả một nhóm câu - như thẻ "Ai nói câu này"
     "shared-voice": 0.6,
     "pronunciation": 0.5,
     "unnamed": 0.3,
@@ -385,6 +386,50 @@ def work_items(project_root: Path) -> dict[str, Any]:
                 "examples": [_example(row, names) for row in (named[minor][:2] + named[major][:1])],
                 **fix,
             })
+
+    # 3b. Lời trong ngoặc 『』 - thần giao, linh thể, giọng qua điện thoại, bình luận trên mạng - là một "kênh giọng" riêng
+    #     mà máy yếu nhất: đo 28-09 trên bộ LN, câu 『』 sai người nói 56-67% (câu thường 34-41%) - máy gán mỗi câu cho
+    #     người đứng gần (Yamiyo: linh thể luôn nói trong 『』 bị chia cho người kể, Hina, Yuusei, "người lạ"). Thường cả
+    #     chương chỉ một người (hay người kể) nói trong 『』: một cú bấm gán cả nhóm. Nhiều người thật thì sửa từng câu ở
+    #     tab Kịch bản - thẻ không có nút giữ nguyên vì nhóm đang mang nhiều nhãn.
+    bracketed: dict[int, list[Any]] = defaultdict(list)
+    for row in spoken:
+        if str(row["text"]).lstrip().startswith("『"):
+            bracketed[int(row["chapter_id"])].append(row)
+    for chapter_id, rows in bracketed.items():
+        counts = Counter(str(row["speaker"]) for row in rows)
+        if len(rows) < 3 or len(counts) < 2:
+            continue
+        here = [speaker for speaker, _count in counts.most_common() if _is_named(speaker)]
+        choices = [{"label": f"Tất cả là {speaker_label(speaker)}", "value": speaker, "name": speaker_label(speaker)}
+                   for speaker in here]
+        # Người đúng có thể chưa từng được máy gán câu nào trong chương này (linh thể Yamiyo: 0/43 câu) - thêm người nói
+        # nhiều nhất của chương rồi của CẢ CUỐN.
+        offered = {speaker.casefold() for speaker in here}
+        for chapters in ({chapter_id}, {int(row["chapter_id"]) for row in spoken}):
+            for choice in _cast_choices(spoken, chapters, offered):
+                offered.add(choice["value"].casefold())
+                choices.append({**choice, "label": f"Tất cả là {choice['label']}", "name": choice["label"]})
+        choices.append({"label": "Người kể đọc tất cả", "value": NARRATOR, "name": "Người kể"})
+        fix = _speaker_fix(rows, choices, "", speaker_wishes)
+        if fix is None:
+            continue
+        chapter = names.get(chapter_id, {})
+        split = ", ".join(f"{speaker_label(speaker)} {count}" for speaker, count in counts.most_common(4))
+        items.append({
+            "kind": "bracket",
+            "key": f"bracket:{chapter_id}",
+            "title": f"Lời trong 『』 ở {chapter.get('full') or chapter.get('title') or 'chương này'} là của một người?",
+            "problem": f"{len(rows)} câu trong ngoặc 『』 - thường là thần giao, linh thể, giọng qua điện thoại hay bình"
+                       f" luận - máy chia cho {len(counts)} người ({split}). Máy hay sai loại câu này nhất. Nếu thật là"
+                       " nhiều người, sửa từng câu ở tab Kịch bản.",
+            "affected": len(rows),
+            "doubt": 0.8,
+            "options": [choice["label"] for choice in choices],
+            "current": f"{len(counts)} người",
+            "examples": [_example(row, names) for row in rows[:EXAMPLES]],
+            **fix,
+        })
 
     # 4. Hai nhân vật có tên dùng CHUNG một giọng và cùng nói trong một chương: người nghe không phân biệt được.
     voice_chapters: dict[tuple[int, int], set[str]] = defaultdict(set)
