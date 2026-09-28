@@ -432,6 +432,13 @@ class App:
     def computers_view(self) -> dict[str, Any]:
         return {"name": socket_name(), "computers": self.computers.list()}
 
+    def discover_computers(self) -> dict[str, Any]:
+        """Máy tính ABook khác đang bật kết nối trong mạng (cùng cách điện thoại tìm máy tính) - để khỏi gõ địa chỉ."""
+        paired = {(entry.get("host"), int(entry.get("port") or 0)) for entry in self.computers.list()}
+        own_port = self.sync_port if self.sync_server is not None else None
+        found = remote_books.discover(exclude_port=own_port)
+        return {"found": [{**item, "paired": (item["host"], item["port"]) in paired} for item in found]}
+
     def pair_computer(self, address: str, code: str) -> dict[str, Any]:
         self._mutating()
         try:
@@ -969,6 +976,9 @@ class Handler(BaseHTTPRequestHandler):
         body = self._body()
         self._send_json(HTTPStatus.OK, self.app.pair_computer(str(body.get("address") or ""), str(body.get("code") or "")))
 
+    def get_computers_discover(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.discover_computers())
+
     def post_computers_refresh(self, _query: dict[str, list[str]]) -> None:
         self.app.refresh_remote(wait=True)
         self._send_json(HTTPStatus.OK, self.app.computers_view())
@@ -1255,6 +1265,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(r"/api/computers"), Handler.get_computers),
     ("POST", re.compile(r"/api/computers"), Handler.post_computers),
     ("POST", re.compile(r"/api/computers/refresh"), Handler.post_computers_refresh),
+    ("GET", re.compile(r"/api/computers/discover"), Handler.get_computers_discover),
     ("DELETE", re.compile(r"/api/computers/([0-9a-f]{12})"), Handler.delete_computer),
     ("GET", re.compile(r"/api/listen/library"), Handler.get_listen_library),
     ("POST", re.compile(r"/api/listen/open-book-file"), Handler.post_open_book_file),
