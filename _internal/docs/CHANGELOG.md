@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.0] - 2026-09-29
+
 ### Điểm chính
 
 - **Làm sách nói từ truyện chữ ngay trên máy tính (Studio)**: model phân tích tự huấn luyện (`abook-analyzer`) nhận ai
