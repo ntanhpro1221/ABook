@@ -6700,10 +6700,10 @@ def strip_lone_surrogates(value: Any) -> Any:
 
     Lô 1 của kế hoạch sản xuất chết ở đây, 2026-09-08, sau 1.406/3.727 đoạn:
 
-        UnicodeEncodeError: 'utf-8' codec can't encode character '\ud83d' - surrogates
+        UnicodeEncodeError: 'utf-8' codec can't encode character '\\ud83d' - surrogates
         not allowed
 
-    Model phân tích nhả ra một emoji vỡ - `\ud83d` mà không có nửa sau. `json.loads` dựng nó
+    Model phân tích nhả ra một emoji vỡ - `\\ud83d` mà không có nửa sau. `json.loads` dựng nó
     thành một code point hợp lệ trong `str` của Python nhưng **không mã hoá UTF-8 được**, nên
     mọi thứ hạ nguồn kế thừa một quả mìn: hàm nổ là `sha256_text` lúc băm bằng chứng critic,
     nhưng nó có thể nổ ở bất cứ chỗ nào ghi xuống sqlite hay ra file.
