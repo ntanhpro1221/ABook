@@ -417,6 +417,7 @@ class BluetoothServer:
         self.socket: socket.socket | None = None
         self.record: _SdpRecord | None = None
         self.channel = 0
+        self.address = ""  # địa chỉ card Bluetooth của máy này ("AA:BB:..."), để điện thoại ghép qua Wi-Fi biết đường dự phòng
         self.error = ""
         self.links: set[Mux] = set()
         self._lock = threading.Lock()
@@ -464,6 +465,7 @@ class BluetoothServer:
                 self._close_quietly(server)
                 return None
             self.socket, self.record, self.channel, self.error = server, record, int(channel), ""
+            self.address = "" if str(radio).strip("0:") == "" else str(radio).upper()
         return server
 
     @staticmethod
@@ -527,7 +529,7 @@ class BluetoothServer:
     def view(self) -> dict[str, object]:
         with self._lock:
             return {"running": self.socket is not None, "channel": self.channel, "error": self.error,
-                    "connections": len(self.links)}
+                    "connections": len(self.links), "address": self.address}
 
     def stop(self) -> None:
         self._stopped.set()

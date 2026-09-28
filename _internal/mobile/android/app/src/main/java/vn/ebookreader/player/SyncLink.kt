@@ -2,7 +2,9 @@ package vn.ebookreader.player
 
 import android.content.Context
 import android.content.SharedPreferences
+import org.json.JSONArray
 import org.json.JSONObject
+import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -17,12 +19,38 @@ object SyncLink {
 
     fun token(context: Context): String = prefs(context).getString("token", "") ?: ""
 
+    /**
+     * Các đường tới máy tính chính: LAN "host:port" (địa chỉ đã ghép qua Wi-Fi, cộng địa chỉ LAN máy tính báo lúc ghép -
+     * `lan`, `lanPort`) và địa chỉ Bluetooth (ghép qua Bluetooth: "bt:<địa chỉ>", hay `bt` máy tính báo lúc ghép Wi-Fi).
+     */
+    fun routes(prefs: SharedPreferences): Pair<List<String>, String?> {
+        val host = prefs.getString("host", "") ?: ""
+        val lan = mutableListOf<String>()
+        if (host.isNotBlank() && !host.startsWith("bt:")) lan += "$host:${prefs.getInt("port", 47630)}"
+        val lanPort = prefs.getInt("lanPort", 0).takeIf { it > 0 } ?: 47630
+        runCatching { JSONArray(prefs.getString("lan", "[]") ?: "[]") }.getOrNull()?.let { array ->
+            for (index in 0 until array.length()) array.optString(index).takeIf { it.isNotBlank() }?.let { lan += "$it:$lanPort" }
+        }
+        val bluetooth = if (host.startsWith("bt:")) host.removePrefix("bt:") else prefs.getString("bt", "")?.takeIf { it.isNotBlank() }
+        return lan.distinct() to bluetooth
+    }
+
+    /** Lưu các đường máy tính báo trong lời đáp ghép (sync.py `routes`) - để dùng Wi-Fi khi được, Bluetooth khi không. */
+    fun saveRoutes(editor: SharedPreferences.Editor, reply: JSONObject): SharedPreferences.Editor {
+        val routes = reply.optJSONObject("routes") ?: return editor
+        return editor.putString("lan", (routes.optJSONArray("lan") ?: JSONArray()).toString())
+            .putInt("lanPort", routes.optInt("port", 0)).putString("bt", routes.optString("bluetooth"))
+    }
+
+    /** Gốc http tới máy tính chính theo đường đang thông (Route - không bao giờ chặn luồng gọi). */
     fun base(context: Context): String {
         val prefs = prefs(context)
-        val host = prefs.getString("host", "") ?: ""
-        // Ghép qua Bluetooth: "bt:<địa chỉ>" - đi qua đường hầm (BluetoothLink), cùng giao thức.
-        if (host.startsWith("bt:")) return BluetoothLink.base(context, host.removePrefix("bt:"))
-        return "http://$host:${prefs.getInt("port", 47630)}"
+        val (lan, bluetooth) = routes(prefs)
+        val choice = Route.pick(lan, bluetooth)
+        choice.lan?.let { return "http://$it" }
+        // Bluetooth: "bt:<địa chỉ>" - đi qua đường hầm (BluetoothLink), cùng giao thức.
+        choice.bluetooth?.let { return BluetoothLink.base(context, it) }
+        return "http://${prefs.getString("host", "")}:${prefs.getInt("port", 47630)}"
     }
 
     /**
@@ -52,6 +80,30 @@ object SyncLink {
         readTimeoutMs: Int = 20_000,
         connectTimeoutMs: Int = 5000,
         token: String? = null,
+    ): String {
+        try {
+            return send(context, method, path, body, auth, root, readTimeoutMs, connectTimeoutMs, token)
+        } catch (error: IOException) {
+            // Nối LAN của máy tính chính hỏng (ra khỏi Wi-Fi nhà): đánh dấu hỏng và thử lại ngay một lần qua Bluetooth.
+            val (lan, bluetooth) = routes(prefs(context))
+            val target = lan.firstOrNull { root == "http://$it" }
+            if (target == null || bluetooth == null) throw error
+            Route.markDown(target)
+            return send(context, method, path, body, auth, BluetoothLink.base(context, bluetooth), readTimeoutMs,
+                connectTimeoutMs, token)
+        }
+    }
+
+    private fun send(
+        context: Context,
+        method: String,
+        path: String,
+        body: JSONObject?,
+        auth: Boolean,
+        root: String,
+        readTimeoutMs: Int,
+        connectTimeoutMs: Int,
+        token: String?,
     ): String {
         val connection = URL(root + path).openConnection() as HttpURLConnection
         connection.requestMethod = method

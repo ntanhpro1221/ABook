@@ -351,6 +351,7 @@ class App:
                 studio = StudioGate(allowed=lambda: bool(self.preferences.get().get("remoteStudio")),
                                     port=lambda: self.local_port, token=self.token, static_dir=self.static_dir)
                 app = SyncApp(self.library, self.listening, self.devices, socket_name(), self.remote, studio=studio,
+                              routes=self.routes,
                               player=self.player)
                 self.sync_server = SyncServer(app, host=self.sync_host, port=self.sync_port).start()
                 self.sync_error = ""
@@ -383,6 +384,15 @@ class App:
     def close(self) -> None:
         """App đóng: tắt cổng đồng bộ nhưng giữ nguyên lựa chọn của người dùng cho lần mở sau."""
         self._stop_sync()
+
+    def routes(self) -> dict[str, Any]:
+        """Các đường tới máy này cho thiết bị vừa ghép: địa chỉ LAN + cổng đồng bộ, và địa chỉ Bluetooth khi cổng
+        Bluetooth đang nghe - điện thoại dùng Wi-Fi khi được, Bluetooth khi không (tự chọn đường)."""
+        lan = local_addresses() if self.sync_host == "0.0.0.0" else [self.sync_host]
+        port = self.sync_server.port if self.sync_server is not None else self.sync_port
+        bluetooth = getattr(self, "bluetooth", None)
+        address = str(bluetooth.view().get("address") or "") if bluetooth is not None and bluetooth.view().get("running") else ""
+        return {"lan": [host for host in lan if host not in ("127.0.0.1", "0.0.0.0")], "port": int(port), "bluetooth": address}
 
     def remote_view(self) -> dict[str, Any]:
         """Máy khác đang có sách trên trình phát (PLAYER_RESEARCH #12), kèm những gì máy này biết về cuốn ấy: có trong

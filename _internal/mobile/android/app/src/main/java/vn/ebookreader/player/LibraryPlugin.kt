@@ -156,8 +156,8 @@ class LibraryPlugin : Plugin() {
         val device = call.getString("device") ?: "${Build.MANUFACTURER} ${Build.MODEL}"
         val body = JSONObject().put("code", call.getString("code") ?: "").put("device", device)
         val reply = JSONObject(request("POST", "/sync/v1/pair", body, auth = false, root = "http://$host:$port"))
-        prefs.edit().putString("host", host).putInt("port", port).putString("token", reply.getString("token"))
-            .putString("name", reply.optString("name")).commit()
+        SyncLink.saveRoutes(prefs.edit().putString("host", host).putInt("port", port).putString("token", reply.getString("token"))
+            .putString("name", reply.optString("name")), reply).commit()
         Remote.ensure()
         call.resolve(JSObject().put("name", reply.optString("name")))
     }
@@ -196,8 +196,8 @@ class LibraryPlugin : Plugin() {
             val reason = BluetoothLink.lastError(address)
             throw IllegalStateException(reason.ifBlank { error.message ?: "không kết nối được qua Bluetooth" })
         }
-        prefs.edit().putString("host", "bt:$address").putInt("port", 0).putString("token", reply.getString("token"))
-            .putString("name", reply.optString("name")).commit()
+        SyncLink.saveRoutes(prefs.edit().putString("host", "bt:$address").putInt("port", 0).putString("token", reply.getString("token"))
+            .putString("name", reply.optString("name")), reply).commit()
         Remote.ensure()
         call.resolve(JSObject().put("name", reply.optString("name")))
     }

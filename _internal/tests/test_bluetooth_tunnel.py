@@ -279,7 +279,7 @@ def test_the_server_comes_back_when_bluetooth_does(monkeypatch) -> None:
     try:
         assert server.view()["running"] is False and "tắt" in server.view()["error"]
         assert listening.wait(5), "bật Bluetooth rồi mà không tự nghe"
-        assert server.view() == {"running": True, "channel": 0, "error": "", "connections": 0}
+        assert server.view() == {"running": True, "channel": 0, "error": "", "connections": 0, "address": ""}
         radio_off.set()
         assert _eventually(lambda: "ngừng nghe" in server.view()["error"] or len(attempts) >= 3)
         assert _eventually(lambda: len(attempts) >= 3), "tắt sóng rồi bật lại mà không tự mở lại"
