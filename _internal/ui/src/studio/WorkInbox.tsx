@@ -6,7 +6,7 @@ import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
 import { Button, EmptyState, Segmented } from "@/shared/ui";
-import { api, urls } from "./api";
+import { api, urls, type BookSummary } from "./api";
 
 // "Việc cần anh" (docs/STUDIO_REVIEW.md, webui/work_items.py): chỗ máy nghi ngờ, xếp theo lợi trên mỗi lần bấm. Máy đã tự
 // quyết và dây chuyền KHÔNG chờ ai - đây là nơi người sửa ít nhất mà được nhiều nhất. Cách đọc tên sửa được ngay trên thẻ
@@ -433,7 +433,8 @@ function Card({ bookId, item, onOpenReview }: { bookId: string; item: WorkItem; 
   );
 }
 
-export function WorkInbox({ bookId, onOpenReview }: { bookId: string; onOpenReview: () => void }) {
+export function WorkInbox({ book, onOpenReview }: { book: BookSummary; onOpenReview: () => void }) {
+  const bookId = book.id;
   const [kind, setKind] = useState<WorkKind | "all">("all");
   const [shown, setShown] = useState(PAGE);
   const { data, isLoading } = useQuery({
@@ -458,7 +459,13 @@ export function WorkInbox({ bookId, onOpenReview }: { bookId: string; onOpenRevi
   return (
     <div className="mt-5">
       <p className="max-w-3xl text-sm text-fg-2">
-        Máy đã tự quyết và đang chạy tiếp - không có gì phải chờ anh. Đây là những chỗ nó không chắc, xếp theo lợi: việc ở
+        {/* Lời mở đầu theo trạng thái sách - soát UX 29-09: "đang chạy tiếp" hiện cả khi sách đã xong hay đang dừng. */}
+        {book.running
+          ? "Máy đã tự quyết và đang chạy tiếp - không có gì phải chờ anh."
+          : book.phase === "done"
+            ? "Sách đã xong - sửa xong thì bấm “Áp dụng thay đổi” ở trên để thu lại đúng các câu bị ảnh hưởng."
+            : "Sách đang dừng - sửa bây giờ, lần chạy tiếp sẽ áp dụng."}{" "}
+        Đây là những chỗ máy không chắc, xếp theo lợi: việc ở
         trên sửa một lần được nhiều câu nhất. Cách đọc tên, người nói từng câu, hai tên của một người, giới và giọng nhân
         vật đều sửa được ngay tại đây, không phải dừng sách.
       </p>
