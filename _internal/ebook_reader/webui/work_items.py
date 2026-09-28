@@ -269,6 +269,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
         if wish is not None and not (wish["gender"] or wish["preset"]):
             continue
         heard = _voice_gender(rows, profiles)
+        chapters_of = sorted({int(row["chapter_id"]) for row in rows})
         choices = []
         for gender, label in (("male", "Nam"), ("female", "Nữ")):
             choices.append({"label": label, "character": key, "gender": gender,
@@ -277,7 +278,10 @@ def work_items(project_root: Path) -> dict[str, Any]:
         items.append({
             "kind": "gender",
             "key": f"gender:{character['canonical_name']}",
-            "title": f"{speaker_label(character['canonical_name'])} là nam hay nữ?",
+            # Vai phụ cục bộ cùng tên ở nhiều chương là những người khác nhau ("Người Dân" ở 727, 728, 731): tên chương
+            # trong tiêu đề để ba thẻ không trông như một thẻ lặp (soát UX 29-09).
+            "title": f"{speaker_label(character['canonical_name'])} là nam hay nữ?"
+                     + (f" · {names.get(chapters_of[0], {}).get('name', '')}" if len(chapters_of) == 1 else ""),
             "problem": "Truyện chưa cho máy đủ dấu hiệu về giới của nhân vật này; máy đang đọc bằng "
                        + {"male": "giọng nam.", "female": "giọng nữ."}.get(heard, "một giọng chưa rõ nam nữ."),
             "affected": len(rows),
