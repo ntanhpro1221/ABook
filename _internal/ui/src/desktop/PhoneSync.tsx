@@ -288,7 +288,13 @@ export function PhoneSync() {
           <div>
             <h3 className="text-xs font-semibold uppercase tracking-[0.06em] text-fg-3">Thiết bị đã ghép</h3>
             {sync.devices.length === 0 ? (
-              <p className="mt-2 text-[13px] text-fg-2">Chưa có thiết bị nào.</p>
+              // Người mới chưa có app trên điện thoại: nói chỗ lấy (chữ chọn được, không phải liên kết - trong cửa sổ app một
+              // liên kết có thể điều hướng chính cửa sổ).
+              <p className="mt-2 select-text text-[13px] leading-relaxed text-fg-2">
+                Chưa có thiết bị nào. Điện thoại Android chưa có app: tải file <span className="font-medium text-fg">.apk</span> ở{" "}
+                <span className="font-medium text-fg">github.com/ntanhpro1221/ABook/releases</span> rồi cài. iPhone, iPad: không cần
+                app - ghép rồi nghe bằng trình duyệt.
+              </p>
             ) : (
               <ul className="mt-2 divide-y divide-line rounded-xl border border-line">
                 {sync.devices.map((device) => (
