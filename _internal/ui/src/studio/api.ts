@@ -26,6 +26,8 @@ export interface BookSummary {
   createdAt: number | null;
   updatedAt: number | null;
   lastError: string;
+  /** Sách đã xong: số yêu cầu sửa của người nghe ghi sau lần chạy cuối - chờ nút "Áp dụng" (store.pending_changes). */
+  pendingChanges?: number;
   settings: { profile: string; profileLabel: string; narrator: string };
   chapters: { total: number; completed: number; failed: number; working: number };
   segments: { total: number; analyzed: number; recorded: number; finished: number; failed: number };
