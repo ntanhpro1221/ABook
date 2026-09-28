@@ -248,6 +248,40 @@ def _refresh_book(entry: dict[str, Any], computer: str, folder: Path, book: str)
             pass
 
 
+def player(entry: dict[str, Any], *, timeout: float = 2.0) -> dict[str, Any]:
+    """Trình phát của máy đã ghép lúc này (`GET /sync/v1/player`, mạng trạm bước 4): máy tính hay điện thoại chia sẻ thư
+    viện đều trả cùng hình dạng thân báo điện thoại gửi máy tính - đọc bằng `sync._presence`."""
+    reply = json.loads(_request(_base(entry), "GET", "/sync/v1/player", entry["token"], timeout=timeout).decode("utf-8"))
+    if not isinstance(reply, dict):
+        raise RemoteError("Máy kia trả lời lạ - có phải ABook không?")
+    return reply
+
+
+def player_command(entry: dict[str, Any], command: dict[str, Any], *, timeout: float = 5.0) -> dict[str, Any]:
+    """Gửi một lệnh (đã qua `sync.remote_command`) cho trình phát của máy đã ghép. Máy tính trả `id` rồi làm sau (kết
+    quả về trong `acks`); điện thoại làm ngay và trả luôn `ok`/`message`."""
+    reply = json.loads(_request(_base(entry), "POST", "/sync/v1/player", entry["token"], command,
+                                timeout=timeout).decode("utf-8"))
+    return reply if isinstance(reply, dict) else {}
+
+
+def local_book(library_root: Path, computer: str, book: str) -> Path | None:
+    """Cuốn ảo của máy này cho sách `book` của máy `computer` (đã dựng bởi `refresh`), None nếu chưa có."""
+    root = Path(library_root).expanduser() / REMOTE_FOLDER
+    mark = f"({hashlib.sha256(book.encode()).hexdigest()[:8]})"
+    for folder in root.glob(f"*({computer[:8]})") if root.is_dir() else []:
+        for child in folder.iterdir():
+            if not child.name.endswith(mark):
+                continue
+            try:
+                manifest = json.loads((child / MANIFEST).read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                continue
+            if remote_of(manifest) == {"computer": computer, "book": book}:
+                return child
+    return None
+
+
 def remote_of(manifest: dict[str, Any]) -> dict[str, str] | None:
     package = manifest.get("package") if isinstance(manifest.get("package"), dict) else {}
     remote = package.get("remote") if isinstance(package, dict) else None

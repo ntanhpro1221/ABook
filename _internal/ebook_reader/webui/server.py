@@ -31,7 +31,9 @@ from .reviews import Reviews, review_view
 from .casting_review import casting_chapter, casting_chapters
 from .voice_picker import voice_choices
 from .work_items import work_items
-from .sync import Devices, ExclusiveHTTPServer, Remote, SyncApp, SyncServer, local_addresses, remote_command, SYNC_PORT
+from .peer_players import PeerPlayers
+from .sync import (LOCAL_PLAYER, SYNC_PORT, Devices, ExclusiveHTTPServer, Remote, SyncApp, SyncServer, local_addresses,
+                   remote_command)
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 MISSING_UI_PAGE = (
@@ -129,6 +131,9 @@ class App:
         self.fingerprints = Fingerprints(self.listening.path.with_name("fingerprints.json"))
         self.devices = Devices(preferences.path.with_name("devices.json"))
         self.remote = Remote()
+        # Trình phát trong giao diện CHÍNH máy này: giao diện báo lên (`report_player`), máy đã ghép xem và điều khiển nó
+        # qua cổng đồng bộ (sync.py, /sync/v1/player) - mạng trạm bước 4.
+        self.player = Remote()
         self.sync_server: SyncServer | None = None
         self.sync_host = "0.0.0.0"
         self.sync_port = SYNC_PORT
@@ -154,6 +159,7 @@ class App:
         # Máy tính khác đã ghép (remote_books.py): thư viện của chúng hiện thành sách "Trên máy khác".
         self.computers = remote_books.Computers(preferences.path.with_name("computers.json"))
         remote_books.configure(self.computers)
+        self.peer_players = PeerPlayers(self.computers)
         self._remote_refreshed = 0.0
         self._remote_lock = threading.Lock()
         self._state_synced: dict[str, float] = {}
@@ -341,7 +347,8 @@ class App:
             try:
                 studio = StudioGate(allowed=lambda: bool(self.preferences.get().get("remoteStudio")),
                                     port=lambda: self.local_port, token=self.token, static_dir=self.static_dir)
-                app = SyncApp(self.library, self.listening, self.devices, socket_name(), self.remote, studio=studio)
+                app = SyncApp(self.library, self.listening, self.devices, socket_name(), self.remote, studio=studio,
+                              player=self.player)
                 self.sync_server = SyncServer(app, host=self.sync_host, port=self.sync_port).start()
                 self.sync_error = ""
             except OSError as error:
@@ -357,6 +364,7 @@ class App:
     def _stop_sync(self) -> None:
         # Trả lời ngay các lần "hỏi dài" đang treo, rồi mới tắt máy chủ - không để luồng nào đợi 25 giây vô ích.
         self.remote.reset()
+        self.player.reset()
         if self.sync_server is not None:
             self.sync_server.stop()
             self.sync_server = None
@@ -366,14 +374,27 @@ class App:
         self._stop_sync()
 
     def remote_view(self) -> dict[str, Any]:
-        """Điện thoại đang có sách trên trình phát (PLAYER_RESEARCH #12), kèm những gì máy tính biết về cuốn ấy: có
-        trong thư viện không (để "Nghe trên máy tính") và ảnh bìa. Giao diện hỏi mỗi 1,5 giây nên ở đây không mở SQLite."""
+        """Máy khác đang có sách trên trình phát (PLAYER_RESEARCH #12), kèm những gì máy này biết về cuốn ấy: có trong
+        thư viện không (để "Nghe trên máy này") và ảnh bìa. Hai nguồn: điện thoại báo lên cổng đồng bộ (`via` remote), và
+        máy đã ghép ở "Máy tính khác" - máy tính hay điện thoại chia sẻ thư viện - do PeerPlayers hỏi nền (`via` peer; sách
+        của chúng ở máy này là cuốn ảo, `localBookId`). Giao diện hỏi mỗi 1,5 giây nên ở đây không mở SQLite, không đợi mạng."""
         phones = []
         for phone in self.remote.view() if self.sync_server is not None else []:
             path = self.library.resolve(phone["bookId"]) if phone["bookId"] else None
             phone["known"] = path is not None
+            phone["localBookId"] = phone["bookId"] if path is not None else None
             phone["cover"] = covers.cover_view(path, phone["bookId"]) if path is not None else None
-            phones.append(phone)
+            phones.append({**phone, "kind": "phone", "via": "remote"})
+        reporting = {phone["name"] for phone in phones}
+        for peer in self.peer_players.view():
+            if peer["name"] in reporting:  # điện thoại vừa báo lên đây vừa chia sẻ thư viện: một thanh là đủ
+                continue
+            path = remote_books.local_book(self.library.root, peer["device"], peer["bookId"]) if peer["bookId"] else None
+            local = book_id(path) if path is not None else None
+            peer["known"] = local is not None
+            peer["localBookId"] = local
+            peer["cover"] = covers.cover_view(path, local) if path is not None and local is not None else None
+            phones.append(peer)
         return {"phones": phones}
 
     def remote_send(self, device: str, body: dict[str, Any]) -> dict[str, Any]:
@@ -381,10 +402,36 @@ class App:
             command = remote_command(body)
         except ValueError as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+        entry = self.computers.get(device)
+        if entry is None or any(phone["device"] == device for phone in self.remote.view()):
+            try:
+                return {"id": self.remote.send(device, command)["id"]}
+            except LookupError as error:
+                raise ApiError(HTTPStatus.CONFLICT, "Máy kia không còn kết nối - mở ABook trên máy ấy rồi thử lại") from error
+        if command["action"] == "load":
+            # "Phát trên <máy kia>": giao diện gửi mã cuốn của MÁY NÀY; máy kia chỉ phát được sách của chính nó.
+            path = self.library.resolve_listenable(command["bookId"])
+            remote = remote_books.remote_of(packages.manifest(path)) if path is not None and packages.is_package(path) else None
+            if remote is None or remote["computer"] != device:
+                raise ApiError(HTTPStatus.CONFLICT, f"{entry['name']} không có cuốn này")
+            command["bookId"] = remote["book"]
         try:
-            return {"id": self.remote.send(device, command)["id"]}
-        except LookupError as error:
-            raise ApiError(HTTPStatus.CONFLICT, "Điện thoại không còn kết nối - mở app trên điện thoại rồi thử lại") from error
+            reply = remote_books.player_command(entry, command)
+        except remote_books.RemoteError as error:
+            raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
+        finally:
+            self.peer_players.poke(device)
+        if reply.get("ok") is False:
+            raise ApiError(HTTPStatus.CONFLICT, f"{entry['name']}: {reply.get('message') or 'không làm được lệnh này'}")
+        return {"id": str(reply.get("id") or "")}
+
+    def report_player(self, body: dict[str, Any]) -> dict[str, Any]:
+        """Giao diện máy này báo trình phát của nó và treo tới `wait` giây chờ lệnh từ máy đã ghép (như điện thoại báo
+        máy tính, sync.Remote). Đồng bộ tắt thì không ai gửi lệnh được: trả ngay `idle`, giao diện thưa lại."""
+        if self.sync_server is None:
+            return {"commands": [], "idle": True}
+        commands = self.player.report(LOCAL_PLAYER, socket_name(), body, body.get("wait", 0))
+        return {"commands": [{key: value for key, value in command.items() if key != "at"} for command in commands]}
 
     # ---- nghe ------------------------------------------------------------------------------------------
 
@@ -966,6 +1013,9 @@ class Handler(BaseHTTPRequestHandler):
     def get_remote(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.remote_view())
 
+    def post_player_report(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.report_player(self._body()))
+
     def post_remote(self, _query: dict[str, list[str]], device: str) -> None:
         self._mutating_guard()
         self._send_json(HTTPStatus.OK, self.app.remote_send(device, self._body()))
@@ -1289,6 +1339,7 @@ ROUTES: list[Route] = [
     ("POST", re.compile(r"/api/sync/pairing"), Handler.post_sync_pairing),
     ("POST", re.compile(r"/api/sync/studio"), Handler.post_sync_studio),
     ("GET", re.compile(r"/api/remote"), Handler.get_remote),
+    ("POST", re.compile(r"/api/player/report"), Handler.post_player_report),
     ("POST", re.compile(r"/api/remote/([0-9a-f]{12})"), Handler.post_remote),
     ("DELETE", re.compile(r"/api/sync/pairing"), Handler.delete_sync_pairing),
     ("DELETE", re.compile(r"/api/sync/devices/([0-9a-f]+)"), Handler.delete_sync_device),
