@@ -356,10 +356,20 @@ def move_to_recycle_bin(path: Path) -> None:
             ("lpszProgressTitle", wintypes.LPCWSTR),
         ]
 
+    class RecycleBinInfo(ctypes.Structure):  # SHQUERYRBINFO
+        _fields_ = [("cbSize", wintypes.DWORD), ("i64Size", ctypes.c_longlong), ("i64NumItems", ctypes.c_longlong)]
+
+    resolved = path.resolve()
+    # Ổ không có Thùng rác (USB, ổ mạng) thì "xoá" là XOÁ HẲN - app không bao giờ tự làm vậy; người dùng tự xoá nếu chắc.
+    info = RecycleBinInfo(ctypes.sizeof(RecycleBinInfo), 0, 0)
+    if ctypes.windll.shell32.SHQueryRecycleBinW(resolved.anchor, ctypes.byref(info)) != 0:
+        raise OSError(f"ổ {resolved.anchor} không có Thùng rác")
     fo_delete = 3
-    flags = 0x0040 | 0x0010 | 0x0004 | 0x0400  # ALLOWUNDO | NOCONFIRMATION | SILENT | NOERRORUI
+    # ALLOWUNDO | NOCONFIRMATION | SILENT | NOERRORUI | WANTNUKEWARNING: thư mục quá lớn so với Thùng rác thì Windows HỎI
+    # trước khi xoá hẳn (không có cờ cuối, NOCONFIRMATION cho nó xoá hẳn im lặng - một cuốn xong nặng hàng chục GB).
+    flags = 0x0040 | 0x0010 | 0x0004 | 0x0400 | 0x4000
     # pFrom là danh sách kết thúc bằng HAI ký tự NUL: ctypes thêm một, "\0" ở đây là cái còn lại.
-    operation = FileOperation(None, fo_delete, str(path.resolve()) + "\0", None, flags, False, None, None)
+    operation = FileOperation(None, fo_delete, str(resolved) + "\0", None, flags, False, None, None)
     code = ctypes.windll.shell32.SHFileOperationW(ctypes.byref(operation))
     if code != 0 or operation.fAnyOperationsAborted:
         raise OSError(f"SHFileOperationW trả {code:#x}")
