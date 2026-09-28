@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sqlite3
 import subprocess
@@ -41,11 +42,13 @@ from ebook_reader.project import create_or_open_project  # noqa: E402
 
 PY = ROOT / "runtime" / ".venv" / "Scripts" / "python.exe"
 EVAL_ROOT = Path("D:/Novels/Audiobooks/_model_eval")
-REFERENCE = Path("D:/Novels/Audiobooks/book2/_versions/v0.3.0-lo08/lo08_270cda51cf")
+# Máy khác (Mac đo song song, 28-09): ABOOK_EVAL_REFERENCE = project tham chiếu HOẶC file settings JSON chép từ nó,
+# ABOOK_CORPUS = kho truyện.
+REFERENCE = Path(os.environ.get("ABOOK_EVAL_REFERENCE", "D:/Novels/Audiobooks/book2/_versions/v0.3.0-lo08/lo08_270cda51cf"))
 SEED = Path("D:/Novels/Audiobooks/book2/_versions/v0.3.0-lo06r/lo06r_266_22b5598370")
 SOURCE = Path("D:/Novels/ABook/Text_Tmp")
 CHAPTERS = ("351", "363", "378", "381")
-CORPUS = Path("D:/Novels/ABook/Corpus")
+CORPUS = Path(os.environ.get("ABOOK_CORPUS", "D:/Novels/ABook/Corpus"))
 
 
 def book_slug(name: str) -> str:
@@ -63,11 +66,14 @@ def slug(model: str) -> str:
 
 
 def reference_settings(model: str) -> dict:
-    connection = sqlite3.connect(f"file:{REFERENCE / 'project.sqlite3'}?mode=ro", uri=True)
-    try:
-        settings = json.loads(connection.execute("SELECT settings_json FROM book").fetchone()[0])
-    finally:
-        connection.close()
+    if REFERENCE.suffix == ".json":
+        settings = json.loads(REFERENCE.read_text(encoding="utf-8"))
+    else:
+        connection = sqlite3.connect(f"file:{REFERENCE / 'project.sqlite3'}?mode=ro", uri=True)
+        try:
+            settings = json.loads(connection.execute("SELECT settings_json FROM book").fetchone()[0])
+        finally:
+            connection.close()
     settings["analysis"]["model"] = model
     validate_settings(normalize_legacy_locked_settings(settings))
     return settings
