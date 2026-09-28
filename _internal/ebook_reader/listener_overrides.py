@@ -1,9 +1,10 @@
-"""Người nghe sửa trong Studio (hộp "Việc cần anh", docs/STUDIO_REVIEW.md) - cách đọc tên, ai nói câu nào - áp ở ranh
-giới an toàn.
+"""Người nghe sửa trong Studio (hộp "Việc cần anh", docs/STUDIO_REVIEW.md) - cách đọc tên, ai nói câu nào, giọng và
+giới của một nhân vật - áp ở ranh giới an toàn.
 
 Giao diện không ghi SQLite của sách: dây chuyền là người ghi duy nhất. Giao diện ghi ý muốn của người nghe vào
 `overrides.json` cạnh `project.sqlite3`, dây chuyền đọc file ấy ở ranh giới an toàn và áp từng yêu cầu bằng
-`ProjectDB.apply_listener_pronunciation` / `apply_listener_speaker` (đổi và đặt lại câu đã thu, một transaction).
+`ProjectDB.apply_listener_pronunciation` / `apply_listener_speaker` / `apply_listener_voice` (đổi và đặt lại câu đã thu,
+một transaction).
 
 File là TRẠNG THÁI MONG MUỐN, không phải hàng đợi: áp lại một yêu cầu đã áp là không làm gì. Nhờ vậy dây chuyền không
 bao giờ phải ghi ngược vào file, và không bao giờ có hai tiến trình cùng ghi một file.
@@ -31,6 +32,10 @@ UNKNOWN_LINE = "unknown_line"
 SOURCE_CHANGED = "source_changed"
 NOT_SPEECH = "not_speech"
 NO_VOICE = "no_voice"
+UNKNOWN_CHARACTER = "unknown_character"
+NOT_A_CHARACTER = "not_a_character"
+UNKNOWN_PRESET = "unknown_preset"
+BAD_GENDER = "bad_gender"
 
 # Hai đích đặc biệt của "Ai nói câu này", ngoài khoá tên chuẩn của một nhân vật.
 NARRATOR = "NARRATOR"
@@ -177,6 +182,100 @@ def speaker_target(
     return None, NO_VOICE
 
 
+def voice_requests(overrides: dict[str, Any]) -> list[dict[str, str]]:
+    """Các yêu cầu giọng/giới cho một nhân vật, theo thứ tự khoá tên chuẩn.
+
+    `preset` rỗng = để máy chọn (đúng phép chọn của bước phân vai, người khác giữ nguyên); `gender` rỗng = giữ giới đang
+    có; `avoid` = khoá giọng phải tránh (hai người đang dùng chung giọng ấy). Cả ba rỗng = người nghe bảo "giữ nguyên"."""
+    entries = overrides.get("voices")
+    if not isinstance(entries, dict):
+        return []
+    requests: list[dict[str, str]] = []
+    for character in sorted(entries):
+        entry = entries[character]
+        if not isinstance(entry, dict) or not str(character).strip():
+            continue
+        requests.append({
+            "character": str(character).strip(),
+            "preset": str(entry.get("preset") or "").strip(),
+            "gender": str(entry.get("gender") or "").strip(),
+            "avoid": str(entry.get("avoid") or "").strip(),
+        })
+    return requests
+
+
+def voice_target(
+    conn: sqlite3.Connection,
+    voices: dict[str, Any],
+    *,
+    character: str,
+    preset: str = "",
+    gender: str = "",
+    avoid: str = "",
+) -> tuple[dict[str, Any] | None, str | None]:
+    """Nhân vật sẽ mang giọng và giới nào nếu áp yêu cầu: (đích, None), hoặc (None, mã lý do).
+
+    Dùng chung cho giao diện (từ chối ngay, SQLite chỉ đọc) và dây chuyền (trong transaction áp). `profile` của đích là
+    None khi giọng đang có đã đáp ứng yêu cầu - đúng giới, không phải giọng cần tránh, đúng preset đã chọn - nên áp lại
+    một yêu cầu đã áp không đổi gì, và máy không đổi giọng một người chỉ vì người khác vừa đổi. Giọng mới luôn là hồ sơ
+    bước phân vai sẽ tạo (`character_registry.listener_voice_choice`), nên "một người một giọng" vẫn đúng.
+    """
+    from .character_registry import listener_voice_choice
+    from .voice_catalog import CASTING_REGIONS, EXCLUDED_PRESETS, STYLE_NEWS, VIENEU_PRESETS
+
+    if gender not in ("", "male", "female"):
+        return None, BAD_GENDER
+    key = " ".join(str(character).strip().casefold().split()).upper()  # = character_registry.canonical_key
+    if key == NARRATOR:
+        return None, NOT_A_CHARACTER
+    row = conn.execute("SELECT id, canonical_name, gender, age, locked FROM characters WHERE canonical_name=?",
+                       (key,)).fetchone()
+    if row is None:
+        return None, UNKNOWN_CHARACTER
+    current = conn.execute(
+        """
+        SELECT v.id, v.voice_key, v.preset_name, COUNT(*) AS lines FROM segments s
+        JOIN voice_profiles v ON v.id = s.voice_profile_id
+        WHERE s.canonical_character_id=? GROUP BY v.id ORDER BY lines DESC LIMIT 1
+        """,
+        (int(row["id"]),),
+    ).fetchone()
+    if current is None:
+        return None, NO_VOICE
+    castable = {
+        str(item["name"]): item for item in VIENEU_PRESETS
+        if item["style"] != STYLE_NEWS and item["region"] in CASTING_REGIONS and item["name"] not in EXCLUDED_PRESETS
+        and item["name"] not in {str(voices.get("narrator_voice") or ""), *map(str, voices.get("other_narrators", ()))}
+    }
+    if preset and preset not in castable:
+        return None, UNKNOWN_PRESET
+    current_gender = str(row["gender"] or "unknown")
+    final_gender = gender or current_gender
+    current_preset = castable.get(str(current["preset_name"] or ""))
+    satisfied = (
+        (not preset or preset == str(current["preset_name"]))
+        and (not avoid or avoid != str(current["voice_key"]))
+        and (not gender or (current_preset is not None and current_preset["gender"] == gender))
+    )
+    profile = None if satisfied else listener_voice_choice(
+        conn, voices, key, gender=final_gender, age=str(row["age"] or "unknown"), preset_name=preset
+    )
+    if profile is not None and preset:
+        final_gender = gender or str(castable[preset]["gender"])
+    # Giới chỉ ghim khi người nghe NÓI giới, hay chọn hẳn một giọng (giọng mang giới của nó). "Giữ nguyên" và "tách hai
+    # người chung giọng" không nói gì về giới.
+    stated = bool(gender) or (profile is not None and bool(preset))
+    return {
+        "character_id": int(row["id"]),
+        "canonical_name": key,
+        "gender": final_gender,
+        "lock_gender": stated and final_gender in ("male", "female")
+                       and (final_gender != current_gender or not row["locked"]),
+        "current_voice_key": str(current["voice_key"]),
+        "profile": profile,
+    }, None
+
+
 def request_pronunciation(project_root: Path, surface: str, spoken_form: str, *, now: float) -> None:
     """Giao diện gọi: ghi (hoặc thay) mong muốn cho một từ."""
     data = read_overrides(project_root)
@@ -209,6 +308,22 @@ def request_speakers(project_root: Path, lines: list[tuple[str, str]], speaker: 
             "requested_at": float(now),
         }
     data["speakers"] = entries
+    _write(project_root, data)
+
+
+def request_voice(project_root: Path, character: str, *, preset: str = "", gender: str = "", avoid: str = "",
+                  now: float) -> None:
+    """Giao diện gọi: ghi (hoặc thay) mong muốn về giọng/giới của một nhân vật."""
+    data = read_overrides(project_root)
+    entries = data.get("voices")
+    entries = dict(entries) if isinstance(entries, dict) else {}
+    entries[" ".join(str(character).strip().casefold().split()).upper()] = {
+        "preset": str(preset).strip(),
+        "gender": str(gender).strip(),
+        "avoid": str(avoid).strip(),
+        "requested_at": float(now),
+    }
+    data["voices"] = entries
     _write(project_root, data)
 
 

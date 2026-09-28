@@ -1425,6 +1425,38 @@ def reserve_pinned_voices(
     return reserved
 
 
+def voice_profile_spec(preset: dict[str, str], formant_ratio: float, *, age_pitch: int = 0) -> dict[str, Any]:
+    """The voice profile a preset becomes at one formant step: key, description, seed, pitch.
+
+    Split out of `_profile_for_preset` so that a voice a listener picks in the Studio
+    (`ProjectDB.apply_listener_voice`) is exactly the profile casting would have created, written
+    inside that apply's own transaction.
+    """
+    name = preset["name"]
+    # The preset's calibrated reading register, plus whatever the character's age asks
+    # for: children speak about three semitones above an adult, and ageing moves men up
+    # while it moves women down.
+    base_pitch = base_pitch_for_preset(name) + int(age_pitch)
+    formant_key = f"f{int(round(float(formant_ratio) * 100)):03d}"
+    pitch_key = f"p{int(base_pitch):+03d}"
+    if abs(float(formant_ratio) - 1.0) <= 1e-6:
+        description = "âm sắc gốc"
+    elif float(formant_ratio) < 1.0:
+        description = f"âm sắc trầm hơn ({formant_ratio:.2f})"
+    else:
+        description = f"âm sắc sáng hơn ({formant_ratio:.2f})"
+    return {
+        "voice_key": f"preset_{slugify(name)}_{formant_key}_{pitch_key}",
+        "engine": "vieneu",
+        "preset_name": name,
+        "description": f"{preset['description']} · {description}",
+        "seed": stable_int(f"voice::vieneu::{name}::{formant_key}::{pitch_key}"),
+        "pitch_semitones": base_pitch,
+        "formant_ratio": float(formant_ratio),
+        "status": "ready",
+    }
+
+
 def _profile_for_preset(
     db: ProjectDB,
     preset: dict[str, str],
@@ -1433,34 +1465,12 @@ def _profile_for_preset(
     *,
     age_pitch: int = 0,
 ) -> int:
-    name = preset["name"]
-    # The preset's calibrated reading register, plus whatever the character's age asks
-    # for: children speak about three semitones above an adult, and ageing moves men up
-    # while it moves women down.
-    base_pitch = base_pitch_for_preset(name) + int(age_pitch)
-    formant_key = f"f{int(round(float(formant_ratio) * 100)):03d}"
-    pitch_key = f"p{int(base_pitch):+03d}"
-    profile_key = f"{name}::{formant_key}::{pitch_key}"
-    if profile_key not in cache:
-        if abs(float(formant_ratio) - 1.0) <= 1e-6:
-            description = "âm sắc gốc"
-        elif float(formant_ratio) < 1.0:
-            description = f"âm sắc trầm hơn ({formant_ratio:.2f})"
-        else:
-            description = f"âm sắc sáng hơn ({formant_ratio:.2f})"
-        cache[profile_key] = db.upsert_voice_profile(
-            {
-                "voice_key": f"preset_{slugify(name)}_{formant_key}_{pitch_key}",
-                "engine": "vieneu",
-                "preset_name": name,
-                "description": f"{preset['description']} · {description}",
-                "seed": stable_int(f"voice::vieneu::{name}::{formant_key}::{pitch_key}"),
-                "pitch_semitones": base_pitch,
-                "formant_ratio": float(formant_ratio),
-                "status": "ready",
-            }
-        )
-    return cache[profile_key]
+    spec = voice_profile_spec(preset, formant_ratio, age_pitch=age_pitch)
+    # The voice key encodes preset, formant step and pitch - the three things the cache was
+    # keyed on - so it keys the cache as well.
+    if spec["voice_key"] not in cache:
+        cache[spec["voice_key"]] = db.upsert_voice_profile(spec)
+    return cache[spec["voice_key"]]
 
 
 def _legacy_personality_hint(note: Any) -> str | None:
@@ -2285,3 +2295,70 @@ def build_registry_and_cast(
         f"{voice_variants} biến thể giọng; "
         f"{local_count} NPC có danh tính cục bộ, {anonymous_count} nhóm NPC generic theo giới tính."
     )
+
+
+def book_allocator(conn: Any, voices: dict[str, Any], *, leave_out: str) -> PresetAllocator:
+    """An allocator carrying the book as it stands: every character but `leave_out` holds its
+    current voice step, and everyone - `leave_out` included - is known by the chapters they speak in.
+
+    Re-voicing ONE character after casting (a listener says the boy is a girl, or two people
+    share a voice) has to ask the question casting asked - which voice, at which formant step,
+    clashes least with whoever shares my chapters - without moving anyone else. Rebuilding the
+    ledger from the segments is what lets `choose()` answer it unchanged.
+    """
+    allocator = PresetAllocator(
+        str(voices["narrator_voice"]),
+        int(voices.get("max_character_pitch_semitones", 2)),
+        other_narrators=tuple(voices.get("other_narrators", ())),
+    )
+    chapters: dict[str, set[int]] = defaultdict(set)
+    held: dict[str, set[tuple[str, float]]] = defaultdict(set)
+    for row in conn.execute(
+        """
+        SELECT c.canonical_name, s.chapter_id, v.preset_name, v.formant_ratio FROM segments s
+        JOIN characters c ON c.id = s.canonical_character_id
+        JOIN voice_profiles v ON v.id = s.voice_profile_id
+        WHERE c.canonical_name <> 'NARRATOR'
+        """
+    ):
+        who = str(row["canonical_name"])
+        chapters[who].add(int(row["chapter_id"]))
+        if who != leave_out and row["preset_name"]:
+            held[who].add((str(row["preset_name"]), round(float(row["formant_ratio"] or 1.0), 3)))
+    for who in sorted(chapters):
+        allocator.note_chapters(who, chapters[who])
+    for who in sorted(held):
+        for preset_name, ratio in sorted(held[who]):
+            allocator.reserve(preset_name, ratio, who=who)
+    return allocator
+
+
+def listener_voice_choice(
+    conn: Any,
+    voices: dict[str, Any],
+    character: str,
+    *,
+    gender: str,
+    age: str,
+    preset_name: str = "",
+) -> dict[str, Any]:
+    """The voice profile `character` should have: the preset a listener picked, or - with no
+    preset - the one casting picks for this gender and age with everybody else in place.
+
+    A picked preset still gets its formant step the way casting would give it: the step age
+    demands, else the first step nobody who shares a chapter with this character holds.
+    """
+    allocator = book_allocator(conn, voices, leave_out=character)
+    if preset_name:
+        preset = preset_by_name(preset_name)
+        ratio = formant_ratio_for_age(preset_name, age, gender)
+        if abs(ratio - 1.0) <= 1e-6:
+            ratio = allocator._first_free_variant(
+                preset_name, formant_variants_for_preset(preset_name), who=character
+            )
+        age_pitch = age_pitch_semitones(age, gender, preset_name)
+    else:
+        preset, ratio, age_pitch = allocator.choose(
+            gender, npc=is_local_speaker(character), age=age, who=character
+        )
+    return voice_profile_spec(preset, ratio, age_pitch=age_pitch)

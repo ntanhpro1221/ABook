@@ -67,6 +67,21 @@ def speaker_request_problem(project_root: Path, stable_id: str, text_sha256: str
     return problem
 
 
+def voice_request_problem(project_root: Path, character: str, *, preset: str = "", gender: str = "",
+                          avoid: str = "") -> str | None:
+    """Mã lý do dây chuyền sẽ từ chối yêu cầu giọng/giới của một nhân vật, hoặc None - hỏi bằng ĐÚNG phép dây chuyền dùng
+    (`listener_overrides.voice_target`), trên SQLite chỉ đọc."""
+    from ..config import build_settings
+    from ..listener_overrides import voice_target
+
+    stored = read_settings(project_root).get("voices")
+    voices = {**build_settings()["voices"], **(stored if isinstance(stored, dict) else {})}
+    with closing(connect(project_root)) as connection:
+        _target, problem = voice_target(connection, voices, character=character, preset=preset, gender=gender,
+                                        avoid=avoid)
+    return problem
+
+
 def _table_names(connection: sqlite3.Connection) -> set[str]:
     return {str(row[0]) for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")}
 
