@@ -451,6 +451,30 @@ def _voice_view(profile: sqlite3.Row | None) -> dict[str, Any] | None:
     }
 
 
+def pending_voices(project_root: Path, since: float) -> dict[str, dict[str, str]]:
+    """{khoá tên chuẩn: giọng/giới người nghe đã chọn} cho các yêu cầu ghi SAU lần dây chuyền ghi sổ cuối `since` - dòng
+    nhân vật hiện "chờ áp dụng" thay vì vẫn giọng cũ như chưa có gì (soát UX 29-09: đổi giọng Heidi xong, dòng vẫn ghi
+    Ngọc Linh, mở lại hộp vẫn "Đang dùng")."""
+    from ..listener_overrides import read_overrides
+
+    entries = read_overrides(project_root).get("voices")
+    pending: dict[str, dict[str, str]] = {}
+    for key, entry in (entries.items() if isinstance(entries, dict) else ()):
+        try:
+            waiting = float(entry.get("requested_at") or 0) > since
+        except (AttributeError, TypeError, ValueError):
+            continue
+        preset, gender = str(entry.get("preset") or ""), str(entry.get("gender") or "")
+        if waiting and (preset or gender):
+            pending[speaker_key(str(key))] = {"preset": preset, "gender": humanize.GENDER_LABELS.get(gender, "")}
+    return pending
+
+
+def speaker_key(name: str) -> str:
+    """Khoá tên chuẩn như character_registry.canonical_key - cùng khoá mục `voices` của overrides.json."""
+    return " ".join(name.strip().casefold().split()).upper()
+
+
 def cast(project_root: Path) -> dict[str, Any]:
     """Ai nói trong CUỐN NÀY, bằng giọng nào. Sổ nhân vật của một lô là sổ cộng dồn cả sách (636 người ở lô 16,
     88 người thật sự lên tiếng), nên chỉ lấy những ai có câu trong bảng `segments` của project này."""
@@ -478,6 +502,8 @@ def cast(project_root: Path) -> dict[str, Any]:
             )
         }
         chapter_numbers = {chapter_id: item["name"] for chapter_id, item in chapter_names(connection).items()}
+        book_row = connection.execute("SELECT updated_at FROM book WHERE id=1").fetchone()
+    pending = pending_voices(project_root, float(book_row["updated_at"] or 0) if book_row is not None else 0.0)
     lines: dict[str, int] = defaultdict(int)
     seconds: dict[str, float] = defaultdict(float)
     voice_votes: dict[str, Counter[int]] = defaultdict(Counter)
@@ -518,6 +544,7 @@ def cast(project_root: Path) -> dict[str, Any]:
             "voice": voice_of(speaker),
             "sampleId": samples.get(speaker),
             "firstChapter": chapter_numbers.get(first_seen.get(speaker, -1), ""),
+            "pendingVoice": pending.get(speaker_key(speaker)),
         }
         (main if record is not None else extras).append(entry)
     main.sort(key=lambda entry: (-entry["lines"], entry["displayName"]))

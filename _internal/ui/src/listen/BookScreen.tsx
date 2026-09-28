@@ -205,6 +205,14 @@ export function PersonRow({
           <AudioLines className="mr-1 inline size-3.5 -translate-y-px text-fg-3" />
           {person.voice ? `${person.voice.preset}${person.voice.tone ? ` · ${person.voice.tone}` : ""}` : "Chưa có giọng"}
         </div>
+        {person.pendingVoice && (
+          <div className="mt-0.5 truncate text-xs font-medium text-accent-text">
+            Chờ áp dụng:{" "}
+            {[person.pendingVoice.preset && `giọng ${person.pendingVoice.preset}`, person.pendingVoice.gender.toLowerCase()]
+              .filter(Boolean)
+              .join(" · ")}
+          </div>
+        )}
         <div className="tabular mt-1 text-xs text-fg-2">
           {formatNumber(person.lines)} câu
           {person.seconds > 0 ? ` · ${formatLength(person.seconds)}` : ""}
