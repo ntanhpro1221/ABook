@@ -161,6 +161,8 @@ export interface AppInfo {
   /** Đang điều khiển ABook của máy khác qua Studio từ xa (webui/remote_studio.py): ẩn những gì chỉ có nghĩa trên chính
    * máy ấy - mở thư mục, đổi cài đặt của máy, ghép điện thoại, thanh điện thoại đang phát. */
   remote?: boolean;
+  /** Ở xa và CHỈ được nghe (thiết bị đã ghép nhưng máy tính chưa cho điều khiển sản xuất): ẩn Studio. */
+  listenOnly?: boolean;
   /** App Windows đóng gói (webui/host.py): bản mới vỏ Tauri tìm thấy trên GitHub Releases, chờ người dùng bấm cài. */
   update?: { version: string; notes: string } | null;
   /** App Windows đóng gói: Studio (thư viện + model làm sách) tải thêm đã cài chưa. null: bản dev (runtime cạnh mã). */

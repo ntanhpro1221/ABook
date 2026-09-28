@@ -252,13 +252,32 @@ function StudioChipLink({ id }: { id: string }) {
 
 function LibraryRoute() {
   const navigate = useNavigate();
+  const { data: info } = useAppInfo();
   return (
     <LibraryScreen
       empty={<EmptyLibrary />}
       header={<OpenBookFileButton />}
       recap={<MorningRecap className="mt-6" />}
-      onOpenUpcoming={(book) => navigate(`/studio/${book.id}`)}
+      onOpenUpcoming={info?.listenOnly ? undefined : (book) => navigate(`/studio/${book.id}`)}
     />
+  );
+}
+
+/** Trang Studio khi thiết bị chỉ được nghe (Studio từ xa, remote_studio.py): nói vì sao và bật ở đâu. */
+function StudioClosed({ children }: { children: ReactNode }) {
+  const { data: info } = useAppInfo();
+  const navigate = useNavigate();
+  if (!info?.listenOnly) return <>{children}</>;
+  return (
+    <EmptyState
+      icon={Clapperboard}
+      title="Thiết bị này chỉ nghe sách"
+      className="mt-24"
+      action={<Button onClick={() => navigate("/")}>Về Thư viện</Button>}
+    >
+      Muốn làm sách từ đây: trên máy tính, Cài đặt → Điện thoại và thiết bị → bật “Cho phép điều khiển sản xuất từ thiết bị
+      đã ghép” và “Điều khiển sản xuất” ở dòng của thiết bị này, rồi tải lại trang.
+    </EmptyState>
   );
 }
 
@@ -319,9 +338,9 @@ export function App() {
                     }
                   />
                   <Route path="/book/:id/read/:chapterId?" element={<ReaderScreen />} />
-                  <Route path="/studio" element={<ProjectsScreen />} />
-                  <Route path="/studio/new" element={<NewProjectScreen />} />
-                  <Route path="/studio/:id" element={<ProjectScreen />} />
+                  <Route path="/studio" element={<StudioClosed><ProjectsScreen /></StudioClosed>} />
+                  <Route path="/studio/new" element={<StudioClosed><NewProjectScreen /></StudioClosed>} />
+                  <Route path="/studio/:id" element={<StudioClosed><ProjectScreen /></StudioClosed>} />
                   <Route path="/settings" element={<SettingsScreen />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
