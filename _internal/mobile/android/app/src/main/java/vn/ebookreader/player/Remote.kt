@@ -117,8 +117,22 @@ object Remote {
         return JSONObject(reply).optJSONArray("commands")
     }
 
+    /** Lệnh từ một máy đã ghép gửi THẲNG tới điện thoại (LibraryServer, POST /sync/v1/player - mạng trạm bước 4): làm ở
+     *  luồng chính như lệnh của máy tính chính, trả lý do nếu không làm được. Chờ tối đa 5 giây. */
+    fun applyNow(command: JSONObject): String? {
+        val result = AtomicReference<String?>("Điện thoại không trả lời kịp")
+        val done = CountDownLatch(1)
+        Playback.onMain {
+            result.set(runCatching { apply(command) }.getOrElse { it.message ?: it.javaClass.simpleName })
+            done.countDown()
+            kick()
+        }
+        done.await(5, TimeUnit.SECONDS)
+        return result.get()
+    }
+
     /** Trạng thái trình phát, đọc ở luồng chính (ExoPlayer chỉ cho đọc từ luồng của nó). */
-    private fun snapshot(): JSONObject {
+    fun snapshot(): JSONObject {
         val result = AtomicReference(JSONObject())
         val done = CountDownLatch(1)
         Playback.onMain {

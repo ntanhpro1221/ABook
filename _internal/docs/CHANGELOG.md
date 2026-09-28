@@ -7,6 +7,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- **Điều khiển trình phát giữa mọi máy, hai chiều.** Máy tính đang phát sách thì điện thoại (và máy tính khác) đã ghép
+  thấy thanh "Đang phát trên <máy tính>" ngay trên thanh phát: dừng/phát, lùi/tới 15 giây, và **"Nghe ở đây"** - máy tính
+  tự dừng, điện thoại nghe tiếp đúng chương, đúng giây (nghe thẳng nếu chưa tải). Ngược lại, máy tính thấy và điều khiển
+  điện thoại đang bật "Cho máy khác nghe thư viện này", và máy tính khác ở "Máy tính khác"; "Phát trên <máy kia>" chuyển
+  cuốn đang nghe sang máy ấy nếu máy ấy có cuốn đó. Lệnh không làm được thì máy bấm được báo lý do. Máy tính phát được
+  ngay khi nhận lệnh từ xa, không cần bấm vào cửa sổ trước.
 - Làm sách: câu thoại có lời dẫn kiểu “Được,” Liz gật đầu. giờ **đọc bằng giọng nhân vật**. Trước đây câu ấy chỉ được
   nhận là thoại khi lời dẫn dùng vài động từ quen (nói, hỏi, đáp...); "gật đầu", "lầm bầm", "lên tiếng", "giải thích"...
   thì cả đoạn thành lời kể và câu thoại đọc bằng giọng người kể. Gặp nhiều ở truyện dịch từ tiếng Anh/Hàn: gần 1.800 câu

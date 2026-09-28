@@ -93,6 +93,35 @@ export interface RemoteBook {
 }
 
 /** Một thiết bị đã ghép ngoài máy tính chính (điện thoại khác, máy tính khác) và thư viện của nó. */
+/** Trình phát trên máy khác (mạng trạm bước 4, RemotePlayers.kt): máy tính chính (`device` "main") hay thiết bị ghép. */
+export interface RemotePlayer {
+  device: string;
+  name: string;
+  kind: "computer" | "phone";
+  state: {
+    bookId?: string;
+    bookTitle?: string;
+    chapterId?: number | null;
+    chapterTitle?: string;
+    position?: number;
+    duration?: number;
+    playing?: boolean;
+    buffering?: boolean;
+    rate?: number;
+  } | null;
+  /** Giây kể từ lần máy kia cập nhật trạng thái (máy tính báo lên host của nó; điện thoại đọc thẳng = 0). */
+  age: number;
+  acks: { id: string; ok: boolean; message: string }[];
+  /** Cuốn ấy ở điện thoại này: mã máy tính chính (nghe thẳng/đã tải) hoặc `p<key>_<mã>` của thiết bị ghép. */
+  localBookId: string;
+  known: boolean;
+}
+
+export type RemotePlayerCommand =
+  | { action: "play" | "pause" | "toggle" | "next" | "previous" }
+  | { action: "skip" | "seek"; seconds: number }
+  | { action: "load"; bookId: string; chapterId: number; seconds: number };
+
 export interface PeerLibrary {
   key: string;
   name: string;
@@ -188,6 +217,9 @@ export interface EbookLibraryPlugin {
   peerPair(options: { host: string; port: number; code: string }): Promise<{ key: string; name: string }>;
   peerForget(options: { key: string }): Promise<void>;
   peerLibraries(): Promise<{ peers: PeerLibrary[] }>;
+  remotePlayers(): Promise<{ players: RemotePlayer[] }>;
+  /** "load" mang mã cuốn của điện thoại này - bên native đổi sang mã của máy kia (hoặc từ chối: máy kia không có). */
+  remoteCommand(options: { device: string; command: RemotePlayerCommand }): Promise<{ id?: string; ok?: boolean; message?: string }>;
   localBooks(): Promise<{ books: LocalBook[] }>;
   /** Sách trên máy tính chưa tải mà nghe thẳng được; máy tính không trả lời thì rỗng. */
   streamableBooks(): Promise<{ books: LocalBook[] }>;
