@@ -346,7 +346,8 @@ function DeleteDialog({ book, open, onOpenChange }: { book: BookSummary; open: b
   );
 }
 
-function ProjectMenu({ book }: { book: BookSummary }) {
+/** "…" của một dự án: đổi tên, xoá. `rename={false}` cho dự án hỏng (không đọc được - chỉ còn xoá). */
+export function ProjectMenu({ book, rename = true, className }: { book: BookSummary; rename?: boolean; className?: string }) {
   const [dialog, setDialog] = useState<"rename" | "delete" | null>(null);
   return (
     <>
@@ -354,18 +355,25 @@ function ProjectMenu({ book }: { book: BookSummary }) {
         <DropdownMenu.Trigger asChild>
           <button
             type="button"
-            aria-label="Tuỳ chọn dự án"
-            className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-fg-2 transition-colors hover:bg-hover hover:text-fg data-[state=open]:bg-hover"
+            aria-label={`Tuỳ chọn dự án ${book.title}`}
+            className={cn(
+              "inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-fg-2 transition-colors hover:bg-hover hover:text-fg data-[state=open]:bg-hover",
+              className,
+            )}
           >
             <MoreHorizontal className="size-[18px]" />
           </button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
           <DropdownMenu.Content align="end" sideOffset={4} className="z-50 min-w-52 rounded-xl border border-line bg-panel p-1.5 shadow-float">
-            <DropdownMenu.Item onSelect={() => setDialog("rename")} className={MENU_ITEM}>
-              <Pencil className="size-4" /> Đổi tên…
-            </DropdownMenu.Item>
-            <DropdownMenu.Separator className="my-1 h-px bg-line" />
+            {rename && (
+              <>
+                <DropdownMenu.Item onSelect={() => setDialog("rename")} className={MENU_ITEM}>
+                  <Pencil className="size-4" /> Đổi tên…
+                </DropdownMenu.Item>
+                <DropdownMenu.Separator className="my-1 h-px bg-line" />
+              </>
+            )}
             <DropdownMenu.Item onSelect={() => setDialog("delete")} className={cn(MENU_ITEM, "text-danger")}>
               <Trash2 className="size-4" /> Xoá dự án…
             </DropdownMenu.Item>
