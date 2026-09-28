@@ -2,7 +2,8 @@
 # train/dev/test của LoRA): chọn model phân tích cho thứ chủ sách đọc (LN Nhật/Hàn). Claude gán (A), agent soát (B).
 # YOSHIHITO / KUCHINASHI YOSHIHITO; KIRAKO / KUROMITSU KIRAKO; GREY / JANE GREY (công chúa Lostland, "cô"); Colbert ở ngoài
 # mái vòm, không nói trong chương. 2-35: bài đăng mạng xã hội trong 『』 (parser khoá thoại) = văn bản viết, quy tắc 7:
-# NARRATOR đủ, người đăng vô danh NPC*~, UNKNOWN~. 46, 68, 69, 79: nội tâm trong "(...)" bị khoá thoại -> T,D, người nghĩ đủ
+# NARRATOR và NPC* đều đủ (mỗi bài một người vô danh - như cả đám, quy tắc 7b), UNKNOWN~; gán cho nhân vật có tên được
+# nhắc TRONG bài (Kuchinashi) là sai. 46, 68, 69, 79: nội tâm trong "(...)" bị khoá thoại -> T,D, người nghĩ đủ
 # (quy tắc 9). 73-74 (soát B): Grey luôn tiếp cận và bị Yoshihito từ chối riêng (035, 038, 040, 041), 73 "đã nói rồi" là
 # Yoshihito, 74 mở bằng "Đúng vậy" là Kirako; đảo lại nửa điểm. 76-77: quyết tâm chung trọn câu -> cả hai đủ (013:119, 123).
 # 64 (soát B, SỬA - A ghi Grey): dòng 『』 giữa cảnh là "con ký sinh trùng" - giọng NAM sống trong não Yoshihito, cả cuốn gọi
@@ -11,40 +12,40 @@
 # cuốn dùng -> đủ (như QUAN PHỦ, TRỊNH LÃO); NPC*~ vì nó nói ở nhiều chương (một NPC mỗi chương = mỗi chương một giọng).
 0 H
 1 N
-2 D NARRATOR,NPC*~,UNKNOWN~ neutral,sad 0-1 normal normal u
-3 D NARRATOR,NPC*~,UNKNOWN~ neutral,happy 0-1 normal normal u
-4 D NARRATOR,NPC*~,UNKNOWN~ excited,neutral,sad 0-2 normal,fast normal u
-5 D NARRATOR,NPC*~,UNKNOWN~ surprised,neutral 0-1 normal normal u
-6 D NARRATOR,NPC*~,UNKNOWN~ excited,neutral,surprised 0-2 normal normal u
-7 D NARRATOR,NPC*~,UNKNOWN~ neutral,sarcastic 0-1 normal normal u
-8 D NARRATOR,NPC*~,UNKNOWN~ neutral,excited 0-1 normal normal u
-9 D NARRATOR,NPC*~,UNKNOWN~ surprised,sarcastic 1-2 normal normal u
-10 D NARRATOR,NPC*~,UNKNOWN~ neutral 0-1 normal normal u
-11 D NARRATOR,NPC*~,UNKNOWN~ surprised,neutral 0-1 normal normal u
-12 D NARRATOR,NPC*~,UNKNOWN~ neutral,sad 0-1 normal normal u
-13 D NARRATOR,NPC*~,UNKNOWN~ neutral,sarcastic,happy 0-1 normal normal u
-14 D NARRATOR,NPC*~,UNKNOWN~ sarcastic,neutral,sad 0-1 normal normal u
-15 D NARRATOR,NPC*~,UNKNOWN~ neutral,sad 0-1 normal normal u
-16 D NARRATOR,NPC*~,UNKNOWN~ neutral,sad 0-1 normal normal u
-17 D NARRATOR,NPC*~,UNKNOWN~ angry,neutral 1-2 normal normal u
-18 D NARRATOR,NPC*~,UNKNOWN~ neutral,tender,sad 0-1 normal normal u
-19 D NARRATOR,NPC*~,UNKNOWN~ neutral,angry 0-1 normal normal u
-20 D NARRATOR,NPC*~,UNKNOWN~ sarcastic,angry,neutral 0-2 normal normal u
-21 D NARRATOR,NPC*~,UNKNOWN~ angry,neutral 1-2 normal normal u
-22 D NARRATOR,NPC*~,UNKNOWN~ angry,neutral 1-2 normal normal u
-23 D NARRATOR,NPC*~,UNKNOWN~ angry,neutral 0-2 normal normal u
-24 D NARRATOR,NPC*~,UNKNOWN~ neutral,surprised 0-1 normal normal u
-25 D NARRATOR,NPC*~,UNKNOWN~ neutral 0-1 normal normal u
-26 D NARRATOR,NPC*~,UNKNOWN~ neutral 0-1 normal normal u
-27 D NARRATOR,NPC*~,UNKNOWN~ neutral 0-1 normal normal u
-28 D NARRATOR,NPC*~,UNKNOWN~ angry,neutral 1-3 normal,fast normal,loud u
-29 D NARRATOR,NPC*~,UNKNOWN~ neutral,excited,happy 0-1 normal normal u
-30 D NARRATOR,NPC*~,UNKNOWN~ neutral,surprised 0-1 normal normal u
-31 D NARRATOR,NPC*~,UNKNOWN~ surprised,neutral 0-1 normal,slow normal u
-32 D NARRATOR,NPC*~,UNKNOWN~ neutral 0-1 normal normal u
-33 D NARRATOR,NPC*~,UNKNOWN~ angry,sarcastic,neutral 0-2 normal normal u
-34 D NARRATOR,NPC*~,UNKNOWN~ sarcastic,surprised,neutral 0-1 normal normal u
-35 D NARRATOR,NPC*~,UNKNOWN~ neutral 0-1 normal normal u
+2 D NARRATOR,NPC*,UNKNOWN~ neutral,sad 0-1 normal normal u
+3 D NARRATOR,NPC*,UNKNOWN~ neutral,happy 0-1 normal normal u
+4 D NARRATOR,NPC*,UNKNOWN~ excited,neutral,sad 0-2 normal,fast normal u
+5 D NARRATOR,NPC*,UNKNOWN~ surprised,neutral 0-1 normal normal u
+6 D NARRATOR,NPC*,UNKNOWN~ excited,neutral,surprised 0-2 normal normal u
+7 D NARRATOR,NPC*,UNKNOWN~ neutral,sarcastic 0-1 normal normal u
+8 D NARRATOR,NPC*,UNKNOWN~ neutral,excited 0-1 normal normal u
+9 D NARRATOR,NPC*,UNKNOWN~ surprised,sarcastic 1-2 normal normal u
+10 D NARRATOR,NPC*,UNKNOWN~ neutral 0-1 normal normal u
+11 D NARRATOR,NPC*,UNKNOWN~ surprised,neutral 0-1 normal normal u
+12 D NARRATOR,NPC*,UNKNOWN~ neutral,sad 0-1 normal normal u
+13 D NARRATOR,NPC*,UNKNOWN~ neutral,sarcastic,happy 0-1 normal normal u
+14 D NARRATOR,NPC*,UNKNOWN~ sarcastic,neutral,sad 0-1 normal normal u
+15 D NARRATOR,NPC*,UNKNOWN~ neutral,sad 0-1 normal normal u
+16 D NARRATOR,NPC*,UNKNOWN~ neutral,sad 0-1 normal normal u
+17 D NARRATOR,NPC*,UNKNOWN~ angry,neutral 1-2 normal normal u
+18 D NARRATOR,NPC*,UNKNOWN~ neutral,tender,sad 0-1 normal normal u
+19 D NARRATOR,NPC*,UNKNOWN~ neutral,angry 0-1 normal normal u
+20 D NARRATOR,NPC*,UNKNOWN~ sarcastic,angry,neutral 0-2 normal normal u
+21 D NARRATOR,NPC*,UNKNOWN~ angry,neutral 1-2 normal normal u
+22 D NARRATOR,NPC*,UNKNOWN~ angry,neutral 1-2 normal normal u
+23 D NARRATOR,NPC*,UNKNOWN~ angry,neutral 0-2 normal normal u
+24 D NARRATOR,NPC*,UNKNOWN~ neutral,surprised 0-1 normal normal u
+25 D NARRATOR,NPC*,UNKNOWN~ neutral 0-1 normal normal u
+26 D NARRATOR,NPC*,UNKNOWN~ neutral 0-1 normal normal u
+27 D NARRATOR,NPC*,UNKNOWN~ neutral 0-1 normal normal u
+28 D NARRATOR,NPC*,UNKNOWN~ angry,neutral 1-3 normal,fast normal,loud u
+29 D NARRATOR,NPC*,UNKNOWN~ neutral,excited,happy 0-1 normal normal u
+30 D NARRATOR,NPC*,UNKNOWN~ neutral,surprised 0-1 normal normal u
+31 D NARRATOR,NPC*,UNKNOWN~ surprised,neutral 0-1 normal,slow normal u
+32 D NARRATOR,NPC*,UNKNOWN~ neutral 0-1 normal normal u
+33 D NARRATOR,NPC*,UNKNOWN~ angry,sarcastic,neutral 0-2 normal normal u
+34 D NARRATOR,NPC*,UNKNOWN~ sarcastic,surprised,neutral 0-1 normal normal u
+35 D NARRATOR,NPC*,UNKNOWN~ neutral 0-1 normal normal u
 36 N
 37 N
 38 N

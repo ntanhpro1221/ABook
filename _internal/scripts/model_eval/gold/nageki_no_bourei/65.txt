@@ -1,0 +1,319 @@
+# "Nageki no Bourei wa Intai Shitai" file 65 ("Lời mở đầu: Danh Dự Mới"). Bộ đo LN 28-09 (chương CHƯA học): chọn model phân
+# tích cho thứ chủ sách đọc. Claude gán (A), agent soát (B). 1-111, 214-307 ngôi thứ nhất: "tôi" = KRAI / KRAI ANDREY. 112-213
+# NGÔI BA theo Murina: Krai chỉ được gọi bằng danh hiệu "Thiên Biến Vạn Hoá" -> KRAI đủ, "THIÊN BIẾN VẠN HOÁ" KHÔNG điểm (quy
+# tắc 11 - nhãn danh hiệu thành giọng thứ hai của Krai). KRIS / KRIS ARGENT (nói kèm "Thưa ngài"); EVA / EVA RENFIED; MURINA /
+# MURINA ATOLM ZEBRUDIA; FRANZ / FRANZ ARGMAN (corpus, 7 lần) / FRANZ ARGMEN~ (lỗi gõ 1 lần ở 143, quy tắc 11); ÉCLAIR / ÉCLAIR GLADIS; RODRICK /
+# RODRICK ATOLM ZEBRUDIA (hoàng đế; "HOÀNG ĐẾ" không điểm). 41 (soát B, SỬA): Killiam đã lộ từ chương 60 (60:141-143 Killiam chui
+# ra khỏi giáp của Killigan; 47 "Sitri đã bảo tôi trước rồi") -> KILLIAM đủ và đứng đầu, KILLIGAN~ (quy tắc 13, tiền lệ 385:123). 46, 251: lời Krai trong dòng kể bị khoá N -> NARRATOR, KRAI~ (quy tắc 10). 78, 134, 183, 243, 271:
+# chữ trong ngoặc giữa câu kể (châm ngôn, thuật ngữ, mô tả) -> NARRATOR, tác giả câu trích ~ (quy tắc 8). 192: "Tinh linh Quý
+# tộc" (191) là Kris, chương không nêu tên ở cảnh ấy -> KRIS đủ, NPC*~. 187: "tôi đã chết lâu rồi" - Franz, người gánh thương
+# tổn thay công chúa (133). 295: Eva (296 "Nghe tuyệt đấy" đáp lại nó; 294 là tiếng lòng). 130: nội tâm trực tiếp của Murina -> đủ.
+# 187: Franz, Murina~ (nhập nhằng: 182-186 là lập luận của cô). Câu hỏi tu từ/cảm thán tức thời của người kể -> N,T.
+0 H
+1 N
+2 N
+3 N
+4 N
+5 N
+6 N
+7 N
+8 N
+9 D KRAI,KRAI ANDREY neutral,happy,whispering 0-1 normal soft,normal m
+10 N
+11 N
+12 D KRIS,KRIS ARGENT angry,surprised 1-2 fast loud,normal f
+13 N
+14 N
+15 N
+16 N
+17 N
+18 N
+19 N
+20 N
+21 D KRIS,KRIS ARGENT angry,sarcastic,tired 0-1 normal normal f
+22 N
+23 D KRIS,KRIS ARGENT angry,sarcastic 0-1 normal normal f
+24 D KRAI,KRAI ANDREY neutral,happy 0-1 normal normal m
+25 N
+26 D KRIS,KRIS ARGENT angry,surprised 1-2 normal,fast normal,loud f
+27 N
+28 D KRAI,KRAI ANDREY neutral 0-1 normal normal m
+29 N
+30 D KRAI,KRAI ANDREY neutral 0-1 normal normal m
+31 D KRIS,KRIS ARGENT surprised,angry,neutral 0-1 normal normal f
+32 D KRAI,KRAI ANDREY neutral,sarcastic 0-1 normal normal m
+33 N
+34 N
+35 N
+36 N
+37 N
+38 N
+39 N
+40 N
+41 D KILLIAM,KILLIAM SMART,KILLIGAN~,NARRATOR~ neutral 0-1 normal normal m
+42 N
+43 N
+44 N
+45 N
+46 N NARRATOR,KRAI~,KRAI ANDREY~ surprised,neutral 0-1 normal normal u
+47 N
+48 N
+49 D KRIS,KRIS ARGENT angry,sarcastic 0-1 normal normal f
+50 N
+51 D KRAI,KRAI ANDREY happy,sarcastic 0-1 normal normal m
+52 N
+53 D KRIS,KRIS ARGENT angry,sarcastic 0-1 normal normal f
+54 N
+55 N
+56 N
+57 N
+58 N
+59 N
+60 N
+61 N
+62 N
+63 N
+64 D EVA,EVA RENFIED happy,neutral 0-1 normal normal f
+65 N
+66 D EVA,EVA RENFIED neutral 0-1 normal normal f
+67 D KRAI,KRAI ANDREY neutral,tired 0-1 normal normal m
+68 D EVA,EVA RENFIED neutral 0-1 normal normal f
+69 D KRAI,KRAI ANDREY neutral,surprised 0-1 normal normal m
+70 D EVA,EVA RENFIED neutral 0-1 normal normal f
+71 N
+72 N
+73 N
+74 N
+75 N
+76 N
+77 N
+78 D NARRATOR,KONGOIN TOUKA~,TOUKA~ neutral 0-1 normal normal u
+79 N
+80 N
+81 N
+82 N
+83 D EVA,EVA RENFIED neutral,surprised 0-1 normal normal f
+84 N
+85 D EVA,EVA RENFIED neutral 0-1 normal normal f
+86 D KRAI,KRAI ANDREY neutral 0-1 normal normal m
+87 D EVA,EVA RENFIED neutral,sarcastic 0-1 normal normal f
+88 D KRAI,KRAI ANDREY neutral 0-1 normal normal m
+89 N NARRATOR neutral,excited 0-1 normal normal u
+90 N
+91 N
+92 N
+93 N
+94 N,T NARRATOR,KRAI,KRAI ANDREY neutral,surprised 0-1 normal normal u
+95 N
+96 N,T NARRATOR,KRAI,KRAI ANDREY neutral,surprised 0-1 normal normal u
+97 N
+98 N
+99 N
+100 D KRAI,KRAI ANDREY neutral 0-1 normal normal m
+101 N
+102 N
+103 D KRAI,KRAI ANDREY neutral 0-1 normal normal m
+104 N
+105 D EVA,EVA RENFIED neutral,tired 0-1 normal normal f
+106 N
+107 N
+108 D KRAI,KRAI ANDREY neutral 0-1 normal normal m
+109 N
+110 N
+111 N
+112 N
+113 N
+114 N
+115 N
+116 N
+117 N
+118 N
+119 D ÉCLAIR,ÉCLAIR GLADIS afraid,whispering 0-1 normal soft f
+120 N
+121 N
+122 D ÉCLAIR,ÉCLAIR GLADIS afraid,angry,whispering 0-1 normal soft,normal f
+123 N NARRATOR neutral,afraid 0-1 normal normal u
+124 D ÉCLAIR,ÉCLAIR GLADIS afraid,angry 0-1 normal soft,normal f
+125 N
+126 D ÉCLAIR,ÉCLAIR GLADIS afraid,neutral 0-1 normal soft,normal f
+127 N
+128 N
+129 N
+130 N,T NARRATOR,MURINA,MURINA ATOLM ZEBRUDIA surprised,neutral 0-1 normal normal u
+131 D ÉCLAIR,ÉCLAIR GLADIS afraid,angry 0-1 normal soft,normal f
+132 N NARRATOR neutral,afraid 0-1 normal normal u
+133 N
+134 D NARRATOR neutral 0-1 normal normal u
+135 N
+136 N
+137 N
+138 N
+139 N
+140 N
+141 N
+142 N
+143 N
+144 N
+145 N
+146 N
+147 N
+148 N
+149 N
+150 N NARRATOR neutral,afraid,surprised 0-1 normal normal u
+151 N
+152 N
+153 N
+154 D KRAI,KRAI ANDREY surprised 0-1 normal normal m
+155 N
+156 N
+157 N NARRATOR neutral,surprised 0-1 normal normal u
+158 N
+159 D KRAI,KRAI ANDREY tired,sad,afraid 0-1 normal normal m
+160 D FRANZ,FRANZ ARGMAN,FRANZ ARGMEN~ angry 2-3 fast loud m
+161 N NARRATOR neutral,angry 0-1 normal normal u
+162 N
+163 N
+164 N NARRATOR neutral,afraid 0-1 normal normal u
+165 N
+166 N
+167 D KRAI,KRAI ANDREY neutral,surprised 0-1 normal normal m
+168 N
+169 D KRAI,KRAI ANDREY surprised,neutral 0-1 normal normal m
+170 N NARRATOR neutral,surprised 0-1 normal normal u
+171 D KRAI,KRAI ANDREY neutral,surprised,whispering 0-1 normal soft,normal m
+172 N
+173 D KRAI,KRAI ANDREY neutral,surprised 0-1 normal normal m
+174 D FRANZ,FRANZ ARGMAN,FRANZ ARGMEN~ angry 2-3 fast loud m
+175 N NARRATOR neutral,angry 0-1 normal normal u
+176 D FRANZ,FRANZ ARGMAN,FRANZ ARGMEN~ angry 1-2 normal,fast loud,normal m
+177 D KRAI,KRAI ANDREY surprised 0-1 normal normal m
+178 D MURINA,MURINA ATOLM ZEBRUDIA afraid,angry 1-2 normal normal,soft f
+179 N
+180 N
+181 D MURINA,MURINA ATOLM ZEBRUDIA afraid,angry,surprised 1-2 normal normal,soft f
+182 N
+183 D NARRATOR neutral 0-1 normal normal u
+184 N
+185 N
+186 N
+187 D FRANZ,FRANZ ARGMAN,FRANZ ARGMEN~,MURINA~,MURINA ATOLM ZEBRUDIA~ angry,neutral 0-1 normal normal m
+188 D RODRICK,RODRICK ATOLM ZEBRUDIA neutral 0-1 normal normal m
+189 N
+190 D RODRICK,RODRICK ATOLM ZEBRUDIA neutral,sad 0-1 normal normal m
+191 N
+192 D KRIS,KRIS ARGENT,NPC*~ angry 1-2 normal normal,loud f
+193 N
+194 N NARRATOR neutral,afraid 0-1 normal normal u
+195 D KRAI,KRAI ANDREY happy,excited,afraid 1-2 fast,normal normal m
+196 N
+197 N
+198 N
+199 N
+200 N
+201 N
+202 D FRANZ,FRANZ ARGMAN,FRANZ ARGMEN~ afraid,neutral 0-1 normal normal m
+203 N NARRATOR neutral,afraid 0-1 normal normal u
+204 D MURINA,MURINA ATOLM ZEBRUDIA afraid,neutral 0-1 normal normal,soft f
+205 N
+206 N
+207 N
+208 N NARRATOR neutral,afraid 0-1 normal normal u
+209 N
+210 N
+211 D FRANZ,FRANZ ARGMAN,FRANZ ARGMEN~ afraid,neutral,sad 0-1 normal normal m
+212 D MURINA,MURINA ATOLM ZEBRUDIA afraid,neutral 0-1 fast,normal normal f
+213 N
+214 N
+215 N
+216 N
+217 N
+218 N
+219 N
+220 D EVA,EVA RENFIED surprised,neutral 0-1 normal normal f
+221 D KRAI,KRAI ANDREY neutral,tired 0-1 normal normal m
+222 D EVA,EVA RENFIED neutral 0-1 normal normal f
+223 D KRAI,KRAI ANDREY tired,sad,neutral 0-1 normal normal m
+224 N
+225 N
+226 N
+227 N
+228 N NARRATOR neutral,afraid 0-1 normal normal u
+229 N
+230 D EVA,EVA RENFIED neutral,afraid 0-1 normal normal f
+231 N
+232 D EVA,EVA RENFIED neutral,afraid 0-1 normal normal f
+233 D KRAI,KRAI ANDREY neutral 0-1 normal normal m
+234 D EVA,EVA RENFIED surprised 0-1 normal normal f
+235 N
+236 N
+237 N,T NARRATOR,KRAI,KRAI ANDREY neutral,surprised 0-1 normal normal u
+238 N
+239 N,T NARRATOR,KRAI,KRAI ANDREY neutral,surprised 0-1 normal normal u
+240 N
+241 N
+242 N
+243 D NARRATOR neutral 0-1 normal normal u
+244 D KRAI,KRAI ANDREY,NARRATOR~ neutral,sarcastic 0-1 normal normal m
+245 N
+246 N
+247 N,T NARRATOR,KRAI,KRAI ANDREY neutral,surprised 0-1 normal normal u
+248 N
+249 N
+250 N
+251 N NARRATOR,KRAI~,KRAI ANDREY~ neutral,surprised 0-1 normal normal u
+252 D KRAI,KRAI ANDREY happy,excited,neutral 0-1 normal normal m
+253 N
+254 N
+255 N
+256 N
+257 D KRAI,KRAI ANDREY neutral,happy 0-1 normal normal m
+258 D EVA,EVA RENFIED surprised,excited 1-2 normal normal f
+259 N
+260 N
+261 N
+262 N
+263 N
+264 N
+265 N
+266 N
+267 N
+268 N
+269 N
+270 N
+271 D NARRATOR,RODRICK~,RODRICK ATOLM ZEBRUDIA~ neutral 0-1 normal normal u
+272 N
+273 D EVA,EVA RENFIED surprised,neutral 0-1 normal normal f
+274 D KRAI,KRAI ANDREY happy,excited 0-1 normal normal m
+275 D EVA,EVA RENFIED neutral,surprised 0-1 normal soft,normal f
+276 N
+277 N
+278 D KRAI,KRAI ANDREY neutral,happy 0-1 normal normal m
+279 N
+280 D EVA,EVA RENFIED surprised 1-2 normal normal f
+281 N
+282 N,T NARRATOR,KRAI,KRAI ANDREY neutral,surprised 0-1 normal normal u
+283 D KRAI,KRAI ANDREY neutral 0-1 normal normal m
+284 N
+285 N
+286 N
+287 D KRAI,KRAI ANDREY neutral,sarcastic 0-1 normal normal m
+288 D EVA,EVA RENFIED neutral,happy 0-1 normal normal f
+289 N,T NARRATOR,KRAI,KRAI ANDREY neutral,surprised 0-1 normal normal u
+290 N
+291 N
+292 D EVA,EVA RENFIED neutral,happy 0-1 normal normal f
+293 N
+294 N,T NARRATOR,KRAI,KRAI ANDREY neutral,surprised 0-1 normal normal u
+295 D EVA,EVA RENFIED happy,neutral 0-1 normal normal f
+296 D KRAI,KRAI ANDREY happy,excited 0-1 normal normal m
+297 N
+298 N
+299 D EVA,EVA RENFIED neutral,surprised 0-1 normal normal f
+300 D KRAI,KRAI ANDREY happy,excited 0-1 normal normal m
+301 D EVA,EVA RENFIED surprised,neutral 0-1 normal normal f
+302 D KRAI,KRAI ANDREY surprised 0-1 normal normal m
+303 N
+304 N
+305 N
+306 N
+307 D EVA,EVA RENFIED neutral,tired 0-1 normal normal f
