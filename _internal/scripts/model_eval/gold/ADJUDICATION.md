@@ -387,3 +387,23 @@ chương. Nhãn NPC sống một chương -> mỗi chương một giọng; sổ 
 
 Hai lỗi nặng A mắc ở bộ này là CÙNG MỘT KIỂU: gán giọng 『』 trong đầu cho một cái tên gần tay mà không lần hết cuốn (Grey ở
 TCF 042:64, Yêu Mẫu ở Yamiyo) - đúng lỗi quy tắc 12 cảnh báo ở model. Soát B lần đủ kho mới bắt được.
+
+**Quy ước mới 28-09 11:xx (GOLD_GUIDE 7b):** TCF 042:2-35 (bài đăng mạng xã hội) từ `NARRATOR,NPC*~,UNKNOWN~` -> `NARRATOR,NPC*,UNKNOWN~`.
+Lý do: mỗi bài là một người vô danh khác - với người nghe, đọc chuỗi bình luận bằng nhiều giọng NPC đúng như câu "cả đám"
+(quy tắc 6), không kém gì người kể đọc. Cái SAI thật là giọng một nhân vật có tên chỉ được NHẮC trong bài: qwen3:8b gán 8/34
+bài cho "Kuchinashi" (042:20-27, 35). Phát hiện khi mổ lượt đo mốc qwen3:8b; sửa trước khi chấm bất kỳ model nào khác.
+
+**Nageki no Bourei 65** - B soát (đọc trọn 60-65, grep toàn kho), không người nói chính nào sai hẳn:
+
+| chỗ | A ghi | kết luận | bằng chứng |
+|---|---|---|---|
+| 41 "Kill, kill" | KILLIGAN đủ, KILLIAM~ | **ĐÁP_ÁN_SAI** -> `KILLIAM,KILLIAM SMART` đủ và đứng đầu, KILLIGAN~, NARRATOR~, `m` | danh tính lộ ở chương TRƯỚC: 60:141-143 Killiam chui ra khỏi giáp Killigan; 47 "Sitri đã bảo tôi trước rồi"; túi giấy hai lỗ mắt (40) là dấu hiệu Killiam (20:337); quy tắc 13, tiền lệ 385:123; gold 20:178 cho "Kill" là KILLIAM. |
+| FRANZ ARGMEN | đủ | ~ | "Argman" 7 lần trong kho, "Argmen" 1 lần ở lời kể 143 - lỗi gõ (quy tắc 11). |
+| 130 | Murina ~ | đủ | trọn đoạn là tiếng lòng trực tiếp (418:32, 436:72). |
+| 187 | Franz | Franz đủ, Murina~ | 182-186 là lập luận của Murina chảy vào câu; nhập nhằng. |
+| 295 | Eva, Krai~ | Eva | 296 "Nghe tuyệt đấy" đáp nó; 294 là tiếng lòng không ngoặc. |
+| cảm xúc | neutral | 89, 123, 157, 175, 208, 228 thêm cảm xúc host bắt; 132, 150, 161, 164, 170, 194, 203 thêm cảm xúc cảnh; 160 intensity 2-3; 195 pace fast,normal | analysis.py `_direct_cue_allowed_emotions`; GOLD_GUIDE. |
+
+Phát lại cả 5 chương sau mọi sửa (project `gold:ln3`, lọc TOÀN BỘ đầu ra): 0 dòng LỆCH; chấm lại project phát lại = 100% mọi
+trục, trừ giới tính Yamiyo 81%: 23 dòng nội tâm Hina bị host giữ khoá lời kể (NARRATOR, giới u) -> đưa về `N,T NARRATOR,HINA
+... u` (điều kiện B tự nêu khi đề xuất T,N). Việc cho bộ tách câu: "(…)" cùng đoạn ngay sau lời thoại là nội tâm người vừa nói.
