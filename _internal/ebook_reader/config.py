@@ -19,7 +19,9 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "analysis": {
         "enabled": True,
         "required": True,
-        "model": "qwen3:8b",
+        # Model phân tích của dự án (docs/models/, Hugging Face NGDtuanh/abook-analyzer): Qwen3-4B + LoRA trên đáp án chuẩn,
+        # hơn qwen3:8b trên mọi cổng đo và nhanh hơn 1,5-1,7 lần (docs/ANALYSIS_RESEARCH.md). Sách tạo trước giữ model của nó.
+        "model": "abook-analyzer:v3",
         "base_url": "http://127.0.0.1:11434",
         "temperature": 0.1,
         "retry_policy_version": "adaptive_seeded_v2",
@@ -255,7 +257,7 @@ ANALYSIS_RETRY_SETTING_KEYS = frozenset(
 
 PROFILE_OVERRIDES: dict[str, dict[str, Any]] = {
     "fast": {
-        "analysis": {"model": "qwen3:4b", "batch_segments": 40},
+        "analysis": {"model": "abook-analyzer:v3", "batch_segments": 40},
         "asr": {"enabled": True, "min_words": 8, "repair_rounds": 1},
         "tts": {"batch_size": 16},
     },
