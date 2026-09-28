@@ -5,7 +5,7 @@
 # lời kể; scripts/model_eval/segment_diff.py): số seq trong các ghi chú bên trên là số CŨ.
 0 H
 1 N
-2 D NPC*,UNKNOWN~ surprised,excited 2 fast,normal loud,normal m
+2 D NPC*:trưởng thôn,UNKNOWN~ surprised,excited 2 fast,normal loud,normal m
 3 N
 4 N
 5 N
@@ -19,7 +19,7 @@
 13 D KRAHI,KRAHI ANDRIHEE,NPC*~ neutral,happy 0-1 normal normal m
 14 N
 15 D KRAHI,KRAHI ANDRIHEE,NPC*~ neutral 0-1 normal normal m
-16 D NPC*,UNKNOWN~ afraid,neutral 1 normal normal m
+16 D NPC*:trưởng thôn,UNKNOWN~ afraid,neutral 1 normal normal m
 17 N
 18 N
 19 N
@@ -37,7 +37,7 @@
 31 D KRAHI,KRAHI ANDRIHEE,NPC*~ neutral,happy 0-1 normal normal m
 32 N
 33 D KRAHI,KRAHI ANDRIHEE,NPC*~ neutral,happy 0-1 normal normal m
-34 D NPC*,UNKNOWN~ surprised 2 fast normal,loud m
+34 D NPC*:trưởng thôn,UNKNOWN~ surprised 2 fast normal,loud m
 35 N
 36 N NARRATOR neutral,surprised 0-1 normal normal u
 37 N NARRATOR neutral,surprised 0-1 normal normal u

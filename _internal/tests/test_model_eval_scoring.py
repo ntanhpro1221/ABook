@@ -37,6 +37,19 @@ def test_the_gold_syntax_is_read_as_written(tmp_path: Path) -> None:
     assert speaker_key("NPC_LOCAL::c1::r2::x") == "NPC*"
 
 
+def test_an_anonymous_speaker_can_say_who_it_is_without_changing_the_score(tmp_path: Path) -> None:
+    """`NPC*:<mô tả>` ("mẹ Kakeru"): chấm y như NPC*, mô tả để gold_replay dạy model nhãn riêng cho từng người lạ."""
+    path = tmp_path / "07.txt"
+    path.write_text("5 D NPC*:mẹ Kakeru,UNKNOWN~ neutral 0 normal normal f\n6 D NPC* neutral 0 normal normal u\n",
+                    encoding="utf-8")
+    gold = {row.seq: row for row in parse_gold(path)}
+    assert gold[5].speakers == (("NPC*", 1.0), ("UNKNOWN", 0.5))
+    assert gold[5].npc_label == "mẹ Kakeru" and gold[6].npc_label == ""
+    assert speaker_credit(gold[5], "NPC_LOCAL:bà cụ") == 1.0
+    assert speaker_credit(gold[5], "Kakeru") == 0.0
+    assert speaker_key("NPC*:mẹ Kakeru") == "NPC*"
+
+
 def test_a_pronoun_label_is_scored_as_the_anonymous_voice_the_listener_hears() -> None:
     """Dây chuyền đẩy tên là đại từ vào nhóm VÔ DANH khi phân vai, nên bộ chấm gom nó về `NPC*` như NPC_LOCAL.
 

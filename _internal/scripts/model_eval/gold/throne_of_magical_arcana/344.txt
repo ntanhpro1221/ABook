@@ -42,13 +42,13 @@
 37 N
 38 N
 39 N
-40 D NPC*,UNKNOWN~ neutral 0-1 normal normal u
-41 D NPC*,UNKNOWN~ neutral 0-1 normal normal u
-42 D NPC*,UNKNOWN~ neutral,surprised 0-1 normal normal u
+40 D NPC*:giọng máy phân luận án,UNKNOWN~ neutral 0-1 normal normal u
+41 D NPC*:giọng máy phân luận án,UNKNOWN~ neutral 0-1 normal normal u
+42 D NPC*:giọng máy phân luận án,UNKNOWN~ neutral,surprised 0-1 normal normal u
 43 N NARRATOR neutral,surprised 0-1 normal normal u
-44 D NPC*,NARRATOR,UNKNOWN~,LUCIEN~ neutral,surprised 0-1 normal,slow normal u
+44 D NPC*:giọng máy phân luận án,NARRATOR,UNKNOWN~,LUCIEN~ neutral,surprised 0-1 normal,slow normal u
 45 N
-46 D NPC*,UNKNOWN~ neutral 0-1 normal normal u
+46 D NPC*:giọng máy phân luận án,UNKNOWN~ neutral 0-1 normal normal u
 47 N
 48 N
 49 N
@@ -65,7 +65,7 @@
 60 N NARRATOR neutral,afraid 0-1 normal normal u
 61 N
 62 N
-63 D NPC*,UNKNOWN~ neutral 0-1 normal normal u
+63 D NPC*:người hầu,UNKNOWN~ neutral 0-1 normal normal u
 64 N
 65 N NARRATOR neutral,tired 0-1 normal normal u
 66 D CHLOE tired,afraid,neutral 0-2 slow,normal soft,normal m

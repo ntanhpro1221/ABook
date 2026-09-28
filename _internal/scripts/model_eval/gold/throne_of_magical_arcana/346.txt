@@ -67,7 +67,7 @@
 64 N
 65 N
 66 N
-67 D NPC*,UNKNOWN~ neutral 0-1 normal normal u
+67 D NPC*:con vẹt đưa thư,UNKNOWN~ neutral 0-1 normal normal u
 68 N
 69 N
 70 T FELIPE surprised,neutral 0-2 normal normal,soft m

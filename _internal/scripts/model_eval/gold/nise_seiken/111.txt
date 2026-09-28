@@ -4,29 +4,29 @@
 0 H
 1 N
 2 N
-3 D NPC*,UNKNOWN~ neutral 0-1 normal normal f
+3 D NPC*:nữ hầu cận của Marla,UNKNOWN~ neutral 0-1 normal normal f
 4 D MARLA,MARLA BALDINI neutral 0-1 normal normal f
 5 N
 6 N NARRATOR neutral,sad 0-1 normal normal u
 7 D MARLA,MARLA BALDINI sad,tired 0-1 normal normal f
-8 D NPC*,UNKNOWN~ neutral 0-1 normal normal f
+8 D NPC*:nữ hầu cận của Marla,UNKNOWN~ neutral 0-1 normal normal f
 9 N
 10 N
 11 D MARLA,MARLA BALDINI neutral,tender 0-1 normal normal f
-12 D NPC*,UNKNOWN~ tender,happy 0-1 normal normal,soft f
+12 D NPC*:nữ hầu cận của Marla,UNKNOWN~ tender,happy 0-1 normal normal,soft f
 13 N
 14 N NARRATOR neutral,happy 0-1 normal normal u
 15 N
-16 D NPC*,UNKNOWN~ neutral,sarcastic,whispering 0-1 normal soft,normal f
+16 D NPC*:nữ hầu cận của Marla,UNKNOWN~ neutral,sarcastic,whispering 0-1 normal soft,normal f
 17 D MARLA,MARLA BALDINI,NARRATOR~ surprised 2 fast normal,loud f
 18 N NARRATOR neutral,sarcastic 0-1 normal normal u
 19 N
 20 D MARLA,MARLA BALDINI surprised,angry 2 fast loud f
-21 D NPC*,UNKNOWN~ happy,sarcastic 0-1 normal normal f
+21 D NPC*:nữ hầu cận của Marla,UNKNOWN~ happy,sarcastic 0-1 normal normal f
 22 D MARLA,MARLA BALDINI surprised,angry 2 fast loud f
 23 N,T NARRATOR,MARLA,MARLA BALDINI tender,surprised,angry 0-1 normal,fast normal u
 24 N,T NARRATOR,MARLA,MARLA BALDINI angry,sarcastic 0-1 normal normal u
-25 D NPC*,UNKNOWN~ happy,tender 0-1 normal normal f
+25 D NPC*:nữ hầu cận của Marla,UNKNOWN~ happy,tender 0-1 normal normal f
 26 N
 27 N,T NARRATOR,MARLA~,MARLA BALDINI~ neutral,tender 0-1 normal normal u
 28 N
@@ -36,7 +36,7 @@
 32 N
 33 N NARRATOR neutral,sad 0-1 normal normal u
 34 D MARLA,MARLA BALDINI neutral,sad 0-1 normal normal f
-35 D NPC*,UNKNOWN~ neutral,sad 0-1 normal soft,normal f
+35 D NPC*:nữ hầu cận của Marla,UNKNOWN~ neutral,sad 0-1 normal soft,normal f
 36 N
 37 N NARRATOR neutral,sad 0-1 normal normal u
 38 N
