@@ -72,6 +72,15 @@ PRONUNCIATION_PROBLEMS = {
     listener_overrides.MULTI_WORD: "Chỉ sửa được cách đọc của MỘT từ - cách đọc lưu theo từng từ.",
     listener_overrides.NOT_VIETNAMESE: "Cách đọc phải là các âm tiết tiếng Việt nối bằng gạch nối, ví dụ Hên-khơ.",
 }
+LINE_PROBLEMS = {
+    listener_overrides.UNKNOWN_LINE: "Không còn câu này trong sách.",
+    listener_overrides.SOURCE_CHANGED: "Chữ của câu này đã đổi - tải lại chương.",
+    listener_overrides.BAD_KIND: "Loại đoạn phải là lời kể, lời thoại hay nội tâm.",
+    listener_overrides.BAD_EMOTION: "Cảm xúc này không có trong bộ giọng.",
+    listener_overrides.NOT_SPEECH: "Lời kể không có người nói - đổi thành lời thoại trước.",
+    listener_overrides.NO_VOICE: "Người này chưa có giọng trong sách (chưa nói câu nào) - chưa gán được.",
+}
+
 VOICE_PROBLEMS = {
     listener_overrides.UNKNOWN_CHARACTER: "Không có nhân vật này trong sách.",
     listener_overrides.NOT_A_CHARACTER: "Giọng người kể chọn khi tạo sách, không đổi ở đây.",
@@ -735,6 +744,30 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.NOT_FOUND, "Nhân vật này chưa có giọng trong sách")
         self._send_json(HTTPStatus.OK, view)
 
+    def post_line(self, _query: dict[str, list[str]], value: str) -> None:
+        # Cách đọc một câu (tab Kịch bản): loại đoạn, cảm xúc, cường độ - và người nói khi câu từ lời kể thành lời thoại.
+        # Như người nói: ghi mong muốn vào overrides.json, dây chuyền áp ở ranh giới chương; từ chối tại chỗ những gì dây
+        # chuyền chắc chắn sẽ từ chối.
+        self.app._mutating()
+        path = self.app._book(value)
+        body = self._body()
+        stable_id = str(body.get("stableId", "")).strip()[:120]
+        text_sha256 = str(body.get("textSha256", "")).strip()[:64]
+        kind = str(body.get("kind") or "").strip()[:20]
+        emotion = str(body.get("emotion") or "").strip()[:20]
+        speaker = str(body.get("speaker") or "").strip()[:200]
+        raw = body.get("intensity")
+        intensity = int(raw) if isinstance(raw, (int, float)) and not isinstance(raw, bool) else None
+        if not stable_id or not text_sha256 or not (kind or emotion or intensity is not None or speaker):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu câu hoặc thay đổi")
+        problem = store.line_request_problem(path, stable_id, text_sha256, kind=kind, emotion=emotion,
+                                             intensity=intensity, speaker=speaker)
+        if problem is not None:
+            raise ApiError(HTTPStatus.BAD_REQUEST, LINE_PROBLEMS.get(problem, "Không đổi được cách đọc câu này"))
+        listener_overrides.request_line(path, stable_id, text_sha256, kind=kind, emotion=emotion, intensity=intensity,
+                                        speaker=speaker, now=time.time())
+        self._send_json(HTTPStatus.OK, {"stableId": stable_id, "kind": kind, "emotion": emotion, "intensity": intensity})
+
     def post_voice(self, _query: dict[str, list[str]], value: str) -> None:
         # Giọng / giới của MỘT nhân vật (thẻ "Nam hay nữ", "Chung giọng"): như người nói - ghi mong muốn vào overrides.json,
         # dây chuyền áp ở ranh giới chương; hỏi SQLite chỉ đọc bằng đúng phép dây chuyền dùng để từ chối tại chỗ.
@@ -1096,6 +1129,7 @@ ROUTES: list[Route] = [
     ("POST", re.compile(BOOK + r"/bookfile"), Handler.post_bookfile),
     ("POST", re.compile(BOOK + r"/speaker"), Handler.post_speaker),
     ("POST", re.compile(BOOK + r"/voice"), Handler.post_voice),
+    ("POST", re.compile(BOOK + r"/line"), Handler.post_line),
     ("GET", re.compile(BOOK + r"/voices"), Handler.get_voice_choices),
     ("GET", re.compile(BOOK + r"/cover/search"), Handler.get_cover_search),
     ("PUT", re.compile(BOOK + r"/cover"), Handler.put_cover),

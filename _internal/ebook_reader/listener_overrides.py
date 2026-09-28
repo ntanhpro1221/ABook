@@ -1,10 +1,10 @@
 """Người nghe sửa trong Studio (hộp "Việc cần anh", docs/STUDIO_REVIEW.md) - cách đọc tên, ai nói câu nào, giọng và
-giới của một nhân vật - áp ở ranh giới an toàn.
+giới của một nhân vật, loại đoạn và cảm xúc của một câu - áp ở ranh giới an toàn.
 
 Giao diện không ghi SQLite của sách: dây chuyền là người ghi duy nhất. Giao diện ghi ý muốn của người nghe vào
 `overrides.json` cạnh `project.sqlite3`, dây chuyền đọc file ấy ở ranh giới an toàn và áp từng yêu cầu bằng
-`ProjectDB.apply_listener_pronunciation` / `apply_listener_speaker` / `apply_listener_voice` (đổi và đặt lại câu đã thu,
-một transaction).
+`ProjectDB.apply_listener_pronunciation` / `apply_listener_line` / `apply_listener_speaker` / `apply_listener_voice`
+(đổi và đặt lại câu đã thu, một transaction).
 
 File là TRẠNG THÁI MONG MUỐN, không phải hàng đợi: áp lại một yêu cầu đã áp là không làm gì. Nhờ vậy dây chuyền không
 bao giờ phải ghi ngược vào file, và không bao giờ có hai tiến trình cùng ghi một file.
@@ -36,6 +36,9 @@ UNKNOWN_CHARACTER = "unknown_character"
 NOT_A_CHARACTER = "not_a_character"
 UNKNOWN_PRESET = "unknown_preset"
 BAD_GENDER = "bad_gender"
+BAD_KIND = "bad_kind"
+BAD_EMOTION = "bad_emotion"
+LINE_KINDS = ("narration", "dialogue", "thought")
 
 # Hai đích đặc biệt của "Ai nói câu này", ngoài khoá tên chuẩn của một nhân vật.
 NARRATOR = "NARRATOR"
@@ -121,6 +124,7 @@ def speaker_target(
     stable_id: str,
     text_sha256: str,
     speaker: str,
+    as_kind: str = "",
 ) -> tuple[dict[str, Any] | None, str | None]:
     """Người nói mà câu sẽ mang nếu áp yêu cầu: (đích, None), hoặc (None, mã lý do).
 
@@ -141,7 +145,8 @@ def speaker_target(
         return None, UNKNOWN_LINE
     if str(line["text_sha256"] or "") != text_sha256:
         return None, SOURCE_CHANGED
-    if str(line["kind"]) not in SPEECH_KINDS:
+    # `as_kind`: câu người nghe vừa đổi từ lời kể thành lời thoại trong CÙNG yêu cầu - xét như thể đã là lời thoại.
+    if (as_kind or str(line["kind"])) not in SPEECH_KINDS:
         return None, NOT_SPEECH
     label: str | None = None
     if speaker == UNNAMED:
@@ -276,6 +281,82 @@ def voice_target(
     }, None
 
 
+def line_requests(overrides: dict[str, Any]) -> list[dict[str, Any]]:
+    """Các yêu cầu sửa cách đọc một câu (loại đoạn, cảm xúc, cường độ), theo thứ tự mã câu. Trường rỗng / None = giữ."""
+    entries = overrides.get("lines")
+    if not isinstance(entries, dict):
+        return []
+    requests: list[dict[str, Any]] = []
+    for stable_id in sorted(entries):
+        entry = entries[stable_id]
+        if not isinstance(entry, dict) or not str(entry.get("text_sha256") or "").strip():
+            continue
+        intensity = entry.get("intensity")
+        requests.append({
+            "stable_id": str(stable_id),
+            "text_sha256": str(entry["text_sha256"]).strip(),
+            "kind": str(entry.get("kind") or "").strip(),
+            "emotion": str(entry.get("emotion") or "").strip(),
+            "intensity": int(intensity) if isinstance(intensity, (int, float)) and not isinstance(intensity, bool) else None,
+        })
+    return requests
+
+
+def line_target(
+    conn: sqlite3.Connection,
+    *,
+    stable_id: str,
+    text_sha256: str,
+    kind: str = "",
+    emotion: str = "",
+    intensity: int | None = None,
+) -> tuple[dict[str, Any] | None, str | None]:
+    """Câu sẽ mang loại đoạn / cảm xúc / cường độ nào nếu áp yêu cầu: (đích, None), hoặc (None, mã lý do). Dùng chung cho
+    giao diện (từ chối ngay) và dây chuyền (trong transaction áp).
+
+    Cường độ đi qua ĐÚNG phép hiệu chỉnh của khâu phân tích (`analysis._calibrated_intensity`: cảm xúc êm tối đa 1, lời kể
+    và nội tâm tối đa 2, mức 3 chỉ cho cảm xúc mạnh có dấu chấm than) - TTS không đọc được gì ngoài dải ấy. Đổi thành lời
+    kể thì câu về người kể và giọng người kể."""
+    from .analysis import ALLOWED_EMOTIONS, _calibrated_intensity
+
+    line = conn.execute(
+        "SELECT id, chapter_id, text, kind, speaker, emotion, intensity, status, text_sha256, voice_profile_id,"
+        " canonical_character_id FROM segments WHERE stable_id=?",
+        (stable_id,),
+    ).fetchone()
+    if line is None:
+        return None, UNKNOWN_LINE
+    if str(line["text_sha256"] or "") != text_sha256:
+        return None, SOURCE_CHANGED
+    if kind and kind not in LINE_KINDS:
+        return None, BAD_KIND
+    if emotion and emotion not in ALLOWED_EMOTIONS:
+        return None, BAD_EMOTION
+    new_kind = kind or str(line["kind"] or "narration")
+    new_emotion = emotion or str(line["emotion"] or "neutral")
+    wanted = intensity if intensity is not None else int(line["intensity"] or 0)
+    target: dict[str, Any] = {
+        "line": line,
+        "kind": new_kind,
+        "emotion": new_emotion,
+        "intensity": _calibrated_intensity(str(line["text"]), new_kind, new_emotion, wanted),
+    }
+    if new_kind == "narration" and str(line["kind"]) != "narration":
+        narrator = conn.execute(
+            """
+            SELECT c.id AS character_id, s.voice_profile_id, COUNT(*) AS lines FROM segments s
+            JOIN characters c ON c.id = s.canonical_character_id
+            WHERE c.canonical_name='NARRATOR' AND s.voice_profile_id IS NOT NULL
+            GROUP BY c.id, s.voice_profile_id ORDER BY lines DESC LIMIT 1
+            """
+        ).fetchone()
+        if narrator is None:
+            return None, NO_VOICE
+        target["narrator"] = {"character_id": int(narrator["character_id"]),
+                              "voice_profile_id": int(narrator["voice_profile_id"])}
+    return target, None
+
+
 def request_pronunciation(project_root: Path, surface: str, spoken_form: str, *, now: float) -> None:
     """Giao diện gọi: ghi (hoặc thay) mong muốn cho một từ."""
     data = read_overrides(project_root)
@@ -308,6 +389,30 @@ def request_speakers(project_root: Path, lines: list[tuple[str, str]], speaker: 
             "requested_at": float(now),
         }
     data["speakers"] = entries
+    _write(project_root, data)
+
+
+def request_line(project_root: Path, stable_id: str, text_sha256: str, *, kind: str = "", emotion: str = "",
+                 intensity: int | None = None, speaker: str = "", now: float) -> None:
+    """Giao diện gọi: ghi (hoặc thay) mong muốn về cách đọc một câu, và - khi câu từ lời kể thành lời thoại - người nói của
+    nó, trong MỘT lần ghi file (dây chuyền không bao giờ thấy nửa yêu cầu)."""
+    data = read_overrides(project_root)
+    lines = data.get("lines")
+    lines = dict(lines) if isinstance(lines, dict) else {}
+    lines[str(stable_id)] = {
+        "text_sha256": str(text_sha256).strip(),
+        "kind": str(kind).strip(),
+        "emotion": str(emotion).strip(),
+        "intensity": intensity,
+        "requested_at": float(now),
+    }
+    data["lines"] = lines
+    if speaker:
+        speakers = data.get("speakers")
+        speakers = dict(speakers) if isinstance(speakers, dict) else {}
+        speakers[str(stable_id)] = {"speaker": str(speaker).strip(), "text_sha256": str(text_sha256).strip(),
+                                    "requested_at": float(now)}
+        data["speakers"] = speakers
     _write(project_root, data)
 
 

@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Tab **"Kịch bản"**: mỗi câu có nhãn **cách đọc** (cảm xúc và mức, vd "Sợ · mạnh"); bấm vào để đổi cảm xúc, mức,
+  hay loại đoạn - lời kể, lời thoại, nội tâm (phím tắt `e` cho câu đang chọn). Lời kể đổi thành lời thoại thì chọn luôn
+  người nói; lời thoại đổi thành lời kể thì câu về giọng người kể. Mức được giữ trong tầm giọng đọc được (thì thầm,
+  dịu dàng tối đa "Vừa"). Áp ở ranh giới chương kế tiếp; câu đã thu được thu lại.
 - Điện thoại: công tắc **"Báo khi sách xong hay có việc cần anh"** (màn Tải sách, dưới nút Studio của máy tính).
   Điện thoại hỏi máy tính mỗi 15 phút (cả khi app đã đóng) và mỗi lần mở app, rồi báo: sách đã xong, dừng vì lỗi,
   dừng giữa chừng, hay có thêm việc cần anh. Bấm thông báo mở thẳng Studio từ xa đúng cuốn, đúng tab. Cần máy tính

@@ -89,6 +89,7 @@ from .listener_overrides import (
     pronunciation_problem,
     pronunciation_requests,
     read_overrides,
+    line_requests,
     speaker_requests,
     surface_key,
     voice_requests,
@@ -1181,6 +1182,31 @@ class BookPipeline:
             forget = getattr(self.tts, "forget_pronunciations", None)
             if callable(forget):
                 forget()
+        # Loại đoạn / cảm xúc của một câu - TRƯỚC "ai nói câu này": câu vừa từ lời kể thành lời thoại thì mới gán người
+        # nói được.
+        for request in line_requests(overrides):
+            result = self.db.apply_listener_line(
+                stable_id=request["stable_id"],
+                text_sha256=request["text_sha256"],
+                kind=request["kind"],
+                emotion=request["emotion"],
+                intensity=request["intensity"],
+            )
+            if result is None:
+                continue
+            if "problem" in result:
+                self._report_rejected_override(
+                    (request["stable_id"], f"line:{request['kind']}:{request['emotion']}:{request['intensity']}"),
+                    f"Không đổi được cách đọc câu {request['stable_id']} ({result['problem']}).",
+                    {**request, "problem": result["problem"]},
+                )
+                continue
+            if result["reset"]:
+                reset_chapters.add(int(result["chapter_id"]))
+            self.log(
+                f"Người nghe đổi câu {request['stable_id']}: {result['kind']}, {result['emotion']} {result['intensity']}"
+                + ("; thu lại." if result["reset"] else ".")
+            )
         for request in speaker_requests(overrides):
             stable_id, speaker = request["stable_id"], request["speaker"]
             result = self.db.apply_listener_speaker(
