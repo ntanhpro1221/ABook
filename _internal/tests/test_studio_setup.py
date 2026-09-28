@@ -363,7 +363,7 @@ def _serving(pieces: list[bytes], fetched: list[str]):
 def test_the_projects_own_model_comes_from_its_release_into_the_studios_ollama(tmp_path: Path, ollama: str,
                                                                               monkeypatch: pytest.MonkeyPatch) -> None:
     """Model tự huấn luyện (chủ sách 28-09: đăng công khai để Studio tải về) không có trong kho Ollama: tải từng phần từ
-    GitHub Release, Ollama nhận CẢ file đúng băm (ghép trên đường truyền), model tạo từ đúng file ấy; không để lại phần
+    nơi đăng (Hugging Face), Ollama nhận CẢ file đúng băm (ghép trên đường truyền), model tạo từ đúng file ấy; không để lại phần
     tải nào trên đĩa, và cài tiếp không tải lại."""
     weights = bytes(range(256)) * 40
     model = _published(monkeypatch, weights, split=6000)

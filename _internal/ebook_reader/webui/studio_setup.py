@@ -65,11 +65,11 @@ OLLAMA = Download("ollama", "https://github.com/ollama/ollama/releases/download/
 
 @dataclass(frozen=True)
 class PublishedModel:
-    """Model phân tích tự huấn luyện, đăng ở GitHub Release của dự án (chủ sách 28-09: đăng công khai để Studio tải về).
-
-    Một file GGUF cắt thành nhiều phần vì GitHub nhận tối đa 2 GiB mỗi tệp. `sha256` là băm của CẢ file, cũng là digest lớp
-    model trong Ollama: Ollama kiểm lại khi nhận, và model tạo từ đúng file ấy trùng từng byte bản đã đo trên máy dev (thử
-    28-09: /api/create chỉ với `files` cho cùng lớp cấu hình và lớp model như `ollama create` của serve_lora.py).
+    """Model phân tích tự huấn luyện, đăng trên Hugging Face (chủ sách 28-09: đăng công khai để Studio tải về;
+    scripts/publish_model.py). Đường tải ghim theo commit. `parts`: thường một file; nhiều phần thì ghép theo thứ tự (nơi
+    đăng giới hạn cỡ mỗi tệp). `sha256` là băm của CẢ file, cũng là digest lớp model trong Ollama: Ollama kiểm lại khi
+    nhận, và model tạo từ đúng file ấy trùng từng byte bản đã đo trên máy dev (thử 28-09: /api/create chỉ với `files` cho
+    cùng lớp cấu hình và lớp model như `ollama create` của serve_lora.py).
     """
 
     name: str
@@ -673,7 +673,7 @@ class StudioSetup:
 
     def _step_llm(self) -> None:
         """Kéo model phân tích qua API của Ollama (không gọi CLI `ollama`: khi máy chủ tắt nó tự mở app khay). Model của
-        dự án (PUBLISHED_MODELS) không có trong kho Ollama: tải từ GitHub Release rồi nạp vào Ollama riêng."""
+        dự án (PUBLISHED_MODELS) không có trong kho Ollama: tải từ Hugging Face rồi nạp vào Ollama riêng."""
         self.ensure_ollama()
         published = PUBLISHED_MODELS.get(self.analysis_model)
         if published is not None:
