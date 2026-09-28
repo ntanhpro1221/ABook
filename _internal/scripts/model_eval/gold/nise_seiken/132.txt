@@ -1,0 +1,106 @@
+# "Nise Seiken Monogatari" file 132 ("Chương 131: Khởi đầu"). Bộ đo LN 28-09 (chương CHƯA học): chọn model phân tích cho
+# thứ chủ sách đọc (LN Nhật/Hàn). Claude gán (A), agent soát (B). Hồi tưởng NGÔI BA: Magali và Alistar lúc nhỏ ở làng; ông
+# chú trong làng không tên = NPC*. 28: tiếng trẻ con gõ cửa, cùng chương gọi tên ngay sau (33) -> ALISTAR đủ, NPC*~ (quy
+# tắc 5). 30, 93: câu hỏi tu từ trong lời kể -> N,T, người nghĩ nửa điểm. 82: 『...』 giữa câu kể là suy nghĩ của Magali ->
+# NARRATOR, MAGALI~ (quy tắc 8). 72: "Allistar" là lỗi gõ của bản dịch (lời kể).
+0 H
+1 N
+2 D MAGALI surprised,neutral 0-1 normal,slow soft,normal f
+3 N
+4 N
+5 N
+6 D MAGALI afraid,surprised 1-2 fast loud,normal f
+7 D ALISTAR tired,happy,neutral 0-1 slow,normal normal,soft m
+8 N
+9 N
+10 D MAGALI afraid,sad,angry 1-2 fast normal,loud f
+11 N
+12 N
+13 D ALISTAR surprised,neutral 0-1 normal normal m
+14 D MAGALI surprised,neutral 0-1 normal normal f
+15 D ALISTAR neutral 0-1 normal normal m
+16 D MAGALI neutral,sad 0-1 normal normal f
+17 N
+18 D ALISTAR sad,tired,neutral 0-1 normal,slow normal,soft m
+19 N
+20 N
+21 N
+22 N
+23 D ALISTAR neutral 0-1 normal normal m
+24 D MAGALI surprised 0-1 normal normal f
+25 N
+26 N
+27 D ALISTAR neutral,sarcastic,happy 0-1 normal normal m
+28 D ALISTAR,NPC*~ neutral,happy 0-1 normal normal m
+29 N
+30 N,T NARRATOR,NPC* neutral,surprised 0-1 normal normal u
+31 N
+32 D NPC*,UNKNOWN~ surprised,neutral 0-1 normal normal m
+33 N
+34 N
+35 N
+36 D ALISTAR sad,neutral 0-1 normal,slow normal,soft m
+37 D NPC*,UNKNOWN~ surprised,neutral 0-1 normal normal m
+38 N
+39 N
+40 N
+41 D ALISTAR sad,neutral 0-1 slow,normal soft,normal m
+42 D NPC*,UNKNOWN~ surprised,afraid 1-2 fast loud,normal m
+43 N
+44 N
+45 D ALISTAR sad,neutral 0-1 slow,normal normal,soft m
+46 D NPC*,UNKNOWN~ surprised,neutral 0-1 normal normal m
+47 D ALISTAR sad,neutral 0-1 normal normal m
+48 D NPC*,UNKNOWN~ sad,afraid,surprised 0-1 normal normal,soft m
+49 N
+50 N
+51 N
+52 D ALISTAR sad,neutral 0-1 slow,normal soft,normal m
+53 D NPC*,UNKNOWN~ afraid,neutral 0-1 normal soft,normal m
+54 N
+55 N
+56 D ALISTAR sad,sarcastic,neutral 0-1 normal normal m
+57 D NPC*,UNKNOWN~ afraid,surprised 1-2 fast loud m
+58 N
+59 N
+60 N
+61 D NPC*,UNKNOWN~ neutral 0-1 normal normal m
+62 N
+63 D ALISTAR surprised,happy 0-1 normal normal m
+64 D NPC*,UNKNOWN~ neutral,tender 0-1 normal normal m
+65 N
+66 N
+67 D NPC*,UNKNOWN~ afraid,neutral,whispering 0-1 normal soft,normal m
+68 D ALISTAR happy,excited 1-2 normal loud m
+69 N
+70 D NPC*,UNKNOWN~ neutral,happy,afraid 0-1 normal normal m
+71 D ALISTAR happy 0-1 normal normal,loud m
+72 N
+73 N
+74 D ALISTAR sarcastic,happy,neutral 0-1 normal normal m
+75 N
+76 D MAGALI excited,surprised,sad 1-2 normal normal f
+77 N
+78 D ALISTAR neutral 0-1 normal normal m
+79 D MAGALI angry,neutral 0-1 normal normal f
+80 D ALISTAR angry,sarcastic 0-1 normal normal m
+81 N
+82 N NARRATOR,MAGALI~ neutral 0-1 normal normal u
+83 D MAGALI happy,excited 1-2 normal normal f
+84 N
+85 N
+86 N
+87 D ALISTAR surprised,neutral 0-1 normal normal m
+88 D MAGALI surprised 0-1 normal normal f
+89 D ALISTAR neutral,happy,excited 0-1 normal normal m
+90 D MAGALI surprised,afraid 1-2 fast normal,loud f
+91 N
+92 D ALISTAR neutral,angry 0-1 normal normal m
+93 N,T NARRATOR,ALISTAR~ neutral,surprised 0-1 normal normal u
+94 N
+95 D MAGALI afraid,sad,neutral 0-1 normal soft,normal f
+96 D ALISTAR happy,excited,neutral 0-1 normal normal m
+97 D MAGALI surprised,sad 1-2 slow,normal loud,normal f
+98 N
+99 N
+100 N

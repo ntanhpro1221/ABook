@@ -17,8 +17,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import time
 from pathlib import Path
+
+# 28-09 10:27: 8B 4-bit (5,7 GB) nạp được nhưng bước đầu hết VRAM ở loss ("No or negligible GPU memory available for fused
+# cross entropy") - chia loss thành khúc cố định thay vì để Unsloth dò VRAM trống (đã gần 0). unsloth_zoo đọc biến này lúc
+# import, nên phải đặt TRƯỚC dòng import unsloth.
+os.environ.setdefault("UNSLOTH_CE_LOSS_N_CHUNKS", "32")
 
 from unsloth import FastLanguageModel  # noqa: I001 - Unsloth phải được nạp trước transformers/trl
 from unsloth.chat_templates import train_on_responses_only
@@ -46,7 +52,18 @@ def main() -> int:
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--export-gguf", default="",
                         help="không huấn luyện: gộp <out>/adapter vào nền 16-bit, xuất GGUF theo kiểu nén này (vd q4_k_m)")
+    parser.add_argument("--save-steps", type=int, default=50,
+                        help="lưu checkpoint mỗi N bước; 8B trên card 8 GB ~3 phút/bước nên 10 (~30 phút) - máy khởi "
+                             "động lại chỉ mất chừng ấy")
+    parser.add_argument("--offload-embedding", action="store_true",
+                        help="nạp bằng FastModel và đẩy bảng embedding sang RAM (~1,2 GB với Qwen3-8B) - nhánh tối ưu "
+                             "FastLanguageModel của Qwen3 lặng lẽ bỏ qua tuỳ chọn này")
     args = parser.parse_args()
+    loader = FastLanguageModel
+    if args.offload_embedding:
+        from unsloth import FastModel
+
+        loader = FastModel
 
     if args.export_gguf:
         # Q4_K_M như qwen3:8b đang chạy: bản q8_0 của 8B nặng 8,7 GB, không vừa card 8 GB lúc suy luận.
@@ -57,8 +74,9 @@ def main() -> int:
         print("đã xuất", sorted(str(path) for path in (args.out / "gguf").rglob("*.gguf")))
         return 0
 
-    model, tokenizer = FastLanguageModel.from_pretrained(
-        model_name=args.base, max_seq_length=args.max_length, load_in_4bit=True, dtype=None
+    extra = {"offload_embedding": True} if args.offload_embedding else {}
+    model, tokenizer = loader.from_pretrained(
+        model_name=args.base, max_seq_length=args.max_length, load_in_4bit=True, dtype=None, **extra
     )
     rows = [json.loads(line) for line in (args.data / "train.jsonl").open(encoding="utf-8")]
     texts = [tokenizer.apply_chat_template(row["messages"], tokenize=False, enable_thinking=False) for row in rows]
@@ -73,7 +91,7 @@ def main() -> int:
         order = sorted(range(len(texts)), key=lambda index: -lengths[index])[: args.smoke]
         texts = [texts[index] for index in order]  # mẫu DÀI NHẤT: đo đúng đỉnh VRAM
 
-    model = FastLanguageModel.get_peft_model(
+    model = loader.get_peft_model(
         model, r=args.r, lora_alpha=args.alpha, lora_dropout=0, target_modules=TARGETS, bias="none",
         use_gradient_checkpointing="unsloth", random_state=3407,
     )
@@ -83,7 +101,7 @@ def main() -> int:
         per_device_train_batch_size=1, gradient_accumulation_steps=1 if args.smoke else args.accum,
         learning_rate=args.lr, lr_scheduler_type="cosine", warmup_steps=max(5, int(0.03 * steps)),
         num_train_epochs=args.epochs, max_steps=3 if args.smoke else -1, optim="adamw_8bit", bf16=True,
-        logging_steps=1 if args.smoke else 5, save_steps=50, save_total_limit=3, report_to="none", seed=3407,
+        logging_steps=1 if args.smoke else 5, save_steps=args.save_steps, save_total_limit=3, report_to="none", seed=3407,
     )
     trainer = SFTTrainer(model=model, processing_class=tokenizer, train_dataset=Dataset.from_dict({"text": texts}),
                          args=config)
