@@ -82,6 +82,7 @@ LINE_PROBLEMS = {
     listener_overrides.BAD_EMOTION: "Cảm xúc này không có trong bộ giọng.",
     listener_overrides.NOT_SPEECH: "Lời kể không có người nói - đổi thành lời thoại trước.",
     listener_overrides.NO_VOICE: "Người này chưa có giọng trong sách (chưa nói câu nào) - chưa gán được.",
+    listener_overrides.BAD_TEXT: "Chữ đem đọc phải có chữ cái, không ký tự lạ, và không dài quá bốn lần câu gốc.",
 }
 
 VOICE_PROBLEMS = {
@@ -929,15 +930,18 @@ class Handler(BaseHTTPRequestHandler):
         speaker = str(body.get("speaker") or "").strip()[:200]
         raw = body.get("intensity")
         intensity = int(raw) if isinstance(raw, (int, float)) and not isinstance(raw, bool) else None
-        if not stable_id or not text_sha256 or not (kind or emotion or intensity is not None or speaker):
+        # Chữ đem đọc (STUDIO_REVIEW mục 7): None = không đụng, "" = trả về chữ của sách.
+        spoken = str(body["spoken"])[:2200] if isinstance(body.get("spoken"), str) else None
+        if not stable_id or not text_sha256 or not (kind or emotion or intensity is not None or speaker or spoken is not None):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu câu hoặc thay đổi")
         problem = store.line_request_problem(path, stable_id, text_sha256, kind=kind, emotion=emotion,
-                                             intensity=intensity, speaker=speaker)
+                                             intensity=intensity, speaker=speaker, spoken=spoken)
         if problem is not None:
             raise ApiError(HTTPStatus.BAD_REQUEST, LINE_PROBLEMS.get(problem, "Không đổi được cách đọc câu này"))
         listener_overrides.request_line(path, stable_id, text_sha256, kind=kind, emotion=emotion, intensity=intensity,
-                                        speaker=speaker, now=time.time())
-        self._send_json(HTTPStatus.OK, {"stableId": stable_id, "kind": kind, "emotion": emotion, "intensity": intensity})
+                                        speaker=speaker, spoken=spoken, now=time.time())
+        self._send_json(HTTPStatus.OK, {"stableId": stable_id, "kind": kind, "emotion": emotion, "intensity": intensity,
+                                        "spoken": spoken})
 
     def post_voice(self, _query: dict[str, list[str]], value: str) -> None:
         # Giọng / giới của MỘT nhân vật (thẻ "Nam hay nữ", "Chung giọng"): như người nói - ghi mong muốn vào overrides.json,

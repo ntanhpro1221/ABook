@@ -1191,12 +1191,14 @@ class BookPipeline:
                 kind=request["kind"],
                 emotion=request["emotion"],
                 intensity=request["intensity"],
+                spoken=request["spoken"],
             )
             if result is None:
                 continue
             if "problem" in result:
                 self._report_rejected_override(
-                    (request["stable_id"], f"line:{request['kind']}:{request['emotion']}:{request['intensity']}"),
+                    (request["stable_id"],
+                     f"line:{request['kind']}:{request['emotion']}:{request['intensity']}:{request['spoken']}"),
                     f"Không đổi được cách đọc câu {request['stable_id']} ({result['problem']}).",
                     {**request, "problem": result["problem"]},
                 )
@@ -1205,6 +1207,7 @@ class BookPipeline:
                 reset_chapters.add(int(result["chapter_id"]))
             self.log(
                 f"Người nghe đổi câu {request['stable_id']}: {result['kind']}, {result['emotion']} {result['intensity']}"
+                + (f", đọc là {result['listener_text']!r}" if result.get("listener_text") else "")
                 + ("; thu lại." if result["reset"] else ".")
             )
         for request in speaker_requests(overrides):

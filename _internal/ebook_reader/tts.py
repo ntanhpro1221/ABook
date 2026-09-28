@@ -905,8 +905,10 @@ class TTSCoordinator:
         # compared against other anchors derived the same way (pipeline.py builds an
         # identity tuple from them), never used to slice row["text"]. Normalising here keeps
         # those offsets internally consistent. row["text"] itself is untouched - the book's
-        # text is not what changes, only what is handed to the voice.
-        source_text = spoken_symbols_to_words(str(row["text"]))
+        # text is not what changes, only what is handed to the voice. A line the listener
+        # re-worded in the Studio (`listener_text`: a typo, an odd spelling) is read in
+        # their words; every consumer of this function sees the same string.
+        source_text = spoken_symbols_to_words(str(_row_value(row, "listener_text", "") or row["text"]))
         origins = [(index, index + 1) for index in range(len(source_text))]
         anchor_tags = [frozenset() for _character in source_text]
         anchors: list[dict[str, Any]] = []
