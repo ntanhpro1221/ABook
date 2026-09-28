@@ -22,3 +22,18 @@ def test_no_file_or_a_broken_entry_is_not_a_change(tmp_path: Path) -> None:
     overrides_path(tmp_path).write_text(json.dumps({"speakers": {"s1": "LUCIEN", "s2": {"requested_at": "x"}},
                                                      "voices": {"A": {"requested_at": 9.0}}}), encoding="utf-8")
     assert pending_changes(tmp_path, since=1.0) == 1
+
+
+def test_a_run_that_found_nothing_to_redo_still_clears_the_button(tmp_path: Path) -> None:
+    """"Giữ nguyên" không làm dây chuyền ghi gì vào sổ, nên chỉ `book.updated_at` thì nút "Áp dụng" không bao giờ tắt:
+    Studio ghi mốc khởi động lượt chạy, và lượt ấy áp mọi yêu cầu ghi trước mốc."""
+    from ebook_reader.webui.store import changes_since, mark_run_started
+
+    request_pronunciation(tmp_path, "Arcanist", "A-rờ-ca-nít", now=500.0)
+    assert changes_since(tmp_path, 100.0) == 100.0, "chưa chạy lần nào: chỉ còn mốc sổ"
+    assert pending_changes(tmp_path, changes_since(tmp_path, 100.0)) == 1
+    mark_run_started(tmp_path, 600.0)
+    assert changes_since(tmp_path, 100.0) == 600.0
+    assert pending_changes(tmp_path, changes_since(tmp_path, 100.0)) == 0
+    request_pronunciation(tmp_path, "Hailkes", "Hên-cơ", now=700.0)
+    assert pending_changes(tmp_path, changes_since(tmp_path, 100.0)) == 1, "ghi sau lượt chạy: lại chờ"

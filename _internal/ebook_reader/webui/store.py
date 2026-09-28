@@ -179,6 +179,28 @@ def chapter_names(connection: sqlite3.Connection) -> dict[int, dict[str, Any]]:
     return out
 
 
+RUN_MARKER = "studio_last_run.json"
+
+
+def mark_run_started(project_root: Path, started_at: float) -> None:
+    """Studio đã khởi động một lượt chạy lúc `started_at`: lượt ấy áp MỌI yêu cầu ghi trước đó (Pipeline._recover áp
+    overrides trước mọi việc) - kể cả khi chẳng có gì phải thu lại và dây chuyền không ghi gì vào sổ, nên mốc
+    `book.updated_at` một mình thì nút "Áp dụng" không bao giờ tắt."""
+    try:
+        (project_root / RUN_MARKER).write_text(json.dumps({"startedAt": started_at}), encoding="utf-8")
+    except OSError:
+        pass
+
+
+def changes_since(project_root: Path, book_updated_at: float) -> float:
+    """Mốc mà yêu cầu sửa ghi SAU nó còn chờ áp: lần dây chuyền ghi sổ cuối hay lần Studio khởi động lượt chạy cuối."""
+    try:
+        started = float(json.loads((project_root / RUN_MARKER).read_text(encoding="utf-8")).get("startedAt") or 0)
+    except (OSError, ValueError, AttributeError, TypeError):
+        started = 0.0
+    return max(book_updated_at, started)
+
+
 def pending_changes(project_root: Path, since: float) -> int:
     """Số yêu cầu của người nghe (overrides.json: cách đọc tên, người nói, cách đọc câu, giọng) ghi SAU lần dây chuyền ghi sổ
     cuối `since`. Sách đã xong không tự chạy lại, nên các yêu cầu ấy chờ mãi nếu không có nút "Áp dụng" (soát UX 29-09:
@@ -259,7 +281,8 @@ def summarize(project_root: Path, *, running: bool = False, now: float | None = 
         "createdAt": float(book["created_at"] or 0) or None,
         "updatedAt": max(float(book["updated_at"] or 0), touched(project_root)) or None,
         "lastError": str(book["last_error"] or ""),
-        "pendingChanges": pending_changes(project_root, float(book["updated_at"] or 0)) if phase == "done" else 0,
+        "pendingChanges": pending_changes(project_root, changes_since(project_root, float(book["updated_at"] or 0)))
+        if phase == "done" else 0,
         "settings": {
             "profile": profile,
             "profileLabel": humanize.PROFILE_LABELS.get(profile, profile),
@@ -503,7 +526,8 @@ def cast(project_root: Path) -> dict[str, Any]:
         }
         chapter_numbers = {chapter_id: item["name"] for chapter_id, item in chapter_names(connection).items()}
         book_row = connection.execute("SELECT updated_at FROM book WHERE id=1").fetchone()
-    pending = pending_voices(project_root, float(book_row["updated_at"] or 0) if book_row is not None else 0.0)
+    pending = pending_voices(
+        project_root, changes_since(project_root, float(book_row["updated_at"] or 0) if book_row is not None else 0.0))
     lines: dict[str, int] = defaultdict(int)
     seconds: dict[str, float] = defaultdict(float)
     voice_votes: dict[str, Counter[int]] = defaultdict(Counter)
