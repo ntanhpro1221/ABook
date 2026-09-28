@@ -220,9 +220,9 @@ export const TabsContent = TabsPrimitive.Content;
 
 export function TabsList({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    // Màn hẹp (Studio từ xa trên điện thoại): hàng tab cuộn ngang thay vì tràn ra ngoài trang.
+    // Hàng tab không vừa (điện thoại, hay cửa sổ hẹp có thanh bên) thì cuộn ngang thay vì tràn ra ngoài trang.
     <TabsPrimitive.List
-      className={cn("flex gap-1 border-b border-line max-md:overflow-x-auto max-md:overflow-y-hidden max-md:[scrollbar-width:none]", className)}
+      className={cn("flex gap-1 overflow-x-auto overflow-y-hidden border-b border-line [scrollbar-width:none]", className)}
     >
       {children}
     </TabsPrimitive.List>
