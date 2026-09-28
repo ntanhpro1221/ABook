@@ -152,7 +152,10 @@ export function Shell({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const { expanded, setExpanded } = useNowPlaying();
   // Studio từ xa: thanh "Đang phát trên điện thoại" là việc của chính máy tính, cổng từ xa không mở đường ấy.
-  const remote = Boolean(useAppInfo().data?.remote);
+  const info = useAppInfo().data;
+  const remote = Boolean(info?.remote);
+  // Chỉ nghe (trình duyệt của iPhone, TV... đã ghép, máy tính chưa cho điều khiển sản xuất): không có Studio để vào.
+  const listenOnly = Boolean(info?.listenOnly);
   useRestoreLastListening();
 
   // Bấm mục thanh bên khi màn "Đang nghe" đang mở: trang mới phải hiện ra, không bị lớp phủ che.
@@ -181,15 +184,17 @@ export function Shell({ children }: { children: ReactNode }) {
               Thư viện
             </NavItem>
           </Section>
-          <Section title="Studio">
-            <NavItem to="/studio" icon={Clapperboard} match={(path) => path.startsWith("/studio") && path !== "/studio/new"}>
-              Dự án
-            </NavItem>
-            <NavItem to="/studio/new" icon={Plus} match={(path) => path === "/studio/new"}>
-              Tạo sách nói
-            </NavItem>
-            <Producing />
-          </Section>
+          {!listenOnly && (
+            <Section title="Studio">
+              <NavItem to="/studio" icon={Clapperboard} match={(path) => path.startsWith("/studio") && path !== "/studio/new"}>
+                Dự án
+              </NavItem>
+              <NavItem to="/studio/new" icon={Plus} match={(path) => path === "/studio/new"}>
+                Tạo sách nói
+              </NavItem>
+              <Producing />
+            </Section>
+          )}
         </nav>
         <div className="mt-auto">
           <UpdateNotice />
@@ -209,12 +214,16 @@ export function Shell({ children }: { children: ReactNode }) {
           <TabItem to="/" icon={Library} match={(path) => path === "/" || path.startsWith("/book/")}>
             Thư viện
           </TabItem>
-          <TabItem to="/studio" icon={Clapperboard} match={(path) => path.startsWith("/studio") && path !== "/studio/new"}>
-            Dự án
-          </TabItem>
-          <TabItem to="/studio/new" icon={Plus} match={(path) => path === "/studio/new"}>
-            Tạo sách
-          </TabItem>
+          {!listenOnly && (
+            <TabItem to="/studio" icon={Clapperboard} match={(path) => path.startsWith("/studio") && path !== "/studio/new"}>
+              Dự án
+            </TabItem>
+          )}
+          {!listenOnly && (
+            <TabItem to="/studio/new" icon={Plus} match={(path) => path === "/studio/new"}>
+              Tạo sách
+            </TabItem>
+          )}
           <TabItem to="/settings" icon={Settings} match={(path) => path.startsWith("/settings")}>
             Cài đặt
           </TabItem>
