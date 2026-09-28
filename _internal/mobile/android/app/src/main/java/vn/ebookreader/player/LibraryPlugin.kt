@@ -40,7 +40,10 @@ private const val SHARE_KEY = "shareLibrary"
  */
 @CapacitorPlugin(
     name = "EbookLibrary",
-    permissions = [Permission(strings = [Manifest.permission.POST_NOTIFICATIONS], alias = "notifications")],
+    permissions = [
+        Permission(strings = [Manifest.permission.POST_NOTIFICATIONS], alias = "notifications"),
+        Permission(strings = [Manifest.permission.BLUETOOTH_CONNECT], alias = "bluetooth"),
+    ],
 )
 class LibraryPlugin : Plugin() {
     private val io = Executors.newSingleThreadExecutor()
@@ -154,6 +157,46 @@ class LibraryPlugin : Plugin() {
         val body = JSONObject().put("code", call.getString("code") ?: "").put("device", device)
         val reply = JSONObject(request("POST", "/sync/v1/pair", body, auth = false, root = "http://$host:$port"))
         prefs.edit().putString("host", host).putInt("port", port).putString("token", reply.getString("token"))
+            .putString("name", reply.optString("name")).commit()
+        Remote.ensure()
+        call.resolve(JSObject().put("name", reply.optString("name")))
+    }
+
+    // ---- qua Bluetooth (BluetoothLink, BtMux) -------------------------------------------------------------------------
+
+    /** Máy đã ghép Bluetooth với điện thoại. Android 12+: xin quyền "Thiết bị ở gần" lần đầu. */
+    @PluginMethod
+    fun bluetoothDevices(call: PluginCall) {
+        if (!BluetoothLink.permitted(context)) {
+            requestPermissionForAlias("bluetooth", call, "bluetoothDevicesAfterPermission")
+            return
+        }
+        bluetoothDevicesAfterPermission(call)
+    }
+
+    @PermissionCallback
+    private fun bluetoothDevicesAfterPermission(call: PluginCall) = background(call) {
+        if (!BluetoothLink.permitted(context)) throw IllegalStateException("Cần cho ABook dùng \"Thiết bị ở gần\" để kết nối qua Bluetooth")
+        val out = JSArray()
+        val devices = BluetoothLink.devices(context)
+        for (index in 0 until devices.length()) out.put(JSObject.fromJSONObject(devices.getJSONObject(index)))
+        call.resolve(JSObject().put("devices", out))
+    }
+
+    /** Ghép máy tính chính QUA BLUETOOTH: cùng mã 6 số, cùng /sync/v1/pair - đi qua đường hầm. */
+    @PluginMethod
+    fun pairBluetooth(call: PluginCall) = background(call) {
+        val address = call.getString("address") ?: throw IllegalArgumentException("thiếu máy")
+        val device = call.getString("device") ?: "${Build.MANUFACTURER} ${Build.MODEL}"
+        val body = JSONObject().put("code", call.getString("code") ?: "").put("device", device)
+        val root = BluetoothLink.base(context, address)
+        val reply = try {
+            JSONObject(request("POST", "/sync/v1/pair", body, auth = false, root = root))
+        } catch (error: Exception) {
+            val reason = BluetoothLink.lastError(address)
+            throw IllegalStateException(reason.ifBlank { error.message ?: "không kết nối được qua Bluetooth" })
+        }
+        prefs.edit().putString("host", "bt:$address").putInt("port", 0).putString("token", reply.getString("token"))
             .putString("name", reply.optString("name")).commit()
         Remote.ensure()
         call.resolve(JSObject().put("name", reply.optString("name")))
