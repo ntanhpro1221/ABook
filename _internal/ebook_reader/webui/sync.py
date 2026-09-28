@@ -879,6 +879,8 @@ def local_addresses() -> list[str]:
     except OSError:
         pass
     addresses -= _virtual_addresses()
-    if primary:
+    if primary and not primary.startswith(("0.", "127.", "169.254.")):
         addresses.add(primary)
+    else:
+        primary = ""
     return sorted(addresses, key=lambda address: (address != primary, _tailscale(address), address))
