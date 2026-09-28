@@ -1150,7 +1150,8 @@ function CaughtUpNotice() {
 
 // ---- Màn hình đang nghe ------------------------------------------------------------------------------------
 
-export function NowPlaying({ mobile = false }: { mobile?: boolean }) {
+/** `actions`: nút riêng của từng nền ở hàng nút dưới thanh tua (điện thoại: "Phát trên <máy tính>"). */
+export function NowPlaying({ mobile = false, actions }: { mobile?: boolean; actions?: ReactNode }) {
   const { track, sleep, canGoBack, goBack, playing, toggle } = usePlayer();
   const { expanded, setExpanded } = useNowPlaying();
   const [panel, setPanelState] = useState<Panel>(initialPanel);
@@ -1284,6 +1285,7 @@ export function NowPlaying({ mobile = false }: { mobile?: boolean }) {
           <SleepMenu />
           <BookmarkButton />
           <VolumeControl />
+          {actions}
         </div>
         {sleep.kind === "chapter" && <p className="mt-2 text-center text-xs text-fg-2">Sẽ dừng khi hết chương này.</p>}
         <FadingNotice className="mt-3" />
