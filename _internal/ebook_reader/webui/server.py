@@ -156,6 +156,7 @@ class App:
         remote_books.configure(self.computers)
         self._remote_refreshed = 0.0
         self._remote_lock = threading.Lock()
+        self._state_synced: dict[str, float] = {}
 
     # ---- sách ------------------------------------------------------------------------------------------
 
@@ -394,6 +395,30 @@ class App:
         self._remote_refreshed = time.time()
         threading.Thread(target=run, name="remote-books", daemon=True).start()
 
+    def sync_remote_state(self, value: str, *, wait: bool) -> None:
+        """Chỗ nghe của một cuốn "Trên máy khác", hai chiều: gửi bản của máy này, gộp bản máy kia trả về (theo mốc thời gian
+        từng phần, như điện thoại với máy tính). Mở sách: đợi, trần 1,5 giây (máy kia tắt thì trang không đứng chờ). Đang
+        nghe / đánh dấu: chạy nền, tối đa mỗi 30 giây một lần - mọi phần mang mốc thời gian, gửi muộn vẫn gộp đúng."""
+        path = self.library.resolve_listenable(value)
+        if path is None or not packages.is_package(path):
+            return
+        book = packages.manifest(path)
+        if remote_books.remote_of(book) is None:
+            return
+        now = time.time()
+        if not wait and now - self._state_synced.get(value, 0.0) < 30:
+            return
+        self._state_synced[value] = now
+
+        def run() -> None:
+            reply = remote_books.exchange_state(book, self.listening.get(value), timeout=1.5 if wait else 4)
+            if reply is not None:
+                self.listening.merge(value, {key: item for key, item in reply.items() if key not in ("night", "sessions")})
+        if wait:
+            run()
+        else:
+            threading.Thread(target=run, name="remote-state", daemon=True).start()
+
     def computers_view(self) -> dict[str, Any]:
         return {"name": socket_name(), "computers": self.computers.list()}
 
@@ -439,6 +464,7 @@ class App:
 
     def listen_book(self, value: str) -> dict[str, Any]:
         path = self._listenable(value)
+        self.sync_remote_state(value, wait=True)
         if packages.is_package(path):
             view = packages.listen(path, value, self.listening.get(value))
         else:
@@ -949,6 +975,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def post_progress(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._listenable(value)
+        self.app.sync_remote_state(value, wait=False)
         body = self._body()
         state = self.app.listening.progress(
             value, int(body.get("chapterId", 0)), float(body.get("seconds", 0)), float(body.get("duration", 0)),
@@ -958,11 +985,13 @@ class Handler(BaseHTTPRequestHandler):
 
     def post_chapter_done(self, _query: dict[str, list[str]], value: str, chapter: str) -> None:
         self.app._listenable(value)
+        self.app.sync_remote_state(value, wait=False)
         state = self.app.listening.set_chapter_done(value, int(chapter), bool(self._body().get("done", True)))
         self._send_json(HTTPStatus.OK, state)
 
     def post_finished(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._listenable(value)
+        self.app.sync_remote_state(value, wait=False)
         self._send_json(HTTPStatus.OK, self.app.listening.set_finished(value, bool(self._body().get("finished", True))))
 
     def post_rate(self, _query: dict[str, list[str]], value: str) -> None:
@@ -972,6 +1001,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def post_bookmark(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._listenable(value)
+        self.app.sync_remote_state(value, wait=False)
         body = self._body()
         mark = self.app.listening.add_bookmark(
             value, int(body.get("chapterId", 0)), float(body.get("seconds", 0)), str(body.get("note", "")),
@@ -981,16 +1011,19 @@ class Handler(BaseHTTPRequestHandler):
 
     def put_bookmark(self, _query: dict[str, list[str]], value: str, mark: str) -> None:
         self.app._listenable(value)
+        self.app.sync_remote_state(value, wait=False)
         self.app.listening.update_bookmark(value, mark, str(self._body().get("note", "")))
         self._send_json(HTTPStatus.OK, {"ok": True})
 
     def delete_bookmark(self, _query: dict[str, list[str]], value: str, mark: str) -> None:
         self.app._listenable(value)
+        self.app.sync_remote_state(value, wait=False)
         self.app.listening.delete_bookmark(value, mark)
         self._send_json(HTTPStatus.OK, {"ok": True})
 
     def post_bookmark_restore(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._listenable(value)
+        self.app.sync_remote_state(value, wait=False)
         body = self._body()
         if not re.fullmatch(r"[0-9a-f]{6,40}", str(body.get("id", ""))):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Dấu trang không hợp lệ")

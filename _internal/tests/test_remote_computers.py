@@ -58,6 +58,35 @@ def test_this_computer_listens_to_a_book_on_another_computer(library, tmp_path: 
     assert not any(item.get("remote") for item in app.listen_library())
 
 
+def test_the_place_you_are_listening_travels_both_ways_between_computers(library, tmp_path: Path) -> None:  # noqa: F811
+    """Như điện thoại với máy tính: nghe ở máy này thì máy kia biết, nghe ở máy kia thì mở sách ở máy này thấy - gộp theo
+    mốc thời gian từng phần, bên mới hơn thắng."""
+    import time
+
+    other_library, project, other_listening = library
+    devices = Devices(tmp_path / "kia" / "devices.json")
+    other = SyncServer(SyncApp(other_library, other_listening, devices, "Máy kia"), host="127.0.0.1", port=0).start()
+    preferences = Preferences(tmp_path / "nay" / "preferences.json")
+    preferences.update({"libraryRoot": str(tmp_path / "nay" / "thu_vien")})
+    app = App(preferences=preferences, runner=FakeRunner(), token="t", listening=Listening(tmp_path / "nay" / "l.json"))
+    try:
+        app.pair_computer(f"127.0.0.1:{other.port}", devices.start_pairing()["code"])
+        (book,) = [item for item in app.listen_library() if item.get("remote")]
+        chapter = app.listen_book(book["id"])["chapters"][0]["id"]
+        remote_id = book_id(project)
+
+        app.listening.progress(book["id"], chapter, 42.0, 100.0)
+        app.sync_remote_state(book["id"], wait=True)
+        assert other_listening.get(remote_id)["last"]["seconds"] == 42.0, "máy kia biết máy này nghe tới đâu"
+
+        time.sleep(0.05)
+        other_listening.progress(remote_id, chapter, 77.0, 100.0)
+        view = app.listen_book(book["id"])
+        assert view["state"]["last"]["seconds"] == 77.0, "mở sách ở máy này thấy chỗ vừa nghe ở máy kia"
+    finally:
+        other.stop()
+
+
 def test_pairing_refuses_a_bad_code_or_address_with_a_readable_reason(library, tmp_path: Path) -> None:  # noqa: F811
     import pytest
 

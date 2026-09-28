@@ -213,6 +213,22 @@ def computer_name(manifest: dict[str, Any]) -> str:
     return str(entry.get("name") or "") if entry else ""
 
 
+def exchange_state(manifest: dict[str, Any], state: dict[str, Any], *, timeout: float = TIMEOUT) -> dict[str, Any] | None:
+    """Gửi chỗ nghe của máy này cho máy kia và nhận bản đã gộp - đúng đường điện thoại dùng (POST .../state; máy kia gộp
+    vào hồ sơ đang dùng theo mốc thời gian từng phần, `listening.merge`). Máy kia không trả lời: None, lần sau gửi lại."""
+    remote = remote_of(manifest)
+    entry = _COMPUTERS.get(remote["computer"]) if remote and _COMPUTERS is not None else None
+    if entry is None:
+        return None
+    body = {key: value for key, value in state.items() if key not in ("night", "sessions")}
+    try:
+        reply = json.loads(_request(_base(entry), "POST", f"/sync/v1/books/{remote['book']}/state", entry["token"], body,
+                                    timeout=timeout).decode("utf-8"))
+    except (RemoteError, ValueError):
+        return None
+    return reply if isinstance(reply, dict) else None
+
+
 def fetch(package: Path, relative: str, manifest: dict[str, Any]) -> Path | None:
     """Tải một file của sách trên máy khác vào thư mục đệm của nó, trả đường dẫn; máy kia không trả lời thì None."""
     remote = remote_of(manifest)
