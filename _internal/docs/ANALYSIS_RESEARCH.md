@@ -63,6 +63,43 @@ Lỗi của model (mổ bằng `score_models --misses` + `scratchpad/turn_taking
 - Bỏ: khoá "(…)" ngay sau lời thoại thành nội tâm - 81 dòng ở Yamiyo nhưng ở truyện khác là ghi chú dịch ("(note: ...)"),
   tiếng động ("(Tiếng sợ hãi)").
 
+## LN ĐỦ 6 TRUYỆN 28-09 19:xx - các LoRA đám mây, và lỗi nằm ở đâu
+
+Đo trên Modal (L4, `LLM_Train/modal/modal_eval.py`) + máy nhà, 519 câu có lời, thước chính F1 giọng B-cubed:
+
+| model | F1 giọng | người nói chặt | cảm xúc |
+|---|---|---|---|
+| qwen3:8b gốc (đang dùng) | 52,9 | 54,9 | 84,4 |
+| v3 = lora28v3-4b (máy nhà) | 55,7 | **62,4** | 87,9 |
+| lfm2.5:8b gốc | 55,6 | 41,8 | 80,9 |
+| Qwen3-4B-Instruct LoRA16 e1 | 53,1 | 47,4 | 88,7 |
+| Qwen3-4B-Instruct LoRA16 e2 | 57,7 | 55,7 | 88,9 |
+| Qwen3.5-4B LoRA16 | 57,5 | 51,4 | 88,6 |
+| **Qwen3.5-9B LoRA28** | **59,9** | 57,4 | 88,8 |
+
+Theo truyện, 9B hơn/kém 4B-e2 từ -11 tới +7 điểm: các khoảng cách 57-60 nằm trong nhiễu của 519 câu. Đang đo: v4 (cấu
+hình e2 trên data_v4), 8B QLoRA huấn luyện trên Kaggle, qwen3.5:9b GỐC (tách phần LoRA khỏi phần cỡ model).
+
+Ba phép thử offline trên kết quả đã có (script ở `scratchpad`, CPU):
+
+- **Bỏ phiếu giữa model KHÔNG giúp** (`ln_vote.py`): 9B + v3 + e2 = 58,7%, thêm q35-4B + lfm = 58,6% - đều dưới 9B một
+  mình (59,9%). Chỉ 278/519 câu ba model cùng nhãn: sai khác chỗ, nhưng trộn nhãn làm cụm giọng kém nhất quán - đúng thứ
+  B-cubed chấm. Âm.
+- **Neo nhãn vào tên người kể đã cho KHÔNG đổi F1** (`ln_firstperson_anchor.py`): 9B viết "Krai Andrej" cho KRAI ANDREY
+  (28 câu), "Tomo" cho TOMOBE (25) - nhưng `canonical_speaker_names` đã gộp các dạng ấy về một giọng; lỗi này chỉ hại
+  điểm "chặt". Âm.
+- **Phân loại lỗi** (`ln_errors.py`, 9B, người nói chặt): sai 221/519, trong đó 179 là nhầm giữa HAI người có tên, dồn ở
+  truyện ngôi thứ nhất (Yamiyo 83/126, Nageki 57/97). Ở Yamiyo, linh thể Tọa Phu Đồng Tử LUÔN nói trong 『』 và máy gán
+  mỗi câu cho người đứng gần (người kể, Hina, Yuusei, "người lạ"; v3 cùng lỗi). Câu 『』 = 78/519 câu, sai 56% (9B, v3) /
+  67% (qwen3:8b) so với 34-41% ở câu thường: một "kênh giọng" riêng máy chưa học.
+- TCF: lfm2.5 được 65,5% (cao nhất) nhờ SUY BIẾN - gán gần hết câu, cả lời Yoshihito và Grey, cho một nhãn "Thất Anh Hùng";
+  chuỗi bình luận 『』 (đáp án NARRATOR đủ, quy tắc 7) một nhãn thì B-cubed thưởng. Đừng tin điểm TCF của lfm. 9B tách chuỗi
+  ấy thành 6 "người lạ" theo lô nên mất điểm.
+
+Đã đưa vào app: thẻ "Lời trong 『』 là của một người?" (`webui/work_items.py`, kind `bracket`) - chương chia câu 『』 cho
+nhiều người thì một cú bấm gán cả nhóm; trên dự án đo Yamiyo của 9B nó đứng đầu hộp việc (43 câu, 7 người). Vòng dữ liệu
+sau: mẫu ngôi thứ nhất có người đối thoại thân cận, và mẫu 『』 nhất quán trong chương.
+
 ## LƯỢT ĐỐI ĐÁP + HAI MODEL BẤT ĐỒNG 28-09 12:xx - hai tín hiệu lỗi đo được trên kết quả đã có (CPU, không tốn GPU)
 
 **Lượt đối đáp.** Cặp câu thoại liền kề ở hai đoạn văn liền nhau, chia theo dấu ngoặc (đáp án 7 truyện, bài làm qwen3:8b):
