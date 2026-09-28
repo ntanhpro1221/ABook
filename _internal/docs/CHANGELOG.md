@@ -194,6 +194,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Tên nhân vật bị viết sai một chữ cái vẫn về đúng giọng của người ấy, kể cả khi cái tên sai tình cờ nằm trong một chữ
   khác của sách ("An Dậu" trong "Văn Dậu"); tên Việt không còn bị nhập nhầm sang một họ khác chỉ vì lệch một chữ cái
   ("Tương" / "Lương").
+- Điện thoại: hướng dẫn "Kết nối với máy tính" nêu đủ bước - bấm "Ghép thiết bị mới" trên máy tính thì mã 6 số mới hiện.
 
 ### Lưu ý khi nâng cấp
 
