@@ -745,8 +745,23 @@ def run_project_foreground(project_root: Path | str, *, echo: bool = True) -> Co
     return CommandResult(data=data)
 
 
+def _chapter_narrators(values: list[str] | None) -> dict[str, str]:
+    """`--first-person-chapter 11="YUUKO HAYASE"` (lặp được) -> {"11": "YUUKO HAYASE"}; `12=` = chương ngôi thứ ba."""
+    chapters: dict[str, str] = {}
+    for value in values or []:
+        index, separator, name = str(value).partition("=")
+        if not separator or not index.strip().isdigit():
+            raise CliUsageError(f"--first-person-chapter {value!r}: dạng đúng là <số chương>=<tên>, vd 11=YUUKO HAYASE")
+        name = name.strip()
+        if name and normalize_name(name) in PRONOUNS:
+            raise CliUsageError(f"--first-person-chapter {value!r}: {name!r} là đại từ, không phải một nhân vật")
+        chapters[str(int(index))] = name
+    return chapters
+
+
 def _settings_from_args(args: argparse.Namespace) -> dict[str, Any]:
     first_person = str(getattr(args, "first_person", "") or "").strip()
+    chapter_narrators = _chapter_narrators(getattr(args, "first_person_chapter", None))
     narrator = str(getattr(args, "narrator", "") or "").strip()
     other_narrators = [
         str(name).strip() for name in (getattr(args, "other_narrator", None) or []) if str(name).strip()
@@ -761,6 +776,11 @@ def _settings_from_args(args: argparse.Namespace) -> dict[str, Any]:
             raise CliUsageError(
                 "--first-person cannot be combined with --settings-file: put "
                 "voices.first_person_identity in that file instead"
+            )
+        if chapter_narrators:
+            raise CliUsageError(
+                "--first-person-chapter cannot be combined with --settings-file: put "
+                "voices.first_person_chapters in that file instead"
             )
         if narrator:
             raise CliUsageError(
@@ -780,6 +800,8 @@ def _settings_from_args(args: argparse.Namespace) -> dict[str, Any]:
     voices: dict[str, Any] = {}
     if first_person:
         voices["first_person_identity"] = first_person
+    if chapter_narrators:
+        voices["first_person_chapters"] = chapter_narrators
     # Cùng luật như `--first-person`: chỉ ghi khi được NÓI RA. Không truyền thì settings y hệt
     # trước, nên `settings_hash` của các project cũ không đổi và lượt chạy lại vẫn mở lại chúng.
     # Người dẫn chuyện là của CUỐN (và có thể đổi giữa cuốn - xem `book_paths.NARRATORS`), nên nó
@@ -1433,6 +1455,16 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Who 'I' is, for a book told in the first person: pronoun-labelled lines "
             "(tôi/ta/mình/me) are attributed to this character instead of an anonymous voice"
+        ),
+    )
+    create.add_argument(
+        "--first-person-chapter",
+        action="append",
+        default=None,
+        metavar="N=NAME",
+        help=(
+            "A chapter told by someone else's 'I' (light novels switch point of view by chapter): chapter "
+            "number = narrator, or N= for a chapter told in the third person. Repeatable."
         ),
     )
     create.add_argument(
