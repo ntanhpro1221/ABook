@@ -513,3 +513,24 @@ của Azuma, các cặp lượt 44/45, 54/56, 67/68, 71, 135 là Tomobe, Ako = A
 A giữ: 143 "Ừ. Nhờ cậu." = Azuma (lời người đi nhờ ở 140; Gensei xưng hô trang trọng, không gọi "cậu") dù 144 là lời dẫn
 của Gensei; KIRISOU (phiên âm khác ở 112) không thêm vì 225 không dùng. Host sai (giữ đáp án): 33, 45, 125 (ghi trong đầu
 file). `voice_identity --gold-check`: yamiyo 18 người, không nhập ai. Phát lại: 100/100, không LỆCH LUẬT.
+
+**Nageki no Bourei 62 (29-09 01:xx) - bộ đo LN MỞ RỘNG** (ngoại truyện "May Rủi và Vận Xui": ngôi thứ nhất Krai, Lucia, một
+bà thầy bói vô danh nói dài; nguồn hỏng dấu nháy ở 53-55). A = Claude, B = agent soát đối kháng (chỉ đọc, tự đưa lựa chọn
+đầu qua `_validate` của host - cả chương một lô và chia lô 4-8 mọi độ lệch - không dòng nào mất điểm người nói). B đồng ý
+người nói ưu tiên 81/81 dòng D/N,T; trọn tập 55/81 trước khi sửa. A nhận:
+
+| chỗ | A ghi | kết luận | bằng chứng |
+|---|---|---|---|
+| 25 dòng bà thầy bói | NPC* | thêm UNKNOWN~ | quy tắc 5: có manh mối thì UNKNOWN chỉ nửa điểm; tiền lệ LU 07:104-111, Nageki 73:2, 53:107 |
+| 56 “Mọi loại vận xui” / 57 | NARRATOR, NPC*~ / N | thêm KRAI đủ / N,T | cụm trích mở câu nghĩ của Krai ("nghe hơi cường điệu", cùng khuôn 33, 72, 77, 91); tiền lệ 53:67 |
+| dòng Lucia | LUCIA, LUCIA ROGIER | thêm LUCY | biệt danh cả cuốn (52.txt 34 lần), như gold 53 |
+| 136 | N | N,T | lời bác tức thời, song song 135, 137 |
+| 26, 71, 141 / 14 / 111 / 10, 42, 46 / 23, 62 / 75 | neutral | thêm angry / surprised / happy / afraid, angry, sad / excited, afraid / angry + cường độ 0-2 | "quát", "cực kỳ khó chịu"; "Lucia ngạc nhiên"; "giọng vui vẻ"; "đầy cảnh giác", "sủa lại", "giọng thương xót"; "Ô hô" như 3, "nuốt nước bọt"; tập có neutral thì cường độ phải chạm 0 |
+
+Sửa đầu file (B chỉ ra): 54-55 là host NỐI LỜI (`_repair_continued_dialogue_speakers`) chép người nói của 53, không phải
+`_repair_explicit_attribution` (hàm ấy chỉ xét lời kể cùng đoạn); "101-105" là dòng nguồn (= seq 53-55); bằng chứng mạnh hơn
+cho 62 "Hả?!" = Lucia (bà thầy bói lờ đi tiếng chen ngang như với Lucia ở 27, 44, còn câu nào Krai nói bà đều đáp); bà
+thầy bói có thể chính là "Con Mắt Thần" của Astral Divinarium được nhắc ở 65:443, 66:1303 nhưng không nói ở đó, và danh
+hiệu ấy dùng chung cho nhiều nhà chiêm tinh (66:1311) -> NPC* đủ vẫn đứng, CON MẮT CỦA THẦN không điểm. B cũng bắt lỗ hổng
+quy trình: chương đo chưa vào `SPLIT["test"]` thì lần dựng dữ liệu sau sẽ lọt vào train - đã thêm. `voice_identity
+--gold-check`: nageki 20 người, không nhập ai. Phát lại: 62 không lệch (hai chỗ lệch còn lại của cuốn là 73, có từ trước).

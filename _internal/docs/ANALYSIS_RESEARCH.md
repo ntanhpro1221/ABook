@@ -115,7 +115,8 @@ nên mỗi bước sử dụng phải tính toán chiến thuật".
   câu) 1.580 s - v3 trên máy nhà ~330 s cho TCF. Không "suy nghĩ" (think=false đúng), sinh ~21 token/s, đọc đề ~100 token/s
   (băng thông ~120 GB/s). Dây chuyền máy nhà làm ~7-10 phút/chương (phân tích + đọc), nên phân tích nhờ Mac bằng 9B làm cả
   dây chuyền chậm ~4 lần. Kết luận chiến thuật: KHÔNG tiêu Modal cho 9B mới trừ khi 9B hơn v3 rất rõ (hiện +4,2 F1, trong
-  nhiễu của 519 câu).
+  nhiễu của 519 câu). Lượt Mac đầy đủ (29-09 01:xx): HDST 062 QUÁ GIỜ 2.400 s (máy nhà ~5 phút), Yamiyo 141 3.093 s - chương
+  dài chậm 6-9 lần, không dùng được cho sách thật. "Chạy nhờ Mac" chỉ đáng khi model 9B hơn hẳn VÀ chạy nền qua đêm.
 - **Ba phép so công bằng đang chạy** (cùng data_v5, cùng công thức, cùng bộ đo): v5 = Qwen3-4B-Instruct-2507 (máy nhà) ->
   q35 = Qwen3.5-4B (máy nhà, tự chạy sau v5, `scratchpad/gpu_queue_29_09q35.sh`) -> 8B = Qwen3-8B QLoRA (Kaggle,
   abook-lora-8b-v5, trả lời "8B sau khi train phải hơn 4B chứ?"; lượt 8B cũ: F1 55,6 = v3, người nói chặt 54,0 < 62,4).
