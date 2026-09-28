@@ -7,6 +7,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Hộp **"Việc cần anh"**: thẻ **"Một người hai tên"** bấm được - "Gộp vào X" chuyển mọi câu của tên ít câu hơn
+  sang giọng của tên nhiều câu hơn (người nghe đã quen giọng ấy, ít câu phải thu lại nhất), "Hai người khác nhau" thì
+  thẻ không hỏi lại. Thẻ giờ bắt cả trường hợp tên NGẮN nói nhiều hơn ("Kati" / "St. Kati") mà trước đây bỏ sót.
 - Studio có tab mới **"Kịch bản"**: đọc từng chương như kịch bản - câu nào của ai - và đổi người nói của bất kỳ câu
   thoại hay câu nghĩ nào bằng cách bấm tên ở đầu câu (tìm được mọi nhân vật đã có giọng, gõ không dấu cũng được). Câu
   máy nghi có dấu vàng kèm lý do và gợi ý người đáp lại; bộ lọc "Máy nghi" chỉ hiện những câu ấy cùng câu liền trước.

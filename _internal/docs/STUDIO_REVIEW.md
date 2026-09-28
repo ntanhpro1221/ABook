@@ -59,6 +59,10 @@ Người duyệt đúng những câu ấy là cách rẻ nhất để đạt 100
      trong MỘT transaction (`ProjectDB.apply_listener_pronunciation`), chương đã qua được thu lại ở vòng sau, sách đã xong
      cũng vậy. `cli pronounce` đi cùng đường. Thử trên bản sao Tập 18: "Hailkes" Hain -> Hên-khơ đặt lại 23 câu đã thu ở 4
      chương (70 câu còn lại chưa thu, tự đọc cách mới).
+   - **2 (bí danh) sửa được 28-09, bằng đường ghi đè nhóm câu của mục 3** (không cần bảng mới): "Gộp vào X" gán mọi câu
+     của tên ít câu hơn cho tên nhiều câu hơn. Trước đó thẻ chỉ bắt cặp khi tên DÀI nói nhiều hơn - bỏ sót trường hợp
+     thường gặp nhất (lô 18 cuốn 2: 0 thẻ -> 2 cặp thật, "Tiers" / "Sứa Hắc Ám Tiers", "Kati" / "St. Kati"). Chưa
+     làm: ghi bí danh vào sổ nhân vật để câu của chương phân tích SAU tự về đúng người (đụng file khoá).
 3. **Sửa cấp câu** (3, 4, 5, 7): bảng ghi đè mới trong SQLite (thay đổi `database.py`/`pipeline.py` - kèm test crash/reopen
    như AGENTS.md đòi).
    - **3 (ai nói câu này) XONG 27-09**, không cần bảng mới: thẻ có một nút cho mỗi ứng viên + "Giữ" -> `overrides.json`
