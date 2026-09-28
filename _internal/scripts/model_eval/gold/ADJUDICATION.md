@@ -563,7 +563,7 @@ file, dò cue host). B đồng ý người nói ưu tiên 60/60 (41 D + 19 T); t
 | 57, 76, 102, 104 "[...]" | NARRATOR, THÁNH KIẾM~ | thêm NGUYỀN KIẾM~ | "Nguyền Kiếm" 533 lần/104 file (tên Alistar đặt, 009:243-245, 010:127-129; 085 chỉ dùng tên này) > "Thánh Kiếm" 429 lần; tên thật bị giấu (008:299) |
 | 66 (lời kể bị khoá D) | NARRATOR, NPC*~ | chỉ NARRATOR | NPC là lỗi host nối lời; tiền lệ LU 07:90 - người bị gán nhầm không được điểm |
 | 10 tiếng kêu (51-53, 68, 69, 83, 105, 108, 109, 111) | người kêu | thêm NARRATOR~ | quy tắc 8; tiền lệ Yamiyo 141, LU 07, TMA 378:79 |
-| 83 "Ugh!" | ELIZABETH, ALISTAR~ | cả hai đủ, Elizabeth trước | 084 "cơ thể cô bé run rẩy" / 085 Alistar "giật nảy mình"; "Ugh!?" là tiếng của Alistar ở 071:167 |
+| 83 "Ugh!" | ELIZABETH, ALISTAR~ | cả hai đủ, Elizabeth trước | 84 "cơ thể cô bé run rẩy" / 85 Alistar "giật nảy mình"; "Ugh!?" là tiếng của Alistar ở 071:167 |
 | 111 "Ehh…" | ALISTAR, MAGALI~ | bỏ MAGALI~ | 112 "Alistar hồn xiêu phách lạc"; Magali "nôn nhẹ" (113); "Eehhhh.." là tật của Alistar (085:119) |
 | 5 / 60 | N | N,T, người nghĩ ~ | "Im lặng chính là thừa nhận. Rubon nghĩa vậy" (lời dẫn liền sau); "...cơ chứ" (tiền lệ 132:30) |
 | 64, 73, 106, 48, 77, 70, 11, 13, 23, 50, 89, 90 / tiếng kêu / Rubon 24, 26, 30 / 91 | neutral | thêm theo cue | "ghét cay ghét đắng", "sự bất ngờ", "khẽ hét", "nhăn nhó", "ác cảm", "tàn ác", lời kể mỉa; kêu đau cho sad/angry; Rubon giả nhân nghĩa (25 vặn lại); "Cha!!" |
