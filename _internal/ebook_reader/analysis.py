@@ -413,7 +413,9 @@ STRONG_NON_HAPPY_CUE_PATTERNS: dict[str, re.Pattern[str]] = {
         flags=re.IGNORECASE,
     ),
     "angry": re.compile(
-        r"\b(?:độc\s+ác|khốn\s+kiếp|đáng\s+chết|nguyền\s+rủa|gào\s+thét|gào|quát|"
+        # "nguyền rủa" alone is mostly the curse as a thing (bị nguyền rủa, lời nguyền rủa, chống nguyền rủa);
+        # only someone cursing is anger.
+        r"\b(?:độc\s+ác|khốn\s+kiếp|đáng\s+chết|(?:thầm|đáng)\s+nguyền\s+rủa|gào\s+thét|gào|quát|"
         r"chửi\s+rủa|thiêu\s+chết(?!\s*(?:…|\.{3}))|"
         r"thiêu(?:\s+[^\s.,!?;:…“”‘’]+){0,5}\s+đi|"
         r"giết(?:\s+[^\s.,!?;:…“”‘’]+){0,5}\s+đi|tan\s+nát)\b",
