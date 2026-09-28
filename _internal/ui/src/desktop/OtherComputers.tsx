@@ -167,8 +167,8 @@ export function OtherComputers() {
         </Button>
       </form>
       <p className="text-xs leading-relaxed text-fg-3">
-        Trên máy kia: Cài đặt → Điện thoại và thiết bị → bật kết nối → “Ghép điện thoại” để lấy mã 6 số; địa chỉ hiện ngay
-        dưới mã. Điện thoại Android: màn Tải sách → bật “Cho máy khác nghe thư viện này” → “Ghép máy mới”. Máy này tên
+        Trên máy kia: Cài đặt → Điện thoại và thiết bị → bật “Cho phép điện thoại kết nối qua Wi-Fi” → “Ghép thiết bị mới”
+        để lấy mã 6 số; địa chỉ máy ấy ghi ở dòng “Trình duyệt” ngay cạnh mã. Điện thoại Android: màn Tải sách → bật “Cho máy khác nghe thư viện này” → “Ghép máy mới”. Máy này tên
         “{data.name}” trong danh sách thiết bị đã ghép của máy kia.
       </p>
     </div>
