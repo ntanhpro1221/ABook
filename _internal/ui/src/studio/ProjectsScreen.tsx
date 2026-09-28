@@ -92,14 +92,20 @@ export function ProjectsScreen() {
   };
 
   return (
-    <div className="mx-auto max-w-[1180px] px-10 pb-16 pt-9">
-      <header className="flex items-end justify-between gap-6">
-        <div>
+    <div className="mx-auto max-w-[1180px] px-4 pb-16 pt-9 md:px-10">
+      <header className="flex flex-wrap items-end justify-between gap-4 md:gap-6">
+        <div className="min-w-0">
           <div className="text-xs font-semibold uppercase tracking-wider text-accent-text">Studio</div>
           <h1 className="mt-1 text-[28px] font-bold tracking-tight">Dự án sách nói</h1>
           <p className="mt-1 text-sm text-fg-2">
             {books.length ? `${books.length} dự án` : "Chưa có dự án"}
-            {data?.root ? <span className="text-fg-3"> · {data.root}</span> : null}
+            {/* Chỉ tên thư mục; đường dẫn đủ trong tooltip - đường dẫn dài từng đẩy "Dự án mới" ra ngoài màn điện thoại. */}
+            {data?.root ? (
+              <span className="text-fg-3" title={data.root}>
+                {" · "}
+                {data.root.split(/[\\/]/).filter(Boolean).pop()}
+              </span>
+            ) : null}
           </p>
         </div>
         <div className="flex items-center gap-2">

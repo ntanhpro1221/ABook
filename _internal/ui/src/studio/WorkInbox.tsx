@@ -139,8 +139,15 @@ function PronunciationFix({ bookId, item }: { bookId: string; item: WorkItem }) 
       }),
     onSuccess: ({ spokenForm }) => {
       void client.invalidateQueries({ queryKey: ["work", bookId] });
+      void client.invalidateQueries({ queryKey: ["book", bookId] });
+      void client.invalidateQueries({ queryKey: ["library"] });
+      // Giữ đúng cách máy đang đọc thì không có gì để thu lại - soát UX 29-09: báo "sẽ thu lại" làm người nghe hoảng.
+      if (spokenForm === item.current) {
+        toast.success(`Giữ cách đọc "${spokenForm}"`, { description: "Không phải thu lại câu nào." });
+        return;
+      }
       toast.success(`Đã ghi: "${item.surface}" đọc là "${spokenForm}"`, {
-        description: "Áp ở ranh giới chương kế tiếp, hoặc lần chạy tới; câu đã thu có tên này sẽ được thu lại.",
+        description: "Các câu có tên này sẽ được thu lại. Thu lại khi sách chạy tiếp - sách đã xong thì bấm “Áp dụng thay đổi” ở trang dự án.",
       });
     },
     onError: (error: Error) => toast.error("Chưa ghi được cách đọc", { description: error.message }),
@@ -152,7 +159,7 @@ function PronunciationFix({ bookId, item }: { bookId: string; item: WorkItem }) 
       {item.requested && (
         <p className="mb-2 flex items-center gap-1.5 text-xs text-fg-2">
           <Check className="size-3.5 text-success" />
-          Đã ghi "{item.requested}" - chờ dây chuyền áp ở ranh giới chương kế tiếp.
+          Đã ghi "{item.requested}" - chờ áp dụng khi sách chạy tiếp.
         </p>
       )}
       <form
@@ -208,6 +215,8 @@ function SpeakerFix({ bookId, item }: { bookId: string; item: WorkItem }) {
       }),
     onSuccess: ({ speaker }) => {
       void client.invalidateQueries({ queryKey: ["work", bookId] });
+      void client.invalidateQueries({ queryKey: ["book", bookId] });
+      void client.invalidateQueries({ queryKey: ["library"] });
       const which = (item.lines?.length ?? 1) > 1 ? `${item.lines?.length} câu này` : "câu này";
       if (speaker === item.currentValue) {
         toast.success(item.keepLabel ? `Đã ghi: ${item.keepLabel}` : `Giữ nguyên: ${which} của ${item.current}`, {
@@ -218,7 +227,7 @@ function SpeakerFix({ bookId, item }: { bookId: string; item: WorkItem }) {
       const choice = item.choices?.find((option) => option.value === speaker);
       const label = choice?.name ?? choice?.label ?? speaker;
       toast.success(`Đã ghi: ${which} của ${label}`, {
-        description: "Áp ở ranh giới chương kế tiếp; câu đã thu sẽ được thu lại bằng giọng của người ấy.",
+        description: "Câu đã thu sẽ đọc lại bằng giọng của người ấy. Thu lại khi sách chạy tiếp - sách đã xong thì bấm “Áp dụng thay đổi” ở trang dự án.",
       });
     },
     onError: (error: Error) => toast.error("Chưa ghi được người nói", { description: error.message }),
@@ -228,8 +237,8 @@ function SpeakerFix({ bookId, item }: { bookId: string; item: WorkItem }) {
       {item.requested && (
         <p className="mb-2 flex items-center gap-1.5 text-xs text-fg-2">
           <Check className="size-3.5 text-success" />
-          Đã ghi: {(item.lines?.length ?? 1) > 1 ? `${item.lines?.length} câu này` : "câu này"} của {item.requested} - chờ dây
-          chuyền áp ở ranh giới chương kế tiếp.
+          Đã ghi: {(item.lines?.length ?? 1) > 1 ? `${item.lines?.length} câu này` : "câu này"} của {item.requested} - chờ áp
+          dụng khi sách chạy tiếp.
         </p>
       )}
       <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Ai nói câu này">
@@ -296,12 +305,14 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
     },
     onSuccess: (_result, { label, keep }) => {
       void client.invalidateQueries({ queryKey: ["work", bookId] });
+      void client.invalidateQueries({ queryKey: ["book", bookId] });
+      void client.invalidateQueries({ queryKey: ["library"] });
       if (keep) {
         toast.success(`Đã ghi: ${label}`, { description: "Việc này sẽ không hiện lại." });
         return;
       }
       toast.success(`Đã ghi: ${label}`, {
-        description: "Áp ở ranh giới chương kế tiếp; nếu giọng phải đổi, mọi câu của người ấy được thu lại bằng giọng mới.",
+        description: "Nếu giọng phải đổi, mọi câu của người ấy sẽ đọc lại bằng giọng mới. Thu lại khi sách chạy tiếp - sách đã xong thì bấm “Áp dụng thay đổi” ở trang dự án.",
       });
     },
     onError: (error: Error) => toast.error("Chưa ghi được", { description: error.message }),
@@ -311,7 +322,7 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
       {item.requested && (
         <p className="mb-2 flex items-center gap-1.5 text-xs text-fg-2">
           <Check className="size-3.5 text-success" />
-          Đã ghi: {item.requested} - chờ dây chuyền áp ở ranh giới chương kế tiếp.
+          Đã ghi: {item.requested} - chờ áp dụng khi sách chạy tiếp.
         </p>
       )}
       <div className="flex flex-wrap items-start gap-2" role="group" aria-label="Chọn">
@@ -425,8 +436,9 @@ export function WorkInbox({ bookId, onOpenReview }: { bookId: string; onOpenRevi
         trên sửa một lần được nhiều câu nhất. Cách đọc tên, người nói từng câu, hai tên của một người, giới và giọng nhân
         vật đều sửa được ngay tại đây, không phải dừng sách.
       </p>
-      <div className="mt-4 overflow-x-auto">
+      <div className="mt-4">
         <Segmented<WorkKind | "all">
+          wrap
           label="Loại việc"
           value={kind}
           onChange={(value) => {

@@ -190,7 +190,7 @@ function useAssign(bookId: string, chapterId: number) {
         return;
       }
       toast.success(`Đã ghi: câu này của ${label}`, {
-        description: "Áp ở ranh giới chương kế tiếp; câu đã thu sẽ được thu lại bằng giọng của người ấy.",
+        description: "Câu đã thu sẽ đọc lại bằng giọng của người ấy. Thu lại khi sách chạy tiếp - sách đã xong thì bấm “Áp dụng thay đổi” ở trang dự án.",
       });
     },
     onError: (error: Error) => toast.error("Chưa ghi được người nói", { description: error.message }),
@@ -257,7 +257,7 @@ function useLineFix(bookId: string, chapterId: number) {
       );
     },
     onSuccess: () =>
-      toast.success("Đã ghi cách đọc câu này", { description: "Áp ở ranh giới chương kế tiếp; câu đã thu sẽ được thu lại." }),
+      toast.success("Đã ghi cách đọc câu này", { description: "Câu đã thu sẽ được thu lại. Thu lại khi sách chạy tiếp - sách đã xong thì bấm “Áp dụng thay đổi” ở trang dự án." }),
     onError: (error: Error) => toast.error("Chưa ghi được", { description: error.message }),
     onSettled: () => {
       void client.invalidateQueries({ queryKey: ["casting", bookId] });
@@ -642,8 +642,8 @@ function ScriptRow({
             <Clock className="size-3.5 shrink-0" />
             Đã ghi cách đọc mới
             {line.lineWish.kind ? ` (${KINDS.find((item) => item.value === line.lineWish?.kind)?.label.toLowerCase()})` : ""}
-            {line.lineWish.spoken !== undefined ? (line.lineWish.spoken ? ` - đọc là "${line.lineWish.spoken}"` : " - trả về chữ của sách") : ""} - áp ở
-            ranh giới chương kế tiếp.
+            {line.lineWish.spoken !== undefined ? (line.lineWish.spoken ? ` - đọc là "${line.lineWish.spoken}"` : " - trả về chữ của sách") : ""} - chờ áp
+            dụng khi sách chạy tiếp.
           </p>
         )}
         {line.lineWish?.state === "refused" && (
@@ -672,7 +672,7 @@ function ScriptRow({
         {line.wish?.state === "pending" && (
           <p className="mt-1 flex items-center gap-1.5 text-xs text-fg-2">
             <Clock className="size-3.5 shrink-0" />
-            Đã ghi {line.wish.label} (máy gán {line.label}) - áp ở ranh giới chương kế tiếp.
+            Đã ghi {line.wish.label} (máy gán {line.label}) - chờ áp dụng khi sách chạy tiếp.
           </p>
         )}
         {line.wish?.state === "refused" && (
@@ -909,8 +909,8 @@ export function ScriptTab({ bookId }: { bookId: string }) {
   return (
     <div className="mt-5">
       <p className="max-w-3xl text-sm text-fg-2">
-        Đọc từng chương như kịch bản và sửa người nói của bất kỳ câu nào - bấm tên ở đầu câu. Sửa không dừng sách: dây chuyền
-        áp ở ranh giới chương kế tiếp, câu đã thu thì thu lại bằng giọng của người mới. Câu máy nghi có dấu vàng.
+        Đọc từng chương như kịch bản và sửa người nói của bất kỳ câu nào - bấm tên ở đầu câu. Sửa không dừng sách: sửa được áp
+        khi sách chạy tiếp (sách đã xong: nút “Áp dụng thay đổi”), câu đã thu thì thu lại bằng giọng của người mới. Câu máy nghi có dấu vàng.
       </p>
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <div className="flex w-full min-w-0 items-center gap-1 sm:w-auto sm:max-w-full">

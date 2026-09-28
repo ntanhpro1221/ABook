@@ -92,8 +92,10 @@ export function VoicePicker({
       api(`/api/books/${bookId}/voice`, { method: "POST", body: { character: data!.character.value, preset: voice.name } }),
     onSuccess: (_result, voice) => {
       void client.invalidateQueries({ queryKey: ["work", bookId] });
+      void client.invalidateQueries({ queryKey: ["book", bookId] });
+      void client.invalidateQueries({ queryKey: ["library"] });
       toast.success(`Đã ghi: ${data!.character.label} đọc bằng giọng ${voice.name}`, {
-        description: "Áp ở ranh giới chương kế tiếp; mọi câu đã thu của người ấy được thu lại bằng giọng mới.",
+        description: "Mọi câu đã thu của người ấy sẽ đọc lại bằng giọng mới. Thu lại khi sách chạy tiếp - sách đã xong thì bấm “Áp dụng thay đổi” ở trang dự án.",
       });
       close();
     },
@@ -146,7 +148,7 @@ export function VoicePicker({
                     )}
                   </div>
                   <div className={cn("mt-0.5 text-xs", voice.sharedWith.length ? "text-warning" : "text-fg-2")}>
-                    Giọng {voice.region} · {voice.style} · {sharedText(voice)}
+                    Miền {voice.region} · {voice.style} · {sharedText(voice)}
                   </div>
                 </div>
                 <Button
