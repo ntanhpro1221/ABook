@@ -94,7 +94,8 @@ export function useWorkCount(bookId: string) {
     enabled: Boolean(bookId),
     staleTime: 60_000,
   });
-  return data?.items.length ?? 0;
+  // Việc đã quyết (đang chờ áp dụng) không còn là việc cần làm - soát UX 29-09: số không giảm sau khi quyết.
+  return data?.items.filter((item) => !item.requested).length ?? 0;
 }
 
 function Example({ bookId, example }: { bookId: string; example: WorkExample }) {
@@ -246,7 +247,9 @@ function SpeakerFix({ bookId, item }: { bookId: string; item: WorkItem }) {
           <Button
             key={choice.value}
             size="sm"
-            variant={index === 0 ? "primary" : "secondary"}
+            // Đã quyết thì tô lựa chọn của người nghe, không phải gợi ý đầu của máy.
+            variant={(item.requested ? [choice.name, choice.label].includes(item.requested) : index === 0) ? "primary" : "secondary"}
+            aria-pressed={item.requested ? [choice.name, choice.label].includes(item.requested) : undefined}
             disabled={save.isPending}
             onClick={() => save.mutate({ speaker: choice.value })}
           >
@@ -330,7 +333,7 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
           <div key={`${choice.character}-${choice.label}`} className="flex flex-col items-start gap-0.5">
             <Button
               size="sm"
-              variant={choice.recommended ? "primary" : "secondary"}
+              variant={(item.requested ? [choice.done, choice.label].includes(item.requested) : choice.recommended) ? "primary" : "secondary"}
               disabled={save.isPending}
               onClick={() =>
                 save.mutate({
@@ -427,8 +430,13 @@ export function WorkInbox({ bookId, onOpenReview }: { bookId: string; onOpenRevi
       </EmptyState>
     );
   }
-  const kinds = (Object.keys(KIND_LABEL) as WorkKind[]).filter((value) => data.counts[value]);
-  const items = data.items.filter((item) => kind === "all" || item.kind === kind);
+  // Việc đã quyết (chờ áp dụng) xuống mục thu gọn cuối trang và không tính vào số đếm.
+  const open = data.items.filter((item) => !item.requested);
+  const decided = data.items.filter((item) => item.requested);
+  const counts: Partial<Record<WorkKind, number>> = {};
+  for (const item of open) counts[item.kind] = (counts[item.kind] ?? 0) + 1;
+  const kinds = (Object.keys(KIND_LABEL) as WorkKind[]).filter((value) => counts[value]);
+  const items = open.filter((item) => kind === "all" || item.kind === kind);
   return (
     <div className="mt-5">
       <p className="max-w-3xl text-sm text-fg-2">
@@ -446,8 +454,8 @@ export function WorkInbox({ bookId, onOpenReview }: { bookId: string; onOpenRevi
             setShown(PAGE);
           }}
           options={[
-            { value: "all", label: `Tất cả · ${data.items.length}` },
-            ...kinds.map((value) => ({ value, label: `${KIND_LABEL[value]} · ${data.counts[value]}` })),
+            { value: "all", label: `Tất cả · ${open.length}` },
+            ...kinds.map((value) => ({ value, label: `${KIND_LABEL[value]} · ${counts[value]}` })),
           ]}
         />
       </div>
@@ -460,6 +468,17 @@ export function WorkInbox({ bookId, onOpenReview }: { bookId: string; onOpenRevi
         <Button variant="secondary" size="sm" className="mt-4" onClick={() => setShown(shown + PAGE)}>
           Xem thêm {Math.min(PAGE, items.length - shown)} việc
         </Button>
+      )}
+      {!open.length && <p className="mt-4 text-sm text-fg-2">Mọi việc đã có quyết định - chờ áp dụng khi sách chạy tiếp.</p>}
+      {decided.length > 0 && (
+        <details className="mt-6 rounded-xl border border-line px-4 py-3">
+          <summary className="cursor-pointer text-sm font-medium text-fg-2">Đã quyết, chờ áp dụng · {decided.length}</summary>
+          <ol className="mt-3 space-y-3">
+            {decided.map((item) => (
+              <Card key={item.key} bookId={bookId} item={item} onOpenReview={onOpenReview} />
+            ))}
+          </ol>
+        </details>
       )}
     </div>
   );
