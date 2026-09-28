@@ -379,3 +379,55 @@ def test_one_person_under_two_names_merges_the_fewer_lines_into_the_voice_heard_
     cards = {item["key"]: item for item in work_items(project)["items"] if item["kind"] == "alias"}
     assert cards["alias:LUCIEN EVANS|LUCIEN"]["requested"] == "Lucien", "gộp đang chờ ranh giới chương"
     assert "alias:HEIDI SCHMIDT|HEIDI" not in cards, "người nghe nói hai người khác nhau: không hỏi lại"
+
+
+def make_bracket_book(root: Path) -> Path:
+    """Linh thể nói trong 『』 cả chương mà máy chia cho ba người (như Yamiyo, bộ LN 28-09); chương 2 thì 『』 nhất quán."""
+    project = make_book(root)
+    db = sqlite3.connect(project / "project.sqlite3")
+    db.execute("DELETE FROM segments")
+    db.execute("INSERT INTO chapters VALUES (2, 2, '002')")
+    db.executemany("INSERT INTO characters (id, canonical_name, display_name, gender, locked) VALUES (?,?,?,?,?)", [
+        (21, "TỌA PHU ĐỒNG TỬ", "Tọa Phu Đồng Tử", "female", 0),
+        (22, "HINA", "Hina", "female", 0),
+        (23, "TOMOBE", "Tomobe", "male", 0),
+    ])
+    rows = [
+        ("s1", 1, "『Tạm biệt nhé.』", "TOMOBE"),
+        ("s2", 1, "“Vâng.”", "HINA"),
+        ("s3", 1, "『Tối nay chúng ta lại ngủ cùng nhau nhé?』", "HINA"),
+        ("s4", 1, "『Thiếp hiểu cảm giác đó mà.』", "TỌA PHU ĐỒNG TỬ"),
+        ("s5", 1, "『Hử? Khí tức này...』", "TỌA PHU ĐỒNG TỬ"),
+        ("t1", 2, "『Chàng về rồi.』", "TỌA PHU ĐỒNG TỬ"),
+        ("t2", 2, "『Thiếp đợi mãi.』", "TỌA PHU ĐỒNG TỬ"),
+        ("t3", 2, "『Vào đi.』", "TỌA PHU ĐỒNG TỬ"),
+    ]
+    db.executemany(
+        "INSERT INTO segments (stable_id, chapter_id, seq, text, kind, speaker, status, text_sha256)"
+        " VALUES (?, ?, ?, ?, 'dialogue', ?, 'verified', 'sha-' || ?)",
+        [(stable, chapter, seq, text, speaker, stable) for seq, (stable, chapter, text, speaker) in enumerate(rows)],
+    )
+    db.commit()
+    db.close()
+    return project
+
+
+def test_telepathy_in_corner_brackets_split_across_people_is_fixed_for_the_whole_chapter(tmp_path: Path) -> None:
+    """Máy yếu nhất ở lời 『』 (bộ LN 28-09: sai 56-67%): chương chia 『』 cho nhiều người -> một thẻ, một cú bấm gán cả
+    nhóm; lời thường (“…”) không nằm trong nhóm; chương đã nhất quán thì không hỏi."""
+    from ebook_reader.listener_overrides import request_speakers
+
+    project = make_bracket_book(tmp_path)
+    cards = [item for item in work_items(project)["items"] if item["kind"] == "bracket"]
+    assert [card["key"] for card in cards] == ["bracket:1"], "chương 2 đã nhất quán"
+    card = cards[0]
+    assert [line["stableId"] for line in card["lines"]] == ["s1", "s3", "s4", "s5"] and card["affected"] == 4
+    assert card["choices"][0] == {"label": "Tất cả là Tọa Phu Đồng Tử", "value": "TỌA PHU ĐỒNG TỬ",
+                                  "name": "Tọa Phu Đồng Tử"}, "người nói nhiều nhất trong 『』 đứng đầu"
+    assert card["choices"][-1]["value"] == "NARRATOR"
+    assert not card["currentValue"], "nhóm mang nhiều nhãn: không có nút giữ nguyên"
+
+    request_speakers(project, [(line["stableId"], line["textSha256"]) for line in card["lines"]], "TỌA PHU ĐỒNG TỬ",
+                     now=time.time())
+    cards = [item for item in work_items(project)["items"] if item["kind"] == "bracket"]
+    assert cards and cards[0]["requested"] == "Tọa Phu Đồng Tử", "đang chờ ranh giới chương"
