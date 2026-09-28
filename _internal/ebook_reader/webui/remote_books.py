@@ -122,6 +122,51 @@ class Computers:
                 shutil.rmtree(child, ignore_errors=True)
 
 
+def discover(*, timeout: float = 1.5, exclude_port: int | None = None, targets: list[str] | None = None,
+             port: int | None = None) -> list[dict[str, Any]]:
+    """Máy tính ABook khác trong cùng mạng: gửi đúng lời tìm điện thoại gửi (UDP broadcast - `sync.Discovery` của máy kia
+    trả tên + cổng đồng bộ), gom trả lời trong `timeout` giây. Phát tới 255.255.255.255 và địa chỉ broadcast /24 của
+    từng card mạng (Windows chỉ đẩy 255.255.255.255 ra một card). Bỏ chính máy này (địa chỉ của máy + cổng đồng bộ
+    của máy). Máy kia phải đang bật kết nối - như điện thoại tìm nó."""
+    import socket
+
+    from .sync import DISCOVERY_PORT, DISCOVERY_PROBE, local_addresses
+
+    own = set(local_addresses()) | {"127.0.0.1"}
+    if targets is None:
+        targets = ["255.255.255.255"] + sorted({address.rsplit(".", 1)[0] + ".255" for address in own
+                                                if address.count(".") == 3 and not address.startswith("127.")})
+    found: dict[tuple[str, int], dict[str, Any]] = {}
+    probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        probe.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        probe.settimeout(0.2)
+        for target in targets:
+            try:
+                probe.sendto(DISCOVERY_PROBE, (target, port or DISCOVERY_PORT))
+            except OSError:
+                continue  # card mạng không có đường tới địa chỉ này
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            try:
+                data, (host, _source_port) = probe.recvfrom(1024)
+            except (TimeoutError, OSError):
+                continue
+            try:
+                reply = json.loads(data.decode("utf-8"))
+                sync_port = int(reply["port"])
+            except (ValueError, KeyError, TypeError):
+                continue
+            if not isinstance(reply, dict) or reply.get("app") != "ebook-reader":
+                continue
+            if host in own and exclude_port is not None and sync_port == exclude_port:
+                continue  # chính máy này trả lời
+            found[(host, sync_port)] = {"name": str(reply.get("name") or host), "host": host, "port": sync_port}
+    finally:
+        probe.close()
+    return sorted(found.values(), key=lambda item: (item["name"].casefold(), item["host"]))
+
+
 def _request(base: str, method: str, path: str, token: str, body: dict[str, Any] | None = None,
              timeout: float = TIMEOUT) -> bytes:
     data = json.dumps(body).encode("utf-8") if body is not None else None
