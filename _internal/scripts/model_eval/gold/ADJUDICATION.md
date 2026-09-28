@@ -431,3 +431,19 @@ ngoặc nào; một manh mối có thể: chuỗi ấy không bao giờ đóng n
 **Sửa ngược 09:6 (train):** mẹ Fuyutsuki nói ở 4 chương (02:671, 06:43/57/111, 08:225, 09:13) -> `MẸ FUYUTSUKI` đủ, NPC*~,
 UNKNOWN~ (quy tắc 5: nhãn NPC sống một chương; quy tắc 11: tên theo con như "chị Dậu"). `voice_identity --gold-check`:
 love_unseen 8 người, không nhập ai. Mẹ Kakeru ở 07 giữ NPC* đủ - bà chỉ nói ở chương này (B kiểm 01-13).
+
+**Love Unseen 03 (28-09 15:0x) - đáp án HUẤN LUYỆN** (Love Unseen mới có một chương train; chương này nhiều đối đáp ba người
+không lời dẫn). A = Claude gán, B = agent soát đối kháng. Phát lại qua host 100%. B không thấy câu nào sai người nói chắc chắn;
+A chấp nhận:
+
+| chỗ | A ghi | kết luận | bằng chứng |
+|---|---|---|---|
+| 354 "Ừ, thật luôn." | KAKERU, NARUMI~ | NARUMI đầu, KAKERU đủ | người ngoài xác nhận lời Hayase (352); Narumi hay mở câu đáp bằng "Ừ," (252, 370); 355 ghép "ánh mắt Narumi và Hayase" |
+| 343 "Mày... Tội cho Koharu" | NARUMI, HAYASE~ | cả hai đủ, NARUMI đầu | "mày" chỉ Kakeru-Narumi dùng; "Koharu" là cách gọi của Hayase (04:625) - bản dịch có thể đặt đại từ |
+| 66, 339 | X, Y~ | cả hai đủ | không dấu xưng hô; lựa chọn đầu giữ theo mạch |
+| 49 "Nâng ly!" | HAYASE, NARUMI | thêm KAKERU~ | cả nhóm cụng ly (quy tắc 6) |
+| 102, 157, 236 | N | N,T | câu hỏi tu từ / phản ứng tức thời (quy tắc 4), như 23, 43, 137, 147 |
+| 191, 357, 7 | neutral | thêm happy / sad / afraid,happy | cue "nhẹ nhõm", "khóc", "mừng"+"bồn chồn" |
+| cảnh hôn 224-226, 233; tiếng cười 104, 276, 282, 286, 380 | neutral | thêm cảm xúc của cảnh | nhất quán với 73, 77, 153 |
+
+Host sai (giữ đáp án): 350 - `HAPPY_EVIDENCE_PATTERN` bắt "mừng" trong "bữa tiệc chào mừng".
