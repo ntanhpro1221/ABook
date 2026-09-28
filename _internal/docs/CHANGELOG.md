@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- **Kết nối điện thoại với máy tính qua Bluetooth** khi không chung Wi-Fi: ghép hai máy trong Cài đặt Bluetooth của hệ
+  điều hành, rồi trên điện thoại vào Tải sách → "Không chung Wi-Fi? Kết nối qua Bluetooth" → chọn máy tính → nhập mã 6 số
+  như thường. Nghe thẳng, tải sách, đồng bộ chỗ nghe và điều khiển trình phát đều chạy qua Bluetooth (tải cả chương chậm
+  hơn Wi-Fi, nghe thẳng thì đủ nhanh). Cài đặt trên máy tính cho biết Bluetooth đang bật hay tắt.
 - **Điều khiển trình phát giữa mọi máy, hai chiều.** Máy tính đang phát sách thì điện thoại (và máy tính khác) đã ghép
   thấy thanh "Đang phát trên <máy tính>" ngay trên thanh phát: dừng/phát, lùi/tới 15 giây, và **"Nghe ở đây"** - máy tính
   tự dừng, điện thoại nghe tiếp đúng chương, đúng giây (nghe thẳng nếu chưa tải). Ngược lại, máy tính thấy và điều khiển
