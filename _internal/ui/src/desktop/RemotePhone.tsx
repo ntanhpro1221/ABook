@@ -209,7 +209,7 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
           <button
             type="button"
             onClick={() => send({ action: "toggle" })}
-            aria-label={phone.playing ? `Tạm dừng ${phone.name}` : `Phát tiếp trên ${phone.name}`}
+            aria-label={phone.playing ? `Tạm dừng trên ${phone.name}` : `Phát tiếp trên ${phone.name}`}
             className="grid size-9 place-items-center rounded-full bg-fg text-bg shadow-card transition-transform hover:scale-105 active:scale-95"
           >
             {phone.buffering && phone.playing ? (

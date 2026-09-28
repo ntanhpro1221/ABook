@@ -139,7 +139,7 @@ function RemotePlayerBar({ remote, receivedAt, onDismiss }: { remote: RemotePlay
         <button
           type="button"
           onClick={() => send({ action: "toggle" })}
-          aria-label={state.playing ? `Tạm dừng ${remote.name}` : `Phát tiếp trên ${remote.name}`}
+          aria-label={state.playing ? `Tạm dừng trên ${remote.name}` : `Phát tiếp trên ${remote.name}`}
           className="grid size-10 place-items-center rounded-full bg-fg text-bg active:scale-95"
         >
           {state.buffering && state.playing ? (
