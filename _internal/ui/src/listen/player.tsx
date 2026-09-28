@@ -1088,13 +1088,23 @@ export function PlayerProvider({
   // Mở/đóng "Đang nghe" qua View Transitions: bìa ở thanh phát bay lên thành bìa lớn (và bay về), phần còn lại mờ
   // chéo - xem .cover-morph trong styles.css. Không có API (trình duyệt cũ) hay người dùng xin giảm chuyển động thì
   // đổi thẳng, không hoạt ảnh.
+  const expandedNow = useRef(expanded);
+  expandedNow.current = expanded;
   const setExpandedAnimated = useCallback((value: boolean) => {
+    // Không đổi gì thì không chạy View Transition rỗng: mục thanh bên gọi setExpanded(false) mỗi lần bấm, và một chuyển
+    // cảnh rỗng khi cửa sổ không được vẽ (thu nhỏ, ẩn) bị trình duyệt huỷ thành lỗi console (soát UX 29-09).
+    if (expandedNow.current === value) return;
     const start = (document as Document & { startViewTransition?: (update: () => void) => unknown }).startViewTransition;
     if (!start || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
       setExpanded(value);
       return;
     }
-    start.call(document, () => flushSync(() => setExpanded(value)));
+    const transition = start.call(document, () => flushSync(() => setExpanded(value))) as
+      | { ready?: Promise<unknown>; finished?: Promise<unknown> }
+      | undefined;
+    // Chuyển cảnh bị huỷ (TimeoutError) thì trạng thái vẫn đã đổi trong flushSync - chỉ là không có hoạt ảnh.
+    transition?.ready?.catch(() => undefined);
+    transition?.finished?.catch(() => undefined);
   }, []);
   const nowPlaying = useMemo(() => ({ expanded, setExpanded: setExpandedAnimated }), [expanded, setExpandedAnimated]);
 

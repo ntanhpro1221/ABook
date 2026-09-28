@@ -192,6 +192,8 @@ function PairingPanel({ sync, onPair, onCancel, busy }: { sync: SyncView; onPair
 export function PhoneSync() {
   const { data: sync, toggle, pair, cancel, revoke, studio, deviceStudio } = useSync();
   const [removing, setRemoving] = useState<SyncDevice | null>(null);
+  // Bật điều khiển sản xuất từ xa phải hỏi lại (soát UX 29-09): thiết bị đã ghép bắt đầu / dừng sản xuất qua http trong mạng.
+  const [confirmStudio, setConfirmStudio] = useState(false);
   const known = useRef<Set<string> | null>(null);
 
   // Điện thoại vừa nhập đúng mã: nó xuất hiện trong danh sách - báo ngay, người dùng đang nhìn vào máy tính.
@@ -257,9 +259,31 @@ export function PhoneSync() {
               id="remote-studio"
               checked={studioWanted}
               disabled={studio.isPending}
-              onCheckedChange={(value) => studio.mutate(value)}
+              onCheckedChange={(value) => (value ? setConfirmStudio(true) : studio.mutate(false))}
             />
           </div>
+          <Dialog
+            open={confirmStudio}
+            onOpenChange={setConfirmStudio}
+            title="Cho thiết bị đã ghép điều khiển sản xuất?"
+            description="Điện thoại, máy tính bảng hay máy tính đã ghép sẽ mở được Studio của máy này trong trình duyệt: xem tiến độ, bắt đầu hay dừng tạo sách, duyệt “Việc cần anh”. Mỗi thiết bị vẫn cần được cho phép riêng ở danh sách bên dưới."
+          >
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => setConfirmStudio(false)}>
+                Để sau
+              </Button>
+              <Button
+                variant="primary"
+                loading={studio.isPending}
+                onClick={() => {
+                  studio.mutate(true);
+                  setConfirmStudio(false);
+                }}
+              >
+                Cho phép
+              </Button>
+            </div>
+          </Dialog>
           <div>
             <h3 className="text-xs font-semibold uppercase tracking-[0.06em] text-fg-3">Thiết bị đã ghép</h3>
             {sync.devices.length === 0 ? (

@@ -41,6 +41,14 @@ def speaker_label(raw: str) -> str:
     return person_name(raw)
 
 
+def _shown_transcript(kind: str, similarity: float | None, text: str, heard: str) -> str:
+    """Chữ máy nghe ra, trừ khi đó là Whisper NGHE ẢO: câu dài bất khả trên thời lượng ("unverified") hay câu rất ngắn khớp
+    gần 0% - soát UX 29-09: "Hãy subscribe cho kênh..." hiện trên thẻ làm người mới tưởng audio bị chèn quảng cáo."""
+    if kind == "unverified" or (similarity is not None and similarity < 0.2 and len(text.split()) <= 4):
+        return ""
+    return heard
+
+
 def _kind(status: str, code: str, similarity: float | None) -> str:
     if status == "failed":
         return "failed"
@@ -69,7 +77,7 @@ def review_items(project_root: Path) -> list[dict[str, Any]]:
             "chapterId": int(row["chapter_id"]),
             "chapterTitle": chapter.get("full") or f"Chương {row['chapter_id']}",
             "text": str(row["text"] or ""),
-            "heard": str(row["asr_text"] or ""),
+            "heard": _shown_transcript(kind, similarity, str(row["text"] or ""), str(row["asr_text"] or "")),
             "similarity": similarity,
             "speaker": speaker_label(str(row["speaker"] or "")),
             "kind": kind,
