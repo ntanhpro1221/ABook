@@ -45,3 +45,25 @@ def test_the_pipeline_reads_all_three_forms_as_one_voice() -> None:
     mapping = canonical_speaker_names(counts, "")
     assert {mapping["HINA"], mapping["HINA-SAMA"], mapping["ONIZUKI HINA"]} == {"ONIZUKI HINA"}
     assert mapping["TOMOBE"] == "TOMOBE"
+
+
+BOOK = "\n".join([
+    "Kuchinashi Yoshihito thở dài.", "Kuromitsu Kirako cười.", "Cậu là Kuchinashi Yoshihito mà.",
+    "Onizuki Hina bước vào.", "Onizuki Aoi gật đầu.", "Onizuki Hina mỉm cười.", "Onizuki Aoi đi ra.",
+    "Kuromitsu Kirako lại cười.", "Jane Grey lên tiếng.", "Jane Grey im lặng.",
+])
+
+
+def test_a_family_name_or_given_name_label_joins_the_full_name_the_book_writes() -> None:
+    counts = {"Kuchinashi": 8, "Yoshihito": 12, "KIRAKO": 5, "HINA": 4, "AOI": 3, "ONIZUKI": 2, "GREY": 6}
+    mapping = canonical_speaker_names(counts, BOOK)
+    assert mapping["Kuchinashi"] == mapping["Yoshihito"] == "KUCHINASHI YOSHIHITO", "họ và tên gọi là một người"
+    assert mapping["KIRAKO"] == "KUROMITSU KIRAKO"
+    assert mapping["HINA"] == "ONIZUKI HINA" and mapping["AOI"] == "ONIZUKI AOI"
+    assert mapping["ONIZUKI"] == "ONIZUKI", "họ chung của hai người trong sách - không đoán"
+    assert mapping["GREY"] == "GREY", "tên Âu: chữ cuối là họ, không nối"
+
+
+def test_a_pair_seen_once_is_not_a_name() -> None:
+    mapping = canonical_speaker_names({"HINA": 3}, "Onizuki Hina bước vào.")
+    assert mapping["HINA"] == "HINA"
