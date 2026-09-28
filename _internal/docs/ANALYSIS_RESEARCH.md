@@ -118,9 +118,11 @@ lại mọi lượt bằng thước chính (`voice_identity.py`, F1 giọng B-cu
 - v3 KHÔNG phá cổng nào và nhanh hơn 1,5-1,7 lần (LN: 327-1049 giây/chương, qwen3:8b 552-1700, cùng card, cùng host).
 - Trên LN, khoảng cách F1 +2,8 nằm trong nhiễu của 519 câu; người nói chặt +7,5 thì không. Model LN tốt nhất đo được vẫn
   là Qwen3.5-9B LoRA28 (59,9) nhưng không nạp nổi card 8 GB.
-- Kết luận nghiên cứu: v3 là ứng viên thay qwen3:8b cho máy 8 GB. CHƯA đổi: chờ v4 (cấu hình e2, data_v4) và 8B QLoRA
-  (Kaggle) đang đo trên Modal - chọn một lần, rồi mới đổi model mặc định (file khoá `config.py`, sách mới) và đường tải
-  model cho Studio (model tự huấn luyện phải được đăng ở đâu đó để Studio kéo về = phát hành, chủ sách quyết).
+- Kết luận nghiên cứu: v3 là ứng viên thay qwen3:8b cho máy 8 GB. CHƯA đổi model mặc định (file khoá `config.py`, sách
+  mới) và đường tải model cho Studio (model tự huấn luyện phải được đăng ở đâu đó để Studio kéo về = phát hành, chủ sách
+  quyết - đã hỏi 28-09 21:0x). Hai đối thủ cùng cỡ máy đo xong trên Modal (21:3x): v4 (cấu hình e2 trên data_v4) đủ 6
+  truyện 55,6 / 51,1 / 89,8 - F1 ngang v3, người nói chặt kém 11 điểm; 8B QLoRA (Kaggle, Q4) 5/6 truyện 55,6 / 54,0. Không
+  model nào chạy được trên card 8 GB hơn v3.
 - Dữ liệu huấn luyện chỉ là đáp án của chính dự án (`build_training_set.py` gom JSONL của `gold_replay`), không có
   CSI/PDNC (giấy phép phi thương mại).
 
