@@ -41,6 +41,7 @@ class MainActivity : BridgeActivity() {
         super.onResume()
         Playback.init(this)
         Remote.foreground = true
+        StudioAlerts.checkSoon(this)  // mở app là hỏi máy tính ngay, không đợi lượt 15 phút
     }
 
     override fun onPause() {
