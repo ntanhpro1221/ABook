@@ -1,7 +1,7 @@
 {
   "name": "ebook-reader-mobile",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.4.0",
   "description": "Vỏ Android (Capacitor) cho trình nghe ABook; giao diện dùng chung nằm ở ../ui",
   "dependencies": {
     "@capacitor/android": "^8.5.2",
