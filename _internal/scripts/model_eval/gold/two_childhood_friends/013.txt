@@ -3,7 +3,7 @@
 # KAKUSHIGI ENMI / KAKUSHIGI; YOSHIHITO / KUCHINASHI YOSHIHITO; KIRAKO / KUROMITSU KIRAKO; thầy đồng nghiệp và sĩ quan là NPC*.
 # 76-77 nội tâm bị khoá thoại -> T,D. 119, 123: tiếng lòng chung của hai đứa -> cả hai đủ.
 0 H
-1 D NPC* afraid,whispering 1 normal,slow soft m
+1 D NPC*:thầy giáo đồng nghiệp afraid,whispering 1 normal,slow soft m
 2 N
 3 N
 4 N
@@ -11,16 +11,16 @@
 6 N
 7 N
 8 D URAZUMI,URAZUMI SAKUKO neutral,tired,sarcastic 0-1 normal normal f
-9 D NPC* afraid 2 fast loud m
+9 D NPC*:thầy giáo đồng nghiệp afraid 2 fast loud m
 10 D URAZUMI,URAZUMI SAKUKO neutral,tired 0-1 normal normal f
-11 D NPC* surprised,angry 1-2 fast,normal loud,normal m
+11 D NPC*:thầy giáo đồng nghiệp surprised,angry 1-2 fast,normal loud,normal m
 12 N
 13 N
 14 N
 15 N
 16 N
-17 D NPC* neutral 0-1 normal normal m
-18 D NPC*,URAZUMI~,URAZUMI SAKUKO~ afraid,neutral 0-1 fast,normal normal m
+17 D NPC*:lính Phòng vệ neutral 0-1 normal normal m
+18 D NPC*:thầy giáo đồng nghiệp,URAZUMI~,URAZUMI SAKUKO~ afraid,neutral 0-1 fast,normal normal m
 19 N
 20 N
 21 N
@@ -32,7 +32,7 @@
 27 N
 28 N
 29 N
-30 D NPC* neutral 0-1 normal normal m
+30 D NPC*:lính Phòng vệ neutral 0-1 normal normal m
 31 N
 32 N
 33 N
@@ -43,14 +43,14 @@
 38 N
 39 N
 40 N
-41 D NPC* excited,neutral 1-2 normal,fast loud m
+41 D NPC*:lính Phòng vệ excited,neutral 1-2 normal,fast loud m
 42 N
 43 N
 44 N NARRATOR neutral,afraid 0-1 normal normal u
 45 N NARRATOR neutral,afraid 0-1 normal normal u
 46 N NARRATOR neutral,afraid 0-1 normal normal u
 47 D ENMI,KAKUSHIGI ENMI,KAKUSHIGI,NPC*~ happy,neutral 0-1 normal normal f
-48 D NPC*,UNKNOWN~ surprised,afraid 1-2 fast normal,loud m
+48 D NPC*:lính Phòng vệ,UNKNOWN~ surprised,afraid 1-2 fast normal,loud m
 49 N NARRATOR neutral,surprised 0-1 normal normal u
 50 N
 51 N
@@ -82,7 +82,7 @@
 77 T,D KIRAKO,KUROMITSU KIRAKO angry 2 fast,normal normal,loud f
 78 N NARRATOR neutral,angry 0-1 normal normal u
 79 N NARRATOR neutral,sarcastic 0-1 normal normal u
-80 D NPC* surprised,afraid 1-2 fast,normal normal,loud m
+80 D NPC*:thầy giáo đồng nghiệp surprised,afraid 1-2 fast,normal normal,loud m
 81 D URAZUMI,URAZUMI SAKUKO,NPC*~ neutral,surprised 0-1 normal normal f
 82 N
 83 N
@@ -102,7 +102,7 @@
 97 N
 98 N
 99 N NARRATOR neutral,sarcastic 0-1 normal normal u
-100 D NPC* happy,neutral 0-1 normal normal m
+100 D NPC*:thầy giáo đồng nghiệp happy,neutral 0-1 normal normal m
 101 D ENMI,KAKUSHIGI ENMI,KAKUSHIGI sarcastic,neutral 0-1 normal normal f
 102 D URAZUMI,URAZUMI SAKUKO neutral 0-1 normal normal f
 103 N
@@ -119,7 +119,7 @@
 114 N
 115 N NARRATOR neutral,afraid 0-1 normal normal u
 116 N NARRATOR neutral,surprised 0-1 normal normal u
-117 D NPC*,UNKNOWN~ surprised,afraid 2 fast loud m
+117 D NPC*:thầy giáo đồng nghiệp,UNKNOWN~ surprised,afraid 2 fast loud m
 118 N NARRATOR neutral,sarcastic 0-1 normal normal u
 119 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO,KIRAKO,KUROMITSU KIRAKO surprised,afraid 0-1 normal normal u
 120 N

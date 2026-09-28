@@ -14,6 +14,10 @@ tranh chấp và kết luận ghi ở `scripts/model_eval/gold/ADJUDICATION.md`.
   Dòng chỉ `seq N` = NARRATOR neutral 0-1 normal normal u.
 - `speaker`: các lựa chọn cách nhau dấu phẩy, đều đủ điểm; hậu tố `~` = nửa điểm (chấp nhận nhưng kém hơn);
   `NPC*` = bất kỳ NPC_LOCAL nào. Tên VIẾT HOA, tên có dấu cách được (`THẦN HƠI NƯỚC`).
+  `NPC*:<mô tả>` (29-09) = chấm y như `NPC*`, kèm người vô danh ấy là ai (`NPC*:mẹ Kakeru`, `NPC*:lính gác 1`): cùng người
+  trong chương cùng mô tả, người khác mô tả khác, không dấu phẩy. Dùng ở chương HUẤN LUYỆN: gold_replay dạy model nhãn
+  `NPC_LOCAL:<mô tả>` - trước đó mọi người lạ thành một nhãn chung "người lạ", ngược lời prompt, và model đọc câu người
+  lạ bằng giọng nhân vật có tên đứng gần (LU 07: mẹ Kakeru thành Fuyutsuki / chính Kakeru).
 - `emotion`, `pace`, `volume`: TẬP chấp nhận được, cái đầu là ưu tiên (dùng làm đáp án khi dạy model).
 - `intensity`: khoảng `a-b`.
 - `gender`: m / f cho người nói có giới rõ; u cho lời kể hoặc không rõ.

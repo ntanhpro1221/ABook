@@ -127,7 +127,8 @@ class Replayer:
             if kind == "narration":
                 speaker = "NARRATOR"
             elif speaker == "NPC*":
-                speaker = "NPC_LOCAL:người lạ"
+                # Người lạ đã được soát là ai thì nhãn riêng ("NPC_LOCAL:mẹ Kakeru"); chưa soát thì nhãn chung như trước.
+                speaker = f"NPC_LOCAL:{gold.npc_label or 'người lạ'}"
             elif speaker == "NARRATOR" and kind != "narration" and len(gold.speakers) > 1:
                 speaker = next((o for o, c in gold.speakers if c == 1.0 and o not in ("NARRATOR", "NPC*", "UNKNOWN")), "NARRATOR")
             emotion = next((e for e in gold.emotion_order if e in allowed_emotions), None)

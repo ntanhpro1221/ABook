@@ -48,7 +48,7 @@
 45 N,T NARRATOR,LEVSKI~ neutral,afraid 0-1 normal normal u
 46 N
 47 N
-48 D NPC*,UNKNOWN~ neutral 0-1 normal normal u
+48 D NPC*:giọng máy phân luận án,UNKNOWN~ neutral 0-1 normal normal u
 49 N
 50 N
 51 N
@@ -84,7 +84,7 @@
 81 D LUCIEN sarcastic,happy 0-1 normal normal m
 82 N
 83 N
-84 D NPC*,UNKNOWN~ neutral 0 normal normal u
+84 D NPC*:golem thép,UNKNOWN~ neutral 0 normal normal u
 85 D LUCIEN surprised 0-1 normal normal m
 86 N
 87 N
