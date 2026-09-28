@@ -194,6 +194,32 @@ function useAssign(bookId: string, chapterId: number) {
   });
 }
 
+// "Chương này đúng": người nghe đã đọc hết chương - ghi nhận người nói của mọi câu chưa ai quyết, trừ câu máy còn nghi.
+// Mỗi xác nhận là một nhãn đúng cho vòng học (scripts/model_eval/listener_labels.py); dây chuyền áp thì không đổi gì.
+function useConfirmChapter(bookId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (lines: Line[]) => {
+      const groups = new Map<string, Line[]>();
+      for (const line of lines) groups.set(line.current, [...(groups.get(line.current) ?? []), line]);
+      for (const [speaker, group] of groups) {
+        await api(`/api/books/${bookId}/speaker`, {
+          method: "POST",
+          body: { speaker, lines: group.map((line) => ({ stableId: line.stableId, textSha256: line.textSha256 })) },
+        });
+      }
+      return lines.length;
+    },
+    onSuccess: (count) =>
+      toast.success(`Đã xác nhận ${count} câu`, { description: "Máy sẽ không hỏi lại những câu này; mỗi câu là một nhãn đúng để học." }),
+    onError: (error: Error) => toast.error("Chưa xác nhận được", { description: error.message }),
+    onSettled: () => {
+      void client.invalidateQueries({ queryKey: ["casting", bookId] });
+      void client.invalidateQueries({ queryKey: ["work", bookId] });
+    },
+  });
+}
+
 function useLineFix(bookId: string, chapterId: number) {
   const client = useQueryClient();
   return useMutation({
@@ -736,6 +762,39 @@ function ChapterScriptView({ bookId, script, filter, who }: { bookId: string; sc
   );
 }
 
+function ChapterFooter({ bookId, script, onNext }: { bookId: string; script: ChapterScript; onNext: () => void }) {
+  const confirm = useConfirmChapter(bookId);
+  const open = script.lines.filter((line) => line.editable && !line.wish && !line.hint);
+  const doubtful = script.lines.filter((line) => line.editable && !line.wish && line.hint).length;
+  return (
+    <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
+      {script.castReady && open.length > 0 ? (
+        <div className="min-w-0">
+          <Button size="sm" variant="secondary" icon={Check} loading={confirm.isPending} onClick={() => confirm.mutate(open)}>
+            Chương này đúng - xác nhận {open.length} câu
+          </Button>
+          <p className="mt-1 text-xs text-fg-3">
+            Ghi nhận người nói của các câu chưa ai quyết{doubtful ? `, trừ ${doubtful} câu máy còn nghi` : ""}. Mỗi câu là một nhãn đúng để máy học.
+          </p>
+        </div>
+      ) : (
+        <span className="text-xs text-fg-3">
+          {!script.castReady
+            ? ""
+            : doubtful
+              ? `Còn ${doubtful} câu máy nghi chưa ai quyết - xem các câu có dấu vàng ở trên.`
+              : "Mọi câu nói trong chương đã có người quyết."}
+        </span>
+      )}
+      {script.next !== null && (
+        <button type="button" onClick={onNext} className="inline-flex items-center gap-1 text-sm font-medium text-fg-2 hover:text-fg">
+          Chương sau <ChevronRight className="size-4" />
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function ScriptTab({ bookId }: { bookId: string }) {
   const [params, setParams] = useSearchParams();
   const [filter, setFilter] = useState<Filter>("all");
@@ -860,13 +919,7 @@ export function ScriptTab({ bookId }: { bookId: string }) {
             </p>
           )}
           <ChapterScriptView bookId={bookId} script={data} filter={filter} who={who} />
-          {data.next !== null && (
-            <div className="mt-6 flex justify-end">
-              <button type="button" onClick={() => go(data.next)} className="inline-flex items-center gap-1 text-sm font-medium text-fg-2 hover:text-fg">
-                Chương sau <ChevronRight className="size-4" />
-              </button>
-            </div>
-          )}
+          <ChapterFooter bookId={bookId} script={data} onNext={() => go(data.next)} />
         </>
       )}
     </div>
