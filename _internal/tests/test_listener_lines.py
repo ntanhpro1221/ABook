@@ -17,6 +17,7 @@ from ebook_reader.database import ProjectDB
 from ebook_reader.listener_overrides import (
     BAD_EMOTION,
     BAD_KIND,
+    BAD_TEXT,
     SOURCE_CHANGED,
     UNKNOWN_LINE,
     line_requests,
@@ -158,3 +159,117 @@ def test_the_script_tab_records_a_delivery_fix_and_shows_it_waiting_then_applied
     lines = {line["stableId"]: line for line in casting_chapter(paths.root, 1)["lines"]}
     assert lines["c1s1"]["lineWish"]["state"] == "applied" and lines["c1s1"]["emotion"] == "sad"
     assert (lines["c1s0"]["kind"], lines["c1s0"]["label"]) == ("dialogue", "Natasha")
+
+
+# ---- chữ đem đọc (STUDIO_REVIEW mục 7: lỗi chữ, cách viết lạ của MỘT câu) ---------------------------------------------
+
+
+def test_a_reworded_line_is_read_in_the_listeners_words_and_the_book_keeps_its_own(tmp_path: Path) -> None:
+    """TTS và phép so của Whisper nhận chữ người nghe sửa; văn bản sách (và đọc theo, băm chữ) giữ nguyên; câu đã thu
+    được thu lại. Sửa về đúng chữ của sách là bỏ sửa."""
+    from ebook_reader.config import build_settings
+    from ebook_reader.tts import TTSCoordinator
+
+    _paths, db = _book(tmp_path)
+    result = _apply(db, "c1s1", spoken="  \u201cĐi   thôi nào.\u201d  ")
+    line = _line(db, "c1s1")
+    assert line["listener_text"] == "\u201cĐi thôi nào.\u201d" and line["text"] == "\u201cĐi thôi.\u201d"
+    assert line["text_sha256"] == "sha-c1s1", "băm chữ của sách không đổi: yêu cầu cũ và đọc theo vẫn khớp"
+    assert result is not None and result["reset"] is True and line["status"] == "analyzed" and line["wav_path"] is None
+    coordinator = TTSCoordinator(build_settings(), db, lambda _message: None)
+    fixed = coordinator.spoken_text({"text": "\u201cĐi thôi nào.\u201d"})
+    assert coordinator.spoken_text(line) == fixed != coordinator.spoken_text({"text": line["text"]})
+
+    assert _apply(db, "c1s1", spoken="\u201cĐi thôi nào.\u201d") is None, "áp lại yêu cầu đã áp: không đổi gì"
+    assert _apply(db, "c1s1", emotion="sad")["listener_text"] == "\u201cĐi thôi nào.\u201d", "đổi cảm xúc không xoá chữ đã sửa"
+    reverted = _apply(db, "c1s1", spoken="")
+    assert reverted is not None and reverted["listener_text"] is None and _line(db, "c1s1")["listener_text"] is None
+    _apply(db, "c1s1", spoken="Đi thôi nào.")
+    assert _apply(db, "c1s1", spoken="\u201cĐi thôi.\u201d")["listener_text"] is None, "sửa về đúng chữ của sách = bỏ sửa"
+
+
+@pytest.mark.parametrize("spoken", ["\u2026", "Đi\x07 thôi", "x" * 2001, "Đi thôi " * 20],
+                         ids=["no-letters", "control-char", "over-cap", "four-times-longer"])
+def test_words_that_cannot_be_a_fix_are_refused_and_change_nothing(tmp_path: Path, spoken: str) -> None:
+    """Không chữ cái, ký tự điều khiển, quá trần, dài hơn bốn lần câu gốc: sửa chữ chứ không viết lại đoạn văn."""
+    _paths, db = _book(tmp_path)
+    assert _apply(db, "c1s1", spoken=spoken) == {"problem": BAD_TEXT}
+    line = _line(db, "c1s1")
+    assert line["listener_text"] is None and line["status"] == "verified"
+
+
+def test_changing_the_words_keeps_an_emotion_the_pipeline_has_not_applied_yet(tmp_path: Path) -> None:
+    """overrides.json là trạng thái mong muốn của cả câu: sửa chữ sau khi chọn cảm xúc (chưa tới ranh giới) giữ cả hai."""
+    paths, _db = _book(tmp_path)
+    request_line(paths.root, "c1s1", "sha-c1s1", emotion="sad", intensity=2, now=1.0)
+    request_line(paths.root, "c1s1", "sha-c1s1", spoken=" Đi  thôi nào. ", now=2.0)
+    (request,) = [entry for entry in line_requests(read_overrides(paths.root)) if entry["stable_id"] == "c1s1"]
+    assert (request["emotion"], request["intensity"], request["spoken"]) == ("sad", 2, "Đi thôi nào.")
+    request_line(paths.root, "c1s1", "sha-c1s1", emotion="happy", now=3.0)
+    (request,) = [entry for entry in line_requests(read_overrides(paths.root)) if entry["stable_id"] == "c1s1"]
+    assert (request["emotion"], request["spoken"]) == ("happy", "Đi thôi nào.")
+    request_line(paths.root, "c1s1", "sha-khac", emotion="angry", now=4.0)
+    (request,) = [entry for entry in line_requests(read_overrides(paths.root)) if entry["stable_id"] == "c1s1"]
+    assert request["spoken"] is None, "câu gốc đã đổi (băm khác): không mang chữ sửa của câu cũ sang"
+
+
+def test_the_fix_survives_reopening_and_an_old_book_gains_the_column(tmp_path: Path) -> None:
+    """Crash/mở lại: chữ sửa nằm trong SQLite, mở lại vẫn còn. Sách tạo trước khi có cột: giao diện (mở DB chưa nâng cấp)
+    vẫn xét được yêu cầu, và lần dây chuyền mở DB kế tiếp thêm cột mà không mất gì."""
+    import sqlite3
+
+    from ebook_reader.listener_overrides import line_target
+
+    paths, db = _book(tmp_path)
+    _apply(db, "c1s1", spoken="Đi thôi nào.")
+    assert _line(ProjectDB(paths.db), "c1s1")["listener_text"] == "Đi thôi nào."
+
+    old = sqlite3.connect(paths.db)
+    old.row_factory = sqlite3.Row
+    old.execute("ALTER TABLE segments DROP COLUMN listener_text")
+    old.commit()
+    target, problem = line_target(old, stable_id="c1s2", text_sha256="sha-c1s2", spoken="Cô chắc không?")
+    assert problem is None and target is not None and target["listener_text"] == "Cô chắc không?"
+    old.close()
+    reopened = ProjectDB(paths.db)
+    assert _line(reopened, "c1s2")["listener_text"] is None and _line(reopened, "c1s2")["status"] == "verified"
+    assert _apply(reopened, "c1s2", spoken="Cô chắc không?")["reset"] is True
+
+
+def test_the_script_tab_rewords_a_line_and_shows_what_will_be_read(tmp_path: Path) -> None:
+    """Studio: POST /line với `spoken` - từ chối tại chỗ chữ dây chuyền sẽ từ chối, không ghi SQLite; tab Kịch bản hiện
+    yêu cầu đang chờ, rồi "Đọc là" sau khi dây chuyền áp."""
+    from ebook_reader.config import build_settings, save_settings
+    from ebook_reader.webui.casting_review import casting_chapter
+    from ebook_reader.webui.library import Preferences, book_id
+    from ebook_reader.webui.listening import Listening
+    from ebook_reader.webui.server import App, Server
+    from tests.test_webui_listen_and_sync import FakeRunner, _request
+
+    paths, db = _book(tmp_path)
+    save_settings(paths.settings, build_settings())
+    preferences = Preferences(tmp_path / "prefs" / "preferences.json")
+    preferences.update({"libraryRoot": str(tmp_path)})
+    app = App(preferences=preferences, runner=FakeRunner(), token="t", listening=Listening(tmp_path / "prefs" / "l.json"))
+    server = Server(app, port=0).start()
+    headers = {"X-Ebook-Token": "t"}
+    path = f"/api/books/{book_id(paths.root)}/line"
+    before = paths.db.read_bytes()
+    try:
+        status, data, _ = _request(server.port, "POST", path, headers=headers,
+                                   body={"stableId": "c1s2", "textSha256": "sha-c1s2", "spoken": "\u2026"})
+        assert status == 400 and "chữ cái" in json.loads(data)["error"]
+        status, _data, _ = _request(server.port, "POST", path, headers=headers,
+                                    body={"stableId": "c1s2", "textSha256": "sha-c1s2", "spoken": "Cô chắc không?"})
+        assert status == 200
+    finally:
+        server.stop()
+    assert paths.db.read_bytes() == before, "chỉ dây chuyền được ghi SQLite của sách"
+
+    line = {item["stableId"]: item for item in casting_chapter(paths.root, 1)["lines"]}["c1s2"]
+    assert line["lineWish"]["spoken"] == "Cô chắc không?" and line["lineWish"]["state"] == "pending"
+    assert line["spoken"] is None, "chưa áp: vẫn đọc chữ của sách"
+    _Pipeline(paths, db)._apply_listener_overrides()
+    line = {item["stableId"]: item for item in casting_chapter(paths.root, 1)["lines"]}["c1s2"]
+    assert line["spoken"] == "Cô chắc không?" and line["lineWish"]["state"] == "applied"
+    assert line["text"] == "\u201cCô chắc chứ?\u201d", "tab vẫn hiện chữ của sách"

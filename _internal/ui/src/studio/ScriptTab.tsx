@@ -56,12 +56,16 @@ interface Line {
   emotion: string | null;
   intensity: number | null;
   lineWish: LineWish | null;
+  /** Chữ người nghe sửa đang được đọc thay câu gốc (đã áp); null = đọc đúng chữ sách. */
+  spoken: string | null;
 }
 
 interface LineWish {
   kind: string;
   emotion: string;
   intensity: number | null;
+  /** Chữ đem đọc đang chờ áp ("" = trả về chữ sách). */
+  spoken?: string;
   state: "pending" | "applied" | "refused";
   reason?: string;
 }
@@ -71,6 +75,7 @@ interface Delivery {
   emotion?: string;
   intensity?: number;
   speaker?: string;
+  spoken?: string;
 }
 
 interface ChapterScript {
@@ -238,7 +243,13 @@ function useLineFix(bookId: string, chapterId: number) {
             item.stableId === line.stableId
               ? {
                   ...item,
-                  lineWish: { kind: change.kind ?? "", emotion: change.emotion ?? "", intensity: change.intensity ?? null, state: "pending" },
+                  lineWish: {
+                    kind: change.kind ?? "",
+                    emotion: change.emotion ?? "",
+                    intensity: change.intensity ?? null,
+                    ...(change.spoken !== undefined ? { spoken: change.spoken } : {}),
+                    state: "pending",
+                  },
                 }
               : item,
           ),
@@ -263,12 +274,21 @@ function DeliveryMenu({ line, script, onSave }: { line: Line; script: ChapterScr
   const [emotion, setEmotion] = useState(waiting?.emotion || line.emotion || "neutral");
   const [level, setLevel] = useState(waiting?.intensity ?? line.intensity ?? 0);
   const [speaker, setSpeaker] = useState<string>("");
+  // Chữ đem đọc (STUDIO_REVIEW mục 7): sửa lỗi chữ / cách viết lạ của riêng câu này - sách giữ nguyên chữ của nó.
+  const reading = line.spoken ?? line.text;
+  const [words, setWords] = useState(waiting?.spoken || reading);
   const needsSpeaker = line.kind === "narration" && kind !== "narration";
   const change: Delivery = {};
   if (kind !== line.kind) change.kind = kind;
   if (line.emotion !== null && emotion !== line.emotion) change.emotion = emotion;
   if (line.intensity !== null && level !== line.intensity) change.intensity = level;
   if (needsSpeaker && speaker) change.speaker = speaker;
+  const cleaned = words.replace(/\s+/g, " ").trim();
+  if (cleaned !== reading.replace(/\s+/g, " ").trim()) {
+    if (!cleaned) {
+      if (line.spoken) change.spoken = ""; // ô trống: trả về chữ của sách
+    } else change.spoken = cleaned === line.text.trim() ? "" : cleaned;
+  }
   const ready = Object.keys(change).length > 0 && (!needsSpeaker || Boolean(speaker));
   return (
     <div className="w-[min(88vw,340px)] space-y-3 p-1.5">
@@ -329,6 +349,25 @@ function DeliveryMenu({ line, script, onSave }: { line: Line; script: ChapterScr
           />
           <p className="mt-1.5 text-[11px] leading-snug text-fg-3">Máy giữ mức trong tầm giọng đọc được: thì thầm, dịu dàng tối đa "Vừa".</p>
         </div>
+      )}
+      <label className="block">
+        <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-fg-3">Chữ đem đọc</span>
+        <textarea
+          id={`spoken-${line.stableId}`}
+          value={words}
+          onChange={(event) => setWords(event.target.value)}
+          rows={Math.min(5, Math.max(2, Math.ceil(words.length / 42)))}
+          className="w-full resize-y rounded-lg border border-line bg-panel px-2.5 py-1.5 text-sm leading-relaxed outline-none focus:border-accent"
+        />
+        <span className="mt-1 block text-[11px] leading-snug text-fg-3">
+          Sửa lỗi chữ hay cách viết lạ của riêng câu này; sách và phần đọc theo giữ nguyên.
+          {line.spoken ? " Xoá hết rồi lưu để trả về chữ của sách." : ""}
+        </span>
+      </label>
+      {line.spoken && (
+        <button type="button" className="text-xs font-medium text-accent-text" onClick={() => setWords(line.text)}>
+          Trả về chữ của sách
+        </button>
       )}
       <Button size="sm" variant="primary" className="w-full" disabled={!ready} onClick={() => onSave(change)}>
         {needsSpeaker && !speaker ? "Chọn người nói trước" : "Lưu cách đọc"}
@@ -590,6 +629,11 @@ function ScriptRow({
           {line.kind === "thought" && <span className="mr-1.5 rounded bg-hover px-1.5 py-px align-[1px] text-[11px] font-medium not-italic text-fg-2">nghĩ</span>}
           {line.text}
         </p>
+        {line.spoken && (
+          <p className="mt-0.5 text-xs text-fg-2">
+            Đọc là: <span className="text-fg">{line.spoken}</span>
+          </p>
+        )}
         {script.castReady && (
           <DeliveryChip line={line} script={script} open={deliveryOpen} onOpenChange={onDelivery} onSave={onSaveDelivery} quiet={!speech && !active} />
         )}
@@ -597,8 +641,9 @@ function ScriptRow({
           <p className="mt-0.5 flex items-center gap-1.5 text-xs text-fg-2">
             <Clock className="size-3.5 shrink-0" />
             Đã ghi cách đọc mới
-            {line.lineWish.kind ? ` (${KINDS.find((item) => item.value === line.lineWish?.kind)?.label.toLowerCase()})` : ""} - áp ở ranh giới
-            chương kế tiếp.
+            {line.lineWish.kind ? ` (${KINDS.find((item) => item.value === line.lineWish?.kind)?.label.toLowerCase()})` : ""}
+            {line.lineWish.spoken !== undefined ? (line.lineWish.spoken ? ` - đọc là "${line.lineWish.spoken}"` : " - trả về chữ của sách") : ""} - áp ở
+            ranh giới chương kế tiếp.
           </p>
         )}
         {line.lineWish?.state === "refused" && (

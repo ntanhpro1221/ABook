@@ -7,6 +7,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Studio: **sửa chữ đem đọc của một câu** - câu có lỗi chữ hay cách viết lạ thì mở bảng cách đọc của câu ấy trong tab
+  Kịch bản, sửa ô "Chữ đem đọc" rồi lưu: câu được thu lại theo chữ đã sửa, còn sách và phần đọc theo giữ nguyên chữ gốc.
+  Xoá ô (hoặc bấm "Trả về chữ của sách") là bỏ sửa.
 - Studio: **tạo người nói mới** khi sửa "ai nói câu này" - gõ tên chưa có trong truyện ở ô tìm người nói (tab Kịch
   bản) hay bấm "Người khác…" trên thẻ của hộp "Việc cần anh", chọn Nam / Nữ / Không rõ. Trước đây chỉ chọn được người
   đã có giọng - linh thể chỉ nói trong ngoặc 『』 mà máy chưa từng gán câu nào thì không chọn được. Dây chuyền tạo người
