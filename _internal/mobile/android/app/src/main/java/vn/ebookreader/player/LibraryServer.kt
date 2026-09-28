@@ -26,13 +26,14 @@ import android.util.Base64
  * thoại khác) nghe thẳng những cuốn chỉ có trên điện thoại, không phải chép sang.
  *
  * Nói ĐÚNG giao thức cổng đồng bộ của máy tính (ebook_reader/webui/sync.py): POST /sync/v1/pair, GET /sync/v1/library,
- * GET /sync/v1/books/<mã>/manifest, GET /sync/v1/books/<mã>/files/<tên> (có Range cho trình phát), và trả lời tìm máy
- * UDP như máy tính (cổng 47631, "ebook-reader"). Nên bên kết nối (webui/remote_books.py) không cần biết đầu kia là máy
- * tính hay điện thoại.
+ * GET /sync/v1/books/<mã>/manifest, GET /sync/v1/books/<mã>/files/<tên> (có Range cho trình phát), POST
+ * /sync/v1/books/<mã>/state (chỗ nghe hai chiều), và trả lời tìm máy UDP như máy tính (cổng 47631, "ebook-reader"). Nên
+ * bên kết nối (webui/remote_books.py) không cần biết đầu kia là máy tính hay điện thoại.
  *
- * Chỉ ĐỌC: không nhận sách, không ghi gì ngoài danh sách thiết bị đã ghép (`share.json`, lưu băm của mã thiết bị,
- * không lưu mã thật). Chỉ phục vụ sách đã tải về máy (book.json) và đúng các file book.json kể tên. Chỉ chạy khi người
- * dùng bật "Cho máy khác nghe thư viện này". Mã ghép 6 số dùng một lần, sống 5 phút, sai 5 lần là huỷ - như máy tính.
+ * Không nhận sách: chỉ phục vụ sách đã tải về máy (book.json) và đúng các file book.json kể tên; ghi duy nhất danh sách
+ * thiết bị đã ghép (`share.json`, lưu băm của mã thiết bị, không lưu mã thật) và chỗ nghe gộp từ máy kia. Chỉ chạy khi
+ * người dùng bật "Cho máy khác nghe thư viện này". Mã ghép 6 số dùng một lần, sống 5 phút, sai 5 lần là huỷ - như máy
+ * tính.
  */
 object LibraryServer {
     const val PORT = 47630
@@ -40,7 +41,8 @@ object LibraryServer {
     private const val PAIRING_MILLIS = 5 * 60 * 1000L
     private const val PAIRING_ATTEMPTS = 5
     private const val MAX_HEADER_BYTES = 16 * 1024
-    private const val MAX_BODY_BYTES = 4 * 1024
+    // Chỗ nghe của một cuốn dài (mỗi chương một mục, dấu trang) vài chục KB; ghép nối vài chục byte.
+    private const val MAX_BODY_BYTES = 2 * 1024 * 1024
     private val PROBE = "EBOOKREADER_DISCOVER".toByteArray()
     private val BOOK_ID = Regex("[A-Za-z0-9_-]+")
 
@@ -312,8 +314,13 @@ object LibraryServer {
                 if (target == null || !target.isFile) json(output, 404, JSONObject().put("error", "Không có file này"))
                 else sendFile(output, target, request.headers["range"], request.method == "HEAD")
             }
-            // Chỗ nghe hai chiều (POST .../state) cần phép gộp của máy tính (webui/listening.py) viết lại ở đây - việc
-            // sau. Máy kia coi 405 là "không đồng bộ được lần này" và giữ chỗ nghe của nó.
+            // Chỗ nghe hai chiều: máy kia gửi bản của nó, điện thoại gộp vào hồ sơ đang dùng của cuốn này (Store.mergeRemote,
+            // cùng phép gộp của máy tính) và trả bản đã gộp.
+            request.method == "POST" && match.groupValues[2] == "state" -> {
+                val body = runCatching { JSONObject(String(request.body)) }.getOrNull()
+                if (body == null) json(output, 400, JSONObject().put("error", "Thân yêu cầu không phải JSON"))
+                else json(output, 200, Store.mergeRemote(book, body))
+            }
             else -> json(output, 405, JSONObject().put("error", "Không hỗ trợ"))
         }
     }
@@ -437,7 +444,7 @@ object LibraryServer {
     }
 
     private fun head(output: OutputStream, status: Int, type: String, length: Long, extra: Map<String, String> = emptyMap()) {
-        val reason = mapOf(200 to "OK", 206 to "Partial Content", 401 to "Unauthorized", 403 to "Forbidden",
+        val reason = mapOf(200 to "OK", 206 to "Partial Content", 400 to "Bad Request", 401 to "Unauthorized", 403 to "Forbidden",
             404 to "Not Found", 405 to "Method Not Allowed", 416 to "Range Not Satisfiable", 500 to "Internal Server Error")
         val lines = StringBuilder("HTTP/1.1 $status ${reason[status] ?: "Status"}\r\n")
             .append("Content-Type: $type\r\n").append("Content-Length: $length\r\n").append("Connection: close\r\n")
