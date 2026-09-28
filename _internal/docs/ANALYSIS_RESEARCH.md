@@ -102,6 +102,18 @@ cùng ý, khác 8b): YMP +11, TMA +2, Tam quốc +2, Tắt đèn -3 - không b�
 model 4B là tín hiệu duyệt tốt hơn tin cậy tự báo ở cả 4 truyện và cộng thêm vào bộ chấm từ mức duyệt 20%; giá là một lượt
 phân tích nữa (4B ~ nửa thời gian 8B). Chưa dựng vào app: chờ số trên bộ LN (hàng i đo qwen3:8b, v2, v3 cùng 5 chương).
 
+**Lỗi người nói của qwen3:8b trên LN, theo loại** (4 chương, 288 câu, 130 câu sai, nhãn đã gom tên): tên A -> tên B **104**
+(Yamiyo 72, trong đó 41 câu 『』 của Tọa Phu Đồng Tử; phần còn lại phần lớn là gộp/lệch lượt đối đáp), đáp án NARRATOR mà
+model gán người có tên 11 (TCF: 8 bài đăng ẩn danh thành Kuchinashi), người vô danh bị gán tên đã biết 9 (ông chú ở Nise),
+người có tên thành vô danh 6. "Chộp tên quen" theo nghĩa hẹp (vô danh -> tên) là lỗi NHỎ; lỗi lớn là nhầm giữa những người
+đã biết - đúng hai thứ prompt `dev/ln-turns` nhắm tới.
+
+**Chương đo thứ 6 (28-09 13:xx): Love Unseen 07** - LN Nhật ngôi thứ nhất, 132 câu có người nói, gần như toàn đối đáp hai
+người không lời dẫn (Kakeru - Fuyutsuki, Kakeru - mẹ qua điện thoại). Hai truyện định chọn trước (Năng lực bá đạo, Đã bảo
+là cùng nhau tự sát) hoá ra là truyện TRUNG - kho hiện chỉ có 6 truyện LN Nhật/Hàn thật. Gold phát lại qua host 99,7%: lệch
+duy nhất 90 - đoạn KỂ ("Tôi nhìn những người bên trong...") ngay sau một câu thoại quên đóng ngoặc bị khoá thoại nối tiếp
+gán cho người vừa nói (lỗi host, chưa có cách phân biệt bằng dấu câu: đoạn giữa một bài nói dài ở TMA cũng y như thế).
+
 ## LORA NỀN 8B TRÊN CARD 8 GB 28-09 (chủ sách: "sao không huấn luyện trên nền qwen3:8b?")
 
 Unsloth trong WSL2 archlinux (`train_lora_unsloth.py`, cùng siêu tham số với 4B). Thử VRAM trên 8 mẫu DÀI NHẤT:
