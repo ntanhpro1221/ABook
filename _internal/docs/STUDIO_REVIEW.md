@@ -70,8 +70,9 @@ Người duyệt đúng những câu ấy là cách rẻ nhất để đạt 100
      không trùng bậc với người cùng chương; mọi câu của người ấy sang giọng mới cùng lúc (`assert_voice_stability` vẫn
      qua), câu đã thu được đặt lại; giới + giọng ghim (`locked`, `locked_voice_key`) cho lô sau. Giọng đang có đã đúng
      giới thì chỉ ghim giới, không thu lại câu nào. Thử trên bản sao lô 18: 9 thẻ giới; "Người Dân" (giọng nữ, 3 câu)
-     -> nam: `manh_dung_f100`, đặt lại đúng 3 câu. Còn làm: màn chọn giọng cụ thể có nghe thử trong tab Nhân vật
-     (API đã nhận `preset`).
+     -> nam: `manh_dung_f100`, đặt lại đúng 3 câu. Màn chọn giọng cụ thể (tab Nhân vật, nút
+     "Đổi giọng", `webui/voice_picker.py`) XONG cùng ngày: mọi giọng dùng được, nghe thử, giọng máy gợi ý mỗi giới,
+     người CÙNG CHƯƠNG đang dùng giọng gốc ấy - chọn thì POST /voice kèm `preset`, cùng đường áp.
 3. **Sửa cấp câu** (3, 4, 5, 7): bảng ghi đè mới trong SQLite (thay đổi `database.py`/`pipeline.py` - kèm test crash/reopen
    như AGENTS.md đòi).
    - **3 (ai nói câu này) XONG 27-09**, không cần bảng mới: thẻ có một nút cho mỗi ứng viên + "Giữ" -> `overrides.json`

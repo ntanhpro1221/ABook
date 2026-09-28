@@ -1,6 +1,6 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, History, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, Trash2, UserRound } from "lucide-react";
+import { ArrowLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, History, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, SlidersHorizontal, Trash2, UserRound } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
@@ -166,7 +166,17 @@ function cleanName(name: string): string {
   return name.replace(/_/g, " ").replace(/\s+/g, " ").trim();
 }
 
-export function PersonRow({ bookId, person }: { bookId: string; person: CastMember; top?: number }) {
+export function PersonRow({
+  bookId,
+  person,
+  onPickVoice,
+}: {
+  bookId: string;
+  person: CastMember;
+  top?: number;
+  /** Chỉ Studio: mở màn "Đổi giọng" cho nhân vật (giọng ấy có từ bước phân vai). */
+  onPickVoice?: (person: CastMember) => void;
+}) {
   const source = useSource();
   const name = cleanName(person.displayName);
   const initials = name
@@ -201,11 +211,14 @@ export function PersonRow({ bookId, person }: { bookId: string; person: CastMemb
         </div>
       </div>
       {person.sampleId ? <SampleButton id={`sample-${bookId}-${person.sampleId}`} url={source.sampleUrl(bookId, person.sampleId)} label={`Nghe ${name} nói`} /> : null}
+      {onPickVoice && person.voice ? (
+        <IconButton label={`Đổi giọng ${name}`} icon={SlidersHorizontal} size="sm" onClick={() => onPickVoice(person)} />
+      ) : null}
     </div>
   );
 }
 
-export function CastList({ bookId }: { bookId: string }) {
+export function CastList({ bookId, onPickVoice }: { bookId: string; onPickVoice?: (person: CastMember) => void }) {
   const source = useSource();
   const { data: cast, isLoading } = useCast(bookId);
   const [extras, setExtras] = useState(false);
@@ -234,14 +247,14 @@ export function CastList({ bookId }: { bookId: string }) {
         Nhân vật <span className="font-normal text-fg-2">· {cast.characters.length} người có lời thoại</span>
       </h3>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {cast.characters.map((person) => <PersonRow key={person.name} bookId={bookId} person={person} />)}
+        {cast.characters.map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} />)}
       </div>
       {cast.extras.length > 0 && (
         <div className="mt-6">
           <button type="button" onClick={() => setExtras((value) => !value)} className="text-sm font-medium text-fg-2 hover:text-fg">
             {extras ? "Ẩn" : "Hiện"} {cast.extras.length} vai phụ chỉ xuất hiện trong một cảnh
           </button>
-          {extras && <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{cast.extras.map((person) => <PersonRow key={person.name} bookId={bookId} person={person} />)}</div>}
+          {extras && <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{cast.extras.map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} />)}</div>}
         </div>
       )}
     </div>

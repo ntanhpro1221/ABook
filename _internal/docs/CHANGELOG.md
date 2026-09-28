@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Studio, tab **Nhân vật**: nút **"Đổi giọng"** trên mỗi nhân vật mở danh sách mọi giọng dùng được, nghe thử từng
+  giọng, thấy giọng đang dùng, giọng máy gợi ý cho giọng nam và giọng nữ, và ai cùng chương đang dùng giọng gốc ấy.
+  Chọn giọng khác giới là đổi luôn giới của nhân vật. Áp ở ranh giới chương kế tiếp như các sửa khác; câu đã thu của
+  người ấy được thu lại bằng giọng mới.
 - Hộp **"Việc cần anh"**: thẻ **"Nam hay nữ"** và **"Chung giọng"** giờ bấm được. Thẻ nói máy đang đọc nhân vật bằng
   giọng nam hay nữ và cái giá của từng lựa chọn ("giữ giọng đang đọc" hay "đổi giọng, thu lại 3 câu"). Chọn xong,
   dây chuyền ghim giới cho các lô sau và - khi giọng phải đổi - chọn giọng mới đúng cách bước phân vai chọn (không trùng

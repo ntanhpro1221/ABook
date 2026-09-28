@@ -49,6 +49,7 @@ import { CoverEditor } from "./CoverEditor";
 import { ReviewQueue, useReviewCount } from "./ReviewQueue";
 import { WorkInbox, useWorkCount } from "./WorkInbox";
 import { ScriptTab } from "./ScriptTab";
+import { VoicePicker } from "./VoicePicker";
 import { usePlayer } from "@/listen/player";
 import { useSource } from "@/listen/source";
 
@@ -468,6 +469,7 @@ export function ProjectScreen() {
   const reviewCount = useReviewCount(id ?? "");
   const workCount = useWorkCount(id ?? "");
   const { data, isLoading, error } = useBook(id);
+  const [picking, setPicking] = useState<{ name: string; displayName: string } | null>(null);
   usePageTitle(data ? `${data.book.title} · Studio` : undefined);
 
   if (isLoading) {
@@ -560,7 +562,8 @@ export function ProjectScreen() {
           <ReviewQueue bookId={book.id} />
         </TabsContent>
         <TabsContent value="cast">
-          <CastList bookId={book.id} />
+          <CastList bookId={book.id} onPickVoice={(person) => setPicking({ name: person.name, displayName: person.displayName })} />
+          <VoicePicker bookId={book.id} person={picking} onClose={() => setPicking(null)} />
         </TabsContent>
         <TabsContent value="activity">
           <ActivityView book={book} />
