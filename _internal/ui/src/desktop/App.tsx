@@ -107,8 +107,10 @@ function ExportMenuItem({ book }: { book: ListenBook }) {
   };
   return (
     <DropdownMenu.Item
+      // Chưa có chương nào nghe được thì không có gì để xuất (soát UX 29-09: bấm được rồi nhận lỗi 409).
+      disabled={!book.chaptersAvailable}
       onSelect={() => void run()}
-      className="flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[highlighted]:bg-hover"
+      className="flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[disabled]:opacity-40 data-[highlighted]:bg-hover"
     >
       <FolderDown className="size-4" /> Xuất MP3 để nghe ở app khác
     </DropdownMenu.Item>
@@ -145,8 +147,10 @@ function BookFileMenuItem({ book }: { book: ListenBook }) {
   };
   return (
     <DropdownMenu.Item
+      // Chưa có chương nào nghe được thì không có gì để xuất (soát UX 29-09: bấm được rồi nhận lỗi 409).
+      disabled={!book.chaptersAvailable}
       onSelect={() => void run()}
-      className="flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[highlighted]:bg-hover"
+      className="flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[disabled]:opacity-40 data-[highlighted]:bg-hover"
     >
       <FileAudio className="size-4" /> Xuất file sách (mở bằng app ở máy khác)
     </DropdownMenu.Item>

@@ -117,7 +117,7 @@ function Example({ bookId, example }: { bookId: string; example: WorkExample }) 
       )}
       <div className="min-w-0">
         <div className="text-xs text-fg-3">
-          {example.chapterTitle} · câu {example.seq}
+          {example.chapterTitle} · {example.seq === 0 ? "tiêu đề chương" : `câu ${example.seq}`}
           {example.speaker && ` · máy gán: ${example.speaker}`}
         </div>
         <p className="text-fg">{example.text}</p>
