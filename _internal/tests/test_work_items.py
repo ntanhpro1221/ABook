@@ -431,3 +431,46 @@ def test_telepathy_in_corner_brackets_split_across_people_is_fixed_for_the_whole
                      now=time.time())
     cards = [item for item in work_items(project)["items"] if item["kind"] == "bracket"]
     assert cards and cards[0]["requested"] == "Tọa Phu Đồng Tử", "đang chờ ranh giới chương"
+
+
+def make_epithet_book(root: Path) -> Path:
+    """Người kể Krai bị gán câu dưới danh hiệu "Thiên Biến Vạn Hóa" - sách viết danh hiệu sát tên ba lần. Tino đứng cạnh Krai
+    chỉ qua dấu phẩy (danh sách), "Giáo sư" đứng sát HAI người: không phải biệt danh của ai."""
+    project = make_book(root)
+    source = root / "nguon"
+    source.mkdir()
+    (source / "001.txt").write_text(
+        "Thiên Biến Vạn Hóa Krai bước vào. Ai cũng sợ Thiên Biến Vạn Hóa Krai Andrey. Người ta gọi Krai được mệnh danh"
+        " Thiên Biến Vạn Hóa. Tino, Krai và Lucia đi chợ. Tino, Krai ngồi xuống. Tino, Krai lại đi.\n"
+        "Giáo sư Glast gật đầu. Giáo sư Krayd lắc đầu. Rồi Giáo sư Glast nói. Giáo sư Krayd im.\n",
+        encoding="utf-8")
+    db = sqlite3.connect(project / "project.sqlite3")
+    db.execute("ALTER TABLE chapters ADD COLUMN input_path TEXT")
+    db.execute("UPDATE chapters SET input_path = ?", (str(source / "001.txt"),))
+    db.execute("DELETE FROM segments")
+    rows = [
+        ("k1", "“Đi thôi.”", "KRAI ANDREY"), ("k2", "“Ừ.”", "KRAI ANDREY"), ("k3", "“Được.”", "KRAI ANDREY"),
+        ("e1", "“Tôi không làm gì cả.”", "THIÊN BIẾN VẠN HÓA"),
+        ("t1", "“Anh Krai!”", "TINO"),
+        ("g1", "“Học đi.”", "GIÁO SƯ"), ("g2", "“Ta là Glast.”", "GLAST"), ("g3", "“Ta là Krayd.”", "KRAYD"),
+    ]
+    db.executemany(
+        "INSERT INTO segments (stable_id, chapter_id, seq, text, kind, speaker, voice_profile_id, canonical_character_id,"
+        " status, text_sha256) VALUES (?, 1, ?, ?, 'dialogue', ?, 1, NULL, 'verified', 'sha-' || ?)",
+        [(stable, seq, text, speaker, stable) for seq, (stable, text, speaker) in enumerate(rows)],
+    )
+    db.commit()
+    db.close()
+    return project
+
+
+def test_a_title_the_book_writes_next_to_one_name_asks_to_join_that_voice(tmp_path: Path) -> None:
+    """Thẻ biệt danh (3a): "Thiên Biến Vạn Hóa" sát "Krai" ba lần -> hỏi gộp câu của danh hiệu vào Krai. Dấu phẩy không
+    tính (danh sách "Tino, Krai"); chức danh sát hai người ("Giáo sư Glast", "Giáo sư Krayd") không phải biệt danh."""
+    project = make_epithet_book(tmp_path)
+    cards = {item["key"]: item for item in work_items(project)["items"] if item["kind"] == "alias"}
+    assert set(cards) == {"alias:KRAI ANDREY|THIÊN BIẾN VẠN HÓA"}, set(cards)
+    card = cards["alias:KRAI ANDREY|THIÊN BIẾN VẠN HÓA"]
+    assert [line["stableId"] for line in card["lines"]] == ["e1"] and card["affected"] == 1
+    assert card["choices"] == [{"label": "Gộp vào Krai Andrey", "value": "KRAI ANDREY", "name": "Krai Andrey"}]
+    assert "sát nhau 3 lần" in card["problem"] and card["keepLabel"] == "Hai người khác nhau"
