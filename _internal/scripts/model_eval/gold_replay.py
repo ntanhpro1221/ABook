@@ -15,9 +15,11 @@ riêng cho việc này (model đặt tên gì cũng được, vd `gold:replay`).
 Chỉ chạy `analyze_all`; hai lượt hoà giải (danh tính NPC, cách đọc tên) chưa có đáp án nên bỏ qua.
 Không gọi mạng, không cần GPU.
 
-`--book-spelling` (LoRA v3, 28-09): câu trả lời ghi tên như SÁCH viết ("Triệu Vân", "Tử-long") thay vì chữ HOA của đáp
-án ("TRIỆU VÂN"). LoRA v2 học trên chữ HOA và rơi dấu hàng loạt ("HUYEN DUC", "TRINH PHU") - chữ hoa có dấu tiếng Việt
-hiếm trong dữ liệu gốc của model. Dây chuyền so tên không phân biệt hoa thường, nên chỉ cách viết đổi.
+Câu trả lời ghi tên như SÁCH viết ("Triệu Vân", "Tử-long", "Glast") thay vì chữ HOA của đáp án ("TRIỆU VÂN"). LoRA v2
+học trên chữ HOA và rơi dấu hàng loạt ("HUYEN DUC", "TRINH PHU") - chữ hoa có dấu tiếng Việt hiếm trong dữ liệu gốc của
+model; v3 học tên theo sách và hết lỗi ấy. Từ 29-09 đây là MẶC ĐỊNH: data_v4/data_v5 phát lại quên cờ `--book-spelling`
+cũ, học lại chữ HOA và v5 lại chép sai tên ("Glast" -> "GAST", HDST 062 tụt 79,5% -> 60,3%). `--gold-capitals` chỉ để
+thí nghiệm. Dây chuyền so tên không phân biệt hoa thường, nên chỉ cách viết đổi.
 """
 from __future__ import annotations
 
@@ -125,7 +127,8 @@ class Replayer:
             if kind == "narration":
                 speaker = "NARRATOR"
             elif speaker == "NPC*":
-                speaker = "NPC_LOCAL:người lạ"
+                # Người lạ đã được soát là ai thì nhãn riêng ("NPC_LOCAL:mẹ Kakeru"); chưa soát thì nhãn chung như trước.
+                speaker = f"NPC_LOCAL:{gold.npc_label or 'người lạ'}"
             elif speaker == "NARRATOR" and kind != "narration" and len(gold.speakers) > 1:
                 speaker = next((o for o, c in gold.speakers if c == 1.0 and o not in ("NARRATOR", "NPC*", "UNKNOWN")), "NARRATOR")
             emotion = next((e for e in gold.emotion_order if e in allowed_emotions), None)
@@ -193,7 +196,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("project", type=Path)
     parser.add_argument("--gold", required=True)
     parser.add_argument("--out", type=Path)
-    parser.add_argument("--book-spelling", action="store_true", help="tên trong câu trả lời viết như sách viết")
+    parser.add_argument("--gold-capitals", action="store_true",
+                        help="ghi tên bằng chữ HOA của đáp án như data_v2/v4/v5 (chỉ để thí nghiệm; mặc định: như sách viết)")
+    parser.add_argument("--book-spelling", action="store_true", help=argparse.SUPPRESS)  # mặc định từ 29-09; giữ cho lệnh cũ
     args = parser.parse_args(argv)
 
     paths = ProjectPaths.build(args.project.resolve())
@@ -209,7 +214,7 @@ def main(argv: list[str] | None = None) -> int:
     segment(db, settings, print)
     if args.out:
         args.out.parent.mkdir(parents=True, exist_ok=True)
-    replay = Replayer(db, load_gold(GOLD_ROOT / args.gold), args.out, args.gold, book_spelling=args.book_spelling)
+    replay = Replayer(db, load_gold(GOLD_ROOT / args.gold), args.out, args.gold, book_spelling=not args.gold_capitals)
 
     def fake_available(self) -> bool:
         self._model_digest = FAKE_DIGEST
