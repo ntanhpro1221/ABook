@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Laptop, RefreshCw, Unplug } from "lucide-react";
-import { useState } from "react";
+import { Laptop, Radar, RefreshCw, Unplug } from "lucide-react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/studio/api";
 import { cn } from "@/shared/cn";
@@ -23,6 +23,14 @@ interface Computer {
 interface ComputersView {
   name: string;
   computers: Computer[];
+}
+
+/** Máy tính ABook đang bật kết nối trong mạng (remote_books.discover - cùng cách điện thoại tìm máy tính). */
+interface FoundComputer {
+  name: string;
+  host: string;
+  port: number;
+  paired: boolean;
 }
 
 export function OtherComputers() {
@@ -51,6 +59,15 @@ export function OtherComputers() {
     mutationFn: (id: string) => api<ComputersView>(`/api/computers/${id}`, { method: "DELETE" }),
     onSuccess: done,
   });
+  const discover = useMutation({
+    mutationFn: () => api<{ found: FoundComputer[] }>("/api/computers/discover"),
+    onError: (error: Error) => toast.error("Không tìm được", { description: error.message }),
+  });
+  const codeInput = useRef<HTMLInputElement>(null);
+  const choose = (found: FoundComputer) => {
+    setAddress(`${found.host}:${found.port}`);
+    codeInput.current?.focus();
+  };
   if (isLoading || !data) return <Skeleton className="h-20" />;
   return (
     <div className="space-y-4">
@@ -73,6 +90,39 @@ export function OtherComputers() {
           ))}
         </ul>
       )}
+      <div className="space-y-2">
+        <Button variant="secondary" icon={Radar} loading={discover.isPending} onClick={() => discover.mutate()}>
+          Tìm máy trong mạng
+        </Button>
+        {discover.data &&
+          (discover.data.found.length ? (
+            <ul className="divide-y divide-line rounded-xl border border-line">
+              {discover.data.found.map((found) => (
+                <li key={`${found.host}:${found.port}`} className="flex items-center gap-3 px-3 py-2">
+                  <Laptop className="size-5 shrink-0 text-fg-2" />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium">{found.name}</div>
+                    <div className="truncate text-xs text-fg-2">
+                      {found.host}:{found.port}
+                    </div>
+                  </div>
+                  {found.paired ? (
+                    <span className="text-xs text-fg-2">Đã ghép</span>
+                  ) : (
+                    <Button size="sm" variant="ghost" onClick={() => choose(found)}>
+                      Chọn
+                    </Button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-xs leading-relaxed text-fg-2 text-pretty">
+              Không thấy máy nào. Trên máy kia, bật kết nối trong Cài đặt → Điện thoại và thiết bị; hai máy phải cùng mạng
+              (qua Tailscale thì gõ địa chỉ Tailscale của máy kia).
+            </p>
+          ))}
+      </div>
       <form
         className="flex flex-wrap items-end gap-2"
         onSubmit={(event) => {
@@ -97,6 +147,7 @@ export function OtherComputers() {
           Mã 6 số
           <input
             id="other-computer-code"
+            ref={codeInput}
             value={code}
             onChange={(event) => setCode(event.target.value)}
             placeholder="123456"

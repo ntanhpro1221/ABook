@@ -447,3 +447,17 @@ A chấp nhận:
 | cảnh hôn 224-226, 233; tiếng cười 104, 276, 282, 286, 380 | neutral | thêm cảm xúc của cảnh | nhất quán với 73, 77, 153 |
 
 Host sai (giữ đáp án): 350 - `HAPPY_EVIDENCE_PATTERN` bắt "mừng" trong "bữa tiệc chào mừng".
+
+**Two Childhood Friends 107 (28-09 20:xx) - đáp án HUẤN LUYỆN, vòng dữ liệu v5** (dòng 『』 và người nghĩ là hai chỗ model sai
+nhiều nhất trên bộ LN). A = Claude gán, B = agent soát đối kháng (`scratchpad/review_tcf107.md`). Phát lại qua host: không
+LỆCH LUẬT. B không thấy câu nào sai hẳn người nói; A chấp nhận cả năm điểm:
+
+| chỗ | A ghi | kết luận | bằng chứng |
+|---|---|---|---|
+| 18 dòng 『』 | AIDA, AIDA MASAMICHI, KÝ SINH TRÙNG | KÝ SINH TRÙNG đầu, thêm CON KÝ SINH TRÙNG, NPC*~ | cả cuốn gọi nó "ký sinh trùng" (102 lần/49 file, cả sau khi lộ tên), 042:64 và 082:94 để tên ấy đầu - lựa chọn đầu là cụm đáp án của B-cubed, một thực thể hai tên đầu thành HAI người; quy tắc 7c |
+<removed>
+| 83 "Hừm. Không xuất hiện à." | cả hai đủ (trái đầu file) | YOSHIHITO đủ, KIRAKO~ | "Hừm" mở câu là tật của Yoshihito (034:147, 049:203, 060:135; Kirako một lần 081:135) |
+<removed>
+
+<removed>
+chứ?"). `voice_identity --gold-check`: two_childhood_friends 9 người, không nhập ai.
