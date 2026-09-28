@@ -134,9 +134,29 @@ export interface DownloadEvent {
   error?: string;
 }
 
+/** "Cho máy khác nghe thư viện này" (LibraryServer.kt, mạng trạm bước 2): điện thoại phục vụ sách đã tải cho máy đã ghép. */
+export interface ShareStatus {
+  running: boolean;
+  /** Tên máy khác thấy ("Samsung SM-A546E"). */
+  name: string;
+  port: number;
+  /** Địa chỉ Wi-Fi của điện thoại - để gõ vào máy kia khi nó không tự tìm thấy. */
+  addresses: string[];
+  pairing: { code: string; expiresAt: number } | null;
+  /** Nhập sai mã quá 5 lần: mã bị huỷ, phải tạo mã mới. */
+  blocked: boolean;
+  devices: { id: string; name: string; pairedAt: number; lastSeen: number }[];
+  error: string;
+}
+
 export interface EbookLibraryPlugin {
   info(): Promise<{ root: string }>;
-  discover(options: { timeoutMs?: number }): Promise<{ computers: { host: string; port: number; name: string }[] }>;
+  discover(options: { timeoutMs?: number }): Promise<{ computers: { host: string; port: number; name: string; kind?: string }[] }>;
+  shareStatus(): Promise<ShareStatus>;
+  setShare(options: { enabled: boolean }): Promise<ShareStatus>;
+  sharePair(): Promise<ShareStatus>;
+  shareCancelPairing(): Promise<ShareStatus>;
+  shareRevoke(options: { id: string }): Promise<ShareStatus>;
   pair(options: { host: string; port: number; code: string; device?: string }): Promise<{ name: string }>;
   connection(): Promise<{ paired: boolean; host: string; port: number; name: string }>;
   unpair(): Promise<void>;

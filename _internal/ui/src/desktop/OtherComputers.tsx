@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Laptop, Radar, RefreshCw, Unplug } from "lucide-react";
+import { Laptop, Radar, RefreshCw, Smartphone, Unplug } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/studio/api";
@@ -31,6 +31,8 @@ interface FoundComputer {
   host: string;
   port: number;
   paired: boolean;
+  /** Điện thoại đang bật "Cho máy khác nghe thư viện này" (LibraryServer.kt) cũng trả lời. */
+  kind?: "computer" | "phone";
 }
 
 export function OtherComputers() {
@@ -99,7 +101,11 @@ export function OtherComputers() {
             <ul className="divide-y divide-line rounded-xl border border-line">
               {discover.data.found.map((found) => (
                 <li key={`${found.host}:${found.port}`} className="flex items-center gap-3 px-3 py-2">
-                  <Laptop className="size-5 shrink-0 text-fg-2" />
+                  {found.kind === "phone" ? (
+                    <Smartphone className="size-5 shrink-0 text-fg-2" aria-label="điện thoại" />
+                  ) : (
+                    <Laptop className="size-5 shrink-0 text-fg-2" aria-label="máy tính" />
+                  )}
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-medium">{found.name}</div>
                     <div className="truncate text-xs text-fg-2">
@@ -162,7 +168,8 @@ export function OtherComputers() {
       </form>
       <p className="text-xs leading-relaxed text-fg-3">
         Trên máy kia: Cài đặt → Điện thoại và thiết bị → bật kết nối → “Ghép điện thoại” để lấy mã 6 số; địa chỉ hiện ngay
-        dưới mã. Máy này tên “{data.name}” trong danh sách thiết bị đã ghép của máy kia.
+        dưới mã. Điện thoại Android: màn Tải sách → bật “Cho máy khác nghe thư viện này” → “Ghép máy mới”. Máy này tên
+        “{data.name}” trong danh sách thiết bị đã ghép của máy kia.
       </p>
     </div>
   );
