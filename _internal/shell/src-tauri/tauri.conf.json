@@ -24,10 +24,21 @@
       "csp": null
     }
   },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEREODQ3NUI4OTc2RjkzMjUKUldRbGsyK1h1SFdFM2RMR2traEx3dGtaamZIc1RSMDlHY0JzQnBLa3ordnpBQk5SZlZHTDYxQ3cK",
+      "endpoints": ["https://github.com/ntanhpro1221/ABook/releases/latest/download/latest.json"],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  },
   "bundle": {
     "active": true,
     "targets": ["nsis"],
+    "createUpdaterArtifacts": true,
     "icon": ["../../ebook_reader/assets/ebook_reader.ico", "../../ebook_reader/assets/ebook_reader.png"],
+    "resources": ["resources/python/", "resources/app/"],
     "publisher": "ABook",
     "shortDescription": "Sách nói tiếng Việt",
     "fileAssociations": [
@@ -41,6 +52,7 @@
     ],
     "windows": {
       "nsis": {
+        "installerHooks": "./windows/hooks.nsh",
         "installMode": "currentUser",
         "languages": ["Vietnamese"],
         "displayLanguageSelector": false

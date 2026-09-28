@@ -37,6 +37,10 @@ tiếp tục được. Chỉ đổi khi không có sách nào cần tiếp tục
 ## Đóng gói và đăng
 
 1. Tag git `vX.Y.Z` trên commit phát hành, đẩy tag.
-2. App máy tính: gói cài đặt (Windows); app điện thoại: APK đã ký.
+2. App máy tính: `scripts\build_windows_app.ps1` (không `-TauriConfig` - bản phát hành chỉ nhận cập nhật qua https) ra
+   trong `shell\src-tauri\target\release\bundle\nsis\`: bộ cài `ABook_X.Y.Z_x64-setup.exe`, chữ ký `.sig` (khoá ở
+   `%USERPROFILE%\.abook-keys`, không bao giờ commit) và `latest.json` (ghi chú lấy từ mục `[X.Y.Z]` của CHANGELOG -
+   đổi tên mục trước khi dựng). App điện thoại: APK đã ký.
 3. `gh release create vX.Y.Z` (dùng `GH_TOKEN="$(gh auth token --user ntanhpro1221)"` cho riêng lệnh ấy) với ghi chú ở mục
-   "Tài liệu bắt buộc" và đính kèm gói cài đặt, APK, `LICENSE`, `THIRD_PARTY.md`.
+   "Tài liệu bắt buộc" và đính kèm bộ cài, `.sig`, `latest.json`, APK, `LICENSE`, `THIRD_PARTY.md`. Các bản đã cài đọc
+   `releases/latest/download/latest.json`: Release phải là bản "latest" (không đánh dấu pre-release) thì mới tự cập nhật.

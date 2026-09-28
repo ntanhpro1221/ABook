@@ -65,6 +65,29 @@ cùng các việc qua ống. Cửa sổ Qt giữ nguyên làm lối lui trong b�
   chọn cập nhật ngay hay sau; (2) sau đó - Studio giữ mã của từng phiên bản (`Studio\code\<phiên bản>\`), sách chạy bằng
   đúng mã đã tạo ra nó (khớp theo hash chất lượng), mã cũ xoá khi không còn sách nào cần.
 
+### Cài Studio: làm gì, theo thứ tự (chuyển từ `scripts/setup_windows.ps1`)
+
+`setup_windows.ps1` của bản dev cài qua winget (Git, uv, Ollama, FFmpeg) và ghi vào `_internal\runtime`. App đóng gói
+không được đụng PATH hay cài gì toàn máy, nên mỗi công cụ là một bản ghim cứng (URL + SHA-256) tải vào
+`Studio\tools\`, và mọi bước do host Python làm ở luồng nền (`webui/studio_setup.py`, chưa viết), có tiến độ, làm tiếp
+được sau khi mất mạng hay tắt máy (tải có Range, mỗi bước một dấu hoàn tất ghi atomic):
+
+| bước | nguồn | cỡ |
+|---|---|---|
+| kiểm máy | NVML (`nvml.dll` của driver NVIDIA) - không có GPU NVIDIA thì dừng, nói rõ; ổ đĩa còn ≥ 30 GB | - |
+| uv | bản phát hành GitHub của astral-sh/uv, ghim | ~20 MB |
+| Python 3.11 + venv | `uv python install` + `uv venv` vào `Studio\runtime\.venv` | ~50 MB |
+| thư viện | `uv pip sync` từ danh sách khoá sinh từ `uv.lock` (torch cu128 từ index của PyTorch) | ~6 GB |
+| UTMOSv2 | đúng commit đã khoá, cài từ git: `runtime_contract` đòi `direct_url.json` có `vcs_info.commit_id` (không giả được bằng bản lưu trữ) -> MinGit (bản Git nhúng chính thức của Git for Windows) ghim vào `Studio\tools\git` | ~40 MB |
+| FFmpeg | bản dựng ghim | ~100 MB |
+| Ollama | `ollama-windows-amd64.zip` ghim, chạy ẩn từ `Studio\tools\ollama` (không cài app khay) | ~1,5 GB |
+| model | LLM phân tích (qua Ollama), VieNeu, Whisper turbo + faster-whisper, UTMOSv2 + wav2vec2 + timm (revision khoá) | ~10 GB |
+| kiểm tra | `check_system.py`, dấu `.setup_complete` như bản dev | - |
+
+Worker chạy bằng `Studio\runtime\.venv\Scripts\pythonw.exe`, mã lấy từ thư mục `app` của bản cài (PYTHONPATH),
+`EBOOK_READER_RUNTIME=Studio\runtime`. Hash chất lượng tính trên đúng các file ấy (kể cả `pyproject.toml` + `uv.lock`
+chép vào `app`) - nên cập nhật app đổi file khoá là sách dở không làm tiếp được: xem mục dưới.
+
 ## Cập nhật và ký
 
 - `tauri-plugin-updater`, nguồn `https://github.com/ntanhpro1221/ABook/releases/latest/download/latest.json`.
@@ -96,10 +119,30 @@ Tauri tự tải.
 
 Mỗi bước một commit có test, không bước nào đụng file khoá chất lượng.
 
-1. `webui/host.py` + `PipeDialogs`: host nói giao thức ở trên; test bằng tiến trình con thật và ống.
-2. `_internal/shell/` (Tauri 2): chạy host (bản dev: python của runtime + mã nguồn), mở cửa sổ, hộp thoại, một phiên
-   bản + chuyển file `.abook`, đóng là thoát sạch (không bỏ lại python).
-3. Build + bộ cài NSIS + chạy thử trên máy này (cài vào thư mục riêng, gỡ sạch).
-4. Cập nhật: khoá ngoài repo, `latest.json`, thử nâng từ bản cũ lên bản mới qua một server cục bộ.
+1. XONG 28-09 - `webui/host.py` + `PipeDialogs`: host nói giao thức ở trên; test bằng tiến trình con thật và ống
+   (`tests/test_webui_host.py`).
+2. XONG 28-09 - `_internal/shell/` (Tauri 2.12): chạy host (bản dev: `ABOOK_HOST_PYTHON` + `ABOOK_HOST_APP`, hay python
+   của runtime cạnh mã nguồn), mở cửa sổ, hộp thoại, một phiên bản + chuyển file `.abook`, đóng là thoát sạch.
+3. XONG 28-09 - `scripts/build_windows_app.ps1`: bộ cài 28 MB (tài nguyên 69 MB chưa nén; Qt sẽ là ~350 MB). Đã thử
+   trên máy này bằng bản release: Python nhúng 3.14.7 chạy host, WebView2 hiện thư viện, hộp thoại gốc có chủ là cửa
+   sổ ABook (huỷ -> `null`), lần mở thứ hai thoát ngay và chuyển file `.abook`, đóng cửa sổ -> host thoát. RAM: vỏ
+   ~28 MB + host ~31 MB (+ tiến trình WebView2).
+4. XONG 28-09 - cập nhật: khoá minisign ở `%USERPROFILE%\.abook-keys` (ACL chỉ chủ máy), script dựng ký gói và sinh
+   `latest.json`. Thử trọn trên máy này: cài 0.1.0 (NSIS `/S /D=`), server cục bộ phục vụ 0.1.1, app hiện "Có ABook
+   0.1.1" ở thanh bên + mục Cập nhật, bấm -> vỏ tải + kiểm chữ ký -> dừng host -> bộ cài passive ghi đè cả Python nhúng
+   -> app tự mở lại ở 0.1.1; gỡ sạch (thư mục, khoá gỡ cài đặt, liên kết `.abook`). Bản thử bật
+   `dangerousInsecureTransportProtocol` bằng `-TauriConfig <file>`; bản phát hành chỉ https. Lỗi của mẫu NSIS Tauri
+   tìm ra khi thử: cập nhật cài đè làm bản sao lưu liên kết `.abook` trỏ vào chính ABook, gỡ xong còn liên kết treo ->
+   `shell/src-tauri/windows/hooks.nsh`.
 5. "Cài Studio" + chạy sách bằng Studio; rồi mã theo phiên bản cho sách dở.
 6. Phát hành theo `RELEASING.md` (thêm bộ cài + `latest.json` + APK đã ký).
+
+## Mẹo thử
+
+- Nhìn trang trong cửa sổ vỏ mà không cần điều khiển màn hình: đặt `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=
+  --remote-debugging-port=9333` trước khi mở `ABook.exe`, rồi dùng CDP (`/json/list`, `Runtime.evaluate`,
+  `Page.captureScreenshot`).
+- Đóng cửa sổ bằng WM_CLOSE: gửi vào cửa sổ lớp `Tauri Window`. `Process.MainWindowHandle` của .NET hay trỏ nhầm vào
+  cửa sổ ẩn `Tao Thread Event Target` - đóng "không ăn" là do phép thử, không phải app.
+- Dữ liệu thử: `EBOOK_READER_PREFERENCES=<thư mục tạm>\preferences.json` (host chuyển cho server), `EBOOK_READER_FAKE_RUNNER=1`
+  (không khởi động worker thật), `ABOOK_UPDATE_URL=<latest.json cục bộ>`.

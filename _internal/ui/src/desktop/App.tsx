@@ -198,6 +198,26 @@ function OpenedBookListener() {
   return null;
 }
 
+/** App Windows đóng gói: vỏ tìm thấy bản mới sau khi trang đã mở - đọc lại thông tin app để hiện nút "Cập nhật";
+ *  tải bản mới hỏng (mất mạng, chữ ký sai) thì nói rõ, bấm lại được. */
+function UpdateListener() {
+  const client = useQueryClient();
+  useEffect(() => {
+    const found = () => void client.invalidateQueries({ queryKey: ["app"] });
+    const failed = (event: Event) =>
+      toast.error("Chưa tải được bản mới", {
+        description: `${(event as CustomEvent<string>).detail} - kiểm tra mạng rồi bấm Cập nhật lần nữa.`,
+      });
+    window.addEventListener("abook-update", found);
+    window.addEventListener("abook-update-failed", failed);
+    return () => {
+      window.removeEventListener("abook-update", found);
+      window.removeEventListener("abook-update-failed", failed);
+    };
+  }, [client]);
+  return null;
+}
+
 /** "Mở file sách": hộp chọn file của Windows (chỉ có trong cửa sổ app), nhập vào thư viện, mở trang sách. */
 function OpenBookFileButton({ variant = "secondary" }: { variant?: "secondary" | "ghost" }) {
   const { data: info } = useAppInfo();
@@ -277,6 +297,7 @@ export function App() {
           <ClipBridge>
             <HashRouter>
               <OpenedBookListener />
+              <UpdateListener />
               <Shell>
                 <Routes>
                   <Route path="/" element={<LibraryRoute />} />
