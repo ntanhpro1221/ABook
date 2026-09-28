@@ -99,6 +99,30 @@ class BackgroundRunner:
             return False
 
 
+class StudioRunner(BackgroundRunner):
+    """App Windows đóng gói (webui/host.py): sách chạy bằng Python của Studio tải thêm (webui/studio_setup.py) và đúng
+    bản mã đã bắt đầu cuốn ấy (`code_for` - app tự cập nhật không làm hỏng sách dở). Python nhúng của app chỉ có phần
+    nghe. Supervisor là con của host nên thừa hưởng môi trường: runtime của Studio, PYTHONPATH tới bản mã, Ollama."""
+
+    def __init__(self, setup: Any) -> None:
+        self.setup = setup
+
+    def start(self, project_root: Path) -> None:
+        if not self.setup.installed():
+            raise RuntimeError("Máy này chưa cài Studio - vào Dự án, bấm \"Cài Studio\" (một lần, khoảng 20 GB).")
+        outdated = self.setup.status()["outdated"]
+        if outdated:
+            # Bản ghim đổi vì bản cũ làm hỏng sách (vd Ollama 0.34.4 - studio_setup.OLLAMA): không chạy bằng bản cũ.
+            raise RuntimeError(f"Studio cần cập nhật ({', '.join(outdated)}) trước khi làm sách - vào Dự án, bấm "
+                               "\"Cập nhật Studio\".")
+        from ..background_runner import start_background
+
+        os.environ.update(self.setup.environment(self.setup.code_for(project_root)))
+        # Ollama riêng của Studio chạy trước (home trong Studio); dây chuyền thấy nó đang nghe nên không tự bật bản khác.
+        self.setup.ensure_ollama()
+        start_background(project_root, python_executable=self.setup.pythonw)
+
+
 class FakeRunner:
     """Giả chạy/dừng cho lúc phát triển giao diện - không đụng tiến trình hay file nào của sách."""
 
@@ -217,7 +241,7 @@ def first_person_hint(paths: list[str]) -> dict[str, Any]:
 
 
 def create_book(library_root: Path, paths: list[str], title: str, profile: str, narrator: str,
-                first_person: str = "") -> Path:
+                first_person: str = "", settings_overrides: dict[str, Any] | None = None) -> Path:
     from ..character_registry import PRONOUNS, normalize_name
     from ..config import build_settings
     from ..project import create_or_open_project
@@ -235,7 +259,10 @@ def create_book(library_root: Path, paths: list[str], title: str, profile: str, 
         # Cùng cài đặt với `cli create --first-person`: prompt phân tích nói cho model biết "tôi" là ai, và sau phân
         # tích các nhãn đại từ được gộp về người ấy.
         voices["first_person_identity"] = first_person
-    settings = build_settings(profile, {"voices": voices} if voices else None)
+    overrides: dict[str, Any] = dict(settings_overrides or {})  # app đóng gói: Ollama riêng của Studio
+    if voices:
+        overrides["voices"] = voices
+    settings = build_settings(profile, overrides or None)
     library_root.mkdir(parents=True, exist_ok=True)
     paths_created, _db, _settings = create_or_open_project(files, library_root, settings, title.strip() or None)
     return paths_created.root

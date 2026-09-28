@@ -163,6 +163,8 @@ export interface AppInfo {
   remote?: boolean;
   /** App Windows đóng gói (webui/host.py): bản mới vỏ Tauri tìm thấy trên GitHub Releases, chờ người dùng bấm cài. */
   update?: { version: string; notes: string } | null;
+  /** App Windows đóng gói: Studio (thư viện + model làm sách) tải thêm đã cài chưa. null: bản dev (runtime cạnh mã). */
+  studio?: { installed: boolean; outdated?: boolean } | null;
   libraryRoot: string;
   theme: "system" | "light" | "dark";
   playbackRate: number;
