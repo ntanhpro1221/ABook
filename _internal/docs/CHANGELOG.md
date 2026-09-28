@@ -7,6 +7,15 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- **Nghe sách của máy tính trong trình duyệt** của bất kỳ máy nào đã ghép - iPhone, iPad, TV, máy tính khác: mở
+  `http://<máy tính>:47630`, nhập mã 6 số như ghép điện thoại. Không cần bật "Cho phép điều khiển sản xuất": thiết bị
+  chỉ nghe thấy Thư viện, trình phát, dấu trang, đọc theo - không có Studio, không thấy thư mục trên máy tính. Bật
+  quyền điều khiển sản xuất cho thiết bị ấy thì Studio hiện ra như trước.
+- Bluetooth và điều khiển từ xa **đáng tin hơn**: tua hay đổi chương khi nghe thẳng qua Bluetooth không còn làm kết nối
+  nghẽn dần; trả lời chậm (lệnh điều khiển chờ tới 25 giây) không còn bị cắt ngang; bật Bluetooth trên máy tính hay
+  điện thoại sau khi đã mở app là tự kết nối được, không phải tắt mở lại. Lệnh "dừng", "phát"... gửi sang máy khác
+  không còn rơi khi mạng chập chờn đúng lúc bấm (máy nhận làm mỗi lệnh đúng một lần). Hai điện thoại cùng đời máy đang
+  nghe hai thứ khác nhau hiện hai thanh riêng.
 - **Kết nối điện thoại với máy tính qua Bluetooth** khi không chung Wi-Fi: ghép hai máy trong Cài đặt Bluetooth của hệ
   điều hành, rồi trên điện thoại vào Tải sách → "Không chung Wi-Fi? Kết nối qua Bluetooth" → chọn máy tính → nhập mã 6 số
   như thường. Nghe thẳng, tải sách, đồng bộ chỗ nghe và điều khiển trình phát đều chạy qua Bluetooth (tải cả chương chậm
