@@ -54,6 +54,9 @@ MAX_BODY = 2 * 1024 * 1024
 REMOTE_WAIT_SECONDS = 25  # trần của một lần "hỏi dài"; điện thoại đặt thời gian chờ đọc dài hơn thế
 PRESENCE_SECONDS = 40  # quá ngần này không nghe tin (hỏi dài chỉ kéo 25 giây) là điện thoại đã đi
 COMMAND_SECONDS = 15  # lệnh chưa tới tay điện thoại sau ngần này thì bỏ: "dừng" tới trễ hai phút là một cú giật mình
+# Lệnh đã giao mà chưa thấy kết quả (`acks`) sau ngần này thì giao lại: lần trả lời trước có thể đã rơi (mạng / Bluetooth
+# đứt giữa lúc hỏi dài - máy chủ không biết, lần hỏi mồ côi vẫn nhận lệnh). Máy nhận bỏ qua lệnh trùng mã.
+REDELIVER_SECONDS = 5
 REMOTE_ACTIONS = frozenset({"play", "pause", "toggle", "skip", "seek", "next", "previous", "jump", "rate", "load"})
 BOOK_ID = re.compile(r"[A-Za-z0-9_-]{1,700}")  # base64 của đường dẫn thư mục sách (library.book_id)
 LOCAL_PLAYER = "local"  # trình phát trong giao diện của chính máy này, một "thiết bị" của Remote riêng
@@ -131,6 +134,10 @@ class Remote:
     phát, điện thoại gửi trạng thái lên `/sync/v1/remote` và để yêu cầu treo tới `wait` giây; có lệnh là máy tính trả
     lời NGAY, nên bấm "dừng" trên máy tính thì điện thoại dừng sau một lượt mạng chứ không đợi tới nhịp hỏi sau. Điện
     thoại đổi trạng thái (phát, dừng, tua, sang chương) thì gửi thêm một lần `wait=0` để máy tính thấy liền.
+
+    Lệnh ở lại tới khi máy nhận báo kết quả (`acks` - nó gửi lại 20 giây) hay quá COMMAND_SECONDS: lần báo nào của nó
+    cũng nhận được lệnh chưa giao, còn lệnh đã giao mà REDELIVER_SECONDS chưa thấy kết quả thì giao lại - kết nối đứt giữa
+    lúc hỏi dài không làm rơi lệnh. Máy nhận làm mỗi mã lệnh một lần.
     """
 
     def __init__(self) -> None:
@@ -140,27 +147,40 @@ class Remote:
         self._generation = 0
 
     def report(self, device: str, name: str, report: dict[str, Any], wait: Any = 0.0) -> list[dict[str, Any]]:
-        """Ghi trạng thái của một điện thoại, trả các lệnh đang chờ nó (chờ tối đa `wait` giây nếu chưa có)."""
+        """Ghi trạng thái của một điện thoại, trả các lệnh cần giao cho nó (chờ tối đa `wait` giây nếu chưa có)."""
         deadline = time.time() + _number(wait, 0.0, REMOTE_WAIT_SECONDS)
+        presence = _presence(report)
         with self._changed:
             generation = self._generation
-            self._presence[device] = {**_presence(report), "device": device, "name": name, "at": time.time()}
-            while self._generation == generation and not self._pending(device):
+            self._presence[device] = {**presence, "device": device, "name": name, "at": time.time()}
+            done = {ack["id"] for ack in presence["acks"]}
+            if done and device in self._commands:
+                self._commands[device] = [command for command in self._commands[device] if command["id"] not in done]
+            due: list[dict[str, Any]] = []
+            while self._generation == generation:
+                due, retry_in = self._due(device)
                 left = deadline - time.time()
-                if left <= 0:
+                if due or left <= 0:
                     break
-                self._changed.wait(left)
-            commands = self._pending(device)
-            self._commands.pop(device, None)
-            return commands
+                self._changed.wait(left if retry_in is None else min(left, retry_in))
+            now = time.time()
+            for command in due:
+                command["delivered"] = now
+            return [{key: value for key, value in command.items() if key != "delivered"} for command in due]
 
-    def _pending(self, device: str) -> list[dict[str, Any]]:
-        fresh = [command for command in self._commands.get(device, []) if time.time() - command["at"] <= COMMAND_SECONDS]
+    def _due(self, device: str) -> tuple[list[dict[str, Any]], float | None]:
+        """Lệnh cần giao ngay (chưa giao, hay giao đã lâu mà chưa thấy kết quả), và bao lâu nữa thì có lệnh cần giao lại."""
+        now = time.time()
+        fresh = [command for command in self._commands.get(device, []) if now - command["at"] <= COMMAND_SECONDS]
         if fresh:
             self._commands[device] = fresh
         else:
             self._commands.pop(device, None)
-        return fresh
+        due = [command for command in fresh
+               if command.get("delivered") is None or now - command["delivered"] >= REDELIVER_SECONDS]
+        waits = [REDELIVER_SECONDS - (now - command["delivered"]) for command in fresh
+                 if command.get("delivered") is not None and now - command["delivered"] < REDELIVER_SECONDS]
+        return due, (max(0.05, min(waits)) if waits else None)
 
     def send(self, device: str, command: dict[str, Any]) -> dict[str, Any]:
         """Xếp một lệnh cho điện thoại. `LookupError` nếu nó không còn ở đó: lệnh gửi vào khoảng không thì người dùng

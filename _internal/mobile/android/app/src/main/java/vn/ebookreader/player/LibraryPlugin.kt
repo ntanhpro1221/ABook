@@ -206,6 +206,8 @@ class LibraryPlugin : Plugin() {
 
     private fun shareView(): JSObject {
         LibraryServer.init(context)
+        // Màn hình hỏi trạng thái sau khi người dùng vừa cho quyền "Thiết bị ở gần" hay vừa bật Bluetooth: thử nghe lại.
+        if (LibraryServer.running()) BluetoothShare.retry()
         val devices = JSArray()
         val list = LibraryServer.devices()
         for (index in 0 until list.length()) devices.put(JSObject.fromJSONObject(list.getJSONObject(index)))
@@ -258,6 +260,7 @@ class LibraryPlugin : Plugin() {
 
     @PluginMethod
     fun unpair(call: PluginCall) {
+        prefs.getString("host", null)?.takeIf { it.startsWith("bt:") }?.let { BluetoothLink.forget(it) }
         prefs.edit().clear().apply()
         call.resolve()
     }
@@ -605,7 +608,10 @@ class LibraryPlugin : Plugin() {
     /** Mở một cuốn chưa tải: gói sách mới nhất từ máy tính (mạng lỗi thì bản đã cất), bìa ngay; dàn nhân vật và câu mẫu
      *  lấy ở luồng nền để màn sách hiện ra không phải chờ chúng. */
     private fun openStreamed(id: String): JSONObject {
-        val manifest = runCatching { Streaming.fetchManifest(context, id) }.getOrNull()
+        // Sách của thiết bị ghép chưa từng mở thư viện của nó ở đây (chưa có stream.json): mã `p<key>_<mã bên ấy>` nói
+        // nguồn - "Nghe ở đây" từ thanh trình phát của máy kia đi thẳng tới đó thay vì hỏi nhầm máy tính chính.
+        val peer = Peers.sourceOf(context, id)
+        val manifest = runCatching { Streaming.fetchManifest(context, id, peer?.first, peer?.second) }.getOrNull()
             ?: Store.streamManifest(id)
             ?: throw IllegalStateException("Cuốn này nằm trên máy tính - kết nối cùng mạng với máy tính để nghe")
         if (manifest.optJSONObject("cover") != null && !Store.file(id, "cover.jpg").isFile) Streaming.fetchSmall(context, id, "cover.jpg")

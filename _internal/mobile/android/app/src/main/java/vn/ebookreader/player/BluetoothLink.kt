@@ -2,12 +2,17 @@ package vn.ebookreader.player
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothClass
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothServerSocket
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
+import androidx.core.content.ContextCompat
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
@@ -15,6 +20,7 @@ import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.Socket
 import java.util.UUID
+import java.util.concurrent.Executors
 
 /**
  * Kết nối máy tính (hay điện thoại khác) qua Bluetooth - chủ sách 27-09: "stream Bluetooth để sau là vẫn phải làm đấy nhé".
@@ -58,16 +64,34 @@ object BluetoothLink {
         gateways.getOrPut(address) { Gateway(context.applicationContext, address) }
 
     fun lastError(address: String): String = synchronized(this) { gateways[address]?.lastError.orEmpty() }
+
+    /** Thôi ghép máy `address` (hay "bt:<address>"): đóng cổng cục bộ và kết nối RFCOMM của nó. */
+    fun forget(address: String) {
+        val gateway = synchronized(this) { gateways.remove(address.removePrefix("bt:")) }
+        gateway?.close()
+    }
 }
 
 private class Gateway(private val context: Context, private val address: String) {
+    companion object {
+        const val RETRY_MILLIS = 10_000L // vừa hỏng (ngoài tầm, máy kia tắt Bluetooth): trả lỗi ngay, không quay số lại
+        const val IDLE_MILLIS = 60_000L // không luồng nào mở ngần này thì đóng RFCOMM - mở lại khi cần
+    }
+
     private val server = bind()
     val port: Int = server.localPort
     @Volatile var lastError = ""
     private var mux: BtMux? = null
+    private var failedAt = 0L
+    @Volatile private var lastUsed = System.currentTimeMillis()
+    @Volatile private var closed = false
+    // Mỗi kết nối cục bộ chờ đường hầm ở luồng riêng: một lần quay số RFCOMM chậm (vài giây khi máy kia ngoài tầm) không
+    // làm các kết nối sau xếp hàng sau luồng accept.
+    private val workers = Executors.newCachedThreadPool()
 
     init {
         Thread({ accept() }, "bt-gateway").apply { isDaemon = true }.start()
+        Thread({ reap() }, "bt-gateway-idle").apply { isDaemon = true }.start()
     }
 
     /** Cổng ổn định theo địa chỉ: trình phát giữ URL qua các lần mở lại đường hầm. Bận thì để hệ thống chọn. */
@@ -78,45 +102,91 @@ private class Gateway(private val context: Context, private val address: String)
     }
 
     private fun accept() {
-        while (true) {
+        while (!closed) {
             val client = try {
                 server.accept()
             } catch (_: IOException) {
                 return
             }
-            try {
-                link().open(client)
-            } catch (error: IOException) {
-                lastError = error.message ?: "không kết nối được qua Bluetooth"
-                runCatching { client.close() }
-            } catch (error: SecurityException) {
-                lastError = "Chưa cho ABook dùng Bluetooth"
-                runCatching { client.close() }
-            }
+            workers.execute { carry(client) }
+        }
+    }
+
+    private fun carry(client: Socket) {
+        try {
+            link().open(client)
+            lastUsed = System.currentTimeMillis()
+        } catch (error: IOException) {
+            lastError = error.message ?: "không kết nối được qua Bluetooth"
+            runCatching { client.close() }
+        } catch (_: SecurityException) {
+            lastError = "Chưa cho ABook dùng Bluetooth"
+            runCatching { client.close() }
+        } catch (error: Exception) { // địa chỉ hỏng, Bluetooth stack lỗi...: không được làm sập app
+            lastError = "Không kết nối được qua Bluetooth: ${error.message ?: error.javaClass.simpleName}"
+            runCatching { client.close() }
         }
     }
 
     @Synchronized
     @SuppressLint("MissingPermission")
     private fun link(): BtMux {
+        if (closed) throw IOException("Đã thôi ghép máy này")
         mux?.takeIf { it.alive }?.let { return it }
+        val now = System.currentTimeMillis()
+        if (now - failedAt < RETRY_MILLIS) throw IOException(lastError.ifBlank { "Không kết nối được qua Bluetooth" })
         val adapter = context.getSystemService(BluetoothManager::class.java)?.adapter
             ?: throw IOException("Điện thoại này không có Bluetooth")
         if (!adapter.isEnabled) throw IOException("Bluetooth của điện thoại đang tắt")
         // cancelDiscovery đòi BLUETOOTH_SCAN trên Android 12+ (mình không dò tìm nên không xin quyền ấy): chỉ là tối ưu.
         runCatching { adapter.cancelDiscovery() }
-        val socket = adapter.getRemoteDevice(address).createRfcommSocketToServiceRecord(BluetoothLink.SERVICE)
+        val socket = try {
+            adapter.getRemoteDevice(address).createRfcommSocketToServiceRecord(BluetoothLink.SERVICE)
+        } catch (error: IllegalArgumentException) {
+            failedAt = now
+            throw IOException("Địa chỉ Bluetooth không hợp lệ: $address", error)
+        }
         try {
             socket.connect()
         } catch (error: IOException) {
             runCatching { socket.close() }
-            throw IOException("Không kết nối được qua Bluetooth - máy kia có bật ABook và Bluetooth không?", error)
+            failedAt = System.currentTimeMillis()
+            lastError = "Không kết nối được qua Bluetooth - máy kia có bật ABook và Bluetooth không?"
+            throw IOException(lastError, error)
         }
         val fresh = BtMux(socket.inputStream, socket.outputStream, { socket.close() })
         Thread({ fresh.run() }, "bt-link").apply { isDaemon = true }.start()
         lastError = ""
+        failedAt = 0L
+        lastUsed = System.currentTimeMillis()
         mux = fresh
         return fresh
+    }
+
+    /** Đóng RFCOMM khi không còn luồng nào mở đã IDLE_MILLIS: không giữ sóng Bluetooth (và pin) cho máy không ai dùng. */
+    private fun reap() {
+        while (!closed) {
+            try {
+                Thread.sleep(15_000)
+            } catch (_: InterruptedException) {
+                return
+            }
+            val current = synchronized(this) { mux }
+            if (current != null && current.alive && current.openStreams == 0 &&
+                System.currentTimeMillis() - lastUsed > IDLE_MILLIS
+            ) {
+                current.shutdown()
+            } else if (current != null && current.openStreams > 0) {
+                lastUsed = System.currentTimeMillis()
+            }
+        }
+    }
+
+    fun close() {
+        closed = true
+        runCatching { server.close() }
+        synchronized(this) { mux }?.shutdown()
+        workers.shutdownNow()
     }
 }
 
@@ -125,19 +195,36 @@ private class Gateway(private val context: Context, private val address: String)
  * cùng UUID dịch vụ ABook; mỗi máy kết nối là một BtMux nối vào LibraryServer của chính điện thoại - điện thoại khác (hay
  * máy tính) nghe thư viện này, đồng bộ chỗ nghe, điều khiển trình phát qua Bluetooth như qua Wi-Fi. Chỉ máy đã ghép
  * Bluetooth mới kết nối được (listenUsingRfcommWithServiceRecord là kênh có xác thực), rồi mới tới mã 6 số.
+ *
+ * Tắt Bluetooth thì thôi nghe và nói rõ; bật lại (ACTION_STATE_CHANGED) thì tự nghe lại khi chia sẻ còn bật.
  */
 object BluetoothShare {
     private var server: BluetoothServerSocket? = null
     private val links = mutableSetOf<BtMux>()
+    private var wanted = false
+    private var appContext: Context? = null
+    private var watching = false
 
     /** "" = chưa bật; "running"; hay lý do đọc được (tắt Bluetooth, chưa cho quyền...). */
     @Volatile
     var status = ""
         private set
 
+    private val radio = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            when (intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)) {
+                BluetoothAdapter.STATE_ON -> synchronized(this@BluetoothShare) { if (wanted) runCatching { start(context) } }
+                BluetoothAdapter.STATE_TURNING_OFF, BluetoothAdapter.STATE_OFF -> dropListener("Bluetooth của điện thoại đang tắt")
+            }
+        }
+    }
+
     @Synchronized
     @SuppressLint("MissingPermission")
     fun start(context: Context) {
+        wanted = true
+        appContext = context.applicationContext
+        watch(context.applicationContext)
         if (server != null) return
         if (!BluetoothLink.permitted(context)) {
             status = "Chưa cho ABook dùng \"Thiết bị ở gần\" - bật trong phần Bluetooth"
@@ -157,7 +244,7 @@ object BluetoothShare {
         } catch (error: IOException) {
             status = "Không mở được Bluetooth: ${error.message}"
             return
-        } catch (error: SecurityException) {
+        } catch (_: SecurityException) {
             status = "Chưa cho ABook dùng Bluetooth"
             return
         }
@@ -166,11 +253,27 @@ object BluetoothShare {
         Thread({ accept(socket) }, "bt-share").apply { isDaemon = true }.start()
     }
 
+    /** Thử lại khi màn hình hỏi trạng thái (vừa cho quyền "Thiết bị ở gần", vừa bật Bluetooth). */
+    @Synchronized
+    fun retry() {
+        val context = appContext ?: return
+        if (wanted && server == null) runCatching { start(context) }
+    }
+
+    private fun watch(context: Context) {
+        if (watching) return
+        watching = true
+        ContextCompat.registerReceiver(context, radio, IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED),
+            ContextCompat.RECEIVER_NOT_EXPORTED)
+    }
+
     private fun accept(socket: BluetoothServerSocket) {
         while (true) {
             val link = try {
                 socket.accept()
             } catch (_: IOException) {
+                // Tắt Bluetooth, hay stop(): bỏ socket hỏng để lần bật lại mở socket mới - không báo "đang chạy" mãi.
+                dropListener("Bluetooth ngừng nghe - sẽ tự mở lại khi Bluetooth bật", socket)
                 return
             }
             val mux = BtMux(link.inputStream, link.outputStream, { link.close() },
@@ -186,10 +289,20 @@ object BluetoothShare {
         }
     }
 
+    @Synchronized
+    private fun dropListener(reason: String, only: BluetoothServerSocket? = null) {
+        val current = server ?: return
+        if (only != null && only !== current) return
+        server = null
+        runCatching { current.close() }
+        if (wanted) status = reason
+    }
+
     fun connections(): Int = synchronized(links) { links.size }
 
     @Synchronized
     fun stop() {
+        wanted = false
         runCatching { server?.close() }
         server = null
         status = ""

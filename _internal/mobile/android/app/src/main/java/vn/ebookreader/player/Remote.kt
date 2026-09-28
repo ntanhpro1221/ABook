@@ -14,6 +14,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -37,6 +38,8 @@ object Remote {
     private val running = AtomicBoolean(false)
     private val kickQueued = AtomicBoolean(false)
     private val acks = ArrayDeque<Pair<Long, JSONObject>>()
+    // Mã lệnh đã nhận: máy tính giao lại lệnh chưa thấy kết quả (lần trả lời trước có thể đã rơi) - mỗi mã làm một lần.
+    private val handled = LinkedHashMap<String, Long>()
     private var service: ListenableFuture<MediaController>? = null
 
     /** App đang hiện trên màn hình (MainActivity): mở app là máy tính thấy điện thoại, kể cả khi chưa phát gì. */
@@ -120,15 +123,20 @@ object Remote {
     /** Lệnh từ một máy đã ghép gửi THẲNG tới điện thoại (LibraryServer, POST /sync/v1/player - mạng trạm bước 4): làm ở
      *  luồng chính như lệnh của máy tính chính, trả lý do nếu không làm được. Chờ tối đa 5 giây. */
     fun applyNow(command: JSONObject): String? {
-        val result = AtomicReference<String?>("Điện thoại không trả lời kịp")
+        val result = AtomicReference<String?>(null)
+        val claim = AtomicInteger(0) // 0 chờ, 1 đã bắt đầu làm, 2 bên gọi đã bỏ
         val done = CountDownLatch(1)
         Playback.onMain {
+            // Đã báo "không kịp" thì KHÔNG làm muộn: người bấm đã được bảo lệnh không thành, nó không được tự xảy ra sau.
+            if (!claim.compareAndSet(0, 1)) return@onMain
             result.set(runCatching { apply(command) }.getOrElse { it.message ?: it.javaClass.simpleName })
             done.countDown()
             kick()
         }
-        done.await(5, TimeUnit.SECONDS)
-        return result.get()
+        if (done.await(5, TimeUnit.SECONDS)) return result.get()
+        if (claim.compareAndSet(0, 2)) return "Điện thoại không trả lời kịp"
+        // Đã bắt đầu làm (luồng chính chậm): chờ kết quả thật thay vì báo sai.
+        return if (done.await(10, TimeUnit.SECONDS)) result.get() else "Điện thoại vẫn đang làm lệnh này"
     }
 
     /** Trạng thái trình phát, đọc ở luồng chính (ExoPlayer chỉ cho đọc từ luồng của nó). */
@@ -148,8 +156,21 @@ object Remote {
         File(Store.root, "books").listFiles()?.filter { File(it, "book.json").isFile }?.forEach { array.put(it.name) }
     }
 
-    private fun execute(commands: JSONArray?) {
-        if (commands == null || commands.length() == 0) return
+    private fun execute(received: JSONArray?) {
+        if (received == null || received.length() == 0) return
+        val commands = JSONArray()
+        synchronized(handled) {
+            val now = System.currentTimeMillis()
+            handled.entries.removeAll { now - it.value > 60_000L }
+            for (index in 0 until received.length()) {
+                val command = received.optJSONObject(index) ?: continue
+                val id = command.optString("id")
+                if (id.isNotEmpty() && handled.containsKey(id)) continue
+                if (id.isNotEmpty()) handled[id] = now
+                commands.put(command)
+            }
+        }
+        if (commands.length() == 0) return
         // Việc mạng làm ở đây (luồng hỏi), trước khi sang luồng chính: "Phát trên điện thoại" một cuốn chưa tải thì lấy
         // gói sách từ máy tính để nghe thẳng.
         val fetchProblems = mutableMapOf<String, String>()

@@ -63,6 +63,11 @@ object Peers {
      *  trong [A-Za-z0-9_-] - thư viện của chính điện thoại này phục vụ lại được). */
     fun localId(key: String, remoteId: String) = "p${key}_$remoteId"
 
+    /** Ngược của `localId` cho một thiết bị đang ghép: (key, mã bên ấy), hay null nếu không phải sách của thiết bị ghép. */
+    fun sourceOf(context: Context, localId: String): Pair<String, String>? =
+        all(context).keys().asSequence().firstOrNull { localId.startsWith("p${it}_") }
+            ?.let { it to localId.removePrefix("p${it}_") }
+
     /** Ghép bằng mã 6 số đang hiện trên thiết bị kia (điện thoại: màn Tải sách; máy tính: Cài đặt). Ghép lại cùng địa chỉ
      *  thì thay chỗ cũ - sách đã tải và chỗ nghe giữ nguyên. */
     fun pair(context: Context, host: String, port: Int, code: String): JSONObject {
@@ -82,6 +87,7 @@ object Peers {
     /** Thôi ghép: bỏ mã thiết bị và mọi sách CHƯA TẢI (chỉ nghe thẳng) của thiết bị ấy; sách đã tải giữ lại. */
     fun forget(context: Context, key: String) {
         val peers = all(context)
+        peers.optJSONObject(key)?.optString("host")?.takeIf { it.startsWith("bt:") }?.let { BluetoothLink.forget(it) }
         peers.remove(key)
         save(context, peers)
         File(Store.root, "books").listFiles()?.filter { it.name.startsWith("p${key}_") }?.forEach { dir ->
