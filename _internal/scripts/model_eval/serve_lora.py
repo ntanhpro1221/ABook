@@ -50,7 +50,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--quantize", default="",
                         help="nén lúc `ollama create`, vd q4_K_M (dùng với --outtype f16): 8B ở q8_0 nặng 8,7 GB, "
                              "không vừa card 8 GB")
+    parser.add_argument("--gguf", type=Path, default=None,
+                        help="GGUF đã gộp sẵn (xuất trên máy Modal bằng modal_train.py --gguf): bỏ bước gộp + chuyển, chỉ "
+                             "dựng Modelfile và `ollama create`")
     args = parser.parse_args(argv)
+    if args.gguf is not None:
+        return create_in_ollama(args, args.gguf)
     if not args.base_only and args.adapter is None:
         parser.error("cần --adapter (hoặc --base-only với --base)")
     if args.base_only and not args.base:
@@ -93,6 +98,13 @@ def main(argv: list[str] | None = None) -> int:
         print(convert.stdout[-2000:], convert.stderr[-2000:])
         raise SystemExit("chuyển GGUF thất bại")
 
+    code = create_in_ollama(args, gguf)
+    if not args.keep_merged and not args.base_only:
+        shutil.rmtree(merged, ignore_errors=True)
+    return code
+
+
+def create_in_ollama(args: argparse.Namespace, gguf: Path) -> int:
     modelfile = GGUF_DIR / f"{args.name}.Modelfile"
     if args.like:
         from ollama_like import modelfile_like  # cùng thư mục scripts/model_eval (sys.path[0])
@@ -107,8 +119,6 @@ def main(argv: list[str] | None = None) -> int:
     if create.returncode != 0:
         print(create.stdout[-2000:], create.stderr[-2000:])
         raise SystemExit("ollama create thất bại")
-    if not args.keep_merged and not args.base_only:
-        shutil.rmtree(merged, ignore_errors=True)
     print(f"  xong: ollama model `{args.name}`")
     print(f"  chấm: runtime/.venv/Scripts/python.exe scripts/model_eval/eval_models.py --models {args.name} ...")
     return 0

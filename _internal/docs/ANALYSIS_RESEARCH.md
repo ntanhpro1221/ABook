@@ -131,6 +131,16 @@ WSL (192.168.0.1/20) trùng cổng wifi 192.168.0.1 nên WSL không ra mạng - 
 (`LLM_Train/scripts/fetch_hf.py`), WSL chạy OFFLINE; xuất GGUF 8B cũng làm bên Windows (`serve_lora.py --like qwen3:8b
 --quantize q4_K_M`, gộp CPU với bản gốc 16-bit).
 
+**Lên đám mây (28-09 13:xx, chủ sách: "thử cả 9b đi / 8b, 4b thì huấn luyện", "sử dụng hết tài nguyên").** Cùng data_v3, cùng
+`train_lora_unsloth.py` (thêm `--load-16bit`, `--time-limit-hours`, fp16 khi card không có bf16):
+- Kaggle (miễn phí 30 giờ/tuần, T4 16 GB): 8B QLoRA trên nền 4-bit "dynamic" của Unsloth - ~100 s/bước, ~6 giờ/epoch. L4 không
+  cấp cho tài khoản miễn phí (`machine_shape` bị bỏ qua); Qwen3.5 trên T4 phải float32 nên 9B không chạy được ở Kaggle.
+- Modal (30 USD/tháng, spend limit 0): L40S 48 GB. Qwen3.5-9B LoRA 16-bit (Unsloth không khuyên 4-bit cho Qwen3.5): **12 s/bước,
+  ~45 phút/epoch, ~1,5 USD** - nhanh hơn card nhà ~5 lần và rẻ, nên mọi thử nghiệm huấn luyện chuyển lên đây (4B 1 và 2 epoch
+  16-bit, 8B 16-bit); GPU nhà dành trọn cho ĐO - chỗ nghẽn thật. Xuất GGUF làm ngay trên Modal (`modal_train.py --gguf`).
+- Card nhà khi huấn luyện 4B: màn hình + app chiếm ~1,5 GB, trần `--vram-cap 0.95` làm driver tràn VRAM sang RAM (38 -> 295
+  s/bước); dùng 0,78.
+
 ## Cách đo
 
 - Đáp án chuẩn: 43 chương / 10 truyện (`scripts/model_eval/gold/`, `docs/GOLD_GUIDE.md`), Claude làm, phân xử theo
