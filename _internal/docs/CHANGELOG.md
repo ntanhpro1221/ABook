@@ -7,6 +7,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Làm sách: Studio phân tích bằng **model riêng của ABook** (`abook-analyzer`, học từ đáp án soát tay của dự án) thay cho
+  qwen3:8b - đoán đúng người nói nhiều hơn rõ ở light novel và truyện mạng (bộ đo 6 chương LN chưa học: 64% câu thoại đúng
+  người, qwen3:8b 49%), mà nhẹ hơn. Thiếu model thì Studio tự tải từ Hugging Face. Sách đang làm dở giữ model đã bắt đầu nó.
+- Làm sách: tên nhân vật mà model phân tích viết sai **ở mọi câu** (vd "GAST" cho Glast) được viết lại theo tên trong sách,
+  nên danh sách nhân vật hiện đúng tên.
+- Làm sách: lời kể nói về **lời nguyền** ("bị nguyền rủa", "lời nguyền rủa") không còn bị đọc bằng giọng tức giận - chỉ
+  người đang nguyền rủa ("thầm nguyền rủa", "đáng nguyền rủa") mới là giận. Câu thoại mở bằng "(" ngay sau lời thoại của
+  người khác được hiểu là một lượt nói mới, không gộp vào người vừa nói.
 - **Tự chọn đường Wi-Fi hay Bluetooth**: ghép điện thoại với máy tính một lần (qua Wi-Fi hay Bluetooth) là đủ - khi
   cùng Wi-Fi thì đi Wi-Fi, ra khỏi nhà thì tự đi Bluetooth (nếu hai máy đã ghép Bluetooth và máy tính bật Bluetooth),
   không phải ghép lại. Yêu cầu nào hỏng lúc nối qua Wi-Fi thì thử lại ngay qua Bluetooth.
