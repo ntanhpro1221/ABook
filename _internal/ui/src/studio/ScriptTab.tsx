@@ -8,7 +8,7 @@ import { hueOf } from "@/listen/BookScreen";
 import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
-import { EmptyState, IconButton, Kbd, Segmented, Skeleton } from "@/shared/ui";
+import { Button, EmptyState, IconButton, Kbd, Segmented, Skeleton } from "@/shared/ui";
 import { api, urls } from "./api";
 
 // Tab "Kịch bản" (webui/casting_review.py, docs/STUDIO_REVIEW.md mục 3): đọc cả chương như kịch bản - câu nào của ai - và
@@ -50,6 +50,25 @@ interface Line {
   hasAudio: boolean;
   hint: Hint | null;
   wish: Wish | null;
+  /** Cảm xúc / mức của câu (sách đời cũ không có: null) và yêu cầu sửa cách đọc của người nghe. */
+  emotion: string | null;
+  intensity: number | null;
+  lineWish: LineWish | null;
+}
+
+interface LineWish {
+  kind: string;
+  emotion: string;
+  intensity: number | null;
+  state: "pending" | "applied" | "refused";
+  reason?: string;
+}
+
+interface Delivery {
+  kind?: string;
+  emotion?: string;
+  intensity?: number;
+  speaker?: string;
 }
 
 interface ChapterScript {
@@ -90,6 +109,32 @@ const FIXED: Person[] = [
 ];
 // Gán nhanh bằng phím số: người nói nhiều nhất của chương đứng trước.
 const HOTKEYS = 9;
+// Bộ cảm xúc của khâu phân tích (analysis.ALLOWED_EMOTIONS) và bốn mức cường độ.
+const EMOTIONS: [string, string][] = [
+  ["neutral", "Bình thường"],
+  ["happy", "Vui"],
+  ["sad", "Buồn"],
+  ["angry", "Giận"],
+  ["afraid", "Sợ"],
+  ["surprised", "Ngạc nhiên"],
+  ["tender", "Dịu dàng"],
+  ["sarcastic", "Mỉa mai"],
+  ["excited", "Hào hứng"],
+  ["tired", "Mệt mỏi"],
+  ["whispering", "Thì thầm"],
+];
+const EMOTION_LABEL = Object.fromEntries(EMOTIONS) as Record<string, string>;
+const LEVELS = ["Nhẹ", "Vừa", "Mạnh", "Rất mạnh"];
+const KINDS = [
+  { value: "narration", label: "Lời kể" },
+  { value: "dialogue", label: "Lời thoại" },
+  { value: "thought", label: "Nội tâm" },
+];
+
+function deliveryText(emotion: string, intensity: number | null): string {
+  const label = EMOTION_LABEL[emotion] ?? emotion;
+  return intensity ? `${label} · ${LEVELS[intensity]?.toLowerCase() ?? intensity}` : label;
+}
 
 function hue(label: string): CSSProperties {
   return { ["--hue" as string]: hueOf(label) };
@@ -147,6 +192,173 @@ function useAssign(bookId: string, chapterId: number) {
       void client.invalidateQueries({ queryKey: ["work", bookId] });
     },
   });
+}
+
+function useLineFix(bookId: string, chapterId: number) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ line, change }: { line: Line; change: Delivery }) =>
+      api(`/api/books/${bookId}/line`, {
+        method: "POST",
+        body: { stableId: line.stableId, textSha256: line.textSha256, ...change },
+      }),
+    onMutate: ({ line, change }) => {
+      client.setQueryData<ChapterScript>(["casting", bookId, chapterId], (data) =>
+        data && {
+          ...data,
+          lines: data.lines.map((item) =>
+            item.stableId === line.stableId
+              ? {
+                  ...item,
+                  lineWish: { kind: change.kind ?? "", emotion: change.emotion ?? "", intensity: change.intensity ?? null, state: "pending" },
+                }
+              : item,
+          ),
+        },
+      );
+    },
+    onSuccess: () =>
+      toast.success("Đã ghi cách đọc câu này", { description: "Áp ở ranh giới chương kế tiếp; câu đã thu sẽ được thu lại." }),
+    onError: (error: Error) => toast.error("Chưa ghi được", { description: error.message }),
+    onSettled: () => {
+      void client.invalidateQueries({ queryKey: ["casting", bookId] });
+      void client.invalidateQueries({ queryKey: ["work", bookId] });
+    },
+  });
+}
+
+// Bảng sửa cách đọc một câu: loại đoạn, cảm xúc, mức. Lời kể thành lời thoại / nội tâm thì phải chọn người nói (một câu
+// thoại luôn có chủ). Mức do khâu phân tích hiệu chỉnh lại theo cảm xúc - thì thầm, dịu dàng tối đa "Vừa".
+function DeliveryMenu({ line, script, onSave }: { line: Line; script: ChapterScript; onSave: (change: Delivery) => void }) {
+  const waiting = line.lineWish?.state === "pending" ? line.lineWish : null;
+  const [kind, setKind] = useState(waiting?.kind || line.kind);
+  const [emotion, setEmotion] = useState(waiting?.emotion || line.emotion || "neutral");
+  const [level, setLevel] = useState(waiting?.intensity ?? line.intensity ?? 0);
+  const [speaker, setSpeaker] = useState<string>("");
+  const needsSpeaker = line.kind === "narration" && kind !== "narration";
+  const change: Delivery = {};
+  if (kind !== line.kind) change.kind = kind;
+  if (line.emotion !== null && emotion !== line.emotion) change.emotion = emotion;
+  if (line.intensity !== null && level !== line.intensity) change.intensity = level;
+  if (needsSpeaker && speaker) change.speaker = speaker;
+  const ready = Object.keys(change).length > 0 && (!needsSpeaker || Boolean(speaker));
+  return (
+    <div className="w-[min(88vw,340px)] space-y-3 p-1.5">
+      <div>
+        <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-fg-3">Loại đoạn</div>
+        <Segmented label="Loại đoạn" value={kind} onChange={setKind} options={KINDS} />
+      </div>
+      {needsSpeaker && (
+        <div>
+          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-fg-3">Ai nói câu này?</div>
+          <div className="flex flex-wrap gap-1.5">
+            {script.cast.slice(0, 8).map((person) => (
+              <button
+                key={person.value}
+                type="button"
+                aria-pressed={speaker === person.value}
+                onClick={() => setSpeaker(person.value)}
+                className={cn(
+                  "rounded-full border px-2.5 py-1 text-xs font-medium",
+                  speaker === person.value ? "border-accent bg-accent-soft text-accent-text" : "border-line text-fg-2 hover:bg-hover",
+                )}
+              >
+                {person.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {line.emotion !== null && (
+        <div>
+          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-fg-3">Cảm xúc</div>
+          <div className="grid grid-cols-3 gap-1">
+            {EMOTIONS.map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={emotion === value}
+                onClick={() => setEmotion(value)}
+                className={cn(
+                  "h-8 rounded-lg px-1 text-xs font-medium",
+                  emotion === value ? "bg-accent-soft text-accent-text ring-1 ring-accent/40" : "text-fg-2 hover:bg-hover",
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {line.intensity !== null && (
+        <div>
+          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-fg-3">Mức</div>
+          <Segmented
+            label="Mức"
+            value={String(level)}
+            onChange={(value) => setLevel(Number(value))}
+            options={LEVELS.map((label, index) => ({ value: String(index), label }))}
+          />
+          <p className="mt-1.5 text-[11px] leading-snug text-fg-3">Máy giữ mức trong tầm giọng đọc được: thì thầm, dịu dàng tối đa "Vừa".</p>
+        </div>
+      )}
+      <Button size="sm" variant="primary" className="w-full" disabled={!ready} onClick={() => onSave(change)}>
+        {needsSpeaker && !speaker ? "Chọn người nói trước" : "Lưu cách đọc"}
+      </Button>
+    </div>
+  );
+}
+
+function DeliveryChip({
+  line,
+  script,
+  open,
+  onOpenChange,
+  onSave,
+  quiet,
+}: {
+  line: Line;
+  script: ChapterScript;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSave: (change: Delivery) => void;
+  quiet: boolean;
+}) {
+  if (line.emotion === null) return null;
+  const waiting = line.lineWish?.state === "pending" ? line.lineWish : null;
+  const text = waiting
+    ? deliveryText(waiting.emotion || line.emotion, waiting.intensity ?? line.intensity)
+    : deliveryText(line.emotion, line.intensity);
+  return (
+    <Popover.Root open={open} onOpenChange={onOpenChange}>
+      <Popover.Trigger asChild>
+        <button
+          type="button"
+          onClick={(event) => event.stopPropagation()}
+          aria-label={`Cách đọc: ${text}. Bấm để sửa`}
+          className={cn(
+            "inline-flex h-6 items-center gap-1 rounded-md px-1.5 text-[11px] font-medium text-fg-3 hover:bg-panel hover:text-fg focus-visible:opacity-100",
+            quiet && !open && "opacity-0 group-hover:opacity-100",
+            waiting && "text-fg-2",
+          )}
+        >
+          {waiting && <Clock className="size-3" />}
+          {text}
+        </button>
+      </Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Content
+          align="start"
+          sideOffset={6}
+          collisionPadding={12}
+          onCloseAutoFocus={(event) => event.preventDefault()}
+          className="z-50 rounded-xl border border-line bg-panel p-1.5 shadow-float"
+        >
+          <DeliveryMenu line={line} script={script} onSave={onSave} />
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
+  );
 }
 
 function SpeakerMenu({ line, script, onPick }: { line: Line; script: ChapterScript; onPick: (person: Person) => void }) {
@@ -279,6 +491,9 @@ function ScriptRow({
   onMenu,
   onActivate,
   onPick,
+  deliveryOpen,
+  onDelivery,
+  onSaveDelivery,
   rowRef,
 }: {
   bookId: string;
@@ -292,6 +507,9 @@ function ScriptRow({
   onMenu: (open: boolean) => void;
   onActivate: () => void;
   onPick: (person: Person) => void;
+  deliveryOpen: boolean;
+  onDelivery: (open: boolean) => void;
+  onSaveDelivery: (change: Delivery) => void;
   rowRef: (element: HTMLLIElement | null) => void;
 }) {
   const clip = useClip();
@@ -307,7 +525,7 @@ function ScriptRow({
       onFocus={speech ? onActivate : undefined}
       onClick={speech ? onActivate : undefined}
       className={cn(
-        "grid grid-cols-[minmax(0,1fr)_28px] gap-x-3 gap-y-1 rounded-lg px-2 py-1.5 outline-none lg:grid-cols-[160px_minmax(0,1fr)_28px]",
+        "group grid grid-cols-[minmax(0,1fr)_28px] gap-x-3 gap-y-1 rounded-lg px-2 py-1.5 outline-none lg:grid-cols-[160px_minmax(0,1fr)_28px]",
         gap && "mt-3",
         active && "bg-hover",
         speech && "focus-visible:ring-2 focus-visible:ring-accent/50",
@@ -322,6 +540,23 @@ function ScriptRow({
           {line.kind === "thought" && <span className="mr-1.5 rounded bg-hover px-1.5 py-px align-[1px] text-[11px] font-medium not-italic text-fg-2">nghĩ</span>}
           {line.text}
         </p>
+        {script.castReady && (
+          <DeliveryChip line={line} script={script} open={deliveryOpen} onOpenChange={onDelivery} onSave={onSaveDelivery} quiet={!speech && !active} />
+        )}
+        {line.lineWish?.state === "pending" && (
+          <p className="mt-0.5 flex items-center gap-1.5 text-xs text-fg-2">
+            <Clock className="size-3.5 shrink-0" />
+            Đã ghi cách đọc mới
+            {line.lineWish.kind ? ` (${KINDS.find((item) => item.value === line.lineWish?.kind)?.label.toLowerCase()})` : ""} - áp ở ranh giới
+            chương kế tiếp.
+          </p>
+        )}
+        {line.lineWish?.state === "refused" && (
+          <p className="mt-0.5 flex items-center gap-1.5 text-xs text-danger">
+            <AlertTriangle className="size-3.5 shrink-0" />
+            Cách đọc mới không áp được: {line.lineWish.reason}
+          </p>
+        )}
         {line.hint && !context && (!line.wish || line.wish.state === "refused") && (
           <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-warning">
             <span className="inline-flex items-start gap-1.5">
@@ -374,8 +609,10 @@ function ScriptRow({
 
 function ChapterScriptView({ bookId, script, filter, who }: { bookId: string; script: ChapterScript; filter: Filter; who: string | null }) {
   const assign = useAssign(bookId, script.chapterId);
+  const fixLine = useLineFix(bookId, script.chapterId);
   const [active, setActive] = useState<string | null>(null);
   const [menu, setMenu] = useState<string | null>(null);
+  const [delivery, setDelivery] = useState<string | null>(null);
   const rows = useRef(new Map<string, HTMLLIElement>());
 
   // Câu hiện ra theo bộ lọc; "Máy nghi" giữ câu nói liền trước mỗi chỗ nghi làm ngữ cảnh (mờ).
@@ -402,6 +639,7 @@ function ChapterScriptView({ bookId, script, filter, who }: { bookId: string; sc
   useEffect(() => {
     setActive(null);
     setMenu(null);
+    setDelivery(null);
   }, [script.chapterId]);
 
   const focusRow = (line: Line | undefined) => {
@@ -414,6 +652,7 @@ function ChapterScriptView({ bookId, script, filter, who }: { bookId: string; sc
   // Menu đóng (chọn xong hay Esc) thì tiêu điểm về lại câu, để ↑ ↓ và phím số làm tiếp từ đó.
   const backTo = (line: Line) => {
     setMenu(null);
+    setDelivery(null);
     requestAnimationFrame(() => rows.current.get(line.stableId)?.focus({ preventScroll: true }));
   };
   const pick = (line: Line, person: Person, refocus = true) => {
@@ -424,7 +663,7 @@ function ChapterScriptView({ bookId, script, filter, who }: { bookId: string; sc
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLOListElement>) => {
-    if (menu || event.altKey || event.ctrlKey || event.metaKey) return;
+    if (menu || delivery || event.altKey || event.ctrlKey || event.metaKey) return;
     const index = activeLine ? speechRows.indexOf(activeLine) : -1;
     if (event.key === "ArrowDown" || event.key === "j") {
       event.preventDefault();
@@ -435,6 +674,9 @@ function ChapterScriptView({ bookId, script, filter, who }: { bookId: string; sc
     } else if ((event.key === "Enter" || event.key === " ") && activeLine) {
       event.preventDefault();
       if (script.castReady && activeLine.editable) setMenu(activeLine.stableId);
+    } else if (event.key === "e" && activeLine && script.castReady && activeLine.emotion !== null) {
+      event.preventDefault();
+      setDelivery(activeLine.stableId);
     } else if (/^[1-9]$/.test(event.key) && activeLine) {
       const person = script.cast[Number(event.key) - 1];
       if (!person) return;
@@ -474,6 +716,15 @@ function ChapterScriptView({ bookId, script, filter, who }: { bookId: string; sc
             }}
             onActivate={() => setActive(line.stableId)}
             onPick={(person) => pick(line, person)}
+            deliveryOpen={delivery === line.stableId}
+            onDelivery={(open) => {
+              if (!open) return backTo(line);
+              setDelivery(line.stableId);
+            }}
+            onSaveDelivery={(change) => {
+              backTo(line);
+              fixLine.mutate({ line, change });
+            }}
             rowRef={(element) => {
               if (element) rows.current.set(line.stableId, element);
               else rows.current.delete(line.stableId);

@@ -8685,6 +8685,86 @@ class ProjectDB:
             )
         return details
 
+    def apply_listener_line(
+        self,
+        *,
+        stable_id: str,
+        text_sha256: str,
+        kind: str = "",
+        emotion: str = "",
+        intensity: int | None = None,
+    ) -> dict[str, Any] | None:
+        """Đổi loại đoạn / cảm xúc / cường độ của MỘT câu theo ý người nghe, và đặt lại câu nếu đã thu - một transaction.
+
+        Đích do `listener_overrides.line_target` chọn, cùng phép giao diện đã dùng để từ chối tại chỗ. Thành lời kể thì câu
+        về người kể và giọng người kể (người nghe đã nói câu này không phải lời của ai). Trả None khi câu đã đúng như yêu
+        cầu, `{"problem": mã}` khi không áp được (không đổi gì), hay chi tiết lần áp.
+        """
+        from .listener_overrides import line_target
+
+        now = time.time()
+        with self.transaction() as conn:
+            target, problem = line_target(conn, stable_id=stable_id, text_sha256=text_sha256, kind=kind,
+                                          emotion=emotion, intensity=intensity)
+            if target is None:
+                return {"problem": problem}
+            line = target["line"]
+            narrator = target.get("narrator")
+            unchanged = (
+                str(line["kind"]) == target["kind"]
+                and str(line["emotion"] or "neutral") == target["emotion"]
+                and int(line["intensity"] or 0) == target["intensity"]
+                and narrator is None
+            )
+            if unchanged:
+                return None
+            conn.execute(
+                "UPDATE segments SET kind=?, emotion=?, intensity=?, updated_at=? WHERE id=?",
+                (target["kind"], target["emotion"], target["intensity"], now, int(line["id"])),
+            )
+            if narrator is not None:
+                conn.execute(
+                    "UPDATE segments SET speaker='NARRATOR', canonical_character_id=?, voice_profile_id=? WHERE id=?",
+                    (narrator["character_id"], narrator["voice_profile_id"], int(line["id"])),
+                )
+            chapter_id = int(line["chapter_id"])
+            reset = str(line["status"]) in {
+                SegmentStatus.SIGNAL_PASSED.value,
+                SegmentStatus.ASR_PASSED.value,
+                SegmentStatus.VERIFIED.value,
+                SegmentStatus.WARNING.value,
+                SegmentStatus.FAILED.value,
+            }
+            reason = f"Người nghe đổi cách đọc câu {stable_id}: thu lại"
+            if reset:
+                self._reset_segment_pending_conn(conn, int(line["id"]), reason, now)
+                self._refresh_chapter_counts_conn(conn, chapter_id)
+                conn.execute(
+                    "UPDATE chapters SET status='warning', last_error=? WHERE id=? AND status=?",
+                    (reason, chapter_id, ChapterStatus.COMPLETED.value),
+                )
+            details = {
+                "stable_id": stable_id,
+                "kind": target["kind"],
+                "emotion": target["emotion"],
+                "intensity": target["intensity"],
+                "previous": {"kind": str(line["kind"]), "emotion": str(line["emotion"] or ""),
+                             "intensity": int(line["intensity"] or 0), "speaker": str(line["speaker"] or "")},
+                "reset": reset,
+                "chapter_id": chapter_id,
+            }
+            conn.execute(
+                "INSERT INTO runtime_events(timestamp,level,code,message,details_json) VALUES(?,?,?,?,?)",
+                (
+                    now,
+                    "info",
+                    "LINE_SET_BY_LISTENER",
+                    f"Người nghe đổi câu {stable_id}: {target['kind']}, {target['emotion']} {target['intensity']}.",
+                    json.dumps(details, ensure_ascii=False),
+                ),
+            )
+        return details
+
     def apply_listener_voice(
         self,
         *,

@@ -92,5 +92,10 @@ Người duyệt đúng những câu ấy là cách rẻ nhất để đạt 100
    - Trên đường làm, lộ một lỗi có sẵn: câu bị đặt lại vẫn giữ ứng viên vòng sửa `promoted` của bản thu đã bỏ, và
      recovery lần sau chết ("promoted candidate is not the current segment artifact"). Đã sửa: đặt lại câu xoá lịch sử
      vòng sửa của nó, trong một transaction (`tests/test_a_reset_line_forgets_its_repairs.py`).
+   - **4 + 5 (loại đoạn, cảm xúc, cường độ) XONG 28-09**, không cần bảng mới: overrides.json `lines` (mã câu + băm
+     chữ -> loại đoạn / cảm xúc / cường độ) -> `ProjectDB.apply_listener_line` ở ranh giới chương, TRƯỚC các yêu cầu
+     "ai nói câu này" (lời kể thành lời thoại gán người nói ngay trong cùng lượt; Studio ghi cả hai trong một lần ghi
+     file). Cường độ đi qua đúng phép hiệu chỉnh của khâu phân tích (`_calibrated_intensity`). Thành lời kể thì câu về
+     người kể và giọng người kể. Giao diện: nhãn cách đọc trên từng câu ở tab Kịch bản.
 4. **Vòng học**: xuất mọi lần sửa thành dòng kiểu gold, đưa vào dữ liệu LoRA/bộ chấm; đo model mới trên chính những câu
    người đã sửa.
