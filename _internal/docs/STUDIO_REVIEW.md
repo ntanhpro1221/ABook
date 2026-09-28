@@ -97,6 +97,14 @@ Người duyệt đúng những câu ấy là cách rẻ nhất để đạt 100
      "ai nói câu này" (lời kể thành lời thoại gán người nói ngay trong cùng lượt; Studio ghi cả hai trong một lần ghi
      file). Cường độ đi qua đúng phép hiệu chỉnh của khâu phân tích (`_calibrated_intensity`). Thành lời kể thì câu về
      người kể và giọng người kể. Giao diện: nhãn cách đọc trên từng câu ở tab Kịch bản.
+   - **7 (lỗi chữ / cách viết lạ) XONG 29-09**, nhánh feat/line-text (FILE KHOÁ): cột `segments.listener_text` - chữ
+     người nghe sửa cho RIÊNG câu ấy - đi cùng mục `lines` của overrides.json (`spoken`, "" = trả về chữ sách) và cùng
+     `apply_listener_line`. `tts.spoken_text_with_anchors` đọc cột ấy thay `text`, nên giọng đọc, cách đọc tên, phép so
+     của Whisper và băm chuỗi nói đều dẫn ra từ một chuỗi; văn bản sách, băm chữ và phần đọc theo giữ nguyên. Chặn: không
+     chữ cái, ký tự điều khiển, quá 2000 ký tự hay dài hơn bốn lần câu gốc (sửa chữ, không viết lại đoạn). Ghi yêu cầu GỘP
+     với yêu cầu cũ của câu (đổi cảm xúc không xoá chữ đã sửa và ngược lại). Sách cũ chưa có cột: giao diện vẫn xét được,
+     lần dây chuyền mở DB kế tiếp tự thêm cột. Giao diện: ô "Chữ đem đọc" trong bảng cách đọc của tab Kịch bản, dòng "Đọc
+     là: …" dưới câu đã sửa.
 4. **Vòng học**: xuất mọi lần sửa thành dòng kiểu gold, đưa vào dữ liệu LoRA/bộ chấm; đo model mới trên chính những câu
    người đã sửa.
    - **Xuất nhãn XONG 28-09** (`scripts/model_eval/listener_labels.py`): mọi quyết định của người nghe trong mọi dự án
