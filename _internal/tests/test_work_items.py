@@ -322,3 +322,60 @@ def test_a_book_without_paragraph_numbers_or_a_narrator_still_builds_its_inbox(t
     third_person = work_items(make_dialogue_book(tmp_path / "ba", first_person=""))
     card = next(item for item in third_person["items"] if item["kind"] == "turn")
     assert card["choices"][0]["value"] == "ED ROSTAILER", "không có 'tôi' thì là người có tên nói nhiều nhất chương"
+
+
+def make_alias_book(root: Path) -> Path:
+    """Hai cặp một-người-hai-tên theo hai chiều: tên NGẮN nói nhiều (Lucien 3 câu, Lucien Evans 1 câu) và tên DÀI nói nhiều
+    (Heidi Schmidt 2 câu, Heidi 1 câu); Anna / Anna Rhine khác giới thì không phải một người."""
+    project = make_book(root)
+    db = sqlite3.connect(project / "project.sqlite3")
+    db.execute("DELETE FROM segments")
+    db.executemany("INSERT INTO characters (id, canonical_name, display_name, gender, locked) VALUES (?,?,?,?,?)", [
+        (11, "LUCIEN EVANS", "Lucien Evans", "male", 0),
+        (12, "HEIDI SCHMIDT", "Heidi Schmidt", "female", 0),
+        (13, "ANNA", "Anna", "female", 0),
+        (14, "ANNA RHINE", "Anna Rhine", "male", 0),
+    ])
+    rows = [
+        ("a1", "“Đi thôi.”", "LUCIEN", 2, 1),
+        ("a2", "“Nhanh lên.”", "LUCIEN", 2, 1),
+        ("a3", "“Tới rồi.”", "LUCIEN", 2, 1),
+        ("a4", "“Ta là Lucien Evans.”", "LUCIEN EVANS", 9, 11),
+        ("b1", "“Chào.”", "HEIDI SCHMIDT", 3, 12),
+        ("b2", "“Tạm biệt.”", "HEIDI SCHMIDT", 3, 12),
+        ("b3", "“Ừ.”", "HEIDI", 8, 2),
+        ("c1", "“Ồ.”", "ANNA", 6, 13),
+        ("c2", "“À.”", "ANNA RHINE", 7, 14),
+    ]
+    db.executemany(
+        "INSERT INTO segments (stable_id, chapter_id, seq, text, kind, speaker, voice_profile_id, canonical_character_id,"
+        " status, text_sha256) VALUES (?, 1, ?, ?, 'dialogue', ?, ?, ?, 'verified', 'sha-' || ?)",
+        [(stable, seq, text, speaker, voice, character, stable) for seq, (stable, text, speaker, voice, character) in enumerate(rows)],
+    )
+    db.commit()
+    db.close()
+    return project
+
+
+def test_one_person_under_two_names_merges_the_fewer_lines_into_the_voice_heard_most(tmp_path: Path) -> None:
+    """Thẻ bí danh bấm được: câu của tên ÍT câu về tên NHIỀU câu (người nghe đã quen giọng ấy, ít câu phải thu lại) - kể
+    cả khi tên ngắn mới là tên nói nhiều, trường hợp trước đây thẻ bỏ sót. "Hai người khác nhau" giữ cả nhóm, thẻ biến."""
+    from ebook_reader.listener_overrides import request_speakers
+
+    project = make_alias_book(tmp_path)
+    cards = {item["key"]: item for item in work_items(project)["items"] if item["kind"] == "alias"}
+    assert set(cards) == {"alias:LUCIEN EVANS|LUCIEN", "alias:HEIDI SCHMIDT|HEIDI"}, "Anna / Anna Rhine khác giới"
+    lucien = cards["alias:LUCIEN EVANS|LUCIEN"]
+    assert lucien["title"] == "\"Lucien\" và \"Lucien Evans\" là một người?"
+    assert [line["stableId"] for line in lucien["lines"]] == ["a4"] and lucien["affected"] == 1
+    assert lucien["choices"] == [{"label": "Gộp vào Lucien", "value": "LUCIEN", "name": "Lucien"}]
+    assert lucien["currentValue"] == "LUCIEN EVANS" and lucien["keepLabel"] == "Hai người khác nhau"
+    heidi = cards["alias:HEIDI SCHMIDT|HEIDI"]
+    assert [line["stableId"] for line in heidi["lines"]] == ["b3"]
+    assert heidi["choices"][0]["value"] == "HEIDI SCHMIDT" and heidi["choices"][0]["name"] == "Heidi Schmidt"
+
+    request_speakers(project, [("a4", "sha-a4")], "LUCIEN", now=time.time())
+    request_speakers(project, [("b3", "sha-b3")], "HEIDI", now=time.time())
+    cards = {item["key"]: item for item in work_items(project)["items"] if item["kind"] == "alias"}
+    assert cards["alias:LUCIEN EVANS|LUCIEN"]["requested"] == "Lucien", "gộp đang chờ ranh giới chương"
+    assert "alias:HEIDI SCHMIDT|HEIDI" not in cards, "người nghe nói hai người khác nhau: không hỏi lại"
