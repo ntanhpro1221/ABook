@@ -225,6 +225,8 @@ try {
     Start-Sleep -Seconds 4
 }
 Invoke-NativeChecked { & ollama pull qwen3:8b } "Tải Qwen3 8B"
+Write-Host "Tải model phân tích của ABook (Hugging Face NGDtuanh/abook-analyzer)..."
+Invoke-NativeChecked { & $Python -m ebook_reader.webui.studio_setup --install-model abook-analyzer:v3 } "Tải model phân tích ABook"
 Write-Host "Tải Qwen3 4B cho profile Nhanh..."
 Invoke-NativeChecked { & ollama pull qwen3:4b } "Tải Qwen3 4B"
 
