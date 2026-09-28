@@ -48,6 +48,10 @@ def main() -> int:
     parser.add_argument("--alpha", type=int, default=32)
     parser.add_argument("--accum", type=int, default=8)
     parser.add_argument("--smoke", type=int, default=0, help="chỉ N mẫu dài nhất và 3 bước - đo VRAM, không huấn luyện")
+    parser.add_argument("--smoke-at", choices=("longest", "median"), default="longest",
+                        help="median: N mẫu quanh độ dài TRUNG VỊ - đo tốc độ một bước điển hình thay vì đỉnh VRAM (28-09: "
+                             "8B trên card 8 GB tràn VRAM ở mẫu dài nhất, câu hỏi là mẫu thường có tràn không)")
+    parser.add_argument("--smoke-steps", type=int, default=3)
     parser.add_argument("--render-only", action="store_true", help="in đuôi một mẫu đã dựng khuôn rồi thoát")
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--export-gguf", default="",
@@ -55,6 +59,12 @@ def main() -> int:
     parser.add_argument("--save-steps", type=int, default=50,
                         help="lưu checkpoint mỗi N bước; 8B trên card 8 GB ~3 phút/bước nên 10 (~30 phút) - máy khởi "
                              "động lại chỉ mất chừng ấy")
+    parser.add_argument("--load-16bit", action="store_true",
+                        help="LoRA trên nền 16-bit thay vì QLoRA 4-bit - Unsloth KHÔNG khuyên 4-bit cho Qwen3.5 (sai số lượng "
+                             "tử lớn); Qwen3.5-9B cần ~22 GB (card L4/A10G 24 GB)")
+    parser.add_argument("--time-limit-hours", type=float, default=0.0,
+                        help="dừng gọn (lưu checkpoint, KHÔNG lưu adapter) sau chừng ấy giờ - phiên Kaggle bị cắt ở 12 giờ và "
+                             "mất hết nếu chưa lưu; chạy lại với --resume từ checkpoint")
     parser.add_argument("--offload-embedding", action="store_true",
                         help="nạp bằng FastModel và đẩy bảng embedding sang RAM (~1,2 GB với Qwen3-8B) - nhánh tối ưu "
                              "FastLanguageModel của Qwen3 lặng lẽ bỏ qua tuỳ chọn này")
@@ -66,18 +76,24 @@ def main() -> int:
         loader = FastModel
 
     if args.export_gguf:
-        # Q4_K_M như qwen3:8b đang chạy: bản q8_0 của 8B nặng 8,7 GB, không vừa card 8 GB lúc suy luận.
+        # Q4_K_M như qwen3:8b đang chạy: bản q8_0 của 8B nặng 8,7 GB, không vừa card 8 GB lúc suy luận. Nền 16-bit
+        # (--load-16bit, Qwen3.5 trên máy đám mây) thì gộp vào bản 16-bit, không qua 4-bit.
+        precision = {"load_in_4bit": False, "load_in_16bit": True} if args.load_16bit else {"load_in_4bit": True}
         model, tokenizer = FastLanguageModel.from_pretrained(
-            model_name=str(args.out / "adapter"), max_seq_length=args.max_length, load_in_4bit=True, dtype=None
+            model_name=str(args.out / "adapter"), max_seq_length=args.max_length, dtype=None, **precision
         )
+        tokenizer = getattr(tokenizer, "tokenizer", tokenizer)
         model.save_pretrained_gguf(str(args.out / "gguf"), tokenizer, quantization_method=args.export_gguf)
         print("đã xuất", sorted(str(path) for path in (args.out / "gguf").rglob("*.gguf")))
         return 0
 
     extra = {"offload_embedding": True} if args.offload_embedding else {}
+    precision = {"load_in_4bit": False, "load_in_16bit": True} if args.load_16bit else {"load_in_4bit": True}
     model, tokenizer = loader.from_pretrained(
-        model_name=args.base, max_seq_length=args.max_length, load_in_4bit=True, dtype=None, **extra
+        model_name=args.base, max_seq_length=args.max_length, dtype=None, **precision, **extra
     )
+    # Qwen3.5 (kiến trúc có thị giác) trả về processor; phần chữ nằm trong .tokenizer.
+    tokenizer = getattr(tokenizer, "tokenizer", tokenizer)
     rows = [json.loads(line) for line in (args.data / "train.jsonl").open(encoding="utf-8")]
     texts = [tokenizer.apply_chat_template(row["messages"], tokenize=False, enable_thinking=False) for row in rows]
     if args.render_only:
@@ -88,8 +104,12 @@ def main() -> int:
     if max(lengths) > args.max_length:
         raise SystemExit(f"mẫu dài {max(lengths)} > max_length {args.max_length}: cắt là mất câu trả lời")
     if args.smoke:
-        order = sorted(range(len(texts)), key=lambda index: -lengths[index])[: args.smoke]
-        texts = [texts[index] for index in order]  # mẫu DÀI NHẤT: đo đúng đỉnh VRAM
+        ranked = sorted(range(len(texts)), key=lambda index: -lengths[index])
+        if args.smoke_at == "median":
+            ranked = ranked[max(0, len(ranked) // 2 - args.smoke // 2):]
+        order = ranked[: args.smoke]
+        print(f"thử trên {len(order)} mẫu, {min(lengths[i] for i in order)}-{max(lengths[i] for i in order)} token")
+        texts = [texts[index] for index in order]  # mặc định mẫu DÀI NHẤT: đo đúng đỉnh VRAM
 
     model = loader.get_peft_model(
         model, r=args.r, lora_alpha=args.alpha, lora_dropout=0, target_modules=TARGETS, bias="none",
@@ -100,7 +120,9 @@ def main() -> int:
         output_dir=str(args.out), dataset_text_field="text", max_length=args.max_length, packing=False,
         per_device_train_batch_size=1, gradient_accumulation_steps=1 if args.smoke else args.accum,
         learning_rate=args.lr, lr_scheduler_type="cosine", warmup_steps=max(5, int(0.03 * steps)),
-        num_train_epochs=args.epochs, max_steps=3 if args.smoke else -1, optim="adamw_8bit", bf16=True,
+        num_train_epochs=args.epochs, max_steps=args.smoke_steps if args.smoke else -1, optim="adamw_8bit",
+        # T4 (Kaggle/Colab miễn phí) không có bf16: tự rơi về fp16, như sổ tay của Unsloth.
+        bf16=torch.cuda.is_bf16_supported(), fp16=not torch.cuda.is_bf16_supported(),
         logging_steps=1 if args.smoke else 5, save_steps=args.save_steps, save_total_limit=3, report_to="none", seed=3407,
     )
     trainer = SFTTrainer(model=model, processing_class=tokenizer, train_dataset=Dataset.from_dict({"text": texts}),
@@ -109,10 +131,28 @@ def main() -> int:
                                       response_part="<|im_start|>assistant\n")
     torch.cuda.reset_peak_memory_stats()
     started = time.time()
+    stopped = {}
+    if args.time_limit_hours > 0:
+        from transformers import TrainerCallback
+
+        class TimeLimit(TrainerCallback):
+            def on_step_end(self, _args, state, control, **_kwargs):
+                if time.time() - started > args.time_limit_hours * 3600:
+                    control.should_save = True
+                    control.should_training_stop = True
+                    stopped.update(step=state.global_step, total=state.max_steps)
+                return control
+
+        trainer.add_callback(TimeLimit())
     resumable = args.resume and any(args.out.glob("checkpoint-*"))
     trainer.train(resume_from_checkpoint=True if resumable else None)
     peak = torch.cuda.max_memory_reserved() / 2**30
     print(f"xong {time.time() - started:.0f} s, đỉnh VRAM (đã giữ) {peak:.2f} GiB")
+    if stopped:
+        (args.out / "INCOMPLETE").write_text(f"{stopped['step']}/{stopped['total']}\n", encoding="utf-8")
+        print(f"DỪNG VÌ HẾT GIỜ ở bước {stopped['step']}/{stopped['total']} - chạy lại với --resume từ checkpoint")
+        return 3
+    (args.out / "INCOMPLETE").unlink(missing_ok=True)
     if not args.smoke:
         model.save_pretrained(str(args.out / "adapter"))
         tokenizer.save_pretrained(str(args.out / "adapter"))

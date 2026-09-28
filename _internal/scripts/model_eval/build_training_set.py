@@ -30,6 +30,8 @@ SPLIT: dict[str, dict[str, set[str]]] = {
         "huong_dan_sinh_ton": {"062"},
         "yamiyo_no_hotaru": {"141"},
         "nageki_no_bourei": {"65"},
+        # Chương thứ 6 (28-09 13:xx): LN Nhật ngôi thứ nhất, đối đáp hai người không lời dẫn dài.
+        "love_unseen": {"07"},
     },
     "dev": {
         "throne_of_magical_arcana": {"344"},
