@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Studio: **tạo người nói mới** khi sửa "ai nói câu này" - gõ tên chưa có trong truyện ở ô tìm người nói (tab Kịch
+  bản) hay bấm "Người khác…" trên thẻ của hộp "Việc cần anh", chọn Nam / Nữ / Không rõ. Trước đây chỉ chọn được người
+  đã có giọng - linh thể chỉ nói trong ngoặc 『』 mà máy chưa từng gán câu nào thì không chọn được. Dây chuyền tạo người
+  ấy ở ranh giới chương kế tiếp với một giọng riêng, khác giọng những người cùng chương, rồi thu lại các câu đã chọn.
 - Làm sách: câu thoại có lời dẫn kiểu “Được,” Liz gật đầu. giờ **đọc bằng giọng nhân vật**. Trước đây câu ấy chỉ được
   nhận là thoại khi lời dẫn dùng vài động từ quen (nói, hỏi, đáp...); "gật đầu", "lầm bầm", "lên tiếng", "giải thích"...
   thì cả đoạn thành lời kể và câu thoại đọc bằng giọng người kể. Gặp nhiều ở truyện dịch từ tiếng Anh/Hàn: gần 1.800 câu

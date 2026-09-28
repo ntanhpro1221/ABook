@@ -57,13 +57,16 @@ def connect(project_root: Path) -> sqlite3.Connection:
     return connection
 
 
-def speaker_request_problem(project_root: Path, stable_id: str, text_sha256: str, speaker: str) -> str | None:
+def speaker_request_problem(project_root: Path, stable_id: str, text_sha256: str, speaker: str,
+                            new_gender: str = "") -> str | None:
     """Mã lý do dây chuyền sẽ từ chối yêu cầu "ai nói câu này", hoặc None - hỏi bằng ĐÚNG phép dây chuyền dùng
-    (`listener_overrides.speaker_target`), trên SQLite chỉ đọc, để người nghe biết ngay chứ không phải chờ ranh giới."""
+    (`listener_overrides.speaker_target`), trên SQLite chỉ đọc, để người nghe biết ngay chứ không phải chờ ranh giới.
+    `new_gender`: người nghe TẠO người nói mới (chưa có giọng) - hợp lệ khi tên dùng được."""
     from ..listener_overrides import speaker_target
 
     with closing(connect(project_root)) as connection:
-        _target, problem = speaker_target(connection, stable_id=stable_id, text_sha256=text_sha256, speaker=speaker)
+        _target, problem = speaker_target(connection, stable_id=stable_id, text_sha256=text_sha256, speaker=speaker,
+                                          new_gender=new_gender)
     return problem
 
 
