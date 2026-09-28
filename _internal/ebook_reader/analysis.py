@@ -7003,15 +7003,24 @@ class OllamaBookAnalyzer:
                 return True
         except requests.RequestException:
             return False
-        if not executable or not self.allow_downloads:
+        # Model của dự án (abook-analyzer) không có trong kho Ollama - `ollama pull` hỏng: tải từ nơi đăng, qua HTTP của
+        # Ollama nên không cần CLI trên PATH (Ollama riêng của Studio không nằm trên PATH).
+        from .webui.studio_setup import PUBLISHED_MODELS, SetupError
+
+        published = self.model in PUBLISHED_MODELS
+        if not self.allow_downloads or not (executable or published):
             self.log(
                 f"Thiếu Ollama model {self.model}. Job không được tự tải model sau khi đã bắt đầu; "
                 "hãy mở lại Ebook Reader để kiểm tra/cài model."
             )
             return False
-        self.log(f"Đang tải Ollama model {self.model} theo policy đã cho phép.")
         try:
-            run_hidden([executable, "pull", self.model], check=True)
+            if published:
+                self.log(f"Đang tải model phân tích {self.model} của ABook (Hugging Face) theo policy đã cho phép.")
+                self._install_published_model()
+            else:
+                self.log(f"Đang tải Ollama model {self.model} theo policy đã cho phép.")
+                run_hidden([executable, "pull", self.model], check=True)
             response = self.session.get(f"{self.base_url}/api/tags", timeout=10)
             response.raise_for_status()
             matched = next(
@@ -7028,8 +7037,19 @@ class OllamaBookAnalyzer:
                 else None
             )
             return matched is not None
-        except (OSError, subprocess.CalledProcessError):
+        except (OSError, subprocess.CalledProcessError, SetupError) as error:
+            if published:
+                self.log(f"Không tải được {self.model}: {error}")
             return False
+
+    def _install_published_model(self) -> None:
+        """Đúng đường Studio và scripts/setup_windows.ps1 dùng: tải (kiểm băm), đẩy vào Ollama ở `base_url`, tạo model."""
+        from .webui.studio_setup import StudioSetup
+
+        runtime_root = Path(os.environ.get("EBOOK_READER_RUNTIME") or DEFAULT_RUNTIME_ROOT)
+        setup = StudioSetup(runtime_root / "model-install", Path(__file__).resolve().parents[1],
+                            ollama_address=self.base_url)
+        setup.install_published_model(self.model, report=self.log)
 
     def _narrator_line(self) -> str:
         """The first-person narrator, when the book names one (``voices.first_person_identity``).

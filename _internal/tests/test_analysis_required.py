@@ -91,6 +91,7 @@ from ebook_reader.analysis import (
     local_speaker_display,
 )
 from ebook_reader.config import build_settings
+from ebook_reader.webui.studio_setup import PUBLISHED_MODELS, StudioSetup
 from ebook_reader.database import (
     ANALYSIS_CHAPTER_HEADING_CONFIDENCE,
     ANALYSIS_CRITIC_EVIDENCE_QUOTE_MAX_LENGTH,
@@ -107,6 +108,11 @@ from ebook_reader.database import (
     canonical_analysis_note,
 )
 from ebook_reader.io_utils import sha256_text
+
+# Model phân tích mặc định (config.py) - các mock /api/tags dưới đây trả đúng tên ấy, để test cơ chế không phụ thuộc
+# model nào đang là mặc định.
+DEFAULT_MODEL = str(build_settings()["analysis"]["model"])
+DEFAULT_FAMILY = DEFAULT_MODEL.split(":", 1)[0]
 
 
 ORIGINAL_DIRECTOR_CRITIC_REQUEST = OllamaBookAnalyzer._request_director_critic
@@ -581,7 +587,7 @@ class FakeSession:
 
             @staticmethod
             def json():
-                return {"models": [{"name": "qwen3:8b", "digest": digest}]}
+                return {"models": [{"name": DEFAULT_MODEL, "digest": digest}]}
 
         return TagsResponse()
 
@@ -1192,9 +1198,9 @@ def test_model_digest_lookup_matches_the_exact_canonical_tag() -> None:
         def json():
             return {
                 "models": [
-                    {"name": "qwen3:4b", "digest": "sha256:wrong-first"},
-                    {"name": "qwen3:8b", "digest": "sha256:exact"},
-                    {"name": "qwen3:latest", "digest": "sha256:wrong-last"},
+                    {"name": f"{DEFAULT_FAMILY}:wrong-first", "digest": "sha256:wrong-first"},
+                    {"name": DEFAULT_MODEL, "digest": "sha256:exact"},
+                    {"name": f"{DEFAULT_FAMILY}:latest", "digest": "sha256:wrong-last"},
                 ]
             }
 
@@ -10495,13 +10501,13 @@ def test_clean_varied_director_batch_checkpoints_with_bound_evidence(monkeypatch
     accepted = next(event for event in db.events if event[1] == "ANALYSIS_DIRECTOR_CRITIC_ACCEPTED")
     details = accepted[3]
     assert details["candidate_hash"]
-    assert details["critic_contract"]["model"] == "qwen3:8b"
+    assert details["critic_contract"]["model"] == DEFAULT_MODEL
     assert details["critic_contract"]["policy_version"] == "second_pass_v18"
     assert {row["text_sha256"] for row in details["segments"]} == {
         "neutral-sha",
         "question-sha",
     }
-    assert db.analysis_model == ("qwen3:8b", "sha256:test-model-digest")
+    assert db.analysis_model == (DEFAULT_MODEL, "sha256:test-model-digest")
 
 
 def test_v27_narration_lead_in_mask_prevents_critic_leak_and_commits(
@@ -10619,7 +10625,7 @@ def test_director_accept_commits_validated_pronunciation_with_batch(monkeypatch)
     assert [(row["surface"], row["spoken_form"]) for row in db.pronunciations] == [
         ("Michael", "Mai-cồ")
     ]
-    assert db.analysis_model == ("qwen3:8b", "sha256:test-model-digest")
+    assert db.analysis_model == (DEFAULT_MODEL, "sha256:test-model-digest")
 
 
 def test_high_quality_rejects_low_generator_confidence_before_director_commit(
@@ -11609,7 +11615,7 @@ def test_analyzer_starts_and_stops_only_its_managed_ollama_process(
     class TagsResponse:
         @staticmethod
         def json():
-            return {"models": [{"name": "qwen3:8b", "digest": "sha256:installed"}]}
+            return {"models": [{"name": DEFAULT_MODEL, "digest": "sha256:installed"}]}
 
     class StartupSession:
         @staticmethod
@@ -11657,7 +11663,7 @@ def test_analyzer_starts_and_stops_only_its_managed_ollama_process(
 def test_analyzer_pulls_an_allowed_missing_model_without_a_console(monkeypatch) -> None:
     settings = build_settings(
         "high_quality",
-        {"safety": {"allow_network_downloads_during_job": True}},
+        {"safety": {"allow_network_downloads_during_job": True}, "analysis": {"model": "qwen3:8b"}},
     )
     analyzer = OllamaBookAnalyzer(settings, FakeDB(), lambda _message: None)
     monkeypatch.setattr(analyzer, "_available", lambda: True)
@@ -11697,6 +11703,74 @@ def test_analyzer_pulls_an_allowed_missing_model_without_a_console(monkeypatch) 
     assert analyzer.ensure_available() is True
     assert analyzer._model_digest == "sha256:downloaded"
     assert calls == [(["ollama.exe", "pull", "qwen3:8b"], True)]
+
+
+def test_analyzer_installs_a_missing_project_model_from_where_it_is_published(monkeypatch, tmp_path) -> None:
+    """abook-analyzer không có trong kho Ollama (`ollama pull` hỏng). Thiếu thì tải từ nơi đăng qua HTTP của Ollama -
+    không cần CLI `ollama` trên PATH, như Ollama riêng của Studio."""
+    settings = build_settings("high_quality", {"safety": {"allow_network_downloads_during_job": True}})
+    logs: list[str] = []
+    analyzer = OllamaBookAnalyzer(settings, FakeDB(), logs.append)
+    assert analyzer.model in PUBLISHED_MODELS, "model mặc định là model của dự án"
+    monkeypatch.setenv("EBOOK_READER_RUNTIME", str(tmp_path))
+    monkeypatch.setattr(analyzer, "_available", lambda: True)
+    monkeypatch.setattr("ebook_reader.analysis.shutil.which", lambda _name: None)
+    listings = iter(({"models": []}, {"models": [{"name": analyzer.model, "digest": "sha256:published"}]}))
+
+    class TagsResponse:
+        def __init__(self, payload):
+            self.payload = payload
+
+        @staticmethod
+        def raise_for_status():
+            return None
+
+        def json(self):
+            return self.payload
+
+    analyzer.session = SimpleNamespace(get=lambda _url, timeout: TagsResponse(next(listings)))
+    installed: list[tuple[str, str, Path]] = []
+    monkeypatch.setattr(StudioSetup, "install_published_model",
+                        lambda self, name, report=print: installed.append((name, self.ollama_address, self.root)))
+    monkeypatch.setattr("ebook_reader.analysis.run_hidden",
+                        lambda *_args, **_kwargs: pytest.fail("model của dự án không kéo từ kho Ollama"))
+
+    assert analyzer.ensure_available() is True
+    assert analyzer._model_digest == "sha256:published"
+    assert installed == [(analyzer.model, analyzer.base_url, tmp_path / "model-install")]
+    assert any("Hugging Face" in message for message in logs)
+
+
+def test_a_project_model_that_cannot_download_says_why(monkeypatch, tmp_path) -> None:
+    from ebook_reader.webui.studio_setup import SetupError
+
+    settings = build_settings("high_quality", {"safety": {"allow_network_downloads_during_job": True}})
+    logs: list[str] = []
+    analyzer = OllamaBookAnalyzer(settings, FakeDB(), logs.append)
+    monkeypatch.setenv("EBOOK_READER_RUNTIME", str(tmp_path))
+    monkeypatch.setattr(analyzer, "_available", lambda: True)
+    monkeypatch.setattr("ebook_reader.analysis.shutil.which", lambda _name: None)
+    analyzer.session = SimpleNamespace(get=lambda _url, timeout: SimpleNamespace(json=lambda: {"models": []}))
+
+    def offline(self, name, report=print):
+        raise SetupError("mất mạng")
+
+    monkeypatch.setattr(StudioSetup, "install_published_model", offline)
+
+    assert analyzer.ensure_available() is False
+    assert any("mất mạng" in message for message in logs)
+
+
+def test_a_job_never_downloads_a_missing_project_model_unless_allowed(monkeypatch) -> None:
+    analyzer = OllamaBookAnalyzer(build_settings(), FakeDB(), lambda _message: None)
+    monkeypatch.setattr(analyzer, "_available", lambda: True)
+    monkeypatch.setattr("ebook_reader.analysis.shutil.which", lambda _name: "ollama.exe")
+    analyzer.session = SimpleNamespace(get=lambda _url, timeout: SimpleNamespace(json=lambda: {"models": []}))
+    monkeypatch.setattr(StudioSetup, "install_published_model",
+                        lambda *_args, **_kwargs: pytest.fail("job không được tự tải khi policy không cho"))
+
+    assert analyzer.allow_downloads is False
+    assert analyzer.ensure_available() is False
 
 
 class TransportFaultResponse:
@@ -11743,7 +11817,7 @@ class TransportFaultSession:
             def json():
                 return {
                     "models": [
-                        {"name": "qwen3:8b", "digest": "sha256:test-model-digest"}
+                        {"name": DEFAULT_MODEL, "digest": "sha256:test-model-digest"}
                     ]
                 }
 
