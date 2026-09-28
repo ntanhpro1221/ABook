@@ -128,6 +128,35 @@ def test_the_studio_installs_step_by_step_and_resumes_where_it_stopped(tmp_path:
     assert environment["OLLAMA_HOST"] == "127.0.0.1:" + ollama.rsplit(":", 1)[-1]
     assert environment["OLLAMA_MODELS"] == str(setup.runtime / "models" / "ollama")
     assert setup.settings_overrides() == {"analysis": {"base_url": ollama}}
+    # Bộ nhớ đệm JIT của CUDA cũng trong Studio (mặc định %APPDATA%\NVIDIA\ComputeCache - bộ gỡ không dọn được).
+    assert environment["CUDA_CACHE_PATH"] == str(setup.root / "cache" / "nvidia")
+
+
+def test_a_studio_installed_by_an_older_app_updates_only_what_changed(tmp_path: Path, ollama: str,
+                                                                     monkeypatch: pytest.MonkeyPatch) -> None:
+    """App lên bản mới đổi ghim Ollama (28-09: 0.34.4 làm hỏng sách, về 0.33.2): Studio đã cài phải biết mình cũ, không
+    cho làm sách bằng bản cũ, và "Cập nhật Studio" chỉ tải lại đúng Ollama."""
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "localappdata"))
+    commands: list[str] = []
+    setup = _setup(tmp_path, ollama, commands)
+    setup.start()
+    setup.wait(30)
+    assert setup.status()["installed"] is True and setup.outdated() == []
+
+    monkeypatch.setattr(studio_setup, "OLLAMA", Download("ollama", "https://example.invalid/ollama-new.zip", "b" * 64, 3))
+    status = setup.status()
+    assert status["outdated"] == ["Ollama"] and status["installed"] is True
+    assert [step["id"] for step in status["steps"] if not step["done"]] == ["ollama"]
+    with pytest.raises(RuntimeError, match="cần cập nhật \\(Ollama\\)"):
+        StudioRunner(setup).start(tmp_path / "sach")
+
+    commands.clear()
+    setup.fetched.clear()  # type: ignore[attr-defined]
+    setup.start()
+    setup.wait(30)
+    assert setup.outdated() == [] and setup.status()["error"] is None
+    assert setup.fetched == ["ollama"], "chỉ tải lại Ollama"  # type: ignore[attr-defined]
+    assert commands == ["Kiểm tra lần cuối"], "không cài lại thư viện hay model"
 
 
 def test_a_book_made_in_the_packaged_app_talks_to_the_studios_own_ollama(tmp_path: Path, ollama: str) -> None:

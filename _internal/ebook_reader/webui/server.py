@@ -699,7 +699,8 @@ class Handler(BaseHTTPRequestHandler):
             # App Windows đóng gói: bản mới vỏ tìm thấy ({version, notes}), hay None; Studio đã cài chưa (None: bản dev,
             # Studio chính là runtime cạnh mã nguồn).
             "update": self.app.update,
-            "studio": None if self.app.studio is None else {"installed": self.app.studio.installed()},
+            "studio": None if self.app.studio is None else {"installed": self.app.studio.installed(),
+                                                             "outdated": bool(self.app.studio.outdated())},
             "libraryRoot": prefs["libraryRoot"],
             "theme": prefs["theme"],
             "playbackRate": prefs["playbackRate"],
