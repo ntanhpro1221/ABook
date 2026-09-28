@@ -8,6 +8,7 @@ import {
   Folder,
   FolderInput,
   Gauge,
+  Info,
   Loader2,
   Mic,
   Play,
@@ -17,7 +18,7 @@ import {
   Wand2,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
-import { useNavigate, useSearchParams } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { Switch } from "@/desktop/PhoneSync";
 import { useClip } from "@/listen/clip";
@@ -337,6 +338,27 @@ function SourceStep({
               </span>
             )}
           </label>
+          {scan?.existing && scan.existing.length > 0 && (
+            <div className="mt-4 flex gap-3 rounded-xl border border-info/40 bg-info-soft p-4 text-sm">
+              <Info className="mt-0.5 size-4 shrink-0 text-info" />
+              <div className="min-w-0">
+                <p className="font-semibold">Truyện này đã có dự án</p>
+                <ul className="mt-1 space-y-1">
+                  {scan.existing.map((project) => (
+                    <li key={project.id} className="flex flex-wrap items-baseline gap-x-2">
+                      <span className="min-w-0 break-words">
+                        “{project.title}” · {project.shared === project.chapters ? `cả ${project.chapters} chương` : `trùng ${project.shared}/${project.chapters} chương`} · {project.statusLabel}
+                      </span>
+                      <Link to={`/studio/${project.id}`} className="font-medium text-accent-text hover:underline">
+                        Mở dự án
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-1 text-fg-2">Vẫn tạo được dự án mới - ví dụ để thử một giọng kể khác.</p>
+              </div>
+            </div>
+          )}
           <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
             <div className="tabular text-sm text-fg-2">
               <span className="font-semibold text-fg">{files.length} chương</span> · {formatNumber(scan!.totals.words)} chữ · khoảng{" "}

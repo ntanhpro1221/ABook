@@ -188,6 +188,12 @@ TITLE_FILE = "studio_title.json"
 TITLE_MAX = 160
 
 
+def source_digests(project_root: Path) -> set[str]:
+    """SHA-256 nội dung các file truyện đã đưa vào dự án (chapters.input_sha256)."""
+    with closing(connect(project_root)) as connection:
+        return {str(row[0]) for row in connection.execute("SELECT input_sha256 FROM chapters") if row[0]}
+
+
 def display_title(project_root: Path, fallback: str) -> str:
     """Tên sách người dùng đặt lại (TITLE_FILE), hay `fallback` - tên lúc tạo trong sổ."""
     try:

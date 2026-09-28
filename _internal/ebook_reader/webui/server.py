@@ -304,6 +304,30 @@ class App:
         self.jobs.stop(path)
         return self.summary(path)
 
+    def existing_projects(self, digests: list[str]) -> list[dict[str, Any]]:
+        """Dự án đã làm từ chính những file vừa chọn - so NỘI DUNG (SHA-256), không so đường dẫn: truyện chép sang thư
+        mục khác vẫn là một. Báo khi trùng từ nửa số file vừa chọn, hay từ nửa số chương của dự án cũ (chọn lại cả thư mục
+        đã thêm chương mới). Soát UX 29-09: tạo lại cùng truyện không có lời nào, người dùng có hai dự án mà không biết."""
+        wanted = {digest for digest in digests if digest}
+        found: list[dict[str, Any]] = []
+        if not wanted:
+            return found
+        for path in self.library.projects():
+            try:
+                have = store.source_digests(path)
+            except Exception:  # noqa: BLE001 - một dự án hỏng không được chặn việc tạo sách
+                continue
+            shared = len(wanted & have)
+            if shared and (shared * 2 >= len(wanted) or shared * 2 >= len(have)):
+                try:
+                    summary = self.summary(path)
+                except Exception:  # noqa: BLE001
+                    continue
+                found.append({"id": summary["id"], "title": summary["title"], "statusLabel": summary["statusLabel"],
+                              "shared": shared, "chapters": len(have)})
+        found.sort(key=lambda item: -item["shared"])
+        return found[:3]
+
     def rename(self, value: str, title: str) -> dict[str, Any]:
         """Đặt lại tên sách hiện trong thư viện, trên điện thoại và trong file xuất (store.TITLE_FILE) - thư mục dự án và
         sổ của dây chuyền giữ nguyên, nên đổi được cả lúc sách đang chạy."""
@@ -1271,7 +1295,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def post_scan(self, _query: dict[str, list[str]]) -> None:
         body = self._body()
-        self._send_json(HTTPStatus.OK, actions.scan_inputs(self._source_paths(body.get("paths"))))
+        result = actions.scan_inputs(self._source_paths(body.get("paths")))
+        result["existing"] = self.app.existing_projects([str(row.get("sha256") or "") for row in result["files"]])
+        self._send_json(HTTPStatus.OK, result)
 
     def post_source_upload(self, _query: dict[str, list[str]]) -> None:
         # Studio từ xa: điện thoại không có đường dẫn nào trên máy này để gõ - nó gửi từng chương TXT, rồi trình tạo sách

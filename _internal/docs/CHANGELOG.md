@@ -14,6 +14,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Studio: **đổi tên và xoá dự án** (nút "…" cạnh "Mở thư mục sách"). Đổi tên chỉ đổi tên hiện trong thư viện, trên
   điện thoại và trong file xuất. Xoá chuyển cả thư mục dự án vào **Thùng rác** của Windows, nên khôi phục được; file
   truyện gốc không bị đụng. Sách đang chạy phải dừng trước. Chỉ làm được trên chính máy tính, không từ Studio từ xa.
+- Studio: chọn truyện **đã có dự án** thì bước đầu báo "Truyện này đã có dự án" kèm nút mở dự án ấy. So nội dung file,
+  nên truyện chép sang thư mục khác vẫn nhận ra. Vẫn tạo được dự án mới, ví dụ để thử một giọng kể khác.
 - Hộp "Việc cần anh":
   - Việc đã quyết thu vào mục "Đã quyết, chờ áp dụng" và không còn tính vào số đếm; nút tô đúng lựa chọn đã bấm.
   - Thẻ "Ai nói câu này" có **"Tìm trong truyện…"**, mở đúng câu ấy ở tab Kịch bản với ô chọn người nói (tìm được mọi
