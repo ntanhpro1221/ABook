@@ -28,6 +28,7 @@ from .listening import RECORD_ID, Listening
 from .remote_studio import REMOTE_HEADER, StudioGate
 from .reviews import Reviews, review_view
 from .casting_review import casting_chapter, casting_chapters
+from .voice_picker import voice_choices
 from .work_items import work_items
 from .sync import Devices, ExclusiveHTTPServer, Remote, SyncApp, SyncServer, local_addresses, remote_command, SYNC_PORT
 
@@ -727,6 +728,13 @@ class Handler(BaseHTTPRequestHandler):
         listener_overrides.request_speakers(path, lines, speaker, now=time.time())
         self._send_json(HTTPStatus.OK, {"lines": len(lines), "speaker": speaker})
 
+    def get_voice_choices(self, query: dict[str, list[str]], value: str) -> None:
+        # Màn "Đổi giọng" của một nhân vật (voice_picker.py): mọi giọng dùng được, giọng máy gợi ý, ai đang dùng giọng nào.
+        view = voice_choices(self.app._book(value), (query.get("character") or [""])[0][:200])
+        if view is None:
+            raise ApiError(HTTPStatus.NOT_FOUND, "Nhân vật này chưa có giọng trong sách")
+        self._send_json(HTTPStatus.OK, view)
+
     def post_voice(self, _query: dict[str, list[str]], value: str) -> None:
         # Giọng / giới của MỘT nhân vật (thẻ "Nam hay nữ", "Chung giọng"): như người nói - ghi mong muốn vào overrides.json,
         # dây chuyền áp ở ranh giới chương; hỏi SQLite chỉ đọc bằng đúng phép dây chuyền dùng để từ chối tại chỗ.
@@ -1088,6 +1096,7 @@ ROUTES: list[Route] = [
     ("POST", re.compile(BOOK + r"/bookfile"), Handler.post_bookfile),
     ("POST", re.compile(BOOK + r"/speaker"), Handler.post_speaker),
     ("POST", re.compile(BOOK + r"/voice"), Handler.post_voice),
+    ("GET", re.compile(BOOK + r"/voices"), Handler.get_voice_choices),
     ("GET", re.compile(BOOK + r"/cover/search"), Handler.get_cover_search),
     ("PUT", re.compile(BOOK + r"/cover"), Handler.put_cover),
     ("DELETE", re.compile(BOOK + r"/cover"), Handler.delete_cover),
