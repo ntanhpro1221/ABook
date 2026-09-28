@@ -511,6 +511,43 @@ def _vietnamese_order_name(name: str) -> bool:
     return bool(parts) and all(is_vietnamese_syllable(part) for part in parts)
 
 
+# Một chữ romaji Hepburn: chuỗi âm tiết (phụ âm đầu tuỳ chọn, có thể kép "kk"/"tch", hoặc ghép "ky"/"sh"/"ts"...) + nguyên
+# âm, hoặc "n" đứng riêng - "onizuki", "yuusei", "kuchinashi", "hokkaido". Tên Âu gần như luôn vấp một cụm phụ âm hay phụ âm
+# cuối không có trong tiếng Nhật ("lucien", "evans", "grey", "krai", "andrey"), tên Hàn cũng vậy ("kim", "dokja").
+ROMAJI_WORD_PATTERN = re.compile(
+    r"(?:(?:kk|ss|tt|pp|tch|cch|ssh)?(?:ky|gy|ny|hy|by|py|my|ry|sh|ch|ts|[kgsztdnhbpmyrwfj])?[aiueo]|n)+"
+)
+
+
+def _japanese_order_name(name: str) -> bool:
+    """Tên Nhật viết romaji: mọi chữ là chuỗi âm tiết romaji - "Onizuki Hina", "Kuchinashi Yoshihito". Bản dịch Việt của
+    LN Nhật giữ thứ tự Nhật, HỌ TRƯỚC, nên như tên Việt: chữ CUỐI là tên gọi, "HINA" là "ONIZUKI HINA"."""
+    parts = [part for part in re.split(r"[\s-]+", normalize_name(name)) if part]
+    return bool(parts) and all(ROMAJI_WORD_PATTERN.fullmatch(part) for part in parts)
+
+
+def _family_first_name(name: str) -> bool:
+    """Tên mà chữ CUỐI là tên gọi riêng của người ấy (họ đứng trước): Việt / Hán Việt hoặc Nhật."""
+    return _vietnamese_order_name(name) or _japanese_order_name(name)
+
+
+# Kính ngữ Nhật đứng SAU tên, bản dịch giữ nguyên ("Hina-sama", "Kazuma-san"): model chép cả cụm làm nhãn người nói, và
+# "HINA-SAMA" thành nhân vật thứ hai - giọng thứ hai - của Hina. `first_person.py` có cùng danh sách cho việc đoán người kể.
+JAPANESE_HONORIFIC_SUFFIX_PATTERN = re.compile(
+    r"^(?P<name>.*\S)[\s-]+(?:san|sama|kun|chan|sensei|senpai|dono|tan|han|nii|nee|niisan|neesan)$",
+    flags=re.IGNORECASE,
+)
+
+
+def strip_japanese_honorific(label: str) -> str:
+    """"HINA-SAMA" -> "HINA". Nhãn chỉ có kính ngữ ("SENSEI") hay phần còn lại quá ngắn thì giữ nguyên."""
+    match = JAPANESE_HONORIFIC_SUFFIX_PATTERN.fullmatch(" ".join(label.split()))
+    if match is None:
+        return label
+    name = match.group("name").strip(" -")
+    return name if len(name) >= 2 and any(character.isalpha() for character in name) else label
+
+
 def _bare_word(word: str) -> str:
     return fold_for_source_search(word).replace("đ", "d")
 
@@ -548,13 +585,13 @@ def merge_given_names(representatives: dict[str, str]) -> dict[str, str]:
     bare: dict[str, set[str]] = defaultdict(set)
     for name in set(representatives.values()):
         words = normalize_name(name).split()
-        if len(words) >= 2 and _vietnamese_order_name(name) and words[0] not in NAME_PREFIX_TITLES:
+        if len(words) >= 2 and _family_first_name(name) and words[0] not in NAME_PREFIX_TITLES:
             exact[words[-1]].add(name)
             bare[_bare_word(words[-1])].add(name)
     redirected: dict[str, str] = {}
     for key, name in representatives.items():
         words = normalize_name(name).split()
-        if len(words) != 1 or not _vietnamese_order_name(name) or words[0] in NAME_SUFFIX_TITLES:
+        if len(words) != 1 or not _family_first_name(name) or words[0] in NAME_SUFFIX_TITLES:
             continue
         word = words[0]
         targets = exact.get(word) or (bare.get(word) if _bare_word(word) == word else None) or set()
@@ -576,7 +613,7 @@ def canonical_speaker_names(
     cleaned_counts: Counter[str] = Counter()
     cleaned_by_original: dict[str, str] = {}
     for original, count in counts.items():
-        cleaned = _canonical_speaker(original)
+        cleaned = strip_japanese_honorific(_canonical_speaker(original))
         cleaned_by_original[original] = cleaned
         normalized = normalize_name(cleaned)
         if (
