@@ -363,11 +363,14 @@ export function Segmented<T extends string>({
   onChange,
   options,
   label,
+  wrap = false,
 }: {
   value: T;
   onChange: (value: T) => void;
   options: { value: T; label: string }[];
   label: string;
+  /** Nhiều lựa chọn (8 loại việc): xuống hàng thay vì bóp chữ - soát UX 29-09, thanh lọc cần ~1089px. */
+  wrap?: boolean;
 }) {
   const values = options.map((option) => option.value);
   return (
@@ -375,7 +378,7 @@ export function Segmented<T extends string>({
       role="radiogroup"
       aria-label={label}
       onKeyDown={radioGroupKeys(values, value, onChange)}
-      className="inline-flex rounded-lg border border-line bg-panel-2 p-0.5"
+      className={cn("rounded-lg border border-line bg-panel-2 p-0.5", wrap ? "flex flex-wrap gap-0.5" : "inline-flex")}
     >
       {options.map((option, index) => (
         <button
@@ -386,7 +389,7 @@ export function Segmented<T extends string>({
           tabIndex={radioTabIndex(values, value, index)}
           onClick={() => onChange(option.value)}
           className={cn(
-            "h-7 rounded-md px-3 text-[13px] font-medium transition-colors",
+            "h-7 whitespace-nowrap rounded-md px-3 text-[13px] font-medium transition-colors",
             value === option.value ? "bg-panel text-fg shadow-card" : "text-fg-2 hover:text-fg",
           )}
         >
