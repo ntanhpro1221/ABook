@@ -180,9 +180,10 @@ def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bo
 
 
 def _remote_view(book: dict[str, Any]) -> dict[str, Any]:
-    from .remote_books import computer_name
+    from .remote_books import computer_name, remote_of
 
-    return {"computer": computer_name(book)}
+    # `device`: máy đã ghép giữ cuốn này - "Phát trên <máy ấy>" chỉ hiện với đúng máy phát được nó.
+    return {"computer": computer_name(book), "device": (remote_of(book) or {}).get("computer", "")}
 
 
 def _folder_name(title: str, key: str) -> str:

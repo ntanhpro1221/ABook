@@ -33,7 +33,8 @@ def test_this_computer_listens_to_a_book_on_another_computer(library, tmp_path: 
 
         books = app.listen_library()
         (book,) = [item for item in books if item.get("remote")]
-        assert book["remote"] == {"computer": "Máy kia"} and book["chaptersAvailable"] == 1
+        (computer_id,) = [computer["id"] for computer in view["computers"]]
+        assert book["remote"] == {"computer": "Máy kia", "device": computer_id} and book["chaptersAvailable"] == 1
         path = app._listenable(book["id"])
         assert REMOTE_FOLDER in str(path) and packages.is_package(path)
         chapter = app.listen_book(book["id"])["chapters"][0]
@@ -159,3 +160,52 @@ def test_a_phone_sharing_its_library_is_found_and_labelled_as_a_phone() -> None:
     finally:
         worker.join(3)
         phone.close()
+
+
+def test_this_computer_sees_and_controls_the_player_of_another_computer(library, tmp_path: Path) -> None:  # noqa: F811
+    """Mạng trạm bước 4, máy tính <-> máy tính: máy kia đang phát (giao diện của nó báo lên host) thì thanh "Đang phát
+    trên Máy kia" hiện ở máy này, kèm cuốn ảo tương ứng để "Nghe trên máy này"; lệnh dừng tới máy kia; "Phát trên Máy
+    kia" gửi đúng mã cuốn CỦA MÁY KIA. Cuốn máy kia không có thì từ chối rõ ràng, không gửi bừa."""
+    import time
+
+    import pytest
+
+    from ebook_reader.webui.server import ApiError
+    from ebook_reader.webui.sync import LOCAL_PLAYER, Remote
+
+    other_library, project, other_listening = library
+    devices = Devices(tmp_path / "kia" / "devices.json")
+    other_player = Remote()
+    other = SyncServer(SyncApp(other_library, other_listening, devices, "Máy kia", player=other_player),
+                       host="127.0.0.1", port=0).start()
+    preferences = Preferences(tmp_path / "nay" / "preferences.json")
+    preferences.update({"libraryRoot": str(tmp_path / "nay" / "thu_vien")})
+    app = App(preferences=preferences, runner=FakeRunner(), token="t", listening=Listening(tmp_path / "nay" / "l.json"))
+    try:
+        app.pair_computer(f"127.0.0.1:{other.port}", devices.start_pairing()["code"])
+        (local,) = [item for item in app.listen_library() if item.get("remote")]
+        remote_id = book_id(project)
+        state = {"bookId": remote_id, "bookTitle": "Sách thử", "chapterId": 1, "chapterTitle": "Chương 646",
+                 "position": 42.0, "duration": 600.0, "playing": True, "rate": 1.25}
+        other_player.report(LOCAL_PLAYER, "Máy kia", {"state": state})
+
+        deadline = time.time() + 5
+        while not (peers := [phone for phone in app.remote_view()["phones"] if phone["via"] == "peer"]):
+            assert time.time() < deadline, "máy này phải thấy trình phát máy kia sau một vòng hỏi nền"
+            time.sleep(0.1)
+        (peer,) = peers
+        assert (peer["name"], peer["kind"], peer["playing"], peer["position"]) == ("Máy kia", "computer", True, 42.0)
+        assert peer["known"] and peer["localBookId"] == local["id"], "Nghe trên máy này = mở đúng cuốn ảo"
+
+        assert app.remote_send(peer["device"], {"action": "pause"})["id"]
+        assert [command["action"] for command in other_player.report(LOCAL_PLAYER, "Máy kia", {"state": state})] == ["pause"]
+
+        app.remote_send(peer["device"], {"action": "load", "bookId": local["id"], "chapterId": 1, "seconds": 90})
+        (load,) = other_player.report(LOCAL_PLAYER, "Máy kia", {"state": state})
+        assert (load["action"], load["bookId"], load["seconds"]) == ("load", remote_id, 90.0), "máy kia nhận mã của CHÍNH nó"
+        with pytest.raises(ApiError, match="không có cuốn này"):
+            app.remote_send(peer["device"], {"action": "load", "bookId": "khongcosach", "chapterId": 1, "seconds": 0})
+    finally:
+        other.stop()
+    with pytest.raises(ApiError, match="Không kết nối được"):
+        app.remote_send(peer["device"], {"action": "play"})
