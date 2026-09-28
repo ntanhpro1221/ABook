@@ -1,7 +1,7 @@
 """N7b TỪ VĂN BẢN THÔ: đoán người kể "tôi" của một truyện LÚC NHẬP SÁCH - không LLM, không sổ nhân vật, không gold.
 
     D:/Novels/LLM_Train/.venv/Scripts/python.exe scripts/model_eval/quote_scorer/narrator_raw.py \
-        "D:/Novels/Ebook Reader/Corpus/Young Master's PoV Woke Up As A Villain In A Game One Day" [--chapters 40]
+        "D:/Novels/ABook/Corpus/Young Master's PoV Woke Up As A Villain In A Game One Day" [--chapters 40]
 
 Dòng prompt "người kể xưng 'tôi' là SAMAEL" đưa LoRA từ 34,0% lên 89,4% người nói ở truyện ngôi thứ nhất (27-09) - nhưng
 dòng ấy phải có NGAY lúc phân tích, trước khi app biết tên ai. Nên ứng viên lấy từ chính văn bản: cụm VIẾT HOA không đứng

@@ -50,7 +50,7 @@ Studio (máy tính):
   `pyproject.toml`/`uv.lock` là đổi hash chất lượng của dây chuyền giữa cuốn sách). Là cửa sổ mặc định của lối tắt
   (`app.py`; giao diện cũ: `app.py --classic`). Phục vụ bản dựng `webui/static/` - dựng tại máy, không commit.
 - File sách `.abook` (`webui/packages.py`): bấm đúp trong Explorer (`register_file_types.ps1` đăng ký lệnh mở:
-  `Ebook Reader.vbs "<file>"` -> `start_windows.ps1 -OpenFile` -> `app.py "<file>"`) hay nút "Mở file sách". Cuốn giải
+  `ABook.vbs "<file>"` -> `start_windows.ps1 -OpenFile` -> `app.py "<file>"`) hay nút "Mở file sách". Cuốn giải
   nén vào `<thư viện>/Sách đã nhập/`, `book.json` của gói đã là hình dạng phía nghe. Mở lần hai khi app đang chạy: đường
   dẫn đi qua khoá một phiên bản (`desktop_shell.open_file_message`), cửa sổ báo trang web bằng sự kiện `abook-opened`.
   Chống trùng bằng dấu vân tay audio: file do dự án trong thư viện xuất -> mở dự án ấy; đã nhập -> về cuốn ấy (bản nhiều

@@ -9,7 +9,7 @@ PROJECT_ROOT = INTERNAL_ROOT.parent
 
 
 def test_one_click_startup_contract() -> None:
-    start_path = INTERNAL_ROOT / "Ebook Reader.vbs"
+    start_path = INTERNAL_ROOT / "ABook.vbs"
     start_bytes = start_path.read_bytes()
     assert not start_bytes.startswith(b"\xef\xbb\xbf")
     assert start_bytes.isascii()
@@ -103,7 +103,7 @@ def test_one_click_startup_contract() -> None:
     assert "revision='$TimmBackboneRevision'" in setup
     assert '$AppName = "ABook"' in shortcut
     assert '$LegacyNames = @("Ebook Reader")' in shortcut and "Remove-LegacyShortcut" in shortcut
-    assert '$Launcher = Join-Path $ProjectRoot "_internal\\Ebook Reader.vbs"' in shortcut
+    assert '$Launcher = Join-Path $ProjectRoot "_internal\\ABook.vbs"' in shortcut
     assert '$RootShortcutPath = Join-Path $ProjectRoot "$AppName.lnk"' in shortcut
     assert '$StartMenuShortcutPath = Join-Path $ProgramsRoot "$AppName.lnk"' in shortcut
     assert "$Shortcut.TargetPath = $Launcher" in shortcut

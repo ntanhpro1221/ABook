@@ -2,7 +2,7 @@
 
     EBOOK_AUDIOBOOKS_ROOT   thư mục chứa `_versions/` và `_book/` của cuốn      mặc định D:/Novels/Audiobooks/book2
     EBOOK_TAG_PREFIX        tiền tố tag git / tên phiên bản (`<prefix>-loNN`)    mặc định v0.3.0
-    EBOOK_SOURCE_DIR        thư mục nguồn .txt                                   mặc định D:/Novels/Ebook Reader/Text_Tmp
+    EBOOK_SOURCE_DIR        thư mục nguồn .txt                                   mặc định D:/Novels/ABook/Text_Tmp
     EBOOK_PLAN              kế hoạch lô (bảng `| lô | 000..048 | ...`)           mặc định docs/PRODUCTION_PLAN_book2.md
     EBOOK_ALBUM             tên đĩa ghi vào thẻ ID3 của mọi chương                mặc định Throne of Magical Arcana
     EBOOK_FIRST_PERSON      "tôi" trong cuốn này là ai (rỗng = kể ngôi thứ ba)   mặc định rỗng
@@ -39,7 +39,7 @@ AUDIOBOOKS_ROOT = Path(os.environ.get("EBOOK_AUDIOBOOKS_ROOT", "D:/Novels/Audiob
 VERSIONS = AUDIOBOOKS_ROOT / "_versions"
 BOOK = AUDIOBOOKS_ROOT / "_book"
 TAG_PREFIX = os.environ.get("EBOOK_TAG_PREFIX", "v0.3.0")
-SOURCE_DIR = Path(os.environ.get("EBOOK_SOURCE_DIR", "D:/Novels/Ebook Reader/Text_Tmp"))
+SOURCE_DIR = Path(os.environ.get("EBOOK_SOURCE_DIR", "D:/Novels/ABook/Text_Tmp"))
 PLAN = Path(os.environ.get("EBOOK_PLAN", "docs/PRODUCTION_PLAN_book2.md"))
 # Ten dia ghi vao the ID3 cua moi chuong. Thuoc ve CUON, khong thuoc ve lan ghep, va phai o
 # day chu khong o `assemble_book.py`: buoc 7 cua `boundary.sh` goi `assemble_book.py --apply`

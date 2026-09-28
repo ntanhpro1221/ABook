@@ -1,4 +1,4 @@
-r"""Khảo sát và tải truyện dịch từ Hako (docln) vào kho dữ liệu `D:/Novels/Ebook Reader/Corpus/`.
+r"""Khảo sát và tải truyện dịch từ Hako (docln) vào kho dữ liệu `D:/Novels/ABook/Corpus/`.
 
 Chạy bằng Python của máy có `cloudscraper` + `lxml` (`py`, 3.13) - KHÔNG phải runtime/.venv của dây chuyền.
 
@@ -35,7 +35,7 @@ import cloudscraper
 from lxml import html
 
 SOURCES = ("https://docln.net", "https://docln.sbs", "https://ln.hako.vn")
-CORPUS = Path("D:/Novels/Ebook Reader/Corpus")
+CORPUS = Path("D:/Novels/ABook/Corpus")
 # Khảo sát nằm CÙNG kho (repo riêng tư, xem scripts/corpus/manifest.py): có bình luận người đọc chép từ Hako.
 SURVEY_DIR = CORPUS / "_survey"
 # Bộ lọc của trang danh sách Hako: truyện dịch bởi người, AI dịch ("convert"), sáng tác tiếng Việt.

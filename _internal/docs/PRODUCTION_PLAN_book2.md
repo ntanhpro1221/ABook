@@ -1,6 +1,6 @@
 # Kế hoạch chạy cuốn 2: 915 chương, 22 lô (lô 6 lớn gộp hai lô cũ)
 
-Nguồn: `D:/Novels/Ebook Reader/Text_Tmp` — chủ sách chỉ định 2026-09-13 22:5x (*"lấy tài liệu ở đây mà dev"*)
+Nguồn: `D:/Novels/ABook/Text_Tmp` — chủ sách chỉ định 2026-09-13 22:5x (*"lấy tài liệu ở đây mà dev"*)
 sau khi nguồn cuốn 1 (`D:/Novels/Tools/Text`, 478 chương) vào Thùng rác lúc 22:25. Không chung một byte với
 cuốn 1: 478/478 file khác. Đây là một cuốn khác — "Chương 01 - Giàn hỏa thiêu rực cháy".
 
@@ -22,7 +22,7 @@ tổng ~182 giờ máy  ≈  7,6 ngày chạy liên tục
 phân tích ~4,5 giờ (cả lô, trước khi đoạn nào được thu) + thu ~5,1 giờ khi máy rảnh ≈ **9,6–9,8 giờ**,
 tức ~380 đoạn/giờ. Khi có người dùng máy, bước thu nhường (`yield_heavy`) và chậm còn ~2/3.
 
-Sinh bằng `scripts/plan_batches.py "D:/Novels/Ebook Reader/Text_Tmp" --hours 8` (cân theo giờ máy, cùng
+Sinh bằng `scripts/plan_batches.py "D:/Novels/ABook/Text_Tmp" --hours 8` (cân theo giờ máy, cùng
 lý do với cuốn 1 — xem PRODUCTION_PLAN.md). `check_sources.py`: 915 chương chia đoạn được hết.
 
 | lô | chương | số chương | segment | giờ máy | |

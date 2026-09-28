@@ -1,5 +1,5 @@
 ﻿param(
-    # Bấm đúp một file sách (.abook): Ebook Reader.vbs chuyển đường dẫn tới đây, app.py mở file ấy.
+    # Bấm đúp một file sách (.abook): ABook.vbs chuyển đường dẫn tới đây, app.py mở file ấy.
     [string]$OpenFile = ""
 )
 

@@ -393,7 +393,7 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
 ABook.lnk
 README.md
 _internal/
-├── Ebook Reader.vbs   # launcher thật; shortcut root/Start Menu trỏ trực tiếp vào đây
+├── ABook.vbs          # launcher thật; shortcut root/Start Menu trỏ trực tiếp vào đây
 ├── AGENTS.md          # tài liệu dành cho agent/lập trình viên
 ├── app.py
 ├── ebook_reader/      # Python package chính
@@ -405,7 +405,7 @@ _internal/
 └── LICENSE
 ```
 
-Tên kỹ thuật duy nhất là `ebook_reader`; tên hiển thị là `ABook` (tên cũ `Ebook Reader` còn ở tên thư mục repo, `Ebook Reader.vbs`, dấu log Ollama trong file khoá chất lượng). Không đưa file kỹ thuật mới ra root nếu không thật sự cần cho người dùng.
+Tên kỹ thuật duy nhất là `ebook_reader`; tên hiển thị là `ABook` (tên cũ `Ebook Reader` chỉ còn ở dấu log Ollama trong file khoá chất lượng và các định danh lưu trữ như QSettings, AppUserModelID; thư mục dự án là `D:\Novels\ABook`, repo `ntanhpro1221/ABook` từ 28-09). Không đưa file kỹ thuật mới ra root nếu không thật sự cần cho người dùng.
 
 Module chính:
 
