@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Tab **"Kịch bản"**: cuối mỗi chương có nút **"Chương này đúng"** - một lần bấm ghi nhận người nói của mọi câu chưa
+  ai quyết (trừ câu máy còn nghi). Mỗi câu xác nhận là một nhãn đúng để máy phân tích học.
 - Tab **"Kịch bản"**: mỗi câu có nhãn **cách đọc** (cảm xúc và mức, vd "Sợ · mạnh"); bấm vào để đổi cảm xúc, mức,
   hay loại đoạn - lời kể, lời thoại, nội tâm (phím tắt `e` cho câu đang chọn). Lời kể đổi thành lời thoại thì chọn luôn
   người nói; lời thoại đổi thành lời kể thì câu về giọng người kể. Mức được giữ trong tầm giọng đọc được (thì thầm,

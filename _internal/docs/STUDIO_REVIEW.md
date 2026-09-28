@@ -99,3 +99,8 @@ Người duyệt đúng những câu ấy là cách rẻ nhất để đạt 100
      người kể và giọng người kể. Giao diện: nhãn cách đọc trên từng câu ở tab Kịch bản.
 4. **Vòng học**: xuất mọi lần sửa thành dòng kiểu gold, đưa vào dữ liệu LoRA/bộ chấm; đo model mới trên chính những câu
    người đã sửa.
+   - **Xuất nhãn XONG 28-09** (`scripts/model_eval/listener_labels.py`): mọi quyết định của người nghe trong mọi dự án
+     (người nói, cách đọc, giới/giọng, cách đọc tên) thành JSONL, kèm nhãn GỐC của máy lấy từ sự kiện áp đầu tiên (sau
+     khi áp SQLite chỉ còn nhãn mới), `confirmed` khi người nghe giữ nhãn máy, và ba câu trước/sau làm ngữ cảnh. Nút
+     "Chương này đúng" ở cuối mỗi chương trong tab Kịch bản sinh nhãn xác nhận hàng loạt (bản sao lô 18: một lần bấm =
+     22 nhãn). Còn làm: đưa nhãn vào dữ liệu LoRA/bộ chấm và đo model trên chính các câu ấy.
