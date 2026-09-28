@@ -8685,6 +8685,119 @@ class ProjectDB:
             )
         return details
 
+    def apply_listener_voice(
+        self,
+        *,
+        character: str,
+        voices: dict[str, Any],
+        preset: str = "",
+        gender: str = "",
+        avoid: str = "",
+    ) -> dict[str, Any] | None:
+        """Đổi giọng và/hoặc ghim giới của MỘT nhân vật theo ý người nghe - một transaction.
+
+        Đích do `listener_overrides.voice_target` chọn, cùng phép giao diện đã dùng để từ chối tại chỗ: giọng mới là hồ
+        sơ bước phân vai sẽ tạo cho người ấy với mọi người khác giữ nguyên giọng (`character_registry.book_allocator`).
+        Mọi câu của nhân vật sang hồ sơ mới cùng lúc, nên "một người một giọng" vẫn đúng; câu đã thu được đặt lại để thu
+        bằng giọng mới. Giới và giọng được ghim (`locked`, `locked_voice_key`) để lô sau phân vai ra đúng như vậy.
+
+        Trả None khi không có gì đổi (giọng đang có đã đáp ứng, giới đã ghim), `{"problem": mã}` khi không áp được, hay
+        chi tiết lần áp.
+        """
+        from .listener_overrides import voice_target
+
+        now = time.time()
+        with self.transaction() as conn:
+            target, problem = voice_target(conn, voices, character=character, preset=preset, gender=gender, avoid=avoid)
+            if target is None:
+                return {"problem": problem}
+            profile = target["profile"]
+            if profile is None and not target["lock_gender"]:
+                return None
+            character_id = int(target["character_id"])
+            voice_key = str(profile["voice_key"]) if profile is not None else target["current_voice_key"]
+            if target["lock_gender"]:
+                conn.execute(
+                    "UPDATE characters SET gender=?, locked=1, updated_at=? WHERE id=?",
+                    (target["gender"], now, character_id),
+                )
+            # Giọng chỉ ghim khi thật sự đổi; chỉ ghim giới thì giọng đang có đã đúng giới, không câu nào phải thu lại.
+            if profile is not None:
+                conn.execute(
+                    "UPDATE characters SET locked_voice_key=?, updated_at=? WHERE id=?",
+                    (voice_key, now, character_id),
+                )
+            reset: list[int] = []
+            chapters: set[int] = set()
+            if profile is not None:
+                existing = conn.execute("SELECT id FROM voice_profiles WHERE voice_key=?", (voice_key,)).fetchone()
+                if existing is not None:
+                    profile_id = int(existing["id"])
+                else:
+                    profile_id = int(conn.execute(
+                        """
+                        INSERT INTO voice_profiles(voice_key,engine,preset_name,description,seed,pitch_semitones,
+                            formant_ratio,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)
+                        """,
+                        (
+                            voice_key, profile["engine"], profile["preset_name"], profile["description"],
+                            int(profile["seed"]), int(profile["pitch_semitones"]), float(profile["formant_ratio"]),
+                            profile["status"], now, now,
+                        ),
+                    ).lastrowid)
+                rows = conn.execute(
+                    "SELECT id, chapter_id, status, voice_profile_id FROM segments WHERE canonical_character_id=?",
+                    (character_id,),
+                ).fetchall()
+                done = {
+                    SegmentStatus.SIGNAL_PASSED.value,
+                    SegmentStatus.ASR_PASSED.value,
+                    SegmentStatus.VERIFIED.value,
+                    SegmentStatus.WARNING.value,
+                    SegmentStatus.FAILED.value,
+                }
+                reason = f"Người nghe đổi giọng {target['canonical_name']}: thu lại bằng giọng mới"
+                for row in rows:
+                    if row["voice_profile_id"] == profile_id:
+                        continue
+                    conn.execute("UPDATE segments SET voice_profile_id=?, updated_at=? WHERE id=?",
+                                 (profile_id, now, int(row["id"])))
+                    if str(row["status"]) in done:
+                        self._reset_segment_pending_conn(conn, int(row["id"]), reason, now)
+                        reset.append(int(row["id"]))
+                        chapters.add(int(row["chapter_id"]))
+                for chapter_id in sorted(chapters):
+                    self._refresh_chapter_counts_conn(conn, chapter_id)
+                    conn.execute(
+                        "UPDATE chapters SET status='warning', last_error=? WHERE id=? AND status=?",
+                        (reason, chapter_id, ChapterStatus.COMPLETED.value),
+                    )
+            if target["lock_gender"]:
+                conn.execute(
+                    "UPDATE segments SET gender=? WHERE canonical_character_id=? AND kind IN ('dialogue','thought')",
+                    (target["gender"], character_id),
+                )
+            details = {
+                "character": target["canonical_name"],
+                "gender": target["gender"],
+                "voice_key": voice_key,
+                "previous_voice_key": target["current_voice_key"],
+                "reset_segments": len(reset),
+                "chapters": sorted(chapters),
+            }
+            conn.execute(
+                "INSERT INTO runtime_events(timestamp,level,code,message,details_json) VALUES(?,?,?,?,?)",
+                (
+                    now,
+                    "info",
+                    "VOICE_SET_BY_LISTENER",
+                    f"Người nghe đặt {target['canonical_name']}: giới {target['gender']}, giọng {voice_key}"
+                    f" (trước là {target['current_voice_key']}); thu lại {len(reset)} câu.",
+                    json.dumps(details, ensure_ascii=False),
+                ),
+            )
+        return details
+
     def upsert_pronunciation(
         self,
         *,

@@ -91,6 +91,7 @@ from .listener_overrides import (
     read_overrides,
     speaker_requests,
     surface_key,
+    voice_requests,
 )
 from .models import BookStatus, ChapterStatus, ProjectPaths, ResourceLevel, SegmentStatus
 from .notifier import WindowsNotifier
@@ -1140,7 +1141,7 @@ class BookPipeline:
 
     def _apply_listener_overrides(self) -> set[int]:
         """Áp những gì người nghe sửa trong Studio (`overrides.json`, xem listener_overrides.py): cách đọc tên, ai nói câu
-        nào.
+        nào, giọng và giới của một nhân vật.
 
         Chỉ khi phân vai đã khoá: trước đó cách đọc là ĐẦU VÀO của phân tích và của bước chuẩn hoá tên, người nói là thứ
         phân tích đang quyết, và đổi chúng giữa pha phân tích là đổi quyển sách (AGENTS.md); giọng để gán thì chưa có.
@@ -1201,6 +1202,29 @@ class BookPipeline:
             self.log(
                 f"Người nghe gán câu {stable_id} cho {result['speaker']} (trước là {result['previous_speaker']})"
                 + ("; thu lại bằng giọng mới." if result["reset"] else ".")
+            )
+        # Giọng và giới của một nhân vật - SAU "ai nói câu nào": câu vừa được gán cho người ấy cũng sang giọng mới.
+        for request in voice_requests(overrides):
+            result = self.db.apply_listener_voice(
+                character=request["character"],
+                voices=self.settings["voices"],
+                preset=request["preset"],
+                gender=request["gender"],
+                avoid=request["avoid"],
+            )
+            if result is None:
+                continue
+            if "problem" in result:
+                self._report_rejected_override(
+                    (request["character"], f"voice:{request['preset']}:{request['gender']}:{request['avoid']}"),
+                    f"Không đổi được giọng của {request['character']!r} ({result['problem']}).",
+                    {**request, "problem": result["problem"]},
+                )
+                continue
+            reset_chapters.update(int(chapter_id) for chapter_id in result["chapters"])
+            self.log(
+                f"Người nghe đặt {result['character']}: giới {result['gender']}, giọng {result['voice_key']}"
+                f" (trước là {result['previous_voice_key']}); thu lại {result['reset_segments']} câu."
             )
         return reset_chapters
 
