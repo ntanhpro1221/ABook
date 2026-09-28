@@ -150,6 +150,80 @@ class BtMuxTest {
         assertTrue("đầu bên này không biết đường hầm đã đứt", !client.alive)
     }
 
+    /**
+     * ExoPlayer đóng kết nối mỗi lần tua ra ngoài bộ đệm, đổi chương, dừng. Bên phục vụ phải bỏ luồng ấy (RESET) - trước đây
+     * nó chờ tín dụng mãi: 64 lần là đường hầm từ chối mọi luồng, điện thoại phục vụ thì kẹt cả luồng của LibraryServer.
+     */
+    private fun abandonDownloads(abrupt: Boolean) {
+        val (client, server, local) = tunnel()
+        repeat(3) {
+            val player = Socket("127.0.0.1", local.port)
+            player.soTimeout = 10_000
+            player.getOutputStream().write("GET /big HTTP/1.1${CRLF}Host: x$CRLF$CRLF".toByteArray())
+            assertTrue(player.getInputStream().read(ByteArray(65536)) > 0)
+            if (abrupt) player.setSoLinger(true, 0) // RST như app bị giết
+            player.close()
+        }
+        val until = System.currentTimeMillis() + 10_000
+        while ((client.openStreams > 0 || server.openStreams > 0) && System.currentTimeMillis() < until) Thread.sleep(50)
+        assertEquals("luồng bị bỏ vẫn giữ chỗ", 0 to 0, client.openStreams to server.openStreams)
+        val (code, body) = get(local.port, "/nho")
+        assertEquals(200, code)
+        assertArrayEquals("nho".toByteArray(), body)
+    }
+
+    @Test
+    fun anAbandonedDownloadFreesBothEnds() = abandonDownloads(abrupt = false)
+
+    @Test
+    fun anAbruptlyAbandonedDownloadFreesBothEnds() = abandonDownloads(abrupt = true)
+
+    private fun rawPeer(): Pair<Socket, BtMux> {
+        val listener = ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"))
+        val near = Socket("127.0.0.1", listener.localPort)
+        val far = listener.accept()
+        listener.close()
+        val mux = BtMux(far.getInputStream(), far.getOutputStream(), { far.close() },
+            dial = { Socket("127.0.0.1", http.localPort) }, odd = false)
+        Thread { mux.run() }.start()
+        cleanups += { mux.shutdown(); near.close() }
+        near.soTimeout = 5000
+        return near to mux
+    }
+
+    private fun frame(kind: Int, number: Int, payload: ByteArray = ByteArray(0)): ByteArray =
+        java.nio.ByteBuffer.allocate(9 + payload.size).put(kind.toByte()).putInt(number).putInt(payload.size).put(payload).array()
+
+    private fun readFrame(socket: Socket): Triple<Int, Int, Int> {
+        val header = ByteArray(9)
+        java.io.DataInputStream(socket.getInputStream()).readFully(header)
+        val buffer = java.nio.ByteBuffer.wrap(header)
+        return Triple(buffer.get().toInt(), buffer.getInt(), buffer.getInt())
+    }
+
+    @Test
+    fun dataForAStreamThatIsGoneIsAnsweredWithResetButResetNever() {
+        val (near, _) = rawPeer()
+        near.getOutputStream().write(frame(BtMux.RESET, 7) + frame(BtMux.DATA, 99, "abc".toByteArray()))
+        assertEquals(Triple(BtMux.RESET, 99, 0), readFrame(near))
+        near.soTimeout = 300
+        try {
+            near.getInputStream().read()
+            throw AssertionError("không được đáp RESET cho RESET")
+        } catch (_: java.net.SocketTimeoutException) {
+        }
+    }
+
+    @Test
+    fun aNegativeWindowResetsTheStream() {
+        val (near, mux) = rawPeer()
+        near.getOutputStream().write(frame(BtMux.OPEN, 3))
+        val until = System.currentTimeMillis() + 5000
+        while (mux.openStreams == 0 && System.currentTimeMillis() < until) Thread.sleep(20)
+        near.getOutputStream().write(frame(BtMux.WINDOW, 3, java.nio.ByteBuffer.allocate(4).putInt(-1).array()))
+        assertEquals(Triple(BtMux.RESET, 3, 0), readFrame(near))
+    }
+
     /** Nói chuyện với đầu Python thật (webui/bluetooth.py) - chạy tay: BTMUX_PY_PORT=<cổng> gradlew testDebugUnitTest. */
     @Test
     fun speaksTheSameProtocolAsThePythonSide() {
