@@ -25,15 +25,15 @@ SPLIT: dict[str, dict[str, set[str]]] = {
         "throne_of_magical_arcana": {"351", "363", "378", "381"},
         "young_masters_pov": {"248"},
         # Bộ đo LN 28-09 (chủ sách đọc LN Nhật/Hàn): 5 chương gold mới, chưa từng vào huấn luyện - giữ như thế.
-        "two_childhood_friends": {"042"},
-        "nise_seiken": {"132"},
+        "two_childhood_friends": {"042", "060"},
+        "nise_seiken": {"132", "086"},
         "huong_dan_sinh_ton": {"062"},
         "yamiyo_no_hotaru": {"141", "225"},
         "nageki_no_bourei": {"65", "62"},
         # Chương thứ 6 (28-09 13:xx): LN Nhật ngôi thứ nhất, đối đáp hai người không lời dẫn dài.
         "love_unseen": {"07"},
         # Bộ LN MỞ RỘNG 29-09: 519 câu nhiễu ~±3 điểm, chưa đủ phân định v3/v5/8B/9B - thêm chương chưa học, xa mọi
-        # chương train/đo của cùng truyện: yamiyo 225, nageki 62 (ở trên).
+        # chương train/đo của cùng truyện: yamiyo 225, nageki 62, two_childhood_friends 060, nise_seiken 086 (ở trên).
     },
     "dev": {
         "throne_of_magical_arcana": {"344"},
