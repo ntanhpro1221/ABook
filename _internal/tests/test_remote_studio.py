@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 import http.client
 import json
+import time
 from pathlib import Path
 
 import pytest
@@ -149,6 +150,132 @@ def test_a_phone_sends_chapters_then_creates_the_book_from_them(studio) -> None:
     status, data, _ = _request(port, "POST", "/api/sources/upload", headers=cookie, body={
         "folder": "x", "name": "anh.jpg", "data": base64.b64encode(b"\xff\xd8").decode("ascii")})
     assert status == 400 and ".txt" in json.loads(data)["error"]
+    # Không ghi đè: đè lên nguồn của một cuốn đã tạo là cuốn ấy không chạy tiếp được nữa.
+    status, data, _ = _request(port, "POST", "/api/sources/upload", headers=cookie, body={
+        "folder": "Truyện của Anh", "name": "001.txt", "data": base64.b64encode(b"khac").decode("ascii")})
+    assert status == 400 and (folder / "001.txt").read_bytes() == chapter
+    for folder_name, name in (("NUL", "a.txt"), ("x", "CON.txt"), ("x", "com1.txt")):
+        status, _data, _ = _request(port, "POST", "/api/sources/upload", headers=cookie, body={
+            "folder": folder_name, "name": name, "data": base64.b64encode(b"a").decode("ascii")})
+        assert status == 400, (folder_name, name)
+
+
+# ---- soát bảo mật 28-09: mỗi test tái hiện đúng một cách tấn công của báo cáo ------------------------------------------
+
+
+def test_a_device_paired_to_listen_needs_its_own_permission(studio) -> None:
+    app, _project = studio
+    port = app.sync_server.port
+    code = app.devices.start_pairing()["code"]
+    _status, data, _ = _request(port, "POST", "/sync/v1/pair", body={"code": code, "device": "Pixel"})
+    phone = json.loads(data)["token"]
+    app.set_remote_studio(True)
+    status, data, _ = _request(port, "GET", "/api/library", phone)
+    assert status == 403 and "chưa được phép" in json.loads(data)["error"], "bật Studio không tự cho điện thoại cũ"
+    short_id = app.devices.identify(phone)["id"]
+    assert app.devices.set_studio(short_id, True)
+    status, _data, _ = _request(port, "GET", "/api/library", phone)
+    assert status == 200
+
+
+def test_remote_paths_stay_inside_the_upload_folder(studio, tmp_path: Path) -> None:
+    app, project = studio
+    app.set_remote_studio(True)
+    port = app.sync_server.port
+    cookie = {"Cookie": _pair_browser(app)}
+    private = tmp_path / "rieng"
+    private.mkdir()
+    (private / "ghi_chu.txt").write_text("Dòng đầu tiên của một file riêng tư", encoding="utf-8")
+    for path in (str(private), r"\\may-khac\share\x", "//may-khac/share", r"\\?\C:\x"):
+        for route in ("/api/scan", "/api/first-person"):
+            status, data, _ = _request(port, "POST", route, headers=cookie, body={"paths": [path]})
+            assert status == 403 and "đã gửi lên" in json.loads(data)["error"], (route, path)
+            assert b"ghi_chu" not in data
+        status, _data, _ = _request(port, "POST", "/api/books", headers=cookie, body={"paths": [path], "title": "x"})
+        assert status == 403, path
+    identifier = book_id(project)
+    status, data, _ = _request(port, "POST", f"/api/books/{identifier}/export", headers=cookie,
+                               body={"target": str(tmp_path / "ngoai")})
+    assert not (tmp_path / "ngoai").exists(), "từ xa không chọn được nơi ghi trên máy tính"
+    # Cùng lời gọi từ cửa sổ app (không qua cổng từ xa) vẫn chọn được thư mục như trước.
+    local = {"X-Ebook-Token": "phien", "Host": f"127.0.0.1:{app.local_port}"}
+    status, data, _ = _request(app.local_port, "POST", "/api/scan", headers=local, body={"paths": [str(private)]})
+    assert status == 200 and b"ghi_chu" in data
+
+
+def test_create_and_start_waits_in_the_queue(studio, tmp_path: Path) -> None:
+    app, project = studio
+    app.set_remote_studio(True)
+    port = app.sync_server.port
+    cookie = {"Cookie": _pair_browser(app)}
+    app.start(book_id(project))
+    deadline = time.time() + 10
+    while not app.runner.running(project) and time.time() < deadline:
+        time.sleep(0.1)  # FakeRunner "khởi động" 1,2 giây, như một worker thật cần thời gian
+    assert app.runner.running(project)
+    folder = None
+    for name in ("001.txt", "002.txt"):
+        _status, data, _ = _request(port, "POST", "/api/sources/upload", headers=cookie, body={
+            "folder": "moi", "name": name, "data": base64.b64encode(f"Chương {name}\n\nTrời sáng.".encode()).decode()})
+        folder = json.loads(data)["folder"]
+    status, data, _ = _request(port, "POST", "/api/books", headers=cookie,
+                               body={"paths": [folder], "title": "Sách mới", "start": True})
+    assert status == 201, data
+    assert app.queue == [json.loads(data)["id"]], "cuốn thứ hai xếp hàng, không tranh GPU với cuốn đang chạy"
+
+
+def test_malformed_and_cross_site_requests_are_refused(studio) -> None:
+    app, project = studio
+    app.set_remote_studio(True)
+    port = app.sync_server.port
+    cookie = _pair_browser(app)
+    # Content-Length âm: trước đây rfile.read(-1) đọc tới hết kết nối, vượt mọi trần kích thước.
+    connection = http.client.HTTPConnection("127.0.0.1", port, timeout=10)
+    connection.putrequest("POST", "/api/scan")
+    connection.putheader("Cookie", cookie)
+    connection.putheader("Content-Type", "application/json")
+    connection.putheader("Content-Length", "-1")
+    connection.endheaders()
+    response = connection.getresponse()
+    response.read()
+    assert response.status == 400
+    connection.close()
+    # DNS rebinding: tên miền lạ trỏ về IP của máy này.
+    status, _data, _ = _request(port, "GET", "/", headers={"Cookie": cookie, "Host": "ke-la.example:47630"})
+    assert status == 403
+    # Lệnh ghi mang cookie từ một trang khác (cùng IP, khác cổng vẫn là "same-site" với SameSite=Strict).
+    identifier = book_id(project)
+    status, _data, _ = _request(port, "POST", f"/api/books/{identifier}/stop",
+                                headers={"Cookie": cookie, "Sec-Fetch-Site": "same-site"})
+    assert status == 403
+    status, _data, _ = _request(port, "POST", f"/api/books/{identifier}/stop",
+                                headers={"Cookie": cookie, "Sec-Fetch-Site": "same-origin"})
+    assert status == 202
+    # Cookie chỉ có nghĩa ở Studio: các đường /sync/v1 của app điện thoại đòi mã tường minh.
+    status, _data, _ = _request(port, "GET", "/sync/v1/library", headers={"Cookie": cookie})
+    assert status == 401
+    # Cookie hỏng của trang khác đứng trước không làm mất mã thiết bị.
+    status, _data, _ = _request(port, "GET", "/api/library", headers={"Cookie": 'x={"a":1}; ' + cookie})
+    assert status == 200
+
+
+def test_head_keeps_the_connection_in_step_and_private_preferences_stay_home(studio) -> None:
+    app, _project = studio
+    app.set_remote_studio(True)
+    app.preferences.update({"recents": ["C:/Users/ai-do/Sach"]})
+    port = app.sync_server.port
+    cookie = _pair_browser(app)
+    connection = http.client.HTTPConnection("127.0.0.1", port, timeout=10)
+    connection.request("HEAD", "/api/app", headers={"Cookie": cookie})
+    response = connection.getresponse()
+    response.read()
+    assert response.status == 200
+    connection.request("GET", "/api/preferences", headers={"Cookie": cookie})
+    response = connection.getresponse()
+    preferences = json.loads(response.read())
+    assert response.status == 200, "yêu cầu kế tiếp trên cùng kết nối vẫn đọc đúng"
+    assert "recents" not in preferences and "positions" not in preferences
+    connection.close()
 
 
 def test_every_allowed_route_exists_on_the_computer() -> None:

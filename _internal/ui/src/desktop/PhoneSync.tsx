@@ -17,6 +17,8 @@ export interface SyncDevice {
   name: string;
   pairedAt: number;
   lastSeen: number;
+  /** Được điều khiển sản xuất khi Studio từ xa bật - theo từng thiết bị, không theo công tắc chung. */
+  studio?: boolean;
 }
 
 export interface SyncView {
@@ -68,7 +70,13 @@ function useSync() {
     onSuccess,
     onError,
   });
-  return { ...query, toggle, pair, cancel, revoke, studio };
+  const deviceStudio = useMutation({
+    mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) =>
+      api<SyncView>(`/api/sync/devices/${id}/studio`, { method: "POST", body: { enabled } }),
+    onSuccess,
+    onError,
+  });
+  return { ...query, toggle, pair, cancel, revoke, studio, deviceStudio };
 }
 
 function useSecondsLeft(until: number | undefined): number {
@@ -180,7 +188,7 @@ function PairingPanel({ sync, onPair, onCancel, busy }: { sync: SyncView; onPair
 
 /** Mục "Điện thoại" trong Cài đặt: bật đồng bộ, ghép nối bằng mã 6 số, quản lý điện thoại đã ghép. */
 export function PhoneSync() {
-  const { data: sync, toggle, pair, cancel, revoke, studio } = useSync();
+  const { data: sync, toggle, pair, cancel, revoke, studio, deviceStudio } = useSync();
   const [removing, setRemoving] = useState<SyncDevice | null>(null);
   const known = useRef<Set<string> | null>(null);
 
@@ -265,6 +273,16 @@ export function PhoneSync() {
                         Kết nối lần cuối {formatRelative(device.lastSeen)} · ghép ngày {formatDate(device.pairedAt)}
                       </div>
                     </div>
+                    {sync.remoteStudio && (
+                      <label className="flex shrink-0 cursor-pointer items-center gap-2 text-xs text-fg-2">
+                        Điều khiển sản xuất
+                        <Switch
+                          checked={Boolean(device.studio)}
+                          disabled={deviceStudio.isPending}
+                          onCheckedChange={(enabled) => deviceStudio.mutate({ id: device.id, enabled })}
+                        />
+                      </label>
+                    )}
                     <Button size="sm" variant="ghost" onClick={() => setRemoving(device)}>
                       Gỡ
                     </Button>

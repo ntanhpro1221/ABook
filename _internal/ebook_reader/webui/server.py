@@ -25,7 +25,7 @@ from . import actions, bookfile, cover_search, covers, listen_view, packages, st
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id
 from .listening import RECORD_ID, Listening
-from .remote_studio import StudioGate
+from .remote_studio import REMOTE_HEADER, StudioGate
 from .reviews import Reviews, review_view
 from .work_items import work_items
 from .sync import Devices, ExclusiveHTTPServer, Remote, SyncApp, SyncServer, local_addresses, remote_command, SYNC_PORT
@@ -259,7 +259,9 @@ class App:
         )
         self.preferences.add_recent(root)
         if body.get("start"):
-            self.jobs.start(root)
+            # Qua hàng đợi như nút "Bắt đầu": cuốn đang chạy thì cuốn mới xếp hàng, không tranh GPU (soát 28-09 - trước
+            # đây "Tạo + bắt đầu ngay" chạy song song với cuốn đang sản xuất).
+            self.start(book_id(root))
         return {"id": book_id(root)}
 
     def open_existing(self, body: dict[str, Any]) -> dict[str, Any]:
@@ -494,9 +496,28 @@ class Handler(BaseHTTPRequestHandler):
                 self.wfile.write(chunk)
                 remaining -= len(chunk)
 
+    def _remote(self) -> bool:
+        """Yêu cầu do Studio từ xa chuyển tới (remote_studio.forward gắn header): thiết bị ở xa không được chỉ đường
+        dẫn tuỳ ý trên máy này - kể cả đường UNC, thứ khiến Windows tự nối SMB tới máy khác (soát bảo mật 28-09)."""
+        return self.headers.get(REMOTE_HEADER) == "1"
+
+    def _source_paths(self, raw: Any) -> list[str]:
+        paths = [str(item) for item in (raw or [])]
+        if self._remote():
+            uploads = Path(self.app.preferences.get()["libraryRoot"]) / actions.UPLOAD_FOLDER
+            if not all(actions.inside_folder(path, uploads) for path in paths):
+                raise ApiError(HTTPStatus.FORBIDDEN, "Từ xa chỉ dùng được các chương đã gửi lên máy tính")
+        return paths
+
+    def _target(self, body: dict[str, Any]) -> str:
+        """Nơi xuất: từ xa luôn là thư mục mặc định trong thư viện, không bao giờ một đường do thiết bị ở xa chỉ."""
+        return "" if self._remote() else str(body.get("target") or "").strip()
+
     def _static(self, path_text: str) -> None:
         root = self.app.static_dir
         relative = unquote(path_text).lstrip("/") or "index.html"
+        if "\\" in relative or ":" in relative:
+            relative = "index.html"  # `\\máy\share` thành đường UNC: Windows nối SMB trước khi `relative_to` kịp chặn
         candidate = (root / relative).resolve()
         try:
             candidate.relative_to(root.resolve())
@@ -620,7 +641,7 @@ class Handler(BaseHTTPRequestHandler):
 
         project = self.app._book(value)
         body = self._body()
-        target = str(body.get("target") or "").strip()
+        target = self._target(body)
         root = Path(target) if target else Path(self.app.preferences.get()["libraryRoot"]) / "Đã xuất"
         try:
             result = export_book(project, root, cover=body.get("cover"))
@@ -632,7 +653,7 @@ class Handler(BaseHTTPRequestHandler):
     def post_bookfile(self, _query: dict[str, list[str]], value: str) -> None:
         # Một cuốn trong một file (bookfile.py) - mở bằng app ở máy khác, gửi cho người khác.
         project = self.app._book(value)
-        target = str(self._body().get("target") or "").strip()
+        target = self._target(self._body())
         root = Path(target) if target else Path(self.app.preferences.get()["libraryRoot"]) / "Đã xuất"
         try:
             path = bookfile.pack(project, root / bookfile.default_name(store.summarize(project)["title"] or project.name))
@@ -760,6 +781,13 @@ class Handler(BaseHTTPRequestHandler):
         self._mutating_guard()
         self.app.devices.revoke(device)
         self.app.remote.forget(device)
+        self._send_json(HTTPStatus.OK, self.app.sync_view())
+
+    def post_sync_device_studio(self, _query: dict[str, list[str]], device: str) -> None:
+        # Quyền Studio từ xa theo TỪNG thiết bị (soát 28-09). Chỉ trên chính máy này - không nằm trong ALLOWED.
+        self._mutating_guard()
+        if not self.app.devices.set_studio(device, bool(self._body().get("enabled"))):
+            raise ApiError(HTTPStatus.NOT_FOUND, "Không có thiết bị này")
         self._send_json(HTTPStatus.OK, self.app.sync_view())
 
     def get_remote(self, _query: dict[str, list[str]]) -> None:
@@ -903,11 +931,13 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.OK, self.app.open_existing(self._body()))
 
     def post_create(self, _query: dict[str, list[str]]) -> None:
-        self._send_json(HTTPStatus.CREATED, self.app.create(self._body()))
+        body = self._body()
+        self._source_paths(body.get("paths"))
+        self._send_json(HTTPStatus.CREATED, self.app.create(body))
 
     def post_scan(self, _query: dict[str, list[str]]) -> None:
         body = self._body()
-        self._send_json(HTTPStatus.OK, actions.scan_inputs([str(item) for item in body.get("paths", [])]))
+        self._send_json(HTTPStatus.OK, actions.scan_inputs(self._source_paths(body.get("paths"))))
 
     def post_source_upload(self, _query: dict[str, list[str]]) -> None:
         # Studio từ xa: điện thoại không có đường dẫn nào trên máy này để gõ - nó gửi từng chương TXT, rồi trình tạo sách
@@ -924,7 +954,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def post_first_person(self, _query: dict[str, list[str]]) -> None:
         body = self._body()
-        self._send_json(HTTPStatus.OK, actions.first_person_hint([str(item) for item in body.get("paths", [])]))
+        self._send_json(HTTPStatus.OK, actions.first_person_hint(self._source_paths(body.get("paths"))))
 
     def get_voices(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.voices())
@@ -1030,6 +1060,7 @@ ROUTES: list[Route] = [
     ("POST", re.compile(r"/api/remote/([0-9a-f]{12})"), Handler.post_remote),
     ("DELETE", re.compile(r"/api/sync/pairing"), Handler.delete_sync_pairing),
     ("DELETE", re.compile(r"/api/sync/devices/([0-9a-f]+)"), Handler.delete_sync_device),
+    ("POST", re.compile(r"/api/sync/devices/([0-9a-f]+)/studio"), Handler.post_sync_device_studio),
     ("GET", re.compile(r"/api/listen/library"), Handler.get_listen_library),
     ("POST", re.compile(r"/api/listen/open-book-file"), Handler.post_open_book_file),
     ("GET", re.compile(LISTEN), Handler.get_listen_book),
