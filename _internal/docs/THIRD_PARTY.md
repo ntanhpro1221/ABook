@@ -42,7 +42,9 @@ băm trong `webui/studio_setup.py`):
 - MinGit / Git for Windows (GPL-2.0) - chỉ để cài UTMOSv2 từ đúng commit; ABook không sửa hay phân phối lại.
 - Ollama (MIT) - bản riêng của Studio, đúng bản dây chuyền đã kiểm, kể cả khi máy đã có Ollama; các thư viện của dây
   chuyền theo `shell/python/studio-requirements.txt` (giấy phép như mục
-  "App máy tính - dây chuyền sản xuất" ở trên); model tải từ Hugging Face / Ollama theo giấy phép của từng model.
+  "App máy tính - dây chuyền sản xuất" ở trên); model tải từ Hugging Face / Ollama theo giấy phép của từng model,
+  trong đó model phân tích của chính dự án `abook-analyzer` (huggingface.co/NGDtuanh/abook-analyzer, Apache-2.0 như
+  model nền Qwen3-4B-Instruct-2507; thẻ model: `docs/models/`).
 
 ## Giao diện (máy tính và điện thoại dùng chung)
 

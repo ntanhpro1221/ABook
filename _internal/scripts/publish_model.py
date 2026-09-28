@@ -1,8 +1,8 @@
 """Đăng model phân tích tự huấn luyện lên Hugging Face để Studio tải về (chủ sách 28-09: đăng công khai - "có"; nơi đăng
 là Hugging Face, không phải GitHub Release).
 
-    python scripts/publish_model.py lora28v3-4b:latest abook-analysis:v3 --notes docs/models/abook-analysis-v3.md \
-        --out D:/Novels/LLM_Train/release --hf <tài khoản>/abook-analysis
+    python scripts/publish_model.py lora28v3-4b:latest abook-analyzer:v3 --notes docs/models/abook-analyzer-v3.md \
+        --out D:/Novels/LLM_Train/release --hf <tài khoản>/abook-analyzer
     python scripts/publish_model.py ... (không --hf)      # chỉ kiểm và chuẩn bị, không đăng
 
 Lấy ĐÚNG file GGUF mà Ollama của máy dev đang phục vụ (lớp model trong manifest - thứ mọi lượt đo đã chạy), kiểm băm khớp
@@ -87,13 +87,13 @@ def check_download(url: str, size: int) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("source", help="tên model trong Ollama của máy dev, vd lora28v3-4b:latest")
-    parser.add_argument("name", help="tên đăng, cũng là tên trong cài đặt phân tích, vd abook-analysis:v3")
+    parser.add_argument("name", help="tên đăng, cũng là tên trong cài đặt phân tích, vd abook-analyzer:v3")
     parser.add_argument("--notes", type=Path, required=True, help="thẻ model (docs/models/<tên>.md)")
     parser.add_argument("--out", type=Path, required=True, help="thư mục chuẩn bị (ngoài repo)")
-    parser.add_argument("--hf", metavar="REPO", help="repo Hugging Face, vd <tài khoản>/abook-analysis")
+    parser.add_argument("--hf", metavar="REPO", help="repo Hugging Face, vd <tài khoản>/abook-analyzer")
     args = parser.parse_args()
     if not re.fullmatch(r"[a-z0-9][a-z0-9._-]*:[a-z0-9._-]+", args.name):
-        raise SystemExit("Tên đăng dạng tên:nhãn, chữ thường - vd abook-analysis:v3")
+        raise SystemExit("Tên đăng dạng tên:nhãn, chữ thường - vd abook-analyzer:v3")
     blob, digest, size = model_layer(args.source)
     file = f"{args.name.replace(':', '-')}.{quantization(args.source)}.gguf"
     folder = args.out / args.name.replace(":", "-")
