@@ -191,6 +191,8 @@ export interface ShareStatus {
   blocked: boolean;
   devices: { id: string; name: string; pairedAt: number; lastSeen: number }[];
   error: string;
+  /** Phục vụ cả qua Bluetooth (BluetoothShare.kt): "running", "" (chưa bật) hay lý do không bật được. */
+  bluetooth?: { status: string; connections: number };
 }
 
 export interface EbookLibraryPlugin {
@@ -219,6 +221,8 @@ export interface EbookLibraryPlugin {
   /** Thiết bị ghép ngoài máy tính chính (mạng trạm bước 2 - Peers.kt). */
   peers(): Promise<{ peers: { key: string; name: string; host: string; port: number }[] }>;
   peerPair(options: { host: string; port: number; code: string }): Promise<{ key: string; name: string }>;
+  /** Ghép thiết bị đã ghép Bluetooth với điện thoại này - cùng mã 6 số, đi qua Bluetooth. */
+  peerPairBluetooth(options: { address: string; code: string }): Promise<{ key: string; name: string }>;
   peerForget(options: { key: string }): Promise<void>;
   peerLibraries(): Promise<{ peers: PeerLibrary[] }>;
   remotePlayers(): Promise<{ players: RemotePlayer[] }>;
