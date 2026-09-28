@@ -7096,7 +7096,11 @@ class OllamaBookAnalyzer:
             try:
                 response = self.session.post(
                     f"{self.base_url}/api/generate",
-                    json=request,
+                    # Không "suy nghĩ": Ollama 0.34.x cho qwen3 suy nghĩ trước khi trả JSON dù request có `format` -
+                    # thử Studio 28-09, cùng prompt sinh 360 token thay vì 61 rồi hết ngân sách đầu ra, cuốn hỏng. Mọi
+                    # lượt đo và mọi cuốn đã làm chạy không suy nghĩ (Ollama 0.33.2): khoá hành vi ấy ở đây, để Ollama
+                    # tự cập nhật trên máy người dùng không đổi được nó.
+                    json={"think": False, **request},
                     timeout=(10.0, min(ANALYSIS_STREAM_IDLE_SECONDS, wall_timeout)),
                     stream=True,
                 )

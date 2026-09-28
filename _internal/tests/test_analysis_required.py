@@ -11770,6 +11770,28 @@ def test_stream_replays_a_connection_that_died_before_any_response_char(monkeypa
     assert session.post_calls == 2
 
 
+def test_every_analysis_request_tells_ollama_not_to_think(monkeypatch):
+    """Ollama 0.34.x lets qwen3 think before the JSON even with `format` set: the same prompt
+    produced 360 tokens instead of 61 and the book died on the output budget (Studio test,
+    2026-09-28). Every measurement and every finished book ran without thinking - pin it."""
+    payload = {"segments": [analysis_item("S001")]}
+    sent = []
+    session = TransportFaultSession(payload, failures=0)
+    original_post = session.post
+
+    def post(url, **kwargs):
+        sent.append(kwargs["json"])
+        return original_post(url, **kwargs)
+
+    session.post = post
+    analyzer = OllamaBookAnalyzer(build_settings(), FakeDB(), lambda _message: None)
+    analyzer.session = session
+
+    assert analyzer._stream_json_response({"prompt": "x", "format": {"type": "object"}}) == payload
+    assert len(sent) == 1 and sent[0]["think"] is False
+    assert sent[0]["prompt"] == "x" and sent[0]["format"] == {"type": "object"}
+
+
 def test_stream_does_not_replay_after_a_partial_response(monkeypatch):
     payload = {"segments": [analysis_item("S001")]}
     session = TransportFaultSession(payload, failures=1, prefix_chunks=['{"seg'])
