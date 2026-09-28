@@ -497,3 +497,19 @@ A giữ: 33 "HẢ?!" Lucia (49:1353 người làm thác cho Luke; 49:725-730 cù
 trưởng" = Lucia (49:823). Host sai: 6 "Khóc" trong tên nhóm "Vong Linh Than Khóc". Dấu ~ ở 4 dòng khoá N (45, 74, 90, 101)
 giữ lại dù score_models bỏ qua: segment_diff.py dùng nó khi bộ tách mới (dev/comma-dialogue) tách các câu ấy thành thoại.
 `voice_identity --gold-check`: nageki 20 người, không nhập ai. Phát lại: 22 + 22 lượt, không LỆCH LUẬT.
+
+**Yamiyo no Hotaru 225 (29-09 00:xx) - bộ đo LN MỞ RỘNG** (chương chưa học, "Chap 169 (2)": ngôi thứ nhất Tomobe, Azuma -
+Gensei - Shiro đối đáp, tên Gensei chỉ lộ ở 72, cô con gái út nhà Ako không gọi tên). A = Claude, B = agent soát đối kháng
+(chỉ đọc). B đồng ý người nói ưu tiên 92/92 dòng D/T, trọn tập 91/92; kiểm lại mọi khẳng định trong đầu file (18/19 một câu
+của Azuma, các cặp lượt 44/45, 54/56, 67/68, 71, 135 là Tomobe, Ako = Akou Murasaki qua 026:5, 038:149, 226:477-499). A nhận:
+
+| chỗ | A ghi | kết luận | bằng chứng |
+|---|---|---|---|
+| 135 "Ha, haha…" | TOMOBE, GENSEI~, happy đầu | TOMOBE, `neutral,afraid,happy` | 133 "Bị lộ rồi" - cười gượng của người bị lộ; 136 Gensei nhìn nghi hoặc, không có chứng cứ y cười |
+| 116 "Đây là…" | N | N,T NARRATOR,TOMOBE | phản ứng bỏ lửng ngay trước câu hỏi 117, cùng khuôn 99/110/138 |
+| 4, 5 / 72 / 84 | neutral | thêm surprised,angry / afraid / afraid | "bối rối và khó chịu"; "run rẩy" (cùng cue đã dùng ở 51); "e ngại" + 86 "nghi ngờ, cảnh giác" |
+| 47 "Thủ lĩnh-sama...?" | TOMOBE | thêm SHIRO~ | cùng khuôn 44 |
+
+A giữ: 143 "Ừ. Nhờ cậu." = Azuma (lời người đi nhờ ở 140; Gensei xưng hô trang trọng, không gọi "cậu") dù 144 là lời dẫn
+của Gensei; KIRISOU (phiên âm khác ở 112) không thêm vì 225 không dùng. Host sai (giữ đáp án): 33, 45, 125 (ghi trong đầu
+file). `voice_identity --gold-check`: yamiyo 18 người, không nhập ai. Phát lại: 100/100, không LỆCH LUẬT.

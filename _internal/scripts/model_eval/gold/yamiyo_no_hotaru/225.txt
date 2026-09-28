@@ -1,0 +1,174 @@
+# "Yamiyo no Hotaru" file 225 ("Chap 169 (2)"). Bộ đo LN MỞ RỘNG 29-09 (chương chưa học, xa mọi chương train/đo): bộ LN cũ 519
+# câu nhiễu ~±3 điểm, chưa đủ phân định v3/v5/9B. Claude gán (A), agent soát (B).
+# Ngôi thứ nhất: "tôi" = TOMOBE (m). AZUMA HIBARI / AZUMA / HIBARI AZUMA (nữ tanuki, cựu Thủ lĩnh Âm Dương Liêu; xưng "ta", gọi
+# tôi "ngươi", Shiro "con"; f). SHIRO (f; "Bạch Hồ" là danh xưng loài - không điểm, quy tắc 11). GENSEI / KIRIKUSA GENSEI (Thủ
+# lĩnh Âm Dương Liêu đương nhiệm, "y", gọi Azuma "Azuma-dono"; m) - chương gọi tên từ 72, trước đó NPC*~ (quy tắc 5).
+# MURASAKI / AKO MURASAKI / AKOU MURASAKI (153 "cô con gái út nhà Ako" = Ako Murasaki, dạng tên như gold 155; f).
+# Lượt nói theo lời dẫn: 28 "người phá vỡ im lặng chính là Thủ lĩnh" -> 29; 55 "Trước lời nói nghiêm nghị ... Azuma ... giải
+# thích bổ sung" -> 54 Gensei, 56 Azuma; 70 "lời của cả cựu và đương nhiệm" -> 67 Azuma, 68 Gensei; 46 "Trước khi tôi kịp lên
+# tiếng, thủ lĩnh đã mở lời" -> 45 Gensei, 44 là tôi vừa mở miệng (SHIRO~); 72 "Gensei khẽ liếc" sau lời nhắc vụ Yêu Hồ -> 71.
+# Parser: 18/19 là MỘT câu của Azuma ("Hãy giữ im lặng một chút đi.") bị dấu nháy hỏng cắt đôi, 18 khoá N -> NARRATOR đủ, AZUMA~
+# (quy tắc 10); 72 “Thật là rắc rối” của Gensei giữa câu kể -> NARRATOR, GENSEI~ (quy tắc 8). 150 = lời Murasaki nối liền tiếng
+# hô của lũ trẻ (“Áp đảo, xông lênnn!!”) -> MURASAKI, NPC*~; 151 tiếng hét của Murasaki bị khoá N -> NARRATOR, MURASAKI~.
+# 135 “Ha, haha…” = tôi cười gượng vì bị lộ chuyện hiệu sách (133 “Bị lộ rồi”; 136 Gensei nhìn nghi hoặc vì chưa được báo) ->
+# TOMOBE, neutral/afraid trước happy (B).
+# Tự nhủ / câu hỏi tu từ của tôi trong lời kể -> N,T (quy tắc 4). 154 là lời người đăng bản dịch -> N. "nhẹ nhõm" (102, 104) ->
+# thêm happy; "run rẩy" (51, 72) -> thêm afraid; "bối rối và khó chịu" (4, 5) -> thêm surprised/angry; "e ngại" (84) -> afraid.
+# 116 "Đây là…" bỏ lửng ngay trước câu hỏi 117 -> N,T như 99/110/138 (B). 47 "Thủ lĩnh-sama...?" -> SHIRO~ như 44 (B).
+# Host sai (giữ đáp án): 33 "không thể tin" nằm trong "không thể tin tưởng"; 45 "bất an" là của người nghe; 125 "khóc" là
+# của một đứa trẻ giả định.
+0 H
+1 N
+2 N
+3 N
+4 N NARRATOR neutral,surprised,angry 0-1 normal normal u
+5 D TOMOBE surprised,neutral,angry 1-2 normal normal m
+6 D AZUMA HIBARI,AZUMA,HIBARI AZUMA sarcastic,angry,neutral 1-2 normal normal f
+7 N
+8 D AZUMA HIBARI,AZUMA,HIBARI AZUMA neutral,sarcastic,angry 0-1 normal normal f
+9 N
+10 D TOMOBE neutral,sad,tired 0-1 normal soft,normal m
+11 N
+12 D AZUMA HIBARI,AZUMA,HIBARI AZUMA angry,neutral,sarcastic 1-2 normal normal f
+13 D TOMOBE afraid,surprised,neutral 0-1 slow,normal soft,normal m
+14 N
+15 N
+16 N,T NARRATOR,TOMOBE afraid,neutral 0-1 normal normal u
+17 D SHIRO afraid,surprised,excited 2-3 fast loud f
+18 N NARRATOR,AZUMA HIBARI~,AZUMA~,HIBARI AZUMA~ neutral 0-1 normal normal u
+19 D AZUMA HIBARI,AZUMA,HIBARI AZUMA neutral,sarcastic 0-1 normal normal f
+20 D SHIRO,NARRATOR~ surprised,afraid,angry 1-3 fast normal,loud f
+21 N
+22 D TOMOBE afraid,neutral,sad 0-1 normal soft,normal m
+23 N
+24 D AZUMA HIBARI,AZUMA,HIBARI AZUMA neutral,angry,sarcastic 0-1 normal normal f
+25 N
+26 D TOMOBE sad,afraid,neutral,tired 0-1 slow,normal soft,normal m
+27 N
+28 N NARRATOR neutral,afraid 0-1 normal normal u
+29 D GENSEI,KIRIKUSA GENSEI,NPC*~ neutral,sarcastic,angry 0-1 normal normal m
+30 N
+31 D AZUMA HIBARI,AZUMA,HIBARI AZUMA neutral,sarcastic 0-1 normal normal f
+32 D GENSEI,KIRIKUSA GENSEI,NPC*~ neutral,afraid,angry 0-1 normal normal m
+33 D AZUMA HIBARI,AZUMA,HIBARI AZUMA neutral,sad,tender 0-1 normal normal f
+34 N
+35 D GENSEI,KIRIKUSA GENSEI,NPC*~ neutral 0-1 normal normal m
+36 D AZUMA HIBARI,AZUMA,HIBARI AZUMA neutral 0-1 normal normal f
+37 D GENSEI,KIRIKUSA GENSEI,NPC*~ neutral,sad 0-1 normal soft,normal m
+38 D AZUMA HIBARI,AZUMA,HIBARI AZUMA neutral,tender,happy 0-1 normal normal f
+39 D SHIRO,NARRATOR~ surprised,tired 1-2 fast normal,loud f
+40 N
+41 D SHIRO afraid,surprised,sad,excited 2-3 fast loud f
+42 D AZUMA HIBARI,AZUMA,HIBARI AZUMA tender,neutral,happy 0-1 normal normal f
+43 N
+44 D TOMOBE,SHIRO~ surprised,neutral 0-1 normal normal,soft m
+45 D GENSEI,KIRIKUSA GENSEI,NPC*~ neutral,tender 0-1 normal normal m
+46 N
+47 D TOMOBE,SHIRO~ surprised,neutral 0-1 normal normal,soft m
+48 D GENSEI,KIRIKUSA GENSEI,NPC*~ neutral 0-1 normal normal m
+49 N
+50 D GENSEI,KIRIKUSA GENSEI,NPC*~ neutral,angry 0-1 normal normal m
+51 N NARRATOR neutral,afraid 0-1 normal normal u
+52 D GENSEI,KIRIKUSA GENSEI,NPC*~ neutral 0-1 normal normal m
+53 D TOMOBE surprised,neutral 0-1 normal normal m
+54 D GENSEI,KIRIKUSA GENSEI,NPC*~ neutral,sad 0-1 normal normal m
+55 N
+56 D AZUMA HIBARI,AZUMA,HIBARI AZUMA neutral,angry,sad 0-2 normal normal f
+57 N
+58 T TOMOBE neutral,afraid 0-1 normal normal,soft m
+59 N
+60 N,T NARRATOR,TOMOBE neutral,tired,sarcastic 0-1 normal normal u
+61 D TOMOBE surprised,neutral 0-1 normal normal m
+62 D GENSEI,KIRIKUSA GENSEI,NPC*~ neutral,sarcastic 0-1 normal normal m
+63 N
+64 D SHIRO,NARRATOR~ surprised 1-2 fast normal f
+65 D AZUMA HIBARI,AZUMA,HIBARI AZUMA tender,neutral 0-1 normal normal f
+66 N
+67 D AZUMA HIBARI,AZUMA,HIBARI AZUMA neutral 0-1 normal normal f
+68 D GENSEI,KIRIKUSA GENSEI,NPC*~ neutral 0-1 normal normal m
+69 D TOMOBE neutral,surprised 0-1 normal normal m
+70 N
+71 D GENSEI,KIRIKUSA GENSEI,NPC*~ neutral 0-1 normal normal m
+72 N NARRATOR,GENSEI~,KIRIKUSA GENSEI~ neutral,afraid 0-1 normal normal u
+73 D GENSEI,KIRIKUSA GENSEI neutral,sad 0-1 normal normal m
+74 N
+75 N
+76 D AZUMA HIBARI,AZUMA,HIBARI AZUMA neutral 0-1 normal normal f
+77 N
+78 D GENSEI,KIRIKUSA GENSEI neutral,sad,tired 0-1 normal normal m
+79 N
+80 D TOMOBE surprised,neutral 0-1 normal normal m
+81 D GENSEI,KIRIKUSA GENSEI neutral 0-1 normal normal m
+82 N
+83 N,T NARRATOR,TOMOBE neutral 0-1 normal normal u
+84 D TOMOBE neutral,afraid,sad 0-1 normal soft,normal m
+85 D AZUMA HIBARI,AZUMA,HIBARI AZUMA neutral,tender 0-1 normal normal f
+86 N
+87 D GENSEI,KIRIKUSA GENSEI neutral 0-1 normal normal m
+88 D TOMOBE surprised,afraid 1-2 normal normal m
+89 N,T NARRATOR,TOMOBE neutral,afraid 0-1 normal normal u
+90 D AZUMA HIBARI,AZUMA,HIBARI AZUMA neutral,tired,sarcastic 0-1 normal normal f
+91 N
+92 D AZUMA HIBARI,AZUMA,HIBARI AZUMA neutral,tender 0-1 normal normal f
+93 D TOMOBE neutral,afraid 0-1 normal normal m
+94 N
+95 D GENSEI,KIRIKUSA GENSEI neutral 0-1 normal normal m
+96 N
+97 D GENSEI,KIRIKUSA GENSEI neutral 0-1 normal normal m
+98 D TOMOBE surprised,neutral 0-1 normal normal m
+99 N,T NARRATOR,TOMOBE neutral 0-1 normal normal u
+100 D AZUMA HIBARI,AZUMA,HIBARI AZUMA neutral 0-1 normal normal f
+101 D TOMOBE tired,sarcastic,neutral 0-1 normal soft,normal m
+102 N NARRATOR neutral,happy 0-1 normal normal u
+103 D GENSEI,KIRIKUSA GENSEI neutral,happy 0-1 normal normal m
+104 N NARRATOR neutral,happy 0-1 normal normal u
+105 D AZUMA HIBARI,AZUMA,HIBARI AZUMA tender,neutral,happy 0-1 normal normal f
+106 D TOMOBE neutral 0-1 normal soft,normal m
+107 N
+108 D AZUMA HIBARI,AZUMA,HIBARI AZUMA tender,neutral 0-1 normal normal f
+109 D TOMOBE neutral,tender 0-1 normal normal m
+110 N,T NARRATOR,TOMOBE neutral 0-1 normal normal u
+111 D AZUMA HIBARI,AZUMA,HIBARI AZUMA happy,neutral 0-1 normal normal f
+112 N
+113 D TOMOBE neutral,surprised 0-1 normal normal m
+114 D AZUMA HIBARI,AZUMA,HIBARI AZUMA neutral 0-1 normal normal f
+115 D TOMOBE surprised,neutral 0-1 normal soft,normal m
+116 N,T NARRATOR,TOMOBE surprised,neutral 0-1 normal normal u
+117 D TOMOBE surprised 1-2 normal normal m
+118 D AZUMA HIBARI,AZUMA,HIBARI AZUMA neutral 0-1 normal normal f
+119 D TOMOBE,NARRATOR~ surprised,tired 0-1 normal soft,normal m
+120 N,T NARRATOR,TOMOBE surprised,neutral 0-1 normal normal u
+121 D AZUMA HIBARI,AZUMA,HIBARI AZUMA neutral,sarcastic 0-1 normal normal f
+122 D TOMOBE neutral 0-1 normal normal m
+123 D AZUMA HIBARI,AZUMA,HIBARI AZUMA neutral,happy 0-1 normal normal f
+124 D TOMOBE tired,sarcastic,neutral 0-1 normal normal m
+125 N,T NARRATOR,TOMOBE neutral,afraid 0-1 normal normal u
+126 D AZUMA HIBARI,AZUMA,HIBARI AZUMA sarcastic,happy 0-1 normal normal f
+127 D TOMOBE surprised,angry,sad 1-2 normal normal m
+128 D TOMOBE angry,surprised 2-3 fast loud m
+129 N
+130 D GENSEI,KIRIKUSA GENSEI neutral 0-1 normal normal m
+131 D AZUMA HIBARI,AZUMA,HIBARI AZUMA happy,sarcastic,neutral 0-1 normal normal f
+132 D TOMOBE,NARRATOR~ surprised 1-2 normal normal m
+133 N,T NARRATOR,TOMOBE surprised,afraid,neutral 0-1 normal normal u
+134 D AZUMA HIBARI,AZUMA,HIBARI AZUMA sarcastic,happy,neutral 0-1 normal normal f
+135 D TOMOBE neutral,afraid,happy 0-1 normal soft,normal m
+136 N
+137 D AZUMA HIBARI,AZUMA,HIBARI AZUMA tender,happy,neutral 0-1 normal normal f
+138 N,T NARRATOR,TOMOBE neutral 0-1 normal normal u
+139 D GENSEI,KIRIKUSA GENSEI surprised,neutral 0-1 normal normal m
+140 D AZUMA HIBARI,AZUMA,HIBARI AZUMA happy,tender 0-1 normal normal f
+141 N
+142 D GENSEI,KIRIKUSA GENSEI tired,happy,sarcastic 0-1 normal normal m
+143 D AZUMA HIBARI,AZUMA,HIBARI AZUMA happy,neutral 0-1 normal normal f
+144 N
+145 D AZUMA HIBARI,AZUMA,HIBARI AZUMA neutral,surprised 0-1 normal normal f
+146 D TOMOBE surprised,neutral 0-1 normal normal m
+147 N
+148 D AZUMA HIBARI,AZUMA,HIBARI AZUMA neutral,sarcastic,angry 0-1 normal,slow soft,normal f
+149 N
+150 D MURASAKI,AKO MURASAKI,AKOU MURASAKI,NPC*~ excited,happy,sarcastic 1-2 fast,normal loud,normal f
+151 N NARRATOR,MURASAKI~,AKO MURASAKI~,AKOU MURASAKI~ surprised,afraid,angry 1-3 fast,normal loud,normal u
+152 D TOMOBE tired,sarcastic,neutral 0-1 normal soft,normal m
+153 N
+154 N
