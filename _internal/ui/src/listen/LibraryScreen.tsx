@@ -343,7 +343,7 @@ export function LibraryScreen({
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Tìm sách (gõ không dấu cũng được)"
-                className="h-9 w-full rounded-lg border border-line bg-panel pl-9 pr-3 text-sm outline-none placeholder:text-fg-3 focus:border-accent sm:w-72"
+                className="h-9 w-full rounded-lg border border-line bg-panel pl-9 pr-3 text-sm outline-none placeholder:text-fg-3 focus:border-accent sm:w-80"
               />
             </label>
           </div>
