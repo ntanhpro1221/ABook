@@ -187,7 +187,8 @@ export function PersonRow({
     .join("")
     .toUpperCase();
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-line bg-panel p-3">
+    // min-w-0: ô lưới mặc định không co dưới chiều rộng nội dung - tên dài từng đẩy "Đổi giọng" ra ngoài màn 375px.
+    <div className="flex min-w-0 items-center gap-3 rounded-xl border border-line bg-panel p-3">
       <div
         className="avatar grid size-10 shrink-0 place-items-center rounded-full text-sm font-bold"
         style={{ ["--hue" as string]: hueOf(person.voice?.preset ?? person.name) }}
@@ -210,10 +211,12 @@ export function PersonRow({
           {person.firstChapter ? ` · từ ${person.firstChapter}` : ""}
         </div>
       </div>
-      {person.sampleId ? <SampleButton id={`sample-${bookId}-${person.sampleId}`} url={source.sampleUrl(bookId, person.sampleId)} label={`Nghe ${name} nói`} /> : null}
-      {onPickVoice && person.voice ? (
-        <IconButton label={`Đổi giọng ${name}`} icon={SlidersHorizontal} size="sm" onClick={() => onPickVoice(person)} />
-      ) : null}
+      <div className="flex shrink-0 items-center gap-1">
+        {person.sampleId ? <SampleButton id={`sample-${bookId}-${person.sampleId}`} url={source.sampleUrl(bookId, person.sampleId)} label={`Nghe ${name} nói`} /> : null}
+        {onPickVoice && person.voice ? (
+          <IconButton label={`Đổi giọng ${name}`} icon={SlidersHorizontal} size="sm" onClick={() => onPickVoice(person)} />
+        ) : null}
+      </div>
     </div>
   );
 }
