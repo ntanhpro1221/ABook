@@ -71,6 +71,12 @@ số qua Bluetooth; A đọc thư viện và trình phát của B; A **nghe th�
 liền, không đứng đệm); A bấm phát/dừng trình phát của B. Bài học: `BluetoothAdapter.cancelDiscovery()` đòi `BLUETOOTH_SCAN`
 trên Android 12+ - mình chỉ xin `BLUETOOTH_CONNECT`, nên gọi nó trong `runCatching`.
 
+**Thử lại 29-09 01:3x với bản có RESET** (cùng hai máy ảo, APK mới cài đè, dữ liệu giữ nguyên): A nghe thẳng chương 725
+của B qua Bluetooth rồi tua lùi 6 lần liền (mỗi lần tua ra ngoài bộ đệm, ExoPlayer bỏ kết nối đang tải) - đếm luồng
+`bt-pump`/`bt-drain` của app bằng `ps -T`: 4 -> 1-2 -> 0 ở CẢ HAI máy, trình phát vẫn chạy (đã đệm tới 137 giây). Bản
+cũ giữ lại mỗi lần tua hai luồng ở bên phục vụ. A bấm "Phát tiếp trên <B>" / "Tạm dừng trên <B>": trình phát của B
+PAUSED -> PLAYING -> PAUSED (B lúc ấy nghe thẳng một cuốn của A - hai chiều cùng lúc trên một đường RFCOMM).
+
 ## Còn lại
 
 - Máy tính KẾT NỐI tới điện thoại qua Bluetooth (máy tính dùng thư viện điện thoại): cần tra SDP trên Windows
