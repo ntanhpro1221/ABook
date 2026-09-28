@@ -286,15 +286,15 @@ class LibraryPlugin : Plugin() {
 
     // ---- tải sách --------------------------------------------------------------------------------------------
 
-    private fun fetchFile(id: String, relative: String, expectedSize: Long): Long {
+    private fun fetchFile(id: String, relative: String, expectedSize: Long, link: Peers.Link, remote: String): Long {
         val target = Store.file(id, relative)
         if (expectedSize > 0 && target.isFile && target.length() == expectedSize) return 0
         target.parentFile?.mkdirs()
         val partial = File(target.path + ".part")
-        val connection = URL("${base()}/sync/v1/books/$id/files/$relative").openConnection() as HttpURLConnection
+        val connection = URL("${link.base}/sync/v1/books/$remote/files/$relative").openConnection() as HttpURLConnection
         connection.connectTimeout = 5000
         connection.readTimeout = 30000
-        connection.setRequestProperty("Authorization", "Bearer ${prefs.getString("token", "")}")
+        connection.setRequestProperty("Authorization", "Bearer ${link.token}")
         val resumeFrom = if (partial.isFile) partial.length() else 0L
         if (resumeFrom > 0) connection.setRequestProperty("Range", "bytes=$resumeFrom-")
         val code = connection.responseCode
@@ -313,11 +313,17 @@ class LibraryPlugin : Plugin() {
     @PluginMethod
     fun download(call: PluginCall) {
         val id = call.getString("bookId") ?: return call.reject("thiếu bookId")
+        // Sách của thiết bị ghép (Peers): `source` = mã thiết bị ở đây, `remoteId` = mã sách bên ấy.
+        val source = call.getString("source")?.takeIf { it.isNotEmpty() }
         call.setKeepAlive(true)
         downloads.execute {
             try {
-                matchImported() // đã mở cuốn này từ file: audio sẵn trên máy, chỉ tải phần còn thiếu
-                val manifest = JSONObject(request("GET", "/sync/v1/books/$id/manifest"))
+                val link = if (source != null) Peers.link(context, source) ?: throw IllegalStateException("Thiết bị này đã thôi ghép")
+                else Peers.Link(base(), prefs.getString("token", "") ?: "")
+                val remote = if (source != null) call.getString("remoteId") ?: throw IllegalArgumentException("thiếu remoteId") else id
+                if (source == null) matchImported() // đã mở cuốn này từ file: audio sẵn trên máy, chỉ tải phần còn thiếu
+                val manifest = JSONObject(SyncLink.request(context, "GET", "/sync/v1/books/$remote/manifest", root = link.base, token = link.token))
+                if (source != null) manifest.put("id", id).put("source", source).put("remoteId", remote)
                 val chapters = manifest.getJSONArray("chapters")
                 val files = mutableListOf<Pair<String, Long>>()
                 for (index in 0 until chapters.length()) {
@@ -338,7 +344,7 @@ class LibraryPlugin : Plugin() {
                 val total = files.sumOf { it.second }
                 var done = 0L
                 files.forEachIndexed { index, (relative, size) ->
-                    fetchFile(id, relative, size)
+                    fetchFile(id, relative, size, link, remote)
                     done += size
                     notifyListeners("download", JSObject().put("bookId", id).put("done", done).put("total", total)
                         .put("files", index + 1).put("filesTotal", files.size))
@@ -398,7 +404,64 @@ class LibraryPlugin : Plugin() {
             }
             books.put(JSObject.fromJSONObject(manifest).put("state", JSObject.fromJSONObject(Store.state(id))).put("streamed", true))
         }
+        // Thiết bị ghép (điện thoại khác, máy tính khác): cùng cách, gói ghi nguồn - thiết bị không trả lời thì bỏ qua.
+        val peers = Peers.libraries(context)
+        for (index in 0 until peers.length()) {
+            val peer = peers.getJSONObject(index)
+            val list = peer.optJSONArray("books") ?: continue
+            for (item in 0 until list.length()) {
+                val entry = list.getJSONObject(item)
+                val id = entry.getString("id")
+                if (Store.manifest(id) != null) continue
+                val cached = Store.streamManifest(id)
+                val stale = cached == null || cached.optInt("chaptersAvailable") != entry.optInt("chaptersAvailable") ||
+                    cached.optString("title") != entry.optString("title")
+                val manifest = (if (stale) runCatching {
+                    Streaming.fetchManifest(context, id, peer.getString("key"), entry.getString("remoteId"))
+                }.getOrNull() else null) ?: cached ?: continue
+                if (manifest.optJSONObject("cover") != null && (stale || !Store.file(id, "cover.jpg").isFile)) {
+                    Streaming.fetchSmall(context, id, "cover.jpg")
+                }
+                books.put(JSObject.fromJSONObject(manifest).put("state", JSObject.fromJSONObject(Store.state(id))).put("streamed", true)
+                    .put("sourceName", peer.optString("name")))
+            }
+        }
         call.resolve(JSObject().put("books", books))
+    }
+
+    // ---- thiết bị ghép khác (Peers: điện thoại khác, máy tính khác - mạng trạm bước 2) -----------------------------
+
+    @PluginMethod
+    fun peers(call: PluginCall) = background(call) {
+        val out = JSArray()
+        val all = Peers.all(context)
+        for (key in all.keys()) {
+            val peer = all.getJSONObject(key)
+            out.put(JSObject().put("key", key).put("name", peer.optString("name")).put("host", peer.optString("host"))
+                .put("port", peer.optInt("port", 47630)))
+        }
+        call.resolve(JSObject().put("peers", out))
+    }
+
+    @PluginMethod
+    fun peerPair(call: PluginCall) = background(call) {
+        val host = call.getString("host") ?: throw IllegalArgumentException("thiếu địa chỉ")
+        val reply = Peers.pair(context, host, call.getInt("port") ?: 47630, call.getString("code") ?: "")
+        call.resolve(JSObject.fromJSONObject(reply))
+    }
+
+    @PluginMethod
+    fun peerForget(call: PluginCall) = background(call) {
+        Peers.forget(context, call.getString("key") ?: "")
+        call.resolve()
+    }
+
+    @PluginMethod
+    fun peerLibraries(call: PluginCall) = background(call) {
+        val out = JSArray()
+        val peers = Peers.libraries(context)
+        for (index in 0 until peers.length()) out.put(JSObject.fromJSONObject(peers.getJSONObject(index)))
+        call.resolve(JSObject().put("peers", out))
     }
 
     @PluginMethod
@@ -487,7 +550,10 @@ class LibraryPlugin : Plugin() {
         val id = call.getString("id") ?: ""
         val path = call.getString("path") ?: ""
         var file = Store.file(id, path)
-        if (!file.isFile && Store.manifest(id) == null && SyncLink.paired(context)) file = Streaming.fetchSmall(context, id, path) ?: file
+        val fromPeer = !Store.streamManifest(id)?.optString("source").isNullOrEmpty()
+        if (!file.isFile && Store.manifest(id) == null && (fromPeer || SyncLink.paired(context))) {
+            file = Streaming.fetchSmall(context, id, path) ?: file
+        }
         call.resolve(JSObject().put("text", if (file.isFile) file.readText() else ""))
     }
 

@@ -1,6 +1,6 @@
 import * as Switch from "@radix-ui/react-switch";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Clapperboard, Download, FileAudio, Laptop, Link2, Loader2, RefreshCw, Search, Unplug, Wifi } from "lucide-react";
+import { CheckCircle2, Clapperboard, Download, FileAudio, Laptop, Link2, Loader2, RefreshCw, Search, Smartphone, Unplug, Wifi } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
@@ -205,6 +205,139 @@ function StudioAlertsRow() {
   );
 }
 
+// Thiết bị ghép ngoài máy tính chính (Peers.kt - mạng trạm bước 2): điện thoại khác bật "Cho máy khác nghe thư viện này",
+// hay một máy tính nữa. Sách của chúng nghe thẳng được trong Thư viện ("Trên <tên>") và tải về như sách máy tính.
+function PeersPanel() {
+  const client = useQueryClient();
+  const progress = useDownloadProgress();
+  const libraries = useQuery({ queryKey: ["peer-libraries"], queryFn: () => EbookLibrary.peerLibraries(), retry: 0 });
+  const connection = useQuery({ queryKey: ["connection"], queryFn: () => EbookLibrary.connection() });
+  const [open, setOpen] = useState(false);
+  const [found, setFound] = useState<{ host: string; port: number; name: string; kind?: string }[] | null>(null);
+  const [address, setAddress] = useState("");
+  const [code, setCode] = useState("");
+  const discover = useMutation({
+    mutationFn: () => EbookLibrary.discover({ timeoutMs: 2500 }),
+    onSuccess: ({ computers }) => {
+      const paired = new Set((libraries.data?.peers ?? []).map((peer) => peer.host));
+      // Máy tính chính đã ghép ở trên; thiết bị đã ghép ở dưới - chỉ hiện máy mới.
+      setFound(computers.filter((item) => item.host !== connection.data?.host && !paired.has(item.host)));
+    },
+  });
+  const pair = useMutation({
+    mutationFn: () => {
+      const [host, port] = address.split(":");
+      return EbookLibrary.peerPair({ host: host.trim(), port: Number(port ?? 47630), code: code.replace(/\D/g, "") });
+    },
+    onSuccess: ({ name }) => {
+      toast.success(`Đã ghép ${name}`);
+      setOpen(false);
+      setCode("");
+      setAddress("");
+      void client.invalidateQueries({ queryKey: ["peer-libraries"] });
+      void client.invalidateQueries({ queryKey: ["streamable"] });
+    },
+    onError: (error: Error) => toast.error("Chưa ghép được", { description: error.message }),
+  });
+  const forget = async (key: string) => {
+    await EbookLibrary.peerForget({ key });
+    void client.invalidateQueries({ queryKey: ["peer-libraries"] });
+    void client.invalidateQueries({ queryKey: ["streamable"] });
+  };
+  const peers = libraries.data?.peers ?? [];
+  const ready = address.includes(".") && code.replace(/\D/g, "").length === 6;
+  return (
+    <section className="mt-8" aria-labelledby="peers-title">
+      <div className="flex items-center justify-between gap-3">
+        <h2 id="peers-title" className="text-lg font-semibold">
+          Thiết bị khác
+        </h2>
+        <Button size="sm" variant="secondary" icon={Link2} onClick={() => { setOpen((value) => !value); if (!open) discover.mutate(); }}>
+          Ghép thiết bị
+        </Button>
+      </div>
+      <p className="mt-1 text-xs leading-snug text-fg-2">
+        Điện thoại khác (bật “Cho máy khác nghe thư viện này” ở màn Tải sách của nó) hay một máy tính nữa. Sách của chúng nghe
+        thẳng được trong Thư viện.
+      </p>
+      {open && (
+        <div className="mt-3 space-y-3 rounded-2xl border border-line bg-panel p-4">
+          {discover.isPending ? (
+            <p className="text-sm text-fg-2">Đang tìm trong mạng Wi-Fi…</p>
+          ) : found?.length ? (
+            <div className="space-y-2">
+              {found.map((item) => (
+                <button
+                  key={item.host}
+                  type="button"
+                  onClick={() => setAddress(`${item.host}:${item.port}`)}
+                  className={cn(
+                    "flex w-full items-center gap-3 rounded-xl border p-3 text-left",
+                    address === `${item.host}:${item.port}` ? "border-accent bg-accent-soft" : "border-line",
+                  )}
+                >
+                  {item.kind === "phone" ? <Smartphone className="size-5 text-fg-2" /> : <Laptop className="size-5 text-fg-2" />}
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-medium">{item.name}</span>
+                    <span className="block text-xs text-fg-2">{item.host}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-fg-2">Không thấy thiết bị nào - nhập địa chỉ đang hiện trên máy kia.</p>
+          )}
+          <input
+            value={address}
+            onChange={(event) => setAddress(event.target.value)}
+            inputMode="url"
+            placeholder="Địa chỉ, ví dụ 192.168.1.25:47630"
+            className="h-11 w-full rounded-xl border border-line bg-panel px-3 text-base outline-none focus:border-accent"
+          />
+          <input
+            value={code}
+            onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+            inputMode="numeric"
+            placeholder="Mã 6 số"
+            className="tabular h-11 w-full rounded-xl border border-line bg-panel px-3 text-center text-lg tracking-[0.3em] outline-none focus:border-accent"
+          />
+          <Button variant="primary" className="w-full" disabled={!ready} loading={pair.isPending} onClick={() => pair.mutate()}>
+            Ghép
+          </Button>
+        </div>
+      )}
+      {peers.map((peer) => (
+        <div key={peer.key} className="mt-4 rounded-2xl border border-line bg-panel p-4">
+          <div className="flex items-center gap-3">
+            <Smartphone className="size-5 text-fg-2" />
+            <div className="min-w-0 flex-1">
+              <div className="truncate font-semibold">{peer.name}</div>
+              <div className={cn("text-xs", peer.error ? "text-danger" : "text-fg-2")}>
+                {peer.error ? "Không kết nối được - máy tắt, khác mạng hay chưa bật cho nghe" : `${peer.books.length} cuốn nghe được`}
+              </div>
+            </div>
+            <button type="button" onClick={() => void forget(peer.key)} className="text-xs font-medium text-danger">
+              Thôi ghép
+            </button>
+          </div>
+          <div className="mt-2 divide-y divide-line">
+            {peer.books.map((book) => (
+              <RemoteRow
+                key={book.id}
+                book={book}
+                progress={progress[book.id]}
+                onDownload={() =>
+                  void EbookLibrary.download({ bookId: book.id, source: peer.key, remoteId: book.remoteId }).catch(() => undefined)
+                }
+              />
+            ))}
+          </div>
+        </div>
+      ))}
+    </section>
+  );
+}
+
 // Mạng trạm bước 2 (LibraryServer.kt): điện thoại PHỤC VỤ sách đã tải cho máy đã ghép - máy tính nghe thẳng những cuốn chỉ
 // có trên điện thoại. Cùng giao thức cổng đồng bộ của máy tính, nên máy tính ghép như ghép một máy tính khác: Cài đặt →
 // Máy tính khác → địa chỉ + mã 6 số hiện ở đây.
@@ -374,6 +507,7 @@ export function DevicesScreen() {
           </>
         )}
       </div>
+      <PeersPanel />
       <SharePanel />
       {storage.data && (
         <p className="mt-8 text-center text-xs text-fg-3">
