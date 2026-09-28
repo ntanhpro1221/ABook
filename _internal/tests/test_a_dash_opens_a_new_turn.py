@@ -44,3 +44,15 @@ def test_a_quote_left_open_across_paragraphs_still_chains() -> None:
         (5, "“Nghe này, ta chỉ nói một lần thôi.", "LUCIEN"),
         (6, "Ngày mai cả đoàn lên đường trước bình minh.”", "DOUGLAS"),
     ]) == ["LUCIEN", "LUCIEN"]
+
+
+def test_a_parenthesised_thought_after_an_open_quote_is_a_new_turn() -> None:
+    # Nise Seiken 086:65-67: lời người lính mở nháy không đóng, đoạn kể sau vẫn là phần tiếp (parser khoá thoại) - nhưng
+    # "(...)" mở một lượt nội tâm mới của người khác.
+    assert _run([
+        (65, "“Guha!? C-Chết tiệt…! Vì Thiên thần giáo… vì Thánh Nữ…!", "NPC_LÍNH"),
+        (66, "Thánh kiếm đang cố giữ mạng cho đối thủ hết mức có thể.", "NARRATOR"),
+        (67, "(Khôngggggg! Tránh xa ta ra! Cíu, ta đang bị lạm dụng!!)", "ALISTAR"),
+    ]) == ["NPC_LÍNH", "NPC_LÍNH", "ALISTAR"]
+    assert _run([(1, "“Nói tiếp đi,", "A"), (2, "（Không đời nào.）", "B")]) == ["A", "B"]
+
