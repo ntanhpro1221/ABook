@@ -99,9 +99,11 @@ tranh chấp và kết luận ghi ở `scripts/model_eval/gold/ADJUDICATION.md`.
 - intensity 3 chỉ cho cao trào rõ (gào thét, khóc nấc, quát tháo tột độ). Lẩm bẩm/thì thầm: volume soft, thường có
   `whispering` trong tập. Quát: loud.
 - Không có nhãn "đau": tiếng kêu đau ("Á hự!") chấp nhận sad/angry/afraid/surprised.
-- Luật của host: đoạn có từ gợi cảm xúc mạnh thì host CẤM neutral (`allowed_emotions`). Nếu đáp án chỉ có neutral cho
-  đoạn như vậy, gold_replay sẽ báo "LỆCH LUẬT" - khi đó xét lại: hoặc thêm cảm xúc hợp lý vào tập, hoặc ghi vào sổ
-  phân xử là luật host sai.
+- Luật của host: đoạn có từ gợi cảm xúc mạnh thì host gửi `allowed_emotions` và prompt CẤM model trả neutral. Nếu đáp án
+  chỉ có neutral cho đoạn như vậy thì xét lại: hoặc thêm cảm xúc hợp lý vào tập, hoặc ghi vào sổ phân xử là luật host sai.
+  gold_replay KHÔNG còn báo "LỆCH LUẬT" cho chỗ này: với một câu lẻ host chỉ ghi lại bất đồng chứ không ép
+  (`analysis.py`, "Recorded, not enforced") - người gán tự rà các từ gợi cảm xúc trong lời kể (soát Love Unseen 07, 28-09:
+  "nhẹ nhõm" ở 103, 138 bị sót).
 
 ## Giới tính
 
