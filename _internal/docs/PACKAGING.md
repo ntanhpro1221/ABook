@@ -85,9 +85,14 @@ không được đụng PATH hay cài gì toàn máy, nên mỗi công cụ là 
 | thư viện | `uv pip sync` từ danh sách khoá sinh từ `uv.lock` (torch cu128 từ index của PyTorch) | ~6 GB |
 | UTMOSv2 | đúng commit đã khoá, cài từ git: `runtime_contract` đòi `direct_url.json` có `vcs_info.commit_id` (không giả được bằng bản lưu trữ) -> MinGit (bản Git nhúng chính thức của Git for Windows) ghim vào `Studio\tools\git` | ~40 MB |
 | FFmpeg | bản dựng ghim | ~100 MB |
-| Ollama | `ollama-windows-amd64.zip` ghim vào `Studio\tools\ollama`, LUÔN bản riêng kể cả khi máy đã có Ollama: chạy ẩn ở cổng 11439 (`OLLAMA_HOST`), model ở `Studio\runtime\models\ollama` (`OLLAMA_MODELS`), `USERPROFILE` = `Studio\ollama-home` nên không ghi `%USERPROFILE%\.ollama`; sách tạo từ app mang `analysis.base_url` = cổng ấy (`StudioSetup.settings_overrides`) | ~1,5 GB |
+| Ollama | `ollama-windows-amd64.zip` ghim ĐÚNG bản dây chuyền đã đo (0.33.2 - bản 0.34.4 cho qwen3 "suy nghĩ" và làm hỏng cuốn thử 28-09) vào `Studio\tools\ollama`, LUÔN bản riêng kể cả khi máy đã có Ollama: chạy ẩn ở cổng 11439 (`OLLAMA_HOST`), model ở `Studio\runtime\models\ollama` (`OLLAMA_MODELS`), `USERPROFILE` = `Studio\ollama-home` nên không ghi `%USERPROFILE%\.ollama`; sách tạo từ app mang `analysis.base_url` = cổng ấy (`StudioSetup.settings_overrides`) | ~1,5 GB |
 | model | LLM phân tích (qua Ollama), VieNeu, Whisper turbo + faster-whisper, UTMOSv2 + wav2vec2 + timm (revision khoá) | ~10 GB |
 | kiểm tra | `check_system.py`, dấu `.setup_complete` như bản dev | - |
+
+**Studio cũ hơn app.** Mỗi bước tải (uv, Git, Ollama, model phân tích) ghi lại bản ghim đã cài vào `setup.json`; app lên
+bản mới đổi ghim thì bước ấy thành "cần cập nhật" (`StudioSetup.outdated`): sách không chạy bằng bản cũ, thẻ "Cập nhật
+Studio" ở màn Dự án chạy lại đúng các bước ấy rồi "Kiểm tra lần cuối" - không tải lại thư viện hay model khác. Thử thật 28-09
+trên Studio cài từ mã chưa ghi ghim: nhận ra 4 bước cũ, tải Ollama 0.33.2 thay bản 0.34.4 đang chạy (dừng nó trước), 3 phút.
 
 Worker chạy bằng `Studio\runtime\.venv\Scripts\pythonw.exe`, mã lấy từ thư mục `app` của bản cài (PYTHONPATH),
 `EBOOK_READER_RUNTIME=Studio\runtime`. Hash chất lượng tính trên đúng các file ấy (kể cả `pyproject.toml` + `uv.lock`
@@ -110,6 +115,14 @@ Phần còn lại vốn đã riêng: Git là MinGit trong `Studio\tools\git`, FF
 là thư viện trong venv (`torch\lib`, `ctranslate2`; máy thử không cài CUDA toolkit), bộ nhớ đệm uv/Hugging Face/torch trỏ
 vào `Studio\`. Thử gỡ trên bộ cài thật (`/S`): gỡ thật -> Studio, WebView2 cache, khoá gỡ cài đặt, liên kết `.abook` mất,
 dữ liệu cá nhân còn; gỡ lúc cài lại -> Studio còn.
+
+Ngoài DLL còn FILE: chạy trọn một cuốn bằng Studio rồi so ảnh chụp các chỗ hay bị ghi rác (`%USERPROFILE%`, `.cache`,
+`.ollama`, `AppData`, Temp). Lần đầu lộ `%APPDATA%\NVIDIA\ComputeCache` (bộ nhớ đệm JIT của driver CUDA, 21 mục) -> biến
+`CUDA_CACHE_PATH` trỏ vào `Studio\cache\nvidia`; lần hai: 0 mục ngoài, 68 mục trong Studio. Phần còn lại đổi trong lúc chạy
+là của app khác (DXCache của DirectX, `cv_debug.log` của Edge, ba file `*.tmp` tên GUID vẫn bị giữ sau khi dừng mọi tiến
+trình Studio). Còn hở một chỗ hiếm: Ollama riêng chết giữa cuốn thì dây chuyền tự bật lại nó (`analysis.py`, file khoá)
+bằng `USERPROFILE` của người dùng - Ollama tạo khoá định danh ở `~/.ollama` (2 file nhỏ); sửa cùng lần đổi `analysis.py`
+kế tiếp.
 
 ## Cập nhật và ký
 
