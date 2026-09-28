@@ -1,0 +1,230 @@
+# "Hướng dẫn sinh tồn trong học viện" file 130 ("Chương 131: Buổi thực hành chiến đấu chung 2 (18)"). Bộ đo LN MỞ RỘNG 29-09
+# (chương chưa học, cách 090 (train) 40 và 062 (test) 68 chương). Claude gán (A), agent soát (B). Ngôi thứ nhất: "tôi" = ED /
+# ED ROSTAILER (m). BEL / BEL MAIA (f, Tổng quản hầu gái Tòa Opelis, gọi "thiếu gia Ed", nói "ạ"); ZIX / ZIX EFFELSTEIN (m,
+# "em", "tiền bối Ed"); CLARICE / KYLIE~ / KYLIE ECKNE~ (f, Thánh nữ - "THÁNH NỮ" không điểm; Kylie Eckne là TÊN GIẢ (075:99)
+# và chương luôn gọi người nói là Clarice -> tên giả nửa điểm, quy tắc 13); YENNICA / YENNICA FAILOVER (f, xưng "tớ"). Adel (đã chết) chỉ hiện
+# như bóng hình (182-183), không nói. 15, 20 nói trước khi lời kể gọi tên Bel (22) -> BEL đủ, NPC*~; 66 trước "là Zix"
+# (67), 195, 197 trước "Yennica đã ra ngoài" (199) -> tên đủ, NPC*~ (quy tắc 5). 69 "…Hựp…!!": Zix vừa bảo "cứ dùng nắm đấm... Em sẽ gồng
+# bụng" (66) - tiếng hự khi ăn đấm, 70 xin lỗi hụt hơi -> ZIX đủ, ED~ (tiếng gắng sức của người đấm), NARRATOR~. 58 "– ‘Cậu
+# không có việc gì khó khăn riêng sao ạ?’": câu của Bel (37) vọng lại trong đầu Ed (60 "nghiền ngẫm lại câu hỏi") -> BEL và
+# NARRATOR đủ, ED~. 63, 64: tiếng la từ trong chòi (Bel đòi mở cửa, Yennica phản đối). 2 "– Tách!", 56 "– ẦM", 173 "– Phịch":
+# tiếng động -> NARRATOR, UNKNOWN~ (quy tắc 8). 110 "Xin chào." = Clarice vừa tới (ED~). 127 "Đã cười mà chết." = Ed nói về
+# Adel (129 lời Ed nói tiếp). 203/204 nhập nhằng: "Không sao đâu." = Yennica (202 "Yennica gọi tôi..."), nhưng cũng là điệp khúc của Ed
+# (160, 176) -> YENNICA đủ, ED~; 204 "Phải." ngược lại (206 "tớ không muốn làm lại lần thứ hai";
+# 212 "Yennica không tùy tiện an ủi"). 214 là lời người đăng bản dịch -> N. Host sai (giữ đáp án): 50 "không phải là một tội lỗi đáng chết" (phủ định xa cửa sổ), 109 "không có vẻ gì là
+# ngạc nhiên hay hoảng hốt" là phủ định.
+0 H
+1 N
+2 D NARRATOR,UNKNOWN~ neutral 0-1 normal normal u
+3 N
+4 N
+5 N
+6 D ED,ED ROSTAILER,NARRATOR~ tired,neutral 0-1 normal,slow soft,normal m
+7 N NARRATOR neutral,tired 0-1 normal normal u
+8 N
+9 N
+10 N
+11 N
+12 N
+13 N
+14 N
+15 D BEL,BEL MAIA,NPC*~ happy,neutral,surprised 0-1 normal normal f
+16 N
+17 N
+18 N
+19 D ED,ED ROSTAILER neutral 0-1 normal normal m
+20 D BEL,BEL MAIA,NPC*~ neutral 0-1 normal normal f
+21 N
+22 N
+23 N
+24 D BEL,BEL MAIA neutral,tender,afraid 0-1 normal normal f
+25 N
+26 N
+27 N
+28 N
+29 N NARRATOR neutral,happy 0-1 normal normal u
+30 D ED,ED ROSTAILER neutral 0-1 normal normal m
+31 D BEL,BEL MAIA neutral,happy 0-1 normal normal f
+32 N NARRATOR neutral,happy 0-1 normal normal u
+33 N NARRATOR neutral,happy 0-1 normal normal u
+34 N
+35 D BEL,BEL MAIA neutral 0-1 normal normal f
+36 D ED,ED ROSTAILER neutral,surprised 0-1 normal normal m
+37 D BEL,BEL MAIA neutral,tender 0-1 normal normal f
+38 N
+39 D BEL,BEL MAIA neutral 0-1 normal normal f
+40 D ED,ED ROSTAILER neutral,surprised 0-1 normal normal m
+41 D BEL,BEL MAIA neutral 0-1 normal normal f
+42 N
+43 N
+44 D BEL,BEL MAIA neutral 0-1 normal normal f
+45 D ED,ED ROSTAILER neutral,tired 0-1 normal normal m
+46 D BEL,BEL MAIA neutral 0-1 normal normal f
+47 N
+48 N
+49 D BEL,BEL MAIA neutral,sarcastic 0-1 normal normal f
+50 D BEL,BEL MAIA neutral,sarcastic 0-1 normal normal f
+51 D ED,ED ROSTAILER tired,angry,neutral 0-1 normal normal m
+52 D BEL,BEL MAIA sarcastic,happy,neutral 0-1 normal normal f
+53 N
+54 D BEL,BEL MAIA happy,sarcastic 0-1 normal normal f
+55 N NARRATOR neutral,happy 0-1 normal normal u
+56 D NARRATOR,UNKNOWN~ neutral,surprised 0-2 normal normal,loud u
+57 N
+58 D BEL,BEL MAIA,NARRATOR~,ED~,ED ROSTAILER~ neutral,tender 0-1 normal normal,soft f
+59 N
+60 N
+61 N
+62 N
+63 D BEL,BEL MAIA angry,excited 1-2 fast,normal loud f
+64 D YENNICA,YENNICA FAILOVER angry,surprised 1-2 fast,normal loud f
+65 N
+66 D ZIX,ZIX EFFELSTEIN,NPC*~ neutral,afraid,excited 0-1 normal normal m
+67 N
+68 D ZIX,ZIX EFFELSTEIN neutral,afraid 0-1 normal normal,soft m
+69 D ZIX,ZIX EFFELSTEIN,ED~,ED ROSTAILER~,YENNICA~,NARRATOR~ surprised,afraid,sad 1-2 fast,normal normal,loud m
+70 D ZIX,ZIX EFFELSTEIN sad,afraid 0-1 slow,normal soft,normal m
+71 N
+72 N
+73 N,T NARRATOR,ED~,ED ROSTAILER~ neutral,sarcastic 0-1 normal normal u
+74 N NARRATOR neutral,afraid 0-1 normal normal u
+75 N NARRATOR neutral,surprised 0-1 normal normal u
+76 N NARRATOR neutral,afraid 0-1 normal normal u
+77 N NARRATOR neutral,afraid 0-1 normal normal u
+78 N,T NARRATOR,ED,ED ROSTAILER neutral,sarcastic 0-1 normal normal u
+79 D ZIX,ZIX EFFELSTEIN neutral 0-1 normal normal m
+80 D ED,ED ROSTAILER neutral,surprised 0-1 normal normal m
+81 D ZIX,ZIX EFFELSTEIN neutral,afraid 0-1 normal normal m
+82 D ED,ED ROSTAILER neutral,sarcastic 0-1 normal normal m
+83 N
+84 N
+85 N
+86 D ZIX,ZIX EFFELSTEIN neutral 0-1 normal normal m
+87 D ED,ED ROSTAILER neutral 0-1 normal normal m
+88 D ZIX,ZIX EFFELSTEIN neutral 0-1 normal normal m
+89 N
+90 D ZIX,ZIX EFFELSTEIN neutral 0-1 normal normal m
+91 D ED,ED ROSTAILER neutral,surprised 0-1 normal normal m
+92 D ZIX,ZIX EFFELSTEIN,NARRATOR~ neutral 0-1 normal normal m
+93 N
+94 D ED,ED ROSTAILER neutral 0-1 normal normal m
+95 D ZIX,ZIX EFFELSTEIN neutral,surprised,afraid 0-1 normal normal m
+96 D ED,ED ROSTAILER sarcastic,neutral 0-1 normal normal m
+97 D ZIX,ZIX EFFELSTEIN neutral 0-1 normal normal m
+98 N
+99 N
+100 D ZIX,ZIX EFFELSTEIN neutral 0-1 normal normal m
+101 D ED,ED ROSTAILER neutral 0-1 normal normal m
+102 N
+103 N
+104 N
+105 N
+106 N
+107 N
+108 N
+109 N
+110 D CLARICE,KYLIE~,KYLIE ECKNE~,ED~,ED ROSTAILER~ neutral 0-1 normal normal,soft f
+111 N
+112 N
+113 N
+114 D CLARICE,KYLIE~,KYLIE ECKNE~ neutral 0-1 normal normal f
+115 D ED,ED ROSTAILER neutral 0-1 normal normal m
+116 D CLARICE,KYLIE~,KYLIE ECKNE~ neutral 0-1 normal normal f
+117 D CLARICE,KYLIE~,KYLIE ECKNE~ neutral 0-1 normal normal f
+118 D ED,ED ROSTAILER neutral 0-1 normal normal m
+119 N
+120 D CLARICE,KYLIE~,KYLIE ECKNE~ neutral,sad 0-1 normal normal f
+121 D CLARICE,KYLIE~,KYLIE ECKNE~ neutral,sad 0-1 normal normal f
+122 N
+123 N
+124 D CLARICE,KYLIE~,KYLIE ECKNE~ sad 0-1 slow,normal soft f
+125 N NARRATOR neutral,sad 0-1 normal normal u
+126 N NARRATOR neutral,sad 0-1 normal normal u
+127 D ED,ED ROSTAILER sad,tender,neutral 0-1 normal,slow soft,normal m
+128 N
+129 D ED,ED ROSTAILER tender,sad,neutral 0-1 normal normal m
+130 N
+131 N NARRATOR neutral,sad 0-1 normal normal u
+132 D ED,ED ROSTAILER tender,neutral 0-1 normal normal m
+133 D ED,ED ROSTAILER tender,sad 0-1 normal normal,soft m
+134 N NARRATOR neutral,sad 0-1 normal normal u
+135 N NARRATOR neutral,sad 0-1 normal normal u
+136 N NARRATOR neutral,sad,tender 0-1 normal normal u
+137 D CLARICE,KYLIE~,KYLIE ECKNE~,ED~,ED ROSTAILER~ neutral 0-1 normal normal,soft f
+138 N
+139 N
+140 N
+141 D CLARICE,KYLIE~,KYLIE ECKNE~ neutral 0-1 normal normal f
+142 D ED,ED ROSTAILER neutral 0-1 normal normal m
+143 D CLARICE,KYLIE~,KYLIE ECKNE~ neutral,happy 0-1 normal normal f
+144 D ED,ED ROSTAILER neutral 0-1 normal normal m
+145 N
+146 D CLARICE,KYLIE~,KYLIE ECKNE~ neutral,afraid 0-1 slow,normal soft,normal f
+147 D ED,ED ROSTAILER neutral,surprised 0-1 normal normal m
+148 D CLARICE,KYLIE~,KYLIE ECKNE~ neutral,afraid,tender 0-1 slow,normal soft f
+149 N
+150 D CLARICE,KYLIE~,KYLIE ECKNE~ neutral,afraid 0-1 normal soft,normal f
+151 D ED,ED ROSTAILER neutral 0-1 normal normal m
+152 D CLARICE,KYLIE~,KYLIE ECKNE~ happy,neutral 0-1 normal normal f
+153 N NARRATOR neutral,happy 0-1 normal normal u
+154 N
+155 D CLARICE,KYLIE~,KYLIE ECKNE~ tender,neutral,afraid 0-1 normal normal,soft f
+156 D ED,ED ROSTAILER surprised,neutral 0-1 normal normal m
+157 D CLARICE,KYLIE~,KYLIE ECKNE~ sad,tender 0-1 normal normal f
+158 N NARRATOR neutral,afraid,tender 0-1 normal normal u
+159 N
+160 N
+161 D ED,ED ROSTAILER neutral 0-1 normal normal m
+162 D CLARICE,KYLIE~,KYLIE ECKNE~ neutral,sad 0-1 normal normal f
+163 D ED,ED ROSTAILER neutral,sad,tired 0-1 normal normal m
+164 N
+165 N
+166 D CLARICE,KYLIE~,KYLIE ECKNE~ tender,sad 0-1 normal soft f
+167 D CLARICE,KYLIE~,KYLIE ECKNE~ tender,sad 0-1 normal soft,normal f
+168 N
+169 D CLARICE,KYLIE~,KYLIE ECKNE~ tender,neutral 0-1 normal normal,soft f
+170 D ED,ED ROSTAILER neutral,tender 0-1 normal normal m
+171 N NARRATOR neutral,sad 0-1 normal normal u
+172 N NARRATOR neutral,sad 0-1 normal normal u
+173 D NARRATOR,UNKNOWN~ neutral 0-1 normal normal u
+174 N
+175 N NARRATOR neutral,afraid 0-1 normal normal u
+176 N
+177 N
+178 N
+179 N
+180 N
+181 N NARRATOR neutral,afraid,sad 0-1 normal normal u
+182 N NARRATOR neutral,sad 0-1 normal normal u
+183 N NARRATOR neutral,sad 0-1 normal normal u
+184 N NARRATOR neutral,sad 0-1 normal normal u
+185 N NARRATOR neutral,sad 0-1 normal normal u
+186 N NARRATOR neutral,sad 0-1 normal normal u
+187 N NARRATOR neutral,sad 0-1 normal normal u
+188 N NARRATOR neutral,sad 0-1 normal normal u
+189 N NARRATOR neutral,sad 0-1 normal normal u
+190 N NARRATOR neutral,sad 0-1 normal normal u
+191 N NARRATOR neutral,sad 0-1 normal normal u
+192 N NARRATOR neutral,sad 0-1 normal normal u
+193 N NARRATOR neutral,sad 0-1 normal normal u
+194 N NARRATOR neutral,sad 0-1 normal normal u
+195 D YENNICA,YENNICA FAILOVER,NPC*~ neutral,tender 0-1 normal soft,normal f
+196 N NARRATOR neutral,surprised 0-1 normal normal u
+197 D YENNICA,YENNICA FAILOVER,NPC*~ neutral 0-1 normal normal f
+198 N
+199 N
+200 N
+201 D YENNICA,YENNICA FAILOVER tender,neutral 0-1 normal soft f
+202 N
+203 D YENNICA,YENNICA FAILOVER,ED~,ED ROSTAILER~ tender,neutral 0-1 normal soft,normal f
+204 D ED,ED ROSTAILER,YENNICA~,YENNICA FAILOVER~ neutral 0-1 normal normal,soft m
+205 N
+206 D YENNICA,YENNICA FAILOVER neutral,sad,tired 0-1 normal normal,soft f
+207 D ED,ED ROSTAILER neutral 0-1 normal normal,soft m
+208 N
+209 N
+210 N
+211 N
+212 N
+213 N
+214 N

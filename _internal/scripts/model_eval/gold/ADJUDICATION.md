@@ -572,3 +572,33 @@ Host sai (giữ đáp án): 66-67 - dấu nháy mở ở 65 không đóng, host 
 cho người lính; nhánh dev/curse-noun (82ed7a7) sửa 67 ("(" mở lượt mới). B xác nhận các khẳng định còn lại (RUBON STREAM 077:39,
 ELIZABETH STREAM 071:213..., Herge Hubner 002:241, "tớ/cậu" giữa Alistar - Magali 005:69...). `voice_identity --gold-check`:
 nise_seiken 9 người, không nhập ai. Phát lại: chỉ 66, 67 lệch (host).
+
+**Love Unseen 10 (29-09 02:xx) - bộ đo LN MỞ RỘNG** (chương ngoại "Chương 11: Yuuko Hayase": ngôi thứ nhất của Hayase trong
+cuốn Kakeru kể - đo "tôi là ai"; sếp, mẹ, người qua đường vô danh; Koharu trong hồi ức). A = Claude, B = agent soát đối kháng
+(chỉ đọc; chạy score_models trên project phát lại, dò cue host, lint nhãn, grep cả cuốn). B đồng ý người nói ưu tiên 27/27
+dòng D và 9/9 dòng N,T. A nhận:
+
+| chỗ | A ghi | kết luận | bằng chứng |
+|---|---|---|---|
+| 69, 75 (Koharu) | KOHARU đầu | FUYUTSUKI đầu | 03/07/09 để FUYUTSUKI đầu - lựa chọn đầu là cụm của voice_identity; để KOHARU đầu thì `--gold-check` tách một người làm hai (9 người) |
+| 47 / 98, 99, 125 | N / N, N, N,T | N,T cả bốn | 47 tự trả lời câu hỏi 45 ("Tôi dừng nghĩ ngợi"); 98-100, 124-125 là dòng suy nghĩ tại cảnh (101 "Cất câu hỏi đó lại vào tâm trí", 126 "đánh thức tôi khỏi dòng suy nghĩ") - nhất quán |
+| 62, 105, 108 / 63, 64 / 3 / 16, 6 | neutral | thêm afraid / sad,angry / afraid,surprised / angry | "bồn chồn", "muốn cắn lưỡi... can đảm", "chuẩn bị tinh thần bị trách mắng"; "đau nhức, ghét", "ghen tỵ"; "đóng băng, căng thẳng"; "bực hết cả mình", "cau có" |
+| 104 / 77 / 46 / 110 / 127 / 28, 35, 67, 97 | ... | volume thêm soft / whispering / soft,normal / happy,excited,tender + nhịp nhanh / cường độ 0-2 / thêm happy, afraid, afraid, happy | "giọng nói nhẹ nhàng"; "nhỏ giọng"; "xổ ra một tràng"; dấu "!"; "thỏa mãn", "lo cho tôi", "do dự", "bật cười" |
+
+A giữ: 26 câu cửa miệng của đồng nghiệp -> NPC* đủ, NARRATOR~ (B đồng ý, kém chắc nhất); 46, 60, 95, 97, 127 là nói thành tiếng
+(câu nghĩ của chương không có ngoặc). B chỉ ra: (1) chương đo phải vào SPLIT["test"] - đã thêm; (2) "cả cuốn Kakeru kể" chưa
+đúng - file 11 Narumi, 13 Koharu kể (đã sửa đầu file); (3) thước F1 giọng méo ở chương này - 10 câu NPC* của bốn người khác
+nhau (sếp nam, mẹ nữ...) là MỘT cụm trong đáp án: model tách đúng bốn người chỉ được F1 89,9%, gộp sếp với mẹ lại được 100% ->
+so model ở chương này bằng người nói chặt. `voice_identity --gold-check`: love_unseen 8 người, không nhập ai. Phát lại
+(người kể HAYASE): 100/100.
+
+**Hướng dẫn sinh tồn 130 (29-09 02:xx) - bộ đo LN MỞ RỘNG** (ngôi thứ nhất Ed; Bel Maia, Zix, Clarice/Kylie, Yennica). A =
+Claude, B = agent soát đối kháng (chỉ đọc; dò cue host trên 215 đoạn). B đồng ý người nói ưu tiên 88/88 dòng D. A nhận:
+KYLIE, KYLIE ECKNE xuống nửa điểm trên 20 dòng của Clarice (tên giả - 075:99; chương luôn gọi người nói là Clarice; quy tắc 13,
+tiền lệ Beaulac); 20, 197 thêm NPC*~ (nói trước khi lời kể gọi tên, như 15, 195); 203/204 nhập nhằng ("Không sao đâu." là
+điệp khúc của Ed ở 160, 176 nhưng 202 "Yennica gọi tôi") -> người đầu đủ, người kia ~; 58 câu của Bel vọng lại: NARRATOR
+xuống ~ (tiền lệ Đã bảo 050:32); 69 thêm YENNICA~ ("Hựp" là tiếng hít hơi sững sờ của Yennica ở 147, 160), 137 thêm ED~;
+73 -> N,T (Ed ~); cảm xúc theo cue: 33 happy ("vui mừng"), 163 sad,tired, 95 surprised,afraid ("em có chút ngạc nhiên"),
+155/81/24/158 afraid ("lo lắng"), 15 surprised ("Không ngờ"), 186-189 sad. Host sai (giữ đáp án): 50 "không phải là một tội
+lỗi đáng chết" (chữ phủ định ngoài cửa sổ của host), 109. SPLIT["test"] thêm "130". `voice_identity --gold-check`: hdst 13
+người, không nhập ai. Phát lại: 100/100.

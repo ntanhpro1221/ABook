@@ -1,0 +1,143 @@
+# "Love Unseen Beneath the Clear Night Sky" file 10 ("Chương 11: Yuuko Hayase"). Bộ đo LN MỞ RỘNG 29-09 (chương chưa học;
+# 03, 09 train, 07 test): chương NGOẠI, ngôi thứ nhất của HAYASE - cả cuốn do Kakeru kể, trừ các chương đổi góc kể (file 11
+# Narumi, 13 Koharu) -> đo đúng chỗ "tôi là ai" (--first-person "YUUKO HAYASE"; replay_all đặt KAKERU cho cả thư mục - nhãn
+# đáp án ghi thẳng HAYASE nên phát lại vẫn đúng). Claude gán (A), agent soát (B, ADJUDICATION.md). "Tôi" = HAYASE / YUUKO
+# HAYASE / YUUKO (f; 6 "Em về được rồi Hayase", 71 "giới thiệu tên mình là Hayase"). FUYUTSUKI / KOHARU / KOHARU FUYUTSUKI
+# (f, trong hồi ức 67-77; FUYUTSUKI đứng đầu như 03/07/09 - lựa chọn đầu là cụm của voice_identity). Sếp ("anh ta", 6-17),
+# mẹ (35, 104-113, qua điện thoại), người qua đường (54) không tên, không nói ở chương nào khác -> NPC* (UNKNOWN~). 26: câu
+# "đầu triết học" mà "vài người còn lại già dặn hơn" hay nói ("Họ kiểu“...”") -> NPC* đủ như câu cả đám (quy tắc 6),
+# UNKNOWN~, NARRATOR~ (người kể nhại lại). 46, 60, 95, 97, 127: Hayase nói một mình thành tiếng (trong ngoặc; câu nghĩ của
+# chương không có ngoặc) -> D, HAYASE. Câu hỏi tu từ / phàn nàn / mong muốn tức thời trong cảnh (47, 98-100, 124-125 - 101
+# "Cất câu hỏi đó lại vào tâm trí", 126 "đánh thức tôi khỏi dòng suy nghĩ") -> N,T; hồi ức, giải thích -> N. Thước F1 giọng
+# méo ở chương này: 10 câu NPC* của BỐN người (sếp nam, đồng nghiệp, mẹ nữ, người qua đường) thành MỘT cụm - so model ở
+# đây bằng người nói chặt.
+0 H
+1 N NARRATOR neutral,tired 0-1 normal normal u
+2 N
+3 N NARRATOR neutral,afraid,surprised 0-1 normal normal u
+4 N NARRATOR neutral,sad,angry,happy 0-1 normal normal u
+5 N NARRATOR neutral,angry 0-1 normal normal u
+6 D NPC*,UNKNOWN~ tired,neutral,angry 0-1 normal normal m
+7 N NARRATOR neutral,tired 0-1 normal normal u
+8 D HAYASE,YUUKO HAYASE,YUUKO neutral,surprised 0-1 normal normal f
+9 D NPC*,UNKNOWN~ neutral,tender 0-1 normal normal m
+10 N
+11 D NPC*,UNKNOWN~ tender,neutral 0-1 normal normal,soft m
+12 N,T NARRATOR,HAYASE,YUUKO HAYASE,YUUKO surprised,angry,neutral 0-1 normal normal u
+13 N,T NARRATOR,HAYASE,YUUKO HAYASE,YUUKO neutral,angry 0-1 normal normal u
+14 N,T NARRATOR,HAYASE,YUUKO HAYASE,YUUKO angry,sarcastic,neutral 0-1 normal normal u
+15 N,T NARRATOR,HAYASE,YUUKO HAYASE,YUUKO angry,neutral 0-1 normal normal u
+16 D HAYASE,YUUKO HAYASE,YUUKO neutral,angry 0-1 normal normal f
+17 D NPC*,UNKNOWN~ sarcastic,neutral,angry 0-1 normal normal m
+18 N NARRATOR neutral,sad 0-1 normal normal u
+19 N
+20 N
+21 N
+22 N
+23 N
+24 N NARRATOR neutral,tired 0-1 normal normal u
+25 N NARRATOR neutral,sarcastic 0-1 normal normal u
+26 D NPC*,UNKNOWN~,NARRATOR~ neutral,sarcastic 0-1 normal normal u
+27 N NARRATOR neutral,sad 0-1 normal normal u
+28 N NARRATOR neutral,happy 0-1 normal normal u
+29 N
+30 N
+31 N NARRATOR neutral,sad 0-1 normal normal u
+32 N
+33 N
+34 N
+35 D NPC*,UNKNOWN~ tender,sad,neutral,afraid 0-1 normal normal,soft f
+36 N
+37 N NARRATOR neutral,sad 0-1 normal normal u
+38 N
+39 N
+40 N NARRATOR neutral,afraid 0-1 normal normal u
+41 D HAYASE,YUUKO HAYASE,YUUKO neutral,angry 0-1 normal normal f
+42 N NARRATOR neutral,sad 0-1 normal normal u
+43 N
+44 N NARRATOR neutral,sad 0-1 normal normal u
+45 N,T NARRATOR,HAYASE,YUUKO HAYASE,YUUKO sad,neutral 0-1 normal normal u
+46 D HAYASE,YUUKO HAYASE,YUUKO tired,sad,whispering 0-1 slow,normal soft,normal f
+47 N,T NARRATOR,HAYASE,YUUKO HAYASE,YUUKO neutral,tired 0-1 normal normal u
+48 N NARRATOR neutral,tired 0-1 normal normal u
+49 N
+50 N NARRATOR neutral,surprised 0-1 normal normal u
+51 D HAYASE,YUUKO HAYASE,YUUKO neutral,surprised 0-1 normal normal,soft f
+52 N
+53 N NARRATOR neutral,angry 0-1 normal normal u
+54 D NPC*,UNKNOWN~ angry 0-2 normal normal u
+55 N
+56 N
+57 N
+58 N
+59 N
+60 D HAYASE,YUUKO HAYASE,YUUKO neutral,sad,whispering 0-1 normal,slow soft,normal f
+61 N
+62 N NARRATOR neutral,afraid,excited 0-1 normal normal u
+63 N NARRATOR neutral,sad,angry 0-1 normal normal u
+64 N NARRATOR neutral,sad,angry 0-1 normal normal u
+65 N
+66 N
+67 D HAYASE,YUUKO HAYASE,YUUKO surprised,neutral,afraid 0-1 slow,normal soft,normal f
+68 N
+69 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI happy,neutral 0-1 normal normal f
+70 N NARRATOR neutral,happy 0-1 normal normal u
+71 N
+72 N
+73 D HAYASE,YUUKO HAYASE,YUUKO happy,tender 0-1 normal normal,soft f
+74 N
+75 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI happy,tender 0-1 normal normal f
+76 N NARRATOR neutral,happy 0-1 normal normal u
+77 D HAYASE,YUUKO HAYASE,YUUKO tender,happy,whispering 0-1 normal soft f
+78 N
+79 N NARRATOR neutral,sad 0-1 normal normal u
+80 N
+81 N
+82 N NARRATOR neutral,sad 0-1 normal normal u
+83 N
+84 N
+85 N
+86 N
+87 N
+88 N
+89 N
+90 N,T NARRATOR,HAYASE,YUUKO HAYASE,YUUKO neutral 0-1 normal normal u
+91 N
+92 N
+93 N
+94 N
+95 D HAYASE,YUUKO HAYASE,YUUKO sarcastic,sad,happy 0-1 normal soft,normal f
+96 N NARRATOR neutral,happy 0-1 normal normal u
+97 D HAYASE,YUUKO HAYASE,YUUKO sarcastic,neutral,happy 0-1 normal soft,normal f
+98 N,T NARRATOR,HAYASE,YUUKO HAYASE,YUUKO neutral,happy 0-1 normal normal u
+99 N,T NARRATOR,HAYASE,YUUKO HAYASE,YUUKO neutral 0-1 normal normal u
+100 N,T NARRATOR,HAYASE,YUUKO HAYASE,YUUKO neutral,sad 0-1 normal normal u
+101 N
+102 N
+103 D HAYASE,YUUKO HAYASE,YUUKO neutral 0-1 normal normal,soft f
+104 D NPC*,UNKNOWN~ neutral,tender 0-1 normal normal,soft f
+105 N NARRATOR neutral,afraid 0-1 normal normal u
+106 D HAYASE,YUUKO HAYASE,YUUKO neutral,sad,afraid 0-1 normal normal,soft f
+107 N
+108 N NARRATOR neutral,afraid 0-1 normal normal u
+109 N NARRATOR neutral,afraid,happy 0-1 normal normal u
+110 D NPC*,UNKNOWN~ happy,excited,tender 0-1 normal,fast normal f
+111 N
+112 N NARRATOR neutral,sad 0-1 normal normal u
+113 D NPC*,UNKNOWN~ tender 0-1 normal normal,soft f
+114 N NARRATOR neutral,tender 0-1 normal normal u
+115 N NARRATOR neutral,sad 0-1 normal normal u
+116 N
+117 N
+118 N
+119 N
+120 N NARRATOR neutral,happy,excited 0-1 normal normal u
+121 D HAYASE,YUUKO HAYASE,YUUKO neutral,happy 0-1 normal normal f
+122 N
+123 N NARRATOR neutral,happy 0-1 normal normal u
+124 N,T NARRATOR,HAYASE,YUUKO HAYASE,YUUKO happy,excited 0-1 normal normal u
+125 N,T NARRATOR,HAYASE,YUUKO HAYASE,YUUKO neutral,happy 0-1 normal normal u
+126 N NARRATOR neutral,excited,happy 0-1 normal normal u
+127 D HAYASE,YUUKO HAYASE,YUUKO happy,excited 0-2 normal normal f
+128 N NARRATOR neutral,happy 0-1 normal normal u
+129 N
