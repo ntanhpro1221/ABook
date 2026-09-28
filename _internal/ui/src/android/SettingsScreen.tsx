@@ -1,6 +1,6 @@
 import * as Switch from "@radix-ui/react-switch";
 import { useState, type ReactNode } from "react";
-import { Segmented } from "@/shared/ui";
+import { Segmented, TimeSelect } from "@/shared/ui";
 import { applyTheme, loadSettings, saveSettings, type PlayerSettings } from "./settings";
 
 function Group({ title, children }: { title: string; children: ReactNode }) {
@@ -104,20 +104,18 @@ export function SettingsScreen() {
         </Row>
         {settings.sleepSchedule && (
           <div className="flex flex-wrap items-center gap-2 px-4 py-3 text-sm">
-            <input
-              type="time"
-              aria-label="Từ"
+            <TimeSelect
+              label="Từ"
               value={settings.sleepSchedule.from}
-              onChange={(event) => event.target.value && change({ sleepSchedule: { ...settings.sleepSchedule!, from: event.target.value } })}
-              className="tabular h-10 rounded-lg border border-line bg-bg px-2"
+              onChange={(value) => change({ sleepSchedule: { ...settings.sleepSchedule!, from: value } })}
+              className="h-10 rounded-lg border border-line bg-bg px-2"
             />
             <span className="text-fg-2">đến</span>
-            <input
-              type="time"
-              aria-label="Đến"
+            <TimeSelect
+              label="Đến"
               value={settings.sleepSchedule.to}
-              onChange={(event) => event.target.value && change({ sleepSchedule: { ...settings.sleepSchedule!, to: event.target.value } })}
-              className="tabular h-10 rounded-lg border border-line bg-bg px-2"
+              onChange={(value) => change({ sleepSchedule: { ...settings.sleepSchedule!, to: value } })}
+              className="h-10 rounded-lg border border-line bg-bg px-2"
             />
             <span className="text-fg-2">hẹn</span>
             <select

@@ -358,6 +358,35 @@ export function radioTabIndex<T>(values: readonly T[], value: T, index: number) 
   return values[index] === value || (!values.includes(value) && index === 0) ? 0 : -1;
 }
 
+const QUARTERS = Array.from({ length: 96 }, (_, index) =>
+  `${String(Math.floor(index / 4)).padStart(2, "0")}:${String((index % 4) * 15).padStart(2, "0")}`,
+);
+
+/** Giờ 24h ("22:00"), mỗi 15 phút. Ô `type="time"` gốc hiện theo locale hệ thống ("10:00 Chiều" cho 22:00 - soát UX
+ *  29-09). Giờ đã lưu lệch 15 phút ("22:10") vẫn có trong danh sách. */
+export function TimeSelect({
+  value,
+  onChange,
+  label,
+  className,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  label: string;
+  className?: string;
+}) {
+  const options = QUARTERS.includes(value) ? QUARTERS : [...QUARTERS, value].sort();
+  return (
+    <select aria-label={label} value={value} onChange={(event) => onChange(event.target.value)} className={cn("tabular", className)}>
+      {options.map((time) => (
+        <option key={time} value={time}>
+          {time}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 export function Segmented<T extends string>({
   value,
   onChange,
