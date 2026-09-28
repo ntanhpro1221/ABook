@@ -1,6 +1,6 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQueryClient } from "@tanstack/react-query";
-import { BookPlus, Clapperboard, Compass, FileAudio, FolderDown, Headphones } from "lucide-react";
+import { BookPlus, Clapperboard, Compass, FileAudio, FolderDown, Headphones, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { HashRouter, Route, Routes, useNavigate } from "react-router";
 import { Toaster, toast } from "sonner";
@@ -12,7 +12,7 @@ import { MorningRecap } from "@/listen/MorningRecap";
 import { ReaderScreen } from "@/listen/ReaderScreen";
 import { PlayerProvider, usePlayer } from "@/listen/player";
 import { SourceProvider } from "@/listen/source";
-import { Button, EmptyState, TooltipProvider } from "@/shared/ui";
+import { Button, Dialog, EmptyState, TooltipProvider } from "@/shared/ui";
 import type { ListenBook } from "@/listen/model";
 import { coverArtwork } from "@/shared/cover";
 import { api } from "@/studio/api";
@@ -114,6 +114,68 @@ function ExportMenuItem({ book }: { book: ListenBook }) {
     >
       <FolderDown className="size-4" /> Xuất MP3 để nghe ở app khác
     </DropdownMenu.Item>
+  );
+}
+
+/** Cuốn nhập từ file `.abook`: bỏ khỏi thư viện (thư mục giải nén vào Thùng rác). Hộp xác nhận nằm ngoài menu
+ *  (RemoveImportedHost) - menu đóng lại ngay khi chọn, hộp trong menu sẽ biến mất theo. */
+function RemoveImportedMenuItem({ book }: { book: ListenBook }) {
+  return (
+    <DropdownMenu.Item
+      onSelect={() => window.dispatchEvent(new CustomEvent<ListenBook>("abook-remove-imported", { detail: book }))}
+      className="flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm text-danger outline-none data-[highlighted]:bg-hover"
+    >
+      <Trash2 className="size-4" /> Xoá khỏi thư viện…
+    </DropdownMenu.Item>
+  );
+}
+
+function RemoveImportedHost() {
+  const [book, setBook] = useState<ListenBook | null>(null);
+  const [busy, setBusy] = useState(false);
+  const client = useQueryClient();
+  const navigate = useNavigate();
+  const player = usePlayer();
+  useEffect(() => {
+    const listener = (event: Event) => setBook((event as CustomEvent<ListenBook>).detail);
+    window.addEventListener("abook-remove-imported", listener);
+    return () => window.removeEventListener("abook-remove-imported", listener);
+  }, []);
+  const remove = async () => {
+    if (!book) return;
+    setBusy(true);
+    // Cuốn đang nghe giữ file chương mở - đóng trình phát trước (nó lưu chỗ nghe lúc sách còn đó).
+    if (player.track?.bookId === book.id) player.close();
+    try {
+      await api(`/api/listen/books/${book.id}`, { method: "DELETE" });
+      setBook(null);
+      navigate("/", { replace: true });
+      void client.invalidateQueries({ queryKey: ["listen"] });
+      toast.success(`Đã bỏ “${book.title}” khỏi thư viện`, {
+        description: "Thư mục sách đã vào Thùng rác. Mở lại file .abook là nhập lại.",
+      });
+    } catch (error) {
+      toast.error("Chưa xoá được", { description: (error as Error).message });
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Dialog
+      open={book !== null}
+      onOpenChange={(open) => !open && setBook(null)}
+      title={`Bỏ “${book?.title ?? ""}” khỏi thư viện?`}
+      description="Bản đã nhập trên máy này chuyển vào Thùng rác, khôi phục được từ đó. File .abook gốc không bị đụng - mở lại nó là nhập lại."
+    >
+      <div className="flex justify-end gap-2">
+        <Button variant="ghost" onClick={() => setBook(null)}>
+          Để sau
+        </Button>
+        <Button variant="danger" icon={Trash2} loading={busy} onClick={() => void remove()}>
+          Xoá khỏi thư viện
+        </Button>
+      </div>
+    </Dialog>
   );
 }
 
@@ -321,6 +383,7 @@ export function App() {
             <HashRouter>
               <OpenedBookListener />
               <UpdateListener />
+              {!info.remote && <RemoveImportedHost />}
               <Shell>
                 <Routes>
                   <Route path="/" element={<LibraryRoute />} />
@@ -329,7 +392,10 @@ export function App() {
                     element={
                       <BookScreen
                         extraActions={(book) =>
-                          book.imported ? null : (
+                          book.imported ? (
+                            // Sách của máy khác (remote) thôi hiện khi gỡ máy ấy - không có gì để xoá ở đây.
+                            book.remote || info.remote ? null : <RemoveImportedMenuItem book={book} />
+                          ) : (
                             <>
                               <BookFileMenuItem book={book} />
                               <ExportMenuItem book={book} />

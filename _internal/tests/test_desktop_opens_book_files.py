@@ -167,3 +167,37 @@ def test_a_tampered_manifest_cannot_reach_outside_the_book(tmp_path: Path) -> No
 
 def test_the_manifest_name_matches_the_book_file_format() -> None:
     assert packages.MANIFEST == bookfile.MANIFEST
+
+
+def test_an_imported_book_leaves_the_library_through_the_recycle_bin(tmp_path: Path, monkeypatch) -> None:
+    """Soát UX 29-09: cuốn nhập từ file không có cách nào bỏ khỏi thư viện. Giờ thư mục giải nén vào Thùng rác; file
+    .abook gốc không bị đụng - mở lại là nhập lại."""
+    import shutil
+
+    from ebook_reader.webui import actions
+
+    _project, file = _produced(tmp_path)
+    elsewhere = tmp_path / "thu_vien_nguoi_nghe"
+    elsewhere.mkdir()
+    app = _app(tmp_path, elsewhere)
+    opened = app.open_book_file(str(file))
+    moved: list[Path] = []
+
+    def recycle(path: Path) -> None:  # không đụng Thùng rác thật của máy chạy test
+        moved.append(path)
+        shutil.rmtree(path)
+
+    monkeypatch.setattr(actions, "move_to_recycle_bin", recycle)
+    assert app.remove_imported(opened["id"]) == {"ok": True}
+    assert [path.parent.name for path in moved] == [packages.IMPORTED_FOLDER]
+    assert app.listen_library() == [] and file.is_file(), "file .abook gốc còn nguyên"
+    assert app.open_book_file(str(file))["how"] == "new", "mở lại là nhập lại"
+
+
+def test_a_studio_project_is_not_removed_from_the_listening_side(tmp_path: Path) -> None:
+    project, _file = _produced(tmp_path)
+    app = _app(tmp_path, tmp_path / "may_san_xuat")
+    with pytest.raises(ApiError) as refused:
+        app.remove_imported(book_id(project))
+    assert refused.value.status == 409 and "Studio" in refused.value.message
+    assert project.is_dir()

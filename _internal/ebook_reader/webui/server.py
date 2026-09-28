@@ -366,6 +366,30 @@ class App:
         self.library.forget(path)
         return {"ok": True, "title": path.name}
 
+    def remove_imported(self, value: str) -> dict[str, Any]:
+        """Bỏ một cuốn NHẬP TỪ FILE `.abook` khỏi thư viện: thư mục đã giải nén vào Thùng rác. File `.abook` gốc không bị
+        đụng - mở lại là nhập lại. Dự án của Studio xoá trong Studio; sách của máy khác thôi hiện khi gỡ máy ấy."""
+        from .remote_books import REMOTE_FOLDER
+
+        self._mutating()
+        path = self._listenable(value).resolve()
+        root = self.library.root.resolve()
+        if store.is_project(path):
+            raise ApiError(HTTPStatus.CONFLICT, "Đây là dự án của Studio - xoá ở trang dự án trong Studio (nút …)")
+        if path.parent.parent == (root / REMOTE_FOLDER).resolve():
+            raise ApiError(HTTPStatus.CONFLICT,
+                           "Sách này nằm trên máy tính khác - muốn thôi hiện thì gỡ máy ấy ở Cài đặt → Máy tính khác")
+        if path.parent != (root / packages.IMPORTED_FOLDER).resolve() or not packages.is_package(path):
+            raise ApiError(HTTPStatus.CONFLICT, "Cuốn này không phải sách đã nhập từ file")
+        try:
+            actions.move_to_recycle_bin(path)
+        except OSError as error:
+            raise ApiError(
+                HTTPStatus.CONFLICT,
+                f"Không chuyển được vào Thùng rác - có thể một chương đang mở (đang nghe cuốn này). Thử lại. ({error})",
+            ) from error
+        return {"ok": True}
+
     def create(self, body: dict[str, Any]) -> dict[str, Any]:
         self._mutating()
         paths = [str(item) for item in body.get("paths", [])]
@@ -889,6 +913,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def post_stop(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.ACCEPTED, self.app.stop(value))
+
+    def delete_listen_book(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.remove_imported(value))
 
     def put_title(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.rename(value, str(self._body().get("title") or "")))
@@ -1467,6 +1494,8 @@ ROUTES: list[Route] = [
     ("GET", re.compile(r"/api/listen/library"), Handler.get_listen_library),
     ("POST", re.compile(r"/api/listen/open-book-file"), Handler.post_open_book_file),
     ("GET", re.compile(LISTEN), Handler.get_listen_book),
+    # Chỉ trên máy này (remote_studio không có): bỏ một cuốn nhập từ file .abook khỏi thư viện.
+    ("DELETE", re.compile(LISTEN), Handler.delete_listen_book),
     ("POST", re.compile(LISTEN + r"/progress"), Handler.post_progress),
     ("POST", re.compile(LISTEN + r"/chapters/(\d+)/done"), Handler.post_chapter_done),
     ("POST", re.compile(LISTEN + r"/finished"), Handler.post_finished),
