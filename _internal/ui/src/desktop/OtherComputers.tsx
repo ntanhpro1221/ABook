@@ -155,7 +155,7 @@ export function OtherComputers() {
             id="other-computer-code"
             ref={codeInput}
             value={code}
-            onChange={(event) => setCode(event.target.value)}
+            onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
             placeholder="123456"
             inputMode="numeric"
             autoComplete="off"
