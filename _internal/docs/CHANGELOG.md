@@ -7,6 +7,31 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Studio: **sửa một cuốn đã xong** giờ có đường áp dụng. Sửa người nói, giọng, cách đọc tên hay cách đọc một câu sau
+  khi sách đã "Hoàn tất" thì trang dự án hiện nút **"Áp dụng N thay đổi"**. Bấm là chỉ thu lại những câu bị ảnh hưởng,
+  không làm lại cả cuốn. Trước đây các thay đổi ấy chờ mãi một "lần chạy tới" không bao giờ đến. Tab Nhân vật ghi
+  "Chờ áp dụng: giọng …" dưới người vừa đổi giọng.
+- Studio: **đổi tên và xoá dự án** (nút "…" cạnh "Mở thư mục sách"). Đổi tên chỉ đổi tên hiện trong thư viện, trên
+  điện thoại và trong file xuất. Xoá chuyển cả thư mục dự án vào **Thùng rác** của Windows, nên khôi phục được; file
+  truyện gốc không bị đụng. Sách đang chạy phải dừng trước. Chỉ làm được trên chính máy tính, không từ Studio từ xa.
+- Hộp "Việc cần anh":
+  - Việc đã quyết thu vào mục "Đã quyết, chờ áp dụng" và không còn tính vào số đếm; nút tô đúng lựa chọn đã bấm.
+  - Thẻ "Ai nói câu này" có **"Tìm trong truyện…"**, mở đúng câu ấy ở tab Kịch bản với ô chọn người nói (tìm được mọi
+    nhân vật).
+  - Cách đọc bị từ chối báo lỗi ngay dưới ô nhập.
+  - Vai phụ trùng tên ở nhiều chương ghi thêm tên chương.
+  - Thanh lọc xuống hàng thay vì bị cắt chữ.
+- Sửa nhỏ từ đợt soát trước phát hành:
+  - Lịch đêm chọn giờ theo **24 giờ** ("22:00", không còn "10:00 Chiều").
+  - Ghép thiết bị: địa chỉ nên gõ đứng đầu, không còn địa chỉ card ảo (WSL, Hyper-V…). Ô mã chỉ nhận số. Nút "Huỷ ghép"
+    đổi thành "Huỷ mã này".
+  - Bật điều khiển sản xuất từ xa phải xác nhận.
+  - Công tắc đang tắt thấy rõ ở giao diện sáng.
+  - Bảng chương và danh sách dự án không vỡ trên màn hẹp.
+  - Câu Whisper "nghe ảo" không hiện ở hàng chờ nghe lại.
+  - Câu chưa có bản thu chỉ còn nút "Thu lại câu này".
+  - Sách chưa có chương nghe được không còn ghi "Đang làm" khi đang dừng. Không xuất được sách chưa có chương nào.
+
 - Làm sách: Studio phân tích bằng **model riêng của ABook** (`abook-analyzer`, học từ đáp án soát tay của dự án) thay cho
   qwen3:8b - đoán đúng người nói nhiều hơn rõ ở light novel và truyện mạng (bộ đo 6 chương LN chưa học: 64% câu thoại đúng
   người, qwen3:8b 49%), mà nhẹ hơn. Thiếu model thì Studio tự tải từ Hugging Face. Sách đang làm dở giữ model đã bắt đầu nó.

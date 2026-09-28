@@ -155,6 +155,13 @@ class Preferences:
             self._data["recents"] = [str(path), *recents][:MAX_RECENTS]
             self._save()
 
+    def forget_recent(self, path: Path) -> None:
+        with self._lock:
+            recents = [item for item in self._data.get("recents", []) if _key(Path(item)) != _key(path)]
+            if recents != self._data.get("recents", []):
+                self._data["recents"] = recents
+                self._save()
+
     def _save(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         temporary = self.path.with_suffix(".tmp")
@@ -188,6 +195,12 @@ class Library:
                 found.setdefault(_key(path), path.resolve())
         return list(found.values())
 
+    def forget(self, project: Path) -> None:
+        """Dự án đã bị xoá: bỏ khỏi danh sách gần đây và bộ đệm tóm tắt."""
+        self.preferences.forget_recent(project)
+        with self._lock:
+            self._cache.pop(_key(project), None)
+
     def resolve(self, value: str) -> Path | None:
         path = _decode_id(value)
         if path is None:
@@ -212,8 +225,9 @@ class Library:
         return {_key(package): package for package in self.packages()}.get(_key(path))
 
     def summary(self, project: Path, *, running: bool, starting: bool = False) -> dict[str, Any]:
-        # Cả mốc của overrides.json: yêu cầu mới của người nghe đổi "pendingChanges" mà không chạm DB.
-        stamp = (store.touched(project), _mtime(overrides_path(project)), _mtime(project / store.RUN_MARKER))
+        # Cả mốc của overrides.json (yêu cầu mới của người nghe đổi "pendingChanges") và tên đặt lại - không chạm DB.
+        stamp = (store.touched(project), _mtime(overrides_path(project)), _mtime(project / store.RUN_MARKER),
+                 _mtime(project / store.TITLE_FILE))
         key = _key(project)
         with self._lock:
             cached = self._cache.get(key)

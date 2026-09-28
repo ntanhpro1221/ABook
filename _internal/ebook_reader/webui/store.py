@@ -11,9 +11,11 @@ cho "đã thu", `chapters.completed_at` cho mốc chương xong. Nhãn tiếng V
 from __future__ import annotations
 
 import json
+import os
 import re
 import sqlite3
 import time
+import unicodedata
 from collections import Counter, defaultdict
 from contextlib import closing
 from pathlib import Path
@@ -180,6 +182,31 @@ def chapter_names(connection: sqlite3.Connection) -> dict[int, dict[str, Any]]:
 
 
 RUN_MARKER = "studio_last_run.json"
+# Tên người dùng đặt lại trong Studio: máy chủ giao diện chỉ ĐỌC sổ dự án (connect: query_only), nên tên mới nằm ở file
+# riêng này thay vì cột `book.title` của dây chuyền. Mọi nơi hiện/xuất tên đi qua `summarize`.
+TITLE_FILE = "studio_title.json"
+TITLE_MAX = 160
+
+
+def display_title(project_root: Path, fallback: str) -> str:
+    """Tên sách người dùng đặt lại (TITLE_FILE), hay `fallback` - tên lúc tạo trong sổ."""
+    try:
+        title = str(json.loads((project_root / TITLE_FILE).read_text(encoding="utf-8")).get("title") or "").strip()
+    except (OSError, ValueError, AttributeError):
+        title = ""
+    return title or fallback
+
+
+def clean_title(value: str) -> str:
+    """Tên hợp lệ: bỏ ký tự điều khiển, gộp khoảng trắng, tối đa TITLE_MAX ký tự; chuỗi rỗng là không hợp lệ."""
+    text = "".join(" " if unicodedata.category(char)[0] == "C" else char for char in str(value))
+    return " ".join(text.split())[:TITLE_MAX].strip()
+
+
+def set_display_title(project_root: Path, title: str) -> None:
+    temporary = project_root / f".{TITLE_FILE}.tmp"
+    temporary.write_text(json.dumps({"title": title}, ensure_ascii=False), encoding="utf-8")
+    os.replace(temporary, project_root / TITLE_FILE)
 
 
 def mark_run_started(project_root: Path, started_at: float) -> None:
@@ -271,7 +298,7 @@ def summarize(project_root: Path, *, running: bool = False, now: float | None = 
     profile = str(settings.get("quality_profile") or "")
     return {
         "path": str(project_root),
-        "title": str(book["title"]),
+        "title": display_title(project_root, str(book["title"])),
         "status": status,
         "stage": stage,
         "phase": phase,

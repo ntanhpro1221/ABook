@@ -304,6 +304,44 @@ class App:
         self.jobs.stop(path)
         return self.summary(path)
 
+    def rename(self, value: str, title: str) -> dict[str, Any]:
+        """Đặt lại tên sách hiện trong thư viện, trên điện thoại và trong file xuất (store.TITLE_FILE) - thư mục dự án và
+        sổ của dây chuyền giữ nguyên, nên đổi được cả lúc sách đang chạy."""
+        self._mutating()
+        path = self._book(value)
+        cleaned = store.clean_title(title)
+        if not cleaned:
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Tên sách không được để trống")
+        try:
+            store.set_display_title(path, cleaned)
+        except OSError as error:
+            raise ApiError(HTTPStatus.CONFLICT, f"Không ghi được tên mới: {error}") from error
+        return self.summary(path)
+
+    def delete(self, value: str) -> dict[str, Any]:
+        """Xoá một dự án: chuyển CẢ thư mục dự án vào Thùng rác (khôi phục được). File truyện gốc người dùng chọn lúc tạo
+        nằm ngoài thư mục ấy, không bị đụng tới. Sách đang chạy phải dừng trước; đang xếp hàng thì bỏ khỏi hàng."""
+        self._mutating()
+        path = self._book(value)
+        if self.runner.running(path) or self.jobs.starting(path):
+            raise ApiError(HTTPStatus.CONFLICT, "Sách đang chạy - dừng sách rồi mới xoá được")
+        resolved = path.resolve()
+        if resolved == Path(resolved.anchor) or resolved == self.library.root.resolve() or not store.is_project(resolved):
+            raise ApiError(HTTPStatus.CONFLICT, "Thư mục này không phải một dự án sách - không xoá")
+        with self._queue_lock:
+            if value in self.queue:
+                self.queue.remove(value)
+        try:
+            actions.move_to_recycle_bin(resolved)
+        except OSError as error:
+            raise ApiError(
+                HTTPStatus.CONFLICT,
+                "Không chuyển được vào Thùng rác - có thể một file trong dự án đang mở (đang nghe cuốn này, hay thư mục"
+                f" đang mở trong cửa sổ khác). Đóng rồi thử lại. ({error})",
+            ) from error
+        self.library.forget(path)
+        return {"ok": True, "title": path.name}
+
     def create(self, body: dict[str, Any]) -> dict[str, Any]:
         self._mutating()
         paths = [str(item) for item in body.get("paths", [])]
@@ -827,6 +865,12 @@ class Handler(BaseHTTPRequestHandler):
 
     def post_stop(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.ACCEPTED, self.app.stop(value))
+
+    def put_title(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.rename(value, str(self._body().get("title") or "")))
+
+    def delete_book(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.delete(value))
 
     def post_reveal(self, _query: dict[str, list[str]], value: str) -> None:
         actions.reveal(self.app._book(value))
@@ -1360,6 +1404,9 @@ ROUTES: list[Route] = [
     ("POST", re.compile(BOOK + r"/start"), Handler.post_start),
     ("POST", re.compile(BOOK + r"/stop"), Handler.post_stop),
     ("POST", re.compile(BOOK + r"/reveal"), Handler.post_reveal),
+    # Chỉ trên máy này: Studio từ xa (remote_studio.ALLOWED) không có hai đường này.
+    ("PUT", re.compile(BOOK + r"/title"), Handler.put_title),
+    ("DELETE", re.compile(BOOK), Handler.delete_book),
     ("POST", re.compile(BOOK + r"/export"), Handler.post_export),
     ("GET", re.compile(BOOK + r"/review"), Handler.get_review),
     ("GET", re.compile(BOOK + r"/work"), Handler.get_work),
