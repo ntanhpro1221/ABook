@@ -391,6 +391,8 @@ class App:
                 continue
             path = remote_books.local_book(self.library.root, peer["device"], peer["bookId"]) if peer["bookId"] else None
             local = book_id(path) if path is not None else None
+            if path is None and peer["bookId"] and (own := self.library.resolve(peer["bookId"])) is not None:
+                path, local = own, peer["bookId"]  # máy kia đang nghe thẳng sách của CHÍNH máy này
             peer["known"] = local is not None
             peer["localBookId"] = local
             peer["cover"] = covers.cover_view(path, local) if path is not None and local is not None else None

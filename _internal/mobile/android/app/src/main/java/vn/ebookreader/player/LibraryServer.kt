@@ -60,6 +60,7 @@ object LibraryServer {
 
     fun init(context: Context) {
         Store.init(context)
+        Remote.init(context.applicationContext)
         if (!::devicesFile.isInitialized) devicesFile = File(context.filesDir, "share.json")
     }
 
@@ -299,6 +300,24 @@ object LibraryServer {
             json(output, 200, JSONObject().put("name", name()).put("books", libraryView()))
             return
         }
+        // Mạng trạm bước 4: máy đã ghép xem và điều khiển trình phát của điện thoại này - cùng hình dạng máy tính trả
+        // (sync.py player_view), nên bên điều khiển không cần biết đầu kia là gì. Điện thoại làm lệnh ngay, trả luôn kết quả.
+        if (path == "/sync/v1/player") {
+            when (request.method) {
+                "GET" -> json(output, 200, playerView())
+                "POST" -> {
+                    val command = runCatching { JSONObject(String(request.body)) }.getOrNull()?.let(::remoteCommand)
+                    if (command == null) {
+                        json(output, 400, JSONObject().put("error", "Lệnh không hỗ trợ"))
+                    } else {
+                        val problem = Remote.applyNow(command)
+                        json(output, 200, JSONObject().put("id", hex(6)).put("ok", problem == null).put("message", problem ?: ""))
+                    }
+                }
+                else -> json(output, 405, JSONObject().put("error", "Không hỗ trợ"))
+            }
+            return
+        }
         val match = Regex("/sync/v1/books/([^/]+)/(manifest|state|files/(.+))").matchEntire(path)
         val book = match?.groupValues?.get(1).orEmpty()
         val manifest = if (BOOK_ID.matches(book)) Store.manifest(book) else null
@@ -324,6 +343,38 @@ object LibraryServer {
             else -> json(output, 405, JSONObject().put("error", "Không hỗ trợ"))
         }
     }
+
+    private fun playerView(): JSONObject {
+        val books = JSONArray()
+        for (manifest in Store.books()) manifest.optString("id").takeIf { BOOK_ID.matches(it) }?.let { books.put(it) }
+        return JSONObject().put("name", name()).put("kind", "phone").put("state", Remote.snapshot()).put("books", books)
+            .put("stream", false).put("acks", JSONArray()).put("age", 0)
+    }
+
+    /** Lệnh từ mạng, kiểm và rút gọn như `sync.remote_command` của máy tính: chỉ lệnh biết, đúng kiểu, có trần. */
+    private fun remoteCommand(body: JSONObject): JSONObject? {
+        val action = body.optString("action")
+        if (action !in setOf("play", "pause", "toggle", "skip", "seek", "next", "previous", "jump", "rate", "load")) return null
+        val command = JSONObject().put("action", action)
+        fun number(key: String, low: Double, high: Double): Double =
+            body.optDouble(key, low).let { if (it.isNaN()) low else it.coerceIn(low, high) }
+        if (action in setOf("skip", "seek", "jump", "load")) {
+            command.put("seconds", number("seconds", if (action == "skip") -3600.0 else 0.0, 86_400.0))
+        }
+        if (action == "jump" || action == "load") {
+            val chapter = body.opt("chapterId") as? Int ?: return null
+            command.put("chapterId", chapter)
+        }
+        if (action == "load") {
+            val book = body.optString("bookId")
+            if (!BOOK_ID.matches(book) || book.length > 700) return null
+            command.put("bookId", book)
+        }
+        if (action == "rate") command.put("rate", number("rate", 0.5, 3.0))
+        return command
+    }
+
+    private fun hex(bytes: Int): String = ByteArray(bytes).also(random::nextBytes).joinToString("") { "%02x".format(it) }
 
     /** Sách đã tải về điện thoại, cùng hình dạng `library_view` của máy tính. */
     private fun libraryView(): JSONArray {
