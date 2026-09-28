@@ -107,3 +107,25 @@ def test_pairing_refuses_a_bad_code_or_address_with_a_readable_reason(library, t
     finally:
         other.stop()
     assert app.computers_view()["computers"] == [] and book_id(tmp_path) != ""
+
+
+def test_a_computer_finds_other_computers_on_the_network_like_phones_do() -> None:
+    """Khỏi gõ địa chỉ: máy này gửi đúng lời tìm điện thoại gửi, máy kia (sync.Discovery) trả tên + cổng đồng bộ.
+    Chính máy này (cùng cổng đồng bộ) không hiện trong danh sách."""
+    import socket
+
+    from ebook_reader.webui import remote_books
+    from ebook_reader.webui.sync import Discovery
+
+    free = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    free.bind(("127.0.0.1", 0))
+    port = free.getsockname()[1]
+    free.close()
+    other = Discovery("Máy kia", 47700, discovery_port=port)
+    other.start()
+    try:
+        found = remote_books.discover(timeout=1.0, targets=["127.0.0.1"], port=port)
+        assert found == [{"name": "Máy kia", "host": "127.0.0.1", "port": 47700}]
+        assert remote_books.discover(timeout=0.5, targets=["127.0.0.1"], port=port, exclude_port=47700) == []
+    finally:
+        other.stop()
