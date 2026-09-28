@@ -40,11 +40,11 @@ từ chối — nên chúng được viết và **kiểm xong trong một bản 
 Cách áp, khi và chỉ khi không có lượt chạy nào đang bay:
 
 ```
-python scripts/pending_patches/patch_quote_recovery.py  "D:/Novels/Ebook Reader/_internal"
-python scripts/pending_patches/patch_quote_tests.py     "D:/Novels/Ebook Reader/_internal"
-python scripts/pending_patches/patch_test2.py           "D:/Novels/Ebook Reader/_internal"
-python scripts/pending_patches/patch_short_anchor.py    "D:/Novels/Ebook Reader/_internal"
-python scripts/pending_patches/patch_laugh.py           "D:/Novels/Ebook Reader/_internal"
+python scripts/pending_patches/patch_quote_recovery.py  "D:/Novels/ABook/_internal"
+python scripts/pending_patches/patch_quote_tests.py     "D:/Novels/ABook/_internal"
+python scripts/pending_patches/patch_test2.py           "D:/Novels/ABook/_internal"
+python scripts/pending_patches/patch_short_anchor.py    "D:/Novels/ABook/_internal"
+python scripts/pending_patches/patch_laugh.py           "D:/Novels/ABook/_internal"
 ```
 
 Thứ tự có ý nghĩa: `patch_quote_tests.py` viết một test mà `patch_test2.py` viết đè lại (bản

@@ -76,9 +76,9 @@ checkpoint chứ không làm lại cuốn sách từ đầu**.
 ### Scheduled Task
 
 ```
-Tên      : EbookReaderAutoResume
+Tên      : ABookAutoResume
 Action   : _internal\runtime\.venv\Scripts\pythonw.exe scripts\resume_interrupted.py
-Thư mục  : D:\Novels\Ebook Reader\_internal
+Thư mục  : D:\Novels\ABook\_internal
 Principal: InteractiveToken, LeastPrivilege
 Trigger 1: LogonTrigger, trễ PT3M          — máy khởi động lại / đăng nhập lại
 Trigger 2: EventTrigger Power-Troubleshooter ID 1, trễ PT1M — máy vừa thức dậy
@@ -104,8 +104,8 @@ Vài lựa chọn có lý do:
 Xem / gỡ:
 
 ```powershell
-Get-ScheduledTask -TaskName EbookReaderAutoResume
-Unregister-ScheduledTask -TaskName EbookReaderAutoResume -Confirm:$false
+Get-ScheduledTask -TaskName ABookAutoResume
+Unregister-ScheduledTask -TaskName ABookAutoResume -Confirm:$false
 ```
 
 ### Nhật ký

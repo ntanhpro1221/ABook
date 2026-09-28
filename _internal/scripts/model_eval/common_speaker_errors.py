@@ -15,7 +15,7 @@ import re
 import sys
 from pathlib import Path
 
-HERE = Path(r"D:/Novels/Ebook Reader/_internal/scripts/model_eval")
+HERE = Path(r"D:/Novels/ABook/_internal/scripts/model_eval")
 sys.path.insert(0, str(HERE))
 
 from score_models import GOLD_ROOT, load_gold, read_project, speaker_credit  # noqa: E402
