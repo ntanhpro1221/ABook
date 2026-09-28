@@ -28,20 +28,32 @@ loại (1 byte) | luồng (4 byte, big-endian) | độ dài (4 byte, big-endian)
 |---|---|
 | 1 OPEN | bên kết nối mở luồng mới (số lẻ: điện thoại; số chẵn dành cho bên kia) |
 | 2 DATA | dữ liệu của luồng |
-| 3 CLOSE | hết dữ liệu theo chiều này (half-close); luồng xong khi cả hai chiều đã CLOSE; bên phục vụ không mở được cổng cục bộ thì trả CLOSE ngay |
-| 4 WINDOW | trả tín dụng: 4 byte số byte vừa ghi xuống socket cục bộ |
+| 3 CLOSE | hết dữ liệu theo chiều này (half-close); luồng xong khi cả hai chiều đã CLOSE |
+| 4 WINDOW | trả tín dụng: 4 byte không dấu, trong (0, 256 KB] - số byte vừa ghi xuống socket cục bộ; ngoài khoảng ấy là sai giao thức (RESET) |
+| 5 RESET | bỏ luồng ngay, cả hai chiều (29-09): ứng dụng cục bộ đóng ngang, bên phục vụ không mở được cổng cục bộ hay từ chối luồng, bên kia gửi quá tín dụng. DATA tới luồng không còn thì đáp RESET; WINDOW/CLOSE/RESET tới luồng không còn là khung trễ, bỏ qua - không bao giờ đáp RESET cho RESET |
 
 **Cửa sổ tín dụng 256 KB mỗi luồng, mỗi chiều** (như HTTP/2): gửi trong phần tín dụng, trả tín dụng sau khi đã ghi. Trình
 phát ngừng đọc khi bộ đệm đầy thì chỉ luồng của nó đứng - lời gọi đồng bộ bên cạnh vẫn về ngay; bộ nhớ đệm mỗi luồng có trần.
-Bên kia gửi quá tín dụng là sai giao thức - đóng luồng.
+Bên kia gửi quá tín dụng là sai giao thức - RESET luồng.
+
+**Vì sao cần RESET** (soát đối kháng 29-09): ExoPlayer đóng kết nối mỗi lần tua ra ngoài bộ đệm, đổi chương, dừng. Chỉ có
+CLOSE thì bên phục vụ không biết: nó gửi tới hết tín dụng rồi chờ mãi - mỗi lần giữ một luồng, hai luồng đọc, một socket;
+64 lần là đường hầm từ chối mọi luồng, và điện thoại phục vụ còn kẹt luồng của LibraryServer (6 luồng: sáu lần tua là
+thôi phục vụ cả Wi-Fi). Cùng đợt: socket nối cổng đồng bộ hết hạn giờ 10 giây sau khi nối (hỏi dài 25 giây bị cắt thành
+EOF), quay số cổng cục bộ ở luồng riêng (không chặn luồng đọc), máy chủ Bluetooth của máy tính tự mở lại khi bật
+Bluetooth / sau khi tắt sóng, không nghe khi không bật được xác thực, điện thoại nghe lại khi Bluetooth bật
+(ACTION_STATE_CHANGED), cổng của điện thoại nhớ lần hỏng 10 giây và đóng RFCOMM sau 60 giây không dùng.
 
 ## Đã kiểm
 
 - `tests/test_bluetooth_tunnel.py` (cặp socket thay RFCOMM): ghép mã + thư viện + gói sách qua cổng đồng bộ thật; 8 yêu cầu
   song song về ngay trong khi một luồng 4 MB nghẽn, rồi luồng ấy nhận đủ từng byte; đóng nửa chiều; đứt đường hầm đóng mọi
-  luồng; cổng cục bộ chết thì luồng đóng ngay; bố cục `SOCKADDR_BTH` (30 byte) và GUID đúng ws2bth.h.
-- `BtMuxTest.kt` (JVM): cùng các ca ấy cho bản Kotlin, và `speaksTheSameProtocolAsThePythonSide` - Kotlin tải 2 MB qua đầu
-  Python thật (`BTMUX_PY_PORT`, chạy tay).
+  luồng; cổng cục bộ chết thì luồng đóng ngay; bố cục `SOCKADDR_BTH` (30 byte) và GUID đúng ws2bth.h. 29-09: trả lời
+  chậm hơn hạn nối vẫn về đủ; tải bỏ ngang (đóng thường và RST) giải phóng cả hai đầu; DATA tới luồng lạ được đáp RESET,
+  RESET thì không; máy chủ tự mở lại khi Bluetooth bật / sau khi tắt sóng; không nghe khi thiếu xác thực.
+- `BtMuxTest.kt` (JVM): cùng các ca ấy cho bản Kotlin (cả tải bỏ ngang, RESET, WINDOW âm), và
+  `speaksTheSameProtocolAsThePythonSide` - Kotlin tải 4 MB qua đầu Python thật (`BTMUX_PY_PORT`, chạy tay; 29-09 qua với
+  bản có RESET).
 - **Chưa thử trên sóng thật** (28-09 đêm: Bluetooth máy tính đang tắt, cần điện thoại thật): bật Bluetooth máy tính, ghép với
   điện thoại trong Cài đặt Android, mở ABook máy tính (đồng bộ bật) → điện thoại: Tải sách → "Không chung Wi-Fi? Kết nối qua
   Bluetooth" → chọn máy tính → mã 6 số. Kiểm: nghe thẳng một chương, đồng bộ chỗ nghe, điều khiển trình phát, tắt Bluetooth
