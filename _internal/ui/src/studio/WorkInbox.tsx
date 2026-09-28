@@ -12,7 +12,7 @@ import { api, urls } from "./api";
 // quyết và dây chuyền KHÔNG chờ ai - đây là nơi người sửa ít nhất mà được nhiều nhất. Cách đọc tên sửa được ngay trên thẻ
 // (bước 2): mong muốn ghi vào overrides.json, dây chuyền áp ở ranh giới chương và thu lại những câu có tên ấy.
 
-type WorkKind = "speaker" | "gender" | "vocative" | "alias" | "shared-voice" | "pronunciation" | "unnamed" | "audio";
+type WorkKind = "speaker" | "turn" | "gender" | "vocative" | "alias" | "shared-voice" | "pronunciation" | "unnamed" | "audio";
 
 interface WorkExample {
   segmentId: number;
@@ -53,6 +53,7 @@ interface WorkView {
 
 const KIND_LABEL: Record<WorkKind, string> = {
   speaker: "Ai nói câu này",
+  turn: "Lượt đối đáp",
   pronunciation: "Cách đọc tên",
   gender: "Nam hay nữ",
   vocative: "Người gọi hay người nói",

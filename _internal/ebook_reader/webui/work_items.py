@@ -26,6 +26,7 @@ SEVERITY = {
     "speaker": 1.0,
     "gender": 1.0,
     "vocative": 0.9,
+    "turn": 1.0,
     "alias": 0.8,
     "shared-voice": 0.6,
     "pronunciation": 0.5,
@@ -88,6 +89,45 @@ def _tokens(name: str) -> list[str]:
     return [token for token in re.split(r"[\s\-]+", name.upper()) if token]
 
 
+# Ngoặc kép và ngoặc CJK; bỏ ngoặc đơn vì dấu ’ cuối câu có thể là dấu lược.
+QUOTE_OPENERS = ("\"", "“", "『", "「", "«")
+QUOTE_CLOSERS = ("\"", "”", "』", "」", "»")
+
+
+def _merged_turns(connection: Any) -> list[tuple[Any, Any]]:
+    """Cặp câu thoại liền kề ở hai đoạn văn liền nhau - câu trước đóng ngoặc, câu sau mở ngoặc mới, đoạn sau chỉ có thoại
+    (không lời dẫn riêng) - mà mang CÙNG một người có tên. Project cũ không có số đoạn văn thì không tìm."""
+    if "paragraph_index" not in {str(row[1]) for row in connection.execute("PRAGMA table_info(segments)")}:
+        return []
+    rows = [
+        row for row in connection.execute(
+            "SELECT id, stable_id, chapter_id, seq, paragraph_index, text, text_sha256, speaker, kind FROM segments"
+            " ORDER BY chapter_id, seq"
+        )
+        if row["paragraph_index"] is not None
+    ]
+    # Đoạn văn có lời kể hay nội tâm thì câu thoại trong đó có lời dẫn riêng - máy có căn cứ, không nghi.
+    narrated = {(int(row["chapter_id"]), int(row["paragraph_index"])) for row in rows if row["kind"] != "dialogue"}
+    pairs = []
+    for first, second in zip(rows, rows[1:]):
+        if first["kind"] != "dialogue" or second["kind"] != "dialogue":
+            continue
+        if int(first["chapter_id"]) != int(second["chapter_id"]) or int(second["seq"]) != int(first["seq"]) + 1:
+            continue
+        if int(second["paragraph_index"]) != int(first["paragraph_index"]) + 1:
+            continue
+        if (int(second["chapter_id"]), int(second["paragraph_index"])) in narrated:
+            continue
+        if not str(first["text"]).rstrip().endswith(QUOTE_CLOSERS):
+            continue
+        if not str(second["text"]).lstrip().startswith(QUOTE_OPENERS):
+            continue
+        speaker = str(second["speaker"])
+        if _is_named(speaker) and str(first["speaker"]).casefold() == speaker.casefold():
+            pairs.append((first, second))
+    return pairs
+
+
 def work_items(project_root: Path) -> dict[str, Any]:
     items: list[dict[str, Any]] = []
     with closing(store.connect(project_root)) as connection:
@@ -101,6 +141,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
             int(row["id"]): row
             for row in connection.execute("SELECT id, canonical_name, display_name, gender, locked FROM characters")
         }
+        merged_turns = _merged_turns(connection)
         pronunciations = connection.execute(
             "SELECT surface, spoken_form, confidence, locked FROM pronunciations WHERE confidence < 0.9"
         ).fetchall() if "pronunciations" in store._table_names(connection) else []
@@ -207,6 +248,37 @@ def work_items(project_root: Path) -> dict[str, Any]:
                 "examples": [_example(row, names)],
                 **fix,
             })
+
+    # 2b. Hai đoạn thoại liền nhau - đoạn trước đóng ngoặc, đoạn sau mở ngoặc mới, không lời dẫn - mà cùng một người: gần
+    #     như chắc máy bỏ lỡ một lượt đổi người. Đo 28-09 (ANALYSIS_RESEARCH.md, "Lượt đối đáp"): trên đáp án 7 truyện,
+    #     91/95 cặp như thế là HAI người, và qwen3:8b gán cùng người cho 42 cặp - 38 cặp sai.
+    # Truyện kể ngôi thứ nhất: người đối đáp thường là chính "tôi" - đứng đầu các lựa chọn.
+    voices = store.read_settings(project_root).get("voices")
+    partner = str((voices if isinstance(voices, dict) else {}).get("first_person_identity") or "")
+    for first, second in merged_turns:
+        speaker = str(second["speaker"])
+        name = speaker_label(speaker)
+        choices = []
+        if partner and partner.casefold() != speaker.casefold():
+            choices.append({"label": speaker_label(partner), "value": partner})
+        choices += _cast_choices(spoken, {int(second["chapter_id"])}, {speaker.casefold()})
+        choices += [{"label": "Người kể", "value": NARRATOR}, {"label": "Vai phụ không tên", "value": UNNAMED}]
+        fix = _speaker_fix([second], choices, speaker, speaker_wishes)
+        if fix is None:
+            continue
+        items.append({
+            "kind": "turn",
+            "key": f"turn:{second['stable_id']}",
+            "title": f"Hai câu liền nhau đều là của {name}?",
+            "problem": f"Câu sau là một đoạn riêng, không lời dẫn, nói ngay sau một câu của {name}. Hầu hết những cặp"
+                       " như thế là hai người đối đáp - có thể câu sau là của người đang nói với " + name + ".",
+            "affected": 1,
+            "doubt": 0.9,
+            "options": ["Chọn người nói khác", "Giữ nguyên"],
+            "current": name,
+            "examples": [_example(first, names), _example(second, names)],
+            **fix,
+        })
 
     # 3. Nghi là MỘT người mang hai tên (bí danh): tên này nằm trọn trong tên kia, cùng giới.
     named = {speaker: rows for speaker, rows in lines_by_speaker.items() if _is_named(speaker)}
