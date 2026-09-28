@@ -17,7 +17,7 @@ import time
 from pathlib import Path
 from typing import Any, Callable, Protocol
 
-from ..io_utils import discover_txt_files, natural_key
+from ..io_utils import discover_txt_files, natural_key, sha256_file
 from . import humanize
 
 # Tiếng Việt đọc ~4,3 âm tiết/giây ở tốc độ kể chuyện; một "từ" tách bằng dấu cách là một âm tiết.
@@ -210,6 +210,8 @@ def scan_inputs(paths: list[str]) -> dict[str, Any]:
             "firstLine": _first_line(path),
             "words": words,
             "bytes": path.stat().st_size,
+            # Như chapters.input_sha256 của dây chuyền: nhận ra truyện đã có dự án (App.existing_projects).
+            "sha256": sha256_file(path),
         })
     title = ""
     if files:
