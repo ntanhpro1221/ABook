@@ -10,6 +10,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - **Tự chọn đường Wi-Fi hay Bluetooth**: ghép điện thoại với máy tính một lần (qua Wi-Fi hay Bluetooth) là đủ - khi
   cùng Wi-Fi thì đi Wi-Fi, ra khỏi nhà thì tự đi Bluetooth (nếu hai máy đã ghép Bluetooth và máy tính bật Bluetooth),
   không phải ghép lại. Yêu cầu nào hỏng lúc nối qua Wi-Fi thì thử lại ngay qua Bluetooth.
+- Làm sách: **chương đổi người kể**. Light novel hay có chương kể bằng "tôi" của một nhân vật khác ("Chương 11: Yuuko
+  Hayase" trong một cuốn Kakeru kể). Ở bước "'Tôi' là ai?", Studio tự tìm những chương như thế (tên chương là tên
+  một nhân vật chính và chương kể bằng "tôi") và đề nghị đúng người kể cho từng chương; giữ chọn thì chương ấy được
+  phân tích với đúng người kể, lời của người kể đọc bằng đúng giọng của họ. Dòng lệnh: `--first-person-chapter 11=TÊN`.
 - **Nghe sách của máy tính trong trình duyệt** của bất kỳ máy nào đã ghép - iPhone, iPad, TV, máy tính khác: mở
   `http://<máy tính>:47630`, nhập mã 6 số như ghép điện thoại. Không cần bật "Cho phép điều khiển sản xuất": thiết bị
   chỉ nghe thấy Thư viện, trình phát, dấu trang, đọc theo - không có Studio, không thấy thư mục trên máy tính. Bật

@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from .io_utils import decode_text_bytes
-from .text_processing import segment_chapter_text
+from .text_processing import natural_key, segment_chapter_text
 
 FIRST_PERSON_RATE = 0.30
 # "mình" sau "của"/"tự" là phản thân ("cảm xúc của mình") - đầy trong truyện ngôi thứ ba.
@@ -42,8 +42,57 @@ def _names(text: str) -> list[str]:
     return names
 
 
+# "Chương 11: Yuuko Hayase" - tiêu đề chương là TÊN một nhân vật (2-3 chữ viết hoa, không số): light novel đặt thế cho
+# chương kể bằng "tôi" của chính người ấy (Love Unseen 11-13).
+_LOWER = "a-zàáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ"
+_AFTER_LOWER = re.compile(rf"(?<=[{_LOWER}] )({_WORD})")
+_POV_TITLE = re.compile(r"^\s*(?:chương|chapter|ch\.?)\s*[\divxlc]+\s*[:：.\-–—]\s*(.+?)\s*$", re.IGNORECASE)
+
+
+def pov_chapters(files: list[Path], book_narrator: str = "", min_mentions: int = 5, top_names: int = 20) -> list[dict[str, Any]]:
+    """Chương đổi góc kể: tiêu đề là tên một nhân vật VÀ lời kể của chương dùng "tôi" nhiều như truyện ngôi thứ nhất.
+    Trả [{"chapter": số thứ tự trong sách (chapters.chapter_index, từ 1), "title", "name"}] - chỉ là gợi ý cho người
+    dùng chọn; chương mà tên ấy chính là người kể cả cuốn thì bỏ (không có gì để đổi). Bản dịch viết hoa MỌI chữ của
+    tên chương ("Chương 7: Tấm Khiên Thịt") nên chữ viết hoa chưa đủ: ít nhất một chữ của tên phải nằm trong
+    `top_names` tên riêng cả cuốn nhắc nhiều nhất ("Hayase" - không phải "Khiên", "Teresa")."""
+    ordered = sorted((Path(path) for path in files), key=lambda path: natural_key(path.name))
+    texts = [decode_text_bytes(path.read_bytes()) for path in ordered]
+    candidates: list[tuple[int, str, str]] = []
+    for index, text in enumerate(texts, 1):
+        title = next((line.strip() for line in text.splitlines() if line.strip()), "")
+        match = _POV_TITLE.match(title)
+        words = match.group(1).split() if match else []
+        if not 2 <= len(words) <= 3 or any(not re.fullmatch(_WORD, word) or word in _NOT_NAMES for word in words):
+            continue
+        name = " ".join(words).upper()
+        if name != book_narrator.strip().upper():
+            candidates.append((index, title, name))
+    if not candidates:
+        return []
+    # Tên riêng của cuốn: chữ viết hoa ngay sau một chữ THƯỜNG ("nói với Hayase") - không sau dấu phẩy hay đầu câu, nơi
+    # bản dịch viết hoa cả chữ thường ("..., Không"). Lấy những chữ hay gặp nhất: nhân vật chính, không phải chữ lạc.
+    mentions: Counter = Counter()
+    for text in texts:
+        mentions.update(match.group(1) for match in _AFTER_LOWER.finditer(text) if match.group(1) not in _NOT_NAMES)
+    top = {word for word, count in mentions.most_common(top_names) if count >= min_mentions}
+    found: list[dict[str, Any]] = []
+    for index, title, name in candidates:
+        if not any(word in top for word in title.split(":", 1)[-1].split()):
+            continue
+        rows = [row for row in segment_chapter_text(index, texts[index - 1]) if row["kind_hint"] != "dialogue"]
+        rate = sum(bool(NARRATOR_I.search(str(row["text"]))) for row in rows) / max(1, len(rows))
+        # Người kể không tự gọi tên mình trong lời kể; chương kể VỀ người ấy thì tên đầy lời kể ("Chương 8: Nguyền Kiếm"
+        # của Nise - Alistar kể về thanh kiếm). Chương của Hayase chỉ có tên cô trong lời người khác gọi.
+        words = [word for word in title.split(":", 1)[-1].split() if len(word) >= 3]
+        told_about = sum(str(row["text"]).casefold().count(word.casefold()) for row in rows[1:] for word in words)
+        if rate >= FIRST_PERSON_RATE and told_about <= 2:
+            found.append({"chapter": index, "title": title, "name": name})
+    return found
+
+
 def first_person_hint(files: list[Path], chapters: int = 20, limit: int = 6) -> dict[str, Any]:
-    """Đọc `chapters` chương đầu: {"rate", "firstPerson", "suggestions"} cho câu hỏi "'Tôi' là ai?" lúc tạo sách."""
+    """Đọc `chapters` chương đầu: {"rate", "firstPerson", "suggestions"} cho câu hỏi "'Tôi' là ai?" lúc tạo sách, và
+    "chapters": các chương đổi góc kể trên CẢ cuốn (`pov_chapters`)."""
     narration = with_i = 0
     names: Counter = Counter()
     for index, path in enumerate(files[:chapters], 1):
@@ -58,4 +107,5 @@ def first_person_hint(files: list[Path], chapters: int = 20, limit: int = 6) -> 
         "rate": round(rate, 3),
         "firstPerson": rate >= FIRST_PERSON_RATE,
         "suggestions": [name for name, _count in names.most_common(limit)],
+        "chapters": pov_chapters(files),
     }

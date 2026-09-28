@@ -236,12 +236,13 @@ def first_person_hint(paths: list[str]) -> dict[str, Any]:
 
     files = [Path(row["path"]) for row in scan_inputs(paths)["files"]]
     if not files:
-        return {"rate": 0.0, "firstPerson": False, "suggestions": []}
+        return {"rate": 0.0, "firstPerson": False, "suggestions": [], "chapters": []}
     return hint(files)
 
 
 def create_book(library_root: Path, paths: list[str], title: str, profile: str, narrator: str,
-                first_person: str = "", settings_overrides: dict[str, Any] | None = None) -> Path:
+                first_person: str = "", settings_overrides: dict[str, Any] | None = None,
+                first_person_chapters: dict[str, str] | None = None) -> Path:
     from ..character_registry import PRONOUNS, normalize_name
     from ..config import build_settings
     from ..project import create_or_open_project
@@ -259,6 +260,17 @@ def create_book(library_root: Path, paths: list[str], title: str, profile: str, 
         # Cùng cài đặt với `cli create --first-person`: prompt phân tích nói cho model biết "tôi" là ai, và sau phân
         # tích các nhãn đại từ được gộp về người ấy.
         voices["first_person_identity"] = first_person
+    chapters: dict[str, str] = {}
+    for key, name in (first_person_chapters or {}).items():
+        name = str(name or "").strip()
+        if not str(key).strip().isdigit():
+            raise ValueError(f"Chương {key!r} không phải một số chương")
+        if name and normalize_name(name) in PRONOUNS:
+            raise ValueError(f'"{name}" là một đại từ, không phải một nhân vật - điền tên người xưng "tôi" của chương ấy')
+        chapters[str(int(key))] = name
+    if chapters:
+        # Người kể theo chương (`cli create --first-person-chapter`): chương đổi góc kể dùng "tôi" của người khác.
+        voices["first_person_chapters"] = chapters
     overrides: dict[str, Any] = dict(settings_overrides or {})  # app đóng gói: Ollama riêng của Studio
     if voices:
         overrides["voices"] = voices

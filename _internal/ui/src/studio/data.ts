@@ -150,7 +150,15 @@ export function useFirstPersonHint(paths: string[]) {
 export function useCreateBook() {
   const refresh = useRefresh();
   return useMutation({
-    mutationFn: (body: { paths: string[]; title: string; profile: string; narrator: string; firstPerson: string; start: boolean }) =>
+    mutationFn: (body: {
+      paths: string[];
+      title: string;
+      profile: string;
+      narrator: string;
+      firstPerson: string;
+      firstPersonChapters?: Record<string, string>;
+      start: boolean;
+    }) =>
       api<{ id: string }>("/api/books", { method: "POST", body }),
     onSuccess: () => refresh(),
   });

@@ -26,7 +26,7 @@ import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import { formatLength, formatNumber } from "@/shared/format";
 import { Button, Segmented, Vu, radioGroupKeys, radioTabIndex } from "@/shared/ui";
-import type { ScanResult, Voice } from "@/studio/api";
+import type { FirstPersonHint, ScanResult, Voice } from "@/studio/api";
 import { pickFiles, pickFolder, useAppInfo, useCreateBook, useFirstPersonHint, useScan, useVoices } from "@/studio/data";
 import { uploadChapters } from "@/studio/upload";
 
@@ -96,6 +96,8 @@ interface Draft {
   narrator: string;
   /** Người xưng "tôi" ở truyện kể ngôi thứ nhất ("" = ngôi thứ ba). */
   firstPerson: string;
+  /** Chương đổi góc kể (gợi ý của máy) mà người dùng bỏ chọn - số chương trong sách. */
+  povOff?: number[];
   profile: Profile;
   startNow: boolean;
 }
@@ -451,10 +453,73 @@ function VoiceCard({
  * của nhân vật chính là của ai: đo 27-09, model gán 22 câu của người kể cho chính người đang nói chuyện với anh ta và
  * chỉ đúng 34% người nói; biết tên người kể thì 89%. Máy đoán được TRUYỆN NÀO kể ngôi thứ nhất, còn tên chỉ gợi ý.
  */
-function FirstPersonQuestion({ paths, value, onChange }: { paths: string[]; value: string; onChange: (name: string) => void }) {
+/** Chương đổi góc kể được giữ: gợi ý của máy, trừ chương mà tên ấy chính là người kể cả cuốn và chương người dùng bỏ chọn. */
+function chosenPovChapters(hint: FirstPersonHint | undefined, narrator: string, off: number[]): Record<string, string> {
+  const book = narrator.trim().toUpperCase();
+  return Object.fromEntries(
+    (hint?.chapters ?? [])
+      .filter((chapter) => chapter.name !== book && !off.includes(chapter.chapter))
+      .map((chapter) => [String(chapter.chapter), chapter.name]),
+  );
+}
+
+/**
+ * Light novel hay có chương đổi góc kể ("Chương 11: Yuuko Hayase" kể bằng "tôi" của Hayase trong cuốn Kakeru kể): máy
+ * gợi ý khi tên chương là một nhân vật chính và chương kể bằng "tôi" (first_person.pov_chapters). Giữ chọn thì chương
+ * ấy phân tích với đúng người kể của nó (`voices.first_person_chapters`).
+ */
+function PovChapters({ hint, narrator, off, onOffChange }: {
+  hint: FirstPersonHint | undefined;
+  narrator: string;
+  off: number[];
+  onOffChange: (off: number[]) => void;
+}) {
+  const book = narrator.trim().toUpperCase();
+  const chapters = (hint?.chapters ?? []).filter((chapter) => chapter.name !== book);
+  if (!chapters.length) return null;
+  return (
+    <fieldset className="mt-4 border-t border-line pt-3">
+      <legend className="sr-only">Chương đổi người kể</legend>
+      <p className="text-sm font-semibold">Chương đổi người kể</p>
+      <p className="mt-0.5 text-sm text-fg-2 text-pretty">
+        Tên các chương này là tên một nhân vật và chương kể bằng “tôi” - thường là “tôi” của chính người ấy. Bỏ chọn nếu không
+        phải.
+      </p>
+      <ul className="mt-2 space-y-1.5">
+        {chapters.map((chapter) => {
+          const on = !off.includes(chapter.chapter);
+          return (
+            <li key={chapter.chapter}>
+              <label className="flex items-start gap-2.5 text-sm">
+                <input
+                  id={`pov-chapter-${chapter.chapter}`}
+                  type="checkbox"
+                  checked={on}
+                  onChange={() => onOffChange(on ? [...off, chapter.chapter] : off.filter((value) => value !== chapter.chapter))}
+                  className="mt-0.5 size-4 accent-[var(--accent)]"
+                />
+                <span>
+                  {chapter.title} - “tôi” là <b>{chapter.name}</b>
+                </span>
+              </label>
+            </li>
+          );
+        })}
+      </ul>
+    </fieldset>
+  );
+}
+
+function FirstPersonQuestion({ paths, value, onChange, povOff, setPovOff }: {
+  paths: string[];
+  value: string;
+  onChange: (name: string) => void;
+  povOff: number[];
+  setPovOff: (off: number[]) => void;
+}) {
   const { data: hint, isLoading } = useFirstPersonHint(paths);
   const [opened, setOpened] = useState(false);
-  if (!hint?.firstPerson && !value && !opened) {
+  if (!hint?.firstPerson && !value && !opened && !hint?.chapters?.length) {
     return (
       <button
         type="button"
@@ -504,6 +569,7 @@ function FirstPersonQuestion({ paths, value, onChange }: { paths: string[]; valu
           className="mt-1.5 h-11 w-full rounded-xl border border-line bg-panel px-3.5 text-[15px] font-medium text-fg outline-none focus:border-accent"
         />
       </label>
+      <PovChapters hint={hint} narrator={value} off={povOff} onOffChange={setPovOff} />
     </section>
   );
 }
@@ -514,12 +580,16 @@ function VoiceStep({
   paths,
   firstPerson,
   setFirstPerson,
+  povOff,
+  setPovOff,
 }: {
   narrator: string;
   setNarrator: (name: string) => void;
   paths: string[];
   firstPerson: string;
   setFirstPerson: (name: string) => void;
+  povOff: number[];
+  setPovOff: (off: number[]) => void;
 }) {
   const { data: voices } = useVoices();
   const [gender, setGender] = useState("all");
@@ -548,7 +618,7 @@ function VoiceStep({
         Giọng này đọc toàn bộ lời dẫn truyện. Mỗi nhân vật sẽ được tự động trao một giọng riêng sau bước phân tích - bạn
         không cần chọn trước.
       </p>
-      <FirstPersonQuestion paths={paths} value={firstPerson} onChange={setFirstPerson} />
+      <FirstPersonQuestion paths={paths} value={firstPerson} onChange={setFirstPerson} povOff={povOff} setPovOff={setPovOff} />
       <div className="mt-5 flex flex-wrap items-center gap-3">
         <Segmented label="Giới tính" value={gender} onChange={setGender} options={[
           { value: "all", label: "Mọi giọng" },
@@ -667,6 +737,7 @@ function ConfirmStep({
   scan,
   narrator,
   firstPerson,
+  povChapters,
   profile,
   startNow,
   setStartNow,
@@ -675,6 +746,7 @@ function ConfirmStep({
   scan: ScanResult;
   narrator: string;
   firstPerson: string;
+  povChapters: Record<string, string>;
   profile: Profile;
   startNow: boolean;
   setStartNow: (value: boolean) => void;
@@ -687,6 +759,9 @@ function ConfirmStep({
     ["Độ dài audio", `khoảng ${formatLength(scan.totals.audioSeconds)}`],
     ["Giọng kể", narrator],
     ...(firstPerson ? ([["Người kể “tôi”", firstPerson]] as [string, string][]) : []),
+    ...(Object.keys(povChapters).length
+      ? ([["Chương đổi người kể", Object.entries(povChapters).map(([chapter, name]) => `chương ${chapter}: ${name}`).join(", ")]] as [string, string][])
+      : []),
     ["Nhân vật", "Tự động phân vai sau khi phân tích"],
     ["Chất lượng", option.title],
     ...(measured
@@ -791,6 +866,10 @@ export function NewProjectScreen() {
     return { ...rawScan, files, totals: { chapters: files.length, words, audioSeconds: Math.round(words / 4.3) } };
   }, [rawScan, draft.excluded]);
 
+  // Cùng khoá truy vấn với bước "Tôi là ai?": lấy từ bộ nhớ đệm, không đọc lại sách.
+  const { data: firstPersonHint } = useFirstPersonHint(scan?.files.map((file) => file.path) ?? []);
+  const povChapters = chosenPovChapters(firstPersonHint, draft.firstPerson, draft.povOff ?? []);
+
   const title = draft.title;
   const allowed = !scan?.files.length || !title.trim() ? 0 : !draft.narrator ? 1 : STEPS.length - 1;
   const requested = Number(params.get("step") ?? 0);
@@ -820,6 +899,7 @@ export function NewProjectScreen() {
         profile: draft.profile,
         narrator: draft.narrator,
         firstPerson: draft.firstPerson.trim(),
+        ...(Object.keys(povChapters).length ? { firstPersonChapters: povChapters } : {}),
         start: draft.startNow,
       },
       {
@@ -890,6 +970,8 @@ export function NewProjectScreen() {
               paths={scan?.files.map((file) => file.path) ?? []}
               firstPerson={draft.firstPerson}
               setFirstPerson={(firstPerson) => update({ firstPerson })}
+              povOff={draft.povOff ?? []}
+              setPovOff={(povOff) => update({ povOff })}
             />
           )}
           {step === 2 && scan && (
@@ -901,6 +983,7 @@ export function NewProjectScreen() {
               scan={scan}
               narrator={draft.narrator}
               firstPerson={draft.firstPerson.trim()}
+              povChapters={povChapters}
               profile={draft.profile}
               startNow={draft.startNow}
               setStartNow={(startNow) => update({ startNow })}
