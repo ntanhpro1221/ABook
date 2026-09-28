@@ -1,5 +1,6 @@
-"""Studio từ xa (webui/remote_studio.py): thiết bị đã ghép điều khiển sản xuất qua cổng đồng bộ - chỉ khi người dùng bật
-công tắc riêng, chỉ các đường trong danh sách trắng, trình duyệt ghép bằng mã 6 số và mang mã thiết bị trong cookie."""
+"""Studio từ xa (webui/remote_studio.py): thiết bị đã ghép NGHE được qua trình duyệt (như app điện thoại qua /sync/v1), và
+điều khiển sản xuất qua cổng đồng bộ - chỉ khi người dùng bật công tắc riêng và cho chính thiết bị ấy, chỉ các đường trong
+danh sách trắng, trình duyệt ghép bằng mã 6 số và mang mã thiết bị trong cookie."""
 from __future__ import annotations
 
 import base64
@@ -45,19 +46,60 @@ def _pair_browser(app: App) -> str:
     return cookie.split(";", 1)[0]
 
 
-def test_remote_studio_is_closed_until_the_owner_opens_it(studio) -> None:
+def test_production_is_closed_until_the_owner_opens_it(studio) -> None:
     app, _project = studio
     port = app.sync_server.port
     assert app.sync_view()["remoteStudio"] is False
     status, data, _ = _request(port, "GET", "/")
-    assert status == 403 and "chưa cho phép" in data.decode("utf-8")
+    assert status == 200 and "Mã ghép nối" in data.decode("utf-8"), "ghép để nghe luôn được, như điện thoại"
     code = app.devices.start_pairing()["code"]
     _status, data, _ = _request(port, "POST", "/sync/v1/pair", body={"code": code, "device": "Pixel"})
     phone = json.loads(data)["token"]
-    status, _data, _ = _request(port, "GET", "/api/library", phone)
-    assert status == 403, "ghép để nghe không có nghĩa là được điều khiển sản xuất"
+    status, data, _ = _request(port, "GET", "/api/library", phone)
+    assert status == 403 and "chỉ nghe" in json.loads(data)["error"], "ghép để nghe không có nghĩa là được điều khiển sản xuất"
     status, _data, _ = _request(port, "POST", "/sync/v1/pair-browser", body={"code": "000000"})
     assert status == 403
+
+
+def test_a_paired_browser_listens_without_the_production_switch(studio) -> None:
+    """Lộ trình đường truyền 27-09 mục 1: iPhone, iPad, TV, máy khác nghe trong trình duyệt. Nghe là quyền của mọi thiết bị
+    đã ghép; Studio thì không - kể cả khi công tắc bật sau, thiết bị ghép lúc tắt vẫn cần quyền riêng."""
+    app, project = studio
+    port = app.sync_server.port
+    identifier = book_id(project)
+    cookie = {"Cookie": _pair_browser(app)}
+    status, data, _ = _request(port, "GET", "/", headers=cookie)
+    assert status == 200 and data.startswith(b"<!doctype html>")
+    status, data, _ = _request(port, "GET", "/api/app", headers=cookie)
+    info = json.loads(data)
+    assert status == 200 and info["remote"] is True and info["listenOnly"] is True
+    assert info["libraryRoot"] == "", "thiết bị chỉ nghe không thấy thư mục (tên người dùng) trên máy tính"
+    status, data, _ = _request(port, "GET", "/api/listen/library", headers=cookie)
+    assert status == 200 and json.loads(data), "thư viện nghe của máy tính"
+    status, data, headers = _request(port, "GET", f"/media/books/{identifier}/chapters/1", headers={
+        **cookie, "Range": "bytes=0-9"})
+    assert status == 206 and len(data) == 10, "nghe thẳng audio"
+    status, _data, _ = _request(port, "GET", f"/api/books/{identifier}/cast", headers=cookie)
+    assert status == 200, "dàn nhân vật của màn sách"
+    status, _data, _ = _request(port, "POST", f"/api/listen/books/{identifier}/progress", headers=cookie,
+                                body={"chapterId": 1, "position": 12.5})
+    assert status in (200, 204), "chỗ nghe ghi về máy tính như khi nghe trên máy tính"
+    for method, path in (("GET", "/api/library"), ("POST", f"/api/books/{identifier}/start"),
+                         ("GET", f"/api/books/{identifier}/work"), ("POST", "/api/scan")):
+        status, data, _ = _request(port, method, path, headers=cookie, body={} if method != "GET" else None)
+        assert status == 403 and "chỉ nghe" in json.loads(data)["error"], (method, path)
+    status, data, _ = _request(port, "POST", "/api/dialog/folder", headers=cookie, body={})
+    assert status == 403 and "chính máy tính" in json.loads(data)["error"], "việc của riêng máy tính vẫn không bao giờ qua"
+
+    app.set_remote_studio(True)
+    status, data, _ = _request(port, "GET", "/api/app", headers=cookie)
+    assert json.loads(data)["listenOnly"] is True, "ghép lúc công tắc tắt: bật công tắc không tự cho thiết bị cũ"
+    short_id = next(device["id"] for device in app.sync_view()["devices"] if device["name"] == "Điện thoại của Anh")
+    assert app.devices.set_studio(short_id, True)
+    status, data, _ = _request(port, "GET", "/api/app", headers=cookie)
+    assert json.loads(data)["listenOnly"] is False
+    status, _data, _ = _request(port, "GET", "/api/library", headers=cookie)
+    assert status == 200
 
 
 def test_a_browser_pairs_with_the_code_then_runs_the_studio(studio) -> None:

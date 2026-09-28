@@ -6,11 +6,13 @@ máy chủ giao diện cục bộ (server.py, chỉ nghe 127.0.0.1) - cùng mọ
 trình duyệt điện thoại, máy tính bảng, máy tính thứ hai và app Android (WebView mang sẵn mã thiết bị) cùng dùng một
 Studio, và phần Nghe (thư viện, trình phát, đọc theo) đi kèm miễn phí.
 
-Ba lớp chặn, lớp nào hỏng cũng không mở được gì:
+NGHE thì mọi thiết bị đã ghép đều được, như app điện thoại qua /sync/v1 (lộ trình đường truyền 27-09 mục 1: iPhone,
+iPad, TV, máy khác nghe trong trình duyệt): chế độ CHỈ NGHE chỉ mở `LISTEN_ROUTES`, và giao diện ẩn Studio (`/api/app`
+mang `listenOnly`). Điều khiển sản xuất thì ba lớp chặn, lớp nào hỏng cũng về chỉ nghe:
 - thiết bị đã ghép: mã thiết bị như điện thoại (`Authorization: Bearer`), hay cookie HttpOnly với trình duyệt - trình
   duyệt ghép bằng mã 6 số như điện thoại (`pairing_page`);
 - công tắc riêng "Cho phép điều khiển sản xuất từ thiết bị đã ghép nối" (`remoteStudio`, tắt mặc định, tách khỏi quyền
-  nghe), đọc lại mỗi yêu cầu - tắt là đóng ngay;
+  nghe) VÀ quyền của chính thiết bị, đọc lại mỗi yêu cầu - tắt là về chỉ nghe ngay;
 - DANH SÁCH TRẮNG đường dẫn (`ALLOWED`): những gì chỉ có nghĩa trên chính máy này - hộp thoại chọn file, mở Explorer,
   đổi thư mục thư viện, ghép / gỡ thiết bị, điều khiển điện thoại, mở file sách theo đường dẫn - không bao giờ đi qua.
 POST chỉ nhận JSON: trang lạ trong trình duyệt không gửi được JSON sang cổng này mà không qua CORS (cổng không trả lời
@@ -46,36 +48,12 @@ _BOOK = r"/api/books/[A-Za-z0-9_-]+"
 _LISTEN = r"/api/listen/books/[A-Za-z0-9_-]+"
 _RECORD = _LISTEN + r"/records/r-[0-9a-f]{16}"
 _MEDIA = r"/media/books/[A-Za-z0-9_-]+"
-ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = tuple((method, re.compile(pattern)) for method, pattern in (
+# Phần Nghe: thư viện nghe, trình phát, chỗ nghe, dấu trang, hồ sơ nghe, đọc theo (chữ chương), dàn nhân vật và câu
+# mẫu, audio, bìa - đúng những gì app điện thoại đã có qua /sync/v1, nên mọi thiết bị đã ghép đều được (chế độ chỉ
+# nghe). Không có gì của Studio.
+LISTEN_ROUTES: tuple[tuple[str, re.Pattern[str]], ...] = tuple((method, re.compile(pattern)) for method, pattern in (
     ("GET", r"/api/app"),
-    ("GET", r"/api/library"),
-    ("GET", r"/api/voices"),
     ("GET", r"/api/preferences"),
-    ("POST", r"/api/scan"),
-    ("POST", r"/api/sources/upload"),
-    ("POST", r"/api/first-person"),
-    ("POST", r"/api/books"),
-    ("GET", _BOOK),
-    ("GET", _BOOK + r"/cast"),
-    ("GET", _BOOK + r"/activity"),
-    ("GET", _BOOK + r"/chapters/\d+/script"),
-    ("POST", _BOOK + r"/start"),
-    ("POST", _BOOK + r"/stop"),
-    ("POST", _BOOK + r"/export"),
-    ("POST", _BOOK + r"/bookfile"),
-    ("GET", _BOOK + r"/review"),
-    ("POST", _BOOK + r"/review"),
-    ("GET", _BOOK + r"/work"),
-    ("GET", _BOOK + r"/casting"),
-    ("GET", _BOOK + r"/casting/\d+"),
-    ("POST", _BOOK + r"/pronunciation"),
-    ("POST", _BOOK + r"/speaker"),
-    ("POST", _BOOK + r"/voice"),
-    ("POST", _BOOK + r"/line"),
-    ("GET", _BOOK + r"/voices"),
-    ("GET", _BOOK + r"/cover/search"),
-    ("PUT", _BOOK + r"/cover"),
-    ("DELETE", _BOOK + r"/cover"),
     ("GET", r"/api/listen/library"),
     ("GET", _LISTEN),
     ("POST", _LISTEN + r"/progress"),
@@ -98,10 +76,40 @@ ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = tuple((method, re.compile(pat
     ("POST", _LISTEN + r"/sessions"),
     ("GET", r"/api/listen/night"),
     ("POST", r"/api/listen/night/dismiss"),
-    ("GET", r"/media/voices/[^/]+"),
     ("GET", _MEDIA + r"/chapters/\d+"),
-    ("GET", _MEDIA + r"/samples/\d+"),
     ("GET", _MEDIA + r"/cover"),
+    ("GET", _BOOK + r"/cast"),
+    ("GET", _BOOK + r"/chapters/\d+/script"),
+    ("GET", r"/media/voices/[^/]+"),
+    ("GET", _MEDIA + r"/samples/\d+"),
+))
+# Thêm cho thiết bị được điều khiển sản xuất: dự án, bắt đầu/dừng, tạo sách, duyệt phân vai, giọng, bìa.
+ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = LISTEN_ROUTES + tuple((method, re.compile(pattern)) for method, pattern in (
+    ("GET", r"/api/library"),
+    ("GET", r"/api/voices"),
+    ("POST", r"/api/scan"),
+    ("POST", r"/api/sources/upload"),
+    ("POST", r"/api/first-person"),
+    ("POST", r"/api/books"),
+    ("GET", _BOOK),
+    ("GET", _BOOK + r"/activity"),
+    ("POST", _BOOK + r"/start"),
+    ("POST", _BOOK + r"/stop"),
+    ("POST", _BOOK + r"/export"),
+    ("POST", _BOOK + r"/bookfile"),
+    ("GET", _BOOK + r"/review"),
+    ("POST", _BOOK + r"/review"),
+    ("GET", _BOOK + r"/work"),
+    ("GET", _BOOK + r"/casting"),
+    ("GET", _BOOK + r"/casting/\d+"),
+    ("POST", _BOOK + r"/pronunciation"),
+    ("POST", _BOOK + r"/speaker"),
+    ("POST", _BOOK + r"/voice"),
+    ("POST", _BOOK + r"/line"),
+    ("GET", _BOOK + r"/voices"),
+    ("GET", _BOOK + r"/cover/search"),
+    ("PUT", _BOOK + r"/cover"),
+    ("DELETE", _BOOK + r"/cover"),
 ))
 TYPES = {
     ".js": "text/javascript; charset=utf-8",
@@ -126,9 +134,11 @@ class StudioGate:
     static_dir: Path  # bản dựng giao diện web (npm run build)
 
 
-def permitted(method: str, path: str) -> bool:
+def permitted(method: str, path: str, *, producing: bool = True) -> bool:
+    """Đường này có mở cho thiết bị ở xa không: `producing` = được điều khiển sản xuất (cả danh sách), không thì chỉ phần
+    Nghe."""
     verb = "GET" if method == "HEAD" else method
-    return any(verb == allowed and pattern.fullmatch(path) for allowed, pattern in ALLOWED)
+    return any(verb == allowed and pattern.fullmatch(path) for allowed, pattern in (ALLOWED if producing else LISTEN_ROUTES))
 
 
 def cookie_token(header: str | None) -> str:
@@ -193,9 +203,10 @@ def send_page(handler: Any, status: int, page: str) -> None:
     send_bytes(handler, status, page.encode("utf-8"), "text/html; charset=utf-8")
 
 
-def forward(handler: Any, method: str, target: str, gate: StudioGate) -> None:
+def forward(handler: Any, method: str, target: str, gate: StudioGate, *, listen_only: bool = False) -> None:
     """Chuyển một yêu cầu đã qua danh sách trắng sang máy chủ giao diện cục bộ, trả nguyên câu trả lời (kể cả audio
-    theo từng đoạn `Range`). `/api/app` được sửa cho đúng máy đang xem: không có hộp thoại chọn file của máy này."""
+    theo từng đoạn `Range`). `/api/app` được sửa cho đúng máy đang xem: không có hộp thoại chọn file của máy này, và
+    `listenOnly` khi thiết bị chỉ được nghe (giao diện ẩn Studio)."""
     port = gate.port()
     if not port:
         _json(handler, HTTPStatus.SERVICE_UNAVAILABLE, {"error": "Giao diện của máy tính chưa sẵn sàng"})
@@ -227,9 +238,11 @@ def forward(handler: Any, method: str, target: str, gate: StudioGate) -> None:
         if method == "GET" and path in ("/api/app", "/api/preferences") and response.status == HTTPStatus.OK:
             info = json.loads(response.read().decode("utf-8"))
             if path == "/api/app":
-                info.update(dialogs=False, remote=True)
+                info.update(dialogs=False, remote=True, listenOnly=listen_only)
             for key in PRIVATE_PREFERENCES:
                 info.pop(key, None)
+            if listen_only and "libraryRoot" in info:
+                info["libraryRoot"] = ""  # thiết bị chỉ nghe không cần biết thư mục (và tên người dùng) trên máy tính
             _json(handler, HTTPStatus.OK, info)
             return
         handler.send_response(response.status)
@@ -272,22 +285,15 @@ def serve_static(handler: Any, root: Path, path: str) -> None:
 
 
 def closed_page(machine: str) -> str:
-    return _page("Studio từ xa đang tắt", f"Máy tính <b>{html.escape(machine)}</b> chưa cho phép điều khiển từ xa. "
-                 "Trên máy tính: Cài đặt → Điện thoại và thiết bị → bật “Cho phép điều khiển sản xuất từ thiết bị đã "
-                 "ghép”.")
-
-
-def device_closed_page(machine: str) -> str:
-    return _page("Thiết bị chưa được phép", f"Thiết bị này đã ghép với <b>{html.escape(machine)}</b> để nghe sách, nhưng "
-                 "chưa được phép điều khiển sản xuất. Trên máy tính: Cài đặt → Điện thoại và thiết bị → bật "
-                 "“Điều khiển sản xuất” ở dòng của thiết bị này.")
+    return _page("ABook chưa mở", f"Giao diện ABook trên <b>{html.escape(machine)}</b> chưa chạy. Mở ABook trên máy tính "
+                 "rồi tải lại trang này.")
 
 
 def pairing_page(machine: str) -> str:
     """Trình duyệt chưa ghép: nhập mã 6 số máy tính đưa ra (như điện thoại), cổng đặt cookie rồi mở Studio."""
     return _page("Ghép với ABook", f"""
-<p>Ghép trình duyệt này với ABook trên <b>{html.escape(machine)}</b>. Trên máy tính: Cài đặt → Điện thoại và thiết bị
-→ “Ghép thiết bị mới”, rồi nhập mã 6 số vào đây.</p>
+<p>Ghép trình duyệt này với ABook trên <b>{html.escape(machine)}</b> để nghe sách của máy ấy. Trên máy tính: Cài đặt →
+Điện thoại và thiết bị → “Ghép thiết bị mới”, rồi nhập mã 6 số vào đây.</p>
 <form id="pair">
   <label>Mã ghép nối<input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="7" required></label>
   <label>Tên thiết bị này<input id="device" maxlength="80" placeholder="Ví dụ: Điện thoại của Anh"></label>
