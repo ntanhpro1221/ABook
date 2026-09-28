@@ -125,7 +125,37 @@ def test_a_computer_finds_other_computers_on_the_network_like_phones_do() -> Non
     other.start()
     try:
         found = remote_books.discover(timeout=1.0, targets=["127.0.0.1"], port=port)
-        assert found == [{"name": "Máy kia", "host": "127.0.0.1", "port": 47700}]
+        assert found == [{"name": "Máy kia", "host": "127.0.0.1", "port": 47700, "kind": "computer"}]
         assert remote_books.discover(timeout=0.5, targets=["127.0.0.1"], port=port, exclude_port=47700) == []
     finally:
         other.stop()
+
+
+def test_a_phone_sharing_its_library_is_found_and_labelled_as_a_phone() -> None:
+    """Mạng trạm bước 2: điện thoại bật "Cho máy khác nghe thư viện này" (LibraryServer.kt) trả lời cùng lời tìm, kèm
+    "kind": "phone" - máy tính hiện nó với biểu tượng điện thoại, ghép như một máy tính."""
+    import json
+    import socket
+    import threading
+
+    from ebook_reader.webui import remote_books
+
+    phone = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    phone.bind(("127.0.0.1", 0))
+    phone.settimeout(2.0)
+    port = phone.getsockname()[1]
+
+    def answer() -> None:
+        data, address = phone.recvfrom(512)
+        if data.strip() == b"EBOOKREADER_DISCOVER":
+            reply = {"app": "ebook-reader", "name": "Samsung SM-A546E", "port": 47630, "kind": "phone"}
+            phone.sendto(json.dumps(reply).encode("utf-8"), address)
+
+    worker = threading.Thread(target=answer, daemon=True)
+    worker.start()
+    try:
+        found = remote_books.discover(timeout=1.0, targets=["127.0.0.1"], port=port)
+        assert found == [{"name": "Samsung SM-A546E", "host": "127.0.0.1", "port": 47630, "kind": "phone"}]
+    finally:
+        worker.join(3)
+        phone.close()

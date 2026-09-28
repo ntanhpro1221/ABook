@@ -1,6 +1,6 @@
 import * as Switch from "@radix-ui/react-switch";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Clapperboard, Download, FileAudio, Laptop, Loader2, RefreshCw, Search, Unplug, Wifi } from "lucide-react";
+import { CheckCircle2, Clapperboard, Download, FileAudio, Laptop, Link2, Loader2, RefreshCw, Search, Unplug, Wifi } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
@@ -9,7 +9,7 @@ import { formatLength } from "@/shared/format";
 import { Button, EmptyState, Progress } from "@/shared/ui";
 import { useDownloadProgress } from "./downloads";
 import { pickBookFile } from "./imports";
-import { EbookLibrary, type DownloadEvent, type RemoteBook } from "./plugins";
+import { EbookLibrary, type DownloadEvent, type RemoteBook, type ShareStatus } from "./plugins";
 
 // "Tải sách": lấy sách từ máy tính qua Wi-Fi. Ghép nối một lần bằng mã 6 số hiện trong Cài đặt của máy tính;
 // sau đó chỉ cần mở màn hình này để thấy sách mới và chương mới.
@@ -205,6 +205,99 @@ function StudioAlertsRow() {
   );
 }
 
+// Mạng trạm bước 2 (LibraryServer.kt): điện thoại PHỤC VỤ sách đã tải cho máy đã ghép - máy tính nghe thẳng những cuốn chỉ
+// có trên điện thoại. Cùng giao thức cổng đồng bộ của máy tính, nên máy tính ghép như ghép một máy tính khác: Cài đặt →
+// Máy tính khác → địa chỉ + mã 6 số hiện ở đây.
+function SharePanel() {
+  const client = useQueryClient();
+  const status = useQuery({
+    queryKey: ["share"],
+    queryFn: () => EbookLibrary.shareStatus(),
+    // Đang hiện mã: hỏi lại để thấy mã đã dùng (thiết bị mới hiện trong danh sách) hay hết hạn.
+    refetchInterval: (query) => (query.state.data?.pairing ? 2000 : false),
+  });
+  const run = useMutation({
+    mutationFn: (action: () => Promise<ShareStatus>) => action(),
+    onSuccess: (data) => client.setQueryData(["share"], data),
+    onError: (error: Error) => toast.error("Chưa làm được", { description: error.message }),
+  });
+  const [now, setNow] = useState(() => Date.now() / 1000);
+  const pairing = status.data?.pairing ?? null;
+  useEffect(() => {
+    if (!pairing) return;
+    const timer = window.setInterval(() => setNow(Date.now() / 1000), 1000);
+    return () => window.clearInterval(timer);
+  }, [pairing]);
+  const data = status.data;
+  const enabled = data?.running ?? false;
+  const left = pairing ? Math.max(0, Math.round(pairing.expiresAt - now)) : 0;
+  return (
+    <section className="mt-8 rounded-2xl border border-line bg-panel p-4" aria-labelledby="share-title">
+      <div className="flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <h2 id="share-title" className="text-[15px] font-medium">Cho máy khác nghe thư viện này</h2>
+          <p className="mt-0.5 text-xs leading-snug text-fg-2">
+            Máy tính đã ghép nghe thẳng sách đã tải về điện thoại này, cùng mạng Wi-Fi, không phải chép sang. Điện thoại cần đang
+            mở ABook.
+          </p>
+        </div>
+        <Switch.Root
+          checked={enabled}
+          disabled={run.isPending || status.isLoading}
+          onCheckedChange={(value) => run.mutate(() => EbookLibrary.setShare({ enabled: value }))}
+          aria-label="Cho máy khác nghe thư viện này"
+          className="relative h-7 w-12 shrink-0 rounded-full bg-line-strong transition-colors data-[state=checked]:bg-accent"
+        >
+          <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
+        </Switch.Root>
+      </div>
+      {data?.error && <p className="mt-3 text-xs text-danger">{data.error}</p>}
+      {enabled && data && (
+        <div className="mt-4 space-y-3 border-t border-line pt-4">
+          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+            <dt className="text-fg-2">Tên</dt>
+            <dd className="truncate">{data.name}</dd>
+            <dt className="text-fg-2">Địa chỉ</dt>
+            <dd className="tabular break-all">
+              {data.addresses.length ? data.addresses.map((address) => `${address}:${data.port}`).join(", ") : "chưa vào mạng Wi-Fi nào"}
+            </dd>
+          </dl>
+          {pairing && left > 0 ? (
+            <div className="rounded-xl bg-accent-soft p-4 text-center">
+              <div className="text-xs text-fg-2">Nhập mã này trên máy kia</div>
+              <div className="tabular mt-1 text-3xl font-bold tracking-[0.3em]">{pairing.code}</div>
+              <div className="tabular mt-1 text-xs text-fg-2">
+                còn {Math.floor(left / 60)}:{String(left % 60).padStart(2, "0")}
+              </div>
+              <button type="button" onClick={() => run.mutate(() => EbookLibrary.shareCancelPairing())} className="mt-2 text-sm text-fg-2 underline underline-offset-4">
+                Huỷ mã
+              </button>
+            </div>
+          ) : (
+            <Button variant="secondary" className="w-full" icon={Link2} onClick={() => run.mutate(() => EbookLibrary.sharePair())}>
+              Ghép máy mới
+            </Button>
+          )}
+          {data.blocked && <p className="text-xs text-danger">Nhập sai mã quá 5 lần - mã đã bị huỷ. Bấm "Ghép máy mới" để có mã khác.</p>}
+          {data.devices.length > 0 && (
+            <ul className="divide-y divide-line">
+              {data.devices.map((device) => (
+                <li key={device.id} className="flex items-center gap-3 py-2.5">
+                  <Laptop className="size-4 shrink-0 text-fg-2" />
+                  <span className="min-w-0 flex-1 truncate text-sm">{device.name}</span>
+                  <button type="button" onClick={() => run.mutate(() => EbookLibrary.shareRevoke({ id: device.id }))} className="text-xs font-medium text-danger">
+                    Thôi ghép
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
 export function DevicesScreen() {
   const client = useQueryClient();
   const connection = useQuery({ queryKey: ["connection"], queryFn: () => EbookLibrary.connection() });
@@ -281,6 +374,7 @@ export function DevicesScreen() {
           </>
         )}
       </div>
+      <SharePanel />
       {storage.data && (
         <p className="mt-8 text-center text-xs text-fg-3">
           Sách trên máy: {formatBytes(storage.data.bytes)} · còn trống {formatBytes(storage.data.free)}

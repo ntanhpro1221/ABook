@@ -29,6 +29,9 @@ import java.util.concurrent.Executors
 import java.util.concurrent.FutureTask
 import java.util.concurrent.TimeUnit
 
+/** Công tắc "Cho máy khác nghe thư viện này" (SharedPreferences "sync"). */
+private const val SHARE_KEY = "shareLibrary"
+
 /**
  * Thư viện trên điện thoại + đồng bộ với máy tính qua Wi-Fi (ebook_reader/webui/sync.py).
  *
@@ -46,6 +49,8 @@ class LibraryPlugin : Plugin() {
 
     override fun load() {
         Playback.init(context)
+        // Đã bật "Cho máy khác nghe thư viện này" từ lần trước: mở lại máy chủ cùng app (LibraryServer).
+        if (prefs.getBoolean(SHARE_KEY, false)) io.execute { runCatching { LibraryServer.start(context) } }
     }
 
     private fun background(call: PluginCall, block: () -> Unit) = io.execute {
@@ -108,6 +113,7 @@ class LibraryPlugin : Plugin() {
     fun discover(call: PluginCall) = background(call) {
         val found = JSArray()
         val seen = mutableSetOf<String>()
+        val own = LibraryServer.addresses().toSet() + "127.0.0.1"
         DatagramSocket().use { socket ->
             socket.broadcast = true
             socket.soTimeout = 400
@@ -125,8 +131,11 @@ class LibraryPlugin : Plugin() {
                     socket.receive(packet)
                     val reply = JSONObject(String(packet.data, 0, packet.length))
                     val host = packet.address.hostAddress ?: continue
+                    // Chính điện thoại này (đang cho máy khác nghe thư viện - LibraryServer) cũng trả lời: bỏ.
+                    if (host in own) continue
                     if (reply.optString("app") == "ebook-reader" && seen.add(host)) {
-                        found.put(JSObject().put("host", host).put("port", reply.optInt("port", 47630)).put("name", reply.optString("name")))
+                        found.put(JSObject().put("host", host).put("port", reply.optInt("port", 47630)).put("name", reply.optString("name"))
+                            .put("kind", reply.optString("kind", "computer")))
                     }
                 } catch (_: SocketTimeoutException) {
                 }
@@ -146,6 +155,50 @@ class LibraryPlugin : Plugin() {
             .putString("name", reply.optString("name")).commit()
         Remote.ensure()
         call.resolve(JSObject().put("name", reply.optString("name")))
+    }
+
+    // ---- cho máy khác nghe thư viện này (mạng trạm bước 2 - LibraryServer) ------------------------------------------
+
+    private fun shareView(): JSObject {
+        LibraryServer.init(context)
+        val devices = JSArray()
+        val list = LibraryServer.devices()
+        for (index in 0 until list.length()) devices.put(JSObject.fromJSONObject(list.getJSONObject(index)))
+        val pairing = LibraryServer.pairingCode()
+        return JSObject().put("running", LibraryServer.running()).put("name", LibraryServer.name())
+            .put("port", LibraryServer.PORT).put("addresses", JSArray(LibraryServer.addresses()))
+            .put("pairing", if (pairing != null) JSObject.fromJSONObject(pairing) else JSONObject.NULL)
+            .put("blocked", LibraryServer.blocked).put("devices", devices).put("error", LibraryServer.lastError)
+    }
+
+    @PluginMethod
+    fun shareStatus(call: PluginCall) = background(call) { call.resolve(shareView()) }
+
+    @PluginMethod
+    fun setShare(call: PluginCall) = background(call) {
+        val enabled = call.getBoolean("enabled") ?: false
+        prefs.edit().putBoolean(SHARE_KEY, enabled).commit()
+        if (enabled) LibraryServer.start(context) else LibraryServer.stop()
+        call.resolve(shareView())
+    }
+
+    @PluginMethod
+    fun sharePair(call: PluginCall) = background(call) {
+        if (!LibraryServer.running()) LibraryServer.start(context)
+        LibraryServer.startPairing()
+        call.resolve(shareView())
+    }
+
+    @PluginMethod
+    fun shareCancelPairing(call: PluginCall) = background(call) {
+        LibraryServer.cancelPairing()
+        call.resolve(shareView())
+    }
+
+    @PluginMethod
+    fun shareRevoke(call: PluginCall) = background(call) {
+        LibraryServer.revoke(call.getString("id") ?: "")
+        call.resolve(shareView())
     }
 
     @PluginMethod
