@@ -63,6 +63,45 @@ Lỗi của model (mổ bằng `score_models --misses` + `scratchpad/turn_taking
 - Bỏ: khoá "(…)" ngay sau lời thoại thành nội tâm - 81 dòng ở Yamiyo nhưng ở truyện khác là ghi chú dịch ("(note: ...)"),
   tiếng động ("(Tiếng sợ hãi)").
 
+## LƯỢT ĐỐI ĐÁP + HAI MODEL BẤT ĐỒNG 28-09 12:xx - hai tín hiệu lỗi đo được trên kết quả đã có (CPU, không tốn GPU)
+
+**Lượt đối đáp.** Cặp câu thoại liền kề ở hai đoạn văn liền nhau, chia theo dấu ngoặc (đáp án 7 truyện, bài làm qwen3:8b):
+
+| kiểu cặp | khác người | cùng người | qwen3:8b gán cùng người mà sai |
+|---|---|---|---|
+| đoạn trước ĐÓNG ngoặc, đoạn sau MỞ ngoặc mới | 91 | 4 | **38/42** cặp nó gán cùng người (LN: TCF 4, Nise 3, HDST 9, Yamiyo 19, YMP 2; TMA 1) |
+| đoạn trước để NGỎ ngoặc (lời nói tiếp) | 0 | 11 (TMA) | - (khoá "thoại nối tiếp" đã lo) |
+| gạch đầu dòng (Tắt đèn) | 16 | 0 | 5 (luật 7ca7ef7 đã lo ở host) |
+
+Một cặp đóng -> mở mà cùng một người thì 90% là máy bỏ lỡ lượt đổi. Tự sửa ở host thì KHÔNG đáng (`scratchpad/
+sim_alternation.py`, 19 lượt model x truyện): sàng "mẫu hội thoại" của Muzny và cs. 2017 (A, B, B -> A, B, A) chỉ đổi 1 câu,
+vì lỗi của model là cả dãy A, A, A sau một câu A có lời dẫn; luân phiên cả dãy với người kể ngôi thứ nhất làm vai kia: +5
+(HDST 4, Yamiyo 1), 0 hỏng; lấy người có tên gần nhất làm vai kia: +9 -3. Nên làm hai việc khác:
+1. **Hộp "Việc cần anh" thẻ "Lượt đối đáp"** (`webui/work_items.py`, nhánh `feat/turn-doubt`): mỗi cặp như thế là một thẻ sửa
+   CÂU SAU, lựa chọn đầu là người kể "tôi" (truyện ngôi thứ nhất), rồi người có tên nói nhiều nhất chương. Độ chính xác đã đo
+   90% - cao hơn mọi tín hiệu khác trong hộp.
+2. **Prompt** (nhánh `dev/ln-turns`): quy tắc 2 thêm "đoạn thoại liền nhau không lời dẫn là hai người luân phiên" và "ngoặc
+   đặc biệt 『』 [ ] là một giọng riêng" (Yamiyo 41 câu 『』 của Tọa Phu Đồng Tử thành SUMIRE/HINA/TOMOBE; TCF 8 bài đăng ẩn
+   danh thành Kuchinashi). Đo ở hàng GPU n, cùng 5 chương LN, so với mốc qwen3:8b.
+
+**Hai model bất đồng về người nói = câu đáng nghe lại** (`scratchpad/disagree.py`: mỗi model gom nhãn qua đúng
+`canonical_speaker_names`; "HINA" và "ONIZUKI HINA" coi là đồng ý). Model chính qwen3:8b, model phụ LoRA v2 (4B):
+
+| truyện | câu | 8b sai | cờ (tải duyệt) | bắt được lỗi | cờ đúng là lỗi | tin cậy tự báo, cùng tải: bắt / đúng |
+|---|---|---|---|---|---|---|
+| Tắt đèn XX, XXI, XXIV | 112 | 30 | 47% | 77% | 43% | 53% / 30% |
+| TMA test (chưa học) | 156 | 58 | 25% | 55% | 82% | 16% / 23% |
+| YMP 248 | 47 | 18 | 38% | 89% | 89% | 33% / 33% |
+| Tam quốc 50-52 | 219 | 46 | 64% | 87% | 29% | 67% / 22% |
+
+Duyệt 20% số câu (xếp: số model phụ bất đồng, rồi tin cậy thấp): bắt 33-50% số lỗi, tin cậy tự báo 11-35%, ngẫu nhiên 20%.
+So với bộ chấm ứng viên đang xếp hộp "Việc cần anh" (`review_curve.py` + `scratchpad/review_curve2.py`, 143 câu TMA test, chấm
+chặt, máy một mình 67,1%): duyệt 20% -> bộ chấm 81,1%, LLM phụ 83,2%, LLM phụ rồi bộ chấm **85,3%** (trần 87,4%); duyệt 30% ->
+85,3 / 89,5 / **91,6%** (trần 97,2%); dưới 15% thì bộ chấm một mình đã bằng cách ghép. Bầu đa số tự đổi nhãn (hai model phụ
+cùng ý, khác 8b): YMP +11, TMA +2, Tam quốc +2, Tắt đèn -3 - không bền, KHÔNG tự áp. Kết luận: lượt phân tích thứ hai bằng
+model 4B là tín hiệu duyệt tốt hơn tin cậy tự báo ở cả 4 truyện và cộng thêm vào bộ chấm từ mức duyệt 20%; giá là một lượt
+phân tích nữa (4B ~ nửa thời gian 8B). Chưa dựng vào app: chờ số trên bộ LN (hàng i đo qwen3:8b, v2, v3 cùng 5 chương).
+
 ## LORA NỀN 8B TRÊN CARD 8 GB 28-09 (chủ sách: "sao không huấn luyện trên nền qwen3:8b?")
 
 Unsloth trong WSL2 archlinux (`train_lora_unsloth.py`, cùng siêu tham số với 4B). Thử VRAM trên 8 mẫu DÀI NHẤT:
