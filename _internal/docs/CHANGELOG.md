@@ -7,6 +7,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Điện thoại: công tắc **"Báo khi sách xong hay có việc cần anh"** (màn Tải sách, dưới nút Studio của máy tính).
+  Điện thoại hỏi máy tính mỗi 15 phút (cả khi app đã đóng) và mỗi lần mở app, rồi báo: sách đã xong, dừng vì lỗi,
+  dừng giữa chừng, hay có thêm việc cần anh. Bấm thông báo mở thẳng Studio từ xa đúng cuốn, đúng tab. Cần máy tính
+  bật "Cho phép điều khiển sản xuất" và điện thoại có quyền ấy - như chính trang Studio từ xa. Lần bật đầu chỉ ghi
+  mốc, không đổ ra tin cũ.
 - Studio, tab **Nhân vật**: nút **"Đổi giọng"** trên mỗi nhân vật mở danh sách mọi giọng dùng được, nghe thử từng
   giọng, thấy giọng đang dùng, giọng máy gợi ý cho giọng nam và giọng nữ, và ai cùng chương đang dùng giọng gốc ấy.
   Chọn giọng khác giới là đổi luôn giới của nhân vật. Áp ở ranh giới chương kế tiếp như các sửa khác; câu đã thu của

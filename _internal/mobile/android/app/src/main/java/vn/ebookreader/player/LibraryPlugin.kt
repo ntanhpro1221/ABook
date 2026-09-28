@@ -1,5 +1,8 @@
 package vn.ebookreader.player
 
+import android.Manifest
+import com.getcapacitor.annotation.Permission
+import com.getcapacitor.annotation.PermissionCallback
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -32,7 +35,10 @@ import java.util.concurrent.TimeUnit
  * Mọi mạng đi qua đây (native) chứ không qua fetch của WebView: trang chạy ở https://localhost, gọi http://<máy
  * tính> sẽ bị chặn vì mixed content, và tải hàng trăm MB audio thì nên làm ở luồng nền, ghi thẳng ra file.
  */
-@CapacitorPlugin(name = "EbookLibrary")
+@CapacitorPlugin(
+    name = "EbookLibrary",
+    permissions = [Permission(strings = [Manifest.permission.POST_NOTIFICATIONS], alias = "notifications")],
+)
 class LibraryPlugin : Plugin() {
     private val io = Executors.newSingleThreadExecutor()
     private val downloads = Executors.newSingleThreadExecutor()
@@ -155,6 +161,30 @@ class LibraryPlugin : Plugin() {
     fun unpair(call: PluginCall) {
         prefs.edit().clear().apply()
         call.resolve()
+    }
+
+    /** Thông báo Studio (StudioAlerts.kt): công tắc, và Android có cho app đăng thông báo không. */
+    @PluginMethod
+    fun studioAlerts(call: PluginCall) {
+        call.resolve(JSObject().put("enabled", StudioAlerts.enabled(context)).put("permitted", StudioAlerts.permitted(context)))
+    }
+
+    @PluginMethod
+    fun setStudioAlerts(call: PluginCall) {
+        val on = call.getBoolean("enabled") ?: false
+        // Android 13+: bật mà chưa có quyền thông báo thì xin trước; người dùng từ chối thì công tắc vẫn lưu, màn hình
+        // nói rõ "chưa cho phép thông báo".
+        if (on && Build.VERSION.SDK_INT >= 33 && !StudioAlerts.permitted(context)) {
+            requestPermissionForAlias("notifications", call, "studioAlertsAfterPermission")
+        } else {
+            studioAlertsAfterPermission(call)
+        }
+    }
+
+    @PermissionCallback
+    private fun studioAlertsAfterPermission(call: PluginCall) {
+        StudioAlerts.setEnabled(context, call.getBoolean("enabled") ?: false)
+        studioAlerts(call)
     }
 
     /** Studio từ xa (StudioActivity.kt): trang Studio của máy tính đã ghép, mang sẵn mã thiết bị. */
