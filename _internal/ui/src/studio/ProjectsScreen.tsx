@@ -7,6 +7,7 @@ import { formatEta, formatPercent, formatRelative } from "@/shared/format";
 import { Button, EmptyState, Progress, Skeleton, StatusPill } from "@/shared/ui";
 import type { BookSummary } from "./api";
 import { phaseTone, pickFolder, useAppInfo, useLibrary, useOpenBook } from "./data";
+import { ProjectMenu } from "./ProjectScreen";
 import { StudioSetupCard } from "./StudioSetup";
 
 // Studio: nơi làm sách. Danh sách là bảng công việc - trạng thái sản xuất, tiến độ, thời gian còn lại - chứ không
@@ -14,12 +15,16 @@ import { StudioSetupCard } from "./StudioSetup";
 
 function ProjectRow({ book }: { book: BookSummary }) {
   const navigate = useNavigate();
+  // Đổi tên / xoá chỉ trên máy này (remote_studio.ALLOWED không có hai đường ấy).
+  const local = !useAppInfo().data?.remote;
   const live = book.running || book.starting;
   if (book.broken) {
+    // Dự án hỏng không mở được - trước đây cũng không bỏ được khỏi danh sách; giờ xoá được (vào Thùng rác).
     return (
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 rounded-xl border border-dashed border-line px-4 py-3 text-sm">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-4 rounded-xl border border-dashed border-line px-4 py-2 text-sm">
         <span className="truncate font-medium">{book.title}</span>
         <span className="text-xs text-danger">Không đọc được: {book.broken}</span>
+        {local ? <ProjectMenu book={book} rename={false} /> : <span />}
       </div>
     );
   }
@@ -30,44 +35,58 @@ function ProjectRow({ book }: { book: BookSummary }) {
         ? formatEta(book.eta.seconds)
         : `${book.chapters.completed}/${book.chapters.total} chương xong`;
   return (
-    <button
-      type="button"
-      onClick={() => navigate(`/studio/${book.id}`)}
-      className="grid w-full grid-cols-[48px_minmax(0,1fr)] items-center gap-x-4 gap-y-1.5 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-hover md:grid-cols-[48px_minmax(0,1fr)_160px_170px] md:gap-y-4 xl:grid-cols-[48px_minmax(0,1fr)_170px_200px_110px]"
-    >
-      {/* Màn hẹp (Studio từ xa trên điện thoại): trạng thái và tiến độ xếp dưới tên, không chia cột. */}
-      <BookCover title={book.title} size="sm" image={book.cover} className="row-span-3 size-12 self-start md:row-span-1 md:self-center" />
-      <div className="min-w-0">
-        <div className="truncate font-semibold">{book.title}</div>
-        <div className="truncate text-xs text-fg-2">
-          {book.settings.narrator ? `Giọng kể ${book.settings.narrator} · ` : ""}
-          {book.settings.profileLabel}
-        </div>
-      </div>
-      <div className="col-start-2 md:col-start-auto">
-        <StatusPill
-          label={book.queuePosition ? `Xếp hàng · thứ ${book.queuePosition}` : book.starting ? "Đang khởi động" : book.statusLabel}
-          tone={book.queuePosition ? "warning" : phaseTone(book.phase, live)}
-          live={live}
-        />
-      </div>
-      <div className="col-start-2 min-w-0 md:col-start-auto">
-        {book.phase === "done" ? (
-          <span className="text-xs text-fg-2">{detail}</span>
-        ) : (
-          <>
-            <div className="flex items-center gap-2">
-              <Progress value={book.progress.overall} running={live} tone={live ? "accent" : "muted"} size="sm" />
-              <span className="tabular w-9 text-right text-xs font-semibold">{formatPercent(book.progress.overall)}</span>
-            </div>
-            <div className="mt-1 truncate text-xs text-fg-2">{detail}</div>
-          </>
+    // Nút "…" nằm NGOÀI nút của dòng (nút lồng nút không hợp lệ), đè lên lề phải mà dòng chừa sẵn (pr-12).
+    <div className="group relative">
+      <button
+        type="button"
+        onClick={() => navigate(`/studio/${book.id}`)}
+        className={cn(
+          "grid w-full grid-cols-[48px_minmax(0,1fr)] items-center gap-x-4 gap-y-1.5 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-hover md:grid-cols-[48px_minmax(0,1fr)_160px_170px] md:gap-y-4 xl:grid-cols-[48px_minmax(0,1fr)_170px_200px_110px]",
+          local && "pr-12",
         )}
-      </div>
-      <div className={cn("tabular hidden text-right text-xs xl:block", live ? "text-accent-text" : "text-fg-2")}>
-        {live ? "đang chạy" : formatRelative(book.updatedAt)}
-      </div>
-    </button>
+      >
+        {/* Màn hẹp (Studio từ xa trên điện thoại): trạng thái và tiến độ xếp dưới tên, không chia cột. */}
+        <BookCover title={book.title} size="sm" image={book.cover} className="row-span-3 size-12 self-start md:row-span-1 md:self-center" />
+        <div className="min-w-0">
+          <div className="truncate font-semibold">{book.title}</div>
+          <div className="truncate text-xs text-fg-2">
+            {book.settings.narrator ? `Giọng kể ${book.settings.narrator} · ` : ""}
+            {book.settings.profileLabel}
+          </div>
+        </div>
+        <div className="col-start-2 md:col-start-auto">
+          <StatusPill
+            label={book.queuePosition ? `Xếp hàng · thứ ${book.queuePosition}` : book.starting ? "Đang khởi động" : book.statusLabel}
+            tone={book.queuePosition ? "warning" : phaseTone(book.phase, live)}
+            live={live}
+          />
+        </div>
+        <div className="col-start-2 min-w-0 md:col-start-auto">
+          {book.phase === "done" ? (
+            <span className="text-xs text-fg-2">{detail}</span>
+          ) : (
+            <>
+              <div className="flex items-center gap-2">
+                <Progress value={book.progress.overall} running={live} tone={live ? "accent" : "muted"} size="sm" />
+                <span className="tabular w-9 text-right text-xs font-semibold">{formatPercent(book.progress.overall)}</span>
+              </div>
+              <div className="mt-1 truncate text-xs text-fg-2">{detail}</div>
+            </>
+          )}
+        </div>
+        <div className={cn("tabular hidden text-right text-xs xl:block", live ? "text-accent-text" : "text-fg-2")}>
+          {live ? "đang chạy" : formatRelative(book.updatedAt)}
+        </div>
+      </button>
+      {local && (
+        <div className="absolute right-2 top-2.5 md:top-1/2 md:-translate-y-1/2">
+          <ProjectMenu
+            book={book}
+            className="opacity-0 focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100 max-md:opacity-100"
+          />
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -155,7 +174,12 @@ export function ProjectsScreen() {
             </section>
           )}
           <section className="mt-8">
-            <div className="hidden grid-cols-[48px_minmax(0,1fr)_160px_170px] gap-4 border-b border-line px-3 pb-2 text-xs font-semibold uppercase tracking-[0.06em] text-fg-2 md:grid xl:grid-cols-[48px_minmax(0,1fr)_170px_200px_110px]">
+            <div
+              className={cn(
+                "hidden grid-cols-[48px_minmax(0,1fr)_160px_170px] gap-4 border-b border-line px-3 pb-2 text-xs font-semibold uppercase tracking-[0.06em] text-fg-2 md:grid xl:grid-cols-[48px_minmax(0,1fr)_170px_200px_110px]",
+                !info?.remote && "pr-12",
+              )}
+            >
               <span />
               <span>Dự án</span>
               <span>Trạng thái</span>
