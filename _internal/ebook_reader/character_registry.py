@@ -94,8 +94,16 @@ PRONOUNS = {
 # không: đó là người khác, và chỗ của chúng vẫn là nhóm vô danh.
 FIRST_PERSON_PRONOUNS = {"tôi", "ta", "mình", "tớ", "tao", "tui", "me"}
 RESERVED_SPEAKERS = {"narrator": "NARRATOR", "unknown": "UNKNOWN"}
+# Chức danh đứng TRƯỚC tên: "GIÁO SƯ GLAST" là Glast. Bộ đo LN 28-09 (Hướng dẫn sinh tồn 062): qwen3:8b ghi 10 câu của Glast
+# là "GIÁO SƯ GLAST", các câu khác "Glast" - hai giọng, vì danh sách cũ chỉ có xưng hô gia đình và tước quý tộc. LN (và
+# truyện Hàn, Trung) đầy chức danh học đường, hoàng tộc, quân đội, sư môn. Tên đứng sau vẫn phải là tên riêng viết La-tinh
+# (`ASCII_PROPER_NAME_PATTERN`) VÀ đã là một nhãn khác (`_canonicalize...` chỉ gom về đại diện có sẵn) - hai chốt cũ giữ nguyên.
+# Chức danh dài đứng trước chức danh ngắn cùng tiền tố ("cô giáo" trước "cô").
 HONORIFIC_PREFIX_PATTERN = re.compile(
-    r"^(?:anh|chị|cô|dì|chú|bác|ông|bà|ngài|quý cô|quý ông|bá tước|công tước|đức ngài)\s+(.+)$",
+    r"^(?:trợ lý giáo sư|phó giáo sư|giáo sư|hiệu trưởng|hiệu phó|giáo viên|cô giáo|thầy giáo|thầy|sư phụ|sư huynh|sư tỷ"
+    r"|sư muội|sư đệ|tiền bối|học trưởng|học tỷ|tiểu thư|thiếu gia|công chúa|hoàng tử|hoàng đế|nữ hoàng|hoàng hậu"
+    r"|quận chúa|điện hạ|bệ hạ|đội trưởng|thuyền trưởng|chỉ huy|thánh nữ|anh|chị|cô|dì|chú|bác|ông|bà|ngài|quý cô"
+    r"|quý ông|bá tước|công tước|nam tước|tử tước|hầu tước|đức ngài)\s+(.+)$",
     flags=re.IGNORECASE,
 )
 ASCII_PROPER_NAME_PATTERN = re.compile(
@@ -511,6 +519,89 @@ def _vietnamese_order_name(name: str) -> bool:
     return bool(parts) and all(is_vietnamese_syllable(part) for part in parts)
 
 
+# Một chữ romaji Hepburn: chuỗi âm tiết (phụ âm đầu tuỳ chọn, có thể kép "kk"/"tch", hoặc ghép "ky"/"sh"/"ts"...) + nguyên
+# âm, hoặc "n" đứng riêng - "onizuki", "yuusei", "kuchinashi", "hokkaido". Tên Âu gần như luôn vấp một cụm phụ âm hay phụ âm
+# cuối không có trong tiếng Nhật ("lucien", "evans", "grey", "krai", "andrey"), tên Hàn cũng vậy ("kim", "dokja").
+ROMAJI_WORD_PATTERN = re.compile(
+    r"(?:(?:kk|ss|tt|pp|tch|cch|ssh)?(?:ky|gy|ny|hy|by|py|my|ry|sh|ch|ts|[kgsztdnhbpmyrwfj])?[aiueo]|n)+"
+)
+
+
+def _japanese_order_name(name: str) -> bool:
+    """Tên Nhật viết romaji: mọi chữ là chuỗi âm tiết romaji - "Onizuki Hina", "Kuchinashi Yoshihito". Bản dịch Việt của
+    LN Nhật giữ thứ tự Nhật, HỌ TRƯỚC, nên như tên Việt: chữ CUỐI là tên gọi, "HINA" là "ONIZUKI HINA"."""
+    parts = [part for part in re.split(r"[\s-]+", normalize_name(name)) if part]
+    return bool(parts) and all(ROMAJI_WORD_PATTERN.fullmatch(part) for part in parts)
+
+
+def _family_first_name(name: str) -> bool:
+    """Tên mà chữ CUỐI là tên gọi riêng của người ấy (họ đứng trước): Việt / Hán Việt hoặc Nhật."""
+    return _vietnamese_order_name(name) or _japanese_order_name(name)
+
+
+# Kính ngữ Nhật đứng SAU tên, bản dịch giữ nguyên ("Hina-sama", "Kazuma-san"): model chép cả cụm làm nhãn người nói, và
+# "HINA-SAMA" thành nhân vật thứ hai - giọng thứ hai - của Hina. `first_person.py` có cùng danh sách cho việc đoán người kể.
+JAPANESE_HONORIFIC_SUFFIX_PATTERN = re.compile(
+    r"^(?P<name>.*\S)[\s-]+(?:san|sama|kun|chan|sensei|senpai|dono|tan|han|nii|nee|niisan|neesan)$",
+    flags=re.IGNORECASE,
+)
+
+
+# Hai chữ viết hoa liền nhau (một dấu cách) - ứng viên "Họ Tên" trong văn bản sách.
+TWO_CAPITALIZED_WORDS_PATTERN = re.compile(r"\b([A-Z][a-z]+) ([A-Z][a-z]+)\b")
+# Một cặp phải gặp ít nhất ngần này lần mới là tên của ai đó, không phải hai chữ tình cờ đứng cạnh nhau.
+BOOK_FULL_NAME_MIN_COUNT = 2
+
+
+def book_japanese_full_names(source: str) -> "Counter[str]":
+    """Tên Nhật đủ, họ trước, mà SÁCH viết ra: "Kuchinashi Yoshihito" (Two Childhood Friends, 33 lần), "Onizuki Hina" (Yamiyo,
+    62 lần). Cả hai chữ là romaji (`ROMAJI_WORD_PATTERN`); tên Âu ("Jane Grey") và tên Hán Việt không qua."""
+    counts: Counter[str] = Counter()
+    for line in source.splitlines():
+        for family, given in TWO_CAPITALIZED_WORDS_PATTERN.findall(line):
+            if ROMAJI_WORD_PATTERN.fullmatch(family.lower()) and ROMAJI_WORD_PATTERN.fullmatch(given.lower()):
+                counts[f"{family} {given}"] += 1
+    return Counter({name: count for name, count in counts.items() if count >= BOOK_FULL_NAME_MIN_COUNT})
+
+
+def merge_into_book_full_names(representatives: dict[str, str], source: str) -> dict[str, str]:
+    """Nhãn MỘT chữ là họ hoặc tên gọi của ĐÚNG MỘT tên Nhật đủ trong sách -> tên đủ ấy. Trả về {key: tên đích}.
+
+    Đo 28-09 trên bộ LN (Two Childhood Friends 042): qwen3:8b ghi cùng một người lúc "KUCHINASHI" (họ), lúc "YOSHIHITO"
+    (tên gọi), không lần nào tên đủ - luật tên gọi dựa trên nhãn không có gì để nối, và Yoshihito có hai giọng. Tên đủ thì
+    sách đã viết. Họ mà cả nhà dùng chung (8 người họ Onizuki ở Yamiyo) khớp nhiều tên đủ -> không đoán; tên gọi thì riêng.
+    Tên đích là nhãn đã có nếu model từng ghi tên đủ, không thì tên đủ viết HOA theo cách sách viết."""
+    full_names = book_japanese_full_names(source)
+    if not full_names:
+        return {}
+    owners: dict[str, set[str]] = defaultdict(set)
+    for full in full_names:
+        family, given = normalize_name(full).split()
+        owners[family].add(full)
+        owners[given].add(full)
+    by_identity = {identity_key(name): name for name in representatives.values()}
+    redirected: dict[str, str] = {}
+    for key, name in representatives.items():
+        words = normalize_name(name).split()
+        if len(words) != 1 or not _japanese_order_name(name):
+            continue
+        candidates = owners.get(words[0], set())
+        if len(candidates) != 1:
+            continue
+        full = next(iter(candidates))
+        redirected[key] = by_identity.get(identity_key(full), full.upper())
+    return redirected
+
+
+def strip_japanese_honorific(label: str) -> str:
+    """"HINA-SAMA" -> "HINA". Nhãn chỉ có kính ngữ ("SENSEI") hay phần còn lại quá ngắn thì giữ nguyên."""
+    match = JAPANESE_HONORIFIC_SUFFIX_PATTERN.fullmatch(" ".join(label.split()))
+    if match is None:
+        return label
+    name = match.group("name").strip(" -")
+    return name if len(name) >= 2 and any(character.isalpha() for character in name) else label
+
+
 def _bare_word(word: str) -> str:
     return fold_for_source_search(word).replace("đ", "d")
 
@@ -548,13 +639,13 @@ def merge_given_names(representatives: dict[str, str]) -> dict[str, str]:
     bare: dict[str, set[str]] = defaultdict(set)
     for name in set(representatives.values()):
         words = normalize_name(name).split()
-        if len(words) >= 2 and _vietnamese_order_name(name) and words[0] not in NAME_PREFIX_TITLES:
+        if len(words) >= 2 and _family_first_name(name) and words[0] not in NAME_PREFIX_TITLES:
             exact[words[-1]].add(name)
             bare[_bare_word(words[-1])].add(name)
     redirected: dict[str, str] = {}
     for key, name in representatives.items():
         words = normalize_name(name).split()
-        if len(words) != 1 or not _vietnamese_order_name(name) or words[0] in NAME_SUFFIX_TITLES:
+        if len(words) != 1 or not _family_first_name(name) or words[0] in NAME_SUFFIX_TITLES:
             continue
         word = words[0]
         targets = exact.get(word) or (bare.get(word) if _bare_word(word) == word else None) or set()
@@ -576,7 +667,7 @@ def canonical_speaker_names(
     cleaned_counts: Counter[str] = Counter()
     cleaned_by_original: dict[str, str] = {}
     for original, count in counts.items():
-        cleaned = _canonical_speaker(original)
+        cleaned = strip_japanese_honorific(_canonical_speaker(original))
         cleaned_by_original[original] = cleaned
         normalized = normalize_name(cleaned)
         if (
@@ -628,6 +719,12 @@ def canonical_speaker_names(
     for key, winner in sorted(given_names.items()):
         log(f"  {representatives[key]} là tên gọi của {winner}: cùng một nhân vật.")
         representatives[key] = winner
+
+    # Tên Nhật: nhãn một chữ (họ hoặc tên gọi) -> tên đủ mà SÁCH viết, khi đúng một người mang chữ ấy.
+    for key, winner in sorted(merge_into_book_full_names(representatives, source).items()):
+        if representatives[key] != winner:
+            log(f"  {representatives[key]} là một phần tên {winner} trong sách: cùng một nhân vật.")
+            representatives[key] = winner
 
     # Sau cùng, chỉ đổi CHỮ hiển thị (một tên thành một tên): tên rơi hết dấu viết lại theo sách.
     marked = restore_source_marks(sorted(set(representatives.values())), source)
