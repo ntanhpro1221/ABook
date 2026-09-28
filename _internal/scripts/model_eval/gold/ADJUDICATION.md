@@ -407,3 +407,27 @@ bài cho "Kuchinashi" (042:20-27, 35). Phát hiện khi mổ lượt đo mốc q
 Phát lại cả 5 chương sau mọi sửa (project `gold:ln3`, lọc TOÀN BỘ đầu ra): 0 dòng LỆCH; chấm lại project phát lại = 100% mọi
 trục, trừ giới tính Yamiyo 81%: 23 dòng nội tâm Hina bị host giữ khoá lời kể (NARRATOR, giới u) -> đưa về `N,T NARRATOR,HINA
 ... u` (điều kiện B tự nêu khi đề xuất T,N). Việc cho bộ tách câu: "(…)" cùng đoạn ngay sau lời thoại là nội tâm người vừa nói.
+
+**Love Unseen 07 (28-09 13:xx) - chương đo LN thứ 6.** A = Claude gán, B = agent soát đối kháng (đọc trọn 01-13, không sửa
+file). B không thấy câu nào sai người nói chính, giới tính hay loại đoạn; phát lại qua host lệch đúng MỘT dòng (90). A chấp
+nhận hết:
+
+| chỗ | A ghi | kết luận | bằng chứng |
+|---|---|---|---|
+| 80, 83, 89, 92, 94, 97, 99 | KOTOMUGI | thêm `YUICHI KOTOMUGI` đủ | 01:895 "Tôi là Yuichi Kotomugi, hội trưởng..."; quy tắc 11 |
+| 41, 171 | N | `N,T NARRATOR,KAKERU...` | tiếng lòng tức thời (quy tắc 4): 41 phản ứng khi bị trêu, 171 tự trả lời câu hỏi tu từ 170; tiền lệ 09:95, 09:142 |
+| 103, 138 | neutral | thêm happy (103 thêm tender) | "nhẹ nhõm" là cue happy; host giờ chỉ ghi lại cue của một câu lẻ nên gold_replay không báo - GOLD_GUIDE đã sửa |
+| 73 | neutral,angry,tired | thêm afraid | "Lo lắng cho Fuyutsuki" - như 57, 188, 247 |
+| 198, 200, 204 | pace normal | thêm slow (198, 204 thêm soft) | 193 "giọng cô chậm chạp như đang chịu đau đớn" |
+| 49, 50, 54 | cường độ 1-2 | 0-2 | tập đã nhận neutral thì phải nhận cường độ 0 |
+| 13 "Uhh…" | KAKERU... | thêm NARRATOR~ | tiếng rên (quy tắc 8) |
+| 54, 58, 100, 117 | NARRATOR,<người nói>~ | NARRATOR trơn | khoá N: host ép NARRATOR, `score_models` không xét danh sách người nói; tiền lệ 09:152 |
+| 90 | NARRATOR | thêm KAKERU~ | lời kể của "tôi" bị khoá D - như quy tắc 10 với T khoá mà thực chất là lời kể |
+
+**Lỗi host (90):** 89 quên đóng ngoặc nên bộ tách khoá 90 ("Tôi nhìn những người bên trong...") là thoại, rồi khoá thoại
+nối tiếp gán nó cho Kotomugi. Chưa có cách phân biệt bằng dấu câu - đoạn giữa một bài nói dài ở TMA (351:30-45) cũng không có
+ngoặc nào; một manh mối có thể: chuỗi ấy không bao giờ đóng ngoặc trước khi đoạn sau mở ngoặc mới.
+
+**Sửa ngược 09:6 (train):** mẹ Fuyutsuki nói ở 4 chương (02:671, 06:43/57/111, 08:225, 09:13) -> `MẸ FUYUTSUKI` đủ, NPC*~,
+UNKNOWN~ (quy tắc 5: nhãn NPC sống một chương; quy tắc 11: tên theo con như "chị Dậu"). `voice_identity --gold-check`:
+love_unseen 8 người, không nhập ai. Mẹ Kakeru ở 07 giữ NPC* đủ - bà chỉ nói ở chương này (B kiểm 01-13).

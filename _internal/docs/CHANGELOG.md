@@ -7,6 +7,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Hộp **"Việc cần anh"** có loại việc mới **"Lượt đối đáp"**: hai đoạn thoại liền nhau không lời dẫn mà máy gán cho cùng một người - đo trên đáp án 7 truyện, 9/10 cặp như thế là máy bỏ lỡ lượt đổi người. Thẻ hỏi câu sau là của ai; truyện kể ngôi thứ nhất thì "tôi" đứng đầu các lựa chọn.
 - **Tên mới: ABook** (trước là Ebook Reader), trên máy tính lẫn điện thoại: lối tắt ở thư mục gốc và Start Menu tên
   "ABook" (lối tắt tên cũ tự gỡ khi mở app), cửa sổ khởi động, dữ liệu app ở `%LOCALAPPDATA%\ABook` (tự chuyển từ thư
   mục tên cũ nếu có). Trình khởi động là `_internal\ABook.vbs`; repo GitHub là `ntanhpro1221/ABook` (địa chỉ cũ

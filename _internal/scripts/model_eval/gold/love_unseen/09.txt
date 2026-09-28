@@ -1,6 +1,6 @@
 # "Love Unseen Beneath the Clear Night Sky" file 09 ("Chương 10: Hai nụ pháo đỏ"). Vòng 7 (20-09): agent review gán (B),
 # Claude soát đối kháng (A) - ADJUDICATION.md. Ngôi thứ nhất: "tôi" = KAKERU / KAKERU SORANO / SORANO. FUYUTSUKI / KOHARU /
-# KOHARU FUYUTSUKI (mù); NARUMI / USHIO NARUMI; HAYASE / YUUKO HAYASE / YUUKO. 6 là mẹ Fuyutsuki (NPC*). 42-43, 50: HAI câu
+# KOHARU FUYUTSUKI (mù); NARUMI / USHIO NARUMI; HAYASE / YUUKO HAYASE / YUUKO. 6 là mẹ Fuyutsuki (MẸ FUYUTSUKI; NPC*~ - bà nói ở 4 chương, sửa 28-09). 42-43, 50: HAI câu
 # liên tiếp của hai người -> mỗi câu một người, đảo nửa điểm (quy tắc 6). 152 thiếu ngoặc mở nên khoá N (quy tắc 10).
 0 H
 1 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI happy,excited,tender 1 normal normal f
@@ -8,7 +8,7 @@
 3 N
 4 N
 5 N
-6 D NPC*,UNKNOWN~ happy,tender 0-1 normal normal f
+6 D MẸ FUYUTSUKI,NPC*~,UNKNOWN~ happy,tender 0-1 normal normal f
 7 N
 8 N NARRATOR neutral,tender 0-1 normal normal u
 9 N NARRATOR neutral,tender 0-1 normal normal u

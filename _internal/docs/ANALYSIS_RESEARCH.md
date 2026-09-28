@@ -63,6 +63,57 @@ Lỗi của model (mổ bằng `score_models --misses` + `scratchpad/turn_taking
 - Bỏ: khoá "(…)" ngay sau lời thoại thành nội tâm - 81 dòng ở Yamiyo nhưng ở truyện khác là ghi chú dịch ("(note: ...)"),
   tiếng động ("(Tiếng sợ hãi)").
 
+## LƯỢT ĐỐI ĐÁP + HAI MODEL BẤT ĐỒNG 28-09 12:xx - hai tín hiệu lỗi đo được trên kết quả đã có (CPU, không tốn GPU)
+
+**Lượt đối đáp.** Cặp câu thoại liền kề ở hai đoạn văn liền nhau, chia theo dấu ngoặc (đáp án 7 truyện, bài làm qwen3:8b):
+
+| kiểu cặp | khác người | cùng người | qwen3:8b gán cùng người mà sai |
+|---|---|---|---|
+| đoạn trước ĐÓNG ngoặc, đoạn sau MỞ ngoặc mới | 91 | 4 | **38/42** cặp nó gán cùng người (LN: TCF 4, Nise 3, HDST 9, Yamiyo 19, YMP 2; TMA 1) |
+| đoạn trước để NGỎ ngoặc (lời nói tiếp) | 0 | 11 (TMA) | - (khoá "thoại nối tiếp" đã lo) |
+| gạch đầu dòng (Tắt đèn) | 16 | 0 | 5 (luật 7ca7ef7 đã lo ở host) |
+
+Một cặp đóng -> mở mà cùng một người thì 90% là máy bỏ lỡ lượt đổi. Tự sửa ở host thì KHÔNG đáng (`scratchpad/
+sim_alternation.py`, 19 lượt model x truyện): sàng "mẫu hội thoại" của Muzny và cs. 2017 (A, B, B -> A, B, A) chỉ đổi 1 câu,
+vì lỗi của model là cả dãy A, A, A sau một câu A có lời dẫn; luân phiên cả dãy với người kể ngôi thứ nhất làm vai kia: +5
+(HDST 4, Yamiyo 1), 0 hỏng; lấy người có tên gần nhất làm vai kia: +9 -3. Nên làm hai việc khác:
+1. **Hộp "Việc cần anh" thẻ "Lượt đối đáp"** (`webui/work_items.py`, nhánh `feat/turn-doubt`): mỗi cặp như thế là một thẻ sửa
+   CÂU SAU, lựa chọn đầu là người kể "tôi" (truyện ngôi thứ nhất), rồi người có tên nói nhiều nhất chương. Độ chính xác đã đo
+   90% - cao hơn mọi tín hiệu khác trong hộp.
+2. **Prompt** (nhánh `dev/ln-turns`): quy tắc 2 thêm "đoạn thoại liền nhau không lời dẫn là hai người luân phiên" và "ngoặc
+   đặc biệt 『』 [ ] là một giọng riêng" (Yamiyo 41 câu 『』 của Tọa Phu Đồng Tử thành SUMIRE/HINA/TOMOBE; TCF 8 bài đăng ẩn
+   danh thành Kuchinashi). Đo ở hàng GPU n, cùng 5 chương LN, so với mốc qwen3:8b.
+
+**Hai model bất đồng về người nói = câu đáng nghe lại** (`scratchpad/disagree.py`: mỗi model gom nhãn qua đúng
+`canonical_speaker_names`; "HINA" và "ONIZUKI HINA" coi là đồng ý). Model chính qwen3:8b, model phụ LoRA v2 (4B):
+
+| truyện | câu | 8b sai | cờ (tải duyệt) | bắt được lỗi | cờ đúng là lỗi | tin cậy tự báo, cùng tải: bắt / đúng |
+|---|---|---|---|---|---|---|
+| Tắt đèn XX, XXI, XXIV | 112 | 30 | 47% | 77% | 43% | 53% / 30% |
+| TMA test (chưa học) | 156 | 58 | 25% | 55% | 82% | 16% / 23% |
+| YMP 248 | 47 | 18 | 38% | 89% | 89% | 33% / 33% |
+| Tam quốc 50-52 | 219 | 46 | 64% | 87% | 29% | 67% / 22% |
+
+Duyệt 20% số câu (xếp: số model phụ bất đồng, rồi tin cậy thấp): bắt 33-50% số lỗi, tin cậy tự báo 11-35%, ngẫu nhiên 20%.
+So với bộ chấm ứng viên đang xếp hộp "Việc cần anh" (`review_curve.py` + `scratchpad/review_curve2.py`, 143 câu TMA test, chấm
+chặt, máy một mình 67,1%): duyệt 20% -> bộ chấm 81,1%, LLM phụ 83,2%, LLM phụ rồi bộ chấm **85,3%** (trần 87,4%); duyệt 30% ->
+85,3 / 89,5 / **91,6%** (trần 97,2%); dưới 15% thì bộ chấm một mình đã bằng cách ghép. Bầu đa số tự đổi nhãn (hai model phụ
+cùng ý, khác 8b): YMP +11, TMA +2, Tam quốc +2, Tắt đèn -3 - không bền, KHÔNG tự áp. Kết luận: lượt phân tích thứ hai bằng
+model 4B là tín hiệu duyệt tốt hơn tin cậy tự báo ở cả 4 truyện và cộng thêm vào bộ chấm từ mức duyệt 20%; giá là một lượt
+phân tích nữa (4B ~ nửa thời gian 8B). Chưa dựng vào app: chờ số trên bộ LN (hàng i đo qwen3:8b, v2, v3 cùng 5 chương).
+
+**Lỗi người nói của qwen3:8b trên LN, theo loại** (4 chương, 288 câu, 130 câu sai, nhãn đã gom tên): tên A -> tên B **104**
+(Yamiyo 72, trong đó 41 câu 『』 của Tọa Phu Đồng Tử; phần còn lại phần lớn là gộp/lệch lượt đối đáp), đáp án NARRATOR mà
+model gán người có tên 11 (TCF: 8 bài đăng ẩn danh thành Kuchinashi), người vô danh bị gán tên đã biết 9 (ông chú ở Nise),
+người có tên thành vô danh 6. "Chộp tên quen" theo nghĩa hẹp (vô danh -> tên) là lỗi NHỎ; lỗi lớn là nhầm giữa những người
+đã biết - đúng hai thứ prompt `dev/ln-turns` nhắm tới.
+
+**Chương đo thứ 6 (28-09 13:xx): Love Unseen 07** - LN Nhật ngôi thứ nhất, 132 câu có người nói, gần như toàn đối đáp hai
+người không lời dẫn (Kakeru - Fuyutsuki, Kakeru - mẹ qua điện thoại). Hai truyện định chọn trước (Năng lực bá đạo, Đã bảo
+là cùng nhau tự sát) hoá ra là truyện TRUNG - kho hiện chỉ có 6 truyện LN Nhật/Hàn thật. Gold phát lại qua host 99,7%: lệch
+duy nhất 90 - đoạn KỂ ("Tôi nhìn những người bên trong...") ngay sau một câu thoại quên đóng ngoặc bị khoá thoại nối tiếp
+gán cho người vừa nói (lỗi host, chưa có cách phân biệt bằng dấu câu: đoạn giữa một bài nói dài ở TMA cũng y như thế).
+
 ## LORA NỀN 8B TRÊN CARD 8 GB 28-09 (chủ sách: "sao không huấn luyện trên nền qwen3:8b?")
 
 Unsloth trong WSL2 archlinux (`train_lora_unsloth.py`, cùng siêu tham số với 4B). Thử VRAM trên 8 mẫu DÀI NHẤT:
@@ -79,6 +130,16 @@ Hạ tầng rút ra cùng lúc: WSL `networkingMode=mirrored` làm rớt wifi Re
 WSL (192.168.0.1/20) trùng cổng wifi 192.168.0.1 nên WSL không ra mạng - model tải bằng Python bên Windows
 (`LLM_Train/scripts/fetch_hf.py`), WSL chạy OFFLINE; xuất GGUF 8B cũng làm bên Windows (`serve_lora.py --like qwen3:8b
 --quantize q4_K_M`, gộp CPU với bản gốc 16-bit).
+
+**Lên đám mây (28-09 13:xx, chủ sách: "thử cả 9b đi / 8b, 4b thì huấn luyện", "sử dụng hết tài nguyên").** Cùng data_v3, cùng
+`train_lora_unsloth.py` (thêm `--load-16bit`, `--time-limit-hours`, fp16 khi card không có bf16):
+- Kaggle (miễn phí 30 giờ/tuần, T4 16 GB): 8B QLoRA trên nền 4-bit "dynamic" của Unsloth - ~100 s/bước, ~6 giờ/epoch. L4 không
+  cấp cho tài khoản miễn phí (`machine_shape` bị bỏ qua); Qwen3.5 trên T4 phải float32 nên 9B không chạy được ở Kaggle.
+- Modal (30 USD/tháng, spend limit 0): L40S 48 GB. Qwen3.5-9B LoRA 16-bit (Unsloth không khuyên 4-bit cho Qwen3.5): **12 s/bước,
+  ~45 phút/epoch, ~1,5 USD** - nhanh hơn card nhà ~5 lần và rẻ, nên mọi thử nghiệm huấn luyện chuyển lên đây (4B 1 và 2 epoch
+  16-bit, 8B 16-bit); GPU nhà dành trọn cho ĐO - chỗ nghẽn thật. Xuất GGUF làm ngay trên Modal (`modal_train.py --gguf`).
+- Card nhà khi huấn luyện 4B: màn hình + app chiếm ~1,5 GB, trần `--vram-cap 0.95` làm driver tràn VRAM sang RAM (38 -> 295
+  s/bước); dùng 0,78.
 
 ## Cách đo
 
