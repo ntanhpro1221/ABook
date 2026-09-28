@@ -831,21 +831,54 @@ class SyncServer:
         self.httpd.server_close()
 
 
+# Card mạng ảo trên máy (WSL/Hyper-V, VirtualBox, VMware, Docker...): điện thoại không bao giờ tới được địa chỉ của chúng.
+VIRTUAL_ADAPTERS = ("vethernet", "hyper-v", "wsl", "virtualbox", "vmware", "docker", "loopback")
+
+
+def _virtual_addresses() -> set[str]:
+    try:
+        import psutil
+    except ImportError:
+        return set()
+    try:
+        return {
+            address.address
+            for name, addresses in psutil.net_if_addrs().items()
+            if any(marker in name.casefold() for marker in VIRTUAL_ADAPTERS)
+            for address in addresses
+            if address.family == socket.AF_INET
+        }
+    except OSError:
+        return set()
+
+
+def _tailscale(address: str) -> bool:
+    """100.64.0.0/10 - dải của Tailscale (CGNAT): dùng được từ xa, nhưng cùng Wi-Fi thì không phải địa chỉ nên gõ."""
+    parts = address.split(".")
+    return len(parts) == 4 and parts[0] == "100" and parts[1].isdigit() and 64 <= int(parts[1]) <= 127
+
+
 def local_addresses() -> list[str]:
-    """Địa chỉ LAN của máy (để hiện cho người dùng khi điện thoại không tự tìm thấy)."""
+    """Địa chỉ LAN của máy (để hiện cho người dùng khi điện thoại không tự tìm thấy): địa chỉ ra mạng chính ĐẦU TIÊN, Tailscale
+    cuối, bỏ card ảo và địa chỉ link-local 169.254.x.x. Soát UX 29-09: "gõ 100.73.x.x hoặc 192.168.0.1 hoặc 192.168.0.230" -
+    192.168.0.1 là card WSL, 100.73 là Tailscale, người dùng không biết gõ cái nào."""
     addresses: set[str] = set()
+    primary = ""
     try:
         probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         probe.connect(("10.255.255.255", 1))
-        addresses.add(probe.getsockname()[0])
+        primary = probe.getsockname()[0]
         probe.close()
     except OSError:
         pass
     try:
         for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):
             address = info[4][0]
-            if not address.startswith("127."):
+            if not address.startswith(("127.", "169.254.")):
                 addresses.add(address)
     except OSError:
         pass
-    return sorted(addresses)
+    addresses -= _virtual_addresses()
+    if primary:
+        addresses.add(primary)
+    return sorted(addresses, key=lambda address: (address != primary, _tailscale(address), address))
