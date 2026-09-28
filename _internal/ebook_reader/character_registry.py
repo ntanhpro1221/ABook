@@ -94,8 +94,16 @@ PRONOUNS = {
 # không: đó là người khác, và chỗ của chúng vẫn là nhóm vô danh.
 FIRST_PERSON_PRONOUNS = {"tôi", "ta", "mình", "tớ", "tao", "tui", "me"}
 RESERVED_SPEAKERS = {"narrator": "NARRATOR", "unknown": "UNKNOWN"}
+# Chức danh đứng TRƯỚC tên: "GIÁO SƯ GLAST" là Glast. Bộ đo LN 28-09 (Hướng dẫn sinh tồn 062): qwen3:8b ghi 10 câu của Glast
+# là "GIÁO SƯ GLAST", các câu khác "Glast" - hai giọng, vì danh sách cũ chỉ có xưng hô gia đình và tước quý tộc. LN (và
+# truyện Hàn, Trung) đầy chức danh học đường, hoàng tộc, quân đội, sư môn. Tên đứng sau vẫn phải là tên riêng viết La-tinh
+# (`ASCII_PROPER_NAME_PATTERN`) VÀ đã là một nhãn khác (`_canonicalize...` chỉ gom về đại diện có sẵn) - hai chốt cũ giữ nguyên.
+# Chức danh dài đứng trước chức danh ngắn cùng tiền tố ("cô giáo" trước "cô").
 HONORIFIC_PREFIX_PATTERN = re.compile(
-    r"^(?:anh|chị|cô|dì|chú|bác|ông|bà|ngài|quý cô|quý ông|bá tước|công tước|đức ngài)\s+(.+)$",
+    r"^(?:trợ lý giáo sư|phó giáo sư|giáo sư|hiệu trưởng|hiệu phó|giáo viên|cô giáo|thầy giáo|thầy|sư phụ|sư huynh|sư tỷ"
+    r"|sư muội|sư đệ|tiền bối|học trưởng|học tỷ|tiểu thư|thiếu gia|công chúa|hoàng tử|hoàng đế|nữ hoàng|hoàng hậu"
+    r"|quận chúa|điện hạ|bệ hạ|đội trưởng|thuyền trưởng|chỉ huy|thánh nữ|anh|chị|cô|dì|chú|bác|ông|bà|ngài|quý cô"
+    r"|quý ông|bá tước|công tước|nam tước|tử tước|hầu tước|đức ngài)\s+(.+)$",
     flags=re.IGNORECASE,
 )
 ASCII_PROPER_NAME_PATTERN = re.compile(
