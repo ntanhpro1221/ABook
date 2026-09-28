@@ -156,6 +156,8 @@ export interface ScanResult {
   subfolders: string[];
   suggestedTitle: string;
   totals: { chapters: number; words: number; audioSeconds: number };
+  /** Dự án đã làm từ chính những file này (so nội dung): `shared` file trùng, dự án ấy có `chapters` chương. */
+  existing?: { id: string; title: string; statusLabel: string; shared: number; chapters: number }[];
 }
 
 export interface AppInfo {
