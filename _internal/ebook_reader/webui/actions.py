@@ -27,14 +27,30 @@ SCAN_WORD_LIMIT_BYTES = 4 * 1024 * 1024
 UPLOAD_FOLDER = "Nguồn tải lên"
 MAX_SOURCE_UPLOAD = 8 * 1024 * 1024  # một chương; chương dài nhất của kho truyện ~200 KB
 _UNSAFE_NAME = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
+# Tên thiết bị của Windows: làm tên thư mục hay file là ghi vào THIẾT BỊ, không vào đĩa.
+_DEVICE_NAME = re.compile(r"^(con|prn|aux|nul|com[0-9¹²³]|lpt[0-9¹²³])(\..*)?$", re.IGNORECASE)
+
+
+def inside_folder(path: str, root: Path) -> bool:
+    """`path` nằm trong `root`? Từ chối TRƯỚC khi chạm đĩa đường UNC (`\\\\máy\\share`, `//máy/share`) và đường thiết bị
+    (`\\\\?\\`, `\\\\.\\`): chỉ cần phân giải chúng là Windows đã nối mạng, gửi cả thông tin đăng nhập (soát 28-09)."""
+    text = path.strip()
+    if not text or text.startswith(("\\\\", "//")) or "\x00" in text:
+        return False
+    try:
+        return Path(text).resolve().is_relative_to(root.resolve())
+    except (OSError, ValueError):
+        return False
 
 
 def upload_source(library_root: Path, folder: str, name: str, data: bytes) -> Path:
     """Ghi một chương TXT gửi từ máy khác vào `<thư viện>/Nguồn tải lên/<thư mục>/`, trả thư mục ấy.
 
-    Chỉ lấy TÊN file (không đường dẫn), chỉ `.txt`, tên thư mục và tên file bỏ ký tự Windows không nhận - không có
-    cách nào ghi ra ngoài thư mục tải lên. Byte giữ nguyên: bảng mã do dây chuyền nhận như với file trên máy."""
-    if not str(library_root) or not library_root.is_dir():
+    Chỉ lấy TÊN file (không đường dẫn), chỉ `.txt`, tên thư mục và tên file bỏ ký tự Windows không nhận, không nhận tên
+    thiết bị (CON, NUL, COM1...) - không có cách nào ghi ra ngoài thư mục tải lên. KHÔNG ghi đè: đè lên nguồn của một
+    cuốn đã tạo là cuốn ấy không chạy tiếp được nữa ("Source chapter đã thay đổi nội dung"). Byte giữ nguyên: bảng mã do
+    dây chuyền nhận như với file trên máy."""
+    if str(library_root) in ("", ".") or not library_root.is_dir():
         raise ValueError("Máy tính chưa có thư mục thư viện")
     if len(data) > MAX_SOURCE_UPLOAD:
         raise ValueError("File quá lớn - tối đa 8 MB một chương")
@@ -42,9 +58,13 @@ def upload_source(library_root: Path, folder: str, name: str, data: bytes) -> Pa
     file_name = " ".join(_UNSAFE_NAME.sub(" ", name.replace("\\", "/").rsplit("/", 1)[-1]).split()).strip(" .")[:120]
     if not file_name.lower().endswith(".txt"):
         raise ValueError("Chỉ nhận file .txt - mỗi file là một chương")
+    if _DEVICE_NAME.match(folder_name) or _DEVICE_NAME.match(file_name):
+        raise ValueError("Tên này là tên thiết bị của Windows - đổi tên file rồi gửi lại")
     target_dir = library_root / UPLOAD_FOLDER / folder_name
     target_dir.mkdir(parents=True, exist_ok=True)
     target = target_dir / file_name
+    if target.exists():
+        raise ValueError(f"Đã có chương {file_name} trong lần gửi này - hai file trùng tên")
     temporary = target_dir / f".{file_name}.part"
     temporary.write_bytes(data)
     os.replace(temporary, target)

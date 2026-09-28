@@ -10,7 +10,9 @@ export async function uploadChapters(files: File[], onProgress: (done: number, t
   if (!chapters.length) throw new Error("Chọn các file .txt - mỗi file là một chương");
   const now = new Date();
   const two = (value: number) => String(value).padStart(2, "0");
-  const folder = `Tải lên ${two(now.getDate())}-${two(now.getMonth() + 1)}-${now.getFullYear()} ${two(now.getHours())}h${two(now.getMinutes())}`;
+  // Mỗi lần gửi một thư mục riêng (thêm mã ngẫu nhiên): hai lần gửi trong cùng phút không trộn chương vào nhau.
+  const tag = Math.random().toString(36).slice(2, 6);
+  const folder = `Tải lên ${two(now.getDate())}-${two(now.getMonth() + 1)}-${now.getFullYear()} ${two(now.getHours())}h${two(now.getMinutes())} ${tag}`;
   let target = "";
   for (const [index, file] of chapters.entries()) {
     const result = await api<{ folder: string }>("/api/sources/upload", {
