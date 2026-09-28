@@ -1,0 +1,235 @@
+# "Yamiyo no Hotaru" file 009 ("Truyện ngắn kỷ niệm Giao thừa năm 2025"). Làm 28-09 cho vòng dữ liệu v5: hai lỗi lớn
+# nhất của model trên bộ LN là dòng 『』 (sai 56-67%) và đối đáp hai người không lời dẫn ở truyện ngôi thứ nhất (Yamiyo
+# 83/126 câu sai). Chương này có cả hai, và cách xa chương thi 141 (không lộ đề). Claude gán (A), B soát 28-09 (chấp nhận
+# hết: thêm NPC*~ trước khi gọi tên, NARRATOR~ cho tiếng không lời, N,T cho tự nhủ, cảm xúc theo từ gợi ý).
+# Ngôi thứ nhất: "tôi" = TOMOBE (m; kho chỉ có dạng kèm kính xưng - quy tắc 11 loại). Ba phần (số là seq):
+# - Phần 1 (hồi tưởng, 5-127): tôi hồi nhỏ và HINA / ONIZUKI HINA (tiểu thư, f) đối đáp gần như không lời dẫn - theo
+#   lượt: HINA xưng "ta" gọi "ngươi", tôi gọi "Tiểu thư", xưng "tôi"; 7 nói trước khi lời kể gọi tên (10) -> NPC*~; 61
+#   "Nếu là cậu thì..." vẫn là Hina ("cậu" = ông thủ quỹ); 90/91 "Mời cả nhà dùng bữa."/"Itadakimasu!" không rõ ai
+#   trước -> người được chọn đủ, người kia ~. Lời kể là tự nhủ / câu hỏi tu từ của tôi -> N,T (13 "Mùi vị của thời Showa
+#   ư?" - Hina đáp đúng chữ ấy ở 14).
+# - Phần 2 (hiện tại, 129-179): tôi, MAGOROKU (m, nấu Soba) và MARI (f, cô em mù) - kho không có họ; 129 "Ngài sao vậy
+#   ạ?" và 171 "Vâng!" không lời dẫn -> MAGOROKU đủ, MARI~; 129/144 nói trước khi gọi tên -> NPC*~. 『』 xen giữa = TỌA PHU
+#   ĐỒNG TỬ (thần giữ nhà Onizuki: 164 "Là nhà của thiếp cơ mà", xưng "thiếp" với "chàng", "ta" với người khác; 096:423/479
+#   gọi tên; 100:371 cùng kiểu "♪ + đồ ăn"; như gold 141) - tên cả cuốn đủ (quy tắc 7c), NPC*~, UNKNOWN~; KHÔNG phải Mari hay
+#   Magoroku dù nói ngay sau họ. Tiếng không lời ("Chụt chụt", "Khạc. Phù.") -> thêm NARRATOR~.
+# - Phần 3 (180-209): "ả" một mình trong phòng tối = HINA (bát Soba rau rừng "hương vị của ký ức cùng hắn", "ở bên cạnh
+#   (soba) chàng" - đúng lời hỏi của Hina ở 118; "đứa em gái" = Aoi 079:299, "tảng mỡ thừa" = Uemon 079:207); chương không
+#   gọi tên -> HINA đủ, NPC*~. 「」 của ả xưng "thiếp" với "chàng" như Tọa Phu Đồng Tử nhưng là NGƯỜI KHÁC (ngoặc khác, có
+#   thân xác, ở phòng khác). Tiếng lòng xưng "ta" trong lời kể ngôi ba (186, 196, 197, 199, 202) -> N,T, HINA~; 200 "Chỉ
+#   mình ta, mới có thể trao tặng..." trọn là lời trong đầu -> HINA đủ. 『』 cuối (201-209, phá bức tường thứ tư) = TỌA
+#   PHU ĐỒNG TỬ.
+# - "(...)" 27, 59: nội tâm của tôi, khoá T -> TOMOBE (như 141:26). 210 "Hãy bình luận để ủng hộ người đăng nhé!" - lời
+#   người đăng bản dịch -> NARRATOR.
+# Host sai (giữ đáp án): 40 "vui vẻ" là CỐ TỎ RA vui (thêm sad cạnh happy); 128 "gào lên" là Hina đùa ("phồng má").
+0 H
+1 N
+2 N
+3 N
+4 N
+5 D TOMOBE surprised,sad 1-2 normal,slow normal m
+6 N
+7 D HINA,ONIZUKI HINA,NPC*~ surprised,neutral 0-1 normal normal f
+8 N NARRATOR neutral,surprised 0-1 normal normal u
+9 D TOMOBE surprised,afraid 1-2 normal,fast normal m
+10 N
+11 D TOMOBE neutral,surprised 0-1 normal normal m
+12 N
+13 N,T NARRATOR,TOMOBE neutral,sarcastic,excited 0-1 normal normal u
+14 D HINA,ONIZUKI HINA neutral,surprised 0-1 normal normal f
+15 D TOMOBE excited,surprised,happy 1-2 normal,fast normal,loud m
+16 N,T NARRATOR,TOMOBE neutral,excited,sarcastic 0-1 normal normal u
+17 N,T NARRATOR,TOMOBE excited,sarcastic,neutral 0-1 normal normal u
+18 D TOMOBE excited,surprised 1-2 fast,normal normal,loud m
+19 N NARRATOR neutral,excited,sarcastic 0-1 normal normal u
+20 N,T NARRATOR,TOMOBE excited,sarcastic,angry,neutral 0-1 normal normal u
+21 D HINA,ONIZUKI HINA neutral,sarcastic 0-1 normal normal f
+22 D TOMOBE surprised,excited 1-2 normal,fast normal,loud m
+23 N NARRATOR neutral,sad 0-1 normal normal u
+24 D TOMOBE sad,tired,neutral 0-1 normal,slow normal,soft m
+25 N
+26 N
+27 T TOMOBE neutral,surprised 0-1 normal normal,soft m
+28 N,T NARRATOR,TOMOBE neutral,sarcastic,surprised 0-1 normal normal u
+29 D HINA,ONIZUKI HINA neutral,sad 0-1 normal normal,soft f
+30 D TOMOBE neutral 0-1 normal normal m
+31 N
+32 D HINA,ONIZUKI HINA neutral,sad 0-1 normal normal,soft f
+33 D TOMOBE neutral 0-1 normal normal m
+34 N
+35 N
+36 N,T NARRATOR,TOMOBE neutral,sarcastic 0-1 normal normal u
+37 N,T NARRATOR,TOMOBE neutral,sarcastic 0-1 normal normal u
+38 N,T NARRATOR,TOMOBE neutral,sad,tender 0-1 normal normal u
+39 D TOMOBE neutral,happy 0-1 normal normal m
+40 N NARRATOR neutral,sad,happy 0-1 normal normal u
+41 N
+42 D HINA,ONIZUKI HINA sad,neutral 0-1 normal,slow normal,soft f
+43 D TOMOBE neutral,happy 0-1 normal normal m
+44 N
+45 N
+46 D HINA,ONIZUKI HINA sad,tired,neutral 0-1 normal normal f
+47 D TOMOBE neutral,happy 0-1 normal normal m
+48 N,T NARRATOR,TOMOBE neutral,afraid,excited 0-1 normal normal u
+49 D HINA,ONIZUKI HINA angry,sarcastic 1-2 normal normal,loud f
+50 D TOMOBE happy,sarcastic,neutral 0-1 normal normal m
+51 D HINA,ONIZUKI HINA angry 1-2 normal,fast normal,loud f
+52 N,T NARRATOR,TOMOBE neutral,tired,sad 0-1 normal normal u
+53 D HINA,ONIZUKI HINA angry,sad 0-1 normal normal,soft f
+54 D TOMOBE neutral,surprised 0-2 normal,fast normal,loud m
+55 N
+56 D HINA,ONIZUKI HINA sad,surprised 0-1 normal normal,soft f
+57 D TOMOBE neutral,tender 0-1 normal normal m
+58 N
+59 T TOMOBE neutral,happy 0-1 normal normal,soft m
+60 N
+61 D HINA,ONIZUKI HINA neutral,happy 0-1 normal,slow soft,normal f
+62 N
+63 D TOMOBE tired,neutral 0-1 normal,slow normal m
+64 N
+65 D HINA,ONIZUKI HINA happy 0-1 normal normal f
+66 D TOMOBE neutral,surprised 0-1 normal normal m
+67 D HINA,ONIZUKI HINA happy,excited 0-1 normal normal f
+68 D TOMOBE neutral,happy 0-1 normal normal m
+69 N
+70 D TOMOBE surprised 0-1 normal,slow normal m
+71 D HINA,ONIZUKI HINA happy,neutral 0-1 normal normal f
+72 D TOMOBE surprised 0-1 normal normal m
+73 D HINA,ONIZUKI HINA happy,neutral 0-1 normal normal f
+74 D TOMOBE surprised 0-1 normal,slow normal m
+75 N,T NARRATOR,TOMOBE surprised,afraid,neutral 0-1 normal normal u
+76 D TOMOBE surprised,afraid,neutral 0-1 normal normal m
+77 D HINA,ONIZUKI HINA happy,excited 1-2 normal normal,loud f
+78 N
+79 N
+80 N
+81 N
+82 N
+83 N
+84 D TOMOBE tender,surprised,neutral,whispering 0-1 slow,normal soft,normal m
+85 D HINA,ONIZUKI HINA happy,excited,afraid 0-2 normal normal f
+86 N NARRATOR neutral,afraid 0-1 normal normal u
+87 D TOMOBE happy,excited 1-2 normal normal,loud m
+88 D HINA,ONIZUKI HINA happy,tender,neutral 0-1 normal normal,soft f
+89 N NARRATOR neutral,happy 0-1 normal normal u
+90 D TOMOBE,HINA~,ONIZUKI HINA~ neutral,happy 0-1 normal normal m
+91 D HINA,ONIZUKI HINA,TOMOBE~ happy,excited 0-1 normal normal f
+92 N
+93 D TOMOBE,NARRATOR~ happy,tired,neutral 0-1 normal,slow normal,soft m
+94 N NARRATOR neutral,happy,tender 0-1 normal normal u
+95 D HINA,ONIZUKI HINA neutral,happy 0-1 normal normal f
+96 D TOMOBE happy,neutral 0-1 normal normal m
+97 D HINA,ONIZUKI HINA happy 0-1 normal normal f
+98 N NARRATOR neutral,happy 0-1 normal normal u
+99 D TOMOBE neutral,sad,tender,whispering 0-1 normal,slow soft,normal m
+100 D HINA,ONIZUKI HINA neutral,surprised 0-1 normal normal f
+101 N NARRATOR neutral,sad 0-1 normal normal u
+102 N NARRATOR neutral,sad 0-1 normal normal u
+103 N NARRATOR neutral,sad,tender 0-1 normal normal u
+104 D HINA,ONIZUKI HINA tender,neutral 0-1 normal normal,soft f
+105 D TOMOBE happy,tender,neutral 0-1 normal normal m
+106 N NARRATOR neutral,tender,happy 0-1 normal normal u
+107 D HINA,ONIZUKI HINA neutral,tender,sad 0-1 normal,slow normal,soft f
+108 D TOMOBE neutral,tender 0-1 normal normal m
+109 N NARRATOR neutral,tender,sad 0-1 normal normal u
+110 N,T NARRATOR,TOMOBE neutral,tender,sad 0-1 normal normal u
+111 D TOMOBE neutral,sad 0-1 normal normal,soft m
+112 N NARRATOR neutral,sad 0-1 normal normal u
+113 D TOMOBE neutral,surprised 0-1 normal normal m
+114 N
+115 D TOMOBE neutral,afraid 0-1 normal normal m
+116 D HINA,ONIZUKI HINA neutral,tender,sad 0-1 slow,normal soft,normal f
+117 N
+118 D HINA,ONIZUKI HINA sad,afraid,tender,neutral 0-1 normal,slow normal,soft f
+119 N
+120 N,T NARRATOR,TOMOBE neutral,sad 0-1 normal normal u
+121 D HINA,ONIZUKI HINA afraid,sad 0-1 normal normal,soft f
+122 N NARRATOR neutral,afraid 0-1 normal normal u
+123 D TOMOBE tender,happy,neutral 0-1 normal normal m
+124 D HINA,ONIZUKI HINA happy,excited 1-2 normal normal,loud f
+125 N NARRATOR neutral,sad,tender 0-1 normal normal u
+126 D TOMOBE neutral,sarcastic,happy 0-1 normal normal m
+127 D HINA,ONIZUKI HINA angry,sarcastic 1-2 normal,fast loud,normal f
+128 N NARRATOR neutral,happy,sarcastic 0-1 normal normal u
+129 D MAGOROKU,MARI~,NPC*~ neutral,surprised 0-1 normal normal m
+130 D TOMOBE neutral,tender 0-1 normal,slow normal,soft m
+131 D TỌA PHU ĐỒNG TỬ,TOẠ PHU ĐỒNG TỬ,ZASHIKI-WARASHI,NPC*~,UNKNOWN~ happy,excited 0-1 normal normal f
+132 N
+133 D TỌA PHU ĐỒNG TỬ,TOẠ PHU ĐỒNG TỬ,ZASHIKI-WARASHI,NPC*~,UNKNOWN~ happy,excited 0-1 normal normal f
+134 D MAGOROKU afraid,sad,neutral 0-1 normal normal m
+135 D TỌA PHU ĐỒNG TỬ,TOẠ PHU ĐỒNG TỬ,ZASHIKI-WARASHI,NPC*~,UNKNOWN~,NARRATOR~ happy,neutral 0-1 normal normal f
+136 N
+137 N
+138 D TỌA PHU ĐỒNG TỬ,TOẠ PHU ĐỒNG TỬ,ZASHIKI-WARASHI,NPC*~,UNKNOWN~ happy,excited 0-1 normal normal f
+139 D TOMOBE neutral,happy 0-1 normal normal m
+140 D TỌA PHU ĐỒNG TỬ,TOẠ PHU ĐỒNG TỬ,ZASHIKI-WARASHI,NPC*~,UNKNOWN~ neutral,happy,sarcastic 0-1 normal normal f
+141 N
+142 N
+143 D TỌA PHU ĐỒNG TỬ,TOẠ PHU ĐỒNG TỬ,ZASHIKI-WARASHI,NPC*~,UNKNOWN~ sarcastic,happy,neutral 0-1 normal normal f
+144 D MARI,NPC*~ neutral,tender,happy 0-1 normal normal,soft f
+145 D TỌA PHU ĐỒNG TỬ,TOẠ PHU ĐỒNG TỬ,ZASHIKI-WARASHI,NPC*~,UNKNOWN~ angry,sarcastic,neutral 0-1 normal normal f
+146 N
+147 D TỌA PHU ĐỒNG TỬ,TOẠ PHU ĐỒNG TỬ,ZASHIKI-WARASHI,NPC*~,UNKNOWN~ sarcastic,happy 0-1 normal normal f
+148 D TOMOBE neutral,tender 0-1 normal normal m
+149 D MAGOROKU neutral,afraid 0-1 normal normal m
+150 D TỌA PHU ĐỒNG TỬ,TOẠ PHU ĐỒNG TỬ,ZASHIKI-WARASHI,NPC*~,UNKNOWN~,NARRATOR~ happy,neutral 0-1 normal normal f
+151 N
+152 D TỌA PHU ĐỒNG TỬ,TOẠ PHU ĐỒNG TỬ,ZASHIKI-WARASHI,NPC*~,UNKNOWN~,NARRATOR~ neutral,sarcastic 0-1 normal normal f
+153 D TOMOBE neutral,tender 0-1 normal normal m
+154 D TỌA PHU ĐỒNG TỬ,TOẠ PHU ĐỒNG TỬ,ZASHIKI-WARASHI,NPC*~,UNKNOWN~ sarcastic,happy 0-1 normal normal,soft f
+155 N
+156 D TỌA PHU ĐỒNG TỬ,TOẠ PHU ĐỒNG TỬ,ZASHIKI-WARASHI,NPC*~,UNKNOWN~ sarcastic,tender,happy 0-1 normal normal f
+157 D MARI neutral,tender 0-1 normal normal,soft f
+158 D TOMOBE neutral 0-1 normal normal m
+159 D MARI,MAGOROKU~ afraid,neutral 0-1 normal normal,soft f
+160 D TỌA PHU ĐỒNG TỬ,TOẠ PHU ĐỒNG TỬ,ZASHIKI-WARASHI,NPC*~,UNKNOWN~ sarcastic,happy 0-1 normal normal f
+161 N NARRATOR neutral,afraid 0-1 normal normal u
+162 D TỌA PHU ĐỒNG TỬ,TOẠ PHU ĐỒNG TỬ,ZASHIKI-WARASHI,NPC*~,UNKNOWN~ sarcastic,happy 0-1 normal normal f
+163 D TOMOBE neutral,happy,sarcastic 0-1 normal normal m
+164 D TỌA PHU ĐỒNG TỬ,TOẠ PHU ĐỒNG TỬ,ZASHIKI-WARASHI,NPC*~,UNKNOWN~ sarcastic,neutral 0-1 normal normal f
+165 N NARRATOR neutral,sad,sarcastic 0-1 normal normal u
+166 D TỌA PHU ĐỒNG TỬ,TOẠ PHU ĐỒNG TỬ,ZASHIKI-WARASHI,NPC*~,UNKNOWN~ sarcastic,happy 0-1 normal normal f
+167 D TOMOBE happy,neutral 0-1 normal normal m
+168 D TỌA PHU ĐỒNG TỬ,TOẠ PHU ĐỒNG TỬ,ZASHIKI-WARASHI,NPC*~,UNKNOWN~ happy,sarcastic,neutral 0-1 normal normal f
+169 N,T NARRATOR,TOMOBE neutral,happy 0-1 normal normal u
+170 D TỌA PHU ĐỒNG TỬ,TOẠ PHU ĐỒNG TỬ,ZASHIKI-WARASHI,NPC*~,UNKNOWN~ tender,sarcastic,happy 0-1 normal normal,soft f
+171 D MAGOROKU,MARI~ happy,excited 0-1 normal normal m
+172 D MARI happy,excited 0-1 normal normal f
+173 D TỌA PHU ĐỒNG TỬ,TOẠ PHU ĐỒNG TỬ,ZASHIKI-WARASHI,NPC*~,UNKNOWN~ tender,happy 0-1 normal normal,soft f
+174 N NARRATOR neutral,happy 0-1 normal normal u
+175 D TỌA PHU ĐỒNG TỬ,TOẠ PHU ĐỒNG TỬ,ZASHIKI-WARASHI,NPC*~,UNKNOWN~ sarcastic,neutral 0-1 normal normal,soft f
+176 N,T NARRATOR,TOMOBE neutral,tender,happy 0-1 normal normal u
+177 D TỌA PHU ĐỒNG TỬ,TOẠ PHU ĐỒNG TỬ,ZASHIKI-WARASHI,NPC*~,UNKNOWN~ tender,sarcastic 0-1 normal,slow soft,normal f
+178 N NARRATOR neutral,sad 0-1 normal normal u
+179 D TỌA PHU ĐỒNG TỬ,TOẠ PHU ĐỒNG TỬ,ZASHIKI-WARASHI,NPC*~,UNKNOWN~ sarcastic,neutral 0-1 normal normal f
+180 N NARRATOR neutral,afraid 0-1 normal normal u
+181 N NARRATOR neutral,sad 0-1 normal normal u
+182 D HINA,ONIZUKI HINA,NPC*~,NARRATOR~ sarcastic,angry 0-1 normal normal,soft f
+183 N NARRATOR neutral,afraid 0-1 normal normal u
+184 N NARRATOR neutral 0-1 normal normal u
+185 N NARRATOR neutral 0-1 normal normal u
+186 N,T NARRATOR,HINA~,ONIZUKI HINA~ neutral,afraid,angry 0-1 normal normal u
+187 D HINA,ONIZUKI HINA,NPC*~ neutral,tender 0-1 normal,slow soft,normal f
+188 N NARRATOR neutral,happy,tender 0-1 normal normal u
+189 D HINA,ONIZUKI HINA,NPC*~ neutral,tender 0-1 normal normal,soft f
+190 N NARRATOR neutral,afraid 0-1 normal normal u
+191 N NARRATOR neutral,afraid 0-1 normal normal u
+192 D HINA,ONIZUKI HINA,NPC*~,NARRATOR~ happy,tired,neutral 0-1 normal,slow normal,soft f
+193 N NARRATOR neutral,afraid 0-1 normal normal u
+194 D HINA,ONIZUKI HINA,NPC*~,NARRATOR~ happy,sarcastic 0-2 normal,slow normal,soft f
+195 N NARRATOR neutral,afraid 0-1 normal normal u
+196 N,T NARRATOR,HINA~,ONIZUKI HINA~ neutral,afraid,tender 0-1 normal normal u
+197 N,T NARRATOR,HINA~,ONIZUKI HINA~ neutral,afraid 0-1 normal normal u
+198 D HINA,ONIZUKI HINA,NPC*~ tender,happy 0-1 normal,slow soft,normal f
+199 N,T NARRATOR,HINA~,ONIZUKI HINA~ neutral,happy,angry,sarcastic,afraid 0-1 normal normal u
+200 N,T NARRATOR,HINA,ONIZUKI HINA neutral,happy,tender 0-1 normal normal u
+201 D TỌA PHU ĐỒNG TỬ,TOẠ PHU ĐỒNG TỬ,ZASHIKI-WARASHI,NPC*~,UNKNOWN~ excited,happy 1-2 normal normal,loud f
+202 N,T NARRATOR,HINA~,ONIZUKI HINA~ neutral,happy,afraid 0-1 normal normal u
+203 D TỌA PHU ĐỒNG TỬ,TOẠ PHU ĐỒNG TỬ,ZASHIKI-WARASHI,NPC*~,UNKNOWN~ happy,surprised,sarcastic 0-1 normal normal f
+204 D HINA,ONIZUKI HINA,NPC*~,NARRATOR~ sarcastic,happy 0-1 normal normal,soft f
+205 D TỌA PHU ĐỒNG TỬ,TOẠ PHU ĐỒNG TỬ,ZASHIKI-WARASHI,NPC*~,UNKNOWN~ happy,sarcastic 0-1 normal normal f
+206 N NARRATOR neutral,afraid 0-1 normal normal u
+207 D TỌA PHU ĐỒNG TỬ,TOẠ PHU ĐỒNG TỬ,ZASHIKI-WARASHI,NPC*~,UNKNOWN~ happy,excited 0-1 normal normal f
+208 D TỌA PHU ĐỒNG TỬ,TOẠ PHU ĐỒNG TỬ,ZASHIKI-WARASHI,NPC*~,UNKNOWN~ sarcastic,neutral 0-1 normal normal,soft f
+209 D TỌA PHU ĐỒNG TỬ,TOẠ PHU ĐỒNG TỬ,ZASHIKI-WARASHI,NPC*~,UNKNOWN~ neutral,sarcastic 0-1 normal,slow normal,soft f
+210 N

@@ -87,6 +87,19 @@ export interface RemoteBook {
   /** Bìa trên máy tính (phiên bản) và bìa đã tải: khác nhau là có ảnh bìa mới để tải. */
   cover?: { color: string; version: number } | null;
   localCoverVersion: number;
+  /** Sách của thiết bị ghép (Peers.kt): mã thiết bị ở đây và mã sách bên ấy - `id` là mã cục bộ. */
+  source?: string;
+  remoteId?: string;
+}
+
+/** Một thiết bị đã ghép ngoài máy tính chính (điện thoại khác, máy tính khác) và thư viện của nó. */
+export interface PeerLibrary {
+  key: string;
+  name: string;
+  host: string;
+  books: RemoteBook[];
+  /** Thiết bị không trả lời (tắt, khác mạng, chưa bật "Cho máy khác nghe"). */
+  error?: string;
 }
 
 export interface ManifestChapter {
@@ -120,6 +133,8 @@ export interface LocalBook {
   bytes?: number;
   /** Chưa tải: nghe thẳng từ máy tính (Streaming.kt) - gói sách đã cất ở stream.json. */
   streamed?: boolean;
+  /** Nghe thẳng từ thiết bị ghép (Peers.kt): tên thiết bị ấy. */
+  sourceName?: string;
   /** Hồ sơ nghe gắn với cuốn (Store.records) - chỉ có khi mở một cuốn. */
   records?: ListeningRecord[];
 }
@@ -167,7 +182,12 @@ export interface EbookLibraryPlugin {
   studioAlerts(): Promise<{ enabled: boolean; permitted: boolean }>;
   setStudioAlerts(options: { enabled: boolean }): Promise<{ enabled: boolean; permitted: boolean }>;
   remoteLibrary(): Promise<{ name: string; books: RemoteBook[] }>;
-  download(options: { bookId: string }): Promise<{ bookId: string }>;
+  download(options: { bookId: string; source?: string; remoteId?: string }): Promise<{ bookId: string }>;
+  /** Thiết bị ghép ngoài máy tính chính (mạng trạm bước 2 - Peers.kt). */
+  peers(): Promise<{ peers: { key: string; name: string; host: string; port: number }[] }>;
+  peerPair(options: { host: string; port: number; code: string }): Promise<{ key: string; name: string }>;
+  peerForget(options: { key: string }): Promise<void>;
+  peerLibraries(): Promise<{ peers: PeerLibrary[] }>;
   localBooks(): Promise<{ books: LocalBook[] }>;
   /** Sách trên máy tính chưa tải mà nghe thẳng được; máy tính không trả lời thì rỗng. */
   streamableBooks(): Promise<{ books: LocalBook[] }>;
