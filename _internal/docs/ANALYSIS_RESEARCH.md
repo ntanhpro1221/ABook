@@ -100,6 +100,28 @@ Ba phép thử offline trên kết quả đã có (script ở `scratchpad`, CPU)
 nhiều người thì một cú bấm gán cả nhóm; trên dự án đo Yamiyo của 9B nó đứng đầu hộp việc (43 câu, 7 người). Vòng dữ liệu
 sau: mẫu ngôi thứ nhất có người đối thoại thân cận, và mẫu 『』 nhất quán trong chương.
 
+## ĐÊM 28-29/09 - đăng model, máy nào chạy nổi model nào, và ba phép so công bằng
+
+Chủ sách 28-09 22:xx: đăng model tự huấn luyện công khai (Hugging Face, không GitHub Release); "chỉ train những thằng mà sau
+khi train xong có thể chạy trên card của tôi" - rồi nới: 9B được nếu chạy nhờ Mac mini; "các nguồn gpu trên mạng là có hạn
+nên mỗi bước sử dụng phải tính toán chiến thuật".
+
+- **Đã đăng `abook-analyzer:v3`** (= lora28v3-4b, GGUF Q8_0 4,28 GB, sha256 9545ce0b...): huggingface.co/NGDtuanh/abook-analyzer,
+  thẻ model `docs/models/abook-analyzer-v3.md`. Studio cài từ đường ghim theo commit (`studio_setup.PUBLISHED_MODELS`); thử
+  thật trên Studio thử: 6 phút tải, model trong Ollama riêng trùng TỪNG LỚP bản đã đo. Tải lên từ Mac (đăng nhập `hf` ở đó).
+- **Kaggle/Colab T4 không huấn luyện được Qwen3.5** (không bf16: Unsloth ép float32, 9B không vừa - thử 28-09). Qwen3.5 chỉ
+  huấn luyện được trên Modal (L40S, 9B LoRA ~11 s/bước) hay máy nhà (4B, bf16 có trên RTX 5060).
+- **Mac mini M4 chạy 9B chậm ~4 lần máy nhà**: qwen35-9b-lora28 (bản 59,9 F1 LN) TCF 042 (81 câu) 1.385 s, Nise 132 (101
+  câu) 1.580 s - v3 trên máy nhà ~330 s cho TCF. Không "suy nghĩ" (think=false đúng), sinh ~21 token/s, đọc đề ~100 token/s
+  (băng thông ~120 GB/s). Dây chuyền máy nhà làm ~7-10 phút/chương (phân tích + đọc), nên phân tích nhờ Mac bằng 9B làm cả
+  dây chuyền chậm ~4 lần. Kết luận chiến thuật: KHÔNG tiêu Modal cho 9B mới trừ khi 9B hơn v3 rất rõ (hiện +4,2 F1, trong
+  nhiễu của 519 câu).
+- **Ba phép so công bằng đang chạy** (cùng data_v5, cùng công thức, cùng bộ đo): v5 = Qwen3-4B-Instruct-2507 (máy nhà) ->
+  q35 = Qwen3.5-4B (máy nhà, tự chạy sau v5, `scratchpad/gpu_queue_29_09q35.sh`) -> 8B = Qwen3-8B QLoRA (Kaggle,
+  abook-lora-8b-v5, trả lời "8B sau khi train phải hơn 4B chứ?"; lượt 8B cũ: F1 55,6 = v3, người nói chặt 54,0 < 62,4).
+- VieNeu-TTS-v3-Turbo main mới (61b85e3d) so bản ghim 8b7e9cff: chỉ README, onnx_int8 (CPU) và 53 file gguf thêm - trọng số
+  PyTorch dây chuyền dùng không đổi, không cần thử.
+
 ## LoRA v3 QUA MỌI CỔNG 28-09 20:xx - ứng viên thay qwen3:8b trên máy 8 GB
 
 Hàng GPU i đo xong v3 (`lora28v3-4b`, Qwen3-4B LoRA trên data_v3, huấn luyện tại máy nhà) trên bốn cổng ngoài bộ LN; chấm
