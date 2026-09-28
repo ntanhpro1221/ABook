@@ -104,7 +104,7 @@ def test_the_studio_installs_step_by_step_and_resumes_where_it_stopped(tmp_path:
     status = setup.status()
     assert status["installed"] is False and "Tải Whisper hỏng" in status["error"], "dừng ở bước hỏng, nói rõ"
     done = [step["id"] for step in status["steps"] if step["done"]]
-    assert done == ["check", "uv", "git", "python", "packages", "ollama", "llm", "voice"]
+    assert done == ["check", "uv", "git", "python", "vcruntime", "packages", "ollama", "llm", "voice"]
     assert FakeOllama.pulled == ["qwen3:8b"], "model phân tích kéo qua API của Ollama"
     assert (setup.tools / "ollama" / "ollama.exe").is_file() and not list((setup.root / "downloads").glob("*.zip"))
 
@@ -124,6 +124,33 @@ def test_the_studio_installs_step_by_step_and_resumes_where_it_stopped(tmp_path:
     assert environment["EBOOK_READER_RUNTIME"] == str(setup.runtime)
     assert environment["PYTHONPATH"] == str(setup.app_root), "worker chạy mã của app"
     assert environment["PATH"].startswith(str(setup.tools / "ollama")), "dây chuyền tìm thấy Ollama của Studio"
+    # Ollama RIÊNG: cổng riêng, model trong Studio - gỡ Studio là không sót gì, Ollama của người dùng không bị đụng.
+    assert environment["OLLAMA_HOST"] == "127.0.0.1:" + ollama.rsplit(":", 1)[-1]
+    assert environment["OLLAMA_MODELS"] == str(setup.runtime / "models" / "ollama")
+    assert setup.settings_overrides() == {"analysis": {"base_url": ollama}}
+
+
+def test_a_book_made_in_the_packaged_app_talks_to_the_studios_own_ollama(tmp_path: Path, ollama: str) -> None:
+    from ebook_reader.webui import actions, store
+
+    setup = _setup(tmp_path, ollama, [])
+    source = tmp_path / "nguon"
+    source.mkdir()
+    (source / "001.txt").write_text("Chương 1\n\nMinh nói: “Chào em.”\n", encoding="utf-8")
+    project = actions.create_book(tmp_path / "thu_vien", [str(source)], "Thử", "high_quality", "",
+                                  settings_overrides=setup.settings_overrides())
+    assert store.read_settings(project)["analysis"]["base_url"] == ollama
+    plain = actions.create_book(tmp_path / "thu_vien_dev", [str(source)], "Thử", "high_quality", "")
+    assert store.read_settings(plain)["analysis"]["base_url"] == "http://127.0.0.1:11434", "bản dev giữ mặc định"
+
+
+def test_stopping_the_studio_never_touches_processes_outside_its_folder(tmp_path: Path, ollama: str) -> None:
+    import os
+
+    setup = _setup(tmp_path, ollama, [])
+    setup.root.mkdir(parents=True, exist_ok=True)
+    assert setup.stop_processes() == [], "không tiến trình nào chạy từ thư mục Studio thử"
+    assert os.getpid()  # chính tiến trình test (python ngoài Studio) vẫn sống
 
 
 def test_a_machine_without_an_nvidia_card_is_told_so_before_anything_downloads(tmp_path: Path, ollama: str) -> None:
@@ -240,3 +267,22 @@ def test_a_download_resumes_where_it_stopped_and_refuses_a_wrong_file(tmp_path: 
         assert not list((tmp_path / "other").iterdir()), "file sai băm bị xoá"
     finally:
         server.shutdown()
+
+
+def test_the_studio_carries_its_own_vc_runtime_next_to_its_python(tmp_path: Path, ollama: str) -> None:
+    """Đo 28-09: thư viện của Studio nạp msvcp140_1.dll từ System32 (VC++ Redistributable - Windows sạch không có). Bộ
+    cài mang sẵn bản Microsoft cho phân phối lại; Studio chép vào thư mục Python gốc (tìm trước System32), không đè file
+    Python đã có."""
+    setup = _setup(tmp_path, ollama, [])
+    runtime = setup.app_root / "vcruntime"
+    runtime.mkdir()
+    (runtime / "msvcp140_1.dll").write_bytes(b"bo-cai")
+    (runtime / "vcruntime140.dll").write_bytes(b"bo-cai")
+    base = tmp_path / "python-goc"
+    base.mkdir()
+    (base / "vcruntime140.dll").write_bytes(b"cua-python")
+    setup.venv.mkdir(parents=True)
+    (setup.venv / "pyvenv.cfg").write_text(f"home = {base}\nversion = 3.11.16\n", encoding="utf-8")
+    setup._step_vcruntime()
+    assert (base / "msvcp140_1.dll").read_bytes() == b"bo-cai"
+    assert (base / "vcruntime140.dll").read_bytes() == b"cua-python", "không đè file của bản dựng Python"

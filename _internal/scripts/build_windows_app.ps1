@@ -1,4 +1,4 @@
-<#
+﻿<#
 Dựng bộ cài app Windows ABook (docs/PACKAGING.md):
   giao diện (ui/) -> Python nhúng (kiểm SHA-256) -> gói phụ (--require-hashes) -> mã ebook_reader -> chạy thử host
   bằng chính Python nhúng -> cargo tauri build (bộ cài NSIS + chữ ký cập nhật).
@@ -41,6 +41,19 @@ function Step([string]$Text) { Write-Host "== $Text" -ForegroundColor Cyan }
 function Invoke-Checked([scriptblock]$Command, [string]$Label) {
     & $Command
     if ($LASTEXITCODE -ne 0) { throw "$Label thất bại (mã $LASTEXITCODE)" }
+}
+
+function Wait-Unlocked([string]$Path, [int]$Seconds = 300) {
+    # Mở chỉ-đọc, KHÔNG chia sẻ: được nghĩa là không còn ai (trình diệt virus, bộ lập chỉ mục) mở file. Chỉ đọc để chính
+    # phép thử không làm trình diệt virus quét lại (nó quét khi file mở-để-ghi được đóng).
+    $deadline = (Get-Date).AddSeconds($Seconds)
+    while ($true) {
+        try { [System.IO.File]::Open($Path, "Open", "Read", "None").Dispose(); return }
+        catch {
+            if ((Get-Date) -gt $deadline) { throw "Sau $Seconds giây $Path vẫn bị giữ: $($_.Exception.Message)" }
+            Start-Sleep -Milliseconds 500
+        }
+    }
 }
 
 function Get-BuildPython {
@@ -101,7 +114,23 @@ function Copy-App {
     }
     # Danh sách thư viện của Studio tải thêm (webui/studio_setup.py đọc ở thư mục app).
     Copy-Item (Join-Path $Shell "python\studio-requirements.txt") $app
+    Copy-VcRuntime (Join-Path $app "vcruntime")
     Invoke-Checked { & (Join-Path $Resources "python\python.exe") -m compileall -q -j 0 (Join-Path $app "ebook_reader") } "compileall"
+}
+
+function Copy-VcRuntime([string]$Target) {
+    # VC++ runtime app-local cho Studio (webui/studio_setup.py chép vào thư mục Python của Studio). Đo 28-09 trên Studio
+    # cài thật: torch/onnxruntime... nạp msvcp140.dll, msvcp140_1.dll từ System32 - tức cần VC++ Redistributable, thứ
+    # Windows sạch không có. Lấy đúng các file Microsoft cho phân phối lại (thư mục Redist của Visual Studio trên máy dựng).
+    $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -products * -property installationPath | Select-Object -First 1
+    $crt = Get-ChildItem (Join-Path $vs "VC\Redist\MSVC") -Directory | Sort-Object Name -Descending |
+        ForEach-Object { Get-ChildItem (Join-Path $_.FullName "x64") -Directory -Filter "Microsoft.VC*.CRT" -ErrorAction SilentlyContinue } |
+        Select-Object -First 1
+    if (-not $crt) { throw "Không thấy VC++ runtime để phân phối lại (Visual Studio > VC\Redist\MSVC\<bản>\x64\Microsoft.VC*.CRT)" }
+    New-Item -ItemType Directory -Force $Target | Out-Null
+    # vccorlib140.dll là của C++/CX (UWP) - không thư viện nào của Studio dùng.
+    Get-ChildItem $crt.FullName -Filter *.dll | Where-Object { $_.Name -ne "vccorlib140.dll" } | Copy-Item -Destination $Target
+    Write-Host "   VC++ runtime: $($crt.FullName)"
 }
 
 function Test-Host {
@@ -150,19 +179,24 @@ function Build-Bundle {
     Push-Location $Shell
     try {
         if (-not (Test-Path "node_modules")) { Invoke-Checked { npm ci --no-audit --no-fund } "npm ci (shell)" }
-        $arguments = @("tauri", "build")
+        $config = @()
         if ($TauriConfig) {
             if (-not (Test-Path $TauriConfig)) { throw "Không thấy file cấu hình $TauriConfig" }
-            $arguments += @("--config", (Resolve-Path $TauriConfig).Path)
+            $config = @("--config", (Resolve-Path $TauriConfig).Path)
         }
-        # Đóng gói đôi khi hỏng "file đang bị tiến trình khác dùng" (os error 32): trình diệt virus đang quét exe vừa dựng.
-        # 28-09 hỏng hai lần liền, lần sau không còn file nào bị giữ. Lần thử lại không biên dịch lại gì - chỉ đóng gói.
+        # Dựng exe và đóng gói là HAI bước: bước đóng gói ghi ngay vào exe vừa dựng ("Patching ... with bundle type
+        # information") và hỏng "file đang bị tiến trình khác dùng" (os error 32) khi trình diệt virus còn đang quét file
+        # mới. 28-09: `tauri build` thử lại 3 lần hỏng cả 3 - mỗi lần thử lại dựng lại exe nên lần nào cũng đụng đúng lúc
+        # quét. Giờ: dựng một lần, chờ tới khi không ai giữ exe, rồi mới đóng gói; hỏng thì chỉ thử lại bước đóng gói.
+        Invoke-Checked { npx tauri build --no-bundle @config } "tauri build --no-bundle"
+        $exe = Join-Path $Tauri "target\release\ABook.exe"
         for ($attempt = 1; ; $attempt++) {
-            & npx @arguments
+            Wait-Unlocked $exe
+            & npx tauri bundle --bundles nsis @config
             if ($LASTEXITCODE -eq 0) { break }
-            if ($attempt -ge 3) { throw "tauri build thất bại (mã $LASTEXITCODE) sau $attempt lần" }
-            Write-Host "   tauri build hỏng (mã $LASTEXITCODE) - thử lại sau 20 giây"
-            Start-Sleep -Seconds 20
+            if ($attempt -ge 5) { throw "tauri bundle thất bại (mã $LASTEXITCODE) sau $attempt lần" }
+            Write-Host "   tauri bundle hỏng (mã $LASTEXITCODE) - chờ exe rảnh rồi thử lại"
+            Start-Sleep -Seconds 5
         }
     } finally {
         Pop-Location

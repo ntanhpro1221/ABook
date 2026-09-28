@@ -113,6 +113,8 @@ class StudioRunner(BackgroundRunner):
         from ..background_runner import start_background
 
         os.environ.update(self.setup.environment(self.setup.code_for(project_root)))
+        # Ollama riêng của Studio chạy trước (home trong Studio); dây chuyền thấy nó đang nghe nên không tự bật bản khác.
+        self.setup.ensure_ollama()
         start_background(project_root, python_executable=self.setup.pythonw)
 
 
@@ -234,7 +236,7 @@ def first_person_hint(paths: list[str]) -> dict[str, Any]:
 
 
 def create_book(library_root: Path, paths: list[str], title: str, profile: str, narrator: str,
-                first_person: str = "") -> Path:
+                first_person: str = "", settings_overrides: dict[str, Any] | None = None) -> Path:
     from ..character_registry import PRONOUNS, normalize_name
     from ..config import build_settings
     from ..project import create_or_open_project
@@ -252,7 +254,10 @@ def create_book(library_root: Path, paths: list[str], title: str, profile: str, 
         # Cùng cài đặt với `cli create --first-person`: prompt phân tích nói cho model biết "tôi" là ai, và sau phân
         # tích các nhãn đại từ được gộp về người ấy.
         voices["first_person_identity"] = first_person
-    settings = build_settings(profile, {"voices": voices} if voices else None)
+    overrides: dict[str, Any] = dict(settings_overrides or {})  # app đóng gói: Ollama riêng của Studio
+    if voices:
+        overrides["voices"] = voices
+    settings = build_settings(profile, overrides or None)
     library_root.mkdir(parents=True, exist_ok=True)
     paths_created, _db, _settings = create_or_open_project(files, library_root, settings, title.strip() or None)
     return paths_created.root

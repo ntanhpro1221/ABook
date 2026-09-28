@@ -52,9 +52,13 @@ cùng các việc qua ống. Cửa sổ Qt giữ nguyên làm lối lui trong b�
 
 ## Studio tải thêm khi cần
 
-- Nơi ở: `%LOCALAPPDATA%\ABook\Studio\` (`runtime\.venv`, `models\`, Ollama). Dữ liệu người dùng ở
-  `%LOCALAPPDATA%\ABook\` như bản dev hôm nay (tuỳ chọn, `listening.json`, `devices.json`, `computers.json`...) - gỡ app
-  không xoá dữ liệu.
+- Nơi ở: `%LOCALAPPDATA%\ABook\Studio\` - MỌI thứ Studio cần nằm trong đó (mục "Tự chứa" dưới). Dữ liệu người dùng ở
+  `%LOCALAPPDATA%\ABook\` như bản dev hôm nay (tuỳ chọn, `listening.json`, `devices.json`, `computers.json`...).
+- Gỡ app (chủ sách 28-09: "gỡ thì gỡ hết", `shell/src-tauri/windows/hooks.nsh`): LUÔN xoá Studio và bộ nhớ đệm WebView2
+  (`%LOCALAPPDATA%\com.ngdtuanh.abook`), dừng trước mọi tiến trình chạy từ hai chỗ ấy và từ thư mục cài (host Python,
+  worker, Ollama riêng); dữ liệu cá nhân chỉ xoá khi tích ô "xoá dữ liệu ứng dụng" của bộ gỡ; thư viện sách (thư mục người
+  dùng chọn) không bao giờ bị đụng. Bộ gỡ chạy vì bộ cài bản mới "gỡ trước khi cài" (tiến trình ông là `*setup*.exe`)
+  thì giữ Studio - nâng cấp không bắt tải lại 13 GB.
 - Cài: màn "Cài Studio" chạy các bước của `scripts/setup_windows.ps1` (uv, venv từ `pyproject.toml` + `uv.lock` đi kèm
   bản cài, torch cu128, FFmpeg, Ollama, kéo model), có tiến độ, làm tiếp được khi mất mạng giữa chừng, không hỏi gì giữa
   lúc chạy. Kiểm GPU trước (không có NVIDIA thì nói thẳng là Studio không chạy được trên máy này).
@@ -77,16 +81,35 @@ không được đụng PATH hay cài gì toàn máy, nên mỗi công cụ là 
 | kiểm máy | NVML (`nvml.dll` của driver NVIDIA) - không có GPU NVIDIA thì dừng, nói rõ; ổ đĩa còn ≥ 30 GB | - |
 | uv | bản phát hành GitHub của astral-sh/uv, ghim | ~20 MB |
 | Python 3.11 + venv | `uv python install` + `uv venv` vào `Studio\runtime\.venv` | ~50 MB |
+| thư viện C++ của Microsoft | `msvcp140.dll`, `vcruntime140*.dll`, `concrt140.dll` - bản redist của Visual Studio đi kèm BỘ CÀI app (`resources\app\vcruntime`), chép vào thư mục Python của Studio: Windows tìm DLL ở thư mục của exe trước System32, nên máy chưa cài "Visual C++ Redistributable" vẫn chạy được torch | ~2 MB |
 | thư viện | `uv pip sync` từ danh sách khoá sinh từ `uv.lock` (torch cu128 từ index của PyTorch) | ~6 GB |
 | UTMOSv2 | đúng commit đã khoá, cài từ git: `runtime_contract` đòi `direct_url.json` có `vcs_info.commit_id` (không giả được bằng bản lưu trữ) -> MinGit (bản Git nhúng chính thức của Git for Windows) ghim vào `Studio\tools\git` | ~40 MB |
 | FFmpeg | bản dựng ghim | ~100 MB |
-| Ollama | `ollama-windows-amd64.zip` ghim, chạy ẩn từ `Studio\tools\ollama` (không cài app khay) | ~1,5 GB |
+| Ollama | `ollama-windows-amd64.zip` ghim vào `Studio\tools\ollama`, LUÔN bản riêng kể cả khi máy đã có Ollama: chạy ẩn ở cổng 11439 (`OLLAMA_HOST`), model ở `Studio\runtime\models\ollama` (`OLLAMA_MODELS`), `USERPROFILE` = `Studio\ollama-home` nên không ghi `%USERPROFILE%\.ollama`; sách tạo từ app mang `analysis.base_url` = cổng ấy (`StudioSetup.settings_overrides`) | ~1,5 GB |
 | model | LLM phân tích (qua Ollama), VieNeu, Whisper turbo + faster-whisper, UTMOSv2 + wav2vec2 + timm (revision khoá) | ~10 GB |
 | kiểm tra | `check_system.py`, dấu `.setup_complete` như bản dev | - |
 
 Worker chạy bằng `Studio\runtime\.venv\Scripts\pythonw.exe`, mã lấy từ thư mục `app` của bản cài (PYTHONPATH),
 `EBOOK_READER_RUNTIME=Studio\runtime`. Hash chất lượng tính trên đúng các file ấy (kể cả `pyproject.toml` + `uv.lock`
 chép vào `app`) - nên cập nhật app đổi file khoá là sách dở không làm tiếp được: xem mục dưới.
+
+### Tự chứa: không dựa vào thứ gì cài sẵn trên máy (kiểm 28-09)
+
+Chủ sách 28-09: "tất tần tận mọi thứ cần thiết khi bấm nút tải Studio" nằm trong app, và app không có Studio cũng không
+được cần gì của máy. Đo bằng danh sách DLL mỗi tiến trình đã nạp (`psutil` `memory_maps`):
+
+| phần | phụ thuộc ngoài app | ghi chú |
+|---|---|---|
+| app không Studio (vỏ Tauri + host Python nhúng) | WebView2 Runtime | thành phần của Windows 11; máy thiếu (Windows 10 cũ) thì bộ cài tự tải bản Evergreen. Ngoài nó 0 DLL từ ngoài thư mục cài và `C:\Windows` |
+| Studio | driver NVIDIA (`nvcuda.dll`, `nvml.dll`) | phần cứng, không đóng gói được; Studio kiểm GPU trước khi cài. Mọi DLL khác nạp từ `Studio\` |
+
+Trước 28-09 Studio còn mượn ba thứ của máy, giờ đều là bản riêng: `msvcp140.dll`/`vcruntime140*.dll` nạp từ System32
+(của gói Visual C++ Redistributable, Windows sạch không có) -> chép kèm; Ollama của máy (`%LOCALAPPDATA%\Programs\Ollama`)
+được dùng lại nếu có, model kéo vào `%USERPROFILE%\.ollama` -> bản riêng, cổng riêng; Python cài sẵn -> `only-managed`.
+Phần còn lại vốn đã riêng: Git là MinGit trong `Studio\tools\git`, FFmpeg là bản trong gói `imageio-ffmpeg`, CUDA/cuDNN
+là thư viện trong venv (`torch\lib`, `ctranslate2`; máy thử không cài CUDA toolkit), bộ nhớ đệm uv/Hugging Face/torch trỏ
+vào `Studio\`. Thử gỡ trên bộ cài thật (`/S`): gỡ thật -> Studio, WebView2 cache, khoá gỡ cài đặt, liên kết `.abook` mất,
+dữ liệu cá nhân còn; gỡ lúc cài lại -> Studio còn.
 
 ## Cập nhật và ký
 
@@ -109,8 +132,10 @@ chép vào `app`) - nên cập nhật app đổi file khoá là sách dở khôn
 ## Build
 
 `scripts/build_windows_app.ps1`: build giao diện (`ui/`) -> tải + kiểm Python nhúng -> cài gói phụ -> chép `ebook_reader`
-(không `__pycache__`, không test) -> `cargo tauri build` (ký gói cập nhật bằng khoá ngoài repo) -> chạy thử bản vừa build
-(`ABook.exe --smoke`: host lên, `/api/state` trả lời, thoát). Bộ cài ra `_internal/shell/target/release/bundle/nsis/`.
+(không `__pycache__`, không test) + VC++ runtime (tìm bằng `vswhere`, cho Studio) -> chạy thử host -> `tauri build
+--no-bundle`, chờ tới khi không ai giữ `ABook.exe`, rồi `tauri bundle` (ký gói cập nhật bằng khoá ngoài repo). Tách hai
+bước vì bước đóng gói ghi vào exe vừa dựng và đụng trình diệt virus đang quét nó (os error 32; 28-09 `tauri build` thử lại
+3 lần hỏng cả 3 - mỗi lần thử lại dựng lại exe). Bộ cài ra `_internal/shell/src-tauri/target/release/bundle/nsis/`.
 
 Công cụ: Rust stable MSVC (rustup, cài 28-09), MSVC C++ (Visual Studio Community 2026 có sẵn), `tauri-cli` 2.x. NSIS do
 Tauri tự tải.
