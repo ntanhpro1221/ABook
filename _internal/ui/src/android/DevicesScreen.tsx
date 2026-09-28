@@ -267,6 +267,7 @@ function PeersPanel() {
   const [found, setFound] = useState<{ host: string; port: number; name: string; kind?: string }[] | null>(null);
   const [address, setAddress] = useState("");
   const [code, setCode] = useState("");
+  const [bonded, setBonded] = useState<{ address: string; name: string; kind: string }[] | null>(null);
   const discover = useMutation({
     mutationFn: () => EbookLibrary.discover({ timeoutMs: 2500 }),
     onSuccess: ({ computers }) => {
@@ -275,8 +276,17 @@ function PeersPanel() {
       setFound(computers.filter((item) => item.host !== connection.data?.host && !paired.has(item.host)));
     },
   });
+  // Không chung Wi-Fi: thiết bị đã ghép Bluetooth với điện thoại này ("bt:<địa chỉ>").
+  const bluetooth = useMutation({
+    mutationFn: () => EbookLibrary.bluetoothDevices(),
+    onSuccess: ({ devices }) => setBonded(devices),
+    onError: (error: Error) => toast.error("Chưa dùng được Bluetooth", { description: error.message }),
+  });
   const pair = useMutation({
     mutationFn: () => {
+      if (address.startsWith("bt:")) {
+        return EbookLibrary.peerPairBluetooth({ address: address.slice(3), code: code.replace(/\D/g, "") });
+      }
       const [host, port] = address.split(":");
       return EbookLibrary.peerPair({ host: host.trim(), port: Number(port ?? 47630), code: code.replace(/\D/g, "") });
     },
@@ -296,7 +306,7 @@ function PeersPanel() {
     void client.invalidateQueries({ queryKey: ["streamable"] });
   };
   const peers = libraries.data?.peers ?? [];
-  const ready = address.includes(".") && code.replace(/\D/g, "").length === 6;
+  const ready = (address.includes(".") || address.startsWith("bt:")) && code.replace(/\D/g, "").length === 6;
   return (
     <section className="mt-8" aria-labelledby="peers-title">
       <div className="flex items-center justify-between gap-3">
@@ -313,6 +323,34 @@ function PeersPanel() {
       </p>
       {open && (
         <div className="mt-3 space-y-3 rounded-2xl border border-line bg-panel p-4">
+          {bonded === null ? (
+            <button type="button" onClick={() => bluetooth.mutate()} className="flex items-center gap-1.5 text-sm font-medium text-accent-text">
+              {bluetooth.isPending ? <Loader2 className="size-4 animate-spin" /> : <Bluetooth className="size-4" />} Không chung Wi-Fi? Ghép qua Bluetooth
+            </button>
+          ) : bonded.length ? (
+            <div className="space-y-2">
+              {bonded.map((device) => (
+                <button
+                  key={device.address}
+                  type="button"
+                  onClick={() => setAddress(`bt:${device.address}`)}
+                  className={cn(
+                    "flex w-full items-center gap-3 rounded-xl border p-3 text-left",
+                    address === `bt:${device.address}` ? "border-accent bg-accent-soft" : "border-line",
+                  )}
+                >
+                  <Bluetooth className="size-5 text-fg-2" />
+                  <span className="flex-1">
+                    <span className="block font-medium">{device.name}</span>
+                    <span className="block text-xs text-fg-2">Qua Bluetooth · {device.kind === "phone" ? "điện thoại" : "máy tính"}</span>
+                  </span>
+                  {address === `bt:${device.address}` && <CheckCircle2 className="size-5 text-accent-text" />}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-fg-2">Chưa có máy nào ghép Bluetooth với điện thoại này (Cài đặt Android → Bluetooth).</p>
+          )}
           {discover.isPending ? (
             <p className="text-sm text-fg-2">Đang tìm trong mạng Wi-Fi…</p>
           ) : found?.length ? (
@@ -436,6 +474,14 @@ function SharePanel() {
         </Switch.Root>
       </div>
       {data?.error && <p className="mt-3 text-xs text-danger">{data.error}</p>}
+      {enabled && data?.bluetooth?.status && (
+        <p className="mt-2 flex items-center gap-1.5 text-xs text-fg-2">
+          <Bluetooth className="size-3.5 shrink-0" />
+          {data.bluetooth.status === "running"
+            ? `Cả qua Bluetooth cho máy đã ghép${data.bluetooth.connections ? ` - ${data.bluetooth.connections} đang kết nối` : ""}`
+            : data.bluetooth.status}
+        </p>
+      )}
       {enabled && data && (
         <div className="mt-4 space-y-3 border-t border-line pt-4">
           <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
