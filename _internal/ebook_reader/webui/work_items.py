@@ -94,15 +94,17 @@ QUOTE_OPENERS = ("\"", "“", "『", "「", "«")
 QUOTE_CLOSERS = ("\"", "”", "』", "」", "»")
 
 
-def _merged_turns(connection: Any) -> list[tuple[Any, Any]]:
+def merged_turns(connection: Any, chapter_id: int | None = None) -> list[tuple[Any, Any]]:
     """Cặp câu thoại liền kề ở hai đoạn văn liền nhau - câu trước đóng ngoặc, câu sau mở ngoặc mới, đoạn sau chỉ có thoại
     (không lời dẫn riêng) - mà mang CÙNG một người có tên. Project cũ không có số đoạn văn thì không tìm."""
     if "paragraph_index" not in {str(row[1]) for row in connection.execute("PRAGMA table_info(segments)")}:
         return []
+    where, parameters = (" WHERE chapter_id = ?", (chapter_id,)) if chapter_id is not None else ("", ())
     rows = [
         row for row in connection.execute(
             "SELECT id, stable_id, chapter_id, seq, paragraph_index, text, text_sha256, speaker, kind FROM segments"
-            " ORDER BY chapter_id, seq"
+            + where + " ORDER BY chapter_id, seq",
+            parameters,
         )
         if row["paragraph_index"] is not None
     ]
@@ -128,6 +130,37 @@ def _merged_turns(connection: Any) -> list[tuple[Any, Any]]:
     return pairs
 
 
+def confident_doubts(project_root: Path, by_stable: dict[str, Any]) -> list[tuple[Any, dict[str, Any], float]]:
+    """(câu, ý kiến, độ chắc) cho mỗi câu mà bộ chấm ứng viên (doubt.json, scripts/model_eval/quote_scorer/doubt_for_book.py)
+    CHẮC từ 0,5 trở lên là của một người KHÁC nhãn LLM đang dùng. Câu đổi nhãn sau lần chấm, hay bộ chấm đồng ý: bỏ."""
+    path = project_root / "doubt.json"
+    if not path.is_file():
+        return []
+    try:
+        doubts = json.loads(path.read_text(encoding="utf-8")).get("segments", {})
+    except (OSError, ValueError, AttributeError):
+        return []
+    found = []
+    for stable_id, doubt in doubts.items():
+        row = by_stable.get(stable_id)
+        if row is None or str(row["speaker"]) != doubt.get("llm") or not doubt.get("disagree"):
+            continue
+        certainty = float(doubt.get("certainty") or 0)
+        if certainty >= 0.5:
+            found.append((row, doubt, certainty))
+    return found
+
+
+def calls_themselves(row: Any) -> bool:
+    """Câu mở đầu bằng lời GỌI chính người đang giữ câu ("Lucien, ..." mà nhãn là LUCIEN): gần như chắc là sai - tên đứng
+    đầu câu kèm dấu phẩy thường là người nghe."""
+    speaker = str(row["speaker"])
+    if not _is_named(speaker):
+        return False
+    name = speaker_label(speaker)
+    return bool(name) and LEADING.sub("", str(row["text"])).upper().startswith(name.upper() + ",")
+
+
 def work_items(project_root: Path) -> dict[str, Any]:
     items: list[dict[str, Any]] = []
     with closing(store.connect(project_root)) as connection:
@@ -141,7 +174,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
             int(row["id"]): row
             for row in connection.execute("SELECT id, canonical_name, display_name, gender, locked FROM characters")
         }
-        merged_turns = _merged_turns(connection)
+        turns = merged_turns(connection)
         pronunciations = connection.execute(
             "SELECT surface, spoken_form, confidence, locked FROM pronunciations WHERE confidence < 0.9"
         ).fetchall() if "pronunciations" in store._table_names(connection) else []
@@ -167,42 +200,30 @@ def work_items(project_root: Path) -> dict[str, Any]:
     #    theo tin cậy LLM tự báo chỉ 79,7% = ngẫu nhiên). Bộ chấm không đổi nhãn nào - chỉ chỉ chỗ cho người nghe lại.
     overrides = read_overrides(project_root)
     speaker_wishes = {entry["stable_id"]: entry for entry in speaker_requests(overrides)}
-    doubt_path = project_root / "doubt.json"
-    if doubt_path.is_file():
-        try:
-            doubts = json.loads(doubt_path.read_text(encoding="utf-8")).get("segments", {})
-        except (OSError, ValueError):
-            doubts = {}
-        by_stable = {str(row["stable_id"]): row for row in spoken}
-        for stable_id, doubt in doubts.items():
-            row = by_stable.get(stable_id)
-            if row is None or str(row["speaker"]) != doubt.get("llm") or not doubt.get("disagree"):
-                continue  # câu đổi nhãn sau lần chấm, hay bộ chấm đồng ý
-            certainty = float(doubt.get("certainty") or 0)
-            if certainty < 0.5:
-                continue
-            choice = speaker_label(str(doubt.get("choice") or ""))
-            options = [speaker_label(str(name)) for name, _ in doubt.get("top", []) if name] + ["Người kể", "Vai phụ không tên"]
-            # Lựa chọn bấm được: giá trị là khoá tên chuẩn (như doubt.json và sổ nhân vật), NARRATOR hay UNNAMED. Người nghe
-            # đã chọn thì thẻ nói "đang chờ" tới khi dây chuyền áp; chọn giữ nguyên thì thẻ biến mất (đã có người quyết).
-            choices = [{"label": speaker_label(str(name)), "value": str(name)} for name, _ in doubt.get("top", []) if name]
-            choices += [{"label": "Người kể", "value": NARRATOR}, {"label": "Vai phụ không tên", "value": UNNAMED}]
-            fix = _speaker_fix([row], choices, str(row["speaker"]), speaker_wishes)
-            if fix is None:
-                continue
-            items.append({
-                "kind": "speaker",
-                "key": f"speaker:{stable_id}",
-                "title": f"Ai nói câu này - {speaker_label(str(row['speaker']))} hay {choice}?",
-                "problem": f"Máy đọc (LLM) gán cho {speaker_label(str(row['speaker']))}; bộ chấm thứ hai chắc"
-                           f" {round(certainty * 100)}% là {choice}.",
-                "affected": 1,
-                "doubt": round(certainty, 3),
-                "options": list(dict.fromkeys(options)),
-                "current": speaker_label(str(row["speaker"])),
-                "examples": [_example(row, names)],
-                **fix,
-            })
+    for row, doubt, certainty in confident_doubts(project_root, {str(row["stable_id"]): row for row in spoken}):
+        stable_id = str(row["stable_id"])
+        choice = speaker_label(str(doubt.get("choice") or ""))
+        options = [speaker_label(str(name)) for name, _ in doubt.get("top", []) if name] + ["Người kể", "Vai phụ không tên"]
+        # Lựa chọn bấm được: giá trị là khoá tên chuẩn (như doubt.json và sổ nhân vật), NARRATOR hay UNNAMED. Người nghe
+        # đã chọn thì thẻ nói "đang chờ" tới khi dây chuyền áp; chọn giữ nguyên thì thẻ biến mất (đã có người quyết).
+        choices = [{"label": speaker_label(str(name)), "value": str(name)} for name, _ in doubt.get("top", []) if name]
+        choices += [{"label": "Người kể", "value": NARRATOR}, {"label": "Vai phụ không tên", "value": UNNAMED}]
+        fix = _speaker_fix([row], choices, str(row["speaker"]), speaker_wishes)
+        if fix is None:
+            continue
+        items.append({
+            "kind": "speaker",
+            "key": f"speaker:{stable_id}",
+            "title": f"Ai nói câu này - {speaker_label(str(row['speaker']))} hay {choice}?",
+            "problem": f"Máy đọc (LLM) gán cho {speaker_label(str(row['speaker']))}; bộ chấm thứ hai chắc"
+                       f" {round(certainty * 100)}% là {choice}.",
+            "affected": 1,
+            "doubt": round(certainty, 3),
+            "options": list(dict.fromkeys(options)),
+            "current": speaker_label(str(row["speaker"])),
+            "examples": [_example(row, names)],
+            **fix,
+        })
 
     # 1. Chưa rõ nam hay nữ mà có lời: giọng sai giới là lỗi người nghe nhận ra ngay.
     for character_id, character in characters.items():
@@ -225,29 +246,27 @@ def work_items(project_root: Path) -> dict[str, Any]:
 
     # 2. Người nói lại chính là người được GỌI ở đầu câu ("Lucien, ..." mà nhãn là LUCIEN): gần như chắc là sai.
     for row in spoken:
-        speaker = str(row["speaker"])
-        if not _is_named(speaker):
+        if not calls_themselves(row):
             continue
+        speaker = str(row["speaker"])
         name = speaker_label(speaker)
-        text = LEADING.sub("", str(row["text"]))
-        if name and text.upper().startswith(name.upper() + ","):
-            choices = _cast_choices(spoken, {int(row["chapter_id"])}, {speaker.casefold()})
-            choices += [{"label": "Người kể", "value": NARRATOR}, {"label": "Vai phụ không tên", "value": UNNAMED}]
-            fix = _speaker_fix([row], choices, speaker, speaker_wishes)
-            if fix is None:
-                continue
-            items.append({
-                "kind": "vocative",
-                "key": f"vocative:{row['id']}",
-                "title": f"Câu mở đầu bằng lời gọi \"{name}\" lại gán cho chính {name}",
-                "problem": "Tên đứng đầu câu và có dấu phẩy thường là người NGHE, không phải người nói.",
-                "affected": 1,
-                "doubt": 0.7,
-                "options": ["Chọn người nói khác", "Giữ nguyên"],
-                "current": name,
-                "examples": [_example(row, names)],
-                **fix,
-            })
+        choices = _cast_choices(spoken, {int(row["chapter_id"])}, {speaker.casefold()})
+        choices += [{"label": "Người kể", "value": NARRATOR}, {"label": "Vai phụ không tên", "value": UNNAMED}]
+        fix = _speaker_fix([row], choices, speaker, speaker_wishes)
+        if fix is None:
+            continue
+        items.append({
+            "kind": "vocative",
+            "key": f"vocative:{row['id']}",
+            "title": f"Câu mở đầu bằng lời gọi \"{name}\" lại gán cho chính {name}",
+            "problem": "Tên đứng đầu câu và có dấu phẩy thường là người NGHE, không phải người nói.",
+            "affected": 1,
+            "doubt": 0.7,
+            "options": ["Chọn người nói khác", "Giữ nguyên"],
+            "current": name,
+            "examples": [_example(row, names)],
+            **fix,
+        })
 
     # 2b. Hai đoạn thoại liền nhau - đoạn trước đóng ngoặc, đoạn sau mở ngoặc mới, không lời dẫn - mà cùng một người: gần
     #     như chắc máy bỏ lỡ một lượt đổi người. Đo 28-09 (ANALYSIS_RESEARCH.md, "Lượt đối đáp"): trên đáp án 7 truyện,
@@ -255,7 +274,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
     # Truyện kể ngôi thứ nhất: người đối đáp thường là chính "tôi" - đứng đầu các lựa chọn.
     voices = store.read_settings(project_root).get("voices")
     partner = str((voices if isinstance(voices, dict) else {}).get("first_person_identity") or "")
-    for first, second in merged_turns:
+    for first, second in turns:
         speaker = str(second["speaker"])
         name = speaker_label(speaker)
         choices = []
