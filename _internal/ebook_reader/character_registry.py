@@ -2003,6 +2003,48 @@ def _drop_pins_that_contradict_a_person(
     return kept
 
 
+def _resolve_first_person_labels_by_chapter(
+    db: ProjectDB,
+    identity: str,
+    chapters: dict[int, str],
+    log: Callable[[str], None],
+) -> int:
+    """Người kể theo chương (`voices.first_person_chapters`): nhãn đại từ ngôi thứ nhất của mỗi chương về đúng người kể
+    của CHƯƠNG ấy (chương không đặt thì về người kể cả cuốn; chương kể ngôi ba thì để nguyên như cuốn ngôi ba)."""
+    if identity and normalize_name(identity) in PRONOUNS:
+        identity = ""
+    narrator_of: dict[int, str] = {}
+    from .analysis import _chapter_index_of
+
+    for chapter in db.list_chapters():
+        narrator = chapters.get(_chapter_index_of(chapter), identity)
+        if narrator and normalize_name(narrator) not in PRONOUNS:
+            narrator_of[int(chapter["id"])] = canonical_key(narrator)
+    labels = sorted({str(row["speaker"]) for row in db.list_segments()
+                     if normalize_name(str(row["speaker"])) in FIRST_PERSON_PRONOUNS})
+    moved = 0
+    notes: list[str] = []
+    for canonical in sorted(set(narrator_of.values())):
+        ids = [chapter_id for chapter_id, name in narrator_of.items() if name == canonical]
+        for speaker in labels:
+            if canonical_key(speaker) == canonical:
+                continue
+            rewritten = db.rewrite_speaker(speaker, canonical, chapter_ids=ids)
+            if rewritten:
+                moved += rewritten
+                notes.append(f"{speaker}->{canonical}={rewritten}")
+    if moved:
+        log(f"{moved} câu mang nhãn đại từ ngôi thứ nhất về người kể của chương ({', '.join(notes)}).")
+        db.event(
+            "info",
+            "FIRST_PERSON_LABELS_RESOLVED",
+            f"{moved} first-person pronoun lines were attributed to each chapter's narrator",
+            {"identity": canonical_key(identity) if identity else "", "labels": notes,
+             "chapters": {str(index): name for index, name in sorted(chapters.items())}},
+        )
+    return moved
+
+
 def resolve_first_person_labels(
     db: ProjectDB,
     settings: dict[str, Any],
@@ -2032,6 +2074,11 @@ def resolve_first_person_labels(
     đó chính là lối `RESERVED_SPEAKERS` ở trên đã đi cho `NARRATOR`/`UNKNOWN`.
     """
     identity = str(settings.get("voices", {}).get("first_person_identity", "")).strip()
+    from .analysis import first_person_chapters
+
+    chapters = first_person_chapters(settings)
+    if chapters:
+        return _resolve_first_person_labels_by_chapter(db, identity, chapters, log)
     if not identity:
         return 0
     if normalize_name(identity) in PRONOUNS:
