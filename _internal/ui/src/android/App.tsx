@@ -85,7 +85,8 @@ function MobileShell({ children }: { children: ReactNode }) {
     if (expandedNow.current) setExpanded(false);
   }, [pathname, setExpanded]);
   const main = useRef<HTMLElement | null>(null);
-  usePageEnter(main, pathname);
+  // Điện thoại giữ chỗ cuộn: thư viện -> sách -> quay lại không mất chỗ đang xem.
+  usePageEnter(main, pathname, { resetScroll: false });
   return (
     <div className="relative flex h-full flex-col" style={{ paddingTop: "env(safe-area-inset-top)" }}>
       <main ref={main} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</main>

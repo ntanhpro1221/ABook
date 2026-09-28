@@ -42,7 +42,7 @@ export function SettingsScreen() {
             checked={settings.shakeToExtend}
             onCheckedChange={(value) => change({ shakeToExtend: value })}
             aria-label="Lắc máy để nghe thêm"
-            className="relative h-7 w-12 rounded-full bg-line-strong transition-colors data-[state=checked]:bg-accent"
+            className="relative h-7 w-12 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-accent"
           >
             <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
           </Switch.Root>
@@ -79,7 +79,7 @@ export function SettingsScreen() {
             checked={settings.flipToPause ?? false}
             onCheckedChange={(value) => change({ flipToPause: value })}
             aria-label="Úp máy để tạm dừng"
-            className="relative h-7 w-12 rounded-full bg-line-strong transition-colors data-[state=checked]:bg-accent"
+            className="relative h-7 w-12 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-accent"
           >
             <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
           </Switch.Root>
@@ -97,7 +97,7 @@ export function SettingsScreen() {
             checked={Boolean(settings.sleepSchedule)}
             onCheckedChange={(value) => change({ sleepSchedule: value ? { from: "22:00", to: "06:00", minutes: 30 } : null })}
             aria-label="Lịch đêm"
-            className="relative h-7 w-12 rounded-full bg-line-strong transition-colors data-[state=checked]:bg-accent"
+            className="relative h-7 w-12 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-accent"
           >
             <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
           </Switch.Root>
@@ -163,7 +163,7 @@ export function SettingsScreen() {
             checked={settings.headsetSkips ?? false}
             onCheckedChange={(value) => change({ headsetSkips: value })}
             aria-label="Nút tai nghe lùi/tới"
-            className="relative h-7 w-12 rounded-full bg-line-strong transition-colors data-[state=checked]:bg-accent"
+            className="relative h-7 w-12 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-accent"
           >
             <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
           </Switch.Root>
