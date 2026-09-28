@@ -108,7 +108,9 @@ def main() -> int:
         output_dir=str(args.out), dataset_text_field="text", max_length=args.max_length, packing=False,
         per_device_train_batch_size=1, gradient_accumulation_steps=1 if args.smoke else args.accum,
         learning_rate=args.lr, lr_scheduler_type="cosine", warmup_steps=max(5, int(0.03 * steps)),
-        num_train_epochs=args.epochs, max_steps=args.smoke_steps if args.smoke else -1, optim="adamw_8bit", bf16=True,
+        num_train_epochs=args.epochs, max_steps=args.smoke_steps if args.smoke else -1, optim="adamw_8bit",
+        # T4 (Kaggle/Colab miễn phí) không có bf16: tự rơi về fp16, như sổ tay của Unsloth.
+        bf16=torch.cuda.is_bf16_supported(), fp16=not torch.cuda.is_bf16_supported(),
         logging_steps=1 if args.smoke else 5, save_steps=args.save_steps, save_total_limit=3, report_to="none", seed=3407,
     )
     trainer = SFTTrainer(model=model, processing_class=tokenizer, train_dataset=Dataset.from_dict({"text": texts}),
