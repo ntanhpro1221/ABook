@@ -142,6 +142,10 @@ export interface EbookLibraryPlugin {
   unpair(): Promise<void>;
   /** Studio từ xa: mở trang Studio của máy tính đã ghép (StudioActivity.kt, webui/remote_studio.py). */
   openStudio(): Promise<void>;
+  /** Thông báo Studio (StudioAlerts.kt): sách xong, dừng vì lỗi, có việc mới cần anh. `permitted`: Android cho đăng
+   *  thông báo không (Android 13+ phải xin). */
+  studioAlerts(): Promise<{ enabled: boolean; permitted: boolean }>;
+  setStudioAlerts(options: { enabled: boolean }): Promise<{ enabled: boolean; permitted: boolean }>;
   remoteLibrary(): Promise<{ name: string; books: RemoteBook[] }>;
   download(options: { bookId: string }): Promise<{ bookId: string }>;
   localBooks(): Promise<{ books: LocalBook[] }>;
