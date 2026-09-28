@@ -71,6 +71,14 @@ PRONUNCIATION_PROBLEMS = {
     listener_overrides.MULTI_WORD: "Chỉ sửa được cách đọc của MỘT từ - cách đọc lưu theo từng từ.",
     listener_overrides.NOT_VIETNAMESE: "Cách đọc phải là các âm tiết tiếng Việt nối bằng gạch nối, ví dụ Hên-khơ.",
 }
+VOICE_PROBLEMS = {
+    listener_overrides.UNKNOWN_CHARACTER: "Không có nhân vật này trong sách.",
+    listener_overrides.NOT_A_CHARACTER: "Giọng người kể chọn khi tạo sách, không đổi ở đây.",
+    listener_overrides.NO_VOICE: "Nhân vật này chưa có giọng (chưa qua bước phân vai) - chưa đổi được.",
+    listener_overrides.UNKNOWN_PRESET: "Giọng này không dùng cho nhân vật được (không có, hay là giọng người kể).",
+    listener_overrides.BAD_GENDER: "Giới phải là nam hoặc nữ.",
+}
+
 SPEAKER_PROBLEMS = {
     listener_overrides.UNKNOWN_LINE: "Không còn câu này trong sách.",
     listener_overrides.SOURCE_CHANGED: "Chữ của câu này đã đổi từ lúc máy chấm - tải lại danh sách việc.",
@@ -719,6 +727,24 @@ class Handler(BaseHTTPRequestHandler):
         listener_overrides.request_speakers(path, lines, speaker, now=time.time())
         self._send_json(HTTPStatus.OK, {"lines": len(lines), "speaker": speaker})
 
+    def post_voice(self, _query: dict[str, list[str]], value: str) -> None:
+        # Giọng / giới của MỘT nhân vật (thẻ "Nam hay nữ", "Chung giọng"): như người nói - ghi mong muốn vào overrides.json,
+        # dây chuyền áp ở ranh giới chương; hỏi SQLite chỉ đọc bằng đúng phép dây chuyền dùng để từ chối tại chỗ.
+        self.app._mutating()
+        path = self.app._book(value)
+        body = self._body()
+        character = str(body.get("character", "")).strip()[:200]
+        preset = str(body.get("preset", "") or "").strip()[:120]
+        gender = str(body.get("gender", "") or "").strip()[:10]
+        avoid = str(body.get("avoid", "") or "").strip()[:200]
+        if not character:
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu nhân vật")
+        problem = store.voice_request_problem(path, character, preset=preset, gender=gender, avoid=avoid)
+        if problem is not None:
+            raise ApiError(HTTPStatus.BAD_REQUEST, VOICE_PROBLEMS.get(problem, "Không đổi được giọng nhân vật này"))
+        listener_overrides.request_voice(path, character, preset=preset, gender=gender, avoid=avoid, now=time.time())
+        self._send_json(HTTPStatus.OK, {"character": character, "preset": preset, "gender": gender, "avoid": avoid})
+
     def post_review(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._book(value)
         body = self._body()
@@ -1061,6 +1087,7 @@ ROUTES: list[Route] = [
     ("POST", re.compile(BOOK + r"/pronunciation"), Handler.post_pronunciation),
     ("POST", re.compile(BOOK + r"/bookfile"), Handler.post_bookfile),
     ("POST", re.compile(BOOK + r"/speaker"), Handler.post_speaker),
+    ("POST", re.compile(BOOK + r"/voice"), Handler.post_voice),
     ("GET", re.compile(BOOK + r"/cover/search"), Handler.get_cover_search),
     ("PUT", re.compile(BOOK + r"/cover"), Handler.put_cover),
     ("DELETE", re.compile(BOOK + r"/cover"), Handler.delete_cover),
