@@ -1,6 +1,6 @@
 import * as Switch from "@radix-ui/react-switch";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Clapperboard, Download, FileAudio, Laptop, Link2, Loader2, RefreshCw, Search, Smartphone, Unplug, Wifi } from "lucide-react";
+import { Bluetooth, CheckCircle2, Clapperboard, Download, FileAudio, Laptop, Link2, Loader2, RefreshCw, Search, Smartphone, Unplug, Wifi } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
@@ -26,6 +26,7 @@ function PairPanel() {
   const [manual, setManual] = useState(false);
   const [address, setAddress] = useState("");
   const [code, setCode] = useState("");
+  const [paired, setPaired] = useState<{ address: string; name: string; abook: boolean }[] | null>(null);
   const discover = useMutation({
     mutationFn: () => EbookLibrary.discover({ timeoutMs: 2500 }),
     onSuccess: ({ computers: found }) => {
@@ -33,8 +34,21 @@ function PairPanel() {
       if (found.length === 1) setTarget(found[0]);
     },
   });
+  // Không chung Wi-Fi: máy tính đã ghép Bluetooth với điện thoại (Cài đặt Android) - cùng mã 6 số, đi qua Bluetooth.
+  const bluetooth = useMutation({
+    mutationFn: () => EbookLibrary.bluetoothDevices(),
+    onSuccess: ({ devices }) => {
+      const computersOnly = devices.filter((device) => device.kind === "computer" || device.abook);
+      setPaired(computersOnly);
+      if (computersOnly.length === 1) setTarget({ host: `bt:${computersOnly[0].address}`, port: 0, name: computersOnly[0].name });
+    },
+    onError: (error: Error) => toast.error("Chưa dùng được Bluetooth", { description: error.message }),
+  });
   const pair = useMutation({
     mutationFn: () => {
+      if (target?.host.startsWith("bt:")) {
+        return EbookLibrary.pairBluetooth({ address: target.host.slice(3), code: code.replace(/\D/g, "") });
+      }
       const host = target?.host ?? address.split(":")[0].trim();
       const port = target?.port ?? Number(address.split(":")[1] ?? 47630);
       return EbookLibrary.pair({ host, port, code: code.replace(/\D/g, "") });
@@ -100,6 +114,43 @@ function PairPanel() {
           ) : (
             <p className="rounded-xl bg-hover px-4 py-3 text-sm text-fg-2">
               {discover.isPending ? "Đang tìm trong mạng Wi-Fi…" : "Chưa thấy máy tính nào. Kiểm tra máy tính đã bật kết nối, hoặc nhập địa chỉ."}
+            </p>
+          )}
+        </div>
+      )}
+
+      {!manual && (
+        <div>
+          {paired === null ? (
+            <button type="button" onClick={() => bluetooth.mutate()} className="flex items-center gap-1.5 text-sm font-medium text-accent-text">
+              {bluetooth.isPending ? <Loader2 className="size-4 animate-spin" /> : <Bluetooth className="size-4" />} Không chung Wi-Fi? Kết nối qua Bluetooth
+            </button>
+          ) : paired.length ? (
+            <div className="space-y-2">
+              <span className="text-sm font-semibold">Máy tính đã ghép Bluetooth</span>
+              {paired.map((device) => (
+                <button
+                  key={device.address}
+                  type="button"
+                  onClick={() => setTarget({ host: `bt:${device.address}`, port: 0, name: device.name })}
+                  className={cn(
+                    "flex w-full items-center gap-3 rounded-xl border p-3.5 text-left",
+                    target?.host === `bt:${device.address}` ? "border-accent bg-accent-soft" : "border-line bg-panel",
+                  )}
+                >
+                  <Bluetooth className="size-5 text-fg-2" />
+                  <span className="flex-1">
+                    <span className="block font-medium">{device.name}</span>
+                    <span className="block text-xs text-fg-2">Qua Bluetooth{device.abook ? " · có ABook" : ""}</span>
+                  </span>
+                  {target?.host === `bt:${device.address}` && <CheckCircle2 className="size-5 text-accent-text" />}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="rounded-xl bg-hover px-4 py-3 text-sm text-fg-2">
+              Chưa có máy tính nào ghép Bluetooth với điện thoại. Ghép trong Cài đặt Android → Bluetooth (máy tính bật
+              Bluetooth và ABook), rồi thử lại.
             </p>
           )}
         </div>
@@ -464,7 +515,10 @@ export function DevicesScreen() {
             <div className="flex items-center gap-3 rounded-2xl border border-line bg-panel p-4">
               <Laptop className="size-5 text-fg-2" />
               <div className="min-w-0 flex-1">
-                <div className="truncate font-semibold">{connection.data.name || connection.data.host}</div>
+                <div className="truncate font-semibold">
+                  {connection.data.name || connection.data.host}
+                  {connection.data.host.startsWith("bt:") && <span className="ml-1.5 text-xs font-normal text-fg-2">· qua Bluetooth</span>}
+                </div>
                 <div className={cn("text-xs", remote.isError ? "text-danger" : "text-fg-2")}>
                   {remote.isError ? "Không kết nối được - máy tính đang tắt hoặc khác mạng Wi-Fi" : "Đã kết nối"}
                 </div>
