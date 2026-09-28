@@ -83,7 +83,7 @@
 79 N
 80 D HẠ TỬ CƯỜNG,TỬ CƯỜNG neutral 0-1 normal normal m
 81 N
-82 D NPC*,HẠ TỬ CƯỜNG~,TỬ CƯỜNG~,UNKNOWN~ neutral,tender 0-1 slow,normal normal m
+82 D NPC*:đại sư trong chùa,HẠ TỬ CƯỜNG~,TỬ CƯỜNG~,UNKNOWN~ neutral,tender 0-1 slow,normal normal m
 83 N NARRATOR neutral,tender 0-1 normal normal u
 84 N NARRATOR neutral,happy 0-1 normal normal u
 85 N NARRATOR neutral,tender 0-1 normal normal u

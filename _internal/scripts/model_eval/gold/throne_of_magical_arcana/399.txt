@@ -40,8 +40,8 @@
 37 N
 38 N
 39 D CLAIRE happy,neutral 0-1 normal normal f
-40 D NPC*,ARTHEN~,RELPH~,UNKNOWN~ surprised 1-2 fast normal,loud m
-41 D NPC*,ARTHEN~,RELPH~,UNKNOWN~ surprised,angry 1-2 fast loud m
+40 D NPC*:đám quý tộc trẻ,ARTHEN~,RELPH~,UNKNOWN~ surprised 1-2 fast normal,loud m
+41 D NPC*:đám quý tộc trẻ,ARTHEN~,RELPH~,UNKNOWN~ surprised,angry 1-2 fast loud m
 42 N
 43 N
 44 D ARTHEN neutral,angry 1 normal normal m
@@ -92,7 +92,7 @@
 89 D RELPH angry 2 normal,fast loud m
 90 N
 91 N
-92 D NPC*,RELPH~,UNKNOWN~ angry 2-3 fast loud m
+92 D NPC*:quý tộc bị nhốt,RELPH~,UNKNOWN~ angry 2-3 fast loud m
 93 D ARTHEN,NARRATOR~ happy,sarcastic 2 normal loud m
 94 N
 95 D ARTHEN sarcastic,happy,angry 1-2 normal normal,loud m
