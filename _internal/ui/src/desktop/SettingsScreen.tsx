@@ -112,11 +112,14 @@ export function SettingsScreen() {
         {remote && (
           <Section title="Điều khiển từ xa" description="Bạn đang dùng ABook của máy tính qua mạng.">
             <p className="max-w-xl text-sm text-fg-2 text-pretty">
-              Sách, dự án và việc sản xuất ở đây là của máy tính. Cài đặt của máy tính - thư mục thư viện, giao diện, hẹn giờ
-              ngủ, thiết bị đã ghép - chỉ đổi được trên chính máy tính.
+              {info?.listenOnly
+                ? "Thiết bị này nghe được mọi sách của máy tính. Muốn làm sách từ đây: trên máy tính, Cài đặt → Điện thoại và thiết bị → bật “Cho phép điều khiển sản xuất từ thiết bị đã ghép” và “Điều khiển sản xuất” ở dòng của thiết bị này."
+                : "Sách, dự án và việc sản xuất ở đây là của máy tính."}{" "}
+              Cài đặt của máy tính - thư mục thư viện, giao diện, hẹn giờ ngủ, thiết bị đã ghép - chỉ đổi được trên chính máy tính.
             </p>
           </Section>
         )}
+        {!info?.listenOnly && (
         <Section title="Thư viện" description="Thư mục chứa các sách. Sách mới được tạo trong thư mục này.">
           <div className="flex items-center gap-2">
             <div className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-lg bg-sunken px-3 text-sm text-fg-2">
@@ -130,6 +133,7 @@ export function SettingsScreen() {
             )}
           </div>
         </Section>
+        )}
         {!remote && (
         <>
         <Section title="Giao diện" description="Màu sáng hay tối. Theo Windows sẽ tự đổi cùng hệ thống.">

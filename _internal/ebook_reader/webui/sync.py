@@ -562,33 +562,33 @@ class SyncHandler(BaseHTTPRequestHandler):
         return self.app.devices.identify(token) if token else None
 
     def _studio(self, method: str, path: str) -> None:
-        """Mọi đường ngoài `/sync/`: giao diện web và API của nó (remote_studio.py)."""
+        """Mọi đường ngoài `/sync/`: giao diện web và API của nó (remote_studio.py). Thiết bị đã ghép luôn NGHE được (như
+        app điện thoại qua /sync/v1); điều khiển sản xuất cần cả công tắc chung lẫn quyền của thiết bị."""
         studio = self.app.studio
         if not remote_studio.allowed_host(self.headers.get("Host")):
             self._json(HTTPStatus.FORBIDDEN, {"error": "Host không hợp lệ"})
             return
-        if studio is None or not studio.allowed():
+        if studio is None:
             if path.startswith(("/api/", "/media/")):
-                self._json(HTTPStatus.FORBIDDEN, {"error": "Máy tính chưa cho phép điều khiển từ xa"})
+                self._json(HTTPStatus.SERVICE_UNAVAILABLE, {"error": "Giao diện ABook của máy tính chưa mở"})
             else:
-                remote_studio.send_page(self, HTTPStatus.FORBIDDEN, remote_studio.closed_page(self.app.name))
+                remote_studio.send_page(self, HTTPStatus.SERVICE_UNAVAILABLE, remote_studio.closed_page(self.app.name))
             return
         device = self._device(cookie=True)
-        if device is not None and not device.get("studio"):
-            if path.startswith(("/api/", "/media/")):
-                self._json(HTTPStatus.FORBIDDEN, {"error": "Thiết bị này chưa được phép điều khiển sản xuất"})
-            else:
-                remote_studio.send_page(self, HTTPStatus.FORBIDDEN, remote_studio.device_closed_page(self.app.name))
-            return
+        producing = device is not None and studio.allowed() and bool(device.get("studio"))
         if path.startswith(("/api/", "/media/")):
             if device is None:
                 self._json(HTTPStatus.UNAUTHORIZED, {"error": "Thiết bị chưa ghép nối"})
             elif not remote_studio.permitted(method, path):
                 self._json(HTTPStatus.FORBIDDEN, {"error": "Việc này chỉ làm được trên chính máy tính"})
+            elif not remote_studio.permitted(method, path, producing=producing):
+                reason = ("Máy tính chưa cho phép điều khiển sản xuất từ xa" if not studio.allowed()
+                          else "Thiết bị này chưa được phép điều khiển sản xuất")
+                self._json(HTTPStatus.FORBIDDEN, {"error": f"{reason} - thiết bị này chỉ nghe sách được"})
             elif method not in ("GET", "HEAD") and not remote_studio.same_origin(self.headers):
                 self._json(HTTPStatus.FORBIDDEN, {"error": "Yêu cầu không đến từ trang Studio"})
             else:
-                remote_studio.forward(self, method, self.path, studio)
+                remote_studio.forward(self, method, self.path, studio, listen_only=not producing)
             return
         if method not in ("GET", "HEAD"):
             self._json(HTTPStatus.METHOD_NOT_ALLOWED, {"error": "Không hỗ trợ"})
@@ -653,12 +653,14 @@ class SyncHandler(BaseHTTPRequestHandler):
                 if not remote_studio.allowed_host(self.headers.get("Host")):
                     self._json(HTTPStatus.FORBIDDEN, {"error": "Host không hợp lệ"})
                     return
-                if self.app.studio is None or not self.app.studio.allowed():
-                    self._json(HTTPStatus.FORBIDDEN, {"error": "Máy tính chưa cho phép điều khiển từ xa"})
+                if self.app.studio is None:
+                    self._json(HTTPStatus.SERVICE_UNAVAILABLE, {"error": "Giao diện ABook của máy tính chưa mở"})
                     return
+                # Ghép để NGHE luôn được (cùng mã 6 số người dùng vừa bấm trên máy tính); quyền sản xuất chỉ khi công tắc
+                # đang bật - như ghép điện thoại.
                 body = self._body()
                 token = self.app.devices.pair(str(body.get("code", "")), str(body.get("device", "")) or "Trình duyệt",
-                                              studio=True)
+                                              studio=self.app.studio.allowed())
                 if token is None:
                     self._json(HTTPStatus.FORBIDDEN, {"error": "Mã ghép nối sai hoặc đã hết hạn"})
                 else:
