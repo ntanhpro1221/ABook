@@ -155,7 +155,7 @@ function SampleButton({ id, url, label }: { id: string; url: string; label: stri
   );
 }
 
-function hueOf(text: string): number {
+export function hueOf(text: string): number {
   let value = 0;
   for (const char of text) value = (value * 31 + char.charCodeAt(0)) % 360;
   return value;

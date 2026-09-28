@@ -7,6 +7,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Studio có tab mới **"Kịch bản"**: đọc từng chương như kịch bản - câu nào của ai - và đổi người nói của bất kỳ câu
+  thoại hay câu nghĩ nào bằng cách bấm tên ở đầu câu (tìm được mọi nhân vật đã có giọng, gõ không dấu cũng được). Câu
+  máy nghi có dấu vàng kèm lý do và gợi ý người đáp lại; bộ lọc "Máy nghi" chỉ hiện những câu ấy cùng câu liền trước.
+  Máy tính có phím tắt: ↑ ↓ chọn câu, phím số gán người theo dàn của chương rồi sang câu kế. Sửa không dừng sách: áp ở
+  ranh giới chương kế tiếp, câu đã thu thì thu lại bằng giọng người mới; câu nào đã ghi hiện "đang chờ", áp rồi có dấu
+  tích. Dùng được cả từ điện thoại qua Studio từ xa.
 - Hộp **"Việc cần anh"** có loại việc mới **"Lượt đối đáp"**: hai đoạn thoại liền nhau không lời dẫn mà máy gán cho cùng một người - đo trên đáp án 7 truyện, 9/10 cặp như thế là máy bỏ lỡ lượt đổi người. Thẻ hỏi câu sau là của ai; truyện kể ngôi thứ nhất thì "tôi" đứng đầu các lựa chọn.
 - **Tên mới: ABook** (trước là Ebook Reader), trên máy tính lẫn điện thoại: lối tắt ở thư mục gốc và Start Menu tên
   "ABook" (lối tắt tên cũ tự gỡ khi mở app), cửa sổ khởi động, dữ liệu app ở `%LOCALAPPDATA%\ABook` (tự chuyển từ thư
