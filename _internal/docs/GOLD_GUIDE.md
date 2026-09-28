@@ -55,6 +55,12 @@ tranh chấp và kết luận ghi ở `scripts/model_eval/gold/ADJUDICATION.md`.
      "?", đang viết nhận xét): người đọc và NARRATOR đủ điểm, tác giả nửa điểm.
    Người ký/nhận văn bản không được điểm. Người viết không tên: `NPC*~`. Tác giả chỉ được gọi tên ở chương khác hoặc qua
    một câu trích thoáng qua ("ghi chép của Vua Mặt Trời Thanos"): tên đủ điểm, `NPC*~` (vòng 5). Thư gửi CHO X thì X không phải người nói.
+   **7b. Chuỗi bài đăng mạng xã hội / diễn đàn / khung chat của người vô danh** (LN Nhật hay có - Two Childhood Friends 042:
+   2-35): mỗi bài là một người vô danh khác, như câu "cả đám" (quy tắc 6) -> `NARRATOR` và `NPC*` đều đủ, `UNKNOWN~`. Nhân vật
+   có tên chỉ được NHẮC đến trong bài ("thằng Kuchinashi...") không phải người đăng - không điểm (bộ đo LN 28-09).
+   **7c. Giọng trong đầu nhân vật / thực thể vô hình** nói bằng dòng 『…』 (ký sinh trùng trong não Yoshihito, Tọa Phu Đồng Tử
+   ở Yamiyo): lần HẾT cuốn tìm cái tên truyện gọi nó trước khi gán; tên cả cuốn dùng đủ điểm (như Trịnh lão), `NPC*~` vì nó
+   nói ở nhiều chương. KHÔNG gán cho nhân vật có tên gần tay nhất - cả A và model đều mắc (bộ đo LN 28-09, `ADJUDICATION.md`).
 8. **Ngoặc kép nhấn mạnh / tiếng tượng thanh trong ngoặc** ("mỉm cười", "quan sát", "Rầm!", "Bùm!"): parser khoá là
    thoại nhưng thực chất là chữ của người kể → `NARRATOR` đủ điểm. Từ/cụm nằm GIỮA câu kể mà gốc là lời của ai
    ("quan sát" của Fernando, câu đáp của Lucien) thì người ấy chỉ nửa điểm (đổi giọng giữa câu kể là sai). Từ trong
