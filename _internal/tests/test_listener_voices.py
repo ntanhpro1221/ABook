@@ -283,3 +283,43 @@ def test_the_inbox_offers_one_click_gender_and_voice_fixes_and_the_studio_record
     kinds = {item["kind"] for item in work_items(paths.root)["items"]}
     assert "gender" not in kinds and "shared-voice" not in kinds, "đã áp: giới đã ghim, hai người đã khác giọng"
     assert_voice_stability(db)
+
+
+def test_the_voice_picker_lists_every_castable_voice_with_what_the_listener_needs_to_choose(tmp_path: Path) -> None:
+    """Màn "Đổi giọng": mọi giọng dùng được (không giọng người kể), giọng đang dùng, giọng máy gợi ý cho mỗi giới, và ai
+    đang dùng giọng ấy cùng mấy chương - để người nghe không vô tình chọn đúng giọng người cùng cảnh."""
+    from ebook_reader.config import save_settings
+    from ebook_reader.webui.library import Preferences, book_id
+    from ebook_reader.webui.listening import Listening
+    from ebook_reader.webui.remote_studio import permitted
+    from ebook_reader.webui.server import App, Server
+    from ebook_reader.webui.voice_picker import voice_choices
+    from tests.test_webui_listen_and_sync import FakeRunner, _request
+
+    paths, _db = _book(tmp_path)
+    save_settings(paths.settings, SETTINGS)
+    view = voice_choices(paths.root, "Rhine")
+    assert view is not None and view["character"] == {"value": "RHINE", "label": "Rhine", "gender": "male",
+                                                      "lines": 1, "chapters": 1}
+    names = {voice["name"] for voice in view["voices"]}
+    assert NARRATOR_VOICE not in names and {MALE[0]["name"], FEMALE[0]["name"]} <= names
+    current = [voice for voice in view["voices"] if voice["current"]]
+    assert [voice["name"] for voice in current] == [MALE[0]["name"]]
+    assert current[0]["sharedWith"] == [{"label": "Lucien", "chapters": 1}], "Lucien cùng giọng, cùng chương"
+    assert current[0]["otherUsers"] == 0
+    assert {voice["gender"] for voice in view["voices"] if voice["suggested"]} == {"male", "female"}
+    assert voice_choices(paths.root, "Heidi") is None and voice_choices(paths.root, "NARRATOR") is None
+
+    preferences = Preferences(tmp_path / "prefs" / "preferences.json")
+    preferences.update({"libraryRoot": str(tmp_path)})
+    app = App(preferences=preferences, runner=FakeRunner(), token="t", listening=Listening(tmp_path / "prefs" / "l.json"))
+    server = Server(app, port=0).start()
+    base = f"/api/books/{book_id(paths.root)}/voices"
+    try:
+        status, data, _ = _request(server.port, "GET", base + "?character=NOAH", headers={"X-Ebook-Token": "t"})
+        assert status == 200 and json.loads(data)["character"]["value"] == "NOAH"
+        status, _, _ = _request(server.port, "GET", base + "?character=HEIDI", headers={"X-Ebook-Token": "t"})
+        assert status == 404
+    finally:
+        server.stop()
+    assert permitted("GET", base)
