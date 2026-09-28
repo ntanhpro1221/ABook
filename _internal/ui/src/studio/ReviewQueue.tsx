@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Ear, Loader2, Play, RotateCcw, ShieldCheck } from "lucide-react";
+import { Check, Ear, FileText, Loader2, Play, RotateCcw, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
@@ -7,8 +7,9 @@ import { formatPercent } from "@/shared/format";
 import { EmptyState, Segmented, Vu } from "@/shared/ui";
 import { api, urls } from "./api";
 
-// "Cần nghe lại": câu mà khâu tự kiểm tra không chắc (webui/reviews.py). Nghe từng câu, bấm Ổn hoặc Cần thu lại -
-// các chương có câu "cần thu lại" gom thành danh sách đúc lại cho ranh giới lô kế tiếp.
+// "Cần nghe lại": câu mà khâu tự kiểm tra không chắc (webui/reviews.py). Nghe từng câu, bấm Ổn hoặc Cần thu lại.
+// Phán quyết chỉ nằm ở reviews.json: CHƯA có gì tự thu lại theo nó (soát 29-09 - câu cũ "sẽ được đúc lại ở lần sản xuất kế
+// tiếp" là quy trình phát triển nội bộ, người dùng Studio không có). Đường thu lại thật hôm nay: sửa câu ở tab Kịch bản.
 
 type Kind = "failed" | "unverified" | "name-low" | "name";
 
@@ -60,7 +61,19 @@ export function useReviewCount(bookId: string) {
 
 const EMPTY = "empty";
 
-function Row({ bookId, item, onVerdict }: { bookId: string; item: ReviewItem; onVerdict: (verdict: ReviewItem["verdict"]) => void }) {
+type OpenScript = (chapterId: number, stableId: string) => void;
+
+function Row({
+  bookId,
+  item,
+  onVerdict,
+  onOpenScript,
+}: {
+  bookId: string;
+  item: ReviewItem;
+  onVerdict: (verdict: ReviewItem["verdict"]) => void;
+  onOpenScript?: OpenScript;
+}) {
   const clip = useClip();
   const id = `review-${item.segmentId}`;
   const playing = clip.current === id;
@@ -100,6 +113,15 @@ function Row({ bookId, item, onVerdict }: { bookId: string; item: ReviewItem; on
         )}
         <p className="mt-1 text-xs text-fg-2">{item.reason}</p>
         {!item.playable && <p className="mt-1 text-xs text-fg-2">{unplayable}.</p>}
+        {onOpenScript && item.verdict === "redo" && (
+          <button
+            type="button"
+            onClick={() => onOpenScript(item.chapterId, item.stableId)}
+            className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-accent-text hover:underline"
+          >
+            <FileText className="size-3.5" /> Sửa câu này ở tab Kịch bản
+          </button>
+        )}
       </div>
       <div className="flex gap-1.5">
         {/* Không có gì để nghe thì không phán "Ổn" được - chỉ còn thu lại (soát UX 29-09). */}
@@ -132,7 +154,7 @@ function Row({ bookId, item, onVerdict }: { bookId: string; item: ReviewItem; on
   );
 }
 
-export function ReviewQueue({ bookId }: { bookId: string }) {
+export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenScript?: OpenScript }) {
   const client = useQueryClient();
   const [showMinor, setShowMinor] = useState(false);
   const [filter, setFilter] = useState<"todo" | "done">("todo");
@@ -198,14 +220,16 @@ export function ReviewQueue({ bookId }: { bookId: string }) {
         />
       </div>
       {data.redoChapters.length > 0 && (
-        <p className="mt-3 rounded-xl bg-danger-soft px-4 py-2.5 text-sm text-danger">
-          Chương cần thu lại: {data.redoChapters.length} chương - sẽ được đúc lại ở lần sản xuất kế tiếp.
+        <p className="mt-3 rounded-xl bg-danger-soft px-4 py-2.5 text-sm text-danger text-pretty">
+          {data.redoChapters.length} chương có câu được đánh dấu cần thu lại. Bản này chưa tự thu lại theo đánh dấu: sửa cách
+          đọc hay chữ đem đọc của câu ấy ở tab Kịch bản thì câu được thu lại khi sách chạy tiếp (sách đã xong: nút “Áp dụng thay
+          đổi”).
         </p>
       )}
       {items.length ? (
         <ul className="mt-3 space-y-1">
           {items.map((item, index) => (
-            <Row key={item.stableId} bookId={bookId} item={item} onVerdict={(value) => judge(index, value)} />
+            <Row key={item.stableId} bookId={bookId} item={item} onVerdict={(value) => judge(index, value)} onOpenScript={onOpenScript} />
           ))}
         </ul>
       ) : (
