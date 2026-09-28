@@ -179,6 +179,25 @@ def chapter_names(connection: sqlite3.Connection) -> dict[int, dict[str, Any]]:
     return out
 
 
+def pending_changes(project_root: Path, since: float) -> int:
+    """Số yêu cầu của người nghe (overrides.json: cách đọc tên, người nói, cách đọc câu, giọng) ghi SAU lần dây chuyền ghi sổ
+    cuối `since`. Sách đã xong không tự chạy lại, nên các yêu cầu ấy chờ mãi nếu không có nút "Áp dụng" (soát UX 29-09:
+    mọi thẻ báo "chờ lần chạy tới" mà trang dự án "Hoàn tất" không có nút chạy nào). Chạy lại một cuốn xong áp chúng trước
+    bước phục hồi (Pipeline._recover) rồi chỉ thu lại câu bị ảnh hưởng."""
+    from ..listener_overrides import read_overrides
+
+    data = read_overrides(project_root)
+    count = 0
+    for section in ("pronunciations", "speakers", "lines", "voices"):
+        entries = data.get(section)
+        for entry in (entries.values() if isinstance(entries, dict) else ()):
+            try:
+                count += float(entry.get("requested_at") or 0) > since
+            except (AttributeError, TypeError, ValueError):
+                continue
+    return count
+
+
 def summarize(project_root: Path, *, running: bool = False, now: float | None = None) -> dict[str, Any]:
     """Tóm tắt một cuốn cho thư viện và phần đầu trang sách."""
     now = time.time() if now is None else now
@@ -240,6 +259,7 @@ def summarize(project_root: Path, *, running: bool = False, now: float | None = 
         "createdAt": float(book["created_at"] or 0) or None,
         "updatedAt": max(float(book["updated_at"] or 0), touched(project_root)) or None,
         "lastError": str(book["last_error"] or ""),
+        "pendingChanges": pending_changes(project_root, float(book["updated_at"] or 0)) if phase == "done" else 0,
         "settings": {
             "profile": profile,
             "profileLabel": humanize.PROFILE_LABELS.get(profile, profile),

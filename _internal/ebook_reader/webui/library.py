@@ -17,6 +17,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+from ..listener_overrides import overrides_path
 from . import store
 
 DEFAULT_PREFERENCES: dict[str, Any] = {
@@ -100,6 +101,13 @@ def _decode_id(value: str) -> Path | None:
         return Path(base64.urlsafe_b64decode(padded.encode("ascii")).decode("utf-8"))
     except (ValueError, UnicodeError):
         return None
+
+
+def _mtime(path: Path) -> float:
+    try:
+        return path.stat().st_mtime
+    except OSError:
+        return 0.0
 
 
 def _key(path: Path) -> str:
@@ -204,7 +212,8 @@ class Library:
         return {_key(package): package for package in self.packages()}.get(_key(path))
 
     def summary(self, project: Path, *, running: bool, starting: bool = False) -> dict[str, Any]:
-        stamp = store.touched(project)
+        # Cả mốc của overrides.json: yêu cầu mới của người nghe đổi "pendingChanges" mà không chạm DB.
+        stamp = (store.touched(project), _mtime(overrides_path(project)))
         key = _key(project)
         with self._lock:
             cached = self._cache.get(key)

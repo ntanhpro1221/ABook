@@ -9,6 +9,7 @@ import {
   Mic2,
   Pause,
   Play,
+  RefreshCw,
   Square,
   Users,
   Wand2,
@@ -268,6 +269,12 @@ function Actions({ book }: { book: BookSummary }) {
       ) : book.phase !== "done" ? (
         <Button variant="primary" size="lg" icon={Play} loading={start.isPending} onClick={() => start.mutate(book.id)}>
           Tiếp tục tạo
+        </Button>
+      ) : book.pendingChanges ? (
+        // Sách đã xong không tự chạy lại: sửa của người nghe chờ ở đây. Chạy lại áp chúng trước rồi chỉ thu lại câu bị ảnh
+        // hưởng (Pipeline._recover) - không làm lại cả cuốn.
+        <Button variant="primary" size="lg" icon={RefreshCw} loading={start.isPending} onClick={() => start.mutate(book.id)}>
+          Áp dụng {book.pendingChanges} thay đổi
         </Button>
       ) : null}
       {!remote && <IconButton label="Mở thư mục sách" icon={FolderOpen} onClick={() => reveal.mutate(book.id)} />}
