@@ -102,17 +102,20 @@ function Row({ bookId, item, onVerdict }: { bookId: string; item: ReviewItem; on
         {!item.playable && <p className="mt-1 text-xs text-fg-2">{unplayable}.</p>}
       </div>
       <div className="flex gap-1.5">
-        <button
-          type="button"
-          aria-pressed={item.verdict === "ok"}
-          onClick={() => onVerdict(item.verdict === "ok" ? null : "ok")}
-          className={cn(
-            "inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-medium",
-            item.verdict === "ok" ? "bg-success-soft text-success" : "border border-line hover:bg-hover",
-          )}
-        >
-          <Check className="size-4" /> Ổn
-        </button>
+        {/* Không có gì để nghe thì không phán "Ổn" được - chỉ còn thu lại (soát UX 29-09). */}
+        {item.playable && (
+          <button
+            type="button"
+            aria-pressed={item.verdict === "ok"}
+            onClick={() => onVerdict(item.verdict === "ok" ? null : "ok")}
+            className={cn(
+              "inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-medium",
+              item.verdict === "ok" ? "bg-success-soft text-success" : "border border-line hover:bg-hover",
+            )}
+          >
+            <Check className="size-4" /> Ổn
+          </button>
+        )}
         <button
           type="button"
           aria-pressed={item.verdict === "redo"}
@@ -122,7 +125,7 @@ function Row({ bookId, item, onVerdict }: { bookId: string; item: ReviewItem; on
             item.verdict === "redo" ? "bg-danger-soft text-danger" : "border border-line hover:bg-hover",
           )}
         >
-          <RotateCcw className="size-4" /> Cần thu lại
+          <RotateCcw className="size-4" /> {item.playable ? "Cần thu lại" : "Thu lại câu này"}
         </button>
       </div>
     </li>
