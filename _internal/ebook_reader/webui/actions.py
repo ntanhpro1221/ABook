@@ -99,6 +99,23 @@ class BackgroundRunner:
             return False
 
 
+class StudioRunner(BackgroundRunner):
+    """App Windows đóng gói (webui/host.py): sách chạy bằng Python của Studio tải thêm (webui/studio_setup.py) và đúng
+    bản mã đã bắt đầu cuốn ấy (`code_for` - app tự cập nhật không làm hỏng sách dở). Python nhúng của app chỉ có phần
+    nghe. Supervisor là con của host nên thừa hưởng môi trường: runtime của Studio, PYTHONPATH tới bản mã, Ollama."""
+
+    def __init__(self, setup: Any) -> None:
+        self.setup = setup
+
+    def start(self, project_root: Path) -> None:
+        if not self.setup.installed():
+            raise RuntimeError("Máy này chưa cài Studio - vào Dự án, bấm \"Cài Studio\" (một lần, khoảng 20 GB).")
+        from ..background_runner import start_background
+
+        os.environ.update(self.setup.environment(self.setup.code_for(project_root)))
+        start_background(project_root, python_executable=self.setup.pythonw)
+
+
 class FakeRunner:
     """Giả chạy/dừng cho lúc phát triển giao diện - không đụng tiến trình hay file nào của sách."""
 

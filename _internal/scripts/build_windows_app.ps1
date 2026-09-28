@@ -99,6 +99,8 @@ function Copy-App {
         $source = Join-Path $Internal $file
         if (Test-Path $source) { Copy-Item $source $app }
     }
+    # Danh sách thư viện của Studio tải thêm (webui/studio_setup.py đọc ở thư mục app).
+    Copy-Item (Join-Path $Shell "python\studio-requirements.txt") $app
     Invoke-Checked { & (Join-Path $Resources "python\python.exe") -m compileall -q -j 0 (Join-Path $app "ebook_reader") } "compileall"
 }
 

@@ -5,6 +5,7 @@ import { Button, Kbd, Segmented, radioGroupKeys, radioTabIndex } from "@/shared/
 import { cn } from "@/shared/cn";
 import { api } from "@/studio/api";
 import { pickFolder, useAppInfo, usePreferences } from "@/studio/data";
+import { StudioSettings } from "@/studio/StudioSetup";
 import { OtherComputers } from "./OtherComputers";
 import { PhoneSync, Switch } from "./PhoneSync";
 
@@ -265,6 +266,15 @@ export function SettingsScreen() {
         >
           <PhoneSync />
         </Section>
+        {info?.studio && (
+          <Section
+            id="studio"
+            title="Studio"
+            description="Phần làm sách nói (thư viện, model đọc hiểu truyện, giọng đọc) - tải thêm khi cần, nằm riêng một thư mục."
+          >
+            <StudioSettings />
+          </Section>
+        )}
         <Section
           id="computers"
           title="Máy tính khác"
