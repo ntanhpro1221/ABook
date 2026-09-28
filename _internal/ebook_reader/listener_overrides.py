@@ -1,5 +1,5 @@
 """Người nghe sửa trong Studio (hộp "Việc cần anh", docs/STUDIO_REVIEW.md) - cách đọc tên, ai nói câu nào, giọng và
-giới của một nhân vật, loại đoạn và cảm xúc của một câu - áp ở ranh giới an toàn.
+giới của một nhân vật, loại đoạn, cảm xúc và chữ đem đọc của một câu - áp ở ranh giới an toàn.
 
 Giao diện không ghi SQLite của sách: dây chuyền là người ghi duy nhất. Giao diện ghi ý muốn của người nghe vào
 `overrides.json` cạnh `project.sqlite3`, dây chuyền đọc file ấy ở ranh giới an toàn và áp từng yêu cầu bằng
@@ -38,6 +38,10 @@ UNKNOWN_PRESET = "unknown_preset"
 BAD_GENDER = "bad_gender"
 BAD_KIND = "bad_kind"
 BAD_EMOTION = "bad_emotion"
+BAD_TEXT = "bad_text"
+# Chữ đem đọc người nghe sửa cho một câu (lỗi chữ, cách viết lạ - STUDIO_REVIEW mục 7): trần tuyệt đối, và không dài quá
+# bốn lần câu gốc - sửa chữ chứ không viết lại đoạn văn.
+MAX_SPOKEN_CHARS = 2000
 LINE_KINDS = ("narration", "dialogue", "thought")
 
 # Hai đích đặc biệt của "Ai nói câu này", ngoài khoá tên chuẩn của một nhân vật.
@@ -306,8 +310,21 @@ def voice_target(
     }, None
 
 
+def spoken_problem(original: str, spoken: str) -> str | None:
+    """Chữ đem đọc người nghe muốn cho câu có văn bản `original`: None nếu dùng được. Rỗng = trả về đúng chữ của sách."""
+    text = spoken.strip()
+    if not text:
+        return None
+    if len(text) > MAX_SPOKEN_CHARS or len(text) > 4 * len(original.strip()) + 40:
+        return BAD_TEXT
+    if any(ord(character) < 32 for character in text) or not any(character.isalpha() for character in text):
+        return BAD_TEXT
+    return None
+
+
 def line_requests(overrides: dict[str, Any]) -> list[dict[str, Any]]:
-    """Các yêu cầu sửa cách đọc một câu (loại đoạn, cảm xúc, cường độ), theo thứ tự mã câu. Trường rỗng / None = giữ."""
+    """Các yêu cầu sửa cách đọc một câu (loại đoạn, cảm xúc, cường độ, chữ đem đọc), theo thứ tự mã câu. Trường rỗng /
+    None = giữ; riêng `spoken`: None = giữ, "" = trả về chữ của sách."""
     entries = overrides.get("lines")
     if not isinstance(entries, dict):
         return []
@@ -323,6 +340,7 @@ def line_requests(overrides: dict[str, Any]) -> list[dict[str, Any]]:
             "kind": str(entry.get("kind") or "").strip(),
             "emotion": str(entry.get("emotion") or "").strip(),
             "intensity": int(intensity) if isinstance(intensity, (int, float)) and not isinstance(intensity, bool) else None,
+            "spoken": entry["spoken"] if isinstance(entry.get("spoken"), str) else None,
         })
     return requests
 
@@ -335,18 +353,22 @@ def line_target(
     kind: str = "",
     emotion: str = "",
     intensity: int | None = None,
+    spoken: str | None = None,
 ) -> tuple[dict[str, Any] | None, str | None]:
-    """Câu sẽ mang loại đoạn / cảm xúc / cường độ nào nếu áp yêu cầu: (đích, None), hoặc (None, mã lý do). Dùng chung cho
-    giao diện (từ chối ngay) và dây chuyền (trong transaction áp).
+    """Câu sẽ mang loại đoạn / cảm xúc / cường độ / chữ đem đọc nào nếu áp yêu cầu: (đích, None), hoặc (None, mã lý do).
+    Dùng chung cho giao diện (từ chối ngay) và dây chuyền (trong transaction áp).
 
     Cường độ đi qua ĐÚNG phép hiệu chỉnh của khâu phân tích (`analysis._calibrated_intensity`: cảm xúc êm tối đa 1, lời kể
     và nội tâm tối đa 2, mức 3 chỉ cho cảm xúc mạnh có dấu chấm than) - TTS không đọc được gì ngoài dải ấy. Đổi thành lời
     kể thì câu về người kể và giọng người kể."""
     from .analysis import ALLOWED_EMOTIONS, _calibrated_intensity
 
+    # Sách tạo trước khi có cột chữ đem đọc (giao diện mở DB chưa qua lượt nâng cấp của dây chuyền): coi như chưa sửa.
+    has_spoken = any(str(row[1]) == "listener_text" for row in conn.execute("PRAGMA table_info(segments)"))
     line = conn.execute(
         "SELECT id, chapter_id, text, kind, speaker, emotion, intensity, status, text_sha256, voice_profile_id,"
-        " canonical_character_id FROM segments WHERE stable_id=?",
+        f" canonical_character_id, {'listener_text' if has_spoken else 'NULL AS listener_text'} FROM segments"
+        " WHERE stable_id=?",
         (stable_id,),
     ).fetchone()
     if line is None:
@@ -357,6 +379,11 @@ def line_target(
         return None, BAD_KIND
     if emotion and emotion not in ALLOWED_EMOTIONS:
         return None, BAD_EMOTION
+    if spoken is not None and spoken_problem(str(line["text"]), spoken) is not None:
+        return None, BAD_TEXT
+    listener_text = line["listener_text"] if spoken is None else (" ".join(spoken.split()) or None)
+    if listener_text == str(line["text"]).strip():
+        listener_text = None  # sửa về đúng chữ của sách = không sửa
     new_kind = kind or str(line["kind"] or "narration")
     new_emotion = emotion or str(line["emotion"] or "neutral")
     wanted = intensity if intensity is not None else int(line["intensity"] or 0)
@@ -365,6 +392,7 @@ def line_target(
         "kind": new_kind,
         "emotion": new_emotion,
         "intensity": _calibrated_intensity(str(line["text"]), new_kind, new_emotion, wanted),
+        "listener_text": listener_text,
     }
     if new_kind == "narration" and str(line["kind"]) != "narration":
         narrator = conn.execute(
@@ -423,19 +451,27 @@ def request_speakers(project_root: Path, lines: list[tuple[str, str]], speaker: 
 
 
 def request_line(project_root: Path, stable_id: str, text_sha256: str, *, kind: str = "", emotion: str = "",
-                 intensity: int | None = None, speaker: str = "", now: float) -> None:
-    """Giao diện gọi: ghi (hoặc thay) mong muốn về cách đọc một câu, và - khi câu từ lời kể thành lời thoại - người nói của
-    nó, trong MỘT lần ghi file (dây chuyền không bao giờ thấy nửa yêu cầu)."""
+                 intensity: int | None = None, speaker: str = "", spoken: str | None = None, now: float) -> None:
+    """Giao diện gọi: ghi mong muốn về cách đọc một câu, và - khi câu từ lời kể thành lời thoại - người nói của nó, trong
+    MỘT lần ghi file (dây chuyền không bao giờ thấy nửa yêu cầu). Gộp với mong muốn cũ của câu: sửa chữ đem đọc không xoá
+    cảm xúc vừa chọn mà dây chuyền chưa kịp áp, và ngược lại."""
     data = read_overrides(project_root)
     lines = data.get("lines")
     lines = dict(lines) if isinstance(lines, dict) else {}
-    lines[str(stable_id)] = {
+    previous = lines.get(str(stable_id))
+    previous = previous if isinstance(previous, dict) and previous.get("text_sha256") == str(text_sha256).strip() else {}
+    entry = {
         "text_sha256": str(text_sha256).strip(),
-        "kind": str(kind).strip(),
-        "emotion": str(emotion).strip(),
-        "intensity": intensity,
+        "kind": str(kind).strip() or str(previous.get("kind") or ""),
+        "emotion": str(emotion).strip() or str(previous.get("emotion") or ""),
+        "intensity": intensity if intensity is not None else previous.get("intensity"),
         "requested_at": float(now),
     }
+    if spoken is not None:
+        entry["spoken"] = " ".join(str(spoken).split())
+    elif isinstance(previous.get("spoken"), str):
+        entry["spoken"] = previous["spoken"]
+    lines[str(stable_id)] = entry
     data["lines"] = lines
     if speaker:
         speakers = data.get("speakers")
