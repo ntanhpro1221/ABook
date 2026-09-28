@@ -34,6 +34,10 @@ SPLIT: dict[str, dict[str, set[str]]] = {
         "love_unseen": {"07", "10"},
         # Bộ LN MỞ RỘNG 29-09: 519 câu nhiễu ~±3 điểm, chưa đủ phân định v3/v5/8B/9B - thêm chương chưa học, xa mọi
         # chương train/đo của cùng truyện: yamiyo 225, nageki 62, two_childhood_friends 060, nise_seiken 086, love_unseen 10, huong_dan_sinh_ton 130 (ở trên).
+        # Hai CỔNG truyện Việt (Tam quốc, Tắt đèn): toàn bộ đáp án của hai truyện này là đề thi. Thiếu ở đây từ 27-09 nên
+        # data_v4/data_v5 đã HỌC chính các chương cổng (332 mẫu) - điểm cổng Tam quốc/Tắt đèn của v4/v5 không dùng được.
+        "tam_quoc_dien_nghia": {"050", "051", "052"},
+        "tat_den_ngo_tat_to": {"020", "021", "024"},
     },
     "dev": {
         "throne_of_magical_arcana": {"344"},
