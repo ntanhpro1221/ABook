@@ -24,6 +24,12 @@ SPLIT: dict[str, dict[str, set[str]]] = {
     "test": {
         "throne_of_magical_arcana": {"351", "363", "378", "381"},
         "young_masters_pov": {"248"},
+        # Bộ đo LN 28-09 (chủ sách đọc LN Nhật/Hàn): 5 chương gold mới, chưa từng vào huấn luyện - giữ như thế.
+        "two_childhood_friends": {"042"},
+        "nise_seiken": {"132"},
+        "huong_dan_sinh_ton": {"062"},
+        "yamiyo_no_hotaru": {"141"},
+        "nageki_no_bourei": {"65"},
     },
     "dev": {
         "throne_of_magical_arcana": {"344"},
