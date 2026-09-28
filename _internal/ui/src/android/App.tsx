@@ -21,6 +21,7 @@ import { cn } from "@/shared/cn";
 import { Button, EmptyState, TooltipProvider } from "@/shared/ui";
 import { androidSource } from "./androidSource";
 import { DevicesScreen } from "./DevicesScreen";
+import { RemotePlayerBars } from "./RemotePlayers";
 import { MorningRecap } from "@/listen/MorningRecap";
 import { NativeAudioEngine } from "./nativeEngine";
 import { SettingsScreen } from "./SettingsScreen";
@@ -88,6 +89,7 @@ function MobileShell({ children }: { children: ReactNode }) {
   return (
     <div className="relative flex h-full flex-col" style={{ paddingTop: "env(safe-area-inset-top)" }}>
       <main ref={main} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</main>
+      <RemotePlayerBars />
       <PlayerBar compact />
       <nav
         className="flex h-16 shrink-0 border-t border-line bg-panel"

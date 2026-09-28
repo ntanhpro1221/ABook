@@ -11,7 +11,7 @@ import { APP_TITLE } from "@/shared/title";
 import { formatPercent } from "@/shared/format";
 import { Progress, Vu } from "@/shared/ui";
 import { useAppInfo, useLibrary } from "@/studio/data";
-import { HandOffButton, RemoteBars } from "./RemotePhone";
+import { HandOffButton, RemoteBars, ThisPlayerReporter } from "./RemotePhone";
 
 // Máy tính = phía Nghe (giống hệt trình phát Android) + Studio sản xuất. Thanh bên tách hai khu rõ ràng.
 
@@ -203,6 +203,7 @@ export function Shell({ children }: { children: ReactNode }) {
           {children}
         </main>
         {!remote && <RemoteBars />}
+        {!remote && <ThisPlayerReporter />}
         <PlayerBar extra={remote ? undefined : <HandOffButton />} />
         <nav aria-label="Điều hướng" className="flex border-t border-line bg-sunken pb-[env(safe-area-inset-bottom)] md:hidden">
           <TabItem to="/" icon={Library} match={(path) => path === "/" || path.startsWith("/book/")}>

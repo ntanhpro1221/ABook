@@ -17,7 +17,8 @@
         "height": 860,
         "minWidth": 1024,
         "minHeight": 680,
-        "backgroundColor": "#0e1115"
+        "backgroundColor": "#0e1115",
+        "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --autoplay-policy=no-user-gesture-required"
       }
     ],
     "security": {

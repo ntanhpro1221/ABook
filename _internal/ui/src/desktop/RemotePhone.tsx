@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { useClockReader } from "@/listen/clock";
 import { usePlayer } from "@/listen/player";
 import { Back15, Forward15 } from "@/listen/PlayerViews";
-import { useSource } from "@/listen/source";
+import { useListenBook, useSource } from "@/listen/source";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import type { CoverImage } from "@/shared/cover";
@@ -20,6 +20,11 @@ import { api } from "@/studio/api";
 export interface RemotePhone {
   device: string;
   name: string;
+  /** Máy gì: điện thoại báo lên máy tính này, hay máy đã ghép ở "Máy tính khác" (máy tính / điện thoại chia sẻ thư viện). */
+  kind: "phone" | "computer";
+  via: "remote" | "peer";
+  /** Cuốn ấy ở máy này (sách của chính máy này, hoặc cuốn ảo "Trên <máy kia>") - "Nghe trên máy này" mở đúng nó. */
+  localBookId: string | null;
   bookId: string;
   bookTitle: string;
   chapterId: number | null;
@@ -49,7 +54,11 @@ interface RemoteView {
 type RemoteCommand =
   | { action: "play" | "pause" | "toggle" | "next" | "previous" }
   | { action: "skip" | "seek"; seconds: number }
+  | { action: "jump"; chapterId: number; seconds: number }
+  | { action: "rate"; rate: number }
   | { action: "load"; bookId: string; chapterId: number; seconds: number };
+
+type Ack = { id: string; ok: boolean; message: string };
 
 const SKIP_SECONDS = 15;
 
@@ -162,7 +171,7 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
     try {
       const here = phonePosition(phone, receivedAt);
       send({ action: "pause" });
-      const book = await source.book(phone.bookId);
+      const book = await source.book(phone.localBookId ?? phone.bookId);
       player.play(book, book.chapters ?? [], phone.chapterId, here);
       onDismiss();
     } catch (error) {
@@ -184,7 +193,7 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
           <BookCover title={phone.bookTitle} image={phone.cover} size="xs" className="size-9 shrink-0 rounded-md" />
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-accent-text">
-              <Smartphone className="size-3.5 shrink-0" />
+              {phone.kind === "computer" ? <Laptop className="size-3.5 shrink-0" /> : <Smartphone className="size-3.5 shrink-0" />}
               <span className="truncate">
                 {phone.playing ? "Đang phát trên" : "Đang dừng trên"} {phone.name}
               </span>
@@ -196,11 +205,11 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
           </div>
         </div>
         <div className="flex items-center gap-1">
-          <IconButton label={`Lùi ${SKIP_SECONDS} giây trên điện thoại`} icon={Back15} size="sm" onClick={() => send({ action: "skip", seconds: -SKIP_SECONDS })} />
+          <IconButton label={`Lùi ${SKIP_SECONDS} giây trên ${phone.name}`} icon={Back15} size="sm" onClick={() => send({ action: "skip", seconds: -SKIP_SECONDS })} />
           <button
             type="button"
             onClick={() => send({ action: "toggle" })}
-            aria-label={phone.playing ? "Tạm dừng điện thoại" : "Phát tiếp trên điện thoại"}
+            aria-label={phone.playing ? `Tạm dừng ${phone.name}` : `Phát tiếp trên ${phone.name}`}
             className="grid size-9 place-items-center rounded-full bg-fg text-bg shadow-card transition-transform hover:scale-105 active:scale-95"
           >
             {phone.buffering && phone.playing ? (
@@ -211,23 +220,23 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
               <Play className="size-4 translate-x-[1px]" fill="currentColor" strokeWidth={0} />
             )}
           </button>
-          <IconButton label={`Tới ${SKIP_SECONDS} giây trên điện thoại`} icon={Forward15} size="sm" onClick={() => send({ action: "skip", seconds: SKIP_SECONDS })} />
+          <IconButton label={`Tới ${SKIP_SECONDS} giây trên ${phone.name}`} icon={Forward15} size="sm" onClick={() => send({ action: "skip", seconds: SKIP_SECONDS })} />
         </div>
         <div className="hidden w-28 text-right text-xs tabular text-fg-2 md:block">
           {formatClock(at)} / {formatClock(phone.duration)}
         </div>
         <div className="flex flex-1 items-center justify-end gap-1">
           {phone.known && (
-            <Tooltip label="Dừng điện thoại, nghe tiếp ở máy tính đúng chỗ này">
+            <Tooltip label={`Dừng ${phone.name}, nghe tiếp ở máy này đúng chỗ ấy`}>
               <button
                 type="button"
                 onClick={() => void listenHere()}
                 disabled={moving}
-                aria-label="Nghe trên máy tính"
+                aria-label="Nghe trên máy này"
                 className="inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-2 text-xs font-medium text-fg hover:bg-hover disabled:opacity-50"
               >
                 {moving ? <Loader2 className="size-4 animate-spin" /> : <Laptop className="size-4" />}
-                <span className="hidden lg:inline">Nghe trên máy tính</span>
+                <span className="hidden lg:inline">Nghe trên máy này</span>
               </button>
             </Tooltip>
           )}
@@ -284,7 +293,14 @@ export function HandOffButton({ className }: { className?: string }) {
   const player = usePlayer();
   const readPosition = useClockReader();
   const track = player.track;
-  const phone = track ? data?.phones.find((candidate) => candidate.stream || candidate.books.includes(track.bookId)) : undefined;
+  const book = useListenBook(track?.bookId);
+  // Điện thoại báo lên máy này nghe được mọi cuốn của nó (hoặc đã tải cuốn này); máy đã ghép thì chỉ phát được sách của
+  // CHÍNH nó - cuốn ảo "Trên <máy ấy>" - host đổi mã cuốn sang mã của máy kia.
+  const owner = typeof book.data?.remote === "object" && book.data?.remote ? book.data.remote.device : undefined;
+  const phone = track
+    ? data?.phones.find((candidate) =>
+        candidate.via === "peer" ? candidate.device === owner : candidate.stream || candidate.books.includes(track.bookId))
+    : undefined;
   if (!phone || !track) return null;
   // Không cần thông báo "đã chuyển": thanh "Đang phát trên <điện thoại>" hiện ra sau một lượt mạng chính là lời xác nhận.
   const handOff = () => {
@@ -293,4 +309,129 @@ export function HandOffButton({ className }: { className?: string }) {
     command.mutate({ device: phone.device, command: { action: "load", bookId: track.bookId, chapterId: track.chapterId, seconds } });
   };
   return <IconButton label={`Phát trên ${phone.name}`} icon={MonitorSmartphone} size="sm" className={cn(className)} onClick={handOff} />;
+}
+
+/**
+ * Trình phát của CHÍNH máy tính này cho máy đã ghép (mạng trạm bước 4): báo trạng thái lên host - host giữ cho
+ * GET /sync/v1/player - và nhận lệnh bằng "hỏi dài" 25 giây, đúng cách điện thoại báo máy tính (Remote.kt). Kết quả lệnh
+ * gửi lại 20 giây trong `acks`. Đổi bài / phát / dừng / tốc độ thì báo ngay (gộp 300 ms); tua xa (lệch quá 3 giây so với
+ * đồng hồ bên kia nội suy) cũng báo. Đồng bộ tắt: host trả `idle`, hỏi lại sau 20 giây.
+ */
+export function ThisPlayerReporter() {
+  const player = usePlayer();
+  const readClock = useClockReader();
+  const source = useSource();
+  const latest = useRef({ player, readClock, source });
+  latest.current = { player, readClock, source };
+  const acks = useRef<{ at: number; ack: Ack }[]>([]);
+  const reported = useRef({ at: 0, position: 0, playing: false, rate: 1 });
+  const reportRef = useRef<(wait: number) => Promise<unknown>>(async () => undefined);
+
+  useEffect(() => {
+    let alive = true;
+    const snapshot = () => {
+      const { player: now, readClock: clock } = latest.current;
+      const track = now.track;
+      const { time, duration } = clock();
+      reported.current = { at: Date.now(), position: time, playing: now.playing, rate: now.rate };
+      if (!track) return {};
+      return {
+        bookId: track.bookId, bookTitle: track.bookTitle, chapterId: track.chapterId, chapterTitle: track.chapterTitle,
+        position: time, duration, playing: now.playing, buffering: now.buffering, rate: now.rate,
+      };
+    };
+    const report = (wait: number) => {
+      const now = Date.now();
+      acks.current = acks.current.filter((entry) => now - entry.at < 20_000);
+      return api<{ commands: (RemoteCommand & { id: string })[]; idle?: boolean }>("/api/player/report", {
+        method: "POST",
+        body: { state: snapshot(), acks: acks.current.map((entry) => entry.ack), wait },
+      });
+    };
+    reportRef.current = report;
+    const apply = async (command: RemoteCommand): Promise<string | null> => {
+      const { player: now, source: books } = latest.current;
+      const loaded = !!now.track;
+      switch (command.action) {
+        case "play":
+        case "toggle":
+          if (!loaded) return "Máy tính chưa mở cuốn nào - chọn sách trên máy tính trước";
+          if (command.action === "toggle") now.toggle();
+          else now.resume();
+          return null;
+        case "pause":
+          now.pause();
+          return null;
+        case "skip":
+          if (loaded) now.skip(command.seconds);
+          return null;
+        case "seek":
+          if (loaded) now.seek(command.seconds);
+          return null;
+        case "next":
+          if (loaded) now.next();
+          return null;
+        case "previous":
+          if (loaded) now.previous();
+          return null;
+        case "jump":
+          if (loaded) now.jumpTo(command.chapterId, command.seconds);
+          return null;
+        case "rate":
+          now.setRate(command.rate);
+          return null;
+        case "load":
+          try {
+            const book = await books.book(command.bookId);
+            now.play(book, book.chapters ?? [], command.chapterId, command.seconds);
+            return null;
+          } catch {
+            return "Máy tính không có cuốn này";
+          }
+        default:
+          return "Máy tính chưa hiểu lệnh này - cập nhật ABook trên máy tính";
+      }
+    };
+    const pause = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
+    void (async () => {
+      let backoff = 3000;
+      while (alive) {
+        try {
+          const reply = await report(25);
+          backoff = 3000;
+          if (reply.idle) {
+            await pause(20_000);
+            continue;
+          }
+          for (const command of reply.commands) {
+            const problem = await apply(command);
+            acks.current.push({ at: Date.now(), ack: { id: command.id, ok: problem === null, message: problem ?? "" } });
+          }
+          if (reply.commands.length) window.setTimeout(() => void report(0).catch(() => undefined), 400);
+        } catch {
+          // Host đóng lại (cập nhật, thoát): thử lại thưa dần.
+          await pause(backoff);
+          backoff = Math.min(backoff * 2, 60_000);
+        }
+      }
+    })();
+    const drift = window.setInterval(() => {
+      const last = reported.current;
+      const { player: now, readClock: clock } = latest.current;
+      if (!now.track) return;
+      const expected = last.position + (last.playing ? ((Date.now() - last.at) / 1000) * last.rate : 0);
+      if (Math.abs(clock().time - expected) > 3) void report(0).catch(() => undefined);
+    }, 2000);
+    return () => {
+      alive = false;
+      window.clearInterval(drift);
+    };
+  }, []);
+
+  const key = `${player.track?.bookId}|${player.track?.chapterId}|${player.playing}|${player.rate}`;
+  useEffect(() => {
+    const timer = window.setTimeout(() => void reportRef.current(0).catch(() => undefined), 300);
+    return () => window.clearTimeout(timer);
+  }, [key]);
+  return null;
 }

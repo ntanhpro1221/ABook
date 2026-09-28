@@ -14,7 +14,10 @@ Gói sách (`book.json`) cùng hình dạng với phía Nghe trên máy tính (l
     cover.jpg               ảnh bìa thật, chỉ khi người dùng đã đặt (webui/covers.py)
 
 Điều khiển từ xa (`Remote`): điện thoại đang có sách trên trình phát thì báo "đang phát gì" lên đây, máy tính thấy và
-gửi lệnh phát/dừng/tua ngược lại - kể cả chuyển chỗ nghe giữa hai máy.
+gửi lệnh phát/dừng/tua ngược lại - kể cả chuyển chỗ nghe giữa hai máy. Chiều ngược lại (mạng trạm bước 4): trình phát
+trong giao diện CHÍNH máy này báo lên host cùng kiểu (`LOCAL_PLAYER`), và máy đã ghép - điện thoại, máy tính khác - xem
+và điều khiển nó qua `GET/POST /sync/v1/player`. Điện thoại chia sẻ thư viện trả lời đúng đường ấy (LibraryServer.kt),
+nên bên điều khiển không cần biết đầu kia là gì.
 
 Studio từ xa (remote_studio.py): mọi đường ngoài `/sync/` - giao diện web và API của nó - chỉ mở khi người dùng bật công
 tắc riêng, cho thiết bị đã ghép, theo danh sách trắng.
@@ -53,6 +56,8 @@ PRESENCE_SECONDS = 40  # quá ngần này không nghe tin (hỏi dài chỉ kéo
 COMMAND_SECONDS = 15  # lệnh chưa tới tay điện thoại sau ngần này thì bỏ: "dừng" tới trễ hai phút là một cú giật mình
 REMOTE_ACTIONS = frozenset({"play", "pause", "toggle", "skip", "seek", "next", "previous", "jump", "rate", "load"})
 BOOK_ID = re.compile(r"[A-Za-z0-9_-]{1,700}")  # base64 của đường dẫn thư mục sách (library.book_id)
+LOCAL_PLAYER = "local"  # trình phát trong giao diện của chính máy này, một "thiết bị" của Remote riêng
+PLAYER_STATE = ("bookId", "bookTitle", "chapterId", "chapterTitle", "position", "duration", "playing", "buffering", "rate")
 
 
 def _hash(token: str) -> str:
@@ -352,12 +357,13 @@ def manifest(project_root: Path, book: str, listening: Listening) -> dict[str, A
 class SyncApp:
     def __init__(self, library: Library, listening: Listening, devices: Devices, name: str,
                  remote: Remote | None = None, fingerprints: Fingerprints | None = None,
-                 studio: StudioGate | None = None) -> None:
+                 studio: StudioGate | None = None, player: Remote | None = None) -> None:
         self.library = library
         self.listening = listening
         self.devices = devices
         self.name = name
         self.remote = remote or Remote()
+        self.player = player or Remote()  # trình phát của chính máy này (giao diện báo lên host, webui/server.py)
         self.fingerprints = fingerprints or Fingerprints(listening.path.with_name("fingerprints.json"))
         self.studio = studio  # None: cổng chỉ đồng bộ (test, máy không có giao diện)
         # Số "việc cần anh" của mỗi dự án, tính lại chỉ khi sách đổi (studio_view): điện thoại hỏi mỗi 15 phút.
@@ -366,6 +372,15 @@ class SyncApp:
 
     def book(self, value: str) -> Path | None:
         return self.library.resolve(value)
+
+    def player_view(self) -> dict[str, Any]:
+        """Trình phát của máy này cho máy đã ghép: cùng hình dạng thân báo của điện thoại (`state`, `books`, `stream`,
+        `acks`), nên bên điều khiển đọc bằng đúng `_presence`. `age`: số giây từ lần giao diện báo cuối - bên kia nội suy
+        vị trí như máy tính làm với điện thoại. Giao diện không mở (không ai báo trong 40 giây): `state` rỗng."""
+        seen = next((entry for entry in self.player.view() if entry["device"] == LOCAL_PLAYER), None)
+        return {"name": self.name, "kind": "computer", "stream": True, "books": [],
+                "state": {key: seen[key] for key in PLAYER_STATE} if seen else None,
+                "acks": seen["acks"] if seen else [], "age": seen["age"] if seen else 0.0}
 
     def studio_view(self) -> list[dict[str, Any]]:
         """Trạng thái sản xuất gọn cho điện thoại: mỗi dự án Studio một dòng - giai đoạn, còn chạy không, số chương xong,
@@ -640,6 +655,23 @@ class SyncHandler(BaseHTTPRequestHandler):
                 commands = self.app.remote.report(device["id"], device["name"], body, body.get("wait", 0))
                 self._json(HTTPStatus.OK, {"commands": [{key: value for key, value in command.items() if key != "at"}
                                                         for command in commands]})
+                return
+            if path == "/sync/v1/player":
+                # Máy đã ghép xem / điều khiển trình phát của máy này (mạng trạm bước 4). Lệnh xếp cho giao diện, giao
+                # diện làm rồi báo kết quả trong `acks` của lần xem sau - như điện thoại với máy tính.
+                if method == "GET":
+                    self._json(HTTPStatus.OK, self.app.player_view())
+                elif method == "POST":
+                    try:
+                        entry = self.app.player.send(LOCAL_PLAYER, remote_command(self._body()))
+                    except ValueError as error:
+                        self._json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
+                    except LookupError:
+                        self._json(HTTPStatus.CONFLICT, {"error": f"{self.app.name} chưa mở ABook - không có trình phát"})
+                    else:
+                        self._json(HTTPStatus.OK, {"id": entry["id"]})
+                else:
+                    self._json(HTTPStatus.METHOD_NOT_ALLOWED, {"error": "Không hỗ trợ"})
                 return
             if method == "GET" and path == "/sync/v1/studio":
                 # Thông báo sản xuất trên điện thoại: thông tin của Studio, nên cùng hai điều kiện với Studio từ xa - công
