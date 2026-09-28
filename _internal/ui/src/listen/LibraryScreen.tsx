@@ -203,7 +203,10 @@ function UpcomingCard({ book, onOpen }: { book: ListenBook; onOpen?: (book: List
       <BookCover title={book.title} size="sm" image={book.cover} className="size-12 opacity-80" />
       <span className="min-w-0">
         <span className="block truncate text-sm font-semibold">{book.title}</span>
-        <span className="block text-xs text-fg-2">Đang làm · {eta}</span>
+        {/* Chưa có chương nghe được không có nghĩa là đang làm: sách dừng trước chương đầu, hay audio bị dời chỗ (soát UX 29-09). */}
+        <span className="block text-xs text-fg-2">
+          {book.producing ? `Đang làm · ${eta}` : "Chưa có chương nghe được · mở Studio để làm tiếp"}
+        </span>
       </span>
     </button>
   );
