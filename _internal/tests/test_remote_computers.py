@@ -209,3 +209,23 @@ def test_this_computer_sees_and_controls_the_player_of_another_computer(library,
         other.stop()
     with pytest.raises(ApiError, match="Không kết nối được"):
         app.remote_send(peer["device"], {"action": "play"})
+
+
+def test_two_phones_of_the_same_model_each_get_a_bar(library, monkeypatch) -> None:  # noqa: F811
+    """Một điện thoại vừa báo lên đây vừa chia sẻ thư viện chỉ hiện một thanh - nhưng nhận ra nó bằng tên VÀ đúng thứ
+    đang phát: hai điện thoại cùng đời máy (cùng tên) nghe hai chương khác nhau thì phải là hai thanh."""
+    lib, _project, listening = library
+    app = App(preferences=lib.preferences, runner=FakeRunner(), token="t", listening=listening)
+    try:
+        def phone(chapter: int, via: str, device: str) -> dict:
+            return {"device": device, "name": "Pixel 8", "bookId": "", "chapterId": chapter, "via": via, "kind": "phone"}
+
+        monkeypatch.setattr(app, "sync_server", object())
+        monkeypatch.setattr(app.remote, "view", lambda: [phone(3, "remote", "d1")])
+        monkeypatch.setattr(app.peer_players, "view", lambda: [phone(5, "peer", "c1")])
+        assert [bar["device"] for bar in app.remote_view()["phones"]] == ["d1", "c1"]
+        monkeypatch.setattr(app.peer_players, "view", lambda: [phone(3, "peer", "c1")])
+        assert [bar["device"] for bar in app.remote_view()["phones"]] == ["d1"], "cùng một máy: một thanh"
+    finally:
+        monkeypatch.setattr(app, "sync_server", None)
+        app.close()

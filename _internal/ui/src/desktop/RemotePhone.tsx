@@ -326,6 +326,8 @@ export function ThisPlayerReporter() {
   const acks = useRef<{ at: number; ack: Ack }[]>([]);
   const reported = useRef({ at: 0, position: 0, playing: false, rate: 1 });
   const reportRef = useRef<(wait: number) => Promise<unknown>>(async () => undefined);
+  // Mã lệnh đã làm (host giao lại lệnh chưa thấy kết quả - mỗi mã chỉ làm một lần).
+  const handled = useRef(new Map<string, number>());
 
   useEffect(() => {
     let alive = true;
@@ -340,13 +342,20 @@ export function ThisPlayerReporter() {
         position: time, duration, playing: now.playing, buffering: now.buffering, rate: now.rate,
       };
     };
-    const report = (wait: number) => {
+    const post = (wait: number) => {
       const now = Date.now();
       acks.current = acks.current.filter((entry) => now - entry.at < 20_000);
       return api<{ commands: (RemoteCommand & { id: string })[]; idle?: boolean }>("/api/player/report", {
         method: "POST",
         body: { state: snapshot(), acks: acks.current.map((entry) => entry.ack), wait },
       });
+    };
+    // MỌI lần báo đều có thể mang lệnh về (host giao lệnh cho lần báo nào tới trước) - lần báo ngay (wait 0) cũng phải
+    // làm lệnh nó nhận, không thì lệnh ấy mất.
+    const report = async (wait: number) => {
+      const reply = await post(wait);
+      await handle(reply.commands ?? []);
+      return reply;
     };
     reportRef.current = report;
     const apply = async (command: RemoteCommand): Promise<string | null> => {
@@ -392,6 +401,17 @@ export function ThisPlayerReporter() {
           return "Máy tính chưa hiểu lệnh này - cập nhật ABook trên máy tính";
       }
     };
+    const handle = async (commands: (RemoteCommand & { id: string })[]) => {
+      const now = Date.now();
+      for (const [id, at] of handled.current) if (now - at > 60_000) handled.current.delete(id);
+      const fresh = commands.filter((command) => !handled.current.has(command.id));
+      for (const command of fresh) {
+        handled.current.set(command.id, Date.now());
+        const problem = await apply(command);
+        acks.current.push({ at: Date.now(), ack: { id: command.id, ok: problem === null, message: problem ?? "" } });
+      }
+      if (fresh.length) window.setTimeout(() => void report(0).catch(() => undefined), 400);
+    };
     const pause = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
     void (async () => {
       let backoff = 3000;
@@ -403,11 +423,6 @@ export function ThisPlayerReporter() {
             await pause(20_000);
             continue;
           }
-          for (const command of reply.commands) {
-            const problem = await apply(command);
-            acks.current.push({ at: Date.now(), ack: { id: command.id, ok: problem === null, message: problem ?? "" } });
-          }
-          if (reply.commands.length) window.setTimeout(() => void report(0).catch(() => undefined), 400);
         } catch {
           // Host đóng lại (cập nhật, thoát): thử lại thưa dần.
           await pause(backoff);
