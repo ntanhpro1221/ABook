@@ -2341,14 +2341,20 @@ def listener_voice_choice(
     gender: str,
     age: str,
     preset_name: str = "",
+    chapters: set[int] | None = None,
 ) -> dict[str, Any]:
     """The voice profile `character` should have: the preset a listener picked, or - with no
     preset - the one casting picks for this gender and age with everybody else in place.
 
     A picked preset still gets its formant step the way casting would give it: the step age
     demands, else the first step nobody who shares a chapter with this character holds.
+
+    `chapters`: where a character a listener just CREATED will speak - they have no segments
+    yet, so without this the allocator would not know whose voice to stay clear of.
     """
     allocator = book_allocator(conn, voices, leave_out=character)
+    if chapters:
+        allocator.note_chapters(character, set(chapters))
     if preset_name:
         preset = preset_by_name(preset_name)
         ratio = formant_ratio_for_age(preset_name, age, gender)

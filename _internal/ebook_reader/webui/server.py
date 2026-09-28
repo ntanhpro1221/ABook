@@ -897,12 +897,16 @@ class Handler(BaseHTTPRequestHandler):
                  for line in raw_lines[:2000] if isinstance(line, dict)]
         if not speaker or not lines or not all(stable_id and text_sha256 for stable_id, text_sha256 in lines):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu câu hoặc người nói")
+        # "Người mới…": người nghe tạo người nói chưa có trong sách (tên + giới) - dây chuyền cấp giọng như bước phân vai.
+        new_gender = str(body.get("newGender", "")).strip()
+        if new_gender and new_gender not in listener_overrides.NEW_CHARACTER_GENDERS:
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Giới của người mới không hợp lệ")
         for stable_id, text_sha256 in lines:
-            problem = store.speaker_request_problem(path, stable_id, text_sha256, speaker)
+            problem = store.speaker_request_problem(path, stable_id, text_sha256, speaker, new_gender)
             if problem is not None:
                 raise ApiError(HTTPStatus.BAD_REQUEST, SPEAKER_PROBLEMS.get(problem, "Không đổi được người nói câu này"))
-        listener_overrides.request_speakers(path, lines, speaker, now=time.time())
-        self._send_json(HTTPStatus.OK, {"lines": len(lines), "speaker": speaker})
+        listener_overrides.request_speakers(path, lines, speaker, now=time.time(), new_gender=new_gender)
+        self._send_json(HTTPStatus.OK, {"lines": len(lines), "speaker": speaker, "new": bool(new_gender)})
 
     def get_voice_choices(self, query: dict[str, list[str]], value: str) -> None:
         # Màn "Đổi giọng" của một nhân vật (voice_picker.py): mọi giọng dùng được, giọng máy gợi ý, ai đang dùng giọng nào.
