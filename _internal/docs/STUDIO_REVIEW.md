@@ -31,7 +31,7 @@ Người duyệt đúng những câu ấy là cách rẻ nhất để đạt 100
 |---|---|---|---|---|---|
 | 1 | Giọng / giới / tuổi của nhân vật | độ tin cậy giới thấp; hai nhân vật dùng chung giọng (voice_pool_pressure); nhân vật chính mang giọng chung chung | preset + cao độ, nghe thử từng giọng; nam/nữ/chưa rõ; tuổi | `characters.locked_voice_key`, `locked` (giới), `locked_age` - CÓ | thu lại mọi câu của nhân vật |
 | 2 | Bí danh: một người hay hai? | hai tên cùng giới, ít khi cùng cảnh, tên này chứa họ/tự của tên kia (Khổng Minh / Gia-cát Lượng, Vân-trường / Quan Vũ) | gộp vào X / để riêng | `character_aliases` - CÓ | thu lại câu của tên bị gộp |
-| 3 | Ai nói câu này | tin cậy thấp; bộ chấm và LLM bất đồng; nhãn NPC mà chương có người được gọi tên sau đó | 3 ứng viên hàng đầu + người kể + "người không tên" | bảng ghi đè theo câu - CHƯA | thu lại một câu |
+| 3 | Ai nói câu này | tin cậy thấp; bộ chấm và LLM bất đồng; nhãn NPC mà chương có người được gọi tên sau đó; hai đoạn thoại liền nhau (đóng ngoặc -> mở ngoặc, không lời dẫn) cùng một người - 38/42 cặp như thế là máy sai (28-09) | 3 ứng viên hàng đầu + người kể + "người không tên" | bảng ghi đè theo câu - CHƯA | thu lại một câu |
 | 4 | Loại đoạn: kể / thoại / nội tâm | "nói thầm", "khen thầm", ngoặc nhấn mạnh, thoại gạch ngang lạ | 3 loại | bảng ghi đè theo câu - CHƯA | thu lại một câu |
 | 5 | Cảm xúc, cường độ, nhịp, âm lượng | critic bất đồng; luật host từ chối; tin cậy thấp | vài cảm xúc hàng đầu + nghe thử | bảng ghi đè theo câu - CHƯA | thu lại một câu |
 | 6 | Cách đọc tên riêng | tin cậy phiên âm thấp; Whisper nghe tên khác xa (hàng chờ "Cần nghe lại") | 2-3 cách đọc, mỗi cách một câu thu thử | `pronunciations.locked` - CÓ | thu lại mọi câu có tên ấy |
