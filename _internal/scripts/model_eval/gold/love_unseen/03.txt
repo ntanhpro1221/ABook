@@ -1,0 +1,394 @@
+# "Love Unseen Beneath the Clear Night Sky" file 03 ("Chương 04: Monja"). Đáp án HUẤN LUYỆN (không vào test) 28-09: Love Unseen
+# mới có một chương train (09); chương này nhiều đối đáp BA người không lời dẫn (Kakeru - Narumi - Hayase ở quán monja) và hồi
+# tưởng hai người (Kakeru - Fuyutsuki). Claude gán (A); soát B ghi ở ADJUDICATION.md. Tên như 07/09: "tôi" = KAKERU / KAKERU
+# SORANO / SORANO; FUYUTSUKI / KOHARU / KOHARU FUYUTSUKI; NARUMI / USHIO NARUMI; HAYASE / YUUKO HAYASE / YUUKO.
+# Dấu hiệu xưng hô: Kakeru và Narumi gọi nhau "mày/tao", với Hayase thì "mình/cậu"; Hayase gọi Fuyutsuki là "Koharu".
+# 96 người phục vụ, 361 cả quán, 363 và 365 hai khách khác nhau -> NPC*. 134 câu Kakeru KHÔNG nói, 229 tiếng thở, 356 ý ánh mắt
+# - trích giữa câu kể -> NARRATOR, người nói nửa điểm (quy tắc 8). 284/285 hai người nói chồng lên nhau (quy tắc 6, đảo nửa điểm).
+# Soát B 28-09: 354 nghiêng về Narumi (người ngoài xác nhận lời Hayase); 343 "Mày... Tội cho Koharu" và 66, 339 nhập nhằng thật
+# -> cả hai người đủ điểm, lựa chọn đầu theo bằng chứng mạnh hơn. 350 host bắt nhầm "mừng" trong "chào mừng" - giữ neutral.
+0 H
+1 N
+2 N
+3 N
+4 N
+5 D NARUMI,USHIO NARUMI happy,excited 0-1 normal normal m
+6 N
+7 N NARRATOR neutral,afraid,happy 0-1 normal normal u
+8 D KAKERU,KAKERU SORANO,SORANO neutral,surprised 0-1 normal normal m
+9 N
+10 N
+11 D NARUMI,USHIO NARUMI neutral,happy 0-1 normal normal m
+12 D KAKERU,KAKERU SORANO,SORANO neutral,surprised,sarcastic 0-1 normal normal m
+13 N
+14 D KAKERU,KAKERU SORANO,SORANO surprised,neutral 0-1 normal normal m
+15 D NARUMI,USHIO NARUMI sarcastic,angry,neutral 0-1 normal normal m
+16 N
+17 D KAKERU,KAKERU SORANO,SORANO neutral,happy 0-1 normal,fast normal m
+18 N
+19 N
+20 N,T NARRATOR,KAKERU,KAKERU SORANO,SORANO happy,neutral 0-1 normal normal u
+21 N
+22 N
+23 N,T NARRATOR,KAKERU,KAKERU SORANO,SORANO surprised,neutral 0-1 normal normal u
+24 N
+25 D NARUMI,USHIO NARUMI happy,excited 0-1 normal normal,loud m
+26 D HAYASE,YUUKO HAYASE,YUUKO happy,neutral 0-1 normal normal f
+27 N
+28 D KAKERU,KAKERU SORANO,SORANO surprised,angry,neutral 0-1 normal normal m
+29 N,T NARRATOR,KAKERU,KAKERU SORANO,SORANO sarcastic,neutral 0-1 normal normal u
+30 N
+31 D NARUMI,USHIO NARUMI excited,neutral 0-1 normal,fast normal m
+32 N
+33 D NARUMI,USHIO NARUMI neutral 0-1 normal normal m
+34 N
+35 D HAYASE,YUUKO HAYASE,YUUKO happy,surprised,neutral 0-1 normal normal f
+36 D KAKERU,KAKERU SORANO,SORANO neutral,sarcastic 0-1 normal normal m
+37 N
+38 D NARUMI,USHIO NARUMI neutral,happy 0-1 normal normal m
+39 D HAYASE,YUUKO HAYASE,YUUKO happy,excited 1-2 normal normal f
+40 N
+41 D HAYASE,YUUKO HAYASE,YUUKO surprised,neutral 0-1 normal normal f
+42 D KAKERU,KAKERU SORANO,SORANO sarcastic,neutral 0-1 normal normal m
+43 N,T NARRATOR,KAKERU,KAKERU SORANO,SORANO surprised,neutral 0-1 normal normal u
+44 N
+45 D NARUMI,USHIO NARUMI neutral,happy 0-1 normal normal m
+46 D KAKERU,KAKERU SORANO,SORANO angry,surprised 0-2 normal normal,loud m
+47 N,T NARRATOR,KAKERU,KAKERU SORANO,SORANO sarcastic,neutral 0-1 normal normal u
+48 N
+49 D HAYASE,NARUMI,YUUKO HAYASE,YUUKO,USHIO NARUMI,KAKERU~,KAKERU SORANO~,SORANO~ happy,excited 1-2 normal normal,loud f
+50 N
+51 D NARUMI,USHIO NARUMI neutral,happy 0-1 normal normal m
+52 N
+53 N
+54 D KAKERU,KAKERU SORANO,SORANO happy 0-1 normal normal m
+55 D HAYASE,YUUKO HAYASE,YUUKO surprised,happy 0-1 normal normal f
+56 N
+57 D NARUMI,USHIO NARUMI happy,sarcastic 0-1 normal normal m
+58 N
+59 D HAYASE,YUUKO HAYASE,YUUKO neutral,happy 0-1 normal normal f
+60 D KAKERU,KAKERU SORANO,SORANO neutral 0-1 normal normal m
+61 D NARUMI,USHIO NARUMI neutral,happy 0-1 normal normal m
+62 N
+63 D NARUMI,USHIO NARUMI neutral,happy 0-1 normal normal m
+64 D HAYASE,YUUKO HAYASE,YUUKO surprised 0-1 normal normal f
+65 N
+66 D KAKERU,KAKERU SORANO,SORANO,NARUMI,USHIO NARUMI neutral 0-1 normal normal m
+67 D NARUMI,USHIO NARUMI surprised,neutral,happy 0-1 normal normal m
+68 N
+69 N
+70 D HAYASE,YUUKO HAYASE,YUUKO surprised,neutral 0-1 normal normal f
+71 D KAKERU,KAKERU SORANO,SORANO neutral,happy,sarcastic 0-1 normal normal m
+72 D HAYASE,YUUKO HAYASE,YUUKO surprised,neutral 0-1 normal normal f
+73 N NARRATOR neutral,happy 0-1 normal normal u
+74 D KAKERU,KAKERU SORANO,SORANO,NARUMI~,USHIO NARUMI~ happy,sarcastic 0-1 normal normal m
+75 D HAYASE,YUUKO HAYASE,YUUKO surprised,angry 1-2 normal normal,loud f
+76 D KAKERU,KAKERU SORANO,SORANO happy 0-1 normal normal m
+77 N NARRATOR neutral,happy 0-1 normal normal u
+78 N
+79 N
+80 N
+81 D NARUMI,USHIO NARUMI afraid,neutral 0-1 normal normal m
+82 D KAKERU,KAKERU SORANO,SORANO neutral,sarcastic 0-1 normal normal m
+83 D HAYASE,YUUKO HAYASE,YUUKO neutral,surprised,sarcastic 0-1 normal normal f
+84 N
+85 N
+86 N
+87 D NARUMI,USHIO NARUMI neutral 0-1 normal normal m
+88 N
+89 D KAKERU,KAKERU SORANO,SORANO tired,neutral 0-1 slow,normal normal,soft m
+90 N
+91 D HAYASE,YUUKO HAYASE,YUUKO happy 0-1 normal normal f
+92 N
+93 N
+94 D KAKERU,KAKERU SORANO,SORANO surprised 0-1 normal normal m
+95 N
+96 D NPC*,UNKNOWN~ afraid,neutral 0-1 normal,fast normal u
+97 N
+98 D HAYASE,YUUKO HAYASE,YUUKO afraid,neutral 0-1 normal normal f
+99 D KAKERU,KAKERU SORANO,SORANO neutral,surprised,tired 0-1 normal,slow normal m
+100 D NARUMI,USHIO NARUMI neutral,afraid,sarcastic 0-1 normal normal m
+101 N
+102 N,T NARRATOR,KAKERU,KAKERU SORANO,SORANO neutral,surprised,tired 0-1 normal normal u
+103 D KAKERU,KAKERU SORANO,SORANO,NARRATOR~ happy 0-1 normal normal m
+104 N NARRATOR neutral,happy 0-1 normal normal u
+105 D NARUMI,USHIO NARUMI neutral,sarcastic 0-1 normal normal m
+106 D KAKERU,KAKERU SORANO,SORANO neutral,happy 0-1 normal normal m
+107 D NARUMI,USHIO NARUMI neutral 0-1 normal normal m
+108 N
+109 D NARUMI,USHIO NARUMI neutral 0-1 normal normal m
+110 D KAKERU,KAKERU SORANO,SORANO neutral 0-1 normal normal m
+111 D NARUMI,USHIO NARUMI neutral,sarcastic,angry 0-1 normal normal m
+112 D KAKERU,KAKERU SORANO,SORANO neutral,surprised 0-1 normal normal m
+113 D HAYASE,YUUKO HAYASE,YUUKO excited,happy 1-2 normal,fast normal f
+114 N
+115 N
+116 N
+117 N
+118 N
+119 N
+120 N
+121 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI,NARRATOR~ neutral 0-1 normal normal f
+122 N
+123 N
+124 N
+125 D KAKERU,KAKERU SORANO,SORANO afraid,tender 0-1 normal normal m
+126 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI happy,neutral,tender 0-1 normal normal f
+127 N
+128 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI neutral,afraid 0-1 normal normal,soft f
+129 N
+130 N
+131 N
+132 N
+133 N
+134 D NARRATOR,KAKERU~,KAKERU SORANO~,SORANO~ neutral,afraid 0-1 normal normal u
+135 D KAKERU,KAKERU SORANO,SORANO tender,neutral,afraid 0-1 normal normal m
+136 N
+137 N,T NARRATOR,KAKERU,KAKERU SORANO,SORANO afraid,neutral 0-1 normal normal u
+138 N
+139 N
+140 N
+141 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI neutral 0-1 normal normal f
+142 D KAKERU,KAKERU SORANO,SORANO afraid,neutral 0-1 normal,fast normal m
+143 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI surprised,happy 0-1 normal normal f
+144 N
+145 D KAKERU,KAKERU SORANO,SORANO afraid,neutral 0-1 normal,fast normal m
+146 N
+147 N,T NARRATOR,KAKERU,KAKERU SORANO,SORANO afraid,neutral 0-1 normal normal u
+148 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI neutral,afraid 0-1 normal normal,soft f
+149 D KAKERU,KAKERU SORANO,SORANO afraid,neutral 0-1 normal normal m
+150 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI happy,sarcastic 0-1 normal normal f
+151 D KAKERU,KAKERU SORANO,SORANO angry,afraid 1-2 normal,fast normal,loud m
+152 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI happy 0-1 normal normal f
+153 N NARRATOR neutral,happy 0-1 normal normal u
+154 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI sad,neutral 0-1 normal normal f
+155 D KAKERU,KAKERU SORANO,SORANO afraid,angry 1-2 normal,fast normal,loud m
+156 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI happy,neutral 0-1 normal normal f
+157 N,T NARRATOR,KAKERU,KAKERU SORANO,SORANO afraid,neutral 0-1 normal normal u
+158 D KAKERU,KAKERU SORANO,SORANO tender,neutral 0-1 normal normal m
+159 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI sad,happy,neutral 0-1 normal normal f
+160 D KAKERU,KAKERU SORANO,SORANO tender,neutral 0-1 normal normal m
+161 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI surprised,happy,excited 1-2 normal normal f
+162 D KAKERU,KAKERU SORANO,SORANO neutral,tender 0-1 normal normal m
+163 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI happy 0-1 normal normal f
+164 N
+165 D KAKERU,KAKERU SORANO,SORANO neutral 0-1 normal normal m
+166 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI neutral 0-1 normal normal f
+167 N
+168 N
+169 N
+170 N
+171 N
+172 N
+173 N
+174 N
+175 N
+176 D KAKERU,KAKERU SORANO,SORANO afraid,neutral 0-1 normal,fast normal m
+177 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI happy 0-1 normal normal f
+178 D KAKERU,KAKERU SORANO,SORANO neutral 0-1 normal normal m
+179 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI happy,sarcastic 0-1 normal normal f
+180 D KAKERU,KAKERU SORANO,SORANO neutral,happy 0-1 normal normal m
+181 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI happy 0-1 normal normal f
+182 N
+183 N
+184 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI neutral,tender 0-1 slow,normal soft,normal f
+185 N
+186 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI neutral,afraid 0-1 normal,slow normal,soft f
+187 D KAKERU,KAKERU SORANO,SORANO surprised 0-1 normal normal m
+188 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI neutral 0-1 normal normal,soft f
+189 D KAKERU,KAKERU SORANO,SORANO surprised,neutral 0-1 normal normal m
+190 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI happy,neutral 0-1 normal normal f
+191 N NARRATOR neutral,happy 0-1 normal normal u
+192 N,T NARRATOR,KAKERU,KAKERU SORANO,SORANO surprised,neutral 0-1 normal normal u
+193 D KAKERU,KAKERU SORANO,SORANO neutral,surprised 0-1 normal normal m
+194 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI afraid,surprised 1-2 fast,normal normal f
+195 D KAKERU,KAKERU SORANO,SORANO neutral 0-1 normal normal m
+196 N
+197 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI surprised,neutral 0-1 normal normal f
+198 N
+199 D KAKERU,KAKERU SORANO,SORANO afraid,surprised 1-2 fast,normal normal m
+200 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI surprised 1-2 normal,fast normal,loud f
+201 N
+202 N,T NARRATOR,KAKERU,KAKERU SORANO,SORANO neutral,sad 0-1 normal normal u
+203 D KAKERU,KAKERU SORANO,SORANO neutral,happy 0-1 normal normal m
+204 N
+205 N
+206 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI angry,sarcastic,happy 0-1 normal normal f
+207 D KAKERU,KAKERU SORANO,SORANO neutral 0-1 normal normal m
+208 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI sarcastic,happy 0-1 normal normal f
+209 N
+210 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI neutral 0-1 normal normal f
+211 N
+212 D KAKERU,KAKERU SORANO,SORANO neutral 0-1 normal normal m
+213 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI neutral,happy 0-1 normal normal f
+214 D KAKERU,KAKERU SORANO,SORANO surprised,neutral 0-1 normal normal m
+215 N
+216 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI neutral,happy 0-1 normal normal f
+217 D KAKERU,KAKERU SORANO,SORANO neutral,surprised 0-1 normal normal m
+218 N
+219 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI tender,neutral 0-1 normal,slow soft,normal f
+220 N
+221 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI tender,neutral 0-1 normal,slow soft,normal f
+222 D KAKERU,KAKERU SORANO,SORANO neutral 0-1 normal normal m
+223 N
+224 N NARRATOR neutral,surprised,tender 0-1 normal normal u
+225 N NARRATOR neutral,surprised,tender 0-1 normal normal u
+226 N NARRATOR neutral,surprised,excited 0-2 normal normal u
+227 N
+228 N
+229 N,T NARRATOR,FUYUTSUKI~,KOHARU~,KOHARU FUYUTSUKI~ tender,neutral 0-1 slow,normal soft,normal u
+230 N
+231 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI tender,neutral 0-1 slow,normal soft,normal f
+232 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI tender,happy,sarcastic 0-1 normal,slow soft,normal f
+233 N NARRATOR neutral,surprised,afraid 0-1 normal normal u
+234 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI tender,happy 0-1 normal soft,normal f
+235 N
+236 N,T NARRATOR,KAKERU,KAKERU SORANO,SORANO excited,surprised,neutral 0-2 normal,fast normal u
+237 D KAKERU,KAKERU SORANO,SORANO whispering,tender,neutral 0-1 slow,normal soft m
+238 N
+239 N
+240 D KAKERU,KAKERU SORANO,SORANO neutral 0-1 normal normal m
+241 N
+242 D NARUMI,USHIO NARUMI surprised,angry,sarcastic 1-2 normal normal,loud m
+243 N
+244 N
+245 D HAYASE,YUUKO HAYASE,YUUKO surprised,excited 1-2 normal normal,loud f
+246 N
+247 D HAYASE,YUUKO HAYASE,YUUKO surprised,angry 1-2 normal,fast loud,normal f
+248 D KAKERU,KAKERU SORANO,SORANO neutral,surprised 0-1 normal normal m
+249 D HAYASE,YUUKO HAYASE,YUUKO neutral 0-1 normal normal f
+250 N
+251 D HAYASE,YUUKO HAYASE,YUUKO neutral,angry 0-1 normal normal f
+252 D NARUMI,USHIO NARUMI neutral,sarcastic 0-1 normal normal m
+253 N
+254 D NARUMI,USHIO NARUMI neutral 0-1 normal normal m
+255 D HAYASE,YUUKO HAYASE,YUUKO angry,neutral 0-1 normal normal f
+256 D KAKERU,KAKERU SORANO,SORANO neutral,sad 0-1 normal normal m
+257 D HAYASE,YUUKO HAYASE,YUUKO neutral,surprised 0-1 normal normal f
+258 D KAKERU,KAKERU SORANO,SORANO neutral 0-1 normal normal m
+259 D HAYASE,YUUKO HAYASE,YUUKO angry,surprised 1-2 normal normal,loud f
+260 N NARRATOR neutral,angry,afraid 0-1 normal normal u
+261 D HAYASE,YUUKO HAYASE,YUUKO angry 1-2 normal normal,loud f
+262 D KAKERU,KAKERU SORANO,SORANO surprised,afraid 1-2 fast,normal normal,loud m
+263 N
+264 D NARUMI,USHIO NARUMI angry,afraid 1-2 normal loud m
+265 N
+266 D NARUMI,USHIO NARUMI neutral 0-1 normal normal m
+267 N
+268 D KAKERU,KAKERU SORANO,SORANO neutral,afraid 0-1 slow,normal normal,soft m
+269 D HAYASE,YUUKO HAYASE,YUUKO angry,neutral 0-1 normal normal f
+270 N
+271 D KAKERU,KAKERU SORANO,SORANO neutral,sad 0-1 slow,normal normal,soft m
+272 D HAYASE,YUUKO HAYASE,YUUKO neutral 0-1 normal normal f
+273 D KAKERU,KAKERU SORANO,SORANO neutral,sad 0-1 normal normal m
+274 D HAYASE,YUUKO HAYASE,YUUKO surprised,neutral 0-1 normal normal f
+275 D KAKERU,KAKERU SORANO,SORANO neutral,afraid 0-1 normal normal m
+276 N NARRATOR neutral,happy 0-1 normal normal u
+277 D HAYASE,YUUKO HAYASE,YUUKO,NARRATOR~ happy,excited 1-2 normal normal,loud f
+278 D NARUMI,USHIO NARUMI neutral,happy 0-1 normal normal m
+279 N
+280 D HAYASE,YUUKO HAYASE,YUUKO happy 1-2 normal normal f
+281 N
+282 N NARRATOR neutral,happy 0-1 normal normal u
+283 D KAKERU,KAKERU SORANO,SORANO angry,sarcastic 0-1 normal normal m
+284 D NARUMI,USHIO NARUMI,HAYASE~,YUUKO HAYASE~,YUUKO~ happy,neutral 0-1 normal normal m
+285 D HAYASE,YUUKO HAYASE,YUUKO,NARUMI~,USHIO NARUMI~ happy,neutral 0-1 normal normal f
+286 N NARRATOR neutral,happy 0-1 normal normal u
+287 D KAKERU,KAKERU SORANO,SORANO angry 1-2 normal normal,loud m
+288 N,T NARRATOR,KAKERU,KAKERU SORANO,SORANO angry,sarcastic,neutral 0-1 normal normal u
+289 D HAYASE,YUUKO HAYASE,YUUKO neutral,happy 0-1 normal normal f
+290 N
+291 D HAYASE,YUUKO HAYASE,YUUKO neutral,happy 0-1 normal normal f
+292 D KAKERU,KAKERU SORANO,SORANO neutral,sarcastic 0-1 normal normal m
+293 D HAYASE,YUUKO HAYASE,YUUKO sarcastic,happy 0-1 normal normal f
+294 D KAKERU,KAKERU SORANO,SORANO neutral 0-1 normal normal m
+295 N
+296 D KAKERU,KAKERU SORANO,SORANO tender,neutral 0-1 normal,slow normal m
+297 D HAYASE,YUUKO HAYASE,YUUKO surprised,happy 0-1 normal normal f
+298 N
+299 D KAKERU,KAKERU SORANO,SORANO neutral,sad 0-1 slow,normal normal m
+300 D HAYASE,YUUKO HAYASE,YUUKO neutral 0-1 normal normal f
+301 D KAKERU,KAKERU SORANO,SORANO sad,neutral 0-1 slow,normal normal m
+302 D HAYASE,YUUKO HAYASE,YUUKO neutral,tender 0-1 normal normal f
+303 D KAKERU,KAKERU SORANO,SORANO neutral,sad 0-1 slow,normal normal m
+304 D HAYASE,YUUKO HAYASE,YUUKO neutral 0-1 normal normal f
+305 D KAKERU,KAKERU SORANO,SORANO sad 0-1 slow,normal normal,soft m
+306 D HAYASE,YUUKO HAYASE,YUUKO neutral,sad,tender 0-1 normal normal,soft f
+307 D KAKERU,KAKERU SORANO,SORANO sad 0-1 slow,normal normal m
+308 D HAYASE,YUUKO HAYASE,YUUKO neutral,sad,tender 0-1 normal normal,soft f
+309 D KAKERU,KAKERU SORANO,SORANO tender,neutral,happy 0-1 normal normal m
+310 N
+311 D HAYASE,YUUKO HAYASE,YUUKO neutral,tender 0-1 normal normal f
+312 D KAKERU,KAKERU SORANO,SORANO tender,neutral 0-1 normal normal m
+313 N
+314 D KAKERU,KAKERU SORANO,SORANO tender,neutral 0-1 normal normal m
+315 N
+316 D HAYASE,YUUKO HAYASE,YUUKO tender,happy,neutral 0-1 normal normal f
+317 N
+318 D HAYASE,YUUKO HAYASE,YUUKO tender,happy,neutral 0-1 normal normal f
+319 N
+320 N
+321 N
+322 D NARUMI,USHIO NARUMI neutral,excited 0-1 normal normal m
+323 D KAKERU,KAKERU SORANO,SORANO afraid,neutral 0-1 normal,slow normal,soft m
+324 D HAYASE,YUUKO HAYASE,YUUKO excited,happy 1-2 normal normal f
+325 N
+326 D KAKERU,KAKERU SORANO,SORANO afraid,neutral 0-1 normal,slow normal m
+327 D NARUMI,USHIO NARUMI neutral,sarcastic,tired 0-1 normal normal m
+328 N
+329 D KAKERU,KAKERU SORANO,SORANO neutral,angry 0-1 normal normal m
+330 D HAYASE,YUUKO HAYASE,YUUKO sarcastic,neutral 0-1 normal normal f
+331 N
+332 D KAKERU,KAKERU SORANO,SORANO angry,excited 1-2 normal normal,loud m
+333 D NARUMI,USHIO NARUMI neutral,sarcastic,tired 0-1 normal normal m
+334 N
+335 D KAKERU,KAKERU SORANO,SORANO angry 1-2 normal normal m
+336 D HAYASE,YUUKO HAYASE,YUUKO sarcastic,neutral 0-1 normal normal f
+337 N
+338 D KAKERU,KAKERU SORANO,SORANO angry 1-2 normal normal,loud m
+339 D HAYASE,YUUKO HAYASE,YUUKO,NARUMI,USHIO NARUMI neutral,excited 0-1 normal normal f
+340 D KAKERU,KAKERU SORANO,SORANO neutral 0-1 normal normal m
+341 D HAYASE,YUUKO HAYASE,YUUKO excited,happy 0-1 normal normal f
+342 D KAKERU,KAKERU SORANO,SORANO surprised,neutral 0-1 normal normal m
+343 D NARUMI,USHIO NARUMI,HAYASE,YUUKO HAYASE,YUUKO sarcastic,neutral 0-1 normal normal m
+344 N,T NARRATOR,KAKERU,KAKERU SORANO,SORANO angry,excited 0-2 normal normal u
+345 N
+346 D KAKERU,KAKERU SORANO,SORANO excited,angry 2-3 normal,fast loud m
+347 N
+348 N
+349 D KAKERU,KAKERU SORANO,SORANO excited 2-3 normal loud m
+350 N
+351 D KAKERU,KAKERU SORANO,SORANO excited 1-3 normal,fast loud m
+352 D HAYASE,YUUKO HAYASE,YUUKO happy,sarcastic 0-1 normal normal f
+353 N
+354 D NARUMI,USHIO NARUMI,KAKERU,KAKERU SORANO,SORANO neutral,sarcastic,happy 0-1 normal normal m
+355 N
+356 N,T NARRATOR,NARUMI~,USHIO NARUMI~,HAYASE~,YUUKO HAYASE~,YUUKO~ neutral,sarcastic 0-1 normal normal u
+357 N NARRATOR neutral,sad 0-1 normal normal u
+358 N,T NARRATOR,KAKERU,KAKERU SORANO,SORANO excited,neutral 0-2 normal normal u
+359 D KAKERU,KAKERU SORANO,SORANO excited 2-3 normal loud m
+360 N
+361 D NPC*,UNKNOWN~ excited,happy 2-3 normal loud u
+362 N
+363 D NPC*,UNKNOWN~ happy,excited 1-2 normal loud u
+364 N
+365 D NPC*,UNKNOWN~ sarcastic,happy 0-1 normal normal,loud u
+366 N
+367 D KAKERU,KAKERU SORANO,SORANO neutral,tired 0-1 normal normal m
+368 N
+369 N
+370 D NARUMI,USHIO NARUMI surprised,happy 0-1 normal normal m
+371 N
+372 D HAYASE,YUUKO HAYASE,YUUKO happy,sarcastic 0-1 normal normal f
+373 D KAKERU,KAKERU SORANO,SORANO surprised 0-1 normal normal m
+374 N
+375 N,T NARRATOR,KAKERU,KAKERU SORANO,SORANO surprised 0-1 normal normal u
+376 N
+377 N
+378 D KAKERU,KAKERU SORANO,SORANO surprised,afraid 0-2 normal normal m
+379 D HAYASE,YUUKO HAYASE,YUUKO happy 1-2 normal normal f
+380 N NARRATOR neutral,happy 0-1 normal normal u
+381 D KAKERU,KAKERU SORANO,SORANO angry,surprised 1-2 normal normal,loud m
+382 N
+383 N
+384 N
