@@ -303,6 +303,8 @@ class App:
             self.library.root, paths, str(body.get("title", "")), str(body.get("profile", "high_quality")),
             str(body.get("narrator", "")), str(body.get("firstPerson", "")),
             settings_overrides=self.studio.settings_overrides() if self.studio is not None else None,
+            first_person_chapters={str(key): str(value) for key, value in body["firstPersonChapters"].items()}
+            if isinstance(body.get("firstPersonChapters"), dict) else None,
         )
         self.preferences.add_recent(root)
         if body.get("start"):

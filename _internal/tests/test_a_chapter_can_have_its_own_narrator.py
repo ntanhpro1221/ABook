@@ -142,3 +142,41 @@ def test_the_command_line_takes_chapter_narrators_and_refuses_what_cannot_work()
     broken = _settings(chapters={"một": "A"})
     with pytest.raises(ValueError, match="first_person_chapters"):
         validate_settings(broken)
+
+
+def _book(tmp_path, chapters: list[tuple[str, str]]) -> list:
+    files = []
+    for number, (title, body) in enumerate(chapters):
+        path = tmp_path / f"{number:02d}.txt"
+        path.write_text(f"{title}\n\n{body}\n", encoding="utf-8")
+        files.append(path)
+    return files
+
+
+def test_the_studio_suggests_chapters_named_after_a_character_told_in_first_person(tmp_path) -> None:
+    from ebook_reader.first_person import pov_chapters
+
+    kakeru = "Tôi nhìn cô ấy rồi nói với Hayase một câu. Tôi đi về nhà. Tôi nghĩ mãi về Hayase và Narumi.\n\n" * 4
+    hayase = "Tôi lại dành cả đêm ở văn phòng. Tôi mệt mỏi.\n\n“Em về được rồi Hayase.” Anh ta thở dài.\n\nTôi về nhà.\n\n" * 3
+    files = _book(tmp_path, [("Chương 1: Lần đầu gặp gỡ", kakeru), ("Chương 2: Tấm Khiên Thịt", kakeru),
+                             ("Chương 3: Yuuko Hayase", hayase), ("Chương 4: Kakeru Sorano", kakeru)])
+    assert pov_chapters(files, "KAKERU SORANO") == [
+        {"chapter": 3, "title": "Chương 3: Yuuko Hayase", "name": "YUUKO HAYASE"}], \
+        "tên chương viết hoa mọi chữ không phải tên người; chương của chính người kể cả cuốn thì bỏ"
+
+
+def test_creating_a_book_writes_the_chapter_narrators(tmp_path) -> None:
+    import pytest
+
+    from ebook_reader.config import load_settings
+    from ebook_reader.webui import actions
+
+    files = _book(tmp_path / "src", [("Chương 1: Mở đầu", "Tôi đi.\n"), ("Chương 2: Yuuko Hayase", "Tôi về.\n")]) \
+        if (tmp_path / "src").mkdir() is None else []
+    root = actions.create_book(tmp_path / "lib", [str(path) for path in files], "Thử", "high_quality", "",
+                               "KAKERU SORANO", first_person_chapters={"2": " YUUKO HAYASE "})
+    settings = load_settings(next(root.rglob("book_settings.json")))
+    assert settings["voices"]["first_person_chapters"] == {"2": "YUUKO HAYASE"}
+    with pytest.raises(ValueError, match="đại từ"):
+        actions.create_book(tmp_path / "lib2", [str(path) for path in files], "Thử", "high_quality", "", "",
+                            first_person_chapters={"2": "tôi"})
