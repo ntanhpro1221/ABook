@@ -100,6 +100,30 @@ Ba phép thử offline trên kết quả đã có (script ở `scratchpad`, CPU)
 nhiều người thì một cú bấm gán cả nhóm; trên dự án đo Yamiyo của 9B nó đứng đầu hộp việc (43 câu, 7 người). Vòng dữ liệu
 sau: mẫu ngôi thứ nhất có người đối thoại thân cận, và mẫu 『』 nhất quán trong chương.
 
+## LoRA v3 QUA MỌI CỔNG 28-09 20:xx - ứng viên thay qwen3:8b trên máy 8 GB
+
+Hàng GPU i đo xong v3 (`lora28v3-4b`, Qwen3-4B LoRA trên data_v3, huấn luyện tại máy nhà) trên bốn cổng ngoài bộ LN; chấm
+lại mọi lượt bằng thước chính (`voice_identity.py`, F1 giọng B-cubed / người nói chặt):
+
+| cổng | câu | qwen3:8b (đang dùng) | LoRA v2 | **v3** | v3 - 8b (F1) |
+|---|---|---|---|---|---|
+| LN 6 truyện (thước quyết định) | 519 | 52,9 / 54,9 | - | **55,7 / 62,4** | +2,8 |
+| YMP 248 (Hàn), có dòng "tôi là ai" | 47 | 56,1 / 61,7 | 82,8 / 91,5 | **85,5 / 93,6** | +29,4 |
+| Tam quốc Hồi 50-52 (chưa học) | 219 | 74,8 / 79,5 | 73,6 / 43,4 | **85,6 / 89,5** | +10,8 |
+| Tắt đèn XX, XXI, XXIV (Việt, chưa học) | 112 | 72,7 / 75,9 | 71,4 / 51,8 | **73,9 / 82,1** | +1,2 |
+| TMA test (4 chương) | 156 | 55,8 / 65,4 (host 21-09) | 59,8 / 75,0 | **60,1 / 69,9** | +4,3 |
+
+- Cổng Tam quốc từng chặn v2 (viết sai tên: 43% nhãn chặt dù F1 giọng ngang 8b) - v3 viết đúng tên (89,5%), cùng lúc luật
+  tên gọi của host (4930919) gom "DU" -> "CHU DU". Tắt đèn: v3 kém 8b ở chương XXI (65,5 vs 80,4 F1) nhưng hơn ở XX, XXIV.
+- v3 KHÔNG phá cổng nào và nhanh hơn 1,5-1,7 lần (LN: 327-1049 giây/chương, qwen3:8b 552-1700, cùng card, cùng host).
+- Trên LN, khoảng cách F1 +2,8 nằm trong nhiễu của 519 câu; người nói chặt +7,5 thì không. Model LN tốt nhất đo được vẫn
+  là Qwen3.5-9B LoRA28 (59,9) nhưng không nạp nổi card 8 GB.
+- Kết luận nghiên cứu: v3 là ứng viên thay qwen3:8b cho máy 8 GB. CHƯA đổi: chờ v4 (cấu hình e2, data_v4) và 8B QLoRA
+  (Kaggle) đang đo trên Modal - chọn một lần, rồi mới đổi model mặc định (file khoá `config.py`, sách mới) và đường tải
+  model cho Studio (model tự huấn luyện phải được đăng ở đâu đó để Studio kéo về = phát hành, chủ sách quyết).
+- Dữ liệu huấn luyện chỉ là đáp án của chính dự án (`build_training_set.py` gom JSONL của `gold_replay`), không có
+  CSI/PDNC (giấy phép phi thương mại).
+
 ## LƯỢT ĐỐI ĐÁP + HAI MODEL BẤT ĐỒNG 28-09 12:xx - hai tín hiệu lỗi đo được trên kết quả đã có (CPU, không tốn GPU)
 
 **Lượt đối đáp.** Cặp câu thoại liền kề ở hai đoạn văn liền nhau, chia theo dấu ngoặc (đáp án 7 truyện, bài làm qwen3:8b):
