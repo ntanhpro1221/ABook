@@ -10,7 +10,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Máy tính: **app Windows cài bằng một file (~30 MB)**, không cần quyền quản trị, không cài Python hay gì khác vào máy.
   Bấm đúp file `.abook` là mở sách. App tự tìm bản mới mỗi lần mở: có bản mới thì thanh bên hiện "Có ABook x.y.z" -
   bấm "Cập nhật và mở lại" trong Cài đặt là xong (gói có chữ ký, sai chữ ký thì không cài). Gỡ app không xoá sách hay chỗ
-  đang nghe. Phần làm sách nói (Studio) chưa có trong bản cài này - sẽ tải thêm khi cần.
+  đang nghe.
+- Máy tính: **Studio tải ngay trong app** (Studio > Dự án > "Cài Studio", khoảng 20 GB, cần card NVIDIA): từng bước có
+  tiến độ, mất mạng hay tắt máy giữa chừng thì bấm lại là làm tiếp. Studio **mang theo mọi thứ nó cần** - Python, thư
+  viện, Ollama và model, Git, thư viện C++ của Microsoft - trong một thư mục riêng, không dùng hay sửa gì đã cài trên máy
+  (máy đã có Ollama vẫn giữ nguyên Ollama ấy). Gỡ app là gỡ luôn Studio; sách đã làm và chỗ đang nghe giữ lại, trừ khi
+  tích ô xoá dữ liệu. Bản app mới cần phần Studio khác thì thẻ "Cập nhật Studio" hiện ra và chỉ tải lại đúng phần ấy.
+  Cuốn đang làm dở tiếp tục bằng đúng bản mã đã bắt đầu nó, kể cả sau khi app tự cập nhật.
 - Máy tính: **nghe sách trên máy tính khác** mà không phải chép sang. Cài đặt → "Máy tính khác": bấm "Tìm máy trong
   mạng" (hoặc gõ địa chỉ) rồi nhập mã 6 số đang hiện trên máy kia (đúng mã điện thoại dùng). Sách của máy ấy hiện trong
   Thư viện với nhãn "Trên <tên máy>";

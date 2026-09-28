@@ -7,6 +7,7 @@ import { formatEta, formatPercent, formatRelative } from "@/shared/format";
 import { Button, EmptyState, Progress, Skeleton, StatusPill } from "@/shared/ui";
 import type { BookSummary } from "./api";
 import { phaseTone, pickFolder, useAppInfo, useLibrary, useOpenBook } from "./data";
+import { StudioSetupCard } from "./StudioSetup";
 
 // Studio: nơi làm sách. Danh sách là bảng công việc - trạng thái sản xuất, tiến độ, thời gian còn lại - chứ không
 // phải kệ sách (kệ sách là của phía Nghe).
@@ -112,6 +113,8 @@ export function ProjectsScreen() {
           </Button>
         </div>
       </header>
+
+      <StudioSetupCard className="mt-8" />
 
       {isLoading ? (
         <div className="mt-8 space-y-2">
