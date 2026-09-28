@@ -305,16 +305,54 @@ def make_dialogue_book(root: Path, first_person: str = "") -> Path:
     return project
 
 
-def test_two_quoted_paragraphs_in_a_row_given_to_one_person_ask_who_answered(tmp_path: Path) -> None:
+def test_quoted_paragraphs_in_a_row_given_to_one_person_are_one_card_that_alternates(tmp_path: Path) -> None:
+    """Câu 1-2 và 2-3 là MỘT chuỗi: một thẻ đổi các câu xen kẽ. Trước đây mỗi cặp một thẻ - sửa thẻ đầu (câu 2 là người
+    kia) thì thẻ sau vẫn hỏi "câu 3 cũng là của Glast?" như thể câu 2 vẫn là Glast (soát UX 29-09)."""
     view = work_items(make_dialogue_book(tmp_path, first_person="ED ROSTAILER"))
     turns = [item for item in view["items"] if item["kind"] == "turn"]
-    assert [item["key"] for item in turns] == ["turn:s2", "turn:s3"], "chỉ cặp đóng ngoặc -> mở ngoặc, đoạn sau không lời dẫn"
+    assert [item["key"] for item in turns] == ["turns:s1"], "chỉ cặp đóng ngoặc -> mở ngoặc, đoạn sau không lời dẫn"
     card = turns[0]
-    assert card["title"] == "Hai câu liền nhau đều là của Glast?"
-    assert [example["text"] for example in card["examples"]] == ["“Cuối cùng, kế hoạch nào rồi cũng thất bại.”", "“Ai biết ạ?”"]
+    assert card["title"] == "3 câu liền nhau đều là của Glast?"
+    assert [(example["text"], example["changes"]) for example in card["examples"]] == [
+        ("“Cuối cùng, kế hoạch nào rồi cũng thất bại.”", False), ("“Ai biết ạ?”", True), ("“Ai biết được.”", False),
+    ]
     assert card["choices"][0] == {"label": "Ed Rostailer", "value": "ED ROSTAILER"}, "truyện ngôi thứ nhất: 'tôi' đứng đầu"
-    assert [line["stableId"] for line in card["lines"]] == ["s2"], "sửa câu SAU, câu trước giữ người của nó"
+    assert [line["stableId"] for line in card["lines"]] == ["s2"], "xen kẽ: câu 2 đổi, câu 1 và 3 giữ người của chúng"
+    assert [line["stableId"] for line in card["allLines"]] == ["s1", "s2", "s3"], "phạm vi 'Cả chuỗi': độc thoại vắt nhiều đoạn"
     assert card["score"] > 0.8, "đo 28-09: 38/42 cặp như thế máy sai - xếp trên lời gọi đầu câu"
+
+
+def test_a_lone_pair_keeps_its_two_line_card(tmp_path: Path) -> None:
+    project = make_dialogue_book(tmp_path, first_person="ED ROSTAILER")
+    db = sqlite3.connect(project / "project.sqlite3")
+    db.execute("DELETE FROM segments WHERE stable_id = 's3'")
+    db.commit()
+    db.close()
+    card = next(item for item in work_items(project)["items"] if item["kind"] == "turn")
+    assert (card["key"], card["title"]) == ("turn:s2", "Hai câu liền nhau đều là của Glast?")
+    assert [example["changes"] for example in card["examples"]] == [False, True], "sửa câu SAU, câu trước giữ người của nó"
+    assert [line["stableId"] for line in card["lines"]] == ["s2"] and "allLines" not in card
+
+
+def test_a_long_run_is_cut_into_cards_that_keep_the_alternation(tmp_path: Path) -> None:
+    """Mười đoạn thoại liền nhau cùng gán Glast: khúc đầu 8 câu đổi câu 2, 4, 6, 8; khúc sau (câu 9-10) đổi câu 10 - câu
+    9 giữ Glast như câu 1, 3... vì khúc dài số chẵn."""
+    project = make_dialogue_book(tmp_path, first_person="ED ROSTAILER")
+    db = sqlite3.connect(project / "project.sqlite3")
+    db.execute("DELETE FROM segments")
+    db.executemany(
+        "INSERT INTO segments (id, stable_id, chapter_id, seq, paragraph_index, text, kind, speaker, status, text_sha256)"
+        " VALUES (?,?,1,?,?,?,'dialogue','GLAST','verified',?)",
+        [(number, f"t{number}", number, number, f"“Câu {number}.”", f"sha-t{number}") for number in range(1, 11)],
+    )
+    db.commit()
+    db.close()
+    turns = [item for item in work_items(project)["items"] if item["kind"] == "turn"]
+    assert [item["key"] for item in turns] == ["turns:t1", "turn:t10"]
+    assert [line["stableId"] for line in turns[0]["lines"]] == ["t2", "t4", "t6", "t8"]
+    assert turns[0]["affected"] == 4 and turns[0]["title"] == "8 câu liền nhau đều là của Glast?"
+    assert [line["stableId"] for line in turns[1]["lines"]] == ["t10"]
+    assert [example["text"] for example in turns[1]["examples"]] == ["“Câu 9.”", "“Câu 10.”"]
 
 
 def test_a_book_without_paragraph_numbers_or_a_narrator_still_builds_its_inbox(tmp_path: Path) -> None:

@@ -20,6 +20,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   - Việc đã quyết thu vào mục "Đã quyết, chờ áp dụng" và không còn tính vào số đếm; nút tô đúng lựa chọn đã bấm.
   - Thẻ "Ai nói câu này" có **"Tìm trong truyện…"**, mở đúng câu ấy ở tab Kịch bản với ô chọn người nói (tìm được mọi
     nhân vật).
+  - Nhiều đoạn thoại liền nhau cùng gán một người giờ là **một thẻ**, không còn mỗi cặp một thẻ chồng lên nhau. Thẻ đổi
+    các câu xen kẽ (hai người đối đáp) hoặc **cả chuỗi** (độc thoại của một người khác), câu nào sẽ đổi được đánh dấu.
   - Cách đọc bị từ chối báo lỗi ngay dưới ô nhập.
   - Vai phụ trùng tên ở nhiều chương ghi thêm tên chương.
   - Thanh lọc xuống hàng thay vì bị cắt chữ.

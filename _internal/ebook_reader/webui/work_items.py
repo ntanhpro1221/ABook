@@ -37,6 +37,9 @@ SEVERITY = {
     "audio": 0.9,
 }
 EXAMPLES = 3
+# Thẻ "Lượt đối đáp" gộp một chuỗi câu liền nhau cùng người thành một thẻ, tối đa ngần này câu. Số CHẴN: khúc sau bắt đầu
+# đúng nhịp xen kẽ của khúc trước (câu thứ 9 là câu giữ nguyên, như câu 1, 3...).
+TURN_CHAIN_MAX = 8
 # Thẻ biệt danh (3a): số lần sách viết danh hiệu SÁT tên (cách một dấu cách, hay "được mệnh danh/gọi là") mới hỏi.
 EPITHET_EVIDENCE = 3
 EPITHET_LINKS = ("được mệnh danh là", "được mệnh danh", "được gọi là", "được biết đến là")
@@ -403,30 +406,65 @@ def work_items(project_root: Path) -> dict[str, Any]:
     # Truyện kể ngôi thứ nhất: người đối đáp thường là chính "tôi" - đứng đầu các lựa chọn.
     voices = store.read_settings(project_root).get("voices")
     partner = str((voices if isinstance(voices, dict) else {}).get("first_person_identity") or "")
+    # Cặp nối nhau (câu 1-2, 2-3...) là MỘT chuỗi, một thẻ: mỗi cặp một thẻ thì sửa thẻ đầu (câu 2 là người kia) xong thẻ
+    # sau vẫn hỏi "câu 3 cũng là của A?" như thể câu 2 vẫn là A (soát UX 29-09). Chuỗi đối đáp bị gán hết cho một người
+    # thường là hai người xen kẽ: thẻ đổi các câu thứ 2, 4... sang người được chọn, các câu còn lại giữ nguyên.
+    chains: list[list[Any]] = []
     for first, second in turns:
-        speaker = str(second["speaker"])
-        name = speaker_label(speaker)
-        choices = []
-        if partner and partner.casefold() != speaker.casefold():
-            choices.append({"label": speaker_label(partner), "value": partner})
-        choices += _cast_choices(spoken, {int(second["chapter_id"])}, {speaker.casefold()})
-        choices += [{"label": "Người kể", "value": NARRATOR}, {"label": "Vai phụ không tên", "value": UNNAMED}]
-        fix = _speaker_fix([second], choices, speaker, speaker_wishes)
-        if fix is None:
-            continue
-        items.append({
-            "kind": "turn",
-            "key": f"turn:{second['stable_id']}",
-            "title": f"Hai câu liền nhau đều là của {name}?",
-            "problem": f"Câu sau là một đoạn riêng, không lời dẫn, nói ngay sau một câu của {name}. Hầu hết những cặp"
-                       " như thế là hai người đối đáp - có thể câu sau là của người đang nói với " + name + ".",
-            "affected": 1,
-            "doubt": 0.9,
-            "options": ["Chọn người nói khác", "Giữ nguyên"],
-            "current": name,
-            "examples": [_example(first, names), _example(second, names)],
-            **fix,
-        })
+        if chains and chains[-1][-1]["stable_id"] == first["stable_id"]:
+            chains[-1].append(second)
+        else:
+            chains.append([first, second])
+    for chain in chains:
+        for start in range(0, len(chain), TURN_CHAIN_MAX):
+            lines = chain[start:start + TURN_CHAIN_MAX]
+            changing = lines[1::2]
+            if not changing:
+                continue
+            speaker = str(lines[-1]["speaker"])
+            name = speaker_label(speaker)
+            choices = []
+            if partner and partner.casefold() != speaker.casefold():
+                choices.append({"label": speaker_label(partner), "value": partner})
+            choices += _cast_choices(spoken, {int(lines[0]["chapter_id"])}, {speaker.casefold()})
+            choices += [{"label": "Người kể", "value": NARRATOR}, {"label": "Vai phụ không tên", "value": UNNAMED}]
+            fix = _speaker_fix(changing, choices, speaker, speaker_wishes)
+            if fix is None:
+                continue
+            if len(lines) == 2:
+                items.append({
+                    "kind": "turn",
+                    "key": f"turn:{lines[1]['stable_id']}",
+                    "title": f"Hai câu liền nhau đều là của {name}?",
+                    "problem": f"Câu sau là một đoạn riêng, không lời dẫn, nói ngay sau một câu của {name}. Hầu hết những"
+                               " cặp như thế là hai người đối đáp - có thể câu sau là của người đang nói với " + name + ".",
+                    "affected": 1,
+                    "doubt": 0.9,
+                    "options": ["Chọn người nói khác", "Giữ nguyên"],
+                    "current": name,
+                    "examples": [{**_example(lines[0], names), "changes": False},
+                                 {**_example(lines[1], names), "changes": True}],
+                    **fix,
+                })
+                continue
+            items.append({
+                "kind": "turn",
+                "key": f"turns:{lines[0]['stable_id']}",
+                "title": f"{len(lines)} câu liền nhau đều là của {name}?",
+                "problem": f"{len(lines)} đoạn thoại liền nhau, không lời dẫn, đều gán cho {name}. Thường là hai người đối"
+                           f" đáp: chọn người nói các câu xen kẽ (đánh dấu \"sẽ đổi\"), các câu còn lại vẫn của {name}. Cả"
+                           " chuỗi là lời của MỘT người khác (độc thoại vắt nhiều đoạn) thì chọn \"Cả chuỗi\".",
+                "affected": len(changing),
+                "doubt": 0.9,
+                "options": ["Chọn người nói khác", "Giữ nguyên"],
+                "current": name,
+                "examples": [{**_example(row, names), "changes": index % 2 == 1} for index, row in enumerate(lines)],
+                **fix,
+                # Phạm vi "Cả chuỗi": độc thoại vắt nhiều đoạn của một người khác (lô 18: 3 đoạn gán Heit mà người nói
+                # đang tính "nhắc nhở Heit") - xen kẽ sẽ sai cả ba.
+                "allLines": [{"stableId": str(row["stable_id"]), "textSha256": str(row["text_sha256"] or "")}
+                             for row in lines],
+            })
 
     # 3. Nghi là MỘT người mang hai tên (bí danh): tên ngắn nằm trọn ở đầu hay cuối tên dài, không khác giới. Tên nào dài
     #    hơn KHÔNG nói ai nhiều câu hơn ("Lucien" 500 câu, "Lucien Evans" 3 câu là trường hợp thường gặp nhất). Gộp thì câu

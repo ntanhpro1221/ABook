@@ -23,6 +23,8 @@ interface WorkExample {
   speaker: string;
   /** Câu đã có bản thu (nghe được); câu chưa thu chỉ là ví dụ ngữ cảnh. */
   hasAudio: boolean;
+  /** Câu mà lựa chọn trên thẻ sẽ đổi người nói (thẻ lượt đối đáp: các câu xen kẽ). */
+  changes?: boolean;
 }
 
 interface WorkItem {
@@ -42,6 +44,8 @@ interface WorkItem {
   /** Việc gán người nói ("Ai nói câu này", người gọi, vai phụ không tên): các câu (mã ổn định + băm chữ, để yêu cầu
    *  không áp nhầm câu đã đổi) và các lựa chọn bấm được. */
   lines?: { stableId: string; textSha256: string }[];
+  /** Thẻ chuỗi lượt đối đáp: mọi câu của chuỗi - phạm vi "Cả chuỗi" thay cho các câu xen kẽ trong `lines`. */
+  allLines?: { stableId: string; textSha256: string }[];
   /** `name`: tên người khi nhãn nút không phải là tên ("Gộp vào Kati"). */
   choices?: { label: string; value: string; name?: string }[];
   currentValue?: string;
@@ -120,6 +124,7 @@ function Example({ bookId, example }: { bookId: string; example: WorkExample }) 
         <div className="text-xs text-fg-3">
           {example.chapterTitle} · {example.seq === 0 ? "tiêu đề chương" : `câu ${example.seq}`}
           {example.speaker && ` · máy gán: ${example.speaker}`}
+          {example.changes && <span className="font-semibold text-accent-text"> · sẽ đổi</span>}
         </div>
         <p className="text-fg">{example.text}</p>
       </div>
@@ -220,8 +225,23 @@ function PronunciationFix({ bookId, item }: { bookId: string; item: WorkItem }) 
 // Gán người nói - một câu ("Ai nói câu này", người gọi) hay mọi câu của một vai phụ: mỗi ứng viên một nút, người máy nghi
 // nhất đứng đầu. Không chờ gì - ghi xong là xong phần người; dây chuyền gán câu cho người ấy (mượn đúng giọng sẵn có của
 // họ) ở ranh giới chương, câu đã thu thì thu lại.
-function SpeakerFix({ bookId, item, onOpenScript }: { bookId: string; item: WorkItem; onOpenScript?: OpenScript }) {
+type Scope = "alternate" | "all";
+
+function SpeakerFix({
+  bookId,
+  item,
+  onOpenScript,
+  scope = "alternate",
+  onScope,
+}: {
+  bookId: string;
+  item: WorkItem;
+  onOpenScript?: OpenScript;
+  scope?: Scope;
+  onScope?: (scope: Scope) => void;
+}) {
   const client = useQueryClient();
+  const lines = scope === "all" && item.allLines ? item.allLines : item.lines;
   // "Người khác…": người nói chưa có trong lựa chọn - kể cả người máy CHƯA TỪNG gán câu nào (linh thể nói trong 『』):
   // gõ tên + chọn giới, dây chuyền tạo người ấy và cấp giọng riêng như bước phân vai.
   const [creating, setCreating] = useState(false);
@@ -230,13 +250,13 @@ function SpeakerFix({ bookId, item, onOpenScript }: { bookId: string; item: Work
     mutationFn: ({ speaker, newGender }: { speaker: string; newGender?: string }) =>
       api<{ lines: number; speaker: string }>(`/api/books/${bookId}/speaker`, {
         method: "POST",
-        body: { lines: item.lines, speaker, newGender: newGender ?? "" },
+        body: { lines, speaker, newGender: newGender ?? "" },
       }),
     onSuccess: ({ speaker }) => {
       void client.invalidateQueries({ queryKey: ["work", bookId] });
       void client.invalidateQueries({ queryKey: ["book", bookId] });
       void client.invalidateQueries({ queryKey: ["library"] });
-      const which = (item.lines?.length ?? 1) > 1 ? `${item.lines?.length} câu này` : "câu này";
+      const which = (lines?.length ?? 1) > 1 ? `${lines?.length} câu này` : "câu này";
       if (speaker === item.currentValue) {
         toast.success(item.keepLabel ? `Đã ghi: ${item.keepLabel}` : `Giữ nguyên: ${which} của ${item.current}`, {
           description: "Việc này sẽ không hiện lại.",
@@ -259,6 +279,20 @@ function SpeakerFix({ bookId, item, onOpenScript }: { bookId: string; item: Work
           Đã ghi: {(item.lines?.length ?? 1) > 1 ? `${item.lines?.length} câu này` : "câu này"} của {item.requested} - chờ áp
           dụng khi sách chạy tiếp.
         </p>
+      )}
+      {item.allLines && item.lines && onScope && (
+        <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-fg-2">
+          <span>Đổi người nói cho</span>
+          <Segmented<Scope>
+            label="Đổi người nói cho những câu nào"
+            value={scope}
+            onChange={onScope}
+            options={[
+              { value: "alternate", label: `Câu xen kẽ · ${item.lines.length}` },
+              { value: "all", label: `Cả chuỗi · ${item.allLines.length}` },
+            ]}
+          />
+        </div>
       )}
       <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Ai nói câu này">
         {(item.choices ?? []).map((choice, index) => (
@@ -399,6 +433,8 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
 type OpenScript = (chapterId: number, stableId: string) => void;
 
 function Card({ bookId, item, onOpenReview, onOpenScript }: { bookId: string; item: WorkItem; onOpenReview: () => void; onOpenScript?: OpenScript }) {
+  // Thẻ chuỗi lượt đối đáp: đổi các câu xen kẽ (mặc định) hay cả chuỗi - câu "sẽ đổi" theo phạm vi đang chọn.
+  const [scope, setScope] = useState<Scope>("alternate");
   return (
     <li className="rounded-xl border border-line bg-panel p-4">
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
@@ -423,7 +459,7 @@ function Card({ bookId, item, onOpenReview, onOpenScript }: { bookId: string; it
       ) : item.voiceChoices && item.voiceChoices.length > 0 ? (
         <VoiceFix bookId={bookId} item={item} />
       ) : item.lines && item.choices ? (
-        <SpeakerFix bookId={bookId} item={item} onOpenScript={onOpenScript} />
+        <SpeakerFix bookId={bookId} item={item} onOpenScript={onOpenScript} scope={scope} onScope={setScope} />
       ) : (
         <div className="mt-3 flex flex-wrap gap-1.5" aria-label="Lựa chọn">
           {item.options.map((option) => (
@@ -436,7 +472,11 @@ function Card({ bookId, item, onOpenReview, onOpenScript }: { bookId: string; it
       {item.examples.length > 0 && (
         <ul className="mt-3 space-y-2 border-t border-line pt-3">
           {item.examples.map((example) => (
-            <Example key={example.segmentId} bookId={bookId} example={example} />
+            <Example
+              key={example.segmentId}
+              bookId={bookId}
+              example={item.allLines && scope === "all" ? { ...example, changes: true } : example}
+            />
           ))}
         </ul>
       )}
