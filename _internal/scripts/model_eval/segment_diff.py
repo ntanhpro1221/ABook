@@ -104,8 +104,12 @@ def main() -> int:
         before, after = old[str(source)], new[str(source)]
         if before == after:
             continue
-        changed += 1
         header, labels = gold_lines(gold)
+        if len(labels) == len(after) != len(before):
+            # Đã ở cách tách mới (chuyển từ lần trước): chuyển lần nữa là đọc số seq mới như số cũ - hỏng nhãn (28-09).
+            print(f"== {gold.parent.name}/{gold.name}: đã theo cách tách mới ({len(after)} đoạn), bỏ qua")
+            continue
+        changed += 1
         print(f"== {gold.parent.name}/{gold.name}: {len(before)} -> {len(after)} đoạn")
         matcher = difflib.SequenceMatcher(a=[text for _k, text in before], b=[text for _k, text in after], autojunk=False)
         out: dict[int, str] = {}
