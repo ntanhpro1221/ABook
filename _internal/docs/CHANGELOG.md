@@ -127,8 +127,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   Thư viện. Cuốn được chép vào thư viện (`Sách đã nhập`) và nghe đầy đủ: chương, đọc theo, nhân vật, câu mẫu, dấu trang,
   hồ sơ nghe. Không thành hai cuốn: file do chính Studio máy này xuất ra mở đúng dự án ấy; mở lại cuốn đã có thì về cuốn
   ấy, bản nhiều chương hơn thì cập nhật tại chỗ (chỗ đang nghe giữ nguyên).
-- Máy tính: ABook mở bằng **cửa sổ mới** (giao diện Nghe + Studio mới). Giao diện cũ vẫn mở được bằng
-  `app.py --classic`.
+- Máy tính: ABook mở bằng **cửa sổ mới** (giao diện Nghe + Studio mới). Bản chạy từ mã nguồn vẫn mở được giao diện cũ
+  bằng `app.py --classic`.
 
 ### Nghe sách - máy tính và điện thoại
 
@@ -223,6 +223,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Android: app đổi mã thành `com.ngdtuanh.abook`, nên ABook cài thành **một app mới** bên cạnh "Ebook Reader" cũ, không
   mang theo sách đã tải hay chỗ đang nghe. Ghép nối lại với máy tính, tải lại sách (chỗ nghe đồng bộ từ máy tính về), rồi
   gỡ app cũ.
+- Android: APK phát hành ký bằng khoá phát hành của dự án. Điện thoại đã cài một bản ABook thử (dựng từ mã nguồn) phải
+  **gỡ bản ấy trước** - Android không cài đè một app khác chữ ký - rồi ghép lại và tải lại sách như trên.
 
 ## [0.3.0] và trước
 
