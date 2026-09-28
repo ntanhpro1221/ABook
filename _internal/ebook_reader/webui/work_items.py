@@ -333,6 +333,8 @@ def work_items(project_root: Path) -> dict[str, Any]:
     #    `voices`; dây chuyền ghim giới và, nếu giọng đang dùng khác giới, chọn giọng mới như bước phân vai (mọi người khác
     #    giữ giọng) rồi thu lại câu của người ấy (ProjectDB.apply_listener_voice). "Để máy quyết" thì thôi hỏi.
     voice_wishes = {entry["character"]: entry for entry in voice_requests(overrides)}
+    # Tên hiển thị trùng nhau (vai phụ cục bộ "Người Dân" ở 727, 728, 731 là ba người): thẻ của họ ghi thêm tên chương.
+    shown_names = Counter(speaker_label(str(character["canonical_name"])) for character in characters.values())
     for character_id, character in characters.items():
         if character["gender"] not in ("unknown", "") or character["locked"]:
             continue
@@ -354,9 +356,10 @@ def work_items(project_root: Path) -> dict[str, Any]:
             "kind": "gender",
             "key": f"gender:{character['canonical_name']}",
             # Vai phụ cục bộ cùng tên ở nhiều chương là những người khác nhau ("Người Dân" ở 727, 728, 731): tên chương
-            # trong tiêu đề để ba thẻ không trông như một thẻ lặp (soát UX 29-09).
+            # trong tiêu đề để ba thẻ không trông như một thẻ lặp (soát UX 29-09) - chỉ khi tên hiển thị thật sự trùng.
             "title": f"{speaker_label(character['canonical_name'])} là nam hay nữ?"
-                     + (f" · {names.get(chapters_of[0], {}).get('name', '')}" if len(chapters_of) == 1 else ""),
+                     + (f" · {names.get(chapters_of[0], {}).get('name', '')}"
+                        if len(chapters_of) == 1 and shown_names[speaker_label(str(character["canonical_name"]))] > 1 else ""),
             "problem": "Truyện chưa cho máy đủ dấu hiệu về giới của nhân vật này; máy đang đọc bằng "
                        + {"male": "giọng nam.", "female": "giọng nữ."}.get(heard, "một giọng chưa rõ nam nữ."),
             "affected": len(rows),
