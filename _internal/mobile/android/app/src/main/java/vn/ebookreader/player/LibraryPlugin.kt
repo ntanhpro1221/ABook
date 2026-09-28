@@ -44,6 +44,8 @@ private const val SHARE_KEY = "shareLibrary"
 )
 class LibraryPlugin : Plugin() {
     private val io = Executors.newSingleThreadExecutor()
+    // Trình phát máy khác (mạng trạm bước 4): hỏi mạng tới vài giây, không được chặn hàng `io` của thư viện.
+    private val remotes = Executors.newCachedThreadPool()
     private val downloads = Executors.newSingleThreadExecutor()
     private val prefs by lazy { SyncLink.prefs(context) }
 
@@ -454,6 +456,30 @@ class LibraryPlugin : Plugin() {
     fun peerForget(call: PluginCall) = background(call) {
         Peers.forget(context, call.getString("key") ?: "")
         call.resolve()
+    }
+
+    /** Trình phát của máy tính chính và mọi thiết bị ghép lúc này (RemotePlayers). */
+    @PluginMethod
+    fun remotePlayers(call: PluginCall) = remotes.execute {
+        try {
+            val out = JSArray()
+            val players = RemotePlayers.all(context)
+            for (index in 0 until players.length()) out.put(JSObject.fromJSONObject(players.getJSONObject(index)))
+            call.resolve(JSObject().put("players", out))
+        } catch (error: Exception) {
+            call.reject(error.message ?: error.javaClass.simpleName)
+        }
+    }
+
+    @PluginMethod
+    fun remoteCommand(call: PluginCall) = remotes.execute {
+        try {
+            val device = call.getString("device") ?: throw IllegalArgumentException("thiếu máy")
+            val command = call.getObject("command") ?: throw IllegalArgumentException("thiếu lệnh")
+            call.resolve(JSObject.fromJSONObject(RemotePlayers.command(context, device, JSONObject(command.toString()))))
+        } catch (error: Exception) {
+            call.reject(error.message ?: error.javaClass.simpleName)
+        }
     }
 
     @PluginMethod
