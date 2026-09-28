@@ -37,6 +37,10 @@ SPEECH_VERB_PATTERN = re.compile(
     r"\b(?:nói|hỏi|đáp|trả lời|quát|hét|gào|thì thầm|lẩm bẩm|kêu|bảo|ra lệnh|cười)\b",
     re.IGNORECASE,
 )
+# Từ dẫn một THUẬT NGỮ trong ngoặc (không phải lời nói): "gọi là “bang hội,”", "mang danh “thợ săn,”".
+TERM_INTRODUCER_PATTERN = re.compile(
+    r"\b(?:là|gọi|tên|chữ|từ|cụm|câu|hiệu|danh|như|kiểu|thành|mệnh danh|xưng)$",
+)
 PUNCTUATION_BREAK_MS = {
     ",": 180,
     ".": 320,
@@ -639,6 +643,12 @@ def _quoted_span_is_dialogue(line: str, match: re.Match[str]) -> bool:
     before = line[: match.start()].rstrip()
     after = line[match.end() :].lstrip()
     if before.endswith(":"):
+        return True
+    # “Được,” Liz gật đầu. - câu trong ngoặc kết thúc bằng dấu phẩy là lời nói nối vào lời dẫn, dù động từ dẫn là gì
+    # (gật đầu, lầm bầm, lên tiếng, thở dài...: danh sách động từ không bao giờ đủ). Quét Corpus 28-09: 1.826 câu như thế
+    # bị khoá lời kể - đọc bằng giọng người kể - ở YMP (Hàn) và Nageki; trừ 5 câu thuật ngữ đặt dấu phẩy kiểu Anh ngay
+    # sau "là", "gọi", "danh", "thành" ("họ gọi tôi là “đội trưởng,” đơn giản vì...") thì đều là thoại.
+    if inner.endswith(",") and not TERM_INTRODUCER_PATTERN.search(before.casefold()):
         return True
     context = f"{before[-100:]} {after[:100]}"
     return SPEECH_VERB_PATTERN.search(context) is not None
