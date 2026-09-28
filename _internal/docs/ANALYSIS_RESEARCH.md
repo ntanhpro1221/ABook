@@ -19,6 +19,25 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
 5. **Thước quyết định là thứ chủ sách đọc: LN Nhật + truyện mạng Hàn** (chủ sách 28-09: *"tôi hay đọc light novel nhật,
    hàn cơ mà"*). Truyện Trung, Việt, cổ chỉ là kiểm tra phụ "không được phá".
 
+## ĐỘ TIN CỦA THƯỚC LN 29-09 05:xx - sổ "nhân vật đã biết" trống trong bộ đo, đầy trong sách thật
+
+Bộ đo `--book` (LN, các cổng) tạo project trống cho MỖI chương: prompt mở đầu "(Chưa có nhân vật đã biết)". Sách thật tới
+chương 141 có sổ tới 80 người từ các chương trước (`_known_summary`: tên, số lần gặp, giới). Thước quyết định model đo một
+điều kiện mà sản xuất chỉ gặp ở chương đầu.
+
+Đo bằng CPU (scratchpad `cast_absent.py`): 133/722 câu có tên trong 12 chương LN có người nói KHÔNG được nhắc tên trong
+chương, cả 133 đều có ở chương trước - nhưng 130 câu là của người kể "tôi" (TOMOBE Yamiyo 62, KAKERU LU 54, KRAI Nageki 13)
+mà prompt đã nêu qua `--first-person`. Chỉ 3 câu thật sự vắng tên. (Tôi đã nhầm lúc đầu: TOMOBE là người kể, không phải
+linh thể nói trong 『』 - linh thể là TỌA PHU ĐỒNG TỬ và tên có trong chương.) Vậy không có nhóm câu "không thể đoán";
+câu hỏi còn lại là model dùng một sổ thật tốt hay bị nó kéo lệch - 21-09 trên cuốn 2 (`LLM_EVAL.md`, `no-counts`): số đếm
+kéo model về người nổi tiếng, cơ chế thật, lợi ròng ~0 với qwen3:8b. Với LoRA (học phần lớn trên sổ ngắn: replay gom các
+chương gold THƯA của một truyện vào một project) thì chưa ai đo.
+
+Công cụ: `seed_gold_cast.py` + `eval_models.py --seed-gold-cast` gieo sổ từ đáp án các chương SỐ NHỎ HƠN chương đo (sách
+thật không biết tương lai). Lượt đầu (Mac, cùng máy cho hai điều kiện): v3 trên Nageki 65 (gieo 8 người) và Yamiyo 225
+(13 người), xen kẽ tắt/bật. **Luật đặt trước khi có số:** hiệu người nói/F1 giọng trong ±3 điểm trên cả hai chương = thước
+LN hiện tại đủ tin, giữ nguyên; lệch cùng chiều quá 3 điểm = đo lại các model ứng viên có gieo trước khi chọn mặc định.
+
 ## BỘ ĐO LN 28-09 10:xx - chưa model nào từng được đo trên LN Nhật
 
 Soát lại tập dữ liệu: test của LoRA chỉ có TMA (Trung, 4 chương) + YMP (Hàn, 1 chương); mọi chương LN Nhật có đáp án (1-2
