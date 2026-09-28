@@ -14,8 +14,45 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
 2. **Đo theo cặp trên cùng chương, trên tập test tách theo chương.** Độ đúng người nói của CÙNG một model dao động
    51,5-84,6% theo chương (21-09): chọn chương chi phối mạnh hơn chọn model. Công cụ: `scripts/model_eval/paired.py`.
 3. **Ghi cả kết quả âm.** Mỗi thí nghiệm: câu hỏi, cấu hình, số đo, kết luận, commit.
-4. **Tập test không bao giờ lọt vào huấn luyện**: TMA 351 363 378 381 + young_masters_pov 248
+4. **Tập test không bao giờ lọt vào huấn luyện**: TMA 351 363 378 381 + young_masters_pov 248 + bộ LN 28-09 (dưới)
    (`scripts/model_eval/build_training_set.py`, `SPLIT`).
+5. **Thước quyết định là thứ chủ sách đọc: LN Nhật + truyện mạng Hàn** (chủ sách 28-09: *"tôi hay đọc light novel nhật,
+   hàn cơ mà"*). Truyện Trung, Việt, cổ chỉ là kiểm tra phụ "không được phá".
+
+## BỘ ĐO LN 28-09 10:xx - chưa model nào từng được đo trên LN Nhật
+
+Soát lại tập dữ liệu: test của LoRA chỉ có TMA (Trung, 4 chương) + YMP (Hàn, 1 chương); mọi chương LN Nhật có đáp án (1-2
+chương mỗi truyện) đều nằm trong TRAIN, còn TMA chiếm 17 chương train. Các cổng 27-28/09 (TMA, Tam quốc, Tắt đèn) vì thế
+không nói gì về LN Nhật - đúng thứ chủ sách đọc. Bộ đo mới: 5 chương CHƯA học, chọn chương nhiều thoại ở giữa truyện
+(`scratchpad` chọn theo tỉ lệ đoạn thoại), 819 đoạn: Two Childhood Friends 042 (81), Nise Seiken 132 (101), Hướng dẫn sinh
+tồn 062 (145, Hàn, ngôi thứ nhất), Yamiyo no Hotaru 141 (184, ngôi thứ nhất), Nageki no Bourei 65 (308, ngôi thứ nhất + đoạn
+ngôi ba). Claude gán, agent soát đối kháng; mọi file qua `gold_replay.py` không LỆCH LUẬT. Các kiểu LN đáp án cũ chưa gặp:
+- chuỗi bài đăng mạng xã hội trong 『』 (TCF 2-35) = văn bản viết, quy tắc 7: NARRATOR đủ, người đăng vô danh NPC*~;
+- HAI giọng nội tâm cãi nhau (Yamiyo): "(…)" sau lời Hina là nội tâm thật của cô (bị khoá lời kể -> N,T, NARRATOR và HINA
+  đều đủ); 『…』 là Yêu Mẫu trong người Tomobe, xưng "thiếp", chương không gọi tên -> YÊU MẪU và NPC* đủ, NARRATOR không;
+- nhân vật chỉ được gọi bằng biệt hiệu trong một đoạn ngôi ba ("Thiên Biến Vạn Hoá" = Krai) -> tên đủ, danh hiệu không
+  điểm (quy tắc 11: nhãn danh hiệu là giọng thứ hai của cùng người);
+- tên giả trước khi chương lộ tên thật (Killigan -> Killiam, quy tắc 13).
+Chạy ở hàng GPU: `scratchpad/ln_eval.sh`, đầu hàng i (v3, qwen3:8b, LoRA v2), hàng j (8B) và khảo sát E1 (đổi từ 10 chương
+TMA sang 5 chương này). Việc nghi sẵn: host chưa gom kính ngữ Nhật đứng SAU tên ("HINA-SAMA" -> "HINA"; `first_person.py`
+có danh sách hậu tố nhưng `character_registry` thì không) - chờ số liệu nhãn thật từ lượt đo LN rồi mới sửa.
+
+## LORA NỀN 8B TRÊN CARD 8 GB 28-09 (chủ sách: "sao không huấn luyện trên nền qwen3:8b?")
+
+Unsloth trong WSL2 archlinux (`train_lora_unsloth.py`, cùng siêu tham số với 4B). Thử VRAM trên 8 mẫu DÀI NHẤT:
+1. Bản 4-bit "dynamic" của Unsloth (`unsloth/Qwen3-8B-unsloth-bnb-4bit`, 6,98 GB - giữ vài lớp 16-bit): KHÔNG NẠP ĐƯỢC
+   ("Some modules are dispatched on the CPU") - card 8 GB trừ màn hình và app còn ~6,4 GB.
+2. Bản 4-bit thường (`unsloth/Qwen3-8B-bnb-4bit`, 5,67 GB): nạp được; khuôn chat Qwen3-8B làm mẫu dài nhất 4.526 token
+   (4B-2507: 4.276) -> `--max-length 4608`.
+3. Bước đầu hết VRAM ở loss: "No or negligible GPU memory available for fused cross entropy" - Unsloth dò VRAM trống để chia
+   khúc logits, thấy ~0. Sửa: `UNSLOTH_CE_LOSS_N_CHUNKS=32` (đặt TRƯỚC import unsloth). `offload_embedding` KHÔNG dùng được:
+   nhánh tối ưu `FastLanguageModel` của Qwen3 lặng lẽ bỏ qua, còn `FastModel` từ chối trên WSL.
+4. Với (2)+(3): bước 1 xong 32 giây, VRAM 7,85/8,15 GB - rồi bước 2 bò (GPU 99% nhưng 32 W thay vì 77 W, RAM máy còn
+   trống 2,1 GB): bộ nhớ tràn qua lại VRAM <-> RAM. Kết luận đang chờ số cuối.
+Hạ tầng rút ra cùng lúc: WSL `networkingMode=mirrored` làm rớt wifi Realtek 8852BE (đổi sang nat); ở nat, dải mạng của
+WSL (192.168.0.1/20) trùng cổng wifi 192.168.0.1 nên WSL không ra mạng - model tải bằng Python bên Windows
+(`LLM_Train/scripts/fetch_hf.py`), WSL chạy OFFLINE; xuất GGUF 8B cũng làm bên Windows (`serve_lora.py --like qwen3:8b
+--quantize q4_K_M`, gộp CPU với bản gốc 16-bit).
 
 ## Cách đo
 
