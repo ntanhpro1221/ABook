@@ -35,7 +35,7 @@ import time
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 from urllib.parse import unquote, urlsplit
 
 from . import covers, listen_view, remote_studio, store
@@ -377,7 +377,8 @@ def manifest(project_root: Path, book: str, listening: Listening) -> dict[str, A
 class SyncApp:
     def __init__(self, library: Library, listening: Listening, devices: Devices, name: str,
                  remote: Remote | None = None, fingerprints: Fingerprints | None = None,
-                 studio: StudioGate | None = None, player: Remote | None = None) -> None:
+                 studio: StudioGate | None = None, player: Remote | None = None,
+                 routes: Callable[[], dict[str, Any]] | None = None) -> None:
         self.library = library
         self.listening = listening
         self.devices = devices
@@ -386,6 +387,9 @@ class SyncApp:
         self.player = player or Remote()  # trình phát của chính máy này (giao diện báo lên host, webui/server.py)
         self.fingerprints = fingerprints or Fingerprints(listening.path.with_name("fingerprints.json"))
         self.studio = studio  # None: cổng chỉ đồng bộ (test, máy không có giao diện)
+        # Các đường tới máy này, gửi kèm lời đáp ghép: điện thoại ghép qua Wi-Fi biết đường Bluetooth dự phòng, ghép qua
+        # Bluetooth biết địa chỉ Wi-Fi để dùng khi cùng mạng (tự chọn đường, feat/auto-route).
+        self.routes = routes or (lambda: {})
         # Số "việc cần anh" của mỗi dự án, tính lại chỉ khi sách đổi (studio_view): điện thoại hỏi mỗi 15 phút.
         self._work: dict[str, tuple[tuple[float, ...], int]] = {}  # đường dẫn -> (dấu thời gian, số việc)
         self._work_lock = threading.Lock()
@@ -646,7 +650,7 @@ class SyncHandler(BaseHTTPRequestHandler):
                 if token is None:
                     self._json(HTTPStatus.FORBIDDEN, {"error": "Mã ghép nối sai hoặc đã hết hạn"})
                 else:
-                    self._json(HTTPStatus.OK, {"token": token, "name": self.app.name})
+                    self._json(HTTPStatus.OK, {"token": token, "name": self.app.name, "routes": self.app.routes()})
                 return
             if method == "POST" and path == "/sync/v1/pair-browser":
                 # Trang ghép của Studio từ xa: cùng mã 6 số, nhưng mã thiết bị về cookie HttpOnly thay vì về tay trang.
