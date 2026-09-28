@@ -63,6 +63,15 @@ Người duyệt đúng những câu ấy là cách rẻ nhất để đạt 100
      của tên ít câu hơn cho tên nhiều câu hơn. Trước đó thẻ chỉ bắt cặp khi tên DÀI nói nhiều hơn - bỏ sót trường hợp
      thường gặp nhất (lô 18 cuốn 2: 0 thẻ -> 2 cặp thật, "Tiers" / "Sứa Hắc Ám Tiers", "Kati" / "St. Kati"). Chưa
      làm: ghi bí danh vào sổ nhân vật để câu của chương phân tích SAU tự về đúng người (đụng file khoá).
+   - **1 (giới / giọng của nhân vật) sửa được 28-09**: thẻ "Nam hay nữ" và "Chung giọng" -> `overrides.json` mục
+     `voices` (nhân vật -> giới, preset hay "để máy chọn", giọng phải tránh) -> `ProjectDB.apply_listener_voice` ở
+     ranh giới chương, một transaction. Giọng mới do CHÍNH bộ cấp giọng của bước phân vai chọn, dựng lại từ trạng thái
+     sách với mọi người khác giữ nguyên bậc giọng (`character_registry.book_allocator` + `listener_voice_choice`), nên
+     không trùng bậc với người cùng chương; mọi câu của người ấy sang giọng mới cùng lúc (`assert_voice_stability` vẫn
+     qua), câu đã thu được đặt lại; giới + giọng ghim (`locked`, `locked_voice_key`) cho lô sau. Giọng đang có đã đúng
+     giới thì chỉ ghim giới, không thu lại câu nào. Thử trên bản sao lô 18: 9 thẻ giới; "Người Dân" (giọng nữ, 3 câu)
+     -> nam: `manh_dung_f100`, đặt lại đúng 3 câu. Còn làm: màn chọn giọng cụ thể có nghe thử trong tab Nhân vật
+     (API đã nhận `preset`).
 3. **Sửa cấp câu** (3, 4, 5, 7): bảng ghi đè mới trong SQLite (thay đổi `database.py`/`pipeline.py` - kèm test crash/reopen
    như AGENTS.md đòi).
    - **3 (ai nói câu này) XONG 27-09**, không cần bảng mới: thẻ có một nút cho mỗi ứng viên + "Giữ" -> `overrides.json`

@@ -17,7 +17,9 @@ from contextlib import closing
 from pathlib import Path
 from typing import Any
 
-from ..listener_overrides import NARRATOR, UNNAMED, pronunciation_requests, read_overrides, speaker_requests, surface_key
+from ..listener_overrides import (
+    NARRATOR, UNNAMED, pronunciation_requests, read_overrides, speaker_requests, surface_key, voice_requests,
+)
 from . import store
 from .reviews import review_items, speaker_label
 
@@ -83,6 +85,26 @@ def _speaker_fix(rows: list[Any], choices: list[dict[str, str]], current: str,
         "currentValue": current,
         "requested": speaker_label(next(iter(pending))) if len(pending) == 1 and None not in asked else None,
     }
+
+
+def _character_key(name: str) -> str:
+    """Khoá tên chuẩn như `character_registry.canonical_key` - cùng khoá mục `voices` của overrides.json."""
+    return " ".join(str(name).strip().casefold().split()).upper()
+
+
+def _voice_gender(rows: list[Any], profiles: dict[int, Any]) -> str:
+    """Giới của giọng mà các câu này đang được đọc bằng (giới của preset), hay "" khi không biết."""
+    from ..voice_catalog import preset_by_name
+
+    for row in rows:
+        profile = profiles.get(int(row["voice_profile_id"])) if row["voice_profile_id"] is not None else None
+        if profile is None or not profile["preset_name"]:
+            continue
+        try:
+            return str(preset_by_name(str(profile["preset_name"]))["gender"])
+        except ValueError:
+            return ""
+    return ""
 
 
 def _tokens(name: str) -> list[str]:
@@ -174,6 +196,12 @@ def work_items(project_root: Path) -> dict[str, Any]:
             int(row["id"]): row
             for row in connection.execute("SELECT id, canonical_name, display_name, gender, locked FROM characters")
         }
+        # Giọng đang dùng của mỗi hồ sơ: khoá (để tránh khi tách hai người chung giọng) và giới của preset (thẻ giới nói
+        # máy đang đọc bằng giọng nam hay nữ). Sổ giọng tối thiểu của test không có bảng này.
+        profiles = {
+            int(row["id"]): row
+            for row in connection.execute("SELECT id, voice_key, preset_name FROM voice_profiles")
+        } if "voice_profiles" in store._table_names(connection) else {}
         turns = merged_turns(connection)
         pronunciations = connection.execute(
             "SELECT surface, spoken_form, confidence, locked FROM pronunciations WHERE confidence < 0.9"
@@ -225,23 +253,41 @@ def work_items(project_root: Path) -> dict[str, Any]:
             **fix,
         })
 
-    # 1. Chưa rõ nam hay nữ mà có lời: giọng sai giới là lỗi người nghe nhận ra ngay.
+    # 1. Chưa rõ nam hay nữ mà có lời: giọng sai giới là lỗi người nghe nhận ra ngay. Bấm "Nam"/"Nữ" -> overrides.json
+    #    `voices`; dây chuyền ghim giới và, nếu giọng đang dùng khác giới, chọn giọng mới như bước phân vai (mọi người khác
+    #    giữ giọng) rồi thu lại câu của người ấy (ProjectDB.apply_listener_voice). "Để máy quyết" thì thôi hỏi.
+    voice_wishes = {entry["character"]: entry for entry in voice_requests(overrides)}
     for character_id, character in characters.items():
         if character["gender"] not in ("unknown", "") or character["locked"]:
             continue
         rows = [row for row in spoken if row["canonical_character_id"] == character_id]
         if not rows:
             continue
+        key = _character_key(str(character["canonical_name"]))
+        wish = voice_wishes.get(key)
+        if wish is not None and not (wish["gender"] or wish["preset"]):
+            continue
+        heard = _voice_gender(rows, profiles)
+        choices = []
+        for gender, label in (("male", "Nam"), ("female", "Nữ")):
+            choices.append({"label": label, "character": key, "gender": gender,
+                            "done": f"{speaker_label(character['canonical_name'])} là {label.lower()}",
+                            "note": "giữ giọng đang đọc" if heard == gender else f"đổi giọng, thu lại {len(rows)} câu"})
         items.append({
             "kind": "gender",
             "key": f"gender:{character['canonical_name']}",
             "title": f"{speaker_label(character['canonical_name'])} là nam hay nữ?",
-            "problem": "Truyện chưa cho máy đủ dấu hiệu về giới của nhân vật này; máy đang đọc bằng giọng trung tính.",
+            "problem": "Truyện chưa cho máy đủ dấu hiệu về giới của nhân vật này; máy đang đọc bằng "
+                       + {"male": "giọng nam.", "female": "giọng nữ."}.get(heard, "một giọng chưa rõ nam nữ."),
             "affected": len(rows),
             "doubt": 0.5,
             "options": ["Nam", "Nữ", "Để máy quyết"],
             "current": "Chưa rõ",
             "examples": [_example(row, names) for row in rows[:EXAMPLES]],
+            "voiceChoices": choices,
+            "keepCharacters": [key],
+            "keepLabel": "Để máy quyết",
+            "requested": {"male": "Nam", "female": "Nữ"}.get(wish["gender"]) if wish is not None else None,
         })
 
     # 2. Người nói lại chính là người được GỌI ở đầu câu ("Lucien, ..." mà nhãn là LUCIEN): gần như chắc là sai.
@@ -346,12 +392,29 @@ def work_items(project_root: Path) -> dict[str, Any]:
         if _is_named(str(row["speaker"])) and row["voice_profile_id"] is not None:
             voice_chapters[(int(row["voice_profile_id"]), int(row["chapter_id"]))].add(str(row["speaker"]))
     clashes: dict[frozenset[str], set[int]] = defaultdict(set)
+    shared_voice: dict[frozenset[str], int] = {}
     for (voice, chapter_id), people in voice_chapters.items():
         if len(people) > 1:
             clashes[frozenset(people)].add(chapter_id)
+            shared_voice[frozenset(people)] = voice
     for people, chapter_ids in clashes.items():
         rows = [row for row in spoken if str(row["speaker"]) in people and int(row["chapter_id"]) in chapter_ids]
-        labels = sorted(speaker_label(person) for person in people)
+        ordered = sorted(people, key=lambda person: speaker_label(person).casefold())
+        labels = [speaker_label(person) for person in ordered]
+        keys = [_character_key(person) for person in ordered]
+        wishes = [voice_wishes.get(key) for key in keys]
+        if all(wish is not None and not (wish["gender"] or wish["preset"] or wish["avoid"]) for wish in wishes):
+            continue  # người nghe bảo giữ nguyên
+        profile = profiles.get(shared_voice[people])
+        avoid = str(profile["voice_key"]) if profile is not None else ""
+        # Người ÍT câu hơn đứng đầu: ít câu phải thu lại hơn, và người nghe đã quen giọng của người nói nhiều.
+        lines = {person: sum(1 for row in rows if str(row["speaker"]) == person) for person in ordered}
+        choices = [
+            {"label": f"Đổi giọng {label}", "character": key, "avoid": avoid, "done": f"đổi giọng {label}",
+             "note": f"thu lại {lines[person]} câu ở các chương chung", "recommended": index == 0}
+            for index, (person, label, key) in enumerate(sorted(zip(ordered, labels, keys), key=lambda item: lines[item[0]]))
+        ] if avoid else []
+        moving = [label for label, wish in zip(labels, wishes) if wish is not None and wish["avoid"]]
         items.append({
             "kind": "shared-voice",
             "key": "shared-voice:" + "|".join(sorted(people)),
@@ -362,6 +425,8 @@ def work_items(project_root: Path) -> dict[str, Any]:
             "options": [f"Đổi giọng {label}" for label in labels] + ["Giữ nguyên"],
             "current": "Chung giọng",
             "examples": [_example(row, names) for row in rows[:EXAMPLES]],
+            **({"voiceChoices": choices, "keepCharacters": keys, "keepLabel": "Giữ nguyên"} if choices else {}),
+            "requested": f"đổi giọng {', '.join(moving)}" if moving else None,
         })
 
     # 5. Người nói không tên (vai phụ cục bộ): có thể là một nhân vật có tên trong chương.
