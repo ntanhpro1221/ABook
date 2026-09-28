@@ -332,3 +332,34 @@ def reveal(path: Path) -> None:
         subprocess.Popen(["explorer", "/select,", str(path)])
     else:
         os.startfile(str(path))  # noqa: S606 - mở thư mục của chính người dùng
+
+
+def move_to_recycle_bin(path: Path) -> None:
+    """Chuyển thư mục vào Thùng rác của Windows - khôi phục được từ đó (Shell `SHFileOperationW`, FOF_ALLOWUNDO, không hộp
+    thoại nào của Windows). Lỗi (file đang mở, ổ không có Thùng rác...) thành OSError; nơi khác Windows: OSError."""
+    if os.name != "nt":
+        raise OSError("Chỉ chuyển được vào Thùng rác trên Windows")
+    import ctypes
+    from ctypes import wintypes
+
+    class FileOperation(ctypes.Structure):  # SHFILEOPSTRUCTW (x64: căn lề mặc định)
+        _fields_ = [
+            ("hwnd", wintypes.HWND),
+            ("wFunc", wintypes.UINT),
+            ("pFrom", wintypes.LPCWSTR),
+            ("pTo", wintypes.LPCWSTR),
+            ("fFlags", ctypes.c_ushort),
+            ("fAnyOperationsAborted", wintypes.BOOL),
+            ("hNameMappings", ctypes.c_void_p),
+            ("lpszProgressTitle", wintypes.LPCWSTR),
+        ]
+
+    fo_delete = 3
+    flags = 0x0040 | 0x0010 | 0x0004 | 0x0400  # ALLOWUNDO | NOCONFIRMATION | SILENT | NOERRORUI
+    # pFrom là danh sách kết thúc bằng HAI ký tự NUL: ctypes thêm một, "\0" ở đây là cái còn lại.
+    operation = FileOperation(None, fo_delete, str(path.resolve()) + "\0", None, flags, False, None, None)
+    code = ctypes.windll.shell32.SHFileOperationW(ctypes.byref(operation))
+    if code != 0 or operation.fAnyOperationsAborted:
+        raise OSError(f"SHFileOperationW trả {code:#x}")
+    if path.exists():
+        raise OSError("Thư mục vẫn còn sau khi chuyển vào Thùng rác")
