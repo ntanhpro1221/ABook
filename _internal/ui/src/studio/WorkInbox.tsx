@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AudioLines, Check, Pause, Play, UserPlus } from "lucide-react";
+import { AudioLines, Check, Pause, Play, Search, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useClip } from "@/listen/clip";
@@ -220,7 +220,7 @@ function PronunciationFix({ bookId, item }: { bookId: string; item: WorkItem }) 
 // Gán người nói - một câu ("Ai nói câu này", người gọi) hay mọi câu của một vai phụ: mỗi ứng viên một nút, người máy nghi
 // nhất đứng đầu. Không chờ gì - ghi xong là xong phần người; dây chuyền gán câu cho người ấy (mượn đúng giọng sẵn có của
 // họ) ở ranh giới chương, câu đã thu thì thu lại.
-function SpeakerFix({ bookId, item }: { bookId: string; item: WorkItem }) {
+function SpeakerFix({ bookId, item, onOpenScript }: { bookId: string; item: WorkItem; onOpenScript?: OpenScript }) {
   const client = useQueryClient();
   // "Người khác…": người nói chưa có trong lựa chọn - kể cả người máy CHƯA TỪNG gán câu nào (linh thể nói trong 『』):
   // gõ tên + chọn giới, dây chuyền tạo người ấy và cấp giọng riêng như bước phân vai.
@@ -282,6 +282,12 @@ function SpeakerFix({ bookId, item }: { bookId: string; item: WorkItem }) {
         <Button size="sm" variant="ghost" icon={UserPlus} aria-expanded={creating} onClick={() => setCreating((value) => !value)}>
           Người khác…
         </Button>
+        {/* Thẻ chỉ gợi vài người; tab Kịch bản tìm được mọi nhân vật trong sách - mở đúng câu này ở đó (soát UX 29-09). */}
+        {onOpenScript && item.lines?.length === 1 && item.examples?.[0] && (
+          <Button size="sm" variant="ghost" icon={Search} onClick={() => onOpenScript(item.examples![0].chapterId, item.lines![0].stableId)}>
+            Tìm trong truyện…
+          </Button>
+        )}
       </div>
       {creating && (
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
@@ -387,7 +393,10 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
   );
 }
 
-function Card({ bookId, item, onOpenReview }: { bookId: string; item: WorkItem; onOpenReview: () => void }) {
+/** Mở câu `stableId` của chương `chapterId` trong tab Kịch bản, ô chọn người nói mở sẵn. */
+type OpenScript = (chapterId: number, stableId: string) => void;
+
+function Card({ bookId, item, onOpenReview, onOpenScript }: { bookId: string; item: WorkItem; onOpenReview: () => void; onOpenScript?: OpenScript }) {
   return (
     <li className="rounded-xl border border-line bg-panel p-4">
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
@@ -412,7 +421,7 @@ function Card({ bookId, item, onOpenReview }: { bookId: string; item: WorkItem; 
       ) : item.voiceChoices && item.voiceChoices.length > 0 ? (
         <VoiceFix bookId={bookId} item={item} />
       ) : item.lines && item.choices ? (
-        <SpeakerFix bookId={bookId} item={item} />
+        <SpeakerFix bookId={bookId} item={item} onOpenScript={onOpenScript} />
       ) : (
         <div className="mt-3 flex flex-wrap gap-1.5" aria-label="Lựa chọn">
           {item.options.map((option) => (
@@ -433,7 +442,7 @@ function Card({ bookId, item, onOpenReview }: { bookId: string; item: WorkItem; 
   );
 }
 
-export function WorkInbox({ book, onOpenReview }: { book: BookSummary; onOpenReview: () => void }) {
+export function WorkInbox({ book, onOpenReview, onOpenScript }: { book: BookSummary; onOpenReview: () => void; onOpenScript?: OpenScript }) {
   const bookId = book.id;
   const [kind, setKind] = useState<WorkKind | "all">("all");
   const [shown, setShown] = useState(PAGE);
@@ -486,7 +495,7 @@ export function WorkInbox({ book, onOpenReview }: { book: BookSummary; onOpenRev
       </div>
       <ol className={cn("mt-4 space-y-3")}>
         {items.slice(0, shown).map((item) => (
-          <Card key={item.key} bookId={bookId} item={item} onOpenReview={onOpenReview} />
+          <Card key={item.key} bookId={bookId} item={item} onOpenReview={onOpenReview} onOpenScript={onOpenScript} />
         ))}
       </ol>
       {items.length > shown && (

@@ -561,7 +561,13 @@ export function ProjectScreen() {
           <ChapterList book={book} chapters={chapters} />
         </TabsContent>
         <TabsContent value="work">
-          <WorkInbox book={book} onOpenReview={() => setParams({ tab: "review" }, { replace: true })} />
+          <WorkInbox
+            book={book}
+            onOpenReview={() => setParams({ tab: "review" }, { replace: true })}
+            onOpenScript={(chapterId, stableId) =>
+              setParams({ tab: "script", chapter: String(chapterId), line: stableId }, { replace: true })
+            }
+          />
         </TabsContent>
         <TabsContent value="script">
           <ScriptTab bookId={book.id} />
