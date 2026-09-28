@@ -7,6 +7,7 @@ import subprocess
 import sys
 import threading
 import time
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -98,6 +99,25 @@ def test_the_shell_opens_windows_dialogs_and_book_files_for_the_page(app_data: P
     assert shell.result == [0]
     with pytest.raises(OSError):
         _request(url, "/api/app")
+
+
+def test_the_update_the_shell_found_is_installed_only_when_the_listener_asks(app_data: Path) -> None:
+    shell = Shell()
+    url = shell.start()
+    assert _request(url, "/api/app")["update"] is None
+    with pytest.raises(urllib.error.HTTPError) as refused:
+        _request(url, "/api/app/update", {})
+    assert refused.value.code == 409, "chưa có bản mới thì không có gì để cài"
+
+    found = {"version": "0.4.0", "notes": "Nghe sách trên máy tính khác"}
+    shell.send({"update": found})
+    assert shell.receive() == {"event": host.UPDATE_EVENT, "detail": found}, "trang đang mở được báo để hiện nút"
+    assert _request(url, "/api/app")["update"] == found
+
+    assert _request(url, "/api/app/update", {}) == {"installing": "0.4.0"}
+    assert shell.receive() == {"install_update": True}, "vỏ nhận lệnh cài - chỉ khi người dùng bấm"
+    shell.send({"quit": True})
+    shell.thread.join(10)
 
 
 def test_a_shell_that_dies_mid_dialog_never_leaves_the_page_hanging(app_data: Path) -> None:

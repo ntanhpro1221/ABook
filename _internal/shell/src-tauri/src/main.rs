@@ -3,7 +3,8 @@
 //! Vỏ chỉ làm những việc một trang web không tự làm được; mọi thứ khác là server giao diện Python
 //! (`ebook_reader.webui.host`) - đúng server của cửa sổ Qt. Vỏ chạy host làm tiến trình con, nói chuyện qua stdin/stdout
 //! (JSON từng dòng), mở cửa sổ ở địa chỉ host báo, mở hộp thoại Windows khi host nhờ, chuyển file `.abook` của lần mở
-//! thứ hai, và khi cửa sổ đóng thì dừng host. Trang web không được cấp IPC của Tauri: nó nằm ở `http://127.0.0.1`.
+//! thứ hai, tìm và cài bản mới có chữ ký khi người dùng bấm, và khi cửa sổ đóng thì dừng host. Trang web không được cấp
+//! IPC của Tauri: nó nằm ở `http://127.0.0.1`.
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
@@ -18,6 +19,7 @@ use std::thread;
 use std::time::{Duration, Instant};
 use tauri::{AppHandle, Manager, RunEvent, Url};
 use tauri_plugin_dialog::DialogExt;
+use tauri_plugin_updater::{Update, UpdaterExt};
 
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
@@ -29,6 +31,9 @@ const BOOK_SUFFIX: &str = ".abook";
 const HOST_STOP_GRACE: Duration = Duration::from_secs(5);
 
 static QUITTING: AtomicBool = AtomicBool::new(false);
+
+/// Bản mới đã tìm thấy, chờ người dùng bấm "Cập nhật" (host chuyển lệnh `install_update`).
+struct PendingUpdate(Mutex<Option<Update>>);
 
 /// Tiến trình host và đầu ghi của ống tới nó.
 struct Host {
@@ -96,7 +101,8 @@ fn host_log() -> Stdio {
     }
 }
 
-/// Lệnh chạy host. Bản cài: Python nhúng trong thư mục tài nguyên (đường dẫn mã nằm trong `python*._pth`). Bản dev:
+/// Lệnh chạy host. Bản cài: Python nhúng trong thư mục tài nguyên (`scripts/build_windows_app.ps1` dựng; đường dẫn
+/// mã nằm trong `python*._pth`, PYTHONPATH bị bỏ qua). Bản dev:
 /// python của runtime cạnh mã nguồn, hoặc `ABOOK_HOST_PYTHON` (+ `ABOOK_HOST_APP` = thư mục chứa `ebook_reader`).
 fn host_command(app: &AppHandle) -> Result<Command, String> {
     let (python, folder) = if let Some(python) = std::env::var_os("ABOOK_HOST_PYTHON") {
@@ -111,7 +117,12 @@ fn host_command(app: &AppHandle) -> Result<Command, String> {
             root,
         )
     } else {
-        let resources = app.path().resource_dir().map_err(|error| error.to_string())?;
+        // tauri.conf.json `bundle.resources`: thư mục giữ nguyên đường dẫn tương đối, dưới thư mục tài nguyên của app.
+        let resources = app
+            .path()
+            .resource_dir()
+            .map_err(|error| error.to_string())?
+            .join("resources");
         (resources.join("python").join("pythonw.exe"), resources.join("app"))
     };
     if !python.is_file() {
@@ -149,6 +160,69 @@ fn show_failure(app: &AppHandle, message: &str) {
             }
         }
     });
+}
+
+/// Phát một CustomEvent vào trang đang hiện (trang của host nghe `abook-opened`, `abook-update`...).
+fn dispatch_event(app: &AppHandle, name: &str, detail: &Value) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.eval(format!(
+            "window.dispatchEvent(new CustomEvent({}, {{detail: {detail}}}))",
+            Value::from(name)
+        ));
+    }
+}
+
+/// Tìm bản mới một lần mỗi lần mở app, gói phải có chữ ký khớp khoá công khai trong tauri.conf.json. Không có mạng hay
+/// chưa có bản phát hành nào: im lặng, lần mở sau thử lại. Bản dev không tìm, trừ khi thử bằng `ABOOK_UPDATE_URL`.
+fn check_for_update(app: &AppHandle) {
+    let endpoint = std::env::var("ABOOK_UPDATE_URL").ok();
+    if cfg!(debug_assertions) && endpoint.is_none() {
+        return;
+    }
+    let app = app.clone();
+    tauri::async_runtime::spawn(async move {
+        let mut builder = app.updater_builder();
+        if let Some(url) = endpoint.and_then(|url| url.parse::<Url>().ok()) {
+            let Ok(with_endpoint) = builder.endpoints(vec![url]) else {
+                return;
+            };
+            builder = with_endpoint;
+        }
+        let Ok(updater) = builder.build() else { return };
+        if let Ok(Some(update)) = updater.check().await {
+            let notes = update.body.clone().unwrap_or_default();
+            let message = json!({"update": {"version": update.version, "notes": notes}});
+            *app.state::<PendingUpdate>().0.lock().unwrap() = Some(update);
+            app.state::<Host>().send(&message);
+        }
+    });
+}
+
+/// Người dùng bấm "Cập nhật": tải gói (kiểm chữ ký), dừng host để bộ cài ghi đè được Python nhúng, chạy bộ cài. Trên
+/// Windows `install` tự thoát app; bộ cài chế độ passive mở lại app khi xong. Tải hỏng: trang được báo, bấm lại được.
+fn install_update(app: &AppHandle) {
+    let Some(update) = app.state::<PendingUpdate>().0.lock().unwrap().take() else {
+        return;
+    };
+    let app = app.clone();
+    thread::spawn(
+        move || match tauri::async_runtime::block_on(update.download(|_, _| {}, || {})) {
+            Ok(bytes) => {
+                QUITTING.store(true, Ordering::SeqCst);
+                app.state::<Host>().stop();
+                if let Err(error) = update.install(bytes) {
+                    show_failure(
+                        &app,
+                        &format!("Không cài được bản mới ({error}). Đóng rồi mở lại ABook."),
+                    );
+                }
+            }
+            Err(error) => {
+                *app.state::<PendingUpdate>().0.lock().unwrap() = Some(update);
+                dispatch_event(&app, "abook-update-failed", &Value::from(error.to_string()));
+            }
+        },
+    );
 }
 
 fn answer_dialog(app: &AppHandle, message: &Value) {
@@ -195,13 +269,9 @@ fn pump(app: AppHandle, stdout: ChildStdout) {
             let app = app.clone();
             thread::spawn(move || answer_dialog(&app, &message));
         } else if let Some(event) = message.get("event").and_then(Value::as_str) {
-            let detail = message.get("detail").cloned().unwrap_or(Value::Null);
-            if let Some(window) = app.get_webview_window("main") {
-                let _ = window.eval(format!(
-                    "window.dispatchEvent(new CustomEvent({}, {{detail: {detail}}}))",
-                    Value::from(event)
-                ));
-            }
+            dispatch_event(&app, event, message.get("detail").unwrap_or(&Value::Null));
+        } else if message.get("install_update").is_some() {
+            install_update(&app);
         }
     }
     if !QUITTING.load(Ordering::SeqCst) {
@@ -226,8 +296,10 @@ fn main() {
             }
         }))
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             let handle = app.handle().clone();
+            app.manage(PendingUpdate(Mutex::new(None)));
             match host_command(&handle).and_then(|mut command| command.spawn().map_err(|error| error.to_string())) {
                 Ok(mut child) => {
                     let stdout = child.stdout.take().expect("stdout của host là ống");
@@ -241,6 +313,7 @@ fn main() {
                     for path in book_files(&args) {
                         app.state::<Host>().send(&json!({"open": path}));
                     }
+                    check_for_update(&handle);
                     thread::spawn(move || pump(handle, stdout));
                 }
                 Err(error) => {

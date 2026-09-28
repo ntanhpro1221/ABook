@@ -1,4 +1,4 @@
-import { Clapperboard, Library, Plus, Settings } from "lucide-react";
+import { Clapperboard, Download, Library, Plus, Settings } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router";
 import { useRestoreLastListening } from "@/listen/LibraryScreen";
@@ -115,6 +115,30 @@ function Producing() {
   );
 }
 
+/** App Windows đóng gói có bản mới: nhắc ở thanh bên, bấm mở Cài đặt (mục "Cập nhật" nằm trên cùng). */
+function UpdateNotice() {
+  const { data: info } = useAppInfo();
+  const navigate = useNavigate();
+  const { setExpanded } = useNowPlaying();
+  if (!info?.update || info.remote) return null;
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        setExpanded(false);
+        navigate("/settings");
+      }}
+      className="mb-2 flex w-full items-center gap-2.5 rounded-lg border border-line bg-panel p-2.5 text-left hover:bg-hover"
+    >
+      <Download className="size-4 shrink-0 text-accent-text" />
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[13px] font-semibold">Có ABook {info.update.version}</span>
+        <span className="block text-xs text-fg-2">Bấm để cập nhật</span>
+      </span>
+    </button>
+  );
+}
+
 const TITLES: [RegExp, string][] = [
   [/^\/$/, "Thư viện"],
   [/^\/book\//, "Sách"],
@@ -168,6 +192,7 @@ export function Shell({ children }: { children: ReactNode }) {
           </Section>
         </nav>
         <div className="mt-auto">
+          <UpdateNotice />
           <NavItem to="/settings" icon={Settings} match={(path) => path.startsWith("/settings")}>
             Cài đặt
           </NavItem>
