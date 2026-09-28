@@ -539,6 +539,52 @@ JAPANESE_HONORIFIC_SUFFIX_PATTERN = re.compile(
 )
 
 
+# Hai chữ viết hoa liền nhau (một dấu cách) - ứng viên "Họ Tên" trong văn bản sách.
+TWO_CAPITALIZED_WORDS_PATTERN = re.compile(r"\b([A-Z][a-z]+) ([A-Z][a-z]+)\b")
+# Một cặp phải gặp ít nhất ngần này lần mới là tên của ai đó, không phải hai chữ tình cờ đứng cạnh nhau.
+BOOK_FULL_NAME_MIN_COUNT = 2
+
+
+def book_japanese_full_names(source: str) -> "Counter[str]":
+    """Tên Nhật đủ, họ trước, mà SÁCH viết ra: "Kuchinashi Yoshihito" (Two Childhood Friends, 33 lần), "Onizuki Hina" (Yamiyo,
+    62 lần). Cả hai chữ là romaji (`ROMAJI_WORD_PATTERN`); tên Âu ("Jane Grey") và tên Hán Việt không qua."""
+    counts: Counter[str] = Counter()
+    for line in source.splitlines():
+        for family, given in TWO_CAPITALIZED_WORDS_PATTERN.findall(line):
+            if ROMAJI_WORD_PATTERN.fullmatch(family.lower()) and ROMAJI_WORD_PATTERN.fullmatch(given.lower()):
+                counts[f"{family} {given}"] += 1
+    return Counter({name: count for name, count in counts.items() if count >= BOOK_FULL_NAME_MIN_COUNT})
+
+
+def merge_into_book_full_names(representatives: dict[str, str], source: str) -> dict[str, str]:
+    """Nhãn MỘT chữ là họ hoặc tên gọi của ĐÚNG MỘT tên Nhật đủ trong sách -> tên đủ ấy. Trả về {key: tên đích}.
+
+    Đo 28-09 trên bộ LN (Two Childhood Friends 042): qwen3:8b ghi cùng một người lúc "KUCHINASHI" (họ), lúc "YOSHIHITO"
+    (tên gọi), không lần nào tên đủ - luật tên gọi dựa trên nhãn không có gì để nối, và Yoshihito có hai giọng. Tên đủ thì
+    sách đã viết. Họ mà cả nhà dùng chung (8 người họ Onizuki ở Yamiyo) khớp nhiều tên đủ -> không đoán; tên gọi thì riêng.
+    Tên đích là nhãn đã có nếu model từng ghi tên đủ, không thì tên đủ viết HOA theo cách sách viết."""
+    full_names = book_japanese_full_names(source)
+    if not full_names:
+        return {}
+    owners: dict[str, set[str]] = defaultdict(set)
+    for full in full_names:
+        family, given = normalize_name(full).split()
+        owners[family].add(full)
+        owners[given].add(full)
+    by_identity = {identity_key(name): name for name in representatives.values()}
+    redirected: dict[str, str] = {}
+    for key, name in representatives.items():
+        words = normalize_name(name).split()
+        if len(words) != 1 or not _japanese_order_name(name):
+            continue
+        candidates = owners.get(words[0], set())
+        if len(candidates) != 1:
+            continue
+        full = next(iter(candidates))
+        redirected[key] = by_identity.get(identity_key(full), full.upper())
+    return redirected
+
+
 def strip_japanese_honorific(label: str) -> str:
     """"HINA-SAMA" -> "HINA". Nhãn chỉ có kính ngữ ("SENSEI") hay phần còn lại quá ngắn thì giữ nguyên."""
     match = JAPANESE_HONORIFIC_SUFFIX_PATTERN.fullmatch(" ".join(label.split()))
@@ -665,6 +711,12 @@ def canonical_speaker_names(
     for key, winner in sorted(given_names.items()):
         log(f"  {representatives[key]} là tên gọi của {winner}: cùng một nhân vật.")
         representatives[key] = winner
+
+    # Tên Nhật: nhãn một chữ (họ hoặc tên gọi) -> tên đủ mà SÁCH viết, khi đúng một người mang chữ ấy.
+    for key, winner in sorted(merge_into_book_full_names(representatives, source).items()):
+        if representatives[key] != winner:
+            log(f"  {representatives[key]} là một phần tên {winner} trong sách: cùng một nhân vật.")
+            representatives[key] = winner
 
     # Sau cùng, chỉ đổi CHỮ hiển thị (một tên thành một tên): tên rơi hết dấu viết lại theo sách.
     marked = restore_source_marks(sorted(set(representatives.values())), source)
