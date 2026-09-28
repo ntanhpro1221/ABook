@@ -10,7 +10,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Máy tính: **nghe sách trên máy tính khác** mà không phải chép sang. Cài đặt → "Máy tính khác": nhập địa chỉ và mã 6
   số đang hiện trên máy kia (đúng mã điện thoại dùng). Sách của máy ấy hiện trong Thư viện với nhãn "Trên <tên máy>";
   nghe, đọc theo, nhân vật, dấu trang, hồ sơ nghe đều như sách của máy này. Chương được tải lần đầu nghe tới rồi giữ
-  lại, nên phần đã nghe vẫn nghe được khi máy kia tắt. Thôi ghép là xoá phần đã giữ.
+  lại, nên phần đã nghe vẫn nghe được khi máy kia tắt. Chỗ đang nghe và dấu trang đi hai chiều: nghe
+  ở máy nào thì mở ở máy kia cũng tiếp đúng chỗ. Thôi ghép là xoá phần đã giữ.
 - Tab **"Kịch bản"**: cuối mỗi chương có nút **"Chương này đúng"** - một lần bấm ghi nhận người nói của mọi câu chưa
   ai quyết (trừ câu máy còn nghi). Mỗi câu xác nhận là một nhãn đúng để máy phân tích học.
 - Tab **"Kịch bản"**: mỗi câu có nhãn **cách đọc** (cảm xúc và mức, vd "Sợ · mạnh"); bấm vào để đổi cảm xúc, mức,
