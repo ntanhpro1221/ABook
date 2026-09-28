@@ -10,7 +10,10 @@ RFCOMM chỉ cho một kết nối mỗi kênh mỗi cặp máy, nên phải t�
 byte), big-endian, rồi dữ liệu. Trình phát ngừng đọc khi bộ đệm đầy, nên mỗi luồng có cửa sổ tín dụng riêng như HTTP/2: bên
 gửi chỉ gửi trong phần tín dụng, bên nhận trả tín dụng sau khi ĐÃ ghi xuống socket cục bộ - một luồng nghẽn không làm luồng
 khác đứng, và bộ nhớ đệm mỗi luồng có trần. CLOSE là "hết dữ liệu theo chiều này" (half-close); luồng xong khi cả hai chiều
-đã CLOSE. Cùng giao thức ở phía Android: mobile/.../BtMux.kt.
+đã CLOSE. RESET là "bỏ luồng này ngay, cả hai chiều": ứng dụng cục bộ đóng ngang (trình phát tua ra ngoài bộ đệm, đổi
+chương, dừng) thì bên kia phải thôi gửi - không thì nó chờ tín dụng mãi, giữ luồng, luồng đọc và socket tới khi hết chỗ.
+DATA tới một luồng không còn thì đáp RESET (bên kia tưởng luồng còn sống); WINDOW, CLOSE, RESET tới luồng không còn là
+khung trễ, bỏ qua - không bao giờ đáp RESET cho RESET. Cùng giao thức ở phía Android: mobile/.../BtMux.kt.
 
 Windows: Python có sẵn socket RFCOMM (AF_BLUETOOTH, từ 3.9); bản ghi SDP (để điện thoại tìm dịch vụ theo UUID) đăng ký bằng
 WSASetServiceW qua ctypes - không thêm gói nào (thêm gói là đổi uv.lock, tức đổi hash chất lượng).
@@ -29,15 +32,29 @@ from typing import Callable
 
 SERVICE_UUID = uuid.UUID("a1f667fe-352a-49b7-9b91-a5463677cac0")  # dịch vụ ABook (điện thoại dùng đúng UUID này)
 SERVICE_NAME = "ABook"
-OPEN, DATA, CLOSE, WINDOW = 1, 2, 3, 4
+OPEN, DATA, CLOSE, WINDOW, RESET = 1, 2, 3, 4, 5
 HEADER = struct.Struct(">BII")
 MAX_DATA = 16 * 1024
 WINDOW_SIZE = 256 * 1024
 MAX_STREAMS = 64
+DIAL_SECONDS = 10  # nối vào cổng đồng bộ của chính máy này; nối được rồi thì KHÔNG hạn giờ đọc (hỏi dài 25 giây)
+RETRY_SECONDS = 20  # Bluetooth tắt / card rút ra: thử mở lại sau ngần này
 
 
 class LinkClosed(Exception):
     """Đường hầm đứt (tắt Bluetooth, ra ngoài tầm, máy kia đóng app)."""
+
+
+def _close_socket(sock: socket.socket) -> None:
+    """shutdown trước close: luồng khác đang chặn trong recv/sendall trên socket này thoát ngay."""
+    try:
+        sock.shutdown(socket.SHUT_RDWR)
+    except OSError:
+        pass
+    try:
+        sock.close()
+    except OSError:
+        pass
 
 
 def _read_exact(link: socket.socket, size: int) -> bytes:
@@ -52,7 +69,7 @@ def _read_exact(link: socket.socket, size: int) -> bytes:
 
 
 class _Stream:
-    def __init__(self, mux: "Mux", number: int, local: socket.socket) -> None:
+    def __init__(self, mux: "Mux", number: int, local: socket.socket | None) -> None:
         self.mux, self.number, self.local = mux, number, local
         self.credit = WINDOW_SIZE  # bên kia nhận được bấy nhiêu byte nữa
         self.changed = threading.Condition()
@@ -62,7 +79,16 @@ class _Stream:
         self.got_eof = False
         self.closed = False
 
-    def start(self) -> None:
+    def start(self, local: socket.socket | None = None) -> None:
+        """Bắt đầu bơm hai chiều; `local` cho luồng bên kia mở (nối xong cổng đồng bộ mới có). Luồng đã bị đóng trong lúc
+        nối (RESET, đường hầm đứt) thì đóng luôn socket vừa nối."""
+        if local is not None:
+            with self.changed:
+                if not self.closed:
+                    self.local = local
+            if self.local is not local:
+                _close_socket(local)
+                return
         threading.Thread(target=self._pump, name=f"bt-pump-{self.number}", daemon=True).start()
         threading.Thread(target=self._drain, name=f"bt-drain-{self.number}", daemon=True).start()
 
@@ -82,6 +108,7 @@ class _Stream:
 
     def _pump(self) -> None:
         """socket cục bộ -> đường hầm, chỉ trong phần tín dụng."""
+        assert self.local is not None
         try:
             while True:
                 with self.changed:
@@ -96,29 +123,37 @@ class _Stream:
                 with self.changed:
                     self.credit -= len(data)
                 self.mux._send(DATA, self.number, data)
-        except (OSError, LinkClosed):
-            pass
+        except LinkClosed:
+            return  # đường hầm đứt: shutdown() đã đóng mọi luồng
+        except OSError:
+            self.close(reset=True)  # ứng dụng cục bộ cắt ngang (RST), hay luồng vừa bị đóng
+            return
         self.sent_eof = True
         try:
             self.mux._send(CLOSE, self.number)
         except LinkClosed:
-            pass
+            return
         self._maybe_done()
 
     def _drain(self) -> None:
         """đường hầm -> socket cục bộ; trả tín dụng sau khi đã ghi."""
+        assert self.local is not None
         try:
             while True:
                 data = self.outgoing.get()
                 if data is None:
-                    self.local.shutdown(socket.SHUT_WR)
+                    if not self.closed:
+                        self.local.shutdown(socket.SHUT_WR)
                     break
                 self.local.sendall(data)
                 with self.changed:
                     self.queued -= len(data)
                 self.mux._send(WINDOW, self.number, struct.pack(">I", len(data)))
-        except (OSError, LinkClosed):
-            self.close()
+        except LinkClosed:
+            return
+        except OSError:
+            self.close(reset=True)  # ứng dụng cục bộ đã đóng kết nối: bên kia phải thôi gửi
+            return
         self.got_eof = True
         self._maybe_done()
 
@@ -126,18 +161,22 @@ class _Stream:
         if self.sent_eof and self.got_eof:
             self.close()
 
-    def close(self) -> None:
+    def close(self, *, reset: bool = False) -> None:
+        """Đóng luồng (một lần). `reset`: đóng ngang - báo bên kia bỏ luồng, để nó không chờ tín dụng mãi."""
         with self.changed:
             if self.closed:
                 return
             self.closed = True
             self.changed.notify_all()
-        try:
-            self.local.close()
-        except OSError:
-            pass
+        if self.local is not None:
+            _close_socket(self.local)
         self.outgoing.put(None)
         self.mux._forget(self.number)
+        if reset:
+            try:
+                self.mux._send(RESET, self.number)
+            except LinkClosed:
+                pass
 
 
 class Mux:
@@ -169,9 +208,9 @@ class Mux:
 
     def open(self, local: socket.socket) -> int:
         with self.lock:
-            if len(self.streams) >= MAX_STREAMS:
+            if not self.alive or len(self.streams) >= MAX_STREAMS:
                 local.close()
-                raise LinkClosed("quá nhiều luồng")
+                raise LinkClosed("đường hầm đã đóng" if not self.alive else "quá nhiều luồng")
             number = next(self.numbers)
             stream = self.streams[number] = _Stream(self, number, local)
         self._send(OPEN, number)
@@ -191,48 +230,59 @@ class Mux:
                 if kind == OPEN:
                     self._accept(number)
                 elif stream is None:
-                    continue  # luồng đã đóng: khung trễ, bỏ
+                    if kind == DATA:
+                        self._send(RESET, number)  # bên kia tưởng luồng còn sống: bảo nó thôi gửi
+                    continue  # WINDOW/CLOSE/RESET trễ của luồng đã xong: bỏ
+                elif kind == RESET:
+                    stream.close()
                 elif kind == DATA:
                     if not stream.receive(payload):
-                        stream.close()
-                        self._send(CLOSE, number)
+                        stream.close(reset=True)  # gửi quá tín dụng: sai giao thức
                 elif kind == CLOSE:
                     stream.outgoing.put(None)
-                elif kind == WINDOW and len(payload) == 4:
-                    stream.grant(struct.unpack(">I", payload)[0])
+                elif kind == WINDOW:
+                    amount = struct.unpack(">I", payload)[0] if len(payload) == 4 else 0
+                    if 0 < amount <= WINDOW_SIZE:
+                        stream.grant(amount)
+                    else:
+                        stream.close(reset=True)
         except (OSError, LinkClosed, struct.error):
             pass
         finally:
             self.shutdown()
 
     def _accept(self, number: int) -> None:
+        """Bên kia mở luồng: nhận chỗ ngay (DATA tới trước khi nối xong thì xếp hàng), nối cổng cục bộ ở luồng riêng - nối
+        chậm không được làm mọi luồng khác đứng theo luồng đọc."""
         with self.lock:
-            full = len(self.streams) >= MAX_STREAMS or number in self.streams
-        if self.dial is None or full:
-            self._send(CLOSE, number)
+            refused = (not self.alive or self.dial is None or len(self.streams) >= MAX_STREAMS
+                       or number in self.streams)
+            stream = None if refused else _Stream(self, number, None)
+            if stream is not None:
+                self.streams[number] = stream
+        if stream is None:
+            self._send(RESET, number)
             return
+        threading.Thread(target=self._dial, args=(stream,), name=f"bt-dial-{number}", daemon=True).start()
+
+    def _dial(self, stream: _Stream) -> None:
+        assert self.dial is not None
         try:
             local = self.dial()
         except OSError:
-            self._send(CLOSE, number)
+            stream.close(reset=True)  # cổng đồng bộ tắt: bên gọi thấy luồng bị bỏ, không treo
             return
-        stream = _Stream(self, number, local)
-        with self.lock:
-            self.streams[number] = stream
-        stream.start()
+        stream.start(local)
 
     def shutdown(self) -> None:
         with self.lock:
             if not self.alive:
                 return
-            self.alive = False
+            self.alive = False  # open()/_accept() kiểm cờ này dưới cùng khoá: không luồng nào đăng ký sau ảnh chụp dưới
             streams = list(self.streams.values())
         for stream in streams:
             stream.close()
-        try:
-            self.link.close()
-        except OSError:
-            pass
+        _close_socket(self.link)
 
 
 class LocalPort:
@@ -309,16 +359,27 @@ class _WSAQUERYSETW(ctypes.Structure):
                 ("dwOutputFlags", ctypes.c_ulong), ("lpBlob", ctypes.c_void_p)]
 
 
+def _bth_address(text: str) -> int:
+    """"AA:BB:CC:DD:EE:FF" (getsockname của socket RFCOMM) -> BTH_ADDR; không đọc được thì 0 (mọi card)."""
+    try:
+        return int(text.replace(":", ""), 16) if text else 0
+    except ValueError:
+        return 0
+
+
 class _SdpRecord:
     """Bản ghi SDP cho kênh RFCOMM `channel`: điện thoại gọi createRfcommSocketToServiceRecord(SERVICE_UUID) là tìm thấy.
-    Giữ mọi cấu trúc sống cùng đối tượng (Windows giữ con trỏ tới lúc xoá bản ghi)."""
+    Giữ mọi cấu trúc sống cùng đối tượng (Windows giữ con trỏ tới lúc xoá bản ghi). Như mẫu bthcxn của Microsoft: địa chỉ
+    là getsockname() của socket đang nghe (địa chỉ card + kênh), dùng cho cả LocalAddr lẫn RemoteAddr."""
 
-    def __init__(self, channel: int, name: str) -> None:
+    def __init__(self, channel: int, name: str, radio: str = "") -> None:
         self.guid = _GUID.of(SERVICE_UUID)
-        self.address = _SOCKADDR_BTH(AF_BTH, 0, _GUID(), channel)
+        self.address = _SOCKADDR_BTH(AF_BTH, _bth_address(radio), _GUID(), channel)
         self.info = _CSADDR_INFO()
         self.info.LocalAddr.lpSockaddr = ctypes.cast(ctypes.pointer(self.address), ctypes.c_void_p)
         self.info.LocalAddr.iSockaddrLength = ctypes.sizeof(self.address)
+        self.info.RemoteAddr.lpSockaddr = self.info.LocalAddr.lpSockaddr
+        self.info.RemoteAddr.iSockaddrLength = self.info.LocalAddr.iSockaddrLength
         self.info.iSocketType = socket.SOCK_STREAM
         self.info.iProtocol = BTHPROTO_RFCOMM
         self.query = _WSAQUERYSETW()
@@ -332,9 +393,9 @@ class _SdpRecord:
         self._call(RNRSERVICE_REGISTER)
 
     def _call(self, operation: int) -> None:
-        ws2 = ctypes.WinDLL("ws2_32")
+        ws2 = ctypes.WinDLL("ws2_32", use_last_error=True)  # mã lỗi lưu ngay sau lời gọi, ctypes không kịp ghi đè
         if ws2.WSASetServiceW(ctypes.byref(self.query), operation, 0) != 0:
-            raise OSError(ws2.WSAGetLastError(), "WSASetServiceW")
+            raise OSError(ctypes.get_last_error(), "WSASetServiceW")
 
     def delete(self) -> None:
         try:
@@ -345,60 +406,115 @@ class _SdpRecord:
 
 class BluetoothServer:
     """Bên phục vụ trên máy tính: nghe RFCOMM, đăng ký SDP, mỗi điện thoại kết nối là một Mux nối vào cổng đồng bộ. Không
-    có Bluetooth (máy không có card, tắt sóng) thì `error` nói rõ, cổng Wi-Fi vẫn chạy như thường."""
+    có Bluetooth (máy không có card, tắt sóng) thì `error` nói rõ, cổng Wi-Fi vẫn chạy như thường - và cứ RETRY_SECONDS
+    lại thử mở: người dùng bật Bluetooth theo lời nhắc là điện thoại kết nối được, không phải tắt mở đồng bộ. Tắt sóng khi
+    đang nghe cũng thế: bỏ socket hỏng, báo lỗi, chờ sóng quay lại."""
 
-    def __init__(self, sync_port: int, name: str = SERVICE_NAME) -> None:
+    def __init__(self, sync_port: int, name: str = SERVICE_NAME, *, retry_seconds: float = RETRY_SECONDS) -> None:
         self.sync_port = sync_port
         self.name = name
+        self.retry_seconds = retry_seconds
         self.socket: socket.socket | None = None
         self.record: _SdpRecord | None = None
         self.channel = 0
         self.error = ""
         self.links: set[Mux] = set()
+        self._lock = threading.Lock()
+        self._stopped = threading.Event()
 
     def start(self) -> "BluetoothServer":
         if os.name != "nt" or not hasattr(socket, "AF_BLUETOOTH"):
             self.error = "Máy này chưa hỗ trợ Bluetooth cho ABook"
             return self
+        self._stopped.clear()
+        server = self._listen()  # lần đầu ngay tại chỗ: màn đồng bộ thấy lỗi (Bluetooth tắt) ngay khi bật
+        threading.Thread(target=self._supervise, args=(server,), name="bt-server", daemon=True).start()
+        return self
+
+    def _listen(self) -> socket.socket | None:
+        server = None
         try:
-            server = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
+            server = self._rfcomm()
             try:
                 # Chỉ máy đã ghép Bluetooth với máy tính (Cài đặt Windows) mới kết nối được - rồi mới tới mã 6 số của app.
                 server.setsockopt(SOL_RFCOMM, SO_BTH_AUTHENTICATE, 1)
-            except OSError:
-                pass
+            except OSError as error:
+                # Không bật được xác thực thì KHÔNG nghe: máy lạ trong tầm sóng không được chạm tới cổng đồng bộ.
+                raise _AuthenticationUnavailable(error) from error
             server.bind(("00:00:00:00:00:00", BT_PORT_ANY))
             server.listen(4)
-            self.channel = int(server.getsockname()[1])
-            self.record = _SdpRecord(self.channel, self.name)
+            radio, channel = server.getsockname()[:2]
+            record = _SdpRecord(int(channel), self.name, str(radio))
+        except _AuthenticationUnavailable as error:
+            self.error = f"Không bật được xác thực Bluetooth nên không mở Bluetooth: {error.__cause__}"
+            self._close_quietly(server)
+            return None
         except OSError as error:
             self.error = ("Bluetooth của máy tính đang tắt - bật trong Cài đặt Windows để điện thoại kết nối qua Bluetooth"
                           if getattr(error, "winerror", None) in (10050, 10047) else f"Không mở được Bluetooth: {error}")
-            self._close_quietly(locals().get("server"))
-            return self
+            self._close_quietly(server)
+            return None
         except Exception as error:  # noqa: BLE001 - Bluetooth hỏng kiểu gì cũng không được kéo đổ cổng Wi-Fi
             self.error = f"Không mở được Bluetooth: {type(error).__name__}: {error}"
-            self._close_quietly(locals().get("server"))
-            return self
-        self.socket = server
-        threading.Thread(target=self._accept, name="bt-server", daemon=True).start()
-        return self
+            self._close_quietly(server)
+            return None
+        with self._lock:
+            if self._stopped.is_set():
+                record.delete()
+                self._close_quietly(server)
+                return None
+            self.socket, self.record, self.channel, self.error = server, record, int(channel), ""
+        return server
 
-    def _accept(self) -> None:
-        while self.socket is not None:
-            try:
-                link, _address = self.socket.accept()
-            except OSError:
+    @staticmethod
+    def _rfcomm() -> socket.socket:
+        return socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
+
+    def _supervise(self, server: socket.socket | None) -> None:
+        while not self._stopped.is_set():
+            if server is not None:
+                self._accept(server)
+                self._drop_listener(server)
+            if self._stopped.wait(self.retry_seconds):
                 return
-            mux = Mux(link, dial=lambda: socket.create_connection(("127.0.0.1", self.sync_port), timeout=10), odd=False)
-            self.links.add(mux)
+            server = self._listen()
+
+    def _accept(self, server: socket.socket) -> None:
+        while not self._stopped.is_set():
+            try:
+                link, _address = server.accept()
+            except OSError as error:
+                if not self._stopped.is_set():
+                    self.error = f"Bluetooth ngừng nghe ({error}) - sẽ tự mở lại khi sóng quay lại"
+                return
+            mux = Mux(link, dial=self._dial, odd=False)
+            with self._lock:
+                if self._stopped.is_set():
+                    mux.shutdown()
+                    return
+                self.links.add(mux)
             threading.Thread(target=self._serve, args=(mux,), name="bt-link", daemon=True).start()
+
+    def _dial(self) -> socket.socket:
+        local = socket.create_connection(("127.0.0.1", self.sync_port), timeout=DIAL_SECONDS)
+        local.settimeout(None)  # hỏi dài 25 giây, trả lời chậm (/match, /studio) không được bị cắt thành EOF
+        return local
+
+    def _drop_listener(self, server: socket.socket) -> None:
+        with self._lock:
+            record = self.record if self.socket is server else None
+            if self.socket is server:
+                self.socket, self.record = None, None
+        if record is not None:
+            record.delete()
+        self._close_quietly(server)
 
     def _serve(self, mux: Mux) -> None:
         try:
             mux.run()
         finally:
-            self.links.discard(mux)
+            with self._lock:
+                self.links.discard(mux)
 
     @staticmethod
     def _close_quietly(server: socket.socket | None) -> None:
@@ -409,18 +525,22 @@ class BluetoothServer:
                 pass
 
     def view(self) -> dict[str, object]:
-        return {"running": self.socket is not None, "channel": self.channel, "error": self.error,
-                "connections": len(self.links)}
+        with self._lock:
+            return {"running": self.socket is not None, "channel": self.channel, "error": self.error,
+                    "connections": len(self.links)}
 
     def stop(self) -> None:
-        server, self.socket = self.socket, None
-        if self.record is not None:
-            self.record.delete()
-            self.record = None
-        if server is not None:
-            try:
-                server.close()
-            except OSError:
-                pass
-        for mux in list(self.links):
+        self._stopped.set()
+        with self._lock:
+            server, self.socket = self.socket, None
+            record, self.record = self.record, None
+            links = list(self.links)
+        if record is not None:
+            record.delete()
+        self._close_quietly(server)
+        for mux in links:
             mux.shutdown()
+
+
+class _AuthenticationUnavailable(Exception):
+    pass

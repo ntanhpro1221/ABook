@@ -73,6 +73,9 @@ object LibraryServer {
     @Synchronized
     fun start(context: Context) {
         init(context)
+        // Bluetooth trước, và cả khi cổng Wi-Fi đã chạy: lần gọi sau khi vừa cho quyền / bật Bluetooth phải mở được nó.
+        // Không mở được thì chỉ ghi lý do (BluetoothShare.status), cổng Wi-Fi vẫn chạy.
+        runCatching { BluetoothShare.start(context) }
         if (running()) return
         lastError = ""
         val socket = try {
@@ -92,8 +95,6 @@ object LibraryServer {
                 bind(InetSocketAddress(DISCOVERY_PORT))
             }
         }.getOrNull()?.also { udp -> Thread({ answer(udp) }, "library-discovery").apply { isDaemon = true }.start() }
-        // Cùng lúc qua Bluetooth (máy không chung Wi-Fi): không mở được thì chỉ ghi lý do, cổng Wi-Fi vẫn chạy.
-        runCatching { BluetoothShare.start(context) }
     }
 
     @Synchronized
