@@ -94,6 +94,9 @@ export function VoicePicker({
       void client.invalidateQueries({ queryKey: ["work", bookId] });
       void client.invalidateQueries({ queryKey: ["book", bookId] });
       void client.invalidateQueries({ queryKey: ["library"] });
+      // Dòng nhân vật hiện "Chờ áp dụng" ngay (store.pending_voices), không đợi lần làm mới sau 60 giây.
+      void client.invalidateQueries({ queryKey: ["listen", "cast", bookId] });
+      void client.invalidateQueries({ queryKey: ["cast", bookId] });
       toast.success(`Đã ghi: ${data!.character.label} đọc bằng giọng ${voice.name}`, {
         description: "Mọi câu đã thu của người ấy sẽ đọc lại bằng giọng mới. Thu lại khi sách chạy tiếp - sách đã xong thì bấm “Áp dụng thay đổi” ở trang dự án.",
       });

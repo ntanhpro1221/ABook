@@ -334,6 +334,8 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
       void client.invalidateQueries({ queryKey: ["work", bookId] });
       void client.invalidateQueries({ queryKey: ["book", bookId] });
       void client.invalidateQueries({ queryKey: ["library"] });
+      void client.invalidateQueries({ queryKey: ["listen", "cast", bookId] });
+      void client.invalidateQueries({ queryKey: ["cast", bookId] });
       if (keep) {
         toast.success(`Đã ghi: ${label}`, { description: "Việc này sẽ không hiện lại." });
         return;
@@ -464,7 +466,9 @@ export function WorkInbox({ book, onOpenReview, onOpenScript }: { book: BookSumm
   const counts: Partial<Record<WorkKind, number>> = {};
   for (const item of open) counts[item.kind] = (counts[item.kind] ?? 0) + 1;
   const kinds = (Object.keys(KIND_LABEL) as WorkKind[]).filter((value) => counts[value]);
-  const items = open.filter((item) => kind === "all" || item.kind === kind);
+  // Quyết xong việc cuối của loại đang lọc thì loại ấy biến khỏi thanh lọc - về "Tất cả", đừng để danh sách trống không lời.
+  const active = kind !== "all" && !counts[kind] ? "all" : kind;
+  const items = open.filter((item) => active === "all" || item.kind === active);
   return (
     <div className="mt-5">
       <p className="max-w-3xl text-sm text-fg-2">
@@ -482,7 +486,7 @@ export function WorkInbox({ book, onOpenReview, onOpenScript }: { book: BookSumm
         <Segmented<WorkKind | "all">
           wrap
           label="Loại việc"
-          value={kind}
+          value={active}
           onChange={(value) => {
             setKind(value);
             setShown(PAGE);
@@ -503,7 +507,13 @@ export function WorkInbox({ book, onOpenReview, onOpenScript }: { book: BookSumm
           Xem thêm {Math.min(PAGE, items.length - shown)} việc
         </Button>
       )}
-      {!open.length && <p className="mt-4 text-sm text-fg-2">Mọi việc đã có quyết định - chờ áp dụng khi sách chạy tiếp.</p>}
+      {!open.length && (
+        <p className="mt-4 text-sm text-fg-2">
+          {book.phase === "done" && !book.running
+            ? "Mọi việc đã có quyết định - bấm “Áp dụng thay đổi” ở trên để thu lại."
+            : "Mọi việc đã có quyết định - chờ áp dụng khi sách chạy tiếp."}
+        </p>
+      )}
       {decided.length > 0 && (
         <details className="mt-6 rounded-xl border border-line px-4 py-3">
           <summary className="cursor-pointer text-sm font-medium text-fg-2">Đã quyết, chờ áp dụng · {decided.length}</summary>
