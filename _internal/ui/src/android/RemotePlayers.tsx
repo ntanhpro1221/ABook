@@ -2,10 +2,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Laptop, Loader2, Pause, Play, Smartphone, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useClockReader } from "@/listen/clock";
 import { usePlayer } from "@/listen/player";
 import { Back15, Forward15 } from "@/listen/PlayerViews";
 import { useSource } from "@/listen/source";
 import { formatClock } from "@/shared/format";
+import { IconButton } from "@/shared/ui";
 import { EbookLibrary, type RemotePlayer, type RemotePlayerCommand } from "./plugins";
 
 // Điện thoại xem và điều khiển trình phát ở máy khác (mạng trạm bước 4): máy tính chính và mọi thiết bị ghép trả trình
@@ -204,5 +206,39 @@ export function RemotePlayerBars() {
         />
       ))}
     </>
+  );
+}
+
+/**
+ * "Phát trên <máy>" ở màn đang nghe của điện thoại: chuyển cuốn đang nghe sang máy giữ nó - máy tính chính (sách của nó,
+ * đã tải hay nghe thẳng) hoặc thiết bị ghép (sách `p<key>_...` của thiết bị ấy) - đúng chương, đúng giây, rồi dừng ở
+ * điện thoại. Chỉ hiện khi máy ấy đang trả lời. Thanh "Đang phát trên <máy>" hiện lên sau một lượt mạng là lời xác nhận.
+ */
+export function PhoneHandOffButton() {
+  const { data } = useRemotePlayers();
+  const player = usePlayer();
+  const readClock = useClockReader();
+  const client = useQueryClient();
+  const track = player.track;
+  if (!track || !data) return null;
+  const peer = /^p([0-9a-f]{8})_/.exec(track.bookId)?.[1];
+  const target = data.players.find((remote) => remote.device === (peer ?? "main"));
+  if (!target) return null;
+  const handOff = async () => {
+    const seconds = readClock().time;
+    try {
+      await EbookLibrary.remoteCommand({
+        device: target.device,
+        command: { action: "load", bookId: track.bookId, chapterId: track.chapterId, seconds },
+      });
+      player.pause();
+      window.setTimeout(() => void client.invalidateQueries({ queryKey: ["remote-players"] }), 800);
+    } catch (error) {
+      toast.error((error as Error).message);
+    }
+  };
+  return (
+    <IconButton label={`Phát trên ${target.name}`} icon={target.kind === "computer" ? Laptop : Smartphone} size="sm"
+      onClick={() => void handOff()} />
   );
 }
