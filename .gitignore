@@ -62,3 +62,10 @@ _internal/mobile/android/app/src/main/assets/public/
 _internal/mobile/android/app/src/main/assets/capacitor.config.json
 _internal/mobile/android/app/src/main/assets/capacitor.plugins.json
 _internal/mobile/android/capacitor-cordova-android-plugins/
+
+# App Windows đóng gói (_internal/shell, docs/PACKAGING.md): công cụ npm, bản dựng Rust, file Tauri sinh ra, Python nhúng
+# và mã chép vào bộ cài (scripts/build_windows_app.ps1 dựng lại mỗi lần). Khoá ký cập nhật nằm NGOÀI repo.
+_internal/shell/node_modules/
+_internal/shell/src-tauri/target/
+_internal/shell/src-tauri/gen/
+_internal/shell/src-tauri/resources/
