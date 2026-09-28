@@ -7,15 +7,21 @@ import {
   CircleAlert,
   FolderOpen,
   Mic2,
+  MoreHorizontal,
   Pause,
+  Pencil,
   Play,
   RefreshCw,
   Square,
+  Trash2,
   Users,
   Wand2,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
+import { toast } from "sonner";
 import {
   Button,
   Dialog,
@@ -31,7 +37,7 @@ import {
   TabsTrigger,
   Vu,
 } from "@/shared/ui";
-import type { BookSummary, Chapter } from "@/studio/api";
+import { api, type BookSummary, type Chapter } from "@/studio/api";
 import { cn } from "@/shared/cn";
 import { usePageTitle } from "@/shared/title";
 import { phaseTone, useActivity, useAppInfo, useBook, useReveal, useStart, useStop } from "@/studio/data";
@@ -230,6 +236,148 @@ function StopDialog({ book, open, onOpenChange }: { book: BookSummary; open: boo
   );
 }
 
+const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[highlighted]:bg-hover";
+
+// Đổi tên chỉ đổi tên HIỆN (store.TITLE_FILE): thư mục dự án và sổ của dây chuyền giữ nguyên, nên làm được cả lúc chạy.
+function RenameDialog({ book, open, onOpenChange }: { book: BookSummary; open: boolean; onOpenChange: (open: boolean) => void }) {
+  const client = useQueryClient();
+  const [title, setTitle] = useState(book.title);
+  useEffect(() => {
+    if (open) setTitle(book.title);
+  }, [open, book.title]);
+  const rename = useMutation({
+    mutationFn: (value: string) => api<BookSummary>(`/api/books/${book.id}/title`, { method: "PUT", body: { title: value } }),
+    onSuccess: (summary) => {
+      void client.invalidateQueries({ queryKey: ["library"] });
+      void client.invalidateQueries({ queryKey: ["book", book.id] });
+      void client.invalidateQueries({ queryKey: ["listen"] });
+      toast.success(`Đã đổi tên thành “${summary.title}”`);
+      onOpenChange(false);
+    },
+    onError: (error: Error) => toast.error("Chưa đổi được tên", { description: error.message }),
+  });
+  const typed = title.trim();
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Đổi tên sách"
+      description="Tên mới hiện trong thư viện, trên điện thoại (lần đồng bộ tới) và trong file xuất. Thư mục dự án giữ nguyên."
+    >
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (typed && typed !== book.title) rename.mutate(typed);
+        }}
+      >
+        <label htmlFor="rename-book-title" className="text-sm font-medium">
+          Tên sách
+        </label>
+        <input
+          id="rename-book-title"
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
+          maxLength={160}
+          autoFocus
+          autoComplete="off"
+          className="mt-1.5 h-10 w-full rounded-lg border border-line bg-panel px-3 text-sm text-fg outline-none focus-visible:border-accent"
+        />
+        <div className="mt-5 flex justify-end gap-2">
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            Huỷ
+          </Button>
+          <Button type="submit" variant="primary" loading={rename.isPending} disabled={!typed || typed === book.title}>
+            Đổi tên
+          </Button>
+        </div>
+      </form>
+    </Dialog>
+  );
+}
+
+// Xoá = chuyển cả thư mục dự án vào Thùng rác của Windows (khôi phục được); file truyện gốc nằm ngoài, không bị đụng.
+function DeleteDialog({ book, open, onOpenChange }: { book: BookSummary; open: boolean; onOpenChange: (open: boolean) => void }) {
+  const client = useQueryClient();
+  const navigate = useNavigate();
+  const player = usePlayer();
+  const busy = book.running || book.starting;
+  const remove = useMutation({
+    mutationFn: () => api<{ ok: boolean }>(`/api/books/${book.id}`, { method: "DELETE" }),
+    onSuccess: () => {
+      onOpenChange(false);
+      navigate("/studio", { replace: true });
+      client.removeQueries({ queryKey: ["book", book.id] });
+      void client.invalidateQueries({ queryKey: ["library"] });
+      void client.invalidateQueries({ queryKey: ["listen"] });
+      toast.success(`Đã chuyển “${book.title}” vào Thùng rác`, {
+        description: "Cần lại thì khôi phục thư mục ấy từ Thùng rác của Windows.",
+      });
+    },
+    onError: (error: Error) => toast.error("Chưa xoá được", { description: error.message }),
+  });
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={`Xoá dự án “${book.title}”?`}
+      description="Cả thư mục dự án - bản thu, phân tích, phân vai và mọi chỗ đã sửa - chuyển vào Thùng rác của Windows, khôi phục được từ đó. File truyện gốc và sách đã xuất ra thư mục khác không bị đụng tới."
+    >
+      <p className="break-all rounded-lg bg-panel-2 px-3 py-2 text-xs text-fg-2">{book.path}</p>
+      {busy && <p className="mt-3 text-sm text-warning">Sách đang chạy - dừng sách trước rồi mới xoá được.</p>}
+      <div className="mt-5 flex justify-end gap-2">
+        <Button variant="ghost" onClick={() => onOpenChange(false)}>
+          Để sau
+        </Button>
+        <Button
+          variant="danger"
+          icon={Trash2}
+          loading={remove.isPending}
+          disabled={busy}
+          onClick={() => {
+            // Cuốn đang nghe giữ file chương mở - đóng trình phát trước (nó lưu chỗ nghe lúc sách còn đó).
+            if (player.track?.bookId === book.id) player.close();
+            remove.mutate();
+          }}
+        >
+          Chuyển vào Thùng rác
+        </Button>
+      </div>
+    </Dialog>
+  );
+}
+
+function ProjectMenu({ book }: { book: BookSummary }) {
+  const [dialog, setDialog] = useState<"rename" | "delete" | null>(null);
+  return (
+    <>
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger asChild>
+          <button
+            type="button"
+            aria-label="Tuỳ chọn dự án"
+            className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-fg-2 transition-colors hover:bg-hover hover:text-fg data-[state=open]:bg-hover"
+          >
+            <MoreHorizontal className="size-[18px]" />
+          </button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Portal>
+          <DropdownMenu.Content align="end" sideOffset={4} className="z-50 min-w-52 rounded-xl border border-line bg-panel p-1.5 shadow-float">
+            <DropdownMenu.Item onSelect={() => setDialog("rename")} className={MENU_ITEM}>
+              <Pencil className="size-4" /> Đổi tên…
+            </DropdownMenu.Item>
+            <DropdownMenu.Separator className="my-1 h-px bg-line" />
+            <DropdownMenu.Item onSelect={() => setDialog("delete")} className={cn(MENU_ITEM, "text-danger")}>
+              <Trash2 className="size-4" /> Xoá dự án…
+            </DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu.Portal>
+      </DropdownMenu.Root>
+      <RenameDialog book={book} open={dialog === "rename"} onOpenChange={(open) => setDialog(open ? "rename" : null)} />
+      <DeleteDialog book={book} open={dialog === "delete"} onOpenChange={(open) => setDialog(open ? "delete" : null)} />
+    </>
+  );
+}
+
 function Actions({ book }: { book: BookSummary }) {
   const start = useStart();
   const reveal = useReveal();
@@ -278,6 +426,8 @@ function Actions({ book }: { book: BookSummary }) {
         </Button>
       ) : null}
       {!remote && <IconButton label="Mở thư mục sách" icon={FolderOpen} onClick={() => reveal.mutate(book.id)} />}
+      {/* Đổi tên / xoá chỉ trên máy này - Studio từ xa không có hai đường ấy (remote_studio.ALLOWED). */}
+      {!remote && <ProjectMenu book={book} />}
       <StopDialog book={book} open={confirmStop} onOpenChange={setConfirmStop} />
     </div>
   );
