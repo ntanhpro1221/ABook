@@ -76,10 +76,13 @@ def main() -> int:
         loader = FastModel
 
     if args.export_gguf:
-        # Q4_K_M như qwen3:8b đang chạy: bản q8_0 của 8B nặng 8,7 GB, không vừa card 8 GB lúc suy luận.
+        # Q4_K_M như qwen3:8b đang chạy: bản q8_0 của 8B nặng 8,7 GB, không vừa card 8 GB lúc suy luận. Nền 16-bit
+        # (--load-16bit, Qwen3.5 trên máy đám mây) thì gộp vào bản 16-bit, không qua 4-bit.
+        precision = {"load_in_4bit": False, "load_in_16bit": True} if args.load_16bit else {"load_in_4bit": True}
         model, tokenizer = FastLanguageModel.from_pretrained(
-            model_name=str(args.out / "adapter"), max_seq_length=args.max_length, load_in_4bit=True, dtype=None
+            model_name=str(args.out / "adapter"), max_seq_length=args.max_length, dtype=None, **precision
         )
+        tokenizer = getattr(tokenizer, "tokenizer", tokenizer)
         model.save_pretrained_gguf(str(args.out / "gguf"), tokenizer, quantization_method=args.export_gguf)
         print("đã xuất", sorted(str(path) for path in (args.out / "gguf").rglob("*.gguf")))
         return 0
