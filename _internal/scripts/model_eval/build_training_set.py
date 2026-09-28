@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import collections
 import json
+import re
 from pathlib import Path
 
 # Sửa ở đây khi đáp án lớn thêm; KHÔNG đưa chương đã ở test sang train.
@@ -100,6 +101,15 @@ def main() -> None:
         chapters = sorted({(row["gold"], c) for row in rows for c in row["chapters"]})
         kinds = collections.Counter(row["type"] for row in rows)
         print(f"{name:5}: {len(rows):5} mẫu ({dict(kinds)}), {len(chapters)} chương")
+    # Chặn lặp lại lỗi data_v4/v5 (29-09): replay quên ghi tên theo sách -> nhãn chữ HOA -> model chép sai tên.
+    upper = mixed = 0
+    for row in buckets.get("train", []):
+        for name in re.findall(r'"speaker":\s*"([^"]+)"', row["messages"][-1]["content"]):
+            if name != "NARRATOR" and not name.startswith("NPC"):
+                upper, mixed = upper + name.isupper(), mixed + (not name.isupper())
+    print(f"nhãn người nói trong train: {mixed} viết như sách, {upper} chữ HOA")
+    if upper > mixed:
+        print("CẢNH BÁO: phần lớn nhãn là chữ HOA - replay có chạy với --gold-capitals không? (LoRA v2/v5 chép sai tên vì thế)")
     missing = [(g, c) for s in ("test", "dev") for g, cs in SPLIT[s].items() for c in cs if (g, c) not in newest]
     if missing:
         print("THIẾU trong đầu vào:", missing)
