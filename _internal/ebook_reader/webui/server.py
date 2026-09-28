@@ -25,6 +25,7 @@ from . import actions, bookfile, cover_search, covers, listen_view, packages, st
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id
 from .listening import RECORD_ID, Listening
+from . import remote_books
 from .remote_studio import REMOTE_HEADER, StudioGate
 from .reviews import Reviews, review_view
 from .casting_review import casting_chapter, casting_chapters
@@ -150,6 +151,11 @@ class App:
         self._queue_thread: threading.Thread | None = None
         # Cổng của chính máy chủ giao diện này (Server đặt) - Studio từ xa chuyển tiếp API về đây. 0: chưa chạy.
         self.local_port = 0
+        # Máy tính khác đã ghép (remote_books.py): thư viện của chúng hiện thành sách "Trên máy khác".
+        self.computers = remote_books.Computers(preferences.path.with_name("computers.json"))
+        remote_books.configure(self.computers)
+        self._remote_refreshed = 0.0
+        self._remote_lock = threading.Lock()
 
     # ---- sách ------------------------------------------------------------------------------------------
 
@@ -368,9 +374,47 @@ class App:
 
     # ---- nghe ------------------------------------------------------------------------------------------
 
+    def refresh_remote(self, *, wait: bool = False) -> None:
+        """Hỏi lại thư viện của các máy tính khác: chạy nền, tối đa mỗi phút một lần (thư viện được hỏi mỗi vài giây);
+        `wait` - ngay và đợi xong (vừa ghép, người dùng bấm làm mới)."""
+        if not self.computers.list():
+            return
+        def run() -> None:
+            try:
+                remote_books.refresh(self.library.root, self.computers)
+            finally:
+                self._remote_lock.release()
+        if wait:
+            self._remote_lock.acquire()
+            self._remote_refreshed = time.time()
+            run()
+            return
+        if time.time() - self._remote_refreshed < 60 or not self._remote_lock.acquire(blocking=False):
+            return
+        self._remote_refreshed = time.time()
+        threading.Thread(target=run, name="remote-books", daemon=True).start()
+
+    def computers_view(self) -> dict[str, Any]:
+        return {"name": socket_name(), "computers": self.computers.list()}
+
+    def pair_computer(self, address: str, code: str) -> dict[str, Any]:
+        self._mutating()
+        try:
+            self.computers.pair(address, code, socket_name())
+        except remote_books.RemoteError as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+        self.refresh_remote(wait=True)
+        return self.computers_view()
+
+    def forget_computer(self, computer: str) -> dict[str, Any]:
+        self._mutating()
+        self.computers.forget(computer, self.library.root)
+        return self.computers_view()
+
     def listen_library(self) -> list[dict[str, Any]]:
         """Sách nghe được: mọi sách đã có ít nhất một chương xong - đang sản xuất cũng nghe được phần đã xong. Sách vừa
         tạo, đang làm mà chưa có chương nào, cũng có mặt (chưa nghe được) - người mới tạo sách hỏi "sách của tôi đâu?"."""
+        self.refresh_remote()
         books = []
         for path in self.library.projects():
             try:
@@ -879,6 +923,21 @@ class Handler(BaseHTTPRequestHandler):
         if self.app.read_only:
             raise ApiError(HTTPStatus.FORBIDDEN, "Giao diện đang ở chế độ chỉ xem")
 
+    def get_computers(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.computers_view())
+
+    def post_computers(self, _query: dict[str, list[str]]) -> None:
+        # Ghép với máy tính khác bằng địa chỉ + mã 6 số đang hiện trên máy ấy (cùng mã điện thoại dùng).
+        body = self._body()
+        self._send_json(HTTPStatus.OK, self.app.pair_computer(str(body.get("address") or ""), str(body.get("code") or "")))
+
+    def post_computers_refresh(self, _query: dict[str, list[str]]) -> None:
+        self.app.refresh_remote(wait=True)
+        self._send_json(HTTPStatus.OK, self.app.computers_view())
+
+    def delete_computer(self, _query: dict[str, list[str]], computer: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.forget_computer(computer))
+
     def get_listen_library(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.listen_library())
 
@@ -1144,6 +1203,10 @@ ROUTES: list[Route] = [
     ("DELETE", re.compile(r"/api/sync/pairing"), Handler.delete_sync_pairing),
     ("DELETE", re.compile(r"/api/sync/devices/([0-9a-f]+)"), Handler.delete_sync_device),
     ("POST", re.compile(r"/api/sync/devices/([0-9a-f]+)/studio"), Handler.post_sync_device_studio),
+    ("GET", re.compile(r"/api/computers"), Handler.get_computers),
+    ("POST", re.compile(r"/api/computers"), Handler.post_computers),
+    ("POST", re.compile(r"/api/computers/refresh"), Handler.post_computers_refresh),
+    ("DELETE", re.compile(r"/api/computers/([0-9a-f]{12})"), Handler.delete_computer),
     ("GET", re.compile(r"/api/listen/library"), Handler.get_listen_library),
     ("POST", re.compile(r"/api/listen/open-book-file"), Handler.post_open_book_file),
     ("GET", re.compile(LISTEN), Handler.get_listen_book),
