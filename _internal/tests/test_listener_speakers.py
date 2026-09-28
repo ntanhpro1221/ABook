@@ -187,3 +187,59 @@ def test_a_group_of_lines_goes_to_one_person_in_one_write(tmp_path: Path) -> Non
     assert _Pipeline(paths, db)._apply_listener_overrides() == {1}
     assert {_segment(db, stable_id)["voice_key"] for stable_id in ("c1s1", "c1s2")} == {"v_natasha"}
     _one_voice_per_person(db)
+
+
+def test_a_listener_creates_a_speaker_the_book_never_had(tmp_path: Path) -> None:
+    """Chủ sách 28-09: người nói chưa từng được máy gán câu nào (linh thể 『』 của Yamiyo) không chọn được - "Người mới…"
+    tạo người ấy (tên + giới) và cấp giọng như bước phân vai, khác giọng mọi người đang có."""
+    _paths, db = _book(tmp_path)
+    voices = build_settings()["voices"]
+
+    result = db.apply_listener_speaker(stable_id="c1s2", text_sha256="sha-c1s2", speaker="Tọa Phu Đồng Tử",
+                                       new_gender="female", voices=voices)
+
+    assert result is not None and result["reset"] is True
+    line = _segment(db, "c1s2")
+    assert (line["speaker"], line["canonical_name"]) == ("TỌA PHU ĐỒNG TỬ", "TỌA PHU ĐỒNG TỬ")
+    assert line["voice_key"] not in VOICES.values(), "giọng riêng, không mượn giọng người khác"
+    with db.connect() as conn:
+        person = conn.execute("SELECT gender, locked, locked_voice_key FROM characters WHERE canonical_name=?",
+                              ("TỌA PHU ĐỒNG TỬ",)).fetchone()
+        assert conn.execute("SELECT COUNT(*) FROM runtime_events WHERE code='CHARACTER_CREATED_BY_LISTENER'").fetchone()[0] == 1
+    assert (person["gender"], person["locked"], person["locked_voice_key"]) == ("female", 1, line["voice_key"])
+    _one_voice_per_person(db)
+
+    # Câu sau của cùng người: đã có giọng, mượn đúng giọng ấy - không cần "mới" nữa.
+    assert _apply(db, "c1s1", "Tọa Phu Đồng Tử") is not None
+    assert _segment(db, "c1s1")["voice_key"] == line["voice_key"]
+    _one_voice_per_person(db)
+
+
+def test_creating_a_speaker_is_all_or_nothing(tmp_path: Path, monkeypatch) -> None:
+    paths, db = _book(tmp_path)
+
+    def crash(*_args, **_kwargs):
+        raise RuntimeError("máy tắt giữa lúc chọn giọng")
+
+    monkeypatch.setattr("ebook_reader.character_registry.listener_voice_choice", crash)
+    with pytest.raises(RuntimeError):
+        db.apply_listener_speaker(stable_id="c1s2", text_sha256="sha-c1s2", speaker="HEIDI", new_gender="female",
+                                  voices=build_settings()["voices"])
+    monkeypatch.undo()
+
+    reopened = ProjectDB(paths.db)
+    with reopened.connect() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM characters WHERE canonical_name='HEIDI'").fetchone()[0] == 0
+    assert (_segment(reopened, "c1s2")["speaker"], _segment(reopened, "c1s2")["status"]) == ("Lucien", "verified")
+
+
+def test_the_pipeline_creates_a_new_speaker_from_the_request(tmp_path: Path) -> None:
+    paths, db = _book(tmp_path)
+    request_speaker(paths.root, "c1s2", "sha-c1s2", "Heidi", now=1.0, new_gender="female")
+    pipeline = _Pipeline(paths, db)
+    pipeline.settings = build_settings()
+
+    assert pipeline._apply_listener_overrides() == {1}
+    assert _segment(db, "c1s2")["canonical_name"] == "HEIDI"
+    # Không có "mới" thì người chưa có giọng vẫn bị từ chối như trước.
+    assert _apply(db, "c1s1", "GRETEL") == {"problem": NO_VOICE}

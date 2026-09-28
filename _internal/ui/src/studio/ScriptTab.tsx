@@ -20,6 +20,8 @@ interface Person {
   value: string;
   label: string;
   lines: number;
+  /** "Người mới…": người nghe tạo người nói chưa có trong sách - giới để dây chuyền chọn giọng như bước phân vai. */
+  newGender?: "male" | "female" | "unknown";
 }
 
 interface Hint {
@@ -161,10 +163,10 @@ function chapterLabel(chapter: ChapterEntry): string {
 function useAssign(bookId: string, chapterId: number) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: ({ line, value }: { line: Line; value: string; label: string }) =>
+    mutationFn: ({ line, value, newGender }: { line: Line; value: string; label: string; newGender?: Person["newGender"] }) =>
       api<{ lines: number; speaker: string }>(`/api/books/${bookId}/speaker`, {
         method: "POST",
-        body: { lines: [{ stableId: line.stableId, textSha256: line.textSha256 }], speaker: value },
+        body: { lines: [{ stableId: line.stableId, textSha256: line.textSha256 }], speaker: value, newGender: newGender ?? "" },
       }),
     // Hiện ngay trên câu; bản thật về khi chương tải lại.
     onMutate: ({ line, value, label }) => {
@@ -434,7 +436,29 @@ function SpeakerMenu({ line, script, onPick }: { line: Line; script: ChapterScri
           found.length ? (
             found.map((person) => item(person))
           ) : (
-            <p className="px-2 py-3 text-sm text-fg-2">Không có ai tên như thế đã có giọng trong truyện.</p>
+            // Người chưa từng được máy gán câu nào (linh thể nói trong 『』...): tạo người ấy - dây chuyền cấp giọng riêng
+            // như bước phân vai, khác giọng người cùng chương.
+            <div className="px-2 py-2.5">
+              <p className="text-sm text-fg-2">Chưa có ai tên như thế trong truyện. Tạo người mới “{query.trim()}”:</p>
+              <div className="mt-2 flex gap-1.5">
+                {(
+                  [
+                    ["male", "Nam"],
+                    ["female", "Nữ"],
+                    ["unknown", "Không rõ"],
+                  ] as const
+                ).map(([gender, label]) => (
+                  <button
+                    key={gender}
+                    type="button"
+                    onClick={() => onPick({ value: query.trim(), label: query.trim(), lines: 0, newGender: gender })}
+                    className="h-8 flex-1 rounded-lg border border-line text-xs font-medium text-fg-2 hover:bg-hover"
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
           )
         ) : (
           <>
@@ -685,7 +709,7 @@ function ChapterScriptView({ bookId, script, filter, who }: { bookId: string; sc
     if (refocus) backTo(line);
     if (!script.castReady || !line.editable) return;
     if (line.wish && line.wish.value === person.value) return;
-    assign.mutate({ line, value: person.value, label: person.label });
+    assign.mutate({ line, value: person.value, label: person.label, newGender: person.newGender });
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLOListElement>) => {
