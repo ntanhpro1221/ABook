@@ -214,6 +214,7 @@ class LibraryPlugin : Plugin() {
             .put("port", LibraryServer.PORT).put("addresses", JSArray(LibraryServer.addresses()))
             .put("pairing", if (pairing != null) JSObject.fromJSONObject(pairing) else JSONObject.NULL)
             .put("blocked", LibraryServer.blocked).put("devices", devices).put("error", LibraryServer.lastError)
+            .put("bluetooth", JSObject().put("status", BluetoothShare.status).put("connections", BluetoothShare.connections()))
     }
 
     @PluginMethod
@@ -493,6 +494,12 @@ class LibraryPlugin : Plugin() {
         val host = call.getString("host") ?: throw IllegalArgumentException("thiếu địa chỉ")
         val reply = Peers.pair(context, host, call.getInt("port") ?: 47630, call.getString("code") ?: "")
         call.resolve(JSObject.fromJSONObject(reply))
+    }
+
+    @PluginMethod
+    fun peerPairBluetooth(call: PluginCall) = background(call) {
+        val address = call.getString("address") ?: throw IllegalArgumentException("thiếu máy")
+        call.resolve(JSObject.fromJSONObject(Peers.pairBluetooth(context, address, call.getString("code") ?: "")))
     }
 
     @PluginMethod

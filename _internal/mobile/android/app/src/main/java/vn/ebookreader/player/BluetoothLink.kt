@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothClass
 import android.bluetooth.BluetoothManager
+import android.bluetooth.BluetoothServerSocket
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
@@ -12,6 +13,7 @@ import org.json.JSONObject
 import java.io.IOException
 import java.net.InetAddress
 import java.net.ServerSocket
+import java.net.Socket
 import java.util.UUID
 
 /**
@@ -101,7 +103,8 @@ private class Gateway(private val context: Context, private val address: String)
         val adapter = context.getSystemService(BluetoothManager::class.java)?.adapter
             ?: throw IOException("Điện thoại này không có Bluetooth")
         if (!adapter.isEnabled) throw IOException("Bluetooth của điện thoại đang tắt")
-        adapter.cancelDiscovery()
+        // cancelDiscovery đòi BLUETOOTH_SCAN trên Android 12+ (mình không dò tìm nên không xin quyền ấy): chỉ là tối ưu.
+        runCatching { adapter.cancelDiscovery() }
         val socket = adapter.getRemoteDevice(address).createRfcommSocketToServiceRecord(BluetoothLink.SERVICE)
         try {
             socket.connect()
@@ -114,5 +117,83 @@ private class Gateway(private val context: Context, private val address: String)
         lastError = ""
         mux = fresh
         return fresh
+    }
+}
+
+/**
+ * Điện thoại PHỤC VỤ qua Bluetooth (vai bên kia của BluetoothLink): khi "Cho máy khác nghe thư viện này" bật, nghe RFCOMM
+ * cùng UUID dịch vụ ABook; mỗi máy kết nối là một BtMux nối vào LibraryServer của chính điện thoại - điện thoại khác (hay
+ * máy tính) nghe thư viện này, đồng bộ chỗ nghe, điều khiển trình phát qua Bluetooth như qua Wi-Fi. Chỉ máy đã ghép
+ * Bluetooth mới kết nối được (listenUsingRfcommWithServiceRecord là kênh có xác thực), rồi mới tới mã 6 số.
+ */
+object BluetoothShare {
+    private var server: BluetoothServerSocket? = null
+    private val links = mutableSetOf<BtMux>()
+
+    /** "" = chưa bật; "running"; hay lý do đọc được (tắt Bluetooth, chưa cho quyền...). */
+    @Volatile
+    var status = ""
+        private set
+
+    @Synchronized
+    @SuppressLint("MissingPermission")
+    fun start(context: Context) {
+        if (server != null) return
+        if (!BluetoothLink.permitted(context)) {
+            status = "Chưa cho ABook dùng \"Thiết bị ở gần\" - bật trong phần Bluetooth"
+            return
+        }
+        val adapter = context.getSystemService(BluetoothManager::class.java)?.adapter
+        if (adapter == null) {
+            status = "Điện thoại này không có Bluetooth"
+            return
+        }
+        if (!adapter.isEnabled) {
+            status = "Bluetooth của điện thoại đang tắt"
+            return
+        }
+        val socket = try {
+            adapter.listenUsingRfcommWithServiceRecord("ABook", BluetoothLink.SERVICE)
+        } catch (error: IOException) {
+            status = "Không mở được Bluetooth: ${error.message}"
+            return
+        } catch (error: SecurityException) {
+            status = "Chưa cho ABook dùng Bluetooth"
+            return
+        }
+        server = socket
+        status = "running"
+        Thread({ accept(socket) }, "bt-share").apply { isDaemon = true }.start()
+    }
+
+    private fun accept(socket: BluetoothServerSocket) {
+        while (true) {
+            val link = try {
+                socket.accept()
+            } catch (_: IOException) {
+                return
+            }
+            val mux = BtMux(link.inputStream, link.outputStream, { link.close() },
+                dial = { Socket("127.0.0.1", LibraryServer.PORT) }, odd = false)
+            synchronized(links) { links += mux }
+            Thread({
+                try {
+                    mux.run()
+                } finally {
+                    synchronized(links) { links -= mux }
+                }
+            }, "bt-share-link").apply { isDaemon = true }.start()
+        }
+    }
+
+    fun connections(): Int = synchronized(links) { links.size }
+
+    @Synchronized
+    fun stop() {
+        runCatching { server?.close() }
+        server = null
+        status = ""
+        val all = synchronized(links) { links.toList() }
+        all.forEach { it.shutdown() }
     }
 }
