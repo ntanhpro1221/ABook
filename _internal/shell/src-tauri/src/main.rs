@@ -105,16 +105,17 @@ fn host_log() -> Stdio {
 /// mã nằm trong `python*._pth`, PYTHONPATH bị bỏ qua). Bản dev:
 /// python của runtime cạnh mã nguồn, hoặc `ABOOK_HOST_PYTHON` (+ `ABOOK_HOST_APP` = thư mục chứa `ebook_reader`).
 fn host_command(app: &AppHandle) -> Result<Command, String> {
-    let (python, folder) = if let Some(python) = std::env::var_os("ABOOK_HOST_PYTHON") {
+    let (python, folder, bundled) = if let Some(python) = std::env::var_os("ABOOK_HOST_PYTHON") {
         let folder = std::env::var_os("ABOOK_HOST_APP")
             .map(PathBuf::from)
             .unwrap_or_else(source_root);
-        (PathBuf::from(python), folder)
+        (PathBuf::from(python), folder, false)
     } else if cfg!(debug_assertions) {
         let root = source_root();
         (
             root.join("runtime").join(".venv").join("Scripts").join("pythonw.exe"),
             root,
+            false,
         )
     } else {
         // tauri.conf.json `bundle.resources`: thư mục giữ nguyên đường dẫn tương đối, dưới thư mục tài nguyên của app.
@@ -123,7 +124,11 @@ fn host_command(app: &AppHandle) -> Result<Command, String> {
             .resource_dir()
             .map_err(|error| error.to_string())?
             .join("resources");
-        (resources.join("python").join("pythonw.exe"), resources.join("app"))
+        (
+            resources.join("python").join("pythonw.exe"),
+            resources.join("app"),
+            true,
+        )
     };
     if !python.is_file() {
         return Err(format!("Không tìm thấy Python của ABook: {}", python.display()));
@@ -137,6 +142,19 @@ fn host_command(app: &AppHandle) -> Result<Command, String> {
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(host_log());
+    // Bản cài: Studio (thư viện + model làm sách) tải thêm vào %LOCALAPPDATA%\ABook\Studio, và runtime phải nằm ở đó -
+    // mặc định `app\runtime` nằm trong thư mục chương trình, bị xoá mỗi lần cập nhật. `ABOOK_STUDIO_ROOT`: thử ở bản dev.
+    let studio = std::env::var_os("ABOOK_STUDIO_ROOT").map(PathBuf::from).or_else(|| {
+        bundled
+            .then(|| std::env::var_os("LOCALAPPDATA").map(|base| Path::new(&base).join("ABook").join("Studio")))
+            .flatten()
+    });
+    if let Some(studio) = studio {
+        command
+            .arg("--studio")
+            .arg(&studio)
+            .env("EBOOK_READER_RUNTIME", studio.join("runtime"));
+    }
     #[cfg(windows)]
     command.creation_flags(CREATE_NO_WINDOW);
     Ok(command)

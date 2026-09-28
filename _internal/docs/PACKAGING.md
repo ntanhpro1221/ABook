@@ -134,7 +134,15 @@ Mỗi bước một commit có test, không bước nào đụng file khoá ch�
    `dangerousInsecureTransportProtocol` bằng `-TauriConfig <file>`; bản phát hành chỉ https. Lỗi của mẫu NSIS Tauri
    tìm ra khi thử: cập nhật cài đè làm bản sao lưu liên kết `.abook` trỏ vào chính ABook, gỡ xong còn liên kết treo ->
    `shell/src-tauri/windows/hooks.nsh`.
-5. "Cài Studio" + chạy sách bằng Studio; rồi mã theo phiên bản cho sách dở.
+5. ĐANG LÀM 28-09 - "Cài Studio" (`webui/studio_setup.py`, thẻ ở màn Dự án `ui/src/studio/StudioSetup.tsx`) + chạy
+   sách bằng Studio (`actions.StudioRunner`) + mã theo phiên bản cho sách dở (`StudioSetup.code_for`: lần chạy đầu
+   chép mã app vào `Studio\code\<hash chất lượng>`, ghi `studio_code.json` vào dự án; cập nhật app không làm hỏng
+   sách dở). Thư viện: `shell/python/studio-requirements.txt` sinh bằng `scripts/freeze_studio_requirements.py` từ
+   runtime dev (165 gói, `pip freeze --all`, bỏ PySide6 + công cụ dev), cài `--no-deps`. Thử cài thật vào thư mục thử:
+   uv + MinGit 5 giây, thư viện 135 giây (mạng nhanh). Hai lỗi tìm ra khi cài thật: `uv venv --seed` cài setuptools mới
+   nhất mà torch đòi <82 (bỏ `--seed`, ghim theo runtime dev); huggingface_hub 1.29 dò symlink có tranh chấp giữa các
+   luồng tải -> WinError 1314 trên máy không bật Developer Mode (`HF_HUB_DISABLE_SYMLINKS=1`). `pip check` chỉ ghi
+   nhật ký: chính runtime làm ra sách cũng có xung đột khai báo vô hại (datasets khai fsspec cũ).
 6. Phát hành theo `RELEASING.md` (thêm bộ cài + `latest.json` + APK đã ký).
 
 ## Mẹo thử

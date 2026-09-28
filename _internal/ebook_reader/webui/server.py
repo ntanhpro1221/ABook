@@ -157,9 +157,11 @@ class App:
         self._remote_refreshed = 0.0
         self._remote_lock = threading.Lock()
         self._state_synced: dict[str, float] = {}
-        # App Windows đóng gói (webui/host.py): vỏ Tauri báo có bản mới (`update`), nhận lệnh cài qua `shell`.
+        # App Windows đóng gói (webui/host.py): vỏ Tauri báo có bản mới (`update`), nhận lệnh cài qua `shell`; Studio
+        # (thư viện + model làm sách) tải thêm khi cần (`studio`, webui/studio_setup.py). Bản dev: cả ba là None.
         self.update: dict[str, Any] | None = None
         self.shell: Callable[[dict[str, Any]], None] | None = None
+        self.studio: Any = None
 
     # ---- sách ------------------------------------------------------------------------------------------
 
@@ -693,8 +695,10 @@ class Handler(BaseHTTPRequestHandler):
             "version": self.app.version,
             "readOnly": self.app.read_only,
             "dialogs": self.app.dialogs is not None,
-            # App Windows đóng gói: bản mới vỏ tìm thấy ({version, notes}), hay None.
+            # App Windows đóng gói: bản mới vỏ tìm thấy ({version, notes}), hay None; Studio đã cài chưa (None: bản dev,
+            # Studio chính là runtime cạnh mã nguồn).
             "update": self.app.update,
+            "studio": None if self.app.studio is None else {"installed": self.app.studio.installed()},
             "libraryRoot": prefs["libraryRoot"],
             "theme": prefs["theme"],
             "playbackRate": prefs["playbackRate"],
@@ -1167,6 +1171,27 @@ class Handler(BaseHTTPRequestHandler):
     def post_app_update(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.install_update())
 
+    def _studio_setup(self) -> Any:
+        if self.app.studio is None:
+            raise ApiError(HTTPStatus.NOT_FOUND, "Bản này không cài Studio từ trong app (Studio là runtime cạnh mã nguồn)")
+        return self.app.studio
+
+    def get_studio_setup(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self._studio_setup().status())
+
+    def post_studio_setup(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self._studio_setup().start())
+
+    def post_studio_setup_cancel(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self._studio_setup().cancel())
+
+    def delete_studio_setup(self, _query: dict[str, list[str]]) -> None:
+        setup = self._studio_setup()
+        busy = self.app._busy_elsewhere(Path())
+        if busy is not None:
+            raise ApiError(HTTPStatus.CONFLICT, f"Đang làm cuốn \"{busy.name}\" - dừng cuốn ấy trước khi gỡ Studio")
+        self._send_json(HTTPStatus.OK, setup.remove())
+
     def post_pick_folder(self, _query: dict[str, list[str]]) -> None:
         if self.app.dialogs is None:
             raise ApiError(HTTPStatus.NOT_IMPLEMENTED, "Không có hộp thoại chọn thư mục ở chế độ này")
@@ -1209,6 +1234,10 @@ LISTEN = r"/api/listen/books/([A-Za-z0-9_-]+)"
 ROUTES: list[Route] = [
     ("GET", re.compile(r"/api/app"), Handler.get_app),
     ("POST", re.compile(r"/api/app/update"), Handler.post_app_update),
+    ("GET", re.compile(r"/api/studio/setup"), Handler.get_studio_setup),
+    ("POST", re.compile(r"/api/studio/setup"), Handler.post_studio_setup),
+    ("POST", re.compile(r"/api/studio/setup/cancel"), Handler.post_studio_setup_cancel),
+    ("DELETE", re.compile(r"/api/studio/setup"), Handler.delete_studio_setup),
     ("GET", re.compile(r"/api/library"), Handler.get_library),
     ("GET", re.compile(r"/api/voices"), Handler.get_voices),
     ("GET", re.compile(r"/api/preferences"), Handler.get_preferences),
