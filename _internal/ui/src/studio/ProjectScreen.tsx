@@ -731,7 +731,12 @@ export function ProjectScreen() {
           <ScriptTab bookId={book.id} />
         </TabsContent>
         <TabsContent value="review">
-          <ReviewQueue bookId={book.id} />
+          <ReviewQueue
+            bookId={book.id}
+            onOpenScript={(chapterId, stableId) =>
+              setParams({ tab: "script", chapter: String(chapterId), line: stableId }, { replace: true })
+            }
+          />
         </TabsContent>
         <TabsContent value="cast">
           <CastList bookId={book.id} onPickVoice={(person) => setPicking({ name: person.name, displayName: person.displayName })} />

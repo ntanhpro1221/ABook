@@ -38,6 +38,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   - Bảng chương và danh sách dự án không vỡ trên màn hẹp.
   - Câu Whisper "nghe ảo" không hiện ở hàng chờ nghe lại.
   - Câu chưa có bản thu chỉ còn nút "Thu lại câu này".
+  - Tab "Cần nghe lại" không còn hứa "sẽ được đúc lại ở lần sản xuất kế tiếp" - đánh dấu "Cần thu lại" chưa tự thu lại
+    gì; câu đã đánh dấu có nút mở thẳng ở tab Kịch bản để sửa cách đọc (câu sửa xong được thu lại).
   - Sách chưa có chương nghe được không còn ghi "Đang làm" khi đang dừng. Không xuất được sách chưa có chương nào.
 
 - Làm sách: Studio phân tích bằng **model riêng của ABook** (`abook-analyzer`, học từ đáp án soát tay của dự án) thay cho
