@@ -107,17 +107,26 @@ def _wish(connection: Any, row: Any, wish: dict[str, str] | None, as_kind: str =
     return {**view, "state": "applied" if str(target["speaker"]) == str(row["speaker"]) else "pending"}
 
 
+def _value(row: Any, key: str) -> Any:
+    """Cột có thể chưa có ở sách cũ (chưa qua lượt nâng cấp của dây chuyền): None."""
+    return row[key] if key in row.keys() else None
+
+
 def _line_wish(connection: Any, row: Any, wish: dict[str, Any] | None) -> dict[str, Any] | None:
     """Yêu cầu sửa cách đọc câu này và nó đang ở đâu (chờ / đã áp / không áp được) - hỏi bằng `line_target`."""
     if wish is None or wish["text_sha256"] != str(row["text_sha256"] or ""):
         return None
     view = {"kind": wish["kind"], "emotion": wish["emotion"], "intensity": wish["intensity"]}
+    if wish.get("spoken") is not None:
+        view["spoken"] = wish["spoken"]
     target, problem = line_target(connection, stable_id=str(row["stable_id"]), text_sha256=wish["text_sha256"],
-                                  kind=wish["kind"], emotion=wish["emotion"], intensity=wish["intensity"])
+                                  kind=wish["kind"], emotion=wish["emotion"], intensity=wish["intensity"],
+                                  spoken=wish.get("spoken"))
     if target is None:
         return {**view, "state": "refused", "reason": REFUSED.get(str(problem), "Dây chuyền sẽ không áp được yêu cầu này.")}
     applied = (str(row["kind"]) == target["kind"] and str(row["emotion"] or "neutral") == target["emotion"]
-               and int(row["intensity"] or 0) == target["intensity"])
+               and int(row["intensity"] or 0) == target["intensity"]
+               and (_value(row, "listener_text") or None) == target["listener_text"])
     return {**view, "state": "applied" if applied else "pending"}
 
 
@@ -165,7 +174,8 @@ def casting_chapter(project_root: Path, chapter_id: int) -> dict[str, Any] | Non
         if connection.execute("SELECT 1 FROM chapters WHERE id = ?", (chapter_id,)).fetchone() is None:
             return None
         columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(segments)")}
-        extra = [column for column in ("paragraph_index", "wav_path", "emotion", "intensity") if column in columns]
+        extra = [column for column in ("paragraph_index", "wav_path", "emotion", "intensity", "listener_text")
+                 if column in columns]
         rows = connection.execute(
             "SELECT id, stable_id, chapter_id, seq, text, text_sha256, speaker, kind"
             + "".join(f", {column}" for column in extra)
@@ -240,6 +250,8 @@ def casting_chapter(project_root: Path, chapter_id: int) -> dict[str, Any] | Non
             "emotion": str(row["emotion"] or "neutral") if "emotion" in extra else None,
             "intensity": int(row["intensity"] or 0) if "intensity" in extra else None,
             "lineWish": delivery.get(stable_id),
+            # Chữ người nghe sửa đang được đọc thay câu gốc (đã áp); None = đọc đúng chữ sách.
+            "spoken": _value(row, "listener_text") or None,
         })
     return {
         "chapterId": chapter_id,

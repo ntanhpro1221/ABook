@@ -2353,6 +2353,10 @@ class ProjectDB:
             )
         if "generation_policy_hash" not in segment_columns:
             conn.execute("ALTER TABLE segments ADD COLUMN generation_policy_hash TEXT")
+        if "listener_text" not in segment_columns:
+            # Chữ đem đọc người nghe sửa cho câu này (Studio, overrides.json `lines`): TTS và phép so của Whisper đọc cột
+            # này thay `text`; văn bản sách (`text`, `text_sha256`, đọc theo) giữ nguyên. NULL = không sửa.
+            conn.execute("ALTER TABLE segments ADD COLUMN listener_text TEXT")
 
         voice_columns = {
             str(row[1]) for row in conn.execute("PRAGMA table_info(voice_profiles)")
@@ -8759,8 +8763,11 @@ class ProjectDB:
         kind: str = "",
         emotion: str = "",
         intensity: int | None = None,
+        spoken: str | None = None,
     ) -> dict[str, Any] | None:
-        """Đổi loại đoạn / cảm xúc / cường độ của MỘT câu theo ý người nghe, và đặt lại câu nếu đã thu - một transaction.
+        """Đổi loại đoạn / cảm xúc / cường độ / chữ đem đọc của MỘT câu theo ý người nghe, và đặt lại câu nếu đã thu - một
+        transaction. Chữ đem đọc (`spoken`, "" = trả về chữ của sách) chỉ đổi thứ TTS nhận và Whisper so; văn bản sách giữ
+        nguyên.
 
         Đích do `listener_overrides.line_target` chọn, cùng phép giao diện đã dùng để từ chối tại chỗ. Thành lời kể thì câu
         về người kể và giọng người kể (người nghe đã nói câu này không phải lời của ai). Trả None khi câu đã đúng như yêu
@@ -8771,7 +8778,7 @@ class ProjectDB:
         now = time.time()
         with self.transaction() as conn:
             target, problem = line_target(conn, stable_id=stable_id, text_sha256=text_sha256, kind=kind,
-                                          emotion=emotion, intensity=intensity)
+                                          emotion=emotion, intensity=intensity, spoken=spoken)
             if target is None:
                 return {"problem": problem}
             line = target["line"]
@@ -8781,12 +8788,13 @@ class ProjectDB:
                 and str(line["emotion"] or "neutral") == target["emotion"]
                 and int(line["intensity"] or 0) == target["intensity"]
                 and narrator is None
+                and (line["listener_text"] or None) == target["listener_text"]
             )
             if unchanged:
                 return None
             conn.execute(
-                "UPDATE segments SET kind=?, emotion=?, intensity=?, updated_at=? WHERE id=?",
-                (target["kind"], target["emotion"], target["intensity"], now, int(line["id"])),
+                "UPDATE segments SET kind=?, emotion=?, intensity=?, listener_text=?, updated_at=? WHERE id=?",
+                (target["kind"], target["emotion"], target["intensity"], target["listener_text"], now, int(line["id"])),
             )
             if narrator is not None:
                 conn.execute(
@@ -8814,8 +8822,10 @@ class ProjectDB:
                 "kind": target["kind"],
                 "emotion": target["emotion"],
                 "intensity": target["intensity"],
+                "listener_text": target["listener_text"],
                 "previous": {"kind": str(line["kind"]), "emotion": str(line["emotion"] or ""),
-                             "intensity": int(line["intensity"] or 0), "speaker": str(line["speaker"] or "")},
+                             "intensity": int(line["intensity"] or 0), "speaker": str(line["speaker"] or ""),
+                             "listener_text": line["listener_text"]},
                 "reset": reset,
                 "chapter_id": chapter_id,
             }
