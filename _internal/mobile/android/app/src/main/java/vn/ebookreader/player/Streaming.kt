@@ -42,7 +42,7 @@ object Streaming {
     fun mediaSourceFactory(context: Context): MediaSource.Factory {
         val http = DefaultHttpDataSource.Factory().setConnectTimeoutMs(5000).setReadTimeoutMs(20_000)
         val authorized = ResolvingDataSource.Factory(http) { spec ->
-            spec.withAdditionalHeaders(mapOf("Authorization" to "Bearer ${SyncLink.token(context)}"))
+            spec.withAdditionalHeaders(mapOf("Authorization" to "Bearer ${SyncLink.tokenFor(context, spec.uri)}"))
         }
         val cached = CacheDataSource.Factory()
             .setCache(cache(context))
@@ -55,7 +55,8 @@ object Streaming {
     fun chapterUri(context: Context, id: String, file: String): Uri {
         val local = runCatching { Store.file(id, file) }.getOrNull()
         if (local != null && local.isFile) return Uri.fromFile(local)
-        return Uri.parse("${SyncLink.base(context)}/sync/v1/books/${Uri.encode(id)}/files/${Uri.encode(file, "/")}")
+        val (link, remote) = SyncLink.linkFor(context, id)
+        return Uri.parse("${link.base}/sync/v1/books/${Uri.encode(remote)}/files/${Uri.encode(file, "/")}")
     }
 
     /** Khoá bộ đệm: sách + file + kích thước trong gói (null = file trên máy, không qua bộ đệm). */
@@ -73,9 +74,17 @@ object Streaming {
         return "$id/$file#$size"
     }
 
-    /** Gói sách của một cuốn trên máy tính, cất vào `stream.json` để lần sau mở ngay cả khi mạng chậm. */
-    fun fetchManifest(context: Context, id: String): JSONObject {
-        val manifest = JSONObject(SyncLink.request(context, "GET", "/sync/v1/books/$id/manifest"))
+    /** Gói sách của một cuốn trên máy tính (hay thiết bị ghép - `source`, `remoteId`: Peers), cất vào `stream.json` để lần
+     *  sau mở ngay cả khi mạng chậm. Gói của thiết bị ghép mang nguồn trong chính nó (SyncLink.linkFor). */
+    fun fetchManifest(context: Context, id: String, source: String? = null, remoteId: String? = null): JSONObject {
+        val known = Store.playableManifest(id)
+        val peer = source ?: known?.optString("source")?.takeIf { it.isNotEmpty() }
+        val remote = remoteId ?: known?.optString("remoteId")?.takeIf { it.isNotEmpty() } ?: id
+        val manifest = JSONObject(
+            if (peer != null) Peers.request(context, peer, "GET", "/sync/v1/books/$remote/manifest")
+            else SyncLink.request(context, "GET", "/sync/v1/books/$id/manifest"),
+        )
+        if (peer != null) manifest.put("id", id).put("source", peer).put("remoteId", remote)
         // Gói đổi (thêm/thu lại chương, đổi bìa): bỏ văn bản và dàn nhân vật đã cất để lần đọc sau lấy bản mới.
         val previous = Store.streamManifest(id)
         if (previous != null && previous.optString("version") != manifest.optString("version")) {
@@ -93,10 +102,11 @@ object Streaming {
     fun fetchSmall(context: Context, id: String, relative: String): File? {
         val target = runCatching { Store.file(id, relative) }.getOrNull() ?: return null
         return runCatching {
-            val connection = URL("${SyncLink.base(context)}/sync/v1/books/$id/files/$relative").openConnection() as HttpURLConnection
+            val (link, remote) = SyncLink.linkFor(context, id)
+            val connection = URL("${link.base}/sync/v1/books/$remote/files/$relative").openConnection() as HttpURLConnection
             connection.connectTimeout = 3000
             connection.readTimeout = 15_000
-            connection.setRequestProperty("Authorization", "Bearer ${SyncLink.token(context)}")
+            connection.setRequestProperty("Authorization", "Bearer ${link.token}")
             try {
                 if (connection.responseCode != 200) return@runCatching null
                 target.parentFile?.mkdirs()
