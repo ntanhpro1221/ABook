@@ -2,8 +2,8 @@
 
 Vỏ Tauri (`_internal/shell`) chạy tiến trình này và nói chuyện với nó qua stdin/stdout, mỗi dòng một JSON: host báo
 địa chỉ để mở cửa sổ, nhờ vỏ mở hộp thoại Windows, nhờ vỏ phát sự kiện vào trang; vỏ chuyển file `.abook` được mở và
-lệnh thoát. Trang web vẫn chỉ nói chuyện với server Python như trong cửa sổ Qt - không mở IPC của Tauri cho một trang
-nằm ở địa chỉ http.
+lệnh thoát; vỏ báo có bản mới, host chuyển lệnh "Cập nhật" của người dùng về vỏ. Trang web vẫn chỉ nói chuyện với
+server Python như trong cửa sổ Qt - không mở IPC của Tauri cho một trang nằm ở địa chỉ http.
 
 stdin đóng (vỏ chết, bị giết) cũng là thoát: không bao giờ bỏ lại một server mồ côi giữ cổng đồng bộ.
 """
@@ -18,8 +18,9 @@ import threading
 from pathlib import Path
 from typing import Any, Callable, TextIO
 
-# Trang web nghe sự kiện này (desktop/App.tsx) - cùng tên với cửa sổ Qt (desktop.OPENED_EVENT).
+# Trang web nghe các sự kiện này (desktop/App.tsx). Mở file sách: cùng tên với cửa sổ Qt (desktop.OPENED_EVENT).
 OPENED_EVENT = "abook-opened"
+UPDATE_EVENT = "abook-update"
 
 
 class Channel:
@@ -126,9 +127,16 @@ def run(reader: TextIO, writer: TextIO, argv: list[str] | None = None) -> int:
     fake = args.fake_runner or os.environ.get("EBOOK_READER_FAKE_RUNNER") == "1"
     web = App(preferences=preferences, runner=FakeRunner() if fake else BackgroundRunner(), token=new_token(),
               dialogs=dialogs, version=args.version)
+    web.shell = channel.send  # "Cập nhật": App.install_update gửi {"install_update": true} về vỏ
     if preferences.get().get("syncEnabled"):
         web.set_sync(True)
     http = Server(web).start()
+
+    def update_found(message: dict[str, Any]) -> None:
+        update = message.get("update")
+        web.update = ({"version": str(update.get("version") or ""), "notes": str(update.get("notes") or "")}
+                      if isinstance(update, dict) and update.get("version") else None)
+        channel.send({"event": UPDATE_EVENT, "detail": web.update})  # trang đã mở: đọc lại /api/app, hiện nút
 
     def open_book_file(message: dict[str, Any]) -> None:
         """Nhập ở luồng nền (kiểm mã băm cả cuốn: vài trăm MB), rồi nhờ vỏ báo trang web mở trang sách."""
@@ -147,7 +155,7 @@ def run(reader: TextIO, writer: TextIO, argv: list[str] | None = None) -> int:
 
     channel.send({"ready": http.url})
     try:
-        channel.serve({"dialog": dialogs.answer, "open": open_book_file})
+        channel.serve({"dialog": dialogs.answer, "open": open_book_file, "update": update_found})
     finally:
         dialogs.close()
         web.close()

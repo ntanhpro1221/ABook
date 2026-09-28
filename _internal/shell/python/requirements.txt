@@ -1,3 +1,4 @@
+# coding: utf-8 (pip đọc file này bằng bảng mã của máy nếu không có dòng này)
 # Gói phụ của Python nhúng trong app Windows (docs/PACKAGING.md): server giao diện cần Pillow (bìa), psutil +
 # requests (màn Studio đọc sổ nhân vật). Cài bằng scripts/build_windows_app.ps1 với --require-hashes: chỉ đúng
 # các wheel này (cp314 win_amd64), không bản nào khác lọt vào bộ cài. Nâng: đổi số + băm từ PyPI, build lại, thử.
