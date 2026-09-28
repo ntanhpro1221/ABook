@@ -187,7 +187,7 @@ def _request(base: str, method: str, path: str, token: str, body: dict[str, Any]
             message = ""
         raise RemoteError(message or f"Máy kia trả lỗi {error.code}") from error
     except (urllib.error.URLError, OSError, TimeoutError) as error:
-        raise RemoteError("Không kết nối được máy kia - máy tắt, khác mạng hay chưa bật đồng bộ") from error
+        raise RemoteError("Không kết nối được máy kia - máy tắt, khác mạng hay chưa bật “Cho phép điện thoại kết nối qua Wi-Fi”") from error
 
 
 def _base(entry: dict[str, Any]) -> str:
