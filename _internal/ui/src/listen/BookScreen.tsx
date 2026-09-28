@@ -549,7 +549,10 @@ export function BookScreen({
           )}
           {book.remote && (
             <p className="mt-2 inline-flex flex-wrap items-center gap-1.5 rounded-full bg-info-soft px-3 py-1 text-xs font-medium text-info">
-              <Laptop className="size-3.5" /> Nghe thẳng từ máy tính - tải về để nghe cả khi không có mạng
+              <Laptop className="size-3.5" />{" "}
+              {typeof book.remote === "object"
+                ? `Nghe thẳng từ ${book.remote.computer || "máy khác"} - chương nghe tới được giữ lại trên máy này`
+                : "Nghe thẳng từ máy tính - tải về để nghe cả khi không có mạng"}
             </p>
           )}
           <div className="mt-4 max-w-md max-sm:mx-auto">

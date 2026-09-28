@@ -53,13 +53,21 @@ def is_package(path: Path) -> bool:
 
 
 def folders(library_root: Path) -> list[Path]:
-    """Các cuốn đã nhập dưới `<thư viện>/Sách đã nhập/` (bỏ thư mục tạm của lần giải nén đang dở: tên bắt đầu bằng ".")."""
-    imported = Path(library_root).expanduser() / IMPORTED_FOLDER
+    """Các cuốn đã nhập dưới `<thư viện>/Sách đã nhập/` (bỏ thư mục tạm của lần giải nén đang dở: tên bắt đầu bằng "."),
+    và các cuốn ảo của máy tính khác dưới `<thư viện>/Trên máy khác/<máy>/` (remote_books.py)."""
+    from .remote_books import REMOTE_FOLDER
+
+    root = Path(library_root).expanduser()
+    candidates: list[Path] = []
     try:
-        children = sorted(imported.iterdir()) if imported.is_dir() else []
+        imported = root / IMPORTED_FOLDER
+        candidates += sorted(imported.iterdir()) if imported.is_dir() else []
+        remote = root / REMOTE_FOLDER
+        for computer in sorted(remote.iterdir()) if remote.is_dir() else []:
+            candidates += sorted(computer.iterdir()) if computer.is_dir() else []
     except OSError:
         return []
-    return [child.resolve() for child in children if child.is_dir() and not child.name.startswith(".") and is_package(child)]
+    return [child.resolve() for child in candidates if child.is_dir() and not child.name.startswith(".") and is_package(child)]
 
 
 def chapter_prints(book: dict[str, Any]) -> dict[str, dict[str, Any]]:
@@ -78,6 +86,26 @@ def _inside(root: Path, relative: Any) -> Path | None:
     return candidate if candidate.is_file() and candidate.is_relative_to(root) else None
 
 
+def _file(path: Path, relative: Any) -> Path | None:
+    """File trong gói; sách của máy tính khác thì tải về lần đầu cần tới (remote_books.fetch) rồi dùng như file đã có."""
+    found = _inside(path, relative)
+    if found is not None or not isinstance(relative, str):
+        return found
+    from .remote_books import fetch, remote_of
+
+    book = manifest(path)
+    if remote_of(book) is None:
+        return None
+    fetch(path, relative, book)
+    return _inside(path, relative)
+
+
+def _remote(path: Path) -> bool:
+    from .remote_books import remote_of
+
+    return remote_of(manifest(path)) is not None
+
+
 def _chapter(book: dict[str, Any], chapter_id: int) -> dict[str, Any] | None:
     return next((chapter for chapter in book.get("chapters") or []
                  if isinstance(chapter, dict) and chapter.get("id") == chapter_id), None)
@@ -85,33 +113,35 @@ def _chapter(book: dict[str, Any], chapter_id: int) -> dict[str, Any] | None:
 
 def chapter_file(path: Path, chapter_id: int) -> Path | None:
     chapter = _chapter(manifest(path), chapter_id)
-    return _inside(path, chapter.get("file")) if chapter and chapter.get("available") else None
+    return _file(path, chapter.get("file")) if chapter and chapter.get("available") else None
 
 
 def sample_file(path: Path, sample_id: int) -> Path | None:
     name = f"samples/{int(sample_id)}.wav"
-    return _inside(path, name) if name in (manifest(path).get("samples") or []) else None
+    return _file(path, name) if name in (manifest(path).get("samples") or []) else None
 
 
 def script(path: Path, chapter_id: int) -> Any | None:
     chapter = _chapter(manifest(path), chapter_id)
-    file = _inside(path, chapter.get("script")) if chapter else None
+    file = _file(path, chapter.get("script")) if chapter else None
     return json.loads(file.read_text(encoding="utf-8")) if file else None
 
 
 def cast(path: Path) -> Any:
-    file = _inside(path, manifest(path).get("cast") or "cast.json")
+    file = _file(path, manifest(path).get("cast") or "cast.json")
     return json.loads(file.read_text(encoding="utf-8")) if file else {"characters": [], "extras": []}
 
 
 def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bool = True) -> dict[str, Any]:
     """Cùng hình dạng với `listen_view.book` của một dự án - giao diện Nghe không phân biệt hai loại."""
     book = manifest(path)
+    remote = _remote(path)
     items = []
     for chapter in book.get("chapters") or []:
         if not isinstance(chapter, dict):
             continue
-        available = bool(chapter.get("available")) and _inside(path, chapter.get("file")) is not None
+        # Sách của máy tính khác: chương máy kia có là nghe được - file tải về lúc bấm nghe.
+        available = bool(chapter.get("available")) and (remote or _inside(path, chapter.get("file")) is not None)
         items.append({
             "id": chapter.get("id"),
             "index": chapter.get("index"),
@@ -136,6 +166,7 @@ def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bo
         "producing": False,
         "paused": False,
         "imported": True,
+        "remote": _remote_view(book) if remote else None,
         "updatedAt": (Path(path) / MANIFEST).stat().st_mtime,
         "state": state,
         "progress": book_progress(state, available, complete=complete),
@@ -146,6 +177,12 @@ def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bo
     if with_chapters:
         result["chapters"] = items
     return result
+
+
+def _remote_view(book: dict[str, Any]) -> dict[str, Any]:
+    from .remote_books import computer_name
+
+    return {"computer": computer_name(book)}
 
 
 def _folder_name(title: str, key: str) -> str:
