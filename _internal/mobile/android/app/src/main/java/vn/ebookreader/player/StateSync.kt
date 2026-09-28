@@ -20,10 +20,14 @@ object StateSync {
 
     /** Đẩy ngay trên luồng hiện tại (đã ở luồng nền). `only`: đúng hồ sơ ấy thay vì hồ sơ đang dùng (xem Store.syncBody). */
     fun pushNow(context: Context, bookId: String, only: String? = null) {
-        if (bookId.isBlank() || !SyncLink.paired(context)) return
+        if (bookId.isBlank()) return
+        // Sách của thiết bị ghép (Peers) đẩy về đúng thiết bị ấy; sách của máy tính chính cần máy tính đã ghép.
+        val fromPeer = !Store.playableManifest(bookId)?.optString("source").isNullOrEmpty()
+        if (!fromPeer && !SyncLink.paired(context)) return
+        val (link, remote) = runCatching { SyncLink.linkFor(context, bookId) }.getOrNull() ?: return
         val reply = runCatching {
-            JSONObject(SyncLink.request(context, "POST", "/sync/v1/books/$bookId/state", Store.syncBody(bookId, only),
-                readTimeoutMs = 10_000, connectTimeoutMs = 3000))
+            JSONObject(SyncLink.request(context, "POST", "/sync/v1/books/$remote/state", Store.syncBody(bookId, only),
+                readTimeoutMs = 10_000, connectTimeoutMs = 3000, root = link.base, token = link.token))
         }.getOrNull() ?: return
         lastPushMs = SystemClock.elapsedRealtime()
         Store.applySync(bookId, reply)
