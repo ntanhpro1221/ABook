@@ -25,7 +25,7 @@ from . import actions, bookfile, cover_search, covers, listen_view, packages, st
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id
 from .listening import RECORD_ID, Listening
-from . import remote_books
+from . import bluetooth, remote_books
 from .remote_studio import REMOTE_HEADER, StudioGate
 from .reviews import Reviews, review_view
 from .casting_review import casting_chapter, casting_chapters
@@ -135,6 +135,8 @@ class App:
         # qua cổng đồng bộ (sync.py, /sync/v1/player) - mạng trạm bước 4.
         self.player = Remote()
         self.sync_server: SyncServer | None = None
+        # Cổng đồng bộ qua Bluetooth (webui/bluetooth.py): bật/tắt cùng cổng Wi-Fi, mang đúng giao thức ấy.
+        self.bluetooth: bluetooth.BluetoothServer | None = None
         self.sync_host = "0.0.0.0"
         self.sync_port = SYNC_PORT
         self.sync_error = ""
@@ -332,6 +334,7 @@ class App:
             "devices": sorted(self.devices.list(), key=lambda device: -float(device.get("lastSeen") or 0)),
             # Studio từ xa (remote_studio.py): công tắc riêng, tách khỏi quyền nghe của điện thoại.
             "remoteStudio": bool(self.preferences.get().get("remoteStudio")),
+            "bluetooth": self.bluetooth.view() if self.bluetooth is not None else None,
         }
 
     def set_remote_studio(self, enabled: bool) -> dict[str, Any]:
@@ -351,6 +354,11 @@ class App:
                               player=self.player)
                 self.sync_server = SyncServer(app, host=self.sync_host, port=self.sync_port).start()
                 self.sync_error = ""
+                if self.sync_host == "0.0.0.0":  # máy chủ thật (không phải bài thử chỉ nghe 127.0.0.1)
+                    try:
+                        self.bluetooth = bluetooth.BluetoothServer(self.sync_server.port, socket_name()).start()
+                    except Exception:  # noqa: BLE001 - Bluetooth không bao giờ được làm hỏng đồng bộ qua Wi-Fi
+                        self.bluetooth = None
             except OSError as error:
                 self.sync_error = f"Không mở được cổng đồng bộ {self.sync_port}: {error.strerror or error}"
         elif not enabled:
@@ -365,6 +373,9 @@ class App:
         # Trả lời ngay các lần "hỏi dài" đang treo, rồi mới tắt máy chủ - không để luồng nào đợi 25 giây vô ích.
         self.remote.reset()
         self.player.reset()
+        if self.bluetooth is not None:
+            self.bluetooth.stop()
+            self.bluetooth = None
         if self.sync_server is not None:
             self.sync_server.stop()
             self.sync_server = None

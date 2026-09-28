@@ -33,6 +33,8 @@ export interface SyncView {
   devices: SyncDevice[];
   /** Studio từ xa (webui/remote_studio.py): thiết bị đã ghép được điều khiển sản xuất. */
   remoteStudio: boolean;
+  /** Cổng đồng bộ qua Bluetooth (webui/bluetooth.py) - null khi đồng bộ tắt. */
+  bluetooth: { running: boolean; channel: number; error: string; connections: number } | null;
 }
 
 /** Địa chỉ mở Studio từ xa trên trình duyệt của máy khác. */
@@ -291,6 +293,15 @@ export function PhoneSync() {
               </ul>
             )}
           </div>
+          {sync.bluetooth && (
+            <p className="text-xs text-fg-3">
+              {sync.bluetooth.running
+                ? `Bluetooth: điện thoại đã ghép Bluetooth với máy này kết nối được cả khi không chung Wi-Fi${
+                    sync.bluetooth.connections ? ` - ${sync.bluetooth.connections} đang kết nối` : ""
+                  }.`
+                : sync.bluetooth.error}
+            </p>
+          )}
           {sync.addresses.length > 0 && (
             <p className="text-xs text-fg-3">
               Điện thoại không tự thấy máy này? Chọn “Nhập địa chỉ máy tính” trên điện thoại rồi gõ{" "}

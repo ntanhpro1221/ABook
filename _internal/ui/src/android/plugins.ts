@@ -202,6 +202,10 @@ export interface EbookLibraryPlugin {
   shareCancelPairing(): Promise<ShareStatus>;
   shareRevoke(options: { id: string }): Promise<ShareStatus>;
   pair(options: { host: string; port: number; code: string; device?: string }): Promise<{ name: string }>;
+  /** Máy đã ghép Bluetooth với điện thoại (BluetoothLink.kt); Android 12+ xin quyền "Thiết bị ở gần" lần đầu. */
+  bluetoothDevices(): Promise<{ devices: { address: string; name: string; kind: "computer" | "phone"; abook: boolean }[] }>;
+  /** Ghép máy tính chính qua Bluetooth - cùng mã 6 số, đi qua đường hầm; sau đó `connection().host` là "bt:<địa chỉ>". */
+  pairBluetooth(options: { address: string; code: string; device?: string }): Promise<{ name: string }>;
   connection(): Promise<{ paired: boolean; host: string; port: number; name: string }>;
   unpair(): Promise<void>;
   /** Studio từ xa: mở trang Studio của máy tính đã ghép (StudioActivity.kt, webui/remote_studio.py). */

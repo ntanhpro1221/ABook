@@ -19,7 +19,10 @@ object SyncLink {
 
     fun base(context: Context): String {
         val prefs = prefs(context)
-        return "http://${prefs.getString("host", "")}:${prefs.getInt("port", 47630)}"
+        val host = prefs.getString("host", "") ?: ""
+        // Ghép qua Bluetooth: "bt:<địa chỉ>" - đi qua đường hầm (BluetoothLink), cùng giao thức.
+        if (host.startsWith("bt:")) return BluetoothLink.base(context, host.removePrefix("bt:"))
+        return "http://$host:${prefs.getInt("port", 47630)}"
     }
 
     /**
