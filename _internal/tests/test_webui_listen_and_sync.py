@@ -326,7 +326,41 @@ def test_a_command_reaches_a_waiting_phone_at_once() -> None:
     remote.send("dev1", {"action": "pause"})
     waiter.join(5)
     assert got and got[0][0]["action"] == "pause" and time.monotonic() - started < 3
-    assert remote.report("dev1", "Pixel", state) == [], "lệnh đã giao thì không giao lại"
+    assert remote.report("dev1", "Pixel", state) == [], "lệnh vừa giao thì không giao lại ngay"
+
+
+def test_a_command_whose_answer_was_lost_is_delivered_again_until_the_phone_says_it_is_done(monkeypatch) -> None:
+    """Mạng (hay Bluetooth) đứt giữa lúc hỏi dài: máy tính không biết, lần hỏi mồ côi vẫn nhận lệnh và trả vào khoảng
+    không. Lệnh ở lại tới khi điện thoại báo kết quả (`acks`); quá REDELIVER_SECONDS chưa thấy thì giao lại, cùng mã -
+    điện thoại làm mỗi mã một lần. Báo kết quả rồi thì thôi hẳn."""
+    clock = [1000.0]
+    monkeypatch.setattr(sync_module.time, "time", lambda: clock[0])
+    remote = Remote()
+    remote.report("dev1", "Pixel", {"state": {"playing": True}})
+    sent = remote.send("dev1", {"action": "pause"})
+    (lost,) = remote.report("dev1", "Pixel", {}, wait=0)
+    assert lost["id"] == sent["id"] and "delivered" not in lost
+    assert remote.report("dev1", "Pixel", {}) == [], "vừa giao: chưa giao lại"
+    clock[0] += sync_module.REDELIVER_SECONDS
+    (again,) = remote.report("dev1", "Pixel", {})
+    assert again == lost, "cùng lệnh, cùng mã"
+    clock[0] += sync_module.REDELIVER_SECONDS
+    done = [{"id": sent["id"], "ok": True, "message": ""}]
+    assert remote.report("dev1", "Pixel", {"acks": done}) == []
+    clock[0] += sync_module.REDELIVER_SECONDS
+    assert remote.report("dev1", "Pixel", {"acks": done}) == [] and remote.report("dev1", "Pixel", {}) == []
+
+
+def test_a_waiting_phone_gets_a_lost_command_again_without_asking_twice(monkeypatch) -> None:
+    """Lần hỏi dài đang treo cũng nhận lại lệnh đã giao mà chưa có kết quả, đúng lúc hết hạn chờ kết quả."""
+    monkeypatch.setattr(sync_module, "REDELIVER_SECONDS", 0.3)
+    remote = Remote()
+    remote.report("dev1", "Pixel", {})
+    remote.send("dev1", {"action": "pause"})
+    (first,) = remote.report("dev1", "Pixel", {})
+    started = time.monotonic()
+    (again,) = remote.report("dev1", "Pixel", {}, wait=10)
+    assert again["id"] == first["id"] and 0.2 < time.monotonic() - started < 3
 
 
 def test_commands_never_go_to_a_phone_that_left_or_arrive_late(monkeypatch) -> None:
