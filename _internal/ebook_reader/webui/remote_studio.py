@@ -66,6 +66,8 @@ ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = tuple((method, re.compile(pat
     ("GET", _BOOK + r"/review"),
     ("POST", _BOOK + r"/review"),
     ("GET", _BOOK + r"/work"),
+    ("GET", _BOOK + r"/casting"),
+    ("GET", _BOOK + r"/casting/\d+"),
     ("POST", _BOOK + r"/pronunciation"),
     ("POST", _BOOK + r"/speaker"),
     ("GET", _BOOK + r"/cover/search"),

@@ -27,6 +27,7 @@ from .library import Library, Preferences, book_id
 from .listening import RECORD_ID, Listening
 from .remote_studio import REMOTE_HEADER, StudioGate
 from .reviews import Reviews, review_view
+from .casting_review import casting_chapter, casting_chapters
 from .work_items import work_items
 from .sync import Devices, ExclusiveHTTPServer, Remote, SyncApp, SyncServer, local_addresses, remote_command, SYNC_PORT
 
@@ -671,6 +672,16 @@ class Handler(BaseHTTPRequestHandler):
         # "Việc cần anh" (docs/STUDIO_REVIEW.md): chỗ máy nghi ngờ, xếp theo lợi trên mỗi lần bấm.
         self._send_json(HTTPStatus.OK, work_items(self.app._book(value)))
 
+    def get_casting(self, _query: dict[str, list[str]], value: str) -> None:
+        # Tab "Kịch bản" (casting_review.py): chương nào bao nhiêu câu thoại, bao nhiêu chỗ máy nghi, bao nhiêu câu đã quyết.
+        self._send_json(HTTPStatus.OK, casting_chapters(self.app._book(value)))
+
+    def get_casting_chapter(self, _query: dict[str, list[str]], value: str, chapter: str) -> None:
+        view = casting_chapter(self.app._book(value), int(chapter))
+        if view is None:
+            raise ApiError(HTTPStatus.NOT_FOUND, "Không có chương này")
+        self._send_json(HTTPStatus.OK, view)
+
     def post_pronunciation(self, _query: dict[str, list[str]], value: str) -> None:
         # Sửa cách đọc một tên. Giao diện KHÔNG ghi SQLite của sách: nó ghi mong muốn vào overrides.json, dây chuyền áp
         # ở ranh giới chương kế tiếp (hoặc lần chạy tới) và thu lại mọi câu đã thu có tên ấy - listener_overrides.py.
@@ -1044,6 +1055,8 @@ ROUTES: list[Route] = [
     ("POST", re.compile(BOOK + r"/export"), Handler.post_export),
     ("GET", re.compile(BOOK + r"/review"), Handler.get_review),
     ("GET", re.compile(BOOK + r"/work"), Handler.get_work),
+    ("GET", re.compile(BOOK + r"/casting"), Handler.get_casting),
+    ("GET", re.compile(BOOK + r"/casting/(\d+)"), Handler.get_casting_chapter),
     ("POST", re.compile(BOOK + r"/review"), Handler.post_review),
     ("POST", re.compile(BOOK + r"/pronunciation"), Handler.post_pronunciation),
     ("POST", re.compile(BOOK + r"/bookfile"), Handler.post_bookfile),
