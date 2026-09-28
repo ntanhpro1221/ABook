@@ -479,3 +479,21 @@ không lời dẫn, 『』 của Tọa Phu Đồng Tử chen giữa lời Magoro
 Host sai (giữ đáp án): 40 "vui vẻ" là CỐ TỎ RA vui; 128 "gào lên" là Hina đùa. "Ả" = Hina: "đứa em gái" = Aoi (079:299), "tảng
 mỡ thừa" = Uemon (079:207). `voice_identity --gold-check`: yamiyo 15 người, không nhập ai. Phát lại: 43 + 43 lượt, không
 LỆCH LUẬT.
+
+**Nageki no Bourei 53 (28-09 22:xx) - đáp án HUẤN LUYỆN, vòng dữ liệu v5** (truyện ngắn ngôi thứ nhất, bảy người đối đáp,
+nhiều câu chỉ suy từ mạch). A = Claude, B = agent soát (`scratchpad/review_nageki053.md`). B không thấy câu nào sai người
+nói chính; A nhận:
+
+| chỗ | A ghi | kết luận | bằng chứng |
+|---|---|---|---|
+| 66 "chắc em sẽ thử nín thở" | NARRATOR, SITRI~ | thêm KRAI đủ | cụm trích nằm trong câu tu từ của Krai (65, 67 N,T); quy tắc 8 chỉ hạ người gốc lời |
+| 29, 30, 106 | N | N,T KRAI | phản ứng tức thời của người kể (tiền lệ 65:294), như 22 |
+| 75 "Kill, kill" | KILLIAM | thêm NARRATOR~, NPC*~, excited | tiền lệ 20:178, 65:41; lời dẫn chỉ nói "con quái vật" |
+| mọi dòng | tên thật | thêm SIDDY, ANSSY, LIZZY, LUCY | biệt danh trong chương (70, 91) và lời kể cuốn 5 (46:1375, 52:371), quy tắc 11 |
+| 103 "Hay đó!!" | ... LUCIA~ | bỏ LUCIA~ | Lucia là người đề xuất cả đám đáp lại |
+| 16, 51 / 37, 102 / 26, 42, 72 | neutral / ... | happy,tender / afraid / sarcastic / loud / NARRATOR~ | "vui", "hoảng hốt"; giọng mỉa; hét |
+
+A giữ: 33 "HẢ?!" Lucia (49:1353 người làm thác cho Luke; 49:725-730 cùng khuôn), 95 "Ừm." Ansem (49:1673...), 41 "Đội
+trưởng" = Lucia (49:823). Host sai: 6 "Khóc" trong tên nhóm "Vong Linh Than Khóc". Dấu ~ ở 4 dòng khoá N (45, 74, 90, 101)
+giữ lại dù score_models bỏ qua: segment_diff.py dùng nó khi bộ tách mới (dev/comma-dialogue) tách các câu ấy thành thoại.
+`voice_identity --gold-check`: nageki 20 người, không nhập ai. Phát lại: 22 + 22 lượt, không LỆCH LUẬT.
