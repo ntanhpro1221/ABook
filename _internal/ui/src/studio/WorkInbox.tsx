@@ -132,6 +132,8 @@ function Example({ bookId, example }: { bookId: string; example: WorkExample }) 
 function PronunciationFix({ bookId, item }: { bookId: string; item: WorkItem }) {
   const client = useQueryClient();
   const [value, setValue] = useState(item.requested ?? item.current);
+  // Lỗi nằm ngay dưới ô nhập, không chỉ trong toast 4 giây (soát UX 29-09: "Hên-kơ" bị từ chối mà không biết sửa chỗ nào).
+  const [problem, setProblem] = useState("");
   const save = useMutation({
     mutationFn: (spokenForm: string) =>
       api<{ surface: string; spokenForm: string }>(`/api/books/${bookId}/pronunciation`, {
@@ -151,7 +153,10 @@ function PronunciationFix({ bookId, item }: { bookId: string; item: WorkItem }) 
         description: "Các câu có tên này sẽ được thu lại. Thu lại khi sách chạy tiếp - sách đã xong thì bấm “Áp dụng thay đổi” ở trang dự án.",
       });
     },
-    onError: (error: Error) => toast.error("Chưa ghi được cách đọc", { description: error.message }),
+    onError: (error: Error) => {
+      setProblem(error.message);
+      toast.error("Chưa ghi được cách đọc", { description: error.message });
+    },
   });
   const typed = value.trim();
   const inputId = `spoken-${item.key}`;
@@ -180,10 +185,18 @@ function PronunciationFix({ bookId, item }: { bookId: string; item: WorkItem }) 
           id={inputId}
           aria-label={`Cách đọc mới cho ${item.surface}`}
           value={value}
-          onChange={(event) => setValue(event.target.value)}
+          onChange={(event) => {
+            setValue(event.target.value);
+            setProblem("");
+          }}
           spellCheck={false}
           autoComplete="off"
-          className="h-8 w-40 rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-accent"
+          aria-invalid={problem ? true : undefined}
+          aria-describedby={problem ? `${inputId}-problem` : undefined}
+          className={cn(
+            "h-8 w-40 rounded-lg border bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-accent",
+            problem ? "border-danger" : "border-line",
+          )}
         />
         <Button
           size="sm"
@@ -195,6 +208,11 @@ function PronunciationFix({ bookId, item }: { bookId: string; item: WorkItem }) 
           Đọc thế này
         </Button>
       </form>
+      {problem && (
+        <p id={`${inputId}-problem`} role="alert" className="mt-1.5 text-xs text-danger">
+          {problem}
+        </p>
+      )}
     </div>
   );
 }
