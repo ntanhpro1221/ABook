@@ -46,7 +46,8 @@ function toListenBook(book: LocalBook, withChapters: boolean): ListenBook {
       ? { url: `${fileUrl(book.id, book.cover.file)}?v=${book.cover.version}`, color: book.cover.color, width: book.cover.width, height: book.cover.height }
       : null,
     chapters: withChapters ? chapters : undefined,
-    remote: Boolean(book.streamed),
+    // Nghe thẳng từ thiết bị ghép (Peers.kt): "Trên <tên máy>"; từ máy tính chính: "Trên máy tính".
+    remote: book.sourceName ? { computer: book.sourceName } : Boolean(book.streamed),
     records: book.records,
   };
 }
