@@ -10,6 +10,7 @@ Chạy ở một luồng nền của host (webui/host.py); giao diện hỏi `st
 """
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import os
@@ -828,6 +829,22 @@ class StudioSetup:
             (self.runtime / ".setup_complete").unlink(missing_ok=True)
             raise
 
+    def install_published_model(self, name: str, report: Callable[[str], None] = print) -> None:
+        """Nạp một model của dự án (PUBLISHED_MODELS) vào Ollama ở `ollama_address` - máy dev dùng đúng đường Studio dùng."""
+        model = PUBLISHED_MODELS.get(name)
+        if model is None:
+            raise SetupError(f"{name} không phải model của dự án ({', '.join(PUBLISHED_MODELS)})")
+        last = [-1]
+
+        def progress(done: int, total: int) -> None:
+            step = int(done * 20 / max(1, total))
+            if step != last[0]:
+                last[0] = step
+                report(f"  {self._detail or name}: {done / 1e9:.2f}/{total / 1e9:.2f} GB")
+
+        self._set_progress = progress  # type: ignore[method-assign]
+        self._install_published(model)
+
     def _write_marker(self) -> None:
         from ..runtime_contract import PERCEPTUAL_CACHE_MARKER_FILENAME, SETUP_SCHEMA_VERSION
 
@@ -844,3 +861,26 @@ class StudioSetup:
         temporary = marker.with_name(marker.name + ".part")
         temporary.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
         os.replace(temporary, marker)
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Máy dev (scripts/setup_windows.ps1): `python -m ebook_reader.webui.studio_setup --install-model abook-analyzer:v3`."""
+    import tempfile
+
+    parser = argparse.ArgumentParser(description="Nạp model phân tích của dự án vào Ollama.")
+    parser.add_argument("--install-model", required=True, help="tên trong PUBLISHED_MODELS, vd abook-analyzer:v3")
+    parser.add_argument("--ollama", default="http://127.0.0.1:11434")
+    parser.add_argument("--downloads", type=Path, default=Path(tempfile.gettempdir()) / "abook-model-install")
+    args = parser.parse_args(argv)
+    setup = StudioSetup(args.downloads, Path(__file__).resolve().parents[2], ollama_address=args.ollama)
+    try:
+        setup.install_published_model(args.install_model)
+    except SetupError as error:
+        print(error)
+        return 2
+    print(f"Ollama ở {args.ollama} đã có {args.install_model}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
