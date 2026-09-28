@@ -12093,6 +12093,24 @@ def test_an_affect_the_prose_ends_stops_being_a_cue(text: str, keeps_cue: bool) 
     assert bool(_semantic_cue_matches(text)) is keeps_cue
 
 
+@pytest.mark.parametrize(
+    ("text", "angry"),
+    [
+        # A curse is a thing in fantasy and horror: a ward against it, a cursed doll, the
+        # words of one. Reading the narrator angry over it contradicted the gold
+        # (Throne of Magical Arcana 346, Yamiyo no Hotaru 189).
+        ("Bệ giả kim được trang bị thêm một lớp bảo vệ chống nguyền rủa.", False),
+        ("Con búp bê bị nguyền rủa nằm yên trên kệ.", False),
+        ("Miệng sư phụ phun ra những lời nguyền rủa.", False),
+        # Someone cursing is still anger.
+        ("Hắn thầm nguyền rủa tên khốn đó.", True),
+        ("Cái thứ đáng nguyền rủa này!", True),
+    ],
+)
+def test_a_curse_as_a_thing_is_not_anger(text: str, angry: bool) -> None:
+    assert ("angry" in _semantic_cue_matches(text)) is angry
+
+
 def test_no_affect_pattern_contains_a_control_character() -> None:
     """A backslash-b that survives one escaping layer too few becomes a backspace.
 
