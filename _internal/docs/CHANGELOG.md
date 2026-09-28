@@ -7,6 +7,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Hộp **"Việc cần anh"**: thẻ **"Nam hay nữ"** và **"Chung giọng"** giờ bấm được. Thẻ nói máy đang đọc nhân vật bằng
+  giọng nam hay nữ và cái giá của từng lựa chọn ("giữ giọng đang đọc" hay "đổi giọng, thu lại 3 câu"). Chọn xong,
+  dây chuyền ghim giới cho các lô sau và - khi giọng phải đổi - chọn giọng mới đúng cách bước phân vai chọn (không trùng
+  bậc giọng với người cùng chương, mọi người khác giữ nguyên giọng), rồi thu lại đúng các câu của người ấy. "Chung giọng"
+  đổi giọng người ít câu hơn trước. Không phải dừng sách.
 - Hộp **"Việc cần anh"**: thẻ **"Một người hai tên"** bấm được - "Gộp vào X" chuyển mọi câu của tên ít câu hơn
   sang giọng của tên nhiều câu hơn (người nghe đã quen giọng ấy, ít câu phải thu lại nhất), "Hai người khác nhau" thì
   thẻ không hỏi lại. Thẻ giờ bắt cả trường hợp tên NGẮN nói nhiều hơn ("Kati" / "St. Kati") mà trước đây bỏ sót.

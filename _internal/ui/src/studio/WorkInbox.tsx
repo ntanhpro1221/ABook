@@ -47,6 +47,24 @@ interface WorkItem {
   currentValue?: string;
   /** Nhãn nút giữ nguyên khi "Giữ <người đang nói>" không đúng nghĩa (bí danh: "Hai người khác nhau"). */
   keepLabel?: string;
+  /** Việc giọng/giới của nhân vật ("Nam hay nữ", "Chung giọng"): mỗi lựa chọn là một yêu cầu POST /voice; giữ nguyên thì
+   *  ghi yêu cầu rỗng cho từng người trong `keepCharacters` (thẻ thôi hỏi). */
+  voiceChoices?: VoiceChoice[];
+  keepCharacters?: string[];
+}
+
+interface VoiceChoice {
+  label: string;
+  character: string;
+  gender?: string;
+  preset?: string;
+  avoid?: string;
+  /** Cái giá của lựa chọn: "giữ giọng đang đọc", "đổi giọng, thu lại 12 câu". */
+  note?: string;
+  /** Câu báo khi đã ghi: "Noah là nữ", "đổi giọng Rhine". */
+  done?: string;
+  /** Máy khuyên lựa chọn này (tách hai người chung giọng: đổi người ít câu hơn). Thẻ giới không khuyên gì. */
+  recommended?: boolean;
 }
 
 interface WorkView {
@@ -231,6 +249,75 @@ function SpeakerFix({ bookId, item }: { bookId: string; item: WorkItem }) {
   );
 }
 
+// Giọng / giới của một nhân vật: một lần bấm. Dây chuyền chọn giọng mới như bước phân vai (mọi người khác giữ giọng) và
+// chỉ thu lại khi giọng thật sự đổi - ghi chú dưới mỗi nút nói trước cái giá ấy.
+function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
+  const client = useQueryClient();
+  const save = useMutation({
+    mutationFn: async ({ requests }: { requests: Omit<VoiceChoice, "label" | "note" | "done" | "recommended">[]; label: string; keep: boolean }) => {
+      for (const request of requests) await api(`/api/books/${bookId}/voice`, { method: "POST", body: request });
+    },
+    onSuccess: (_result, { label, keep }) => {
+      void client.invalidateQueries({ queryKey: ["work", bookId] });
+      if (keep) {
+        toast.success(`Đã ghi: ${label}`, { description: "Việc này sẽ không hiện lại." });
+        return;
+      }
+      toast.success(`Đã ghi: ${label}`, {
+        description: "Áp ở ranh giới chương kế tiếp; nếu giọng phải đổi, mọi câu của người ấy được thu lại bằng giọng mới.",
+      });
+    },
+    onError: (error: Error) => toast.error("Chưa ghi được", { description: error.message }),
+  });
+  return (
+    <div className="mt-3">
+      {item.requested && (
+        <p className="mb-2 flex items-center gap-1.5 text-xs text-fg-2">
+          <Check className="size-3.5 text-success" />
+          Đã ghi: {item.requested} - chờ dây chuyền áp ở ranh giới chương kế tiếp.
+        </p>
+      )}
+      <div className="flex flex-wrap items-start gap-2" role="group" aria-label="Chọn">
+        {(item.voiceChoices ?? []).map((choice) => (
+          <div key={`${choice.character}-${choice.label}`} className="flex flex-col items-start gap-0.5">
+            <Button
+              size="sm"
+              variant={choice.recommended ? "primary" : "secondary"}
+              disabled={save.isPending}
+              onClick={() =>
+                save.mutate({
+                  requests: [{ character: choice.character, gender: choice.gender, preset: choice.preset, avoid: choice.avoid }],
+                  label: choice.done ?? choice.label,
+                  keep: false,
+                })
+              }
+            >
+              {choice.label}
+            </Button>
+            {choice.note && <span className="px-0.5 text-[11px] text-fg-3">{choice.note}</span>}
+          </div>
+        ))}
+        {item.keepCharacters && item.keepCharacters.length > 0 && (
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={save.isPending}
+            onClick={() =>
+              save.mutate({
+                requests: item.keepCharacters!.map((character) => ({ character })),
+                label: item.keepLabel ?? "Giữ nguyên",
+                keep: true,
+              })
+            }
+          >
+            {item.keepLabel ?? "Giữ nguyên"}
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function Card({ bookId, item, onOpenReview }: { bookId: string; item: WorkItem; onOpenReview: () => void }) {
   return (
     <li className="rounded-xl border border-line bg-panel p-4">
@@ -253,6 +340,8 @@ function Card({ bookId, item, onOpenReview }: { bookId: string; item: WorkItem; 
         </Button>
       ) : item.kind === "pronunciation" && item.surface ? (
         <PronunciationFix bookId={bookId} item={item} />
+      ) : item.voiceChoices && item.voiceChoices.length > 0 ? (
+        <VoiceFix bookId={bookId} item={item} />
       ) : item.lines && item.choices ? (
         <SpeakerFix bookId={bookId} item={item} />
       ) : (
@@ -296,8 +385,8 @@ export function WorkInbox({ bookId, onOpenReview }: { bookId: string; onOpenRevi
     <div className="mt-5">
       <p className="max-w-3xl text-sm text-fg-2">
         Máy đã tự quyết và đang chạy tiếp - không có gì phải chờ anh. Đây là những chỗ nó không chắc, xếp theo lợi: việc ở
-        trên sửa một lần được nhiều câu nhất. Cách đọc tên, người nói từng câu và gộp hai tên của một người sửa được ngay
-        tại đây, không phải dừng sách; giới tính và giọng nhân vật sẽ sửa được ở bước kế.
+        trên sửa một lần được nhiều câu nhất. Cách đọc tên, người nói từng câu, hai tên của một người, giới và giọng nhân
+        vật đều sửa được ngay tại đây, không phải dừng sách.
       </p>
       <div className="mt-4 overflow-x-auto">
         <Segmented<WorkKind | "all">
