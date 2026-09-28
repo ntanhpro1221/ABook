@@ -18,9 +18,9 @@
 13 N
 14 N
 15 N
-16 D NPC*,UNKNOWN~,ANDRIS~ afraid 1-2 fast,normal normal,loud u
-17 D NPC*,UNKNOWN~ afraid,surprised 1-2 fast,normal normal,loud u
-18 D NPC*,UNKNOWN~ afraid 2-3 fast loud u
+16 D NPC*:quý tộc trẻ 1,UNKNOWN~,ANDRIS~ afraid 1-2 fast,normal normal,loud u
+17 D NPC*:quý tộc trẻ 2,UNKNOWN~ afraid,surprised 1-2 fast,normal normal,loud u
+18 D NPC*:quý tộc trẻ 3,UNKNOWN~ afraid 2-3 fast loud u
 19 N NARRATOR neutral,afraid 0-1 normal normal u
 20 N,T NARRATOR,JOCELYN~ angry,sarcastic,neutral 0-1 normal normal u
 21 N
@@ -56,14 +56,14 @@
 51 D SOPHIA happy,excited 1 normal normal f
 52 N,T NARRATOR,ANDRIS~ angry,sad,neutral 0-1 normal normal u
 53 N NARRATOR neutral,angry 0-1 normal normal u
-54 D NPC*,UNKNOWN~ sarcastic,happy 1-2 normal loud,normal m
+54 D NPC*:quý tộc trẻ khoa trương,UNKNOWN~ sarcastic,happy 1-2 normal loud,normal m
 55 N
 56 N
-57 D NPC*,UNKNOWN~ sarcastic,happy 1-2 normal loud,normal m
+57 D NPC*:quý tộc trẻ khoa trương,UNKNOWN~ sarcastic,happy 1-2 normal loud,normal m
 58 N
-59 D NPC*,UNKNOWN~ sarcastic 1-2 normal normal m
+59 D NPC*:quý tộc trẻ không ưa Andris,UNKNOWN~ sarcastic 1-2 normal normal m
 60 N
-61 D NPC*,UNKNOWN~ sarcastic 1 normal normal,soft m
+61 D NPC*:quý tộc trẻ cười ám muội,UNKNOWN~ sarcastic 1 normal normal,soft m
 62 N
 63 N
 64 N NARRATOR neutral,angry 0-1 normal normal u

@@ -66,6 +66,9 @@ class Gold:
     emotion_order: tuple[str, ...] = ()
     pace_order: tuple[str, ...] = ()
     volume_order: tuple[str, ...] = ()
+    # `NPC*:<mô tả>` (29-09): người vô danh ĐÃ được soát là ai ("mẹ Kakeru", "bà chủ quán"). Chấm vẫn như `NPC*`; mô tả chỉ
+    # để gold_replay dạy model đặt nhãn cục bộ riêng cho từng người lạ, như prompt yêu cầu.
+    npc_label: str = ""
 
     @property
     def spoken(self) -> bool:
@@ -84,7 +87,7 @@ def speaker_key(name: str) -> str:
     thứ hai, để hai bên không bao giờ lệch nhau.
     """
     text = unicodedata.normalize("NFC", str(name or "")).strip()
-    if text.upper().startswith("NPC_LOCAL") or text.upper() == "NPC*" or text.casefold() in PRONOUNS:
+    if text.upper().startswith(("NPC_LOCAL", "NPC*")) or text.casefold() in PRONOUNS:
         return "NPC*"
     return re.sub(r"\s+", " ", text).upper()
 
@@ -105,6 +108,7 @@ def parse_gold(path: Path) -> list[Gold]:
                 raise ValueError(f"{path.name}:{number}: dòng rút gọn chỉ dành cho N")
             speaker, emotions, intensity, paces, volumes, gender = NARRATION_DEFAULT
             speakers: tuple[tuple[str, float], ...] = ((speaker, 1.0),)
+            npc_label = ""
             emotion_order, pace_order, volume_order = ("neutral",), ("normal",), ("normal",)
         else:
             # Tên có dấu cách ("THẦN HƠI NƯỚC") nên tách từ PHẢI: 5 trường cuối cố định.
@@ -112,6 +116,8 @@ def parse_gold(path: Path) -> list[Gold]:
                 raise ValueError(f"{path.name}:{number}: thiếu trường: {line!r}")
             speaker_field = " ".join(parts[2:-5])
             emotion_field, intensity_field, pace_field, volume_field, gender = parts[-5:]
+            first = speaker_field.split(",")[0]
+            npc_label = first.partition(":")[2].strip() if first.upper().startswith("NPC*:") else ""
             speakers = tuple(
                 (speaker_key(option[:-1]), 0.5) if option.endswith("~") else (speaker_key(option), 1.0)
                 for option in speaker_field.split(",")
@@ -127,7 +133,7 @@ def parse_gold(path: Path) -> list[Gold]:
         kinds = frozenset(KIND_LETTERS[letter] for letter in kind_field.split(","))
         rows.append(
             Gold(chapter, seq, kinds, speakers, frozenset(emotions), intensity,
-                 frozenset(paces), frozenset(volumes), gender, emotion_order, pace_order, volume_order)
+                 frozenset(paces), frozenset(volumes), gender, emotion_order, pace_order, volume_order, npc_label)
         )
     return rows
 
