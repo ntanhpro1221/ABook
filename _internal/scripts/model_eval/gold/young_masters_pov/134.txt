@@ -1,214 +1,221 @@
 # Đáp án chuẩn cuốn 1 (Young Master's PoV), file 134 ("Chương 133"). Vòng 11 (20-09): agent review gán (B), Claude soát đối
 # kháng (A) - ADJUDICATION.md. "tôi" = SAMAEL (lời kể là NARRATOR). MICHAEL / MICHAEL GODSWILL. Câu gọi tên: người được gọi là
 # người NGHE ("Samael, ..." là Michael nói). 5, 12, 17, 60, 109, 123, 191: thoại nằm trong đoạn bị khoá N -> NARRATOR (quy tắc 10).
+# 28-09 22:xx - CHUYỂN sang cách tách mới (nhánh dev/comma-dialogue: câu “...,” + lời dẫn giờ tách thành thoại +
+# lời kể; scripts/model_eval/segment_diff.py): số seq trong các ghi chú bên trên là số CŨ.
 0 H
 1 D MICHAEL,MICHAEL GODSWILL neutral 0-1 normal normal m
 2 N
 3 N
 4 N NARRATOR neutral,surprised 0-1 normal normal u
-5 N NARRATOR neutral,afraid 0-1 normal normal u
+5 D SAMAEL afraid,neutral,surprised 0-1 normal normal m
 6 N
-7 D MICHAEL,MICHAEL GODSWILL neutral 0-1 normal normal m
-8 D SAMAEL afraid,neutral 0-1 normal normal m
-9 N
+7 N
+8 D MICHAEL,MICHAEL GODSWILL neutral 0-1 normal normal m
+9 D SAMAEL afraid,neutral 0-1 normal normal m
 10 N
-11 D MICHAEL,MICHAEL GODSWILL surprised,neutral 0-1 normal normal m
-12 N NARRATOR neutral,afraid 0-1 normal normal u
-13 D SAMAEL afraid,neutral 0-1 normal normal m
-14 D MICHAEL,MICHAEL GODSWILL neutral,sarcastic 0-1 normal normal m
-15 N
-16 D MICHAEL,MICHAEL GODSWILL neutral 0-1 normal normal m
-17 N NARRATOR neutral,sad 0-1 normal normal u
-18 D SAMAEL sad,neutral 0-1 normal normal m
-19 N NARRATOR neutral,happy 0-1 normal normal u
-20 D MICHAEL,MICHAEL GODSWILL sarcastic,happy 1-2 normal normal,loud m
-21 N
-22 D MICHAEL,MICHAEL GODSWILL sarcastic,happy 1-2 normal normal,loud m
-23 N NARRATOR neutral,tired 0-1 normal normal u
-24 D SAMAEL angry,tired 1 normal normal m
-25 N
-26 D MICHAEL,MICHAEL GODSWILL sarcastic,happy 0-1 normal normal m
-27 N NARRATOR neutral,sarcastic 0-1 normal normal u
-28 D MICHAEL,MICHAEL GODSWILL sarcastic,happy 0-1 normal normal m
-29 D SAMAEL neutral,tired 0-1 normal normal m
-30 D MICHAEL,MICHAEL GODSWILL happy,sarcastic 0-1 normal normal m
-31 N
-32 D SAMAEL sarcastic,angry 0-1 normal normal m
+11 N
+12 D MICHAEL,MICHAEL GODSWILL surprised,neutral 0-1 normal normal m
+13 D SAMAEL afraid,neutral 0-1 normal,slow normal,soft m
+14 N
+15 D SAMAEL afraid,neutral 0-1 normal normal m
+16 D MICHAEL,MICHAEL GODSWILL neutral,sarcastic 0-1 normal normal m
+17 N
+18 D MICHAEL,MICHAEL GODSWILL neutral 0-1 normal normal m
+19 D SAMAEL neutral,sad 0-1 normal normal,soft m
+20 N
+21 D SAMAEL sad,neutral 0-1 normal normal m
+22 N NARRATOR neutral,happy 0-1 normal normal u
+23 D MICHAEL,MICHAEL GODSWILL sarcastic,happy 1-2 normal normal,loud m
+24 N
+25 D MICHAEL,MICHAEL GODSWILL sarcastic,happy 1-2 normal normal,loud m
+26 N NARRATOR neutral,tired 0-1 normal normal u
+27 D SAMAEL angry,tired 1 normal normal m
+28 N
+29 D MICHAEL,MICHAEL GODSWILL sarcastic,happy 0-1 normal normal m
+30 N NARRATOR neutral,sarcastic 0-1 normal normal u
+31 D MICHAEL,MICHAEL GODSWILL sarcastic,happy 0-1 normal normal m
+32 D SAMAEL neutral,tired 0-1 normal normal m
 33 D MICHAEL,MICHAEL GODSWILL happy,sarcastic 0-1 normal normal m
 34 N
-35 D MICHAEL,MICHAEL GODSWILL happy,neutral 0-1 normal normal m
-36 N
+35 D SAMAEL sarcastic,angry 0-1 normal normal m
+36 D MICHAEL,MICHAEL GODSWILL happy,sarcastic 0-1 normal normal m
 37 N
-38 D SAMAEL tired,sarcastic 0-1 normal normal m
+38 D MICHAEL,MICHAEL GODSWILL happy,neutral 0-1 normal normal m
 39 N
-40 D MICHAEL,MICHAEL GODSWILL surprised 1 normal normal m
-41 D SAMAEL tired,neutral 0-1 normal,fast normal m
+40 N
+41 D SAMAEL tired,sarcastic 0-1 normal normal m
 42 N
-43 N NARRATOR neutral,sarcastic 0-1 normal normal u
-44 D MICHAEL,MICHAEL GODSWILL happy 0-1 normal normal m
+43 D MICHAEL,MICHAEL GODSWILL surprised 1 normal normal m
+44 D SAMAEL tired,neutral 0-1 normal,fast normal m
 45 N
-46 D SAMAEL neutral 0-1 normal normal m
-47 D MICHAEL,MICHAEL GODSWILL neutral 0-1 normal normal m
+46 N NARRATOR neutral,sarcastic 0-1 normal normal u
+47 D MICHAEL,MICHAEL GODSWILL happy 0-1 normal normal m
 48 N
-49 D MICHAEL,MICHAEL GODSWILL happy,sarcastic 0-1 normal normal m
-50 D SAMAEL sarcastic,tired 0-1 normal normal m
+49 D SAMAEL neutral 0-1 normal normal m
+50 D MICHAEL,MICHAEL GODSWILL neutral 0-1 normal normal m
 51 N
-52 D SAMAEL sarcastic 0-1 normal normal m
-53 N
-54 D SAMAEL surprised 0-1 normal normal m
-55 N
-56 D MICHAEL,MICHAEL GODSWILL happy,neutral 0-1 normal normal m
-57 N
+52 D MICHAEL,MICHAEL GODSWILL happy,sarcastic 0-1 normal normal m
+53 D SAMAEL sarcastic,tired 0-1 normal normal m
+54 N
+55 D SAMAEL sarcastic 0-1 normal normal m
+56 N
+57 D SAMAEL surprised 0-1 normal normal m
 58 N
-59 N NARRATOR neutral,sarcastic 0-1 normal normal u
-60 N NARRATOR neutral,sarcastic 0-1 normal normal u
-61 D MICHAEL,MICHAEL GODSWILL happy,sarcastic 0-1 normal normal m
-62 N
-63 D SAMAEL neutral 0-1 normal normal m
+59 D MICHAEL,MICHAEL GODSWILL happy,neutral 0-1 normal normal m
+60 N
+61 N
+62 N NARRATOR neutral,sarcastic 0-1 normal normal u
+63 D MICHAEL,MICHAEL GODSWILL sarcastic,happy 0-1 normal normal m
 64 N
-65 D MICHAEL,MICHAEL GODSWILL angry,neutral 0-1 normal normal m
+65 D MICHAEL,MICHAEL GODSWILL happy,sarcastic 0-1 normal normal m
 66 N
 67 D SAMAEL neutral 0-1 normal normal m
-68 D MICHAEL,MICHAEL GODSWILL angry,tired 1 normal normal m
-69 N
+68 N
+69 D MICHAEL,MICHAEL GODSWILL angry,neutral 0-1 normal normal m
 70 N
-71 N
-72 D SAMAEL neutral 0-1 normal normal m
+71 D SAMAEL neutral 0-1 normal normal m
+72 D MICHAEL,MICHAEL GODSWILL angry,tired 1 normal normal m
 73 N
-74 D MICHAEL,MICHAEL GODSWILL surprised,angry 1-2 fast normal,loud m
-75 D SAMAEL neutral 0-1 normal normal m
-76 N
+74 N
+75 N
+76 D SAMAEL neutral 0-1 normal normal m
 77 N
-78 N
-79 N
-80 D MICHAEL,MICHAEL GODSWILL sarcastic,surprised 0-1 normal normal m
-81 D SAMAEL sarcastic,neutral 0-1 normal normal m
+78 D MICHAEL,MICHAEL GODSWILL surprised,angry 1-2 fast normal,loud m
+79 D SAMAEL neutral 0-1 normal normal m
+80 N
+81 N
 82 N
 83 N
-84 D SAMAEL neutral 0-1 normal normal m
-85 N
+84 D MICHAEL,MICHAEL GODSWILL sarcastic,surprised 0-1 normal normal m
+85 D SAMAEL sarcastic,neutral 0-1 normal normal m
 86 N
-87 D MICHAEL,MICHAEL GODSWILL surprised,afraid 1 normal normal m
-88 N
+87 N
+88 D SAMAEL neutral 0-1 normal normal m
 89 N
 90 N
-91 N
-92 N NARRATOR neutral,afraid 0-1 normal normal u
-93 D MICHAEL,MICHAEL GODSWILL afraid,surprised 1-2 normal normal m
-94 D SAMAEL neutral,sarcastic 0-1 normal normal m
+91 D MICHAEL,MICHAEL GODSWILL surprised,afraid 1 normal normal m
+92 N
+93 N
+94 N
 95 N
-96 D MICHAEL,MICHAEL GODSWILL angry 2 fast loud m
-97 N
-98 N
-99 D SAMAEL neutral,sarcastic 0-1 normal normal m
-100 N
+96 N NARRATOR neutral,afraid 0-1 normal normal u
+97 D MICHAEL,MICHAEL GODSWILL afraid,surprised 1-2 normal normal m
+98 D SAMAEL neutral,sarcastic 0-1 normal normal m
+99 N
+100 D MICHAEL,MICHAEL GODSWILL angry 2 fast loud m
 101 N
-102 N NARRATOR neutral,surprised 0-1 normal normal u
-103 N NARRATOR neutral,surprised 0-1 normal normal u
+102 N
+103 D SAMAEL neutral,sarcastic 0-1 normal normal m
 104 N
-105 N NARRATOR neutral,afraid 0-1 normal normal u
-106 D MICHAEL,MICHAEL GODSWILL afraid,surprised 2 fast loud m
-107 N
-108 D SAMAEL happy,sarcastic 0-1 normal normal m
+105 N
+106 N NARRATOR neutral,surprised 0-1 normal normal u
+107 N NARRATOR neutral,surprised 0-1 normal normal u
+108 N
 109 N NARRATOR neutral,afraid 0-1 normal normal u
-110 D MICHAEL,MICHAEL GODSWILL afraid,angry 2 fast loud m
+110 D MICHAEL,MICHAEL GODSWILL afraid,surprised 2 fast loud m
 111 N
-112 N
-113 D MICHAEL,MICHAEL GODSWILL afraid 2 fast loud m
-114 N NARRATOR neutral,excited 0-1 normal normal u
+112 D SAMAEL happy,sarcastic 0-1 normal normal m
+113 N NARRATOR neutral,afraid 0-1 normal normal u
+114 D MICHAEL,MICHAEL GODSWILL afraid,angry 2 fast loud m
 115 N
 116 N
-117 N NARRATOR neutral,afraid 0-1 normal normal u
-118 D MICHAEL,MICHAEL GODSWILL afraid,angry 2-3 fast loud m
+117 D MICHAEL,MICHAEL GODSWILL afraid 2 fast loud m
+118 N NARRATOR neutral,excited 0-1 normal normal u
 119 N
-120 D SAMAEL happy,sarcastic 0-1 normal normal m
-121 N
-122 N
-123 N NARRATOR neutral,angry 0-1 normal normal u
-124 D MICHAEL,MICHAEL GODSWILL angry 2 fast loud m
+120 N
+121 N NARRATOR neutral,afraid 0-1 normal normal u
+122 D MICHAEL,MICHAEL GODSWILL afraid,angry 2-3 fast loud m
+123 N
+124 D SAMAEL happy,sarcastic 0-1 normal normal m
 125 N
-126 D SAMAEL happy,sarcastic 0-1 normal normal m
-127 N
-128 D MICHAEL,MICHAEL GODSWILL angry,afraid 2 fast normal,loud m
-129 D SAMAEL happy 1 normal normal m
-130 N
-131 D SAMAEL sarcastic,neutral 0-1 normal normal m
-132 N
-133 D MICHAEL,MICHAEL GODSWILL afraid,angry 2-3 fast loud m
-134 D SAMAEL sarcastic 0-1 normal normal m
-135 N
-136 D SAMAEL sarcastic 0-1 normal normal m
-137 N
-138 D MICHAEL,MICHAEL GODSWILL surprised,angry 2 fast loud m
+126 N
+127 N NARRATOR neutral,angry 0-1 normal normal u
+128 D MICHAEL,MICHAEL GODSWILL angry 2 fast loud m
+129 N
+130 D SAMAEL happy,sarcastic 0-1 normal normal m
+131 N
+132 D MICHAEL,MICHAEL GODSWILL angry,afraid 2 fast normal,loud m
+133 D SAMAEL happy 1 normal normal m
+134 N
+135 D SAMAEL sarcastic,neutral 0-1 normal normal m
+136 N
+137 D MICHAEL,MICHAEL GODSWILL afraid,angry 2-3 fast loud m
+138 D SAMAEL sarcastic 0-1 normal normal m
 139 N
-140 D SAMAEL sarcastic,neutral 0-1 normal normal m
-141 N NARRATOR neutral,afraid 0-1 normal normal u
-142 N
+140 D SAMAEL sarcastic 0-1 normal normal m
+141 N
+142 D MICHAEL,MICHAEL GODSWILL surprised,angry 2 fast loud m
 143 N
-144 D MICHAEL,MICHAEL GODSWILL angry 2 normal normal,loud m
-145 D SAMAEL sarcastic,happy 0-1 normal normal m
+144 D SAMAEL sarcastic,neutral 0-1 normal normal m
+145 N NARRATOR neutral,afraid 0-1 normal normal u
 146 N
-147 D SAMAEL happy,sarcastic 0-1 normal normal m
-148 N NARRATOR neutral,angry 0-1 normal normal u
-149 D SAMAEL sarcastic 0-1 normal normal m
+147 N
+148 D MICHAEL,MICHAEL GODSWILL angry 2 normal normal,loud m
+149 D SAMAEL sarcastic,happy 0-1 normal normal m
 150 N
-151 D SAMAEL neutral,sarcastic 0-1 normal normal m
-152 D SAMAEL neutral,sarcastic 0-1 normal normal m
-153 N
+151 D SAMAEL happy,sarcastic 0-1 normal normal m
+152 N NARRATOR neutral,angry 0-1 normal normal u
+153 D SAMAEL sarcastic 0-1 normal normal m
 154 N
-155 D SAMAEL happy,sarcastic 0-1 normal normal m
-156 N
-157 D SAMAEL sarcastic 0-1 normal normal m
+155 D SAMAEL neutral,sarcastic 0-1 normal normal m
+156 D SAMAEL neutral,sarcastic 0-1 normal normal m
+157 N
 158 N
-159 D SAMAEL sarcastic,neutral 0-1 normal normal m
+159 D SAMAEL happy,sarcastic 0-1 normal normal m
 160 N
-161 D SAMAEL happy,sarcastic 0-1 normal normal m
+161 D SAMAEL sarcastic 0-1 normal normal m
 162 N
-163 D SAMAEL happy,sarcastic 0-1 normal normal m
-164 N NARRATOR neutral,angry 0-1 normal normal u
-165 D MICHAEL,MICHAEL GODSWILL angry 2 normal,fast normal,loud m
+163 D SAMAEL sarcastic,neutral 0-1 normal normal m
+164 N
+165 D SAMAEL happy,sarcastic 0-1 normal normal m
 166 N
-167 D SAMAEL sarcastic,happy 0-1 normal normal m
+167 D SAMAEL happy,sarcastic 0-1 normal normal m
 168 N NARRATOR neutral,angry 0-1 normal normal u
-169 N,T NARRATOR,SAMAEL neutral,sarcastic 0-1 normal normal u
-170 N NARRATOR neutral,sarcastic 0-1 normal normal u
-171 N
-172 D MICHAEL,MICHAEL GODSWILL angry 1-2 slow soft,normal m
-173 N
-174 D SAMAEL happy,sarcastic 0-1 normal normal m
-175 N NARRATOR neutral,angry 0-1 normal normal u
-176 N
+169 D MICHAEL,MICHAEL GODSWILL angry 2 normal,fast normal,loud m
+170 N
+171 D SAMAEL sarcastic,happy 0-1 normal normal m
+172 N NARRATOR neutral,angry 0-1 normal normal u
+173 N,T NARRATOR,SAMAEL neutral,sarcastic 0-1 normal normal u
+174 N NARRATOR neutral,sarcastic 0-1 normal normal u
+175 N
+176 D MICHAEL,MICHAEL GODSWILL angry 1-2 slow soft,normal m
 177 N
-178 D SAMAEL neutral 0-1 normal normal m
-179 N
-180 D MICHAEL,MICHAEL GODSWILL angry,tired 0-1 normal normal m
-181 D SAMAEL neutral 0-1 normal normal m
-182 N
+178 D SAMAEL happy,sarcastic 0-1 normal normal m
+179 N NARRATOR neutral,angry 0-1 normal normal u
+180 N
+181 N
+182 D SAMAEL neutral 0-1 normal normal m
 183 N
-184 N
-185 D MICHAEL,MICHAEL GODSWILL neutral,angry 1 normal normal m
+184 D MICHAEL,MICHAEL GODSWILL angry,tired 0-1 normal normal m
+185 D SAMAEL neutral 0-1 normal normal m
 186 N
 187 N
-188 D SAMAEL neutral,happy 0-1 normal normal m
-189 N
-190 D MICHAEL,MICHAEL GODSWILL surprised 1 normal normal m
-191 N NARRATOR neutral 0-1 normal normal u
-192 D SAMAEL neutral 0-1 normal normal m
-193 D MICHAEL,MICHAEL GODSWILL surprised,sarcastic 0-1 normal normal m
-194 N
-195 D MICHAEL,MICHAEL GODSWILL surprised 0-1 normal normal m
+188 N
+189 D MICHAEL,MICHAEL GODSWILL neutral,angry 1 normal normal m
+190 N
+191 N
+192 D SAMAEL neutral,happy 0-1 normal normal m
+193 N
+194 D MICHAEL,MICHAEL GODSWILL surprised 1 normal normal m
+195 D SAMAEL neutral 0-1 normal normal m
 196 N
-197 D MICHAEL,MICHAEL GODSWILL angry,surprised 2 fast normal,loud m
-198 N
-199 D SAMAEL happy 0-1 normal normal m
-200 N
-201 D SAMAEL happy,sarcastic 0-1 normal normal m
-202 N NARRATOR neutral,sarcastic 0-1 normal normal u
-203 D MICHAEL,MICHAEL GODSWILL angry 1-2 normal normal m
+197 D SAMAEL neutral 0-1 normal normal m
+198 D MICHAEL,MICHAEL GODSWILL surprised,sarcastic 0-1 normal normal m
+199 N
+200 D MICHAEL,MICHAEL GODSWILL surprised 0-1 normal normal m
+201 N
+202 D MICHAEL,MICHAEL GODSWILL angry,surprised 2 fast normal,loud m
+203 N
 204 D SAMAEL happy 0-1 normal normal m
 205 N
 206 D SAMAEL happy,sarcastic 0-1 normal normal m
-207 N
-208 D MICHAEL,MICHAEL GODSWILL angry 2 fast loud m
-209 N NARRATOR neutral,excited 0-1 normal,fast normal u
-210 N NARRATOR neutral,sarcastic 0-1 normal normal u
+207 N NARRATOR neutral,sarcastic 0-1 normal normal u
+208 D MICHAEL,MICHAEL GODSWILL angry 1-2 normal normal m
+209 D SAMAEL happy 0-1 normal normal m
+210 N
+211 D SAMAEL happy,sarcastic 0-1 normal normal m
+212 N
+213 D MICHAEL,MICHAEL GODSWILL angry 2 fast loud m
+214 N NARRATOR neutral,excited 0-1 normal,fast normal u
+215 N NARRATOR neutral,sarcastic 0-1 normal normal u
