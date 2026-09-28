@@ -1038,6 +1038,16 @@ Quy tắc:
    “anh Lucien”, “chị Alisa”, hoặc tên ở đầu câu theo sau bởi dấu phẩy như “Iven, ...” thường là người
    nghe. Tuyệt đối không lấy tên đó làm speaker nếu lời kể lân cận cho thấy một người khác đang nói;
    nếu người nói chưa có tên, dùng NPC_LOCAL với nhãn mô tả người nói.
+   Nhiều đoạn văn liền nhau, mỗi đoạn chỉ một câu thoại trọn trong ngoặc (đoạn trước đóng ngoặc, đoạn sau mở
+   ngoặc mới) và không có lời dẫn xen giữa, là hai người LUÂN PHIÊN đối đáp: A, B, A, B. Xác định hai người
+   ấy từ lời dẫn gần nhất rồi đếm luân phiên; không gán hai đoạn liền nhau như thế cho cùng một người, trừ khi
+   nội dung cho thấy rõ vẫn là người ấy nói tiếp. Truyện kể ngôi thứ nhất: một trong hai người thường là
+   chính người kể.
+   Câu thoại trong kiểu ngoặc khác hẳn ngoặc thoại thường của truyện (ví dụ 『』, [ ], 【】 hay 《》 khi thoại
+   thường dùng “ ”) là một giọng ĐẶC BIỆT: bài đăng mạng, tin nhắn, thư, giọng trong đầu, thần linh, yêu
+   quái, hệ thống. Không gán những câu ấy cho người đang nói bằng ngoặc thường ở gần; dùng tên riêng của
+   thực thể ấy nếu văn bản có, không thì NPC_LOCAL với nhãn mô tả (NPC_LOCAL:bài đăng ẩn danh,
+   NPC_LOCAL:giọng trong đầu). Cùng một kiểu ngoặc đặc biệt trong một chương thường là cùng một thực thể.
 3. Độc thoại nội tâm dùng kind=thought và speaker là **chính nhân vật đang nghĩ**, theo đúng quy tắc đặt tên
    như hội thoại. Nội tâm là tiếng nói bên trong của người đó, không phải lời người kể, nên phải đọc bằng
    giọng của người đó. Xác định người nghĩ từ ngữ cảnh: đại từ ngôi thứ nhất trong câu, và điểm nhìn của
