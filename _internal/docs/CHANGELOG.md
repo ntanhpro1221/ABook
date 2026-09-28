@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Máy tính: **app Windows cài bằng một file (~30 MB)**, không cần quyền quản trị, không cài Python hay gì khác vào máy.
+  Bấm đúp file `.abook` là mở sách. App tự tìm bản mới mỗi lần mở: có bản mới thì thanh bên hiện "Có ABook x.y.z" -
+  bấm "Cập nhật và mở lại" trong Cài đặt là xong (gói có chữ ký, sai chữ ký thì không cài). Gỡ app không xoá sách hay chỗ
+  đang nghe. Phần làm sách nói (Studio) chưa có trong bản cài này - sẽ tải thêm khi cần.
 - Máy tính: **nghe sách trên máy tính khác** mà không phải chép sang. Cài đặt → "Máy tính khác": nhập địa chỉ và mã 6
   số đang hiện trên máy kia (đúng mã điện thoại dùng). Sách của máy ấy hiện trong Thư viện với nhãn "Trên <tên máy>";
   nghe, đọc theo, nhân vật, dấu trang, hồ sơ nghe đều như sách của máy này. Chương được tải lần đầu nghe tới rồi giữ
