@@ -396,9 +396,11 @@ class App:
             phone["localBookId"] = phone["bookId"] if path is not None else None
             phone["cover"] = covers.cover_view(path, phone["bookId"]) if path is not None else None
             phones.append({**phone, "kind": "phone", "via": "remote"})
-        reporting = {phone["name"] for phone in phones}
+        # Điện thoại vừa báo lên đây vừa chia sẻ thư viện: một thanh là đủ. Nhận ra nó bằng tên VÀ đúng cuốn, đúng chương
+        # đang phát - hai điện thoại cùng đời máy (cùng tên) đang nghe hai thứ khác nhau thì vẫn là hai thanh.
+        reporting = {(phone["name"], phone["bookId"], phone["chapterId"]) for phone in phones}
         for peer in self.peer_players.view():
-            if peer["name"] in reporting:  # điện thoại vừa báo lên đây vừa chia sẻ thư viện: một thanh là đủ
+            if (peer["name"], peer["bookId"], peer["chapterId"]) in reporting:
                 continue
             path = remote_books.local_book(self.library.root, peer["device"], peer["bookId"]) if peer["bookId"] else None
             local = book_id(path) if path is not None else None
