@@ -542,9 +542,20 @@ object Store {
         save(id, state)
     }
 
+    /** Mã sách hợp lệ để XOÁ: không rỗng, chỉ [A-Za-z0-9_-], và thư mục của nó nằm ngay trong books/. Mã rỗng là CẢ thư
+     *  mục books/ (bookDir("") = root/books) - xoá theo mã ấy là mất mọi sách đã tải; "../x" ra ngoài thư viện. */
+    fun deletableBookDir(id: String): File {
+        require(id.isNotEmpty() && id.all { it.isLetterOrDigit() && it.code < 128 || it == '_' || it == '-' }) {
+            "mã sách không hợp lệ"
+        }
+        val dir = bookDir(id).canonicalFile
+        require(dir.parentFile == File(root, "books").canonicalFile) { "thư mục sách nằm ngoài thư viện" }
+        return dir
+    }
+
     @Synchronized
     fun deleteBook(id: String) {
-        bookDir(id).deleteRecursively()
+        deletableBookDir(id).deleteRecursively()
         val all = printsBook()
         if (all.has(id)) {
             all.remove(id)

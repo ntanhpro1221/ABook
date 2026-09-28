@@ -1,7 +1,7 @@
 import { App as CapacitorApp } from "@capacitor/app";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { Download, FileAudio, Library, Settings } from "lucide-react";
-import { useEffect, useMemo, useRef, type ReactNode } from "react";
+import { Download, FileAudio, Library, Settings, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { HashRouter, NavLink, Route, Routes, useLocation, useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { Toaster, toast } from "sonner";
@@ -18,7 +18,7 @@ import { usePageEnter } from "@/shared/motion";
 import { watchDownloads } from "./downloads";
 import { pickBookFile, watchImports } from "./imports";
 import { cn } from "@/shared/cn";
-import { Button, EmptyState, TooltipProvider } from "@/shared/ui";
+import { Button, Dialog, EmptyState, TooltipProvider } from "@/shared/ui";
 import { androidSource } from "./androidSource";
 import { DevicesScreen } from "./DevicesScreen";
 import { PhoneHandOffButton, RemotePlayerBars } from "./RemotePlayers";
@@ -149,6 +149,65 @@ function DownloadMenuItem({ book }: { book: ListenBook }) {
   );
 }
 
+/** Sách đã nằm trên điện thoại: xoá bản ấy để lấy lại chỗ trống (soát UX 29-09: EbookLibrary.deleteBook có sẵn mà không
+ *  nút nào gọi - sách tải về chỉ có thêm, không bớt được). Hộp xác nhận ở RemoveFromPhoneHost, ngoài menu. */
+function RemoveFromPhoneMenuItem({ book }: { book: ListenBook }) {
+  return (
+    <DropdownMenu.Item
+      onSelect={() => window.dispatchEvent(new CustomEvent<ListenBook>("abook-remove-from-phone", { detail: book }))}
+      className="flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm text-danger outline-none data-[highlighted]:bg-hover"
+    >
+      <Trash2 className="size-4" /> Xoá khỏi điện thoại…
+    </DropdownMenu.Item>
+  );
+}
+
+function RemoveFromPhoneHost() {
+  const [book, setBook] = useState<ListenBook | null>(null);
+  const [busy, setBusy] = useState(false);
+  const client = useQueryClient();
+  const navigate = useNavigate();
+  const player = usePlayer();
+  useEffect(() => {
+    const listener = (event: Event) => setBook((event as CustomEvent<ListenBook>).detail);
+    window.addEventListener("abook-remove-from-phone", listener);
+    return () => window.removeEventListener("abook-remove-from-phone", listener);
+  }, []);
+  const remove = async () => {
+    if (!book) return;
+    setBusy(true);
+    if (player.track?.bookId === book.id) player.close();
+    try {
+      await EbookLibrary.deleteBook({ id: book.id });
+      setBook(null);
+      navigate("/", { replace: true });
+      void client.invalidateQueries();
+      toast.success(`Đã xoá “${book.title}” khỏi điện thoại`);
+    } catch (error) {
+      toast.error("Chưa xoá được", { description: (error as Error).message });
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Dialog
+      open={book !== null}
+      onOpenChange={(open) => !open && setBook(null)}
+      title={`Xoá “${book?.title ?? ""}” khỏi điện thoại?`}
+      description="Bản trên điện thoại bị xoá hẳn để lấy lại chỗ trống. Sách của máy tính hay thiết bị đã ghép thì tải lại được, chỗ nghe đồng bộ lại từ máy ấy; sách mở từ file .abook thì mở lại file ấy."
+    >
+      <div className="flex justify-end gap-2">
+        <Button variant="ghost" onClick={() => setBook(null)}>
+          Để sau
+        </Button>
+        <Button variant="danger" icon={Trash2} loading={busy} onClick={() => void remove()}>
+          Xoá khỏi điện thoại
+        </Button>
+      </div>
+    </Dialog>
+  );
+}
+
 function ClipBridge({ children }: { children: ReactNode }) {
   const player = usePlayer();
   return <ClipProvider onStart={() => player.playing && player.toggle()}>{children}</ClipProvider>;
@@ -180,10 +239,20 @@ export function AndroidApp() {
               <BackButton />
               <DownloadWatcher />
               <ImportWatcher />
+              <RemoveFromPhoneHost />
               <MobileShell>
                 <Routes>
                   <Route path="/" element={<LibraryPage />} />
-                  <Route path="/book/:id" element={<BookScreen extraActions={(book) => (book.remote ? <DownloadMenuItem book={book} /> : null)} />} />
+                  <Route
+                    path="/book/:id"
+                    element={
+                      <BookScreen
+                        extraActions={(book) =>
+                          book.remote ? <DownloadMenuItem book={book} /> : <RemoveFromPhoneMenuItem book={book} />
+                        }
+                      />
+                    }
+                  />
                   <Route path="/book/:id/read/:chapterId?" element={<ReaderScreen />} />
                   <Route path="/devices" element={<DevicesScreen />} />
                   <Route path="/settings" element={<SettingsScreen />} />
