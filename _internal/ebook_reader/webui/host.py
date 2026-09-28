@@ -112,6 +112,7 @@ def _arguments(argv: list[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(prog="ebook_reader.webui.host")
     parser.add_argument("--version", default="", help="phiên bản app (vỏ biết, gói Python nhúng không có metadata)")
     parser.add_argument("--fake-runner", action="store_true", help="không khởi động worker thật (thử giao diện)")
+    parser.add_argument("--studio", default="", help="thư mục Studio tải thêm (bản cài); trống: bản dev, runtime cạnh mã")
     return parser.parse_args(argv)
 
 
@@ -125,8 +126,17 @@ def run(reader: TextIO, writer: TextIO, argv: list[str] | None = None) -> int:
     dialogs = PipeDialogs(channel)
     preferences = Preferences()
     fake = args.fake_runner or os.environ.get("EBOOK_READER_FAKE_RUNNER") == "1"
-    web = App(preferences=preferences, runner=FakeRunner() if fake else BackgroundRunner(), token=new_token(),
-              dialogs=dialogs, version=args.version)
+    studio = None
+    if args.studio:
+        from ..config import build_settings
+        from .actions import StudioRunner
+        from .studio_setup import StudioSetup
+
+        studio = StudioSetup(Path(args.studio), Path(__file__).resolve().parents[2],
+                             analysis_model=str(build_settings()["analysis"]["model"]))
+    runner = FakeRunner() if fake else StudioRunner(studio) if studio is not None else BackgroundRunner()
+    web = App(preferences=preferences, runner=runner, token=new_token(), dialogs=dialogs, version=args.version)
+    web.studio = studio
     web.shell = channel.send  # "Cập nhật": App.install_update gửi {"install_update": true} về vỏ
     if preferences.get().get("syncEnabled"):
         web.set_sync(True)
