@@ -248,7 +248,9 @@ class Devices:
                 return None
             return {"code": self._pairing[0], "expiresAt": self._pairing[1]}
 
-    def pair(self, code: str, name: str) -> str | None:
+    def pair(self, code: str, name: str, studio: bool = False) -> str | None:
+        """`studio`: thiết bị được điều khiển sản xuất (Studio từ xa) - theo TỪNG thiết bị, không theo công tắc chung:
+        điện thoại ghép từ trước chỉ để nghe không tự có quyền ấy khi người dùng bật Studio từ xa (soát 28-09)."""
         digits = re.sub(r"[^0-9]", "", code)[:12]  # "482 913" cũng được; compare_digest không nhận chữ ngoài ASCII
         with self._lock:
             if not self._pairing or self._pairing[1] <= time.time():
@@ -262,15 +264,16 @@ class Devices:
             self._pairing = None  # mã dùng một lần
             token = secrets.token_urlsafe(32)
             self._data["devices"][_hash(token)] = {"name": name.strip()[:80] or "Điện thoại",
-                                                   "pairedAt": time.time(), "lastSeen": time.time()}
+                                                   "pairedAt": time.time(), "lastSeen": time.time(),
+                                                   "studio": bool(studio)}
             self._save()
             return token
 
     def check(self, token: str) -> bool:
         return self.identify(token) is not None
 
-    def identify(self, token: str) -> dict[str, str] | None:
-        """Thiết bị mang mã này: `{"id", "name"}` (id là 12 ký tự đầu của băm, như trong danh sách), hoặc None."""
+    def identify(self, token: str) -> dict[str, Any] | None:
+        """Thiết bị mang mã này: `{"id", "name", "studio"}` (id là 12 ký tự đầu của băm, như trong danh sách)."""
         key = _hash(token)
         with self._lock:
             device = self._data["devices"].get(key)
@@ -279,7 +282,18 @@ class Devices:
             if time.time() - device.get("lastSeen", 0) > 60:
                 device["lastSeen"] = time.time()
                 self._save()
-            return {"id": key[:12], "name": str(device.get("name") or "Điện thoại")}
+            return {"id": key[:12], "name": str(device.get("name") or "Điện thoại"),
+                    "studio": bool(device.get("studio"))}
+
+    def set_studio(self, short_id: str, enabled: bool) -> bool:
+        """Cho / thôi cho một thiết bị điều khiển sản xuất. False: không có thiết bị này."""
+        with self._lock:
+            found = [value for key, value in self._data["devices"].items() if key[:12] == short_id]
+            for device in found:
+                device["studio"] = bool(enabled)
+            if found:
+                self._save()
+            return bool(found)
 
     def list(self) -> list[dict[str, Any]]:
         with self._lock:
@@ -413,6 +427,8 @@ class SyncApp:
 class SyncHandler(BaseHTTPRequestHandler):
     server_version = "EbookReaderSync"
     protocol_version = "HTTP/1.1"
+    # Một kết nối im lặng quá lâu (gửi dở thân, giữ kết nối) bị cắt; "hỏi dài" của điện thoại chờ tối đa 25 giây.
+    timeout = 60
     app: SyncApp
 
     def log_message(self, format: str, *args: Any) -> None:  # noqa: A002
@@ -425,11 +441,17 @@ class SyncHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
         self.end_headers()
-        self.wfile.write(body)
+        if self.command != "HEAD":  # HEAD mà có thân thì lệch luồng keep-alive, yêu cầu kế tiếp đọc nhầm
+            self.wfile.write(body)
 
     def _body(self) -> dict[str, Any]:
-        length = int(self.headers.get("Content-Length") or 0)
-        if length > MAX_BODY:
+        try:
+            length = int(self.headers.get("Content-Length") or 0)
+        except ValueError:
+            length = -1
+        if length < 0 or length > MAX_BODY:
+            # Âm thì `rfile.read(-1)` đọc tới hết kết nối - vượt mọi trần, không cần ghép nối (soát 28-09).
+            self.close_connection = True
             return {}
         try:
             data = json.loads(self.rfile.read(length).decode("utf-8")) if length else {}
@@ -437,10 +459,12 @@ class SyncHandler(BaseHTTPRequestHandler):
             return {}
         return data if isinstance(data, dict) else {}
 
-    def _device(self) -> dict[str, str] | None:
+    def _device(self, *, cookie: bool = False) -> dict[str, Any] | None:
         header = self.headers.get("Authorization") or ""
         if header.startswith("Bearer "):
             return self.app.devices.identify(header[7:].strip())
+        if not cookie:
+            return None  # các đường /sync/v1 là của app điện thoại: chỉ mã thiết bị tường minh, không cookie tự gửi kèm
         # Trình duyệt (Studio từ xa) mang mã thiết bị trong cookie HttpOnly - cùng mã, cùng danh sách thiết bị.
         token = remote_studio.cookie_token(self.headers.get("Cookie"))
         return self.app.devices.identify(token) if token else None
@@ -448,18 +472,29 @@ class SyncHandler(BaseHTTPRequestHandler):
     def _studio(self, method: str, path: str) -> None:
         """Mọi đường ngoài `/sync/`: giao diện web và API của nó (remote_studio.py)."""
         studio = self.app.studio
+        if not remote_studio.allowed_host(self.headers.get("Host")):
+            self._json(HTTPStatus.FORBIDDEN, {"error": "Host không hợp lệ"})
+            return
         if studio is None or not studio.allowed():
             if path.startswith(("/api/", "/media/")):
                 self._json(HTTPStatus.FORBIDDEN, {"error": "Máy tính chưa cho phép điều khiển từ xa"})
             else:
                 remote_studio.send_page(self, HTTPStatus.FORBIDDEN, remote_studio.closed_page(self.app.name))
             return
-        device = self._device()
+        device = self._device(cookie=True)
+        if device is not None and not device.get("studio"):
+            if path.startswith(("/api/", "/media/")):
+                self._json(HTTPStatus.FORBIDDEN, {"error": "Thiết bị này chưa được phép điều khiển sản xuất"})
+            else:
+                remote_studio.send_page(self, HTTPStatus.FORBIDDEN, remote_studio.device_closed_page(self.app.name))
+            return
         if path.startswith(("/api/", "/media/")):
             if device is None:
                 self._json(HTTPStatus.UNAUTHORIZED, {"error": "Thiết bị chưa ghép nối"})
             elif not remote_studio.permitted(method, path):
                 self._json(HTTPStatus.FORBIDDEN, {"error": "Việc này chỉ làm được trên chính máy tính"})
+            elif method not in ("GET", "HEAD") and not remote_studio.same_origin(self.headers):
+                self._json(HTTPStatus.FORBIDDEN, {"error": "Yêu cầu không đến từ trang Studio"})
             else:
                 remote_studio.forward(self, method, self.path, studio)
             return
@@ -513,7 +548,9 @@ class SyncHandler(BaseHTTPRequestHandler):
                 return
             if method == "POST" and path == "/sync/v1/pair":
                 body = self._body()
-                token = self.app.devices.pair(str(body.get("code", "")), str(body.get("device", "")))
+                # Ghép lúc người dùng ĐANG bật Studio từ xa: họ ghép thiết bị này để điều khiển - cho luôn quyền ấy.
+                studio_on = self.app.studio is not None and self.app.studio.allowed()
+                token = self.app.devices.pair(str(body.get("code", "")), str(body.get("device", "")), studio=studio_on)
                 if token is None:
                     self._json(HTTPStatus.FORBIDDEN, {"error": "Mã ghép nối sai hoặc đã hết hạn"})
                 else:
@@ -521,11 +558,15 @@ class SyncHandler(BaseHTTPRequestHandler):
                 return
             if method == "POST" and path == "/sync/v1/pair-browser":
                 # Trang ghép của Studio từ xa: cùng mã 6 số, nhưng mã thiết bị về cookie HttpOnly thay vì về tay trang.
+                if not remote_studio.allowed_host(self.headers.get("Host")):
+                    self._json(HTTPStatus.FORBIDDEN, {"error": "Host không hợp lệ"})
+                    return
                 if self.app.studio is None or not self.app.studio.allowed():
                     self._json(HTTPStatus.FORBIDDEN, {"error": "Máy tính chưa cho phép điều khiển từ xa"})
                     return
                 body = self._body()
-                token = self.app.devices.pair(str(body.get("code", "")), str(body.get("device", "")) or "Trình duyệt")
+                token = self.app.devices.pair(str(body.get("code", "")), str(body.get("device", "")) or "Trình duyệt",
+                                              studio=True)
                 if token is None:
                     self._json(HTTPStatus.FORBIDDEN, {"error": "Mã ghép nối sai hoặc đã hết hạn"})
                 else:
