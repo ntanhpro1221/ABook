@@ -103,8 +103,11 @@ class PlayerPlugin : Plugin() {
         Playback.jumpTo(call.getInt("chapterId") ?: return@act, call.getDouble("seconds") ?: 0.0)
     }
 
+    /** Trên luồng chính: Playback.state() đọc ExoPlayer, mà ExoPlayer chỉ cho luồng chính. Gọi thẳng từ luồng plugin thì
+     *  văng "Player is accessed on the wrong thread" - thử 28-09: mở app khi dịch vụ phát còn giữ trình phát (giao diện
+     *  hỏi trạng thái ngay lúc mở, nativeEngine.ts) là app chết, dịch vụ tự bật lại, mở lại lại chết. */
     @PluginMethod
-    fun getState(call: PluginCall) = call.resolve(JSObject.fromJSONObject(Playback.state()))
+    fun getState(call: PluginCall) = Playback.onMain { call.resolve(JSObject.fromJSONObject(Playback.state())) }
 
     @PluginMethod
     fun addBookmark(call: PluginCall) = withService {
