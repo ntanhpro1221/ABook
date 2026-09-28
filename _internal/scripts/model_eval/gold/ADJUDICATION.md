@@ -342,3 +342,48 @@ host sai, đã sửa (7ca7ef7), sau sửa 100%.
 Quy ước mới cho truyện Việt (ghi ở đầu 020.txt): chức danh trọn cuốn là tên (QUAN PHỦ, LÝ TRƯỞNG - như "Trịnh lão");
 người gọi theo tên chồng: "CHỊ DẬU" đủ, "DẬU" trơn không điểm (là chồng chị); tiền tố xưng hô trên tên thật ("ANH DẬU",
 "THẰNG DẦN") nửa điểm - khác "CHÚ LƯU ĐẠT" (quy tắc 11, không điểm) ở chỗ lời kể của sách không bao giờ viết tên trơn.
+
+## Bộ đo LN 28-09 - 5 chương LN Nhật/Hàn CHƯA học (thứ chủ sách đọc)
+
+A = Claude gán, B = agent soát đối kháng (không sửa file, trả bằng chứng file:dòng). Mục đích và cách chọn chương:
+`docs/ANALYSIS_RESEARCH.md` "BỘ ĐO LN 28-09".
+
+**Two Childhood Friends 042** - B soát, A chấp nhận hết:
+
+| chỗ | A ghi | kết luận | bằng chứng |
+|---|---|---|---|
+| 64 | GREY đủ, NARRATOR~ | **ĐÁP_ÁN_SAI** -> `KÝ SINH TRÙNG,CON KÝ SINH TRÙNG` đủ, NPC*~, UNKNOWN~, NARRATOR~, `m` | Dòng 『』 giữa cảnh là "con ký sinh trùng" - giọng NAM trong não Yoshihito, cả cuốn gọi thế (102 lần/49 chương); 072:191-193 "Giọng nói của con ký sinh trùng trong não, chẳng ai nghe thấy"; 001:55-63 giọng một gã đàn ông; hay hỏi "hai người/các cậu" để lời kể trả lời (050:103, 040:157-163, 041:127-131 - đúng khuôn 64 -> 65-67). Grey chỉ nói 『』 khi đã hoá đàn dơi (043:119-141); ở 042 cả 7 câu của cô trong "". |
+| 73, 74 | cả hai đủ ở cả hai câu | **ĐÁP_ÁN_SAI** (nhẹ): 73 Yoshihito đủ, Kirako~; 74 Kirako đủ, Yoshihito~ | Grey luôn tiếp cận và bị Yoshihito từ chối riêng (035:91-145, 038:255-261, 040:195-227, 041:141); 73 "đã nói rồi" là cậu; 74 mở bằng "Đúng vậy" là người kia. Tiền lệ quy tắc 6 vòng 7. |
+| 2-35 | NARRATOR,NPC*~ | thêm UNKNOWN~ | tiền lệ văn bản viết của người vô danh (345:84-85, 050:61-62). |
+| 76, 77 | hai người ~ | cả hai đủ | trọn câu quyết tâm chung, không có phần kể về họ (013:119, 123). |
+
+**Nise Seiken 132** - B không thấy người nói chính nào sai. 30: `N,T NARRATOR,NPC*~` -> NPC* đủ (câu 31 "ông ta" xác định
+người nghĩ là ông chú nói 32-70).
+
+**Sửa ngược gold cũ Two Childhood Friends 082:94** (train, không phải test): `NPC*,UNKNOWN,KAKUSHIGI,GREY` -> `KÝ SINH
+TRÙNG,CON KÝ SINH TRÙNG,NPC*~,UNKNOWN~,NARRATOR~ ... m`. Nguồn phát hiện: B khi soát 042. Dòng 082:195 "『Một trong hai người
+nhượng bộ đi chứ...』" cùng khuôn châm chọc "hai người" của ký sinh trùng (077:165, 081:189); câu 082:203 nhắc Kakushigi,
+Grey chỉ giải thích vì sao Yoshihito không quát Kirako; hai người ấy đều nói trong "" (082:107, 261). Dữ liệu LoRA v3 dựng
+trước khi sửa (câu ấy dạy NPC* - lựa chọn đầu cũ).
+
+Bài học chung cho LN: **giọng trong đầu nhân vật** (ký sinh trùng ở TCF, Yêu Mẫu ở Yamiyo) nói bằng dòng 『』 ở hàng chục
+chương. Nhãn NPC sống một chương -> mỗi chương một giọng; sổ nhân vật cần một tên cố định (tên cả cuốn gọi nó).
+
+**Yamiyo no Hotaru 141** - B soát (27 chương kho), A chấp nhận hết:
+
+| chỗ | A ghi | kết luận | bằng chứng |
+|---|---|---|---|
+| 41 dòng 『』 "thiếp" | YÊU MẪU, NPC* đủ | **ĐÁP_ÁN_SAI** -> `TỌA PHU ĐỒNG TỬ,TOẠ PHU ĐỒNG TỬ,ZASHIKI-WARASHI` đủ, NPC*~, UNKNOWN~ | 096:477-479 "nàng, Tọa Phu Đồng Tử, cất lên lời nguyền" sau một câu 『』 cùng giọng (096:411-449 tả đúng giọng ở 141: luôn dõi theo, nắm tay, ghen với người Onizuki); giọng ấy nói cả khi Tomobe vắng (137:159, 237) - không thể nằm trong máu cậu; Yêu Mẫu là nhân vật khác (107:63-155, tóc xanh, nói 「」, xưng "mẹ"). A lấy "yếu tố yêu mẫu" (136) làm bằng chứng - sai, đó là thứ trong máu Tomobe mà thuốc ức chế. Quy tắc 12. |
+| 173, 175 | NPC*, UNKNOWN~ | `NHỆN TRẮNG,CON NHỆN TRẮNG` đủ, NPC*~ (173 thêm NARRATOR~) | 177 gọi người nói là con nhện trắng; cả cuốn không tên riêng ("nhện trắng" 47 file); nói ở 099, 102, 143, 150. |
+| 23 dòng nội tâm Hina | `N,T NARRATOR,HINA` | `T,N HINA,ONIZUKI HINA,NARRATOR ... f` | quy tắc 9 (loại THẬT trước, tiền lệ 385:56); lựa chọn đầu là thứ dạy model; nội tâm đọc bằng giọng người nghĩ (chủ sách 20-09). Điểm không đổi. |
+| 26, 100, 149 | TOMOBE, NARRATOR~ | TOMOBE | 189:117, 155:10-12: dòng T thật không cho NARRATOR điểm. |
+| 18, 22 | TOMOBE | TOMOBE, NARRATOR~ | tiếng kêu (quy tắc 8; 189:13, 25, 35). |
+| 28, 177 | N | N,T NARRATOR,TOMOBE | tự nhủ tức thời như 25. 39: thêm NPC*~ như 38. |
+| cảm xúc lời kể | neutral | thêm cảm xúc của cảnh (9, 11, 16, 58, 65, 72, 157, 161, 179 - host cấm neutral; 8, 15, 17, 20, 31, 105 theo GOLD_GUIDE); 83, 158 thêm happy | "host sai" (giữ đáp án): 23, 59, 64, 67 - chữ "đau đớn"/"khóc" nằm trong câu trêu hay kỷ niệm vui. |
+
+**Hướng dẫn sinh tồn 062** - B không thấy câu nào sai người nói chính. 3: bỏ Lucy~ ("Hừm~" là tật nói của Lortel -
+028:39-41, 100:265-267). 37, 98, 119: N,T với ED (như 26; 060:127). Lời kể cảnh Glast hấp hối thêm sad (tender ở 128,
+141-143); 6, 48, 117 thêm afraid (host cấm neutral). 56: host đòi angry vì chữ "tan nát" - host sai, đáp án neutral,sad.
+
+Hai lỗi nặng A mắc ở bộ này là CÙNG MỘT KIỂU: gán giọng 『』 trong đầu cho một cái tên gần tay mà không lần hết cuốn (Grey ở
+TCF 042:64, Yêu Mẫu ở Yamiyo) - đúng lỗi quy tắc 12 cảnh báo ở model. Soát B lần đủ kho mới bắt được.

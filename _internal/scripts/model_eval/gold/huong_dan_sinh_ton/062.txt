@@ -1,0 +1,156 @@
+# "Hướng dẫn sinh tồn trong học viện" file 062 ("Chương 63: Trận chiến chinh phạt Glast (12)"). Bộ đo LN 28-09 (chương
+# CHƯA học): chọn model phân tích cho thứ chủ sách đọc. Claude gán (A), agent soát (B). Ngôi thứ nhất: "tôi" = ED /
+# ED ROSTAILER (74 Glast gọi đủ tên). YENNICA / YENNICA FAILOVER; LUCY / LUCY MEIRIL; LORTEL / LORTEL KEHELN; GLAST (không
+# tính "GIÁO SƯ GLAST" - quy tắc 11). 2: Yennica dẫn đường (9, 17). 3: than thở ngay trước đoạn kể về Lortel -> Lortel,
+# Lucy nửa điểm. 26: lời định nói của người kể -> N,T. 99: câu điều kiện nhận thư viện, người kể nghĩ tiếp ở 100 ->
+# Glast, Ed nửa điểm. 112: lời Glast KHÔNG ngoặc ("Nói những lời như vậy" ở 113) bị khoá lời kể -> NARRATOR (quy tắc 10).
+# 129: Ed nhắc lại câu "17 năm" của Glast (130 "Nghe lời đó, Giáo sư Glast mở to mắt").
+# Soát B (28-09): 3 chỉ Lortel - "Hừm~" mở câu là tật nói của cô (028:39-41, 100:265-267), Lucy không nói kiểu ấy -> bỏ
+# Lucy~. 37, 98, 119: nghĩ tức thời của người kể -> N,T (như 26; tiền lệ 060:127). Lời kể cảnh Glast hấp hối có thêm sad
+# (tender ở 128, 141-143), 6/48/117 thêm afraid (host cấm neutral: "bất an", "run rẩy", "hoảng hốt"); luôn giữ neutral đứng
+# đầu. 56: host đòi angry vì chữ "tan nát" - sai, câu tả nụ cười nhạt -> neutral,sad (host sai, ghi sổ).
+0 H
+1 N
+2 D YENNICA,YENNICA FAILOVER neutral 0-1 normal normal f
+3 D LORTEL,LORTEL KEHELN neutral,sarcastic,tired 0-1 normal normal f
+4 N
+5 N
+6 N NARRATOR neutral,afraid 0-1 normal normal u
+7 N
+8 N
+9 N
+10 N
+11 N
+12 N
+13 N
+14 N
+15 N
+16 N
+17 N
+18 D YENNICA,YENNICA FAILOVER neutral 0-1 normal normal f
+19 N
+20 D LUCY,LUCY MEIRIL neutral 0-1 normal normal f
+21 N
+22 N
+23 D ED,ED ROSTAILER surprised,neutral 0-1 normal normal m
+24 D LUCY,LUCY MEIRIL neutral,tired 0-1 normal normal f
+25 N
+26 N,T NARRATOR,ED,ED ROSTAILER neutral,tired 0-1 normal normal u
+27 D YENNICA,YENNICA FAILOVER surprised,afraid,neutral 0-1 normal normal f
+28 N
+29 N
+30 N
+31 N
+32 N
+33 N
+34 N
+35 N
+36 N
+37 N,T NARRATOR,ED,ED ROSTAILER neutral,afraid 0-1 normal normal u
+38 N
+39 N
+40 N NARRATOR neutral,sad 0-1 normal normal u
+41 N NARRATOR neutral,sad 0-1 normal normal u
+42 N NARRATOR neutral,sad 0-1 normal normal u
+43 D GLAST surprised,sarcastic,tired 0-1 slow,normal soft,normal m
+44 N
+45 D GLAST sarcastic,tired,neutral 0-1 slow,normal soft,normal m
+46 D ED,ED ROSTAILER sad,surprised,neutral 0-1 normal normal m
+47 N NARRATOR neutral,sad 0-1 normal normal u
+48 N NARRATOR neutral,afraid,sad 0-1 normal normal u
+49 D YENNICA,YENNICA FAILOVER sad,afraid 1-2 slow,normal soft f
+50 D GLAST neutral,tired,sarcastic 0-1 slow,normal soft,normal m
+51 N
+52 N
+53 N
+54 D ED,ED ROSTAILER neutral,surprised 0-1 normal normal m
+55 D GLAST sad,tired,sarcastic 0-1 slow soft,normal m
+56 N NARRATOR neutral,sad 0-1 normal normal u
+57 D GLAST sarcastic,sad 0-1 slow,normal soft,normal m
+58 D ED,ED ROSTAILER neutral,sad,tender 0-1 normal normal m
+59 D GLAST sarcastic,sad 0-1 slow,normal soft,normal m
+60 N
+61 D GLAST sarcastic,sad,tired 0-1 slow,normal soft,normal m
+62 D ED,ED ROSTAILER neutral,surprised 0-1 normal normal m
+63 D GLAST neutral,sarcastic 0-1 slow,normal soft,normal m
+64 N
+65 N
+66 N
+67 D GLAST sarcastic,sad,neutral 0-1 slow,normal normal,soft m
+68 D ED,ED ROSTAILER neutral 0-1 normal normal m
+69 D GLAST neutral,sad,sarcastic 0-1 slow,normal normal,soft m
+70 N
+71 N
+72 D GLAST neutral,sarcastic 0-1 slow,normal normal,soft m
+73 D ED,ED ROSTAILER neutral 0-1 normal normal m
+74 D GLAST neutral,happy,sarcastic 0-1 slow,normal normal,soft m
+75 N
+76 D GLAST neutral,sarcastic 0-1 slow,normal normal,soft m
+77 D ED,ED ROSTAILER neutral,surprised 0-1 normal normal m
+78 N
+79 N
+80 D GLAST neutral,tired 0-1 slow,normal normal,soft m
+81 D ED,ED ROSTAILER surprised,neutral 0-1 normal normal m
+82 D GLAST neutral,sarcastic 0-1 slow,normal normal,soft m
+83 N
+84 N
+85 D GLAST sad,neutral,tired 0-1 slow soft,normal m
+86 N
+87 N
+88 D GLAST neutral,tired 0-1 slow,normal soft,normal m
+89 D ED,ED ROSTAILER surprised,neutral 0-1 normal normal m
+90 D GLAST sarcastic,neutral 0-1 slow,normal soft,normal m
+91 N
+92 D GLAST sarcastic,neutral 0-1 slow,normal soft,normal m
+93 D ED,ED ROSTAILER surprised 0-1 normal normal m
+94 D GLAST sarcastic,neutral 0-1 slow,normal soft,normal m
+95 N
+96 N
+97 N
+98 N,T NARRATOR,ED,ED ROSTAILER neutral,surprised,excited 0-1 normal normal u
+99 D GLAST,ED~,ED ROSTAILER~ neutral,sarcastic 0-1 slow,normal soft,normal m
+100 N
+101 N
+102 D ED,ED ROSTAILER surprised,neutral 0-1 normal normal m
+103 D GLAST sarcastic,neutral 0-1 slow,normal soft,normal m
+104 D ED,ED ROSTAILER neutral,surprised 0-1 normal normal m
+105 N
+106 D GLAST neutral,sarcastic,tender 0-1 slow,normal soft,normal m
+107 N
+108 D GLAST sad,tender,neutral 0-1 slow soft,normal m
+109 D GLAST sad,tender,neutral 0-1 slow soft,normal m
+110 N
+111 D GLAST sad,tender 0-1 slow soft,normal m
+112 N NARRATOR neutral,sad 0-1 normal,slow normal,soft u
+113 N
+114 D GLAST sad,tender 0-1 slow soft m
+115 D ED,ED ROSTAILER sad,surprised,neutral 0-1 normal,slow normal,soft m
+116 D GLAST sad,tender,tired 0-1 slow soft m
+117 N NARRATOR neutral,afraid,sad 0-1 normal normal u
+118 N NARRATOR neutral,sad 0-1 normal normal u
+119 N,T NARRATOR,ED,ED ROSTAILER neutral,sad,sarcastic 0-1 normal normal u
+120 N
+121 D GLAST sad,sarcastic,tired 0-1 slow soft m
+122 N NARRATOR neutral,sad 0-1 normal normal u
+123 N NARRATOR neutral,sad 0-1 normal normal u
+124 N NARRATOR neutral,sad 0-1 normal normal u
+125 D ED,ED ROSTAILER sad,tender,neutral 0-1 normal,slow normal,soft m
+126 N NARRATOR neutral,sad 0-1 normal normal u
+127 D ED,ED ROSTAILER tender,sad,neutral 0-1 normal,slow normal,soft m
+128 N NARRATOR neutral,sad,tender 0-1 normal normal u
+129 D ED,ED ROSTAILER tender,sad 0-1 slow soft,normal m
+130 N NARRATOR neutral,sad 0-1 normal normal u
+131 N NARRATOR neutral,sad 0-1 normal normal u
+132 N NARRATOR neutral,sad 0-1 normal normal u
+133 N NARRATOR neutral,sad 0-1 normal normal u
+134 N NARRATOR neutral,sad 0-1 normal normal u
+135 N NARRATOR neutral,sad 0-1 normal normal u
+136 N NARRATOR neutral,sad 0-1 normal normal u
+137 N NARRATOR neutral,sad 0-1 normal normal u
+138 N NARRATOR neutral,sad 0-1 normal normal u
+139 D GLAST tender,sad,tired 0-1 slow soft m
+140 N NARRATOR neutral,sad 0-1 normal normal u
+141 N NARRATOR neutral,sad,tender 0-1 normal normal u
+142 N NARRATOR neutral,sad,tender 0-1 normal normal u
+143 N NARRATOR neutral,sad,tender 0-1 normal normal u
+144 N
