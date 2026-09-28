@@ -213,7 +213,7 @@ class Library:
 
     def summary(self, project: Path, *, running: bool, starting: bool = False) -> dict[str, Any]:
         # Cả mốc của overrides.json: yêu cầu mới của người nghe đổi "pendingChanges" mà không chạm DB.
-        stamp = (store.touched(project), _mtime(overrides_path(project)))
+        stamp = (store.touched(project), _mtime(overrides_path(project)), _mtime(project / store.RUN_MARKER))
         key = _key(project)
         with self._lock:
             cached = self._cache.get(key)

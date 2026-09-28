@@ -245,7 +245,7 @@ class App:
                 with self._queue_lock:
                     if self.queue and self.queue[0] == head:
                         self.queue.pop(0)
-                self.jobs.start(path)
+                self._launch(path)
 
     def library_view(self) -> dict[str, Any]:
         books = []
@@ -281,8 +281,15 @@ class App:
         with self._queue_lock:
             if value in self.queue:
                 self.queue.remove(value)
-        self.jobs.start(path)
+        self._launch(path)
         return self.summary(path)
+
+    def _launch(self, path: Path) -> None:
+        """Khởi động lượt chạy và ghi mốc (store.mark_run_started) - mốc lấy TRƯỚC khi khởi động: yêu cầu ghi trong lúc
+        khởi động vẫn tính là đang chờ; khởi động hỏng thì không ghi gì."""
+        started_at = time.time()
+        self.jobs.start(path)
+        store.mark_run_started(path, started_at)
 
     def stop(self, value: str) -> dict[str, Any]:
         self._mutating()
