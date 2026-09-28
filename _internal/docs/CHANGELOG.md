@@ -15,6 +15,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Làm sách: lời kể nói về **lời nguyền** ("bị nguyền rủa", "lời nguyền rủa") không còn bị đọc bằng giọng tức giận - chỉ
   người đang nguyền rủa ("thầm nguyền rủa", "đáng nguyền rủa") mới là giận. Câu thoại mở bằng "(" ngay sau lời thoại của
   người khác được hiểu là một lượt nói mới, không gộp vào người vừa nói.
+- Hộp **"Việc cần anh"** hỏi khi một **danh hiệu hay biệt danh** có giọng riêng mà sách luôn viết nó sát tên một người
+  ("Thiên Biến Vạn Hóa Krai", "Krai được mệnh danh Thiên Biến Vạn Hóa"): một cú bấm đọc các câu ấy bằng giọng của
+  chính người đó. Trước đây chỉ hỏi khi tên ngắn nằm trong tên dài ("Lucien" / "Lucien Evans").
 - **Tự chọn đường Wi-Fi hay Bluetooth**: ghép điện thoại với máy tính một lần (qua Wi-Fi hay Bluetooth) là đủ - khi
   cùng Wi-Fi thì đi Wi-Fi, ra khỏi nhà thì tự đi Bluetooth (nếu hai máy đã ghép Bluetooth và máy tính bật Bluetooth),
   không phải ghép lại. Yêu cầu nào hỏng lúc nối qua Wi-Fi thì thử lại ngay qua Bluetooth.
