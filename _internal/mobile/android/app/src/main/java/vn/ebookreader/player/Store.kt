@@ -367,6 +367,80 @@ object Store {
     @Synchronized
     private fun save(id: String, state: JSONObject) = writeAtomic(stateFile(id), state.toString())
 
+    /**
+     * Máy khác đang nghe một cuốn CỦA điện thoại (LibraryServer, POST .../state) gửi chỗ nghe của nó: gộp vào hồ sơ đang
+     * dùng của cuốn ấy đúng như máy tính gộp khi điện thoại gửi lên (webui/listening.py `merge` + `merge_states`) và trả
+     * bản đã gộp - bên gửi (remote_books.exchange_state) không cần biết đầu kia là điện thoại.
+     */
+    @Synchronized
+    fun mergeRemote(id: String, incoming: JSONObject): JSONObject {
+        val merged = mergeStates(state(id), withoutSyncKeys(incoming))
+        save(id, merged)
+        return JSONObject(merged.toString())
+    }
+
+    private const val MAX_SESSIONS = 200
+
+    private fun stamp(value: JSONObject?, key: String = "at") = value?.optDouble(key, 0.0)?.takeIf { !it.isNaN() } ?: 0.0
+
+    /** `merge_states` của máy tính: mỗi phần mang mốc thời gian riêng, bên mới hơn thắng; dấu trang hợp theo id, dấu trang
+     *  đã xoá ở một bên (bia mộ "deleted") thì xoá ở cả hai; phiên nghe hợp theo id, giữ 200 phiên cuối; đêm nghe theo
+     *  `merge_nights`. */
+    fun mergeStates(ours: JSONObject, theirs: JSONObject): JSONObject {
+        val result = JSONObject(ours.toString())
+        if (result.optJSONObject("chapters") == null) result.put("chapters", JSONObject())
+        if (result.optJSONArray("bookmarks") == null) result.put("bookmarks", JSONArray())
+        for (key in listOf("last", "reading")) {
+            if (stamp(theirs.optJSONObject(key)) > stamp(result.optJSONObject(key))) result.put(key, theirs.get(key))
+        }
+        val chapters = result.getJSONObject("chapters")
+        theirs.optJSONObject("chapters")?.let { incoming ->
+            for (key in incoming.keys()) {
+                val record = incoming.optJSONObject(key) ?: continue
+                if (stamp(record) > stamp(chapters.optJSONObject(key)) || chapters.optJSONObject(key) == null) chapters.put(key, record)
+            }
+        }
+        for ((field, at) in listOf("rate" to "rateAt", "finished" to "finishedAt")) {
+            if (theirs.has(field) && stamp(theirs, at) > stamp(result, at)) {
+                result.put(field, theirs.get(field)).put(at, theirs.get(at))
+            }
+        }
+        val deleted = JSONObject((result.optJSONObject("deleted") ?: JSONObject()).toString())
+        theirs.optJSONObject("deleted")?.let { gone -> for (key in gone.keys()) deleted.put(key, gone.get(key)) }
+        val marks = LinkedHashMap<String, JSONObject>()
+        result.getJSONArray("bookmarks").let { list -> for (i in 0 until list.length()) list.optJSONObject(i)?.let { marks[it.optString("id")] = it } }
+        (theirs.optJSONArray("bookmarks") ?: JSONArray()).let { list ->
+            for (i in 0 until list.length()) {
+                val mark = list.optJSONObject(i) ?: continue
+                if (stamp(mark) >= stamp(marks[mark.optString("id")]) || marks[mark.optString("id")] == null) marks[mark.optString("id")] = mark
+            }
+        }
+        result.put("bookmarks", JSONArray(marks.values.filter { !deleted.has(it.optString("id")) }.sortedBy { stamp(it) }))
+        result.put("deleted", deleted)
+        val sessions = LinkedHashMap<String, JSONObject>()
+        for (source in listOf(result, theirs)) {
+            val list = source.optJSONArray("sessions") ?: continue
+            for (i in 0 until list.length()) list.optJSONObject(i)?.takeIf { it.optString("id").isNotEmpty() }?.let { sessions[it.optString("id")] = it }
+        }
+        if (sessions.isNotEmpty()) result.put("sessions", JSONArray(sessions.values.sortedBy { stamp(it, "startedAt") }.takeLast(MAX_SESSIONS)))
+        mergeNights(result.optJSONObject("night"), theirs.optJSONObject("night"))?.let { result.put("night", it) }
+        result.put("updatedAt", maxOf(stamp(result, "updatedAt"), stamp(theirs, "updatedAt")))
+        return result
+    }
+
+    /** `merge_nights`: đêm mới hơn thắng; cùng một đêm thì bản ghi dài hơn thắng, "đã gạt đi" ở đâu cũng giữ. */
+    private fun mergeNights(ours: JSONObject?, theirs: JSONObject?): JSONObject? {
+        if (ours == null || theirs == null) return ours ?: theirs
+        if (ours.optString("id") != theirs.optString("id")) {
+            return if (stamp(ours, "startedAt") >= stamp(theirs, "startedAt")) ours else theirs
+        }
+        val longer = if ((ours.optJSONArray("events")?.length() ?: 0) >= (theirs.optJSONArray("events")?.length() ?: 0)) ours else theirs
+        val result = JSONObject(longer.toString())
+        result.put("dismissed", ours.optBoolean("dismissed") || theirs.optBoolean("dismissed"))
+        result.put("endedAt", ours.opt("endedAt")?.takeIf { it != JSONObject.NULL } ?: theirs.opt("endedAt") ?: JSONObject.NULL)
+        return result
+    }
+
     private fun now() = System.currentTimeMillis() / 1000.0
 
     @Synchronized

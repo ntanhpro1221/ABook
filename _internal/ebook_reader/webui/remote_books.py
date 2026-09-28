@@ -161,7 +161,9 @@ def discover(*, timeout: float = 1.5, exclude_port: int | None = None, targets: 
                 continue
             if host in own and exclude_port is not None and sync_port == exclude_port:
                 continue  # chính máy này trả lời
-            found[(host, sync_port)] = {"name": str(reply.get("name") or host), "host": host, "port": sync_port}
+            # Điện thoại cũng trả lời khi bật "Cho máy khác nghe thư viện này" (LibraryServer.kt, cùng giao thức).
+            found[(host, sync_port)] = {"name": str(reply.get("name") or host), "host": host, "port": sync_port,
+                                        "kind": "phone" if reply.get("kind") == "phone" else "computer"}
     finally:
         probe.close()
     return sorted(found.values(), key=lambda item: (item["name"].casefold(), item["host"]))
