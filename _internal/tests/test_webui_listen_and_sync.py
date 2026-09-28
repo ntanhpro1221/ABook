@@ -424,6 +424,59 @@ def test_the_desktop_sees_the_phone_and_its_pause_arrives(library, tmp_path: Pat
         app.close()
 
 
+def test_a_paired_device_sees_and_controls_the_player_on_this_computer(library, tmp_path: Path) -> None:
+    """Chiều ngược lại (mạng trạm bước 4): trình phát trong giao diện máy tính báo lên host như điện thoại báo máy tính;
+    điện thoại (hay máy tính khác) đã ghép thấy nó ở /sync/v1/player và gửi lệnh; giao diện nhận lệnh ở lần hỏi dài kế
+    rồi báo kết quả trong `acks`. Giao diện chưa mở thì lệnh không được lặng lẽ rơi mất."""
+    lib, project, listening = library
+    app = App(preferences=lib.preferences, runner=FakeRunner(), token="t", listening=listening)
+    headers = {"X-Ebook-Token": "t"}
+    ui = Server(app, port=0).start()
+    try:
+        status, data, _ = _request(ui.port, "POST", "/api/player/report", headers=headers, body={"wait": 25})
+        assert status == 200 and json.loads(data) == {"commands": [], "idle": True}, "đồng bộ tắt: trả ngay, không treo"
+
+        app.sync_host, app.sync_port = "127.0.0.1", 0
+        app.set_sync(True)
+        sync_port = app.sync_server.port
+        code = app.devices.start_pairing()["code"]
+        _status, data, _ = _request(sync_port, "POST", "/sync/v1/pair", body={"code": code, "device": "Pixel"})
+        token = json.loads(data)["token"]
+        status, data, _ = _request(sync_port, "GET", "/sync/v1/player", token)
+        view = json.loads(data)
+        assert status == 200 and view["kind"] == "computer" and view["state"] is None, "giao diện chưa báo: chưa có trình phát"
+        status, data, _ = _request(sync_port, "POST", "/sync/v1/player", token, body={"action": "pause"})
+        assert status == 409 and "chưa mở ABook" in json.loads(data)["error"]
+
+        identifier = book_id(project)
+        report = {"state": {"bookId": identifier, "bookTitle": "Sách thử", "chapterId": 1, "chapterTitle": "Chương 646",
+                            "position": 30.0, "duration": 600.0, "playing": True, "rate": 1.0}}
+        status, data, _ = _request(ui.port, "POST", "/api/player/report", headers=headers, body={**report, "wait": 0})
+        assert status == 200 and json.loads(data) == {"commands": []}
+        _status, data, _ = _request(sync_port, "GET", "/sync/v1/player", token)
+        view = json.loads(data)
+        assert view["state"]["bookId"] == identifier and view["state"]["playing"] is True and view["age"] < 5
+        assert view["stream"] is True, "máy tính phát được mọi cuốn của nó: điện thoại gửi được 'Phát trên máy tính'"
+
+        status, data, _ = _request(sync_port, "POST", "/sync/v1/player", token, body={"action": "skip", "seconds": -15})
+        command = json.loads(data)["id"]
+        assert status == 200 and command
+        status, _data, _ = _request(sync_port, "POST", "/sync/v1/player", token, body={"action": "format_disk"})
+        assert status == 400
+        status, _data, _ = _request(sync_port, "GET", "/sync/v1/player", "sai-ma")
+        assert status == 401, "chỉ thiết bị đã ghép mới thấy và điều khiển được trình phát"
+
+        _status, data, _ = _request(ui.port, "POST", "/api/player/report", headers=headers, body={**report, "wait": 5})
+        assert json.loads(data)["commands"] == [{"action": "skip", "seconds": -15.0, "id": command}]
+        acks = [{"id": command, "ok": False, "message": "Máy tính chưa nghe cuốn nào"}]
+        _request(ui.port, "POST", "/api/player/report", headers=headers, body={**report, "acks": acks, "wait": 0})
+        _status, data, _ = _request(sync_port, "GET", "/sync/v1/player", token)
+        assert json.loads(data)["acks"] == acks, "điện thoại thấy lệnh của nó không làm được, và vì sao"
+    finally:
+        ui.stop()
+        app.close()
+
+
 def test_the_listen_view_lists_only_chapters_you_can_hear(library) -> None:
     _lib, project, listening = library
     summary = store.summarize(project)
