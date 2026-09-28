@@ -48,6 +48,10 @@ def main() -> int:
     parser.add_argument("--alpha", type=int, default=32)
     parser.add_argument("--accum", type=int, default=8)
     parser.add_argument("--smoke", type=int, default=0, help="chỉ N mẫu dài nhất và 3 bước - đo VRAM, không huấn luyện")
+    parser.add_argument("--smoke-at", choices=("longest", "median"), default="longest",
+                        help="median: N mẫu quanh độ dài TRUNG VỊ - đo tốc độ một bước điển hình thay vì đỉnh VRAM (28-09: "
+                             "8B trên card 8 GB tràn VRAM ở mẫu dài nhất, câu hỏi là mẫu thường có tràn không)")
+    parser.add_argument("--smoke-steps", type=int, default=3)
     parser.add_argument("--render-only", action="store_true", help="in đuôi một mẫu đã dựng khuôn rồi thoát")
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--export-gguf", default="",
@@ -88,8 +92,12 @@ def main() -> int:
     if max(lengths) > args.max_length:
         raise SystemExit(f"mẫu dài {max(lengths)} > max_length {args.max_length}: cắt là mất câu trả lời")
     if args.smoke:
-        order = sorted(range(len(texts)), key=lambda index: -lengths[index])[: args.smoke]
-        texts = [texts[index] for index in order]  # mẫu DÀI NHẤT: đo đúng đỉnh VRAM
+        ranked = sorted(range(len(texts)), key=lambda index: -lengths[index])
+        if args.smoke_at == "median":
+            ranked = ranked[max(0, len(ranked) // 2 - args.smoke // 2):]
+        order = ranked[: args.smoke]
+        print(f"thử trên {len(order)} mẫu, {min(lengths[i] for i in order)}-{max(lengths[i] for i in order)} token")
+        texts = [texts[index] for index in order]  # mặc định mẫu DÀI NHẤT: đo đúng đỉnh VRAM
 
     model = loader.get_peft_model(
         model, r=args.r, lora_alpha=args.alpha, lora_dropout=0, target_modules=TARGETS, bias="none",
@@ -100,7 +108,7 @@ def main() -> int:
         output_dir=str(args.out), dataset_text_field="text", max_length=args.max_length, packing=False,
         per_device_train_batch_size=1, gradient_accumulation_steps=1 if args.smoke else args.accum,
         learning_rate=args.lr, lr_scheduler_type="cosine", warmup_steps=max(5, int(0.03 * steps)),
-        num_train_epochs=args.epochs, max_steps=3 if args.smoke else -1, optim="adamw_8bit", bf16=True,
+        num_train_epochs=args.epochs, max_steps=args.smoke_steps if args.smoke else -1, optim="adamw_8bit", bf16=True,
         logging_steps=1 if args.smoke else 5, save_steps=args.save_steps, save_total_limit=3, report_to="none", seed=3407,
     )
     trainer = SFTTrainer(model=model, processing_class=tokenizer, train_dataset=Dataset.from_dict({"text": texts}),
