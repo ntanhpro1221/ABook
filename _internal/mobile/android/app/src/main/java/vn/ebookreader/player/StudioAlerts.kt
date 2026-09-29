@@ -81,6 +81,7 @@ object StudioAlerts {
             after.put(id, JSONObject()
                 .put("phase", book.optString("phase"))
                 .put("running", book.optBoolean("running"))
+                .put("paused", pausedOf(book))
                 .put("work", if (book.isNull("work")) JSONObject.NULL else book.optInt("work")))
             val old = before.optJSONObject(id)
             if (seeded && old != null) alert(context, book, old)
@@ -103,6 +104,11 @@ object StudioAlerts {
                     book.optString("lastError").ifBlank { book.optString("statusLabel") }.take(160), "/#/studio/$id?tab=activity")
             old.optBoolean("running") && !book.optBoolean("running") && phase != "done" && phase != "error" ->
                 post(context, "$id:stopped", "Đã dừng: $title", "${book.optString("statusLabel")} · $progress", "/#/studio/$id")
+            // Máy tính rút sạc nên Studio tự tạm dừng (power_source.py): báo để người ta biết máy tuột sạc - 24-09 sạc tuột
+            // 22:50 mà 00:07 mới có người thấy.
+            pausedOf(book) == "battery" && pausedOf(old) != "battery" ->
+                post(context, "$id:battery", "Máy tính đang chạy pin",
+                    "Đã tạm dừng $title · $progress. Cắm sạc là tự làm tiếp.", "/#/studio/$id")
         }
         if (!book.isNull("work") && !old.isNull("work")) {
             val now = book.optInt("work")
@@ -113,6 +119,9 @@ object StudioAlerts {
             }
         }
     }
+
+    /** "battery" / "listener" / "" - JSON null của máy tính đọc bằng optString ra chữ "null", nên đọc riêng. */
+    private fun pausedOf(book: JSONObject): String = if (book.isNull("paused")) "" else book.optString("paused")
 
     private fun post(context: Context, key: String, title: String, text: String, path: String) {
         if (!permitted(context)) return
