@@ -1,4 +1,4 @@
-"""Hộp "Việc cần anh" của Studio (docs/STUDIO_REVIEW.md).
+"""Hộp "Việc cần bạn" của Studio (docs/STUDIO_REVIEW.md).
 
 Dựng danh sách chỗ máy nghi ngờ từ SQLite của sách (mở chỉ đọc như mọi phần của webui), mỗi việc tự giải thích và xếp
 theo LỢI TRÊN MỖI LẦN BẤM: `số câu bị ảnh hưởng x khả năng máy sai x độ chói tai`. Không việc nào chặn dây chuyền - máy
@@ -126,7 +126,7 @@ QUOTE_CLOSERS = ("\"", "”", "』", "」", "»")
 
 def _folded_book(chapter_paths: list[str]) -> str:
     """Cả cuốn (mọi .txt cùng thư mục với các chương, như character_registry._source_text), bỏ dấu, hạ chữ - giữ lại giữa
-    các lần mở hộp "Việc cần anh" (bỏ dấu cả cuốn mất vài giây)."""
+    các lần mở hộp "Việc cần bạn" (bỏ dấu cả cuốn mất vài giây)."""
     from ..character_registry import fold_for_source_search
 
     folders = sorted({Path(path).parent for path in chapter_paths if path and Path(path).parent.is_dir()})

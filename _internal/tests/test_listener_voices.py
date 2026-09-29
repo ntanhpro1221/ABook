@@ -1,6 +1,6 @@
 """Người nghe sửa giọng và giới của một nhân vật trong Studio, và mọi câu của người ấy được đọc lại bằng giọng mới.
 
-Hộp "Việc cần anh" ghi mong muốn vào `overrides.json` (mục `voices`); dây chuyền áp ở ranh giới an toàn bằng
+Hộp "Việc cần bạn" ghi mong muốn vào `overrides.json` (mục `voices`); dây chuyền áp ở ranh giới an toàn bằng
 `ProjectDB.apply_listener_voice`: giọng mới là hồ sơ bước phân vai sẽ tạo cho người ấy với mọi người khác giữ nguyên
 giọng (`character_registry.book_allocator`), mọi câu sang cùng lúc - "một người một giọng" vẫn đúng - câu đã thu được đặt
 lại, giới và giọng được ghim cho lô sau. Một transaction.

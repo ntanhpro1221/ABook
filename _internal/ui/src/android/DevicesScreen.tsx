@@ -218,7 +218,7 @@ function RemoteRow({ book, progress, onDownload }: { book: RemoteBook; progress?
   );
 }
 
-// Báo về điện thoại khi máy tính sản xuất có tin (StudioAlerts.kt): sách xong, dừng vì lỗi, có việc mới cần anh.
+// Báo về điện thoại khi máy tính sản xuất có tin (StudioAlerts.kt): sách xong, dừng vì lỗi, có việc mới cần bạn.
 // Cần công tắc Studio từ xa trên máy tính và quyền điều khiển sản xuất cho điện thoại này - như chính trang Studio.
 function StudioAlertsRow() {
   const client = useQueryClient();
@@ -228,7 +228,7 @@ function StudioAlertsRow() {
     onSuccess: (data) => {
       client.setQueryData(["studio-alerts"], data);
       if (data.enabled && !data.permitted) toast.error("Android chưa cho ABook đăng thông báo", { description: "Bật lại trong Cài đặt của máy > Ứng dụng > ABook > Thông báo." });
-      else if (data.enabled) toast.success("Sẽ báo khi sách xong hay có việc cần anh", { description: "Máy tính cần bật \"Cho phép điều khiển sản xuất\"." });
+      else if (data.enabled) toast.success("Sẽ báo khi sách xong hay có việc cần bạn", { description: "Máy tính cần bật \"Cho phép điều khiển sản xuất\"." });
     },
     onError: (error: Error) => toast.error("Chưa đổi được", { description: error.message }),
   });
@@ -236,7 +236,7 @@ function StudioAlertsRow() {
   return (
     <div className="mt-3 flex items-center justify-between gap-4 rounded-2xl border border-line bg-panel px-4 py-3.5">
       <div className="min-w-0">
-        <div className="text-[15px] font-medium">Báo khi sách xong hay có việc cần anh</div>
+        <div className="text-[15px] font-medium">Báo khi sách xong hay có việc cần bạn</div>
         <div className="mt-0.5 text-xs leading-snug text-fg-2">
           {enabled && state.data && !state.data.permitted
             ? "Android đang chặn thông báo của ABook."
@@ -247,7 +247,7 @@ function StudioAlertsRow() {
         checked={enabled}
         disabled={change.isPending || state.isLoading}
         onCheckedChange={(value) => change.mutate(value)}
-        aria-label="Báo khi sách xong hay có việc cần anh"
+        aria-label="Báo khi sách xong hay có việc cần bạn"
         className="relative h-7 w-12 shrink-0 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-accent"
       >
         <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />

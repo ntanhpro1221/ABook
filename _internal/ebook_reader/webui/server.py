@@ -959,7 +959,7 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.OK, review_view(project, verdicts, include_minor=query.get("all") == ["1"]))
 
     def get_work(self, _query: dict[str, list[str]], value: str) -> None:
-        # "Việc cần anh" (docs/STUDIO_REVIEW.md): chỗ máy nghi ngờ, xếp theo lợi trên mỗi lần bấm.
+        # "Việc cần bạn" (docs/STUDIO_REVIEW.md): chỗ máy nghi ngờ, xếp theo lợi trên mỗi lần bấm.
         self._send_json(HTTPStatus.OK, work_items(self.app._book(value)))
 
     def get_casting(self, _query: dict[str, list[str]], value: str) -> None:

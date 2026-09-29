@@ -24,7 +24,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   thoại…"). Sách của máy tính hay thiết bị đã ghép tải lại được bất cứ lúc nào, chỗ nghe đồng bộ lại từ máy ấy.
 - Studio: chọn truyện **đã có dự án** thì bước đầu báo "Truyện này đã có dự án" kèm nút mở dự án ấy. So nội dung file,
   nên truyện chép sang thư mục khác vẫn nhận ra. Vẫn tạo được dự án mới, ví dụ để thử một giọng kể khác.
-- Hộp "Việc cần anh":
+- Hộp "Việc cần bạn":
   - Việc đã quyết thu vào mục "Đã quyết, chờ áp dụng" và không còn tính vào số đếm; nút tô đúng lựa chọn đã bấm.
   - Thẻ "Ai nói câu này" có **"Tìm trong truyện…"**, mở đúng câu ấy ở tab Kịch bản với ô chọn người nói (tìm được mọi
     nhân vật).
@@ -60,7 +60,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Làm sách: lời kể nói về **lời nguyền** ("bị nguyền rủa", "lời nguyền rủa") không còn bị đọc bằng giọng tức giận - chỉ
   người đang nguyền rủa ("thầm nguyền rủa", "đáng nguyền rủa") mới là giận. Câu thoại mở bằng "(" ngay sau lời thoại của
   người khác được hiểu là một lượt nói mới, không gộp vào người vừa nói.
-- Hộp **"Việc cần anh"** hỏi khi một **danh hiệu hay biệt danh** có giọng riêng mà sách luôn viết nó sát tên một người
+- Hộp **"Việc cần bạn"** hỏi khi một **danh hiệu hay biệt danh** có giọng riêng mà sách luôn viết nó sát tên một người
   ("Thiên Biến Vạn Hóa Krai", "Krai được mệnh danh Thiên Biến Vạn Hóa"): một cú bấm đọc các câu ấy bằng giọng của
   chính người đó. Trước đây chỉ hỏi khi tên ngắn nằm trong tên dài ("Lucien" / "Lucien Evans").
 - **Tự chọn đường Wi-Fi hay Bluetooth**: ghép điện thoại với máy tính một lần (qua Wi-Fi hay Bluetooth) là đủ - khi
@@ -93,7 +93,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   Kịch bản, sửa ô "Chữ đem đọc" rồi lưu: câu được thu lại theo chữ đã sửa, còn sách và phần đọc theo giữ nguyên chữ gốc.
   Xoá ô (hoặc bấm "Trả về chữ của sách") là bỏ sửa.
 - Studio: **tạo người nói mới** khi sửa "ai nói câu này" - gõ tên chưa có trong truyện ở ô tìm người nói (tab Kịch
-  bản) hay bấm "Người khác…" trên thẻ của hộp "Việc cần anh", chọn Nam / Nữ / Không rõ. Trước đây chỉ chọn được người
+  bản) hay bấm "Người khác…" trên thẻ của hộp "Việc cần bạn", chọn Nam / Nữ / Không rõ. Trước đây chỉ chọn được người
   đã có giọng - linh thể chỉ nói trong ngoặc 『』 mà máy chưa từng gán câu nào thì không chọn được. Dây chuyền tạo người
   ấy ở ranh giới chương kế tiếp với một giọng riêng, khác giọng những người cùng chương, rồi thu lại các câu đã chọn.
 - Làm sách: câu thoại có lời dẫn kiểu “Được,” Liz gật đầu. giờ **đọc bằng giọng nhân vật**. Trước đây câu ấy chỉ được
@@ -133,21 +133,21 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   hay loại đoạn - lời kể, lời thoại, nội tâm (phím tắt `e` cho câu đang chọn). Lời kể đổi thành lời thoại thì chọn luôn
   người nói; lời thoại đổi thành lời kể thì câu về giọng người kể. Mức được giữ trong tầm giọng đọc được (thì thầm,
   dịu dàng tối đa "Vừa"). Áp ở ranh giới chương kế tiếp; câu đã thu được thu lại.
-- Điện thoại: công tắc **"Báo khi sách xong hay có việc cần anh"** (màn Tải sách, dưới nút Studio của máy tính).
+- Điện thoại: công tắc **"Báo khi sách xong hay có việc cần bạn"** (màn Tải sách, dưới nút Studio của máy tính).
   Điện thoại hỏi máy tính mỗi 15 phút (cả khi app đã đóng) và mỗi lần mở app, rồi báo: sách đã xong, dừng vì lỗi,
-  dừng giữa chừng, hay có thêm việc cần anh. Bấm thông báo mở thẳng Studio từ xa đúng cuốn, đúng tab. Cần máy tính
+  dừng giữa chừng, hay có thêm việc cần bạn. Bấm thông báo mở thẳng Studio từ xa đúng cuốn, đúng tab. Cần máy tính
   bật "Cho phép điều khiển sản xuất" và điện thoại có quyền ấy - như chính trang Studio từ xa. Lần bật đầu chỉ ghi
   mốc, không đổ ra tin cũ.
 - Studio, tab **Nhân vật**: nút **"Đổi giọng"** trên mỗi nhân vật mở danh sách mọi giọng dùng được, nghe thử từng
   giọng, thấy giọng đang dùng, giọng máy gợi ý cho giọng nam và giọng nữ, và ai cùng chương đang dùng giọng gốc ấy.
   Chọn giọng khác giới là đổi luôn giới của nhân vật. Áp ở ranh giới chương kế tiếp như các sửa khác; câu đã thu của
   người ấy được thu lại bằng giọng mới.
-- Hộp **"Việc cần anh"**: thẻ **"Nam hay nữ"** và **"Chung giọng"** giờ bấm được. Thẻ nói máy đang đọc nhân vật bằng
+- Hộp **"Việc cần bạn"**: thẻ **"Nam hay nữ"** và **"Chung giọng"** giờ bấm được. Thẻ nói máy đang đọc nhân vật bằng
   giọng nam hay nữ và cái giá của từng lựa chọn ("giữ giọng đang đọc" hay "đổi giọng, thu lại 3 câu"). Chọn xong,
   dây chuyền ghim giới cho các lô sau và - khi giọng phải đổi - chọn giọng mới đúng cách bước phân vai chọn (không trùng
   bậc giọng với người cùng chương, mọi người khác giữ nguyên giọng), rồi thu lại đúng các câu của người ấy. "Chung giọng"
   đổi giọng người ít câu hơn trước. Không phải dừng sách.
-- Hộp **"Việc cần anh"**: thẻ **"Một người hai tên"** bấm được - "Gộp vào X" chuyển mọi câu của tên ít câu hơn
+- Hộp **"Việc cần bạn"**: thẻ **"Một người hai tên"** bấm được - "Gộp vào X" chuyển mọi câu của tên ít câu hơn
   sang giọng của tên nhiều câu hơn (người nghe đã quen giọng ấy, ít câu phải thu lại nhất), "Hai người khác nhau" thì
   thẻ không hỏi lại. Thẻ giờ bắt cả trường hợp tên NGẮN nói nhiều hơn ("Kati" / "St. Kati") mà trước đây bỏ sót.
 - Studio có tab mới **"Kịch bản"**: đọc từng chương như kịch bản - câu nào của ai - và đổi người nói của bất kỳ câu
@@ -156,7 +156,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   Máy tính có phím tắt: ↑ ↓ chọn câu, phím số gán người theo dàn của chương rồi sang câu kế. Sửa không dừng sách: áp ở
   ranh giới chương kế tiếp, câu đã thu thì thu lại bằng giọng người mới; câu nào đã ghi hiện "đang chờ", áp rồi có dấu
   tích. Dùng được cả từ điện thoại qua Studio từ xa.
-- Hộp **"Việc cần anh"** có loại việc mới **"Lượt đối đáp"**: hai đoạn thoại liền nhau không lời dẫn mà máy gán cho cùng một người - đo trên đáp án 7 truyện, 9/10 cặp như thế là máy bỏ lỡ lượt đổi người. Thẻ hỏi câu sau là của ai; truyện kể ngôi thứ nhất thì "tôi" đứng đầu các lựa chọn.
+- Hộp **"Việc cần bạn"** có loại việc mới **"Lượt đối đáp"**: hai đoạn thoại liền nhau không lời dẫn mà máy gán cho cùng một người - đo trên đáp án 7 truyện, 9/10 cặp như thế là máy bỏ lỡ lượt đổi người. Thẻ hỏi câu sau là của ai; truyện kể ngôi thứ nhất thì "tôi" đứng đầu các lựa chọn.
 - **Tên mới: ABook** (trước là Ebook Reader), trên máy tính lẫn điện thoại: lối tắt ở thư mục gốc và Start Menu tên
   "ABook" (lối tắt tên cũ tự gỡ khi mở app), cửa sổ khởi động, dữ liệu app ở `%LOCALAPPDATA%\ABook` (tự chuyển từ thư
   mục tên cũ nếu có). Trình khởi động là `_internal\ABook.vbs`; repo GitHub là `ntanhpro1221/ABook` (địa chỉ cũ
@@ -216,7 +216,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   thoại" (ngược lại) - với mọi cuốn, kể cả cuốn điện thoại chưa tải.
 - Máy tính: trình phát hiện ở bảng media của Windows (Windows+A) và nhận phím media.
 - **Studio từ xa**: điện thoại, máy tính bảng hay máy tính khác cùng mạng mở ABook của máy tính trong trình duyệt
-  (`http://<máy tính>:47630`) - xem tiến độ, bắt đầu hay dừng, tạo sách, duyệt "Việc cần anh" và "Cần nghe lại", đặt
+  (`http://<máy tính>:47630`) - xem tiến độ, bắt đầu hay dừng, tạo sách, duyệt "Việc cần bạn" và "Cần nghe lại", đặt
   bìa, nghe sách. Bật trong Cài đặt → Điện thoại và thiết bị ("Cho phép điều khiển sản xuất từ thiết bị đã ghép"), tắt
   mặc định; trình duyệt ghép bằng mã 6 số như điện thoại. Những gì chỉ có nghĩa trên chính máy tính (mở thư mục, đổi
   cài đặt, ghép thiết bị) không làm được từ xa. App Android có nút **"Studio của máy tính"** trong Tải sách - mở thẳng,
@@ -229,11 +229,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - **Truyện kể ngôi thứ nhất**: Studio hỏi "Người kể xưng 'tôi' là ai?" và gợi ý tên; model phân tích nhận đúng người nói
   hơn hẳn (thử trên một chương: 34% lên 89%).
 - **"Cần nghe lại"**: nghe các câu khâu tự kiểm tra nghi ngờ, bấm Ổn hoặc Cần thu lại.
-- **"Việc cần anh"**: những chỗ máy không chắc, xếp theo lợi trên mỗi lần bấm - cách đọc tên riêng, nhân vật nam hay nữ,
+- **"Việc cần bạn"**: những chỗ máy không chắc, xếp theo lợi trên mỗi lần bấm - cách đọc tên riêng, nhân vật nam hay nữ,
   người gọi hay người nói, vai phụ không tên, ai nói câu này, bản thu lỗi. Máy vẫn tự quyết và chạy tiếp.
-- **Sửa cách đọc tên ngay trong "Việc cần anh"**: nghe máy đang đọc tên ấy thế nào, bấm "Đúng rồi" hoặc gõ cách đọc khác.
+- **Sửa cách đọc tên ngay trong "Việc cần bạn"**: nghe máy đang đọc tên ấy thế nào, bấm "Đúng rồi" hoặc gõ cách đọc khác.
   Không phải dừng sách: dây chuyền áp ở chương kế tiếp và thu lại đúng những câu đã thu có tên ấy - kể cả sách đã xong.
-- **Sửa "ai nói câu này" ngay trong "Việc cần anh"**: mỗi người máy nghi là một nút (cùng "Người kể", "Vai phụ không
+- **Sửa "ai nói câu này" ngay trong "Việc cần bạn"**: mỗi người máy nghi là một nút (cùng "Người kể", "Vai phụ không
   tên", "Giữ nguyên"). Câu chuyển sang đúng giọng sẵn có của người ấy và được thu lại ở chương kế tiếp.
 
 ### Sửa lỗi

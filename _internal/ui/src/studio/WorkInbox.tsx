@@ -8,7 +8,7 @@ import { formatNumber } from "@/shared/format";
 import { Button, EmptyState, Segmented } from "@/shared/ui";
 import { api, urls, type BookSummary } from "./api";
 
-// "Việc cần anh" (docs/STUDIO_REVIEW.md, webui/work_items.py): chỗ máy nghi ngờ, xếp theo lợi trên mỗi lần bấm. Máy đã tự
+// "Việc cần bạn" (docs/STUDIO_REVIEW.md, webui/work_items.py): chỗ máy nghi ngờ, xếp theo lợi trên mỗi lần bấm. Máy đã tự
 // quyết và dây chuyền KHÔNG chờ ai - đây là nơi người sửa ít nhất mà được nhiều nhất. Cách đọc tên sửa được ngay trên thẻ
 // (bước 2): mong muốn ghi vào overrides.json, dây chuyền áp ở ranh giới chương và thu lại những câu có tên ấy.
 
@@ -495,7 +495,7 @@ export function WorkInbox({ book, onOpenReview, onOpenScript }: { book: BookSumm
   if (isLoading || !data) return <div className="mt-6 text-sm text-fg-2">Đang tìm những chỗ máy chưa chắc…</div>;
   if (!data.items.length) {
     return (
-      <EmptyState icon={AudioLines} title="Không có việc gì cần anh" className="py-10">
+      <EmptyState icon={AudioLines} title="Không có việc gì cần bạn" className="py-10">
         Máy chắc chắn về mọi thứ đã làm tới giờ.
       </EmptyState>
     );
@@ -514,7 +514,7 @@ export function WorkInbox({ book, onOpenReview, onOpenScript }: { book: BookSumm
       <p className="max-w-3xl text-sm text-fg-2">
         {/* Lời mở đầu theo trạng thái sách - soát UX 29-09: "đang chạy tiếp" hiện cả khi sách đã xong hay đang dừng. */}
         {book.running
-          ? "Máy đã tự quyết và đang chạy tiếp - không có gì phải chờ anh."
+          ? "Máy đã tự quyết và đang chạy tiếp - không có gì phải chờ bạn."
           : book.phase === "done"
             ? "Sách đã xong - sửa xong thì bấm “Áp dụng thay đổi” ở trên để thu lại đúng các câu bị ảnh hưởng."
             : "Sách đang dừng - sửa bây giờ, lần chạy tiếp sẽ áp dụng."}{" "}

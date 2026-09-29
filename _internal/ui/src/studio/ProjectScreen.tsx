@@ -706,7 +706,7 @@ export function ProjectScreen() {
             Chương
           </TabsTrigger>
           <TabsTrigger value="work" count={workCount || undefined}>
-            Việc cần anh
+            Việc cần bạn
           </TabsTrigger>
           <TabsTrigger value="script">Kịch bản</TabsTrigger>
           <TabsTrigger value="review" count={reviewCount || undefined}>
