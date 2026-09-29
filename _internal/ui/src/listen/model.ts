@@ -94,30 +94,50 @@ export interface ListenBook {
 }
 
 export interface SeriesPlace {
+  /** Khoá gom nhóm: chuỗi "Làm tiếp cuốn này" của máy chủ ("chain:<phần đầu>") hay tên bộ ("title:<tên>") - hai kiểu không
+   *  bao giờ trộn: dự án lạ tên "X · Phần 2" không vào nhóm các phần thật của X (soát UX 29-09, N10). */
+  key: string;
+  /** Tên hiện của bộ. */
   series: string;
   volume: number | null;
   /** Chữ gọi một tập của bộ, viết thường: "tập", "quyển" hay "phần". */
   unit: string;
 }
 
+/** Chỗ của một phần trong chuỗi "Làm tiếp cuốn này" (continues.json, máy chủ tính): mã phần đầu + thứ tự phần. */
+export interface SeriesLink {
+  root: string;
+  part: number;
+}
+
 /** Bộ và số tập từ tên sách ("Throne of Magical Arcana · Tập 16" -> bộ "Throne of Magical Arcana", tập 16; "Truyện · Phần 2"
  * -> phần 2, tên phần sau mà "Làm tiếp cuốn này" đặt). */
 export function seriesOf(title: string): SeriesPlace {
   const match = title.match(/^(.*?)\s*[·|:—–-]\s*(Tập|Quyển|Phần|Vol\.?|Book)\s*(\d+)\b/i);
-  if (!match) return { series: title.trim(), volume: null, unit: "tập" };
+  if (!match) return { key: `title:${title.trim()}`, series: title.trim(), volume: null, unit: "tập" };
   const word = match[2].toLowerCase();
-  return { series: match[1].trim(), volume: Number(match[3]), unit: word === "quyển" || word === "phần" ? word : "tập" };
+  const series = match[1].trim();
+  return { key: `title:${series}`, series, volume: Number(match[3]), unit: word === "quyển" || word === "phần" ? word : "tập" };
 }
 
-/** `seriesOf` cho cả thư viện, thêm một luật: cuốn KHÔNG đánh số mà tên đúng bằng tên một bộ có tập đánh số là tập 1 của bộ
- * ấy - "Làm tiếp cuốn này" giữ nguyên tên phần đầu, các phần sau là "Tên · Phần 2", "Tên · Phần 3". */
-export function seriesIndex(books: { id: string; title: string }[]): Map<string, SeriesPlace> {
-  const places = new Map(books.map((book) => [book.id, seriesOf(book.title)]));
+/** Bộ và số tập của mọi cuốn trong thư viện. Phần của một cuốn làm nhiều đợt ("Làm tiếp cuốn này") đi theo chuỗi máy chủ
+ * biết (`series`) - đổi tên một phần không làm mất nhóm; nhóm mang tên phần đầu. Còn lại theo tên (`seriesOf`), thêm một
+ * luật: cuốn KHÔNG đánh số mà tên đúng bằng tên một bộ có tập đánh số là tập 1 của bộ ấy (sách nhập từ file .abook, máy chủ
+ * cũ không gửi chuỗi). */
+export function seriesIndex(books: { id: string; title: string; series?: SeriesLink | null }[]): Map<string, SeriesPlace> {
+  const titles = new Map(books.map((book) => [book.id, book.title]));
+  const places = new Map<string, SeriesPlace>();
+  for (const book of books) {
+    if (!book.series) continue;
+    const name = seriesOf(titles.get(book.series.root) ?? book.title).series;
+    places.set(book.id, { key: `chain:${book.series.root}`, series: name, volume: book.series.part, unit: "phần" });
+  }
+  const byTitle = new Map(books.filter((book) => !places.has(book.id)).map((book) => [book.id, seriesOf(book.title)]));
   const units = new Map<string, string>();
-  for (const place of places.values()) if (place.volume !== null && !units.has(place.series)) units.set(place.series, place.unit);
-  for (const [id, place] of places) {
-    const unit = units.get(place.series);
-    if (place.volume === null && unit) places.set(id, { ...place, volume: 1, unit });
+  for (const place of byTitle.values()) if (place.volume !== null && !units.has(place.key)) units.set(place.key, place.unit);
+  for (const [id, place] of byTitle) {
+    const unit = units.get(place.key);
+    places.set(id, place.volume === null && unit ? { ...place, volume: 1, unit } : place);
   }
   return places;
 }

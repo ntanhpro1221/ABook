@@ -3,14 +3,19 @@ import { foldVietnamese, resumePoint, seriesIndex, seriesOf, type ListenBook, ty
 
 describe("seriesOf", () => {
   it("reads the volume and the word the book uses for it", () => {
-    expect(seriesOf("Throne of Magical Arcana · Tập 16")).toEqual({ series: "Throne of Magical Arcana", volume: 16, unit: "tập" });
-    expect(seriesOf("Truyện - Quyển 4")).toEqual({ series: "Truyện", volume: 4, unit: "quyển" });
-    expect(seriesOf("Nageki · Phần 2")).toEqual({ series: "Nageki", volume: 2, unit: "phần" });
+    expect(seriesOf("Throne of Magical Arcana · Tập 16")).toEqual({
+      key: "title:Throne of Magical Arcana",
+      series: "Throne of Magical Arcana",
+      volume: 16,
+      unit: "tập",
+    });
+    expect(seriesOf("Truyện - Quyển 4")).toEqual({ key: "title:Truyện", series: "Truyện", volume: 4, unit: "quyển" });
+    expect(seriesOf("Nageki · Phần 2")).toEqual({ key: "title:Nageki", series: "Nageki", volume: 2, unit: "phần" });
     expect(seriesOf("Book: Vol. 3").volume).toBe(3);
   });
 
   it("leaves a title without a volume alone", () => {
-    expect(seriesOf("Sách lẻ")).toEqual({ series: "Sách lẻ", volume: null, unit: "tập" });
+    expect(seriesOf("Sách lẻ")).toEqual({ key: "title:Sách lẻ", series: "Sách lẻ", volume: null, unit: "tập" });
     expect(seriesOf("Truyện (phần 2)").volume, "hậu tố kiểu cũ không có dấu ngăn").toBeNull();
   });
 });
@@ -25,13 +30,25 @@ describe("seriesIndex", () => {
 
   it("counts the unnumbered first part of a continued book as part 1", () => {
     const places = seriesIndex(books);
-    expect(places.get("a")).toEqual({ series: "Nageki", volume: 1, unit: "phần" });
+    expect(places.get("a")).toEqual({ key: "title:Nageki", series: "Nageki", volume: 1, unit: "phần" });
     expect(places.get("c")?.volume).toBe(3);
   });
 
   it("does not number a book that has no numbered sibling", () => {
     expect(seriesIndex(books).get("d")?.volume).toBeNull();
     expect(seriesIndex([{ id: "x", title: "Nageki" }]).get("x")?.volume).toBeNull();
+  });
+
+  // Soát UX 29-09 (N10): các phần của "Làm tiếp cuốn này" đi theo chuỗi máy chủ biết (continues.json), không theo tên.
+  it("keeps a renamed part with its book and leaves a look-alike title out", () => {
+    const places = seriesIndex([
+      { id: "p1", title: "lo18", series: { root: "p1", part: 1 } },
+      { id: "p2", title: "Ma pháp thần toạ", series: { root: "p1", part: 2 } },
+      { id: "stray", title: "lo18 · Phần 2" },
+    ]);
+    expect(places.get("p2")).toEqual({ key: "chain:p1", series: "lo18", volume: 2, unit: "phần" });
+    expect(places.get("p1")?.key).toBe("chain:p1");
+    expect(places.get("stray")?.key, "dự án lạ không nối gì: nhóm theo tên, tách khỏi chuỗi").toBe("title:lo18");
   });
 });
 
