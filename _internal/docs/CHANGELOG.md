@@ -10,6 +10,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Studio (sản xuất sách nói)
 
 - Thẻ cách đọc tên trong "Việc cần duyệt" có nút "Mọi cách đọc tên…" mở thẳng mục "Cách đọc tên" ở tab Nhân vật.
+- "Hoàn tác" trên thông báo sau mỗi quyết định trong Việc cần duyệt (người nói, nam hay nữ, cách đọc tên, giữ nguyên) và
+  sau mỗi lần sửa ở mục "Cách đọc tên": bấm nhầm "Nữ" cạnh "Nam" thì thẻ trở lại như trước khi bấm, kể cả thẻ đã có quyết
+  định cũ (quyết định cũ được trả về chỗ). Máy đã kịp đưa quyết định vào sách thì thông báo nói thật và chỉ chỗ đổi lại;
+  riêng cách đọc tên thì máy xin lại cách đọc cũ.
+- Trình tạo sách phát hiện dòng ghi công người dịch / biên tập ở đầu chương ("TL : NicK", "*Edit: Lắc", "Translator: …"),
+  vốn bị đọc như một câu kể, và đề xuất bỏ chúng khỏi phần đọc. Chỉ áp dụng khi bấm "Bỏ khỏi phần đọc"; không bấm thì sách
+  giữ nguyên như file truyện. Sách đã tạo trước đó không đổi gì.
 - Cập nhật app không còn bắt kiểm lại âm thanh cả cuốn: trước đây số phiên bản của app nằm trong dấu vân tay chất lượng,
   nên sau mỗi lần cập nhật, lần "Áp dụng thay đổi" hay "Làm tiếp" đầu tiên trên một cuốn cũ nhận dạng giọng lại mọi câu
   và dựng lại mọi chương. Đổi thư viện giọng đọc hay nhận dạng vẫn kiểm lại như trước.
@@ -30,13 +37,6 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   gõ một tên chưa có trong danh sách để thêm cách đọc cho nó.
 - Tab Kịch bản: bảng sửa cách đọc một câu có thêm "Tên trong câu" - nghe sai tên ở câu nào sửa ngay ở câu ấy (cho cả
   cuốn). Bảng cao hơn màn nhỏ giờ cuộn được thay vì tràn ra ngoài màn.
-
-### Studio (sản xuất sách nói)
-
-- "Hoàn tác" trên thông báo sau mỗi quyết định trong Việc cần duyệt (người nói, nam hay nữ, cách đọc tên, giữ nguyên):
-  bấm nhầm "Nữ" cạnh "Nam" thì thẻ trở lại như trước khi bấm, kể cả thẻ đã có quyết định cũ (quyết định cũ được trả về
-  chỗ). Máy đã kịp đưa quyết định vào sách thì thông báo nói thật và chỉ chỗ đổi lại; riêng cách đọc tên thì máy xin lại
-  cách đọc cũ.
 
 ## [0.4.4] - 2026-09-29
 
