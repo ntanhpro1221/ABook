@@ -37,9 +37,32 @@ export interface SyncView {
   bluetooth: { running: boolean; channel: number; error: string; connections: number } | null;
 }
 
-/** Địa chỉ mở Studio từ xa trên trình duyệt của máy khác. */
-function studioUrls(sync: SyncView): string[] {
-  return sync.addresses.map((address) => `http://${address}:${sync.port}`);
+/** Tailscale (100.64.0.0/10, như `sync._tailscale`): thiết bị kia cũng bật Tailscale cùng tài khoản thì mở được từ bất cứ
+ *  đâu, không cần chung Wi-Fi. Soát 29-09: chủ sách tưởng khác mạng là không dùng được, vì giao diện ghép mọi địa chỉ bằng
+ *  "hoặc" mà không nói địa chỉ nào để làm gì. */
+function isTailscale(address: string): boolean {
+  const [first, second] = address.split(".").map(Number);
+  return first === 100 && second >= 64 && second <= 127;
+}
+
+/** Địa chỉ của máy này cho thiết bị khác: trong nhà (LAN) và khi ở ngoài (Tailscale), nói rõ cái nào để làm gì. */
+function Where({ sync, scheme = true }: { sync: SyncView; scheme?: boolean }) {
+  const home = sync.addresses.filter((address) => !isTailscale(address));
+  const away = sync.addresses.filter(isTailscale);
+  const show = (list: string[]) => (
+    <span className="font-medium text-fg tabular-nums">{list.map((address) => `${scheme ? "http://" : ""}${address}:${sync.port}`).join(" hoặc ")}</span>
+  );
+  return (
+    <>
+      {home.length > 0 && show(home)}
+      {home.length > 0 && away.length > 0 && " trong nhà, hoặc "}
+      {away.length > 0 && (
+        <>
+          {show(away)} khi ở ngoài (thiết bị kia bật Tailscale cùng tài khoản)
+        </>
+      )}
+    </>
+  );
 }
 
 function useSync() {
@@ -142,7 +165,7 @@ function PairingPanel({ sync, onPair, onCancel, busy }: { sync: SyncView; onPair
             </ol>
             {sync.remoteStudio && (
               <p className="mt-2 text-[13px] text-fg-2">
-                Trình duyệt: mở <span className="font-medium text-fg tabular-nums">{studioUrls(sync)[0]}</span> rồi gõ mã.
+                Trình duyệt: mở <Where sync={sync} /> rồi gõ mã.
               </p>
             )}
           </div>
@@ -251,9 +274,8 @@ export function PhoneSync() {
               <span className="mt-0.5 block text-[13px] text-fg-2 text-pretty">
                 {studioWanted ? (
                   <>
-                    Trên điện thoại, máy tính bảng hay máy tính khác cùng mạng, mở{" "}
-                    <span className="font-medium text-fg tabular-nums">{studioUrls(sync).join(" hoặc ")}</span> để xem tiến
-                    độ, bắt đầu hay dừng, duyệt “Việc cần duyệt” và nghe sách. Lần đầu nhập mã ghép như điện thoại.
+                    Trên điện thoại, máy tính bảng hay máy tính khác, mở <Where sync={sync} /> để xem tiến độ, bắt đầu
+                    hay dừng, duyệt “Việc cần duyệt” và nghe sách. Lần đầu nhập mã ghép như điện thoại.
                   </>
                 ) : (
                   "Đang tắt - thiết bị đã ghép chỉ tải và nghe sách."
@@ -340,10 +362,7 @@ export function PhoneSync() {
           {sync.addresses.length > 0 && (
             <p className="text-xs text-fg-3">
               Điện thoại không tự thấy máy này? Chọn “Nhập địa chỉ máy tính” trên điện thoại rồi gõ{" "}
-              <span className="text-fg-2 tabular-nums">
-                {sync.addresses.map((address) => `${address}:${sync.port}`).join(" hoặc ")}
-              </span>
-              .
+              <Where sync={sync} scheme={false} />.
             </p>
           )}
         </>
