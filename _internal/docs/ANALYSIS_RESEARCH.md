@@ -170,7 +170,7 @@ Một cặp đóng -> mở mà cùng một người thì 90% là máy bỏ lỡ 
 sim_alternation.py`, 19 lượt model x truyện): sàng "mẫu hội thoại" của Muzny và cs. 2017 (A, B, B -> A, B, A) chỉ đổi 1 câu,
 vì lỗi của model là cả dãy A, A, A sau một câu A có lời dẫn; luân phiên cả dãy với người kể ngôi thứ nhất làm vai kia: +5
 (HDST 4, Yamiyo 1), 0 hỏng; lấy người có tên gần nhất làm vai kia: +9 -3. Nên làm hai việc khác:
-1. **Hộp "Việc cần anh" thẻ "Lượt đối đáp"** (`webui/work_items.py`, nhánh `feat/turn-doubt`): mỗi cặp như thế là một thẻ sửa
+1. **Hộp "Việc cần duyệt" thẻ "Lượt đối đáp"** (`webui/work_items.py`, nhánh `feat/turn-doubt`): mỗi cặp như thế là một thẻ sửa
    CÂU SAU, lựa chọn đầu là người kể "tôi" (truyện ngôi thứ nhất), rồi người có tên nói nhiều nhất chương. Độ chính xác đã đo
    90% - cao hơn mọi tín hiệu khác trong hộp.
 2. **Prompt** (nhánh `dev/ln-turns`): quy tắc 2 thêm "đoạn thoại liền nhau không lời dẫn là hai người luân phiên" và "ngoặc
@@ -188,7 +188,7 @@ vì lỗi của model là cả dãy A, A, A sau một câu A có lời dẫn; lu
 | Tam quốc 50-52 | 219 | 46 | 64% | 87% | 29% | 67% / 22% |
 
 Duyệt 20% số câu (xếp: số model phụ bất đồng, rồi tin cậy thấp): bắt 33-50% số lỗi, tin cậy tự báo 11-35%, ngẫu nhiên 20%.
-So với bộ chấm ứng viên đang xếp hộp "Việc cần anh" (`review_curve.py` + `scratchpad/review_curve2.py`, 143 câu TMA test, chấm
+So với bộ chấm ứng viên đang xếp hộp "Việc cần duyệt" (`review_curve.py` + `scratchpad/review_curve2.py`, 143 câu TMA test, chấm
 chặt, máy một mình 67,1%): duyệt 20% -> bộ chấm 81,1%, LLM phụ 83,2%, LLM phụ rồi bộ chấm **85,3%** (trần 87,4%); duyệt 30% ->
 85,3 / 89,5 / **91,6%** (trần 97,2%); dưới 15% thì bộ chấm một mình đã bằng cách ghép. Bầu đa số tự đổi nhãn (hai model phụ
 cùng ý, khác 8b): YMP +11, TMA +2, Tam quốc +2, Tắt đèn -3 - không bền, KHÔNG tự áp. Kết luận: lượt phân tích thứ hai bằng
@@ -300,7 +300,7 @@ như cài đặt của sách; hoặc suy bằng N7b theo sổ nhân vật sau v�
 
 Độ tin cậy do LLM tự báo gần như vô dụng để biết câu nào cần người duyệt: trên Tập 18 (sản xuất) câu thoại trung bình
 0,91, chỉ 14/1.157 câu dưới 0,8 - nó quá tự tin. Bộ chấm ứng viên thì hiệu chỉnh tốt (tin cậy >= 0,95 đúng 100%, < 0,5
-đúng 33%). Trong hệ kết hợp nó chỉ thêm +2 điểm độ đúng trên nền LoRA, nhưng cho hộp "Việc cần anh" (docs/STUDIO_REVIEW.md)
+đúng 33%). Trong hệ kết hợp nó chỉ thêm +2 điểm độ đúng trên nền LoRA, nhưng cho hộp "Việc cần duyệt" (docs/STUDIO_REVIEW.md)
 nó là nguồn xếp hạng tốt nhất: chỉ ra ĐÚNG câu nào người nên nghe lại. **ĐÃ ĐO (27-09 17:3x, `quote_scorer/review_curve.py`, 143 câu test TMA, chấm chặt):**
 
 | người duyệt | 10% câu | 20% | 30% | 50% |
@@ -312,7 +312,7 @@ nó là nguồn xếp hạng tốt nhất: chỉ ra ĐÚNG câu nào người n�
 | qwen3:8b một mình 67,1% -> bộ chấm / LLM tự báo / ngẫu nhiên, duyệt 20% | | 81,1 / 72,7 / 73,7% | | |
 
 Tin cậy LLM tự báo KHÔNG hơn ngẫu nhiên; bộ chấm cho lợi gấp ~2 lần ngẫu nhiên. **Đổi quyết định 17:0x "gác bộ chấm"**:
-vai của nó là CHỌN CÂU CHO NGƯỜI DUYỆT trong hộp "Việc cần anh" - chỉ xếp hạng, không đổi nhãn, nên chạy được phía
+vai của nó là CHỌN CÂU CHO NGƯỜI DUYỆT trong hộp "Việc cần duyệt" - chỉ xếp hạng, không đổi nhãn, nên chạy được phía
 Studio (đọc SQLite chỉ đọc) mà không đụng file khoá/dấu vân tay của dây chuyền. Cần: suy luận mmBERT trong runtime app.
 Cũng 27-09: 3 câu mở đầu bằng lời gọi ("Heidi, các cậu đi đâu vậy?") vẫn bị gán cho chính người được gọi - luật host
 "tên trong lời gọi là người nghe" (AGENTS.md) còn lọt; hộp việc bắt được bằng một luật chữ đơn giản.

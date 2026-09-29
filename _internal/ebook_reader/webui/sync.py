@@ -391,7 +391,7 @@ class SyncApp:
         # Các đường tới máy này, gửi kèm lời đáp ghép: điện thoại ghép qua Wi-Fi biết đường Bluetooth dự phòng, ghép qua
         # Bluetooth biết địa chỉ Wi-Fi để dùng khi cùng mạng (tự chọn đường, feat/auto-route).
         self.routes = routes or (lambda: {})
-        # Số "việc cần anh" của mỗi dự án, tính lại chỉ khi sách đổi (studio_view): điện thoại hỏi mỗi 15 phút.
+        # Số "việc cần duyệt" của mỗi dự án, tính lại chỉ khi sách đổi (studio_view): điện thoại hỏi mỗi 15 phút.
         self._work: dict[str, tuple[tuple[float, ...], int]] = {}  # đường dẫn -> (dấu thời gian, số việc)
         self._work_lock = threading.Lock()
 
@@ -409,7 +409,7 @@ class SyncApp:
 
     def studio_view(self) -> list[dict[str, Any]]:
         """Trạng thái sản xuất gọn cho điện thoại: mỗi dự án Studio một dòng - giai đoạn, còn chạy không, số chương xong,
-        số "việc cần anh", lỗi cuối. Điện thoại tự so với lần hỏi trước để báo "sách xong", "có việc mới cần anh", "dừng vì
+        số "việc cần duyệt", lỗi cuối. Điện thoại tự so với lần hỏi trước để báo "sách xong", "có việc mới cần duyệt", "dừng vì
         lỗi" (StudioAlerts.kt); máy tính không phải nhớ gì cho từng điện thoại.
 
         Đang chạy hay không đọc từ nhịp tim của worker trong DB (`store.summarize`), không từ bộ chạy của cửa sổ app - cổng

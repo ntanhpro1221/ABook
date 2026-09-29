@@ -14,7 +14,7 @@ Làm sách chạy hoàn toàn trên máy của bạn: văn bản truyện và â
 - **Làm sách nói (Studio)**: đọc cả truyện để nhận ra lời thoại, ai đang nói và cảm xúc từng câu; mỗi nhân vật một giọng
   riêng giữ nguyên suốt cuốn; thu từng câu rồi tự nghe lại bằng nhận dạng giọng nói và thu lại câu lệch. Truyện kể ngôi
   thứ nhất: Studio hỏi "tôi" là ai.
-- **Bạn là người duyệt cuối**: hộp **"Việc cần anh"** chỉ ra những chỗ máy không chắc (ai nói câu này, hai tên là một
+- **Bạn là người duyệt cuối**: hộp **"Việc cần duyệt"** chỉ ra những chỗ máy không chắc (ai nói câu này, hai tên là một
   người, nam hay nữ, cách đọc một tên...), xếp theo lợi trên mỗi lần bấm. Tab **Kịch bản** cho sửa người nói, loại câu,
   cảm xúc và chữ đem đọc của từng câu; tab Nhân vật cho đổi giọng; tab **Cần nghe lại** cho nghe những câu máy tự kiểm
   không chắc và bấm "Cần thu lại" để thu một bản mới. Máy vẫn tự quyết và chạy tiếp - không bắt ai chờ.
@@ -84,7 +84,7 @@ Sau khi ghép, sách trên máy tính hiện ngay trong Thư viện điện tho�
    chương đổi người kể).
 3. Bấm bắt đầu. Studio đọc cả truyện trước để phân vai thống nhất cho cả cuốn, rồi thu từng chương. Sách hiện trong Thư
    viện ngay khi chương đầu tiên thu xong - không cần chờ cả cuốn.
-4. Trong lúc chạy, mở **"Việc cần anh"** khi rảnh: mỗi thẻ nói rõ máy đang nghi điều gì, sửa bằng một cú bấm; câu đã
+4. Trong lúc chạy, mở **"Việc cần duyệt"** khi rảnh: mỗi thẻ nói rõ máy đang nghi điều gì, sửa bằng một cú bấm; câu đã
    thu bị ảnh hưởng tự thu lại. Sách đã xong vẫn sửa được: trang dự án hiện nút **"Áp dụng N thay đổi"**, bấm là chỉ thu
    lại những câu bị ảnh hưởng.
 
@@ -95,7 +95,7 @@ chương đầu tiên được thu) nên để chạy liền một mạch: dừn
 
 ABook đang ở giai đoạn alpha: dùng hằng ngày được, nhưng còn thay đổi nhiều giữa các bản. Model phân tích của Studio
 (`abook-analyzer`, tự huấn luyện trên nền Qwen3) đoán đúng người nói khoảng hai phần ba số câu thoại ở truyện mạng và
-light novel khó - đó là lý do có "Việc cần anh" và tab Kịch bản.
+light novel khó - đó là lý do có "Việc cần duyệt" và tab Kịch bản.
 
 ## Dành cho người phát triển
 

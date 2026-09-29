@@ -1,4 +1,4 @@
-# "Việc cần anh" - người can thiệp vào sản xuất mà không chặn dây chuyền
+# "Việc cần duyệt" - người can thiệp vào sản xuất mà không chặn dây chuyền
 
 Chủ sách, 27-09: *"quy trình sản xuất phải cho phép người dùng can thiệp ở mức sâu một cách dễ dàng, đơn giản, trên mọi
 khía cạnh, tại mọi thời điểm mà có thể cần người dùng, thậm chí sort các phần cần can thiệp theo mức độ để người dùng can

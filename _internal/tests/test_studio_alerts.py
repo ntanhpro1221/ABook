@@ -1,4 +1,4 @@
-"""Điện thoại báo "sách xong", "có việc mới cần anh", "dừng vì lỗi" (StudioAlerts.kt): máy tính trả trạng thái sản xuất
+"""Điện thoại báo "sách xong", "có việc mới cần duyệt", "dừng vì lỗi" (StudioAlerts.kt): máy tính trả trạng thái sản xuất
 gọn qua cổng đồng bộ (`GET /sync/v1/studio`) - CHỈ cho thiết bị được phép điều khiển sản xuất, khi công tắc Studio từ xa
 đang bật (cùng hai điều kiện với Studio từ xa). Điện thoại tự so với lần hỏi trước; máy tính không nhớ gì cho từng máy.
 """

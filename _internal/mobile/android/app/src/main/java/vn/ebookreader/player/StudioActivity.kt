@@ -18,7 +18,7 @@ import androidx.core.view.WindowInsetsCompat
 
 /**
  * Studio từ xa: giao diện web mà máy tính phục vụ trên cổng đồng bộ (webui/remote_studio.py) - xem tiến độ, bắt đầu
- * hay dừng, "Việc cần anh", "Cần nghe lại", đặt bìa. Điện thoại không sản xuất, nhưng điều khiển được máy có sản xuất
+ * hay dừng, "Việc cần duyệt", "Cần nghe lại", đặt bìa. Điện thoại không sản xuất, nhưng điều khiển được máy có sản xuất
  * (chủ sách 27-09).
  *
  * Mở bằng WebView riêng chứ không trong trang của app: trang app nạp từ https://localhost, không gọi được http LAN

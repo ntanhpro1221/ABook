@@ -1,6 +1,6 @@
 """Người nghe sửa cách đọc một tên trong Studio, và sách đọc lại tên ấy - kể cả sách đã xong, kể cả giữa lúc chạy.
 
-Hộp "Việc cần anh" (docs/STUDIO_REVIEW.md) ghi mong muốn vào `overrides.json`; dây chuyền áp ở ranh giới an toàn bằng
+Hộp "Việc cần duyệt" (docs/STUDIO_REVIEW.md) ghi mong muốn vào `overrides.json`; dây chuyền áp ở ranh giới an toàn bằng
 `ProjectDB.apply_listener_pronunciation`: ghim cách đọc VÀ đặt lại mọi câu đã thu có từ ấy, trong một transaction.
 Trước đây chỉ có `cli pronounce`, phải dừng sách mới gõ được, và với sách đã xong thì không thu lại câu nào - recovery
 của sách xong đi đường tắt, không bao giờ hỏi chuỗi nói của bản thu còn đúng không.

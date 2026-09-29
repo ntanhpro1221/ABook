@@ -1,6 +1,6 @@
 """Tab "Kịch bản" của Studio: duyệt phân vai từng câu (docs/STUDIO_REVIEW.md, mục 3 "Ai nói câu này").
 
-Hộp "Việc cần anh" chỉ đưa ra chỗ máy nghi; tab này cho người nghe đọc CẢ chương như một kịch bản - câu nào của ai - và
+Hộp "Việc cần duyệt" chỉ đưa ra chỗ máy nghi; tab này cho người nghe đọc CẢ chương như một kịch bản - câu nào của ai - và
 đổi người nói của bất kỳ câu thoại hay nội tâm nào. Sửa bằng đúng đường ghi đè của thẻ "Ai nói câu này" (POST /speaker ->
 overrides.json -> dây chuyền áp ở ranh giới chương, câu đã thu thì thu lại), nên không có đường ghi thứ hai, và mọi luật
 của đường ấy vẫn đúng: chỉ gán cho người đã có giọng, câu đổi chữ thì yêu cầu tự rơi. Mỗi lần sửa cũng là một nhãn kiểu

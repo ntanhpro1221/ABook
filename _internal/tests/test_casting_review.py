@@ -90,7 +90,7 @@ def test_a_chapter_reads_as_a_script_with_who_says_each_line(tmp_path: Path) -> 
 
 
 def test_the_script_marks_where_the_machine_doubts_and_suggests_someone(tmp_path: Path) -> None:
-    """Cùng tín hiệu với hộp Việc cần anh, gắn thẳng lên câu: hai câu liền nhau cùng người (gợi ý: người khác vừa nói trước
+    """Cùng tín hiệu với hộp Việc cần duyệt, gắn thẳng lên câu: hai câu liền nhau cùng người (gợi ý: người khác vừa nói trước
     cặp ấy), lời gọi chính người nói, bộ chấm thứ hai bất đồng (mạnh nhất - đè tín hiệu khác trên cùng câu)."""
     project = make_book(tmp_path)
     hints = {line["stableId"]: line["hint"] for line in casting_chapter(project, 1)["lines"] if line["hint"]}

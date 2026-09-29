@@ -253,7 +253,7 @@ export function PhoneSync() {
                   <>
                     Trên điện thoại, máy tính bảng hay máy tính khác cùng mạng, mở{" "}
                     <span className="font-medium text-fg tabular-nums">{studioUrls(sync).join(" hoặc ")}</span> để xem tiến
-                    độ, bắt đầu hay dừng, duyệt “Việc cần anh” và nghe sách. Lần đầu nhập mã ghép như điện thoại.
+                    độ, bắt đầu hay dừng, duyệt “Việc cần duyệt” và nghe sách. Lần đầu nhập mã ghép như điện thoại.
                   </>
                 ) : (
                   "Đang tắt - thiết bị đã ghép chỉ tải và nghe sách."
@@ -271,7 +271,7 @@ export function PhoneSync() {
             open={confirmStudio}
             onOpenChange={setConfirmStudio}
             title="Cho thiết bị đã ghép điều khiển sản xuất?"
-            description="Điện thoại, máy tính bảng hay máy tính đã ghép sẽ mở được Studio của máy này trong trình duyệt: xem tiến độ, bắt đầu hay dừng tạo sách, duyệt “Việc cần anh”. Mỗi thiết bị vẫn cần được cho phép riêng ở danh sách bên dưới."
+            description="Điện thoại, máy tính bảng hay máy tính đã ghép sẽ mở được Studio của máy này trong trình duyệt: xem tiến độ, bắt đầu hay dừng tạo sách, duyệt “Việc cần duyệt”. Mỗi thiết bị vẫn cần được cho phép riêng ở danh sách bên dưới."
           >
             <div className="flex justify-end gap-2">
               <Button variant="ghost" onClick={() => setConfirmStudio(false)}>
