@@ -18,7 +18,9 @@ export function refreshAfterDecision(client: QueryClient, bookId: string) {
 // giới chương rơi đúng mấy giây ấy) thì máy chủ nói thật, và thông báo lỗi nói chỗ đổi lại.
 export const UNDO_MS = 8000;
 
-export function undoAction(client: QueryClient, bookId: string, endpoint: string, decisions: Record<string, unknown>[]) {
+/** `message`: điều gì trở lại, nói cụ thể ("“Lucien” lại đọc là “Lu-si-en”") - soát UX 29-09: "Việc trở lại như trước khi
+ *  bấm" quá chung. */
+export function undoAction(client: QueryClient, bookId: string, endpoint: string, decisions: Record<string, unknown>[], message?: string) {
   return {
     label: "Hoàn tác",
     onClick: () => {
@@ -35,7 +37,7 @@ export function undoAction(client: QueryClient, bookId: string, endpoint: string
           toast.success("Đã hoàn tác", {
             description: restored
               ? "Máy vừa đưa cách đọc mới vào sách, nên sẽ đọc lại theo cách cũ."
-              : "Việc trở lại như trước khi bấm.",
+              : (message ?? "Việc trở lại như trước khi bấm."),
           });
         } catch (error) {
           toast.error("Không hoàn tác được", { description: (error as Error).message });
