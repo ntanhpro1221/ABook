@@ -11,6 +11,7 @@ import { formatNumber } from "@/shared/format";
 import { Button, EmptyState, IconButton, Kbd, Segmented, Skeleton } from "@/shared/ui";
 import { api, urls } from "./api";
 import { NameInLine, useNamesInLine } from "./NameReadings";
+import { UNDO_MS, undoAction } from "./decisions";
 
 // Tab "Kịch bản" (webui/casting_review.py, docs/STUDIO_REVIEW.md mục 3): đọc cả chương như kịch bản - câu nào của ai - và
 // đổi người nói của bất kỳ câu thoại hay nội tâm nào. Hộp "Việc cần duyệt" chỉ đưa ra chỗ máy nghi; ở đây người nghe duyệt
@@ -170,7 +171,7 @@ function useAssign(bookId: string, chapterId: number) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: ({ line, value, newGender }: { line: Line; value: string; label: string; newGender?: Person["newGender"] }) =>
-      api<{ lines: number; speaker: string }>(`/api/books/${bookId}/speaker`, {
+      api<{ lines: number; speaker: string; requestedAt: number }>(`/api/books/${bookId}/speaker`, {
         method: "POST",
         body: { lines: [{ stableId: line.stableId, textSha256: line.textSha256 }], speaker: value, newGender: newGender ?? "" },
       }),
@@ -185,13 +186,22 @@ function useAssign(bookId: string, chapterId: number) {
         },
       );
     },
-    onSuccess: (_result, { line, value, label }) => {
-      if (value === line.current) {
-        toast.success(`Đã xác nhận: câu này của ${line.label}`, { description: "Máy sẽ không hỏi lại câu này." });
+    onSuccess: ({ requestedAt }, { line, value, label }) => {
+      const keep = value === line.current;
+      // Như hộp việc: gán nhầm người thì "Hoàn tác" trả câu về đúng như trước lần bấm này (studio/decisions.ts).
+      const undo = {
+        action: undoAction(client, bookId, "speaker", [
+          { lines: [{ stableId: line.stableId, textSha256: line.textSha256 }], requestedAt, keep },
+        ]),
+        duration: UNDO_MS,
+      };
+      if (keep) {
+        toast.success(`Đã xác nhận: câu này của ${line.label}`, { description: "Máy sẽ không hỏi lại câu này.", ...undo });
         return;
       }
       toast.success(`Đã ghi: câu này của ${label}`, {
         description: "Câu đã thu sẽ đọc lại bằng giọng của người ấy. Thu lại khi sách chạy tiếp - sách đã xong thì bấm “Áp dụng thay đổi” ở trang dự án.",
+        ...undo,
       });
     },
     onError: (error: Error) => toast.error("Chưa ghi được người nói", { description: error.message }),
