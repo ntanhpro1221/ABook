@@ -27,19 +27,33 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
 |---|---|---|
 | 8B-v5 Q4, máy nhà (Ollama 0.33.2 như Studio) | **61,2%** | **65,6%** |
 | 8B-v5 Q4, Kaggle (Ollama mới nhất) | 61,9% | 66,0% |
-| v3 (4B, đang dùng) | 53,9% | 56,5% |
+| v3 (4B, đang dùng) | 57,4% | 63,7% |
 | v6 (4B, data_v6) | 55,8% | 58,7% |
 | 4B-v5 (CÙNG dữ liệu với 8B) | 55,5% | 57,8% |
 
-- Cùng dữ liệu, 8B hơn 4B 6,4 điểm. Ở nhà trùng Kaggle từng chương, nên không phải nhiễu phiên bản.
-- Tốc độ gần ngang 4B Q8 vì giải mã bị giới hạn băng thông: TCF 042 mất 356 giây, v3 mất 327 giây.
-- 8B hơn ở đúng hai chỗ yếu nhất (`analysis/ln_categories.py`):
-  - câu người kể "tôi" nói: 80% (v3 62%);
-  - đối đáp liền không lời dẫn: 73% (v3 66%).
+- **Đính chính 29-09 chiều.** Bản trước của bảng này ghi v3 = 53,9% / 56,5%. Con số ấy lấy từ lượt v3 chia câu Nageki 65
+  theo cách CŨ: 520 câu, Nageki chỉ 37,5% vì đáp án lệch khỏi câu. Cùng cách chia mới (521 câu) thì v3 là 57,4% / 63,7%.
+  - Như vậy 8B hơn v3 **3,8 điểm F1 và 1,9 điểm chặt**, không phải 7,3. Vẫn là thắng: 5/6 chương hơn, riêng HDST kém 8 điểm.
+    Bộ LN mở rộng sẽ phân định.
+  - Chỉ so các lượt có cùng số câu. Các lượt còn ở cách chia cũ: qwen3:8b gốc, 9B Modal, 8B-lora16.
+- Cùng dữ liệu, 8B hơn 4B 5,7 điểm (ở nhà; Kaggle 6,4). Ở nhà trùng Kaggle từng chương, nên không phải nhiễu phiên bản.
+- Tốc độ gần ngang 4B Q8 vì giải mã bị giới hạn băng thông: TCF 042 mất 356 giây, v3 mất 327 giây. Trên Mac mini M4 thì
+  chậm khoảng 3 lần (1114 giây), nên không dùng Mac làm "máy phân tích" song song được.
+- 8B hơn v3 ở hai chỗ yếu nhất (`research/ln/ln_categories.py` trong repo riêng tư):
+  - câu người kể "tôi" nói: 79,7% (v3 72,5%);
+  - đối đáp liền không lời dẫn: 72,6% (v3 68,5%).
+- 8B lại KÉM v3 ở câu có lời dẫn nêu tên: 80,4% (v3 85,3%). Những câu sai ấy phần lớn là lời của người được lời dẫn nêu
+  tên ("Franz đỏ mặt hét lên", "Eva nói") mà 8B gán cho người kể "tôi".
+- **Lỗi lớn nhất của MỌI model là nhầm với người kể "tôi"** (`ln_narrator_bias.py`):
+  - v3: gán nhầm câu của người khác cho người kể 73 lần, bỏ sót người kể 34 lần, trên khoảng 190 câu sai;
+  - 8B: 68 và 28, trên khoảng 180 câu sai;
+  - tức hơn nửa số câu sai.
+  - Mỗi model lệch ở một cuốn khác nhau: 8B đỡ hẳn ở Yamiyo (32 → 14 lần gán nhầm) nhưng tệ hơn ở Nageki (14 → 23).
+  - Dữ liệu kế tiếp nên nhắm đúng lỗi này: chương ngôi thứ nhất nhiều thoại mà người kể ít nói.
 - Dữ liệu v5 có lỗi: nhãn viết hoa, và chương cổng Tam quốc/Tắt đèn nằm trong TRAIN. Việc kế là 8B trên dữ liệu sạch (v6/v6b), rồi đo LN mở rộng và 4 cổng trước khi đổi model mặc định.
 - Khi đăng model, Studio phải mang theo khuôn chat qwen3. Tạo chỉ từ GGUF thì Ollama lấy khuôn Jinja thô. Việc này đã sửa: `PublishedModel.template`.
 
-**Lỗi 『』 phần lớn KHÔNG phải việc của model** (`analysis/bracket_flip.py`):
+**Lỗi 『』 phần lớn KHÔNG phải việc của model** (`research/ln/bracket_flip.py` trong repo riêng tư):
 - Two Childhood Friends 042: 30/35 câu 『』 là lời kể/thông báo, cả v3 lẫn 8B đều gán cho người trong cảnh.
 - Yamiyo 141: 43 câu 『』 của linh thể Tọa Phu Đồng Tử, không model nào gán cho nó.
 - Mỗi cuốn một quy ước. Máy không đoán được, người nghe thì biết ngay. Vì vậy app có **quy ước 『』 theo cả cuốn** (0.4.2, `ebook_reader/bracket_rule.py`): chọn một lần, các phần sau tự áp trước bước phân vai.
