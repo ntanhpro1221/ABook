@@ -32,6 +32,7 @@ def test_the_phone_reads_a_compact_production_status_only_when_allowed(library, 
         status, data, _ = _request(server.port, "GET", "/sync/v1/studio", token)
         view = json.loads(data)
         assert status == 200 and view["name"] == "Máy thử" and view["at"] > 0
+        assert "onBattery" in view, "điện thoại báo máy tuột sạc cả khi không có sách nào chạy"
         (book,) = view["books"]
         assert {"id", "title", "phase", "statusLabel", "running", "paused", "chapters", "work", "lastError"} <= set(book)
         assert book["paused"] is None

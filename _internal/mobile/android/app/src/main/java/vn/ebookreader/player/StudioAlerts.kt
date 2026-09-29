@@ -73,6 +73,13 @@ object StudioAlerts {
         val prefs = state(context)
         val before = runCatching { JSONObject(prefs.getString("snapshot", "{}") ?: "{}") }.getOrElse { JSONObject() }
         val seeded = prefs.getBoolean("seeded", false)
+        // Máy tính tuột sạc (cấp máy, kể cả khi không có sách nào chạy): báo một lần mỗi lần rút; máy bàn gửi false/null.
+        val unplugged = !reply.isNull("onBattery") && reply.optBoolean("onBattery")
+        if (seeded && unplugged && !prefs.getBoolean("onBattery", false)) {
+            post(context, "machine:battery", "Máy tính đang chạy pin",
+                "${reply.optString("name").ifBlank { "Máy tính" }} đang chạy bằng pin - cắm sạc lại nếu không định rút.", "/#/studio")
+        }
+        prefs.edit().putBoolean("onBattery", unplugged).apply()
         val after = JSONObject()
         for (index in 0 until books.length()) {
             val book = books.optJSONObject(index) ?: continue
@@ -106,7 +113,7 @@ object StudioAlerts {
                 post(context, "$id:stopped", "Đã dừng: $title", "${book.optString("statusLabel")} · $progress", "/#/studio/$id")
             // Máy tính rút sạc nên Studio tự tạm dừng (power_source.py): báo để người ta biết máy tuột sạc - 24-09 sạc tuột
             // 22:50 mà 00:07 mới có người thấy.
-            pausedOf(book) == "battery" && pausedOf(old) != "battery" ->
+            pausedOf(book) == "battery" && pausedOf(old) != "battery" && !state(context).getBoolean("onBattery", false) ->
                 post(context, "$id:battery", "Máy tính đang chạy pin",
                     "Đã tạm dừng $title · $progress. Cắm sạc là tự làm tiếp.", "/#/studio/$id")
         }
