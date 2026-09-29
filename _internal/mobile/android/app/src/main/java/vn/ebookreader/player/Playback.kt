@@ -48,6 +48,11 @@ object Playback {
     /** Chỗ lần gần nhất đã lưu (hay vừa nạp từ chỗ đã lưu): (chương, mili giây). Đổi hồ sơ mà trình phát chưa nhúc nhích
      *  từ đó thì khỏi lưu lại - lưu lại là đóng dấu giờ mới lên chỗ CŨ, đè chỗ mới hơn mà máy khác vừa đồng bộ tới. */
     private var savedPlace: Pair<Int, Long>? = null
+    /** Cuốn trình điều khiển bên ngoài vừa chọn (`adopt`), chờ ExoPlayer nhận hàng đợi của nó (`onQueueReplaced`). */
+    private var pending: Pending? = null
+
+    private class Pending(val id: String, val title: String, val narrator: String, val items: List<Chapter>,
+                          val place: Pair<Int, Long>, val rate: Double)
     private var autoRewindAfterMs = 5 * 60_000L
     private var autoRewindSeconds = 5.0
     private val listeners = mutableSetOf<(JSONObject) -> Unit>()
@@ -134,12 +139,7 @@ object Playback {
             manifest to last
         }.maxByOrNull { it.second.optDouble("at") }
 
-    fun chaptersOf(manifest: JSONObject): List<Chapter> {
-        val array = manifest.optJSONArray("chapters") ?: return emptyList()
-        return (0 until array.length()).map { array.getJSONObject(it) }
-            .filter { it.optBoolean("available") && it.optString("file").isNotBlank() && it.optString("file") != "null" }
-            .map { Chapter(it.getInt("id"), it.optString("fullTitle"), it.getString("file"), it.optDouble("duration", 0.0)) }
-    }
+    fun chaptersOf(manifest: JSONObject): List<Chapter> = LibraryTree.chapters(manifest)
 
     /** Nạp lại cuốn nghe gần nhất đúng chỗ đang dở rồi phát (bấm phát trên widget khi app không chạy). */
     fun resumeLast(): Boolean {
@@ -217,6 +217,7 @@ object Playback {
     /** Nạp một cuốn: cả danh sách chương vào hàng đợi, bắt đầu ở chương/giây đã chọn. */
     fun load(id: String, title: String, narratorName: String, items: List<Chapter>, startChapterId: Int, startSeconds: Double, rate: Double, autoplay: Boolean = true) {
         val exo = player ?: return
+        pending = null
         saveNow()
         lastError = ""
         bookId = id
@@ -234,6 +235,41 @@ object Playback {
         // Mở lại app: nạp sẵn đúng chỗ đang nghe dở ở trạng thái dừng, người nghe bấm phát khi sẵn sàng.
         if (autoplay) {
             exo.play()
+            startTicking()
+        }
+        emit("load")
+    }
+
+    /**
+     * Trình điều khiển bên ngoài (Android Auto, trình duyệt media của hệ thống) chọn một cuốn trong cây duyệt
+     * (PlaybackService.onSetMediaItems): phiên media tự đặt hàng đợi lên ExoPlayer ngay sau đó. Ở đây lưu chỗ của cuốn
+     * đang nạp rồi thôi nhận chỗ nghe cho tới khi hàng đợi mới vào ExoPlayer (`onQueueReplaced`) - nhịp lưu 5 giây rơi
+     * vào khoảng giữa mà đã đổi `bookId` thì sẽ ghi chỗ của cuốn cũ vào cuốn mới.
+     */
+    fun adopt(id: String, title: String, narratorName: String, items: List<Chapter>, startChapterId: Int, startSeconds: Double, rate: Double) {
+        saveNow()
+        closeSession()
+        bookId = ""
+        pending = Pending(id, title, narratorName, items, startChapterId to (startSeconds * 1000).toLong(), rate)
+    }
+
+    /** ExoPlayer vừa nhận một hàng đợi mới (onTimelineChanged, PLAYLIST_CHANGED): là cuốn `adopt` đang chờ thì nhận
+     *  nó như `load` làm - tốc độ, giữ Wi-Fi thức khi nghe thẳng, phiên nghe, lưu chỗ. */
+    fun onQueueReplaced() {
+        val next = pending ?: return
+        pending = null
+        val exo = player ?: return
+        lastError = ""
+        bookId = next.id
+        bookTitle = next.title
+        narrator = next.narrator
+        chapters = next.items
+        val streamed = next.items.any { Streaming.chapterUri(appContext, next.id, it.file).scheme == "http" }
+        exo.setWakeMode(if (streamed) C.WAKE_MODE_NETWORK else C.WAKE_MODE_LOCAL)
+        exo.playbackParameters = PlaybackParameters(next.rate.toFloat())
+        savedPlace = next.place
+        if (exo.isPlaying) {
+            openSession()
             startTicking()
         }
         emit("load")
