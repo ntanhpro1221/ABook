@@ -167,6 +167,16 @@ def epithet_links(labels: list[str], folded_book: str) -> dict[tuple[str, str], 
     for label, text in folded.items():
         words = text.split()
         forms[label] = {text} | ({word for word in (words[0], words[-1]) if len(word) >= 3} if len(words) > 1 else set())
+    words = {label: set(text.split()) for label, text in folded.items()}
+    # Chỉ mục "dạng tên -> những nhãn có dạng ấy", và các độ dài dạng tên: mỗi chỗ danh hiệu xuất hiện chỉ cần thử vài
+    # độ dài, không phải từng tên x từng dạng tên (soát UX 29-09: phép thử cũ chiếm ~90% thời gian mở hộp "Việc cần duyệt",
+    # 3-5 giây với sách 43 chương). Cùng điều kiện như trước: sau danh hiệu là " <tên>" rồi ký tự không phải chữ/số; trước
+    # danh hiệu là "<tên> " mà trước tên không phải chữ/số; hoặc "<tên> <từ nối> " (không xét ranh giới, như trước).
+    owners: dict[str, set[str]] = defaultdict(set)
+    for label, label_forms in forms.items():
+        for form in label_forms:
+            owners[form].add(label)
+    lengths = sorted({len(form) for form in owners})
     links: dict[tuple[str, str], int] = {}
     for epithet, text in folded.items():
         if not text:
@@ -174,21 +184,28 @@ def epithet_links(labels: list[str], folded_book: str) -> dict[tuple[str, str], 
         positions = _word_positions(text, folded_book)
         if not positions:
             continue
-        for name in labels:
+        counts: Counter = Counter()
+        for index in positions:
+            before = folded_book[max(0, index - 40):index]
+            after = folded_book[index + len(text):index + len(text) + 40]
+            heads = [before[:-len(link) - 2] for link in joins if before.endswith(f" {link} ")]
+            found: set[str] = set()
+            for size in lengths:
+                if after.startswith(" ") and len(after) > size and after[1:size + 1] in owners \
+                        and not after[size + 1:size + 2].isalnum():
+                    found |= owners[after[1:size + 1]]
+                if before.endswith(" ") and len(before) > size and before[-size - 1:-1] in owners \
+                        and not before[-size - 2:-size - 1].isalnum():
+                    found |= owners[before[-size - 1:-1]]
+                for head in heads:
+                    if len(head) >= size and head[-size:] in owners:
+                        found |= owners[head[-size:]]
+            counts.update(found)
+        for name, count in counts.items():
             other = folded[name]
-            if name == epithet or not other or text in other or other in text or set(text.split()) & set(other.split()):
+            if name == epithet or not other or text in other or other in text or words[epithet] & words[name]:
                 continue
-            count = 0
-            for index in positions:
-                before, after = folded_book[max(0, index - 40):index], folded_book[index + len(text):index + len(text) + 40]
-                for form in forms[name]:
-                    if (after.startswith(f" {form}") and not after[len(form) + 1:len(form) + 2].isalnum()) or (
-                        before.endswith(f"{form} ") and not before[-len(form) - 2:-len(form) - 1].isalnum()
-                    ) or any(before.endswith(f"{form} {link} ") for link in joins):
-                        count += 1
-                        break
-            if count:
-                links[(epithet, name)] = count
+            links[(epithet, name)] = count
     return links
 
 
