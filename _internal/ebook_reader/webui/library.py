@@ -258,7 +258,11 @@ class Preferences:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         temporary = self.path.with_suffix(".tmp")
         temporary.write_text(json.dumps(self._data, ensure_ascii=False, indent=1), encoding="utf-8")
-        os.replace(temporary, self.path)
+        # Supervisor của sách đang chạy đọc file này (power_source, khi máy chạy pin): trên Windows, đổi tên đè lên file đang
+        # mở báo PermissionError - thử lại như file state của dây chuyền (soát QA 29-09).
+        from ..io_utils import _replace_with_retry
+
+        _replace_with_retry(temporary, self.path)
 
 
 class Library:
