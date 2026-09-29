@@ -334,6 +334,17 @@ print("hợp đồng runtime ok")
 """
 
 
+
+def _code_stamp(package: Path) -> str:
+    """Dấu của mã app (đường dẫn, cỡ, giờ sửa từng file; bỏ __pycache__) - đổi khi app lên bản mới, rẻ hơn băm nội dung."""
+    digest = hashlib.sha256()
+    for path in sorted(package.rglob("*")):
+        if path.is_file() and "__pycache__" not in path.parts and path.suffix != ".pyc":
+            stat = path.stat()
+            digest.update(f"{path.relative_to(package).as_posix()}|{stat.st_size}|{stat.st_mtime_ns};".encode("utf-8"))
+    return digest.hexdigest()[:16]
+
+
 class StudioSetup:
     """Cài / kiểm Studio trong `root`. `app_root` là thư mục chứa `ebook_reader` và `studio-requirements.txt` (thư
     mục `app` của bản cài). Các hàm bên ngoài (tải, chạy lệnh, dò GPU) truyền vào được để thử không cần mạng."""
@@ -484,37 +495,66 @@ class StudioSetup:
             thread.join(timeout)
 
     def code_for(self, project_root: Path) -> Path:
-        """Thư mục mã chạy cuốn này. Đổi một file khoá chất lượng là cuốn đang làm dở không làm tiếp được (AGENTS.md),
-        mà app tự cập nhật - nên cuốn nào cũng chạy bằng đúng bản mã đã bắt đầu nó: lần chạy đầu chép mã của app vào
-        `Studio\\code\\<hash chất lượng>` và ghi dấu vào dự án, các lần sau (kể cả sau khi app lên bản mới) dùng lại."""
+        """Thư mục mã chạy cuốn này. Đổi một file khoá chất lượng là cuốn đang làm dở không làm tiếp được (AGENTS.md), mà
+        app tự cập nhật. Lần chạy đầu ghi hash chất lượng vào dự án (`CODE_PIN_FILE`); về sau:
+        - hash của app vẫn trùng: chạy MÃ CỦA APP - có mọi sửa mới ở file không khoá (từ 0.4.6 nâng phiên bản không đổi
+          hash, nên một bản chép theo hash đứng yên từ bản đầu tiên có hash ấy - soát QA 29-09) - và làm mới bản chép
+          `Studio\\code\\<hash>` dành cho lúc app lên bản khác hash;
+        - đã khác: chạy bản chép của hash đã ghim, file khoá y hệt lúc cuốn bắt đầu."""
         pin = project_root / CODE_PIN_FILE
         try:
             code_id = str(json.loads(pin.read_text(encoding="utf-8"))["code"])
         except (OSError, ValueError, KeyError, TypeError):
             code_id = ""
-        if code_id:
-            folder = self.root / "code" / code_id
-            if not (folder / "ebook_reader").is_dir():
-                raise SetupError(f"Mất bản mã đã làm cuốn này ({folder}) - cuốn này phải làm lại bằng bản hiện tại.")
-            return folder
         from ..quality_policy import quality_implementation_hash
 
-        code_id = quality_implementation_hash()[:16]
+        current = quality_implementation_hash()[:16]
+        if not code_id:
+            code_id = current
+            payload = {"code": code_id, "since": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
+            temporary_pin = pin.with_name(pin.name + ".part")
+            temporary_pin.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+            os.replace(temporary_pin, pin)
+        if code_id == current:
+            self._snapshot(current)
+            return self.app_root
         folder = self.root / "code" / code_id
         if not (folder / "ebook_reader").is_dir():
-            temporary = folder.with_name(folder.name + ".part")
-            shutil.rmtree(temporary, ignore_errors=True)
-            shutil.copytree(self.app_root / "ebook_reader", temporary / "ebook_reader",
-                            ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
-            for name in ("pyproject.toml", "uv.lock"):  # nằm trong hash chất lượng
-                if (self.app_root / name).is_file():
-                    shutil.copy2(self.app_root / name, temporary / name)
-            os.replace(temporary, folder)
-        payload = {"code": code_id, "since": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
-        temporary_pin = pin.with_name(pin.name + ".part")
-        temporary_pin.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
-        os.replace(temporary_pin, pin)
+            raise SetupError(f"Mất bản mã đã làm cuốn này ({folder}) - cuốn này phải làm lại bằng bản hiện tại.")
         return folder
+
+    def _snapshot(self, code_id: str) -> None:
+        """Chép mã của app vào `Studio\\code\\<hash>`; bản chép cũ hơn mã app (cùng hash: file khoá y hệt, chỉ khác file
+        thường) thì làm mới. Có cuốn đang chạy TỪ bản chép ấy (app từng lùi bản) thì Windows không cho thay thư mục - giữ
+        bản cũ, không sao: nó chạy được."""
+        folder = self.root / "code" / code_id
+        stamp = _code_stamp(self.app_root / "ebook_reader")
+        marker = "app_code.json"
+        try:
+            if json.loads((folder / marker).read_text(encoding="utf-8")).get("stamp") == stamp:
+                return
+        except (OSError, ValueError, AttributeError):
+            pass
+        temporary = folder.with_name(folder.name + ".part")
+        stale = folder.with_name(folder.name + ".old")
+        shutil.rmtree(temporary, ignore_errors=True)
+        shutil.copytree(self.app_root / "ebook_reader", temporary / "ebook_reader",
+                        ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+        for name in ("pyproject.toml", "uv.lock"):  # nằm trong hash chất lượng
+            if (self.app_root / name).is_file():
+                shutil.copy2(self.app_root / name, temporary / name)
+        (temporary / marker).write_text(json.dumps({"stamp": stamp}), encoding="utf-8")
+        try:
+            if folder.exists():
+                shutil.rmtree(stale, ignore_errors=True)
+                os.replace(folder, stale)
+            os.replace(temporary, folder)
+        except OSError:
+            if not folder.exists() and stale.exists():
+                os.replace(stale, folder)
+        finally:
+            shutil.rmtree(temporary, ignore_errors=True)
+            shutil.rmtree(stale, ignore_errors=True)
 
     def environment(self, code: Path | None = None) -> dict[str, str]:
         """Biến môi trường cho worker và các lệnh cài: runtime của Studio, mã (của cuốn đang chạy - `code_for`; mặc định
