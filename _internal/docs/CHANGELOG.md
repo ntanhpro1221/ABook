@@ -12,6 +12,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Chế độ đọc: "Nghe từ đây" nghe tiếp từ câu đang dừng nếu câu ấy còn trên màn hình, không lùi về câu đầu màn hình.
 - Chạm một câu rồi nghe từ câu ấy: thông báo trích câu ("Nghe từ “Cậu ấy nói rằng hôm nay…”") thay cho "Đã tới 0:41";
   nhảy tới dấu trang có ghi chú thì thông báo nói ghi chú ấy. "Quay lại" trên thông báo giữ nguyên.
+- Điện thoại học lại các địa chỉ của máy tính mỗi lần mở thư viện: cài Tailscale (hay mạng riêng ảo khác) SAU khi đã ghép
+  thì ra khỏi nhà điện thoại vẫn tự nối được. Trước đây địa chỉ chỉ được lưu lúc ghép.
 
 ### Studio (sản xuất sách nói)
 

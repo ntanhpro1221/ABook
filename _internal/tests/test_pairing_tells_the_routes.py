@@ -39,3 +39,21 @@ def test_the_pairing_answer_names_every_way_back_to_this_computer(library, tmp_p
         assert "127.0.0.1" not in app.routes()["lan"]
     finally:
         app.close()
+
+
+def test_the_library_listing_repeats_the_routes(library, tmp_path: Path) -> None:  # noqa: F811
+    """Đường chỉ báo lúc ghép thì địa chỉ có SAU đó (cài Tailscale sau khi ghép) không bao giờ tới điện thoại: danh sách
+    thư viện - điện thoại hỏi mỗi lần mở - mang lại các đường, như lời đáp ghép."""
+    lib, _project, listening = library
+    app = App(preferences=lib.preferences, runner=FakeRunner(), token="t", listening=listening)
+    app.sync_host, app.sync_port = "127.0.0.1", 0
+    app.set_sync(True)
+    try:
+        code = app.devices.start_pairing()["code"]
+        _status, data, _ = _request(app.sync_server.port, "POST", "/sync/v1/pair", body={"code": code, "device": "Pixel"})
+        token = json.loads(data)["token"]
+        status, data, _ = _request(app.sync_server.port, "GET", "/sync/v1/library", token)
+        reply = json.loads(data)
+        assert status == 200 and reply["routes"] == app.routes()
+    finally:
+        app.close()
