@@ -317,7 +317,8 @@ function SpeakerFix({
             key={choice.value}
             size="sm"
             // Đã quyết thì tô lựa chọn của người nghe, không phải gợi ý đầu của máy.
-            variant={(item.requested ? [choice.name, choice.label].includes(item.requested) : index === 0) ? "primary" : "secondary"}
+            variant={(item.requested ? [choice.name, choice.label].includes(item.requested) : index === 0 && item.kind !== "unnamed")
+              ? "primary" : "secondary"}
             aria-pressed={item.requested ? [choice.name, choice.label].includes(item.requested) : undefined}
             disabled={save.isPending}
             onClick={() => save.mutate({ speaker: choice.value })}
@@ -327,7 +328,7 @@ function SpeakerFix({
         ))}
         {item.currentValue && (
           <Button size="sm" variant="ghost" disabled={save.isPending} onClick={() => save.mutate({ speaker: item.currentValue! })}>
-            {item.keepLabel ?? `Giữ ${item.current}`}
+            {item.keepLabel ?? (item.kind === "unnamed" ? "Đúng là vai phụ" : `Giữ ${item.current}`)}
           </Button>
         )}
         <Button size="sm" variant="ghost" icon={UserPlus} aria-expanded={creating} onClick={() => setCreating((value) => !value)}>

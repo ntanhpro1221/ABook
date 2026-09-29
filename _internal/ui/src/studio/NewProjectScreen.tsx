@@ -413,6 +413,7 @@ function SourceStep({
               <span>Đợt này làm</span>
               <Segmented<string>
                 label="Đợt này làm bao nhiêu chương"
+                wrap
                 value={files.length === total ? "all" : String(files.length)}
                 onChange={(value) => onLimit(value === "all" ? null : Number(value))}
                 options={[
@@ -439,7 +440,7 @@ function SourceStep({
                   aria-label={`Bỏ chương ${file.name}`}
                   title="Bỏ chương này"
                   onClick={() => onRemove(file.path)}
-                  className="grid size-8 place-items-center rounded-md text-fg-2 opacity-0 hover:bg-hover hover:text-danger group-hover:opacity-100 focus-visible:opacity-100"
+                  className="grid size-8 place-items-center rounded-md text-fg-2 opacity-0 hover:bg-hover hover:text-danger group-hover:opacity-100 focus-visible:opacity-100 max-md:opacity-100"
                 >
                   <Trash2 className="size-4" />
                 </button>
@@ -1030,6 +1031,9 @@ export function NewProjectScreen() {
   const allowed = !scan?.files.length || !title.trim() ? 0 : !draft.narrator ? 1 : STEPS.length - 1;
   const requested = Number(params.get("step") ?? 0);
   const step = Number.isInteger(requested) ? Math.max(0, Math.min(requested, allowed)) : 0;
+  useEffect(() => {
+    document.querySelector("main")?.scrollTo({ top: 0 });
+  }, [step]);
   // URL đòi bước chưa được phép (tên vừa bị xoá trống...): kéo URL về đúng bước đang hiện, để lúc điều kiện thoả
   // lại, trình tạo KHÔNG tự nhảy tới bước cũ trong URL.
   useEffect(() => {
