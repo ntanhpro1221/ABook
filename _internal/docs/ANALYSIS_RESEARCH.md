@@ -51,8 +51,11 @@ Mọi phép so v3 với các lượt ấy trên LN cơ sở vì thế lẫn hai 
 
 - v6 hơn v6b 1,5 F1 và 4,8 chặt, nhưng thắng 3 thua 3 chương. Sau 3 chương khoảng cách là 5,0, sau 5 chương còn 1,8: phần
   lớn là dao động của từng chương.
-- Kết luận tạm: 4 chương không có hại, và có thể có ích. Lượt LN mở rộng của v6b cùng `choose_composition.py` sẽ chọn thành
-  phần cho v7/v8/q35 và cho lượt 8B ngày 01-10.
+- **Kết luận (29-09 18:4x):** gộp cả 12 chương LN (1014 câu, cùng host), v6 được 60,0 F1 / 61,4 chặt, v6b được 57,5 / 57,8.
+  Luật đặt trước khi có số là chỉ bỏ 4 chương khi v6b hơn từ 1,0 điểm trở lên; thực tế v6b kém 2,5 điểm. Vậy **giữ 4 chương**:
+  v7/v8/q35 và lượt 8B ngày 01-10 dùng data_v6.
+- 4 chương không làm giảm lỗi người kể mà chỉ đẩy cán cân. Trên LN cơ sở, v6 gán nhầm CHO người kể 78 câu và bỏ sót 37; v6b
+  gán nhầm 66 và bỏ sót 47. Tổng gần bằng nhau (115 và 113). 8B ít lỗi người kể nhất: 96.
 
 **Dòng dặn về người kể trong prompt (A/B trên Mac, 8B-v5, Nageki 65 + LU 07 = 233 câu).**
 
