@@ -75,7 +75,9 @@ MỘT nhãn trong một chương theo việc chúng đi chung câu; hai nhóm t�
 - Nhóm nào là người lạ: nhóm lệch khỏi cách nhãn ấy nói ở các chương KHÁC. Thử ghép hai chương mỗi truyện: v3 Nageki 62
   đúng 3/3; nhãn người kể thì hay chọn ngược (HDST 130: nhóm "tôi" đúng là Ed) vì hồ sơ người kể nhiễm lời model đã gộp -
   nên thẻ bỏ qua nhãn người kể (thẻ từng câu đã lo phần ấy). Chưa đo được trên một cuốn đủ chương: bộ đo chỉ có một chương
-  mỗi dự án.
+  mỗi dự án. Kiểm âm duy nhất có: bản sao lô 18 (TMA, 11 chương, 1257 câu thoại, văn "ta… ngươi" khắp nơi), ép coi như ngôi
+  thứ nhất - 0 thẻ, 0,017 giây. Kiểm dương: Mac chạy 8B-v5 Nageki 56-64 đêm 29-09 (split_check_mac.sh) - Lucia đã có hồ sơ
+  ở các chương khác thì bà thầy bói ở 62 có bị hỏi không.
 
 **F1 giọng theo chương không thấy lỗi xuyên chương.** LU 10 kể ngôi thứ nhất của Hayase; khai sai người kể là Kakeru
 (người kể cả cuốn): người nói chặt sụp ở cả ba model (v3 64,1 -> 35,9; v6 64,1 -> 35,9; 8B 66,7 -> 38,5), còn F1 giọng
