@@ -421,3 +421,14 @@ Cùng chín gói như lượt 24-09 ngay trên; VieNeu SDK vẫn v3.8.3; `main` 
 | `huggingface-hub` **2.0.0** (24-09, "The httpx2 release"; bảng 20-09 còn ghi bản mới nhất là 1.32) | hai thay đổi phá vỡ: tầng HTTP chuyển từ `httpx` sang `httpx2`/`httpcore2`, và bỏ mọi API đã deprecate ở 1.x (`upload_large_folder`, `duplicate_space`, `huggingface-cli`...). Không nói gì về bố cục cache | **không nâng**. Mã của ta chỉ chạm `huggingface_hub.constants` (`HF_HOME`, `HF_HUB_CACHE`, `HF_HUB_OFFLINE` ở `worker.py`) và chạy offline với revision đã khoá. Khi nâng `transformers` giữa hai cuốn, hub 2 sẽ đi theo: kiểm ba hằng số ấy còn tồn tại và `HF_HUB_OFFLINE` vẫn chặn mạng thật (httpx2 dùng kho chứng chỉ của hệ điều hành - không liên quan khi offline) |
 | `ruff` 0.16.9 | công cụ dev, không phải cổng | không nâng |
 | Ollama 0.34.4 (23-09) | máy chủ đang cài 0.33.2; model đang dùng khớp registry | không đụng giữa cuốn - model digest khoá theo sách |
+
+## Kiểm 2026-09-29 22:1x (máy đang chạy pin, lô không chạy) — không có gì mới so với 26-09
+
+Cùng chín gói (`pip list --outdated`: torch 2.14.0, torchvision 0.29.0, transformers 5.17.0, huggingface_hub 2.0.0,
+vieneu 3.8.3, sea-g2p 0.10.0, timm 1.0.30, torchcodec 0.16.0, pyworld). Đọc lại hai thứ chạm âm thanh: diff
+`vieneu v3.8.1...v3.8.3` vẫn chỉ là đổi tên giọng v3 Turbo (có bí danh) + phần tinh chỉnh LoRA; `sea-g2p` 0.10.0 vẫn chỉ
+là C ABI. `main` của `VieNeu-TTS-v3-Turbo`: commit trọng số cuối vẫn là 8b7e9cff (05-09) = bản đang ghim; sau đó chỉ có
+README, ONNX int8 xuất lại (16-09) và `gguf/` cho audio.cpp (23-09). Giữ nguyên mọi quyết định.
+
+Đáng để ý cho sau: bản GGUF q8_0/bf16 + audio.cpp là đường chạy VieNeu không cần PyTorch - có thể là lối cho máy không có
+card NVIDIA, hay đọc ngay trên điện thoại. Chưa đo.
