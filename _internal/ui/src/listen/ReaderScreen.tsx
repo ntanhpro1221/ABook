@@ -20,6 +20,8 @@ import { useListenBook, useScript, useSource } from "./source";
 interface ReaderPrefs {
   size: number;
   leading: number;
+  /** Đã nghe từ một câu chọn trong trang ít nhất một lần - thôi nhắc "chạm vào câu". */
+  tapped?: boolean;
 }
 
 const PREFS_KEY = "ebook-reader-reader";
@@ -146,6 +148,7 @@ export function ReaderScreen() {
     if (player.track?.bookId === id) player.jumpTo(chapterId, start);
     else void playBook(book, chapterId, start);
     setSelected(null);
+    if (!prefs.tapped) setPrefs({ ...prefs, tapped: true });
   };
   const go = (step: 1 | -1) => {
     const next = chapters[index + step];
@@ -212,9 +215,13 @@ export function ReaderScreen() {
           </Popover.Portal>
         </Popover.Root>
         {script.timed && (
-          <Button size="sm" variant="primary" icon={Headphones} onMouseDown={(event) => event.preventDefault()} onClick={() => listenFrom(current)} className="max-sm:hidden">
-            Nghe từ đây
-          </Button>
+          <>
+            <Button size="sm" variant="primary" icon={Headphones} onMouseDown={(event) => event.preventDefault()} onClick={() => listenFrom(current)} className="max-sm:hidden">
+              Nghe từ đây
+            </Button>
+            {/* Điện thoại: cùng việc, chỉ còn biểu tượng - trước đây nút ẩn hẳn và chỉ còn cách đoán là chạm vào câu. */}
+            <IconButton label="Nghe từ đây" icon={Headphones} tone="solid" onClick={() => listenFrom(current)} className="sm:hidden" />
+          </>
         )}
       </header>
 
@@ -225,6 +232,7 @@ export function ReaderScreen() {
               Chương này chưa có audio - vẫn đọc được. Khi Studio thu xong, “Nghe từ đây” sẽ hiện ra.
             </p>
           )}
+          {script.timed && !prefs.tapped && <p className="mb-6 text-sm text-fg-2">Chạm vào một câu để nghe từ câu ấy.</p>}
           <div className="space-y-[0.9em]">
             {paragraphs.map((paragraph) => {
               const first = paragraph.items[0];
@@ -247,7 +255,9 @@ export function ReaderScreen() {
                           script.timed && "cursor-pointer",
                           item.kind === "thought" && "italic",
                           item.index === playingIndex && "read-along-active",
-                          item.index === selected && "outline outline-2 outline-accent",
+                          // Câu đang chọn: gạch chân màu nhấn - khung bao từng dòng của câu dài thành nhiều ô rời, và gạch
+                          // chân không lẫn với nền của câu đang phát.
+                          item.index === selected && "underline decoration-accent decoration-2 underline-offset-[0.22em]",
                         )}
                       >
                         {item.text}
