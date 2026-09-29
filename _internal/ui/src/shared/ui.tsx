@@ -53,6 +53,11 @@ export function Button({
         "inline-flex select-none items-center justify-center whitespace-nowrap font-medium transition-[background-color,color,border-color,transform] duration-150 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45",
         VARIANTS[variant],
         SIZES[size],
+        // Màn cảm ứng: nút 32-36 px nới vùng chạm theo chiều dọc lên ~44 px như IconButton (soát UX 29-09: "Sửa", "Nam",
+        // "Nữ", "Đọc thế này" chỉ 28-32 px trên điện thoại).
+        size !== "lg" && "relative pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:content-['']",
+        size === "sm" && "pointer-coarse:after:-inset-y-1.5",
+        size === "md" && "pointer-coarse:after:-inset-y-1",
         className,
       )}
       {...rest}

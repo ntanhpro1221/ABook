@@ -11,10 +11,22 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Cài đặt → Điện thoại nói rõ địa chỉ nào để làm gì: địa chỉ trong nhà, và địa chỉ Tailscale để mở từ bất cứ đâu khi
   thiết bị kia cũng bật Tailscale cùng tài khoản (trước đây các địa chỉ chỉ nối nhau bằng "hoặc").
+- Chế độ đọc: câu được cuộn tới không còn nằm khuất dưới thanh đầu; lời nhắc nói rõ chạm câu rồi bấm "Nghe từ câu này".
 
 ### Studio (sản xuất sách nói)
 
 - Tab Kịch bản: chọn người nói cho một câu xong cũng có "Hoàn tác" trên thông báo, như trong Việc cần duyệt.
+- Mục "Cách đọc tên": gõ tìm tên không còn bị ô "thêm cách đọc" giành con trỏ (gõ "Lan" + Enter từng ghi nhầm một cách
+  đọc cho chữ "L"); tên chưa có chỉ hiện nút "Thêm cách đọc cho …" khi không tên nào khớp. Tìm không dấu hiểu cả "đ" và bỏ
+  qua gạch nối ("dac lat" ra "Đác-lát"). "Mọi cách đọc tên…" trên thẻ điền sẵn tên của thẻ vào ô tìm.
+- Quyết định "giữ như cũ" không còn bị ghi là "chờ áp dụng": thẻ ghi "Giữ “…” - không cần áp dụng" và không tính vào số
+  thay đổi chờ áp.
+- Tab Kịch bản: bảng cách đọc của câu có lối xuống "Sửa cách đọc N tên trong câu", nút lưu của câu đổi thành "Lưu cho câu
+  này", Esc trong ô sửa tên chỉ đóng ô ấy.
+- Trình tạo sách: thanh "Quay lại / Tiếp tục / Tạo" luôn nằm trong màn hình; gợi ý dòng ghi công nói rõ file truyện không
+  bị sửa.
+- Nút nhỏ dễ chạm hơn trên điện thoại; câu mẫu chưa có bản thu chỉ báo một lần; câu mẫu của sách đã chuyển thư mục vẫn
+  nghe được.
 
 ## [0.4.6] - 2026-09-29
 

@@ -232,7 +232,7 @@ export function ReaderScreen() {
               Chương này chưa có audio - vẫn đọc được. Khi Studio thu xong, “Nghe từ đây” sẽ hiện ra.
             </p>
           )}
-          {script.timed && !prefs.tapped && <p className="mb-6 text-sm text-fg-2">Chạm vào một câu để nghe từ câu ấy.</p>}
+          {script.timed && !prefs.tapped && <p className="mb-6 text-sm text-fg-2">Chạm vào một câu rồi bấm “Nghe từ câu này” để nghe từ câu ấy.</p>}
           <div className="space-y-[0.9em]">
             {paragraphs.map((paragraph) => {
               const first = paragraph.items[0];
@@ -251,7 +251,8 @@ export function ReaderScreen() {
                         data-index={item.index}
                         onClick={() => script.timed && setSelected(item.index === selected ? null : item.index)}
                         className={cn(
-                          "rounded-[4px] [box-decoration-break:clone]",
+                          // scroll-mt: câu được cuộn tới không nằm khuất dưới thanh đầu dính (soát UX 29-09).
+                          "scroll-mt-20 rounded-[4px] [box-decoration-break:clone]",
                           script.timed && "cursor-pointer",
                           item.kind === "thought" && "italic",
                           item.index === playingIndex && "read-along-active",

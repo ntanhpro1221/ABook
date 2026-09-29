@@ -163,18 +163,36 @@ def chapter_mp3(project_root: Path, recorded_path: str | None) -> Path | None:
 
 
 def segment_audio(project_root: Path, recorded_path: str | None) -> Path | None:
-    """WAV của một câu, chỉ khi nó nằm trong thư mục sách."""
+    """WAV của một câu, chỉ khi nó nằm trong thư mục sách. Đường dẫn trong DB là tuyệt đối lúc thu: sách đã chuyển chỗ (thư
+    mục dự án đổi tên 28-09, chép sang máy khác) thì tìm lại theo phần ĐUÔI dài nhất của đường dẫn ấy ngay trong thư mục sách
+    - như `chapter_mp3` tìm MP3 theo tên (soát UX 29-09: câu mẫu báo "chưa có bản thu" dù file vẫn nằm đó)."""
     if not recorded_path:
         return None
+    root = project_root.resolve()
     path = Path(str(recorded_path))
-    if not path.is_absolute():
-        path = project_root / path
     try:
-        resolved = path.resolve()
-        resolved.relative_to(project_root.resolve())
+        resolved = (path if path.is_absolute() else project_root / path).resolve()
+        resolved.relative_to(root)
+        return resolved if resolved.is_file() else None
     except (OSError, ValueError):
-        return None
-    return resolved if resolved.is_file() else None
+        pass
+    # Ngoài thư mục sách: nối phần đuôi từ thư mục con của dự án ("work", "output") vào thư mục sách hiện tại. Rẻ - chỉ
+    # `is_file`, rồi `resolve` đúng một file: hộp việc gọi hàm này cho hàng trăm câu (thử mọi phần đuôi từng làm nó chậm
+    # 0,7 -> 5 giây).
+    parts = Path(str(recorded_path).replace("\\", "/")).parts
+    for index, part in enumerate(parts):
+        if part not in ("work", "output") or ".." in parts[index:]:
+            continue
+        candidate = project_root.joinpath(*parts[index:])
+        if not candidate.is_file():
+            continue
+        try:
+            found = candidate.resolve()
+            found.relative_to(root)
+        except (OSError, ValueError):
+            return None
+        return found
+    return None
 
 
 def lease_age(connection: sqlite3.Connection, now: float) -> float | None:
