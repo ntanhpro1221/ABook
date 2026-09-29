@@ -33,6 +33,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent a
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
+import { useMediaQuery } from "@/shared/media";
 import { formatClock, formatLength, formatPercent, formatWhen, spokenClock } from "@/shared/format";
 import { IconButton, Tooltip, Vu } from "@/shared/ui";
 import { useClock, useClockReader, useDuration, usePlaybackSecond } from "./clock";
@@ -432,39 +433,62 @@ function VolumeControl() {
   const { volume, setVolume } = usePlayer();
   const Icon = volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
   const remembered = useRef(volume || 0.9);
+  // Dưới 1280px thanh phát không còn chỗ cho thanh trượt: bấm loa mở ô chỉnh âm lượng thay vì chỉ có tắt/bật tiếng (soát UX
+  // 29-09). Phím M vẫn tắt/bật tiếng ở mọi cỡ.
+  const wide = useMediaQuery("(min-width: 1280px)");
+  const toggleMute = () => {
+    if (volume === 0) setVolume(remembered.current);
+    else {
+      remembered.current = volume;
+      setVolume(0);
+    }
+  };
+  const slider = (className: string) => (
+    <Slider.Root
+      className={cn("group relative h-4 touch-none select-none items-center", className)}
+      min={0}
+      max={1}
+      step={0.05}
+      value={[volume]}
+      onValueChange={([value]) => setVolume(value)}
+      onKeyDown={(event) => event.stopPropagation()}
+    >
+      <Slider.Track className="relative h-1 grow overflow-hidden rounded-full bg-line-strong">
+        <Slider.Range className="absolute h-full rounded-full bg-fg-2 group-hover:bg-accent" />
+      </Slider.Track>
+      <Slider.Thumb
+        aria-label="Âm lượng"
+        aria-valuetext={`Âm lượng ${Math.round(volume * 100)}%`}
+        className="block size-3 rounded-full bg-fg opacity-0 shadow group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-accent"
+      />
+    </Slider.Root>
+  );
+  if (!wide) {
+    return (
+      <Popover.Root>
+        <Popover.Trigger asChild>
+          <button
+            type="button"
+            aria-label={`Âm lượng ${Math.round(volume * 100)}%`}
+            className="grid size-8 place-items-center rounded-lg text-fg-2 hover:bg-hover hover:text-fg data-[state=open]:bg-hover"
+          >
+            <Icon className="size-[18px]" />
+          </button>
+        </Popover.Trigger>
+        <Popover.Portal>
+          <Popover.Content side="top" sideOffset={8} className="z-50 flex items-center gap-2 rounded-xl border border-line bg-panel p-2 shadow-float">
+            <IconButton label={volume === 0 ? "Bật tiếng (M)" : "Tắt tiếng (M)"} icon={Icon} size="sm" onClick={toggleMute} />
+            {slider("flex w-32")}
+            <span className="tabular w-9 text-right text-xs text-fg-2">{Math.round(volume * 100)}%</span>
+          </Popover.Content>
+        </Popover.Portal>
+      </Popover.Root>
+    );
+  }
   return (
     <div className="flex items-center gap-1">
-      <IconButton
-        label={volume === 0 ? "Bật tiếng (M)" : "Tắt tiếng (M)"}
-        icon={Icon}
-        size="sm"
-        {...keepFocus}
-        onClick={() => {
-          if (volume === 0) setVolume(remembered.current);
-          else {
-            remembered.current = volume;
-            setVolume(0);
-          }
-        }}
-      />
-      <Slider.Root
-        className="group relative hidden h-4 w-20 touch-none select-none items-center xl:flex"
-        min={0}
-        max={1}
-        step={0.05}
-        value={[volume]}
-        onValueChange={([value]) => setVolume(value)}
-        onKeyDown={(event) => event.stopPropagation()}
-      >
-        <Slider.Track className="relative h-1 grow overflow-hidden rounded-full bg-line-strong">
-          <Slider.Range className="absolute h-full rounded-full bg-fg-2 group-hover:bg-accent" />
-        </Slider.Track>
-        <Slider.Thumb
-          aria-label="Âm lượng"
-          aria-valuetext={`Âm lượng ${Math.round(volume * 100)}%`}
-          className="block size-3 rounded-full bg-fg opacity-0 shadow group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-accent"
-        />
-      </Slider.Root>
+      <IconButton label={volume === 0 ? "Bật tiếng (M)" : "Tắt tiếng (M)"} icon={Icon} size="sm" {...keepFocus} onClick={toggleMute} />
+      {slider("flex w-20")}
     </div>
   );
 }
