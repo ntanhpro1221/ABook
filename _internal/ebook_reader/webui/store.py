@@ -204,6 +204,34 @@ def segment_text_sha256(project_root: Path, stable_id: str) -> str | None:
     return str(row[0]) if row is not None and row[0] else None
 
 
+def continuation_plan(project_root: Path) -> dict[str, Any]:
+    """"Làm tiếp cuốn này" (ebook_reader/continuation.py): các chương kế tiếp trong thư mục truyện, tên phần sau, cài
+    đặt giữ nguyên (chất lượng, giọng kể, người xưng "tôi") và những gì sẽ mang theo - cho trình tạo sách điền sẵn."""
+    from .. import continuation
+
+    settings = read_settings(project_root)
+    voices = settings.get("voices") if isinstance(settings.get("voices"), dict) else {}
+    with closing(connect(project_root)) as connection:
+        book = connection.execute("SELECT title FROM book WHERE id=1").fetchone()
+        segments = connection.execute(
+            "SELECT COUNT(*) AS total, SUM(status != 'pending') AS analyzed FROM segments").fetchone()
+    title = display_title(project_root, str(book["title"]) if book is not None else project_root.name)
+    part = continuation.part_number(project_root) + 1
+    total = int(segments["total"] or 0)
+    return {
+        "sourceTitle": title,
+        "part": part,
+        "title": continuation.continued_title(title, part),
+        "paths": [str(path) for path in continuation.next_chapters(project_root)],
+        "profile": str(settings.get("quality_profile") or "high_quality"),
+        "narrator": humanize.voice_label(str(voices.get("narrator_voice") or "")),
+        "firstPerson": str(voices.get("first_person_identity") or ""),
+        # Phần trước còn đang phân tích thì sổ nhân vật chưa đủ - trình tạo nói ra, không chặn.
+        "analyzed": bool(total) and int(segments["analyzed"] or 0) == total,
+        "carries": continuation.carried_summary(project_root),
+    }
+
+
 def display_title(project_root: Path, fallback: str) -> str:
     """Tên sách người dùng đặt lại (TITLE_FILE), hay `fallback` - tên lúc tạo trong sổ."""
     try:

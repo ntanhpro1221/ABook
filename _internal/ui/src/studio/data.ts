@@ -7,6 +7,7 @@ import {
   type BookSummary,
   type Cast,
   type Chapter,
+  type ContinuationPlan,
   type FirstPersonHint,
   type Preferences,
   type ScanResult,
@@ -147,6 +148,16 @@ export function useFirstPersonHint(paths: string[]) {
   });
 }
 
+/** Phần kế tiếp của một dự án ("Làm tiếp cuốn này"): chương mới trong thư mục truyện + thứ sẽ mang theo. */
+export function useContinuation(id: string | undefined, enabled = true) {
+  return useQuery({
+    queryKey: ["continuation", id],
+    enabled: Boolean(id) && enabled,
+    queryFn: () => api<ContinuationPlan>(`/api/books/${id}/continuation`),
+    staleTime: 60_000,
+  });
+}
+
 export function useCreateBook() {
   const refresh = useRefresh();
   return useMutation({
@@ -157,6 +168,8 @@ export function useCreateBook() {
       narrator: string;
       firstPerson: string;
       firstPersonChapters?: Record<string, string>;
+      /** "Làm tiếp cuốn này": id dự án phần trước - giọng, cách đọc tên, ghim được gieo sang trước khi chạy. */
+      seedFrom?: string;
       start: boolean;
     }) =>
       api<{ id: string }>("/api/books", { method: "POST", body }),
