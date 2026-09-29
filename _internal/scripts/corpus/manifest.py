@@ -6,7 +6,7 @@ r"""Bảng kê kho truyện `D:/Novels/ABook/Corpus/` -> `Corpus/manifest.json`.
 Mỗi truyện: số chương, số từ (tách theo khoảng trắng), sha256 từng file. Bảng kê để biết chắc cái đang có
 là cái đã gom, và để các tập train/dev/test chỉ đích danh chương theo mã băm.
 
-Kho là một repo RIÊNG TƯ, `ntanhpro1221/ABook-Corpus`, clone vào đúng `Corpus/` (repo chính bỏ qua thư mục
+Kho là một repo RIÊNG TƯ, `ntanhpro1221/ABook-Private`, clone vào đúng `Corpus/` (repo chính bỏ qua thư mục
 này). Chủ sách chốt 19-09: dữ liệu phải được đẩy lên, laptop hỏng thì không mất công gom và làm đáp án. 27-09:
 repo chính công khai mà truyện còn bản quyền - một thông báo DMCA khoá cả repo, kéo theo trang tải APK và bộ cập
 nhật của app - nên kho sang repo riêng tư, còn lịch sử repo chính được viết lại cho sạch.
