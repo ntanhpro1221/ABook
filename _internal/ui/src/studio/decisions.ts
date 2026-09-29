@@ -1,6 +1,19 @@
-import type { QueryClient } from "@tanstack/react-query";
+import { useQuery, type QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { api } from "./api";
+import { api, type BookSummary } from "./api";
+
+/** Thay đổi của người nghe vào sách lúc nào - thông báo chỉ nói vế đúng với sách này (soát UX 29-09: mọi thông báo nói cả
+ *  "thu lại khi sách chạy tiếp" lẫn "sách đã xong thì bấm…"). Đang chạy: dây chuyền áp ở ranh giới chương kế tiếp và thu
+ *  lại cả chương đã qua; trước khi phân vai khoá thì yêu cầu nằm chờ; sách ĐÃ XONG không tự chạy lại. Chỉ đọc bản của
+ *  trang dự án trong bộ nhớ đệm - không thêm một nhịp hỏi máy chủ. */
+export function useWhenApplied(bookId: string): string {
+  const book = useQuery<{ book: BookSummary }>({ queryKey: ["book", bookId], enabled: false }).data?.book;
+  if (!book) return "Thu lại khi sách chạy tiếp.";
+  if (book.phase === "analysis" || book.phase === "casting") return "Áp dụng khi phân vai xong.";
+  if (book.running || book.starting) return "Máy áp ở ranh giới chương kế tiếp, không phải dừng sách.";
+  if (book.phase === "done") return "Bấm “Áp dụng thay đổi” ở trang dự án để thu lại.";
+  return "Thu lại khi sách chạy tiếp.";
+}
 
 /** Làm mới mọi chỗ một quyết định của người nghe (người nói, giới, cách đọc tên) chạm tới. */
 export function refreshAfterDecision(client: QueryClient, bookId: string) {

@@ -11,7 +11,7 @@ import { formatNumber } from "@/shared/format";
 import { Button, EmptyState, IconButton, Kbd, Segmented, Skeleton } from "@/shared/ui";
 import { api, urls } from "./api";
 import { NameInLine, useNamesInLine } from "./NameReadings";
-import { UNDO_MS, undoAction } from "./decisions";
+import { UNDO_MS, undoAction, useWhenApplied } from "./decisions";
 
 // Tab "Kịch bản" (webui/casting_review.py, docs/STUDIO_REVIEW.md mục 3): đọc cả chương như kịch bản - câu nào của ai - và
 // đổi người nói của bất kỳ câu thoại hay nội tâm nào. Hộp "Việc cần duyệt" chỉ đưa ra chỗ máy nghi; ở đây người nghe duyệt
@@ -169,6 +169,7 @@ function chapterLabel(chapter: ChapterEntry): string {
 
 function useAssign(bookId: string, chapterId: number) {
   const client = useQueryClient();
+  const when = useWhenApplied(bookId);
   return useMutation({
     mutationFn: ({ line, value, newGender }: { line: Line; value: string; label: string; newGender?: Person["newGender"] }) =>
       api<{ lines: number; speaker: string; requestedAt: number }>(`/api/books/${bookId}/speaker`, {
@@ -206,7 +207,7 @@ function useAssign(bookId: string, chapterId: number) {
         return;
       }
       toast.success(`Đã ghi: câu này của ${label}`, {
-        description: "Câu đã thu sẽ đọc lại bằng giọng của người ấy. Thu lại khi sách chạy tiếp - sách đã xong thì bấm “Áp dụng thay đổi” ở trang dự án.",
+        description: `Câu đã thu sẽ đọc lại bằng giọng của người ấy. ${when}`,
         ...undo,
       });
     },
@@ -246,6 +247,7 @@ function useConfirmChapter(bookId: string) {
 
 function useLineFix(bookId: string, chapterId: number) {
   const client = useQueryClient();
+  const when = useWhenApplied(bookId);
   return useMutation({
     mutationFn: ({ line, change }: { line: Line; change: Delivery }) =>
       api(`/api/books/${bookId}/line`, {
@@ -274,7 +276,7 @@ function useLineFix(bookId: string, chapterId: number) {
       );
     },
     onSuccess: () =>
-      toast.success("Đã ghi cách đọc câu này", { description: "Câu đã thu sẽ được thu lại. Thu lại khi sách chạy tiếp - sách đã xong thì bấm “Áp dụng thay đổi” ở trang dự án." }),
+      toast.success("Đã ghi cách đọc câu này", { description: `Câu đã thu sẽ được thu lại. ${when}` }),
     onError: (error: Error) => toast.error("Chưa ghi được", { description: error.message }),
     onSettled: () => {
       void client.invalidateQueries({ queryKey: ["casting", bookId] });
