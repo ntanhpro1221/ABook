@@ -665,11 +665,14 @@ object Store {
     /** Cuốn của máy tính đã ghép chính - tải hẳn hay nghe thẳng; không kể cuốn mở từ file, cuốn của thiết bị ghép khác
      *  (gói mang `source`). */
     @Synchronized
-    fun computerBooks(): List<String> =
-        File(root, "books").listFiles()?.filter { it.isDirectory }?.mapNotNull { dir ->
+    fun computerBooks(): List<String> {
+        val prints = printsBook()
+        return File(root, "books").listFiles()?.filter { it.isDirectory }?.mapNotNull { dir ->
             val manifest = playableManifest(dir.name) ?: return@mapNotNull null
-            dir.name.takeIf { manifest.optString("source").isEmpty() && !isImported(it) }
+            val imported = prints.optJSONObject(dir.name)?.optBoolean("imported") == true
+            dir.name.takeIf { manifest.optString("source").isEmpty() && !imported }
         } ?: emptyList()
+    }
 
     /**
      * Máy tính đổi mã một cuốn (mã kiểu cũ - đường dẫn thư mục mã hoá - sang mã mới, docs/BOOK_IDS.md): thư

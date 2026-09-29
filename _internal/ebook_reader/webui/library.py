@@ -293,10 +293,11 @@ class Library:
 
     def resolve(self, value: str) -> Path | None:
         """Dự án mang mã `value` (mã mới, hay mã kiểu cũ của cùng thư mục); ngoài thư viện: None."""
-        return self._find(value, self.projects())
+        return self.find(value, self.projects())
 
     @staticmethod
-    def _find(value: str, allowed: list[Path]) -> Path | None:
+    def find(value: str, allowed: list[Path]) -> Path | None:
+        """Cuốn mang mã `value` trong `allowed` (mã mới, hay mã kiểu cũ của cùng thư mục)."""
         if ID_PATTERN.fullmatch(value):
             return next((path for path in allowed if book_id(path) == value), None)
         path = _decode_id(value)
@@ -323,7 +324,7 @@ class Library:
         project = self.resolve(value)
         if project is not None:
             return project
-        return self._find(value, self.packages())
+        return self.find(value, self.packages())
 
     def summary(self, project: Path, *, running: bool, starting: bool = False) -> dict[str, Any]:
         # Cả mốc của overrides.json (yêu cầu mới của người nghe đổi "pendingChanges") và tên đặt lại - không chạm DB.
