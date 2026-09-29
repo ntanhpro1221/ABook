@@ -19,6 +19,42 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
 5. **Thước quyết định là thứ chủ sách đọc: LN Nhật + truyện mạng Hàn** (chủ sách 28-09: *"tôi hay đọc light novel nhật,
    hàn cơ mà"*). Truyện Trung, Việt, cổ chỉ là kiểm tra phụ "không được phá".
 
+## 29-09 - NỀN 8B HƠN 4B RÕ RỆT; lỗi 『』 là quy ước của từng cuốn; gieo sổ nhân vật giúp nhẹ
+
+**8B > 4B là thật, và chạy được trên card 8 GB.** Qwen3-8B QLoRA 1 epoch trên data_v5 (Kaggle T4), đo ở bản Q4_K_M 5,0 GB:
+
+| model (bộ LN 6 chương, 521 câu) | F1 giọng | người nói chặt |
+|---|---|---|
+| 8B-v5 Q4, máy nhà (Ollama 0.33.2 như Studio) | **61,2%** | **65,6%** |
+| 8B-v5 Q4, Kaggle (Ollama mới nhất) | 61,9% | 66,0% |
+| v3 (4B, đang dùng) | 53,9% | 56,5% |
+| v6 (4B, data_v6) | 55,8% | 58,7% |
+| 4B-v5 (CÙNG dữ liệu với 8B) | 55,5% | 57,8% |
+
+- Cùng dữ liệu, 8B hơn 4B 6,4 điểm. Ở nhà trùng Kaggle từng chương, nên không phải nhiễu phiên bản.
+- Tốc độ gần ngang 4B Q8 vì giải mã bị giới hạn băng thông: TCF 042 mất 356 giây, v3 mất 327 giây.
+- 8B hơn ở đúng hai chỗ yếu nhất (`analysis/ln_categories.py`):
+  - câu người kể "tôi" nói: 80% (v3 62%);
+  - đối đáp liền không lời dẫn: 73% (v3 66%).
+- Dữ liệu v5 có lỗi: nhãn viết hoa, và chương cổng Tam quốc/Tắt đèn nằm trong TRAIN. Việc kế là 8B trên dữ liệu sạch (v6/v6b), rồi đo LN mở rộng và 4 cổng trước khi đổi model mặc định.
+- Khi đăng model, Studio phải mang theo khuôn chat qwen3. Tạo chỉ từ GGUF thì Ollama lấy khuôn Jinja thô. Việc này đã sửa: `PublishedModel.template`.
+
+**Lỗi 『』 phần lớn KHÔNG phải việc của model** (`analysis/bracket_flip.py`):
+- Two Childhood Friends 042: 30/35 câu 『』 là lời kể/thông báo, cả v3 lẫn 8B đều gán cho người trong cảnh.
+- Yamiyo 141: 43 câu 『』 của linh thể Tọa Phu Đồng Tử, không model nào gán cho nó.
+- Mỗi cuốn một quy ước. Máy không đoán được, người nghe thì biết ngay. Vì vậy app có **quy ước 『』 theo cả cuốn** (0.4.2, `ebook_reader/bracket_rule.py`): chọn một lần, các phần sau tự áp trước bước phân vai.
+
+**Gieo sổ nhân vật đã biết** (Mac, v3), đúng thứ "Làm tiếp cuốn này" mang sang phần sau:
+
+| chương | không gieo | có gieo |
+|---|---|---|
+| Nageki 65 (8 người) | 78,7 | 79,0 |
+| Yamiyo 225 (13 người) | 74,8 | 76,2 |
+
+Giúp nhẹ, rõ hơn khi truyện đông người.
+
+**Phiên bản Ollama không đổi đầu ra.** Trên Mac, v3 chạy bằng 0.33.2 và 0.34.4 ra đúng từng số. Mac lệch nhà 4 điểm là do phần cứng (Metal so với CUDA), nên số đo trên Mac chỉ so với số đo trên Mac.
+
 ## BỘ ĐO LN 28-09 10:xx - chưa model nào từng được đo trên LN Nhật
 
 Soát lại tập dữ liệu: test của LoRA chỉ có TMA (Trung, 4 chương) + YMP (Hàn, 1 chương); mọi chương LN Nhật có đáp án (1-2
