@@ -817,8 +817,13 @@ def _settings_from_args(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def _command_create(args: argparse.Namespace) -> CommandResult:
+    from . import continuation
+
     if args.dry_run and args.start:
         raise CliUsageError("--dry-run cannot be combined with --start")
+    seed_from = Path(args.seed_from) if getattr(args, "seed_from", None) else None
+    if seed_from is not None and not continuation.is_project(seed_from):
+        raise CliUsageError(f"--seed-from is not a project: {seed_from}")
     files = resolve_input_selection(
         files=args.files,
         source_dir=args.source_dir,
@@ -829,6 +834,9 @@ def _command_create(args: argparse.Namespace) -> CommandResult:
     output_root = Path(args.output_root)
     preview = preview_project_creation(files, output_root, settings, args.title)
     preview["dry_run"] = bool(args.dry_run)
+    if seed_from is not None:
+        preview["seed_from"] = {"project_root": str(seed_from.resolve()),
+                                "carries": continuation.carried_summary(seed_from)}
     if args.dry_run:
         return CommandResult(data=preview)
 
@@ -849,6 +857,12 @@ def _command_create(args: argparse.Namespace) -> CommandResult:
             "settings_hash": settings_hash(used_settings),
         }
     )
+    if seed_from is not None:
+        # Giữa `create` và `run`, như `launch_batch.sh`: gieo sau khi bắt đầu chạy là quá muộn.
+        try:
+            created["seeded"] = continuation.seed(seed_from, paths.root)
+        except continuation.ContinuationError as error:
+            raise CliUsageError(str(error)) from error
     if args.start:
         from .background_runner import start_background
 
@@ -1485,6 +1499,14 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     create.add_argument("--settings-file", type=Path, help="Use a fully validated settings JSON instead")
+    create.add_argument(
+        "--seed-from",
+        type=Path,
+        help=(
+            "Continue a book from this earlier project: carry every character's voice, locked name readings, "
+            "listener pins and verdicts into the new one before it runs (ebook_reader/continuation.py)"
+        ),
+    )
     create.add_argument("--dry-run", action="store_true", help="Hash and preview without writing anything")
     create.add_argument("--start", action="store_true", help="Start the new project in the background")
     create.add_argument(

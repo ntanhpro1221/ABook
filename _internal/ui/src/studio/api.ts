@@ -160,6 +160,23 @@ export interface ScanResult {
   existing?: { id: string; title: string; statusLabel: string; shared: number; chapters: number }[];
 }
 
+/** "Làm tiếp cuốn này" (ebook_reader/continuation.py): trình tạo sách điền sẵn phần kế tiếp của một truyện dài, gieo từ
+ * phần trước để nhân vật giữ giọng và tên giữ cách đọc. */
+export interface ContinuationPlan {
+  sourceTitle: string;
+  /** Số của phần sắp tạo (phần trước + 1). */
+  part: number;
+  title: string;
+  /** Các chương kế tiếp trong thư mục truyện, sau chương cuối đã làm - rỗng khi chưa có chương mới. */
+  paths: string[];
+  profile: string;
+  narrator: string;
+  firstPerson: string;
+  /** Phần trước đã phân tích xong; chưa thì sổ nhân vật mang theo chưa đủ. */
+  analyzed: boolean;
+  carries: { voices: number; pronunciations: number; listenerReadings: number; pins: number };
+}
+
 export interface AppInfo {
   version: string;
   readOnly: boolean;
