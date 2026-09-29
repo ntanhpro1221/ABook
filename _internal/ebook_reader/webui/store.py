@@ -280,15 +280,64 @@ def pending_changes(project_root: Path, since: float) -> int:
     from ..listener_overrides import read_overrides
 
     data = read_overrides(project_root)
-    count = 0
+    fresh: dict[str, dict[str, Any]] = {}
     for section in ("pronunciations", "speakers", "lines", "voices", "retakes"):
         entries = data.get(section)
-        for entry in (entries.values() if isinstance(entries, dict) else ()):
+        chosen: dict[str, Any] = {}
+        for key, entry in (entries.items() if isinstance(entries, dict) else ()):
             try:
-                count += float(entry.get("requested_at") or 0) > since
+                if float(entry.get("requested_at") or 0) > since:
+                    chosen[str(key)] = entry
             except (AttributeError, TypeError, ValueError):
                 continue
-    return count
+        fresh[section] = chosen
+    return sum(len(entries) for entries in fresh.values()) - _kept_as_is(project_root, fresh)
+
+
+def _kept_as_is(project_root: Path, fresh: dict[str, dict[str, Any]]) -> int:
+    """Số yêu cầu "giữ nguyên" trong `fresh`: người nói bằng đúng người câu đang có, cách đọc bằng đúng cách đang đọc. Chúng
+    không đổi gì trong sách nên không phải "thay đổi chờ áp" - soát UX 29-09: sáu lần bấm "Giữ…"/"Đúng rồi" đẩy số trên nút
+    "Áp dụng N thay đổi" từ 38 lên 47 trong khi chỉ một lần đổi thật."""
+    from ..listener_overrides import surface_key
+
+    speakers, pronunciations = fresh.get("speakers") or {}, fresh.get("pronunciations") or {}
+    if not (speakers or pronunciations) or not (Path(project_root) / DB_NAME).is_file():
+        return 0
+
+    def same(left: Any, right: Any) -> bool:
+        return " ".join(str(left or "").casefold().split()) == " ".join(str(right or "").casefold().split())
+
+    kept = 0
+    try:
+        with closing(connect(project_root)) as connection:
+            if speakers:
+                ids = list(speakers)
+                current: dict[str, str] = {}
+                for start in range(0, len(ids), 500):
+                    chunk = ids[start:start + 500]
+                    current.update(
+                        (str(row[0]), str(row[1] or ""))
+                        for row in connection.execute(
+                            f"SELECT stable_id, speaker FROM segments WHERE stable_id IN ({','.join('?' * len(chunk))})", chunk
+                        )
+                    )
+                kept += sum(
+                    1 for stable_id, entry in speakers.items()
+                    if stable_id in current and isinstance(entry, dict) and not entry.get("new")
+                    and same(entry.get("speaker"), current[stable_id])
+                )
+            if pronunciations and "pronunciations" in _table_names(connection):
+                forms = {
+                    surface_key(str(row[0])): str(row[1] or "")
+                    for row in connection.execute("SELECT surface, spoken_form FROM pronunciations")
+                }
+                kept += sum(
+                    1 for key, entry in pronunciations.items()
+                    if key in forms and isinstance(entry, dict) and same(entry.get("spoken_form"), forms[key])
+                )
+    except sqlite3.Error:
+        return 0
+    return kept
 
 
 def summarize(project_root: Path, *, running: bool = False, now: float | None = None) -> dict[str, Any]:

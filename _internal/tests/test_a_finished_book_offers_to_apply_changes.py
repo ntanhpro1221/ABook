@@ -37,3 +37,29 @@ def test_a_run_that_found_nothing_to_redo_still_clears_the_button(tmp_path: Path
     assert pending_changes(tmp_path, changes_since(tmp_path, 100.0)) == 0
     request_pronunciation(tmp_path, "Hailkes", "Hên-cơ", now=700.0)
     assert pending_changes(tmp_path, changes_since(tmp_path, 100.0)) == 1, "ghi sau lượt chạy: lại chờ"
+
+
+def test_keeping_what_the_book_already_has_is_not_a_change(tmp_path: Path) -> None:
+    """Soát UX 29-09: "Giữ Banus", "Đúng rồi, giữ Na-xờ-đên", "Giữ vai phụ" đẩy số trên nút "Áp dụng N thay đổi" từ 38 lên 47
+    trong khi chỉ một lần bấm đổi thật. Yêu cầu bằng đúng thứ sách đang có thì không phải thay đổi chờ áp."""
+    import sqlite3
+
+    db = sqlite3.connect(tmp_path / "project.sqlite3")
+    db.executescript(
+        """
+        CREATE TABLE segments (stable_id TEXT, speaker TEXT);
+        CREATE TABLE pronunciations (surface TEXT, spoken_form TEXT);
+        INSERT INTO segments VALUES ('s1', 'Banus'), ('s2', 'Banus'), ('s3', 'NPC_LOCAL::c1::r1::trộm');
+        INSERT INTO pronunciations VALUES ('Naseden', 'Na-xờ-đên'), ('Maltimus', 'Man-ti-mu');
+        """
+    )
+    db.commit()
+    db.close()
+    request_speakers(tmp_path, [("s1", "a"), ("s2", "b")], "BANUS", now=10.0)
+    request_speakers(tmp_path, [("s3", "c")], "NPC_LOCAL::c1::r1::trộm", now=10.0)
+    request_pronunciation(tmp_path, "Naseden", "Na-xờ-đên", now=10.0)
+    assert pending_changes(tmp_path, since=1.0) == 0, "toàn giữ nguyên"
+
+    request_pronunciation(tmp_path, "Maltimus", "Man-ti-mút", now=20.0)
+    request_speakers(tmp_path, [("s2", "b")], "ALI", now=20.0)
+    assert pending_changes(tmp_path, since=1.0) == 2, "đổi cách đọc Maltimus + câu s2 sang Ali"
