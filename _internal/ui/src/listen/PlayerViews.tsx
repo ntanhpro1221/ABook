@@ -87,7 +87,7 @@ export function sentenceAt(script: Script | undefined, seconds: number): string 
 // ---- Thanh tua -------------------------------------------------------------------------------------------
 
 function SeekBar({ large = false }: { large?: boolean }) {
-  const { seek, skip, track } = usePlayer();
+  const { seek, skip, track, rate } = usePlayer();
   const second = usePlaybackSecond();
   const duration = useDuration();
   const [dragging, setDragging] = useState<number | null>(null);
@@ -149,10 +149,11 @@ function SeekBar({ large = false }: { large?: boolean }) {
       {large ? (
         <div className="tabular flex justify-between text-xs text-fg-2">
           <span>{formatClock(shown)}</span>
-          <span>-{formatClock(Math.max(0, duration - shown))}</span>
+          <span>-{formatClock(Math.max(0, duration - shown) / (rate || 1))}</span>
         </div>
       ) : (
-        <span className="tabular w-12 shrink-0 text-xs text-fg-2">-{formatClock(Math.max(0, duration - shown))}</span>
+        // Thời gian còn lại THẬT ở tốc độ đang nghe (như màn "Đang nghe" ghi "6 phút ở 1,5×") - soát UX 29-09.
+        <span className="tabular w-12 shrink-0 text-xs text-fg-2">-{formatClock(Math.max(0, duration - shown) / (rate || 1))}</span>
       )}
     </div>
   );
