@@ -168,7 +168,7 @@ export function ProjectsScreen() {
         <>
           {live.length > 0 && (
             <section className="mt-8">
-              <h2 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-fg-3">Đang chạy</h2>
+              <h2 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-fg-3">{live.every((book) => book.paused) ? "Đang tạm dừng" : "Đang chạy"}</h2>
               <div className="rounded-2xl border border-accent/30 bg-panel p-1.5">
                 {live.map((book) => (
                   <ProjectRow key={book.id} book={book} />

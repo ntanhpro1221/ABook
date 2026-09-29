@@ -83,3 +83,14 @@ def test_the_estimate_is_the_more_careful_of_windows_and_the_measured_rate() -> 
     assert remaining_minutes(state, Reading(300, False, 45, 20 * 60)) == 20  # Windows bi quan hơn thì theo Windows
     assert remaining_minutes(State(samples=[(0, 50), (60, 49)]), Reading(60, False, 49, None)) is None, \
         "một phút số liệu, % nhảy từng 1: chưa đủ để ước"
+
+
+def test_the_guard_leaves_ollama_alone_while_an_app_book_runs() -> None:
+    """Sách của app tự tạm dừng khi rút sạc, ở ranh giới lô; treo máy chủ Ollama giữa lô thì yêu cầu đang bay hết hạn chờ
+    và phần phân tích chạy khác lượt liền mạch (soát QA 29-09)."""
+    from power_guard import suspend_servers
+
+    job = "bash gpu_queue_29_09v7.sh"
+    app = "C:/ABook/Studio/runtime/pythonw.exe -m ebook_reader.background_runner supervise --project-root D:/sach"
+    assert suspend_servers([job, "ollama.exe serve"]) is True
+    assert suspend_servers([job, app, "ollama.exe serve"]) is False

@@ -625,7 +625,12 @@ tiếp đúng chỗ khi cắm sạc. Tiến trình không chết, nên **tạm d
   giây, kể cả khi đã đóng cửa sổ app). Máy bàn (không pin) không bao giờ dừng.
 - Pin cạn khi đang tạm dừng: Windows ngủ đông ở 2%, tiến trình đang đứng sống qua được. Máy tắt hẳn thì lần chạy sau là
   một lần resume bình thường - trang sách nói "Tạm ngưng lúc …" đúng pha.
-- Hai lớp không giẫm nhau: người gác treo supervisor thì supervisor không đọc pin; gỡ treo khi có sạc thì nó thấy sạc.
+- Người gác pin (công cụ máy chủ sách) KHÔNG treo supervisor của app (không khớp JOB_ROOTS) và, từ soát QA 29-09, cũng
+  không treo máy chủ Ollama khi có supervisor của app đang chạy (`power_guard.suspend_servers`): treo máy chủ giữa một lô
+  phân tích thì yêu cầu đang bay hết hạn chờ 90 giây, lô ấy chạy khác lượt liền mạch. Việc của người gác (đo, huấn
+  luyện) vẫn treo cả Ollama như cũ; yêu cầu đo đang bay lúc ấy có thể phải thử lại sau khi cắm sạc.
+- Tạm dừng không trả bộ nhớ card đồ hoạ (model đọc/nhận dạng giọng và Ollama vẫn nạp) - đo 29-09: tiến trình huấn luyện
+  bị treo giữ 7,3 GB và card vẫn ở P4, ~11 W.
 
 Test: `tests/test_pause_on_battery.py` (luật 60 giây, "Tiếp tục" trên pin, tuỳ chọn tắt, supervisor thật với worker giả),
 `tests/test_pause_a_running_book.py` (API, nhãn "Đang tạm dừng…" / "Đã tạm dừng" / "Tạm dừng · máy đang chạy pin", Studio

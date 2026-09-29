@@ -136,7 +136,7 @@ export function usePause() {
       refresh(id);
       toast(paused ? "Đang tạm dừng" : "Làm tiếp", {
         description: paused
-          ? "Sách đứng lại sau câu đang làm dở và giữ nguyên mọi thứ - bấm “Tiếp tục” là làm tiếp đúng chỗ ấy."
+          ? "Sách đứng lại sau phần đang làm dở (lúc phân tích có thể mất vài phút) và giữ nguyên mọi thứ - bấm “Tiếp tục” là làm tiếp đúng chỗ ấy."
           : undefined,
       });
     },
