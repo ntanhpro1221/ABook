@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -p tsconfig.json && vite build",
     "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
     "preview": "vite preview",
     "build:android": "tsc -p tsconfig.json && vite build -c vite.android.config.ts && node -e \"require('fs').renameSync('../mobile/www/android.html','../mobile/www/index.html')\""
   },
@@ -39,6 +40,7 @@
     "@vitejs/plugin-react": "^6.1.1",
     "tailwindcss": "^4.3.3",
     "typescript": "^7.0.2",
-    "vite": "^8.3.1"
+    "vite": "^8.3.1",
+    "vitest": "^5.0.2"
   }
 }
