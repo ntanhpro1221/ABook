@@ -59,8 +59,8 @@ function ProjectRow({ book }: { book: BookSummary }) {
         <div className="col-start-2 md:col-start-auto">
           <StatusPill
             label={book.queuePosition ? `Xếp hàng · thứ ${book.queuePosition}` : book.starting ? "Đang khởi động" : book.statusLabel}
-            tone={book.queuePosition ? "warning" : phaseTone(book.phase, live)}
-            live={live}
+            tone={book.queuePosition || book.paused ? "warning" : phaseTone(book.phase, live)}
+            live={live && !book.paused}
           />
         </div>
         <div className="col-start-2 min-w-0 md:col-start-auto">

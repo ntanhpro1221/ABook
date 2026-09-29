@@ -255,6 +255,12 @@ class App:
         running = self.runner.running(path)
         result = self.library.summary(path, running=running, starting=self.jobs.starting(path))
         result["startError"] = self.jobs.error(path)
+        # Tạm dừng mà tiến trình vẫn sống (power_source): "battery" / "listener". Dây chuyền chỉ đứng ở checkpoint kế -
+        # tới đó sổ vẫn ghi pha đang làm, nên "đang tạm dừng" khác "đã tạm dừng".
+        result["paused"] = self.runner.pause_reason(path) if running else None
+        if result["paused"]:
+            result["statusLabel"] = humanize.pause_label(result["paused"], reached=result.get("status") == "paused")
+            result["eta"] = None
         result["cover"] = covers.cover_view(path, result["id"])
         result.pop("position", None)
         with self._queue_lock:
@@ -329,6 +335,20 @@ class App:
         started_at = time.time()
         self.jobs.start(path)
         store.mark_run_started(path, started_at)
+
+    def pause(self, value: str, paused: bool) -> dict[str, Any]:
+        """"Tạm dừng" / "Tiếp tục" cuốn đang chạy: tiến trình vẫn sống, dây chuyền đứng ở checkpoint kế rồi làm tiếp đúng
+        chỗ ấy - an toàn cả giữa pha phân tích, nơi "Dừng" rồi chạy lại là ra một quyển sách khác. "Tiếp tục" lúc máy
+        đang chạy pin = làm tiếp trên pin tới lần cắm sạc kế (background_runner._pause_reason)."""
+        self._mutating()
+        path = self._book(value)
+        if not self.runner.running(path):
+            raise ApiError(HTTPStatus.CONFLICT, "Sách này không đang chạy")
+        try:
+            self.runner.pause(path, paused)
+        except RuntimeError as error:
+            raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
+        return self.summary(path)
 
     def stop(self, value: str) -> dict[str, Any]:
         self._mutating()
@@ -1001,6 +1021,9 @@ class Handler(BaseHTTPRequestHandler):
     def post_stop(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.ACCEPTED, self.app.stop(value))
 
+    def post_pause(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.ACCEPTED, self.app.pause(value, self._body().get("paused") is not False))
+
     def delete_listen_book(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.remove_imported(value))
 
@@ -1529,6 +1552,9 @@ class Handler(BaseHTTPRequestHandler):
             allowed["sleepExtendMinutes"] = body["sleepExtendMinutes"]
         if body.get("safetyStopHours") in (0, 1, 2, 3):
             allowed["safetyStopHours"] = body["safetyStopHours"]
+        # Supervisor đọc thẳng khoá này (power_source.pause_on_battery_enabled) - chỉ nhận đúng True/False.
+        if isinstance(body.get("pauseOnBattery"), bool):
+            allowed["pauseOnBattery"] = body["pauseOnBattery"]
         if "sleepSchedule" in body:
             schedule = body["sleepSchedule"]
             clock = re.compile(r"([01]\d|2[0-3]):[0-5]\d")
@@ -1627,6 +1653,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(BOOK + r"/chapters/(\d+)/script"), Handler.get_script),
     ("POST", re.compile(BOOK + r"/start"), Handler.post_start),
     ("POST", re.compile(BOOK + r"/stop"), Handler.post_stop),
+    ("POST", re.compile(BOOK + r"/pause"), Handler.post_pause),
     ("POST", re.compile(BOOK + r"/reveal"), Handler.post_reveal),
     # Chỉ trên máy này: Studio từ xa (remote_studio.ALLOWED) không có hai đường này.
     ("PUT", re.compile(BOOK + r"/title"), Handler.put_title),

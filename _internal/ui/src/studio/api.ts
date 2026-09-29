@@ -37,6 +37,8 @@ export interface BookSummary {
   position: Position | null;
   /** Đang xếp hàng chờ cuốn khác chạy xong (thứ tự trong hàng), hoặc null. */
   queuePosition?: number | null;
+  /** Đang tạm dừng mà tiến trình vẫn sống (power_source): máy tính đang chạy pin, hay người dùng bấm "Tạm dừng". */
+  paused?: "battery" | "listener" | null;
   broken?: string;
   /** Ảnh bìa thật (webui/covers.py), hoặc null khi dùng bìa vẽ từ tên. */
   cover?: CoverImage | null;
@@ -228,6 +230,8 @@ export interface Preferences {
   sleepExtendMinutes: number;
   safetyStopHours: number;
   sleepSchedule: { from: string; to: string; minutes: number } | null;
+  /** Máy tính xách tay rút sạc: tạm dừng tạo sách (ebook_reader/power_source.py). */
+  pauseOnBattery?: boolean;
 }
 
 // Mã phiên do cửa sổ app gắn vào URL (?t=...). Giữ lại trong phiên để điều hướng nội bộ không làm mất nó.
