@@ -21,7 +21,7 @@ from ..listener_overrides import (
     NARRATOR, UNNAMED, pronunciation_requests, read_overrides, speaker_requests, surface_key, voice_requests,
 )
 from . import store
-from .address_cues import address_doubts
+from .address_cues import address_doubts, split_doubts
 from .reviews import review_items, speaker_label
 
 # Độ chói tai khi máy sai ở khía cạnh ấy (1 = người nghe nhận ra ngay: giọng sai người, sai giới).
@@ -388,6 +388,42 @@ def work_items(project_root: Path) -> dict[str, Any]:
             "options": list(dict.fromkeys([speaker_label(suggested), speaker_label(current), "Người kể", "Vai phụ không tên"])),
             "current": speaker_label(current),
             "examples": [_example(row, names)],
+            **fix,
+        })
+
+    # 0c. Hai người chung một tên (address_cues.split_doubts): chương kể ngôi thứ nhất, câu thoại của MỘT nhãn chia hai
+    #     giọng xưng hô không bao giờ đi chung câu, và một giọng lệch khỏi cách người ấy nói ở các chương khác - máy đã
+    #     nhập một người lạ vào nhân vật có tên (29-09: 8B-v5 đọc bà thầy bói bằng giọng Lucia, 21/25 câu; model nào cũng
+    #     nhập 32-55% câu người vô danh). Một thẻ cho cả nhóm; "Người khác…" đặt tên người lạ để có giọng riêng.
+    asked = {item["key"] for item in items}
+    for label, odd_rows, odd_words, usual_words, usual_count in (
+        split_doubts(spoken, narrator_of, _is_named) if (book_narrator or chapter_narrators) else []
+    ):
+        odd_rows = [row for row in odd_rows if f"speaker:{row['stable_id']}" not in asked]
+        if len(odd_rows) < 2:
+            continue
+        chapter_id = int(odd_rows[0]["chapter_id"])
+        choices = [{"label": "Vai phụ không tên", "value": UNNAMED}]
+        choices += _cast_choices(spoken, {chapter_id}, {label.casefold()})
+        choices += [{"label": "Người kể", "value": NARRATOR}]
+        fix = _speaker_fix(odd_rows, choices, label, speaker_wishes)
+        if fix is None:
+            continue
+        who = speaker_label(label)
+        odd_list = ", ".join(f"“{word}”" for word in odd_words[:4])
+        usual_list = ", ".join(f"“{word}”" for word in usual_words[:4])
+        items.append({
+            "kind": "speaker",
+            "key": f"split:{chapter_id}:{_character_key(label)}",
+            "title": f"{len(odd_rows)} câu của {who} ở chương này là của một người khác?",
+            "problem": f"{who} nói theo hai kiểu xưng hô ở chương này - {odd_list} ({len(odd_rows)} câu) và {usual_list}"
+                       f" ({usual_count} câu), không câu nào dùng cả hai - và kiểu {odd_list} khác cách {who} nói ở các chương"
+                       f" khác. Thường là máy đã gán lời một người không tên cho {who}.",
+            "affected": len(odd_rows),
+            "doubt": 0.8,
+            "options": list(dict.fromkeys(["Vai phụ không tên"] + [choice["label"] for choice in choices] + [who])),
+            "current": who,
+            "examples": [_example(row, names) for row in odd_rows[:EXAMPLES]],
             **fix,
         })
 

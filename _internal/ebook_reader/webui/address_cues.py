@@ -55,6 +55,96 @@ def _same_person(label: str, name: str) -> bool:
     return bool(name) and bool({word.casefold() for word in label.split()} & {word.casefold() for word in name.split()})
 
 
+# Từ TỰ XƯNG không đổi theo người nghe trong một cảnh: hai nhóm câu của một nhãn mà tự xưng khác hẳn ("ta" / "tôi") là hai
+# giọng. "em", "anh", "con", "cháu" vừa tự xưng vừa gọi người nghe - không tính ở đây.
+SELF_TERMS = frozenset({"tôi", "tớ", "mình", "ta", "tao", "thiếp", "chúng ta", "chúng tôi", "chúng mình", "chúng tớ",
+                        "bọn ta", "bọn mình", "bọn tao"})
+SPLIT_MIN_LINES = 2  # mỗi nhóm phải có ít nhất bấy nhiêu câu
+SPLIT_MARGIN = 0.5  # nhóm lạ phải kém nhóm quen bấy nhiêu log-likelihood MỖI TỪ dưới hồ sơ các chương khác
+
+
+def _voices(lines: list[tuple[Any, Counter]]) -> list[tuple[set[str], list[Any]]]:
+    """Các "giọng" của một nhãn: từ xưng hô nối nhau khi đi chung một câu (một người dùng chúng cùng lúc); câu không có từ
+    nào thì không thuộc giọng nào. Nhiều câu nhất đứng trước."""
+    parent: dict[str, str] = {}
+
+    def find(word: str) -> str:
+        while parent.setdefault(word, word) != word:
+            parent[word] = parent[parent[word]]
+            word = parent[word]
+        return word
+
+    for _row, bag in lines:
+        words = list(bag)
+        for word in words[1:]:
+            parent[find(word)] = find(words[0])
+    groups: dict[str, tuple[set[str], list[Any]]] = {}
+    for row, bag in lines:
+        if bag:
+            words, rows = groups.setdefault(find(next(iter(bag))), (set(), []))
+            words.update(bag)
+            rows.append(row)
+    return sorted(groups.values(), key=lambda group: -len(group[1]))
+
+
+def _two_people(first: set[str], second: set[str]) -> bool:
+    """Hai nhóm từ tách hẳn có phải hai NGƯỜI không, hay một người gọi hai người nghe bằng hai từ ("con" với mẹ, "cậu" với
+    bạn): tự xưng khác nhau, hoặc cả hai nhóm đều có từ hai từ trở lên."""
+    own_first, own_second = first & SELF_TERMS, second & SELF_TERMS
+    if own_first and own_second and not own_first & own_second:
+        return True
+    return len(first) >= 2 and len(second) >= 2
+
+
+def split_doubts(rows: list[Any], narrator_of: Callable[[int], str],
+                 named: Callable[[str], bool]) -> list[tuple[str, list[Any], list[str], list[str], int]]:
+    """"Hai người chung một tên": trong chương kể ngôi thứ nhất, câu thoại của MỘT nhãn chia làm hai giọng xưng hô không
+    bao giờ đi chung câu (8B-v5 gán 21 câu của một bà thầy bói vô danh cho LUCIA: "cậu… ta" so với "anh… bà").
+
+    Trả (nhãn, các câu nghi là của người khác, từ của nhóm ấy, từ của nhóm kia, số câu nhóm kia). Nhóm nghi là nhóm LỆCH
+    khỏi cách nhãn ấy xưng hô ở các chương KHÁC của cuốn - chưa có hồ sơ ấy (nhãn chỉ nói ở chương này) thì không hỏi: không
+    biết nhóm nào là người thật. Đo 29-09 (luật hai nhóm + tự xưng, trước khi lọc ngôi kể và đòi hồ sơ): bộ LN 12 chương
+    15/15 lần báo đúng ở v3, v6, 8B-v5; truyện kể ngôi ba (Tam quốc, Tắt đèn) thì phần lớn báo nhầm - một người đổi xưng hô
+    theo vai vế ("ta… ngươi" với tướng dưới, "tôi… ngài" với chúa) - nên chỉ xét chương có người kể."""
+    dialogue = [row for row in rows if str(row["kind"]) == "dialogue" and named(str(row["speaker"] or ""))]
+    bags = {id(row): tokens(str(row["text"] or "")) for row in dialogue}
+    by_label: dict[str, dict[int, list[Any]]] = defaultdict(lambda: defaultdict(list))
+    for row in dialogue:
+        by_label[str(row["speaker"])][int(row["chapter_id"])].append(row)
+    found = []
+    for label, chapters in by_label.items():
+        for chapter_id, chapter_rows in chapters.items():
+            narrator = narrator_of(chapter_id)
+            # Người kể thì không: câu dính người kể đã có thẻ xưng hô từng câu (address_doubts), và hồ sơ của người kể ở
+            # các chương khác nhiễm chính những câu model gộp vào - 29-09 HDST 130: nhóm "tôi" (đúng là Ed) bị chọn nhầm
+            # làm nhóm lạ vì Ed ở chương 062 đã mang lời người khác.
+            if not narrator or _same_person(label, narrator):
+                continue
+            voices = [group for group in _voices([(row, bags[id(row)]) for row in chapter_rows])
+                      if len(group[1]) >= SPLIT_MIN_LINES]
+            if len(voices) < 2 or not _two_people(voices[0][0], voices[1][0]):
+                continue
+            elsewhere: Counter = Counter()
+            for other_id, other_rows in chapters.items():
+                if other_id != chapter_id:
+                    for row in other_rows:
+                        elsewhere.update(bags[id(row)])
+            if sum(elsewhere.values()) < MIN_OWN:
+                continue
+
+            def fit(group: tuple[set[str], list[Any]]) -> float:
+                bag: Counter = Counter()
+                for row in group[1]:
+                    bag.update(bags[id(row)])
+                return _log_likelihood(bag, elsewhere) / max(1, sum(bag.values()))
+
+            usual, odd = sorted(voices[:2], key=fit, reverse=True)
+            if fit(usual) - fit(odd) < SPLIT_MARGIN:
+                continue
+            found.append((label, odd[1], sorted(odd[0]), sorted(usual[0]), len(usual[1])))
+    return found
+
+
 def address_doubts(rows: list[Any], narrator_of: Callable[[int], str]) -> list[tuple[Any, str, list[str]]]:
     """(câu, người xưng hô giống hơn, các đại từ trong câu) cho câu thoại dính người kể của chương (`narrator_of(chapter_id)`,
     rỗng = chương kể ngôi ba: bỏ qua) mà xưng hô hợp người kia hơn người đang được gán ít nhất `MARGIN`."""
