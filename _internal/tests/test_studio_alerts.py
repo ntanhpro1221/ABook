@@ -33,7 +33,8 @@ def test_the_phone_reads_a_compact_production_status_only_when_allowed(library, 
         view = json.loads(data)
         assert status == 200 and view["name"] == "Máy thử" and view["at"] > 0
         (book,) = view["books"]
-        assert {"id", "title", "phase", "statusLabel", "running", "chapters", "work", "lastError"} <= set(book)
+        assert {"id", "title", "phase", "statusLabel", "running", "paused", "chapters", "work", "lastError"} <= set(book)
+        assert book["paused"] is None
         assert book["chapters"]["total"] >= 1 and book["running"] is False
         assert book["work"] is None, "sách đời cũ của fixture không dựng được hộp việc: 'không biết', vẫn có mặt"
         status, _data, _ = _request(server.port, "GET", "/sync/v1/studio")
@@ -61,3 +62,16 @@ def test_the_work_count_is_recomputed_only_when_the_book_changes(library, monkey
     (project / "overrides.json").write_text(json.dumps({"voices": {}}), encoding="utf-8")
     app.studio_view()
     assert len(calls) == 2, "người nghe vừa ghi một yêu cầu: đếm lại"
+
+
+def test_the_phone_learns_that_the_computer_paused_on_battery(library, monkeypatch) -> None:  # noqa: F811
+    """Máy tính rút sạc thì tự tạm dừng (power_source); điện thoại báo "Máy tính đang chạy pin" - ngày 24-09 sạc tuột 22:50
+    mà tới 00:07 mới có người biết."""
+    from ebook_reader import background_runner
+    from ebook_reader.background_runner import BackgroundStatus
+
+    lib, project, listening = library
+    monkeypatch.setattr(background_runner, "get_status", lambda path: BackgroundStatus(
+        project_root=Path(path), state="running", running=True, pause_reason="battery"))
+    app = SyncApp(lib, listening, Devices(project.parent / "devices.json"), "Máy thử")
+    assert app.studio_view()[0]["paused"] == "battery"
