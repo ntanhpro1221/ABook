@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
-// Khoá ký bản phát hành (docs/RELEASING.md): nằm NGOÀI repo - %USERPROFILE%\.abook-keysndroid-release.properties (storeFile,
+// Khoá ký bản phát hành (docs/RELEASING.md): nằm NGOÀI repo - %USERPROFILE%\.abook-keys\android-release.properties (storeFile,
 // storePassword, keyAlias, keyPassword; ABOOK_ANDROID_SIGNING trỏ chỗ khác) - không bao giờ commit. Mọi bản cập nhật APK
 // phải cùng khoá này, nên chủ sách giữ bản sao. Thiếu file thì bản release KHÔNG ký, không bao giờ rơi về khoá debug.
 def releaseSigning = new Properties()
