@@ -383,6 +383,12 @@ def summarize(project_root: Path, *, running: bool = False, now: float | None = 
         if book is None:
             raise ValueError(f"{project_root} chưa được khởi tạo")
         chapter_rows = connection.execute("SELECT status, COUNT(*) AS n FROM chapters GROUP BY status").fetchall()
+        # Chương "xong" trong sổ mà file MP3 không còn (dời/xoá tay, bản sao thiếu audio): Studio từng báo "43/43 chương nghe
+        # được" trong khi thư viện chỉ thấy 3 (soát UX 29-09).
+        missing_audio = sum(
+            1 for row in connection.execute("SELECT output_mp3 FROM chapters WHERE status = 'completed'")
+            if chapter_mp3(project_root, row[0]) is None
+        )
         segments = connection.execute(
             "SELECT COUNT(*) AS total,"
             " SUM(status != 'pending') AS analyzed,"
@@ -445,6 +451,7 @@ def summarize(project_root: Path, *, running: bool = False, now: float | None = 
         "chapters": {
             "total": chapter_total,
             "completed": chapters.get("completed", 0),
+            "missingAudio": missing_audio,
             "failed": chapters.get("failed", 0),
             "working": chapters.get("synthesizing", 0) + chapters.get("verifying", 0),
         },
@@ -499,7 +506,8 @@ def chapters(project_root: Path) -> list[dict[str, Any]]:
             "subtitle": names[int(row["id"])]["subtitle"],
             "fullTitle": names[int(row["id"])]["full"],
             "status": status,
-            "statusLabel": humanize.CHAPTER_STATUS_LABELS.get(status, status),
+            "statusLabel": "Mất file audio" if status == "completed" and mp3 is None
+            else humanize.CHAPTER_STATUS_LABELS.get(status, status),
             "segments": {
                 "total": int(counts["total"]) if counts else int(row["total_segments"] or 0),
                 "analyzed": int(counts["analyzed"] or 0) if counts else 0,
