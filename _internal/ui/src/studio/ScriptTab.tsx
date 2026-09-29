@@ -849,6 +849,9 @@ function ChapterScriptView({
     openedLine.current = wantedLine;
     requestAnimationFrame(() => {
       focusRow(line);
+      // Mở từ thẻ là để đọc ngữ cảnh: câu ra GIỮA màn (focusRow chỉ cuộn "vừa đủ thấy" - hợp với ↑ ↓, còn ở đây câu nằm sát
+      // thanh phát, không thấy câu sau).
+      rows.current.get(line.stableId)?.scrollIntoView({ block: "center" });
       if (pickLine && script.castReady && line.editable) setMenu(line.stableId);
     });
     // focusRow đổi mỗi lần vẽ; chỉ chạy lại khi câu được mở hay nội dung chương đổi.
