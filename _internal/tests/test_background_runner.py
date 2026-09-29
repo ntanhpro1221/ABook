@@ -223,6 +223,29 @@ def test_windows_detached_spawn_has_no_console_and_redirects_stdio(
         assert kwargs["start_new_session"] is True
 
 
+def test_the_supervisor_runs_from_the_pinned_code_folder(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """`python -m` đặt thư mục làm việc ĐẦU sys.path, trước PYTHONPATH: supervisor phải chạy TỪ bản mã ghim của cuốn
+    (studio_setup.code_for), không từ mã của app - app tự cập nhật không được làm cuốn dở chạy bằng mã mới."""
+    project = _make_project(tmp_path)
+    paths = BackgroundPaths.for_project(project)
+    paths.ensure_root()
+    captured: dict[str, Any] = {}
+
+    class FakeProcess:
+        pid = 54321
+
+    def fake_popen(command: list[str], **kwargs: Any) -> FakeProcess:
+        captured["cwd"] = kwargs["cwd"]
+        return FakeProcess()
+
+    monkeypatch.setattr(background_runner.subprocess, "Popen", fake_popen)
+    pinned = tmp_path / "Studio" / "code" / "33e1d1f3"
+    _spawn_detached_supervisor(paths, "safe-token", Path("python"), pinned)
+    assert captured["cwd"] == str(pinned)
+    _spawn_detached_supervisor(paths, "safe-token", Path("python"))
+    assert captured["cwd"] == str(Path(background_runner.__file__).resolve().parents[1]), "CLI / bản dev: mã của chính nó"
+
+
 def test_start_waits_for_matching_ready_handshake(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -236,7 +259,7 @@ def test_start_waits_for_matching_ready_handshake(
         def poll() -> None:
             return None
 
-    def fake_spawn(paths: BackgroundPaths, instance_id: str, _python: Path) -> FakeProcess:
+    def fake_spawn(paths: BackgroundPaths, instance_id: str, _python: Path, _code: Path | None = None) -> FakeProcess:
         state = _active_state(project, instance_id)
         atomic_write_json(paths.state, state)
         atomic_write_json(
@@ -281,7 +304,7 @@ def test_start_preserves_matching_terminal_state_when_worker_finishes_after_read
         def poll() -> int:
             return exit_code
 
-    def fake_spawn(control: BackgroundPaths, instance_id: str, _python: Path) -> FakeProcess:
+    def fake_spawn(control: BackgroundPaths, instance_id: str, _python: Path, _code: Path | None = None) -> FakeProcess:
         state = _active_state(project, instance_id)
         state.update(
             {
@@ -332,7 +355,7 @@ def test_start_reports_matching_failed_state_after_ready_without_overwriting_it(
         def poll() -> int:
             return 1
 
-    def fake_spawn(control: BackgroundPaths, instance_id: str, _python: Path) -> FakeProcess:
+    def fake_spawn(control: BackgroundPaths, instance_id: str, _python: Path, _code: Path | None = None) -> FakeProcess:
         state = _active_state(project, instance_id)
         state.update(
             {
@@ -413,7 +436,7 @@ def test_stale_starting_state_without_an_owner_can_be_relaunched(
         def poll() -> None:
             return None
 
-    def fake_spawn(control: BackgroundPaths, instance_id: str, _python: Path) -> FakeProcess:
+    def fake_spawn(control: BackgroundPaths, instance_id: str, _python: Path, _code: Path | None = None) -> FakeProcess:
         atomic_write_json(control.state, _active_state(project, instance_id))
         atomic_write_json(
             control.handshake,

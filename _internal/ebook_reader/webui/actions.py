@@ -133,10 +133,12 @@ class StudioRunner(BackgroundRunner):
                                "\"Cập nhật Studio\".")
         from ..background_runner import start_background
 
-        os.environ.update(self.setup.environment(self.setup.code_for(project_root)))
+        code = self.setup.code_for(project_root)
+        os.environ.update(self.setup.environment(code))
         # Ollama riêng của Studio chạy trước (home trong Studio); dây chuyền thấy nó đang nghe nên không tự bật bản khác.
         self.setup.ensure_ollama()
-        start_background(project_root, python_executable=self.setup.pythonw)
+        # Supervisor chạy TỪ thư mục mã ghim: `python -m` ưu tiên thư mục làm việc hơn PYTHONPATH.
+        start_background(project_root, python_executable=self.setup.pythonw, code_root=code)
 
 
 class FakeRunner:
