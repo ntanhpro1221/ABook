@@ -63,6 +63,18 @@ def test_a_lost_run_is_resumed(tmp_path: Path, monkeypatch) -> None:
     assert started == [project], "an interrupted run must come back"
 
 
+def test_a_book_the_listener_paused_stays_paused_after_a_reboot(tmp_path: Path, monkeypatch) -> None:
+    """Máy tắt khi người dùng đang tạm dừng: không tự chạy lại. Máy tự dừng vì pin thì chạy lại như mọi lượt bị ngắt."""
+    _project(tmp_path, "alpha.9", {"state": "running", "supervisor_pid": 999_999, "pause_reason": "listener"})
+    battery = _project(tmp_path, "alpha.10", {"state": "running", "supervisor_pid": 999_999, "pause_reason": "battery"})
+    started: list[Path] = []
+    monkeypatch.setattr(resume_interrupted, "start_background", lambda p: started.append(Path(p)))
+
+    resume_interrupted.main([str(tmp_path)])
+
+    assert started == [battery]
+
+
 def test_a_stop_request_is_never_overridden(tmp_path: Path, monkeypatch) -> None:
     """Someone asked it to stop. Coming back after a reboot would be worse than the gap."""
     _project(

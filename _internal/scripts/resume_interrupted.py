@@ -30,7 +30,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import datetime as _dt  # noqa: E402
 
-from ebook_reader.background_runner import get_status, start_background  # noqa: E402
+from ebook_reader.background_runner import BackgroundPaths, _read_json, get_status, start_background  # noqa: E402
+
+
+def _paused_by_listener(project: Path) -> bool:
+    """Người dùng bấm "Tạm dừng" (không phải máy tự dừng vì pin) rồi máy tắt: chạy lại sau khởi động là trái ý họ (soát QA
+    29-09). Lượt đã mất thì get_status không báo lý do tạm dừng - đọc thẳng state."""
+    state = _read_json(BackgroundPaths.for_project(project).state) or {}
+    return state.get("pause_reason") == "listener"
 
 try:
     from scripts.book_paths import VERSIONS as _BOOK_VERSIONS  # noqa: E402
@@ -159,6 +166,9 @@ def main(argv: list[str]) -> int:
         label = f"{project.parent.name}/{project.name}"
         if status.stop_requested:
             say(f"  bỏ qua  {label}: đã có yêu cầu dừng, không tự chạy lại")
+            continue
+        if _paused_by_listener(project):
+            say(f"  bỏ qua  {label}: người dùng đã bấm Tạm dừng, không tự chạy lại")
             continue
         if str(status.state) != RESUMABLE_STATE and not _wants_a_fresh_process(status):
             say(f"  bỏ qua  {label}: trạng thái {status.state}")
