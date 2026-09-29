@@ -7,6 +7,7 @@ import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
 import { Button, Dialog, Segmented, Skeleton, Vu } from "@/shared/ui";
 import { api, urls } from "./api";
+import { refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied } from "./decisions";
 
 // "Đổi giọng" một nhân vật (webui/voice_picker.py): mọi giọng dùng được cho nhân vật, nghe thử từng giọng, giọng đang dùng,
 // giọng máy gợi ý cho từng giới, và ai đang dùng giọng ấy cùng mấy chương. Chọn xong đi đúng đường của thẻ "Nam hay nữ"
@@ -87,18 +88,26 @@ export function VoicePicker({
     clip.stop();
     onClose();
   };
+  const when = useWhenApplied(bookId);
   const save = useMutation({
     mutationFn: (voice: VoiceOption) =>
-      api(`/api/books/${bookId}/voice`, { method: "POST", body: { character: data!.character.value, preset: voice.name } }),
-    onSuccess: (_result, voice) => {
-      void client.invalidateQueries({ queryKey: ["work", bookId] });
-      void client.invalidateQueries({ queryKey: ["book", bookId] });
-      void client.invalidateQueries({ queryKey: ["library"] });
+      api<{ requestedAt: number }>(`/api/books/${bookId}/voice`, { method: "POST", body: { character: data!.character.value, preset: voice.name } }),
+    onSuccess: ({ requestedAt }, voice) => {
       // Dòng nhân vật hiện "Chờ áp dụng" ngay (store.pending_voices), không đợi lần làm mới sau 60 giây.
-      void client.invalidateQueries({ queryKey: ["listen", "cast", bookId] });
-      void client.invalidateQueries({ queryKey: ["cast", bookId] });
-      toast.success(`Đã ghi: ${data!.character.label} đọc bằng giọng ${voice.name}`, {
-        description: "Mọi câu đã thu của người ấy sẽ đọc lại bằng giọng mới. Thu lại khi sách chạy tiếp - sách đã xong thì bấm “Áp dụng thay đổi” ở trang dự án.",
+      refreshAfterDecision(client, bookId);
+      const character = data!.character;
+      // Chọn nhầm giọng trong danh sách dài: "Hoàn tác" như thẻ giọng trong hộp việc (studio/decisions.ts).
+      toast.success(`Đã ghi: ${character.label} đọc bằng giọng ${voice.name}`, {
+        description: `Mọi câu đã thu của người ấy sẽ đọc lại bằng giọng mới. ${when}`,
+        action: undoAction(
+          client,
+          bookId,
+          "voice",
+          [{ character: character.value, requestedAt, keep: false }],
+          // Không nói tên giọng cũ: người ấy có thể đang có một giọng chờ áp khác, và hoàn tác trả về đúng giọng chờ ấy.
+          `Giọng của ${character.label} trở lại như trước khi đổi.`,
+        ),
+        duration: UNDO_MS,
       });
       close();
     },

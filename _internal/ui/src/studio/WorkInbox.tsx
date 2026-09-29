@@ -7,7 +7,7 @@ import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
 import { Button, EmptyState, Segmented } from "@/shared/ui";
 import { api, urls, type BookSummary } from "./api";
-import { refreshAfterDecision, UNDO_MS, undoAction } from "./decisions";
+import { refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied } from "./decisions";
 
 // "Việc cần duyệt" (docs/STUDIO_REVIEW.md, webui/work_items.py): chỗ máy nghi ngờ, xếp theo lợi trên mỗi lần bấm. Máy đã tự
 // quyết và dây chuyền KHÔNG chờ ai - đây là nơi người sửa ít nhất mà được nhiều nhất. Cách đọc tên sửa được ngay trên thẻ
@@ -112,8 +112,6 @@ export function useWorkCount(bookId: string) {
  *  đổi" (soát UX 29-09: thẻ từng nói "chờ … chạy tiếp" cả ở sách đã xong). */
 const PendingHint = createContext("chờ áp dụng khi sách chạy tiếp");
 
-/** Nhãn nút ("Vai phụ không tên", "Người kể") đứng GIỮA câu thì viết thường chữ đầu - "…của vai phụ không tên" (soát UX
- *  29-09). Tên người giữ nguyên. */
 /** Chữ đầu viết hoa - "câu này" đứng đầu câu báo. */
 function sentence(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
@@ -132,6 +130,8 @@ function decidedTitle(item: WorkItem): string | null {
   return null;
 }
 
+/** Nhãn nút ("Vai phụ không tên", "Người kể") đứng GIỮA câu thì viết thường chữ đầu - "…của vai phụ không tên" (soát UX
+ *  29-09). Tên người giữ nguyên. */
 function midSentence(label: string | null | undefined): string {
   const text = label ?? "";
   return text === "Vai phụ không tên" || text === "Người kể" ? text.charAt(0).toLowerCase() + text.slice(1) : text;
@@ -172,6 +172,7 @@ function Example({ bookId, example }: { bookId: string; example: WorkExample }) 
 function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item: WorkItem; onOpenNames?: (name: string) => void }) {
   const client = useQueryClient();
   const pending = useContext(PendingHint);
+  const when = useWhenApplied(bookId);
   const [value, setValue] = useState(item.requested ?? item.current);
   // Lỗi nằm ngay dưới ô nhập, không chỉ trong toast 4 giây (soát UX 29-09: "Hên-kơ" bị từ chối mà không biết sửa chỗ nào).
   const [problem, setProblem] = useState("");
@@ -200,7 +201,7 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
         return;
       }
       toast.success(`Đã ghi: “${item.surface}” đọc là “${spokenForm}”`, {
-        description: "Các câu có tên này sẽ được thu lại. Thu lại khi sách chạy tiếp - sách đã xong thì bấm “Áp dụng thay đổi” ở trang dự án.",
+        description: `Các câu có tên này sẽ được thu lại. ${when}`,
         action,
         duration: UNDO_MS,
       });
@@ -295,6 +296,7 @@ function SpeakerFix({
   const client = useQueryClient();
   const lines = scope === "all" && item.allLines ? item.allLines : item.lines;
   const pending = useContext(PendingHint);
+  const when = useWhenApplied(bookId);
   // "Người khác…": người nói chưa có trong lựa chọn - kể cả người máy CHƯA TỪNG gán câu nào (linh thể nói trong 『』):
   // gõ tên + chọn giới, dây chuyền tạo người ấy và cấp giọng riêng như bước phân vai.
   const [creating, setCreating] = useState(false);
@@ -333,7 +335,7 @@ function SpeakerFix({
       const label = choice?.name ?? choice?.label ?? speaker;
       toast.success(`Đã ghi: ${which} của ${midSentence(label)}`, {
         description:
-          "Câu đã thu sẽ đọc lại bằng giọng của người ấy. Thu lại khi sách chạy tiếp - sách đã xong thì bấm “Áp dụng thay đổi” ở trang dự án." +
+          `Câu đã thu sẽ đọc lại bằng giọng của người ấy. ${when}` +
           (alias && item.kind === "bracket"
             ? " Lời trong 『』 ở các chương và các phần sau của cuốn cũng tự về người này."
             : alias
@@ -440,6 +442,7 @@ function SpeakerFix({
 function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
   const client = useQueryClient();
   const pending = useContext(PendingHint);
+  const when = useWhenApplied(bookId);
   const save = useMutation({
     mutationFn: async ({ requests }: { requests: Omit<VoiceChoice, "label" | "note" | "done" | "recommended">[]; label: string; keep: boolean; note?: string }) => {
       const made: { character: string; requestedAt: number }[] = [];
@@ -462,7 +465,7 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
       toast.success(`Đã ghi: ${label}`, {
         description: note?.startsWith("giữ giọng")
           ? "Giọng đang đọc giữ nguyên - không phải thu lại câu nào."
-          : "Mọi câu của người ấy sẽ đọc lại bằng giọng mới. Thu lại khi sách chạy tiếp - sách đã xong thì bấm “Áp dụng thay đổi” ở trang dự án.",
+          : `Mọi câu của người ấy sẽ đọc lại bằng giọng mới. ${when}`,
         ...undo,
       });
     },
@@ -574,9 +577,12 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames }: { bookI
 }
 
 export function WorkInbox(props: { book: BookSummary; onOpenReview: () => void; onOpenScript?: OpenScript; onOpenNames?: (name: string) => void }) {
-  const hint = props.book.phase === "done" && !props.book.running
-    ? "bấm “Áp dụng thay đổi” ở đầu trang để áp"
-    : "chờ áp dụng khi sách chạy tiếp";
+  // Như useWhenApplied: sách đang chạy áp ở ranh giới chương kế tiếp, không "chờ chạy tiếp".
+  const hint = props.book.running || props.book.starting
+    ? "máy áp ở ranh giới chương kế tiếp"
+    : props.book.phase === "done"
+      ? "bấm “Áp dụng thay đổi” ở đầu trang để áp"
+      : "chờ áp dụng khi sách chạy tiếp";
   return (
     <PendingHint.Provider value={hint}>
       <WorkInboxBody {...props} />
@@ -586,6 +592,7 @@ export function WorkInbox(props: { book: BookSummary; onOpenReview: () => void; 
 
 function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames }: { book: BookSummary; onOpenReview: () => void; onOpenScript?: OpenScript; onOpenNames?: (name: string) => void }) {
   const bookId = book.id;
+  const hint = useContext(PendingHint);
   const [kind, setKind] = useState<WorkKind | "all">("all");
   const [shown, setShown] = useState(PAGE);
   const { data, isLoading } = useQuery({
@@ -651,9 +658,7 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames }: { book
       )}
       {!open.length && (
         <p className="mt-4 text-sm text-fg-2">
-          {book.phase === "done" && !book.running
-            ? "Mọi việc đã có quyết định - bấm “Áp dụng thay đổi” ở trên để thu lại."
-            : "Mọi việc đã có quyết định - chờ áp dụng khi sách chạy tiếp."}
+          Mọi việc đã có quyết định - {hint}.
         </p>
       )}
       {decided.length > 0 && (
