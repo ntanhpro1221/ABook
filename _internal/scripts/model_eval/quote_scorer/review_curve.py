@@ -1,4 +1,4 @@
-"""Duyệt k% câu khó nhất thì đúng thêm bao nhiêu? - chọn tín hiệu xếp hạng cho hộp "Việc cần anh" (STUDIO_REVIEW.md).
+"""Duyệt k% câu khó nhất thì đúng thêm bao nhiêu? - chọn tín hiệu xếp hạng cho hộp "Việc cần duyệt" (STUDIO_REVIEW.md).
 
     D:/Novels/LLM_Train/.venv/Scripts/python.exe scripts/model_eval/quote_scorer/review_curve.py \
         D:/Novels/LLM_Train/runs/st/ctrl@last --llm "lora27-4b:latest=D:/Novels/Audiobooks/_model_eval_v2/27-09-lora"
