@@ -118,10 +118,34 @@ class Reviews:
                 entry.pop(stable_id, None)
             else:
                 entry[stable_id] = {"verdict": verdict, "chapterId": int(chapter_id), "at": time.time()}
-            self.path.parent.mkdir(parents=True, exist_ok=True)
-            temporary = self.path.with_suffix(".tmp")
-            temporary.write_text(json.dumps(self._data, ensure_ascii=False, indent=1), encoding="utf-8")
-            os.replace(temporary, self.path)
+            self._save()
+
+    def books(self) -> list[str]:
+        with self._lock:
+            return list(self._data)
+
+    def rename_books(self, renamed: dict[str, str]) -> None:
+        """Đổi khoá sách ({mã cũ: mã mới}, library.legacy_ids). Hai khoá về cùng một cuốn: phán quyết mới hơn thắng."""
+        with self._lock:
+            changed = False
+            for old, new in renamed.items():
+                if old == new or old not in self._data:
+                    continue
+                moved = self._data.pop(old) or {}
+                target = self._data.setdefault(new, {})
+                for stable_id, verdict in moved.items():
+                    current = target.get(stable_id)
+                    if current is None or float((verdict or {}).get("at") or 0) > float(current.get("at") or 0):
+                        target[stable_id] = verdict
+                changed = True
+            if changed:
+                self._save()
+
+    def _save(self) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        temporary = self.path.with_suffix(".tmp")
+        temporary.write_text(json.dumps(self._data, ensure_ascii=False, indent=1), encoding="utf-8")
+        os.replace(temporary, self.path)
 
 
 def review_view(project_root: Path, verdicts: dict[str, Any], *, include_minor: bool) -> dict[str, Any]:

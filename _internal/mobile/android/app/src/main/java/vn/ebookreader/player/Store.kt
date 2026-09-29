@@ -662,5 +662,37 @@ object Store {
         writeAtomic(printsFile, all.toString())
     }
 
+    /** Cuốn của máy tính đã ghép chính - tải hẳn hay nghe thẳng; không kể cuốn mở từ file, cuốn của thiết bị ghép khác
+     *  (gói mang `source`). */
+    @Synchronized
+    fun computerBooks(): List<String> =
+        File(root, "books").listFiles()?.filter { it.isDirectory }?.mapNotNull { dir ->
+            val manifest = playableManifest(dir.name) ?: return@mapNotNull null
+            dir.name.takeIf { manifest.optString("source").isEmpty() && !isImported(it) }
+        } ?: emptyList()
+
+    /**
+     * Máy tính đổi mã một cuốn (mã kiểu cũ - đường dẫn thư mục mã hoá - sang mã mới, docs/BOOK_IDS.md): thư
+     * mục, gói sách, liên kết hồ sơ nghe và sổ dấu vân tay sang mã mới. Hồ sơ giữ nguyên mã (máy tính cũng giữ) nên vẫn
+     * gộp được với nhau. Máy đã có bản tải hẳn mang mã mới: để nguyên cả hai - không xoá gì của người nghe.
+     */
+    @Synchronized
+    fun rekey(oldId: String, newId: String) {
+        if (oldId == newId) return
+        val target = runCatching { deletableBookDir(newId) }.getOrNull() ?: return
+        val source = runCatching { deletableBookDir(oldId) }.getOrNull() ?: return
+        if (!source.isDirectory || manifest(newId) != null) return
+        target.deleteRecursively() // chỉ có thể là bộ nhớ đệm nghe thẳng của mã mới: lấy lại được
+        if (!source.renameTo(target)) return
+        manifest(newId)?.let { writeAtomic(File(target, "book.json"), it.put("id", newId).toString()) }
+        streamManifest(newId)?.let { writeAtomic(File(target, "stream.json"), it.put("id", newId).toString()) }
+        moveLinks(oldId, newId)
+        val all = printsBook()
+        val entry = all.optJSONObject(oldId) ?: return
+        all.remove(oldId)
+        all.put(newId, entry)
+        writeAtomic(printsFile, all.toString())
+    }
+
     fun sizeOf(dir: File): Long = dir.walkTopDown().filter { it.isFile }.sumOf { it.length() }
 }
