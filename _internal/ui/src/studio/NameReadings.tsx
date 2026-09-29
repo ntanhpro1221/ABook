@@ -8,6 +8,7 @@ import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
 import { Button } from "@/shared/ui";
 import { api, urls } from "./api";
+import { refreshAfterDecision, UNDO_MS, undoAction } from "./decisions";
 
 // Tab Nhân vật, mục "Cách đọc tên" (webui/name_readings.py): mọi tên riêng máy đọc thế nào - kể cả tên máy chắc và cách
 // người nghe đã chọn, hai thứ hộp việc không bao giờ hỏi lại. Sửa ở đây đi đúng đường của thẻ cách đọc: ghi mong muốn,
@@ -219,22 +220,26 @@ function EditReading({ bookId, item, onDone, fresh }: { bookId: string; item: Na
   const [problem, setProblem] = useState("");
   const save = useMutation({
     mutationFn: (spokenForm: string) =>
-      api<{ surface: string; spokenForm: string }>(`/api/books/${bookId}/pronunciation`, {
+      api<{ surface: string; spokenForm: string; requestedAt: number }>(`/api/books/${bookId}/pronunciation`, {
         method: "POST",
         body: { surface: item.surface, spokenForm },
       }),
-    onSuccess: ({ spokenForm }) => {
-      void client.invalidateQueries({ queryKey: ["pronunciations", bookId] });
-      void client.invalidateQueries({ queryKey: ["work", bookId] });
-      void client.invalidateQueries({ queryKey: ["book", bookId] });
-      void client.invalidateQueries({ queryKey: ["library"] });
+    onSuccess: ({ spokenForm, requestedAt }) => {
+      refreshAfterDecision(client, bookId);
       onDone();
-      if (spokenForm === item.spoken) {
-        toast.success(`Giữ cách đọc "${spokenForm}"`, { description: "Không phải thu lại câu nào." });
+      const keep = spokenForm === item.spoken;
+      // Như thẻ trong hộp việc: sửa nhầm thì "Hoàn tác" trả về đúng như trước lần lưu này (`previous` = cách đang đọc).
+      const undo = {
+        action: undoAction(client, bookId, "pronunciation", [{ surface: item.surface, requestedAt, previous: item.spoken, keep }]),
+        duration: UNDO_MS,
+      };
+      if (keep) {
+        toast.success(`Giữ cách đọc "${spokenForm}"`, { description: "Không phải thu lại câu nào.", ...undo });
         return;
       }
       toast.success(`Đã ghi: "${item.surface}" đọc là "${spokenForm}"`, {
         description: "Các câu có tên này sẽ được thu lại. Thu lại khi sách chạy tiếp - sách đã xong thì bấm “Áp dụng thay đổi” ở trang dự án.",
+        ...undo,
       });
     },
     onError: (error: Error) => setProblem(error.message),

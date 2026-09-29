@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AudioLines, Check, Pause, Play, Search, UserPlus } from "lucide-react";
 import { createContext, useContext, useState } from "react";
 import { toast } from "sonner";
@@ -7,6 +7,7 @@ import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
 import { Button, EmptyState, Segmented } from "@/shared/ui";
 import { api, urls, type BookSummary } from "./api";
+import { refreshAfterDecision, UNDO_MS, undoAction } from "./decisions";
 
 // "Việc cần duyệt" (docs/STUDIO_REVIEW.md, webui/work_items.py): chỗ máy nghi ngờ, xếp theo lợi trên mỗi lần bấm. Máy đã tự
 // quyết và dây chuyền KHÔNG chờ ai - đây là nơi người sửa ít nhất mà được nhiều nhất. Cách đọc tên sửa được ngay trên thẻ
@@ -144,49 +145,6 @@ function Example({ bookId, example }: { bookId: string; example: WorkExample }) 
       </div>
     </li>
   );
-}
-
-/** Làm mới mọi chỗ một quyết định trong hộp việc chạm tới. */
-function refreshAfterDecision(client: QueryClient, bookId: string) {
-  void client.invalidateQueries({ queryKey: ["work", bookId] });
-  void client.invalidateQueries({ queryKey: ["book", bookId] });
-  void client.invalidateQueries({ queryKey: ["library"] });
-  void client.invalidateQueries({ queryKey: ["listen", "cast", bookId] });
-  void client.invalidateQueries({ queryKey: ["cast", bookId] });
-}
-
-// Bấm nhầm ("Nữ" cạnh "Nam", nhầm người, nhầm cách đọc) sửa ngay trên thông báo: "Hoàn tác" gửi lại đúng lần bấm ấy
-// (`requestedAt` máy chủ trả) để máy chủ trả yêu cầu trước đó về chỗ. Dây chuyền đã kịp đưa quyết định vào sách (ranh
-// giới chương rơi đúng mấy giây ấy) thì máy chủ nói thật, và thông báo lỗi nói chỗ đổi lại.
-const UNDO_MS = 8000;
-
-function undoAction(client: QueryClient, bookId: string, endpoint: string, decisions: Record<string, unknown>[]) {
-  return {
-    label: "Hoàn tác",
-    onClick: () => {
-      void (async () => {
-        try {
-          let restored = false;
-          for (const decision of decisions) {
-            const answer = await api<{ undone: number; restored: boolean }>(`/api/books/${bookId}/${endpoint}`, {
-              method: "POST",
-              body: { ...decision, withdraw: true },
-            });
-            restored ||= answer.restored;
-          }
-          toast.success("Đã hoàn tác", {
-            description: restored
-              ? "Máy vừa đưa cách đọc mới vào sách, nên sẽ đọc lại theo cách cũ."
-              : "Việc trở lại như trước khi bấm.",
-          });
-        } catch (error) {
-          toast.error("Không hoàn tác được", { description: (error as Error).message });
-        } finally {
-          refreshAfterDecision(client, bookId);
-        }
-      })();
-    },
-  };
 }
 
 // Sửa cách đọc một tên ngay trên thẻ. Không chờ gì: ghi xong là xong phần người; dây chuyền áp ở ranh giới chương kế
