@@ -39,7 +39,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   để chừa chỗ cho đọc theo.
 - Nghe: dòng "Đã nghe hết phần đã có" biến mất ngay khi tua, lùi hay nhảy về một chỗ trước đó (trước đây còn nguyên tới
   khi tải lại trang). Esc đóng màn "Đang nghe" ở bất kỳ đâu. Thông báo có nút "Hoàn tác", "Ghi chú", "Quay lại chỗ cũ"
-  hiện đủ lâu để kịp bấm.
+  hiện đủ lâu để kịp bấm. **Âm lượng được nhớ** qua các lần mở app (trước đây lần nào cũng về 90%); tắt tiếng thì lần
+  mở sau về mức nghe được gần nhất.
 - Sửa nhỏ từ đợt soát trước phát hành:
   - Lịch đêm chọn giờ theo **24 giờ** ("22:00", không còn "10:00 Chiều").
   - Ghép thiết bị: địa chỉ nên gõ đứng đầu, không còn địa chỉ card ảo (WSL, Hyper-V…). Ô mã chỉ nhận số. Nút "Huỷ ghép"

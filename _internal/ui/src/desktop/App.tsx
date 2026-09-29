@@ -1,7 +1,7 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQueryClient } from "@tanstack/react-query";
 import { BookPlus, Clapperboard, Compass, FileAudio, FolderDown, Headphones, Trash2 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { HashRouter, Route, Routes, useNavigate } from "react-router";
 import { Toaster, toast } from "sonner";
 import { BookScreen } from "@/listen/BookScreen";
@@ -254,6 +254,26 @@ function useOpenedBook() {
 }
 
 /** Cửa sổ app mở một file sách (bấm đúp .abook trong Explorer, kể cả khi app đang mở): desktop.py báo qua sự kiện. */
+/** Âm lượng nhớ qua các lần mở app (soát UX 29-09: đặt 15% rồi mở lại thành 90% - app nghe trước khi ngủ mà lần sau phát
+ *  to đột ngột). Lưu vào tuỳ chọn sau khi thôi kéo; mức 0 của nút tắt tiếng thì không lưu - lần mở sau về mức nghe được gần
+ *  nhất, không im lặng khó hiểu. */
+function VolumeSaver() {
+  const { volume } = usePlayer();
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    if (volume <= 0) return;
+    const timer = window.setTimeout(() => {
+      void api("/api/preferences", { method: "PUT", body: { volume } }).catch(() => undefined);
+    }, 800);
+    return () => window.clearTimeout(timer);
+  }, [volume]);
+  return null;
+}
+
 function OpenedBookListener() {
   const opened = useOpenedBook();
   useEffect(() => {
@@ -383,6 +403,7 @@ export function App() {
             <HashRouter>
               <OpenedBookListener />
               <UpdateListener />
+              {!info.remote && <VolumeSaver />}
               {!info.remote && <RemoveImportedHost />}
               <Shell>
                 <Routes>
