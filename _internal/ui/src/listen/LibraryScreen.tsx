@@ -1,4 +1,4 @@
-import { Headphones, Laptop, Pause, Play, Search } from "lucide-react";
+import { Headphones, Laptop, Pause, Play, Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode, type CSSProperties } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -288,7 +288,9 @@ export function LibraryScreen({
   );
   const folded = foldVietnamese(query.trim());
   const shown = (books ?? []).filter(
-    (book) => (filter === "all" || stateOf(book) === filter) && (!folded || foldVietnamese(book.title).includes(folded)),
+    // Tên sách hoặc giọng kể ("duc tri" tìm ra mọi cuốn Đức Trí đọc - soát UX 29-09).
+    (book) => (filter === "all" || stateOf(book) === filter)
+      && (!folded || foldVietnamese(`${book.title} ${book.narrator}`).includes(folded)),
   );
   return (
     <div className="mx-auto max-w-[1180px] px-4 pb-16 pt-6 sm:px-10 sm:pt-9">
@@ -349,9 +351,19 @@ export function LibraryScreen({
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Tìm sách"
-                title="Gõ không dấu cũng được"
-                className="h-9 w-full rounded-lg border border-line bg-panel pl-9 pr-3 text-sm outline-none placeholder:text-fg-3 focus:border-accent sm:w-80"
+                title="Tên sách hay giọng kể - gõ không dấu cũng được"
+                className="h-9 w-full rounded-lg border border-line bg-panel pl-9 pr-9 text-sm outline-none placeholder:text-fg-3 focus:border-accent sm:w-80 [&::-webkit-search-cancel-button]:hidden"
               />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => setQuery("")}
+                  aria-label="Xoá ô tìm"
+                  className="absolute right-1 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-md text-fg-3 hover:bg-hover hover:text-fg"
+                >
+                  <X className="size-4" />
+                </button>
+              )}
             </label>
           </div>
           {shown.length ? (
