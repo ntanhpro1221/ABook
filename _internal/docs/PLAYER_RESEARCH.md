@@ -97,4 +97,21 @@ mỗi app là một trạm hai vai (phục vụ thư viện của mình cho máy
 USB: bật chia sẻ kết nối qua USB trên Android là có đường mạng, cùng giao thức. Ngoài nhà: địa chỉ nhập tay qua Tailscale /
 ZeroTier / NetBird (không trói vào dịch vụ nào); không đẩy audio lên cloud (một tập ~40 chương ~750 MB).
 
+### Phát lên loa / TV qua Google Cast - thiết kế, chưa làm (29-09)
+
+Mục (3) còn lại của lộ trình đường truyền (Android Auto đã xong ở 0.4.1). Media3 có `CastPlayer`
+(`androidx.media3:media3-cast`): cùng giao diện `Player`, cắm thẳng vào `MediaSession` sẵn có, nên thông báo, màn khoá,
+nút tai nghe, tốc độ, hẹn giờ vẫn là một đường. Không cần app nhận riêng - dùng Default Media Receiver của Google.
+
+Điểm khó duy nhất: loa/TV phải TỰ tải audio qua HTTP trong mạng nhà.
+- Sách đã tải về điện thoại: máy chủ nhỏ sẵn có của điện thoại (LibraryServer.kt, bước 2) phát chương ra LAN. Loa không
+  ghép được bằng mã 6 số, nên mỗi lượt phát cấp một địa chỉ BÍ MẬT ngắn hạn (mã ngẫu nhiên trong đường dẫn, chỉ đúng cuốn
+  đang phát, hết hạn khi ngắt Cast), cần hỗ trợ `Range` để tua.
+- Sách nghe thẳng từ máy tính: loa tải thẳng từ cổng đồng bộ của máy tính cũng bằng địa chỉ bí mật như thế - audio không
+  đi vòng qua điện thoại.
+- Chuyển qua lại: dừng ở loa thì nghe tiếp trên điện thoại đúng chỗ (lưu vị trí như chuyển máy hiện nay).
+- Nút Cast: trình phát React gọi plugin mở hộp chọn thiết bị (MediaRouter); chỉ hiện khi máy có Google Play Services và
+  mạng có thiết bị Cast.
+- Chỉ Wi-Fi nhà (không qua Tailscale: loa không ở trong tailnet).
+
 Không học: hộp thoại xin chấm sao, lặp đoạn (học ngoại ngữ), cân bằng âm (giọng đọc đã được cân mức ở dây chuyền).
