@@ -42,12 +42,12 @@ describe("seriesIndex", () => {
   // Soát UX 29-09 (N10): các phần của "Làm tiếp cuốn này" đi theo chuỗi máy chủ biết (continues.json), không theo tên.
   it("keeps a renamed part with its book and leaves a look-alike title out", () => {
     const places = seriesIndex([
-      { id: "p1", title: "lo18", series: { root: "p1", part: 1 } },
+      { id: "p1", title: "lo18" }, // phần đầu: máy chủ không gắn gì, các phần sau trỏ về nó
       { id: "p2", title: "Ma pháp thần toạ", series: { root: "p1", part: 2 } },
       { id: "stray", title: "lo18 · Phần 2" },
     ]);
     expect(places.get("p2")).toEqual({ key: "chain:p1", series: "lo18", volume: 2, unit: "phần" });
-    expect(places.get("p1")?.key).toBe("chain:p1");
+    expect(places.get("p1")).toEqual({ key: "chain:p1", series: "lo18", volume: 1, unit: "phần" });
     expect(places.get("stray")?.key, "dự án lạ không nối gì: nhóm theo tên, tách khỏi chuỗi").toBe("title:lo18");
   });
 });
