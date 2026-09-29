@@ -115,6 +115,11 @@ def _held_record(body: dict[str, Any]) -> str | None:
     return record if isinstance(record, str) and RECORD_ID.fullmatch(record) else None
 
 
+def index_part(chain: list[Path], project: Path) -> int:
+    """Số phần của `project` trong chuỗi (phần đầu = 1)."""
+    return chain.index(project) + 1
+
+
 class App:
     def __init__(
         self,
@@ -447,6 +452,25 @@ class App:
         plan = store.continuation_plan(latest)
         plan["sourceId"] = book_id(latest)
         return plan
+
+    def parts(self, value: str) -> list[dict[str, Any]]:
+        """Các phần của cuốn mà sách này thuộc về (chuỗi dài nhất qua nó, phần đầu trước) - trang dự án chỉ sang phần kia
+        (soát UX 29-09: phần 1 không nói đã có phần 2, phần 2 không nói nối tiếp cuốn nào). Một phần lẻ thì rỗng."""
+        here = self._book(value).resolve()
+        chain = continuation.chain_of(continuation.latest_part(here, self.library.projects()))
+        if here not in chain:
+            chain = continuation.chain_of(here)
+        if len(chain) < 2:
+            return []
+        out = []
+        for project in chain:
+            try:
+                title = str(store.summarize(project)["title"])
+            except (OSError, ValueError, KeyError):
+                title = project.name
+            out.append({"id": book_id(project), "title": title, "part": index_part(chain, project),
+                        "current": project == here})
+        return out
 
     def open_existing(self, body: dict[str, Any]) -> dict[str, Any]:
         path = Path(str(body.get("path", ""))).expanduser()
@@ -1016,6 +1040,9 @@ class Handler(BaseHTTPRequestHandler):
     def get_continuation(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.continuation(value))
 
+    def get_parts(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.OK, {"parts": self.app.parts(value)})
+
     def get_casting(self, _query: dict[str, list[str]], value: str) -> None:
         # Tab "Kịch bản" (casting_review.py): chương nào bao nhiêu câu thoại, bao nhiêu chỗ máy nghi, bao nhiêu câu đã quyết.
         self._send_json(HTTPStatus.OK, casting_chapters(self.app._book(value)))
@@ -1544,6 +1571,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(BOOK + r"/work"), Handler.get_work),
     ("GET", re.compile(BOOK + r"/casting"), Handler.get_casting),
     ("GET", re.compile(BOOK + r"/continuation"), Handler.get_continuation),
+    ("GET", re.compile(BOOK + r"/parts"), Handler.get_parts),
     ("GET", re.compile(BOOK + r"/casting/(\d+)"), Handler.get_casting_chapter),
     ("POST", re.compile(BOOK + r"/review"), Handler.post_review),
     ("POST", re.compile(BOOK + r"/pronunciation"), Handler.post_pronunciation),

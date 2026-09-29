@@ -152,6 +152,17 @@ export function useFirstPersonHint(paths: string[], seedFrom?: string) {
 }
 
 /** Phần kế tiếp của một dự án ("Làm tiếp cuốn này"): chương mới trong thư mục truyện + thứ sẽ mang theo. */
+/** Các phần của cuốn mà sách này thuộc về (server.App.parts): phần đầu trước, `current` là sách đang xem; phần lẻ thì rỗng. */
+export function useParts(id: string | undefined) {
+  return useQuery({
+    queryKey: ["parts", id],
+    enabled: Boolean(id),
+    queryFn: () => api<{ parts: { id: string; title: string; part: number; current: boolean }[] }>(`/api/books/${id}/parts`),
+    // Ngắn: vừa tạo phần sau thì trang phần trước phải thấy ngay.
+    staleTime: 5_000,
+  });
+}
+
 export function useContinuation(id: string | undefined, enabled = true) {
   return useQuery({
     queryKey: ["continuation", id],
