@@ -150,6 +150,18 @@ export function ReaderScreen() {
     setSelected(null);
     if (!prefs.tapped) setPrefs({ ...prefs, tapped: true });
   };
+  // "Nghe từ đây" trên thanh đầu: câu đang nghe dở (dừng) vẫn nằm trong màn thì nghe tiếp từ đúng chỗ ấy - trước đây nút
+  // luôn nhảy về câu đầu màn hình (1:11 lùi về 0:41, soát UX 29-09). Câu ấy đã trôi khỏi màn thì nghe từ câu đang đọc.
+  const listenHere = () => {
+    if (listeningHere && playingIndex >= 0) {
+      const rect = container.current?.querySelector<HTMLElement>(`[data-index="${playingIndex}"]`)?.getBoundingClientRect();
+      if (rect && rect.bottom > 0 && rect.top < window.innerHeight) {
+        if (!player.playing) player.resume();
+        return;
+      }
+    }
+    listenFrom(current);
+  };
   const go = (step: 1 | -1) => {
     const next = chapters[index + step];
     if (next) navigate(`/book/${id}/read/${next.id}`, { replace: true });
@@ -216,11 +228,11 @@ export function ReaderScreen() {
         </Popover.Root>
         {script.timed && (
           <>
-            <Button size="sm" variant="primary" icon={Headphones} onMouseDown={(event) => event.preventDefault()} onClick={() => listenFrom(current)} className="max-sm:hidden">
+            <Button size="sm" variant="primary" icon={Headphones} onMouseDown={(event) => event.preventDefault()} onClick={listenHere} className="max-sm:hidden">
               Nghe từ đây
             </Button>
             {/* Điện thoại: cùng việc, chỉ còn biểu tượng - trước đây nút ẩn hẳn và chỉ còn cách đoán là chạm vào câu. */}
-            <IconButton label="Nghe từ đây" icon={Headphones} tone="solid" onClick={() => listenFrom(current)} className="sm:hidden" />
+            <IconButton label="Nghe từ đây" icon={Headphones} tone="solid" onClick={listenHere} className="sm:hidden" />
           </>
         )}
       </header>
