@@ -13,6 +13,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   nghe thẳng từ máy tính hay điều khiển từ xa thì cài Tailscale (hoặc ZeroTier, NetBird) trên cả hai máy, cùng một tài
   khoản, rồi mở Thư viện trên điện thoại một lần ở nhà.
 
+### Studio (sản xuất sách nói)
+
+- "Việc cần duyệt" có thẻ mới "N câu của X ở chương này là của một người khác?": trong truyện kể ngôi thứ nhất, khi một
+  nhân vật nói theo hai kiểu xưng hô không bao giờ đi chung câu ("cậu… ta" và "anh… bà") và một kiểu khác hẳn cách người
+  ấy nói ở các chương khác - thường là máy đã gán lời một người không tên (bà thầy bói) cho nhân vật có tên (Lucia). Một
+  thẻ cho cả nhóm câu: chọn "Vai phụ không tên", một người khác, hay "Người khác…" để đặt tên và có giọng riêng.
+
 ## [0.4.8] - 2026-09-29
 
 ### Nghe sách - máy tính và điện thoại
