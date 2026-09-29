@@ -21,6 +21,7 @@ from ..listener_overrides import (
     NARRATOR, UNNAMED, pronunciation_requests, read_overrides, speaker_requests, surface_key, voice_requests,
 )
 from . import store
+from .address_cues import address_doubts
 from .reviews import review_items, speaker_label
 
 # Độ chói tai khi máy sai ở khía cạnh ấy (1 = người nghe nhận ra ngay: giọng sai người, sai giới).
@@ -275,6 +276,8 @@ def work_items(project_root: Path) -> dict[str, Any]:
             int(row["id"]): row
             for row in connection.execute("SELECT id, canonical_name, display_name, gender, locked FROM characters")
         }
+        # Số chương trong sách (first_person_chapters của settings khoá theo nó) - cho thẻ xưng hô (0b).
+        chapter_index = {int(row[0]): int(row[1] or 0) for row in connection.execute("SELECT id, chapter_index FROM chapters")}
         # Giọng đang dùng của mỗi hồ sơ: khoá (để tránh khi tách hai người chung giọng) và giới của preset (thẻ giới nói
         # máy đang đọc bằng giọng nam hay nữ). Sổ giọng tối thiểu của test không có bảng này.
         profiles = {
@@ -328,6 +331,45 @@ def work_items(project_root: Path) -> dict[str, Any]:
             "doubt": round(certainty, 3),
             "options": list(dict.fromkeys(options)),
             "current": speaker_label(str(row["speaker"])),
+            "examples": [_example(row, names)],
+            **fix,
+        })
+
+    # 0b. Ai nói câu này - theo XƯNG HÔ (address_cues.py): truyện kể ngôi thứ nhất, câu dính người kể "tôi" mà cách xưng
+    #     hô ("ta… ngươi", "tớ… cậu") hợp người khác trong chương hơn hẳn. Đo 29-09 trên bộ LN: câu bị hỏi sai thật 85-95%.
+    #     Câu đã có thẻ của bộ chấm thứ hai thì thôi (một câu một thẻ).
+    voices_settings = store.read_settings(project_root).get("voices")
+    voices_settings = voices_settings if isinstance(voices_settings, dict) else {}
+    book_narrator = str(voices_settings.get("first_person_identity") or "").strip()
+    chapter_narrators = voices_settings.get("first_person_chapters") if isinstance(voices_settings.get("first_person_chapters"), dict) else {}
+
+    def narrator_of(chapter_id: int) -> str:
+        index = str(chapter_index.get(chapter_id, ""))
+        return str(chapter_narrators[index]).strip() if index in chapter_narrators else book_narrator
+
+    asked = {item["key"] for item in items}
+    for row, suggested, cue in address_doubts(spoken, narrator_of) if (book_narrator or chapter_narrators) else []:
+        stable_id = str(row["stable_id"])
+        if f"speaker:{stable_id}" in asked:
+            continue
+        current = str(row["speaker"])
+        choices = [{"label": speaker_label(suggested), "value": suggested}]
+        choices += _cast_choices(spoken, {int(row["chapter_id"])}, {current.casefold(), suggested.casefold()})
+        choices += [{"label": "Người kể", "value": NARRATOR}, {"label": "Vai phụ không tên", "value": UNNAMED}]
+        fix = _speaker_fix([row], choices, current, speaker_wishes)
+        if fix is None:
+            continue
+        words = ", ".join(f"“{word}”" for word in cue)
+        items.append({
+            "kind": "speaker",
+            "key": f"speaker:{stable_id}",
+            "title": f"Ai nói câu này - {speaker_label(current)} hay {speaker_label(suggested)}?",
+            "problem": f"Cách xưng hô trong câu ({words}) giống cách {speaker_label(suggested)} nói ở chương này hơn cách"
+                       f" {speaker_label(current)} nói.",
+            "affected": 1,
+            "doubt": 0.85,
+            "options": list(dict.fromkeys([speaker_label(suggested), speaker_label(current), "Người kể", "Vai phụ không tên"])),
+            "current": speaker_label(current),
             "examples": [_example(row, names)],
             **fix,
         })
