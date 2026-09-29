@@ -559,7 +559,8 @@ export function BookScreen({
   const caughtUp = Boolean(book.progress.caughtUp) && !listening;
   const primaryLabel = listening
     ? player.playing ? "Tạm dừng" : "Tiếp tục"
-    : point && point.at > 0 ? `Nghe tiếp · ${point.chapter.title}` : heard > 0 ? "Nghe tiếp" : "Bắt đầu nghe";
+    // Nói rõ nghe tiếp từ ĐÂU, như thẻ ở Thư viện (soát UX 29-09).
+    : point && point.at > 0 ? `Nghe tiếp · ${point.chapter.title} · ${formatClock(point.at)}` : heard > 0 ? "Nghe tiếp" : "Bắt đầu nghe";
   const restart = () => {
     const first = chapters.find((chapter) => chapter.available);
     if (!first) return;
