@@ -126,6 +126,8 @@ interface Seed {
   /** Thư mục truyện chưa có chương nào sau chương cuối của phần trước lúc mở trình tạo. */
   empty: boolean;
   carries: ContinuationPlan["carries"];
+  /** Giọng kể của phần trước (nháp cũ không có). */
+  narrator?: string;
 }
 
 const DRAFT_KEY = "ebook-reader-new-book-draft";
@@ -469,7 +471,8 @@ function carriedText(carries: Seed["carries"]): string {
 
 function SeedBanner({ seed, onDrop }: { seed: Seed; onDrop: () => void }) {
   return (
-    <div className="mt-5 flex gap-3 rounded-xl border border-accent/30 bg-accent-soft p-4 text-sm">
+    // Điện thoại: nút bỏ nối tiếp xuống dưới đoạn chữ - đứng bên phải thì ép chữ thành cột ~180 px, dài 11 dòng (soát UX 29-09).
+    <div className="mt-5 flex flex-wrap gap-3 rounded-xl border border-accent/30 bg-accent-soft p-4 text-sm sm:flex-nowrap">
       <Layers className="mt-0.5 size-4 shrink-0 text-accent-text" />
       <div className="min-w-0 flex-1">
         <p className="font-semibold">
@@ -488,8 +491,12 @@ function SeedBanner({ seed, onDrop }: { seed: Seed; onDrop: () => void }) {
           <p className="mt-1 text-warning">Phần trước chưa phân tích xong - chỉ mang được những gì đã có tới lúc này.</p>
         )}
       </div>
-      <button type="button" onClick={onDrop} className="self-start whitespace-nowrap text-[13px] text-fg-2 hover:text-fg">
-        Làm như sách mới
+      <button
+        type="button"
+        onClick={onDrop}
+        className="self-start whitespace-nowrap text-[13px] text-fg-2 underline-offset-2 hover:text-fg hover:underline max-sm:basis-full max-sm:pl-7 max-sm:text-left"
+      >
+        Bỏ nối tiếp…
       </button>
     </div>
   );
@@ -693,6 +700,7 @@ function VoiceStep({
   setNarrator,
   paths,
   seedFrom,
+  previousNarrator,
   firstPerson,
   setFirstPerson,
   povOff,
@@ -702,6 +710,7 @@ function VoiceStep({
   setNarrator: (name: string) => void;
   paths: string[];
   seedFrom?: string;
+  previousNarrator?: string;
   firstPerson: string;
   setFirstPerson: (name: string) => void;
   povOff: number[];
@@ -711,9 +720,11 @@ function VoiceStep({
   const [gender, setGender] = useState("all");
   const [region, setRegion] = useState("all");
   const group = useRef<HTMLDivElement | null>(null);
-  const shown = (voices ?? []).filter(
-    (voice) => (gender === "all" || voice.gender === gender) && (region === "all" || voice.region === region),
-  );
+  // Làm tiếp một cuốn: giọng kể của phần trước đứng ĐẦU lưới - trước đây nó là thẻ thứ 21, dưới hai giọng "Đề xuất", dễ
+  // đổi nhầm giọng kể giữa bộ (soát UX 29-09).
+  const shown = (voices ?? [])
+    .filter((voice) => (gender === "all" || voice.gender === gender) && (region === "all" || voice.region === region))
+    .sort((a, b) => Number(b.name === previousNarrator) - Number(a.name === previousNarrator));
   const hiddenSelection = Boolean(narrator) && !shown.some((voice) => voice.name === narrator);
   const focusName = shown.some((voice) => voice.name === narrator) ? narrator : shown[0]?.name;
   // Một điểm dừng Tab cho cả nhóm; mũi tên chuyển giọng (chuẩn radiogroup).
@@ -755,6 +766,19 @@ function VoiceStep({
           { value: "Trung", label: "Miền Trung" },
         ]} />
       </div>
+      {previousNarrator && (
+        <p className="mt-4 text-sm text-fg-2">
+          Giọng kể phần trước: <span className="font-semibold text-fg">{previousNarrator}</span>
+          {narrator && narrator !== previousNarrator && (
+            <>
+              {" - đang chọn giọng khác, hai phần sẽ đọc lời dẫn khác nhau. "}
+              <button type="button" className="font-medium text-accent-text underline underline-offset-2" onClick={() => setNarrator(previousNarrator)}>
+                Dùng lại {previousNarrator}
+              </button>
+            </>
+          )}
+        </p>
+      )}
       {hiddenSelection && (
         <p className="mt-3 text-sm text-fg-2">
           Đang chọn: <span className="font-semibold text-fg">{narrator}</span> (bộ lọc đang ẩn giọng này).{" "}
@@ -975,6 +999,7 @@ export function NewProjectScreen() {
         analyzed: plan.analyzed,
         empty: plan.paths.length === 0,
         carries: plan.carries,
+        narrator: plan.narrator,
       },
     });
     setParams({}, { replace: true });
@@ -1083,7 +1108,21 @@ export function NewProjectScreen() {
         <ArrowLeft className="size-4" /> Studio
       </button>
       <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-[28px]">{draft.seed ? "Làm tiếp cuốn này" : "Tạo sách nói"}</h1>
-      {draft.seed && <SeedBanner seed={draft.seed} onDrop={() => update({ seed: undefined })} />}
+      {draft.seed && (
+        <SeedBanner
+          seed={draft.seed}
+          onDrop={() => {
+            // Bỏ nối tiếp = phân vai lại từ đầu, giọng lệch phần trước: một cú bấm lỡ tay phải lấy lại được (soát UX 29-09).
+            const previous = draft.seed;
+            update({ seed: undefined });
+            toast("Đã bỏ nối tiếp", {
+              description: "Sách này sẽ phân vai lại từ đầu - nhân vật có thể mang giọng khác phần trước.",
+              duration: 10000,
+              action: { label: "Hoàn tác", onClick: () => update({ seed: previous }) },
+            });
+          }}
+        />
+      )}
       <div className="mt-6 flex flex-col gap-8 lg:flex-row lg:gap-10">
         <aside className="shrink-0 lg:w-56">
           <StepRail step={step} allowed={allowed} onGo={go} />
@@ -1135,6 +1174,7 @@ export function NewProjectScreen() {
               setNarrator={(narrator) => update({ narrator })}
               paths={scan?.files.map((file) => file.path) ?? []}
               seedFrom={draft.seed?.id}
+              previousNarrator={draft.seed?.narrator}
               firstPerson={draft.firstPerson}
               setFirstPerson={(firstPerson) => update({ firstPerson })}
               povOff={draft.povOff ?? []}
