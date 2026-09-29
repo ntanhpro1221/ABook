@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.3] - 2026-09-29
+
 ### Studio (sản xuất sách nói)
 
 - Danh sách dự án gom các phần của một cuốn ("Tên", "Tên · Phần 2"...) thành một nhóm theo thứ tự phần - truyện dài
@@ -19,6 +21,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Hộp "Việc cần duyệt" hỏi thêm "Ai nói câu này?" theo XƯNG HÔ ở truyện kể ngôi thứ nhất: câu dính người kể "tôi" mà cách
   xưng hô ("ta… ngươi", "tớ… cậu") giống một người khác trong chương hơn hẳn. Đo trên 12 chương light novel có đáp án:
   85-96% câu bị hỏi là máy gán sai thật. Truyện kể ngôi ba không bị hỏi (ở đó ai cũng "ta/ngươi").
+- Thẻ "vai phụ không tên" không còn tô cam một nhân vật chính như lựa chọn nên chọn (một cú bấm vội từng làm lời của
+  "trộm" đọc bằng giọng nhân vật chính); nút giữ ghi "Đúng là vai phụ". Quyết định giữ nguyên ("Giữ…", "Đúng rồi") không
+  còn làm tăng số trên nút "Áp dụng N thay đổi".
+- Làm tiếp cuốn này: giọng kể của phần trước đứng đầu bước chọn giọng, chọn giọng khác thì được nhắc kèm nút "Dùng lại";
+  "Bỏ nối tiếp…" (phân vai lại từ đầu) có nút Hoàn tác. Điện thoại: chip "Đợt này làm" xuống dòng thay vì làm cả trang
+  lắc ngang, đổi bước thì về đầu trang, nút "Bỏ chương" luôn hiện.
 
 ### Nghe sách - máy tính và điện thoại
 
@@ -33,6 +41,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Thanh phát ở máy tính không cắt tên chương khi còn chỗ; sách chưa thu xong ghi "Phần đã có 99%" thay vì "Cả cuốn
   99%"; màn cảm ứng không gợi ý phím tắt; Đọc theo mở ra nhảy thẳng tới câu đang đọc thay vì cuộn dài từ đầu chương.
 - App không xưng hô với người dùng nữa (bỏ "bạn" ở 15 chỗ).
+- Tab Nhân vật của trang sách không lộ nội dung: người chỉ xuất hiện sau chỗ đang nghe được ẩn tới khi bấm "Hiện N
+  người…"; dòng việc của Studio ("Chờ áp dụng") không hiện ở phía nghe.
+- Tìm sách theo cả tên giọng kể, có nút xoá ô tìm; nút "Nghe tiếp" ở trang sách ghi rõ chương và phút.
+- Màn cảm ứng: nút biểu tượng nhỏ có vùng chạm cao 44 px.
 
 ## [0.4.2] - 2026-09-29
 
