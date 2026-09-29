@@ -329,7 +329,7 @@ def summarize(project_root: Path, *, running: bool = False, now: float | None = 
         "settings": {
             "profile": profile,
             "profileLabel": humanize.PROFILE_LABELS.get(profile, profile),
-            "narrator": str(voices.get("narrator_voice") or ""),
+            "narrator": humanize.voice_label(str(voices.get("narrator_voice") or "")),
         },
         "chapters": {
             "total": chapter_total,
@@ -512,7 +512,7 @@ def _voice_view(profile: sqlite3.Row | None) -> dict[str, Any] | None:
     pitch = float(profile["pitch_semitones"] or 0.0)
     return {
         "key": str(profile["voice_key"]),
-        "preset": str(profile["preset_name"]),
+        "preset": humanize.voice_label(str(profile["preset_name"])),
         "tone": humanize.voice_tone(formant, pitch),
     }
 
@@ -532,7 +532,8 @@ def pending_voices(project_root: Path, since: float) -> dict[str, dict[str, str]
             continue
         preset, gender = str(entry.get("preset") or ""), str(entry.get("gender") or "")
         if waiting and (preset or gender):
-            pending[speaker_key(str(key))] = {"preset": preset, "gender": humanize.GENDER_LABELS.get(gender, "")}
+            pending[speaker_key(str(key))] = {"preset": humanize.voice_label(preset),
+                                              "gender": humanize.GENDER_LABELS.get(gender, "")}
     return pending
 
 
@@ -591,7 +592,7 @@ def cast(project_root: Path) -> dict[str, Any]:
         return _voice_view(profiles.get(votes.most_common(1)[0][0]))
 
     narrator = {
-        "voice": str(voices.get("narrator_voice") or ""),
+        "voice": humanize.voice_label(str(voices.get("narrator_voice") or "")),
         "lines": lines.get("NARRATOR", 0),
         "seconds": round(seconds.get("NARRATOR", 0.0), 1),
         "profile": voice_of("NARRATOR"),

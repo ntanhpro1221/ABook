@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from . import store
+from .humanize import voice_label
 from .reviews import speaker_label
 
 GENDER_LABELS = {"male": "Nam", "female": "Nữ"}
@@ -83,7 +84,7 @@ def voice_choices(project_root: Path, character: str) -> dict[str, Any] | None:
                 key=lambda item: (-item["chapters"], item["label"].casefold()),
             )
             entries.append({
-                "name": name,
+                "name": voice_label(name),
                 "gender": gender,
                 "genderLabel": GENDER_LABELS[gender],
                 "region": str(preset["region"]),
@@ -104,6 +105,6 @@ def voice_choices(project_root: Path, character: str) -> dict[str, Any] | None:
             "lines": lines,
             "chapters": len(mine),
         },
-        "current": current,
+        "current": voice_label(current),
         "voices": entries,
     }
