@@ -8,8 +8,10 @@ là Hugging Face, không phải GitHub Release).
 Lấy ĐÚNG file GGUF mà Ollama của máy dev đang phục vụ (lớp model trong manifest - thứ mọi lượt đo đã chạy), kiểm băm khớp
 digest của Ollama, tải thẳng từ blob lên Hugging Face (không chép 4 GB ra đĩa) cùng thẻ model và Modelfile, rồi in mục
 `PUBLISHED_MODELS` cho `webui/studio_setup.py` với đường tải ghim theo commit (không đổi dưới chân Studio). Model tạo lại ở
-Studio bằng /api/create từ đúng file ấy trùng từng byte bản đã đo (thử 28-09), nên model có lớp nào ngoài lớp GGUF
-(template, tham số, adapter) thì từ chối.
+Studio bằng /api/create từ đúng file ấy trùng từng byte bản đã đo (thử 28-09). Lớp khuôn chat và tham số đi theo (nền
+Qwen3-8B cần khuôn qwen3 của Ollama - tạo chỉ từ GGUF thì ra khuôn Jinja thô, đo 29-09): khuôn ghi vào
+`ebook_reader/webui/model_templates/` để đi cùng app, ghim băm; tham số in thẳng vào mục. Lớp giấy phép chỉ lên Modelfile
+ở Hugging Face. Lớp khác (adapter, system, messages...) thì từ chối - Studio không tạo lại được.
 
 Hugging Face tách model khỏi repo app có chủ ý: model học từ nhãn trên truyện có bản quyền - khiếu nại nếu có chỉ chạm
 model, không khoá repo cùng đường tự cập nhật của app. Đăng nhập một lần bằng `hf auth login` (chủ sách tự dán token;
@@ -28,22 +30,47 @@ import urllib.request
 from pathlib import Path
 
 MODEL_LAYER = "application/vnd.ollama.image.model"
+SIDE_LAYERS = {"application/vnd.ollama.image.template": "template", "application/vnd.ollama.image.params": "params",
+               "application/vnd.ollama.image.license": "license"}
+TEMPLATES = Path(__file__).resolve().parents[1] / "ebook_reader" / "webui" / "model_templates"
 
 
 def models_dir() -> Path:
     return Path(os.environ.get("OLLAMA_MODELS") or Path.home() / ".ollama" / "models")
 
 
-def model_layer(name: str) -> tuple[Path, str, int]:
-    """(file blob, băm hex, cỡ) của lớp GGUF duy nhất của model `name` ("lora28v3-4b:latest")."""
+def _layers(name: str) -> list[dict]:
     base, _, tag = name.partition(":")
     manifest = models_dir() / "manifests" / "registry.ollama.ai" / "library" / base / (tag or "latest")
-    layers = json.loads(manifest.read_text(encoding="utf-8"))["layers"]
-    if len(layers) != 1 or layers[0]["mediaType"] != MODEL_LAYER:
-        raise SystemExit(f"{name}: cần đúng một lớp GGUF, có {[layer['mediaType'] for layer in layers]} - Studio tạo model "
-                         "chỉ từ file GGUF, lớp khác (template, tham số, adapter) sẽ mất")
-    digest = layers[0]["digest"].removeprefix("sha256:")
-    return models_dir() / "blobs" / f"sha256-{digest}", digest, int(layers[0]["size"])
+    return json.loads(manifest.read_text(encoding="utf-8"))["layers"]
+
+
+def model_layer(name: str) -> tuple[Path, str, int]:
+    """(file blob, băm hex, cỡ) của lớp GGUF duy nhất của model `name` ("lora28v3-4b:latest"). Lớp khác chỉ được là khuôn
+    chat / tham số / giấy phép (`side_layers`)."""
+    layers = _layers(name)
+    models = [layer for layer in layers if layer["mediaType"] == MODEL_LAYER]
+    others = [layer["mediaType"] for layer in layers if layer["mediaType"] != MODEL_LAYER and layer["mediaType"] not in SIDE_LAYERS]
+    if len(models) != 1 or others:
+        raise SystemExit(f"{name}: cần đúng một lớp GGUF và chỉ thêm khuôn/tham số/giấy phép, có "
+                         f"{[layer['mediaType'] for layer in layers]} - Studio không tạo lại được lớp khác")
+    digest = models[0]["digest"].removeprefix("sha256:")
+    return models_dir() / "blobs" / f"sha256-{digest}", digest, int(models[0]["size"])
+
+
+def side_layers(name: str) -> dict[str, tuple[bytes, str]]:
+    """{"template"/"params"/"license": (nội dung, băm hex)} - kiểm từng blob khớp digest của nó."""
+    found: dict[str, tuple[bytes, str]] = {}
+    for layer in _layers(name):
+        kind = SIDE_LAYERS.get(layer["mediaType"])
+        if kind is None:
+            continue
+        digest = layer["digest"].removeprefix("sha256:")
+        data = (models_dir() / "blobs" / f"sha256-{digest}").read_bytes()
+        if hashlib.sha256(data).hexdigest() != digest:
+            raise SystemExit(f"Blob {kind} của {name} không khớp digest - hỏng?")
+        found[kind] = (data, digest)
+    return found
 
 
 def quantization(name: str) -> str:
@@ -101,7 +128,23 @@ def main() -> int:
     print(f"{args.source} -> {args.name}: {size:,} byte, sha256 {digest[:12]}", flush=True)
     if file_sha256(blob) != digest:
         raise SystemExit("Blob của Ollama không khớp digest của nó - hỏng?")
-    (folder / "Modelfile").write_text(f"FROM ./{file}\n", encoding="utf-8", newline="\n")
+    side = side_layers(args.source)
+    modelfile = f"FROM ./{file}\n"
+    template_name = ""
+    if "template" in side:
+        text, template_digest = side["template"]
+        modelfile += f'TEMPLATE """{text.decode("utf-8")}"""\n'
+        template_name = f"{args.name.replace(':', '-')}.gotmpl"
+        TEMPLATES.mkdir(parents=True, exist_ok=True)
+        (TEMPLATES / template_name).write_bytes(text)  # đúng từng byte - Studio kiểm băm trước khi tạo
+        print(f"  khuôn chat -> {TEMPLATES / template_name} (sha256 {template_digest[:12]}) - commit cùng mục PUBLISHED_MODELS")
+    parameters = json.loads(side["params"][0]) if "params" in side else {}
+    for key, value in parameters.items():
+        for item in value if isinstance(value, list) else [value]:
+            modelfile += f"PARAMETER {key} {json.dumps(item, ensure_ascii=False) if isinstance(item, str) else item}\n"
+    if "license" in side:
+        modelfile += f'LICENSE """{side["license"][0].decode("utf-8")}"""\n'
+    (folder / "Modelfile").write_text(modelfile, encoding="utf-8", newline="\n")
     shutil.copyfile(args.notes, folder / "README.md")
     if not args.hf:
         print(f"Đã kiểm, chuẩn bị ở {folder}. Chưa đăng (thêm --hf <repo>).")
@@ -110,9 +153,14 @@ def main() -> int:
     url = f"https://huggingface.co/{args.hf}/resolve/{commit}/{file}"
     check_download(url, size)
     print("\n# webui/studio_setup.py - PUBLISHED_MODELS")
+    extra = ""
+    if template_name:
+        extra += f'        template="{template_name}",\n        template_sha256="{side["template"][1]}",\n'
+    if parameters:
+        extra += f"        parameters={json.dumps(json.dumps(parameters, separators=(',', ':')))},\n"
     print(f'    "{args.name}": PublishedModel(\n        "{args.name}",\n'
           f'        (Download("{file}", "{url}",\n                  "{digest}", {size:_}),),\n'
-          f'        "{digest}",\n        {size:_},\n    ),')
+          f'        "{digest}",\n        {size:_},\n{extra}    ),')
     return 0
 
 

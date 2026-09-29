@@ -71,15 +71,26 @@ class PublishedModel:
     đăng giới hạn cỡ mỗi tệp). `sha256` là băm của CẢ file, cũng là digest lớp model trong Ollama: Ollama kiểm lại khi
     nhận, và model tạo từ đúng file ấy trùng từng byte bản đã đo trên máy dev (thử 28-09: /api/create chỉ với `files` cho
     cùng lớp cấu hình và lớp model như `ollama create` của serve_lora.py).
+
+    `template` + `parameters`: lớp khuôn chat và tham số của bản đã đo, khi GGUF một mình không đủ. Nền Qwen3-8B là một ca
+    như thế: tạo chỉ từ file, Ollama lấy khuôn Jinja thô trong GGUF (4.673 ký tự) chứ không phải khuôn qwen3 của nó (1.715
+    ký tự, lượt đo dùng) và không có `stop` - đo 29-09. Khuôn là một file trong `model_templates/` đi cùng app, ghim bằng
+    `template_sha256` (cũng là digest lớp khuôn trong Ollama); tham số là đúng JSON lớp tham số.
     """
 
     name: str
     parts: tuple[Download, ...]
     sha256: str
     size: int
+    template: str = ""
+    template_sha256: str = ""
+    parameters: str = ""
 
 
 # Tên model trong cài đặt phân tích (config.py) -> nơi tải. Model không có ở đây kéo từ kho Ollama như cũ.
+# Khuôn chat của model đã đăng (PublishedModel.template), đi cùng app - scripts/publish_model.py ghi ra khi model có lớp khuôn.
+MODEL_TEMPLATES = Path(__file__).with_name("model_templates")
+
 PUBLISHED_MODELS: dict[str, PublishedModel] = {
     # docs/models/abook-analyzer-v3.md - Qwen3-4B-Instruct-2507 + LoRA trên đáp án của dự án, GGUF Q8_0 (lora28v3-4b).
     "abook-analyzer:v3": PublishedModel(
@@ -752,9 +763,17 @@ class StudioSetup:
                 path.unlink(missing_ok=True)  # Ollama đã giữ bản của nó: không để hai bản 4 GB trên đĩa
         self._detail = "Tạo model trong Ollama"
         file = re.sub(r"[^A-Za-z0-9._-]+", "-", model.name) + ".gguf"
+        body: dict[str, Any] = {"model": model.name, "files": {file: digest}, "stream": False}
+        if model.template:
+            text = (MODEL_TEMPLATES / model.template).read_bytes()
+            if hashlib.sha256(text).hexdigest() != model.template_sha256:
+                raise SetupError(f"Khuôn chat của {model.name} không khớp bản đã đo - cài lại ABook rồi bấm Cài tiếp.")
+            body["template"] = text.decode("utf-8")
+        if model.parameters:
+            body["parameters"] = json.loads(model.parameters)
         request = urllib.request.Request(
             f"{self.ollama_address}/api/create", method="POST", headers={"Content-Type": "application/json"},
-            data=json.dumps({"model": model.name, "files": {file: digest}, "stream": False}).encode("utf-8"))
+            data=json.dumps(body).encode("utf-8"))
         try:
             with urllib.request.urlopen(request, timeout=600) as response:
                 reply = json.loads(response.read().decode("utf-8") or "{}")

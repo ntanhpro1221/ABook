@@ -384,6 +384,45 @@ def test_the_projects_own_model_comes_from_its_release_into_the_studios_ollama(t
     assert fetched == [] and len(FakeOllama.created) == 1, "model đã có: không tải, không tạo lại"
 
 
+def test_a_published_model_carries_the_chat_template_it_was_measured_with(tmp_path: Path, ollama: str,
+                                                                        monkeypatch: pytest.MonkeyPatch) -> None:
+    """Nền Qwen3-8B: tạo chỉ từ GGUF thì Ollama lấy khuôn Jinja thô trong file, khác khuôn đã đo (29-09) - bản đăng mang
+    khuôn (file đi cùng app, ghim băm) và tham số (stop...) vào /api/create; khuôn bị sửa thì từ chối, không tạo lệch."""
+    import dataclasses
+
+    weights = bytes(range(256)) * 40
+    base = _published(monkeypatch, weights, split=6000)
+    templates = tmp_path / "templates"
+    templates.mkdir()
+    text = "{{ .Prompt }}<|im_end|>\n"
+    (templates / "qwen3.gotmpl").write_bytes(text.encode("utf-8"))
+    monkeypatch.setattr(studio_setup, "MODEL_TEMPLATES", templates)
+    model = dataclasses.replace(base, template="qwen3.gotmpl", template_sha256=hashlib.sha256(text.encode()).hexdigest(),
+                                parameters='{"stop":["<|im_start|>","<|im_end|>"],"temperature":0.6}')
+    monkeypatch.setitem(studio_setup.PUBLISHED_MODELS, model.name, model)
+    setup = StudioSetup(tmp_path / "Studio", tmp_path, fetch=_serving([weights[:6000], weights[6000:]], []),
+                        gpu=lambda: None, analysis_model=model.name, ollama_address=ollama)
+
+    (templates / "qwen3.gotmpl").write_bytes(b"{{ .Prompt }}")
+    with pytest.raises(SetupError, match="không khớp bản đã đo"):
+        setup._step_llm()
+    assert FakeOllama.created == []
+
+    (templates / "qwen3.gotmpl").write_bytes(text.encode("utf-8"))
+    setup._step_llm()
+    assert FakeOllama.created == [{
+        "model": "abook-test:v1", "files": {"abook-test-v1.gguf": f"sha256:{model.sha256}"}, "stream": False,
+        "template": text, "parameters": {"stop": ["<|im_start|>", "<|im_end|>"], "temperature": 0.6},
+    }]
+
+
+def test_the_shipped_templates_are_what_their_models_pin() -> None:
+    for model in studio_setup.PUBLISHED_MODELS.values():
+        if model.template:
+            data = (studio_setup.MODEL_TEMPLATES / model.template).read_bytes()
+            assert hashlib.sha256(data).hexdigest() == model.template_sha256, model.name
+
+
 def test_a_published_model_that_does_not_add_up_is_refused_by_ollama(tmp_path: Path, ollama: str,
                                                                     monkeypatch: pytest.MonkeyPatch) -> None:
     """Từng phần đúng băm của nó mà ghép lại sai (phần tải nhầm bản) thì Ollama từ chối - lỗi nói bấm Cài tiếp; tải lại
