@@ -16,6 +16,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   liên kết nhỏ - mà không biết "tôi" là ai thì lời của nhân vật chính dễ bị gán cho người đang nói chuyện với họ.
 - Gợi ý tên cho câu hỏi ấy đưa người kể lên trước: tên người khác hay GỌI trong lời thoại mà lời kể hiếm nhắc (người kể
   xưng "tôi" nên lời kể không có tên họ). Yamiyo no Hotaru: "Tomobe" lên đầu, trước đây không có trong gợi ý.
+- Hộp "Việc cần duyệt" hỏi thêm "Ai nói câu này?" theo XƯNG HÔ ở truyện kể ngôi thứ nhất: câu dính người kể "tôi" mà cách
+  xưng hô ("ta… ngươi", "tớ… cậu") giống một người khác trong chương hơn hẳn. Đo trên 12 chương light novel có đáp án:
+  85-96% câu bị hỏi là máy gán sai thật. Truyện kể ngôi ba không bị hỏi (ở đó ai cũng "ta/ngươi").
 
 ### Nghe sách - máy tính và điện thoại
 
