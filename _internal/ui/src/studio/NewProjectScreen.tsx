@@ -9,6 +9,7 @@ import {
   FolderInput,
   Gauge,
   Info,
+  Layers,
   Loader2,
   Mic,
   Play,
@@ -25,10 +26,20 @@ import { useClip } from "@/listen/clip";
 import { useSource } from "@/listen/source";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
+import { usePageTitle } from "@/shared/title";
 import { formatLength, formatNumber } from "@/shared/format";
 import { Button, Segmented, Vu, radioGroupKeys, radioTabIndex } from "@/shared/ui";
-import type { FirstPersonHint, ScanResult, Voice } from "@/studio/api";
-import { pickFiles, pickFolder, useAppInfo, useCreateBook, useFirstPersonHint, useScan, useVoices } from "@/studio/data";
+import type { ContinuationPlan, FirstPersonHint, ScanResult, Voice } from "@/studio/api";
+import {
+  pickFiles,
+  pickFolder,
+  useAppInfo,
+  useContinuation,
+  useCreateBook,
+  useFirstPersonHint,
+  useScan,
+  useVoices,
+} from "@/studio/data";
 import { uploadChapters } from "@/studio/upload";
 
 type Profile = "fast" | "balanced" | "high_quality";
@@ -101,6 +112,18 @@ interface Draft {
   povOff?: number[];
   profile: Profile;
   startNow: boolean;
+  /** "Làm tiếp cuốn này": phần trước để gieo từ (continuation.py), hay không có khi là sách mới. */
+  seed?: Seed;
+}
+
+interface Seed {
+  id: string;
+  title: string;
+  part: number;
+  analyzed: boolean;
+  /** Thư mục truyện chưa có chương nào sau chương cuối của phần trước lúc mở trình tạo. */
+  empty: boolean;
+  carries: ContinuationPlan["carries"];
 }
 
 const DRAFT_KEY = "ebook-reader-new-book-draft";
@@ -402,6 +425,45 @@ function SourceStep({
           {scan!.skipped.length > 0 && <p className="mt-2 text-xs text-fg-2">Bỏ qua {scan!.skipped.length} file không phải .txt.</p>}
         </>
       )}
+    </div>
+  );
+}
+
+// ---- Nối tiếp phần trước ---------------------------------------------------------------------------------------
+
+function carriedText(carries: Seed["carries"]): string {
+  const parts = [
+    carries.voices ? `giọng ${formatNumber(carries.voices)} nhân vật` : "",
+    carries.pronunciations ? `${formatNumber(carries.pronunciations)} cách đọc tên` : "",
+    carries.pins ? `${formatNumber(carries.pins)} ghim giới/tuổi` : "",
+  ].filter(Boolean);
+  return parts.length ? parts.join(" · ") : "những gì phần trước đã có";
+}
+
+function SeedBanner({ seed, onDrop }: { seed: Seed; onDrop: () => void }) {
+  return (
+    <div className="mt-5 flex gap-3 rounded-xl border border-accent/30 bg-accent-soft p-4 text-sm">
+      <Layers className="mt-0.5 size-4 shrink-0 text-accent-text" />
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold">
+          Phần {seed.part} của “{seed.title}”
+        </p>
+        <p className="mt-0.5 text-fg-2">
+          Mang theo {carriedText(seed.carries)}: nhân vật đã gặp giữ nguyên giọng, tên đọc như phần trước.
+        </p>
+        {seed.empty && (
+          <p className="mt-1 text-fg-2">
+            Thư mục truyện chưa có chương nào sau chương cuối của phần trước - thêm file chương mới vào đó, hoặc chọn các
+            file chương mới ở dưới.
+          </p>
+        )}
+        {!seed.analyzed && (
+          <p className="mt-1 text-warning">Phần trước chưa phân tích xong - chỉ mang được những gì đã có tới lúc này.</p>
+        )}
+      </div>
+      <button type="button" onClick={onDrop} className="self-start whitespace-nowrap text-[13px] text-fg-2 hover:text-fg">
+        Làm như sách mới
+      </button>
     </div>
   );
 }
@@ -761,6 +823,7 @@ function ConfirmStep({
   firstPerson,
   povChapters,
   profile,
+  seed,
   startNow,
   setStartNow,
 }: {
@@ -770,6 +833,7 @@ function ConfirmStep({
   firstPerson: string;
   povChapters: Record<string, string>;
   profile: Profile;
+  seed?: Seed;
   startNow: boolean;
   setStartNow: (value: boolean) => void;
 }) {
@@ -784,7 +848,8 @@ function ConfirmStep({
     ...(Object.keys(povChapters).length
       ? ([["Chương đổi người kể", Object.entries(povChapters).map(([chapter, name]) => `chương ${chapter}: ${name}`).join(", ")]] as [string, string][])
       : []),
-    ["Nhân vật", "Tự động phân vai sau khi phân tích"],
+    ...(seed ? ([["Nối tiếp", `phần ${seed.part} của “${seed.title}”`]] as [string, string][]) : []),
+    ["Nhân vật", seed ? `Giữ ${carriedText(seed.carries)}; người mới được phân vai sau khi phân tích` : "Tự động phân vai sau khi phân tích"],
     ["Chất lượng", option.title],
     ...(measured
       ? ([
@@ -838,6 +903,8 @@ function ConfirmStep({
 export function NewProjectScreen() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
+  const continueId = params.get("continue") ?? undefined;
+  const { data: plan, error: planError } = useContinuation(continueId);
   const scanMutation = useScan();
   const create = useCreateBook();
   const { data: voices } = useVoices();
@@ -848,6 +915,35 @@ export function NewProjectScreen() {
   const update = (changes: Partial<Draft>) => setDraft((current) => ({ ...current, ...changes }));
 
   useEffect(() => saveDraft(draft), [draft]);
+  usePageTitle(draft.seed ? "Làm tiếp cuốn này" : undefined);
+
+  // "Làm tiếp cuốn này" (?continue=<id>): điền sẵn một lần từ phần trước rồi bỏ tham số, để quay lại trang không điền đè
+  // những gì người dùng đã sửa.
+  useEffect(() => {
+    if (!continueId || !plan) return;
+    setDraft({
+      ...EMPTY_DRAFT,
+      paths: plan.paths,
+      title: plan.title,
+      titleEdited: true,
+      narrator: plan.narrator,
+      firstPerson: plan.firstPerson,
+      profile: (PROFILE_VALUES as string[]).includes(plan.profile) ? (plan.profile as Profile) : "high_quality",
+      seed: {
+        id: continueId,
+        title: plan.sourceTitle,
+        part: plan.part,
+        analyzed: plan.analyzed,
+        empty: plan.paths.length === 0,
+        carries: plan.carries,
+      },
+    });
+    setParams({}, { replace: true });
+  }, [continueId, plan, setParams]);
+
+  useEffect(() => {
+    if (planError) toast.error("Không mở được phần trước", { description: planError.message });
+  }, [planError]);
 
   useEffect(() => {
     if (!draft.narrator && voices?.length) update({ narrator: voices.find((voice) => voice.recommended)?.name ?? voices[0].name });
@@ -922,6 +1018,7 @@ export function NewProjectScreen() {
         narrator: draft.narrator,
         firstPerson: draft.firstPerson.trim(),
         ...(Object.keys(povChapters).length ? { firstPersonChapters: povChapters } : {}),
+        ...(draft.seed ? { seedFrom: draft.seed.id } : {}),
         start: draft.startNow,
       },
       {
@@ -943,7 +1040,8 @@ export function NewProjectScreen() {
       <button type="button" onClick={() => navigate("/studio")} className="inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
         <ArrowLeft className="size-4" /> Studio
       </button>
-      <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-[28px]">Tạo sách nói</h1>
+      <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-[28px]">{draft.seed ? "Làm tiếp cuốn này" : "Tạo sách nói"}</h1>
+      {draft.seed && <SeedBanner seed={draft.seed} onDrop={() => update({ seed: undefined })} />}
       <div className="mt-6 flex flex-col gap-8 lg:flex-row lg:gap-10">
         <aside className="shrink-0 lg:w-56">
           <StepRail step={step} allowed={allowed} onGo={go} />
@@ -1007,6 +1105,7 @@ export function NewProjectScreen() {
               firstPerson={draft.firstPerson.trim()}
               povChapters={povChapters}
               profile={draft.profile}
+              seed={draft.seed}
               startNow={draft.startNow}
               setStartNow={(startNow) => update({ startNow })}
             />

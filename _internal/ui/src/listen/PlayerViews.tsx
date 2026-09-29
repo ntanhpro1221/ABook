@@ -1183,6 +1183,12 @@ function BookProgressLine() {
   );
 }
 
+/** "Tập 17", "Phần 2" - hay cả tên khi cuốn kế không đánh số. */
+function nextLabel(title: string): string {
+  const { volume, unit } = seriesOf(title);
+  return volume === null ? title : `${unit.charAt(0).toUpperCase()}${unit.slice(1)} ${volume}`;
+}
+
 function CaughtUpNotice() {
   const { atEnd, track } = usePlayer();
   const next = useNextVolume(track?.bookId, track?.bookTitle);
@@ -1192,7 +1198,7 @@ function CaughtUpNotice() {
       <div className="mt-3 rounded-xl bg-accent-soft px-3 py-2.5 text-center text-sm">
         <div className="text-fg">Đã nghe hết cuốn này.</div>
         <button type="button" onClick={() => void playBook(next)} className="mt-1.5 font-semibold text-accent-text underline underline-offset-2">
-          Nghe tiếp {seriesOf(next.title).volume !== null ? `Tập ${seriesOf(next.title).volume}` : next.title}
+          Nghe tiếp {nextLabel(next.title)}
         </button>
       </div>
     );
