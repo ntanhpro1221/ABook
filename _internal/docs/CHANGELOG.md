@@ -19,7 +19,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - **Máy tính và điện thoại liên thông**: điện thoại nghe thẳng thư viện máy tính qua Wi-Fi hoặc Bluetooth, đồng bộ chỗ
   nghe, chuyển máy đang nghe, điều khiển trình phát từ xa, Studio từ xa.
 - **File sách `.abook`**: mỗi cuốn một file, mở được trên máy tính và điện thoại.
-- **Dữ liệu ở lại trên máy của bạn**: sách, audio và chỗ nghe không đi đâu cả; link sách không còn chứa đường dẫn thư mục.
+- **Dữ liệu ở lại trên máy của bạn**: sách, audio và chỗ nghe không gửi lên máy chủ nào - chỉ đi giữa các máy bạn đã
+  ghép; link sách không còn chứa đường dẫn thư mục.
 - App Windows tự báo bản mới và tự cập nhật bằng gói có chữ ký.
 
 - **Riêng tư: mã sách không còn chứa đường dẫn thư mục.** Link một cuốn sách (`#/book/…`, cả khi nghe từ xa bằng trình
