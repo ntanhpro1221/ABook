@@ -226,6 +226,35 @@ class Listening:
             self._save()
             return True
 
+    def books(self) -> list[str]:
+        """Mã các sách có hồ sơ nghe."""
+        with self._lock:
+            return list(self._data["links"])
+
+    def rename_books(self, renamed: dict[str, str]) -> None:
+        """Đổi khoá sách của bảng liên kết ({mã cũ: mã mới}, library.legacy_ids). Hồ sơ giữ nguyên mã - điện thoại gộp
+        theo mã hồ sơ nên vẫn khớp. Hai khoá về cùng một cuốn: gộp danh sách hồ sơ; hồ sơ đang dùng là bên chọn sau."""
+        with self._lock:
+            links = self._data["links"]
+            changed = False
+            for old, new in renamed.items():
+                if old == new or old not in links:
+                    continue
+                moved = links.pop(old)
+                existing = links.get(new)
+                if existing is None:
+                    links[new] = moved
+                else:
+                    known = list(existing.get("records", []))
+                    existing["records"] = known + [item for item in moved.get("records", []) if item not in known]
+                    if moved.get("active") and (not existing.get("active")
+                                                or float(moved.get("activeAt") or 0) > float(existing.get("activeAt") or 0)):
+                        existing["active"] = moved["active"]
+                        existing["activeAt"] = float(moved.get("activeAt") or 0)
+                changed = True
+            if changed:
+                self._save()
+
     def _owner(self, record_id: str) -> str | None:
         return next((book for book, link in self._data["links"].items() if record_id in link.get("records", [])),
                     None)

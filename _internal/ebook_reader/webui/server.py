@@ -12,6 +12,7 @@ import json
 import mimetypes
 import re
 import secrets
+import shutil
 import threading
 import time
 from http import HTTPStatus
@@ -23,7 +24,7 @@ from urllib.parse import parse_qs, unquote, urlsplit
 from .. import listener_overrides
 from . import actions, bookfile, cover_search, covers, listen_view, packages, store
 from .fingerprints import Fingerprints
-from .library import Library, Preferences, book_id
+from .library import Library, Preferences, book_id, legacy_ids
 from .listening import RECORD_ID, Listening
 from . import bluetooth, remote_books
 from .remote_studio import REMOTE_HEADER, StudioGate
@@ -150,6 +151,8 @@ class App:
         self.static_dir = static_dir
         self.version = version
         self.reviews = Reviews(preferences.path.with_name("reviews.json"))
+        if not read_only:
+            self._adopt_new_book_ids()
         # Thư mục đã xuất trong phiên này - chỉ những thư mục này được mở bằng "Mở thư mục" sau khi xuất.
         self.exports: set[str] = set()
         # Hàng đợi sản xuất: hai cuốn chạy cùng lúc tranh nhau GPU (phân tích cần ~6,2 GB trên card 8 GB), nên cuốn
@@ -171,6 +174,26 @@ class App:
         self.update: dict[str, Any] | None = None
         self.shell: Callable[[dict[str, Any]], None] | None = None
         self.studio: Any = None
+
+    def _adopt_new_book_ids(self) -> None:
+        """Dữ liệu lưu theo mã sách kiểu cũ (đường dẫn base64 - docs/BOOK_IDS.md): đổi khoá sang mã mới, một
+        lần. Hồ sơ nghe giữ nguyên mã (điện thoại gộp theo mã hồ sơ). Sao lưu từng file trước lần ghi đầu
+        (`*.pre-ids.bak`)."""
+        positions = self.preferences.get().get("positions")
+        renamed = legacy_ids([*self.listening.books(), *(positions if isinstance(positions, dict) else {}),
+                              *self.reviews.books()])
+        if not renamed:
+            return
+        for file in (self.listening.path, self.preferences.path, self.reviews.path):
+            backup = file.with_name(file.name + ".pre-ids.bak")
+            try:
+                if file.is_file() and not backup.exists():
+                    shutil.copy2(file, backup)
+            except OSError:
+                pass  # không sao lưu được vẫn đổi: mỗi file ghi nguyên tử, mã cũ vẫn được nhận
+        self.listening.rename_books(renamed)
+        self.preferences.rename_positions(renamed)
+        self.reviews.rename_books(renamed)
 
     # ---- sách ------------------------------------------------------------------------------------------
 
@@ -499,8 +522,9 @@ class App:
         for phone in self.remote.view() if self.sync_server is not None else []:
             path = self.library.resolve(phone["bookId"]) if phone["bookId"] else None
             phone["known"] = path is not None
-            phone["localBookId"] = phone["bookId"] if path is not None else None
-            phone["cover"] = covers.cover_view(path, phone["bookId"]) if path is not None else None
+            # điện thoại chưa đổi khoá báo mã kiểu cũ: giao diện luôn nhận mã hiện hành của cuốn
+            phone["localBookId"] = book_id(path) if path is not None else None
+            phone["cover"] = covers.cover_view(path, phone["localBookId"]) if path is not None else None
             phones.append({**phone, "kind": "phone", "via": "remote"})
         # Điện thoại vừa báo lên đây vừa chia sẻ thư viện: một thanh là đủ. Nhận ra nó bằng tên VÀ đúng cuốn, đúng chương
         # đang phát - hai điện thoại cùng đời máy (cùng tên) đang nghe hai thứ khác nhau thì vẫn là hai thanh.
@@ -511,7 +535,7 @@ class App:
             path = remote_books.local_book(self.library.root, peer["device"], peer["bookId"]) if peer["bookId"] else None
             local = book_id(path) if path is not None else None
             if path is None and peer["bookId"] and (own := self.library.resolve(peer["bookId"])) is not None:
-                path, local = own, peer["bookId"]  # máy kia đang nghe thẳng sách của CHÍNH máy này
+                path, local = own, book_id(own)  # máy kia đang nghe thẳng sách của CHÍNH máy này
             peer["known"] = local is not None
             peer["localBookId"] = local
             peer["cover"] = covers.cover_view(path, local) if path is not None and local is not None else None
@@ -834,7 +858,12 @@ class Handler(BaseHTTPRequestHandler):
                     continue
                 match = pattern.fullmatch(path)
                 if match:
-                    handler(self, query, *[unquote(group) for group in match.groups()])
+                    groups = [unquote(group) for group in match.groups()]
+                    if groups and pattern.pattern.startswith(BOOK_ROUTES):
+                        # mã kiểu cũ (link cũ, điện thoại chưa đổi khoá) -> mã hiện hành: mọi handler dùng mã làm khoá
+                        # dữ liệu nghe, phán quyết, hàng đợi nhận đúng một mã cho mỗi cuốn
+                        groups[0] = self.app.library.canonical(groups[0])
+                    handler(self, query, *groups)
                     return
             raise ApiError(HTTPStatus.NOT_FOUND, "Không có đường dẫn này")
         except ApiError as error:
@@ -1282,7 +1311,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def post_record_move(self, _query: dict[str, list[str]], value: str, record: str) -> None:
         self._own_record(value, record)
-        target = str(self._body().get("book", ""))
+        target = self.app.library.canonical(str(self._body().get("book", "")))
         self.app._listenable(target)
         self.app.listening.move_record(record, target)
         self._send_json(HTTPStatus.OK, {"records": self.app.listening.records(value)})
@@ -1318,7 +1347,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def post_night_dismiss(self, _query: dict[str, list[str]]) -> None:
         body = self._body()
-        self.app.listening.dismiss_night(str(body.get("bookId", "")), str(body.get("id", "")))
+        book = self.app.library.canonical(str(body.get("bookId", "")))
+        self.app.listening.dismiss_night(book, str(body.get("id", "")))
         self._send_json(HTTPStatus.OK, {"ok": True})
 
     def post_open(self, _query: dict[str, list[str]]) -> None:
@@ -1447,6 +1477,7 @@ class Handler(BaseHTTPRequestHandler):
 
 BOOK = r"/api/books/([A-Za-z0-9_-]+)"
 LISTEN = r"/api/listen/books/([A-Za-z0-9_-]+)"
+BOOK_ROUTES = (BOOK, LISTEN, r"/media/books/")
 ROUTES: list[Route] = [
     ("GET", re.compile(r"/api/app"), Handler.get_app),
     ("POST", re.compile(r"/api/app/update"), Handler.post_app_update),

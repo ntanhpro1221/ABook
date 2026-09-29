@@ -58,7 +58,8 @@ COMMAND_SECONDS = 15  # lệnh chưa tới tay điện thoại sau ngần này t
 # đứt giữa lúc hỏi dài - máy chủ không biết, lần hỏi mồ côi vẫn nhận lệnh). Máy nhận bỏ qua lệnh trùng mã.
 REDELIVER_SECONDS = 5
 REMOTE_ACTIONS = frozenset({"play", "pause", "toggle", "skip", "seek", "next", "previous", "jump", "rate", "load"})
-BOOK_ID = re.compile(r"[A-Za-z0-9_-]{1,700}")  # base64 của đường dẫn thư mục sách (library.book_id)
+# Mã sách: library.book_id (24 hex), hay mã kiểu cũ của điện thoại chưa đổi khoá (đường dẫn base64, tới ~700 ký tự).
+BOOK_ID = re.compile(r"[A-Za-z0-9_-]{1,700}")
 LOCAL_PLAYER = "local"  # trình phát trong giao diện của chính máy này, một "thiết bị" của Remote riêng
 PLAYER_STATE = ("bookId", "bookTitle", "chapterId", "chapterTitle", "position", "duration", "playing", "buffering", "rate")
 
@@ -462,14 +463,21 @@ class SyncApp:
 
     def match(self, books: Any) -> dict[str, str]:
         """Cuốn điện thoại mở từ file là cuốn nào của máy này (mã máy này), so bằng audio từng chương - sách không mang
-        mã nào (fingerprints.py). `books`: [{"key": mã phía điện thoại, "chapters": {"chapters/x.mp3": {size, sha256}}}]."""
+        mã nào (fingerprints.py). `books`: [{"key": mã phía điện thoại, "chapters": {"chapters/x.mp3": {size, sha256}}}].
+        Khoá là mã sách kiểu cũ của chính máy này (cuốn điện thoại tải từ bản cũ, docs/BOOK_IDS.md): trả thẳng mã hiện
+        hành để điện thoại đổi khoá cuốn ấy - không cần audio."""
         found: dict[str, str] = {}
         if not isinstance(books, list):
             return found
         projects = list(self.library.projects())
         for item in books[:200]:
-            if not isinstance(item, dict) or not isinstance(item.get("key"), str) or not isinstance(
-                    item.get("chapters"), dict):
+            if not isinstance(item, dict) or not isinstance(item.get("key"), str):
+                continue
+            own = self.library.resolve(item["key"])
+            if own is not None:
+                found[item["key"]] = book_id(own)
+                continue
+            if not isinstance(item.get("chapters"), dict):
                 continue
             for path in projects:
                 if self.fingerprints.shares_a_chapter(path, item["chapters"]):
@@ -721,8 +729,11 @@ class SyncHandler(BaseHTTPRequestHandler):
                 self._json(HTTPStatus.NOT_FOUND, {"error": "Không có sách này"})
                 return
             book = match.group(1)
+            # Điện thoại chưa đổi khoá gọi bằng mã kiểu cũ: dữ liệu nghe lưu theo mã hiện hành (`key`), lời đáp nói lại
+            # đúng mã nó dùng - không thì nó tưởng hồ sơ đã chuyển sang cuốn khác và gỡ khỏi cuốn đang nghe.
+            key = book_id(project)
             if method == "GET" and match.group(2) == "manifest":
-                self._json(HTTPStatus.OK, manifest(project, book, self.app.listening))
+                self._json(HTTPStatus.OK, {**manifest(project, key, self.app.listening), "id": book})
             elif method == "POST" and match.group(2) == "state":
                 body = self._body()
                 record = body.get("record")
@@ -730,12 +741,15 @@ class SyncHandler(BaseHTTPRequestHandler):
                 if isinstance(record, str) and RECORD_ID.fullmatch(record):
                     # điện thoại biết hồ sơ: gộp đúng hồ sơ ấy (webui/listening.py merge_record)
                     deleted = body.get("deletedRecords")
-                    self._json(HTTPStatus.OK, self.app.listening.merge_record(
-                        book, record, state, name=str(body.get("recordName") or ""),
+                    reply = self.app.listening.merge_record(
+                        key, record, state, name=str(body.get("recordName") or ""),
                         name_at=float(body.get("nameAt") or 0), active_at=float(body.get("activeAt") or 0),
-                        deleted=deleted if isinstance(deleted, dict) else None))
+                        deleted=deleted if isinstance(deleted, dict) else None)
+                    if reply.get("book") == key:
+                        reply["book"] = book
+                    self._json(HTTPStatus.OK, reply)
                 else:  # điện thoại đời trước: hồ sơ đang dùng
-                    self._json(HTTPStatus.OK, self.app.listening.merge(book, state))
+                    self._json(HTTPStatus.OK, self.app.listening.merge(key, state))
             elif method == "GET" and match.group(3):
                 target = self.app.resolve_file(project, unquote(match.group(3)))
                 if target is None:

@@ -72,6 +72,21 @@ def pytest_configure(config: pytest.Config) -> None:
     )
 
 
+@pytest.fixture(autouse=True, scope="session")
+def _app_data_in_a_temporary_folder(tmp_path_factory: pytest.TempPathFactory) -> Iterator[None]:
+    """Dữ liệu của app mà test không tự chỉ chỗ - nhất là khoá mã sách (webui/library.book_id: `book_ids.key` cạnh
+    preferences.json, tạo lần đầu cần tới) - nằm trong thư mục tạm của phiên test, không bao giờ ở %LOCALAPPDATA%/ABook
+    thật của người chạy test. Test tự đặt biến này (monkeypatch) thì theo test."""
+    if os.environ.get("EBOOK_READER_PREFERENCES"):
+        yield
+        return
+    os.environ["EBOOK_READER_PREFERENCES"] = str(tmp_path_factory.mktemp("app-data") / "preferences.json")
+    try:
+        yield
+    finally:
+        os.environ.pop("EBOOK_READER_PREFERENCES", None)
+
+
 @pytest.fixture(autouse=True)
 def _count_sleeping(request: pytest.FixtureRequest) -> Iterator[None]:
     """Bọc `time.sleep` để đếm. Vẫn ngủ thật, trừ khi có người bật công tắc đo.

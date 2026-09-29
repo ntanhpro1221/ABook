@@ -1,8 +1,13 @@
 """Thư viện sách và tuỳ chọn của người dùng.
 
 Thư viện = các thư mục sách nằm TRỰC TIẾP trong thư mục thư viện, cộng những sách người dùng tự mở ở nơi khác
-("gần đây"). Server chỉ đọc sách nằm trong tập ấy: mã sách là đường dẫn mã hoá, nên không có tập cho phép thì
-bất kỳ trang nào gọi được server cũng đọc được mọi file SQLite trên máy.
+("gần đây"). Server chỉ đọc sách nằm trong tập ấy.
+
+Mã sách (`book_id`) là HMAC của đường dẫn với khoá bí mật của máy này (`book_ids.key` cạnh tuỳ chọn): cùng thư mục thì
+cùng mã, mà mã không giải ngược ra đường dẫn - bản dựng trước 0.4.0 dùng chính đường dẫn mã hoá base64, lộ tên tài khoản
+Windows qua link `#/book/<mã>`, ảnh chụp màn hình, nghe từ xa (docs/BOOK_IDS.md). Mã kiểu cũ vẫn được nhận
+(`Library.resolve`, `canonical`) - link cũ, điện thoại chưa đổi khoá; dữ liệu lưu theo mã cũ được đổi khoá một lần lúc
+mở app (`legacy_ids`, server.App).
 
 Tuỳ chọn và vị trí nghe dở lưu ở `%LOCALAPPDATA%/ABook/preferences.json` - ghi atomic. (Tên cũ của thư mục là
 "Ebook Reader": lần đầu mở với tên mới, các file của app được chuyển sang - `preferences_path`.)
@@ -10,8 +15,12 @@ Tuỳ chọn và vị trí nghe dở lưu ở `%LOCALAPPDATA%/ABook/preferences.
 from __future__ import annotations
 
 import base64
+import hashlib
+import hmac
 import json
 import os
+import re
+import secrets
 import threading
 import time
 from pathlib import Path
@@ -91,16 +100,82 @@ def _legacy_output_folder() -> str:
         return ""
 
 
+ID_KEY_FILE = "book_ids.key"
+ID_PATTERN = re.compile(r"[0-9a-f]{24}")  # 96 bit đầu của HMAC-SHA256, hex
+_ID_KEYS: dict[str, bytes] = {}
+_ID_LOCK = threading.Lock()
+
+
+def _id_key() -> bytes:
+    """Khoá bí mật của mã sách trên máy này: 32 byte ngẫu nhiên, tạo lần đầu cần tới, nằm cạnh preferences.json - đi
+    cùng dữ liệu nghe nó đánh khoá (sao lưu / chép thư mục dữ liệu thì mã giữ nguyên). Tạo bằng O_EXCL: hai tiến trình
+    cùng mở lần đầu thì một bên tạo, bên kia đọc lại khoá ấy. Không ghi được thư mục (ổ chỉ đọc): khoá suy từ đường dẫn
+    thư mục dữ liệu - vẫn ổn định giữa các lần mở, chỉ kém bí mật."""
+    path = preferences_path().with_name(ID_KEY_FILE)
+    with _ID_LOCK:
+        cached = _ID_KEYS.get(str(path))
+        if cached is not None:
+            return cached
+        key = _read_or_create_key(path)
+        _ID_KEYS[str(path)] = key
+        return key
+
+
+def _read_or_create_key(path: Path) -> bytes:
+    for _attempt in range(20):
+        try:
+            key = bytes.fromhex(path.read_text(encoding="ascii").strip())
+            if len(key) >= 16:
+                return key
+        except (OSError, ValueError):
+            pass
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            handle = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        except FileExistsError:
+            time.sleep(0.05)  # tiến trình kia vừa tạo, chưa ghi xong: đọc lại
+            continue
+        except OSError:
+            break
+        key = secrets.token_bytes(32)
+        with os.fdopen(handle, "w", encoding="ascii") as file:
+            file.write(key.hex())
+        return key
+    return hashlib.sha256(b"abook-book-ids:" + str(path.parent).encode("utf-8")).digest()
+
+
 def book_id(path: Path) -> str:
+    """Mã sách của thư mục `path` trên máy này: cùng thư mục (không phân biệt hoa thường, dạng viết) thì cùng mã."""
+    return hmac.new(_id_key(), _key(Path(path).resolve()).encode("utf-8"), hashlib.sha256).hexdigest()[:24]
+
+
+def legacy_book_id(path: Path) -> str:
+    """Mã sách kiểu cũ (đường dẫn mã hoá base64) - chỉ để nhận ra và đổi khoá dữ liệu cũ, không cấp ra nữa."""
     return base64.urlsafe_b64encode(str(path).encode("utf-8")).decode("ascii").rstrip("=")
 
 
 def _decode_id(value: str) -> Path | None:
+    """Đường dẫn trong một mã KIỂU CŨ; mã mới hay chuỗi lạ: None."""
+    if ID_PATTERN.fullmatch(value):
+        return None
     try:
         padded = value + "=" * (-len(value) % 4)
-        return Path(base64.urlsafe_b64decode(padded.encode("ascii")).decode("utf-8"))
+        text = base64.urlsafe_b64decode(padded.encode("ascii")).decode("utf-8")
     except (ValueError, UnicodeError):
         return None
+    # đường dẫn tuyệt đối (C:\..., \máy\..., /...): "open" hay mã rác giải ra được vẫn không phải mã sách
+    return Path(text) if text and ("\\" in text or "/" in text) and Path(text).is_absolute() else None
+
+
+def legacy_ids(keys: Any) -> dict[str, str]:
+    """{mã cũ: mã mới} cho những khoá kiểu cũ trong `keys` - để đổi khoá dữ liệu lưu theo mã kiểu cũ (thư mục đã mất vẫn
+    đổi: mã mới chỉ phụ thuộc đường dẫn)."""
+    found: dict[str, str] = {}
+    for key in keys:
+        path = _decode_id(str(key)) if isinstance(key, str) else None
+        if path is not None:
+            found[key] = book_id(path)
+    return found
 
 
 def _mtime(path: Path) -> float:
@@ -147,6 +222,21 @@ class Preferences:
             positions = self._data.setdefault("positions", {})
             positions[book] = {"chapterId": int(chapter_id), "seconds": round(float(seconds), 1),
                                "duration": round(float(duration), 1), "at": time.time()}
+            self._save()
+
+    def rename_positions(self, renamed: dict[str, str]) -> None:
+        """Đổi khoá chỗ nghe dở ({mã cũ: mã mới}, `legacy_ids`); hai khoá về cùng một cuốn: chỗ ghi sau thắng."""
+        with self._lock:
+            positions = self._data.get("positions")
+            if not isinstance(positions, dict) or not any(old in positions for old in renamed):
+                return
+            for old, new in renamed.items():
+                if old == new or old not in positions:
+                    continue
+                moved = positions.pop(old)
+                current = positions.get(new)
+                if not isinstance(current, dict) or float((moved or {}).get("at") or 0) > float(current.get("at") or 0):
+                    positions[new] = moved
             self._save()
 
     def add_recent(self, path: Path) -> None:
@@ -202,11 +292,25 @@ class Library:
             self._cache.pop(_key(project), None)
 
     def resolve(self, value: str) -> Path | None:
+        """Dự án mang mã `value` (mã mới, hay mã kiểu cũ của cùng thư mục); ngoài thư viện: None."""
+        return self._find(value, self.projects())
+
+    @staticmethod
+    def _find(value: str, allowed: list[Path]) -> Path | None:
+        if ID_PATTERN.fullmatch(value):
+            return next((path for path in allowed if book_id(path) == value), None)
         path = _decode_id(value)
         if path is None:
             return None
-        allowed = {_key(project): project for project in self.projects()}
-        return allowed.get(_key(path))
+        return {_key(item): item for item in allowed}.get(_key(path))
+
+    def canonical(self, value: str) -> str:
+        """Mã hiện hành của cuốn mang mã `value`: mã kiểu cũ của một cuốn trong thư viện -> mã mới; còn lại giữ nguyên.
+        Mọi chỗ dùng mã làm KHOÁ (dữ liệu nghe, phán quyết, hàng đợi) nhận mã qua đây."""
+        if ID_PATTERN.fullmatch(value):
+            return value
+        path = self.resolve_listenable(value)
+        return book_id(path) if path is not None else value
 
     def packages(self) -> list[Path]:
         """Cuốn mở từ file `.abook` (webui/packages.py) - nghe được, không phải dự án của Studio."""
@@ -219,10 +323,7 @@ class Library:
         project = self.resolve(value)
         if project is not None:
             return project
-        path = _decode_id(value)
-        if path is None:
-            return None
-        return {_key(package): package for package in self.packages()}.get(_key(path))
+        return self._find(value, self.packages())
 
     def summary(self, project: Path, *, running: bool, starting: bool = False) -> dict[str, Any]:
         # Cả mốc của overrides.json (yêu cầu mới của người nghe đổi "pendingChanges") và tên đặt lại - không chạm DB.

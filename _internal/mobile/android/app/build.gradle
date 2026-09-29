@@ -69,6 +69,8 @@ dependencies {
     // Thông báo Studio (StudioAlerts.kt): hỏi máy tính mỗi 15 phút cả khi app đã đóng.
     implementation "androidx.work:work-runtime-ktx:2.10.1"
     testImplementation "junit:junit:$junitVersion"
+    // org.json thật cho test JVM (android.jar chỉ có vỏ rỗng): StoreRekeyTest đọc/ghi records.json, book.json.
+    testImplementation "org.json:json:20240303"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation project(':capacitor-cordova-android-plugins')
