@@ -26,6 +26,7 @@ import { useClip } from "@/listen/clip";
 import { useSource } from "@/listen/source";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
+import { usePageTitle } from "@/shared/title";
 import { formatLength, formatNumber } from "@/shared/format";
 import { Button, Segmented, Vu, radioGroupKeys, radioTabIndex } from "@/shared/ui";
 import type { ContinuationPlan, FirstPersonHint, ScanResult, Voice } from "@/studio/api";
@@ -914,6 +915,7 @@ export function NewProjectScreen() {
   const update = (changes: Partial<Draft>) => setDraft((current) => ({ ...current, ...changes }));
 
   useEffect(() => saveDraft(draft), [draft]);
+  usePageTitle(draft.seed ? "Làm tiếp cuốn này" : undefined);
 
   // "Làm tiếp cuốn này" (?continue=<id>): điền sẵn một lần từ phần trước rồi bỏ tham số, để quay lại trang không điền đè
   // những gì người dùng đã sửa.
