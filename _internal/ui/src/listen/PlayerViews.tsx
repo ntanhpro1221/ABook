@@ -755,7 +755,6 @@ function ReadAlong() {
   const client = useQueryClient();
   const { data: script, isLoading } = useScript(track?.bookId, track?.chapterId);
   const container = useRef<HTMLDivElement | null>(null);
-  const autoScrolling = useRef(0);
   const [following, setFollowing] = useState(true);
   const starts = useMemo(() => (script?.timed ? script.segments.map((segment) => segment.start ?? 0) : []), [script]);
   const active = useClock((time) => (starts.length ? sentenceIndexAt(starts, time) : -1));
@@ -780,7 +779,6 @@ function ReadAlong() {
   const scrollToActive = useCallback((smooth: boolean) => {
     const element = container.current?.querySelector<HTMLElement>(`[data-index="${active}"]`);
     if (!element) return;
-    autoScrolling.current = Date.now();
     element.scrollIntoView({ block: "center", behavior: smooth ? "smooth" : "auto" });
   }, [active]);
 
@@ -822,10 +820,17 @@ function ReadAlong() {
     <div className="relative h-full">
       <div
         ref={container}
-        onScroll={() => {
-          if (Date.now() - autoScrolling.current > 900) setFollowing(false);
+        // Chỉ THAO TÁC của người (lăn chuột, vuốt, kéo thanh cuộn, phím trang) mới tắt tự theo câu đang đọc - không suy từ sự
+        // kiện cuộn: cuộn mượt do app kéo dài quá mốc cũ 900ms bị tưởng là người cuộn (soát UX 29-09).
+        onWheel={() => setFollowing(false)}
+        onTouchMove={() => setFollowing(false)}
+        onPointerDown={(event) => {
+          if (event.target === event.currentTarget) setFollowing(false);
         }}
-        onKeyDown={onKeyDown}
+        onKeyDown={(event) => {
+          if (["PageUp", "PageDown", "Home", "End"].includes(event.key)) setFollowing(false);
+          onKeyDown(event);
+        }}
         className="h-full overflow-y-auto px-6 py-8 sm:px-10"
       >
         <div className="mx-auto max-w-[62ch] space-y-5 text-[17px] leading-[1.75]">
