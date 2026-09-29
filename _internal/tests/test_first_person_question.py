@@ -87,6 +87,19 @@ def test_a_third_person_book_with_a_few_first_person_letters_is_not(tmp_path: Pa
     assert hint["chaptersWithI"] == 2
 
 
+def test_the_narrator_others_call_by_name_is_suggested_first(tmp_path: Path) -> None:
+    """Yamiyo (29-09): "Tomobe" chỉ có trong lời người khác gọi, lời kể toàn "tôi" - trước đây không lọt 6 gợi ý, vì tên hay
+    gặp nhất là những người được KỂ về ("Onizuki", "Soba")."""
+    chapter = "\n\n".join(
+        ["Onizuki bước vào, Onizuki ngồi xuống.", "Tôi nhìn theo Onizuki.", "“Chào anh, Tomobe.”",
+         "Onizuki mỉm cười.", "“Đi thôi, Tomobe.”", "Tôi gật đầu với Onizuki."]
+    ) + "\n"
+    hint = first_person_hint(_book(tmp_path / "yamiyo", [chapter] * 3))
+
+    assert hint["suggestions"][0] == "Tomobe"
+    assert "Onizuki" in hint["suggestions"]
+
+
 def test_short_chapters_are_not_counted_chapter_by_chapter(tmp_path: Path) -> None:
     hint = first_person_hint(_book(tmp_path / "short", [_chapter(1, narration=3)] * 5))
 
