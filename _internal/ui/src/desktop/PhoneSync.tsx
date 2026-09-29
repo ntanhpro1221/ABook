@@ -97,15 +97,19 @@ export function Switch({
   checked,
   onCheckedChange,
   disabled,
+  label,
 }: {
   id?: string;
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
   disabled?: boolean;
+  /** Tên cho trình đọc màn hình khi không có <label htmlFor> trỏ tới công tắc (soát UX 29-09: "Lịch đêm" chỉ đọc "switch"). */
+  label?: string;
 }) {
   return (
     <SwitchPrimitive.Root
       id={id}
+      aria-label={label}
       checked={checked}
       onCheckedChange={onCheckedChange}
       disabled={disabled}
