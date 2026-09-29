@@ -75,6 +75,8 @@ const PROFILES: { value: Profile; title: string; pace: string; summary: string; 
   },
 ];
 const PROFILE_VALUES = PROFILES.map((option) => option.value);
+// Chọn nhanh số chương cho một đợt - chỉ hiện khi nguồn có nhiều hơn mức nhỏ nhất.
+const CHAPTER_LIMITS = [20, 50, 100];
 
 // Ước lượng thời gian làm trên máy này, đo từ hai lô gần nhất của cuốn 2 (26-09, mức Chất lượng cao): lô 18 có
 // 113 nghìn chữ, phân tích ~4 giờ, thu âm 4,6-7,1 giờ. Hai mức kia chưa đo trên máy này nên không đoán con số.
@@ -203,6 +205,8 @@ function SourceStep({
   onPaths,
   onAddFiles,
   onRemove,
+  total,
+  onLimit,
   problem,
 }: {
   scan: ScanResult | null;
@@ -212,6 +216,10 @@ function SourceStep({
   onPaths: (paths: string[]) => void;
   onAddFiles: (paths: string[]) => void;
   onRemove: (path: string) => void;
+  /** Số chương đọc được trong nguồn, trước khi bỏ chương nào. */
+  total: number;
+  /** Chỉ làm `count` chương đầu (theo thứ tự tên file), hay tất cả khi null. */
+  onLimit: (count: number | null) => void;
   problem: { text: string; subfolders: string[] } | null;
 }) {
   const { data: info } = useAppInfo();
@@ -398,6 +406,22 @@ function SourceStep({
               </Button>
             </div>
           </div>
+          {/* Truyện dài (còn ra tiếp, hay làm từng đợt bằng "Làm tiếp cuốn này"): bỏ từng chương một thì không xuể - chọn
+              nhanh làm N chương đầu, phần còn lại để đợt sau. */}
+          {total > CHAPTER_LIMITS[0] && (
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-fg-2">
+              <span>Đợt này làm</span>
+              <Segmented<string>
+                label="Đợt này làm bao nhiêu chương"
+                value={files.length === total ? "all" : String(files.length)}
+                onChange={(value) => onLimit(value === "all" ? null : Number(value))}
+                options={[
+                  ...CHAPTER_LIMITS.filter((count) => count < total).map((count) => ({ value: String(count), label: `${count} chương đầu` })),
+                  { value: "all", label: `Cả ${formatNumber(total)} chương` },
+                ]}
+              />
+            </div>
+          )}
           <div className="mt-3 max-h-[340px] overflow-y-auto rounded-xl border border-line bg-panel">
             {files.map((file, index) => (
               <div
@@ -941,7 +965,7 @@ export function NewProjectScreen() {
       firstPerson: plan.firstPerson,
       profile: (PROFILE_VALUES as string[]).includes(plan.profile) ? (plan.profile as Profile) : "high_quality",
       seed: {
-        id: continueId,
+        id: plan.sourceId || continueId,
         title: plan.sourceTitle,
         part: plan.part,
         analyzed: plan.analyzed,
@@ -1080,6 +1104,10 @@ export function NewProjectScreen() {
               scanning={scanMutation.isPending}
               onPaths={(paths) => update({ paths, excluded: [], titleEdited: paths.length ? draft.titleEdited : false })}
               onAddFiles={(paths) => update({ paths: [...draft.paths, ...paths] })}
+              total={rawScan?.files.length ?? 0}
+              onLimit={(count) =>
+                update({ excluded: count === null ? [] : (rawScan?.files ?? []).slice(count).map((file) => file.path) })
+              }
               onRemove={(path) => {
                 update({ excluded: [...draft.excluded, path] });
                 const name = path.split(/[\\/]/).pop();

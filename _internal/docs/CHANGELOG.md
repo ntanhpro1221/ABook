@@ -7,6 +7,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Studio (sản xuất sách nói)
+
+- Trình tạo sách có nút chọn nhanh **"Đợt này làm 20 / 50 / 100 chương đầu"** khi truyện có nhiều chương - làm truyện dài
+  từng đợt không phải bỏ từng chương một.
+- "Làm tiếp cuốn này" bấm ở phần cũ (khi đã có phần sau) giờ nối tiếp từ phần mới nhất, không làm lại các chương phần
+  sau đã làm.
+
 ## [0.4.1] - 2026-09-29
 
 ### Studio (sản xuất sách nói)

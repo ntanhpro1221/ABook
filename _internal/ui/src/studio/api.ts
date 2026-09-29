@@ -163,6 +163,8 @@ export interface ScanResult {
 /** "Làm tiếp cuốn này" (ebook_reader/continuation.py): trình tạo sách điền sẵn phần kế tiếp của một truyện dài, gieo từ
  * phần trước để nhân vật giữ giọng và tên giữ cách đọc. */
 export interface ContinuationPlan {
+  /** Phần mới nhất của cuốn - phần gieo từ (bấm ở phần cũ khi đã có phần sau thì là phần sau). */
+  sourceId: string;
   sourceTitle: string;
   /** Số của phần sắp tạo (phần trước + 1). */
   part: number;

@@ -27,7 +27,7 @@ import re
 import sqlite3
 import time
 from collections import Counter
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterable, Iterator
 from contextlib import closing, contextmanager
 from pathlib import Path
 from typing import Any
@@ -196,10 +196,30 @@ def _write_link(source: Path, target: Path) -> None:
     os.replace(temporary, target / LINK_FILE)
 
 
+def base_title(title: str) -> str:
+    """Tên cuốn không có hậu tố phần ("Tên · Phần 2" -> "Tên")."""
+    return PART_SUFFIX.sub("", str(title)).strip() or str(title).strip()
+
+
 def continued_title(title: str, part: int) -> str:
     """"Tên · Phần 3" cho phần kế tiếp, không chồng hậu tố cũ."""
-    base = PART_SUFFIX.sub("", str(title)).strip() or str(title).strip()
-    return f"{base} · Phần {part}"
+    return f"{base_title(title)} · Phần {part}"
+
+
+def latest_part(project: Path, candidates: Iterable[Path]) -> Path:
+    """Phần mới nhất của cuốn mà `project` thuộc về, trong số `candidates` (các dự án của thư viện): chuỗi dài nhất đi qua
+    `project`. Bấm "Làm tiếp" ở phần 1 khi đã có phần 2 thì phải nối từ phần 2 - không thì phần mới làm lại đúng các
+    chương phần 2 đã làm. Không phần nào nối sau thì là chính nó."""
+    here = Path(project).resolve()
+    best, length = here, len(chain_of(here))
+    for candidate in candidates:
+        try:
+            chain = chain_of(candidate)
+        except OSError:
+            continue
+        if here in chain and len(chain) > length:
+            best, length = chain[-1], len(chain)
+    return best
 
 
 def _input_paths(project: Path) -> list[Path]:
