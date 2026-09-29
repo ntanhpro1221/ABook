@@ -48,6 +48,12 @@ mọi phán quyết của chủ sách trên những đoạn ấy **hết hiệu 
   alpha.51 trùng khít alpha.48 từng byte.
 - **Muốn biết đang ở pha nào:** `SELECT COUNT(*) FROM segments WHERE status='pending'`. Khác 0
   nghĩa là phân tích chưa xong.
+- **Cần máy rảnh một lúc giữa pha phân tích:** TẠM DỪNG, đừng dừng (từ 29-09: nút "Tạm dừng" ở
+  trang dự án, hay `background_runner.request_pause(project, True)`). Worker vẫn sống, đứng ở
+  checkpoint kế (`Pipeline._wait_pause_or_stop`) rồi làm tiếp đúng chỗ - không có resume nào,
+  nên vẫn là cùng một quyển sách. Supervisor cũng tự tạm dừng khi máy xách tay chạy pin quá
+  60 giây (`ebook_reader/power_source.py`). Treo tiến trình từ ngoài (người gác pin của máy
+  chủ sách) cũng an toàn cùng lý do; chỉ việc tiến trình CHẾT mới đổi quyển sách.
 
 Điều này áp cả cho crash: alpha.50 chết vì `PermissionError` giữa pha phân tích, resume, và
 ra một quyển sách khác — 6/10 chương thay vì 8/10 như alpha.51.
