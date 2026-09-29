@@ -79,6 +79,12 @@ MỘT nhãn trong một chương theo việc chúng đi chung câu; hai nhóm t�
   thứ nhất - 0 thẻ, 0,017 giây. Kiểm dương: Mac chạy 8B-v5 Nageki 56-64 đêm 29-09 (split_check_mac.sh) - Lucia đã có hồ sơ
   ở các chương khác thì bà thầy bói ở 62 có bị hỏi không.
 
+**Kết quả âm: danh từ chỉ người trong lời kể sát câu không dò được việc nhập.** Câu người lạ bị gán cho nhân vật có tên,
+lời kể trong hai đoạn quanh câu có nhắc "bà lão", "gã", "người đàn ông"... mà không nhắc tên nhân vật được gán? Chỉ
+4/23 (v3), 4/21 (v6), 6/36 (8B) câu nhập có dấu hiệu ấy, và câu gán ĐÚNG cũng có (7/287, 7/263, 10/283): hỏi theo nó chỉ
+đúng 36-38%. Lời kể của LN hiếm gắn lời dẫn vào từng câu thoại; xưng hô (thẻ 0c) là tín hiệu tốt hơn. Công cụ:
+scratchpad `stranger_tag_cue.py`.
+
 **F1 giọng theo chương không thấy lỗi xuyên chương.** LU 10 kể ngôi thứ nhất của Hayase; khai sai người kể là Kakeru
 (người kể cả cuốn): người nói chặt sụp ở cả ba model (v3 64,1 -> 35,9; v6 64,1 -> 35,9; 8B 66,7 -> 38,5), còn F1 giọng
 gần như không đổi (73,0 -> 68,0; 79,1 -> 77,2; 78,9 -> 81,5) - trong chương, lời Hayase vẫn gom đúng một cụm, chỉ mang tên
