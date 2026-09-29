@@ -279,10 +279,13 @@ def guard() -> int:
     log_event("GUARD", f"gác pin bắt đầu (pid {os.getpid()})")
     position = EVENTS.stat().st_size if EVENTS.exists() else 0
     while True:
-        reading = read_power()
-        left = remaining_minutes(state, reading) if not reading.ac else None
-        for action in decide(state, reading):
-            act(action, state, reading, left, paused)
+        try:
+            reading = read_power()
+            left = remaining_minutes(state, reading) if not reading.ac else None
+            for action in decide(state, reading):
+                act(action, state, reading, left, paused)
+        except Exception as exc:  # noqa: BLE001 - một lần đo/làm hỏng không được giết người gác: lần sau đo lại
+            log_event("ERROR", f"{type(exc).__name__}: {exc}"[:300])
         time.sleep(POLL_SECONDS)
         lines, position = new_events(position)
         if state.shutdown_pending and any(" DECLINED" in line for line in lines):
