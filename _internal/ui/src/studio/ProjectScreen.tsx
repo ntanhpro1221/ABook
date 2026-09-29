@@ -524,7 +524,7 @@ function ChapterRow({ book, chapter }: { book: BookSummary; chapter: Chapter }) 
       role="row"
       onDoubleClick={onPlay}
       className={cn(
-        "group grid h-14 grid-cols-[40px_minmax(0,1fr)_auto] md:grid-cols-[48px_minmax(0,1fr)_150px_110px_72px] items-center gap-3 rounded-lg px-2 text-sm",
+        "group grid h-14 grid-cols-[40px_minmax(0,1fr)_auto] md:grid-cols-[48px_minmax(0,1fr)_150px_110px_96px] items-center gap-3 rounded-lg px-2 text-sm",
         current ? "bg-accent-soft" : "hover:bg-hover",
       )}
     >
@@ -576,7 +576,7 @@ function ChapterRow({ book, chapter }: { book: BookSummary; chapter: Chapter }) 
       <div className="tabular hidden text-right text-xs text-fg-2 md:block">
         {chapter.status === "completed" ? formatLength(chapter.seconds) : chapter.segments.total ? `${formatNumber(chapter.segments.total)} câu` : ""}
       </div>
-      <div className="tabular hidden text-right text-xs text-fg-3 md:block">
+      <div className="tabular hidden whitespace-nowrap text-right text-xs text-fg-3 md:block">
         {chapter.completedAt ? formatRelative(chapter.completedAt) : ""}
       </div>
     </div>
@@ -586,7 +586,7 @@ function ChapterRow({ book, chapter }: { book: BookSummary; chapter: Chapter }) 
 function ChapterList({ book, chapters }: { book: BookSummary; chapters: Chapter[] }) {
   return (
     <div role="table" aria-label="Danh sách chương" className="mt-2">
-      <div className="grid h-9 grid-cols-[40px_minmax(0,1fr)_auto] md:grid-cols-[48px_minmax(0,1fr)_150px_110px_72px] items-center gap-3 border-b border-line px-2 text-[11px] font-semibold uppercase tracking-wider text-fg-3">
+      <div className="grid h-9 grid-cols-[40px_minmax(0,1fr)_auto] md:grid-cols-[48px_minmax(0,1fr)_150px_110px_96px] items-center gap-3 border-b border-line px-2 text-[11px] font-semibold uppercase tracking-wider text-fg-3">
         <span className="text-center">#</span>
         <span>Chương</span>
         <span>Trạng thái</span>
