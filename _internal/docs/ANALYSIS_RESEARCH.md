@@ -18,6 +18,78 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
    (`scripts/model_eval/build_training_set.py`, `SPLIT`).
 5. **Thước quyết định là thứ chủ sách đọc: LN Nhật + truyện mạng Hàn** (chủ sách 28-09: *"tôi hay đọc light novel nhật,
    hàn cơ mà"*). Truyện Trung, Việt, cổ chỉ là kiểm tra phụ "không được phá".
+6. **Chỉ so hai model đo trên CÙNG host** (cùng mã phân tích và tách câu). Lượt đo trước một thay đổi host phải đo lại
+   trên host mới, không đem ra so - 29-09 chiều: lượt LN cơ sở của v3 chạy trước các thay đổi host tối 28-09, và kết luận
+   "v6 thua v3" rút từ đó không đứng (mục dưới).
+
+## 29-09 chiều - đối chứng v6b; so với v3 bị nhiễu HOST; một khối câu làm lệch TCF 042
+
+**Câu hỏi của v6b.** v6 (data_v6, 2057 mẫu) thua v3 trên LN cơ sở, và câu 『』 ở TCF 042 tụt. Giả thuyết: 4 chương "nhắm lỗi"
+thêm vào data_v6 (LU 03, Nageki 53, TCF 107, Yamiyo 009) có hại, nhất là TCF 107, nơi 『』 là "ký sinh trùng" nói. v6b =
+đúng công thức v6 trên data_v6 bỏ 4 chương ấy (1717 mẫu).
+
+**data_v3 và data_v6b gần như trùng khít** (`data_diff.py`). Chung một prompt hệ thống (không lệch dòng nào). Trong 3971 câu
+có mặt ở cả hai bộ, chỉ 2 nhãn đổi. Số mẫu mỗi truyện lệch ±2-4. Vậy v6b là một lượt huấn luyện LẠI của v3 với cùng dữ
+liệu, không phải một công thức khác.
+
+**Lượt LN cơ sở của v3 chạy trên host cũ.** v3 đo lúc 28-09 14:13, tức TRƯỚC các thay đổi host tối 28-09: bộ tách
+“...,” là thoại, luật tên gọi, tên theo chữ sách, dòng người kể. v6, v6b và 8B đo ngày 29-09 trên host mới (c372ce37).
+Mọi phép so v3 với các lượt ấy trên LN cơ sở vì thế lẫn hai biến. Có hai hệ quả:
+
+- **v6 hoà v3.** Trên LN mở rộng (6 chương, 493 câu, cả hai đo cùng host 29-09), v6 − v3 = −0,5 F1 giọng, khoảng tin cậy
+  95% [−5,6; +3,7], thắng 3 thua 3. Như vậy kết luận "giữ v3 vì v6 thua LN" (29-09 sáng) không đứng.
+- **"8B hơn v3 3,8 điểm" (bảng trên) cũng lẫn host.** Phép so công bằng là 8B với v3 trên LN mở rộng. Lượt 8B trên LN mở
+  rộng đang trong hàng GPU.
+
+**v6 so với v6b cùng host là phép thử thật của 4 chương.** Trên LN cơ sở (521 câu):
+
+| model | F1 giọng | người nói chặt |
+|---|---|---|
+| v6 (data_v6, có 4 chương) | 55,8% | 58,7% |
+| v6b (data_v6b, bỏ 4 chương) | 54,3% | 53,9% |
+| 8B-v5 | 61,2% | 65,6% |
+
+- v6 hơn v6b 1,5 F1 và 4,8 chặt, nhưng thắng 3 thua 3 chương. Sau 3 chương khoảng cách là 5,0, sau 5 chương còn 1,8: phần
+  lớn là dao động của từng chương.
+- Kết luận tạm: 4 chương không có hại, và có thể có ích. Lượt LN mở rộng của v6b cùng `choose_composition.py` sẽ chọn thành
+  phần cho v7/v8/q35 và cho lượt 8B ngày 01-10.
+
+**Dòng dặn về người kể trong prompt (A/B trên Mac, 8B-v5, Nageki 65 + LU 07 = 233 câu).**
+
+- Nhánh dev/narrator-balance thêm vế "lời người khác nói VỚI người kể là của người ấy".
+- Kết quả: F1 giọng 60,9 → 63,7, chặt 67,4 → 69,5; gán nhầm CHO người kể 42 → 38, bỏ sót 19 → 16.
+- Theo truyện: LU +5,2, Nageki −0,5.
+- Hai chương là quá ít để đổi `analysis.py`, file khoá nhóm phân tích: đổi nó thì sách đã bắt đầu phân tích không resume
+  được. Lượt 2 đang chạy trên bốn chương ngôi thứ nhất của bộ mở rộng: Nageki 62, LU 10, Yamiyo 225, HDST 130.
+
+**TCF 042 có một khối câu tương quan.**
+
+- Câu 2-35 là bài đăng mạng xã hội trong 『』. Đáp án chấp nhận NARRATOR hoặc NPC\*. Gán cho người được NHẮC TÊN trong bài
+  (Kuchinashi) là sai.
+- v6b gán cả 21 câu cho "Kuchinashi"; v3 gán cho người lạ.
+- Dữ liệu không giải thích được khác biệt này (`bracket_labels.py`):
+  - câu mở bằng 『 chỉ có 31 (v3) / 76 (v6) / 31 (v6b);
+  - 84-95% trong số đó dán nhân vật;
+  - không mẫu nào có dạng "tên trong câu = người nói";
+  - v6b có đúng thành phần 『』 của v3 mà vẫn lật.
+- Vậy đây là MỘT quyết định cho cả khối, lật giữa các lượt huấn luyện. Khối này chiếm 21/55 câu của chương. Đừng dùng điểm
+  chặt TCF 042 để chọn model; F1 giọng ít nhạy hơn.
+- Thước LN cũng không truyền `--first-person` cho TCF 042, trong khi các truyện ngôi thứ nhất khác có. Khi chạy Studio thật,
+  người dùng sẽ khai người kể.
+
+**8B hơn 4B ở đâu** (cùng host, LN cơ sở 521 câu, `ln_categories.py`; người nói chặt):
+
+| loại | số câu | v6 (4B) | 8B-v5 |
+|---|---|---|---|
+| đối đáp liền | 168 | 57,7% | 72,6% |
+| 『』 | 78 | 23,1% | 42,3% |
+| tôi nói | 138 | 73,2% | 79,7% |
+| còn lại | 110 | 53,6% | 58,2% |
+| có lời dẫn | 102 | 83,3% | 80,4% |
+| vô danh | 22 | 4,5% | 13,6% |
+
+Phần lớn khoảng cách nằm ở loạt thoại xen kẽ không có lời dẫn: 8B giữ lượt tốt hơn. Hai chỗ yếu còn lại là người vô danh và
+câu 『』, cũng là hai chỗ v7 (nhãn người vô danh có mô tả) và v8 (người nói các câu trước) nhắm tới.
 
 ## 29-09 - NỀN 8B HƠN 4B RÕ RỆT; lỗi 『』 là quy ước của từng cuốn; gieo sổ nhân vật giúp nhẹ
 
