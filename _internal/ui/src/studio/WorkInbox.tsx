@@ -148,7 +148,7 @@ function Example({ bookId, example }: { bookId: string; example: WorkExample }) 
 
 // Sửa cách đọc một tên ngay trên thẻ. Không chờ gì: ghi xong là xong phần người; dây chuyền áp ở ranh giới chương kế
 // tiếp (hoặc lần chạy tới) và thu lại đúng những câu có tên ấy - kể cả sách đã xong.
-function PronunciationFix({ bookId, item }: { bookId: string; item: WorkItem }) {
+function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item: WorkItem; onOpenNames?: () => void }) {
   const client = useQueryClient();
   const pending = useContext(PendingHint);
   const [value, setValue] = useState(item.requested ?? item.current);
@@ -227,6 +227,12 @@ function PronunciationFix({ bookId, item }: { bookId: string; item: WorkItem }) 
         >
           Đọc thế này
         </Button>
+        {/* Thẻ chỉ hỏi tên máy kém chắc; mọi tên khác (kể cả tên đã chọn) sửa ở tab Nhân vật, mục "Cách đọc tên". */}
+        {onOpenNames && (
+          <Button size="sm" variant="ghost" type="button" onClick={onOpenNames}>
+            Mọi cách đọc tên…
+          </Button>
+        )}
       </form>
       {problem && (
         <p id={`${inputId}-problem`} role="alert" className="mt-1.5 text-xs text-danger">
@@ -474,7 +480,7 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
 /** Mở câu `stableId` của chương `chapterId` trong tab Kịch bản, ô chọn người nói mở sẵn. */
 type OpenScript = (chapterId: number, stableId: string) => void;
 
-function Card({ bookId, item, onOpenReview, onOpenScript }: { bookId: string; item: WorkItem; onOpenReview: () => void; onOpenScript?: OpenScript }) {
+function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames }: { bookId: string; item: WorkItem; onOpenReview: () => void; onOpenScript?: OpenScript; onOpenNames?: () => void }) {
   // Thẻ chuỗi lượt đối đáp: đổi các câu xen kẽ (mặc định) hay cả chuỗi - câu "sẽ đổi" theo phạm vi đang chọn.
   const [scope, setScope] = useState<Scope>("alternate");
   return (
@@ -497,7 +503,7 @@ function Card({ bookId, item, onOpenReview, onOpenScript }: { bookId: string; it
           Nghe ở tab Cần nghe lại
         </Button>
       ) : item.kind === "pronunciation" && item.surface ? (
-        <PronunciationFix bookId={bookId} item={item} />
+        <PronunciationFix bookId={bookId} item={item} onOpenNames={onOpenNames} />
       ) : item.voiceChoices && item.voiceChoices.length > 0 ? (
         <VoiceFix bookId={bookId} item={item} />
       ) : item.lines && item.choices ? (
@@ -526,7 +532,7 @@ function Card({ bookId, item, onOpenReview, onOpenScript }: { bookId: string; it
   );
 }
 
-export function WorkInbox(props: { book: BookSummary; onOpenReview: () => void; onOpenScript?: OpenScript }) {
+export function WorkInbox(props: { book: BookSummary; onOpenReview: () => void; onOpenScript?: OpenScript; onOpenNames?: () => void }) {
   const hint = props.book.phase === "done" && !props.book.running
     ? "bấm “Áp dụng thay đổi” ở đầu trang để áp"
     : "chờ áp dụng khi sách chạy tiếp";
@@ -537,7 +543,7 @@ export function WorkInbox(props: { book: BookSummary; onOpenReview: () => void; 
   );
 }
 
-function WorkInboxBody({ book, onOpenReview, onOpenScript }: { book: BookSummary; onOpenReview: () => void; onOpenScript?: OpenScript }) {
+function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames }: { book: BookSummary; onOpenReview: () => void; onOpenScript?: OpenScript; onOpenNames?: () => void }) {
   const bookId = book.id;
   const [kind, setKind] = useState<WorkKind | "all">("all");
   const [shown, setShown] = useState(PAGE);
@@ -592,7 +598,7 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript }: { book: BookSummary
       </div>
       <ol className={cn("mt-4 space-y-3")}>
         {items.slice(0, shown).map((item) => (
-          <Card key={item.key} bookId={bookId} item={item} onOpenReview={onOpenReview} onOpenScript={onOpenScript} />
+          <Card key={item.key} bookId={bookId} item={item} onOpenReview={onOpenReview} onOpenScript={onOpenScript} onOpenNames={onOpenNames} />
         ))}
       </ol>
       {items.length > shown && (
@@ -612,7 +618,7 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript }: { book: BookSummary
           <summary className="cursor-pointer text-sm font-medium text-fg-2">Đã quyết, chờ áp dụng · {decided.length}</summary>
           <ol className="mt-3 space-y-3">
             {decided.map((item) => (
-              <Card key={item.key} bookId={bookId} item={item} onOpenReview={onOpenReview} />
+              <Card key={item.key} bookId={bookId} item={item} onOpenReview={onOpenReview} onOpenNames={onOpenNames} />
             ))}
           </ol>
         </details>
