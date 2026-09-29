@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.5] - 2026-09-29
+
 ### Nghe sách - máy tính và điện thoại
 
 - Thẻ "Đang nghe dở" của sách đã nghe hết phần đã có ghi "Chờ chương mới" thay cho nút phát không phát gì.
