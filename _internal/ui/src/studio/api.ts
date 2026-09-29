@@ -244,10 +244,19 @@ const token: string = (() => {
 
 export class ApiError extends Error {
   status: number;
-  constructor(status: number, message: string) {
+  /** Các trường máy chủ gửi kèm lời báo lỗi - `suggestion`: cách đọc bị từ chối, viết lại đúng chính tả. */
+  detail: Record<string, unknown>;
+  constructor(status: number, message: string, detail: Record<string, unknown> = {}) {
     super(message);
     this.status = status;
+    this.detail = detail;
   }
+}
+
+/** Bản sửa máy chủ mời dùng khi từ chối một cách đọc ("Hên-kơ" -> "Hên-cơ"); "" khi không có. */
+export function suggestionOf(error: unknown): string {
+  const value = error instanceof ApiError ? error.detail.suggestion : undefined;
+  return typeof value === "string" ? value : "";
 }
 
 export async function api<T>(path: string, init?: { method?: string; body?: unknown }): Promise<T> {
@@ -262,7 +271,7 @@ export async function api<T>(path: string, init?: { method?: string; body?: unkn
   const text = await response.text();
   const data = text ? JSON.parse(text) : null;
   if (!response.ok) {
-    throw new ApiError(response.status, (data && data.error) || `Lỗi ${response.status}`);
+    throw new ApiError(response.status, (data && data.error) || `Lỗi ${response.status}`, data && typeof data === "object" ? data : {});
   }
   return data as T;
 }
