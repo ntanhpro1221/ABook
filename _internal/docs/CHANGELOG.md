@@ -11,6 +11,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Thẻ "Đang nghe dở" của sách đã nghe hết phần đã có ghi "Chờ chương mới" thay cho nút phát không phát gì.
 - Tab Lịch sử: phiên nghe trong cùng một phút ghi một mốc giờ; nút ghi rõ "Nghe tiếp từ mm:ss".
+- Chế độ đọc trên điện thoại có nút "Nghe từ đây" (trước chỉ có trên máy tính), lần đầu nhắc "Chạm vào một câu để nghe
+  từ câu ấy"; câu đang chọn được gạch chân thay vì đóng khung từng dòng.
 
 ### Studio (sản xuất sách nói)
 
