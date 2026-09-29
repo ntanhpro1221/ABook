@@ -160,6 +160,10 @@ function ContinueCard({ book }: { book: ListenBook }) {
         <p className="mt-0.5 text-sm text-fg-2">{bookStatusText(book)}</p>
         <Progress value={book.progress.fraction} size="xs" className="mt-3 max-w-md" label="Đã nghe" />
       </div>
+      {book.progress.caughtUp && !current ? (
+        // Đã nghe hết phần đã có: nút phát lớn chỉ phát 0 giây rồi báo hết - nói thẳng đang chờ chương mới (soát UX 29-09).
+        <span className="shrink-0 rounded-full bg-hover px-3 py-1.5 text-xs font-medium text-fg-2">Chờ chương mới</span>
+      ) : (
       <button
         type="button"
         onClick={() => (current ? player.toggle() : void playBook(book))}
@@ -172,6 +176,7 @@ function ContinueCard({ book }: { book: ListenBook }) {
           <Play className="size-6 translate-x-[1px]" fill="currentColor" strokeWidth={0} />
         )}
       </button>
+      )}
     </section>
   );
 }
