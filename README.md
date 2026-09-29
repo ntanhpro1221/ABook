@@ -94,6 +94,11 @@ Android Auto bật chế độ nhà phát triển (chạm nhiều lần vào s�
 Có thể đóng app hay tắt máy bất kỳ lúc nào; mở lại là làm tiếp từ chỗ dừng. Riêng giai đoạn **phân tích** (trước khi
 chương đầu tiên được thu) nên để chạy liền một mạch: dừng giữa chừng rồi chạy tiếp có thể cho ra cách phân vai khác.
 
+**Truyện dài, làm nhiều đợt**: khi thư mục truyện có chương mới (truyện còn ra tiếp, hay lần đầu chỉ làm vài chục chương),
+trang dự án hiện nút **"Làm tiếp cuốn này"**. Phần mới ("Tên · Phần 2") giữ nguyên giọng của mọi nhân vật đã gặp, cách
+đọc tên và những gì đã sửa ở "Việc cần duyệt"; trong Thư viện các phần đứng chung một bộ và nghe hết phần này thì được
+mời nghe tiếp phần sau.
+
 ## Trạng thái
 
 ABook đang ở giai đoạn alpha: dùng hằng ngày được, nhưng còn thay đổi nhiều giữa các bản. Model phân tích của Studio
