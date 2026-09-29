@@ -29,7 +29,7 @@ import { cn } from "@/shared/cn";
 import { usePageTitle } from "@/shared/title";
 import { formatLength, formatNumber } from "@/shared/format";
 import { Button, Segmented, Vu, radioGroupKeys, radioTabIndex } from "@/shared/ui";
-import type { ContinuationPlan, FirstPersonHint, ScanResult, Voice } from "@/studio/api";
+import type { ContinuationPlan, FirstPersonHint, ScannedFile, ScanResult, Voice } from "@/studio/api";
 import {
   pickFiles,
   pickFolder,
@@ -456,6 +456,12 @@ function SourceStep({
       )}
     </div>
   );
+}
+
+/** "Chương 768" từ dòng đầu file ("Chương 768 - Mô hình…"), không thì tên file - cho dải chương ở bước xác nhận. */
+function chapterLabel(file: ScannedFile): string {
+  const head = file.firstLine.split(/\s[-–—:]\s|[:：]/)[0].trim();
+  return head && head.length <= 40 ? head : file.name;
 }
 
 // ---- Nối tiếp phần trước ---------------------------------------------------------------------------------------
@@ -913,7 +919,15 @@ function ConfirmStep({
     ...(Object.keys(povChapters).length
       ? ([["Chương đổi người kể", Object.entries(povChapters).map(([chapter, name]) => `chương ${chapter}: ${name}`).join(", ")]] as [string, string][])
       : []),
-    ...(seed ? ([["Nối tiếp", `phần ${seed.part} của “${seed.title}”`]] as [string, string][]) : []),
+    // "Nối tiếp: phần 2 của …" đọc như nối SAU phần 2 hay LÀ phần 2 đều được - nói thẳng là phần mấy, sau phần nào, và dải
+    // chương (soát UX 29-09).
+    ...(seed
+      ? ([[
+          "Là",
+          `phần ${seed.part} của “${seed.title}”, nối sau phần ${seed.part - 1}` +
+            (scan.files.length ? ` · ${chapterLabel(scan.files[0])} → ${chapterLabel(scan.files[scan.files.length - 1])}` : ""),
+        ]] as [string, string][])
+      : []),
     ["Nhân vật", seed ? `Giữ ${carriedText(seed.carries)}; người mới được phân vai sau khi phân tích` : "Tự động phân vai sau khi phân tích"],
     ["Chất lượng", option.title],
     ...(measured
@@ -932,7 +946,8 @@ function ConfirmStep({
           <h3 className="text-lg font-semibold text-balance">{title}</h3>
           <dl className="mt-3 divide-y divide-line text-sm">
             {rows.map(([label, value]) => (
-              <div key={label} className="grid grid-cols-[170px_minmax(0,1fr)] gap-4 py-2">
+              // Điện thoại: nhãn trên, giá trị dưới - cột nhãn 170 px cố định từng ép giá trị thành 5-6 dòng ở 390 px.
+              <div key={label} className="grid gap-0.5 py-2 sm:grid-cols-[170px_minmax(0,1fr)] sm:gap-4">
                 <dt className="text-fg-2">{label}</dt>
                 <dd className="font-medium">{value}</dd>
               </div>
