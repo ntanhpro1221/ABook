@@ -7,6 +7,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe sách - máy tính và điện thoại
+
+- Các phần của một cuốn làm nhiều đợt ("Tên · Phần 2"...) nghe liền như một cuốn: hết phần này tự nghe tiếp phần sau.
+  Tập khác của một bộ ("Tập 17") vẫn chỉ hiện nút mời nghe tiếp.
+
 ## [0.4.2] - 2026-09-29
 
 ### Studio (sản xuất sách nói)
