@@ -786,6 +786,7 @@ function ChapterScriptView({
   filter,
   who,
   wantedLine = null,
+  pickLine = true,
 }: {
   bookId: string;
   script: ChapterScript;
@@ -793,6 +794,8 @@ function ChapterScriptView({
   who: string | null;
   /** Mở từ thẻ "Việc cần duyệt" (Tìm trong truyện…): tới câu này và mở sẵn ô chọn người nói. */
   wantedLine?: string | null;
+  /** false: chỉ tới câu ấy để ĐỌC (thẻ nhóm "Đọc cả N câu") - không mở ô chọn che chữ. */
+  pickLine?: boolean;
 }) {
   const assign = useAssign(bookId, script.chapterId);
   const fixLine = useLineFix(bookId, script.chapterId);
@@ -846,7 +849,7 @@ function ChapterScriptView({
     openedLine.current = wantedLine;
     requestAnimationFrame(() => {
       focusRow(line);
-      if (script.castReady && line.editable) setMenu(line.stableId);
+      if (pickLine && script.castReady && line.editable) setMenu(line.stableId);
     });
     // focusRow đổi mỗi lần vẽ; chỉ chạy lại khi câu được mở hay nội dung chương đổi.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1095,7 +1098,7 @@ export function ScriptTab({ bookId }: { bookId: string }) {
               trên rồi sang câu kế · <Kbd>Enter</Kbd> mở danh sách
             </p>
           )}
-          <ChapterScriptView bookId={bookId} script={data} filter={filter} who={who} wantedLine={params.get("line")} />
+          <ChapterScriptView bookId={bookId} script={data} filter={filter} who={who} wantedLine={params.get("line")} pickLine={params.get("pick") !== "0"} />
           <ChapterFooter bookId={bookId} script={data} onNext={() => go(data.next)} />
         </>
       )}

@@ -784,8 +784,8 @@ export function ProjectScreen() {
           <WorkInbox
             book={book}
             onOpenReview={() => setParams({ tab: "review" }, { replace: true })}
-            onOpenScript={(chapterId, stableId) =>
-              setParams({ tab: "script", chapter: String(chapterId), line: stableId }, { replace: true })
+            onOpenScript={(chapterId, stableId, pick = true) =>
+              setParams({ tab: "script", chapter: String(chapterId), line: stableId, ...(pick ? {} : { pick: "0" }) }, { replace: true })
             }
             onOpenNames={(name) => setParams({ tab: "cast", focus: "names", ...(name ? { name } : {}) }, { replace: true })}
           />
