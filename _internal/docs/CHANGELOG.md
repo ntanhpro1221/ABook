@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe sách - máy tính và điện thoại
+
+- Chế độ đọc: "Nghe từ đây" nghe tiếp từ câu đang dừng nếu câu ấy còn trên màn hình, không lùi về câu đầu màn hình.
+
 ### Studio (sản xuất sách nói)
 
 - Thẻ đã quyết trong "Việc cần duyệt" nói kết quả thay vì lặp câu hỏi: "Giữ: “Arcanist” đọc là “A-rờ-ca-nít”", "Noah là
