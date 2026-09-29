@@ -16,23 +16,22 @@ def _project(root: Path, name: str, previous: str | None = None, part: int = 2) 
     return folder
 
 
-def test_parts_follow_the_chain_whatever_their_titles(tmp_path: Path) -> None:
+def test_a_part_knows_its_first_part_and_place_whatever_its_title(tmp_path: Path) -> None:
     first = _project(tmp_path, "lo18")
     second = _project(tmp_path, "doi_ten_roi", previous="lo18")  # phần 2 đã đổi tên hiện, vẫn nối
     third = _project(tmp_path, "phan_3", previous="doi_ten_roi", part=3)
     alone = _project(tmp_path, "lo18_phan_2_la")  # tên như một phần mà không nối gì: dự án lẻ
-    places = continuation.series_map([first, second, third, alone])
-    root = first.resolve()
-    assert places == {root: (root, 1), second.resolve(): (root, 2), third.resolve(): (root, 3)}
+    assert continuation.series_of(second) == (first.resolve(), 2)
+    assert continuation.series_of(third) == (first.resolve(), 3)
+    assert continuation.series_of(first) is None, "phần đầu: giao diện nhận ra nhờ các phần trỏ về nó"
+    assert continuation.series_of(alone) is None
 
 
 def test_a_part_whose_first_part_is_gone_stands_alone(tmp_path: Path) -> None:
-    orphan = _project(tmp_path, "phan_2", previous="da_xoa")
-    assert continuation.series_map([orphan]) == {}
+    assert continuation.series_of(_project(tmp_path, "phan_2", previous="da_xoa")) is None
 
 
 def test_a_loop_in_the_links_does_not_hang(tmp_path: Path) -> None:
     a = _project(tmp_path, "a", previous="b")
-    b = _project(tmp_path, "b", previous="a")
-    places = continuation.series_map([a, b])
-    assert set(places) <= {a.resolve(), b.resolve()}
+    _project(tmp_path, "b", previous="a")
+    assert continuation.series_of(a) is not None
