@@ -63,7 +63,14 @@ function ChapterRow({
           <CircleDashed className="size-4" />
         )}
       </button>
-      <button type="button" onClick={onPlay} disabled={!chapter.available} className="min-w-0 flex-1 text-left">
+      {/* Chương chưa có audio vẫn đọc được: bấm vào dòng là mở màn đọc (soát UX 29-09 - trước đây cả dòng bị vô hiệu, chỉ
+          nút "…" hiện khi rê chuột mới có "Đọc chương này"). */}
+      <button
+        type="button"
+        onClick={chapter.available ? onPlay : () => navigate(`/book/${book.id}/read/${chapter.id}`)}
+        aria-label={chapter.available ? undefined : `Đọc ${chapter.fullTitle} (chưa có audio)`}
+        className="min-w-0 flex-1 text-left"
+      >
         <div className={cn("truncate text-sm font-medium", current && "text-accent-text", (done || !chapter.available) && !current && "text-fg-2")}>
           {name}
         </div>
