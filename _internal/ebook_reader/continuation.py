@@ -185,18 +185,13 @@ def chain_of(project: Path) -> list[Path]:
         chain.insert(0, previous)
 
 
-def series_map(projects: Iterable[Path]) -> dict[Path, tuple[Path, int]]:
-    """Mỗi dự án thuộc một cuốn nhiều phần -> (phần đầu, thứ tự phần theo chuỗi `continues.json`, 1 = phần đầu); khoá là
-    đường dẫn đã resolve. Dự án lẻ (không nối tiếp ai, không ai nối tiếp nó) không có mặt. Một lượt cho cả thư viện: danh
-    sách Dự án và Thư viện nghe gom các phần theo chuỗi này, không theo tên (soát UX 29-09, N10: đổi tên một phần làm mất
-    nhóm trong khi "Làm tiếp" vẫn nối; dự án lạ tên "X · Phần 2" bị gom vào "X")."""
-    places: dict[Path, tuple[Path, int]] = {}
-    size: Counter[Path] = Counter()
-    for project in projects:
-        chain = chain_of(project)
-        places[chain[-1]] = (chain[0], len(chain))
-        size[chain[0]] += 1
-    return {project: place for project, place in places.items() if size[place[0]] > 1}
+def series_of(project: Path) -> tuple[Path, int] | None:
+    """Phần nối tiếp (phần 2 trở đi) -> (phần đầu, thứ tự phần theo chuỗi `continues.json`); phần đầu hay dự án lẻ: None -
+    giao diện tự nhận phần đầu là sách mà phần khác trỏ về. Danh sách Dự án và Thư viện nghe gom các phần theo chuỗi này,
+    không theo tên (soát UX 29-09, N10: đổi tên một phần làm mất nhóm trong khi "Làm tiếp" vẫn nối; dự án lạ tên
+    "X · Phần 2" bị gom vào X). Chỉ đọc vài file continues.json ngược về phần đầu - không quét cả thư viện."""
+    chain = chain_of(project)
+    return (chain[0], len(chain)) if len(chain) > 1 else None
 
 
 def _write_link(source: Path, target: Path) -> None:

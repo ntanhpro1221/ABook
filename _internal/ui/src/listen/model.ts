@@ -132,6 +132,13 @@ export function seriesIndex(books: { id: string; title: string; series?: SeriesL
     const name = seriesOf(titles.get(book.series.root) ?? book.title).series;
     places.set(book.id, { key: `chain:${book.series.root}`, series: name, volume: book.series.part, unit: "phần" });
   }
+  // Phần đầu không mang `series` (máy chủ chỉ gắn cho phần nối tiếp): nó là sách mà phần khác trỏ về.
+  const roots = new Set(books.map((book) => book.series?.root));
+  for (const book of books) {
+    if (!places.has(book.id) && roots.has(book.id)) {
+      places.set(book.id, { key: `chain:${book.id}`, series: seriesOf(book.title).series, volume: 1, unit: "phần" });
+    }
+  }
   const byTitle = new Map(books.filter((book) => !places.has(book.id)).map((book) => [book.id, seriesOf(book.title)]));
   const units = new Map<string, string>();
   for (const place of byTitle.values()) if (place.volume !== null && !units.has(place.key)) units.set(place.key, place.unit);
