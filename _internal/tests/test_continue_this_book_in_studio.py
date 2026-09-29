@@ -18,7 +18,7 @@ def test_the_next_part_is_offered_then_created_with_the_old_voices(studio, tmp_p
     status, plan = _call(server, "GET", f"/api/books/{source}/continuation")
     assert status == 200
     assert [Path(path).name for path in plan["paths"]] == ["002.txt"]
-    assert (plan["title"], plan["part"], plan["analyzed"]) == ("T (phần 2)", 2, True)
+    assert (plan["title"], plan["part"], plan["analyzed"]) == ("T · Phần 2", 2, True)
     assert plan["carries"]["voices"] >= 2
 
     status, created = _call(server, "POST", "/api/books", {

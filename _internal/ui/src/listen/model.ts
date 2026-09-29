@@ -93,11 +93,33 @@ export interface ListenBook {
   records?: ListeningRecord[];
 }
 
-/** Bộ và số tập từ tên sách ("Throne of Magical Arcana · Tập 16" -> bộ "Throne of Magical Arcana", tập 16). */
-export function seriesOf(title: string): { series: string; volume: number | null } {
-  const match = title.match(/^(.*?)\s*[·|:—–-]\s*(?:Tập|Quyển|Phần|Vol\.?|Book)\s*(\d+)\b/i);
-  if (!match) return { series: title.trim(), volume: null };
-  return { series: match[1].trim(), volume: Number(match[2]) };
+export interface SeriesPlace {
+  series: string;
+  volume: number | null;
+  /** Chữ gọi một tập của bộ, viết thường: "tập", "quyển" hay "phần". */
+  unit: string;
+}
+
+/** Bộ và số tập từ tên sách ("Throne of Magical Arcana · Tập 16" -> bộ "Throne of Magical Arcana", tập 16; "Truyện · Phần 2"
+ * -> phần 2, tên phần sau mà "Làm tiếp cuốn này" đặt). */
+export function seriesOf(title: string): SeriesPlace {
+  const match = title.match(/^(.*?)\s*[·|:—–-]\s*(Tập|Quyển|Phần|Vol\.?|Book)\s*(\d+)\b/i);
+  if (!match) return { series: title.trim(), volume: null, unit: "tập" };
+  const word = match[2].toLowerCase();
+  return { series: match[1].trim(), volume: Number(match[3]), unit: word === "quyển" || word === "phần" ? word : "tập" };
+}
+
+/** `seriesOf` cho cả thư viện, thêm một luật: cuốn KHÔNG đánh số mà tên đúng bằng tên một bộ có tập đánh số là tập 1 của bộ
+ * ấy - "Làm tiếp cuốn này" giữ nguyên tên phần đầu, các phần sau là "Tên · Phần 2", "Tên · Phần 3". */
+export function seriesIndex(books: { id: string; title: string }[]): Map<string, SeriesPlace> {
+  const places = new Map(books.map((book) => [book.id, seriesOf(book.title)]));
+  const units = new Map<string, string>();
+  for (const place of places.values()) if (place.volume !== null && !units.has(place.series)) units.set(place.series, place.unit);
+  for (const [id, place] of places) {
+    const unit = units.get(place.series);
+    if (place.volume === null && unit) places.set(id, { ...place, volume: 1, unit });
+  }
+  return places;
 }
 
 /** Một phiên nghe: bấm phát tới lúc dừng. */

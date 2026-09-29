@@ -48,7 +48,9 @@ CREATE TABLE IF NOT EXISTS {LEDGER_TABLE} (
     updated_at REAL NOT NULL
 )
 """
-PART_SUFFIX = re.compile(r"\s*\(phần \d+\)\s*$", re.IGNORECASE)
+# "Tên · Phần 2": cùng quy ước "Tên · Tập 16" mà thư viện nghe gom thành bộ (ui/src/listen/model.ts `seriesOf`) - phần sau
+# đứng cạnh phần đầu và được mời nghe tiếp khi phần trước hết. Bỏ được cả hậu tố cũ "(phần 2)".
+PART_SUFFIX = re.compile(r"\s*(?:\(phần\s*\d+\)|[·|:—–-]\s*phần\s*\d+)\s*$", re.IGNORECASE)
 
 SPOKE_HERE_SQL = """
     SELECT c.canonical_name AS canonical_name, v.*,
@@ -194,9 +196,9 @@ def _write_link(source: Path, target: Path) -> None:
 
 
 def continued_title(title: str, part: int) -> str:
-    """"Tên (phần 3)" cho phần kế tiếp, không chồng hậu tố cũ."""
+    """"Tên · Phần 3" cho phần kế tiếp, không chồng hậu tố cũ."""
     base = PART_SUFFIX.sub("", str(title)).strip() or str(title).strip()
-    return f"{base} (phần {part})"
+    return f"{base} · Phần {part}"
 
 
 def _input_paths(project: Path) -> list[Path]:
