@@ -160,7 +160,9 @@ function cleanPath(value: string): string {
 
 function StepRail({ step, allowed, onGo }: { step: number; allowed: number; onGo: (index: number) => void }) {
   return (
-    <ol className="space-y-1">
+    // Dưới lg (điện thoại, cửa sổ hẹp): bốn bước một hàng ngang, bỏ dòng gợi ý - xếp dọc thì chiếm ~250 px trước khi tới
+    // nội dung của bước (soát UX 29-09).
+    <ol className="grid grid-cols-4 gap-1 lg:block lg:space-y-1">
       {STEPS.map((item, index) => {
         const done = index < step;
         const current = index === step;
@@ -173,7 +175,7 @@ function StepRail({ step, allowed, onGo }: { step: number; allowed: number; onGo
               aria-current={current ? "step" : undefined}
               onClick={() => onGo(index)}
               className={cn(
-                "flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors disabled:cursor-not-allowed",
+                "flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors disabled:cursor-not-allowed max-lg:flex-col max-lg:gap-1 max-lg:px-1 max-lg:text-center",
                 current ? "bg-hover" : enabled && "hover:bg-hover",
               )}
             >
@@ -186,8 +188,8 @@ function StepRail({ step, allowed, onGo }: { step: number; allowed: number; onGo
                 {done ? <Check className="size-4" strokeWidth={3} /> : index + 1}
               </span>
               <span>
-                <span className={cn("block text-sm font-medium", !current && !done && "text-fg-2")}>{item.title}</span>
-                <span className="block text-xs text-fg-2">{item.hint}</span>
+                <span className={cn("block text-sm font-medium max-lg:text-xs", !current && !done && "text-fg-2")}>{item.title}</span>
+                <span className="block text-xs text-fg-2 max-lg:hidden">{item.hint}</span>
               </span>
             </button>
           </li>
