@@ -248,11 +248,17 @@ function SpeakerFix({
   const [name, setName] = useState("");
   const save = useMutation({
     mutationFn: ({ speaker, newGender }: { speaker: string; newGender?: string }) =>
-      api<{ lines: number; speaker: string }>(`/api/books/${bookId}/speaker`, {
+      api<{ lines: number; speaker: string; alias?: boolean }>(`/api/books/${bookId}/speaker`, {
         method: "POST",
-        body: { lines, speaker, newGender: newGender ?? "" },
+        body: {
+          lines,
+          speaker,
+          newGender: newGender ?? "",
+          // "Một người hai tên": gộp là quyết cả ở cấp tên - phần sau của cuốn ("Làm tiếp cuốn này") tự hiểu.
+          ...(item.kind === "alias" && speaker !== item.currentValue ? { alias: item.currentValue } : {}),
+        },
       }),
-    onSuccess: ({ speaker }) => {
+    onSuccess: ({ speaker, alias }) => {
       void client.invalidateQueries({ queryKey: ["work", bookId] });
       void client.invalidateQueries({ queryKey: ["book", bookId] });
       void client.invalidateQueries({ queryKey: ["library"] });
@@ -266,7 +272,9 @@ function SpeakerFix({
       const choice = item.choices?.find((option) => option.value === speaker);
       const label = choice?.name ?? choice?.label ?? speaker;
       toast.success(`Đã ghi: ${which} của ${label}`, {
-        description: "Câu đã thu sẽ đọc lại bằng giọng của người ấy. Thu lại khi sách chạy tiếp - sách đã xong thì bấm “Áp dụng thay đổi” ở trang dự án.",
+        description:
+          "Câu đã thu sẽ đọc lại bằng giọng của người ấy. Thu lại khi sách chạy tiếp - sách đã xong thì bấm “Áp dụng thay đổi” ở trang dự án." +
+          (alias ? ` Các phần sau của cuốn cũng tự hiểu ${item.current} là ${label}.` : ""),
       });
     },
     onError: (error: Error) => toast.error("Chưa ghi được người nói", { description: error.message }),
