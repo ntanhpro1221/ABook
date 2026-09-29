@@ -177,9 +177,10 @@ export const Forward15 = skipIcon(RotateCw);
 
 function Transport({ large = false }: { large?: boolean }) {
   const { playing, buffering, toggle, skip, next, previous, queue, track } = usePlayer();
-  const hasNext = useMemo(() => {
+  const [hasNext, hasLater] = useMemo(() => {
     const index = queue.findIndex((chapter) => chapter.id === track?.chapterId);
-    return queue.slice(index + 1).some((chapter) => chapter.available);
+    const later = queue.slice(index + 1);
+    return [later.some((chapter) => chapter.available), later.length > 0];
   }, [queue, track?.chapterId]);
   const size = large ? "lg" : "sm";
   return (
@@ -211,7 +212,15 @@ function Transport({ large = false }: { large?: boolean }) {
         )}
       </button>
       <IconButton label={`Tới ${SKIP_SECONDS} giây (→)`} icon={Forward15} size={size} onClick={() => skip(SKIP_SECONDS)} {...keepFocus} />
-      <IconButton label="Chương sau (Shift+→)" icon={SkipForward} size={size} onClick={next} disabled={!hasNext} {...keepFocus} />
+      {/* Còn chương sau mà chưa có audio: nút vẫn bấm được và nói vì sao (player.step báo + đường đọc chữ); chỉ chương cuối mới mờ. */}
+      <IconButton
+        label={hasNext ? "Chương sau (Shift+→)" : "Chương sau chưa có audio"}
+        icon={SkipForward}
+        size={size}
+        onClick={next}
+        disabled={!hasLater}
+        {...keepFocus}
+      />
     </div>
   );
 }
