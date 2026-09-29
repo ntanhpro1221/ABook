@@ -13,7 +13,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   này" (hiện khi thư mục truyện có chương mới sau chương cuối; luôn có trong menu "…") mở trình tạo sách đã điền sẵn các
   chương kế tiếp, tên "· Phần 2", giọng kể, chất lượng và người xưng "tôi" của phần trước. Phần mới mang theo giọng của
   từng nhân vật đã gặp, cách đọc tên (kể cả cách đọc đã chọn trong "Việc cần duyệt"), ghim giới tính/tuổi và danh sách
-  nhân vật đã biết cho bước phân tích; trình tạo nói trước sẽ mang theo bao nhiêu. Dòng lệnh: `create --seed-from`.
+  nhân vật đã biết cho bước phân tích; trình tạo nói trước sẽ mang theo bao nhiêu. Làm được cả từ Studio từ xa
+  (điện thoại, trình duyệt đã ghép): chương mới do máy tính tự tìm trong thư mục truyện. Dòng lệnh: `create --seed-from`.
 - Thư viện nghe xếp các phần của một cuốn cạnh nhau như một bộ ("Tên · 3 phần"), và nghe hết phần này thì mời nghe tiếp
   phần sau - trên máy tính, điện thoại và trình duyệt.
 
