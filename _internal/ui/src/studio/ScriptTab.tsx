@@ -490,7 +490,8 @@ function DeliveryChip({
   );
 }
 
-function SpeakerMenu({ line, script, onPick }: { line: Line; script: ChapterScript; onPick: (person: Person) => void }) {
+/** `phone`: trong tấm trượt - ô tìm không tự bật bàn phím (bàn phím che danh sách người của chương, lối chọn chính). */
+function SpeakerMenu({ line, script, onPick, phone = false }: { line: Line; script: ChapterScript; onPick: (person: Person) => void; phone?: boolean }) {
   const [query, setQuery] = useState("");
   const everyone = [...script.cast, ...script.others];
   const suggested = line.hint?.suggest ? everyone.find((person) => person.value === line.hint?.suggest) : undefined;
@@ -502,7 +503,7 @@ function SpeakerMenu({ line, script, onPick }: { line: Line; script: ChapterScri
         key={person.value}
         type="button"
         onClick={() => onPick(person)}
-        className="flex h-9 w-full items-center gap-2 rounded-lg px-2 text-left text-sm hover:bg-hover focus-visible:bg-hover focus-visible:outline-none"
+        className="flex h-9 w-full items-center gap-2 rounded-lg px-2 text-left text-sm hover:bg-hover focus-visible:bg-hover focus-visible:outline-none pointer-coarse:h-11"
       >
         <span className="avatar grid size-6 shrink-0 place-items-center rounded-full text-[11px] font-bold" style={hue(person.label)} aria-hidden>
           {hotkey ?? person.label.slice(0, 1).toUpperCase()}
@@ -519,7 +520,7 @@ function SpeakerMenu({ line, script, onPick }: { line: Line; script: ChapterScri
       <label className="flex h-9 items-center gap-2 rounded-lg border border-line bg-panel-2 px-2.5 focus-within:border-accent">
         <Search className="size-4 shrink-0 text-fg-3" />
         <input
-          autoFocus
+          autoFocus={!phone}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           onKeyDown={(event) => {
@@ -532,7 +533,7 @@ function SpeakerMenu({ line, script, onPick }: { line: Line; script: ChapterScri
           className="min-w-0 flex-1 bg-transparent text-sm text-fg outline-none placeholder:text-fg-3"
         />
       </label>
-      <div className="mt-1.5 max-h-[min(60vh,360px)] overflow-y-auto">
+      <div className={cn("mt-1.5 overflow-y-auto", phone ? "max-h-[60dvh]" : "max-h-[min(60vh,360px)]")}>
         {query.trim() ? (
           found.length ? (
             found.map((person) => item(person))
@@ -597,24 +598,36 @@ function SpeakerChip({
   onOpenChange: (open: boolean) => void;
   onPick: (person: Person) => void;
 }) {
+  const phone = useMediaQuery("(max-width: 639px)");
   const waiting = line.wish?.state === "pending";
   const shown = waiting ? line.wish!.label : line.label;
   const Icon = waiting ? Clock : line.wish?.state === "applied" ? Check : ChevronDown;
+  const trigger = (
+    <button
+      type="button"
+      tabIndex={-1}
+      disabled={!script.castReady || !line.editable}
+      aria-label={`${line.kind === "thought" ? "Người nghĩ" : "Người nói"}: ${shown}. Bấm để đổi`}
+      className="avatar inline-flex h-7 max-w-full items-center gap-1 rounded-full px-2.5 text-[13px] font-semibold transition-[filter] hover:brightness-95 disabled:cursor-default disabled:hover:brightness-100"
+      style={hue(shown)}
+    >
+      <span className="truncate">{shown}</span>
+      <Icon className={cn("size-3.5 shrink-0", line.wish?.state === "applied" && "text-success")} strokeWidth={2.25} />
+    </button>
+  );
+  // Điện thoại: tấm trượt như bảng cách đọc câu - bảng nổi 288 px neo vào chip bị ép sát mép.
+  if (phone) {
+    return (
+      <Sheet open={open} onOpenChange={onOpenChange} title={line.kind === "thought" ? "Ai nghĩ câu này?" : "Ai nói câu này?"} trigger={trigger}>
+        <div className="px-1.5 pt-2">
+          <SpeakerMenu line={line} script={script} onPick={onPick} phone />
+        </div>
+      </Sheet>
+    );
+  }
   return (
     <Popover.Root open={open} onOpenChange={onOpenChange}>
-      <Popover.Trigger asChild>
-        <button
-          type="button"
-          tabIndex={-1}
-          disabled={!script.castReady || !line.editable}
-          aria-label={`${line.kind === "thought" ? "Người nghĩ" : "Người nói"}: ${shown}. Bấm để đổi`}
-          className="avatar inline-flex h-7 max-w-full items-center gap-1 rounded-full px-2.5 text-[13px] font-semibold transition-[filter] hover:brightness-95 disabled:cursor-default disabled:hover:brightness-100"
-          style={hue(shown)}
-        >
-          <span className="truncate">{shown}</span>
-          <Icon className={cn("size-3.5 shrink-0", line.wish?.state === "applied" && "text-success")} strokeWidth={2.25} />
-        </button>
-      </Popover.Trigger>
+      <Popover.Trigger asChild>{trigger}</Popover.Trigger>
       <Popover.Portal>
         <Popover.Content
           align="start"
