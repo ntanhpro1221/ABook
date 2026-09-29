@@ -77,6 +77,12 @@ MỘT nhãn trong một chương theo việc chúng đi chung câu; hai nhóm t�
   nên thẻ bỏ qua nhãn người kể (thẻ từng câu đã lo phần ấy). Chưa đo được trên một cuốn đủ chương: bộ đo chỉ có một chương
   mỗi dự án.
 
+**F1 giọng theo chương không thấy lỗi xuyên chương.** LU 10 kể ngôi thứ nhất của Hayase; khai sai người kể là Kakeru
+(người kể cả cuốn): người nói chặt sụp ở cả ba model (v3 64,1 -> 35,9; v6 64,1 -> 35,9; 8B 66,7 -> 38,5), còn F1 giọng
+gần như không đổi (73,0 -> 68,0; 79,1 -> 77,2; 78,9 -> 81,5) - trong chương, lời Hayase vẫn gom đúng một cụm, chỉ mang tên
+sai. Trong cả cuốn thì cụm ấy chính là giọng Kakeru: người kể nữ đọc bằng giọng nam. Thước đo từng chương không bắt được, vì
+vậy câu hỏi "Tôi là ai?" theo chương (0.4.3) là thứ giữ lỗi này, không phải model.
+
 **Chữ hoa của 8B-v5 không tới tay người dùng.** 8B-v5 viết nhãn chữ hoa ("AZUMA") vì học từ data_v5. Lượt gom tên của dây
 chuyền không đổi chữ hoa, nhưng `humanize.person_name` hiện nhãn toàn chữ hoa thành "Azuma". Chỉ nhãn hoa lẫn thường
 ("LOUise" của model cũ) lọt qua; nay cũng thành "Louise".
