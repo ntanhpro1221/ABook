@@ -33,6 +33,13 @@ def test_the_next_part_is_offered_then_created_with_the_old_voices(studio, tmp_p
 
     status, plan = _call(server, "GET", f"/api/books/{created['id']}/continuation")
     assert status == 200 and plan["part"] == 3 and plan["paths"] == [], "phần 2 đã lấy chương mới cuối cùng"
+    assert plan["sourceTitle"] == "T", "tên cuốn, không phải tên phần"
+
+    # Bấm "Làm tiếp" ở phần 1 khi đã có phần 2: nối sau phần 2, không làm lại chương phần 2 đã làm.
+    (tmp_path / "003.txt").write_text("Natasha trở lại.\n", encoding="utf-8")
+    status, plan = _call(server, "GET", f"/api/books/{source}/continuation")
+    assert status == 200 and plan["sourceId"] == created["id"] and plan["part"] == 3
+    assert [Path(path).name for path in plan["paths"]] == ["003.txt"]
 
 
 def test_an_unknown_previous_part_creates_nothing(studio, tmp_path: Path) -> None:  # noqa: F811
