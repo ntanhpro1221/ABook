@@ -239,19 +239,25 @@ def test_a_book_keeps_the_code_that_started_it_across_app_updates(tmp_path: Path
     old_book, new_book = tmp_path / "cuon_cu", tmp_path / "cuon_moi"
     old_book.mkdir()
     new_book.mkdir()
-    first = setup.code_for(old_book)
-    assert first == setup.root / "code" / ("a" * 16)
-    assert (first / "ebook_reader" / "pipeline.py").read_text(encoding="utf-8") == "PHIEN_BAN = 1\n"
+    first = setup.root / "code" / ("a" * 16)
+    assert setup.code_for(old_book) == setup.app_root, "hash của app trùng hash đã ghim: chạy mã của app"
+    assert (first / "ebook_reader" / "pipeline.py").read_text(encoding="utf-8") == "PHIEN_BAN = 1\n", "bản chép để dành"
     assert (first / "pyproject.toml").is_file() and not (first / "ebook_reader" / "__pycache__").exists()
-    assert setup.environment(first)["PYTHONPATH"] == str(first)
 
-    # App lên bản mới, đổi mã dây chuyền.
+    # Bản app mới CÙNG hash (chỉ đổi file không khoá - từ 0.4.6 nâng phiên bản không đổi hash): vẫn chạy mã của app, và bản
+    # chép được làm mới - không đứng yên ở bản đầu tiên có hash ấy (soát QA 29-09).
+    (package / "power_source.py").write_text("MOI = 1\n", encoding="utf-8")
+    assert setup.code_for(old_book) == setup.app_root
+    assert (first / "ebook_reader" / "power_source.py").read_text(encoding="utf-8") == "MOI = 1\n"
+
+    # App lên bản mới, đổi mã dây chuyền (file khoá -> hash khác).
     (package / "pipeline.py").write_text("PHIEN_BAN = 2\n", encoding="utf-8")
     monkeypatch.setattr(quality_policy, "quality_implementation_hash", lambda: "b" * 64)
     assert setup.code_for(old_book) == first, "cuốn đang làm dở chạy tiếp bằng mã cũ"
     assert (first / "ebook_reader" / "pipeline.py").read_text(encoding="utf-8") == "PHIEN_BAN = 1\n"
-    second = setup.code_for(new_book)
-    assert second == setup.root / "code" / ("b" * 16), "cuốn mới dùng mã mới"
+    assert setup.environment(first)["PYTHONPATH"] == str(first)
+    assert setup.code_for(new_book) == setup.app_root, "cuốn mới chạy mã mới"
+    second = setup.root / "code" / ("b" * 16)
     assert (second / "ebook_reader" / "pipeline.py").read_text(encoding="utf-8") == "PHIEN_BAN = 2\n"
 
     shutil.rmtree(first)
