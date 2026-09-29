@@ -7,6 +7,21 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Điểm chính
+
+- **Làm sách nói từ truyện chữ ngay trên máy tính (Studio)**: model phân tích tự huấn luyện (`abook-analyzer`) nhận ai
+  nói câu nào và nói với cảm xúc gì; mỗi nhân vật một giọng riêng trong 25 giọng tiếng Việt; tự nghe lại để bắt câu đọc
+  lỗi. Studio tải về một lần khi cần.
+- **Sửa được khi máy không chắc**: hộp "Việc cần anh" và tab Kịch bản - cách đọc tên, ai nói câu này, giọng, cách đọc từng
+  câu. Chỉ thu lại những câu bị đổi, kể cả khi sách đã xong.
+- **Nghe trên máy tính, điện thoại Android và trình duyệt** (iPhone, iPad): văn bản đọc theo, chế độ đọc bằng mắt, hẹn giờ
+  ngủ, dấu trang, hồ sơ nghe.
+- **Máy tính và điện thoại liên thông**: điện thoại nghe thẳng thư viện máy tính qua Wi-Fi hoặc Bluetooth, đồng bộ chỗ
+  nghe, chuyển máy đang nghe, điều khiển trình phát từ xa, Studio từ xa.
+- **File sách `.abook`**: mỗi cuốn một file, mở được trên máy tính và điện thoại.
+- **Dữ liệu ở lại trên máy của bạn**: sách, audio và chỗ nghe không đi đâu cả; link sách không còn chứa đường dẫn thư mục.
+- App Windows tự báo bản mới và tự cập nhật bằng gói có chữ ký.
+
 - **Riêng tư: mã sách không còn chứa đường dẫn thư mục.** Link một cuốn sách (`#/book/…`, cả khi nghe từ xa bằng trình
   duyệt trên iPhone, iPad) trước đây giải ra được đường dẫn thư mục, tức lộ tên tài khoản Windows và tên truyện qua link
   chia sẻ hay ảnh chụp màn hình. Giờ là một mã ngắn không giải ngược được. Link cũ vẫn mở đúng cuốn.
