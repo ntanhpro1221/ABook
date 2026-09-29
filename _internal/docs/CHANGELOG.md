@@ -15,7 +15,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Máy tính xách tay rút sạc hơn một phút thì Studio tự tạm dừng (chạy pin làm sách rất chậm mà hao pin) và tự làm tiếp
   khi cắm sạc lại; trang sách nói "Tạm dừng · máy đang chạy pin". Bấm "Tiếp tục" để làm tiếp ngay trên pin, hay tắt hẳn ở
   Cài đặt → Studio → "Tạm dừng khi rút sạc". Điện thoại điều khiển Studio từ xa cũng tạm dừng / tiếp tục được, và điện
-  thoại đã bật thông báo Studio báo "Máy tính đang chạy pin" - biết ngay máy tuột sạc.
+  thoại đã bật thông báo Studio báo "Máy tính đang chạy pin" (điện thoại hỏi mỗi 15 phút và khi mở app). Lượt chạy bắt
+  đầu bằng bản app cũ hơn thì không có nút tạm dừng.
+- Sách đang làm dở chạy tiếp bằng đúng bản mã đã bắt đầu nó khi app lên bản đổi file khoá chất lượng (trước đây bản mã
+  ghim bị bỏ qua); các cuốn khác luôn chạy mã mới nhất của app.
+- Danh sách Dự án và Thư viện gom các phần của "Làm tiếp cuốn này" theo chuỗi thật: đổi tên một phần không làm mất nhóm,
+  dự án khác tình cờ tên "X · Phần 2" không bị gom vào X.
 - Bảng chương ở trang dự án không còn ngắt "2 ngày trước" thành hai dòng.
 - Mục "Cách đọc tên", bảng "Tên trong câu" và thẻ "Đọc … là …?" trong Việc cần duyệt hiện cách đọc với chữ đầu mỗi từ viết
   hoa ("Rên-ta-rô" thay cho "rên-ta-rô"); cách đọc đã lưu và ô sửa giữ nguyên.

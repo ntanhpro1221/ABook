@@ -214,7 +214,7 @@ function StopDialog({ book, open, onOpenChange }: { book: BookSummary; open: boo
       description={
         inAnalysis
           ? undefined
-          : "Mọi chương và câu đã xong được giữ nguyên. Bấm “Tiếp tục” để làm tiếp từ chỗ dừng."
+          : "Mọi chương và câu đã xong được giữ nguyên. Bấm “Tiếp tục tạo” để làm tiếp từ chỗ dừng."
       }
     >
       {inAnalysis && (
@@ -226,18 +226,24 @@ function StopDialog({ book, open, onOpenChange }: { book: BookSummary; open: boo
               sách khác</span> so với chạy liền một mạch: đoạn sau chỗ dừng có thể đổi người nói, kéo theo đổi giọng.
             </p>
             <p className="mt-2 text-fg-2">
-              Nên để chạy hết bước này{book.eta ? ` (${formatEta(book.eta.seconds)})` : ""}. Cần máy rảnh một lúc thì bấm{" "}
-              <span className="font-medium text-fg">Tạm dừng</span>: sách đứng yên và làm tiếp đúng chỗ, không đổi gì. Nếu buộc
-              phải dừng hẳn (tắt máy), hãy tạo lại sách từ đầu thay vì bấm Tiếp tục.
+              Nên để chạy hết bước này{book.eta ? ` (${formatEta(book.eta.seconds)})` : ""}.
+              {book.canPause && (
+                <>
+                  {" "}
+                  Muốn nghỉ giữa chừng thì bấm <span className="font-medium text-fg">Tạm dừng</span>: sách đứng yên (sau phần
+                  đang làm dở) và làm tiếp đúng chỗ, không đổi gì - nhưng vẫn giữ bộ nhớ card đồ hoạ.
+                </>
+              )}{" "}
+              Nếu buộc phải dừng hẳn (tắt máy), hãy tạo lại sách từ đầu thay vì bấm “Tiếp tục tạo”.
             </p>
           </div>
         </div>
       )}
       <div className="flex flex-wrap justify-end gap-2">
         <Button variant="ghost" onClick={() => onOpenChange(false)}>
-          Để chạy tiếp
+          {book.paused ? "Để nguyên" : "Để chạy tiếp"}
         </Button>
-        {inAnalysis && !book.paused && (
+        {inAnalysis && !book.paused && book.canPause && (
           <Button
             variant="primary"
             icon={Pause}
@@ -469,12 +475,13 @@ function Actions({ book }: { book: BookSummary }) {
             <Button variant="primary" size="lg" icon={Play} loading={pause.isPending} onClick={() => pause.mutate({ id: book.id, paused: false })}>
               Tiếp tục
             </Button>
-          ) : (
+          ) : book.canPause ? (
             <Button variant="outline" size="lg" icon={Pause} loading={pause.isPending} onClick={() => pause.mutate({ id: book.id, paused: true })}>
               Tạm dừng
             </Button>
-          )}
-          <Button variant="ghost" size="lg" icon={Square} onClick={() => setConfirmStop(true)}>
+          ) : null}
+          {/* Lượt chạy bắt đầu bằng bản app cũ không tạm dừng được: "Dừng" là nút duy nhất, giữ như trước. */}
+          <Button variant={book.canPause ? "ghost" : "outline"} size="lg" icon={Square} onClick={() => setConfirmStop(true)}>
             Dừng
           </Button>
         </>
