@@ -183,8 +183,9 @@ def test_the_chain_knows_its_parts_and_what_comes_next(book: dict[str, Path]) ->
     assert continuation.chain_of(book["second"]) == [book["first"].resolve(), book["second"].resolve()]
     assert continuation.part_number(book["second"]) == 2
     assert continuation.next_chapters(book["second"]) == [(folder / "004.txt").resolve(), (folder / "005.txt").resolve()]
-    assert continuation.continued_title("Truyện (phần 2)", 3) == "Truyện (phần 3)"
-    assert continuation.continued_title("Truyện", 2) == "Truyện (phần 2)"
+    assert continuation.continued_title("Truyện · Phần 2", 3) == "Truyện · Phần 3"
+    assert continuation.continued_title("Truyện", 2) == "Truyện · Phần 2"
+    assert continuation.continued_title("Truyện (phần 2)", 3) == "Truyện · Phần 3", "hậu tố kiểu cũ"
 
 
 def test_a_redone_chapter_is_counted_once(book: dict[str, Path]) -> None:
