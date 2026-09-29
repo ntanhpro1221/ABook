@@ -647,7 +647,9 @@ function FirstPersonQuestion({ paths, seedFrom, value, onChange, povOff, setPovO
       <h3 id="first-person-title" className="font-semibold">“Tôi” là ai?</h3>
       <p className="mt-1 text-sm text-fg-2 text-pretty">
         {hint?.firstPerson
-          ? `Truyện có vẻ kể ở ngôi thứ nhất: ${Math.round(hint.rate * 100)}% đoạn lời kể có “tôi”. `
+          ? hint.chaptersSampled && hint.chaptersWithI
+            ? `Truyện có vẻ kể ở ngôi thứ nhất: ${hint.chaptersWithI}/${hint.chaptersSampled} chương đầu có nhiều lời kể xưng “tôi”. `
+            : `Truyện có vẻ kể ở ngôi thứ nhất: ${Math.round(hint.rate * 100)}% đoạn lời kể có “tôi”. `
           : "Nếu người kể chuyện xưng “tôi”, cho biết đó là nhân vật nào. "}
         Biết tên người kể thì lời thoại của nhân vật chính được đọc bằng đúng giọng của họ - không thì dễ bị gán cho người
         đang nói chuyện với họ.

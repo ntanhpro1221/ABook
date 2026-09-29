@@ -2,8 +2,11 @@
 
 Dòng prompt "người kể xưng 'tôi' là X" (`analysis._narrator_line`, bật bằng `voices.first_person_identity`) đưa model
 tinh chỉnh từ 34,0% lên 89,4% người nói trên chương test ngôi thứ nhất YMP 248 (2026-09-27, docs/LLM_EVAL.md). Máy
-đoán được TRUYỆN NÀO kể ngôi thứ nhất - tỉ lệ đoạn lời kể có "tôi/tớ/mình" (bỏ "mình" phản thân sau "của/tự"): 34-58% ở
-các truyện ngôi thứ nhất của kho, 7-23% ở truyện ngôi thứ ba. Còn "tôi" LÀ AI thì chỉ gợi ý (tên viết hoa hay gặp nhất)
+đoán được TRUYỆN NÀO kể ngôi thứ nhất - đếm THEO CHƯƠNG: chương có >= 20% đoạn lời kể chứa "tôi/tớ/mình" (bỏ "mình"
+phản thân sau "của/tự") là chương kể ngôi thứ nhất; truyện có >= 30% chương mẫu như thế thì hỏi. Kho 29-09 (12 truyện, 20
+chương đầu): truyện ngôi thứ nhất 40-100% chương, ngôi thứ ba 0-15%. Tỉ lệ gộp cả cuốn (cách cũ, ngưỡng 30%) bỏ sót hai
+truyện ngôi thứ nhất: HDST 29,6%, Nageki 24,1% - Nageki chen chương ngoại truyện kể ngôi ba, Yamiyo mở đầu bằng nhiều
+chương ngôi ba. Còn "tôi" LÀ AI thì chỉ gợi ý (tên viết hoa hay gặp nhất)
 để người dùng chọn: đoán tự động từ văn bản thô từng nhận "Portal" cho YMP, vì 40 chương đầu của truyện ấy nhắc
 "Samael" 103 lần ngay trong lời kể.
 """
@@ -19,6 +22,11 @@ from .io_utils import decode_text_bytes
 from .text_processing import natural_key, segment_chapter_text
 
 FIRST_PERSON_RATE = 0.30
+# Theo chương (xem đầu file): ngưỡng một chương, tỉ lệ chương của cả cuốn, và số đoạn lời kể tối thiểu để một chương được
+# tính (chương vài dòng không nói được gì).
+CHAPTER_RATE = 0.20
+FIRST_PERSON_SHARE = 0.30
+MIN_NARRATION = 8
 # "mình" sau "của"/"tự" là phản thân ("cảm xúc của mình") - đầy trong truyện ngôi thứ ba.
 NARRATOR_I = re.compile(r"(?<!của )(?<!tự )(?<!\w)(tôi|tớ|mình)(?!\w)", re.IGNORECASE)
 _UPPER = "A-ZÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ"
@@ -91,21 +99,31 @@ def pov_chapters(files: list[Path], book_narrator: str = "", min_mentions: int =
 
 
 def first_person_hint(files: list[Path], chapters: int = 20, limit: int = 6) -> dict[str, Any]:
-    """Đọc `chapters` chương đầu: {"rate", "firstPerson", "suggestions"} cho câu hỏi "'Tôi' là ai?" lúc tạo sách, và
-    "chapters": các chương đổi góc kể trên CẢ cuốn (`pov_chapters`)."""
+    """Đọc `chapters` chương đầu: {"rate", "firstPerson", "chaptersWithI", "chaptersSampled", "suggestions"} cho câu hỏi
+    "'Tôi' là ai?" lúc tạo sách, và "chapters": các chương đổi góc kể trên CẢ cuốn (`pov_chapters`)."""
     narration = with_i = 0
+    sampled = told_with_i = 0
     names: Counter = Counter()
     for index, path in enumerate(files[:chapters], 1):
+        chapter_narration = chapter_with_i = 0
         for row in segment_chapter_text(index, decode_text_bytes(Path(path).read_bytes())):
             text = str(row["text"])
             if row["kind_hint"] != "dialogue":
-                narration += 1
-                with_i += bool(NARRATOR_I.search(text))
+                chapter_narration += 1
+                chapter_with_i += bool(NARRATOR_I.search(text))
             names.update(_names(text))
+        narration += chapter_narration
+        with_i += chapter_with_i
+        if chapter_narration >= MIN_NARRATION:
+            sampled += 1
+            told_with_i += chapter_with_i / chapter_narration >= CHAPTER_RATE
     rate = with_i / max(1, narration)
+    share = told_with_i / sampled if sampled else 0.0
     return {
         "rate": round(rate, 3),
-        "firstPerson": rate >= FIRST_PERSON_RATE,
+        "firstPerson": rate >= FIRST_PERSON_RATE or share >= FIRST_PERSON_SHARE,
+        "chaptersWithI": told_with_i,
+        "chaptersSampled": sampled,
         "suggestions": [name for name, _count in names.most_common(limit)],
         "chapters": pov_chapters(files),
     }
