@@ -14,6 +14,7 @@ def test_the_next_part_is_offered_then_created_with_the_old_voices(studio, tmp_p
     paths, app, server, _runner = studio
     (tmp_path / "002.txt").write_text("Lucien quay lại.\n", encoding="utf-8")
     source = book_id(paths.root)
+    assert _call(server, "GET", f"/api/books/{source}/parts") == (200, {"parts": []}), "phần lẻ: không có gì để chỉ sang"
 
     status, plan = _call(server, "GET", f"/api/books/{source}/continuation")
     assert status == 200
@@ -30,6 +31,14 @@ def test_the_next_part_is_offered_then_created_with_the_old_voices(studio, tmp_p
     assert continuation.chain_of(root) == [paths.root.resolve(), root.resolve()]
     voices = ProjectDB(root / "project.sqlite3").locked_character_voices()
     assert {"LUCIEN", "NATASHA"} <= set(voices), "người đã gặp giữ giọng ở phần sau"
+
+    # Trang dự án của mỗi phần chỉ sang phần kia (soát UX 29-09).
+    status, first = _call(server, "GET", f"/api/books/{source}/parts")
+    assert status == 200
+    assert [(part["id"], part["part"], part["current"]) for part in first["parts"]] == [(source, 1, True), (created["id"], 2, False)]
+    assert first["parts"][1]["title"] == "T · Phần 2"
+    status, second = _call(server, "GET", f"/api/books/{created['id']}/parts")
+    assert [part["current"] for part in second["parts"]] == [False, True]
 
     status, plan = _call(server, "GET", f"/api/books/{created['id']}/continuation")
     assert status == 200 and plan["part"] == 3 and plan["paths"] == [], "phần 2 đã lấy chương mới cuối cùng"

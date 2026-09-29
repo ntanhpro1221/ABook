@@ -41,7 +41,7 @@ import {
 import { api, type BookSummary, type Chapter } from "@/studio/api";
 import { cn } from "@/shared/cn";
 import { usePageTitle } from "@/shared/title";
-import { phaseTone, useActivity, useAppInfo, useBook, useContinuation, useReveal, useStart, useStop } from "@/studio/data";
+import { phaseTone, useActivity, useAppInfo, useBook, useContinuation, useParts, useReveal, useStart, useStop } from "@/studio/data";
 import {
   formatClock,
   formatDate,
@@ -456,6 +456,35 @@ function Actions({ book }: { book: BookSummary }) {
   );
 }
 
+/** Truyện dài làm nhiều đợt: "Phần 2/3 · Phần 1 · Phần 3" - chỉ sang các phần kia của cuốn (soát UX 29-09: phần 1 không nói
+ *  đã có phần 2, phần 2 không nói nối tiếp cuốn nào). */
+function PartLinks({ id }: { id: string }) {
+  const parts = useParts(id).data?.parts ?? [];
+  const navigate = useNavigate();
+  const here = parts.find((part) => part.current);
+  if (parts.length < 2 || !here) return null;
+  return (
+    <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-fg-2">
+      <span className="font-medium text-fg">
+        Phần {here.part}/{parts.length}
+      </span>
+      {parts
+        .filter((part) => !part.current)
+        .map((part) => (
+          <button
+            key={part.id}
+            type="button"
+            onClick={() => navigate(`/studio/${part.id}`)}
+            className="font-medium text-accent-text underline-offset-2 hover:underline"
+          >
+            {part.part < here.part ? "← " : ""}Phần {part.part}
+            {part.part > here.part ? " →" : ""}
+          </button>
+        ))}
+    </p>
+  );
+}
+
 // ---- Chương ------------------------------------------------------------------------------------------------
 
 function chapterTone(chapter: Chapter) {
@@ -701,6 +730,7 @@ export function ProjectScreen() {
           <StatusPill label={book.starting ? "Đang khởi động" : book.statusLabel} tone={phaseTone(book.phase, live)} live={live} />
           <h1 className="mt-3 text-2xl font-bold leading-tight tracking-tight sm:text-[30px]">{book.title}</h1>
           <p className="mt-2 text-sm text-fg-2">{meta.join(" · ")}</p>
+          <PartLinks id={book.id} />
           {book.phase === "done" || book.audioSeconds > 0 ? (
             <p className="tabular mt-1 text-sm text-fg-2">
               {formatLength(book.audioSeconds)} audio · {book.chapters.completed}/{book.chapters.total} chương nghe được
