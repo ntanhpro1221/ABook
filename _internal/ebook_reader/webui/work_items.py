@@ -557,7 +557,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
                 "title": f"\"{speaker_label(shorter)}\" và \"{speaker_label(longer)}\" là một người?",
                 "problem": "Hai tên này đang là hai nhân vật với hai giọng khác nhau, nhưng tên ngắn nằm trọn trong tên dài."
                            f" Gộp thì {len(named[minor])} câu của {speaker_label(minor)} đọc bằng giọng của {into}"
-                           f" ({len(named[major])} câu).",
+                           f" - giọng đang đọc {len(named[major])} câu của {into}.",
                 "affected": len(named[minor]),
                 "doubt": 0.6,
                 "options": [f"Gộp vào {into}", "Hai người khác nhau"],
@@ -607,7 +607,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
                 "title": f"\"{speaker_label(minor)}\" là tên khác của {into}?",
                 "problem": f"Sách viết hai tên này sát nhau {both} lần (như \"{second} {first}\") - thường là danh hiệu hay"
                            f" biệt danh của một người. Máy đang cho {len(named[minor])} câu của {speaker_label(minor)} một"
-                           f" giọng riêng; gộp thì đọc bằng giọng của {into} ({len(named[major])} câu).",
+                           f" giọng riêng; gộp thì đọc bằng giọng của {into} - giọng đang đọc {len(named[major])} câu của {into}.",
                 "affected": len(named[minor]),
                 "doubt": 0.7,
                 "options": [f"Gộp vào {into}", "Hai người khác nhau"],
