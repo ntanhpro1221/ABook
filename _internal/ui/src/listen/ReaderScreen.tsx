@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, BookOpenText, ChevronLeft, ChevronRight, Headpho
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { cn } from "@/shared/cn";
+import { excerpt } from "@/shared/format";
 import { usePageTitle } from "@/shared/title";
 import { Button, EmptyState, IconButton, Skeleton } from "@/shared/ui";
 import { useClock } from "./clock";
@@ -145,7 +146,7 @@ export function ReaderScreen() {
   const listenFrom = (sentence: number) => {
     const start = script.segments[sentence]?.start;
     if (!script.timed || start === null || start === undefined) return;
-    if (player.track?.bookId === id) player.jumpTo(chapterId, start);
+    if (player.track?.bookId === id) player.jumpTo(chapterId, start, `Nghe từ “${excerpt(script.segments[sentence].text)}”`);
     else void playBook(book, chapterId, start);
     setSelected(null);
     if (!prefs.tapped) setPrefs({ ...prefs, tapped: true });
