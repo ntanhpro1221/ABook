@@ -17,7 +17,10 @@ tranh chấp và kết luận ghi ở `scripts/model_eval/gold/ADJUDICATION.md`.
   `NPC*:<mô tả>` (29-09) = chấm y như `NPC*`, kèm người vô danh ấy là ai (`NPC*:mẹ Kakeru`, `NPC*:lính gác 1`): cùng người
   trong chương cùng mô tả, người khác mô tả khác, không dấu phẩy. Dùng ở chương HUẤN LUYỆN: gold_replay dạy model nhãn
   `NPC_LOCAL:<mô tả>` - trước đó mọi người lạ thành một nhãn chung "người lạ", ngược lời prompt, và model đọc câu người
-  lạ bằng giọng nhân vật có tên đứng gần (LU 07: mẹ Kakeru thành Fuyutsuki / chính Kakeru).
+  lạ bằng giọng nhân vật có tên đứng gần (LU 07: mẹ Kakeru thành Fuyutsuki / chính Kakeru). Từ 29-09 tối dùng CẢ ở chương
+  KIỂM TRA: thước F1 giọng (`voice_identity.gold_person`) coi câu có mô tả là một người - tách bà ấy làm hai giọng bị tính,
+  lẫn một câu của người khác chỉ mất phần của câu ấy. Chỉ ghi khi chắc là một người; đám đông (lính la hét, "cả đám đồng
+  nghiệp") để `NPC*` trơn.
 - `emotion`, `pace`, `volume`: TẬP chấp nhận được, cái đầu là ưu tiên (dùng làm đáp án khi dạy model).
 - `intensity`: khoảng `a-b`.
 - `gender`: m / f cho người nói có giới rõ; u cho lời kể hoặc không rõ.
