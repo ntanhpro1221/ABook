@@ -725,15 +725,19 @@ def work_items(project_root: Path) -> dict[str, Any]:
             "kind": "pronunciation",
             "key": f"pronunciation:{row['surface']}",
             "title": f"Đọc \"{row['surface']}\" là \"{row['spoken_form']}\"?",
-            "problem": f"Máy chỉ chắc {round(float(row['confidence']) * 100)}% về cách đọc tên này; tên có trong"
-                       f" {occurrences} câu.",
+            # Không ghi "máy chắc 88%": gần như mọi tên máy tự đoán đều mang đúng con số ấy nên nó không nói gì (soát UX
+            # 29-09: 50/51 thẻ); số câu đã có ở "Ảnh hưởng N câu".
+            "problem": "Cách đọc do máy tự đoán - nghe một câu mẫu, sai thì sửa ngay trên thẻ."
+                       if float(row["confidence"]) >= 0.8 else
+                       "Máy không chắc cách đọc tên này - nghe một câu mẫu, sai thì sửa ngay trên thẻ.",
             "affected": occurrences,
             "doubt": round(1 - float(row["confidence"]), 2),
             "options": ["Đúng rồi", "Đọc cách khác"],
             "current": str(row["spoken_form"]),
             "surface": str(row["surface"]),
             "requested": requested.get(surface_key(str(row["surface"]))),
-            "examples": [_example(example, names) for example in word_examples.get(str(row["surface"]), [])],
+            # Người nói của câu ví dụ không liên quan tới cách đọc tên - bỏ "máy gán: ..." khỏi thẻ này.
+            "examples": [{**_example(example, names), "speaker": ""} for example in word_examples.get(str(row["surface"]), [])],
         })
 
     # 7. Bản thu lỗi (hàng chờ "Cần nghe lại"), gom theo chương.
