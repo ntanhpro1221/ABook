@@ -22,6 +22,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Hộp "Việc cần duyệt": thẻ đã quyết ở sách đã xong bảo bấm "Áp dụng thay đổi" (không còn "chờ … chạy tiếp"); thẻ nam/nữ
   ghi đúng giọng đang đọc và thông báo nói đúng cái giá của lựa chọn; thẻ gộp tên ghi "“X” là Y - cả cuốn và các phần sau".
 - Sách đã xong còn thay đổi chờ áp: chỉ "Áp dụng thay đổi" là nút chính.
+- Chương đã làm xong mà file audio bị mất (dời, xoá tay) được ghi "Mất file audio", và trang dự án chỉ đếm chương nghe
+  được thật - trước đây vẫn báo "43/43 chương nghe được".
 
 ## [0.4.3] - 2026-09-29
 
