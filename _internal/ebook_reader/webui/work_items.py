@@ -566,6 +566,9 @@ def work_items(project_root: Path) -> dict[str, Any]:
     for row in spoken:
         if str(row["text"]).lstrip().startswith("『"):
             bracketed[int(row["chapter_id"])].append(row)
+    # Phạm vi "Cả cuốn" (bracket_rule.py): mọi câu 『』 của dự án về một người - và quy ước đi theo các phần sau.
+    every_bracketed = [{"stableId": str(row["stable_id"]), "textSha256": str(row["text_sha256"] or "")}
+                       for rows in bracketed.values() for row in rows]
     for chapter_id, rows in bracketed.items():
         counts = Counter(str(row["speaker"]) for row in rows)
         if len(rows) < 3 or len(counts) < 2:
@@ -599,6 +602,8 @@ def work_items(project_root: Path) -> dict[str, Any]:
             "current": f"{len(counts)} người",
             "examples": [_example(row, names) for row in rows[:EXAMPLES]],
             **fix,
+            "allLines": every_bracketed,
+            "scopeLabels": ["Chương này", "Cả cuốn"],
         })
 
     # 4. Hai nhân vật có tên dùng CHUNG một giọng và cùng nói trong một chương: người nghe không phân biệt được.
