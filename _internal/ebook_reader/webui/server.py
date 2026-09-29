@@ -1360,7 +1360,13 @@ class Handler(BaseHTTPRequestHandler):
 
     def put_preferences(self, _query: dict[str, list[str]]) -> None:
         body = self._body()
-        allowed = {key: body[key] for key in ("theme", "libraryRoot", "playbackRate", "volume") if key in body}
+        allowed = {key: body[key] for key in ("theme", "libraryRoot") if key in body}
+        # Tốc độ và âm lượng là SỐ trong khoảng giao diện đưa ra (player.SPEEDS 0,75-3; âm lượng 0-1): trình phát nạp lại
+        # chúng lúc mở app, và một giá trị hỏng (chuỗi, 5) từng được lưu nguyên.
+        for key, low, high in (("playbackRate", 0.5, 3.0), ("volume", 0.0, 1.0)):
+            value = body.get(key)
+            if isinstance(value, (int, float)) and not isinstance(value, bool) and low <= float(value) <= high:
+                allowed[key] = float(value)
         # Hai tuỳ chọn hẹn giờ ngủ chỉ nhận đúng các mức giao diện đưa ra.
         if body.get("sleepFadeSeconds") in (10, 30, 60):
             allowed["sleepFadeSeconds"] = body["sleepFadeSeconds"]
