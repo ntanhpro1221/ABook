@@ -11,6 +11,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   khi sách đã "Hoàn tất" thì trang dự án hiện nút **"Áp dụng N thay đổi"**. Bấm là chỉ thu lại những câu bị ảnh hưởng,
   không làm lại cả cuốn. Trước đây các thay đổi ấy chờ mãi một "lần chạy tới" không bao giờ đến. Tab Nhân vật ghi
   "Chờ áp dụng: giọng …" dưới người vừa đổi giọng.
+- Studio: **"Cần thu lại" thu lại thật.** Ở tab "Cần nghe lại", câu bấm "Cần thu lại" (hay "Thu lại câu này" với câu
+  hỏng) được thu lại thành một bản MỚI khi sách chạy tiếp - sách đã xong thì bấm "Áp dụng thay đổi". Trước đây phán quyết
+  chỉ được ghi lại mà không gì thu lại. Đổi ý trước khi áp thì bỏ yêu cầu. Câu đọc sai chữ hay sai tên thì sửa ở tab Kịch
+  bản (nút ngay dưới câu).
 - Studio: **đổi tên và xoá dự án** (nút "…" cạnh "Mở thư mục sách"). Đổi tên chỉ đổi tên hiện trong thư viện, trên
   điện thoại và trong file xuất. Xoá chuyển cả thư mục dự án vào **Thùng rác** của Windows, nên khôi phục được; file
   truyện gốc không bị đụng. Sách đang chạy phải dừng trước. Chỉ làm được trên chính máy tính, không từ Studio từ xa.
@@ -38,8 +42,6 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   - Bảng chương và danh sách dự án không vỡ trên màn hẹp.
   - Câu Whisper "nghe ảo" không hiện ở hàng chờ nghe lại.
   - Câu chưa có bản thu chỉ còn nút "Thu lại câu này".
-  - Tab "Cần nghe lại" không còn hứa "sẽ được đúc lại ở lần sản xuất kế tiếp" - đánh dấu "Cần thu lại" chưa tự thu lại
-    gì; câu đã đánh dấu có nút mở thẳng ở tab Kịch bản để sửa cách đọc (câu sửa xong được thu lại).
   - Sách chưa có chương nghe được không còn ghi "Đang làm" khi đang dừng. Không xuất được sách chưa có chương nào.
 
 - Làm sách: Studio phân tích bằng **model riêng của ABook** (`abook-analyzer`, học từ đáp án soát tay của dự án) thay cho

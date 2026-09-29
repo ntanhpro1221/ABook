@@ -2357,6 +2357,15 @@ class ProjectDB:
             # Chữ đem đọc người nghe sửa cho câu này (Studio, overrides.json `lines`): TTS và phép so của Whisper đọc cột
             # này thay `text`; văn bản sách (`text`, `text_sha256`, đọc theo) giữ nguyên. NULL = không sửa.
             conn.execute("ALTER TABLE segments ADD COLUMN listener_text TEXT")
+        if "listener_retakes" not in segment_columns:
+            # Số lần người nghe yêu cầu THU LẠI nguyên câu (overrides.json `retakes`): tts.generation_seed thêm số này vào
+            # hạt giống, nên bản thu mới khác bản cũ; 0 = hạt giống như trước khi có cột. Không nâng SCHEMA_VERSION (như
+            # listener_text): mã cũ bỏ qua cột lạ.
+            conn.execute("ALTER TABLE segments ADD COLUMN listener_retakes INTEGER NOT NULL DEFAULT 0")
+        if "listener_retake_at" not in segment_columns:
+            # Mốc `requested_at` của yêu cầu thu lại đã áp gần nhất: overrides.json là trạng thái mong muốn, đọc lại ở MỌI
+            # ranh giới - mốc này làm một yêu cầu chỉ thu lại câu đúng một lần.
+            conn.execute("ALTER TABLE segments ADD COLUMN listener_retake_at REAL NOT NULL DEFAULT 0")
 
         voice_columns = {
             str(row[1]) for row in conn.execute("PRAGMA table_info(voice_profiles)")
@@ -8754,6 +8763,50 @@ class ProjectDB:
             ),
         )
         return {**target, "character_id": int(character_id), "voice_profile_id": profile_id}
+
+    def apply_listener_retake(self, *, stable_id: str, text_sha256: str, requested_at: float) -> dict[str, Any] | None:
+        """THU LẠI nguyên một câu theo ý người nghe (bản thu méo, nuốt chữ, lệch giọng): tăng `listener_retakes` - hạt
+        giống của câu đổi theo số ấy (tts.generation_seed), nên bản thu mới khác bản cũ - và đặt lại câu nếu đã thu, một
+        transaction. Trả None khi yêu cầu này đã áp (`requested_at` không mới hơn `listener_retake_at`), `{"problem": mã}`
+        khi câu không còn hay chữ đã đổi, hay chi tiết lần áp."""
+        from .listener_overrides import SOURCE_CHANGED, UNKNOWN_LINE
+
+        now = time.time()
+        with self.transaction() as conn:
+            line = conn.execute(
+                "SELECT id, chapter_id, status, text_sha256, listener_retakes, listener_retake_at FROM segments"
+                " WHERE stable_id=?",
+                (stable_id,),
+            ).fetchone()
+            if line is None:
+                return {"problem": UNKNOWN_LINE}
+            if str(line["text_sha256"] or "") != str(text_sha256).strip():
+                return {"problem": SOURCE_CHANGED}
+            if float(line["listener_retake_at"] or 0) >= float(requested_at):
+                return None
+            retakes = int(line["listener_retakes"] or 0) + 1
+            conn.execute(
+                "UPDATE segments SET listener_retakes=?, listener_retake_at=?, updated_at=? WHERE id=?",
+                (retakes, float(requested_at), now, int(line["id"])),
+            )
+            chapter_id = int(line["chapter_id"])
+            # Câu chưa thu (đang chờ, đang phân tích) tự thu bằng hạt giống mới khi tới lượt - không có gì phải đặt lại.
+            reset = str(line["status"]) in {
+                SegmentStatus.SIGNAL_PASSED.value,
+                SegmentStatus.ASR_PASSED.value,
+                SegmentStatus.VERIFIED.value,
+                SegmentStatus.WARNING.value,
+                SegmentStatus.FAILED.value,
+            }
+            reason = f"Người nghe yêu cầu thu lại câu {stable_id} (lần {retakes})"
+            if reset:
+                self._reset_segment_pending_conn(conn, int(line["id"]), reason, now)
+                self._refresh_chapter_counts_conn(conn, chapter_id)
+                conn.execute(
+                    "UPDATE chapters SET status='warning', last_error=? WHERE id=? AND status=?",
+                    (reason, chapter_id, ChapterStatus.COMPLETED.value),
+                )
+            return {"stable_id": stable_id, "chapter_id": chapter_id, "retakes": retakes, "reset": reset}
 
     def apply_listener_line(
         self,

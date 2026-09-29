@@ -8,8 +8,9 @@ import { EmptyState, Segmented, Vu } from "@/shared/ui";
 import { api, urls } from "./api";
 
 // "Cần nghe lại": câu mà khâu tự kiểm tra không chắc (webui/reviews.py). Nghe từng câu, bấm Ổn hoặc Cần thu lại.
-// Phán quyết chỉ nằm ở reviews.json: CHƯA có gì tự thu lại theo nó (soát 29-09 - câu cũ "sẽ được đúc lại ở lần sản xuất kế
-// tiếp" là quy trình phát triển nội bộ, người dùng Studio không có). Đường thu lại thật hôm nay: sửa câu ở tab Kịch bản.
+// "Cần thu lại" ghi một yêu cầu cho dây chuyền (overrides.json `retakes`): câu được thu lại bằng hạt giống MỚI ở lần chạy
+// tới - sách đã xong thì nút "Áp dụng thay đổi" ở trang dự án. Lỗi đọc sai chữ/tên thì sửa ở tab Kịch bản, thu lại y chữ
+// không chữa được.
 
 type Kind = "failed" | "unverified" | "name-low" | "name";
 
@@ -183,7 +184,12 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
         });
       }
     },
-    onSettled: () => void client.invalidateQueries({ queryKey: ["review", bookId] }),
+    onSettled: () => {
+      void client.invalidateQueries({ queryKey: ["review", bookId] });
+      // "Cần thu lại" là một yêu cầu cho dây chuyền: trang dự án đếm nó vào nút "Áp dụng thay đổi".
+      void client.invalidateQueries({ queryKey: ["book", bookId] });
+      void client.invalidateQueries({ queryKey: ["library"] });
+    },
   });
 
   if (isLoading || !data) return <div className="mt-6 text-sm text-fg-2">Đang tìm các câu cần nghe lại…</div>;
@@ -221,9 +227,8 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
       </div>
       {data.redoChapters.length > 0 && (
         <p className="mt-3 rounded-xl bg-danger-soft px-4 py-2.5 text-sm text-danger text-pretty">
-          {data.redoChapters.length} chương có câu được đánh dấu cần thu lại. Bản này chưa tự thu lại theo đánh dấu: sửa cách
-          đọc hay chữ đem đọc của câu ấy ở tab Kịch bản thì câu được thu lại khi sách chạy tiếp (sách đã xong: nút “Áp dụng thay
-          đổi”).
+          {data.redoChapters.length} chương có câu cần thu lại - các câu ấy được thu lại thành bản mới khi sách chạy tiếp (sách
+          đã xong: nút “Áp dụng thay đổi” ở trang dự án). Câu đọc sai chữ hay sai tên thì sửa ở tab Kịch bản.
         </p>
       )}
       {items.length ? (

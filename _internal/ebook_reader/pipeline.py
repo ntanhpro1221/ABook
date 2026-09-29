@@ -90,6 +90,7 @@ from .listener_overrides import (
     pronunciation_requests,
     read_overrides,
     line_requests,
+    retake_requests,
     speaker_requests,
     surface_key,
     voice_requests,
@@ -1258,6 +1259,26 @@ class BookPipeline:
                 f"Người nghe đặt {result['character']}: giới {result['gender']}, giọng {result['voice_key']}"
                 f" (trước là {result['previous_voice_key']}); thu lại {result['reset_segments']} câu."
             )
+        # Thu lại nguyên câu (tab "Cần nghe lại": "Cần thu lại") - SAU mọi thứ khác: câu vừa đổi cách đọc/người nói cũng
+        # thu bằng hạt giống mới nếu người nghe đã chê bản thu của nó.
+        for request in retake_requests(overrides):
+            result = self.db.apply_listener_retake(
+                stable_id=request["stable_id"],
+                text_sha256=request["text_sha256"],
+                requested_at=request["requested_at"],
+            )
+            if result is None:
+                continue
+            if "problem" in result:
+                self._report_rejected_override(
+                    (request["stable_id"], f"retake:{request['requested_at']}"),
+                    f"Không thu lại được câu {request['stable_id']!r} ({result['problem']}).",
+                    {**request, "problem": result["problem"]},
+                )
+                continue
+            if result["reset"]:
+                reset_chapters.add(int(result["chapter_id"]))
+            self.log(f"Người nghe yêu cầu thu lại câu {result['stable_id']} (lần {result['retakes']}).")
         return reset_chapters
 
     def _report_rejected_override(self, key: tuple[str, str], message: str, details: dict[str, Any]) -> None:
