@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AudioLines, Check, Pause, Play, Search, UserPlus } from "lucide-react";
-import { useState } from "react";
+import { createContext, useContext, useState } from "react";
 import { toast } from "sonner";
 import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
@@ -105,6 +105,10 @@ export function useWorkCount(bookId: string) {
   return data?.items.filter((item) => !item.requested).length ?? 0;
 }
 
+/** Việc đã quyết chờ gì: sách đang dở thì tự áp khi chạy tiếp; sách ĐÃ XONG không tự chạy lại - phải bấm "Áp dụng thay
+ *  đổi" (soát UX 29-09: thẻ từng nói "chờ … chạy tiếp" cả ở sách đã xong). */
+const PendingHint = createContext("chờ áp dụng khi sách chạy tiếp");
+
 /** Nhãn nút ("Vai phụ không tên", "Người kể") đứng GIỮA câu thì viết thường chữ đầu - "…của vai phụ không tên" (soát UX
  *  29-09). Tên người giữ nguyên. */
 function midSentence(label: string | null | undefined): string {
@@ -146,6 +150,7 @@ function Example({ bookId, example }: { bookId: string; example: WorkExample }) 
 // tiếp (hoặc lần chạy tới) và thu lại đúng những câu có tên ấy - kể cả sách đã xong.
 function PronunciationFix({ bookId, item }: { bookId: string; item: WorkItem }) {
   const client = useQueryClient();
+  const pending = useContext(PendingHint);
   const [value, setValue] = useState(item.requested ?? item.current);
   // Lỗi nằm ngay dưới ô nhập, không chỉ trong toast 4 giây (soát UX 29-09: "Hên-kơ" bị từ chối mà không biết sửa chỗ nào).
   const [problem, setProblem] = useState("");
@@ -180,7 +185,7 @@ function PronunciationFix({ bookId, item }: { bookId: string; item: WorkItem }) 
       {item.requested && (
         <p className="mb-2 flex items-center gap-1.5 text-xs text-fg-2">
           <Check className="size-3.5 text-success" />
-          Đã ghi "{item.requested}" - chờ áp dụng khi sách chạy tiếp.
+          Đã ghi "{item.requested}" - {pending}.
         </p>
       )}
       <form
@@ -252,6 +257,7 @@ function SpeakerFix({
 }) {
   const client = useQueryClient();
   const lines = scope === "all" && item.allLines ? item.allLines : item.lines;
+  const pending = useContext(PendingHint);
   // "Người khác…": người nói chưa có trong lựa chọn - kể cả người máy CHƯA TỪNG gán câu nào (linh thể nói trong 『』):
   // gõ tên + chọn giới, dây chuyền tạo người ấy và cấp giọng riêng như bước phân vai.
   const [creating, setCreating] = useState(false);
@@ -303,7 +309,7 @@ function SpeakerFix({
           {/* Gộp tên là ở cấp TÊN cho cả cuốn và các phần sau, không phải "câu này của X" (soát UX 29-09). */}
           {item.kind === "alias"
             ? `Đã ghi: “${item.current}” là ${midSentence(item.requested)} - cả cuốn và các phần sau.`
-            : `Đã ghi: ${(item.lines?.length ?? 1) > 1 ? `${item.lines?.length} câu này` : "câu này"} của ${midSentence(item.requested)} - chờ áp dụng khi sách chạy tiếp.`}
+            : `Đã ghi: ${(item.lines?.length ?? 1) > 1 ? `${item.lines?.length} câu này` : "câu này"} của ${midSentence(item.requested)} - ${pending}.`}
         </p>
       )}
       {item.allLines && item.lines && onScope && (
@@ -390,6 +396,7 @@ function SpeakerFix({
 // chỉ thu lại khi giọng thật sự đổi - ghi chú dưới mỗi nút nói trước cái giá ấy.
 function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
   const client = useQueryClient();
+  const pending = useContext(PendingHint);
   const save = useMutation({
     mutationFn: async ({ requests }: { requests: Omit<VoiceChoice, "label" | "note" | "done" | "recommended">[]; label: string; keep: boolean; note?: string }) => {
       for (const request of requests) await api(`/api/books/${bookId}/voice`, { method: "POST", body: request });
@@ -419,7 +426,7 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
       {item.requested && (
         <p className="mb-2 flex items-center gap-1.5 text-xs text-fg-2">
           <Check className="size-3.5 text-success" />
-          Đã ghi: {item.requested} - chờ áp dụng khi sách chạy tiếp.
+          Đã ghi: {item.requested} - {pending}.
         </p>
       )}
       <div className="flex flex-wrap items-start gap-2" role="group" aria-label="Chọn">
@@ -519,7 +526,18 @@ function Card({ bookId, item, onOpenReview, onOpenScript }: { bookId: string; it
   );
 }
 
-export function WorkInbox({ book, onOpenReview, onOpenScript }: { book: BookSummary; onOpenReview: () => void; onOpenScript?: OpenScript }) {
+export function WorkInbox(props: { book: BookSummary; onOpenReview: () => void; onOpenScript?: OpenScript }) {
+  const hint = props.book.phase === "done" && !props.book.running
+    ? "bấm “Áp dụng thay đổi” ở đầu trang để áp"
+    : "chờ áp dụng khi sách chạy tiếp";
+  return (
+    <PendingHint.Provider value={hint}>
+      <WorkInboxBody {...props} />
+    </PendingHint.Provider>
+  );
+}
+
+function WorkInboxBody({ book, onOpenReview, onOpenScript }: { book: BookSummary; onOpenReview: () => void; onOpenScript?: OpenScript }) {
   const bookId = book.id;
   const [kind, setKind] = useState<WorkKind | "all">("all");
   const [shown, setShown] = useState(PAGE);
