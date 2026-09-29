@@ -141,6 +141,10 @@ export interface FirstPersonHint {
   /** Tỉ lệ đoạn lời kể có "tôi/tớ/mình" trong ~20 chương đầu. */
   rate: number;
   firstPerson: boolean;
+  /** Số chương (trong ~20 chương đầu, đủ dài) có >= 20% lời kể xưng "tôi" / số chương được đếm - cách máy quyết định
+   *  từ 29-09: truyện chen chương ngoại truyện ngôi ba vẫn được nhận ra. Thiếu ở máy chủ cũ. */
+  chaptersWithI?: number;
+  chaptersSampled?: number;
   /** Tên viết hoa hay gặp nhất - gợi ý để chọn, không phải đáp án. */
   suggestions: string[];
   /** Chương đổi góc kể: tiêu đề là tên một nhân vật và chương kể bằng "tôi" (số chương theo thứ tự trong sách, từ 1). */
