@@ -473,7 +473,7 @@ class SyncApp:
         for item in books[:200]:
             if not isinstance(item, dict) or not isinstance(item.get("key"), str):
                 continue
-            own = self.library.resolve(item["key"])
+            own = self.library.find(item["key"], projects)
             if own is not None:
                 found[item["key"]] = book_id(own)
                 continue
