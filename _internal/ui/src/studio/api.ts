@@ -175,6 +175,9 @@ export interface ContinuationPlan {
   title: string;
   /** Các chương kế tiếp trong thư mục truyện, sau chương cuối đã làm - rỗng khi chưa có chương mới. */
   paths: string[];
+  /** Thư mục truyện và file chương cuối đã làm (máy chủ cũ không có). */
+  folder?: string;
+  lastChapter?: string;
   profile: string;
   narrator: string;
   firstPerson: string;
