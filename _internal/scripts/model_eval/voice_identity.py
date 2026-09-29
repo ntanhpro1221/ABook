@@ -141,6 +141,12 @@ def main(argv: list[str]) -> int:
         for project in projects:
             found, _meta = read_project(project, wanted_chapters)
             rows.update({(str(row["chapter"]), int(row["seq"])): row for row in found})
+        # Chương đang phân tích dở: câu chưa tới lượt mang nhãn tạm (UNKNOWN) - chấm vào là đo nhầm một "hỏng cả chương"
+        # (29-09: TMA 378 của 8B-v5 đọc ra 39/47 UNKNOWN giữa lúc đang đo). Bỏ chương ấy, nói ra.
+        unfinished = sorted({key[0] for key, row in rows.items() if str(row.get("status") or "") == "pending"})
+        if unfinished:
+            print(f"{model_dir.name}: bỏ chương chưa phân tích xong {', '.join(unfinished)}")
+            rows = {key: row for key, row in rows.items() if key[0] not in unfinished}
         labels = Counter(str(row["speaker"] or "") for row in rows.values())
         mapping = canonical_speaker_names(labels, source_text(projects))
         points, places, strict, shown = [], [], 0, 0

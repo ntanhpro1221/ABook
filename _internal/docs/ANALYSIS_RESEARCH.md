@@ -62,6 +62,21 @@ mẹ 4, người qua đường 1). Đám đông để trơn: lính Toà án dị
 - Ngược lại LU 07: 8B giữ mẹ Kakeru riêng 11/11, v3 nhập 6/11.
 - Đây là chỗ v7 nhắm tới (dữ liệu dạy nhãn cục bộ có mô tả cho từng người lạ).
 
+**Dò việc nhập bằng xưng hô, không cần huấn luyện lại (thẻ 0c "hai người chung một tên", `address_cues.split_doubts`).**
+Bà thầy bói nói "ta… cậu" với Krai; Lucia nói "anh… bà" - hai bộ từ không bao giờ đi chung một câu. Gom các từ xưng hô của
+MỘT nhãn trong một chương theo việc chúng đi chung câu; hai nhóm tách hẳn là hai giọng.
+
+- Luật "hai người" (tự xưng khác nhau như "ta"/"tôi", hoặc cả hai nhóm có từ hai từ trở lên): trên bộ LN 12 chương đúng
+  15/15 lần báo (v3 6, v6 3, 8B 6); luật chưa thêm điều kiện ấy đúng 21/31 - báo nhầm khi một người gọi mẹ "con", gọi bạn
+  "cậu".
+- Truyện kể ngôi ba thì hỏng: Chu Du "ta… ngươi" với tướng dưới, "tôi… ngài" với chúa; Chị Dậu "con/em" với nhà mình,
+  "cháu/bà" với người ngoài. Điều kiện "cùng người nghe" (xấp xỉ bằng người nói kề bên) không cứu được mà còn làm mất phần
+  lớn ca đúng của 8B (6 -> 1). Nên thẻ chỉ xét chương kể ngôi thứ nhất, như thẻ xưng hô từng câu.
+- Nhóm nào là người lạ: nhóm lệch khỏi cách nhãn ấy nói ở các chương KHÁC. Thử ghép hai chương mỗi truyện: v3 Nageki 62
+  đúng 3/3; nhãn người kể thì hay chọn ngược (HDST 130: nhóm "tôi" đúng là Ed) vì hồ sơ người kể nhiễm lời model đã gộp -
+  nên thẻ bỏ qua nhãn người kể (thẻ từng câu đã lo phần ấy). Chưa đo được trên một cuốn đủ chương: bộ đo chỉ có một chương
+  mỗi dự án.
+
 **Chữ hoa của 8B-v5 không tới tay người dùng.** 8B-v5 viết nhãn chữ hoa ("AZUMA") vì học từ data_v5. Lượt gom tên của dây
 chuyền không đổi chữ hoa, nhưng `humanize.person_name` hiện nhãn toàn chữ hoa thành "Azuma". Chỉ nhãn hoa lẫn thường
 ("LOUise" của model cũ) lọt qua; nay cũng thành "Louise".
