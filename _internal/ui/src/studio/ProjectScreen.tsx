@@ -376,9 +376,15 @@ export function ProjectMenu({ book, rename = true, className }: { book: BookSumm
                 <DropdownMenu.Separator className="my-1 h-px bg-line" />
               </>
             )}
-            {/* Truyện dài làm nhiều đợt: phần mới giữ giọng, cách đọc tên, ghim của phần này (continuation.py). */}
-            <DropdownMenu.Item onSelect={() => navigate(`/studio/new?continue=${book.id}`)} className={MENU_ITEM}>
+            {/* Truyện dài làm nhiều đợt: phần mới giữ giọng, cách đọc tên, ghim của phần này (continuation.py). Dự án chưa
+                phân tích câu nào thì không có gì để mang theo - mờ kèm lý do thay vì dẫn tới một phần mới trống (soát UX 29-09). */}
+            <DropdownMenu.Item
+              disabled={book.segments.analyzed === 0}
+              onSelect={() => navigate(`/studio/new?continue=${book.id}`)}
+              className={cn(MENU_ITEM, "data-[disabled]:opacity-50")}
+            >
               <BookPlus className="size-4" /> Làm tiếp cuốn này…
+              {book.segments.analyzed === 0 && <span className="ml-auto pl-3 text-xs text-fg-3">chạy phần này trước</span>}
             </DropdownMenu.Item>
             <DropdownMenu.Separator className="my-1 h-px bg-line" />
             <DropdownMenu.Item onSelect={() => setDialog("delete")} className={cn(MENU_ITEM, "text-danger")}>
