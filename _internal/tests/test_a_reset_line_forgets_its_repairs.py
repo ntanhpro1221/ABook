@@ -43,7 +43,7 @@ def test_recovery_still_starts_after_a_repaired_line_is_reset(tmp_path: Path) ->
 
 
 def test_a_listener_reading_on_a_repaired_line_does_not_break_the_next_start(tmp_path: Path) -> None:
-    """Đúng đường của hộp "Việc cần anh": áp cách đọc lúc khởi động chạy TRƯỚC recovery."""
+    """Đúng đường của hộp "Việc cần duyệt": áp cách đọc lúc khởi động chạy TRƯỚC recovery."""
     from ebook_reader.database import LISTENER_PRONUNCIATION_SOURCE
 
     db = _copy(tmp_path)

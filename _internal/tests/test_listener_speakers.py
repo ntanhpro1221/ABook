@@ -1,6 +1,6 @@
 """Người nghe sửa "ai nói câu này" trong Studio, và câu được đọc lại bằng giọng của đúng người.
 
-Hộp "Việc cần anh" ghi mong muốn vào `overrides.json` (mã câu + băm chữ, để không bao giờ áp nhầm câu đã đổi); dây chuyền
+Hộp "Việc cần duyệt" ghi mong muốn vào `overrides.json` (mã câu + băm chữ, để không bao giờ áp nhầm câu đã đổi); dây chuyền
 áp ở ranh giới an toàn bằng `ProjectDB.apply_listener_speaker`: gán câu cho người ấy bằng ĐÚNG nhãn và giọng sẵn có của
 họ - nên "một người một giọng" (`assert_voice_stability`) vẫn đúng - và đặt lại câu nếu đã thu, trong một transaction.
 """
