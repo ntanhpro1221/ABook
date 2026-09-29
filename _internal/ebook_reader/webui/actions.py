@@ -165,6 +165,21 @@ def _first_line(path: Path) -> str:
     return ""
 
 
+def _credits_at_top(path: Path) -> list[str]:
+    """Dòng ghi công người dịch / biên tập ở đầu chương (text_processing.credit_lines) - để trình tạo sách ĐỀ XUẤT bỏ
+    chúng khỏi phần đọc; chỉ áp dụng khi người dùng đồng ý. Chỉ đọc 8 KB đầu file."""
+    from ..io_utils import decode_text_bytes
+    from ..text_processing import credit_lines
+
+    try:
+        with path.open("rb") as handle:
+            head = handle.read(8192)
+    except OSError:
+        return []
+    cut = head.rfind(b"\n")
+    return credit_lines(decode_text_bytes(head[:cut] if cut > 0 else head))
+
+
 def scan_inputs(paths: list[str]) -> dict[str, Any]:
     """Những gì người dùng sắp đưa vào sách: file TXT (thư mục chỉ quét một tầng, như app cũ), xếp tự nhiên."""
     files: list[Path] = []
@@ -208,6 +223,8 @@ def scan_inputs(paths: list[str]) -> dict[str, Any]:
             "name": path.name,
             "title": humanize.chapter_title(path.stem),
             "firstLine": _first_line(path),
+            # Dòng ghi công ở đầu chương: trình tạo sách ĐỀ XUẤT bỏ chúng khỏi phần đọc (đếm trên đúng các chương còn chọn).
+            "credits": _credits_at_top(path),
             "words": words,
             "bytes": path.stat().st_size,
             # Như chapters.input_sha256 của dây chuyền: nhận ra truyện đã có dự án (App.existing_projects).
@@ -244,7 +261,8 @@ def first_person_hint(paths: list[str]) -> dict[str, Any]:
 
 def create_book(library_root: Path, paths: list[str], title: str, profile: str, narrator: str,
                 first_person: str = "", settings_overrides: dict[str, Any] | None = None,
-                first_person_chapters: dict[str, str] | None = None) -> Path:
+                first_person_chapters: dict[str, str] | None = None,
+                drop_credit_lines: bool | None = None) -> Path:
     from ..character_registry import PRONOUNS, normalize_name
     from ..config import build_settings
     from ..project import create_or_open_project
@@ -276,6 +294,9 @@ def create_book(library_root: Path, paths: list[str], title: str, profile: str, 
     overrides: dict[str, Any] = dict(settings_overrides or {})  # app đóng gói: Ollama riêng của Studio
     if voices:
         overrides["voices"] = voices
+    if drop_credit_lines is not None:
+        # Lựa chọn của người dùng ở trình tạo sách; không nói gì thì theo mặc định (config: bỏ).
+        overrides["text"] = {**overrides.get("text", {}), "drop_credit_lines": bool(drop_credit_lines)}
     settings = build_settings(profile, overrides or None)
     library_root.mkdir(parents=True, exist_ok=True)
     paths_created, _db, _settings = create_or_open_project(files, library_root, settings, title.strip() or None)

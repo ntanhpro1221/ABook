@@ -431,6 +431,7 @@ class App:
             settings_overrides=self.studio.settings_overrides() if self.studio is not None else None,
             first_person_chapters={str(key): str(value) for key, value in body["firstPersonChapters"].items()}
             if isinstance(body.get("firstPersonChapters"), dict) else None,
+            drop_credit_lines=body["dropCreditLines"] if isinstance(body.get("dropCreditLines"), bool) else None,
         )
         self.preferences.add_recent(root)
         if previous is not None:

@@ -20,6 +20,16 @@ QUOTE_CLOSING_MARKS = {"”", "’", '"'}
 # giữa một câu kể là sai. 『 cố ý KHÔNG vào CURLY_QUOTE_SPECS: theo lối Nhật nó là ngoặc lồng trong 「…」 (nay là “”).
 WHITE_CORNER_QUOTE_LINE_PATTERN = re.compile(r"『[^』]{1,1600}』")
 INLINE_REFERENCE_MARKER_PATTERN = re.compile(r"\[\s*note\d+\s*\]", re.IGNORECASE)
+# Dòng ghi công người dịch / biên tập ở đầu chương ("*Edit: Lắc", "TL : NicK", "Translator: NicK", "Editor: Deemo"): TTS
+# từng đọc to như một câu kể - 17 chương Throne, 172 chương Nise (quét kho 29-09). Chỉ trong vài dòng đầu chương, nhãn ghi
+# công rõ ràng, phần tên ngắn không kết câu: "Tác giả: Lucien Evans X, Arcanist cấp một…" ở giữa chương 211 là câu truyện
+# và ở lại ("tác giả" không phải nhãn ở đây, và dòng ấy không ở đầu chương).
+CREDIT_LINE_PATTERN = re.compile(
+    r"^[*_~#>\-–—\s]*(?:edit(?:or|ed by)?|tl|t/l|trans(?:lator|lated by)?|dịch(?: giả)?|người dịch|biên tập(?: viên)?|"
+    r"beta(?:[- ]?reader)?|converter|cvt|proof ?read(?:er)?|typesetter)\s*[:：]\s*[^\s.!?…\"“”][^.!?…\"“”]{0,39}$",
+    re.IGNORECASE,
+)
+CREDIT_WINDOW_LINES = 6
 SENTENCE_BOUNDARY = re.compile(r"(?<=[.!?…;:])\s+")
 CLAUSE_BOUNDARY = re.compile(r"(?<=[.!?…;:,])\s+")
 SENTENCE_SPLIT_STRATEGY = "sentence_v1"
@@ -898,12 +908,42 @@ def _walk_paragraphs(
     return rows, quote_state, opened_at
 
 
+def _credit_line_indexes(lines: list[str]) -> set[int]:
+    """Chỉ số các dòng ghi công trong CREDIT_WINDOW_LINES dòng có chữ đầu tiên của chương (dòng tiêu đề tính là một)."""
+    found: set[int] = set()
+    seen = 0
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if seen >= CREDIT_WINDOW_LINES:
+            break
+        seen += 1
+        if CREDIT_LINE_PATTERN.match(stripped):
+            found.add(index)
+    return found
+
+
+def credit_lines(text: str) -> list[str]:
+    """Đúng những dòng `drop_credit_lines` sẽ bỏ - trình tạo sách đếm và cho xem trước khi hỏi người dùng bỏ hay giữ."""
+    lines = normalize_text(text).split("\n")
+    return [lines[index].strip() for index in sorted(_credit_line_indexes(lines))]
+
+
+def drop_credit_lines(text: str) -> str:
+    """Bỏ dòng ghi công ở đầu chương (`credit_lines`)."""
+    lines = text.split("\n")
+    drop = _credit_line_indexes(lines)
+    return re.sub(r"\n{3,}", "\n\n", "\n".join(line for index, line in enumerate(lines) if index not in drop)).strip()
+
+
 def segment_chapter_text(
     chapter_index: int,
     text: str,
     max_chars: int = 340,
     *,
     warnings: list[str] | None = None,
+    drop_credits: bool = False,
 ) -> list[dict[str, Any]]:
     """Split a chapter into segments, recovering from a source that never closes a quote.
 
@@ -922,8 +962,15 @@ def segment_chapter_text(
     at the bottom of this function still proves that on every chapter, recovered or not.
 
     Pass ``warnings`` to hear about it; the list is appended to, never read.
+
+    ``drop_credits=True`` leaves out translator/editor credit lines at the top of the chapter.
+    Only a book whose owner ACCEPTED that suggestion in the creation wizard asks for it
+    (settings ``text.drop_credit_lines``); the text is never edited on the app's own initiative,
+    and every other book - including all made before 29-09 - splits exactly as it always has.
     """
     text = normalize_text(text)
+    if drop_credits:
+        text = drop_credit_lines(text)
     paragraphs = [part.strip() for part in re.split(r"\n\s*\n", text) if part.strip()]
 
     close_at_end_of: frozenset[int] = frozenset()
@@ -997,6 +1044,7 @@ def load_and_segment_chapter(
     max_chars: int,
     *,
     warnings: list[str] | None = None,
+    drop_credits: bool = False,
 ) -> list[dict[str, Any]]:
     source = Path(chapter["input_path"])
     raw = source.read_bytes()
@@ -1010,4 +1058,5 @@ def load_and_segment_chapter(
         text,
         max_chars=max_chars,
         warnings=warnings,
+        drop_credits=drop_credits,
     )
