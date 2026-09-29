@@ -465,6 +465,15 @@ def summarize(project_root: Path, *, running: bool = False, now: float | None = 
         total = int(segments["total"] or 0)
         analyzed = int(segments["analyzed"] or 0)
         finished = int(segments["finished"] or 0)
+        if status == "paused":
+            # Tạm dừng (power_source): dây chuyền ghi status/stage "paused" và nhớ pha cũ trong bộ nhớ. Đoán lại pha từ tiến
+            # độ - "Đã dừng" là sai khi tiến trình vẫn sống; tiến trình chết lúc đang tạm dừng thì là "Tạm ngưng lúc ...".
+            if analyzed < total or not total:
+                phase = "analysis"
+            elif not int(segments["recorded"] or 0) and not any(row["status"] == "completed" for row in chapter_rows):
+                phase = "casting"
+            else:
+                phase = "synthesis"
         eta = None
         if running and phase == "analysis" and total:
             rate = _rate(connection, "status != 'pending'", now)

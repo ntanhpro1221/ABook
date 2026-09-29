@@ -610,3 +610,23 @@ việc.
 Sự kiện ghi ở `runtime/power_events.log`; `power_guard.py --wait` là chuông (thoát khi có sự kiện mới, trần 30 phút),
 `--status` in pin + việc GPU đang có. Phần quyết định là hàm thuần `decide()` - `tests/test_power_guard.py` chạy các kịch
 bản rút nhầm 40 giây, pin khoẻ tụt chậm hai giờ, tụt 1%/phút, ước lượng nhảy một lần, chủ sách bấm "Không tắt máy".
+
+### Trong app: Studio tự tạm dừng khi rút sạc
+
+Người gác pin là công cụ của máy chủ sách (treo cả tiến trình từ bên ngoài). Người dùng app có cùng cơ chế nhưng hiền hơn,
+trong chính supervisor (`background_runner.run_supervisor` + `ebook_reader/power_source.py`): chạy pin quá 60 giây thì bật
+`pause_event` của worker, dây chuyền đứng ở checkpoint kế (`Pipeline._wait_pause_or_stop`, ghi sổ `status=paused`) và làm
+tiếp đúng chỗ khi cắm sạc. Tiến trình không chết, nên **tạm dừng an toàn cả giữa pha phân tích** - khác "Dừng" (mục
+"Đừng stop giữa pha phân tích" ở AGENTS.md). Cùng đường ấy là nút "Tạm dừng" / "Tiếp tục" ở trang dự án (`POST
+/api/books/<id>/pause`, file `runtime/background/pause.request` gắn với lần chạy như `stop.request`).
+
+- "Tiếp tục" bấm lúc đang chạy pin = làm tiếp trên pin tới lần kế máy thấy sạc (`_pause_reason`); rút lần sau lại dừng.
+- Tắt ở Cài đặt → Studio → "Tạm dừng khi rút sạc" (`pauseOnBattery` trong preferences.json - supervisor đọc thẳng mỗi 5
+  giây, kể cả khi đã đóng cửa sổ app). Máy bàn (không pin) không bao giờ dừng.
+- Pin cạn khi đang tạm dừng: Windows ngủ đông ở 2%, tiến trình đang đứng sống qua được. Máy tắt hẳn thì lần chạy sau là
+  một lần resume bình thường - trang sách nói "Tạm ngưng lúc …" đúng pha.
+- Hai lớp không giẫm nhau: người gác treo supervisor thì supervisor không đọc pin; gỡ treo khi có sạc thì nó thấy sạc.
+
+Test: `tests/test_pause_on_battery.py` (luật 60 giây, "Tiếp tục" trên pin, tuỳ chọn tắt, supervisor thật với worker giả),
+`tests/test_pause_a_running_book.py` (API, nhãn "Đang tạm dừng…" / "Đã tạm dừng" / "Tạm dừng · máy đang chạy pin", Studio
+từ xa).

@@ -125,6 +125,25 @@ export function useStop() {
   });
 }
 
+/** "Tạm dừng" / "Tiếp tục" cuốn đang chạy: tiến trình vẫn sống, làm tiếp đúng chỗ - an toàn cả giữa lúc phân tích truyện. */
+export function usePause() {
+  const refresh = useRefresh();
+  return useMutation({
+    scope: { id: "start-stop" },
+    mutationFn: ({ id, paused }: { id: string; paused: boolean }) =>
+      api<BookSummary>(`/api/books/${id}/pause`, { method: "POST", body: { paused } }),
+    onSuccess: (_book, { id, paused }) => {
+      refresh(id);
+      toast(paused ? "Đang tạm dừng" : "Làm tiếp", {
+        description: paused
+          ? "Sách đứng lại sau câu đang làm dở và giữ nguyên mọi thứ - bấm “Tiếp tục” là làm tiếp đúng chỗ ấy."
+          : undefined,
+      });
+    },
+    onError: (error: Error) => toast.error("Không tạm dừng được", { description: error.message }),
+  });
+}
+
 export function useReveal() {
   return useMutation({
     mutationFn: (id: string) => api(`/api/books/${id}/reveal`, { method: "POST" }),

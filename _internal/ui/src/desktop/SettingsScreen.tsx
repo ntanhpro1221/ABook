@@ -278,6 +278,20 @@ export function SettingsScreen() {
             title="Studio"
             description="Phần làm sách nói (thư viện, model đọc hiểu truyện, giọng đọc) - tải thêm khi cần, nằm riêng một thư mục."
           >
+            <div className="mb-4 flex max-w-xl items-start justify-between gap-6">
+              <label htmlFor="pause-on-battery" className="min-w-0 cursor-pointer">
+                <span className="block text-sm font-medium">Tạm dừng khi rút sạc</span>
+                <span className="mt-0.5 block text-[13px] text-fg-2 text-pretty">
+                  Máy tính xách tay chạy pin thì làm sách rất chậm mà hao pin. Sách đứng yên và tự làm tiếp đúng chỗ khi cắm sạc
+                  lại - kể cả giữa lúc phân tích truyện.
+                </span>
+              </label>
+              <Switch
+                id="pause-on-battery"
+                checked={preferences?.pauseOnBattery !== false}
+                onCheckedChange={(value) => update({ pauseOnBattery: value })}
+              />
+            </div>
             <StudioSettings />
           </Section>
         )}

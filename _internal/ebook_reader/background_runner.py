@@ -16,6 +16,7 @@ from typing import Any, Callable, Mapping, Sequence
 
 import psutil
 
+from . import power_source
 from .io_utils import atomic_write_json
 from .process_utils import terminate_process_tree
 
@@ -27,6 +28,7 @@ HANDSHAKE_FILE_NAME = "handshake.json"
 SUPERVISOR_LOCK_FILE_NAME = "supervisor.lock"
 LAUNCH_LOCK_FILE_NAME = "launch.lock"
 STOP_REQUEST_FILE_NAME = "stop.request"
+PAUSE_REQUEST_FILE_NAME = "pause.request"
 EVENTS_FILE_NAME = "events.jsonl"
 LOG_FILE_NAME = "supervisor.log"
 ACTIVE_STATES = frozenset({"starting", "running", "stopping"})
@@ -41,6 +43,8 @@ STATE_EVENT_FLUSH_SECONDS = 1.0
 SUPERVISOR_POLL_SECONDS = 0.25
 PROCESS_CREATE_TIME_TOLERANCE_SECONDS = 1.0
 QUEUE_DRAIN_GRACE_SECONDS = 0.75
+# Đọc nguồn điện + tuỳ chọn "tạm dừng khi rút sạc" (power_source) mỗi chừng này giây.
+POWER_CHECK_SECONDS = 5.0
 WORKER_READY_EVENT = "worker_ready"
 
 
@@ -65,6 +69,7 @@ class BackgroundPaths:
     supervisor_lock: Path
     launch_lock: Path
     stop_request: Path
+    pause_request: Path
     events: Path
     log: Path
 
@@ -81,6 +86,7 @@ class BackgroundPaths:
             supervisor_lock=root / SUPERVISOR_LOCK_FILE_NAME,
             launch_lock=root / LAUNCH_LOCK_FILE_NAME,
             stop_request=root / STOP_REQUEST_FILE_NAME,
+            pause_request=root / PAUSE_REQUEST_FILE_NAME,
             events=root / EVENTS_FILE_NAME,
             log=root / LOG_FILE_NAME,
         )
@@ -104,6 +110,9 @@ class BackgroundStatus:
     stop_requested: bool = False
     last_event: dict[str, Any] | None = None
     detail: str | None = None
+    # Tạm dừng mà tiến trình vẫn sống (power_source): "battery" = máy đang chạy pin, "listener" = người dùng bấm.
+    pause_reason: str | None = None
+    paused_at: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         result = asdict(self)
@@ -312,6 +321,8 @@ def _status_from_state(paths: BackgroundPaths, state: Mapping[str, Any]) -> Back
         stop_requested=bool(state.get("stop_requested", False)),
         last_event=dict(last_event) if isinstance(last_event, dict) else None,
         detail=detail,
+        pause_reason=str(state["pause_reason"]) if running and state.get("pause_reason") else None,
+        paused_at=str(state["paused_at"]) if running and state.get("paused_at") else None,
     )
 
 
@@ -455,7 +466,7 @@ def _write_launching_state(paths: BackgroundPaths, instance_id: str) -> None:
 def _clear_stale_control_files(paths: BackgroundPaths, previous_status: BackgroundStatus) -> None:
     if previous_status.running:
         return
-    for path in (paths.stop_request, paths.handshake):
+    for path in (paths.stop_request, paths.pause_request, paths.handshake):
         try:
             path.unlink(missing_ok=True)
         except OSError:
@@ -687,6 +698,55 @@ def request_stop(
     return status
 
 
+def request_pause(project_root: Path | str, paused: bool) -> BackgroundStatus:
+    """Người dùng bấm "Tạm dừng" (paused=True) hay "Tiếp tục" (False) cho cuốn đang chạy. Chỉ ghi yêu cầu gắn với lần chạy
+    đang sống (như stop); supervisor chuyển sang worker ở vòng kế. "Tiếp tục" lúc máy đang chạy pin cũng là đồng ý làm tiếp
+    trên pin - tới lần kế máy thấy sạc (`_pause_reason`)."""
+    paths = BackgroundPaths.for_project(project_root)
+    state = _read_json(paths.state)
+    if state is None or str(state.get("state")) not in {"running", "starting"}:
+        raise BackgroundIdentityError("Sách này không đang chạy")
+    identity_ok, detail = _validate_supervisor_identity(state, paths.project_root)
+    if not identity_ok:
+        raise BackgroundIdentityError(f"Từ chối tạm dừng: {detail}")
+    atomic_write_json(
+        paths.pause_request,
+        {
+            "schema_version": STATE_SCHEMA_VERSION,
+            "project_root": str(paths.project_root),
+            "instance_id": str(state["instance_id"]),
+            "requested_at": _utc_now(),
+            "requested_at_epoch": time.time(),
+            "requester_pid": os.getpid(),
+            "paused": bool(paused),
+        },
+    )
+    return get_status(paths.project_root)
+
+
+def _pause_request(paths: BackgroundPaths, instance_id: str) -> dict[str, Any] | None:
+    request = _read_json(paths.pause_request)
+    if request is None or request.get("instance_id") != instance_id:
+        return None
+    if _normal_path_text(str(request.get("project_root", ""))) != _normal_path_text(paths.project_root):
+        return None
+    return request
+
+
+def _pause_reason(request: Mapping[str, Any] | None, battery_pause: bool, last_plugged_wall: float | None) -> str | None:
+    """Vì sao worker phải đứng: người dùng bấm tạm dừng thắng mọi thứ; máy chạy pin đủ lâu thì dừng, trừ khi người dùng đã
+    bấm "Tiếp tục" SAU lần cuối máy thấy sạc (rút sạc lần sau lại dừng)."""
+    if request is not None and request.get("paused") is True:
+        return "listener"
+    if not battery_pause:
+        return None
+    if request is not None and request.get("paused") is False:
+        at = request.get("requested_at_epoch")
+        if isinstance(at, (int, float)) and (last_plugged_wall is None or at >= last_plugged_wall):
+            return None
+    return "battery"
+
+
 def _terminal_result(last_finished: Mapping[str, Any] | None, exit_code: int, stop_requested: bool) -> tuple[str, int, str]:
     if last_finished is not None:
         if bool(last_finished.get("ok")):
@@ -781,6 +841,8 @@ def run_supervisor(
             "stop_requested": False,
             "last_event": None,
             "detail": "supervisor đang khởi tạo worker",
+            "pause_reason": None,
+            "paused_at": None,
         }
         atomic_write_json(paths.state, state)
         _append_log(paths, f"SUPERVISOR_START pid={supervisor_pid} instance={instance_id}")
@@ -869,6 +931,10 @@ def run_supervisor(
 
         last_state_write = time.monotonic()
         next_heartbeat = last_state_write + STATUS_HEARTBEAT_SECONDS
+        battery = power_source.BatteryWatch()
+        battery_pause = False
+        next_power_check = last_state_write
+        pause_reason: str | None = None
         while worker.is_alive():
             if not stop_requested and _stop_request_matches(paths, instance_id):
                 stop_requested = True
@@ -883,6 +949,28 @@ def run_supervisor(
                 )
                 atomic_write_json(paths.state, state)
                 _append_log(paths, "STOP_REQUEST forwarded to worker")
+
+            # Tạm dừng giữ tiến trình sống: dây chuyền đứng ở checkpoint kế (pause_requested) và làm tiếp đúng chỗ ấy -
+            # an toàn cả giữa pha phân tích, khác "Dừng" (power_source).
+            if time.monotonic() >= next_power_check:
+                next_power_check = time.monotonic() + POWER_CHECK_SECONDS
+                battery_pause = battery.update(
+                    power_source.on_battery(), time.monotonic(), time.time()
+                ) and power_source.pause_on_battery_enabled()
+            wanted = None if stop_requested else _pause_reason(
+                _pause_request(paths, instance_id), battery_pause, battery.last_plugged_wall
+            )
+            if wanted != pause_reason:
+                pause_reason = wanted
+                if wanted:
+                    pause_event.set()
+                else:
+                    pause_event.clear()
+                state.update(
+                    {"pause_reason": wanted, "paused_at": _utc_now() if wanted else None, "updated_at": _utc_now()}
+                )
+                atomic_write_json(paths.state, state)
+                _append_log(paths, f"PAUSE reason={wanted}" if wanted else "RESUME")
 
             try:
                 event = message_queue.get(timeout=max(0.01, float(poll_seconds)))
