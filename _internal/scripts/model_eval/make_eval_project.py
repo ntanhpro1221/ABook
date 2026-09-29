@@ -89,6 +89,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--first-person", default="", help="'tôi' là ai, cho truyện kể ngôi thứ nhất")
     parser.add_argument("--first-person-chapter", action="append", default=[], metavar="N=TÊN",
                         help="người kể của MỘT chương (số chương theo thứ tự trong project, từ 1; lặp được)")
+    parser.add_argument("--seed-gold-cast", default="", metavar="GOLD",
+                        help="cùng --book: gieo nhân vật đã biết từ đáp án gold/GOLD của các chương TRƯỚC chương đo "
+                             "(seed_gold_cast.py) - như sổ của sách thật tới chương ấy")
     args = parser.parse_args(argv)
 
     source = SOURCE if not args.book else CORPUS / args.book
@@ -122,6 +125,11 @@ def main(argv: list[str] | None = None) -> int:
     if not args.no_seed and not args.book and fresh:
         for script in ("port_pronunciations.py", "port_casting.py"):
             subprocess.run([str(PY), str(ROOT / "scripts" / script), str(SEED), str(paths.root)], check=True)
+    elif args.book and args.seed_gold_cast and fresh:
+        from seed_gold_cast import seed
+
+        cast = seed(paths.root, args.seed_gold_cast, min(args.chapters, key=lambda chapter: int(chapter)))
+        print(f"gieo {len(cast)} nhân vật đã biết từ đáp án chương trước")
     elif not fresh:
         print("đã gieo từ trước - giữ nguyên")
     return 0

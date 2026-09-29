@@ -1,0 +1,279 @@
+# "Hướng dẫn sinh tồn trong học viện" file 086 ("Chương 87: Cuộc chiến Bầu cử Hội trưởng Hội học sinh (1)"). Đáp án
+# HUẤN LUYỆN (không vào test/dev) 29-09: chọn vì ĐỐI ĐÁP HAI NGƯỜI KHÔNG LỜI DẪN dài (Ed - Lortel, 60-211; Ed - Zix, 213-239)
+# - lỗi lớn nhất của v3 là mất lượt đối đáp (scratchpad/turn_chain_scan.py: 80 câu trong chuỗi >= 3 đoạn thoại liền). Cách
+# xa hai chương test 062, 130. Claude gán (A); soát B ghi ở ADJUDICATION.md.
+# Tên: "tôi" = ED ROSTAILER / ED; LORTEL / LORTEL KEHELN; ZIX / ZIX EFFELSTEIN (như 060/090); CLAVIUS / CLAVIUS NORTONDALE
+# (ngôi ba, 22-47; tên đủ ở 068, 079, 092 - quy tắc 11).
+# Xưng hô: Lortel xưng "em", gọi "anh", "anh Ed", "tiền bối Ed"; Ed gọi Lortel "cô", Zix "cậu"; Zix xưng "em", gọi "anh Ed".
+# LƯỢT IM LẶNG: nguồn có dòng "..." riêng - parser BỎ (không có chữ đọc): p145 là Lortel (bị bắt thóp sau "...Yên tâm?"),
+# p148, p153, p161, p165, p207 là Ed (p20 thuộc cảnh Clavius). Model thấy Lortel nói hai câu liền: 153-154, 157-158,
+# 166-167 (qua p161), 169-170; 164 -> 166 qua 165 kể. Không xen kẽ máy móc.
+# 2-20: lời đề từ gửi Clavius (văn bản, khoá lời kể) -> NARRATOR; 21 "– 'Đơn Xin Đấu Tập'" tựa văn bản -> NARRATOR (quy tắc 7);
+# 13 "bất khả thi", 46 "thì đã sao" = chữ trong ngoặc giữa câu kể, không ai nói -> NARRATOR (quy tắc 8); 103 "ẦM!" tiếng động
+# -> NARRATOR, UNKNOWN~; 85 'khục khục', 160 'ư,' tiếng của Lortel giữa câu kể (khoá T) -> N,T NARRATOR, LORTEL~ (quy tắc 8, 10);
+# 223, 225 'đạo quán phá' thuật ngữ trong ngoặc -> N,T NARRATOR. 53 "Ôi chao..." lúc chưa nêu tên, 62 mới là Lortel; 213 và
+# 249 trước khi lời kể nêu Zix -> tên đủ, NPC*~ (quy tắc 5). 118 mở chuyện bầu cử: Lortel (119 là Ed hỏi "Cô không có ý định
+# ra tranh cử sao?"), Ed nửa điểm. 44, 250, 252: tự nhủ trực tiếp trong đoạn ngôi ba -> N,T, người nghĩ đủ (quy tắc 4).
+# 259 dòng xin ủng hộ của nhóm dịch (có trong nguồn) -> lời kể. Host bắt từ cảm xúc nhưng đáp án giữ neutral (host sai):
+# 5 mệnh lệnh "Hãy biết sợ hãi đi", 12 "gào lên" nghĩa bóng, 22 "kinh hoàng" tả bão, 101 "hỗn loạn" nhận định chung.
+# Soát B (agent, 29-09): không lỗi người nói; nhận thêm tên đủ Clavius, 57 NPC*~, UNKNOWN~ cho chủ tiệm, 31/32/210/236 N,T.
+0 H
+1 N
+2 N
+3 N
+4 N
+5 N
+6 N
+7 N
+8 N
+9 N
+10 N
+11 N
+12 N
+13 D NARRATOR neutral 0-1 normal normal u
+14 N
+15 N
+16 N
+17 N
+18 N
+19 N
+20 N
+21 D NARRATOR neutral 0-1 normal normal u
+22 N
+23 N
+24 N
+25 N
+26 N NARRATOR neutral,sad,afraid,angry 0-1 normal normal u
+27 D CLAVIUS,CLAVIUS NORTONDALE angry,sad,afraid 1-2 normal,slow soft,normal m
+28 N
+29 N
+30 N
+31 N,T NARRATOR,CLAVIUS~,CLAVIUS NORTONDALE~ neutral 0-1 normal normal u
+32 N,T NARRATOR,CLAVIUS,CLAVIUS NORTONDALE neutral,sad 0-1 normal normal u
+33 N
+34 N
+35 N
+36 N
+37 D CLAVIUS,CLAVIUS NORTONDALE sarcastic,tired,neutral 0-1 normal soft,normal m
+38 N
+39 N
+40 N
+41 D CLAVIUS,CLAVIUS NORTONDALE sad,angry,tired 1-2 normal,slow soft,normal m
+42 N
+43 N
+44 N,T NARRATOR,CLAVIUS,CLAVIUS NORTONDALE sad,sarcastic,neutral 0-1 normal normal u
+45 N
+46 D NARRATOR neutral,sarcastic 0-1 normal normal u
+47 N
+48 N
+49 N
+50 N
+51 N
+52 N
+53 D LORTEL,LORTEL KEHELN,NPC*~ happy,surprised,neutral 0-1 normal normal f
+54 N
+55 N
+56 N
+57 D LORTEL,LORTEL KEHELN,NPC*~ happy,sarcastic,neutral 0-1 normal normal f
+58 N
+59 N
+60 N
+61 N
+62 N
+63 D ED ROSTAILER,ED neutral,surprised,sarcastic 0-1 normal normal m
+64 D LORTEL,LORTEL KEHELN neutral,happy 0-1 normal normal f
+65 D ED ROSTAILER,ED surprised,neutral 0-1 normal normal m
+66 D LORTEL,LORTEL KEHELN neutral,whispering,happy,tender 0-1 normal soft,normal f
+67 N
+68 N
+69 N
+70 N
+71 N
+72 D ED ROSTAILER,ED surprised,neutral,sarcastic 0-1 normal normal m
+73 D LORTEL,LORTEL KEHELN sarcastic,happy,neutral 0-1 normal normal f
+74 D ED ROSTAILER,ED surprised,neutral 0-1 normal normal m
+75 D LORTEL,LORTEL KEHELN neutral,sarcastic 0-1 normal normal f
+76 D LORTEL,LORTEL KEHELN neutral,sarcastic 0-1 normal normal f
+77 N
+78 N
+79 N
+80 N
+81 D LORTEL,LORTEL KEHELN happy,sarcastic,excited 0-1 normal normal f
+82 D ED ROSTAILER,ED sarcastic,neutral 0-1 normal normal m
+83 D LORTEL,LORTEL KEHELN happy,sarcastic 0-1 normal normal f
+84 N
+85 N,T NARRATOR,LORTEL~,LORTEL KEHELN~ happy,neutral 0-1 normal normal u
+86 N
+87 D LORTEL,LORTEL KEHELN neutral,sarcastic 0-1 normal normal f
+88 D ED ROSTAILER,ED surprised,neutral 0-1 normal normal m
+89 D LORTEL,LORTEL KEHELN neutral,sarcastic,angry 0-1 normal normal f
+90 N
+91 D LORTEL,LORTEL KEHELN neutral 0-1 normal normal f
+92 D ED ROSTAILER,ED neutral,tired 0-1 normal normal m
+93 D LORTEL,LORTEL KEHELN neutral 0-1 normal normal f
+94 N
+95 N
+96 N
+97 N
+98 D LORTEL,LORTEL KEHELN neutral,sarcastic 0-1 normal normal f
+99 N
+100 N
+101 N
+102 N
+103 D NARRATOR,UNKNOWN~ surprised,neutral 1-2 normal,fast normal,loud u
+104 N
+105 N
+106 D NPC*:chủ tiệm bánh Laplace,UNKNOWN~ afraid,sad,surprised 1-2 fast,normal loud,normal m
+107 N
+108 N
+109 N
+110 N
+111 D NPC*:chủ tiệm bánh Laplace,UNKNOWN~ afraid,sad 1-2 normal,fast normal,loud m
+112 D LORTEL,LORTEL KEHELN neutral 0-1 normal normal f
+113 N
+114 N
+115 D LORTEL,LORTEL KEHELN happy,neutral,tender 0-1 normal normal f
+116 N
+117 N
+118 D LORTEL,LORTEL KEHELN,ED ROSTAILER~,ED~ neutral,happy 0-1 normal normal f
+119 D ED ROSTAILER,ED neutral,surprised 0-1 normal normal m
+120 D LORTEL,LORTEL KEHELN neutral,sarcastic 0-1 normal normal f
+121 N
+122 N
+123 D LORTEL,LORTEL KEHELN happy,neutral,sarcastic 0-1 normal normal f
+124 D ED ROSTAILER,ED neutral,tired 0-1 normal normal m
+125 D LORTEL,LORTEL KEHELN sad,sarcastic,neutral 0-1 normal normal f
+126 N
+127 N
+128 N
+129 D LORTEL,LORTEL KEHELN neutral,happy 0-1 normal normal f
+130 D ED ROSTAILER,ED surprised,neutral 0-1 normal normal m
+131 N
+132 D LORTEL,LORTEL KEHELN whispering,neutral,sarcastic 0-1 normal soft f
+133 D ED ROSTAILER,ED neutral,tired,whispering 0-1 normal soft,normal m
+134 D LORTEL,LORTEL KEHELN whispering,tender,neutral 0-1 normal soft f
+135 N
+136 D LORTEL,LORTEL KEHELN whispering,neutral,sad 0-1 normal soft,normal f
+137 D LORTEL,LORTEL KEHELN whispering,neutral,sad 0-1 normal soft,normal f
+138 N
+139 N
+140 N
+141 N
+142 N NARRATOR neutral,sad 0-1 normal normal u
+143 D LORTEL,LORTEL KEHELN surprised,afraid,neutral 0-1 normal normal f
+144 D ED ROSTAILER,ED surprised,neutral 0-1 normal normal m
+145 D LORTEL,LORTEL KEHELN happy,tender,neutral 0-1 normal normal f
+146 N
+147 D ED ROSTAILER,ED tired,neutral,sad 0-1 normal normal m
+148 D LORTEL,LORTEL KEHELN surprised,neutral 0-1 normal normal f
+149 D ED ROSTAILER,ED neutral,tired,afraid 0-1 normal,slow normal m
+150 D LORTEL,LORTEL KEHELN happy,tender 0-1 normal soft,normal f
+151 D ED ROSTAILER,ED surprised,neutral 0-1 normal normal m
+152 N
+153 D LORTEL,LORTEL KEHELN tender,happy,sarcastic 0-1 normal soft,normal f
+154 D LORTEL,LORTEL KEHELN sarcastic,happy,tender 0-1 normal normal f
+155 N
+156 N
+157 D LORTEL,LORTEL KEHELN sarcastic,happy 0-1 normal normal f
+158 D LORTEL,LORTEL KEHELN sarcastic,happy,tender 0-1 normal normal f
+159 N
+160 N,T NARRATOR,LORTEL~,LORTEL KEHELN~ surprised,neutral 0-1 normal normal u
+161 N
+162 D LORTEL,LORTEL KEHELN sarcastic,sad,happy 0-1 normal normal f
+163 D ED ROSTAILER,ED neutral,tired 0-1 normal normal m
+164 D LORTEL,LORTEL KEHELN surprised,neutral 0-1 normal normal f
+165 N
+166 D LORTEL,LORTEL KEHELN surprised,happy,sarcastic 0-1 normal normal f
+167 D LORTEL,LORTEL KEHELN happy,sarcastic,excited 0-1 normal normal f
+168 N
+169 D LORTEL,LORTEL KEHELN sarcastic,happy 0-1 normal normal f
+170 D LORTEL,LORTEL KEHELN sarcastic,happy,tender 0-1 normal normal f
+171 N
+172 D LORTEL,LORTEL KEHELN happy,sarcastic 0-1 normal normal f
+173 D ED ROSTAILER,ED tired,neutral,sarcastic 0-1 normal normal m
+174 D LORTEL,LORTEL KEHELN happy,neutral,tender 0-1 normal normal f
+175 D ED ROSTAILER,ED neutral 0-1 normal normal m
+176 D LORTEL,LORTEL KEHELN happy,surprised 0-1 normal normal f
+177 N
+178 N
+179 D LORTEL,LORTEL KEHELN happy,neutral,sad 0-1 normal normal f
+180 D ED ROSTAILER,ED surprised,neutral 0-1 normal normal m
+181 D LORTEL,LORTEL KEHELN neutral,tired,sad 0-1 normal normal f
+182 N
+183 N
+184 D LORTEL,LORTEL KEHELN neutral,tired 0-1 normal normal f
+185 D LORTEL,LORTEL KEHELN neutral,tired,afraid 0-1 normal normal f
+186 N
+187 D LORTEL,LORTEL KEHELN neutral,tired 0-1 normal normal f
+188 D ED ROSTAILER,ED surprised,neutral 0-1 normal normal m
+189 D LORTEL,LORTEL KEHELN neutral 0-1 normal normal f
+190 N
+191 N
+192 D LORTEL,LORTEL KEHELN neutral,tired,sarcastic 0-1 normal normal f
+193 D ED ROSTAILER,ED neutral 0-1 normal normal m
+194 D LORTEL,LORTEL KEHELN neutral,tired 0-1 normal normal f
+195 N
+196 D LORTEL,LORTEL KEHELN happy,neutral,excited 0-1 normal normal f
+197 D ED ROSTAILER,ED neutral,tender,sarcastic 0-1 normal normal m
+198 D LORTEL,LORTEL KEHELN happy,sarcastic,excited 0-2 normal normal f
+199 N
+200 N
+201 D LORTEL,LORTEL KEHELN happy,surprised,neutral 0-1 normal normal f
+202 N
+203 D ED ROSTAILER,ED neutral 0-1 normal normal m
+204 D LORTEL,LORTEL KEHELN surprised,neutral 0-1 normal normal f
+205 D ED ROSTAILER,ED neutral,happy 0-1 normal normal m
+206 D LORTEL,LORTEL KEHELN surprised,neutral 0-1 normal normal f
+207 N
+208 N
+209 N NARRATOR neutral,afraid,surprised 0-1 normal normal u
+210 N,T NARRATOR,ED ROSTAILER~,ED~ neutral,sarcastic,surprised 0-1 normal normal u
+211 D LORTEL,LORTEL KEHELN afraid,sad,surprised 1-2 slow,normal soft,normal f
+212 N
+213 D ZIX,ZIX EFFELSTEIN,NPC*~ neutral,happy 0-1 normal normal m
+214 N
+215 N
+216 D ED ROSTAILER,ED neutral,happy 0-1 normal normal m
+217 D ZIX,ZIX EFFELSTEIN neutral,happy 0-1 normal normal m
+218 D ED ROSTAILER,ED surprised,neutral 0-1 normal normal m
+219 N
+220 N
+221 N
+222 N
+223 N,T NARRATOR neutral 0-1 normal normal u
+224 N
+225 N,T NARRATOR neutral 0-1 normal normal u
+226 N
+227 N
+228 N
+229 N
+230 N
+231 N
+232 N
+233 D ZIX,ZIX EFFELSTEIN neutral 0-1 normal normal m
+234 D ED ROSTAILER,ED neutral,tender 0-1 normal normal m
+235 D ZIX,ZIX EFFELSTEIN neutral,happy 0-1 normal normal m
+236 N,T NARRATOR,ED ROSTAILER~,ED~ neutral,sarcastic,tired 0-1 normal normal u
+237 D ED ROSTAILER,ED neutral 0-1 normal normal m
+238 D ZIX,ZIX EFFELSTEIN surprised,neutral 0-1 normal normal m
+239 D ED ROSTAILER,ED neutral,happy 0-1 normal normal m
+240 N
+241 N
+242 N
+243 N
+244 N
+245 N
+246 N
+247 N
+248 N
+249 D ZIX,ZIX EFFELSTEIN,NPC*~ neutral,tired,whispering 0-1 normal,slow soft,normal m
+250 N,T NARRATOR,ZIX,ZIX EFFELSTEIN neutral,tired 0-1 normal normal u
+251 N
+252 N,T NARRATOR,ZIX,ZIX EFFELSTEIN neutral 0-1 normal normal u
+253 N
+254 N
+255 N
+256 N
+257 D ZIX,ZIX EFFELSTEIN neutral,tired,whispering 0-1 normal,slow soft,normal m
+258 N
+259 N

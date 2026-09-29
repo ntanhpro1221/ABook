@@ -602,3 +602,22 @@ xuống ~ (tiền lệ Đã bảo 050:32); 69 thêm YENNICA~ ("Hựp" là tiến
 155/81/24/158 afraid ("lo lắng"), 15 surprised ("Không ngờ"), 186-189 sad. Host sai (giữ đáp án): 50 "không phải là một tội
 lỗi đáng chết" (chữ phủ định ngoài cửa sổ của host), 109. SPLIT["test"] thêm "130". `voice_identity --gold-check`: hdst 13
 người, không nhập ai. Phát lại: 100/100.
+
+## Hướng dẫn sinh tồn 086 (29-09): gold HUẤN LUYỆN dạy giữ lượt - A Claude, B agent soát đối kháng
+
+B không tìm ra lỗi người nói chính nào (xưng hô nhất quán: Lortel "em" với Ed, "tôi" chỉ ở 66 khi nói với nhân viên; Ed "tôi",
+gọi Lortel "cô"). Nhận các đề nghị sau:
+
+| câu | A | kết luận | lý do |
+|---|---|---|---|
+| 27, 37, 41, 44 | CLAVIUS | + CLAVIUS NORTONDALE đủ điểm | tên đủ ở 068, 079, 092 (quy tắc 11); bộ chấm so tên tuyệt đối |
+| 57 | LORTEL | + NPC*~ | tới 57 vẫn "một cô gái quen mặt", tên chỉ ở 62 (quy tắc 5), như 53 |
+| 106, 111 | NPC*:chủ tiệm bánh Laplace | + UNKNOWN~ | có manh mối thì UNKNOWN~ (quy tắc 5) |
+| 31 | N | N,T, CLAVIUS~ | ngôi ba, một câu tự nhủ cuối đoạn kể về Clavius (quy tắc 4) |
+| 32 | N | N,T, CLAVIUS đủ | cả đoạn là suy nghĩ nối 31, như 250 (Zix) |
+| 210, 236 | N | N,T, ED~ | phản ứng tức thời của người kể "tôi" trong đoạn kể về người khác |
+| 142 | neutral | + sad | "tuyệt vọng", "nén lại sự uất hận" |
+| 66 | neutral,tender | + whispering, happy | 67 "vừa chống cằm mỉm cười... nói nhỏ" |
+
+Sửa ghi chú đầu file: lượt im p145 là của Lortel (không phải Ed), p20 thuộc cảnh Clavius, cảnh Clavius tới 47; ghi các câu host
+bắt từ cảm xúc mà đáp án giữ neutral (5, 12, 22, 101). gold_replay qua host + score_models 100% sau khi sửa.

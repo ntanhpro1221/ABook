@@ -240,6 +240,42 @@ Giúp nhẹ, rõ hơn khi truyện đông người.
 
 **Phiên bản Ollama không đổi đầu ra.** Trên Mac, v3 chạy bằng 0.33.2 và 0.34.4 ra đúng từng số. Mac lệch nhà 4 điểm là do phần cứng (Metal so với CUDA), nên số đo trên Mac chỉ so với số đo trên Mac.
 
+## v6 29-09 07:2x - KẾT QUẢ ÂM: dữ liệu "nhắm lỗi" làm tệ đúng loại câu nó nhắm
+
+v6 = công thức v3 trên data_v6 (2057 mẫu = thành phần v3 + 4 chương thêm để nhắm lỗi 『』 và đối đáp ngôi thứ nhất: LU 03,
+Nageki 53, TCF 107, Yamiyo 009; tên theo sách, không chương cổng). LN gốc 6 chương: F1 giọng 55,8 vs v3 57,4 (-1,7, KTC95
+-3,9..+0,4), người nói chặt 58,7 vs 63,7, hơn 2 thua 4. Theo loại (scratchpad ln_categories.py): 『』 43,6 -> 23,1; đối đáp
+liền 68,5 -> 57,7; các loại khác gần như cũ.
+
+Soi (bracket_flip.py): TCF 107 có 18 câu 『』 là "KÝ SINH TRÙNG" nói (thần giao); TCF 042 (chương thi) có 35 câu 『』 là LỜI
+KỂ (đáp án NARRATOR, chấp nhận vai phụ). v3 gán chúng cho vai phụ cục bộ (được tính), v6 gán 15 câu cho KUCHINASHI - học
+"『』 = một thực thể đang nói" từ 107. **Nghĩa của 『』 đổi theo chương ngay trong một truyện**: thêm vài chương cùng kiểu
+dạy model một liên tưởng của truyện chứ không dạy cách đọc ngữ cảnh. Linh thể TỌA PHU ĐỒNG TỬ (Yamiyo 141, tên CÓ trong
+chương) vẫn không model nào nhận ra, kể cả sau khi học Yamiyo 009.
+
+Bài học: dữ liệu nhắm một loại lỗi phải có nhiều truyện, nhiều nghĩa của cùng một dấu hiệu - không phải vài chương của một
+truyện. Đối chứng v6b (data_v6 bỏ 4 chương, 1717 mẫu ~ data_v3 1727) đã xếp hàng trước v7; luật đặt trước: v6b hơn v6 >= 1,0
+F1 trên 12 chương LN thì v7/v8/q35 học bản bỏ 4 chương (hàng tự quyết, scratchpad choose_composition.py).
+
+## ĐỘ TIN CỦA THƯỚC LN 29-09 05:xx - sổ "nhân vật đã biết" trống trong bộ đo, đầy trong sách thật
+
+Bộ đo `--book` (LN, các cổng) tạo project trống cho MỖI chương: prompt mở đầu "(Chưa có nhân vật đã biết)". Sách thật tới
+chương 141 có sổ tới 80 người từ các chương trước (`_known_summary`: tên, số lần gặp, giới). Thước quyết định model đo một
+điều kiện mà sản xuất chỉ gặp ở chương đầu.
+
+Đo bằng CPU (scratchpad `cast_absent.py`): 133/722 câu có tên trong 12 chương LN có người nói KHÔNG được nhắc tên trong
+chương, cả 133 đều có ở chương trước - nhưng 130 câu là của người kể "tôi" (TOMOBE Yamiyo 62, KAKERU LU 54, KRAI Nageki 13)
+mà prompt đã nêu qua `--first-person`. Chỉ 3 câu thật sự vắng tên. (Tôi đã nhầm lúc đầu: TOMOBE là người kể, không phải
+linh thể nói trong 『』 - linh thể là TỌA PHU ĐỒNG TỬ và tên có trong chương.) Vậy không có nhóm câu "không thể đoán";
+câu hỏi còn lại là model dùng một sổ thật tốt hay bị nó kéo lệch - 21-09 trên cuốn 2 (`LLM_EVAL.md`, `no-counts`): số đếm
+kéo model về người nổi tiếng, cơ chế thật, lợi ròng ~0 với qwen3:8b. Với LoRA (học phần lớn trên sổ ngắn: replay gom các
+chương gold THƯA của một truyện vào một project) thì chưa ai đo.
+
+Công cụ: `seed_gold_cast.py` + `eval_models.py --seed-gold-cast` gieo sổ từ đáp án các chương SỐ NHỎ HƠN chương đo (sách
+thật không biết tương lai). Lượt đầu (Mac, cùng máy cho hai điều kiện): v3 trên Nageki 65 (gieo 8 người) và Yamiyo 225
+(13 người), xen kẽ tắt/bật. **Luật đặt trước khi có số:** hiệu người nói/F1 giọng trong ±3 điểm trên cả hai chương = thước
+LN hiện tại đủ tin, giữ nguyên; lệch cùng chiều quá 3 điểm = đo lại các model ứng viên có gieo trước khi chọn mặc định.
+
 ## BỘ ĐO LN 28-09 10:xx - chưa model nào từng được đo trên LN Nhật
 
 Soát lại tập dữ liệu: test của LoRA chỉ có TMA (Trung, 4 chương) + YMP (Hàn, 1 chương); mọi chương LN Nhật có đáp án (1-2
