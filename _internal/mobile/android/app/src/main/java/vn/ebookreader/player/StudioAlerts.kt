@@ -20,7 +20,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 /**
- * Báo về điện thoại khi máy tính sản xuất có tin: sách xong, dừng vì lỗi, dừng giữa chừng, có thêm "việc cần anh".
+ * Báo về điện thoại khi máy tính sản xuất có tin: sách xong, dừng vì lỗi, dừng giữa chừng, có thêm "việc cần bạn".
  *
  * Máy tính trả trạng thái gọn của mọi dự án (`GET /sync/v1/studio`, webui/sync.py SyncApp.studio_view) - chỉ cho thiết bị
  * được phép điều khiển sản xuất, khi công tắc Studio từ xa đang bật. Điện thoại tự so với lần hỏi trước (ảnh chụp trong
@@ -108,7 +108,7 @@ object StudioAlerts {
             val now = book.optInt("work")
             val was = old.optInt("work")
             if (now > was) {
-                post(context, "$id:work", "$title: $now việc cần anh",
+                post(context, "$id:work", "$title: $now việc cần bạn",
                     "Thêm ${now - was} chỗ máy chưa chắc. Sửa không phải dừng sách.", "/#/studio/$id?tab=work")
             }
         }
@@ -120,7 +120,7 @@ object StudioAlerts {
         if (Build.VERSION.SDK_INT >= 26 && manager.getNotificationChannel(CHANNEL) == null) {
             manager.createNotificationChannel(
                 NotificationChannel(CHANNEL, "Studio trên máy tính", NotificationManager.IMPORTANCE_DEFAULT).apply {
-                    description = "Sách xong, dừng vì lỗi, có việc mới cần anh"
+                    description = "Sách xong, dừng vì lỗi, có việc mới cần bạn"
                 },
             )
         }

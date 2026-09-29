@@ -12,7 +12,7 @@ import { Button, EmptyState, IconButton, Kbd, Segmented, Skeleton } from "@/shar
 import { api, urls } from "./api";
 
 // Tab "Kịch bản" (webui/casting_review.py, docs/STUDIO_REVIEW.md mục 3): đọc cả chương như kịch bản - câu nào của ai - và
-// đổi người nói của bất kỳ câu thoại hay nội tâm nào. Hộp "Việc cần anh" chỉ đưa ra chỗ máy nghi; ở đây người nghe duyệt
+// đổi người nói của bất kỳ câu thoại hay nội tâm nào. Hộp "Việc cần bạn" chỉ đưa ra chỗ máy nghi; ở đây người nghe duyệt
 // cả chương. Sửa đi đúng đường của thẻ "Ai nói câu này" (POST /speaker -> overrides.json -> dây chuyền áp ở ranh giới
 // chương, câu đã thu thì thu lại), nên không có gì phải chờ; mỗi lần sửa hay xác nhận là một nhãn cho vòng học.
 
@@ -713,7 +713,7 @@ function ChapterScriptView({
   script: ChapterScript;
   filter: Filter;
   who: string | null;
-  /** Mở từ thẻ "Việc cần anh" (Tìm trong truyện…): tới câu này và mở sẵn ô chọn người nói. */
+  /** Mở từ thẻ "Việc cần bạn" (Tìm trong truyện…): tới câu này và mở sẵn ô chọn người nói. */
   wantedLine?: string | null;
 }) {
   const assign = useAssign(bookId, script.chapterId);
@@ -757,7 +757,7 @@ function ChapterScriptView({
     element?.focus({ preventScroll: true });
     element?.scrollIntoView({ block: "nearest" });
   };
-  // Câu được mở từ thẻ "Việc cần anh": tới đó một lần và mở ô chọn người nói (tìm được mọi người trong truyện).
+  // Câu được mở từ thẻ "Việc cần bạn": tới đó một lần và mở ô chọn người nói (tìm được mọi người trong truyện).
   const openedLine = useRef<string | null>(null);
   useEffect(() => {
     if (!wantedLine || openedLine.current === wantedLine) return;
@@ -981,7 +981,7 @@ export function ScriptTab({ bookId }: { bookId: string }) {
           {!data.castReady && (
             <p className="mt-4 flex items-start gap-2 rounded-xl bg-info-soft p-3 text-sm text-fg">
               <Clock className="mt-0.5 size-4 shrink-0 text-info" />
-              Người nói sửa được sau bước phân vai - lúc ấy mỗi nhân vật mới có giọng để gán. Giờ anh vẫn đọc được kịch bản máy
+              Người nói sửa được sau bước phân vai - lúc ấy mỗi nhân vật mới có giọng để gán. Giờ bạn vẫn đọc được kịch bản máy
               đang hiểu.
             </p>
           )}

@@ -1,4 +1,4 @@
-"""Chấm một cuốn sách THẬT bằng bộ chấm ứng viên, ghi `doubt.json` cạnh sách cho hộp "Việc cần anh" (STUDIO_REVIEW.md).
+"""Chấm một cuốn sách THẬT bằng bộ chấm ứng viên, ghi `doubt.json` cạnh sách cho hộp "Việc cần bạn" (STUDIO_REVIEW.md).
 
     CUDA_VISIBLE_DEVICES=-1 D:/Novels/LLM_Train/.venv/Scripts/python.exe \
         scripts/model_eval/quote_scorer/doubt_for_book.py <thư mục sách> --scorer D:/Novels/LLM_Train/runs/scorer_prod_27_09
