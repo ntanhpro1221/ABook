@@ -60,7 +60,9 @@ mẹ 4, người qua đường 1). Đám đông để trơn: lính Toà án dị
 - Nageki 62: 8B gán 21/25 câu của bà thầy bói cho LUCIA (em gái Krai). Người nghe nghe một bà lão bằng giọng cô gái trẻ.
 - Yamiyo 225: 8B gán 12/22 câu của Gensei cho Azuma. v3 thì TÁCH Gensei: nhãn chức danh "Thủ lĩnh Âm Dương Liêu" 10 câu.
 - Ngược lại LU 07: 8B giữ mẹ Kakeru riêng 11/11, v3 nhập 6/11.
-- Đây là chỗ v7 nhắm tới (dữ liệu dạy nhãn cục bộ có mô tả cho từng người lạ).
+- Đây là chỗ v7 nhắm tới (dữ liệu dạy nhãn cục bộ có mô tả cho từng người lạ). Kiểm tiền đề trên đáp án mẫu của tập huấn
+  luyện: data_v6 dạy 174/176 câu người lạ bằng MỘT nhãn "người lạ"; data_v7 dạy 50 mô tả khác nhau ("nữ hầu cận của
+  Marla", "trưởng thôn"...), không còn "người lạ" nào. v7 có giảm việc nhập không: `ln_strangers.py` khi v7 đo xong.
 
 **Dò việc nhập bằng xưng hô, không cần huấn luyện lại (thẻ 0c "hai người chung một tên", `address_cues.split_doubts`).**
 Bà thầy bói nói "ta… cậu" với Krai; Lucia nói "anh… bà" - hai bộ từ không bao giờ đi chung một câu. Gom các từ xưng hô của
