@@ -7,6 +7,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Studio (sản xuất sách nói)
+
+- **Làm tiếp cuốn này**: truyện dài làm được nhiều đợt mà không đổi giọng giữa chừng. Ở trang dự án, nút "Làm tiếp cuốn
+  này" (hiện khi thư mục truyện có chương mới sau chương cuối; luôn có trong menu "…") mở trình tạo sách đã điền sẵn các
+  chương kế tiếp, tên "(phần 2)", giọng kể, chất lượng và người xưng "tôi" của phần trước. Phần mới mang theo giọng của
+  từng nhân vật đã gặp, cách đọc tên (kể cả cách đọc đã chọn trong "Việc cần duyệt"), ghim giới tính/tuổi và danh sách
+  nhân vật đã biết cho bước phân tích; trình tạo nói trước sẽ mang theo bao nhiêu. Dòng lệnh: `create --seed-from`.
+
 ## [0.4.0] - 2026-09-29
 
 ### Điểm chính

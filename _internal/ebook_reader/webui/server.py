@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any, Callable, Protocol
 from urllib.parse import parse_qs, unquote, urlsplit
 
-from .. import listener_overrides
+from .. import continuation, listener_overrides
 from . import actions, bookfile, cover_search, covers, humanize, listen_view, packages, store
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, legacy_ids
@@ -416,6 +416,9 @@ class App:
     def create(self, body: dict[str, Any]) -> dict[str, Any]:
         self._mutating()
         paths = [str(item) for item in body.get("paths", [])]
+        # "Làm tiếp cuốn này": phần mới gieo từ phần trước (continuation.py) - tìm phần trước TRƯỚC khi tạo, để id sai
+        # không để lại một dự án mồ côi.
+        previous = self._book(str(body["seedFrom"])) if body.get("seedFrom") else None
         root = actions.create_book(
             self.library.root, paths, str(body.get("title", "")), str(body.get("profile", "high_quality")),
             humanize.voice_key(str(body.get("narrator", ""))), str(body.get("firstPerson", "")),
@@ -424,11 +427,22 @@ class App:
             if isinstance(body.get("firstPersonChapters"), dict) else None,
         )
         self.preferences.add_recent(root)
+        if previous is not None:
+            # Giữa lúc tạo và lúc chạy - sau khi chạy là quá muộn (đổi cách đọc tên làm trôi chữ dưới audio đã có).
+            try:
+                continuation.seed(previous, root)
+            except continuation.ContinuationError as error:
+                raise ApiError(HTTPStatus.CONFLICT,
+                               f"Đã tạo sách nhưng không mang được gì từ phần trước: {error}") from error
         if body.get("start"):
             # Qua hàng đợi như nút "Bắt đầu": cuốn đang chạy thì cuốn mới xếp hàng, không tranh GPU (soát 28-09 - trước
             # đây "Tạo + bắt đầu ngay" chạy song song với cuốn đang sản xuất).
             self.start(book_id(root))
         return {"id": book_id(root)}
+
+    def continuation(self, value: str) -> dict[str, Any]:
+        """"Làm tiếp cuốn này": chương kế tiếp, cài đặt và thứ sẽ mang theo - trình tạo sách điền sẵn từ đây."""
+        return store.continuation_plan(self._book(value))
 
     def open_existing(self, body: dict[str, Any]) -> dict[str, Any]:
         path = Path(str(body.get("path", ""))).expanduser()
@@ -991,6 +1005,9 @@ class Handler(BaseHTTPRequestHandler):
         # "Việc cần duyệt" (docs/STUDIO_REVIEW.md): chỗ máy nghi ngờ, xếp theo lợi trên mỗi lần bấm.
         self._send_json(HTTPStatus.OK, work_items(self.app._book(value)))
 
+    def get_continuation(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.continuation(value))
+
     def get_casting(self, _query: dict[str, list[str]], value: str) -> None:
         # Tab "Kịch bản" (casting_review.py): chương nào bao nhiêu câu thoại, bao nhiêu chỗ máy nghi, bao nhiêu câu đã quyết.
         self._send_json(HTTPStatus.OK, casting_chapters(self.app._book(value)))
@@ -1511,6 +1528,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(BOOK + r"/review"), Handler.get_review),
     ("GET", re.compile(BOOK + r"/work"), Handler.get_work),
     ("GET", re.compile(BOOK + r"/casting"), Handler.get_casting),
+    ("GET", re.compile(BOOK + r"/continuation"), Handler.get_continuation),
     ("GET", re.compile(BOOK + r"/casting/(\d+)"), Handler.get_casting_chapter),
     ("POST", re.compile(BOOK + r"/review"), Handler.post_review),
     ("POST", re.compile(BOOK + r"/pronunciation"), Handler.post_pronunciation),
