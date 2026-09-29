@@ -94,7 +94,10 @@ Android Auto bật chế độ nhà phát triển (chạm nhiều lần vào s�
    lại những câu bị ảnh hưởng.
 
 Có thể đóng app hay tắt máy bất kỳ lúc nào; mở lại là làm tiếp từ chỗ dừng. Riêng giai đoạn **phân tích** (trước khi
-chương đầu tiên được thu) nên để chạy liền một mạch: dừng giữa chừng rồi chạy tiếp có thể cho ra cách phân vai khác.
+chương đầu tiên được thu) nên để chạy liền một mạch: dừng giữa chừng rồi chạy tiếp có thể cho ra cách phân vai khác. Cần
+máy rảnh một lúc thì bấm **"Tạm dừng"** thay vì "Dừng": sách đứng yên và làm tiếp đúng chỗ, an toàn cả lúc phân tích.
+Máy tính xách tay rút sạc thì Studio tự tạm dừng (chạy pin làm sách rất chậm mà hao pin) và tự làm tiếp khi cắm lại; tắt
+ở Cài đặt → Studio.
 
 **Truyện dài, làm nhiều đợt**: khi thư mục truyện có chương mới (truyện còn ra tiếp, hay lần đầu chỉ làm vài chục chương),
 trang dự án hiện nút **"Làm tiếp cuốn này"**. Phần mới ("Tên · Phần 2") giữ nguyên giọng của mọi nhân vật đã gặp, cách
