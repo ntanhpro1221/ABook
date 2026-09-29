@@ -8,7 +8,7 @@ import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
 import { Button } from "@/shared/ui";
 import { api, urls } from "./api";
-import { refreshAfterDecision, UNDO_MS, undoAction } from "./decisions";
+import { refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied } from "./decisions";
 
 // Tab Nhân vật, mục "Cách đọc tên" (webui/name_readings.py): mọi tên riêng máy đọc thế nào - kể cả tên máy chắc và cách
 // người nghe đã chọn, hai thứ hộp việc không bao giờ hỏi lại. Sửa ở đây đi đúng đường của thẻ cách đọc: ghi mong muốn,
@@ -229,6 +229,7 @@ export function NameInLine({ bookId, item }: { bookId: string; item: NameReading
 
 function EditReading({ bookId, item, onDone, fresh }: { bookId: string; item: NameReading; onDone: () => void; fresh: boolean }) {
   const client = useQueryClient();
+  const when = useWhenApplied(bookId);
   const [value, setValue] = useState(item.requested ?? item.spoken);
   const [problem, setProblem] = useState("");
   const save = useMutation({
@@ -263,7 +264,7 @@ function EditReading({ bookId, item, onDone, fresh }: { bookId: string; item: Na
       toast.success(`Đã ghi: “${item.surface}” đọc là “${spokenForm}”`, {
         // Tên chưa có câu nào trong phần này (vừa thêm): không có gì để thu lại - nói đúng điều ấy (soát UX 29-09).
         description: item.lines
-          ? "Các câu có tên này sẽ được thu lại. Thu lại khi sách chạy tiếp - sách đã xong thì bấm “Áp dụng thay đổi” ở trang dự án."
+          ? `Các câu có tên này sẽ được thu lại. ${when}`
           : "Phần này chưa có câu nào có tên này - cách đọc sẽ được dùng khi tên xuất hiện.",
         ...undo,
       });

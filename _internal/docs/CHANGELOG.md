@@ -10,6 +10,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Nghe sách - máy tính và điện thoại
 
 - Chế độ đọc: "Nghe từ đây" nghe tiếp từ câu đang dừng nếu câu ấy còn trên màn hình, không lùi về câu đầu màn hình.
+- Chạm một câu rồi nghe từ câu ấy: thông báo trích câu ("Nghe từ “Cậu ấy nói rằng hôm nay…”") thay cho "Đã tới 0:41";
+  nhảy tới dấu trang có ghi chú thì thông báo nói ghi chú ấy. "Quay lại" trên thông báo giữ nguyên.
 
 ### Studio (sản xuất sách nói)
 
@@ -17,6 +19,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   nữ", "Câu này của Natasha", "“St. Kati” là Kati". Thẻ gộp tên từng ghi nhầm "“Hai người khác nhau” là Kati".
 - "Đã hoàn tác" nói cụ thể điều gì trở lại ("“Lucien” lại đọc là “Lu-si-en”", "Câu này lại là của Ali", hay "Trở lại
   quyết định trước: …").
+- Thông báo sau khi sửa (cách đọc tên, người nói, giọng, cách đọc một câu) chỉ nói điều đúng với sách này: sách đang chạy
+  thì "máy áp ở ranh giới chương kế tiếp", sách đang dừng thì "thu lại khi sách chạy tiếp", sách đã xong thì "bấm “Áp dụng
+  thay đổi”" - trước đây thông báo nào cũng nói cả hai vế.
+- Đổi giọng một nhân vật trong hộp chọn giọng cũng có "Hoàn tác" trên thông báo.
 
 ## [0.4.7] - 2026-09-29
 
