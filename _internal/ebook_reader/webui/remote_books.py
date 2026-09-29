@@ -205,11 +205,11 @@ def refresh(library_root: Path, computers: Computers) -> dict[str, Any]:
         try:
             library = json.loads(_request(_base(entry), "GET", "/sync/v1/library", entry["token"]).decode("utf-8"))
             folder = root / _folder(str(library.get("name") or entry["name"]), public["id"])
+            listed = [str(book["id"]) for book in library.get("books") or [] if isinstance(book, dict) and book.get("id")]
+            _follow_renamed(entry, public["id"], folder, set(listed))
             books = 0
-            for book in library.get("books") or []:
-                if not isinstance(book, dict) or not book.get("id"):
-                    continue
-                _refresh_book(entry, public["id"], folder, str(book["id"]))
+            for book in listed:
+                _refresh_book(entry, public["id"], folder, book)
                 books += 1
             computers.note(public["id"], lastSeen=time.time(), error="", name=str(library.get("name") or entry["name"]))
             report[public["id"]] = {"books": books}
@@ -219,10 +219,62 @@ def refresh(library_root: Path, computers: Computers) -> dict[str, Any]:
     return report
 
 
+def _manifests(folder: Path, suffix: str = "") -> list[tuple[Path, dict[str, Any]]]:
+    """(thư mục, book.json) các cuốn ảo trong `folder` - chỉ những thư mục có tên kết thúc bằng `suffix` nếu có."""
+    found = []
+    for child in folder.iterdir() if folder.is_dir() else []:
+        if suffix and not child.name.endswith(suffix):
+            continue
+        try:
+            manifest = json.loads((child / MANIFEST).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if isinstance(manifest, dict):
+            found.append((child, manifest))
+    return found
+
+
+def _write_manifest(target: Path, manifest: dict[str, Any]) -> None:
+    temporary = target / (MANIFEST + ".tmp")
+    temporary.write_text(json.dumps(manifest, ensure_ascii=False), encoding="utf-8")
+    temporary.replace(target / MANIFEST)
+
+
+def _follow_renamed(entry: dict[str, Any], computer: str, folder: Path, listed: set[str]) -> None:
+    """Máy kia đổi mã sách (mã kiểu cũ -> mã mới, docs/BOOK_IDS.md): cuốn ảo dựng theo mã cũ hỏi máy kia mã
+    mới (`/sync/v1/match` nhận ra mã cũ của chính nó) rồi đổi trong book.json. Thư mục giữ nguyên - mã sách ở máy này,
+    chỗ nghe, file đã tải đều giữ; không thì máy này hiện hai bản của một cuốn. Máy kia chưa nâng cấp: không cuốn nào lệch
+    mã, không hỏi gì."""
+    stale = {}
+    for child, manifest in _manifests(folder):
+        remote = remote_of(manifest)
+        if remote and remote["computer"] == computer and remote["book"] not in listed:
+            stale[remote["book"]] = (child, manifest)
+    if not stale:
+        return
+    try:
+        reply = json.loads(_request(_base(entry), "POST", "/sync/v1/match", entry["token"],
+                                    {"books": [{"key": key} for key in stale]}).decode("utf-8"))
+    except (RemoteError, ValueError):
+        return
+    matches = reply.get("matches") if isinstance(reply, dict) else None
+    taken = {remote_of(manifest)["book"] for _child, manifest in _manifests(folder) if remote_of(manifest)}
+    for old, new in (matches.items() if isinstance(matches, dict) else []):
+        # mã mới phải là cuốn máy kia đang liệt kê, và chưa có cuốn ảo nào mang nó (có rồi thì để nguyên cả hai)
+        if old not in stale or not isinstance(new, str) or new not in listed or new in taken:
+            continue
+        child, manifest = stale[old]
+        manifest["package"]["remote"]["book"] = new
+        _write_manifest(child, manifest)
+        taken.add(new)
+
+
 def _refresh_book(entry: dict[str, Any], computer: str, folder: Path, book: str) -> None:
     manifest = json.loads(_request(_base(entry), "GET", f"/sync/v1/books/{book}/manifest", entry["token"]).decode("utf-8"))
     title = str(manifest.get("title") or "Sách")
-    target = folder / _folder(title, hashlib.sha256(book.encode()).hexdigest())
+    # cuốn ảo đã có (kể cả dựng theo mã cũ rồi đổi mã, `_follow_renamed`: tên thư mục mang dấu của mã cũ)
+    target = next((child for child, known in _manifests(folder) if remote_of(known) == {"computer": computer, "book": book}),
+                  folder / _folder(title, hashlib.sha256(book.encode()).hexdigest()))
     target.mkdir(parents=True, exist_ok=True)
     previous: dict[str, Any] = {}
     try:
@@ -233,9 +285,7 @@ def _refresh_book(entry: dict[str, Any], computer: str, folder: Path, book: str)
     new_cover = manifest.get("cover") if isinstance(manifest.get("cover"), dict) else None
     old_cover = previous.get("cover") if isinstance(previous.get("cover"), dict) else None
     if manifest != previous:
-        temporary = target / (MANIFEST + ".tmp")
-        temporary.write_text(json.dumps(manifest, ensure_ascii=False), encoding="utf-8")
-        temporary.replace(target / MANIFEST)
+        _write_manifest(target, manifest)
     # Bìa: nhỏ, cần ngay cho thư viện - tải luôn (khi đổi phiên bản), không đợi người mở.
     if new_cover and (new_cover != old_cover or not (target / "cover.jpg").is_file()):
         try:
@@ -270,15 +320,11 @@ def local_book(library_root: Path, computer: str, book: str) -> Path | None:
     root = Path(library_root).expanduser() / REMOTE_FOLDER
     mark = f"({hashlib.sha256(book.encode()).hexdigest()[:8]})"
     for folder in root.glob(f"*({computer[:8]})") if root.is_dir() else []:
-        for child in folder.iterdir():
-            if not child.name.endswith(mark):
-                continue
-            try:
-                manifest = json.loads((child / MANIFEST).read_text(encoding="utf-8"))
-            except (OSError, ValueError):
-                continue
-            if remote_of(manifest) == {"computer": computer, "book": book}:
-                return child
+        # thư mục mang dấu của mã trước (nhanh: giao diện hỏi mỗi 1,5 giây); cuốn đổi mã (`_follow_renamed`) giữ tên cũ
+        for suffix in (mark, ""):
+            for child, manifest in _manifests(folder, suffix):
+                if remote_of(manifest) == {"computer": computer, "book": book}:
+                    return child
     return None
 
 

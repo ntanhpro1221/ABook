@@ -7,6 +7,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- **Riêng tư: mã sách không còn chứa đường dẫn thư mục.** Link một cuốn sách (`#/book/…`, cả khi nghe từ xa bằng trình
+  duyệt trên iPhone, iPad) trước đây giải ra được đường dẫn thư mục, tức lộ tên tài khoản Windows và tên truyện qua link
+  chia sẻ hay ảnh chụp màn hình. Giờ là một mã ngắn không giải ngược được. Link cũ vẫn mở đúng cuốn.
 - Studio: **sửa một cuốn đã xong** giờ có đường áp dụng. Sửa người nói, giọng, cách đọc tên hay cách đọc một câu sau
   khi sách đã "Hoàn tất" thì trang dự án hiện nút **"Áp dụng N thay đổi"**. Bấm là chỉ thu lại những câu bị ảnh hưởng,
   không làm lại cả cuốn. Trước đây các thay đổi ấy chờ mãi một "lần chạy tới" không bao giờ đến. Tab Nhân vật ghi
@@ -268,6 +271,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Sách đang làm dở từ bản trước **không tiếp tục được** (khâu phân tích đã đổi) - tạo sách mới từ cùng nguồn.
 - Dữ liệu nghe (chỗ đang nghe, dấu trang, lịch sử) chuyển sang dạng **hồ sơ nghe** độc lập với sách, tự động khi mở app:
   mỗi cuốn đang nghe thành một hồ sơ "Mặc định", máy tính và điện thoại nhận ra là cùng một hồ sơ. Không mất gì.
+- Mã sách đổi sang dạng mới (không chứa đường dẫn). Chỗ nghe, hồ sơ nghe, phán quyết nghe lại tự chuyển sang mã mới khi
+  mở app lần đầu; bản trước khi chuyển được giữ cạnh file gốc (`*.pre-ids.bak`). Máy tính khác đã ghép tự nhận ra sách
+  cũ của máy này dưới mã mới.
 - Android: app đổi mã thành `com.ngdtuanh.abook`, nên ABook cài thành **một app mới** bên cạnh "Ebook Reader" cũ, không
   mang theo sách đã tải hay chỗ đang nghe. Ghép nối lại với máy tính, tải lại sách (chỗ nghe đồng bộ từ máy tính về), rồi
   gỡ app cũ.
