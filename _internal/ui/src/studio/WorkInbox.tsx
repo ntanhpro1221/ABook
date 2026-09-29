@@ -149,7 +149,7 @@ function Example({ bookId, example }: { bookId: string; example: WorkExample }) 
 
 // Sửa cách đọc một tên ngay trên thẻ. Không chờ gì: ghi xong là xong phần người; dây chuyền áp ở ranh giới chương kế
 // tiếp (hoặc lần chạy tới) và thu lại đúng những câu có tên ấy - kể cả sách đã xong.
-function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item: WorkItem; onOpenNames?: () => void }) {
+function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item: WorkItem; onOpenNames?: (name: string) => void }) {
   const client = useQueryClient();
   const pending = useContext(PendingHint);
   const [value, setValue] = useState(item.requested ?? item.current);
@@ -170,19 +170,17 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
       ]);
       // Giữ đúng cách máy đang đọc thì không có gì để thu lại - soát UX 29-09: báo "sẽ thu lại" làm người nghe hoảng.
       if (keep) {
-        toast.success(`Giữ cách đọc "${spokenForm}"`, { description: "Không phải thu lại câu nào.", action, duration: UNDO_MS });
+        toast.success(`Giữ cách đọc “${spokenForm}”`, { description: "Không phải thu lại câu nào.", action, duration: UNDO_MS });
         return;
       }
-      toast.success(`Đã ghi: "${item.surface}" đọc là "${spokenForm}"`, {
+      toast.success(`Đã ghi: “${item.surface}” đọc là “${spokenForm}”`, {
         description: "Các câu có tên này sẽ được thu lại. Thu lại khi sách chạy tiếp - sách đã xong thì bấm “Áp dụng thay đổi” ở trang dự án.",
         action,
         duration: UNDO_MS,
       });
     },
-    onError: (error: Error) => {
-      setProblem(error.message);
-      toast.error("Chưa ghi được cách đọc", { description: error.message });
-    },
+    // Lỗi chỉ nằm dưới ô nhập - thêm toast là báo một lỗi hai lần (soát UX 29-09).
+    onError: (error: Error) => setProblem(error.message),
   });
   const typed = value.trim();
   const inputId = `spoken-${item.key}`;
@@ -191,7 +189,8 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
       {item.requested && (
         <p className="mb-2 flex items-center gap-1.5 text-xs text-fg-2">
           <Check className="size-3.5 text-success" />
-          Đã ghi "{item.requested}" - {pending}.
+          {/* "Giữ" cách máy đang đọc không đổi gì trong sách - không bảo bấm "Áp dụng thay đổi" (soát UX 29-09). */}
+          {item.requested === item.current ? `Giữ “${item.requested}” - không cần áp dụng.` : `Đã ghi “${item.requested}” - ${pending}.`}
         </p>
       )}
       <form
@@ -235,7 +234,7 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
         </Button>
         {/* Thẻ chỉ hỏi tên máy kém chắc; mọi tên khác (kể cả tên đã chọn) sửa ở tab Nhân vật, mục "Cách đọc tên". */}
         {onOpenNames && (
-          <Button size="sm" variant="ghost" type="button" onClick={onOpenNames}>
+          <Button size="sm" variant="ghost" type="button" onClick={() => onOpenNames(item.surface ?? "")}>
             Mọi cách đọc tên…
           </Button>
         )}
@@ -492,7 +491,7 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
 /** Mở câu `stableId` của chương `chapterId` trong tab Kịch bản, ô chọn người nói mở sẵn. */
 type OpenScript = (chapterId: number, stableId: string) => void;
 
-function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames }: { bookId: string; item: WorkItem; onOpenReview: () => void; onOpenScript?: OpenScript; onOpenNames?: () => void }) {
+function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames }: { bookId: string; item: WorkItem; onOpenReview: () => void; onOpenScript?: OpenScript; onOpenNames?: (name: string) => void }) {
   // Thẻ chuỗi lượt đối đáp: đổi các câu xen kẽ (mặc định) hay cả chuỗi - câu "sẽ đổi" theo phạm vi đang chọn.
   const [scope, setScope] = useState<Scope>("alternate");
   return (
@@ -544,7 +543,7 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames }: { bookI
   );
 }
 
-export function WorkInbox(props: { book: BookSummary; onOpenReview: () => void; onOpenScript?: OpenScript; onOpenNames?: () => void }) {
+export function WorkInbox(props: { book: BookSummary; onOpenReview: () => void; onOpenScript?: OpenScript; onOpenNames?: (name: string) => void }) {
   const hint = props.book.phase === "done" && !props.book.running
     ? "bấm “Áp dụng thay đổi” ở đầu trang để áp"
     : "chờ áp dụng khi sách chạy tiếp";
@@ -555,7 +554,7 @@ export function WorkInbox(props: { book: BookSummary; onOpenReview: () => void; 
   );
 }
 
-function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames }: { book: BookSummary; onOpenReview: () => void; onOpenScript?: OpenScript; onOpenNames?: () => void }) {
+function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames }: { book: BookSummary; onOpenReview: () => void; onOpenScript?: OpenScript; onOpenNames?: (name: string) => void }) {
   const bookId = book.id;
   const [kind, setKind] = useState<WorkKind | "all">("all");
   const [shown, setShown] = useState(PAGE);
@@ -574,6 +573,8 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames }: { book
   // Việc đã quyết (chờ áp dụng) xuống mục thu gọn cuối trang và không tính vào số đếm.
   const open = data.items.filter((item) => !item.requested);
   const decided = data.items.filter((item) => item.requested);
+  // "Giữ" cách đang đọc là đã quyết mà không có gì chờ áp dụng - không đếm vào "chờ áp dụng" (soát UX 29-09).
+  const waiting = decided.filter((item) => item.requested !== item.current).length;
   const counts: Partial<Record<WorkKind, number>> = {};
   for (const item of open) counts[item.kind] = (counts[item.kind] ?? 0) + 1;
   const kinds = (Object.keys(KIND_LABEL) as WorkKind[]).filter((value) => counts[value]);
@@ -627,7 +628,9 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames }: { book
       )}
       {decided.length > 0 && (
         <details className="mt-6 rounded-xl border border-line px-4 py-3">
-          <summary className="cursor-pointer text-sm font-medium text-fg-2">Đã quyết, chờ áp dụng · {decided.length}</summary>
+          <summary className="cursor-pointer text-sm font-medium text-fg-2">
+            {waiting === decided.length ? `Đã quyết, chờ áp dụng · ${decided.length}` : `Đã quyết · ${decided.length} (${waiting} chờ áp dụng)`}
+          </summary>
           <ol className="mt-3 space-y-3">
             {decided.map((item) => (
               <Card key={item.key} bookId={bookId} item={item} onOpenReview={onOpenReview} onOpenNames={onOpenNames} />

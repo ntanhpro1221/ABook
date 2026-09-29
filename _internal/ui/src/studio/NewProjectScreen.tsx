@@ -536,10 +536,11 @@ function CreditSuggestion({ credits, accepted, onChange }: { credits: Credits; a
           </>
         ) : (
           <>
-            <p className="font-semibold">Gợi ý: đầu {formatNumber(credits.chapters)} chương có dòng ghi công người dịch</p>
+            <p className="font-semibold">Gợi ý: {formatNumber(credits.chapters)} chương có dòng ghi công người dịch ở đầu chương</p>
             <p className="mt-1 break-words text-fg-2">
               {quoted}
-              {credits.lines > credits.examples.length ? "…" : ""} - máy sẽ đọc chúng như một câu kể. Bỏ chúng khỏi phần đọc?
+              {credits.lines > credits.examples.length ? " và các dòng khác" : ""}. Hiện máy vẫn đọc chúng như lời kể - file truyện
+              không bị sửa. Bỏ chúng khỏi phần đọc?
             </p>
           </>
         )}
@@ -1321,7 +1322,9 @@ export function NewProjectScreen() {
               dropCredits={Boolean(draft.dropCredits)}
             />
           )}
-          <div className="mt-8 flex items-center justify-between border-t border-line pt-5">
+          {/* Ghim ở đáy vùng cuộn: bước xác nhận dài (thêm dòng "Dòng ghi công"...) đẩy nút tạo xuống dưới nếp màn hình - soát
+              UX 29-09. */}
+          <div className="sticky bottom-0 z-10 mt-8 flex items-center justify-between border-t border-line bg-bg py-4">
             <Button variant="ghost" icon={ArrowLeft} disabled={step === 0} onClick={() => go(step - 1)}>
               Quay lại
             </Button>

@@ -787,7 +787,7 @@ export function ProjectScreen() {
             onOpenScript={(chapterId, stableId) =>
               setParams({ tab: "script", chapter: String(chapterId), line: stableId }, { replace: true })
             }
-            onOpenNames={() => setParams({ tab: "cast", focus: "names" }, { replace: true })}
+            onOpenNames={(name) => setParams({ tab: "cast", focus: "names", ...(name ? { name } : {}) }, { replace: true })}
           />
         </TabsContent>
         <TabsContent value="script">
@@ -804,7 +804,7 @@ export function ProjectScreen() {
         <TabsContent value="cast">
           <CastList bookId={book.id} onPickVoice={(person) => setPicking({ name: person.name, displayName: person.displayName })} />
           <VoicePicker bookId={book.id} person={picking} onClose={() => setPicking(null)} />
-          <NameReadings bookId={book.id} focus={params.get("focus") === "names"} />
+          <NameReadings bookId={book.id} focus={params.get("focus") === "names"} name={params.get("name") ?? ""} />
         </TabsContent>
         <TabsContent value="activity">
           <ActivityView book={book} />

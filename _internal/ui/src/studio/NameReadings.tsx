@@ -34,13 +34,15 @@ export function useNameReadings(bookId: string) {
   });
 }
 
-/** So tên không phân biệt hoa thường và dấu: gõ "hen" thấy "Hên-cơ". */
+/** So tên không phân biệt hoa thường, dấu, gạch nối hay khoảng trắng: gõ "hen" thấy "Hên-cơ", "dac lat" thấy "Đác-lát",
+ *  "lusien" thấy "Lu-si-en" (soát UX 29-09: đ không tự bỏ dấu khi tách NFD, gạch nối chặn khớp). */
 function fold(text: string): string {
-  return text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+  return text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/đ/g, "d").replace(/[\s\-‐-―]/g, "");
 }
 
-/** `focus`: mở từ nút "Mọi cách đọc tên…" trên thẻ hộp việc - cuộn tới mục khi danh sách đã tải. */
-export function NameReadings({ bookId, focus = false }: { bookId: string; focus?: boolean }) {
+/** `focus`: mở từ nút "Mọi cách đọc tên…" trên thẻ hộp việc - cuộn tới mục khi danh sách đã tải; `name`: tên của thẻ ấy,
+ *  điền sẵn vào ô tìm. */
+export function NameReadings({ bookId, focus = false, name = "" }: { bookId: string; focus?: boolean; name?: string }) {
   const { data } = useNameReadings(bookId);
   // Dàn nhân vật đứng TRÊN mục này: cuộn khi nó đã hiện (cùng truy vấn với CastList, không tải thêm) - cuộn sớm hơn thì
   // dàn nhân vật hiện ra sau đẩy mục xuống khỏi màn.
@@ -52,20 +54,26 @@ export function NameReadings({ bookId, focus = false }: { bookId: string; focus?
     );
     return () => cancelAnimationFrame(frame);
   }, [focus, data, castShown]);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(name);
   const [limit, setLimit] = useState(PAGE);
+  useEffect(() => {
+    if (name) setQuery(name);
+  }, [name]);
   if (!data || (!data.items.length && !data.unseen)) return null;
   const typed = query.trim();
   const needle = fold(typed);
   const found = needle
     ? data.items.filter((item) => fold(item.surface).includes(needle) || fold(item.requested ?? item.spoken).includes(needle))
     : data.items;
-  // Tên chưa có dòng nào (máy không coi là tên riêng, hay chưa gặp): gõ đúng một từ thì thêm được cách đọc cho nó.
-  const addable = /^[\p{L}\p{M}'’-]+$/u.test(typed) && !data.items.some((item) => fold(item.surface) === needle);
+  // Tên chưa có dòng nào (máy không coi là tên riêng, hay chưa gặp): gõ đúng một từ mà KHÔNG khớp tên nào thì mời thêm cách
+  // đọc cho nó - chỉ là một nút; ô nhập chỉ mở khi bấm (soát UX 29-09: ô mở sẵn giành con trỏ ngay sau chữ đầu, "Lan"+Enter
+  // thành luật "L đọc là an" cho cả cuốn).
+  const addable = !found.length && /^[\p{L}\p{M}'’-]+$/u.test(typed);
+  const counted = data.items.filter((item) => item.lines > 0).length;
   return (
     <section className="mt-8" aria-labelledby="name-readings-title">
-      <h3 id="name-readings-title" className="text-sm font-semibold">
-        Cách đọc tên <span className="font-normal text-fg-2">· {formatNumber(data.items.length)} tên trong phần này</span>
+      <h3 id="name-readings-title" className="scroll-mt-16 text-sm font-semibold">
+        Cách đọc tên <span className="font-normal text-fg-2">· {formatNumber(counted)} tên trong phần này</span>
       </h3>
       <p className="mt-1 max-w-prose text-sm text-fg-2">
         Tên riêng máy đọc thế nào. Nghe câu mẫu, sai thì sửa ngay trên dòng - các câu có tên ấy sẽ được thu lại.
@@ -120,7 +128,7 @@ export function NameReadings({ bookId, focus = false }: { bookId: string; focus?
 
 function ReadingRow({ bookId, item, fresh = false }: { bookId: string; item: NameReading; fresh?: boolean }) {
   const clip = useClip();
-  const [editing, setEditing] = useState(fresh);
+  const [editing, setEditing] = useState(false);
   const example = item.example;
   const id = example ? `reading-${example.segmentId}` : "";
   const playing = Boolean(id) && clip.current === id;
@@ -151,7 +159,7 @@ function ReadingRow({ bookId, item, fresh = false }: { bookId: string; item: Nam
         </div>
         <div className="tabular text-xs text-fg-2">
           {fresh
-            ? "Chưa có cách đọc riêng - máy đọc theo chữ"
+            ? "Không có trong danh sách - máy đọc theo chữ"
             : `${formatNumber(item.lines)} câu · ${item.byListener ? "đã chọn" : item.spoken ? "máy đoán" : "chưa có trong sách"}`}
           {item.requested && (
             <span className="font-medium text-accent-text">
@@ -164,8 +172,8 @@ function ReadingRow({ bookId, item, fresh = false }: { bookId: string; item: Nam
       {editing ? (
         <EditReading bookId={bookId} item={item} onDone={() => setEditing(false)} fresh={fresh} />
       ) : (
-        <Button size="sm" variant="ghost" onClick={() => setEditing(true)} aria-label={`Sửa cách đọc ${item.surface}`}>
-          Sửa
+        <Button size="sm" variant="ghost" onClick={() => setEditing(true)} aria-label={`${fresh ? "Thêm" : "Sửa"} cách đọc ${item.surface}`}>
+          {fresh ? `Thêm cách đọc cho “${item.surface}”` : "Sửa"}
         </Button>
       )}
     </li>
@@ -191,14 +199,19 @@ export function useNamesInLine(bookId: string, text: string): NameReading[] {
 /** Một tên trong bảng sửa cách đọc của câu (tab Kịch bản): đọc thế nào + sửa ngay - cho CẢ CUỐN, như mục "Cách đọc tên". */
 export function NameInLine({ bookId, item }: { bookId: string; item: NameReading }) {
   const [editing, setEditing] = useState(false);
-  const shown = item.requested ?? item.spoken;
+  // Trình bày như mục "Cách đọc tên" ở tab Nhân vật: đang đọc gì, và (nếu có) cách đọc đang chờ áp dụng.
   return (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5" data-name-editor>
       <span className="min-w-0 flex-1 text-sm">
         <span className="font-semibold">{item.surface}</span>
-        {shown && <span className="text-fg-2"> đọc là </span>}
-        {shown && <span className="whitespace-nowrap font-medium">“{shown}”</span>}
-        {item.requested && <span className="text-xs text-accent-text"> · chờ áp dụng</span>}
+        {item.spoken && <span className="text-fg-2"> đọc là </span>}
+        {item.spoken && <span className="whitespace-nowrap font-medium">“{item.spoken}”</span>}
+        {item.requested && (
+          <span className="text-xs font-medium text-accent-text">
+            {" "}
+            · chờ áp dụng: <span className="whitespace-nowrap">“{item.requested}”</span>
+          </span>
+        )}
       </span>
       {editing ? (
         // Hàng riêng dưới tên: bảng chỉ rộng ~340 px, chung hàng thì tên bị ép thành cột chữ hẹp.
@@ -234,11 +247,14 @@ function EditReading({ bookId, item, onDone, fresh }: { bookId: string; item: Na
         duration: UNDO_MS,
       };
       if (keep) {
-        toast.success(`Giữ cách đọc "${spokenForm}"`, { description: "Không phải thu lại câu nào.", ...undo });
+        toast.success(`Giữ cách đọc “${spokenForm}”`, { description: "Không phải thu lại câu nào.", ...undo });
         return;
       }
-      toast.success(`Đã ghi: "${item.surface}" đọc là "${spokenForm}"`, {
-        description: "Các câu có tên này sẽ được thu lại. Thu lại khi sách chạy tiếp - sách đã xong thì bấm “Áp dụng thay đổi” ở trang dự án.",
+      toast.success(`Đã ghi: “${item.surface}” đọc là “${spokenForm}”`, {
+        // Tên chưa có câu nào trong phần này (vừa thêm): không có gì để thu lại - nói đúng điều ấy (soát UX 29-09).
+        description: item.lines
+          ? "Các câu có tên này sẽ được thu lại. Thu lại khi sách chạy tiếp - sách đã xong thì bấm “Áp dụng thay đổi” ở trang dự án."
+          : "Phần này chưa có câu nào có tên này - cách đọc sẽ được dùng khi tên xuất hiện.",
         ...undo,
       });
     },
@@ -246,9 +262,11 @@ function EditReading({ bookId, item, onDone, fresh }: { bookId: string; item: Na
   });
   const typed = value.trim();
   const inputId = `reading-${fold(item.surface)}`;
+  // Lỗi nằm DƯỚI cụm ô nhập, cùng bề rộng với cụm - trước đây dòng lỗi rộng hết dòng kéo cả cụm từ mép phải vào giữa.
   return (
+    <div className="flex w-full flex-col gap-1 sm:w-auto sm:max-w-sm">
     <form
-      className="flex w-full flex-wrap items-center gap-2 sm:w-auto"
+      className="flex w-full flex-wrap items-center gap-2"
       onSubmit={(event) => {
         event.preventDefault();
         if (typed) save.mutate(typed);
@@ -276,17 +294,19 @@ function EditReading({ bookId, item, onDone, fresh }: { bookId: string; item: Na
           problem ? "border-danger" : "border-line",
         )}
       />
-      <Button size="sm" variant="primary" type="submit" loading={save.isPending} disabled={!typed || (!fresh && typed === (item.requested ?? item.spoken))}>
-        Lưu
-      </Button>
+      {/* "Huỷ" trước "Lưu": nút ở đúng chỗ nút "Sửa" vừa bấm là "Lưu" (mờ khi chưa đổi gì) - bấm đúp không huỷ ngay. */}
       <Button size="sm" variant="ghost" type="button" onClick={onDone}>
         Huỷ
       </Button>
+      <Button size="sm" variant="primary" type="submit" loading={save.isPending} disabled={!typed || (!fresh && typed === (item.requested ?? item.spoken))}>
+        Lưu
+      </Button>
+    </form>
       {problem && (
-        <p id={`${inputId}-problem`} role="alert" className="w-full text-xs text-danger">
+        <p id={`${inputId}-problem`} role="alert" className="text-xs text-danger">
           {problem}
         </p>
       )}
-    </form>
+    </div>
   );
 }
