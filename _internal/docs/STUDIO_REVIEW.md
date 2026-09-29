@@ -61,8 +61,15 @@ Người duyệt đúng những câu ấy là cách rẻ nhất để đạt 100
      chương (70 câu còn lại chưa thu, tự đọc cách mới).
    - **2 (bí danh) sửa được 28-09, bằng đường ghi đè nhóm câu của mục 3** (không cần bảng mới): "Gộp vào X" gán mọi câu
      của tên ít câu hơn cho tên nhiều câu hơn. Trước đó thẻ chỉ bắt cặp khi tên DÀI nói nhiều hơn - bỏ sót trường hợp
-     thường gặp nhất (lô 18 cuốn 2: 0 thẻ -> 2 cặp thật, "Tiers" / "Sứa Hắc Ám Tiers", "Kati" / "St. Kati"). Chưa
-     làm: ghi bí danh vào sổ nhân vật để câu của chương phân tích SAU tự về đúng người (đụng file khoá).
+     thường gặp nhất (lô 18 cuốn 2: 0 thẻ -> 2 cặp thật, "Tiers" / "Sứa Hắc Ám Tiers", "Kati" / "St. Kati"). **29-09
+     (0.4.1):** gộp còn ghi cấp TÊN vào `aliases.json` (`ebook_reader/aliases.py`); trong một dự án không có "chương
+     phân tích sau" (phân vai chạy một lần), nên cái lợi nằm ở PHẦN SAU của cuốn: "Làm tiếp cuốn này" chép file sang, bước
+     gom tên (`character_registry._canonicalize_named_speakers`) trỏ nhãn bí danh về người ấy trước khi phân vai.
+   - **3b (lời trong 『』) theo CẢ CUỐN, 29-09 (0.4.2):** đo trên bộ LN (`bracket_flip.py`), lỗi 『』 phần lớn là quy
+     ước riêng của từng cuốn (TCF: lời kể/thông báo; Yamiyo: một linh thể) mà model không thể biết. Thẻ 『』 có phạm vi
+     "Chương này / Cả cuốn"; "Cả cuốn" gán mọi câu 『』 của dự án và ghi `bracket_rule.json`
+     (`ebook_reader/bracket_rule.py`) - phần sau nhận qua "Làm tiếp cuốn này", bước gom tên gán mọi câu nói mở bằng 『 cho
+     người ấy trước khi đếm nhãn.
    - **1 (giới / giọng của nhân vật) sửa được 28-09**: thẻ "Nam hay nữ" và "Chung giọng" -> `overrides.json` mục
      `voices` (nhân vật -> giới, preset hay "để máy chọn", giọng phải tránh) -> `ProjectDB.apply_listener_voice` ở
      ranh giới chương, một transaction. Giọng mới do CHÍNH bộ cấp giọng của bước phân vai chọn, dựng lại từ trạng thái
