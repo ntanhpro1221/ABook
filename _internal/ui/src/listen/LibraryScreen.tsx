@@ -193,7 +193,7 @@ export function useNextVolume(bookId: string | undefined, title: string | undefi
     books
       .filter((book) => book.id !== bookId && book.chaptersAvailable > 0)
       .map((book) => ({ book, place: places.get(book.id)! }))
-      .filter(({ place }) => place.series === here.series && place.volume !== null && place.volume > volume)
+      .filter(({ place }) => place.key === here.key && place.volume !== null && place.volume > volume)
       .sort((a, b) => (a.place.volume ?? 0) - (b.place.volume ?? 0))[0]?.book ?? null
   );
 }
@@ -234,20 +234,20 @@ function Shelf({ books }: { books: ListenBook[] }) {
 /** Sách cùng bộ đứng cạnh nhau theo số tập; sách lẻ ở cuối. Chỉ gom khi không lọc, không tìm. */
 function SeriesShelves({ books }: { books: ListenBook[] }) {
   const places = seriesIndex(books);
-  const groups = new Map<string, { book: ListenBook; volume: number | null; unit: string }[]>();
+  const groups = new Map<string, { book: ListenBook; volume: number | null; unit: string; name: string }[]>();
   for (const book of books) {
-    const { series, volume, unit } = places.get(book.id)!;
+    const { key: series, series: name, volume, unit } = places.get(book.id)!;
     const key = volume === null ? `\u0000${book.id}` : series;
-    groups.set(key, [...(groups.get(key) ?? []), { book, volume, unit }]);
+    groups.set(key, [...(groups.get(key) ?? []), { book, volume, unit, name }]);
   }
   const series = [...groups.entries()].filter(([key, items]) => !key.startsWith("\u0000") && items.length > 1);
   const singles = books.filter((book) => !series.some(([, items]) => items.some((item) => item.book.id === book.id)));
   return (
     <div className="mt-6 space-y-10">
-      {series.map(([name, items]) => (
-        <section key={name} aria-label={name}>
+      {series.map(([key, items]) => (
+        <section key={key} aria-label={items[0].name}>
           <h2 className="mb-3 flex items-baseline gap-2 text-base font-semibold">
-            {name} <span className="text-sm font-normal text-fg-2">· {items.length} {items[0].unit}</span>
+            {items[0].name} <span className="text-sm font-normal text-fg-2">· {items.length} {items[0].unit}</span>
           </h2>
           <Shelf books={items.sort((a, b) => (a.volume ?? 0) - (b.volume ?? 0)).map((item) => item.book)} />
         </section>
