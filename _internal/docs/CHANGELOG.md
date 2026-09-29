@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.9] - 2026-09-29
+
 ### Nghe sách - máy tính và điện thoại
 
 - Cài đặt → Điện thoại và thiết bị nói cách nghe khi ra khỏi nhà: sách đã tải về điện thoại nghe ở đâu cũng được; muốn
