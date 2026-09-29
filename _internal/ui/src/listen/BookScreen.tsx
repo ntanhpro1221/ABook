@@ -393,7 +393,7 @@ function RecordPicker({ book }: { book: ListenBook }) {
           </button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
-          <DropdownMenu.Content align="start" sideOffset={6} className="z-50 w-72 rounded-xl border border-line bg-panel p-1.5 shadow-float">
+          <DropdownMenu.Content align="start" sideOffset={6} collisionPadding={12} className="z-50 w-72 rounded-xl border border-line bg-panel p-1.5 shadow-float">
             <p className="px-2 pb-1.5 pt-1 text-xs text-fg-2">
               Mỗi hồ sơ giữ chỗ nghe, dấu trang và lịch sử riêng - để nghe lại từ đầu mà giữ lần trước, hay mỗi người một hồ sơ.
             </p>
@@ -532,13 +532,19 @@ export function BookScreen({
   const restart = () => {
     const first = chapters.find((chapter) => chapter.available);
     if (!first) return;
+    if (listening) {
+      // Cuốn đang nạp trong trình phát: nhảy như mọi cú nhảy khác - trình phát nhớ chỗ cũ (nút ↺ "Quay lại chỗ vừa nghe"
+      // + thông báo), không chỉ một thông báo 8 giây rồi mất (soát UX 29-09).
+      player.jumpTo(first.id, 0);
+      return;
+    }
     const before = point;
     void playBook(book, first.id, 0);
     if (before && (before.chapter.id !== first.id || before.at > 30)) {
       toast("Đang nghe lại từ đầu", {
         // Có nút thao tác: đủ lâu để kịp bấm (mặc định 4 giây quá ngắn - soát UX 29-09).
         duration: 8000,
-        description: `Chỗ cũ: ${before.chapter.title}`,
+        description: `Chỗ cũ: ${before.chapter.title} · ${formatClock(before.at)}`,
         action: { label: "Quay lại chỗ cũ", onClick: () => void playBook(book, before.chapter.id, before.at) },
       });
     }
@@ -595,12 +601,15 @@ export function BookScreen({
                 size="lg"
                 icon={listening && player.playing ? Pause : Play}
                 onClick={() => (listening ? player.toggle() : void playBook(book))}
+                // Điện thoại: nút chính một hàng riêng, các nút phụ luôn ở hàng dưới theo cùng thứ tự - nhãn đổi độ dài khi
+                // phát/dừng từng làm hàng xuống dòng khác đi, "Từ đầu" nhảy sang chỗ nút khác (soát UX 29-09).
+                className="max-sm:w-full"
               >
                 {primaryLabel}
               </Button>
             )}
             {caughtUp && (
-              <p className="rounded-xl bg-hover px-4 py-2.5 text-sm text-fg-2">Bạn đã nghe hết phần đã có. Chương mới sẽ hiện ở đây khi làm xong.</p>
+              <p className="rounded-xl bg-hover px-4 py-2.5 text-sm text-fg-2">Đã nghe hết phần đã có. Chương mới sẽ hiện ở đây khi làm xong.</p>
             )}
             <Tooltip label="Đọc bằng mắt - đọc được cả chương chưa thu âm; “Nghe từ đây” chuyển sang nghe đúng câu đang đọc">
               <Button
@@ -624,7 +633,7 @@ export function BookScreen({
                 <IconButton label="Tuỳ chọn khác" icon={MoreHorizontal} size="lg" />
               </DropdownMenu.Trigger>
               <DropdownMenu.Portal>
-                <DropdownMenu.Content align="start" sideOffset={6} className="z-50 min-w-56 rounded-xl border border-line bg-panel p-1.5 shadow-float">
+                <DropdownMenu.Content align="start" sideOffset={6} collisionPadding={12} className="z-50 min-w-56 rounded-xl border border-line bg-panel p-1.5 shadow-float">
                   <DropdownMenu.Item onSelect={() => mutations.finished.mutate(!book.progress.finished)} className={MENU_ITEM}>
                     <CheckCheck className="size-4" />
                     {book.progress.finished ? "Đánh dấu chưa nghe xong" : "Đánh dấu đã nghe xong"}

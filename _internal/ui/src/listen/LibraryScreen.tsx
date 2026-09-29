@@ -259,7 +259,7 @@ function SeriesShelves({ books }: { books: ListenBook[] }) {
 
 const EMPTY_TEXT: Record<Filter, string> = {
   all: "Thư viện chưa có sách nào.",
-  listening: "Bạn chưa nghe dở cuốn nào - chọn một cuốn để bắt đầu.",
+  listening: "Chưa nghe dở cuốn nào - chọn một cuốn để bắt đầu.",
   new: "Cuốn nào cũng đã được nghe ít nhất một đoạn.",
   finished: "Chưa có cuốn nào nghe xong.",
 };
@@ -348,7 +348,8 @@ export function LibraryScreen({
                 type="search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Tìm sách (gõ không dấu cũng được)"
+                placeholder="Tìm sách"
+                title="Gõ không dấu cũng được"
                 className="h-9 w-full rounded-lg border border-line bg-panel pl-9 pr-3 text-sm outline-none placeholder:text-fg-3 focus:border-accent sm:w-80"
               />
             </label>
