@@ -16,6 +16,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Hộp "Việc cần duyệt" mở nhanh gấp ba (sách 43 chương: 2,1 -> 0,7 giây). Thẻ cách đọc tên bỏ con số "máy chắc 88%" (gần
   như tên nào máy đoán cũng mang đúng số ấy) và dòng "máy gán: …" không liên quan.
 - "Làm tiếp cuốn này…" mờ kèm lý do ở dự án chưa phân tích câu nào (không có gì để mang theo).
+- Trình tạo sách: chip "N chương đầu" giữ các chương đã bỏ bằng tay và ghi "còn N chương cho đợt sau"; bước xác nhận ghi
+  rõ "Là phần 3 của …, nối sau phần 2 · Chương 768 → Chương 817"; khi thư mục chưa có chương mới thì nêu tên thư mục và file
+  chương cuối; tải lại trang ở bước 4 không còn về bước 1.
+- Hộp "Việc cần duyệt": thẻ đã quyết ở sách đã xong bảo bấm "Áp dụng thay đổi" (không còn "chờ … chạy tiếp"); thẻ nam/nữ
+  ghi đúng giọng đang đọc và thông báo nói đúng cái giá của lựa chọn; thẻ gộp tên ghi "“X” là Y - cả cuốn và các phần sau".
+- Sách đã xong còn thay đổi chờ áp: chỉ "Áp dụng thay đổi" là nút chính.
 
 ## [0.4.3] - 2026-09-29
 
