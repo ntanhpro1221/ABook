@@ -59,6 +59,8 @@ export interface ListeningRecord {
   createdAt?: number | null;
   updatedAt?: number | null;
   active: boolean;
+  /** Chỗ nghe cuối của hồ sơ (máy tính); điện thoại chưa gửi thì không có. */
+  last?: { chapterId: number; seconds: number } | null;
 }
 
 export interface ListenBook {
