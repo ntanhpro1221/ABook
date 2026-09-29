@@ -7,6 +7,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Studio (sản xuất sách nói)
+
+- Danh sách dự án gom các phần của một cuốn ("Tên", "Tên · Phần 2"...) thành một nhóm theo thứ tự phần - truyện dài
+  làm nhiều đợt không còn rải thành hàng chục dòng rời.
+
 ### Nghe sách - máy tính và điện thoại
 
 - Các phần của một cuốn làm nhiều đợt ("Tên · Phần 2"...) nghe liền như một cuốn: hết phần này tự nghe tiếp phần sau.
