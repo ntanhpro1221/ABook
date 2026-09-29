@@ -440,6 +440,15 @@ class SyncApp:
                 self._work[str(path)] = (stamp, count)
             return count
 
+        def paused_of(path: Path) -> str | None:
+            # Đọc thẳng state của supervisor (như nhịp tim ở trên): sách chạy bằng dòng lệnh cũng được báo.
+            from ..background_runner import get_status
+
+            try:
+                return get_status(path).pause_reason
+            except Exception:  # noqa: BLE001
+                return None
+
         books = []
         for path in self.library.projects():
             try:
@@ -454,6 +463,8 @@ class SyncApp:
                 "phase": str(summary.get("phase") or ""),
                 "statusLabel": str(summary.get("statusLabel") or ""),
                 "running": bool(summary.get("running")),
+                # "battery": máy tính rút sạc nên tự tạm dừng (power_source) - điện thoại báo để người ta biết máy tuột sạc.
+                "paused": paused_of(path),
                 "chapters": {"completed": int(chapters.get("completed") or 0), "total": int(chapters.get("total") or 0)},
                 "work": work,
                 "lastError": str(summary.get("lastError") or "")[:300],

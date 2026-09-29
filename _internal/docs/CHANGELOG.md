@@ -14,7 +14,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   phân tích truyện?" mời tạm dừng thay vì dừng.
 - Máy tính xách tay rút sạc hơn một phút thì Studio tự tạm dừng (chạy pin làm sách rất chậm mà hao pin) và tự làm tiếp
   khi cắm sạc lại; trang sách nói "Tạm dừng · máy đang chạy pin". Bấm "Tiếp tục" để làm tiếp ngay trên pin, hay tắt hẳn ở
-  Cài đặt → Studio → "Tạm dừng khi rút sạc". Điện thoại điều khiển Studio từ xa cũng tạm dừng / tiếp tục được.
+  Cài đặt → Studio → "Tạm dừng khi rút sạc". Điện thoại điều khiển Studio từ xa cũng tạm dừng / tiếp tục được, và điện
+  thoại đã bật thông báo Studio báo "Máy tính đang chạy pin" - biết ngay máy tuột sạc.
 - Bảng chương ở trang dự án không còn ngắt "2 ngày trước" thành hai dòng.
 - Mục "Cách đọc tên", bảng "Tên trong câu" và thẻ "Đọc … là …?" trong Việc cần duyệt hiện cách đọc với chữ đầu mỗi từ viết
   hoa ("Rên-ta-rô" thay cho "rên-ta-rô"); cách đọc đã lưu và ô sửa giữ nguyên.
