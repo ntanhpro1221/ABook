@@ -12,6 +12,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Thẻ "Đang nghe dở" của sách đã nghe hết phần đã có ghi "Chờ chương mới" thay cho nút phát không phát gì.
 - Tab Lịch sử: phiên nghe trong cùng một phút ghi một mốc giờ; nút ghi rõ "Nghe tiếp từ mm:ss".
 
+### Studio (sản xuất sách nói)
+
+- Tab Nhân vật có mục "Cách đọc tên": mọi tên riêng máy đọc thế nào, bao nhiêu câu có tên ấy, máy đoán hay đã chọn,
+  một câu mẫu để nghe. Sửa ngay trên dòng - kể cả tên máy chắc (Việc cần duyệt không hỏi) và cách đã chọn rồi muốn đổi;
+  gõ một tên chưa có trong danh sách để thêm cách đọc cho nó.
+
 ## [0.4.4] - 2026-09-29
 
 ### Studio (sản xuất sách nói)

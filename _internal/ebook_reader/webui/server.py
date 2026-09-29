@@ -30,6 +30,7 @@ from . import bluetooth, remote_books
 from .remote_studio import REMOTE_HEADER, StudioGate
 from .reviews import Reviews, review_view
 from .casting_review import casting_chapter, casting_chapters
+from .name_readings import name_readings
 from .voice_picker import voice_choices
 from .work_items import work_items
 from .peer_players import PeerPlayers
@@ -1043,6 +1044,10 @@ class Handler(BaseHTTPRequestHandler):
     def get_parts(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.OK, {"parts": self.app.parts(value)})
 
+    def get_name_readings(self, _query: dict[str, list[str]], value: str) -> None:
+        # Tab Nhân vật, mục "Cách đọc tên" (name_readings.py): mọi cách đọc của cuốn, kể cả cách máy chắc và cách đã ghim.
+        self._send_json(HTTPStatus.OK, name_readings(self.app._book(value)))
+
     def get_casting(self, _query: dict[str, list[str]], value: str) -> None:
         # Tab "Kịch bản" (casting_review.py): chương nào bao nhiêu câu thoại, bao nhiêu chỗ máy nghi, bao nhiêu câu đã quyết.
         self._send_json(HTTPStatus.OK, casting_chapters(self.app._book(value)))
@@ -1572,6 +1577,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(BOOK + r"/casting"), Handler.get_casting),
     ("GET", re.compile(BOOK + r"/continuation"), Handler.get_continuation),
     ("GET", re.compile(BOOK + r"/parts"), Handler.get_parts),
+    ("GET", re.compile(BOOK + r"/pronunciations"), Handler.get_name_readings),
     ("GET", re.compile(BOOK + r"/casting/(\d+)"), Handler.get_casting_chapter),
     ("POST", re.compile(BOOK + r"/review"), Handler.post_review),
     ("POST", re.compile(BOOK + r"/pronunciation"), Handler.post_pronunciation),
