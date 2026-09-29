@@ -581,7 +581,7 @@ export function BookScreen({
           <div className="mt-4 max-w-md max-sm:mx-auto">
             <Progress value={book.progress.fraction} tone={book.progress.finished ? "success" : "accent"} size="sm" label="Đã nghe" />
             <div className="tabular mt-1.5 flex justify-between text-xs text-fg-2">
-              <span>{book.progress.finished || book.progress.caughtUp ? bookStatusText(book) : heard > 0 ? `Đã nghe ${formatLength(heard)}` : "Chưa nghe"}</span>
+              <span>{book.progress.finished || book.progress.caughtUp ? bookStatusText(book) : heard > 0 ? `Đã nghe ${formatLength(heard)}` : listening ? "Đang nghe" : "Chưa nghe"}</span>
               {/* Tính theo phần ĐÃ PHỦ (chỗ tua qua vẫn là chưa nghe), khác "còn X" theo vị trí ở màn "Đang nghe" - nói rõ để hai con
                   số không trông như mâu thuẫn (soát UX 29-09). */}
               {!book.progress.finished && !book.progress.caughtUp && heard > 0 && <span>còn {formatLength(left)} chưa nghe</span>}
