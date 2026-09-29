@@ -22,7 +22,7 @@ from typing import Any, Callable, Protocol
 from urllib.parse import parse_qs, unquote, urlsplit
 
 from .. import listener_overrides
-from . import actions, bookfile, cover_search, covers, listen_view, packages, store
+from . import actions, bookfile, cover_search, covers, humanize, listen_view, packages, store
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, legacy_ids
 from .listening import RECORD_ID, Listening
@@ -418,7 +418,7 @@ class App:
         paths = [str(item) for item in body.get("paths", [])]
         root = actions.create_book(
             self.library.root, paths, str(body.get("title", "")), str(body.get("profile", "high_quality")),
-            str(body.get("narrator", "")), str(body.get("firstPerson", "")),
+            humanize.voice_key(str(body.get("narrator", ""))), str(body.get("firstPerson", "")),
             settings_overrides=self.studio.settings_overrides() if self.studio is not None else None,
             first_person_chapters={str(key): str(value) for key, value in body["firstPersonChapters"].items()}
             if isinstance(body.get("firstPersonChapters"), dict) else None,
@@ -690,7 +690,7 @@ class App:
         defaults = set(DEFAULT_NARRATOR_BY_GENDER.values())
         return [
             {
-                "name": preset["name"],
+                "name": humanize.voice_label(preset["name"]),
                 "gender": {"male": "Nam", "female": "Nữ"}.get(preset["gender"], ""),
                 "region": preset["region"],
                 "style": {"tu_nhien": "Tự nhiên", "doc_truyen": "Kể chuyện"}.get(preset["style"], preset["style"]),
@@ -1083,7 +1083,7 @@ class Handler(BaseHTTPRequestHandler):
         path = self.app._book(value)
         body = self._body()
         character = str(body.get("character", "")).strip()[:200]
-        preset = str(body.get("preset", "") or "").strip()[:120]
+        preset = humanize.voice_key(str(body.get("preset", "") or "").strip()[:120])
         gender = str(body.get("gender", "") or "").strip()[:10]
         avoid = str(body.get("avoid", "") or "").strip()[:200]
         if not character:
@@ -1092,7 +1092,8 @@ class Handler(BaseHTTPRequestHandler):
         if problem is not None:
             raise ApiError(HTTPStatus.BAD_REQUEST, VOICE_PROBLEMS.get(problem, "Không đổi được giọng nhân vật này"))
         listener_overrides.request_voice(path, character, preset=preset, gender=gender, avoid=avoid, now=time.time())
-        self._send_json(HTTPStatus.OK, {"character": character, "preset": preset, "gender": gender, "avoid": avoid})
+        self._send_json(HTTPStatus.OK, {"character": character, "preset": humanize.voice_label(preset), "gender": gender,
+                                        "avoid": avoid})
 
     def post_review(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._mutating()  # ghi reviews.json và (Cần thu lại) overrides.json - như mọi yêu cầu sửa khác
@@ -1453,7 +1454,7 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.OK, {"paths": paths})
 
     def media_voice(self, _query: dict[str, list[str]], name: str) -> None:
-        path = self.app.voice_file(name)
+        path = self.app.voice_file(humanize.voice_key(name))
         if path is None:
             raise ApiError(HTTPStatus.NOT_FOUND, "Không có bản nghe thử cho giọng này")
         self._send_file(path, cache=True)

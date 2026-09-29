@@ -257,6 +257,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Sửa lỗi
 
+- Tên giọng theo đúng VieNeu hiện hành: "Minh Quân Pro" giờ là **Hải Đăng**, "Anh Khôi" là **Thiện Minh**, "Mạnh Dũng" là
+  **Quốc Tuấn**. Sách đã làm không đổi gì, chỉ đổi tên hiện ra.
+
 - Android: nút Back đóng màn "Đang nghe" thay vì thoát app; không còn crash khi thoát.
 - Windows: shortcut Start Menu mang mã nhận diện của app, để bảng media và thanh tác vụ hiện đúng tên, biểu tượng.
 - Sách không còn kẹt ở lần chạy tiếp theo sau khi một câu từng được thu lại cho rõ bị thu lại lần nữa (khi chữ đọc đổi,
