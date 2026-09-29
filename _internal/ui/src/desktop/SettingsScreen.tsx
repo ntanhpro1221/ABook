@@ -1,4 +1,4 @@
-import { Download, FolderOpen, Monitor, Moon, Sun } from "lucide-react";
+import { Check, Download, FolderOpen, Monitor, Moon, Sun } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { Button, Kbd, Segmented, TimeSelect, radioGroupKeys, radioTabIndex } from "@/shared/ui";
@@ -258,7 +258,10 @@ export function SettingsScreen() {
               label="Tự lùi khi nghe lại"
               hint="Dừng dưới 5 phút: không lùi. Từ 5 phút tới 1 giờ: lùi 10 giây. Lâu hơn (ngủ dậy): lùi 30 giây."
             >
-              <span className="text-[13px] text-fg-2">Tự động</span>
+              {/* Thông tin, không phải lựa chọn (soát UX 29-09: chữ "Tự động" trông như một nút mà không bấm được). */}
+              <span className="inline-flex items-center gap-1 text-[13px] text-fg-2">
+                <Check className="size-3.5 text-success" /> Luôn bật
+              </span>
             </Field>
           </div>
         </Section>
