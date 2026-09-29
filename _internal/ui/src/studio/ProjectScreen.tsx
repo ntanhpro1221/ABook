@@ -2,6 +2,7 @@ import {
   AlertTriangle,
   ArrowLeft,
   BookOpenText,
+  BookPlus,
   Headphones,
   Check,
   CircleAlert,
@@ -40,7 +41,7 @@ import {
 import { api, type BookSummary, type Chapter } from "@/studio/api";
 import { cn } from "@/shared/cn";
 import { usePageTitle } from "@/shared/title";
-import { phaseTone, useActivity, useAppInfo, useBook, useReveal, useStart, useStop } from "@/studio/data";
+import { phaseTone, useActivity, useAppInfo, useBook, useContinuation, useReveal, useStart, useStop } from "@/studio/data";
 import {
   formatClock,
   formatDate,
@@ -349,6 +350,7 @@ function DeleteDialog({ book, open, onOpenChange }: { book: BookSummary; open: b
 /** "…" của một dự án: đổi tên, xoá. `rename={false}` cho dự án hỏng (không đọc được - chỉ còn xoá). */
 export function ProjectMenu({ book, rename = true, className }: { book: BookSummary; rename?: boolean; className?: string }) {
   const [dialog, setDialog] = useState<"rename" | "delete" | null>(null);
+  const navigate = useNavigate();
   return (
     <>
       <DropdownMenu.Root>
@@ -374,6 +376,11 @@ export function ProjectMenu({ book, rename = true, className }: { book: BookSumm
                 <DropdownMenu.Separator className="my-1 h-px bg-line" />
               </>
             )}
+            {/* Truyện dài làm nhiều đợt: phần mới giữ giọng, cách đọc tên, ghim của phần này (continuation.py). */}
+            <DropdownMenu.Item onSelect={() => navigate(`/studio/new?continue=${book.id}`)} className={MENU_ITEM}>
+              <BookPlus className="size-4" /> Làm tiếp cuốn này…
+            </DropdownMenu.Item>
+            <DropdownMenu.Separator className="my-1 h-px bg-line" />
             <DropdownMenu.Item onSelect={() => setDialog("delete")} className={cn(MENU_ITEM, "text-danger")}>
               <Trash2 className="size-4" /> Xoá dự án…
             </DropdownMenu.Item>
@@ -394,6 +401,9 @@ function Actions({ book }: { book: BookSummary }) {
   const [confirmStop, setConfirmStop] = useState(false);
   const live = book.running;
   const stop = useStop();
+  // Phân tích xong thì sổ nhân vật đã đủ để làm tiếp; nút chỉ hiện khi thư mục truyện có chương mới sau chương cuối.
+  const analyzed = book.segments.total > 0 && book.segments.analyzed === book.segments.total;
+  const next = useContinuation(book.id, !remote && analyzed).data?.paths.length ?? 0;
   return (
     <div className="mt-5 flex flex-wrap items-center gap-2">
       {book.chapters.completed > 0 && (
@@ -433,6 +443,11 @@ function Actions({ book }: { book: BookSummary }) {
           Áp dụng {book.pendingChanges} thay đổi
         </Button>
       ) : null}
+      {next > 0 && (
+        <Button variant="secondary" size="lg" icon={BookPlus} onClick={() => navigate(`/studio/new?continue=${book.id}`)}>
+          Làm tiếp cuốn này · {next} chương mới
+        </Button>
+      )}
       {!remote && <IconButton label="Mở thư mục sách" icon={FolderOpen} onClick={() => reveal.mutate(book.id)} />}
       {/* Đổi tên / xoá chỉ trên máy này - Studio từ xa không có hai đường ấy (remote_studio.ALLOWED). */}
       {!remote && <ProjectMenu book={book} />}
