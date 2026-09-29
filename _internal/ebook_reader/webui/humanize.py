@@ -27,6 +27,21 @@ CHAPTER_STATUS_LABELS = {
 }
 
 GENDER_LABELS = {"male": "Nam", "female": "Nữ"}
+
+# Tên giọng hiển thị như VieNeu hiện hành (3.8.3, vieneu/assets/voices_v3_turbo.json - "aliases" giữ tên cũ): ba giọng đổi
+# tên. Dữ liệu sách và bảng giọng (voice_catalog.py, file khoá) vẫn dùng tên cũ làm khoá - đổi sang tên mới khi đưa ra giao
+# diện (`voice_label`), đổi ngược khi nhận về (`voice_key`). Chỉ áp ở trường TÊN GIỌNG: nhân vật trong truyện có thể trùng
+# tên người ("Anh Khôi", "Quốc Tuấn").
+VOICE_LABELS = {"Anh Khôi": "Thiện Minh", "Minh Quân Pro": "Hải Đăng", "Mạnh Dũng": "Quốc Tuấn"}
+_VOICE_KEYS = {label: key for key, label in VOICE_LABELS.items()}
+
+
+def voice_label(name: str) -> str:
+    return VOICE_LABELS.get(name, name)
+
+
+def voice_key(name: str) -> str:
+    return _VOICE_KEYS.get(name, name)
 AGE_LABELS = {
     "child": "Trẻ em",
     "teen": "Thiếu niên",
