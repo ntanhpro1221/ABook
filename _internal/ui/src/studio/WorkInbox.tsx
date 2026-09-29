@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { AudioLines, Check, Pause, Play, Search, UserPlus } from "lucide-react";
 import { createContext, useContext, useState } from "react";
 import { toast } from "sonner";
@@ -146,6 +146,49 @@ function Example({ bookId, example }: { bookId: string; example: WorkExample }) 
   );
 }
 
+/** Làm mới mọi chỗ một quyết định trong hộp việc chạm tới. */
+function refreshAfterDecision(client: QueryClient, bookId: string) {
+  void client.invalidateQueries({ queryKey: ["work", bookId] });
+  void client.invalidateQueries({ queryKey: ["book", bookId] });
+  void client.invalidateQueries({ queryKey: ["library"] });
+  void client.invalidateQueries({ queryKey: ["listen", "cast", bookId] });
+  void client.invalidateQueries({ queryKey: ["cast", bookId] });
+}
+
+// Bấm nhầm ("Nữ" cạnh "Nam", nhầm người, nhầm cách đọc) sửa ngay trên thông báo: "Hoàn tác" gửi lại đúng lần bấm ấy
+// (`requestedAt` máy chủ trả) để máy chủ trả yêu cầu trước đó về chỗ. Dây chuyền đã kịp đưa quyết định vào sách (ranh
+// giới chương rơi đúng mấy giây ấy) thì máy chủ nói thật, và thông báo lỗi nói chỗ đổi lại.
+const UNDO_MS = 8000;
+
+function undoAction(client: QueryClient, bookId: string, endpoint: string, decisions: Record<string, unknown>[]) {
+  return {
+    label: "Hoàn tác",
+    onClick: () => {
+      void (async () => {
+        try {
+          let restored = false;
+          for (const decision of decisions) {
+            const answer = await api<{ undone: number; restored: boolean }>(`/api/books/${bookId}/${endpoint}`, {
+              method: "POST",
+              body: { ...decision, withdraw: true },
+            });
+            restored ||= answer.restored;
+          }
+          toast.success("Đã hoàn tác", {
+            description: restored
+              ? "Máy vừa đưa cách đọc mới vào sách, nên sẽ đọc lại theo cách cũ."
+              : "Việc trở lại như trước khi bấm.",
+          });
+        } catch (error) {
+          toast.error("Không hoàn tác được", { description: (error as Error).message });
+        } finally {
+          refreshAfterDecision(client, bookId);
+        }
+      })();
+    },
+  };
+}
+
 // Sửa cách đọc một tên ngay trên thẻ. Không chờ gì: ghi xong là xong phần người; dây chuyền áp ở ranh giới chương kế
 // tiếp (hoặc lần chạy tới) và thu lại đúng những câu có tên ấy - kể cả sách đã xong.
 function PronunciationFix({ bookId, item }: { bookId: string; item: WorkItem }) {
@@ -156,21 +199,26 @@ function PronunciationFix({ bookId, item }: { bookId: string; item: WorkItem }) 
   const [problem, setProblem] = useState("");
   const save = useMutation({
     mutationFn: (spokenForm: string) =>
-      api<{ surface: string; spokenForm: string }>(`/api/books/${bookId}/pronunciation`, {
+      api<{ surface: string; spokenForm: string; requestedAt: number }>(`/api/books/${bookId}/pronunciation`, {
         method: "POST",
         body: { surface: item.surface, spokenForm },
       }),
-    onSuccess: ({ spokenForm }) => {
-      void client.invalidateQueries({ queryKey: ["work", bookId] });
-      void client.invalidateQueries({ queryKey: ["book", bookId] });
-      void client.invalidateQueries({ queryKey: ["library"] });
+    onSuccess: ({ spokenForm, requestedAt }) => {
+      refreshAfterDecision(client, bookId);
+      const keep = spokenForm === item.current;
+      // `previous`: cách máy đọc lúc bấm - máy chủ xin lại cách ấy nếu cách mới đã vào sách.
+      const action = undoAction(client, bookId, "pronunciation", [
+        { surface: item.surface, requestedAt, previous: item.current, keep },
+      ]);
       // Giữ đúng cách máy đang đọc thì không có gì để thu lại - soát UX 29-09: báo "sẽ thu lại" làm người nghe hoảng.
-      if (spokenForm === item.current) {
-        toast.success(`Giữ cách đọc "${spokenForm}"`, { description: "Không phải thu lại câu nào." });
+      if (keep) {
+        toast.success(`Giữ cách đọc "${spokenForm}"`, { description: "Không phải thu lại câu nào.", action, duration: UNDO_MS });
         return;
       }
       toast.success(`Đã ghi: "${item.surface}" đọc là "${spokenForm}"`, {
         description: "Các câu có tên này sẽ được thu lại. Thu lại khi sách chạy tiếp - sách đã xong thì bấm “Áp dụng thay đổi” ở trang dự án.",
+        action,
+        duration: UNDO_MS,
       });
     },
     onError: (error: Error) => {
@@ -264,7 +312,7 @@ function SpeakerFix({
   const [name, setName] = useState("");
   const save = useMutation({
     mutationFn: ({ speaker, newGender }: { speaker: string; newGender?: string }) =>
-      api<{ lines: number; speaker: string; alias?: boolean }>(`/api/books/${bookId}/speaker`, {
+      api<{ lines: number; speaker: string; alias?: boolean; requestedAt: number }>(`/api/books/${bookId}/speaker`, {
         method: "POST",
         body: {
           lines,
@@ -276,14 +324,16 @@ function SpeakerFix({
           ...(item.kind === "bracket" && scope === "all" ? { bracketRule: true } : {}),
         },
       }),
-    onSuccess: ({ speaker, alias }) => {
-      void client.invalidateQueries({ queryKey: ["work", bookId] });
-      void client.invalidateQueries({ queryKey: ["book", bookId] });
-      void client.invalidateQueries({ queryKey: ["library"] });
+    onSuccess: ({ speaker, alias, requestedAt }) => {
+      refreshAfterDecision(client, bookId);
       const which = (lines?.length ?? 1) > 1 ? `${lines?.length} câu này` : "câu này";
-      if (speaker === item.currentValue) {
+      const keep = speaker === item.currentValue;
+      // Gộp tên / quy ước 『』 cả cuốn còn ghi ở cấp TÊN cho các phần sau - hoàn tác chỉ lùi được phần câu, nên không mời.
+      const undo = alias ? {} : { action: undoAction(client, bookId, "speaker", [{ lines, requestedAt, keep }]), duration: UNDO_MS };
+      if (keep) {
         toast.success(item.keepLabel ? `Đã ghi: ${item.keepLabel}` : `Giữ nguyên: ${which} của ${midSentence(item.current)}`, {
           description: "Việc này sẽ không hiện lại.",
+          ...undo,
         });
         return;
       }
@@ -297,6 +347,7 @@ function SpeakerFix({
             : alias
               ? ` Các phần sau của cuốn cũng tự hiểu ${item.current} là ${label}.`
               : ""),
+        ...undo,
       });
     },
     onError: (error: Error) => toast.error("Chưa ghi được người nói", { description: error.message }),
@@ -399,16 +450,18 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
   const pending = useContext(PendingHint);
   const save = useMutation({
     mutationFn: async ({ requests }: { requests: Omit<VoiceChoice, "label" | "note" | "done" | "recommended">[]; label: string; keep: boolean; note?: string }) => {
-      for (const request of requests) await api(`/api/books/${bookId}/voice`, { method: "POST", body: request });
+      const made: { character: string; requestedAt: number }[] = [];
+      for (const request of requests) {
+        const { requestedAt } = await api<{ requestedAt: number }>(`/api/books/${bookId}/voice`, { method: "POST", body: request });
+        made.push({ character: request.character, requestedAt });
+      }
+      return made;
     },
-    onSuccess: (_result, { label, keep, note }) => {
-      void client.invalidateQueries({ queryKey: ["work", bookId] });
-      void client.invalidateQueries({ queryKey: ["book", bookId] });
-      void client.invalidateQueries({ queryKey: ["library"] });
-      void client.invalidateQueries({ queryKey: ["listen", "cast", bookId] });
-      void client.invalidateQueries({ queryKey: ["cast", bookId] });
+    onSuccess: (made, { label, keep, note }) => {
+      refreshAfterDecision(client, bookId);
+      const undo = { action: undoAction(client, bookId, "voice", made.map((decision) => ({ ...decision, keep }))), duration: UNDO_MS };
       if (keep) {
-        toast.success(`Đã ghi: ${label}`, { description: "Việc này sẽ không hiện lại." });
+        toast.success(`Đã ghi: ${label}`, { description: "Việc này sẽ không hiện lại.", ...undo });
         return;
       }
       // Lựa chọn nói trước cái giá ("giữ giọng đang đọc" / "đổi giọng, thu lại N câu") - thông báo nói đúng cái giá ấy, không
@@ -417,6 +470,7 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
         description: note?.startsWith("giữ giọng")
           ? "Giọng đang đọc giữ nguyên - không phải thu lại câu nào."
           : "Mọi câu của người ấy sẽ đọc lại bằng giọng mới. Thu lại khi sách chạy tiếp - sách đã xong thì bấm “Áp dụng thay đổi” ở trang dự án.",
+        ...undo,
       });
     },
     onError: (error: Error) => toast.error("Chưa ghi được", { description: error.message }),

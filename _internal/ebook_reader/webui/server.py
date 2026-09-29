@@ -93,6 +93,13 @@ VOICE_PROBLEMS = {
     listener_overrides.UNKNOWN_PRESET: "Giọng này không dùng cho nhân vật được (không có, hay là giọng người kể).",
     listener_overrides.BAD_GENDER: "Giới phải là nam hoặc nữ.",
 }
+# "Hoàn tác" tới sau khi dây chuyền đã đưa quyết định vào sách (ranh giới chương rơi đúng mấy giây ấy).
+WITHDRAW_APPLIED = {
+    "speakers": "Máy vừa đưa quyết định này vào sách nên không hoàn tác được nữa - muốn đổi lại, chọn người nói cho câu"
+                " ở tab Kịch bản.",
+    "pronunciations": "Máy vừa đưa cách đọc này vào sách nên không hoàn tác được nữa.",
+    "voices": "Máy vừa đưa quyết định này vào sách nên không hoàn tác được nữa - muốn đổi lại, đổi giọng ở tab Nhân vật.",
+}
 
 SPEAKER_PROBLEMS = {
     listener_overrides.UNKNOWN_LINE: "Không còn câu này trong sách.",
@@ -1060,14 +1067,48 @@ class Handler(BaseHTTPRequestHandler):
         path = self.app._book(value)
         body = self._body()
         surface = str(body.get("surface", "")).strip()[:80]
+        if body.get("withdraw"):
+            # Cách đọc chỉ sửa được trên thẻ, mà thẻ biến mất khi cách đọc đã vào sách: đã áp thì hoàn tác bằng cách xin
+            # lại cách đọc cũ (`previous`, cách máy đọc lúc bấm) - câu có từ ấy được đọc lại như trước.
+            previous = " ".join(str(body.get("previous", "") or "").split())[:120]
+            usable = bool(previous) and listener_overrides.pronunciation_problem(surface, previous) is None
+            self._withdraw(path, "pronunciations", [listener_overrides.surface_key(surface)] if surface else [], body,
+                           restore=(lambda now: listener_overrides.request_pronunciation(path, surface, previous, now=now))
+                           if usable else None)
+            return
         spoken = " ".join(str(body.get("spokenForm", "")).split())[:120]
         if not surface or not spoken:
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu tên hoặc cách đọc")
         problem = listener_overrides.pronunciation_problem(surface, spoken)
         if problem is not None:
             raise ApiError(HTTPStatus.BAD_REQUEST, PRONUNCIATION_PROBLEMS.get(problem, "Cách đọc này không dùng được"))
-        listener_overrides.request_pronunciation(path, surface, spoken, now=time.time())
-        self._send_json(HTTPStatus.OK, {"surface": surface, "spokenForm": spoken})
+        now = time.time()
+        listener_overrides.request_pronunciation(path, surface, spoken, now=now)
+        self._send_json(HTTPStatus.OK, {"surface": surface, "spokenForm": spoken, "requestedAt": now})
+
+    def _withdraw(self, path: Path, section: str, keys: list[str], body: dict[str, Any], *,
+                  restore: Callable[[float], None] | None = None) -> None:
+        # "Hoàn tác" trên thông báo sau một quyết định trong hộp việc: bỏ yêu cầu của ĐÚNG lần bấm ấy (`requestedAt` do
+        # lần bấm trả về) khi dây chuyền chưa đưa nó vào sách - thẻ hỏi lại như chưa bấm. Đã vào sách thì bỏ yêu cầu cũng
+        # không đổi lại được gì: xin lại giá trị cũ nếu có cách (`restore`), không thì nói thật và giữ yêu cầu. "Giữ
+        # nguyên" (`keep`) không đổi gì trong sách, áp hay chưa cũng bỏ được.
+        try:
+            requested_at = float(body.get("requestedAt") or 0)
+        except (TypeError, ValueError):
+            requested_at = 0.0
+        if not keys or requested_at <= 0:
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu quyết định cần hoàn tác")
+        mine = listener_overrides.requests_made_at(listener_overrides.read_overrides(path), section, keys, requested_at)
+        if not mine:
+            raise ApiError(HTTPStatus.CONFLICT, "Quyết định này đã được thay bằng một lựa chọn sau - không còn gì để hoàn tác.")
+        if not body.get("keep") and store.already_applied(path, section, mine):
+            if restore is None:
+                raise ApiError(HTTPStatus.CONFLICT, WITHDRAW_APPLIED[section])
+            restore(time.time())
+            self._send_json(HTTPStatus.OK, {"undone": len(mine), "restored": True})
+            return
+        removed = listener_overrides.withdraw_requests(path, section, list(mine), requested_at)
+        self._send_json(HTTPStatus.OK, {"undone": len(removed), "restored": False})
 
     def post_speaker(self, _query: dict[str, list[str]], value: str) -> None:
         # "Ai nói câu này": như cách đọc tên - ghi mong muốn vào overrides.json, dây chuyền áp ở ranh giới chương. Hỏi
@@ -1081,6 +1122,9 @@ class Handler(BaseHTTPRequestHandler):
         raw_lines = body.get("lines") if isinstance(body.get("lines"), list) else [body]
         lines = [(str(line.get("stableId", "")).strip()[:120], str(line.get("textSha256", "")).strip()[:64])
                  for line in raw_lines[:2000] if isinstance(line, dict)]
+        if body.get("withdraw"):
+            self._withdraw(path, "speakers", [stable_id for stable_id, _sha in lines if stable_id], body)
+            return
         if not speaker or not lines or not all(stable_id and text_sha256 for stable_id, text_sha256 in lines):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu câu hoặc người nói")
         # "Người mới…": người nghe tạo người nói chưa có trong sách (tên + giới) - dây chuyền cấp giọng như bước phân vai.
@@ -1091,7 +1135,8 @@ class Handler(BaseHTTPRequestHandler):
             problem = store.speaker_request_problem(path, stable_id, text_sha256, speaker, new_gender)
             if problem is not None:
                 raise ApiError(HTTPStatus.BAD_REQUEST, SPEAKER_PROBLEMS.get(problem, "Không đổi được người nói câu này"))
-        listener_overrides.request_speakers(path, lines, speaker, now=time.time(), new_gender=new_gender)
+        now = time.time()
+        listener_overrides.request_speakers(path, lines, speaker, now=now, new_gender=new_gender)
         # Thẻ "Một người hai tên": ngoài các câu này, ghi luôn cấp TÊN (aliases.py) - phần sau của cuốn tự hiểu.
         alias = str(body.get("alias", "") or "").strip()[:200]
         remembered = bool(alias) and aliases.add(path, alias, speaker)
@@ -1099,7 +1144,7 @@ class Handler(BaseHTTPRequestHandler):
         if body.get("bracketRule"):
             remembered = bracket_rule.save(path, speaker) or remembered
         self._send_json(HTTPStatus.OK, {"lines": len(lines), "speaker": speaker, "new": bool(new_gender),
-                                        "alias": remembered})
+                                        "alias": remembered, "requestedAt": now})
 
     def get_voice_choices(self, query: dict[str, list[str]], value: str) -> None:
         # Màn "Đổi giọng" của một nhân vật (voice_picker.py): mọi giọng dùng được, giọng máy gợi ý, ai đang dùng giọng nào.
@@ -1142,6 +1187,9 @@ class Handler(BaseHTTPRequestHandler):
         path = self.app._book(value)
         body = self._body()
         character = str(body.get("character", "")).strip()[:200]
+        if body.get("withdraw"):
+            self._withdraw(path, "voices", [listener_overrides.character_key(character)] if character else [], body)
+            return
         preset = humanize.voice_key(str(body.get("preset", "") or "").strip()[:120])
         gender = str(body.get("gender", "") or "").strip()[:10]
         avoid = str(body.get("avoid", "") or "").strip()[:200]
@@ -1150,9 +1198,10 @@ class Handler(BaseHTTPRequestHandler):
         problem = store.voice_request_problem(path, character, preset=preset, gender=gender, avoid=avoid)
         if problem is not None:
             raise ApiError(HTTPStatus.BAD_REQUEST, VOICE_PROBLEMS.get(problem, "Không đổi được giọng nhân vật này"))
-        listener_overrides.request_voice(path, character, preset=preset, gender=gender, avoid=avoid, now=time.time())
+        now = time.time()
+        listener_overrides.request_voice(path, character, preset=preset, gender=gender, avoid=avoid, now=now)
         self._send_json(HTTPStatus.OK, {"character": character, "preset": humanize.voice_label(preset), "gender": gender,
-                                        "avoid": avoid})
+                                        "avoid": avoid, "requestedAt": now})
 
     def post_review(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._mutating()  # ghi reviews.json và (Cần thu lại) overrides.json - như mọi yêu cầu sửa khác
