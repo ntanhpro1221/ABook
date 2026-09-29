@@ -10,6 +10,7 @@ export function refreshAfterDecision(client: QueryClient, bookId: string) {
   void client.invalidateQueries({ queryKey: ["listen", "cast", bookId] });
   void client.invalidateQueries({ queryKey: ["cast", bookId] });
   void client.invalidateQueries({ queryKey: ["pronunciations", bookId] });
+  void client.invalidateQueries({ queryKey: ["casting", bookId] });
 }
 
 // Bấm nhầm ("Nữ" cạnh "Nam", nhầm người, nhầm cách đọc) sửa ngay trên thông báo: "Hoàn tác" gửi lại đúng lần bấm ấy
