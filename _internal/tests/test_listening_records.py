@@ -261,3 +261,14 @@ def test_the_player_writes_into_the_record_it_is_playing(tmp_path: Path) -> None
     assert listening.add_bookmark("sach", 3, 210.0, "vẫn giữ", record=playing)["note"] == "vẫn giữ"
     assert [mark["note"] for mark in listening.get("sach")["bookmarks"]] == ["vẫn giữ"]
     assert playing not in json.dumps(listening.records("sach")), "không sống lại"
+
+
+def test_each_record_says_where_it_stopped(tmp_path: Path) -> None:
+    """Hai hồ sơ cùng "nghe gần nhất hôm nay" không phân biệt được trong menu (soát UX 29-09): mỗi hồ sơ mang chỗ nghe cuối."""
+    listening = Listening(tmp_path / "listening.json")
+    listening.progress("sach", 3, 430.5, 1000.0)
+    [record] = listening.records("sach")
+    assert record["last"] == {"chapterId": 3, "seconds": 430.5}
+    listening.create_record("sach", "Lần nghe 2")
+    fresh = next(item for item in listening.records("sach") if item["active"])
+    assert fresh["last"] is None, "hồ sơ mới chưa nghe chỗ nào"
