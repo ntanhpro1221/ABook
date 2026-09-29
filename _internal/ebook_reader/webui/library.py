@@ -46,6 +46,8 @@ DEFAULT_PREFERENCES: dict[str, Any] = {
     "safetyStopHours": 2,
     # Lịch đêm tự hẹn giờ: {"from": "22:00", "to": "06:00", "minutes": 30} hoặc None.
     "sleepSchedule": None,
+    # Máy tính xách tay rút sạc: tạm dừng tạo sách (supervisor đọc thẳng khoá này - power_source.PREFERENCE_KEY).
+    "pauseOnBattery": True,
 }
 MAX_RECENTS = 30
 

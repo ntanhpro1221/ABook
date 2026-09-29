@@ -82,6 +82,13 @@ def status_label(phase: str, stage: str, *, active: bool) -> str:
     return f"Đang {doing}" if active else f"Tạm ngưng lúc {doing}"
 
 
+def pause_label(reason: str, *, reached: bool) -> str:
+    """Nhãn trạng thái khi cuốn đang tạm dừng (power_source). Chưa tới checkpoint thì dây chuyền còn làm nốt việc dở."""
+    if not reached:
+        return "Đang tạm dừng…"
+    return "Tạm dừng · máy đang chạy pin" if reason == "battery" else "Đã tạm dừng"
+
+
 def chapter_title(title: str) -> str:
     """Tên file chương là số ("645") thì đọc thành "Chương 645"; còn lại giữ nguyên."""
     match = _NUMERIC_TITLE.match(title)

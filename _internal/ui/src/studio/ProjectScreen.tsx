@@ -41,7 +41,18 @@ import {
 import { api, type BookSummary, type Chapter } from "@/studio/api";
 import { cn } from "@/shared/cn";
 import { usePageTitle } from "@/shared/title";
-import { phaseTone, useActivity, useAppInfo, useBook, useContinuation, useParts, useReveal, useStart, useStop } from "@/studio/data";
+import {
+  phaseTone,
+  useActivity,
+  useAppInfo,
+  useBook,
+  useContinuation,
+  useParts,
+  usePause,
+  useReveal,
+  useStart,
+  useStop,
+} from "@/studio/data";
 import {
   formatClock,
   formatDate,
@@ -78,7 +89,7 @@ function usePlayChapter() {
 type StepState = "done" | "active" | "paused" | "pending";
 
 function stepStates(book: BookSummary): [StepState, StepState, StepState] {
-  const live = book.running || book.starting;
+  const live = (book.running || book.starting) && !book.paused;
   const now: StepState = live ? "active" : "paused";
   if (book.phase === "done") return ["done", "done", "done"];
   if (book.phase === "idle") return ["pending", "pending", "pending"];
@@ -193,6 +204,7 @@ function ProductionPanel({ book }: { book: BookSummary }) {
 
 function StopDialog({ book, open, onOpenChange }: { book: BookSummary; open: boolean; onOpenChange: (open: boolean) => void }) {
   const stop = useStop();
+  const pause = usePause();
   const inAnalysis = book.phase === "analysis";
   return (
     <Dialog
@@ -214,16 +226,27 @@ function StopDialog({ book, open, onOpenChange }: { book: BookSummary; open: boo
               sách khác</span> so với chạy liền một mạch: đoạn sau chỗ dừng có thể đổi người nói, kéo theo đổi giọng.
             </p>
             <p className="mt-2 text-fg-2">
-              Nên để chạy hết bước này{book.eta ? ` (${formatEta(book.eta.seconds)})` : ""}. Nếu buộc phải dừng (tắt máy), hãy
-              tạo lại sách từ đầu thay vì bấm Tiếp tục.
+              Nên để chạy hết bước này{book.eta ? ` (${formatEta(book.eta.seconds)})` : ""}. Cần máy rảnh một lúc thì bấm{" "}
+              <span className="font-medium text-fg">Tạm dừng</span>: sách đứng yên và làm tiếp đúng chỗ, không đổi gì. Nếu buộc
+              phải dừng hẳn (tắt máy), hãy tạo lại sách từ đầu thay vì bấm Tiếp tục.
             </p>
           </div>
         </div>
       )}
-      <div className="flex justify-end gap-2">
-        <Button variant={inAnalysis ? "primary" : "ghost"} onClick={() => onOpenChange(false)}>
+      <div className="flex flex-wrap justify-end gap-2">
+        <Button variant="ghost" onClick={() => onOpenChange(false)}>
           Để chạy tiếp
         </Button>
+        {inAnalysis && !book.paused && (
+          <Button
+            variant="primary"
+            icon={Pause}
+            loading={pause.isPending}
+            onClick={() => pause.mutate({ id: book.id, paused: true }, { onSettled: () => onOpenChange(false) })}
+          >
+            Tạm dừng
+          </Button>
+        )}
         <Button
           variant="danger"
           icon={Square}
@@ -408,6 +431,7 @@ function Actions({ book }: { book: BookSummary }) {
   const [confirmStop, setConfirmStop] = useState(false);
   const live = book.running;
   const stop = useStop();
+  const pause = usePause();
   // Phân tích xong thì sổ nhân vật đã đủ để làm tiếp; nút chỉ hiện khi thư mục truyện có chương mới sau chương cuối.
   const analyzed = book.segments.total > 0 && book.segments.analyzed === book.segments.total;
   const next = useContinuation(book.id, analyzed).data?.paths.length ?? 0;
@@ -439,9 +463,21 @@ function Actions({ book }: { book: BookSummary }) {
           Đang khởi động
         </Button>
       ) : live ? (
-        <Button variant="outline" size="lg" icon={Square} onClick={() => setConfirmStop(true)}>
-          Dừng
-        </Button>
+        // Tạm dừng giữ tiến trình sống, làm tiếp đúng chỗ - an toàn cả giữa lúc phân tích; "Dừng" kết thúc lượt chạy.
+        <>
+          {book.paused ? (
+            <Button variant="primary" size="lg" icon={Play} loading={pause.isPending} onClick={() => pause.mutate({ id: book.id, paused: false })}>
+              Tiếp tục
+            </Button>
+          ) : (
+            <Button variant="outline" size="lg" icon={Pause} loading={pause.isPending} onClick={() => pause.mutate({ id: book.id, paused: true })}>
+              Tạm dừng
+            </Button>
+          )}
+          <Button variant="ghost" size="lg" icon={Square} onClick={() => setConfirmStop(true)}>
+            Dừng
+          </Button>
+        </>
       ) : book.phase === "idle" ? (
         <Button variant="primary" size="lg" icon={Wand2} loading={start.isPending} onClick={() => start.mutate(book.id)}>
           Bắt đầu tạo sách nói
@@ -466,6 +502,12 @@ function Actions({ book }: { book: BookSummary }) {
       {/* Đổi tên / xoá chỉ trên máy này - Studio từ xa không có hai đường ấy (remote_studio.ALLOWED). */}
       {!remote && <ProjectMenu book={book} />}
       <StopDialog book={book} open={confirmStop} onOpenChange={setConfirmStop} />
+      {live && book.paused === "battery" && (
+        <p className="basis-full text-pretty text-sm text-fg-2">
+          Máy tính đang chạy pin: tạo sách trên pin chậm hơn nhiều mà hao pin, nên Studio tạm dừng và tự làm tiếp khi cắm sạc.
+          Bấm “Tiếp tục” để làm tiếp ngay trên pin.
+        </p>
+      )}
     </div>
   );
 }
@@ -741,7 +783,11 @@ export function ProjectScreen() {
       <header className="mt-5 flex flex-col gap-5 sm:flex-row sm:gap-7">
         <CoverEditor book={book} />
         <div className="min-w-0 flex-1 pt-1">
-          <StatusPill label={book.starting ? "Đang khởi động" : book.statusLabel} tone={phaseTone(book.phase, live)} live={live} />
+          <StatusPill
+            label={book.starting ? "Đang khởi động" : book.statusLabel}
+            tone={book.paused ? "warning" : phaseTone(book.phase, live)}
+            live={live && !book.paused}
+          />
           <h1 className="mt-3 text-2xl font-bold leading-tight tracking-tight sm:text-[30px]">{book.title}</h1>
           <p className="mt-2 text-sm text-fg-2">{meta.join(" · ")}</p>
           <PartLinks id={book.id} />

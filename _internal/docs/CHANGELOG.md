@@ -9,6 +9,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Studio (sản xuất sách nói)
 
+- Nút "Tạm dừng" / "Tiếp tục" khi sách đang chạy: sách đứng yên sau câu đang làm dở và làm tiếp đúng chỗ ấy, không đổi
+  gì - an toàn cả giữa lúc phân tích truyện, nơi "Dừng" rồi chạy tiếp có thể ra một cuốn khác. Hộp thoại "Dừng giữa lúc
+  phân tích truyện?" mời tạm dừng thay vì dừng.
+- Máy tính xách tay rút sạc hơn một phút thì Studio tự tạm dừng (chạy pin làm sách rất chậm mà hao pin) và tự làm tiếp
+  khi cắm sạc lại; trang sách nói "Tạm dừng · máy đang chạy pin". Bấm "Tiếp tục" để làm tiếp ngay trên pin, hay tắt hẳn ở
+  Cài đặt → Studio → "Tạm dừng khi rút sạc". Điện thoại điều khiển Studio từ xa cũng tạm dừng / tiếp tục được.
+- Bảng chương ở trang dự án không còn ngắt "2 ngày trước" thành hai dòng.
 - Mục "Cách đọc tên", bảng "Tên trong câu" và thẻ "Đọc … là …?" trong Việc cần duyệt hiện cách đọc với chữ đầu mỗi từ viết
   hoa ("Rên-ta-rô" thay cho "rên-ta-rô"); cách đọc đã lưu và ô sửa giữ nguyên.
 

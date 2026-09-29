@@ -75,6 +75,8 @@ class Runner(Protocol):
     def start(self, project_root: Path) -> None: ...
     def stop(self, project_root: Path) -> None: ...
     def running(self, project_root: Path) -> bool: ...
+    def pause(self, project_root: Path, paused: bool) -> None: ...
+    def pause_reason(self, project_root: Path) -> str | None: ...
 
 
 class BackgroundRunner:
@@ -97,6 +99,20 @@ class BackgroundRunner:
             return bool(get_status(project_root).running)
         except Exception:  # noqa: BLE001 - state hỏng thì coi như không chạy; summary vẫn đọc lease
             return False
+
+    def pause(self, project_root: Path, paused: bool) -> None:
+        from ..background_runner import request_pause
+
+        request_pause(project_root, paused)
+
+    def pause_reason(self, project_root: Path) -> str | None:
+        """"battery" (máy đang chạy pin), "listener" (người dùng bấm Tạm dừng) hay None - power_source."""
+        from ..background_runner import get_status
+
+        try:
+            return get_status(project_root).pause_reason
+        except Exception:  # noqa: BLE001
+            return None
 
 
 class StudioRunner(BackgroundRunner):
@@ -128,6 +144,7 @@ class FakeRunner:
 
     def __init__(self) -> None:
         self._running: set[str] = set()
+        self._paused: dict[str, str] = {}
 
     def start(self, project_root: Path) -> None:
         time.sleep(1.2)
@@ -135,9 +152,21 @@ class FakeRunner:
 
     def stop(self, project_root: Path) -> None:
         self._running.discard(str(project_root))
+        self._paused.pop(str(project_root), None)
 
     def running(self, project_root: Path) -> bool:
         return str(project_root) in self._running
+
+    def pause(self, project_root: Path, paused: bool) -> None:
+        if str(project_root) not in self._running:
+            raise RuntimeError("Sách này không đang chạy")
+        if paused:
+            self._paused[str(project_root)] = "listener"
+        else:
+            self._paused.pop(str(project_root), None)
+
+    def pause_reason(self, project_root: Path) -> str | None:
+        return self._paused.get(str(project_root))
 
 
 def _count_words(path: Path) -> int:
