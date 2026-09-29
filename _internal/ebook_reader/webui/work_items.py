@@ -418,7 +418,8 @@ def work_items(project_root: Path) -> dict[str, Any]:
             "title": f"{len(odd_rows)} câu của {who} ở chương này là của một người khác?",
             "problem": f"{who} nói theo hai kiểu xưng hô ở chương này - {odd_list} ({len(odd_rows)} câu) và {usual_list}"
                        f" ({usual_count} câu), không câu nào dùng cả hai - và kiểu {odd_list} khác cách {who} nói ở các chương"
-                       f" khác. Thường là máy đã gán lời một người không tên cho {who}.",
+                       f" khác. Thường là máy đã gán lời một người không tên cho {who}. “Người khác…” để đặt tên và giới"
+                       f" (vd “bà thầy bói”, nữ) - người ấy được giọng riêng.",
             "affected": len(odd_rows),
             "doubt": 0.8,
             "options": list(dict.fromkeys(["Vai phụ không tên"] + [choice["label"] for choice in choices] + [who])),
