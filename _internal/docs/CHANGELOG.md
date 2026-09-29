@@ -22,7 +22,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Thông báo sau khi sửa (cách đọc tên, người nói, giọng, cách đọc một câu) chỉ nói điều đúng với sách này: sách đang chạy
   thì "máy áp ở ranh giới chương kế tiếp", sách đang dừng thì "thu lại khi sách chạy tiếp", sách đã xong thì "bấm “Áp dụng
   thay đổi”" - trước đây thông báo nào cũng nói cả hai vế.
-- Đổi giọng một nhân vật trong hộp chọn giọng cũng có "Hoàn tác" trên thông báo.
+- Đổi giọng một nhân vật trong hộp chọn giọng cũng có "Hoàn tác" trên thông báo. Dòng "Đã ghi … - chờ áp dụng" trên thẻ
+  và trên từng câu ở tab Kịch bản cũng nói theo tình trạng sách như thông báo.
+- Cách đọc tên bị từ chối vì sai chính tả tiếng Việt ("Hên-kơ") nói đúng âm tiết sai ("Tiếng Việt viết “cơ”, không viết
+  “kơ”") và có nút "Dùng “Hên-cơ”" ngay dưới ô nhập - trước đây chỉ có một câu báo chung.
+- Tab Kịch bản trên điện thoại: bảng cách đọc câu mở thành tấm trượt từ đáy màn, rộng hết màn, thay cho bảng nổi bị ép sát
+  mép.
 
 ## [0.4.7] - 2026-09-29
 

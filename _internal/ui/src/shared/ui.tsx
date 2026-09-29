@@ -330,6 +330,50 @@ export function Dialog({
   );
 }
 
+/** Tấm trượt từ đáy màn điện thoại, thay cho bảng nổi neo vào một nút nhỏ: trên màn hẹp bảng nổi bị ép sát mép và phải
+ *  cuộn trong khung thấp (soát UX 29-09, bảng cách đọc câu ở tab Kịch bản). `trigger` là nút mở (asChild). */
+export function Sheet({
+  open,
+  onOpenChange,
+  title,
+  trigger,
+  children,
+  onEscapeKeyDown,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: ReactNode;
+  trigger: ReactNode;
+  children: ReactNode;
+  onEscapeKeyDown?: (event: KeyboardEvent) => void;
+}) {
+  return (
+    <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
+      <DialogPrimitive.Trigger asChild>{trigger}</DialogPrimitive.Trigger>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-scrim" />
+        <DialogPrimitive.Content
+          aria-describedby={undefined}
+          onCloseAutoFocus={(event) => event.preventDefault()}
+          onEscapeKeyDown={onEscapeKeyDown}
+          className="fixed inset-x-0 bottom-0 z-50 max-h-[85dvh] overflow-y-auto overscroll-contain rounded-t-2xl border-t border-line bg-panel px-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-2 shadow-float focus:outline-none"
+        >
+          <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-line-strong" aria-hidden />
+          <div className="flex items-center justify-between gap-3 px-1.5">
+            <DialogPrimitive.Title className="text-sm font-semibold">{title}</DialogPrimitive.Title>
+            <DialogPrimitive.Close asChild>
+              <button aria-label="Đóng" className="-m-1 rounded-md p-1 text-fg-3 hover:bg-hover hover:text-fg">
+                <X className="size-5" />
+              </button>
+            </DialogPrimitive.Close>
+          </div>
+          {children}
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
+  );
+}
+
 // ---- Khác -------------------------------------------------------------------------------------------------
 
 export function Skeleton({ className }: { className?: string }) {
