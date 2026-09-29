@@ -24,6 +24,15 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Các phần của một cuốn làm nhiều đợt ("Tên · Phần 2"...) nghe liền như một cuốn: hết phần này tự nghe tiếp phần sau.
   Tập khác của một bộ ("Tập 17") vẫn chỉ hiện nút mời nghe tiếp.
+  Đã thử trên Android lúc tắt màn hình: phần sau tự phát.
+- Nút trong thông báo ("Hoàn tác", "Ở lại đây") nhìn thấy được ở giao diện tối.
+- Nghe thử giọng nhân vật chỉ dừng sách khi câu mẫu phát được thật; chưa có câu mẫu thì báo, sách vẫn phát tiếp.
+- Điện thoại: bốn tab của trang sách vừa màn hình, hàng tab còn tab bị che thì mờ ở mép; nút chính một hàng riêng nên
+  "Từ đầu" không nhảy chỗ khi bấm phát/dừng. "Từ đầu" khi đang nghe là một cú nhảy như mọi cú nhảy khác - nút ↺ quay
+  lại được chỗ cũ.
+- Thanh phát ở máy tính không cắt tên chương khi còn chỗ; sách chưa thu xong ghi "Phần đã có 99%" thay vì "Cả cuốn
+  99%"; màn cảm ứng không gợi ý phím tắt; Đọc theo mở ra nhảy thẳng tới câu đang đọc thay vì cuộn dài từ đầu chương.
+- App không xưng hô với người dùng nữa (bỏ "bạn" ở 15 chỗ).
 
 ## [0.4.2] - 2026-09-29
 
