@@ -433,6 +433,9 @@ export function PlayerProvider({
     const current = refs.current.track;
     if (!current) return;
     const from = engine.time;
+    // Tua (về đầu chương bằng Home, "Nghe từ đây", dấu trang) sau khi đã nghe hết: bỏ dòng "Đã nghe hết phần đã có" - soát UX
+    // 29-09: dòng ấy còn nguyên trong lúc chương đang phát lại ở 4:52, tới khi tải lại trang.
+    setAtEnd("none");
     engine.seek(seconds);
     clock.set(Math.max(0, seconds), engine.duration);
     night.touch("seek", position());
@@ -447,6 +450,7 @@ export function PlayerProvider({
       return;
     }
     const target = Math.max(0, engine.time + delta);
+    if (delta < 0) setAtEnd("none");
     engine.seek(target);
     clock.set(target, engine.duration);
   }, [clock, engine, native, night, position]);
@@ -455,6 +459,7 @@ export function PlayerProvider({
     const current = refs.current.track;
     const chapter = refs.current.queue.find((item) => item.id === chapterId);
     if (!current || !chapter || !chapter.available) return;
+    setAtEnd("none");
     night.touch("chapter", position(), true);
     const from = { chapterId: current.chapterId, seconds: engine.time };
     if (chapterId !== current.chapterId || Math.abs(at - from.seconds) > JUMP_SECONDS) remember(from, { chapterId, seconds: at });

@@ -33,6 +33,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   - Cách đọc bị từ chối báo lỗi ngay dưới ô nhập.
   - Vai phụ trùng tên ở nhiều chương ghi thêm tên chương.
   - Thanh lọc xuống hàng thay vì bị cắt chữ.
+- Nghe trên **trình duyệt điện thoại** (iPhone, iPad nghe thư viện máy tính): thanh phát gọn như app Android thay cho
+  thanh đầy đủ (ở 375px các nút chồng lên nhau), màn "Đang nghe" xếp dọc - trước đây tràn ngang và không mở được đọc theo,
+  danh sách chương hay dấu trang. Cửa sổ máy tính hẹp (dưới ~1024px) cũng dùng thanh gọn; màn "Đang nghe" co cột trái
+  để chừa chỗ cho đọc theo.
+- Nghe: dòng "Đã nghe hết phần đã có" biến mất ngay khi tua, lùi hay nhảy về một chỗ trước đó (trước đây còn nguyên tới
+  khi tải lại trang). Esc đóng màn "Đang nghe" ở bất kỳ đâu. Thông báo có nút "Hoàn tác", "Ghi chú", "Quay lại chỗ cũ"
+  hiện đủ lâu để kịp bấm.
 - Sửa nhỏ từ đợt soát trước phát hành:
   - Lịch đêm chọn giờ theo **24 giờ** ("22:00", không còn "10:00 Chiều").
   - Ghép thiết bị: địa chỉ nên gõ đứng đầu, không còn địa chỉ card ảo (WSL, Hyper-V…). Ô mã chỉ nhận số. Nút "Huỷ ghép"

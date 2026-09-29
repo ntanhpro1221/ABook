@@ -6,6 +6,7 @@ import { useNowPlaying } from "@/listen/player";
 import { NowPlaying, PlayerBar } from "@/listen/PlayerViews";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
+import { useMediaQuery } from "@/shared/media";
 import { usePageEnter } from "@/shared/motion";
 import { APP_TITLE } from "@/shared/title";
 import { formatPercent } from "@/shared/format";
@@ -166,6 +167,9 @@ export function Shell({ children }: { children: ReactNode }) {
     if (expandedNow.current) setExpanded(false);
   }, [pathname, setExpanded]);
   const main = useRef<HTMLElement | null>(null);
+  // Dưới md (768px) là bố cục điện thoại: thanh tab dưới đáy, màn "Đang nghe" xếp dọc. Thanh phát đầy đủ cần ~1024px.
+  const phoneWidth = useMediaQuery("(max-width: 767px)");
+  const compactBar = useMediaQuery("(max-width: 1023px)");
   usePageEnter(main, pathname);
 
   // Tên chung theo đường dẫn; màn nào biết tên cụ thể (sách, chương, dự án) thì `usePageTitle` ghi đè sau đó.
@@ -209,7 +213,9 @@ export function Shell({ children }: { children: ReactNode }) {
         </main>
         {!remote && <RemoteBars />}
         {!remote && <ThisPlayerReporter />}
-        <PlayerBar extra={remote ? undefined : <HandOffButton />} />
+        {/* Cửa sổ hẹp (trình duyệt điện thoại nghe thư viện máy tính, soát UX 29-09): thanh phát gọn như app Android -
+            thanh đầy đủ ở 375px chồng các nút lên nhau; các nút phụ vẫn có ở màn "Đang nghe". */}
+        <PlayerBar compact={compactBar} notices extra={remote ? undefined : <HandOffButton />} />
         <nav aria-label="Điều hướng" className="flex border-t border-line bg-sunken pb-[env(safe-area-inset-bottom)] md:hidden">
           <TabItem to="/" icon={Library} match={(path) => path === "/" || path.startsWith("/book/")}>
             Thư viện
@@ -228,7 +234,7 @@ export function Shell({ children }: { children: ReactNode }) {
             Cài đặt
           </TabItem>
         </nav>
-        <NowPlaying />
+        <NowPlaying mobile={phoneWidth} />
       </div>
     </div>
   );

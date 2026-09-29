@@ -526,6 +526,8 @@ export function BookScreen({
     void playBook(book, first.id, 0);
     if (before && (before.chapter.id !== first.id || before.at > 30)) {
       toast("Đang nghe lại từ đầu", {
+        // Có nút thao tác: đủ lâu để kịp bấm (mặc định 4 giây quá ngắn - soát UX 29-09).
+        duration: 8000,
         description: `Chỗ cũ: ${before.chapter.title}`,
         action: { label: "Quay lại chỗ cũ", onClick: () => void playBook(book, before.chapter.id, before.at) },
       });
