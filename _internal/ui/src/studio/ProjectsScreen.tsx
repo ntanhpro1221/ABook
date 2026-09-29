@@ -32,7 +32,7 @@ function ProjectRow({ book }: { book: BookSummary }) {
   }
   const detail =
     book.phase === "done"
-      ? `${book.chapters.completed}/${book.chapters.total} chương`
+      ? `${book.chapters.completed}/${book.chapters.total} chương xong`
       : book.eta && live
         ? formatEta(book.eta.seconds)
         : `${book.chapters.completed}/${book.chapters.total} chương xong`;

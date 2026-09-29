@@ -70,7 +70,7 @@ function markersOf(session: NightSession): Marker[] {
     lastTouch && lastTouch !== timer
       ? make(lastTouch, "touch", Hand, phone ? "Lần cuối chạm máy" : "Lần cuối dùng máy", "chắc chắn còn thức")
       : null,
-    make(still, "still", Smartphone, "Máy bắt đầu nằm yên", "có lẽ bạn ngủ từ khoảng này", BEFORE_SLEEP_SECONDS),
+    make(still, "still", Smartphone, "Máy bắt đầu nằm yên", "có lẽ đã ngủ từ khoảng này", BEFORE_SLEEP_SECONDS),
     make(stopped, "stopped", Moon, "Tự dừng", safety ? "không ai chạm máy suốt một lúc lâu" : "lúc hết giờ hẹn"),
   ].filter(Boolean) as Marker[];
   const suggested = list.find((marker) => marker.key === "still") ?? list.find((marker) => marker.key === "touch") ?? list[0];
@@ -134,7 +134,7 @@ export function MorningRecap({ className }: { className?: string }) {
       <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-accent-text">
         <Moon className="size-3.5" /> {sessionLabel(session.endedAt)} · {session.bookTitle}
       </div>
-      <h2 className="mt-1.5 pr-8 text-lg font-semibold leading-snug">Bạn nghe tới đâu rồi thiếp đi?</h2>
+      <h2 className="mt-1.5 pr-8 text-lg font-semibold leading-snug">Nghe tới đâu rồi thiếp đi?</h2>
 
       <ol className="mt-4 grid gap-3 lg:grid-cols-2">
         {markers.map((marker) => {
@@ -183,7 +183,7 @@ export function MorningRecap({ className }: { className?: string }) {
 
       {scrubbing && script?.timed && (
         <div className="mt-4 max-h-80 overflow-y-auto rounded-xl border border-line">
-          <p className="sticky top-0 bg-panel px-3 py-2 text-xs text-fg-2">Chọn câu cuối cùng bạn còn nhớ:</p>
+          <p className="sticky top-0 bg-panel px-3 py-2 text-xs text-fg-2">Chọn câu cuối cùng còn nhớ:</p>
           {script.segments.slice(Math.max(0, scrubFrom - 2), scrubTo + 3).map((segment) => (
             <button
               key={segment.id}

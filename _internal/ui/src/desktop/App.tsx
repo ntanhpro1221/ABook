@@ -449,6 +449,10 @@ export function App() {
           classNames: {
             toast: "!bg-panel !border !border-line !text-fg !shadow-float !rounded-xl",
             description: "!text-fg-2",
+            // Nút trong thông báo ("Hoàn tác", "Ở lại đây") theo màu của app - mặc định của sonner là chữ tối trên nền
+            // tối ở giao diện tối (soát UX 29-09).
+            actionButton: "!bg-accent !text-accent-ink !font-semibold !rounded-lg",
+            cancelButton: "!bg-hover !text-fg !rounded-lg",
           },
         }}
       />

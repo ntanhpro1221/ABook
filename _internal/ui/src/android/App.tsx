@@ -262,7 +262,18 @@ export function AndroidApp() {
           </ClipBridge>
         </PlayerProvider>
       </SourceProvider>
-      <Toaster position="top-center" containerAriaLabel="Thông báo" toastOptions={{ classNames: { toast: "!bg-panel !border !border-line !text-fg !rounded-xl", description: "!text-fg-2" } }} />
+      <Toaster
+        position="top-center"
+        containerAriaLabel="Thông báo"
+        toastOptions={{
+          classNames: {
+            toast: "!bg-panel !border !border-line !text-fg !rounded-xl",
+            description: "!text-fg-2",
+            actionButton: "!bg-accent !text-accent-ink !font-semibold !rounded-lg",
+            cancelButton: "!bg-hover !text-fg !rounded-lg",
+          },
+        }}
+      />
     </TooltipProvider>
   );
 }

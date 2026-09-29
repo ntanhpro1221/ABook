@@ -2,7 +2,8 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { Loader2, X } from "lucide-react";
-import type { ButtonHTMLAttributes, ComponentType, ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { ButtonHTMLAttributes, ComponentType, CSSProperties, ReactNode } from "react";
 import { cn } from "@/shared/cn";
 
 type IconType = ComponentType<{ className?: string; strokeWidth?: number }>;
@@ -218,10 +219,40 @@ export function StatusPill({
 export const Tabs = TabsPrimitive.Root;
 export const TabsContent = TabsPrimitive.Content;
 
+const FADE = 28;
+
 export function TabsList({ children, className }: { children: ReactNode; className?: string }) {
+  // Hàng tab không vừa (điện thoại, hay cửa sổ hẹp có thanh bên) thì cuộn ngang thay vì tràn ra ngoài trang, và mép nào
+  // còn tab bị che thì mờ dần - không thì "Nhân v" bị cắt trông như lỗi, không ai biết là còn tab (soát UX 29-09).
+  const list = useRef<HTMLDivElement>(null);
+  const [edges, setEdges] = useState({ left: false, right: false });
+  useEffect(() => {
+    const element = list.current;
+    if (!element) return;
+    const update = () => {
+      const left = element.scrollLeft > 2;
+      const right = element.scrollLeft + element.clientWidth < element.scrollWidth - 2;
+      setEdges((old) => (old.left === left && old.right === right ? old : { left, right }));
+    };
+    update();
+    element.addEventListener("scroll", update, { passive: true });
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(update);
+    observer?.observe(element);
+    return () => {
+      element.removeEventListener("scroll", update);
+      observer?.disconnect();
+    };
+  }, []);
+  const mask = edges.left || edges.right
+    ? `linear-gradient(to right, ${edges.left ? `transparent, black ${FADE}px` : "black"}, ${
+        edges.right ? `black calc(100% - ${FADE}px), transparent` : "black"
+      })`
+    : undefined;
+  const style: CSSProperties | undefined = mask ? { maskImage: mask, WebkitMaskImage: mask } : undefined;
   return (
-    // Hàng tab không vừa (điện thoại, hay cửa sổ hẹp có thanh bên) thì cuộn ngang thay vì tràn ra ngoài trang.
     <TabsPrimitive.List
+      ref={list}
+      style={style}
       className={cn("flex gap-1 overflow-x-auto overflow-y-hidden border-b border-line [scrollbar-width:none]", className)}
     >
       {children}
@@ -233,7 +264,7 @@ export function TabsTrigger({ value, children, count }: { value: string; childre
   return (
     <TabsPrimitive.Trigger
       value={value}
-      className="relative -mb-px inline-flex h-11 shrink-0 items-center gap-2 whitespace-nowrap border-b-2 border-transparent px-3 text-sm font-medium text-fg-2 transition-colors hover:text-fg data-[state=active]:border-accent data-[state=active]:text-fg"
+      className="relative -mb-px inline-flex h-11 shrink-0 items-center gap-2 whitespace-nowrap border-b-2 border-transparent px-2.5 text-sm sm:px-3 font-medium text-fg-2 transition-colors hover:text-fg data-[state=active]:border-accent data-[state=active]:text-fg"
     >
       {children}
       {count !== undefined && (

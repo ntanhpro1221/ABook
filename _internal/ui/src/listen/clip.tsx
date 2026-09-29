@@ -1,8 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { toast } from "sonner";
 
 // Trình phát clip ngắn: nghe thử giọng kể, nghe câu mẫu của một nhân vật. Tách khỏi trình phát chương để
 // không làm mất vị trí đang nghe; bấm clip thì tạm dừng chương, clip hết thì thôi (không tự phát lại chương -
-// người dùng đang so giọng, tự bật lại tiếng chương giữa chừng là làm phiền).
+// người dùng đang so giọng, tự bật lại tiếng chương giữa chừng là làm phiền). Chương chỉ dừng khi clip THẬT SỰ phát:
+// clip hỏng (câu mẫu chưa thu, 404) từng làm sách dừng im lặng mà không báo gì (soát UX 29-09).
 
 interface ClipContextValue {
   current: string | null;
@@ -39,6 +41,18 @@ export function ClipProvider({ children, onStart }: { children: ReactNode; onSta
     setLoading(false);
   }, []);
 
+  const onStartRef = useRef(onStart);
+  onStartRef.current = onStart;
+  // Số thứ tự của lần bấm còn chờ clip phát được để dừng chương (0 = không chờ).
+  const startPending = useRef(0);
+
+  const failed = useCallback(() => {
+    startPending.current = 0;
+    setCurrent(null);
+    setLoading(false);
+    toast("Chưa nghe thử được", { description: "Câu mẫu này chưa có bản thu - sách vẫn phát tiếp." });
+  }, []);
+
   const toggle = useCallback((id: string, url: string) => {
     const element = audio.current;
     if (!element) return;
@@ -46,8 +60,8 @@ export function ClipProvider({ children, onStart }: { children: ReactNode; onSta
       stop();
       return;
     }
-    onStart?.();
     const mine = (request.current += 1);
+    startPending.current = mine;
     element.pause();
     element.src = url;
     element.currentTime = 0;
@@ -55,28 +69,38 @@ export function ClipProvider({ children, onStart }: { children: ReactNode; onSta
     setLoading(true);
     void element.play().catch((error: unknown) => {
       if (request.current !== mine || (error as { name?: string } | null)?.name === "AbortError") return;
-      setCurrent(null);
-      setLoading(false);
+      failed();
     });
-  }, [current, onStart, stop]);
+  }, [current, failed, stop]);
 
   useEffect(() => {
     const element = audio.current;
     if (!element) return;
     const ended = () => {
+      startPending.current = 0;
       setCurrent(null);
       setLoading(false);
     };
-    const playing = () => setLoading(false);
+    const error = () => {
+      if (startPending.current && startPending.current === request.current) failed();
+      else ended();
+    };
+    const playing = () => {
+      setLoading(false);
+      if (startPending.current && startPending.current === request.current) {
+        startPending.current = 0;
+        onStartRef.current?.();
+      }
+    };
     element.addEventListener("ended", ended);
-    element.addEventListener("error", ended);
+    element.addEventListener("error", error);
     element.addEventListener("playing", playing);
     return () => {
       element.removeEventListener("ended", ended);
-      element.removeEventListener("error", ended);
+      element.removeEventListener("error", error);
       element.removeEventListener("playing", playing);
     };
-  }, []);
+  }, [failed]);
 
   const value = useMemo(() => ({ current, loading, toggle, stop }), [current, loading, toggle, stop]);
   return <ClipContext.Provider value={value}>{children}</ClipContext.Provider>;

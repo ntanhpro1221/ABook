@@ -64,7 +64,7 @@ function UpdateSection({ update, current }: { update: { version: string; notes: 
     try {
       await api("/api/app/update", { method: "POST", body: {} });
       toast.success(`Đang tải ABook ${update.version}`, {
-        description: "App tự đóng, cài bản mới rồi mở lại. Chỗ đang nghe, dấu trang và sách của bạn giữ nguyên.",
+        description: "App tự đóng, cài bản mới rồi mở lại. Chỗ đang nghe, dấu trang và sách giữ nguyên.",
         duration: 60_000,
       });
     } catch (error) {
@@ -110,7 +110,7 @@ export function SettingsScreen() {
       <div className="mt-2 max-w-[980px]">
         {!remote && info?.update && <UpdateSection update={info.update} current={info.version} />}
         {remote && (
-          <Section title="Điều khiển từ xa" description="Bạn đang dùng ABook của máy tính qua mạng.">
+          <Section title="Điều khiển từ xa" description="Đang dùng ABook của máy tính qua mạng.">
             <p className="max-w-xl text-sm text-fg-2 text-pretty">
               {info?.listenOnly
                 ? "Thiết bị này nghe được mọi sách của máy tính. Muốn làm sách từ đây: trên máy tính, Cài đặt → Điện thoại và thiết bị → bật “Cho phép điều khiển sản xuất từ thiết bị đã ghép” và “Điều khiển sản xuất” ở dòng của thiết bị này."
@@ -302,7 +302,7 @@ export function SettingsScreen() {
         </Section>
         <Section title="Giới thiệu">
           <p className="text-sm text-fg-2 text-pretty">
-            ABook {info?.version} - studio sách nói tiếng Việt chạy hoàn toàn trên máy của bạn: phân tích truyện, phân vai, thu âm và
+            ABook {info?.version} - studio sách nói tiếng Việt chạy hoàn toàn trên máy này: phân tích truyện, phân vai, thu âm và
             kiểm tra từng câu.
           </p>
           {/* Chữ chọn được, không phải liên kết: trong cửa sổ app (WebView) một liên kết có thể điều hướng chính cửa sổ. */}
