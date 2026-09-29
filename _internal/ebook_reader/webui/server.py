@@ -441,8 +441,12 @@ class App:
         return {"id": book_id(root)}
 
     def continuation(self, value: str) -> dict[str, Any]:
-        """"Làm tiếp cuốn này": chương kế tiếp, cài đặt và thứ sẽ mang theo - trình tạo sách điền sẵn từ đây."""
-        return store.continuation_plan(self._book(value))
+        """"Làm tiếp cuốn này": chương kế tiếp, cài đặt và thứ sẽ mang theo - trình tạo sách điền sẵn từ đây. Tính từ phần
+        MỚI NHẤT của cuốn (bấm ở phần 1 khi đã có phần 2 thì nối sau phần 2); `sourceId` là phần ấy - gieo từ nó."""
+        latest = continuation.latest_part(self._book(value), self.library.projects())
+        plan = store.continuation_plan(latest)
+        plan["sourceId"] = book_id(latest)
+        return plan
 
     def open_existing(self, body: dict[str, Any]) -> dict[str, Any]:
         path = Path(str(body.get("path", ""))).expanduser()

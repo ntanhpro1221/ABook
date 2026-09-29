@@ -219,7 +219,7 @@ def continuation_plan(project_root: Path) -> dict[str, Any]:
     part = continuation.part_number(project_root) + 1
     total = int(segments["total"] or 0)
     return {
-        "sourceTitle": title,
+        "sourceTitle": continuation.base_title(title),
         "part": part,
         "title": continuation.continued_title(title, part),
         "paths": [str(path) for path in continuation.next_chapters(project_root)],
