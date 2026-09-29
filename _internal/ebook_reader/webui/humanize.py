@@ -134,6 +134,12 @@ def person_name(name: str) -> str:
 _ROMAN_NUMERALS = frozenset({"I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"})
 
 
+def shown_reading(spoken: str) -> str:
+    """Cách đọc một tên để HIỆN: chữ đầu mỗi từ viết hoa ("rên-ta-rô" -> "Rên-ta-rô", như ui/src/shared/format.shownReading).
+    Chỉ cho chữ hiện ra - giá trị lưu và giá trị để sửa giữ nguyên."""
+    return re.sub(r"(^|\s)([^\W\d_])", lambda match: match.group(1) + match.group(2).upper(), spoken)
+
+
 def _caps_glitch(word: str) -> bool:
     """Từ mở bằng từ HAI chữ hoa trở lên rồi toàn chữ thường ("LOUise")."""
     letters = [ch for ch in word if ch.isalpha()]
