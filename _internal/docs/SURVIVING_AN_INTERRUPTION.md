@@ -588,3 +588,25 @@ Phân biệt bằng hai câu lệnh, không bằng phỏng đoán:
 
 `LastBootUpTime` muộn hơn dòng log cuối của worker → máy đã tắt. Kernel-Power id 109 là "bắt đầu tắt
 máy", 107 là "thức lại từ sleep", 41 là mất điện đột ngột.
+
+## Rút điện ngoài ý muốn: người gác pin (2026-09-29)
+
+Laptop là máy chủ sách, cắm điện 24/24. Ngày 24-09 sạc tuột lúc 22:50, tới 00:07 mới có người thấy - pin còn 5%, Windows
+sắp ngủ đông ở 2%. Trên pin, GPU bị hạ xuống 15 W và phân tích chậm ~15 lần: việc GPU chạy tiếp chỉ đốt pin mà không ra
+việc.
+
+`scripts/power_guard.py` chạy rời (từ bản chép `runtime/power_guard.py`, để đổi nhánh worktree không làm mất file giữa lúc
+đang hẹn tắt máy) và làm theo lời chủ sách: "căn pin cho phù hợp chứ không phải cứ thấy pin tụt chút là tắt":
+
+- rút sạc hơn 60 giây: **tạm dừng** (không giết) cây tiến trình các việc GPU và máy chủ Ollama của chúng; cắm lại là chạy
+  tiếp đúng chỗ;
+- thời gian còn lại ước từ tốc độ tụt THẬT trong 10 phút gần nhất và ước lượng của Windows, lấy số thận trọng hơn - không
+  theo một con số %;
+- chạy pin 15 phút, hay còn ~25 phút: ghi sự kiện cho người vận hành dời việc sang máy khác (đo sang Mac mini, huấn luyện
+  sang Kaggle/Modal - mất điện cả nhà thì Mac và router cũng tắt);
+- còn ~12 phút hay <= 8%, hai lần đo liền: đóng các việc ấy, rồi `shutdown /s /t 180` kèm hộp "Không tắt máy" - người đang
+  ngồi cạnh máy bấm là huỷ, và lần chạy pin ấy không hỏi lại (Windows vẫn tự ngủ đông ở 2%).
+
+Sự kiện ghi ở `runtime/power_events.log`; `power_guard.py --wait` là chuông (thoát khi có sự kiện mới, trần 30 phút),
+`--status` in pin + việc GPU đang có. Phần quyết định là hàm thuần `decide()` - `tests/test_power_guard.py` chạy các kịch
+bản rút nhầm 40 giây, pin khoẻ tụt chậm hai giờ, tụt 1%/phút, ước lượng nhảy một lần, chủ sách bấm "Không tắt máy".
