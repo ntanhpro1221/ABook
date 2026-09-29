@@ -207,9 +207,11 @@ def refresh(library_root: Path, computers: Computers) -> dict[str, Any]:
             folder = root / _folder(str(library.get("name") or entry["name"]), public["id"])
             listed = [str(book["id"]) for book in library.get("books") or [] if isinstance(book, dict) and book.get("id")]
             _follow_renamed(entry, public["id"], folder, set(listed))
+            built = {remote["book"]: child for child, manifest in _manifests(folder)
+                     if (remote := remote_of(manifest)) and remote["computer"] == public["id"]}
             books = 0
             for book in listed:
-                _refresh_book(entry, public["id"], folder, book)
+                _refresh_book(entry, public["id"], folder, book, built.get(book))
                 books += 1
             computers.note(public["id"], lastSeen=time.time(), error="", name=str(library.get("name") or entry["name"]))
             report[public["id"]] = {"books": books}
@@ -269,12 +271,12 @@ def _follow_renamed(entry: dict[str, Any], computer: str, folder: Path, listed: 
         taken.add(new)
 
 
-def _refresh_book(entry: dict[str, Any], computer: str, folder: Path, book: str) -> None:
+def _refresh_book(entry: dict[str, Any], computer: str, folder: Path, book: str, built: Path | None = None) -> None:
+    """`built`: thư mục cuốn ảo đã dựng cho sách này - kể cả dựng theo mã cũ rồi đổi mã (`_follow_renamed`: tên thư mục
+    còn mang dấu của mã cũ)."""
     manifest = json.loads(_request(_base(entry), "GET", f"/sync/v1/books/{book}/manifest", entry["token"]).decode("utf-8"))
     title = str(manifest.get("title") or "Sách")
-    # cuốn ảo đã có (kể cả dựng theo mã cũ rồi đổi mã, `_follow_renamed`: tên thư mục mang dấu của mã cũ)
-    target = next((child for child, known in _manifests(folder) if remote_of(known) == {"computer": computer, "book": book}),
-                  folder / _folder(title, hashlib.sha256(book.encode()).hexdigest()))
+    target = built or folder / _folder(title, hashlib.sha256(book.encode()).hexdigest())
     target.mkdir(parents=True, exist_ok=True)
     previous: dict[str, Any] = {}
     try:

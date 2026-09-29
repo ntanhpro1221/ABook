@@ -8,6 +8,7 @@ worker thật. `--real-runner` bật lại worker thật; `--read-only` khoá m�
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 import threading
 from pathlib import Path
@@ -29,6 +30,9 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if args.preferences is not None:
+        # mọi dữ liệu của app nằm cạnh file tuỳ chọn này - kể cả khoá mã sách (library.book_id), không lọt vào hồ sơ thật
+        os.environ["EBOOK_READER_PREFERENCES"] = str(args.preferences.resolve())
     preferences = Preferences(args.preferences)
     if args.library is not None:
         preferences.update({"libraryRoot": str(args.library.resolve())})
