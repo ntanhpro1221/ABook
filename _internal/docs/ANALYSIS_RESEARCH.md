@@ -102,8 +102,19 @@ chuyền không đổi chữ hoa, nhưng `humanize.person_name` hiện nhãn to�
 **8B-v5 so với v6, cùng host (12 chương, 1014 câu):** F1 62,6 so với 59,8: +2,7 [+0,1; +5,2]; chặt 66,7 so với 61,4:
 +5,2 [+1,8; +9,8]; thắng 7 thua 5. **8B hơn v6 thật**, và v6 ≈ v3 trên LN mở rộng.
 
-**Kết luận cho câu hỏi đổi model mặc định (chủ sách quyết):** 8B-v5 hơn 4B một khoảng nhỏ nhưng thật (+2,7 F1,
-+5,2 chặt so với v6), tốc độ gần ngang 4B. Đổi lại nó nhập người lạ vào nhân vật có tên nhiều hơn (55% so với 32-35%).
+**Cổng, 8B-v5 so với v6 cùng host (29-09 tối):**
+
+| cổng | câu | F1 giọng v6 → 8B | người nói chặt v6 → 8B | từng chương |
+|---|---|---|---|---|
+| TMA 351/363/378/381 (cuốn chủ sách đang làm) | 156 | 64,3 → 70,7 | 73,1 → 82,7 | 8B thắng 4/4 |
+| YMP 248 (ngôi thứ nhất) | 50 | 76,4 → 84,6 | 86,0 → 92,0 | - |
+
+Lượt cổng TMA của v3 (28-09-lora3) chạy trên host cũ nên không đem so. Gộp theo CUỐN thay vì theo chương (`lnx_table.py
+--by-book`: cùng người ở hai chương một truyện là một người) hạ cả ba model 2,5-3 điểm và không đổi thứ hạng (8B 60,4 > v3
+57,2 ≈ v6 56,8); một phần mức hạ là giả, vì công cụ gom cách viết tên theo từng chương còn app gom theo cả cuốn.
+
+**Kết luận cho câu hỏi đổi model mặc định (chủ sách quyết):** 8B-v5 hơn 4B một khoảng nhỏ nhưng thật trên LN (+2,7 F1,
++5,2 chặt so với v6) và rõ trên cổng (TMA +6,4 / +9,6, YMP +8,2 / +6,0), tốc độ gần ngang 4B. Đổi lại nó nhập người lạ vào nhân vật có tên nhiều hơn (55% so với 32-35%).
 Nên chờ 8B trên dữ liệu sạch (data_v6, Modal 01-10) và v7 (nhãn người lạ có mô tả) trước khi đổi: v5 học dữ liệu có
 nhãn chữ hoa và có chương cổng Tam quốc/Tắt đèn trong tập huấn luyện, nên hai cổng ấy không đo được v5.
 
