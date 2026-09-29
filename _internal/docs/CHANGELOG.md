@@ -7,6 +7,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Studio (sản xuất sách nói)
+
+- Trang dự án của một cuốn làm nhiều đợt chỉ sang các phần kia: "Phần 1/2 · Phần 2 →", "Phần 2/2 · ← Phần 1".
+- Chương chưa làm tới lấy tên theo dòng đầu file truyện, không theo tên file (nguồn đánh số file lệch một so với truyện
+  từng làm ranh giới hai phần trông như lặp chương).
+- Điện thoại: bốn bước của trình tạo sách nằm một hàng ngang gọn.
+
 ## [0.4.3] - 2026-09-29
 
 ### Studio (sản xuất sách nói)
