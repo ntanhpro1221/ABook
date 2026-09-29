@@ -573,6 +573,15 @@ export function DevicesScreen() {
                 <RefreshCw className={cn("size-4", remote.isFetching && "animate-spin")} />
               </button>
             </div>
+            {/* Như Cài đặt → Điện thoại và thiết bị của máy tính (chủ sách 29-09: khác mạng có dùng được không): app không cần gì
+                riêng - mạng riêng ảo cho máy tính một địa chỉ tới được, và điện thoại học địa chỉ ấy mỗi lần liệt kê sách. */}
+            {remote.isError && (
+              <p className="mt-2 px-1 text-xs leading-snug text-fg-2">
+                Ra khỏi nhà: sách đã tải về điện thoại vẫn nghe bình thường. Muốn nghe thẳng hay tải thêm từ máy tính khi ở ngoài,
+                cài Tailscale (hoặc ZeroTier, NetBird) trên cả điện thoại và máy tính, đăng nhập cùng một tài khoản, rồi mở mục này
+                một lần khi còn ở nhà - điện thoại tự nhớ đường.
+              </p>
+            )}
             {/* Studio từ xa: điện thoại không sản xuất, nhưng điều khiển được việc sản xuất của máy tính. */}
             <Button
               variant="secondary"
