@@ -300,8 +300,10 @@ function SpeakerFix({
       {item.requested && (
         <p className="mb-2 flex items-center gap-1.5 text-xs text-fg-2">
           <Check className="size-3.5 text-success" />
-          Đã ghi: {(item.lines?.length ?? 1) > 1 ? `${item.lines?.length} câu này` : "câu này"} của {midSentence(item.requested)} - chờ áp
-          dụng khi sách chạy tiếp.
+          {/* Gộp tên là ở cấp TÊN cho cả cuốn và các phần sau, không phải "câu này của X" (soát UX 29-09). */}
+          {item.kind === "alias"
+            ? `Đã ghi: “${item.current}” là ${midSentence(item.requested)} - cả cuốn và các phần sau.`
+            : `Đã ghi: ${(item.lines?.length ?? 1) > 1 ? `${item.lines?.length} câu này` : "câu này"} của ${midSentence(item.requested)} - chờ áp dụng khi sách chạy tiếp.`}
         </p>
       )}
       {item.allLines && item.lines && onScope && (
@@ -338,9 +340,12 @@ function SpeakerFix({
             {item.keepLabel ?? (item.kind === "unnamed" ? "Đúng là vai phụ" : `Giữ ${item.current}`)}
           </Button>
         )}
-        <Button size="sm" variant="ghost" icon={UserPlus} aria-expanded={creating} onClick={() => setCreating((value) => !value)}>
-          Người khác…
-        </Button>
+        {/* Thẻ "một người hai tên" hỏi hai tên có phải một người - chọn người thứ ba lạc chủ đề (soát UX 29-09). */}
+        {item.kind !== "alias" && (
+          <Button size="sm" variant="ghost" icon={UserPlus} aria-expanded={creating} onClick={() => setCreating((value) => !value)}>
+            Người khác…
+          </Button>
+        )}
         {/* Thẻ chỉ gợi vài người; tab Kịch bản tìm được mọi nhân vật trong sách - mở đúng câu này ở đó (soát UX 29-09). */}
         {onOpenScript && item.lines?.length === 1 && item.examples?.[0] && (
           <Button size="sm" variant="ghost" icon={Search} onClick={() => onOpenScript(item.examples![0].chapterId, item.lines![0].stableId)}>
