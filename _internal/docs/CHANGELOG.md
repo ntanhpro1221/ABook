@@ -11,6 +11,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Danh sách dự án gom các phần của một cuốn ("Tên", "Tên · Phần 2"...) thành một nhóm theo thứ tự phần - truyện dài
   làm nhiều đợt không còn rải thành hàng chục dòng rời.
+- Câu hỏi "“Tôi” là ai?" lúc tạo sách nhận ra truyện kể ngôi thứ nhất theo TỪNG CHƯƠNG: truyện chen chương ngoại truyện
+  kể ngôi ba (Nageki, Hướng dẫn sinh tồn trong học viện) trước đây bị coi là ngôi ba nên câu hỏi chỉ hiện thành một dòng
+  liên kết nhỏ - mà không biết "tôi" là ai thì lời của nhân vật chính dễ bị gán cho người đang nói chuyện với họ.
 
 ### Nghe sách - máy tính và điện thoại
 
