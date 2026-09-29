@@ -367,14 +367,17 @@ function HistoryTab({ book }: { book: ListenBook }) {
               <li key={item.id} className="flex items-center gap-3 py-2.5">
                 <div className="min-w-0 flex-1">
                   <div className="tabular text-sm font-medium">
-                    {clockOf(item.startedAt)}-{clockOf(item.endedAt)} · {formatLength(item.listened)}
+                    {/* Cùng phút thì một mốc giờ, không "13:57-13:57" (soát UX 29-09). */}
+                    {clockOf(item.startedAt) === clockOf(item.endedAt) ? clockOf(item.startedAt) : `${clockOf(item.startedAt)}-${clockOf(item.endedAt)}`} ·{" "}
+                    {formatLength(item.listened)}
                   </div>
                   <div className="tabular truncate text-xs text-fg-2">
                     {titleOf(item.from.chapterId)} {formatClock(item.from.seconds)} → {titleOf(item.to.chapterId)} {formatClock(item.to.seconds)}
                   </div>
                 </div>
+                {/* Nút nhảy tới CUỐI phiên nghe ấy - nói rõ tới đâu, "Nghe từ đây" mơ hồ (soát UX 29-09). */}
                 <Button size="sm" variant="ghost" icon={Play} onClick={() => void playBook(book, item.to.chapterId, item.to.seconds)}>
-                  Nghe từ đây
+                  Nghe tiếp từ {formatClock(item.to.seconds)}
                 </Button>
               </li>
             ))}
