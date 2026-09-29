@@ -594,14 +594,15 @@ function PovChapters({ hint, narrator, off, onOffChange }: {
   );
 }
 
-function FirstPersonQuestion({ paths, value, onChange, povOff, setPovOff }: {
+function FirstPersonQuestion({ paths, seedFrom, value, onChange, povOff, setPovOff }: {
   paths: string[];
+  seedFrom?: string;
   value: string;
   onChange: (name: string) => void;
   povOff: number[];
   setPovOff: (off: number[]) => void;
 }) {
-  const { data: hint, isLoading } = useFirstPersonHint(paths);
+  const { data: hint, isLoading } = useFirstPersonHint(paths, seedFrom);
   const [opened, setOpened] = useState(false);
   if (!hint?.firstPerson && !value && !opened && !hint?.chapters?.length) {
     return (
@@ -662,6 +663,7 @@ function VoiceStep({
   narrator,
   setNarrator,
   paths,
+  seedFrom,
   firstPerson,
   setFirstPerson,
   povOff,
@@ -670,6 +672,7 @@ function VoiceStep({
   narrator: string;
   setNarrator: (name: string) => void;
   paths: string[];
+  seedFrom?: string;
   firstPerson: string;
   setFirstPerson: (name: string) => void;
   povOff: number[];
@@ -702,7 +705,14 @@ function VoiceStep({
         Giọng này đọc toàn bộ lời dẫn truyện. Mỗi nhân vật sẽ được tự động trao một giọng riêng sau bước phân tích - bạn
         không cần chọn trước.
       </p>
-      <FirstPersonQuestion paths={paths} value={firstPerson} onChange={setFirstPerson} povOff={povOff} setPovOff={setPovOff} />
+      <FirstPersonQuestion
+        paths={paths}
+        seedFrom={seedFrom}
+        value={firstPerson}
+        onChange={setFirstPerson}
+        povOff={povOff}
+        setPovOff={setPovOff}
+      />
       <div className="mt-5 flex flex-wrap items-center gap-3">
         <Segmented label="Giới tính" value={gender} onChange={setGender} options={[
           { value: "all", label: "Mọi giọng" },
@@ -957,7 +967,7 @@ export function NewProjectScreen() {
       setProblem(null);
       return;
     }
-    scanMutation.mutate(draft.paths, {
+    scanMutation.mutate({ paths: draft.paths, seedFrom: draft.seed?.id }, {
       onSuccess: (result) => {
         setRawScan(result);
         if (!result.files.length) {
@@ -985,7 +995,7 @@ export function NewProjectScreen() {
   }, [rawScan, draft.excluded]);
 
   // Cùng khoá truy vấn với bước "Tôi là ai?": lấy từ bộ nhớ đệm, không đọc lại sách.
-  const { data: firstPersonHint } = useFirstPersonHint(scan?.files.map((file) => file.path) ?? []);
+  const { data: firstPersonHint } = useFirstPersonHint(scan?.files.map((file) => file.path) ?? [], draft.seed?.id);
   const povChapters = chosenPovChapters(firstPersonHint, draft.firstPerson, draft.povOff ?? []);
 
   const title = draft.title;
@@ -1088,6 +1098,7 @@ export function NewProjectScreen() {
               narrator={draft.narrator}
               setNarrator={(narrator) => update({ narrator })}
               paths={scan?.files.map((file) => file.path) ?? []}
+              seedFrom={draft.seed?.id}
               firstPerson={draft.firstPerson}
               setFirstPerson={(firstPerson) => update({ firstPerson })}
               povOff={draft.povOff ?? []}

@@ -403,7 +403,7 @@ function Actions({ book }: { book: BookSummary }) {
   const stop = useStop();
   // Phân tích xong thì sổ nhân vật đã đủ để làm tiếp; nút chỉ hiện khi thư mục truyện có chương mới sau chương cuối.
   const analyzed = book.segments.total > 0 && book.segments.analyzed === book.segments.total;
-  const next = useContinuation(book.id, !remote && analyzed).data?.paths.length ?? 0;
+  const next = useContinuation(book.id, analyzed).data?.paths.length ?? 0;
   return (
     <div className="mt-5 flex flex-wrap items-center gap-2">
       {book.chapters.completed > 0 && (
