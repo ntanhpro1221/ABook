@@ -57,6 +57,7 @@ import { CoverEditor } from "./CoverEditor";
 import { ReviewQueue, useReviewCount } from "./ReviewQueue";
 import { WorkInbox, useWorkCount } from "./WorkInbox";
 import { ScriptTab } from "./ScriptTab";
+import { NameReadings } from "./NameReadings";
 import { VoicePicker } from "./VoicePicker";
 import { usePlayer } from "@/listen/player";
 import { useSource } from "@/listen/source";
@@ -802,6 +803,7 @@ export function ProjectScreen() {
         <TabsContent value="cast">
           <CastList bookId={book.id} onPickVoice={(person) => setPicking({ name: person.name, displayName: person.displayName })} />
           <VoicePicker bookId={book.id} person={picking} onClose={() => setPicking(null)} />
+          <NameReadings bookId={book.id} />
         </TabsContent>
         <TabsContent value="activity">
           <ActivityView book={book} />
