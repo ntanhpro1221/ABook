@@ -1090,9 +1090,13 @@ export function NewProjectScreen() {
   }, [step]);
   // URL đòi bước chưa được phép (tên vừa bị xoá trống...): kéo URL về đúng bước đang hiện, để lúc điều kiện thoả
   // lại, trình tạo KHÔNG tự nhảy tới bước cũ trong URL.
+  // Nhưng KHÔNG trong lúc nháp đang quét lại file (tải lại trang ở bước 4): lúc ấy chưa có chương nên mọi bước sau đều
+  // "chưa được phép" - kéo URL về bước 1 thì quét xong người dùng mất chỗ (soát UX 29-09).
+  const scanning = draft.paths.length > 0 && !rawScan;
   useEffect(() => {
+    if (scanning) return;
     if (params.get("step") && requested !== step) setParams(step ? { step: String(step) } : {}, { replace: true });
-  }, [params, requested, setParams, step]);
+  }, [params, requested, scanning, setParams, step]);
 
   // Bước nằm trong URL: nút Back của trình duyệt/chuột lùi đúng một bước.
   const go = (index: number) => {
