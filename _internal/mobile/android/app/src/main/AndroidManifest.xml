@@ -64,15 +64,23 @@
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|screenLayout|uiMode"
             android:exported="false" />
 
-        <!-- Dịch vụ phát nền: thông báo, màn hình khoá, nút tai nghe (Media3). -->
+        <!-- Dịch vụ phát nền: thông báo, màn hình khoá, nút tai nghe (Media3); là thư viện media cho Android Auto và
+             trình duyệt media của hệ thống (MediaLibraryService, cây duyệt ở LibraryTree.kt). -->
         <service
             android:name=".PlaybackService"
             android:foregroundServiceType="mediaPlayback"
             android:exported="true">
             <intent-filter>
+                <action android:name="androidx.media3.session.MediaLibraryService" />
                 <action android:name="androidx.media3.session.MediaSessionService" />
+                <action android:name="android.media.browse.MediaBrowserService" />
             </intent-filter>
         </service>
+
+        <!-- Android Auto: app nghe (media). -->
+        <meta-data
+            android:name="com.google.android.gms.car.application"
+            android:resource="@xml/automotive_app_desc" />
 
         <!-- Widget màn hình chính: trình phát thu nhỏ. -->
         <receiver

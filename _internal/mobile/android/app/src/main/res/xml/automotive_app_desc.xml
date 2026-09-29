@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android Auto: app nghe (media) - PlaybackService là MediaLibraryService, cây duyệt ở LibraryTree.kt. -->
+<automotiveApp>
+    <uses name="media" />
+</automotiveApp>
