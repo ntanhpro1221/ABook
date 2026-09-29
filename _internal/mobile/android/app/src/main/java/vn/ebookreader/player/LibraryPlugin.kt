@@ -303,6 +303,7 @@ class LibraryPlugin : Plugin() {
     @PluginMethod
     fun remoteLibrary(call: PluginCall) = background(call) {
         val reply = JSONObject(request("GET", "/sync/v1/library"))
+        SyncLink.refreshRoutes(context, reply)
         val books = reply.getJSONArray("books")
         matchImported(listed(books))
         for (index in 0 until books.length()) {
@@ -448,7 +449,10 @@ class LibraryPlugin : Plugin() {
             runCatching { JSONObject(SyncLink.request(context, "GET", "/sync/v1/library", readTimeoutMs = 10_000, connectTimeoutMs = 1500)) }.getOrNull()
         } else null
         val remote = reply?.optJSONArray("books") ?: JSONArray()
-        if (reply != null) matchImported(listed(remote))
+        if (reply != null) {
+            SyncLink.refreshRoutes(context, reply)
+            matchImported(listed(remote))
+        }
         for (index in 0 until remote.length()) {
             val entry = remote.getJSONObject(index)
             val id = entry.getString("id")

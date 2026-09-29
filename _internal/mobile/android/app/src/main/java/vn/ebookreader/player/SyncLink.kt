@@ -42,6 +42,28 @@ object SyncLink {
             .putInt("lanPort", routes.optInt("port", 0)).putString("bt", routes.optString("bluetooth"))
     }
 
+    /**
+     * Máy tính báo lại các đường của nó mỗi lần điện thoại liệt kê thư viện (sync.py `/sync/v1/library`): địa chỉ có sau
+     * lúc ghép (cài Tailscale/ZeroTier sau khi ghép) tới được điện thoại trước khi nó ra khỏi nhà. Trước đây đường chỉ lưu
+     * lúc ghép.
+     */
+    fun refreshRoutes(context: Context, reply: JSONObject) {
+        val prefs = prefs(context)
+        val (lan, port, bluetooth) = refreshed(reply, prefs.getString("bt", "") ?: "") ?: return
+        prefs.edit().putString("lan", lan).putInt("lanPort", port).putString("bt", bluetooth).apply()
+    }
+
+    /**
+     * Phần thuần của refreshRoutes: (địa chỉ LAN dạng JSON, cổng, Bluetooth) hay null khi lời đáp không mang đường (máy
+     * tính bản cũ). Máy tính đang tắt Bluetooth thì GIỮ địa chỉ Bluetooth đã biết - lúc cần nó nhất là lúc không có Wi-Fi
+     * để hỏi lại.
+     */
+    internal fun refreshed(reply: JSONObject, knownBluetooth: String): Triple<String, Int, String>? {
+        val routes = reply.optJSONObject("routes") ?: return null
+        val bluetooth = routes.optString("bluetooth").takeIf { it.isNotBlank() } ?: knownBluetooth
+        return Triple((routes.optJSONArray("lan") ?: JSONArray()).toString(), routes.optInt("port", 0), bluetooth)
+    }
+
     /** Gốc http tới máy tính chính theo đường đang thông (Route - không bao giờ chặn luồng gọi). */
     fun base(context: Context): String {
         val prefs = prefs(context)
