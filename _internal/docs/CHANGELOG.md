@@ -28,6 +28,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   “kơ”") và có nút "Dùng “Hên-cơ”" ngay dưới ô nhập - trước đây chỉ có một câu báo chung.
 - Tab Kịch bản trên điện thoại: bảng cách đọc câu mở thành tấm trượt từ đáy màn, rộng hết màn, thay cho bảng nổi bị ép sát
   mép.
+- Tên nhân vật máy gõ nửa hoa nửa thường ("LOUise") hiện đúng dạng tên ("Louise"); tên viết kiểu "McDonald" giữ nguyên.
 
 ## [0.4.7] - 2026-09-29
 
