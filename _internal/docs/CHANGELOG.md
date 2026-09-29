@@ -12,6 +12,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Thẻ "Đang nghe dở" của sách đã nghe hết phần đã có ghi "Chờ chương mới" thay cho nút phát không phát gì.
 - Tab Lịch sử: phiên nghe trong cùng một phút ghi một mốc giờ; nút ghi rõ "Nghe tiếp từ mm:ss".
 
+### Studio (sản xuất sách nói)
+
+- "Hoàn tác" trên thông báo sau mỗi quyết định trong Việc cần duyệt (người nói, nam hay nữ, cách đọc tên, giữ nguyên):
+  bấm nhầm "Nữ" cạnh "Nam" thì thẻ trở lại như trước khi bấm, kể cả thẻ đã có quyết định cũ (quyết định cũ được trả về
+  chỗ). Máy đã kịp đưa quyết định vào sách thì thông báo nói thật và chỉ chỗ đổi lại; riêng cách đọc tên thì máy xin lại
+  cách đọc cũ.
+
 ## [0.4.4] - 2026-09-29
 
 ### Studio (sản xuất sách nói)

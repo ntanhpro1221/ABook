@@ -415,13 +415,21 @@ def request_pronunciation(project_root: Path, surface: str, spoken_form: str, *,
     data = read_overrides(project_root)
     entries = data.get("pronunciations")
     entries = dict(entries) if isinstance(entries, dict) else {}
-    entries[surface_key(surface)] = {
+    entries[surface_key(surface)] = _replacing(entries.get(surface_key(surface)), {
         "surface": str(surface).strip(),
         "spoken_form": " ".join(str(spoken_form).split()),
         "requested_at": float(now),
-    }
+    })
     data["pronunciations"] = entries
     _write(project_root, data)
+
+
+def _replacing(previous: Any, entry: dict[str, Any]) -> dict[str, Any]:
+    """Yêu cầu mới giữ yêu cầu nó thay (một tầng) trong `replaced`: "Hoàn tác" (`withdraw_requests`) trả đúng yêu cầu cũ
+    về chỗ, không xoá trắng. Dây chuyền không đọc trường này."""
+    if isinstance(previous, dict):
+        entry["replaced"] = {key: value for key, value in previous.items() if key != "replaced"}
+    return entry
 
 
 def request_speaker(project_root: Path, stable_id: str, text_sha256: str, speaker: str, *, now: float,
@@ -438,11 +446,11 @@ def request_speakers(project_root: Path, lines: list[tuple[str, str]], speaker: 
     entries = data.get("speakers")
     entries = dict(entries) if isinstance(entries, dict) else {}
     for stable_id, text_sha256 in lines:
-        entries[str(stable_id)] = {
+        entries[str(stable_id)] = _replacing(entries.get(str(stable_id)), {
             "speaker": str(speaker).strip(),
             "text_sha256": str(text_sha256).strip(),
             "requested_at": float(now),
-        }
+        })
         if new_gender in NEW_CHARACTER_GENDERS:
             # Người nghe tạo người này (chưa có giọng): giới để bước áp chọn giọng như bước phân vai.
             entries[str(stable_id)]["new"] = {"gender": new_gender}
@@ -527,20 +535,61 @@ def cancel_retake(project_root: Path, stable_id: str) -> None:
         _write(project_root, data)
 
 
+def character_key(character: str) -> str:
+    """Khoá mục `voices`: tên chuẩn viết hoa, gộp khoảng trắng."""
+    return " ".join(str(character).strip().casefold().split()).upper()
+
+
 def request_voice(project_root: Path, character: str, *, preset: str = "", gender: str = "", avoid: str = "",
                   now: float) -> None:
     """Giao diện gọi: ghi (hoặc thay) mong muốn về giọng/giới của một nhân vật."""
     data = read_overrides(project_root)
     entries = data.get("voices")
     entries = dict(entries) if isinstance(entries, dict) else {}
-    entries[" ".join(str(character).strip().casefold().split()).upper()] = {
+    entries[character_key(character)] = _replacing(entries.get(character_key(character)), {
         "preset": str(preset).strip(),
         "gender": str(gender).strip(),
         "avoid": str(avoid).strip(),
         "requested_at": float(now),
-    }
+    })
     data["voices"] = entries
     _write(project_root, data)
+
+
+def requests_made_at(overrides: dict[str, Any], section: str, keys: list[str],
+                     requested_at: float) -> dict[str, dict[str, Any]]:
+    """Những yêu cầu trong `section` ("speakers" theo mã câu, "pronunciations" theo `surface_key`, "voices" theo
+    `character_key`) do CHÍNH một lần bấm ghi: khoá thuộc `keys` và `requested_at` khớp - lần bấm sau đã thay thì không
+    còn là của lần bấm ấy."""
+    entries = overrides.get(section)
+    if not isinstance(entries, dict):
+        return {}
+    found: dict[str, dict[str, Any]] = {}
+    for key in dict.fromkeys(keys):
+        entry = entries.get(key)
+        try:
+            if isinstance(entry, dict) and abs(float(entry.get("requested_at") or 0) - float(requested_at)) < 1e-6:
+                found[key] = entry
+        except (TypeError, ValueError):
+            continue
+    return found
+
+
+def withdraw_requests(project_root: Path, section: str, keys: list[str], requested_at: float) -> list[str]:
+    """Hoàn tác một quyết định vừa bấm trong hộp việc: yêu cầu của đúng lần bấm ấy (`requests_made_at`) nhường chỗ lại
+    cho yêu cầu nó đã thay (`replaced`), hoặc biến mất nếu trước đó chưa có gì - trong MỘT lần ghi file. Trả các khoá đã
+    hoàn tác.
+
+    Yêu cầu đã áp thì bỏ khỏi file cũng không đổi gì trong sách (như `cancel_retake`): server hỏi SQLite trước, và chỉ
+    gọi hàm này khi yêu cầu chưa vào sách."""
+    data = read_overrides(project_root)
+    mine = requests_made_at(data, section, keys, requested_at)
+    if mine:
+        entries = {key: entry for key, entry in data[section].items() if key not in mine}
+        entries.update({key: entry["replaced"] for key, entry in mine.items() if isinstance(entry.get("replaced"), dict)})
+        data[section] = entries
+        _write(project_root, data)
+    return list(mine)
 
 
 def _write(project_root: Path, data: dict[str, Any]) -> None:

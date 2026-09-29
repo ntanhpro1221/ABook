@@ -102,6 +102,45 @@ def voice_request_problem(project_root: Path, character: str, *, preset: str = "
     return problem
 
 
+def already_applied(project_root: Path, section: str, entries: dict[str, dict[str, Any]]) -> bool:
+    """Dây chuyền đã đưa một trong các yêu cầu này vào sách chưa (ranh giới chương vừa qua): áp lại bây giờ không còn
+    đổi gì - hỏi bằng ĐÚNG phép các bước áp dùng để bỏ qua yêu cầu đã áp (database.apply_listener_*), trên SQLite chỉ
+    đọc. Chỉ có nghĩa với quyết định ĐỔI: "giữ nguyên" thì áp hay chưa, sách vẫn như cũ."""
+    from ..config import build_settings
+    from ..database import LISTENER_PRONUNCIATION_SOURCE
+    from ..listener_overrides import (pronunciation_requests, speaker_requests, speaker_target, surface_key,
+                                      voice_requests, voice_target)
+
+    with closing(connect(project_root)) as connection:
+        if section == "speakers":
+            for wish in speaker_requests({"speakers": entries}):
+                target, _problem = speaker_target(connection, stable_id=wish["stable_id"],
+                                                  text_sha256=wish["text_sha256"], speaker=wish["speaker"],
+                                                  new_gender=wish.get("new_gender", ""))
+                if (target is not None and "create" not in target
+                        and target["line"]["canonical_character_id"] == target["character_id"]
+                        and target["line"]["voice_profile_id"] == target["voice_profile_id"]):
+                    return True
+        elif section == "pronunciations":
+            for wish in pronunciation_requests({"pronunciations": entries}):
+                row = connection.execute(
+                    "SELECT spoken_form, source, locked FROM pronunciations WHERE normalized_surface=?",
+                    (surface_key(wish["surface"]),),
+                ).fetchone()
+                if (row is not None and int(row["locked"]) and str(row["source"]) == LISTENER_PRONUNCIATION_SOURCE
+                        and str(row["spoken_form"]) == wish["spoken_form"]):
+                    return True
+        elif section == "voices":
+            stored = read_settings(project_root).get("voices")
+            voices = {**build_settings()["voices"], **(stored if isinstance(stored, dict) else {})}
+            for wish in voice_requests({"voices": entries}):
+                target, _problem = voice_target(connection, voices, character=wish["character"], preset=wish["preset"],
+                                                gender=wish["gender"], avoid=wish["avoid"])
+                if target is not None and target["profile"] is None and not target["lock_gender"]:
+                    return True
+    return False
+
+
 def _table_names(connection: sqlite3.Connection) -> set[str]:
     return {str(row[0]) for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")}
 
