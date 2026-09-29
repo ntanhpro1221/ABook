@@ -212,7 +212,8 @@ export function PersonRow({
           <AudioLines className="mr-1 inline size-3.5 -translate-y-px text-fg-3" />
           {person.voice ? `${person.voice.preset}${person.voice.tone ? ` · ${person.voice.tone}` : ""}` : "Chưa có giọng"}
         </div>
-        {person.pendingVoice && (
+        {/* Việc của Studio (giọng người nghe đã chọn, chưa áp) - trang nghe không cần (soát UX 29-09). */}
+        {person.pendingVoice && onPickVoice && (
           <div className="mt-0.5 truncate text-xs font-medium text-accent-text">
             Chờ áp dụng:{" "}
             {[person.pendingVoice.preset && `giọng ${person.pendingVoice.preset}`, person.pendingVoice.gender.toLowerCase()]
@@ -236,10 +237,33 @@ export function PersonRow({
   );
 }
 
-export function CastList({ bookId, onPickVoice }: { bookId: string; onPickVoice?: (person: CastMember) => void }) {
+function ahead(people: CastMember[], reached: Set<string>): number {
+  return people.filter((person) => person.firstChapter && !reached.has(person.firstChapter)).length;
+}
+
+/** Tên (ngắn và đầy đủ) của các chương từ đầu tới chương `until` (chưa nghe gì: tới chương đầu). */
+function reachedTitles(chapters: ListenChapter[], until: number | undefined): Set<string> {
+  const titles = new Set<string>();
+  const last = until ?? chapters[0]?.id;
+  for (const chapter of chapters) {
+    titles.add(chapter.title);
+    titles.add(chapter.fullTitle);
+    if (chapter.id === last) break;
+  }
+  return titles;
+}
+
+/** `reached`: tên các chương tới chỗ đang nghe (trang nghe) - người chỉ xuất hiện SAU đó bị ẩn tới khi bấm hiện, để dàn nhân
+ *  vật không lộ nội dung ("Douglas · từ Chương 738" khi đang nghe Chương 725 - soát UX 29-09). Studio không truyền: hiện hết. */
+export function CastList({ bookId, onPickVoice, reached }: {
+  bookId: string;
+  onPickVoice?: (person: CastMember) => void;
+  reached?: Set<string>;
+}) {
   const source = useSource();
   const { data: cast, isLoading } = useCast(bookId);
   const [extras, setExtras] = useState(false);
+  const [later, setLater] = useState(false);
   if (isLoading) return <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{Array.from({ length: 6 }, (_, index) => <Skeleton key={index} className="h-[84px] rounded-xl" />)}</div>;
   if (!cast || (!cast.characters.length && !cast.extras.length)) {
     return (
@@ -265,8 +289,15 @@ export function CastList({ bookId, onPickVoice }: { bookId: string; onPickVoice?
         Nhân vật <span className="font-normal text-fg-2">· {cast.characters.length} người có lời thoại</span>
       </h3>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {cast.characters.map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} />)}
+        {cast.characters
+          .filter((person) => later || !reached || !person.firstChapter || reached.has(person.firstChapter))
+          .map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} />)}
       </div>
+      {reached && ahead(cast.characters, reached) > 0 && (
+        <button type="button" onClick={() => setLater((value) => !value)} className="mt-3 text-sm font-medium text-fg-2 hover:text-fg">
+          {later ? "Ẩn" : "Hiện"} {ahead(cast.characters, reached)} người chỉ xuất hiện ở chương sau chỗ đang nghe
+        </button>
+      )}
       {cast.extras.length > 0 && (
         <div className="mt-6">
           <button type="button" onClick={() => setExtras((value) => !value)} className="text-sm font-medium text-fg-2 hover:text-fg">
@@ -669,7 +700,7 @@ export function BookScreen({
           <HistoryTab book={book} />
         </TabsContent>
         <TabsContent value="cast">
-          <CastList bookId={book.id} />
+          <CastList bookId={book.id} reached={reachedTitles(chapters, point?.chapter.id)} />
         </TabsContent>
       </Tabs>
     </div>
