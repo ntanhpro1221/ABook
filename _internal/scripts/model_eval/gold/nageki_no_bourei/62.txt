@@ -17,10 +17,13 @@
 # Krai nói (30, 64, 83, 97, 112) bà đều đáp; lúc ấy Krai đang thấy buồn cười (66-67) -> LUCIA đủ, KRAI~. 113 "Ồ?": bà thầy
 # bói - "Ồ?" là tật của bà (70), 119-120 "nheo mắt... Một lúc sau, bà nói"; "Tôi hỏi theo bản năng" (114) nói về câu hỏi 112
 # -> NPC* đủ, KRAI~. Câu hỏi tu từ / phản ứng tức thời của người kể -> N,T (quy tắc 4); giải thích, lập luận -> N.
+# 29-09 tối: 25 câu NPC* ghi `NPC*:bà thầy bói` - chấm người nói y như cũ; thước F1 giọng nay biết cả 25 câu là MỘT người
+# (trước đó mọi cặp câu vô danh bị bỏ qua: tách bà làm hai giọng không mất điểm, giữ một giọng mà lẫn một câu của Krai thì
+# mất nửa độ chính xác của cả 25 câu).
 0 H
 1 N
 2 N
-3 D NPC*,UNKNOWN~ surprised,excited,happy 1-2 normal normal,loud f
+3 D NPC*:bà thầy bói,UNKNOWN~ surprised,excited,happy 1-2 normal normal,loud f
 4 N NARRATOR neutral,afraid,surprised 0-1 normal normal u
 5 N
 6 N
@@ -40,21 +43,21 @@
 20 N NARRATOR neutral,excited,afraid 0-1 normal normal u
 21 N,T NARRATOR,KRAI,KRAI ANDREY neutral,surprised 0-1 normal normal u
 22 N,T NARRATOR,KRAI,KRAI ANDREY neutral,excited,happy 0-1 normal normal u
-23 D NPC*,UNKNOWN~ surprised,neutral,sad,excited 0-1 normal normal,soft f
+23 D NPC*:bà thầy bói,UNKNOWN~ surprised,neutral,sad,excited 0-1 normal normal,soft f
 24 N NARRATOR neutral,surprised 0-1 normal normal u
 25 D LUCIA,LUCIA ROGIER,LUCY angry,surprised 2-3 fast,normal loud f
 26 N NARRATOR neutral,angry 0-1 normal normal u
 27 N
 28 N
-29 D NPC*,UNKNOWN~ sad,neutral 0-1 normal,slow normal f
+29 D NPC*:bà thầy bói,UNKNOWN~ sad,neutral 0-1 normal,slow normal f
 30 D KRAI,KRAI ANDREY neutral,surprised,afraid 0-1 normal normal,soft m
-31 D NPC*,UNKNOWN~ neutral,sad 0-1 normal normal f
+31 D NPC*:bà thầy bói,UNKNOWN~ neutral,sad 0-1 normal normal f
 32 N,T NARRATOR,KRAI,KRAI ANDREY neutral,surprised 0-1 normal normal u
 33 N,T NARRATOR,KRAI,KRAI ANDREY neutral,afraid 0-1 normal normal u
-34 D NPC*,UNKNOWN~ neutral,sad 0-1 normal normal f
+34 D NPC*:bà thầy bói,UNKNOWN~ neutral,sad 0-1 normal normal f
 35 N NARRATOR neutral,tired,sad 0-1 normal normal u
 36 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sarcastic 0-1 normal normal u
-37 D NPC*,UNKNOWN~ neutral,sad,angry 0-1 normal normal f
+37 D NPC*:bà thầy bói,UNKNOWN~ neutral,sad,angry 0-1 normal normal f
 38 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sad,angry 0-1 normal normal u
 39 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sad 0-1 normal normal u
 40 N
@@ -62,13 +65,13 @@
 42 N NARRATOR neutral,angry 0-1 normal normal u
 43 N NARRATOR neutral,afraid 0-1 normal normal u
 44 N
-45 D NPC*,UNKNOWN~ sad,tender,neutral 0-1 normal,slow normal,soft f
+45 D NPC*:bà thầy bói,UNKNOWN~ sad,tender,neutral 0-1 normal,slow normal,soft f
 46 N NARRATOR neutral,sad 0-1 normal normal u
-47 D NPC*,UNKNOWN~ sad,neutral,tender 0-1 normal,slow normal f
+47 D NPC*:bà thầy bói,UNKNOWN~ sad,neutral,tender 0-1 normal,slow normal f
 48 N,T NARRATOR,KRAI,KRAI ANDREY neutral 0-1 normal normal u
 49 N,T NARRATOR,KRAI,KRAI ANDREY neutral,happy 0-1 normal normal u
 50 N NARRATOR neutral,afraid 0-1 normal normal u
-51 D NPC*,UNKNOWN~ neutral,sad,afraid 0-1 slow,normal soft,normal f
+51 D NPC*:bà thầy bói,UNKNOWN~ neutral,sad,afraid 0-1 slow,normal soft,normal f
 52 N
 53 D KRAI,KRAI ANDREY neutral,surprised 0-1 normal normal m
 54 D NARRATOR,KRAI,KRAI ANDREY neutral 0-1 normal normal u
@@ -78,20 +81,20 @@
 58 N
 59 N,T NARRATOR,KRAI,KRAI ANDREY neutral,afraid,surprised 0-1 normal normal u
 60 N
-61 D NPC*,UNKNOWN~ neutral,sad 0-1 normal normal f
+61 D NPC*:bà thầy bói,UNKNOWN~ neutral,sad 0-1 normal normal f
 62 D LUCIA,LUCIA ROGIER,LUCY,KRAI~,KRAI ANDREY~ surprised,angry,afraid 1-3 fast,normal loud,normal f
-63 D NPC*,UNKNOWN~ sad,neutral 0-1 normal normal f
+63 D NPC*:bà thầy bói,UNKNOWN~ sad,neutral 0-1 normal normal f
 64 D KRAI,KRAI ANDREY neutral,happy,sarcastic 0-1 normal normal m
 65 N
 66 N,T NARRATOR,KRAI,KRAI ANDREY neutral,happy,surprised 0-1 normal normal u
 67 N,T NARRATOR,KRAI,KRAI ANDREY happy,surprised,neutral 0-1 normal normal u
 68 N,T NARRATOR,KRAI,KRAI ANDREY neutral,surprised 0-1 normal normal u
-69 D NPC*,UNKNOWN~ neutral,sad 0-1 normal normal f
-70 D NPC*,UNKNOWN~ neutral,surprised,sad 0-1 normal normal f
+69 D NPC*:bà thầy bói,UNKNOWN~ neutral,sad 0-1 normal normal f
+70 D NPC*:bà thầy bói,UNKNOWN~ neutral,surprised,sad 0-1 normal normal f
 71 N NARRATOR neutral,angry 0-1 normal normal u
 72 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sarcastic 0-1 normal normal u
 73 N
-74 D NPC*,UNKNOWN~ neutral,sad 0-1 normal normal f
+74 D NPC*:bà thầy bói,UNKNOWN~ neutral,sad 0-1 normal normal f
 75 D KRAI,KRAI ANDREY surprised,neutral,tired,angry 0-2 fast,normal loud,normal m
 76 N
 77 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sarcastic,angry 0-1 normal normal u
@@ -103,7 +106,7 @@
 83 D KRAI,KRAI ANDREY neutral,happy 0-1 normal normal m
 84 N
 85 N
-86 D NPC*,UNKNOWN~ neutral,sad 0-1 normal normal f
+86 D NPC*:bà thầy bói,UNKNOWN~ neutral,sad 0-1 normal normal f
 87 N,T NARRATOR,KRAI,KRAI ANDREY neutral,surprised,angry 0-1 normal normal u
 88 N,T NARRATOR,KRAI,KRAI ANDREY neutral,angry,sarcastic 0-1 normal normal u
 89 N,T NARRATOR,KRAI,KRAI ANDREY neutral,angry 0-1 normal normal u
@@ -116,7 +119,7 @@
 96 N
 97 D KRAI,KRAI ANDREY neutral,happy 0-1 normal normal m
 98 N
-99 D NPC*,UNKNOWN~ surprised,neutral 0-1 normal normal f
+99 D NPC*:bà thầy bói,UNKNOWN~ surprised,neutral 0-1 normal normal f
 100 D LUCIA,LUCIA ROGIER,LUCY neutral,angry 0-1 normal normal f
 101 N
 102 D LUCIA,LUCIA ROGIER,LUCY angry,sarcastic 1-2 normal,fast normal,loud f
@@ -130,7 +133,7 @@
 110 D KRAI,KRAI ANDREY happy,neutral 0-1 normal normal m
 111 N NARRATOR neutral,happy 0-1 normal normal u
 112 D KRAI,KRAI ANDREY happy,neutral 0-1 normal normal m
-113 D NPC*,UNKNOWN~,KRAI~,KRAI ANDREY~ surprised,neutral 0-1 normal normal f
+113 D NPC*:bà thầy bói,UNKNOWN~,KRAI~,KRAI ANDREY~ surprised,neutral 0-1 normal normal f
 114 N
 115 N
 116 N
@@ -138,20 +141,20 @@
 118 N
 119 N
 120 N
-121 D NPC*,UNKNOWN~ neutral,surprised,happy 0-1 normal normal f
+121 D NPC*:bà thầy bói,UNKNOWN~ neutral,surprised,happy 0-1 normal normal f
 122 N NARRATOR neutral,surprised 0-1 normal normal u
 123 D KRAI,KRAI ANDREY surprised,neutral 0-1 normal normal m
 124 N,T NARRATOR,KRAI,KRAI ANDREY neutral,surprised 0-1 normal normal u
 125 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sarcastic 0-1 normal normal u
 126 N,T NARRATOR,KRAI,KRAI ANDREY neutral,happy,tender 0-1 normal normal u
-127 D NPC*,UNKNOWN~ surprised,neutral 0-2 normal,slow soft,normal f
+127 D NPC*:bà thầy bói,UNKNOWN~ surprised,neutral 0-2 normal,slow soft,normal f
 128 N
-129 D NPC*,UNKNOWN~ surprised,neutral 0-1 normal normal f
+129 D NPC*:bà thầy bói,UNKNOWN~ surprised,neutral 0-1 normal normal f
 130 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sad,sarcastic 0-1 normal normal u
-131 D NPC*,UNKNOWN~ neutral 0-1 normal normal f
+131 D NPC*:bà thầy bói,UNKNOWN~ neutral 0-1 normal normal f
 132 N
-133 D NPC*,UNKNOWN~ neutral,surprised 0-1 normal normal f
-134 D NPC*,UNKNOWN~ neutral,surprised,tired 0-1 normal normal f
+133 D NPC*:bà thầy bói,UNKNOWN~ neutral,surprised 0-1 normal normal f
+134 D NPC*:bà thầy bói,UNKNOWN~ neutral,surprised,tired 0-1 normal normal f
 135 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sarcastic 0-1 normal normal u
 136 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sarcastic 0-1 normal normal u
 137 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sarcastic,angry 0-1 normal normal u
@@ -160,7 +163,7 @@
 140 N
 141 N NARRATOR neutral,angry 0-1 normal normal u
 142 D LUCIA,LUCIA ROGIER,LUCY angry 1-2 normal,fast normal,loud f
-143 D NPC*,UNKNOWN~ neutral,sad 0-1 normal normal f
+143 D NPC*:bà thầy bói,UNKNOWN~ neutral,sad 0-1 normal normal f
 144 N
-145 D NPC*,UNKNOWN~ sad,tender 0-1 normal,slow soft,normal f
+145 D NPC*:bà thầy bói,UNKNOWN~ sad,tender 0-1 normal,slow soft,normal f
 146 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sad,sarcastic 0-1 normal normal u

@@ -17,7 +17,8 @@ họ nghe ra là (a) một người bị đọc bằng hai giọng (tách) và (
    Câu đáp án `NPC*` ("bất kỳ NPC cục bộ nào", GOLD_GUIDE) KHÔNG nói hai người vô danh là một hay hai - từ 29-09 chỉ chấm
    quan hệ đã biết: NPC* khác mọi người có tên (câu người lạ đọc bằng giọng nhân vật chính = NHẬP), còn giữa hai câu NPC*
    thì không tính. Trước đó mọi câu NPC* là MỘT cụm: model tách đúng ba người lạ bị phạt, model gộp bừa được thưởng (LU 10:
-   10/39 câu nói là NPC*, Nageki 62: 25/83). `bcubed(..., anonymous_known=True)` cho cách cũ.
+   10/39 câu nói là NPC*, Nageki 62: 25/83). `bcubed(..., anonymous_known=True)` cho cách cũ. Câu `NPC*:<mô tả>` (đáp án
+   đã soát người vô danh ấy là ai, `gold_person`) là MỘT người, chấm như người có tên - chỉ NPC* trơn còn "chưa biết".
 
 Kèm độ đúng nhãn chặt (`score_models`) trên cùng các câu để thấy khoảng cách giữa "sai chữ" và "sai giọng".
 `--gold-check`: phần PHÁ - chạy các lượt gom trên chính nhãn đáp án của từng truyện; gom hai người làm một là lỗi.
@@ -58,6 +59,15 @@ def source_text(projects: list[Path]) -> str:
     return "\n".join(chunks)
 
 
+def gold_person(entry) -> str:
+    """Cụm đáp án của một câu: người nói ưu tiên; câu `NPC*:<mô tả>` (đáp án đã soát người vô danh ấy là ai - "bà thầy bói",
+    "mẹ Kakeru") thành MỘT người như người có tên. `NPC*` trơn (đám đông, chưa soát) vẫn là "chưa biết là ai" - xem `bcubed`.
+    Chấm người nói chặt không đổi: mô tả chỉ nói ai cùng ai (29-09 tối - Nageki 62: 25 câu của một bà thầy bói; model tách bà
+    làm hai giọng không mất điểm, model giữ một giọng mà lẫn MỘT câu của Krai thì mất nửa độ chính xác của cả 25 câu)."""
+    person = entry.speakers[0][0]
+    return f"NPC*:{entry.npc_label.casefold()}" if person == "NPC*" and entry.npc_label else person
+
+
 def voice_of(label: str, chapter: str, mapping: dict[str, str]) -> str:
     """Giọng người nghe nghe: nhân vật sau gom; NPC cục bộ riêng từng chương; vô danh chung một giọng."""
     if is_local_speaker(label):
@@ -75,9 +85,10 @@ def bcubed(points: list[tuple[str, str]], *, anonymous_known: bool = False) -> t
     (1 + số câu có tên cùng giọng). Với câu có tên: như B-cubed thường, câu NPC* cùng giọng tính là khác người.
     `anonymous_known=True`: cách trước 29-09 - mọi câu NPC* là một người.
     """
-    # Bảng gộp nhiều chương đặt tên điểm là (chương, người) - người là phần tử cuối.
+    # Bảng gộp nhiều chương đặt tên điểm là (chương, người) - người là phần tử cuối. Chỉ `NPC*` TRƠN là chưa biết ai:
+    # `NPC*:<mô tả>` (gold_person) là một người đã soát, chấm như người có tên.
     anonymous = {gold for gold, _ in points
-                 if not anonymous_known and speaker_key(gold[-1] if isinstance(gold, tuple) else gold) == "NPC*"}
+                 if not anonymous_known and (gold[-1] if isinstance(gold, tuple) else gold) == "NPC*"}
     by_gold = Counter(gold for gold, _ in points)
     by_voice = Counter(voice for _, voice in points)
     named_by_voice = Counter(voice for gold, voice in points if gold not in anonymous)
@@ -139,7 +150,7 @@ def main(argv: list[str]) -> int:
             if not entry.spoken or key not in rows:
                 continue
             label = str(rows[key]["speaker"] or "")
-            person, voice = entry.speakers[0][0], voice_of(label, key[0], mapping)
+            person, voice = gold_person(entry), voice_of(label, key[0], mapping)
             points.append((person, voice))
             places.append(key[0])
             strict += speaker_credit(entry, label) > 0

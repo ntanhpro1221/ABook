@@ -3,6 +3,7 @@
 # chú trong làng không tên = NPC*. 28: tiếng trẻ con gõ cửa, cùng chương gọi tên ngay sau (33) -> ALISTAR đủ, NPC*~ (quy
 # tắc 5). 30, 93: câu hỏi tu từ trong lời kể -> N,T, người nghĩ nửa điểm. 82: 『...』 giữa câu kể là suy nghĩ của Magali ->
 # NARRATOR, MAGALI~ (quy tắc 8). 72: "Allistar" là lỗi gõ của bản dịch (lời kể).
+# 29-09 tối: 11 câu NPC* ghi `NPC*:ông chú trong làng` (chấm người nói y như cũ; cho thước F1 giọng biết là MỘT người).
 0 H
 1 N
 2 D MAGALI surprised,neutral 0-1 normal,slow soft,normal f
@@ -35,45 +36,45 @@
 29 N
 30 N,T NARRATOR,NPC* neutral,surprised 0-1 normal normal u
 31 N
-32 D NPC*,UNKNOWN~ surprised,neutral 0-1 normal normal m
+32 D NPC*:ông chú trong làng,UNKNOWN~ surprised,neutral 0-1 normal normal m
 33 N
 34 N
 35 N
 36 D ALISTAR sad,neutral 0-1 normal,slow normal,soft m
-37 D NPC*,UNKNOWN~ surprised,neutral 0-1 normal normal m
+37 D NPC*:ông chú trong làng,UNKNOWN~ surprised,neutral 0-1 normal normal m
 38 N
 39 N
 40 N
 41 D ALISTAR sad,neutral 0-1 slow,normal soft,normal m
-42 D NPC*,UNKNOWN~ surprised,afraid 1-2 fast loud,normal m
+42 D NPC*:ông chú trong làng,UNKNOWN~ surprised,afraid 1-2 fast loud,normal m
 43 N
 44 N
 45 D ALISTAR sad,neutral 0-1 slow,normal normal,soft m
-46 D NPC*,UNKNOWN~ surprised,neutral 0-1 normal normal m
+46 D NPC*:ông chú trong làng,UNKNOWN~ surprised,neutral 0-1 normal normal m
 47 D ALISTAR sad,neutral 0-1 normal normal m
-48 D NPC*,UNKNOWN~ sad,afraid,surprised 0-1 normal normal,soft m
+48 D NPC*:ông chú trong làng,UNKNOWN~ sad,afraid,surprised 0-1 normal normal,soft m
 49 N
 50 N
 51 N
 52 D ALISTAR sad,neutral 0-1 slow,normal soft,normal m
-53 D NPC*,UNKNOWN~ afraid,neutral 0-1 normal soft,normal m
+53 D NPC*:ông chú trong làng,UNKNOWN~ afraid,neutral 0-1 normal soft,normal m
 54 N
 55 N
 56 D ALISTAR sad,sarcastic,neutral 0-1 normal normal m
-57 D NPC*,UNKNOWN~ afraid,surprised 1-2 fast loud m
+57 D NPC*:ông chú trong làng,UNKNOWN~ afraid,surprised 1-2 fast loud m
 58 N
 59 N
 60 N
-61 D NPC*,UNKNOWN~ neutral 0-1 normal normal m
+61 D NPC*:ông chú trong làng,UNKNOWN~ neutral 0-1 normal normal m
 62 N
 63 D ALISTAR surprised,happy 0-1 normal normal m
-64 D NPC*,UNKNOWN~ neutral,tender 0-1 normal normal m
+64 D NPC*:ông chú trong làng,UNKNOWN~ neutral,tender 0-1 normal normal m
 65 N
 66 N
-67 D NPC*,UNKNOWN~ afraid,neutral,whispering 0-1 normal soft,normal m
+67 D NPC*:ông chú trong làng,UNKNOWN~ afraid,neutral,whispering 0-1 normal soft,normal m
 68 D ALISTAR happy,excited 1-2 normal loud m
 69 N
-70 D NPC*,UNKNOWN~ neutral,happy,afraid 0-1 normal normal m
+70 D NPC*:ông chú trong làng,UNKNOWN~ neutral,happy,afraid 0-1 normal normal m
 71 D ALISTAR happy 0-1 normal normal,loud m
 72 N
 73 N

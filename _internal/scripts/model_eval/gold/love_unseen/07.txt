@@ -7,6 +7,7 @@
 # là nửa sau lời Kotomugi bị cắt ở "Đoàng!" -> NARRATOR (quy tắc 10; host ép, bộ chấm không xét người); 90 là LỜI KỂ ("Tôi nhìn những
 # người bên trong...") bị khoá D vì 89 quên đóng ngoặc - khoá thoại nối tiếp của host gán nó cho Kotomugi (lỗi host, ghi ở
 # ADJUDICATION); 196, 209, 211 là câu Kakeru ĐỊNH nói, trích giữa câu kể -> NARRATOR, Kakeru nửa điểm (quy tắc 8).
+# 29-09 tối: 11 câu NPC* ghi `NPC*:mẹ Kakeru` (chấm người nói y như cũ; cho thước F1 giọng biết là MỘT người).
 0 H
 1 N
 2 N
@@ -111,31 +112,31 @@
 101 N
 102 N
 103 N NARRATOR neutral,happy,tender 0-1 normal normal u
-104 D NPC*,UNKNOWN~ neutral,tender 0-1 normal normal f
+104 D NPC*:mẹ Kakeru,UNKNOWN~ neutral,tender 0-1 normal normal f
 105 D KAKERU,KAKERU SORANO,SORANO neutral 0-1 normal normal m
-106 D NPC*,UNKNOWN~ happy,neutral,sarcastic 0-1 normal normal f
+106 D NPC*:mẹ Kakeru,UNKNOWN~ happy,neutral,sarcastic 0-1 normal normal f
 107 D KAKERU,KAKERU SORANO,SORANO surprised,neutral 0-1 normal normal m
-108 D NPC*,UNKNOWN~ happy,neutral,sarcastic 0-1 normal normal f
+108 D NPC*:mẹ Kakeru,UNKNOWN~ happy,neutral,sarcastic 0-1 normal normal f
 109 N
 110 D KAKERU,KAKERU SORANO,SORANO neutral 0-1 normal normal m
-111 D NPC*,UNKNOWN~ neutral,happy 0-1 normal normal f
+111 D NPC*:mẹ Kakeru,UNKNOWN~ neutral,happy 0-1 normal normal f
 112 N
 113 D KAKERU,KAKERU SORANO,SORANO neutral 0-1 normal normal m
-114 D NPC*,UNKNOWN~ neutral 0-1 normal normal f
+114 D NPC*:mẹ Kakeru,UNKNOWN~ neutral 0-1 normal normal f
 115 D KAKERU,KAKERU SORANO,SORANO neutral,sad 0-1 normal normal m
-116 D NPC*,UNKNOWN~ neutral,tender 0-1 normal normal f
+116 D NPC*:mẹ Kakeru,UNKNOWN~ neutral,tender 0-1 normal normal f
 117 N NARRATOR neutral,sad 0-1 normal normal u
-118 D NPC*,UNKNOWN~ neutral,tender 0-1 normal normal f
+118 D NPC*:mẹ Kakeru,UNKNOWN~ neutral,tender 0-1 normal normal f
 119 N
 120 D KAKERU,KAKERU SORANO,SORANO neutral,tender 0-1 normal normal m
-121 D NPC*,UNKNOWN~ neutral,tender 0-1 normal normal f
+121 D NPC*:mẹ Kakeru,UNKNOWN~ neutral,tender 0-1 normal normal f
 122 D KAKERU,KAKERU SORANO,SORANO neutral,sad 0-1 normal normal m
-123 D NPC*,UNKNOWN~ tender,neutral 0-1 normal normal f
+123 D NPC*:mẹ Kakeru,UNKNOWN~ tender,neutral 0-1 normal normal f
 124 D KAKERU,KAKERU SORANO,SORANO neutral,happy 0-1 normal normal m
 125 N
-126 D NPC*,UNKNOWN~ tender,neutral 0-1 normal normal f
+126 D NPC*:mẹ Kakeru,UNKNOWN~ tender,neutral 0-1 normal normal f
 127 D KAKERU,KAKERU SORANO,SORANO neutral,happy 0-1 normal normal m
-128 D NPC*,UNKNOWN~ tender,neutral 0-1 normal normal f
+128 D NPC*:mẹ Kakeru,UNKNOWN~ tender,neutral 0-1 normal normal f
 129 D KAKERU,KAKERU SORANO,SORANO whispering,tender,neutral 0-1 slow,normal soft m
 130 N
 131 N

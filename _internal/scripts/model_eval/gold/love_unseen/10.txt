@@ -8,27 +8,27 @@
 # "đầu triết học" mà "vài người còn lại già dặn hơn" hay nói ("Họ kiểu“...”") -> NPC* đủ như câu cả đám (quy tắc 6),
 # UNKNOWN~, NARRATOR~ (người kể nhại lại). 46, 60, 95, 97, 127: Hayase nói một mình thành tiếng (trong ngoặc; câu nghĩ của
 # chương không có ngoặc) -> D, HAYASE. Câu hỏi tu từ / phàn nàn / mong muốn tức thời trong cảnh (47, 98-100, 124-125 - 101
-# "Cất câu hỏi đó lại vào tâm trí", 126 "đánh thức tôi khỏi dòng suy nghĩ") -> N,T; hồi ức, giải thích -> N. Thước F1 giọng
-# méo ở chương này: 10 câu NPC* của BỐN người (sếp nam, đồng nghiệp, mẹ nữ, người qua đường) thành MỘT cụm - so model ở
-# đây bằng người nói chặt.
+# "Cất câu hỏi đó lại vào tâm trí", 126 "đánh thức tôi khỏi dòng suy nghĩ") -> N,T; hồi ức, giải thích -> N. 29-09 tối: câu
+# NPC* ghi người là ai (`NPC*:sếp của Hayase` 6-17, `NPC*:mẹ Hayase` 35/104-113, `NPC*:người qua đường` 54; 26 là cả đám,
+# để trơn) - chấm người nói y như cũ, thước F1 giọng thì nay biết sếp, mẹ và người qua đường là ba người khác nhau.
 0 H
 1 N NARRATOR neutral,tired 0-1 normal normal u
 2 N
 3 N NARRATOR neutral,afraid,surprised 0-1 normal normal u
 4 N NARRATOR neutral,sad,angry,happy 0-1 normal normal u
 5 N NARRATOR neutral,angry 0-1 normal normal u
-6 D NPC*,UNKNOWN~ tired,neutral,angry 0-1 normal normal m
+6 D NPC*:sếp của Hayase,UNKNOWN~ tired,neutral,angry 0-1 normal normal m
 7 N NARRATOR neutral,tired 0-1 normal normal u
 8 D HAYASE,YUUKO HAYASE,YUUKO neutral,surprised 0-1 normal normal f
-9 D NPC*,UNKNOWN~ neutral,tender 0-1 normal normal m
+9 D NPC*:sếp của Hayase,UNKNOWN~ neutral,tender 0-1 normal normal m
 10 N
-11 D NPC*,UNKNOWN~ tender,neutral 0-1 normal normal,soft m
+11 D NPC*:sếp của Hayase,UNKNOWN~ tender,neutral 0-1 normal normal,soft m
 12 N,T NARRATOR,HAYASE,YUUKO HAYASE,YUUKO surprised,angry,neutral 0-1 normal normal u
 13 N,T NARRATOR,HAYASE,YUUKO HAYASE,YUUKO neutral,angry 0-1 normal normal u
 14 N,T NARRATOR,HAYASE,YUUKO HAYASE,YUUKO angry,sarcastic,neutral 0-1 normal normal u
 15 N,T NARRATOR,HAYASE,YUUKO HAYASE,YUUKO angry,neutral 0-1 normal normal u
 16 D HAYASE,YUUKO HAYASE,YUUKO neutral,angry 0-1 normal normal f
-17 D NPC*,UNKNOWN~ sarcastic,neutral,angry 0-1 normal normal m
+17 D NPC*:sếp của Hayase,UNKNOWN~ sarcastic,neutral,angry 0-1 normal normal m
 18 N NARRATOR neutral,sad 0-1 normal normal u
 19 N
 20 N
@@ -46,7 +46,7 @@
 32 N
 33 N
 34 N
-35 D NPC*,UNKNOWN~ tender,sad,neutral,afraid 0-1 normal normal,soft f
+35 D NPC*:mẹ Hayase,UNKNOWN~ tender,sad,neutral,afraid 0-1 normal normal,soft f
 36 N
 37 N NARRATOR neutral,sad 0-1 normal normal u
 38 N
@@ -65,7 +65,7 @@
 51 D HAYASE,YUUKO HAYASE,YUUKO neutral,surprised 0-1 normal normal,soft f
 52 N
 53 N NARRATOR neutral,angry 0-1 normal normal u
-54 D NPC*,UNKNOWN~ angry 0-2 normal normal u
+54 D NPC*:người qua đường,UNKNOWN~ angry 0-2 normal normal u
 55 N
 56 N
 57 N
@@ -115,16 +115,16 @@
 101 N
 102 N
 103 D HAYASE,YUUKO HAYASE,YUUKO neutral 0-1 normal normal,soft f
-104 D NPC*,UNKNOWN~ neutral,tender 0-1 normal normal,soft f
+104 D NPC*:mẹ Hayase,UNKNOWN~ neutral,tender 0-1 normal normal,soft f
 105 N NARRATOR neutral,afraid 0-1 normal normal u
 106 D HAYASE,YUUKO HAYASE,YUUKO neutral,sad,afraid 0-1 normal normal,soft f
 107 N
 108 N NARRATOR neutral,afraid 0-1 normal normal u
 109 N NARRATOR neutral,afraid,happy 0-1 normal normal u
-110 D NPC*,UNKNOWN~ happy,excited,tender 0-1 normal,fast normal f
+110 D NPC*:mẹ Hayase,UNKNOWN~ happy,excited,tender 0-1 normal,fast normal f
 111 N
 112 N NARRATOR neutral,sad 0-1 normal normal u
-113 D NPC*,UNKNOWN~ tender 0-1 normal normal,soft f
+113 D NPC*:mẹ Hayase,UNKNOWN~ tender 0-1 normal normal,soft f
 114 N NARRATOR neutral,tender 0-1 normal normal u
 115 N NARRATOR neutral,sad 0-1 normal normal u
 116 N
