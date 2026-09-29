@@ -174,7 +174,7 @@ export interface ContinuationPlan {
   firstPerson: string;
   /** Phần trước đã phân tích xong; chưa thì sổ nhân vật mang theo chưa đủ. */
   analyzed: boolean;
-  carries: { voices: number; pronunciations: number; listenerReadings: number; pins: number };
+  carries: { voices: number; pronunciations: number; listenerReadings: number; pins: number; aliases?: number };
 }
 
 export interface AppInfo {

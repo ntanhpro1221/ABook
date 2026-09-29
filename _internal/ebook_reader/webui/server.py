@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any, Callable, Protocol
 from urllib.parse import parse_qs, unquote, urlsplit
 
-from .. import continuation, listener_overrides
+from .. import aliases, continuation, listener_overrides
 from . import actions, bookfile, cover_search, covers, humanize, listen_view, packages, store
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, legacy_ids
@@ -1061,7 +1061,11 @@ class Handler(BaseHTTPRequestHandler):
             if problem is not None:
                 raise ApiError(HTTPStatus.BAD_REQUEST, SPEAKER_PROBLEMS.get(problem, "Không đổi được người nói câu này"))
         listener_overrides.request_speakers(path, lines, speaker, now=time.time(), new_gender=new_gender)
-        self._send_json(HTTPStatus.OK, {"lines": len(lines), "speaker": speaker, "new": bool(new_gender)})
+        # Thẻ "Một người hai tên": ngoài các câu này, ghi luôn cấp TÊN (aliases.py) - phần sau của cuốn tự hiểu.
+        alias = str(body.get("alias", "") or "").strip()[:200]
+        remembered = bool(alias) and aliases.add(path, alias, speaker)
+        self._send_json(HTTPStatus.OK, {"lines": len(lines), "speaker": speaker, "new": bool(new_gender),
+                                        "alias": remembered})
 
     def get_voice_choices(self, query: dict[str, list[str]], value: str) -> None:
         # Màn "Đổi giọng" của một nhân vật (voice_picker.py): mọi giọng dùng được, giọng máy gợi ý, ai đang dùng giọng nào.
