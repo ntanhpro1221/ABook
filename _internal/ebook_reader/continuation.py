@@ -185,6 +185,20 @@ def chain_of(project: Path) -> list[Path]:
         chain.insert(0, previous)
 
 
+def series_map(projects: Iterable[Path]) -> dict[Path, tuple[Path, int]]:
+    """Mỗi dự án thuộc một cuốn nhiều phần -> (phần đầu, thứ tự phần theo chuỗi `continues.json`, 1 = phần đầu); khoá là
+    đường dẫn đã resolve. Dự án lẻ (không nối tiếp ai, không ai nối tiếp nó) không có mặt. Một lượt cho cả thư viện: danh
+    sách Dự án và Thư viện nghe gom các phần theo chuỗi này, không theo tên (soát UX 29-09, N10: đổi tên một phần làm mất
+    nhóm trong khi "Làm tiếp" vẫn nối; dự án lạ tên "X · Phần 2" bị gom vào "X")."""
+    places: dict[Path, tuple[Path, int]] = {}
+    size: Counter[Path] = Counter()
+    for project in projects:
+        chain = chain_of(project)
+        places[chain[-1]] = (chain[0], len(chain))
+        size[chain[0]] += 1
+    return {project: place for project, place in places.items() if size[place[0]] > 1}
+
+
 def _write_link(source: Path, target: Path) -> None:
     try:
         previous = os.path.relpath(source, target.parent) if source.parent == target.parent else str(source)
