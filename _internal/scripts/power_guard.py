@@ -12,7 +12,8 @@ chỗ. Windows tự ngủ đông ở 2%, nên đóng việc + hẹn tắt phải
 chứ không theo một con số % (máy nghỉ GPU còn chạy pin được hàng giờ).
 
 Các bậc (mỗi bậc một dòng trong runtime/power_events.log - chuông `--wait` đọc file ấy):
-  PAUSED   rút sạc > 60 giây: tạm dừng cây tiến trình của các việc GPU (hàng đợi, đo, huấn luyện, dây chuyền).
+  PAUSED   rút sạc > 60 giây: tạm dừng cây tiến trình của các việc GPU (hàng đợi, đo, huấn luyện, dây chuyền) và máy chủ
+           Ollama của chúng.
   LONG     chạy pin > 15 phút: không phải rút nhầm - lúc dời việc sang Mac / cloud (việc của Claude, chuông báo).
   WARN     còn <= 25 phút: dời việc gấp, ghi kế hoạch chạy lại vào bộ nhớ.
   STOPPED  còn <= 12 phút hay <= 8%, hai lần đo liền: đóng các việc ấy.
@@ -153,10 +154,11 @@ def log_event(kind: str, detail: str = "") -> None:
         handle.write(line + "\n")
 
 
-def job_processes(stopping: bool = False):
-    """Gốc việc GPU + mọi tiến trình con cháu, bỏ chính tiến trình này. `stopping`: thêm máy chủ Ollama của lượt đo
-    (`ollama serve` do ollama_up.py bật tách khỏi cây, và các llama-server của nó) - tạm dừng thì để yên (khách đã dừng
-    thì nó rảnh), đóng việc thì tắt cho khỏi giữ VRAM khi chủ sách bấm "Không tắt máy"."""
+def job_processes():
+    """Gốc việc GPU + mọi tiến trình con cháu, bỏ chính tiến trình này - kèm máy chủ Ollama (`ollama serve` do ollama_up.py
+    bật tách khỏi cây, và các llama-server của nó): tạm dừng mà để máy chủ chạy thì nó làm nốt câu trả lời đang dở ở 15 W
+    (có khi vài phút pin); dừng cả nó thì GPU nghỉ ngay, cắm lại là cả hai chạy tiếp đúng chỗ. Đóng việc thì tắt luôn, cho
+    khỏi giữ VRAM khi chủ sách bấm "Không tắt máy"."""
     import psutil
 
     me = os.getpid()
@@ -169,7 +171,7 @@ def job_processes(stopping: bool = False):
             continue
         if process.info["pid"] == me or "power_guard.py" in command:
             continue
-        server = stopping and (name == "llama-server.exe" or (name == "ollama.exe" and " serve" in command))
+        server = name == "llama-server.exe" or (name == "ollama.exe" and " serve" in command)
         if not server and not JOB_ROOTS.search(command):
             continue
         found[process.pid] = process
@@ -216,7 +218,7 @@ def act(action: str, state: State, reading: Reading, left: float | None, paused:
     elif action == "warn":
         log_event("WARN", f"{level}; dời việc gấp, ghi kế hoạch chạy lại")
     elif action == "stop":
-        victims = job_processes(stopping=True)
+        victims = job_processes()
         # Con trước cha: cha không kịp đẻ con mới; tiến trình đang bị tạm dừng vẫn giết được.
         for process in sorted(victims, key=lambda p: -len(_ancestors(p))):
             try:
