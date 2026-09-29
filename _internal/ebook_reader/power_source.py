@@ -23,6 +23,10 @@ PREFERENCE_KEY = "pauseOnBattery"
 
 def on_battery() -> bool | None:
     """True khi máy đang chạy pin, False khi đang cắm sạc hay không có pin (máy bàn), None khi không biết."""
+    return _windows_on_battery() if os.name == "nt" else _psutil_on_battery()
+
+
+def _psutil_on_battery() -> bool | None:
     try:
         battery = psutil.sensors_battery()
     except Exception:  # noqa: BLE001 - driver pin lạ không được làm hỏng việc tạo sách
@@ -32,6 +36,32 @@ def on_battery() -> bool | None:
     if battery.power_plugged is None:
         return None
     return not battery.power_plugged
+
+
+def _windows_on_battery() -> bool | None:
+    """GetSystemPowerStatus: ACLineStatus 0 = chạy pin, 1 = cắm sạc, 255 = không biết. psutil gộp 255 vào "chạy pin"
+    (power_plugged = ACLineStatus == 1) - máy báo "không biết" sẽ tạm dừng sau 60 giây mọi lượt (soát QA 29-09)."""
+    import ctypes
+    from ctypes import wintypes
+
+    class Status(ctypes.Structure):
+        _fields_ = [("ACLineStatus", wintypes.BYTE), ("BatteryFlag", wintypes.BYTE),
+                    ("BatteryLifePercent", wintypes.BYTE), ("SystemStatusFlag", wintypes.BYTE),
+                    ("BatteryLifeTime", wintypes.DWORD), ("BatteryFullLifeTime", wintypes.DWORD)]
+
+    status = Status()
+    try:
+        if not ctypes.windll.kernel32.GetSystemPowerStatus(ctypes.byref(status)):
+            return None
+    except (AttributeError, OSError):
+        return None
+    return _from_status(status.ACLineStatus & 0xFF, status.BatteryFlag & 0xFF)
+
+
+def _from_status(line: int, flag: int) -> bool | None:
+    if flag != 0xFF and flag & 128:  # không có pin (máy bàn)
+        return False
+    return {0: True, 1: False}.get(line)
 
 
 def _preferences_path() -> Path:
@@ -45,14 +75,24 @@ def _preferences_path() -> Path:
     return Path(base) / "ABook" / "preferences.json"
 
 
+_last_setting: bool | None = None
+
+
 def pause_on_battery_enabled() -> bool:
-    """Tuỳ chọn của app; thiếu file hay khoá (CLI, máy chưa mở app) thì bật."""
-    try:
-        data = json.loads(_preferences_path().read_text(encoding="utf-8"))
-    except (OSError, ValueError):
+    """Tuỳ chọn của app; thiếu file hay khoá (CLI, máy chưa mở app) thì bật. Đọc lỗi thoáng qua (file đang được ghi đè)
+    thì giữ giá trị đọc được lần trước - không để người đã tắt tuỳ chọn thấy sách khựng vài giây (soát QA 29-09)."""
+    global _last_setting
+    path = _preferences_path()
+    if not path.exists():
+        _last_setting = True
         return True
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return True if _last_setting is None else _last_setting
     value = data.get(PREFERENCE_KEY, True) if isinstance(data, dict) else True
-    return value is not False
+    _last_setting = value is not False
+    return _last_setting
 
 
 class BatteryWatch:

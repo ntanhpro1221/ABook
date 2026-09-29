@@ -46,7 +46,16 @@ def test_plugging_back_resumes_at_once_and_an_unreadable_battery_keeps_the_verdi
 
 def test_a_desktop_without_a_battery_never_pauses(monkeypatch) -> None:
     monkeypatch.setattr(power_source.psutil, "sensors_battery", lambda: None)
-    assert power_source.on_battery() is False
+    assert power_source._psutil_on_battery() is False
+    assert power_source._from_status(1, 128) is False and power_source._from_status(0, 128) is False
+
+
+def test_an_unknown_power_line_is_not_read_as_running_on_battery() -> None:
+    """Windows ACLineStatus 255 = không biết: psutil gộp vào "chạy pin" - máy ấy sẽ tạm dừng sau 60 giây mọi lượt."""
+    assert power_source._from_status(0, 1) is True
+    assert power_source._from_status(1, 8) is False
+    assert power_source._from_status(255, 1) is None
+    assert power_source._from_status(0, 255) is True, "BatteryFlag 255 = không rõ pin, vẫn tin ACLineStatus"
 
 
 def test_the_listener_pause_wins_and_resuming_on_battery_lasts_until_the_next_charge() -> None:
