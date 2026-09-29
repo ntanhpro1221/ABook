@@ -16,7 +16,8 @@ Làm sách chạy hoàn toàn trên máy của bạn: văn bản truyện và â
   thứ nhất: Studio hỏi "tôi" là ai.
 - **Bạn là người duyệt cuối**: hộp **"Việc cần anh"** chỉ ra những chỗ máy không chắc (ai nói câu này, hai tên là một
   người, nam hay nữ, cách đọc một tên...), xếp theo lợi trên mỗi lần bấm. Tab **Kịch bản** cho sửa người nói, loại câu,
-  cảm xúc và chữ đem đọc của từng câu; tab Nhân vật cho đổi giọng. Máy vẫn tự quyết và chạy tiếp - không bắt ai chờ.
+  cảm xúc và chữ đem đọc của từng câu; tab Nhân vật cho đổi giọng; tab **Cần nghe lại** cho nghe những câu máy tự kiểm
+  không chắc và bấm "Cần thu lại" để thu một bản mới. Máy vẫn tự quyết và chạy tiếp - không bắt ai chờ.
 - **Mọi máy trong nhà làm việc cùng nhau**: điện thoại nghe thẳng thư viện máy tính không cần tải (hoặc tải về nghe khi
   không có mạng); chỗ đang nghe và dấu trang đi hai chiều; thấy và điều khiển máy khác đang phát, **"Nghe ở đây"** chuyển
   sang máy mình đúng chương, đúng giây. Nối qua Wi-Fi, hoặc Bluetooth khi không chung Wi-Fi - điện thoại tự chọn đường.
@@ -84,7 +85,8 @@ Sau khi ghép, sách trên máy tính hiện ngay trong Thư viện điện tho�
 3. Bấm bắt đầu. Studio đọc cả truyện trước để phân vai thống nhất cho cả cuốn, rồi thu từng chương. Sách hiện trong Thư
    viện ngay khi chương đầu tiên thu xong - không cần chờ cả cuốn.
 4. Trong lúc chạy, mở **"Việc cần anh"** khi rảnh: mỗi thẻ nói rõ máy đang nghi điều gì, sửa bằng một cú bấm; câu đã
-   thu bị ảnh hưởng tự thu lại.
+   thu bị ảnh hưởng tự thu lại. Sách đã xong vẫn sửa được: trang dự án hiện nút **"Áp dụng N thay đổi"**, bấm là chỉ thu
+   lại những câu bị ảnh hưởng.
 
 Có thể đóng app hay tắt máy bất kỳ lúc nào; mở lại là làm tiếp từ chỗ dừng. Riêng giai đoạn **phân tích** (trước khi
 chương đầu tiên được thu) nên để chạy liền một mạch: dừng giữa chừng rồi chạy tiếp có thể cho ra cách phân vai khác.
