@@ -13,6 +13,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Chương chưa làm tới lấy tên theo dòng đầu file truyện, không theo tên file (nguồn đánh số file lệch một so với truyện
   từng làm ranh giới hai phần trông như lặp chương).
 - Điện thoại: bốn bước của trình tạo sách nằm một hàng ngang gọn.
+- Hộp "Việc cần duyệt" mở nhanh gấp ba (sách 43 chương: 2,1 -> 0,7 giây). Thẻ cách đọc tên bỏ con số "máy chắc 88%" (gần
+  như tên nào máy đoán cũng mang đúng số ấy) và dòng "máy gán: …" không liên quan.
+- "Làm tiếp cuốn này…" mờ kèm lý do ở dự án chưa phân tích câu nào (không có gì để mang theo).
 
 ## [0.4.3] - 2026-09-29
 
