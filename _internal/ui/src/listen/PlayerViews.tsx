@@ -697,6 +697,7 @@ export function PlayerBar({
 }) {
   const { track, close, playing, toggle } = usePlayer();
   const { expanded, setExpanded } = useNowPlaying();
+  useContinueIntoNextPart();
   if (!track) return null;
   if (compact) {
     return (
@@ -1187,6 +1188,24 @@ function BookProgressLine() {
 function nextLabel(title: string): string {
   const { volume, unit } = seriesOf(title);
   return volume === null ? title : `${unit.charAt(0).toUpperCase()}${unit.slice(1)} ${volume}`;
+}
+
+/** Các phần của CÙNG một cuốn ("Làm tiếp cuốn này": "Tên", "Tên · Phần 2"...) nối liền như một cuốn - hết phần này tự nghe
+ *  phần sau, từ chỗ nghe tiếp của nó. Tập khác của một bộ ("Tập 17") thì chỉ mời (CaughtUpNotice): sang tập mới là việc người
+ *  nghe chọn. Hẹn giờ "hết chương" dừng trước khi tới đây (atEnd không thành "finished"). Gọi ở PlayerBar - có mặt ở mọi
+ *  màn của máy tính lẫn điện thoại. */
+function useContinueIntoNextPart() {
+  const { atEnd, track } = usePlayer();
+  const next = useNextVolume(track?.bookId, track?.bookTitle);
+  const playBook = usePlayListenBook();
+  const continued = useRef("");
+  useEffect(() => {
+    if (atEnd !== "finished" || !track || !next || seriesOf(next.title).unit !== "phần") return;
+    if (continued.current === track.bookId) return;
+    continued.current = track.bookId;
+    toast(`Nghe tiếp ${nextLabel(next.title)}`, { description: "Hết phần trước - phần sau nối liền như một cuốn." });
+    void playBook(next);
+  }, [atEnd, track, next, playBook]);
 }
 
 function CaughtUpNotice() {
