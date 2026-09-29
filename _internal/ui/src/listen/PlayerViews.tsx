@@ -34,7 +34,7 @@ import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import { useMediaQuery } from "@/shared/media";
-import { formatClock, formatLength, formatPercent, formatWhen, spokenClock } from "@/shared/format";
+import { excerpt, formatClock, formatLength, formatPercent, formatWhen, spokenClock } from "@/shared/format";
 import { IconButton, Tooltip, Vu } from "@/shared/ui";
 import { useClock, useClockReader, useDuration, usePlaybackSecond } from "./clock";
 import { usePlayListenBook, useNextVolume } from "./LibraryScreen";
@@ -1143,7 +1143,7 @@ function BookmarkPanel({ editingId, setEditingId }: { editingId: string | null; 
         bookId={track.bookId}
         chapters={queue}
         marks={marks}
-        onJump={(mark) => jumpTo(mark.chapterId, mark.seconds)}
+        onJump={(mark) => jumpTo(mark.chapterId, mark.seconds, mark.note.trim() ? `Đã tới dấu trang “${excerpt(mark.note)}”` : undefined)}
         editingId={editingId}
         setEditingId={setEditingId}
       />

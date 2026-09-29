@@ -120,7 +120,9 @@ interface PlayerActions {
   skip: (delta: number) => void;
   next: () => void;
   previous: () => void;
-  jumpTo: (chapterId: number, at?: number) => void;
+  /** `note`: chỗ tới nói bằng lời ("Nghe từ “…”") thay cho giờ trong toast "Đã tới 0:41" - người vừa bấm một câu nhận ra câu,
+   *  không nhận ra con số (soát UX 29-09). */
+  jumpTo: (chapterId: number, at?: number, note?: string) => void;
   goBack: () => void;
   setRate: (rate: number) => void;
   setVolume: (volume: number) => void;
@@ -310,7 +312,7 @@ export function PlayerProvider({
     );
   }, [clock, engine, source, save]);
 
-  const remember = useCallback((from: { chapterId: number; seconds: number }, to: { chapterId: number; seconds: number }) => {
+  const remember = useCallback((from: { chapterId: number; seconds: number }, to: { chapterId: number; seconds: number }, note?: string) => {
     // Nhảy xa là một đoạn nghe khác: phiên cũ kết thúc ở chỗ trước khi nhảy.
     splitSessionRef.current(from);
     const history = refs.current.history;
@@ -319,7 +321,7 @@ export function PlayerProvider({
     setCanGoBack(true);
     const sameChapter = from.chapterId === to.chapterId;
     const title = refs.current.queue.find((chapter) => chapter.id === from.chapterId)?.title ?? "";
-    toast(`Đã tới ${sameChapter ? formatClock(to.seconds) : refs.current.queue.find((c) => c.id === to.chapterId)?.title ?? ""}`, {
+    toast(note ?? `Đã tới ${sameChapter ? formatClock(to.seconds) : refs.current.queue.find((c) => c.id === to.chapterId)?.title ?? ""}`, {
       id: "jump",
       duration: 8000,
       action: {
@@ -455,14 +457,14 @@ export function PlayerProvider({
     clock.set(target, engine.duration);
   }, [clock, engine, native, night, position]);
 
-  const jumpTo = useCallback((chapterId: number, at = 0) => {
+  const jumpTo = useCallback((chapterId: number, at = 0, note?: string) => {
     const current = refs.current.track;
     const chapter = refs.current.queue.find((item) => item.id === chapterId);
     if (!current || !chapter || !chapter.available) return;
     setAtEnd("none");
     night.touch("chapter", position(), true);
     const from = { chapterId: current.chapterId, seconds: engine.time };
-    if (chapterId !== current.chapterId || Math.abs(at - from.seconds) > JUMP_SECONDS) remember(from, { chapterId, seconds: at });
+    if (chapterId !== current.chapterId || Math.abs(at - from.seconds) > JUMP_SECONDS) remember(from, { chapterId, seconds: at }, note);
     if (native) {
       native.jumpTo(chapterId, at);
       return;
