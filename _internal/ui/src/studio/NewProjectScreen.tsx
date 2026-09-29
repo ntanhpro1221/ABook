@@ -128,6 +128,9 @@ interface Seed {
   carries: ContinuationPlan["carries"];
   /** Giọng kể của phần trước (nháp cũ không có). */
   narrator?: string;
+  /** Thư mục truyện + file chương cuối đã làm - khung "chưa có chương mới" nói rõ chỗ. */
+  folder?: string;
+  lastChapter?: string;
 }
 
 const DRAFT_KEY = "ebook-reader-new-book-draft";
@@ -491,8 +494,15 @@ function SeedBanner({ seed, onDrop }: { seed: Seed; onDrop: () => void }) {
         </p>
         {seed.empty && (
           <p className="mt-1 text-fg-2">
-            Thư mục truyện chưa có chương nào sau chương cuối của phần trước - thêm file chương mới vào đó, hoặc chọn các
-            file chương mới ở dưới.
+            {seed.folder ? (
+              <>
+                Thư mục <span className="break-all font-medium text-fg">{seed.folder}</span> chưa có file chương nào sau{" "}
+                {seed.lastChapter || "chương cuối của phần trước"} - thêm file chương mới vào đó rồi mở lại “Làm tiếp”, hoặc
+                chọn các file chương mới ở dưới.
+              </>
+            ) : (
+              "Thư mục truyện chưa có chương nào sau chương cuối của phần trước - thêm file chương mới vào đó, hoặc chọn các file chương mới ở dưới."
+            )}
           </p>
         )}
         {!seed.analyzed && (
@@ -1017,6 +1027,8 @@ export function NewProjectScreen() {
         empty: plan.paths.length === 0,
         carries: plan.carries,
         narrator: plan.narrator,
+        folder: plan.folder,
+        lastChapter: plan.lastChapter,
       },
     });
     setParams({}, { replace: true });

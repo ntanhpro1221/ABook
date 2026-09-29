@@ -247,11 +247,16 @@ def continuation_plan(project_root: Path) -> dict[str, Any]:
     title = display_title(project_root, str(book["title"]) if book is not None else project_root.name)
     part = continuation.part_number(project_root) + 1
     total = int(segments["total"] or 0)
+    inputs = continuation._input_paths(project_root)
+    last_input = inputs[-1] if inputs else None
     return {
         "sourceTitle": continuation.base_title(title),
         "part": part,
         "title": continuation.continued_title(title, part),
         "paths": [str(path) for path in continuation.next_chapters(project_root)],
+        # Thư mục truyện của chương cuối đã làm: trình tạo nói RÕ thư mục nào chưa có chương mới (soát UX 29-09).
+        "folder": str(last_input.parent) if last_input else "",
+        "lastChapter": last_input.name if last_input else "",
         "profile": str(settings.get("quality_profile") or "high_quality"),
         "narrator": humanize.voice_label(str(voices.get("narrator_voice") or "")),
         "firstPerson": str(voices.get("first_person_identity") or ""),
