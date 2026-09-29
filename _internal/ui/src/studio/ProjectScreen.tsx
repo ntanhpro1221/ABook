@@ -746,7 +746,10 @@ export function ProjectScreen() {
           <PartLinks id={book.id} />
           {book.phase === "done" || book.audioSeconds > 0 ? (
             <p className="tabular mt-1 text-sm text-fg-2">
-              {formatLength(book.audioSeconds)} audio · {book.chapters.completed}/{book.chapters.total} chương nghe được
+              {formatLength(book.audioSeconds)} audio · {book.chapters.completed - (book.chapters.missingAudio ?? 0)}/{book.chapters.total} chương nghe được
+              {book.chapters.missingAudio ? (
+                <span className="font-medium text-warning"> · {book.chapters.missingAudio} chương mất file audio</span>
+              ) : null}
               {book.position && (
                 <span className="text-fg-3"> · lần nghe cuối {formatRelative(book.position.at)} ở {formatClock(book.position.seconds)}</span>
               )}
