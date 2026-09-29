@@ -7,6 +7,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe sách - máy tính và điện thoại
+
+- Thẻ "Đang nghe dở" của sách đã nghe hết phần đã có ghi "Chờ chương mới" thay cho nút phát không phát gì.
+- Tab Lịch sử: phiên nghe trong cùng một phút ghi một mốc giờ; nút ghi rõ "Nghe tiếp từ mm:ss".
+
 ## [0.4.4] - 2026-09-29
 
 ### Studio (sản xuất sách nói)
