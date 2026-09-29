@@ -176,7 +176,15 @@ export interface ContinuationPlan {
   firstPerson: string;
   /** Phần trước đã phân tích xong; chưa thì sổ nhân vật mang theo chưa đủ. */
   analyzed: boolean;
-  carries: { voices: number; pronunciations: number; listenerReadings: number; pins: number; aliases?: number };
+  carries: {
+    voices: number;
+    pronunciations: number;
+    listenerReadings: number;
+    pins: number;
+    aliases?: number;
+    /** Quy ước 『』 của cuốn: người nói mọi câu 『』 ("NARRATOR" = người kể), rỗng khi chưa có. */
+    bracket?: string;
+  };
 }
 
 export interface AppInfo {

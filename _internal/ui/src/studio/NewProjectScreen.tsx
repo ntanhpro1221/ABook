@@ -461,6 +461,7 @@ function carriedText(carries: Seed["carries"]): string {
     carries.pronunciations ? `${formatNumber(carries.pronunciations)} cách đọc tên` : "",
     carries.pins ? `${formatNumber(carries.pins)} ghim giới/tuổi` : "",
     carries.aliases ? `${formatNumber(carries.aliases)} bí danh` : "",
+    carries.bracket ? "quy ước lời trong 『』" : "",
   ].filter(Boolean);
   return parts.length ? parts.join(" · ") : "những gì phần trước đã có";
 }

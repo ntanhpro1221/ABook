@@ -11,6 +11,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Trình tạo sách có nút chọn nhanh **"Đợt này làm 20 / 50 / 100 chương đầu"** khi truyện có nhiều chương - làm truyện dài
   từng đợt không phải bỏ từng chương một.
+- Thẻ "Lời trong 『』 là của một người?" có phạm vi **"Cả cuốn"**: một lần chọn (vd lời 『』 luôn là của linh thể, hay
+  luôn là lời người kể) áp cho mọi chương của sách và các phần sau của cuốn - không phải chọn lại từng chương. Nhiều
+  cuốn dùng 『』 theo quy ước riêng mà máy không tự đoán được.
 - "Làm tiếp cuốn này" bấm ở phần cũ (khi đã có phần sau) giờ nối tiếp từ phần mới nhất, không làm lại các chương phần
   sau đã làm.
 

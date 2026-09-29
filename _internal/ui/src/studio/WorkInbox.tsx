@@ -44,8 +44,11 @@ interface WorkItem {
   /** Việc gán người nói ("Ai nói câu này", người gọi, vai phụ không tên): các câu (mã ổn định + băm chữ, để yêu cầu
    *  không áp nhầm câu đã đổi) và các lựa chọn bấm được. */
   lines?: { stableId: string; textSha256: string }[];
-  /** Thẻ chuỗi lượt đối đáp: mọi câu của chuỗi - phạm vi "Cả chuỗi" thay cho các câu xen kẽ trong `lines`. */
+  /** Thẻ chuỗi lượt đối đáp: mọi câu của chuỗi - phạm vi "Cả chuỗi" thay cho các câu xen kẽ trong `lines`. Thẻ 『』: mọi
+   *  câu 『』 của dự án - phạm vi "Cả cuốn", và quy ước đi theo các phần sau. */
   allLines?: { stableId: string; textSha256: string }[];
+  /** Nhãn hai phạm vi khi khác "Câu xen kẽ / Cả chuỗi" (thẻ 『』: "Chương này / Cả cuốn"). */
+  scopeLabels?: [string, string];
   /** `name`: tên người khi nhãn nút không phải là tên ("Gộp vào Kati"). */
   choices?: { label: string; value: string; name?: string }[];
   currentValue?: string;
@@ -256,6 +259,8 @@ function SpeakerFix({
           newGender: newGender ?? "",
           // "Một người hai tên": gộp là quyết cả ở cấp tên - phần sau của cuốn ("Làm tiếp cuốn này") tự hiểu.
           ...(item.kind === "alias" && speaker !== item.currentValue ? { alias: item.currentValue } : {}),
+          // Thẻ 『』 phạm vi "Cả cuốn": quy ước của cả cuốn, các phần sau tự áp.
+          ...(item.kind === "bracket" && scope === "all" ? { bracketRule: true } : {}),
         },
       }),
     onSuccess: ({ speaker, alias }) => {
@@ -274,7 +279,11 @@ function SpeakerFix({
       toast.success(`Đã ghi: ${which} của ${label}`, {
         description:
           "Câu đã thu sẽ đọc lại bằng giọng của người ấy. Thu lại khi sách chạy tiếp - sách đã xong thì bấm “Áp dụng thay đổi” ở trang dự án." +
-          (alias ? ` Các phần sau của cuốn cũng tự hiểu ${item.current} là ${label}.` : ""),
+          (alias && item.kind === "bracket"
+            ? " Lời trong 『』 ở các chương và các phần sau của cuốn cũng tự về người này."
+            : alias
+              ? ` Các phần sau của cuốn cũng tự hiểu ${item.current} là ${label}.`
+              : ""),
       });
     },
     onError: (error: Error) => toast.error("Chưa ghi được người nói", { description: error.message }),
@@ -296,8 +305,8 @@ function SpeakerFix({
             value={scope}
             onChange={onScope}
             options={[
-              { value: "alternate", label: `Câu xen kẽ · ${item.lines.length}` },
-              { value: "all", label: `Cả chuỗi · ${item.allLines.length}` },
+              { value: "alternate", label: `${item.scopeLabels?.[0] ?? "Câu xen kẽ"} · ${item.lines.length}` },
+              { value: "all", label: `${item.scopeLabels?.[1] ?? "Cả chuỗi"} · ${item.allLines.length}` },
             ]}
           />
         </div>

@@ -32,7 +32,7 @@ from contextlib import closing, contextmanager
 from pathlib import Path
 from typing import Any
 
-from . import aliases
+from . import aliases, bracket_rule
 from .database import LISTENER_PRONUNCIATION_SOURCE, ProjectDB
 from .io_utils import discover_txt_files, natural_key
 
@@ -657,6 +657,7 @@ def carried_summary(source: Path) -> dict[str, int]:
                                       LISTENER_PRONUNCIATION_SOURCE),
             "pins": count("SELECT COUNT(*) FROM characters WHERE locked=1 OR (locked_age IS NOT NULL AND locked_age <> '')"),
             "aliases": len(aliases.load(source)),
+            "bracket": bracket_rule.load(source),
         }
 
 
@@ -687,6 +688,8 @@ def seed(source: Path, target: Path, log: Log = _quiet) -> dict[str, Any]:
             acceptances = seed_acceptances(connection, database)
     # Bí danh người nghe đã gộp ("Thiên Biến Vạn Hóa" là Krai): file cạnh sổ, bước gom tên của phần sau tự áp.
     carried_aliases = aliases.carry(source, target)
+    # Quy ước 『』 của cuốn ("lời trong 『』 là của X"): phần sau gán trước khi gom tên, như phần trước sau khi chọn.
+    carried_bracket = bracket_rule.carry(source, target)
     _write_link(source, target)
     return {"from": str(source), "part": part_number(target), "pronunciations": len(readings), **casting,
-            "acceptances": acceptances, "aliases": carried_aliases}
+            "acceptances": acceptances, "aliases": carried_aliases, "bracket": carried_bracket}
