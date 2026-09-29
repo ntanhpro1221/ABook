@@ -88,7 +88,10 @@ export function ReaderScreen() {
     }
     const target = requested !== null ? Number(requested) : reading ?? local ?? (playingIndex >= 0 ? playingIndex : 0);
     window.requestAnimationFrame(() => {
-      container.current?.querySelector<HTMLElement>(`[data-index="${target}"]`)?.scrollIntoView({ block: "start" });
+      // Đầu chương: về đầu trang, không cuộn tới câu đầu - dòng "Chương này chưa có audio" đứng TRƯỚC câu ấy và từng bị
+      // cuộn khuất ngay lúc mở (soát UX 29-09).
+      if (target <= 0) container.current?.scrollTo({ top: 0 });
+      else container.current?.querySelector<HTMLElement>(`[data-index="${target}"]`)?.scrollIntoView({ block: "start" });
       setCurrent(target);
     });
   }, [book, chapterId, id, params, playingIndex, script]);
