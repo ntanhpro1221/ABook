@@ -8,10 +8,11 @@ import { hueOf } from "@/listen/BookScreen";
 import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
-import { Button, EmptyState, IconButton, Kbd, Segmented, Skeleton } from "@/shared/ui";
+import { useMediaQuery } from "@/shared/media";
+import { Button, EmptyState, IconButton, Kbd, Segmented, Sheet, Skeleton } from "@/shared/ui";
 import { api, urls } from "./api";
 import { NameInLine, useNamesInLine } from "./NameReadings";
-import { UNDO_MS, undoAction, useWhenApplied } from "./decisions";
+import { UNDO_MS, undoAction, usePendingNote, useWhenApplied } from "./decisions";
 
 // Tab "Kịch bản" (webui/casting_review.py, docs/STUDIO_REVIEW.md mục 3): đọc cả chương như kịch bản - câu nào của ai - và
 // đổi người nói của bất kỳ câu thoại hay nội tâm nào. Hộp "Việc cần duyệt" chỉ đưa ra chỗ máy nghi; ở đây người nghe duyệt
@@ -287,7 +288,7 @@ function useLineFix(bookId: string, chapterId: number) {
 
 // Bảng sửa cách đọc một câu: loại đoạn, cảm xúc, mức. Lời kể thành lời thoại / nội tâm thì phải chọn người nói (một câu
 // thoại luôn có chủ). Mức do khâu phân tích hiệu chỉnh lại theo cảm xúc - thì thầm, dịu dàng tối đa "Vừa".
-function DeliveryMenu({ bookId, line, script, onSave }: { bookId: string; line: Line; script: ChapterScript; onSave: (change: Delivery) => void }) {
+function DeliveryMenu({ bookId, line, script, onSave, wide = false }: { bookId: string; line: Line; script: ChapterScript; onSave: (change: Delivery) => void; wide?: boolean }) {
   const waiting = line.lineWish?.state === "pending" ? line.lineWish : null;
   const [kind, setKind] = useState(waiting?.kind || line.kind);
   const [emotion, setEmotion] = useState(waiting?.emotion || line.emotion || "neutral");
@@ -311,7 +312,7 @@ function DeliveryMenu({ bookId, line, script, onSave }: { bookId: string; line: 
   }
   const ready = Object.keys(change).length > 0 && (!needsSpeaker || Boolean(speaker));
   return (
-    <div className="w-[min(88vw,340px)] space-y-3 p-1.5">
+    <div className={cn("space-y-3 p-1.5", wide ? "w-full" : "w-[min(88vw,340px)]")} data-delivery-menu>
       {/* Mục tên nằm cuối bảng, dưới nếp cuộn - chỉ lối xuống đó ngay đầu bảng (soát UX 29-09). */}
       {names.length > 0 && (
         <button
@@ -435,40 +436,50 @@ function DeliveryChip({
   onSave: (change: Delivery) => void;
   quiet: boolean;
 }) {
+  const phone = useMediaQuery("(max-width: 639px)");
   if (line.emotion === null) return null;
   const waiting = line.lineWish?.state === "pending" ? line.lineWish : null;
   const text = waiting
     ? deliveryText(waiting.emotion || line.emotion, waiting.intensity ?? line.intensity)
     : deliveryText(line.emotion, line.intensity);
+  const trigger = (
+    <button
+      type="button"
+      onClick={(event) => event.stopPropagation()}
+      aria-label={`Cách đọc: ${text}. Bấm để sửa`}
+      className={cn(
+        // Màn cảm ứng: nút chỉ 24 px - nới vùng chạm theo chiều dọc lên ~44 px (soát UX 29-09).
+        "relative inline-flex h-6 items-center gap-1 rounded-md px-1.5 text-[11px] font-medium text-fg-3 hover:bg-panel hover:text-fg focus-visible:opacity-100 pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:-inset-y-2.5 pointer-coarse:after:content-['']",
+        quiet && !open && "opacity-0 group-hover:opacity-100",
+        waiting && "text-fg-2",
+      )}
+    >
+      {waiting && <Clock className="size-3" />}
+      {text}
+    </button>
+  );
+  // Esc trong ô sửa cách đọc tên chỉ đóng ô ấy (EditReading tự lo), không đóng cả bảng (soát UX 29-09).
+  const keepOpenForNameEditor = (event: globalThis.KeyboardEvent) => {
+    if ((event.target as HTMLElement | null)?.closest?.("[data-name-editor]")) event.preventDefault();
+  };
+  // Điện thoại: tấm trượt từ đáy, rộng hết màn - bảng nổi neo vào nút 24 px bị ép sát mép, cuộn trong khung thấp.
+  if (phone) {
+    return (
+      <Sheet open={open} onOpenChange={onOpenChange} title="Cách đọc câu này" trigger={trigger} onEscapeKeyDown={keepOpenForNameEditor}>
+        <DeliveryMenu bookId={bookId} line={line} script={script} onSave={onSave} wide />
+      </Sheet>
+    );
+  }
   return (
     <Popover.Root open={open} onOpenChange={onOpenChange}>
-      <Popover.Trigger asChild>
-        <button
-          type="button"
-          onClick={(event) => event.stopPropagation()}
-          aria-label={`Cách đọc: ${text}. Bấm để sửa`}
-          className={cn(
-            // Màn cảm ứng: nút chỉ 24 px - nới vùng chạm theo chiều dọc lên ~44 px (soát UX 29-09).
-            "relative inline-flex h-6 items-center gap-1 rounded-md px-1.5 text-[11px] font-medium text-fg-3 hover:bg-panel hover:text-fg focus-visible:opacity-100 pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:-inset-y-2.5 pointer-coarse:after:content-['']",
-            quiet && !open && "opacity-0 group-hover:opacity-100",
-            waiting && "text-fg-2",
-          )}
-        >
-          {waiting && <Clock className="size-3" />}
-          {text}
-        </button>
-      </Popover.Trigger>
+      <Popover.Trigger asChild>{trigger}</Popover.Trigger>
       <Popover.Portal>
         <Popover.Content
           align="start"
           sideOffset={6}
           collisionPadding={12}
           onCloseAutoFocus={(event) => event.preventDefault()}
-          // Esc trong ô sửa cách đọc tên chỉ đóng ô ấy (EditReading tự lo), không đóng cả bảng (soát UX 29-09).
-          onEscapeKeyDown={(event) => {
-            if ((event.target as HTMLElement | null)?.closest?.("[data-name-editor]")) event.preventDefault();
-          }}
-          data-delivery-menu
+          onEscapeKeyDown={keepOpenForNameEditor}
           // Bảng cao hơn màn nhỏ (655 px trong khung 486 px: đỉnh ra ngoài màn, không với tới) - cuộn trong phần còn trống.
           className="z-50 max-h-[var(--radix-popover-content-available-height)] overflow-y-auto overscroll-contain rounded-xl border border-line bg-panel p-1.5 shadow-float"
         >
@@ -634,6 +645,7 @@ function ScriptRow({
   deliveryOpen,
   onDelivery,
   onSaveDelivery,
+  pendingNote,
   rowRef,
 }: {
   bookId: string;
@@ -650,6 +662,8 @@ function ScriptRow({
   deliveryOpen: boolean;
   onDelivery: (open: boolean) => void;
   onSaveDelivery: (change: Delivery) => void;
+  /** Vế "chờ áp dụng khi sách chạy tiếp" / "bấm “Áp dụng thay đổi”…" đúng với tình trạng sách (studio/decisions.ts). */
+  pendingNote: string;
   rowRef: (element: HTMLLIElement | null) => void;
 }) {
   const clip = useClip();
@@ -693,8 +707,8 @@ function ScriptRow({
             <Clock className="size-3.5 shrink-0" />
             Đã ghi cách đọc mới
             {line.lineWish.kind ? ` (${KINDS.find((item) => item.value === line.lineWish?.kind)?.label.toLowerCase()})` : ""}
-            {line.lineWish.spoken !== undefined ? (line.lineWish.spoken ? ` - đọc là "${line.lineWish.spoken}"` : " - trả về chữ của sách") : ""} - chờ áp
-            dụng khi sách chạy tiếp.
+            {line.lineWish.spoken !== undefined ? (line.lineWish.spoken ? ` - đọc là "${line.lineWish.spoken}"` : " - trả về chữ của sách") : ""} -{" "}
+            {pendingNote}.
           </p>
         )}
         {line.lineWish?.state === "refused" && (
@@ -723,7 +737,7 @@ function ScriptRow({
         {line.wish?.state === "pending" && (
           <p className="mt-1 flex items-center gap-1.5 text-xs text-fg-2">
             <Clock className="size-3.5 shrink-0" />
-            Đã ghi {line.wish.label} (máy gán {line.label}) - chờ áp dụng khi sách chạy tiếp.
+            Đã ghi {line.wish.label} (máy gán {line.label}) - {pendingNote}.
           </p>
         )}
         {line.wish?.state === "refused" && (
@@ -769,6 +783,8 @@ function ChapterScriptView({
 }) {
   const assign = useAssign(bookId, script.chapterId);
   const fixLine = useLineFix(bookId, script.chapterId);
+  // Một lần cho cả chương, không mỗi câu một truy vấn.
+  const pendingNote = usePendingNote(bookId);
   const [active, setActive] = useState<string | null>(null);
   const [menu, setMenu] = useState<string | null>(null);
   const [delivery, setDelivery] = useState<string | null>(null);
@@ -898,6 +914,7 @@ function ChapterScriptView({
               backTo(line);
               fixLine.mutate({ line, change });
             }}
+            pendingNote={pendingNote}
             rowRef={(element) => {
               if (element) rows.current.set(line.stableId, element);
               else rows.current.delete(line.stableId);
