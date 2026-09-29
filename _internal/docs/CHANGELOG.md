@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.7] - 2026-09-29
+
 ### Nghe sách - máy tính và điện thoại
 
 - Cài đặt → Điện thoại nói rõ địa chỉ nào để làm gì: địa chỉ trong nhà, và địa chỉ Tailscale để mở từ bất cứ đâu khi
