@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.1] - 2026-09-29
+
 ### Studio (sản xuất sách nói)
 
 - **Làm tiếp cuốn này**: truyện dài làm được nhiều đợt mà không đổi giọng giữa chừng. Ở trang dự án, nút "Làm tiếp cuốn
