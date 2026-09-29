@@ -134,6 +134,8 @@ export interface ScannedFile {
   firstLine: string;
   words: number;
   bytes: number;
+  /** Dòng ghi công người dịch ở đầu chương - trình tạo sách ĐỀ XUẤT bỏ chúng khỏi phần đọc, không bao giờ tự bỏ. */
+  credits?: string[];
 }
 
 /** Truyện kể ngôi thứ nhất? (ebook_reader/first_person.py) - cho câu hỏi "'Tôi' là ai?" ở bước chọn giọng. */
