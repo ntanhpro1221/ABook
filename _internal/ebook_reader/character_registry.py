@@ -832,6 +832,21 @@ def _canonicalize_named_speakers(
 ) -> dict[str, set[str]]:
     counts = Counter(str(row["speaker"]) for row in db.list_segments())
     targets = canonical_speaker_names(counts, _source_text(db), log)
+    # Bí danh người nghe đã xác nhận (aliases.py - thẻ "Một người hai tên"; "Làm tiếp cuốn này" chép sang phần sau): nhãn
+    # là bí danh thì về người ấy. Sau các lượt gom tự động, để cả nhãn gốc lẫn tên đã gom của nó đều được tra.
+    from .aliases import key as alias_key
+    from .aliases import load as listener_aliases
+
+    path = getattr(db, "path", None)  # db giả trong test không có đường dẫn: không có bí danh
+    confirmed = listener_aliases(Path(path).parent) if path else {}
+    told: set[tuple[str, str]] = set()
+    for original, target in list(targets.items()):
+        person = confirmed.get(alias_key(target)) or confirmed.get(alias_key(original))
+        if person and alias_key(person) != alias_key(target):
+            if (target, person) not in told:
+                told.add((target, person))
+                log(f"  {target} là {person}: người nghe đã gộp.")
+            targets[original] = person
     aliases_by_target: dict[str, set[str]] = defaultdict(set)
     rewritten_segments = 0
     for original, target in targets.items():

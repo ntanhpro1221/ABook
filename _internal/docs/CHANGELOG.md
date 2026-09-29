@@ -15,6 +15,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   từng nhân vật đã gặp, cách đọc tên (kể cả cách đọc đã chọn trong "Việc cần duyệt"), ghim giới tính/tuổi và danh sách
   nhân vật đã biết cho bước phân tích; trình tạo nói trước sẽ mang theo bao nhiêu. Làm được cả từ Studio từ xa
   (điện thoại, trình duyệt đã ghép): chương mới do máy tính tự tìm trong thư mục truyện. Dòng lệnh: `create --seed-from`.
+- Gộp hai tên ở thẻ "Một người hai tên" (ví dụ một danh hiệu luôn đi kèm một nhân vật) giờ được nhớ theo TÊN: các phần
+  sau của cuốn tự hiểu danh hiệu ấy là người ấy, câu của danh hiệu không có giọng thứ hai và thẻ không hỏi lại.
 - Thư viện nghe xếp các phần của một cuốn cạnh nhau như một bộ ("Tên · 3 phần"), và nghe hết phần này thì mời nghe tiếp
   phần sau - trên máy tính, điện thoại và trình duyệt.
 
