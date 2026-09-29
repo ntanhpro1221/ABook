@@ -413,7 +413,14 @@ function Actions({ book }: { book: BookSummary }) {
   return (
     <div className="mt-5 flex flex-wrap items-center gap-2">
       {book.chapters.completed > 0 && (
-        <Button variant={book.phase === "done" ? "primary" : "secondary"} size="lg" icon={Headphones} onClick={() => navigate(`/book/${book.id}`)}>
+        // Một nút chính mỗi lúc: sách xong mà còn thay đổi chờ áp thì "Áp dụng" là việc chính, không phải hai nút cam cạnh nhau
+        // (soát UX 29-09).
+        <Button
+          variant={book.phase === "done" && !book.pendingChanges ? "primary" : "secondary"}
+          size="lg"
+          icon={Headphones}
+          onClick={() => navigate(`/book/${book.id}`)}
+        >
           Nghe trong Thư viện
         </Button>
       )}
