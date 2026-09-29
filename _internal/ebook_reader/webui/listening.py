@@ -147,7 +147,7 @@ class Listening:
         return state
 
     def records(self, book: str) -> list[dict[str, Any]]:
-        """Các hồ sơ gắn với `book`: mã, tên, lúc tạo, lúc nghe gần nhất, có đang dùng không."""
+        """Các hồ sơ gắn với `book`: mã, tên, lúc tạo, lúc nghe gần nhất, chỗ nghe cuối, có đang dùng không."""
         with self._lock:
             link = self._data["links"].get(book) or {}
             found = []
@@ -156,9 +156,14 @@ class Listening:
                 if record is None:
                     continue
                 state = record.get("state") or {}
+                last = state.get("last") if isinstance(state.get("last"), dict) else None
                 found.append({"id": record_id, "name": record.get("name") or DEFAULT_RECORD_NAME,
                               "createdAt": record.get("createdAt"), "updatedAt": state.get("updatedAt"),
-                              "active": record_id == link.get("active")})
+                              "active": record_id == link.get("active"),
+                              # Chỗ nghe cuối của hồ sơ: menu hiện "Chương 727 · 7:10" - hai hồ sơ cùng "nghe gần nhất hôm
+                              # nay" mới phân biệt được (soát UX 29-09).
+                              "last": {"chapterId": int(last["chapterId"]), "seconds": float(last.get("seconds") or 0)}
+                              if last and str(last.get("chapterId", "")).lstrip("-").isdigit() else None})
             return found
 
     def create_record(self, book: str, name: str = "") -> dict[str, Any]:

@@ -409,6 +409,9 @@ function RecordPicker({ book }: { book: ListenBook }) {
                 <span className="min-w-0 flex-1">
                   <span className="block truncate">{record.name}</span>
                   <span className="block text-xs text-fg-3">
+                    {record.last
+                      ? `${book.chapters?.find((chapter) => chapter.id === record.last!.chapterId)?.title ?? "Chương"} · ${formatClock(record.last.seconds)} · `
+                      : ""}
                     {record.updatedAt ? `nghe gần nhất ${dayLabel(record.updatedAt).toLowerCase()}` : "chưa nghe"}
                   </span>
                 </span>
