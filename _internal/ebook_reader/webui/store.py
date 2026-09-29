@@ -163,15 +163,44 @@ def _rate(connection: sqlite3.Connection, where: str, now: float) -> float | Non
     return count / span
 
 
+def _first_line(path: Any) -> str | None:
+    """Dòng khác rỗng đầu tiên của một file chương (đọc 8 KB đầu, giải mã như dây chuyền), hoặc None."""
+    if not path:
+        return None
+    from ..io_utils import decode_text_bytes
+
+    try:
+        with open(str(path), "rb") as handle:
+            data = handle.read(8192)
+    except OSError:
+        return None
+    if data.startswith((b"\xff\xfe", b"\xfe\xff")):
+        data = data[: len(data) // 2 * 2]
+    else:
+        # Chỉ những dòng trọn vẹn: một ký tự nhiều byte bị cắt ở 8 KB làm bộ giải mã chọn nhầm bảng mã.
+        cut = data.rfind(b"\n")
+        if 0 < cut < len(data) - 1:
+            data = data[:cut]
+    text = decode_text_bytes(data)
+    return next((line.strip() for line in text.splitlines() if line.strip()), None)
+
+
 def chapter_names(connection: sqlite3.Connection) -> dict[int, dict[str, Any]]:
     """chapter_id -> {index, name, subtitle, full} theo dòng tiêu đề đầu chương (xem `humanize.chapter_names`)."""
     headings = {
         int(row["chapter_id"]): str(row["text"] or "")
         for row in connection.execute("SELECT chapter_id, text, MIN(seq) FROM segments GROUP BY chapter_id")
     }
+    has_path = "input_path" in {row[1] for row in connection.execute("PRAGMA table_info(chapters)")}
     out: dict[int, dict[str, Any]] = {}
-    for row in connection.execute("SELECT id, chapter_index, title FROM chapters"):
-        name, subtitle = humanize.chapter_names(str(row["title"]), headings.get(int(row["id"])))
+    for row in connection.execute(f"SELECT id, chapter_index, title{', input_path' if has_path else ''} FROM chapters"):
+        heading = headings.get(int(row["id"]))
+        if heading is None and has_path:
+            # Chương chưa tách câu (dự án chưa chạy tới): dòng đầu FILE nguồn, như danh sách chương của trình tạo - tên file
+            # lệch một so với truyện ("767.txt" mở đầu "Chương 768 - ...") làm ranh giới hai phần trông như lặp chương
+            # (soát UX 29-09).
+            heading = _first_line(row["input_path"])
+        name, subtitle = humanize.chapter_names(str(row["title"]), heading)
         out[int(row["id"])] = {
             "index": int(row["chapter_index"]),
             "name": name,
