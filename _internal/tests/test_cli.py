@@ -77,6 +77,13 @@ def test_doctor_uses_actual_critical_dependency_and_runtime_contract_checks(
         "perceptual_cache_check",
         lambda _root: {"ok": True, "detail": "offline smoke passed"},
     )
+    # Như perceptual_cache_check: model giọng thật chỉ có trong runtime của máy đã cài - worktree không có `runtime`
+    # thì phép kiểm thật hỏng và test này đo máy chứ không đo doctor (29-09).
+    monkeypatch.setattr(
+        cli,
+        "voice_model_check",
+        lambda _root: {"ok": True, "detail": "VieNeu-TTS pinned"},
+    )
     monkeypatch.setattr(cli.shutil, "which", lambda name: f"C:\\bin\\{name}.exe")
 
     result = cli._command_doctor(SimpleNamespace(deep=False))
