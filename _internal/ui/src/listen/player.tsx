@@ -512,7 +512,19 @@ export function PlayerProvider({
       return;
     }
     const target = availableAfter(refs.current.queue, current.chapterId, direction);
-    if (!target) return;
+    if (!target) {
+      // Chương sau có mà chưa có audio: nói ra, kèm đường đọc chữ - trước đây nút mờ và Shift+→ im lặng (soát UX 29-09).
+      const queue = refs.current.queue;
+      const waiting = direction === 1 ? queue[queue.findIndex((chapter) => chapter.id === current.chapterId) + 1] : undefined;
+      if (waiting && !waiting.available) {
+        toast("Chương sau chưa có audio", {
+          description: waiting.fullTitle,
+          duration: 8000,
+          action: { label: "Đọc chương ấy", onClick: () => { window.location.hash = `#/book/${current.bookId}/read/${waiting.id}`; } },
+        });
+      }
+      return;
+    }
     remember({ chapterId: current.chapterId, seconds: engine.time }, { chapterId: target.id, seconds: 0 });
     load({ ...current, chapterId: target.id, chapterTitle: target.fullTitle }, 0, !engine.paused || engine.ended);
   }, [clock, engine, load, native, night, position, remember]);
