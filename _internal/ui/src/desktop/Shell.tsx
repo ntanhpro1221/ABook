@@ -1,4 +1,4 @@
-import { Clapperboard, Download, Library, Plus, Settings } from "lucide-react";
+import { Clapperboard, Download, Library, Pause, Plus, Settings } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router";
 import { useRestoreLastListening } from "@/listen/LibraryScreen";
@@ -102,11 +102,15 @@ function Producing() {
           <BookCover title={book.title} size="xs" image={book.cover} className="size-8 rounded-md" />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 truncate text-xs font-medium">
-              <Vu className="h-2 text-accent" />
+              {book.paused ? (
+                <Pause className="size-3 shrink-0 text-warning" aria-label="Đang tạm dừng" />
+              ) : (
+                <Vu className="h-2 text-accent" />
+              )}
               <span className="truncate">{book.title}</span>
             </div>
             <div className="mt-1 flex items-center gap-2">
-              <Progress value={book.progress.overall} running size="xs" className="flex-1" />
+              <Progress value={book.progress.overall} running={!book.paused} size="xs" className="flex-1" />
               <span className="tabular text-[11px] text-fg-2">{book.starting ? "…" : formatPercent(book.progress.overall)}</span>
             </div>
           </div>

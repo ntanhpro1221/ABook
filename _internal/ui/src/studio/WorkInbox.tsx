@@ -634,7 +634,9 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames }: { book
     <div className="mt-5">
       <p className="max-w-3xl text-sm text-fg-2">
         {/* Lời mở đầu theo trạng thái sách - soát UX 29-09: "đang chạy tiếp" hiện cả khi sách đã xong hay đang dừng. */}
-        {book.running
+        {book.running && book.paused
+          ? "Sách đang tạm dừng - sửa bây giờ, máy áp dụng khi làm tiếp."
+          : book.running
           ? "Máy đã tự quyết và đang chạy tiếp - không có gì phải chờ."
           : book.phase === "done"
             ? "Sách đã xong - sửa xong thì bấm “Áp dụng thay đổi” ở trên để thu lại đúng các câu bị ảnh hưởng."

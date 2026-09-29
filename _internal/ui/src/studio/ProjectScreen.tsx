@@ -149,7 +149,7 @@ function Step({
 function ProductionPanel({ book }: { book: BookSummary }) {
   const [analysis, casting, synthesis] = stepStates(book);
   const live = book.running || book.starting;
-  const eta = book.eta ? formatEta(book.eta.seconds) : live ? "đang ước tính thời gian…" : "";
+  const eta = book.paused ? "đang tạm dừng" : book.eta ? formatEta(book.eta.seconds) : live ? "đang ước tính thời gian…" : "";
   return (
     <section className="mt-8">
       <div className="mb-3 flex items-baseline justify-between">
@@ -505,7 +505,7 @@ function Actions({ book }: { book: BookSummary }) {
       {live && book.paused === "battery" && (
         <p className="basis-full text-pretty text-sm text-fg-2">
           Máy tính đang chạy pin: tạo sách trên pin chậm hơn nhiều mà hao pin, nên Studio tạm dừng và tự làm tiếp khi cắm sạc.
-          Bấm “Tiếp tục” để làm tiếp ngay trên pin.
+          Bấm “Tiếp tục” để làm tiếp ngay trên pin{remote ? "" : ", hay tắt hẳn ở Cài đặt → Studio"}.
         </p>
       )}
     </div>
