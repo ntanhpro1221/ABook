@@ -830,6 +830,22 @@ def _canonicalize_named_speakers(
     db: ProjectDB,
     log: Callable[[str], None],
 ) -> dict[str, set[str]]:
+    path = getattr(db, "path", None)  # db giả trong test không có đường dẫn: không có quyết định nào của người nghe
+    # Quy ước 『』 của cả cuốn (bracket_rule.py - thẻ 『』 chọn "Cả cuốn"; "Làm tiếp cuốn này" chép sang phần sau): mọi câu
+    # nói mở bằng 『 là của người ấy. TRƯỚC khi đếm nhãn, để người ấy vào sổ nhân vật và được cấp giọng như mọi người.
+    from .bracket_rule import OPENER
+    from .bracket_rule import load as bracket_speaker
+
+    rule = bracket_speaker(Path(path).parent) if path else ""
+    if rule:
+        with db.transaction() as conn:
+            moved = conn.execute(
+                "UPDATE segments SET speaker=? WHERE kind != 'narration' AND speaker != ?"
+                " AND substr(ltrim(text, ' ' || char(9) || char(10) || char(13)), 1, 1) = ?",
+                (rule, rule, OPENER),
+            ).rowcount
+        if moved:
+            log(f"  {moved} câu trong 『』 là của {rule}: quy ước người nghe chọn cho cả cuốn.")
     counts = Counter(str(row["speaker"]) for row in db.list_segments())
     targets = canonical_speaker_names(counts, _source_text(db), log)
     # Bí danh người nghe đã xác nhận (aliases.py - thẻ "Một người hai tên"; "Làm tiếp cuốn này" chép sang phần sau): nhãn
@@ -837,7 +853,6 @@ def _canonicalize_named_speakers(
     from .aliases import key as alias_key
     from .aliases import load as listener_aliases
 
-    path = getattr(db, "path", None)  # db giả trong test không có đường dẫn: không có bí danh
     confirmed = listener_aliases(Path(path).parent) if path else {}
     told: set[tuple[str, str]] = set()
     for original, target in list(targets.items()):

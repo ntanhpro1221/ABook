@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any, Callable, Protocol
 from urllib.parse import parse_qs, unquote, urlsplit
 
-from .. import aliases, continuation, listener_overrides
+from .. import aliases, bracket_rule, continuation, listener_overrides
 from . import actions, bookfile, cover_search, covers, humanize, listen_view, packages, store
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, legacy_ids
@@ -1068,6 +1068,9 @@ class Handler(BaseHTTPRequestHandler):
         # Thẻ "Một người hai tên": ngoài các câu này, ghi luôn cấp TÊN (aliases.py) - phần sau của cuốn tự hiểu.
         alias = str(body.get("alias", "") or "").strip()[:200]
         remembered = bool(alias) and aliases.add(path, alias, speaker)
+        # Thẻ 『』 với phạm vi "Cả cuốn": quy ước của cuốn (bracket_rule.py) - các phần sau tự áp trước khi phân vai.
+        if body.get("bracketRule"):
+            remembered = bracket_rule.save(path, speaker) or remembered
         self._send_json(HTTPStatus.OK, {"lines": len(lines), "speaker": speaker, "new": bool(new_gender),
                                         "alias": remembered})
 
