@@ -406,6 +406,7 @@ def _spawn_detached_supervisor(
     paths: BackgroundPaths,
     instance_id: str,
     python_executable: Path,
+    code_root: Path | None = None,
 ) -> subprocess.Popen[bytes]:
     command = [
         str(python_executable),
@@ -419,7 +420,10 @@ def _spawn_detached_supervisor(
     ]
     environment = os.environ.copy()
     environment["PYTHONUTF8"] = "1"
-    package_root = Path(__file__).resolve().parents[1]
+    # `python -m` đặt thư mục làm việc ĐẦU sys.path, trước cả PYTHONPATH: chạy từ thư mục mã của app thì bản mã ghim của
+    # cuốn (studio_setup.code_for - cuốn dở chạy tiếp bằng đúng mã đã bắt đầu nó) bị bỏ qua, app lên bản mới đổi file khoá
+    # là cuốn dở bị từ chối resume. Soát QA 29-09.
+    package_root = Path(code_root) if code_root is not None else Path(__file__).resolve().parents[1]
     log_handle = paths.log.open("ab", buffering=0)
     kwargs: dict[str, Any] = {
         "cwd": str(package_root),
@@ -511,6 +515,7 @@ def start_background(
     *,
     python_executable: Path | str | None = None,
     startup_timeout: float = DEFAULT_STARTUP_TIMEOUT_SECONDS,
+    code_root: Path | str | None = None,
 ) -> BackgroundStatus:
     paths = BackgroundPaths.for_project(project_root)
     if not paths.project_root.is_dir():
@@ -545,7 +550,8 @@ def start_background(
         _write_launching_state(paths, instance_id)
         _append_log(paths, f"LAUNCH instance={instance_id} project={paths.project_root}")
         try:
-            process = _spawn_detached_supervisor(paths, instance_id, executable)
+            process = _spawn_detached_supervisor(paths, instance_id, executable,
+                                                 Path(code_root) if code_root is not None else None)
         except OSError as exc:
             detail = f"không thể spawn supervisor: {exc}"
             _record_launch_failure(paths, instance_id, detail)
