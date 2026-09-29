@@ -82,6 +82,9 @@ export function IconButton({
 }) {
   const box = size === "sm" ? "size-8" : size === "lg" ? "size-11" : "size-9";
   const glyph = size === "lg" ? "size-5" : "size-[18px]";
+  // Màn cảm ứng: nút 32-36 px nới vùng chạm theo CHIỀU DỌC lên ~44 px (soát UX 29-09) - không nới ngang, vì các nút trên
+  // thanh công cụ đứng sát nhau, vùng nới ngang sẽ giành chạm của nút bên cạnh.
+  const reach = size === "lg" ? "" : "relative pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:-inset-y-1.5 pointer-coarse:after:content-['']";
   return (
     <Tooltip label={label}>
       <button
@@ -91,6 +94,7 @@ export function IconButton({
           "inline-flex shrink-0 items-center justify-center rounded-lg transition-colors disabled:pointer-events-none disabled:opacity-40",
           tone === "ghost" ? "text-fg-2 hover:bg-hover hover:text-fg" : "bg-panel-2 text-fg hover:bg-hover",
           box,
+          reach,
           className,
         )}
         {...rest}
