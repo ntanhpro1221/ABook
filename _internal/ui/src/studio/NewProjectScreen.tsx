@@ -116,6 +116,9 @@ interface Draft {
   startNow: boolean;
   /** "Làm tiếp cuốn này": phần trước để gieo từ (continuation.py), hay không có khi là sách mới. */
   seed?: Seed;
+  /** Chip "Đợt này làm N chương đầu": N chương đầu trong số chương CHƯA bị bỏ tay (null/không có = tất cả). Tách khỏi
+   *  `excluded` - trước đây chip ghi đè danh sách bỏ tay, chương vừa bỏ tự quay lại (soát UX 29-09). */
+  limit?: number | null;
 }
 
 interface Seed {
@@ -213,6 +216,8 @@ function SourceStep({
   onAddFiles,
   onRemove,
   total,
+  limit,
+  later,
   onLimit,
   problem,
 }: {
@@ -225,7 +230,10 @@ function SourceStep({
   onRemove: (path: string) => void;
   /** Số chương đọc được trong nguồn, trước khi bỏ chương nào. */
   total: number;
-  /** Chỉ làm `count` chương đầu (theo thứ tự tên file), hay tất cả khi null. */
+  /** Giới hạn đang chọn (null = tất cả) và số chương để dành cho đợt sau. */
+  limit: number | null;
+  later: number;
+  /** Chỉ làm `count` chương đầu (theo thứ tự tên file, sau các chương bỏ tay), hay tất cả khi null. */
   onLimit: (count: number | null) => void;
   problem: { text: string; subfolders: string[] } | null;
 }) {
@@ -421,13 +429,14 @@ function SourceStep({
               <Segmented<string>
                 label="Đợt này làm bao nhiêu chương"
                 wrap
-                value={files.length === total ? "all" : String(files.length)}
+                value={limit ? String(limit) : "all"}
                 onChange={(value) => onLimit(value === "all" ? null : Number(value))}
                 options={[
                   ...CHAPTER_LIMITS.filter((count) => count < total).map((count) => ({ value: String(count), label: `${count} chương đầu` })),
                   { value: "all", label: `Cả ${formatNumber(total)} chương` },
                 ]}
               />
+              {limit !== null && later > 0 && <span>· còn {formatNumber(later)} chương cho đợt sau</span>}
             </div>
           )}
           <div className="mt-3 max-h-[340px] overflow-y-auto rounded-xl border border-line bg-panel">
@@ -1072,10 +1081,11 @@ export function NewProjectScreen() {
   const scan = useMemo<ScanResult | null>(() => {
     if (!rawScan) return null;
     const excluded = new Set(draft.excluded);
-    const files = rawScan.files.filter((file) => !excluded.has(file.path));
+    const kept = rawScan.files.filter((file) => !excluded.has(file.path));
+    const files = draft.limit ? kept.slice(0, draft.limit) : kept;
     const words = files.reduce((sum, file) => sum + file.words, 0);
     return { ...rawScan, files, totals: { chapters: files.length, words, audioSeconds: Math.round(words / 4.3) } };
-  }, [rawScan, draft.excluded]);
+  }, [rawScan, draft.excluded, draft.limit]);
 
   // Cùng khoá truy vấn với bước "Tôi là ai?": lấy từ bộ nhớ đệm, không đọc lại sách.
   const { data: firstPersonHint } = useFirstPersonHint(scan?.files.map((file) => file.path) ?? [], draft.seed?.id);
@@ -1181,12 +1191,12 @@ export function NewProjectScreen() {
               title={title}
               onTitle={(value) => update({ title: value, titleEdited: true })}
               scanning={scanMutation.isPending}
-              onPaths={(paths) => update({ paths, excluded: [], titleEdited: paths.length ? draft.titleEdited : false })}
+              onPaths={(paths) => update({ paths, excluded: [], limit: null, titleEdited: paths.length ? draft.titleEdited : false })}
               onAddFiles={(paths) => update({ paths: [...draft.paths, ...paths] })}
               total={rawScan?.files.length ?? 0}
-              onLimit={(count) =>
-                update({ excluded: count === null ? [] : (rawScan?.files ?? []).slice(count).map((file) => file.path) })
-              }
+              limit={draft.limit ?? null}
+              later={(rawScan?.files.filter((file) => !draft.excluded.includes(file.path)).length ?? 0) - (scan?.files.length ?? 0)}
+              onLimit={(count) => update({ limit: count })}
               onRemove={(path) => {
                 update({ excluded: [...draft.excluded, path] });
                 const name = path.split(/[\\/]/).pop();
