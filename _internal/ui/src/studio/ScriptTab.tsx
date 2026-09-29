@@ -10,6 +10,7 @@ import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
 import { Button, EmptyState, IconButton, Kbd, Segmented, Skeleton } from "@/shared/ui";
 import { api, urls } from "./api";
+import { NameInLine, useNamesInLine } from "./NameReadings";
 
 // Tab "Kịch bản" (webui/casting_review.py, docs/STUDIO_REVIEW.md mục 3): đọc cả chương như kịch bản - câu nào của ai - và
 // đổi người nói của bất kỳ câu thoại hay nội tâm nào. Hộp "Việc cần duyệt" chỉ đưa ra chỗ máy nghi; ở đây người nghe duyệt
@@ -268,7 +269,7 @@ function useLineFix(bookId: string, chapterId: number) {
 
 // Bảng sửa cách đọc một câu: loại đoạn, cảm xúc, mức. Lời kể thành lời thoại / nội tâm thì phải chọn người nói (một câu
 // thoại luôn có chủ). Mức do khâu phân tích hiệu chỉnh lại theo cảm xúc - thì thầm, dịu dàng tối đa "Vừa".
-function DeliveryMenu({ line, script, onSave }: { line: Line; script: ChapterScript; onSave: (change: Delivery) => void }) {
+function DeliveryMenu({ bookId, line, script, onSave }: { bookId: string; line: Line; script: ChapterScript; onSave: (change: Delivery) => void }) {
   const waiting = line.lineWish?.state === "pending" ? line.lineWish : null;
   const [kind, setKind] = useState(waiting?.kind || line.kind);
   const [emotion, setEmotion] = useState(waiting?.emotion || line.emotion || "neutral");
@@ -278,6 +279,7 @@ function DeliveryMenu({ line, script, onSave }: { line: Line; script: ChapterScr
   const reading = line.spoken ?? line.text;
   const [words, setWords] = useState(waiting?.spoken || reading);
   const needsSpeaker = line.kind === "narration" && kind !== "narration";
+  const names = useNamesInLine(bookId, line.text);
   const change: Delivery = {};
   if (kind !== line.kind) change.kind = kind;
   if (line.emotion !== null && emotion !== line.emotion) change.emotion = emotion;
@@ -372,11 +374,24 @@ function DeliveryMenu({ line, script, onSave }: { line: Line; script: ChapterScr
       <Button size="sm" variant="primary" className="w-full" disabled={!ready} onClick={() => onSave(change)}>
         {needsSpeaker && !speaker ? "Chọn người nói trước" : "Lưu cách đọc"}
       </Button>
+      {/* Tên riêng trong câu đọc sai là sai ở MỌI câu có tên ấy: sửa ngay tại đây, cho cả cuốn (mục "Cách đọc tên" ở tab
+          Nhân vật) - tách khỏi nút "Lưu cách đọc" vốn chỉ cho riêng câu này. */}
+      {names.length > 0 && (
+        <div className="border-t border-line pt-3">
+          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-fg-3">Tên trong câu · sửa cho cả cuốn</div>
+          <div className="space-y-2">
+            {names.map((item) => (
+              <NameInLine key={item.surface} bookId={bookId} item={item} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 function DeliveryChip({
+  bookId,
   line,
   script,
   open,
@@ -384,6 +399,7 @@ function DeliveryChip({
   onSave,
   quiet,
 }: {
+  bookId: string;
   line: Line;
   script: ChapterScript;
   open: boolean;
@@ -419,9 +435,10 @@ function DeliveryChip({
           sideOffset={6}
           collisionPadding={12}
           onCloseAutoFocus={(event) => event.preventDefault()}
-          className="z-50 rounded-xl border border-line bg-panel p-1.5 shadow-float"
+          // Bảng cao hơn màn nhỏ (655 px trong khung 486 px: đỉnh ra ngoài màn, không với tới) - cuộn trong phần còn trống.
+          className="z-50 max-h-[var(--radix-popover-content-available-height)] overflow-y-auto overscroll-contain rounded-xl border border-line bg-panel p-1.5 shadow-float"
         >
-          <DeliveryMenu line={line} script={script} onSave={onSave} />
+          <DeliveryMenu bookId={bookId} line={line} script={script} onSave={onSave} />
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>
@@ -635,7 +652,7 @@ function ScriptRow({
           </p>
         )}
         {script.castReady && (
-          <DeliveryChip line={line} script={script} open={deliveryOpen} onOpenChange={onDelivery} onSave={onSaveDelivery} quiet={!speech && !active} />
+          <DeliveryChip bookId={bookId} line={line} script={script} open={deliveryOpen} onOpenChange={onDelivery} onSave={onSaveDelivery} quiet={!speech && !active} />
         )}
         {line.lineWish?.state === "pending" && (
           <p className="mt-0.5 flex items-center gap-1.5 text-xs text-fg-2">

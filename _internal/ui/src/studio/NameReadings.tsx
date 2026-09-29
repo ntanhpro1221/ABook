@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pause, Play, Search, X } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
@@ -25,7 +25,7 @@ interface NameReading {
 
 const PAGE = 30;
 
-function useNameReadings(bookId: string) {
+export function useNameReadings(bookId: string) {
   return useQuery({
     queryKey: ["pronunciations", bookId],
     queryFn: () => api<{ items: NameReading[]; unseen: number }>(`/api/books/${bookId}/pronunciations`),
@@ -156,6 +156,48 @@ function ReadingRow({ bookId, item, fresh = false }: { bookId: string; item: Nam
         </Button>
       )}
     </li>
+  );
+}
+
+/** Tên riêng có cách đọc nằm trong một câu - so như TTS khớp: nguyên từ, không phân biệt hoa thường, GIỮ dấu ("hàn" không
+ *  phải "Han"). Mỗi tên một lần, theo thứ tự xuất hiện. */
+export function useNamesInLine(bookId: string, text: string): NameReading[] {
+  const { data } = useNameReadings(bookId);
+  return useMemo(() => {
+    if (!data) return [];
+    const index = new Map(data.items.map((item) => [item.surface.normalize("NFC").toLowerCase(), item]));
+    const found = new Map<string, NameReading>();
+    for (const word of text.normalize("NFC").match(/[\p{L}\p{M}\p{N}_]+/gu) ?? []) {
+      const item = index.get(word.toLowerCase());
+      if (item) found.set(item.surface, item);
+    }
+    return [...found.values()];
+  }, [data, text]);
+}
+
+/** Một tên trong bảng sửa cách đọc của câu (tab Kịch bản): đọc thế nào + sửa ngay - cho CẢ CUỐN, như mục "Cách đọc tên". */
+export function NameInLine({ bookId, item }: { bookId: string; item: NameReading }) {
+  const [editing, setEditing] = useState(false);
+  const shown = item.requested ?? item.spoken;
+  return (
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+      <span className="min-w-0 flex-1 text-sm">
+        <span className="font-semibold">{item.surface}</span>
+        {shown && <span className="text-fg-2"> đọc là </span>}
+        {shown && <span className="whitespace-nowrap font-medium">“{shown}”</span>}
+        {item.requested && <span className="text-xs text-accent-text"> · chờ áp dụng</span>}
+      </span>
+      {editing ? (
+        // Hàng riêng dưới tên: bảng chỉ rộng ~340 px, chung hàng thì tên bị ép thành cột chữ hẹp.
+        <div className="w-full">
+          <EditReading bookId={bookId} item={item} onDone={() => setEditing(false)} fresh={false} />
+        </div>
+      ) : (
+        <Button size="sm" variant="ghost" onClick={() => setEditing(true)} aria-label={`Sửa cách đọc ${item.surface}`}>
+          Sửa
+        </Button>
+      )}
+    </div>
   );
 }
 
