@@ -30,6 +30,20 @@ interface Marker {
   suggested?: boolean;
 }
 
+/** Câu thoại đã mang ngoặc của sách - bỏ trước khi bọc ngoặc trích (soát UX 29-09: ““…””). */
+function unquoted(sentence: string): string {
+  return sentence.replace(/^[\s“"«「『]+|[\s”"»」』]+$/g, "");
+}
+
+/** "Tối qua" chỉ đúng khi lần hẹn giờ kết thúc hôm trước hay lúc rạng sáng; hẹn giờ ban ngày (06:5x sáng nay) thì không. */
+function sessionLabel(endedAt: number | null | undefined): string {
+  if (!endedAt) return "Tối qua";
+  const ended = new Date(endedAt * 1000);
+  const now = new Date();
+  const today = ended.toDateString() === now.toDateString();
+  return today && ended.getHours() >= 5 ? "Lần hẹn giờ vừa rồi" : "Tối qua";
+}
+
 function timeOf(at: number): string {
   return new Date(at * 1000).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
 }
@@ -113,12 +127,12 @@ export function MorningRecap({ className }: { className?: string }) {
   const scrubTo = Math.max(scrubFrom, indexAt(markers[markers.length - 1].seconds));
 
   return (
-    <section className={cn("relative overflow-hidden rounded-2xl border border-line bg-panel p-4 shadow-card sm:p-5", className)} aria-label="Tối qua">
+    <section className={cn("relative overflow-hidden rounded-2xl border border-line bg-panel p-4 shadow-card sm:p-5", className)} aria-label={sessionLabel(session.endedAt)}>
       <button type="button" aria-label="Ẩn thẻ này" onClick={() => void dismiss()} className="absolute right-2 top-2 grid size-9 place-items-center rounded-full text-fg-2 hover:bg-hover">
         <X className="size-4" />
       </button>
       <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-accent-text">
-        <Moon className="size-3.5" /> Tối qua · {session.bookTitle}
+        <Moon className="size-3.5" /> {sessionLabel(session.endedAt)} · {session.bookTitle}
       </div>
       <h2 className="mt-1.5 pr-8 text-lg font-semibold leading-snug">Bạn nghe tới đâu rồi thiếp đi?</h2>
 
@@ -144,7 +158,7 @@ export function MorningRecap({ className }: { className?: string }) {
                   <span className="tabular block text-xs text-fg-2">
                     {marker.hint} · {marker.chapterTitle} {formatClock(marker.seconds)}
                   </span>
-                  {sentence && <span className="mt-1.5 line-clamp-2 block text-sm italic leading-snug text-fg">“{sentence}”</span>}
+                  {sentence && <span className="mt-1.5 line-clamp-2 block text-sm italic leading-snug text-fg">“{unquoted(sentence)}”</span>}
                 </span>
               </button>
             </li>
