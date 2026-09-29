@@ -17,6 +17,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Thư viện nghe xếp các phần của một cuốn cạnh nhau như một bộ ("Tên · 3 phần"), và nghe hết phần này thì mời nghe tiếp
   phần sau - trên máy tính, điện thoại và trình duyệt.
 
+### Điện thoại (Android)
+
+- **Nghe trên màn hình xe bằng Android Auto.** Thư viện trên điện thoại (sách đã tải và sách nghe thẳng từ máy tính)
+  hiện trong Android Auto: cuốn nghe gần nhất đứng đầu, bấm một cuốn là nghe tiếp đúng chỗ đang dở, mở cuốn để chọn
+  chương. App cài từ file APK (không qua CH Play) thì trong Android Auto phải bật chế độ nhà phát triển rồi bật "Nguồn
+  không xác định" thì ABook mới hiện.
+
 ## [0.4.0] - 2026-09-29
 
 ### Điểm chính
