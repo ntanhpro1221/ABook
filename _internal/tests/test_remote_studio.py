@@ -331,3 +331,46 @@ def test_every_allowed_route_exists_on_the_computer() -> None:
             path = path.replace(token, sample)
         assert pattern.fullmatch(path), (method, path)
         assert any(verb == method and local.fullmatch(path) for verb, local, _handler in ROUTES), (method, path)
+
+
+def test_a_remote_studio_continues_a_book_only_with_its_next_chapters(studio, tmp_path: Path) -> None:
+    """"Làm tiếp cuốn này" từ điện thoại: chương kế tiếp là file TRÊN MÁY TÍNH, nhưng do máy tính tự tính từ dự án phần trước
+    (continuation.next_chapters) - thiết bị chỉ chọn trong danh sách ấy, không mở được đường dẫn nào khác."""
+    import sqlite3
+
+    from ebook_reader import continuation
+
+    app, project = studio
+    app.set_remote_studio(True)
+    port = app.sync_server.port
+    cookie = {"Cookie": _pair_browser(app)}
+    story = tmp_path / "truyen"
+    story.mkdir()
+    for name in ("645.txt", "646.txt", "647.txt"):
+        (story / name).write_text(f"Chương {name[:3]}\nLucien đi tiếp.\n", encoding="utf-8")
+    db = sqlite3.connect(project / "project.sqlite3")
+    db.execute("UPDATE chapters SET input_path=? WHERE id=1", (str(story / "645.txt"),))
+    db.execute("UPDATE chapters SET input_path=? WHERE id=2", (str(story / "646.txt"),))
+    db.commit()
+    db.close()
+    identifier = book_id(project)
+
+    status, data, _ = _request(port, "GET", f"/api/books/{identifier}/continuation", headers=cookie)
+    plan = json.loads(data)
+    assert status == 200 and [Path(path).name for path in plan["paths"]] == ["647.txt"]
+    for route in ("/api/scan", "/api/first-person"):
+        status, _data, _ = _request(port, "POST", route, headers=cookie, body={"paths": plan["paths"], "seedFrom": identifier})
+        assert status == 200, route
+        status, _data, _ = _request(port, "POST", route, headers=cookie, body={"paths": plan["paths"]})
+        assert status == 403, "không nói làm tiếp cuốn nào thì vẫn chỉ được thư mục gửi lên"
+        status, _data, _ = _request(port, "POST", route, headers=cookie,
+                                    body={"paths": [str(story / "645.txt")], "seedFrom": identifier})
+        assert status == 403, "chương đã làm không phải chương kế tiếp"
+
+    status, data, _ = _request(port, "POST", "/api/books", headers=cookie, body={
+        "paths": plan["paths"], "title": plan["title"], "profile": "high_quality", "narrator": "", "firstPerson": "",
+        "seedFrom": identifier,
+    })
+    assert status == 201, data
+    created = app.library.resolve(json.loads(data)["id"])
+    assert continuation.chain_of(created)[0] == project.resolve()
