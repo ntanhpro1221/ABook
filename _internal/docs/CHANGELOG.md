@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Studio (sản xuất sách nói)
+
+- Thẻ cách đọc tên trong "Việc cần duyệt" có nút "Mọi cách đọc tên…" mở thẳng mục "Cách đọc tên" ở tab Nhân vật.
+
 ## [0.4.5] - 2026-09-29
 
 ### Nghe sách - máy tính và điện thoại
