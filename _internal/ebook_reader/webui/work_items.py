@@ -22,6 +22,7 @@ from ..listener_overrides import (
 )
 from . import store
 from .address_cues import address_doubts, split_doubts
+from .humanize import shown_reading
 from .reviews import review_items, speaker_label
 
 # Độ chói tai khi máy sai ở khía cạnh ấy (1 = người nghe nhận ra ngay: giọng sai người, sai giới).
@@ -783,7 +784,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
         items.append({
             "kind": "pronunciation",
             "key": f"pronunciation:{row['surface']}",
-            "title": f"Đọc \"{row['surface']}\" là \"{row['spoken_form']}\"?",
+            "title": f"Đọc \"{row['surface']}\" là \"{shown_reading(str(row['spoken_form']))}\"?",
             # Không ghi "máy chắc 88%": gần như mọi tên máy tự đoán đều mang đúng con số ấy nên nó không nói gì (soát UX
             # 29-09: 50/51 thẻ); số câu đã có ở "Ảnh hưởng N câu".
             "problem": "Cách đọc do máy tự đoán - nghe một câu mẫu, sai thì sửa ngay trên thẻ."
