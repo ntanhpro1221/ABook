@@ -981,8 +981,8 @@ export function ScriptTab({ bookId }: { bookId: string }) {
           {!data.castReady && (
             <p className="mt-4 flex items-start gap-2 rounded-xl bg-info-soft p-3 text-sm text-fg">
               <Clock className="mt-0.5 size-4 shrink-0 text-info" />
-              Người nói sửa được sau bước phân vai - lúc ấy mỗi nhân vật mới có giọng để gán. Giờ anh vẫn đọc được kịch bản máy
-              đang hiểu.
+              Người nói sửa được sau bước phân vai - lúc ấy mỗi nhân vật mới có giọng để gán. Trong lúc chờ, vẫn đọc được kịch
+              bản máy đang hiểu.
             </p>
           )}
           {data.cast.length > 0 && (
