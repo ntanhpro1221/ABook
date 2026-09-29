@@ -481,6 +481,7 @@ export function useAddBookmark() {
     }
     toast.success("Đã thêm dấu trang", {
       id: "bookmark",
+      duration: 8000,
       description: `${track.chapterTitle} · ${formatClock(at)}`,
       action: {
         label: "Ghi chú",
@@ -650,7 +651,16 @@ function FollowRecord() {
 // ---- Thanh phát nhỏ ------------------------------------------------------------------------------------
 
 /** `extra`: nút riêng của từng nền, đặt trước nhóm nút phải (máy tính: "Phát trên điện thoại"). */
-export function PlayerBar({ compact = false, extra }: { compact?: boolean; extra?: ReactNode }) {
+export function PlayerBar({
+  compact = false,
+  notices = false,
+  extra,
+}: {
+  compact?: boolean;
+  /** Thanh gọn trên máy tính (cửa sổ hẹp): vẫn cần các báo "đang nghe xa hơn ở máy khác" và hồ sơ - app Android có đường riêng. */
+  notices?: boolean;
+  extra?: ReactNode;
+}) {
   const { track, close, playing, toggle } = usePlayer();
   const { expanded, setExpanded } = useNowPlaying();
   if (!track) return null;
@@ -658,6 +668,13 @@ export function PlayerBar({ compact = false, extra }: { compact?: boolean; extra
     return (
       <section aria-label="Trình phát" className="relative z-20 shrink-0 border-t border-line bg-panel">
         <CompactProgress />
+        {notices && (
+          <>
+            <BookmarkShortcut />
+            <FurtherElsewhere />
+            <FollowRecord />
+          </>
+        )}
         <FadingNotice className="mx-3 mt-2" />
         <div className="flex h-16 items-center gap-3 px-3">
           <button type="button" onClick={() => setExpanded(true)} className="flex min-w-0 flex-1 items-center gap-3 text-left" aria-label="Mở màn hình đang nghe">
@@ -947,6 +964,7 @@ function BookmarkRow({
       onSuccess: () =>
         toast("Đã xoá dấu trang", {
           id: `bookmark-${mark.id}`,
+          duration: 8000,
           action: { label: "Hoàn tác", onClick: () => mutations.restoreBookmark.mutate(mark) },
         }),
     });
@@ -1191,15 +1209,21 @@ export function NowPlaying({ mobile = false, actions }: { mobile?: boolean; acti
     return () => window.removeEventListener(EDIT_BOOKMARK_EVENT, onEdit);
   }, []);
 
-  const onKeyDown = (event: ReactKeyboardEvent) => {
-    if (event.key !== "Escape" || event.defaultPrevented) return;
-    const target = event.target as HTMLElement;
-    if (["INPUT", "TEXTAREA"].includes(target.tagName)) return;
-    // Một lần Esc đóng một lớp: menu hay popover đang mở thì chỉ đóng nó.
-    if (document.querySelector("[data-radix-popper-content-wrapper] [role='dialog'], [role='menu'], [role='listbox']")) return;
-    event.preventDefault();
-    setExpanded(false);
-  };
+  // Esc đóng màn này ở MỌI chỗ đang có tiêu điểm (soát UX 29-09: bấm vào chỗ trống, tiêu điểm về trang, Esc không ăn - mà
+  // Cài đặt ghi "Dùng được ở mọi màn hình"). Một lần Esc đóng một lớp: menu, popover hay hộp thoại đang mở thì chỉ đóng nó.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      const target = event.target as HTMLElement | null;
+      if (target && ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) return;
+      if (document.querySelector("[role='dialog'], [role='menu'], [role='listbox']")) return;
+      event.preventDefault();
+      setExpanded(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, setExpanded]);
 
   const panelTabs = (
     <div role="tablist" aria-label="Bảng" className="flex gap-1">
@@ -1217,7 +1241,7 @@ export function NowPlaying({ mobile = false, actions }: { mobile?: boolean; acti
             }
           }}
           className={cn(
-            "inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-medium transition-colors",
+            "inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-sm font-medium transition-colors",
             panel === item.value && showPanel ? "bg-hover text-fg" : "text-fg-2 hover:text-fg",
           )}
         >
@@ -1235,12 +1259,15 @@ export function NowPlaying({ mobile = false, actions }: { mobile?: boolean; acti
   return (
     <section
       ref={section}
-      onKeyDown={onKeyDown}
       className={cn("now-playing absolute inset-0 z-30 flex bg-bg", mobile && "flex-col")}
       aria-label="Đang nghe"
     >
       <aside
-        className={cn("flex shrink-0 flex-col bg-panel", mobile ? "min-h-0 flex-1 px-6 pb-6 pt-3" : "w-[400px] border-r border-line px-8 pb-8 pt-5")}
+        // Cửa sổ vừa (~900px): cột trái 400px chỉ chừa ~270px cho đọc theo - co về 320px dưới lg (soát UX 29-09).
+        className={cn(
+          "flex shrink-0 flex-col bg-panel",
+          mobile ? "min-h-0 flex-1 px-6 pb-6 pt-3" : "w-[320px] border-r border-line px-6 pb-8 pt-5 lg:w-[400px] lg:px-8",
+        )}
         // Mỗi cuốn một sắc: màu chủ đạo của ảnh bìa thật (máy chủ tính sẵn), không có thì màu của bìa vẽ từ tên.
         // Nhạt dần trước khi tới chữ và nút, nên không đụng tới độ tương phản của chúng.
         style={{

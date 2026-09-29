@@ -218,6 +218,7 @@ export function SettingsScreen() {
               <div className="flex flex-wrap items-center gap-2 text-sm">
                 <Switch
                   id="sleep-schedule"
+                  label="Lịch đêm"
                   checked={Boolean(preferences?.sleepSchedule)}
                   onCheckedChange={(on) => update({ sleepSchedule: on ? { from: "22:00", to: "06:00", minutes: 30 } : null })}
                 />
