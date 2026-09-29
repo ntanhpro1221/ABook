@@ -50,7 +50,9 @@ export function ClipProvider({ children, onStart }: { children: ReactNode; onSta
     startPending.current = 0;
     setCurrent(null);
     setLoading(false);
-    toast("Chưa nghe thử được", { description: "Câu mẫu này chưa có bản thu - sách vẫn phát tiếp." });
+    // Một id: sự kiện `error` và `play()` bị từ chối có thể cùng báo một lần bấm - hai toast giống hệt (soát UX 29-09). Không
+    // hứa "sách vẫn phát tiếp": lúc bấm sách có thể đang dừng.
+    toast("Chưa nghe thử được", { id: "clip-failed", description: "Câu mẫu này chưa có bản thu." });
   }, []);
 
   const toggle = useCallback((id: string, url: string) => {
@@ -68,7 +70,8 @@ export function ClipProvider({ children, onStart }: { children: ReactNode; onSta
     setCurrent(id);
     setLoading(true);
     void element.play().catch((error: unknown) => {
-      if (request.current !== mine || (error as { name?: string } | null)?.name === "AbortError") return;
+      // `startPending` đã về 0: sự kiện `error` của thẻ audio đã báo lần bấm này rồi.
+      if (request.current !== mine || startPending.current !== mine || (error as { name?: string } | null)?.name === "AbortError") return;
       failed();
     });
   }, [current, failed, stop]);

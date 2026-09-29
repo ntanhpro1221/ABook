@@ -304,6 +304,16 @@ function DeliveryMenu({ bookId, line, script, onSave }: { bookId: string; line: 
   const ready = Object.keys(change).length > 0 && (!needsSpeaker || Boolean(speaker));
   return (
     <div className="w-[min(88vw,340px)] space-y-3 p-1.5">
+      {/* Mục tên nằm cuối bảng, dưới nếp cuộn - chỉ lối xuống đó ngay đầu bảng (soát UX 29-09). */}
+      {names.length > 0 && (
+        <button
+          type="button"
+          onClick={(event) => event.currentTarget.closest("[data-delivery-menu]")?.querySelector("[data-names-section]")?.scrollIntoView({ block: "nearest", behavior: "smooth" })}
+          className="text-xs font-medium text-accent-text hover:underline"
+        >
+          Sửa cách đọc {names.length} tên trong câu ↓
+        </button>
+      )}
       <div>
         <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-fg-3">Loại đoạn</div>
         <Segmented label="Loại đoạn" value={kind} onChange={setKind} options={KINDS} />
@@ -382,12 +392,12 @@ function DeliveryMenu({ bookId, line, script, onSave }: { bookId: string; line: 
         </button>
       )}
       <Button size="sm" variant="primary" className="w-full" disabled={!ready} onClick={() => onSave(change)}>
-        {needsSpeaker && !speaker ? "Chọn người nói trước" : "Lưu cách đọc"}
+        {needsSpeaker && !speaker ? "Chọn người nói trước" : "Lưu cho câu này"}
       </Button>
       {/* Tên riêng trong câu đọc sai là sai ở MỌI câu có tên ấy: sửa ngay tại đây, cho cả cuốn (mục "Cách đọc tên" ở tab
           Nhân vật) - tách khỏi nút "Lưu cách đọc" vốn chỉ cho riêng câu này. */}
       {names.length > 0 && (
-        <div className="border-t border-line pt-3">
+        <div className="border-t border-line pt-3" data-names-section>
           <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-fg-3">Tên trong câu · sửa cho cả cuốn</div>
           <div className="space-y-2">
             {names.map((item) => (
@@ -430,7 +440,8 @@ function DeliveryChip({
           onClick={(event) => event.stopPropagation()}
           aria-label={`Cách đọc: ${text}. Bấm để sửa`}
           className={cn(
-            "inline-flex h-6 items-center gap-1 rounded-md px-1.5 text-[11px] font-medium text-fg-3 hover:bg-panel hover:text-fg focus-visible:opacity-100",
+            // Màn cảm ứng: nút chỉ 24 px - nới vùng chạm theo chiều dọc lên ~44 px (soát UX 29-09).
+            "relative inline-flex h-6 items-center gap-1 rounded-md px-1.5 text-[11px] font-medium text-fg-3 hover:bg-panel hover:text-fg focus-visible:opacity-100 pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:-inset-y-2.5 pointer-coarse:after:content-['']",
             quiet && !open && "opacity-0 group-hover:opacity-100",
             waiting && "text-fg-2",
           )}
@@ -445,6 +456,11 @@ function DeliveryChip({
           sideOffset={6}
           collisionPadding={12}
           onCloseAutoFocus={(event) => event.preventDefault()}
+          // Esc trong ô sửa cách đọc tên chỉ đóng ô ấy (EditReading tự lo), không đóng cả bảng (soát UX 29-09).
+          onEscapeKeyDown={(event) => {
+            if ((event.target as HTMLElement | null)?.closest?.("[data-name-editor]")) event.preventDefault();
+          }}
+          data-delivery-menu
           // Bảng cao hơn màn nhỏ (655 px trong khung 486 px: đỉnh ra ngoài màn, không với tới) - cuộn trong phần còn trống.
           className="z-50 max-h-[var(--radix-popover-content-available-height)] overflow-y-auto overscroll-contain rounded-xl border border-line bg-panel p-1.5 shadow-float"
         >
