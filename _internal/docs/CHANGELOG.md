@@ -7,6 +7,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Studio (sản xuất sách nói)
+
+- Mục "Cách đọc tên" và bảng "Tên trong câu" hiện cách đọc với chữ đầu mỗi từ viết hoa ("Rên-ta-rô" thay cho "rên-ta-rô");
+  cách đọc đã lưu và ô sửa giữ nguyên.
+
 ## [0.4.9] - 2026-09-29
 
 ### Nghe sách - máy tính và điện thoại

@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { useClip } from "@/listen/clip";
 import { useCast } from "@/listen/source";
 import { cn } from "@/shared/cn";
-import { formatNumber } from "@/shared/format";
+import { formatNumber, shownReading } from "@/shared/format";
 import { Button } from "@/shared/ui";
 import { api, suggestionOf, urls } from "./api";
 import { ReadingProblem } from "./ReadingProblem";
@@ -154,7 +154,7 @@ function ReadingRow({ bookId, item, fresh = false }: { bookId: string; item: Nam
           {item.spoken && (
             <>
               <span className="text-sm text-fg-2">đọc là</span>
-              <span className="whitespace-nowrap font-medium">“{item.spoken}”</span>
+              <span className="whitespace-nowrap font-medium">“{shownReading(item.spoken)}”</span>
             </>
           )}
         </div>
@@ -206,7 +206,7 @@ export function NameInLine({ bookId, item }: { bookId: string; item: NameReading
       <span className="min-w-0 flex-1 text-sm">
         <span className="font-semibold">{item.surface}</span>
         {item.spoken && <span className="text-fg-2"> đọc là </span>}
-        {item.spoken && <span className="whitespace-nowrap font-medium">“{item.spoken}”</span>}
+        {item.spoken && <span className="whitespace-nowrap font-medium">“{shownReading(item.spoken)}”</span>}
         {item.requested && (
           <span className="text-xs font-medium text-accent-text">
             {" "}

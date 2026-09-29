@@ -33,6 +33,12 @@ export function excerpt(text: string, max = 48): string {
   return `${(space > max / 2 ? cut.slice(0, space) : cut).replace(/[\s,.;:!?…—–-]+$/, "")}…`;
 }
 
+/** Cách đọc một tên để HIỆN: chữ đầu mỗi từ viết hoa - "rên-ta-rô" (phần tên máy tách từ "Nam rên-ta-rô") thành "Rên-ta-rô"
+ *  (soát UX 29-09). Chỉ để hiện: ô sửa và dữ liệu giữ nguyên cách đọc đã lưu. */
+export function shownReading(spoken: string): string {
+  return spoken.replace(/(^|\s)(\p{Ll})/gu, (_match, gap: string, letter: string) => gap + letter.toUpperCase());
+}
+
 /** Thời lượng cho con người: "45 phút", "9 giờ 12 phút", "2 giờ". */
 export function formatLength(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds <= 0) return "0 phút";

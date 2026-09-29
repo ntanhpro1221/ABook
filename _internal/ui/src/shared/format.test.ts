@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { excerpt } from "./format";
+import { excerpt, shownReading } from "./format";
+
+describe("shownReading", () => {
+  it("capitalises each word of a name's reading for display", () => {
+    expect(shownReading("rên-ta-rô")).toBe("Rên-ta-rô");
+    expect(shownReading("Mu-rờ-lốc Cu-ô toa hain")).toBe("Mu-rờ-lốc Cu-ô Toa Hain");
+    expect(shownReading("Gờ-ran a-rờ-ca-nít")).toBe("Gờ-ran A-rờ-ca-nít");
+    expect(shownReading("ơ-lin")).toBe("Ơ-lin");
+  });
+});
 
 describe("excerpt", () => {
   it("keeps a short line whole, without its dialogue quotes", () => {
