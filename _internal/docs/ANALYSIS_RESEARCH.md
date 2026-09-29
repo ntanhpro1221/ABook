@@ -21,6 +21,68 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
 6. **Chỉ so hai model đo trên CÙNG host** (cùng mã phân tích và tách câu). Lượt đo trước một thay đổi host phải đo lại
    trên host mới, không đem ra so - 29-09 chiều: lượt LN cơ sở của v3 chạy trước các thay đổi host tối 28-09, và kết luận
    "v6 thua v3" rút từ đó không đứng (mục dưới).
+7. **Người vô danh xác định được là MỘT người phải ghi `NPC*:<mô tả>` trong đáp án, cả ở chương kiểm tra**; đám đông
+   để `NPC*` trơn. Thiếu mô tả thì F1 giọng không biết hai câu vô danh là một người, và xếp model ngược (mục 29-09 tối).
+
+## 29-09 tối - F1 giọng biết người vô danh là ai; 8B-v5 nhập người lạ vào nhân vật có tên
+
+**Lỗ của thước F1 giọng.** Từ sáng 29-09, câu đáp án `NPC*` chỉ được so với câu của người có tên: hai câu NPC* không tính
+là cùng hay khác người. Làm vậy để model tách đúng ba người lạ không bị phạt. Nhưng nó có hai tác dụng phụ khi người vô danh
+thật ra là MỘT người:
+
+- tách người ấy làm hai giọng không mất điểm nào;
+- một câu của nhân vật có tên lẫn vào giọng người ấy thì MỌI câu của người ấy mất một nửa độ chính xác (câu vô danh không
+  đỡ nhau, nên câu lạc chiếm 1/2 thay vì 1/24).
+
+Nageki 62 xếp ngược vì thế. v3 đọc bà thầy bói bằng hai giọng ("Bà lão" 14 câu, "Bà thầy bói" 8) và được 87,5. v6 giữ bà
+trong một giọng, chỉ lẫn một câu của Krai, và được 77,7.
+
+**Sửa.** Đáp án các chương đo nay ghi người vô danh là ai, như đáp án huấn luyện đã làm từ c525821: `NPC*:bà thầy bói`
+(Nageki 62, 25 câu), `NPC*:ông chú trong làng` (Nise 132, 11), `NPC*:mẹ Kakeru` (LU 07, 11), và ba người của LU 10 (sếp 4,
+mẹ 4, người qua đường 1). Đám đông để trơn: lính Toà án dị giáo ở Nise 086, câu "cả đám đồng nghiệp" ở LU 10.
+`voice_identity.gold_person()` biến câu có mô tả thành một người như người có tên. Chấm người nói chặt không đổi. Test:
+`tests/test_voice_identity_scoring.py`.
+
+| model | Nageki 62 trước → sau | gộp 12 chương trước → sau |
+|---|---|---|
+| v3 | 87,5 → 78,6 | 61,1 → 59,9 |
+| v6 | 77,7 → 82,6 | 60,0 → 59,8 |
+| 8B-v5 | 71,3 → 77,3 | 62,4 → 62,6 |
+
+**8B-v5 nhập người lạ vào nhân vật có tên gấp đôi** (`ln_strangers.py`, 5 chương có người vô danh):
+
+| model | câu vô danh | giọng người lạ | NHẬP vào nhân vật có tên |
+|---|---|---|---|
+| v3 | 65 | 65% | 35% (23) |
+| v6 | 65 | 68% | 32% (21) |
+| 8B-v5 | 65 | 45% | 55% (36) |
+
+- Nageki 62: 8B gán 21/25 câu của bà thầy bói cho LUCIA (em gái Krai). Người nghe nghe một bà lão bằng giọng cô gái trẻ.
+- Yamiyo 225: 8B gán 12/22 câu của Gensei cho Azuma. v3 thì TÁCH Gensei: nhãn chức danh "Thủ lĩnh Âm Dương Liêu" 10 câu.
+- Ngược lại LU 07: 8B giữ mẹ Kakeru riêng 11/11, v3 nhập 6/11.
+- Đây là chỗ v7 nhắm tới (dữ liệu dạy nhãn cục bộ có mô tả cho từng người lạ).
+
+**Chữ hoa của 8B-v5 không tới tay người dùng.** 8B-v5 viết nhãn chữ hoa ("AZUMA") vì học từ data_v5. Lượt gom tên của dây
+chuyền không đổi chữ hoa, nhưng `humanize.person_name` hiện nhãn toàn chữ hoa thành "Azuma". Chỉ nhãn hoa lẫn thường
+("LOUise" của model cũ) lọt qua; nay cũng thành "Louise".
+
+**8B-v5 so với v3, cùng host (LN mở rộng, 6 chương, 493 câu, thước mới):**
+
+| model | F1 giọng | người nói chặt | cảm xúc |
+|---|---|---|---|
+| v3 | 63,6% | 65,5% | 90,7% |
+| v6 | 65,1% | 64,3% | 92,0% |
+| 8B-v5 | 64,3% | 67,7% | 91,6% |
+
+8B − v3: F1 +0,8 [−2,8; +4,0], chặt +2,2 [−2,4; +7,6], thắng 3 thua 3 chương. **Không phân biệt được.**
+
+**8B-v5 so với v6, cùng host (12 chương, 1014 câu):** F1 62,6 so với 59,8: +2,7 [+0,1; +5,2]; chặt 66,7 so với 61,4:
++5,2 [+1,8; +9,8]; thắng 7 thua 5. **8B hơn v6 thật**, và v6 ≈ v3 trên LN mở rộng.
+
+**Kết luận cho câu hỏi đổi model mặc định (chủ sách quyết):** 8B-v5 hơn 4B một khoảng nhỏ nhưng thật (+2,7 F1,
++5,2 chặt so với v6), tốc độ gần ngang 4B. Đổi lại nó nhập người lạ vào nhân vật có tên nhiều hơn (55% so với 32-35%).
+Nên chờ 8B trên dữ liệu sạch (data_v6, Modal 01-10) và v7 (nhãn người lạ có mô tả) trước khi đổi: v5 học dữ liệu có
+nhãn chữ hoa và có chương cổng Tam quốc/Tắt đèn trong tập huấn luyện, nên hai cổng ấy không đo được v5.
 
 ## 29-09 chiều - đối chứng v6b; so với v3 bị nhiễu HOST; một khối câu làm lệch TCF 042
 
