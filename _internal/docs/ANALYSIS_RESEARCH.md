@@ -87,6 +87,12 @@ lời kể trong hai đoạn quanh câu có nhắc "bà lão", "gã", "người 
 đúng 36-38%. Lời kể của LN hiếm gắn lời dẫn vào từng câu thoại; xưng hô (thẻ 0c) là tín hiệu tốt hơn. Công cụ:
 scratchpad `stranger_tag_cue.py`.
 
+**Kết quả âm: lời dẫn nêu tên ("…," Lucia nói.) cũng không.** Câu máy gán cho X mà đoạn lời kể liền trước/sau có "<Y>
+nói/hỏi/đáp…" (Y một nhân vật có tên khác trong chương): trên 12 chương LN, 8B-v5 chỉ 17/768 câu có dấu hiệu, đúng là Y
+3/17; v6 27/781, đúng 7. Bắt được 1-2% số câu sai. Model đã dùng tốt lời dẫn có tên - câu sai là câu KHÔNG có lời dẫn
+(đối đáp liền, người kể "tôi"), chỉ ngữ cảnh lượt lời gỡ được. Công cụ: scratchpad `named_tag_cue.py` (so bằng
+`speaker_credit`, không bằng tên đầu của đáp án - đáp án ghi nhiều cách viết một tên).
+
 **F1 giọng theo chương không thấy lỗi xuyên chương.** LU 10 kể ngôi thứ nhất của Hayase; khai sai người kể là Kakeru
 (người kể cả cuốn): người nói chặt sụp ở cả ba model (v3 64,1 -> 35,9; v6 64,1 -> 35,9; 8B 66,7 -> 38,5), còn F1 giọng
 gần như không đổi (73,0 -> 68,0; 79,1 -> 77,2; 78,9 -> 81,5) - trong chương, lời Hayase vẫn gom đúng một cụm, chỉ mang tên
