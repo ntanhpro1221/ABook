@@ -6,7 +6,7 @@ import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import { formatClock, formatLength, formatWhen } from "@/shared/format";
 import { EmptyState, Progress, Segmented, Skeleton } from "@/shared/ui";
-import { foldVietnamese, resumePoint, seriesOf, type ListenBook } from "./model";
+import { foldVietnamese, resumePoint, seriesIndex, type ListenBook } from "./model";
 import { usePlayer } from "./player";
 import { useListenLibrary, useSource } from "./source";
 
@@ -176,18 +176,20 @@ function ContinueCard({ book }: { book: ListenBook }) {
   );
 }
 
-/** Tập kế tiếp của cùng bộ trong thư viện (nghe xong Tập 16 thì mời Tập 17). */
+/** Tập kế tiếp của cùng bộ trong thư viện (nghe xong Tập 16 thì mời Tập 17; phần đầu của "Làm tiếp cuốn này" mời Phần 2). */
 export function useNextVolume(bookId: string | undefined, title: string | undefined): ListenBook | null {
   const { data: books } = useListenLibrary();
   if (!bookId || !title || !books) return null;
-  const { series, volume } = seriesOf(title);
-  if (volume === null) return null;
+  const places = seriesIndex(books);
+  const here = places.get(bookId);
+  if (!here || here.volume === null) return null;
+  const volume = here.volume;
   return (
     books
       .filter((book) => book.id !== bookId && book.chaptersAvailable > 0)
-      .map((book) => ({ book, ...seriesOf(book.title) }))
-      .filter((item) => item.series === series && item.volume !== null && item.volume > volume)
-      .sort((a, b) => (a.volume ?? 0) - (b.volume ?? 0))[0]?.book ?? null
+      .map((book) => ({ book, place: places.get(book.id)! }))
+      .filter(({ place }) => place.series === here.series && place.volume !== null && place.volume > volume)
+      .sort((a, b) => (a.place.volume ?? 0) - (b.place.volume ?? 0))[0]?.book ?? null
   );
 }
 
@@ -226,11 +228,12 @@ function Shelf({ books }: { books: ListenBook[] }) {
 
 /** Sách cùng bộ đứng cạnh nhau theo số tập; sách lẻ ở cuối. Chỉ gom khi không lọc, không tìm. */
 function SeriesShelves({ books }: { books: ListenBook[] }) {
-  const groups = new Map<string, { book: ListenBook; volume: number | null }[]>();
+  const places = seriesIndex(books);
+  const groups = new Map<string, { book: ListenBook; volume: number | null; unit: string }[]>();
   for (const book of books) {
-    const { series, volume } = seriesOf(book.title);
+    const { series, volume, unit } = places.get(book.id)!;
     const key = volume === null ? `\u0000${book.id}` : series;
-    groups.set(key, [...(groups.get(key) ?? []), { book, volume }]);
+    groups.set(key, [...(groups.get(key) ?? []), { book, volume, unit }]);
   }
   const series = [...groups.entries()].filter(([key, items]) => !key.startsWith("\u0000") && items.length > 1);
   const singles = books.filter((book) => !series.some(([, items]) => items.some((item) => item.book.id === book.id)));
@@ -239,7 +242,7 @@ function SeriesShelves({ books }: { books: ListenBook[] }) {
       {series.map(([name, items]) => (
         <section key={name} aria-label={name}>
           <h2 className="mb-3 flex items-baseline gap-2 text-base font-semibold">
-            {name} <span className="text-sm font-normal text-fg-2">· {items.length} tập</span>
+            {name} <span className="text-sm font-normal text-fg-2">· {items.length} {items[0].unit}</span>
           </h2>
           <Shelf books={items.sort((a, b) => (a.volume ?? 0) - (b.volume ?? 0)).map((item) => item.book)} />
         </section>
