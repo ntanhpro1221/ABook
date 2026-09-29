@@ -138,6 +138,13 @@ def test_the_studio_writes_the_request_and_refuses_a_reading_the_voice_cannot_sa
         status, data, _ = _request(server.port, "POST", path, headers=headers,
                                    body={"surface": "Hailkes", "spokenForm": "Hlkx"})
         assert status == 400 and "âm tiết tiếng Việt" in json.loads(data)["error"]
+        assert "suggestion" not in json.loads(data), "không có bản viết lại qua được phép kiểm thì không mời"
+        # Gõ theo tai sai chính tả: lời báo chỉ đúng âm tiết sai và mời dùng bản sửa - chưa ghi gì tới khi người nghe chọn.
+        status, data, _ = _request(server.port, "POST", path, headers=headers,
+                                   body={"surface": "Hailkes", "spokenForm": "Hên-kơ"})
+        answer = json.loads(data)
+        assert status == 400 and answer["suggestion"] == "Hên-cơ" and "“kơ”" in answer["error"]
+        assert pronunciation_requests(read_overrides(project)) == [{"surface": "Hailkes", "spoken_form": "Hên-khơ"}]
         status, data, _ = _request(server.port, "POST", path, headers=headers,
                                    body={"surface": "Lucien Evans", "spokenForm": "Lu-si-en"})
         assert status == 400 and "MỘT từ" in json.loads(data)["error"]

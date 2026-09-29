@@ -6,8 +6,9 @@ import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
 import { Button, EmptyState, Segmented } from "@/shared/ui";
-import { api, urls, type BookSummary } from "./api";
-import { refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied } from "./decisions";
+import { api, suggestionOf, urls, type BookSummary } from "./api";
+import { ReadingProblem } from "./ReadingProblem";
+import { applyWhen, PENDING_NOTE, refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied } from "./decisions";
 
 // "Việc cần duyệt" (docs/STUDIO_REVIEW.md, webui/work_items.py): chỗ máy nghi ngờ, xếp theo lợi trên mỗi lần bấm. Máy đã tự
 // quyết và dây chuyền KHÔNG chờ ai - đây là nơi người sửa ít nhất mà được nhiều nhất. Cách đọc tên sửa được ngay trên thẻ
@@ -176,6 +177,7 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
   const [value, setValue] = useState(item.requested ?? item.current);
   // Lỗi nằm ngay dưới ô nhập, không chỉ trong toast 4 giây (soát UX 29-09: "Hên-kơ" bị từ chối mà không biết sửa chỗ nào).
   const [problem, setProblem] = useState("");
+  const [suggestion, setSuggestion] = useState("");
   const save = useMutation({
     mutationFn: (spokenForm: string) =>
       api<{ surface: string; spokenForm: string; requestedAt: number }>(`/api/books/${bookId}/pronunciation`, {
@@ -207,10 +209,19 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
       });
     },
     // Lỗi chỉ nằm dưới ô nhập - thêm toast là báo một lỗi hai lần (soát UX 29-09).
-    onError: (error: Error) => setProblem(error.message),
+    onError: (error: Error) => {
+      setProblem(error.message);
+      setSuggestion(suggestionOf(error));
+    },
   });
   const typed = value.trim();
   const inputId = `spoken-${item.key}`;
+  const use = (spoken: string) => {
+    setValue(spoken);
+    setProblem("");
+    setSuggestion("");
+    save.mutate(spoken);
+  };
   return (
     <div className="mt-3">
       {item.requested && (
@@ -240,6 +251,7 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
           onChange={(event) => {
             setValue(event.target.value);
             setProblem("");
+            setSuggestion("");
           }}
           spellCheck={false}
           autoComplete="off"
@@ -266,11 +278,7 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
           </Button>
         )}
       </form>
-      {problem && (
-        <p id={`${inputId}-problem`} role="alert" className="mt-1.5 text-xs text-danger">
-          {problem}
-        </p>
-      )}
+      <ReadingProblem id={`${inputId}-problem`} problem={problem} suggestion={suggestion} onUse={use} />
     </div>
   );
 }
@@ -577,12 +585,8 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames }: { bookI
 }
 
 export function WorkInbox(props: { book: BookSummary; onOpenReview: () => void; onOpenScript?: OpenScript; onOpenNames?: (name: string) => void }) {
-  // Như useWhenApplied: sách đang chạy áp ở ranh giới chương kế tiếp, không "chờ chạy tiếp".
-  const hint = props.book.running || props.book.starting
-    ? "máy áp ở ranh giới chương kế tiếp"
-    : props.book.phase === "done"
-      ? "bấm “Áp dụng thay đổi” ở đầu trang để áp"
-      : "chờ áp dụng khi sách chạy tiếp";
+  // Sách đang chạy áp ở ranh giới chương kế tiếp, không "chờ chạy tiếp" (studio/decisions.ts).
+  const hint = PENDING_NOTE[applyWhen(props.book)];
   return (
     <PendingHint.Provider value={hint}>
       <WorkInboxBody {...props} />

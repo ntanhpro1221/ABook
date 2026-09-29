@@ -26,7 +26,7 @@ from . import actions, bookfile, cover_search, covers, humanize, listen_view, pa
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, legacy_ids
 from .listening import RECORD_ID, Listening
-from . import bluetooth, remote_books
+from . import bluetooth, remote_books, spelling
 from .remote_studio import REMOTE_HEADER, StudioGate
 from .reviews import Reviews, review_view
 from .casting_review import casting_chapter, casting_chapters
@@ -111,10 +111,13 @@ SPEAKER_PROBLEMS = {
 
 
 class ApiError(Exception):
-    def __init__(self, status: int, message: str) -> None:
+    """`extra`: trường gửi kèm lời báo lỗi để giao diện làm được gì đó với nó (`suggestion` của một cách đọc bị từ chối)."""
+
+    def __init__(self, status: int, message: str, **extra: Any) -> None:
         super().__init__(message)
         self.status = status
         self.message = message
+        self.extra = extra
 
 
 def _held_record(body: dict[str, Any]) -> str | None:
@@ -922,7 +925,7 @@ class Handler(BaseHTTPRequestHandler):
                     return
             raise ApiError(HTTPStatus.NOT_FOUND, "Không có đường dẫn này")
         except ApiError as error:
-            self._send_json(error.status, {"error": error.message})
+            self._send_json(error.status, {"error": error.message, **error.extra})
         except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
             return
         except FileNotFoundError as error:
@@ -1087,6 +1090,13 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu tên hoặc cách đọc")
         problem = listener_overrides.pronunciation_problem(surface, spoken)
         if problem is not None:
+            # Gõ theo tai mà sai chính tả ("Hên-kơ"): nói đúng âm tiết sai và mời dùng bản sửa - bản sửa qua đúng phép kiểm
+            # vừa từ chối thì mới mời (soát UX 29-09: câu báo chung không chỉ chỗ sửa).
+            fixed = spelling.respelled(spoken)
+            if problem == listener_overrides.NOT_VIETNAMESE and fixed != spoken and \
+                    listener_overrides.pronunciation_problem(surface, fixed) is None:
+                raise ApiError(HTTPStatus.BAD_REQUEST, f"{spelling.respelling_note(spoken, fixed)} Viết: “{fixed}”.",
+                               suggestion=fixed)
             raise ApiError(HTTPStatus.BAD_REQUEST, PRONUNCIATION_PROBLEMS.get(problem, "Cách đọc này không dùng được"))
         now = time.time()
         listener_overrides.request_pronunciation(path, surface, spoken, now=now)

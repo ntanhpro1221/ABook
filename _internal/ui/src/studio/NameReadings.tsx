@@ -7,7 +7,8 @@ import { useCast } from "@/listen/source";
 import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
 import { Button } from "@/shared/ui";
-import { api, urls } from "./api";
+import { api, suggestionOf, urls } from "./api";
+import { ReadingProblem } from "./ReadingProblem";
 import { refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied } from "./decisions";
 
 // Tab Nhân vật, mục "Cách đọc tên" (webui/name_readings.py): mọi tên riêng máy đọc thế nào - kể cả tên máy chắc và cách
@@ -232,6 +233,7 @@ function EditReading({ bookId, item, onDone, fresh }: { bookId: string; item: Na
   const when = useWhenApplied(bookId);
   const [value, setValue] = useState(item.requested ?? item.spoken);
   const [problem, setProblem] = useState("");
+  const [suggestion, setSuggestion] = useState("");
   const save = useMutation({
     mutationFn: (spokenForm: string) =>
       api<{ surface: string; spokenForm: string; requestedAt: number }>(`/api/books/${bookId}/pronunciation`, {
@@ -269,10 +271,19 @@ function EditReading({ bookId, item, onDone, fresh }: { bookId: string; item: Na
         ...undo,
       });
     },
-    onError: (error: Error) => setProblem(error.message),
+    onError: (error: Error) => {
+      setProblem(error.message);
+      setSuggestion(suggestionOf(error));
+    },
   });
   const typed = value.trim();
   const inputId = `reading-${fold(item.surface)}`;
+  const use = (spoken: string) => {
+    setValue(spoken);
+    setProblem("");
+    setSuggestion("");
+    save.mutate(spoken);
+  };
   // Lỗi nằm DƯỚI cụm ô nhập, cùng bề rộng với cụm - trước đây dòng lỗi rộng hết dòng kéo cả cụm từ mép phải vào giữa.
   return (
     <div className="flex w-full flex-col gap-1 sm:w-auto sm:max-w-sm">
@@ -290,6 +301,7 @@ function EditReading({ bookId, item, onDone, fresh }: { bookId: string; item: Na
         onChange={(event) => {
           setValue(event.target.value);
           setProblem("");
+          setSuggestion("");
         }}
         onKeyDown={(event) => {
           if (event.key === "Escape") onDone();
@@ -313,11 +325,7 @@ function EditReading({ bookId, item, onDone, fresh }: { bookId: string; item: Na
         Lưu
       </Button>
     </form>
-      {problem && (
-        <p id={`${inputId}-problem`} role="alert" className="text-xs text-danger">
-          {problem}
-        </p>
-      )}
+      <ReadingProblem id={`${inputId}-problem`} problem={problem} suggestion={suggestion} onUse={use} className="" />
     </div>
   );
 }
