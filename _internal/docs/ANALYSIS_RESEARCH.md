@@ -19,6 +19,23 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
 5. **Thước quyết định là thứ chủ sách đọc: LN Nhật + truyện mạng Hàn** (chủ sách 28-09: *"tôi hay đọc light novel nhật,
    hàn cơ mà"*). Truyện Trung, Việt, cổ chỉ là kiểm tra phụ "không được phá".
 
+## v6 29-09 07:2x - KẾT QUẢ ÂM: dữ liệu "nhắm lỗi" làm tệ đúng loại câu nó nhắm
+
+v6 = công thức v3 trên data_v6 (2057 mẫu = thành phần v3 + 4 chương thêm để nhắm lỗi 『』 và đối đáp ngôi thứ nhất: LU 03,
+Nageki 53, TCF 107, Yamiyo 009; tên theo sách, không chương cổng). LN gốc 6 chương: F1 giọng 55,8 vs v3 57,4 (-1,7, KTC95
+-3,9..+0,4), người nói chặt 58,7 vs 63,7, hơn 2 thua 4. Theo loại (scratchpad ln_categories.py): 『』 43,6 -> 23,1; đối đáp
+liền 68,5 -> 57,7; các loại khác gần như cũ.
+
+Soi (bracket_flip.py): TCF 107 có 18 câu 『』 là "KÝ SINH TRÙNG" nói (thần giao); TCF 042 (chương thi) có 35 câu 『』 là LỜI
+KỂ (đáp án NARRATOR, chấp nhận vai phụ). v3 gán chúng cho vai phụ cục bộ (được tính), v6 gán 15 câu cho KUCHINASHI - học
+"『』 = một thực thể đang nói" từ 107. **Nghĩa của 『』 đổi theo chương ngay trong một truyện**: thêm vài chương cùng kiểu
+dạy model một liên tưởng của truyện chứ không dạy cách đọc ngữ cảnh. Linh thể TỌA PHU ĐỒNG TỬ (Yamiyo 141, tên CÓ trong
+chương) vẫn không model nào nhận ra, kể cả sau khi học Yamiyo 009.
+
+Bài học: dữ liệu nhắm một loại lỗi phải có nhiều truyện, nhiều nghĩa của cùng một dấu hiệu - không phải vài chương của một
+truyện. Đối chứng v6b (data_v6 bỏ 4 chương, 1717 mẫu ~ data_v3 1727) đã xếp hàng trước v7; luật đặt trước: v6b hơn v6 >= 1,0
+F1 trên 12 chương LN thì v7/v8/q35 học bản bỏ 4 chương (hàng tự quyết, scratchpad choose_composition.py).
+
 ## ĐỘ TIN CỦA THƯỚC LN 29-09 05:xx - sổ "nhân vật đã biết" trống trong bộ đo, đầy trong sách thật
 
 Bộ đo `--book` (LN, các cổng) tạo project trống cho MỖI chương: prompt mở đầu "(Chưa có nhân vật đã biết)". Sách thật tới
