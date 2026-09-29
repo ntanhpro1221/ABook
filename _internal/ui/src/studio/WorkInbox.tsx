@@ -391,10 +391,10 @@ function SpeakerFix({
 function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
   const client = useQueryClient();
   const save = useMutation({
-    mutationFn: async ({ requests }: { requests: Omit<VoiceChoice, "label" | "note" | "done" | "recommended">[]; label: string; keep: boolean }) => {
+    mutationFn: async ({ requests }: { requests: Omit<VoiceChoice, "label" | "note" | "done" | "recommended">[]; label: string; keep: boolean; note?: string }) => {
       for (const request of requests) await api(`/api/books/${bookId}/voice`, { method: "POST", body: request });
     },
-    onSuccess: (_result, { label, keep }) => {
+    onSuccess: (_result, { label, keep, note }) => {
       void client.invalidateQueries({ queryKey: ["work", bookId] });
       void client.invalidateQueries({ queryKey: ["book", bookId] });
       void client.invalidateQueries({ queryKey: ["library"] });
@@ -404,8 +404,12 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
         toast.success(`Đã ghi: ${label}`, { description: "Việc này sẽ không hiện lại." });
         return;
       }
+      // Lựa chọn nói trước cái giá ("giữ giọng đang đọc" / "đổi giọng, thu lại N câu") - thông báo nói đúng cái giá ấy, không
+      // rào "nếu giọng phải đổi" khi giọng giữ nguyên (soát UX 29-09).
       toast.success(`Đã ghi: ${label}`, {
-        description: "Nếu giọng phải đổi, mọi câu của người ấy sẽ đọc lại bằng giọng mới. Thu lại khi sách chạy tiếp - sách đã xong thì bấm “Áp dụng thay đổi” ở trang dự án.",
+        description: note?.startsWith("giữ giọng")
+          ? "Giọng đang đọc giữ nguyên - không phải thu lại câu nào."
+          : "Mọi câu của người ấy sẽ đọc lại bằng giọng mới. Thu lại khi sách chạy tiếp - sách đã xong thì bấm “Áp dụng thay đổi” ở trang dự án.",
       });
     },
     onError: (error: Error) => toast.error("Chưa ghi được", { description: error.message }),
@@ -430,6 +434,7 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
                   requests: [{ character: choice.character, gender: choice.gender, preset: choice.preset, avoid: choice.avoid }],
                   label: choice.done ?? choice.label,
                   keep: false,
+                  note: choice.note,
                 })
               }
             >
