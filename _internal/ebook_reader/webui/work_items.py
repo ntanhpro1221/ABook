@@ -427,7 +427,8 @@ def work_items(project_root: Path) -> dict[str, Any]:
             "affected": len(rows),
             "doubt": 0.5,
             "options": ["Nam", "Nữ", "Để máy quyết"],
-            "current": "Chưa rõ",
+            # Cùng điều câu trên nói: giọng ĐANG ĐỌC (không phải "Chưa rõ" cạnh "máy đang đọc bằng giọng nam").
+            "current": {"male": "Giọng nam", "female": "Giọng nữ"}.get(heard, "Chưa rõ"),
             "examples": [_example(row, names) for row in rows[:EXAMPLES]],
             "voiceChoices": choices,
             "keepCharacters": [key],
