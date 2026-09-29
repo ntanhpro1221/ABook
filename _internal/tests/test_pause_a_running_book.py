@@ -126,3 +126,15 @@ def test_the_settings_screen_can_turn_it_off(studio) -> None:
     assert data["pauseOnBattery"] is False, "giá trị hỏng không được ghi"
     status, data = _call(server, "PUT", "/api/preferences", {"pauseOnBattery": True})
     assert data["pauseOnBattery"] is True
+
+
+def test_the_supervisor_reads_the_same_preferences_file_as_the_app(tmp_path, monkeypatch) -> None:
+    """power_source chép cách tìm preferences.json của webui.library (supervisor không nhập webui) - hai bên phải trùng."""
+    from ebook_reader import power_source
+    from ebook_reader.webui import library
+
+    monkeypatch.delenv("EBOOK_READER_PREFERENCES", raising=False)
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
+    assert power_source._preferences_path() == library.preferences_path()
+    monkeypatch.setenv("EBOOK_READER_PREFERENCES", str(tmp_path / "rieng.json"))
+    assert power_source._preferences_path() == library.preferences_path()
