@@ -29,7 +29,7 @@ export interface BookSummary {
   /** Sách đã xong: số yêu cầu sửa của người nghe ghi sau lần chạy cuối - chờ nút "Áp dụng" (store.pending_changes). */
   pendingChanges?: number;
   settings: { profile: string; profileLabel: string; narrator: string };
-  chapters: { total: number; completed: number; failed: number; working: number };
+  chapters: { total: number; completed: number; missingAudio?: number; failed: number; working: number };
   segments: { total: number; analyzed: number; recorded: number; finished: number; failed: number };
   progress: { overall: number; analysis: number; synthesis: number };
   audioSeconds: number;
