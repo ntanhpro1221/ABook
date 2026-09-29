@@ -26,8 +26,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   và trên từng câu ở tab Kịch bản cũng nói theo tình trạng sách như thông báo.
 - Cách đọc tên bị từ chối vì sai chính tả tiếng Việt ("Hên-kơ") nói đúng âm tiết sai ("Tiếng Việt viết “cơ”, không viết
   “kơ”") và có nút "Dùng “Hên-cơ”" ngay dưới ô nhập - trước đây chỉ có một câu báo chung.
-- Tab Kịch bản trên điện thoại: bảng cách đọc câu mở thành tấm trượt từ đáy màn, rộng hết màn, thay cho bảng nổi bị ép sát
-  mép.
+- Tab Kịch bản trên điện thoại: bảng cách đọc câu và ô chọn người nói mở thành tấm trượt từ đáy màn, rộng hết màn, thay
+  cho bảng nổi bị ép sát mép; ô chọn người nói không tự bật bàn phím che danh sách.
 - Tên nhân vật máy gõ nửa hoa nửa thường ("LOUise") hiện đúng dạng tên ("Louise"); tên viết kiểu "McDonald" giữ nguyên.
 
 ## [0.4.7] - 2026-09-29
