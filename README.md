@@ -23,7 +23,8 @@ Làm sách chạy hoàn toàn trên máy của bạn: văn bản truyện và â
   không có mạng); chỗ đang nghe và dấu trang đi hai chiều; thấy và điều khiển máy khác đang phát, **"Nghe ở đây"** chuyển
   sang máy mình đúng chương, đúng giây. Nối qua Wi-Fi, hoặc Bluetooth khi không chung Wi-Fi - điện thoại tự chọn đường.
   Máy tính nghe được thư viện của máy tính khác; điện thoại nghe được thư viện của điện thoại khác.
-- **Nghe trong trình duyệt** của iPhone, iPad, TV hay máy bất kỳ: mở `http://<tên hoặc địa chỉ máy tính>:47630`.
+- **Nghe trong trình duyệt** của iPhone, iPad, TV hay máy bất kỳ: mở `http://<tên hoặc địa chỉ máy tính>:47630`. Ở ngoài
+  nhà thì dùng địa chỉ Tailscale của máy tính (Cài đặt ghi rõ địa chỉ nào dùng trong nhà, địa chỉ nào dùng khi ở ngoài).
 
 Thay đổi của từng bản phát hành: [`_internal/docs/CHANGELOG.md`](_internal/docs/CHANGELOG.md).
 
@@ -34,7 +35,7 @@ Thay đổi của từng bản phát hành: [`_internal/docs/CHANGELOG.md`](_int
 | nghe trên máy tính | Windows 10 hoặc 11, 64-bit |
 | làm sách (Studio) | thêm card đồ hoạ **NVIDIA** (đã thử trên RTX 5060 8 GB), ổ đĩa trống từ 30 GB, mạng để tải Studio lần đầu |
 | nghe trên điện thoại | Android 7.0 trở lên |
-| nghe trong trình duyệt | trình duyệt bất kỳ, cùng mạng với máy tính |
+| nghe trong trình duyệt | trình duyệt bất kỳ, cùng mạng với máy tính - hoặc cùng mạng Tailscale khi ở ngoài nhà |
 
 Không có card NVIDIA vẫn cài và nghe được bình thường; chỉ phần làm sách cần nó.
 
