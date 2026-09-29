@@ -24,6 +24,15 @@ export function formatClock(seconds: number): string {
   return `${hours ? `${hours}:` : ""}${mm}:${String(secs).padStart(2, "0")}`;
 }
 
+/** Đầu một câu để nhắc lại trong toast: bỏ ngoặc thoại hai đầu, cắt ở ranh giới từ - "Cậu ấy nói rằng hôm nay…". */
+export function excerpt(text: string, max = 48): string {
+  const clean = text.replace(/\s+/g, " ").trim().replace(/^["“”'‘’«»『』「」—–\-\s]+|["“”'‘’«»『』「」\s]+$/g, "");
+  if (clean.length <= max) return clean;
+  const cut = clean.slice(0, max);
+  const space = cut.lastIndexOf(" ");
+  return `${(space > max / 2 ? cut.slice(0, space) : cut).replace(/[\s,.;:!?…—–-]+$/, "")}…`;
+}
+
 /** Thời lượng cho con người: "45 phút", "9 giờ 12 phút", "2 giờ". */
 export function formatLength(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds <= 0) return "0 phút";
