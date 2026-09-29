@@ -639,7 +639,11 @@ class TTSCoordinator:
 
     def generation_seed(self, row: Any, seed_salt: str = "") -> int:
         profile = self._voice_profile_for_row(row)
-        return stable_int(f"segment::{row['stable_id']}::{profile['voice_key']}::{seed_salt}")
+        # Người nghe yêu cầu thu lại câu (segments.listener_retakes): hạt giống mới cho mọi lượt thu của câu, không thì bản
+        # thu lại y hệt bản bị chê. 0 (mọi câu chưa ai yêu cầu) giữ ĐÚNG chuỗi hạt giống cũ - sách cũ thu như trước.
+        retakes = int(_row_value(row, "listener_retakes", 0) or 0)
+        suffix = f"::retake{retakes}" if retakes > 0 else ""
+        return stable_int(f"segment::{row['stable_id']}::{profile['voice_key']}::{seed_salt}{suffix}")
 
     def _voice_profile_for_row(self, row: Any) -> Any:
         if str(_row_value(row, "kind", "narration")) == "thought":

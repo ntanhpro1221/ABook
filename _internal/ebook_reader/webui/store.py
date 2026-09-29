@@ -194,6 +194,16 @@ def source_digests(project_root: Path) -> set[str]:
         return {str(row[0]) for row in connection.execute("SELECT input_sha256 FROM chapters") if row[0]}
 
 
+def segment_text_sha256(project_root: Path, stable_id: str) -> str | None:
+    """Băm chữ của một câu theo mã ổn định (yêu cầu gửi dây chuyền mang băm này - câu đã đổi chữ thì không áp nhầm)."""
+    try:
+        with closing(connect(project_root)) as connection:
+            row = connection.execute("SELECT text_sha256 FROM segments WHERE stable_id=?", (stable_id,)).fetchone()
+    except sqlite3.Error:
+        return None
+    return str(row[0]) if row is not None and row[0] else None
+
+
 def display_title(project_root: Path, fallback: str) -> str:
     """Tên sách người dùng đặt lại (TITLE_FILE), hay `fallback` - tên lúc tạo trong sổ."""
     try:
@@ -235,7 +245,7 @@ def changes_since(project_root: Path, book_updated_at: float) -> float:
 
 
 def pending_changes(project_root: Path, since: float) -> int:
-    """Số yêu cầu của người nghe (overrides.json: cách đọc tên, người nói, cách đọc câu, giọng) ghi SAU lần dây chuyền ghi sổ
+    """Số yêu cầu của người nghe (overrides.json: cách đọc tên, người nói, cách đọc câu, giọng, thu lại câu) ghi SAU lần dây chuyền ghi sổ
     cuối `since`. Sách đã xong không tự chạy lại, nên các yêu cầu ấy chờ mãi nếu không có nút "Áp dụng" (soát UX 29-09:
     mọi thẻ báo "chờ lần chạy tới" mà trang dự án "Hoàn tất" không có nút chạy nào). Chạy lại một cuốn xong áp chúng trước
     bước phục hồi (Pipeline._recover) rồi chỉ thu lại câu bị ảnh hưởng."""
@@ -243,7 +253,7 @@ def pending_changes(project_root: Path, since: float) -> int:
 
     data = read_overrides(project_root)
     count = 0
-    for section in ("pronunciations", "speakers", "lines", "voices"):
+    for section in ("pronunciations", "speakers", "lines", "voices", "retakes"):
         entries = data.get(section)
         for entry in (entries.values() if isinstance(entries, dict) else ()):
             try:
