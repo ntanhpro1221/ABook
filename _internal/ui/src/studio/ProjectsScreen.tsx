@@ -194,7 +194,7 @@ export function ProjectsScreen() {
                 entry.kind === "book" ? (
                   <ProjectRow key={entry.book.id} book={entry.book} />
                 ) : (
-                  <section key={`series:${entry.name}`} aria-label={entry.name} className="rounded-xl border border-line/70 p-1">
+                  <section key={`series:${entry.name}`} aria-label={entry.name} className="-mx-[5px] rounded-xl border border-line/70 p-1">
                     <h3 className="px-3 pb-1 pt-1.5 text-xs font-semibold text-fg-2">
                       {entry.name} <span className="font-normal text-fg-3">· {entry.books.length} {entry.unit}</span>
                     </h3>
