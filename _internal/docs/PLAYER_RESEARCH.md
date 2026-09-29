@@ -90,9 +90,9 @@ mỗi app là một trạm hai vai (phục vụ thư viện của mình cho máy
 |---|---|---|
 | 0 | Điều khiển điện thoại đang phát từ máy tính, chuyển chỗ nghe giữa hai máy (#12) | xong 27-09 |
 | 1 | Điện thoại nghe thẳng thư viện máy tính, đầy đủ như sách đã tải (Streaming.kt) | xong 27-09 |
-| 2 | Điện thoại có vai phục vụ (máy chủ nhỏ trong app, trả lời tìm máy) -> máy tính nghe thư viện điện thoại, điện thoại <-> điện thoại | chưa |
-| 3 | Máy tính có vai kết nối (mục "Trên thiết bị khác") -> máy tính <-> máy tính | chưa |
-| 4 | Điều khiển từ xa hai chiều trên cùng giao thức (điện thoại điều khiển trình phát máy tính) | chưa |
+| 2 | Điện thoại có vai phục vụ (máy chủ nhỏ trong app, trả lời tìm máy) -> máy tính nghe thư viện điện thoại, điện thoại <-> điện thoại | xong 28-09 (LibraryServer.kt, Peers.kt; qua Bluetooth: BluetoothLink.kt) |
+| 3 | Máy tính có vai kết nối (mục "Trên thiết bị khác") -> máy tính <-> máy tính | xong 28-09 (webui/remote_books.py, Cài đặt → Máy tính khác) |
+| 4 | Điều khiển từ xa hai chiều trên cùng giao thức (điện thoại điều khiển trình phát máy tính) | xong 28-09 (webui/peer_players.py, RemotePlayers.kt) |
 
 USB: bật chia sẻ kết nối qua USB trên Android là có đường mạng, cùng giao thức. Ngoài nhà: địa chỉ nhập tay qua Tailscale /
 ZeroTier / NetBird (không trói vào dịch vụ nào); không đẩy audio lên cloud (một tập ~40 chương ~750 MB).
