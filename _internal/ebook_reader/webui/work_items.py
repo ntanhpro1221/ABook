@@ -563,6 +563,8 @@ def work_items(project_root: Path) -> dict[str, Any]:
                 "options": [f"Gộp vào {into}", "Hai người khác nhau"],
                 "current": "Hai người khác nhau",
                 "keepLabel": "Hai người khác nhau",
+                # Tên được hỏi (bí danh) để hiển thị - `current` là nhãn lựa chọn "Hai người khác nhau", không phải tên.
+                "subject": speaker_label(minor),
                 "examples": [_example(row, names) for row in (named[minor][:2] + named[major][:1])],
                 **fix,
             })
@@ -613,6 +615,8 @@ def work_items(project_root: Path) -> dict[str, Any]:
                 "options": [f"Gộp vào {into}", "Hai người khác nhau"],
                 "current": "Hai người khác nhau",
                 "keepLabel": "Hai người khác nhau",
+                # Tên được hỏi (bí danh) để hiển thị - `current` là nhãn lựa chọn "Hai người khác nhau", không phải tên.
+                "subject": speaker_label(minor),
                 "examples": [_example(row, names) for row in (named[minor][:2] + named[major][:1])],
                 **fix,
             })

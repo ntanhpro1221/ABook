@@ -408,6 +408,8 @@ def test_one_person_under_two_names_merges_the_fewer_lines_into_the_voice_heard_
     assert [line["stableId"] for line in lucien["lines"]] == ["a4"] and lucien["affected"] == 1
     assert lucien["choices"] == [{"label": "Gộp vào Lucien", "value": "LUCIEN", "name": "Lucien"}]
     assert lucien["currentValue"] == "LUCIEN EVANS" and lucien["keepLabel"] == "Hai người khác nhau"
+    # Tên được hỏi để hiển thị ("“Lucien Evans” là Lucien") - `current` là nhãn lựa chọn, không phải tên.
+    assert lucien["subject"] == "Lucien Evans"
     heidi = cards["alias:HEIDI SCHMIDT|HEIDI"]
     assert [line["stableId"] for line in heidi["lines"]] == ["b3"]
     assert heidi["choices"][0]["value"] == "HEIDI SCHMIDT" and heidi["choices"][0]["name"] == "Heidi Schmidt"
