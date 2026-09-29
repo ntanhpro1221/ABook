@@ -190,9 +190,15 @@ function useAssign(bookId: string, chapterId: number) {
       const keep = value === line.current;
       // Như hộp việc: gán nhầm người thì "Hoàn tác" trả câu về đúng như trước lần bấm này (studio/decisions.ts).
       const undo = {
-        action: undoAction(client, bookId, "speaker", [
-          { lines: [{ stableId: line.stableId, textSha256: line.textSha256 }], requestedAt, keep },
-        ]),
+        action: undoAction(
+          client,
+          bookId,
+          "speaker",
+          [{ lines: [{ stableId: line.stableId, textSha256: line.textSha256 }], requestedAt, keep }],
+          line.wish?.state === "pending"
+            ? `Trở lại quyết định trước: câu này của ${line.wish.label}.`
+            : `Câu này lại là của ${line.label}.`,
+        ),
         duration: UNDO_MS,
       };
       if (keep) {

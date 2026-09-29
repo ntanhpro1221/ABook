@@ -7,6 +7,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Studio (sản xuất sách nói)
+
+- Thẻ đã quyết trong "Việc cần duyệt" nói kết quả thay vì lặp câu hỏi: "Giữ: “Arcanist” đọc là “A-rờ-ca-nít”", "Noah là
+  nữ", "Câu này của Natasha", "“St. Kati” là Kati". Thẻ gộp tên từng ghi nhầm "“Hai người khác nhau” là Kati".
+- "Đã hoàn tác" nói cụ thể điều gì trở lại ("“Lucien” lại đọc là “Lu-si-en”", "Câu này lại là của Ali", hay "Trở lại
+  quyết định trước: …").
+
 ## [0.4.7] - 2026-09-29
 
 ### Nghe sách - máy tính và điện thoại

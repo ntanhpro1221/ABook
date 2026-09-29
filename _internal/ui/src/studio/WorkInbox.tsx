@@ -55,6 +55,8 @@ interface WorkItem {
   currentValue?: string;
   /** Nhãn nút giữ nguyên khi "Giữ <người đang nói>" không đúng nghĩa (bí danh: "Hai người khác nhau"). */
   keepLabel?: string;
+  /** Thẻ bí danh: tên được hỏi, để hiển thị ("“Thiên Biến Vạn Hóa” là Krai") - `current` là nhãn lựa chọn, không phải tên. */
+  subject?: string;
   /** Việc giọng/giới của nhân vật ("Nam hay nữ", "Chung giọng"): mỗi lựa chọn là một yêu cầu POST /voice; giữ nguyên thì
    *  ghi yêu cầu rỗng cho từng người trong `keepCharacters` (thẻ thôi hỏi). */
   voiceChoices?: VoiceChoice[];
@@ -112,6 +114,24 @@ const PendingHint = createContext("chờ áp dụng khi sách chạy tiếp");
 
 /** Nhãn nút ("Vai phụ không tên", "Người kể") đứng GIỮA câu thì viết thường chữ đầu - "…của vai phụ không tên" (soát UX
  *  29-09). Tên người giữ nguyên. */
+/** Chữ đầu viết hoa - "câu này" đứng đầu câu báo. */
+function sentence(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/** Thẻ đã quyết nói KẾT QUẢ thay vì lặp câu hỏi ("Đọc “Arcanist” là…?" khi đã giữ - soát UX 29-09); null = giữ tiêu đề. */
+function decidedTitle(item: WorkItem): string | null {
+  const answer = item.requested;
+  if (!answer) return null;
+  if (item.kind === "pronunciation" && item.surface) {
+    return answer === item.current ? `Giữ: “${item.surface}” đọc là “${answer}”` : `“${item.surface}” sẽ đọc là “${answer}”`;
+  }
+  if (item.voiceChoices?.length) return item.voiceChoices.find((choice) => choice.label === answer || choice.done === answer)?.done ?? null;
+  if (item.kind === "alias") return `“${item.subject ?? item.current}” là ${midSentence(answer)}`;
+  if (item.lines?.length) return `${item.lines.length > 1 ? `${item.lines.length} câu này` : "Câu này"} của ${midSentence(answer)}`;
+  return null;
+}
+
 function midSentence(label: string | null | undefined): string {
   const text = label ?? "";
   return text === "Vai phụ không tên" || text === "Người kể" ? text.charAt(0).toLowerCase() + text.slice(1) : text;
@@ -165,9 +185,15 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
       refreshAfterDecision(client, bookId);
       const keep = spokenForm === item.current;
       // `previous`: cách máy đọc lúc bấm - máy chủ xin lại cách ấy nếu cách mới đã vào sách.
-      const action = undoAction(client, bookId, "pronunciation", [
-        { surface: item.surface, requestedAt, previous: item.current, keep },
-      ]);
+      const action = undoAction(
+        client,
+        bookId,
+        "pronunciation",
+        [{ surface: item.surface, requestedAt, previous: item.current, keep }],
+        item.requested
+          ? `Trở lại quyết định trước: “${item.surface}” đọc là “${item.requested}”.`
+          : `“${item.surface}” lại đọc là “${item.current}”.`,
+      );
       // Giữ đúng cách máy đang đọc thì không có gì để thu lại - soát UX 29-09: báo "sẽ thu lại" làm người nghe hoảng.
       if (keep) {
         toast.success(`Giữ cách đọc “${spokenForm}”`, { description: "Không phải thu lại câu nào.", action, duration: UNDO_MS });
@@ -292,7 +318,10 @@ function SpeakerFix({
       const which = (lines?.length ?? 1) > 1 ? `${lines?.length} câu này` : "câu này";
       const keep = speaker === item.currentValue;
       // Gộp tên / quy ước 『』 cả cuốn còn ghi ở cấp TÊN cho các phần sau - hoàn tác chỉ lùi được phần câu, nên không mời.
-      const undo = alias ? {} : { action: undoAction(client, bookId, "speaker", [{ lines, requestedAt, keep }]), duration: UNDO_MS };
+      const back = item.requested
+        ? `Trở lại quyết định trước: ${which} của ${midSentence(item.requested)}.`
+        : `${sentence(which)} lại là của ${midSentence(item.current)}.`;
+      const undo = alias ? {} : { action: undoAction(client, bookId, "speaker", [{ lines, requestedAt, keep }], back), duration: UNDO_MS };
       if (keep) {
         toast.success(item.keepLabel ? `Đã ghi: ${item.keepLabel}` : `Giữ nguyên: ${which} của ${midSentence(item.current)}`, {
           description: "Việc này sẽ không hiện lại.",
@@ -308,7 +337,7 @@ function SpeakerFix({
           (alias && item.kind === "bracket"
             ? " Lời trong 『』 ở các chương và các phần sau của cuốn cũng tự về người này."
             : alias
-              ? ` Các phần sau của cuốn cũng tự hiểu ${item.current} là ${label}.`
+              ? ` Các phần sau của cuốn cũng tự hiểu “${item.subject ?? item.current}” là ${label}.`
               : ""),
         ...undo,
       });
@@ -322,7 +351,7 @@ function SpeakerFix({
           <Check className="size-3.5 text-success" />
           {/* Gộp tên là ở cấp TÊN cho cả cuốn và các phần sau, không phải "câu này của X" (soát UX 29-09). */}
           {item.kind === "alias"
-            ? `Đã ghi: “${item.current}” là ${midSentence(item.requested)} - cả cuốn và các phần sau.`
+            ? `Đã ghi: “${item.subject ?? item.current}” là ${midSentence(item.requested)} - cả cuốn và các phần sau.`
             : `Đã ghi: ${(item.lines?.length ?? 1) > 1 ? `${item.lines?.length} câu này` : "câu này"} của ${midSentence(item.requested)} - ${pending}.`}
         </p>
       )}
@@ -422,7 +451,8 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
     },
     onSuccess: (made, { label, keep, note }) => {
       refreshAfterDecision(client, bookId);
-      const undo = { action: undoAction(client, bookId, "voice", made.map((decision) => ({ ...decision, keep }))), duration: UNDO_MS };
+      const back = item.requested ? `Trở lại quyết định trước: ${item.requested}.` : "Thẻ hỏi lại như trước khi bấm.";
+      const undo = { action: undoAction(client, bookId, "voice", made.map((decision) => ({ ...decision, keep })), back), duration: UNDO_MS };
       if (keep) {
         toast.success(`Đã ghi: ${label}`, { description: "Việc này sẽ không hiện lại.", ...undo });
         return;
@@ -498,7 +528,7 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames }: { bookI
     <li className="rounded-xl border border-line bg-panel p-4">
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
         <span className="rounded-full bg-hover px-2 py-0.5 text-[11px] font-medium text-fg-2">{KIND_LABEL[item.kind]}</span>
-        <h3 className="text-[15px] font-semibold">{item.title}</h3>
+        <h3 className="text-[15px] font-semibold">{decidedTitle(item) ?? item.title}</h3>
       </div>
       <p className="mt-1.5 text-sm text-fg-2">{item.problem}</p>
       <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-fg-2">

@@ -243,7 +243,17 @@ function EditReading({ bookId, item, onDone, fresh }: { bookId: string; item: Na
       const keep = spokenForm === item.spoken;
       // Như thẻ trong hộp việc: sửa nhầm thì "Hoàn tác" trả về đúng như trước lần lưu này (`previous` = cách đang đọc).
       const undo = {
-        action: undoAction(client, bookId, "pronunciation", [{ surface: item.surface, requestedAt, previous: item.spoken, keep }]),
+        action: undoAction(
+          client,
+          bookId,
+          "pronunciation",
+          [{ surface: item.surface, requestedAt, previous: item.spoken, keep }],
+          item.requested
+            ? `Trở lại cách đọc chờ áp trước đó: “${item.requested}”.`
+            : item.spoken
+              ? `“${item.surface}” lại đọc là “${item.spoken}”.`
+              : `Đã bỏ cách đọc vừa thêm cho “${item.surface}”.`,
+        ),
         duration: UNDO_MS,
       };
       if (keep) {
