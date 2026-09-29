@@ -39,6 +39,10 @@ export interface BookSummary {
   queuePosition?: number | null;
   /** Đang tạm dừng mà tiến trình vẫn sống (power_source): máy tính đang chạy pin, hay người dùng bấm "Tạm dừng". */
   paused?: "battery" | "listener" | null;
+  /** Lượt chạy này tạm dừng được: bắt đầu bằng bản app có tính năng ấy (lượt cũ chạy mã cũ tới hết). */
+  canPause?: boolean;
+  /** Phần nối tiếp của "Làm tiếp cuốn này" (continues.json): mã phần đầu + thứ tự phần; phần đầu và sách lẻ: null. */
+  series?: { root: string; part: number } | null;
   broken?: string;
   /** Ảnh bìa thật (webui/covers.py), hoặc null khi dùng bìa vẽ từ tên. */
   cover?: CoverImage | null;

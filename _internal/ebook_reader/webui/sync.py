@@ -509,7 +509,7 @@ class SyncApp:
             summary["id"] = identifier
             view = listen_view.book(path, identifier, summary, self.listening.get(identifier), with_chapters=False)
             entry = {key: view[key] for key in ("id", "title", "narrator", "duration", "chaptersTotal",
-                                                 "chaptersAvailable", "complete", "updatedAt")}
+                                                 "chaptersAvailable", "complete", "updatedAt", "series")}
             meta = covers.cover_meta(path)
             entry["cover"] = {"color": meta["color"], "version": meta["version"]} if meta else None
             out.append(entry)

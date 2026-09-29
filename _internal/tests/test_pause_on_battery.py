@@ -53,10 +53,13 @@ def test_the_listener_pause_wins_and_resuming_on_battery_lasts_until_the_next_ch
     assert _pause_reason({"paused": True}, battery_pause=False, last_plugged_wall=None) == "listener"
     assert _pause_reason(None, battery_pause=True, last_plugged_wall=100.0) == "battery"
     assert _pause_reason(None, battery_pause=False, last_plugged_wall=100.0) is None
-    # "Tiếp tục" bấm lúc đang chạy pin (sau lần cuối thấy sạc): làm tiếp trên pin.
-    assert _pause_reason({"paused": False, "requested_at_epoch": 150.0}, True, 100.0) is None
+    # "Tiếp tục" bấm lúc đang dừng vì pin (sau lần cuối thấy sạc): làm tiếp trên pin.
+    over = {"paused": False, "requested_at_epoch": 150.0, "overrides": "battery"}
+    assert _pause_reason(over, True, 100.0) is None
     # Máy thấy sạc SAU lần bấm ấy rồi lại rút đủ lâu: lại dừng.
-    assert _pause_reason({"paused": False, "requested_at_epoch": 150.0}, True, 200.0) == "battery"
+    assert _pause_reason(over, True, 200.0) == "battery"
+    # "Tiếp tục" bấm để thôi một lần tạm dừng TAY (đang cắm sạc): rút sạc sau đó vẫn dừng.
+    assert _pause_reason({"paused": False, "requested_at_epoch": 150.0, "overrides": "listener"}, True, 100.0) == "battery"
 
 
 def test_the_setting_turns_it_off(tmp_path: Path, monkeypatch) -> None:
@@ -186,3 +189,29 @@ def test_a_pause_request_of_another_run_is_ignored(tmp_path: Path, monkeypatch) 
 
     assert run_supervisor(project, "a-new-run", worker_target=_fake_worker_success, poll_seconds=0.01) == 0
     assert "PAUSE" not in tail_log(project, lines=40)
+
+
+def test_a_run_started_by_older_code_says_it_cannot_pause(tmp_path: Path, monkeypatch) -> None:
+    """Supervisor khởi động bằng mã cũ (trước tính năng này) không đọc pause.request - app phải nói thật, không ghi yêu
+    cầu rồi báo "Đang tạm dừng" (soát QA 29-09)."""
+    import pytest
+
+    from ebook_reader.background_runner import BackgroundIdentityError, request_pause
+
+    project = _make_project(tmp_path)
+    paths = BackgroundPaths.for_project(project)
+    paths.ensure_root()
+    state = {"schema_version": 1, "project_root": str(project.resolve()), "instance_id": "old-run", "state": "running",
+             "supervisor_pid": os.getpid(), "supervisor_create_time": 1.0, "worker_pid": 1234}
+    atomic_write_json(paths.state, state)
+    monkeypatch.setattr(background_runner, "_validate_supervisor_identity", lambda state, root: (True, None))
+    with pytest.raises(BackgroundIdentityError, match="bản cũ"):
+        request_pause(project, True)
+    assert not paths.pause_request.exists()
+    assert get_status(project).can_pause is False
+
+    atomic_write_json(paths.state, {**state, "pause_reason": "battery"})
+    request_pause(project, False)
+    written = json.loads(paths.pause_request.read_text(encoding="utf-8"))
+    assert written["paused"] is False and written["overrides"] == "battery", "Tiếp tục vượt đúng lần dừng vì pin"
+    assert get_status(project).can_pause is True

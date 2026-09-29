@@ -468,7 +468,9 @@ def summarize(project_root: Path, *, running: bool = False, now: float | None = 
         if status == "paused":
             # Tạm dừng (power_source): dây chuyền ghi status/stage "paused" và nhớ pha cũ trong bộ nhớ. Đoán lại pha từ tiến
             # độ - "Đã dừng" là sai khi tiến trình vẫn sống; tiến trình chết lúc đang tạm dừng thì là "Tạm ngưng lúc ...".
-            if analyzed < total or not total:
+            # Phân vai chạy dưới status "analyzing" (humanize.phase_of gọi là phân tích) cho tới khi khoá phân vai.
+            finalized = int(book["casting_finalized"] or 0) if "casting_finalized" in book.keys() else 1
+            if analyzed < total or not total or not finalized:
                 phase = "analysis"
             elif not int(segments["recorded"] or 0) and not any(row["status"] == "completed" for row in chapter_rows):
                 phase = "casting"

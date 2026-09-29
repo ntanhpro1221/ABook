@@ -77,6 +77,7 @@ class Runner(Protocol):
     def running(self, project_root: Path) -> bool: ...
     def pause(self, project_root: Path, paused: bool) -> None: ...
     def pause_reason(self, project_root: Path) -> str | None: ...
+    def can_pause(self, project_root: Path) -> bool: ...
 
 
 class BackgroundRunner:
@@ -113,6 +114,14 @@ class BackgroundRunner:
             return get_status(project_root).pause_reason
         except Exception:  # noqa: BLE001
             return None
+
+    def can_pause(self, project_root: Path) -> bool:
+        from ..background_runner import get_status
+
+        try:
+            return get_status(project_root).can_pause
+        except Exception:  # noqa: BLE001
+            return False
 
 
 class StudioRunner(BackgroundRunner):
@@ -169,6 +178,9 @@ class FakeRunner:
 
     def pause_reason(self, project_root: Path) -> str | None:
         return self._paused.get(str(project_root))
+
+    def can_pause(self, project_root: Path) -> bool:
+        return str(project_root) in self._running
 
 
 def _count_words(path: Path) -> int:

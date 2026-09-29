@@ -258,6 +258,10 @@ class App:
         # Tạm dừng mà tiến trình vẫn sống (power_source): "battery" / "listener". Dây chuyền chỉ đứng ở checkpoint kế -
         # tới đó sổ vẫn ghi pha đang làm, nên "đang tạm dừng" khác "đã tạm dừng".
         result["paused"] = self.runner.pause_reason(path) if running else None
+        result["canPause"] = bool(running and self.runner.can_pause(path))
+        # Phần nối tiếp của "Làm tiếp cuốn này": danh sách Dự án gom theo chuỗi, không theo tên (soát UX 29-09, N10).
+        place = continuation.series_of(path)
+        result["series"] = {"root": book_id(place[0]), "part": place[1]} if place else None
         if result["paused"]:
             result["statusLabel"] = humanize.pause_label(result["paused"], reached=result.get("status") == "paused")
             result["eta"] = None
@@ -348,7 +352,13 @@ class App:
             self.runner.pause(path, paused)
         except RuntimeError as error:
             raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
-        return self.summary(path)
+        # Supervisor đọc yêu cầu ở vòng kế (tới 0,25 giây): trả trạng thái SẼ có, không phải trạng thái vừa đọc.
+        result = self.summary(path)
+        result["paused"] = "listener" if paused else None
+        if paused:
+            result["statusLabel"] = humanize.pause_label("listener", reached=result.get("status") == "paused")
+            result["eta"] = None
+        return result
 
     def stop(self, value: str) -> dict[str, Any]:
         self._mutating()

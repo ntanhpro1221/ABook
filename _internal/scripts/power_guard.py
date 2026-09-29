@@ -154,6 +154,17 @@ def log_event(kind: str, detail: str = "") -> None:
         handle.write(line + "\n")
 
 
+APP_SUPERVISOR = re.compile(r"ebook_reader\.background_runner\S*\s+supervise")
+
+
+def suspend_servers(commands: list[str]) -> bool:
+    """Treo cả máy chủ Ollama không. KHÔNG khi có sách của app đang chạy (supervisor của background_runner): app tự tạm
+    dừng khi rút sạc (ebook_reader/power_source.py) ở ranh giới lô, và worker của nó không nằm trong cây việc bị treo -
+    treo máy chủ giữa một lô phân tích thì yêu cầu đang bay hết hạn chờ (90 giây), lô ấy chạy khác lượt liền mạch (soát QA
+    29-09)."""
+    return not any(APP_SUPERVISOR.search(command) for command in commands)
+
+
 def job_processes():
     """Gốc việc GPU + mọi tiến trình con cháu, bỏ chính tiến trình này - kèm máy chủ Ollama (`ollama serve` do ollama_up.py
     bật tách khỏi cây, và các llama-server của nó): tạm dừng mà để máy chủ chạy thì nó làm nốt câu trả lời đang dở ở 15 W
@@ -163,15 +174,19 @@ def job_processes():
 
     me = os.getpid()
     found: dict[int, "psutil.Process"] = {}
+    listed = []
     for process in psutil.process_iter(["pid", "name", "cmdline"]):
         try:
-            command = " ".join(process.info["cmdline"] or [])
-            name = (process.info["name"] or "").lower()
+            listed.append((process, " ".join(process.info["cmdline"] or []), (process.info["name"] or "").lower()))
         except (psutil.Error, TypeError):
             continue
+    servers_too = suspend_servers([command for _process, command, _name in listed])
+    for process, command, name in listed:
         if process.info["pid"] == me or "power_guard.py" in command:
             continue
         server = name == "llama-server.exe" or (name == "ollama.exe" and " serve" in command)
+        if server and not servers_too:
+            continue
         if not server and not JOB_ROOTS.search(command):
             continue
         found[process.pid] = process

@@ -113,6 +113,9 @@ class BackgroundStatus:
     # Tạm dừng mà tiến trình vẫn sống (power_source): "battery" = máy đang chạy pin, "listener" = người dùng bấm.
     pause_reason: str | None = None
     paused_at: str | None = None
+    # Supervisor biết tạm dừng: lượt chạy bắt đầu bằng mã có tính năng này (state có khoá pause_reason ngay từ lúc
+    # khởi động). Lượt cũ vẫn chạy mã cũ tới hết - ghi yêu cầu cho nó là nói dối người dùng (soát QA 29-09).
+    can_pause: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         result = asdict(self)
@@ -323,6 +326,7 @@ def _status_from_state(paths: BackgroundPaths, state: Mapping[str, Any]) -> Back
         detail=detail,
         pause_reason=str(state["pause_reason"]) if running and state.get("pause_reason") else None,
         paused_at=str(state["paused_at"]) if running and state.get("paused_at") else None,
+        can_pause=running and "pause_reason" in state,
     )
 
 
@@ -715,6 +719,8 @@ def request_pause(project_root: Path | str, paused: bool) -> BackgroundStatus:
     identity_ok, detail = _validate_supervisor_identity(state, paths.project_root)
     if not identity_ok:
         raise BackgroundIdentityError(f"Từ chối tạm dừng: {detail}")
+    if "pause_reason" not in state:
+        raise BackgroundIdentityError("Lượt chạy này bắt đầu bằng bản cũ của app, chưa tạm dừng được")
     atomic_write_json(
         paths.pause_request,
         {
@@ -725,6 +731,8 @@ def request_pause(project_root: Path | str, paused: bool) -> BackgroundStatus:
             "requested_at_epoch": time.time(),
             "requester_pid": os.getpid(),
             "paused": bool(paused),
+            # "Tiếp tục" chỉ vượt đúng lần dừng người dùng đang thấy: bấm lúc dừng vì pin = làm tiếp trên pin.
+            "overrides": None if paused else state.get("pause_reason"),
         },
     )
     return get_status(paths.project_root)
@@ -746,7 +754,7 @@ def _pause_reason(request: Mapping[str, Any] | None, battery_pause: bool, last_p
         return "listener"
     if not battery_pause:
         return None
-    if request is not None and request.get("paused") is False:
+    if request is not None and request.get("paused") is False and request.get("overrides") == "battery":
         at = request.get("requested_at_epoch")
         if isinstance(at, (int, float)) and (last_plugged_wall is None or at >= last_plugged_wall):
             return None
