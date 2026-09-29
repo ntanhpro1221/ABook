@@ -105,6 +105,13 @@ export function useWorkCount(bookId: string) {
   return data?.items.filter((item) => !item.requested).length ?? 0;
 }
 
+/** Nhãn nút ("Vai phụ không tên", "Người kể") đứng GIỮA câu thì viết thường chữ đầu - "…của vai phụ không tên" (soát UX
+ *  29-09). Tên người giữ nguyên. */
+function midSentence(label: string | null | undefined): string {
+  const text = label ?? "";
+  return text === "Vai phụ không tên" || text === "Người kể" ? text.charAt(0).toLowerCase() + text.slice(1) : text;
+}
+
 function Example({ bookId, example }: { bookId: string; example: WorkExample }) {
   const clip = useClip();
   const id = `work-${example.segmentId}`;
@@ -269,14 +276,14 @@ function SpeakerFix({
       void client.invalidateQueries({ queryKey: ["library"] });
       const which = (lines?.length ?? 1) > 1 ? `${lines?.length} câu này` : "câu này";
       if (speaker === item.currentValue) {
-        toast.success(item.keepLabel ? `Đã ghi: ${item.keepLabel}` : `Giữ nguyên: ${which} của ${item.current}`, {
+        toast.success(item.keepLabel ? `Đã ghi: ${item.keepLabel}` : `Giữ nguyên: ${which} của ${midSentence(item.current)}`, {
           description: "Việc này sẽ không hiện lại.",
         });
         return;
       }
       const choice = item.choices?.find((option) => option.value === speaker);
       const label = choice?.name ?? choice?.label ?? speaker;
-      toast.success(`Đã ghi: ${which} của ${label}`, {
+      toast.success(`Đã ghi: ${which} của ${midSentence(label)}`, {
         description:
           "Câu đã thu sẽ đọc lại bằng giọng của người ấy. Thu lại khi sách chạy tiếp - sách đã xong thì bấm “Áp dụng thay đổi” ở trang dự án." +
           (alias && item.kind === "bracket"
@@ -293,7 +300,7 @@ function SpeakerFix({
       {item.requested && (
         <p className="mb-2 flex items-center gap-1.5 text-xs text-fg-2">
           <Check className="size-3.5 text-success" />
-          Đã ghi: {(item.lines?.length ?? 1) > 1 ? `${item.lines?.length} câu này` : "câu này"} của {item.requested} - chờ áp
+          Đã ghi: {(item.lines?.length ?? 1) > 1 ? `${item.lines?.length} câu này` : "câu này"} của {midSentence(item.requested)} - chờ áp
           dụng khi sách chạy tiếp.
         </p>
       )}
