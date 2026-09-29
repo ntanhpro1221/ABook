@@ -1066,7 +1066,7 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.OK, {"character": character, "preset": preset, "gender": gender, "avoid": avoid})
 
     def post_review(self, _query: dict[str, list[str]], value: str) -> None:
-        self.app._book(value)
+        self.app._mutating()  # ghi reviews.json và (Cần thu lại) overrides.json - như mọi yêu cầu sửa khác
         body = self._body()
         verdict = body.get("verdict")
         if verdict not in (None, "ok", "redo"):
