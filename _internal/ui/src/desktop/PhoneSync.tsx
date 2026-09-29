@@ -365,6 +365,13 @@ export function PhoneSync() {
               <Where sync={sync} scheme={false} />.
             </p>
           )}
+          {/* Chủ sách 29-09 hỏi khác mạng có dùng được không: app không cần gì riêng - mạng riêng ảo người dùng tự cài cho
+              máy này một địa chỉ điện thoại tới được, và điện thoại học địa chỉ ấy mỗi lần mở Thư viện (SyncLink.refreshRoutes). */}
+          <p className="text-xs text-fg-3">
+            Ra khỏi nhà: sách đã tải về điện thoại thì nghe ở đâu cũng được. Muốn nghe thẳng từ máy này hay điều khiển từ xa,
+            cài Tailscale (hoặc ZeroTier, NetBird) trên cả máy này và điện thoại, đăng nhập cùng một tài khoản, rồi mở Thư viện
+            trên điện thoại một lần khi còn ở nhà - ra ngoài điện thoại tự nối qua đó.
+          </p>
         </>
       )}
 

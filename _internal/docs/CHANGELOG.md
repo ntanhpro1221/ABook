@@ -7,6 +7,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe sách - máy tính và điện thoại
+
+- Cài đặt → Điện thoại và thiết bị nói cách nghe khi ra khỏi nhà: sách đã tải về điện thoại nghe ở đâu cũng được; muốn
+  nghe thẳng từ máy tính hay điều khiển từ xa thì cài Tailscale (hoặc ZeroTier, NetBird) trên cả hai máy, cùng một tài
+  khoản, rồi mở Thư viện trên điện thoại một lần ở nhà.
+
 ## [0.4.8] - 2026-09-29
 
 ### Nghe sách - máy tính và điện thoại
