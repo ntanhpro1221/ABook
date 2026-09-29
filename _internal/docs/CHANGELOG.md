@@ -12,6 +12,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Cài đặt → Điện thoại nói rõ địa chỉ nào để làm gì: địa chỉ trong nhà, và địa chỉ Tailscale để mở từ bất cứ đâu khi
   thiết bị kia cũng bật Tailscale cùng tài khoản (trước đây các địa chỉ chỉ nối nhau bằng "hoặc").
 
+### Studio (sản xuất sách nói)
+
+- Tab Kịch bản: chọn người nói cho một câu xong cũng có "Hoàn tác" trên thông báo, như trong Việc cần duyệt.
+
 ## [0.4.6] - 2026-09-29
 
 ### Studio (sản xuất sách nói)
