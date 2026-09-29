@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pause, Play, Search, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useClip } from "@/listen/clip";
+import { useCast } from "@/listen/source";
 import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
 import { Button } from "@/shared/ui";
@@ -37,8 +38,19 @@ function fold(text: string): string {
   return text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
 }
 
-export function NameReadings({ bookId }: { bookId: string }) {
+/** `focus`: mở từ nút "Mọi cách đọc tên…" trên thẻ hộp việc - cuộn tới mục khi danh sách đã tải. */
+export function NameReadings({ bookId, focus = false }: { bookId: string; focus?: boolean }) {
   const { data } = useNameReadings(bookId);
+  // Dàn nhân vật đứng TRÊN mục này: cuộn khi nó đã hiện (cùng truy vấn với CastList, không tải thêm) - cuộn sớm hơn thì
+  // dàn nhân vật hiện ra sau đẩy mục xuống khỏi màn.
+  const { isSuccess: castShown } = useCast(bookId);
+  useEffect(() => {
+    if (!focus || !data || !castShown) return;
+    const frame = requestAnimationFrame(() =>
+      document.getElementById("name-readings-title")?.scrollIntoView({ block: "start", behavior: "smooth" }),
+    );
+    return () => cancelAnimationFrame(frame);
+  }, [focus, data, castShown]);
   const [query, setQuery] = useState("");
   const [limit, setLimit] = useState(PAGE);
   if (!data || (!data.items.length && !data.unseen)) return null;

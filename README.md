@@ -16,7 +16,8 @@ Làm sách chạy hoàn toàn trên máy của bạn: văn bản truyện và â
   thứ nhất: Studio hỏi "tôi" là ai.
 - **Bạn là người duyệt cuối**: hộp **"Việc cần duyệt"** chỉ ra những chỗ máy không chắc (ai nói câu này, hai tên là một
   người, nam hay nữ, cách đọc một tên...), xếp theo lợi trên mỗi lần bấm. Tab **Kịch bản** cho sửa người nói, loại câu,
-  cảm xúc và chữ đem đọc của từng câu; tab Nhân vật cho đổi giọng; tab **Cần nghe lại** cho nghe những câu máy tự kiểm
+  cảm xúc và chữ đem đọc của từng câu; tab Nhân vật cho đổi giọng và sửa cách đọc mọi tên riêng (mục "Cách đọc tên");
+  tab **Cần nghe lại** cho nghe những câu máy tự kiểm
   không chắc và bấm "Cần thu lại" để thu một bản mới. Máy vẫn tự quyết và chạy tiếp - không bắt ai chờ.
 - **Mọi máy trong nhà làm việc cùng nhau**: điện thoại nghe thẳng thư viện máy tính không cần tải (hoặc tải về nghe khi
   không có mạng); chỗ đang nghe và dấu trang đi hai chiều; thấy và điều khiển máy khác đang phát, **"Nghe ở đây"** chuyển
