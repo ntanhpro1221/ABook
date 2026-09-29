@@ -19,6 +19,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Tab Nhân vật có mục "Cách đọc tên": mọi tên riêng máy đọc thế nào, bao nhiêu câu có tên ấy, máy đoán hay đã chọn,
   một câu mẫu để nghe. Sửa ngay trên dòng - kể cả tên máy chắc (Việc cần duyệt không hỏi) và cách đã chọn rồi muốn đổi;
   gõ một tên chưa có trong danh sách để thêm cách đọc cho nó.
+- Tab Kịch bản: bảng sửa cách đọc một câu có thêm "Tên trong câu" - nghe sai tên ở câu nào sửa ngay ở câu ấy (cho cả
+  cuốn). Bảng cao hơn màn nhỏ giờ cuộn được thay vì tràn ra ngoài màn.
 
 ## [0.4.4] - 2026-09-29
 
