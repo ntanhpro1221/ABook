@@ -19,6 +19,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   nhân vật nói theo hai kiểu xưng hô không bao giờ đi chung câu ("cậu… ta" và "anh… bà") và một kiểu khác hẳn cách người
   ấy nói ở các chương khác - thường là máy đã gán lời một người không tên (bà thầy bói) cho nhân vật có tên (Lucia). Một
   thẻ cho cả nhóm câu: chọn "Vai phụ không tên", một người khác, hay "Người khác…" để đặt tên và có giọng riêng.
+- Thẻ nhiều câu (thẻ trên, "Một người hai tên", lời trong 『』) có nút "Đọc cả N câu trong Kịch bản": mở đúng chương tại câu
+  đầu của nhóm để đọc đủ ngữ cảnh - không bật ô chọn người nói che chữ như "Tìm trong truyện…".
 
 ## [0.4.8] - 2026-09-29
 

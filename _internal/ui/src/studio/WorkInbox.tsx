@@ -411,6 +411,13 @@ function SpeakerFix({
             Tìm trong truyện…
           </Button>
         )}
+        {/* Thẻ nhóm chỉ in vài câu làm ví dụ ("Hai người chung một tên" có thể 16 câu): đọc đủ ngữ cảnh ở tab Kịch bản trước khi
+            quyết, mở đúng chương, tại câu đầu của nhóm. */}
+        {onOpenScript && (item.lines?.length ?? 0) > (item.examples?.length ?? 0) && item.examples?.[0] && (
+          <Button size="sm" variant="ghost" icon={Search} onClick={() => onOpenScript(item.examples![0].chapterId, item.lines![0].stableId, false)}>
+            Đọc cả {item.lines!.length} câu trong Kịch bản
+          </Button>
+        )}
       </div>
       {creating && (
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
@@ -530,7 +537,8 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
 }
 
 /** Mở câu `stableId` của chương `chapterId` trong tab Kịch bản, ô chọn người nói mở sẵn. */
-type OpenScript = (chapterId: number, stableId: string) => void;
+/** `pick`: mở sẵn ô chọn người nói ở câu ấy (mặc định) - thẻ nhóm mở để ĐỌC thì không, ô ấy che chữ. */
+type OpenScript = (chapterId: number, stableId: string, pick?: boolean) => void;
 
 function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames }: { bookId: string; item: WorkItem; onOpenReview: () => void; onOpenScript?: OpenScript; onOpenNames?: (name: string) => void }) {
   // Thẻ chuỗi lượt đối đáp: đổi các câu xen kẽ (mặc định) hay cả chuỗi - câu "sẽ đổi" theo phạm vi đang chọn.
