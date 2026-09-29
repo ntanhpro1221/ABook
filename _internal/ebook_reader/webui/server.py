@@ -816,11 +816,15 @@ class Handler(BaseHTTPRequestHandler):
         dẫn tuỳ ý trên máy này - kể cả đường UNC, thứ khiến Windows tự nối SMB tới máy khác (soát bảo mật 28-09)."""
         return self.headers.get(REMOTE_HEADER) == "1"
 
-    def _source_paths(self, raw: Any) -> list[str]:
+    def _source_paths(self, raw: Any, seed_from: Any = None) -> list[str]:
         paths = [str(item) for item in (raw or [])]
         if self._remote():
             uploads = Path(self.app.preferences.get()["libraryRoot"]) / actions.UPLOAD_FOLDER
-            if not all(actions.inside_folder(path, uploads) for path in paths):
+            # "Làm tiếp cuốn này" từ xa: chương kế tiếp do CHÍNH máy này tính từ dự án phần trước - thiết bị chỉ chọn trong
+            # danh sách ấy. So nguyên chuỗi, không `resolve()` chuỗi thiết bị gửi (đường UNC làm Windows tự nối SMB).
+            following = ({str(path) for path in continuation.next_chapters(self.app._book(str(seed_from)))}
+                         if seed_from else set())
+            if not all(path in following or actions.inside_folder(path, uploads) for path in paths):
                 raise ApiError(HTTPStatus.FORBIDDEN, "Từ xa chỉ dùng được các chương đã gửi lên máy tính")
         return paths
 
@@ -1374,12 +1378,12 @@ class Handler(BaseHTTPRequestHandler):
 
     def post_create(self, _query: dict[str, list[str]]) -> None:
         body = self._body()
-        self._source_paths(body.get("paths"))
+        self._source_paths(body.get("paths"), body.get("seedFrom"))
         self._send_json(HTTPStatus.CREATED, self.app.create(body))
 
     def post_scan(self, _query: dict[str, list[str]]) -> None:
         body = self._body()
-        result = actions.scan_inputs(self._source_paths(body.get("paths")))
+        result = actions.scan_inputs(self._source_paths(body.get("paths"), body.get("seedFrom")))
         result["existing"] = self.app.existing_projects([str(row.get("sha256") or "") for row in result["files"]])
         self._send_json(HTTPStatus.OK, result)
 
@@ -1398,7 +1402,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def post_first_person(self, _query: dict[str, list[str]]) -> None:
         body = self._body()
-        self._send_json(HTTPStatus.OK, actions.first_person_hint(self._source_paths(body.get("paths"))))
+        self._send_json(HTTPStatus.OK, actions.first_person_hint(self._source_paths(body.get("paths"), body.get("seedFrom"))))
 
     def get_voices(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.voices())

@@ -132,17 +132,20 @@ export function useReveal() {
   });
 }
 
+/** `seedFrom` ("Làm tiếp cuốn này"): Studio từ xa chỉ được đọc chương kế tiếp của đúng dự án ấy, ngoài các chương đã gửi lên. */
 export function useScan() {
   return useMutation({
-    mutationFn: (paths: string[]) => api<ScanResult>("/api/scan", { method: "POST", body: { paths } }),
+    mutationFn: ({ paths, seedFrom }: { paths: string[]; seedFrom?: string }) =>
+      api<ScanResult>("/api/scan", { method: "POST", body: { paths, ...(seedFrom ? { seedFrom } : {}) } }),
   });
 }
 
 /** Truyện kể ngôi thứ nhất? - đọc ~20 chương đầu một lần cho mỗi bộ file đã chọn. */
-export function useFirstPersonHint(paths: string[]) {
+export function useFirstPersonHint(paths: string[], seedFrom?: string) {
   return useQuery({
-    queryKey: ["first-person", paths.join("\n")],
-    queryFn: () => api<FirstPersonHint>("/api/first-person", { method: "POST", body: { paths } }),
+    queryKey: ["first-person", paths.join("\n"), seedFrom ?? ""],
+    queryFn: () =>
+      api<FirstPersonHint>("/api/first-person", { method: "POST", body: { paths, ...(seedFrom ? { seedFrom } : {}) } }),
     enabled: paths.length > 0,
     staleTime: Infinity,
   });
