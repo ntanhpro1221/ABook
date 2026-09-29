@@ -1,10 +1,10 @@
 """Người nghe sửa trong Studio (hộp "Việc cần anh", docs/STUDIO_REVIEW.md) - cách đọc tên, ai nói câu nào, giọng và
-giới của một nhân vật, loại đoạn, cảm xúc và chữ đem đọc của một câu - áp ở ranh giới an toàn.
+giới của một nhân vật, loại đoạn, cảm xúc và chữ đem đọc của một câu, thu lại một câu - áp ở ranh giới an toàn.
 
 Giao diện không ghi SQLite của sách: dây chuyền là người ghi duy nhất. Giao diện ghi ý muốn của người nghe vào
 `overrides.json` cạnh `project.sqlite3`, dây chuyền đọc file ấy ở ranh giới an toàn và áp từng yêu cầu bằng
-`ProjectDB.apply_listener_pronunciation` / `apply_listener_line` / `apply_listener_speaker` / `apply_listener_voice`
-(đổi và đặt lại câu đã thu, một transaction).
+`ProjectDB.apply_listener_pronunciation` / `apply_listener_line` / `apply_listener_speaker` / `apply_listener_voice` /
+`apply_listener_retake` (đổi và đặt lại câu đã thu, một transaction).
 
 File là TRẠNG THÁI MONG MUỐN, không phải hàng đợi: áp lại một yêu cầu đã áp là không làm gì. Nhờ vậy dây chuyền không
 bao giờ phải ghi ngược vào file, và không bao giờ có hai tiến trình cùng ghi một file.
@@ -480,6 +480,51 @@ def request_line(project_root: Path, stable_id: str, text_sha256: str, *, kind: 
                                     "requested_at": float(now)}
         data["speakers"] = speakers
     _write(project_root, data)
+
+
+def retake_requests(overrides: dict[str, Any]) -> list[dict[str, Any]]:
+    """Các câu người nghe muốn THU LẠI nguyên như cũ - bản thu méo, nuốt chữ, lệch giọng (tab "Cần nghe lại": "Cần thu
+    lại"), theo mã câu. Không đổi gì về cách đọc, nên dây chuyền thu bằng một hạt giống MỚI (tts.generation_seed đổi theo
+    `segments.listener_retakes`) - cùng hạt giống thì ra y hệt bản cũ. Áp khi `requested_at` mới hơn lần thu lại theo yêu
+    cầu gần nhất của câu (`segments.listener_retake_at`): áp lại một yêu cầu đã áp là không làm gì."""
+    entries = overrides.get("retakes")
+    if not isinstance(entries, dict):
+        return []
+    requests: list[dict[str, Any]] = []
+    for stable_id in sorted(entries):
+        entry = entries[stable_id]
+        if not isinstance(entry, dict) or not str(entry.get("text_sha256") or "").strip():
+            continue
+        try:
+            requested_at = float(entry.get("requested_at") or 0)
+        except (TypeError, ValueError):
+            continue
+        if requested_at > 0:
+            requests.append({"stable_id": str(stable_id), "text_sha256": str(entry["text_sha256"]).strip(),
+                             "requested_at": requested_at})
+    return requests
+
+
+def request_retake(project_root: Path, stable_id: str, text_sha256: str, *, now: float) -> None:
+    """Giao diện gọi: người nghe bấm "Cần thu lại" cho một câu."""
+    data = read_overrides(project_root)
+    entries = data.get("retakes")
+    entries = dict(entries) if isinstance(entries, dict) else {}
+    entries[str(stable_id)] = {"text_sha256": str(text_sha256).strip(), "requested_at": float(now)}
+    data["retakes"] = entries
+    _write(project_root, data)
+
+
+def cancel_retake(project_root: Path, stable_id: str) -> None:
+    """Người nghe bỏ phán quyết "Cần thu lại" trước khi dây chuyền kịp thu: bỏ yêu cầu. Đã thu rồi thì bản mới ở lại -
+    bỏ một mục đã áp không đổi gì trong sách."""
+    data = read_overrides(project_root)
+    entries = data.get("retakes")
+    if isinstance(entries, dict) and str(stable_id) in entries:
+        entries = dict(entries)
+        entries.pop(str(stable_id))
+        data["retakes"] = entries
+        _write(project_root, data)
 
 
 def request_voice(project_root: Path, character: str, *, preset: str = "", gender: str = "", avoid: str = "",

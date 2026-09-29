@@ -1071,7 +1071,16 @@ class Handler(BaseHTTPRequestHandler):
         verdict = body.get("verdict")
         if verdict not in (None, "ok", "redo"):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Phán quyết không hợp lệ")
-        self.app.reviews.set(value, str(body.get("stableId", ""))[:80], verdict, int(body.get("chapterId", 0)))
+        stable_id = str(body.get("stableId", ""))[:80]
+        project = self.app._book(value)
+        self.app.reviews.set(value, stable_id, verdict, int(body.get("chapterId", 0)))
+        # "Cần thu lại" là một yêu cầu cho dây chuyền (overrides.json `retakes`: thu bằng hạt giống mới ở lần chạy tới -
+        # sách đã xong: nút "Áp dụng thay đổi"); đổi ý thì bỏ yêu cầu chưa áp.
+        text_sha256 = store.segment_text_sha256(project, stable_id)
+        if verdict == "redo" and text_sha256:
+            listener_overrides.request_retake(project, stable_id, text_sha256, now=time.time())
+        elif verdict != "redo":
+            listener_overrides.cancel_retake(project, stable_id)
         self._send_json(HTTPStatus.OK, {"ok": True})
 
     def put_cover(self, _query: dict[str, list[str]], value: str) -> None:
