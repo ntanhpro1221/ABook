@@ -47,11 +47,15 @@ def run(args: list[str]) -> str:
 
 # Truyện kể ngôi thứ nhất -> "tôi" là ai (voices.first_person_identity): prompt mỗi batch nói cho model biết, nên dữ liệu
 # huấn luyện phải có đúng dòng ấy (27-09: LoRA 34,0% -> 89,4% người nói ở YMP 248 khi được biết). Người kể suy bằng N7b
-# (ANALYSIS_RESEARCH.md) và soát tay; Yamiyo đổi người kể theo chương nên không đặt được một danh tính cho cả truyện.
+# (ANALYSIS_RESEARCH.md) và soát tay. 29-09: HDST và Yamiyo từng THIẾU ở đây, nên mẫu generator của chúng trong data_v4..v8
+# không có dòng người kể, trong khi bộ đo (--first-person) và Studio thì có. Yamiyo đặt MỘT người kể cho cả cuốn như người
+# nghe trả lời "Tôi là ai?" ở Studio; chương kể ngôi ba của nó (155) vẫn dạy được: có dòng người kể mà lời thoại là của người khác.
 FIRST_PERSON: dict[str, str] = {
     "young_masters_pov": "SAMAEL",
     "nageki_no_bourei": "KRAI",
     "love_unseen": "KAKERU",
+    "huong_dan_sinh_ton": "ED ROSTAILER",
+    "yamiyo_no_hotaru": "TOMOBE",
 }
 
 
