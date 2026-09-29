@@ -6,15 +6,17 @@ tinh chỉnh từ 34,0% lên 89,4% người nói trên chương test ngôi thứ
 phản thân sau "của/tự") là chương kể ngôi thứ nhất; truyện có >= 30% chương mẫu như thế thì hỏi. Kho 29-09 (12 truyện, 20
 chương đầu): truyện ngôi thứ nhất 40-100% chương, ngôi thứ ba 0-15%. Tỉ lệ gộp cả cuốn (cách cũ, ngưỡng 30%) bỏ sót hai
 truyện ngôi thứ nhất: HDST 29,6%, Nageki 24,1% - Nageki chen chương ngoại truyện kể ngôi ba, Yamiyo mở đầu bằng nhiều
-chương ngôi ba. Còn "tôi" LÀ AI thì chỉ gợi ý (tên viết hoa hay gặp nhất)
-để người dùng chọn: đoán tự động từ văn bản thô từng nhận "Portal" cho YMP, vì 40 chương đầu của truyện ấy nhắc
-"Samael" 103 lần ngay trong lời kể.
+chương ngôi ba. Còn "tôi" LÀ AI thì chỉ gợi ý để người dùng chọn: đoán tự động từ văn bản thô từng nhận "Portal" cho
+YMP, vì 40 chương đầu của truyện ấy nhắc "Samael" 103 lần ngay trong lời kể. Gợi ý xen kẽ tên hay gặp nhất với tên hay
+được GỌI trong lời thoại mà lời kể hiếm nhắc (`_suggestions`): người kể xưng "tôi" nên gần như không có tên trong lời kể,
+nhưng người đối diện gọi tên họ luôn.
 """
 
 from __future__ import annotations
 
 import re
 from collections import Counter
+from itertools import zip_longest
 from pathlib import Path
 from typing import Any
 
@@ -48,6 +50,21 @@ def _names(text: str) -> list[str]:
         if len(name) >= 3 and name not in _NOT_NAMES and name.split()[0] not in _NOT_NAMES:
             names.append(name)
     return names
+
+
+def _suggestions(names: Counter, spoken: Counter, limit: int) -> list[str]:
+    """Xen kẽ tên hay được GỌI trong lời thoại mà lời kể hiếm nhắc (điểm = số lần trong lời thoại² / tổng số lần) với tên
+    hay gặp nhất. Kho 29-09, 20 chương đầu: tên người kể lên ĐẦU ở Yamiyo ("Tomobe": 6 lần trong lời thoại, 0 trong lời kể -
+    trước đó không lọt 6 gợi ý), Nageki ("Krai", trước ở thứ 4), Love Unseen ("Sorano"), TCF ("Kuchinashi"); thứ 2 ở YMP
+    ("Samael") và thứ 3 ở HDST ("Rostailer")."""
+    called = sorted((name for name in spoken if spoken[name] >= 3),
+                    key=lambda name: (-spoken[name] * spoken[name] / names[name], name))
+    merged: list[str] = []
+    for pair in zip_longest(called, (name for name, _count in names.most_common())):
+        for name in pair:
+            if name and name not in merged and len(merged) < limit:
+                merged.append(name)
+    return merged
 
 
 # "Chương 11: Yuuko Hayase" - tiêu đề chương là TÊN một nhân vật (2-3 chữ viết hoa, không số): light novel đặt thế cho
@@ -104,6 +121,7 @@ def first_person_hint(files: list[Path], chapters: int = 20, limit: int = 6) -> 
     narration = with_i = 0
     sampled = told_with_i = 0
     names: Counter = Counter()
+    spoken: Counter = Counter()
     for index, path in enumerate(files[:chapters], 1):
         chapter_narration = chapter_with_i = 0
         for row in segment_chapter_text(index, decode_text_bytes(Path(path).read_bytes())):
@@ -111,7 +129,10 @@ def first_person_hint(files: list[Path], chapters: int = 20, limit: int = 6) -> 
             if row["kind_hint"] != "dialogue":
                 chapter_narration += 1
                 chapter_with_i += bool(NARRATOR_I.search(text))
-            names.update(_names(text))
+            found = _names(text)
+            names.update(found)
+            if row["kind_hint"] == "dialogue":
+                spoken.update(found)
         narration += chapter_narration
         with_i += chapter_with_i
         if chapter_narration >= MIN_NARRATION:
@@ -124,6 +145,6 @@ def first_person_hint(files: list[Path], chapters: int = 20, limit: int = 6) -> 
         "firstPerson": rate >= FIRST_PERSON_RATE or share >= FIRST_PERSON_SHARE,
         "chaptersWithI": told_with_i,
         "chaptersSampled": sampled,
-        "suggestions": [name for name, _count in names.most_common(limit)],
+        "suggestions": _suggestions(names, spoken, limit),
         "chapters": pov_chapters(files),
     }

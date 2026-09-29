@@ -14,6 +14,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Câu hỏi "“Tôi” là ai?" lúc tạo sách nhận ra truyện kể ngôi thứ nhất theo TỪNG CHƯƠNG: truyện chen chương ngoại truyện
   kể ngôi ba (Nageki, Hướng dẫn sinh tồn trong học viện) trước đây bị coi là ngôi ba nên câu hỏi chỉ hiện thành một dòng
   liên kết nhỏ - mà không biết "tôi" là ai thì lời của nhân vật chính dễ bị gán cho người đang nói chuyện với họ.
+- Gợi ý tên cho câu hỏi ấy đưa người kể lên trước: tên người khác hay GỌI trong lời thoại mà lời kể hiếm nhắc (người kể
+  xưng "tôi" nên lời kể không có tên họ). Yamiyo no Hotaru: "Tomobe" lên đầu, trước đây không có trong gợi ý.
 
 ### Nghe sách - máy tính và điện thoại
 
