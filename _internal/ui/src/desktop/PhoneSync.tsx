@@ -176,7 +176,7 @@ function PairingPanel({ sync, onPair, onCancel, busy }: { sync: SyncView; onPair
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold">Mã đã bị huỷ vì nhập sai 5 lần</p>
           <p className="mt-0.5 text-[13px] text-fg-2">
-            Nếu là bạn gõ nhầm, tạo mã mới. Nếu không phải, có thiết bị lạ trong mạng đang đoán mã - đừng tạo mã khi
+            Nếu gõ nhầm thì tạo mã mới. Nếu không phải, có thiết bị lạ trong mạng đang đoán mã - đừng tạo mã khi
             chưa cần.
           </p>
         </div>

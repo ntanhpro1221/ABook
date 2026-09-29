@@ -293,9 +293,11 @@ export function SpeedMenu() {
           </Popover.Close>
         ))}
       </div>
-      <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">
-        Phím <kbd className="font-semibold">[</kbd> và <kbd className="font-semibold">]</kbd> để giảm, tăng.
-      </p>
+      {!COARSE && (
+        <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">
+          Phím <kbd className="font-semibold">[</kbd> và <kbd className="font-semibold">]</kbd> để giảm, tăng.
+        </p>
+      )}
     </MenuShell>
   );
 }
@@ -423,7 +425,7 @@ export function SleepMenu() {
       </Popover.Close>
       <p className="px-2 pb-1 pt-2 text-xs leading-snug text-fg-2">
         Tiếng nhỏ dần {options.fadeSeconds} giây trước khi dừng. Lúc đó {EXTEND_GESTURE} để nghe thêm {options.extendMinutes} phút.
-        Sáng hôm sau, thẻ “Tối qua” giúp tìm lại đoạn bạn còn nhớ.
+        Sáng hôm sau, thẻ “Tối qua” giúp tìm lại đoạn còn nhớ.
       </p>
     </MenuShell>
   );
@@ -582,7 +584,10 @@ function SleepRing({ fraction, children }: { fraction: number | null; children: 
 
 // Cách gia hạn khác nhau theo máy: máy tính bắt phím/chuột; điện thoại bắt cú LẮC (SleepTimer.kt) và nút "Nghe thêm"
 // trên thông báo - chạm màn hình ở đó chỉ ghi nhận cho tính năng tự dừng, không gia hạn (27-09, thấy trên máy ảo).
-const EXTEND_GESTURE = Capacitor.isNativePlatform() ? "lắc máy hoặc bấm “Nghe thêm” trên thông báo" : "chạm phím hoặc chuột";
+const COARSE = typeof window !== "undefined" && Boolean(window.matchMedia?.("(pointer: coarse)").matches);
+const EXTEND_GESTURE = Capacitor.isNativePlatform()
+  ? "lắc máy hoặc bấm “Nghe thêm” trên thông báo"
+  : COARSE ? "chạm màn hình" : "chạm phím hoặc chuột";
 
 /** Đang nhỏ dần trước khi tắt: nói rõ và cho nghe thêm bằng một chạm. */
 function FadingNotice({ className }: { className?: string }) {
@@ -739,7 +744,9 @@ export function PlayerBar({
       <FurtherElsewhere />
       <FollowRecord />
       <FadingNotice className="mx-4 mt-2" />
-      <div className="grid h-[76px] grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4 px-4">
+      {/* Cột giữa theo bề rộng CỦA THANH (min(40%, 480px)), không theo cửa sổ (40vw): thanh không gồm thanh bên, 40vw từng
+          chiếm 512/1044 px ở cửa sổ 1280 - tên chương bị cắt, cụm nút phải (266 px) bị ép vào 238 px (soát UX 29-09). */}
+      <div className="grid h-[76px] grid-cols-[minmax(0,1fr)_min(40%,480px)_minmax(0,1fr)] items-center gap-4 px-4">
         <button
           type="button"
           onClick={() => setExpanded(true)}
@@ -754,7 +761,7 @@ export function PlayerBar({
             </div>
           </div>
         </button>
-        <div className="flex w-[min(40vw,560px)] flex-col items-center gap-0.5">
+        <div className="flex w-full flex-col items-center gap-0.5">
           <Transport />
           <SeekBar />
         </div>
@@ -801,10 +808,15 @@ function ReadAlong() {
     }
   }, [client, nearEnd, queue, source, track]);
 
+  const scrolled = useRef(false);
+  useEffect(() => {
+    scrolled.current = false;
+  }, [track?.chapterId]);
   const scrollToActive = useCallback((smooth: boolean) => {
     const element = container.current?.querySelector<HTMLElement>(`[data-index="${active}"]`);
     if (!element) return;
-    element.scrollIntoView({ block: "center", behavior: smooth ? "smooth" : "auto" });
+    element.scrollIntoView({ block: "center", behavior: smooth && scrolled.current ? "smooth" : "auto" });
+    scrolled.current = true;
   }, [active]);
 
   useEffect(() => {
@@ -1175,10 +1187,12 @@ function BookProgressLine() {
   }, [queue, track?.chapterId]);
   if (!track || total <= 0) return null;
   const heard = Math.min(total, before + tens * 10);
+  // Sách chưa thu xong: "Cả cuốn 99%" đọc như sắp hết truyện (soát UX 29-09) - đó là phần đã có.
+  const whole = queue.every((chapter) => chapter.available);
   const left = Math.max(0, total - heard);
   return (
     <p className="tabular mt-1 text-xs text-fg-2">
-      Cả cuốn {formatPercent(heard / total)} · còn {formatLength(left)}
+      {whole ? "Cả cuốn" : "Phần đã có"} {formatPercent(heard / total)} · còn {formatLength(left)}
       {rate !== 1 && left > 60 ? ` (${formatLength(left / rate)} ở ${speedLabel(rate)})` : ""}
     </p>
   );
@@ -1225,7 +1239,7 @@ function CaughtUpNotice() {
   if (atEnd !== "caughtUp") return null;
   return (
     <p className="mt-3 rounded-xl bg-hover px-3 py-2 text-center text-sm text-fg-2">
-      Bạn đã nghe hết phần đã có. Chương tiếp theo sẽ nghe được khi Studio làm xong.
+      Đã nghe hết phần đã có. Chương tiếp theo nghe được khi Studio làm xong.
     </p>
   );
 }

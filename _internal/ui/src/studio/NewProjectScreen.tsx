@@ -331,7 +331,7 @@ function SourceStep({
               {problem.text}
               {problem.subfolders.length > 0 && (
                 <div className="mt-2 space-y-1">
-                  <div className="text-fg-2">Có thể bạn muốn chọn thư mục con:</div>
+                  <div className="text-fg-2">Có lẽ nên chọn thư mục con:</div>
                   {problem.subfolders.map((folder) => (
                     <button
                       key={folder}
@@ -730,8 +730,8 @@ function VoiceStep({
     <div>
       <h2 className="text-xl font-semibold">Chọn giọng kể chuyện</h2>
       <p className="mt-1 max-w-2xl text-sm text-fg-2 text-pretty">
-        Giọng này đọc toàn bộ lời dẫn truyện. Mỗi nhân vật sẽ được tự động trao một giọng riêng sau bước phân tích - bạn
-        không cần chọn trước.
+        Giọng này đọc toàn bộ lời dẫn truyện. Mỗi nhân vật sẽ được tự động trao một giọng riêng sau bước phân tích - không cần
+        chọn trước.
       </p>
       <FirstPersonQuestion
         paths={paths}

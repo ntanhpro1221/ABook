@@ -200,7 +200,7 @@ function CoverSearch({
       open={open}
       onOpenChange={onOpenChange}
       title="Tìm ảnh bìa trên mạng"
-      description="Từ iTunes, Open Library và Google Books. Truyện mạng dịch thường không có ở đó - khi ấy dùng ảnh của bạn."
+      description="Từ iTunes, Open Library và Google Books. Truyện mạng dịch thường không có ở đó - khi ấy dùng ảnh có sẵn trên máy."
       width="max-w-3xl"
     >
       <form
@@ -249,7 +249,7 @@ function CoverSearch({
             ))}
           </div>
         ) : search.data ? (
-          <p className="py-10 text-center text-sm text-fg-2">Không thấy bìa nào. Thử tên tiếng Anh, bỏ số tập, hoặc dùng ảnh của bạn.</p>
+          <p className="py-10 text-center text-sm text-fg-2">Không thấy bìa nào. Thử tên tiếng Anh, bỏ số tập, hoặc dùng ảnh có sẵn trên máy.</p>
         ) : null}
         {failed.length > 0 && (
           <p className="mt-3 text-xs text-fg-3">Không trả lời lần này: {failed.map((name) => name.replace("_", " ")).join(", ")}.</p>
