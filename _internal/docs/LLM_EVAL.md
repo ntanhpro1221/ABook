@@ -777,7 +777,7 @@ Việc còn lại cho cửa sổ GPU, theo đúng thứ tự: `train_lora.py --s
 ## Kho dữ liệu (`D:/Novels/ABook/Corpus/`)
 
 Gom 19-09 (chỉ SAO CHÉP; bản trong Tools và Thùng rác giữ nguyên). Từ 27-09 kho là repo RIÊNG TƯ
-`ntanhpro1221/ABook-Corpus`, clone vào đúng `Corpus/` (repo chính công khai bỏ qua thư mục này và lịch sử của nó
+`ntanhpro1221/ABook-Private`, clone vào đúng `Corpus/` (repo chính công khai bỏ qua thư mục này và lịch sử của nó
 đã được viết lại cho sạch: phần lớn các truyện còn bản quyền, một thông báo DMCA sẽ khoá cả repo):
 
 | truyện | chương | nguồn |
