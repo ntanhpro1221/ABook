@@ -726,7 +726,12 @@ class SyncHandler(BaseHTTPRequestHandler):
                 elif not device.get("studio"):
                     self._json(HTTPStatus.FORBIDDEN, {"error": "Thiết bị này chưa được phép điều khiển sản xuất"})
                 else:
-                    self._json(HTTPStatus.OK, {"name": self.app.name, "at": time.time(), "books": self.app.studio_view()})
+                    # onBattery cấp MÁY (không cần sách nào chạy): điện thoại báo máy tuột sạc cả khi máy đang làm việc
+                    # khác - 24-09 và 29-09 sạc tuột lúc máy chạy việc ngoài Studio (soát QA 29-09).
+                    from ..power_source import on_battery
+
+                    self._json(HTTPStatus.OK, {"name": self.app.name, "at": time.time(), "onBattery": on_battery(),
+                                               "books": self.app.studio_view()})
                 return
             if method == "GET" and path == "/sync/v1/library":
                 # `routes` như lời đáp ghép: điện thoại học lại các đường mỗi lần mở thư viện - địa chỉ có SAU lúc ghép
