@@ -120,7 +120,8 @@ def person_name(name: str) -> str:
         name = name.rsplit("::", 1)[-1]
     name = name.replace("_", " ").strip()
     if name != name.upper():
-        return name
+        # "LOUise": model gõ vài chữ đầu HOA rồi thường - không tên nào viết thế (soát UX 29-09); "McDonald", "LeBlanc" giữ.
+        return " ".join(word[:1] + word[1:].lower() if _caps_glitch(word) else word for word in name.split(" "))
     words = []
     for word in name.split():
         if word in _ROMAN_NUMERALS:
@@ -131,6 +132,13 @@ def person_name(name: str) -> str:
 
 
 _ROMAN_NUMERALS = frozenset({"I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"})
+
+
+def _caps_glitch(word: str) -> bool:
+    """Từ mở bằng từ HAI chữ hoa trở lên rồi toàn chữ thường ("LOUise")."""
+    letters = [ch for ch in word if ch.isalpha()]
+    run = next((index for index, ch in enumerate(letters) if not ch.isupper()), len(letters))
+    return 2 <= run < len(letters) and all(ch.islower() for ch in letters[run:])
 
 
 def voice_tone(formant: float, pitch: float) -> str:
