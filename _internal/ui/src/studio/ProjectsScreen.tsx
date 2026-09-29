@@ -1,4 +1,5 @@
 import { FolderOpen, Plus, Wand2 } from "lucide-react";
+import { useMemo } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
@@ -9,6 +10,7 @@ import type { BookSummary } from "./api";
 import { phaseTone, pickFolder, useAppInfo, useLibrary, useOpenBook } from "./data";
 import { ProjectMenu } from "./ProjectScreen";
 import { StudioSetupCard } from "./StudioSetup";
+import { groupParts } from "./projectGroups";
 
 // Studio: nơi làm sách. Danh sách là bảng công việc - trạng thái sản xuất, tiến độ, thời gian còn lại - chứ không
 // phải kệ sách (kệ sách là của phía Nghe).
@@ -98,6 +100,7 @@ export function ProjectsScreen() {
   const books = data?.books ?? [];
   const live = books.filter((book) => book.running || book.starting);
   const others = books.filter((book) => !(book.running || book.starting));
+  const entries = useMemo(() => groupParts(others), [others]);
 
   const openExisting = async () => {
     try {
@@ -187,9 +190,22 @@ export function ProjectsScreen() {
               <span className="hidden text-right xl:block">Cập nhật</span>
             </div>
             <div className="mt-1.5 space-y-0.5">
-              {others.map((book) => (
-                <ProjectRow key={book.id} book={book} />
-              ))}
+              {entries.map((entry) =>
+                entry.kind === "book" ? (
+                  <ProjectRow key={entry.book.id} book={entry.book} />
+                ) : (
+                  <section key={`series:${entry.name}`} aria-label={entry.name} className="rounded-xl border border-line/70 p-1">
+                    <h3 className="px-3 pb-1 pt-1.5 text-xs font-semibold text-fg-2">
+                      {entry.name} <span className="font-normal text-fg-3">· {entry.books.length} {entry.unit}</span>
+                    </h3>
+                    <div className="space-y-0.5">
+                      {entry.books.map((book) => (
+                        <ProjectRow key={book.id} book={book} />
+                      ))}
+                    </div>
+                  </section>
+                ),
+              )}
             </div>
           </section>
         </>
