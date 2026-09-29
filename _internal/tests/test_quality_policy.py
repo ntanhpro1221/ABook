@@ -70,6 +70,21 @@ def test_quality_policy_fingerprints_every_critical_implementation_file() -> Non
     assert len(quality_implementation_hash()) == 64
 
 
+def test_the_apps_own_version_number_does_not_retire_quality_evidence() -> None:
+    """Mỗi bản phát hành nâng `version` của pyproject. Nếu con số ấy vào hash, mọi cuốn cũ mất bằng chứng QA sau mỗi lần
+    cập nhật app (ASR lại cả cuốn, dựng lại mọi MP3) mà không mẫu âm thanh nào đổi. Đổi thư viện phụ thuộc thì vẫn phải
+    đổi hash."""
+    from ebook_reader.quality_policy import _hashed_bytes
+
+    pyproject = b'[project]\nname = "ebook_reader"\nversion = "0.4.5"\ndependencies = ["vieneu==3.8.1"]\n'
+    bumped = pyproject.replace(b'"0.4.5"', b'"0.4.6"')
+    new_voice_engine = pyproject.replace(b"vieneu==3.8.1", b"vieneu==3.9.0")
+
+    assert _hashed_bytes("../pyproject.toml", bumped) == _hashed_bytes("../pyproject.toml", pyproject)
+    assert _hashed_bytes("../pyproject.toml", new_voice_engine) != _hashed_bytes("../pyproject.toml", pyproject)
+    assert _hashed_bytes("analysis.py", b'version = "1"\n') == b'version = "1"\n', "chỉ pyproject được bỏ số phiên bản"
+
+
 def test_quality_policy_locks_installed_dependency_versions_and_direct_urls() -> None:
     policy = build_quality_policy(build_settings())
 

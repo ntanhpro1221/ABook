@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 from pathlib import Path
 from typing import Any
 
@@ -66,6 +67,19 @@ QUALITY_IMPLEMENTATION_FILES = (
 )
 
 
+# Số phiên bản của CHÍNH app (dòng `version` của pyproject) đổi ở mỗi bản phát hành mà không đổi một mẫu âm thanh nào. Băm
+# nguyên byte thì mỗi lần cập nhật app xoá bằng chứng QA của mọi cuốn cũ: lần "Áp dụng thay đổi" hay "Làm tiếp" đầu tiên
+# sau đó ASR lại cả cuốn và dựng lại mọi MP3 (29-09: 0.4.3, 0.4.4, 0.4.5 trong cùng một ngày). Thư viện phụ thuộc - thứ
+# thật sự đổi âm thanh - vẫn nằm trong hash như cũ.
+PROJECT_VERSION_LINE = re.compile(rb'(?m)^version\s*=\s*"[^"\r\n]*"')
+
+
+def _hashed_bytes(filename: str, data: bytes) -> bytes:
+    if filename == "../pyproject.toml":
+        return PROJECT_VERSION_LINE.sub(b'version = "*"', data, count=1)
+    return data
+
+
 def implementation_files_hash(filenames: tuple[str, ...]) -> str:
     package_root = Path(__file__).resolve().parent
     digest = hashlib.sha256()
@@ -73,7 +87,7 @@ def implementation_files_hash(filenames: tuple[str, ...]) -> str:
         path = (package_root / filename).resolve()
         digest.update(filename.encode("utf-8"))
         digest.update(b"\0")
-        digest.update(path.read_bytes() if path.is_file() else b"MISSING")
+        digest.update(_hashed_bytes(filename, path.read_bytes()) if path.is_file() else b"MISSING")
         digest.update(b"\0")
     return digest.hexdigest()
 

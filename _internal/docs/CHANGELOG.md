@@ -10,6 +10,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Studio (sản xuất sách nói)
 
 - Thẻ cách đọc tên trong "Việc cần duyệt" có nút "Mọi cách đọc tên…" mở thẳng mục "Cách đọc tên" ở tab Nhân vật.
+- Cập nhật app không còn bắt kiểm lại âm thanh cả cuốn: trước đây số phiên bản của app nằm trong dấu vân tay chất lượng,
+  nên sau mỗi lần cập nhật, lần "Áp dụng thay đổi" hay "Làm tiếp" đầu tiên trên một cuốn cũ nhận dạng giọng lại mọi câu
+  và dựng lại mọi chương. Đổi thư viện giọng đọc hay nhận dạng vẫn kiểm lại như trước.
 
 ## [0.4.5] - 2026-09-29
 
