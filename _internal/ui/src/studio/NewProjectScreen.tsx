@@ -119,6 +119,8 @@ interface Draft {
   /** Chip "Đợt này làm N chương đầu": N chương đầu trong số chương CHƯA bị bỏ tay (null/không có = tất cả). Tách khỏi
    *  `excluded` - trước đây chip ghi đè danh sách bỏ tay, chương vừa bỏ tự quay lại (soát UX 29-09). */
   limit?: number | null;
+  /** Người dùng ĐỒNG Ý bỏ dòng ghi công người dịch khỏi phần đọc. Mặc định không: app không tự sửa nội dung truyện. */
+  dropCredits?: boolean;
 }
 
 interface Seed {
@@ -220,6 +222,8 @@ function SourceStep({
   later,
   onLimit,
   problem,
+  dropCredits,
+  onDropCredits,
 }: {
   scan: ScanResult | null;
   title: string;
@@ -236,6 +240,8 @@ function SourceStep({
   /** Chỉ làm `count` chương đầu (theo thứ tự tên file, sau các chương bỏ tay), hay tất cả khi null. */
   onLimit: (count: number | null) => void;
   problem: { text: string; subfolders: string[] } | null;
+  dropCredits: boolean;
+  onDropCredits: (value: boolean) => void;
 }) {
   const { data: info } = useAppInfo();
   const [typed, setTyped] = useState("");
@@ -405,6 +411,7 @@ function SourceStep({
               </div>
             </div>
           )}
+          <CreditSuggestion credits={creditSummary(files)} accepted={dropCredits} onChange={onDropCredits} />
           <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
             <div className="tabular text-sm text-fg-2">
               <span className="font-semibold text-fg">{files.length} chương</span> · {formatNumber(scan!.totals.words)} chữ · khoảng{" "}
@@ -487,6 +494,69 @@ function carriedText(carries: Seed["carries"]): string {
     carries.bracket ? "quy ước lời trong 『』" : "",
   ].filter(Boolean);
   return parts.length ? parts.join(" · ") : "những gì phần trước đã có";
+}
+
+interface Credits {
+  lines: number;
+  chapters: number;
+  examples: string[];
+}
+
+/** Dòng ghi công người dịch ở đầu các chương ĐANG CHỌN (bỏ chương hay giới hạn số chương thì đếm lại). */
+function creditSummary(files: ScannedFile[]): Credits {
+  const examples: string[] = [];
+  let lines = 0;
+  let chapters = 0;
+  for (const file of files) {
+    const found = file.credits ?? [];
+    if (!found.length) continue;
+    lines += found.length;
+    chapters += 1;
+    for (const line of found) if (examples.length < 3 && !examples.includes(line)) examples.push(line);
+  }
+  return { lines, chapters, examples };
+}
+
+// Phát hiện được thì ĐỀ XUẤT, không tự làm (chủ sách 29-09: app không bao giờ tự sửa nội dung truyện). Dòng ghi công người
+// dịch ở đầu chương ("TL : NicK", "*Edit: Lắc") bị đọc như một câu kể; chỉ khi bấm "Bỏ khỏi phần đọc" sách mới bỏ chúng,
+// không bấm thì sách giữ nguyên như file truyện. Phải chọn lúc tạo sách: đổi cách tách câu sau khi đã làm là đổi cả quyển.
+function CreditSuggestion({ credits, accepted, onChange }: { credits: Credits; accepted: boolean; onChange: (value: boolean) => void }) {
+  if (!credits.lines) return null;
+  const quoted = credits.examples.map((line) => `“${line}”`).join(", ");
+  return (
+    <div className="mt-4 flex gap-3 rounded-xl border border-line bg-panel p-4 text-sm">
+      <Sparkles className="mt-0.5 size-4 shrink-0 text-accent-text" />
+      <div className="min-w-0 flex-1">
+        {accepted ? (
+          <>
+            <p className="font-semibold">Sẽ bỏ {formatNumber(credits.lines)} dòng ghi công khỏi phần đọc</p>
+            <p className="mt-1 break-words text-fg-2">
+              Những dòng như {quoted} không được đọc và không hiện khi đọc theo. File truyện giữ nguyên.
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="font-semibold">Gợi ý: đầu {formatNumber(credits.chapters)} chương có dòng ghi công người dịch</p>
+            <p className="mt-1 break-words text-fg-2">
+              {quoted}
+              {credits.lines > credits.examples.length ? "…" : ""} - máy sẽ đọc chúng như một câu kể. Bỏ chúng khỏi phần đọc?
+            </p>
+          </>
+        )}
+        <div className="mt-2.5">
+          {accepted ? (
+            <Button size="sm" variant="ghost" onClick={() => onChange(false)}>
+              Thôi, cứ đọc như file truyện
+            </Button>
+          ) : (
+            <Button size="sm" variant="secondary" onClick={() => onChange(true)}>
+              Bỏ khỏi phần đọc
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function SeedBanner({ seed, onDrop }: { seed: Seed; onDrop: () => void }) {
@@ -916,6 +986,7 @@ function ConfirmStep({
   seed,
   startNow,
   setStartNow,
+  dropCredits,
 }: {
   title: string;
   scan: ScanResult;
@@ -926,12 +997,17 @@ function ConfirmStep({
   seed?: Seed;
   startNow: boolean;
   setStartNow: (value: boolean) => void;
+  /** Người dùng đã đồng ý bỏ dòng ghi công khỏi phần đọc. */
+  dropCredits: boolean;
 }) {
   const option = PROFILES.find((item) => item.value === profile)!;
   const guess = estimate(scan.totals.words, scan.files.length);
   const measured = profile === "high_quality";
   const rows: [string, string][] = [
     ["Chương", `${scan.files.length} chương · ${formatNumber(scan.totals.words)} chữ`],
+    ...(dropCredits
+      ? ([["Dòng ghi công", `bỏ ${formatNumber(creditSummary(scan.files).lines)} dòng khỏi phần đọc`]] as [string, string][])
+      : []),
     ["Độ dài audio", `khoảng ${formatLength(scan.totals.audioSeconds)}`],
     ["Giọng kể", narrator],
     ...(firstPerson ? ([["Người kể “tôi”", firstPerson]] as [string, string][]) : []),
@@ -1129,6 +1205,8 @@ export function NewProjectScreen() {
         firstPerson: draft.firstPerson.trim(),
         ...(Object.keys(povChapters).length ? { firstPersonChapters: povChapters } : {}),
         ...(draft.seed ? { seedFrom: draft.seed.id } : {}),
+        // Chỉ khi người dùng đã đồng ý đề xuất - không gửi gì thì sách giữ nguyên nội dung.
+        ...(draft.dropCredits && creditSummary(scan.files).lines ? { dropCreditLines: true } : {}),
         start: draft.startNow,
       },
       {
@@ -1209,6 +1287,8 @@ export function NewProjectScreen() {
                 });
               }}
               problem={problem}
+              dropCredits={Boolean(draft.dropCredits)}
+              onDropCredits={(value) => update({ dropCredits: value })}
             />
           )}
           {step === 1 && (
@@ -1238,6 +1318,7 @@ export function NewProjectScreen() {
               seed={draft.seed}
               startNow={draft.startNow}
               setStartNow={(startNow) => update({ startNow })}
+              dropCredits={Boolean(draft.dropCredits)}
             />
           )}
           <div className="mt-8 flex items-center justify-between border-t border-line pt-5">

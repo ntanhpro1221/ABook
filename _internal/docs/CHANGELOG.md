@@ -10,6 +10,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Studio (sản xuất sách nói)
 
 - Thẻ cách đọc tên trong "Việc cần duyệt" có nút "Mọi cách đọc tên…" mở thẳng mục "Cách đọc tên" ở tab Nhân vật.
+- Trình tạo sách phát hiện dòng ghi công người dịch / biên tập ở đầu chương ("TL : NicK", "*Edit: Lắc", "Translator: …"),
+  vốn bị đọc như một câu kể, và đề xuất bỏ chúng khỏi phần đọc. Chỉ áp dụng khi bấm "Bỏ khỏi phần đọc"; không bấm thì sách
+  giữ nguyên như file truyện. Sách đã tạo trước đó không đổi gì.
 
 ## [0.4.5] - 2026-09-29
 
