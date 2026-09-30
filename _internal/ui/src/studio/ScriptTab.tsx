@@ -88,7 +88,8 @@ interface ChapterScript {
   previous: number | null;
   next: number | null;
   castReady: boolean;
-  firstPerson: { value: string; label: string } | null;
+  /** Người kể "tôi" của CHƯƠNG NÀY (null: chương kể ngôi ba) và chip của người ấy trong chương (null: chưa nói câu nào). */
+  firstPerson: { value: string; label: string; chip?: string | null } | null;
   cast: Person[];
   others: Person[];
   lines: Line[];
@@ -1094,6 +1095,18 @@ export function ScriptTab({ bookId }: { bookId: string }) {
                 </button>
               ))}
             </div>
+          )}
+          {/* Chương kể ngôi thứ nhất: máy gán nhầm câu của người khác cho "tôi" nhiều nhất (8B-v5 trên bộ LN: 97/276 câu gán cho
+              người kể là sai) - mời soát riêng câu của người kể trước. */}
+          {data.castReady && data.firstPerson?.chip && who !== data.firstPerson.chip && (
+            <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-fg-2">
+              <span className="text-pretty">
+                Chương kể ngôi thứ nhất: máy hay nhầm câu của người khác thành của “tôi”.
+              </span>
+              <Button size="sm" variant="ghost" onClick={() => setWho(data.firstPerson!.chip!)}>
+                Soát câu của {data.cast.find((person) => person.value === data.firstPerson!.chip)?.label ?? data.firstPerson.label}
+              </Button>
+            </p>
           )}
           {data.castReady && data.cast.length > 0 && (
             <p className="mt-2 hidden flex-wrap items-center gap-1.5 text-xs text-fg-3 md:flex">

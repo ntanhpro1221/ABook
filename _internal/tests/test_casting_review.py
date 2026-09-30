@@ -83,7 +83,7 @@ def test_a_chapter_reads_as_a_script_with_who_says_each_line(tmp_path: Path) -> 
     assert [person["label"] for person in view["cast"]] == ["Lucien", "Heidi", "người gác"]
     assert view["cast"][0]["lines"] == 3, "câu nghĩ cũng là lời của Lucien"
     assert [person["label"] for person in view["others"]] == ["Rhine"], "bà bán hàng là vai phụ của chương 2"
-    assert view["firstPerson"] == {"value": "LUCIEN", "label": "Lucien"}
+    assert view["firstPerson"] == {"value": "LUCIEN", "label": "Lucien", "chip": "LUCIEN"}
     assert view["previous"] is None and view["next"] == 2 and view["castReady"] is True
     assert casting_chapter(project, 99) is None
     assert time.time() - started < 5
@@ -172,3 +172,16 @@ def test_the_studio_serves_the_script_tab_locally_and_to_remote_devices(tmp_path
     finally:
         server.stop()
     assert permitted("GET", base) and permitted("GET", base + "/2") and not permitted("POST", base + "/2")
+
+
+def test_the_narrator_of_each_chapter_points_at_their_chip(tmp_path: Path) -> None:
+    """Người kể "tôi" theo TỪNG chương (first_person_chapters đè cả cuốn; rỗng = chương kể ngôi ba) và chip của người ấy
+    trong chương - tab Kịch bản mời soát câu gán cho người kể, loại câu máy nhầm nhiều nhất (ANALYSIS_RESEARCH 30-09)."""
+    project = make_book(tmp_path)
+    settings = {"voices": {"first_person_identity": "Lucien", "first_person_chapters": {"1": "heidi"}}}
+    (project / "book_settings.json").write_text(json.dumps(settings), encoding="utf-8")
+    assert casting_chapter(project, 1)["firstPerson"]["chip"] == "HEIDI", "chương 1 người kể là Heidi, gõ thường vẫn khớp"
+    settings["voices"]["first_person_chapters"] = {"1": ""}
+    (project / "book_settings.json").write_text(json.dumps(settings), encoding="utf-8")
+    assert casting_chapter(project, 1)["firstPerson"] is None, "chương kể ngôi ba: không có người kể"
+
