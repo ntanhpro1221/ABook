@@ -38,6 +38,14 @@ B − A: F1 −1,4 [−4,0; +0,8], chặt −1,9 [−4,9; +1,1], B thua 3/4 chư
 LoRA gần như bỏ qua lời dặn thêm, nên thiên vị người kể phải sửa bằng dữ liệu (v8: người nói các lượt trước) chứ không bằng
 chữ trong prompt. Nhánh `dev/narrator-balance` KHÔNG gộp.
 
+**Huấn luyện 8B trên Mac mini M4 16 GB (MLX): chạy được nhưng ~35 giờ/epoch.** Câu hỏi của chủ sách ("sao không train 8b
+trên mac?"). mlx-lm, `mlx-community/Qwen3-8B-4bit`, LoRA rank 16 mọi lớp tuyến tính, chỉ tính loss câu trả lời, tối đa 4608
+token, batch 1, 24 mẫu data_v7n rải đều (trung bình 10.367 ký tự/mẫu, cả tập 10.333): ~62 giây/mẫu (0,014-0,017 it/s),
+bộ nhớ đỉnh 11,4 GB, RAM trống còn ~10%. Cả tập 2.057 mẫu: ~35 giờ. So: máy nhà 4B ~5 giây/mẫu (card 8 GB không vừa
+huấn luyện 8B), Modal L40S 8B ~1 giờ/epoch (~3 USD). Công thức MLX (lượng tử affine 4-bit của MLX, tối ưu hoá khác) cũng
+khác Unsloth của Kaggle/Modal nên kết quả không so thẳng được. Kết luận: 8B học trên Modal; Mac chỉ gánh thêm một biến thể
+chạy nền khi thật cần.
+
 **Phép kiểm thẻ "hai người chung một tên" trên cuốn đủ chương: dừng, làm lại trên máy nhà.** `split_check_mac.sh` gộp
 Nageki 56-64 (8 chương, 2.203 câu) thành MỘT dự án, nên dây chuyền phân tích cả cuốn trước: sau 8 giờ mới 608 câu (~76
 câu/giờ, chậm ~6 lần các chương đơn), mỗi lượt đo một chương hết hạn 2 giờ. Làm lại khi hàng GPU nhà rảnh (8B ở nhà nhanh
