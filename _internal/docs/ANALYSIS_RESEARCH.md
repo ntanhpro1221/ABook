@@ -47,6 +47,12 @@ Cổng (F1 giọng / người nói chặt, v6 → v7): TMA 156 câu 64,3 → 65,
 sạch trên Modal 01-10 dùng **data_v6** (`data_base.txt` không ghi gì). Cũng là phép so sạch hơn: 8B và 4B học cùng một bộ
 dữ liệu, khác nhau chỉ cỡ model. v7 không thay v6; mức +1,9 trên LN nằm sát nhiễu và không tới từ cơ chế đã nhắm.
 
+**Thẻ "hai người chung một tên" trên 5 chương liền nhau (Mac, 8B-v5, Nageki 60-64, 1.024 câu, từng chương một dự án):
+0 thẻ.** Không phải thẻ sai mà là không có gì để so: ở 60, 61, 63, 64 Lucia chỉ nói 3 câu (2 từ xưng hô), còn ở 62 cả 24
+câu mang nhãn LUCIA gần như toàn là lời bà thầy bói ("cậu" 38, "ta" 10) - một nhóm xưng hô duy nhất, không có nhóm thứ
+hai, không có hồ sơ ở chương khác. Thẻ chỉ bắt được việc nhập khi nhân vật bị nhập CÓ nói ở nơi khác trong cuốn. Kiểm tiếp
+trên Mac: thêm ba chương Lucia nói nhiều (49, 48, 79) rồi ghép với 62.
+
 ## 30-09 sáng - lời dặn "cân bằng người kể" không giúp; phép kiểm thẻ tách giọng trên Mac quá chậm
 
 **Lời dặn thêm về người kể: kết quả âm, đóng thí nghiệm.** Vòng 2 (Mac, 8B-v5, 4 chương ngôi thứ nhất của LN mở rộng, 315
