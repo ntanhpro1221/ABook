@@ -367,6 +367,8 @@ def manifest(project_root: Path, book: str, listening: Listening) -> dict[str, A
         "chaptersTotal": view["chaptersTotal"],
         "chaptersAvailable": sum(1 for chapter in chapters if chapter["available"]),
         "complete": view["complete"],
+        # Phần nối tiếp của "Làm tiếp cuốn này": sách đã tải về điện thoại vẫn gom theo chuỗi khi không nối máy tính.
+        "series": view.get("series"),
         "version": version,
         "chapters": chapters,
         "cast": "cast.json",
