@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { BookSummary } from "./api";
-import { groupParts } from "./projectGroups";
+import { groupParts, splitLive } from "./projectGroups";
 
 const book = (id: string, title: string) => ({ id, title }) as unknown as BookSummary;
 
@@ -16,5 +16,16 @@ describe("groupParts", () => {
 
   it("leaves a single volume on its own", () => {
     expect(groupParts([book("a", "Truyện · Tập 1"), book("b", "Khác")]).map((entry) => entry.kind)).toEqual(["book", "book"]);
+  });
+});
+
+describe("splitLive", () => {
+  it("lifts the whole series of a running part into the running section, not the part alone", () => {
+    const running = { ...book("p2", "Nageki · Phần 2"), running: true, paused: "listener" } as BookSummary;
+    const { live, rest, books } = splitLive(groupParts([book("p1", "Nageki"), running, book("x", "Sách lẻ")]));
+    expect(live).toHaveLength(1);
+    expect(live[0]).toMatchObject({ kind: "series", name: "Nageki" });
+    expect(rest.map((entry) => (entry.kind === "book" ? entry.book.id : entry.name))).toEqual(["x"]);
+    expect(books.map((item) => item.id)).toEqual(["p2"]);
   });
 });
