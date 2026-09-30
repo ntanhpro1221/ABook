@@ -89,6 +89,9 @@ export interface ListenBook {
   /** Cuốn nằm ở máy khác, nghe thẳng qua mạng: điện thoại - `true` (trên máy tính đã ghép); máy tính - tên máy tính
    *  kia (webui/remote_books.py). */
   remote?: boolean | { computer: string; device?: string };
+  /** Phần nối tiếp của "Làm tiếp cuốn này" (continues.json của máy tính): mã phần đầu + thứ tự phần; phần đầu và sách lẻ:
+   *  null. Có ở sách của máy tính, sách nghe thẳng và sách đã tải về điện thoại (book.json). */
+  series?: SeriesLink | null;
   /** Hồ sơ nghe gắn với cuốn này (chưa nghe lần nào thì rỗng). */
   records?: ListeningRecord[];
 }
