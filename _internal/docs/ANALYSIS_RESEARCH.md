@@ -53,6 +53,17 @@ câu mang nhãn LUCIA gần như toàn là lời bà thầy bói ("cậu" 38, "t
 hai, không có hồ sơ ở chương khác. Thẻ chỉ bắt được việc nhập khi nhân vật bị nhập CÓ nói ở nơi khác trong cuốn. Kiểm tiếp
 trên Mac: thêm ba chương Lucia nói nhiều (49, 48, 79) rồi ghép với 62.
 
+**Thêm chương 49 (Lucia nói 25 câu "anh/em"; 6 chương, 2.080 câu) - 30-09 20:4x, chưa có 48 và 79:**
+
+- Thẻ đang có trong app (hai nhóm xưng hô trong MỘT chương): 1 thẻ, và SAI - Sitri ở chương 49, "tôi… ngài" khi đàm phán
+  với người ngoài và "em… anh" với Krai; cả hai nhóm đều là lời Sitri. Đúng hạn chế đã biết (xưng hô đổi theo người nghe),
+  lần đầu gặp trong chương kể ngôi thứ nhất: độ đúng trên LN từ 15/15 thành 15/16.
+- Biến thể chưa vào app (MỘT nhóm lệch khỏi hồ sơ của nhãn ở các chương khác): 3 lần hỏi. Chương 62: 13 câu nhãn LUCIA
+  ("ta… cậu") - đáp án: cả 13 là bà thầy bói, BẮT ĐÚNG. Chương 49: 25 câu của chính Lucia bị hỏi, vì "các chương khác" của
+  49 chỉ có hồ sơ bẩn của 62 - hai chương thì không biết chương nào lệch. Sitri chương 49 (4 câu): sai như trên.
+- Hệ quả thiết kế: biến thể một nhóm chỉ nên hỏi khi hồ sơ ở các chương khác đến từ ít nhất hai chương và các chương ấy
+  khớp nhau (đa số quyết chương nào lệch). Đo lại khi 48 và 79 xong: mong 62 bị hỏi, 49 thì không.
+
 ## 30-09 sáng - lời dặn "cân bằng người kể" không giúp; phép kiểm thẻ tách giọng trên Mac quá chậm
 
 **Lời dặn thêm về người kể: kết quả âm, đóng thí nghiệm.** Vòng 2 (Mac, 8B-v5, 4 chương ngôi thứ nhất của LN mở rộng, 315
