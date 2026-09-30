@@ -231,7 +231,11 @@ export function NameInLine({ bookId, item }: { bookId: string; item: NameReading
 function EditReading({ bookId, item, onDone, fresh }: { bookId: string; item: NameReading; onDone: () => void; fresh: boolean }) {
   const client = useQueryClient();
   const when = useWhenApplied(bookId);
-  const [value, setValue] = useState(item.requested ?? item.spoken);
+  // Ô sửa hiện như dòng bên cạnh (“Rên-ta-rô”, chữ đầu mỗi từ viết hoa - soát UX 30-09); lưu mà chỉ khác hoa thường thì
+  // gửi đúng cách đang lưu (`asStored`), không thành một thay đổi bắt thu lại các câu.
+  const [value, setValue] = useState(shownReading(item.requested ?? item.spoken ?? ""));
+  const asStored = (text: string) =>
+    [item.requested, item.spoken].find((saved) => saved && saved.toLocaleLowerCase("vi") === text.toLocaleLowerCase("vi")) ?? text;
   const [problem, setProblem] = useState("");
   const [suggestion, setSuggestion] = useState("");
   const save = useMutation({
@@ -252,18 +256,18 @@ function EditReading({ bookId, item, onDone, fresh }: { bookId: string; item: Na
           "pronunciation",
           [{ surface: item.surface, requestedAt, previous: item.spoken, keep }],
           item.requested
-            ? `Trở lại cách đọc chờ áp trước đó: “${item.requested}”.`
+            ? `Trở lại cách đọc chờ áp trước đó: “${shownReading(item.requested)}”.`
             : item.spoken
-              ? `“${item.surface}” lại đọc là “${item.spoken}”.`
+              ? `“${item.surface}” lại đọc là “${shownReading(item.spoken)}”.`
               : `Đã bỏ cách đọc vừa thêm cho “${item.surface}”.`,
         ),
         duration: UNDO_MS,
       };
       if (keep) {
-        toast.success(`Giữ cách đọc “${spokenForm}”`, { description: "Không phải thu lại câu nào.", ...undo });
+        toast.success(`Giữ cách đọc “${shownReading(spokenForm)}”`, { description: "Không phải thu lại câu nào.", ...undo });
         return;
       }
-      toast.success(`Đã ghi: “${item.surface}” đọc là “${spokenForm}”`, {
+      toast.success(`Đã ghi: “${item.surface}” đọc là “${shownReading(spokenForm)}”`, {
         // Tên chưa có câu nào trong phần này (vừa thêm): không có gì để thu lại - nói đúng điều ấy (soát UX 29-09).
         description: item.lines
           ? `Các câu có tên này sẽ được thu lại. ${when}`
@@ -291,7 +295,7 @@ function EditReading({ bookId, item, onDone, fresh }: { bookId: string; item: Na
       className="flex w-full flex-wrap items-center gap-2"
       onSubmit={(event) => {
         event.preventDefault();
-        if (typed) save.mutate(typed);
+        if (typed) save.mutate(asStored(typed));
       }}
     >
       <input

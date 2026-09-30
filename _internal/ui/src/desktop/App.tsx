@@ -13,6 +13,7 @@ import { ReaderScreen } from "@/listen/ReaderScreen";
 import { PlayerProvider, usePlayer } from "@/listen/player";
 import { SourceProvider } from "@/listen/source";
 import { Button, Dialog, EmptyState, TooltipProvider } from "@/shared/ui";
+import { useMediaQuery } from "@/shared/media";
 import type { ListenBook } from "@/listen/model";
 import { coverArtwork } from "@/shared/cover";
 import { api } from "@/studio/api";
@@ -386,6 +387,9 @@ export function App() {
   const { data: preferences } = usePreferences();
   useTheme(preferences?.theme ?? info?.theme);
   const engine = useMemo(() => new WebAudioEngine(), []);
+  // Màn hẹp (Studio từ xa trên điện thoại): thông báo ở đầu màn như app Android - ở đáy nó đè trình phát nhỏ và thanh
+  // điều hướng suốt 8 giây của nút "Hoàn tác" (soát UX 30-09).
+  const narrow = useMediaQuery("(max-width: 639px)");
   if (!info) return <div className="grid h-full place-items-center text-fg-3">Đang mở ABook…</div>;
   return (
     <TooltipProvider delayDuration={350} skipDelayDuration={150}>
@@ -441,7 +445,7 @@ export function App() {
         </PlayerProvider>
       </SourceProvider>
       <Toaster
-        position="bottom-right"
+        position={narrow ? "top-center" : "bottom-right"}
         // Đáy nâng lên khi có thanh "Đang phát trên điện thoại" (RemotePhone.tsx đặt --toast-bottom).
         offset={{ top: 96, right: 96, left: 96, bottom: "var(--toast-bottom, 96px)" }}
         containerAriaLabel="Thông báo"

@@ -112,14 +112,25 @@ export function useStart() {
   });
 }
 
+/** `paused` / `queued`: sách đang ở trạng thái nào lúc bấm - thông báo nói đúng điều xảy ra (soát UX 30-09: dừng một sách
+ *  đang tạm dừng vẫn báo "dừng ở câu đang làm dở", bỏ xếp hàng cũng vậy). */
 export function useStop() {
   const refresh = useRefresh();
   return useMutation({
     scope: { id: "start-stop" },
-    mutationFn: (id: string) => api<BookSummary>(`/api/books/${id}/stop`, { method: "POST" }),
-    onSuccess: (_book, id) => {
+    mutationFn: ({ id }: { id: string; paused?: boolean; queued?: boolean }) =>
+      api<BookSummary>(`/api/books/${id}/stop`, { method: "POST" }),
+    onSuccess: (_book, { id, paused, queued }) => {
       refresh(id);
-      toast("Đang dừng", { description: "Sách sẽ dừng ở câu đang làm dở; mọi thứ đã xong được giữ nguyên." });
+      if (queued) {
+        toast("Đã bỏ xếp hàng", { description: "Cuốn này không tự bắt đầu nữa." });
+        return;
+      }
+      toast("Đang dừng", {
+        description: paused
+          ? "Sách dừng hẳn và nhả bộ nhớ card đồ hoạ; mọi thứ đã xong được giữ nguyên."
+          : "Sách sẽ dừng ở câu đang làm dở; mọi thứ đã xong được giữ nguyên.",
+      });
     },
     onError: (error: Error) => toast.error("Không dừng được", { description: error.message }),
   });
@@ -134,13 +145,14 @@ export function usePause() {
       api<BookSummary>(`/api/books/${id}/pause`, { method: "POST", body: { paused } }),
     onSuccess: (_book, { id, paused }) => {
       refresh(id);
-      toast(paused ? "Đang tạm dừng" : "Làm tiếp", {
+      toast(paused ? "Đang tạm dừng" : "Đang làm tiếp", {
         description: paused
           ? "Sách đứng lại sau phần đang làm dở (lúc phân tích có thể mất vài phút) và giữ nguyên mọi thứ - bấm “Tiếp tục” là làm tiếp đúng chỗ ấy."
-          : undefined,
+          : "Sách làm tiếp đúng chỗ đã tạm dừng.",
       });
     },
-    onError: (error: Error) => toast.error("Không tạm dừng được", { description: error.message }),
+    onError: (error: Error, { paused }) =>
+      toast.error(paused ? "Không tạm dừng được" : "Không làm tiếp được", { description: error.message }),
   });
 }
 

@@ -74,6 +74,8 @@ export interface ListenBook {
   producing: boolean;
   /** Chưa làm xong và cũng không đang làm (Studio đã dừng). */
   paused?: boolean;
+  /** Đang làm mà tạm dừng (người dùng bấm "Tạm dừng", hay máy tính chạy pin) - tiến trình vẫn sống. */
+  pauseReason?: "battery" | "listener" | null;
   /** Máy tính: cuốn mở từ file `.abook` (webui/packages.py) - nghe được, không có dự án trong Studio. */
   imported?: boolean;
   updatedAt: number | null;

@@ -65,6 +65,9 @@ def book(project_root: Path, book_id: str, summary: dict[str, Any], state: dict[
         "complete": complete,
         "producing": bool(summary.get("running") or summary.get("starting")),
         "paused": not complete and not (summary.get("running") or summary.get("starting")),
+        # Đang làm nhưng bấm "Tạm dừng" hay máy chạy pin (tiến trình vẫn sống): thẻ "đang làm" nói đúng là đang tạm dừng
+        # (soát UX 30-09: thẻ ghi "Đang làm · đang chuẩn bị").
+        "pauseReason": summary.get("paused") if summary.get("running") else None,
         "updatedAt": summary.get("updatedAt"),
         "state": state,
         "progress": book_progress(state, available, complete=complete),

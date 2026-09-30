@@ -66,6 +66,9 @@ def voice_choices(project_root: Path, character: str) -> dict[str, Any] | None:
             gender: str(listener_voice_choice(connection, voices, key, gender=gender, age=age)["preset_name"])
             for gender in ("male", "female")
         }
+        book_row = connection.execute("SELECT updated_at FROM book WHERE id=1").fetchone()
+    pending = _pending_request(project_root, key, suggested,
+                               float(book_row["updated_at"] or 0) if book_row is not None else 0.0)
     mine = chapters.get(key, set())
     entries = []
     for gender in ("male", "female"):
@@ -91,6 +94,7 @@ def voice_choices(project_root: Path, character: str) -> dict[str, Any] | None:
                 "style": STYLE_LABELS.get(str(preset["style"]), str(preset["style"])),
                 "preview": bool(VOICE_PREVIEW_FILENAMES.get(name)),
                 "current": name == current,
+                "pending": pending is not None and pending["preset"] == name,
                 "suggested": suggested.get(gender) == name,
                 "sharedWith": shared[:4],
                 "otherUsers": len(others) - min(len(shared), 4),
@@ -106,5 +110,33 @@ def voice_choices(project_root: Path, character: str) -> dict[str, Any] | None:
             "chapters": len(mine),
         },
         "current": voice_label(current),
+        # Lựa chọn chưa vào sách: hộp đánh dấu nó và cho giữ giọng đang dùng (bỏ yêu cầu) - soát UX 30-09: lỡ 8 giây
+        # "Hoàn tác" thì không còn đường nào bỏ lựa chọn.
+        "pending": None if pending is None else {
+            "name": voice_label(pending["preset"]) if pending["preset"] else "",
+            "requestedAt": pending["requestedAt"],
+        },
         "voices": entries,
     }
+
+
+def _pending_request(project_root: Path, key: str, suggested: dict[str, str], written_at: float) -> dict[str, Any] | None:
+    """Yêu cầu giọng/giới của nhân vật này ghi SAU lần dây chuyền ghi sổ cuối (như store.pending_voices), kèm giọng gốc nó
+    sẽ thành: giọng đã chọn, hay giọng máy chọn cho giới đã chọn (thẻ "Nam hay nữ"); "tránh trùng giọng" thì chưa biết."""
+    from ..listener_overrides import read_overrides
+
+    entries = read_overrides(project_root).get("voices")
+    entry = entries.get(key) if isinstance(entries, dict) else None
+    if not isinstance(entry, dict):
+        return None
+    try:
+        requested_at = float(entry.get("requested_at") or 0)
+    except (TypeError, ValueError):
+        return None
+    if requested_at <= store.changes_since(project_root, written_at):
+        return None
+    preset = str(entry.get("preset") or "")
+    gender = str(entry.get("gender") or "")
+    if not (preset or gender or entry.get("avoid")):
+        return None
+    return {"preset": preset or suggested.get(gender, ""), "requestedAt": requested_at}
