@@ -576,3 +576,20 @@ def test_listening_sessions_are_kept_merged_and_left_out_of_lists(tmp_path: Path
     phone = {"sessions": [{**session, "id": "p1", "device": "phone", "startedAt": 50}]}
     merged = listening.merge("b", phone)
     assert [item["id"] for item in merged["sessions"]] == ["p1", "s1"]
+
+
+def test_a_continued_part_carries_its_chain_to_the_phone(library) -> None:
+    """Sách tải về điện thoại gom phần theo chuỗi continues.json như trên máy tính - kể cả khi không nối máy tính: book.json
+    mang {phần đầu, thứ tự phần} (soát UX 29-09, N10)."""
+    from ebook_reader import continuation
+
+    _lib, project, listening = library
+    assert manifest(project, book_id(project), listening)["series"] is None, "sách lẻ không mang gì"
+    first = project.parent / "phan1"
+    first.mkdir()
+    (first / continuation.DB_NAME).write_bytes(b"")
+    (project / continuation.LINK_FILE).write_text(json.dumps({"previous": "phan1", "part": 2}), encoding="utf-8")
+    expected = {"root": book_id(first), "part": 2}
+    assert manifest(project, book_id(project), listening)["series"] == expected
+    view = listen_view.book(project, book_id(project), store.summarize(project), listening.get("x"))
+    assert view["series"] == expected
