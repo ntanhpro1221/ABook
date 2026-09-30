@@ -24,6 +24,29 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
 7. **Người vô danh xác định được là MỘT người phải ghi `NPC*:<mô tả>` trong đáp án, cả ở chương kiểm tra**; đám đông
    để `NPC*` trơn. Thiếu mô tả thì F1 giọng không biết hai câu vô danh là một người, và xếp model ngược (mục 29-09 tối).
 
+## 30-09 chiều - v7 (nhãn người lạ có mô tả): LN nhích lên, việc nhập người lạ KHÔNG giảm, thua hai cổng
+
+v7 = công thức v6 (4B, 1 epoch) trên data_v7 = data_v6 với 174 câu "người lạ" đổi thành 50 nhãn mô tả ("trưởng thôn",
+"nữ hầu cận của Marla"). Cùng host với v6 và 8B-v5 (29-09), LN 12 chương, 1014 câu:
+
+| | F1 giọng | người nói chặt | cảm xúc | nhập người lạ vào nhân vật có tên |
+|---|---|---|---|---|
+| v6 | 59,8% | 61,4% | 90,4% | 32% (21/65) |
+| v7 | 61,7% | 63,2% | 89,7% | 34% (22/65) |
+| 8B-v5 | 62,6% | 66,7% | 90,0% | 55% (36/65) |
+
+v7 − v6: F1 +1,9 [−0,0; +4,0], chặt +1,8 [−0,3; +3,9], cảm xúc −0,7 [−1,6; +0,1], hơn 10/12 chương. Nhưng điều v7 nhắm
+tới không đổi: nhập người lạ 34% so với 32% (Nise 11/11, LU 6/11 vẫn nhập; Nageki 62 0/25 như v6). Với 4B, nhãn mô tả
+trong dữ liệu không dạy được việc giữ người lạ riêng - chỗ nhập là chỗ model không nhận ra có một người mới, không phải
+chỗ nó thiếu cách gọi tên người ấy.
+
+Cổng (F1 giọng / người nói chặt, v6 → v7): TMA 156 câu 64,3 → 65,4 / 73,1 → 71,2; YMP 248 50 câu 76,4 → 67,0 / 86,0 →
+80,0; Tam quốc 219 câu 87,5 → 83,8 / 84,5 → 80,8; Tắt đèn 112 câu 72,8 → 72,9 / 80,4 → 80,4. Thua quá 2 điểm ở hai cổng.
+
+**Quyết định (luật đặt trước khi có số cổng: dùng data_v7 chỉ khi không thua v6 quá 2 điểm ở cổng nào):** lượt 8B dữ liệu
+sạch trên Modal 01-10 dùng **data_v6** (`data_base.txt` không ghi gì). Cũng là phép so sạch hơn: 8B và 4B học cùng một bộ
+dữ liệu, khác nhau chỉ cỡ model. v7 không thay v6; mức +1,9 trên LN nằm sát nhiễu và không tới từ cơ chế đã nhắm.
+
 ## 30-09 sáng - lời dặn "cân bằng người kể" không giúp; phép kiểm thẻ tách giọng trên Mac quá chậm
 
 **Lời dặn thêm về người kể: kết quả âm, đóng thí nghiệm.** Vòng 2 (Mac, 8B-v5, 4 chương ngôi thứ nhất của LN mở rộng, 315
