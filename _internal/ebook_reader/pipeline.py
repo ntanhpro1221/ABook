@@ -454,14 +454,19 @@ class BookPipeline:
     ) -> None:
         self.emit("work_progress", {"label": label, "done": done, "total": total})
 
-    def _wait_pause_or_stop(self) -> None:
+    def _wait_pause_or_stop(self) -> float:
+        """Đứng yên khi được bảo tạm dừng (nút Tạm dừng, máy rút sạc - power_source.py). Trả về số giây đã đứng, để các
+        vòng chờ có hạn giờ (RAM, VRAM) không tính thời gian tạm dừng vào hạn của chúng: tạm dừng một giờ giữa lúc chờ RAM
+        từng thành "dừng khẩn cấp" ngay khi làm tiếp (soát QA 29-09)."""
         announced = False
+        paused_at = 0.0
         resume_status: str | None = None
         resume_stage: str | None = None
         while self.pause_requested():
             if self.stop_requested():
                 raise PipelineStopped("Stop requested")
             if not announced:
+                paused_at = time.monotonic()
                 book = self.db.book()
                 resume_status = str(book["status"])
                 resume_stage = str(book["stage"])
@@ -469,11 +474,13 @@ class BookPipeline:
                 self._state("paused", "Đã tạm dừng.")
                 announced = True
             time.sleep(0.25)
+        paused_for = time.monotonic() - paused_at if announced else 0.0
         if announced:
             self.db.update_book(status=resume_status, stage=resume_stage)
             self._state("running", "Đang tiếp tục từ checkpoint.")
         if self.stop_requested():
             raise PipelineStopped("Stop requested")
+        return paused_for
 
     def _resource_gate(
         self,
@@ -619,7 +626,7 @@ class BookPipeline:
                         "hết model và sẽ tự chạy tiếp khi có bộ nhớ.",
                         project_path=self.paths.root,
                     )
-            self._wait_pause_or_stop()
+            started += self._wait_pause_or_stop()
             time.sleep(CRITICAL_RAM_WAIT_POLL_SECONDS)
             snapshot = self.resources.snapshot(force=True)
             decision = self.resources.decide(snapshot)
@@ -690,7 +697,7 @@ class BookPipeline:
         )
         last_logged = 0.0
         while time.monotonic() - started < CRITICAL_RAM_WAIT_TIMEOUT_SECONDS:
-            self._wait_pause_or_stop()
+            started += self._wait_pause_or_stop()
             time.sleep(CRITICAL_RAM_WAIT_POLL_SECONDS)
             snapshot = self.resources.snapshot(force=True)
             if int(snapshot.gpu_free_mb or 0) >= needed:
