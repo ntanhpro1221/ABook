@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.10] - 2026-09-30
+
 ### Studio (sản xuất sách nói)
 
 - Nút "Tạm dừng" / "Tiếp tục" khi sách đang chạy: sách đứng yên sau phần đang làm dở và làm tiếp đúng chỗ ấy, không đổi
