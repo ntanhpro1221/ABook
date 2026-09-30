@@ -49,7 +49,11 @@ chữ trong prompt. Nhánh `dev/narrator-balance` KHÔNG gộp.
 | người kể "tôi" nói | 47/227 (21%) | |
 | có lời dẫn | 39/194 (20%) | |
 
-v6 sai 391: 8B bớt chủ yếu ở 『』 của TCF (28 -> 13) và "tôi nói" (60 -> 47). Cặp chương LN (cơ sở + mở rộng, cách xa
+v6 sai 391: 8B bớt chủ yếu ở 『』 của TCF (28 -> 13) và "tôi nói" (60 -> 47). Trong ô "còn lại" (87 câu sai), 42 câu là
+câu người khác bị gán cho người kể: tính cả hai chiều, NHẦM NGƯỜI KỂ là 89/338 lỗi (26%) - vẫn là lỗi số một. App bắt được
+ít: 97 câu 8B gán nhầm cho người kể trên các chương ngôi thứ nhất, thẻ 0b (xưng hô) hỏi 18 (19%), gợi ý đúng người 9, hỏi
+nhầm 7 câu đúng; tên người kể nằm trong câu chỉ 7 câu (6 sai), phần lớn đã là thẻ 2 ("gọi tên ở đầu câu") - không làm thẻ
+mới. Phần còn lại cần ngữ cảnh lượt lời (v8) hay người đọc Kịch bản. Công cụ: `card0b_recall.py`, `narrator_name_cue.py`. Cặp chương LN (cơ sở + mở rộng, cách xa
 nhau) gần như không chung nhân vật ngoài người kể, nên KHÔNG đo được thẻ tách giọng cần hồ sơ ở chương khác - phải dùng
 các chương liền nhau (Nageki 60-64). Công cụ: scratchpad `error_map.py`, `split_pairs_eval.py`.
 
