@@ -309,6 +309,15 @@ export function Dialog({
             "fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-line bg-panel p-6 shadow-float focus:outline-none",
             width,
           )}
+          onOpenAutoFocus={(event) => {
+            // Radix đặt con trỏ vào thứ bấm được đầu tiên - nút X ở đầu hộp - đè lên `autoFocus` của ô nhập (soát UX 30-09:
+            // hộp Đổi tên). Ô nào mang `data-autofocus` thì nhận con trỏ, chữ có sẵn được chọn để gõ đè.
+            const target = (event.currentTarget as HTMLElement | null)?.querySelector<HTMLElement>("[data-autofocus]");
+            if (!target) return;
+            event.preventDefault();
+            target.focus();
+            if (target instanceof HTMLInputElement) target.select();
+          }}
         >
           <div className="mb-4 flex items-start justify-between gap-4">
             <div>

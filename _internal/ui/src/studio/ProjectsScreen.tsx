@@ -10,7 +10,7 @@ import type { BookSummary } from "./api";
 import { phaseTone, pickFolder, useAppInfo, useLibrary, useOpenBook } from "./data";
 import { ProjectMenu } from "./ProjectScreen";
 import { StudioSetupCard } from "./StudioSetup";
-import { groupParts } from "./projectGroups";
+import { groupParts, type Entry } from "./projectGroups";
 
 // Studio: nơi làm sách. Danh sách là bảng công việc - trạng thái sản xuất, tiến độ, thời gian còn lại - chứ không
 // phải kệ sách (kệ sách là của phía Nghe).
@@ -48,7 +48,7 @@ function ProjectRow({ book }: { book: BookSummary }) {
         )}
       >
         {/* Màn hẹp (Studio từ xa trên điện thoại): trạng thái và tiến độ xếp dưới tên, không chia cột. */}
-        <BookCover title={book.title} size="sm" image={book.cover} className="row-span-3 size-12 self-start md:row-span-1 md:self-center" />
+        <BookCover title={book.title} part={book.series?.part} size="sm" image={book.cover} className="row-span-3 size-12 self-start md:row-span-1 md:self-center" />
         <div className="min-w-0">
           <div className="truncate font-semibold">{book.title}</div>
           <div className="truncate text-xs text-fg-2">
@@ -76,8 +76,10 @@ function ProjectRow({ book }: { book: BookSummary }) {
             </>
           )}
         </div>
-        <div className={cn("tabular hidden text-right text-xs xl:block", live ? "text-accent-text" : "text-fg-2")}>
-          {live ? "đang chạy" : formatRelative(book.updatedAt)}
+        <div
+          className={cn("tabular hidden text-right text-xs xl:block", live ? (book.paused ? "text-warning" : "text-accent-text") : "text-fg-2")}
+        >
+          {live ? (book.paused ? "tạm dừng" : "đang chạy") : formatRelative(book.updatedAt)}
         </div>
       </button>
       {local && (
@@ -92,15 +94,40 @@ function ProjectRow({ book }: { book: BookSummary }) {
   );
 }
 
+/** Một dòng dự án, hay khung các phần của một cuốn ("lo18 · 2 phần"). `inset`: khung nằm trong hộp "Đang chạy" (đã có lề
+ *  trong) - không kéo ra lề như trong bảng chính. */
+function EntryView({ entry, inset = false }: { entry: Entry; inset?: boolean }) {
+  if (entry.kind === "book") return <ProjectRow book={entry.book} />;
+  return (
+    <section aria-label={entry.name} className={cn("rounded-xl border border-line/70 p-1", !inset && "-mx-[5px]")}>
+      <h3 className="px-3 pb-1 pt-1.5 text-xs font-semibold text-fg-2">
+        {entry.name} <span className="font-normal text-fg-3">· {entry.books.length} {entry.unit}</span>
+      </h3>
+      <div className="space-y-0.5">
+        {entry.books.map((book) => (
+          <ProjectRow key={book.id} book={book} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+const entryKey = (entry: Entry) => (entry.kind === "book" ? entry.book.id : `series:${entry.name}`);
+const entryBooks = (entry: Entry) => (entry.kind === "book" ? [entry.book] : entry.books);
+const isLive = (book: BookSummary) => book.running || book.starting;
+
 export function ProjectsScreen() {
   const { data, isLoading } = useLibrary();
   const { data: info } = useAppInfo();
   const navigate = useNavigate();
   const open = useOpenBook();
-  const books = data?.books ?? [];
-  const live = books.filter((book) => book.running || book.starting);
-  const others = books.filter((book) => !(book.running || book.starting));
-  const entries = useMemo(() => groupParts(others), [others]);
+  const books = useMemo(() => data?.books ?? [], [data]);
+  // Nhóm phần trước, rồi mới tách mục "Đang chạy": một phần đang chạy kéo cả nhóm của nó lên, không để phần 2 ở trên và
+  // phần 1 đứng lẻ bên dưới (soát UX 30-09).
+  const entries = useMemo(() => groupParts(books), [books]);
+  const liveEntries = entries.filter((entry) => entryBooks(entry).some(isLive));
+  const otherEntries = entries.filter((entry) => !entryBooks(entry).some(isLive));
+  const live = liveEntries.flatMap(entryBooks).filter(isLive);
 
   const openExisting = async () => {
     try {
@@ -169,14 +196,14 @@ export function ProjectsScreen() {
           {live.length > 0 && (
             <section className="mt-8">
               <h2 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-fg-3">{live.every((book) => book.paused) ? "Đang tạm dừng" : "Đang chạy"}</h2>
-              <div className="rounded-2xl border border-accent/30 bg-panel p-1.5">
-                {live.map((book) => (
-                  <ProjectRow key={book.id} book={book} />
+              <div className="space-y-0.5 rounded-2xl border border-accent/30 bg-panel p-1.5">
+                {liveEntries.map((entry) => (
+                  <EntryView key={entryKey(entry)} entry={entry} inset />
                 ))}
               </div>
             </section>
           )}
-          <section className="mt-8">
+          <section className={cn("mt-8", !otherEntries.length && "hidden")}>
             <div
               className={cn(
                 "hidden grid-cols-[48px_minmax(0,1fr)_160px_170px] gap-4 border-b border-line px-3 pb-2 text-xs font-semibold uppercase tracking-[0.06em] text-fg-2 md:grid xl:grid-cols-[48px_minmax(0,1fr)_170px_200px_110px]",
@@ -190,22 +217,9 @@ export function ProjectsScreen() {
               <span className="hidden text-right xl:block">Cập nhật</span>
             </div>
             <div className="mt-1.5 space-y-0.5">
-              {entries.map((entry) =>
-                entry.kind === "book" ? (
-                  <ProjectRow key={entry.book.id} book={entry.book} />
-                ) : (
-                  <section key={`series:${entry.name}`} aria-label={entry.name} className="-mx-[5px] rounded-xl border border-line/70 p-1">
-                    <h3 className="px-3 pb-1 pt-1.5 text-xs font-semibold text-fg-2">
-                      {entry.name} <span className="font-normal text-fg-3">· {entry.books.length} {entry.unit}</span>
-                    </h3>
-                    <div className="space-y-0.5">
-                      {entry.books.map((book) => (
-                        <ProjectRow key={book.id} book={book} />
-                      ))}
-                    </div>
-                  </section>
-                ),
-              )}
+              {otherEntries.map((entry) => (
+                <EntryView key={entryKey(entry)} entry={entry} />
+              ))}
             </div>
           </section>
         </>

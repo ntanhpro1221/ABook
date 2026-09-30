@@ -97,7 +97,7 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
           else toast.error("Chỉ thả được file ảnh (PNG, JPEG, WebP…)");
         }}
       >
-        <BookCover title={book.title} size="lg" image={book.cover} className="w-44" />
+        <BookCover title={book.title} part={book.series?.part} size="lg" image={book.cover} className="w-44" />
         {busy && (
           <div className="absolute inset-0 grid place-items-center rounded-lg bg-black/40 text-white">
             <Loader2 className="size-6 animate-spin" />

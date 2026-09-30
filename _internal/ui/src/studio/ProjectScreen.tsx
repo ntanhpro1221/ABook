@@ -21,7 +21,7 @@ import {
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import {
   Button,
@@ -212,9 +212,13 @@ function StopDialog({ book, open, onOpenChange }: { book: BookSummary; open: boo
       onOpenChange={onOpenChange}
       title={inAnalysis ? "Dừng giữa lúc phân tích truyện?" : "Dừng tạo sách nói?"}
       description={
+        // Không nêu tên nút làm tiếp: sau khi dừng nó là "Tiếp tục tạo", "Bắt đầu tạo sách nói" hay "Áp dụng N thay đổi"
+        // tuỳ sách đã tới đâu (soát UX 30-09). Đang tạm dừng thì nói Dừng khác Tạm dừng ở chỗ nào.
         inAnalysis
           ? undefined
-          : "Mọi chương và câu đã xong được giữ nguyên. Bấm “Tiếp tục tạo” để làm tiếp từ chỗ dừng."
+          : book.paused
+            ? "Sách đang tạm dừng và vẫn giữ bộ nhớ card đồ hoạ. Dừng hẳn thì nhả bộ nhớ ấy cho việc khác; mọi chương và câu đã xong vẫn giữ nguyên, làm tiếp lúc nào cũng được."
+            : "Mọi chương và câu đã xong được giữ nguyên - làm tiếp lúc nào cũng được, từ đúng chỗ dừng."
       }
     >
       {inAnalysis && (
@@ -234,7 +238,7 @@ function StopDialog({ book, open, onOpenChange }: { book: BookSummary; open: boo
                   đang làm dở) và làm tiếp đúng chỗ, không đổi gì - nhưng vẫn giữ bộ nhớ card đồ hoạ.
                 </>
               )}{" "}
-              Nếu buộc phải dừng hẳn (tắt máy), hãy tạo lại sách từ đầu thay vì bấm “Tiếp tục tạo”.
+              Nếu buộc phải dừng hẳn (tắt máy), hãy tạo lại sách từ đầu thay vì chạy tiếp bản dở.
             </p>
           </div>
         </div>
@@ -258,7 +262,7 @@ function StopDialog({ book, open, onOpenChange }: { book: BookSummary; open: boo
           icon={Square}
           loading={stop.isPending}
           disabled={stop.isPending}
-          onClick={() => stop.mutate(book.id, { onSettled: () => onOpenChange(false) })}
+          onClick={() => stop.mutate({ id: book.id, paused: Boolean(book.paused) }, { onSettled: () => onOpenChange(false) })}
         >
           {inAnalysis ? "Vẫn dừng" : "Dừng"}
         </Button>
@@ -309,7 +313,7 @@ function RenameDialog({ book, open, onOpenChange }: { book: BookSummary; open: b
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           maxLength={160}
-          autoFocus
+          data-autofocus
           autoComplete="off"
           className="mt-1.5 h-10 w-full rounded-lg border border-line bg-panel px-3 text-sm text-fg outline-none focus-visible:border-accent"
         />
@@ -460,7 +464,7 @@ function Actions({ book }: { book: BookSummary }) {
           <span className="inline-flex h-11 items-center gap-2 rounded-xl bg-warning-soft px-4 text-sm font-medium text-warning">
             Đang xếp hàng · thứ {book.queuePosition} - tự bắt đầu khi cuốn đang chạy xong
           </span>
-          <Button variant="ghost" size="lg" onClick={() => stop.mutate(book.id)}>
+          <Button variant="ghost" size="lg" onClick={() => stop.mutate({ id: book.id, queued: true })}>
             Bỏ xếp hàng
           </Button>
         </>
@@ -573,7 +577,7 @@ function ChapterRow({ book, chapter }: { book: BookSummary; chapter: Chapter }) 
       role="row"
       onDoubleClick={onPlay}
       className={cn(
-        "group grid h-14 grid-cols-[40px_minmax(0,1fr)_auto] md:grid-cols-[48px_minmax(0,1fr)_150px_110px_96px] items-center gap-3 rounded-lg px-2 text-sm",
+        "group grid h-14 grid-cols-[40px_minmax(0,1fr)_auto] lg:grid-cols-[48px_minmax(0,1fr)_150px_110px_96px] items-center gap-3 rounded-lg px-2 text-sm",
         current ? "bg-accent-soft" : "hover:bg-hover",
       )}
     >
@@ -622,10 +626,10 @@ function ChapterRow({ book, chapter }: { book: BookSummary; chapter: Chapter }) 
           <StatusPill label={chapter.statusLabel} tone={chapterTone(chapter)} />
         )}
       </div>
-      <div className="tabular hidden text-right text-xs text-fg-2 md:block">
+      <div className="tabular hidden text-right text-xs text-fg-2 lg:block">
         {chapter.status === "completed" ? formatLength(chapter.seconds) : chapter.segments.total ? `${formatNumber(chapter.segments.total)} câu` : ""}
       </div>
-      <div className="tabular hidden whitespace-nowrap text-right text-xs text-fg-3 md:block">
+      <div className="tabular hidden whitespace-nowrap text-right text-xs text-fg-3 lg:block">
         {chapter.completedAt ? formatRelative(chapter.completedAt) : ""}
       </div>
     </div>
@@ -635,13 +639,13 @@ function ChapterRow({ book, chapter }: { book: BookSummary; chapter: Chapter }) 
 function ChapterList({ book, chapters }: { book: BookSummary; chapters: Chapter[] }) {
   return (
     <div role="table" aria-label="Danh sách chương" className="mt-2">
-      <div className="grid h-9 grid-cols-[40px_minmax(0,1fr)_auto] md:grid-cols-[48px_minmax(0,1fr)_150px_110px_96px] items-center gap-3 border-b border-line px-2 text-[11px] font-semibold uppercase tracking-wider text-fg-3">
+      <div className="grid h-9 grid-cols-[40px_minmax(0,1fr)_auto] lg:grid-cols-[48px_minmax(0,1fr)_150px_110px_96px] items-center gap-3 border-b border-line px-2 text-[11px] font-semibold uppercase tracking-wider text-fg-3">
         <span className="text-center">#</span>
         <span>Chương</span>
         <span>Trạng thái</span>
         {/* Màn hẹp (điện thoại, Studio từ xa) chỉ còn #, chương, trạng thái - soát UX 29-09: 5 cột cố định vỡ ở 375px. */}
-        <span className="hidden text-right md:block">Độ dài</span>
-        <span className="hidden text-right md:block">Xong lúc</span>
+        <span className="hidden text-right lg:block">Độ dài</span>
+        <span className="hidden text-right lg:block">Xong lúc</span>
       </div>
       <div className="mt-1 space-y-px">
         {chapters.map((chapter) => (
@@ -734,6 +738,9 @@ function ActivityView({ book }: { book: BookSummary }) {
 
 // ---- Trang -----------------------------------------------------------------------------------------------------------
 
+/** Tab mở lối nhảy sang tab khác ("Đọc cả N câu trong Kịch bản") - nhãn nút "Về …" ở tab đích. */
+const FROM_LABEL: Record<string, string> = { work: "Việc cần duyệt", review: "Cần nghe lại" };
+
 export function ProjectScreen() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -744,6 +751,28 @@ export function ProjectScreen() {
   const { data, isLoading, error } = useBook(id);
   const [picking, setPicking] = useState<{ name: string; displayName: string } | null>(null);
   usePageTitle(data ? `${data.book.title} · Studio` : undefined);
+  const location = useLocation();
+  // Đổi tab tại chỗ thay địa chỉ (không chất lịch sử), nhưng NHẢY từ một thẻ/câu sang tab khác là một bước điều hướng:
+  // Back và nút "Về …" trở lại đúng thẻ vừa rời - thẻ và bộ lọc nằm trong địa chỉ (soát UX 30-09: Back sau "Đọc cả N
+  // câu trong Kịch bản" về thẳng danh sách Dự án, mất cả bộ lọc lẫn chỗ đang duyệt).
+  const jump = (next: Record<string, string>, from: string, card?: string) => {
+    if (card) {
+      setParams(
+        (previous) => {
+          const here = new URLSearchParams(previous);
+          here.set("card", card);
+          return here;
+        },
+        { replace: true },
+      );
+    }
+    setParams({ ...next, from });
+  };
+  const from = params.get("from");
+  const back = () => {
+    if (location.key !== "default") navigate(-1);
+    else setParams({ tab: from ?? "chapters" }, { replace: true });
+  };
 
   if (isLoading) {
     return (
@@ -830,17 +859,36 @@ export function ProjectScreen() {
           <TabsTrigger value="cast">Nhân vật</TabsTrigger>
           <TabsTrigger value="activity">Nhật ký</TabsTrigger>
         </TabsList>
+        {from && FROM_LABEL[from] && tab !== from && (
+          <button type="button" onClick={back} className="mt-4 inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
+            <ArrowLeft className="size-4" /> Về {FROM_LABEL[from]}
+          </button>
+        )}
         <TabsContent value="chapters">
           <ChapterList book={book} chapters={chapters} />
         </TabsContent>
         <TabsContent value="work">
           <WorkInbox
             book={book}
-            onOpenReview={() => setParams({ tab: "review" }, { replace: true })}
-            onOpenScript={(chapterId, stableId, pick = true) =>
-              setParams({ tab: "script", chapter: String(chapterId), line: stableId, ...(pick ? {} : { pick: "0" }) }, { replace: true })
+            kind={params.get("kind")}
+            focus={params.get("card")}
+            onKind={(value) =>
+              setParams(
+                (previous) => {
+                  const here = new URLSearchParams(previous);
+                  if (value === "all") here.delete("kind");
+                  else here.set("kind", value);
+                  here.delete("card");
+                  return here;
+                },
+                { replace: true },
+              )
             }
-            onOpenNames={(name) => setParams({ tab: "cast", focus: "names", ...(name ? { name } : {}) }, { replace: true })}
+            onOpenReview={(card) => jump({ tab: "review" }, "work", card)}
+            onOpenScript={(chapterId, stableId, pick = true, card) =>
+              jump({ tab: "script", chapter: String(chapterId), line: stableId, ...(pick ? {} : { pick: "0" }) }, "work", card)
+            }
+            onOpenNames={(name, card) => jump({ tab: "cast", focus: "names", ...(name ? { name } : {}) }, "work", card)}
           />
         </TabsContent>
         <TabsContent value="script">
@@ -849,9 +897,7 @@ export function ProjectScreen() {
         <TabsContent value="review">
           <ReviewQueue
             bookId={book.id}
-            onOpenScript={(chapterId, stableId) =>
-              setParams({ tab: "script", chapter: String(chapterId), line: stableId }, { replace: true })
-            }
+            onOpenScript={(chapterId, stableId) => jump({ tab: "script", chapter: String(chapterId), line: stableId }, "review")}
           />
         </TabsContent>
         <TabsContent value="cast">

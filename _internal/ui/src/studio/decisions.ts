@@ -5,22 +5,24 @@ import { api, type BookSummary } from "./api";
 /** Thay đổi của người nghe vào sách lúc nào - lời báo chỉ nói vế đúng với sách này (soát UX 29-09: mọi thông báo nói cả
  *  "thu lại khi sách chạy tiếp" lẫn "sách đã xong thì bấm…"). Đang chạy: dây chuyền áp ở ranh giới chương kế tiếp và thu
  *  lại cả chương đã qua (pipeline._process_all_chapters); trước khi phân vai khoá thì yêu cầu nằm chờ; sách ĐÃ XONG không
- *  tự chạy lại. */
+ *  tự chạy lại. Sách bấm "Tạm dừng" vẫn `running` (tiến trình sống) nhưng không tới ranh giới chương nào tới khi làm tiếp. */
 type ApplyWhen = "cast" | "running" | "done" | "paused";
 
-export function applyWhen(book: Pick<BookSummary, "phase" | "running" | "starting"> | undefined): ApplyWhen {
+export function applyWhen(book: Pick<BookSummary, "phase" | "running" | "starting" | "paused"> | undefined): ApplyWhen {
   if (!book) return "paused";
   if (book.phase === "analysis" || book.phase === "casting") return "cast";
+  if (book.paused) return "paused";
   if (book.running || book.starting) return "running";
   return book.phase === "done" ? "done" : "paused";
 }
 
-/** Câu đứng riêng, cho thông báo. */
+/** Câu đứng riêng, cho thông báo - đứng sau câu nói cái giá ("Câu đã thu sẽ được thu lại."), nên không nhắc "thu lại"
+ *  lần nữa; thông báo hiện trên chính trang dự án nên chỉ "đầu trang", không "trang dự án" (soát UX 30-09). */
 const SENTENCE: Record<ApplyWhen, string> = {
   cast: "Áp dụng khi phân vai xong.",
   running: "Máy áp ở ranh giới chương kế tiếp, không phải dừng sách.",
-  done: "Bấm “Áp dụng thay đổi” ở trang dự án để thu lại.",
-  paused: "Thu lại khi sách chạy tiếp.",
+  done: "Bấm “Áp dụng thay đổi” ở đầu trang để đưa vào sách.",
+  paused: "Máy áp dụng khi sách làm tiếp.",
 };
 
 /** Vế sau gạch nối, cho dòng "Đã ghi … - {vế}." trên thẻ và trên câu. */
@@ -53,6 +55,7 @@ export function refreshAfterDecision(client: QueryClient, bookId: string) {
   void client.invalidateQueries({ queryKey: ["cast", bookId] });
   void client.invalidateQueries({ queryKey: ["pronunciations", bookId] });
   void client.invalidateQueries({ queryKey: ["casting", bookId] });
+  void client.invalidateQueries({ queryKey: ["voice-choices", bookId] });
 }
 
 // Bấm nhầm ("Nữ" cạnh "Nam", nhầm người, nhầm cách đọc) sửa ngay trên thông báo: "Hoàn tác" gửi lại đúng lần bấm ấy

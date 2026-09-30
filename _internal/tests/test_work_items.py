@@ -68,7 +68,7 @@ def test_the_inbox_finds_each_kind_of_doubt_and_ranks_by_benefit(tmp_path: Path)
     assert "LUCIEN" not in str(kinds["gender"]), "đã biết giới thì không hỏi"
     shared = kinds["shared-voice"]
     assert "Lucien" in shared["title"] and "Rhine" in shared["title"], "hai người có tên, một giọng, cùng chương"
-    assert kinds["unnamed"]["title"].casefold() == "\"người gác\" là ai?"
+    assert kinds["unnamed"]["title"].casefold() == "“người gác” là ai?"
     pronunciation = kinds["pronunciation"]
     assert pronunciation["affected"] == 1 and "Hain" in pronunciation["title"], "đếm câu chứa tên, không đếm lần nhắc"
     assert not any("Lucien" in item["title"] and item["kind"] == "pronunciation" for item in view["items"]), "0,99 là chắc"
@@ -411,7 +411,7 @@ def test_one_person_under_two_names_merges_the_fewer_lines_into_the_voice_heard_
     cards = {item["key"]: item for item in work_items(project)["items"] if item["kind"] == "alias"}
     assert set(cards) == {"alias:LUCIEN EVANS|LUCIEN", "alias:HEIDI SCHMIDT|HEIDI"}, "Anna / Anna Rhine khác giới"
     lucien = cards["alias:LUCIEN EVANS|LUCIEN"]
-    assert lucien["title"] == "\"Lucien\" và \"Lucien Evans\" là một người?"
+    assert lucien["title"] == "“Lucien” và “Lucien Evans” là một người?"
     assert [line["stableId"] for line in lucien["lines"]] == ["a4"] and lucien["affected"] == 1
     assert lucien["choices"] == [{"label": "Gộp vào Lucien", "value": "LUCIEN", "name": "Lucien"}]
     assert lucien["currentValue"] == "LUCIEN EVANS" and lucien["keepLabel"] == "Hai người khác nhau"

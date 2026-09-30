@@ -99,7 +99,7 @@ function Producing() {
           onClick={() => navigate(`/studio/${book.id}`)}
           className="flex w-full items-center gap-2.5 rounded-lg p-2 text-left hover:bg-hover"
         >
-          <BookCover title={book.title} size="xs" image={book.cover} className="size-8 rounded-md" />
+          <BookCover title={book.title} part={book.series?.part} size="xs" image={book.cover} className="size-8 rounded-md" />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 truncate text-xs font-medium">
               {book.paused ? (

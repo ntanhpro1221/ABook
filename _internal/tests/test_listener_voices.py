@@ -323,3 +323,53 @@ def test_the_voice_picker_lists_every_castable_voice_with_what_the_listener_need
     finally:
         server.stop()
     assert permitted("GET", base)
+
+
+def test_the_voice_picker_shows_a_choice_still_waiting_and_can_drop_it_after_the_undo_toast(tmp_path: Path) -> None:
+    """Soát UX 30-09: chọn giọng rồi lỡ 8 giây "Hoàn tác" thì mở lại hộp không thấy lựa chọn đang chờ, giọng đang dùng bị
+    khoá "Đang dùng" - không còn đường bỏ lựa chọn. Hộp nay nói giọng nào đang chờ và bỏ được nó bằng đúng mốc của nó."""
+    from ebook_reader.config import save_settings
+    from ebook_reader.webui.library import Preferences, book_id
+    from ebook_reader.webui.listening import Listening
+    from ebook_reader.webui.server import App, Server
+    from ebook_reader.webui.voice_picker import voice_choices
+    from tests.test_webui_listen_and_sync import FakeRunner, _request
+
+    paths, _db = _book(tmp_path)
+    save_settings(paths.settings, SETTINGS)
+    assert voice_choices(paths.root, "Rhine")["pending"] is None
+    preferences = Preferences(tmp_path / "prefs" / "preferences.json")
+    preferences.update({"libraryRoot": str(tmp_path)})
+    app = App(preferences=preferences, runner=FakeRunner(), token="t", listening=Listening(tmp_path / "prefs" / "l.json"))
+    server = Server(app, port=0).start()
+    book = f"/api/books/{book_id(paths.root)}"
+    headers = {"X-Ebook-Token": "t"}
+    picked = str(MALE[2]["name"])
+    try:
+        status, data, _ = _request(server.port, "POST", book + "/voice", body={"character": "RHINE", "preset": picked},
+                                   headers=headers)
+        assert status == 200
+        requested_at = json.loads(data)["requestedAt"]
+        view = voice_choices(paths.root, "Rhine")
+        assert view["pending"] is not None and view["pending"]["requestedAt"] == requested_at
+        assert [voice["name"] for voice in view["voices"] if voice["pending"]] == [view["pending"]["name"]]
+        assert [voice["current"] for voice in view["voices"] if voice["pending"]] == [False]
+
+        # "Giữ giọng này": bỏ đúng yêu cầu đang chờ, như nút "Hoàn tác" nhưng lúc nào cũng được.
+        status, data, _ = _request(server.port, "POST", book + "/voice",
+                                   body={"character": "RHINE", "withdraw": True, "requestedAt": requested_at},
+                                   headers=headers)
+        assert status == 200 and json.loads(data)["undone"] == 1
+        after = voice_choices(paths.root, "Rhine")
+        assert after["pending"] is None and not any(voice["pending"] for voice in after["voices"])
+        assert "RHINE" not in (read_overrides(paths.root).get("voices") or {})
+
+        # Chỉ chọn giới (thẻ "Nam hay nữ"): hộp đánh dấu giọng máy sẽ chọn cho giới ấy.
+        status, _, _ = _request(server.port, "POST", book + "/voice", body={"character": "RHINE", "gender": "female"},
+                                headers=headers)
+        assert status == 200
+        by_gender = voice_choices(paths.root, "Rhine")
+        waiting = [voice for voice in by_gender["voices"] if voice["pending"]]
+        assert len(waiting) == 1 and waiting[0]["gender"] == "female" and waiting[0]["suggested"]
+    finally:
+        server.stop()

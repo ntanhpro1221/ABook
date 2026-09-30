@@ -36,18 +36,21 @@ export function coverStyle(title: string): CoverStyle {
   return { from, to, ink, seed };
 }
 
-/** Tên sách tách phần chính và phần phụ ("Throne of Magical Arcana · Tập 16" -> ["Throne of Magical Arcana", "Tập 16"]). */
-export function splitTitle(title: string): [string, string] {
+/** Tên sách tách phần chính và phần phụ ("Throne of Magical Arcana · Tập 16" -> ["Throne of Magical Arcana", "Tập 16"]).
+ *  `part`: thứ tự phần thật của "Làm tiếp cuốn này" (continues.json) - phần đã đổi tên vẫn mang "Phần 2" trên bìa (soát UX
+ *  30-09: đổi tên phần 2 thì bìa mất nhãn, ô nhỏ thành hai chữ cái). */
+export function splitTitle(title: string, part?: number | null): [string, string] {
   const match = title.match(/^(.*?)\s*[·|:—–-]\s*(Tập|Quyển|Phần|Vol\.?|Book)\s*(.+)$/i);
   if (match) return [match[1].trim(), `${match[2]} ${match[3]}`.trim()];
+  if (part && part > 1) return [title.trim(), `Phần ${part}`];
   return [title.trim(), ""];
 }
 
 const STOPWORDS = new Set(["the", "and", "của", "và", "những", "các", "một"]);
 
 /** Chữ trên bìa nhỏ: số tập nếu là sách trong một bộ ("16"), không thì hai chữ cái đầu. */
-export function coverLabel(title: string): string {
-  const [main, sub] = splitTitle(title);
+export function coverLabel(title: string, part?: number | null): string {
+  const [main, sub] = splitTitle(title, part);
   const volume = sub.match(/(\d+)/);
   if (volume) return volume[1];
   return main

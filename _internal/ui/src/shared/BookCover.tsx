@@ -14,6 +14,7 @@ export function BookCover({
   size = "md",
   playing = false,
   image,
+  part,
   className,
 }: {
   title: string;
@@ -21,6 +22,8 @@ export function BookCover({
   playing?: boolean;
   /** Ảnh bìa thật; ảnh không tải được thì quay về bìa vẽ, không để ô trống. */
   image?: CoverImage | null;
+  /** Thứ tự phần trong chuỗi "Làm tiếp cuốn này" - phần đổi tên vẫn ghi "Phần N" (cover.splitTitle). */
+  part?: number | null;
   className?: string;
 }) {
   const [failed, setFailed] = useState<string | null>(null);
@@ -28,7 +31,7 @@ export function BookCover({
     return <PhotoCover image={image} playing={playing} className={className} onError={() => setFailed(image.url)} />;
   }
   const style = coverStyle(title);
-  const [main, sub] = splitTitle(title);
+  const [main, sub] = splitTitle(title, part);
   const small = size === "xs" || size === "sm";
   const text = {
     xs: "",
@@ -65,7 +68,7 @@ export function BookCover({
             className="m-auto font-bold leading-none tracking-tight"
             style={{ color: style.ink, fontSize: size === "xs" ? 12 : 17 }}
           >
-            {coverLabel(title)}
+            {coverLabel(title, part)}
           </span>
         ) : (
           <>

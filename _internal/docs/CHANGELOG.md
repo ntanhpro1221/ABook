@@ -12,6 +12,17 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Tab Kịch bản, chương kể ngôi thứ nhất: dòng gợi ý và nút "Soát câu của …" làm nổi riêng câu máy gán cho người kể "tôi" -
   chỗ máy nhầm nhiều nhất (đo trên bộ truyện thử: khoảng 1/3 câu gán cho người kể là của người khác). Người kể theo từng
   chương nếu truyện đổi người kể.
+- Từ Việc cần duyệt sang Kịch bản ("Đọc cả N câu…", "Mở trong Kịch bản") rồi bấm Back hay nút "← Về Việc cần duyệt" là trở
+  lại đúng thẻ vừa rời, giữ nguyên bộ lọc.
+- Hộp "Đổi giọng" hiện giọng đang chờ áp dụng và có "Giữ giọng này" để bỏ lựa chọn bất cứ lúc nào trước khi máy áp - không
+  chỉ trong 8 giây của nút Hoàn tác.
+- Sách đang tạm dừng: danh sách Dự án ghi "tạm dừng", Thư viện ghi "Đang tạm dừng", thông báo sau mỗi quyết định nói máy áp
+  dụng khi sách làm tiếp; hộp "Dừng" nói Dừng hẳn khác Tạm dừng ở chỗ nào (nhả bộ nhớ card đồ hoạ).
+- Các phần của một cuốn đứng chung một khung cả khi một phần đang chạy; phần đã đổi tên vẫn mang nhãn "Phần N" trên bìa.
+- Bảng chương giữ cột Chương khi cửa sổ hẹp (dưới 1024 px chỉ còn số, tên và trạng thái).
+- Sửa nhỏ: hộp Đổi tên đặt con trỏ vào ô tên; tên trong thông báo đổi giọng viết như tiêu đề (không in hoa); tiêu đề thẻ
+  dùng nháy cong; câu Hoàn tác của thẻ "Nam hay nữ" nói cụ thể; ô sửa cách đọc tên viết hoa như dòng bên cạnh; màn hẹp: bảng
+  chọn người nói / cách đọc trích lại câu vừa chạm, thông báo nằm đầu màn không đè trình phát.
 
 ### Điện thoại
 
