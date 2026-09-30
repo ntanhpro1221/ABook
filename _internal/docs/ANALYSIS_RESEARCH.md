@@ -38,6 +38,21 @@ B − A: F1 −1,4 [−4,0; +0,8], chặt −1,9 [−4,9; +1,1], B thua 3/4 chư
 LoRA gần như bỏ qua lời dặn thêm, nên thiên vị người kể phải sửa bằng dữ liệu (v8: người nói các lượt trước) chứ không bằng
 chữ trong prompt. Nhánh `dev/narrator-balance` KHÔNG gộp.
 
+**Lỗi dồn vào đâu (8B-v5, bộ LN 12 chương, người nói chặt, mỗi câu một loại chính):** sai 338/1014.
+
+| loại | sai | ghi chú |
+|---|---|---|
+| 『』 | 56/89 (63%) | Yamiyo 43/43 - quy ước riêng từng cuốn, app đã có thẻ "quy ước 『』 cả cuốn" |
+| người vô danh | 57/65 (88%) | LU 20/21, Nageki 22/25, Nise 15/19 - v7 nhắm |
+| còn lại | 87/235 (37%) | ô lớn nhất: không lời dẫn tên, không chuỗi đối đáp, không phải người kể |
+| đối đáp liền | 52/204 (25%) | v8 nhắm |
+| người kể "tôi" nói | 47/227 (21%) | |
+| có lời dẫn | 39/194 (20%) | |
+
+v6 sai 391: 8B bớt chủ yếu ở 『』 của TCF (28 -> 13) và "tôi nói" (60 -> 47). Cặp chương LN (cơ sở + mở rộng, cách xa
+nhau) gần như không chung nhân vật ngoài người kể, nên KHÔNG đo được thẻ tách giọng cần hồ sơ ở chương khác - phải dùng
+các chương liền nhau (Nageki 60-64). Công cụ: scratchpad `error_map.py`, `split_pairs_eval.py`.
+
 **Huấn luyện 8B trên Mac mini M4 16 GB (MLX): chạy được nhưng ~35 giờ/epoch.** Câu hỏi của chủ sách ("sao không train 8b
 trên mac?"). mlx-lm, `mlx-community/Qwen3-8B-4bit`, LoRA rank 16 mọi lớp tuyến tính, chỉ tính loss câu trả lời, tối đa 4608
 token, batch 1, 24 mẫu data_v7n rải đều (trung bình 10.367 ký tự/mẫu, cả tập 10.333): ~62 giây/mẫu (0,014-0,017 it/s),
