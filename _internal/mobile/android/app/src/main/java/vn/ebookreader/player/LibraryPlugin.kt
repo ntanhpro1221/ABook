@@ -300,6 +300,23 @@ class LibraryPlugin : Plugin() {
         call.resolve()
     }
 
+    /**
+     * Mở trang (hay file APK) của bản phát hành mới bằng trình duyệt của máy: điện thoại không tự cập nhật như app Windows,
+     * nên Cài đặt báo có bản mới và mời tải (updates.ts). Chỉ mở đường của chính ABook trên GitHub - không phải cửa mở mọi
+     * địa chỉ cho trang web trong app.
+     */
+    @PluginMethod
+    fun openRelease(call: PluginCall) {
+        val url = call.getString("url").orEmpty()
+        if (!url.startsWith("https://github.com/ntanhpro1221/ABook/")) {
+            call.reject("Chỉ mở trang phát hành của ABook")
+            return
+        }
+        runCatching { activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
+            .onSuccess { call.resolve() }
+            .onFailure { call.reject("Không mở được trình duyệt: ${it.message}") }
+    }
+
     @PluginMethod
     fun remoteLibrary(call: PluginCall) = background(call) {
         val reply = JSONObject(request("GET", "/sync/v1/library"))

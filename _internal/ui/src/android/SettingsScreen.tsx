@@ -1,7 +1,10 @@
 import * as Switch from "@radix-ui/react-switch";
+import { Download } from "lucide-react";
 import { useState, type ReactNode } from "react";
-import { Segmented, TimeSelect } from "@/shared/ui";
+import { Button, Segmented, TimeSelect } from "@/shared/ui";
 import { applyTheme, loadSettings, saveSettings, type PlayerSettings } from "./settings";
+import { openRelease } from "./UpdateNotice";
+import { useAppUpdate } from "./updates";
 
 function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -26,6 +29,7 @@ function Row({ label, hint, children }: { label: string; hint?: string; children
 
 export function SettingsScreen() {
   const [settings, setSettings] = useState<PlayerSettings>(loadSettings);
+  const { current, update } = useAppUpdate();
   const change = (patch: Partial<PlayerSettings>) => {
     const next = { ...settings, ...patch };
     setSettings(next);
@@ -195,7 +199,18 @@ export function SettingsScreen() {
         </Row>
       </Group>
 
-      <p className="mt-10 text-center text-xs text-fg-3">ABook · trình nghe sách nói</p>
+      {/* Điện thoại không tự cập nhật như app Windows: báo bản mới trên GitHub, mời tải APK (updates.ts). */}
+      {update && (
+        <Group title="Cập nhật">
+          <Row label={`Có bản mới ${update.version}`} hint="Tải file APK rồi mở để cài đè - sách và chỗ đang nghe giữ nguyên.">
+            <Button size="sm" variant="primary" icon={Download} onClick={() => void openRelease(update.apk ?? update.page)}>
+              Tải
+            </Button>
+          </Row>
+        </Group>
+      )}
+
+      <p className="mt-10 text-center text-xs text-fg-3">ABook{current ? ` ${current}` : ""} · trình nghe sách nói</p>
     </div>
   );
 }

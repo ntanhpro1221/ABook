@@ -25,6 +25,7 @@ import { PhoneHandOffButton, RemotePlayerBars } from "./RemotePlayers";
 import { MorningRecap } from "@/listen/MorningRecap";
 import { NativeAudioEngine } from "./nativeEngine";
 import { SettingsScreen } from "./SettingsScreen";
+import { UpdateNotice } from "./UpdateNotice";
 import { applyTheme, loadSettings, pushSettings } from "./settings";
 
 // Vỏ Android: cùng các màn hình Nghe với máy tính, bố cục một tay - điều hướng dưới đáy, trình phát thu nhỏ ngay
@@ -238,6 +239,7 @@ export function AndroidApp() {
             <HashRouter>
               <BackButton />
               <DownloadWatcher />
+              <UpdateNotice />
               <ImportWatcher />
               <RemoveFromPhoneHost />
               <MobileShell>
