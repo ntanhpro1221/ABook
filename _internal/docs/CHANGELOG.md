@@ -16,6 +16,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Điện thoại
 
 - Sách đã tải về điện thoại vẫn gom các phần của "Làm tiếp cuốn này" theo chuỗi thật khi không nối máy tính.
+- App điện thoại tự biết có bản mới trên GitHub (hỏi tối đa một lần mỗi ngày): nhắc một lần mỗi bản mới lúc mở app, nút
+  "Tải" mở file APK bằng trình duyệt để cài đè - sách và chỗ đang nghe giữ nguyên. Cài đặt có mục "Cập nhật" khi có bản
+  mới, và cuối trang ghi bản đang cài.
 
 ## [0.4.10] - 2026-09-30
 
