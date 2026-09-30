@@ -13,7 +13,8 @@ Làm sách chạy hoàn toàn trên máy của bạn: văn bản truyện và â
   nhà một chỗ nghe riêng, hay nghe lại từ đầu mà vẫn giữ lần trước.
 - **Làm sách nói (Studio)**: đọc cả truyện để nhận ra lời thoại, ai đang nói và cảm xúc từng câu; mỗi nhân vật một giọng
   riêng giữ nguyên suốt cuốn; thu từng câu rồi tự nghe lại bằng nhận dạng giọng nói và thu lại câu lệch. Truyện kể ngôi
-  thứ nhất: Studio hỏi "tôi" là ai.
+  thứ nhất: Studio hỏi "tôi" là ai. Tạm dừng bất cứ lúc nào - kể cả giữa lúc phân tích - rồi làm tiếp đúng chỗ; máy tính
+  xách tay rút sạc thì Studio tự tạm dừng và điện thoại báo "Máy tính đang chạy pin".
 - **Bạn là người duyệt cuối**: hộp **"Việc cần duyệt"** chỉ ra những chỗ máy không chắc (ai nói câu này, hai tên là một
   người, nam hay nữ, cách đọc một tên...), xếp theo lợi trên mỗi lần bấm. Tab **Kịch bản** cho sửa người nói, loại câu,
   cảm xúc và chữ đem đọc của từng câu; tab Nhân vật cho đổi giọng và sửa cách đọc mọi tên riêng (mục "Cách đọc tên");
