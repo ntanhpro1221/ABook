@@ -231,8 +231,8 @@ class _Pipeline(BookPipeline):
     def emit(self, *_args, **_kwargs) -> None:
         pass
 
-    def _wait_pause_or_stop(self) -> None:
-        pass
+    def _wait_pause_or_stop(self) -> float:
+        return 0.0
 
     def _safe_export_reports(self, incremental: bool = False) -> None:
         pass
