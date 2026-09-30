@@ -24,6 +24,25 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
 7. **Người vô danh xác định được là MỘT người phải ghi `NPC*:<mô tả>` trong đáp án, cả ở chương kiểm tra**; đám đông
    để `NPC*` trơn. Thiếu mô tả thì F1 giọng không biết hai câu vô danh là một người, và xếp model ngược (mục 29-09 tối).
 
+## 30-09 sáng - lời dặn "cân bằng người kể" không giúp; phép kiểm thẻ tách giọng trên Mac quá chậm
+
+**Lời dặn thêm về người kể: kết quả âm, đóng thí nghiệm.** Vòng 2 (Mac, 8B-v5, 4 chương ngôi thứ nhất của LN mở rộng, 315
+câu, cùng mã e09c6c3): nhánh B (prompt có đoạn dặn "lời nói VỚI người kể là của người kia") so với A:
+
+| | F1 giọng | người nói chặt | gán nhầm CHO người kể | bỏ sót người kể |
+|---|---|---|---|---|
+| A (prompt hiện tại) | 65,7% | 69,5% | 33 | 16 |
+| B (thêm lời dặn) | 64,3% | 67,6% | 36 | 18 |
+
+B − A: F1 −1,4 [−4,0; +0,8], chặt −1,9 [−4,9; +1,1], B thua 3/4 chương. Vòng 1 (một chương Nageki 65) từng +2,8. Model
+LoRA gần như bỏ qua lời dặn thêm, nên thiên vị người kể phải sửa bằng dữ liệu (v8: người nói các lượt trước) chứ không bằng
+chữ trong prompt. Nhánh `dev/narrator-balance` KHÔNG gộp.
+
+**Phép kiểm thẻ "hai người chung một tên" trên cuốn đủ chương: dừng, làm lại trên máy nhà.** `split_check_mac.sh` gộp
+Nageki 56-64 (8 chương, 2.203 câu) thành MỘT dự án, nên dây chuyền phân tích cả cuốn trước: sau 8 giờ mới 608 câu (~76
+câu/giờ, chậm ~6 lần các chương đơn), mỗi lượt đo một chương hết hạn 2 giờ. Làm lại khi hàng GPU nhà rảnh (8B ở nhà nhanh
+~6 lần Mac), hay bớt còn 3-4 chương.
+
 ## 29-09 tối - F1 giọng biết người vô danh là ai; 8B-v5 nhập người lạ vào nhân vật có tên
 
 **Lỗ của thước F1 giọng.** Từ sáng 29-09, câu đáp án `NPC*` chỉ được so với câu của người có tên: hai câu NPC* không tính
