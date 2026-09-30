@@ -22,6 +22,7 @@ from ..listener_overrides import (
 )
 from . import store
 from .reviews import speaker_label
+from .address_cues import _same_person
 from .work_items import calls_themselves, confident_doubts, merged_turns
 
 # Người có tên trong cả cuốn đưa vào ô "người khác": sách dài có hàng trăm vai, ô tìm lọc tại chỗ.
@@ -224,7 +225,16 @@ def casting_chapter(project_root: Path, chapter_id: int) -> dict[str, Any] | Non
         if _is_person(raw) and not raw.startswith("NPC_LOCAL") and raw not in here
     ][:OTHERS]
     voices = store.read_settings(project_root).get("voices")
-    first_person = str((voices if isinstance(voices, dict) else {}).get("first_person_identity") or "")
+    voices = voices if isinstance(voices, dict) else {}
+    first_person = str(voices.get("first_person_identity") or "")
+    # Người kể "tôi" CỦA CHƯƠNG NÀY: first_person_chapters (theo số chương) đè người kể cả cuốn, rỗng = chương kể ngôi ba. Chip
+    # của người ấy trong chương: tên người dùng gõ ("Krai") có thể khác cách sổ nhân vật viết ("KRAI ANDREY"). Máy gán nhầm
+    # câu của người khác cho người kể nhiều nhất - 8B-v5 trên bộ LN: 97/276 câu gán cho người kể là sai (ANALYSIS_RESEARCH).
+    by_chapter = voices.get("first_person_chapters") if isinstance(voices.get("first_person_chapters"), dict) else {}
+    index_key = str(chapter_name.get("index", chapter_id))
+    if index_key in by_chapter:
+        first_person = str(by_chapter[index_key] or "").strip()
+    narrator_chip = next((person["value"] for person in cast if _same_person(person["value"], first_person)), None)
     position = order.index(chapter_id) if chapter_id in order else -1
     lines = []
     for row in rows:
@@ -260,7 +270,7 @@ def casting_chapter(project_root: Path, chapter_id: int) -> dict[str, Any] | Non
         "previous": order[position - 1] if position > 0 else None,
         "next": order[position + 1] if 0 <= position < len(order) - 1 else None,
         "castReady": bool(voiced),
-        "firstPerson": {"value": first_person, "label": label(first_person)} if first_person else None,
+        "firstPerson": {"value": first_person, "label": label(first_person), "chip": narrator_chip} if first_person else None,
         "cast": cast,
         "others": others,
         "lines": lines,
