@@ -7,6 +7,16 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Studio (sản xuất sách nói)
+
+- Tab Kịch bản, chương kể ngôi thứ nhất: dòng gợi ý và nút "Soát câu của …" làm nổi riêng câu máy gán cho người kể "tôi" -
+  chỗ máy nhầm nhiều nhất (đo trên bộ truyện thử: khoảng 1/3 câu gán cho người kể là của người khác). Người kể theo từng
+  chương nếu truyện đổi người kể.
+
+### Điện thoại
+
+- Sách đã tải về điện thoại vẫn gom các phần của "Làm tiếp cuốn này" theo chuỗi thật khi không nối máy tính.
+
 ## [0.4.10] - 2026-09-30
 
 ### Studio (sản xuất sách nói)
