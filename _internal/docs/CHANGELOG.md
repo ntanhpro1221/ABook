@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.11] - 2026-09-30
+
 ### Studio (sản xuất sách nói)
 
 - Tab Kịch bản, chương kể ngôi thứ nhất: dòng gợi ý và nút "Soát câu của …" làm nổi riêng câu máy gán cho người kể "tôi" -
