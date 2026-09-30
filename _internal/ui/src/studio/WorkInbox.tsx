@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AudioLines, Check, Pause, Play, Search, UserPlus } from "lucide-react";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
@@ -469,7 +469,18 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
     },
     onSuccess: (made, { label, keep, note }) => {
       refreshAfterDecision(client, bookId);
-      const back = item.requested ? `Trở lại quyết định trước: ${item.requested}.` : "Thẻ hỏi lại như trước khi bấm.";
+      // Nói cụ thể điều gì trở lại, như thẻ cách đọc và thẻ người nói (soát UX 30-09: "Thẻ hỏi lại như trước khi bấm").
+      const heard = item.current === "Giọng nam" || item.current === "Giọng nữ" ? item.current.toLowerCase() : "giọng đang có";
+      const back =
+        item.kind === "gender" && item.subject
+          ? item.requested
+            ? `Trở lại quyết định trước: ${item.subject} là ${item.requested.toLowerCase()}.`
+            : `${item.subject} lại để máy quyết - vẫn đọc bằng ${heard}.`
+          : item.requested
+            ? `Trở lại quyết định trước: ${item.requested}.`
+            : item.kind === "shared-voice"
+              ? "Hai người lại dùng chung giọng như trước."
+              : "Thẻ hỏi lại như trước khi bấm.";
       const undo = { action: undoAction(client, bookId, "voice", made.map((decision) => ({ ...decision, keep })), back), duration: UNDO_MS };
       if (keep) {
         toast.success(`Đã ghi: ${label}`, { description: "Việc này sẽ không hiện lại.", ...undo });
@@ -538,13 +549,19 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
 
 /** Mở câu `stableId` của chương `chapterId` trong tab Kịch bản, ô chọn người nói mở sẵn. */
 /** `pick`: mở sẵn ô chọn người nói ở câu ấy (mặc định) - thẻ nhóm mở để ĐỌC thì không, ô ấy che chữ. */
-type OpenScript = (chapterId: number, stableId: string, pick?: boolean) => void;
+/** `card`: thẻ đang mở lối nhảy - trang dự án ghi nó vào địa chỉ để Back trở lại đúng thẻ ấy. */
+type OpenScript = (chapterId: number, stableId: string, pick?: boolean, card?: string) => void;
+type OpenNames = (name: string, card?: string) => void;
+type OpenReview = (card?: string) => void;
 
-function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames }: { bookId: string; item: WorkItem; onOpenReview: () => void; onOpenScript?: OpenScript; onOpenNames?: (name: string) => void }) {
+function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames }: { bookId: string; item: WorkItem; onOpenReview: OpenReview; onOpenScript?: OpenScript; onOpenNames?: OpenNames }) {
   // Thẻ chuỗi lượt đối đáp: đổi các câu xen kẽ (mặc định) hay cả chuỗi - câu "sẽ đổi" theo phạm vi đang chọn.
   const [scope, setScope] = useState<Scope>("alternate");
+  const openScript: OpenScript | undefined =
+    onOpenScript && ((chapterId, stableId, pick) => onOpenScript(chapterId, stableId, pick, item.key));
+  const openNames: OpenNames | undefined = onOpenNames && ((name) => onOpenNames(name, item.key));
   return (
-    <li className="rounded-xl border border-line bg-panel p-4">
+    <li id={`work-${item.key}`} className="scroll-mt-24 rounded-xl border border-line bg-panel p-4">
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
         <span className="rounded-full bg-hover px-2 py-0.5 text-[11px] font-medium text-fg-2">{KIND_LABEL[item.kind]}</span>
         <h3 className="text-[15px] font-semibold">{decidedTitle(item) ?? item.title}</h3>
@@ -559,15 +576,15 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames }: { bookI
         </span>
       </div>
       {item.kind === "audio" ? (
-        <Button size="sm" variant="secondary" icon={AudioLines} className="mt-3" onClick={onOpenReview}>
+        <Button size="sm" variant="secondary" icon={AudioLines} className="mt-3" onClick={() => onOpenReview(item.key)}>
           Nghe ở tab Cần nghe lại
         </Button>
       ) : item.kind === "pronunciation" && item.surface ? (
-        <PronunciationFix bookId={bookId} item={item} onOpenNames={onOpenNames} />
+        <PronunciationFix bookId={bookId} item={item} onOpenNames={openNames} />
       ) : item.voiceChoices && item.voiceChoices.length > 0 ? (
         <VoiceFix bookId={bookId} item={item} />
       ) : item.lines && item.choices ? (
-        <SpeakerFix bookId={bookId} item={item} onOpenScript={onOpenScript} scope={scope} onScope={setScope} />
+        <SpeakerFix bookId={bookId} item={item} onOpenScript={openScript} scope={scope} onScope={setScope} />
       ) : (
         <div className="mt-3 flex flex-wrap gap-1.5" aria-label="Lựa chọn">
           {item.options.map((option) => (
@@ -592,7 +609,18 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames }: { bookI
   );
 }
 
-export function WorkInbox(props: { book: BookSummary; onOpenReview: () => void; onOpenScript?: OpenScript; onOpenNames?: (name: string) => void }) {
+interface InboxProps {
+  book: BookSummary;
+  onOpenReview: OpenReview;
+  onOpenScript?: OpenScript;
+  onOpenNames?: OpenNames;
+  /** Bộ lọc loại việc và thẻ cần cuộn tới, nằm trong địa chỉ trang - Back từ Kịch bản trở lại đúng chỗ đang duyệt. */
+  kind?: string | null;
+  focus?: string | null;
+  onKind?: (kind: WorkKind | "all") => void;
+}
+
+export function WorkInbox(props: InboxProps) {
   // Sách đang chạy áp ở ranh giới chương kế tiếp, không "chờ chạy tiếp" (studio/decisions.ts).
   const hint = PENDING_NOTE[applyWhen(props.book)];
   return (
@@ -602,15 +630,30 @@ export function WorkInbox(props: { book: BookSummary; onOpenReview: () => void; 
   );
 }
 
-function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames }: { book: BookSummary; onOpenReview: () => void; onOpenScript?: OpenScript; onOpenNames?: (name: string) => void }) {
+function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, kind: kindParam, focus, onKind }: InboxProps) {
   const bookId = book.id;
   const hint = useContext(PendingHint);
-  const [kind, setKind] = useState<WorkKind | "all">("all");
+  const [kind, setKindState] = useState<WorkKind | "all">(
+    kindParam && kindParam in KIND_LABEL ? (kindParam as WorkKind) : "all",
+  );
+  const setKind = (value: WorkKind | "all") => {
+    setKindState(value);
+    onKind?.(value);
+  };
   const [shown, setShown] = useState(PAGE);
   const { data, isLoading } = useQuery({
     queryKey: ["work", bookId],
     queryFn: () => api<WorkView>(`/api/books/${bookId}/work`),
   });
+  // Trở lại từ Kịch bản (Back hay "Về Việc cần duyệt"): cuộn tới đúng thẻ vừa rời, mở đủ trang để thấy nó - một lần.
+  const focused = useRef(false);
+  useEffect(() => {
+    if (focused.current || !focus || !data) return;
+    focused.current = true;
+    const index = data.items.filter((item) => !item.requested && (kind === "all" || item.kind === kind)).findIndex((item) => item.key === focus);
+    if (index >= PAGE) setShown(Math.ceil((index + 1) / PAGE) * PAGE);
+    window.setTimeout(() => document.getElementById(`work-${focus}`)?.scrollIntoView({ block: "center" }), 0);
+  }, [focus, data, kind]);
   if (isLoading || !data) return <div className="mt-6 text-sm text-fg-2">Đang tìm những chỗ máy chưa chắc…</div>;
   if (!data.items.length) {
     return (

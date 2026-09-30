@@ -467,6 +467,7 @@ function DeliveryChip({
   if (phone) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange} title="Cách đọc câu này" trigger={trigger} onEscapeKeyDown={keepOpenForNameEditor}>
+        <LineQuote line={line} />
         <DeliveryMenu bookId={bookId} line={line} script={script} onSave={onSave} wide />
       </Sheet>
     );
@@ -489,6 +490,11 @@ function DeliveryChip({
       </Popover.Portal>
     </Popover.Root>
   );
+}
+
+/** Tấm trượt trên điện thoại che mất đúng câu vừa chạm (soát UX 30-09) - trích lại câu ấy ở đầu tấm. */
+function LineQuote({ line }: { line: Line }) {
+  return <p className="mx-1.5 mt-2 line-clamp-3 rounded-lg bg-hover px-3 py-2 text-sm leading-snug text-fg-2">{line.text}</p>;
 }
 
 /** `phone`: trong tấm trượt - ô tìm không tự bật bàn phím (bàn phím che danh sách người của chương, lối chọn chính). */
@@ -620,6 +626,7 @@ function SpeakerChip({
   if (phone) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange} title={line.kind === "thought" ? "Ai nghĩ câu này?" : "Ai nói câu này?"} trigger={trigger}>
+        <LineQuote line={line} />
         <div className="px-1.5 pt-2">
           <SpeakerMenu line={line} script={script} onPick={onPick} phone />
         </div>

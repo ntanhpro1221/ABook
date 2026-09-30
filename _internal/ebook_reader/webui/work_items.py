@@ -471,6 +471,8 @@ def work_items(project_root: Path) -> dict[str, Any]:
             "voiceChoices": choices,
             "keepCharacters": [key],
             "keepLabel": "Để máy quyết",
+            # Tên người được hỏi: câu "Hoàn tác" nói cụ thể ai trở lại thế nào (soát UX 30-09).
+            "subject": speaker_label(character["canonical_name"]),
             "requested": {"male": "Nam", "female": "Nữ"}.get(wish["gender"]) if wish is not None else None,
         })
 
@@ -488,7 +490,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
         items.append({
             "kind": "vocative",
             "key": f"vocative:{row['id']}",
-            "title": f"Câu mở đầu bằng lời gọi \"{name}\" lại gán cho chính {name}",
+            "title": f"Câu mở đầu bằng lời gọi “{name}” lại gán cho chính {name}",
             "problem": "Tên đứng đầu câu và có dấu phẩy thường là người NGHE, không phải người nói.",
             "affected": 1,
             "doubt": 0.7,
@@ -550,8 +552,8 @@ def work_items(project_root: Path) -> dict[str, Any]:
                 "key": f"turns:{lines[0]['stable_id']}",
                 "title": f"{len(lines)} câu liền nhau đều là của {name}?",
                 "problem": f"{len(lines)} đoạn thoại liền nhau, không lời dẫn, đều gán cho {name}. Thường là hai người đối"
-                           f" đáp: chọn người nói các câu xen kẽ (đánh dấu \"sẽ đổi\"), các câu còn lại vẫn của {name}. Cả"
-                           " chuỗi là lời của MỘT người khác (độc thoại vắt nhiều đoạn) thì chọn \"Cả chuỗi\".",
+                           f" đáp: chọn người nói các câu xen kẽ (đánh dấu “sẽ đổi”), các câu còn lại vẫn của {name}. Cả"
+                           " chuỗi là lời của MỘT người khác (độc thoại vắt nhiều đoạn) thì chọn “Cả chuỗi”.",
                 "affected": len(changing),
                 "doubt": 0.9,
                 "options": ["Chọn người nói khác", "Giữ nguyên"],
@@ -592,7 +594,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
             items.append({
                 "kind": "alias",
                 "key": f"alias:{longer}|{shorter}",
-                "title": f"\"{speaker_label(shorter)}\" và \"{speaker_label(longer)}\" là một người?",
+                "title": f"“{speaker_label(shorter)}” và “{speaker_label(longer)}” là một người?",
                 "problem": "Hai tên này đang là hai nhân vật với hai giọng khác nhau, nhưng tên ngắn nằm trọn trong tên dài."
                            f" Gộp thì {len(named[minor])} câu của {speaker_label(minor)} đọc bằng giọng của {into}"
                            f" - giọng đang đọc {len(named[major])} câu của {into}.",
@@ -644,8 +646,8 @@ def work_items(project_root: Path) -> dict[str, Any]:
             items.append({
                 "kind": "alias",
                 "key": f"alias:{major}|{minor}",
-                "title": f"\"{speaker_label(minor)}\" là tên khác của {into}?",
-                "problem": f"Sách viết hai tên này sát nhau {both} lần (như \"{second} {first}\") - thường là danh hiệu hay"
+                "title": f"“{speaker_label(minor)}” là tên khác của {into}?",
+                "problem": f"Sách viết hai tên này sát nhau {both} lần (như “{second} {first}”) - thường là danh hiệu hay"
                            f" biệt danh của một người. Máy đang cho {len(named[minor])} câu của {speaker_label(minor)} một"
                            f" giọng riêng; gộp thì đọc bằng giọng của {into} - giọng đang đọc {len(named[major])} câu của {into}.",
                 "affected": len(named[minor]),
@@ -763,7 +765,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
         items.append({
             "kind": "unnamed",
             "key": f"unnamed:{speaker}",
-            "title": f"\"{speaker_label(speaker)}\" là ai?",
+            "title": f"“{speaker_label(speaker)}” là ai?",
             "problem": "Máy để người này là vai phụ không tên (giọng riêng trong chương). Nếu thật ra là nhân vật có tên thì"
                        " nên dùng giọng của nhân vật ấy.",
             "affected": len(rows),
@@ -784,7 +786,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
         items.append({
             "kind": "pronunciation",
             "key": f"pronunciation:{row['surface']}",
-            "title": f"Đọc \"{row['surface']}\" là \"{shown_reading(str(row['spoken_form']))}\"?",
+            "title": f"Đọc “{row['surface']}” là “{shown_reading(str(row['spoken_form']))}”?",
             # Không ghi "máy chắc 88%": gần như mọi tên máy tự đoán đều mang đúng con số ấy nên nó không nói gì (soát UX
             # 29-09: 50/51 thẻ); số câu đã có ở "Ảnh hưởng N câu".
             "problem": "Cách đọc do máy tự đoán - nghe một câu mẫu, sai thì sửa ngay trên thẻ."

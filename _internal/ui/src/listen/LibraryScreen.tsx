@@ -100,7 +100,7 @@ function BookTile({ book }: { book: ListenBook }) {
     <div className="group">
       <div className="relative">
         <button type="button" onClick={() => navigate(`/book/${book.id}`)} className="block w-full rounded-lg" aria-label={`Mở ${book.title}`}>
-          <BookCover title={book.title} size="md" image={book.cover} playing={playingHere} className="w-full" />
+          <BookCover title={book.title} part={book.series?.part} size="md" image={book.cover} playing={playingHere} className="w-full" />
         </button>
         <button
           type="button"
@@ -148,7 +148,7 @@ function ContinueCard({ book }: { book: ListenBook }) {
   return (
     <section className="flex items-center gap-4 rounded-2xl border border-line bg-panel p-4 shadow-card sm:gap-5 sm:p-5">
       <button type="button" onClick={() => navigate(`/book/${book.id}`)} aria-label={`Mở ${book.title}`}>
-        <BookCover title={book.title} size="md" image={book.cover} playing={playingHere} className="w-20 sm:w-28" />
+        <BookCover title={book.title} part={book.series?.part} size="md" image={book.cover} playing={playingHere} className="w-20 sm:w-28" />
       </button>
       <div className="min-w-0 flex-1">
         <div className="text-xs font-semibold uppercase tracking-[0.08em] text-accent-text">Đang nghe dở</div>
@@ -207,12 +207,18 @@ function UpcomingCard({ book, onOpen }: { book: ListenBook; onOpen?: (book: List
       disabled={!onOpen}
       className="flex items-center gap-3 rounded-xl border border-dashed border-line-strong bg-panel p-3 text-left hover:border-accent disabled:hover:border-line-strong"
     >
-      <BookCover title={book.title} size="sm" image={book.cover} className="size-12 opacity-80" />
+      <BookCover title={book.title} part={book.series?.part} size="sm" image={book.cover} className="size-12 opacity-80" />
       <span className="min-w-0">
         <span className="block truncate text-sm font-semibold">{book.title}</span>
         {/* Chưa có chương nghe được không có nghĩa là đang làm: sách dừng trước chương đầu, hay audio bị dời chỗ (soát UX 29-09). */}
         <span className="block text-xs text-fg-2">
-          {book.producing ? `Đang làm · ${eta}` : "Chưa có chương nghe được · mở Studio để làm tiếp"}
+          {book.producing && book.pauseReason
+            ? book.pauseReason === "battery"
+              ? "Đang tạm dừng · máy đang chạy pin"
+              : "Đang tạm dừng · mở Studio để làm tiếp"
+            : book.producing
+              ? `Đang làm · ${eta}`
+              : "Chưa có chương nghe được · mở Studio để làm tiếp"}
         </span>
       </span>
     </button>

@@ -24,6 +24,8 @@ interface VoiceOption {
   style: string;
   preview: boolean;
   current: boolean;
+  /** Giọng người nghe đã chọn mà chưa vào sách. */
+  pending: boolean;
   suggested: boolean;
   /** Người CÙNG CHƯƠNG với nhân vật đang dùng giọng gốc này (máy sẽ lấy bậc âm sắc khác họ). */
   sharedWith: { label: string; chapters: number }[];
@@ -34,6 +36,8 @@ interface VoiceOption {
 interface VoiceChoices {
   character: { value: string; label: string; gender: string; lines: number; chapters: number };
   current: string;
+  /** Lựa chọn chưa vào sách (tên giọng nó sẽ thành; "" khi chưa biết) - bỏ được bằng `requestedAt` như "Hoàn tác". */
+  pending: { name: string; requestedAt: number } | null;
   voices: VoiceOption[];
 }
 
@@ -89,6 +93,8 @@ export function VoicePicker({
     onClose();
   };
   const when = useWhenApplied(bookId);
+  // Tên như tiêu đề hộp ("Oliver"), không phải khoá sổ in hoa ("OLIVER") - soát UX 30-09.
+  const name = person?.displayName || data?.character.label || "";
   const save = useMutation({
     mutationFn: (voice: VoiceOption) =>
       api<{ requestedAt: number }>(`/api/books/${bookId}/voice`, { method: "POST", body: { character: data!.character.value, preset: voice.name } }),
@@ -97,7 +103,7 @@ export function VoicePicker({
       refreshAfterDecision(client, bookId);
       const character = data!.character;
       // Chọn nhầm giọng trong danh sách dài: "Hoàn tác" như thẻ giọng trong hộp việc (studio/decisions.ts).
-      toast.success(`Đã ghi: ${character.label} đọc bằng giọng ${voice.name}`, {
+      toast.success(`Đã ghi: ${name} đọc bằng giọng ${voice.name}`, {
         description: `Mọi câu đã thu của người ấy sẽ đọc lại bằng giọng mới. ${when}`,
         action: undoAction(
           client,
@@ -105,13 +111,29 @@ export function VoicePicker({
           "voice",
           [{ character: character.value, requestedAt, keep: false }],
           // Không nói tên giọng cũ: người ấy có thể đang có một giọng chờ áp khác, và hoàn tác trả về đúng giọng chờ ấy.
-          `Giọng của ${character.label} trở lại như trước khi đổi.`,
+          `Giọng của ${name} trở lại như trước khi đổi.`,
         ),
         duration: UNDO_MS,
       });
       close();
     },
     onError: (failure: Error) => toast.error("Chưa đổi được giọng", { description: failure.message }),
+  });
+  // Bỏ lựa chọn chưa vào sách - cùng đường "Hoàn tác" (POST /voice withdraw), dùng được bất cứ lúc nào trước khi máy áp.
+  const keep = useMutation({
+    mutationFn: (pending: { name: string; requestedAt: number }) =>
+      api<{ undone: number }>(`/api/books/${bookId}/voice`, {
+        method: "POST",
+        body: { character: data!.character.value, withdraw: true, requestedAt: pending.requestedAt },
+      }),
+    onSuccess: (_answer, pending) => {
+      refreshAfterDecision(client, bookId);
+      toast.success(pending.name ? `Đã bỏ lựa chọn ${pending.name}` : "Đã bỏ lựa chọn giọng", {
+        description: `Giọng của ${name} trở lại như trước khi chọn.`,
+      });
+      close();
+    },
+    onError: (failure: Error) => toast.error("Chưa bỏ được lựa chọn", { description: failure.message }),
   });
   const voices = (data?.voices ?? []).filter((voice) => voice.gender === shown);
   return (
@@ -138,6 +160,16 @@ export function VoicePicker({
         <p className="text-sm text-danger">{(error as Error | null)?.message ?? "Không đọc được danh sách giọng."}</p>
       ) : (
         <>
+          {data.pending && (
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-warning-soft px-3 py-2 text-sm">
+              <span className="text-pretty">
+                Chờ áp dụng: đổi sang <span className="font-medium">{data.pending.name || "giọng khác"}</span>
+              </span>
+              <Button size="sm" variant="secondary" loading={keep.isPending} disabled={save.isPending} onClick={() => keep.mutate(data.pending!)}>
+                Giữ {data.current || "giọng đang dùng"}
+              </Button>
+            </div>
+          )}
           <Segmented<Gender>
             label="Giọng nam hay nữ"
             value={shown}
@@ -155,7 +187,10 @@ export function VoicePicker({
                   <div className="flex flex-wrap items-center gap-1.5">
                     <span className="font-medium">{voice.name}</span>
                     {voice.current && <span className="rounded-full bg-panel px-2 py-px text-[11px] font-medium text-accent-text">Đang dùng</span>}
-                    {voice.suggested && !voice.current && (
+                    {voice.pending && !voice.current && (
+                      <span className="rounded-full bg-warning-soft px-2 py-px text-[11px] font-medium text-warning">Chờ áp dụng</span>
+                    )}
+                    {voice.suggested && !voice.current && !voice.pending && (
                       <span className="rounded-full bg-info-soft px-2 py-px text-[11px] font-medium text-info">Máy gợi ý</span>
                     )}
                   </div>
@@ -163,14 +198,21 @@ export function VoicePicker({
                     Miền {voice.region} · {voice.style} · {sharedText(voice)}
                   </div>
                 </div>
-                <Button
-                  size="sm"
-                  variant={voice.suggested && !voice.current ? "primary" : "secondary"}
-                  disabled={voice.current || save.isPending}
-                  onClick={() => save.mutate(voice)}
-                >
-                  {voice.current ? "Đang dùng" : "Chọn"}
-                </Button>
+                {voice.current && data.pending ? (
+                  // Đã chọn giọng khác mà chưa vào sách: giọng đang dùng chọn lại được - là bỏ lựa chọn kia.
+                  <Button size="sm" variant="secondary" loading={keep.isPending} disabled={save.isPending} onClick={() => keep.mutate(data.pending!)}>
+                    Giữ giọng này
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant={voice.suggested && !voice.current && !voice.pending ? "primary" : "secondary"}
+                    disabled={voice.current || voice.pending || save.isPending || keep.isPending}
+                    onClick={() => save.mutate(voice)}
+                  >
+                    {voice.current ? "Đang dùng" : voice.pending ? "Đã chọn" : "Chọn"}
+                  </Button>
+                )}
               </li>
             ))}
           </ul>
