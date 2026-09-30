@@ -446,3 +446,36 @@ def test_a_published_model_that_does_not_add_up_is_refused_by_ollama(tmp_path: P
     fetched.clear()
     setup._step_llm()
     assert fetched == [] and [body["model"] for body in FakeOllama.created] == ["abook-test:v1"]
+
+
+def test_starting_a_book_runs_its_supervisor_from_the_code_it_is_pinned_to(tmp_path: Path, ollama: str,
+                                                                          monkeypatch: pytest.MonkeyPatch) -> None:
+    """Studio chạy sách: supervisor đi từ mã của app khi hash chất lượng còn trùng, từ bản chép ghim khi app đã lên bản đổi
+    file khoá (background_runner chạy `python -m` từ thư mục ấy - thư mục làm việc đứng trước PYTHONPATH; soát QA 29-09)."""
+    import os
+
+    from ebook_reader import background_runner, quality_policy
+
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "localappdata"))
+    monkeypatch.setattr(os, "environ", dict(os.environ))  # StudioRunner.start ghi biến môi trường của Studio
+    setup = _setup(tmp_path, ollama, [])
+    setup.start()
+    setup.wait(30)
+    package = setup.app_root / "ebook_reader"
+    package.mkdir()
+    (package / "pipeline.py").write_text("PHIEN_BAN = 1\n", encoding="utf-8")
+    monkeypatch.setattr(quality_policy, "quality_implementation_hash", lambda: "a" * 64)
+    monkeypatch.setattr(setup, "ensure_ollama", lambda: None)
+    started: dict = {}
+    monkeypatch.setattr(background_runner, "start_background", lambda root, **options: started.update(options))
+    book = tmp_path / "sach"
+    book.mkdir()
+
+    StudioRunner(setup).start(book)
+    assert started["code_root"] == setup.app_root, "hash trùng: mã mới nhất của app"
+    assert started["python_executable"] == setup.pythonw
+
+    monkeypatch.setattr(quality_policy, "quality_implementation_hash", lambda: "b" * 64)
+    StudioRunner(setup).start(book)
+    assert started["code_root"] == setup.root / "code" / ("a" * 16), "app đổi file khoá: cuốn dở chạy bản ghim"
+
