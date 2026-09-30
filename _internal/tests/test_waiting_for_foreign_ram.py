@@ -83,10 +83,11 @@ def _pipeline(monkeypatch, readings, *, stop_after: int | None = None):
     obj.emit = lambda _kind, _payload: None
     calls = {"waits": 0}
 
-    def _wait_pause_or_stop() -> None:
+    def _wait_pause_or_stop() -> float:
         calls["waits"] += 1
         if stop_after is not None and calls["waits"] > stop_after:
             raise KeyboardInterrupt("stop requested")
+        return calls.pop("pause", 0.0)
 
     obj._wait_pause_or_stop = _wait_pause_or_stop
     return obj, calls
@@ -161,3 +162,28 @@ def test_memory_that_never_comes_back_still_stops_the_run(monkeypatch) -> None:
     )
 
     assert decision.critical is True
+
+
+def test_a_pause_while_waiting_does_not_eat_the_wait(monkeypatch) -> None:
+    """A listener pause (the Pause button, or a laptop unplugged - power_source.py) of an hour in the middle of a
+    thirty-minute wait for memory: the pause is not counted against the wait. Before, continuing ended the run at once in
+    a critical stop (QA review 29-09)."""
+    clock = {"now": 1000.0}
+    monkeypatch.setattr(pipeline_module.time, "monotonic", lambda: clock["now"])
+    monkeypatch.setattr(pipeline_module, "CRITICAL_RAM_WAIT_TIMEOUT_SECONDS", 1800.0)
+    pipeline, calls = _pipeline(monkeypatch, [_critical(1.1), _critical(1.1), _recovered(4.0)])
+    real_wait = pipeline._wait_pause_or_stop
+
+    def paused_for_an_hour_once() -> float:
+        if calls["waits"] == 0:
+            clock["now"] += 3600.0
+            calls["pause"] = 3600.0
+        return real_wait()
+
+    pipeline._wait_pause_or_stop = paused_for_an_hour_once
+
+    _snapshot, decision = pipeline._wait_for_foreign_ram(
+        pipeline.resources.snapshot(), pipeline.resources.decide(None), "chapter 3"
+    )
+
+    assert decision.critical is False, "memory came back after the pause: carry on, no critical stop"
