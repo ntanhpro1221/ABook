@@ -9,15 +9,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Studio (sản xuất sách nói)
 
-- Nút "Tạm dừng" / "Tiếp tục" khi sách đang chạy: sách đứng yên sau câu đang làm dở và làm tiếp đúng chỗ ấy, không đổi
+- Nút "Tạm dừng" / "Tiếp tục" khi sách đang chạy: sách đứng yên sau phần đang làm dở và làm tiếp đúng chỗ ấy, không đổi
   gì - an toàn cả giữa lúc phân tích truyện, nơi "Dừng" rồi chạy tiếp có thể ra một cuốn khác. Hộp thoại "Dừng giữa lúc
-  phân tích truyện?" mời tạm dừng thay vì dừng.
+  phân tích truyện?" mời tạm dừng thay vì dừng. Tạm dừng vẫn giữ bộ nhớ card đồ hoạ. Lượt chạy bắt đầu bằng bản app cũ
+  hơn thì không có nút tạm dừng.
 - Máy tính xách tay rút sạc hơn một phút thì Studio tự tạm dừng (chạy pin làm sách rất chậm mà hao pin) và tự làm tiếp
   khi cắm sạc lại; trang sách nói "Tạm dừng · máy đang chạy pin". Bấm "Tiếp tục" để làm tiếp ngay trên pin, hay tắt hẳn ở
-  Cài đặt → Studio → "Tạm dừng khi rút sạc". Điện thoại điều khiển Studio từ xa cũng tạm dừng / tiếp tục được, và điện
-  thoại đã bật thông báo Studio báo "Máy tính đang chạy pin" - cả khi máy không làm sách nào (điện thoại hỏi mỗi 15
-  phút và khi mở app). Lượt chạy bắt
-  đầu bằng bản app cũ hơn thì không có nút tạm dừng.
+  Cài đặt → Studio → "Tạm dừng khi rút sạc". Máy khởi động lại thì sách đã bấm tạm dừng vẫn đứng yên.
 - Sách đang làm dở chạy tiếp bằng đúng bản mã đã bắt đầu nó khi app lên bản đổi file khoá chất lượng (trước đây bản mã
   ghim bị bỏ qua); các cuốn khác luôn chạy mã mới nhất của app.
 - Danh sách Dự án và Thư viện gom các phần của "Làm tiếp cuốn này" theo chuỗi thật: đổi tên một phần không làm mất nhóm,
@@ -25,6 +23,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Bảng chương ở trang dự án không còn ngắt "2 ngày trước" thành hai dòng.
 - Mục "Cách đọc tên", bảng "Tên trong câu" và thẻ "Đọc … là …?" trong Việc cần duyệt hiện cách đọc với chữ đầu mỗi từ viết
   hoa ("Rên-ta-rô" thay cho "rên-ta-rô"); cách đọc đã lưu và ô sửa giữ nguyên.
+
+### Điện thoại
+
+- Studio từ xa trên điện thoại cũng tạm dừng / tiếp tục được sách đang chạy.
+- Điện thoại đã bật thông báo Studio báo "Máy tính đang chạy pin" khi máy tính tuột sạc - cả khi máy không làm sách nào
+  (điện thoại hỏi mỗi 15 phút và khi mở app).
 
 ## [0.4.9] - 2026-09-29
 
