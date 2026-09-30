@@ -10,7 +10,7 @@ import type { BookSummary } from "./api";
 import { phaseTone, pickFolder, useAppInfo, useLibrary, useOpenBook } from "./data";
 import { ProjectMenu } from "./ProjectScreen";
 import { StudioSetupCard } from "./StudioSetup";
-import { groupParts, type Entry } from "./projectGroups";
+import { groupParts, splitLive, type Entry } from "./projectGroups";
 
 // Studio: nơi làm sách. Danh sách là bảng công việc - trạng thái sản xuất, tiến độ, thời gian còn lại - chứ không
 // phải kệ sách (kệ sách là của phía Nghe).
@@ -113,8 +113,6 @@ function EntryView({ entry, inset = false }: { entry: Entry; inset?: boolean }) 
 }
 
 const entryKey = (entry: Entry) => (entry.kind === "book" ? entry.book.id : `series:${entry.name}`);
-const entryBooks = (entry: Entry) => (entry.kind === "book" ? [entry.book] : entry.books);
-const isLive = (book: BookSummary) => book.running || book.starting;
 
 export function ProjectsScreen() {
   const { data, isLoading } = useLibrary();
@@ -124,10 +122,7 @@ export function ProjectsScreen() {
   const books = useMemo(() => data?.books ?? [], [data]);
   // Nhóm phần trước, rồi mới tách mục "Đang chạy": một phần đang chạy kéo cả nhóm của nó lên, không để phần 2 ở trên và
   // phần 1 đứng lẻ bên dưới (soát UX 30-09).
-  const entries = useMemo(() => groupParts(books), [books]);
-  const liveEntries = entries.filter((entry) => entryBooks(entry).some(isLive));
-  const otherEntries = entries.filter((entry) => !entryBooks(entry).some(isLive));
-  const live = liveEntries.flatMap(entryBooks).filter(isLive);
+  const { live: liveEntries, rest: otherEntries, books: live } = useMemo(() => splitLive(groupParts(books)), [books]);
 
   const openExisting = async () => {
     try {

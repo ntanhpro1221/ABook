@@ -28,3 +28,13 @@ export function groupParts(books: BookSummary[]): Entry[] {
   }
   return entries;
 }
+
+export const entryBooks = (entry: Entry) => (entry.kind === "book" ? [entry.book] : entry.books);
+const isLive = (book: BookSummary) => Boolean(book.running || book.starting);
+
+/** Mục "Đang chạy" và phần còn lại: một phần đang chạy (hay tạm dừng) kéo CẢ nhóm của nó lên - không để phần 2 ở trên và
+ *  phần 1 đứng lẻ bên dưới (soát UX 30-09). `live`: các cuốn thật sự đang chạy, cho tiêu đề mục. */
+export function splitLive(entries: Entry[]): { live: Entry[]; rest: Entry[]; books: BookSummary[] } {
+  const live = entries.filter((entry) => entryBooks(entry).some(isLive));
+  return { live, rest: entries.filter((entry) => !live.includes(entry)), books: live.flatMap(entryBooks).filter(isLive) };
+}
