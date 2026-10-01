@@ -515,6 +515,10 @@ def summarize(project_root: Path, *, running: bool = False, now: float | None = 
             "profile": profile,
             "profileLabel": humanize.PROFILE_LABELS.get(profile, profile),
             "narrator": humanize.voice_label(str(voices.get("narrator_voice") or "")),
+            # Model đã phân tích cuốn này (book_settings.json lúc tạo sách) - đổi model mặc định thì biết cuốn nào làm bằng
+            # model cũ.
+            "analyzer": str((settings.get("analysis") or {}).get("model") or "")
+            if isinstance(settings.get("analysis"), dict) else "",
         },
         "chapters": {
             "total": chapter_total,

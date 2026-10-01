@@ -28,7 +28,8 @@ export interface BookSummary {
   lastError: string;
   /** Sách đã xong: số yêu cầu sửa của người nghe ghi sau lần chạy cuối - chờ nút "Áp dụng" (store.pending_changes). */
   pendingChanges?: number;
-  settings: { profile: string; profileLabel: string; narrator: string };
+  /** `analyzer`: model đã phân tích cuốn này (book_settings.json), "" ở sách không ghi. */
+  settings: { profile: string; profileLabel: string; narrator: string; analyzer?: string };
   chapters: { total: number; completed: number; missingAudio?: number; failed: number; working: number };
   segments: { total: number; analyzed: number; recorded: number; finished: number; failed: number };
   progress: { overall: number; analysis: number; synthesis: number };
