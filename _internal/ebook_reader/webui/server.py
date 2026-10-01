@@ -460,6 +460,50 @@ class App:
             ) from error
         return {"ok": True}
 
+    def analysis_models(self) -> dict[str, Any]:
+        """Model đọc hiểu truyện chọn được cho MỘT cuốn (trình tạo sách): các model có trong Ollama mà dây chuyền sẽ gọi -
+        Ollama riêng của Studio trong app đóng gói, Ollama của máy khi chạy từ mã nguồn - cùng model mặc định của app. Hỏi
+        HTTP /api/tags (không gọi CLI `ollama`: khi máy chủ tắt nó tự mở app khay); Ollama tắt thì danh sách rỗng."""
+        import urllib.request
+
+        from ..config import build_settings
+
+        analysis = build_settings()["analysis"]
+        default = str(analysis.get("model", ""))
+        base = str((self.studio.settings_overrides().get("analysis") or {}).get("base_url") if self.studio is not None
+                   else analysis.get("base_url", ""))
+        models: list[dict[str, Any]] = []
+        reachable = True
+        try:
+            with urllib.request.urlopen(f"{base.rstrip('/')}/api/tags", timeout=3) as reply:
+                data = json.loads(reply.read().decode("utf-8"))
+        except (OSError, ValueError):
+            data, reachable = {}, False
+        for item in data.get("models", []) if isinstance(data, dict) else []:
+            name = str(item.get("name", ""))
+            details = item.get("details") if isinstance(item.get("details"), dict) else {}
+            if not name or "embed" in name.casefold() or "bert" in str(details.get("family", "")).casefold():
+                continue
+            models.append({"name": name, "size": int(item.get("size") or 0),
+                           "parameters": str(details.get("parameter_size", "")),
+                           "quantization": str(details.get("quantization_level", ""))})
+        bare = lambda name: name[:-len(":latest")] if name.endswith(":latest") else name  # noqa: E731
+        models.sort(key=lambda model: (bare(model["name"]) != bare(default), model["name"].casefold()))
+        return {"default": default, "models": models, "reachable": reachable}
+
+    def _analysis_overrides(self, chosen: str) -> dict[str, Any] | None:
+        """Cài đặt riêng của cuốn mới: Ollama riêng của Studio (app đóng gói) và model đọc hiểu người dùng chọn (nếu khác
+        mặc định) - model ấy phải có trong Ollama, không thì dây chuyền hỏng ngay bước đầu."""
+        overrides = dict(self.studio.settings_overrides()) if self.studio is not None else {}
+        chosen = chosen.strip()
+        if chosen:
+            listed = self.analysis_models()
+            names = {model["name"] for model in listed["models"]}
+            if chosen != listed["default"] and chosen not in names:
+                raise ApiError(HTTPStatus.BAD_REQUEST, f"Model “{chosen}” không có trong Ollama của máy này")
+            overrides["analysis"] = {**(overrides.get("analysis") or {}), "model": chosen}
+        return overrides or None
+
     def create(self, body: dict[str, Any]) -> dict[str, Any]:
         self._mutating()
         paths = [str(item) for item in body.get("paths", [])]
@@ -469,7 +513,7 @@ class App:
         root = actions.create_book(
             self.library.root, paths, str(body.get("title", "")), str(body.get("profile", "high_quality")),
             humanize.voice_key(str(body.get("narrator", ""))), str(body.get("firstPerson", "")),
-            settings_overrides=self.studio.settings_overrides() if self.studio is not None else None,
+            settings_overrides=self._analysis_overrides(str(body.get("analysisModel", "") or "")),
             first_person_chapters={str(key): str(value) for key, value in body["firstPersonChapters"].items()}
             if isinstance(body.get("firstPersonChapters"), dict) else None,
             drop_credit_lines=body["dropCreditLines"] if isinstance(body.get("dropCreditLines"), bool) else None,
@@ -1580,6 +1624,9 @@ class Handler(BaseHTTPRequestHandler):
     def get_preferences(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.preferences.get())
 
+    def get_analysis_models(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.analysis_models())
+
     def get_shared_readings(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.shared_readings_view())
 
@@ -1728,6 +1775,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(BOOK + r"/shared-readings"), Handler.get_book_shared_readings),
     ("POST", re.compile(BOOK + r"/shared-readings"), Handler.post_book_shared_readings),
     ("GET", re.compile(r"/api/readings"), Handler.get_shared_readings),
+    ("GET", re.compile(r"/api/analysis-models"), Handler.get_analysis_models),
     ("POST", re.compile(r"/api/readings"), Handler.post_shared_readings),
     ("POST", re.compile(BOOK + r"/bookfile"), Handler.post_bookfile),
     ("POST", re.compile(BOOK + r"/speaker"), Handler.post_speaker),
