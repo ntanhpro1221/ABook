@@ -35,6 +35,9 @@ function imageFromItems(items: DataTransferItemList | null | undefined): File | 
   return null;
 }
 
+/** Tên nguồn bìa như người đọc biết (máy chủ trả tên hàm: "google_books"). */
+const PROVIDER_NAMES: Record<string, string> = { itunes: "iTunes", open_library: "Open Library", google_books: "Google Books" };
+
 export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage | null } }) {
   const client = useQueryClient();
   const input = useRef<HTMLInputElement | null>(null);
@@ -252,7 +255,10 @@ function CoverSearch({
           <p className="py-10 text-center text-sm text-fg-2">Không thấy bìa nào. Thử tên tiếng Anh, bỏ số tập, hoặc dùng ảnh có sẵn trên máy.</p>
         ) : null}
         {failed.length > 0 && (
-          <p className="mt-3 text-xs text-fg-3">Không trả lời lần này: {failed.map((name) => name.replace("_", " ")).join(", ")}.</p>
+          <p className="mt-3 text-xs text-fg-3">
+            Chưa hỏi được {failed.map((name) => PROVIDER_NAMES[name] ?? name.replace("_", " ")).join(", ")} lần này (mạng chậm hay trang ấy
+            không trả lời) - thử lại sau, hoặc dùng ảnh có sẵn trên máy.
+          </p>
         )}
       </div>
     </Dialog>
