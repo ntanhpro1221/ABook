@@ -6,7 +6,8 @@ mỗi file (xem `ABOOK_FILE_FORMAT.md`), app và hệ điều hành nhận ra fi
 đuôi `.abook`.
 
 `.abookproj` (cả dự án Studio trong một file, đặc tả `ABOOKPROJ_FILE_FORMAT.md`) đăng ký riêng bằng form thứ hai -
-bảng cuối file. `.abook` đã gửi ngày 01-10, mã hồ sơ IANA #1460837.
+bảng cuối file. Cả hai đã gửi ngày 01-10: `.abook` mã hồ sơ IANA #1460837, `.abookproj` #1460846
+(trạng thái: https://tools.iana.org/public-view).
 
 ## Chủ sách làm (khoảng 10 phút)
 
