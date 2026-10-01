@@ -129,7 +129,10 @@ def _apk_certificate(apk: Path) -> str:
     sdk = Path(os.environ.get("LOCALAPPDATA", "")) / "Android/Sdk/build-tools"
     tools = sorted(sdk.glob("*/apksigner.bat"), key=lambda path: [int(part) for part in re.findall(r"\d+", path.parent.name)])
     assert tools, f"không có apksigner trong {sdk}"
-    output = subprocess.run([str(tools[-1]), "verify", "--print-certs", str(apk)], capture_output=True, text=True, check=True).stdout
+    # apksigner.bat cần java: JAVA_HOME của Android Studio như bước dựng APK.
+    env = dict(os.environ, JAVA_HOME=os.environ.get("JAVA_HOME") or "C:/Program Files/Android/Android Studio/jbr")
+    output = subprocess.run([str(tools[-1]), "verify", "--print-certs", str(apk)], capture_output=True, text=True, check=True,
+                            env=env).stdout
     match = re.search(r"SHA-256 digest: ([0-9a-f]{64})", output)
     assert match, "apksigner không in chứng chỉ"
     return match.group(1)
