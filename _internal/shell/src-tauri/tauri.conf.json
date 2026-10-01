@@ -49,6 +49,13 @@
         "description": "Sách nói ABook",
         "role": "Viewer",
         "mimeType": "application/vnd.ngdtuanh.abook+zip"
+      },
+      {
+        "ext": ["abookproj"],
+        "name": "ABook.Project",
+        "description": "Dự án sách nói ABook",
+        "role": "Editor",
+        "mimeType": "application/vnd.ngdtuanh.abookproj+zip"
       }
     ],
     "windows": {

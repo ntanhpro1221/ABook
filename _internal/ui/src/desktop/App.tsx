@@ -223,7 +223,9 @@ function BookFileMenuItem({ book }: { book: ListenBook }) {
 /** Kết quả mở một file sách (`POST /api/listen/open-book-file`, hay cửa sổ app khi bấm đúp file .abook - desktop.py). */
 interface OpenedBook {
   id: string | null;
-  how?: "new" | "existing" | "updated" | "project";
+  how?: "new" | "existing" | "updated" | "project" | "studio";
+  /** File `.abookproj`: số file nguồn chương không có trong gói (đã bị dời hay xoá ở máy gói). */
+  missingSources?: number;
   error?: string;
   file?: string;
 }
@@ -233,6 +235,7 @@ const OPENED_SAID: Record<NonNullable<OpenedBook["how"]>, [string, string | unde
   existing: ["Cuốn này đã có trong thư viện", undefined],
   updated: ["Đã cập nhật lên bản nhiều chương hơn", "Chỗ đang nghe, dấu trang vẫn giữ nguyên."],
   project: ["Đây là sách do Studio máy này làm", "Mở đúng cuốn ấy, không chép thêm bản nào."],
+  studio: ["Đã mở dự án vào Studio", "Dự án đã chép vào thư viện Studio - xoá file gốc cũng không sao."],
 };
 
 function useOpenedBook() {
@@ -245,6 +248,17 @@ function useOpenedBook() {
         return;
       }
       if (!result.id) return;
+      if (result.how === "studio") {
+        void client.invalidateQueries({ queryKey: ["library"] });
+        navigate(`/studio/${result.id}`);
+        const lost = result.missingSources ?? 0;
+        toast.success(OPENED_SAID.studio[0], {
+          description: lost
+            ? `Thiếu ${lost} file nguồn chương (đã bị dời ở máy gói) - nghe, xem, xuất vẫn được; thu lại chương ấy thì cần chép nguồn vào.`
+            : OPENED_SAID.studio[1],
+        });
+        return;
+      }
       void client.invalidateQueries({ queryKey: ["listen"] });
       navigate(`/book/${result.id}`);
       const [title, description] = OPENED_SAID[result.how ?? "new"];

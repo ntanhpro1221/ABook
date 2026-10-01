@@ -7,7 +7,8 @@
 #
 # -DryRun: chỉ in những gì sẽ ghi, không đụng registry. -Unregister: gỡ đúng những khoá này.
 # Bấm đúp .abook mở ABook (shell\open\command -> ABook.vbs "<file>" -> app.py -> desktop.py nhập và mở cuốn ấy;
-# app đang mở thì cửa sổ đang chạy mở nó). .abookproj chưa có lệnh mở: app chưa đọc được dự án đóng gói.
+# app đang mở thì cửa sổ đang chạy mở nó). Bấm đúp .abookproj cũng vậy: app mở nó thành một dự án MỚI trong thư viện
+# Studio (webui/projectfile.py).
 param(
     [switch]$DryRun,
     [switch]$Unregister
@@ -27,7 +28,7 @@ $Types = @(
     @{ Extension = ".abook"; ProgId = "ABook.Book"; Name = "Sách nói ABook"; Icon = "book_file.ico";
        ContentType = "application/vnd.ngdtuanh.abook+zip"; Opens = $true },
     @{ Extension = ".abookproj"; ProgId = "ABook.Project"; Name = "Dự án sách nói ABook"; Icon = "project_file.ico";
-       ContentType = "application/vnd.ngdtuanh.abookproj+zip"; Opens = $false }
+       ContentType = "application/vnd.ngdtuanh.abookproj+zip"; Opens = $true }
 )
 
 function Set-Value([string]$Key, [string]$Name, $Value, [string]$Kind = "String") {
