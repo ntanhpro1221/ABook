@@ -46,7 +46,8 @@ Không có card NVIDIA vẫn cài và nghe được bình thường; chỉ phầ
 
 1. Tải `ABook_<phiên bản>_x64-setup.exe` ở trang [Releases](https://github.com/ntanhpro1221/ABook/releases/latest)
    và chạy. Bộ cài khoảng 30 MB, không cần quyền quản trị, không cài Python hay gì khác vào máy.
-2. Mở **ABook** từ Start Menu. Bấm đúp một file `.abook` là mở cuốn sách đó.
+2. Mở **ABook** từ Start Menu. Bấm đúp một file `.abook` là mở cuốn sách đó; bấm đúp một file `.abookproj` (cả dự án
+   Studio, tạo bằng Xuất > Cả dự án) là có lại dự án ấy trong Studio.
 3. Muốn làm sách nói: vào **Studio → Dự án → "Cài Studio"**. Studio tải một lần khoảng 15-20 GB (Python, thư viện, Ollama
    và các model) vào một thư mục riêng, không đụng tới thứ đã cài trên máy (máy đã có Ollama thì Ollama ấy giữ nguyên).
    Mất mạng hay tắt máy giữa chừng thì bấm "Cài tiếp".
