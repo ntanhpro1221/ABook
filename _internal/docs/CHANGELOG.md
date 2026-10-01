@@ -15,6 +15,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   theo phần trước).
 - **Cần nghe lại** có nút **Nghe liền N câu**: phát lần lượt mọi câu nghe được; đang nghe thì phím **O** = Ổn, **R** = Cần
   thu lại, rồi sang câu kế ngay.
+- **Gói cả dự án thành một file `.abookproj`** (Xuất > Cả dự án): sổ dự án, audio đã thu, nguồn chương, bìa - để sao lưu
+  hay chuyển sang máy khác. Bấm đúp file (hay Mở file sách) là có lại dự án ấy trong Studio, luôn thành một dự án MỚI,
+  không đè dự án đang có. Nguồn chương đã bị dời hay xoá thì vẫn gói được, app báo rõ thiếu file nào. Dự án đang chạy
+  thì gói sau khi nó chạy xong hoặc đã dừng.
 
 ## [0.4.15] - 2026-10-01
 

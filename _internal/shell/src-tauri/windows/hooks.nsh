@@ -5,7 +5,10 @@
 ; lưu trỏ vào chính ABook, và gỡ app xong .abook vẫn trỏ vào "ABook" không còn tồn tại. Thử 28-09: cài 0.1.0, cập nhật
 ; lên 0.1.1, gỡ -> sót đúng như thế. Sửa: giữ bản sao lưu gốc qua các lần cập nhật, gỡ xong thì dọn phần của mình.
 
+; .abookproj (dự án Studio đóng gói, ProgId "ABook.Project") cùng cách.
+
 Var AbookAssociationBackup
+Var AbookProjAssociationBackup
 
 !macro NSIS_HOOK_PREINSTALL
   ReadRegStr $AbookAssociationBackup SHCTX "Software\Classes\.abook" "ABook_backup"
@@ -14,10 +17,16 @@ Var AbookAssociationBackup
     ; Chưa phải của ABook: đây mới là giá trị "trước khi cài" thật.
     StrCpy $AbookAssociationBackup $0
   ${EndIf}
+  ReadRegStr $AbookProjAssociationBackup SHCTX "Software\Classes\.abookproj" "ABook_backup"
+  ReadRegStr $0 SHCTX "Software\Classes\.abookproj" ""
+  ${If} $0 != "ABook.Project"
+    StrCpy $AbookProjAssociationBackup $0
+  ${EndIf}
 !macroend
 
 !macro NSIS_HOOK_POSTINSTALL
   WriteRegStr SHCTX "Software\Classes\.abook" "ABook_backup" $AbookAssociationBackup
+  WriteRegStr SHCTX "Software\Classes\.abookproj" "ABook_backup" $AbookProjAssociationBackup
 !macroend
 
 ; Gỡ là gỡ hết (chủ sách 28-09: "phụ thuộc nằm hoàn toàn bên trong app, gỡ thì gỡ hết"). Mọi thứ app tải thêm nằm trong
@@ -49,6 +58,12 @@ Var AbookAssociationBackup
     ${EndIf}
     DeleteRegValue SHCTX "Software\Classes\.abook" "ABook_backup"
     DeleteRegKey /ifempty SHCTX "Software\Classes\.abook"
+    ReadRegStr $0 SHCTX "Software\Classes\.abookproj" ""
+    ${If} $0 == ""
+      DeleteRegValue SHCTX "Software\Classes\.abookproj" ""
+    ${EndIf}
+    DeleteRegValue SHCTX "Software\Classes\.abookproj" "ABook_backup"
+    DeleteRegKey /ifempty SHCTX "Software\Classes\.abookproj"
 
     ; Gỡ vì đang CÀI LẠI: bộ cài bản mới (tự tải về, không qua bộ cập nhật) mặc định chọn "gỡ trước khi cài" và gọi
     ; thẳng bộ gỡ này - khi ấy tiến trình ÔNG của PowerShell dưới đây là "ABook_x.y.z_x64-setup.exe". Giữ Studio (20 GB,

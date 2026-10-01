@@ -34,6 +34,7 @@ from .desktop_shell import (
 
 WEB_FLAGS = "--disable-gpu --disable-gpu-compositing --disable-features=Translate"
 BOOK_FILE_SUFFIX = ".abook"
+PROJECT_FILE_SUFFIX = ".abookproj"  # cả dự án Studio (webui/projectfile.py) - mở thành dự án mới
 # Trang web nghe sự kiện này (desktop/App.tsx): mở trang sách vừa nhập, hay báo vì sao không mở được.
 OPENED_EVENT = "abook-opened"
 
@@ -46,8 +47,9 @@ def _version() -> str:
 
 
 def book_file_argument(argv: list[str]) -> str:
-    """File sách trong dòng lệnh (bấm đúp file `.abook`: `app.py "<file>"`), hoặc ""."""
-    return next((arg for arg in argv[1:] if arg.lower().endswith(BOOK_FILE_SUFFIX) and Path(arg).is_file()), "")
+    """File sách hay file dự án trong dòng lệnh (bấm đúp file `.abook`/`.abookproj`: `app.py "<file>"`), hoặc ""."""
+    return next((arg for arg in argv[1:] if arg.lower().endswith((BOOK_FILE_SUFFIX, PROJECT_FILE_SUFFIX))
+                 and Path(arg).is_file()), "")
 
 
 def run_desktop() -> int:
@@ -98,7 +100,7 @@ def run_desktop() -> int:
 
         def pick_book_file(self, title: str, start: str) -> str | None:
             return self._call(
-                lambda: QFileDialog.getOpenFileName(self.window, title, start, f"Sách ABook (*{BOOK_FILE_SUFFIX})")[0] or None
+                lambda: QFileDialog.getOpenFileName(self.window, title, start, f"Sách hay dự án ABook (*{BOOK_FILE_SUFFIX} *{PROJECT_FILE_SUFFIX})")[0] or None
             )
 
     class Window(QMainWindow):
