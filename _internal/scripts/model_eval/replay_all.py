@@ -36,6 +36,7 @@ BOOKS: dict[str, str | None] = {
     "two_childhood_friends": "Two Childhood Friends Who Have the Strongest Power Kick Each Other in the Dungeon With All Their Might",
     "tam_quoc_dien_nghia": "Tam quốc diễn nghĩa (Phan Kế Bính)",
     "tat_den_ngo_tat_to": "Tắt đèn (Ngô Tất Tố)",
+    "dong_chu_liet_quoc": "Đông Chu liệt quốc (Nguyễn Đỗ Mục)",
 }
 
 

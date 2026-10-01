@@ -602,3 +602,18 @@ xuống ~ (tiền lệ Đã bảo 050:32); 69 thêm YENNICA~ ("Hựp" là tiến
 155/81/24/158 afraid ("lo lắng"), 15 surprised ("Không ngờ"), 186-189 sad. Host sai (giữ đáp án): 50 "không phải là một tội
 lỗi đáng chết" (chữ phủ định ngoài cửa sổ của host), 109. SPLIT["test"] thêm "130". `voice_identity --gold-check`: hdst 13
 người, không nhập ai. Phát lại: 100/100.
+
+## Đông Chu liệt quốc 002, 004 (01-10, chương HUẤN LUYỆN - lời dẫn "X nói :" đứng trước câu thoại)
+
+Lý do làm: v8 thua cổng Tam quốc vì ghép lời dẫn của câu SAU vào câu hiện tại; data_v8 chỉ có 7/1.939 câu thoại mang cấu
+hình "lời dẫn của chính câu ở previous_text, lời dẫn của câu kế ở next_text" (ANALYSIS_RESEARCH.md 01-10). A: Claude; B: agent
+soát đối kháng (đọc trọn hai chương + Hồi 1, 3). B không thấy câu nào gán sai người, kể cả bẫy 004:71 ("Trang-công làm thinh,
+không nói :" rồi câu của Khương-thị). Nhận: 002 thêm CUNG-NIẾC đủ cho U-vương (tên húy nêu ở câu 18, trước mọi câu ông nói -
+cùng lý với NGỘ-SANH ở 004), NGHI-CỰU thêm BÌNH-VƯƠNG~ và 004:10 thêm NGHI-CỰU~ (hiệu chỉ có từ Hồi 3, quy tắc 13), TUYÊN-VƯƠNG
+thêm TỊNH~ (Hồi 1), THÂN-HẦU thêm THÂN-BÁ~ (tước cũ); 244 bỏ TRỊNH-HỮU-BÁ~ (dạng gõ đảo chỉ ở câu kể 23, không dẫn câu nói nào);
+26/47 cùng NPC*:quan trấn thủ Kỳ-sơn ("lại dâng biểu"); 171 NPC*:nội giám; 118 giới f (nhóm phá hoa là cung-nữ, câu 109, 120);
+cảm xúc theo cue 147 afraid, 156, 187, 249, 252. 004: 56 thêm QUẬT-ĐỘT đủ (câu 47; Hồi 3 ông nói dưới tên ấy), 21 bỏ NPC*~
+(Thái-sử Đôn được nêu tên ở câu 19), 145/146 thêm sarcastic (trách khéo bằng chim cú), 119 thêm angry, 167 sad ("hối hận").
+Thư 164 và các bài thơ: câu kể bị khoá N - NARRATOR (quy tắc 10; sửa chú thích đầu file). Dạng đầu mỗi người cố định trong cả
+chương (QUÁCH-CÔNG, TRỊNH TRANG-CÔNG, THÚC-ĐOẠN, KHẢO-THÚC, TRIỆU-THÚC-ĐÁI, DOÃN-KIẾT-PHỦ): dạng đầu là nhãn dạy model, đổi theo
+lời dẫn là dạy tách một người thành hai giọng.
