@@ -1,10 +1,10 @@
-"""Danh mục nhạc nền trên mây (dataset Hugging Face, file tĩnh qua CDN - dựng bằng LLM_Train/music/build_catalog.py).
+"""Danh mục nhạc nền trên mây (Cloudflare, file tĩnh - Workers static assets, lượt tải không giới hạn - dựng bằng LLM_Train/music/build_catalog.py).
 
 Không máy chủ, không khoá, không đăng nhập: app tải `manifest.json` (nhỏ), rồi CHỈ những mảnh cần:
 - `tracks/<xx>.json`: dữ liệu đã gắn cho các link nhạc - có danh sách link thì tính mảnh (`shard_of`) và tải đúng mảnh ấy;
 - `cells/<v>_<a>.json`: bài theo ô cảm xúc - "bài nào hợp với đoạn này".
 Mảnh đã tải giữ trong bộ nhớ đệm trên máy theo `revision` của danh mục: danh mục mới thì tải lại, không thì dùng lại, mất
-mạng vẫn dùng bản đệm. Hạn mức tải file công khai của Hugging Face tính theo IP của TỪNG người dùng (3.000 lượt / 5 phút).
+mạng vẫn dùng bản đệm.
 
     ABOOK_MUSIC_CATALOG=<url hay thư mục>   đổi nguồn (thử nghiệm, bản dựng tại chỗ)
 """
@@ -19,7 +19,8 @@ import urllib.request
 from pathlib import Path
 from typing import Any, Iterable
 
-DEFAULT_CATALOG = "https://huggingface.co/datasets/NGDtuanh/abook-music/resolve/main/"
+# Địa chỉ thật lấy từ cấu hình từ xa (remote_config.RemoteConfig.music_catalogs) - đây chỉ là giá trị dự phòng.
+DEFAULT_CATALOG = "https://abook-music.ngdtuanh.workers.dev/"
 USER_AGENT = "ABook (+https://github.com/ntanhpro1221/ABook)"
 MANIFEST_MAX_AGE = 24 * 3600
 FORMAT = "abook-music-catalog"
