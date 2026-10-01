@@ -48,7 +48,7 @@
         "name": "ABook",
         "description": "Sách nói ABook",
         "role": "Viewer",
-        "mimeType": "application/x-abook"
+        "mimeType": "application/vnd.ngdtuanh.abook+zip"
       }
     ],
     "windows": {
