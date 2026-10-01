@@ -64,3 +64,25 @@ def test_long_turns_are_shortened() -> None:
     rows = [_row(1, "dialogue", "LUCIEN", "“" + "a" * 300 + "”"), _row(2, "dialogue", "", "“Ừ.”", status="pending")]
     line = _analyzer(rows)._previous_turns([rows[1]]).strip().splitlines()[1]
     assert line.endswith("...") and len(line) < 200
+
+
+def test_the_lines_at_the_edge_of_a_batch_see_their_real_neighbours() -> None:
+    """v9b (01-10): lời dẫn đứng trước câu thoại ("Khổng Minh hỏi:") phải tới được câu đầu lô, lời dẫn đứng sau tới câu cuối lô."""
+    rows = [
+        _row(1, "narration", "NARRATOR", "Khổng Minh hỏi:"),
+        _row(2, "dialogue", "", "- Thế có bắt được tướng sĩ nào không?", status="pending"),
+        _row(3, "narration", "NARRATOR", "Vân-trường đáp:", status="pending"),
+        _row(4, "dialogue", "", "- Không bắt được ai.", status="pending"),
+        _row(5, "narration", "NARRATOR", "Khổng Minh cười.", status="pending"),
+    ]
+    for index, row in enumerate(rows):
+        row["stable_id"] = f"s{index + 1}"
+    analyzer = _analyzer(rows)
+    batch = rows[1:4]
+    boundary = analyzer._boundary_texts(batch)
+    assert boundary == ("Khổng Minh hỏi:", "Khổng Minh cười.")
+    from ebook_reader.analysis import _neighbor_texts
+
+    assert _neighbor_texts(batch, 0, None, boundary) == ("Khổng Minh hỏi:", "Vân-trường đáp:")
+    assert _neighbor_texts(batch, 2, None, boundary)[1] == "Khổng Minh cười."
+    assert _neighbor_texts(batch, 0, None) == ("", "Vân-trường đáp:"), "không truyền ranh giới: như cũ"

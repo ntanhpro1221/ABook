@@ -5255,14 +5255,18 @@ def _neighbor_texts(
     group: list[Any],
     index: int,
     original_context: dict[str, dict[str, Any]] | None,
+    boundary: tuple[str, str] = ("", ""),
 ) -> tuple[str, str]:
+    """Câu kể / thoại ngay trước và ngay sau một câu. `boundary` (v9b, 01-10): câu ngay trước lô và ngay sau lô trong chương -
+    câu ĐẦU lô thấy câu trước nó, câu CUỐI lô thấy câu sau nó, như mọi câu giữa lô. Không có thì lời dẫn đứng trước câu thoại
+    ("Khổng Minh hỏi:" rồi "- Thế có…") rơi ra ngoài tầm nhìn của câu đầu lô: v8 gán 4/8 câu sai ở cổng Tam quốc đúng chỗ ấy."""
     stable_id = str(group[index]["stable_id"])
     if original_context is not None and stable_id in original_context:
         context = original_context[stable_id]
         return str(context.get("previous_text", "")), str(context.get("next_text", ""))
     return (
-        str(group[index - 1]["text"])[-500:] if index else "",
-        str(group[index + 1]["text"])[:500] if index + 1 < len(group) else "",
+        str(group[index - 1]["text"])[-500:] if index else boundary[0][-500:],
+        str(group[index + 1]["text"])[:500] if index + 1 < len(group) else boundary[1][:500],
     )
 
 
@@ -7054,6 +7058,27 @@ class OllamaBookAnalyzer:
             f"dùng \"tôi\", NARRATOR hay tên người đang nói chuyện với {narrator}.\n\n"
         )
 
+    def _boundary_texts(self, group: list[Any]) -> tuple[str, str]:
+        """Chữ của câu ngay trước lô và ngay sau lô trong cùng chương (v9b) - chữ nguồn, không phải kết quả phân tích, nên một
+        lần chạy liền mạch hay chạy lại đều thấy y như nhau. Sổ giả tối thiểu (test) không lọc theo chương: không có gì."""
+        try:
+            chapter_id, first_seq, last_seq = int(group[0]["chapter_id"]), int(group[0]["seq"]), int(group[-1]["seq"])
+        except (KeyError, IndexError, TypeError, ValueError):
+            return "", ""
+        list_segments = getattr(self.db, "list_segments", None)
+        if not callable(list_segments):
+            return "", ""
+        try:
+            chapter_rows = list_segments(chapter_id=chapter_id)
+        except TypeError:
+            return "", ""
+        before = [row for row in chapter_rows if int(row["seq"]) < first_seq]
+        after = [row for row in chapter_rows if int(row["seq"]) > last_seq]
+        return (
+            str(max(before, key=lambda row: int(row["seq"]))["text"]) if before else "",
+            str(min(after, key=lambda row: int(row["seq"]))["text"]) if after else "",
+        )
+
     def _previous_turns(self, group: list[Any]) -> str:
         """Vài đoạn ngay trước lô (cùng chương, đã phân tích xong) kèm người nói ĐÃ gán - để nối lượt đối đáp qua ranh giới lô.
 
@@ -7256,6 +7281,7 @@ class OllamaBookAnalyzer:
         chapter_titles: list[str] = []
         rows: list[dict[str, Any]] = []
         batch_to_stable: dict[str, str] = {}
+        boundary = self._boundary_texts(group)
         for index, row in enumerate(group):
             chapter_title = self._chapter_titles.get(int(row["chapter_id"]), "")
             if chapter_title not in chapter_titles:
@@ -7266,7 +7292,7 @@ class OllamaBookAnalyzer:
                 paragraph_index = int(row["paragraph_index"])
             except (KeyError, TypeError):
                 paragraph_index = 0
-            previous_text, next_text = _neighbor_texts(group, index, original_context)
+            previous_text, next_text = _neighbor_texts(group, index, original_context, boundary)
             request_row = {
                 "id": batch_id,
                 "paragraph": paragraph_index,
