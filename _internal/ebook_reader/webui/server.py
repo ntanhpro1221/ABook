@@ -1841,6 +1841,13 @@ class Handler(BaseHTTPRequestHandler):
         # Supervisor đọc thẳng khoá này (power_source.pause_on_battery_enabled) - chỉ nhận đúng True/False.
         if isinstance(body.get("pauseOnBattery"), bool):
             allowed["pauseOnBattery"] = body["pauseOnBattery"]
+        # Mặc định của trình tạo sách: chất lượng là một trong ba mức; giọng kể là tên giọng có thật ("" = máy đề xuất).
+        if body.get("newBookProfile") in ("fast", "balanced", "high_quality"):
+            allowed["newBookProfile"] = body["newBookProfile"]
+        if isinstance(body.get("newBookNarrator"), str):
+            narrator = body["newBookNarrator"].strip()[:80]
+            if not narrator or narrator in {voice["name"] for voice in self.app.voices()}:
+                allowed["newBookNarrator"] = narrator
         if "sleepSchedule" in body:
             schedule = body["sleepSchedule"]
             clock = re.compile(r"([01]\d|2[0-3]):[0-5]\d")
