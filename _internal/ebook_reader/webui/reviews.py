@@ -60,12 +60,20 @@ def _kind(status: str, code: str, similarity: float | None) -> str:
 
 
 def review_items(project_root: Path) -> list[dict[str, Any]]:
+    from ..listener_overrides import line_requests, read_overrides
+
     with closing(store.connect(project_root)) as connection:
+        columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(segments)")}
+        extra = [column for column in ("text_sha256", "listener_text") if column in columns]
         rows = connection.execute(
             "SELECT id, stable_id, chapter_id, seq, text, asr_text, asr_similarity, status, warning_code, speaker,"
-            " wav_path FROM segments WHERE status IN ('warning', 'failed') ORDER BY chapter_id, seq"
+            " wav_path" + "".join(f", {column}" for column in extra)
+            + " FROM segments WHERE status IN ('warning', 'failed') ORDER BY chapter_id, seq"
         ).fetchall()
         names = store.chapter_names(connection)
+    # Chữ đem đọc đang chờ áp (tab Kịch bản hay chính thẻ này): thẻ hiện nó thay vì mời sửa lại từ đầu.
+    waiting = {entry["stable_id"]: entry for entry in line_requests(read_overrides(project_root))
+               if isinstance(entry.get("spoken"), str)}
     items = []
     for row in rows:
         similarity = float(row["asr_similarity"]) if row["asr_similarity"] is not None else None
@@ -83,9 +91,23 @@ def review_items(project_root: Path) -> list[dict[str, Any]]:
             "kind": kind,
             "reason": REASONS[kind],
             "playable": store.segment_audio(project_root, row["wav_path"]) is not None,
+            # Sửa "chữ đem đọc" ngay trên thẻ (soát UX a5/a6 01-10: câu tượng thanh "Tách tách tách" hỏng sau mọi lần thử chỉ
+            # có nút "Thu lại" - thu lại y chữ thì hỏng y như cũ). Băm chữ đi kèm để yêu cầu tự rơi khi câu đổi chữ.
+            "textSha256": str(row["text_sha256"] or "") if "text_sha256" in row.keys() else "",
+            "spoken": (str(row["listener_text"] or "") if "listener_text" in row.keys() else "") or None,
+            "pendingSpoken": _pending_spoken(waiting.get(str(row["stable_id"])), row),
         })
     items.sort(key=lambda item: (KINDS.index(item["kind"]), item["similarity"] if item["similarity"] is not None else 1.0))
     return items
+
+
+def _pending_spoken(wish: dict[str, Any] | None, row: Any) -> str | None:
+    """Chữ đem đọc người nghe đã ghi mà dây chuyền chưa áp ("" = trả về chữ sách); None khi không có hay câu đã đổi chữ."""
+    if wish is None or "text_sha256" not in row.keys() or wish.get("text_sha256") != str(row["text_sha256"] or ""):
+        return None
+    spoken = str(wish.get("spoken"))
+    applied = str(row["listener_text"] or "") if "listener_text" in row.keys() else ""
+    return None if spoken == applied else spoken
 
 
 def reviews_path() -> Path:
@@ -155,7 +177,7 @@ def review_view(project_root: Path, verdicts: dict[str, Any], *, include_minor: 
     for item in items:
         counts[item["kind"]] += 1
         item["verdict"] = (verdicts.get(item["stableId"]) or {}).get("verdict")
-        if item["kind"] != "name" and not item["verdict"]:
+        if item["kind"] != "name" and not item["verdict"] and item["pendingSpoken"] is None:
             pending += 1
     redo = sorted({int(value["chapterId"]) for value in verdicts.values() if value.get("verdict") == "redo"})
     shown = items if include_minor else [item for item in items if item["kind"] != "name" or item["verdict"]]
