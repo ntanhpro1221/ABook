@@ -25,6 +25,7 @@ SYLLABLES_PER_SECOND = 4.3
 SCAN_WORD_LIMIT_BYTES = 4 * 1024 * 1024
 # Studio từ xa: chương TXT gửi từ máy khác nằm ở đây, trong thư viện - dây chuyền còn đọc lại nguồn mỗi lần chạy tiếp.
 UPLOAD_FOLDER = "Nguồn tải lên"
+SPLIT_FOLDER = "Nguồn tách chương"
 MAX_SOURCE_UPLOAD = 8 * 1024 * 1024  # một chương; chương dài nhất của kho truyện ~200 KB
 _UNSAFE_NAME = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 # Tên thiết bị của Windows: làm tên thư mục hay file là ghi vào THIẾT BỊ, không vào đĩa.
@@ -226,7 +227,7 @@ def _credits_at_top(path: Path) -> list[str]:
 def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, Any]:
     """Những gì người dùng sắp đưa vào sách: file TXT (thư mục chỉ quét một tầng, như app cũ), xếp tự nhiên. File EPUB được
     tách thành thư mục chương TXT trong `epub_root` (thư viện; không có thì cạnh file EPUB) rồi quét như một thư mục."""
-    from . import epub_import
+    from . import epub_import, txt_split
 
     files: list[Path] = []
     seen: set[str] = set()
@@ -309,6 +310,9 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, An
             "bytes": path.stat().st_size,
             # Như chapters.input_sha256 của dây chuyền: nhận ra truyện đã có dự án (App.existing_projects).
             "sha256": sha256_file(path),
+            # Một file chứa nhiều "Chương N": ĐỀ XUẤT tách (txt_split) - chỉ khi người dùng đưa vào vài file, không đọc lại
+            # cả nghìn file chương của một thư mục bình thường.
+            "split": txt_split.plan(path) if len(files) <= 3 else None,
         })
     title = epub_title
     if files and not title:

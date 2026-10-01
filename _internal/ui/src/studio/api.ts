@@ -143,6 +143,8 @@ export interface ScannedFile {
   bytes: number;
   /** Dòng ghi công người dịch ở đầu chương - trình tạo sách ĐỀ XUẤT bỏ chúng khỏi phần đọc, không bao giờ tự bỏ. */
   credits?: string[];
+  /** Một file chứa nhiều tiêu đề "Chương N" (cả truyện trong một file): trình tạo sách ĐỀ XUẤT tách, không tự tách. */
+  split?: { chapters: number; titles: string[]; preamble: boolean } | null;
 }
 
 /** Truyện kể ngôi thứ nhất? (ebook_reader/first_person.py) - cho câu hỏi "'Tôi' là ai?" ở bước chọn giọng. */

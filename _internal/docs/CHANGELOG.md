@@ -7,6 +7,21 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Studio
+
+- **Cả truyện trong một file TXT**: trình tạo sách nhận ra các dòng "Chương N" (cả "Hồi", "Chapter", "第N章") và đề nghị
+  **Tách thành N chương** - không bấm thì giữ nguyên như file. Tách là ghi các chương ra thư mục mới trong thư viện, file
+  gốc không đổi; chữ trước tiêu đề đầu tiên thành chương "Mở đầu". Làm được cả từ Studio trên điện thoại.
+- **Áp dụng N thay đổi** mở hộp xem trước: từng thay đổi nói bằng lời (cách đọc tên, ai nói câu này, giọng mới…), bao
+  nhiêu câu đã thu phải thu lại, ở những chương nào, và hết khoảng bao lâu theo tốc độ thật của chính cuốn ấy. Nút ✕
+  cạnh mỗi mục bỏ riêng thay đổi ấy (lựa chọn trước đó, nếu có, trở lại) - không phải đi tìm lại đúng thẻ ở tab khác.
+- Danh sách dự án: cuốn "Hoàn tất" mà còn việc ghi rõ ngay trên dòng ("15 thay đổi chờ áp · 40 chương mất audio"); cuốn
+  đang chờ ghi "Xếp hàng · thứ N". Chương "Mất file audio" tô màu cảnh báo thay vì xanh như chương xong.
+- Tạo sách khi máy đang bận cuốn khác: thông báo nói rõ cuốn mới đã vào hàng chờ.
+- **Kịch bản** sửa nhanh hơn: thanh chọn chương và chú giải người nói (số phím tắt) dính ở đầu khi cuộn; **Shift + ↑ ↓**
+  (hay Shift + bấm) chọn nhiều câu rồi một phím số gán cả nhóm; người gán qua ô tìm được thêm vào chú giải với số kế
+  tiếp; chọn người trong danh sách xong tự sang câu kế; **Ctrl+Z** hoàn tác lần gán gần nhất; **P** nghe câu đang chọn.
+
 ### Nghe
 
 - Điện thoại: thông báo "Đang phát trên <TV>" có nút **Tạm dừng / Phát tiếp / Dừng** - điều khiển loa, TV ngay từ thanh

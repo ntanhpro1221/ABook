@@ -169,46 +169,59 @@ function chapterLabel(chapter: ChapterEntry): string {
   return `${chapter.title || `Chương ${chapter.index}`} — ${extras.join(" · ")}`;
 }
 
-function useAssign(bookId: string, chapterId: number) {
+function useAssign(bookId: string, chapterId: number, onUndoable: (undo: () => void) => void) {
   const client = useQueryClient();
   const when = useWhenApplied(bookId);
   return useMutation({
-    mutationFn: ({ line, value, newGender }: { line: Line; value: string; label: string; newGender?: Person["newGender"] }) =>
+    mutationFn: ({ lines, value, newGender }: { lines: Line[]; value: string; label: string; newGender?: Person["newGender"] }) =>
       api<{ lines: number; speaker: string; requestedAt: number }>(`/api/books/${bookId}/speaker`, {
         method: "POST",
-        body: { lines: [{ stableId: line.stableId, textSha256: line.textSha256 }], speaker: value, newGender: newGender ?? "" },
+        body: { lines: lines.map((line) => ({ stableId: line.stableId, textSha256: line.textSha256 })), speaker: value, newGender: newGender ?? "" },
       }),
     // Hiện ngay trên câu; bản thật về khi chương tải lại.
-    onMutate: ({ line, value, label }) => {
+    onMutate: ({ lines, value, label }) => {
+      const ids = new Set(lines.map((line) => line.stableId));
       client.setQueryData<ChapterScript>(["casting", bookId, chapterId], (data) =>
         data && {
           ...data,
           lines: data.lines.map((item) =>
-            item.stableId === line.stableId ? { ...item, wish: { value, label, state: value === item.current ? "applied" : "pending" } } : item,
+            ids.has(item.stableId) ? { ...item, wish: { value, label, state: value === item.current ? "applied" : "pending" } } : item,
           ),
         },
       );
     },
-    onSuccess: ({ requestedAt }, { line, value, label }) => {
-      const keep = value === line.current;
-      // Như hộp việc: gán nhầm người thì "Hoàn tác" trả câu về đúng như trước lần bấm này (studio/decisions.ts).
-      const undo = {
-        action: undoAction(
-          client,
-          bookId,
-          "speaker",
-          [{ lines: [{ stableId: line.stableId, textSha256: line.textSha256 }], requestedAt, keep }],
-          line.wish?.state === "pending"
+    onSuccess: ({ requestedAt }, { lines, value, label }) => {
+      const line = lines[0];
+      const keep = lines.every((item) => value === item.current);
+      // Như hộp việc: gán nhầm người thì "Hoàn tác" trả câu về đúng như trước lần bấm này (studio/decisions.ts). Nút trên
+      // thông báo và Ctrl+Z dùng CHUNG một lần hoàn tác - bấm cả hai không hoàn tác hai lần.
+      const action = undoAction(
+        client,
+        bookId,
+        "speaker",
+        [{ lines: lines.map((item) => ({ stableId: item.stableId, textSha256: item.textSha256 })), requestedAt, keep }],
+        lines.length > 1
+          ? `${lines.length} câu trở lại như trước.`
+          : line.wish?.state === "pending"
             ? `Trở lại quyết định trước: câu này của ${line.wish.label}.`
             : `Câu này lại là của ${line.label}.`,
-        ),
-        duration: UNDO_MS,
+      );
+      let used = false;
+      const run = () => {
+        if (used) return;
+        used = true;
+        action.onClick();
       };
+      onUndoable(run);
+      const undo = { action: { label: action.label, onClick: run }, duration: UNDO_MS };
       if (keep) {
-        toast.success(`Đã xác nhận: câu này của ${line.label}`, { description: "Máy sẽ không hỏi lại câu này.", ...undo });
+        toast.success(lines.length > 1 ? `Đã xác nhận ${lines.length} câu của ${label}` : `Đã xác nhận: câu này của ${line.label}`, {
+          description: "Máy sẽ không hỏi lại những câu này.",
+          ...undo,
+        });
         return;
       }
-      toast.success(`Đã ghi: câu này của ${label}`, {
+      toast.success(lines.length > 1 ? `Đã ghi: ${lines.length} câu của ${label}` : `Đã ghi: câu này của ${label}`, {
         description: `Câu đã thu sẽ đọc lại bằng giọng của người ấy. ${when}`,
         ...undo,
       });
@@ -656,12 +669,14 @@ function ScriptRow({
   line,
   script,
   active,
+  selected,
   dim,
   context,
   gap,
   menuOpen,
   onMenu,
   onActivate,
+  onExtend,
   onPick,
   deliveryOpen,
   onDelivery,
@@ -673,12 +688,16 @@ function ScriptRow({
   line: Line;
   script: ChapterScript;
   active: boolean;
+  /** Nằm trong nhóm câu đang chọn (Shift): phím số / chọn người áp cho cả nhóm. */
+  selected: boolean;
   dim: boolean;
   context: boolean;
   gap: boolean;
   menuOpen: boolean;
   onMenu: (open: boolean) => void;
   onActivate: () => void;
+  /** Shift + bấm: chọn từ câu đang đứng tới câu này. */
+  onExtend: () => void;
   onPick: (person: Person) => void;
   deliveryOpen: boolean;
   onDelivery: (open: boolean) => void;
@@ -697,12 +716,18 @@ function ScriptRow({
       ref={rowRef}
       data-line={line.stableId}
       tabIndex={speech ? (active ? 0 : -1) : undefined}
+      aria-selected={speech ? selected : undefined}
       onFocus={speech ? onActivate : undefined}
-      onClick={speech ? onActivate : undefined}
+      onMouseDown={(event) => {
+        // Shift + bấm chọn cả đoạn - không để trình duyệt bôi đen chữ giữa hai lần bấm.
+        if (speech && event.shiftKey) event.preventDefault();
+      }}
+      onClick={speech ? (event) => (event.shiftKey ? onExtend() : onActivate()) : undefined}
       className={cn(
         "group grid grid-cols-[minmax(0,1fr)_28px] gap-x-3 gap-y-1 rounded-lg px-2 py-1.5 outline-none lg:grid-cols-[160px_minmax(0,1fr)_28px]",
         gap && "mt-3",
         active && "bg-hover",
+        selected && "bg-accent-soft ring-1 ring-inset ring-accent/40",
         speech && "focus-visible:ring-2 focus-visible:ring-accent/50",
         (dim || context) && "opacity-45",
       )}
@@ -726,8 +751,9 @@ function ScriptRow({
         {line.lineWish?.state === "pending" && (
           <p className="mt-0.5 flex items-center gap-1.5 text-xs text-fg-2">
             <Clock className="size-3.5 shrink-0" />
-            Đã ghi cách đọc mới
-            {line.lineWish.kind ? ` (${KINDS.find((item) => item.value === line.lineWish?.kind)?.label.toLowerCase()})` : ""}
+            {line.lineWish.kind
+              ? `Đã đổi loại câu: ${KINDS.find((item) => item.value === line.lineWish?.kind)?.label.toLowerCase()}`
+              : "Đã ghi cách đọc câu"}
             {line.lineWish.spoken !== undefined ? (line.lineWish.spoken ? ` - đọc là "${line.lineWish.spoken}"` : " - trả về chữ của sách") : ""} -{" "}
             {pendingNote}.
           </p>
@@ -795,21 +821,35 @@ function ChapterScriptView({
   who,
   wantedLine = null,
   pickLine = true,
+  people,
+  onPicked,
 }: {
   bookId: string;
   script: ChapterScript;
   filter: Filter;
   who: string | null;
+  /** Người gán bằng phím số (theo số trên chú giải): người nói của chương + người vừa gán qua ô tìm. */
+  people: Person[];
+  /** Vừa gán một người - người ngoài chú giải được thêm vào đó với số kế tiếp (soát UX a6 01-10). */
+  onPicked: (person: Person) => void;
   /** Mở từ thẻ "Việc cần duyệt" (Tìm trong truyện…): tới câu này và mở sẵn ô chọn người nói. */
   wantedLine?: string | null;
   /** false: chỉ tới câu ấy để ĐỌC (thẻ nhóm "Đọc cả N câu") - không mở ô chọn che chữ. */
   pickLine?: boolean;
 }) {
-  const assign = useAssign(bookId, script.chapterId);
+  // Ctrl+Z: hoàn tác lần gán gần nhất (soát UX a6 01-10: gán nhầm một phím số chỉ hoàn tác được trong vài giây thông báo).
+  const undos = useRef<(() => void)[]>([]);
+  const assign = useAssign(bookId, script.chapterId, (undo) => {
+    undos.current = [...undos.current.slice(-19), undo];
+  });
   const fixLine = useLineFix(bookId, script.chapterId);
+  const clip = useClip();
   // Một lần cho cả chương, không mỗi câu một truy vấn.
   const pendingNote = usePendingNote(bookId);
   const [active, setActive] = useState<string | null>(null);
+  // Nhiều câu liền nhau của cùng một người (Shift + ↑ ↓ hay Shift + bấm): một phím số gán cả nhóm.
+  const [selected, setSelected] = useState<string[]>([]);
+  const anchor = useRef<string | null>(null);
   const [menu, setMenu] = useState<string | null>(null);
   const [delivery, setDelivery] = useState<string | null>(null);
   const rows = useRef(new Map<string, HTMLLIElement>());
@@ -839,10 +879,40 @@ function ChapterScriptView({
     setActive(null);
     setMenu(null);
     setDelivery(null);
+    setSelected([]);
+    anchor.current = null;
   }, [script.chapterId]);
 
-  const focusRow = (line: Line | undefined) => {
+  useEffect(() => {
+    const onKey = (event: globalThis.KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || event.shiftKey || event.key.toLowerCase() !== "z") return;
+      // Đang gõ trong ô chữ thì Ctrl+Z là của ô ấy.
+      if (event.target instanceof Element && event.target.closest("input, textarea, select, [contenteditable=true]")) return;
+      const undo = undos.current.pop();
+      if (!undo) return;
+      event.preventDefault();
+      undo();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const range = (from: string | null, to: Line): string[] => {
+    const start = speechRows.findIndex((line) => line.stableId === from);
+    const end = speechRows.indexOf(to);
+    if (start < 0 || end < 0) return [to.stableId];
+    const [low, high] = start <= end ? [start, end] : [end, start];
+    return speechRows.slice(low, high + 1).map((line) => line.stableId);
+  };
+  const focusRow = (line: Line | undefined, extend = false) => {
     if (!line) return;
+    if (extend) {
+      anchor.current ??= active ?? line.stableId;
+      setSelected(range(anchor.current, line));
+    } else {
+      anchor.current = null;
+      setSelected([]);
+    }
     setActive(line.stableId);
     const element = rows.current.get(line.stableId);
     element?.focus({ preventScroll: true });
@@ -871,22 +941,38 @@ function ChapterScriptView({
     setDelivery(null);
     requestAnimationFrame(() => rows.current.get(line.stableId)?.focus({ preventScroll: true }));
   };
+  // Câu đang đứng nằm trong nhóm đã chọn thì gán cả nhóm; không thì chỉ câu ấy.
+  const targets = (line: Line): Line[] =>
+    selected.length > 1 && selected.includes(line.stableId) ? speechRows.filter((item) => selected.includes(item.stableId)) : [line];
   const pick = (line: Line, person: Person, refocus = true) => {
     if (refocus) backTo(line);
     if (!script.castReady || !line.editable) return;
-    if (line.wish && line.wish.value === person.value) return;
-    assign.mutate({ line, value: person.value, label: person.label, newGender: person.newGender });
+    const group = targets(line);
+    const lines = group.filter((item) => item.editable && !(item.wish && item.wish.value === person.value));
+    if (!lines.length) return;
+    onPicked(person);
+    assign.mutate({ lines, value: person.value, label: person.label, newGender: person.newGender });
+    // Chọn trong danh sách (Enter, bấm tên) cũng sang câu kế như phím số - soát UX a6: gán qua ô tìm xong phải tự bấm sang.
+    const after = speechRows[speechRows.indexOf(group[group.length - 1]) + 1];
+    if (refocus && after) requestAnimationFrame(() => focusRow(after));
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLOListElement>) => {
     if (menu || delivery || event.altKey || event.ctrlKey || event.metaKey) return;
     const index = activeLine ? speechRows.indexOf(activeLine) : -1;
-    if (event.key === "ArrowDown" || event.key === "j") {
+    if (event.key === "ArrowDown" || event.key === "j" || event.key === "J") {
       event.preventDefault();
-      focusRow(speechRows[Math.min(index + 1, speechRows.length - 1)]);
-    } else if (event.key === "ArrowUp" || event.key === "k") {
+      focusRow(speechRows[Math.min(index + 1, speechRows.length - 1)], event.shiftKey);
+    } else if (event.key === "ArrowUp" || event.key === "k" || event.key === "K") {
       event.preventDefault();
-      focusRow(speechRows[Math.max(index - 1, 0)]);
+      focusRow(speechRows[Math.max(index - 1, 0)], event.shiftKey);
+    } else if (event.key === "Escape" && selected.length) {
+      event.preventDefault();
+      anchor.current = null;
+      setSelected([]);
+    } else if (event.key === "p" && activeLine?.hasAudio) {
+      event.preventDefault();
+      clip.toggle(`script-${activeLine.segmentId}`, urls.sample(bookId, activeLine.segmentId));
     } else if ((event.key === "Enter" || event.key === " ") && activeLine) {
       event.preventDefault();
       if (script.castReady && activeLine.editable) setMenu(activeLine.stableId);
@@ -894,11 +980,12 @@ function ChapterScriptView({
       event.preventDefault();
       setDelivery(activeLine.stableId);
     } else if (/^[1-9]$/.test(event.key) && activeLine) {
-      const person = script.cast[Number(event.key) - 1];
+      const person = people[Number(event.key) - 1];
       if (!person) return;
       event.preventDefault();
+      const group = targets(activeLine);
       pick(activeLine, person, false);
-      focusRow(speechRows[index + 1] ?? activeLine);
+      focusRow(speechRows[speechRows.indexOf(group[group.length - 1]) + 1] ?? activeLine);
     }
   };
 
@@ -910,7 +997,14 @@ function ChapterScriptView({
     );
   }
   return (
-    <ol aria-label={`Kịch bản ${script.title}`} onKeyDown={onKeyDown} className="mt-3">
+    <>
+      {selected.length > 1 && (
+        <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg bg-accent-soft px-3 py-1.5 text-[13px]" role="status">
+          <span className="font-semibold">Đang chọn {selected.length} câu</span>
+          <span className="text-fg-2">- phím số hay chọn người ở một câu trong nhóm gán cả {selected.length} câu · Esc bỏ chọn</span>
+        </p>
+      )}
+      <ol aria-label={`Kịch bản ${script.title}`} aria-multiselectable onKeyDown={onKeyDown} className="mt-3">
       {shown.map(({ line, context }, index) => {
         const before = shown[index - 1]?.line;
         const gap = index > 0 && (filter === "doubt" ? !context && !shown[index - 1]?.context && before?.seq !== line.seq - 1 : line.paragraph !== before?.paragraph);
@@ -921,6 +1015,7 @@ function ChapterScriptView({
             line={line}
             script={script}
             active={line.stableId === active}
+            selected={selected.length > 1 && selected.includes(line.stableId)}
             dim={Boolean(who) && (!isSpeech(line) || (line.wish?.state === "pending" ? line.wish.value : line.current) !== who)}
             context={context}
             gap={gap}
@@ -930,7 +1025,18 @@ function ChapterScriptView({
               setMenu(line.stableId);
               setActive(line.stableId);
             }}
-            onActivate={() => setActive(line.stableId)}
+            onActivate={() => {
+              if (line.stableId !== active) {
+                anchor.current = null;
+                setSelected([]);
+              }
+              setActive(line.stableId);
+            }}
+            onExtend={() => {
+              anchor.current ??= active ?? line.stableId;
+              setSelected(range(anchor.current, line));
+              setActive(line.stableId);
+            }}
             onPick={(person) => pick(line, person)}
             deliveryOpen={delivery === line.stableId}
             onDelivery={(open) => {
@@ -949,7 +1055,8 @@ function ChapterScriptView({
           />
         );
       })}
-    </ol>
+      </ol>
+    </>
   );
 }
 
@@ -990,6 +1097,8 @@ export function ScriptTab({ bookId }: { bookId: string }) {
   const [params, setParams] = useSearchParams();
   const [filter, setFilter] = useState<Filter>("all");
   const [who, setWho] = useState<string | null>(null);
+  // Người gán qua ô tìm (vai phụ, người của chương khác): thêm vào chú giải với số kế tiếp để câu sau gán bằng một phím.
+  const [added, setAdded] = useState<Person[]>([]);
   const contents = useQuery({
     queryKey: ["casting", bookId],
     queryFn: () => api<Contents>(`/api/books/${bookId}/casting`),
@@ -1028,13 +1137,24 @@ export function ScriptTab({ bookId }: { bookId: string }) {
   const data = script.data?.chapterId === chapterId ? script.data : undefined;
   const entry = chapters.find((chapter) => chapter.chapterId === chapterId);
   const doubts = data?.lines.filter((line) => line.hint).length ?? entry?.hints ?? 0;
+  const said = (person: Person) =>
+    data?.lines.filter((line) => isSpeech(line) && (line.wish?.state === "pending" ? line.wish.value : line.current) === person.value).length ?? 0;
+  const people: Person[] = data
+    ? [
+        ...data.cast,
+        ...added.filter((person) => !data.cast.some((item) => item.value === person.value)).map((person) => ({ ...person, lines: said(person) })),
+      ]
+    : [];
   return (
     <div className="mt-5">
       <p className="max-w-3xl text-sm text-fg-2">
         Đọc từng chương như kịch bản và sửa người nói của bất kỳ câu nào - bấm tên ở đầu câu. Sửa không dừng sách: sửa được áp
         khi sách chạy tiếp (sách đã xong: nút “Áp dụng thay đổi”), câu đã thu thì thu lại bằng giọng của người mới. Câu máy nghi có dấu vàng.
       </p>
-      <div className="mt-4 flex flex-wrap items-center gap-2">
+      {/* Chương + chú giải người nói DÍNH khi cuộn (soát UX a6 01-10: cuộn xuống giữa chương là quên phím 4 là ai, muốn sang
+          chương sau phải cuộn ngược lên đầu). */}
+      <div className="sticky top-0 z-10 -mx-2 mt-2 bg-bg/95 px-2 pb-2 pt-2 backdrop-blur">
+      <div className="flex flex-wrap items-center gap-2">
         <div className="flex w-full min-w-0 items-center gap-1 sm:w-auto sm:max-w-full">
           <IconButton label="Chương trước" icon={ChevronLeft} disabled={!data?.previous} onClick={() => go(data?.previous ?? null)} />
           <select
@@ -1065,6 +1185,36 @@ export function ScriptTab({ bookId }: { bookId: string }) {
           />
         </div>
       </div>
+      {data && people.length > 0 && (
+        <div className="mt-2 flex flex-wrap items-center gap-1.5" role="group" aria-label="Người nói trong chương - bấm để làm nổi câu của họ">
+          {people.map((person, index) => (
+            <button
+              key={person.value}
+              type="button"
+              aria-pressed={who === person.value}
+              onClick={() => setWho(who === person.value ? null : person.value)}
+              className={cn(
+                "inline-flex h-7 items-center gap-1.5 rounded-full border py-0 pl-1 pr-2.5 text-[13px] font-medium transition-opacity",
+                who === person.value ? "border-line-strong bg-panel" : "border-transparent hover:bg-hover",
+                who && who !== person.value && "opacity-50",
+              )}
+            >
+              <span className="avatar grid size-5 place-items-center rounded-full text-[10px] font-bold" style={hue(person.label)} aria-hidden>
+                {index < HOTKEYS ? index + 1 : ""}
+              </span>
+              {person.label}
+              <span className="tabular text-fg-3">{formatNumber(person.lines)}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      {data?.castReady && people.length > 0 && (
+        <p className="mt-1.5 hidden flex-wrap items-center gap-1.5 text-xs text-fg-3 md:flex">
+          Bàn phím: <Kbd>↑</Kbd> <Kbd>↓</Kbd> chọn câu (<Kbd>Shift</Kbd> chọn nhiều) · <Kbd>1</Kbd>–<Kbd>{Math.min(HOTKEYS, people.length)}</Kbd> gán
+          người theo số rồi sang câu kế · <Kbd>Enter</Kbd> danh sách · <Kbd>P</Kbd> nghe câu · <Kbd>Ctrl</Kbd>+<Kbd>Z</Kbd> hoàn tác
+        </p>
+      )}
+      </div>
       {!data ? (
         <div className="mt-4 space-y-2">
           {Array.from({ length: 8 }, (_, index) => (
@@ -1080,29 +1230,6 @@ export function ScriptTab({ bookId }: { bookId: string }) {
               bản máy đang hiểu.
             </p>
           )}
-          {data.cast.length > 0 && (
-            <div className="mt-4 flex flex-wrap items-center gap-1.5" role="group" aria-label="Người nói trong chương - bấm để làm nổi câu của họ">
-              {data.cast.map((person, index) => (
-                <button
-                  key={person.value}
-                  type="button"
-                  aria-pressed={who === person.value}
-                  onClick={() => setWho(who === person.value ? null : person.value)}
-                  className={cn(
-                    "inline-flex h-7 items-center gap-1.5 rounded-full border py-0 pl-1 pr-2.5 text-[13px] font-medium transition-opacity",
-                    who === person.value ? "border-line-strong bg-panel" : "border-transparent hover:bg-hover",
-                    who && who !== person.value && "opacity-50",
-                  )}
-                >
-                  <span className="avatar grid size-5 place-items-center rounded-full text-[10px] font-bold" style={hue(person.label)} aria-hidden>
-                    {index < HOTKEYS ? index + 1 : ""}
-                  </span>
-                  {person.label}
-                  <span className="tabular text-fg-3">{formatNumber(person.lines)}</span>
-                </button>
-              ))}
-            </div>
-          )}
           {/* Chương kể ngôi thứ nhất: máy gán nhầm câu của người khác cho "tôi" nhiều nhất (8B-v5 trên bộ LN: 97/276 câu gán cho
               người kể là sai) - mời soát riêng câu của người kể trước. */}
           {data.castReady && data.firstPerson?.chip && who !== data.firstPerson.chip && (
@@ -1115,13 +1242,22 @@ export function ScriptTab({ bookId }: { bookId: string }) {
               </Button>
             </p>
           )}
-          {data.castReady && data.cast.length > 0 && (
-            <p className="mt-2 hidden flex-wrap items-center gap-1.5 text-xs text-fg-3 md:flex">
-              Bàn phím: <Kbd>↑</Kbd> <Kbd>↓</Kbd> chọn câu · <Kbd>1</Kbd>–<Kbd>{Math.min(HOTKEYS, data.cast.length)}</Kbd> gán người theo số ở
-              trên rồi sang câu kế · <Kbd>Enter</Kbd> mở danh sách
-            </p>
-          )}
-          <ChapterScriptView bookId={bookId} script={data} filter={filter} who={who} wantedLine={params.get("line")} pickLine={params.get("pick") !== "0"} />
+          <ChapterScriptView
+            bookId={bookId}
+            script={data}
+            filter={filter}
+            who={who}
+            wantedLine={params.get("line")}
+            pickLine={params.get("pick") !== "0"}
+            people={people}
+            onPicked={(person) =>
+              setAdded((current) =>
+                person.value === UNNAMED || current.some((item) => item.value === person.value)
+                  ? current
+                  : [...current, person],
+              )
+            }
+          />
           <ChapterFooter bookId={bookId} script={data} onNext={() => go(data.next)} />
         </>
       )}

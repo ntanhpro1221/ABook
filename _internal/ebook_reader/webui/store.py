@@ -385,6 +385,142 @@ def pending_changes(project_root: Path, since: float) -> int:
     return sum(len(entries) for entries in fresh.values()) - _kept_as_is(project_root, fresh)
 
 
+QUOTE_OPENERS = {"“": "”", '"': '"', "‘": "’", "'": "'", "«": "»", "「": "」", "『": "』"}
+EMOTIONS = {"neutral": "Bình thường", "happy": "Vui", "sad": "Buồn", "angry": "Giận", "afraid": "Sợ", "surprised": "Ngạc nhiên",
+            "tender": "Dịu dàng", "sarcastic": "Mỉa mai", "excited": "Hào hứng", "tired": "Mệt mỏi", "whispering": "Thì thầm"}
+LINE_KINDS = {"narration": "lời kể", "dialogue": "lời thoại", "thought": "nội tâm"}
+
+
+def pending_details(project_root: Path, since: float) -> dict[str, Any]:
+    """Nút "Áp dụng N thay đổi" mở hộp xem trước (soát UX a6 01-10: bấm là chạy ngay, không nói sẽ thu lại gì, hết bao lâu):
+    từng thay đổi nói bằng lời, số câu sẽ thu lại, ở những chương nào, và thời gian ước theo TỐC ĐỘ THẬT của chính cuốn này
+    (giây làm một câu = thời gian các chương đã xong / số câu của chúng). Cùng cách chọn như `pending_changes` (yêu cầu ghi
+    sau `since`, bỏ yêu cầu giữ nguyên) để số mục khớp số trên nút. Câu chưa thu không tốn thêm gì nên không tính."""
+    from ..listener_overrides import character_key, read_overrides, surface_key
+
+    data = read_overrides(project_root)
+    fresh: dict[str, dict[str, Any]] = {}
+    for section in ("pronunciations", "speakers", "lines", "voices", "retakes"):
+        entries = data.get(section)
+        fresh[section] = {
+            str(key): entry for key, entry in (entries.items() if isinstance(entries, dict) else ())
+            if isinstance(entry, dict) and _requested_after(entry, since)
+        }
+    items: list[dict[str, Any]] = []
+    affected: set[str] = set()
+    chapters_hit: set[int] = set()
+    seconds_per_line = 0.0
+    if not (Path(project_root) / DB_NAME).is_file():
+        return {"items": items, "lines": 0, "chapters": [], "seconds": 0.0}
+    titles = {chapter["id"]: chapter["displayTitle"] for chapter in chapters(project_root)}
+
+    def same(left: Any, right: Any) -> bool:
+        return " ".join(str(left or "").casefold().split()) == " ".join(str(right or "").casefold().split())
+
+    def quote(text: str) -> str:
+        # Câu thoại đã có ngoặc của sách ("“Cái… cái này là gì?”") thì không bọc thêm một lớp nữa.
+        text = " ".join(str(text or "").split())
+        if text[:1] in QUOTE_OPENERS:
+            return f"{text[:70]}…{QUOTE_OPENERS[text[0]]}" if len(text) > 70 else text
+        return f"“{text[:70]}…”" if len(text) > 70 else f"“{text}”"
+
+    def handle(section: str, key: str, entry: dict[str, Any]) -> dict[str, Any]:
+        # Đủ để bỏ ĐÚNG yêu cầu này khỏi hộp (POST …/pending-changes/withdraw): lần bấm sau đã thay thì không bỏ nhầm.
+        return {"section": section, "key": key, "requestedAt": float(entry.get("requested_at") or 0)}
+
+    def who(raw: Any) -> str:
+        from .humanize import person_name
+
+        raw = str(raw or "")
+        return "người kể" if raw.upper() == "NARRATOR" else person_name(raw)
+
+    with closing(connect(project_root)) as connection:
+        rows = connection.execute(
+            "SELECT stable_id, chapter_id, text, speaker, kind, wav_path FROM segments ORDER BY chapter_id, seq"
+        ).fetchall()
+        by_id = {str(row["stable_id"]): row for row in rows}
+        recorded = [row for row in rows if row["wav_path"]]
+
+        def hit(stable_ids: list[str]) -> int:
+            count = 0
+            for stable_id in stable_ids:
+                row = by_id.get(stable_id)
+                if row is not None and row["wav_path"]:
+                    affected.add(stable_id)
+                    chapters_hit.add(int(row["chapter_id"]))
+                    count += 1
+            return count
+
+        forms = {}
+        if "pronunciations" in _table_names(connection):
+            forms = {surface_key(str(row[0])): str(row[1] or "")
+                     for row in connection.execute("SELECT surface, spoken_form FROM pronunciations")}
+        for key, entry in fresh["pronunciations"].items():
+            if key in forms and same(entry.get("spoken_form"), forms[key]):
+                continue
+            surface = str(entry.get("surface") or key)
+            pattern = re.compile(rf"(?<![\w]){re.escape(surface)}(?![\w])", re.IGNORECASE)
+            ids = [str(row["stable_id"]) for row in recorded if pattern.search(str(row["text"] or ""))]
+            items.append({"kind": "pronunciation", "label": f"“{surface}” đọc là “{entry.get('spoken_form', '')}”",
+                          "lines": hit(ids), **handle("pronunciations", key, entry)})
+        for stable_id, entry in fresh["speakers"].items():
+            row = by_id.get(stable_id)
+            if row is None or (not entry.get("new") and same(entry.get("speaker"), row["speaker"])):
+                continue
+            items.append({"kind": "speaker", "label": f"{quote(row['text'])} là lời của {who(entry.get('speaker'))}",
+                          "chapter": titles.get(int(row["chapter_id"]), ""), "lines": hit([stable_id]),
+                          **handle("speakers", stable_id, entry)})
+        for stable_id, entry in fresh["lines"].items():
+            row = by_id.get(stable_id)
+            if row is None:
+                continue
+            what = []
+            if entry.get("kind"):
+                what.append(f"đọc là {LINE_KINDS.get(str(entry['kind']), str(entry['kind']))}")
+            if entry.get("emotion"):
+                what.append(f"cảm xúc {EMOTIONS.get(str(entry['emotion']), str(entry['emotion'])).lower()}")
+            if isinstance(entry.get("spoken"), str):
+                what.append(f"chữ đem đọc “{entry['spoken'][:50]}”" if entry["spoken"] else "đọc lại theo chữ sách")
+            items.append({"kind": "line", "label": f"{quote(row['text'])}: {', '.join(what) or 'cách đọc mới'}",
+                          "chapter": titles.get(int(row["chapter_id"]), ""), "lines": hit([stable_id]),
+                          **handle("lines", stable_id, entry)})
+        for key, entry in fresh["voices"].items():
+            ids = [str(row["stable_id"]) for row in recorded if character_key(str(row["speaker"] or "")) == key]
+            # Khoá giọng là tên đã hạ chữ thường - lấy lại cách viết trong sách từ một câu của người ấy.
+            name = next((who(row["speaker"]) for row in rows if character_key(str(row["speaker"] or "")) == key), who(key))
+            change = entry.get("preset") or {"male": "giọng nam", "female": "giọng nữ"}.get(str(entry.get("gender")), "giọng khác")
+            items.append({"kind": "voice", "label": f"Giọng của {name}: {change}", "lines": hit(ids),
+                          **handle("voices", key, entry)})
+        for stable_id, entry in fresh["retakes"].items():
+            row = by_id.get(stable_id)
+            if row is not None:
+                items.append({"kind": "retake", "label": f"Thu lại {quote(row['text'])}",
+                              "chapter": titles.get(int(row["chapter_id"]), ""), "lines": hit([stable_id]),
+                              **handle("retakes", stable_id, entry)})
+        # Tốc độ thật: các chương đã xong của chính cuốn này (bắt đầu -> xong, chia số câu).
+        done = connection.execute(
+            "SELECT started_at, completed_at, total_segments FROM chapters "
+            "WHERE status='completed' AND started_at IS NOT NULL AND completed_at > started_at AND total_segments > 0"
+        ).fetchall()
+        spent = sum(float(row["completed_at"]) - float(row["started_at"]) for row in done)
+        lines_done = sum(int(row["total_segments"]) for row in done)
+        if lines_done:
+            seconds_per_line = spent / lines_done
+    return {
+        "items": items,
+        "lines": len(affected),
+        "chapters": [titles.get(chapter, str(chapter)) for chapter in sorted(chapters_hit)],
+        "seconds": round(len(affected) * seconds_per_line, 1),
+    }
+
+
+def _requested_after(entry: dict[str, Any], since: float) -> bool:
+    try:
+        return float(entry.get("requested_at") or 0) > since
+    except (TypeError, ValueError):
+        return False
+
+
 def _kept_as_is(project_root: Path, fresh: dict[str, dict[str, Any]]) -> int:
     """Số yêu cầu "giữ nguyên" trong `fresh`: người nói bằng đúng người câu đang có, cách đọc bằng đúng cách đang đọc. Chúng
     không đổi gì trong sách nên không phải "thay đổi chờ áp" - soát UX 29-09: sáu lần bấm "Giữ…"/"Đúng rồi" đẩy số trên nút
