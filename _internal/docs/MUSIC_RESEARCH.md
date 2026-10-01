@@ -84,6 +84,23 @@ larger_clap_music qua `transformers` HỎNG, không phải model kém: nhúng c�
 tả bỏ phí một phần. Nhưng ridge học và đo trên CÙNG bộ (kiểm chéo theo trích đoạn) - còn phải đo chéo bộ (học trên nhạc
 phim, đoán Incompetech / DEAM) trước khi tin.
 
+**Đo CHÉO BỘ (02-10 00:4x) - lật ngược kết luận trên.** Ridge học trên nhạc phim, đoán 635 bài Incompetech, so với
+nhãn người gắn ("feel"); AUC = xác suất xếp đúng bài có nhãn lên trên bài không nhãn (0,5 = đoán bừa):
+
+| Nhãn -> trục | ridge (học nhạc phim) | zero-shot |
+|---|---|---|
+| Somber -> vui/buồn thấp | **0,34 (ngược chiều)** | 0,76 |
+| Dark -> vui/buồn thấp | 0,63 | 0,79 |
+| Calming -> năng lượng thấp | 0,73 | 0,85 |
+| Action -> năng lượng cao | 0,61 | 0,84 |
+| Suspenseful -> căng thẳng | 0,76 | - |
+| tương quan với toạ độ suy từ nhãn (vui/buồn, năng lượng) | 0,28 / 0,39 | 0,65 / 0,72 |
+
+Đo theo từng đoạn rồi mới lấy trung bình cho đúng y như vậy -> không phải lỗi cách nhúng. Bài học: 470 trích đoạn nhạc
+phim quá hẹp để học 512 chiều - ridge học được nét riêng của bộ ấy, không khái quát. Kiểm chéo TRONG một bộ đánh giá quá
+cao. Hướng kế: học trên NHIỀU nguồn (DEAM + PMEmo + nhãn Incompetech), luôn đo trên bộ không dùng để học; zero-shot hiện
+là ứng viên vững nhất cho kho thật.
+
 "Hợp làm nền" đo riêng, khách quan: xác suất có lời (kiểm trên MTG-Jamendo), độ nổi của giai điệu, độ ổn định cường độ
 (phương sai độ to theo cửa sổ), có lặp liền được không (ghép đuôi-đầu theo phách).
 
