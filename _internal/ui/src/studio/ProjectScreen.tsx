@@ -6,6 +6,7 @@ import {
   Headphones,
   Check,
   CircleAlert,
+  FolderDown,
   FolderOpen,
   Mic2,
   MoreHorizontal,
@@ -75,6 +76,7 @@ import { usePlayer } from "@/listen/player";
 import { useCast, useSource } from "@/listen/source";
 import type { CastMember } from "@/listen/model";
 import { MergeDialog } from "@/studio/MergePeople";
+import { ExportDialog } from "@/studio/ExportBook";
 
 /** Phát một chương ngay trong Studio (nghe kiểm tra) bằng chính trình phát của phía Nghe - ở chế độ "nghe kiểm":
  *  không ghi đè chỗ đang nghe dở, tốc độ hay nhật ký đêm của người nghe. */
@@ -443,6 +445,7 @@ function Actions({ book }: { book: BookSummary }) {
   const navigate = useNavigate();
   const [confirmStop, setConfirmStop] = useState(false);
   const [confirmApply, setConfirmApply] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const live = book.running;
   const stop = useStop();
   const pause = usePause();
@@ -463,6 +466,12 @@ function Actions({ book }: { book: BookSummary }) {
           Nghe trong Thư viện
         </Button>
       )}
+      {book.chapters.completed > 0 && (
+        <Button variant="ghost" size="lg" icon={FolderDown} onClick={() => setExporting(true)}>
+          Xuất…
+        </Button>
+      )}
+      <ExportDialog book={book} open={exporting} onOpenChange={setExporting} onApplyFirst={() => setConfirmApply(true)} />
       {book.queuePosition ? (
         <>
           <span className="inline-flex h-11 items-center gap-2 rounded-xl bg-warning-soft px-4 text-sm font-medium text-warning">

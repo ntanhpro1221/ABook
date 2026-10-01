@@ -29,6 +29,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - **Làm tiếp cuốn này**: bấm ở một phần cũ khi cuốn đã có phần sau thì trình tạo nói rõ phần mới nối sau phần MỚI
   NHẤT (không lặng lẽ nhảy "Phần 1" → "Phần 3"); phần mới đọc bằng đúng model đọc hiểu của phần trước (bước Xác nhận
   ghi "như phần trước", báo nếu máy không còn model ấy); khung "chưa có chương mới" tự tắt khi đã có file.
+- Trang dự án có nút **Xuất…**: chọn thư mục MP3 hay file .abook ngay trong Studio, và hộp nói trước bản xuất có gì -
+  bao nhiêu chương chưa có audio, sách đang chạy, còn thay đổi chưa áp (kèm nút "Áp dụng trước").
 - Mỗi chương có menu **…**: nghe chương, mở **Kịch bản chương này**, và **Thu lại cả chương** (mọi câu đã thu, hạt giống
   mới - khi cả chương nghe không ổn). Cả chương tính là một thay đổi trong hộp "Áp dụng", bỏ được bằng một nút.
 - **Cần nghe lại**: câu hỏng sau mọi lần thử (tượng thanh "Tách tách tách", "Coong…", chữ lạ) có nút **Sửa chữ đem đọc**
