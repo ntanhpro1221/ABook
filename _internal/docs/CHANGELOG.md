@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.14] - 2026-10-01
+
 ### Nghe
 
 - Điện thoại **tự phát lên loa / TV** trong nhà, không cần máy tính: sách đã có trên điện thoại (tải về, mở file .abook)
