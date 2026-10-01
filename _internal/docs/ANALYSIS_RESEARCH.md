@@ -24,6 +24,15 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
 7. **Người vô danh xác định được là MỘT người phải ghi `NPC*:<mô tả>` trong đáp án, cả ở chương kiểm tra**; đám đông
    để `NPC*` trơn. Thiếu mô tả thì F1 giọng không biết hai câu vô danh là một người, và xếp model ngược (mục 29-09 tối).
 
+## 01-10 16:3x - Qwen3.5-9B Q4 VỪA card 8 GB và nhanh gấp đôi 8B
+
+`vram_probe.py` ở ngữ cảnh 16384, máy đang bận 2,2 GB VRAM (app khác): 8B-v5 Q4 (Qwen3) cần 7,09 GiB, chỉ 83% nằm trên GPU
+(tràn CPU), đề 535 tok/s, sinh 22,5 tok/s, 27 s một lô; Qwen3.5-9B LoRA28 Q4 cần **5,35 GiB, 100% trên GPU**, đề 1885
+tok/s, sinh **47,2 tok/s**, 14 s một lô. Kiến trúc lai của Qwen3.5 (3/4 lớp chú ý tuyến tính) làm KV cache rất nhỏ. Câu
+"9B không nạp nổi card 8 GB" (28-09) đã lỗi thời: 9B là ứng viên thật cho máy nhà, và nhanh hơn ứng viên 8B. Việc: lượt
+Qwen3.5-9B trên CÔNG THỨC v8 đã giao Modal (`LLM_Train/modal/launch_9b_v8_01_10.sh`, data_v8, ~4 USD), tự xuất GGUF q4_k_m
+và nạp Ollama `qwen35-9b-lora-v8-q4`; đo LN 12 + 4 cổng từ ABook_ui khi hàng GPU rảnh.
+
 ## 01-10 chiều - v8 (mỗi lô thấy người nói 4 lượt trước): LoRA 4B tốt nhất trên LN, giữ lượt đối đáp, thua cổng Tam quốc
 
 v8 = công thức v7 trên data_v8 (= data_v7 phát lại bằng prompt của nhánh dev/prev-speakers: mỗi lô nêu người nói ĐÃ gán của
