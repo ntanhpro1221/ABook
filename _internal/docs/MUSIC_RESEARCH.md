@@ -76,6 +76,10 @@ soundtracks, không kém đường cơ sở CLAP zero-shot ở Incompetech.
 | LAION-CLAP htsat-unfused (01-10) | zero-shot (câu mô tả của analyze_clap.py) | 0,589 | 0,714 | 0,600 | - |
 | LAION-CLAP htsat-unfused (01-10) | ridge trên vector nhúng, kiểm chéo 5 phần | **0,757** | **0,828** | **0,818** | 54,5% (hồi quy logistic, kiểm chéo) |
 
+| LAION larger_clap_music (01-10) | qua transformers | -0,10 | -0,06 | -0,03 | - |
+
+larger_clap_music qua `transformers` HỎNG, không phải model kém: nhúng của các trích đoạn khác nhau gần như trùng (cos 0,98 so với 0,82 ở htsat-unfused) - khớp LAION-AI/CLAP issue #126 (bản HTSAT-base chuyển sang Hugging Face sụt độ chính xác). Phải đo lại bằng thư viện gốc `laion_clap` + checkpoint .pt trước khi kết luận.
+
 Đọc: vector nhúng của CLAP đã MANG thông tin cảm xúc ở mức ngang mốc tham khảo (0,67 / 0,81); cách zero-shot bằng câu mô
 tả bỏ phí một phần. Nhưng ridge học và đo trên CÙNG bộ (kiểm chéo theo trích đoạn) - còn phải đo chéo bộ (học trên nhạc
 phim, đoán Incompetech / DEAM) trước khi tin.
