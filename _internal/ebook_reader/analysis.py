@@ -7077,11 +7077,6 @@ class OllamaBookAnalyzer:
             return ""
         if not any(str(row["kind"] or "") in {"dialogue", "thought"} for row in before):
             return ""
-        # v9 (01-10): chỉ nêu khi các lượt gần đây là HAI người luân phiên. Cảnh nhiều người (hội nghị, trận mạc) thì v8 kéo
-        # câu về người vừa nói - cổng Tam quốc: Trình Phổ / Lã Mông / Lỗ Túc -> Chu Du, sai 40/219 câu so với 35 của v6.
-        talkers = {str(row["speaker"] or "UNKNOWN") for row in before if str(row["kind"] or "") in {"dialogue", "thought"}}
-        if len(talkers) > 2:
-            return ""
         lines = []
         for row in before:
             kind = str(row["kind"] or "narration")
