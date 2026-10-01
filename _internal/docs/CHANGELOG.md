@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.15] - 2026-10-01
+
 ### Studio
 
 - **Cả truyện trong một file TXT**: trình tạo sách nhận ra các dòng "Chương N" (cả "Hồi", "Chapter", "第N章") và đề nghị
