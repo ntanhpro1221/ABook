@@ -41,6 +41,7 @@ import {
   useVoices,
 } from "@/studio/data";
 import { uploadChapters } from "@/studio/upload";
+import { AnalysisModelPicker } from "@/studio/AnalysisModelPicker";
 
 type Profile = "fast" | "balanced" | "high_quality";
 
@@ -121,6 +122,8 @@ interface Draft {
   limit?: number | null;
   /** Người dùng ĐỒNG Ý bỏ dòng ghi công người dịch khỏi phần đọc. Mặc định không: app không tự sửa nội dung truyện. */
   dropCredits?: boolean;
+  /** Model đọc hiểu truyện chỉ cho cuốn này ("" hay không có = mặc định của app). */
+  analysisModel?: string;
 }
 
 interface Seed {
@@ -903,7 +906,21 @@ function VoiceStep({
 
 // ---- Bước 3 ---------------------------------------------------------------------------------------------------
 
-function QualityStep({ profile, setProfile, words, chapters }: { profile: Profile; setProfile: (profile: Profile) => void; words: number; chapters: number }) {
+function QualityStep({
+  profile,
+  setProfile,
+  words,
+  chapters,
+  analysisModel,
+  setAnalysisModel,
+}: {
+  profile: Profile;
+  setProfile: (profile: Profile) => void;
+  words: number;
+  chapters: number;
+  analysisModel: string;
+  setAnalysisModel: (model: string) => void;
+}) {
   const guess = estimate(words, chapters);
   return (
     <div>
@@ -972,6 +989,7 @@ function QualityStep({ profile, setProfile, words, chapters }: { profile: Profil
           );
         })}
       </div>
+      <AnalysisModelPicker value={analysisModel} onChange={setAnalysisModel} />
     </div>
   );
 }
@@ -989,6 +1007,7 @@ function ConfirmStep({
   startNow,
   setStartNow,
   dropCredits,
+  analysisModel,
 }: {
   title: string;
   scan: ScanResult;
@@ -1001,6 +1020,7 @@ function ConfirmStep({
   setStartNow: (value: boolean) => void;
   /** Người dùng đã đồng ý bỏ dòng ghi công khỏi phần đọc. */
   dropCredits: boolean;
+  analysisModel: string;
 }) {
   const option = PROFILES.find((item) => item.value === profile)!;
   const guess = estimate(scan.totals.words, scan.files.length);
@@ -1027,6 +1047,7 @@ function ConfirmStep({
       : []),
     ["Nhân vật", seed ? `Giữ ${carriedText(seed.carries)}; người mới được phân vai sau khi phân tích` : "Tự động phân vai sau khi phân tích"],
     ["Chất lượng", option.title],
+    ...(analysisModel ? ([["Model đọc hiểu", `${analysisModel} (chỉ cuốn này)`]] as [string, string][]) : []),
     ...(measured
       ? ([
           ["Thời gian làm", lengthRange(guess.totalLow, guess.totalHigh)],
@@ -1209,6 +1230,7 @@ export function NewProjectScreen() {
         firstPerson: draft.firstPerson.trim(),
         ...(Object.keys(povChapters).length ? { firstPersonChapters: povChapters } : {}),
         ...(draft.seed ? { seedFrom: draft.seed.id } : {}),
+        ...(draft.analysisModel ? { analysisModel: draft.analysisModel } : {}),
         // Chỉ khi người dùng đã đồng ý đề xuất - không gửi gì thì sách giữ nguyên nội dung.
         ...(draft.dropCredits && creditSummary(scan.files).lines ? { dropCreditLines: true } : {}),
         start: draft.startNow,
@@ -1314,7 +1336,8 @@ export function NewProjectScreen() {
             />
           )}
           {step === 2 && scan && (
-            <QualityStep profile={draft.profile} setProfile={(profile) => update({ profile })} words={scan.totals.words} chapters={scan.files.length} />
+            <QualityStep profile={draft.profile} setProfile={(profile) => update({ profile })} words={scan.totals.words} chapters={scan.files.length}
+              analysisModel={draft.analysisModel ?? ""} setAnalysisModel={(analysisModel) => update({ analysisModel })} />
           )}
           {step === 3 && scan && (
             <ConfirmStep
@@ -1328,6 +1351,7 @@ export function NewProjectScreen() {
               startNow={draft.startNow}
               setStartNow={(startNow) => update({ startNow })}
               dropCredits={Boolean(draft.dropCredits)}
+              analysisModel={draft.analysisModel ?? ""}
             />
           )}
           {/* Ghim ở đáy vùng cuộn: bước xác nhận dài (thêm dòng "Dòng ghi công"...) đẩy nút tạo xuống dưới nếp màn hình - soát
