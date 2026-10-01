@@ -1,11 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Clock, Ear, FileText, Loader2, PenLine, Play, RotateCcw, ShieldCheck } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Check, Clock, Ear, FileText, ListMusic, Loader2, PenLine, Play, RotateCcw, ShieldCheck, Square } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
 import { formatPercent } from "@/shared/format";
-import { Button, EmptyState, Segmented, Vu } from "@/shared/ui";
+import { Button, EmptyState, Kbd, Segmented, Vu } from "@/shared/ui";
 import { api, urls } from "./api";
 import { usePendingNote } from "./decisions";
 
@@ -297,6 +297,56 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
     (row?.querySelector<HTMLElement>("button:not(:disabled)") ?? row)?.focus();
     setFocusAfter(null);
   });
+  // "Nghe liền" (soát UX a6 01-10, E3): phát lần lượt mọi câu nghe được, phán bằng phím O / R ngay lúc nghe - không phải bấm
+  // nghe rồi bấm phán từng câu. Câu vừa phán rời danh sách và câu kế phát luôn.
+  const clip = useClip();
+  const [continuous, setContinuous] = useState(false);
+  const live = useRef<{ items: ReviewItem[]; judge: (index: number, value: ReviewItem["verdict"]) => void }>({
+    items: [],
+    judge: () => undefined,
+  });
+  const playing = useRef<{ id: string | null; index: number }>({ id: null, index: 0 });
+  const playAt = (from: number) => {
+    const next = live.current.items.slice(Math.max(from, 0)).find((item) => item.playable);
+    if (!next) {
+      setContinuous(false);
+      toast.success("Đã nghe hết các câu trong danh sách");
+      return;
+    }
+    clip.toggle(`review-${next.segmentId}`, urls.sample(bookId, next.segmentId));
+    document.querySelector(`[data-review-row="${CSS.escape(next.stableId)}"]`)?.scrollIntoView({ block: "nearest" });
+  };
+  useEffect(() => {
+    const was = playing.current.id;
+    if (clip.current?.startsWith("review-")) {
+      const index = live.current.items.findIndex((item) => `review-${item.segmentId}` === clip.current);
+      playing.current = { id: clip.current, index: Math.max(index, 0) };
+      return;
+    }
+    playing.current = { ...playing.current, id: null };
+    if (!continuous || clip.current !== null || !was) return;
+    // Câu vừa nghe còn trong danh sách thì sang câu sau nó; đã phán (rời danh sách) thì câu sau dồn lên đúng chỗ ấy.
+    const still = live.current.items.findIndex((item) => `review-${item.segmentId}` === was);
+    playAt(still >= 0 ? still + 1 : playing.current.index);
+    // playAt đọc qua ref - chỉ chạy lại khi clip đổi hay bật / tắt nghe liền.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clip.current, continuous]);
+  useEffect(() => {
+    if (!continuous) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
+      if (event.target instanceof Element && event.target.closest("input, textarea, select, [contenteditable=true]")) return;
+      const key = event.key.toLowerCase();
+      if (key !== "o" && key !== "r") return;
+      const index = live.current.items.findIndex((item) => `review-${item.segmentId}` === playing.current.id);
+      if (index < 0) return;
+      event.preventDefault();
+      live.current.judge(index, key === "o" ? "ok" : "redo");
+      clip.stop(); // sang câu kế ngay (hiệu ứng ở trên bắt lúc clip dừng)
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [continuous, clip]);
   const { data, isLoading } = useQuery({
     queryKey: ["review", bookId, showMinor],
     queryFn: () => api<ReviewView>(`/api/books/${bookId}/review${showMinor ? "?all=1" : ""}`),
@@ -339,6 +389,8 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
     verdict.mutate({ stableId: item.stableId, chapterId: item.chapterId, verdict: value });
   };
   const minor = data.counts.name;
+  live.current = { items, judge };
+  const playableCount = items.filter((item) => item.playable).length;
   return (
     <div className="mt-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -362,6 +414,22 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
           ]}
         />
       </div>
+      {playableCount > 1 && (
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+          {continuous ? (
+            <Button size="sm" variant="secondary" icon={Square} onClick={() => { setContinuous(false); clip.stop(); }}>
+              Dừng nghe liền
+            </Button>
+          ) : (
+            <Button size="sm" variant="secondary" icon={ListMusic} onClick={() => { setContinuous(true); playAt(0); }}>
+              Nghe liền {playableCount} câu
+            </Button>
+          )}
+          <span className="hidden items-center gap-1.5 text-xs text-fg-3 md:inline-flex">
+            Đang nghe liền: <Kbd>O</Kbd> Ổn · <Kbd>R</Kbd> Cần thu lại - rồi sang câu kế
+          </span>
+        </div>
+      )}
       {data.redoChapters.length > 0 && (
         <p className="mt-3 rounded-xl bg-danger-soft px-4 py-2.5 text-sm text-danger text-pretty">
           {data.redoChapters.length} chương có câu cần thu lại - các câu ấy được thu lại thành bản mới khi sách chạy tiếp (sách
