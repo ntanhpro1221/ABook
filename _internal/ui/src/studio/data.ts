@@ -8,6 +8,7 @@ import {
   type Cast,
   type Chapter,
   type ContinuationPlan,
+  type RedoPlan,
   type FirstPersonHint,
   type Preferences,
   type ScanResult,
@@ -203,6 +204,15 @@ export function useContinuation(id: string | undefined, enabled = true) {
   });
 }
 
+export function useRedo(id: string | undefined) {
+  return useQuery({
+    queryKey: ["redo", id],
+    enabled: Boolean(id),
+    queryFn: () => api<RedoPlan>(`/api/books/${id}/redo`),
+    staleTime: 0,
+  });
+}
+
 export function useCreateBook() {
   const refresh = useRefresh();
   return useMutation({
@@ -215,10 +225,12 @@ export function useCreateBook() {
       firstPersonChapters?: Record<string, string>;
       /** "Làm tiếp cuốn này": id dự án phần trước - giọng, cách đọc tên, ghim được gieo sang trước khi chạy. */
       seedFrom?: string;
+      /** "Sửa thiết lập": cuốn chưa bắt đầu được thay - tạo xong thì nó vào Thùng rác (bìa đi theo). */
+      replaces?: string;
       start: boolean;
     }) =>
       // `sharedReadings`: các từ của cách đọc chung có trong truyện - sách mới nhận luôn (webui/shared_readings.py).
-      api<{ id: string; sharedReadings?: string[]; queued?: number }>("/api/books", { method: "POST", body }),
+      api<{ id: string; sharedReadings?: string[]; queued?: number; replaceError?: string }>("/api/books", { method: "POST", body }),
     onSuccess: () => refresh(),
   });
 }

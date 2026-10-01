@@ -37,6 +37,7 @@ import {
   usePreferences,
   useAppInfo,
   useContinuation,
+  useRedo,
   useCreateBook,
   useFirstPersonHint,
   useScan,
@@ -128,6 +129,8 @@ interface Draft {
   dropCredits?: boolean;
   /** Model đọc hiểu truyện chỉ cho cuốn này ("" hay không có = mặc định của app). */
   analysisModel?: string;
+  /** "Sửa thiết lập" (?redo=<id>): cuốn chưa bắt đầu sẽ được thay bằng cuốn này; phần trước của nó nếu là phần nối tiếp. */
+  replaces?: { id: string; title: string; seedFrom?: string };
 }
 
 interface Seed {
@@ -1203,6 +1206,8 @@ export function NewProjectScreen() {
   const [params, setParams] = useSearchParams();
   const continueId = params.get("continue") ?? undefined;
   const { data: plan, error: planError } = useContinuation(continueId);
+  const redoId = params.get("redo") ?? undefined;
+  const { data: redo, error: redoError } = useRedo(redoId);
   const scanMutation = useScan();
   const create = useCreateBook();
   const { data: voices } = useVoices();
@@ -1225,7 +1230,33 @@ export function NewProjectScreen() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [preferences]);
-  usePageTitle(draft.seed ? "Làm tiếp cuốn này" : undefined);
+  usePageTitle(draft.seed ? "Làm tiếp cuốn này" : draft.replaces ? `Sửa thiết lập · ${draft.replaces.title}` : undefined);
+
+  // "Sửa thiết lập" (?redo=<id>): điền lại đúng lựa chọn lúc tạo của cuốn chưa bắt đầu, một lần, rồi bỏ tham số.
+  useEffect(() => {
+    if (!redoId || !redo) return;
+    if (redo.started) {
+      toast.error("Sách đã bắt đầu chạy", { description: "Không làm lại với thiết lập khác được nữa." });
+      navigate(`/studio/${redoId}`, { replace: true });
+      return;
+    }
+    setDraft({
+      ...EMPTY_DRAFT,
+      paths: redo.paths,
+      title: redo.title,
+      titleEdited: true,
+      narrator: redo.narrator,
+      firstPerson: redo.firstPerson,
+      ...(redo.analysisModel ? { analysisModel: redo.analysisModel } : {}),
+      profile: (PROFILE_VALUES as string[]).includes(redo.profile) ? (redo.profile as Profile) : "high_quality",
+      dropCredits: redo.dropCreditLines,
+      replaces: { id: redoId, title: redo.title, ...(redo.seedFrom ? { seedFrom: redo.seedFrom } : {}) },
+    });
+    setParams({}, { replace: true });
+  }, [redoId, redo, setParams, navigate]);
+  useEffect(() => {
+    if (redoError) toast.error("Không đọc được thiết lập của sách", { description: (redoError as Error).message });
+  }, [redoError]);
 
   // "Làm tiếp cuốn này" (?continue=<id>): điền sẵn một lần từ phần trước rồi bỏ tham số, để quay lại trang không điền đè
   // những gì người dùng đã sửa.
@@ -1350,7 +1381,8 @@ export function NewProjectScreen() {
         narrator: draft.narrator,
         firstPerson: draft.firstPerson.trim(),
         ...(Object.keys(povChapters).length ? { firstPersonChapters: povChapters } : {}),
-        ...(draft.seed ? { seedFrom: draft.seed.id } : {}),
+        ...(draft.seed ? { seedFrom: draft.seed.id } : draft.replaces?.seedFrom ? { seedFrom: draft.replaces.seedFrom } : {}),
+        ...(draft.replaces ? { replaces: draft.replaces.id } : {}),
         ...(draft.analysisModel ? { analysisModel: draft.analysisModel } : {}),
         // Chỉ khi người dùng đã đồng ý đề xuất - không gửi gì thì sách giữ nguyên nội dung.
         ...(draft.dropCredits && creditSummary(scan.files).lines ? { dropCreditLines: true } : {}),
@@ -1368,7 +1400,11 @@ export function NewProjectScreen() {
             : result.queued
               ? `Đang có cuốn khác chạy - sách này vào hàng chờ (thứ ${result.queued}), tự bắt đầu khi cuốn ấy xong.`
               : "Đang khởi động - theo dõi tiến trình ngay trên trang sách.";
-          toast.success("Đã tạo sách", { description: [starting, readings].filter(Boolean).join(" ") || undefined });
+          toast.success(draft.replaces ? "Đã tạo lại sách với thiết lập mới" : "Đã tạo sách", {
+            description: [starting, readings, draft.replaces && !result.replaceError ? "Bản cũ đã vào Thùng rác." : ""]
+              .filter(Boolean).join(" ") || undefined,
+          });
+          if (result.replaceError) toast.warning("Bản cũ vẫn còn trong Dự án", { description: result.replaceError });
           navigate(`/studio/${result.id}`, { replace: true });
         },
         onError: (error: Error) => toast.error("Không tạo được sách", { description: error.message }),

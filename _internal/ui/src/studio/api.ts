@@ -181,6 +181,23 @@ export interface ScanResult {
 
 /** "Làm tiếp cuốn này" (ebook_reader/continuation.py): trình tạo sách điền sẵn phần kế tiếp của một truyện dài, gieo từ
  * phần trước để nhân vật giữ giọng và tên giữ cách đọc. */
+/** "Sửa thiết lập" của sách chưa bắt đầu (GET /api/books/<id>/redo - store.redo_plan): lựa chọn lúc tạo, điền lại vào trình
+ *  tạo sách; tạo xong thì cuốn cũ vào Thùng rác. */
+export interface RedoPlan {
+  started: boolean;
+  paths: string[];
+  title: string;
+  profile: string;
+  narrator: string;
+  firstPerson: string;
+  firstPersonChapters: Record<string, string>;
+  analysisModel: string;
+  analysisModelMissing?: string;
+  dropCreditLines: boolean;
+  /** Cuốn này là phần nối tiếp: id phần trước, để cuốn làm lại vẫn mang dàn nhân vật từ đó. */
+  seedFrom: string;
+}
+
 export interface ContinuationPlan {
   /** Phần mới nhất của cuốn - phần gieo từ (bấm ở phần cũ khi đã có phần sau thì là phần sau). */
   sourceId: string;

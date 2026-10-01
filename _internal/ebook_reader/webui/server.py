@@ -532,6 +532,13 @@ class App:
         # "Làm tiếp cuốn này": phần mới gieo từ phần trước (continuation.py) - tìm phần trước TRƯỚC khi tạo, để id sai
         # không để lại một dự án mồ côi.
         previous = self._book(str(body["seedFrom"])) if body.get("seedFrom") else None
+        # "Sửa thiết lập" của sách chưa bắt đầu: cuốn cũ được thay - kiểm TRƯỚC khi tạo, như phần trước ở trên.
+        replaces = str(body.get("replaces") or "")
+        replaced = self._book(replaces) if replaces else None
+        if replaced is not None and (self.runner.running(replaced) or self.jobs.starting(replaced)
+                                     or not store.not_started(replaced)):
+            raise ApiError(HTTPStatus.CONFLICT, "Sách cũ đã bắt đầu chạy - không làm lại được nữa. Tạo sách mới hay dùng "
+                                                "“Làm tiếp cuốn này”.")
         root = actions.create_book(
             self.library.root, paths, str(body.get("title", "")), str(body.get("profile", "high_quality")),
             humanize.voice_key(str(body.get("narrator", ""))), str(body.get("firstPerson", "")),
@@ -541,6 +548,17 @@ class App:
             drop_credit_lines=body["dropCreditLines"] if isinstance(body.get("dropCreditLines"), bool) else None,
         )
         self.preferences.add_recent(root)
+        replace_error = ""
+        if replaced is not None:
+            # Bìa đã chọn cho cuốn cũ đi theo; cuốn cũ vào Thùng rác (khôi phục được). Không bỏ được thì cuốn mới vẫn còn,
+            # lời báo nói rõ.
+            for name in (covers.COVER_FILE, covers.META_FILE):
+                if (replaced / name).is_file() and not (root / name).exists():
+                    shutil.copy2(replaced / name, root / name)
+            try:
+                self.delete(replaces)
+            except ApiError as error:
+                replace_error = error.message
         if previous is not None:
             # Giữa lúc tạo và lúc chạy - sau khi chạy là quá muộn (đổi cách đọc tên làm trôi chữ dưới audio đã có).
             try:
@@ -559,7 +577,8 @@ class App:
         # Đang có cuốn khác chạy thì cuốn mới vào hàng chờ: lời báo nói đúng thế, không "Đang khởi động" (soát UX a6 01-10).
         with self._queue_lock:
             queued = self.queue.index(book_id(root)) + 1 if book_id(root) in self.queue else 0
-        return {"id": book_id(root), "sharedReadings": shared, "queued": queued}
+        return {"id": book_id(root), "sharedReadings": shared, "queued": queued,
+                **({"replaceError": replace_error} if replace_error else {})}
 
     def shared_readings_view(self) -> dict[str, Any]:
         return {"entries": self.shared_readings.entries()}
@@ -585,6 +604,31 @@ class App:
         self._mutating()
         return {"applied": shared_readings.apply(path, waiting)}
 
+    def _pinned_model(self, plan: dict[str, Any]) -> None:
+        """Model đọc hiểu đã ghim của cuốn cũ: bỏ đi nếu là mặc định của app, chuyển sang `analysisModelMissing` nếu Ollama
+        không còn model ấy (trình tạo nói ra thay vì hỏng lúc tạo)."""
+        if not plan.get("analysisModel"):
+            return
+        try:
+            listed = self.analysis_models()
+        except Exception:  # noqa: BLE001 - Ollama tắt: giữ tên, bước tạo sách tự kiểm lại
+            return
+        if plan["analysisModel"] == listed["default"]:
+            plan["analysisModel"] = ""
+        elif plan["analysisModel"] not in {model["name"] for model in listed["models"]}:
+            plan["analysisModelMissing"], plan["analysisModel"] = plan["analysisModel"], ""
+
+    def redo(self, value: str) -> dict[str, Any]:
+        """"Sửa thiết lập" (store.redo_plan): lựa chọn lúc tạo của một cuốn chưa bắt đầu, và phần trước nếu nó là phần
+        nối tiếp - để cuốn làm lại vẫn mang dàn nhân vật của phần trước."""
+        path = self._book(value)
+        plan = store.redo_plan(path)
+        plan["started"] = plan["started"] or self.runner.running(path) or self.jobs.starting(path)
+        previous = continuation.previous_project(path)
+        plan["seedFrom"] = book_id(previous) if previous is not None and store.is_project(previous) else ""
+        self._pinned_model(plan)
+        return plan
+
     def continuation(self, value: str) -> dict[str, Any]:
         """"Làm tiếp cuốn này": chương kế tiếp, cài đặt và thứ sẽ mang theo - trình tạo sách điền sẵn từ đây. Tính từ phần
         MỚI NHẤT của cuốn (bấm ở phần 1 khi đã có phần 2 thì nối sau phần 2); `sourceId` là phần ấy - gieo từ nó."""
@@ -592,16 +636,7 @@ class App:
         latest = continuation.latest_part(clicked, self.library.projects())
         plan = store.continuation_plan(latest)
         plan["sourceId"] = book_id(latest)
-        if plan.get("analysisModel"):
-            try:
-                listed = self.analysis_models()
-            except Exception:  # noqa: BLE001 - Ollama tắt: giữ tên, bước tạo sách tự kiểm lại
-                listed = None
-            if listed is not None:
-                if plan["analysisModel"] == listed["default"]:
-                    plan["analysisModel"] = ""  # mặc định của app - không cần ghim riêng cho cuốn
-                elif plan["analysisModel"] not in {model["name"] for model in listed["models"]}:
-                    plan["analysisModelMissing"], plan["analysisModel"] = plan["analysisModel"], ""
+        self._pinned_model(plan)
         if latest != clicked:
             # Bấm ở phần cũ khi cuốn đã có phần sau (soát UX a6 01-10, B1): phần mới nối sau phần MỚI NHẤT - nói ra, không thì
             # người dùng tưởng máy bỏ qua một phần ("Phần 1" -> "Phần 3").
@@ -1339,6 +1374,9 @@ class Handler(BaseHTTPRequestHandler):
         # "Việc cần duyệt" (docs/STUDIO_REVIEW.md): chỗ máy nghi ngờ, xếp theo lợi trên mỗi lần bấm.
         self._send_json(HTTPStatus.OK, work_items(self.app._book(value)))
 
+    def get_redo(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.redo(value))
+
     def get_continuation(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.continuation(value))
 
@@ -1785,6 +1823,9 @@ class Handler(BaseHTTPRequestHandler):
     def post_create(self, _query: dict[str, list[str]]) -> None:
         body = self._body()
         self._source_paths(body.get("paths"), body.get("seedFrom"))
+        if body.get("replaces") and self._remote():
+            # Thay = bỏ cuốn cũ vào Thùng rác: như xoá, chỉ từ chính máy này.
+            raise ApiError(HTTPStatus.FORBIDDEN, "Sửa thiết lập (làm lại sách) chỉ làm được trên máy tính")
         self._send_json(HTTPStatus.CREATED, self.app.create(body))
 
     def post_scan(self, _query: dict[str, list[str]]) -> None:
@@ -1992,6 +2033,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(BOOK + r"/work"), Handler.get_work),
     ("GET", re.compile(BOOK + r"/casting"), Handler.get_casting),
     ("GET", re.compile(BOOK + r"/continuation"), Handler.get_continuation),
+    ("GET", re.compile(BOOK + r"/redo"), Handler.get_redo),
     ("GET", re.compile(BOOK + r"/parts"), Handler.get_parts),
     ("GET", re.compile(BOOK + r"/pronunciations"), Handler.get_name_readings),
     ("GET", re.compile(BOOK + r"/casting/(\d+)"), Handler.get_casting_chapter),

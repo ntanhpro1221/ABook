@@ -13,6 +13,7 @@ import {
   Pause,
   Pencil,
   Play,
+  SlidersHorizontal,
   RefreshCw,
   Square,
   Trash2,
@@ -503,9 +504,18 @@ function Actions({ book }: { book: BookSummary }) {
           </Button>
         </>
       ) : book.phase === "idle" ? (
-        <Button variant="primary" size="lg" icon={Wand2} loading={start.isPending} onClick={() => start.mutate(book.id)}>
-          Bắt đầu tạo sách nói
-        </Button>
+        <>
+          <Button variant="primary" size="lg" icon={Wand2} loading={start.isPending} onClick={() => start.mutate(book.id)}>
+            Bắt đầu tạo sách nói
+          </Button>
+          {/* Chưa chạy bước nào: chọn lại chương, giọng kể, chất lượng, "tôi" (soát UX a5 01-10, #4). Cài đặt khoá theo sách
+              nên là tạo lại - trình tạo điền sẵn mọi lựa chọn cũ, cuốn cũ vào Thùng rác khi cuốn mới tạo xong. */}
+          {!remote && (
+            <Button variant="ghost" size="lg" icon={SlidersHorizontal} onClick={() => navigate(`/studio/new?redo=${book.id}`)}>
+              Sửa thiết lập
+            </Button>
+          )}
+        </>
       ) : book.phase !== "done" ? (
         <Button variant="primary" size="lg" icon={Play} loading={start.isPending} onClick={() => start.mutate(book.id)}>
           Tiếp tục tạo
