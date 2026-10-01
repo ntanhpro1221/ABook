@@ -9,6 +9,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Studio (sản xuất sách nói)
 
+- Trình tạo sách, bước Chất lượng: chọn **model đọc hiểu truyện** riêng cho cuốn này (các model đang có trong Ollama của
+  Studio) - thử một model mới trên sách thật mà không đổi model mặc định của app. Trang dự án ghi model đã dùng.
 - **Tạo sách từ file EPUB**: ở bước chọn chương, chọn (hay gửi từ điện thoại) một file `.epub` - mỗi chương trong EPUB
   thành một chương, tên chương theo mục lục, tên sách theo metadata. Chương tách ra nằm trong thư viện ("Nguồn EPUB"),
   không ghi cạnh file của bạn; EPUB hỏng thì trình tạo sách nói lý do.
