@@ -1,11 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Ear, FileText, Loader2, Play, RotateCcw, ShieldCheck } from "lucide-react";
+import { Check, Clock, Ear, FileText, Loader2, PenLine, Play, RotateCcw, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
 import { formatPercent } from "@/shared/format";
-import { EmptyState, Segmented, Vu } from "@/shared/ui";
+import { Button, EmptyState, Segmented, Vu } from "@/shared/ui";
 import { api, urls } from "./api";
+import { usePendingNote } from "./decisions";
 
 // "Cần nghe lại": câu mà khâu tự kiểm tra không chắc (webui/reviews.py). Nghe từng câu, bấm Ổn hoặc Cần thu lại.
 // "Cần thu lại" ghi một yêu cầu cho dây chuyền (overrides.json `retakes`): câu được thu lại bằng hạt giống MỚI ở lần chạy
@@ -27,7 +29,18 @@ interface ReviewItem {
   reason: string;
   playable: boolean;
   verdict: "ok" | "redo" | null;
+  /** Băm chữ câu (rỗng ở sách rất cũ: không sửa chữ đem đọc được). */
+  textSha256: string;
+  /** Chữ đem đọc đã áp (null = đọc đúng chữ sách) và chữ người nghe vừa ghi mà chưa áp ("" = trả về chữ sách). */
+  spoken: string | null;
+  pendingSpoken: string | null;
 }
+
+/** Câu đã có cách xử lý: phán quyết, hay chữ đem đọc mới đang chờ áp. */
+const handled = (item: ReviewItem) => Boolean(item.verdict) || item.pendingSpoken !== null;
+/** Cùng chữ, bỏ qua dấu câu và hoa thường: “Tách tách tách.” và “Tách tách tách!” là một câu tượng thanh. */
+const letters = (text: string) => text.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+const sameText = (left: string, right: string) => letters(left) === letters(right);
 
 interface ReviewView {
   counts: Record<Kind, number>;
@@ -64,18 +77,96 @@ const EMPTY = "empty";
 
 type OpenScript = (chapterId: number, stableId: string) => void;
 
-function Row({
+// Sửa chữ đem đọc ngay trên thẻ (soát UX a5/a6 01-10): câu tượng thanh ("Tách tách tách", "Coong…") hay chữ lạ hỏng sau mọi
+// lần thử thì thu lại y chữ cũng hỏng y như cũ - viết lại thành chữ máy đọc được mới chữa được. Chữ của sách không đổi; câu
+// được thu lại bằng chữ mới khi sách chạy tiếp. Câu giống hệt (tượng thanh hay lặp) sửa một lần cho cả nhóm.
+function SpokenEditor({
   bookId,
   item,
-  onVerdict,
-  onOpenScript,
+  twins,
+  onDone,
 }: {
   bookId: string;
   item: ReviewItem;
+  twins: ReviewItem[];
+  onDone: (saved: string | null) => void;
+}) {
+  const [value, setValue] = useState(item.pendingSpoken ?? item.spoken ?? item.text);
+  const [busy, setBusy] = useState(false);
+  const save = async (lines: ReviewItem[]) => {
+    setBusy(true);
+    try {
+      const spoken = value.trim() === item.text.trim() ? "" : value.trim();
+      for (const line of lines) {
+        await api(`/api/books/${bookId}/line`, { method: "POST", body: { stableId: line.stableId, textSha256: line.textSha256, spoken } });
+      }
+      toast.success(lines.length > 1 ? `Đã ghi chữ đem đọc cho ${lines.length} câu` : "Đã ghi chữ đem đọc", {
+        description: "Chữ của sách giữ nguyên; câu được thu lại bằng chữ mới.",
+      });
+      onDone(spoken);
+    } catch (error) {
+      toast.error("Chưa ghi được", { description: (error as Error).message });
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <form
+      className="mt-2 rounded-lg border border-line bg-panel p-2.5"
+      onSubmit={(event) => {
+        event.preventDefault();
+        void save([item]);
+      }}
+    >
+      <label htmlFor={`spoken-${item.stableId}`} className="text-xs font-medium text-fg-2">
+        Máy đọc câu này thành
+      </label>
+      <input
+        id={`spoken-${item.stableId}`}
+        value={value}
+        autoFocus
+        onChange={(event) => setValue(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") onDone(null);
+        }}
+        className="mt-1 h-9 w-full rounded-lg border border-line bg-bg px-2.5 text-[15px] outline-none focus-visible:border-accent"
+      />
+      <p className="mt-1 text-xs text-fg-3">Viết như cách đọc thành tiếng, ví dụ “Tách tách tách” thành “tách, tách, tách”. Để trống là đọc đúng chữ sách.</p>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        <Button type="submit" size="sm" variant="primary" loading={busy} disabled={!value.trim() && !item.spoken}>
+          Lưu
+        </Button>
+        {twins.length > 0 && (
+          <Button size="sm" variant="secondary" disabled={busy} onClick={() => void save([item, ...twins])}>
+            Lưu cho cả {twins.length + 1} câu cùng chữ
+          </Button>
+        )}
+        <Button size="sm" variant="ghost" disabled={busy} onClick={() => onDone(null)}>
+          Huỷ
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+function Row({
+  bookId,
+  item,
+  twins,
+  onVerdict,
+  onOpenScript,
+  onSpoken,
+}: {
+  bookId: string;
+  item: ReviewItem;
+  twins: ReviewItem[];
   onVerdict: (verdict: ReviewItem["verdict"]) => void;
   onOpenScript?: OpenScript;
+  onSpoken: () => void;
 }) {
   const clip = useClip();
+  const pendingNote = usePendingNote(bookId);
+  const [editing, setEditing] = useState(false);
   const id = `review-${item.segmentId}`;
   const playing = clip.current === id;
   // Câu hỏng chưa từng có bản thu; câu khác có thể đã mất WAV riêng khi dọn dẹp. Nút tắt thì phải nói vì sao.
@@ -83,7 +174,7 @@ function Row({
   return (
     <li
       data-review-row={item.stableId}
-      className={cn("grid grid-cols-[40px_minmax(0,1fr)_auto] items-start gap-3 rounded-xl px-3 py-3", item.verdict ? "opacity-70" : "hover:bg-hover")}
+      className={cn("grid grid-cols-[40px_minmax(0,1fr)_auto] items-start gap-3 rounded-xl px-3 py-3", handled(item) && !editing ? "opacity-70" : "hover:bg-hover")}
     >
       <button
         type="button"
@@ -114,7 +205,43 @@ function Row({
         )}
         <p className="mt-1 text-xs text-fg-2">{item.reason}</p>
         {!item.playable && <p className="mt-1 text-xs text-fg-2">{unplayable}.</p>}
-        {onOpenScript && item.verdict === "redo" && (
+        {item.pendingSpoken !== null ? (
+          <p className="mt-1 flex items-start gap-1.5 text-xs text-fg-2">
+            <Clock className="mt-px size-3.5 shrink-0" />
+            <span>
+              {item.pendingSpoken ? <>Sẽ đọc là “<span className="text-fg">{item.pendingSpoken}</span>”</> : "Sẽ đọc lại đúng chữ sách"} - {pendingNote}.
+            </span>
+          </p>
+        ) : (
+          item.spoken && (
+            <p className="mt-1 text-xs text-fg-2">
+              Đang đọc là: <span className="text-fg">{item.spoken}</span>
+            </p>
+          )
+        )}
+        {editing ? (
+          <SpokenEditor
+            bookId={bookId}
+            item={item}
+            twins={twins}
+            onDone={(saved) => {
+              setEditing(false);
+              if (saved !== null) onSpoken();
+            }}
+          />
+        ) : (
+          item.textSha256 && (
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              className="mt-1.5 mr-3 inline-flex items-center gap-1 text-xs font-medium text-accent-text hover:underline"
+            >
+              <PenLine className="size-3.5" /> Sửa chữ đem đọc
+              {twins.length > 0 ? ` (có ${twins.length} câu cùng chữ)` : ""}
+            </button>
+          )
+        )}
+        {onOpenScript && (item.verdict === "redo" || item.kind === "failed") && (
           <button
             type="button"
             onClick={() => onOpenScript(item.chapterId, item.stableId)}
@@ -192,8 +319,14 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
     },
   });
 
+  const refresh = () => {
+    void client.invalidateQueries({ queryKey: ["review", bookId] });
+    void client.invalidateQueries({ queryKey: ["book", bookId] });
+    void client.invalidateQueries({ queryKey: ["library"] });
+    void client.invalidateQueries({ queryKey: ["casting", bookId] });
+  };
   if (isLoading || !data) return <div className="mt-6 text-sm text-fg-2">Đang tìm các câu cần nghe lại…</div>;
-  const items = data.items.filter((item) => (filter === "todo" ? !item.verdict : Boolean(item.verdict)));
+  const items = data.items.filter((item) => (filter === "todo" ? !handled(item) : handled(item)));
   const judge = (index: number, value: ReviewItem["verdict"]) => {
     const item = items[index];
     // Câu vừa phán rời danh sách đang lọc: đưa tiêu điểm sang câu kế (hay câu trước), đừng để nó rơi về đầu trang.
@@ -209,7 +342,7 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
           {data.pending ? (
             <>
               Còn <span className="font-semibold text-fg">{data.pending} câu</span> máy tự kiểm không chắc - nghe bằng tai rồi bấm Ổn hoặc
-              Cần thu lại.
+              Cần thu lại. Câu hỏng (chưa thu được) không có gì để nghe: sửa chữ đem đọc - tượng thanh, chữ lạ - hay thu lại.
             </>
           ) : (
             "Đã xem hết các câu đáng lo."
@@ -234,7 +367,18 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
       {items.length ? (
         <ul className="mt-3 space-y-1">
           {items.map((item, index) => (
-            <Row key={item.stableId} bookId={bookId} item={item} onVerdict={(value) => judge(index, value)} onOpenScript={onOpenScript} />
+            <Row
+              key={item.stableId}
+              bookId={bookId}
+              item={item}
+              twins={items.filter((other) => other.stableId !== item.stableId && other.textSha256 && sameText(other.text, item.text))}
+              onVerdict={(value) => judge(index, value)}
+              onOpenScript={onOpenScript}
+              onSpoken={() => {
+                setFocusAfter((items[index + 1] ?? items[index - 1])?.stableId ?? EMPTY);
+                refresh();
+              }}
+            />
           ))}
         </ul>
       ) : (

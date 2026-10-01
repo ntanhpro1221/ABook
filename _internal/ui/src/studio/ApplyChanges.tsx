@@ -84,17 +84,17 @@ export function ApplyChangesDialog({
       ) : (
         <>
           <ul className="max-h-72 divide-y divide-line overflow-y-auto rounded-xl border border-line">
-            {data.items.map((item, index) => {
+            {data.items.map((item) => {
               const Icon = KIND_ICON[item.kind] ?? RefreshCw;
               return (
-                <li key={`${item.kind}-${index}`} className="flex items-start gap-3 px-3 py-2 text-sm">
+                <li key={`${item.section}:${item.key}`} className="flex items-start gap-3 px-3 py-2 text-sm">
                   <Icon className="mt-0.5 size-4 shrink-0 text-fg-3" />
                   <span className="min-w-0 flex-1 text-pretty">
                     {item.label}
                     {item.chapter && <span className="text-fg-3"> · {item.chapter}</span>}
                   </span>
                   <span className="shrink-0 pt-0.5 text-xs tabular text-fg-3">
-                    {item.lines ? `${formatNumber(item.lines)} câu đã thu` : "chưa thu - không tốn gì"}
+                    {item.lines ? `${formatNumber(item.lines)} câu thu lại` : "chưa thu - không tốn gì"}
                   </span>
                   <IconButton
                     size="sm"
