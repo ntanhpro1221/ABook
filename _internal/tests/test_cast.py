@@ -122,14 +122,14 @@ def test_a_renderer_answers_the_search_and_describes_itself() -> None:
         assert cast.describe(device.location, "127.0.0.1").kind == "tv"
 
 
-def test_a_windows_computer_that_renders_shows_as_a_computer(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_a_windows_computer_that_renders_shows_as_a_media_player(monkeypatch: pytest.MonkeyPatch) -> None:
     """Gặp thật trong mạng nhà chủ sách 01-10: một máy Windows bật điều khiển Windows Media Player từ xa."""
     with _renderer("QuangNgocThuy") as device:
         described = device.description()
         monkeypatch.setattr(device, "description", lambda: described.replace(
             "<manufacturer>ABook</manufacturer><modelName>Fake renderer</modelName>",
             "<manufacturer>Microsoft Corporation</manufacturer><modelName>Windows Digital Media Renderer</modelName>"))
-        assert cast.describe(device.location, "127.0.0.1").kind == "computer"
+        assert cast.describe(device.location, "127.0.0.1").kind == "media", "không lẫn với máy tính có ABook"
 
 
 def test_a_description_counts_only_at_the_address_that_answered(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -237,13 +237,17 @@ def test_casting_plays_the_chapter_and_moves_on_by_itself(tmp_path: Path, fast: 
 
 def test_resuming_mid_chapter_seeks_once_the_renderer_plays(tmp_path: Path, fast: None) -> None:
     """Phần lớn TV chỉ tua được khi đã chạy (loa giả trả lỗi 701 nếu tua sớm): phát trước, đợi PLAYING, rồi mới tua."""
-    with _renderer() as device, _players(Book(tmp_path), device) as players:
+    book = Book(tmp_path)
+    with _renderer() as device, _players(book, device) as players:
         speaker = _found(players)
         players.send(speaker["device"], {"action": "load", "bookId": "sach", "chapterId": 2, "seconds": 6.0})
         names = [action for action, _ in device.actions]
         assert names.index("Seek") > names.index("Play")
         assert _calls(device, "Seek")[0] == {"InstanceID": "0", "Unit": "REL_TIME", "Target": "0:00:06"}
         assert device.position() >= 6 and _now(players)["position"] >= 6
+        # App đóng: thiết bị dừng hẳn (cổng audio sắp đóng), chỗ nghe lưu ở chỗ dừng.
+        players.close()
+        assert device.state == "STOPPED" and book.saved[-1][:2] == ("sach", 2) and book.saved[-1][2] >= 6
 
 
 def test_pause_play_skip_and_chapters_on_the_renderer(tmp_path: Path, fast: None) -> None:
@@ -350,4 +354,48 @@ def test_the_app_lists_a_speaker_and_casts_a_real_chapter(tmp_path: Path, fast: 
             _until(lambda: (listening.get(identifier).get("last") or {}).get("chapterId") == 1)
         finally:
             ui.stop()
+            app.close()
+
+
+def test_a_paired_phone_sees_and_drives_the_speakers_of_this_computer(tmp_path: Path, fast: None) -> None:
+    """Điện thoại đã ghép điều khiển loa / TV QUA máy tính (GET/POST /sync/v1/cast): máy tính phục vụ audio, giữ chỗ nghe."""
+    root = tmp_path / "thu_vien"
+    root.mkdir()
+    project = make_project(root)
+    preferences = Preferences(tmp_path / "prefs" / "preferences.json")
+    preferences.update({"libraryRoot": str(root)})
+    app = App(preferences=preferences, runner=FakeRunner(), token="t", listening=Listening(tmp_path / "prefs" / "l.json"))
+    app.sync_host, app.sync_port = "127.0.0.1", 0
+    with _renderer("TV phòng khách") as device:
+        app.cast.find = lambda: cast.search(0.4, addresses=[], targets=[device.ssdp_address])
+        app.cast.media = CastMedia("127.0.0.1")
+        app.set_sync(True)
+        try:
+            port = app.sync_server.port
+            status, _data, _ = _request(port, "GET", "/sync/v1/cast")
+            assert status == 401, "chỉ thiết bị đã ghép mới thấy loa / TV của máy này"
+            code = app.devices.start_pairing()["code"]
+            _status, data, _ = _request(port, "POST", "/sync/v1/pair", body={"code": code, "device": "Pixel"})
+            token = json.loads(data)["token"]
+
+            def renderers() -> list[dict[str, Any]]:
+                _status, data, _ = _request(port, "GET", "/sync/v1/cast", token)
+                return json.loads(data)["renderers"]
+
+            app.cast.scan()
+            tv = _until(renderers)[0]
+            assert tv["name"] == "TV phòng khách" and tv["kind"] == "tv" and tv["state"] is None and tv["stream"]
+            status, data, _ = _request(port, "POST", f"/sync/v1/cast/{tv['id']}", token,
+                                       body={"action": "load", "bookId": book_id(project), "chapterId": 1, "seconds": 0})
+            assert status == 200 and json.loads(data)["id"]
+            _until(lambda: device.fetches)
+            playing = _until(lambda: [item for item in renderers() if item["state"] and item["state"]["playing"]])[0]
+            assert playing["state"]["bookId"] == book_id(project) and playing["state"]["chapterId"] == 1
+            status, data, _ = _request(port, "POST", f"/sync/v1/cast/{tv['id']}", token, body={"action": "rate", "rate": 2})
+            assert status == 409 and "1x" in json.loads(data)["error"]
+            status, _data, _ = _request(port, "POST", "/sync/v1/cast/0123456789ab", token, body={"action": "pause"})
+            assert status == 404
+            status, _data, _ = _request(port, "POST", f"/sync/v1/cast/{tv['id']}", token, body={"action": "format"})
+            assert status == 400
+        finally:
             app.close()

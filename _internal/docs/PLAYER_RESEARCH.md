@@ -138,12 +138,18 @@ thiết bị giả `scripts/fake_renderer.py` (chỉ thư viện chuẩn, chạy
   chạy, tự sang chương, thiết bị không Pause / không báo vị trí / bị chiếm, qua HTTP của app); trên mạng thật: loa giả trên
   chính máy này VÀ trên Mac mini (máy khác, tải 23,7 MB qua LAN trong ~2 giây - tường lửa Windows cho qua), giao diện:
   chuyển qua lại máy tính <-> loa <-> loa khác, tự sang chương 725 -> 726 và ghi "đã nghe hết". Trong mạng nhà chủ sách có
-  một thiết bị thật: máy Windows "QuangNgocThuy" (Windows Digital Media Renderer) - hiện là máy tính; KHÔNG gửi lệnh nào
-  tới nó (sẽ phát ra loa của người khác).
+  một thiết bị thật: máy Windows "QuangNgocThuy" (Windows Digital Media Renderer) - hiện với biểu tượng riêng (`kind`
+  media, không lẫn với máy tính có ABook); KHÔNG gửi lệnh nào tới nó (sẽ phát ra loa của người khác).
+- Điện thoại điều khiển loa / TV QUA máy tính (01-10): `GET /sync/v1/cast` (mỗi thiết bị một "trình phát" cùng hình dạng
+  `/sync/v1/player`) và `POST /sync/v1/cast/<mã>` (cùng lệnh, máy tính chạy ngay), chỉ thiết bị đã ghép. Điện thoại
+  (RemotePlayers.kt) đặt chúng cạnh máy tính với mã `cast:<mã>`; "Phát trên…" thành menu khi có nhiều nơi. Thử trên máy ảo
+  ebook_pixel ghép với máy chủ thử: menu đủ 4 nơi, điện thoại -> máy tính -> loa giả (tua đúng 0:40), dừng và "Nghe ở đây"
+  từ thanh của điện thoại.
 - Lỗi cũ lộ ra khi thử: "Phát trên…" chỉ tạm dừng trình phát trong app, nên lúc rời trang nó lưu lại chỗ cũ đè lên chỗ máy
   kia đã nghe tới (loa dừng 0:56, tải lại trang thành 0:19) - đúng cả với điện thoại. Nay máy kia nhận lệnh thì trình phát
   trong app đóng hẳn (vẫn lưu chỗ trước khi đóng).
-- Còn lại: điện thoại phát thẳng lên loa / TV (Kotlin, cùng giao thức; sách đã tải phục vụ từ LibraryServer.kt), Google Cast
+- Còn lại: điện thoại TỰ phát lên loa / TV khi không có máy tính (Kotlin, cùng giao thức; trình phát Media3 riêng để màn
+  khoá / tai nghe điều khiển TV; sách đã tải phục vụ từ điện thoại), hẹn giờ ngủ khi đang phát trên loa, Google Cast
   (mục trên - loa Google không có DLNA), âm lượng của thiết bị (RenderingControl - đã đọc địa chỉ, chưa có nút), tốc độ
   khác 1x (DLNA gần như không thiết bị nào nhận).
 

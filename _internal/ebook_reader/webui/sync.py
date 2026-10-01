@@ -39,6 +39,7 @@ from typing import Any, Callable
 from urllib.parse import unquote, urlsplit
 
 from . import covers, listen_view, remote_studio, store
+from .cast import CastError
 from .fingerprints import Fingerprints
 from .library import Library, book_id
 from .listening import RECORD_ID, SYNC_KEYS, Listening
@@ -381,7 +382,7 @@ class SyncApp:
     def __init__(self, library: Library, listening: Listening, devices: Devices, name: str,
                  remote: Remote | None = None, fingerprints: Fingerprints | None = None,
                  studio: StudioGate | None = None, player: Remote | None = None,
-                 routes: Callable[[], dict[str, Any]] | None = None) -> None:
+                 routes: Callable[[], dict[str, Any]] | None = None, cast: Any = None) -> None:
         self.library = library
         self.listening = listening
         self.devices = devices
@@ -393,6 +394,8 @@ class SyncApp:
         # Các đường tới máy này, gửi kèm lời đáp ghép: điện thoại ghép qua Wi-Fi biết đường Bluetooth dự phòng, ghép qua
         # Bluetooth biết địa chỉ Wi-Fi để dùng khi cùng mạng (tự chọn đường, feat/auto-route).
         self.routes = routes or (lambda: {})
+        # Loa / TV trong mạng nhà của máy này (webui/cast.CastPlayers): điện thoại đã ghép điều khiển chúng QUA máy này.
+        self.cast = cast
         # Số "việc cần duyệt" của mỗi dự án, tính lại chỉ khi sách đổi (studio_view): điện thoại hỏi mỗi 15 phút.
         self._work: dict[str, tuple[tuple[float, ...], int]] = {}  # đường dẫn -> (dấu thời gian, số việc)
         self._work_lock = threading.Lock()
@@ -408,6 +411,21 @@ class SyncApp:
         return {"name": self.name, "kind": "computer", "stream": True, "books": [],
                 "state": {key: seen[key] for key in PLAYER_STATE} if seen else None,
                 "acks": seen["acks"] if seen else [], "age": seen["age"] if seen else 0.0}
+
+    def cast_view(self) -> list[dict[str, Any]]:
+        """Loa / TV máy này thấy trong mạng nhà (webui/cast.py), cho máy đã ghép: mỗi thiết bị một "trình phát" cùng hình
+        dạng `player_view` (thêm `id`), nên điện thoại đặt chúng cạnh máy tính trong danh sách máy khác và "Phát trên…" -
+        máy này vẫn là bên phục vụ audio và giữ chỗ nghe."""
+        if self.cast is None:
+            return []
+        return [{"id": item["device"], "name": item["name"], "kind": item["kind"], "stream": True, "books": [],
+                 "state": {key: item[key] for key in PLAYER_STATE} if item["bookId"] else None, "acks": [],
+                 "age": item["age"]} for item in self.cast.view()]
+
+    def cast_send(self, device: str, command: dict[str, Any]) -> dict[str, Any]:
+        if self.cast is None or not self.cast.owns(device):
+            raise LookupError(device)
+        return self.cast.send(device, command)
 
     def studio_view(self) -> list[dict[str, Any]]:
         """Trạng thái sản xuất gọn cho điện thoại: mỗi dự án Studio một dòng - giai đoạn, còn chạy không, số chương xong,
@@ -719,6 +737,22 @@ class SyncHandler(BaseHTTPRequestHandler):
                         self._json(HTTPStatus.OK, {"id": entry["id"]})
                 else:
                     self._json(HTTPStatus.METHOD_NOT_ALLOWED, {"error": "Không hỗ trợ"})
+                return
+            if method == "GET" and path == "/sync/v1/cast":
+                self._json(HTTPStatus.OK, {"renderers": self.app.cast_view()})
+                return
+            if method == "POST" and (cast := re.fullmatch(r"/sync/v1/cast/([0-9a-f]{12})", path)):
+                # Điện thoại bấm "Phát trên <TV>" hay điều khiển thanh "Đang phát trên <TV>": lệnh chạy ngay ở máy này.
+                try:
+                    reply = self.app.cast_send(cast.group(1), remote_command(self._body()))
+                except ValueError as error:
+                    self._json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
+                except LookupError:
+                    self._json(HTTPStatus.NOT_FOUND, {"error": f"{self.app.name} không còn thấy thiết bị này trong mạng"})
+                except CastError as error:
+                    self._json(HTTPStatus.CONFLICT, {"error": str(error)})
+                else:
+                    self._json(HTTPStatus.OK, reply)
                 return
             if method == "GET" and path == "/sync/v1/studio":
                 # Thông báo sản xuất trên điện thoại: thông tin của Studio, nên cùng hai điều kiện với Studio từ xa - công
