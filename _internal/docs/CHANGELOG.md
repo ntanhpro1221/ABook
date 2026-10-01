@@ -19,6 +19,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   hay chuyển sang máy khác. Bấm đúp file (hay Mở file sách) là có lại dự án ấy trong Studio, luôn thành một dự án MỚI,
   không đè dự án đang có. Nguồn chương đã bị dời hay xoá thì vẫn gói được, app báo rõ thiếu file nào. Dự án đang chạy
   thì gói sau khi nó chạy xong hoặc đã dừng.
+- Sách đã tạo mà **chưa bắt đầu** có nút **Sửa thiết lập**: trình tạo sách mở lại với mọi lựa chọn cũ (chương, tên, giọng kể,
+  chất lượng, người xưng "tôi", model đọc hiểu) để đổi; tạo xong thì bản cũ vào Thùng rác, bìa đã chọn đi theo.
 
 ## [0.4.15] - 2026-10-01
 

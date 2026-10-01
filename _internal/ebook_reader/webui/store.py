@@ -326,6 +326,46 @@ def continuation_plan(project_root: Path) -> dict[str, Any]:
     }
 
 
+def not_started(project_root: Path) -> bool:
+    """Sách đã tạo mà CHƯA chạy bước nào: chưa câu nào được phân tích, sổ ứng viên phân tích trống (AGENTS.md: có ứng viên
+    là phân tích đã bắt đầu). Chỉ khi ấy mới được làm lại với thiết lập khác - cài đặt khoá theo sách từ lúc tạo, và chưa
+    có gì để mất."""
+    with closing(connect(project_root)) as connection:
+        book = connection.execute("SELECT status FROM book WHERE id=1").fetchone()
+        if book is None or str(book["status"]) != "created":
+            return False
+        if connection.execute("SELECT 1 FROM segments WHERE status != 'pending' LIMIT 1").fetchone():
+            return False
+        tables = {row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+        return not ("analysis_candidates" in tables
+                    and connection.execute("SELECT 1 FROM analysis_candidates LIMIT 1").fetchone())
+
+
+def redo_plan(project_root: Path) -> dict[str, Any]:
+    """"Sửa thiết lập" của sách chưa bắt đầu (soát UX a5 01-10, #4): mọi lựa chọn lúc tạo - chương, tên, chất lượng, giọng
+    kể, người xưng "tôi", model đọc hiểu, bỏ dòng ghi công - cho trình tạo sách điền sẵn. Tạo xong cuốn mới thì cuốn này
+    vào Thùng rác (`create` với `replaces`)."""
+    from .. import continuation
+
+    settings = read_settings(project_root)
+    voices = settings.get("voices") if isinstance(settings.get("voices"), dict) else {}
+    text = settings.get("text") if isinstance(settings.get("text"), dict) else {}
+    with closing(connect(project_root)) as connection:
+        book = connection.execute("SELECT title FROM book WHERE id=1").fetchone()
+    chapters = voices.get("first_person_chapters")
+    return {
+        "started": not not_started(project_root),
+        "paths": [str(path) for path in continuation._input_paths(project_root)],
+        "title": display_title(project_root, str(book["title"]) if book is not None else project_root.name),
+        "profile": str(settings.get("quality_profile") or "high_quality"),
+        "narrator": humanize.voice_label(str(voices.get("narrator_voice") or "")),
+        "firstPerson": str(voices.get("first_person_identity") or ""),
+        "firstPersonChapters": {str(key): str(value) for key, value in chapters.items()} if isinstance(chapters, dict) else {},
+        "analysisModel": str((settings.get("analysis") or {}).get("model") or ""),
+        "dropCreditLines": bool(text.get("drop_credit_lines")),
+    }
+
+
 def display_title(project_root: Path, fallback: str) -> str:
     """Tên sách người dùng đặt lại (TITLE_FILE), hay `fallback` - tên lúc tạo trong sổ."""
     try:
