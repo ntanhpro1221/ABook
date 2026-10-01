@@ -1,0 +1,11 @@
+# Đáp án cảnh - Yamiyo no Hotaru (LN Nhật, bản dịch Việt), Chap 120 (4). Thế giới: modern / huyền bí Nhật.
+# 184 câu, ~3730 tiếng. BỘ KIỂM GIỮ RIÊNG (02-10). PHÂN XỬ từ A3 + B3 (Pk 0,23).
+scene 0-13 | V=-0.5 E=-0.5 T=1 | gems=tension | function=doi_thoai | setting=hành lang điện chính dinh thự | music=co | bị cho lui, Sumire quan tâm giả, bất an
+scene 14-32 | V=-1.25 E=0.25 T=1 | gems=tension/sadness | function=noi_tam | setting=sân trước, gốc cây | music=co | start=soft (cả hai) - kiệt quệ, giận, đấm cây chảy máu, tự dặn chờ thời
+scene 33-48 | V=0 E=-0.75 T=0.5 | gems=wonder/tension | function=chuyen_canh | setting=đường đêm trăng, trước nhà nhỏ | music=co | về đêm, Hina đứng dưới trăng
+scene 49-101 | V=0.75 E=-0.5 T=-0.75 | gems=nostalgia/tenderness | function=doi_thoai | setting=khu vườn, rừng tre về đêm | music=co | tone=hai - kể chuyện thơ ấu; giọng nội tâm chen hài
+scene 102-117 | V=0.75 E=-0.25 T=-0.5 | gems=tenderness | function=doi_thoai | setting=rừng tre | music=co | start=soft (chỉ A) - tone=hai - Hina trêu, kề mặt
+scene 118-150 | V=0.25 E=-0.5 T=0 | gems=tenderness/sadness | function=doi_thoai | setting=rừng tre | music=co | start=soft (chỉ B) - trao hộp thuốc, áy náy
+scene 151-172 | V=0.5 E=-0.5 T=-0.5 | gems=tenderness/nostalgia | function=doi_thoai | setting=rừng tre, chia tay | music=co | start=soft (chỉ B) - hẹn gặp lại, Hina đi trước
+scene 173-182 | V=0.75 E=0.75 T=-0.75 | gems=joyful_activation | function=ket | setting=nhện trắng trong đầu | music=co | tone=hai - "Buổi sáng vui vẻ", Tomobe hét
+scene 183-183 | V=0 E=0 T=0 | gems=none | function=chu_thich | setting=lời người đăng | music=im |

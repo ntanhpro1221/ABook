@@ -1,0 +1,11 @@
+# Đáp án cảnh - Love Unseen Beneath the Clear Night Sky (LN Nhật, bản dịch Việt), Chương 08 "Kỳ nghỉ hè". Thế giới: romance.
+# 257 câu, ~3320 tiếng. BỘ KIỂM GIỮ RIÊNG (02-10): cách chia đã chốt TRƯỚC khi có đáp án này. PHÂN XỬ từ A3 + B3 (Pk 0,008).
+scene 0-43 | V=0.75 E=-0.5 T=-0.5 | gems=tenderness/peacefulness | function=doi_thoai | setting=phòng bệnh, hoa bỉ ngạn | music=co | tin thuốc có tác dụng, khóc vì mừng, đùa chữ "Whoa"
+scene 44-69 | V=0 E=0 T=0.5 | gems=tenderness/tension | function=hanh_dong | setting=phòng bệnh trống, hành lang | music=co | hôm sau phòng trống, hoảng tìm; cô tập đi để kịp xem pháo hoa
+accent 47-50 | linh cảm xấu, chạy tìm
+scene 70-77 | V=-0.75 E=-1 T=0 | gems=sadness/none | function=noi_tam | setting=phòng trọ nóng, nghỉ hè | music=nhe | ~160 tiếng: cô chuyển tệ, không được thăm, chán
+scene 78-100 | V=0.5 E=0 T=-0.75 | gems=wonder/peacefulness | function=doi_thoai | setting=xưởng pháo hoa | music=co | giúp Kotomugi, xem bọc giấy pháo hoa
+scene 101-133 | V=0.75 E=-1 T=-0.75 | gems=tenderness/nostalgia | function=doi_thoai | setting=ký túc xá buổi tối, điện thoại với mẹ | music=co | mẹ: "nắm tay đến giây phút cuối"
+scene 134-183 | V=0.75 E=-0.5 T=-0.75 | gems=tenderness/nostalgia | function=doi_thoai | setting=bệnh viện tháng Tám, vườn sân thượng | music=co | tập đi, trà sữa, nhớ nụ hôn cô đã quên
+scene 184-244 | V=-1.5 E=-1 T=0.5 | gems=sadness/tenderness | function=cao_trao | setting=phòng bệnh, ống truyền | music=co | di căn, "mình nói dối đấy", chuyển Hokkaido, nhờ đọc sách
+scene 245-256 | V=-0.5 E=-0.5 T=0.5 | gems=sadness/nostalgia | function=chuyen_canh | setting=phòng bệnh qua nhiều tuần | music=co | đọc sách mỗi ngày, hồi sức hai tuần, nghìn con hạc, sắp lễ hội pháo hoa

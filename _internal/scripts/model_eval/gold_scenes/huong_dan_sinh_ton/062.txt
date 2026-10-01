@@ -1,0 +1,10 @@
+# Đáp án cảnh - Hướng dẫn sinh tồn trong học viện (web novel, bản dịch Việt), Chương 63. Thế giới: western_fantasy.
+# 145 câu, ~3410 tiếng. BỘ KIỂM GIỮ RIÊNG (02-10). PHÂN XỬ từ A3 + B3 (Pk 0,31 - cảnh Glast hấp hối dài, chỗ cắt bên trong khác nhau).
+scene 0-16 | V=0 E=-0.25 T=0.25 | gems=none/tension | function=chuyen_canh | setting=đường vào rừng phía bắc | music=nhe | đi tìm pháp trận, Lortel bám theo
+scene 17-26 | V=0 E=-0.25 T=0.5 | gems=none/tension | function=doi_thoai | setting=pháp trận Thánh vị | music=nhe | start=soft (chỉ A) - Lucy giải mã pháp trận dịch chuyển
+scene 27-38 | V=-0.5 E=-0.25 T=1 | gems=tension | function=hanh_dong | setting=rìa pháp trận, vết máu | music=co | start=soft (chỉ B) - vết máu, nhớ cảnh Glast nhảy xuống, lần theo
+scene 39-77 | V=-1 E=-1 T=0.5 | gems=sadness/tension | function=cao_trao | setting=gốc cây cổ thụ dưới trăng | music=co | Glast hấp hối, ngắm trăng, chuyện với Hiệu trưởng Obel
+scene 78-104 | V=-0.75 E=-1 T=0.25 | gems=sadness | function=doi_thoai | setting=gốc cây dưới trăng | music=co | start=soft (chỉ B) - chìa khoá Thư viện Linh hồn
+scene 105-121 | V=-1 E=-1 T=0.5 | gems=sadness/nostalgia | function=noi_tam | setting=gốc cây dưới trăng | music=co | start=soft (chỉ B) - con gái 17 năm, ho ra máu
+scene 122-143 | V=-1.25 E=-1.5 T=-0.5 | gems=transcendence/sadness | function=ket | setting=gốc cây du dưới trăng | music=co | start=soft (chỉ A) - nhắm mắt, lời Yennica, chết như ngủ
+scene 144-144 | V=0 E=0 T=0 | gems=none | function=chu_thich | setting=lời người dịch | music=im |
