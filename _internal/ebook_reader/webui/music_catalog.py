@@ -66,7 +66,9 @@ class MusicCatalog:
             data: dict[str, Any] | None = None
             if refresh or not fresh:
                 try:
-                    data = json.loads(self._fetch("manifest.json").decode("utf-8"))
+                    # Làm mới chủ động: tham số chống đệm, để CDN không trả bản mục lục cũ (danh mục vừa dựng lại).
+                    relative = f"manifest.json?v={int(time.time())}" if refresh and self.source.startswith("http")                         else "manifest.json"
+                    data = json.loads(self._fetch(relative).decode("utf-8"))
                     self.cache_dir.mkdir(parents=True, exist_ok=True)
                     tmp = path.with_suffix(".part")
                     tmp.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
@@ -97,7 +99,8 @@ class MusicCatalog:
             value = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             try:
-                raw = self._fetch(relative)
+                # Mã phiên bản trong đường dẫn: CDN đệm mảnh 1 giờ - danh mục mới là đường dẫn mới, không lẫn mảnh cũ.
+                raw = self._fetch(f"{relative}?v={manifest['revision']}" if self.source.startswith("http") else relative)
             except OSError as exc:
                 raise CatalogError("Không tải được danh mục nhạc nền - kiểm tra mạng.") from exc
             value = json.loads(raw.decode("utf-8"))
