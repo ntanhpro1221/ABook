@@ -26,6 +26,8 @@ class DlnaPlayers(
     private val media: Dlna.Media = Dlna.Media(),
     private val find: () -> List<Pair<String, String>> = { Dlna.search() },
     private val read: (String, String) -> Dlna.Renderer? = { location, host -> Dlna.describe(location, host) },
+    /** Vừa có phiên phát (đưa chương): app giữ một dịch vụ chạy nền để TV không đứt khi màn hình tắt (CastService). */
+    private val onSession: () -> Unit = {},
 ) {
     data class Chapter(val id: Int, val title: String, val duration: Double, val file: File)
     data class Book(val title: String, val chapters: List<Chapter>)
@@ -98,6 +100,11 @@ class DlnaPlayers(
     }
 
     fun owns(id: String): Boolean = synchronized(lock) { id in renderers }
+
+    /** Tên thiết bị đang có phiên (đang phát hay tạm dừng) - dịch vụ chạy nền sống chừng nào danh sách còn khác rỗng. */
+    fun active(): List<String> = synchronized(lock) {
+        sessions.filter { !it.value.ended }.keys.mapNotNull { renderers[it]?.first?.name }
+    }
 
     /** App thôi phục vụ: thiết bị đang phát sách của điện thoại dừng hẳn, chỗ nghe lưu ở chỗ dừng, đóng cổng audio. */
     fun close() {
@@ -238,6 +245,7 @@ class DlnaPlayers(
         val previous = synchronized(lock) { sessions.put(renderer.id, session) }
         if (previous != null && !previous.ended && previous.chapter.id != chapter.id) store(previous, previous.position)
         store(session, session.position)
+        runCatching(onSession)
     }
 
     /** Phần lớn TV chỉ tua được khi đã chạy: đợi PLAYING (tới 8 giây) rồi tua. Không tua được thì phát từ đầu. */

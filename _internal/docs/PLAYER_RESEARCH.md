@@ -148,8 +148,16 @@ thiết bị giả `scripts/fake_renderer.py` (chỉ thư viện chuẩn, chạy
 - Lỗi cũ lộ ra khi thử: "Phát trên…" chỉ tạm dừng trình phát trong app, nên lúc rời trang nó lưu lại chỗ cũ đè lên chỗ máy
   kia đã nghe tới (loa dừng 0:56, tải lại trang thành 0:19) - đúng cả với điện thoại. Nay máy kia nhận lệnh thì trình phát
   trong app đóng hẳn (vẫn lưu chỗ trước khi đóng).
-- Còn lại: điện thoại TỰ phát lên loa / TV khi không có máy tính (Kotlin, cùng giao thức; trình phát Media3 riêng để màn
-  khoá / tai nghe điều khiển TV; sách đã tải phục vụ từ điện thoại), hẹn giờ ngủ khi đang phát trên loa, Google Cast
+- Điện thoại TỰ phát lên loa / TV, không cần máy tính (01-10): `Dlna.kt` (cùng giao thức, cùng phép an toàn, cổng audio
+  riêng của điện thoại) + `DlnaPlayers.kt` (cùng bộ não với CastPlayers) + `PhoneCast.kt` (sách lấy từ Store - chỉ sách ĐÃ
+  CÓ trên máy; chỗ nghe vào Store.progress). Màn hình tắt thì Android ngủ sâu - cổng audio ngừng giữa chương, không sang
+  chương - nên có `CastService` (dịch vụ mediaPlayback, khoá CPU + khoá Wi-Fi, thông báo "Đang phát trên <TV>", tự dừng
+  khi hết phiên). Một thiết bị chỉ một mục dù cả máy tính ("cast:") lẫn điện thoại ("dlna:") đều thấy; lúc bấm điện thoại
+  tự chọn đường (sách có trên máy thì phát thẳng, sách nghe thẳng thì nhờ máy tính). Thử: 9 bài JVM (DlnaTest) với loa giả
+  Kotlin (FakeRenderer, src/sharedTest - cùng cư xử loa giả Python) và cùng loa giả ấy CHẠY TRÊN MÁY ẢO ANDROID
+  (DlnaOnDeviceTest: bộ đọc XML và mạng của Android thật). Máy ảo không thử được trọn vòng với loa giả trên máy tính (NAT
+  của máy ảo chặn multicast, loa ở ngoài không tới được cổng của máy ảo).
+- Còn lại: màn khoá / tai nghe điều khiển TV (trình phát Media3 riêng cho phiên DLNA), hẹn giờ ngủ khi đang phát trên loa, Google Cast
   (mục trên - loa Google không có DLNA), âm lượng của thiết bị (RenderingControl - đã đọc địa chỉ, chưa có nút), tốc độ
   khác 1x (DLNA gần như không thiết bị nào nhận).
 

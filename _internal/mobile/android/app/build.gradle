@@ -26,6 +26,11 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // Loa giả DLNA (FakeRenderer) dùng chung cho bài thử JVM (DlnaTest) và bài thử trên máy Android (DlnaOnDeviceTest).
+    sourceSets {
+        test.java.srcDirs += "src/sharedTest/java"
+        androidTest.java.srcDirs += "src/sharedTest/java"
+    }
     signingConfigs {
         if (releaseSigning.getProperty("storeFile")) {
             release {

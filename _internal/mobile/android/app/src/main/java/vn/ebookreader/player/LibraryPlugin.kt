@@ -54,6 +54,7 @@ class LibraryPlugin : Plugin() {
 
     override fun load() {
         Playback.init(context)
+        PhoneCast.init(context)
         // Đã bật "Cho máy khác nghe thư viện này" từ lần trước: mở lại máy chủ cùng app (LibraryServer).
         if (prefs.getBoolean(SHARE_KEY, false)) io.execute { runCatching { LibraryServer.start(context) } }
     }
