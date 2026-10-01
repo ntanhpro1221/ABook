@@ -157,6 +157,15 @@ giới - TextTiling thắng ở 4 chương đầu (0,18) nhưng mất khi thêm 
 ĐẢO thang số; (4) LLM chia theo NHỊP truyện (mỗi trận phục kích, mỗi tràng cười một đoạn), đáp án coi đó là điểm nhấn.
 Đang thử: chế độ suy nghĩ, model khác, lai (ranh giới cứng + không khí từ LLM).
 
+**Thêm trên bộ phát triển (02-10 sáng):** LAI = ranh giới TextTiling bge-m3 (c = 1) + V, T từ nhãn khối LLM 9B v3 + E từ nhãn
+câu: Pk 0,223, r 0,66 / 0,56 / 0,65 (T gần gấp đôi app 0,34). Chế độ suy nghĩ của 9B: không khí ngang (V 0,61, T 0,70), ranh
+giới không hơn (0,26), tốn gấp nhiều lần -> không dùng. qwen3:8b v3 Pk 0,208 nhưng chỉ vì hầu như không nói "mới" (8,7 đoạn/giờ);
+gemma4-e4b V r ~0 -> loại.
+
+**CHỐT TRƯỚC BỘ KIỂM GIỮ RIÊNG (02-10 07:0x, trước khi có đáp án của 3 chương LN Love Unseen 07, Yamiyo 141, HDST 062):**
+cách được kiểm = `moodvt:qwen3.5:9b#v3|tile:bge-m3:1` (eval_scenes.py), so với `hard` và `app`. Không chỉnh tham số sau khi
+thấy kết quả trên ba chương ấy.
+
 ## Pha 3 - ghép đoạn với nhạc
 
 Ứng viên: (1) gần nhất trên hai trục (đường cơ sở); (2) truy hồi chữ-nhạc: model đọc hiểu viết mô tả nhạc cho đoạn ("tiếng
