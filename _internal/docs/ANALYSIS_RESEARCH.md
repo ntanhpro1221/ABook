@@ -68,6 +68,14 @@ quốc để biết độ rộng nhiễu thật trước khi đổi model mặc 
 đọc bằng giọng người lạ. Dữ liệu "bẩn" của v5 (nhãn chữ hoa, có chương cổng) vẫn cho F1 cao hơn; chờ v6-e1 / v6n-e2 trước
 khi kết luận về 8B.
 
+**9B-v8 ĐỦ CỔNG (02-10 01:0x)** - LN 12 chương: 64,7 = v8 4B (-0,1 [-3,4; +3,7], hơn 6 thua 6); cổng: Tam quốc F1 giọng
+**91,9 vs 83,0** (chặt 89,0 vs 82,2; v8m Modal 87,8 - vẫn hơn), YMP ngôi thứ nhất **92,2 vs 77,0** (chặt 92,0 vs 86,0),
+Tắt đèn 77,7 vs 76,3 (chặt 92,0 vs 84,8); cổng 351/381 OK, 363/378 hỏng vì QUÁ GIỜ do bộ giữ êm (lỗi đo - đo lại bằng
+scratchpad/redo_9bv8_gates.sh). Chạy được trên card 8 GB (Q4, 16k ngữ cảnh, 5,35 GiB, 47 tok/s - nhanh hơn 8B). Hơn hẳn ở
+hai cổng khó nhất (cảnh nhiều người kiểu Tam quốc, kể ngôi thứ nhất) vượt cỡ nhiễu giữa hai lượt huấn luyện (~5-6) ->
+**ỨNG VIÊN đổi model mặc định** (đổi = file khoá config.py + đăng model: chủ sách quyết). Trước khi đổi: đo lại 363/378,
+và một lượt 9B-v8 hạt giống khác nếu tín dụng cho phép.
+
 9B-v8 (Qwen3.5-9B công thức v8, đo ở nhà, 6 chương LN cơ sở): F1 giọng 64,2 = v8 4B (+0,0 [−3,5; +4,6]), chặt −6,0
 [−16,0; +3,9]; chênh lớn theo chương (Nise 79,0 vs 62,8; TCF 25,8 vs 40,7). Chưa đủ để nói 9B hơn; chờ LN mở rộng + cổng.
 
