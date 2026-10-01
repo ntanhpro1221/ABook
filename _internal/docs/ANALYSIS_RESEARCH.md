@@ -49,7 +49,11 @@ LoRA 4B hơn v6 vượt nhiễu. Theo loại câu (chặt, v7 → v8): đối đ
 ranh giới lô), 『』 14,6 → 38,2, tôi nói 74,0 → 77,5, còn lại 60,0 → 66,4; nhưng **có lời dẫn 82,4 → 70,4**. Soi 36 câu có lời
 dẫn v8 sai mà v7 đúng (`v8_cue_errors.py`): chỉ 4 câu v8 chép người nói của lượt trước; **24 câu ở một chương HDST (062)**
 v8 viết "Professor Glast" thay "Glast" - thêm chức danh, lệch nhãn chặt nhưng vẫn một giọng (F1 giọng không mất). Tức phần
-tụt chủ yếu là CÁCH VIẾT TÊN, không phải đọc sai lời dẫn.
+tụt chủ yếu là CÁCH VIẾT TÊN, không phải đọc sai lời dẫn. Gốc của nó: sách viết **"giáo sư Glast"** (29 lần), v8 **dịch chức
+danh sang tiếng Anh** khi gán nhãn ("Professor Glast", 34 câu); v6/v7 viết "Glast". Trong app điều ấy có hại thật: luật gộp
+chức danh của host (`character_registry.HONORIFIC_PREFIX_PATTERN`) chỉ biết chức danh tiếng Việt, nên "Professor Glast"
+không gộp với "Glast" ở chương khác -> có thể thành hai giọng. Sửa (file khoá, sự kiện phiên bản): thêm chức danh tiếng Anh
+(Professor, Lady, Lord, Sir, Master, Miss, Mr, Mrs, Dr, Captain, Prince, Princess, King, Queen, Duke, Count…) vào luật ấy.
 
 Cổng (F1 giọng, v6 / v7 / v8): TMA 64,3 / 65,4 / **72,1**; YMP 76,4 / 67,0 / **77,0**; Tắt đèn 72,8 / 72,9 / **76,3**; Tam
 quốc **87,5** / 83,8 / 83,0 (v8 tách 13/32 người thành nhiều giọng, v6 10/32).
