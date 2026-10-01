@@ -101,6 +101,14 @@ phim quá hẹp để học 512 chiều - ridge học được nét riêng của
 cao. Hướng kế: học trên NHIỀU nguồn (DEAM + PMEmo + nhãn Incompetech), luôn đo trên bộ không dùng để học; zero-shot hiện
 là ứng viên vững nhất cho kho thật.
 
+**Nhãn GEMS và phong cách zero-shot (02-10 01:0x, 634 bài Incompetech có nhãn người).** Khớp nhãn người (nhãn GEMS mạnh
+nhất nằm trong tập suy từ "feel" của bài): thô 74,3%, đoán bừa ~38,6% - nhưng phân bố lệch (một câu mô tả "hút" mọi bài:
+"power" 232/634). Hiệu chỉnh từng câu theo cả kho (z-score cột) -> 75,4% và phân bố cân ("power" 85). Phong cách sau hiệu
+chỉnh: ambient 145, piano 87, mộc 81, giao hưởng hùng 70, giao hưởng nhẹ 65, trung cổ 59, jazz 42, u tối 33, điện tử 29,
+rock 13, **cổ phong phương Đông 11** - thiếu hẳn cho truyện tiên hiệp / Tam quốc: phải tìm thêm nguồn nhạc cổ phương Đông
+giấy phép mở trước khi bật nhạc cho các cuốn ấy. Phân loại (11 phong cách, 9 thể loại truyện với bảng tương thích, 9 nhãn
+GEMS) ở `LLM_Train/music/taxonomy.py`; khung ở `MUSIC_SELECTION_MODEL.md`.
+
 "Hợp làm nền" đo riêng, khách quan: xác suất có lời (kiểm trên MTG-Jamendo), độ nổi của giai điệu, độ ổn định cường độ
 (phương sai độ to theo cửa sổ), có lặp liền được không (ghép đuôi-đầu theo phách).
 
