@@ -271,8 +271,10 @@ export function CastList({ bookId, onPickVoice, onMerge, reached }: {
   const { data: cast, isLoading } = useCast(bookId);
   const [extras, setExtras] = useState(false);
   const [later, setLater] = useState(false);
+  const [carried, setCarried] = useState(false);
+  const carriedPeople = onPickVoice ? (cast?.carried ?? []) : [];
   if (isLoading) return <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{Array.from({ length: 6 }, (_, index) => <Skeleton key={index} className="h-[84px] rounded-xl" />)}</div>;
-  if (!cast || (!cast.characters.length && !cast.extras.length)) {
+  if (!cast || (!cast.characters.length && !cast.extras.length && !carriedPeople.length)) {
     return (
       <EmptyState icon={AudioLines} title="Chưa có dàn nhân vật" className="mt-2">
         Dàn nhân vật hiện ra khi truyện đã được phân vai.
@@ -311,6 +313,26 @@ export function CastList({ bookId, onPickVoice, onMerge, reached }: {
             {extras ? "Ẩn" : "Hiện"} {cast.extras.length} vai phụ chỉ xuất hiện trong một cảnh
           </button>
           {extras && <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{cast.extras.map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} onMerge={onMerge} />)}</div>}
+        </div>
+      )}
+      {/* Phần nối tiếp: dàn mang sang chưa nói ở phần này (soát UX a6 01-10, B2 - tab từng ghi "Chưa có dàn"). Mở sẵn khi chưa ai
+          nói câu nào - lúc ấy đây là cả dàn. */}
+      {carriedPeople.length > 0 && (
+        <div className="mt-6">
+          {cast.characters.length ? (
+            <button type="button" onClick={() => setCarried((value) => !value)} className="text-sm font-medium text-fg-2 hover:text-fg">
+              {carried ? "Ẩn" : "Hiện"} {carriedPeople.length} người mang giọng từ phần trước - chưa nói câu nào ở phần này
+            </button>
+          ) : (
+            <h3 className="text-sm font-semibold">
+              Mang từ phần trước <span className="font-normal text-fg-2">· {carriedPeople.length} người giữ nguyên giọng - phần này chưa phân tích tới họ</span>
+            </h3>
+          )}
+          {(carried || !cast.characters.length) && (
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {carriedPeople.map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} />)}
+            </div>
+          )}
         </div>
       )}
     </div>

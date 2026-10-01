@@ -988,7 +988,28 @@ def cast(project_root: Path) -> dict[str, Any]:
         (main if record is not None else extras).append(entry)
     main.sort(key=lambda entry: (-entry["lines"], entry["displayName"]))
     extras.sort(key=lambda entry: (-entry["lines"], entry["displayName"]))
-    return {"narrator": narrator, "characters": main, "extras": extras}
+    # Phần nối tiếp chưa phân tích (soát UX a6 01-10, B2): dàn mang từ phần trước - giọng đã ghim - chưa ai nói câu nào ở
+    # phần này nên danh sách trên trống ("Chưa có dàn") dù cuốn mang theo cả trăm giọng. Liệt kê riêng để Studio cho thấy.
+    by_key = {str(row["voice_key"]): row for row in profiles.values() if "voice_key" in row.keys()}
+    spoke = {speaker_key(name) for name in lines}
+    carried = [
+        {
+            "name": name,
+            "displayName": humanize.person_name(str(record["display_name"] or name)),
+            "gender": humanize.GENDER_LABELS.get(str(record["gender"] or ""), ""),
+            "age": humanize.AGE_LABELS.get(str(record["age"] or ""), ""),
+            "lines": 0,
+            "seconds": 0.0,
+            "voice": _voice_view(by_key.get(str(record["locked_voice_key"]))),
+            "sampleId": None,
+            "firstChapter": "",
+            "pendingVoice": pending.get(speaker_key(name)),
+        }
+        for name, record in characters.items()
+        if speaker_key(name) not in spoke and "locked_voice_key" in record.keys() and str(record["locked_voice_key"] or "")
+    ]
+    carried.sort(key=lambda entry: entry["displayName"])
+    return {"narrator": narrator, "characters": main, "extras": extras, "carried": carried}
 
 
 def sample_audio_path(project_root: Path, segment_id: int) -> Path | None:

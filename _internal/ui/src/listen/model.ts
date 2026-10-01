@@ -231,6 +231,8 @@ export interface Cast {
   narrator: { voice: string; lines: number; seconds: number };
   characters: CastMember[];
   extras: CastMember[];
+  /** Studio, phần nối tiếp: giọng mang từ phần trước của những người chưa nói câu nào ở phần này. */
+  carried?: CastMember[];
 }
 
 /** Chương nên phát khi bấm "Nghe": chỗ đang nghe dở nếu chương ấy còn nghe được (nghe gần hết thì sang chương
