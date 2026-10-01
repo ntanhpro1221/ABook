@@ -41,12 +41,12 @@ import {
   useVoices,
 } from "@/studio/data";
 import { uploadChapters } from "@/studio/upload";
-import { AnalysisModelPicker } from "@/studio/AnalysisModelPicker";
+import { AnalysisModelPicker, modelLabel } from "@/studio/AnalysisModelPicker";
 
 type Profile = "fast" | "balanced" | "high_quality";
 
 const STEPS = [
-  { title: "Nội dung", hint: "Các chương TXT" },
+  { title: "Nội dung", hint: "Chương TXT hay EPUB" },
   { title: "Giọng kể", hint: "Người dẫn truyện" },
   { title: "Chất lượng", hint: "Nhanh hay kỹ" },
   { title: "Xác nhận", hint: "Xem lại và tạo" },
@@ -290,12 +290,12 @@ function SourceStep({
             {scanning ? <Loader2 className="size-7 animate-spin" /> : <FolderInput className="size-7" strokeWidth={1.75} />}
           </div>
           <p className="mt-4 font-medium">
-            {scanning ? "Đang đọc các chương…" : info?.remote ? "Gửi các chương từ máy này" : "Chọn thư mục chứa truyện"}
+            {scanning ? "Đang đọc các chương…" : info?.remote ? "Gửi các chương từ máy này" : "Chọn thư mục truyện hay một file EPUB"}
           </p>
           <p className="mt-1 text-sm text-fg-2">
             {info?.remote
               ? "Chọn cùng lúc mọi file .txt của truyện, hay một file .epub. Máy tính giữ chúng trong thư viện, mục “Nguồn tải lên”."
-              : "Chỉ lấy file .txt nằm ngay trong thư mục, không quét thư mục con."}
+              : "Thư mục: lấy các file .txt nằm ngay bên trong (không quét thư mục con). File .epub: mỗi chương trong EPUB thành một chương."}
           </p>
           {info?.remote && (
             <div className="mt-6 flex justify-center">
@@ -341,7 +341,7 @@ function SourceStep({
               aria-label="Đường dẫn thư mục"
               aria-invalid={Boolean(problem)}
               aria-describedby={problem ? "source-problem" : undefined}
-              placeholder={info?.dialogs ? "…hoặc dán đường dẫn thư mục" : "Dán đường dẫn thư mục, ví dụ D:\\Truyện\\Tên truyện"}
+              placeholder={info?.dialogs ? "…hoặc dán đường dẫn thư mục hay file .epub" : "Dán đường dẫn thư mục hay file .epub, ví dụ D:\\Truyện\\Tên truyện"}
               className={cn(
                 "h-10 flex-1 rounded-lg border bg-bg px-3 text-sm outline-none placeholder:text-fg-3 focus:border-accent",
                 problem ? "border-danger" : "border-line",
@@ -475,6 +475,12 @@ function SourceStep({
             ))}
           </div>
           {scan!.skipped.length > 0 && <p className="mt-2 text-xs text-fg-2">Bỏ qua {scan!.skipped.length} file không phải .txt.</p>}
+          {/* EPUB hỏng nằm cạnh EPUB tốt, thư mục có cả TXT lẫn EPUB: không chặn, nhưng nói ra (soát UX 01-10: bị bỏ âm thầm). */}
+          {[...(scan!.errors ?? []).map((error) => `Bỏ qua ${error}`), ...(scan!.notes ?? [])].map((line) => (
+            <p key={line} className="mt-2 text-xs text-warning">
+              {line}
+            </p>
+          ))}
         </>
       )}
     </div>
@@ -1047,7 +1053,7 @@ function ConfirmStep({
       : []),
     ["Nhân vật", seed ? `Giữ ${carriedText(seed.carries)}; người mới được phân vai sau khi phân tích` : "Tự động phân vai sau khi phân tích"],
     ["Chất lượng", option.title],
-    ...(analysisModel ? ([["Model đọc hiểu", `${analysisModel} (chỉ cuốn này)`]] as [string, string][]) : []),
+    ...(analysisModel ? ([["Model đọc hiểu", `${modelLabel(analysisModel)} (chỉ cuốn này)`]] as [string, string][]) : []),
     ...(measured
       ? ([
           ["Thời gian làm", lengthRange(guess.totalLow, guess.totalHigh)],
@@ -1164,9 +1170,9 @@ export function NewProjectScreen() {
         if (!result.files.length) {
           setProblem(
             result.errors?.length
-              ? { text: `Không mở được EPUB - ${result.errors[0]}`, subfolders: [] }
+              ? { text: `Không mở được ${result.errors[0]}`, subfolders: [] }
               : result.missing.length
-              ? { text: `Không tìm thấy thư mục “${result.missing[0]}”. Kiểm tra lại đường dẫn.`, subfolders: [] }
+              ? { text: `Không tìm thấy “${result.missing[0]}”. Kiểm tra lại đường dẫn.`, subfolders: [] }
               : { text: "Thư mục này không có file .txt (hay .epub) nằm ngay bên trong.", subfolders: result.subfolders },
           );
           return;

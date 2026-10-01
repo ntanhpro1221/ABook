@@ -83,6 +83,15 @@ def test_a_fix_marked_for_every_book_lands_in_the_shared_list(tmp_path: Path) ->
     server = Server(app, port=0).start()
     headers = {"X-Ebook-Token": "t"}
     try:
+        # Hoàn tác một lần sửa có "Dùng cho mọi sách" gỡ luôn mục chung (soát UX 01-10).
+        status, data, _ = _request(server.port, "POST", f"/api/books/{created['id']}/pronunciation",
+                                   body={"surface": "Nasdell", "spokenForm": "Nát-đen", "everywhere": True}, headers=headers)
+        assert status == 200 and [entry["spokenForm"] for entry in app.shared_readings.entries()] == ["Nát-đen"]
+        undo = {"surface": "Nasdell", "withdraw": True, "requestedAt": json.loads(data)["requestedAt"], "previous": "",
+                "keep": False, "shared": "Nát-đen"}
+        status, _data, _ = _request(server.port, "POST", f"/api/books/{created['id']}/pronunciation", body=undo,
+                                    headers=headers)
+        assert status == 200 and app.shared_readings.entries() == []
         status, _data, _ = _request(server.port, "POST", f"/api/books/{created['id']}/pronunciation",
                                     body={"surface": "Nasdell", "spokenForm": "Hên-cơ", "everywhere": True}, headers=headers)
         assert status == 200

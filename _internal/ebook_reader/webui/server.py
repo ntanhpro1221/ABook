@@ -1187,6 +1187,12 @@ class Handler(BaseHTTPRequestHandler):
             # lại cách đọc cũ (`previous`, cách máy đọc lúc bấm) - câu có từ ấy được đọc lại như trước.
             previous = " ".join(str(body.get("previous", "") or "").split())[:120]
             usable = bool(previous) and listener_overrides.pronunciation_problem(surface, previous) is None
+            # Lần sửa ấy cũng đưa cách đọc vào từ điển chung ("Dùng cho mọi sách"): hoàn tác gỡ luôn mục ấy - nếu nó vẫn là
+            # đúng cách đọc ấy (soát UX 01-10: hoàn tác xong, sách khác vẫn được mời dùng cách đọc vừa bỏ).
+            shared = " ".join(str(body.get("shared", "") or "").split())
+            if shared and any(entry["surface"].casefold() == surface.casefold() and entry["spokenForm"] == shared
+                              for entry in self.app.shared_readings.entries()):
+                self.app.shared_readings.remove(surface)
             self._withdraw(path, "pronunciations", [listener_overrides.surface_key(surface)] if surface else [], body,
                            restore=(lambda now: listener_overrides.request_pronunciation(path, surface, previous, now=now))
                            if usable else None)
