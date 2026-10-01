@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.12] - 2026-10-01
+
 ### Studio (sản xuất sách nói)
 
 - Trình tạo sách, bước Chất lượng: chọn **model đọc hiểu truyện** riêng cho cuốn này (các model đang có trong Ollama của
