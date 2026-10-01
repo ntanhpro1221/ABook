@@ -68,6 +68,13 @@ quốc để biết độ rộng nhiễu thật trước khi đổi model mặc 
 đọc bằng giọng người lạ. Dữ liệu "bẩn" của v5 (nhãn chữ hoa, có chương cổng) vẫn cho F1 cao hơn; chờ v6-e1 / v6n-e2 trước
 khi kết luận về 8B.
 
+**ĐỘ NHIỄU GIỮA HAI LƯỢT HUẤN LUYỆN (02-10 01:2x)** - cùng data_v8, cùng trình unsloth trên Modal, chỉ khác hạt giống:
+LN6 F1 giọng 58,2 / 63,9 / 60,5 (hạt 3407 / 1 / 2; trung bình 60,9, lệch ~2,9), riêng chương TCF 40,5 / **83,1** / 42,7 - một
+chương ngôi thứ nhất lật theo hạt giống; Tam quốc 87,8 / 84,3 / 88,2. v9m (63,7; 87,2) nằm trong dải -> v9 không phân biệt
+được, đúng như đã không nhận. Luật từ nay: so hai công thức bằng >= 3 hạt giống mỗi bên (Modal ~2,5 USD/lượt), báo trung
+bình +- lệch; một lượt đơn chỉ đủ để loại thứ thua xa. 9B-v8: Tam quốc 91,9 chỉ hơn dải v8 (84-88) 4-8 điểm - dè dặt; YMP +15
+lớn hơn mọi dao động đã thấy, nhưng chưa đo hạt giống trên cổng YMP.
+
 **9B-v8 ĐỦ CỔNG (02-10 01:0x)** - LN 12 chương: 64,7 = v8 4B (-0,1 [-3,4; +3,7], hơn 6 thua 6); cổng: Tam quốc F1 giọng
 **91,9 vs 83,0** (chặt 89,0 vs 82,2; v8m Modal 87,8 - vẫn hơn), YMP ngôi thứ nhất **92,2 vs 77,0** (chặt 92,0 vs 86,0),
 Tắt đèn 77,7 vs 76,3 (chặt 92,0 vs 84,8); cổng 351/381 OK, 363/378 hỏng vì QUÁ GIỜ do bộ giữ êm (lỗi đo - đo lại bằng
