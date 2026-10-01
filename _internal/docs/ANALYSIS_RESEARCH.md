@@ -50,6 +50,11 @@ Instruct-2507 4-bit, r16, 1 epoch): v8m (data_v8, đối chứng) và v9m (data_
 LN 6 + Tam quốc trên Modal, host 26dec3dc (`LLM_Train/modal/launch_v9_01_10.sh`, `v9_chain_01_10.sh`). Luật nhận như v7/v8:
 không thua v8m quá 2 điểm ở LN, và Tam quốc phải về gần v6 (87,5).
 
+8B dữ liệu SẠCH (Modal 01-10, đo trên Mac cùng host với 8B-v5 lượt A, 5 chương chung): v6n-e1 F1 giọng 56,6 vs 8B-v5 63,8
+(−8,0 [−12,7; −3,0], thua 5/5 chương), chặt −20,8; nhưng NHẬP người lạ vào nhân vật có tên 0% (v5 39%) - mọi câu vô danh
+đọc bằng giọng người lạ. Dữ liệu "bẩn" của v5 (nhãn chữ hoa, có chương cổng) vẫn cho F1 cao hơn; chờ v6-e1 / v6n-e2 trước
+khi kết luận về 8B.
+
 9B-v8 (Qwen3.5-9B công thức v8, đo ở nhà, 6 chương LN cơ sở): F1 giọng 64,2 = v8 4B (+0,0 [−3,5; +4,6]), chặt −6,0
 [−16,0; +3,9]; chênh lớn theo chương (Nise 79,0 vs 62,8; TCF 25,8 vs 40,7). Chưa đủ để nói 9B hơn; chờ LN mở rộng + cổng.
 
