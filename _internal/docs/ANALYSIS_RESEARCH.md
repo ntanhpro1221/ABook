@@ -78,7 +78,14 @@ nói (dữ liệu, hay lời nhắc trong khối).** **Soi tận câu (`tamquoc_
 thúc bằng '… X nói/hỏi/đáp:' -> X" (`colon_tag_rule2.py`, tên đầu tiên trong mệnh đề cuối, có tên gọi tắt): trên đúng những
 câu luật áp được, luật KHÔNG hơn model - Tam quốc 93% (v6 96%, v8 92%), Tắt đèn 74% (76%, 76%), TMA 92% (92%, 85%); luật
 hỏng ở bí danh ("Huyền-đức hỏi Khổng Minh:" là Lưu Bị) và tên trùng chữ ("Anh Dậu" / "Chị Dậu"). Không làm luật ghi đè; sửa
-v8 phải ở dữ liệu / prompt (vd ví dụ lời dẫn đứng trước trong khối lượt trước).** (2) Qwen3.5-4B trên đúng công thức v8 (`q35v8_after_8bclean.sh`, sau hàng
+v8 phải ở dữ liệu / prompt (vd ví dụ lời dẫn đứng trước trong khối lượt trước).** **v9b (01-10 18:0x, nhánh
+dev/prev-speakers-v9 6c2b82ed: câu đầu / cuối lô thấy câu láng giềng THẬT bên kia ranh giới lô) - đo trên Modal cùng model
+v8, 4 chương LN (tcf, nise, hdst, yamiyo): trùng v8 TỪNG CÂU (người nói, loại, cảm xúc) ở cả 511 câu - lại một nhánh không
+làm gì. Lý do: giả thuyết sai từ gốc. Đường chạy thật (`analyze_all`) dựng `_original_neighbor_context` cho MỌI câu từ cả
+chương trước khi chia lô, và `_neighbor_texts` dùng nó trước - câu đầu lô vốn đã thấy câu kể ngay trước nó (cả "Khổng Minh
+hỏi:"). Phần "4/8 câu sai ở vị trí 0 của lô" là thật nhưng không do thiếu chữ láng giềng. Bỏ nhánh (không gộp); dừng hai
+lượt Modal giữa chừng (app abook-eval stop, khi cần thì deploy lại). Bài học, lần thứ hai trong ngày: TRƯỚC khi thuê GPU đo
+một thay đổi host, chạy một lô thật qua cả hai mã và so PROMPT gửi đi - giống nhau thì không cần đo.** (2) Qwen3.5-4B trên đúng công thức v8 (`q35v8_after_8bclean.sh`, sau hàng
 8B sạch) - lượt Qwen3.5 đầu tiên ở nhà (01-10 16:06) hỏng ngay bước 1: cuDNN không nhận đầu chú ý 256 của Qwen3.5 và
 train_lora.py cấm mọi kernel khác; nay mở thêm kernel memory-efficient khi đầu > 128 (vẫn cấm math), kèm chốt tốc độ (quá
 14 giờ một epoch thì lên đám mây - Windows thiếu kernel nhanh cho lớp gated delta của Qwen3.5). v8 cần mã host của nhánh
