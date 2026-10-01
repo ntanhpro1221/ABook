@@ -17,6 +17,7 @@ from .runtime_contract import (
     TIMM_CACHE_REVISION,
     WAV2VEC2_CACHE_REVISION,
     installed_dependency_provenance,
+    relocated_model_path,
 )
 
 
@@ -179,7 +180,7 @@ def build_quality_policy(settings: dict[str, Any]) -> dict[str, Any]:
                 "failure_policy": settings["perceptual_qa"]["failure_policy"],
                 "checkpoint_path": settings["perceptual_qa"]["checkpoint_path"],
                 "checkpoint_sha256": external_file_hash(
-                    str(settings["perceptual_qa"]["checkpoint_path"])
+                    str(relocated_model_path(settings["perceptual_qa"]["checkpoint_path"]))
                 ),
                 "wav2vec2_revision": WAV2VEC2_CACHE_REVISION,
                 "timm_backbone_revision": TIMM_CACHE_REVISION,

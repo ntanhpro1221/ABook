@@ -19,6 +19,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   hay chuyển sang máy khác. Bấm đúp file (hay Mở file sách) là có lại dự án ấy trong Studio, luôn thành một dự án MỚI,
   không đè dự án đang có. Nguồn chương đã bị dời hay xoá thì vẫn gói được, app báo rõ thiếu file nào. Dự án đang chạy
   thì gói sau khi nó chạy xong hoặc đã dừng.
+- Dự án mở từ `.abookproj` ở máy cài Studio chỗ khác (hay sau khi thư mục app đổi chỗ) **làm tiếp được**: app tìm model
+  cùng tên trong Studio của máy này thay vì báo thiếu model / từ chối làm tiếp. Cài đặt khoá theo sách không đổi.
 
 ## [0.4.15] - 2026-10-01
 
