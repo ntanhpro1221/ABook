@@ -48,6 +48,10 @@ DEFAULT_PREFERENCES: dict[str, Any] = {
     "sleepSchedule": None,
     # Máy tính xách tay rút sạc: tạm dừng tạo sách (supervisor đọc thẳng khoá này - power_source.PREFERENCE_KEY).
     "pauseOnBattery": True,
+    # Trình tạo sách điền sẵn cho sách MỚI (Cài đặt > Studio; soát UX a5 01-10): giọng kể ("" = giọng máy đề xuất) và chất
+    # lượng. "Làm tiếp cuốn này" vẫn lấy theo phần trước.
+    "newBookNarrator": "",
+    "newBookProfile": "high_quality",
 }
 MAX_RECENTS = 30
 

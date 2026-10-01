@@ -249,6 +249,9 @@ export interface Preferences {
   sleepSchedule: { from: string; to: string; minutes: number } | null;
   /** Máy tính xách tay rút sạc: tạm dừng tạo sách (ebook_reader/power_source.py). */
   pauseOnBattery?: boolean;
+  /** Mặc định của trình tạo sách cho sách mới ("" = giọng máy đề xuất). */
+  newBookNarrator?: string;
+  newBookProfile?: string;
 }
 
 // Mã phiên do cửa sổ app gắn vào URL (?t=...). Giữ lại trong phiên để điều hướng nội bộ không làm mất nó.

@@ -4,11 +4,52 @@ import { toast } from "sonner";
 import { Button, Kbd, Segmented, TimeSelect, radioGroupKeys, radioTabIndex } from "@/shared/ui";
 import { cn } from "@/shared/cn";
 import { api } from "@/studio/api";
-import { pickFolder, useAppInfo, usePreferences } from "@/studio/data";
+import { pickFolder, useAppInfo, usePreferences, useVoices } from "@/studio/data";
 import { StudioSettings } from "@/studio/StudioSetup";
 import { SharedReadingsSettings } from "@/studio/sharedReadings";
 import { OtherComputers } from "./OtherComputers";
 import { PhoneSync, Switch } from "./PhoneSync";
+
+// Mặc định cho sách MỚI (soát UX a5 01-10: mỗi lần tạo sách lại chọn giọng kể và chất lượng như lần trước). "Làm tiếp cuốn
+// này" vẫn theo phần trước.
+function NewBookDefaults() {
+  const { data: preferences, update } = usePreferences();
+  const { data: voices } = useVoices();
+  const selectClass = "h-9 w-full rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-accent";
+  return (
+    <div className="mb-4 grid max-w-xl gap-3 sm:grid-cols-2">
+      <label htmlFor="new-book-narrator" className="block">
+        <span className="block text-sm font-medium">Giọng kể cho sách mới</span>
+        <select
+          id="new-book-narrator"
+          className={cn(selectClass, "mt-1")}
+          value={preferences?.newBookNarrator ?? ""}
+          onChange={(event) => update({ newBookNarrator: event.target.value })}
+        >
+          <option value="">Giọng máy đề xuất</option>
+          {(voices ?? []).map((voice) => (
+            <option key={voice.name} value={voice.name}>
+              {voice.name} · {voice.gender}, miền {voice.region}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label htmlFor="new-book-profile" className="block">
+        <span className="block text-sm font-medium">Chất lượng cho sách mới</span>
+        <select
+          id="new-book-profile"
+          className={cn(selectClass, "mt-1")}
+          value={preferences?.newBookProfile ?? "high_quality"}
+          onChange={(event) => update({ newBookProfile: event.target.value })}
+        >
+          <option value="high_quality">Chất lượng cao</option>
+          <option value="balanced">Cân bằng</option>
+          <option value="fast">Nhanh</option>
+        </select>
+      </label>
+    </div>
+  );
+}
 
 function Section({ id, title, description, children }: { id?: string; title: string; description?: string; children: ReactNode }) {
   return (
@@ -293,6 +334,7 @@ export function SettingsScreen() {
                 onCheckedChange={(value) => update({ pauseOnBattery: value })}
               />
             </div>
+            <NewBookDefaults />
             <SharedReadingsSettings />
             <StudioSettings />
           </Section>
