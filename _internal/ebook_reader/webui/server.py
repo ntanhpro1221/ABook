@@ -654,9 +654,11 @@ class App:
     def music_rebuild(self, value: str) -> dict[str, Any]:
         path = self._book(value)
         catalog = self.music_catalog()
-        revision = str(catalog.manifest().get("revision") or "")
+        # Dựng lại = muốn dữ liệu mới nhất: đọc lại mục lục (nhỏ) thay vì bản đệm 24 giờ.
+        manifest = catalog.manifest(refresh=True)
         return music_plan.build(path, lambda v, a: catalog.near(v, a, radius=1), catalog.lookup,
-                                catalog_revision=revision, book_key=value)
+                                catalog_revision=str(manifest.get("revision") or ""), book_key=value,
+                                taxonomy=manifest.get("taxonomy"))
 
     def music_update(self, value: str, body: dict[str, Any]) -> dict[str, Any]:
         """Người dùng sửa (bật/tắt, phong cách, âm lượng, ghim, im lặng, bỏ bài): lưu lựa chọn rồi dựng lại rãnh nhạc.

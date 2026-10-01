@@ -36,6 +36,8 @@ def read_overrides(project_root: Path) -> dict[str, Any]:
     return {
         "enabled": bool(value.get("enabled", True)),  # mặc định BẬT (chủ sách 01-10)
         "family": value.get("family") if value.get("family") in FAMILIES else None,
+        # Thế giới của cuốn (bảng thể loại x phong cách trong danh mục nhạc) - lọc phong cách cứng; None = chưa chọn.
+        "genre": str(value["genre"])[:40] if isinstance(value.get("genre"), str) and value.get("genre") else None,
         "levelDb": float(value["levelDb"]) if isinstance(value.get("levelDb"), (int, float)) else DEFAULT_LEVEL_DB,
         "pins": {str(k): str(v) for k, v in (value.get("pins") or {}).items() if isinstance(v, str) and v},
         "silenced": sorted({str(k) for k in value.get("silenced") or []}),
@@ -51,6 +53,8 @@ def write_overrides(project_root: Path, changes: dict[str, Any]) -> dict[str, An
         current["enabled"] = bool(changes["enabled"])
     if "family" in changes:
         current["family"] = changes["family"] if changes["family"] in FAMILIES else None
+    if "genre" in changes:
+        current["genre"] = str(changes["genre"])[:40] if changes.get("genre") else None
     if "levelDb" in changes:
         current["levelDb"] = max(-40.0, min(-6.0, float(changes["levelDb"])))
     for key, link in (changes.get("pins") or {}).items():
@@ -79,13 +83,16 @@ def book_scripts(project_root: Path) -> Iterable[dict[str, Any]]:
 
 def build(project_root: Path, candidates_near: Callable[[float, float], Iterable[dict[str, Any]]],
           lookup: Callable[[list[str]], dict[str, dict[str, Any]]], *, catalog_revision: str | None = None,
-          book_key: str | None = None) -> dict[str, Any]:
+          book_key: str | None = None, taxonomy: dict[str, Any] | None = None) -> dict[str, Any]:
     """Dựng lại music_plan.json: chia đoạn cả cuốn, chọn bài theo lựa chọn của người dùng, gắn thông tin bài."""
     project_root = Path(project_root)
     overrides = read_overrides(project_root)
     scenes = music_scenes.book_scenes(book_scripts(project_root))
+    genres = (taxonomy or {}).get("genres") or {}
+    genre_styles = (genres.get(overrides["genre"]) or {}).get("styles") if overrides["genre"] else None
     chosen = music_select.choose(scenes, candidates_near, book_key=book_key or project_root.name,
-                                 family=overrides["family"], pins=overrides["pins"], banned=overrides["banned"])
+                                 family=overrides["family"], pins=overrides["pins"], banned=overrides["banned"],
+                                 genre_styles=genre_styles)
     silenced = set(overrides["silenced"])
     for scene in chosen:
         if scene["key"] in silenced:
@@ -99,6 +106,7 @@ def build(project_root: Path, candidates_near: Callable[[float, float], Iterable
         "enabled": overrides["enabled"],
         "levelDb": overrides["levelDb"],
         "family": overrides["family"],
+        "genre": overrides["genre"],
         "scenes": chosen,
         "tracks": {link: {key: tracks.get(link, {}).get(key) for key in
                           ("title", "creator", "license", "licenseUrl", "attribution", "duration", "source", "landing")}

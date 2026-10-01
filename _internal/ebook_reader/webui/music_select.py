@@ -16,6 +16,8 @@ import math
 from typing import Any, Callable, Iterable
 
 MAX_DISTANCE = 0.75
+TENSION_WEIGHT = 0.6             # trục căng thẳng nhẹ hơn vui/buồn và năng lượng (đường cơ sở - đo lại ở Pha 3)
+STYLE_HALF_PENALTY = 0.3         # phong cách chỉ "dùng được" (0,5) với thể loại của cuốn
 FAMILY_PENALTY = 0.35
 FOREGROUND_PENALTY = 0.25       # x (1 - độ hợp làm nền)
 RECENT_PENALTY = 0.3            # bài đã dùng trong RECENT_SCENES đoạn trước
@@ -39,9 +41,24 @@ def target_of(scene: dict[str, Any]) -> tuple[float, float]:
     return (weight * valence + (1 - weight) * CALM_TARGET[0], weight * arousal + (1 - weight) * CALM_TARGET[1])
 
 
-def score(track: dict[str, Any], target: tuple[float, float], *, family: str | None, recent: list[str]) -> float:
-    distance = math.dist((float(track["valence"]), float(track["arousal"])), target)
+def style_fit(track: dict[str, Any], genre_styles: dict[str, float] | None) -> float:
+    """Độ hợp phong cách của bài với thế giới của cuốn (bảng thể loại x phong cách trong danh mục): 1 hợp, 0,5 dùng được,
+    0 = LOẠI CỨNG. Chưa chọn thể loại -> không lọc."""
+    if not genre_styles:
+        return 1.0
+    style = track.get("style")
+    return float(genre_styles.get(style, 0.0)) if style else 0.5
+
+
+def score(track: dict[str, Any], target: tuple[float, ...], *, family: str | None, recent: list[str],
+          genre_styles: dict[str, float] | None = None) -> float:
+    point = (float(track["valence"]), float(track["arousal"]))
+    distance = math.dist(point, target[:2])
+    if len(target) > 2 and track.get("tension") is not None:
+        distance = math.hypot(distance, TENSION_WEIGHT * (float(track["tension"]) - target[2]))
     penalty = 0.0
+    if style_fit(track, genre_styles) < 1.0:
+        penalty += STYLE_HALF_PENALTY
     if family and track.get("family") != family:
         penalty += FAMILY_PENALTY
     background = track.get("background")
@@ -54,7 +71,7 @@ def score(track: dict[str, Any], target: tuple[float, float], *, family: str | N
 
 def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float], Iterable[dict[str, Any]]], *,
            book_key: str, family: str | None = None, pins: dict[str, str] | None = None,
-           banned: Iterable[str] = ()) -> list[dict[str, Any]]:
+           banned: Iterable[str] = (), genre_styles: dict[str, float] | None = None) -> list[dict[str, Any]]:
     """Mỗi đoạn kèm `link` (None = im lặng), `distance`, `pinned`. `pins`: {khoá đoạn: link} người dùng ghim
     (khoá = `scene_key`); `banned`: link người dùng đã bỏ (không chọn lại cho cuốn này)."""
     pins = pins or {}
@@ -67,13 +84,15 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
         if key in pins:
             result.update(link=pins[key], pinned=True, distance=None)
         else:
-            target = target_of(scene)
+            target = (*target_of(scene), float(scene.get("tension") or 0.0))
             best: tuple[float, str] | None = None
-            for track in candidates_near(*target):
+            for track in candidates_near(target[0], target[1]):
                 link = str(track.get("link") or "")
                 if not link or link in banned or int(track.get("duration") or 0) < MIN_TRACK_SECONDS:
                     continue
-                value = score(track, target, family=family, recent=recent[-RECENT_SCENES:])
+                if style_fit(track, genre_styles) <= 0.0:
+                    continue  # lọc cứng: phong cách không hợp thế giới của cuốn
+                value = score(track, target, family=family, recent=recent[-RECENT_SCENES:], genre_styles=genre_styles)
                 value += _tiebreak(book_key, link)
                 if best is None or value < best[0]:
                     best = (value, link)

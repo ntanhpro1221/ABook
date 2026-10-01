@@ -66,3 +66,9 @@ def test_neutral_narration_weighs_less_than_feeling() -> None:
     assert neutral < sad and not affective_n and affective_s
     assert line_point({"emotion": "sad", "intensity": 3})[0] < line_point({"emotion": "sad", "intensity": 0})[0] < 0
     assert line_point({"emotion": "neutral", "pace": "fast", "volume": "loud"})[1] > 0
+
+
+def test_a_frightening_scene_is_tense_and_an_excited_one_is_not() -> None:
+    afraid = chapter_scenes(_script([("Có tiếng động!", "afraid", 3, 6.0)] * 20))[0]
+    excited = chapter_scenes(_script([("Thắng rồi!", "excited", 3, 6.0)] * 20))[0]
+    assert afraid["tension"] > 0.5 > excited["tension"]

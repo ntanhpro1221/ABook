@@ -35,6 +35,12 @@ EMOTION_VA: dict[str, tuple[float, float]] = {
     "tired": (-0.3, -0.7),
     "whispering": (0.0, -0.5),
 }
+# Trục thứ ba (căng thẳng - Schimmack & Grob 2000; MUSIC_SELECTION_MODEL.md): "dồn dập vì hào hứng" và "dồn dập vì sợ" khác
+# nhau ở đây.
+EMOTION_TENSION: dict[str, float] = {
+    "neutral": 0.0, "happy": -0.4, "excited": 0.1, "tender": -0.6, "surprised": 0.5, "sarcastic": 0.3,
+    "angry": 0.75, "afraid": 0.85, "sad": 0.1, "tired": -0.3, "whispering": 0.3,
+}
 PACE_AROUSAL = {"slow": -0.2, "normal": 0.0, "fast": 0.2}
 VOLUME_AROUSAL = {"soft": -0.15, "normal": 0.0, "loud": 0.15}
 NEUTRAL_WEIGHT = 0.35          # câu trung tính đóng góp ít vào không khí
@@ -51,6 +57,14 @@ TIME_JUMP = re.compile(
     r"(?:the\s+)?next\s+(?:morning|day)|(?:a\s+few|several|\d+)\s+(?:days|weeks|months|years)\s+later)",
     re.IGNORECASE,
 )
+
+
+def line_tension(segment: dict[str, Any]) -> float:
+    try:
+        intensity = max(0, min(3, int(segment.get("intensity") or 0)))
+    except (TypeError, ValueError):
+        intensity = 0
+    return EMOTION_TENSION.get(str(segment.get("emotion") or "neutral"), 0.0) * (0.4 + 0.2 * intensity)
 
 
 def line_point(segment: dict[str, Any]) -> tuple[float, float, float, bool]:
@@ -205,6 +219,8 @@ def _view(scene: dict[str, Any], segments: list[dict[str, Any]], timeline: list[
     first, last = scene["first"], scene["last"]
     valence, arousal = scene["acc"].point()
     weight = scene["acc"].weight
+    weights = [line_point(segments[i])[2] * seconds[i] for i in range(first, last + 1)]
+    tension = sum(line_tension(segments[i]) * w for i, w in zip(range(first, last + 1), weights)) / (sum(weights) or 1.0)
     return {
         "chapterId": script.get("chapterId"),
         "firstSegment": segments[first].get("id"),
@@ -213,6 +229,7 @@ def _view(scene: dict[str, Any], segments: list[dict[str, Any]], timeline: list[
         "end": round(timeline[last] + seconds[last], 3),
         "valence": round(valence, 3),
         "arousal": round(arousal, 3),
+        "tension": round(tension, 3),
         "confidence": round(scene["acc"].affective / weight, 3) if weight else 0.0,
         "reason": scene["reason"],
         "lines": last - first + 1,
