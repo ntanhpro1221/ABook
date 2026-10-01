@@ -6,6 +6,7 @@ import { cn } from "@/shared/cn";
 import { api } from "@/studio/api";
 import { pickFolder, useAppInfo, usePreferences } from "@/studio/data";
 import { StudioSettings } from "@/studio/StudioSetup";
+import { SharedReadingsSettings } from "@/studio/sharedReadings";
 import { OtherComputers } from "./OtherComputers";
 import { PhoneSync, Switch } from "./PhoneSync";
 
@@ -292,6 +293,7 @@ export function SettingsScreen() {
                 onCheckedChange={(value) => update({ pauseOnBattery: value })}
               />
             </div>
+            <SharedReadingsSettings />
             <StudioSettings />
           </Section>
         )}
