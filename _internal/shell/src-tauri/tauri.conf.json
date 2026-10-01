@@ -38,7 +38,7 @@
     "active": true,
     "targets": ["nsis"],
     "createUpdaterArtifacts": true,
-    "icon": ["../../ebook_reader/assets/ebook_reader.ico", "../../ebook_reader/assets/ebook_reader.png"],
+    "icon": ["../../ebook_reader/assets/abook.ico", "../../ebook_reader/assets/abook.png"],
     "resources": ["resources/python/", "resources/app/"],
     "publisher": "ABook",
     "shortDescription": "Sách nói tiếng Việt",
