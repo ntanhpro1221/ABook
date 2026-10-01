@@ -59,6 +59,7 @@ def _same_person(label: str, name: str) -> bool:
 # giọng. "em", "anh", "con", "cháu" vừa tự xưng vừa gọi người nghe - không tính ở đây.
 SELF_TERMS = frozenset({"tôi", "tớ", "mình", "ta", "tao", "thiếp", "chúng ta", "chúng tôi", "chúng mình", "chúng tớ",
                         "bọn ta", "bọn mình", "bọn tao"})
+SINGULAR_SELF = frozenset({"tôi", "tớ", "mình", "ta", "tao", "thiếp"})
 SPLIT_MIN_LINES = 2  # mỗi nhóm phải có ít nhất bấy nhiêu câu
 SPLIT_MARGIN = 0.5  # nhóm lạ phải kém nhóm quen bấy nhiêu log-likelihood MỖI TỪ dưới hồ sơ các chương khác
 
@@ -89,8 +90,9 @@ def _voices(lines: list[tuple[Any, Counter]]) -> list[tuple[set[str], list[Any]]
 
 def _two_people(first: set[str], second: set[str]) -> bool:
     """Hai nhóm từ tách hẳn có phải hai NGƯỜI không, hay một người gọi hai người nghe bằng hai từ ("con" với mẹ, "cậu" với
-    bạn): tự xưng khác nhau, hoặc cả hai nhóm đều có từ hai từ trở lên."""
-    own_first, own_second = first & SELF_TERMS, second & SELF_TERMS
+    bạn): tự xưng khác nhau, hoặc cả hai nhóm đều có từ hai từ trở lên. Chỉ so tự xưng SỐ ÍT: người nói "tôi… cậu" vẫn nói
+    "chúng ta" (01-10: Franz ở Nageki 79 bị hỏi vì hai câu "chúng ta"; bộ LN vẫn 15/15 khi bỏ số nhiều)."""
+    own_first, own_second = first & SINGULAR_SELF, second & SINGULAR_SELF
     if own_first and own_second and not own_first & own_second:
         return True
     return len(first) >= 2 and len(second) >= 2
