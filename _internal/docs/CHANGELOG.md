@@ -7,6 +7,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe
+
+- Điện thoại: thông báo "Đang phát trên <TV>" có nút **Tạm dừng / Phát tiếp / Dừng** - điều khiển loa, TV ngay từ thanh
+  thông báo hay màn khoá, không phải mở app. "Dừng" lưu đúng chỗ đang nghe.
+
 ## [0.4.14] - 2026-10-01
 
 ### Nghe
