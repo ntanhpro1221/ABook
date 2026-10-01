@@ -514,7 +514,7 @@ function carriedText(carries: Seed["carries"]): string {
   const parts = [
     carries.voices ? `giọng ${formatNumber(carries.voices)} nhân vật` : "",
     carries.pronunciations ? `${formatNumber(carries.pronunciations)} cách đọc tên` : "",
-    carries.pins ? `${formatNumber(carries.pins)} ghim giới/tuổi` : "",
+    carries.pins ? `giới / tuổi đã sửa tay của ${formatNumber(carries.pins)} nhân vật` : "",
     carries.aliases ? `${formatNumber(carries.aliases)} bí danh` : "",
     carries.bracket ? "quy ước lời trong 『』" : "",
   ].filter(Boolean);
@@ -704,8 +704,9 @@ function VoiceCard({
         tabIndex={-1}
         aria-label={playing ? `Dừng nghe ${voice.name}` : `Nghe thử giọng ${voice.name}`}
         onClick={() => clip.toggle(id, source.voiceUrl(voice.name))}
+        // Trên lớp phủ bấm-để-chọn của thẻ (after:inset-0): nghe thử không đổi giọng đang chọn (soát UX a5 01-10).
         className={cn(
-          "grid size-10 shrink-0 place-items-center rounded-full transition-colors",
+          "relative z-10 grid size-10 shrink-0 place-items-center rounded-full transition-colors",
           playing ? "bg-accent text-accent-ink" : "bg-hover text-fg hover:bg-line",
         )}
       >
@@ -1126,7 +1127,8 @@ function ConfirmStep({
           ["Thời gian làm", lengthRange(guess.totalLow, guess.totalHigh)],
           ["Chương đầu nghe được sau", `khoảng ${formatLength(guess.firstChapter)}`],
         ] as [string, string][])
-      : []),
+      : // "Nhanh" chưa có số đo trên máy này - vẫn nói được trần trên thay vì im lặng (soát UX a5 01-10).
+        ([["Thời gian làm", `chưa đo cho chế độ này - ngắn hơn “Chất lượng cao” (dưới ${formatLength(guess.totalHigh)})`]] as [string, string][])),
   ];
   return (
     <div>
@@ -1151,8 +1153,8 @@ function ConfirmStep({
         <p className="text-pretty">
           <span className="font-semibold">Giai đoạn đầu là phân tích cả truyện</span>
           {measured ? ` (khoảng ${formatLength(guess.analysis)})` : ""}: trong lúc đó đừng tắt máy, đừng cho máy ngủ và đừng bấm
-          Dừng. Dừng giữa chừng rồi chạy tiếp sẽ ra cách phân vai khác với chạy liền một mạch. Qua giai đoạn này thì dừng lúc nào
-          cũng được.
+          Dừng. Dừng giữa chừng rồi chạy tiếp sẽ ra cách phân vai khác với chạy liền một mạch - cần máy rảnh một lúc thì bấm{" "}
+          <span className="font-semibold">Tạm dừng</span>, an toàn mọi lúc. Qua giai đoạn này thì dừng lúc nào cũng được.
         </p>
       </div>
       <label className="mt-4 flex items-start gap-3 rounded-xl border border-line bg-panel p-4" htmlFor="start-now">
@@ -1160,8 +1162,9 @@ function ConfirmStep({
         <span>
           <span className="block text-sm font-medium">Bắt đầu tạo ngay</span>
           <span className="mt-0.5 block text-[13px] leading-relaxed text-fg-2">
-            Sách chạy nền: đóng cửa sổ vẫn tiếp tục, Windows báo khi xong. Chương nào xong là nghe được chương đó, không phải chờ
-            cả cuốn.
+            {startNow
+              ? "Sách chạy nền: đóng cửa sổ vẫn tiếp tục, Windows báo khi xong. Chương nào xong là nghe được chương đó, không phải chờ cả cuốn."
+              : "Sách được tạo nhưng chưa chạy - bấm “Bắt đầu tạo sách nói” ở trang dự án khi sẵn sàng (vd sửa trước cách đọc tên)."}
           </span>
         </span>
       </label>

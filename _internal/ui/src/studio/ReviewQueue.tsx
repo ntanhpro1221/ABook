@@ -170,7 +170,7 @@ function Row({
   const id = `review-${item.segmentId}`;
   const playing = clip.current === id;
   // Câu hỏng chưa từng có bản thu; câu khác có thể đã mất WAV riêng khi dọn dẹp. Nút tắt thì phải nói vì sao.
-  const unplayable = item.kind === "failed" ? "Câu này chưa thu được, chưa có gì để nghe" : "Không còn bản thu riêng của câu này";
+  const unplayable = item.kind === "failed" ? "Câu này chưa thu được, chưa có gì để nghe" : "Bản thu riêng của câu này đã được dọn sau khi ghép chương - nghe câu này trong chương";
   return (
     <li
       data-review-row={item.stableId}
@@ -194,7 +194,11 @@ function Row({
           <span className={cn("rounded-md px-1.5 py-0.5 font-semibold", KIND_TONE[item.kind])}>{KIND_LABEL[item.kind]}</span>
           <span className="text-fg-2">{item.chapterTitle}</span>
           {item.speaker && <span className="text-fg-2">· {item.speaker}</span>}
-          {item.similarity !== null && <span className="tabular text-fg-2">· khớp {formatPercent(item.similarity)}</span>}
+          {item.similarity !== null && (
+            <span className="tabular text-fg-2" title="Máy nghe lại bản thu và so với chữ của câu: 100% là nghe ra đúng từng chữ">
+              · máy nghe khớp {formatPercent(item.similarity)}
+            </span>
+          )}
         </div>
         <p className="mt-1 text-[15px] leading-snug">{item.text}</p>
         {item.heard && (

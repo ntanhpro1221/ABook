@@ -24,8 +24,12 @@ export const modelLabel = (name: string) => name.replace(/:latest$/, "");
 
 function describe(model: AnalysisModel): string {
   const size = model.size ? `${(model.size / 1e9).toFixed(1).replace(".", ",")} GB` : "";
-  const parameters = model.parameters.replace(".", ",");
-  return [modelLabel(model.name), parameters && `${parameters} tham số`, size].filter(Boolean).join(" · ");
+  // "4.0B" -> "4 tỉ tham số": người đọc không cần biết ký hiệu B (soát UX a5 01-10).
+  const billions = Number.parseFloat(model.parameters);
+  const parameters = Number.isFinite(billions) && /b$/i.test(model.parameters.trim())
+    ? `${String(Math.round(billions * 10) / 10).replace(".", ",")} tỉ tham số`
+    : model.parameters;
+  return [modelLabel(model.name), parameters, size].filter(Boolean).join(" · ");
 }
 
 /** Ô chọn ở bước Chất lượng; không có model nào khác mặc định (hay Ollama tắt) thì không hiện gì - không có gì để chọn. */
