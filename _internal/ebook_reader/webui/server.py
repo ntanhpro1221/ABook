@@ -24,7 +24,8 @@ from typing import Any, Callable, Protocol
 from urllib.parse import parse_qs, unquote, urlsplit
 
 from .. import aliases, bracket_rule, continuation, listener_overrides
-from . import actions, bookfile, cover_search, covers, humanize, listen_view, packages, shared_readings, store
+from . import (actions, bookfile, cover_search, covers, humanize, listen_view, packages, projectfile, shared_readings,
+               store)
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, legacy_ids
 from .listening import RECORD_ID, Listening
@@ -254,11 +255,24 @@ class App:
                 return {"id": None}
         if not Path(path).is_file():
             raise ApiError(HTTPStatus.NOT_FOUND, "Không tìm thấy file sách này - có thể nó đã bị chuyển hay xoá")
+        if path.lower().endswith(projectfile.EXTENSION):
+            return self.open_project_file(Path(path))
         try:
             target, how = packages.import_file(Path(path), self.library.root, self.library.projects(), self.fingerprints)
         except bookfile.BookFileError as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
         return {"id": book_id(target), "how": how}
+
+    def open_project_file(self, path: Path) -> dict[str, Any]:
+        """Mở một file `.abookproj` (projectfile.py): giải nén thành một dự án MỚI trong thư viện, mở ở Studio."""
+        try:
+            with projectfile.ProjectFile(path) as opened:
+                target, report = opened.open_into(self.library.root)
+                missing = len(opened.missing_sources)
+        except projectfile.ProjectFileError as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+        self.library.preferences.add_recent(target)
+        return {"id": book_id(target), "how": "studio", "missingSources": missing, "outside": report["outside"]}
 
     def summary(self, path: Path) -> dict[str, Any]:
         running = self.runner.running(path)
@@ -1299,6 +1313,23 @@ class Handler(BaseHTTPRequestHandler):
         self.app.exports.add(str(path.parent))
         self._send_json(HTTPStatus.OK, {"file": str(path), "folder": str(path.parent), "size": path.stat().st_size})
 
+    def post_projectfile(self, _query: dict[str, list[str]], value: str) -> None:
+        # Cả dự án trong một file (projectfile.py) - chuyển máy, sao lưu, làm tiếp ở chỗ khác.
+        project = self.app._book(value)
+        target = self._target(self._body())
+        root = Path(target) if target else Path(self.app.preferences.get()["libraryRoot"]) / "Đã xuất"
+        title = store.summarize(project)["title"] or project.name
+        try:
+            path = projectfile.pack(project, root / projectfile.default_name(title),
+                                    running=self.app.runner.running(project))
+            with projectfile.ProjectFile(path) as packed:
+                missing = packed.missing_sources
+        except projectfile.ProjectFileError as error:
+            raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
+        self.app.exports.add(str(path.parent))
+        self._send_json(HTTPStatus.OK, {"file": str(path), "folder": str(path.parent), "size": path.stat().st_size,
+                                        "missingSources": missing})
+
     def get_review(self, query: dict[str, list[str]], value: str) -> None:
         project = self.app._book(value)
         verdicts = self.app.reviews.get(value)
@@ -1972,6 +2003,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(r"/api/analysis-models"), Handler.get_analysis_models),
     ("POST", re.compile(r"/api/readings"), Handler.post_shared_readings),
     ("POST", re.compile(BOOK + r"/bookfile"), Handler.post_bookfile),
+    ("POST", re.compile(BOOK + r"/projectfile"), Handler.post_projectfile),
     ("POST", re.compile(BOOK + r"/speaker"), Handler.post_speaker),
     ("POST", re.compile(BOOK + r"/voice"), Handler.post_voice),
     ("POST", re.compile(BOOK + r"/line"), Handler.post_line),

@@ -27,6 +27,8 @@ use std::os::windows::process::CommandExt;
 #[cfg(windows)]
 const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 const BOOK_SUFFIX: &str = ".abook";
+/// Cả dự án Studio trong một file (webui/projectfile.py): host mở thành dự án mới.
+const PROJECT_SUFFIX: &str = ".abookproj";
 /// Host có chừng ấy thời gian để đóng server sau lệnh thoát, rồi bị giết.
 const HOST_STOP_GRACE: Duration = Duration::from_secs(5);
 
@@ -74,7 +76,10 @@ impl Host {
 fn book_files(args: &[String]) -> Vec<String> {
     args.iter()
         .skip(1)
-        .filter(|arg| arg.to_lowercase().ends_with(BOOK_SUFFIX) && Path::new(arg).is_file())
+        .filter(|arg| {
+            let lower = arg.to_lowercase();
+            (lower.ends_with(BOOK_SUFFIX) || lower.ends_with(PROJECT_SUFFIX)) && Path::new(arg).is_file()
+        })
         .cloned()
         .collect()
 }
@@ -261,7 +266,7 @@ fn answer_dialog(app: &AppHandle, message: &Value) {
             .blocking_pick_files()
             .map(|paths| Value::from(paths.into_iter().filter_map(path_text).collect::<Vec<_>>())),
         Some("book") => dialog
-            .add_filter("Sách ABook", &["abook"])
+            .add_filter("Sách hay dự án ABook", &["abook", "abookproj"])
             .blocking_pick_file()
             .and_then(path_text)
             .map(Value::from),
@@ -365,13 +370,16 @@ mod tests {
         fs::create_dir_all(&folder).unwrap();
         let book = folder.join("Sách.ABOOK");
         File::create(&book).unwrap();
+        let project = folder.join("Dự án.abookproj");
+        File::create(&project).unwrap();
         let args = vec![
             "ABook.exe".to_string(),
             book.display().to_string(),
+            project.display().to_string(),
             folder.join("khong_co.abook").display().to_string(),
             folder.join("chuong.txt").display().to_string(),
         ];
-        assert_eq!(book_files(&args), vec![book.display().to_string()]);
+        assert_eq!(book_files(&args), vec![book.display().to_string(), project.display().to_string()]);
         let _ = fs::remove_dir_all(&folder);
     }
 }
