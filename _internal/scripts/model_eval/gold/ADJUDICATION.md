@@ -617,3 +617,10 @@ cảm xúc theo cue 147 afraid, 156, 187, 249, 252. 004: 56 thêm QUẬT-ĐỘT 
 Thư 164 và các bài thơ: câu kể bị khoá N - NARRATOR (quy tắc 10; sửa chú thích đầu file). Dạng đầu mỗi người cố định trong cả
 chương (QUÁCH-CÔNG, TRỊNH TRANG-CÔNG, THÚC-ĐOẠN, KHẢO-THÚC, TRIỆU-THÚC-ĐÁI, DOÃN-KIẾT-PHỦ): dạng đầu là nhãn dạy model, đổi theo
 lời dẫn là dạy tách một người thành hai giọng.
+
+Đông Chu 003 (01-10 tối, cùng quy trình): B soát 50 cặp lời dẫn "X nói :" + câu thoại, không câu nào sai người, không lỗi loại
+đoạn. Nhận: 106 thêm TẦN-HẦU (câu 65); 136 "Các chư-hầu … thưa" thêm nửa điểm cho người có mặt không được nêu (Tần tương-công,
+Tấn-công, Thân-hầu - quy tắc 6; Vệ-công là người nghe); 170 "Các quan cùng tâu" thêm CHU-CÔNG-HUYẾN~ (ông bênh đúng ý ấy ở
+178-180); 100 cùng NPC*:quân thám thính với 96 (cùng toán thám thính, câu 94); 148 NPC*:quân báo tin nước Thân; cảm xúc 90 thêm
+excited ("mừng rỡ, … kêu lớn"), 120/123 afraid. Dạng đầu Nghi-cựu cả 002-003 (cùng chương nêu lên ngôi ở 156); 004:10 dạng đầu
+BÌNH-VƯƠNG theo chữ của chương, NGHI-CỰU đủ (Hồi 3 nêu ngay trước).
