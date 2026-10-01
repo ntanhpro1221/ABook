@@ -166,6 +166,25 @@ gemma4-e4b V r ~0 -> loại.
 cách được kiểm = `moodvt:qwen3.5:9b#v3|tile:bge-m3:1` (eval_scenes.py), so với `hard` và `app`. Không chỉnh tham số sau khi
 thấy kết quả trên ba chương ấy.
 
+**KẾT QUẢ BỘ KIỂM GIỮ RIÊNG (02-10 07:0x; 3 chương LN, hai người chấm mù, đồng thuận Pk 0,18, r V/E/T 0,93/0,76/0,89):**
+
+| cách | Pk | P / R ranh giới | đoạn/giờ (gold 29,6) | r V / E / T |
+|---|---|---|---|---|
+| chỉ ranh giới cứng = app = cả chương | **0,222** | - / 0,00 | 3,6 | 0,43 / 0,42 / 0,29 |
+| cắt đều 3 phút + nhãn câu | 0,354 | 0,47 / 0,15 | 21 | 0,76 / 0,44 / 0,58 |
+| TextTiling bge-m3 + nhãn câu | 0,306 | **0,56 / 0,38** | 22 | **0,80** / 0,39 / 0,52 |
+| ĐÃ CHỐT: TextTiling + V, T từ LLM | 0,306 | 0,56 / 0,38 | 22 | 0,62 / 0,39 / 0,58 |
+| (chọn SAU khi xem) TextTiling + trung bình nhãn câu và LLM | 0,306 | 0,56 / 0,38 | 22 | 0,71 / 0,33 / 0,60 |
+
+Đọc thẳng: (1) cách đã chốt KHÔNG thắng Pk - TextTiling thua "không cắt" trên chương mới; lợi thế ở bộ phát triển là chỉnh trên
+chính nó. (2) Nhưng Pk phạt cắt lệch nặng hơn "không bao giờ đổi nhạc", trong khi điều người nghe nhận là nhạc HỢP từng lúc: chia
+chương ~20 đoạn/giờ nâng r V từ 0,43 lên 0,76-0,80 - phần lớn nhờ CHIA NHỎ (cắt đều 3 phút cũng được 0,76), TextTiling thêm phần
+đổi nhạc ĐÚNG lúc đổi cảnh (bắt 38% ranh giới thật so với 15%). (3) Không nguồn không khí nào thắng mọi nơi: LLM thắng ở bộ phát
+triển (Tam quốc, Tắt đèn - văn kể nhiều), nhãn câu thắng ở LN nhiều thoại. Trung bình hai nguồn ổn định nhất ở cả hai bộ
+(phát triển 0,69/0,58/0,63; kiểm 0,71/0,33/0,60) nhưng được chọn SAU khi thấy bộ kiểm -> cần một bộ kiểm mới trước khi tin.
+**Thước chính từ nay:** r và sai số không khí theo thời gian + P/R ranh giới (dung sai 20 giây) + số đoạn/giờ gần gold; Pk là
+thước phụ (nó thưởng việc không bao giờ đổi nhạc).
+
 ## Pha 3 - ghép đoạn với nhạc
 
 Ứng viên: (1) gần nhất trên hai trục (đường cơ sở); (2) truy hồi chữ-nhạc: model đọc hiểu viết mô tả nhạc cho đoạn ("tiếng
