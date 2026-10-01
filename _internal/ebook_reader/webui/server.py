@@ -649,7 +649,19 @@ class App:
                 plan = self.music_rebuild(value)
             except music_catalog.CatalogError as exc:
                 error = str(exc)
-        return {"plan": plan, "overrides": music_plan.read_overrides(path), "error": error}
+        return {"plan": plan, "overrides": music_plan.read_overrides(path), "error": error,
+                "taxonomy": self._music_taxonomy()}
+
+    def _music_taxonomy(self) -> dict[str, Any]:
+        """Bảng phong cách / thể loại / nhãn GEMS từ danh mục (đổi được không cần cập nhật app); mất mạng thì rỗng."""
+        try:
+            catalog = self.music_catalog()
+            taxonomy = catalog.manifest().get("taxonomy")
+            if not taxonomy:  # bản đệm từ trước khi danh mục có bảng phân loại: đọc lại một lần
+                taxonomy = catalog.manifest(refresh=True).get("taxonomy")
+            return dict(taxonomy or {})
+        except music_catalog.CatalogError:
+            return {}
 
     def music_rebuild(self, value: str) -> dict[str, Any]:
         path = self._book(value)
@@ -675,7 +687,8 @@ class App:
             self.music_rebuild(value)
         except music_catalog.CatalogError as exc:
             error = str(exc)
-        return {"plan": music_plan.read_plan(path), "overrides": music_plan.read_overrides(path), "error": error}
+        return {"plan": music_plan.read_plan(path), "overrides": music_plan.read_overrides(path), "error": error,
+                "taxonomy": self._music_taxonomy()}
 
     def music_cues(self, value: str, chapter_id: int) -> dict[str, Any]:
         """Nhạc của một chương cho trình phát: mốc thời gian + đường lấy file qua máy này (đệm, tua được)."""
