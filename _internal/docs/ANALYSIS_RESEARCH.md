@@ -72,7 +72,13 @@ nhánh dev/prev-speakers-v9 193e1d08: bỏ khối khi 4 đoạn trước có >2 
 nhãn) - vì điều kiện KHÔNG LẦN NÀO xảy ra: trong 105 lô, 4 đoạn trước lô chỉ có 1 người (40 lô) hoặc 2 người (65 lô), thoại
 xen lời kể và lô chỉ 5 đoạn. Vậy v8 gán nhầm cho người vừa nói ngay trong cửa sổ 1-2 người; "cảnh đông người" là mô tả
 đúng cảnh nhưng sai CƠ CHẾ. Bỏ ý này (không gộp nhánh); hướng kế phải nhắm câu có lời dẫn nêu tên NGƯỜI KHÁC người vừa
-nói (dữ liệu, hay lời nhắc trong khối).** (2) Qwen3.5-4B trên đúng công thức v8 (`q35v8_after_8bclean.sh`, sau hàng
+nói (dữ liệu, hay lời nhắc trong khối).** **Soi tận câu (`tamquoc_v8_cases.py`): Tam quốc đặt lời dẫn TRƯỚC câu thoại
+("Khổng Minh hỏi:" rồi "- Thế có bắt được…"); 6/8 câu v8 sai mà v6 đúng bị gán cho tên trong lời dẫn của câu SAU ("Vân-trường
+đáp:", "Du nói:") - v8 ghép lệch lời dẫn sang câu kề, không phải "người vừa nói". Thử luật xác định "câu kể ngay trước kết
+thúc bằng '… X nói/hỏi/đáp:' -> X" (`colon_tag_rule2.py`, tên đầu tiên trong mệnh đề cuối, có tên gọi tắt): trên đúng những
+câu luật áp được, luật KHÔNG hơn model - Tam quốc 93% (v6 96%, v8 92%), Tắt đèn 74% (76%, 76%), TMA 92% (92%, 85%); luật
+hỏng ở bí danh ("Huyền-đức hỏi Khổng Minh:" là Lưu Bị) và tên trùng chữ ("Anh Dậu" / "Chị Dậu"). Không làm luật ghi đè; sửa
+v8 phải ở dữ liệu / prompt (vd ví dụ lời dẫn đứng trước trong khối lượt trước).** (2) Qwen3.5-4B trên đúng công thức v8 (`q35v8_after_8bclean.sh`, sau hàng
 8B sạch) - lượt Qwen3.5 đầu tiên ở nhà (01-10 16:06) hỏng ngay bước 1: cuDNN không nhận đầu chú ý 256 của Qwen3.5 và
 train_lora.py cấm mọi kernel khác; nay mở thêm kernel memory-efficient khi đầu > 128 (vẫn cấm math), kèm chốt tốc độ (quá
 14 giờ một epoch thì lên đám mây - Windows thiếu kernel nhanh cho lớp gated delta của Qwen3.5). v8 cần mã host của nhánh
