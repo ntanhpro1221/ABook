@@ -40,6 +40,11 @@ tới không đổi: nhập người lạ 34% so với 32% (Nise 11/11, LU 6/11 
 trong dữ liệu không dạy được việc giữ người lạ riêng - chỗ nhập là chỗ model không nhận ra có một người mới, không phải
 chỗ nó thiếu cách gọi tên người ấy.
 
+Mức +1,9 tới từ đâu (`error_map.py`, câu sai theo loại chính, v6 → v7 → 8B-v5): có lời dẫn 40 → **30** → 39, đối đáp
+liền 60 → 53 → 52, còn lại 100 → 94 → 87, "tôi nói" 60 → 59 → 47, vô danh 60 → 61 → 57, 『』 71 → 76 → 56 (cộng 391 →
+373 → 338). v7 đọc lời dẫn tốt hơn cả 8B - có lẽ nhờ học nhãn mô tả ("bà lão nói" -> người tên "bà lão") - nhưng mất ở
+『』 của TCF (28 → 33).
+
 Cổng (F1 giọng / người nói chặt, v6 → v7): TMA 156 câu 64,3 → 65,4 / 73,1 → 71,2; YMP 248 50 câu 76,4 → 67,0 / 86,0 →
 80,0; Tam quốc 219 câu 87,5 → 83,8 / 84,5 → 80,8; Tắt đèn 112 câu 72,8 → 72,9 / 80,4 → 80,4. Thua quá 2 điểm ở hai cổng.
 
