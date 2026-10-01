@@ -1,0 +1,93 @@
+"""Chọn nhạc nền cho từng đoạn (music_scenes.py) từ danh mục (music_catalog.py) - máy tự làm hết; người dùng chỉ can thiệp
+nếu muốn (ghim bài cho một đoạn, đổi không khí, chọn phong cách nhạc của cuốn), như sửa cách đọc tên hay giọng nhân vật.
+
+Đoạn và bài nằm trên cùng mặt phẳng cảm xúc (vui/buồn x êm/dồn dập). Bài "tương đương" = gần nhất trên mặt phẳng ấy, cộng:
+- phạt khác PHONG CÁCH của cuốn (nếu đã chọn: cổ phong, giao hưởng, piano...);
+- phạt bài ít hợp làm nền (giai điệu nổi), bài quá ngắn để lặp;
+- phạt bài vừa dùng ở mấy đoạn trước - không lặp mãi một bài;
+- hai đoạn liền nhau chọn trúng cùng bài thì nhạc chơi liền, không bắt đầu lại.
+Không bài nào đủ gần (MAX_DISTANCE) thì đoạn ấy IM LẶNG - im lặng tốt hơn nhạc sai không khí. Hoà điểm thì chọn tất định
+theo mã sách: làm lại vẫn ra đúng bài cũ.
+"""
+from __future__ import annotations
+
+import hashlib
+import math
+from typing import Any, Callable, Iterable
+
+MAX_DISTANCE = 0.75
+FAMILY_PENALTY = 0.35
+FOREGROUND_PENALTY = 0.25       # x (1 - độ hợp làm nền)
+RECENT_PENALTY = 0.3            # bài đã dùng trong RECENT_SCENES đoạn trước
+RECENT_SCENES = 3
+MIN_TRACK_SECONDS = 60
+WEAK_MOOD = 0.2                 # đoạn không có không khí rõ (ít câu có cảm xúc) ...
+CALM_TARGET = (0.15, -0.55)     # ... thì nhạc nền nhẹ, êm - nhạc mặc định bật (chủ sách 01-10)
+
+
+def _tiebreak(book_key: str, link: str) -> float:
+    return int(hashlib.sha1(f"{book_key}|{link}".encode("utf-8")).hexdigest()[:8], 16) / 0xFFFFFFFF * 1e-3
+
+
+def target_of(scene: dict[str, Any]) -> tuple[float, float]:
+    """Điểm cảm xúc cần tìm nhạc: đoạn không có không khí rõ thì kéo về nền êm nhẹ."""
+    valence, arousal = float(scene.get("valence") or 0.0), float(scene.get("arousal") or 0.0)
+    confidence = float(scene.get("confidence") or 0.0)
+    if confidence >= WEAK_MOOD:
+        return valence, arousal
+    weight = confidence / WEAK_MOOD
+    return (weight * valence + (1 - weight) * CALM_TARGET[0], weight * arousal + (1 - weight) * CALM_TARGET[1])
+
+
+def score(track: dict[str, Any], target: tuple[float, float], *, family: str | None, recent: list[str]) -> float:
+    distance = math.dist((float(track["valence"]), float(track["arousal"])), target)
+    penalty = 0.0
+    if family and track.get("family") != family:
+        penalty += FAMILY_PENALTY
+    background = track.get("background")
+    if background is not None and track.get("source") != "incompetech":
+        penalty += FOREGROUND_PENALTY * (1.0 - float(background))
+    if track.get("link") in recent:
+        penalty += RECENT_PENALTY
+    return distance + penalty
+
+
+def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float], Iterable[dict[str, Any]]], *,
+           book_key: str, family: str | None = None, pins: dict[str, str] | None = None,
+           banned: Iterable[str] = ()) -> list[dict[str, Any]]:
+    """Mỗi đoạn kèm `link` (None = im lặng), `distance`, `pinned`. `pins`: {khoá đoạn: link} người dùng ghim
+    (khoá = `scene_key`); `banned`: link người dùng đã bỏ (không chọn lại cho cuốn này)."""
+    pins = pins or {}
+    banned = set(banned)
+    chosen: list[dict[str, Any]] = []
+    recent: list[str] = []
+    for scene in scenes:
+        key = scene_key(scene)
+        result = dict(scene, key=key, pinned=False)
+        if key in pins:
+            result.update(link=pins[key], pinned=True, distance=None)
+        else:
+            target = target_of(scene)
+            best: tuple[float, str] | None = None
+            for track in candidates_near(*target):
+                link = str(track.get("link") or "")
+                if not link or link in banned or int(track.get("duration") or 0) < MIN_TRACK_SECONDS:
+                    continue
+                value = score(track, target, family=family, recent=recent[-RECENT_SCENES:])
+                value += _tiebreak(book_key, link)
+                if best is None or value < best[0]:
+                    best = (value, link)
+            if best is None or best[0] > MAX_DISTANCE + (FAMILY_PENALTY if family else 0.0):
+                result.update(link=None, distance=None)
+            else:
+                result.update(link=best[1], distance=round(best[0], 3))
+        # Đoạn kề chọn trúng bài đang chơi: chơi tiếp, không phải bài "mới" (không tính là lặp).
+        if result["link"] and (not recent or recent[-1] != result["link"]):
+            recent.append(result["link"])
+        chosen.append(result)
+    return chosen
+
+
+def scene_key(scene: dict[str, Any]) -> str:
+    """Khoá bền của một đoạn: chương + câu đầu. Chia lại đoạn thì đoạn mới có khoá mới (ghim cũ không áp nhầm)."""
+    return f"{scene.get('chapterId')}:{scene.get('firstSegment')}"
