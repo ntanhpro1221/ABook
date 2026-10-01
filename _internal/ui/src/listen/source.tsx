@@ -1,3 +1,4 @@
+import type { MusicCue } from "./musicBed";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, useContext, type ReactNode } from "react";
 import type { Bookmark, Cast, ListenBook, ListeningRecord, ListeningSession, ListeningState, NightSession, Script } from "./model";
@@ -11,6 +12,9 @@ export interface ListenSource {
   book(id: string): Promise<ListenBook>;
   script(bookId: string, chapterId: number): Promise<Script>;
   cast(bookId: string): Promise<Cast>;
+  /** Nhạc nền của một chương (rãnh nhạc của cuốn - webui/music_plan.py): mốc thời gian + đường lấy file. Nguồn nào
+   *  chưa có thì trình phát không chơi nhạc nền. */
+  musicCues?(bookId: string, chapterId: number): Promise<{ cues: MusicCue[]; levelDb: number }>;
   audioUrl(bookId: string, chapterId: number): string;
   sampleUrl(bookId: string, sampleId: number): string;
   voiceUrl(name: string): string;

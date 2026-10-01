@@ -6,6 +6,7 @@ import { coverArtwork, type CoverImage } from "@/shared/cover";
 import { formatClock } from "@/shared/format";
 import { Clock, ClockContext } from "./clock";
 import { isNative, type AudioEngine } from "./engine";
+import { MusicBed } from "./musicBed";
 import { resumePoint, type Bookmark, type ListenBook, type ListenChapter, type NightPosition } from "./model";
 import { NightRecorder } from "./night";
 import {
@@ -330,6 +331,41 @@ export function PlayerProvider({
       },
     });
   }, []);
+
+  // Nhạc nền (musicBed.ts): chỉ bộ máy phát web (máy tính); lõi native Android chưa có. Rãnh nhạc tắt / chưa dựng thì
+  // nguồn trả không mốc nào - trình phát chạy như cũ.
+  const bed = useMemo(() => (native || !source.musicCues ? null : new MusicBed()), [native, source]);
+  const bedChapter = track ? `${track.bookId}:${track.chapterId}` : "";
+  useEffect(() => {
+    if (!bed || !track || !source.musicCues) return;
+    let cancelled = false;
+    source.musicCues(track.bookId, track.chapterId)
+      .then((result) => {
+        if (!cancelled) bed.setCues(result.cues, result.levelDb);
+      })
+      .catch(() => {
+        if (!cancelled) bed.setCues([], -20);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bed, source, bedChapter]);
+  useEffect(() => {
+    if (!bed) return;
+    let last = engine.time;
+    const sync = () => {
+      const now = engine.time;
+      bed.sync(now, !engine.paused, Math.abs(now - last) > 3);
+      last = now;
+    };
+    const offs = [engine.on("time", sync), engine.on("play", sync), engine.on("pause", sync), engine.on("ended", sync)];
+    return () => {
+      offs.forEach((off) => off());
+      bed.stop();
+    };
+  }, [bed, engine]);
+  useEffect(() => bed?.setVolume(volume), [bed, volume]);
 
   const applyRate = useCallback((value: number) => {
     refs.current.rate = value;
