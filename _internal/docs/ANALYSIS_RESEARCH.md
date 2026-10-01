@@ -75,6 +75,12 @@ chương ngôi thứ nhất lật theo hạt giống; Tam quốc 87,8 / 84,3 / 8
 bình +- lệch; một lượt đơn chỉ đủ để loại thứ thua xa. 9B-v8: Tam quốc 91,9 chỉ hơn dải v8 (84-88) 4-8 điểm - dè dặt; YMP +15
 lớn hơn mọi dao động đã thấy, nhưng chưa đo hạt giống trên cổng YMP.
 
+**Tốc độ THẬT theo chương (02-10 02:xx, log hàng GPU, 13 chương LN chung, cùng máy nhà):** 9B-v8 Q4 chậm hơn v8 4B Q8
+trung vị **1,32 lần** (TCF 042: 412 / 313 giây; Nageki 65: 1379 / 1103), gần ngang 8B-v5 Q4 (356 / 1196). Con số 47 vs 22 tok/s
+ở trên chỉ là tốc độ SINH trong phép thử riêng; cả chương thì đọc prompt dài chiếm phần lớn. 9B nằm trọn VRAM, 8B tràn.
+Nên cái giá của 9B là ~30% thời gian phân tích - cân với +4..+15 ở hai cổng khó. Qwen3.5-4B công thức v8 (chưa huấn luyện được
+ở nhà - Windows thiếu kernel lớp gated delta) là phép thử còn thiếu: nếu giữ phần lớn mức hơn của 9B mà nhanh như 4B thì hơn.
+
 **9B-v8 ĐỦ CỔNG (02-10 01:0x)** - LN 12 chương: 64,7 = v8 4B (-0,1 [-3,4; +3,7], hơn 6 thua 6); cổng: Tam quốc F1 giọng
 **91,9 vs 83,0** (chặt 89,0 vs 82,2; v8m Modal 87,8 - vẫn hơn), YMP ngôi thứ nhất **92,2 vs 77,0** (chặt 92,0 vs 86,0),
 Tắt đèn 77,7 vs 76,3 (chặt 92,0 vs 84,8); cổng 351/381 OK, 363/378 hỏng vì QUÁ GIỜ do bộ giữ êm (lỗi đo - đo lại bằng
