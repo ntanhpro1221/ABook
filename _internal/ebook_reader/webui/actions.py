@@ -56,8 +56,8 @@ def upload_source(library_root: Path, folder: str, name: str, data: bytes) -> Pa
         raise ValueError("File quá lớn - tối đa 8 MB một chương")
     folder_name = " ".join(_UNSAFE_NAME.sub(" ", folder).split()).strip(" .")[:80] or "Tải lên"
     file_name = " ".join(_UNSAFE_NAME.sub(" ", name.replace("\\", "/").rsplit("/", 1)[-1]).split()).strip(" .")[:120]
-    if not file_name.lower().endswith(".txt"):
-        raise ValueError("Chỉ nhận file .txt - mỗi file là một chương")
+    if not file_name.lower().endswith((".txt", ".epub")):
+        raise ValueError("Chỉ nhận file .txt (mỗi file là một chương) hay một file .epub")
     if _DEVICE_NAME.match(folder_name) or _DEVICE_NAME.match(file_name):
         raise ValueError("Tên này là tên thiết bị của Windows - đổi tên file rồi gửi lại")
     target_dir = library_root / UPLOAD_FOLDER / folder_name
@@ -223,13 +223,18 @@ def _credits_at_top(path: Path) -> list[str]:
     return credit_lines(decode_text_bytes(head[:cut] if cut > 0 else head))
 
 
-def scan_inputs(paths: list[str]) -> dict[str, Any]:
-    """Những gì người dùng sắp đưa vào sách: file TXT (thư mục chỉ quét một tầng, như app cũ), xếp tự nhiên."""
+def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, Any]:
+    """Những gì người dùng sắp đưa vào sách: file TXT (thư mục chỉ quét một tầng, như app cũ), xếp tự nhiên. File EPUB được
+    tách thành thư mục chương TXT trong `epub_root` (thư viện; không có thì cạnh file EPUB) rồi quét như một thư mục."""
+    from . import epub_import
+
     files: list[Path] = []
     seen: set[str] = set()
     skipped: list[str] = []
     missing: list[str] = []
     subfolders: list[str] = []
+    errors: list[str] = []
+    epub_title = ""
     for item in paths:
         # "Copy as path" của Explorer luôn thêm ngoặc kép; khoảng trắng hai đầu cũng hay dính theo khi dán.
         cleaned = str(item).strip().strip('"').strip("'").strip()
@@ -237,7 +242,23 @@ def scan_inputs(paths: list[str]) -> dict[str, Any]:
         if not path.exists():
             missing.append(cleaned)
             continue
+        if path.is_file() and path.suffix.casefold() == ".epub":
+            try:
+                epub_title = epub_title or epub_import.title_of(path)
+                path = epub_import.extract(path, epub_root or path.parent)
+            except (epub_import.EpubError, OSError) as error:
+                errors.append(f"{path.name}: {error}")
+                continue
         candidates = discover_txt_files(path) if path.is_dir() else [path]
+        if path.is_dir() and not candidates:
+            # Thư mục chỉ có EPUB (gửi từ điện thoại, hay chọn thư mục chứa file EPUB): tách từng file như khi chọn nó.
+            for book in sorted((child for child in path.iterdir() if child.suffix.casefold() == ".epub"),
+                               key=lambda child: natural_key(child.name)):
+                try:
+                    epub_title = epub_title or epub_import.title_of(book)
+                    candidates += discover_txt_files(epub_import.extract(book, epub_root or path))
+                except (epub_import.EpubError, OSError) as error:
+                    errors.append(f"{book.name}: {error}")
         if path.is_dir() and not candidates:
             # Chọn nhầm thư mục cha: gợi ý các thư mục con có TXT ngay bên trong.
             try:
@@ -273,8 +294,8 @@ def scan_inputs(paths: list[str]) -> dict[str, Any]:
             # Như chapters.input_sha256 của dây chuyền: nhận ra truyện đã có dự án (App.existing_projects).
             "sha256": sha256_file(path),
         })
-    title = ""
-    if files:
+    title = epub_title
+    if files and not title:
         from ..project import infer_book_title
 
         title = infer_book_title(files)
@@ -282,6 +303,8 @@ def scan_inputs(paths: list[str]) -> dict[str, Any]:
         "files": rows,
         "skipped": skipped,
         "missing": missing,
+        # EPUB không tách được (hỏng, không có chương nào có chữ...): nói lý do thay vì "không có chương nào".
+        "errors": errors,
         "subfolders": subfolders[:8],
         "suggestedTitle": title,
         "totals": {

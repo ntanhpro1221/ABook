@@ -167,6 +167,8 @@ export interface ScanResult {
   missing: string[];
   /** Thư mục đã chọn không có TXT ngay bên trong - đây là các thư mục con có. */
   subfolders: string[];
+  /** File EPUB không tách được thành chương, kèm lý do (webui/epub_import.py). */
+  errors?: string[];
   suggestedTitle: string;
   totals: { chapters: number; words: number; audioSeconds: number };
   /** Dự án đã làm từ chính những file này (so nội dung): `shared` file trùng, dự án ấy có `chapters` chương. */

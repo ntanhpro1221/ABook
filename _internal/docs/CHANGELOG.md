@@ -9,6 +9,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Studio (sản xuất sách nói)
 
+- **Tạo sách từ file EPUB**: ở bước chọn chương, chọn (hay gửi từ điện thoại) một file `.epub` - mỗi chương trong EPUB
+  thành một chương, tên chương theo mục lục, tên sách theo metadata. Chương tách ra nằm trong thư viện ("Nguồn EPUB"),
+  không ghi cạnh file của bạn; EPUB hỏng thì trình tạo sách nói lý do.
 - **Cách đọc chung cho mọi sách**: sửa cách đọc một tên rồi tích "Dùng cho mọi sách" (hay thêm trong Cài đặt → Studio →
   Cách đọc chung) - sách mới có tên ấy tự dùng cách đọc này ngay lúc tạo; sách có sẵn hiện dòng "Dùng N cách đọc chung" ở
   tab Nhân vật → Cách đọc tên. Đi đúng đường của một lần sửa tay (cùng phép kiểm, máy áp ở ranh giới chương).
