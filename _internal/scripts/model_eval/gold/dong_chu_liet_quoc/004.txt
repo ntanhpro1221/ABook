@@ -1,0 +1,194 @@
+# Đáp án chuẩn - Đông Chu liệt quốc (Nguyễn Đỗ Mục dịch; hết bản quyền, vi.wikisource), Hồi 4. Chương HUẤN LUYỆN (01-10),
+# cùng lý do Hồi 2: lời dẫn "X nói :" đứng TRƯỚC câu thoại, chuỗi đối đáp hai người (Trang-công / Công-tử Lữ, Trang-công /
+# Khảo-thúc) mà mỗi câu có lời dẫn riêng - câu kế luôn mang lời dẫn của NGƯỜI KIA.
+# Trịnh trang-công = Ngộ-sanh (tên húy, câu 50/58/170) - mọi dạng đủ. Đoạn = Cung-thúc-đoạn = Thái-thúc = Thúc-đoạn (câu 56,
+# 83): mọi dạng đủ. Công-tử Lữ (tự Tử-phong, câu 92): "LỮ" / "TỬ-PHONG" đủ; "CÔNG-TỬ LỮ" nửa điểm (tiền tố tước, quy tắc
+# 11 - lời kể không bao giờ viết "Lữ" trơn, như ANH DẬU). Thái-sử Đôn: ĐÔN đủ, THÁI-SỬ ĐÔN nửa điểm. Dĩnh-khảo-thúc =
+# Khảo-thúc. Khương-thị / Huệ-công / Võ-công: dạng sách dùng làm tên suốt chương (như "Trịnh lão") - đủ; Trịnh võ-công = Quật-đột (câu 47 - đủ); Bình-vương = Nghi-cựu (Hồi 2-3 - nửa điểm).
+# 71: lời dẫn [70] "Trang-công làm thinh, không nói :" là BẪY - Trang-công im lặng, câu thoại là của MẸ ("đuổi em con ra
+# khỏi nước") - Khương-thị đủ, Trang-công không điểm. 92: "có người bước ra" - câu 93 nói ngay đó là Công-tử Lữ: tên
+# đủ, NPC*~ (quy tắc 5). 119/139: "nghĩ thầm" - T,D (quy tắc 9). 23: lời hai đứa trẻ nằm trong câu kể (khoá N): NARRATOR.
+0 H
+1 N NARRATOR neutral,happy 0-1 normal normal u
+2 N
+3 N NARRATOR neutral,angry 0-1 normal normal u
+4 N
+5 D NPC*,UNKNOWN~ neutral,afraid 0-1 normal normal m
+6 D NPC*,UNKNOWN~ neutral,afraid 0-1 normal normal m
+7 N NARRATOR neutral,happy 0-1 normal normal u
+8 N
+9 N
+10 D BÌNH-VƯƠNG,BÌNH VƯƠNG,NGHI-CỰU~,NGHI CỰU~ neutral 0-1 normal normal m
+11 N
+12 N
+13 N
+14 N
+15 N
+16 N NARRATOR neutral,surprised 0-1 normal normal u
+17 D NPC*:đứa bé trong mộng,UNKNOWN~ neutral 1-2 normal normal,loud u
+18 N
+19 N
+20 N
+21 D ĐÔN,THÁI-SỬ ĐÔN~,THÁI SỬ ĐÔN~ neutral,happy 0-1 normal normal m
+22 N
+23 N NARRATOR neutral,surprised 0-1 normal normal u
+24 N
+25 D NPC*:con Vị,UNKNOWN~ neutral,angry 0-1 normal normal u
+26 N NARRATOR neutral,surprised 0-1 normal normal u
+27 N
+28 N NARRATOR neutral,afraid 0-1 normal normal u
+29 N
+30 N NARRATOR neutral,surprised 0-1 normal normal u
+31 N NARRATOR neutral,afraid,surprised 0-1 normal normal u
+32 N
+33 D NPC*,UNKNOWN~ neutral,afraid 0-1 normal soft,normal u
+34 N
+35 N
+36 N NARRATOR neutral,surprised,afraid 0-1 normal normal u
+37 N
+38 N
+39 N
+40 N
+41 N
+42 N
+43 D HUỆ-CÔNG,HUỆ CÔNG angry,sarcastic,neutral 1-2 normal normal m
+44 N NARRATOR neutral,angry 0-1 normal normal u
+45 N NARRATOR neutral,afraid,sad 0-1 normal normal u
+46 N NARRATOR neutral,sad 0-1 normal normal u
+47 N
+48 N
+49 N
+50 N
+51 N
+52 N NARRATOR neutral,happy 0-1 normal normal u
+53 N
+54 D KHƯƠNG-THỊ,KHƯƠNG THỊ neutral,tender 0-1 normal normal,soft f
+55 N
+56 D TRỊNH VÕ-CÔNG,TRỊNH VÕ CÔNG,TRỊNH-VÕ-CÔNG,VÕ-CÔNG,VÕ CÔNG,QUẬT-ĐỘT,QUẬT ĐỘT neutral,angry 0-1 normal normal m
+57 N
+58 N NARRATOR neutral,sad,angry 0-1 normal normal u
+59 N
+60 N NARRATOR neutral,sad 0-1 normal normal u
+61 D KHƯƠNG-THỊ,KHƯƠNG THỊ angry,sad,sarcastic 1-2 normal normal f
+62 N
+63 D TRỊNH TRANG-CÔNG,TRANG-CÔNG,TRANG CÔNG,TRỊNH TRANG CÔNG,TRỊNH-TRANG-CÔNG,NGỘ-SANH,NGỘ SANH neutral 0-1 normal normal m
+64 N
+65 D KHƯƠNG-THỊ,KHƯƠNG THỊ neutral,angry 0-1 normal normal f
+66 N
+67 D TRỊNH TRANG-CÔNG,TRANG-CÔNG,TRANG CÔNG,TRỊNH TRANG CÔNG,TRỊNH-TRANG-CÔNG,NGỘ-SANH,NGỘ SANH neutral,sad 0-1 normal normal m
+68 N
+69 D KHƯƠNG-THỊ,KHƯƠNG THỊ neutral 0-1 normal normal f
+70 N
+71 D KHƯƠNG-THỊ,KHƯƠNG THỊ angry,sarcastic 1-2 normal normal f
+72 N NARRATOR neutral,sad 0-1 normal normal u
+73 D TRỊNH TRANG-CÔNG,TRANG-CÔNG,TRANG CÔNG,TRỊNH TRANG CÔNG,TRỊNH-TRANG-CÔNG,NGỘ-SANH,NGỘ SANH sad,tender 0-1 normal,slow soft,normal m
+74 N
+75 N
+76 D TỀ-TÚC,TỀ TÚC afraid,neutral 1-2 normal normal m
+77 N
+78 D TRỊNH TRANG-CÔNG,TRỊNH TRANG CÔNG,TRỊNH-TRANG-CÔNG,TRANG-CÔNG,TRANG CÔNG,NGỘ-SANH,NGỘ SANH neutral,sad 0-1 normal normal m
+79 N
+80 N
+81 N
+82 D KHƯƠNG-THỊ,KHƯƠNG THỊ whispering,neutral,angry 0-1 normal soft f
+83 N
+84 N
+85 N
+86 D THÚC-ĐOẠN,THÁI-THÚC,THÁI THÚC,ĐOẠN,THÚC ĐOẠN,CUNG-THÚC,CUNG THÚC,CUNG-THÚC-ĐOẠN,CUNG THÚC ĐOẠN,THÁI-THÚC-ĐOẠN,THÁI THÚC ĐOẠN neutral,angry 0-1 normal normal,loud m
+87 N NARRATOR neutral,afraid 0-1 normal normal u
+88 N
+89 N
+90 N NARRATOR neutral,happy 0-1 normal normal u
+91 N
+92 D LỮ,TỬ-PHONG,TỬ PHONG,CÔNG-TỬ LỮ~,CÔNG TỬ LỮ~,NPC*~ angry,excited 1-2 normal,fast loud m
+93 N
+94 D TRỊNH TRANG-CÔNG,TRỊNH-TRANG-CÔNG,TRỊNH TRANG CÔNG,TRANG-CÔNG,TRANG CÔNG,NGỘ-SANH,NGỘ SANH neutral 0-1 normal normal m
+95 N
+96 D LỮ,TỬ-PHONG,TỬ PHONG,CÔNG-TỬ LỮ~,CÔNG TỬ LỮ~ angry,neutral 1-2 normal normal m
+97 N
+98 D TRỊNH TRANG-CÔNG,TRỊNH-TRANG-CÔNG,TRỊNH TRANG CÔNG,TRANG-CÔNG,TRANG CÔNG,NGỘ-SANH,NGỘ SANH neutral,sad 0-1 normal normal m
+99 N
+100 D LỮ,TỬ-PHONG,TỬ PHONG,CÔNG-TỬ LỮ~,CÔNG TỬ LỮ~ afraid,neutral 0-1 normal normal m
+101 N
+102 D TRỊNH TRANG-CÔNG,TRỊNH-TRANG-CÔNG,TRỊNH TRANG CÔNG,TRANG-CÔNG,TRANG CÔNG,NGỘ-SANH,NGỘ SANH neutral 0-1 normal normal m
+103 N NARRATOR neutral,sad 0-1 normal normal u
+104 D LỮ,TỬ-PHONG,TỬ PHONG,CÔNG-TỬ LỮ~,CÔNG TỬ LỮ~ neutral,sad 0-1 normal normal m
+105 N
+106 D TRỊNH TRANG-CÔNG,TRỊNH-TRANG-CÔNG,TRỊNH TRANG CÔNG,TRANG-CÔNG,TRANG CÔNG,NGỘ-SANH,NGỘ SANH neutral 0-1 normal normal m
+107 N
+108 D LỮ,TỬ-PHONG,TỬ PHONG,CÔNG-TỬ LỮ~,CÔNG TỬ LỮ~ neutral,excited 0-1 normal normal m
+109 D LỮ,TỬ-PHONG,TỬ PHONG,CÔNG-TỬ LỮ~,CÔNG TỬ LỮ~ neutral,excited 0-1 normal normal m
+110 N
+111 D TRỊNH TRANG-CÔNG,TRỊNH-TRANG-CÔNG,TRỊNH TRANG CÔNG,TRANG-CÔNG,TRANG CÔNG,NGỘ-SANH,NGỘ SANH happy,neutral 0-1 normal soft,normal m
+112 N
+113 N NARRATOR neutral,happy 0-1 normal normal u
+114 N
+115 N
+116 N NARRATOR neutral,sad 0-1 normal normal u
+117 N
+118 N
+119 T,D TRỊNH TRANG-CÔNG,TRỊNH-TRANG-CÔNG,TRỊNH TRANG CÔNG,TRANG-CÔNG,TRANG CÔNG,NGỘ-SANH,NGỘ SANH sad,neutral,angry 0-1 normal soft m
+120 N
+121 N
+122 N
+123 N NARRATOR neutral,angry 0-1 normal normal u
+124 N NARRATOR neutral,afraid,surprised 0-1 normal normal u
+125 N NARRATOR neutral,angry 0-1 normal normal u
+126 N NARRATOR neutral,afraid 0-1 normal normal u
+127 N
+128 N
+129 N NARRATOR neutral,sad 0-1 normal normal u
+130 D THÚC-ĐOẠN,THÚC ĐOẠN,ĐOẠN,THÁI-THÚC,THÁI THÚC,CUNG-THÚC,CUNG THÚC,CUNG-THÚC-ĐOẠN,CUNG THÚC ĐOẠN,THÁI-THÚC-ĐOẠN,THÁI THÚC ĐOẠN sad,angry 2-3 normal,slow loud,normal m
+131 N NARRATOR neutral,sad 0-1 normal normal u
+132 N NARRATOR neutral,sad 0-1 normal normal u
+133 D TRỊNH TRANG-CÔNG,TRỊNH-TRANG-CÔNG,TRỊNH TRANG CÔNG,TRANG-CÔNG,TRANG CÔNG,NGỘ-SANH,NGỘ SANH sad 2-3 slow,normal normal,loud m
+134 N
+135 N NARRATOR neutral,angry 0-1 normal normal u
+136 D TRỊNH TRANG-CÔNG,TRỊNH-TRANG-CÔNG,TRỊNH TRANG CÔNG,TRANG-CÔNG,TRANG CÔNG,NGỘ-SANH,NGỘ SANH angry,sad 1-2 normal normal m
+137 N NARRATOR neutral,sad 0-1 normal normal u
+138 N NARRATOR neutral,sad 0-1 normal normal u
+139 T,D TRỊNH TRANG-CÔNG,TRỊNH-TRANG-CÔNG,TRỊNH TRANG CÔNG,TRANG-CÔNG,TRANG CÔNG,NGỘ-SANH,NGỘ SANH sad 1-2 slow soft m
+140 N NARRATOR neutral,angry 0-1 normal normal u
+141 D KHẢO-THÚC,DĨNH-KHẢO-THÚC,DĨNH KHẢO THÚC,KHẢO THÚC angry,sad 1-2 normal normal m
+142 N
+143 N
+144 N
+145 D KHẢO-THÚC,KHẢO THÚC,DĨNH-KHẢO-THÚC,DĨNH KHẢO THÚC neutral,sarcastic 0-1 normal normal m
+146 D KHẢO-THÚC,KHẢO THÚC,DĨNH-KHẢO-THÚC,DĨNH KHẢO THÚC neutral,sarcastic 0-1 normal normal m
+147 N NARRATOR neutral,sad 0-1 normal normal u
+148 N
+149 N
+150 N
+151 N NARRATOR neutral,surprised 0-1 normal normal u
+152 D TRỊNH TRANG-CÔNG,TRỊNH-TRANG-CÔNG,TRỊNH TRANG CÔNG,TRANG-CÔNG,TRANG CÔNG,NGỘ-SANH,NGỘ SANH surprised,neutral 0-1 normal normal m
+153 N
+154 D KHẢO-THÚC,KHẢO THÚC,DĨNH-KHẢO-THÚC,DĨNH KHẢO THÚC tender,neutral,sad 0-1 normal normal m
+155 N
+156 D TRỊNH TRANG-CÔNG,TRỊNH-TRANG-CÔNG,TRỊNH TRANG CÔNG,TRANG-CÔNG,TRANG CÔNG,NGỘ-SANH,NGỘ SANH sad,tender 0-1 normal,slow normal,soft m
+157 N NARRATOR neutral,surprised 0-1 normal normal u
+158 D KHẢO-THÚC,KHẢO THÚC,DĨNH-KHẢO-THÚC,DĨNH KHẢO THÚC surprised 0-1 normal normal m
+159 N NARRATOR neutral,sad 0-1 normal normal u
+160 N NARRATOR neutral,sad 0-1 normal normal u
+161 D KHẢO-THÚC,KHẢO THÚC,DĨNH-KHẢO-THÚC,DĨNH KHẢO THÚC sad,neutral 0-1 normal normal m
+162 N NARRATOR neutral,happy 0-1 normal normal u
+163 D TRỊNH TRANG-CÔNG,TRỊNH-TRANG-CÔNG,TRỊNH TRANG CÔNG,TRANG-CÔNG,TRANG CÔNG,NGỘ-SANH,NGỘ SANH happy,excited 1-2 normal,fast normal m
+164 N
+165 D KHẢO-THÚC,KHẢO THÚC,DĨNH-KHẢO-THÚC,DĨNH KHẢO THÚC neutral 0-1 normal normal m
+166 N
+167 N NARRATOR neutral,sad 0-1 normal normal u
+168 N
+169 N NARRATOR neutral,sad 0-1 normal normal u
+170 D TRỊNH TRANG-CÔNG,TRỊNH-TRANG-CÔNG,TRỊNH TRANG CÔNG,TRANG-CÔNG,TRANG CÔNG,NGỘ-SANH,NGỘ SANH sad 1-2 slow soft,normal m
+171 N NARRATOR neutral,sad,happy 0-1 normal normal u
+172 D KHƯƠNG-THỊ,KHƯƠNG THỊ sad,happy,tender 1-2 slow soft f
+173 N
+174 N NARRATOR neutral,sad,happy 0-1 normal normal u
+175 N
+176 N NARRATOR neutral,happy 0-1 normal normal u
+177 N NARRATOR neutral,happy 0-1 normal normal u
+178 N
+179 N
+180 N
+181 N
+182 N
+183 N
