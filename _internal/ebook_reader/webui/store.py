@@ -382,10 +382,17 @@ def pending_changes(project_root: Path, since: float) -> int:
             except (AttributeError, TypeError, ValueError):
                 continue
         fresh[section] = chosen
-    # "Thu lại cả chương" ghi mọi câu của chương trong MỘT lần bấm (cùng `requested_at`): một thay đổi, không phải trăm.
-    retake_clicks = len({_click(entry) for entry in fresh["retakes"].values()})
-    return (sum(len(entries) for section, entries in fresh.items() if section != "retakes") + retake_clicks
-            - _kept_as_is(project_root, fresh))
+    kept = _kept_as_is(project_root, fresh)
+    # Một lần bấm gán / thu lại nhiều câu (cả nhóm vai phụ, "Gộp vào…", "Thu lại cả chương", Shift-chọn ở Kịch bản) ghi
+    # mọi câu cùng một `requested_at`: một thay đổi, không phải trăm.
+    total = 0
+    for section, entries in fresh.items():
+        alive = {key: entry for key, entry in entries.items() if (section, key) not in kept}
+        total += len({_click(entry) for entry in alive.values()}) if section in BY_CLICK else len(alive)
+    return total
+
+
+BY_CLICK = ("speakers", "retakes")
 
 
 def _click(entry: Any) -> float:
@@ -473,13 +480,26 @@ def pending_details(project_root: Path, since: float) -> dict[str, Any]:
             ids = [str(row["stable_id"]) for row in recorded if pattern.search(str(row["text"] or ""))]
             items.append({"kind": "pronunciation", "label": f"“{surface}” đọc là “{entry.get('spoken_form', '')}”",
                           "lines": hit(ids), **handle("pronunciations", key, entry)})
+        speaker_clicks: dict[float, list[str]] = {}
         for stable_id, entry in fresh["speakers"].items():
             row = by_id.get(stable_id)
             if row is None or (not entry.get("new") and same(entry.get("speaker"), row["speaker"])):
                 continue
-            items.append({"kind": "speaker", "label": f"{quote(row['text'])} là lời của {who(entry.get('speaker'))}",
-                          "chapter": titles.get(int(row["chapter_id"]), ""), "lines": hit([stable_id]),
-                          **handle("speakers", stable_id, entry)})
+            speaker_clicks.setdefault(_click(entry), []).append(stable_id)
+        for at, stable_ids in speaker_clicks.items():
+            entry = fresh["speakers"][stable_ids[0]]
+            row = by_id[stable_ids[0]]
+            if len(stable_ids) == 1:
+                items.append({"kind": "speaker", "label": f"{quote(row['text'])} là lời của {who(entry.get('speaker'))}",
+                              "chapter": titles.get(int(row["chapter_id"]), ""), "lines": hit(stable_ids),
+                              **handle("speakers", stable_ids[0], entry)})
+                continue
+            # Một lần bấm cho nhiều câu (nhóm vai phụ, "Gộp vào…", Shift-chọn): một mục, bỏ thì bỏ cả nhóm.
+            places = sorted({int(by_id[stable_id]["chapter_id"]) for stable_id in stable_ids})
+            items.append({"kind": "speaker", "label": f"{len(stable_ids)} câu là lời của {who(entry.get('speaker'))}",
+                          "chapter": titles.get(places[0], "") + (f" và {len(places) - 1} chương khác" if len(places) > 1 else ""),
+                          "lines": hit(stable_ids), "section": "speakers", "key": stable_ids[0], "keys": stable_ids,
+                          "requestedAt": at})
         for stable_id, entry in fresh["lines"].items():
             row = by_id.get(stable_id)
             if row is None:
@@ -542,7 +562,7 @@ def _requested_after(entry: dict[str, Any], since: float) -> bool:
         return False
 
 
-def _kept_as_is(project_root: Path, fresh: dict[str, dict[str, Any]]) -> int:
+def _kept_as_is(project_root: Path, fresh: dict[str, dict[str, Any]]) -> set[tuple[str, str]]:
     """Số yêu cầu "giữ nguyên" trong `fresh`: người nói bằng đúng người câu đang có, cách đọc bằng đúng cách đang đọc. Chúng
     không đổi gì trong sách nên không phải "thay đổi chờ áp" - soát UX 29-09: sáu lần bấm "Giữ…"/"Đúng rồi" đẩy số trên nút
     "Áp dụng N thay đổi" từ 38 lên 47 trong khi chỉ một lần đổi thật."""
@@ -550,12 +570,12 @@ def _kept_as_is(project_root: Path, fresh: dict[str, dict[str, Any]]) -> int:
 
     speakers, pronunciations = fresh.get("speakers") or {}, fresh.get("pronunciations") or {}
     if not (speakers or pronunciations) or not (Path(project_root) / DB_NAME).is_file():
-        return 0
+        return set()
 
     def same(left: Any, right: Any) -> bool:
         return " ".join(str(left or "").casefold().split()) == " ".join(str(right or "").casefold().split())
 
-    kept = 0
+    kept: set[tuple[str, str]] = set()
     try:
         with closing(connect(project_root)) as connection:
             if speakers:
@@ -569,8 +589,8 @@ def _kept_as_is(project_root: Path, fresh: dict[str, dict[str, Any]]) -> int:
                             f"SELECT stable_id, speaker FROM segments WHERE stable_id IN ({','.join('?' * len(chunk))})", chunk
                         )
                     )
-                kept += sum(
-                    1 for stable_id, entry in speakers.items()
+                kept.update(
+                    ("speakers", stable_id) for stable_id, entry in speakers.items()
                     if stable_id in current and isinstance(entry, dict) and not entry.get("new")
                     and same(entry.get("speaker"), current[stable_id])
                 )
@@ -579,12 +599,12 @@ def _kept_as_is(project_root: Path, fresh: dict[str, dict[str, Any]]) -> int:
                     surface_key(str(row[0])): str(row[1] or "")
                     for row in connection.execute("SELECT surface, spoken_form FROM pronunciations")
                 }
-                kept += sum(
-                    1 for key, entry in pronunciations.items()
+                kept.update(
+                    ("pronunciations", key) for key, entry in pronunciations.items()
                     if key in forms and isinstance(entry, dict) and same(entry.get("spoken_form"), forms[key])
                 )
     except sqlite3.Error:
-        return 0
+        return set()
     return kept
 
 

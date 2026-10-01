@@ -1150,7 +1150,8 @@ class Handler(BaseHTTPRequestHandler):
             requested_at = 0.0
         if section not in ("pronunciations", "speakers", "lines", "voices", "retakes") or not key or requested_at <= 0:
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu thay đổi cần bỏ")
-        group = [str(item) for item in body.get("keys") or [] if isinstance(item, str)][:5000] if section == "retakes" else []
+        group = ([str(item) for item in body.get("keys") or [] if isinstance(item, str)][:5000]
+                 if section in store.BY_CLICK else [])
         mine = listener_overrides.requests_made_at(listener_overrides.read_overrides(path), section, group or [key], requested_at)
         if not mine:
             raise ApiError(HTTPStatus.CONFLICT, "Thay đổi này vừa được thay bằng một lựa chọn sau - mở lại hộp để xem.")
@@ -1159,8 +1160,40 @@ class Handler(BaseHTTPRequestHandler):
             for stable_id in mine:
                 listener_overrides.cancel_retake(path, stable_id)
         else:
-            listener_overrides.withdraw_requests(path, section, [key], requested_at)
-        self._send_json(HTTPStatus.OK, {"withdrawn": 1})
+            listener_overrides.withdraw_requests(path, section, list(mine), requested_at)
+            if section == "speakers":
+                # "Gộp vào…" ghi cả bí danh cùng mốc ấy: bỏ lần gộp là bỏ luôn bí danh.
+                aliases.remove_added_at(path, requested_at)
+        self._send_json(HTTPStatus.OK, {"withdrawn": len(mine)})
+
+    def post_merge_character(self, _query: dict[str, list[str]], value: str) -> None:
+        # Tab Nhân vật: "Gộp vào…" (soát UX a6 01-10: máy tách một người thành hai - "Lucien" và "Giáo sư Lucien" - mà Studio
+        # chỉ sửa được từng câu). Đi đúng đường có sẵn: mọi câu nói của người này thành câu của người kia (overrides.json
+        # `speakers`, một lần ghi, một mốc) + bí danh cấp TÊN (aliases.json) để phần sau của cuốn tự hiểu. Bỏ trong hộp
+        # "Áp dụng" là bỏ cả hai.
+        self.app._mutating()
+        path = self.app._book(value)
+        body = self._body()
+        source = str(body.get("from", "")).strip()[:200]
+        target = str(body.get("into", "")).strip()[:200]
+        if not source or not target or aliases.key(source) == aliases.key(target):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Chọn hai người khác nhau")
+        with closing(store.connect(path)) as connection:
+            rows = connection.execute(
+                "SELECT stable_id, text_sha256, speaker FROM segments WHERE kind IN ('dialogue', 'thought')"
+                " AND stable_id IS NOT NULL AND text_sha256 IS NOT NULL ORDER BY chapter_id, seq"
+            ).fetchall()
+        lines = [(str(row["stable_id"]), str(row["text_sha256"])) for row in rows
+                 if aliases.key(str(row["speaker"] or "")) == aliases.key(source)]
+        if not lines:
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Người này không còn câu nói nào để gộp")
+        problem = store.speaker_request_problem(path, lines[0][0], lines[0][1], target, "")
+        if problem is not None:
+            raise ApiError(HTTPStatus.BAD_REQUEST, SPEAKER_PROBLEMS.get(problem, "Không gộp được vào người này"))
+        now = time.time()
+        listener_overrides.request_speakers(path, lines, target, now=now)
+        aliases.add(path, source, target, now=now)
+        self._send_json(HTTPStatus.OK, {"lines": len(lines), "requestedAt": now})
 
     def post_chapter_retake(self, _query: dict[str, list[str]], value: str, chapter: str) -> None:
         # Menu "…" của một chương: thu lại MỌI câu đã thu của chương bằng hạt giống mới (soát UX a5/a6 01-10: cả chương nghe
@@ -1886,6 +1919,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(BOOK + r"/pending-changes"), Handler.get_pending_changes),
     ("POST", re.compile(BOOK + r"/pending-changes/withdraw"), Handler.post_pending_withdraw),
     ("POST", re.compile(BOOK + r"/chapters/(\d+)/retake"), Handler.post_chapter_retake),
+    ("POST", re.compile(BOOK + r"/characters/merge"), Handler.post_merge_character),
     ("GET", re.compile(BOOK + r"/chapters/(\d+)/script"), Handler.get_script),
     ("POST", re.compile(BOOK + r"/start"), Handler.post_start),
     ("POST", re.compile(BOOK + r"/stop"), Handler.post_stop),

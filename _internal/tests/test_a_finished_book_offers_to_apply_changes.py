@@ -12,8 +12,10 @@ from ebook_reader.webui.store import pending_changes
 def test_only_requests_written_after_the_last_run_are_pending(tmp_path: Path) -> None:
     request_pronunciation(tmp_path, "Hailkes", "Hên-cơ", now=100.0)
     request_speakers(tmp_path, [("s1", "sha1"), ("s2", "sha2")], "LUCIEN", now=300.0)
-    assert pending_changes(tmp_path, since=50.0) == 3
-    assert pending_changes(tmp_path, since=200.0) == 2, "cách đọc tên đã áp ở lần chạy lúc 200"
+    # Hai câu gán trong MỘT lần bấm (cả nhóm vai phụ) là một thay đổi (soát UX a6 01-10: "Gộp vào…" ba trăm câu không
+    # được thành "Áp dụng 300 thay đổi").
+    assert pending_changes(tmp_path, since=50.0) == 2
+    assert pending_changes(tmp_path, since=200.0) == 1, "cách đọc tên đã áp ở lần chạy lúc 200"
     assert pending_changes(tmp_path, since=400.0) == 0
 
 
