@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import base64
 import binascii
+import hashlib
 import json
 import mimetypes
 import os
@@ -16,16 +17,17 @@ import secrets
 import shutil
 import threading
 import time
+import urllib.request
 from contextlib import closing
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler
 from pathlib import Path
 from typing import Any, Callable, Protocol
-from urllib.parse import parse_qs, unquote, urlsplit
+from urllib.parse import parse_qs, quote, unquote, urlsplit
 
 from .. import aliases, bracket_rule, continuation, listener_overrides
-from . import (actions, bookfile, cover_search, covers, humanize, listen_view, packages, projectfile, shared_readings,
-               store)
+from . import (actions, bookfile, cover_search, covers, humanize, listen_view, music_catalog, music_plan, packages,
+               projectfile, remote_config, shared_readings, store)
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, legacy_ids
 from .listening import RECORD_ID, Listening
@@ -173,6 +175,11 @@ class App:
         self.static_dir = static_dir
         self.version = version
         self.reviews = Reviews(preferences.path.with_name("reviews.json"))
+        # Nhạc nền (webui/music_*.py): địa chỉ danh mục lấy từ cấu hình từ xa có chữ ký (remote_config.py), không ghi cứng.
+        self.remote_config = remote_config.RemoteConfig(preferences.path.with_name("remote"))
+        self.music_dir = preferences.path.with_name("music")
+        self._music_catalog: music_catalog.MusicCatalog | None = None
+        self._music_lock = threading.Lock()
         if not read_only:
             self._adopt_new_book_ids()
         # Thư mục đã xuất trong phiên này - chỉ những thư mục này được mở bằng "Mở thư mục" sau khi xuất.
@@ -623,6 +630,86 @@ class App:
             plan["analysisModel"] = ""
         elif plan["analysisModel"] not in {model["name"] for model in listed["models"]}:
             plan["analysisModelMissing"], plan["analysisModel"] = plan["analysisModel"], ""
+
+    # ---- nhạc nền ------------------------------------------------------------------------------------------------
+    def music_catalog(self) -> music_catalog.MusicCatalog:
+        with self._music_lock:
+            if self._music_catalog is None:
+                self._music_catalog = music_catalog.MusicCatalog(self.music_dir / "catalog",
+                                                                 self.remote_config.music_catalogs()[0])
+            return self._music_catalog
+
+    def music_view(self, value: str) -> dict[str, Any]:
+        """Rãnh nhạc của cuốn + lựa chọn của người dùng. Chưa có thì dựng (cần danh mục: lần đầu cần mạng)."""
+        path = self._book(value)
+        plan = music_plan.read_plan(path)
+        error = ""
+        if plan is None:
+            try:
+                plan = self.music_rebuild(value)
+            except music_catalog.CatalogError as exc:
+                error = str(exc)
+        return {"plan": plan, "overrides": music_plan.read_overrides(path), "error": error}
+
+    def music_rebuild(self, value: str) -> dict[str, Any]:
+        path = self._book(value)
+        catalog = self.music_catalog()
+        revision = str(catalog.manifest().get("revision") or "")
+        return music_plan.build(path, lambda v, a: catalog.near(v, a, radius=1), catalog.lookup,
+                                catalog_revision=revision, book_key=value)
+
+    def music_update(self, value: str, body: dict[str, Any]) -> dict[str, Any]:
+        """Người dùng sửa (bật/tắt, phong cách, âm lượng, ghim, im lặng, bỏ bài): lưu lựa chọn rồi dựng lại rãnh nhạc.
+        Mất mạng thì lựa chọn vẫn được lưu, rãnh nhạc dựng lại lần sau."""
+        self._mutating()
+        path = self._book(value)
+        music_plan.write_overrides(path, body)
+        return self.music_view(value) if music_plan.read_plan(path) is None else self._music_after_change(value)
+
+    def _music_after_change(self, value: str) -> dict[str, Any]:
+        path = self._book(value)
+        error = ""
+        try:
+            self.music_rebuild(value)
+        except music_catalog.CatalogError as exc:
+            error = str(exc)
+        return {"plan": music_plan.read_plan(path), "overrides": music_plan.read_overrides(path), "error": error}
+
+    def music_cues(self, value: str, chapter_id: int) -> dict[str, Any]:
+        """Nhạc của một chương cho trình phát: mốc thời gian + đường lấy file qua máy này (đệm, tua được)."""
+        path = self._book(value)
+        plan = music_plan.read_plan(path)
+        if plan is None:
+            return {"cues": [], "levelDb": music_plan.DEFAULT_LEVEL_DB}
+        cues = [dict(cue, src="/api/music/track?link=" + quote(cue["link"], safe=""))
+                for cue in music_plan.chapter_cues(plan, chapter_id)]
+        return {"cues": cues, "levelDb": plan.get("levelDb", music_plan.DEFAULT_LEVEL_DB)}
+
+    def music_track_file(self, link: str) -> Path:
+        """File nhạc của một bài trong danh mục: tải một lần từ nguồn gốc vào bộ nhớ đệm, lần sau dùng lại. Chỉ bài CÓ
+        trong danh mục - máy chủ này không thành chỗ tải hộ link tuỳ ý."""
+        if not link.startswith("https://"):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Link nhạc không hợp lệ")
+        target = self.music_dir / "files" / (hashlib.sha1(link.encode("utf-8")).hexdigest() + ".mp3")
+        if target.is_file():
+            return target
+        try:
+            known = self.music_catalog().lookup([link])
+        except music_catalog.CatalogError as exc:
+            raise ApiError(HTTPStatus.SERVICE_UNAVAILABLE, str(exc)) from exc
+        if link not in known:
+            raise ApiError(HTTPStatus.NOT_FOUND, "Bài này không có trong danh mục nhạc nền")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        part = target.with_suffix(".part")
+        try:
+            request = urllib.request.Request(link, headers={"User-Agent": music_catalog.USER_AGENT})
+            with urllib.request.urlopen(request, timeout=60) as response, part.open("wb") as sink:
+                shutil.copyfileobj(response, sink, 1 << 16)
+            os.replace(part, target)
+        except OSError as exc:
+            part.unlink(missing_ok=True)
+            raise ApiError(HTTPStatus.BAD_GATEWAY, "Không tải được bài nhạc từ nguồn - kiểm tra mạng") from exc
+        return target
 
     def redo(self, value: str) -> dict[str, Any]:
         """"Sửa thiết lập" (store.redo_plan): lựa chọn lúc tạo của một cuốn chưa bắt đầu, và phần trước nếu nó là phần
@@ -1380,6 +1467,25 @@ class Handler(BaseHTTPRequestHandler):
         # "Việc cần duyệt" (docs/STUDIO_REVIEW.md): chỗ máy nghi ngờ, xếp theo lợi trên mỗi lần bấm.
         self._send_json(HTTPStatus.OK, work_items(self.app._book(value)))
 
+    def get_music(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.music_view(value))
+
+    def put_music(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.music_update(value, self._body()))
+
+    def post_music_rebuild(self, _query: dict[str, list[str]], value: str) -> None:
+        try:
+            self.app.music_rebuild(value)
+        except music_catalog.CatalogError as error:
+            raise ApiError(HTTPStatus.SERVICE_UNAVAILABLE, str(error)) from error
+        self._send_json(HTTPStatus.OK, self.app.music_view(value))
+
+    def get_music_cues(self, _query: dict[str, list[str]], value: str, chapter: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.music_cues(value, int(chapter)))
+
+    def get_music_track(self, query: dict[str, list[str]]) -> None:
+        self._send_file(self.app.music_track_file((query.get("link") or [""])[0]), cache=True)
+
     def get_redo(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.redo(value))
 
@@ -2040,6 +2146,11 @@ ROUTES: list[Route] = [
     ("GET", re.compile(BOOK + r"/casting"), Handler.get_casting),
     ("GET", re.compile(BOOK + r"/continuation"), Handler.get_continuation),
     ("GET", re.compile(BOOK + r"/redo"), Handler.get_redo),
+    ("GET", re.compile(BOOK + r"/music"), Handler.get_music),
+    ("PUT", re.compile(BOOK + r"/music"), Handler.put_music),
+    ("POST", re.compile(BOOK + r"/music/rebuild"), Handler.post_music_rebuild),
+    ("GET", re.compile(BOOK + r"/music/chapters/(\d+)"), Handler.get_music_cues),
+    ("GET", re.compile(r"/api/music/track"), Handler.get_music_track),
     ("GET", re.compile(BOOK + r"/parts"), Handler.get_parts),
     ("GET", re.compile(BOOK + r"/pronunciations"), Handler.get_name_readings),
     ("GET", re.compile(BOOK + r"/casting/(\d+)"), Handler.get_casting_chapter),
