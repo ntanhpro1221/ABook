@@ -11,6 +11,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Thẻ "Hai người chung một tên?" không còn hỏi khi một nhân vật chỉ nói thêm "chúng ta" bên cạnh "tôi… cậu" (một người,
   không phải hai) - đo trên 8 chương một cuốn LN: bớt một thẻ hỏi nhầm, các ca nhập người thật vẫn bắt đủ.
+- Trang dự án ghi model đã phân tích cuốn ấy ("Phân tích bằng qwen3:8b") - đổi model mặc định thì biết cuốn nào làm bằng model cũ.
 
 ## [0.4.11] - 2026-09-30
 

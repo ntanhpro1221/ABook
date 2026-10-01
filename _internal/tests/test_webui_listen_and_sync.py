@@ -511,6 +511,16 @@ def test_a_paired_device_sees_and_controls_the_player_on_this_computer(library, 
         app.close()
 
 
+def test_the_summary_names_the_model_that_analysed_the_book(library) -> None:
+    """Đổi model phân tích mặc định thì trang dự án vẫn nói cuốn nào làm bằng model nào (book_settings.json)."""
+    _lib, project, _listening = library
+    assert store.summarize(project)["settings"]["analyzer"] == "", "sách không ghi model thì không bịa"
+    settings = json.loads((project / "book_settings.json").read_text(encoding="utf-8"))
+    settings["analysis"] = {"model": "qwen3:8b", "batch_segments": 40}
+    (project / "book_settings.json").write_text(json.dumps(settings), encoding="utf-8")
+    assert store.summarize(project)["settings"]["analyzer"] == "qwen3:8b"
+
+
 def test_the_listen_view_lists_only_chapters_you_can_hear(library) -> None:
     _lib, project, listening = library
     summary = store.summarize(project)
