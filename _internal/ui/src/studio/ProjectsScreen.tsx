@@ -36,6 +36,10 @@ function ProjectRow({ book }: { book: BookSummary }) {
       : book.eta && live
         ? formatEta(book.eta.seconds)
         : `${book.chapters.completed}/${book.chapters.total} chương xong`;
+  const needs = [
+    book.pendingChanges ? `${book.pendingChanges} thay đổi chờ áp` : "",
+    book.chapters.missingAudio ? `${book.chapters.missingAudio} chương mất audio` : "",
+  ].filter(Boolean);
   return (
     // Nút "…" nằm NGOÀI nút của dòng (nút lồng nút không hợp lệ), đè lên lề phải mà dòng chừa sẵn (pr-12).
     <div className="group relative">
@@ -59,13 +63,18 @@ function ProjectRow({ book }: { book: BookSummary }) {
         <div className="col-start-2 md:col-start-auto">
           <StatusPill
             label={book.queuePosition ? `Xếp hàng · thứ ${book.queuePosition}` : book.starting ? "Đang khởi động" : book.statusLabel}
-            tone={book.queuePosition || book.paused ? "warning" : phaseTone(book.phase, live)}
+            tone={book.queuePosition || book.paused || (book.phase === "done" && needs.length) ? "warning" : phaseTone(book.phase, live)}
             live={live && !book.paused}
           />
         </div>
         <div className="col-start-2 min-w-0 md:col-start-auto">
           {book.phase === "done" ? (
-            <span className="text-xs text-fg-2">{detail}</span>
+            <span className="text-xs text-fg-2">
+              {detail}
+              {/* Sách "Hoàn tất" mà còn việc của mình: nói ngay trên dòng (soát UX a6 01-10 - lo18 xanh "Hoàn tất" trong khi còn
+                  15 thay đổi chờ áp và 40 chương mất audio, nhìn danh sách không biết cuốn nào cần mình). */}
+              {needs.length > 0 && <span className="font-medium text-warning"> · {needs.join(" · ")}</span>}
+            </span>
           ) : (
             <>
               <div className="flex items-center gap-2">

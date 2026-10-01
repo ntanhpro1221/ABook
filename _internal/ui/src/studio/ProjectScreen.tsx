@@ -64,6 +64,7 @@ import {
   formatTime,
 } from "@/shared/format";
 import { CastList } from "@/listen/BookScreen";
+import { ApplyChangesDialog } from "./ApplyChanges";
 import { CoverEditor } from "./CoverEditor";
 import { ReviewQueue, useReviewCount } from "./ReviewQueue";
 import { WorkInbox, useWorkCount } from "./WorkInbox";
@@ -439,6 +440,7 @@ function Actions({ book }: { book: BookSummary }) {
   const remote = Boolean(useAppInfo().data?.remote);
   const navigate = useNavigate();
   const [confirmStop, setConfirmStop] = useState(false);
+  const [confirmApply, setConfirmApply] = useState(false);
   const live = book.running;
   const stop = useStop();
   const pause = usePause();
@@ -500,7 +502,7 @@ function Actions({ book }: { book: BookSummary }) {
       ) : book.pendingChanges ? (
         // Sách đã xong không tự chạy lại: sửa của người nghe chờ ở đây. Chạy lại áp chúng trước rồi chỉ thu lại câu bị ảnh
         // hưởng (Pipeline._recover) - không làm lại cả cuốn.
-        <Button variant="primary" size="lg" icon={RefreshCw} loading={start.isPending} onClick={() => start.mutate(book.id)}>
+        <Button variant="primary" size="lg" icon={RefreshCw} loading={start.isPending} onClick={() => setConfirmApply(true)}>
           Áp dụng {book.pendingChanges} thay đổi
         </Button>
       ) : null}
@@ -513,6 +515,13 @@ function Actions({ book }: { book: BookSummary }) {
       {/* Đổi tên / xoá chỉ trên máy này - Studio từ xa không có hai đường ấy (remote_studio.ALLOWED). */}
       {!remote && <ProjectMenu book={book} />}
       <StopDialog book={book} open={confirmStop} onOpenChange={setConfirmStop} />
+      <ApplyChangesDialog
+        bookId={book.id}
+        count={book.pendingChanges ?? 0}
+        open={confirmApply}
+        onOpenChange={setConfirmApply}
+        onApply={() => start.mutate(book.id)}
+      />
       {live && book.paused === "battery" && (
         <p className="basis-full text-pretty text-sm text-fg-2">
           Máy tính đang chạy pin: tạo sách trên pin chậm hơn nhiều mà hao pin, nên Studio tạm dừng và tự làm tiếp khi cắm sạc.
@@ -555,7 +564,8 @@ function PartLinks({ id }: { id: string }) {
 // ---- Chương ------------------------------------------------------------------------------------------------
 
 function chapterTone(chapter: Chapter) {
-  if (chapter.status === "completed") return "success" as const;
+  // Soát UX a6 01-10: "Mất file audio" mang màu "xong" trong khi đầu trang tô cam cùng chuyện ấy.
+  if (chapter.status === "completed") return chapter.statusLabel === "Mất file audio" ? ("warning" as const) : ("success" as const);
   if (chapter.status === "failed") return "danger" as const;
   if (chapter.status === "synthesizing" || chapter.status === "verifying") return "accent" as const;
   return "muted" as const;
@@ -822,7 +832,7 @@ export function ProjectScreen() {
         <CoverEditor book={book} />
         <div className="min-w-0 flex-1 pt-1">
           <StatusPill
-            label={book.starting ? "Đang khởi động" : book.statusLabel}
+            label={book.queuePosition ? `Xếp hàng · thứ ${book.queuePosition}` : book.starting ? "Đang khởi động" : book.statusLabel}
             tone={book.paused ? "warning" : phaseTone(book.phase, live)}
             live={live && !book.paused}
           />

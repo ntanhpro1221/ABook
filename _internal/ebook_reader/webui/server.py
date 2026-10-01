@@ -16,6 +16,7 @@ import secrets
 import shutil
 import threading
 import time
+from contextlib import closing
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler
 from pathlib import Path
@@ -541,7 +542,10 @@ class App:
             # Qua hàng đợi như nút "Bắt đầu": cuốn đang chạy thì cuốn mới xếp hàng, không tranh GPU (soát 28-09 - trước
             # đây "Tạo + bắt đầu ngay" chạy song song với cuốn đang sản xuất).
             self.start(book_id(root))
-        return {"id": book_id(root), "sharedReadings": shared}
+        # Đang có cuốn khác chạy thì cuốn mới vào hàng chờ: lời báo nói đúng thế, không "Đang khởi động" (soát UX a6 01-10).
+        with self._queue_lock:
+            queued = self.queue.index(book_id(root)) + 1 if book_id(root) in self.queue else 0
+        return {"id": book_id(root), "sharedReadings": shared, "queued": queued}
 
     def shared_readings_view(self) -> dict[str, Any]:
         return {"entries": self.shared_readings.entries()}
@@ -1122,6 +1126,38 @@ class Handler(BaseHTTPRequestHandler):
     def get_book(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.book_view(value))
 
+    def get_pending_changes(self, _query: dict[str, list[str]], value: str) -> None:
+        # Hộp xem trước của nút "Áp dụng N thay đổi": từng thay đổi, số câu / chương thu lại, thời gian ước (store.pending_details).
+        project = self.app._book(value)
+        with closing(store.connect(project)) as connection:
+            row = connection.execute("SELECT updated_at FROM book WHERE id=1").fetchone()
+        since = store.changes_since(project, float(row["updated_at"] or 0) if row is not None else 0.0)
+        self._send_json(HTTPStatus.OK, store.pending_details(project, since))
+
+    def post_pending_withdraw(self, _query: dict[str, list[str]], value: str) -> None:
+        # Bỏ một thay đổi khỏi hộp "Áp dụng N thay đổi" trước khi áp (soát UX a6 01-10: muốn bỏ một mục thì phải đi tìm lại
+        # đúng thẻ / đúng câu ở ba tab khác nhau). Chỉ khi sách KHÔNG chạy: đang chạy thì dây chuyền có thể đang áp chính
+        # yêu cầu ấy ở ranh giới chương. Yêu cầu từng thay một yêu cầu cũ thì yêu cầu cũ trở lại (withdraw_requests).
+        self.app._mutating()
+        path = self.app._book(value)
+        if self.app.runner.running(path) or self.app.jobs.starting(path):
+            raise ApiError(HTTPStatus.CONFLICT, "Sách đang chạy - máy có thể đang áp chính thay đổi này. Tạm dừng hẳn rồi bỏ.")
+        body = self._body()
+        section, key = str(body.get("section") or ""), str(body.get("key") or "")
+        try:
+            requested_at = float(body.get("requestedAt") or 0)
+        except (TypeError, ValueError):
+            requested_at = 0.0
+        if section not in ("pronunciations", "speakers", "lines", "voices", "retakes") or not key or requested_at <= 0:
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu thay đổi cần bỏ")
+        if not listener_overrides.requests_made_at(listener_overrides.read_overrides(path), section, [key], requested_at):
+            raise ApiError(HTTPStatus.CONFLICT, "Thay đổi này vừa được thay bằng một lựa chọn sau - mở lại hộp để xem.")
+        if section == "retakes":
+            listener_overrides.cancel_retake(path, key)
+        else:
+            listener_overrides.withdraw_requests(path, section, [key], requested_at)
+        self._send_json(HTTPStatus.OK, {"withdrawn": 1})
+
     def get_cast(self, _query: dict[str, list[str]], value: str) -> None:
         path = self.app._listenable(value)
         self._send_json(HTTPStatus.OK, packages.cast(path) if packages.is_package(path) else store.cast(path))
@@ -1651,6 +1687,25 @@ class Handler(BaseHTTPRequestHandler):
         result["existing"] = self.app.existing_projects([str(row.get("sha256") or "") for row in result["files"]])
         self._send_json(HTTPStatus.OK, result)
 
+    def post_source_split(self, _query: dict[str, list[str]]) -> None:
+        # Người dùng bấm "Tách thành N chương" (đề xuất của bước 1): các chương ghi vào thư mục mới trong thư viện, file
+        # gốc giữ nguyên. Từ xa: nguồn phải là file đã gửi lên, và kết quả cũng nằm trong "Nguồn tải lên" để quét tiếp được.
+        from . import txt_split
+
+        self.app._mutating()
+        body = self._body()
+        paths = self._source_paths([str(body.get("path") or "")])
+        source = Path(paths[0].strip().strip('"').strip("'").strip()).expanduser()
+        if not source.is_file() or source.suffix.casefold() != ".txt":
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Chỉ tách được một file .txt có sẵn trên máy này")
+        library = Path(self.app.preferences.get()["libraryRoot"])
+        root = library / (actions.UPLOAD_FOLDER if self._remote() else actions.SPLIT_FOLDER)
+        try:
+            folder = txt_split.split(source, root)
+        except (OSError, ValueError) as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, f"Không tách được: {error}") from error
+        self._send_json(HTTPStatus.OK, {"folder": str(folder)})
+
     def post_source_upload(self, _query: dict[str, list[str]]) -> None:
         # Studio từ xa: điện thoại không có đường dẫn nào trên máy này để gõ - nó gửi từng chương TXT, rồi trình tạo sách
         # đi tiếp như khi chọn thư mục. Byte giữ nguyên (base64): dây chuyền tự nhận bảng mã như với file trên máy.
@@ -1796,6 +1851,7 @@ ROUTES: list[Route] = [
     ("PUT", re.compile(r"/api/preferences"), Handler.put_preferences),
     ("POST", re.compile(r"/api/scan"), Handler.post_scan),
     ("POST", re.compile(r"/api/sources/upload"), Handler.post_source_upload),
+    ("POST", re.compile(r"/api/sources/split"), Handler.post_source_split),
     ("POST", re.compile(r"/api/first-person"), Handler.post_first_person),
     ("POST", re.compile(r"/api/books"), Handler.post_create),
     ("POST", re.compile(r"/api/books/open"), Handler.post_open),
@@ -1804,6 +1860,8 @@ ROUTES: list[Route] = [
     ("GET", re.compile(BOOK), Handler.get_book),
     ("GET", re.compile(BOOK + r"/cast"), Handler.get_cast),
     ("GET", re.compile(BOOK + r"/activity"), Handler.get_activity),
+    ("GET", re.compile(BOOK + r"/pending-changes"), Handler.get_pending_changes),
+    ("POST", re.compile(BOOK + r"/pending-changes/withdraw"), Handler.post_pending_withdraw),
     ("GET", re.compile(BOOK + r"/chapters/(\d+)/script"), Handler.get_script),
     ("POST", re.compile(BOOK + r"/start"), Handler.post_start),
     ("POST", re.compile(BOOK + r"/stop"), Handler.post_stop),

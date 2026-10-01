@@ -202,6 +202,31 @@ def test_a_phone_sends_chapters_then_creates_the_book_from_them(studio) -> None:
         assert status == 400, (folder_name, name)
 
 
+def test_a_whole_book_sent_from_a_phone_can_be_split_into_chapters(studio, tmp_path: Path) -> None:
+    # Soát UX a5 01-10: truyện tải mạng là MỘT file - điện thoại gửi nó lên, bước 1 đề xuất tách, bấm thì tách ngay trên
+    # máy tính; các chương nằm trong "Nguồn tải lên" để thiết bị quét tiếp được. Không tách được file ngoài chỗ tải lên.
+    app, _project = studio
+    app.set_remote_studio(True)
+    port = app.sync_server.port
+    cookie = {"Cookie": _pair_browser(app)}
+    book = "Chương 1\n\nTrời đã sáng.\n\nChương 2\n\nTrời tối.\n".encode()
+    _status, data, _ = _request(port, "POST", "/api/sources/upload", headers=cookie, body={
+        "folder": "Cả truyện", "name": "tron bo.txt", "data": base64.b64encode(book).decode("ascii")})
+    whole = str(Path(json.loads(data)["folder"]) / "tron bo.txt")
+    status, data, _ = _request(port, "POST", "/api/scan", headers=cookie, body={"paths": [whole]})
+    assert status == 200 and json.loads(data)["files"][0]["split"]["chapters"] == 2
+    status, data, _ = _request(port, "POST", "/api/sources/split", headers=cookie, body={"path": whole})
+    assert status == 200, data
+    folder = Path(json.loads(data)["folder"])
+    assert folder.parent.parent == Path(app.preferences.get()["libraryRoot"]) / "Nguồn tải lên"
+    status, data, _ = _request(port, "POST", "/api/scan", headers=cookie, body={"paths": [str(folder)]})
+    assert status == 200 and len(json.loads(data)["files"]) == 2
+    outside = tmp_path / "ngoai.txt"
+    outside.write_bytes(book)
+    status, _data, _ = _request(port, "POST", "/api/sources/split", headers=cookie, body={"path": str(outside)})
+    assert status == 403
+
+
 # ---- soát bảo mật 28-09: mỗi test tái hiện đúng một cách tấn công của báo cáo ------------------------------------------
 
 
