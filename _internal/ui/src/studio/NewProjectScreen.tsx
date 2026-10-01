@@ -34,6 +34,7 @@ import type { ContinuationPlan, FirstPersonHint, ScannedFile, ScanResult, Voice 
 import {
   pickFiles,
   pickFolder,
+  usePreferences,
   useAppInfo,
   useContinuation,
   useCreateBook,
@@ -1205,6 +1206,7 @@ export function NewProjectScreen() {
   const scanMutation = useScan();
   const create = useCreateBook();
   const { data: voices } = useVoices();
+  const { data: preferences } = usePreferences();
   const [draft, setDraft] = useState<Draft>(loadDraft);
   const [rawScan, setRawScan] = useState<ScanResult | null>(null);
   const [problem, setProblem] = useState<{ text: string; subfolders: string[] } | null>(null);
@@ -1212,6 +1214,17 @@ export function NewProjectScreen() {
   const update = (changes: Partial<Draft>) => setDraft((current) => ({ ...current, ...changes }));
 
   useEffect(() => saveDraft(draft), [draft]);
+  // Chất lượng mặc định cho sách mới (Cài đặt > Studio) - chỉ khi trình tạo còn trống, không đè lựa chọn đang dở.
+  const profileApplied = useRef(false);
+  useEffect(() => {
+    if (profileApplied.current || !preferences) return;
+    profileApplied.current = true;
+    const wanted = preferences.newBookProfile;
+    if (!draft.paths.length && !draft.seed && wanted && (PROFILE_VALUES as string[]).includes(wanted) && wanted !== draft.profile) {
+      update({ profile: wanted as Profile });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preferences]);
   usePageTitle(draft.seed ? "Làm tiếp cuốn này" : undefined);
 
   // "Làm tiếp cuốn này" (?continue=<id>): điền sẵn một lần từ phần trước rồi bỏ tham số, để quay lại trang không điền đè
@@ -1251,9 +1264,13 @@ export function NewProjectScreen() {
   }, [planError]);
 
   useEffect(() => {
-    if (!draft.narrator && voices?.length) update({ narrator: voices.find((voice) => voice.recommended)?.name ?? voices[0].name });
+    if (!draft.narrator && voices?.length) {
+      // Cài đặt > Studio: giọng kể mặc định cho sách mới (còn trong danh sách giọng), không thì giọng máy đề xuất.
+      const preferred = preferences?.newBookNarrator && voices.find((voice) => voice.name === preferences.newBookNarrator);
+      update({ narrator: preferred ? preferred.name : (voices.find((voice) => voice.recommended)?.name ?? voices[0].name) });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [voices, draft.narrator]);
+  }, [voices, draft.narrator, preferences?.newBookNarrator]);
 
   // Quét lại chỉ khi danh sách nguồn đổi; bỏ một chương là lọc ngay ở đây, không đọc lại cả thư mục.
   useEffect(() => {
