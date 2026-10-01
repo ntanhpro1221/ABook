@@ -571,6 +571,89 @@ function chapterTone(chapter: Chapter) {
   return "muted" as const;
 }
 
+// Menu "…" của một chương (soát UX a5/a6 01-10: trên bảng chương chỉ nghe được - muốn đọc kịch bản chương ấy, hay thu lại
+// cả chương nghe không ổn, phải đi vòng qua tab khác và bấm từng câu).
+function ChapterMenu({ book, chapter, onPlay }: { book: BookSummary; chapter: Chapter; onPlay: () => void }) {
+  const [, setParams] = useSearchParams();
+  const client = useQueryClient();
+  const [confirm, setConfirm] = useState(false);
+  const recorded = chapter.segments.finished;
+  const retake = useMutation({
+    mutationFn: () => api<{ lines: number }>(`/api/books/${book.id}/chapters/${chapter.id}/retake`, { method: "POST" }),
+    onSuccess: ({ lines }) => {
+      toast.success(`Đã ghi: thu lại ${lines} câu của ${chapter.displayTitle}`, {
+        description: book.running
+          ? "Máy thu lại khi sách chạy tới ranh giới chương kế. Bỏ được trong hộp “Áp dụng thay đổi”."
+          : "Bấm “Áp dụng thay đổi” ở đầu trang để thu. Bỏ được trong hộp ấy.",
+      });
+      void client.invalidateQueries({ queryKey: ["book", book.id] });
+      void client.invalidateQueries({ queryKey: ["library"] });
+    },
+    onError: (error: Error) => toast.error("Chưa ghi được", { description: error.message }),
+  });
+  return (
+    <>
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger asChild>
+          <button
+            type="button"
+            aria-label={`Tuỳ chọn ${chapter.displayTitle}`}
+            className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-fg-2 opacity-0 transition-colors hover:bg-panel hover:text-fg focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:bg-panel data-[state=open]:opacity-100 max-md:opacity-100"
+          >
+            <MoreHorizontal className="size-[18px]" />
+          </button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Portal>
+          <DropdownMenu.Content align="end" sideOffset={4} className="z-50 min-w-56 rounded-xl border border-line bg-panel p-1.5 shadow-float">
+            {chapter.playable && (
+              <DropdownMenu.Item onSelect={onPlay} className={MENU_ITEM}>
+                <Play className="size-4" /> Nghe chương
+              </DropdownMenu.Item>
+            )}
+            <DropdownMenu.Item
+              onSelect={() => setParams({ tab: "script", chapter: String(chapter.id) })}
+              className={MENU_ITEM}
+            >
+              <BookOpenText className="size-4" /> Kịch bản chương này
+            </DropdownMenu.Item>
+            {recorded > 0 && (
+              <>
+                <DropdownMenu.Separator className="my-1 h-px bg-line" />
+                <DropdownMenu.Item onSelect={() => setConfirm(true)} className={MENU_ITEM}>
+                  <RefreshCw className="size-4" /> Thu lại cả chương…
+                </DropdownMenu.Item>
+              </>
+            )}
+          </DropdownMenu.Content>
+        </DropdownMenu.Portal>
+      </DropdownMenu.Root>
+      <Dialog
+        open={confirm}
+        onOpenChange={setConfirm}
+        title={`Thu lại cả ${chapter.displayTitle}?`}
+        description={`${recorded} câu đã thu được thu lại bằng hạt giống mới - giọng như cũ, cách nói mỗi câu khác đi một chút. Hợp khi cả chương nghe không ổn; sai người nói hay sai chữ thì sửa ở Kịch bản, thu lại y chữ không chữa được.`}
+      >
+        <div className="mt-5 flex justify-end gap-2">
+          <Button variant="ghost" onClick={() => setConfirm(false)}>
+            Thôi
+          </Button>
+          <Button
+            variant="primary"
+            icon={RefreshCw}
+            loading={retake.isPending}
+            onClick={() => {
+              setConfirm(false);
+              retake.mutate();
+            }}
+          >
+            Thu lại {recorded} câu
+          </Button>
+        </div>
+      </Dialog>
+    </>
+  );
+}
+
 function ChapterRow({ book, chapter }: { book: BookSummary; chapter: Chapter }) {
   const player = usePlayer();
   const playChapter = usePlayChapter();
@@ -587,7 +670,7 @@ function ChapterRow({ book, chapter }: { book: BookSummary; chapter: Chapter }) 
       role="row"
       onDoubleClick={onPlay}
       className={cn(
-        "group grid h-14 grid-cols-[40px_minmax(0,1fr)_auto] lg:grid-cols-[48px_minmax(0,1fr)_150px_110px_96px] items-center gap-3 rounded-lg px-2 text-sm",
+        "group grid h-14 grid-cols-[40px_minmax(0,1fr)_auto_32px] lg:grid-cols-[48px_minmax(0,1fr)_150px_110px_96px_32px] items-center gap-3 rounded-lg px-2 text-sm",
         current ? "bg-accent-soft" : "hover:bg-hover",
       )}
     >
@@ -642,6 +725,7 @@ function ChapterRow({ book, chapter }: { book: BookSummary; chapter: Chapter }) 
       <div className="tabular hidden whitespace-nowrap text-right text-xs text-fg-3 lg:block">
         {chapter.completedAt ? formatRelative(chapter.completedAt) : ""}
       </div>
+      <ChapterMenu book={book} chapter={chapter} onPlay={onPlay} />
     </div>
   );
 }
@@ -649,13 +733,14 @@ function ChapterRow({ book, chapter }: { book: BookSummary; chapter: Chapter }) 
 function ChapterList({ book, chapters }: { book: BookSummary; chapters: Chapter[] }) {
   return (
     <div role="table" aria-label="Danh sách chương" className="mt-2">
-      <div className="grid h-9 grid-cols-[40px_minmax(0,1fr)_auto] lg:grid-cols-[48px_minmax(0,1fr)_150px_110px_96px] items-center gap-3 border-b border-line px-2 text-[11px] font-semibold uppercase tracking-wider text-fg-3">
+      <div className="grid h-9 grid-cols-[40px_minmax(0,1fr)_auto_32px] lg:grid-cols-[48px_minmax(0,1fr)_150px_110px_96px_32px] items-center gap-3 border-b border-line px-2 text-[11px] font-semibold uppercase tracking-wider text-fg-3">
         <span className="text-center">#</span>
         <span>Chương</span>
         <span>Trạng thái</span>
         {/* Màn hẹp (điện thoại, Studio từ xa) chỉ còn #, chương, trạng thái - soát UX 29-09: 5 cột cố định vỡ ở 375px. */}
         <span className="hidden text-right lg:block">Độ dài</span>
         <span className="hidden text-right lg:block">Xong lúc</span>
+        <span />
       </div>
       <div className="mt-1 space-y-px">
         {chapters.map((chapter) => (

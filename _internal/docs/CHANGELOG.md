@@ -21,6 +21,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - **Kịch bản** sửa nhanh hơn: thanh chọn chương và chú giải người nói (số phím tắt) dính ở đầu khi cuộn; **Shift + ↑ ↓**
   (hay Shift + bấm) chọn nhiều câu rồi một phím số gán cả nhóm; người gán qua ô tìm được thêm vào chú giải với số kế
   tiếp; chọn người trong danh sách xong tự sang câu kế; **Ctrl+Z** hoàn tác lần gán gần nhất; **P** nghe câu đang chọn.
+- Mỗi chương có menu **…**: nghe chương, mở **Kịch bản chương này**, và **Thu lại cả chương** (mọi câu đã thu, hạt giống
+  mới - khi cả chương nghe không ổn). Cả chương tính là một thay đổi trong hộp "Áp dụng", bỏ được bằng một nút.
 - **Cần nghe lại**: câu hỏng sau mọi lần thử (tượng thanh "Tách tách tách", "Coong…", chữ lạ) có nút **Sửa chữ đem đọc**
   ngay trên thẻ - viết lại cách đọc thành tiếng, lưu cho một câu hay cả các câu cùng chữ; chữ của sách giữ nguyên. Câu đã
   ghi chữ mới rời mục "Chưa xem" và hiện "Sẽ đọc là …" cho tới khi áp.
