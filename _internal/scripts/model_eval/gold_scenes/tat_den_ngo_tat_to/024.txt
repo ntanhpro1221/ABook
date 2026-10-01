@@ -1,0 +1,9 @@
+# Đáp án cảnh - Tắt đèn, Chương XXIV: đêm ở trại lệ phủ đường; lính đòi tiền hàng đội, cùm chị Dậu, dẫn vào nhà tư quan Phủ.
+# 74 câu, ~1270 tiếng. Thế giới: vietnam_classic. PHÂN XỬ 02-10 từ A + B. Đồng thuận trước phân xử: Pk 0,14.
+scene 0-22 | V=-0.5 E=0 T=0.5 | gems=tension | function=mo_dau | setting=trại lệ phủ đường lúc lên đèn | music=nhe | tone=mia - lính lệ tán chuyện quan, xe ông huyện Minh Hảo tới
+accent 5-6 | trống báo ba tiếng, ô tô xanh vào sân
+scene 23-43 | V=-1 E=0.5 T=1.5 | gems=tension | function=doi_thoai | setting=xó trại lệ | music=co | biện lệ đòi tiền hàng đội, chỉ cái cùm
+scene 44-63 | V=-1.5 E=0 T=2 | gems=tension | function=hanh_dong | setting=trại lệ về đêm | music=co | khách đi, kiểng trống điểm canh; quan đòi lên giữa đêm, chị Dậu van xin
+accent 46-47 | xe khách khuất vào bóng tối; kiểng và trống điểm ba tiếng
+scene 64-73 | V=-2 E=0.5 T=2 | gems=tension/sadness | function=cao_trao | setting=gian trại có cùm, rồi cửa nhà tư | music=co | start=soft (chỉ A) - cùm tréo, mếu khóc; dẫn vào nhà tư, cửa đóng sập
+accent 73 | cánh cửa đóng sập
