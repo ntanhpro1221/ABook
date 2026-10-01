@@ -97,7 +97,10 @@ export interface RemoteBook {
 export interface RemotePlayer {
   device: string;
   name: string;
-  kind: "computer" | "phone";
+  /** Máy gì - chỉ để chọn biểu tượng. */
+  kind: "computer" | "phone" | "speaker" | "tv" | "media";
+  /** "cast": loa / TV máy tính chính thấy trong mạng nhà (mã "cast:…") - điều khiển qua máy tính, chỉ phát sách của nó. */
+  via?: "cast";
   state: {
     bookId?: string;
     bookTitle?: string;

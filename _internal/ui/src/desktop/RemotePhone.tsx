@@ -1,6 +1,6 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Cast, Laptop, Loader2, MonitorSmartphone, Pause, Play, Smartphone, Speaker, Tv, X } from "lucide-react";
+import { Cast, Laptop, Loader2, MonitorSmartphone, MonitorSpeaker, Pause, Play, Smartphone, Speaker, Tv, X } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useClockReader } from "@/listen/clock";
@@ -24,7 +24,7 @@ export interface RemotePhone {
   device: string;
   name: string;
   /** Máy gì - chỉ để chọn biểu tượng. */
-  kind: "phone" | "computer" | "speaker" | "tv";
+  kind: "phone" | "computer" | "speaker" | "tv" | "media";
   /** Điện thoại báo lên máy tính này, máy đã ghép ở "Máy tính khác" (máy tính / điện thoại chia sẻ thư viện), hay loa /
    *  TV trong mạng nhà (phát mọi cuốn của máy này). */
   via: "remote" | "peer" | "cast";
@@ -65,7 +65,7 @@ type RemoteCommand =
 
 type Ack = { id: string; ok: boolean; message: string };
 
-const DEVICE_ICONS = { phone: Smartphone, computer: Laptop, speaker: Speaker, tv: Tv } as const;
+const DEVICE_ICONS = { phone: Smartphone, computer: Laptop, speaker: Speaker, tv: Tv, media: MonitorSpeaker } as const;
 
 export function DeviceIcon({ kind, className }: { kind: RemotePhone["kind"]; className?: string }) {
   const Icon = DEVICE_ICONS[kind] ?? Smartphone;

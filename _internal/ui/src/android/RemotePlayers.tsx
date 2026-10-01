@@ -1,5 +1,6 @@
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Laptop, Loader2, Pause, Play, Smartphone, X } from "lucide-react";
+import { Cast, Laptop, Loader2, MonitorSpeaker, Pause, Play, Smartphone, Speaker, Tv, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useClockReader } from "@/listen/clock";
@@ -12,7 +13,15 @@ import { EbookLibrary, type RemotePlayer, type RemotePlayerCommand } from "./plu
 
 // Điện thoại xem và điều khiển trình phát ở máy khác (mạng trạm bước 4): máy tính chính và mọi thiết bị ghép trả trình
 // phát ở /sync/v1/player (RemotePlayers.kt). Chỉ hỏi khi app đang hiện; có máy đang phát thì 2 giây một lần, không thì 8
-// giây. Giữa hai lần hỏi, vị trí nội suy theo đồng hồ và tốc độ như máy tính làm với điện thoại.
+// giây. Giữa hai lần hỏi, vị trí nội suy theo đồng hồ và tốc độ như máy tính làm với điện thoại. Loa / TV máy tính chính
+// thấy trong mạng nhà (`via` cast, 01-10) đứng cùng danh sách: điều khiển qua máy tính, máy tính phục vụ audio.
+
+const KIND_ICONS = { computer: Laptop, phone: Smartphone, speaker: Speaker, tv: Tv, media: MonitorSpeaker } as const;
+
+function KindIcon({ kind, className }: { kind: RemotePlayer["kind"]; className?: string }) {
+  const Icon = KIND_ICONS[kind] ?? Smartphone;
+  return <Icon className={className} />;
+}
 
 interface PlayersView {
   players: RemotePlayer[];
@@ -122,7 +131,7 @@ function RemotePlayerBar({ remote, receivedAt, onDismiss }: { remote: RemotePlay
       <div className="flex items-center gap-2 px-3 py-2">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 text-xs font-semibold text-accent-text">
-            {remote.kind === "computer" ? <Laptop className="size-3.5 shrink-0" /> : <Smartphone className="size-3.5 shrink-0" />}
+            <KindIcon kind={remote.kind} className="size-3.5 shrink-0" />
             <span className="truncate">
               {state.playing ? "Đang phát trên" : "Đang dừng trên"} {remote.name}
             </span>
@@ -211,8 +220,9 @@ export function RemotePlayerBars() {
 
 /**
  * "Phát trên <máy>" ở màn đang nghe của điện thoại: chuyển cuốn đang nghe sang máy giữ nó - máy tính chính (sách của nó,
- * đã tải hay nghe thẳng) hoặc thiết bị ghép (sách `p<key>_...` của thiết bị ấy) - đúng chương, đúng giây, rồi dừng ở
- * điện thoại. Chỉ hiện khi máy ấy đang trả lời. Thanh "Đang phát trên <máy>" hiện lên sau một lượt mạng là lời xác nhận.
+ * đã tải hay nghe thẳng) hoặc thiết bị ghép (sách `p<key>_...` của thiết bị ấy) - hay sang loa / TV máy tính chính thấy
+ * (sách của máy tính), đúng chương, đúng giây, rồi dừng ở điện thoại. Một nơi: một nút; nhiều nơi: một menu. Thanh "Đang
+ * phát trên <máy>" hiện lên sau một lượt mạng là lời xác nhận.
  */
 export function PhoneHandOffButton() {
   const { data } = useRemotePlayers();
@@ -222,10 +232,14 @@ export function PhoneHandOffButton() {
   const track = player.track;
   if (!track || !data) return null;
   const peer = /^p([0-9a-f]{8})_/.exec(track.bookId)?.[1];
-  const target = data.players.find((remote) => remote.device === (peer ?? "main"));
-  if (!target) return null;
-  const handOff = async () => {
+  const owner = data.players.find((remote) => remote.device === (peer ?? "main"));
+  const speakers = peer ? [] : data.players.filter((remote) => remote.via === "cast");
+  const targets = [...(owner ? [owner] : []), ...speakers];
+  if (!targets.length) return null;
+  const handOff = async (target: RemotePlayer) => {
     const seconds = readClock().time;
+    // Loa / TV mất vài giây (máy tính đưa chương, TV tải rồi mới tua tới đúng chỗ): có dòng "Đang mở…" tới lúc ấy.
+    const waiting = target.via === "cast" ? toast.loading(`Đang mở trên ${target.name}…`) : undefined;
     try {
       await EbookLibrary.remoteCommand({
         device: target.device,
@@ -235,10 +249,41 @@ export function PhoneHandOffButton() {
       window.setTimeout(() => void client.invalidateQueries({ queryKey: ["remote-players"] }), 800);
     } catch (error) {
       toast.error((error as Error).message);
+    } finally {
+      if (waiting !== undefined) toast.dismiss(waiting);
     }
   };
+  if (targets.length === 1) {
+    const [only] = targets;
+    return (
+      <IconButton label={`Phát trên ${only.name}`} icon={only.via === "cast" ? Cast : KIND_ICONS[only.kind] ?? Smartphone}
+        size="sm" onClick={() => void handOff(only)} />
+    );
+  }
   return (
-    <IconButton label={`Phát trên ${target.name}`} icon={target.kind === "computer" ? Laptop : Smartphone} size="sm"
-      onClick={() => void handOff()} />
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger
+        aria-label="Phát trên thiết bị khác"
+        className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-fg-2 active:bg-hover data-[state=open]:bg-hover data-[state=open]:text-fg"
+      >
+        <Cast className="size-[18px]" strokeWidth={2} />
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content side="top" align="end" sideOffset={8} collisionPadding={12} className="z-50 min-w-56 max-w-[calc(100vw-24px)] rounded-xl border border-line bg-panel p-1.5 shadow-float">
+          <DropdownMenu.Label className="px-2 pb-1 pt-0.5 text-xs font-medium text-fg-3">Phát trên</DropdownMenu.Label>
+          {targets.map((target) => (
+            <DropdownMenu.Item
+              key={target.device}
+              onSelect={() => void handOff(target)}
+              className="flex h-11 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[highlighted]:bg-hover"
+            >
+              <KindIcon kind={target.kind} className="size-4 shrink-0 text-fg-2" />
+              <span className="min-w-0 flex-1 truncate">{target.name}</span>
+              {target.state?.bookId && target.state.playing && <span className="shrink-0 text-xs text-fg-3">đang phát</span>}
+            </DropdownMenu.Item>
+          ))}
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
   );
 }

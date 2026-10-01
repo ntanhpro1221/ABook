@@ -72,7 +72,7 @@ UPNP_ERRORS = {
 }
 TV_WORDS = re.compile(r"\b(tv|television|bravia|webos|tizen|roku|fire ?tv|google ?tv|android ?tv|smart ?tv)\b", re.IGNORECASE)
 # Máy Windows bật "Cho phép điều khiển Trình phát từ xa" (Windows Media Player) - gặp thật trong mạng nhà chủ sách 01-10.
-COMPUTER_WORDS = re.compile(r"\b(windows (digital )?media|windows media player|microsoft)\b", re.IGNORECASE)
+MEDIA_WORDS = re.compile(r"\b(windows (digital )?media|windows media player|microsoft)\b", re.IGNORECASE)
 
 
 class CastError(Exception):
@@ -87,7 +87,7 @@ class CastError(Exception):
 class Renderer:
     id: str  # 12 hex, ổn định theo UDN - nằm trong đường /api/remote/<id> như mã điện thoại
     name: str
-    kind: str  # "tv" | "computer" | "speaker" - chỉ để chọn biểu tượng
+    kind: str  # "tv" | "media" (máy tính bật trình phát nhận lệnh từ xa) | "speaker" - chỉ để chọn biểu tượng
     host: str  # địa chỉ IP đã trả lời SSDP; mô tả và lệnh chỉ đi tới đây
     location: str
     av_url: str
@@ -282,7 +282,7 @@ def describe(location: str, host: str, *, timeout: float = 3.0) -> Renderer | No
         name = _clean(_text(device, "friendlyName"), 80) or host
         model = " ".join(_text(device, field) for field in ("manufacturer", "modelName", "modelDescription"))
         udn = _text(device, "UDN") or location
-        kind = ("tv" if TV_WORDS.search(f"{name} {model}") else "computer" if COMPUTER_WORDS.search(model)
+        kind = ("tv" if TV_WORDS.search(f"{name} {model}") else "media" if MEDIA_WORDS.search(model)
                 else "speaker")
         return Renderer(id=hashlib.sha1(udn.encode("utf-8")).hexdigest()[:12], name=name, kind=kind, host=host,
                         location=location, av_url=av[1], av_type=av[0], rc_url=rc[1], rc_type=rc[0])
@@ -552,6 +552,18 @@ class CastPlayers:
             return device in self._renderers
 
     def close(self) -> None:
+        """App đóng: thiết bị đang phát sách của máy này dừng hẳn (cổng audio sắp đóng - để nó phát nốt phần đã tải rồi
+        báo lỗi thì khó hiểu hơn), chỗ nghe lưu đúng chỗ dừng, rồi đóng cổng audio."""
+        with self._lock:
+            active = [(self._renderers[device][0], session) for device, session in self._sessions.items()
+                      if not session.ended and device in self._renderers]
+        for renderer, session in active:
+            session.ended = True
+            self._store(session, session.estimate(time.time()))
+            try:
+                soap(renderer.av_url, renderer.av_type, "Stop", (("InstanceID", 0),), timeout=2.0)
+            except CastError:
+                pass
         self.media.close()
 
     def _presence(self, renderer: Renderer, session: _Session | None, now: float) -> dict[str, Any]:
