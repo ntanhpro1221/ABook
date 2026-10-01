@@ -24,6 +24,36 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
 7. **Người vô danh xác định được là MỘT người phải ghi `NPC*:<mô tả>` trong đáp án, cả ở chương kiểm tra**; đám đông
    để `NPC*` trơn. Thiếu mô tả thì F1 giọng không biết hai câu vô danh là một người, và xếp model ngược (mục 29-09 tối).
 
+## 01-10 chiều - v8 (mỗi lô thấy người nói 4 lượt trước): LoRA 4B tốt nhất trên LN, giữ lượt đối đáp, thua cổng Tam quốc
+
+v8 = công thức v7 trên data_v8 (= data_v7 phát lại bằng prompt của nhánh dev/prev-speakers: mỗi lô nêu người nói ĐÃ gán của
+4 đoạn ngay trước - cả lúc học lẫn lúc đo, đo từ worktree ABook_ui). v8 và v7 khác nhau DUY NHẤT ở phần prompt ấy.
+
+| lượt | LN 12 chương F1 giọng | người nói chặt | cảm xúc | nhập người lạ vào nhân vật có tên |
+|---|---|---|---|---|
+| v6 | 59,8% | 61,4% | 90,4% | 32% (21/65) |
+| v7 | 61,7% | 63,2% | 89,7% | 34% (22/65) |
+| v8 | **64,7%** | **66,7%** | 90,5% | 29% (19/65) |
+
+v8 − v7: F1 +3,0 [−1,3; +6,3], chặt +3,5 [−5,7; +11,4], hơn 7/12 chương. v8 − v6: **F1 +4,9 [+0,6; +8,5]** - lần đầu một
+LoRA 4B hơn v6 vượt nhiễu. Theo loại câu (chặt, v7 → v8): đối đáp liền 66,1 → **78,8** (đúng điều v8 nhắm - nối lượt qua
+ranh giới lô), 『』 14,6 → 38,2, tôi nói 74,0 → 77,5, còn lại 60,0 → 66,4; nhưng **có lời dẫn 82,4 → 70,4**. Soi 36 câu có lời
+dẫn v8 sai mà v7 đúng (`v8_cue_errors.py`): chỉ 4 câu v8 chép người nói của lượt trước; **24 câu ở một chương HDST (062)**
+v8 viết "Professor Glast" thay "Glast" - thêm chức danh, lệch nhãn chặt nhưng vẫn một giọng (F1 giọng không mất). Tức phần
+tụt chủ yếu là CÁCH VIẾT TÊN, không phải đọc sai lời dẫn.
+
+Cổng (F1 giọng, v6 / v7 / v8): TMA 64,3 / 65,4 / **72,1**; YMP 76,4 / 67,0 / **77,0**; Tắt đèn 72,8 / 72,9 / **76,3**; Tam
+quốc **87,5** / 83,8 / 83,0 (v8 tách 13/32 người thành nhiều giọng, v6 10/32).
+
+**Quyết định (cùng luật đặt trước như v7: không thua v6 quá 2 điểm ở cổng nào):** v8 thua Tam quốc 4,5 -> CHƯA nhận làm
+công thức; nhưng giữ hướng "thấy người nói lượt trước" (lợi rõ nhất từ trước tới nay ở LN và 3/4 cổng). Việc kế: (1) soi
+Tam quốc v8 vs v6 - nghi cùng kiểu tách tên/chức danh (13 người nhiều giọng) chứ không phải nhận sai người; nếu đúng thì
+sửa ở luật gom tên của host chứ không ở dữ liệu; (2) Qwen3.5-4B trên đúng công thức v8 (`q35v8_after_8bclean.sh`, sau hàng
+8B sạch) - lượt Qwen3.5 đầu tiên ở nhà (01-10 16:06) hỏng ngay bước 1: cuDNN không nhận đầu chú ý 256 của Qwen3.5 và
+train_lora.py cấm mọi kernel khác; nay mở thêm kernel memory-efficient khi đầu > 128 (vẫn cấm math), kèm chốt tốc độ (quá
+14 giờ một epoch thì lên đám mây - Windows thiếu kernel nhanh cho lớp gated delta của Qwen3.5). v8 cần mã host của nhánh
+dev/prev-speakers (prompt) - đưa vào app là sự kiện phiên bản.
+
 ## 30-09 chiều - v7 (nhãn người lạ có mô tả): LN nhích lên, việc nhập người lạ KHÔNG giảm, thua hai cổng
 
 v7 = công thức v6 (4B, 1 epoch) trên data_v7 = data_v6 với 174 câu "người lạ" đổi thành 50 nhãn mô tả ("trưởng thôn",

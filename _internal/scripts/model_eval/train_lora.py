@@ -54,12 +54,24 @@ DEFAULT_MAX_LENGTH = 4352
 ATTENTION_NOTE = "attention ghim vào cuDNN (xem pin_attention_kernel)"
 
 
-def pin_attention_kernel(torch) -> None:
-    """Chỉ cho SDPA dùng cuDNN: đường math không được lặng lẽ quay lại - thiếu kernel thì phải báo lỗi."""
+def pin_attention_kernel(torch, head_dim: int = 128) -> None:
+    """Chỉ cho SDPA dùng cuDNN: đường math không được lặng lẽ quay lại - thiếu kernel thì phải báo lỗi.
+
+    Đầu chú ý rộng hơn 128 (Qwen3.5: 256 ở các lớp full attention) thì cuDNN trên card này từ chối và SDPA báo "Invalid
+    backend" ngay bước đầu (thử khói q35 01-10) - mở thêm kernel memory-efficient cho riêng trường hợp ấy, vẫn cấm math."""
     torch.backends.cuda.enable_cudnn_sdp(True)
     torch.backends.cuda.enable_math_sdp(False)
-    torch.backends.cuda.enable_mem_efficient_sdp(False)
+    torch.backends.cuda.enable_mem_efficient_sdp(head_dim > 128)
     torch.backends.cuda.enable_flash_sdp(False)
+
+
+def head_dim_of(base: str) -> int:
+    """Cỡ đầu chú ý của model nền (config.json, cả dạng có text_config như Qwen3.5)."""
+    from transformers import AutoConfig
+
+    config = AutoConfig.from_pretrained(base)
+    text = getattr(config, "text_config", None) or config
+    return int(getattr(text, "head_dim", 0) or text.hidden_size // text.num_attention_heads)
 
 
 PAGED_OPTIMIZER_CRASH = (
@@ -206,7 +218,7 @@ def main(argv: list[str] | None = None) -> int:
 
     torch.cuda.set_per_process_memory_fraction(args.vram_cap)
     if args.attention == "cudnn":
-        pin_attention_kernel(torch)
+        pin_attention_kernel(torch, head_dim_of(args.base))
     train_rows = load_rows(args.data / "train.jsonl", args.only)
     dev_rows = load_rows(args.data / "dev.jsonl", args.only)
     if args.smoke:
