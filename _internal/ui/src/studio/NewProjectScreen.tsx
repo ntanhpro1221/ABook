@@ -13,6 +13,7 @@ import {
   Loader2,
   Mic,
   Play,
+  Scissors,
   Sparkles,
   Trash2,
   Upload,
@@ -40,6 +41,7 @@ import {
   useScan,
   useVoices,
 } from "@/studio/data";
+import { api } from "@/studio/api";
 import { uploadChapters } from "@/studio/upload";
 import { AnalysisModelPicker, modelLabel } from "@/studio/AnalysisModelPicker";
 
@@ -227,6 +229,7 @@ function SourceStep({
   problem,
   dropCredits,
   onDropCredits,
+  onSplit,
 }: {
   scan: ScanResult | null;
   title: string;
@@ -245,6 +248,8 @@ function SourceStep({
   problem: { text: string; subfolders: string[] } | null;
   dropCredits: boolean;
   onDropCredits: (value: boolean) => void;
+  /** Tách một file cả truyện thành các chương (máy ghi thư mục mới), rồi quét thư mục ấy thay cho file. */
+  onSplit: (path: string) => Promise<void>;
 }) {
   const { data: info } = useAppInfo();
   const [typed, setTyped] = useState("");
@@ -282,7 +287,8 @@ function SourceStep({
       <h2 className="text-xl font-semibold">Chọn các chương của truyện</h2>
       <p className="mt-1 text-sm text-fg-2 text-pretty">
         Mỗi file TXT là một chương. Chương được xếp theo tên file như người đọc mong đợi: 2 đứng trước 10. Có sẵn file EPUB
-        thì chọn nó: mỗi chương trong EPUB thành một chương, tên chương theo mục lục.
+        thì chọn nó: mỗi chương trong EPUB thành một chương, tên chương theo mục lục. Cả truyện nằm trong một file TXT thì máy
+        đề nghị tách theo các dòng “Chương N”.
       </p>
       {!files.length ? (
         <div className="mt-6 rounded-2xl border-2 border-dashed border-line-strong bg-panel px-8 py-10 text-center">
@@ -415,6 +421,9 @@ function SourceStep({
               </div>
             </div>
           )}
+          {files.filter((file) => file.split).map((file) => (
+            <SplitSuggestion key={file.path} file={file} onSplit={onSplit} />
+          ))}
           <CreditSuggestion credits={creditSummary(files)} accepted={dropCredits} onChange={onDropCredits} />
           <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
             <div className="tabular text-sm text-fg-2">
@@ -570,6 +579,43 @@ function CreditSuggestion({ credits, accepted, onChange }: { credits: Credits; a
   );
 }
 
+// Soát UX a5 01-10: truyện tải trên mạng phần lớn là MỘT file TXT - trình tạo sách đọc ra một chương dài vài tiếng, không
+// một lời nhắc. Thấy nhiều dòng "Chương N" trong một file thì ĐỀ XUẤT tách; không bấm thì giữ nguyên như file (chủ sách
+// 29-09: không bao giờ tự sửa nguồn). Tách là ghi các chương ra một thư mục mới trong thư viện - file gốc không đổi.
+function SplitSuggestion({ file, onSplit }: { file: ScannedFile; onSplit: (path: string) => Promise<void> }) {
+  const [busy, setBusy] = useState(false);
+  const plan = file.split!;
+  const quoted = plan.titles.map((title) => `“${title}”`).join(", ");
+  return (
+    <div className="mt-4 flex gap-3 rounded-xl border border-line bg-panel p-4 text-sm">
+      <Sparkles className="mt-0.5 size-4 shrink-0 text-accent-text" />
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold">Gợi ý: “{file.name}” có vẻ chứa cả {formatNumber(plan.chapters)} chương</p>
+        <p className="mt-1 break-words text-fg-2">
+          Máy thấy các tiêu đề {quoted}
+          {plan.chapters > plan.titles.length + (plan.preamble ? 1 : 0) ? "…" : ""}. Hiện cả file được làm thành MỘT chương - một file
+          audio dài, không chuyển chương được. Tách theo các tiêu đề ấy?
+          {plan.preamble ? " Phần chữ trước tiêu đề đầu tiên thành chương “Mở đầu”." : ""} File gốc giữ nguyên.
+        </p>
+        <div className="mt-2.5">
+          <Button
+            size="sm"
+            variant="secondary"
+            icon={busy ? Loader2 : Scissors}
+            disabled={busy}
+            onClick={() => {
+              setBusy(true);
+              void onSplit(file.path).finally(() => setBusy(false));
+            }}
+          >
+            Tách thành {formatNumber(plan.chapters)} chương
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SeedBanner({ seed, onDrop }: { seed: Seed; onDrop: () => void }) {
   return (
     // Điện thoại: nút bỏ nối tiếp xuống dưới đoạn chữ - đứng bên phải thì ép chữ thành cột ~180 px, dài 11 dòng (soát UX 29-09).
@@ -604,7 +650,7 @@ function SeedBanner({ seed, onDrop }: { seed: Seed; onDrop: () => void }) {
         onClick={onDrop}
         className="self-start whitespace-nowrap text-[13px] text-fg-2 underline-offset-2 hover:text-fg hover:underline max-sm:basis-full max-sm:pl-7 max-sm:text-left"
       >
-        Bỏ nối tiếp…
+        Bỏ nối tiếp
       </button>
     </div>
   );
@@ -1248,7 +1294,11 @@ export function NewProjectScreen() {
           const readings = shared.length
             ? `Dùng ${shared.length} cách đọc chung (${shared.slice(0, 3).join(", ")}${shared.length > 3 ? ", …" : ""}).`
             : "";
-          const starting = draft.startNow ? "Đang khởi động - theo dõi tiến trình ngay trên trang sách." : "";
+          const starting = !draft.startNow
+            ? ""
+            : result.queued
+              ? `Đang có cuốn khác chạy - sách này vào hàng chờ (thứ ${result.queued}), tự bắt đầu khi cuốn ấy xong.`
+              : "Đang khởi động - theo dõi tiến trình ngay trên trang sách.";
           toast.success("Đã tạo sách", { description: [starting, readings].filter(Boolean).join(" ") || undefined });
           navigate(`/studio/${result.id}`, { replace: true });
         },
@@ -1326,6 +1376,22 @@ export function NewProjectScreen() {
               problem={problem}
               dropCredits={Boolean(draft.dropCredits)}
               onDropCredits={(value) => update({ dropCredits: value })}
+              onSplit={async (path) => {
+                try {
+                  const { folder } = await api<{ folder: string }>("/api/sources/split", { method: "POST", body: { path } });
+                  // File đã chọn thẳng: thư mục chương thay chỗ nó. File nằm trong một thư mục đã chọn: thêm thư mục chương,
+                  // bỏ file cả truyện khỏi danh sách (vẫn hoàn tác được như mọi chương bỏ tay).
+                  const replaced = draft.paths.includes(path);
+                  update(
+                    replaced
+                      ? { paths: draft.paths.map((item) => (item === path ? folder : item)), excluded: [], limit: null }
+                      : { paths: [...draft.paths, folder], excluded: [...draft.excluded, path], limit: null },
+                  );
+                  toast.success("Đã tách thành các chương", { description: folder });
+                } catch (error) {
+                  toast.error("Không tách được", { description: (error as Error).message });
+                }
+              }}
             />
           )}
           {step === 1 && (

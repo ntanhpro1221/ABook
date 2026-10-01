@@ -408,7 +408,7 @@ function SpeakerFix({
         {/* Thẻ chỉ gợi vài người; tab Kịch bản tìm được mọi nhân vật trong sách - mở đúng câu này ở đó (soát UX 29-09). */}
         {onOpenScript && item.lines?.length === 1 && item.examples?.[0] && (
           <Button size="sm" variant="ghost" icon={Search} onClick={() => onOpenScript(item.examples![0].chapterId, item.lines![0].stableId)}>
-            Tìm trong truyện…
+            Chọn người khác trong truyện…
           </Button>
         )}
         {/* Thẻ nhóm chỉ in vài câu làm ví dụ ("Hai người chung một tên" có thể 16 câu): đọc đủ ngữ cảnh ở tab Kịch bản trước khi
@@ -572,7 +572,7 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames }: { bookI
           Ảnh hưởng <span className="tabular font-semibold text-fg">{formatNumber(item.affected)}</span> câu
         </span>
         <span>
-          Máy đang dùng: <span className="font-medium text-fg">{item.current}</span>
+          {item.kind === "audio" ? "Trạng thái" : "Máy đang dùng"}: <span className="font-medium text-fg">{item.current}</span>
         </span>
       </div>
       {item.kind === "audio" ? (
