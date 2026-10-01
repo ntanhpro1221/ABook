@@ -114,4 +114,37 @@ nút tai nghe, tốc độ, hẹn giờ vẫn là một đường. Không cần 
   mạng có thiết bị Cast.
 - Chỉ Wi-Fi nhà (không qua Tailscale: loa không ở trong tailnet).
 
+### Phát lên loa / TV qua DLNA - máy tính, đã làm (01-10)
+
+Chủ sách không có loa Google, Chromecast hay TV để thử ("giả lập hay gì đó đi"), nên làm trước chuẩn MỞ - DLNA / UPnP AV
+(TV Samsung / LG / Sony, ampli, loa mạng, máy Windows bật điều khiển Windows Media Player từ xa) - và thử hoàn toàn bằng
+thiết bị giả `scripts/fake_renderer.py` (chỉ thư viện chuẩn, chạy được trên máy khác trong mạng). Mã: `webui/cast.py`.
+
+- Máy tính là bộ não, thiết bị chỉ phát một file: tìm bằng SSDP (M-SEARCH ra từng card mạng, nhịp 30 giây khi giao diện
+  đang mở, tìm lại ngay khi mở menu "Phát trên…"), điều khiển bằng SOAP AVTransport, hỏi thiết bị mỗi giây để lưu chỗ nghe
+  (hồ sơ nghe như trình phát trong app) và tự sang chương sau khi thiết bị về STOPPED ở cuối chương - kể cả khi không ai
+  mở giao diện.
+- Audio đi thẳng từ máy tính tới thiết bị qua cổng riêng `CastMedia`: chỉ phục vụ file đã đưa, mỗi file một mã ngẫu nhiên
+  128 bit trong đường dẫn, hết hạn 12 giờ, có `Range` và header DLNA. Không đi qua cổng đồng bộ: dùng được cả khi chưa bật
+  "Cho phép điện thoại kết nối".
+- Thiết bị là một "máy" trong `/api/remote` (`via` cast) như điện thoại: cùng thanh "Đang phát trên…", nút "Phát trên…" (một
+  máy: một nút; nhiều máy: một menu), "Nghe trên máy này".
+- Chỗ TV thật hay vấp, loa giả bắt chước để thử: chỉ tua khi đã chạy (đưa chương, Play, đợi PLAYING rồi mới Seek), hết bài
+  về STOPPED với vị trí 0 (nhớ vị trí xa nhất), không có Pause (dừng hẳn, "phát" đưa lại đúng chỗ), không báo vị trí
+  (ước theo đồng hồ), app khác chiếm thiết bị (bỏ phiên). Không ghi DLNA.ORG_PN (PN sai thì TV khó tính từ chối hẳn).
+- An toàn: trả lời SSDP là dữ liệu LAN - chỉ đọc mô tả ở đúng địa chỉ đã trả lời và chỉ gửi lệnh tới địa chỉ ấy, không theo
+  chuyển hướng, không qua proxy, XML có trần cỡ và không nhận DOCTYPE / ENTITY.
+- Đã thử (01-10): 14 bài trong `tests/test_cast.py` (trọn vòng với loa giả: tìm, đọc mô tả, tải đúng file, tua sau khi
+  chạy, tự sang chương, thiết bị không Pause / không báo vị trí / bị chiếm, qua HTTP của app); trên mạng thật: loa giả trên
+  chính máy này VÀ trên Mac mini (máy khác, tải 23,7 MB qua LAN trong ~2 giây - tường lửa Windows cho qua), giao diện:
+  chuyển qua lại máy tính <-> loa <-> loa khác, tự sang chương 725 -> 726 và ghi "đã nghe hết". Trong mạng nhà chủ sách có
+  một thiết bị thật: máy Windows "QuangNgocThuy" (Windows Digital Media Renderer) - hiện là máy tính; KHÔNG gửi lệnh nào
+  tới nó (sẽ phát ra loa của người khác).
+- Lỗi cũ lộ ra khi thử: "Phát trên…" chỉ tạm dừng trình phát trong app, nên lúc rời trang nó lưu lại chỗ cũ đè lên chỗ máy
+  kia đã nghe tới (loa dừng 0:56, tải lại trang thành 0:19) - đúng cả với điện thoại. Nay máy kia nhận lệnh thì trình phát
+  trong app đóng hẳn (vẫn lưu chỗ trước khi đóng).
+- Còn lại: điện thoại phát thẳng lên loa / TV (Kotlin, cùng giao thức; sách đã tải phục vụ từ LibraryServer.kt), Google Cast
+  (mục trên - loa Google không có DLNA), âm lượng của thiết bị (RenderingControl - đã đọc địa chỉ, chưa có nút), tốc độ
+  khác 1x (DLNA gần như không thiết bị nào nhận).
+
 Không học: hộp thoại xin chấm sao, lặp đoạn (học ngoại ngữ), cân bằng âm (giọng đọc đã được cân mức ở dây chuyền).

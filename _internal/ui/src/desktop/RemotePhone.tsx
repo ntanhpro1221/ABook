@@ -1,5 +1,6 @@
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Laptop, Loader2, MonitorSmartphone, Pause, Play, Smartphone, X } from "lucide-react";
+import { Cast, Laptop, Loader2, MonitorSmartphone, Pause, Play, Smartphone, Speaker, Tv, X } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useClockReader } from "@/listen/clock";
@@ -16,13 +17,17 @@ import { api } from "@/studio/api";
 // Điều khiển điện thoại đang phát từ máy tính (PLAYER_RESEARCH #12, kiểu Spotify Connect trong mạng nhà).
 // Hợp đồng với server: webui/server.py (remote_view, remote_send) và webui/sync.py (Remote). Điện thoại báo trạng thái
 // mỗi khi đổi và ít nhất 25 giây một lần; giữa hai lần báo, vị trí được nội suy theo đồng hồ và tốc độ phát.
+// Loa / TV trong mạng nhà (DLNA, webui/cast.py - 01-10) là "máy" cùng danh sách: máy tính này phục vụ audio và hỏi
+// thiết bị mỗi giây, nên chúng đi cùng thanh "Đang phát trên…" và nút "Phát trên…".
 
 export interface RemotePhone {
   device: string;
   name: string;
-  /** Máy gì: điện thoại báo lên máy tính này, hay máy đã ghép ở "Máy tính khác" (máy tính / điện thoại chia sẻ thư viện). */
-  kind: "phone" | "computer";
-  via: "remote" | "peer";
+  /** Máy gì - chỉ để chọn biểu tượng. */
+  kind: "phone" | "computer" | "speaker" | "tv";
+  /** Điện thoại báo lên máy tính này, máy đã ghép ở "Máy tính khác" (máy tính / điện thoại chia sẻ thư viện), hay loa /
+   *  TV trong mạng nhà (phát mọi cuốn của máy này). */
+  via: "remote" | "peer" | "cast";
   /** Cuốn ấy ở máy này (sách của chính máy này, hoặc cuốn ảo "Trên <máy kia>") - "Nghe trên máy này" mở đúng nó. */
   localBookId: string | null;
   bookId: string;
@@ -60,13 +65,21 @@ type RemoteCommand =
 
 type Ack = { id: string; ok: boolean; message: string };
 
+const DEVICE_ICONS = { phone: Smartphone, computer: Laptop, speaker: Speaker, tv: Tv } as const;
+
+export function DeviceIcon({ kind, className }: { kind: RemotePhone["kind"]; className?: string }) {
+  const Icon = DEVICE_ICONS[kind] ?? Smartphone;
+  return <Icon className={className} />;
+}
+
 const SKIP_SECONDS = 15;
 
 export function useRemotePhones() {
   return useQuery({
     queryKey: ["remote"],
     queryFn: async (): Promise<RemoteView> => ({ ...(await api<{ phones: RemotePhone[] }>("/api/remote")), receivedAt: Date.now() }),
-    refetchInterval: (query) => (query.state.data?.phones.length ? 1500 : 5000),
+    // Loa / TV rảnh không đáng hỏi dồn: chỉ máy đang có sách (hay điện thoại, máy đã ghép đang nối) mới cần 1,5 giây.
+    refetchInterval: (query) => (query.state.data?.phones.some((phone) => phone.via !== "cast" || phone.bookId) ? 1500 : 5000),
   });
 }
 
@@ -193,7 +206,7 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
           <BookCover title={phone.bookTitle} image={phone.cover} size="xs" className="size-9 shrink-0 rounded-md" />
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-accent-text">
-              {phone.kind === "computer" ? <Laptop className="size-3.5 shrink-0" /> : <Smartphone className="size-3.5 shrink-0" />}
+              <DeviceIcon kind={phone.kind} className="size-3.5 shrink-0" />
               <span className="truncate">
                 {phone.playing ? "Đang phát trên" : "Đang dừng trên"} {phone.name}
               </span>
@@ -254,8 +267,23 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
  */
 export function RemoteBars() {
   const { data } = useRemotePhones();
+  const client = useQueryClient();
   const [dismissed, setDismissed] = useState<Record<string, { bookId: string; playing: boolean }>>({});
   useFailedCommands(data);
+  // Loa / TV không giữ chỗ nghe - máy này lưu thay (webui/cast.py): đổi chương, phát / dừng thì thẻ "Đang nghe dở" và
+  // trang sách đọc lại ngay, không đợi nhịp 30 giây của thư viện.
+  const casting = (data?.phones ?? [])
+    .filter((phone) => phone.via === "cast" && phone.bookId)
+    .map((phone) => `${phone.device}|${phone.bookId}|${phone.chapterId}|${phone.playing}`)
+    .join(",");
+  useEffect(() => {
+    if (!casting) return;
+    const timer = window.setTimeout(() => {
+      void client.invalidateQueries({ queryKey: ["listen", "library"] });
+      void client.invalidateQueries({ queryKey: ["listen", "book"] });
+    }, 600);
+    return () => window.clearTimeout(timer);
+  }, [casting, client]);
   useEffect(() => {
     const paused = (data?.phones ?? []).filter((phone) => !phone.playing && dismissed[phone.device]?.playing);
     if (!paused.length) return;
@@ -286,7 +314,13 @@ export function RemoteBars() {
   );
 }
 
-/** "Phát trên điện thoại" ở thanh phát máy tính: có điện thoại đang kết nối nghe được cuốn này (nghe thẳng, hoặc đã tải). */
+const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[highlighted]:bg-hover";
+
+/**
+ * "Phát trên…" ở thanh phát máy tính: máy nào nghe được cuốn đang phát - điện thoại đang kết nối (nghe thẳng, hoặc đã
+ * tải), máy đã ghép (chỉ sách của chính nó), loa / TV trong mạng nhà (mọi cuốn của máy này). Một máy: một nút; nhiều máy:
+ * một danh sách, mở ra thì tìm lại loa / TV ngay (thiết bị vừa bật không phải đợi nhịp tìm 30 giây).
+ */
 export function HandOffButton({ className }: { className?: string }) {
   const { data } = useRemotePhones();
   const command = useRemoteCommand();
@@ -294,21 +328,73 @@ export function HandOffButton({ className }: { className?: string }) {
   const readPosition = useClockReader();
   const track = player.track;
   const book = useListenBook(track?.bookId);
-  // Điện thoại báo lên máy này nghe được mọi cuốn của nó (hoặc đã tải cuốn này); máy đã ghép thì chỉ phát được sách của
-  // CHÍNH nó - cuốn ảo "Trên <máy ấy>" - host đổi mã cuốn sang mã của máy kia.
+  // Máy đã ghép chỉ phát được sách của CHÍNH nó - cuốn ảo "Trên <máy ấy>" - host đổi mã cuốn sang mã của máy kia.
   const owner = typeof book.data?.remote === "object" && book.data?.remote ? book.data.remote.device : undefined;
-  const phone = track
-    ? data?.phones.find((candidate) =>
-        candidate.via === "peer" ? candidate.device === owner : candidate.stream || candidate.books.includes(track.bookId))
-    : undefined;
-  if (!phone || !track) return null;
-  // Không cần thông báo "đã chuyển": thanh "Đang phát trên <điện thoại>" hiện ra sau một lượt mạng chính là lời xác nhận.
-  const handOff = () => {
+  const targets = track
+    ? (data?.phones ?? []).filter((candidate) =>
+        candidate.via === "cast" ||
+        (candidate.via === "peer" ? candidate.device === owner : candidate.stream || candidate.books.includes(track.bookId)))
+    : [];
+  if (!targets.length || !track) return null;
+  // Không cần thông báo "đã chuyển": thanh "Đang phát trên <máy>" hiện ra sau một lượt mạng chính là lời xác nhận. Loa /
+  // TV mất vài giây (tải chương, đợi chạy rồi mới tua tới đúng chỗ) nên có dòng "Đang mở…" tới lúc ấy.
+  const handOff = (target: RemotePhone) => {
     const seconds = readPosition().time;
     player.pause();
-    command.mutate({ device: phone.device, command: { action: "load", bookId: track.bookId, chapterId: track.chapterId, seconds } });
+    const waiting = target.via === "cast" ? toast.loading(`Đang mở trên ${target.name}…`) : undefined;
+    command.mutate(
+      { device: target.device, command: { action: "load", bookId: track.bookId, chapterId: track.chapterId, seconds } },
+      {
+        // Máy kia đã nhận thì đóng hẳn trình phát ở đây (nó lưu chỗ trước khi đóng). Chỉ dừng thì lúc rời trang nó lưu lại
+        // chỗ cũ đè lên chỗ máy kia đã nghe tới - gặp 01-10 với loa giả lập: loa dừng ở 0:56, tải lại trang thành 0:19.
+        onSuccess: () => player.close(),
+        onSettled: () => waiting !== undefined && toast.dismiss(waiting),
+      },
+    );
   };
-  return <IconButton label={`Phát trên ${phone.name}`} icon={MonitorSmartphone} size="sm" className={cn(className)} onClick={handOff} />;
+  if (targets.length === 1) {
+    const [only] = targets;
+    return (
+      <IconButton
+        label={`Phát trên ${only.name}`}
+        icon={only.via === "cast" ? Cast : MonitorSmartphone}
+        size="sm"
+        className={cn(className)}
+        onClick={() => handOff(only)}
+      />
+    );
+  }
+  return (
+    <DropdownMenu.Root
+      onOpenChange={(open) => {
+        if (open) void api("/api/cast/scan", { method: "POST" }).catch(() => undefined);
+      }}
+    >
+      <Tooltip label="Phát trên thiết bị khác">
+        <DropdownMenu.Trigger
+          aria-label="Phát trên thiết bị khác"
+          className={cn(
+            "inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-fg-2 transition-colors hover:bg-hover hover:text-fg data-[state=open]:bg-hover data-[state=open]:text-fg",
+            className,
+          )}
+        >
+          <Cast className="size-[18px]" strokeWidth={2} />
+        </DropdownMenu.Trigger>
+      </Tooltip>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content side="top" align="end" sideOffset={8} collisionPadding={12} className="z-50 min-w-56 max-w-80 rounded-xl border border-line bg-panel p-1.5 shadow-float">
+          <DropdownMenu.Label className="px-2 pb-1 pt-0.5 text-xs font-medium text-fg-3">Phát trên</DropdownMenu.Label>
+          {targets.map((target) => (
+            <DropdownMenu.Item key={target.device} onSelect={() => handOff(target)} className={MENU_ITEM}>
+              <DeviceIcon kind={target.kind} className="size-4 shrink-0 text-fg-2" />
+              <span className="min-w-0 flex-1 truncate">{target.name}</span>
+              {target.bookId && target.playing && <span className="shrink-0 text-xs text-fg-3">đang phát</span>}
+            </DropdownMenu.Item>
+          ))}
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  );
 }
 
 /**

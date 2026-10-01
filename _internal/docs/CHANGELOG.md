@@ -7,6 +7,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe
+
+- Máy tính: **phát lên loa / TV trong mạng nhà** (DLNA - TV Samsung, LG, Sony, ampli, loa mạng, máy Windows bật điều khiển
+  Windows Media Player từ xa). Nút "Phát trên…" ở thanh phát liệt kê cả loa / TV bên cạnh điện thoại; thiết bị tự tải
+  chương từ máy tính, máy tính lưu chỗ nghe và tự sang chương sau, thanh "Đang phát trên <TV>" có dừng / tua / "Nghe trên
+  máy này". Loa / TV phát ở tốc độ 1x.
+- Bấm "Phát trên <máy khác>" rồi đóng hay tải lại app không còn đưa chỗ nghe về chỗ lúc chuyển đi.
+
 ## [0.4.12] - 2026-10-01
 
 ### Studio (sản xuất sách nói)
