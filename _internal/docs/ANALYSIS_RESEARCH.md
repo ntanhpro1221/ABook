@@ -50,6 +50,12 @@ Instruct-2507 4-bit, r16, 1 epoch): v8m (data_v8, đối chứng) và v9m (data_
 LN 6 + Tam quốc trên Modal, host 26dec3dc (`LLM_Train/modal/launch_v9_01_10.sh`, `v9_chain_01_10.sh`). Luật nhận như v7/v8:
 không thua v8m quá 2 điểm ở LN, và Tam quốc phải về gần v6 (87,5).
 
+LN 6 (01-10 22:1x): v9m 63,7 vs v8m 58,2 = **+5,5 [+1,6; +10,2]**, hơn 5/6 chương; chặt −2,1 [−23,0; +8,3]; NHẬP người
+lạ 86% vs 50% (22 câu, lu 8/11 vs 0/11). NHƯNG đối chứng v8m (data_v8, trình unsloth trên Modal) thấp hơn v8 nhà (cùng
+data_v8, `train_lora.py`) −6,0 [−8,2; −2,8], thua 6/6 - khác trình/lượt huấn luyện đã to ngang hiệu của 184 mẫu, và v9m
+chỉ ngang v8 nhà (63,7 vs 64,2). KTC bootstrap theo chương KHÔNG gồm nhiễu giữa hai lượt huấn luyện. Chưa nhận: chờ Tam
+quốc; nếu v9m hồi ở Tam quốc thì huấn luyện v9 ở NHÀ bằng đúng trình của v8 nhà rồi so thẳng với v8 nhà.
+
 8B dữ liệu SẠCH (Modal 01-10, đo trên Mac cùng host với 8B-v5 lượt A, 5 chương chung): v6n-e1 F1 giọng 56,6 vs 8B-v5 63,8
 (−8,0 [−12,7; −3,0], thua 5/5 chương), chặt −20,8; nhưng NHẬP người lạ vào nhân vật có tên 0% (v5 39%) - mọi câu vô danh
 đọc bằng giọng người lạ. Dữ liệu "bẩn" của v5 (nhãn chữ hoa, có chương cổng) vẫn cho F1 cao hơn; chờ v6-e1 / v6n-e2 trước
