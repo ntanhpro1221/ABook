@@ -64,6 +64,15 @@ trên Mac: thêm ba chương Lucia nói nhiều (49, 48, 79) rồi ghép với 6
 - Hệ quả thiết kế: biến thể một nhóm chỉ nên hỏi khi hồ sơ ở các chương khác đến từ ít nhất hai chương và các chương ấy
   khớp nhau (đa số quyết chương nào lệch). Đo lại khi 48 và 79 xong: mong 62 bị hỏi, 49 thì không.
 
+**Đủ 8 chương (48, 49, 60-64, 79; 4.156 câu; 79 dừng ở hạn 4 giờ nhưng đã phân tích 1.442 câu) - 01-10 sáng:** đúng như
+mong đợi, biến thể một nhóm vẫn hỏi 13 câu bà thầy bói ở 62 (đúng cả 13) và KHÔNG còn hỏi Lucia ở 49 - hồ sơ của Lucia giờ
+là đa số lời thật ("anh" 62, "em" 58 qua 48/49/79). Nhưng nó hỏi thêm 4 nhóm nhỏ 3-5 câu (Lucia 48, Sitri 48/49, Liz 49),
+không có đáp án, ít nhất Sitri 49 là sai. Thẻ đang có trong app hỏi 3 lần, ít nhất 2 SAI: Sitri 49 (đàm phán "tôi… ngài"
+/ với Krai "em… anh") và Franz 79 ("tôi… cậu" / "chúng ta"); Luke 49 không có đáp án. **Kết luận: xưng hô bắt được ca nhập
+lớn nhất của 8B khi nhân vật bị nhập có hồ sơ, nhưng trên một cuốn thật nó ồn - một người đổi xưng hô theo người nghe (đàm
+phán, nổi nóng) trông như hai người.** Chưa đưa biến thể vào app; thẻ hiện có giữ nguyên (sai chỉ tốn một lần bấm "là một
+người"). Nếu làm tiếp: chấm từng nhóm theo người nghe (câu liền trước là của ai) thay vì gộp cả chương.
+
 ## 30-09 sáng - lời dặn "cân bằng người kể" không giúp; phép kiểm thẻ tách giọng trên Mac quá chậm
 
 **Lời dặn thêm về người kể: kết quả âm, đóng thí nghiệm.** Vòng 2 (Mac, 8B-v5, 4 chương ngôi thứ nhất của LN mở rộng, 315
