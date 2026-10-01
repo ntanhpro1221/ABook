@@ -42,6 +42,7 @@ import {
   useVoices,
 } from "@/studio/data";
 import { api } from "@/studio/api";
+import { chapterNumberIssues } from "@/studio/chapterNumbers";
 import { uploadChapters } from "@/studio/upload";
 import { AnalysisModelPicker, modelLabel } from "@/studio/AnalysisModelPicker";
 
@@ -236,6 +237,7 @@ function SourceStep({
   dropCredits,
   onDropCredits,
   onSplit,
+  previousLast,
 }: {
   scan: ScanResult | null;
   title: string;
@@ -256,6 +258,8 @@ function SourceStep({
   onDropCredits: (value: boolean) => void;
   /** Tách một file cả truyện thành các chương (máy ghi thư mục mới), rồi quét thư mục ấy thay cho file. */
   onSplit: (path: string) => Promise<void>;
+  /** "Làm tiếp": file chương cuối của phần trước - phần này phải bắt đầu ngay sau nó. */
+  previousLast?: string;
 }) {
   const { data: info } = useAppInfo();
   const [typed, setTyped] = useState("");
@@ -430,6 +434,7 @@ function SourceStep({
           {files.filter((file) => file.split).map((file) => (
             <SplitSuggestion key={file.path} file={file} onSplit={onSplit} />
           ))}
+          <ChapterNumberWarning issues={chapterNumberIssues(files, previousLast)} />
           <CreditSuggestion credits={creditSummary(files)} accepted={dropCredits} onChange={onDropCredits} />
           <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
             <div className="tabular text-sm text-fg-2">
@@ -588,6 +593,24 @@ function CreditSuggestion({ credits, accepted, onChange }: { credits: Credits; a
 // Soát UX a5 01-10: truyện tải trên mạng phần lớn là MỘT file TXT - trình tạo sách đọc ra một chương dài vài tiếng, không
 // một lời nhắc. Thấy nhiều dòng "Chương N" trong một file thì ĐỀ XUẤT tách; không bấm thì giữ nguyên như file (chủ sách
 // 29-09: không bao giờ tự sửa nguồn). Tách là ghi các chương ra một thư mục mới trong thư viện - file gốc không đổi.
+function ChapterNumberWarning({ issues }: { issues: string[] }) {
+  if (!issues.length) return null;
+  return (
+    <div className="mt-4 flex gap-3 rounded-xl border border-warning/40 bg-warning-soft p-4 text-sm">
+      <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" />
+      <div className="min-w-0">
+        <p className="font-semibold">Số chương có chỗ lạ - xem lại trước khi tạo</p>
+        <ul className="mt-1 list-disc space-y-0.5 pl-4 text-fg-2">
+          {issues.map((issue) => (
+            <li key={issue} className="break-words">{issue}</li>
+          ))}
+        </ul>
+        <p className="mt-1 text-fg-2">Vẫn tạo được như thế - máy chỉ nhắc, không bỏ file nào.</p>
+      </div>
+    </div>
+  );
+}
+
 function SplitSuggestion({ file, onSplit }: { file: ScannedFile; onSplit: (path: string) => Promise<void> }) {
   const [busy, setBusy] = useState(false);
   const plan = file.split!;
@@ -1406,6 +1429,7 @@ export function NewProjectScreen() {
               problem={problem}
               dropCredits={Boolean(draft.dropCredits)}
               onDropCredits={(value) => update({ dropCredits: value })}
+              previousLast={draft.seed?.lastChapter}
               onSplit={async (path) => {
                 try {
                   const { folder } = await api<{ folder: string }>("/api/sources/split", { method: "POST", body: { path } });
