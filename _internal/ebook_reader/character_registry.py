@@ -99,8 +99,14 @@ RESERVED_SPEAKERS = {"narrator": "NARRATOR", "unknown": "UNKNOWN"}
 # truyện Hàn, Trung) đầy chức danh học đường, hoàng tộc, quân đội, sư môn. Tên đứng sau vẫn phải là tên riêng viết La-tinh
 # (`ASCII_PROPER_NAME_PATTERN`) VÀ đã là một nhãn khác (`_canonicalize...` chỉ gom về đại diện có sẵn) - hai chốt cũ giữ nguyên.
 # Chức danh dài đứng trước chức danh ngắn cùng tiền tố ("cô giáo" trước "cô").
+# Chức danh tiếng Anh (01-10): sách viết "giáo sư Glast" mà LoRA v8 gán nhãn "Professor Glast" (34 câu, Hướng dẫn sinh tồn
+# 062) - model dịch chức danh khi viết nhãn; không gộp thì cùng một người hai giọng giữa các chương.
 HONORIFIC_PREFIX_PATTERN = re.compile(
-    r"^(?:trợ lý giáo sư|phó giáo sư|giáo sư|hiệu trưởng|hiệu phó|giáo viên|cô giáo|thầy giáo|thầy|sư phụ|sư huynh|sư tỷ"
+    r"^(?:assistant professor|associate professor|professor|headmaster|headmistress|principal|young master|young lady"
+    r"|master|lady|lord|sir|dame|miss|mister|mrs\.?|mr\.?|ms\.?|dr\.?|doctor|captain|commander|general|colonel"
+    r"|lieutenant|sergeant|prince|princess|king|queen|emperor|empress|duke|duchess|countess|count|baroness|baron"
+    r"|marquess|marquis|earl|saint|father|sister|brother|elder|vice president|president|knight"
+    r"|trợ lý giáo sư|phó giáo sư|giáo sư|hiệu trưởng|hiệu phó|giáo viên|cô giáo|thầy giáo|thầy|sư phụ|sư huynh|sư tỷ"
     r"|sư muội|sư đệ|tiền bối|học trưởng|học tỷ|tiểu thư|thiếu gia|công chúa|hoàng tử|hoàng đế|nữ hoàng|hoàng hậu"
     r"|quận chúa|điện hạ|bệ hạ|đội trưởng|thuyền trưởng|chỉ huy|thánh nữ|anh|chị|cô|dì|chú|bác|ông|bà|ngài|quý cô"
     r"|quý ông|bá tước|công tước|nam tước|tử tước|hầu tước|đức ngài)\s+(.+)$",

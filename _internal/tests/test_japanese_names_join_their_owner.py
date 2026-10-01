@@ -75,3 +75,13 @@ def test_a_title_before_the_name_is_not_a_second_person() -> None:
     assert mapping["GIÁO SƯ GLAST"] == mapping["Glast"]
     assert mapping["CÔNG CHÚA MURINA"] == mapping["MURINA"] == "MURINA"
     assert mapping["TIỂU THƯ HINA"] == "TIỂU THƯ HINA", "không có nhãn HINA trơn nào để gom về - giữ nguyên"
+
+
+def test_an_english_title_the_model_wrote_is_not_a_second_person() -> None:
+    """01-10: sách viết "giáo sư Glast", LoRA v8 gán "Professor Glast" - dịch chức danh khi viết nhãn."""
+    counts = {"Professor Glast": 34, "Glast": 4, "Lady Lucia": 2, "LUCIA": 9, "Sir Lancelot": 1, "Master": 3, "ED": 20}
+    mapping = canonical_speaker_names(counts, "")
+    assert mapping["Professor Glast"] == mapping["Glast"]
+    assert mapping["Lady Lucia"] == mapping["LUCIA"]
+    assert mapping["Sir Lancelot"] == "Sir Lancelot", "không có nhãn Lancelot trơn nào để gom về - giữ nguyên"
+    assert mapping["Master"] == "Master", "chỉ có chức danh thì không có tên để gom"
