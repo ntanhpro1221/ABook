@@ -9,7 +9,7 @@ $AppName = "ABook"
 # Tên cũ của app (trước 27-09): lối tắt mang tên này mà trỏ đúng trình khởi động dưới đây thì gỡ, để không còn hai mục.
 $LegacyNames = @("Ebook Reader")
 $Launcher = Join-Path $ProjectRoot "_internal\ABook.vbs"
-$Icon = Join-Path $ProjectRoot "_internal\ebook_reader\assets\ebook_reader.ico"
+$Icon = Join-Path $ProjectRoot "_internal\ebook_reader\assets\abook.ico"
 $ProgramsRoot = [Environment]::GetFolderPath([Environment+SpecialFolder]::Programs)
 $RootShortcutPath = Join-Path $ProjectRoot "$AppName.lnk"
 $StartMenuShortcutPath = Join-Path $ProgramsRoot "$AppName.lnk"
