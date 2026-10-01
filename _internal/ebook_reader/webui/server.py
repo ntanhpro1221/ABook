@@ -1551,7 +1551,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def post_scan(self, _query: dict[str, list[str]]) -> None:
         body = self._body()
-        result = actions.scan_inputs(self._source_paths(body.get("paths"), body.get("seedFrom")))
+        # EPUB tách vào thư viện (như "Nguồn tải lên"), không ghi cạnh file của người dùng.
+        result = actions.scan_inputs(self._source_paths(body.get("paths"), body.get("seedFrom")),
+                                     epub_root=self.app.library.root / "Nguồn EPUB")
         result["existing"] = self.app.existing_projects([str(row.get("sha256") or "") for row in result["files"]])
         self._send_json(HTTPStatus.OK, result)
 

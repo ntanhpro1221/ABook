@@ -267,7 +267,7 @@ function SourceStep({
     if (path) onPaths([path]);
   };
   const chooseFiles = async (append: boolean) => {
-    const chosen = await pickFiles("Chọn các chương TXT").catch((error: Error) => {
+    const chosen = await pickFiles("Chọn các chương TXT hay một file EPUB").catch((error: Error) => {
       toast.error(error.message);
       return [];
     });
@@ -278,7 +278,8 @@ function SourceStep({
     <div>
       <h2 className="text-xl font-semibold">Chọn các chương của truyện</h2>
       <p className="mt-1 text-sm text-fg-2 text-pretty">
-        Mỗi file TXT là một chương. Chương được xếp theo tên file như người đọc mong đợi: 2 đứng trước 10.
+        Mỗi file TXT là một chương. Chương được xếp theo tên file như người đọc mong đợi: 2 đứng trước 10. Có sẵn file EPUB
+        thì chọn nó: mỗi chương trong EPUB thành một chương, tên chương theo mục lục.
       </p>
       {!files.length ? (
         <div className="mt-6 rounded-2xl border-2 border-dashed border-line-strong bg-panel px-8 py-10 text-center">
@@ -290,7 +291,7 @@ function SourceStep({
           </p>
           <p className="mt-1 text-sm text-fg-2">
             {info?.remote
-              ? "Chọn cùng lúc mọi file .txt của truyện. Máy tính giữ chúng trong thư viện, mục “Nguồn tải lên”."
+              ? "Chọn cùng lúc mọi file .txt của truyện, hay một file .epub. Máy tính giữ chúng trong thư viện, mục “Nguồn tải lên”."
               : "Chỉ lấy file .txt nằm ngay trong thư mục, không quét thư mục con."}
           </p>
           {info?.remote && (
@@ -299,7 +300,7 @@ function SourceStep({
                 ref={uploadInput}
                 type="file"
                 multiple
-                accept=".txt,text/plain"
+                accept=".txt,.epub,text/plain,application/epub+zip"
                 className="sr-only"
                 tabIndex={-1}
                 aria-hidden
@@ -1141,9 +1142,11 @@ export function NewProjectScreen() {
         setRawScan(result);
         if (!result.files.length) {
           setProblem(
-            result.missing.length
+            result.errors?.length
+              ? { text: `Không mở được EPUB - ${result.errors[0]}`, subfolders: [] }
+              : result.missing.length
               ? { text: `Không tìm thấy thư mục “${result.missing[0]}”. Kiểm tra lại đường dẫn.`, subfolders: [] }
-              : { text: "Thư mục này không có file .txt nằm ngay bên trong.", subfolders: result.subfolders },
+              : { text: "Thư mục này không có file .txt (hay .epub) nằm ngay bên trong.", subfolders: result.subfolders },
           );
           return;
         }

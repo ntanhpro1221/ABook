@@ -257,7 +257,7 @@ fn answer_dialog(app: &AppHandle, message: &Value) {
     let result = match message.get("kind").and_then(Value::as_str) {
         Some("folder") => dialog.blocking_pick_folder().and_then(path_text).map(Value::from),
         Some("files") => dialog
-            .add_filter("Chương truyện", &["txt"])
+            .add_filter("Chương truyện (TXT) hay EPUB", &["txt", "epub"])
             .blocking_pick_files()
             .map(|paths| Value::from(paths.into_iter().filter_map(path_text).collect::<Vec<_>>())),
         Some("book") => dialog
