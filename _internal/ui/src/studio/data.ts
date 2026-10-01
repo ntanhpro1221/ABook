@@ -230,7 +230,10 @@ export function useCreateBook() {
       start: boolean;
     }) =>
       // `sharedReadings`: các từ của cách đọc chung có trong truyện - sách mới nhận luôn (webui/shared_readings.py).
-      api<{ id: string; sharedReadings?: string[]; queued?: number; replaceError?: string }>("/api/books", { method: "POST", body }),
+      api<{ id: string; sharedReadings?: string[]; queued?: number; replaceError?: string; unchanged?: boolean }>("/api/books", {
+        method: "POST",
+        body,
+      }),
     onSuccess: () => refresh(),
   });
 }
