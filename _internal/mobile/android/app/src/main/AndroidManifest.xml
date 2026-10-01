@@ -77,6 +77,12 @@
             </intent-filter>
         </service>
 
+        <!-- Điện thoại phục vụ audio cho loa / TV (PhoneCast.kt): giữ máy thức khi màn hình tắt. -->
+        <service
+            android:name=".CastService"
+            android:foregroundServiceType="mediaPlayback"
+            android:exported="false" />
+
         <!-- Android Auto: app nghe (media). -->
         <meta-data
             android:name="com.google.android.gms.car.application"

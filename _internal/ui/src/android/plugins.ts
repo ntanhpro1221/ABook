@@ -99,7 +99,8 @@ export interface RemotePlayer {
   name: string;
   /** Máy gì - chỉ để chọn biểu tượng. */
   kind: "computer" | "phone" | "speaker" | "tv" | "media";
-  /** "cast": loa / TV máy tính chính thấy trong mạng nhà (mã "cast:…") - điều khiển qua máy tính, chỉ phát sách của nó. */
+  /** "cast": loa / TV trong mạng nhà - máy tính chính thấy (mã "cast:…", máy tính phục vụ audio) hay điện thoại tự thấy
+   *  (mã "dlna:…", điện thoại phục vụ sách đã có trên nó); một thiết bị chỉ một mục (RemotePlayers.kt). */
   via?: "cast";
   state: {
     bookId?: string;

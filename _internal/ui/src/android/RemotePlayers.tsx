@@ -233,7 +233,9 @@ export function PhoneHandOffButton() {
   if (!track || !data) return null;
   const peer = /^p([0-9a-f]{8})_/.exec(track.bookId)?.[1];
   const owner = data.players.find((remote) => remote.device === (peer ?? "main"));
-  const speakers = peer ? [] : data.players.filter((remote) => remote.via === "cast");
+  // Loa / TV: điện thoại tự chọn đường (RemotePlayers.kt) - sách đã có trên điện thoại thì phát thẳng ("dlna:"), sách
+  // nghe thẳng từ máy tính thì nhờ máy tính ("cast:"); không đường nào được thì lời báo nói lý do.
+  const speakers = data.players.filter((remote) => remote.via === "cast");
   const targets = [...(owner ? [owner] : []), ...speakers];
   if (!targets.length) return null;
   const handOff = async (target: RemotePlayer) => {

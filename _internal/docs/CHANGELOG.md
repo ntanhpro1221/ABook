@@ -7,6 +7,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe
+
+- Điện thoại **tự phát lên loa / TV** trong nhà, không cần máy tính: sách đã có trên điện thoại (tải về, mở file .abook)
+  phát thẳng từ điện thoại; sách nghe thẳng từ máy tính vẫn đi qua máy tính. Mỗi loa / TV một mục trong "Phát trên…",
+  điện thoại tự chọn đường. Đang phát lên loa thì điện thoại giữ một thông báo "Đang phát trên <TV>" để không ngủ quên
+  giữa chương khi tắt màn hình.
+
 ## [0.4.13] - 2026-10-01
 
 ### Nghe
