@@ -132,6 +132,31 @@ Thước: ranh giới đoạn bằng Pk và WindowDiff (thước chuẩn của b
 trục và độ đúng loại cảnh so với đáp án cảnh; độ ổn định (số lần đổi nhạc mỗi giờ - đổi quá dày là lỗi người nghe ghét
 nhất). Đo theo từng truyện, báo từng truyện (luật đa thể loại 27-09).
 
+### Kết quả Pha 2 (02-10, đang chạy - CHƯA ngã ngũ)
+
+**Đáp án cảnh** (`scripts/model_eval/gold_scenes/`, hướng dẫn SCENE_GOLD_GUIDE.md): 7 chương, 4 truyện, 4 thể loại (Tam quốc
+050, Tắt đèn 020/021/024, YMP 248, Lucien 351/381). Mỗi chương HAI người chấm độc lập (Claude + một agent chấm mù), phân xử
+theo luật cố định. Độ đồng thuận = TRẦN cho máy: lượt 1 Pk 0,15, r V/E/T 0,46/0,73/0,79; lượt 2 (hướng dẫn bản 2) Pk 0,13,
+r 0,66/0,79/0,78. Bộ chấm: `LLM_Train/music/eval_scenes.py` (Pk min có/không ranh giới soft, P/R dung sai 20 giây, đoạn/giờ,
+r và sai số V/E/T trên từng câu theo thời lượng, và "oracle" = biết đúng ranh giới, chỉ đoán không khí).
+
+| cách | Pk | đoạn/giờ (gold 27,7) | r V / E / T |
+|---|---|---|---|
+| cả chương một đoạn | 0,238 | 6 | - |
+| chỉ ranh giới cứng (tiêu đề, dòng ngăn, nhảy thời gian) | 0,239 | 8 | 0,55 / 0,48 / 0,34 |
+| app hiện tại (đổi không khí từ nhãn câu) | 0,239 | 8 - **chưa bao giờ cắt** | như trên |
+| cắt đều 3 phút | 0,353 | 21 | 0,50 / 0,53 / 0,40 |
+| TextTiling bge-m3 (c = 1) | 0,223 | 22 | 0,50 / 0,56 / 0,39 |
+| LLM 9B v2 (chia cả chương) + gộp | 0,248 (4 chương) | 22 | thấp |
+| LLM 9B v3 (nhãn từng khối 30 giây) | 0,274 | 27 | **0,62** / 0,34 / **0,48** |
+
+Đọc: (1) nhãn cảm xúc từng câu KHÔNG thấy đổi cảnh trong lời kể (mọi ngưỡng đều kém "chỉ ranh giới cứng") - đổi cảnh nằm ở
+bối cảnh / thời gian / hành động, lời kể gần như toàn "trung tính"; (2) chưa cách nào thắng đường cơ sở tầm thường về ranh
+giới - TextTiling thắng ở 4 chương đầu (0,18) nhưng mất khi thêm LN (chia vụn); (3) LLM đọc chữ đoán SẮC THÁI tốt hơn nhãn câu
+(V, T) nhưng kém về năng lượng, và 9B không suy nghĩ hay sai định dạng (bỏ cột, nhét chữ của trục này sang trục kia) - v1 còn
+ĐẢO thang số; (4) LLM chia theo NHỊP truyện (mỗi trận phục kích, mỗi tràng cười một đoạn), đáp án coi đó là điểm nhấn.
+Đang thử: chế độ suy nghĩ, model khác, lai (ranh giới cứng + không khí từ LLM).
+
 ## Pha 3 - ghép đoạn với nhạc
 
 Ứng viên: (1) gần nhất trên hai trục (đường cơ sở); (2) truy hồi chữ-nhạc: model đọc hiểu viết mô tả nhạc cho đoạn ("tiếng
