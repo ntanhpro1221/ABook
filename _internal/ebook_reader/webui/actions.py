@@ -234,7 +234,27 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, An
     missing: list[str] = []
     subfolders: list[str] = []
     errors: list[str] = []
+    notes: list[str] = []
     epub_title = ""
+    # Chương tách từ EPUB giữ thứ tự của TỪNG file (hai tập trong một thư mục: hết tập 1 rồi mới tới tập 2) - xếp theo tên
+    # file thì "0001 …" của tập 1 và tập 2 xen nhau (soát UX 01-10). TXT là nhóm 0, mỗi EPUB một nhóm theo thứ tự gặp.
+    group_of: dict[str, int] = {}
+    groups = 0
+
+    def unpack(book: Path, root: Path) -> list[Path]:
+        nonlocal epub_title, groups
+        try:
+            title = epub_import.title_of(book)
+            chapter_files = discover_txt_files(epub_import.extract(book, root))
+        except (epub_import.EpubError, OSError) as error:
+            errors.append(f"{book.name}: {error}")
+            return []
+        epub_title = epub_title or title
+        groups += 1
+        for chapter in chapter_files:
+            group_of[os.path.normcase(str(chapter.resolve()))] = groups
+        return chapter_files
+
     for item in paths:
         # "Copy as path" của Explorer luôn thêm ngoặc kép; khoảng trắng hai đầu cũng hay dính theo khi dán.
         cleaned = str(item).strip().strip('"').strip("'").strip()
@@ -243,22 +263,18 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, An
             missing.append(cleaned)
             continue
         if path.is_file() and path.suffix.casefold() == ".epub":
-            try:
-                epub_title = epub_title or epub_import.title_of(path)
-                path = epub_import.extract(path, epub_root or path.parent)
-            except (epub_import.EpubError, OSError) as error:
-                errors.append(f"{path.name}: {error}")
-                continue
-        candidates = discover_txt_files(path) if path.is_dir() else [path]
+            candidates = unpack(path, epub_root or path.parent)
+        else:
+            candidates = discover_txt_files(path) if path.is_dir() else [path]
+        books = sorted((child for child in path.iterdir() if child.suffix.casefold() == ".epub"),
+                       key=lambda child: natural_key(child.name)) if path.is_dir() else []
         if path.is_dir() and not candidates:
             # Thư mục chỉ có EPUB (gửi từ điện thoại, hay chọn thư mục chứa file EPUB): tách từng file như khi chọn nó.
-            for book in sorted((child for child in path.iterdir() if child.suffix.casefold() == ".epub"),
-                               key=lambda child: natural_key(child.name)):
-                try:
-                    epub_title = epub_title or epub_import.title_of(book)
-                    candidates += discover_txt_files(epub_import.extract(book, epub_root or path))
-                except (epub_import.EpubError, OSError) as error:
-                    errors.append(f"{book.name}: {error}")
+            for book in books:
+                candidates += unpack(book, epub_root or path)
+        elif books:
+            names = ", ".join(book.name for book in books[:2]) + (" …" if len(books) > 2 else "")
+            notes.append(f"Thư mục có cả file EPUB ({names}) - chỉ lấy các file TXT; muốn dùng EPUB thì chọn riêng file ấy.")
         if path.is_dir() and not candidates:
             # Chọn nhầm thư mục cha: gợi ý các thư mục con có TXT ngay bên trong.
             try:
@@ -276,7 +292,7 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, An
             if key not in seen:
                 seen.add(key)
                 files.append(candidate.resolve())
-    files.sort(key=lambda path: natural_key(path.name))
+    files.sort(key=lambda path: (group_of.get(os.path.normcase(str(path)), 0), natural_key(path.name)))
     rows = []
     total_words = 0
     for path in files:
@@ -305,6 +321,8 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, An
         "missing": missing,
         # EPUB không tách được (hỏng, không có chương nào có chữ...): nói lý do thay vì "không có chương nào".
         "errors": errors,
+        # Không phải lỗi nhưng người dùng nên biết (thư mục có cả TXT lẫn EPUB: chỉ lấy TXT).
+        "notes": notes,
         "subfolders": subfolders[:8],
         "suggestedTitle": title,
         "totals": {

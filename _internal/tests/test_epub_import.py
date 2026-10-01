@@ -67,6 +67,30 @@ def test_an_epub_becomes_one_txt_chapter_per_spine_item_titled_by_its_table_of_c
     assert len(list(library.iterdir())) == 1
 
 
+def test_two_volumes_in_one_folder_keep_their_own_order_and_titles_are_read_once(tmp_path: Path) -> None:
+    """Soát UX 01-10: thư mục có Tập 1 + Tập 2 thì chương hai tập xen kẽ (xếp theo tên "0001.txt"); tên chương ở mục lục
+    "Chương 2: Gặp gỡ" mà tiêu đề trong chương là "Gặp gỡ" thì người nghe nghe tên chương hai lần."""
+    volumes = tmp_path / "hai_tap"
+    volumes.mkdir()
+    _epub(volumes / "Tap 1.epub", OPF.replace("Truyện thử EPUB", "Truyện · Tập 1"))
+    _epub(volumes / "Tap 2.epub", OPF.replace("Truyện thử EPUB", "Truyện · Tập 2").replace("Chương", "Hồi"))
+    scan = actions.scan_inputs([str(volumes)], epub_root=tmp_path / "lib")
+    assert [Path(row["path"]).parent.name.split(" - ")[0] for row in scan["files"]] == ["Tap 1", "Tap 1", "Tap 2", "Tap 2"]
+    assert [row["name"] for row in scan["files"]][:2] == ["0001 Chương 1 Khởi đầu.txt", "0002 Chương 2 Gặp gỡ.txt"]
+    second = Path(scan["files"][1]["path"]).read_text(encoding="utf-8").splitlines()
+    assert [line for line in second if line] == ["Chương 2: Gặp gỡ", "Natasha bước vào phòng."]
+
+
+def test_a_folder_with_both_txt_and_epub_says_the_epub_was_left_out(tmp_path: Path) -> None:
+    mixed = tmp_path / "lan"
+    mixed.mkdir()
+    (mixed / "001.txt").write_text("Chương 1\n\nCâu.\n", encoding="utf-8")
+    _epub(mixed / "kem.epub")
+    scan = actions.scan_inputs([str(mixed)], epub_root=tmp_path / "lib")
+    assert [row["name"] for row in scan["files"]] == ["001.txt"]
+    assert scan["notes"] and "kem.epub" in scan["notes"][0]
+
+
 def test_a_broken_or_hostile_epub_says_why_instead_of_finding_nothing(tmp_path: Path) -> None:
     broken = tmp_path / "hong.epub"
     broken.write_bytes(b"not a zip")

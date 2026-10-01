@@ -29,6 +29,7 @@ NS = {
 }
 BLOCKS = {"p", "div", "h1", "h2", "h3", "h4", "h5", "h6", "li", "blockquote", "section", "article", "tr", "dd", "dt", "pre"}
 HEADINGS = {"h1", "h2", "h3"}
+UNSAFE_NAME = re.compile(r'[<>:"/\\|?*\x00-\x1f]')  # ký tự Windows không nhận trong tên file
 
 
 class EpubError(ValueError):
@@ -38,11 +39,11 @@ class EpubError(ValueError):
 def _xml(raw: bytes) -> ElementTree.Element:
     head = raw[:4096].decode("utf-8", errors="replace")
     if "<!ENTITY" in head.upper():
-        raise EpubError("EPUB khai báo entity XML - không mở")
+        raise EpubError("có nội dung XML lạ (khai báo entity) - không mở để giữ an toàn máy")
     try:
         return ElementTree.fromstring(raw)
     except ElementTree.ParseError as error:
-        raise EpubError(f"EPUB hỏng: {error}") from error
+        raise EpubError("không phải EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT") from error
 
 
 class _Text(HTMLParser):
@@ -129,9 +130,9 @@ def _read(book: zipfile.ZipFile, name: str) -> bytes:
     try:
         info = book.getinfo(name)
     except KeyError as error:
-        raise EpubError(f"EPUB thiếu {name}") from error
+        raise EpubError("không phải EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT") from error
     if info.file_size > MAX_MEMBER:
-        raise EpubError(f"{name} trong EPUB quá lớn")
+        raise EpubError("có một chương quá lớn (trên 20 MB) - không giống EPUB truyện")
     return book.read(info)
 
 
@@ -140,14 +141,14 @@ def chapters(path: Path) -> list[tuple[str, list[str]]]:
     try:
         book = zipfile.ZipFile(path)
     except (OSError, zipfile.BadZipFile) as error:
-        raise EpubError(f"Không mở được EPUB: {error}") from error
+        raise EpubError("không phải EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT") from error
     with book:
         if sum(info.file_size for info in book.infolist()) > MAX_TOTAL:
-            raise EpubError("EPUB giải nén quá lớn")
+            raise EpubError("quá lớn khi giải nén (trên 300 MB) - không giống EPUB truyện")
         container = _xml(_read(book, "META-INF/container.xml"))
         rootfile = container.find(".//c:rootfile", NS)
         if rootfile is None or not rootfile.get("full-path"):
-            raise EpubError("EPUB không có rootfile")
+            raise EpubError("không phải EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT")
         opf_path = rootfile.get("full-path", "")
         opf = _xml(_read(book, opf_path))
         opf_dir = posixpath.dirname(opf_path)
@@ -158,7 +159,7 @@ def chapters(path: Path) -> list[tuple[str, list[str]]]:
         }
         spine = opf.find("opf:spine", NS)
         if spine is None:
-            raise EpubError("EPUB không có spine")
+            raise EpubError("không phải EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT")
         titles = _toc(book, opf_dir, manifest, spine.get("toc", ""))
         result: list[tuple[str, list[str]]] = []
         for itemref in spine.iterfind("opf:itemref", NS):
@@ -172,11 +173,16 @@ def chapters(path: Path) -> list[tuple[str, list[str]]]:
             if not lines or (sum(len(line) for line in lines) < MIN_CHARS and not listed):
                 continue
             title = listed or heading or lines[0][:80]
-            if lines and " ".join(lines[0].split()) == title:
+            first = " ".join(lines[0].split()).casefold()
+            # Dòng đầu là tiêu đề của chính chương: bỏ khi nó đã nằm trong tên chương ("Gặp gỡ" trong "Chương 2: Gặp gỡ"),
+            # hay lấy nó làm tên khi nó đầy đủ hơn tên mục lục - không để người nghe nghe tên chương hai lần.
+            if first == title.casefold() or (heading and first == heading.casefold() and first in title.casefold()):
                 lines = lines[1:]
+            elif heading and first == heading.casefold() and title.casefold() in first:
+                title, lines = lines[0], lines[1:]
             result.append((title, lines))
         if not result:
-            raise EpubError("EPUB không có chương nào có chữ")
+            raise EpubError("không có chương nào có chữ")
         return result
 
 
@@ -197,7 +203,7 @@ def extract(path: Path, folder_root: Path) -> Path:
     """Tách EPUB thành thư mục chương TXT trong `folder_root` (đặt tên theo file + băm nội dung: mở lại cùng file thì dùng
     lại thư mục, file khác cùng tên không đè lên nhau). Trả về thư mục ấy."""
     digest = hashlib.sha256(path.read_bytes()).hexdigest()[:8]
-    stem = re.sub(r'[<>:"/\\|?*\x00-\x1f]', " ", path.stem).strip() or "epub"
+    stem = UNSAFE_NAME.sub(" ", path.stem).strip() or "epub"
     folder = folder_root / f"{stem[:80]} - {digest}"
     if folder.is_dir() and any(folder.glob("*.txt")):
         return folder
@@ -206,5 +212,6 @@ def extract(path: Path, folder_root: Path) -> Path:
     width = max(4, len(str(len(found))))
     for index, (title, lines) in enumerate(found, start=1):
         body = "\n\n".join([title, *lines]) + "\n"
-        (folder / f"{index:0{width}d}.txt").write_bytes(body.encode("utf-8"))
+        label = " ".join(UNSAFE_NAME.sub(" ", title).split())[:50].strip(" .")
+        (folder / f"{index:0{width}d}{' ' + label if label else ''}.txt").write_bytes(body.encode("utf-8"))
     return folder

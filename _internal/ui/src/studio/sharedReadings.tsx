@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { shownReading } from "@/shared/format";
 import { Button, IconButton } from "@/shared/ui";
 import { api } from "./api";
-import { refreshAfterDecision, useWhenApplied } from "./decisions";
+import { refreshAfterDecision, useApplyWhen, useWhenApplied } from "./decisions";
 
 // Cách đọc dùng chung cho mọi sách (webui/shared_readings.py): sửa một tên một lần, sách MỚI có tên ấy tự dùng (lúc tạo),
 // sách có sẵn thì bấm "Dùng cách đọc chung". Mọi mục đi đúng đường của một lần sửa tay - dây chuyền áp ở ranh giới chương.
@@ -25,6 +25,16 @@ export function useSharedReadings() {
     queryKey: ["shared-readings"],
     queryFn: () => api<{ entries: SharedReading[] }>("/api/readings"),
   });
+}
+
+/** Mục cách đọc chung của một từ (không phân biệt hoa thường); `reading` có thì chỉ khi mục ấy đọc ĐÚNG như vậy - dấu
+ *  "dùng chung" trên dòng tên. */
+export function useSharedEntry(surface: string, reading?: string | null): SharedReading | undefined {
+  const { data } = useSharedReadings();
+  const key = surface.toLocaleLowerCase("vi");
+  return data?.entries.find(
+    (entry) => entry.surface.toLocaleLowerCase("vi") === key && (reading == null || entry.spokenForm === reading),
+  );
 }
 
 /** Cài đặt → Studio: xem, thêm, bỏ cách đọc chung. */
@@ -117,6 +127,7 @@ export function SharedReadingsSettings() {
 export function SharedReadingsOffer({ bookId }: { bookId: string }) {
   const client = useQueryClient();
   const when = useWhenApplied(bookId);
+  const stage = useApplyWhen(bookId);
   const { data } = useQuery({
     queryKey: ["shared-readings", bookId],
     queryFn: () => api<{ entries: SharedReading[] }>(`/api/books/${bookId}/shared-readings`),
@@ -126,18 +137,28 @@ export function SharedReadingsOffer({ bookId }: { bookId: string }) {
     onSuccess: ({ applied }) => {
       refreshAfterDecision(client, bookId);
       void client.invalidateQueries({ queryKey: ["shared-readings", bookId] });
-      toast.success(`Đã dùng ${applied.length} cách đọc chung`, { description: `Các câu có những tên này sẽ được thu lại. ${when}` });
+      // Sách chưa thu câu nào (chưa bắt đầu, đang phân tích) thì không có gì để "thu lại" (soát UX 01-10).
+      const redo = stage === "start" || stage === "cast" ? "" : `${applied.length === 1 ? "Câu có tên này" : "Các câu có những tên này"} sẽ được thu lại. `;
+      toast.success(`Đã dùng ${applied.length} cách đọc chung`, { description: `${redo}${when}` });
     },
     onError: (error: Error) => toast.error("Chưa dùng được cách đọc chung", { description: error.message }),
   });
   const entries = data?.entries ?? [];
   if (!entries.length) return null;
-  const shown = entries.slice(0, 3).map((entry) => `${entry.surface} → “${shownReading(entry.spokenForm)}”`).join(", ");
+  // Cách cuốn đang đọc (nếu có) bên cạnh cách chung - người dùng thấy cái gì sẽ đổi thành cái gì.
+  const shown = entries
+    .slice(0, 3)
+    .map((entry) =>
+      entry.current
+        ? `${entry.surface}: “${shownReading(entry.current)}” → “${shownReading(entry.spokenForm)}”`
+        : `${entry.surface} → “${shownReading(entry.spokenForm)}”`,
+    )
+    .join(", ");
   return (
     <div className="mt-3 flex max-w-2xl flex-wrap items-center gap-3 rounded-xl bg-info-soft px-3 py-2 text-sm">
       <span className="min-w-0 flex-1 text-pretty">
-        Cách đọc chung có {entries.length} tên trong cuốn này mà cuốn đang đọc khác: {shown}
-        {entries.length > 3 ? ", …" : ""}
+        Cách đọc chung khác cách cuốn này đang đọc: {shown}
+        {entries.length > 3 ? `, và ${entries.length - 3} tên khác` : ""}
       </span>
       <Button size="sm" variant="secondary" icon={BookOpenCheck} loading={apply.isPending} onClick={() => apply.mutate()}>
         Dùng {entries.length} cách đọc chung

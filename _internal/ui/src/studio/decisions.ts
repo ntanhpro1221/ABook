@@ -6,10 +6,12 @@ import { api, type BookSummary } from "./api";
  *  "thu lại khi sách chạy tiếp" lẫn "sách đã xong thì bấm…"). Đang chạy: dây chuyền áp ở ranh giới chương kế tiếp và thu
  *  lại cả chương đã qua (pipeline._process_all_chapters); trước khi phân vai khoá thì yêu cầu nằm chờ; sách ĐÃ XONG không
  *  tự chạy lại. Sách bấm "Tạm dừng" vẫn `running` (tiến trình sống) nhưng không tới ranh giới chương nào tới khi làm tiếp. */
-type ApplyWhen = "cast" | "running" | "done" | "paused";
+type ApplyWhen = "start" | "cast" | "running" | "done" | "paused";
 
 export function applyWhen(book: Pick<BookSummary, "phase" | "running" | "starting" | "paused"> | undefined): ApplyWhen {
   if (!book) return "paused";
+  // Sách chưa bắt đầu: chưa có câu nào để thu lại, cũng chưa có gì để "làm tiếp" (soát UX 01-10).
+  if (book.phase === "idle" && !book.running && !book.starting) return "start";
   if (book.phase === "analysis" || book.phase === "casting") return "cast";
   if (book.paused) return "paused";
   if (book.running || book.starting) return "running";
@@ -19,6 +21,7 @@ export function applyWhen(book: Pick<BookSummary, "phase" | "running" | "startin
 /** Câu đứng riêng, cho thông báo - đứng sau câu nói cái giá ("Câu đã thu sẽ được thu lại."), nên không nhắc "thu lại"
  *  lần nữa; thông báo hiện trên chính trang dự án nên chỉ "đầu trang", không "trang dự án" (soát UX 30-09). */
 const SENTENCE: Record<ApplyWhen, string> = {
+  start: "Máy dùng ngay từ khi bắt đầu làm sách.",
   cast: "Áp dụng khi phân vai xong.",
   running: "Máy áp ở ranh giới chương kế tiếp, không phải dừng sách.",
   done: "Bấm “Áp dụng thay đổi” ở đầu trang để đưa vào sách.",
@@ -27,6 +30,7 @@ const SENTENCE: Record<ApplyWhen, string> = {
 
 /** Vế sau gạch nối, cho dòng "Đã ghi … - {vế}." trên thẻ và trên câu. */
 export const PENDING_NOTE: Record<ApplyWhen, string> = {
+  start: "dùng khi bắt đầu làm sách",
   cast: "chờ phân vai xong",
   running: "máy áp ở ranh giới chương kế tiếp",
   done: "bấm “Áp dụng thay đổi” ở đầu trang để áp",
@@ -34,7 +38,7 @@ export const PENDING_NOTE: Record<ApplyWhen, string> = {
 };
 
 /** Chỉ đọc bản của trang dự án trong bộ nhớ đệm - không thêm một nhịp hỏi máy chủ. */
-function useApplyWhen(bookId: string): ApplyWhen {
+export function useApplyWhen(bookId: string): ApplyWhen {
   return applyWhen(useQuery<{ book: BookSummary }>({ queryKey: ["book", bookId], enabled: false }).data?.book);
 }
 
@@ -56,6 +60,8 @@ export function refreshAfterDecision(client: QueryClient, bookId: string) {
   void client.invalidateQueries({ queryKey: ["pronunciations", bookId] });
   void client.invalidateQueries({ queryKey: ["casting", bookId] });
   void client.invalidateQueries({ queryKey: ["voice-choices", bookId] });
+  // Cả danh sách cách đọc chung lẫn gợi ý "Dùng N cách đọc chung" của mọi cuốn (hoàn tác có thể gỡ một mục chung).
+  void client.invalidateQueries({ queryKey: ["shared-readings"] });
 }
 
 // Bấm nhầm ("Nữ" cạnh "Nam", nhầm người, nhầm cách đọc) sửa ngay trên thông báo: "Hoàn tác" gửi lại đúng lần bấm ấy
