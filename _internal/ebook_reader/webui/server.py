@@ -574,9 +574,30 @@ class App:
     def continuation(self, value: str) -> dict[str, Any]:
         """"Làm tiếp cuốn này": chương kế tiếp, cài đặt và thứ sẽ mang theo - trình tạo sách điền sẵn từ đây. Tính từ phần
         MỚI NHẤT của cuốn (bấm ở phần 1 khi đã có phần 2 thì nối sau phần 2); `sourceId` là phần ấy - gieo từ nó."""
-        latest = continuation.latest_part(self._book(value), self.library.projects())
+        clicked = self._book(value).resolve()
+        latest = continuation.latest_part(clicked, self.library.projects())
         plan = store.continuation_plan(latest)
         plan["sourceId"] = book_id(latest)
+        if plan.get("analysisModel"):
+            try:
+                listed = self.analysis_models()
+            except Exception:  # noqa: BLE001 - Ollama tắt: giữ tên, bước tạo sách tự kiểm lại
+                listed = None
+            if listed is not None:
+                if plan["analysisModel"] == listed["default"]:
+                    plan["analysisModel"] = ""  # mặc định của app - không cần ghim riêng cho cuốn
+                elif plan["analysisModel"] not in {model["name"] for model in listed["models"]}:
+                    plan["analysisModelMissing"], plan["analysisModel"] = plan["analysisModel"], ""
+        if latest != clicked:
+            # Bấm ở phần cũ khi cuốn đã có phần sau (soát UX a6 01-10, B1): phần mới nối sau phần MỚI NHẤT - nói ra, không thì
+            # người dùng tưởng máy bỏ qua một phần ("Phần 1" -> "Phần 3").
+            def title(project: Path) -> str:
+                try:
+                    return str(store.summarize(project)["title"])
+                except (OSError, ValueError, KeyError):
+                    return project.name
+
+            plan["clickedTitle"], plan["latestTitle"] = title(clicked), title(latest)
         return plan
 
     def parts(self, value: str) -> list[dict[str, Any]]:

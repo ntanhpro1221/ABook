@@ -185,6 +185,12 @@ export interface ContinuationPlan {
   /** Phần mới nhất của cuốn - phần gieo từ (bấm ở phần cũ khi đã có phần sau thì là phần sau). */
   sourceId: string;
   sourceTitle: string;
+  /** Bấm "Làm tiếp" ở một phần CŨ: tên phần ấy (phần mới vẫn nối sau phần mới nhất - `sourceTitle`). */
+  clickedTitle?: string;
+  latestTitle?: string;
+  /** Model đọc hiểu của phần trước khi khác mặc định ("" = mặc định); model ấy không còn trong Ollama thì tên ở `analysisModelMissing`. */
+  analysisModel?: string;
+  analysisModelMissing?: string;
   /** Số của phần sắp tạo (phần trước + 1). */
   part: number;
   title: string;
