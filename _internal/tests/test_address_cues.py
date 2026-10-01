@@ -150,6 +150,18 @@ def test_calling_mother_and_friend_differently_is_one_person() -> None:
     assert split_doubts(rows, lambda _chapter: "Kakeru", lambda speaker: True) == []
 
 
+def test_saying_we_is_not_a_second_self() -> None:
+    """01-10, Nageki 79: Franz hét "tôi… cậu" với Krai và hai lần nói "chúng ta" - một người. Tự xưng số nhiều không phải
+    cách tự xưng của người khác."""
+    from ebook_reader.webui.address_cues import split_doubts
+
+    shouting = ["“Tôi nói rồi, tôi không phải bạn cậu!”", "“Cậu nghĩ tôi cần cậu trấn an chắc?”", "“Cậu mưu tính gì, tôi hỏi!”"]
+    we = ["“Chúng ta đi thôi.”", "“Chúng ta không còn thời gian.”"]
+    rows = [{"chapter_id": 1, "speaker": "FRANZ", "text": text, "kind": "dialogue"} for text in shouting * 3]
+    rows += [{"chapter_id": 2, "speaker": "FRANZ", "text": text, "kind": "dialogue"} for text in shouting + we]
+    assert split_doubts(rows, lambda _chapter: "Krai", lambda speaker: True) == []
+
+
 def test_the_inbox_asks_once_for_the_whole_odd_group(tmp_path: Path) -> None:
     project = tmp_path / "sach"
     project.mkdir()
