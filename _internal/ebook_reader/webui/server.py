@@ -635,7 +635,7 @@ class App:
                                     port=lambda: self.local_port, token=self.token, static_dir=self.static_dir)
                 app = SyncApp(self.library, self.listening, self.devices, socket_name(), self.remote, studio=studio,
                               routes=self.routes,
-                              player=self.player)
+                              player=self.player, cast=self.cast)
                 self.sync_server = SyncServer(app, host=self.sync_host, port=self.sync_port).start()
                 self.sync_error = ""
                 if self.sync_host == "0.0.0.0":  # máy chủ thật (không phải bài thử chỉ nghe 127.0.0.1)

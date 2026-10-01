@@ -13,6 +13,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   Windows Media Player từ xa). Nút "Phát trên…" ở thanh phát liệt kê cả loa / TV bên cạnh điện thoại; thiết bị tự tải
   chương từ máy tính, máy tính lưu chỗ nghe và tự sang chương sau, thanh "Đang phát trên <TV>" có dừng / tua / "Nghe trên
   máy này". Loa / TV phát ở tốc độ 1x.
+- Điện thoại: nút "Phát trên…" ở màn đang nghe liệt kê cả loa / TV mà máy tính (đang mở ABook) thấy trong nhà - phát sách
+  của máy tính lên đó, dừng / tua / "Nghe ở đây" từ thanh "Đang phát trên <TV>" của điện thoại. Máy tính phục vụ audio.
 - Bấm "Phát trên <máy khác>" rồi đóng hay tải lại app không còn đưa chỗ nghe về chỗ lúc chuyển đi.
 
 ## [0.4.12] - 2026-10-01
