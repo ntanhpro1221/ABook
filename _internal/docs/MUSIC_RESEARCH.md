@@ -109,6 +109,14 @@ rock 13, **cổ phong phương Đông 11** - thiếu hẳn cho truyện tiên hi
 giấy phép mở trước khi bật nhạc cho các cuốn ấy. Phân loại (11 phong cách, 9 thể loại truyện với bảng tương thích, 9 nhãn
 GEMS) ở `LLM_Train/music/taxonomy.py`; khung ở `MUSIC_SELECTION_MODEL.md`.
 
+**Phong cách + nhịp (02-10 01:3x).** CLAP zero-shot (hiệu chỉnh) đúng phong cách 63,8% (3 nhãn đầu 88,8%, đoán bừa ~7%)
+trên 260 bài Incompetech có thể loại người gắn; danh mục cộng thêm thể loại / nhạc cụ / feel do người gắn. Bộ phong cách
+phải tách: pop / nhảy, hài hước, nhạc thế giới khác (sitar, santur...) khỏi cổ phong Trung Hoa, và bằng chứng NHỊP TRỐNG NỔI
+(feel Grooving/Bouncy + drum kit/bass) - thiếu chúng thì "Derp Nugget", "Space 1990" lọt vào truyện kỳ ảo. Sau khi tách, lo18
+(thế giới: dị giới phương Tây) ra Crusade, Royal Coupling, Goblin King, Minstrel Guild, Final Battle of the Dark Wizards...;
+còn sót "Vadodora Chill Mix", "Zanzibar". Dò nhịp (librosa) so với BPM người nhập của 723 bài: đúng trong 8% 57,8%, kể cả
+lệch đôi/nửa 76,2% - đủ cho nhóm nhanh / vừa / chậm, chưa đủ để so BPM chính xác.
+
 "Hợp làm nền" đo riêng, khách quan: xác suất có lời (kiểm trên MTG-Jamendo), độ nổi của giai điệu, độ ổn định cường độ
 (phương sai độ to theo cửa sổ), có lặp liền được không (ghép đuôi-đầu theo phách).
 
