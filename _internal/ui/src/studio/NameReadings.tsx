@@ -9,6 +9,7 @@ import { formatNumber, shownReading } from "@/shared/format";
 import { Button } from "@/shared/ui";
 import { api, suggestionOf, urls } from "./api";
 import { ReadingProblem } from "./ReadingProblem";
+import { SharedReadingsOffer } from "./sharedReadings";
 import { refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied } from "./decisions";
 
 // Tab Nhân vật, mục "Cách đọc tên" (webui/name_readings.py): mọi tên riêng máy đọc thế nào - kể cả tên máy chắc và cách
@@ -79,6 +80,7 @@ export function NameReadings({ bookId, focus = false, name = "" }: { bookId: str
       <p className="mt-1 max-w-prose text-sm text-fg-2">
         Tên riêng máy đọc thế nào. Nghe câu mẫu, sai thì sửa ngay trên dòng - các câu có tên ấy sẽ được thu lại.
       </p>
+      <SharedReadingsOffer bookId={bookId} />
       <div className="relative mt-3 max-w-sm">
         <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-fg-3" aria-hidden />
         <input
@@ -238,14 +240,18 @@ function EditReading({ bookId, item, onDone, fresh }: { bookId: string; item: Na
     [item.requested, item.spoken].find((saved) => saved && saved.toLocaleLowerCase("vi") === text.toLocaleLowerCase("vi")) ?? text;
   const [problem, setProblem] = useState("");
   const [suggestion, setSuggestion] = useState("");
+  // "Dùng cho mọi sách": cùng cách đọc vào từ điển chung (webui/shared_readings.py) - sách mới có tên này tự dùng.
+  const [everywhere, setEverywhere] = useState(false);
   const save = useMutation({
     mutationFn: (spokenForm: string) =>
       api<{ surface: string; spokenForm: string; requestedAt: number }>(`/api/books/${bookId}/pronunciation`, {
         method: "POST",
-        body: { surface: item.surface, spokenForm },
+        body: { surface: item.surface, spokenForm, ...(everywhere ? { everywhere: true } : {}) },
       }),
     onSuccess: ({ spokenForm, requestedAt }) => {
       refreshAfterDecision(client, bookId);
+      if (everywhere) void client.invalidateQueries({ queryKey: ["shared-readings"] });
+      const shared = everywhere ? " Đã thêm vào cách đọc chung - sách mới có tên này tự dùng." : "";
       onDone();
       const keep = spokenForm === item.spoken;
       // Như thẻ trong hộp việc: sửa nhầm thì "Hoàn tác" trả về đúng như trước lần lưu này (`previous` = cách đang đọc).
@@ -264,14 +270,14 @@ function EditReading({ bookId, item, onDone, fresh }: { bookId: string; item: Na
         duration: UNDO_MS,
       };
       if (keep) {
-        toast.success(`Giữ cách đọc “${shownReading(spokenForm)}”`, { description: "Không phải thu lại câu nào.", ...undo });
+        toast.success(`Giữ cách đọc “${shownReading(spokenForm)}”`, { description: `Không phải thu lại câu nào.${shared}`, ...undo });
         return;
       }
       toast.success(`Đã ghi: “${item.surface}” đọc là “${shownReading(spokenForm)}”`, {
         // Tên chưa có câu nào trong phần này (vừa thêm): không có gì để thu lại - nói đúng điều ấy (soát UX 29-09).
         description: item.lines
-          ? `Các câu có tên này sẽ được thu lại. ${when}`
-          : "Phần này chưa có câu nào có tên này - cách đọc sẽ được dùng khi tên xuất hiện.",
+          ? `Các câu có tên này sẽ được thu lại. ${when}${shared}`
+          : `Phần này chưa có câu nào có tên này - cách đọc sẽ được dùng khi tên xuất hiện.${shared}`,
         ...undo,
       });
     },
@@ -325,7 +331,18 @@ function EditReading({ bookId, item, onDone, fresh }: { bookId: string; item: Na
       <Button size="sm" variant="ghost" type="button" onClick={onDone}>
         Huỷ
       </Button>
-      <Button size="sm" variant="primary" type="submit" loading={save.isPending} disabled={!typed || (!fresh && typed === (item.requested ?? item.spoken))}>
+      <label className="flex items-center gap-1.5 text-xs text-fg-2">
+        <input type="checkbox" checked={everywhere} onChange={(event) => setEverywhere(event.target.checked)} className="accent-[var(--color-accent)]" />
+        Dùng cho mọi sách
+      </label>
+      <Button
+        size="sm"
+        variant="primary"
+        type="submit"
+        loading={save.isPending}
+        // Chưa đổi gì (ô hiện chữ đầu viết hoa - so không phân biệt hoa thường) thì chỉ lưu khi đưa vào cách đọc chung.
+        disabled={!typed || (!fresh && !everywhere && asStored(typed) === (item.requested ?? item.spoken))}
+      >
         Lưu
       </Button>
     </form>

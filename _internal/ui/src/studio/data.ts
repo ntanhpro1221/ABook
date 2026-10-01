@@ -217,7 +217,8 @@ export function useCreateBook() {
       seedFrom?: string;
       start: boolean;
     }) =>
-      api<{ id: string }>("/api/books", { method: "POST", body }),
+      // `sharedReadings`: các từ của cách đọc chung có trong truyện - sách mới nhận luôn (webui/shared_readings.py).
+      api<{ id: string; sharedReadings?: string[] }>("/api/books", { method: "POST", body }),
     onSuccess: () => refresh(),
   });
 }
