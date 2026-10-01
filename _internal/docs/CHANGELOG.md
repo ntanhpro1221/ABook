@@ -33,9 +33,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   bao nhiêu chương chưa có audio, sách đang chạy, còn thay đổi chưa áp (kèm nút "Áp dụng trước").
 - Mỗi chương có menu **…**: nghe chương, mở **Kịch bản chương này**, và **Thu lại cả chương** (mọi câu đã thu, hạt giống
   mới - khi cả chương nghe không ổn). Cả chương tính là một thay đổi trong hộp "Áp dụng", bỏ được bằng một nút.
+- **Việc cần duyệt** có phím tắt: **J / K** chọn thẻ, **1–9** bấm lựa chọn thứ N của thẻ ấy - duyệt cả trăm thẻ không cần
+  chuột; quyết xong thì thẻ kế đứng vào đúng chỗ.
 - **Cần nghe lại**: câu hỏng sau mọi lần thử (tượng thanh "Tách tách tách", "Coong…", chữ lạ) có nút **Sửa chữ đem đọc**
   ngay trên thẻ - viết lại cách đọc thành tiếng, lưu cho một câu hay cả các câu cùng chữ; chữ của sách giữ nguyên. Câu đã
   ghi chữ mới rời mục "Chưa xem" và hiện "Sẽ đọc là …" cho tới khi áp.
+- Phân vai: tên có chức danh tiếng Anh mà model đọc hiểu viết thêm ("Professor Glast", "Lady Marla", "Sir …") gộp về
+  đúng người ("Glast") - không còn thành nhân vật thứ hai với giọng khác.
 
 ### Nghe
 
