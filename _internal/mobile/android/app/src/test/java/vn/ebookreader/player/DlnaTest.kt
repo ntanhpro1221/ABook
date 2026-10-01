@@ -227,6 +227,24 @@ class DlnaTest {
     }
 
     @Test
+    fun theStopButtonOfTheNotificationEndsTheSessionAtTheRightPlace() {
+        val device = renderer()
+        val (chosen, saved) = book(30.0)
+        val players = players(device, chosen, saved)
+        val id = players.found()
+        players.send(id, command("load", "bookId" to "sach", "chapterId" to 1, "seconds" to 0.0))
+        until { players.only().now()?.takeIf { it.getBoolean("playing") && it.getDouble("position") >= 1.0 } }
+        assertEquals(listOf(id to true), players.playing())
+        players.end(id)
+        assertEquals("STOPPED", device.state())
+        assertNull(players.only().now())
+        assertTrue(players.playing().isEmpty() && players.active().isEmpty())
+        val last = synchronized(saved) { saved.last() }
+        assertEquals(listOf("sach", 1), last.take(2))
+        assertTrue((last[2] as Double) >= 1.0)
+    }
+
+    @Test
     fun anotherAppTakingTheRendererEndsTheSession() {
         val device = renderer()
         val (chosen, saved) = book(30.0)
