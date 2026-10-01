@@ -17,6 +17,7 @@ import android.os.Looper
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import org.json.JSONObject
 
 /**
  * Điện thoại phát sách CỦA NÓ lên loa / TV (01-10): [DlnaPlayers] với sách lấy từ Store (chỉ sách ĐÃ CÓ trên máy - tải
@@ -103,7 +104,28 @@ class CastService : Service() {
         handler.postDelayed(check, 15_000)
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_NOT_STICKY
+    /** Nút trên thông báo (Tạm dừng / Phát tiếp / Dừng) tới đây; lệnh tới thiết bị đi qua mạng nên chạy ngoài luồng chính. */
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val action = intent?.action ?: return START_NOT_STICKY
+        Thread {
+            val players = PhoneCast.players
+            for ((id, playing) in players.playing()) {
+                runCatching {
+                    when (action) {
+                        ACTION_PAUSE -> if (playing) players.send(id, JSONObject().put("action", "pause"))
+                        ACTION_PLAY -> if (!playing) players.send(id, JSONObject().put("action", "play"))
+                        ACTION_STOP -> players.end(id)
+                    }
+                }
+            }
+            // Một chuỗi hỏi duy nhất: bỏ lượt hẹn sẵn rồi chạy ngay (nó tự hẹn lượt sau) - không chồng thêm chuỗi mới.
+            handler.post {
+                handler.removeCallbacks(check)
+                check.run()
+            }
+        }.start()
+        return START_NOT_STICKY
+    }
 
     override fun onDestroy() {
         handler.removeCallbacks(check)
@@ -117,19 +139,29 @@ class CastService : Service() {
     private fun notification(names: List<String>): Notification {
         val open = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
             PendingIntent.FLAG_IMMUTABLE)
+        val playing = PhoneCast.players.playing().any { it.second }
+        val toggle = if (playing) ACTION_PAUSE else ACTION_PLAY
         return NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(applicationInfo.icon)
-            .setContentTitle("Đang phát trên ${names.joinToString(", ").ifEmpty { "loa / TV" }}")
+            .setContentTitle("${if (playing) "Đang phát" else "Đang dừng"} trên ${names.joinToString(", ").ifEmpty { "loa / TV" }}")
             .setContentText("Điện thoại đang phục vụ audio - giữ Wi-Fi bật")
             .setContentIntent(open)
+            .addAction(0, if (playing) "Tạm dừng" else "Phát tiếp", command(toggle))
+            .addAction(0, "Dừng", command(ACTION_STOP))
             .setOngoing(true)
             .setSilent(true)
             .build()
     }
 
+    private fun command(action: String): PendingIntent = PendingIntent.getService(this, action.hashCode(),
+        Intent(this, CastService::class.java).setAction(action), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+
     companion object {
         private const val CHANNEL = "cast"
         private const val ID = 4207
+        private const val ACTION_PAUSE = "vn.ebookreader.player.cast.PAUSE"
+        private const val ACTION_PLAY = "vn.ebookreader.player.cast.PLAY"
+        private const val ACTION_STOP = "vn.ebookreader.player.cast.STOP"
 
         fun start(context: Context) {
             ContextCompat.startForegroundService(context, Intent(context, CastService::class.java))

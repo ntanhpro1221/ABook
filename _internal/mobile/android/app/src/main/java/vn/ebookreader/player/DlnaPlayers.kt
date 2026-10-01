@@ -106,6 +106,26 @@ class DlnaPlayers(
         sessions.filter { !it.value.ended }.keys.mapNotNull { renderers[it]?.first?.name }
     }
 
+    /** Phiên đang mở: (mã thiết bị, có đang phát không) - nút trên thông báo của CastService. */
+    fun playing(): List<Pair<String, Boolean>> = synchronized(lock) {
+        sessions.filter { !it.value.ended }.map { it.key to it.value.playing }
+    }
+
+    /** Thôi phát trên thiết bị (nút "Dừng" của thông báo): thiết bị dừng hẳn, chỗ nghe lưu ở chỗ dừng, phiên đóng. */
+    fun end(id: String) {
+        val (renderer, session) = synchronized(lock) { renderers[id]?.first to sessions[id] }
+        if (renderer == null || session == null || session.ended) return
+        val device = deviceLocks.getOrPut(id) { ReentrantLock() }
+        device.lock()
+        try {
+            session.ended = true
+            store(session, session.estimate(System.currentTimeMillis()))
+            runCatching { call(renderer, "Stop") }
+        } finally {
+            device.unlock()
+        }
+    }
+
     /** App thôi phục vụ: thiết bị đang phát sách của điện thoại dừng hẳn, chỗ nghe lưu ở chỗ dừng, đóng cổng audio. */
     fun close() {
         val active = synchronized(lock) {
