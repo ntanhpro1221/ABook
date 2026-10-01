@@ -549,6 +549,11 @@ class App:
         )
         self.preferences.add_recent(root)
         replace_error = ""
+        unchanged = replaced is not None and root.resolve() == replaced.resolve()
+        if unchanged:
+            # Cùng tên, cùng chương, cùng thiết lập: dây chuyền mở lại ĐÚNG cuốn cũ (project.create_or_open_project) - không
+            # có gì để thay, và tuyệt đối không bỏ chính nó vào Thùng rác (soát 01-10: lần thử đầu đã làm vậy).
+            replaced = None
         if replaced is not None:
             # Bìa đã chọn cho cuốn cũ đi theo; cuốn cũ vào Thùng rác (khôi phục được). Không bỏ được thì cuốn mới vẫn còn,
             # lời báo nói rõ.
@@ -578,7 +583,8 @@ class App:
         with self._queue_lock:
             queued = self.queue.index(book_id(root)) + 1 if book_id(root) in self.queue else 0
         return {"id": book_id(root), "sharedReadings": shared, "queued": queued,
-                **({"replaceError": replace_error} if replace_error else {})}
+                **({"replaceError": replace_error} if replace_error else {}),
+                **({"unchanged": True} if unchanged else {})}
 
     def shared_readings_view(self) -> dict[str, Any]:
         return {"entries": self.shared_readings.entries()}

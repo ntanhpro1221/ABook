@@ -242,7 +242,10 @@ function SourceStep({
   onDropCredits,
   onSplit,
   previousLast,
+  replaces,
 }: {
+  /** "Sửa thiết lập": cuốn đang được làm lại - không nhắc "đã có dự án" về chính nó. */
+  replaces?: { id: string; title: string };
   scan: ScanResult | null;
   title: string;
   onTitle: (title: string) => void;
@@ -414,13 +417,22 @@ function SourceStep({
               </span>
             )}
           </label>
-          {scan?.existing && scan.existing.length > 0 && (
+          {replaces && (
+            <div className="mt-4 flex gap-3 rounded-xl border border-info/40 bg-info-soft p-4 text-sm">
+              <Info className="mt-0.5 size-4 shrink-0 text-info" />
+              <p className="min-w-0 text-pretty">
+                Đang sửa thiết lập của <span className="font-semibold">“{replaces.title}”</span>: mọi lựa chọn cũ đã điền sẵn, đổi
+                gì cũng được. Tạo xong, bản cũ vào Thùng rác (bìa đi theo).
+              </p>
+            </div>
+          )}
+          {scan?.existing && scan.existing.some((project) => project.id !== replaces?.id) && (
             <div className="mt-4 flex gap-3 rounded-xl border border-info/40 bg-info-soft p-4 text-sm">
               <Info className="mt-0.5 size-4 shrink-0 text-info" />
               <div className="min-w-0">
                 <p className="font-semibold">Truyện này đã có dự án</p>
                 <ul className="mt-1 space-y-1">
-                  {scan.existing.map((project) => (
+                  {scan.existing.filter((project) => project.id !== replaces?.id).map((project) => (
                     <li key={project.id} className="flex flex-wrap items-baseline gap-x-2">
                       <span className="min-w-0 break-words">
                         “{project.title}” · {project.shared === project.chapters ? `cả ${project.chapters} chương` : `trùng ${project.shared}/${project.chapters} chương`} · {project.statusLabel}
@@ -1400,10 +1412,20 @@ export function NewProjectScreen() {
             : result.queued
               ? `Đang có cuốn khác chạy - sách này vào hàng chờ (thứ ${result.queued}), tự bắt đầu khi cuốn ấy xong.`
               : "Đang khởi động - theo dõi tiến trình ngay trên trang sách.";
-          toast.success(draft.replaces ? "Đã tạo lại sách với thiết lập mới" : "Đã tạo sách", {
-            description: [starting, readings, draft.replaces && !result.replaceError ? "Bản cũ đã vào Thùng rác." : ""]
-              .filter(Boolean).join(" ") || undefined,
-          });
+          toast.success(
+            result.unchanged ? "Không có thiết lập nào thay đổi" : draft.replaces ? "Đã tạo lại sách với thiết lập mới" : "Đã tạo sách",
+            {
+              description:
+                [
+                  result.unchanged ? "Giữ nguyên sách cũ." : "",
+                  starting,
+                  readings,
+                  draft.replaces && !result.unchanged && !result.replaceError ? "Bản cũ đã vào Thùng rác." : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ") || undefined,
+            },
+          );
           if (result.replaceError) toast.warning("Bản cũ vẫn còn trong Dự án", { description: result.replaceError });
           navigate(`/studio/${result.id}`, { replace: true });
         },
@@ -1483,6 +1505,7 @@ export function NewProjectScreen() {
               dropCredits={Boolean(draft.dropCredits)}
               onDropCredits={(value) => update({ dropCredits: value })}
               previousLast={draft.seed?.lastChapter}
+              replaces={draft.replaces}
               onSplit={async (path) => {
                 try {
                   const { folder } = await api<{ folder: string }>("/api/sources/split", { method: "POST", body: { path } });
