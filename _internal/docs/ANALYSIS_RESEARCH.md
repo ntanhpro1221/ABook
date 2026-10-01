@@ -33,6 +33,26 @@ tok/s, sinh **47,2 tok/s**, 14 s một lô. Kiến trúc lai của Qwen3.5 (3/4 
 Qwen3.5-9B trên CÔNG THỨC v8 đã giao Modal (`LLM_Train/modal/launch_9b_v8_01_10.sh`, data_v8, ~4 USD), tự xuất GGUF q4_k_m
 và nạp Ollama `qwen35-9b-lora-v8-q4`; đo LN 12 + 4 cổng từ ABook_ui khi hàng GPU rảnh.
 
+## 01-10 tối - v9: dạy đúng chỗ v8 thua Tam quốc bằng DỮ LIỆU (Đông Chu liệt quốc)
+
+Lỗi v8 ở cổng Tam quốc là ghép lời dẫn của câu SAU ("Vân-trường đáp:") vào câu hiện tại khi lời dẫn đứng TRƯỚC câu thoại.
+Đếm trong data_v8 (`colon_tag_share.py`): lời dẫn "X nói/hỏi/đáp…:" đứng trước ở 130/1.939 câu thoại (6,7%), nhưng cấu hình
+BẪY - previous_text là lời dẫn của chính câu, next_text là lời dẫn của câu kế - chỉ **7 câu**; Tam quốc thì gần như mọi
+lượt đối đáp đều thế. v9b (prompt) đã chứng minh không phải thiếu chữ láng giềng; vậy là thiếu MẪU. Gold mới (chương
+HUẤN LUYỆN, không phải cổng): Đông Chu liệt quốc Hồi 2 (273 đoạn) và Hồi 4 (184 đoạn), bản dịch Nguyễn Đỗ Mục (mất 1948, hết
+bản quyền, vi.wikisource) - cùng lối "X nói :" rồi gạch đầu dòng, có cả bẫy thật ("Trang-công làm thinh, không nói :" rồi
+câu của mẹ). A: Claude; B: agent soát đối kháng - không câu nào sai người, phân xử dạng tên/cảm xúc (`ADJUDICATION.md`). Dạng
+tên đầu tiên CỐ ĐỊNH cho mỗi người cả chương (dạng đầu là nhãn dạy; đổi theo lời dẫn là dạy tách giọng). Phát lại từ
+ABook_ui (prompt v8): 100%. data_v9 = data_v8 + 184 mẫu (92 sinh + 92 phản biện). Nhánh dev/prev-speakers-main 26dec3dc.
+
+Đo: hàng GPU nhà kín tới mai, nên huấn luyện CẢ HAI trên Modal bằng cùng trình (`train_lora_unsloth.py`, Qwen3-4B-
+Instruct-2507 4-bit, r16, 1 epoch): v8m (data_v8, đối chứng) và v9m (data_v9) - khác nhau DUY NHẤT ở 184 mẫu Đông Chu; đo
+LN 6 + Tam quốc trên Modal, host 26dec3dc (`LLM_Train/modal/launch_v9_01_10.sh`, `v9_chain_01_10.sh`). Luật nhận như v7/v8:
+không thua v8m quá 2 điểm ở LN, và Tam quốc phải về gần v6 (87,5).
+
+9B-v8 (Qwen3.5-9B công thức v8, đo ở nhà, 6 chương LN cơ sở): F1 giọng 64,2 = v8 4B (+0,0 [−3,5; +4,6]), chặt −6,0
+[−16,0; +3,9]; chênh lớn theo chương (Nise 79,0 vs 62,8; TCF 25,8 vs 40,7). Chưa đủ để nói 9B hơn; chờ LN mở rộng + cổng.
+
 ## 01-10 chiều - v8 (mỗi lô thấy người nói 4 lượt trước): LoRA 4B tốt nhất trên LN, giữ lượt đối đáp, thua cổng Tam quốc
 
 v8 = công thức v7 trên data_v8 (= data_v7 phát lại bằng prompt của nhánh dev/prev-speakers: mỗi lô nêu người nói ĐÃ gán của
