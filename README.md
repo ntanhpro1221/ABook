@@ -71,6 +71,9 @@ chữ ký thì không cài). Bản mới cần phần Studio khác thì thẻ "C
 
 Sau khi ghép, sách trên máy tính hiện ngay trong Thư viện điện thoại (nhãn "Máy tính") để nghe thẳng hoặc tải về.
 
+**Cập nhật**: từ bản 0.4.11 app điện thoại tự hỏi trang Releases mỗi ngày một lần; có bản mới thì nhắc một lần và
+**Cài đặt → Cập nhật** có nút **"Tải"** mở file APK mới - mở file để cài đè, sách và chỗ đang nghe giữ nguyên.
+
 **Trên xe**: ABook có trong Android Auto - chọn cuốn, chọn chương ngay trên màn hình xe. App cài từ file APK thì trong
 Android Auto bật chế độ nhà phát triển (chạm nhiều lần vào số phiên bản) rồi bật "Nguồn không xác định".
 
