@@ -7,6 +7,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Studio (sản xuất sách nói)
+
+- Thẻ "Hai người chung một tên?" không còn hỏi khi một nhân vật chỉ nói thêm "chúng ta" bên cạnh "tôi… cậu" (một người,
+  không phải hai) - đo trên 8 chương một cuốn LN: bớt một thẻ hỏi nhầm, các ca nhập người thật vẫn bắt đủ.
+
 ## [0.4.11] - 2026-09-30
 
 ### Studio (sản xuất sách nói)
