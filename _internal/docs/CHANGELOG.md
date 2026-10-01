@@ -9,6 +9,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Studio (sản xuất sách nói)
 
+- **Cách đọc chung cho mọi sách**: sửa cách đọc một tên rồi tích "Dùng cho mọi sách" (hay thêm trong Cài đặt → Studio →
+  Cách đọc chung) - sách mới có tên ấy tự dùng cách đọc này ngay lúc tạo; sách có sẵn hiện dòng "Dùng N cách đọc chung" ở
+  tab Nhân vật → Cách đọc tên. Đi đúng đường của một lần sửa tay (cùng phép kiểm, máy áp ở ranh giới chương).
 - Thẻ "Hai người chung một tên?" không còn hỏi khi một nhân vật chỉ nói thêm "chúng ta" bên cạnh "tôi… cậu" (một người,
   không phải hai) - đo trên 8 chương một cuốn LN: bớt một thẻ hỏi nhầm, các ca nhập người thật vẫn bắt đủ.
 - Trang dự án ghi model đã phân tích cuốn ấy ("Phân tích bằng qwen3:8b") - đổi model mặc định thì biết cuốn nào làm bằng model cũ.

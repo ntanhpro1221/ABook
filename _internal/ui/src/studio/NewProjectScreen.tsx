@@ -1213,7 +1213,12 @@ export function NewProjectScreen() {
       {
         onSuccess: (result) => {
           saveDraft(null);
-          toast.success("Đã tạo sách", { description: draft.startNow ? "Đang khởi động - theo dõi tiến trình ngay trên trang sách." : undefined });
+          const shared = result.sharedReadings ?? [];
+          const readings = shared.length
+            ? `Dùng ${shared.length} cách đọc chung (${shared.slice(0, 3).join(", ")}${shared.length > 3 ? ", …" : ""}).`
+            : "";
+          const starting = draft.startNow ? "Đang khởi động - theo dõi tiến trình ngay trên trang sách." : "";
+          toast.success("Đã tạo sách", { description: [starting, readings].filter(Boolean).join(" ") || undefined });
           navigate(`/studio/${result.id}`, { replace: true });
         },
         onError: (error: Error) => toast.error("Không tạo được sách", { description: error.message }),

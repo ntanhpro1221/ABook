@@ -22,7 +22,7 @@ from typing import Any, Callable, Protocol
 from urllib.parse import parse_qs, unquote, urlsplit
 
 from .. import aliases, bracket_rule, continuation, listener_overrides
-from . import actions, bookfile, cover_search, covers, humanize, listen_view, packages, store
+from . import actions, bookfile, cover_search, covers, humanize, listen_view, packages, shared_readings, store
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, legacy_ids
 from .listening import RECORD_ID, Listening
@@ -148,6 +148,7 @@ class App:
         self.listening = listening or Listening(preferences.path.with_name("listening.json"))
         self.fingerprints = Fingerprints(self.listening.path.with_name("fingerprints.json"))
         self.devices = Devices(preferences.path.with_name("devices.json"))
+        self.shared_readings = shared_readings.SharedReadings(preferences.path.with_name(shared_readings.FILE_NAME))
         self.remote = Remote()
         # Trình phát trong giao diện CHÍNH máy này: giao diện báo lên (`report_player`), máy đã ghép xem và điều khiển nó
         # qua cổng đồng bộ (sync.py, /sync/v1/player) - mạng trạm bước 4.
@@ -481,11 +482,39 @@ class App:
             except continuation.ContinuationError as error:
                 raise ApiError(HTTPStatus.CONFLICT,
                                f"Đã tạo sách nhưng không mang được gì từ phần trước: {error}") from error
+        # Cách đọc dùng chung: mục nào có trong truyện thì sách mới nhận luôn, như người dùng sửa từng tên (trước khi chạy -
+        # chưa có câu nào phải thu lại).
+        shared = shared_readings.apply(root, shared_readings.present(self.shared_readings.entries(),
+                                                                      shared_readings.file_texts(paths)))
         if body.get("start"):
             # Qua hàng đợi như nút "Bắt đầu": cuốn đang chạy thì cuốn mới xếp hàng, không tranh GPU (soát 28-09 - trước
             # đây "Tạo + bắt đầu ngay" chạy song song với cuốn đang sản xuất).
             self.start(book_id(root))
-        return {"id": book_id(root)}
+        return {"id": book_id(root), "sharedReadings": shared}
+
+    def shared_readings_view(self) -> dict[str, Any]:
+        return {"entries": self.shared_readings.entries()}
+
+    def put_shared_reading(self, body: dict[str, Any], source: str = "") -> dict[str, Any]:
+        surface = " ".join(str(body.get("surface", "")).split())[:80]
+        if body.get("remove"):
+            return {"removed": self.shared_readings.remove(surface)}
+        spoken = " ".join(str(body.get("spokenForm", "")).split())[:120]
+        if not surface or not spoken:
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu từ hoặc cách đọc")
+        try:
+            return self.shared_readings.put(surface, spoken, source=source)
+        except ValueError as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, PRONUNCIATION_PROBLEMS.get(str(error), "Cách đọc này không dùng được")) from error
+
+    def book_shared_readings(self, value: str, *, apply: bool) -> dict[str, Any]:
+        """Mục của từ điển chung có trong cuốn này mà cuốn đang đọc khác; `apply` thì ghi chúng thành yêu cầu cách đọc."""
+        path = self._book(value)
+        waiting = shared_readings.differing(path, self.shared_readings.entries(), shared_readings.book_texts(path))
+        if not apply:
+            return {"entries": waiting}
+        self._mutating()
+        return {"applied": shared_readings.apply(path, waiting)}
 
     def continuation(self, value: str) -> dict[str, Any]:
         """"Làm tiếp cuốn này": chương kế tiếp, cài đặt và thứ sẽ mang theo - trình tạo sách điền sẵn từ đây. Tính từ phần
@@ -1133,6 +1162,9 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.BAD_REQUEST, PRONUNCIATION_PROBLEMS.get(problem, "Cách đọc này không dùng được"))
         now = time.time()
         listener_overrides.request_pronunciation(path, surface, spoken, now=now)
+        if body.get("everywhere") is True:
+            # "Dùng cho mọi sách": cùng cách đọc vào từ điển chung - sách mới có từ này tự nhận nó.
+            self.app.put_shared_reading({"surface": surface, "spokenForm": spoken}, source=store.summarize(path)["title"])
         self._send_json(HTTPStatus.OK, {"surface": surface, "spokenForm": spoken, "requestedAt": now})
 
     def _withdraw(self, path: Path, section: str, keys: list[str], body: dict[str, Any], *,
@@ -1546,6 +1578,19 @@ class Handler(BaseHTTPRequestHandler):
     def get_preferences(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.preferences.get())
 
+    def get_shared_readings(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.shared_readings_view())
+
+    def post_shared_readings(self, _query: dict[str, list[str]]) -> None:
+        self.app._mutating()
+        self._send_json(HTTPStatus.OK, self.app.put_shared_reading(self._body()))
+
+    def get_book_shared_readings(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.book_shared_readings(value, apply=False))
+
+    def post_book_shared_readings(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.book_shared_readings(value, apply=True))
+
     def put_preferences(self, _query: dict[str, list[str]]) -> None:
         body = self._body()
         allowed = {key: body[key] for key in ("theme", "libraryRoot") if key in body}
@@ -1678,6 +1723,10 @@ ROUTES: list[Route] = [
     ("GET", re.compile(BOOK + r"/casting/(\d+)"), Handler.get_casting_chapter),
     ("POST", re.compile(BOOK + r"/review"), Handler.post_review),
     ("POST", re.compile(BOOK + r"/pronunciation"), Handler.post_pronunciation),
+    ("GET", re.compile(BOOK + r"/shared-readings"), Handler.get_book_shared_readings),
+    ("POST", re.compile(BOOK + r"/shared-readings"), Handler.post_book_shared_readings),
+    ("GET", re.compile(r"/api/readings"), Handler.get_shared_readings),
+    ("POST", re.compile(r"/api/readings"), Handler.post_shared_readings),
     ("POST", re.compile(BOOK + r"/bookfile"), Handler.post_bookfile),
     ("POST", re.compile(BOOK + r"/speaker"), Handler.post_speaker),
     ("POST", re.compile(BOOK + r"/voice"), Handler.post_voice),
