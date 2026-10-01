@@ -53,6 +53,17 @@ năng khái quát), kiểm chéo theo nguồn. Thước: tương quan (Pearson, 
 của Incompetech; độ lệch theo văn hoá trên GlobalMood. Luật nhận: model có giấy phép dùng được, tốt nhất trên Film
 soundtracks, không kém đường cơ sở CLAP zero-shot ở Incompetech.
 
+**Kết quả (Film soundtracks, 470 trích đoạn, tương quan Pearson với điểm trung bình của người):**
+
+| Model | Cách | vui/buồn | năng lượng | căng thẳng | 5 cảm xúc rời (chính xác, đoán bừa 20%) |
+|---|---|---|---|---|---|
+| LAION-CLAP htsat-unfused (01-10) | zero-shot (câu mô tả của analyze_clap.py) | 0,589 | 0,714 | 0,600 | - |
+| LAION-CLAP htsat-unfused (01-10) | ridge trên vector nhúng, kiểm chéo 5 phần | **0,757** | **0,828** | **0,818** | 54,5% (hồi quy logistic, kiểm chéo) |
+
+Đọc: vector nhúng của CLAP đã MANG thông tin cảm xúc ở mức ngang mốc tham khảo (0,67 / 0,81); cách zero-shot bằng câu mô
+tả bỏ phí một phần. Nhưng ridge học và đo trên CÙNG bộ (kiểm chéo theo trích đoạn) - còn phải đo chéo bộ (học trên nhạc
+phim, đoán Incompetech / DEAM) trước khi tin.
+
 "Hợp làm nền" đo riêng, khách quan: xác suất có lời (kiểm trên MTG-Jamendo), độ nổi của giai điệu, độ ổn định cường độ
 (phương sai độ to theo cửa sổ), có lặp liền được không (ghép đuôi-đầu theo phách).
 
