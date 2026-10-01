@@ -48,6 +48,8 @@ def test_the_next_part_is_offered_then_created_with_the_old_voices(studio, tmp_p
     (tmp_path / "003.txt").write_text("Natasha trở lại.\n", encoding="utf-8")
     status, plan = _call(server, "GET", f"/api/books/{source}/continuation")
     assert status == 200 and plan["sourceId"] == created["id"] and plan["part"] == 3
+    # Và NÓI ra (soát UX a6 01-10, B1): mở từ phần 1, nối sau "T · Phần 2".
+    assert (plan["clickedTitle"], plan["latestTitle"]) == ("T", "T · Phần 2")
     assert [Path(path).name for path in plan["paths"]] == ["003.txt"]
 
 

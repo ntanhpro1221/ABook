@@ -141,6 +141,12 @@ interface Seed {
   /** Thư mục truyện + file chương cuối đã làm - khung "chưa có chương mới" nói rõ chỗ. */
   folder?: string;
   lastChapter?: string;
+  /** Mở từ một phần cũ hơn phần mới nhất (tên phần ấy). */
+  clickedTitle?: string;
+  latestTitle?: string;
+  /** Model đọc hiểu phần trước dùng (khác mặc định), hay model ấy đã không còn trong Ollama. */
+  analysisModel?: string;
+  analysisModelMissing?: string;
 }
 
 const DRAFT_KEY = "ebook-reader-new-book-draft";
@@ -616,7 +622,7 @@ function SplitSuggestion({ file, onSplit }: { file: ScannedFile; onSplit: (path:
   );
 }
 
-function SeedBanner({ seed, onDrop }: { seed: Seed; onDrop: () => void }) {
+function SeedBanner({ seed, hasFiles, onDrop }: { seed: Seed; hasFiles: boolean; onDrop: () => void }) {
   return (
     // Điện thoại: nút bỏ nối tiếp xuống dưới đoạn chữ - đứng bên phải thì ép chữ thành cột ~180 px, dài 11 dòng (soát UX 29-09).
     <div className="mt-5 flex flex-wrap gap-3 rounded-xl border border-accent/30 bg-accent-soft p-4 text-sm sm:flex-nowrap">
@@ -625,10 +631,17 @@ function SeedBanner({ seed, onDrop }: { seed: Seed; onDrop: () => void }) {
         <p className="font-semibold">
           Phần {seed.part} của “{seed.title}”
         </p>
+        {seed.clickedTitle && (
+          <p className="mt-0.5 text-fg-2">
+            Mở từ “{seed.clickedTitle}”, nhưng cuốn đã có tới “{seed.latestTitle ?? seed.title}” - phần mới nối sau phần ấy,
+            không làm lại chương đã có.
+          </p>
+        )}
         <p className="mt-0.5 text-fg-2">
           Mang theo {carriedText(seed.carries)}: nhân vật đã gặp giữ nguyên giọng, tên đọc như phần trước.
         </p>
-        {seed.empty && (
+        {/* Khung "chưa có chương mới" tắt ngay khi đã chọn / thêm được file (soát UX a6 01-10, B5: vẫn hiện sau khi đã có). */}
+        {seed.empty && !hasFiles && (
           <p className="mt-1 text-fg-2">
             {seed.folder ? (
               <>
@@ -639,6 +652,12 @@ function SeedBanner({ seed, onDrop }: { seed: Seed; onDrop: () => void }) {
             ) : (
               "Thư mục truyện chưa có chương nào sau chương cuối của phần trước - thêm file chương mới vào đó, hoặc chọn các file chương mới ở dưới."
             )}
+          </p>
+        )}
+        {seed.analysisModelMissing && (
+          <p className="mt-1 text-warning">
+            Phần trước đọc bằng model “{modelLabel(seed.analysisModelMissing)}”, máy này lúc này không thấy model ấy - phần mới sẽ
+            dùng model mặc định (đổi được ở bước Chất lượng). Đổi model giữa hai phần có thể làm vài người nói được gán khác đi.
           </p>
         )}
         {!seed.analyzed && (
@@ -1099,7 +1118,9 @@ function ConfirmStep({
       : []),
     ["Nhân vật", seed ? `Giữ ${carriedText(seed.carries)}; người mới được phân vai sau khi phân tích` : "Tự động phân vai sau khi phân tích"],
     ["Chất lượng", option.title],
-    ...(analysisModel ? ([["Model đọc hiểu", `${modelLabel(analysisModel)} (chỉ cuốn này)`]] as [string, string][]) : []),
+    ...(analysisModel
+      ? ([["Model đọc hiểu", `${modelLabel(analysisModel)} (${seed?.analysisModel === analysisModel ? "như phần trước" : "chỉ cuốn này"})`]] as [string, string][])
+      : []),
     ...(measured
       ? ([
           ["Thời gian làm", lengthRange(guess.totalLow, guess.totalHigh)],
@@ -1178,10 +1199,15 @@ export function NewProjectScreen() {
       titleEdited: true,
       narrator: plan.narrator,
       firstPerson: plan.firstPerson,
+      ...(plan.analysisModel ? { analysisModel: plan.analysisModel } : {}),
       profile: (PROFILE_VALUES as string[]).includes(plan.profile) ? (plan.profile as Profile) : "high_quality",
       seed: {
         id: plan.sourceId || continueId,
         title: plan.sourceTitle,
+        clickedTitle: plan.clickedTitle,
+        latestTitle: plan.latestTitle,
+        analysisModel: plan.analysisModel,
+        analysisModelMissing: plan.analysisModelMissing,
         part: plan.part,
         analyzed: plan.analyzed,
         empty: plan.paths.length === 0,
@@ -1319,6 +1345,7 @@ export function NewProjectScreen() {
       {draft.seed && (
         <SeedBanner
           seed={draft.seed}
+          hasFiles={(rawScan?.files.length ?? 0) > 0}
           onDrop={() => {
             // Bỏ nối tiếp = phân vai lại từ đầu, giọng lệch phần trước: một cú bấm lỡ tay phải lấy lại được (soát UX 29-09).
             const previous = draft.seed;
