@@ -33,6 +33,26 @@ tok/s, sinh **47,2 tok/s**, 14 s một lô. Kiến trúc lai của Qwen3.5 (3/4 
 Qwen3.5-9B trên CÔNG THỨC v8 đã giao Modal (`LLM_Train/modal/launch_9b_v8_01_10.sh`, data_v8, ~4 USD), tự xuất GGUF q4_k_m
 và nạp Ollama `qwen35-9b-lora-v8-q4`; đo LN 12 + 4 cổng từ ABook_ui khi hàng GPU rảnh.
 
+## 01-10 tối - v9: dạy đúng chỗ v8 thua Tam quốc bằng DỮ LIỆU (Đông Chu liệt quốc)
+
+Lỗi v8 ở cổng Tam quốc là ghép lời dẫn của câu SAU ("Vân-trường đáp:") vào câu hiện tại khi lời dẫn đứng TRƯỚC câu thoại.
+Đếm trong data_v8 (`colon_tag_share.py`): lời dẫn "X nói/hỏi/đáp…:" đứng trước ở 130/1.939 câu thoại (6,7%), nhưng cấu hình
+BẪY - previous_text là lời dẫn của chính câu, next_text là lời dẫn của câu kế - chỉ **7 câu**; Tam quốc thì gần như mọi
+lượt đối đáp đều thế. v9b (prompt) đã chứng minh không phải thiếu chữ láng giềng; vậy là thiếu MẪU. Gold mới (chương
+HUẤN LUYỆN, không phải cổng): Đông Chu liệt quốc Hồi 2 (273 đoạn) và Hồi 4 (184 đoạn), bản dịch Nguyễn Đỗ Mục (mất 1948, hết
+bản quyền, vi.wikisource) - cùng lối "X nói :" rồi gạch đầu dòng, có cả bẫy thật ("Trang-công làm thinh, không nói :" rồi
+câu của mẹ). A: Claude; B: agent soát đối kháng - không câu nào sai người, phân xử dạng tên/cảm xúc (`ADJUDICATION.md`). Dạng
+tên đầu tiên CỐ ĐỊNH cho mỗi người cả chương (dạng đầu là nhãn dạy; đổi theo lời dẫn là dạy tách giọng). Phát lại từ
+ABook_ui (prompt v8): 100%. data_v9 = data_v8 + 184 mẫu (92 sinh + 92 phản biện). Nhánh dev/prev-speakers-main 26dec3dc.
+
+Đo: hàng GPU nhà kín tới mai, nên huấn luyện CẢ HAI trên Modal bằng cùng trình (`train_lora_unsloth.py`, Qwen3-4B-
+Instruct-2507 4-bit, r16, 1 epoch): v8m (data_v8, đối chứng) và v9m (data_v9) - khác nhau DUY NHẤT ở 184 mẫu Đông Chu; đo
+LN 6 + Tam quốc trên Modal, host 26dec3dc (`LLM_Train/modal/launch_v9_01_10.sh`, `v9_chain_01_10.sh`). Luật nhận như v7/v8:
+không thua v8m quá 2 điểm ở LN, và Tam quốc phải về gần v6 (87,5).
+
+9B-v8 (Qwen3.5-9B công thức v8, đo ở nhà, 6 chương LN cơ sở): F1 giọng 64,2 = v8 4B (+0,0 [−3,5; +4,6]), chặt −6,0
+[−16,0; +3,9]; chênh lớn theo chương (Nise 79,0 vs 62,8; TCF 25,8 vs 40,7). Chưa đủ để nói 9B hơn; chờ LN mở rộng + cổng.
+
 ## 01-10 chiều - v8 (mỗi lô thấy người nói 4 lượt trước): LoRA 4B tốt nhất trên LN, giữ lượt đối đáp, thua cổng Tam quốc
 
 v8 = công thức v7 trên data_v8 (= data_v7 phát lại bằng prompt của nhánh dev/prev-speakers: mỗi lô nêu người nói ĐÃ gán của
@@ -78,7 +98,14 @@ nói (dữ liệu, hay lời nhắc trong khối).** **Soi tận câu (`tamquoc_
 thúc bằng '… X nói/hỏi/đáp:' -> X" (`colon_tag_rule2.py`, tên đầu tiên trong mệnh đề cuối, có tên gọi tắt): trên đúng những
 câu luật áp được, luật KHÔNG hơn model - Tam quốc 93% (v6 96%, v8 92%), Tắt đèn 74% (76%, 76%), TMA 92% (92%, 85%); luật
 hỏng ở bí danh ("Huyền-đức hỏi Khổng Minh:" là Lưu Bị) và tên trùng chữ ("Anh Dậu" / "Chị Dậu"). Không làm luật ghi đè; sửa
-v8 phải ở dữ liệu / prompt (vd ví dụ lời dẫn đứng trước trong khối lượt trước).** (2) Qwen3.5-4B trên đúng công thức v8 (`q35v8_after_8bclean.sh`, sau hàng
+v8 phải ở dữ liệu / prompt (vd ví dụ lời dẫn đứng trước trong khối lượt trước).** **v9b (01-10 18:0x, nhánh
+dev/prev-speakers-v9 6c2b82ed: câu đầu / cuối lô thấy câu láng giềng THẬT bên kia ranh giới lô) - đo trên Modal cùng model
+v8, 4 chương LN (tcf, nise, hdst, yamiyo): trùng v8 TỪNG CÂU (người nói, loại, cảm xúc) ở cả 511 câu - lại một nhánh không
+làm gì. Lý do: giả thuyết sai từ gốc. Đường chạy thật (`analyze_all`) dựng `_original_neighbor_context` cho MỌI câu từ cả
+chương trước khi chia lô, và `_neighbor_texts` dùng nó trước - câu đầu lô vốn đã thấy câu kể ngay trước nó (cả "Khổng Minh
+hỏi:"). Phần "4/8 câu sai ở vị trí 0 của lô" là thật nhưng không do thiếu chữ láng giềng. Bỏ nhánh (không gộp); dừng hai
+lượt Modal giữa chừng (app abook-eval stop, khi cần thì deploy lại). Bài học, lần thứ hai trong ngày: TRƯỚC khi thuê GPU đo
+một thay đổi host, chạy một lô thật qua cả hai mã và so PROMPT gửi đi - giống nhau thì không cần đo.** (2) Qwen3.5-4B trên đúng công thức v8 (`q35v8_after_8bclean.sh`, sau hàng
 8B sạch) - lượt Qwen3.5 đầu tiên ở nhà (01-10 16:06) hỏng ngay bước 1: cuDNN không nhận đầu chú ý 256 của Qwen3.5 và
 train_lora.py cấm mọi kernel khác; nay mở thêm kernel memory-efficient khi đầu > 128 (vẫn cấm math), kèm chốt tốc độ (quá
 14 giờ một epoch thì lên đám mây - Windows thiếu kernel nhanh cho lớp gated delta của Qwen3.5). v8 cần mã host của nhánh
