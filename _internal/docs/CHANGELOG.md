@@ -33,6 +33,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   bao nhiêu chương chưa có audio, sách đang chạy, còn thay đổi chưa áp (kèm nút "Áp dụng trước").
 - Mỗi chương có menu **…**: nghe chương, mở **Kịch bản chương này**, và **Thu lại cả chương** (mọi câu đã thu, hạt giống
   mới - khi cả chương nghe không ổn). Cả chương tính là một thay đổi trong hộp "Áp dụng", bỏ được bằng một nút.
+- Trình tạo sách: bấm "Nghe thử" một giọng kể không còn đổi luôn giọng đang chọn; chế độ "Nhanh" vẫn có ước thời gian
+  (trần trên); cảnh báo giai đoạn phân tích nhắc **Tạm dừng** là cách an toàn; tắt "Bắt đầu tạo ngay" thì lời mô tả nói
+  đúng điều sẽ xảy ra. Chữ dễ hiểu hơn ở vài chỗ ("4 tỉ tham số", nguồn bìa nào chưa trả lời, "máy nghe khớp 15%").
 - **Việc cần duyệt** có phím tắt: **J / K** chọn thẻ, **1–9** bấm lựa chọn thứ N của thẻ ấy - duyệt cả trăm thẻ không cần
   chuột; quyết xong thì thẻ kế đứng vào đúng chỗ.
 - **Cần nghe lại**: câu hỏng sau mọi lần thử (tượng thanh "Tách tách tách", "Coong…", chữ lạ) có nút **Sửa chữ đem đọc**
