@@ -11,6 +11,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Bước chọn chương soát **số chương**: chương trùng (hai file cùng "Chương 11"), chương thiếu (14 rồi 18), thứ tự lùi, và
   phần nối tiếp không bắt đầu ngay sau chương cuối của phần trước - máy chỉ nhắc, không bỏ file nào.
+- **Cần nghe lại** có nút **Nghe liền N câu**: phát lần lượt mọi câu nghe được; đang nghe thì phím **O** = Ổn, **R** = Cần
+  thu lại, rồi sang câu kế ngay.
 
 ## [0.4.15] - 2026-10-01
 
