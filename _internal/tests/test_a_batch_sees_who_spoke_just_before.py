@@ -48,6 +48,18 @@ def test_the_last_turns_before_a_batch_name_their_speakers() -> None:
     assert lines[3] == "- [kể] Mẹ thở dài."
 
 
+def test_a_crowded_scene_names_nobody() -> None:
+    """v9 (01-10): ba người trở lên trong các lượt gần đây (hội nghị Tam quốc) thì không nêu - v8 kéo câu về người vừa nói."""
+    rows = [
+        _row(1, "dialogue", "CHU DU", "“Phải đánh hỏa công.”"),
+        _row(2, "dialogue", "TRÌNH PHỔ", "“Gió đông chưa nổi.”"),
+        _row(3, "dialogue", "LỖ TÚC", "“Khổng Minh đã liệu cả rồi.”"),
+        _row(4, "narration", "NARRATOR", "Mọi người đều lặng im."),
+        _row(5, "dialogue", "", "“Vậy cứ theo kế ấy.”", status="pending"),
+    ]
+    assert _analyzer(rows)._previous_turns([rows[4]]) == ""
+
+
 def test_nothing_is_added_without_analysed_dialogue_just_before() -> None:
     first = [_row(1, "dialogue", "", "“Chào.”", status="pending")]
     assert _analyzer(first)._previous_turns(first) == "", "lô đầu chương"
