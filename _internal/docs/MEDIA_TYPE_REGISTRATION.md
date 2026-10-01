@@ -61,5 +61,5 @@ No, Deprecated alias N/A, Macintosh N/A, Intended usage COMMON, tÃªn + email nhÆ
 | Interoperability considerations | The first ZIP entry is `mimetype`, stored uncompressed, containing the media type string, so the format can be identified from the first bytes (as in EPUB). The related finished-audiobook format is application/vnd.ngdtuanh.abook+zip. |
 | Published specification | https://github.com/ntanhpro1221/ABook/blob/main/_internal/docs/ABOOKPROJ_FILE_FORMAT.md |
 | Applications that use this media type | ABook, an audiobook production and listening app for Windows and Android (https://github.com/ntanhpro1221/ABook): the Studio packs and opens projects |
-| Magic number(s) | `PK` at offset 0; the ASCII string `mimetypeapplication/vnd.ngdtuanh.abookproj+zip` at offset 30 |
+| Magic number(s) | `PK\x03\x04` at offset 0; the ASCII string `mimetypeapplication/vnd.ngdtuanh.abookproj+zip` at offset 30 |
 | File extension(s) | `.abookproj` |
