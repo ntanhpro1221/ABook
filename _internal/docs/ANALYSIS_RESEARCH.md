@@ -67,7 +67,12 @@ Du / Tào Nhân, Lã Mông -> Chu Du, Lỗ Túc -> Chu Du, Triệu Phạm -> Ph�
 lượt trước giúp đối đáp HAI người luân phiên (LN: đối đáp liền +12,7) nhưng kéo lệch về người hay nói ở cảnh NHIỀU người.
 
 Việc kế: (1) v9 nhắm đúng chỗ ấy - chỉ nêu người nói lượt trước khi các lượt gần đây luân phiên giữa hai người, hay nêu
-kèm lời nhắc "lời dẫn nêu tên luôn thắng lượt trước"; đo lại trên LN + Tam quốc; (2) Qwen3.5-4B trên đúng công thức v8 (`q35v8_after_8bclean.sh`, sau hàng
+kèm lời nhắc "lời dẫn nêu tên luôn thắng lượt trước"; đo lại trên LN + Tam quốc. **Đã thử rẻ 01-10 17:5x (model v8, host
+nhánh dev/prev-speakers-v9 193e1d08: bỏ khối khi 4 đoạn trước có >2 người nói): Tam quốc y hệt v8 (F1 83,0, 0/197 câu khác
+nhãn) - vì điều kiện KHÔNG LẦN NÀO xảy ra: trong 105 lô, 4 đoạn trước lô chỉ có 1 người (40 lô) hoặc 2 người (65 lô), thoại
+xen lời kể và lô chỉ 5 đoạn. Vậy v8 gán nhầm cho người vừa nói ngay trong cửa sổ 1-2 người; "cảnh đông người" là mô tả
+đúng cảnh nhưng sai CƠ CHẾ. Bỏ ý này (không gộp nhánh); hướng kế phải nhắm câu có lời dẫn nêu tên NGƯỜI KHÁC người vừa
+nói (dữ liệu, hay lời nhắc trong khối).** (2) Qwen3.5-4B trên đúng công thức v8 (`q35v8_after_8bclean.sh`, sau hàng
 8B sạch) - lượt Qwen3.5 đầu tiên ở nhà (01-10 16:06) hỏng ngay bước 1: cuDNN không nhận đầu chú ý 256 của Qwen3.5 và
 train_lora.py cấm mọi kernel khác; nay mở thêm kernel memory-efficient khi đầu > 128 (vẫn cấm math), kèm chốt tốc độ (quá
 14 giờ một epoch thì lên đám mây - Windows thiếu kernel nhanh cho lớp gated delta của Qwen3.5). v8 cần mã host của nhánh
