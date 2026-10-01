@@ -80,3 +80,17 @@ def test_a_book_that_has_started_is_not_replaced(studio, tmp_path: Path, recycle
     assert status == 409 and "đã bắt đầu" in data["error"]
     assert recycled == [] and paths.root.is_dir()
     assert sorted(path.name for path in tmp_path.iterdir()) == sorted([*before, "nguon"]), "không tạo cuốn mồ côi"
+
+
+def test_changing_nothing_keeps_the_book_instead_of_throwing_it_away(studio, tmp_path: Path,  # noqa: F811
+                                                                      recycled: list[Path]) -> None:
+    """Cùng tên, cùng chương, cùng thiết lập: dây chuyền mở lại đúng cuốn cũ. Lần thử đầu (01-10) đã bỏ nó vào Thùng rác."""
+    _paths, app, server, _runner = studio
+    old = _created(server, tmp_path)
+    old_root = app.library.resolve(old)
+    status, plan = _call(server, "GET", f"/api/books/{old}/redo")
+    status, created = _call(server, "POST", "/api/books", {
+        "paths": plan["paths"], "title": plan["title"], "profile": plan["profile"], "narrator": plan["narrator"],
+        "firstPerson": plan["firstPerson"], "replaces": old, "start": False})
+    assert status == 201 and created["id"] == old and created.get("unchanged") is True
+    assert recycled == [] and old_root.is_dir()
