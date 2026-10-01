@@ -5,7 +5,8 @@ Không ai cấp quyền dùng riêng một đuôi file. Thứ đăng ký đượ
 mỗi file (xem `ABOOK_FILE_FORMAT.md`), app và hệ điều hành nhận ra file ABook kể cả khi có phần mềm khác dùng trùng
 đuôi `.abook`.
 
-`.abookproj` chưa đăng ký: dự án sản xuất hiện là một thư mục, chưa phải một file có định dạng - đăng ký khi nó thành file.
+`.abookproj` (cả dự án Studio trong một file, đặc tả `ABOOKPROJ_FILE_FORMAT.md`) đăng ký riêng bằng form thứ hai -
+bảng cuối file. `.abook` đã gửi ngày 01-10, mã hồ sơ IANA #1460837.
 
 ## Chủ sách làm (khoảng 10 phút)
 
@@ -43,5 +44,22 @@ mỗi file (xem `ABOOK_FILE_FORMAT.md`), app và hệ điều hành nhận ra fi
 ## Không bắt buộc, cũng miễn phí
 
 - **PRONOM** (danh bạ định dạng của Lưu trữ Quốc gia Anh, dùng bởi các công cụ nhận dạng file như DROID, Siegfried):
-  gửi thư tới pronom@nationalarchives.gov.uk kèm link đặc tả và magic number ở trên. Làm sau khi IANA duyệt.
+  `.abook` đã nộp ngày 01-10 bằng pull request https://github.com/digital-preservation/PRONOM_Research/pull/185 (nội
+  dung ở `PRONOM_SUBMISSION.md`). `.abookproj` nộp sau khi tính năng có trong một bản phát hành.
 - Sau khi IANA duyệt: không phải đổi gì trong app - app đã dùng đúng tên kiểu này từ 0.4.0.
+
+## Form thứ hai: `.abookproj`
+
+Cùng trang https://www.iana.org/form/media-types, gửi riêng. Ô nào không có trong bảng thì điền như form `.abook` ở trên
+(Type name `application`, Required/Optional parameters N/A, Encoding binary, Fragment N/A, Restrictions None, Provisional
+No, Deprecated alias N/A, Macintosh N/A, Intended usage COMMON, tên + email như lần trước).
+
+| Ô | Điền |
+|---|---|
+| Subtype name | `vnd.ngdtuanh.abookproj+zip` |
+| Security considerations | The file is a ZIP archive of audio, images, plain text and an SQLite database. It contains no executable or active content and no external references. Readers must reject entry names outside the rules of the specification (no absolute paths, no `..`), enforce limits on entry count and sizes against decompression bombs, check free space, and verify every entry's size and SHA-256 against `project.json`. The database is read only by the application with fixed queries. The file may contain the full text of the book being produced and the folder paths of the computer that packed it; it carries no listening data. |
+| Interoperability considerations | The first ZIP entry is `mimetype`, stored uncompressed, containing the media type string, so the format can be identified from the first bytes (as in EPUB). The related finished-audiobook format is application/vnd.ngdtuanh.abook+zip. |
+| Published specification | https://github.com/ntanhpro1221/ABook/blob/main/_internal/docs/ABOOKPROJ_FILE_FORMAT.md |
+| Applications that use this media type | ABook, an audiobook production and listening app for Windows and Android (https://github.com/ntanhpro1221/ABook): the Studio packs and opens projects |
+| Magic number(s) | `PK` at offset 0; the ASCII string `mimetypeapplication/vnd.ngdtuanh.abookproj+zip` at offset 30 |
+| File extension(s) | `.abookproj` |
