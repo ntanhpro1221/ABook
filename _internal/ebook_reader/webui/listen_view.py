@@ -12,7 +12,7 @@ from typing import Any
 from . import covers, store
 from .listening import book_progress
 
-FORMAT = "ebook-reader-audiobook/1"
+FORMAT = "abook-book/1"  # tên cũ "ebook-reader-audiobook/1"; không ai đọc trường này, mã phiên bản gói không tính nó
 
 
 _CACHE: dict[str, tuple[float, list[dict[str, Any]]]] = {}
