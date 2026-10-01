@@ -7,9 +7,9 @@ import { useCast } from "@/listen/source";
 import { cn } from "@/shared/cn";
 import { formatNumber, shownReading } from "@/shared/format";
 import { Button } from "@/shared/ui";
-import { api, suggestionOf, urls } from "./api";
+import { api, suggestionOf, urls, type BookSummary } from "./api";
 import { ReadingProblem } from "./ReadingProblem";
-import { SharedReadingsOffer } from "./sharedReadings";
+import { SharedReadingsOffer, useSharedEntry } from "./sharedReadings";
 import { refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied } from "./decisions";
 
 // Tab Nhân vật, mục "Cách đọc tên" (webui/name_readings.py): mọi tên riêng máy đọc thế nào - kể cả tên máy chắc và cách
@@ -38,6 +38,13 @@ export function useNameReadings(bookId: string) {
 
 /** So tên không phân biệt hoa thường, dấu, gạch nối hay khoảng trắng: gõ "hen" thấy "Hên-cơ", "dac lat" thấy "Đác-lát",
  *  "lusien" thấy "Lu-si-en" (soát UX 29-09: đ không tự bỏ dấu khi tách NFD, gạch nối chặn khớp). */
+/** Sách đã phân tích xong chưa - đọc bản của trang dự án trong bộ nhớ đệm (không hỏi thêm máy chủ); không có bản ấy thì
+ *  coi như đã phân tích (cách hiện cũ). */
+function useAnalyzed(bookId: string): boolean {
+  const book = useQuery<{ book: BookSummary }>({ queryKey: ["book", bookId], enabled: false }).data?.book;
+  return !book || (book.segments.total > 0 && book.segments.analyzed === book.segments.total);
+}
+
 function fold(text: string): string {
   return text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/đ/g, "d").replace(/[\s\-‐-―]/g, "");
 }
@@ -46,6 +53,7 @@ function fold(text: string): string {
  *  điền sẵn vào ô tìm. */
 export function NameReadings({ bookId, focus = false, name = "" }: { bookId: string; focus?: boolean; name?: string }) {
   const { data } = useNameReadings(bookId);
+  const analyzed = useAnalyzed(bookId);
   // Dàn nhân vật đứng TRÊN mục này: cuộn khi nó đã hiện (cùng truy vấn với CastList, không tải thêm) - cuộn sớm hơn thì
   // dàn nhân vật hiện ra sau đẩy mục xuống khỏi màn.
   const { isSuccess: castShown } = useCast(bookId);
@@ -75,7 +83,10 @@ export function NameReadings({ bookId, focus = false, name = "" }: { bookId: str
   return (
     <section className="mt-8" aria-labelledby="name-readings-title">
       <h3 id="name-readings-title" className="scroll-mt-16 text-sm font-semibold">
-        Cách đọc tên <span className="font-normal text-fg-2">· {formatNumber(counted)} tên trong phần này</span>
+        Cách đọc tên{" "}
+        <span className="font-normal text-fg-2">
+          · {analyzed ? `${formatNumber(counted)} tên trong phần này` : "chưa phân tích - tên hiện ra sau bước ấy"}
+        </span>
       </h3>
       <p className="mt-1 max-w-prose text-sm text-fg-2">
         Tên riêng máy đọc thế nào. Nghe câu mẫu, sai thì sửa ngay trên dòng - các câu có tên ấy sẽ được thu lại.
@@ -130,6 +141,8 @@ export function NameReadings({ bookId, focus = false, name = "" }: { bookId: str
 }
 
 function ReadingRow({ bookId, item, fresh = false }: { bookId: string; item: NameReading; fresh?: boolean }) {
+  const analyzed = useAnalyzed(bookId);
+  const sharedHere = useSharedEntry(item.surface, item.requested ?? item.spoken);
   const clip = useClip();
   const [editing, setEditing] = useState(false);
   const example = item.example;
@@ -163,7 +176,10 @@ function ReadingRow({ bookId, item, fresh = false }: { bookId: string; item: Nam
         <div className="tabular text-xs text-fg-2">
           {fresh
             ? "Không có trong danh sách - máy đọc theo chữ"
-            : `${formatNumber(item.lines)} câu · ${item.byListener ? "đã chọn" : item.spoken ? "máy đoán" : "chưa có trong sách"}`}
+            : !analyzed && !item.lines
+              ? "chưa phân tích tới"
+              : `${formatNumber(item.lines)} câu · ${item.byListener ? "đã chọn" : item.spoken ? "máy đoán" : "chưa có trong sách"}`}
+          {sharedHere && <span className="text-fg-3"> · dùng chung</span>}
           {item.requested && (
             <span className="font-medium text-accent-text">
               {" "}
@@ -241,7 +257,12 @@ function EditReading({ bookId, item, onDone, fresh }: { bookId: string; item: Na
   const [problem, setProblem] = useState("");
   const [suggestion, setSuggestion] = useState("");
   // "Dùng cho mọi sách": cùng cách đọc vào từ điển chung (webui/shared_readings.py) - sách mới có tên này tự dùng.
-  const [everywhere, setEverywhere] = useState(false);
+  // Tên đã có trong cách đọc chung: ô tự tích - lưu là sửa luôn mục chung (soát UX 01-10: không biết tên nào đã dùng chung).
+  const sharedEntry = useSharedEntry(item.surface);
+  const [everywhere, setEverywhere] = useState(Boolean(sharedEntry));
+  useEffect(() => {
+    if (sharedEntry) setEverywhere(true);
+  }, [sharedEntry]);
   const save = useMutation({
     mutationFn: (spokenForm: string) =>
       api<{ surface: string; spokenForm: string; requestedAt: number }>(`/api/books/${bookId}/pronunciation`, {
@@ -260,12 +281,13 @@ function EditReading({ bookId, item, onDone, fresh }: { bookId: string; item: Na
           client,
           bookId,
           "pronunciation",
-          [{ surface: item.surface, requestedAt, previous: item.spoken, keep }],
-          item.requested
+          // `shared`: lần lưu này cũng đưa cách đọc vào từ điển chung - hoàn tác gỡ luôn mục ấy (soát UX 01-10).
+          [{ surface: item.surface, requestedAt, previous: item.spoken, keep, ...(everywhere ? { shared: spokenForm } : {}) }],
+          (item.requested
             ? `Trở lại cách đọc chờ áp trước đó: “${shownReading(item.requested)}”.`
             : item.spoken
               ? `“${item.surface}” lại đọc là “${shownReading(item.spoken)}”.`
-              : `Đã bỏ cách đọc vừa thêm cho “${item.surface}”.`,
+              : `Đã bỏ cách đọc vừa thêm cho “${item.surface}”.`) + (everywhere ? " Đã bỏ khỏi cách đọc chung." : ""),
         ),
         duration: UNDO_MS,
       };
@@ -331,10 +353,6 @@ function EditReading({ bookId, item, onDone, fresh }: { bookId: string; item: Na
       <Button size="sm" variant="ghost" type="button" onClick={onDone}>
         Huỷ
       </Button>
-      <label className="flex items-center gap-1.5 text-xs text-fg-2">
-        <input type="checkbox" checked={everywhere} onChange={(event) => setEverywhere(event.target.checked)} className="accent-[var(--color-accent)]" />
-        Dùng cho mọi sách
-      </label>
       <Button
         size="sm"
         variant="primary"
@@ -345,6 +363,10 @@ function EditReading({ bookId, item, onDone, fresh }: { bookId: string; item: Na
       >
         Lưu
       </Button>
+      <label className="flex basis-full items-center gap-1.5 text-xs text-fg-2">
+        <input type="checkbox" checked={everywhere} onChange={(event) => setEverywhere(event.target.checked)} className="accent-[var(--color-accent)]" />
+        Dùng cho mọi sách
+      </label>
     </form>
       <ReadingProblem id={`${inputId}-problem`} problem={problem} suggestion={suggestion} onUse={use} className="" />
     </div>

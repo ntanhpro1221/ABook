@@ -169,6 +169,8 @@ export interface ScanResult {
   subfolders: string[];
   /** File EPUB không tách được thành chương, kèm lý do (webui/epub_import.py). */
   errors?: string[];
+  /** Không phải lỗi nhưng nên biết (thư mục có cả TXT lẫn EPUB: chỉ lấy TXT). */
+  notes?: string[];
   suggestedTitle: string;
   totals: { chapters: number; words: number; audioSeconds: number };
   /** Dự án đã làm từ chính những file này (so nội dung): `shared` file trùng, dự án ấy có `chapters` chương. */

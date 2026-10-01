@@ -808,7 +808,7 @@ export function ProjectScreen() {
     book.settings.narrator && `Giọng kể ${book.settings.narrator}`,
     book.settings.profileLabel,
     // Model đã phân tích cuốn này - đổi model mặc định thì biết cuốn nào làm bằng model cũ.
-    book.settings.analyzer && `Phân tích bằng ${book.settings.analyzer}`,
+    book.settings.analyzer && `Phân tích bằng ${book.settings.analyzer.replace(/:latest$/, "")}`,
     book.createdAt && `Tạo ${formatDate(book.createdAt)}`,
   ].filter(Boolean);
 
