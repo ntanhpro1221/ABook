@@ -1,0 +1,7 @@
+# Đáp án cảnh - Tắt đèn, Chương XXI: về nhà sau phiên đình; anh Dậu lên cơn sốt, bà lão láng giềng giúp; lý trưởng lại đòi sưu.
+# 87 câu, ~1560 tiếng. Thế giới: vietnam_classic. PHÂN XỬ 02-10 từ A + B (trùng ranh giới, Pk 0,0).
+scene 0-21 | V=-0.5 E=-1 T=0 | gems=tenderness | function=doi_thoai | setting=túp nhà tranh chị Dậu, trưa | music=nhe | tìm con hốt hoảng rồi thấy con no ngủ; bà lão hàng xóm sang hỏi chuyện
+scene 22-78 | V=-1.5 E=-1.5 T=0 | gems=sadness/tenderness | function=doi_thoai | setting=túp nhà tranh, anh Dậu sốt nằm phản | music=co | start=soft (cả hai) - đói, khóc, lá dành lá duối, bà lão cho vay gạo
+accent 22 | tiếng rên ngoài cổng, anh Dậu lẩy bẩy về
+scene 79-86 | V=-1.5 E=1 T=2 | gems=tension | function=cao_trao | setting=trước nhà, lý trưởng xông đến | music=co | ~40 giây nhưng đổi hẳn không khí cuối chương (ngoại lệ kết treo)
+accent 79-80 | tù và rúc, chó sủa, lý trưởng quát

@@ -1,0 +1,8 @@
+# Đáp án cảnh - truyện web Trung (bản dịch Việt), nhân vật chính Lucien, Chương 352 "Sự thật". Thế giới: western_fantasy.
+# 97 câu, ~2970 tiếng. PHÂN XỬ 02-10 từ A + B2 (Pk trước phân xử 0,18).
+scene 0-28 | V=0.75 E=0 T=-0.25 | gems=wonder/joyful_activation | function=doi_thoai | setting=phòng họp hội đồng arcana | music=nhe | Douglas phát biểu về electron, Oliver hỏi - hơi hài
+scene 29-51 | V=0.5 E=-0.5 T=0 | gems=transcendence/wonder | function=doi_thoai | setting=phòng họp hội đồng arcana | music=co | bài nói triết học sự thật tuyệt đối / tương đối
+scene 52-70 | V=0.75 E=0 T=-0.75 | gems=none/joyful_activation | function=chuyen_canh | setting=phòng họp, vỗ tay rồi tản đi | music=nhe | start=soft (chỉ B; A đặt ở 59, lệch ~45 giây) - tone=hai - Douglas khen, Morris nhả chữ
+scene 71-76 | V=0 E=-0.25 T=0 | gems=none | function=chuyen_canh | setting=ma tháp của Chloe, vài ngày sau | music=nhe | ~160 tiếng: người hầu đọc thư
+scene 77-96 | V=-0.5 E=0 T=1 | gems=tension | function=doi_thoai | setting=trụ sở Bàn tay Nhợt nhạt, rồi Đại giáo đường | music=co | phe đối địch nghi ngờ, Felipe đọc luận án; tin mật tới các Hồng y
+accent 95-96 | Đại giáo đường Quang Huy - kết treo

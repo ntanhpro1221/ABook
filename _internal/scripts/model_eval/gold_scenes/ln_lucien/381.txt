@@ -1,0 +1,10 @@
+# Đáp án cảnh - truyện Lucien, Chương 382 "Bá tước Vlad". Thế giới: western_fantasy. 104 câu, ~2980 tiếng.
+# PHÂN XỬ 02-10 từ A + B2 (Pk trước phân xử 0,20). Ranh giới 91 ("Ngày hôm sau", đổi sang lâu đài) bắt buộc dù chỉ A đặt:
+# nhảy thời gian + đổi nơi trong chữ là ranh giới khách quan.
+scene 0-32 | V=1 E=0.5 T=-0.25 | gems=wonder/transcendence | function=ta_canh | setting=ảo ảnh thành phố thần Atlantis giữa sa mạc | music=co | người lùn choáng ngợp, quỳ lạy, đối đáp thần dụ
+accent 22-27 | thành phố phình thành bong bóng máy móc
+scene 33-53 | V=0.75 E=0 T=-0.5 | gems=tenderness/wonder | function=doi_thoai | setting=hang động dưới lòng đất, tế đàn | music=co | tỉnh dậy, vỡ oà nước mắt, ký ức trở về
+accent 39-41 | "Thần Hơi Nước thật sự đã giáng lâm!" - cả nhóm khóc
+scene 54-79 | V=1.25 E=0.75 T=-0.5 | gems=joyful_activation/wonder | function=doi_thoai | setting=hang động dưới lòng đất | music=co | start=soft (chỉ B) - mơ xây Atlantis, ký khế ước
+scene 80-90 | V=0.25 E=-0.5 T=0.5 | gems=tension/none | function=noi_tam | setting=ngoài hang động, Lucien tàng hình | music=nhe | lộ ra là ảo ảnh Lucien dựng; lo Bá tước Vlad truy ra
+scene 91-103 | V=-0.5 E=-0.25 T=1.5 | gems=tension | function=ta_canh | setting=lâu đài ma cà rồng, tầng hầm quan tài đỏ máu | music=co | ngày hôm sau; pháp trận phòng thủ, tính kế ám sát - kết treo

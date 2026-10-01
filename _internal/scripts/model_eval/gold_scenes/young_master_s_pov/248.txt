@@ -1,0 +1,9 @@
+# Đáp án cảnh - Young Master's POV (truyện web Hàn, bản dịch Việt), Chương 247 "Nhân vật chính cứu vị cậu chủ vô ơn".
+# 133 câu, ~1870 tiếng. Thế giới: modern (học viện / game). PHÂN XỬ 02-10 từ A + B2 (Pk trước phân xử 0,009).
+scene 0-9 | V=-0.25 E=1 T=1.25 | gems=tension | function=hanh_dong | setting=rừng đêm, hai bóng bùn lao ra | music=co | ~150 tiếng nhưng đổi hẳn cả hai phía
+accent 1-3 | hai bóng lao sầm ra, "Cái quái—?!"
+scene 10-79 | V=0.75 E=0.25 T=-0.5 | gems=joyful_activation | function=doi_thoai | setting=rừng đêm, "quái vật bùn" hoá ra Ray và Vince | music=co | tone=hai - nhảy breakdance, Juliana đòi giết, Samael mắng
+scene 80-132 | V=0 E=1.5 T=0.25 | gems=joyful_activation/tension | function=hanh_dong | setting=rừng đêm, cả nhóm ập đến | music=co | tone=hai - Michael húc, Kang húc, Samael chửi như thiếu gia; hai người sắp chết ngạt
+accent 80-82 | "Samael, nằm xuống!" - Rầm
+accent 104-106 | Rầm - Kang húc sượt qua
+duck 129-132 | "...Ồ. Phải rồi." - ngắt nhạc chốt chương

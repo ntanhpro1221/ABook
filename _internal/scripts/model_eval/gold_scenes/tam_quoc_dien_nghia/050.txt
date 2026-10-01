@@ -1,0 +1,25 @@
+# Đáp án cảnh - Tam quốc diễn nghĩa (Phan Kế Bính), Hồi 50: Gia-cát Lượng khéo tính đường Hoa-dung, Quan Vân-trường vì
+# nghĩa tha Tào Tháo. 170 câu (seq 0-169), ~3450 tiếng. Thế giới: chinese_history.
+# PHÂN XỬ 02-10 từ A (Claude) + B (agent chấm mù) theo SCENE_GOLD_GUIDE.md "Phân xử". Đồng thuận A-B trước phân xử:
+# Pk 0,262 (chương khó nhất - chuỗi tháo chạy 35-96 một nền hay ba nền).
+scene 0-19 | V=-1 E=2 T=2 | gems=tension/power | function=hanh_dong | setting=chiến trường sông đêm, biển lửa Xích-bích | music=co | lửa đỏ trời, quân Tào chết cháy chết đuối
+duck 10-19 | hai bài thơ đời sau (~20 giây) - hạ nhạc
+scene 20-34 | V=-1 E=2 T=2 | gems=tension | function=hanh_dong | setting=rừng núi đêm cháy, đường tháo chạy Ô-lâm | music=co | Lã Mông, Lăng Thống, Cam Ninh đuổi chặn
+accent 26-27 | Lăng Thống chặn đường
+accent 32-33 | Cam Ninh chém Mã Diên, Trương Khải
+scene 35-45 | V=-1 E=0 T=1 | gems=tension | function=chuyen_canh | setting=rừng Ô-lâm lúc canh năm | music=co | start=soft (chỉ B) - thoát được, Tào cười chê Chu Du rồi Triệu Vân phục kích
+accent 43-44 | Triệu Vân phục kích
+scene 46-63 | V=-1.5 E=-1 T=1 | gems=sadness/tension | function=ta_canh | setting=mưa rét, đường Di-lăng, hang Hồ-lô | music=co | start=soft (chỉ A) - mưa, đói, nghỉ thổi cơm, Tào lại cười, Trương Phi phục kích
+accent 61-62 | Trương Phi hét chặn cửa hang
+scene 64-78 | V=0 E=0 T=1 | gems=tension | function=doi_thoai | setting=ngã ba đường, lối nhỏ Hoa-dung | music=nhe | chọn đường nhỏ, Tào giảng "hư là thực"
+scene 79-96 | V=-2 E=-1 T=1 | gems=sadness | function=ta_canh | setting=đường hẻm bùn lầy, rét | music=co | thương binh bị giẫm qua mà đi, tiếng khóc dọc đường; lại cười ở 93-96
+scene 97-121 | V=-1 E=-1 T=1 | gems=nostalgia/tension | function=cao_trao | setting=đường hẻm Hoa-dung, Quan Vũ chắn lối | music=co | Quan Vũ chặn, Tào kể ơn xưa, Vân-trường động lòng tha - bi tráng
+accent 97-98 | pháo nổ, Quan Vũ cầm thanh long đao chắn đường
+duck 117-121 | thơ "rồng tù thoát xuống sông" (~10 giây)
+scene 122-137 | V=-1 E=-1 T=0 | gems=sadness | function=noi_tam | setting=cửa ngõ Nam-quận, tiệc rượu trong thành | music=co | hoàn hồn (lửa té ra quân nhà), rồi Tào khóc Quách Phụng-hiếu
+accent 122-125 | lửa bốc chặn đường - té ra Tào Nhân
+scene 138-144 | V=0 E=-1 T=0 | gems=none | function=doi_thoai | setting=sảnh thành, dặn dò | music=nhe | start=soft (chỉ A, ~45 giây) - giao Nam-quận, Hợp-phì, mật kế
+scene 145-167 | V=-1 E=0 T=1.5 | gems=tension | function=cao_trao | setting=doanh trại Hạ-khẩu, tiệc mừng công | music=co | Vân-trường về tay không, Khổng Minh mỉa rồi đòi chém - kết treo
+accent 162-163 | quát võ sĩ lôi Vân-trường ra chém
+duck 164-167 | câu đối kết hồi
+scene 168-169 | V=0 E=-1.5 T=-1 | gems=none | function=chu_thich | setting=chú thích điển Xuân Thu | music=im |

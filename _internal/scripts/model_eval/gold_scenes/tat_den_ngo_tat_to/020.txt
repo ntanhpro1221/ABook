@@ -1,0 +1,9 @@
+# Đáp án cảnh - Tắt đèn (Ngô Tất Tố), Chương XX: quan Phủ về đình thu thuế, xử vợ chồng chị Dậu. 84 câu, ~1640 tiếng.
+# Thế giới: vietnam_classic. PHÂN XỬ 02-10 từ A + B. Đồng thuận trước phân xử: Pk 0,20.
+scene 0-12 | V=-1 E=-1 T=1 | gems=tension | function=mo_dau | setting=sân đình làng, quan về thu thuế | music=nhe | tone=mia - tả đình và bộ râu quan Phủ
+scene 13-41 | V=-1 E=1 T=2 | gems=tension | function=doi_thoai | setting=đình làng thành công đường tạm | music=co | cai lệ, lý trưởng tố; quan quát; anh Dậu run; trẻ con bị lôi ra
+accent 17-18 | quan Phủ đập bàn "Bắt cổ nó ra đây!"
+accent 40-41 | hai đứa trẻ bị lôi ra cổng, khóc gọi u
+scene 42-74 | V=-1 E=0.5 T=1.5 | gems=tension | function=doi_thoai | setting=đình làng, quan Phủ xử | music=co | start=soft (chỉ B) - tone=mia - quan lật sang bắt lỗi lý trưởng rồi dồn chị Dậu
+accent 70 | "Im cái mồm!"
+scene 75-83 | V=-1 E=0 T=0 | gems=none | function=ket | setting=đình, đếm bạc thuế, quan về | music=nhe | tone=mia - quan ngọt giọng, cờ quạt tiễn quan
