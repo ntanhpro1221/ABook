@@ -4,7 +4,7 @@
 # Trịnh trang-công = Ngộ-sanh (tên húy, câu 50/58/170) - mọi dạng đủ. Đoạn = Cung-thúc-đoạn = Thái-thúc = Thúc-đoạn (câu 56,
 # 83): mọi dạng đủ. Công-tử Lữ (tự Tử-phong, câu 92): "LỮ" / "TỬ-PHONG" đủ; "CÔNG-TỬ LỮ" nửa điểm (tiền tố tước, quy tắc
 # 11 - lời kể không bao giờ viết "Lữ" trơn, như ANH DẬU). Thái-sử Đôn: ĐÔN đủ, THÁI-SỬ ĐÔN nửa điểm. Dĩnh-khảo-thúc =
-# Khảo-thúc. Khương-thị / Huệ-công / Võ-công: dạng sách dùng làm tên suốt chương (như "Trịnh lão") - đủ; Trịnh võ-công = Quật-đột (câu 47 - đủ); Bình-vương = Nghi-cựu (Hồi 2-3 - nửa điểm).
+# Khảo-thúc. Khương-thị / Huệ-công / Võ-công: dạng sách dùng làm tên suốt chương (như "Trịnh lão") - đủ; Trịnh võ-công = Quật-đột (câu 47 - đủ); Bình-vương = Nghi-cựu (Hồi 3 câu 156 nêu ngay trước chương này - đủ; dạng đầu BÌNH-VƯƠNG theo chữ của chương).
 # 71: lời dẫn [70] "Trang-công làm thinh, không nói :" là BẪY - Trang-công im lặng, câu thoại là của MẸ ("đuổi em con ra
 # khỏi nước") - Khương-thị đủ, Trang-công không điểm. 92: "có người bước ra" - câu 93 nói ngay đó là Công-tử Lữ: tên
 # đủ, NPC*~ (quy tắc 5). 119/139: "nghĩ thầm" - T,D (quy tắc 9). 23: lời hai đứa trẻ nằm trong câu kể (khoá N): NARRATOR.
@@ -18,7 +18,7 @@
 7 N NARRATOR neutral,happy 0-1 normal normal u
 8 N
 9 N
-10 D BÌNH-VƯƠNG,BÌNH VƯƠNG,NGHI-CỰU~,NGHI CỰU~ neutral 0-1 normal normal m
+10 D BÌNH-VƯƠNG,BÌNH VƯƠNG,NGHI-CỰU,NGHI CỰU neutral 0-1 normal normal m
 11 N
 12 N
 13 N
@@ -64,7 +64,7 @@
 53 N
 54 D KHƯƠNG-THỊ,KHƯƠNG THỊ neutral,tender 0-1 normal normal,soft f
 55 N
-56 D TRỊNH VÕ-CÔNG,TRỊNH VÕ CÔNG,TRỊNH-VÕ-CÔNG,VÕ-CÔNG,VÕ CÔNG,QUẬT-ĐỘT,QUẬT ĐỘT neutral,angry 0-1 normal normal m
+56 D QUẬT-ĐỘT,QUẬT ĐỘT,TRỊNH VÕ-CÔNG,TRỊNH VÕ CÔNG,TRỊNH-VÕ-CÔNG,VÕ-CÔNG,VÕ CÔNG neutral,angry 0-1 normal normal m
 57 N
 58 N NARRATOR neutral,sad,angry 0-1 normal normal u
 59 N
