@@ -36,6 +36,18 @@ tiếp tục được. Chỉ đổi khi không có sách nào cần tiếp tục
 
 ## Đóng gói và đăng
 
+Từ 01-10 cả bốn bước dưới đây là một script (`scripts/release.py`, chạy bằng `runtime/.venv`, từ worktree có commit phát
+hành); mỗi bước dừng ở chỗ đầu tiên không đúng:
+
+```
+python scripts/release.py bump X.Y.Z --commit   # 7 file + commit "Release X.Y.Z"; hash chất lượng phải giữ nguyên
+python scripts/release.py build X.Y.Z           # bộ cài + APK; kiểm latest.json và chứng chỉ APK
+python scripts/release.py publish X.Y.Z --commit <commit phát hành>
+```
+
+File phát hành nằm ở thư mục tạm của máy (`abook-release/X.Y.Z`, hay `--out`), không bao giờ trong repo. Các bước tay
+tương ứng, để hiểu script làm gì:
+
 1. Tag git `vX.Y.Z` trên commit phát hành, đẩy tag.
 2. App máy tính: `scripts\build_windows_app.ps1` (không `-TauriConfig` - bản phát hành chỉ nhận cập nhật qua https) ra
    trong `shell\src-tauri\target\release\bundle\nsis\`: bộ cài `ABook_X.Y.Z_x64-setup.exe`, chữ ký `.sig` (khoá ở
