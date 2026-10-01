@@ -84,10 +84,17 @@ class CastService : Service() {
             manager.createNotificationChannel(NotificationChannel(CHANNEL, "Phát trên loa / TV", NotificationManager.IMPORTANCE_LOW))
         }
         val notification = notification(PhoneCast.players.active())
-        if (Build.VERSION.SDK_INT >= 29) {
-            startForeground(ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
-        } else {
-            startForeground(ID, notification)
+        try {
+            if (Build.VERSION.SDK_INT >= 29) {
+                startForeground(ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
+            } else {
+                startForeground(ID, notification)
+            }
+        } catch (error: Exception) {
+            // Máy từ chối dịch vụ chạy nền (đời Android / hãng khó tính): không bao giờ làm sập app - loa vẫn phát, chỉ thiếu
+            // phần giữ máy thức khi tắt màn hình.
+            stopSelf()
+            return
         }
         wake = (getSystemService(POWER_SERVICE) as PowerManager).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "abook:cast")
             .apply { acquire() }
