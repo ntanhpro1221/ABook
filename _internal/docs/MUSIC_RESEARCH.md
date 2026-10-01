@@ -9,6 +9,22 @@ Trạng thái 01-10 23:xx: đã có BẢN THỬ (đường cơ sở) ở cả b�
 thành đoạn (`webui/music_scenes.py`), chọn bài gần nhất (`webui/music_select.py`), danh mục tĩnh (`LLM_Train/music/`).
 Đường cơ sở là để có số đầu tiên, KHÔNG phải lựa chọn: mọi tham số trong đó sẽ được đo lại ở các pha dưới.
 
+## Nền tảng (chủ sách chốt 01-10 23:xx-00:xx: không tên miền, không thẻ, không rủi ro chi phí)
+
+- Dữ liệu phân tích + chỉ mục lướt/tìm/lọc: **Cloudflare Pages** (gói miễn phí, không thẻ - không thể phát sinh tiền; lượt
+  tải file tĩnh không giới hạn; 20.000 file / 25 MB mỗi file). Chỉ mục bằng **Pagefind** (tìm kiếm tĩnh chia mảnh). Thử
+  01-10: 1.607 bài -> 1.641 file, 3,3 MB; tìm + lọc + đếm theo bộ lọc + sắp xếp ~180 ms, ~85 KB tải.
+- File nhạc: KHÔNG tự đặt kho (Pages không sinh ra cho kho media; R2 cần tên miền + thẻ). Lấy từ nguồn gốc khi cuốn sách
+  dùng bài, đệm trên máy,  mang theo file; dự phòng khi nguồn gỡ bài = bản trên Internet Archive (kho công cộng cho
+  nội dung giấy phép mở, miễn phí vĩnh viễn).
+- Openverse chỉ là "tìm thêm ngoài danh mục" (vô danh, hạn mức theo IP từng người dùng); máy dựng danh mục lấy bài bằng
+  API nguồn gốc (điều khoản Openverse cấm cào kho).
+- Chờ chủ sách: tài khoản Cloudflare (
+ ⛅️ wrangler 4.146.0
+────────────────────
+Attempting to login via OAuth...
+Opening a link in your default browser: https://dash.cloudflare.com/oauth2/auth?response_type=code&client_id=54d11594-84e4-41aa-b438-e81b8fa78ee7&redirect_uri=http%3A%2F%2Flocalhost%3A8976%2Foauth%2Fcallback&scope=k2.read%20k2.write%20account%3Aread%20user%3Aread%20workers%3Awrite%20workers_kv%3Awrite%20workers_routes%3Awrite%20workers_scripts%3Awrite%20workers_tail%3Aread%20d1%3Awrite%20pages%3Awrite%20zone%3Aread%20ssl_certs%3Awrite%20ai%3Awrite%20ai-search%3Awrite%20ai-search%3Arun%20agent-memory%3Awrite%20queues%3Awrite%20pipelines%3Awrite%20secrets_store%3Awrite%20artifacts%3Awrite%20flagship%3Awrite%20containers%3Awrite%20cloudchamber%3Awrite%20connectivity%3Aadmin%20email_routing%3Awrite%20email_sending%3Awrite%20browser%3Awrite%20challenge-widgets.write%20offline_access&state=vKISkfIq2w2Evdw9Kjib31H6FpRUJY-c&code_challenge=BD2BVWA7WIcythy-25LT0Wtw3BbcRGQhVp_2AmLmqvw&code_challenge_method=S256) và archive.org (khoá S3 để đăng bản dự phòng).
+
 ## Bốn câu hỏi
 
 1. **Cảnh.** Truyện chia thành đoạn nào, mỗi đoạn mang không khí gì (vui/buồn, êm/dồn dập, căng thẳng, loại cảnh: chiến
