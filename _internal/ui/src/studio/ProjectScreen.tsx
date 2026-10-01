@@ -71,6 +71,7 @@ import { CoverEditor } from "./CoverEditor";
 import { ReviewQueue, useReviewCount } from "./ReviewQueue";
 import { WorkInbox, useWorkCount } from "./WorkInbox";
 import { ScriptTab } from "./ScriptTab";
+import { MusicTab } from "./MusicTab";
 import { NameReadings } from "./NameReadings";
 import { VoicePicker } from "./VoicePicker";
 import { usePlayer } from "@/listen/player";
@@ -861,7 +862,7 @@ export function ProjectScreen() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const tab = ["chapters", "work", "script", "review", "cast", "activity"].includes(params.get("tab") ?? "") ? params.get("tab")! : "chapters";
+  const tab = ["chapters", "work", "script", "review", "cast", "music", "activity"].includes(params.get("tab") ?? "") ? params.get("tab")! : "chapters";
   const reviewCount = useReviewCount(id ?? "");
   const workCount = useWorkCount(id ?? "");
   const { data, isLoading, error } = useBook(id);
@@ -977,6 +978,7 @@ export function ProjectScreen() {
             Cần nghe lại
           </TabsTrigger>
           <TabsTrigger value="cast">Nhân vật</TabsTrigger>
+          <TabsTrigger value="music">Nhạc nền</TabsTrigger>
           <TabsTrigger value="activity">Nhật ký</TabsTrigger>
         </TabsList>
         {from && FROM_LABEL[from] && tab !== from && (
@@ -1034,6 +1036,9 @@ export function ProjectScreen() {
           />
           <VoicePicker bookId={book.id} person={picking} onClose={() => setPicking(null)} />
           <NameReadings bookId={book.id} focus={params.get("focus") === "names"} name={params.get("name") ?? ""} />
+        </TabsContent>
+        <TabsContent value="music">
+          <MusicTab bookId={book.id} chapterTitle={(id) => chapters.find((chapter) => chapter.id === id)?.fullTitle ?? `Chương ${id}`} />
         </TabsContent>
         <TabsContent value="activity">
           <ActivityView book={book} />
