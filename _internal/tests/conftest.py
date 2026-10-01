@@ -87,6 +87,22 @@ def _app_data_in_a_temporary_folder(tmp_path_factory: pytest.TempPathFactory) ->
         os.environ.pop("EBOOK_READER_PREFERENCES", None)
 
 
+@pytest.fixture(autouse=True, scope="session")
+def _no_cast_discovery() -> Iterator[None]:
+    """App không tìm loa / TV (webui/cast.py - M-SEARCH multicast ra mọi card mạng) trong bài thử: không gửi gì ra mạng
+    của người chạy test, và một TV thật trong nhà không lọt vào danh sách máy mà bài thử đếm. Thử DLNA thì dùng loa giả
+    (scripts/fake_renderer.py, tests/test_cast.py)."""
+    previous = os.environ.get("ABOOK_CAST_DISCOVERY")
+    os.environ["ABOOK_CAST_DISCOVERY"] = "0"
+    try:
+        yield
+    finally:
+        if previous is None:
+            os.environ.pop("ABOOK_CAST_DISCOVERY", None)
+        else:
+            os.environ["ABOOK_CAST_DISCOVERY"] = previous
+
+
 @pytest.fixture(autouse=True)
 def _count_sleeping(request: pytest.FixtureRequest) -> Iterator[None]:
     """Bọc `time.sleep` để đếm. Vẫn ngủ thật, trừ khi có người bật công tắc đo.

@@ -10,6 +10,7 @@ import base64
 import binascii
 import json
 import mimetypes
+import os
 import re
 import secrets
 import shutil
@@ -33,6 +34,8 @@ from .casting_review import casting_chapter, casting_chapters
 from .name_readings import name_readings
 from .voice_picker import voice_choices
 from .work_items import work_items
+from .cast import CastError, CastPlayers
+from .cast import search as cast_search
 from .peer_players import PeerPlayers
 from .sync import (LOCAL_PLAYER, SYNC_PORT, Devices, ExclusiveHTTPServer, Remote, SyncApp, SyncServer, local_addresses,
                    remote_command)
@@ -183,6 +186,10 @@ class App:
         self.computers = remote_books.Computers(preferences.path.with_name("computers.json"))
         remote_books.configure(self.computers)
         self.peer_players = PeerPlayers(self.computers)
+        # Loa / TV trong mạng nhà (DLNA, webui/cast.py): hiện trong danh sách máy như điện thoại, máy này phục vụ audio.
+        # ABOOK_CAST_DISCOVERY=0 tắt việc tìm (bài thử - tests/conftest.py - không gửi multicast ra mạng người chạy).
+        self.cast = CastPlayers(self._cast_book, self._cast_audio, self._cast_save, cover=self._cast_cover,
+                                find=lambda: cast_search() if os.environ.get("ABOOK_CAST_DISCOVERY") != "0" else [])
         self._remote_refreshed = 0.0
         self._remote_lock = threading.Lock()
         self._state_synced: dict[str, float] = {}
@@ -660,6 +667,7 @@ class App:
     def close(self) -> None:
         """App đóng: tắt cổng đồng bộ nhưng giữ nguyên lựa chọn của người dùng cho lần mở sau."""
         self._stop_sync()
+        self.cast.close()
 
     def routes(self) -> dict[str, Any]:
         """Các đường tới máy này cho thiết bị vừa ghép: địa chỉ LAN + cổng đồng bộ, và địa chỉ Bluetooth khi cổng
@@ -697,6 +705,12 @@ class App:
             peer["localBookId"] = local
             peer["cover"] = covers.cover_view(path, local) if path is not None and local is not None else None
             phones.append(peer)
+        for device in self.cast.view():
+            path = self.library.resolve_listenable(device["bookId"]) if device["bookId"] else None
+            device["known"] = path is not None
+            device["localBookId"] = device["bookId"] if path is not None else None
+            device["cover"] = covers.cover_view(path, device["bookId"]) if path is not None else None
+            phones.append(device)
         return {"phones": phones}
 
     def remote_send(self, device: str, body: dict[str, Any]) -> dict[str, Any]:
@@ -704,6 +718,11 @@ class App:
             command = remote_command(body)
         except ValueError as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+        if self.cast.owns(device):
+            try:
+                return self.cast.send(device, command)
+            except CastError as error:
+                raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
         entry = self.computers.get(device)
         if entry is None or any(phone["device"] == device for phone in self.remote.view()):
             try:
@@ -726,6 +745,27 @@ class App:
         if reply.get("ok") is False:
             raise ApiError(HTTPStatus.CONFLICT, f"{entry['name']}: {reply.get('message') or 'không làm được lệnh này'}")
         return {"id": str(reply.get("id") or "")}
+
+    # Loa / TV (webui/cast.py) dùng đúng đường của trình phát trong app: sách nghe được, file chương, chỗ nghe, bìa.
+    def _cast_book(self, value: str) -> dict[str, Any]:
+        try:
+            return self.listen_book(value)
+        except ApiError as error:
+            raise CastError(error.message) from None
+
+    def _cast_audio(self, value: str, chapter: int) -> Path | None:
+        book = self.library.resolve_listenable(value)
+        if book is None:
+            return None
+        return packages.chapter_file(book, chapter) if packages.is_package(book) else store.chapter_audio_path(book, chapter)
+
+    def _cast_save(self, value: str, chapter: int, seconds: float, duration: float) -> None:
+        self.listening.progress(value, chapter, seconds, duration)
+        self.sync_remote_state(value, wait=False)
+
+    def _cast_cover(self, value: str) -> Path | None:
+        book = self.library.resolve_listenable(value)
+        return covers.cover_file(book) if book is not None else None
 
     def report_player(self, body: dict[str, Any]) -> dict[str, Any]:
         """Giao diện máy này báo trình phát của nó và treo tới `wait` giây chờ lệnh từ máy đã ghép (như điện thoại báo
@@ -1431,6 +1471,10 @@ class Handler(BaseHTTPRequestHandler):
     def post_player_report(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.report_player(self._body()))
 
+    def post_cast_scan(self, _query: dict[str, list[str]]) -> None:
+        self.app.cast.scan()
+        self._send_json(HTTPStatus.OK, {"scanning": True})
+
     def post_remote(self, _query: dict[str, list[str]], device: str) -> None:
         self._mutating_guard()
         self._send_json(HTTPStatus.OK, self.app.remote_send(device, self._body()))
@@ -1799,6 +1843,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(r"/api/remote"), Handler.get_remote),
     ("POST", re.compile(r"/api/player/report"), Handler.post_player_report),
     ("POST", re.compile(r"/api/remote/([0-9a-f]{12})"), Handler.post_remote),
+    ("POST", re.compile(r"/api/cast/scan"), Handler.post_cast_scan),
     ("DELETE", re.compile(r"/api/sync/pairing"), Handler.delete_sync_pairing),
     ("DELETE", re.compile(r"/api/sync/devices/([0-9a-f]+)"), Handler.delete_sync_device),
     ("POST", re.compile(r"/api/sync/devices/([0-9a-f]+)/studio"), Handler.post_sync_device_studio),
