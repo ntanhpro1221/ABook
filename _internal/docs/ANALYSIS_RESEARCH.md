@@ -56,6 +56,13 @@ data_v8, `train_lora.py`) −6,0 [−8,2; −2,8], thua 6/6 - khác trình/lư�
 chỉ ngang v8 nhà (63,7 vs 64,2). KTC bootstrap theo chương KHÔNG gồm nhiễu giữa hai lượt huấn luyện. Chưa nhận: chờ Tam
 quốc; nếu v9m hồi ở Tam quốc thì huấn luyện v9 ở NHÀ bằng đúng trình của v8 nhà rồi so thẳng với v8 nhà.
 
+Tam quốc (01-10 22:2x): v8m 87,8 / v9m 87,2 (chặt 86,8 / 88,1) - KHÔNG khác, cả hai ngang v6 (87,5). Mà v8 NHÀ chỉ 83,0:
+"v8 thua Tam quốc 4,5" là của LƯỢT huấn luyện ở nhà, không phải của data_v8. **Kết luận: v9 không nhận** (Tam quốc không
+có gì để sửa, LN +5,5 nằm trong nhiễu giữa hai lượt). **Bài học lớn hơn: hai lượt cùng dữ liệu lệch ~6 F1 LN và ~5 Tam
+quốc** - mọi so sánh model trước đây hơn kém dưới mức ấy (v7, v6b, 9B-v8 ±0) là CHƯA phân định; muốn tách hiệu của dữ liệu
+phải huấn luyện >= 2-3 hạt giống mỗi bên rồi so trung bình. Việc kế: 3 hạt giống v8 cùng trình (Modal, rẻ) đo LN6 + Tam
+quốc để biết độ rộng nhiễu thật trước khi đổi model mặc định.
+
 8B dữ liệu SẠCH (Modal 01-10, đo trên Mac cùng host với 8B-v5 lượt A, 5 chương chung): v6n-e1 F1 giọng 56,6 vs 8B-v5 63,8
 (−8,0 [−12,7; −3,0], thua 5/5 chương), chặt −20,8; nhưng NHẬP người lạ vào nhân vật có tên 0% (v5 39%) - mọi câu vô danh
 đọc bằng giọng người lạ. Dữ liệu "bẩn" của v5 (nhãn chữ hoa, có chương cổng) vẫn cho F1 cao hơn; chờ v6-e1 / v6n-e2 trước
