@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.13] - 2026-10-01
+
 ### Nghe
 
 - Máy tính: **phát lên loa / TV trong mạng nhà** (DLNA - TV Samsung, LG, Sony, ampli, loa mạng, máy Windows bật điều khiển
