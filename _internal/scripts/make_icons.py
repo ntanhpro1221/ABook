@@ -10,7 +10,7 @@ Hai loại file là biến thể của chính icon app:
     runtime/.venv/Scripts/python.exe scripts/make_icons.py [--preview <thư mục>]
 
 Ra (vẽ lại toàn bộ mỗi lần chạy):
-    ebook_reader/assets/abook.ico + .png   icon app Windows: cửa sổ, khay, shortcut (16-256 px)
+    ebook_reader/assets/app.ico + .png   icon app Windows: cửa sổ, khay, shortcut (16-256 px)
     ebook_reader/assets/book_file.ico + .png      file .abook
     ebook_reader/assets/project_file.ico + .png   file .abookproj
     ebook_reader/assets/icon/*.svg                bản vector gốc: phóng to bao nhiêu cũng không vỡ
@@ -271,7 +271,7 @@ def main() -> int:
                          ("abook.svg", file_icon()), ("abookproj.svg", file_icon(dashed=True)),
                          ("glyph.svg", _svg(glyph())), ("glyph_mono.svg", _svg(glyph(mono="#000000")))):
         (sources / name).write_text(markup + "\n", encoding="utf-8", newline="\n")
-    write_ico(ASSETS / "abook.ico", app_icon(), app_icon(small=True))
+    write_ico(ASSETS / "app.ico", app_icon(), app_icon(small=True))
     write_ico(ASSETS / "book_file.ico", file_icon(), file_icon(small=True))
     write_ico(ASSETS / "project_file.ico", file_icon(dashed=True), file_icon(small=True, dashed=True))
     if not args.no_android:

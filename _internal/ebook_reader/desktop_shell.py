@@ -19,7 +19,7 @@ INSTANCE_OPEN_PREFIX = b"open\n"
 INSTANCE_CONNECT_TIMEOUT_MS = 250
 STARTUP_READY_FILE_ENV = "EBOOK_READER_READY_FILE"
 APP_ASSET_DIR = Path(__file__).resolve().parent / "assets"
-APP_ICON_PATH = APP_ASSET_DIR / ("abook.ico" if os.name == "nt" else "abook.png")
+APP_ICON_PATH = APP_ASSET_DIR / ("app.ico" if os.name == "nt" else "app.png")
 
 
 def set_windows_app_identity() -> None:
