@@ -113,3 +113,29 @@ def test_short_tracks_are_not_used_and_choices_repeat_exactly(near) -> None:
     first = choose(scenes, near, book_key="b")
     assert "https://x/short.mp3" not in [entry["link"] for entry in first]
     assert first == choose(scenes, near, book_key="b"), "làm lại ra đúng bài cũ"
+
+
+def test_a_style_that_does_not_fit_the_books_world_is_never_chosen(near) -> None:
+    from ebook_reader.webui.music_select import choose as pick
+
+    tracks = [{"link": "https://x/rock.mp3", "valence": 0.3, "arousal": -0.6, "tension": 0.0, "style": "rock",
+               "duration": 200, "source": "incompetech"},
+              {"link": "https://x/guzheng.mp3", "valence": 0.0, "arousal": -0.2, "tension": 0.0, "style": "eastern_ancient",
+               "duration": 200, "source": "incompetech"}]
+    xianxia = {"eastern_ancient": 1, "orchestral_epic": 1}
+    [entry] = pick([_scene(1, 0.3, -0.6)], lambda v, a: tracks, book_key="b", genre_styles=xianxia)
+    assert entry["link"] == "https://x/guzheng.mp3", "rock gần hơn nhưng không hợp truyện tiên hiệp"
+    [free] = pick([_scene(1, 0.3, -0.6)], lambda v, a: tracks, book_key="b")
+    assert free["link"] == "https://x/rock.mp3", "chưa chọn thể loại thì không lọc"
+
+
+def test_tension_tells_fear_from_excitement(near) -> None:
+    from ebook_reader.webui.music_select import choose as pick
+
+    tracks = [{"link": "https://x/thrill.mp3", "valence": -0.3, "arousal": 0.7, "tension": 0.9, "duration": 200,
+               "source": "incompetech"},
+              {"link": "https://x/party.mp3", "valence": -0.2, "arousal": 0.7, "tension": -0.6, "duration": 200,
+               "source": "incompetech"}]
+    scene = {**_scene(1, -0.25, 0.7), "tension": 0.8}
+    [entry] = pick([scene], lambda v, a: tracks, book_key="b")
+    assert entry["link"] == "https://x/thrill.mp3"
