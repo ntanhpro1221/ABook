@@ -1150,13 +1150,36 @@ class Handler(BaseHTTPRequestHandler):
             requested_at = 0.0
         if section not in ("pronunciations", "speakers", "lines", "voices", "retakes") or not key or requested_at <= 0:
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu thay đổi cần bỏ")
-        if not listener_overrides.requests_made_at(listener_overrides.read_overrides(path), section, [key], requested_at):
+        group = [str(item) for item in body.get("keys") or [] if isinstance(item, str)][:5000] if section == "retakes" else []
+        mine = listener_overrides.requests_made_at(listener_overrides.read_overrides(path), section, group or [key], requested_at)
+        if not mine:
             raise ApiError(HTTPStatus.CONFLICT, "Thay đổi này vừa được thay bằng một lựa chọn sau - mở lại hộp để xem.")
         if section == "retakes":
-            listener_overrides.cancel_retake(path, key)
+            # "Thu lại cả chương" là một nhóm: bỏ cả nhóm - chỉ những câu còn đúng lần bấm ấy.
+            for stable_id in mine:
+                listener_overrides.cancel_retake(path, stable_id)
         else:
             listener_overrides.withdraw_requests(path, section, [key], requested_at)
         self._send_json(HTTPStatus.OK, {"withdrawn": 1})
+
+    def post_chapter_retake(self, _query: dict[str, list[str]], value: str, chapter: str) -> None:
+        # Menu "…" của một chương: thu lại MỌI câu đã thu của chương bằng hạt giống mới (soát UX a5/a6 01-10: cả chương nghe
+        # không ổn thì phải bấm "Cần thu lại" từng câu). Cùng đường với "Cần thu lại" một câu (overrides.json `retakes`),
+        # cùng một mốc thời gian để hộp "Áp dụng" coi là một thay đổi; dây chuyền áp ở ranh giới như mọi yêu cầu.
+        self.app._mutating()
+        path = self.app._book(value)
+        with closing(store.connect(path)) as connection:
+            rows = connection.execute(
+                "SELECT stable_id, text_sha256 FROM segments WHERE chapter_id=? AND wav_path IS NOT NULL AND wav_path != ''"
+                " AND stable_id IS NOT NULL AND text_sha256 IS NOT NULL ORDER BY seq",
+                (int(chapter),),
+            ).fetchall()
+        if not rows:
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Chương này chưa có câu nào đã thu để thu lại.")
+        now = time.time()
+        for row in rows:
+            listener_overrides.request_retake(path, str(row["stable_id"]), str(row["text_sha256"]), now=now)
+        self._send_json(HTTPStatus.OK, {"lines": len(rows), "requestedAt": now})
 
     def get_cast(self, _query: dict[str, list[str]], value: str) -> None:
         path = self.app._listenable(value)
@@ -1862,6 +1885,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(BOOK + r"/activity"), Handler.get_activity),
     ("GET", re.compile(BOOK + r"/pending-changes"), Handler.get_pending_changes),
     ("POST", re.compile(BOOK + r"/pending-changes/withdraw"), Handler.post_pending_withdraw),
+    ("POST", re.compile(BOOK + r"/chapters/(\d+)/retake"), Handler.post_chapter_retake),
     ("GET", re.compile(BOOK + r"/chapters/(\d+)/script"), Handler.get_script),
     ("POST", re.compile(BOOK + r"/start"), Handler.post_start),
     ("POST", re.compile(BOOK + r"/stop"), Handler.post_stop),

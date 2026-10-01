@@ -103,3 +103,43 @@ def test_one_change_can_be_dropped_from_the_box_and_the_older_wish_comes_back(tm
     finally:
         server.stop()
         app.close()
+
+
+def test_a_whole_chapter_retake_is_one_change_and_drops_as_one(tmp_path: Path) -> None:
+    # Menu "…" của chương: "Thu lại cả chương" - mọi câu đã thu, MỘT lần bấm = một thay đổi trên nút và trong hộp.
+    import json
+
+    from ebook_reader.webui.actions import FakeRunner
+    from ebook_reader.webui.library import Preferences, book_id
+    from ebook_reader.webui.server import App, Server
+    from tests.test_webui_listen_and_sync import _request
+
+    root = tmp_path / "thu_vien"
+    project = _project(root)
+    db = sqlite3.connect(project / "project.sqlite3")
+    db.execute("ALTER TABLE segments ADD COLUMN text_sha256 TEXT")
+    db.execute("UPDATE segments SET text_sha256 = 'h' || id")
+    db.commit()
+    db.close()
+    preferences = Preferences(tmp_path / "prefs" / "preferences.json")
+    preferences.update({"libraryRoot": str(root)})
+    app = App(preferences=preferences, runner=FakeRunner(), token="phien")
+    server = Server(app, port=0).start()
+    try:
+        since = time.time() - 1
+        headers = {"X-Ebook-Token": "phien"}
+        status, data, _ = _request(server.port, "POST", f"/api/books/{book_id(project)}/chapters/1/retake", headers=headers)
+        assert status == 200 and json.loads(data)["lines"] == 2, "câu 2 và 3 đã thu; câu 1 chưa thu"
+        assert store.pending_changes(project, since) == 1
+        (item,) = store.pending_details(project, since)["items"]
+        assert item["label"] == "Thu lại cả chương (2 câu)" and item["lines"] == 2 and sorted(item["keys"]) == ["s2", "s3"]
+        status, data, _ = _request(server.port, "POST", f"/api/books/{book_id(project)}/pending-changes/withdraw", headers=headers,
+                                   body={"section": "retakes", "key": item["key"], "keys": item["keys"],
+                                         "requestedAt": item["requestedAt"]})
+        assert status == 200, data
+        assert store.pending_changes(project, since) == 0
+        status, _data, _ = _request(server.port, "POST", f"/api/books/{book_id(project)}/chapters/2/retake", headers=headers)
+        assert status == 400, "chương chưa thu câu nào"
+    finally:
+        server.stop()
+        app.close()

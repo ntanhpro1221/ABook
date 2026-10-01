@@ -382,7 +382,17 @@ def pending_changes(project_root: Path, since: float) -> int:
             except (AttributeError, TypeError, ValueError):
                 continue
         fresh[section] = chosen
-    return sum(len(entries) for entries in fresh.values()) - _kept_as_is(project_root, fresh)
+    # "Thu lại cả chương" ghi mọi câu của chương trong MỘT lần bấm (cùng `requested_at`): một thay đổi, không phải trăm.
+    retake_clicks = len({_click(entry) for entry in fresh["retakes"].values()})
+    return (sum(len(entries) for section, entries in fresh.items() if section != "retakes") + retake_clicks
+            - _kept_as_is(project_root, fresh))
+
+
+def _click(entry: Any) -> float:
+    try:
+        return float(entry.get("requested_at") or 0)
+    except (AttributeError, TypeError, ValueError):
+        return 0.0
 
 
 QUOTE_OPENERS = {"“": "”", '"': '"', "‘": "’", "'": "'", "«": "»", "「": "」", "『": "』"}
@@ -491,12 +501,23 @@ def pending_details(project_root: Path, since: float) -> dict[str, Any]:
             change = entry.get("preset") or {"male": "giọng nam", "female": "giọng nữ"}.get(str(entry.get("gender")), "giọng khác")
             items.append({"kind": "voice", "label": f"Giọng của {name}: {change}", "lines": hit(ids),
                           **handle("voices", key, entry)})
+        clicks: dict[float, list[str]] = {}
         for stable_id, entry in fresh["retakes"].items():
-            row = by_id.get(stable_id)
-            if row is not None:
-                items.append({"kind": "retake", "label": f"Thu lại {quote(row['text'])}",
-                              "chapter": titles.get(int(row["chapter_id"]), ""), "lines": hit([stable_id]),
-                              **handle("retakes", stable_id, entry)})
+            clicks.setdefault(_click(entry), []).append(stable_id)
+        for at, stable_ids in clicks.items():
+            known = [stable_id for stable_id in stable_ids if stable_id in by_id]
+            if not known:
+                continue
+            row = by_id[known[0]]
+            chapter = titles.get(int(row["chapter_id"]), "")
+            if len(stable_ids) == 1:
+                items.append({"kind": "retake", "label": f"Thu lại {quote(row['text'])}", "chapter": chapter,
+                              "lines": hit(known), **handle("retakes", known[0], fresh["retakes"][known[0]])})
+            else:
+                # Một lần bấm "Thu lại cả chương": một mục, bỏ thì bỏ cả nhóm (`keys`).
+                items.append({"kind": "retake", "label": f"Thu lại cả chương ({len(stable_ids)} câu)", "chapter": chapter,
+                              "lines": hit(known), "section": "retakes", "key": stable_ids[0], "keys": stable_ids,
+                              "requestedAt": at})
         # Tốc độ thật: các chương đã xong của chính cuốn này (bắt đầu -> xong, chia số câu).
         done = connection.execute(
             "SELECT started_at, completed_at, total_segments FROM chapters "

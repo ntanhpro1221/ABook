@@ -19,6 +19,8 @@ interface PendingItem {
   /** Đủ để bỏ đúng yêu cầu này (POST …/pending-changes/withdraw). */
   section: string;
   key: string;
+  /** "Thu lại cả chương": mọi câu của một lần bấm - bỏ thì bỏ cả nhóm. */
+  keys?: string[];
   requestedAt: number;
 }
 
@@ -54,7 +56,7 @@ export function ApplyChangesDialog({
     try {
       await api(`/api/books/${bookId}/pending-changes/withdraw`, {
         method: "POST",
-        body: { section: item.section, key: item.key, requestedAt: item.requestedAt },
+        body: { section: item.section, key: item.key, keys: item.keys, requestedAt: item.requestedAt },
       });
       if (count <= 1) onOpenChange(false);
       await client.invalidateQueries();
