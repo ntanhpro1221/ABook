@@ -317,6 +317,9 @@ def continuation_plan(project_root: Path) -> dict[str, Any]:
         "profile": str(settings.get("quality_profile") or "high_quality"),
         "narrator": humanize.voice_label(str(voices.get("narrator_voice") or "")),
         "firstPerson": str(voices.get("first_person_identity") or ""),
+        # Model đọc hiểu của phần trước (soát UX a6 01-10, B3): phần sau đọc bằng đúng model ấy - đổi model giữa hai phần
+        # là đổi cách gán người nói giữa cuốn. Máy chủ bỏ đi nếu Ollama không còn model ấy.
+        "analysisModel": str((settings.get("analysis") or {}).get("model") or ""),
         # Phần trước còn đang phân tích thì sổ nhân vật chưa đủ - trình tạo nói ra, không chặn.
         "analyzed": bool(total) and int(segments["analyzed"] or 0) == total,
         "carries": continuation.carried_summary(project_root),
