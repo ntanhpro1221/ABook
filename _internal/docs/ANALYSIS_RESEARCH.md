@@ -46,9 +46,15 @@ Cổng (F1 giọng, v6 / v7 / v8): TMA 64,3 / 65,4 / **72,1**; YMP 76,4 / 67,0 /
 quốc **87,5** / 83,8 / 83,0 (v8 tách 13/32 người thành nhiều giọng, v6 10/32).
 
 **Quyết định (cùng luật đặt trước như v7: không thua v6 quá 2 điểm ở cổng nào):** v8 thua Tam quốc 4,5 -> CHƯA nhận làm
-công thức; nhưng giữ hướng "thấy người nói lượt trước" (lợi rõ nhất từ trước tới nay ở LN và 3/4 cổng). Việc kế: (1) soi
-Tam quốc v8 vs v6 - nghi cùng kiểu tách tên/chức danh (13 người nhiều giọng) chứ không phải nhận sai người; nếu đúng thì
-sửa ở luật gom tên của host chứ không ở dữ liệu; (2) Qwen3.5-4B trên đúng công thức v8 (`q35v8_after_8bclean.sh`, sau hàng
+công thức; nhưng giữ hướng "thấy người nói lượt trước" (lợi rõ nhất từ trước tới nay ở LN và 3/4 cổng).
+
+Soi Tam quốc (`tamquoc_v8.py`, nhãn sau lượt gom tên của dây chuyền): KHÔNG phải tách tên - v8 sai người 40/219 câu, v6
+35. Các câu v8 sai thêm đều là gán cho NGƯỜI VỪA NÓI GẦN ĐÂY trong cảnh nhiều người (hội nghị, trận mạc): Trình Phổ -> Chu
+Du / Tào Nhân, Lã Mông -> Chu Du, Lỗ Túc -> Chu Du, Triệu Phạm -> Pháo Long, câu vô danh -> Khổng Minh (3). Tức nêu người nói
+lượt trước giúp đối đáp HAI người luân phiên (LN: đối đáp liền +12,7) nhưng kéo lệch về người hay nói ở cảnh NHIỀU người.
+
+Việc kế: (1) v9 nhắm đúng chỗ ấy - chỉ nêu người nói lượt trước khi các lượt gần đây luân phiên giữa hai người, hay nêu
+kèm lời nhắc "lời dẫn nêu tên luôn thắng lượt trước"; đo lại trên LN + Tam quốc; (2) Qwen3.5-4B trên đúng công thức v8 (`q35v8_after_8bclean.sh`, sau hàng
 8B sạch) - lượt Qwen3.5 đầu tiên ở nhà (01-10 16:06) hỏng ngay bước 1: cuDNN không nhận đầu chú ý 256 của Qwen3.5 và
 train_lora.py cấm mọi kernel khác; nay mở thêm kernel memory-efficient khi đầu > 128 (vẫn cấm math), kèm chốt tốc độ (quá
 14 giờ một epoch thì lên đám mây - Windows thiếu kernel nhanh cho lớp gated delta của Qwen3.5). v8 cần mã host của nhánh
