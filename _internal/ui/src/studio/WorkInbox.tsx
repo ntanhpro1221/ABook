@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
-import { Button, EmptyState, Segmented } from "@/shared/ui";
+import { Button, EmptyState, Kbd, Segmented } from "@/shared/ui";
 import { api, suggestionOf, urls, type BookSummary } from "./api";
 import { ReadingProblem } from "./ReadingProblem";
 import { applyWhen, PENDING_NOTE, refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied } from "./decisions";
@@ -238,7 +238,7 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
           if (typed) save.mutate(typed);
         }}
       >
-        <Button size="sm" variant="secondary" disabled={save.isPending} onClick={() => save.mutate(item.current)}>
+        <Button data-choice size="sm" variant="secondary" disabled={save.isPending} onClick={() => save.mutate(item.current)}>
           Đúng rồi, giữ "{item.current}"
         </Button>
         <label htmlFor={inputId} className="text-xs text-fg-2">
@@ -381,7 +381,7 @@ function SpeakerFix({
       )}
       <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Ai nói câu này">
         {(item.choices ?? []).map((choice, index) => (
-          <Button
+          <Button data-choice
             key={choice.value}
             size="sm"
             // Đã quyết thì tô lựa chọn của người nghe, không phải gợi ý đầu của máy.
@@ -395,7 +395,7 @@ function SpeakerFix({
           </Button>
         ))}
         {item.currentValue && (
-          <Button size="sm" variant="ghost" disabled={save.isPending} onClick={() => save.mutate({ speaker: item.currentValue! })}>
+          <Button data-choice size="sm" variant="ghost" disabled={save.isPending} onClick={() => save.mutate({ speaker: item.currentValue! })}>
             {item.keepLabel ?? (item.kind === "unnamed" ? "Đúng là vai phụ" : `Giữ ${item.current}`)}
           </Button>
         )}
@@ -508,7 +508,7 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
       <div className="flex flex-wrap items-start gap-2" role="group" aria-label="Chọn">
         {(item.voiceChoices ?? []).map((choice) => (
           <div key={`${choice.character}-${choice.label}`} className="flex flex-col items-start gap-0.5">
-            <Button
+            <Button data-choice
               size="sm"
               variant={(item.requested ? [choice.done, choice.label].includes(item.requested) : choice.recommended) ? "primary" : "secondary"}
               disabled={save.isPending}
@@ -527,7 +527,7 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
           </div>
         ))}
         {item.keepCharacters && item.keepCharacters.length > 0 && (
-          <Button
+          <Button data-choice
             size="sm"
             variant="ghost"
             disabled={save.isPending}
@@ -554,14 +554,14 @@ type OpenScript = (chapterId: number, stableId: string, pick?: boolean, card?: s
 type OpenNames = (name: string, card?: string) => void;
 type OpenReview = (card?: string) => void;
 
-function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames }: { bookId: string; item: WorkItem; onOpenReview: OpenReview; onOpenScript?: OpenScript; onOpenNames?: OpenNames }) {
+function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, active = false }: { bookId: string; item: WorkItem; onOpenReview: OpenReview; onOpenScript?: OpenScript; onOpenNames?: OpenNames; active?: boolean }) {
   // Thẻ chuỗi lượt đối đáp: đổi các câu xen kẽ (mặc định) hay cả chuỗi - câu "sẽ đổi" theo phạm vi đang chọn.
   const [scope, setScope] = useState<Scope>("alternate");
   const openScript: OpenScript | undefined =
     onOpenScript && ((chapterId, stableId, pick) => onOpenScript(chapterId, stableId, pick, item.key));
   const openNames: OpenNames | undefined = onOpenNames && ((name) => onOpenNames(name, item.key));
   return (
-    <li id={`work-${item.key}`} className="scroll-mt-24 rounded-xl border border-line bg-panel p-4">
+    <li id={`work-${item.key}`} className={cn("scroll-mt-24 rounded-xl border bg-panel p-4", active ? "border-accent ring-2 ring-accent/25" : "border-line")}>
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
         <span className="rounded-full bg-hover px-2 py-0.5 text-[11px] font-medium text-fg-2">{KIND_LABEL[item.kind]}</span>
         <h3 className="text-[15px] font-semibold">{decidedTitle(item) ?? item.title}</h3>
@@ -641,6 +641,43 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, kind: ki
     onKind?.(value);
   };
   const [shown, setShown] = useState(PAGE);
+  // Phím tắt (soát UX a6 01-10, D1): J / K chọn thẻ, 1-9 bấm lựa chọn thứ N của thẻ ấy - duyệt cả trăm thẻ không cần chuột.
+  // Quyết xong thì thẻ rời danh sách, nên thẻ kế tự đứng vào đúng chỗ đang chọn.
+  const [cursor, setCursorState] = useState<number | null>(null);
+  const cursorRef = useRef<number | null>(null);
+  const setCursor = (value: number | null) => {
+    cursorRef.current = value;
+    setCursorState(value);
+  };
+  const keys = useRef<{ items: WorkItem[] }>({ items: [] });
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
+      if (event.target instanceof Element && event.target.closest("input, textarea, select, [contenteditable=true], [role=dialog]")) return;
+      const list = keys.current.items;
+      if (!list.length) return;
+      const current = cursorRef.current === null ? null : Math.min(cursorRef.current, list.length - 1);
+      if (event.key === "j" || event.key === "k") {
+        event.preventDefault();
+        const next = current === null ? 0 : Math.min(Math.max(current + (event.key === "j" ? 1 : -1), 0), list.length - 1);
+        setCursor(next);
+        window.setTimeout(() => document.getElementById(`work-${list[next].key}`)?.scrollIntoView({ block: "nearest" }), 0);
+      } else if (/^[1-9]$/.test(event.key) && current !== null) {
+        const choices = document.querySelectorAll<HTMLButtonElement>(`#work-${CSS.escape(list[current].key)} [data-choice]:not(:disabled)`);
+        const choice = choices[Number(event.key) - 1];
+        if (choice) {
+          event.preventDefault();
+          choice.click();
+        }
+      } else if (event.key === "Escape" && current !== null) {
+        setCursor(null);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // setCursor chỉ ghi ref + state - không cần gắn lại.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const { data, isLoading } = useQuery({
     queryKey: ["work", bookId],
     queryFn: () => api<WorkView>(`/api/books/${bookId}/work`),
@@ -673,6 +710,8 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, kind: ki
   // Quyết xong việc cuối của loại đang lọc thì loại ấy biến khỏi thanh lọc - về "Tất cả", đừng để danh sách trống không lời.
   const active = kind !== "all" && !counts[kind] ? "all" : kind;
   const items = open.filter((item) => active === "all" || item.kind === active);
+  keys.current.items = items.slice(0, shown);
+  const at = cursor === null ? null : Math.min(cursor, Math.max(items.slice(0, shown).length - 1, 0));
   return (
     <div className="mt-5">
       <p className="max-w-3xl text-sm text-fg-2">
@@ -703,9 +742,13 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, kind: ki
           ]}
         />
       </div>
-      <ol className={cn("mt-4 space-y-3")}>
-        {items.slice(0, shown).map((item) => (
-          <Card key={item.key} bookId={bookId} item={item} onOpenReview={onOpenReview} onOpenScript={onOpenScript} onOpenNames={onOpenNames} />
+      <p className="mt-2 hidden flex-wrap items-center gap-1.5 text-xs text-fg-3 md:flex">
+        Bàn phím: <Kbd>J</Kbd> <Kbd>K</Kbd> chọn thẻ · <Kbd>1</Kbd>–<Kbd>9</Kbd> bấm lựa chọn thứ N của thẻ (đếm từ trái sang) ·{" "}
+        <Kbd>Esc</Kbd> bỏ chọn
+      </p>
+      <ol className={cn("mt-3 space-y-3")}>
+        {items.slice(0, shown).map((item, index) => (
+          <Card key={item.key} bookId={bookId} item={item} active={index === at} onOpenReview={onOpenReview} onOpenScript={onOpenScript} onOpenNames={onOpenNames} />
         ))}
       </ol>
       {items.length > shown && (
