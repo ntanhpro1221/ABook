@@ -38,6 +38,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   đúng điều sẽ xảy ra. Chữ dễ hiểu hơn ở vài chỗ ("4 tỉ tham số", nguồn bìa nào chưa trả lời, "máy nghe khớp 15%").
 - **Việc cần duyệt** có phím tắt: **J / K** chọn thẻ, **1–9** bấm lựa chọn thứ N của thẻ ấy - duyệt cả trăm thẻ không cần
   chuột; quyết xong thì thẻ kế đứng vào đúng chỗ.
+- Lọc theo một loại thẻ thì có nút **Giữ như máy đang làm - cả N thẻ** (hỏi lại trước, hoàn tác được): soát vài thẻ thấy
+  máy đúng thì khỏi bấm "giữ" từng thẻ một.
 - **Cần nghe lại**: câu hỏng sau mọi lần thử (tượng thanh "Tách tách tách", "Coong…", chữ lạ) có nút **Sửa chữ đem đọc**
   ngay trên thẻ - viết lại cách đọc thành tiếng, lưu cho một câu hay cả các câu cùng chữ; chữ của sách giữ nguyên. Câu đã
   ghi chữ mới rời mục "Chưa xem" và hiện "Sẽ đọc là …" cho tới khi áp.

@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
-import { Button, EmptyState, Kbd, Segmented } from "@/shared/ui";
+import { Button, Dialog, EmptyState, Kbd, Segmented } from "@/shared/ui";
 import { api, suggestionOf, urls, type BookSummary } from "./api";
 import { ReadingProblem } from "./ReadingProblem";
 import { applyWhen, PENDING_NOTE, refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied } from "./decisions";
@@ -609,6 +609,78 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, active = 
   );
 }
 
+// "Giữ như máy đang làm" cho cả loại thẻ đang lọc (soát UX a6 01-10, D2): sau khi soát vài thẻ thấy máy đúng gần hết, người
+// làm sách bấm "giữ" từng thẻ một trong cả trăm thẻ. Một lần bấm (có hỏi lại) ghi đúng quyết định "giữ" mà từng thẻ ghi -
+// không câu nào phải thu lại, máy thôi hỏi - và hoàn tác được cả nhóm.
+const BULK_KINDS: WorkKind[] = ["pronunciation", "speaker", "turn", "vocative", "unnamed"];
+
+function BulkKeep({ bookId, kind, items }: { bookId: string; kind: WorkKind; items: WorkItem[] }) {
+  const client = useQueryClient();
+  const [confirm, setConfirm] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const pronunciation = kind === "pronunciation";
+  const keepable = items.filter((item) => (pronunciation ? Boolean(item.surface) : Boolean(item.lines?.length && item.currentValue)));
+  if (!BULK_KINDS.includes(kind) || keepable.length < 2) return null;
+  const run = async () => {
+    setBusy(true);
+    const decisions: Record<string, unknown>[] = [];
+    try {
+      for (const item of keepable) {
+        if (pronunciation) {
+          const { requestedAt } = await api<{ requestedAt: number }>(`/api/books/${bookId}/pronunciation`, {
+            method: "POST",
+            body: { surface: item.surface, spokenForm: item.current },
+          });
+          decisions.push({ surface: item.surface, requestedAt, previous: item.current, keep: true });
+        } else {
+          const { requestedAt } = await api<{ requestedAt: number }>(`/api/books/${bookId}/speaker`, {
+            method: "POST",
+            body: { lines: item.lines, speaker: item.currentValue },
+          });
+          decisions.push({ lines: item.lines, requestedAt, keep: true });
+        }
+      }
+      toast.success(`Đã giữ như máy đang làm cho ${decisions.length} thẻ`, {
+        description: "Không câu nào phải thu lại; máy sẽ không hỏi lại những thẻ này.",
+        action: undoAction(client, bookId, pronunciation ? "pronunciation" : "speaker", decisions, `${decisions.length} thẻ trở lại chờ duyệt.`),
+        duration: UNDO_MS,
+      });
+    } catch (error) {
+      toast.error(`Mới giữ được ${decisions.length}/${keepable.length} thẻ`, { description: (error as Error).message });
+    } finally {
+      setBusy(false);
+      setConfirm(false);
+      refreshAfterDecision(client, bookId);
+    }
+  };
+  return (
+    <>
+      <Button size="sm" variant="ghost" icon={Check} className="mt-3" onClick={() => setConfirm(true)}>
+        Giữ như máy đang làm - cả {keepable.length} thẻ “{KIND_LABEL[kind]}”…
+      </Button>
+      <Dialog
+        open={confirm}
+        onOpenChange={setConfirm}
+        title={`Giữ cả ${keepable.length} thẻ “${KIND_LABEL[kind]}”?`}
+        description={
+          pronunciation
+            ? "Mọi tên trong các thẻ này giữ đúng cách máy đang đọc. Không câu nào phải thu lại; máy thôi hỏi. Hoàn tác được ngay sau đó."
+            : "Mọi câu trong các thẻ này giữ đúng người máy đang gán. Không câu nào phải thu lại; máy thôi hỏi. Hoàn tác được ngay sau đó."
+        }
+      >
+        <div className="mt-5 flex justify-end gap-2">
+          <Button variant="ghost" onClick={() => setConfirm(false)}>
+            Thôi
+          </Button>
+          <Button variant="primary" icon={Check} loading={busy} onClick={() => void run()}>
+            Giữ cả {keepable.length} thẻ
+          </Button>
+        </div>
+      </Dialog>
+    </>
+  );
+}
+
 interface InboxProps {
   book: BookSummary;
   onOpenReview: OpenReview;
@@ -742,6 +814,7 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, kind: ki
           ]}
         />
       </div>
+      {active !== "all" && <BulkKeep bookId={bookId} kind={active} items={items} />}
       <p className="mt-2 hidden flex-wrap items-center gap-1.5 text-xs text-fg-3 md:flex">
         Bàn phím: <Kbd>J</Kbd> <Kbd>K</Kbd> chọn thẻ · <Kbd>1</Kbd>–<Kbd>9</Kbd> bấm lựa chọn thứ N của thẻ (đếm từ trái sang) ·{" "}
         <Kbd>Esc</Kbd> bỏ chọn
