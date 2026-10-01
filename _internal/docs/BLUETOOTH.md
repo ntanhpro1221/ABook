@@ -82,4 +82,5 @@ PAUSED -> PLAYING -> PAUSED (B lúc ấy nghe thẳng một cuốn của A - hai
 - Máy tính KẾT NỐI tới điện thoại qua Bluetooth (máy tính dùng thư viện điện thoại): cần tra SDP trên Windows
   (WSALookupServiceBegin qua ctypes) để biết kênh RFCOMM của điện thoại.
 - Thử máy tính <-> điện thoại trên sóng thật (Bluetooth máy tính đang tắt đêm 28-09).
-- Tự chọn đường: Wi-Fi khi được, Bluetooth khi không (hiện chọn khi ghép).
+- ~~Tự chọn đường~~ XONG (4d74b592, `Route.kt`): điện thoại giữ cả địa chỉ Wi-Fi lẫn Bluetooth của máy tính, dò đường Wi-Fi rồi lùi về Bluetooth khi hỏng, máy tính báo lại các đường của nó mỗi lần liệt kê thư viện.
+- Cả hai việc trên cần Bluetooth máy tính BẬT (cài đặt của chủ sách) và một điện thoại thật - chưa làm mù.
