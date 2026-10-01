@@ -1,0 +1,11 @@
+{
+ "format": "abook-remote-config",
+ "version": 1,
+ "issued": "2026-10-01T17:26:05Z",
+ "music": {
+  "catalogs": [
+   "https://abook-music.ngdtuanh.workers.dev/"
+  ],
+  "openverse": "https://api.openverse.org/v1/"
+ }
+}
