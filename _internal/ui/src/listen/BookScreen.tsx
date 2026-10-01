@@ -1,6 +1,6 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, History, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, SlidersHorizontal, Trash2, UserRound } from "lucide-react";
+import { ArrowLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, GitMerge, History, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, SlidersHorizontal, Trash2, UserRound } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
@@ -169,7 +169,7 @@ export function hueOf(text: string): number {
 }
 
 /** Tên hiển thị không lộ dữ liệu thô: gạch dưới thành dấu cách. */
-function cleanName(name: string): string {
+export function cleanName(name: string): string {
   return name.replace(/_/g, " ").replace(/\s+/g, " ").trim();
 }
 
@@ -177,12 +177,15 @@ export function PersonRow({
   bookId,
   person,
   onPickVoice,
+  onMerge,
 }: {
   bookId: string;
   person: CastMember;
   top?: number;
   /** Chỉ Studio: mở màn "Đổi giọng" cho nhân vật (giọng ấy có từ bước phân vai). */
   onPickVoice?: (person: CastMember) => void;
+  /** Chỉ Studio: "Gộp vào…" - máy tách một người thành hai tên. */
+  onMerge?: (person: CastMember) => void;
 }) {
   const source = useSource();
   const name = cleanName(person.displayName);
@@ -232,6 +235,9 @@ export function PersonRow({
         {onPickVoice && person.voice ? (
           <IconButton label={`Đổi giọng ${name}`} icon={SlidersHorizontal} size="sm" onClick={() => onPickVoice(person)} />
         ) : null}
+        {onMerge && person.lines > 0 ? (
+          <IconButton label={`Gộp ${name} vào người khác`} icon={GitMerge} size="sm" onClick={() => onMerge(person)} />
+        ) : null}
       </div>
     </div>
   );
@@ -255,9 +261,10 @@ function reachedTitles(chapters: ListenChapter[], until: number | undefined): Se
 
 /** `reached`: tên các chương tới chỗ đang nghe (trang nghe) - người chỉ xuất hiện SAU đó bị ẩn tới khi bấm hiện, để dàn nhân
  *  vật không lộ nội dung ("Douglas · từ Chương 738" khi đang nghe Chương 725 - soát UX 29-09). Studio không truyền: hiện hết. */
-export function CastList({ bookId, onPickVoice, reached }: {
+export function CastList({ bookId, onPickVoice, onMerge, reached }: {
   bookId: string;
   onPickVoice?: (person: CastMember) => void;
+  onMerge?: (person: CastMember) => void;
   reached?: Set<string>;
 }) {
   const source = useSource();
@@ -291,7 +298,7 @@ export function CastList({ bookId, onPickVoice, reached }: {
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {cast.characters
           .filter((person) => later || !reached || !person.firstChapter || reached.has(person.firstChapter))
-          .map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} />)}
+          .map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} onMerge={onMerge} />)}
       </div>
       {reached && ahead(cast.characters, reached) > 0 && (
         <button type="button" onClick={() => setLater((value) => !value)} className="mt-3 text-sm font-medium text-fg-2 hover:text-fg">
@@ -303,7 +310,7 @@ export function CastList({ bookId, onPickVoice, reached }: {
           <button type="button" onClick={() => setExtras((value) => !value)} className="text-sm font-medium text-fg-2 hover:text-fg">
             {extras ? "Ẩn" : "Hiện"} {cast.extras.length} vai phụ chỉ xuất hiện trong một cảnh
           </button>
-          {extras && <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{cast.extras.map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} />)}</div>}
+          {extras && <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{cast.extras.map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} onMerge={onMerge} />)}</div>}
         </div>
       )}
     </div>

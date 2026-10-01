@@ -72,7 +72,9 @@ import { ScriptTab } from "./ScriptTab";
 import { NameReadings } from "./NameReadings";
 import { VoicePicker } from "./VoicePicker";
 import { usePlayer } from "@/listen/player";
-import { useSource } from "@/listen/source";
+import { useCast, useSource } from "@/listen/source";
+import type { CastMember } from "@/listen/model";
+import { MergeDialog } from "@/studio/MergePeople";
 
 /** Phát một chương ngay trong Studio (nghe kiểm tra) bằng chính trình phát của phía Nghe - ở chế độ "nghe kiểm":
  *  không ghi đè chỗ đang nghe dở, tốc độ hay nhật ký đêm của người nghe. */
@@ -845,6 +847,8 @@ export function ProjectScreen() {
   const workCount = useWorkCount(id ?? "");
   const { data, isLoading, error } = useBook(id);
   const [picking, setPicking] = useState<{ name: string; displayName: string } | null>(null);
+  const [merging, setMerging] = useState<CastMember | null>(null);
+  const { data: cast } = useCast(id);
   usePageTitle(data ? `${data.book.title} · Studio` : undefined);
   const location = useLocation();
   // Đổi tab tại chỗ thay địa chỉ (không chất lịch sử), nhưng NHẢY từ một thẻ/câu sang tab khác là một bước điều hướng:
@@ -998,7 +1002,17 @@ export function ProjectScreen() {
           />
         </TabsContent>
         <TabsContent value="cast">
-          <CastList bookId={book.id} onPickVoice={(person) => setPicking({ name: person.name, displayName: person.displayName })} />
+          <CastList
+            bookId={book.id}
+            onPickVoice={(person) => setPicking({ name: person.name, displayName: person.displayName })}
+            onMerge={setMerging}
+          />
+          <MergeDialog
+            bookId={book.id}
+            person={merging}
+            people={[...(cast?.characters ?? []), ...(cast?.extras ?? [])]}
+            onClose={() => setMerging(null)}
+          />
           <VoicePicker bookId={book.id} person={picking} onClose={() => setPicking(null)} />
           <NameReadings bookId={book.id} focus={params.get("focus") === "names"} name={params.get("name") ?? ""} />
         </TabsContent>

@@ -80,6 +80,16 @@ def add(project_root: Path, alias: str, person: str, *, now: float | None = None
     return True
 
 
+def remove_added_at(project_root: Path, at: float) -> bool:
+    """Bỏ bí danh ghi đúng lúc `at` (hoàn tác "Gộp vào…" trong hộp "Áp dụng"). Trả về True khi file đổi."""
+    entries = _entries(project_root)
+    kept = [entry for entry in entries if abs(float(entry.get("at") or 0) - float(at)) >= 1e-6]
+    if len(kept) == len(entries):
+        return False
+    _write(project_root, kept)
+    return True
+
+
 def carry(source_root: Path, target_root: Path) -> int:
     """Chép mọi bí danh của phần trước sang phần sau (giữ cái phần sau đã có). Trả về số bí danh thêm."""
     added = 0
