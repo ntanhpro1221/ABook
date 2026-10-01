@@ -110,7 +110,7 @@ def test_one_click_startup_contract() -> None:
     assert "$Shortcut.TargetPath = $Launcher" in shortcut
     assert '$Shortcut.Arguments = ""' in shortcut
     assert "wscript.exe" not in shortcut.lower()
-    assert '"_internal\\ebook_reader\\assets\\abook.ico"' in shortcut
+    assert '"_internal\\ebook_reader\\assets\\app.ico"' in shortcut
     assert "$Shortcut.IconLocation = $IconLocation" in shortcut
     # Thẻ media ở Windows+A tra tên và biểu tượng app qua mã này trên shortcut Start Menu: phải trùng mã cửa sổ tự đặt.
     assert f'$AppUserModelId = "{APP_USER_MODEL_ID}"' in shortcut
