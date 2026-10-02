@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.18] - 2026-10-02
+
 ### Studio
 
 - **Chia thành nhiều phần**: truyện nhiều tập (mỗi tập một thư mục hay một file EPUB, hay chương có dòng "Tập 2", "Volume 2"...)
