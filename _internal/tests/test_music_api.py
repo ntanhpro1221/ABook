@@ -6,10 +6,20 @@ import json
 from pathlib import Path
 from urllib.parse import quote
 
+import pytest
+
 from abook.webui import music_catalog
 from abook.webui.library import book_id
 from tests.test_a_project_can_be_renamed_or_deleted import _call, studio  # noqa: F401 - fixture dùng chung
 from tests.test_music_catalog_and_select import _catalog_dir
+
+
+@pytest.fixture(autouse=True)
+def _no_background_warming(monkeypatch):
+    """Luồng tải sẵn chạm mạng thật và dựng lại plan giữa chừng: test gọi `_warm_run` trực tiếp khi cần."""
+    from abook.webui.server import App
+
+    monkeypatch.setattr(App, "_warm_music", lambda self, plan, value=None: None)
 
 
 def _with_catalog(app, tmp_path: Path) -> None:
@@ -333,3 +343,197 @@ def test_a_mirror_without_the_originals_sha1_is_never_used(studio, tmp_path: Pat
     with pytest.raises(Exception):
         app.music_track_file("https://x/gone.mp3")
     assert calls == ["https://x/gone.mp3"]
+
+
+CALM, CALM2 = "https://x/calm.mp3", "https://x/calm2.mp3"
+
+
+def _forced_plan(paths, link: str, count: int = 3) -> dict:
+    """Ép plan về `count` đoạn êm cùng dùng `link` (hai bài "calm" của danh mục thử cùng hợp)."""
+    plan_file = paths.root / "music_plan.json"
+    plan = json.loads(plan_file.read_text(encoding="utf-8"))
+    base = plan["scenes"][0]
+    plan["scenes"] = [dict(base, firstSegment=100 + i, lastSegment=100 + i, start=i * 20.0, end=i * 20.0 + 20.0,
+                           key=f"{base['chapterId']}:{100 + i}", link=link, pinned=False, valence=0.3, arousal=-0.6,
+                           confidence=0.9, tension=0.0) for i in range(count)]
+    plan_file.write_bytes(json.dumps(plan).encode("utf-8"))
+    return plan
+
+
+def _cache(app, link: str) -> Path:
+    cached = app.music_dir / "files" / (hashlib.sha1(link.encode("utf-8")).hexdigest() + ".mp3")
+    cached.parent.mkdir(parents=True, exist_ok=True)
+    cached.write_bytes(b"ID3" + b"\0" * 100)
+    return cached
+
+
+def test_a_network_failure_puts_the_machine_offline_but_an_http_error_marks_the_track(studio, tmp_path: Path,  # noqa: F811
+                                                                                   monkeypatch) -> None:
+    import io
+    import socket
+    import urllib.error
+    import urllib.request
+
+    from abook.webui.server import ApiError, App
+
+    _paths, app, _server, _runner = studio
+    _with_catalog(app, tmp_path)
+    clock = {"now": 1_000_000.0}
+    app._music_clock = lambda: clock["now"]
+    registry = app.music_dir / "unavailable.json"
+
+    def no_network(request, timeout=0):
+        raise urllib.error.URLError(socket.gaierror(11001, "getaddrinfo failed"))
+
+    monkeypatch.setattr(urllib.request, "urlopen", no_network)
+    with pytest.raises(ApiError):
+        app.music_track_file(CALM)
+    assert not registry.exists(), "mất mạng không phải lỗi của bài"
+    assert app.music_track_available(CALM) is False and app.music_track_available(CALM2) is False
+    clock["now"] += 301
+    assert app.music_track_available(CALM) is True, "hết 5 phút thì thử lại"
+
+    def gone(request, timeout=0):
+        raise urllib.error.HTTPError(request.full_url, 404, "gone", {}, None)
+
+    monkeypatch.setattr(urllib.request, "urlopen", gone)
+    with pytest.raises(ApiError):
+        app.music_track_file(CALM)
+    assert json.loads(registry.read_text(encoding="utf-8")) == {CALM: clock["now"]}
+    assert app.music_track_available(CALM) is False and app.music_track_available(CALM2) is True
+    assert app._music_offline_until < clock["now"], "lỗi HTTP không làm cả máy offline"
+    marked_at = clock["now"]
+    clock["now"] += 24 * 3600 - 1
+    assert app.music_track_available(CALM) is False
+    clock["now"] += 2
+    assert app.music_track_available(CALM) is True, "dấu hỏng hết hạn sau 24 giờ"
+    assert App._read_unavailable(app) == {CALM: marked_at}, "sổ nằm trong file: mở lại app vẫn còn"
+
+    # Tải thành công thì xoá dấu.
+    monkeypatch.setattr(urllib.request, "urlopen", lambda request, timeout=0: io.BytesIO(b"ID3" + b"\0" * 100))
+    app.music_track_file(CALM)
+    assert json.loads(registry.read_text(encoding="utf-8")) == {}
+
+
+def test_a_mirror_that_differs_from_the_original_is_not_a_network_failure(studio, tmp_path: Path, monkeypatch) -> None:  # noqa: F811
+    import io
+    import socket
+    import urllib.error
+    import urllib.request
+
+    from abook.webui.server import ApiError
+
+    _paths, app, _server, _runner = studio
+    _with_catalog(app, tmp_path)
+    info = {"mirrors": ["https://archive.org/download/abook-music-x/a.mp3"], "sha1": hashlib.sha1(b"ID3good").hexdigest()}
+    monkeypatch.setattr(app.music_catalog(), "lookup", lambda links: {link: info for link in links})
+
+    def open_(request, timeout=0):
+        if request.full_url.startswith("https://x/"):
+            raise urllib.error.URLError(socket.timeout("timed out"))
+        return io.BytesIO(b"ID3bad")
+
+    monkeypatch.setattr(urllib.request, "urlopen", open_)
+    with pytest.raises(ApiError):
+        app.music_track_file(CALM)
+    assert CALM in json.loads((app.music_dir / "unavailable.json").read_text(encoding="utf-8"))
+    assert app._music_offline_until == 0.0
+
+
+def test_a_cached_track_is_available_even_when_the_machine_is_offline(studio, tmp_path: Path) -> None:  # noqa: F811
+    _paths, app, _server, _runner = studio
+    app._music_offline_until = app._music_clock() + 300
+    app._music_mark(CALM, True)
+    assert app.music_track_available(CALM) is False and app.music_track_available(CALM2) is False
+    _cache(app, CALM)
+    assert app.music_track_available(CALM) is True, "đã có trong bộ đệm thì không phụ thuộc mạng"
+
+
+def test_the_player_gets_the_next_best_track_when_the_chosen_one_is_unavailable_and_silence_only_without_one(  # noqa: F811
+        studio, tmp_path: Path) -> None:
+    paths, app, server, _runner = studio
+    _with_catalog(app, tmp_path)
+    book = book_id(paths.root)
+    _call(server, "GET", f"/api/books/{book}/music")
+    plan = _forced_plan(paths, CALM)
+    url = f"/api/books/{book}/music/chapters/{plan['scenes'][0]['chapterId']}"
+    _status, cues = _call(server, "GET", url)
+    assert [cue["link"] for cue in cues["cues"]] == [CALM]
+    app._music_mark(CALM, True)
+    status, cues = _call(server, "GET", url)
+    assert status == 200 and [cue["link"] for cue in cues["cues"]] == [CALM2]
+    assert cues["cues"][0]["src"] == "/api/music/track?link=" + quote(CALM2, safe="") and "gainDb" in cues["cues"][0]
+    assert json.loads((paths.root / "music_plan.json").read_text(encoding="utf-8"))["scenes"][0]["link"] == CALM
+    app._music_mark(CALM2, True)
+    _status, cues = _call(server, "GET", url)
+    assert cues["cues"] == []
+
+
+def test_offline_the_player_only_gets_tracks_already_in_the_cache(studio, tmp_path: Path) -> None:  # noqa: F811
+    paths, app, server, _runner = studio
+    _with_catalog(app, tmp_path)
+    book = book_id(paths.root)
+    _call(server, "GET", f"/api/books/{book}/music")
+    plan = _forced_plan(paths, CALM)
+    app._music_offline_until = app._music_clock() + 300
+    url = f"/api/books/{book}/music/chapters/{plan['scenes'][0]['chapterId']}"
+    assert _call(server, "GET", url)[1]["cues"] == []
+    _cache(app, CALM2)
+    assert [cue["link"] for cue in _call(server, "GET", url)[1]["cues"]] == [CALM2]
+
+
+def test_warming_rebuilds_the_plan_around_a_track_that_cannot_be_fetched(studio, tmp_path: Path, monkeypatch) -> None:  # noqa: F811
+    import io
+    import urllib.error
+    import urllib.request
+
+    from abook.webui import music_plan
+
+    paths, app, server, _runner = studio
+    _with_catalog(app, tmp_path)
+    book = book_id(paths.root)
+    _call(server, "GET", f"/api/books/{book}/music")
+    _forced_plan(paths, CALM, count=3)
+    calls = []
+
+    def open_(request, timeout=0):
+        calls.append(request.full_url)
+        if request.full_url == CALM:
+            raise urllib.error.HTTPError(request.full_url, 404, "gone", {}, None)
+        return io.BytesIO(b"ID3" + b"\0" * 100)
+
+    monkeypatch.setattr(urllib.request, "urlopen", open_)
+    app._warm_run(music_plan.read_plan(paths.root), book)
+    rebuilt = music_plan.read_plan(paths.root)
+    assert [scene["link"] for scene in rebuilt["scenes"]] == [CALM2] * 3 and list(rebuilt["tracks"]) == [CALM2]
+    assert calls == [CALM, CALM2] and app.music_track_cached(CALM2) is not None
+
+
+def test_warming_offline_keeps_only_cached_tracks_and_stops(studio, tmp_path: Path, monkeypatch) -> None:  # noqa: F811
+    import socket
+    import urllib.error
+    import urllib.request
+
+    from abook.webui import music_plan
+
+    paths, app, server, _runner = studio
+    _with_catalog(app, tmp_path)
+    book = book_id(paths.root)
+    _call(server, "GET", f"/api/books/{book}/music")
+    _forced_plan(paths, CALM, count=2)
+    calls = []
+
+    def no_network(request, timeout=0):
+        calls.append(request.full_url)
+        raise urllib.error.URLError(socket.gaierror(11001, "getaddrinfo failed"))
+
+    monkeypatch.setattr(urllib.request, "urlopen", no_network)
+    app._warm_run(music_plan.read_plan(paths.root), book)
+    assert [scene["link"] for scene in music_plan.read_plan(paths.root)["scenes"]] == [None, None]
+    assert calls == [CALM], "hỏng vì mạng một lần là đủ biết offline, không chờ từng bài"
+    assert not (app.music_dir / "unavailable.json").exists()
+    # Một bài đã có trong bộ đệm thì dùng được: lần dựng sau (vẫn offline) chọn nó thay vì im lặng.
+    _cache(app, CALM2)
+    _forced_plan(paths, CALM, count=2)
+    app._warm_run(music_plan.read_plan(paths.root), book)
+    assert [scene["link"] for scene in music_plan.read_plan(paths.root)["scenes"]] == [CALM2, CALM2]

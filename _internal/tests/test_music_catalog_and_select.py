@@ -230,3 +230,36 @@ def test_a_track_with_old_shape_gems_still_ranks_without_a_gems_term() -> None:
     ranked = rank(scene, lambda v, a: tracks, book_key="b")
     assert {t["link"] for t in ranked} == {"https://x/a.mp3", "https://x/b.mp3"}
     assert abs(ranked[0]["score"] - ranked[1]["score"]) < 0.01, "cả hai đều không có số hạng GEMS"
+
+
+def test_a_track_this_machine_cannot_get_is_skipped_and_the_next_best_is_used(near) -> None:
+    from abook.webui.music_select import rank
+
+    scene = _scene(1, 0.3, -0.6)
+    down = lambda link: link != "https://x/calm.mp3"  # noqa: E731
+    assert rank(scene, near, book_key="b")[0]["link"] == "https://x/calm.mp3"
+    ranked = rank(scene, near, book_key="b", available=down)
+    assert ranked and "https://x/calm.mp3" not in [t["link"] for t in ranked]
+    [entry] = choose([scene], near, book_key="b", available=down)
+    assert entry["link"] == ranked[0]["link"] == "https://x/calm2.mp3"
+    [nothing] = choose([scene], near, book_key="b", available=lambda link: False)
+    assert nothing["link"] is None, "không bài nào lấy được thì mới im lặng"
+
+
+def test_a_pinned_track_that_is_unavailable_falls_back_to_ranking_but_the_pin_stays_the_users(near) -> None:
+    scene = _scene(1, 0.3, -0.6)
+    pins = {scene_key(scene): "https://x/sad.mp3"}
+    [entry] = choose([scene], near, book_key="b", pins=pins, available=lambda link: link != "https://x/sad.mp3")
+    assert entry["link"] in ("https://x/calm.mp3", "https://x/calm2.mp3")
+    assert entry["pinUnavailable"] is True and entry["pinned"] is False and pins == {scene_key(scene): "https://x/sad.mp3"}
+    [back] = choose([scene], near, book_key="b", pins=pins, available=lambda link: True)
+    assert back["link"] == "https://x/sad.mp3" and back["pinned"] is True and "pinUnavailable" not in back
+
+
+def test_a_kept_track_that_is_unavailable_is_chosen_again_and_an_available_one_stays(near) -> None:
+    scene = _scene(1, 0.3, -0.6)
+    keep = {scene_key(scene): "https://x/calm.mp3"}
+    [stays] = choose([scene], near, book_key="b", keep=keep, available=lambda link: True)
+    assert stays["link"] == "https://x/calm.mp3"
+    [moved] = choose([scene], near, book_key="b", keep=keep, available=lambda link: link != "https://x/calm.mp3")
+    assert moved["link"] == "https://x/calm2.mp3"
