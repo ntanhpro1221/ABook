@@ -68,6 +68,8 @@ def main() -> int:
     parser.add_argument("--offload-embedding", action="store_true",
                         help="nạp bằng FastModel và đẩy bảng embedding sang RAM (~1,2 GB với Qwen3-8B) - nhánh tối ưu "
                              "FastLanguageModel của Qwen3 lặng lẽ bỏ qua tuỳ chọn này")
+    parser.add_argument("--seed", type=int, default=3407,
+                        help="hạt giống khởi tạo LoRA + huấn luyện; thứ tự trộn mẫu giữ 3407 (data_seed) như lượt v8m-s1/s2")
     args = parser.parse_args()
     loader = FastLanguageModel
     if args.offload_embedding:
@@ -113,7 +115,7 @@ def main() -> int:
 
     model = loader.get_peft_model(
         model, r=args.r, lora_alpha=args.alpha, lora_dropout=0, target_modules=TARGETS, bias="none",
-        use_gradient_checkpointing="unsloth", random_state=3407,
+        use_gradient_checkpointing="unsloth", random_state=args.seed,
     )
     steps = max(1, int(len(texts) * args.epochs / args.accum))
     config = SFTConfig(
@@ -123,7 +125,7 @@ def main() -> int:
         num_train_epochs=args.epochs, max_steps=args.smoke_steps if args.smoke else -1, optim="adamw_8bit",
         # T4 (Kaggle/Colab miễn phí) không có bf16: tự rơi về fp16, như sổ tay của Unsloth.
         bf16=torch.cuda.is_bf16_supported(), fp16=not torch.cuda.is_bf16_supported(),
-        logging_steps=1 if args.smoke else 5, save_steps=args.save_steps, save_total_limit=3, report_to="none", seed=3407,
+        logging_steps=1 if args.smoke else 5, save_steps=args.save_steps, save_total_limit=3, report_to="none", seed=args.seed, data_seed=3407,
     )
     trainer = SFTTrainer(model=model, processing_class=tokenizer, train_dataset=Dataset.from_dict({"text": texts}),
                          args=config)
