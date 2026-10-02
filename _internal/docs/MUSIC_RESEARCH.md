@@ -689,6 +689,22 @@ Mục 3 - nền êm chấm lại bằng mô tả không CLAP (`DESC=noclap score
   - Qwen3-Omni (nếu chạy) cũng vậy.
   - Omni-7B tiếng Anh có thể làm thước nghe thứ ba bên cạnh R_mới; mở rộng ra mọi đoạn cần ~600 lượt GPU nữa (~40 phút).
 
+**GHI TRƯỚC - THƯỚC NGHE TIẾNG ANH (03-10 04:xx, Lead; trước mọi số của phần mở rộng):**
+- **Luật chung:** từ nay mọi người chấm nghe nhận đoạn truyện qua tóm tắt tiếng Anh. Tóm tắt cố định, agent Claude viết một lần,
+  chỉ thấy đoạn truyện, lưu ở `e1/en_summaries.json`.
+- **(i) Omni-7B-EN mở rộng ra cả 100 đoạn E1:**
+  - 50 tóm tắt còn lại (vị trí lẻ) viết cùng prompt; chấm từng clip a / b như trước.
+  - DÙNG ĐƯỢC nếu trên cả 300 lượt không lặp: ổn định a/b ≥ 0,75 VÀ kappa với R_mới ≥ 0,20.
+  - Báo kèm kappa với R_cũ.
+  - Dùng được thì gọi là **L_min**, thước nghe TỐI THIỂU (vừa chạm luật). Mọi kết luận về nhạc báo theo R_mới và L_min.
+  - Khi hai thước nghịch nhau thì ghi "bất đồng", không chọn bên.
+- **(ii) Qwen3-Omni-30B-A3B-EN trên Kaggle 2×T4:**
+  - Model xếp vào ngân sách 30 giờ sau bộ Hàn.
+  - Cùng giao thức: 30 giây đầu clip, tóm tắt tiếng Anh, prompt rate a / b, điểm = kỳ vọng xác suất 7 chữ số, nạp 4-bit.
+  - Cùng luật dùng được.
+  - Dùng được thì thay L_min làm thước nghe chính. Nếu cả hai dùng được: phán quyết nghe chung = lượt hai model cùng ý.
+
+
 **GHI TRƯỚC - NỚI NGƯỠNG NỀN ÊM (02-10 23:xx, Lead duyệt; từ E1: calm đứng thứ hai, hơn app):**
 - **Giả thuyết:** kéo về nền êm (CALM_TARGET) cho nhiều đoạn hơn làm nhạc hợp hơn. Hiện chỉ kéo khi confidence < WEAK_MOOD
   0,2, và kéo tuyến tính.
