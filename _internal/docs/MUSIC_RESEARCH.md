@@ -377,6 +377,20 @@ Corpus research/music/scene_set4):**
   học). Việc kế có lợi nhất: đoán không khí đoạn tốt hơn (vd LLM đọc cả đoạn, không cộng nhãn câu) - đo trên chính bộ 4 này
   với đáp án đã có, bằng thí nghiệm ghi trước riêng.
 
+**GHI TRƯỚC - "LLM ĐỌC CẢ ĐOẠN ĐOÁN KHÔNG KHÍ" (02-10 16:4x, Lead duyệt; trước mọi lần chạy model):** khác `moodvt` cũ
+(nhãn khối 30 giây rồi cộng): mỗi ĐOẠN gửi nguyên văn cho LLM, LLM chấm MỘT bộ V/E/T cho cả đoạn theo đúng thang của người
+chấm. Script `segment_mood_llm.py` (Corpus research/music, 24edc4a; prompt nằm trong script, không sửa sau khi chạy).
+Model `qwen3.5:9b` gốc (chạy được trên card 8 GB; không dùng LoRA 9B-v8 vì nó ĐẢO thang T khi gắn nhãn cảnh - mục trên),
+think=false, temperature 0, ra JSON. Dữ liệu: đáp án bộ 4 (10 chương, đã có). Đoạn LLM trả hỏng định dạng giữ nhãn câu và
+báo số lượng.
+- CHÍNH: cách chia của app, không khí từ LLM (`app+llm`) so không khí từ nhãn câu (`app`). LLM THẮNG nếu r trung bình V/E/T
+  hơn ít nhất 0,05 VÀ hơn ở >= 7/10 chương, VÀ vẫn đúng như vậy khi bỏ HDST 090 (hơn >= 0,05, >= 7/9) - đòi cả hai vì bộ 4
+  cho thấy một chương đã học đủ lật kết luận (nhãn câu lấy từ 9B-v8, đã học HDST 090).
+- Chỉ ghi lại, không dùng để quyết: `oracle+llm` so `oracle` (ranh giới đáp án - tách lỗi đoán không khí), và `+llmVT`
+  (V, T từ LLM, E từ nhãn câu - lần trước LLM kém ở E).
+- Thắng thì việc kế là quyết định sản phẩm (model gốc thêm ~6 GB cho người dùng, hay đưa bài toán vào dữ liệu huấn luyện);
+  thua thì ghi lại và giữ nhãn câu.
+
 ## Thứ tự và tài nguyên
 
 0. Dữ liệu (đang chạy): Incompetech 1.443 bài (đọc 3 đoạn từ máy chủ), Jamendo CC BY 665 bài; tải Film soundtracks,
