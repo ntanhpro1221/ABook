@@ -934,14 +934,24 @@ def adopt(folder: Path, incoming: dict[str, Any], cover: bytes | None,
 
 INCOMING_FILE = "edits_incoming.json"
 INCOMING_COVER = "edits_incoming_cover.jpg"
+INCOMING_MUSIC = "edits_incoming_music"  # bài nhạc người nghe ghim (<sha1>.<đuôi>) lấy từ file, chờ nhập vào kho của máy
 PART_SPAN = 100_000  # bookfile.PART_SPAN (bookfile nhập module này, nên không nhập ngược ở đây)
 
 
-def stash_incoming(project: Path, edits: dict[str, Any], cover: bytes | None) -> None:
+def stash_incoming(project: Path, edits: dict[str, Any], cover: bytes | None,
+                   member: Callable[[str, Path], None] | None = None) -> None:
     """File `.abook` mang lớp sửa vừa mở ra đúng dự án của máy này (nhận ra bằng audio): cất phần sửa cạnh dự án để người
-    dùng quyết ("N thay đổi - áp vào dự án?") - không bao giờ tự áp."""
+    dùng quyết ("N thay đổi - áp vào dự án?") - không bao giờ tự áp. `member(tên, đích)`: chép một mục của file ra đĩa - cho
+    các bài nhạc người nghe đã ghim (cất ở edits_incoming_music/, `fold` nhập chúng vào kho nhạc của máy)."""
     project = Path(project)
     with _LOCK:
+        shutil.rmtree(project / INCOMING_MUSIC, ignore_errors=True)
+        if member is not None:
+            for name in pinned_files(edits):
+                try:
+                    member(name, project / INCOMING_MUSIC / name.rpartition("/")[2])
+                except (KeyError, OSError):
+                    pass  # thiếu trong file: `fold` bỏ qua ghim ấy và nói lý do
         atomic_write_bytes(project / INCOMING_FILE, dump(edits))
         if cover is not None:
             atomic_write_bytes(project / INCOMING_COVER, cover)
@@ -960,15 +970,30 @@ def incoming(project: Path) -> dict[str, Any]:
 def dismiss_incoming(project: Path) -> None:
     for name in (INCOMING_FILE, INCOMING_COVER):
         (Path(project) / name).unlink(missing_ok=True)
+    shutil.rmtree(Path(project) / INCOMING_MUSIC, ignore_errors=True)
 
 
-def fold(project: Path) -> dict[str, Any]:
+def _cue_scenes(plan: dict[str, Any] | None, chapter: int | None, millis: str) -> list[str]:
+    """Khoá các đoạn (scene) của rãnh nhạc nằm trong mốc nhạc `<chương>:<mili giây đầu>` - chỗ "im lặng" và "ghim" của dự án
+    được ghi (overrides theo đoạn, không theo mốc). Không có mốc ấy: rỗng."""
+    if plan is None or chapter is None:
+        return []
+    cue = next((cue for cue in music_plan.chapter_cues(plan, chapter) if int(round(cue["start"] * 1000)) == int(millis)), None)
+    return [scene["key"] for scene in plan.get("scenes") or []
+            if cue is not None and scene.get("chapterId") == chapter and scene.get("link") == cue["link"]
+            and float(scene["start"]) >= cue["start"] - 0.001 and float(scene["end"]) <= cue["end"] + 0.001]
+
+
+def fold(project: Path, my_music: Any = None) -> dict[str, Any]:
     """Áp phần sửa đang chờ (`incoming`) vào dự án bằng ĐÚNG những hàm Studio dùng: tên sách (store.set_display_title), bìa
     (covers), tên nhân vật (names.set_name), tên chương (store.set_chapter_title), nhạc nền (music_plan.write_overrides).
     Thay đổi nào không còn chỗ (nhân vật / chương không có trong dự án, nhạc chưa dựng) thì bỏ qua và đếm. Ý muốn chờ Studio
     (`wishes`) thành yêu cầu của dự án qua `book_wishes.fold`, không áp. Xong thì xoá phần chờ. Trả {"applied", "skipped",
-    "music": có đổi lựa chọn nhạc không (người gọi dựng lại rãnh nhạc), "requests": số ý muốn đã thành yêu cầu}."""
+    "music": có đổi lựa chọn nhạc không (người gọi dựng lại rãnh nhạc), "requests": số ý muốn đã thành yêu cầu, "reasons":
+    lý do từng bài ghim bị bỏ qua (chỉ có khi có)}. Bài nhạc người nghe ghim (`music.pins`) được nhập vào kho "Nhạc của tôi"
+    của máy này (`my_music`: music_local.LocalMusic) rồi ghim vào đoạn tương ứng; thiếu file / không có kho / file hỏng thì bỏ qua."""
     from .. import continuation
+    from .music_local import MusicImportError
 
     project = Path(project)
     edits = incoming(project)
@@ -1014,17 +1039,40 @@ def fold(project: Path) -> dict[str, Any]:
         music_changes["enabled"] = music["enabled"]
     if "levelDb" in music:
         music_changes["levelDb"] = music["levelDb"]
-    skipped += len(music.get("pins") or {})  # bài của người nghe chỉ có trong kho nhạc của máy họ: không áp được vào dự án
     silence: dict[str, bool] = {}
+    pins: dict[str, str] = {}
+    reasons: list[str] = []
     plan = music_plan.read_plan(project)
+    for key, link in (music.get("pins") or {}).items():
+        chapter, _, millis = key.partition(":")
+        scenes = _cue_scenes(plan, local(chapter), millis)
+        sha = music_plan.local_hash(link)
+        source = project / INCOMING_MUSIC / f"{sha}.{music['tracks'][sha]['ext']}"
+        if not scenes:
+            reason = "mốc nhạc này không còn trong dự án"
+        elif my_music is None:
+            reason = "máy này chưa có kho nhạc"
+        elif not source.is_file():
+            reason = "file nhạc không có trong sách"
+        else:
+            reason = ""
+            info = music["tracks"][sha]
+            try:
+                mine, _ = my_music.import_file(source, {"title": info.get("title", ""), "artist": info.get("creator", "")})
+                reason = "" if mine["link"] == link else "file nhạc không đúng bài đã ghim"
+            except MusicImportError as exc:
+                reason = str(exc)
+        if reason:
+            skipped += 1
+            reasons.append(f"{key}: {reason}")
+            continue
+        pins.update({scene: link for scene in scenes})
+        applied += 1
+    if pins:
+        music_changes["pins"] = pins
     for key in music.get("silenced") or []:
         chapter, _, millis = key.partition(":")
-        target = local(chapter)
-        cue = next((cue for cue in music_plan.chapter_cues(plan, target) if int(round(cue["start"] * 1000)) == int(millis)),
-                   None) if plan is not None and target is not None else None
-        scenes = [scene["key"] for scene in (plan or {}).get("scenes") or []
-                  if cue is not None and scene.get("chapterId") == target and scene.get("link") == cue["link"]
-                  and float(scene["start"]) >= cue["start"] - 0.001 and float(scene["end"]) <= cue["end"] + 0.001]
+        scenes = _cue_scenes(plan, local(chapter), millis)
         if not scenes:
             skipped += 1
             continue
@@ -1044,4 +1092,5 @@ def fold(project: Path) -> dict[str, Any]:
         folded = book_wishes.fold(project, edits["wishes"], now=time.time())
         requests, skipped = folded["requests"], skipped + folded["skipped"]
     dismiss_incoming(project)
-    return {"applied": applied, "skipped": skipped, "music": bool(music_changes), "requests": requests}
+    return {"applied": applied, "skipped": skipped, "music": bool(music_changes), "requests": requests,
+            **({"reasons": reasons} if reasons else {})}

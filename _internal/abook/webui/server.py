@@ -2122,7 +2122,7 @@ class Handler(BaseHTTPRequestHandler):
         path = self.app._editable(value)
         if not store.is_project(path):
             raise ApiError(HTTPStatus.CONFLICT, "Chỉ dự án trên máy này mới áp được thay đổi từ file")
-        report = book_edits.fold(path)
+        report = book_edits.fold(path, self.app.my_music)
         if report["music"]:
             try:
                 self.app._music_after_change(value)
