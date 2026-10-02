@@ -525,6 +525,17 @@ Câu hỏi:
 - H1-H4 như E1, tính lại với người chấm nghe dùng được.
 - Thêm: phán quyết "nghe" có xếp `calm` thứ hai và `app` dưới `vet` như người chấm đọc mô tả không?
 
+**KẾT QUẢ E1b - J-omni1 (03-10 00:1x, `score_e1.py`, `results/e1_score.txt`):**
+- Đã chấm 1.200 điểm clip.
+- Ổn định a/b là 0,82, đạt ngưỡng ≥ 0,75.
+- Kappa với phán quyết chung của c1 + c2 chỉ 0,044 (253 lượt; đồng ý 52%), dưới ngưỡng 0,20. **KHÔNG dùng được.**
+- Omni nghe nhất quán với chính nó, nhưng chọn gần như ngẫu nhiên so với người chấm đọc mô tả. Xếp hạng BT riêng của nó là
+  gems > vet > app > mid > far > calm. Nó xếp `calm` cuối, ngược với E1.
+- Sửa script trước khi đọc kết luận: bản cũ áp luật dùng được của E1 (kappa với BẤT KỲ người chấm nào). Luật đó cho omni1
+  qua nhờ kappa 0,355 với chính Omni bản E1. Nay áp đúng luật E1b đã ghi trước.
+- Phán quyết chung vẫn là c1 + c2: vet > calm > gems > mid > app > far.
+- Còn chờ Music Flamingo 2601 (`mf_rate.py`, hàng GPU sau Whisper pha 4). MF cũng không đạt thì mới tính Qwen3-Omni trên Modal.
+
 **GHI TRƯỚC - NỚI NGƯỠNG NỀN ÊM (02-10 23:xx, Lead duyệt; từ E1: calm đứng thứ hai, hơn app):**
 - **Giả thuyết:** kéo về nền êm (CALM_TARGET) cho nhiều đoạn hơn làm nhạc hợp hơn. Hiện chỉ kéo khi confidence < WEAK_MOOD
   0,2, và kéo tuyến tính.
