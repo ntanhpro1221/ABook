@@ -1,0 +1,144 @@
+# Đáp án KIỂM TRA LN Nhật đợt 4 (02-10; luật cố định: vị trí 30% của bộ không có thoại -> 70%); mục đích: văn phong độc thoại nội tâm dày.
+# "Kumo Desu ga" (Kumo Desu ga, Nani ka? / Tôi là nhện thì sao; bản dịch fan) file 396 ("Chap 258: Hồi sinh công chúa Vampire";
+# vị trí 30% = 170 toàn bảng chỉ số). Agent A gán 02-10, B soát + phân xử 02-10 (27, 51, 66, 67, 74, 120, 121 N->N,T).
+# NGÔI THỨ NHẤT: "tôi" = SHIRO / SHIRAORI (f; con nhện đã thành người - Oni gọi "Shiro-san" ở 75; tên đầy đủ "Shiraori" trong
+# các chương của Sophia 297-308); TRUYỀN --first-person SHIRO. Chương xen kẽ góc nhìn có tiêu đề riêng ("Huyết 29", "Oni 14",
+# "Những dòng suy nghĩ của Giáo hoàng" 394-395) - còn 396 là chương "Chap" của Shiro (393, 397 cùng mạch viết sách cho Giáo
+# hoàng); nhan đề nhắc Vampire nhưng người kể không phải Sophia. "Kumoko" chỉ có trong ghi chú người dịch -> không tính.
+# Tên: SOPHIA / SOPHIA KEREN (f; "bé Vampire" là cách Shiro gọi xuyên suốt, lời kể của Shiro không bao giờ bỏ chữ "bé" ->
+# BÉ VAMPIRE~ như tiền lệ "ANH DẬU", quy tắc 11; "VAMPIRE" trơn là danh hiệu, không điểm); WRATH / KYOUYA / SASAJIMA KYOUYA /
+# KYOUYA SASAJIMA / SASAJIMA (m; Oni = Thịnh Nộ Chủ; Sophia gọi "Wrath" ở 390, chương của chính cậu dùng "Kyouya"; Shiro chỉ
+# gọi "Oni-kun" -> ONI-KUN~, hậu tố xưng hô trên tên loài); MERA / MERAZOFIS (m, "ông ấy", người bảo hộ của Sophia).
+# Thoại 「」 (bộ tách thành “”): 37 lời Mera NHỚ LẠI (36 "khi tôi hỏi Mera... thì ông ấy nói:") -> MERA đủ, NARRATOR~ (tiền lệ
+# Shimotsuki 029:7). 44 Shiro xuất hiện đột ngột trước Sophia ("Nói cách khác, chuẩn bị đi"); 45-48 là MỘT câu của Sophia
+# bị ngoặc lồng “nói cách khác” cắt bốn mảnh: 45, 47 khoá D -> SOPHIA; 46, 48 khoá N -> NARRATOR, SOPHIA~ (quy tắc 10).
+# Đối đáp với Oni (75-102): Shiro nói cụt một hai chữ ("Kháng Dị Giáo", "Chỉ số", "Đọc, rồi..."), Oni gọi "Shiro-san"/"cô",
+# trả lời dài; 102 "Ể?" = Oni (103 "Tôi quay lại rồi cứ thế rời đi").
+# Tiếng lòng tức thời của người kể (câu hỏi tu từ, tự cãi, cảm thán, tiếng cười, "Ô?", "Ừ hử") -> N,T NARRATOR,SHIRO (quy tắc
+# 4, ngôi một): 7-11, 20, 23, 26, 28, 39, 49, 57-65, 68, 82-83, 86, 90, 118-119. Câu nói thẳng với người đọc / giải thích bối
+# cảnh vẫn chỉ N: 18-19 ("Tôi nói có là có hiểu không!" - cãi với người đọc), 22, 51, 74. 29-32 ("Làm Nhân Loại là thế
+# nào?... Tôi là ai?") là Shiro NHẠI câu hỏi trong đầu Sophia (33 "Kiểu như thế.") -> N,T NARRATOR, SOPHIA~ (giọng người
+# kể đọc là đúng; "tôi" trong bốn câu này là Sophia). 49 "Mấy đứa trẻ ngoan không nên dùng từ “éo”!" không có dấu hiệu nói
+# thành tiếng (Shiro gần như không nói; 50 đáp bằng cú chặt) -> N,T.
+0 H
+1 N
+2 N
+3 N
+4 N
+5 N
+6 N
+7 N,T NARRATOR,SHIRO,SHIRAORI neutral,happy,sarcastic 0-1 normal normal u
+8 N,T NARRATOR,SHIRO,SHIRAORI neutral,sarcastic 0-1 normal normal u
+9 N,T NARRATOR,SHIRO,SHIRAORI sarcastic,neutral 0-1 normal normal u
+10 N,T NARRATOR,SHIRO,SHIRAORI sarcastic,neutral,tired 0-1 normal normal u
+11 N,T NARRATOR,SHIRO,SHIRAORI sarcastic,neutral,tired 0-1 normal normal u
+12 N
+13 N
+14 N
+15 N
+16 N
+17 N
+18 N NARRATOR neutral,angry,excited 0-2 normal,fast normal,loud u
+19 N NARRATOR neutral,angry,excited 0-2 normal,fast normal,loud u
+20 N,T NARRATOR,SHIRO,SHIRAORI neutral 0-1 normal normal u
+21 N
+22 N
+23 N,T NARRATOR,SHIRO,SHIRAORI neutral,surprised 0-1 normal normal u
+24 N
+25 N
+26 N,T NARRATOR,SHIRO,SHIRAORI tired,neutral,sad 0-1 normal,slow normal u
+27 N,T NARRATOR,SHIRO,SHIRAORI neutral,sad 0-1 normal normal u
+28 N,T NARRATOR,SHIRO,SHIRAORI neutral,sad 0-1 normal normal u
+29 N,T NARRATOR,SOPHIA~,SOPHIA KEREN~ neutral,sad 0-1 normal,slow normal u
+30 N,T NARRATOR,SOPHIA~,SOPHIA KEREN~ neutral,sad 0-1 normal,slow normal u
+31 N,T NARRATOR,SOPHIA~,SOPHIA KEREN~ neutral,sad 0-1 normal,slow normal u
+32 N,T NARRATOR,SOPHIA~,SOPHIA KEREN~ neutral,sad 0-1 normal,slow normal u
+33 N
+34 N NARRATOR neutral,sad 0-1 normal normal u
+35 N NARRATOR neutral,sad 0-1 normal normal u
+36 N
+37 D MERA,MERAZOFIS,NARRATOR~ neutral,sad,tender 0-1 normal,slow normal m
+38 N
+39 N,T NARRATOR,SHIRO,SHIRAORI neutral 0-1 normal normal u
+40 N NARRATOR neutral,afraid 0-1 normal normal u
+41 N
+42 N
+43 N
+44 D SHIRO,SHIRAORI neutral 0-1 normal normal f
+45 D SOPHIA,SOPHIA KEREN,BÉ VAMPIRE~ angry,surprised,sarcastic 1-2 normal,fast normal,loud f
+46 N NARRATOR,SOPHIA~,SOPHIA KEREN~ neutral,angry,sarcastic 0-2 normal,fast normal u
+47 D SOPHIA,SOPHIA KEREN,BÉ VAMPIRE~ sarcastic,angry 1-2 normal,fast normal,loud f
+48 N NARRATOR,SOPHIA~,SOPHIA KEREN~ neutral,angry,sarcastic 0-2 normal,fast normal u
+49 N,T NARRATOR,SHIRO,SHIRAORI angry,neutral,sarcastic 0-2 normal normal,loud u
+50 N
+51 N,T NARRATOR,SHIRO,SHIRAORI neutral,sarcastic 0-1 normal normal u
+52 N
+53 N
+54 N
+55 N
+56 N
+57 N,T NARRATOR,SHIRO,SHIRAORI happy,excited,sarcastic 1-2 normal normal u
+58 N,T NARRATOR,SHIRO,SHIRAORI excited,happy,sarcastic 1-2 normal,fast normal,loud u
+59 N,T NARRATOR,SHIRO,SHIRAORI excited,happy,sarcastic 1-2 normal,fast normal,loud u
+60 N,T NARRATOR,SHIRO,SHIRAORI excited,happy,sarcastic 1-2 normal,fast normal,loud u
+61 N,T NARRATOR,SHIRO,SHIRAORI surprised,neutral 0-1 normal,slow normal,soft u
+62 N,T NARRATOR,SHIRO,SHIRAORI surprised,afraid,neutral 0-1 normal,slow normal,soft u
+63 N,T NARRATOR,SHIRO,SHIRAORI neutral,tired 0-1 normal normal u
+64 N,T NARRATOR,SHIRO,SHIRAORI neutral 0-1 normal normal u
+65 N,T NARRATOR,SHIRO,SHIRAORI neutral,sarcastic 0-1 normal normal u
+66 N,T NARRATOR,SHIRO,SHIRAORI neutral 0-1 normal normal u
+67 N,T NARRATOR,SHIRO,SHIRAORI neutral 0-1 normal normal u
+68 N,T NARRATOR,SHIRO,SHIRAORI neutral,tired 0-1 normal normal u
+69 N
+70 N
+71 N
+72 N
+73 N
+74 N,T NARRATOR,SHIRO,SHIRAORI neutral 0-1 normal normal u
+75 D WRATH,KYOUYA,SASAJIMA KYOUYA,KYOUYA SASAJIMA,SASAJIMA,ONI-KUN~ happy,tender,neutral 0-1 normal normal m
+76 N NARRATOR neutral,happy 0-1 normal normal u
+77 N
+78 N
+79 D WRATH,KYOUYA,SASAJIMA KYOUYA,KYOUYA SASAJIMA,SASAJIMA,ONI-KUN~ neutral,happy 0-1 normal normal m
+80 D SHIRO,SHIRAORI neutral 0-1 normal normal f
+81 D WRATH,KYOUYA,SASAJIMA KYOUYA,KYOUYA SASAJIMA,SASAJIMA,ONI-KUN~ neutral,happy 0-1 normal normal m
+82 N,T NARRATOR,SHIRO,SHIRAORI neutral,happy 0-1 normal normal u
+83 N,T NARRATOR,SHIRO,SHIRAORI happy,neutral 0-1 normal normal u
+84 N NARRATOR neutral,happy 0-1 normal normal u
+85 N
+86 N,T NARRATOR,SHIRO,SHIRAORI happy,excited 0-1 normal normal u
+87 D SHIRO,SHIRAORI neutral 0-1 normal normal f
+88 D WRATH,KYOUYA,SASAJIMA KYOUYA,KYOUYA SASAJIMA,SASAJIMA,ONI-KUN~ surprised,neutral,afraid 1-2 normal,fast normal m
+89 N
+90 N,T NARRATOR,SHIRO,SHIRAORI sad,tired 0-1 normal normal,soft u
+91 N
+92 N
+93 N
+94 N
+95 N
+96 N
+97 N
+98 N
+99 N
+100 D WRATH,KYOUYA,SASAJIMA KYOUYA,KYOUYA SASAJIMA,SASAJIMA,ONI-KUN~ neutral,surprised,happy 0-1 normal normal m
+101 D SHIRO,SHIRAORI neutral 0-1 normal normal f
+102 D WRATH,KYOUYA,SASAJIMA KYOUYA,KYOUYA SASAJIMA,SASAJIMA,ONI-KUN~ surprised 0-2 normal normal,soft m
+103 N
+104 N
+105 N
+106 N
+107 N
+108 N
+109 N
+110 N
+111 N
+112 N
+113 N
+114 N
+115 N
+116 N
+117 N
+118 N,T NARRATOR,SHIRO,SHIRAORI neutral 0-1 normal,slow normal u
+119 N,T NARRATOR,SHIRO,SHIRAORI neutral 0-1 normal,slow normal u
+120 N,T NARRATOR,SHIRO,SHIRAORI neutral,angry 0-2 normal,slow normal u
+121 N,T NARRATOR,SHIRO,SHIRAORI neutral,angry 0-2 normal,slow normal u
