@@ -9,6 +9,16 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Studio
 
+- **Nhập nhạc của tôi làm nhạc nền**: trong tab "Nhạc nền" của một cuốn có phần "Nhạc của tôi" - bấm "Nhập nhạc của tôi…",
+  chọn một hay nhiều file nhạc (mp3, m4a, ogg, opus, flac, wav). File được chép vào kho nhạc riêng của máy này (nhập lại cùng
+  một bài thì không thành hai bản), ABook đọc sẵn tên bài, nghệ sĩ, độ dài trong file và đo độ to để nhạc nằm đúng dưới giọng
+  đọc. Danh sách cho xem từng bài, nghe thử, xoá. Ở "Đổi bài" có thêm nhóm "Nhạc của tôi": ghim được bài nào cho đoạn nào,
+  kể cả bài mới nhập. Máy chưa có bộ phân tích âm thanh nên bài nhập vào hiện "Chưa phân tích - máy chưa tự chọn, bạn vẫn ghim
+  được": máy không tự đoán không khí của bài, và chưa tự chọn nó cho đoạn nào. Bài bạn ghim đi cùng file sách `.abook` /
+  `.abookproj` (không ai khác tải được nó) và sang điện thoại khi nghe hay đồng bộ; nơi ghi công chỉ hiện tên bài và nghệ sĩ có
+  sẵn trong file, không nói gì về giấy phép. Xoá một bài khỏi kho thì sách đã xuất vẫn giữ bản của nó. Điện thoại phát được
+  những bài này khi chúng nằm trong sách hay đến qua đồng bộ; nhập nhạc ngay trên điện thoại sẽ có sau.
+
 - **Xuất cả bộ nhiều phần thành MỘT file `.abook`**: trong hộp Xuất, chọn "Cả bộ" rồi file `.abook` - có hai cách,
   "Một file" (mặc định: cả bộ gộp trong một file, mở ra là nghe liền từ phần 1 sang phần 2, danh sách chương chia theo
   "Phần N · tên") hay "Mỗi phần một file". Hộp báo cỡ ước tính và cảnh báo khi quá 4 GB (thẻ nhớ / USB định dạng FAT32 không

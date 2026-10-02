@@ -101,3 +101,6 @@ thanh.
    làm thầy / giám khảo khi phát triển, không đi theo app.
 6. Âm thanh người dùng nhập vẫn có thể mang chút ngữ cảnh (tên file, thẻ ID3 tên bài / nghệ sĩ / thể loại): dùng nếu có, như
    thầy, nhưng không trông vào.
+7. Chỗ cắm trong app: `abook/webui/music_local.py` - `set_analyzer(hàm)` nhận `analyze(path) -> {valence, arousal, tension, sd,
+   emotions{13}, confidence, fitsUnderNarration, loudness}`; chưa cắm thì bài nhập ở trạng thái "chưa phân tích" (không bịa số).
+   Xem `docs/MUSIC_IMPORT.md`.

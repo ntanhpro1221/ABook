@@ -36,7 +36,7 @@ A ZIP archive (PKWARE APPNOTE, as used by EPUB and OOXML).
 | `chapters/<part>/<name>.mp3` | stored | version 3 only: chapter audio of part `<part>` (1-4 digits); two parts may use the same file name |
 | `scripts/<n>.json` | deflate | the lines of chapter `n`: text, kind (narration / dialogue / thought / heading), speaker, emotion, intensity, pace, volume, and the time span inside the chapter MP3 |
 | `samples/<n>.wav` | stored | short voice sample of a character |
-| `music/<sha1>.mp3` | stored | version 2 and later: a background-music track the producer attached; `<sha1>` is 40 hex digits and the file is stored once however many chapters or parts use it |
+| `music/<sha1>.<ext>` | stored | version 2 and later: a background-music track the producer attached; `<sha1>` is 40 hex digits and the file is stored once however many chapters or parts use it. `<ext>` is `mp3` for catalogue tracks; a track the producer imported from their own files (`music.tracks[...].link` starts with `local:`) keeps its own format: `mp3`, `m4a`, `ogg`, `opus`, `flac` or `wav`, and `<sha1>` is then the hash of the file's content. Such a track carries no licence fields, only the title and artist read from the file's own tags |
 | `edits.json` | deflate | version 4 only: the listener's edit layer (see below), at most 1 MiB |
 | `edits/cover.jpg` | deflate | version 4 only: a cover the listener chose, JPEG, at most 8 MiB; only with `edits.json` |
 
@@ -50,7 +50,7 @@ older apps still open it.
 | Version | Adds |
 |---|---|
 | 1 | the layout above without `music/` and without part folders |
-| 2 | background music: the `music` object of `book.json` (`levelDb`, `tracks`, and per chapter the cue list `chapters[<chapterId>]` of `{start, end, track, gainDb}`) and the `music/<sha1>.mp3` entries |
+| 2 | background music: the `music` object of `book.json` (`levelDb`, `tracks`, and per chapter the cue list `chapters[<chapterId>]` of `{start, end, track, gainDb}`) and the `music/<sha1>.<ext>` entries |
 | 3 | a whole series in one file: parts, nested chapter paths and a series-wide chapter id scheme, described next |
 | 4 | the listener's edit layer: `edits.json` and `edits/cover.jpg`, described after version 3. Only written when the listener changed something; an unedited book stays at version 1-3 |
 
@@ -71,7 +71,7 @@ older apps still open it.
   `parts: [n, ...]`, the parts in which they speak.
 - **Samples.** `samples/<k>.wav` are numbered 1..K across the whole file, and `sampleId` in `cast.json` refers to that new
   number (sample ids of different parts would otherwise collide).
-- **Music.** One `music/<sha1>.mp3` per track, shared by every part that uses it; `music.chapters` is keyed by the series-wide
+- **Music.** One `music/<sha1>.<ext>` per track, shared by every part that uses it; `music.chapters` is keyed by the series-wide
   chapter id.
 - **Size.** A series can be several gigabytes. A single file larger than 4 GiB cannot be stored on FAT32 media (some SD
   cards and USB sticks), so the producing app also offers one file per part (each a normal version 1 or 2 file).

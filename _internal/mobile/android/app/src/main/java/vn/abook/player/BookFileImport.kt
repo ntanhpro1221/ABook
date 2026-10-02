@@ -40,13 +40,13 @@ object BookFileImport {
     private const val PROJECT_FORMAT = "abookproj"
     private const val PROJECT_FORMAT_VERSION = 2  // 1 = dự án thuần (không có phần nghe); 2 = thêm book.json + cast/scripts/samples/music
     private const val PROJECT_MAX_ENTRIES = 1_000_000
-    private const val FORMAT_VERSION = 4  // 2 = có thêm rãnh nhạc nền (music/<sha1>.mp3); 3 = cả bộ nhiều phần (chapters/<phần>/...); 4 = lớp sửa của người nghe (edits.json, edits/cover.jpg)
+    private const val FORMAT_VERSION = 4  // 2 = có thêm rãnh nhạc nền (music/<sha1>.<mp3|m4a|ogg|opus|flac|wav>; bài người dùng nhập giữ định dạng của file); 3 = cả bộ nhiều phần (chapters/<phần>/...); 4 = lớp sửa của người nghe (edits.json, edits/cover.jpg)
     /** Chỗ trống dư ngoài cỡ giải nén (book.json, thư mục tạm): đủ để không đầy bộ nhớ giữa chừng. */
     private const val ROOM_MARGIN = 64L shl 20
     private const val MAX_ENTRIES = 20_000
     private const val MAX_TOTAL_BYTES = 64L shl 30
     private const val MAX_JSON_BYTES = 32L shl 20
-    private const val COMMON = """cast\.json|cover\.jpg|scripts/\d+\.json|samples/\d+\.wav|music/[0-9a-f]{40}\.mp3"""
+    private const val COMMON = """cast\.json|cover\.jpg|scripts/\d+\.json|samples/\d+\.wav|music/[0-9a-f]{40}\.(?:mp3|m4a|ogg|opus|flac|wav)"""
     private val CONTENT = Regex("""$COMMON|chapters/[0-9A-Za-z_.\-]+\.mp3""")
     /** Phiên bản 3 thêm thư mục phần: chapters/<phần>/<tên>.mp3 (phiên bản 1-2 không có - gặp thì là mục lạ). */
     private val CONTENT_V3 = Regex("""$COMMON|chapters/(?:\d{1,4}/)?[0-9A-Za-z_.\-]+\.mp3""")

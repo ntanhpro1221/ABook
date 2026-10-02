@@ -16,7 +16,7 @@ Hình dạng - một gói ZIP:
     scripts/<chương>.json    từng câu: chữ, loại (kể/thoại/nội tâm/tiêu đề), người nói, cảm xúc, cường độ, nhịp, âm
                              lượng, mốc thời gian trong MP3 - cho đọc theo và chế độ đọc
     samples/<câu>.wav        câu mẫu giọng của từng nhân vật
-    music/<sha1>.mp3         nhạc nền người sản xuất đã gắn (02-10; mốc từng chương ở mục `music` của book.json,
+    music/<sha1>.<đuôi>      nhạc nền người sản xuất đã gắn (02-10; mốc từng chương ở mục `music` của book.json,
                              music_plan.package) - chỉ khi cuốn có rãnh nhạc; KHÔNG nén như audio chương
     edits.json               phiên bản 4 (03-10): LỚP SỬA của người nghe - tên sách, bìa, tên nhân vật, tên chương, nhạc nền
     edits/cover.jpg          (book_edits.py, docs/EDITING.md); chỉ có khi người nghe đã sửa gì. Lớp sách ở trên không bao giờ
@@ -81,7 +81,7 @@ MAX_ENTRIES = 20_000
 MAX_JSON_BYTES = 32 * 1024 * 1024
 MAX_TOTAL_BYTES = 64 * 1024**3
 PART_SPAN = 100_000  # mã chương trong bộ = số phần x PART_SPAN + mã chương trong phần
-_COMMON = r"cast\.json|cover\.jpg|scripts/\d+\.json|samples/\d+\.wav|music/[0-9a-f]{40}\.mp3"
+_COMMON = r"cast\.json|cover\.jpg|scripts/\d+\.json|samples/\d+\.wav|" + music_plan.TRACK_FILE.pattern
 _CONTENT = re.compile(_COMMON + r"|chapters/[0-9A-Za-z_.\-]+\.mp3")
 # Phiên bản 3 thêm thư mục phần: chapters/<phần>/<tên>.mp3 (phiên bản 1-2 không có - gặp thì là mục lạ).
 _CONTENT_V3 = re.compile(_COMMON + r"|chapters/(?:\d{1,4}/)?[0-9A-Za-z_.\-]+\.mp3")
@@ -93,7 +93,7 @@ LISTENING_ENTRY = re.compile(_COMMON)
 # Chỗ trống dư ngoài cỡ giải nén (thư mục tạm, book.json): không cần sát từng byte, chỉ cần không để ổ đĩa đầy giữa chừng.
 _ROOM_MARGIN = 64 * 1024 * 1024
 JPEG_MAGIC = bytes([0xFF, 0xD8, 0xFF])  #ảnh bìa trong lớp sửa phải là JPEG (book_edits.render_cover luôn ghi JPEG)
-_STORED = (".mp3", ".jpg", ".wav")  # đã nén sẵn hay cần đọc thẳng: nén thêm chỉ tốn công khi phát
+_STORED = (".mp3", ".jpg", ".wav", ".m4a", ".ogg", ".opus", ".flac")  # đã nén sẵn hay cần đọc thẳng: nén thêm chỉ tốn công khi phát
 _CHUNK = 1024 * 1024
 
 

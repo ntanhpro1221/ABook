@@ -1,12 +1,23 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Ban, Music2, Pin, Play, RefreshCw, Shuffle, Square, VolumeX, Volume2 } from "lucide-react";
+import { Ban, Music2, Pin, Play, RefreshCw, Shuffle, Square, Trash2, Upload, VolumeX, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import { MUSIC_CHANGED_EVENT } from "@/listen/musicBed";
 import { formatClock } from "@/shared/format";
 import { MUSIC_LEVELS as LEVELS } from "@/shared/musicLevels";
 import { Button } from "@/shared/ui";
 import { api, mediaUrl } from "./api";
+import { pickFiles, useAppInfo } from "./data";
+import {
+  analysisLabel,
+  importSummary,
+  LOCAL_PREFIX,
+  mergeImports,
+  previewPath,
+  type ImportResult,
+  type LocalMusicView,
+  type LocalTrack,
+} from "./musicLocal";
 
 // Tab "Nhạc nền" của trang dự án (docs/MUSIC_SELECTION_MODEL.md, mục 4 - ba tầng chỉnh): cả cuốn (bật/tắt, thế giới
 // của truyện, mức nhạc), từng đoạn (im lặng, bỏ ghim), từng bài (không dùng bài này nữa). Máy tự làm hết; mọi chỉnh ở đây
@@ -25,12 +36,16 @@ interface Scene {
   link: string | null;
   pinned?: boolean;
   silenced?: boolean;
+  /** Bài đã ghim không còn dùng được trên máy này (vd. đã xoá khỏi "Nhạc của tôi"): lần dựng này đoạn dùng bài khác. */
+  pinUnavailable?: boolean;
 }
 
 interface TrackInfo {
   title?: string;
   creator?: string;
   attribution?: string;
+  /** "local": bài người dùng tự nhập ("Nhạc của tôi") - không có ghi công / giấy phép, chỉ tên + nghệ sĩ của chính file. */
+  source?: string;
 }
 
 interface MusicView {
@@ -53,6 +68,17 @@ interface Alternative {
   attribution: string;
   duration?: number;
   score: number;
+}
+
+/** Một bài trong nhóm "Nhạc của tôi" của "Đổi bài": mọi bài đã nhập, `fits` = qua ngưỡng hợp không khí của đoạn này. */
+interface MineAlternative {
+  link: string;
+  title: string;
+  creator: string;
+  duration?: number;
+  analysed: boolean;
+  fits: boolean;
+  score?: number;
 }
 
 const PREVIEW_SECONDS = 20;
@@ -107,7 +133,7 @@ function usePreview() {
         audio.current = created;
       }
       const element = audio.current;
-      element.src = mediaUrl(`/api/music/track?link=${encodeURIComponent(link)}`);
+      element.src = mediaUrl(previewPath(link));
       current.current = link;
       setPlaying(link);
       void element.play().catch(() => {
@@ -140,7 +166,53 @@ function moodOf(scene: Scene, names: Record<string, string> | undefined): string
   return strong.length ? strong.join(" · ") : scene.emotions ? "êm" : "";
 }
 
-/** "Đổi bài": các bài khác hợp đoạn này, hợp nhất trước (cùng cách chấm điểm với lúc máy chọn). Chọn = ghim bài ấy. */
+/** Một dòng bài trong "Đổi bài": tên · tác giả · độ dài, "Nghe thử" và "Chọn" (= ghim bài ấy cho đoạn này). */
+function TrackRow({
+  item,
+  note,
+  busy,
+  choosing,
+  previewing,
+  canPreview,
+  onPreview,
+  onChoose,
+}: {
+  item: { link: string; title: string; creator: string; duration?: number };
+  note?: string;
+  busy: boolean;
+  choosing: string | null;
+  previewing: string | null;
+  canPreview: boolean;
+  onPreview: (link: string) => void;
+  onChoose: (link: string) => void;
+}) {
+  return (
+    <li className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <span className="min-w-0 flex-1 break-words">
+        <Music2 className="mr-1.5 inline size-4 text-fg-2" />
+        {item.title || "Bài nhạc"}
+        {item.creator && <span className="text-fg-2"> · {item.creator}</span>}
+        {item.duration ? <span className="tabular text-fg-2"> · {formatClock(item.duration)}</span> : null}
+        {note && <span className="block text-xs text-fg-2">{note}</span>}
+      </span>
+      <span className="flex shrink-0 gap-1">
+        {canPreview && (
+          <Button size="sm" variant="ghost" icon={previewing === item.link ? Square : Play} aria-pressed={previewing === item.link}
+            onClick={() => onPreview(item.link)}>
+            {previewing === item.link ? "Dừng nghe" : "Nghe thử"}
+          </Button>
+        )}
+        <Button size="sm" variant="secondary" icon={Pin} disabled={busy} loading={choosing === item.link}
+          onClick={() => onChoose(item.link)}>
+          {choosing === item.link ? "Đang đổi…" : "Chọn"}
+        </Button>
+      </span>
+    </li>
+  );
+}
+
+/** "Đổi bài": các bài khác hợp đoạn này, hợp nhất trước (cùng cách chấm điểm với lúc máy chọn). Chọn = ghim bài ấy. Dưới là
+ *  nhóm "Nhạc của tôi": mọi bài bạn đã nhập, kể cả bài chưa phân tích (máy không tự chọn chúng, nhưng bạn ghim được). */
 function Alternatives({
   bookId,
   sceneKey,
@@ -161,39 +233,169 @@ function Alternatives({
   onChoose: (link: string) => void;
 }) {
   useEffect(() => onStopPreview, [onStopPreview]); // đóng danh sách (hay mở đoạn khác) thì bài nghe thử dừng
+  const { data: info } = useAppInfo();
   const { data, isLoading, error } = useQuery({
     queryKey: ["music-alternatives", bookId, sceneKey],
     queryFn: () =>
-      api<{ alternatives: Alternative[] }>(`/api/books/${bookId}/music/scenes/${encodeURIComponent(sceneKey)}/alternatives`),
+      api<{ alternatives: Alternative[]; mine?: MineAlternative[] }>(
+        `/api/books/${bookId}/music/scenes/${encodeURIComponent(sceneKey)}/alternatives`,
+      ),
     staleTime: 0,
     gcTime: 0,
   });
   if (isLoading) return <p className="text-fg-2">Đang tìm bài khác…</p>;
   if (error) return <p className="text-warning">{(error as Error).message}</p>;
-  if (!data?.alternatives.length) return <p className="text-fg-2">Không còn bài nào khác đủ hợp đoạn này.</p>;
+  const mine = data?.mine ?? [];
+  // Nhạc của tôi nằm trên máy tính chủ sách: nghe thử từ máy khác (Studio từ xa) không đi qua đường theo sách.
+  const canPreviewMine = !info?.remote;
+  const row = { busy, choosing, previewing, onPreview, onChoose };
   return (
-    <ul className="space-y-1">
-      {data.alternatives.map((item) => (
-        <li key={item.link} className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="min-w-0 flex-1 break-words">
-            <Music2 className="mr-1.5 inline size-4 text-fg-2" />
-            {item.title || "Bài nhạc"}
-            {item.creator && <span className="text-fg-2"> · {item.creator}</span>}
-            {item.duration ? <span className="tabular text-fg-2"> · {formatClock(item.duration)}</span> : null}
-          </span>
-          <span className="flex shrink-0 gap-1">
-            <Button size="sm" variant="ghost" icon={previewing === item.link ? Square : Play} aria-pressed={previewing === item.link}
-              onClick={() => onPreview(item.link)}>
-              {previewing === item.link ? "Dừng nghe" : "Nghe thử"}
-            </Button>
-            <Button size="sm" variant="secondary" icon={Pin} disabled={busy} loading={choosing === item.link}
-              onClick={() => onChoose(item.link)}>
-              {choosing === item.link ? "Đang đổi…" : "Chọn"}
-            </Button>
-          </span>
-        </li>
-      ))}
-    </ul>
+    <div className="space-y-3">
+      {data?.alternatives.length ? (
+        <ul className="space-y-1">
+          {data.alternatives.map((item) => (
+            <TrackRow key={item.link} item={item} canPreview {...row} />
+          ))}
+        </ul>
+      ) : (
+        <p className="text-fg-2">Không còn bài nào khác trong danh mục đủ hợp đoạn này.</p>
+      )}
+      <div>
+        <h4 className="font-medium">Nhạc của tôi</h4>
+        {mine.length ? (
+          <ul className="mt-1 space-y-1">
+            {mine.map((item) => (
+              <TrackRow
+                key={item.link}
+                item={item}
+                note={item.analysed ? (item.fits ? "Hợp không khí đoạn này" : undefined) : "Chưa phân tích - máy chưa tự chọn, bạn vẫn ghim được"}
+                canPreview={canPreviewMine}
+                {...row}
+              />
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-1 text-fg-2">
+            {info?.remote
+              ? "Chưa có bài nào. Nhập nhạc của bạn trên máy tính chủ sách."
+              : "Chưa có bài nào - bấm “Nhập nhạc của tôi…” ở đầu trang để thêm nhạc của riêng bạn."}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** "Nhạc của tôi": nhạc bạn tự có, làm nhạc nền ngoài danh mục. Nhập, xem, xoá, nghe thử ở đây; ghim cho từng đoạn ở "Đổi bài". */
+function MyMusic({ bookId, previewing, onPreview }: { bookId: string; previewing: string | null; onPreview: (link: string) => void }) {
+  const client = useQueryClient();
+  const { data: info } = useAppInfo();
+  const canImport = Boolean(info?.dialogs); // hộp chọn file là của máy tính chủ sách, không có ở Studio từ xa
+  const key = ["music-local"];
+  const { data } = useQuery({ queryKey: key, queryFn: () => api<LocalMusicView>("/api/music/local"), enabled: canImport });
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const [removing, setRemoving] = useState<string | null>(null);
+  const refresh = (view: LocalMusicView) => {
+    client.setQueryData(key, view);
+    void client.invalidateQueries({ queryKey: ["music-alternatives", bookId] });
+  };
+  const importFiles = async () => {
+    const paths = await pickFiles("Chọn nhạc của bạn", "", "music").catch((error: Error) => {
+      toast.error(error.message);
+      return [] as string[];
+    });
+    if (!paths.length) return;
+    const results: ImportResult[] = [];
+    setProgress({ done: 0, total: paths.length });
+    try {
+      // Từng file một: thấy tiến độ, và một file hỏng không làm mất những file đã vào.
+      for (const [index, path] of paths.entries()) {
+        const result = await api<ImportResult>("/api/music/local/import", { method: "POST", body: { paths: [path] } });
+        results.push(result);
+        refresh(result);
+        setProgress({ done: index + 1, total: paths.length });
+      }
+    } catch (error) {
+      toast.error("Đang nhập nhạc thì dừng", { description: (error as Error).message });
+    } finally {
+      setProgress(null);
+    }
+    if (!results.length) return;
+    const summary = importSummary(mergeImports(results));
+    toast[summary.kind](summary.title, { description: summary.description });
+  };
+  const remove = useMutation({
+    mutationFn: (link: string) => api<LocalMusicView>(`/api/music/local/${link.slice(LOCAL_PREFIX.length)}`, { method: "DELETE" }),
+    onSuccess: (view) => {
+      refresh(view);
+      setRemoving(null);
+      toast("Đã xoá khỏi Nhạc của tôi", {
+        description: "Sách đã xuất vẫn giữ bản của bài này. Đoạn đang ghim bài ấy trên máy này sẽ dùng bài khác ở lần dựng sau.",
+      });
+    },
+    onError: (error: Error) => toast.error("Không xoá được bài này", { description: error.message }),
+  });
+  const tracks = data?.tracks ?? [];
+  return (
+    <section className="space-y-3 rounded-xl border border-line bg-panel p-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <h3 className="text-sm font-semibold">Nhạc của tôi{canImport && tracks.length ? ` (${tracks.length})` : ""}</h3>
+        {canImport && (
+          <Button size="sm" variant="secondary" icon={Upload} loading={Boolean(progress)} onClick={() => void importFiles()}>
+            {progress ? `Đang nhập ${progress.done}/${progress.total}…` : "Nhập nhạc của tôi…"}
+          </Button>
+        )}
+      </div>
+      <p className="text-sm text-fg-2 text-pretty">
+        Thêm nhạc của riêng bạn (mp3, m4a, ogg, opus, flac, wav) làm nhạc nền. File được chép vào kho nhạc của máy này. Bài nào bạn
+        ghim cho một đoạn (ở “Đổi bài”) sẽ đi cùng file sách .abook / .abookproj và sang điện thoại, vì không ai khác tải được nó.
+        ABook chỉ ghi tên bài và nghệ sĩ có sẵn trong file, không nói gì về giấy phép.
+      </p>
+      {!canImport && (
+        <p className="text-sm text-fg-2">Nhập và xoá nhạc làm trên máy tính chủ sách. Ở đây bạn vẫn ghim được bài đã nhập qua “Đổi bài”.</p>
+      )}
+      {canImport && !!tracks.length && data && !data.analyzer && tracks.some((track) => !track.analysed) && (
+        <p className="text-sm text-fg-2">
+          Máy chưa có bộ phân tích âm thanh nên chưa tự chọn nhạc của bạn cho đoạn nào. Bạn vẫn ghim được từng bài cho từng đoạn ở “Đổi bài”.
+        </p>
+      )}
+      {canImport && !tracks.length && <p className="text-sm text-fg-2">Chưa có bài nào.</p>}
+      {!!tracks.length && (
+        <ul className="divide-y divide-line rounded-lg border border-line">
+          {tracks.map((track: LocalTrack) => (
+            <li key={track.link} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-sm">
+              <span className="min-w-0 flex-1 break-words">
+                <Music2 className="mr-1.5 inline size-4 text-accent-text" />
+                {track.title}
+                {track.creator && <span className="text-fg-2"> · {track.creator}</span>}
+                {track.duration ? <span className="tabular text-fg-2"> · {formatClock(track.duration)}</span> : null}
+                <span className="block text-xs text-fg-2">{analysisLabel(track)}</span>
+              </span>
+              <span className="flex shrink-0 gap-1">
+                <Button size="sm" variant="ghost" icon={previewing === track.link ? Square : Play} aria-pressed={previewing === track.link}
+                  onClick={() => onPreview(track.link)}>
+                  {previewing === track.link ? "Dừng nghe" : "Nghe thử"}
+                </Button>
+                {removing === track.link ? (
+                  <>
+                    <Button size="sm" variant="secondary" icon={Trash2} loading={remove.isPending} onClick={() => remove.mutate(track.link)}>
+                      Xoá khỏi kho
+                    </Button>
+                    <Button size="sm" variant="ghost" disabled={remove.isPending} onClick={() => setRemoving(null)}>
+                      Giữ lại
+                    </Button>
+                  </>
+                ) : (
+                  <Button size="sm" variant="ghost" icon={Trash2} onClick={() => setRemoving(track.link)}>
+                    Xoá
+                  </Button>
+                )}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 
@@ -313,6 +515,8 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
         )}
       </section>
 
+      <MyMusic bookId={bookId} previewing={preview.playing} onPreview={preview.toggle} />
+
       {data.error && <p className="text-sm text-warning">{data.error}</p>}
       {!overrides.enabled && !!plan?.scenes.length && (
         <p className="text-sm text-fg-2">Nhạc nền đang tắt - các đoạn dưới đây sẽ không phát.</p>
@@ -339,7 +543,13 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                           <Music2 className="mr-1.5 inline size-4 text-accent-text" />
                           {track?.title ?? "Bài nhạc"}
                           {track?.creator && <span className="text-fg-2"> · {track.creator}</span>}
+                          {track?.source === "local" && (
+                            <span className="ml-1.5 rounded bg-sunken px-1.5 py-0.5 text-xs text-fg-2">Nhạc của tôi</span>
+                          )}
                           {scene.pinned && <Pin className="ml-1.5 inline size-3.5 text-fg-2" aria-label="Đã ghim" />}
+                          {scene.pinUnavailable && (
+                            <span className="block text-xs text-warning">Bài bạn ghim không còn trên máy này - đoạn dùng bài khác.</span>
+                          )}
                         </>
                       ) : (
                         <span className="text-fg-2">{scene.silenced ? "Im lặng (bạn chọn)" : "Im lặng - không bài nào đủ hợp"}</span>
@@ -394,7 +604,11 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
           <summary className="cursor-pointer">Ghi công các bài nhạc ({Object.keys(plan.tracks).length})</summary>
           <ul className="mt-2 space-y-1">
             {Object.entries(plan.tracks).map(([link, track]) => (
-              <li key={link} className="break-words">{track.attribution ?? link}</li>
+              <li key={link} className="break-words">
+                {track.source === "local"
+                  ? `${[track.title, track.creator].filter(Boolean).join(" · ")} - nhạc của bạn, không có thông tin giấy phép`
+                  : (track.attribution ?? link)}
+              </li>
             ))}
           </ul>
         </details>

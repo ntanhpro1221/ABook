@@ -285,11 +285,32 @@ def apply_gain(cues: list[dict[str, Any]], level_db: float, tracks: dict[str, An
         cue["gainDb"] = cue_gain_db(level_db, track_lufs(info, path, measure=False), _number(info.get("speechBand")))
 
 
-TRACK_FILE = re.compile(r"music/[0-9a-f]{40}\.mp3")
+# Bài của danh mục luôn là .mp3; bài người dùng tự nhập ("Nhạc của tôi", music_local.py) giữ nguyên định dạng của file.
+TRACK_EXTENSIONS = ("mp3", "m4a", "ogg", "opus", "flac", "wav")
+TRACK_NAME = r"[0-9a-f]{40}\.(?:" + "|".join(TRACK_EXTENSIONS) + ")"  # tên file bài trong gói, không kể thư mục music/
+TRACK_FILE = re.compile("music/" + TRACK_NAME)
+TRACK_TYPES = {".mp3": "audio/mpeg", ".m4a": "audio/mp4", ".ogg": "audio/ogg", ".opus": "audio/ogg", ".flac": "audio/flac",
+               ".wav": "audio/wav"}
+LOCAL_PREFIX = "local:"  # link của bài người dùng nhập: `local:<sha1 của file>` - không ai khác tải được
 
 
-def track_name(link: str) -> str:
-    """Tên file của một bài trong gói sách: `music/<sha1 của link>.mp3` (cùng tên với bộ đệm của máy)."""
+def is_local(link: str) -> bool:
+    return link.startswith(LOCAL_PREFIX)
+
+
+def local_hash(link: str) -> str | None:
+    """Mã sha1 (40 hex) của file trong link `local:<sha1>`; link khác dạng -> None."""
+    digest = link[len(LOCAL_PREFIX):] if is_local(link) else ""
+    return digest if re.fullmatch(r"[0-9a-f]{40}", digest) else None
+
+
+def track_name(link: str, path: Path | None = None) -> str:
+    """Tên file của một bài trong gói sách: `music/<sha1 của link>.mp3` (cùng tên với bộ đệm của máy). Bài người dùng nhập:
+    `music/<sha1 của file>.<đuôi thật của file>` (`path`; không có thì .mp3)."""
+    digest = local_hash(link)
+    if digest is not None:
+        suffix = Path(path).suffix.lower() if path is not None else ""
+        return f"music/{digest}{suffix if suffix[1:] in TRACK_EXTENSIONS else '.mp3'}"
     return f"music/{hashlib.sha1(link.encode('utf-8')).hexdigest()}.mp3"
 
 
@@ -319,20 +340,21 @@ def package(project_root: Path, chapter_ids: Iterable[int],
     tracks: dict[str, dict[str, Any]] = {}
     chapters: dict[str, list[dict[str, Any]]] = {}
     alternatives = getattr(track_file, "alternatives", None)
+    names: dict[str, str] = {}  # link -> tên file trong gói, của các bài đã có file
     failed: set[str] = set()  # bài đã thử mà không lấy được: không thử lại ở mốc khác
 
     def resolve(cue: dict[str, Any]) -> tuple[str, dict[str, Any], Path] | None:
         """(link, thông tin, file) của bài dùng cho mốc này: chính bài đã chọn, không lấy được thì bài thay thế đầu tiên."""
         link = cue["link"]
         info = (plan.get("tracks") or {}).get(link) or {}
-        if track_name(link) in files:
-            return link, info, files[track_name(link)]
+        if link in names:
+            return link, info, files[names[link]]
         path = None if link in failed else track_file(link)
         if path is not None:
             return link, info, path
         failed.add(link)
         for other in (alternatives(project_root, cue["key"], [link]) if alternatives else []):
-            path = files.get(track_name(other["link"])) or track_file(other["link"])
+            path = files[names[other["link"]]] if other["link"] in names else track_file(other["link"])
             if path is not None:
                 return other["link"], other, path
         return None
@@ -344,8 +366,9 @@ def package(project_root: Path, chapter_ids: Iterable[int],
             if found is None:
                 continue
             link, info, path = found
-            name = track_name(link)
-            if name not in files:
+            name = names.get(link)
+            if name is None:
+                name = names[link] = track_name(link, path)
                 files[name] = path
                 tracks[name] = {"file": name, "link": link,
                                 **{key: info.get(key) for key in ("title", "creator", "license", "licenseUrl",
@@ -384,6 +407,28 @@ def substituted_tracks(project_root: Path, track_file: Callable[[str], Path | No
             if other["link"] not in out:
                 out.append(other["link"])
     return out
+
+
+def track_file_named(project_root: Path, name: str, track_file: Callable[[str], Path | None]) -> Path | None:
+    """File của bài tên `name` (`music/<sha1>.<đuôi>`) trong gói của cuốn này: chỉ bài của chính plan (`plan["tracks"]`) hay bài
+    thay thế (`substituted_tracks`) - nơi phục vụ file (đồng bộ điện thoại, trình phát máy tính) không mở link tuỳ ý."""
+    plan = read_plan(project_root)
+    stem, _, suffix = name.removeprefix("music/").partition(".")
+
+    def matches(link: str) -> bool:
+        return (local_hash(link) == stem if is_local(link) else suffix == "mp3" and track_name(link) == name)
+
+    def serve(link: str) -> Path | None:
+        path = track_file(link)
+        return path if path is not None and track_name(link, path) == name else None
+
+    for link in (plan or {}).get("tracks") or {}:
+        if matches(link):
+            return serve(link)
+    for link in substituted_tracks(project_root, track_file):
+        if matches(link):
+            return serve(link)
+    return None
 
 
 def packaged_cues(music: dict[str, Any] | None, chapter_id: int) -> list[dict[str, Any]]:

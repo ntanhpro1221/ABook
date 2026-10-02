@@ -95,8 +95,9 @@ def run_desktop() -> int:
         def pick_folder(self, title: str, start: str) -> str | None:
             return self._call(lambda: QFileDialog.getExistingDirectory(self.window, title, start) or None)
 
-        def pick_files(self, title: str, start: str) -> list[str]:
-            return self._call(lambda: QFileDialog.getOpenFileNames(self.window, title, start, "Chương truyện (*.txt)")[0])
+        def pick_files(self, title: str, start: str, kind: str = "chapters") -> list[str]:
+            filters = {"chapters": "Chương truyện (*.txt)", "music": "Nhạc (*.mp3 *.m4a *.ogg *.opus *.flac *.wav)"}
+            return self._call(lambda: QFileDialog.getOpenFileNames(self.window, title, start, filters[kind])[0])
 
         def pick_book_file(self, title: str, start: str) -> str | None:
             return self._call(

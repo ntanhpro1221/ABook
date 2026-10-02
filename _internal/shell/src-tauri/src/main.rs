@@ -261,10 +261,19 @@ fn answer_dialog(app: &AppHandle, message: &Value) {
     let path_text = |path: tauri_plugin_dialog::FilePath| path.into_path().ok().map(|path| path.display().to_string());
     let result = match message.get("kind").and_then(Value::as_str) {
         Some("folder") => dialog.blocking_pick_folder().and_then(path_text).map(Value::from),
-        Some("files") => dialog
-            .add_filter("Chương truyện (TXT) hay EPUB", &["txt", "epub"])
-            .blocking_pick_files()
-            .map(|paths| Value::from(paths.into_iter().filter_map(path_text).collect::<Vec<_>>())),
+        Some("files") => {
+            // "Nhập nhạc của tôi" xin bộ lọc nhạc; mọi nơi khác chọn chương truyện (TXT) hay EPUB.
+            let dialog = match message.get("filter").and_then(Value::as_str) {
+                Some("music") => dialog.add_filter(
+                    "Nhạc (mp3, m4a, ogg, opus, flac, wav)",
+                    &["mp3", "m4a", "ogg", "opus", "flac", "wav"],
+                ),
+                _ => dialog.add_filter("Chương truyện (TXT) hay EPUB", &["txt", "epub"]),
+            };
+            dialog
+                .blocking_pick_files()
+                .map(|paths| Value::from(paths.into_iter().filter_map(path_text).collect::<Vec<_>>()))
+        }
         Some("book") => dialog
             .add_filter("Sách hay dự án ABook", &["abook", "abookproj"])
             .blocking_pick_file()

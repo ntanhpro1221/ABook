@@ -26,7 +26,7 @@ object BookDocumentWriter {
     const val EXTENSION = ".abook"
     private const val PRODUCER = "ABook"
     private const val FORMAT = "abook"
-    private val STORED = listOf(".mp3", ".jpg", ".wav")
+    private val STORED = listOf(".mp3", ".jpg", ".wav", ".m4a", ".ogg", ".opus", ".flac")
     private val RANK = listOf("edits", "cover.jpg", "cast.json", "scripts/", "samples/", "chapters/", "music/")
     private val PART_AUDIO = Regex("chapters/[0-9]+/.+")
 

@@ -33,6 +33,8 @@ from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import unquote, urlsplit
 
+from .music_plan import TRACK_NAME
+
 COOKIE = "abook_device"
 COOKIE_SECONDS = 365 * 24 * 3600
 # Trên máy chủ cục bộ, yêu cầu mang header này là yêu cầu TỪ XA (chỉ `forward` gắn nó): `paths` chỉ được nằm trong
@@ -83,10 +85,11 @@ LISTEN_ROUTES: tuple[tuple[str, re.Pattern[str]], ...] = tuple((method, re.compi
     ("GET", _BOOK + r"/chapters/\d+/script"),
     ("GET", r"/media/voices/[^/]+"),
     ("GET", _MEDIA + r"/samples/\d+"),
-    # Nhạc nền của trình phát (httpSource.ts, musicBed.ts): mốc nhạc từng chương, bài đóng trong sách, bài trong danh mục
-    # (máy chủ chỉ tải bài CÓ trong danh mục - server.music_track_file - nên không thành chỗ tải hộ link tuỳ ý).
+    # Nhạc nền của trình phát (httpSource.ts, musicBed.ts): mốc nhạc từng chương, bài đóng trong sách (và bài "Nhạc của tôi"
+    # mà đoạn của cuốn này dùng - chỉ qua đường theo sách), bài trong danh mục (máy chủ chỉ tải bài CÓ trong danh mục -
+    # server.music_track_file - nên không thành chỗ tải hộ link tuỳ ý).
     ("GET", _BOOK + r"/music/chapters/\d+"),
-    ("GET", _BOOK + r"/music/files/[0-9a-f]{40}\.mp3"),
+    ("GET", _BOOK + r"/music/files/" + TRACK_NAME),
     ("GET", r"/api/music/track"),
 ))
 # Thêm cho thiết bị được điều khiển sản xuất: dự án, bắt đầu/dừng, tạo sách, duyệt phân vai, giọng, bìa.
