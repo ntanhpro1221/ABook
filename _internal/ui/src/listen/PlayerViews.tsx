@@ -604,16 +604,57 @@ function FadingNotice({ className }: { className?: string }) {
   );
 }
 
-/** Ghi công nhạc nền đang nghe (CC BY đòi nêu tác giả ở nơi nhạc phát): một dòng nhỏ, mờ; không có bài thì không hiện gì.
- *  Giữ chuột lên dòng thì thấy nguyên văn ghi công của nguồn (attribution). */
+/** Ghi công nhạc nền đang nghe (CC BY đòi nêu tác giả ở nơi nhạc phát): một dòng nhỏ, mờ, chỉ hiện khi đang phát; không
+ *  có bài thì không hiện gì. Chạm (hay Enter) vào dòng để xem đủ ghi công: tên bài, tác giả, giấy phép (có liên kết) -
+ *  màn cảm ứng không có chỗ "giữ chuột" để xem chú thích. */
 function MusicCreditLine() {
-  const { musicCredit } = usePlayer();
+  const { musicCredit, playing } = usePlayer();
+  const [open, setOpen] = useState(false);
   const label = [musicCredit?.title, musicCredit?.creator].filter(Boolean).join(" · ");
-  if (!musicCredit || !label) return null;
+  useEffect(() => setOpen(false), [musicCredit]);
+  if (!playing || !musicCredit || !label) return null;
   return (
-    <p className="mt-0.5 truncate text-xs text-fg-2" title={musicCredit.attribution || label}>
-      Nhạc nền: {label}
-    </p>
+    <div className="mt-0.5 text-xs text-fg-2">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+        title={musicCredit.attribution || label}
+        className="max-w-full truncate rounded outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      >
+        Nhạc nền: {label}
+      </button>
+      {open && (
+        <div className="mx-auto mt-1 max-w-sm break-words text-left">
+          {musicCredit.attribution && <p>{musicCredit.attribution}</p>}
+          {!musicCredit.attribution && (
+            <p>
+              {musicCredit.title}
+              {musicCredit.creator ? ` - ${musicCredit.creator}` : ""}
+            </p>
+          )}
+          {musicCredit.license && (
+            <p>
+              Giấy phép:{" "}
+              {musicCredit.licenseUrl ? (
+                <a href={musicCredit.licenseUrl} target="_blank" rel="noreferrer" className="underline">
+                  {musicCredit.license}
+                </a>
+              ) : (
+                musicCredit.license
+              )}
+            </p>
+          )}
+          {musicCredit.landing && (
+            <p>
+              <a href={musicCredit.landing} target="_blank" rel="noreferrer" className="underline">
+                Trang của bài nhạc
+              </a>
+            </p>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
