@@ -227,6 +227,8 @@ export interface ContinuationPlan {
     listenerReadings: number;
     pins: number;
     aliases?: number;
+    /** Tên hiển thị người nghe đã đặt cho nhân vật ("Đổi tên"). */
+    names?: number;
     /** Quy ước 『』 của cuốn: người nói mọi câu 『』 ("NARRATOR" = người kể), rỗng khi chưa có. */
     bracket?: string;
   };
