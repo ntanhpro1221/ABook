@@ -206,7 +206,7 @@ def test_a_redone_chapter_is_counted_once(book: dict[str, Path]) -> None:
 def test_the_carried_summary_counts_without_writing(book: dict[str, Path]) -> None:
     before = _digest(book["first"] / "project.sqlite3")
     assert continuation.carried_summary(book["first"]) == {
-        "voices": 2, "pronunciations": 2, "listenerReadings": 1, "pins": 2, "aliases": 0, "bracket": "",
+        "voices": 2, "pronunciations": 2, "listenerReadings": 1, "pins": 2, "aliases": 0, "bracket": "", "names": 0,
     }
     assert _digest(book["first"] / "project.sqlite3") == before
 
