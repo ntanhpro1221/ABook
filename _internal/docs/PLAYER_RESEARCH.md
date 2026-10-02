@@ -97,7 +97,13 @@ mỗi app là một trạm hai vai (phục vụ thư viện của mình cho máy
 USB: bật chia sẻ kết nối qua USB trên Android là có đường mạng, cùng giao thức. Ngoài nhà: địa chỉ nhập tay qua Tailscale /
 ZeroTier / NetBird (không trói vào dịch vụ nào); không đẩy audio lên cloud (một tập ~40 chương ~750 MB).
 
-### Phát lên loa / TV qua Google Cast - thiết kế, chưa làm (29-09)
+### Phát lên loa / TV qua Google Cast - thiết kế 29-09, ĐÃ LÀM 02-10 theo đường khác
+
+02-10: làm bằng client CASTV2 tự viết, KHÔNG dùng `CastPlayer` / Cast SDK dưới đây - Cast SDK cần Google Play Services,
+đem MediaRouter + phiên riêng chồng lên "Phát trên…" và CastService, và đòi chứng thực thiết bị nên không thử được bằng
+thiết bị giả. Máy tính: `abook/webui/gcast.py` (thư viện chuẩn - pyproject/uv.lock bị khoá hash), điện thoại: `GCast.kt`;
+cả hai là một backend của CastPlayers / DlnaPlayers, media qua máy chủ HTTP có mã như DLNA, tìm bằng mDNS hỏi từ cổng tạm
+với bit trả lời unicast. Phần dưới là thiết kế cũ, giữ để biết vì sao bỏ.
 
 Mục (3) còn lại của lộ trình đường truyền (Android Auto đã xong ở 0.4.1). Media3 có `CastPlayer`
 (`androidx.media3:media3-cast`): cùng giao diện `Player`, cắm thẳng vào `MediaSession` sẵn có, nên thông báo, màn khoá,
@@ -157,8 +163,8 @@ thiết bị giả `scripts/fake_renderer.py` (chỉ thư viện chuẩn, chạy
   Kotlin (FakeRenderer, src/sharedTest - cùng cư xử loa giả Python) và cùng loa giả ấy CHẠY TRÊN MÁY ẢO ANDROID
   (DlnaOnDeviceTest: bộ đọc XML và mạng của Android thật). Máy ảo không thử được trọn vòng với loa giả trên máy tính (NAT
   của máy ảo chặn multicast, loa ở ngoài không tới được cổng của máy ảo).
-- Còn lại: màn khoá / tai nghe điều khiển TV (trình phát Media3 riêng cho phiên DLNA), hẹn giờ ngủ khi đang phát trên loa, Google Cast
-  (mục trên - loa Google không có DLNA), âm lượng của thiết bị (RenderingControl - đã đọc địa chỉ, chưa có nút), tốc độ
+- Còn lại: màn khoá / tai nghe điều khiển TV (trình phát Media3 riêng cho phiên DLNA), hẹn giờ ngủ khi đang phát trên loa,
+  âm lượng của thiết bị (RenderingControl - đã đọc địa chỉ, chưa có nút), tốc độ
   khác 1x (DLNA gần như không thiết bị nào nhận).
 
 Không học: hộp thoại xin chấm sao, lặp đoạn (học ngoại ngữ), cân bằng âm (giọng đọc đã được cân mức ở dây chuyền).
