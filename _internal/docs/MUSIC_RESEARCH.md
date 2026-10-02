@@ -1306,6 +1306,24 @@ Cách sửa F1, cho bài mang số trò:
 - Lượt 2 QUYẾT theo luật cũ: dùng được (ổn định ≥ 0,75 trên 34 cặp lặp, kappa ≥ 0,20) và p ≥ 0,45.
 - p tính trên bản gốc. Lượt 1 chỉ báo.
 
+**KẾT QUẢ LƯỢT 2 (03-10 06:0x, `results/mixedc2_score.txt`):** **F2 ĐẠT → vào app.**
+- Dùng được: ổn định a/b 27 / 34 = 0,79 và 30 / 34 = 0,88; kappa 0,58.
+- 34 cặp khác bài. Cả hai chọn bài kho trộn 16, cả hai chọn bài kho toàn thầy 11, khác ý 7.
+- **p = 0,574** (KTC 0,41–0,72) ≥ 0,45. Từng người 0,59 / 0,56. Tính cả 100 đoạn: 0,525.
+
+Vào app (nhánh `dev/music-mixed-f2`), chỉ cho bài nhập:
+- Hiệu chỉnh a + b·trò từng trục.
+- Bỏ sd của trò; bài dùng mặc định 0,2.
+- Thêm `vetVar`; `z_distance` cộng 0,1 × vetVar vào tử.
+- Hằng số riêng cho đầu A (ONNX), ghép cùng cách trên dự đoán chéo của A. Đầu A không chấm người đọc riêng: cách làm giống
+  hệt, số gần như trùng.
+
+| Trục | a | b | var |
+|---|---|---|---|
+| V | −0,055 | 1,251 | 0,041 |
+| E | 0,002 | 1,096 | 0,031 |
+| T | 0,009 | 1,277 | 0,041 |
+
 **KẾT QUẢ TRÒ v2 + MTG (03-10 05:3x, `results/student_eval_v2.txt`):** **KHÔNG THAY v1**, trượt cả ba điều kiện.
 
 | | v1 | v2 |
