@@ -1,4 +1,16 @@
 {
+  "allowedMcpServers": [],
+  "disableClaudeAiConnectors": true,
+  "skillOverrides": {
+    "docx": "off",
+    "xlsx": "off",
+    "pptx": "off",
+    "pdf": "off",
+    "google-workspace": "off",
+    "learn": "off",
+    "import-memory": "off",
+    "docs": "off"
+  },
   "enabledPlugins": {
     "unity@knowledge-work-plugins": false,
     "engineering@knowledge-work-plugins": false,
@@ -9,13 +21,25 @@
     "PreToolUse": [
       {
         "matcher": "Bash|PowerShell",
-        "hooks": [{ "type": "command", "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard_bash.py\"", "timeout": 10 }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard_bash.py\"",
+            "timeout": 10
+          }
+        ]
       }
     ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
-        "hooks": [{ "type": "command", "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/after_edit.py\"", "timeout": 90 }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/after_edit.py\"",
+            "timeout": 90
+          }
+        ]
       }
     ]
   }
