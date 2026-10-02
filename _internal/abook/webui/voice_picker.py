@@ -13,6 +13,7 @@ from contextlib import closing
 from pathlib import Path
 from typing import Any
 
+from .. import names as renames
 from . import store
 from .humanize import voice_label
 from .reviews import speaker_label
@@ -34,6 +35,12 @@ def voice_choices(project_root: Path, character: str) -> dict[str, Any] | None:
     voices = {**build_settings()["voices"], **(stored if isinstance(stored, dict) else {})}
     not_for_characters = {str(voices.get("narrator_voice") or ""), *map(str, voices.get("other_narrators", ()))}
     key = _key(character)
+    renamed = renames.load(project_root)
+
+    def shown(who: str) -> str:
+        """Tên người nghe đã "Đổi tên" (tab Nhân vật) thay tên gốc; khoá `value` giữ nguyên."""
+        return renamed.get(renames.name_key(who)) or speaker_label(who)
+
     with closing(store.connect(project_root)) as connection:
         row = connection.execute(
             "SELECT id, canonical_name, display_name, gender, age FROM characters WHERE canonical_name=?", (key,)
@@ -81,7 +88,7 @@ def voice_choices(project_root: Path, character: str) -> dict[str, Any] | None:
             others = [who for who in presets_of.get(name, set()) if who != key]
             shared = sorted(
                 (
-                    {"label": speaker_label(who), "chapters": len(chapters.get(who, set()) & mine)}
+                    {"label": shown(who), "chapters": len(chapters.get(who, set()) & mine)}
                     for who in others if chapters.get(who, set()) & mine
                 ),
                 key=lambda item: (-item["chapters"], item["label"].casefold()),
@@ -103,8 +110,8 @@ def voice_choices(project_root: Path, character: str) -> dict[str, Any] | None:
         "character": {
             "value": key,
             # Vai phụ cục bộ mang tên sổ "NPC người gác": người đọc thấy "người gác" (speaker_label của khoá).
-            "label": speaker_label(key) if key.startswith("NPC_LOCAL") or not row["display_name"]
-            else str(row["display_name"]),
+            "label": renamed.get(renames.name_key(key))
+            or (speaker_label(key) if key.startswith("NPC_LOCAL") or not row["display_name"] else str(row["display_name"])),
             "gender": str(row["gender"] or "unknown"),
             "lines": lines,
             "chapters": len(mine),
