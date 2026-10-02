@@ -17,7 +17,7 @@ describe("refusalText", () => {
 
 describe("previewCaption", () => {
   it("names the line and the voice, and promises only 'about like this'", () => {
-    expect(previewCaption("“Đi thôi, Natasha.”", "Lucien")).toBe("Bản thu đầu sẽ gần như vầy · câu “Đi thôi, Natasha.” · giọng Lucien");
+    expect(previewCaption("“Đi thôi, Natasha.”", "Lucien")).toBe("Lúc thu thật sẽ nghe gần như vậy · câu “Đi thôi, Natasha.” · giọng Lucien");
   });
 
   it("cuts a long line and leaves the voice out when there is none to name", () => {

@@ -519,7 +519,7 @@ function SharePanel() {
               Ghép máy mới
             </Button>
           )}
-          {data.blocked && <p className="text-xs text-danger">Nhập sai mã quá 5 lần - mã đã bị huỷ. Bấm "Ghép máy mới" để có mã khác.</p>}
+          {data.blocked && <p className="text-xs text-danger">Nhập sai mã quá 5 lần - mã đã bị huỷ. Bấm “Ghép máy mới” để có mã khác.</p>}
           {data.devices.length > 0 && (
             <ul className="divide-y divide-line">
               {data.devices.map((device) => (

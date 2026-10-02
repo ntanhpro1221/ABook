@@ -405,23 +405,29 @@ function SourceStep({
                     <button
                       type="button"
                       onClick={() => onPaths(problem.subfolders)}
-                      className="flex w-full items-center gap-2 truncate rounded-lg border border-accent/50 bg-panel px-3 py-2 text-left font-medium text-fg hover:border-accent"
+                      className="flex w-full items-center gap-2 rounded-lg border border-accent/50 bg-panel px-3 py-2 text-left font-medium text-fg hover:border-accent"
                     >
                       <Layers className="size-4 shrink-0 text-accent-text" />
-                      <span className="truncate">Dùng cả {problem.subfolders.length} thư mục - mỗi thư mục một tập</span>
+                      <span className="min-w-0">Dùng cả {problem.subfolders.length} thư mục - mỗi thư mục một tập</span>
                     </button>
                   )}
                   {problem.subfolders.slice(0, 8).map((folder) => (
                     <button
                       key={folder}
                       type="button"
+                      title={folder}
                       onClick={() => onPaths([folder])}
                       className="flex w-full items-center gap-2 truncate rounded-lg border border-line bg-panel px-3 py-2 text-left text-fg hover:border-accent"
                     >
                       <Folder className="size-4 shrink-0 text-fg-2" />
-                      <span className="truncate">{folder}</span>
+                      {/* Tên thư mục đứng trước: hai thư mục "Tập 1", "Tập 2" cùng một đường dẫn dài thì đuôi bị cắt nhìn y hệt nhau. */}
+                      <span className="shrink-0 font-medium">{folder.split(/[\\/]/).filter(Boolean).pop() ?? folder}</span>
+                      <span className="min-w-0 truncate text-xs text-fg-3">{folder}</span>
                     </button>
                   ))}
+                  {problem.subfolders.length > 8 && (
+                    <div className="text-fg-2">…và {problem.subfolders.length - 8} thư mục nữa (đều nằm trong “Dùng cả” ở trên).</div>
+                  )}
                 </div>
               )}
             </div>
@@ -481,6 +487,9 @@ function SourceStep({
           {files.filter((file) => file.split).map((file) => (
             <SplitSuggestion key={file.path} file={file} onSplit={onSplit} />
           ))}
+          {/* Gợi ý chia phần đứng TRƯỚC lời nhắc số chương: truyện nhiều tập đánh số lại từ 1 ở mỗi tập, lời nhắc "trùng số" chỉ là
+              hệ quả của việc chưa chia. */}
+          {volumeSplit}
           <ChapterNumberWarning
             issues={
               splitting && volumeStarts
@@ -491,8 +500,8 @@ function SourceStep({
                   )
                 : chapterNumberIssues(files, previousLast)
             }
+            suggestsSplit={!splitting && Boolean(scan?.volumes)}
           />
-          {volumeSplit}
           <CreditSuggestion credits={creditSummary(files)} accepted={dropCredits} onChange={onDropCredits} />
           <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
             <div className="tabular text-sm text-fg-2">
@@ -652,7 +661,7 @@ function CreditSuggestion({ credits, accepted, onChange }: { credits: Credits; a
 // Soát UX a5 01-10: truyện tải trên mạng phần lớn là MỘT file TXT - trình tạo sách đọc ra một chương dài vài tiếng, không
 // một lời nhắc. Thấy nhiều dòng "Chương N" trong một file thì ĐỀ XUẤT tách; không bấm thì giữ nguyên như file (chủ sách
 // 29-09: không bao giờ tự sửa nguồn). Tách là ghi các chương ra một thư mục mới trong thư viện - file gốc không đổi.
-function ChapterNumberWarning({ issues }: { issues: string[] }) {
+function ChapterNumberWarning({ issues, suggestsSplit }: { issues: string[]; suggestsSplit?: boolean }) {
   if (!issues.length) return null;
   return (
     <div className="mt-4 flex gap-3 rounded-xl border border-warning/40 bg-warning-soft p-4 text-sm">
@@ -664,7 +673,12 @@ function ChapterNumberWarning({ issues }: { issues: string[] }) {
             <li key={issue} className="break-words">{issue}</li>
           ))}
         </ul>
-        <p className="mt-1 text-fg-2">Vẫn tạo được như thế - máy chỉ nhắc, không bỏ file nào.</p>
+        <p className="mt-1 text-fg-2">
+          {suggestsSplit
+            ? "Nếu đây là nhiều tập (mỗi tập đánh số chương lại từ 1) thì chia thành nhiều phần ở trên - mỗi phần được soát số chương riêng. "
+            : ""}
+          Vẫn tạo được như thế - máy chỉ nhắc, không bỏ file nào.
+        </p>
       </div>
     </div>
   );

@@ -247,7 +247,7 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
         <div className="hidden w-28 text-right text-xs tabular text-fg-2 md:block">
           {formatClock(at)} / {formatClock(phone.duration)}
         </div>
-        <div className="flex flex-1 items-center justify-end gap-1">
+        <div className="flex shrink-0 items-center justify-end gap-1 md:flex-1">
           {phone.known && (
             <Tooltip label={`Dừng ${phone.name}, nghe tiếp ở máy này đúng chỗ ấy`}>
               <button
@@ -349,6 +349,7 @@ export function HandOffButton({ className }: { className?: string }) {
   // TV mất vài giây (tải chương, đợi chạy rồi mới tua tới đúng chỗ) nên có dòng "Đang mở…" tới lúc ấy.
   const handOff = (target: RemotePhone) => {
     const seconds = readPosition().time;
+    const wasPlaying = player.playing;
     player.pause();
     const waiting = target.via === "cast" ? toast.loading(`Đang mở trên ${target.name}…`) : undefined;
     command.mutate(
@@ -357,6 +358,10 @@ export function HandOffButton({ className }: { className?: string }) {
         // Máy kia đã nhận thì đóng hẳn trình phát ở đây (nó lưu chỗ trước khi đóng). Chỉ dừng thì lúc rời trang nó lưu lại
         // chỗ cũ đè lên chỗ máy kia đã nghe tới - gặp 01-10 với loa giả lập: loa dừng ở 0:56, tải lại trang thành 0:19.
         onSuccess: () => player.close(),
+        // Loa / TV từ chối (tắt nguồn, bị chiếm...): lời báo lỗi hiện từ useRemoteCommand; nghe tiếp ở máy này thay vì để im lặng.
+        onError: () => {
+          if (wasPlaying) player.resume();
+        },
         onSettled: () => waiting !== undefined && toast.dismiss(waiting),
       },
     );

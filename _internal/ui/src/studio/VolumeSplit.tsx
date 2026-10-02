@@ -161,7 +161,7 @@ export function VolumeSplit({
                 />
               )}
             </label>
-            <span className="tabular text-right text-xs text-fg-2 max-sm:col-start-1">{formatNumber(part.chapters)} chương</span>
+            <span className="tabular text-right text-xs text-fg-2 max-sm:col-start-1 max-sm:text-left">{formatNumber(part.chapters)} chương</span>
             {index > 0 ? (
               <button
                 type="button"

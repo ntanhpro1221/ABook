@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { cn } from "@/shared/cn";
 import { coverArtwork } from "@/shared/cover";
 import { formatNumber } from "@/shared/format";
-import { Button, Dialog } from "@/shared/ui";
+import { Button, Dialog, radioGroupKeys, radioTabIndex } from "@/shared/ui";
 import { api, type BookSummary } from "./api";
 import { pickFolder, useAppInfo, useParts } from "./data";
 
@@ -123,22 +123,30 @@ export function ExportDialog({
   ).filter(Boolean) as string[];
   // Studio từ xa (trình duyệt máy khác) không gói dự án: file nằm ở máy tính, việc của người ngồi trước nó.
   const kinds = info?.remote ? KINDS.filter((item) => item.value !== "abookproj") : KINDS;
+  const kindValues = kinds.map((item) => item.value);
+  const scopeValues: Scope[] = ["part", "series"];
   return (
     <Dialog open={open} onOpenChange={onOpenChange} width="max-w-lg" title={`Xuất “${book.title}”`}
       description={wholeSeries ? `Các chương nghe được của cả ${parts.length} phần sẽ vào bản xuất.` : `${formatNumber(ready)} chương nghe được sẽ vào bản xuất.`}>
       {parts.length > 1 && !whole && (
-        <div className="mb-3 grid grid-cols-2 gap-1 rounded-xl bg-sunken p-1 text-sm" role="radiogroup" aria-label="Phạm vi bản xuất">
+        <div
+          className="mb-3 grid grid-cols-2 gap-1 rounded-xl bg-sunken p-1 text-sm"
+          role="radiogroup"
+          aria-label="Phạm vi bản xuất"
+          onKeyDown={radioGroupKeys(scopeValues, scope, setScope)}
+        >
           {(
             [
               ["part", "Phần này"],
               ["series", `Cả bộ (${parts.length} phần)`],
             ] as const
-          ).map(([value, label]) => (
+          ).map(([value, label], index) => (
             <button
               key={value}
               type="button"
               role="radio"
               aria-checked={scope === value}
+              tabIndex={radioTabIndex(scopeValues, scope, index)}
               onClick={() => setScope(value)}
               className={cn("rounded-lg px-3 py-1.5 font-medium", scope === value ? "bg-panel shadow-sm" : "text-fg-2")}
             >
@@ -147,13 +155,14 @@ export function ExportDialog({
           ))}
         </div>
       )}
-      <div className="grid gap-2" role="radiogroup" aria-label="Kiểu bản xuất">
-        {kinds.map(({ value, title, detail, icon: Icon }) => (
+      <div className="grid gap-2" role="radiogroup" aria-label="Kiểu bản xuất" onKeyDown={radioGroupKeys(kindValues, kind, setKind)}>
+        {kinds.map(({ value, title, detail, icon: Icon }, index) => (
           <button
             key={value}
             type="button"
             role="radio"
             aria-checked={kind === value}
+            tabIndex={radioTabIndex(kindValues, kind, index)}
             onClick={() => setKind(value)}
             className={cn(
               "flex items-start gap-3 rounded-xl border p-3 text-left text-sm",
@@ -170,6 +179,9 @@ export function ExportDialog({
       </div>
       {wholeSeries && kind === "abook" && (
         <p className="mt-3 text-sm text-fg-2 text-pretty">Mỗi phần là một file .abook riêng, cùng nằm trong một thư mục của bộ.</p>
+      )}
+      {wholeSeries && kind === "mp3" && (
+        <p className="mt-3 text-sm text-fg-2 text-pretty">Mỗi phần một thư mục con (“Phần 1 - …”, “Phần 2 - …”), cùng nằm trong một thư mục của bộ.</p>
       )}
       {(warnings.length > 0 || (!whole && Boolean(book.pendingChanges))) && (
         <div className="mt-3 space-y-1.5 rounded-xl bg-warning-soft p-3 text-sm">
