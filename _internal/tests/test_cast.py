@@ -21,7 +21,7 @@ from abook.webui.cast import CastError, CastMedia, CastPlayers
 from abook.webui.library import Preferences, book_id
 from abook.webui.listening import Listening
 from abook.webui.server import App, Server
-from tests.test_webui_listen_and_sync import _request, make_project
+from tests.test_webui_listen_and_sync import _request, _sync_request, make_project
 
 ROOT = Path(__file__).resolve().parents[1]
 _spec = importlib.util.spec_from_file_location("fake_renderer", ROOT / "scripts/fake_renderer.py")
@@ -372,30 +372,30 @@ def test_a_paired_phone_sees_and_drives_the_speakers_of_this_computer(tmp_path: 
         app.set_sync(True)
         try:
             port = app.sync_server.port
-            status, _data, _ = _request(port, "GET", "/sync/v1/cast")
+            status, _data, _ = _sync_request(port, "GET", "/sync/v1/cast")
             assert status == 401, "chỉ thiết bị đã ghép mới thấy loa / TV của máy này"
             code = app.devices.start_pairing()["code"]
-            _status, data, _ = _request(port, "POST", "/sync/v1/pair", body={"code": code, "device": "Pixel"})
+            _status, data, _ = _sync_request(port, "POST", "/sync/v1/pair", body={"code": code, "device": "Pixel"})
             token = json.loads(data)["token"]
 
             def renderers() -> list[dict[str, Any]]:
-                _status, data, _ = _request(port, "GET", "/sync/v1/cast", token)
+                _status, data, _ = _sync_request(port, "GET", "/sync/v1/cast", token)
                 return json.loads(data)["renderers"]
 
             app.cast.scan()
             tv = _until(renderers)[0]
             assert tv["name"] == "TV phòng khách" and tv["kind"] == "tv" and tv["state"] is None and tv["stream"]
-            status, data, _ = _request(port, "POST", f"/sync/v1/cast/{tv['id']}", token,
+            status, data, _ = _sync_request(port, "POST", f"/sync/v1/cast/{tv['id']}", token,
                                        body={"action": "load", "bookId": book_id(project), "chapterId": 1, "seconds": 0})
             assert status == 200 and json.loads(data)["id"]
             _until(lambda: device.fetches)
             playing = _until(lambda: [item for item in renderers() if item["state"] and item["state"]["playing"]])[0]
             assert playing["state"]["bookId"] == book_id(project) and playing["state"]["chapterId"] == 1
-            status, data, _ = _request(port, "POST", f"/sync/v1/cast/{tv['id']}", token, body={"action": "rate", "rate": 2})
+            status, data, _ = _sync_request(port, "POST", f"/sync/v1/cast/{tv['id']}", token, body={"action": "rate", "rate": 2})
             assert status == 409 and "1x" in json.loads(data)["error"]
-            status, _data, _ = _request(port, "POST", "/sync/v1/cast/0123456789ab", token, body={"action": "pause"})
+            status, _data, _ = _sync_request(port, "POST", "/sync/v1/cast/0123456789ab", token, body={"action": "pause"})
             assert status == 404
-            status, _data, _ = _request(port, "POST", f"/sync/v1/cast/{tv['id']}", token, body={"action": "format"})
+            status, _data, _ = _sync_request(port, "POST", f"/sync/v1/cast/{tv['id']}", token, body={"action": "format"})
             assert status == 400
         finally:
             app.close()

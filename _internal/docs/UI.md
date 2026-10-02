@@ -65,7 +65,7 @@ Studio (máy tính):
 - Đọc theo: mốc từng câu dựng từ `wav_duration + break_ms` (lệch 0,14 s trên 13 phút), co giãn theo độ dài MP3.
 - **Studio từ xa** (`webui/remote_studio.py`, 28-09): cổng đồng bộ (`sync.py`, nghe trên LAN) phục vụ luôn bản dựng
   giao diện web và CHUYỂN TIẾP API của nó về máy chủ cục bộ ở trên - không viết lại đường nào, mọi kiểm tra đầu vào
-  giữ nguyên. Điện thoại, máy tính bảng, máy tính khác mở `http://<máy>:47630` trong trình duyệt: cả Studio lẫn phần
+  giữ nguyên. Điện thoại, máy tính bảng, máy tính khác mở `https://<máy>:47630` trong trình duyệt: cả Studio lẫn phần
   Nghe. Ba lớp chặn: thiết bị đã ghép (mã thiết bị; trình duyệt ghép bằng mã 6 số, mã về cookie HttpOnly SameSite=Strict
   qua `/sync/v1/pair-browser`), công tắc `remoteStudio` (tắt mặc định, đọc lại mỗi yêu cầu), và danh sách trắng
   `ALLOWED` - hộp thoại chọn file, mở Explorer, đổi cài đặt, ghép / gỡ thiết bị, điều khiển điện thoại, mở file theo
@@ -78,8 +78,18 @@ Studio (máy tính):
   sách bị bỏ qua; quyền Studio theo TỪNG thiết bị (`devices.json` `studio`, công tắc trên dòng thiết bị; ghép lúc Studio
   từ xa đang bật thì có sẵn); `Host` phải là IP hay tên máy (chống DNS rebinding); lệnh ghi mang cookie phải có
   `Sec-Fetch-Site: same-origin` hay `Origin` trùng `Host`; cookie chỉ được nhận ở đường Studio, không ở `/sync/v1`;
-  `Content-Length` âm bị từ chối; tải lên không ghi đè và không nhận tên thiết bị của Windows. CÒN: mã thiết bị đi dạng
-  rõ qua HTTP trong LAN (như đồng bộ điện thoại từ trước) - TLS tự ký ghim vân tay lúc ghép là việc sau.
+  `Content-Length` âm bị từ chối; tải lên không ghi đè và không nhận tên thiết bị của Windows.
+  **TLS ghim vân tay** (`webui/tls.py`): mọi cổng nghe trên LAN - cổng đồng bộ của máy tính và `LibraryServer.kt` của điện
+  thoại chia sẻ thư viện - chỉ nói HTTPS với MỘT chứng chỉ tự ký ECDSA P-256 sinh một lần (máy tính: `sync-tls.pem` cạnh
+  `preferences.json`, sinh bằng số học thuần Python vì `cryptography` không nằm trong Python nhúng và thêm gói là đổi `uv.lock`;
+  điện thoại: khoá trong AndroidKeyStore, `ShareTls.kt`). HTTP thường gửi tới cổng ấy bị cắt ngay lúc bắt tay. Lời đáp
+  `/sync/v1/pair` mang `fingerprint` (SHA-256 của chứng chỉ, 64 hex thường); bên ghép nhận chứng chỉ lần đầu, đối chiếu với
+  vân tay máy kia tự báo, rồi ghi cùng thiết bị (`computers.json`, Android `sync`/`peers` `fingerprint`). Từ đó mọi kết nối -
+  Python `tls.PinnedHTTPSConnection`, Android `Pin.kt` (HttpsURLConnection mặc định, nên cả trình phát Media3 và đường hầm
+  Bluetooth) - kiểm vân tay NGAY sau bắt tay, trước khi gửi mã thiết bị; khác là lỗi bảo ghép lại, không bao giờ rơi về HTTP hay
+  tự nhận chứng chỉ mới. Trình duyệt (Studio từ xa) không ghim được: báo "không an toàn" một lần, và Cài đặt hiện vân tay để đối
+  chiếu; cookie mang `Secure`. Giới hạn: kẻ chen vào đúng 5 phút ghép (người dùng tự bấm "Ghép thiết bị mới") vẫn có thể được ghi
+  nhận như máy kia - sau lần ghép đầu thì hết cách chen. Máy chủ giao diện cục bộ `127.0.0.1` (cửa sổ app) vẫn HTTP.
 
 ## Android: `mobile/`
 

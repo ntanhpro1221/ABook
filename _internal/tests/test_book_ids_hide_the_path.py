@@ -23,12 +23,12 @@ from abook.webui.remote_books import _folder
 from abook.webui.reviews import Reviews
 from abook.webui.server import App, Server
 from abook.webui.sync import Devices, SyncApp, SyncServer
-from tests.test_webui_listen_and_sync import _request, library  # noqa: F401 - library là fixture
+from tests.test_webui_listen_and_sync import _request, _sync_request, library  # noqa: F401 - library là fixture
 
 
 def _paired(port: int, devices: Devices) -> str:
     code = devices.start_pairing()["code"]
-    _status, data, _ = _request(port, "POST", "/sync/v1/pair", body={"code": code, "device": "Pixel"})
+    _status, data, _ = _sync_request(port, "POST", "/sync/v1/pair", body={"code": code, "device": "Pixel"})
     return json.loads(data)["token"]
 
 
@@ -125,19 +125,19 @@ def test_a_phone_that_still_knows_the_old_id_keeps_syncing(library, tmp_path: Pa
     old, new = legacy_book_id(project.resolve()), book_id(project)
     try:
         token = _paired(server.port, devices)
-        status, data, _ = _request(server.port, "GET", f"/sync/v1/books/{old}/manifest", token)
+        status, data, _ = _sync_request(server.port, "GET", f"/sync/v1/books/{old}/manifest", token)
         assert status == 200 and json.loads(data)["id"] == old, "gói trả đúng mã điện thoại hỏi"
         record = default_record_id(old)
         body = {"last": {"chapterId": 1, "seconds": 42.0, "at": time.time()}, "chapters": {}, "bookmarks": [],
                 "record": record}
-        status, data, _ = _request(server.port, "POST", f"/sync/v1/books/{old}/state", token, body=body)
+        status, data, _ = _sync_request(server.port, "POST", f"/sync/v1/books/{old}/state", token, body=body)
         assert status == 200 and json.loads(data)["book"] == old, "điện thoại cũ không tưởng hồ sơ đã sang cuốn khác"
         assert listening.books() == [new] and listening.get(new)["last"]["seconds"] == 42.0
 
-        status, data, _ = _request(server.port, "POST", "/sync/v1/match", token,
+        status, data, _ = _sync_request(server.port, "POST", "/sync/v1/match", token,
                                    body={"books": [{"key": old}, {"key": "f-cua-dien-thoai"}]})
         assert json.loads(data)["matches"] == {old: new}, "điện thoại mới hỏi được mã mới của cuốn đã tải"
-        _status, data, _ = _request(server.port, "GET", "/sync/v1/library", token)
+        _status, data, _ = _sync_request(server.port, "GET", "/sync/v1/library", token)
         assert [book["id"] for book in json.loads(data)["books"]] == [new]
     finally:
         server.stop()

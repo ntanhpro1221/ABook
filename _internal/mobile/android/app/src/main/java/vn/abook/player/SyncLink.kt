@@ -7,10 +7,12 @@ import org.json.JSONObject
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
+import javax.net.ssl.HttpsURLConnection
 
 /**
- * Đường tới máy tính đã ghép (địa chỉ, cổng, mã thiết bị trong SharedPreferences "sync") - dùng chung cho thư viện
- * (LibraryPlugin: tải sách, đồng bộ chỗ nghe) và điều khiển từ xa (Remote).
+ * Đường tới máy tính đã ghép (địa chỉ, cổng, mã thiết bị, vân tay chứng chỉ TLS trong SharedPreferences "sync") - dùng chung
+ * cho thư viện (LibraryPlugin: tải sách, đồng bộ chỗ nghe) và điều khiển từ xa (Remote). Mọi đường là HTTPS với chứng chỉ đã
+ * ghim lúc ghép ([Pin]); chứng chỉ đổi thì lỗi [Pin.CHANGED], không rơi về HTTP.
  */
 object SyncLink {
     fun prefs(context: Context): SharedPreferences = context.getSharedPreferences("sync", Context.MODE_PRIVATE)
@@ -64,15 +66,16 @@ object SyncLink {
         return Triple((routes.optJSONArray("lan") ?: JSONArray()).toString(), routes.optInt("port", 0), bluetooth)
     }
 
-    /** Gốc http tới máy tính chính theo đường đang thông (Route - không bao giờ chặn luồng gọi). */
+    /** Gốc https tới máy tính chính theo đường đang thông (Route - không bao giờ chặn luồng gọi). */
     fun base(context: Context): String {
+        Pin.install(context)
         val prefs = prefs(context)
         val (lan, bluetooth) = routes(prefs)
         val choice = Route.pick(lan, bluetooth)
-        choice.lan?.let { return "http://$it" }
+        choice.lan?.let { return "https://$it" }
         // Bluetooth: "bt:<địa chỉ>" - đi qua đường hầm (BluetoothLink), cùng giao thức.
         choice.bluetooth?.let { return BluetoothLink.base(context, it) }
-        return "http://${prefs.getString("host", "")}:${prefs.getInt("port", 47630)}"
+        return "https://${prefs.getString("host", "")}:${prefs.getInt("port", 47630)}"
     }
 
     /**
@@ -80,6 +83,7 @@ object SyncLink {
      * (`remoteId`; sách của máy tính chính dùng đúng mã của nó).
      */
     fun linkFor(context: Context, bookId: String): Pair<Peers.Link, String> {
+        Pin.install(context)
         val manifest = Store.playableManifest(bookId)
         val source = manifest?.optString("source").orEmpty()
         if (source.isNotEmpty()) {
@@ -108,12 +112,29 @@ object SyncLink {
         } catch (error: IOException) {
             // Nối LAN của máy tính chính hỏng (ra khỏi Wi-Fi nhà): đánh dấu hỏng và thử lại ngay một lần qua Bluetooth.
             val (lan, bluetooth) = routes(prefs(context))
-            val target = lan.firstOrNull { root == "http://$it" }
+            val target = lan.firstOrNull { root == "https://$it" }
             if (target == null || bluetooth == null) throw error
             Route.markDown(target)
             return send(context, method, path, body, auth, BluetoothLink.base(context, bluetooth), readTimeoutMs,
                 connectTimeoutMs, token)
         }
+    }
+
+    /**
+     * Ghép với một máy (`root` = "https://host:port", máy tính hay điện thoại chia sẻ): trả lời đáp và VÂN TAY chứng chỉ máy ấy.
+     * Lần duy nhất nhận chứng chỉ chưa biết ([Pin.firstUse]); vân tay thấy được phải trùng vân tay máy kia tự báo trong lời đáp,
+     * rồi người gọi ghi lại để từ đó chỉ nhận đúng chứng chỉ này.
+     */
+    fun pair(context: Context, root: String, body: JSONObject): Pair<JSONObject, String> {
+        Pin.install(context)
+        val seen = arrayOfNulls<String>(1)
+        val text = send(context, "POST", "/sync/v1/pair", body, false, root, 20_000, 5000, null, seen)
+        val reply = JSONObject(text)
+        val fingerprint = seen[0].orEmpty()
+        if (fingerprint.isEmpty() || !reply.optString("fingerprint").equals(fingerprint, ignoreCase = true)) {
+            throw IllegalStateException("Chứng chỉ máy kia không khớp với vân tay nó báo - dừng ghép, thử lại")
+        }
+        return reply to fingerprint
     }
 
     private fun send(
@@ -126,8 +147,29 @@ object SyncLink {
         readTimeoutMs: Int,
         connectTimeoutMs: Int,
         token: String?,
+        firstUse: Array<String?>? = null,
+    ): String {
+        Pin.install(context)
+        return Pin.guard {
+            exchange(context, method, path, body, auth, root, readTimeoutMs, connectTimeoutMs, token, firstUse)
+        }
+    }
+
+    private fun exchange(
+        context: Context,
+        method: String,
+        path: String,
+        body: JSONObject?,
+        auth: Boolean,
+        root: String,
+        readTimeoutMs: Int,
+        connectTimeoutMs: Int,
+        token: String?,
+        firstUse: Array<String?>?,
     ): String {
         val connection = URL(root + path).openConnection() as HttpURLConnection
+        // `firstUse` != null: yêu cầu ghép - nhận chứng chỉ lạ một lần và đọc vân tay ra mảng này.
+        if (firstUse != null && connection is HttpsURLConnection) Pin.firstUse(connection)
         connection.requestMethod = method
         connection.connectTimeout = connectTimeoutMs
         connection.readTimeout = readTimeoutMs
@@ -140,6 +182,7 @@ object SyncLink {
         }
         val code = connection.responseCode
         val text = (if (code < 400) connection.inputStream else connection.errorStream)?.bufferedReader()?.use { it.readText() } ?: ""
+        if (firstUse != null && connection is HttpsURLConnection) firstUse[0] = Pin.peerFingerprint(connection)
         connection.disconnect()
         if (code >= 400) {
             val message = runCatching { JSONObject(text).optString("error") }.getOrNull()

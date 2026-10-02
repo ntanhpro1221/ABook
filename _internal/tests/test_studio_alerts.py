@@ -9,7 +9,7 @@ from pathlib import Path
 
 from abook.webui.remote_studio import StudioGate
 from abook.webui.sync import Devices, SyncApp, SyncServer
-from tests.test_webui_listen_and_sync import _request, library  # noqa: F401 - fixture dùng chung
+from tests.test_webui_listen_and_sync import _sync_request, library  # noqa: F401 - fixture dùng chung
 
 
 def test_the_phone_reads_a_compact_production_status_only_when_allowed(library, tmp_path: Path) -> None:  # noqa: F811
@@ -21,15 +21,15 @@ def test_the_phone_reads_a_compact_production_status_only_when_allowed(library, 
     server = SyncServer(app, host="127.0.0.1", port=0).start()
     try:
         code = devices.start_pairing()["code"]
-        _status, data, _ = _request(server.port, "POST", "/sync/v1/pair", body={"code": code, "device": "Pixel"})
+        _status, data, _ = _sync_request(server.port, "POST", "/sync/v1/pair", body={"code": code, "device": "Pixel"})
         token = json.loads(data)["token"]
-        status, data, _ = _request(server.port, "GET", "/sync/v1/studio", token)
+        status, data, _ = _sync_request(server.port, "GET", "/sync/v1/studio", token)
         assert status == 403 and "chưa cho phép" in json.loads(data)["error"], "công tắc Studio từ xa đang tắt"
         switch["on"] = True
-        status, data, _ = _request(server.port, "GET", "/sync/v1/studio", token)
+        status, data, _ = _sync_request(server.port, "GET", "/sync/v1/studio", token)
         assert status == 403 and "điều khiển sản xuất" in json.loads(data)["error"], "ghép lúc công tắc tắt: chỉ quyền nghe"
         assert devices.set_studio(devices.list()[0]["id"], True)
-        status, data, _ = _request(server.port, "GET", "/sync/v1/studio", token)
+        status, data, _ = _sync_request(server.port, "GET", "/sync/v1/studio", token)
         view = json.loads(data)
         assert status == 200 and view["name"] == "Máy thử" and view["at"] > 0
         assert "onBattery" in view, "điện thoại báo máy tuột sạc cả khi không có sách nào chạy"
@@ -38,7 +38,7 @@ def test_the_phone_reads_a_compact_production_status_only_when_allowed(library, 
         assert book["paused"] is None
         assert book["chapters"]["total"] >= 1 and book["running"] is False
         assert book["work"] is None, "sách đời cũ của fixture không dựng được hộp việc: 'không biết', vẫn có mặt"
-        status, _data, _ = _request(server.port, "GET", "/sync/v1/studio")
+        status, _data, _ = _sync_request(server.port, "GET", "/sync/v1/studio")
         assert status == 401, "chưa ghép thì không thấy gì"
     finally:
         server.stop()
