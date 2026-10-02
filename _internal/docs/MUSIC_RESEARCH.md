@@ -19,11 +19,8 @@ thành đoạn (`webui/music_scenes.py`), chọn bài gần nhất (`webui/music
   nội dung giấy phép mở, miễn phí vĩnh viễn).
 - Openverse chỉ là "tìm thêm ngoài danh mục" (vô danh, hạn mức theo IP từng người dùng); máy dựng danh mục lấy bài bằng
   API nguồn gốc (điều khoản Openverse cấm cào kho).
-- Chờ chủ sách: tài khoản Cloudflare (
- ⛅️ wrangler 4.146.0
-────────────────────
-Attempting to login via OAuth...
-Opening a link in your default browser: https://dash.cloudflare.com/oauth2/auth?response_type=code&client_id=54d11594-84e4-41aa-b438-e81b8fa78ee7&redirect_uri=http%3A%2F%2Flocalhost%3A8976%2Foauth%2Fcallback&scope=k2.read%20k2.write%20account%3Aread%20user%3Aread%20workers%3Awrite%20workers_kv%3Awrite%20workers_routes%3Awrite%20workers_scripts%3Awrite%20workers_tail%3Aread%20d1%3Awrite%20pages%3Awrite%20zone%3Aread%20ssl_certs%3Awrite%20ai%3Awrite%20ai-search%3Awrite%20ai-search%3Arun%20agent-memory%3Awrite%20queues%3Awrite%20pipelines%3Awrite%20secrets_store%3Awrite%20artifacts%3Awrite%20flagship%3Awrite%20containers%3Awrite%20cloudchamber%3Awrite%20connectivity%3Aadmin%20email_routing%3Awrite%20email_sending%3Awrite%20browser%3Awrite%20challenge-widgets.write%20offline_access&state=vKISkfIq2w2Evdw9Kjib31H6FpRUJY-c&code_challenge=BD2BVWA7WIcythy-25LT0Wtw3BbcRGQhVp_2AmLmqvw&code_challenge_method=S256) và archive.org (khoá S3 để đăng bản dự phòng).
+- Tài khoản (đã có từ 02-10): Cloudflare - Worker tĩnh `abook-music` (triển khai bằng `wrangler deploy` trong
+  `LLM_Train/music`); archive.org - khoá S3 để đăng bản dự phòng.
 
 ## Bốn câu hỏi
 
@@ -264,6 +261,54 @@ các cặp người chấm trước (Pk 0,13-0,21), nên người chấm Sonnet 
 Đo bằng chính dây chuyền: Whisper trên chương có nhạc ở nhiều mức (nền thấp hơn giọng 15 / 18 / 21 / 24 / 27 LU, có / không
 hạ khi có giọng), lấy mức to nhất mà WER tăng không quá một ngưỡng nhỏ so với bản không nhạc; kiểm thêm độ to toàn chương
 và trần đỉnh như luật cân mức hiện có (AGENTS.md). Thời gian chuyển cảnh, độ dài vào/ra đặt theo cùng phép đo.
+
+### Kết quả Pha 4 (02-10, phiên Music)
+
+**Lỗi có thật trong app:** trình phát (máy tính `musicBed.ts`, Android `MusicBed.kt`) đặt âm lượng nhạc = 10^(levelDb/20)
+CỐ ĐỊNH cho mọi bài, không bù độ to riêng của bài. Giọng mọi chương ở −20,3 LUFS (đo 6 chương, 2 cuốn), còn LUFS tích hợp
+(BS.1770) của 1.826 bài danh mục mới trải −27,3..−9,5 (p5..p95; Incompetech ước từ 3 đoạn 10 s, hiệu chỉnh trên 150 bài đo
+cả bài: lệch +0,71 dB, SD 1,5). Nên khoảng cách độ to giọng − nhạc (LD) người nghe nhận dao động ~10..27 LU tuỳ bài máy
+chọn: bài to lấn lời (6% bài dưới 10 LU, 38% dưới 15), bài nhỏ gần như không nghe thấy.
+
+**Người nghe muốn bao nhiêu (nghiên cứu, không cần tự nghe):** Torcoli và cộng sự 2019 (JAES 67(12), 22 người): lời bình
+trên NHẠC cần LD tối thiểu ~10 LU, trên tiếng nền 15 LU; người không chuyên thích LD cao hơn chuyên gia ~4 LU; sở thích
+từng người rất khác (IQR ~5,7 LU, Torcoli 2023). Người trên 65 tuổi chọn LD lớn hơn bản phát sóng gốc. WCAG G56: nền thấp
+hơn lời ít nhất 20 dB. Kinh nghiệm sách nói / podcast: nhạc thấp hơn giọng 18-24 dB.
+
+**Đo khách quan trên giọng thật (`LLM_Train/music/mix_intelligibility.py`):** 6 đoạn 120 s giọng đã xuất bản (2 cuốn,
+nhiều nhân vật) trộn với 18 bài rải đều theo độ lấn dải tiếng nói (speechBand 0,03..0,96), LD 0..25 LU; ESTOI (Jensen &
+Taal 2016) giữa giọng sạch và bản trộn:
+
+| LD (LU) | 0 | 5 | 10 | 15 | 20 | 25 |
+|---|---|---|---|---|---|---|
+| ESTOI trung bình | 0,56 | 0,69 | 0,80 | 0,88 | 0,94 | 0,97 |
+| ESTOI p10 | 0,43 | 0,56 | 0,69 | 0,81 | 0,89 | 0,94 |
+
+LD cần để ESTOI ≥ 0,9: trung vị 16,9, p90 21,0; bài càng lấn dải tiếng nói càng cần thêm (LD ≈ 12,3 + 8,1 × speechBand,
+r 0,48). Luật "LD của bài = LD cuốn + 8 × (speechBand − 0,30)", phần bù kẹp ±6 dB (trung vị danh mục 0,30 -> bù p10..p90 =
+−2..+3,9 dB):
+
+| LD cuốn | ESTOI ≥ 0,9 (cố định / có bù) | ESTOI tệ nhất (cố định / có bù) |
+|---|---|---|
+| 16 | 44% / 57% | 0,75 / 0,83 |
+| 18 | 67% / 76% | 0,79 / 0,86 |
+| **20** | 82% / **94%** | 0,82 / **0,89** |
+
+**Quyết định:** mặc định LD 20 LU (trùng WCAG, nằm trong 18-24 của sách nói, chừa chỗ cho người không chuyên / lớn tuổi /
+nghe nơi ồn) + bù theo speechBand từng bài; người dùng chỉnh mức trong Studio (nghĩa mới của `levelDb` = −LD so với giọng).
+Mỗi bài trong danh mục mang `lufs` và `speechBand`. Whisper WER (sàn an toàn, cùng bộ trộn) chờ khe GPU - Whisper chịu nhạc
+tốt hơn tai người nên không dùng để chọn mức. Chưa đo: hạ nhạc khi có giọng (sách nói gần như liền giọng, lợi nhỏ), độ dài
+chuyển cảnh.
+
+**Danh mục dựng lại (02-10, chưa triển khai):** thêm Freesound (313 ứng viên CC0/CC BY -> 69 bài qua lọc; cổ phong phương
+Đông 27 -> 47 bài); bộ lọc mới cho bản thu ngoài trời (thẻ / tên người đăng: field-recording, ambience, street, crowd,
+festival... + điểm CLAP "tạp âm" vượt phân vị 99 của Incompetech, `probe_noise.py`) bỏ 58 bài mà bộ lọc "có lời" không bắt
+(đàn tranh có tiếng người lao xao, múa lân, phố xá). 1.826 bài (bản triển khai 01:08 có 955 - lúc ấy phân tích chưa xong kho).
+
+**Pha 2c - chọn chỗ cắt (dời mốc 3 phút tới chỗ không khí đổi mạnh nhất từ nhãn câu, `snap:W` trong eval_scenes.py): KHÔNG
+giúp** trên cả 17 chương (số phát triển - thiết kế sau khi đã thấy mọi đáp án): W 30/60/90 s không hơn chia đều về ranh giới,
+r không khí kém hơn. Khớp kết luận cũ: nhãn cảm xúc câu không thấy đổi cảnh. Chia đều trong đoạn (app) và cắt mỗi 180 s từ
+đầu chương (fixed3) khác nhau trong mức nhiễu (mỗi bên thắng một số chương).
 
 ## Thứ tự và tài nguyên
 
