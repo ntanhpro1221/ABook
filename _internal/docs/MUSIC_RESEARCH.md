@@ -348,6 +348,10 @@ tải tự động), chọn bằng luật cố định chỉ đọc dòng tiêu 
 (truyện mọi chương < 15 KB: 2 chương đầu tiên >= 8 KB): Make Heroine ga Oosugiru 017 (file 018 là lời bạt nên chỉ một
 chương), Rokujouma no Shinryakusha 014, 015, Shimotsuki wa Mob ga Suki 029, 032. Tổng bộ 4 = 10 chương. Lưu ý: Hướng dẫn
 sinh tồn 090 nằm trong dữ liệu huấn luyện 9B-v8 (nhãn câu có thể đẹp hơn thật) - báo thêm kết quả khi bỏ chương này.
+QUY ƯỚC CHẤM (02-10 chiều, khi mới có đáp án 2/10 chương, chưa đọc kết quả): "hơn ở >= 7/10 chương" so r trung bình ba
+trục TRONG từng chương; `hard` thường chỉ một đoạn mỗi chương nên dự đoán hằng và r không xác định - tính 0 (không mang
+thông tin), cùng quy ước cho mọi cách. Khi bỏ HDST 090 còn 9 chương: cần >= 7/9. Chấm bằng `score_set4.py` (Corpus
+research/music).
 
 ## Thứ tự và tài nguyên
 
