@@ -1,11 +1,11 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { FileDown, ImagePlus, Loader2, Music2, Trash2, Volume2, VolumeX, Wrench } from "lucide-react";
+import { FileDown, ImagePlus, Loader2, Music2, Pencil, Trash2, Volume2, VolumeX, Wrench } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
-import { canEditLayer, studioNeed } from "@/shared/capabilities";
+import { canEditLayer, editBlockedNote, studioNeed } from "@/shared/capabilities";
 import { formatClock } from "@/shared/format";
 import { levelOptions } from "@/shared/musicLevels";
 import { Button, Dialog, Segmented } from "@/shared/ui";
@@ -477,6 +477,21 @@ export function StudioOnlyItem({ book }: { book: ListenBook }) {
       <span className="min-w-0">
         <span className="block">Đổi giọng, sửa lời đọc, thu lại chương</span>
         <span className="block text-xs text-fg-3">{need}</span>
+      </span>
+    </DropdownMenu.Item>
+  );
+}
+
+/** Cuốn nghe thẳng từ máy khác: mục sửa vẫn hiện, mờ đi, nói vì sao không sửa được ở đây - không giấu. */
+export function EditBlockedItem({ book }: { book: ListenBook }) {
+  const note = editBlockedNote(book.capabilities);
+  if (!note) return null;
+  return (
+    <DropdownMenu.Item disabled className={cn(MENU_ITEM, "h-auto items-start py-1.5 data-[disabled]:opacity-60")}>
+      <Pencil className="mt-0.5 size-4 shrink-0" />
+      <span className="min-w-0">
+        <span className="block">Sửa tên, bìa, nhạc nền…</span>
+        <span className="block text-xs text-fg-3">{note}</span>
       </span>
     </DropdownMenu.Item>
   );

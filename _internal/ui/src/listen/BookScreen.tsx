@@ -11,7 +11,7 @@ import { formatClock, formatLength, formatNumber } from "@/shared/format";
 import { Button, Dialog, EmptyState, IconButton, Progress, Skeleton, Tabs, TabsContent, TabsList, TabsTrigger, Tooltip, Vu } from "@/shared/ui";
 import { RenamePersonDialog } from "@/studio/CastEdits";
 import { useClip } from "./clip";
-import { canEditBook, EditBookDialog, refreshAfterEdit, RenameChapterDialog, SaveAsDialog, StudioOnlyItem, useSaveBook } from "./EditBook";
+import { canEditBook, EditBlockedItem, EditBookDialog, refreshAfterEdit, RenameChapterDialog, SaveAsDialog, StudioOnlyItem, useSaveBook } from "./EditBook";
 import { bookStatusText, usePlayListenBook } from "./LibraryScreen";
 import { chapterHeard, chaptersByPart, resumePoint, type CastMember, type ListenBook, type ListenChapter } from "./model";
 import { usePlayer } from "./player";
@@ -790,6 +790,7 @@ export function BookScreen({
                       )}
                     </>
                   )}
+                  {editing !== false && <EditBlockedItem book={book} />}
                   {editing !== false && <StudioOnlyItem book={book} />}
                   {extraActions?.(book)}
                 </DropdownMenu.Content>

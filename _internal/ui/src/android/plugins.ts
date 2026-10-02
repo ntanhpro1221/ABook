@@ -290,6 +290,8 @@ export interface EbookLibraryPlugin {
 export interface ImportEvent {
   bookId?: string;
   title?: string;
+  /** Cuốn đã có trên máy và đã có thay đổi của người nghe: số thay đổi được giữ nguyên (BookFileImport.Imported.keptEdits). */
+  keptEdits?: number;
   error?: string;
 }
 
