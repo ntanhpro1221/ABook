@@ -7,6 +7,10 @@ description: Thủ tục khi phiên ABook thức dậy - sau khi máy khởi đ�
 
 Mục tiêu: không việc nền nào nằm chết, không ngồi chờ. Làm theo thứ tự; bước nào đã ổn thì bỏ qua.
 
+Ba phiên theo luồng (bộ nhớ `session-lanes`): Lead (đầu mối duy nhất với chủ sách, giữ chuông và ngưỡng nén), Model
+(DUY NHẤT thả việc GPU), Music. Mỗi phiên chỉ thả lại việc rời của luồng mình. Phiên Lead được tác vụ hẹn giờ
+`abook-watchdog` của app đánh thức mỗi giờ và ngay khi app mở lại sau reboot (mở phiên KHÔNG tự làm Claude chạy).
+
 ## 1. Có khởi động lại không?
 
 PowerShell: `(Get-CimInstance Win32_OperatingSystem).LastBootUpTime`. Mới hơn lần thả việc rời cuối (xem
@@ -37,7 +41,13 @@ Bash `run_in_background`, từ `D:/Novels/ABook/_internal`:
 - B: `runtime/.venv/Scripts/python.exe scripts/heartbeat_timeout.py --hours 2` (đặt lại bằng `--reset` mỗi lần A reo).
 Mỗi lần A reo: xử lý sự kiện, thả lại A, đặt lại B.
 
-## 5. Làm tiếp - không ngồi chờ
+## 5. Đánh thức cấp dưới (chỉ phiên Lead)
+
+Sau reboot: SendMessage cho Model và Music "máy vừa khởi động lại lúc ..., chạy abook-wake cho luồng của bạn rồi báo
+Lead". Mỗi lần thức: `get_usage(session_id)` từng phiên con (> ~50% thì nhắn ghi trạng thái), `list_events` khi cần
+xem chúng làm gì.
+
+## 6. Làm tiếp - không ngồi chờ
 
 - Đọc `app-backlog` trong bộ nhớ: việc app ĐANG LÀM. Đọc `work-efficiency`: cách chia việc cho agent.
 - Agent nền dở dang: `SendMessage` cho nó chạy tiếp thay vì thả agent mới.
