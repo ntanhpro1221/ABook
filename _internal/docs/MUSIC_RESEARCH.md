@@ -513,6 +513,9 @@ Cách chấm:
 Người chấm và luật dùng được:
 - **J-omni1** = Qwen2.5-Omni-7B Q4 (`omni_judge.py rate`).
 - **J-af3** = Audio Flamingo 3 (NVIDIA, giấy phép NC dùng được), cùng giao thức. Đo VRAM trước; không vừa 8 GB thì chạy Mac.
+  - SỬA TRƯỚC KHI CÓ SỐ (02-10 23:xx): dùng **Music Flamingo 2601** (`nvidia/music-flamingo-2601-hf`). Đây là bản NVIDIA
+    dựng trên AF3, chuyên hiểu nhạc, cùng giấy phép NC, tải 16,5 GB thay vì 33 GB của AF3. Model nạp 4-bit NF4, riêng bộ
+    mã hoá âm thanh giữ bf16 (`mf_rate.py`). Cùng hai cách hỏi, cùng thang 1-7.
 - **Độ ổn định:** lượt lặp của E1 cho cùng đầu vào nên tầm thường. Thay vào đó dùng độ khớp phán quyết giữa cách hỏi a và b
   trên 300 lượt.
 - **Dùng được** khi ổn định ≥ 0,75 và kappa với phán quyết chung của c1 + c2 (E1) ≥ 0,20.
