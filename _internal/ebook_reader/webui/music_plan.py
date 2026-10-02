@@ -11,7 +11,9 @@ hai file giữ ổn định để lựa chọn của người dùng không mất
 """
 from __future__ import annotations
 
+import hashlib
 import json
+import re
 import time
 from pathlib import Path
 from typing import Any, Callable, Iterable
@@ -139,3 +141,63 @@ def chapter_cues(plan: dict[str, Any], chapter_id: int) -> list[dict[str, Any]]:
         cues.append({"start": float(scene["start"]), "end": float(scene["end"]), "link": scene["link"],
                      "key": scene["key"]})
     return cues
+
+
+TRACK_FILE = re.compile(r"music/[0-9a-f]{40}\.mp3")
+
+
+def track_name(link: str) -> str:
+    """Tên file của một bài trong gói sách: `music/<sha1 của link>.mp3` (cùng tên với bộ đệm của máy)."""
+    return f"music/{hashlib.sha1(link.encode('utf-8')).hexdigest()}.mp3"
+
+
+def package(project_root: Path, chapter_ids: Iterable[int],
+            track_file: Callable[[str], Path | None]) -> tuple[dict[str, Any], dict[str, Path]] | None:
+    """Nhạc nền đi theo cuốn sách khi xuất (chủ sách 01-10: sách xuất ra mang nhạc người sản xuất đã gắn): mục `music`
+    của book.json + các file bài. Bài nào không lấy được file (mất mạng, nguồn gỡ) thì các mốc của nó bỏ đi - chỗ đó
+    im lặng, sách vẫn xuất được. Rãnh nhạc tắt / chưa dựng -> None (sách không nhạc, định dạng cũ)."""
+    plan = read_plan(project_root)
+    if plan is None or not plan.get("enabled"):
+        return None
+    files: dict[str, Path] = {}
+    tracks: dict[str, dict[str, Any]] = {}
+    chapters: dict[str, list[dict[str, Any]]] = {}
+    for chapter_id in chapter_ids:
+        kept = []
+        for cue in chapter_cues(plan, chapter_id):
+            name = track_name(cue["link"])
+            if name not in files:
+                path = track_file(cue["link"])
+                if path is None:
+                    continue
+                files[name] = path
+                info = (plan.get("tracks") or {}).get(cue["link"]) or {}
+                tracks[name] = {"file": name, "link": cue["link"],
+                                **{key: info.get(key) for key in ("title", "creator", "license", "licenseUrl",
+                                                                  "attribution", "landing") if info.get(key)}}
+            kept.append({"start": round(cue["start"], 3), "end": round(cue["end"], 3), "track": name})
+        if kept:
+            chapters[str(chapter_id)] = kept
+    if not chapters:
+        return None
+    music = {"levelDb": plan.get("levelDb", DEFAULT_LEVEL_DB), "tracks": tracks, "chapters": chapters}
+    return music, files
+
+
+def packaged_cues(music: dict[str, Any] | None, chapter_id: int) -> list[dict[str, Any]]:
+    """Mốc nhạc của một chương từ mục `music` của một cuốn đã đóng gói: [{start, end, link, key, track}]."""
+    if not isinstance(music, dict):
+        return []
+    tracks = music.get("tracks") if isinstance(music.get("tracks"), dict) else {}
+    out = []
+    for cue in (music.get("chapters") or {}).get(str(chapter_id)) or []:
+        track = cue.get("track") if isinstance(cue, dict) else None
+        if not isinstance(track, str) or not TRACK_FILE.fullmatch(track) or track not in tracks:
+            continue
+        try:
+            start, end = float(cue["start"]), float(cue["end"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        out.append({"start": start, "end": end, "link": tracks[track].get("link") or track, "key": track,
+                    "track": track})
+    return out

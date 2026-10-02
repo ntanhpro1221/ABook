@@ -100,6 +100,17 @@ def _file(path: Path, relative: Any) -> Path | None:
     return _inside(path, relative)
 
 
+def music_file(path: Path, name: str) -> Path | None:
+    """File nhạc nền mang theo trong gói (music/<sha1>.mp3, chỉ tên có trong mục `music` của book.json)."""
+    from .music_plan import TRACK_FILE
+
+    music = manifest(path).get("music")
+    tracks = music.get("tracks") if isinstance(music, dict) else None
+    if not TRACK_FILE.fullmatch(name) or not isinstance(tracks, dict) or name not in tracks:
+        return None
+    return _file(path, name)
+
+
 def _remote(path: Path) -> bool:
     from .remote_books import remote_of
 
