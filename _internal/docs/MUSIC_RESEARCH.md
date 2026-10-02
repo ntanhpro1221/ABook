@@ -601,6 +601,42 @@ Thước (ghi trước):
 Trò không đạt (a) thì thêm dữ liệu (MTG-Jamendo) hoặc đổi nhúng (MuQ / MERT, NC dùng được) rồi đo lại. Mỗi lần đổi ghi một dòng
 ở đây trước khi đo.
 
+**GHI TRƯỚC - MTG-JAMENDO LÀM DỮ LIỆU HỌC CHO TRÒ (02-10 23:xx, Lead + chủ sách):**
+
+Bộ dữ liệu:
+- autotagging_moodtheme: 18.486 bài, 56 tag mood/theme. Metadata CC BY-NC-SA, audio CC từng bài.
+- Bản audio đầy đủ, xử lý cuốn chiếu trần ~20 GB mỗi máy (`mtg_rolling.py`). Gói 00-57 chạy máy nhà, 58-99 chạy Mac.
+- Mỗi bài lưu nhúng CLAP + có lời / nền + âm học `acoustic_features2`. Chỉ giữ audio bài không lời (ứng viên danh mục).
+- Sổ gói: `done_tars.txt` mỗi máy.
+
+Nhãn thầy từ tag (ghi trước, cường độ 1 hoặc 0,5; lấy max khi nhiều tag cùng lớp; bài không có tag nào ánh xạ thì không có
+nhãn lớp ấy):
+
+| Lớp | Tag cường độ 1 | Tag cường độ 0,5 |
+|---|---|---|
+| peacefulness | calm, relaxing, meditative, nature | soft |
+| tenderness | love, romantic | ballad, soft |
+| nostalgia | | retro, melancholic |
+| sadness | sad, melancholic | emotional |
+| joy | happy, fun, positive, upbeat, party, summer, holiday | christmas |
+| playful | funny, children | fun |
+| power | epic, powerful, heavy, action, trailer, sport | motivational, energetic |
+| wonder | space | dream, inspiring, epic |
+| tension | | dramatic, dark, action, drama |
+| fear | dark | |
+| anger | | heavy |
+| mystery | dream, deep | space, soundscape |
+| moved | emotional, inspiring | hopeful, uplifting |
+
+Gộp với kênh chữ:
+- Người đọc chữ đọc tag MTG cộng tên bài theo cùng prompt; bảng trên là mức sàn.
+- Nhãn thầy MTG = max(bảng, người đọc chữ × độ tin cậy). Độ tin cậy nhãn = 0,6 nếu có ≥ 1 tag ánh xạ, không thì 0,2.
+
+Giữ ngoài:
+- 15% bài MTG (theo split-0 của bộ, phần test).
+- Thước phụ của trò: AUC từng tag MTG (56 tag) trên phần test, so với baseline đã công bố cho mood/theme (PR-AUC
+  ~0,12-0,15, ROC-AUC ~0,75-0,77 cho effnet/musicnn) để biết trò đứng đâu.
+
 **LỚP 2 PHÍA BÀI - 13 cường độ độc lập (02-10 22:xx, `derive_emotions.py`):**
 - **Zero-shot CLAP** (3 câu mô tả mỗi lớp, z theo cả kho, sigmoid): AUC so feel người gắn của Incompetech (1.381 bài)
   trung bình 0,69. Có lớp còn kém bản GEMS-9 cũ, như joy 0,46 so với 0,74.
