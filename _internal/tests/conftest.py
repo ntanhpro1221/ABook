@@ -118,6 +118,21 @@ def _no_music_model_download() -> Iterator[None]:
             os.environ["ABOOK_MUSIC_STUDENT_DOWNLOAD"] = previous
 
 
+@pytest.fixture(autouse=True, scope="session")
+def _no_ffmpeg_download() -> Iterator[None]:
+    """Bộ đọc nhạc (webui/ffmpeg_setup.py) không tải ffmpeg từ PyPI trong bài thử: máy thử có imageio_ffmpeg nên không cần tải;
+    bài thử nào cần đường tải thì thay studio_setup.download bằng bản giả."""
+    previous = os.environ.get("ABOOK_FFMPEG_DOWNLOAD")
+    os.environ["ABOOK_FFMPEG_DOWNLOAD"] = "0"
+    try:
+        yield
+    finally:
+        if previous is None:
+            os.environ.pop("ABOOK_FFMPEG_DOWNLOAD", None)
+        else:
+            os.environ["ABOOK_FFMPEG_DOWNLOAD"] = previous
+
+
 @pytest.fixture(autouse=True)
 def _count_sleeping(request: pytest.FixtureRequest) -> Iterator[None]:
     """Bọc `time.sleep` để đếm. Vẫn ngủ thật, trừ khi có người bật công tắc đo.

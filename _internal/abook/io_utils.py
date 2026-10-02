@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import time
 import unicodedata
@@ -190,13 +191,28 @@ def remove_part_files(
     return removed
 
 
+_downloaded_ffmpeg: Path | None = None
+
+
+def use_downloaded_ffmpeg(path: Path | str | None) -> None:
+    """Đăng ký ffmpeg tải về lúc chạy (webui/ffmpeg_setup.py: bản app chỉ-nghe không mang ffmpeg); None = gỡ."""
+    global _downloaded_ffmpeg
+    _downloaded_ffmpeg = Path(path) if path is not None else None
+
+
 def ffmpeg_executable() -> str:
     try:
         import imageio_ffmpeg
 
         return imageio_ffmpeg.get_ffmpeg_exe()
     except Exception:
-        return "ffmpeg.exe" if os.name == "nt" else "ffmpeg"
+        pass
+    if _downloaded_ffmpeg is not None and _downloaded_ffmpeg.is_file():
+        return str(_downloaded_ffmpeg)
+    found = shutil.which("ffmpeg")
+    if found:
+        return found
+    return "ffmpeg.exe" if os.name == "nt" else "ffmpeg"
 
 
 def run_hidden(command: Iterable[str], *, timeout: float | None = None, check: bool = True) -> subprocess.CompletedProcess[str]:
