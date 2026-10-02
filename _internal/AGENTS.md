@@ -8,7 +8,7 @@
 
 Yêu cầu bắt buộc:
 
-- workflow GUI mở shortcut **ABook** ở root hoặc trong Start Menu (tên cũ "Ebook Reader" tự gỡ khi khởi động); workflow tự động dùng
+- workflow GUI mở shortcut **ABook** ở root hoặc trong Start Menu; workflow tự động dùng
   `python -m abook.cli`/entrypoint `abook-headless` và tuyệt đối không điều khiển cửa sổ;
 - không hỏi người dùng trong lúc job đang chạy;
 - settings, model, voice mapping, seed và threshold bị khóa theo book;
@@ -405,7 +405,7 @@ _internal/
 └── LICENSE
 ```
 
-Tên kỹ thuật duy nhất là `abook`; tên hiển thị là `ABook` (tên cũ `Ebook Reader` chỉ còn trong mã chuyển dữ liệu/lối tắt cũ (`webui/library.py`, `install_windows_shortcut.ps1`); thư mục dự án là `D:\Novels\ABook`, repo `ntanhpro1221/ABook` từ 28-09). Không đưa file kỹ thuật mới ra root nếu không thật sự cần cho người dùng.
+Tên kỹ thuật duy nhất là `abook`; tên hiển thị là `ABook`; thư mục dự án là `D:\Novels\ABook`, repo `ntanhpro1221/ABook` từ 28-09. Không đưa file kỹ thuật mới ra root nếu không thật sự cần cho người dùng.
 
 Module chính:
 
