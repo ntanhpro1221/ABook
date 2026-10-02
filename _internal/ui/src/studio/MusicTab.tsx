@@ -55,8 +55,8 @@ const LEVELS: [number, string][] = [
   [-14, "To"],
   [-17, "Hơi to"],
   [-20, "Vừa (mặc định)"],
-  [-23, "Nhỏ"],
-  [-26, "Rất nhỏ"],
+  [-24, "Nhỏ"],
+  [-28, "Rất nhỏ"],
 ];
 
 const PREVIEW_SECONDS = 20;
@@ -279,6 +279,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
         </label>
         <label className="min-w-0 basis-full text-sm sm:basis-auto">
           <span className="block text-fg-2">Mức nhạc dưới giọng đọc</span>
+          <span className="block text-xs text-fg-2">Nhỏ hơn giọng đọc bấy nhiêu; máy tự bù bài to hay nhỏ</span>
           <select
             id="music-level"
             value={String(overrides.levelDb)}

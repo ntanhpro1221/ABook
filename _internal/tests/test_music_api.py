@@ -40,6 +40,8 @@ def test_the_player_gets_timed_cues_through_this_machine(studio, tmp_path: Path)
     assert status == 200 and cues["cues"]
     first = cues["cues"][0]
     assert first["src"] == "/api/music/track?link=" + quote(first["link"], safe="")
+    # gainDb tính ở máy chủ: danh mục thử chưa có lufs -> trung vị -16,6; levelDb mặc định -20 -> -23,4 dB.
+    assert all(cue["gainDb"] == -23.4 for cue in cues["cues"]) and cues["levelDb"] == -20.0
     # Ghi công (CC BY) của bài chương này dùng, khoá theo link của mốc - lấy từ plan["tracks"].
     tracks = json.loads((paths.root / "music_plan.json").read_text(encoding="utf-8")).get("tracks") or {}
     for cue in cues["cues"]:
@@ -260,3 +262,19 @@ def test_the_view_names_the_banned_tracks_and_survives_a_missing_catalog(studio,
     app._music_catalog = music_catalog.MusicCatalog(tmp_path / "empty_cache", str(tmp_path / "khong_co"))
     status, offline = _call(server, "GET", f"/api/books/{book}/music")
     assert status == 200 and offline["bannedTracks"] == {}
+
+
+def test_the_cue_gain_follows_the_users_level_and_the_track_loudness(studio, tmp_path: Path) -> None:  # noqa: F811
+    paths, app, server, _runner = studio
+    _with_catalog(app, tmp_path)
+    book = book_id(paths.root)
+    _call(server, "GET", f"/api/books/{book}/music")
+    _call(server, "PUT", f"/api/books/{book}/music", {"levelDb": -14})
+    plan = json.loads((paths.root / "music_plan.json").read_text(encoding="utf-8"))
+    chapter = plan["scenes"][0]["chapterId"]
+    link = next(scene["link"] for scene in plan["scenes"] if scene["chapterId"] == chapter and scene["link"])
+    plan["tracks"][link].update(lufs=-30.0, speechBand=0.7)  # như danh mục mới: -20 - 14 + 30 - 3,2
+    (paths.root / "music_plan.json").write_text(json.dumps(plan), encoding="utf-8")
+    status, cues = _call(server, "GET", f"/api/books/{book}/music/chapters/{chapter}")
+    assert status == 200 and cues["levelDb"] == -14.0
+    assert next(cue for cue in cues["cues"] if cue["link"] == link)["gainDb"] == -7.2

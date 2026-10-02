@@ -21,8 +21,10 @@ def _plan(project: Path, *, enabled: bool = True) -> None:
               {"chapterId": 1, "start": 30.0, "end": 60.0, "link": CALM, "key": "1:5"},
               {"chapterId": 1, "start": 60.0, "end": 90.0, "link": BATTLE, "key": "1:9"}]
     plan = {"version": music_plan.PLAN_VERSION, "enabled": enabled, "levelDb": -18.0, "scenes": scenes,
-            "tracks": {CALM: {"title": "Calm", "creator": "A", "attribution": "Calm by A (CC BY 4.0)"},
-                       BATTLE: {"title": "Battle", "creator": "B", "attribution": "Battle by B (CC BY 4.0)"}}}
+            "tracks": {CALM: {"title": "Calm", "creator": "A", "attribution": "Calm by A (CC BY 4.0)",
+                              "lufs": -26.0, "speechBand": 0.1},
+                       BATTLE: {"title": "Battle", "creator": "B", "attribution": "Battle by B (CC BY 4.0)",
+                                "lufs": -10.0, "speechBand": 0.7}}}
     (project / music_plan.PLAN_FILE).write_text(json.dumps(plan), encoding="utf-8")
 
 
@@ -54,8 +56,11 @@ def test_the_book_file_carries_the_producers_music(tmp_path: Path) -> None:
         music = manifest["music"]
         assert music["levelDb"] == -18.0 and set(music["tracks"]) == {calm, battle}
         assert music["tracks"][calm]["attribution"] == "Calm by A (CC BY 4.0)", "ghi công đi theo bài"
-        assert music["chapters"]["1"] == [{"start": 0.0, "end": 60.0, "track": calm},
-                                          {"start": 60.0, "end": 90.0, "track": battle}], "hai đoạn liền cùng bài gộp"
+        assert music["tracks"][calm]["lufs"] == -26.0 and music["tracks"][calm]["speechBand"] == 0.1, "độ to đi theo bài"
+        # gainDb tính một lần ở máy chủ (music_plan.cue_gain_db): -20 + (-18) - lufs - 8 x (speechBand - 0,30), kẹp <= 0.
+        assert music["chapters"]["1"] == [{"start": 0.0, "end": 60.0, "track": calm, "gainDb": -10.4},
+                                          {"start": 60.0, "end": 90.0, "track": battle, "gainDb": -31.2}
+                                          ], "hai đoạn liền cùng bài gộp"
 
 
 def test_a_book_without_music_keeps_the_old_format_so_older_apps_open_it(tmp_path: Path) -> None:
@@ -115,6 +120,7 @@ def test_a_book_opened_from_a_file_plays_its_packaged_music(studio, tmp_path: Pa
     assert status == 200 and cues["levelDb"] == -18.0 and len(cues["cues"]) == 2
     first = cues["cues"][0]
     assert first["src"].startswith(f"/api/books/{book}/music/files/") and first["start"] == 0.0
+    assert first["gainDb"] == -10.4 and cues["cues"][1]["gainDb"] == -31.2, "trình phát chỉ áp gainDb của gói"
     status, body, _headers = _request(server.port, "GET", first["src"], headers={"X-Ebook-Token": "t"})
     assert status == 200 and body.startswith(b"ID3")
     status, _body, _headers = _request(server.port, "GET", f"/api/books/{book}/music/files/{'0' * 40}.mp3",
@@ -159,3 +165,16 @@ def test_the_phone_package_carries_the_music_already_on_this_machine(tmp_path: P
     assert isinstance(found, Path) and found.read_bytes().startswith(b"ID3")
     assert app.resolve_file(project, music_plan.track_name(BATTLE)) is None
     assert app.resolve_file(project, f"music/{'0' * 40}.mp3") is None
+
+
+def test_a_package_without_catalog_loudness_falls_back_to_the_median_track(tmp_path: Path) -> None:
+    project = make_project(tmp_path)
+    _plan(project)
+    plan = json.loads((project / music_plan.PLAN_FILE).read_text(encoding="utf-8"))
+    for info in plan["tracks"].values():
+        info.pop("lufs"), info.pop("speechBand")
+    (project / music_plan.PLAN_FILE).write_text(json.dumps(plan), encoding="utf-8")
+    music, _files = music_plan.package(project, [1], _tracks(tmp_path))  # file giả không phải âm thanh: không đo được
+    assert all("lufs" not in info for info in music["tracks"].values())
+    median = music_plan.cue_gain_db(-18.0, None, None)
+    assert [cue["gainDb"] for cue in music["chapters"]["1"]] == [median, median]

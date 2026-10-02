@@ -11,20 +11,31 @@ hai file giữ ổn định để lựa chọn của người dùng không mất
 """
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
+import math
+import os
 import re
+import subprocess
 import time
 from pathlib import Path
 from typing import Any, Callable, Iterable
 
-from ..io_utils import atomic_write_json
+from ..config import DEFAULT_SETTINGS
+from ..io_utils import atomic_write_json, atomic_write_text, ffmpeg_executable, run_hidden
 from . import music_scenes, music_select, store
 
 PLAN_FILE = "music_plan.json"
 OVERRIDES_FILE = "music_overrides.json"
 PLAN_VERSION = 1
-DEFAULT_LEVEL_DB = -20.0  # nền thấp hơn giọng ~20 dB (đường cơ sở - Pha 4 đo lại bằng Whisper)
+# `levelDb` = nhạc nền thấp hơn GIỌNG bao nhiêu LU (Pha 4, docs/MUSIC_RESEARCH.md: -20 + bù theo bài -> 94% cặp ESTOI >= 0,9).
+DEFAULT_LEVEL_DB = -20.0
+VOICE_LUFS = float(DEFAULT_SETTINGS["audio"]["loudness_lufs"])  # giọng mọi chương được chuẩn hoá về mức này
+DEFAULT_TRACK_LUFS = -16.6  # trung vị danh mục: bài chưa có `lufs` (plan / danh mục cũ) và chưa có file để đo
+MASKING_CENTER = 0.30  # trung vị `speechBand` của danh mục: bài lấn dải tiếng nói hơn mức này thì hạ thêm
+MASKING_SLOPE_DB = 8.0
+MASKING_LIMIT_DB = 6.0
 FAMILIES = ("eastern", "orchestral", "piano", "ambient", "acoustic", "electronic", "other")
 
 
@@ -124,7 +135,8 @@ def build(project_root: Path, candidates_near: Callable[[float, float], Iterable
         "genre": overrides["genre"],
         "scenes": chosen,
         "tracks": {link: {key: tracks.get(link, {}).get(key) for key in
-                          ("title", "creator", "license", "licenseUrl", "attribution", "duration", "source", "landing")}
+                          ("title", "creator", "license", "licenseUrl", "attribution", "duration", "source", "landing",
+                           "lufs", "speechBand")}
                    for link in links},
     }
     atomic_write_json(project_root / PLAN_FILE, plan)
@@ -176,6 +188,78 @@ def chapter_cues(plan: dict[str, Any], chapter_id: int) -> list[dict[str, Any]]:
     return cues
 
 
+def _number(value: Any) -> float | None:
+    return float(value) if isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value) else None
+
+
+def measured_lufs(path: Path) -> float | None:
+    """LUFS tích hợp (BS.1770) của file bài nhạc, đo một lần rồi ghi cạnh file (`<tên>.lufs`) cho lần sau. Nguồn: bài
+    chưa có `lufs` trong danh mục mà file đã nằm trong bộ đệm. Giải mã stereo -> một kênh bằng (L+R)/sqrt(2) để công
+    suất tổng đúng như BS.1770 cộng hai kênh (đo kênh đơn thuần sẽ thấp hơn ~3 dB). Không đo được -> None."""
+    sidecar = Path(path).with_suffix(".lufs")
+    try:
+        cached = _number(float(sidecar.read_text(encoding="utf-8").strip()))
+    except (OSError, ValueError):
+        cached = None
+    if cached is not None:
+        return cached
+    from .. import audio_io  # nặng (numpy, pyloudnorm): chỉ nạp khi thật sự phải đo
+
+    wav = Path(path).with_suffix(f".{os.getpid()}.measure.wav")
+    try:
+        command = [ffmpeg_executable(), "-hide_banner", "-nostats", "-loglevel", "error", "-nostdin", "-y", "-i",
+                   str(path), "-map", "0:a:0", "-af", "pan=mono|c0=0.7071*c0+0.7071*c1", "-ar", "48000",
+                   "-codec:a", "pcm_f32le", str(wav)]
+        if run_hidden(command, timeout=300, check=False).returncode != 0:
+            return None
+        import soundfile
+
+        audio, rate = soundfile.read(wav, dtype="float32", always_2d=True)
+        value = audio_io.integrated_loudness_lufs(audio[:, 0], int(rate))
+    except (OSError, ValueError, subprocess.SubprocessError, RuntimeError):
+        return None
+    finally:
+        with contextlib.suppress(OSError):
+            wav.unlink(missing_ok=True)
+    if value is None:
+        return None
+    with contextlib.suppress(OSError):
+        atomic_write_text(sidecar, f"{value:.2f}\n")
+    return value
+
+
+def track_lufs(info: dict[str, Any] | None, path: Path | None) -> float | None:
+    """Độ to của một bài: `lufs` của danh mục nếu có, không thì đo từ file đã có (`measured_lufs`), không thì None."""
+    known = _number((info or {}).get("lufs"))
+    if known is not None:
+        return known
+    return measured_lufs(path) if path is not None else None
+
+
+def cue_gain_db(level_db: float, lufs: float | None, speech_band: float | None) -> float:
+    """Độ khuếch đại (dB, <= 0) cho một bài để nó nằm `level_db` LU dưới giọng: VOICE_LUFS + level_db - lufs - bù, với bù
+    = 8 x (speechBand - 0,30) kẹp +-6 (bài lấn dải tiếng nói nhiều thì thấp thêm, ít thì cao hơn). MỘT chỗ tính duy nhất:
+    hai trình phát (musicBed.ts, MusicBed.kt) chỉ áp con số này. Thiếu `lufs` -> trung vị danh mục; thiếu `speechBand`
+    -> không bù."""
+    loudness = DEFAULT_TRACK_LUFS if lufs is None else lufs
+    band = MASKING_CENTER if speech_band is None else speech_band
+    masking = max(-MASKING_LIMIT_DB, min(MASKING_LIMIT_DB, MASKING_SLOPE_DB * (band - MASKING_CENTER)))
+    return round(min(0.0, VOICE_LUFS + level_db - loudness - masking), 2)  # volume HTML / ExoPlayer tối đa 1
+
+
+def apply_gain(cues: list[dict[str, Any]], level_db: float, tracks: dict[str, Any],
+               track_path: Callable[[str], Path | None] | None = None) -> None:
+    """Gắn `gainDb` cho từng mốc chưa có (mốc của gói sách xuất bởi bản mới đã mang sẵn). `tracks`: {link: thông tin bài};
+    `track_path(link)` -> file bài ĐÃ có trên máy (không tải) để đo khi thiếu `lufs`."""
+    for cue in cues:
+        if _number(cue.get("gainDb")) is not None:
+            continue
+        info = tracks.get(cue["link"])
+        info = info if isinstance(info, dict) else {}
+        path = track_path(cue["link"]) if track_path is not None and _number(info.get("lufs")) is None else None
+        cue["gainDb"] = cue_gain_db(level_db, track_lufs(info, path), _number(info.get("speechBand")))
+
+
 TRACK_FILE = re.compile(r"music/[0-9a-f]{40}\.mp3")
 
 
@@ -192,6 +276,7 @@ def package(project_root: Path, chapter_ids: Iterable[int],
     plan = read_plan(project_root)
     if plan is None or not plan.get("enabled"):
         return None
+    level_db = plan.get("levelDb", DEFAULT_LEVEL_DB)
     files: dict[str, Path] = {}
     tracks: dict[str, dict[str, Any]] = {}
     chapters: dict[str, list[dict[str, Any]]] = {}
@@ -208,12 +293,20 @@ def package(project_root: Path, chapter_ids: Iterable[int],
                 tracks[name] = {"file": name, "link": cue["link"],
                                 **{key: info.get(key) for key in ("title", "creator", "license", "licenseUrl",
                                                                   "attribution", "landing") if info.get(key)}}
-            kept.append({"start": round(cue["start"], 3), "end": round(cue["end"], 3), "track": name})
+                # Độ to + độ lấn dải tiếng nói đi theo bài (sách đọc lại / cập nhật mà không cần danh mục); thiếu `lufs` thì
+                # đo từ chính file đang đóng gói.
+                lufs = track_lufs(info, path)
+                for key, value in (("lufs", lufs), ("speechBand", _number(info.get("speechBand")))):
+                    if value is not None:
+                        tracks[name][key] = round(value, 2)
+            kept.append({"start": round(cue["start"], 3), "end": round(cue["end"], 3), "track": name,
+                         "gainDb": cue_gain_db(level_db, _number(tracks[name].get("lufs")),
+                                               _number(tracks[name].get("speechBand")))})
         if kept:
             chapters[str(chapter_id)] = kept
     if not chapters:
         return None
-    music = {"levelDb": plan.get("levelDb", DEFAULT_LEVEL_DB), "tracks": tracks, "chapters": chapters}
+    music = {"levelDb": level_db, "tracks": tracks, "chapters": chapters}
     return music, files
 
 
@@ -231,6 +324,8 @@ def packaged_cues(music: dict[str, Any] | None, chapter_id: int) -> list[dict[st
             start, end = float(cue["start"]), float(cue["end"])
         except (KeyError, TypeError, ValueError):
             continue
-        out.append({"start": start, "end": end, "link": tracks[track].get("link") or track, "key": track,
-                    "track": track})
+        item = {"start": start, "end": end, "link": tracks[track].get("link") or track, "key": track, "track": track}
+        if _number(cue.get("gainDb")) is not None:
+            item["gainDb"] = float(cue["gainDb"])
+        out.append(item)
     return out
