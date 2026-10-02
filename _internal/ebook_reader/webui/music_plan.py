@@ -241,6 +241,7 @@ def measured_lufs(path: Path, *, measure: bool = True) -> float | None:
             wav.unlink(missing_ok=True)
     if value is None:
         return None
+    value = round(value, 2)  # đúng số ghi cạnh file: lần đo đầu và các lần đọc lại cho cùng gainDb
     with contextlib.suppress(OSError):
         atomic_write_text(sidecar, f"{value:.2f}\n")
     return value

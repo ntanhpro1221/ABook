@@ -82,9 +82,9 @@ def test_overrides_are_clamped_and_unknown_styles_dropped(tmp_path: Path) -> Non
 def test_the_gain_puts_every_track_the_same_distance_under_the_voice() -> None:
     quiet, loud = (music_plan.cue_gain_db(-18.0, lufs, 0.30) for lufs in (-26.0, -10.0))
     assert math.isclose(quiet - loud, 16.0, abs_tol=0.01), "bài to hơn 16 LU thì hạ hơn đúng 16 dB"
-    # Giọng -20 LUFS, levelDb -18: nhạc phải ở -38 LUFS -> bài -26 LUFS chỉ cần hạ 12 dB.
-    assert quiet == -12.0 and loud == -28.0
-    assert music_plan.cue_gain_db(-20.0, -30.0, 0.30) == -10.0
+    # Giọng -20 LUFS một kênh = -16,99 khi phát hai loa, levelDb -18: nhạc ở -34,99 -> bài -26 LUFS hạ 8,99 dB.
+    assert quiet == -8.99 and loud == -24.99
+    assert music_plan.cue_gain_db(-20.0, -30.0, 0.30) == -6.99
 
 
 def test_the_gain_never_boosts_a_track_above_its_own_level() -> None:
@@ -93,7 +93,7 @@ def test_the_gain_never_boosts_a_track_above_its_own_level() -> None:
 
 def test_a_track_that_covers_the_speech_band_sits_lower_and_the_correction_is_clamped() -> None:
     base = music_plan.cue_gain_db(-20.0, -20.0, 0.30)
-    assert base == -20.0
+    assert base == -16.99
     assert math.isclose(music_plan.cue_gain_db(-20.0, -20.0, 0.80) - base, -4.0, abs_tol=0.01)
     assert math.isclose(music_plan.cue_gain_db(-20.0, -20.0, 0.10) - base, 1.6, abs_tol=0.01)
     assert math.isclose(music_plan.cue_gain_db(-20.0, -20.0, 5.0) - base, -6.0, abs_tol=0.01), "kẹp -6 dB"

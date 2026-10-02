@@ -835,6 +835,11 @@ class App:
             raise ApiError(HTTPStatus.SERVICE_UNAVAILABLE, str(exc)) from exc
         if link not in known:
             raise ApiError(HTTPStatus.NOT_FOUND, "Bài này không có trong danh mục nhạc nền")
+        info = known[link] if isinstance(known[link], dict) else {}
+        # Nguồn gốc trước; hỏng (mạng, 404, nguồn gỡ bài) thì sang bản sao dự phòng trên archive.org mà danh mục ghi ở
+        # `mirrors`. Bản sao phải khớp `sha1` của bản gốc khi danh mục có - không thì bỏ, không phát nhầm bài.
+        mirrors = [url for url in info.get("mirrors") or [] if isinstance(url, str) and url.startswith("https://")]
+        expected = info.get("sha1") if isinstance(info.get("sha1"), str) else None
         target.parent.mkdir(parents=True, exist_ok=True)
         with self._music_lock:
             fetching = self._music_fetching.setdefault(link, threading.Lock())
@@ -842,17 +847,22 @@ class App:
         with fetching:
             if target.is_file():
                 return target
-            part = target.with_name(f"{target.stem}.{secrets.token_hex(4)}.part")
-            try:
-                request = urllib.request.Request(link, headers={"User-Agent": music_catalog.USER_AGENT})
-                with urllib.request.urlopen(request, timeout=60) as response, part.open("wb") as sink:
-                    shutil.copyfileobj(response, sink, 1 << 16)
-                os.replace(part, target)
-            except OSError as exc:
-                with contextlib.suppress(OSError):
-                    part.unlink(missing_ok=True)
-                raise ApiError(HTTPStatus.BAD_GATEWAY, "Không tải được bài nhạc từ nguồn - kiểm tra mạng") from exc
-        return target
+            failure: OSError | None = None
+            for url in [link, *mirrors]:
+                part = target.with_name(f"{target.stem}.{secrets.token_hex(4)}.part")
+                try:
+                    request = urllib.request.Request(url, headers={"User-Agent": music_catalog.USER_AGENT})
+                    with urllib.request.urlopen(request, timeout=60) as response, part.open("wb") as sink:
+                        shutil.copyfileobj(response, sink, 1 << 16)
+                    if url != link and expected and hashlib.sha1(part.read_bytes()).hexdigest() != expected.lower():
+                        raise OSError(f"bản sao khác bản gốc: {url}")
+                    os.replace(part, target)
+                    return target
+                except OSError as exc:
+                    failure = exc
+                    with contextlib.suppress(OSError):
+                        part.unlink(missing_ok=True)
+            raise ApiError(HTTPStatus.BAD_GATEWAY, "Không tải được bài nhạc từ nguồn - kiểm tra mạng") from failure
 
     def redo(self, value: str) -> dict[str, Any]:
         """"Sửa thiết lập" (store.redo_plan): lựa chọn lúc tạo của một cuốn chưa bắt đầu, và phần trước nếu nó là phần
