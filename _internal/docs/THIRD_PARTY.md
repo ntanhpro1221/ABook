@@ -58,6 +58,16 @@ băm trong `webui/studio_setup.py`):
 - AndroidX Media3 - ExoPlayer, MediaSession, datasource, cache (Apache-2.0); các thư viện AndroidX khác (Apache-2.0).
 - Kotlin và Guava (Apache-2.0).
 
+## Nhạc nền (không đóng gói trong bộ cài)
+
+Bộ cài và APK không mang bài nhạc nào. Studio đọc danh mục nhạc đã phân tích sẵn qua mạng (địa chỉ trong cấu hình từ xa
+có chữ ký), tải bài cần dùng từ nguồn gốc vào bộ đệm của máy và đóng vào file sách `.abook` của cuốn ấy, kèm ghi công của
+từng bài; trình nghe hiện ghi công khi bài đang phát.
+
+- Kevin MacLeod / incompetech.com - Creative Commons Attribution 4.0.
+- Jamendo (bài CC BY / CC0 theo từng bài; thông tin bài qua Openverse - không do Openverse bảo trợ).
+- Freesound (bài CC0 / CC BY theo từng âm thanh).
+
 ## Model phân tích và dữ liệu nghiên cứu (chưa đóng gói trong bản phát hành)
 
 - LoRA tự huấn luyện trên nền Qwen3-4B-Instruct-2507 (Apache-2.0), dữ liệu huấn luyện là đáp án chuẩn của chính dự án.
