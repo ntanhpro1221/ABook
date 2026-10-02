@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.20] - 2026-10-02
+
 ### Điện thoại và thiết bị
 
 - **Ở ngoài nhà dùng mạng riêng ảo nào cũng được**: Cài đặt nhận ra địa chỉ "dùng khi ở ngoài" trên mọi mạng riêng ảo
