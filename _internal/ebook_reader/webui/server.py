@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import base64
 import binascii
+import contextlib
 import hashlib
 import json
 import mimetypes
@@ -180,6 +181,7 @@ class App:
         self.music_dir = preferences.path.with_name("music")
         self._music_catalog: music_catalog.MusicCatalog | None = None
         self._music_lock = threading.Lock()
+        self._music_fetching: dict[str, threading.Lock] = {}  # mỗi bài một khoá: luồng tải sẵn và trình phát không ghi đè nhau
         if not read_only:
             self._adopt_new_book_ids()
         # Thư mục đã xuất trong phiên này - chỉ những thư mục này được mở bằng "Mở thư mục" sau khi xuất.
@@ -799,15 +801,22 @@ class App:
         if link not in known:
             raise ApiError(HTTPStatus.NOT_FOUND, "Bài này không có trong danh mục nhạc nền")
         target.parent.mkdir(parents=True, exist_ok=True)
-        part = target.with_suffix(".part")
-        try:
-            request = urllib.request.Request(link, headers={"User-Agent": music_catalog.USER_AGENT})
-            with urllib.request.urlopen(request, timeout=60) as response, part.open("wb") as sink:
-                shutil.copyfileobj(response, sink, 1 << 16)
-            os.replace(part, target)
-        except OSError as exc:
-            part.unlink(missing_ok=True)
-            raise ApiError(HTTPStatus.BAD_GATEWAY, "Không tải được bài nhạc từ nguồn - kiểm tra mạng") from exc
+        with self._music_lock:
+            fetching = self._music_fetching.setdefault(link, threading.Lock())
+        # Cùng một bài đang được tải (luồng tải sẵn sau khi đổi nhạc, hay trình phát khác): chờ nó xong rồi dùng luôn.
+        with fetching:
+            if target.is_file():
+                return target
+            part = target.with_name(f"{target.stem}.{secrets.token_hex(4)}.part")
+            try:
+                request = urllib.request.Request(link, headers={"User-Agent": music_catalog.USER_AGENT})
+                with urllib.request.urlopen(request, timeout=60) as response, part.open("wb") as sink:
+                    shutil.copyfileobj(response, sink, 1 << 16)
+                os.replace(part, target)
+            except OSError as exc:
+                with contextlib.suppress(OSError):
+                    part.unlink(missing_ok=True)
+                raise ApiError(HTTPStatus.BAD_GATEWAY, "Không tải được bài nhạc từ nguồn - kiểm tra mạng") from exc
         return target
 
     def redo(self, value: str) -> dict[str, Any]:
