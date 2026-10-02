@@ -1,5 +1,6 @@
 import type { CoverImage } from "@/shared/cover";
 import type { VolumeProposal } from "@/studio/volumes";
+import type { BookTemplate } from "@/studio/bookTemplates";
 // Hợp đồng với server Python (abook/webui/server.py). Mọi chữ hiển thị đã được server dịch sẵn
 // sang tiếng Việt (humanize.py); ở đây chỉ định kiểu và gọi.
 
@@ -276,6 +277,8 @@ export interface Preferences {
   /** Mặc định của trình tạo sách cho sách mới ("" = giọng máy đề xuất). */
   newBookNarrator?: string;
   newBookProfile?: string;
+  /** Mẫu thiết lập có tên cho sách mới (studio/bookTemplates.ts), tối đa 20. */
+  bookTemplates?: BookTemplate[];
 }
 
 // Mã phiên do cửa sổ app gắn vào URL (?t=...). Giữ lại trong phiên để điều hướng nội bộ không làm mất nó.

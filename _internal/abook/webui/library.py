@@ -51,8 +51,51 @@ DEFAULT_PREFERENCES: dict[str, Any] = {
     # lượng. "Làm tiếp cuốn này" vẫn lấy theo phần trước.
     "newBookNarrator": "",
     "newBookProfile": "high_quality",
+    # Mẫu thiết lập có tên cho sách mới (trình tạo sách): [{name, narrator, profile, analysisModel, startNow}], tối đa 20.
+    "bookTemplates": [],
 }
 MAX_RECENTS = 30
+BOOK_PROFILES = ("fast", "balanced", "high_quality")
+MAX_BOOK_TEMPLATES = 20
+BOOK_TEMPLATE_NAME_MAX = 40
+
+
+def clean_book_templates(raw: Any, voice_names: set[str]) -> list[dict[str, Any]]:
+    """Danh sách mẫu thiết lập do giao diện gửi lên -> danh sách sạch, hoặc ValueError kèm lời báo cho người dùng.
+
+    Chỉ giữ đúng năm trường (còn lại bị bỏ - nhất là KHÔNG có `dropCredits`: bỏ dòng ghi công là đồng ý riêng từng cuốn, không
+    nằm trong mẫu). Tên cắt khoảng trắng, 1-40 chữ, không trùng nhau (không phân biệt hoa thường); giọng kể là "" hoặc một
+    giọng có thật; chất lượng là một trong ba mức."""
+    if not isinstance(raw, list):
+        raise ValueError("Danh sách mẫu không hợp lệ")
+    if len(raw) > MAX_BOOK_TEMPLATES:
+        raise ValueError(f"Tối đa {MAX_BOOK_TEMPLATES} mẫu - xoá bớt một mẫu cũ trước")
+    cleaned: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for item in raw:
+        if not isinstance(item, dict):
+            raise ValueError("Mẫu không hợp lệ")
+        name = item.get("name")
+        name = " ".join(name.split()) if isinstance(name, str) else ""
+        if not 1 <= len(name) <= BOOK_TEMPLATE_NAME_MAX:
+            raise ValueError(f"Tên mẫu phải dài 1-{BOOK_TEMPLATE_NAME_MAX} chữ")
+        if name.casefold() in seen:
+            raise ValueError(f"Đã có mẫu tên “{name}”")
+        seen.add(name.casefold())
+        # Giọng đã gỡ khỏi máy: mẫu về "giọng máy đề xuất" thay vì chặn cả danh sách (đổi tên một mẫu khác cũng hỏng).
+        narrator = item.get("narrator", "")
+        narrator = narrator.strip() if isinstance(narrator, str) and narrator.strip() in voice_names else ""
+        if item.get("profile") not in BOOK_PROFILES:
+            raise ValueError(f"Mức chất lượng của mẫu “{name}” không hợp lệ")
+        model = item.get("analysisModel", "")
+        if not isinstance(model, str) or len(model.strip()) > 200:
+            raise ValueError(f"Model đọc hiểu của mẫu “{name}” không hợp lệ")
+        start_now = item.get("startNow", True)
+        if not isinstance(start_now, bool):
+            raise ValueError(f"Lựa chọn “bắt đầu ngay” của mẫu “{name}” không hợp lệ")
+        cleaned.append({"name": name, "narrator": narrator.strip(), "profile": item["profile"],
+                        "analysisModel": model.strip(), "startNow": start_now})
+    return cleaned
 
 
 APP_DATA_FOLDER = "ABook"
