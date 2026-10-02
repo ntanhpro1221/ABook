@@ -557,6 +557,44 @@ Câu hỏi:
   - Qwen3-Omni là phép phân xử. Nếu nó cũng xếp gần hai model nghe, phải ghi trước một phép kiểm vòng tròn của người chấm đọc
     (vd bỏ nhãn CLAP khỏi mô tả) trước khi tiếp tục dùng E1 làm thước.
 
+**GHI TRƯỚC - KIỂM THƯỚC E1 (03-10 01:4x, Lead: làm NGAY, trước Qwen3-Omni; hai phép song song):**
+
+Ký hiệu:
+- R_cũ = phán quyết chung c1 + c2 (E1).
+- L = phán quyết chung hai model nghe: các lượt omni1 và mf cùng ý.
+- Kappa tính trên các lượt không lặp, chỉ những lượt cả hai bên có phán quyết.
+
+**(1) Vòng tròn - người đọc KHÔNG có nhãn CLAP.**
+- Mô tả mới mỗi clip chỉ gồm chữ thô và đặc trưng âm học đọc thành lời:
+  - tên bài, tác giả, nguồn;
+  - tag gốc và mô tả gốc của trang nguồn (`text_meta` / `text_fetch`);
+  - âm học `acoustic2` đọc thành lời: nhịp, độ ổn định nhịp, trưởng / thứ, âm vực, độ to, độ sáng, mật độ, độ nghịch tai.
+- KHÔNG có nhãn CLAP, xác suất CLAP, chú thích Omni hay số V/E/T dẫn xuất.
+- Cùng 330 lượt và cùng đoạn truyện. Gói và khoá mới; người chấm Sonnet n1, n2 theo đúng giao thức E1.
+- R_mới = chung n1 + n2.
+- **Kết luận:**
+  - **"E1 vững"** nếu kappa(R_mới, R_cũ) ≥ 0,40 VÀ kappa(R_mới, L) < 0,20.
+  - **"E1 vòng tròn"** nếu kappa(R_mới, R_cũ) < 0,20. Khi đó E1 thôi làm thước chính; R_mới làm thước đọc thay, chờ (2) và
+    Qwen3-Omni.
+  - Còn lại là "không phân định": giữ cả hai, báo đủ.
+- Báo kèm thứ hạng BT của R_mới.
+
+**(2) Ngôn ngữ - model nghe đọc tóm tắt TIẾNG ANH.**
+- Tập con cố định: các đoạn E1 ở vị trí chẵn khi xếp theo mã đoạn (~nửa), với mọi clip của các đoạn ấy.
+- Tóm tắt tiếng Anh 120-200 từ mỗi đoạn:
+  - Do một agent Claude viết MỘT lần, chỉ thấy đoạn truyện, không thấy clip.
+  - Nội dung: sự việc, bối cảnh, không khí, nhịp, và tone hài / nghiêm nếu có.
+  - Chốt trong file trước khi chạy model.
+- Omni-7B và MF chấm lại đúng prompt rate a / b, chỉ thay đoạn tiếng Việt bằng tóm tắt tiếng Anh. Prompt cũng dịch sang tiếng
+  Anh, giữ thang 1-7.
+- **Kết luận cho mỗi model:**
+  - **"ngôn ngữ là rào"** nếu, trên cùng tập con, kappa với R_cũ (và với R_mới nếu (1) đã có) tăng ≥ 0,10 so với bản tiếng Việt
+    VÀ đạt ≥ 0,20.
+  - Có model qua thì Qwen3-Omni (nếu vẫn chạy) dùng tóm tắt tiếng Anh. Không model nào qua thì ngôn ngữ không phải nguyên nhân
+    chính.
+
+Sau cả hai: báo Lead trước khi tốn Kaggle cho Qwen3-Omni.
+
 **GHI TRƯỚC - NỚI NGƯỠNG NỀN ÊM (02-10 23:xx, Lead duyệt; từ E1: calm đứng thứ hai, hơn app):**
 - **Giả thuyết:** kéo về nền êm (CALM_TARGET) cho nhiều đoạn hơn làm nhạc hợp hơn. Hiện chỉ kéo khi confidence < WEAK_MOOD
   0,2, và kéo tuyến tính.
