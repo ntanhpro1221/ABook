@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.19] - 2026-10-02
+
 ### Studio
 
 - **Nghe thử cách đọc tên trước khi lưu**: sửa cách đọc một tên (tab Nhân vật, hay thẻ "Cách đọc tên" ở Việc cần duyệt) có
