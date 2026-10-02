@@ -158,6 +158,13 @@ class LocalStudioTest {
         BookEditsFixtures.copyBase(Store.bookDir(peer))
         File(Store.bookDir(peer), "book.json").writeText(JSONObject(File(Store.bookDir(peer), "book.json").readText()).put("source", "k1").toString())
         assertEquals(409, LocalStudio.handle("GET", "/api/books/$peer/edits", null).first)
+        // cuốn nghe thẳng chưa tải (chỉ có stream.json): cũng 409 với đúng câu ấy, không phải 404
+        val streamed = "s0123456789abcdef_y"
+        Store.bookDir(streamed).mkdirs()
+        File(Store.bookDir(streamed), "stream.json").writeText(JSONObject().put("title", "Từ máy tính").toString())
+        val (streamStatus, streamReply) = LocalStudio.handle("PUT", "/api/books/$streamed/title", JSONObject().put("title", "x"))
+        assertEquals(409, streamStatus)
+        assertEquals("Sách này lấy từ máy tính khác - muốn sửa thì sửa ở máy ấy", (streamReply as JSONObject).getString("error"))
     }
 
     @Test
