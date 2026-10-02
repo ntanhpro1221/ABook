@@ -717,3 +717,10 @@ chính sai 0; đối đáp không lời dẫn quyết theo xưng hô khớp A c�
 | 065a:33 | D | D,T | theo B | Frederica đã đi (28), không chữ nào cho thấy nói thành tiếng (khác 152, có 153 đáp) |
 | 065a:85 | D | D,T | theo B | Petra đã đi xa, không phản ứng; 86 tiếng lòng cùng mạch - nhập nhằng, nới cả hai |
 | 065a:83 | N | N,T + SUBARU~ | theo B | tự sửa số tức thời, cùng kiểu 46/155/157 A đã cho |
+
+Otonari no Tenshi 030 (đợt 4, romcom hai người, ngôi ba, cả chương đối đáp không lời dẫn): B dựng lại chuỗi lượt độc lập, người
+nói chính sai 0 (chốt 34: Mahiru gọi Amane "cậu", Amane gọi Mahiru "cô"; 46 "chín hẳn" khớp 032:11 của Amane).
+
+| câu | A | B đề nghị | kết luận | lý do |
+|---|---|---|---|---|
+| Otonari 030:51 | N | N,T + AMANE~ | theo B | câu đánh giá chủ quan cùng khuôn 55; ghi chú đầu file sửa (không phải đoạn kể nào cũng có "cậu") |
