@@ -1,7 +1,7 @@
 """Đoạn và không khí của đoạn cho nhạc nền (webui/music_scenes.py): tính từ cảm xúc từng câu, không cần model."""
 from __future__ import annotations
 
-from ebook_reader.webui.music_scenes import chapter_scenes, line_point
+from ebook_reader.webui.music_scenes import MAX_SCENE_SECONDS, chapter_scenes, line_point
 
 
 def _script(lines: list[tuple[str, str, int, float]], *, timed: bool = True) -> dict:
@@ -24,17 +24,18 @@ def _battle(n: int) -> list:
 
 def test_a_calm_scene_then_a_battle_are_two_scenes_with_opposite_moods() -> None:
     scenes = chapter_scenes(_script(_calm(30) + _battle(36)))
-    assert len(scenes) == 2
-    calm, battle = scenes
+    # khúc êm ~190 giây vượt trần 3 phút: hai khúc cùng không khí, rồi trận
+    assert [scene["reason"] for scene in scenes] == ["chapter_start", "length", "mood_shift"]
+    calm, battle = scenes[0], scenes[2]
     assert calm["arousal"] < 0 < battle["arousal"] and battle["valence"] < 0
     assert battle["reason"] == "mood_shift"
     assert 28 <= battle["firstSegment"] <= 34, "cắt gần chỗ không khí đổi, không trễ cả cửa sổ"
     assert battle["confidence"] > calm["confidence"]
-    assert calm["start"] == 0 and calm["end"] <= battle["start"]
+    assert calm["start"] == 0 and scenes[1]["end"] <= battle["start"]
 
 
 def test_one_outburst_does_not_change_the_music() -> None:
-    lines = _calm(20) + [("“Cút đi!”", "angry", 3, 2.0)] + _calm(20)
+    lines = _calm(12) + [("“Cút đi!”", "angry", 3, 2.0)] + _calm(12)  # ngắn hơn trần 3 phút: chỉ còn câu hỏi đổi không khí
     assert len(chapter_scenes(_script(lines))) == 1
 
 
@@ -57,7 +58,17 @@ def test_a_chapter_without_audio_is_split_by_text_length() -> None:
     long_battle = [("Kiếm chém xuống, máu bắn tung tóe, tiếng hét vang lên khắp chiến trường, khói lửa mù mịt che kín cả "
                     "bầu trời.", "angry" if i % 2 else "afraid", 3, 0.0) for i in range(36)]
     scenes = chapter_scenes(_script(long_calm + long_battle, timed=False))
-    assert len(scenes) == 2 and scenes[1]["arousal"] > scenes[0]["arousal"]
+    shift = [scene for scene in scenes if scene["reason"] == "mood_shift"]
+    assert len(shift) == 1 and 28 <= shift[0]["firstSegment"] <= 34
+    assert scenes[-1]["arousal"] > scenes[0]["arousal"]
+
+
+def test_a_long_scene_is_cut_into_pieces_of_about_three_minutes() -> None:
+    scenes = chapter_scenes(_script(_calm(100)))  # ~640 giây cùng một không khí
+    assert len(scenes) == 4 and [scene["reason"] for scene in scenes][1:] == ["length"] * 3
+    lengths = [scene["end"] - scene["start"] for scene in scenes]
+    assert max(lengths) <= MAX_SCENE_SECONDS + 10 and min(lengths) >= 120
+    assert all(a["lastSegment"] + 1 == b["firstSegment"] for a, b in zip(scenes, scenes[1:]))
 
 
 def test_neutral_narration_weighs_less_than_feeling() -> None:
