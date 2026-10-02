@@ -168,7 +168,7 @@ export function ProjectsScreen() {
             </Button>
           )}
           <Button variant="primary" icon={Plus} onClick={() => navigate("/studio/new")}>
-            Dự án mới
+            Tạo sách nói
           </Button>
         </div>
       </header>

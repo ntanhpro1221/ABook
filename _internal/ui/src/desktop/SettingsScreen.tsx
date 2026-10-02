@@ -87,8 +87,8 @@ function BookTemplates() {
     <div className="mb-4 max-w-xl">
       <div className="text-sm font-medium">Mẫu thiết lập cho sách mới</div>
       <p className="mt-0.5 text-[13px] text-fg-2 text-pretty">
-        Bộ lựa chọn đặt tên sẵn (giọng kể, chất lượng...) để chọn lại ở trình tạo sách. Muốn lưu mẫu mới: chọn xong ở trình tạo sách
-        rồi bấm “Lưu thành mẫu…”.
+        Bộ lựa chọn đặt tên sẵn (giọng kể, chất lượng...) để chọn lại ở trình tạo sách; “Mặc định” ở đó là giọng kể và chất lượng đặt
+        ngay phía trên. Muốn lưu mẫu mới: chọn xong ở trình tạo sách rồi bấm “Lưu thành mẫu…”.
       </p>
       {!templates.length ? (
         <p className="mt-2 text-[13px] text-fg-3">Chưa có mẫu nào.</p>

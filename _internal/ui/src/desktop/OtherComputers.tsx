@@ -48,6 +48,7 @@ export function OtherComputers() {
     mutationFn: () => api<ComputersView>("/api/computers", { method: "POST", body: { address, code } }),
     onSuccess: (view) => {
       done(view);
+      setAddress("");
       setCode("");
       toast.success("Đã ghép", { description: "Sách của máy ấy hiện trong Thư viện với nhãn “Trên <tên máy>”." });
     },

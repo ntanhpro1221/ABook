@@ -102,7 +102,7 @@ export function SharedReadingsSettings() {
           aria-label="Từ trong sách"
           autoComplete="off"
           spellCheck={false}
-          className="h-8 w-40 rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-accent"
+          className="h-8 w-56 max-w-full rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-accent"
         />
         <input
           id="shared-reading-spoken"
@@ -112,7 +112,7 @@ export function SharedReadingsSettings() {
           aria-label="Cách đọc"
           autoComplete="off"
           spellCheck={false}
-          className="h-8 w-40 rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-accent"
+          className="h-8 w-56 max-w-full rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-accent"
         />
         <Button size="sm" variant="secondary" type="submit" loading={save.isPending} disabled={!surface.trim() || !spoken.trim()}>
           Thêm
