@@ -32,6 +32,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   chương có đáp án cảnh, docs/MUSIC_RESEARCH.md).
 - **File sách `.abook` mang theo nhạc nền** người sản xuất đã gắn (cả file nhạc và ghi công): mở ở máy khác vẫn nghe đúng
   nhạc ấy. Sách có nhạc dùng định dạng mới - app bản cũ sẽ nhắc cập nhật; sách không nhạc vẫn mở được ở app cũ.
+- **Điện thoại cũng phát nhạc nền** (sách tải từ máy tính hay file `.abook`), mờ dần khi đổi bài, dừng và tua theo giọng.
+- Màn đang nghe có dòng **Nhạc nền: tên bài · tác giả**, chạm để xem ghi công đầy đủ (giấy phép, trang của bài).
+- **Đổi bài** cho một đoạn: danh sách bài hợp không khí khác, **Nghe thử** khoảng 20 giây trước khi chọn.
+- Sửa một đoạn (ghim, im lặng, bỏ bài, bật / tắt, mức nhạc) **không làm đổi nhạc các đoạn khác**; chỉ "Chọn lại nhạc" hay đổi
+  thế giới của truyện mới chọn lại cả cuốn. Bỏ một bài có **Hoàn tác** và danh sách **Bài đã bỏ** để dùng lại.
+- **Nhạc luôn nằm dưới giọng đọc một khoảng như nhau**, bài to hay nhỏ máy tự bù (trước đây khoảng cách lệch 10-27 LU tuỳ
+  bài, 1/5 số bài sát giọng quá). Mức nhạc nay chọn theo "nhỏ hơn giọng bao nhiêu", mặc định 20 LU.
+- Danh mục nhạc thêm bài từ Jamendo và Freesound (CC0 / CC BY), mỗi bài ghi công và dẫn về trang gốc.
 
 ## [0.4.15] - 2026-10-01
 
