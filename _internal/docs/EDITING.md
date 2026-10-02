@@ -177,7 +177,10 @@ Opening an `.abook` that fingerprint-matches one of this computer's projects and
 (`edits_incoming.json`) and `open-book-file` answers `{how: "project", edits: N}`; the UI shows "N thay đổi - áp vào dự
 án?" as a toast with an action -> `POST /edits/fold` -> `book_edits.fold` (the existing writers: `store.set_display_title`,
 `covers.save_cover_bytes`, `names.set_name`, `store.set_chapter_title`, `music_plan.write_overrides`; silenced cues map back
-to scenes by chapter + start). Nothing is applied without the click; "Bỏ qua" = `DELETE /edits`.
+to scenes by chapter + start; music pins of imported tracks too: `stash_incoming` copies the pinned files out of the opened book into
+`edits_incoming_music/`, `fold` imports each into this machine's "Nhạc của tôi" (`LocalMusic.import_file`, same sha1 dedupe,
+title/creator from the edit layer when the file has none) and writes the pin for the cue's scenes via `write_overrides`; a pin
+whose file is missing / wrong / whose cue is gone is skipped and its reason goes to `reasons`). Nothing is applied without the click; "Bỏ qua" = `DELETE /edits`.
 
 ## P2a - wishes (W class) on a book without a workshop
 
