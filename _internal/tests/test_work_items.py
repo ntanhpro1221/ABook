@@ -9,7 +9,7 @@ import sqlite3
 import time
 from pathlib import Path
 
-from ebook_reader.webui.work_items import work_items
+from abook.webui.work_items import work_items
 
 
 def make_book(root: Path) -> Path:
@@ -97,7 +97,7 @@ def test_the_second_scorer_flags_only_confident_disagreements_on_current_labels(
 def test_a_pronunciation_card_has_lines_to_hear_and_shows_a_waiting_request(tmp_path: Path) -> None:
     """Bước 2: người nghe nghe máy đang đọc tên thế nào (câu đã thu trước), sửa ngay trên thẻ; mong muốn chưa áp thì thẻ
     nói "đang chờ" thay vì im lặng như chưa sửa."""
-    from ebook_reader.listener_overrides import request_pronunciation
+    from abook.listener_overrides import request_pronunciation
 
     project = make_book(tmp_path)
     db = sqlite3.connect(project / "project.sqlite3")
@@ -116,10 +116,10 @@ def test_a_pronunciation_card_has_lines_to_hear_and_shows_a_waiting_request(tmp_
 def test_the_studio_writes_the_request_and_refuses_a_reading_the_voice_cannot_say(tmp_path: Path) -> None:
     """Giao diện không ghi SQLite của sách: chỉ ghi overrides.json. Cách đọc không phải âm tiết tiếng Việt bị từ chối NGAY,
     kèm lý do đọc được - không để tới ranh giới chương mới lặng lẽ bỏ qua."""
-    from ebook_reader.listener_overrides import pronunciation_requests, read_overrides
-    from ebook_reader.webui.library import Preferences, book_id
-    from ebook_reader.webui.listening import Listening
-    from ebook_reader.webui.server import App, Server
+    from abook.listener_overrides import pronunciation_requests, read_overrides
+    from abook.webui.library import Preferences, book_id
+    from abook.webui.listening import Listening
+    from abook.webui.server import App, Server
     from tests.test_webui_listen_and_sync import FakeRunner, _request
 
     project = make_book(tmp_path)
@@ -156,7 +156,7 @@ def test_the_studio_writes_the_request_and_refuses_a_reading_the_voice_cannot_sa
 def test_a_speaker_card_offers_clickable_choices_and_hides_once_the_listener_keeps_it(tmp_path: Path) -> None:
     """"Ai nói câu này" bấm được: mỗi lựa chọn mang giá trị máy hiểu (khoá tên, NARRATOR, UNNAMED) và thẻ mang mã câu + băm
     chữ. Chọn một người thì thẻ nói "đang chờ"; chọn giữ nguyên thì thẻ biến mất - đã có người quyết."""
-    from ebook_reader.listener_overrides import NARRATOR, UNNAMED, request_speaker
+    from abook.listener_overrides import NARRATOR, UNNAMED, request_speaker
 
     project = make_book(tmp_path)
     (project / "doubt.json").write_text(json.dumps({"segments": {
@@ -179,10 +179,10 @@ def test_a_speaker_card_offers_clickable_choices_and_hides_once_the_listener_kee
 def test_the_studio_refuses_on_the_spot_a_speaker_the_pipeline_would_refuse(tmp_path: Path) -> None:
     """Giao diện hỏi bằng ĐÚNG phép dây chuyền dùng (`listener_overrides.speaker_target`), nên không có yêu cầu nào được
     ghi rồi lặng lẽ bị bỏ ở ranh giới chương. Và vẫn không ghi SQLite của sách."""
-    from ebook_reader.listener_overrides import read_overrides, speaker_requests
-    from ebook_reader.webui.library import Preferences, book_id
-    from ebook_reader.webui.listening import Listening
-    from ebook_reader.webui.server import App, Server
+    from abook.listener_overrides import read_overrides, speaker_requests
+    from abook.webui.library import Preferences, book_id
+    from abook.webui.listening import Listening
+    from abook.webui.server import App, Server
     from tests.test_webui_listen_and_sync import FakeRunner, _request
 
     project = make_book(tmp_path)
@@ -215,7 +215,7 @@ def test_the_studio_refuses_on_the_spot_a_speaker_the_pipeline_would_refuse(tmp_
 def test_the_called_person_and_the_unnamed_extra_get_the_chapters_speakers_as_choices(tmp_path: Path) -> None:
     """Người gọi hay người nói, vai phụ không tên: sửa bằng cùng cơ chế gán người nói. Ứng viên là người có tên nói nhiều
     nhất trong chương (không phải người bị gọi); vai phụ thì chọn một lần cho MỌI câu của vai ấy."""
-    from ebook_reader.listener_overrides import NARRATOR, UNNAMED, request_speakers
+    from abook.listener_overrides import NARRATOR, UNNAMED, request_speakers
 
     project = make_book(tmp_path)
     items = {item["kind"]: item for item in work_items(project)["items"]}
@@ -233,10 +233,10 @@ def test_the_called_person_and_the_unnamed_extra_get_the_chapters_speakers_as_ch
 
 
 def test_a_group_request_is_taken_whole_or_refused_whole(tmp_path: Path) -> None:
-    from ebook_reader.listener_overrides import read_overrides, speaker_requests
-    from ebook_reader.webui.library import Preferences, book_id
-    from ebook_reader.webui.listening import Listening
-    from ebook_reader.webui.server import App, Server
+    from abook.listener_overrides import read_overrides, speaker_requests
+    from abook.webui.library import Preferences, book_id
+    from abook.webui.listening import Listening
+    from abook.webui.server import App, Server
     from tests.test_webui_listen_and_sync import FakeRunner, _request
 
     project = make_book(tmp_path)
@@ -405,7 +405,7 @@ def make_alias_book(root: Path) -> Path:
 def test_one_person_under_two_names_merges_the_fewer_lines_into_the_voice_heard_most(tmp_path: Path) -> None:
     """Thẻ bí danh bấm được: câu của tên ÍT câu về tên NHIỀU câu (người nghe đã quen giọng ấy, ít câu phải thu lại) - kể
     cả khi tên ngắn mới là tên nói nhiều, trường hợp trước đây thẻ bỏ sót. "Hai người khác nhau" giữ cả nhóm, thẻ biến."""
-    from ebook_reader.listener_overrides import request_speakers
+    from abook.listener_overrides import request_speakers
 
     project = make_alias_book(tmp_path)
     cards = {item["key"]: item for item in work_items(project)["items"] if item["kind"] == "alias"}
@@ -462,7 +462,7 @@ def make_bracket_book(root: Path) -> Path:
 def test_telepathy_in_corner_brackets_split_across_people_is_fixed_for_the_whole_chapter(tmp_path: Path) -> None:
     """Máy yếu nhất ở lời 『』 (bộ LN 28-09: sai 56-67%): chương chia 『』 cho nhiều người -> một thẻ, một cú bấm gán cả
     nhóm; lời thường (“…”) không nằm trong nhóm; chương đã nhất quán thì không hỏi."""
-    from ebook_reader.listener_overrides import request_speakers
+    from abook.listener_overrides import request_speakers
 
     project = make_bracket_book(tmp_path)
     cards = [item for item in work_items(project)["items"] if item["kind"] == "bracket"]

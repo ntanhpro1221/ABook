@@ -1,7 +1,7 @@
 """Lời dẫn có tên thì nhãn chung phải im; lời dẫn riêng thắng khoá theo đoạn (đáp án chuẩn TMA 418:37, 426:22, 436:61)."""
 from __future__ import annotations
 
-from ebook_reader.analysis import _generic_speaker_attribution, _validate
+from abook.analysis import _generic_speaker_attribution, _validate
 
 
 def _row(seq: int, kind_hint: str, text: str, paragraph: int = 3) -> dict:

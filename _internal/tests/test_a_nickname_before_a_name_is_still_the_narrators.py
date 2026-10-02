@@ -1,7 +1,7 @@
 """Cụm trích giữa câu kể vẫn của người kể khi câu kể sau mở bằng một cái tên (đáp án chuẩn TMA 449:65)."""
 from __future__ import annotations
 
-from ebook_reader.analysis import _validate
+from abook.analysis import _validate
 
 
 def _row(seq: int, kind_hint: str, text: str) -> dict:

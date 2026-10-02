@@ -217,7 +217,7 @@ def main(argv: list[str] | None = None) -> int:
     out = args.out or Path(tempfile.gettempdir()) / "abook-release" / args.version
     sys.path.insert(0, str(ROOT))
     if args.step == "bump":
-        from ebook_reader.quality_policy import quality_implementation_hash
+        from abook.quality_policy import quality_implementation_hash
 
         before = quality_implementation_hash()
         files = bump(args.version)

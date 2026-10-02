@@ -42,7 +42,7 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "character_registry.py"
+p = root / "abook" / "character_registry.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD_DETECT = '''        if (
@@ -184,7 +184,7 @@ from __future__ import annotations
 
 import pytest
 
-from ebook_reader.character_registry import _validate_casting_inputs
+from abook.character_registry import _validate_casting_inputs
 
 
 def _row(speaker: str, gender: str = "unknown", **extra):

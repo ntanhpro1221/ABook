@@ -14,7 +14,7 @@ import sqlite3
 
 import pytest
 
-from ebook_reader.io_utils import sha256_text, strip_lone_surrogates
+from abook.io_utils import sha256_text, strip_lone_surrogates
 
 VO = json.loads('"\\ud83d"')
 
@@ -40,7 +40,7 @@ def test_both_engine_branches_are_cleaned() -> None:
     """Hai nhánh engine, hai đường trả transcript. Dọn một nhánh là chưa dọn."""
     import inspect
 
-    from ebook_reader import asr
+    from abook import asr
 
     source = inspect.getsource(asr.WhisperVerifier._transcribe_audio)
     assert source.count("strip_lone_surrogates") == 2, (

@@ -129,7 +129,7 @@ def _segment_bands(root: Path) -> dict[str, str]:
 
 def main(project_root: str) -> int:
     root = Path(project_root)
-    path = root / "logs" / "ebook_reader.log"
+    path = root / "logs" / "abook.log"
     if not path.is_file():
         print(f"không tìm thấy log: {path}")
         return 2

@@ -6,13 +6,13 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from ebook_reader import aliases
-from ebook_reader.config import build_settings, save_settings
-from ebook_reader.listener_overrides import read_overrides
-from ebook_reader.webui import store
-from ebook_reader.webui.actions import FakeRunner
-from ebook_reader.webui.library import Preferences, book_id
-from ebook_reader.webui.server import App, Server
+from abook import aliases
+from abook.config import build_settings, save_settings
+from abook.listener_overrides import read_overrides
+from abook.webui import store
+from abook.webui.actions import FakeRunner
+from abook.webui.library import Preferences, book_id
+from abook.webui.server import App, Server
 from tests.test_listener_speakers import _book
 from tests.test_webui_listen_and_sync import _request
 

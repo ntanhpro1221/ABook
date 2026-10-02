@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from ebook_reader import runtime_contract as contract
+from abook import runtime_contract as contract
 
 
 def test_the_voice_model_revision_is_pinned() -> None:

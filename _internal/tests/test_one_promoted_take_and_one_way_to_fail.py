@@ -14,8 +14,8 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.cli import _open_project
-from ebook_reader.database import (
+from abook.cli import _open_project
+from abook.database import (
     KEEP_LOCKED_READING_ACTION,
     SEGMENT_CANDIDATE_PROMOTED,
     ProjectDB,

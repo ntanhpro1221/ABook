@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from ebook_reader import continuation
+from abook import continuation
 
 
 def _project(root: Path, name: str, previous: str | None = None, part: int = 2) -> Path:

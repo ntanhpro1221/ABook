@@ -8,9 +8,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from ebook_reader.models import ProjectPaths
-from ebook_reader.pipeline import BookPipeline
-from ebook_reader.webui import bookfile
+from abook.models import ProjectPaths
+from abook.pipeline import BookPipeline
+from abook.webui import bookfile
 from tests.test_webui_listen_and_sync import make_project
 
 

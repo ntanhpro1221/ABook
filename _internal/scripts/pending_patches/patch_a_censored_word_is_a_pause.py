@@ -48,7 +48,7 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "text_processing.py"
+p = root / "abook" / "text_processing.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD_TRIM = '''_SPOKEN_BOUNDARY_TRIM = SPOKEN_SEPARATORS + SPOKEN_DROPPED + " \\t\\r\\n"
@@ -92,7 +92,7 @@ from __future__ import annotations
 
 import pytest
 
-from ebook_reader.text_processing import spoken_symbols_to_words
+from abook.text_processing import spoken_symbols_to_words
 
 
 @pytest.mark.parametrize(

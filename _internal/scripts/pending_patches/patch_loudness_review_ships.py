@@ -26,7 +26,7 @@ def write_atomic(path: Path, text: str) -> None:
 
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "audio_io.py"
+p = root / "abook" / "audio_io.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD = '''        if settings.get("quality_profile") == "high_quality" and quality.review_flags:
@@ -101,7 +101,7 @@ thấy được và vẫn chặn.
 """
 from __future__ import annotations
 
-from ebook_reader.audio_io import (
+from abook.audio_io import (
     CHAPTER_LOUDNESS_HARD_TOLERANCE_LU,
     CHAPTER_LOUDNESS_REVIEW_TOLERANCE_LU,
     chapter_review_flags_that_block,

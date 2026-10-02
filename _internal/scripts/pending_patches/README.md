@@ -205,7 +205,7 @@ Nó đã xảy ra: script viết post-mortem cho đúng sự cố ấy có ký t
 nổ ở dòng `.write`, và **xoá sạch `docs/PRODUCTION_PLAN.md`**. Commit mất một nhịp mới phát
 hiện; khôi phục từ commit trước.
 
-Ở đây mới chỉ là một tài liệu. Các script trong thư mục này ghi vào `ebook_reader/*.py`.
+Ở đây mới chỉ là một tài liệu. Các script trong thư mục này ghi vào `abook/*.py`.
 
 Dùng:
 
@@ -218,5 +218,5 @@ os.replace(tmp, p)          # đổi chỗ nguyên tử; hỏng lúc mã hoá th
 ```
 
 Dự án đã có `io_utils.atomic_write_text` làm đúng việc này cho mã sản xuất. Script vá chạy
-trước khi `ebook_reader` chắc chắn import được nên tự làm lấy, nhưng nguyên tắc là một:
+trước khi `abook` chắc chắn import được nên tự làm lấy, nhưng nguyên tắc là một:
 **không bao giờ cắt bản gốc trước khi bản mới đã nằm trọn trên đĩa.**

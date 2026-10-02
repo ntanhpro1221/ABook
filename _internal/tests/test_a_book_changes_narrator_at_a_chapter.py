@@ -74,7 +74,7 @@ def test_the_shell_reads_one_argument_per_line_without_carriage_returns() -> Non
 def test_both_launchers_ask_the_schedule_and_pass_it_to_create(script: str) -> None:
     source = (ROOT / "scripts" / script).read_text(encoding="utf-8")
     assert "scripts/book_paths.py narrator-args" in source
-    create = source[source.index("-m ebook_reader.cli create"):]
+    create = source[source.index("-m abook.cli create"):]
     create = create[: create.index("--json")] + create[create.index("--json"): create.index("--json") + 120]
     assert '${NARR_ARGS[@]+"${NARR_ARGS[@]}"}' in create
 
@@ -92,8 +92,8 @@ def _args(**overrides: Any) -> argparse.Namespace:
 
 
 def test_the_command_line_writes_the_narrators_only_when_told() -> None:
-    from ebook_reader.cli import _settings_from_args
-    from ebook_reader.config import build_settings
+    from abook.cli import _settings_from_args
+    from abook.config import build_settings
 
     assert _settings_from_args(_args()) == build_settings("high_quality"), (
         "không truyền gì thì settings phải y hệt trước - `settings_hash` của project cũ không đổi"
@@ -111,7 +111,7 @@ def test_the_command_line_writes_the_narrators_only_when_told() -> None:
     ],
 )
 def test_a_settings_file_cannot_be_mixed_with_narrator_flags(overrides: dict[str, Any]) -> None:
-    from ebook_reader.cli import CliUsageError, _settings_from_args
+    from abook.cli import CliUsageError, _settings_from_args
 
     with pytest.raises(CliUsageError):
         _settings_from_args(_args(**overrides))

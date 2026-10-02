@@ -26,7 +26,7 @@ def write_atomic(path: Path, text: str) -> None:
 root = Path(sys.argv[1])
 
 # ================================================================= asr.py
-p = root / "ebook_reader" / "asr.py"
+p = root / "abook" / "asr.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD = '''# Whisper's own timestamps ran past the end of the file, which it can only do by
@@ -85,7 +85,7 @@ write_atomic(p, s)
 print("da va", p)
 
 # ================================================================= pipeline.py
-p = root / "ebook_reader" / "pipeline.py"
+p = root / "abook" / "pipeline.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD = """    ASR_TRANSCRIPT_TIMELINE_IMPOSSIBLE,
@@ -188,13 +188,13 @@ danh sách không-chặn; cái này bị bỏ sót trong đúng lần dọn ấy
 """
 from __future__ import annotations
 
-from ebook_reader.asr import (
+from abook.asr import (
     ASR_TRANSCRIPT_RATE_IMPOSSIBLE,
     ASR_TRANSCRIPT_TIMELINE_IMPOSSIBLE,
     asr_answer_is_about_other_audio,
     transcript_exceeds_physical_rate,
 )
-from ebook_reader.pipeline import (
+from abook.pipeline import (
     HIGH_QUALITY_ALLOWED_SEGMENT_WARNINGS,
     MACHINE_ACCEPTABLE_SEGMENT_WARNINGS,
 )

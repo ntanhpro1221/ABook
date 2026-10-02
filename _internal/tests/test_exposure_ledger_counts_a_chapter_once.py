@@ -10,9 +10,9 @@ from __future__ import annotations
 from collections import Counter
 from pathlib import Path
 
-from ebook_reader.character_registry import build_registry_and_cast
-from ebook_reader.config import build_settings
-from ebook_reader.database import ProjectDB
+from abook.character_registry import build_registry_and_cast
+from abook.config import build_settings
+from abook.database import ProjectDB
 
 from scripts.backfill_exposure import (
     backfill,

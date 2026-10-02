@@ -6,7 +6,7 @@ thay vì đếm cái giọng đọc phát ra.
 """
 from __future__ import annotations
 
-from ebook_reader.audio_io import (
+from abook.audio_io import (
     PACE_SYLLABLES_PER_SECOND_FLOOR,
     pace_is_outlier,
     spoken_speakable_chars,

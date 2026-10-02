@@ -120,8 +120,8 @@ mới nên làm trước:
 Kiểm lại trạng thái ship bằng chính code, đừng tin bảng này (2026-09-06):
 
 ```bash
-grep -n "NAME_PRONUNCIATION_BATCH_SIZE = " _internal/ebook_reader/analysis.py   # mục 3: 12
-grep -n '"tts": {"max_retries"' _internal/ebook_reader/config.py                # mục 4: 10
+grep -n "NAME_PRONUNCIATION_BATCH_SIZE = " _internal/abook/analysis.py   # mục 3: 12
+grep -n '"tts": {"max_retries"' _internal/abook/config.py                # mục 4: 10
 grep -n "faster-whisper==" _internal/pyproject.toml                             # mục 6
 ```
 
@@ -275,7 +275,7 @@ nếu mục 1 đã làm xong thì đánh đổi ấy còn tệ hơn** — pool c
 > alpha.46 chậm hơn ~190s ở đúng cấu hình ấy, nên nó là tải máy chứ không phải num_ctx.
 >
 > Cách đo lại: mốc đầu và mốc cuối của dòng `Đang phân tích batch` trong
-> `logs/ebook_reader.log`.
+> `logs/abook.log`.
 
 alpha.32 ở 7.168 chạy pha phân tích trong 3.851s; alpha.43 ở 9.216 mất 4.490s. Số lượt gọi
 và số token gần như không đổi (+1,4% và +2,6%); **tốc độ sinh tụt 56,4 → 50,1 tok/s**, riêng
@@ -1238,7 +1238,7 @@ chữ lẫn âm tiết; sàn âm tiết 3,75 là p2 của 8.301 bản thu đã q
 Xếp thứ tư — file khác (`audio_io.py`) nên không chạm neo ba bản registry. Ranh giới tự chạy
 sẽ áp nó trước lô vá của lô 3, và chương 075 chạy lại là phép thử: câu ấy phải qua **lần đầu**.
 
-Tổng diễn tập ranh giới trên bản sao đủ bố cục (`Ebook Reader.vbs`, `.lnk`): `apply_all
+Tổng diễn tập ranh giới trên bản sao đủ bố cục (`ABook.vbs`, `.lnk`): `apply_all
 --apply --force` áp ba bản, tự rút hàng chờ, bộ test đầy đủ xanh, mã thoát 0. Bốn bản áp chồng
 trên bản sao khác: test audio + registry xanh.
 
@@ -1790,7 +1790,7 @@ nào đụng phải một bản thu bị cắt.
 **2. Bước 2 của `boundary.sh` dùng `git add -A "$ROOT"`.** Đã một lần cuốn công việc đang dở của
 tôi vào commit của ranh giới (7e5e4bd). Luật hiện tại là "giữ cây sạch khi ranh giới bay" — một
 luật dựa vào kỷ luật của người, đúng kiểu luật sẽ hỏng lúc 4 giờ sáng. Sửa đúng:
-`apply_all --apply` in ra danh sách file nó đã ghi (nó biết chính xác: `ebook_reader/*`, `tests/*`,
+`apply_all --apply` in ra danh sách file nó đã ghi (nó biết chính xác: `abook/*`, `tests/*`,
 `scripts/pending_patches/apply_all.py`), và bước 2 stage đúng danh sách ấy. Không sửa được lúc
 này vì `boundary.sh` đang chạy (bash đọc script theo từng khúc).
 
@@ -2075,12 +2075,12 @@ bốn bài test đều xanh và chương vẫn hỏng.
    `failed_segments=1` thì bắt nó thu lại đúng một đoạn — khi **không có lô nào bay**:
 
        python - <<'X'
-       from ebook_reader.database import ProjectDB
+       from abook.database import ProjectDB
        db = ProjectDB(r"D:/Novels/Audiobooks/book2/_versions/v0.3.0-lo01/lo01_c0d8c42dfe/project.sqlite3")
        seg = [r for r in db.list_segments(chapter_id=26) if str(r["stable_id"]).endswith("1e32f852fb08")][0]
        db.reset_segment_pending(int(seg["id"]), "bản vá công thức: thu lại với chuỗi đối chiếu đã sửa")
        X
-       python -m ebook_reader.cli run <project> --json
+       python -m abook.cli run <project> --json
 
    Dự đoán ghi trước: lần thu lại ấy qua ASR ngay vòng 0 (độ giống từ 0,73 lên > 0,9) và chương 26 về
    `failed_segments=0`. Nếu chương vào `failed` thì bước 3 ranh giới tự lo, không cần lệnh trên.

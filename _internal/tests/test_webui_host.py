@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.webui import host
+from abook.webui import host
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -60,7 +60,7 @@ def app_data(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     preferences = tmp_path / "ABook" / "preferences.json"
     preferences.parent.mkdir(parents=True)
     preferences.write_text(json.dumps({"libraryRoot": str(tmp_path / "thu_vien")}), encoding="utf-8")
-    monkeypatch.setenv("EBOOK_READER_PREFERENCES", str(preferences))
+    monkeypatch.setenv("ABOOK_PREFERENCES", str(preferences))
     return tmp_path
 
 
@@ -138,7 +138,7 @@ def test_the_host_process_exits_when_the_shell_goes_away(app_data: Path) -> None
     """Tiến trình thật như vỏ chạy nó: stdout là của giao thức (print lạc sang stderr), đóng stdin là thoát - không
     bao giờ bỏ lại một server mồ côi giữ cổng."""
     environment = dict(os.environ, PYTHONPATH=str(ROOT), PYTHONIOENCODING="utf-8")
-    process = subprocess.Popen([sys.executable, "-m", "ebook_reader.webui.host", "--fake-runner", "--version", "9.9.9"],
+    process = subprocess.Popen([sys.executable, "-m", "abook.webui.host", "--fake-runner", "--version", "9.9.9"],
                                cwd=ROOT, env=environment, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE, text=True, encoding="utf-8")
     try:

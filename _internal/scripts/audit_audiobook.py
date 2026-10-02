@@ -30,9 +30,9 @@ import numpy as np
 import pyloudnorm as pyln
 import soundfile as sf
 
-from ebook_reader.audio_io import LOUDNESS_EMOTION_OFFSETS_DB, integrated_loudness_lufs
-from ebook_reader.config import build_settings
-from ebook_reader.text_processing import SPOKEN_WORD_PATTERN
+from abook.audio_io import LOUDNESS_EMOTION_OFFSETS_DB, integrated_loudness_lufs
+from abook.config import build_settings
+from abook.text_processing import SPOKEN_WORD_PATTERN
 
 
 DIGIT_PATTERN = re.compile(r"\d")

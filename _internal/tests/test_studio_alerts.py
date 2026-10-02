@@ -7,8 +7,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from ebook_reader.webui.remote_studio import StudioGate
-from ebook_reader.webui.sync import Devices, SyncApp, SyncServer
+from abook.webui.remote_studio import StudioGate
+from abook.webui.sync import Devices, SyncApp, SyncServer
 from tests.test_webui_listen_and_sync import _request, library  # noqa: F401 - fixture dùng chung
 
 
@@ -46,7 +46,7 @@ def test_the_phone_reads_a_compact_production_status_only_when_allowed(library, 
 
 def test_the_work_count_is_recomputed_only_when_the_book_changes(library, monkeypatch) -> None:  # noqa: F811
     """Điện thoại hỏi mỗi 15 phút: dựng lại hộp việc (đọc cả sách) chỉ khi DB hay file yêu cầu của người nghe đổi."""
-    from ebook_reader.webui import work_items as module
+    from abook.webui import work_items as module
 
     lib, project, listening = library
     calls = []
@@ -68,8 +68,8 @@ def test_the_work_count_is_recomputed_only_when_the_book_changes(library, monkey
 def test_the_phone_learns_that_the_computer_paused_on_battery(library, monkeypatch) -> None:  # noqa: F811
     """Máy tính rút sạc thì tự tạm dừng (power_source); điện thoại báo "Máy tính đang chạy pin" - ngày 24-09 sạc tuột 22:50
     mà tới 00:07 mới có người biết."""
-    from ebook_reader import background_runner
-    from ebook_reader.background_runner import BackgroundStatus
+    from abook import background_runner
+    from abook.background_runner import BackgroundStatus
 
     lib, project, listening = library
     monkeypatch.setattr(background_runner, "get_status", lambda path: BackgroundStatus(

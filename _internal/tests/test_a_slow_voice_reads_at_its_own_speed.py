@@ -10,8 +10,8 @@ import numpy as np
 import pytest
 import pyworld
 
-from ebook_reader.tts import apply_speed_change
-from ebook_reader.voice_catalog import (
+from abook.tts import apply_speed_change
+from abook.voice_catalog import (
     PRESET_SPEED_FACTOR,
     SPEED_FACTOR_MAX,
     SPEED_FACTOR_MIN,
@@ -70,7 +70,7 @@ def test_the_speed_step_runs_after_pitch_and_skips_the_laugh() -> None:
     # tự hai dòng là quá nặng.
     from pathlib import Path
 
-    source = (Path(__file__).resolve().parent.parent / "ebook_reader" / "tts.py").read_text(encoding="utf-8")
+    source = (Path(__file__).resolve().parent.parent / "abook" / "tts.py").read_text(encoding="utf-8")
     pitch_at = source.index("pitched_audio = apply_pitch_variant(\n                        audio,\n                        self.vieneu.sample_rate,\n                        pitch_steps,\n                    )")
     speed_at = source.index("audio = apply_speed_change(audio, self.vieneu.sample_rate, speed_factor)")
     assert pitch_at < speed_at

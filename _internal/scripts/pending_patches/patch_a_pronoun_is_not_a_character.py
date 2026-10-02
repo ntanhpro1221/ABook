@@ -71,7 +71,7 @@ from pathlib import Path
 root = Path(sys.argv[1])
 
 # ---- 1 + 2: analysis.py ----------------------------------------------------------------
-p = root / "ebook_reader" / "analysis.py"
+p = root / "abook" / "analysis.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD_KEY = '''def _name_candidate_key(value: str) -> str:
@@ -121,7 +121,7 @@ io.open(p, "w", encoding="utf-8", newline="\n").write(s)
 print(f"da va {p}")
 
 # ---- 3: character_registry.py --------------------------------------------------------
-q = root / "ebook_reader" / "character_registry.py"
+q = root / "abook" / "character_registry.py"
 t = io.open(q, encoding="utf-8").read()
 
 OLD_PRONOUNS = '''PRONOUNS = {
@@ -174,13 +174,13 @@ Hai đường sinh, và mỗi đường một chỗ sửa:
 """
 from __future__ import annotations
 
-from ebook_reader.analysis import (
+from abook.analysis import (
     ATTRIBUTION_SENTENCE_START_EXCLUSIONS,
     NAME_CANDIDATE_EXCLUSIONS,
     _leading_proper_name,
     _name_candidate_key,
 )
-from ebook_reader.character_registry import PRONOUNS, normalize_name
+from abook.character_registry import PRONOUNS, normalize_name
 
 
 def test_the_key_folds_the_marks_so_the_lists_can_match() -> None:

@@ -38,11 +38,11 @@ for path in (ROOT, HERE):
         sys.path.insert(0, str(path))
 
 from analysis_only import segment  # noqa: E402
-from ebook_reader import analysis as A  # noqa: E402
-from ebook_reader.database import ProjectDB  # noqa: E402
-from ebook_reader.models import BookStatus, ProjectPaths  # noqa: E402
-from ebook_reader.quality_policy import QUALITY_POLICY_VERSION, build_quality_policy, quality_policy_hash  # noqa: E402
-from ebook_reader.worker import ProjectRunLock, _configure_logging, _load_locked_settings  # noqa: E402
+from abook import analysis as A  # noqa: E402
+from abook.database import ProjectDB  # noqa: E402
+from abook.models import BookStatus, ProjectPaths  # noqa: E402
+from abook.quality_policy import QUALITY_POLICY_VERSION, build_quality_policy, quality_policy_hash  # noqa: E402
+from abook.worker import ProjectRunLock, _configure_logging, _load_locked_settings  # noqa: E402
 from score_models import GOLD_ROOT, load_gold  # noqa: E402
 
 FAKE_DIGEST = "sha256:" + "0" * 64
@@ -204,7 +204,7 @@ def main(argv: list[str] | None = None) -> int:
     paths = ProjectPaths.build(args.project.resolve())
     lock = ProjectRunLock(paths.root / ".worker.lock")
     lock.acquire()
-    _configure_logging(paths.logs / "ebook_reader.log")
+    _configure_logging(paths.logs / "abook.log")
     db = ProjectDB(paths.db, synchronous="FULL")
     settings = _load_locked_settings(paths, db)
     policy = build_quality_policy(settings)

@@ -11,7 +11,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from ebook_reader.asr import WhisperVerifier
+from abook.asr import WhisperVerifier
 
 
 class _FasterSegment:

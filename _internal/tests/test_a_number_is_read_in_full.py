@@ -7,14 +7,14 @@ from __future__ import annotations
 
 import pytest
 
-from ebook_reader.asr import NUMBER_FOLD_CEILING, normalize_transcript
-from ebook_reader.audio_io import (
+from abook.asr import NUMBER_FOLD_CEILING, normalize_transcript
+from abook.audio_io import (
     PACE_SYLLABLES_PER_SECOND_FLOOR,
     pace_is_outlier,
     spoken_speakable_chars,
     spoken_syllables,
 )
-from ebook_reader.text_processing import vietnamese_number_words
+from abook.text_processing import vietnamese_number_words
 
 NORMAL = (12.5, 24.5)
 LOST_LINE_106 = (

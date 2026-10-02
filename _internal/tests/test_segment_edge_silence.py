@@ -26,7 +26,7 @@ import numpy as np
 import soundfile as sf
 import pytest
 
-from ebook_reader.audio_io import (
+from abook.audio_io import (
     SEGMENT_EDGE_SILENCE_CAP_SECONDS,
     SEGMENT_INTERNAL_SILENCE_CAP_SECONDS,
     _cap_internal_silence,

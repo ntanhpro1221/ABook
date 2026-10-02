@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ebook_reader.asr import BEAM_MINIMUM_SECONDS, WhisperVerifier
+from abook.asr import BEAM_MINIMUM_SECONDS, WhisperVerifier
 
 
 class _Recorder:

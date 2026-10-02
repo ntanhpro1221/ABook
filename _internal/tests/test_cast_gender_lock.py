@@ -16,9 +16,9 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.character_registry import resolve_gender
-from ebook_reader.config import build_settings
-from ebook_reader.project import create_or_open_project
+from abook.character_registry import resolve_gender
+from abook.config import build_settings
+from abook.project import create_or_open_project
 
 
 class _Row(dict):
@@ -149,7 +149,7 @@ def test_a_pin_and_the_lookup_agree_on_what_a_name_is(tmp_path) -> None:
     agrees for "Noah" and disagrees for a name typed with a double space - so a listener
     could pin a gender, be told it was stored, and watch the run ignore it without a word.
     """
-    from ebook_reader.character_registry import canonical_key
+    from abook.character_registry import canonical_key
 
     db = _project(tmp_path)
     awkward = "Lê  Văn   A"

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from ebook_reader.listener_overrides import pronunciation_problem
-from ebook_reader.webui.spelling import respelled, respelling_note
+from abook.listener_overrides import pronunciation_problem
+from abook.webui.spelling import respelled, respelling_note
 
 
 @pytest.mark.parametrize(

@@ -65,7 +65,7 @@ def main(project_root: str, sample: int, max_workers: int) -> int:
     import torch  # noqa: F401  - imported for the CUDA libraries CTranslate2 links
     from faster_whisper import WhisperModel
 
-    from ebook_reader.asr import load_audio_for_whisper, normalize_transcript
+    from abook.asr import load_audio_for_whisper, normalize_transcript
 
     options = {
         "language": "vi",

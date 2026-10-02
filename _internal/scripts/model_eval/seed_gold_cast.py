@@ -62,8 +62,8 @@ def gold_cast(gold_book: str, chapter: str) -> list[dict]:
 
 
 def seed(project_root: Path, gold_book: str, chapter: str) -> list[dict]:
-    from ebook_reader.database import ProjectDB
-    from ebook_reader.models import ProjectPaths
+    from abook.database import ProjectDB
+    from abook.models import ProjectPaths
 
     cast = gold_cast(gold_book, chapter)
     database = ProjectDB(ProjectPaths.build(project_root).db)

@@ -32,7 +32,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from ebook_reader.text_processing import segment_chapter_text  # noqa: E402
+from abook.text_processing import segment_chapter_text  # noqa: E402
 
 SECONDS_PER_SEGMENT = 7.78  # alpha.55, chương mới, mã hiện tại
 

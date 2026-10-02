@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.database import require_all
+from abook.database import require_all
 
 
 def test_it_passes_when_nothing_failed() -> None:
@@ -55,7 +55,7 @@ def test_truthiness_counts_not_just_true() -> None:
 
 def test_no_new_blind_compound_check_is_added() -> None:
     """70 existed when this was written; the count may fall, never rise."""
-    source = Path("ebook_reader/database.py").read_text(encoding="utf-8")
+    source = Path("abook/database.py").read_text(encoding="utf-8")
     blind = 0
     for node in ast.walk(ast.parse(source)):
         if not isinstance(node, ast.If) or not isinstance(node.test, ast.BoolOp):

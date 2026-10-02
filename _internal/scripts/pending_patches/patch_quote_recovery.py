@@ -1,13 +1,13 @@
 """Vá text_processing.py: bộ chia đoạn tự phục hồi thay vì ném lỗi.
 
-    python patch_quote_recovery.py <thư mục chứa ebook_reader/>
+    python patch_quote_recovery.py <thư mục chứa abook/>
 """
 import io
 import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "text_processing.py"
+p = root / "abook" / "text_processing.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD_WALK = '''def segment_chapter_text(chapter_index: int, text: str, max_chars: int = 340) -> list[dict[str, Any]]:

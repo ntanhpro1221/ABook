@@ -6,7 +6,7 @@ An `.abookproj` file is one whole audiobook *production project* of ABook (https
 project database, the audio recorded so far, the working files, the chapter sources and the cover, in a single file.
 It is for backing a project up or moving it to another computer; opening it gives the same project back in the ABook
 Studio. The finished audiobook for listening is a different format, `.abook` (`ABOOK_FILE_FORMAT.md`). The reference
-implementation is `_internal/ebook_reader/webui/projectfile.py`.
+implementation is `_internal/abook/webui/projectfile.py`.
 
 ## Container
 

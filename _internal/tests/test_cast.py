@@ -15,12 +15,12 @@ from typing import Any
 
 import pytest
 
-from ebook_reader.webui import cast
-from ebook_reader.webui.actions import FakeRunner
-from ebook_reader.webui.cast import CastError, CastMedia, CastPlayers
-from ebook_reader.webui.library import Preferences, book_id
-from ebook_reader.webui.listening import Listening
-from ebook_reader.webui.server import App, Server
+from abook.webui import cast
+from abook.webui.actions import FakeRunner
+from abook.webui.cast import CastError, CastMedia, CastPlayers
+from abook.webui.library import Preferences, book_id
+from abook.webui.listening import Listening
+from abook.webui.server import App, Server
 from tests.test_webui_listen_and_sync import _request, make_project
 
 ROOT = Path(__file__).resolve().parents[1]

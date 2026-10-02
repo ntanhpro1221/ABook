@@ -21,7 +21,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE.parent))
-sys.path.insert(0, str(HERE.parents[2]))  # _internal: gói ebook_reader
+sys.path.insert(0, str(HERE.parents[2]))  # _internal: gói abook
 
 from build_vi import (  # noqa: E402
     GOLD_ROOT, aliases_for, chapter_cast, entity_of, gold_speakers, join_segments, mention_spans, point_of_view_auto,
@@ -29,8 +29,8 @@ from build_vi import (  # noqa: E402
 )
 from replay_all import BOOKS, CORPUS  # noqa: E402
 
-from ebook_reader.io_utils import decode_text_bytes  # noqa: E402
-from ebook_reader.text_processing import segment_chapter_text  # noqa: E402
+from abook.io_utils import decode_text_bytes  # noqa: E402
+from abook.text_processing import segment_chapter_text  # noqa: E402
 
 
 def main() -> int:

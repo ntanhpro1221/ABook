@@ -62,7 +62,7 @@ def replace_exactly(path: Path, old: str, new: str, count: int) -> None:
 
 
 # ------------------------------------------------------------------ voice_catalog.py
-catalog = root / "ebook_reader" / "voice_catalog.py"
+catalog = root / "abook" / "voice_catalog.py"
 replace_once(catalog, '''PRESET_SPEED_FACTOR: dict[str, float] = {}
 SPEED_FACTOR_MIN = 0.80
 SPEED_FACTOR_MAX = 1.50
@@ -93,7 +93,7 @@ def pace_scale_for_preset(preset_name: str) -> float:
 ''')
 
 # ------------------------------------------------------------------ audio_io.py
-audio = root / "ebook_reader" / "audio_io.py"
+audio = root / "abook" / "audio_io.py"
 replace_once(audio, '''from .text_processing import VIETNAMESE_UNITS, vietnamese_number_words
 ''', '''from .text_processing import VIETNAMESE_UNITS, vietnamese_number_words
 from .voice_catalog import pace_scale_for_preset, speed_factor_for_preset
@@ -176,7 +176,7 @@ replace_once(audio, '''        metrics["pace_outlier"] = float(
 ''')
 
 # ------------------------------------------------------------------ tts.py
-tts = root / "ebook_reader" / "tts.py"
+tts = root / "abook" / "tts.py"
 replace_once(tts, '''from .audio_io import (
 ''', '''from .audio_io import (
     VOICE_PRESET_FIELD,
@@ -194,7 +194,7 @@ replace_once(tts, '''            spoken_row = self._spoken_row(
 ''')
 
 # ------------------------------------------------------------------ pipeline.py
-pipeline = root / "ebook_reader" / "pipeline.py"
+pipeline = root / "abook" / "pipeline.py"
 replace_once(pipeline, '''from .audio_io import (
 ''', '''from .audio_io import (
     VOICE_PRESET_FIELD,
@@ -272,16 +272,16 @@ import re
 import numpy as np
 import pytest
 
-from ebook_reader import audio_io, pipeline, tts, voice_catalog
-from ebook_reader.audio_io import (
+from abook import audio_io, pipeline, tts, voice_catalog
+from abook.audio_io import (
     VOICE_PRESET_FIELD,
     pace_is_outlier,
     segment_duration_policy,
     spoken_speakable_chars,
     validate_audio_array,
 )
-from ebook_reader.config import build_settings
-from ebook_reader.voice_catalog import (
+from abook.config import build_settings
+from abook.voice_catalog import (
     PACE_SCALE_MAX,
     PACE_SCALE_MIN,
     PRESET_PACE_SCALE,

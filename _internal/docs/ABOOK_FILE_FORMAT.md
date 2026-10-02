@@ -4,7 +4,7 @@ Media type: `application/vnd.ngdtuanh.abook+zip` · File extension: `.abook` · 
 
 An `.abook` file is one finished audiobook produced by ABook (https://github.com/ntanhpro1221/ABook): the audio of every
 chapter, the text with who speaks each line, the cast of characters and the cover, in a single file that the ABook apps
-for Windows and Android open. The reference implementation is `_internal/ebook_reader/webui/bookfile.py`.
+for Windows and Android open. The reference implementation is `_internal/abook/webui/bookfile.py`.
 
 ## Container
 

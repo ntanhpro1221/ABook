@@ -20,8 +20,8 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.analysis import name_component_corrections
-from ebook_reader.database import LISTENER_PRONUNCIATION_SOURCE, ProjectDB
+from abook.analysis import name_component_corrections
+from abook.database import LISTENER_PRONUNCIATION_SOURCE, ProjectDB
 
 MACHINE = "english_name_transliteration"
 CONSISTENCY = "name_component_consistency"

@@ -125,7 +125,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from ebook_reader.voice_catalog import VIENEU_PRESETS  # noqa: E402
+from abook.voice_catalog import VIENEU_PRESETS  # noqa: E402
 from scripts.name_marks import fold_dropped_marks  # noqa: E402
 
 try:

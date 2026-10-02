@@ -16,7 +16,7 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-from ebook_reader.character_registry import canonical_key
+from abook.character_registry import canonical_key
 from scripts.pin_the_book_cast import chapters_by_voice, pins_that_drifted, project_chapters
 
 F090 = "preset_thanh_binh_f090_p-04"

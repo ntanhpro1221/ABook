@@ -25,7 +25,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import numpy as np  # noqa: E402
 
-from ebook_reader.asr import load_audio_for_whisper  # noqa: E402
+from abook.asr import load_audio_for_whisper  # noqa: E402
 
 LENGTHS = [3.0, 6.0, 12.0, 20.0, 28.0, 31.0, 45.0, 58.0, 61.0]
 REPEATS = 3

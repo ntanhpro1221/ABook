@@ -16,8 +16,8 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.database import ProjectDB
-from ebook_reader.io_utils import sha256_file
+from abook.database import ProjectDB
+from abook.io_utils import sha256_file
 
 SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
 sys.path.insert(0, str(SCRIPTS))

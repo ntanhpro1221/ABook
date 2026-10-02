@@ -17,8 +17,8 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.config import build_settings
-from ebook_reader.project import create_or_open_project
+from abook.config import build_settings
+from abook.project import create_or_open_project
 
 WARNING = "PERCEPTUAL_NATURALNESS_REVIEW"
 
@@ -97,7 +97,7 @@ def test_an_acceptance_needs_all_three_of_its_parts(tmp_path) -> None:
 
 def test_the_gate_stops_blocking_on_a_warning_that_was_accepted(monkeypatch) -> None:
     """The whole point, seen from the check that refuses the chapter."""
-    import ebook_reader.pipeline as pipeline_module
+    import abook.pipeline as pipeline_module
 
     pipeline = object.__new__(pipeline_module.BookPipeline)
     pipeline.settings = {"quality_profile": "high_quality"}
@@ -125,7 +125,7 @@ def test_the_gate_stops_blocking_on_a_warning_that_was_accepted(monkeypatch) -> 
 
 
 def test_an_acceptance_of_different_audio_does_not_clear_this_one(monkeypatch) -> None:
-    import ebook_reader.pipeline as pipeline_module
+    import abook.pipeline as pipeline_module
 
     pipeline = object.__new__(pipeline_module.BookPipeline)
     pipeline.settings = {"quality_profile": "high_quality"}
@@ -147,7 +147,7 @@ def _db_with_segment(tmp_path: Path):
     _paths, db, settings = create_or_open_project(
         [source], tmp_path / "out", build_settings(), "Accept failed"
     )
-    from ebook_reader.text_processing import load_and_segment_chapter
+    from abook.text_processing import load_and_segment_chapter
 
     chapter = db.list_chapters()[0]
     rows = load_and_segment_chapter(

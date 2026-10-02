@@ -6,8 +6,8 @@ import json
 from pathlib import Path
 from urllib.parse import quote
 
-from ebook_reader.webui import music_catalog
-from ebook_reader.webui.library import book_id
+from abook.webui import music_catalog
+from abook.webui.library import book_id
 from tests.test_a_project_can_be_renamed_or_deleted import _call, studio  # noqa: F401 - fixture dùng chung
 from tests.test_music_catalog_and_select import _catalog_dir
 

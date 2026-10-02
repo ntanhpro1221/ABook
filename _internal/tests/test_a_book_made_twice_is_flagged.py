@@ -10,7 +10,7 @@ from tests.test_a_project_can_be_renamed_or_deleted import _call, studio  # noqa
 
 
 def test_the_same_story_copied_elsewhere_is_recognised(studio, tmp_path: Path) -> None:  # noqa: F811
-    from ebook_reader.webui.library import book_id
+    from abook.webui.library import book_id
 
     paths, _app, server, _runner = studio
     copy = tmp_path / "elsewhere" / "chuong 1.txt"

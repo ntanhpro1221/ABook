@@ -14,7 +14,7 @@ vị trên khung hữu thanh, lệch tới 9,8% so với thang của catalog. Xe
 
 Thêm một giọng vào kho không phải một dòng: `VIENEU_PRESETS`, `PRESET_VOCAL_TRACT_CM`,
 `PRESET_PREVIEW_MEDIAN_PITCH_HZ`, `PRESET_MIN_PITCH_SEMITONES`, `VOICE_PREVIEW_FILENAMES`, cộng file
-preview trong `ebook_reader/assets/voice_previews`. Sáu chỗ, và hai trong số đó là **số đo** phải lấy
+preview trong `abook/assets/voice_previews`. Sáu chỗ, và hai trong số đó là **số đo** phải lấy
 từ đúng preview ấy bằng đúng cách đã dùng cho các giọng cũ (Praat, F0 trung vị và F3 → chiều dài ống
 thanh `L = 5c / 4F3`). Chủ sách đang nghe 11 giọng và sẽ nhận một tập con; làm tay sáu chỗ cho từng
 giọng giữa buổi sáng là cách chắc chắn để sai một chỗ.
@@ -32,8 +32,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from ebook_reader.io_utils import slugify  # noqa: E402
-from ebook_reader.voice_catalog import (  # noqa: E402
+from abook.io_utils import slugify  # noqa: E402
+from abook.voice_catalog import (  # noqa: E402
     PRESET_MIN_PITCH_SEMITONES,
     PRESET_PREVIEW_MEDIAN_PITCH_HZ,
     PRESET_VOCAL_TRACT_CM,
@@ -45,7 +45,7 @@ from ebook_reader.voice_catalog import (  # noqa: E402
 from scripts.audition_presets import acoustics  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
-SHIPPED_PREVIEWS = ROOT / "ebook_reader" / "assets" / "voice_previews"
+SHIPPED_PREVIEWS = ROOT / "abook" / "assets" / "voice_previews"
 STAGED_PREVIEWS = ROOT / "scripts" / "pending_patches" / "assets" / "voice_previews"
 # Hai ngưỡng khác nhau vì hai số tái lập khác nhau (đo 18-09 trên đúng 10 preview đang ship): ống
 # thanh về đúng con số cũ (lệch 0,0% sau khi sửa cách đo F3 thành "Get mean" cả clip), còn F0 lệch
@@ -211,7 +211,7 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "voice_catalog.py"
+p = root / "abook" / "voice_catalog.py"
 s = io.open(p, encoding="utf-8").read()
 
 INSERTS = (
@@ -232,7 +232,7 @@ print(f"da va {{p}}")
 
 # Preview đi cùng: kho giọng đọc file theo tên trong VOICE_PREVIEW_FILENAMES, thiếu file là hỏng.
 staged = root / "scripts" / "pending_patches" / "assets" / "voice_previews"
-shipped = root / "ebook_reader" / "assets" / "voice_previews"
+shipped = root / "abook" / "assets" / "voice_previews"
 for filename in (
 {copies}):
     source = staged / filename

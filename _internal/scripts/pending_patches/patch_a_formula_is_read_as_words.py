@@ -32,7 +32,7 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "text_processing.py"
+p = root / "abook" / "text_processing.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD_MAP = '''SPOKEN_SYMBOL_WORDS = {
@@ -87,7 +87,7 @@ nothing (Whisper writes "25%" back as a symbol, 6/6 verified in book 1).
 """
 from __future__ import annotations
 
-from ebook_reader.text_processing import spoken_symbols_to_words
+from abook.text_processing import spoken_symbols_to_words
 
 
 def test_an_alchemy_recipe_is_read_as_words() -> None:

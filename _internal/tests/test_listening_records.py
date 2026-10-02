@@ -8,10 +8,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from ebook_reader.webui.actions import FakeRunner
-from ebook_reader.webui.library import book_id
-from ebook_reader.webui.listening import DEFAULT_RECORD_NAME, Listening, default_record_id
-from ebook_reader.webui.server import App, Server
+from abook.webui.actions import FakeRunner
+from abook.webui.library import book_id
+from abook.webui.listening import DEFAULT_RECORD_NAME, Listening, default_record_id
+from abook.webui.server import App, Server
 from tests.test_webui_listen_and_sync import _request, library  # noqa: F401 - library là fixture
 
 

@@ -37,8 +37,8 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from ebook_reader.config import normalize_legacy_locked_settings, validate_settings  # noqa: E402
-from ebook_reader.project import create_or_open_project  # noqa: E402
+from abook.config import normalize_legacy_locked_settings, validate_settings  # noqa: E402
+from abook.project import create_or_open_project  # noqa: E402
 
 PY = ROOT / "runtime" / ".venv" / "Scripts" / "python.exe"
 EVAL_ROOT = Path("D:/Novels/Audiobooks/_model_eval")

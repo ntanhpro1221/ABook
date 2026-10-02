@@ -6,15 +6,15 @@ cấp cho một console MỚI, và Windows 11 mở một cửa sổ terminal đ�
 Ca thật: `scripts/heartbeat_daemon.py` chạy `python.exe heartbeat_tick.py` mỗi 30 phút từ 18-09 21:16 mà
 thiếu cờ, và chủ sách hỏi ngày 21-09 "thi thoảng tôi cứ thấy cái terminal nó pop ra rồi biến mất". Docstring
 của chính daemon ấy ghi nó dùng `pythonw.exe` "để không có cửa sổ console nháy" - `pythonw` chỉ lo cho bản
-thân nó, không lo cho con. Cùng loại lỗi `ebook_reader/background_runner.py` đã sửa hôm 11-09.
+thân nó, không lo cho con. Cùng loại lỗi `abook/background_runner.py` đã sửa hôm 11-09.
 
 Kiểm bằng cây cú pháp: mọi lệnh gọi `subprocess.run` / `subprocess.Popen` / `subprocess.call` /
 `subprocess.check_output` trong các script chạy bằng `pythonw` phải truyền `creationflags` - viết thẳng, hoặc
 qua `**kwargs` (như `background_runner._spawn_detached_supervisor`, gán cờ vào dict rồi mới bung ra).
 
 Phạm vi lấy từ mã thật chứ không từ trí nhớ (grep `pythonw` ngày 21-09): hai script khởi chạy thẳng bằng
-pythonw, watchdog của Ollama, và TOÀN BỘ `ebook_reader/` - vì supervisor của mọi lô là
-`pythonw -m ebook_reader.background_runner supervise`, nên mọi lệnh gọi subprocess của dây chuyền khi sản xuất
+pythonw, watchdog của Ollama, và TOÀN BỘ `abook/` - vì supervisor của mọi lô là
+`pythonw -m abook.background_runner supervise`, nên mọi lệnh gọi subprocess của dây chuyền khi sản xuất
 đều có cha không có console. Lúc viết test: 0 lệnh gọi thiếu cờ trên 32 file của dây chuyền.
 """
 from __future__ import annotations
@@ -33,7 +33,7 @@ WINDOWLESS_SCRIPTS = (
     "scripts/resume_interrupted.py",
     "scripts/ollama_watchdog.py",
     "scripts/run_detached.py",
-    *sorted(str(path.relative_to(ROOT)).replace("\\", "/") for path in (ROOT / "ebook_reader").glob("*.py")),
+    *sorted(str(path.relative_to(ROOT)).replace("\\", "/") for path in (ROOT / "abook").glob("*.py")),
 )
 SPAWNING_CALLS = {"run", "Popen", "call", "check_call", "check_output"}
 

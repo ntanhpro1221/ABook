@@ -13,9 +13,9 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.webui import studio_setup
-from ebook_reader.webui.actions import StudioRunner
-from ebook_reader.webui.studio_setup import Download, SetupError, StudioSetup
+from abook.webui import studio_setup
+from abook.webui.actions import StudioRunner
+from abook.webui.studio_setup import Download, SetupError, StudioSetup
 
 
 def _zip_with(path: Path, files: dict[str, bytes]) -> Path:
@@ -144,7 +144,7 @@ def test_the_studio_installs_step_by_step_and_resumes_where_it_stopped(tmp_path:
     assert marker["schema_version"] == 2, "đúng dấu cài đặt runtime_contract đòi"
 
     environment = setup.environment()
-    assert environment["EBOOK_READER_RUNTIME"] == str(setup.runtime)
+    assert environment["ABOOK_RUNTIME"] == str(setup.runtime)
     assert environment["PYTHONPATH"] == str(setup.app_root), "worker chạy mã của app"
     assert environment["PATH"].startswith(str(setup.tools / "ollama")), "dây chuyền tìm thấy Ollama của Studio"
     # Ollama RIÊNG: cổng riêng, model trong Studio - gỡ Studio là không sót gì, Ollama của người dùng không bị đụng.
@@ -183,7 +183,7 @@ def test_a_studio_installed_by_an_older_app_updates_only_what_changed(tmp_path: 
 
 
 def test_a_book_made_in_the_packaged_app_talks_to_the_studios_own_ollama(tmp_path: Path, ollama: str) -> None:
-    from ebook_reader.webui import actions, store
+    from abook.webui import actions, store
 
     setup = _setup(tmp_path, ollama, [])
     source = tmp_path / "nguon"
@@ -226,10 +226,10 @@ def test_a_book_keeps_the_code_that_started_it_across_app_updates(tmp_path: Path
                                                                    monkeypatch: pytest.MonkeyPatch) -> None:
     """App tự cập nhật; đổi một file khoá chất lượng là sách dở không làm tiếp được - nên mỗi cuốn chạy bằng đúng bản
     mã đã bắt đầu nó."""
-    from ebook_reader import quality_policy
+    from abook import quality_policy
 
     setup = _setup(tmp_path, ollama, [])
-    package = setup.app_root / "ebook_reader"
+    package = setup.app_root / "abook"
     package.mkdir()
     (package / "pipeline.py").write_text("PHIEN_BAN = 1\n", encoding="utf-8")
     (package / "__pycache__").mkdir()
@@ -241,24 +241,24 @@ def test_a_book_keeps_the_code_that_started_it_across_app_updates(tmp_path: Path
     new_book.mkdir()
     first = setup.root / "code" / ("a" * 16)
     assert setup.code_for(old_book) == setup.app_root, "hash của app trùng hash đã ghim: chạy mã của app"
-    assert (first / "ebook_reader" / "pipeline.py").read_text(encoding="utf-8") == "PHIEN_BAN = 1\n", "bản chép để dành"
-    assert (first / "pyproject.toml").is_file() and not (first / "ebook_reader" / "__pycache__").exists()
+    assert (first / "abook" / "pipeline.py").read_text(encoding="utf-8") == "PHIEN_BAN = 1\n", "bản chép để dành"
+    assert (first / "pyproject.toml").is_file() and not (first / "abook" / "__pycache__").exists()
 
     # Bản app mới CÙNG hash (chỉ đổi file không khoá - từ 0.4.6 nâng phiên bản không đổi hash): vẫn chạy mã của app, và bản
     # chép được làm mới - không đứng yên ở bản đầu tiên có hash ấy (soát QA 29-09).
     (package / "power_source.py").write_text("MOI = 1\n", encoding="utf-8")
     assert setup.code_for(old_book) == setup.app_root
-    assert (first / "ebook_reader" / "power_source.py").read_text(encoding="utf-8") == "MOI = 1\n"
+    assert (first / "abook" / "power_source.py").read_text(encoding="utf-8") == "MOI = 1\n"
 
     # App lên bản mới, đổi mã dây chuyền (file khoá -> hash khác).
     (package / "pipeline.py").write_text("PHIEN_BAN = 2\n", encoding="utf-8")
     monkeypatch.setattr(quality_policy, "quality_implementation_hash", lambda: "b" * 64)
     assert setup.code_for(old_book) == first, "cuốn đang làm dở chạy tiếp bằng mã cũ"
-    assert (first / "ebook_reader" / "pipeline.py").read_text(encoding="utf-8") == "PHIEN_BAN = 1\n"
+    assert (first / "abook" / "pipeline.py").read_text(encoding="utf-8") == "PHIEN_BAN = 1\n"
     assert setup.environment(first)["PYTHONPATH"] == str(first)
     assert setup.code_for(new_book) == setup.app_root, "cuốn mới chạy mã mới"
     second = setup.root / "code" / ("b" * 16)
-    assert (second / "ebook_reader" / "pipeline.py").read_text(encoding="utf-8") == "PHIEN_BAN = 2\n"
+    assert (second / "abook" / "pipeline.py").read_text(encoding="utf-8") == "PHIEN_BAN = 2\n"
 
     shutil.rmtree(first)
     with pytest.raises(SetupError, match="làm lại bằng bản hiện tại"):
@@ -454,14 +454,14 @@ def test_starting_a_book_runs_its_supervisor_from_the_code_it_is_pinned_to(tmp_p
     file khoá (background_runner chạy `python -m` từ thư mục ấy - thư mục làm việc đứng trước PYTHONPATH; soát QA 29-09)."""
     import os
 
-    from ebook_reader import background_runner, quality_policy
+    from abook import background_runner, quality_policy
 
     monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "localappdata"))
     monkeypatch.setattr(os, "environ", dict(os.environ))  # StudioRunner.start ghi biến môi trường của Studio
     setup = _setup(tmp_path, ollama, [])
     setup.start()
     setup.wait(30)
-    package = setup.app_root / "ebook_reader"
+    package = setup.app_root / "abook"
     package.mkdir()
     (package / "pipeline.py").write_text("PHIEN_BAN = 1\n", encoding="utf-8")
     monkeypatch.setattr(quality_policy, "quality_implementation_hash", lambda: "a" * 64)

@@ -24,7 +24,7 @@ def write_atomic(path: Path, text: str) -> None:
 
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "character_registry.py"
+p = root / "abook" / "character_registry.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD = """    issues: list[str] = []
@@ -125,7 +125,7 @@ from __future__ import annotations
 
 import pytest
 
-from ebook_reader.character_registry import _validate_casting_inputs, resolve_gender
+from abook.character_registry import _validate_casting_inputs, resolve_gender
 
 
 class _Row(dict):
@@ -179,7 +179,7 @@ def test_the_evidence_threshold_is_not_lowered() -> None:
     Đo trên mọi project đã lưu: bằng chứng văn bản nhất trí ở 3 hit mâu thuẫn với model 5 lần
     trên 13; ở 1 hit là 17 khớp / 18 lệch, tức tung đồng xu.
     """
-    from ebook_reader import character_registry
+    from abook import character_registry
 
     assert character_registry.GENDER_EVIDENCE_MINIMUM_HITS == 5
     assert character_registry.GENDER_EVIDENCE_MINIMUM_RATIO == 3.0

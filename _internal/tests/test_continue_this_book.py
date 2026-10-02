@@ -1,4 +1,4 @@
-"""Làm tiếp cuốn này: phần kế tiếp của một truyện dài được gieo từ phần trước (ebook_reader/continuation.py).
+"""Làm tiếp cuốn này: phần kế tiếp của một truyện dài được gieo từ phần trước (abook/continuation.py).
 
 Ghim các lời hứa người nghe thấy được: cùng một người giữ cùng một giọng qua các phần, cách đọc tên đã chọn không bị hỏi
 lại, ghim giới/tuổi của người nghe đi theo, và phần trước chỉ bị đọc chứ không bị ghi.
@@ -12,8 +12,8 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader import continuation
-from ebook_reader.database import LISTENER_PRONUNCIATION_SOURCE, ProjectDB
+from abook import continuation
+from abook.database import LISTENER_PRONUNCIATION_SOURCE, ProjectDB
 
 VOICE_A = "preset_thanh_binh_f100_p-04"
 VOICE_B = "preset_ngoc_linh_f107_p+02"
@@ -228,7 +228,7 @@ def test_a_project_without_the_newer_tables_seeds_what_it_has(tmp_path: Path) ->
 
 
 def test_the_cli_creates_the_next_part_already_seeded(book: dict[str, Path], capsys: pytest.CaptureFixture[str]) -> None:
-    from ebook_reader import cli
+    from abook import cli
 
     folder = book["folder"]
     arguments = ["create", "--files", str(folder / "004.txt"), str(folder / "005.txt"), "--output-root",
@@ -247,7 +247,7 @@ def test_the_cli_creates_the_next_part_already_seeded(book: dict[str, Path], cap
 
 
 def test_the_cli_refuses_a_seed_that_is_not_a_project(book: dict[str, Path], capsys: pytest.CaptureFixture[str]) -> None:
-    from ebook_reader import cli
+    from abook import cli
 
     code = cli.main(["create", "--files", str(book["folder"] / "004.txt"), "--output-root", str(book["first"].parent),
                      "--seed-from", str(book["folder"]), "--json"])

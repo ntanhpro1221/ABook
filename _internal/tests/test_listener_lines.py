@@ -13,8 +13,8 @@ from typing import Any
 
 import pytest
 
-from ebook_reader.database import ProjectDB
-from ebook_reader.listener_overrides import (
+from abook.database import ProjectDB
+from abook.listener_overrides import (
     BAD_EMOTION,
     BAD_KIND,
     BAD_TEXT,
@@ -59,7 +59,7 @@ def test_a_new_emotion_is_stored_within_what_the_voice_can_do_and_the_line_is_re
 
 
 def test_a_line_that_is_nobodys_words_becomes_narration_in_the_narrators_voice(tmp_path: Path) -> None:
-    from ebook_reader.character_registry import assert_voice_stability
+    from abook.character_registry import assert_voice_stability
 
     _paths, db = _book(tmp_path)
 
@@ -115,12 +115,12 @@ def test_a_crash_inside_the_apply_leaves_the_line_as_it_was(tmp_path: Path, monk
 def test_the_script_tab_records_a_delivery_fix_and_shows_it_waiting_then_applied(tmp_path: Path) -> None:
     """Studio: POST /line ghi yêu cầu (từ chối tại chỗ cái dây chuyền sẽ từ chối), KHÔNG ghi SQLite; tab Kịch bản hiện
     cảm xúc/cường độ của câu và yêu cầu "đang chờ" tới khi dây chuyền áp."""
-    from ebook_reader.config import build_settings, save_settings
-    from ebook_reader.webui.casting_review import casting_chapter
-    from ebook_reader.webui.library import Preferences, book_id
-    from ebook_reader.webui.listening import Listening
-    from ebook_reader.webui.remote_studio import permitted
-    from ebook_reader.webui.server import App, Server
+    from abook.config import build_settings, save_settings
+    from abook.webui.casting_review import casting_chapter
+    from abook.webui.library import Preferences, book_id
+    from abook.webui.listening import Listening
+    from abook.webui.remote_studio import permitted
+    from abook.webui.server import App, Server
     from tests.test_webui_listen_and_sync import FakeRunner, _request
 
     paths, db = _book(tmp_path)
@@ -167,8 +167,8 @@ def test_the_script_tab_records_a_delivery_fix_and_shows_it_waiting_then_applied
 def test_a_reworded_line_is_read_in_the_listeners_words_and_the_book_keeps_its_own(tmp_path: Path) -> None:
     """TTS và phép so của Whisper nhận chữ người nghe sửa; văn bản sách (và đọc theo, băm chữ) giữ nguyên; câu đã thu
     được thu lại. Sửa về đúng chữ của sách là bỏ sửa."""
-    from ebook_reader.config import build_settings
-    from ebook_reader.tts import TTSCoordinator
+    from abook.config import build_settings
+    from abook.tts import TTSCoordinator
 
     _paths, db = _book(tmp_path)
     result = _apply(db, "c1s1", spoken="  \u201cĐi   thôi nào.\u201d  ")
@@ -218,7 +218,7 @@ def test_the_fix_survives_reopening_and_an_old_book_gains_the_column(tmp_path: P
     vẫn xét được yêu cầu, và lần dây chuyền mở DB kế tiếp thêm cột mà không mất gì."""
     import sqlite3
 
-    from ebook_reader.listener_overrides import line_target
+    from abook.listener_overrides import line_target
 
     paths, db = _book(tmp_path)
     _apply(db, "c1s1", spoken="Đi thôi nào.")
@@ -239,11 +239,11 @@ def test_the_fix_survives_reopening_and_an_old_book_gains_the_column(tmp_path: P
 def test_the_script_tab_rewords_a_line_and_shows_what_will_be_read(tmp_path: Path) -> None:
     """Studio: POST /line với `spoken` - từ chối tại chỗ chữ dây chuyền sẽ từ chối, không ghi SQLite; tab Kịch bản hiện
     yêu cầu đang chờ, rồi "Đọc là" sau khi dây chuyền áp."""
-    from ebook_reader.config import build_settings, save_settings
-    from ebook_reader.webui.casting_review import casting_chapter
-    from ebook_reader.webui.library import Preferences, book_id
-    from ebook_reader.webui.listening import Listening
-    from ebook_reader.webui.server import App, Server
+    from abook.config import build_settings, save_settings
+    from abook.webui.casting_review import casting_chapter
+    from abook.webui.library import Preferences, book_id
+    from abook.webui.listening import Listening
+    from abook.webui.server import App, Server
     from tests.test_webui_listen_and_sync import FakeRunner, _request
 
     paths, db = _book(tmp_path)

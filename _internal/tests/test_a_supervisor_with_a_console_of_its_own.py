@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import os
 
-from ebook_reader import background_runner
+from abook import background_runner
 
 
 def test_the_supervisor_is_hidden_but_not_detached() -> None:

@@ -34,7 +34,7 @@ SEGMENT_SCRIPT = r"""
 import json, sys
 from pathlib import Path
 sys.path.insert(0, sys.argv[1])
-from ebook_reader.text_processing import decode_text_bytes, segment_chapter_text
+from abook.text_processing import decode_text_bytes, segment_chapter_text
 out = {}
 for path in json.loads(sys.stdin.read()):
     text = decode_text_bytes(Path(path).read_bytes())

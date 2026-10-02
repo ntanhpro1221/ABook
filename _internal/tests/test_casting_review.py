@@ -10,7 +10,7 @@ import sqlite3
 import time
 from pathlib import Path
 
-from ebook_reader.webui.casting_review import casting_chapter, casting_chapters
+from abook.webui.casting_review import casting_chapter, casting_chapters
 
 
 def make_book(root: Path, *, cast: bool = True) -> Path:
@@ -113,7 +113,7 @@ def test_the_script_marks_where_the_machine_doubts_and_suggests_someone(tmp_path
 def test_a_decision_shows_waiting_then_applied_and_a_refused_one_says_so(tmp_path: Path) -> None:
     """Yêu cầu của người nghe hiện ngay trên câu: "đang chờ" tới ranh giới chương, "đã áp" khi dây chuyền gán xong, "không
     áp được" khi dây chuyền sẽ từ chối (hỏi bằng đúng `speaker_target`). Câu đổi chữ thì yêu cầu tự rơi."""
-    from ebook_reader.listener_overrides import UNNAMED, request_speakers
+    from abook.listener_overrides import UNNAMED, request_speakers
 
     project = make_book(tmp_path)
     request_speakers(project, [("d", "sha-d")], "LUCIEN", now=time.time())
@@ -147,10 +147,10 @@ def test_before_casting_nobody_can_be_chosen_yet(tmp_path: Path) -> None:
 
 
 def test_the_studio_serves_the_script_tab_locally_and_to_remote_devices(tmp_path: Path) -> None:
-    from ebook_reader.webui.library import Preferences, book_id
-    from ebook_reader.webui.listening import Listening
-    from ebook_reader.webui.remote_studio import permitted
-    from ebook_reader.webui.server import App, Server
+    from abook.webui.library import Preferences, book_id
+    from abook.webui.listening import Listening
+    from abook.webui.remote_studio import permitted
+    from abook.webui.server import App, Server
     from tests.test_webui_listen_and_sync import FakeRunner, _request
 
     project = make_book(tmp_path)

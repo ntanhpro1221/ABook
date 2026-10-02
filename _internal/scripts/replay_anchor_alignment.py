@@ -37,12 +37,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from ebook_reader.asr import (  # noqa: E402
+from abook.asr import (  # noqa: E402
     ASR_MISMATCH,
     adjudicate_locked_name_anchors,
 )
-from ebook_reader.database import ProjectDB  # noqa: E402
-from ebook_reader.tts import TTSCoordinator  # noqa: E402
+from abook.database import ProjectDB  # noqa: E402
+from abook.tts import TTSCoordinator  # noqa: E402
 
 # The scripted case from test_clarity_final_gate_preserves_anchor_failure_from_either_decode.
 # The transcript does contain the name, so the anchor MATCHES; what is wrong is everything

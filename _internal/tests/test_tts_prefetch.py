@@ -12,7 +12,7 @@ from typing import Any
 
 import pytest
 
-from ebook_reader.pipeline import BookPipeline
+from abook.pipeline import BookPipeline
 
 
 class FakeTTS:
@@ -128,7 +128,7 @@ def test_scanning_starts_where_the_loop_is() -> None:
 def test_a_batch_is_never_smaller_than_the_measured_minimum() -> None:
     """Two segments measured 1.00x warm while holding three times the VRAM, so a batch
     configured below TTS_POOL_MIN_BATCH would run a pool for no gain at all."""
-    from ebook_reader.tts_pool import TTS_POOL_MIN_BATCH
+    from abook.tts_pool import TTS_POOL_MIN_BATCH
 
     rows = _rows("a", "b", "c", "d")
     assert len(Scanner({"a", "b", "c", "d"}, limit=1).scan(rows, 0)) == TTS_POOL_MIN_BATCH

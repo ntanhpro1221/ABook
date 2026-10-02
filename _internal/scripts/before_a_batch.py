@@ -54,7 +54,7 @@ def _source_fingerprint() -> str:
     một file cũng đổi vân tay.
     """
     digest = hashlib.sha256()
-    for folder in ("ebook_reader", "tests", "scripts"):
+    for folder in ("abook", "tests", "scripts"):
         base = ROOT / folder
         if not base.is_dir():
             continue
@@ -126,7 +126,7 @@ def _supervisors_elsewhere() -> list[str]:
     Từ 2026-09-13 máy có hai cuốn (`scripts/book_paths.py`): `_runs_in_flight` chỉ nhìn `_versions`
     của cuốn đang chọn, nên một lô của cuốn kia đang bay là vô hình với nó - và hai lô trên một GPU
     là cả hai cùng chậm, hoặc một cái hết bộ nhớ. Nhìn tiến trình thì không cần biết cuốn kia nằm
-    đâu: mọi lô đều là `pythonw -m ebook_reader.background_runner supervise --project-root <dir>`.
+    đâu: mọi lô đều là `pythonw -m abook.background_runner supervise --project-root <dir>`.
 
     Project trong gốc của cuốn này thì để `_runs_in_flight` phán bằng nhịp tim như cũ: một supervisor
     vừa xong việc còn sống thêm vài giây không được làm cổng đóng nhầm ngay trước bước 6 của ranh giới.
@@ -142,7 +142,7 @@ def _supervisors_elsewhere() -> list[str]:
             cmdline = list(process.info.get("cmdline") or [])
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             continue
-        if "ebook_reader.background_runner" not in cmdline or "supervise" not in cmdline:
+        if "abook.background_runner" not in cmdline or "supervise" not in cmdline:
             continue
         root = ""
         if "--project-root" in cmdline:
@@ -224,12 +224,12 @@ def main(argv: list[str]) -> int:
 
     _say("")
     _say("=== 4. hợp đồng runtime (model đã ghim đúng chưa) ===")
-    os.environ.setdefault("EBOOK_READER_RUNTIME", str(ROOT / "runtime"))
+    os.environ.setdefault("ABOOK_RUNTIME", str(ROOT / "runtime"))
     sys.path.insert(0, str(ROOT))
     try:
-        from ebook_reader.runtime_contract import voice_model_check  # noqa: PLC0415
+        from abook.runtime_contract import voice_model_check  # noqa: PLC0415
 
-        result = voice_model_check(Path(os.environ["EBOOK_READER_RUNTIME"]))
+        result = voice_model_check(Path(os.environ["ABOOK_RUNTIME"]))
         _say(f"   {result['detail']}")
         if not result["ok"]:
             problems.append("model giọng không khớp revision đã ghim")
@@ -261,7 +261,7 @@ def main(argv: list[str]) -> int:
         _say("")
         _say("=== 5. bộ test đầy đủ ===")
         _say("   BỎ QUA: đã xanh cho đúng vân tay mã này (runtime/last_green_suite.json).")
-        _say("   Sửa bất kỳ file .py nào trong ebook_reader/, tests/ hay scripts/ là nó chạy lại.")
+        _say("   Sửa bất kỳ file .py nào trong abook/, tests/ hay scripts/ là nó chạy lại.")
     elif not args.skip_tests:
         _say("")
         _say("=== 5. bộ test đầy đủ ===")

@@ -33,7 +33,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from ebook_reader.asr import (  # noqa: E402
+from abook.asr import (  # noqa: E402
     normalize_transcript,
     tone_folded_transcript_metrics,
     transcript_metrics,
@@ -45,7 +45,7 @@ TARGET_SAMPLE_RATE = 16_000
 
 
 def _model_root() -> Path:
-    runtime = Path(os.environ.get("EBOOK_READER_RUNTIME") or (
+    runtime = Path(os.environ.get("ABOOK_RUNTIME") or (
         Path(__file__).resolve().parent.parent / "runtime"
     ))
     return runtime / "models" / "asr_compare"
@@ -91,7 +91,7 @@ def _load_audio(path: Path) -> np.ndarray:
 def transcribe_baseline(rows: list[dict[str, Any]], device: str) -> dict[str, str]:
     import whisper
 
-    from ebook_reader.config import build_settings
+    from abook.config import build_settings
 
     settings = build_settings("high_quality")["asr"]
     model = whisper.load_model(

@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import inspect
 
-from ebook_reader.analysis import _adjudicate_director_critic
-from ebook_reader.database import AFFECT_CUE_DISAGREEMENT_BLOCKS, INAUDIBLE_DELIVERY_FIELDS, host_derived_accept
+from abook.analysis import _adjudicate_director_critic
+from abook.database import AFFECT_CUE_DISAGREEMENT_BLOCKS, INAUDIBLE_DELIVERY_FIELDS, host_derived_accept
 
 
 def _critic_source() -> str:

@@ -13,10 +13,10 @@ from typing import Any
 
 import pytest
 
-from ebook_reader.config import build_settings, settings_hash
-from ebook_reader.database import ProjectDB
-from ebook_reader.io_utils import sha256_file
-from ebook_reader.listener_overrides import (
+from abook.config import build_settings, settings_hash
+from abook.database import ProjectDB
+from abook.io_utils import sha256_file
+from abook.listener_overrides import (
     NARRATOR,
     NO_VOICE,
     NOT_SPEECH,
@@ -25,7 +25,7 @@ from ebook_reader.listener_overrides import (
     UNNAMED,
     request_speaker,
 )
-from ebook_reader.models import ProjectPaths
+from abook.models import ProjectPaths
 from tests.test_listener_overrides import _Pipeline
 
 LINES = [
@@ -89,7 +89,7 @@ def _apply(db: ProjectDB, stable_id: str, speaker: str, text_sha256: str | None 
 
 
 def _one_voice_per_person(db: ProjectDB) -> None:
-    from ebook_reader.character_registry import assert_voice_stability
+    from abook.character_registry import assert_voice_stability
 
     assert_voice_stability(db)
 
@@ -178,7 +178,7 @@ def test_the_pipeline_applies_a_speaker_request_at_a_boundary(tmp_path: Path) ->
 
 def test_a_group_of_lines_goes_to_one_person_in_one_write(tmp_path: Path) -> None:
     """"Vai phụ không tên" là ai: mọi câu của vai ấy về một người, ghi một lần (dây chuyền không bao giờ thấy nửa nhóm)."""
-    from ebook_reader.listener_overrides import read_overrides, request_speakers, speaker_requests
+    from abook.listener_overrides import read_overrides, request_speakers, speaker_requests
 
     paths, db = _book(tmp_path)
     request_speakers(paths.root, [("c1s1", "sha-c1s1"), ("c1s2", "sha-c1s2")], "NATASHA", now=1.0)
@@ -221,7 +221,7 @@ def test_creating_a_speaker_is_all_or_nothing(tmp_path: Path, monkeypatch) -> No
     def crash(*_args, **_kwargs):
         raise RuntimeError("máy tắt giữa lúc chọn giọng")
 
-    monkeypatch.setattr("ebook_reader.character_registry.listener_voice_choice", crash)
+    monkeypatch.setattr("abook.character_registry.listener_voice_choice", crash)
     with pytest.raises(RuntimeError):
         db.apply_listener_speaker(stable_id="c1s2", text_sha256="sha-c1s2", speaker="HEIDI", new_gender="female",
                                   voices=build_settings()["voices"])

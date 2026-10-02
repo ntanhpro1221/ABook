@@ -5,8 +5,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ebook_reader import listener_overrides
-from ebook_reader.webui import reviews
+from abook import listener_overrides
+from abook.webui import reviews
 from tests.test_listener_speakers import _book
 
 

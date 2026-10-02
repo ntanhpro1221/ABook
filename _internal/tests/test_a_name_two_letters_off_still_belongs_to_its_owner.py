@@ -1,7 +1,7 @@
 """Nhãn vắng mặt trong sách lệch hai ký tự thì gom, nhưng chỉ khi đích duy nhất và nhãn đủ dài."""
 from __future__ import annotations
 
-from ebook_reader.character_registry import fold_for_source_search, fold_to_source_spelling, source_occurrences
+from abook.character_registry import fold_for_source_search, fold_to_source_spelling, source_occurrences
 
 SOURCE = fold_for_source_search(
     "Jocelyn quay sang Artil. Artil im lặng. Jocelyn nói với Artil rằng Norman đã tới. "

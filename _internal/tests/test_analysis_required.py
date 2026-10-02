@@ -12,8 +12,8 @@ from typing import Any
 import pytest
 import requests
 
-from ebook_reader import database as database_module
-from ebook_reader.analysis import (
+from abook import database as database_module
+from abook.analysis import (
     LOCAL_NAME_FALLBACK_CONFIDENCE,
     ADDRESSEE_REPAIR_NOTE,
     ANALYSIS_LEDGER_POLICY_VERSION,
@@ -90,9 +90,9 @@ from ebook_reader.analysis import (
     is_local_speaker,
     local_speaker_display,
 )
-from ebook_reader.config import build_settings
-from ebook_reader.webui.studio_setup import PUBLISHED_MODELS, StudioSetup
-from ebook_reader.database import (
+from abook.config import build_settings
+from abook.webui.studio_setup import PUBLISHED_MODELS, StudioSetup
+from abook.database import (
     ANALYSIS_CHAPTER_HEADING_CONFIDENCE,
     ANALYSIS_CRITIC_EVIDENCE_QUOTE_MAX_LENGTH,
     ANALYSIS_CONTEXT_POLICY_NARRATION_BEFORE_NEXT_PARAGRAPH_THOUGHT,
@@ -107,7 +107,7 @@ from ebook_reader.database import (
     canonical_analysis_critic_per_id_source_anchor_map,
     canonical_analysis_note,
 )
-from ebook_reader.io_utils import sha256_text
+from abook.io_utils import sha256_text
 
 # Model phân tích mặc định (config.py) - các mock /api/tags dưới đây trả đúng tên ấy, để test cơ chế không phụ thuộc
 # model nào đang là mặc định.
@@ -884,7 +884,7 @@ def test_required_analysis_stops_when_every_request_fails(monkeypatch) -> None:
     analyzer = OllamaBookAnalyzer(build_settings(), db, lambda _message: None)
     monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
     monkeypatch.setattr(analyzer, "_request", lambda _group: (_ for _ in ()).throw(RuntimeError("timeout")))
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
 
     with pytest.raises(RuntimeError, match="Phân tích bắt buộc thất bại"):
         analyzer.analyze_all(lambda: False)
@@ -2420,7 +2420,7 @@ def test_v37_same_projection_is_recriticized_after_semantic_rejection(
     )
     analyzer = OllamaBookAnalyzer(settings, db, lambda _message: None)
     monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
     generator_calls = 0
     critic_contracts = []
 
@@ -2515,7 +2515,7 @@ def test_v38_nonledger_clearance_keeps_projection_hash_after_semantic_retry(
         lambda _message: None,
     )
     monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
     generator_calls = 0
     critic_subjects: list[tuple[list[dict], list[dict]]] = []
 
@@ -3349,7 +3349,7 @@ def test_name_pronunciation_digest_drift_is_fatal_without_fallback(monkeypatch) 
     ]
     analyzer = OllamaBookAnalyzer(build_settings(), db, lambda _message: None)
     monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
     request_count = 0
 
     def response(_request, **_kwargs):
@@ -3392,7 +3392,7 @@ def test_name_pronunciation_rejects_invalid_confidence_without_locking(
     analyzer = OllamaBookAnalyzer(build_settings(), db, lambda _message: None)
     monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
     _trust_locked_test_digest(analyzer, monkeypatch)
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
     monkeypatch.setattr(
         analyzer,
         "_stream_json_response",
@@ -3515,7 +3515,7 @@ def test_fantasy_name_uses_logged_local_fallback_after_targeted_retries(
     analyzer = OllamaBookAnalyzer(build_settings(), db, lambda _message: None)
     monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
     _trust_locked_test_digest(analyzer, monkeypatch)
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
     requested_ids: list[list[str]] = []
 
     def response(request, **_kwargs):
@@ -3562,7 +3562,7 @@ def test_multiple_fantasy_names_recover_when_every_qwen_request_fails(monkeypatc
     analyzer = OllamaBookAnalyzer(build_settings(), db, lambda _message: None)
     monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
     _trust_locked_test_digest(analyzer, monkeypatch)
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
     attempts = 0
 
     def response(_request, **_kwargs):
@@ -3607,7 +3607,7 @@ def test_uncertain_short_names_are_left_verbatim_when_reconciliation_fails(
     analyzer = OllamaBookAnalyzer(build_settings(profile="balanced"), db, lambda _message: None)
     monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
     _trust_locked_test_digest(analyzer, monkeypatch)
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
     attempts = 0
 
     def response(_request, **_kwargs):
@@ -3662,7 +3662,7 @@ def test_high_quality_records_an_unresolved_short_name_and_carries_on(monkeypatc
     analyzer = OllamaBookAnalyzer(build_settings(), db, lambda _message: None)
     monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
     _trust_locked_test_digest(analyzer, monkeypatch)
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
     monkeypatch.setattr(
         analyzer,
         "_stream_json_response",
@@ -5909,11 +5909,11 @@ def test_v29_policy_fingerprint_does_not_match_stale_v28_ledger(
     current = _analysis_policy_fingerprint(settings, "quality-policy")
 
     monkeypatch.setattr(
-        "ebook_reader.analysis.DIRECTOR_CRITIC_POLICY_VERSION",
+        "abook.analysis.DIRECTOR_CRITIC_POLICY_VERSION",
         "second_pass_v9",
     )
     monkeypatch.setattr(
-        "ebook_reader.analysis.ANALYSIS_LEDGER_POLICY_VERSION",
+        "abook.analysis.ANALYSIS_LEDGER_POLICY_VERSION",
         "analysis_ledger_v13",
     )
     stale = _analysis_policy_fingerprint(settings, "quality-policy")
@@ -8371,7 +8371,7 @@ def test_repeated_host_candidate_splits_before_third_generator_or_critic(
     )
     analyzer = OllamaBookAnalyzer(settings, db, lambda _message: None)
     monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
     generator_sizes: list[int] = []
     critic_sizes: list[int] = []
 
@@ -8457,7 +8457,7 @@ def test_v20_host_rules_split_then_reject_wrong_nonneutral_before_critic(
     )
     analyzer = OllamaBookAnalyzer(settings, db, lambda _message: None)
     monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
     calls_by_group: Counter[tuple[str, ...]] = Counter()
     feedback_seen: list[tuple[tuple[str, ...], tuple[AnalysisFeedbackIssue, ...]]] = []
     critic_groups: list[tuple[str, ...]] = []
@@ -8552,7 +8552,7 @@ def test_repeated_host_candidate_fails_singleton_without_critic(monkeypatch) -> 
     settings = build_settings(overrides={"analysis": {"max_retries": 3}})
     analyzer = OllamaBookAnalyzer(settings, db, lambda _message: None)
     monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
     generator_calls = 0
     critic_calls = 0
 
@@ -9241,7 +9241,7 @@ def test_semantic_delivery_feedback_retries_before_checkpoint(monkeypatch) -> No
     )
     analyzer = OllamaBookAnalyzer(settings, db, lambda _message: None)
     monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
     feedback_seen: list[object | None] = []
     contracts_seen: list[dict[str, object]] = []
 
@@ -9326,7 +9326,7 @@ def test_v25_seq9_advisory_retry_reaches_critic_without_exact_membership_gate(
     )
     analyzer = OllamaBookAnalyzer(settings, db, lambda _message: None)
     monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
     feedback_seen: list[tuple[AnalysisFeedbackIssue, ...] | None] = []
     critic_calls = 0
 
@@ -9413,7 +9413,7 @@ def test_v25_seq9_repeated_neutral_still_fails_before_critic(monkeypatch) -> Non
     )
     analyzer = OllamaBookAnalyzer(settings, db, lambda _message: None)
     monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
     feedback_seen: list[tuple[AnalysisFeedbackIssue, ...] | None] = []
 
     def generate(group, **kwargs):
@@ -9606,7 +9606,7 @@ def test_retry_retains_host_constraints_while_fixing_later_semantic_issue(
     )
     analyzer = OllamaBookAnalyzer(settings, db, lambda _message: None)
     monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
     feedback_seen: list[tuple[AnalysisFeedbackIssue, ...] | None] = []
 
     def generate(group, **kwargs):
@@ -9699,7 +9699,7 @@ def test_retry_merges_source_kind_and_host_affect_failures_in_one_attempt(
     )
     analyzer = OllamaBookAnalyzer(settings, db, lambda _message: None)
     monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
     feedback_seen: list[tuple[AnalysisFeedbackIssue, ...] | None] = []
 
     def generate(group, **kwargs):
@@ -9782,7 +9782,7 @@ def test_retry_retains_host_pass_constraint_while_fixing_other_semantic_issue(
     )
     analyzer = OllamaBookAnalyzer(settings, db, lambda _message: None)
     monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
     feedback_seen: list[tuple[AnalysisFeedbackIssue, ...] | None] = []
 
     def generate(group, **kwargs):
@@ -9869,7 +9869,7 @@ def test_desperate_exertion_retry_receives_typed_allowed_emotions(
     )
     analyzer = OllamaBookAnalyzer(settings, db, lambda _message: None)
     monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
     feedback_seen: list[tuple[AnalysisFeedbackIssue, ...] | None] = []
 
     def generate(group, **kwargs):
@@ -9931,7 +9931,7 @@ def test_critic_exhaustion_does_not_clear_prior_deterministic_feedback(
     settings = build_settings(overrides={"analysis": {"max_retries": 3}})
     analyzer = OllamaBookAnalyzer(settings, db, lambda _message: None)
     monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
     feedback_seen: list[tuple[AnalysisFeedbackIssue, ...] | None] = []
     critic_calls = 0
 
@@ -9983,7 +9983,7 @@ def test_director_field_mismatch_retries_generator_with_bounded_feedback(monkeyp
     settings = build_settings(overrides={"analysis": {"max_retries": 2}})
     analyzer = OllamaBookAnalyzer(settings, db, lambda _message: None)
     monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
     generator_feedback = []
     generator_contracts = []
     critic_calls = 0
@@ -10257,7 +10257,7 @@ def test_persistent_director_rejection_splits_then_publishes_the_singleton(
     )
     analyzer = OllamaBookAnalyzer(settings, db, lambda _message: None)
     monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
     generator_sizes = []
     critic_sizes = []
 
@@ -10972,7 +10972,7 @@ def test_persistent_semantic_delivery_failure_splits_until_singletons(monkeypatc
     logs: list[str] = []
     analyzer = OllamaBookAnalyzer(settings, db, logs.append)
     monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
     request_sizes: list[int] = []
 
     def request(group, **_kwargs):
@@ -11021,7 +11021,7 @@ def test_persistent_neutral_zero_template_never_checkpoints_after_split(monkeypa
     )
     analyzer = OllamaBookAnalyzer(settings, db, lambda _message: None)
     monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
     request_sizes: list[int] = []
 
     def request(group, **_kwargs):
@@ -11083,7 +11083,7 @@ def test_five_row_neutral_one_template_cannot_reach_blanket_accepting_critic(
     )
     analyzer = OllamaBookAnalyzer(settings, db, lambda _message: None)
     monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
     critic_calls = 0
 
     def generate(group, **_kwargs):
@@ -11150,7 +11150,7 @@ def test_thought_uses_narrator_without_retry_or_warning(monkeypatch) -> None:
     logs: list[str] = []
     analyzer = OllamaBookAnalyzer(settings, db, logs.append)
     monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
     attempts = 0
 
     def unresolved_request(_group, **_kwargs):
@@ -11216,7 +11216,7 @@ def test_streaming_analysis_wall_timeout_raises_specific_error_and_closes_respon
     analyzer = OllamaBookAnalyzer(build_settings(), FakeDB(), lambda _message: None)
     analyzer.session = session
     monotonic_values = iter((0.0, 421.0))
-    monkeypatch.setattr("ebook_reader.analysis.time.monotonic", lambda: next(monotonic_values))
+    monkeypatch.setattr("abook.analysis.time.monotonic", lambda: next(monotonic_values))
 
     with pytest.raises(AnalysisWallTimeoutError, match="420s wall-time limit"):
         analyzer._request(group)
@@ -11424,7 +11424,7 @@ def test_wall_timeout_single_segment_uses_bounded_retries_without_split(monkeypa
     settings = build_settings(overrides={"analysis": {"max_retries": 3}})
     analyzer = OllamaBookAnalyzer(settings, db, lambda _message: None)
     monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
     request_sizes: list[int] = []
 
     def request(group, **_kwargs):
@@ -11577,7 +11577,7 @@ def test_incomplete_id_response_splits_batch_after_retries(monkeypatch) -> None:
     logs: list[str] = []
     analyzer = OllamaBookAnalyzer(settings, db, logs.append)
     monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
     request_sizes: list[int] = []
 
     def request(group, **_kwargs):
@@ -11607,10 +11607,10 @@ def test_analyzer_starts_and_stops_only_its_managed_ollama_process(
     logs: list[str] = []
     analyzer = OllamaBookAnalyzer(build_settings(), FakeDB(), logs.append)
     runtime_root = tmp_path / "runtime"
-    monkeypatch.setenv("EBOOK_READER_RUNTIME", str(runtime_root))
+    monkeypatch.setenv("ABOOK_RUNTIME", str(runtime_root))
     availability = iter((False, True))
     monkeypatch.setattr(analyzer, "_available", lambda: next(availability))
-    monkeypatch.setattr("ebook_reader.analysis.shutil.which", lambda _name: "ollama.exe")
+    monkeypatch.setattr("abook.analysis.shutil.which", lambda _name: "ollama.exe")
 
     class TagsResponse:
         @staticmethod
@@ -11637,10 +11637,10 @@ def test_analyzer_starts_and_stops_only_its_managed_ollama_process(
         popen_calls.append((kwargs["stdout"].name, kwargs["stderr"]))
         return managed
 
-    monkeypatch.setattr("ebook_reader.analysis.subprocess.Popen", start_managed_process)
+    monkeypatch.setattr("abook.analysis.subprocess.Popen", start_managed_process)
     terminated: list[tuple[int, float]] = []
     monkeypatch.setattr(
-        "ebook_reader.analysis.terminate_process_tree",
+        "abook.analysis.terminate_process_tree",
         lambda pid, *, grace_seconds: terminated.append((pid, grace_seconds)),
     )
     analyzer.session = StartupSession()
@@ -11651,7 +11651,7 @@ def test_analyzer_starts_and_stops_only_its_managed_ollama_process(
     expected_log = runtime_root / "logs" / "ollama-server.log"
     assert analyzer._managed_ollama_log_path == expected_log
     assert popen_calls == [(str(expected_log), subprocess.STDOUT)]
-    assert "Ebook Reader started Ollama" in expected_log.read_text(encoding="utf-8")
+    assert "ABook started Ollama" in expected_log.read_text(encoding="utf-8")
     analyzer._stop_managed_ollama()
     analyzer._stop_managed_ollama()
 
@@ -11667,7 +11667,7 @@ def test_analyzer_pulls_an_allowed_missing_model_without_a_console(monkeypatch) 
     )
     analyzer = OllamaBookAnalyzer(settings, FakeDB(), lambda _message: None)
     monkeypatch.setattr(analyzer, "_available", lambda: True)
-    monkeypatch.setattr("ebook_reader.analysis.shutil.which", lambda _name: "ollama.exe")
+    monkeypatch.setattr("abook.analysis.shutil.which", lambda _name: "ollama.exe")
 
     class EmptyTagsResponse:
         def __init__(self, payload):
@@ -11696,7 +11696,7 @@ def test_analyzer_pulls_an_allowed_missing_model_without_a_console(monkeypatch) 
     analyzer.session = EmptyTagsSession()
     calls: list[tuple[list[str], bool]] = []
     monkeypatch.setattr(
-        "ebook_reader.analysis.run_hidden",
+        "abook.analysis.run_hidden",
         lambda command, *, check: calls.append((list(command), check)),
     )
 
@@ -11712,9 +11712,9 @@ def test_analyzer_installs_a_missing_project_model_from_where_it_is_published(mo
     logs: list[str] = []
     analyzer = OllamaBookAnalyzer(settings, FakeDB(), logs.append)
     assert analyzer.model in PUBLISHED_MODELS, "model mặc định là model của dự án"
-    monkeypatch.setenv("EBOOK_READER_RUNTIME", str(tmp_path))
+    monkeypatch.setenv("ABOOK_RUNTIME", str(tmp_path))
     monkeypatch.setattr(analyzer, "_available", lambda: True)
-    monkeypatch.setattr("ebook_reader.analysis.shutil.which", lambda _name: None)
+    monkeypatch.setattr("abook.analysis.shutil.which", lambda _name: None)
     listings = iter(({"models": []}, {"models": [{"name": analyzer.model, "digest": "sha256:published"}]}))
 
     class TagsResponse:
@@ -11732,7 +11732,7 @@ def test_analyzer_installs_a_missing_project_model_from_where_it_is_published(mo
     installed: list[tuple[str, str, Path]] = []
     monkeypatch.setattr(StudioSetup, "install_published_model",
                         lambda self, name, report=print: installed.append((name, self.ollama_address, self.root)))
-    monkeypatch.setattr("ebook_reader.analysis.run_hidden",
+    monkeypatch.setattr("abook.analysis.run_hidden",
                         lambda *_args, **_kwargs: pytest.fail("model của dự án không kéo từ kho Ollama"))
 
     assert analyzer.ensure_available() is True
@@ -11742,14 +11742,14 @@ def test_analyzer_installs_a_missing_project_model_from_where_it_is_published(mo
 
 
 def test_a_project_model_that_cannot_download_says_why(monkeypatch, tmp_path) -> None:
-    from ebook_reader.webui.studio_setup import SetupError
+    from abook.webui.studio_setup import SetupError
 
     settings = build_settings("high_quality", {"safety": {"allow_network_downloads_during_job": True}})
     logs: list[str] = []
     analyzer = OllamaBookAnalyzer(settings, FakeDB(), logs.append)
-    monkeypatch.setenv("EBOOK_READER_RUNTIME", str(tmp_path))
+    monkeypatch.setenv("ABOOK_RUNTIME", str(tmp_path))
     monkeypatch.setattr(analyzer, "_available", lambda: True)
-    monkeypatch.setattr("ebook_reader.analysis.shutil.which", lambda _name: None)
+    monkeypatch.setattr("abook.analysis.shutil.which", lambda _name: None)
     analyzer.session = SimpleNamespace(get=lambda _url, timeout: SimpleNamespace(json=lambda: {"models": []}))
 
     def offline(self, name, report=print):
@@ -11764,7 +11764,7 @@ def test_a_project_model_that_cannot_download_says_why(monkeypatch, tmp_path) ->
 def test_a_job_never_downloads_a_missing_project_model_unless_allowed(monkeypatch) -> None:
     analyzer = OllamaBookAnalyzer(build_settings(), FakeDB(), lambda _message: None)
     monkeypatch.setattr(analyzer, "_available", lambda: True)
-    monkeypatch.setattr("ebook_reader.analysis.shutil.which", lambda _name: "ollama.exe")
+    monkeypatch.setattr("abook.analysis.shutil.which", lambda _name: "ollama.exe")
     analyzer.session = SimpleNamespace(get=lambda _url, timeout: SimpleNamespace(json=lambda: {"models": []}))
     monkeypatch.setattr(StudioSetup, "install_published_model",
                         lambda *_args, **_kwargs: pytest.fail("job không được tự tải khi policy không cho"))
@@ -11836,7 +11836,7 @@ def test_stream_replays_a_connection_that_died_before_any_response_char(monkeypa
     session = TransportFaultSession(payload, failures=1)
     analyzer = OllamaBookAnalyzer(build_settings(), FakeDB(), lambda _message: None)
     analyzer.session = session
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
 
     result = analyzer._stream_json_response({"prompt": "x"})
 
@@ -11871,7 +11871,7 @@ def test_stream_does_not_replay_after_a_partial_response(monkeypatch):
     session = TransportFaultSession(payload, failures=1, prefix_chunks=['{"seg'])
     analyzer = OllamaBookAnalyzer(build_settings(), FakeDB(), lambda _message: None)
     analyzer.session = session
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
 
     with pytest.raises(requests.exceptions.ChunkedEncodingError):
         analyzer._stream_json_response({"prompt": "x"})
@@ -11884,7 +11884,7 @@ def test_stream_stops_replaying_after_the_bounded_reconnect_budget(monkeypatch):
     session = TransportFaultSession(payload, failures=99)
     analyzer = OllamaBookAnalyzer(build_settings(), FakeDB(), lambda _message: None)
     analyzer.session = session
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
 
     with pytest.raises(requests.exceptions.ChunkedEncodingError):
         analyzer._stream_json_response({"prompt": "x"})
@@ -11902,7 +11902,7 @@ def test_critic_transport_fault_consumes_one_attempt_and_keeps_the_book_running(
     analyzer = OllamaBookAnalyzer(settings, db, lambda _message: None)
     monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
     _trust_locked_test_digest(analyzer, monkeypatch)
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
 
     def generate(group, **_kwargs):
         return {"segments": [analysis_item(str(row["stable_id"])) for row in group]}
@@ -11943,7 +11943,7 @@ def test_critic_transport_fault_exhausts_its_budget_without_escaping(monkeypatch
     analyzer = OllamaBookAnalyzer(settings, db, lambda _message: None)
     monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
     _trust_locked_test_digest(analyzer, monkeypatch)
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
 
     def generate(group, **_kwargs):
         return {"segments": [analysis_item(str(row["stable_id"])) for row in group]}
@@ -12118,7 +12118,7 @@ def test_no_affect_pattern_contains_a_control_character() -> None:
     matches nothing and the suppression it implements is dead while still looking right
     in the source. This cost two debugging rounds; the check is one line.
     """
-    from ebook_reader import analysis as module
+    from abook import analysis as module
 
     for name in dir(module):
         if not name.startswith("SCOPED_AFFECT"):
@@ -12163,7 +12163,7 @@ def test_affect_disagreement_is_recorded_but_does_not_retry(monkeypatch) -> None
     )
     analyzer = OllamaBookAnalyzer(settings, db, lambda _message: None)
     monkeypatch.setattr(analyzer, "ensure_available", lambda: True)
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
     assert database_module.AFFECT_CUE_DISAGREEMENT_BLOCKS is False
     requests_made: list[object] = []
 
@@ -12365,7 +12365,7 @@ def _critic_that_always_disputes_the_delivery(db, monkeypatch, model_speaker):
     monkeypatch.setattr(
         OllamaBookAnalyzer, "_request_director_critic", dispute_the_delivery
     )
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
     return analyzer
 
 
@@ -12484,7 +12484,7 @@ def test_a_malfunctioning_critic_still_ends_the_batch(tmp_path, monkeypatch) -> 
         )
 
     monkeypatch.setattr(OllamaBookAnalyzer, "_request_director_critic", malfunction)
-    monkeypatch.setattr("ebook_reader.analysis.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.analysis.time.sleep", lambda _seconds: None)
 
     with pytest.raises(RuntimeError, match="Phân tích bắt buộc thất bại"):
         analyzer.analyze_all(lambda: False)

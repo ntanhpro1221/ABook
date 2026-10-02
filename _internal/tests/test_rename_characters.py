@@ -5,15 +5,15 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from ebook_reader import continuation
-from ebook_reader.config import build_settings, save_settings
-from ebook_reader.database import ProjectDB
-from ebook_reader import names
-from ebook_reader.webui import store
-from ebook_reader.webui.actions import FakeRunner
-from ebook_reader.webui.library import Preferences, book_id
-from ebook_reader.webui.remote_studio import permitted
-from ebook_reader.webui.server import App, Server
+from abook import continuation
+from abook.config import build_settings, save_settings
+from abook.database import ProjectDB
+from abook import names
+from abook.webui import store
+from abook.webui.actions import FakeRunner
+from abook.webui.library import Preferences, book_id
+from abook.webui.remote_studio import permitted
+from abook.webui.server import App, Server
 from tests.test_listener_voices import _book
 from tests.test_webui_listen_and_sync import _request
 

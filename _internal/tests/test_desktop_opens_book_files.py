@@ -12,11 +12,11 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.webui import bookfile, packages
-from ebook_reader.webui.actions import FakeRunner
-from ebook_reader.webui.library import Preferences, book_id
-from ebook_reader.webui.listening import Listening
-from ebook_reader.webui.server import ApiError, App, Server
+from abook.webui import bookfile, packages
+from abook.webui.actions import FakeRunner
+from abook.webui.library import Preferences, book_id
+from abook.webui.listening import Listening
+from abook.webui.server import ApiError, App, Server
 from tests.test_webui_listen_and_sync import _request, make_project
 
 TOKEN = {"X-Ebook-Token": "t"}
@@ -174,7 +174,7 @@ def test_an_imported_book_leaves_the_library_through_the_recycle_bin(tmp_path: P
     .abook gốc không bị đụng - mở lại là nhập lại."""
     import shutil
 
-    from ebook_reader.webui import actions
+    from abook.webui import actions
 
     _project, file = _produced(tmp_path)
     elsewhere = tmp_path / "thu_vien_nguoi_nghe"

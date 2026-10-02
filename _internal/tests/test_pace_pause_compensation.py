@@ -10,12 +10,12 @@ from __future__ import annotations
 
 import pytest
 
-from ebook_reader.audio_io import (
+from abook.audio_io import (
     MIN_SPEECH_SECONDS,
     PAUSE_GROUP_SECONDS,
     pause_group_count,
 )
-from ebook_reader.config import build_settings
+from abook.config import build_settings
 
 
 def _rate(text: str, duration: float) -> float:

@@ -8,8 +8,8 @@ from typing import Any
 import numpy as np
 import pytest
 
-import ebook_reader.audio_io as audio_io
-from ebook_reader.audio_io import (
+import abook.audio_io as audio_io
+from abook.audio_io import (
     AudioQualityError,
     ChapterQualityError,
     VIENEU_V3_CODEC_SAMPLES_PER_FRAME,
@@ -24,7 +24,7 @@ from ebook_reader.audio_io import (
     verify_mp3,
     validate_audio_array,
 )
-from ebook_reader.audio_transform_contract import (
+from abook.audio_transform_contract import (
     POSTPROCESS_ALGORITHM,
     POSTPROCESS_OUTPUT_CODEC,
     POSTPROCESS_OUTPUT_SAMPLES_FIELD,
@@ -42,8 +42,8 @@ from ebook_reader.audio_transform_contract import (
     POSTPROCESS_TEMPO_FACTOR,
     POSTPROCESS_TEMPO_NUMERATOR,
 )
-from ebook_reader.config import build_settings
-from ebook_reader.io_utils import sha256_file
+from abook.config import build_settings
+from abook.io_utils import sha256_file
 
 
 def _write_test_tone(
@@ -657,7 +657,7 @@ def test_spoken_speakable_chars_counts_a_number_as_it_is_said() -> None:
     eleven times running, while what a listener hears is 17.78 - comfortably inside the band.
     Eleven identical failures because it was arithmetic, not variance.
     """
-    from ebook_reader.audio_io import spoken_speakable_chars
+    from abook.audio_io import spoken_speakable_chars
 
     title = "Chương 22 - 22: Ấn tượng đầu tiên"
 
@@ -668,7 +668,7 @@ def test_spoken_speakable_chars_counts_a_number_as_it_is_said() -> None:
 
 def test_text_without_digits_is_counted_exactly_as_before() -> None:
     """The change must be invisible to every segment that has no number in it."""
-    from ebook_reader.audio_io import spoken_speakable_chars
+    from abook.audio_io import spoken_speakable_chars
 
     for text in (
         "Không có chữ số nào ở đây cả.",
@@ -685,7 +685,7 @@ def test_a_number_from_a_thousand_up_is_counted_as_it_is_read() -> None:
     speller now reaches below 10^12 by the grammar of counting, and a digit run from 1000 up
     counts the shorter of its two possible readings - never a made-up multiplier.
     """
-    from ebook_reader.audio_io import spoken_speakable_chars
+    from abook.audio_io import spoken_speakable_chars
 
     text = "Chương 1000 - 1000: xa quá"
     spoken = "Chương một nghìn - một nghìn: xa quá"

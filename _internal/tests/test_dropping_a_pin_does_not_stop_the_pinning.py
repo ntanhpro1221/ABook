@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 
 import scripts.pin_the_book_cast as cast
-from ebook_reader.database import ProjectDB
+from abook.database import ProjectDB
 
 PROFILE = {
     "engine": "vieneu",

@@ -63,8 +63,8 @@ def test_a_stale_pin_is_skipped_out_loud_rather_than_killing_the_run(tmp_path: P
 '''
 
 s = s.replace(
-    "from ebook_reader.character_registry import PresetAllocator",
-    "from ebook_reader.character_registry import PresetAllocator, reserve_pinned_voices",
+    "from abook.character_registry import PresetAllocator",
+    "from abook.character_registry import PresetAllocator, reserve_pinned_voices",
     1,
 )
 s = s.rstrip() + "\n" + TEST

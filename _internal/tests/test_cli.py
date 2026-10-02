@@ -10,16 +10,16 @@ from types import SimpleNamespace
 
 import pytest
 
-from ebook_reader import cli
-from ebook_reader import background_runner
-from ebook_reader.background_runner import BackgroundStatus
-from ebook_reader.config import build_settings
-from ebook_reader.database import (
+from abook import cli
+from abook import background_runner
+from abook.background_runner import BackgroundStatus
+from abook.config import build_settings
+from abook.database import (
     SEGMENT_AUDIO_QUALITY_STAGE,
     SEGMENT_PERCEPTUAL_QUALITY_STAGE,
     ProjectDB,
 )
-from ebook_reader.project import create_or_open_project
+from abook.project import create_or_open_project
 
 
 def test_cli_default_startup_timeout_covers_supervisor_bootstrap() -> None:
@@ -305,7 +305,7 @@ def test_validate_rejects_completed_chapter_without_perceptual_evidence(
         requested_stages.append(stage)
         return stage == SEGMENT_AUDIO_QUALITY_STAGE
 
-    monkeypatch.setattr("ebook_reader.audio_io.verify_mp3", lambda _path: (True, "ok"))
+    monkeypatch.setattr("abook.audio_io.verify_mp3", lambda _path: (True, "ok"))
     monkeypatch.setattr(
         cli._ReadOnlyProjectDB,
         "artifact_by_key",

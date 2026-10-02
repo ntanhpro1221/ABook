@@ -37,7 +37,7 @@ ollama create abook-analyzer:v3 -f Modelfile
 Đã đo với Ollama 0.33.2. Ollama 0.34 cho dòng qwen3 "suy nghĩ" trước khi trả JSON kể cả khi request có `format`: gửi
 `"think": false` như ABook.
 
-Model chỉ học prompt và schema của ABook (`ebook_reader/analysis.py`); hỏi kiểu khác thì không có gì bảo đảm.
+Model chỉ học prompt và schema của ABook (`abook/analysis.py`); hỏi kiểu khác thì không có gì bảo đảm.
 
 ## Huấn luyện
 

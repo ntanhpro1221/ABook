@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import inspect
 
-from ebook_reader.analysis import OllamaBookAnalyzer
+from abook.analysis import OllamaBookAnalyzer
 
 
 def _source() -> str:

@@ -20,7 +20,7 @@ sys.path.insert(0, "D:/Novels/ABook/_internal")
 from score_models import GOLD_ROOT, load_gold, read_project  # noqa: E402
 from voice_identity import bcubed, source_text, voice_of  # noqa: E402
 
-from ebook_reader.character_registry import canonical_speaker_names  # noqa: E402
+from abook.character_registry import canonical_speaker_names  # noqa: E402
 
 EVAL = Path("D:/Novels/Audiobooks/_model_eval_v2")
 GATES = [("TMA", "", "throne_of_magical_arcana", ("351", "363", "378", "381")),

@@ -16,8 +16,8 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.models import ProjectPaths
-from ebook_reader.worker import (
+from abook.models import ProjectPaths
+from abook.worker import (
     GPU_CONTEXT_LOST_FILE_NAME,
     GPU_CONTEXT_LOST_MAX_ATTEMPTS,
     _record_gpu_context_loss,
@@ -184,12 +184,12 @@ import os  # noqa: E402
 from queue import Queue  # noqa: E402
 from types import SimpleNamespace  # noqa: E402
 
-from ebook_reader import worker as worker_module  # noqa: E402
-from ebook_reader.config import build_settings, save_settings, settings_hash  # noqa: E402
-from ebook_reader.database import ProjectDB  # noqa: E402
-from ebook_reader.io_utils import sha256_file  # noqa: E402
-from ebook_reader.models import BookStatus  # noqa: E402
-from ebook_reader.pipeline import BookPipeline  # noqa: E402
+from abook import worker as worker_module  # noqa: E402
+from abook.config import build_settings, save_settings, settings_hash  # noqa: E402
+from abook.database import ProjectDB  # noqa: E402
+from abook.io_utils import sha256_file  # noqa: E402
+from abook.models import BookStatus  # noqa: E402
+from abook.pipeline import BookPipeline  # noqa: E402
 
 
 def _book(tmp_path: Path):

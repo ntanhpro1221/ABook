@@ -26,9 +26,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from ebook_reader.asr import normalize_transcript  # noqa: E402
-from ebook_reader.database import ProjectDB  # noqa: E402
-from ebook_reader.tts import TTSCoordinator  # noqa: E402
+from abook.asr import normalize_transcript  # noqa: E402
+from abook.database import ProjectDB  # noqa: E402
+from abook.tts import TTSCoordinator  # noqa: E402
 
 
 def _similarity(expected: str, heard: str) -> float:

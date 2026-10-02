@@ -37,7 +37,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from ebook_reader.text_processing import segment_chapter_text  # noqa: E402
+from abook.text_processing import segment_chapter_text  # noqa: E402
 
 # Both shapes, because the parser accepts both and pairs them across shapes: its pattern is
 # [“"] … [”"]. Counting only the straight one blamed five chapters that are perfectly fine,

@@ -91,6 +91,6 @@ def test_the_guard_leaves_ollama_alone_while_an_app_book_runs() -> None:
     from power_guard import suspend_servers
 
     job = "bash gpu_queue_29_09v7.sh"
-    app = "C:/ABook/Studio/runtime/pythonw.exe -m ebook_reader.background_runner supervise --project-root D:/sach"
+    app = "C:/ABook/Studio/runtime/pythonw.exe -m abook.background_runner supervise --project-root D:/sach"
     assert suspend_servers([job, "ollama.exe serve"]) is True
     assert suspend_servers([job, app, "ollama.exe serve"]) is False

@@ -13,8 +13,8 @@ the run.
 """
 from __future__ import annotations
 
-import ebook_reader.pipeline as pipeline_module
-from ebook_reader.models import ResourceDecision, ResourceLevel
+import abook.pipeline as pipeline_module
+from abook.models import ResourceDecision, ResourceLevel
 
 
 class _Resources:

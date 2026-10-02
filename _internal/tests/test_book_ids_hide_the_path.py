@@ -15,14 +15,14 @@ import os
 import time
 from pathlib import Path
 
-from ebook_reader.webui import library as library_module
-from ebook_reader.webui.actions import FakeRunner
-from ebook_reader.webui.library import Preferences, book_id, legacy_book_id
-from ebook_reader.webui.listening import Listening, default_record_id
-from ebook_reader.webui.remote_books import _folder
-from ebook_reader.webui.reviews import Reviews
-from ebook_reader.webui.server import App, Server
-from ebook_reader.webui.sync import Devices, SyncApp, SyncServer
+from abook.webui import library as library_module
+from abook.webui.actions import FakeRunner
+from abook.webui.library import Preferences, book_id, legacy_book_id
+from abook.webui.listening import Listening, default_record_id
+from abook.webui.remote_books import _folder
+from abook.webui.reviews import Reviews
+from abook.webui.server import App, Server
+from abook.webui.sync import Devices, SyncApp, SyncServer
 from tests.test_webui_listen_and_sync import _request, library  # noqa: F401 - library là fixture
 
 
@@ -51,12 +51,12 @@ def test_the_id_says_nothing_about_the_folder(library) -> None:  # noqa: F811 - 
 
 def test_each_computer_has_its_own_ids_and_keeps_them(tmp_path: Path, monkeypatch) -> None:
     folder = tmp_path / "Sách"
-    monkeypatch.setenv("EBOOK_READER_PREFERENCES", str(tmp_path / "may_a" / "preferences.json"))
+    monkeypatch.setenv("ABOOK_PREFERENCES", str(tmp_path / "may_a" / "preferences.json"))
     first = book_id(folder)
-    monkeypatch.setenv("EBOOK_READER_PREFERENCES", str(tmp_path / "may_b" / "preferences.json"))
+    monkeypatch.setenv("ABOOK_PREFERENCES", str(tmp_path / "may_b" / "preferences.json"))
     assert book_id(folder) != first, "khoá bí mật của mỗi máy: đoán tên tài khoản rồi băm thử không ra mã"
 
-    monkeypatch.setenv("EBOOK_READER_PREFERENCES", str(tmp_path / "may_a" / "preferences.json"))
+    monkeypatch.setenv("ABOOK_PREFERENCES", str(tmp_path / "may_a" / "preferences.json"))
     library_module._ID_KEYS.clear()  # như mở lại app: khoá đọc lại từ đĩa
     assert book_id(folder) == first
     assert len((tmp_path / "may_a" / library_module.ID_KEY_FILE).read_text(encoding="ascii").strip()) == 64

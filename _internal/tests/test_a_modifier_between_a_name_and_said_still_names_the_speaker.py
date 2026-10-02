@@ -1,7 +1,7 @@
 """Trạng ngữ giữa tên và động từ nói không xoá người nói; ba chốt chống gán sai."""
 from __future__ import annotations
 
-from ebook_reader.analysis import _trailing_speech_attribution
+from abook.analysis import _trailing_speech_attribution
 
 
 def test_a_modifier_between_a_name_and_said() -> None:

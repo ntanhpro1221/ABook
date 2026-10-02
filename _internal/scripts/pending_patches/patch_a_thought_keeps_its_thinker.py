@@ -29,7 +29,7 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "analysis.py"
+p = root / "abook" / "analysis.py"
 s = io.open(p, encoding="utf-8").read()
 
 
@@ -89,7 +89,7 @@ test = root / "tests" / "test_a_thought_keeps_its_thinker.py"
 test.write_text('''"""Câu nội tâm giữ người đang nghĩ; chỉ câu nội tâm không ai nhận mới về người kể (7e4d74c + chỗ bị sót)."""
 from __future__ import annotations
 
-from ebook_reader.analysis import _validate
+from abook.analysis import _validate
 
 
 def _row(seq: int, kind_hint: str, text: str) -> dict:

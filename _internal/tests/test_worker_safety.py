@@ -9,18 +9,18 @@ from types import SimpleNamespace
 
 import pytest
 
-from ebook_reader import worker as worker_module
-from ebook_reader.config import (
+from abook import worker as worker_module
+from abook.config import (
     DIRECTOR_CRITIC_SETTING_KEYS,
     build_settings,
     save_settings,
     settings_hash,
 )
-from ebook_reader.database import ProjectDB
-from ebook_reader.io_utils import sha256_file
-from ebook_reader.models import BookStatus, ProjectPaths
-from ebook_reader.pipeline import BookPipeline
-from ebook_reader.worker import (
+from abook.database import ProjectDB
+from abook.io_utils import sha256_file
+from abook.models import BookStatus, ProjectPaths
+from abook.pipeline import BookPipeline
+from abook.worker import (
     ProjectRunLock,
     _apply_locked_model_cache_environment,
     _apply_model_network_policy,
@@ -198,7 +198,7 @@ def test_high_quality_worker_forces_locked_model_cache_environment(
     transformers_hub = SimpleNamespace(HF_HUB_CACHE="old-transformers-cache")
     monkeypatch.setitem(sys.modules, "huggingface_hub.constants", hub_constants)
     monkeypatch.setitem(sys.modules, "transformers.utils.hub", transformers_hub)
-    monkeypatch.setenv("EBOOK_READER_RUNTIME", str(tmp_path))
+    monkeypatch.setenv("ABOOK_RUNTIME", str(tmp_path))
     monkeypatch.setenv("HF_HOME", "C:\\global-hf")
     monkeypatch.setenv("HF_HUB_CACHE", "C:\\global-hub")
     monkeypatch.setenv("TORCH_HOME", "C:\\global-torch")
@@ -244,7 +244,7 @@ def test_worker_does_not_override_explicit_environment_when_downloads_are_allowe
 
 
 def test_worker_rejects_stale_perceptual_base_cache(monkeypatch, tmp_path: Path) -> None:
-    monkeypatch.setenv("EBOOK_READER_RUNTIME", str(tmp_path))
+    monkeypatch.setenv("ABOOK_RUNTIME", str(tmp_path))
     monkeypatch.setattr(
         worker_module,
         "runtime_contract_errors",

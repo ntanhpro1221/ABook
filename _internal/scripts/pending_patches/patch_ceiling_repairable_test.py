@@ -30,7 +30,7 @@ def test_a_ceiling_hit_take_is_repairable_even_when_asr_cannot_judge_it() -> Non
     scripts/probe_frame_cap.py regenerated that exact line at five caps and four came back
     clean at 0.64-0.80s, ending naturally with no ceiling hit. A re-roll is the right cure.
     """
-    from ebook_reader.pipeline import BookPipeline
+    from abook.pipeline import BookPipeline
 
     runaway = {
         "warning_code": "TTS_GENERATION_CEILING_REACHED|ASR_TRANSCRIPT_TIMELINE_IMPOSSIBLE",
@@ -52,7 +52,7 @@ def test_a_ceiling_hit_take_is_repairable_even_when_asr_cannot_judge_it() -> Non
 
 def test_a_take_that_never_hit_the_ceiling_is_still_not_repaired() -> None:
     """The narrowing must not turn every blind ASR verdict into a re-record."""
-    from ebook_reader.pipeline import BookPipeline
+    from abook.pipeline import BookPipeline
 
     ordinary_short_line = {
         "warning_code": "ASR_UNVERIFIABLE_SHORT_TEXT",
@@ -64,7 +64,7 @@ def test_a_take_that_never_hit_the_ceiling_is_still_not_repaired() -> None:
 
 def test_the_ceiling_warning_alone_is_enough_when_metrics_are_missing() -> None:
     """A row whose signal did not survive still carries its warning code."""
-    from ebook_reader.pipeline import BookPipeline
+    from abook.pipeline import BookPipeline
 
     assert BookPipeline._segment_generation_hit_ceiling(
         {"warning_code": "TTS_GENERATION_CEILING_REACHED", "signal_json": None}

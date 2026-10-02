@@ -22,9 +22,9 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.character_registry import PresetAllocator, reserve_pinned_voices
-from ebook_reader.config import build_settings
-from ebook_reader.project import create_or_open_project
+from abook.character_registry import PresetAllocator, reserve_pinned_voices
+from abook.config import build_settings
+from abook.project import create_or_open_project
 
 KEY = "preset_thanh_binh_f109_p-01"
 
@@ -146,7 +146,7 @@ _sys.path.insert(0, str(SCRIPTS))
 
 import port_casting as porter  # noqa: E402
 
-from ebook_reader.character_registry import canonical_key  # noqa: E402
+from abook.character_registry import canonical_key  # noqa: E402
 
 
 def _cast_project(tmp_path: Path, *, name: str, voice_key: str):
@@ -247,7 +247,7 @@ def test_the_anonymous_groups_are_pinned_too(tmp_path: Path) -> None:
 def test_a_pinned_key_naming_no_profile_falls_back_and_says_so(tmp_path: Path) -> None:
     """A carried decision that has gone stale must not kill the run - casting afresh is a
     defensible answer. Doing it silently is not: somebody chose that voice."""
-    from ebook_reader.character_registry import _pinned_profile_id
+    from abook.character_registry import _pinned_profile_id
 
     db = _project(tmp_path)
     said: list[str] = []
@@ -269,7 +269,7 @@ def test_two_characters_on_one_voice_is_reported(tmp_path: Path) -> None:
     Reported rather than raised - at some book size sharing becomes unavoidable, and killing
     a run over an inevitability would be worse than saying so.
     """
-    from ebook_reader.character_registry import assert_voice_stability
+    from abook.character_registry import assert_voice_stability
 
     db = _project(tmp_path)
     profile = db.upsert_voice_profile(

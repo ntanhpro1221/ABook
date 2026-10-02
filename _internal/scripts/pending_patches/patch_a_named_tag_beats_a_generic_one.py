@@ -33,7 +33,7 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "analysis.py"
+p = root / "abook" / "analysis.py"
 s = io.open(p, encoding="utf-8").read()
 
 
@@ -112,7 +112,7 @@ test = root / "tests" / "test_a_named_tag_beats_a_generic_one.py"
 test.write_text('''"""Lời dẫn có tên thì nhãn chung phải im; lời dẫn riêng thắng khoá theo đoạn (đáp án chuẩn TMA 418:37, 426:22, 436:61)."""
 from __future__ import annotations
 
-from ebook_reader.analysis import _generic_speaker_attribution, _validate
+from abook.analysis import _generic_speaker_attribution, _validate
 
 
 def _row(seq: int, kind_hint: str, text: str, paragraph: int = 3) -> dict:

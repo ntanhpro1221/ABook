@@ -55,7 +55,7 @@ def write_atomic(path: Path, text: str) -> None:
 root = Path(sys.argv[1])
 
 # ============================================================ database.py
-p = root / "ebook_reader" / "database.py"
+p = root / "abook" / "database.py"
 s = io.open(p, encoding="utf-8").read()
 
 # ---- 1a. schema cua project moi
@@ -162,7 +162,7 @@ write_atomic(p, s)
 print("da va", p)
 
 # ============================================================ cli.py
-p = root / "ebook_reader" / "cli.py"
+p = root / "abook" / "cli.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD = '''    paths = _existing_project_paths(args.project_root)
@@ -287,7 +287,7 @@ write_atomic(p, s)
 print("da va", p)
 
 # ============================================================ character_registry.py
-p = root / "ebook_reader" / "character_registry.py"
+p = root / "abook" / "character_registry.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD = '''    locked_genders = db.locked_character_genders()
@@ -462,12 +462,12 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.analysis import ALLOWED_AGES
-from ebook_reader.character_registry import (
+from abook.analysis import ALLOWED_AGES
+from abook.character_registry import (
     _drop_pins_that_contradict_a_person,
     preset_gender_of_voice_key,
 )
-from ebook_reader.database import LOCKABLE_AGES, ProjectDB
+from abook.database import LOCKABLE_AGES, ProjectDB
 
 
 class _Events:
@@ -579,7 +579,7 @@ def test_a_pin_nobody_ruled_on_is_left_alone(tmp_path: Path) -> None:
 def test_the_cast_command_takes_either_flag_or_both(tmp_path: Path) -> None:
     from types import SimpleNamespace
 
-    from ebook_reader import cli
+    from abook import cli
 
     root = tmp_path / "project"
     root.mkdir()
