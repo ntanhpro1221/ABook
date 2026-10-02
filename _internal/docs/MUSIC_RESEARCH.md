@@ -539,6 +539,15 @@ Câu hỏi:
   Wilson > 0,5, và thước phụ không kém quá 0,02. Nhiều ngưỡng cùng thắng thì chọn ngưỡng nhỏ nhất đạt luật (đổi ít nhất).
   Không ngưỡng nào thắng thì giữ 0,2.
 
+**KẾT QUẢ NỚI NGƯỠNG NỀN ÊM (03-10, `score_calm.py`, chấm ngày 03-10):**
+- 52 lượt (đoạn khác bài, bộ 3 + 4 + các bộ có đáp án), 17 clip mới có chú thích J-omni. Hai người chấm mù Sonnet cùng ý
+  45/52 (87%); độ tin cậy 1: 8 và 4 lượt.
+- 0,35 so 0,2: thắng 6/14 = 0,43 [KTC95 0,21-0,67], thước phụ +0,015 → không thắng.
+- 0,5 so 0,2: thắng 19/31 = 0,61 [KTC95 0,44-0,76], thước phụ +0,020 → không thắng (đạt 60% nhưng cận dưới < 0,5; thước phụ
+  vừa chạm trần 0,02).
+- **QUYẾT: giữ WEAK_MOOD = 0,2.** Nghiêng về 0,5 nhưng chưa đủ bằng chứng; nếu sau này có bộ cảnh lớn hơn (bộ 5) thì đo lại
+  0,5 một lần, ghi trước, không gộp mẫu cũ.
+
 **GHI TRƯỚC - PHÍA BÀI GỘP BA NGUỒN: CLAP + ÂM HỌC + VĂN BẢN (02-10 23:xx, Lead + chủ sách; trước mọi số):**
 Ba nguồn:
 - **(A) CLAP:** vector 512 chiều đã lưu (đầu dò như trên).
@@ -596,6 +605,71 @@ Ghép theo GEMS (`segllm_matching.txt`):
 Biểu diễn (`segllm_gems_reps.txt`):
 - LLM 9 cường độ ĐỘC LẬP khớp người r 0,705, dạng tỉ lệ r 0,605 (trần người 0,94). Ủng hộ Lớp 2 độc lập.
 - Nhưng LLM gắn 2,86 nhãn ≥ 0,5 mỗi đoạn, người chỉ 1,48. Cần hiệu chỉnh ngưỡng / độ nhọn trước khi dùng cho cosine Lớp 2.
+
+**GHI TRƯỚC - BỘ KIỂM 5: KHÔNG KHÍ ĐOẠN TRÊN CHƯƠNG MỚI (02-10 23:4x, Lead duyệt (a)(b)(c); trước khi chọn chương, trước
+mọi phân tích / đáp án / số):**
+
+Chọn chương. Luật cố định, chỉ đọc tên file, cỡ file và dòng đầu; chạy bằng script, không đọc nội dung trước khi chọn.
+- **Truyện:**
+  - LN Nhật trong bộ tải mới của chủ sách: thư mục `Tools/Text_Tmp <tên>` tạo từ 02-10 22:00, chưa có chương nào trong bộ
+    nhạc 1-4.
+  - Theo tên đã thấy: Re Zero, Kumo Desu ga, Otonari no Tenshi, Mushoku Tensei, Overlord, Kage no Jitsuryokusha, Maou Gakuin,
+    Arafoo Kenja, Classroom of the Elite, Kuma Kuma Kuma Bear.
+  - Truyện Hàn cùng điều kiện: hiện có Childhood Friend of the Zenith.
+  - Trung không lấy: chủ sách gần như không đọc.
+  - Danh sách chốt lúc chạy script chọn, sau khi các lượt tải đã xong.
+- **Số chương:** mỗi truyện Nhật 1 chương, mỗi truyện Hàn 2 chương (trọng số Nhật + Hàn).
+  - Truyện Hàn về SAU lúc chốt thành bộ 5b, có báo cáo riêng.
+  - Bộ 5b không bao giờ gộp vào số của bộ 5 sau khi bộ 5 đã có số.
+- **Chương trong truyện** (luật bộ 4 mở rộng): xếp file theo tên, bắt đầu từ vị trí 25% danh sách, lấy file đầu tiên (Hàn: hai
+  file đầu tiên) thoả cả bốn điều kiện:
+  - cỡ 15-60 KB;
+  - dòng đầu không chứa Lời bạt / Minh hoạ / Lời tác giả / Mục lục / Phụ lục / Tái bút / Thông báo;
+  - số chương không cách quá ±1 so với chương nào của truyện ấy trong `Corpus/<truyện>/` (đáp án thoại của Model; so cả hậu
+    tố a/b);
+  - không có trong danh sách chương Model báo đang dùng.
+- Danh sách chương chọn được gửi Model để họ tránh khi làm đáp án thoại sau này: hai bộ đáp án không dính nhau.
+
+Máy và đáp án:
+- **Phân tích:** 9B-v8 như bộ 4, qua hàng GPU của Model. Dừng giữa pha phân tích thì làm lại project mới (AGENTS.md).
+- **Đáp án cảnh:** hai người chấm mù Sonnet theo SCENE_GOLD_GUIDE như bộ 4 (V/E/T, ranh giới, gems), cộng `adjudicate_scenes.py`.
+  - THÊM: mỗi người chấm cho 13 cường độ độc lập 0-1 mỗi đoạn (danh sách Lớp 2).
+  - Người chấm chỉ thấy `seq<TAB>chữ`.
+- **Chấm:** r theo chương rồi lấy trung bình, quy ước r không xác định = 0 như bộ 4. Thắng ở X/N chương = so r trung bình các
+  trục liên quan trong từng chương.
+
+**(a) llmVT - V, T từ LLM đọc cả đoạn, E từ nhãn câu** (thăm dò ở bộ 4 cho +0,10).
+- Prompt `segment_mood_llm.py` giữ nguyên, `qwen3.5:9b` gốc, think=false, temperature 0.
+- CHÍNH: `app+llmVT` so `app`, r trung bình V/E/T, ranh giới của app. THẮNG nếu hơn ≥ 0,05 VÀ hơn ở ≥ 70% số chương (làm
+  tròn lên).
+- Ghi lại, không dùng để quyết: `app+llm` (cả ba trục từ LLM) và `oracle+llmVT`.
+
+**(b) Hiệu chỉnh Lớp 2 - độ nhọn 13 cường độ của LLM.**
+- LLM (cùng model, lượt gọi riêng, prompt 13 cường độ chốt trong script trước khi chạy) cho 13 cường độ mỗi đoạn trên ranh
+  giới đáp án.
+- Hiệu chỉnh: mỗi lớp một hàm mũ p^γ_c, γ_c chọn trong {0,5 … 4} (bước 0,25) để số đoạn ≥ 0,5 khớp người.
+  - Học bằng kiểm chéo 2 phần theo TRUYỆN, chia cố định theo thứ tự tên: nửa đầu học, nửa sau đo, rồi đổi.
+- CHÍNH: cosine 13 chiều LLM-người trung bình mỗi đoạn, trên phần đo (ngoài phần học).
+  - Hiệu chỉnh THẮNG nếu cosine hơn ≥ 0,03 VÀ số nhãn ≥ 0,5 mỗi đoạn lệch người ≤ 30%.
+- Ghi lại: r theo từng lớp, JS.
+- Thắng thì γ học trên cả bộ 5 vào `music_scenes`. Bật lại `EMOTION_WEIGHT` > 0 là thí nghiệm ghi trước riêng sau đó.
+
+**(c) E bằng SO SÁNH trong chương (MUSIC_THEORY §4.2)** - LLM 8-9B chấm thẳng energy kém (bộ 4: r E 0,17).
+- Mỗi chương: Best-Worst Scaling nhóm 4 đoạn (ranh giới của app). Mỗi đoạn xuất hiện trong 6 nhóm; thiết kế ngẫu nhiên cân
+  bằng, hạt giống 7, chốt trong script.
+- LLM được hỏi: đoạn nào năng lượng / độ kích động CAO nhất và THẤP nhất. Định nghĩa E lấy đúng câu của SCENE_GOLD_GUIDE.
+- Điểm = Bradley-Terry trên các cặp suy ra (đoạn "cao nhất" hơn 3 đoạn kia; 3 đoạn kia hơn đoạn "thấp nhất"), rồi đưa về
+  z trong chương.
+- Chương ít hơn 4 đoạn: dùng cặp đủ mọi tổ hợp.
+- CHÍNH: r của E so đáp án, `app+bwsE` so `app` (E nhãn câu). THẮNG nếu r E hơn ≥ 0,05 VÀ hơn ở ≥ 70% chương.
+- Ghi lại: `oracle+bwsE` và tổ hợp cuối `app + llmVT + bwsE` (r trung bình V/E/T).
+
+Chung:
+- Đoạn LLM trả hỏng định dạng thì giữ nhãn câu, có báo số lượng.
+- Mọi script và prompt commit vào Corpus TRƯỚC lượt chạy đầu; không sửa sau khi thấy số.
+- Nếu (a) và (c) cùng thắng: đề xuất sản phẩm là tổ hợp `llmVT + bwsE`. Chi phí: model gốc ~6 GB và số lượt gọi.
+  - Chủ sách / Lead quyết qua thí nghiệm tiếp theo trên bộ 5b hoặc bộ mới; không quyết thẳng từ bộ 5 vì tổ hợp chưa được ghi
+    làm thước chính.
 
 **KẾT QUẢ GỘP BA NGUỒN (02-10 23:5x, `eval_fusion.py`, `results/fusion_ablation.txt`; 1.381 bài Incompetech, AUC TB 10 lớp):**
 
@@ -666,6 +740,13 @@ Bộ dữ liệu:
 - Bản audio đầy đủ, xử lý cuốn chiếu trần ~20 GB mỗi máy (`mtg_rolling.py`). Gói 00-57 chạy máy nhà, 58-99 chạy Mac.
 - Mỗi bài lưu nhúng CLAP + có lời / nền + âm học `acoustic_features2`. Chỉ giữ audio bài không lời (ứng viên danh mục).
 - Sổ gói: `done_tars.txt` mỗi máy.
+- **Sửa 03-10 (chủ sách qua Lead: "nhạc có lời không bao giờ dùng làm nhạc nền thì quan tâm làm gì?"):** chỉ bài KHÔNG LỜI
+  (có lời ≤ 0,5) vào danh mục LẪN tập học của trò; trò chỉ phải phân tích nhạc nền không lời, học trên bài có lời là lệch
+  miền. Bài có lời chỉ qua bộ dò lời (CLAP 3 cửa sổ, cần cho chính việc loại) rồi bỏ: không âm học, không lưu nhúng, chỉ ghi
+  `{id, có lời, kept=false}`. Số đã tính của bài có lời ở gói 00-01 / 58 đã xoá. Bộ dò lời vẫn là một phần của trò để app
+  báo "có lời, không dùng được" cho nhạc người dùng nhập. Gói đầu: 43-45% bài không lời. Áp như nhau cho FMA.
+- Hệ quả cho thước phụ: AUC 56 tag MTG đo trên phần test KHÔNG LỜI, nên không so thẳng được với baseline công bố (đo trên mọi
+  bài); chỉ dùng để định vị.
 
 Nhãn thầy từ tag (ghi trước, cường độ 1 hoặc 0,5; lấy max khi nhiều tag cùng lớp; bài không có tag nào ánh xạ thì không có
 nhãn lớp ấy):
