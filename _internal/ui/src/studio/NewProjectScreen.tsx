@@ -47,10 +47,10 @@ import { api } from "@/studio/api";
 import { chapterNumberIssues } from "@/studio/chapterNumbers";
 import { uploadChapters } from "@/studio/upload";
 import { AnalysisModelPicker, modelLabel } from "@/studio/AnalysisModelPicker";
+import { DEFAULT_LABEL, applyTemplate, type BookTemplate, type Profile } from "@/studio/bookTemplates";
+import { TemplateBar } from "@/studio/TemplateBar";
 import { VolumeSplit } from "@/studio/VolumeSplit";
 import { inOrder, ranges, startNumbers, volumeTitles } from "@/studio/volumes";
-
-type Profile = "fast" | "balanced" | "high_quality";
 
 const STEPS = [
   { title: "Nội dung", hint: "Chương TXT hay EPUB" },
@@ -133,6 +133,8 @@ interface Draft {
   dropCredits?: boolean;
   /** Model đọc hiểu truyện chỉ cho cuốn này ("" hay không có = mặc định của app). */
   analysisModel?: string;
+  /** Tên mẫu thiết lập đang theo (studio/bookTemplates.ts); không có = mặc định của app. Mẫu bị xoá/đổi tên thì coi như không có. */
+  template?: string;
   /** "Sửa thiết lập" (?redo=<id>): cuốn chưa bắt đầu sẽ được thay bằng cuốn này; phần trước của nó nếu là phần nối tiếp. */
   replaces?: { id: string; title: string; seedFrom?: string };
 }
@@ -178,6 +180,12 @@ function saveDraft(draft: Draft | null): void {
   } catch {
     /* không lưu được nháp thì thôi */
   }
+}
+
+/** Giọng kể mặc định cho sách mới (Cài đặt > Studio): giọng người dùng đặt nếu còn trong danh sách giọng, không thì giọng máy đề xuất. */
+function defaultNarrator(voices: Voice[], preferred?: string): string {
+  const chosen = preferred ? voices.find((voice) => voice.name === preferred) : undefined;
+  return chosen ? chosen.name : (voices.find((voice) => voice.recommended)?.name ?? voices[0].name);
 }
 
 function cleanPath(value: string): string {
@@ -1352,13 +1360,21 @@ export function NewProjectScreen() {
   }, [planError]);
 
   useEffect(() => {
-    if (!draft.narrator && voices?.length) {
-      // Cài đặt > Studio: giọng kể mặc định cho sách mới (còn trong danh sách giọng), không thì giọng máy đề xuất.
-      const preferred = preferences?.newBookNarrator && voices.find((voice) => voice.name === preferences.newBookNarrator);
-      update({ narrator: preferred ? preferred.name : (voices.find((voice) => voice.recommended)?.name ?? voices[0].name) });
-    }
+    if (!draft.narrator && voices?.length) update({ narrator: defaultNarrator(voices, preferences?.newBookNarrator) });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [voices, draft.narrator, preferences?.newBookNarrator]);
+
+  // Chọn một mẫu thiết lập (hay "Mặc định" = null): chỉ giọng kể, chất lượng, model, "bắt đầu ngay" của nháp đổi theo.
+  const pickTemplate = (template: BookTemplate | null) => {
+    const fallback: BookTemplate = {
+      name: DEFAULT_LABEL,
+      narrator: voices?.length ? defaultNarrator(voices, preferences?.newBookNarrator) : "",
+      profile: (PROFILE_VALUES as string[]).includes(preferences?.newBookProfile ?? "") ? (preferences?.newBookProfile as Profile) : "high_quality",
+      analysisModel: "",
+      startNow: true,
+    };
+    setDraft((current) => (template ? applyTemplate(current, template, voices?.map((voice) => voice.name)) : { ...applyTemplate(current, fallback), template: undefined }));
+  };
 
   // Quét lại chỉ khi danh sách nguồn đổi; bỏ một chương là lọc ngay ở đây, không đọc lại cả thư mục.
   useEffect(() => {
@@ -1544,6 +1560,8 @@ export function NewProjectScreen() {
           )}
         </aside>
         <section className="min-w-0 flex-1">
+          {/* Mẫu thiết lập chỉ cho sách mới: "Làm tiếp cuốn này" theo phần trước. */}
+          {step > 0 && !draft.seed && <TemplateBar draft={draft} onPick={pickTemplate} />}
           {step === 0 && (
             <SourceStep
               scan={scan}

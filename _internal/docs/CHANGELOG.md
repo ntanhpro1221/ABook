@@ -7,6 +7,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Studio
+
+- **Mẫu thiết lập cho sách mới**: làm nhiều kiểu truyện (light novel, tiên hiệp...) thì lưu bộ lựa chọn - giọng kể, chất lượng,
+  model đọc hiểu, có bắt đầu ngay không - thành một mẫu có tên ("Lưu thành mẫu…" ở trình tạo sách), lần sau chọn lại một cú
+  bấm. Chọn mẫu chỉ đổi các lựa chọn ấy, không đụng tới truyện hay tên sách; đổi tay sau khi chọn thì tên mẫu hiện "(đã sửa)".
+  Đổi tên hay xoá mẫu (có "Hoàn tác") ở Cài đặt > Studio. Việc bỏ dòng ghi công vẫn do bạn đồng ý riêng từng cuốn, không nằm
+  trong mẫu. Điều khiển từ xa chỉ chọn được mẫu có sẵn.
+
 ## [0.4.18] - 2026-10-02
 
 ### Studio
