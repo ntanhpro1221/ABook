@@ -413,6 +413,13 @@ thấy V/E/T) - để biết LLM gần người tới đâu (Jensen-Shannon) và
   hơn; khoảng 0,86 -> 0,69 nằm ở CHẤT LƯỢNG ĐẦU VÀO. Nên câu hỏi thật của lượt LLM sáng mai là: LLM đoán tỉ lệ có gần người
   hơn nhãn câu đoán ba trục không.
 
+**Trọng số ghép GEMS (02-10 23:xx, sau quyết định Lead + chủ sách lấy phân phối GEMS-9 làm biểu diễn chính - code app ở nhánh
+`dev/music-gems`, CHỜ bản tổng hợp lý thuyết trước khi gộp):** điểm = khoảng cách V/E/T (như cũ, vẫn quyết ngưỡng im lặng) +
+W x Jensen-Shannon(đoạn, bài); đường nhãn câu suy phân phối đoạn từ V/E/T: softmax(-khoảng cách² tới toạ độ nhãn / TAU).
+Lưới trên bộ 3 (đầu vào đáp án, 32 đoạn): mọi ô 0,607-0,621, W = 0 (cách cũ) 0,608 - PHẲNG; ô tốt nhất W 2, TAU 0,1 (0,607).
+Kiểm cả chuỗi bộ 4 (đầu vào máy, không dùng để chọn): 0,862 -> 0,825, hơn 5/8 cuốn (bỏ HDST: 0,854 -> 0,822, 4/7). Script
+`tune_gems_weight.py` (Corpus research/music).
+
 ## Thứ tự và tài nguyên
 
 0. Dữ liệu (đang chạy): Incompetech 1.443 bài (đọc 3 đoạn từ máy chủ), Jamendo CC BY 665 bài; tải Film soundtracks,
