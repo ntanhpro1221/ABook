@@ -937,10 +937,10 @@ class App:
         self._mutating()
         path = self._editable(value)
         if packages.is_package(path):
-            extra = set(body) - {"enabled", "levelDb", "silence"}
+            extra = set(body) - {"enabled", "levelDb", "silence", "pins"}
             if extra:
-                raise ApiError(HTTPStatus.BAD_REQUEST, "Sách đã đóng gói chỉ chỉnh được bật/tắt nhạc, mức nhạc và im lặng từng đoạn")
-            return book_edits.set_music(path, body)
+                raise ApiError(HTTPStatus.BAD_REQUEST, "Sách đã đóng gói chỉ chỉnh được bật/tắt nhạc, mức nhạc, im lặng từng đoạn và đổi bài")
+            return book_edits.set_music(path, body, self._my_track)
         music_plan.write_overrides(path, body)
         if music_plan.read_plan(path) is None:
             return self.music_view(value)
@@ -984,9 +984,36 @@ class App:
                                  family=overrides["family"], banned=overrides["banned"], genre_styles=genre_styles,
                                  recent=recent, exclude=exclude, limit=limit, available=available)
 
+    def _my_track(self, link: str) -> tuple[dict[str, Any], Path] | None:
+        """(thông tin, file) của một bài trong "Nhạc của tôi" của máy này, hay None - cho `book_edits.set_music` (đổi bài một mốc của
+        sách đóng gói sang bài của người nghe)."""
+        info, path = self.my_music.lookup([link]).get(link), self.my_music.file(link)
+        return (info, path) if info is not None and path is not None else None
+
+    def _packaged_alternatives(self, path: Path, scene_key: str) -> dict[str, Any]:
+        """"Đổi bài" của sách đóng gói: mốc nhạc người làm sách gắn không có "không khí" để chấm điểm, nên danh mục không đề xuất
+        bài nào - chỉ có nhóm "Nhạc của tôi" (mọi bài đã nhập trừ bài đang dùng ở mốc này, bài chưa phân tích đi trước sau bài đã
+        phân tích), cùng hình với nhóm của sách có xưởng."""
+        view = book_edits.music_view(packages.manifest(path), book_edits.load(path))
+        if not any(cue["key"] == scene_key for cue in view["cues"]):
+            raise ApiError(HTTPStatus.NOT_FOUND, "Không thấy đoạn nhạc này trong sách.")
+        edits = book_edits.load(path)
+        current = ((edits.get("music") or {}).get("pins") or {}).get(scene_key) or book_edits.base_links(packages.manifest(path)).get(scene_key)
+        items = []
+        for track in self.my_music.entries():
+            if track["link"] == current:
+                continue
+            items.append({"link": track["link"], "title": track["title"], "creator": track["creator"], "attribution": "",
+                          "duration": track["duration"], "analysed": track["analysed"], "fits": False})
+        items.sort(key=lambda item: (not item["analysed"], item["title"].lower()))
+        return {"key": scene_key, "alternatives": [], "mine": items}
+
     def music_alternatives(self, value: str, scene_key: str, limit: int = 6) -> dict[str, Any]:
         """"Đổi bài": tối đa `limit` bài khác cho một đoạn, hợp nhất trước - cùng điểm và bộ lọc với lúc máy chọn
         (music_select.rank), tôn trọng phong cách / thế giới của cuốn, bỏ bài đã bỏ, bài đang chọn và bài máy này không lấy được."""
+        listenable = self._listenable(value)
+        if packages.is_package(listenable):
+            return self._packaged_alternatives(listenable, scene_key)
         path = self._book(value)
         plan = music_plan.read_plan(path)
         current = next((scene.get("link") for scene in (plan or {}).get("scenes") or []

@@ -96,18 +96,27 @@ A book with a workshop never has `edits.json`. A book without one never has the 
                                             object = use edits/cover.jpg (version = cache-buster the writer picks)
  "characters": {"<cast.json name>": "<shown name>"},
  "chapters": {"<chapter id>": {"title": "Chương 12", "subtitle": "Hồi kết"}},      each field optional
- "music": {"enabled": false, "levelDb": -24.0, "silenced": ["<chapter id>:<start ms>"]}}   each field optional
+ "music": {"enabled": false, "levelDb": -24.0, "silenced": ["<chapter id>:<start ms>"],
+           "pins": {"<chapter id>:<start ms>": "local:<sha1>"},
+           "tracks": {"<sha1>": {"ext": "mp3", "title": "...", "creator": "...", "duration": 184.0, "lufs": -14.2}}}}   each field optional
 ```
 
+`pins` = a cue the listener switched to one of their own tracks ("Nhạc của tôi", docs/MUSIC_IMPORT.md); `tracks` describes exactly
+the tracks the pins name (no more, no fewer - anything else refuses the file): `ext` one of mp3 / m4a / ogg / opus / flac / wav,
+`title` / `creator` clean text <= 200 code points when present, `duration` in (0, 1e6] seconds, `lufs` in [-100, 20] (measured
+from the file itself). No licence or attribution: the file's own name and artist are all ABook shows. The track FILE sits in the
+book folder as `music/<sha1>.<ext>` - the place a producer's own track would be - and `repack` / `BookDocumentWriter` add it to the
+file next to the book layer (the book layer's `package.files` is never rewritten; the saved file's list covers it).
+
 Strict (untrusted input - it arrives inside someone else's .abook): only these keys (plus `wishes`, below); size <= 1 MiB; <= 2000 characters,
-5000 chapters, 5000 silenced cues; title/chapter text <= 160 code points, character names <= 80 (the server's
+5000 chapters, 5000 silenced cues, 5000 pins; title/chapter text <= 160 code points, character names <= 80 (the server's
 `TITLE_MAX` / `names.MAX_NAME`); text must already be clean (no control characters, no whitespace other than single ASCII
 spaces, no leading/trailing space) - validation REFUSES, it never repairs; `levelDb` in [-40, -6]; cover color `#rrggbb` or
 "", sizes 0..20000; `edits/cover.jpg` must exist iff `cover` is an object, be a JPEG, <= 8 MiB. Any violation refuses the
 whole file. No device names or paths are stored (the only times are the `requested_at` stamps of wishes, see P2a). Writers store the minimum: a value equal to the book layer's is
 removed (no-op edits never count), `enabled: true` is never stored.
 
-Counting ("N thay đổi"): title + cover + each character + each chapter + enabled + levelDb + each silenced cue + each wish (P2a).
+Counting ("N thay đổi"): title + cover + each character + each chapter + enabled + levelDb + each silenced cue + each pin + each wish (P2a).
 
 ## Overlay (what the listener sees)
 
@@ -116,12 +125,16 @@ Counting ("N thay đổi"): title + cover + each character + each chapter + enab
 `{file: "edits/cover.jpg", ...cover}`; `music`. `apply_cast`: `displayName` = the edit, `originalName` = the pre-edit original
 (`originalName`, else `displayName`) unless the edit equals it; `firstChapter` follows a renamed chapter `title`.
 `apply_script`: `speaker` = new display name (scripts store the display name at pack time), `title` = renamed `fullTitle`.
-`apply_music`: `levelDb` replaces the level and every cue's `gainDb` is recomputed with
-`music_plan.cue_gain_db(level, track.lufs, track.speechBand)`; `enabled: false` empties `chapters`; silenced cues are
-dropped. A cue's key is `"<chapterId>:<round(start * 1000)>"`.
+`apply_music`: a pinned cue's `track` becomes `music/<sha1>.<ext>` and `tracks` gains `{file, link: "local:<sha1>", title?,
+creator?, lufs?}` (kept when the producer's own book already holds that name); `levelDb` replaces the level and every cue's
+`gainDb` is recomputed with `music_plan.cue_gain_db(level, track.lufs, track.speechBand)` (a pinned cue gets its gain from the
+level in force even when `levelDb` is not edited); `enabled: false` empties `chapters`; silenced cues are dropped. A cue's key is
+`"<chapterId>:<round(start * 1000)>"`.
 
 Merge on re-import, `merge(local, incoming)`: the key present on this device wins, the rest is taken from the file; silenced
-cues are a union. Report `{adopted, kept, conflicts, cover: "local" | "incoming" | null}`.
+cues are a union; pins are a union (this device's pin wins on a cue both pinned) and `tracks` keeps only what the merged pins name.
+The pinned track FILES follow: an extract keeps this device's files (`BookFile._keep_local_edits`, `BookFileImport.keepLocalEdits`) and
+adopting into a fuller book takes the incoming file's (`book_edits.adopt(..., member)`). Report `{adopted, kept, conflicts, cover: "local" | "incoming" | null}`.
 
 ## Routes (same JSON on the Python server and `LocalStudio.kt` for a book without a workshop)
 
@@ -134,8 +147,10 @@ All under `/api/books/<id>`; the server also accepts them for workshop books (sa
 | `DELETE /cover` | `{"cover": null}` |
 | `POST /characters/rename {character, name}` | `{character, name, original, renamed}` |
 | `PUT /chapters/<n>/title {title?, subtitle?, revert?}` | `{chapterId, title, subtitle, fullTitle}` |
-| `GET /music` | `{package: true, hasMusic, enabled, levelDb, defaultLevelDb, cues: [{key, chapterId, chapter, start, end, title, creator, silenced}]}` |
-| `PUT /music {enabled?, levelDb?, silence?: {key: bool}}` | the same view; any other key -> 400 |
+| `GET /music` | `{package: true, hasMusic, enabled, levelDb, defaultLevelDb, cues: [{key, chapterId, chapter, start, end, title, creator, silenced, pinned?: true}]}` |
+| `PUT /music {enabled?, levelDb?, silence?: {key: bool}, pins?: {key: "local:<sha1>" \| null}}` | the same view; any other key -> 400. A pin copies the track's file from this device's "Nhạc của tôi" into the book folder (400 "Bài này không còn trong Nhạc của tôi" when it is gone); `null` goes back to the producer's track and drops the file |
+| `GET /music/scenes/<cue key>/alternatives` | `{key, alternatives: [], mine: [{link, title, creator, attribution: "", duration, analysed, fits: false}]}` - a packaged cue has no mood to score, so only "Nhạc của tôi" (every track but the one in use) is offered; 404 for an unknown cue |
+| `GET /api/music/local`, `DELETE /api/music/local/<sha1>`, `POST /api/music/local/analyze` | this device's "Nhạc của tôi" (docs/MUSIC_IMPORT.md) - the phone answers them in `LocalStudio.kt` with the desktop's JSON |
 | `GET /edits` | `{applied: N, waiting: 0}` (workshop: `waiting` = edits from a file awaiting "áp vào dự án?") |
 | `DELETE /edits` | `{applied: 0, waiting: 0}` |
 | `GET /cast`, `GET /chapters/<n>/script` | the overlaid cast / script |
@@ -229,6 +244,7 @@ Code: Python `abook/webui/book_wishes.py` (validate/merge/count, the writers, `p
 
 ## Not built (later phases)
 
-The sync edits inbox, `.abookproj` v2, phone music swap, phone cover web search; edits on
+The sync edits inbox, `.abookproj` v2, phone cover web search; swapping a cue to a CATALOG track on the phone (only the listener's
+own tracks can be pinned to a packaged book - there is no catalogue offline and no mood to rank by); edits on
 streamed ("link") books; an in-place "Lưu" that overwrites the original file (desktop "Lưu" writes `Đã xuất/<title>.abook`,
 Android asks where with the system "create document" picker).

@@ -1,6 +1,7 @@
 import { registerPlugin, type PluginListenerHandle } from "@capacitor/core";
 import type { Bookmark, BookPart, ListeningRecord, ListeningState, NightSession } from "@/listen/model";
 import type { Capabilities } from "@/shared/capabilities";
+import type { ImportResult } from "@/studio/musicLocal";
 
 // Hai plugin native của app Android (mobile/android/app/src/main/java/vn/abook/player):
 //  EbookPlayer  - lõi phát Media3: hàng đợi chương, hẹn giờ ngủ, lắc để nghe thêm, nhật ký đêm.
@@ -286,6 +287,10 @@ export interface EbookLibraryPlugin {
   /** Bộ chọn file của hệ thống để mở một file sách .abook; kết quả về qua sự kiện "import". */
   pickBook(): Promise<{ picked: boolean }>;
   addListener(event: "import", handler: (event: ImportEvent) => void): Promise<PluginListenerHandle>;
+  /** "Nhập nhạc của tôi…": hộp chọn file của hệ thống (nhiều bản một lúc), nhập từng bản vào kho nhạc của điện thoại (MusicStore.kt);
+   *  trả khi nhập xong - cùng JSON như `/api/music/local/import` của máy tính - hay `{picked: false}` khi không chọn gì. */
+  pickMusic(): Promise<{ picked: boolean } & Partial<ImportResult>>;
+  addListener(event: "musicImport", handler: (event: { done: number; total: number }) => void): Promise<PluginListenerHandle>;
 }
 
 /** Kết quả mở một file sách (.abook): mã sách vừa vào Thư viện, hay lý do không nhận. */

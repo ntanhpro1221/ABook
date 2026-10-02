@@ -1,6 +1,6 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { FileDown, ImagePlus, Loader2, Music2, Pencil, Trash2, Volume2, VolumeX, Wrench } from "lucide-react";
+import { FileDown, ImagePlus, Loader2, Music2, Pencil, Shuffle, Trash2, Volume2, VolumeX, Wrench } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
@@ -11,6 +11,7 @@ import { levelOptions } from "@/shared/musicLevels";
 import { Button, Dialog, Segmented } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { MUSIC_CHANGED_EVENT } from "./musicBed";
+import { MyMusicSection, SwapTrack } from "./MyMusic";
 import type { ListenBook, ListenChapter } from "./model";
 import { useSource } from "./source";
 
@@ -70,19 +71,33 @@ interface MusicEditView {
   enabled: boolean;
   levelDb: number;
   defaultLevelDb: number;
-  cues: { key: string; chapterId: number; chapter: string; start: number; end: number; title: string; creator: string; silenced: boolean }[];
+  cues: {
+    key: string;
+    chapterId: number;
+    chapter: string;
+    start: number;
+    end: number;
+    title: string;
+    creator: string;
+    silenced: boolean;
+    /** Người nghe đã đổi đoạn này sang một bài trong "Nhạc của tôi". */
+    pinned?: boolean;
+  }[];
 }
 
-/** Nhạc nền của cuốn nhập từ file: người làm sách đã gắn sẵn - người nghe chỉ bật/tắt, chỉnh mức, cho im lặng từng đoạn. */
+/** Nhạc nền của cuốn nhập từ file: người làm sách đã gắn sẵn - người nghe bật/tắt, chỉnh mức, cho im lặng từng đoạn, và đổi một đoạn
+ *  sang bài trong "Nhạc của tôi" (bài ấy đi cùng file sách khi lưu). */
 function MusicSection({ book }: { book: ListenBook }) {
   const client = useQueryClient();
   const key = ["listen", "edit-music", book.id];
+  const [swapping, setSwapping] = useState<string | null>(null); // khoá đoạn đang mở "Đổi bài"
   const { data, isLoading } = useQuery({ queryKey: key, queryFn: () => api<MusicEditView>(`/api/books/${book.id}/music`) });
   const change = useMutation({
-    mutationFn: (body: { enabled?: boolean; levelDb?: number; silence?: Record<string, boolean> }) =>
+    mutationFn: (body: { enabled?: boolean; levelDb?: number; silence?: Record<string, boolean>; pins?: Record<string, string | null> }) =>
       api<MusicEditView>(`/api/books/${book.id}/music`, { method: "PUT", body }),
     onSuccess: (view) => {
       client.setQueryData(key, view);
+      setSwapping(null);
       refreshAfterEdit(client, book.id);
       window.dispatchEvent(new CustomEvent(MUSIC_CHANGED_EVENT, { detail: book.id }));
     },
@@ -92,6 +107,7 @@ function MusicSection({ book }: { book: ListenBook }) {
   if (!data.hasMusic) {
     return <p className="text-sm text-fg-2">Người làm sách không gắn nhạc nền cho cuốn này.</p>;
   }
+  const choosing = change.isPending ? (Object.values(change.variables?.pins ?? {}).find((link): link is string => !!link) ?? null) : null;
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end gap-3">
@@ -119,22 +135,52 @@ function MusicSection({ book }: { book: ListenBook }) {
           </select>
         </label>
       </div>
-      <ul className={cn("max-h-56 divide-y divide-line overflow-y-auto rounded-xl border border-line", !data.enabled && "opacity-50")}>
+      <ul className={cn("max-h-72 divide-y divide-line overflow-y-auto rounded-xl border border-line", !data.enabled && "opacity-50")}>
         {data.cues.map((cue) => (
-          <li key={cue.key} className="flex items-center gap-3 px-3 py-2">
-            <div className="min-w-0 flex-1">
-              <div className={cn("truncate text-sm", cue.silenced && "text-fg-3 line-through")}>{cue.title || "Nhạc nền"}</div>
-              <div className="tabular truncate text-xs text-fg-2">
-                {cue.chapter} · {formatClock(cue.start)} – {formatClock(cue.end)}
-                {cue.creator ? ` · ${cue.creator}` : ""}
+          <li key={cue.key}>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2">
+              <div className="min-w-[9rem] flex-1">
+                <div className={cn("truncate text-sm", cue.silenced && "text-fg-3 line-through")}>{cue.title || "Nhạc nền"}</div>
+                <div className="tabular truncate text-xs text-fg-2">
+                  {cue.chapter} · {formatClock(cue.start)} – {formatClock(cue.end)}
+                  {cue.creator ? ` · ${cue.creator}` : ""}
+                  {cue.pinned ? " · bài của bạn" : ""}
+                </div>
               </div>
+              <span className="flex shrink-0 gap-1">
+                {cue.pinned && (
+                  <Button size="sm" variant="ghost" disabled={change.isPending} onClick={() => change.mutate({ pins: { [cue.key]: null } })}>
+                    Về bài gốc
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  icon={Shuffle}
+                  aria-expanded={swapping === cue.key}
+                  disabled={change.isPending}
+                  onClick={() => setSwapping(swapping === cue.key ? null : cue.key)}
+                >
+                  Đổi bài
+                </Button>
+                <Button size="sm" variant="ghost" disabled={change.isPending} onClick={() => change.mutate({ silence: { [cue.key]: !cue.silenced } })}>
+                  {cue.silenced ? "Có nhạc" : "Im lặng"}
+                </Button>
+              </span>
             </div>
-            <Button size="sm" variant="ghost" disabled={change.isPending} onClick={() => change.mutate({ silence: { [cue.key]: !cue.silenced } })}>
-              {cue.silenced ? "Có nhạc" : "Im lặng"}
-            </Button>
+            {swapping === cue.key && (
+              <SwapTrack
+                bookId={book.id}
+                cueKey={cue.key}
+                busy={change.isPending}
+                choosing={choosing}
+                onChoose={(link) => change.mutate({ pins: { [cue.key]: link }, ...(cue.silenced ? { silence: { [cue.key]: false } } : {}) })}
+              />
+            )}
           </li>
         ))}
       </ul>
+      <MyMusicSection />
     </div>
   );
 }

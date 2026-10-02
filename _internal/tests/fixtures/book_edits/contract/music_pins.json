@@ -1,0 +1,494 @@
+{
+ "volatile": [
+  "color",
+  "version",
+  "requestedAt"
+ ],
+ "steps": [
+  {
+   "method": "GET",
+   "path": "/music/scenes/1:0/alternatives",
+   "status": 200,
+   "response": {
+    "key": "1:0",
+    "alternatives": [],
+    "mine": []
+   }
+  },
+  {
+   "import": "tone.wav"
+  },
+  {
+   "method": "GET",
+   "path": "/music/scenes/1:0/alternatives",
+   "status": 200,
+   "response": {
+    "key": "1:0",
+    "alternatives": [],
+    "mine": [
+     {
+      "link": "local:51edf6872a24d2b85b1e73e348a961b28699578a",
+      "title": "tone",
+      "creator": "",
+      "attribution": "",
+      "duration": 1,
+      "analysed": false,
+      "fits": false
+     }
+    ]
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/music/scenes/9:9/alternatives",
+   "status": 404,
+   "response": {
+    "error": "Không thấy đoạn nhạc này trong sách."
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/music",
+   "body": {
+    "pins": {
+     "1:0": "local:51edf6872a24d2b85b1e73e348a961b28699578a"
+    }
+   },
+   "status": 200,
+   "response": {
+    "package": true,
+    "hasMusic": true,
+    "enabled": true,
+    "levelDb": -18.0,
+    "defaultLevelDb": -18.0,
+    "cues": [
+     {
+      "key": "1:0",
+      "chapterId": 1,
+      "chapter": "Chương 646 · Trở về (1)",
+      "start": 0.0,
+      "end": 60.0,
+      "title": "tone",
+      "creator": "",
+      "silenced": false,
+      "pinned": true
+     },
+     {
+      "key": "1:60000",
+      "chapterId": 1,
+      "chapter": "Chương 646 · Trở về (1)",
+      "start": 60.0,
+      "end": 90.0,
+      "title": "Battle",
+      "creator": "B",
+      "silenced": false
+     }
+    ]
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/music",
+   "body": {
+    "pins": {
+     "1:0": "local:51edf6872a24d2b85b1e73e348a961b28699578a"
+    }
+   },
+   "status": 200,
+   "response": {
+    "package": true,
+    "hasMusic": true,
+    "enabled": true,
+    "levelDb": -18.0,
+    "defaultLevelDb": -18.0,
+    "cues": [
+     {
+      "key": "1:0",
+      "chapterId": 1,
+      "chapter": "Chương 646 · Trở về (1)",
+      "start": 0.0,
+      "end": 60.0,
+      "title": "tone",
+      "creator": "",
+      "silenced": false,
+      "pinned": true
+     },
+     {
+      "key": "1:60000",
+      "chapterId": 1,
+      "chapter": "Chương 646 · Trở về (1)",
+      "start": 60.0,
+      "end": 90.0,
+      "title": "Battle",
+      "creator": "B",
+      "silenced": false
+     }
+    ]
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/edits",
+   "status": 200,
+   "response": {
+    "applied": 1,
+    "waiting": 0,
+    "wishes": 0
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/music/scenes/1:0/alternatives",
+   "status": 200,
+   "response": {
+    "key": "1:0",
+    "alternatives": [],
+    "mine": []
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/music/scenes/1:60000/alternatives",
+   "status": 200,
+   "response": {
+    "key": "1:60000",
+    "alternatives": [],
+    "mine": [
+     {
+      "link": "local:51edf6872a24d2b85b1e73e348a961b28699578a",
+      "title": "tone",
+      "creator": "",
+      "attribution": "",
+      "duration": 1,
+      "analysed": false,
+      "fits": false
+     }
+    ]
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/music",
+   "body": {
+    "pins": {
+     "1:60000": "local:0123456789abcdef0123456789abcdef01234567"
+    }
+   },
+   "status": 400,
+   "response": {
+    "error": "Bài này không còn trong Nhạc của tôi"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/music",
+   "body": {
+    "pins": {
+     "1:60000": "https://x/y.mp3"
+    }
+   },
+   "status": 400,
+   "response": {
+    "error": "Chỉ đổi được sang bài trong Nhạc của tôi"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/music",
+   "body": {
+    "pins": {
+     "7:7": "local:51edf6872a24d2b85b1e73e348a961b28699578a"
+    }
+   },
+   "status": 400,
+   "response": {
+    "error": "Không có đoạn nhạc này trong sách"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/music",
+   "body": {
+    "pins": "tone"
+   },
+   "status": 400,
+   "response": {
+    "error": "Phần sửa nhạc nền không hợp lệ."
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/music",
+   "body": {
+    "levelDb": -24,
+    "silence": {
+     "1:60000": true
+    }
+   },
+   "status": 200,
+   "response": {
+    "package": true,
+    "hasMusic": true,
+    "enabled": true,
+    "levelDb": -24.0,
+    "defaultLevelDb": -18.0,
+    "cues": [
+     {
+      "key": "1:0",
+      "chapterId": 1,
+      "chapter": "Chương 646 · Trở về (1)",
+      "start": 0.0,
+      "end": 60.0,
+      "title": "tone",
+      "creator": "",
+      "silenced": false,
+      "pinned": true
+     },
+     {
+      "key": "1:60000",
+      "chapterId": 1,
+      "chapter": "Chương 646 · Trở về (1)",
+      "start": 60.0,
+      "end": 90.0,
+      "title": "Battle",
+      "creator": "B",
+      "silenced": true
+     }
+    ]
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/music",
+   "body": {
+    "pins": {
+     "1:60000": "local:51edf6872a24d2b85b1e73e348a961b28699578a"
+    }
+   },
+   "status": 200,
+   "response": {
+    "package": true,
+    "hasMusic": true,
+    "enabled": true,
+    "levelDb": -24.0,
+    "defaultLevelDb": -18.0,
+    "cues": [
+     {
+      "key": "1:0",
+      "chapterId": 1,
+      "chapter": "Chương 646 · Trở về (1)",
+      "start": 0.0,
+      "end": 60.0,
+      "title": "tone",
+      "creator": "",
+      "silenced": false,
+      "pinned": true
+     },
+     {
+      "key": "1:60000",
+      "chapterId": 1,
+      "chapter": "Chương 646 · Trở về (1)",
+      "start": 60.0,
+      "end": 90.0,
+      "title": "tone",
+      "creator": "",
+      "silenced": true,
+      "pinned": true
+     }
+    ]
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/edits",
+   "status": 200,
+   "response": {
+    "applied": 4,
+    "waiting": 0,
+    "wishes": 0
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/music",
+   "body": {
+    "pins": {
+     "1:0": null
+    }
+   },
+   "status": 200,
+   "response": {
+    "package": true,
+    "hasMusic": true,
+    "enabled": true,
+    "levelDb": -24.0,
+    "defaultLevelDb": -18.0,
+    "cues": [
+     {
+      "key": "1:0",
+      "chapterId": 1,
+      "chapter": "Chương 646 · Trở về (1)",
+      "start": 0.0,
+      "end": 60.0,
+      "title": "Calm",
+      "creator": "A",
+      "silenced": false
+     },
+     {
+      "key": "1:60000",
+      "chapterId": 1,
+      "chapter": "Chương 646 · Trở về (1)",
+      "start": 60.0,
+      "end": 90.0,
+      "title": "tone",
+      "creator": "",
+      "silenced": true,
+      "pinned": true
+     }
+    ]
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/music",
+   "body": {
+    "pins": {
+     "1:60000": null
+    }
+   },
+   "status": 200,
+   "response": {
+    "package": true,
+    "hasMusic": true,
+    "enabled": true,
+    "levelDb": -24.0,
+    "defaultLevelDb": -18.0,
+    "cues": [
+     {
+      "key": "1:0",
+      "chapterId": 1,
+      "chapter": "Chương 646 · Trở về (1)",
+      "start": 0.0,
+      "end": 60.0,
+      "title": "Calm",
+      "creator": "A",
+      "silenced": false
+     },
+     {
+      "key": "1:60000",
+      "chapterId": 1,
+      "chapter": "Chương 646 · Trở về (1)",
+      "start": 60.0,
+      "end": 90.0,
+      "title": "Battle",
+      "creator": "B",
+      "silenced": true
+     }
+    ]
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/edits",
+   "status": 200,
+   "response": {
+    "applied": 2,
+    "waiting": 0,
+    "wishes": 0
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/music",
+   "body": {
+    "pins": {
+     "1:0": "local:51edf6872a24d2b85b1e73e348a961b28699578a"
+    }
+   },
+   "status": 200,
+   "response": {
+    "package": true,
+    "hasMusic": true,
+    "enabled": true,
+    "levelDb": -24.0,
+    "defaultLevelDb": -18.0,
+    "cues": [
+     {
+      "key": "1:0",
+      "chapterId": 1,
+      "chapter": "Chương 646 · Trở về (1)",
+      "start": 0.0,
+      "end": 60.0,
+      "title": "tone",
+      "creator": "",
+      "silenced": false,
+      "pinned": true
+     },
+     {
+      "key": "1:60000",
+      "chapterId": 1,
+      "chapter": "Chương 646 · Trở về (1)",
+      "start": 60.0,
+      "end": 90.0,
+      "title": "Battle",
+      "creator": "B",
+      "silenced": true
+     }
+    ]
+   }
+  },
+  {
+   "method": "DELETE",
+   "path": "/edits",
+   "status": 200,
+   "response": {
+    "applied": 0,
+    "waiting": 0
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/music",
+   "status": 200,
+   "response": {
+    "package": true,
+    "hasMusic": true,
+    "enabled": true,
+    "levelDb": -18.0,
+    "defaultLevelDb": -18.0,
+    "cues": [
+     {
+      "key": "1:0",
+      "chapterId": 1,
+      "chapter": "Chương 646 · Trở về (1)",
+      "start": 0.0,
+      "end": 60.0,
+      "title": "Calm",
+      "creator": "A",
+      "silenced": false
+     },
+     {
+      "key": "1:60000",
+      "chapterId": 1,
+      "chapter": "Chương 646 · Trở về (1)",
+      "start": 60.0,
+      "end": 90.0,
+      "title": "Battle",
+      "creator": "B",
+      "silenced": false
+     }
+    ]
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/edits",
+   "status": 200,
+   "response": {
+    "applied": 0,
+    "waiting": 0,
+    "wishes": 0
+   }
+  }
+ ]
+}

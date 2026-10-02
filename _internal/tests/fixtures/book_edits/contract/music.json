@@ -175,7 +175,7 @@
    },
    "status": 400,
    "response": {
-    "error": "Sách đã đóng gói chỉ chỉnh được bật/tắt nhạc, mức nhạc và im lặng từng đoạn"
+    "error": "Không có đoạn nhạc này trong sách"
    }
   },
   {

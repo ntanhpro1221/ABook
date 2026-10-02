@@ -13,6 +13,8 @@ những file này.
                                           chờ Studio - LocalStudio.kt phải đáp y hệt (trừ trường dễ đổi: `volatile`). Trong thân
                                           yêu cầu, chuỗi "$requestedAt#N" là `requestedAt` của lời đáp bước N (để rút đúng lần bấm)
     fixtures/book_edits/written/python_v4.abook, kotlin_v4.abook   file phiên bản 4 do từng bên ghi, bên kia phải mở được
+                                          (python_v4_pins.abook / kotlin_v4_pins.abook: thêm bài nhạc người nghe đã ghim)
+    fixtures/book_edits/track/tone.wav    một bài nhạc nhỏ ("Nhạc của tôi") cho các ca ghim bài: nhập vào kho nhạc của máy rồi ghim
 
 Sinh lại (chỉ khi cố ý đổi hành vi hay giao ước):  runtime/.venv/Scripts/python.exe -m tests.book_edits_fixtures
 (thêm --rebuild-base để dựng lại cả `base`; không thì giữ nguyên nó và chỉ sinh lại các file mong đợi)
@@ -20,18 +22,40 @@ Sinh lại (chỉ khi cố ý đổi hành vi hay giao ước):  runtime/.venv/S
 from __future__ import annotations
 
 import base64
+import hashlib
 import io
 import json
 import re
 import shutil
 import sqlite3
+import struct
 import sys
 import tempfile
+import wave
 from pathlib import Path
 from typing import Any
 
 FIXTURES = Path(__file__).parent / "fixtures" / "book_edits"
 BASE = FIXTURES / "base"
+
+def tone_wav() -> bytes:
+    """Bài nhạc mẫu: một giây sin 440 Hz, một kênh, 8 kHz, 16 bit - đủ nhỏ để nằm trong bộ ví dụ, cùng byte mỗi lần."""
+    import math
+
+    out = io.BytesIO()
+    with wave.open(out, "wb") as sink:
+        sink.setnchannels(1)
+        sink.setsampwidth(2)
+        sink.setframerate(8000)
+        sink.writeframes(b"".join(struct.pack("<h", round(3000 * math.sin(2 * math.pi * 440 * n / 8000))) for n in range(8000)))
+    return out.getvalue()
+
+
+TRACK_SHA = hashlib.sha1(tone_wav()).hexdigest()
+TRACK_LINK = f"local:{TRACK_SHA}"
+TRACK_INFO = {"ext": "wav", "title": "Bài của tôi", "creator": "Tôi", "duration": 1.0, "lufs": -23.0}
+OTHER_SHA = "0123456789abcdef0123456789abcdef01234567"
+PINS = {"pins": {"1:0": TRACK_LINK}, "tracks": {TRACK_SHA: TRACK_INFO}}
 
 # Mốc nhạc của base (xem tests/test_bookfile_music._plan): chương 1, hai bài, mốc 0-60 s (hai đoạn liền cùng bài gộp) và 60-90 s.
 CASES: dict[str, dict[str, Any]] = {
@@ -40,6 +64,10 @@ CASES: dict[str, dict[str, Any]] = {
     "chapters": {"chapters": {"1": {"title": "Chương Một", "subtitle": ""}, "2": {"subtitle": "Hết rồi"}}},
     "music_level_and_silence": {"music": {"levelDb": -24.0, "silenced": ["1:60000"]}},
     "music_off": {"music": {"enabled": False}},
+    "music_pin": {"music": dict(PINS)},
+    "music_pin_level_silence": {"music": {"levelDb": -24.0, "silenced": ["1:60000"], **PINS}},
+    "music_pin_two_cues": {"music": {"pins": {"1:0": TRACK_LINK, "1:60000": TRACK_LINK}, "tracks": {TRACK_SHA: TRACK_INFO}}},
+    "music_pin_music_off": {"music": {"enabled": False, **PINS}},
     "cover_removed": {"cover": None},
     "cover_set": {"cover": {"color": "#aa5522", "width": 96, "height": 128, "version": 1759400000}},
     "everything": {
@@ -106,7 +134,21 @@ INVALID: dict[str, Any] = {
     "level_too_quiet": {**HEAD, "music": {"levelDb": -41}},
     "level_not_a_number": {**HEAD, "music": {"levelDb": "-20"}},
     "enabled_not_a_boolean": {**HEAD, "music": {"enabled": 1}},
-    "music_unknown_field": {**HEAD, "music": {"pins": {}}},
+    "music_unknown_field": {**HEAD, "music": {"fade": 2}},
+    "pins_bad_key": {**HEAD, "music": {"pins": {"x": TRACK_LINK}, "tracks": {TRACK_SHA: TRACK_INFO}}},
+    "pins_not_an_object": {**HEAD, "music": {"pins": [TRACK_LINK], "tracks": {TRACK_SHA: TRACK_INFO}}},
+    "pins_not_a_local_link": {**HEAD, "music": {"pins": {"1:0": "https://x/y.mp3"}, "tracks": {TRACK_SHA: TRACK_INFO}}},
+    "pins_link_not_a_sha": {**HEAD, "music": {"pins": {"1:0": "local:ABC"}, "tracks": {}}},
+    "pins_without_tracks": {**HEAD, "music": {"pins": {"1:0": TRACK_LINK}}},
+    "tracks_without_pins": {**HEAD, "music": {"tracks": {TRACK_SHA: TRACK_INFO}}},
+    "tracks_one_unused": {**HEAD, "music": {**PINS, "tracks": {TRACK_SHA: TRACK_INFO, OTHER_SHA: TRACK_INFO}}},
+    "track_bad_extension": {**HEAD, "music": {**PINS, "tracks": {TRACK_SHA: {**TRACK_INFO, "ext": "exe"}}}},
+    "track_unknown_field": {**HEAD, "music": {**PINS, "tracks": {TRACK_SHA: {**TRACK_INFO, "path": "/sdcard/x.wav"}}}},
+    "track_title_padded": {**HEAD, "music": {**PINS, "tracks": {TRACK_SHA: {**TRACK_INFO, "title": " Bài"}}}},
+    "track_title_empty": {**HEAD, "music": {**PINS, "tracks": {TRACK_SHA: {**TRACK_INFO, "title": ""}}}},
+    "track_duration_zero": {**HEAD, "music": {**PINS, "tracks": {TRACK_SHA: {**TRACK_INFO, "duration": 0}}}},
+    "track_loudness_too_high": {**HEAD, "music": {**PINS, "tracks": {TRACK_SHA: {**TRACK_INFO, "lufs": 21}}}},
+    "track_loudness_a_string": {**HEAD, "music": {**PINS, "tracks": {TRACK_SHA: {**TRACK_INFO, "lufs": "-23"}}}},
     "music_empty": {**HEAD, "music": {}},
     "silenced_bad_key": {**HEAD, "music": {"silenced": ["abc"]}},
     "silenced_duplicate": {**HEAD, "music": {"silenced": ["1:0", "1:0"]}},
@@ -167,6 +209,15 @@ MERGE_CASES = {
     "silence_is_a_union": (
         {**HEAD, "music": {"levelDb": -20.0, "silenced": ["1:0"]}},
         {**HEAD, "music": {"enabled": False, "levelDb": -30.0, "silenced": ["1:60000"]}},
+    ),
+    "pins_local_wins_and_unused_tracks_go": (
+        {**HEAD, "music": {"pins": {"1:0": TRACK_LINK}, "tracks": {TRACK_SHA: TRACK_INFO}}},
+        {**HEAD, "music": {"pins": {"1:0": f"local:{OTHER_SHA}", "1:60000": f"local:{OTHER_SHA}"},
+                           "tracks": {OTHER_SHA: {**TRACK_INFO, "title": "Bài khác"}}}},
+    ),
+    "pins_next_to_the_levels": (
+        {**HEAD, "music": {"levelDb": -20.0}},
+        {**HEAD, "music": {"silenced": ["1:0"], **PINS}},
     ),
     "cover_follows_the_winner": (
         {**HEAD, "title": "Của tôi"},
@@ -233,6 +284,32 @@ CONTRACT: dict[str, list[dict[str, Any]]] = {
         {"method": "PUT", "path": "/music", "body": {"pins": {"1:1": "https://x/y.mp3"}}},
         {"method": "PUT", "path": "/music", "body": {"enabled": False}},
         {"method": "PUT", "path": "/music", "body": {"enabled": True, "levelDb": -20, "silence": {"1:60000": False}}},
+        {"method": "GET", "path": "/edits"},
+    ],
+    # "Nhạc của tôi" trên sách không có xưởng: bước {"import": tên} nhập file mẫu vào kho nhạc của máy (bên Kotlin: MusicStore).
+    "music_pins": [
+        {"method": "GET", "path": "/music/scenes/1:0/alternatives"},
+        {"import": "tone.wav"},
+        {"method": "GET", "path": "/music/scenes/1:0/alternatives"},
+        {"method": "GET", "path": "/music/scenes/9:9/alternatives"},
+        {"method": "PUT", "path": "/music", "body": {"pins": {"1:0": TRACK_LINK}}},
+        {"method": "PUT", "path": "/music", "body": {"pins": {"1:0": TRACK_LINK}}},
+        {"method": "GET", "path": "/edits"},
+        {"method": "GET", "path": "/music/scenes/1:0/alternatives"},
+        {"method": "GET", "path": "/music/scenes/1:60000/alternatives"},
+        {"method": "PUT", "path": "/music", "body": {"pins": {"1:60000": f"local:{OTHER_SHA}"}}},
+        {"method": "PUT", "path": "/music", "body": {"pins": {"1:60000": "https://x/y.mp3"}}},
+        {"method": "PUT", "path": "/music", "body": {"pins": {"7:7": TRACK_LINK}}},
+        {"method": "PUT", "path": "/music", "body": {"pins": "tone"}},
+        {"method": "PUT", "path": "/music", "body": {"levelDb": -24, "silence": {"1:60000": True}}},
+        {"method": "PUT", "path": "/music", "body": {"pins": {"1:60000": TRACK_LINK}}},
+        {"method": "GET", "path": "/edits"},
+        {"method": "PUT", "path": "/music", "body": {"pins": {"1:0": None}}},
+        {"method": "PUT", "path": "/music", "body": {"pins": {"1:60000": None}}},
+        {"method": "GET", "path": "/edits"},
+        {"method": "PUT", "path": "/music", "body": {"pins": {"1:0": TRACK_LINK}}},
+        {"method": "DELETE", "path": "/edits"},
+        {"method": "GET", "path": "/music"},
         {"method": "GET", "path": "/edits"},
     ],
     "cover": [
@@ -486,6 +563,10 @@ def record_contract(folder: Path, steps: list[dict[str, Any]]) -> list[dict[str,
             identifier = book_id(copy)
             recorded: list[dict[str, Any]] = []
             for step in steps:
+                if "import" in step:  # nhập một bài mẫu vào kho "Nhạc của tôi" của máy này
+                    app.my_music.import_file(FIXTURES / "track" / step["import"])
+                    recorded.append(step)
+                    continue
                 body = step.get("body")
                 if body is not None:
                     text = json.dumps(body).replace('"$cover"', json.dumps(cover_data_url()))
@@ -513,8 +594,10 @@ def generate(*, rebuild_base: bool = False) -> None:
             shutil.copytree(folder, BASE)
             # Readium manifest sinh lại được từ book.json, nên bỏ khỏi bộ ví dụ
             (BASE / "manifest.json").unlink(missing_ok=True)
-    for old in ("edits", "invalid", "expected", "merge", "contract", "series"):
+    for old in ("edits", "invalid", "expected", "merge", "contract", "series", "track"):
         shutil.rmtree(FIXTURES / old, ignore_errors=True)
+    (FIXTURES / "track").mkdir(parents=True)
+    (FIXTURES / "track" / "tone.wav").write_bytes(tone_wav())
     _write(FIXTURES / "series" / "book.json", series_manifest())
     for name, case in CASES.items():
         edits = book_edits.validate({**HEAD, **case})
@@ -542,18 +625,26 @@ def generate(*, rebuild_base: bool = False) -> None:
     python_file = FIXTURES / "written" / "python_v4.abook"
     if rebuild_base or not python_file.exists():
         write_python_v4(python_file)
+    pins_file = FIXTURES / "written" / "python_v4_pins.abook"
+    if rebuild_base or not pins_file.exists():
+        write_python_v4(pins_file, pinned=True)
 
 
-def write_python_v4(target: Path) -> None:
-    """`base` + phần sửa `everything` -> file phiên bản 4 do `bookfile.repack` ghi (Kotlin phải mở và kiểm được)."""
+def write_python_v4(target: Path, *, pinned: bool = False) -> None:
+    """`base` + phần sửa `everything` -> file phiên bản 4 do `bookfile.repack` ghi (Kotlin phải mở và kiểm được). `pinned`: phần sửa
+    `music_pin` thay vì `everything`, kèm file bài nhạc ghim ở music/<sha1>.wav (không bìa sửa)."""
     from abook.webui import bookfile
 
     with tempfile.TemporaryDirectory() as raw:
         copy = Path(raw) / "base"
         shutil.copytree(BASE, copy)
-        shutil.copy2(FIXTURES / "edits" / "everything.json", copy / "edits.json")
-        (copy / "edits").mkdir()
-        shutil.copy2(FIXTURES / "edits" / "everything.cover.jpg", copy / "edits" / "cover.jpg")
+        if pinned:
+            shutil.copy2(FIXTURES / "edits" / "music_pin.json", copy / "edits.json")
+            shutil.copy2(FIXTURES / "track" / "tone.wav", copy / "music" / f"{TRACK_SHA}.wav")
+        else:
+            shutil.copy2(FIXTURES / "edits" / "everything.json", copy / "edits.json")
+            (copy / "edits").mkdir()
+            shutil.copy2(FIXTURES / "edits" / "everything.cover.jpg", copy / "edits" / "cover.jpg")
         target.parent.mkdir(parents=True, exist_ok=True)
         bookfile.repack(copy, target)
 

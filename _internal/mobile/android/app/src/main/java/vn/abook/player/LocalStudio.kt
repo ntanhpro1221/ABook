@@ -8,8 +8,9 @@ import org.json.JSONObject
  * thoại thì không có máy chủ - giao diện gọi `EbookLibrary.studio({method, path, body})` và nhận đúng JSON máy chủ sẽ trả
  * (docs/EDITING.md, bảng "Routes"). Phần L ("áp ngay", không cần Studio) cho cuốn mở từ file `.abook`: đổi tên sách, bìa, tên
  * nhân vật, tên chương, nhạc nền, xem/bỏ thay đổi; và phần W (ý muốn chờ Studio - [BookWishes]): cách đọc tên, ai nói câu này,
- * gộp tên, cách đọc câu, giọng/giới, thu lại, danh sách chờ và rút. Mọi thứ khác: 404. Cuốn lấy từ máy tính khác thì sửa ở máy
- * ấy: 409.
+ * gộp tên, cách đọc câu, giọng/giới, thu lại, danh sách chờ và rút. Cộng "Nhạc của tôi" ([MusicStore], docs/MUSIC_IMPORT.md): danh
+ * sách bài đã nhập, xoá, và - cho từng cuốn - nhóm bài của tôi trong "Đổi bài" + ghim một bài vào một đoạn nhạc (`PUT /music {pins}`).
+ * Mọi thứ khác: 404. Cuốn lấy từ máy tính khác thì sửa ở máy ấy: 409.
  *
  * Lời đáp phải y hệt bản Python (tests/fixtures/book_edits/contract/ - LocalStudioTest phát lại từng bước), nên câu báo lỗi
  * và mã trạng thái theo đúng server.py: sửa sai (ValueError bên Python) là 400.
@@ -21,9 +22,15 @@ object LocalStudio {
     private val CHAPTER_TITLE = Regex("/chapters/([0-9]+)/title")
     private val CHAPTER_SCRIPT = Regex("/chapters/([0-9]+)/script")
     private val CHAPTER_RETAKE = Regex("/chapters/([0-9]+)/retake")
-    private val EDITS_ONLY_KEYS = setOf("enabled", "levelDb", "silence")
+    private val SCENE_ALTERNATIVES = Regex("/music/scenes/([^/]+)/alternatives")
+    private val MY_MUSIC = Regex("/api/music/local(?:/([0-9a-f]{40})|/(analyze))?")
+    private val EDITS_ONLY_KEYS = setOf("enabled", "levelDb", "silence", "pins")
     private val lock = Any()
     private const val LINK_BOOK = "Sách này lấy từ máy tính khác - muốn sửa thì sửa ở máy ấy"
+
+    /** Kho "Nhạc của tôi" của điện thoại này (LibraryPlugin đặt khi nạp; test JVM đặt kho trong thư mục tạm). */
+    @Volatile
+    var musicStore: MusicStore? = null
 
     /** Bộ chuẩn hoá ảnh bìa: máy thật dùng [AndroidCoverCodec]; test JVM đặt bản giả. */
     @Volatile
@@ -49,7 +56,39 @@ object LocalStudio {
         extra?.keys()?.forEach { out.put(it, extra.opt(it)) }
     }
 
+    /** `my_music_view` của server.py: danh sách bài đã nhập + có bộ phân tích âm thanh chưa. */
+    fun musicView(): JSONObject {
+        val store = musicStore ?: throw Api(404, "Không có đường dẫn này")
+        return JSONObject().put("tracks", JSONArray(store.entries())).put("analyzer", store.analyzerAvailable())
+    }
+
+    /** Lời đáp của một lượt nhập (`my_music_import` của server.py): bài mới, bài đã có, file lỗi kèm lý do, cộng danh sách mới. */
+    fun importAnswer(added: List<JSONObject>, existing: List<JSONObject>, failed: List<String>): JSONObject =
+        JSONObject().put("added", JSONArray(added)).put("existing", JSONArray(existing)).put("failed", JSONArray(failed)).also { out ->
+            val view = musicView()
+            for (key in listOf("tracks", "analyzer")) out.put(key, view.opt(key))
+        }
+
+    /** `/api/music/local...`: kho nhạc của máy, không thuộc cuốn nào. Nhập file đi qua hộp chọn file của hệ thống (LibraryPlugin.pickMusic). */
+    private fun myMusic(method: String, digest: String?, analyze: Boolean): Pair<Int, Any?> {
+        val store = musicStore ?: throw Api(404, "Không có đường dẫn này")
+        return when {
+            method == "GET" && digest == null && !analyze -> 200 to musicView()
+            method == "DELETE" && digest != null -> {
+                if (!store.remove(digest)) throw Api(404, "Bài này không còn trong Nhạc của tôi")
+                200 to musicView()
+            }
+            method == "POST" && analyze -> {
+                if (!store.analyzerAvailable()) throw Api(409, MusicStore.NO_ANALYZER)
+                val done = store.analyzePending()
+                200 to musicView().put("analysed", done)
+            }
+            else -> throw Api(404, "Không có đường dẫn này")
+        }
+    }
+
     private fun run(method: String, path: String, body: JSONObject): Pair<Int, Any?> {
+        MY_MUSIC.matchEntire(path)?.let { return myMusic(method, it.groups[1]?.value, it.groups[2] != null) }
         val match = ROUTE.matchEntire(path) ?: throw Api(404, "Không có đường dẫn này")
         val id = match.groupValues[1]
         val rest = match.groupValues[2]
@@ -73,6 +112,7 @@ object LocalStudio {
         CHAPTER_TITLE.matchEntire(path)?.takeIf { method == "PUT" }?.let { match -> return { dir, body -> chapterTitle(dir, match.groupValues[1], body) } }
         CHAPTER_SCRIPT.matchEntire(path)?.takeIf { method == "GET" }?.let { match -> return { dir, _ -> script(dir, match.groupValues[1]) } }
         CHAPTER_RETAKE.matchEntire(path)?.takeIf { method == "POST" }?.let { match -> return { dir, _ -> chapterRetake(dir, match.groupValues[1]) } }
+        SCENE_ALTERNATIVES.matchEntire(path)?.takeIf { method == "GET" }?.let { match -> return { dir, _ -> alternatives(dir, java.net.URLDecoder.decode(match.groupValues[1], "UTF-8")) } }
         return when (method to path) {
             "PUT" to "/title" -> ::title
             "PUT" to "/cover" -> ::cover
@@ -141,12 +181,30 @@ object LocalStudio {
         return BookEdits.setChapterTitle(dir, chapter.toLongOrNull() ?: throw BookEdits.EditsError("Không có chương này trong sách"), newTitle, newSubtitle)
     }
 
-    /** PUT /music {enabled?, levelDb?, silence?}: sách đã đóng gói chỉ chỉnh được ba thứ ấy. */
+    /** PUT /music {enabled?, levelDb?, silence?, pins?}: sách đã đóng gói chỉ chỉnh được bốn thứ ấy. */
     private fun music(dir: java.io.File, body: JSONObject): Any? {
         if (body.keys().asSequence().any { it !in EDITS_ONLY_KEYS }) {
-            throw BookEdits.EditsError("Sách đã đóng gói chỉ chỉnh được bật/tắt nhạc, mức nhạc và im lặng từng đoạn")
+            throw BookEdits.EditsError("Sách đã đóng gói chỉ chỉnh được bật/tắt nhạc, mức nhạc, im lặng từng đoạn và đổi bài")
         }
-        return BookEdits.setMusic(dir, body)
+        return BookEdits.setMusic(dir, body, musicStore?.let { store -> { link: String -> store.track(link) } })
+    }
+
+    /**
+     * GET /music/scenes/<khoá mốc>/alternatives ("Đổi bài" của sách đóng gói, `_packaged_alternatives` của server.py): mốc nhạc người
+     * làm sách gắn không có "không khí" để chấm điểm nên danh mục không đề xuất bài nào - chỉ có nhóm "Nhạc của tôi" (mọi bài đã nhập
+     * trừ bài đang dùng ở mốc này; bài chưa phân tích đi sau bài đã phân tích).
+     */
+    private fun alternatives(dir: java.io.File, key: String): Any? {
+        val book = BookEdits.rawBook(dir)
+        val edits = BookEdits.load(dir)
+        val cues = BookEdits.musicView(book, edits).getJSONArray("cues")
+        if ((0 until cues.length()).none { cues.getJSONObject(it).getString("key") == key }) throw Api(404, "Không thấy đoạn nhạc này trong sách.")
+        val current = edits.optJSONObject("music")?.optJSONObject("pins")?.optString(key, "")?.ifEmpty { null } ?: BookEdits.baseLinks(book)[key]
+        val items = (musicStore?.entries() ?: emptyList()).filter { it.getString("link") != current }.map { track ->
+            JSONObject().put("link", track.getString("link")).put("title", track.getString("title")).put("creator", track.getString("creator"))
+                .put("attribution", "").put("duration", track.get("duration")).put("analysed", track.getBoolean("analysed")).put("fits", false)
+        }.sortedWith(compareBy({ it.getBoolean("analysed").not() }, { it.getString("title").lowercase() }))
+        return JSONObject().put("key", key).put("alternatives", JSONArray()).put("mine", JSONArray(items))
     }
 
     // ---- ý muốn chờ Studio (docs/EDITING.md, P2a): từng đường theo đúng server.py, câu báo lỗi và mã trạng thái y hệt -------------
