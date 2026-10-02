@@ -6,6 +6,17 @@ import type { Bookmark, Cast, ListenBook, ListeningRecord, ListeningSession, Lis
 // Nguồn dữ liệu của phía Nghe. Giao diện chỉ nói chuyện với giao diện này:
 // máy tính cài bằng HTTP tới server cục bộ, Android cài bằng file gói sách trên máy.
 
+export interface SavedBook {
+  saved: boolean;
+  /** Tên file (điện thoại) hay đường dẫn đầy đủ (máy tính). */
+  file?: string;
+  /** Máy tính: thư mục chứa file - để mở bằng "Mở thư mục". */
+  folder?: string;
+  size?: number;
+  /** Số thay đổi của người nghe nằm trong file. */
+  edits?: number;
+}
+
 export interface ListenSource {
   kind: "desktop" | "android";
   library(): Promise<ListenBook[]>;
@@ -42,6 +53,9 @@ export interface ListenSource {
   addSessionOnExit?(bookId: string, session: ListeningSession, record?: string): void;
   /** Chỗ đọc dở ở chế độ đọc (nguồn nào không có thì giao diện tự nhớ trong máy). */
   saveReading?(bookId: string, chapterId: number, index: number): Promise<void>;
+  /** Lưu cuốn nhập từ file (kèm thay đổi của người nghe) thành file `.abook` mới: máy tính ghi vào thư mục xuất (hay
+   *  `folder`), điện thoại hỏi chỗ lưu bằng hộp thoại của hệ thống. `saved: false` khi người dùng bỏ qua. */
+  saveBook?(bookId: string, options?: { folder?: string }): Promise<SavedBook>;
   /** Hồ sơ nghe (nguồn nào chưa có thì giao diện ẩn đi); mỗi lệnh trả danh sách hồ sơ mới của cuốn. */
   records?: {
     create(bookId: string, name: string): Promise<ListeningRecord[]>;

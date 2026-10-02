@@ -73,3 +73,10 @@ of the book being produced and the original folder paths of the computer that pa
 `version` in `project.json` is an integer. Additions that old readers can ignore keep the version; anything an old
 reader would misread raises it (version 2 added the listening-layer entries, which a version 1 reader would report as
 unknown names).
+
+## Listener edits
+
+A `.abookproj` does not carry the listener edit layer of `.abook` version 4 (`edits.json`): a project is a workshop, so
+its title, cover, character names, chapter titles and music settings are the project's own files and travel inside it.
+When a computer opens a `.abook` that carries edits and finds that it came from one of its own projects, it offers to apply
+them to that project through the same writers the editor uses; nothing is applied until the user agrees.

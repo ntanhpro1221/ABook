@@ -1,5 +1,5 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { BookPlus, Clapperboard, Compass, FileAudio, FolderDown, Headphones, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { HashRouter, Route, Routes, useNavigate } from "react-router";
@@ -226,6 +226,11 @@ interface OpenedBook {
   how?: "new" | "existing" | "updated" | "project" | "studio";
   /** File `.abookproj`: số file nguồn chương không có trong gói (đã bị dời hay xoá ở máy gói). */
   missingSources?: number;
+  /** File `.abook` phiên bản 4 mang thay đổi của người nghe (lớp sửa - docs/EDITING.md): số thay đổi. Cuốn là dự án của
+   *  máy này (`how` "project") thì chúng đang chờ người dùng đồng ý áp vào dự án. */
+  edits?: number;
+  /** Cuốn đã nhập sẵn trên máy: phần sửa trong file được hợp vào, thay đổi của máy này thắng khi trùng. */
+  merge?: { adopted: number; kept: number; conflicts: number };
   error?: string;
   file?: string;
 }
@@ -262,10 +267,52 @@ function useOpenedBook() {
       void client.invalidateQueries({ queryKey: ["listen"] });
       navigate(`/book/${result.id}`);
       const [title, description] = OPENED_SAID[result.how ?? "new"];
-      toast.success(title, { description });
+      toast.success(title, { description: mergeNote(result) ?? description });
+      if (result.how === "project" && result.edits) offerFold(client, result.id, result.edits);
     },
     [client, navigate],
   );
+}
+
+/** File đã sửa mở vào cuốn có sẵn trên máy: nói thay đổi nào được giữ (không nói gì khi file không mang thay đổi). */
+function mergeNote(result: OpenedBook): string | undefined {
+  const merge = result.merge;
+  if (!merge || (!merge.adopted && !merge.kept)) return undefined;
+  const parts = [];
+  if (merge.adopted) parts.push(`lấy ${merge.adopted} thay đổi từ file`);
+  if (merge.kept) parts.push(`giữ ${merge.kept} thay đổi của bạn`);
+  const conflict = merge.conflicts ? ` Chỗ hai bên khác nhau thì theo máy này (${merge.conflicts}).` : "";
+  return `Đã ${parts.join(", ")}.${conflict}`;
+}
+
+/** File `.abook` mang thay đổi của người nghe, mở ra đúng dự án của máy này: hỏi có áp vào dự án không - thông báo có nút,
+ *  không phải hộp chọn chế độ. Chưa áp gì cho tới khi bấm; "Bỏ qua" xoá phần chờ. */
+function offerFold(client: QueryClient, id: string, edits: number) {
+  const refresh = () => {
+    void client.invalidateQueries({ queryKey: ["library"] });
+    void client.invalidateQueries({ queryKey: ["book", id] });
+    void client.invalidateQueries({ queryKey: ["listen"] });
+  };
+  toast(`${edits} thay đổi trong file - áp vào dự án?`, {
+    description: "Tên sách, bìa, tên nhân vật, tên chương, nhạc nền mà người nghe đã sửa. Chưa áp gì cho tới khi bạn đồng ý.",
+    duration: 30000,
+    action: {
+      label: "Áp vào dự án",
+      onClick: () =>
+        void api<{ applied: number; skipped: number }>(`/api/books/${id}/edits/fold`, { method: "POST", body: {} })
+          .then((report) => {
+            refresh();
+            toast.success(`Đã áp ${report.applied} thay đổi vào dự án`, {
+              description: report.skipped ? `${report.skipped} thay đổi không còn chỗ trong dự án nên bỏ qua.` : undefined,
+            });
+          })
+          .catch((error: Error) => toast.error("Chưa áp được thay đổi", { description: error.message })),
+    },
+    cancel: {
+      label: "Bỏ qua",
+      onClick: () => void api(`/api/books/${id}/edits`, { method: "DELETE" }).then(refresh).catch(() => undefined),
+    },
+  });
 }
 
 /** Cửa sổ app mở một file sách (bấm đúp .abook trong Explorer, kể cả khi app đang mở): desktop.py báo qua sự kiện. */
@@ -446,6 +493,14 @@ export function App() {
                           )
                         }
                         studioLink={(book) => (book.imported ? null : <StudioChipLink id={book.id} />)}
+                        editing={
+                          info.remote
+                            ? false
+                            : {
+                                pickFolder: info.dialogs ? () => pickFolder("Chọn nơi lưu file sách", "").catch(() => null) : undefined,
+                                onOpenStudio: (book) => window.location.assign(`#/studio/${book.id}?tab=music`),
+                              }
+                        }
                       />
                     }
                   />

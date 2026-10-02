@@ -1,0 +1,10 @@
+{
+ "format": "abook-edits",
+ "version": 1,
+ "cover": {
+  "color": "red",
+  "width": 1,
+  "height": 1,
+  "version": 1
+ }
+}

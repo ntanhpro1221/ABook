@@ -1,0 +1,59 @@
+{
+ "volatile": [
+  "color",
+  "version"
+ ],
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/title",
+   "body": {
+    "title": "  Tên \t mới \n"
+   },
+   "status": 200,
+   "response": {
+    "title": "Tên mới"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/title",
+   "body": {
+    "title": "   "
+   },
+   "status": 400,
+   "response": {
+    "error": "Tên sách không được để trống"
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/edits",
+   "status": 200,
+   "response": {
+    "applied": 1,
+    "waiting": 0
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/title",
+   "body": {
+    "title": "Sách thử · Tập 1"
+   },
+   "status": 200,
+   "response": {
+    "title": "Sách thử · Tập 1"
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/edits",
+   "status": 200,
+   "response": {
+    "applied": 0,
+    "waiting": 0
+   }
+  }
+ ]
+}

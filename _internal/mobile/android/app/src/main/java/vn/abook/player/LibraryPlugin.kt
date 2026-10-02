@@ -333,7 +333,7 @@ class LibraryPlugin : Plugin() {
         matchImported(listed(books))
         for (index in 0 until books.length()) {
             val book = books.getJSONObject(index)
-            val local = Store.manifest(book.getString("id"))
+            val local = Store.rawManifest(book.getString("id"))
             book.put("downloaded", local != null)
             book.put("localChapters", local?.optInt("chaptersAvailable") ?: 0)
             book.put("localCoverVersion", local?.optJSONObject("cover")?.optLong("version") ?: 0L)
@@ -482,7 +482,7 @@ class LibraryPlugin : Plugin() {
         for (index in 0 until remote.length()) {
             val entry = remote.getJSONObject(index)
             val id = entry.getString("id")
-            if (Store.manifest(id) != null) continue
+            if (Store.rawManifest(id) != null) continue
             val cached = Store.streamManifest(id)
             val stale = cached == null ||
                 cached.optInt("chaptersAvailable") != entry.optInt("chaptersAvailable") ||
@@ -492,7 +492,7 @@ class LibraryPlugin : Plugin() {
             if (manifest.optJSONObject("cover") != null && (stale || !Store.file(id, "cover.jpg").isFile)) {
                 Streaming.fetchSmall(context, id, "cover.jpg")
             }
-            books.put(JSObject.fromJSONObject(manifest).put("state", JSObject.fromJSONObject(Store.state(id))).put("streamed", true))
+            books.put(JSObject.fromJSONObject(Store.linked(manifest)).put("state", JSObject.fromJSONObject(Store.state(id))).put("streamed", true))
         }
         // Thiết bị ghép (điện thoại khác, máy tính khác): cùng cách, gói ghi nguồn - thiết bị không trả lời thì bỏ qua.
         val peers = Peers.libraries(context)
@@ -502,7 +502,7 @@ class LibraryPlugin : Plugin() {
             for (item in 0 until list.length()) {
                 val entry = list.getJSONObject(item)
                 val id = entry.getString("id")
-                if (Store.manifest(id) != null) continue
+                if (Store.rawManifest(id) != null) continue
                 val cached = Store.streamManifest(id)
                 val stale = cached == null || cached.optInt("chaptersAvailable") != entry.optInt("chaptersAvailable") ||
                     cached.optString("title") != entry.optString("title")
@@ -512,7 +512,7 @@ class LibraryPlugin : Plugin() {
                 if (manifest.optJSONObject("cover") != null && (stale || !Store.file(id, "cover.jpg").isFile)) {
                     Streaming.fetchSmall(context, id, "cover.jpg")
                 }
-                books.put(JSObject.fromJSONObject(manifest).put("state", JSObject.fromJSONObject(Store.state(id))).put("streamed", true)
+                books.put(JSObject.fromJSONObject(Store.linked(manifest)).put("state", JSObject.fromJSONObject(Store.state(id))).put("streamed", true)
                     .put("sourceName", peer.optString("name")))
             }
         }
@@ -595,9 +595,78 @@ class LibraryPlugin : Plugin() {
     fun book(call: PluginCall) = background(call) {
         val id = call.getString("id") ?: throw IllegalArgumentException("thiếu id")
         val local = Store.manifest(id)
-        val manifest = local ?: openStreamed(id)
+        val manifest = local ?: Store.linked(openStreamed(id))
         call.resolve(JSObject.fromJSONObject(manifest).put("state", JSObject.fromJSONObject(Store.state(id))).put("streamed", local == null)
             .put("records", Store.records(id)))
+    }
+
+    // ---- sửa sách ngay trên điện thoại (docs/EDITING.md: LocalStudio, BookEdits, BookDocumentWriter) -----------------
+
+    /**
+     * Điện thoại không có máy chủ giao diện nên giao diện gọi thẳng đây thay cho `fetch("/api/books/<mã>/...")`: trả
+     * {status, body} đúng như máy chủ của máy tính (LocalStudio). Sửa xong (khác GET) thì nhạc đang phát đọc lại lớp sửa.
+     */
+    @PluginMethod
+    fun studio(call: PluginCall) = background(call) {
+        val method = call.getString("method") ?: "GET"
+        val path = call.getString("path") ?: throw IllegalArgumentException("thiếu đường dẫn")
+        val body = call.getObject("body")?.let { JSONObject(it.toString()) }
+        val (status, reply) = LocalStudio.handle(method, path, body)
+        if (status == 200 && method.uppercase() != "GET") {
+            Regex("/api/books/([A-Za-z0-9_-]+)").find(path)?.groupValues?.get(1)?.let(MusicBed::invalidate)
+        }
+        val answer = JSObject().put("status", status)
+        call.resolve(if (reply is JSONObject) answer.put("body", JSObject.fromJSONObject(reply)) else answer.put("body", JSONObject.NULL))
+    }
+
+    /** Điện thoại làm được gì (EditingCapabilities, ui/src/shared/capabilities.ts): không có Studio, không có xưởng; `link` theo cuốn. */
+    @PluginMethod
+    fun capabilities(call: PluginCall) = background(call) {
+        val id = call.getString("id")
+        val link = id != null && Store.isComputerBook(id)
+        call.resolve(JSObject.fromJSONObject(Store.capabilities(link)))
+    }
+
+    /**
+     * "Lưu thành…": hộp thoại "tạo file" của hệ thống (người dùng chọn chỗ và tên), rồi ghi cuốn - kèm thay đổi của người nghe
+     * nếu có (file phiên bản 4) - bằng BookDocumentWriter. Trả {saved: true, name, size, edits}, hay {saved: false} khi huỷ.
+     */
+    @PluginMethod
+    fun saveBook(call: PluginCall) {
+        val id = call.getString("id") ?: return call.reject("thiếu id")
+        val manifest = Store.rawManifest(id) ?: return call.reject("Không tìm thấy sách này trong thư viện")
+        if (Store.isComputerBook(id) || manifest.optJSONObject("package") == null) {
+            return call.reject("Sách này lấy từ máy tính khác - muốn lưu thành file thì lưu ở máy ấy")
+        }
+        val title = Store.manifest(id)?.optString("title").orEmpty()
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType(BookFileImport.MIMETYPE)
+            .putExtra(Intent.EXTRA_TITLE, BookDocumentWriter.defaultName(title))
+        startActivityForResult(call, intent, "savedBook")
+    }
+
+    @ActivityCallback
+    private fun savedBook(call: PluginCall?, result: ActivityResult) {
+        val uri = result.data?.data
+        if (call == null) return
+        if (uri == null) {
+            call.resolve(JSObject().put("saved", false))
+            return
+        }
+        io.execute {
+            try {
+                val id = call.getString("id") ?: throw IllegalArgumentException("thiếu id")
+                val out = context.contentResolver.openOutputStream(uri, "wt") ?: throw IllegalStateException("Không ghi được vào chỗ đã chọn")
+                val written = out.use { BookDocumentWriter.write(Store.bookDir(id), it) }
+                val name = runCatching {
+                    context.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
+                        if (cursor.moveToFirst()) cursor.getString(0) else null
+                    }
+                }.getOrNull() ?: ""
+                call.resolve(JSObject().put("saved", true).put("name", name).put("size", written.size).put("edits", written.edits))
+            } catch (error: Exception) {
+                fail(call, error, "không lưu được file")
+            }
+        }
     }
 
     // ---- hồ sơ nghe (độc lập với sách, app giữ liên kết - Store) -----------------------------------------------
@@ -681,10 +750,11 @@ class LibraryPlugin : Plugin() {
         val path = call.getString("path") ?: ""
         var file = Store.file(id, path)
         val fromPeer = !Store.streamManifest(id)?.optString("source").isNullOrEmpty()
-        if (!file.isFile && Store.manifest(id) == null && (fromPeer || SyncLink.paired(context))) {
+        if (!file.isFile && Store.rawManifest(id) == null && (fromPeer || SyncLink.paired(context))) {
             file = Streaming.fetchSmall(context, id, path) ?: file
         }
-        call.resolve(JSObject().put("text", if (file.isFile) file.readText() else ""))
+        // Dàn nhân vật, chữ đọc theo: bản người nghe thấy (lớp sửa phủ lên), không phải file nguyên văn của người làm sách.
+        call.resolve(JSObject().put("text", if (file.isFile) Store.overlaidText(id, path) ?: file.readText() else ""))
     }
 
     @PluginMethod

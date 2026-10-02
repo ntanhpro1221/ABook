@@ -1,0 +1,826 @@
+package vn.abook.player
+
+import org.json.JSONArray
+import org.json.JSONObject
+import java.io.File
+import java.io.IOException
+import java.math.BigInteger
+import java.text.Normalizer
+
+/**
+ * Lớp SỬA của người nghe trên một cuốn mở từ file `.abook` - bản Kotlin của abook/webui/book_edits.py (docs/EDITING.md); hai
+ * bản cài đọc chung bộ ví dụ tests/fixtures/book_edits/ nên phải ra ĐÚNG cùng kết quả, cùng câu báo lỗi.
+ *
+ * Lớp sách (book.json, cast.json, scripts/, nhạc, audio, bìa) là của người làm sách và không bao giờ bị sửa tại chỗ. Người
+ * nghe đổi được tên sách, bìa, tên nhân vật, tên chương, nhạc nền (bật/tắt, mức, im lặng một đoạn); chúng nằm ở `edits.json` (+
+ * `edits/cover.jpg`) trong thư mục sách, và mọi nơi đọc lớp sách (Store.manifest, LibraryPlugin.readText, LibraryServer) đi
+ * qua đây để thấy bản đã sửa.
+ *
+ * `edits.json` là dữ liệu của người lạ (đi theo file `.abook` phiên bản 4): [validate] chặt - đúng khoá, đúng kiểu, có trần cỡ
+ * và độ dài, chữ phải đã sạch (không sửa hộ) - và file sai thì bị từ chối cả file. Không mang tên máy hay tên người nào.
+ * Chỉ dùng org.json và java.io: chạy được cả trong test JVM.
+ */
+object BookEdits {
+    const val EDITS_FILE = "edits.json"
+    const val EDITS_COVER = "edits/cover.jpg"
+    const val FORMAT = "abook-edits"
+    const val VERSION = 1
+    const val MAX_EDITS_BYTES = 1024 * 1024
+    const val MAX_COVER_BYTES = 8 * 1024 * 1024
+    const val TITLE_MAX = 160
+    const val NAME_MAX = 80
+    private const val MAX_CHARACTERS = 2000
+    private const val MAX_CHAPTERS = 5000
+    private const val MAX_SILENCED = 5000
+    private const val LEVEL_MIN = -40.0
+    private const val LEVEL_MAX = -6.0
+    private const val DEFAULT_LEVEL_DB = -20.0 // music_plan.DEFAULT_LEVEL_DB
+    private val TOP_KEYS = setOf("format", "version", "title", "cover", "characters", "chapters", "music")
+    private val COVER_KEYS = setOf("color", "width", "height", "version")
+    private val MUSIC_KEYS = setOf("enabled", "levelDb", "silenced")
+    private val CHAPTER_KEYS = setOf("title", "subtitle")
+    private val CHAPTER_ID = Regex("[0-9]{1,9}")
+    private val CUE_KEY = Regex("[0-9]{1,9}:[0-9]{1,12}")
+    private val COLOR = Regex("#[0-9a-f]{6}")
+    /** continuation.PART_SUFFIX: hậu tố " · Phần 2", " (phần 2)", " - phần 2" ở cuối tên. */
+    private val PART_SUFFIX = Regex("""(?iuU)\s*(?:\(phần\s*\d+\)|[·|:—–-]\s*phần\s*\d+)\s*$""")
+    private val lock = Any()
+
+    /** Sửa không hợp lệ, hay `edits.json` không dùng được - câu chữ để người dùng đọc. */
+    class EditsError(message: String) : Exception(message)
+
+    // ---- làm sạch chữ người gõ (cùng luật máy chủ: store.clean_title, book_edits.clean_text) ---------------------
+
+    private fun isControl(codePoint: Int): Boolean = when (Character.getType(codePoint)) {
+        Character.CONTROL.toInt(), Character.FORMAT.toInt(), Character.SURROGATE.toInt(), Character.PRIVATE_USE.toInt(),
+        Character.UNASSIGNED.toInt() -> true // loại "C*" của Unicode
+        else -> false
+    }
+
+    private fun isSpace(char: Char) = Character.isWhitespace(char) || Character.isSpaceChar(char)
+
+    private fun codePoints(text: String): List<Int> = text.codePoints().toArray().toList()
+
+    internal fun cut(text: String, limit: Int): String =
+        if (text.codePointCount(0, text.length) <= limit) text else text.substring(0, text.offsetByCodePoints(0, limit))
+
+    /** Chữ như `str(value or "")` của Python. */
+    internal fun pyText(value: Any?): String = when {
+        value == null || value === JSONObject.NULL || value == false -> ""
+        value is Number && value.toDouble() == 0.0 -> ""
+        else -> value.toString()
+    }
+
+    /** Như `str(value)` của Python (None -> "None"). */
+    internal fun pyStr(value: Any?): String = when {
+        value == null || value === JSONObject.NULL -> "None"
+        value is Boolean -> if (value) "True" else "False"
+        value is Double -> StrictJson.pyFloat(value)
+        else -> value.toString()
+    }
+
+    internal fun truthy(value: Any?): Boolean = when {
+        value == null || value === JSONObject.NULL -> false
+        value is Boolean -> value
+        value is Number -> value.toDouble() != 0.0
+        value is String -> value.isNotEmpty()
+        value is JSONObject -> value.length() > 0
+        value is JSONArray -> value.length() > 0
+        else -> true
+    }
+
+    /** `str.strip()` của Python. */
+    internal fun pyStrip(text: String): String = text.trim { isSpace(it) }
+
+    /**
+     * Chữ người gõ: NFC (trừ khi `normalize` tắt - như `store.clean_title`), ký tự điều khiển thành dấu cách, gộp khoảng
+     * trắng, cắt ở `limit` ký tự (điểm mã).
+     */
+    fun cleanText(value: Any?, limit: Int, normalize: Boolean = true): String {
+        val source = pyText(value)
+        val text = if (normalize) Normalizer.normalize(source, Normalizer.Form.NFC) else source
+        val spaced = StringBuilder()
+        for (codePoint in codePoints(text)) spaced.appendCodePoint(if (isControl(codePoint)) ' '.code else codePoint)
+        val joined = spaced.toString().split(Regex("[\\p{Z}\\s]+")).filter { it.isNotEmpty() }.joinToString(" ")
+        return pyStrip(cut(joined, limit))
+    }
+
+    /**
+     * Chữ đã ở dạng `cleanText` ghi ra: không ký tự điều khiển, không khoảng trắng nào ngoài dấu cách đơn, không dấu cách
+     * đầu/cuối/kép, không dài quá `limit`. [validate] KHÔNG sửa chữ của người lạ - gặp chữ chưa sạch là từ chối.
+     */
+    private fun isClean(text: String, limit: Int): Boolean {
+        if (text.codePointCount(0, text.length) > limit || text.startsWith(' ') || text.endsWith(' ') || text.contains("  ")) return false
+        return codePoints(text).none { isControl(it) || (it != ' '.code && Character.isValidCodePoint(it) && it < 0x10000 && isSpace(it.toChar())) }
+    }
+
+    private fun hasControl(text: String) = codePoints(text).any { isControl(it) }
+
+    // ---- đọc / kiểm / ghi ------------------------------------------------------------------------------------------
+
+    fun empty(): JSONObject = JSONObject().put("format", FORMAT).put("version", VERSION)
+
+    fun isEmpty(edits: JSONObject) = count(edits) == 0
+
+    /**
+     * Số thay đổi người nghe đã làm (cho dòng "N thay đổi"): tên sách, bìa, mỗi tên nhân vật, mỗi chương đổi tên, bật/tắt
+     * nhạc, mức nhạc, mỗi đoạn nhạc im lặng.
+     */
+    fun count(edits: JSONObject): Int {
+        val music = edits.optJSONObject("music")
+        return (if (edits.has("title")) 1 else 0) + (if (edits.has("cover")) 1 else 0) +
+            (edits.optJSONObject("characters")?.length() ?: 0) + (edits.optJSONObject("chapters")?.length() ?: 0) +
+            (if (music?.has("enabled") == true) 1 else 0) + (if (music?.has("levelDb") == true) 1 else 0) +
+            (music?.optJSONArray("silenced")?.length() ?: 0)
+    }
+
+    private fun isNumber(value: Any?) = value is Number && !(value is Double && (value.isNaN() || value.isInfinite()))
+
+    private fun isInteger(value: Any?) = value is Int || value is Long || value is BigInteger
+
+    private fun names(value: JSONObject): List<String> = value.keys().asSequence().toList()
+
+    /** `edits.json` đã đọc -> dạng chuẩn; sai thì [EditsError]. Khoá lạ, kiểu sai, chữ chưa sạch, quá trần: từ chối. */
+    fun validate(raw: Any?): JSONObject {
+        if (raw !is JSONObject || names(raw).any { it !in TOP_KEYS }) throw EditsError("Phần sửa của sách có mục lạ.")
+        val version = raw.opt("version")
+        if (raw.opt("format") != FORMAT || version !is Number || version.toDouble() != VERSION.toDouble()) {
+            throw EditsError("Phần sửa của sách không đúng định dạng hay mới hơn app - hãy cập nhật app.")
+        }
+        val out = empty()
+        if (raw.has("title")) {
+            val title = raw.opt("title")
+            if (title !is String || title.isEmpty() || !isClean(title, TITLE_MAX)) throw EditsError("Tên sách trong phần sửa không hợp lệ.")
+            out.put("title", title)
+        }
+        if (raw.has("cover")) out.put("cover", validateCover(raw.opt("cover")))
+        if (raw.has("characters")) {
+            val people = raw.opt("characters")
+            if (people !is JSONObject || people.length() > MAX_CHARACTERS) {
+                throw EditsError("Phần đổi tên nhân vật không hợp lệ hay quá dài.")
+            }
+            val kept = JSONObject()
+            for (name in names(people)) {
+                val shown = people.opt(name)
+                if (name.isEmpty() || name.codePointCount(0, name.length) > 200 || hasControl(name)) {
+                    throw EditsError("Tên nhân vật trong phần sửa không hợp lệ.")
+                }
+                if (shown !is String || shown.isEmpty() || !isClean(shown, NAME_MAX)) {
+                    throw EditsError("Tên hiện của một nhân vật trong phần sửa không hợp lệ.")
+                }
+                kept.put(name, shown)
+            }
+            out.put("characters", kept)
+        }
+        if (raw.has("chapters")) {
+            val chapters = raw.opt("chapters")
+            if (chapters !is JSONObject || chapters.length() > MAX_CHAPTERS) throw EditsError("Phần đổi tên chương không hợp lệ hay quá dài.")
+            val kept = JSONObject()
+            for (key in names(chapters)) {
+                val entry = chapters.opt(key)
+                if (!CHAPTER_ID.matches(key) || entry !is JSONObject || entry.length() == 0 || names(entry).any { it !in CHAPTER_KEYS }) {
+                    throw EditsError("Một mục đổi tên chương không hợp lệ.")
+                }
+                val copy = JSONObject()
+                for (field in names(entry)) {
+                    val text = entry.opt(field)
+                    if (text !is String || !isClean(text, TITLE_MAX) || (field == "title" && text.isEmpty())) {
+                        throw EditsError("Tên một chương trong phần sửa không hợp lệ.")
+                    }
+                    copy.put(field, text)
+                }
+                kept.put(key, copy)
+            }
+            out.put("chapters", kept)
+        }
+        if (raw.has("music")) out.put("music", validateMusic(raw.opt("music")))
+        return out
+    }
+
+    private fun validateCover(cover: Any?): Any {
+        if (cover === JSONObject.NULL) return JSONObject.NULL
+        val bad = EditsError("Ảnh bìa trong phần sửa không hợp lệ.")
+        if (cover !is JSONObject || names(cover).any { it !in COVER_KEYS }) throw bad
+        val color = if (cover.has("color")) cover.opt("color") else ""
+        val numbers = listOf("width", "height", "version").map { if (cover.has(it)) cover.opt(it) else 0L }
+        if (color !is String || (color.isNotEmpty() && !COLOR.matches(color))) throw bad
+        if (numbers.any { !isInteger(it) || it is BigInteger || (it as Number).toLong() !in 0L..10_000_000_000L }) throw bad
+        val (width, height, version) = numbers.map { (it as Number).toLong() }
+        if (width > 20_000 || height > 20_000) throw bad
+        return JSONObject().put("color", color).put("width", width).put("height", height).put("version", version)
+    }
+
+    private fun validateMusic(music: Any?): JSONObject {
+        if (music !is JSONObject || music.length() == 0 || names(music).any { it !in MUSIC_KEYS }) {
+            throw EditsError("Phần sửa nhạc nền không hợp lệ.")
+        }
+        val out = JSONObject()
+        if (music.has("enabled")) {
+            val enabled = music.opt("enabled")
+            if (enabled !is Boolean) throw EditsError("Phần sửa nhạc nền không hợp lệ.")
+            out.put("enabled", enabled)
+        }
+        if (music.has("levelDb")) {
+            val level = music.opt("levelDb")
+            if (!isNumber(level) || (level is Boolean) || (level as Number).toDouble() !in LEVEL_MIN..LEVEL_MAX) {
+                throw EditsError("Mức nhạc nền trong phần sửa nằm ngoài khoảng cho phép.")
+            }
+            out.put("levelDb", level.toDouble())
+        }
+        if (music.has("silenced")) {
+            val silenced = music.opt("silenced")
+            val bad = EditsError("Danh sách đoạn nhạc im lặng trong phần sửa không hợp lệ.")
+            if (silenced !is JSONArray || silenced.length() > MAX_SILENCED) throw bad
+            val keys = (0 until silenced.length()).map { silenced.opt(it) }
+            if (keys.any { it !is String || !CUE_KEY.matches(it) } || keys.toSet().size != keys.size) throw bad
+            out.put("silenced", JSONArray(keys.map { it as String }.sorted()))
+        }
+        return out
+    }
+
+    /** Byte của `edits.json` -> dạng chuẩn ([validate]); quá cỡ hay không phải JSON: [EditsError]. */
+    fun parse(data: ByteArray): JSONObject {
+        if (data.size > MAX_EDITS_BYTES) throw EditsError("Phần sửa của sách quá lớn.")
+        val raw = try {
+            val decoder = Charsets.UTF_8.newDecoder()
+                .onMalformedInput(java.nio.charset.CodingErrorAction.REPORT).onUnmappableCharacter(java.nio.charset.CodingErrorAction.REPORT)
+            StrictJson.parse(decoder.decode(java.nio.ByteBuffer.wrap(data)).toString())
+        } catch (error: StrictJson.ParseError) {
+            throw EditsError("Phần sửa của sách bị hỏng.")
+        } catch (error: java.nio.charset.CharacterCodingException) {
+            throw EditsError("Phần sửa của sách bị hỏng.")
+        }
+        return validate(raw)
+    }
+
+    /** Byte ghi ra `edits.json`: khoá xếp cố định, UTF-8, xuống dòng LF - cùng nội dung thì cùng byte. */
+    fun dump(edits: JSONObject): ByteArray = (StrictJson.dumps(ordered(edits), 1) + "\n").toByteArray(Charsets.UTF_8)
+
+    private fun byCodePoints(first: String, second: String): Int {
+        val a = codePoints(first)
+        val b = codePoints(second)
+        for (index in 0 until minOf(a.size, b.size)) if (a[index] != b[index]) return a[index].compareTo(b[index])
+        return a.size.compareTo(b.size)
+    }
+
+    private fun ordered(edits: JSONObject): Map<String, Any?> {
+        val out = LinkedHashMap<String, Any?>()
+        out["format"] = FORMAT
+        out["version"] = VERSION
+        for (key in listOf("title", "cover")) if (edits.has(key)) out[key] = edits.opt(key).let { if (key == "cover") orderedCover(it) else it }
+        edits.optJSONObject("characters")?.takeIf { it.length() > 0 }?.let { people ->
+            out["characters"] = names(people).sortedWith { a, b -> byCodePoints(a, b) }.associateWith { people.opt(it) }
+        }
+        edits.optJSONObject("chapters")?.takeIf { it.length() > 0 }?.let { chapters ->
+            out["chapters"] = names(chapters).sortedBy { it.toLong() }.associateWith { key ->
+                val entry = chapters.getJSONObject(key)
+                listOf("title", "subtitle").filter { entry.has(it) }.associateWith { entry.opt(it) }
+            }
+        }
+        edits.optJSONObject("music")?.takeIf { it.length() > 0 }?.let { music ->
+            out["music"] = listOf("enabled", "levelDb", "silenced").filter { music.has(it) }.associateWith { music.opt(it) }
+        }
+        return out
+    }
+
+    private fun orderedCover(cover: Any?): Any? =
+        if (cover is JSONObject) listOf("color", "width", "height", "version").filter { cover.has(it) }.associateWith { cover.opt(it) } else cover
+
+    /** Phần sửa của một cuốn đã nhập; không có file hay file hỏng thì rỗng (thư viện không được hỏng vì nó). */
+    fun load(folder: File): JSONObject {
+        val file = File(folder, EDITS_FILE)
+        if (!file.isFile || file.length() > MAX_EDITS_BYTES) return empty()
+        return try {
+            parse(file.readBytes())
+        } catch (error: IOException) {
+            empty()
+        } catch (error: EditsError) {
+            empty()
+        }
+    }
+
+    /** Ghi `edits.json` nguyên tử; không còn thay đổi nào thì xoá cả file lẫn bìa sửa. */
+    fun save(folder: File, edits: JSONObject) = synchronized(lock) {
+        if (isEmpty(edits)) {
+            File(folder, EDITS_FILE).delete()
+            File(folder, EDITS_COVER).delete()
+            return@synchronized
+        }
+        Store.writeAtomic(File(folder, EDITS_FILE), dump(edits))
+        if (edits.opt("cover") !is JSONObject) File(folder, EDITS_COVER).delete()
+    }
+
+    // ---- hợp hai lớp sửa (nhập lại cùng một cuốn) ------------------------------------------------------------------
+
+    /**
+     * Hợp phần sửa đã có trên máy (`local`) với phần sửa trong file vừa mở (`incoming`): khoá nào cả hai cùng có thì THẮNG BÊN
+     * MÁY NÀY (người nghe đã làm nó ở đây), còn lại lấy cả hai. Nhạc im lặng: hợp. Trả (kết quả, báo cáo): {adopted: số thay đổi
+     * lấy từ file, kept: số thay đổi của máy này, conflicts: số khoá hai bên khác nhau (đã theo máy này), cover: "local" |
+     * "incoming" | null - bìa sửa lấy từ đâu}.
+     */
+    fun merge(local: JSONObject, incoming: JSONObject): Pair<JSONObject, JSONObject> {
+        val out = empty()
+        var conflicts = 0
+        for (key in listOf("title", "cover")) {
+            if (local.has(key)) {
+                out.put(key, deepCopy(local.opt(key)))
+                if (incoming.has(key) && !StrictJson.equal(incoming.opt(key), local.opt(key))) conflicts++
+            } else if (incoming.has(key)) {
+                out.put(key, deepCopy(incoming.opt(key)))
+            }
+        }
+        val ourPeople = local.optJSONObject("characters") ?: JSONObject()
+        val theirPeople = incoming.optJSONObject("characters") ?: JSONObject()
+        val people = JSONObject()
+        for (name in names(theirPeople)) people.put(name, theirPeople.opt(name))
+        for (name in names(ourPeople)) {
+            people.put(name, ourPeople.opt(name))
+            if (theirPeople.has(name) && theirPeople.opt(name) != ourPeople.opt(name)) conflicts++
+        }
+        if (people.length() > 0) out.put("characters", people)
+        val ourChapters = local.optJSONObject("chapters") ?: JSONObject()
+        val theirChapters = incoming.optJSONObject("chapters") ?: JSONObject()
+        val chapters = JSONObject()
+        for (key in (names(theirChapters) + names(ourChapters)).distinct()) {
+            val theirs = theirChapters.optJSONObject(key) ?: JSONObject()
+            val ours = ourChapters.optJSONObject(key) ?: JSONObject()
+            val entry = JSONObject()
+            for (field in names(theirs)) entry.put(field, theirs.opt(field))
+            for (field in names(ours)) {
+                entry.put(field, ours.opt(field))
+                if (theirs.has(field) && theirs.opt(field) != ours.opt(field)) conflicts++
+            }
+            chapters.put(key, entry)
+        }
+        if (chapters.length() > 0) out.put("chapters", chapters)
+        val music = JSONObject()
+        val ourMusic = local.optJSONObject("music") ?: JSONObject()
+        val theirMusic = incoming.optJSONObject("music") ?: JSONObject()
+        for (field in listOf("enabled", "levelDb")) {
+            if (ourMusic.has(field)) {
+                music.put(field, ourMusic.opt(field))
+                if (theirMusic.has(field) && !StrictJson.equal(theirMusic.opt(field), ourMusic.opt(field))) conflicts++
+            } else if (theirMusic.has(field)) {
+                music.put(field, theirMusic.opt(field))
+            }
+        }
+        val silenced = (strings(ourMusic.optJSONArray("silenced")) + strings(theirMusic.optJSONArray("silenced"))).toSortedSet().toList()
+        if (silenced.isNotEmpty()) music.put("silenced", JSONArray(silenced))
+        if (music.length() > 0) out.put("music", music)
+        val cover = if (out.opt("cover") is JSONObject) (if (local.opt("cover") is JSONObject) "local" else "incoming") else null
+        val taken = count(out) - count(local)
+        val report = JSONObject().put("adopted", maxOf(0, taken)).put("kept", count(local)).put("conflicts", conflicts)
+            .put("cover", cover ?: JSONObject.NULL)
+        return out to report
+    }
+
+    private fun strings(array: JSONArray?): List<String> = array?.let { (0 until it.length()).map { index -> it.getString(index) } } ?: emptyList()
+
+    fun deepCopy(value: Any?): Any? = when (value) {
+        is JSONObject -> JSONObject().also { out -> for (key in names(value)) out.put(key, deepCopy(value.opt(key))) }
+        is JSONArray -> JSONArray().also { out -> for (index in 0 until value.length()) out.put(deepCopy(value.opt(index))) }
+        else -> value
+    }
+
+    private fun shallowCopy(value: JSONObject): JSONObject = JSONObject().also { out -> for (key in names(value)) out.put(key, value.opt(key)) }
+
+    // ---- lớp phủ lên lớp sách ---------------------------------------------------------------------------------------
+
+    /** Khoá một mốc nhạc của sách đã đóng gói: "<mã chương>:<mili giây đầu mốc>" (làm tròn nửa-chẵn như `round` của Python). */
+    fun cueKey(chapterId: Any?, start: Double): String {
+        val chapter = chapterId.toString().toLongOrNull() ?: return ""
+        return "$chapter:${Math.rint(start * 1000).toLong()}"
+    }
+
+    private fun idText(value: Any?): String = pyStr(value)
+
+    /** Một mục `chapters` của book.json sau khi đổi tên: `title`, `subtitle`, `fullTitle`. */
+    fun applyChapter(chapter: JSONObject, edit: JSONObject?): JSONObject {
+        if (edit == null || edit.length() == 0) return chapter
+        val name = if (edit.has("title")) edit.getString("title") else pyText(chapter.opt("title"))
+        val subtitle = if (edit.has("subtitle")) edit.getString("subtitle") else pyText(chapter.opt("subtitle"))
+        return shallowCopy(chapter).put("title", name).put("subtitle", subtitle).put("fullTitle", if (subtitle.isNotEmpty()) "$name · $subtitle" else name)
+    }
+
+    /** continuation.base_title: tên cuốn không có hậu tố phần ("Tên · Phần 2" -> "Tên"). */
+    fun baseTitle(title: String): String = pyStrip(PART_SUFFIX.replace(title, "")).ifEmpty { pyStrip(title) }
+
+    /** continuation.continued_title: "Tên · Phần 3", không chồng hậu tố cũ. */
+    fun continuedTitle(title: String, part: Int): String = "${baseTitle(title)} · Phần $part"
+
+    /** `book.json` (lớp sách) -> bản người nghe thấy: tên sách (và tên các phần của cả bộ), tên chương, bìa, nhạc. */
+    fun applyManifest(book: JSONObject, edits: JSONObject): JSONObject {
+        if (isEmpty(edits)) return book
+        val out = shallowCopy(book)
+        if (edits.has("title")) {
+            val title = edits.getString("title")
+            out.put("title", title)
+            book.optJSONArray("parts")?.let { parts ->
+                val renamed = JSONArray()
+                for (index in 0 until parts.length()) {
+                    val part = parts.opt(index)
+                    val number = (part as? JSONObject)?.opt("part")
+                    renamed.put(if (part is JSONObject && (number is Int || number is Long)) {
+                        shallowCopy(part).put("title", continuedTitle(title, (number as Number).toInt()))
+                    } else part)
+                }
+                out.put("parts", renamed)
+            }
+        }
+        val renamed = edits.optJSONObject("chapters")
+        val chapters = book.optJSONArray("chapters")
+        if (renamed != null && renamed.length() > 0 && chapters != null) {
+            val shown = JSONArray()
+            for (index in 0 until chapters.length()) {
+                val chapter = chapters.opt(index)
+                shown.put(if (chapter is JSONObject) applyChapter(chapter, renamed.optJSONObject(idText(chapter.opt("id")))) else chapter)
+            }
+            out.put("chapters", shown)
+        }
+        if (edits.has("cover")) {
+            val cover = edits.opt("cover")
+            out.put("cover", if (cover is JSONObject) JSONObject().put("file", EDITS_COVER).also { shown ->
+                for (key in names(cover)) shown.put(key, cover.opt(key))
+            } else JSONObject.NULL)
+        }
+        val existing = book.opt("music")
+        if (edits.has("music") || (existing != null && existing !== JSONObject.NULL)) {
+            val music = applyMusic(existing.takeIf { it !== JSONObject.NULL }, edits)
+            if (music == null) out.remove("music") else out.put("music", music)
+        }
+        return out
+    }
+
+    private fun renamedChapters(base: JSONObject?, edits: JSONObject): Map<String, String> {
+        val renamed = edits.optJSONObject("chapters")
+        if (renamed == null || renamed.length() == 0 || base == null) return emptyMap()
+        val out = LinkedHashMap<String, String>()
+        val chapters = base.optJSONArray("chapters") ?: return out
+        for (index in 0 until chapters.length()) {
+            val chapter = chapters.optJSONObject(index) ?: continue
+            val edit = renamed.optJSONObject(idText(chapter.opt("id")))
+            if (edit != null && edit.has("title") && truthy(chapter.opt("title"))) out[pyStr(chapter.opt("title"))] = edit.getString("title")
+        }
+        return out
+    }
+
+    private val PEOPLE = listOf("characters", "extras", "carried")
+
+    private fun peopleOf(cast: JSONObject): List<JSONObject> =
+        PEOPLE.flatMap { kind -> cast.optJSONArray(kind)?.let { list -> (0 until list.length()).mapNotNull { list.optJSONObject(it) } } ?: emptyList() }
+
+    /**
+     * `cast.json` -> bản người nghe thấy: tên nhân vật đã đổi (`displayName`, và `originalName` khi khác tên gốc), và
+     * `firstChapter` theo tên chương mới. `base`: book.json lớp sách (để biết tên chương gốc).
+     */
+    fun applyCast(cast: JSONObject, edits: JSONObject, base: JSONObject? = null): JSONObject {
+        val people = edits.optJSONObject("characters") ?: JSONObject()
+        val chapterNames = renamedChapters(base, edits)
+        if (people.length() == 0 && chapterNames.isEmpty()) return cast
+        val out = deepCopy(cast) as JSONObject
+        for (person in peopleOf(out)) {
+            val name = person.opt("name")
+            if (name is String && people.has(name)) {
+                val original = listOf(person.opt("originalName"), person.opt("displayName")).firstOrNull { truthy(it) } ?: name
+                val shown = people.getString(name)
+                person.put("displayName", shown)
+                if (shown != original) person.put("originalName", original) else person.remove("originalName")
+            }
+            val first = person.opt("firstChapter")
+            if (first is String && first in chapterNames) person.put("firstChapter", chapterNames.getValue(first))
+        }
+        return out
+    }
+
+    /**
+     * `scripts/<n>.json` -> bản người nghe thấy: tên người nói theo tên nhân vật mới, tên chương. `cast`: cast.json GỐC (câu
+     * ghi người nói bằng `displayName` lúc đóng gói).
+     */
+    fun applyScript(script: JSONObject, cast: JSONObject, edits: JSONObject, chapter: JSONObject?): JSONObject {
+        val people = edits.optJSONObject("characters") ?: JSONObject()
+        val swap = LinkedHashMap<String, String>()
+        for (person in peopleOf(cast)) {
+            val name = person.opt("name")
+            if (name is String && people.has(name) && truthy(person.opt("displayName"))) swap[pyStr(person.opt("displayName"))] = people.getString(name)
+        }
+        val edit = edits.optJSONObject("chapters")?.optJSONObject(idText(script.opt("chapterId")))
+        if (swap.none { (old, shown) -> shown != old } && (edit == null || edit.length() == 0)) return script
+        val out = shallowCopy(script)
+        val segments = script.optJSONArray("segments")
+        if (swap.isNotEmpty() && segments != null) {
+            val renamed = JSONArray()
+            for (index in 0 until segments.length()) {
+                val segment = segments.opt(index)
+                val speaker = (segment as? JSONObject)?.opt("speaker")
+                renamed.put(if (segment is JSONObject && speaker is String && speaker in swap) {
+                    shallowCopy(segment).put("speaker", swap.getValue(speaker))
+                } else segment)
+            }
+            out.put("segments", renamed)
+        }
+        if (edit != null && edit.length() > 0 && chapter != null) out.put("title", applyChapter(chapter, edit).opt("fullTitle"))
+        return out
+    }
+
+    private fun trackNumber(info: Any?, key: String): Double? {
+        val value = (info as? JSONObject)?.opt(key)
+        return if (isNumber(value) && value !is Boolean) (value as Number).toDouble() else null
+    }
+
+    /**
+     * Mục `music` của book.json sau khi người nghe sửa: tắt hết, mức khác (tính lại `gainDb` từng mốc bằng đúng công thức của
+     * người làm sách - [MusicGain.cueGainDb]), bỏ các mốc đã cho im lặng.
+     */
+    fun applyMusic(music: Any?, edits: JSONObject): Any? {
+        if (music == null || music === JSONObject.NULL) return null
+        val changes = edits.optJSONObject("music")
+        if (changes == null || changes.length() == 0 || music !is JSONObject) return music
+        val out = deepCopy(music) as JSONObject
+        val tracks = out.optJSONObject("tracks") ?: JSONObject()
+        val chapters = out.optJSONObject("chapters") ?: JSONObject()
+        if (changes.has("levelDb")) {
+            val level = changes.getDouble("levelDb")
+            out.put("levelDb", level)
+            for (key in names(chapters)) {
+                val cues = chapters.optJSONArray(key) ?: continue
+                for (index in 0 until cues.length()) {
+                    val cue = cues.optJSONObject(index) ?: continue
+                    val info = (cue.opt("track") as? String)?.let { tracks.opt(it) }
+                    cue.put("gainDb", MusicGain.cueGainDb(level, trackNumber(info, "lufs"), trackNumber(info, "speechBand")))
+                }
+            }
+        }
+        if (changes.opt("enabled") == false) {
+            out.put("chapters", JSONObject())
+            return out
+        }
+        val silenced = strings(changes.optJSONArray("silenced")).toSet()
+        if (silenced.isNotEmpty()) {
+            val kept = JSONObject()
+            for (key in names(chapters)) {
+                val cues = chapters.optJSONArray(key) ?: continue
+                val rest = JSONArray()
+                for (index in 0 until cues.length()) {
+                    val cue = cues.opt(index)
+                    if (cue !is JSONObject || cueKey(key, cue.optDouble("start", 0.0)) !in silenced) rest.put(cue)
+                }
+                if (rest.length() > 0) kept.put(key, rest)
+            }
+            out.put("chapters", kept)
+        }
+        return out
+    }
+
+    /**
+     * Màn "Nhạc nền" của sách đóng gói: bật/tắt, mức, và từng mốc (đã im lặng hay chưa) - kể cả mốc đã im lặng, để bật lại.
+     * `book`: book.json GỐC. Sách không có nhạc: `hasMusic` false.
+     */
+    fun musicView(book: JSONObject, edits: JSONObject): JSONObject {
+        val music = book.optJSONObject("music")
+        val changes = edits.optJSONObject("music") ?: JSONObject()
+        val baseLevel = music?.opt("levelDb")?.takeIf { isNumber(it) && it !is Boolean }?.let { (it as Number).toDouble() } ?: DEFAULT_LEVEL_DB
+        val silenced = strings(changes.optJSONArray("silenced")).toSet()
+        val cues = JSONArray()
+        val tracks = music?.optJSONObject("tracks") ?: JSONObject()
+        val chapters = book.optJSONArray("chapters")
+        for (index in 0 until (chapters?.length() ?: 0)) {
+            val chapter = chapters?.optJSONObject(index) ?: continue
+            val chapterId = idText(chapter.opt("id"))
+            val shown = applyChapter(chapter, edits.optJSONObject("chapters")?.optJSONObject(chapterId))
+            val list = music?.optJSONObject("chapters")?.optJSONArray(chapterId) ?: continue
+            for (item in 0 until list.length()) {
+                val cue = list.optJSONObject(item) ?: continue
+                val info = (cue.opt("track") as? String)?.let { tracks.optJSONObject(it) } ?: JSONObject()
+                val key = cueKey(chapterId, cue.optDouble("start", 0.0))
+                cues.put(JSONObject().put("key", key).put("chapterId", chapterId.toLongOrNull() ?: 0L)
+                    .put("chapter", listOf(shown.opt("fullTitle"), shown.opt("title")).firstOrNull { truthy(it) }?.toString() ?: "")
+                    .put("start", cue.optDouble("start", 0.0)).put("end", cue.optDouble("end", 0.0))
+                    .put("title", pyText(info.opt("title"))).put("creator", pyText(info.opt("creator")))
+                    .put("silenced", key in silenced))
+            }
+        }
+        return JSONObject().put("package", true).put("hasMusic", cues.length() > 0)
+            .put("enabled", if (changes.has("enabled")) changes.opt("enabled") else true)
+            .put("levelDb", if (changes.has("levelDb")) changes.opt("levelDb") else baseLevel)
+            .put("defaultLevelDb", baseLevel).put("cues", cues)
+    }
+
+    // ---- bìa ----------------------------------------------------------------------------------------------------
+
+    /** File ảnh bìa người nghe thấy: bìa sửa, hay bìa của sách; null khi đã bỏ bìa hoặc sách không có. */
+    fun coverFile(folder: File): File? {
+        val edits = load(folder)
+        if (edits.has("cover")) {
+            val path = File(folder, EDITS_COVER)
+            return if (edits.opt("cover") is JSONObject && path.isFile) path else null
+        }
+        return File(folder, "cover.jpg").takeIf { it.isFile }
+    }
+
+    // ---- chữ trong gói qua lớp sửa -----------------------------------------------------------------------------------
+
+    private fun readObject(file: File?): JSONObject? =
+        if (file != null && file.isFile) runCatching { JSONObject(file.readText()) }.getOrNull() else null
+
+    private fun inside(folder: File, relative: Any?): File? {
+        if (relative !is String || relative.isEmpty()) return null
+        val file = runCatching { Store.contained(folder, relative) }.getOrNull()
+        return file?.takeIf { it.isFile }
+    }
+
+    /** `book.json` nguyên văn của thư mục sách. */
+    fun rawBook(folder: File): JSONObject = JSONObject(File(folder, "book.json").readText())
+
+    /** Tên file dàn nhân vật theo book.json (mặc định cast.json). */
+    private fun castName(book: JSONObject): String = listOf(book.opt("cast"), "cast.json").first { truthy(it) }.toString()
+
+    /** `cast.json` của lớp sách, chưa qua lớp sửa; không có file thì dàn rỗng. */
+    fun rawCast(folder: File, book: JSONObject): JSONObject {
+        return readObject(inside(folder, castName(book))) ?: JSONObject().put("characters", JSONArray()).put("extras", JSONArray())
+    }
+
+    /** Dàn nhân vật như người nghe thấy (tên đã đổi, chương đầu theo tên chương mới). */
+    fun cast(folder: File, book: JSONObject): JSONObject {
+        val raw = rawCast(folder, book)
+        val edits = load(folder)
+        return if (isEmpty(edits)) raw else applyCast(raw, edits, book)
+    }
+
+    /** Chữ đọc theo của một chương đã qua lớp sửa; null khi chương hay file không có. */
+    fun script(folder: File, book: JSONObject, chapterId: Long): JSONObject? {
+        val chapters = book.optJSONArray("chapters") ?: return null
+        val chapter = (0 until chapters.length()).mapNotNull { chapters.optJSONObject(it) }
+            .firstOrNull { (it.opt("id") as? Number)?.toLong() == chapterId } ?: return null
+        val script = readObject(inside(folder, chapter.opt("script"))) ?: return null
+        val edits = load(folder)
+        return if (isEmpty(edits)) script else applyScript(script, rawCast(folder, book), edits, chapter)
+    }
+
+    /** Chữ của file `relative` trong gói khi lớp sửa làm nó khác đi (cast.json, scripts/<n>.json); null = giữ nguyên file. */
+    fun overlaidText(folder: File, book: JSONObject, edits: JSONObject, relative: String): String? {
+        if (relative == castName(book)) {
+            val raw = readObject(File(folder, relative)) ?: return null
+            return applyCast(raw, edits, book).toString()
+        }
+        val chapters = book.optJSONArray("chapters") ?: return null
+        val chapter = (0 until chapters.length()).mapNotNull { chapters.optJSONObject(it) }.firstOrNull { it.opt("script") == relative } ?: return null
+        val raw = readObject(File(folder, relative)) ?: return null
+        return applyScript(raw, rawCast(folder, book), edits, chapter).toString()
+    }
+
+    // ---- sửa (ghi) ---------------------------------------------------------------------------------------------------
+
+    private fun write(folder: File, edits: JSONObject): JSONObject {
+        save(folder, edits)
+        return edits
+    }
+
+    /** Đặt lại tên sách (người nghe). Tên rỗng: [EditsError]. Trả tên đã làm sạch. */
+    fun setTitle(folder: File, title: String): String {
+        val cleaned = cleanText(title, TITLE_MAX)
+        if (cleaned.isEmpty()) throw EditsError("Tên sách không được để trống")
+        synchronized(lock) {
+            val edits = load(folder)
+            if (cleaned == pyText(rawBook(folder).opt("title"))) edits.remove("title") else edits.put("title", cleaned)
+            write(folder, edits)
+        }
+        return cleaned
+    }
+
+    /**
+     * Đặt ảnh bìa từ byte ảnh thô: chuẩn hoá như bìa dự án (`codec`), cất ở edits/cover.jpg. `now`: số làm phiên bản (giây) để
+     * giao diện không giữ ảnh cũ. Trả mô tả bìa {color, width, height, version}.
+     */
+    fun setCover(folder: File, raw: ByteArray, now: Long, codec: CoverCodec): JSONObject {
+        if (raw.size > Covers.MAX_UPLOAD_BYTES) throw EditsError(Covers.tooLarge().message.orEmpty())
+        val normalized = try {
+            codec.normalize(raw)
+        } catch (error: CoverCodec.CoverError) {
+            throw EditsError(error.message.orEmpty())
+        }
+        synchronized(lock) {
+            val edits = load(folder)
+            val cover = JSONObject().put("color", normalized.color).put("width", normalized.width.toLong())
+                .put("height", normalized.height.toLong()).put("version", now)
+            edits.put("cover", cover)
+            Store.writeAtomic(File(folder, EDITS_COVER), normalized.jpeg)
+            write(folder, edits)
+            return deepCopy(cover) as JSONObject
+        }
+    }
+
+    /** Bỏ bìa: sách dùng bìa vẽ từ tên (kể cả khi lớp sách có ảnh bìa). */
+    fun removeCover(folder: File) = synchronized(lock) {
+        val edits = load(folder)
+        edits.put("cover", JSONObject.NULL)
+        File(folder, EDITS_COVER).delete()
+        write(folder, edits)
+        Unit
+    }
+
+    private fun personOf(cast: JSONObject, character: String): JSONObject? = peopleOf(cast).firstOrNull { it.opt("name") == character }
+
+    /**
+     * Đổi tên hiện của một nhân vật (như tab Nhân vật của Studio): tên rỗng hay đúng tên gốc là trở về tên gốc. Trả đúng hình
+     * dạng của `POST /characters/rename`: {character, name, original, renamed}.
+     */
+    fun setCharacterName(folder: File, character: String, name: String): JSONObject {
+        val wanted = cut(pyStrip(character), 200)
+        val book = rawBook(folder)
+        val person = personOf(rawCast(folder, book), wanted)
+        if (wanted.isEmpty() || wanted.uppercase(java.util.Locale.ROOT) == "NARRATOR" || person == null) {
+            throw EditsError("Không có nhân vật này trong sách")
+        }
+        val baseShown = listOf(person.opt("displayName"), wanted).first { truthy(it) }.toString()
+        val original = listOf(person.opt("originalName"), baseShown).first { truthy(it) }.toString()
+        val newName = cleanText(name, NAME_MAX).ifEmpty { original }
+        val shown: String
+        synchronized(lock) {
+            val edits = load(folder)
+            val people = edits.optJSONObject("characters")?.let { deepCopy(it) as JSONObject } ?: JSONObject()
+            if (newName == baseShown) people.remove(wanted) else people.put(wanted, newName)
+            if (people.length() > 0) edits.put("characters", people) else edits.remove("characters")
+            write(folder, edits)
+            shown = if (people.has(wanted)) people.getString(wanted) else baseShown
+        }
+        return JSONObject().put("character", wanted).put("name", shown).put("original", original).put("renamed", shown != original)
+    }
+
+    /**
+     * Đặt lại tên chương `chapterId`: `title` (nhãn như "Chương 12") và/hoặc `subtitle` (tên phụ, "" là bỏ tên phụ). Cả hai trống
+     * (`title` rỗng/null và `subtitle` null) là trở về tên của người làm sách. Trả {chapterId, title, subtitle, fullTitle} đang hiện.
+     */
+    fun setChapterTitle(folder: File, chapterId: Long, title: String?, subtitle: String? = null): JSONObject {
+        val book = rawBook(folder)
+        val list = book.optJSONArray("chapters")
+        val chapter = (0 until (list?.length() ?: 0)).mapNotNull { list?.optJSONObject(it) }
+            .firstOrNull { (it.opt("id") as? Number)?.toLong() == chapterId } ?: throw EditsError("Không có chương này trong sách")
+        val newTitle = if (title != null) cleanText(title, TITLE_MAX) else ""
+        val newSubtitle = if (subtitle != null) cleanText(subtitle, TITLE_MAX) else null
+        val entry = JSONObject()
+        if (newTitle.isNotEmpty() && newTitle != pyText(chapter.opt("title"))) entry.put("title", newTitle)
+        if (newSubtitle != null && newSubtitle != pyText(chapter.opt("subtitle"))) entry.put("subtitle", newSubtitle)
+        synchronized(lock) {
+            val edits = load(folder)
+            val chapters = edits.optJSONObject("chapters")?.let { deepCopy(it) as JSONObject } ?: JSONObject()
+            if (entry.length() > 0) chapters.put(chapterId.toString(), entry) else chapters.remove(chapterId.toString())
+            if (chapters.length() > 0) edits.put("chapters", chapters) else edits.remove("chapters")
+            write(folder, edits)
+        }
+        val shown = applyChapter(chapter, entry)
+        return JSONObject().put("chapterId", chapterId).put("title", pyText(shown.opt("title")))
+            .put("subtitle", pyText(shown.opt("subtitle")))
+            .put("fullTitle", listOf(shown.opt("fullTitle"), shown.opt("title")).firstOrNull { truthy(it) }?.toString() ?: "")
+    }
+
+    /**
+     * Sửa nhạc nền của sách đóng gói: `enabled`, `levelDb` (kẹp -40..-6 như `music_plan.write_overrides`), `silence` {khoá mốc:
+     * true/false}. Khoá lạ: [EditsError]. Trả [musicView].
+     */
+    fun setMusic(folder: File, body: JSONObject): JSONObject {
+        val book = rawBook(folder)
+        synchronized(lock) {
+            val edits = load(folder)
+            val music = edits.optJSONObject("music")?.let { deepCopy(it) as JSONObject } ?: JSONObject()
+            val base = musicView(book, empty())
+            if (body.has("enabled")) {
+                if (truthy(body.opt("enabled"))) music.remove("enabled") else music.put("enabled", false)
+            }
+            if (body.has("levelDb")) {
+                val value = body.opt("levelDb")
+                if (!isNumber(value) || value is Boolean) throw EditsError("Mức nhạc nền không hợp lệ")
+                val level = Math.max(LEVEL_MIN, Math.min(LEVEL_MAX, (value as Number).toDouble()))
+                if (level == base.getDouble("levelDb")) music.remove("levelDb") else music.put("levelDb", level)
+            }
+            if (truthy(body.opt("silence"))) {
+                val wanted = body.opt("silence") as? JSONObject ?: throw EditsError("Phần sửa nhạc nền không hợp lệ.")
+                val known = (0 until base.getJSONArray("cues").length()).map { base.getJSONArray("cues").getJSONObject(it).getString("key") }.toSet()
+                val silenced = strings(music.optJSONArray("silenced")).toMutableSet()
+                for (key in names(wanted)) {
+                    if (key !in known) throw EditsError("Không có đoạn nhạc này trong sách")
+                    if (truthy(wanted.opt(key))) silenced.add(key) else silenced.remove(key)
+                }
+                if (silenced.isNotEmpty()) music.put("silenced", JSONArray(silenced.sorted())) else music.remove("silenced")
+            }
+            if (music.length() > 0) edits.put("music", music) else edits.remove("music")
+            write(folder, edits)
+            return musicView(book, edits)
+        }
+    }
+
+    /** Bỏ mọi thay đổi của người nghe: sách trở về đúng như người làm sách đã đóng gói. */
+    fun clear(folder: File) = save(folder, empty())
+
+    // ---- file `.abook` mang phần sửa theo ---------------------------------------------------------------------------
+
+    /**
+     * Nhập lại một file sách ĐÃ có trên máy mà file mang phần sửa: hợp vào phần sửa của máy ([merge]: máy này thắng) - không
+     * giải nén lại audio. `cover`: byte edits/cover.jpg của file (nếu có). Trả báo cáo của [merge].
+     */
+    fun adopt(folder: File, incoming: JSONObject, cover: ByteArray?): JSONObject = synchronized(lock) {
+        val (merged, report) = merge(load(folder), incoming)
+        if (report.opt("cover") == "incoming" && cover != null) Store.writeAtomic(File(folder, EDITS_COVER), cover)
+        save(folder, merged)
+        report
+    }
+}

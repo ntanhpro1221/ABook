@@ -53,6 +53,11 @@ object MusicBed {
         context = appContext.applicationContext
     }
 
+    /** Lớp sửa của cuốn `bookId` vừa đổi (nhạc bật/tắt, mức, im lặng một đoạn): lần `sync` kế đọc lại mục `music` đã phủ sửa. */
+    fun invalidate(bookId: String) {
+        if (bookId == book) book = ""
+    }
+
     /** Bài đang kêu (tên trong gói) hay null khi im lặng - cho kiểm thử trên máy. */
     val activeTrack: String? get() = current?.track
 

@@ -1,0 +1,13 @@
+{
+ "format": "abook-edits",
+ "version": 1,
+ "chapters": {
+  "1": {
+   "title": "Chương Một",
+   "subtitle": ""
+  },
+  "2": {
+   "subtitle": "Hết rồi"
+  }
+ }
+}

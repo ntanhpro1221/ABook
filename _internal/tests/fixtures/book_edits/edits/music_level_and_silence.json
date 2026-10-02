@@ -1,0 +1,10 @@
+{
+ "format": "abook-edits",
+ "version": 1,
+ "music": {
+  "levelDb": -24.0,
+  "silenced": [
+   "1:60000"
+  ]
+ }
+}

@@ -1,0 +1,126 @@
+{
+ "format": "abook-book/1",
+ "title": "Sách thử · Tập 1",
+ "narrator": "Đức Trí",
+ "duration": 12.2,
+ "chaptersTotal": 2,
+ "chaptersAvailable": 1,
+ "complete": false,
+ "version": "eacac0f189d27043",
+ "chapters": [
+  {
+   "id": 1,
+   "index": 1,
+   "title": "Chương 646",
+   "subtitle": "Trở về (1)",
+   "fullTitle": "Chương 646 · Trở về (1)",
+   "duration": 12.2,
+   "available": true,
+   "file": "chapters/00001_645.mp3",
+   "size": 10243,
+   "script": "scripts/1.json"
+  },
+  {
+   "id": 2,
+   "index": 2,
+   "title": "Chương 647",
+   "subtitle": "Trở về (2)",
+   "fullTitle": "Chương 647 · Trở về (2)",
+   "duration": 0.0,
+   "available": false,
+   "file": null,
+   "size": 0,
+   "script": "scripts/2.json"
+  }
+ ],
+ "cast": "cast.json",
+ "samples": [
+  "samples/3.wav"
+ ],
+ "cover": {
+  "version": 1790950133,
+  "color": "#9b562f",
+  "width": 96,
+  "height": 128,
+  "file": "cover.jpg"
+ },
+ "music": {
+  "levelDb": -18.0,
+  "tracks": {
+   "music/c4c39b8782f721b05358033359f25876e70597f8.mp3": {
+    "file": "music/c4c39b8782f721b05358033359f25876e70597f8.mp3",
+    "link": "https://x/calm.mp3",
+    "title": "Calm",
+    "creator": "A",
+    "attribution": "Calm by A (CC BY 4.0)",
+    "lufs": -26.0,
+    "speechBand": 0.1
+   },
+   "music/bf36d3af630dc0c7d83324b545ade933affdfd90.mp3": {
+    "file": "music/bf36d3af630dc0c7d83324b545ade933affdfd90.mp3",
+    "link": "https://x/battle.mp3",
+    "title": "Battle",
+    "creator": "B",
+    "attribution": "Battle by B (CC BY 4.0)",
+    "lufs": -10.0,
+    "speechBand": 0.7
+   }
+  },
+  "chapters": {
+   "1": [
+    {
+     "start": 0.0,
+     "end": 60.0,
+     "track": "music/c4c39b8782f721b05358033359f25876e70597f8.mp3",
+     "gainDb": -7.39
+    },
+    {
+     "start": 60.0,
+     "end": 90.0,
+     "track": "music/bf36d3af630dc0c7d83324b545ade933affdfd90.mp3",
+     "gainDb": -28.19
+    }
+   ]
+  }
+ },
+ "package": {
+  "format": "abook",
+  "version": 2,
+  "createdAt": "2026-10-02T14:08:53+00:00",
+  "producer": "ABook",
+  "files": {
+   "cast.json": {
+    "size": 946,
+    "sha256": "aeb6c013d9ae7fa677ddb492bc4b265f86652c10b49a4f905017847a259167c0"
+   },
+   "chapters/00001_645.mp3": {
+    "size": 10243,
+    "sha256": "26bb9785d6687dcf202529c33d1190b641d182c2b509dc6f1f7d0a37022e2bdd"
+   },
+   "cover.jpg": {
+    "size": 1373,
+    "sha256": "382a640218ab28f9c5801623a4fb34b1835adad3c14a4c6a2a29f3cbdd1c85fb"
+   },
+   "music/bf36d3af630dc0c7d83324b545ade933affdfd90.mp3": {
+    "size": 403,
+    "sha256": "b55adf7b59019934548891cfee348162a9da094d36db81bf4bdfd1e6eb4baf64"
+   },
+   "music/c4c39b8782f721b05358033359f25876e70597f8.mp3": {
+    "size": 363,
+    "sha256": "fb8f63685927d39a6423558c81ac04e914d44e1bd21138dfbbbaebdd23f8b987"
+   },
+   "samples/3.wav": {
+    "size": 404,
+    "sha256": "842072bc2900b10e8d2e7d442e2e6252166d1c8ed2037491f68c9564a8939691"
+   },
+   "scripts/1.json": {
+    "size": 1294,
+    "sha256": "df92f29a2c2d11d09960773906e7c72d9121dbfd92b5174da4c64cff3b6d24a9"
+   },
+   "scripts/2.json": {
+    "size": 701,
+    "sha256": "92f2849a13df1d7d8c503996d3edc358aaa4ccdd903593382f786803dd580f8e"
+   }
+  }
+ }
+}

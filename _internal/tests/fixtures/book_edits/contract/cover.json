@@ -1,0 +1,52 @@
+{
+ "volatile": [
+  "color",
+  "version"
+ ],
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/cover",
+   "body": {
+    "image": "$cover"
+   },
+   "status": 200,
+   "response": {
+    "cover": {
+     "color": "#9b562f",
+     "width": 96,
+     "height": 128,
+     "version": 1790950256
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/cover",
+   "body": {
+    "image": "data:text/plain;base64,AAAA"
+   },
+   "status": 400,
+   "response": {
+    "error": "Chỉ nhận ảnh PNG, JPEG, WebP, GIF hoặc BMP"
+   }
+  },
+  {
+   "method": "DELETE",
+   "path": "/cover",
+   "status": 200,
+   "response": {
+    "cover": null
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/edits",
+   "status": 200,
+   "response": {
+    "applied": 1,
+    "waiting": 0
+   }
+  }
+ ]
+}

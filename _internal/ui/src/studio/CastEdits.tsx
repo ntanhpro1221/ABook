@@ -12,7 +12,18 @@ import { refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied } from "./dec
 // - Đổi tên chỉ là cái tên trên màn hình (POST /characters/rename -> names.json): không đổi giọng hay audio, có hiệu lực ngay.
 // - Đổi giới tính đi đúng đường của thẻ "Nam hay nữ" (POST /voice): một thay đổi chờ "Áp dụng thay đổi", hoàn tác được.
 
-export function RenamePersonDialog({ bookId, person, onClose }: { bookId: string; person: CastMember | null; onClose: () => void }) {
+export function RenamePersonDialog({
+  bookId,
+  person,
+  onClose,
+  onSaved,
+}: {
+  bookId: string;
+  person: CastMember | null;
+  onClose: () => void;
+  /** Gọi sau khi đổi tên xong - trang nghe làm mới thư viện, chữ đọc theo, dàn nhân vật (listen/EditBook.tsx). */
+  onSaved?: () => void;
+}) {
   const client = useQueryClient();
   const [value, setValue] = useState("");
   const [busy, setBusy] = useState(false);
@@ -26,6 +37,7 @@ export function RenamePersonDialog({ bookId, person, onClose }: { bookId: string
         body: { character: person.name, name: next },
       });
       refreshAfterDecision(client, bookId);
+      onSaved?.();
       toast.success(answer.renamed ? `Đã đổi tên thành ${cleanName(answer.name)}` : `Đã trở về tên gốc: ${cleanName(answer.name)}`, {
         description: "Chỉ đổi cái tên hiện trên màn hình - giọng đọc và audio giữ nguyên. Các phần sau của truyện cũng dùng tên này.",
       });

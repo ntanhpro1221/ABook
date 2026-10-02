@@ -18,8 +18,12 @@ Hình dạng - một gói ZIP:
     samples/<câu>.wav        câu mẫu giọng của từng nhân vật
     music/<sha1>.mp3         nhạc nền người sản xuất đã gắn (02-10; mốc từng chương ở mục `music` của book.json,
                              music_plan.package) - chỉ khi cuốn có rãnh nhạc; KHÔNG nén như audio chương
+    edits.json               phiên bản 4 (03-10): LỚP SỬA của người nghe - tên sách, bìa, tên nhân vật, tên chương, nhạc nền
+    edits/cover.jpg          (book_edits.py, docs/EDITING.md); chỉ có khi người nghe đã sửa gì. Lớp sách ở trên không bao giờ
+                             bị sửa tại chỗ - bìa mới nằm ở edits/cover.jpg chứ không đè cover.jpg (mã băm của nó giữ nguyên)
 
-Phiên bản 3 (02-10, `pack_series`): CẢ BỘ nhiều phần trong một file. Audio nằm ở `chapters/<phần>/<tên>.mp3` (hai phần
+Phiên bản 4 chỉ ghi khi file mang lớp sửa (`repack`); `.abook` không bao giờ chứa `project/`, `sources/`, `views/` (của
+`.abookproj`). Phiên bản 3 (02-10, `pack_series`): CẢ BỘ nhiều phần trong một file. Audio nằm ở `chapters/<phần>/<tên>.mp3` (hai phần
 có thể trùng tên file), mã chương = phần x 100000 + mã chương trong phần (nên `scripts/<mã>.json` và mốc nhạc dùng mã
 chung của cả bộ), một `cast.json` gộp theo tên nhân vật, câu mẫu đánh số lại 1..K, một bìa (của phần đầu), mục `parts`
 trong book.json. Chi tiết: docs/ABOOK_FILE_FORMAT.md.
@@ -36,6 +40,7 @@ Mở một file là mở dữ liệu của người khác: mọi tên mục ph�
 nhắc cập nhật. Trong gói không có gì được "chạy".
 
     python -m abook.webui.bookfile pack <thư mục sách> [-o file]
+    python -m abook.webui.bookfile repack <thư mục sách đã nhập> -o file
     python -m abook.webui.bookfile inspect <file>
     python -m abook.webui.bookfile verify <file>
 """
@@ -56,7 +61,7 @@ from pathlib import Path
 from typing import Any, Callable, Self, Sequence
 
 from .. import continuation
-from . import covers, music_plan, store, sync
+from . import book_edits, covers, music_plan, store, sync
 from .fingerprints import content_key
 from .library import book_id
 
@@ -66,10 +71,10 @@ from .library import book_id
 EXTENSION = ".abook"
 MIMETYPE = "application/vnd.ngdtuanh.abook+zip"
 FORMAT = "abook"
-# 1 = sách không nhạc nền; 2 = có mục `music` + music/*.mp3 (02-10); 3 = cả bộ nhiều phần (`pack_series`). Gói ghi phiên bản
-# THẤP NHẤT đủ chứa nội dung: sách một phần không nhạc vẫn là 1, có nhạc là 2 - app cũ mở được; app cũ gặp file mới hơn thì
-# từ chối kèm lời nhắc cập nhật thay vì báo "mục lạ".
-FORMAT_VERSION = 3
+# 1 = sách không nhạc nền; 2 = có mục `music` + music/*.mp3 (02-10); 3 = cả bộ nhiều phần (`pack_series`); 4 = có lớp sửa của
+# người nghe (edits.json + edits/cover.jpg, `repack`). Gói ghi phiên bản THẤP NHẤT đủ chứa nội dung: sách một phần không nhạc
+# vẫn là 1, có nhạc là 2 - app cũ mở được; app cũ gặp file mới hơn thì từ chối kèm lời nhắc cập nhật thay vì báo "mục lạ".
+FORMAT_VERSION = 4
 MANIFEST = "book.json"
 READIUM_MANIFEST = "manifest.json"
 MAX_ENTRIES = 20_000
@@ -80,11 +85,14 @@ _COMMON = r"cast\.json|cover\.jpg|scripts/\d+\.json|samples/\d+\.wav|music/[0-9a
 _CONTENT = re.compile(_COMMON + r"|chapters/[0-9A-Za-z_.\-]+\.mp3")
 # Phiên bản 3 thêm thư mục phần: chapters/<phần>/<tên>.mp3 (phiên bản 1-2 không có - gặp thì là mục lạ).
 _CONTENT_V3 = re.compile(_COMMON + r"|chapters/(?:\d{1,4}/)?[0-9A-Za-z_.\-]+\.mp3")
+# Phiên bản 4 thêm lớp sửa của người nghe (book_edits.py).
+_CONTENT_V4 = re.compile(_COMMON + r"|chapters/(?:\d{1,4}/)?[0-9A-Za-z_.\-]+\.mp3|edits\.json|edits/cover\.jpg")
 # Phần nghe của một file dự án `.abookproj` (projectfile.py) cùng tên mục như file sách, trừ audio chương: nằm ở chỗ nó đã
 # nằm trong gói (`project/output/chapters/...mp3`), không chép hai lần.
 LISTENING_ENTRY = re.compile(_COMMON)
 # Chỗ trống dư ngoài cỡ giải nén (thư mục tạm, book.json): không cần sát từng byte, chỉ cần không để ổ đĩa đầy giữa chừng.
 _ROOM_MARGIN = 64 * 1024 * 1024
+JPEG_MAGIC = bytes([0xFF, 0xD8, 0xFF])  #ảnh bìa trong lớp sửa phải là JPEG (book_edits.render_cover luôn ghi JPEG)
 _STORED = (".mp3", ".jpg", ".wav")  # đã nén sẵn hay cần đọc thẳng: nén thêm chỉ tốn công khi phát
 _CHUNK = 1024 * 1024
 
@@ -186,6 +194,45 @@ def pack(project_root: Path, out: Path | None = None, *, producer: str = "ABook"
     book, files = listening_layer(project_root, music_track)
     out = Path(out) if out is not None else project_root / "output" / default_name(book["title"])
     return _seal(book, files, out, producer=producer, version=package_version(book))
+
+
+def repack(folder: Path, out: Path, *, producer: str = "ABook") -> Path:
+    """Đóng lại một cuốn ĐÃ NHẬP (thư mục trong thư viện, giải nén từ file `.abook`) thành một file: lớp sách y nguyên (file,
+    mã băm đã biết không băm lại), cộng lớp sửa của người nghe nếu có - khi ấy phiên bản 4 (`edits.json`, `edits/cover.jpg`).
+    Không có lớp sửa thì ra file như người làm sách đã đóng, ở phiên bản thấp nhất đủ chứa nó. Thư mục dự án (Studio) thì
+    dùng `pack`, không phải hàm này."""
+    folder = Path(folder)
+    try:
+        book = json.loads((folder / MANIFEST).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise BookFileError("Không đọc được thư mục sách này.") from exc
+    package = book.get("package") if isinstance(book, dict) else None
+    if not isinstance(package, dict) or not isinstance(package.get("files"), dict):
+        raise BookFileError("Đây không phải một cuốn đã nhập từ file sách.")
+    files: dict[str, Path | bytes] = {}
+    known: dict[str, dict[str, Any]] = {}
+    for name, meta in package["files"].items():
+        if name in (book_edits.EDITS_FILE, book_edits.EDITS_COVER):
+            continue  # lớp sửa suy lại từ phần sửa hiện có, không từ danh sách cũ
+        source = folder.joinpath(*name.split("/"))
+        if not source.is_file():
+            raise BookFileError(f"Thư mục sách thiếu file {name}.")
+        files[name], known[name] = source, meta
+    book.pop("package", None)
+    edits = book_edits.load(folder)
+    if not book_edits.is_empty(edits):
+        files[book_edits.EDITS_FILE] = book_edits.dump(edits)
+        if isinstance(edits.get("cover"), dict):
+            files[book_edits.EDITS_COVER] = folder / book_edits.EDITS_COVER
+            if not files[book_edits.EDITS_COVER].is_file():
+                raise BookFileError("Thiếu ảnh bìa trong phần sửa của sách.")
+    if not book_edits.is_empty(edits):
+        version = 4
+    elif any(re.fullmatch(r"chapters/\d+/.+", name) for name in files):
+        version = 3
+    else:
+        version = package_version(book)
+    return _seal(book, files, Path(out), producer=producer, version=version, known=known, edits=edits)
 
 
 def package_version(book: dict[str, Any]) -> int:
@@ -311,18 +358,22 @@ def _merge_music(parts: list[tuple[int, dict[str, Any]]]) -> dict[str, Any] | No
     return {"levelDb": parts[0][1]["levelDb"], "tracks": tracks, "chapters": chapters}
 
 
-def _seal(book: dict[str, Any], files: dict[str, Path | bytes], out: Path, *, producer: str, version: int) -> Path:
-    """Ghi `book.package` (cỡ + mã băm từng file) rồi gói ZIP: file tạm cạnh đích, thay nguyên tử."""
+def _seal(book: dict[str, Any], files: dict[str, Path | bytes], out: Path, *, producer: str, version: int,
+          known: dict[str, dict[str, Any]] | None = None, edits: dict[str, Any] | None = None) -> Path:
+    """Ghi `book.package` (cỡ + mã băm từng file) rồi gói ZIP: file tạm cạnh đích, thay nguyên tử.
+    `known`: cỡ + mã băm đã biết của một số file (sách đã nhập, đã kiểm lúc giải nén) - file đúng cỡ ấy khỏi băm lại.
+    `edits`: lớp sửa của người nghe - `manifest.json` (Readium, cho app khác) mang tên sách / tên chương đã sửa."""
     if not any(name.startswith("chapters/") for name in files):
         raise BookFileError("Sách chưa có chương nào nghe được để xuất.")
+    known = known or {}
     book["package"] = {
         "format": FORMAT,
         "version": version,
         "createdAt": datetime.now(UTC).isoformat(timespec="seconds"),
         "producer": producer,
-        "files": {name: describe(source) for name, source in sorted(files.items())},
+        "files": {name: _described(name, source, known) for name, source in sorted(files.items())},
     }
-    allowed = _CONTENT_V3 if version >= 3 else _CONTENT
+    allowed = _CONTENT_V4 if version >= 4 else _CONTENT_V3 if version >= 3 else _CONTENT
     unknown = [name for name in files if not allowed.fullmatch(name)]
     if unknown:
         raise BookFileError(f"Không gói được các file có tên ngoài định dạng: {unknown[:3]}")
@@ -332,7 +383,7 @@ def _seal(book: dict[str, Any], files: dict[str, Path | bytes], out: Path, *, pr
         with zipfile.ZipFile(temporary, "w", allowZip64=True) as archive:
             archive.writestr(_entry("mimetype", stored=True), MIMETYPE)
             archive.writestr(_entry(MANIFEST), json_bytes(book))
-            archive.writestr(_entry(READIUM_MANIFEST), json_bytes(_readium(book)))
+            archive.writestr(_entry(READIUM_MANIFEST), json_bytes(_readium(book_edits.apply_manifest(book, edits or {}))))
             write_entries(archive, files, order=_order)
         with temporary.open("rb+") as handle:
             os.fsync(handle.fileno())
@@ -341,6 +392,13 @@ def _seal(book: dict[str, Any], files: dict[str, Path | bytes], out: Path, *, pr
         temporary.unlink(missing_ok=True)
         raise
     return out
+
+
+def _described(name: str, source: Path | bytes, known: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    meta = known.get(name)
+    if isinstance(source, Path) and isinstance(meta, dict) and meta.get("size") == source.stat().st_size             and isinstance(meta.get("sha256"), str):
+        return {"size": meta["size"], "sha256": meta["sha256"]}
+    return describe(source)
 
 
 def write_entries(archive: zipfile.ZipFile, files: dict[str, Path | bytes], *, order: Callable[[str], Any],
@@ -360,6 +418,8 @@ class BookFile:
 
     def __init__(self, path: Path) -> None:
         self.path = Path(path)
+        self.last_merge: dict[str, Any] | None = None
+        self._edits: dict[str, Any] = book_edits.empty()
         try:
             self._zip = zipfile.ZipFile(self.path)
         except (zipfile.BadZipFile, OSError) as exc:
@@ -415,7 +475,8 @@ class BookFile:
         """Giải nén vào `library/<folder>/` (mặc định: tên suy từ nội dung), kiểm cỡ + mã băm TRONG LÚC chép - một lần đọc,
         không đọc cả file hai lượt (cả bộ có thể vài GB). Thư mục tạm rồi đổi tên: hỏng giữa chừng thì không có gì vào
         thư viện, không bao giờ để lại nửa cuốn. Thư mục ấy đã có thì được thay - app chọn `folder` là cuốn cùng lần sản
-        xuất đã có. Ổ đĩa không đủ chỗ thì từ chối TRƯỚC khi chép gì."""
+        xuất đã có. Ổ đĩa không đủ chỗ thì từ chối TRƯỚC khi chép gì. Thư mục ấy đã có phần sửa của người nghe (edits.json) thì
+        phần sửa KHÔNG mất: nó được hợp với phần sửa của file (`book_edits.merge`: bên máy này thắng), báo cáo ở `last_merge`."""
         library = Path(library)
         library.mkdir(parents=True, exist_ok=True)
         self.require_room(library)
@@ -437,6 +498,7 @@ class BookFile:
                 expected = files.get(entry)  # book.json / manifest.json không nằm trong danh sách mã băm
                 if expected is not None and (size != expected["size"] or digest.hexdigest() != expected["sha256"]):
                     raise BookFileError(f"File sách bị hỏng hoặc bị sửa ({entry}). Hãy chép lại file từ nguồn.")
+            self.last_merge = self._keep_local_edits(target, staging) if target.exists() else None
             if target.exists():
                 retired = library / f".{name}.{secrets.token_hex(4)}.old"
                 os.replace(target, retired)
@@ -448,6 +510,19 @@ class BookFile:
             shutil.rmtree(staging, ignore_errors=True)
             raise
         return target
+
+    def _keep_local_edits(self, target: Path, staging: Path) -> dict[str, Any] | None:
+        """Thư mục cũ có phần sửa của người nghe: hợp nó vào bản vừa giải nén (trước khi bản cũ bị thay)."""
+        local = book_edits.load(target)
+        if book_edits.is_empty(local):
+            return None
+        merged, report = book_edits.merge(local, self.edits)
+        book_edits.save(staging, merged)
+        if report["cover"] == "local":
+            destination = staging / book_edits.EDITS_COVER
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(target / book_edits.EDITS_COVER, destination)
+        return report
 
     def require_room(self, library: Path) -> None:
         """Ổ chứa `library` còn đủ chỗ cho cả cuốn khi giải nén? Không thì `BookFileError` nói cần bao nhiêu, còn bao nhiêu."""
@@ -488,7 +563,8 @@ class BookFile:
             raise BookFileError("Sách này được làm bằng bản app mới hơn. Hãy cập nhật app để mở.")
         files = package.get("files")
         content = names - {"mimetype", MANIFEST, READIUM_MANIFEST}
-        allowed = _CONTENT_V3 if version >= 3 else _CONTENT  # thư mục phần chỉ có từ phiên bản 3
+        # thư mục phần chỉ có từ phiên bản 3, lớp sửa (edits.json, edits/cover.jpg) chỉ có từ phiên bản 4
+        allowed = _CONTENT_V4 if version >= 4 else _CONTENT_V3 if version >= 3 else _CONTENT
         for name in content:
             if not allowed.fullmatch(name):
                 raise BookFileError(f"Gói có mục lạ: {name!r}.")
@@ -512,7 +588,38 @@ class BookFile:
                 reference = chapter.get(key) if isinstance(chapter, dict) else None
                 if reference and key == "file" and reference not in content:
                     raise BookFileError("File sách thiếu audio của một chương.")
+        self._check_edits(content)
         return book
+
+    def _check_edits(self, content: set[str]) -> None:
+        """Lớp sửa (phiên bản 4): `edits.json` đúng giao ước (book_edits.validate - file sai thì từ chối cả file) và bìa sửa
+        đi đôi với nó (có `cover` là đối tượng thì phải có edits/cover.jpg, và ngược lại), là JPEG, không quá cỡ."""
+        self._edits = book_edits.empty()
+        if book_edits.EDITS_FILE in content:
+            if self._zip.getinfo(book_edits.EDITS_FILE).file_size > book_edits.MAX_EDITS_BYTES:
+                raise BookFileError("Phần sửa của sách quá lớn.")
+            try:
+                self._edits = book_edits.parse(self._zip.read(book_edits.EDITS_FILE))
+            except book_edits.EditsError as exc:
+                raise BookFileError(str(exc)) from exc
+        has_cover = book_edits.EDITS_COVER in content
+        if has_cover != isinstance(self._edits.get("cover"), dict):
+            raise BookFileError("Ảnh bìa trong phần sửa của sách không khớp.")
+        if has_cover:
+            info = self._zip.getinfo(book_edits.EDITS_COVER)
+            with self._zip.open(info) as handle:
+                magic = handle.read(3)
+            if info.file_size > book_edits.MAX_COVER_BYTES or magic != JPEG_MAGIC:
+                raise BookFileError("Ảnh bìa trong phần sửa của sách không dùng được.")
+
+    @property
+    def edits(self) -> dict[str, Any]:
+        """Lớp sửa của người nghe mà file mang theo (đã kiểm); rỗng khi file không có."""
+        return self._edits
+
+    def edits_cover(self) -> bytes | None:
+        """Byte ảnh bìa sửa của file (edits/cover.jpg), hay None."""
+        return self._zip.read(book_edits.EDITS_COVER) if book_edits.EDITS_COVER in self.book["package"]["files"] else None
 
     def _json(self, name: str) -> Any:
         if self._zip.getinfo(name).file_size > MAX_JSON_BYTES:
@@ -556,7 +663,7 @@ def _gigabytes(size: int) -> str:
 
 def _order(name: str) -> tuple[int, str]:
     """Phần nhỏ trước, audio sau cùng: đọc mô tả, bìa, chữ mà không phải lướt qua hàng trăm MB audio."""
-    rank = ("cover.jpg", "cast.json", "scripts/", "samples/", "chapters/", "music/")
+    rank = ("edits", "cover.jpg", "cast.json", "scripts/", "samples/", "chapters/", "music/")
     return next(index for index, prefix in enumerate(rank) if name.startswith(prefix)), name
 
 
@@ -593,12 +700,18 @@ def main(argv: list[str] | None = None) -> int:
     pack_command = commands.add_parser("pack", help="gói một cuốn sách thành một file")
     pack_command.add_argument("project", type=Path)
     pack_command.add_argument("-o", "--out", type=Path, default=None)
+    repack_command = commands.add_parser("repack", help="đóng lại một cuốn đã nhập (kèm phần sửa của người nghe)")
+    repack_command.add_argument("folder", type=Path)
+    repack_command.add_argument("-o", "--out", type=Path, required=True)
     for name in ("inspect", "verify"):
         commands.add_parser(name).add_argument("file", type=Path)
     args = parser.parse_args(argv)
     try:
         if args.command == "pack":
             print(pack(args.project, args.out))
+            return 0
+        if args.command == "repack":
+            print(repack(args.folder, args.out))
             return 0
         with BookFile(args.file) as book:
             if args.command == "verify":
