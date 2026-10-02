@@ -965,6 +965,24 @@ Trò:
 - Việc kế:
   - cắm vào `music_local.set_analyzer` (nhánh `dev/music-student`), gói đăng Hugging Face `NGDtuanh/abook-music-student`;
   - MTG-Jamendo không lời dùng làm dữ liệu thêm khi cần (hiện chưa cần, (a) đã đạt).
+- 03-10 04:xx: bản cuối (đủ âm học, 1.736 bài không lời) 97,4% (0,880 / 0,904); Soundtracks 0,65 / 0,74 / 0,77; DEAM
+  0,32 / 0,69. Gói HF `NGDtuanh/abook-music-student` @ c6e1485f; Lead đã gộp vào main (đường torch, máy có Studio).
+
+**GHI TRƯỚC - TRÒ ĐƯỜNG ONNX cho máy chỉ player + điện thoại (03-10 05:xx, Lead; trước khi làm):**
+
+Bản torch hiện có là CHUẨN. Đường ONNX phải khớp nó, đo trên 20 bài danh mục cố định (20 mã đầu của `embedding_ids.json` có
+audio, xếp theo mã):
+- **Nhúng CLAP:** cosine(ONNX, torch) ≥ 0,999 ở mọi bài.
+- **Đầu ra:** |ΔV|, |ΔE|, |ΔT| ≤ 0,02 và mọi |Δ cường độ| ≤ 0,02 ở mọi bài; `family` trùng ở ≥ 19/20 bài.
+- **Mel:** phổ mel tự tính (numpy cho máy tính, Kotlin cho điện thoại) so `ClapFeatureExtractor` trên cùng mẫu: sai số tuyệt đối
+  TB ≤ 1e-3 dB, tối đa ≤ 0,05 dB.
+
+Âm học (42 đặc trưng, librosa: beat_track, chroma…) có thể không có ở máy chỉ player / điện thoại. Khi đó:
+- **Biến thể "trò-A"**: đầu chỉ học trên CLAP 512 chiều, cùng cách học, cùng phần giữ ngoài.
+- Dùng được nếu (a) ≥ 90% AUC thầy VÀ (b) r V/E/T bộ ngoài không kém zero-shot cũ ở trục nào.
+- Không đạt thì máy đó gửi file sang máy có Studio để phân tích (mạng trạm), không dùng số kém hơn.
+
+Điện thoại: onnxruntime-android + mel Kotlin, cùng ngưỡng. Kích thước: tháp fp16 ONNX ~58 MB, đầu < 0,1 MB.
 
 **GHI TRƯỚC - MTG-JAMENDO LÀM DỮ LIỆU HỌC CHO TRÒ (02-10 23:xx, Lead + chủ sách):**
 
