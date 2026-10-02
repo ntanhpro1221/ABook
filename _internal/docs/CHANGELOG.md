@@ -17,7 +17,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   chương từ máy tính, máy tính lưu chỗ nghe và tự sang chương sau, thanh "Đang phát trên…" có tạm dừng / tua / "Nghe trên
   máy này" (bấm thì màn hình TV, loa trở về như cũ). Có người khác phát gì đó lên thiết bị, hay tắt nó đi, thì ABook thôi
   điều khiển và giữ chỗ nghe ở đó. Chỉ phát ở tốc độ 1x và giọng đọc thôi - nhạc nền không đi theo sang thiết bị, như loa /
-  TV DLNA. Điện thoại đã ghép điều khiển được các thiết bị này qua máy tính; điện thoại tự tìm Google Cast thì để bản sau.
+  TV DLNA. Điện thoại cũng tự tìm thấy các thiết bị này và phát sách đã có trên máy, không cần mở máy tính (ghi "Google
+  Cast" cạnh tên, bấm "Nghe ở đây" thì thiết bị trở về như cũ); sách của máy tính thì điện thoại đã ghép vẫn điều khiển
+  được thiết bị qua máy tính.
 
 ## [0.4.19] - 2026-10-02
 

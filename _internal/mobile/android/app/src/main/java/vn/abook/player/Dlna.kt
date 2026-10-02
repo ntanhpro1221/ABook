@@ -61,16 +61,21 @@ object Dlna {
     )
 
     data class Renderer(
-        val id: String, // 12 hex theo UDN - trùng mã máy tính đặt cho cùng thiết bị
+        val id: String, // 12 hex theo UDN (Cast: theo `id` trong TXT) - trùng mã máy tính đặt cho cùng thiết bị
         val name: String,
         val kind: String, // "tv" | "media" | "speaker" - chỉ để chọn biểu tượng
-        val host: String,
-        val location: String,
-        val avUrl: String,
-        val avType: String,
+        val host: String, // địa chỉ IP đã trả lời SSDP / mDNS; mô tả và lệnh chỉ đi tới đây
+        val location: String = "",
+        val avUrl: String = "",
+        val avType: String = "",
+        val protocol: String = "dlna", // "dlna" | "gcast" (Google Cast, GCast.kt): chọn backend
+        val port: Int = 0, // Cast: cổng SRV (thường 8009); DLNA đi theo avUrl
     )
 
     class Failure(message: String, val code: Int = 0) : Exception(message)
+
+    /** Lời của một mã lỗi UPnP; GCast dùng lại cho lỗi của Cast (cùng một câu người nghe hiểu). */
+    fun error(code: Int): String = ERRORS.getValue(code)
 
     fun clock(seconds: Double): String {
         val whole = maxOf(0L, Math.round(seconds))
@@ -88,7 +93,7 @@ object Dlna {
         return total
     }
 
-    private fun clean(value: String, limit: Int) = value.replace(Regex("[\\u0000-\\u001f\\u007f]+"), " ").trim().take(limit)
+    internal fun clean(value: String, limit: Int) = value.replace(Regex("[\\u0000-\\u001f\\u007f]+"), " ").trim().take(limit)
 
     private fun escape(value: String) = value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")
 
@@ -124,30 +129,39 @@ object Dlna {
     }.getOrDefault(emptyList())
 
     /**
-     * M-SEARCH ra từng card mạng (multicast, gửi hai lần - UDP trên Wi-Fi hay rơi) và thẳng tới [targets] (bài thử); gom
-     * trả lời trong [timeoutMs] -> [(LOCATION, địa chỉ đã trả lời)]. Trả lời tới bằng unicast nên không cần MulticastLock.
+     * Gửi [message] (UDP) tới nhóm multicast [group] ra từng card mạng (hai lần - UDP trên Wi-Fi hay rơi) và thẳng tới
+     * [targets] (bài thử, thiết bị giả); gom trả lời trong [timeoutMs]. [accept] (dữ liệu, độ dài, địa chỉ đã trả lời) ->
+     * các cặp (khoá, giá trị); khoá trùng thì giữ lần đầu. Trả lời tới bằng unicast nên không cần MulticastLock. Dùng chung
+     * cho SSDP (DLNA) ở đây và mDNS (Google Cast, GCast.kt).
      */
-    fun search(timeoutMs: Int = 2000, targets: List<InetSocketAddress> = emptyList(), multicast: Boolean = true): List<Pair<String, String>> {
-        val payload = message(maxOf(1, timeoutMs / 1000))
+    fun <K : Any, V> probe(
+        message: ByteArray,
+        group: InetSocketAddress,
+        timeoutMs: Int,
+        targets: List<InetSocketAddress> = emptyList(),
+        multicast: Boolean = true,
+        ttl: Int = 2,
+        accept: (ByteArray, Int, String) -> List<Pair<K, V>>,
+    ): List<Pair<K, V>> {
         val sockets = mutableListOf<Pair<DatagramSocket, List<InetSocketAddress>>>()
         if (multicast) {
             for ((nif, address) in interfaces()) {
                 runCatching {
-                    MulticastSocket(InetSocketAddress(address, 0)).apply { networkInterface = nif; timeToLive = 2 }
-                }.getOrNull()?.let { sockets += it to listOf(GROUP) }
+                    MulticastSocket(InetSocketAddress(address, 0)).apply { networkInterface = nif; timeToLive = ttl }
+                }.getOrNull()?.let { sockets += it to listOf(group) }
             }
         }
         if (targets.isNotEmpty()) {
             val loopback = targets.all { it.address?.isLoopbackAddress == true }
             sockets += DatagramSocket(InetSocketAddress(if (loopback) "127.0.0.1" else "0.0.0.0", 0)) to targets
         }
-        val found = LinkedHashMap<String, String>()
+        val found = LinkedHashMap<K, V>()
         val pool = Executors.newFixedThreadPool(maxOf(1, sockets.size))
         try {
             val deadline = System.currentTimeMillis() + timeoutMs
             val jobs = sockets.map { (socket, destinations) ->
                 pool.submit {
-                    val send = { destinations.forEach { runCatching { socket.send(DatagramPacket(payload, payload.size, it)) } } }
+                    val send = { destinations.forEach { runCatching { socket.send(DatagramPacket(message, message.size, it)) } } }
                     send()
                     var resent = false
                     val buffer = ByteArray(8192)
@@ -167,9 +181,9 @@ object Dlna {
                         } catch (_: IOException) {
                             break
                         }
-                        val where = location(packet.data, packet.length)
                         val source = packet.address?.hostAddress ?: continue
-                        if (where.isNotEmpty()) synchronized(found) { found.putIfAbsent(where, source) }
+                        val answers = accept(packet.data, packet.length, source)
+                        synchronized(found) { answers.forEach { found.putIfAbsent(it.first, it.second) } }
                     }
                 }
             }
@@ -180,6 +194,12 @@ object Dlna {
         }
         return found.map { it.key to it.value }
     }
+
+    /** M-SEARCH tìm thiết bị phát ra từng card mạng và thẳng tới [targets] (bài thử) -> [(LOCATION, địa chỉ đã trả lời)]. */
+    fun search(timeoutMs: Int = 2000, targets: List<InetSocketAddress> = emptyList(), multicast: Boolean = true): List<Pair<String, String>> =
+        probe(message(maxOf(1, timeoutMs / 1000)), GROUP, timeoutMs, targets, multicast) { data, length, source ->
+            location(data, length).let { if (it.isEmpty()) emptyList() else listOf(it to source) }
+        }
 
     // ---- mô tả, lệnh --------------------------------------------------------------------------------------------
 
@@ -226,7 +246,7 @@ object Dlna {
 
     private fun text(element: Element, name: String): String = children(element, name).firstOrNull()?.textContent?.trim().orEmpty()
 
-    private fun sha1(value: String): String =
+    internal fun sha1(value: String): String =
         MessageDigest.getInstance("SHA-1").digest(value.toByteArray()).joinToString("") { "%02x".format(it) }
 
     /** Mô tả thiết bị ở [location] - chỉ khi nó nằm đúng ở [host]; null: không phát được hay lệnh trỏ sang máy khác. */
@@ -432,6 +452,8 @@ object Dlna {
             }
             val headLines = StringBuilder(if (partial) "HTTP/1.1 206 Partial Content\r\n" else "HTTP/1.1 200 OK\r\n")
                 .append("Content-Type: $type\r\nContent-Length: ${end - start + 1}\r\nAccept-Ranges: bytes\r\n")
+                // Ứng dụng nhận của Google Cast là trang web: tải audio bằng CORS.
+                .append("Access-Control-Allow-Origin: *\r\n")
                 .append("transferMode.dlna.org: Streaming\r\ncontentFeatures.dlna.org: $FEATURES\r\nConnection: close\r\n")
             if (partial) headLines.append("Content-Range: bytes $start-$end/$size\r\n")
             output.write(headLines.append("\r\n").toString().toByteArray())

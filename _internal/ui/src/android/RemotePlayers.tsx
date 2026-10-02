@@ -119,7 +119,8 @@ function RemotePlayerBar({ remote, receivedAt, onDismiss }: { remote: RemotePlay
     setMoving(true);
     try {
       const here = positionOf(remote, receivedAt);
-      send({ action: "pause" });
+      // Google Cast: dừng hẳn để màn hình TV / loa về như cũ; DLNA và máy khác chỉ cần tạm dừng.
+      send({ action: remote.protocol === "gcast" ? "stop" : "pause" });
       const book = await source.book(remote.localBookId);
       player.play(book, book.chapters ?? [], state.chapterId, here);
       onDismiss();
