@@ -184,7 +184,8 @@ export function PersonRow({
   bookId: string;
   person: CastMember;
   top?: number;
-  /** Chỉ Studio: mở màn "Đổi giọng" cho nhân vật (giọng ấy có từ bước phân vai). */
+  /** Chỉ Studio: mở màn "Đổi giọng" cho nhân vật (giọng ấy có từ bước phân vai). Người mang từ phần trước (0 câu) không có
+   *  nút này và "Đổi giới tính": dây chuyền chỉ đổi giọng của người đã có câu (NO_VOICE), còn "Đổi tên" thì được. */
   onPickVoice?: (person: CastMember) => void;
   /** Chỉ Studio: "Gộp vào…" - máy tách một người thành hai tên. */
   onMerge?: (person: CastMember) => void;
@@ -239,7 +240,7 @@ export function PersonRow({
       </div>
       <div className="flex shrink-0 items-center gap-1">
         {person.sampleId ? <SampleButton id={`sample-${bookId}-${person.sampleId}`} url={source.sampleUrl(bookId, person.sampleId)} label={`Nghe ${name} nói`} /> : null}
-        {onPickVoice && person.voice ? (
+        {onPickVoice && person.voice && person.lines > 0 ? (
           <IconButton label={`Đổi giọng ${name}`} icon={SlidersHorizontal} size="sm" onClick={() => onPickVoice(person)} />
         ) : null}
         {onMerge && person.lines > 0 ? (
@@ -263,7 +264,7 @@ export function PersonRow({
                     <Pencil className="size-4" /> Đổi tên
                   </DropdownMenu.Item>
                 )}
-                {onGender && person.voice && (
+                {onGender && person.voice && person.lines > 0 && (
                   <DropdownMenu.Item onSelect={() => onGender(person)} className={MENU_ITEM}>
                     <UserRound className="size-4" /> Đổi giới tính
                   </DropdownMenu.Item>
@@ -357,11 +358,11 @@ export function CastList({ bookId, onPickVoice, onMerge, onRename, onGender, rea
         <div className="mt-6">
           {cast.characters.length ? (
             <button type="button" onClick={() => setCarried((value) => !value)} className="text-sm font-medium text-fg-2 hover:text-fg">
-              {carried ? "Ẩn" : "Hiện"} {carriedPeople.length} người mang giọng từ phần trước - chưa nói câu nào ở phần này
+              {carried ? "Ẩn" : "Hiện"} {carriedPeople.length} người từ phần trước (chưa xuất hiện ở phần này)
             </button>
           ) : (
             <h3 className="text-sm font-semibold">
-              Mang từ phần trước <span className="font-normal text-fg-2">· {carriedPeople.length} người giữ nguyên giọng - phần này chưa phân tích tới họ</span>
+              Từ phần trước (chưa xuất hiện ở phần này) <span className="font-normal text-fg-2">· {carriedPeople.length} người giữ nguyên giọng</span>
             </h3>
           )}
           {(carried || !cast.characters.length) && (
