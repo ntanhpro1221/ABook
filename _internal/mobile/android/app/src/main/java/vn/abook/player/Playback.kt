@@ -181,9 +181,11 @@ object Playback {
         private set
 
     /** ExoPlayer dừng vì lỗi: chương phát qua mạng thì gần như chắc là mất kết nối với máy tính - nói đúng lý do. */
-    fun onError() {
+    fun onError(error: Throwable? = null) {
         val streamed = player?.currentMediaItem?.localConfiguration?.uri?.scheme == "https"
-        lastError = if (streamed) {
+        lastError = if (streamed && error != null && Pin.isCertificateProblem(error)) {
+            Pin.CHANGED // máy tính đã đổi chứng chỉ: không phải Wi-Fi hỏng, người nghe phải ghép lại
+        } else if (streamed) {
             "Mất kết nối với máy tính - kiểm tra Wi-Fi rồi bấm phát lại"
         } else {
             "Không phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại."

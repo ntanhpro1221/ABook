@@ -45,15 +45,22 @@ object Pin {
         if (expected.isEmpty() || fingerprint(leaf.encoded) != expected.lowercase()) throw CertificateException(CHANGED)
     }
 
-    /** `error` hay một nguyên nhân của nó là lỗi chứng chỉ (không phải đứt mạng): lúc ấy nói [CHANGED] thay vì chữ của SSL. */
-    fun isCertificateProblem(error: Throwable): Boolean =
-        error is SSLException && generateSequence<Throwable>(error) { it.cause }.any { it is CertificateException }
+    /** Mã lỗi Capacitor cho [ChangedException]: giao diện thấy mã này thì hiện nguyên câu [CHANGED] thay vì "không kết nối được". */
+    const val CODE = "PIN_CHANGED"
 
-    /** Chạy `block`; lỗi chứng chỉ thành [IllegalStateException] có chữ đọc được (không phải IOException: không phải "mất mạng"). */
+    /** Lỗi chứng chỉ đã đổi lời cho người nghe (không phải IOException: không phải "mất mạng"). */
+    class ChangedException(cause: Throwable) : IllegalStateException(CHANGED, cause)
+
+    /** `error` hay một nguyên nhân của nó là lỗi chứng chỉ (không phải đứt mạng): lúc ấy nói [CHANGED] thay vì chữ của SSL.
+     *  Không đòi `error` là SSLException: lỗi của trình phát Media3 (PlaybackException) bọc nó vài lớp. */
+    fun isCertificateProblem(error: Throwable): Boolean =
+        generateSequence(error) { it.cause }.any { it is CertificateException }
+
+    /** Chạy `block`; lỗi chứng chỉ thành [ChangedException] có chữ đọc được. */
     fun <T> guard(block: () -> T): T = try {
         block()
     } catch (error: SSLException) {
-        if (isCertificateProblem(error)) throw IllegalStateException(CHANGED, error) else throw error
+        if (isCertificateProblem(error)) throw ChangedException(error) else throw error
     }
 
     // ---- vân tay mong đợi của một địa chỉ ----------------------------------------------------------------------------
