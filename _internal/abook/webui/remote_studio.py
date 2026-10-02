@@ -16,7 +16,8 @@ mang `listenOnly`). Điều khiển sản xuất thì ba lớp chặn, lớp nà
 - DANH SÁCH TRẮNG đường dẫn (`ALLOWED`): những gì chỉ có nghĩa trên chính máy này - hộp thoại chọn file, mở Explorer,
   đổi thư mục thư viện, ghép / gỡ thiết bị, điều khiển điện thoại, mở file sách theo đường dẫn - không bao giờ đi qua.
 POST chỉ nhận JSON: trang lạ trong trình duyệt không gửi được JSON sang cổng này mà không qua CORS (cổng không trả lời
-CORS), cookie lại SameSite=Strict.
+CORS), cookie lại SameSite=Strict. Cổng chỉ nói TLS (tls.py): cookie mang `Secure`, và trình duyệt - không ghim được vân tay như
+app - báo "không an toàn" một lần vì chứng chỉ tự ký.
 """
 from __future__ import annotations
 
@@ -82,6 +83,11 @@ LISTEN_ROUTES: tuple[tuple[str, re.Pattern[str]], ...] = tuple((method, re.compi
     ("GET", _BOOK + r"/chapters/\d+/script"),
     ("GET", r"/media/voices/[^/]+"),
     ("GET", _MEDIA + r"/samples/\d+"),
+    # Nhạc nền của trình phát (httpSource.ts, musicBed.ts): mốc nhạc từng chương, bài đóng trong sách, bài trong danh mục
+    # (máy chủ chỉ tải bài CÓ trong danh mục - server.music_track_file - nên không thành chỗ tải hộ link tuỳ ý).
+    ("GET", _BOOK + r"/music/chapters/\d+"),
+    ("GET", _BOOK + r"/music/files/[0-9a-f]{40}\.mp3"),
+    ("GET", r"/api/music/track"),
 ))
 # Thêm cho thiết bị được điều khiển sản xuất: dự án, bắt đầu/dừng, tạo sách, duyệt phân vai, giọng, bìa.
 ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = LISTEN_ROUTES + tuple((method, re.compile(pattern)) for method, pattern in (
@@ -125,6 +131,11 @@ ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = LISTEN_ROUTES + tuple((method
     ("GET", _BOOK + r"/cover/search"),
     ("PUT", _BOOK + r"/cover"),
     ("DELETE", _BOOK + r"/cover"),
+    # Tab Nhạc nền (MusicTab.tsx): xem, chỉnh, dựng lại, "Đổi bài".
+    ("GET", _BOOK + r"/music"),
+    ("PUT", _BOOK + r"/music"),
+    ("POST", _BOOK + r"/music/rebuild"),
+    ("GET", _BOOK + r"/music/scenes/[^/]+/alternatives"),
 ))
 TYPES = {
     ".js": "text/javascript; charset=utf-8",
@@ -198,7 +209,7 @@ def same_origin(headers: Any) -> bool:
 
 
 def device_cookie(token: str) -> str:
-    return f"{COOKIE}={token}; Path=/; Max-Age={COOKIE_SECONDS}; HttpOnly; SameSite=Strict"
+    return f"{COOKIE}={token}; Path=/; Max-Age={COOKIE_SECONDS}; HttpOnly; Secure; SameSite=Strict"
 
 
 def send_bytes(handler: Any, status: int, body: bytes, content_type: str, *,

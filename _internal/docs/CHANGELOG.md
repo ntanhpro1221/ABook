@@ -16,6 +16,17 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   mục MP3 mỗi phần một thư mục con, hay mỗi phần một file `.abook` trong thư mục của bộ; phần chưa có chương xong được
   bỏ qua và kể tên.
 
+### Điện thoại và thiết bị
+
+- **Kết nối giữa các máy được mã hoá**: điện thoại, máy tính và trình duyệt trong cùng Wi-Fi nói chuyện qua kênh mã hoá thay
+  vì chữ rõ, nên người lạ cùng mạng không đọc trộm được mã thiết bị rồi dùng lại. Lúc ghép, mỗi máy ghi nhớ "vân tay" của
+  máy kia; sau đó chỉ nói chuyện với đúng máy đó - máy kia cài lại ABook hay có ai giả mạo thì app báo rõ và bảo ghép lại,
+  không âm thầm nối vào. Cài đặt hiện vân tay của máy này để đối chiếu. Máy đã ghép từ bản trước phải ghép lại một lần.
+  Trình duyệt mở Studio từ xa sẽ báo trang "không an toàn" vì chứng chỉ do chính máy tính cấp - chọn tiếp tục.
+- **Nhạc nền trong Studio từ xa**: điện thoại và trình duyệt điều khiển máy tính giờ mở được tab Nhạc nền - nghe thử,
+  chỉnh, "Đổi bài" cho từng đoạn - và trình phát ở xa phát cả nhạc nền như trên máy tính. Trước đây các yêu cầu này bị
+  chặn nên tab trống.
+
 ## [0.4.17] - 2026-10-02
 
 ### Studio

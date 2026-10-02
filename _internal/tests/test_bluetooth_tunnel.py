@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from abook.webui import bluetooth
+from abook.webui import bluetooth, tls
 from abook.webui.bluetooth import HEADER, BluetoothServer, LocalPort, Mux
 from abook.webui.sync import Devices, SyncApp, SyncServer
 from tests.test_webui_listen_and_sync import library  # noqa: F401 - fixture dùng chung
@@ -57,8 +57,11 @@ def files():
     server.shutdown()
 
 
-def _get(port: int, path: str, token: str = "", body: dict | None = None, method: str = "GET") -> tuple[int, bytes]:
-    connection = http.client.HTTPConnection("127.0.0.1", port, timeout=20)
+def _get(port: int, path: str, token: str = "", body: dict | None = None, method: str = "GET",
+         secure: bool = False) -> tuple[int, bytes]:
+    """`secure`: cổng đồng bộ thật (TLS, đi nguyên vẹn qua đường hầm); mặc định máy chủ HTTP thường của bài thử."""
+    connection = (tls.PinnedHTTPSConnection("127.0.0.1", port, expected=None, timeout=20) if secure
+                  else http.client.HTTPConnection("127.0.0.1", port, timeout=20))
     headers = {"Authorization": f"Bearer {token}"} if token else {}
     payload = json.dumps(body).encode() if body is not None else None
     if payload is not None:
@@ -78,14 +81,14 @@ def test_the_sync_protocol_runs_unchanged_through_the_tunnel(library, tmp_path: 
     client, server, local = _tunnel(sync.port)
     try:
         code = devices.start_pairing()["code"]
-        status, data = _get(local.port, "/sync/v1/pair", body={"code": code, "device": "Điện thoại BT"}, method="POST")
+        status, data = _get(local.port, "/sync/v1/pair", body={"code": code, "device": "Điện thoại BT"}, method="POST", secure=True)
         assert status == 200
         token = json.loads(data)["token"]
-        status, data = _get(local.port, "/sync/v1/library", token)
+        status, data = _get(local.port, "/sync/v1/library", token, secure=True)
         (book,) = json.loads(data)["books"]
-        status, data = _get(local.port, f"/sync/v1/books/{book['id']}/manifest", token)
+        status, data = _get(local.port, f"/sync/v1/books/{book['id']}/manifest", token, secure=True)
         assert status == 200 and json.loads(data)["title"]
-        assert _get(local.port, "/sync/v1/library", "sai-ma")[0] == 401, "mã thiết bị vẫn do cổng đồng bộ kiểm"
+        assert _get(local.port, "/sync/v1/library", "sai-ma", secure=True)[0] == 401, "mã thiết bị vẫn do cổng đồng bộ kiểm"
     finally:
         client.shutdown()
         server.shutdown()

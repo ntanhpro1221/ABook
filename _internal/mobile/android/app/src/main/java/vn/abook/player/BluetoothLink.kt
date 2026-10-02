@@ -26,7 +26,7 @@ import java.util.concurrent.Executors
  * Kết nối máy tính (hay điện thoại khác) qua Bluetooth - chủ sách 27-09: "stream Bluetooth để sau là vẫn phải làm đấy nhé".
  *
  * Mỗi máy nhận một cổng TCP cục bộ ổn định (127.0.0.1:47670-47701, theo địa chỉ Bluetooth): SyncLink, trình phát nghe thẳng,
- * điều khiển từ xa... dùng http://127.0.0.1:<cổng> như một máy tính trong mạng, và mọi kết nối vào cổng ấy đi qua MỘT kết
+ * điều khiển từ xa... dùng https://127.0.0.1:<cổng> như một máy tính trong mạng, và mọi kết nối vào cổng ấy đi qua MỘT kết
  * nối RFCOMM (BtMux - cùng giao thức với webui/bluetooth.py của máy tính). RFCOMM chỉ mở khi có kết nối đầu tiên và mở lại
  * khi đứt, nên gọi `base` không bao giờ chặn luồng giao diện. Chỉ máy đã ghép Bluetooth (Cài đặt Android) mới dùng được -
  * rồi mới tới mã 6 số của app.
@@ -56,8 +56,15 @@ object BluetoothLink {
         return out
     }
 
-    /** Gốc http qua đường hầm tới máy `address` (không chặn). */
-    fun base(context: Context, address: String): String = "http://127.0.0.1:${gateway(context, address).port}"
+    /**
+     * Gốc https qua đường hầm tới máy `address` (không chặn). Đường hầm chỉ chuyển byte: TLS đi nguyên vẹn tới máy kia, và vẫn
+     * ghim đúng chứng chỉ của nó ([Pin.expected] tìm máy theo cổng cục bộ này).
+     */
+    fun base(context: Context, address: String): String = "https://127.0.0.1:${gateway(context, address).port}"
+
+    /** Địa chỉ Bluetooth của máy mà cổng cục bộ `port` dẫn tới, hay null nếu không phải cổng của đường hầm nào. */
+    @Synchronized
+    fun addressOfPort(port: Int): String? = gateways.entries.firstOrNull { it.value.port == port }?.key
 
     @Synchronized
     private fun gateway(context: Context, address: String): Gateway =

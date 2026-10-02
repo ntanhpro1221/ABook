@@ -182,7 +182,7 @@ object Playback {
 
     /** ExoPlayer dừng vì lỗi: chương phát qua mạng thì gần như chắc là mất kết nối với máy tính - nói đúng lý do. */
     fun onError() {
-        val streamed = player?.currentMediaItem?.localConfiguration?.uri?.scheme == "http"
+        val streamed = player?.currentMediaItem?.localConfiguration?.uri?.scheme == "https"
         lastError = if (streamed) {
             "Mất kết nối với máy tính - kiểm tra Wi-Fi rồi bấm phát lại"
         } else {
@@ -227,7 +227,7 @@ object Playback {
         chapters = items
         val media = mediaItems(id, title, narratorName, items)
         // Có chương phát qua mạng thì giữ Wi-Fi thức khi tắt màn hình; sách đã tải hết thì không tốn pin cho việc ấy.
-        exo.setWakeMode(if (media.any { it.localConfiguration?.uri?.scheme == "http" }) C.WAKE_MODE_NETWORK else C.WAKE_MODE_LOCAL)
+        exo.setWakeMode(if (media.any { it.localConfiguration?.uri?.scheme == "https" }) C.WAKE_MODE_NETWORK else C.WAKE_MODE_LOCAL)
         val index = items.indexOfFirst { it.id == startChapterId }.coerceAtLeast(0)
         exo.setMediaItems(media, index, (startSeconds * 1000).toLong())
         savedPlace = items.getOrNull(index)?.let { it.id to (startSeconds * 1000).toLong() }
@@ -265,7 +265,7 @@ object Playback {
         bookTitle = next.title
         narrator = next.narrator
         chapters = next.items
-        val streamed = next.items.any { Streaming.chapterUri(appContext, next.id, it.file).scheme == "http" }
+        val streamed = next.items.any { Streaming.chapterUri(appContext, next.id, it.file).scheme == "https" }
         exo.setWakeMode(if (streamed) C.WAKE_MODE_NETWORK else C.WAKE_MODE_LOCAL)
         exo.playbackParameters = PlaybackParameters(next.rate.toFloat())
         savedPlace = next.place

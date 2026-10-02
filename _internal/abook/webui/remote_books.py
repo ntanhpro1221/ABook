@@ -7,22 +7,24 @@ kia LẦN ĐẦU có người mở tới rồi giữ lại (`fetch`). Nhờ vậ
 theo, dấu trang, hồ sơ nghe, hẹn giờ) dùng nguyên được, và phần đã tải vẫn nghe được khi máy kia đã tắt.
 
 Máy này không bao giờ ghi gì lên máy kia ngoài việc ghép; mã thiết bị máy kia cấp nằm trong `computers.json` cạnh tuỳ chọn
-của app (dữ liệu cá nhân - không đồng bộ, không đưa lên đâu).
+của app (dữ liệu cá nhân - không đồng bộ, không đưa lên đâu), cùng vân tay chứng chỉ TLS của máy kia (tls.py): lúc ghép máy này
+nhận chứng chỉ của máy kia và ghi vân tay lại; từ đó mọi yêu cầu chỉ nhận ĐÚNG chứng chỉ ấy. Vân tay đổi là lỗi bảo ghép lại.
 """
 from __future__ import annotations
 
 import hashlib
+import http.client
 import json
 import re
 import secrets
 import shutil
 import threading
 import time
-import urllib.error
-import urllib.request
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 from urllib.parse import quote
+
+from . import tls
 
 REMOTE_FOLDER = "Trên máy khác"
 MANIFEST = "book.json"
@@ -93,19 +95,23 @@ class Computers:
         if not match or len(digits) != 6:
             raise RemoteError("Nhập địa chỉ máy kia (vd 192.168.1.20) và mã 6 số đang hiện trên máy ấy")
         host, port = match.group(1), int(match.group(2) or 47630)
-        reply = _request(f"http://{host}:{port}", "POST", "/sync/v1/pair", "",
-                         {"code": digits, "device": device_name or "Máy tính"})
+        # Lần ghép đầu: chưa có vân tay để đối chiếu (None) - ghi lại chứng chỉ máy kia đưa ra, sau khi nó tự xưng cùng vân tay.
+        reply, seen = _exchange(Endpoint(host, port, None), "POST", "/sync/v1/pair", "",
+                                {"code": digits, "device": device_name or "Máy tính"})
         try:
             data = json.loads(reply.decode("utf-8"))
             token, name = str(data["token"]), str(data.get("name") or host)
+            claimed = str(data["fingerprint"]).lower()
         except (ValueError, KeyError) as error:
             raise RemoteError("Máy kia trả lời lạ - có phải ABook không?") from error
+        if not seen or claimed != seen:
+            raise RemoteError("Chứng chỉ máy kia không khớp với vân tay nó báo - dừng ghép, thử lại")
         with self._lock:
             data = self._read()
             # Ghép lại cùng một máy (cùng địa chỉ) thì thay chỗ cũ: sách đã tải và chỗ nghe giữ nguyên.
             key = next((existing for existing, entry in data["computers"].items()
                         if entry.get("host") == host and int(entry.get("port") or 0) == port), secrets.token_hex(6))
-            data["computers"][key] = {"name": name, "host": host, "port": port, "token": token,
+            data["computers"][key] = {"name": name, "host": host, "port": port, "token": token, "fingerprint": seen,
                                       "pairedAt": time.time(), "lastSeen": time.time(), "error": ""}
             self._write(data)
         return {"id": key, "name": name, "host": host, "port": port}
@@ -169,29 +175,52 @@ def discover(*, timeout: float = 1.5, exclude_port: int | None = None, targets: 
     return sorted(found.values(), key=lambda item: (item["name"].casefold(), item["host"]))
 
 
-def _request(base: str, method: str, path: str, token: str, body: dict[str, Any] | None = None,
-             timeout: float = TIMEOUT) -> bytes:
+class Endpoint(NamedTuple):
+    """Một máy đã ghép: địa chỉ + vân tay chứng chỉ phải gặp. `fingerprint` None: chưa có (lần ghép đầu)."""
+
+    host: str
+    port: int
+    fingerprint: str | None
+
+
+def _exchange(endpoint: Endpoint, method: str, path: str, token: str, body: dict[str, Any] | None = None,
+              timeout: float = TIMEOUT) -> tuple[bytes, str]:
+    """Một yêu cầu qua TLS ghim vân tay: (thân trả lời, vân tay chứng chỉ máy kia đã đưa ra)."""
+    if endpoint.fingerprint == "":
+        raise RemoteError("Máy này chưa ghi vân tay của máy kia - ghép lại với máy kia")
     data = json.dumps(body).encode("utf-8") if body is not None else None
-    request = urllib.request.Request(base + path, data=data, method=method)
-    if token:
-        request.add_header("Authorization", f"Bearer {token}")
+    headers = {"Authorization": f"Bearer {token}"} if token else {}
     if data is not None:
-        request.add_header("Content-Type", "application/json")
+        headers["Content-Type"] = "application/json"
+    connection = tls.PinnedHTTPSConnection(endpoint.host, endpoint.port, expected=endpoint.fingerprint, timeout=timeout)
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310 - địa chỉ người dùng tự nhập
-            return response.read()
-    except urllib.error.HTTPError as error:
-        try:
-            message = json.loads(error.read().decode("utf-8")).get("error")
-        except (ValueError, OSError):
-            message = ""
-        raise RemoteError(message or f"Máy kia trả lỗi {error.code}") from error
-    except (urllib.error.URLError, OSError, TimeoutError) as error:
+        connection.request(method, path, body=data, headers=headers)
+        response = connection.getresponse()
+        payload = response.read()
+        status, seen = response.status, connection.peer_fingerprint
+    except tls.PinError as error:
+        raise RemoteError("Chứng chỉ của máy kia đã khác lúc ghép - máy kia cài lại ABook, hoặc có ai chen vào mạng. "
+                          "Nếu chắc đó vẫn là máy của anh, gỡ rồi ghép lại") from error
+    except (OSError, http.client.HTTPException, TimeoutError) as error:
         raise RemoteError("Không kết nối được máy kia - máy tắt, khác mạng hay chưa bật “Cho phép điện thoại kết nối qua Wi-Fi”") from error
+    finally:
+        connection.close()
+    if status >= 400:
+        try:
+            message = json.loads(payload.decode("utf-8")).get("error")
+        except (ValueError, AttributeError):
+            message = ""
+        raise RemoteError(message or f"Máy kia trả lỗi {status}")
+    return payload, seen
 
 
-def _base(entry: dict[str, Any]) -> str:
-    return f"http://{entry['host']}:{int(entry['port'])}"
+def _request(endpoint: Endpoint, method: str, path: str, token: str, body: dict[str, Any] | None = None,
+             timeout: float = TIMEOUT) -> bytes:
+    return _exchange(endpoint, method, path, token, body, timeout)[0]
+
+
+def _base(entry: dict[str, Any]) -> Endpoint:
+    return Endpoint(str(entry["host"]), int(entry["port"]), str(entry.get("fingerprint") or ""))
 
 
 def refresh(library_root: Path, computers: Computers) -> dict[str, Any]:

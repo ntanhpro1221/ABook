@@ -21,6 +21,9 @@ nên bên điều khiển không cần biết đầu kia là gì.
 
 Studio từ xa (remote_studio.py): mọi đường ngoài `/sync/` - giao diện web và API của nó - chỉ mở khi người dùng bật công
 tắc riêng, cho thiết bị đã ghép, theo danh sách trắng.
+
+Cổng này CHỈ nói TLS (tls.py): chứng chỉ tự ký của máy, vân tay SHA-256 của nó đi trong lời đáp ghép nối và bên kết nối ghim
+lại - nên mã thiết bị không còn đi dạng rõ trong mạng LAN. Yêu cầu HTTP thường tới cổng này bị cắt ngay lúc bắt tay.
 """
 from __future__ import annotations
 
@@ -30,6 +33,7 @@ import os
 import re
 import secrets
 import socket
+import ssl
 import threading
 import time
 from http import HTTPStatus
@@ -38,7 +42,7 @@ from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import unquote, urlsplit
 
-from . import covers, listen_view, music_plan, remote_studio, store
+from . import covers, listen_view, music_plan, remote_studio, store, tls
 from .cast import CastError
 from .fingerprints import Fingerprints
 from .library import Library, book_id
@@ -237,6 +241,28 @@ class ExclusiveHTTPServer(ThreadingHTTPServer):
         super().server_bind()
 
 
+class TlsHTTPServer(ExclusiveHTTPServer):
+    """`ExclusiveHTTPServer` nhưng mọi kết nối phải qua TLS với chứng chỉ của máy này.
+
+    Bắt tay làm ở luồng của TỪNG kết nối (`SyncHandler.setup`), không ở vòng `accept`: một máy lạ mở kết nối rồi im lặng
+    không được chặn các điện thoại khác. Bắt tay hỏng (kể cả HTTP thường gửi vào cổng TLS) chỉ cắt kết nối, không in lỗi.
+    """
+
+    def __init__(self, address: tuple[str, int], handler: type[BaseHTTPRequestHandler], context: ssl.SSLContext) -> None:
+        self.context = context
+        super().__init__(address, handler)
+
+    def get_request(self) -> tuple[Any, Any]:
+        client, address = super().get_request()
+        return self.context.wrap_socket(client, server_side=True, do_handshake_on_connect=False), address
+
+    def handle_error(self, request: Any, client_address: Any) -> None:
+        import sys
+
+        if not isinstance(sys.exc_info()[1], (ssl.SSLError, OSError)):
+            super().handle_error(request, client_address)
+
+
 class Devices:
     """Điện thoại đã ghép nối: lưu băm của mã (không lưu mã thật), tên, lần thấy cuối.
 
@@ -411,6 +437,8 @@ class SyncApp:
         self.music_track = music_track
         # Số "việc cần duyệt" của mỗi dự án, tính lại chỉ khi sách đổi (studio_view): điện thoại hỏi mỗi 15 phút.
         self._work: dict[str, tuple[tuple[float, ...], int]] = {}  # đường dẫn -> (dấu thời gian, số việc)
+        # Vân tay chứng chỉ TLS của cổng phục vụ app này (SyncServer điền lúc dựng): đi trong lời đáp ghép nối.
+        self.fingerprint = ""
         self._work_lock = threading.Lock()
 
     def book(self, value: str) -> Path | None:
@@ -585,6 +613,12 @@ class SyncHandler(BaseHTTPRequestHandler):
     timeout = 60
     app: SyncApp
 
+    def setup(self) -> None:
+        # Bắt tay TLS ở đây, trong luồng của kết nối (TlsHTTPServer.get_request chưa làm); lỗi thì kết nối bị cắt.
+        self.request.settimeout(tls.HANDSHAKE_SECONDS)
+        self.request.do_handshake()
+        super().setup()
+
     def log_message(self, format: str, *args: Any) -> None:  # noqa: A002
         return
 
@@ -708,7 +742,9 @@ class SyncHandler(BaseHTTPRequestHandler):
                 if token is None:
                     self._json(HTTPStatus.FORBIDDEN, {"error": "Mã ghép nối sai hoặc đã hết hạn"})
                 else:
-                    self._json(HTTPStatus.OK, {"token": token, "name": self.app.name, "routes": self.app.routes()})
+                    # `fingerprint`: vân tay chứng chỉ của máy này - bên ghép đối chiếu với chứng chỉ nó vừa thấy rồi ghim.
+                    self._json(HTTPStatus.OK, {"token": token, "name": self.app.name, "routes": self.app.routes(),
+                                               "fingerprint": self.app.fingerprint})
                 return
             if method == "POST" and path == "/sync/v1/pair-browser":
                 # Trang ghép của Studio từ xa: cùng mã 6 số, nhưng mã thiết bị về cookie HttpOnly thay vì về tay trang.
@@ -895,12 +931,18 @@ class Discovery(threading.Thread):
 
 class SyncServer:
     """`host="0.0.0.0"` mở cho cả mạng LAN (kèm trả lời tìm máy). Khi phát triển dùng `127.0.0.1`: máy ảo Android
-    gọi được qua 10.0.2.2 mà không mở cổng ra mạng, nên Windows không hỏi tường lửa."""
+    gọi được qua 10.0.2.2 mà không mở cổng ra mạng, nên Windows không hỏi tường lửa.
+
+    Luôn là TLS: `identity` là danh tính đã lưu của máy (tls.load_or_create); không đưa thì dùng danh tính tạm của tiến trình
+    (bài thử) - không có đường nào nói HTTP thường."""
 
     def __init__(self, app: SyncApp, *, host: str = "0.0.0.0", port: int = SYNC_PORT,
-                 discovery_port: int = DISCOVERY_PORT) -> None:
+                 discovery_port: int = DISCOVERY_PORT, identity: tls.Identity | None = None) -> None:
+        identity = identity or tls.ephemeral()
+        app.fingerprint = identity.fingerprint
+        self.fingerprint = identity.fingerprint
         handler = type("BoundSyncHandler", (SyncHandler,), {"app": app})
-        self.httpd = ExclusiveHTTPServer((host, port), handler)
+        self.httpd = TlsHTTPServer((host, port), handler, identity.server_context())
         self.port = int(self.httpd.server_address[1])
         self.discovery = Discovery(app.name, self.port, discovery_port) if host == "0.0.0.0" else None
         self._thread: threading.Thread | None = None

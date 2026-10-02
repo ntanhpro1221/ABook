@@ -16,6 +16,7 @@ import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketException
 import java.net.URLDecoder
+import javax.net.ssl.SSLServerSocket
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.concurrent.Executors
@@ -34,6 +35,10 @@ import android.util.Base64
  * thiết bị đã ghép (`share.json`, lưu băm của mã thiết bị, không lưu mã thật) và chỗ nghe gộp từ máy kia. Chỉ chạy khi
  * người dùng bật "Cho máy khác nghe thư viện này". Mã ghép 6 số dùng một lần, sống 5 phút, sai 5 lần là huỷ - như máy
  * tính.
+ *
+ * Nói TLS, không bao giờ HTTP thường: chứng chỉ tự ký trong AndroidKeyStore ([ShareTls]), vân tay của nó đi trong lời đáp
+ * ghép nối để máy kia ghim (webui/tls.py, [Pin]). Cổng Bluetooth ([BluetoothShare]) chỉ chuyển byte tới đúng cổng này nên TLS
+ * đi nguyên vẹn từ máy kia tới đây.
  */
 object LibraryServer {
     const val PORT = 47630
@@ -48,6 +53,9 @@ object LibraryServer {
 
     private lateinit var devicesFile: File
     private var server: ServerSocket? = null
+    // Vân tay chứng chỉ TLS của máy này, điền lúc start().
+    @Volatile var fingerprint = ""
+        private set
     private var discovery: DatagramSocket? = null
     private val workers = Executors.newFixedThreadPool(6)
     private val random = SecureRandom()
@@ -78,9 +86,17 @@ object LibraryServer {
         runCatching { BluetoothShare.start(context) }
         if (running()) return
         lastError = ""
+        val identity = try {
+            ShareTls.identity()
+        } catch (error: Exception) {
+            lastError = "Không tạo được chứng chỉ bảo mật cho kết nối - ${error.message ?: error.javaClass.simpleName}"
+            throw IllegalStateException(lastError)
+        }
+        fingerprint = identity.fingerprint
         val socket = try {
-            ServerSocket().apply {
+            (identity.context.serverSocketFactory.createServerSocket() as SSLServerSocket).apply {
                 reuseAddress = true
+                enabledProtocols = supportedProtocols.filter { it == "TLSv1.3" || it == "TLSv1.2" }.toTypedArray()
                 bind(InetSocketAddress(PORT))
             }
         } catch (error: Exception) {
@@ -292,7 +308,7 @@ object LibraryServer {
             val body = runCatching { JSONObject(String(request.body)) }.getOrDefault(JSONObject())
             val token = pair(body.optString("code"), body.optString("device"))
             if (token == null) json(output, 403, JSONObject().put("error", "Mã ghép nối sai hoặc đã hết hạn"))
-            else json(output, 200, JSONObject().put("token", token).put("name", name()))
+            else json(output, 200, JSONObject().put("token", token).put("name", name()).put("fingerprint", fingerprint))
             return
         }
         val token = request.headers["authorization"]?.removePrefix("Bearer ")?.trim().orEmpty()

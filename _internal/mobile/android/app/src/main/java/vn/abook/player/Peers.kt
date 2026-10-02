@@ -22,7 +22,7 @@ object Peers {
 
     private fun prefs(context: Context) = context.getSharedPreferences("peers", Context.MODE_PRIVATE)
 
-    /** key -> {name, host, port, token, kind, pairedAt}. */
+    /** key -> {name, host, port, token, fingerprint, kind, pairedAt}. */
     @Synchronized
     fun all(context: Context): JSONObject =
         runCatching { JSONObject(prefs(context).getString("peers", "{}") ?: "{}") }.getOrDefault(JSONObject())
@@ -33,10 +33,11 @@ object Peers {
     }
 
     fun link(context: Context, key: String): Link? {
+        Pin.install(context)
         val peer = all(context).optJSONObject(key) ?: return null
         val host = peer.optString("host")
         if (host.startsWith("bt:")) return Link(BluetoothLink.base(context, host.removePrefix("bt:")), peer.optString("token"))
-        return Link("http://$host:${peer.optInt("port", 47630)}", peer.optString("token"))
+        return Link("https://$host:${peer.optInt("port", 47630)}", peer.optString("token"))
     }
 
     /** Ghép thiết bị đã ghép Bluetooth với điện thoại này (không chung Wi-Fi): cùng mã 6 số, đi qua đường hầm. */
@@ -44,8 +45,8 @@ object Peers {
         val device = "${Build.MANUFACTURER} ${Build.MODEL}".trim()
         val body = JSONObject().put("code", code.filter { it.isDigit() }).put("device", device)
         val root = BluetoothLink.base(context, address)
-        val reply = try {
-            JSONObject(SyncLink.request(context, "POST", "/sync/v1/pair", body, auth = false, root = root))
+        val (reply, fingerprint) = try {
+            SyncLink.pair(context, root, body)
         } catch (error: Exception) {
             throw IllegalStateException(BluetoothLink.lastError(address).ifBlank { error.message ?: "không kết nối được qua Bluetooth" })
         }
@@ -54,7 +55,8 @@ object Peers {
         val key = peers.keys().asSequence().firstOrNull { peers.getJSONObject(it).optString("host") == host }
             ?: UUID.randomUUID().toString().replace("-", "").take(8)
         peers.put(key, JSONObject().put("name", reply.optString("name", address)).put("host", host).put("port", 0)
-            .put("token", reply.getString("token")).put("pairedAt", System.currentTimeMillis() / 1000.0))
+            .put("token", reply.getString("token")).put("fingerprint", fingerprint)
+            .put("pairedAt", System.currentTimeMillis() / 1000.0))
         save(context, peers)
         return JSONObject().put("key", key).put("name", reply.optString("name", address))
     }
@@ -73,13 +75,14 @@ object Peers {
     fun pair(context: Context, host: String, port: Int, code: String): JSONObject {
         val device = "${Build.MANUFACTURER} ${Build.MODEL}".trim()
         val body = JSONObject().put("code", code.filter { it.isDigit() }).put("device", device)
-        val reply = JSONObject(SyncLink.request(context, "POST", "/sync/v1/pair", body, auth = false, root = "http://$host:$port"))
+        val (reply, fingerprint) = SyncLink.pair(context, "https://$host:$port", body)
         val peers = all(context)
         val key = peers.keys().asSequence().firstOrNull { existing ->
             peers.getJSONObject(existing).let { it.optString("host") == host && it.optInt("port") == port }
         } ?: UUID.randomUUID().toString().replace("-", "").take(8)
         peers.put(key, JSONObject().put("name", reply.optString("name", host)).put("host", host).put("port", port)
-            .put("token", reply.getString("token")).put("pairedAt", System.currentTimeMillis() / 1000.0))
+            .put("token", reply.getString("token")).put("fingerprint", fingerprint)
+            .put("pairedAt", System.currentTimeMillis() / 1000.0))
         save(context, peers)
         return JSONObject().put("key", key).put("name", reply.optString("name", host))
     }

@@ -288,7 +288,7 @@ class BtMux(
 
 /**
  * Bên kết nối: cổng TCP cục bộ (127.0.0.1) mà mọi kết nối vào đều đi qua đường hầm - trình phát, SyncLink... chỉ việc dùng
- * http://127.0.0.1:<port> như một máy tính trong mạng. `port` 0 = để hệ thống chọn.
+ * https://127.0.0.1:<port> như một máy tính trong mạng. `port` 0 = để hệ thống chọn.
  */
 class BtLocalPort(private val mux: BtMux, port: Int = 0) {
     private val server = ServerSocket(port, 50, InetAddress.getByName("127.0.0.1"))

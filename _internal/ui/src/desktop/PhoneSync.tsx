@@ -30,6 +30,8 @@ export interface SyncView {
   addresses: string[];
   pairing: { code: string; expiresAt: number } | null;
   pairingBlocked: boolean;
+  /** Vân tay SHA-256 chứng chỉ TLS của máy này (webui/tls.py), nhóm 4 ký tự; "" khi đồng bộ tắt. */
+  fingerprint: string;
   devices: SyncDevice[];
   /** Studio từ xa (webui/remote_studio.py): thiết bị đã ghép được điều khiển sản xuất. */
   remoteStudio: boolean;
@@ -50,7 +52,7 @@ function Where({ sync, scheme = true }: { sync: SyncView; scheme?: boolean }) {
   const home = sync.addresses.filter((address) => !isTailscale(address));
   const away = sync.addresses.filter(isTailscale);
   const show = (list: string[]) => (
-    <span className="font-medium text-fg tabular-nums">{list.map((address) => `${scheme ? "http://" : ""}${address}:${sync.port}`).join(" hoặc ")}</span>
+    <span className="font-medium text-fg tabular-nums">{list.map((address) => `${scheme ? "https://" : ""}${address}:${sync.port}`).join(" hoặc ")}</span>
   );
   return (
     <>
@@ -165,7 +167,13 @@ function PairingPanel({ sync, onPair, onCancel, busy }: { sync: SyncView; onPair
             </ol>
             {sync.remoteStudio && (
               <p className="mt-2 text-[13px] text-fg-2">
-                Trình duyệt: mở <Where sync={sync} /> rồi gõ mã.
+                Trình duyệt: mở <Where sync={sync} /> rồi gõ mã. Trình duyệt sẽ báo trang "không an toàn" vì chứng chỉ do
+                chính máy này cấp - cứ chọn tiếp tục.
+              </p>
+            )}
+            {sync.fingerprint && (
+              <p className="mt-2 text-[12px] text-fg-3">
+                Vân tay chứng chỉ của máy này, để đối chiếu: <span className="tabular-nums">{sync.fingerprint}</span>
               </p>
             )}
           </div>

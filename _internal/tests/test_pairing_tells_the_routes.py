@@ -7,7 +7,7 @@ from pathlib import Path
 
 from abook.webui.actions import FakeRunner
 from abook.webui.server import App
-from tests.test_webui_listen_and_sync import _request, library  # noqa: F401 - fixture dùng chung
+from tests.test_webui_listen_and_sync import _sync_request, library  # noqa: F401 - fixture dùng chung
 
 
 def test_the_pairing_answer_names_every_way_back_to_this_computer(library, tmp_path: Path) -> None:  # noqa: F811
@@ -17,7 +17,7 @@ def test_the_pairing_answer_names_every_way_back_to_this_computer(library, tmp_p
     app.set_sync(True)
     try:
         code = app.devices.start_pairing()["code"]
-        status, data, _ = _request(app.sync_server.port, "POST", "/sync/v1/pair", body={"code": code, "device": "Pixel"})
+        status, data, _ = _sync_request(app.sync_server.port, "POST", "/sync/v1/pair", body={"code": code, "device": "Pixel"})
         reply = json.loads(data)
         assert status == 200 and reply["token"]
         assert reply["routes"]["port"] == app.sync_server.port
@@ -50,9 +50,9 @@ def test_the_library_listing_repeats_the_routes(library, tmp_path: Path) -> None
     app.set_sync(True)
     try:
         code = app.devices.start_pairing()["code"]
-        _status, data, _ = _request(app.sync_server.port, "POST", "/sync/v1/pair", body={"code": code, "device": "Pixel"})
+        _status, data, _ = _sync_request(app.sync_server.port, "POST", "/sync/v1/pair", body={"code": code, "device": "Pixel"})
         token = json.loads(data)["token"]
-        status, data, _ = _request(app.sync_server.port, "GET", "/sync/v1/library", token)
+        status, data, _ = _sync_request(app.sync_server.port, "GET", "/sync/v1/library", token)
         reply = json.loads(data)
         assert status == 200 and reply["routes"] == app.routes()
     finally:
