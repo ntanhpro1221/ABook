@@ -251,8 +251,13 @@ kiểm chéo giữ từng cuốn: tốt nhất r 0,48/0,53/0,43 so với bảng 
 **CẢ CHUỖI (02-10 09:1x):** đầu vào = không khí MÁY ĐOÁN (bảng tay từ nhãn câu, trên ranh giới đáp án; nhãn GEMS = nhãn
 gần nhất trên ba trục), chấm bằng nhãn người so với không khí ĐÚNG: ngẫu nhiên 0,861 / clap 0,752 / mix 0,730 / **textmix
 0,688** / trần 0,255. Với đầu vào nhiễu, textmix hơn clap rõ hơn (−0,064) so với khi đầu vào đúng (−0,031) - câu mô tả chữ
-"cứu" một phần sai số của ba trục. Ứng viên mạnh nhất cho bước chọn bài; việc kế: kiểm bootstrap theo cuốn rồi dựng lưới câu
-mô tả trong danh mục.
+"cứu" một phần sai số của ba trục. Bootstrap: theo đoạn −0,064 [−0,116; −0,009], nhưng THEO CUỐN [−0,180; +0,017], chỉ hơn 4/9 cuốn.
+
+**BỘ KIỂM THỨ BA cho textmix (02-10 09:5x; ghi trước: thắng nếu độ lệch cả chuỗi thấp hơn clap VÀ hơn >= 3/4 cuốn mới):**
+Tam quốc 051, Nise 132, Nageki 65, Love Unseen 10 (32 đoạn) - ngẫu nhiên 0,855 / **clap 0,736** / textmix 0,757 (+0,022, hơn
+2/4 cuốn) -> textmix BỊ BÁC; app giữ cách chọn ba trục CLAP. Đáp án bộ này: hai người chấm mù (agent Opus + agent Sonnet),
+phân xử TỰ ĐỘNG theo luật (`LLM_Train/music/adjudicate_scenes.py`); đồng thuận Opus-Sonnet Pk 0,185, r 0,91/0,76/0,90 - ngang
+các cặp người chấm trước (Pk 0,13-0,21), nên người chấm Sonnet dùng được.
 
 ## Pha 4 - trộn
 
