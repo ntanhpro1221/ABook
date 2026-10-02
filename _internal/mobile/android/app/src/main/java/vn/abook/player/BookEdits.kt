@@ -42,8 +42,8 @@ object BookEdits {
     private val CHAPTER_ID = Regex("[0-9]{1,9}")
     private val CUE_KEY = Regex("[0-9]{1,9}:[0-9]{1,12}")
     private val COLOR = Regex("#[0-9a-f]{6}")
-    /** continuation.PART_SUFFIX: hậu tố " · Phần 2", " (phần 2)", " - phần 2" ở cuối tên. */
-    private val PART_SUFFIX = Regex("""(?iuU)\s*(?:\(phần\s*\d+\)|[·|:—–-]\s*phần\s*\d+)\s*$""")
+    /** continuation.PART_SUFFIX: hậu tố " · Phần 2", " (phần 2)", " - phần 2" ở cuối tên. Không dùng cờ `U`: ICU của Android từ chối nó (sập khi nạp lớp); `\s` của ICU vốn đã theo Unicode. */
+    private val PART_SUFFIX = Regex("""(?iu)\s*(?:\(phần\s*\d+\)|[·|:—–-]\s*phần\s*\d+)\s*$""")
     private val lock = Any()
 
     /** Sửa không hợp lệ, hay `edits.json` không dùng được - câu chữ để người dùng đọc. */
