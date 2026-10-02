@@ -28,7 +28,7 @@ hiện tên + nghệ sĩ của chính file, không tuyên bố giấy phép.
 
 ## Phân tích - chưa bịa số
 
-`music_local.analyze(path)` trả mục theo hình danh mục `{valence, arousal, tension, sd, emotions{13}, confidence,
+`music_local.analyze(path)` trả mục theo hình danh mục `{valence, arousal, tension, vetVar, emotions{13}, confidence,
 fitsUnderNarration, loudness}` hay `None`. Bộ phân tích âm thanh chỉ-nghe (trò của `music_theory/E_signal_sources.md` §6, phiên
 Nhạc huấn luyện) cắm vào bằng `music_local.set_analyzer(hàm)`; kết quả qua `clean_analysis` (kẹp miền, bỏ khoá lạ,
 `fitsUnderNarration` -> `background`, `loudness` -> `lufs` / `speechBand`). Thiếu valence hay arousal, hay bộ phân tích lỗi
@@ -39,9 +39,14 @@ Nhạc huấn luyện) cắm vào bằng `music_local.set_analyzer(hàm)`; kết
   "có lời", không chặn bài nào. Một bài: ffmpeg giải mã -> ba cửa sổ 10 giây ở 20 / 50 / 80% (bài ngắn: một cửa sổ) mono 48 kHz
   -> tháp âm thanh LAION-CLAP (L2 từng cửa sổ, trung bình, L2) -> cùng 42 đặc trưng âm học 22.050 Hz của bản nghiên cứu
   (`music_acoustic.py`, bản chép đúng số của `acoustic_features2.py`) -> đầu trò `student_head.npz` (z-score, 16 hàng: 13 cường
-  độ = sigmoid, valence / energy / tension kẹp -1..1). `sd` = RMSE giữ ngoài của từng trục, `confidence` cố định 0,5,
+  độ = sigmoid, valence / energy / tension kẹp -1..1, rồi hiệu chỉnh - xem đoạn dưới). `confidence` cố định 0,5,
   `fitsUnderNarration` và `family` đọc từ vector nhúng so với vector chữ đã tính sẵn (họ ngoài danh sách của app như "rock"
   -> `other`), `loudness.speechBand` = tỉ lệ năng lượng 300-3000 Hz. Bài < 3 giây hay file không giải mã được -> `None`.
+- **Hiệu chỉnh cho kho trộn** (`music_student.CALIBRATION`): V/E/T của trò bị nén về giữa, nên trong kho lẫn nhạc danh mục (số của thầy)
+  và nhạc nhập, bài nhập được chọn quá thường. Mỗi trục, theo từng đường chạy: `v' = kẹp(a + b*v, -1, 1)`; trò KHÔNG còn ghi `sd`
+  (bài nhập dùng `TRACK_SD_DEFAULT` như bài danh mục) mà ghi `vetVar` = phương sai dư của từng trục, và
+  `music_select.z_distance` cộng `VET_VAR_WEIGHT` (0,1) x `vetVar` vào tử số của trục ấy. Bài danh mục không có `vetVar` nên
+  khoảng cách không đổi. Số đã đo trên phép chấm mù, xem docs/MUSIC_RESEARCH.md "F2".
 - **Hai đường chạy** (`music_student.backend()`): máy có Studio (torch + transformers + librosa) chạy đường **torch** như mô tả
   trên. Bản app chỉ-nghe (Python nhúng, `shell/python/requirements.txt`: numpy + onnxruntime CPU) chạy đường **onnx**: mel numpy
   (`music_mel.py`, khớp transformers 1e-5 dB) -> tháp CLAP fp16 `clap_audio_fp16.onnx` -> đầu A `student_head_A.npz` (chỉ 512 chiều

@@ -80,8 +80,8 @@ def test_a_synthetic_track_gets_a_full_entry_that_survives_clean_analysis(tmp_pa
     song = _tones(tmp_path / "tones.wav")
     result = music_student.analyze(song)
     assert result is not None
-    assert {"valence", "arousal", "tension", "sd", "emotions", "confidence", "fitsUnderNarration", "family", "loudness"} <= result.keys()
-    assert result["confidence"] == 0.5 and set(result["sd"]) == {"valence", "arousal", "tension"}
+    assert {"valence", "arousal", "tension", "vetVar", "emotions", "confidence", "fitsUnderNarration", "family", "loudness"} <= result.keys()
+    assert result["confidence"] == 0.5 and set(result["vetVar"]) == {"valence", "arousal", "tension"} and "sd" not in result
     assert len(result["emotions"]) == 13 and all(0.0 <= v <= 1.0 for v in result["emotions"].values())
     assert 0.0 <= result["loudness"]["speechBand"] <= 1.0
     cleaned = music_local.clean_analysis(result)
@@ -139,6 +139,13 @@ def _vet(result: dict) -> np.ndarray:
     return np.array([result["valence"], result["arousal"], result["tension"]])
 
 
+def _calibrated(raw: np.ndarray, backend: str) -> np.ndarray:
+    """V/E/T thô của bản nghiên cứu -> số sau hiệu chỉnh F2 của đường `backend` (phép tính viết lại, không gọi code của app)."""
+    table = music_student.CALIBRATION[backend]
+    return np.array([np.clip(table[axis][0] + table[axis][1] * value, -1, 1)
+                     for axis, value in zip(("valence", "arousal", "tension"), raw)])
+
+
 def test_the_head_and_the_tower_reproduce_the_research_numbers(package: Path) -> None:
     """Hai nửa của đường chạy, mỗi nửa đối chiếu với bản nghiên cứu ở mức gần như tuyệt đối: (1) đầu trò + âm học cho cùng V/E/T khi
     nhận đúng vector nhúng của bản nghiên cứu; (2) tháp fp16 của gói cho gần như đúng vector nhúng ấy khi nhận đúng ba cửa sổ mà
@@ -149,7 +156,7 @@ def test_the_head_and_the_tower_reproduce_the_research_numbers(package: Path) ->
     for track in ids:
         embedding, acoustic, expected = _reference(track, stem)
         got = student.predict(embedding.astype(np.float64), acoustic)
-        assert np.abs(_vet(got) - expected).max() < 1e-3, track
+        assert np.abs(_vet(got) - _calibrated(expected, "torch")).max() < 1e-3, track
         path = MUSIC / "audio_incompetech" / (stem(track) + ".mp3")
         duration = music_local.read_tags(path)["duration"]
         clips = []
@@ -167,7 +174,7 @@ def test_the_app_prediction_stays_close_to_build_student_on_catalog_tracks(packa
     ids, stem = _reference_ids()
     worst = 0.0
     for track in ids:
-        expected = _reference(track, stem)[2]
+        expected = _calibrated(_reference(track, stem)[2], music_student.backend())
         got = music_student.analyze(MUSIC / "audio_incompetech" / (stem(track) + ".mp3"))
         assert got is not None, track
         diff = np.abs(expected - _vet(got))
@@ -177,8 +184,42 @@ def test_the_app_prediction_stays_close_to_build_student_on_catalog_tracks(packa
         print(f"\nmusic_student parity: max |diff| V/E/T = {worst:.4f} trên {len(ids)} bài")
 
 
+class _FakeHead(music_student._Head):
+    """Đầu giả 512 chiều, V/E/T thô = intercept (hệ số 0): thử riêng phần hiệu chỉnh mà không cần gói model."""
+
+    def __init__(self, backend: str, raw: tuple[float, float, float]) -> None:
+        self.backend = backend
+        self.mu, self.sd = np.zeros(512), np.ones(512)
+        self.names, self.emotions = [], ["peacefulness"]
+        self.coef, self.intercept = np.zeros((4, 512)), np.array([0.0, *raw])
+        self.background, self.family_names, self.family_text = np.ones((2, 512)), ["eastern"], np.ones((1, 512))
+
+
+@pytest.mark.parametrize("backend", ["torch", "onnx"])
+def test_the_head_calibrates_the_means_drops_sd_and_reports_the_residual_variance(backend: str) -> None:
+    embedding = np.zeros(512)
+    embedding[0] = 1.0
+    got = _FakeHead(backend, (0.1, -0.2, 0.0)).predict(embedding)
+    table = music_student.CALIBRATION[backend]
+    for axis, raw in (("valence", 0.1), ("arousal", -0.2), ("tension", 0.0)):
+        assert got[axis] == pytest.approx(table[axis][0] + table[axis][1] * raw)
+    assert got["vetVar"] == {axis: table[axis][2] for axis in table} and "sd" not in got
+    assert got["family"] == "eastern" and len(got["emotions"]) == 1 and got["confidence"] == music_student.CONFIDENCE
+    clipped = _FakeHead(backend, (0.99, -0.99, 5.0)).predict(embedding)
+    assert clipped["valence"] == 1.0 and clipped["tension"] == 1.0 and -1.0 <= clipped["arousal"] < 0.0
+    assert _FakeHead(backend, (-5.0, 0.0, 0.0)).predict(embedding)["valence"] == -1.0
+
+
+def test_the_constants_come_from_the_f2_fit() -> None:
+    assert music_student.CALIBRATION["torch"]["valence"] == (-0.055, 1.248, 0.0404)
+    assert music_student.CALIBRATION["onnx"]["tension"] == (0.009, 1.277, 0.0408)
+    assert all(len(v) == 3 for table in music_student.CALIBRATION.values() for v in table.values())
+    raw = _FakeHead("", (0.1, 0.2, 0.3)).predict(np.eye(512)[0])
+    assert (raw["valence"], raw["arousal"], raw["tension"]) == pytest.approx((0.1, 0.2, 0.3)) and "vetVar" not in raw
+
+
 # ---- đường ONNX (bản app chỉ-nghe: không torch / transformers / librosa) -------------------------------------------------------
-ONNX_KEYS = {"valence", "arousal", "tension", "sd", "emotions", "confidence", "fitsUnderNarration", "family"}
+ONNX_KEYS = {"valence", "arousal", "tension", "vetVar", "emotions", "confidence", "fitsUnderNarration", "family"}
 
 
 @pytest.fixture(scope="module")
@@ -231,7 +272,7 @@ def test_an_onnx_track_gets_a_full_entry_without_the_acoustic_key(tmp_path: Path
     result = music_student.analyze(song)
     assert result is not None and ONNX_KEYS <= result.keys()
     assert "loudness" not in result, "speechBand cần âm học: đường onnx không bịa"
-    assert result["confidence"] == 0.5 and set(result["sd"]) == {"valence", "arousal", "tension"}
+    assert result["confidence"] == 0.5 and set(result["vetVar"]) == {"valence", "arousal", "tension"} and "sd" not in result
     assert len(result["emotions"]) == 13 and all(0.0 <= v <= 1.0 for v in result["emotions"].values())
     cleaned = music_local.clean_analysis(result)
     assert cleaned is not None and cleaned["background"] == result["fitsUnderNarration"] and "speechBand" not in cleaned
@@ -266,7 +307,7 @@ def test_onnx_and_torch_agree_with_the_same_head_on_catalog_tracks(monkeypatch, 
     for path, result in zip(paths, got):
         clips = music_student._clap_windows(music_mel.decode(path, music_student.CLAP_RATE))
         expected = head.predict(tower.embed(clips))
-        diff = np.abs(_vet(result) - _vet(expected))
+        diff = np.abs(_vet(result) - _calibrated(_vet(expected), "onnx"))
         worst = max(worst, float(diff.max()))
         assert diff.max() < 0.02, f"{path.name}: V/E/T khác {diff.round(4).tolist()}"
         assert max(abs(result["emotions"][name] - value) for name, value in expected["emotions"].items()) < 0.02, path.name

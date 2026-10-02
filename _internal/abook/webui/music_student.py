@@ -7,7 +7,7 @@ Hai đường chạy, cùng một cách cắt cửa sổ và cùng khoá đầu 
      laion/clap-htsat-unfused (Apache-2.0, chỉ tháp âm thanh + phép chiếu) -> chuẩn hoá L2 từng cửa sổ -> trung bình -> chuẩn hoá L2;
   2. âm học 22.050 Hz (music_acoustic.py, bản chép đúng số của acoustic_features2);
   3. đầu trò (`student_head.npz`): z-score 512 CLAP + 42 âm học -> hồi quy tuyến tính 16 hàng; 13 cường độ cảm xúc = sigmoid,
-     valence / energy / tension kẹp -1..1. `fitsUnderNarration` và `family` đọc thẳng từ vector nhúng so với vector chữ đã tính sẵn
+     valence / energy / tension kẹp -1..1 rồi hiệu chỉnh cho kho trộn (CALIBRATION, kèm `vetVar`; không còn `sd`). `fitsUnderNarration` và `family` đọc thẳng từ vector nhúng so với vector chữ đã tính sẵn
      (app không cần tháp chữ).
 - onnx (bản app chỉ-nghe, Python nhúng chỉ có numpy + onnxruntime): mel numpy (music_mel.py) -> tháp CLAP fp16 ONNX trên CPU -> đầu
   trò A (`student_head_A.npz`, chỉ 512 chiều CLAP, không âm học). Cùng phép tính của đầu; bỏ `loudness.speechBand` (cần âm học).
@@ -149,8 +149,18 @@ def _download(directory: Path) -> bool:
     return _complete(directory, name)
 
 
+# Hiệu chỉnh số của trò cho kho TRỘN (nhạc nhập lẫn nhạc danh mục có số của thầy): V/E/T của trò bị nén về giữa nên bài nhập được chọn
+# quá thường. Mỗi trục (a, b, var): v' = kẹp(a + b*v, -1, 1) và `vetVar` = phương sai dư, music_select.z_distance cộng
+# VET_VAR_WEIGHT * var vào tử số. Khớp trên dự đoán chéo (cross-fit) so với số của thầy, từng đường một - docs/MUSIC_RESEARCH.md "F2".
+CALIBRATION = {
+    "torch": {"valence": (-0.055, 1.248, 0.0404), "arousal": (0.002, 1.102, 0.0307), "tension": (0.009, 1.242, 0.0396)},
+    "onnx": {"valence": (-0.055, 1.251, 0.0412), "arousal": (0.002, 1.096, 0.0309), "tension": (0.009, 1.277, 0.0408)},
+}
+
+
 class _Head:
-    """Đầu trò: z-score + hồi quy tuyến tính + vector chữ đã tính sẵn, dùng chung hai đường. Đầu A không có cột âm học (`names` rỗng)."""
+    """Đầu trò: z-score + hồi quy tuyến tính + vector chữ đã tính sẵn, dùng chung hai đường. Đầu A không có cột âm học (`names` rỗng).
+    Lớp con đặt `backend`; V/E/T ra theo CALIBRATION của đường ấy (lớp gốc, `backend` trống: số thô, không `vetVar`)."""
 
     backend = ""
 
@@ -162,7 +172,6 @@ class _Head:
         self.coef, self.intercept = head["coef"].astype(np.float64), head["intercept"].astype(np.float64)
         self.names = [str(name) for name in head["names"]] if "names" in head.files else []
         self.emotions = [str(name) for name in head["emos"]]
-        self.vet_sd = [float(value) for value in head["vet_sd"]]
         self.background = head["background_text"].astype(np.float64)
         self.family_names = [str(name) for name in head["family_names"]]
         self.family_text = head["family_text"].astype(np.float64)
@@ -181,13 +190,19 @@ class _Head:
         out = z @ self.coef.T + self.intercept
         count = len(self.emotions)
         intensity = 1.0 / (1.0 + np.exp(-out[:count]))
-        valence, energy, tension = (float(np.clip(value, -1.0, 1.0)) for value in out[count:])
+        # kẹp trước rồi mới hiệu chỉnh, đúng thứ tự lúc khớp CALIBRATION (dự đoán chéo đã kẹp -1..1)
+        raw = dict(zip(("valence", "arousal", "tension"), (float(np.clip(value, -1.0, 1.0)) for value in out[count:])))
+        calibration = CALIBRATION.get(self.backend, {})
+        # Không còn `sd` của trò (RMSE giữ ngoài): bài nhập dùng độ không chắc mặc định như bài danh mục, phần sai số của bộ đoán
+        # nằm ở `vetVar` (xem CALIBRATION).
+        vet = {axis: float(np.clip(value if not calibration else calibration[axis][0] + calibration[axis][1] * value, -1.0, 1.0))
+               for axis, value in raw.items()}
         pair = 100.0 * (self.background @ embedding)
         pair = np.exp(pair - pair.max())
         family = self.family_names[int(np.argmax(self.family_text @ embedding))]
         result: dict[str, Any] = {
-            "valence": valence, "arousal": energy, "tension": tension,
-            "sd": dict(zip(("valence", "arousal", "tension"), self.vet_sd)),
+            "valence": vet["valence"], "arousal": vet["arousal"], "tension": vet["tension"],
+            **({"vetVar": {axis: calibration[axis][2] for axis in vet}} if calibration else {}),
             "emotions": {name: float(value) for name, value in zip(self.emotions, intensity)},
             "confidence": CONFIDENCE,
             "fitsUnderNarration": float(pair[0] / pair.sum()),
