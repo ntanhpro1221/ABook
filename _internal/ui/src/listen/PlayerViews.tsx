@@ -604,6 +604,19 @@ function FadingNotice({ className }: { className?: string }) {
   );
 }
 
+/** Ghi công nhạc nền đang nghe (CC BY đòi nêu tác giả ở nơi nhạc phát): một dòng nhỏ, mờ; không có bài thì không hiện gì.
+ *  Giữ chuột lên dòng thì thấy nguyên văn ghi công của nguồn (attribution). */
+function MusicCreditLine() {
+  const { musicCredit } = usePlayer();
+  const label = [musicCredit?.title, musicCredit?.creator].filter(Boolean).join(" · ");
+  if (!musicCredit || !label) return null;
+  return (
+    <p className="mt-0.5 truncate text-xs text-fg-2" title={musicCredit.attribution || label}>
+      Nhạc nền: {label}
+    </p>
+  );
+}
+
 function TrackSubtitle() {
   const { track, error, purpose, atEnd } = usePlayer();
   if (!track) return null;
@@ -1378,6 +1391,7 @@ export function NowPlaying({ mobile = false, actions }: { mobile?: boolean; acti
             <TrackSubtitle />
           </p>
           <BookProgressLine />
+          <MusicCreditLine />
         </div>
         <div className="mt-5 w-full">
           <SeekBar large />

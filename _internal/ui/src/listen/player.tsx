@@ -6,7 +6,7 @@ import { coverArtwork, type CoverImage } from "@/shared/cover";
 import { formatClock } from "@/shared/format";
 import { Clock, ClockContext } from "./clock";
 import { isNative, type AudioEngine } from "./engine";
-import { MusicBed } from "./musicBed";
+import { MusicBed, type MusicCredit } from "./musicBed";
 import { resumePoint, type Bookmark, type ListenBook, type ListenChapter, type NightPosition } from "./model";
 import { NightRecorder } from "./night";
 import {
@@ -105,6 +105,8 @@ interface PlayerState {
   purpose: Purpose;
   /** Phát hết chương cuối đã có: "finished" nếu cuốn đã đủ, "caughtUp" nếu cuốn còn đang làm. */
   atEnd: "none" | "caughtUp" | "finished";
+  /** Ghi công bài nhạc nền đang nghe được (CC BY): null = không có nhạc / bài chưa có thông tin. */
+  musicCredit: MusicCredit | null;
   canGoBack: boolean;
   error: string;
   options: PlayerOptions;
@@ -227,6 +229,7 @@ export function PlayerProvider({
   const [purpose, setPurpose] = useState<Purpose>("listen");
   const [atEnd, setAtEnd] = useState<PlayerState["atEnd"]>("none");
   const [canGoBack, setCanGoBack] = useState(false);
+  const [musicCredit, setMusicCredit] = useState<MusicCredit | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [error, setError] = useState("");
 
@@ -336,15 +339,32 @@ export function PlayerProvider({
   // nguồn trả không mốc nào - trình phát chạy như cũ.
   const bed = useMemo(() => (native || !source.musicCues ? null : new MusicBed()), [native, source]);
   const bedChapter = track ? `${track.bookId}:${track.chapterId}` : "";
+  // Dòng ghi công (CC BY): bài đang nghe được -> thông tin tác giả của chương này, theo `link` của mốc.
+  const bedCredits = useRef<Record<string, MusicCredit>>({});
+  useEffect(() => {
+    if (!bed) {
+      setMusicCredit(null);
+      return;
+    }
+    const off = bed.onActiveChange((link) => setMusicCredit(link ? bedCredits.current[link] ?? null : null));
+    return () => {
+      off();
+      setMusicCredit(null);
+    };
+  }, [bed]);
   useEffect(() => {
     if (!bed || !track || !source.musicCues) return;
     let cancelled = false;
     source.musicCues(track.bookId, track.chapterId)
       .then((result) => {
-        if (!cancelled) bed.setCues(result.cues, result.levelDb);
+        if (cancelled) return;
+        bedCredits.current = result.credits ?? {};
+        bed.setCues(result.cues, result.levelDb);
       })
       .catch(() => {
-        if (!cancelled) bed.setCues([], -20);
+        if (cancelled) return;
+        bedCredits.current = {};
+        bed.setCues([], -20);
       });
     return () => {
       cancelled = true;
@@ -1133,11 +1153,11 @@ export function PlayerProvider({
 
   const value = useMemo<PlayerValue>(() => ({
     track, queue, playing, buffering, rate, volume, sleep, fading, sleepStoppedAt, lastSleepMinutes, purpose, atEnd,
-    canGoBack, error, options,
+    canGoBack, error, options, musicCredit,
     play, prepare, toggle, resume, pause, seek, skip, next, previous, jumpTo, goBack, setRate, setVolume, setSleep,
     extendSleep, addBookmark, close, switchRecord, positionStamp,
   }), [track, queue, playing, buffering, rate, volume, sleep, fading, sleepStoppedAt, lastSleepMinutes, purpose, atEnd,
-    canGoBack, error, options, play, prepare, toggle, resume, pause, seek, skip, next, previous, jumpTo, goBack, setRate,
+    canGoBack, error, options, musicCredit, play, prepare, toggle, resume, pause, seek, skip, next, previous, jumpTo, goBack, setRate,
     setVolume, setSleep, extendSleep, addBookmark, close, switchRecord, positionStamp]);
 
   // Mở/đóng "Đang nghe" qua View Transitions: bìa ở thanh phát bay lên thành bìa lớn (và bay về), phần còn lại mờ
