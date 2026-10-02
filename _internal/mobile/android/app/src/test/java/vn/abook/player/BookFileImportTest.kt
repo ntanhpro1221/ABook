@@ -422,6 +422,8 @@ class BookFileImportTest {
         assertTrue(File(dir, "edits/cover.jpg").readBytes().contentEquals(jpeg))
         assertEquals("Của tôi", again.title)
         assertEquals("Của tôi", Store.manifest(again.id)!!.getString("title"))
+        assertEquals("hai thay đổi của máy này được báo là giữ nguyên", 2, again.keptEdits)
+        assertEquals("cuốn mới chưa có gì để giữ", 0, first.keptEdits)
     }
 
     @Test
@@ -450,6 +452,7 @@ class BookFileImportTest {
         assertEquals("Của tôi", edits.getString("title"))
         assertEquals("Lu-xi-en", edits.getJSONObject("characters").getString("LUCIEN"))
         assertEquals("bản trên máy (nhiều chương hơn) giữ nguyên", 2, Store.rawManifest(first.id)!!.getInt("chaptersAvailable"))
+        assertEquals(1, again.keptEdits)
     }
 
     @Test

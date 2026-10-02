@@ -1,5 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { keptEditsTitle } from "@/shared/editsKept";
 import { EbookLibrary } from "./plugins";
 
 // Mở một file sách .abook (BookFileImport.kt): từ trình quản lý file, Zalo, Drive ("Mở bằng") hay nút "Mở file sách".
@@ -15,7 +16,7 @@ export function watchImports(client: QueryClient, open: (bookId: string) => void
     const bookId = event.bookId;
     void client.invalidateQueries({ queryKey: ["listen"] });
     void client.invalidateQueries({ queryKey: ["storage"] });
-    toast.success("Đã thêm sách vào Thư viện", {
+    toast.success(keptEditsTitle(event.keptEdits) ?? "Đã thêm sách vào Thư viện", {
       description: event.title || undefined,
       action: { label: "Mở sách", onClick: () => open(bookId) },
     });

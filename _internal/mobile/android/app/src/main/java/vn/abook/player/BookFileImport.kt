@@ -59,7 +59,9 @@ object BookFileImport {
     /** Lý do không nhận file - câu chữ để người dùng đọc. */
     class Refused(message: String) : Exception(message)
 
-    data class Imported(val id: String, val title: String)
+    /** `keptEdits`: số thay đổi của người nghe đã có sẵn trên cuốn này và được giữ nguyên (0 = cuốn mới hay chưa sửa gì) - giao
+     *  diện nói "giữ nguyên N chỉnh sửa của bạn". */
+    data class Imported(val id: String, val title: String, val keptEdits: Int = 0)
 
     /** Chép từ content:// (trình quản lý file, Zalo, Drive...) vào bộ nhớ đệm rồi nhập. */
     fun import(context: Context, uri: Uri): Imported {
@@ -188,10 +190,11 @@ object BookFileImport {
             val current = existing?.let { Store.rawManifest(it) }
             // Chỉ cuốn mở từ file mới nhận phần sửa của người nghe; cuốn của máy tính thì sửa ở máy ấy.
             val editable = existing == null || Store.isImported(existing)
+            val keptEdits = if (existing != null && editable) BookEdits.count(BookEdits.load(Store.bookDir(target))) else 0
             if (current != null && current.optInt("chaptersAvailable") > book.optInt("chaptersAvailable")) {
                 // Giữ bản trên máy, nhưng phần sửa trong file vẫn được hợp vào (bên máy này thắng) - không mất công của ai.
                 if (editable && BookEdits.count(incoming.edits) > 0) BookEdits.adopt(Store.bookDir(target), incoming.edits, incoming.cover)
-                return Imported(target, Store.manifest(target)?.optString("title") ?: current.optString("title"))
+                return Imported(target, Store.manifest(target)?.optString("title") ?: current.optString("title"), keptEdits)
             }
             val books = File(Store.root, "books").apply { mkdirs() }
             // File dự án: chỗ cần là cỡ phần nghe sẽ giải nén, không phải cả gói.
@@ -215,7 +218,7 @@ object BookFileImport {
                 staging.deleteRecursively()
             }
             Store.rememberChapters(target, chapters, imported = existing == null || Store.isImported(existing))
-            return Imported(target, Store.manifest(target)?.optString("title") ?: book.optString("title"))
+            return Imported(target, Store.manifest(target)?.optString("title") ?: book.optString("title"), keptEdits)
         }
     }
 

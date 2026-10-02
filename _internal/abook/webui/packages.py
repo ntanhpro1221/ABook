@@ -299,6 +299,9 @@ def import_file(source: Path, library_root: Path, projects: Iterable[Path],
                 if len(prints) <= len(theirs):
                     if report["edits"]:
                         report["merge"] = book_edits.adopt(existing, opened.edits, opened.edits_cover())
+                    elif not book_edits.is_empty(local := book_edits.load(existing)):
+                        # File không mang thay đổi nào, nhưng cuốn trên máy có: báo "giữ nguyên N thay đổi" cho người dùng.
+                        report["merge"] = book_edits.merge(local, book_edits.empty())[1]
                     return existing, "existing"
                 target = opened.extract(imported, existing.name)
                 report["merge"] = opened.last_merge

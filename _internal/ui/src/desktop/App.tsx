@@ -16,6 +16,7 @@ import { Button, Dialog, EmptyState, TooltipProvider } from "@/shared/ui";
 import { useMediaQuery, useModalOpen } from "@/shared/media";
 import type { ListenBook } from "@/listen/model";
 import { coverArtwork } from "@/shared/cover";
+import { keptEditsTitle } from "@/shared/editsKept";
 import { api } from "@/studio/api";
 import { pickFolder, useAppInfo, usePreferences } from "@/studio/data";
 import { NewProjectScreen } from "@/studio/NewProjectScreen";
@@ -266,23 +267,22 @@ function useOpenedBook() {
       }
       void client.invalidateQueries({ queryKey: ["listen"] });
       navigate(`/book/${result.id}`);
-      const [title, description] = OPENED_SAID[result.how ?? "new"];
-      toast.success(title, { description: mergeNote(result) ?? description });
+      const [said, description] = OPENED_SAID[result.how ?? "new"];
+      toast.success(keptEditsTitle(result.merge?.kept) ?? said, { description: mergeNote(result) ?? description });
       if (result.how === "project" && result.edits) offerFold(client, result.id, result.edits);
     },
     [client, navigate],
   );
 }
 
-/** File đã sửa mở vào cuốn có sẵn trên máy: nói thay đổi nào được giữ (không nói gì khi file không mang thay đổi). */
+/** File đã sửa mở vào cuốn có sẵn trên máy: nói thay đổi nào được lấy từ file và chỗ nào hai bên khác nhau (phần "giữ nguyên N
+ *  chỉnh sửa của bạn" đã nằm ở tiêu đề - keptEditsTitle). Không nói gì khi file không mang thay đổi. */
 function mergeNote(result: OpenedBook): string | undefined {
   const merge = result.merge;
-  if (!merge || (!merge.adopted && !merge.kept)) return undefined;
-  const parts = [];
-  if (merge.adopted) parts.push(`lấy ${merge.adopted} thay đổi từ file`);
-  if (merge.kept) parts.push(`giữ ${merge.kept} thay đổi của bạn`);
+  if (!merge || (!merge.adopted && !merge.conflicts)) return undefined;
+  const taken = merge.adopted ? `Đã lấy ${merge.adopted} thay đổi từ file.` : "";
   const conflict = merge.conflicts ? ` Chỗ hai bên khác nhau thì theo máy này (${merge.conflicts}).` : "";
-  return `Đã ${parts.join(", ")}.${conflict}`;
+  return `${taken}${conflict}`.trim();
 }
 
 /** File `.abook` mang thay đổi của người nghe, mở ra đúng dự án của máy này: hỏi có áp vào dự án không - thông báo có nút,
