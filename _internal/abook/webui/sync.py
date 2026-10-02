@@ -62,7 +62,8 @@ COMMAND_SECONDS = 15  # lệnh chưa tới tay điện thoại sau ngần này t
 # Lệnh đã giao mà chưa thấy kết quả (`acks`) sau ngần này thì giao lại: lần trả lời trước có thể đã rơi (mạng / Bluetooth
 # đứt giữa lúc hỏi dài - máy chủ không biết, lần hỏi mồ côi vẫn nhận lệnh). Máy nhận bỏ qua lệnh trùng mã.
 REDELIVER_SECONDS = 5
-REMOTE_ACTIONS = frozenset({"play", "pause", "toggle", "skip", "seek", "next", "previous", "jump", "rate", "load"})
+# "stop": dừng hẳn và trả thiết bị (Google Cast: đóng ứng dụng phát) - chỉ "Nghe trên máy này" gửi cho loa / TV Cast.
+REMOTE_ACTIONS = frozenset({"play", "pause", "toggle", "skip", "seek", "next", "previous", "jump", "rate", "load", "stop"})
 # Mã sách: library.book_id (24 hex), hay mã kiểu cũ của điện thoại chưa đổi khoá (đường dẫn base64, tới ~700 ký tự).
 BOOK_ID = re.compile(r"[A-Za-z0-9_-]{1,700}")
 LOCAL_PLAYER = "local"  # trình phát trong giao diện của chính máy này, một "thiết bị" của Remote riêng
@@ -459,7 +460,8 @@ class SyncApp:
         máy này vẫn là bên phục vụ audio và giữ chỗ nghe."""
         if self.cast is None:
             return []
-        return [{"id": item["device"], "name": item["name"], "kind": item["kind"], "stream": True, "books": [],
+        return [{"id": item["device"], "name": item["name"], "kind": item["kind"], "protocol": item["protocol"],
+                 "stream": True, "books": [],
                  "state": {key: item[key] for key in PLAYER_STATE} if item["bookId"] else None, "acks": [],
                  "age": item["age"]} for item in self.cast.view()]
 

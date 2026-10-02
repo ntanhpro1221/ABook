@@ -23,6 +23,11 @@ function KindIcon({ kind, className }: { kind: RemotePlayer["kind"]; className?:
   return <Icon className={className} />;
 }
 
+/** Cạnh tên thiết bị: chỉ Google Cast cần nói (DLNA là loa, TV thông thường). */
+function protocolLabel(remote: RemotePlayer): string | null {
+  return remote.protocol === "gcast" ? "Google Cast" : null;
+}
+
 interface PlayersView {
   players: RemotePlayer[];
   receivedAt: number;
@@ -134,6 +139,7 @@ function RemotePlayerBar({ remote, receivedAt, onDismiss }: { remote: RemotePlay
             <KindIcon kind={remote.kind} className="size-3.5 shrink-0" />
             <span className="truncate">
               {state.playing ? "Đang phát trên" : "Đang dừng trên"} {remote.name}
+              {protocolLabel(remote) && <span className="font-normal text-fg-3"> · {protocolLabel(remote)}</span>}
             </span>
           </div>
           <div className="truncate text-sm">
@@ -258,7 +264,7 @@ export function PhoneHandOffButton() {
   if (targets.length === 1) {
     const [only] = targets;
     return (
-      <IconButton label={`Phát trên ${only.name}`} icon={only.via === "cast" ? Cast : KIND_ICONS[only.kind] ?? Smartphone}
+      <IconButton label={`Phát trên ${only.name}${protocolLabel(only) ? ` (${protocolLabel(only)})` : ""}`} icon={only.via === "cast" ? Cast : KIND_ICONS[only.kind] ?? Smartphone}
         size="sm" onClick={() => void handOff(only)} />
     );
   }
@@ -281,6 +287,7 @@ export function PhoneHandOffButton() {
             >
               <KindIcon kind={target.kind} className="size-4 shrink-0 text-fg-2" />
               <span className="min-w-0 flex-1 truncate">{target.name}</span>
+              {protocolLabel(target) && <span className="shrink-0 text-xs text-fg-3">{protocolLabel(target)}</span>}
               {target.state?.bookId && target.state.playing && <span className="shrink-0 text-xs text-fg-3">đang phát</span>}
             </DropdownMenu.Item>
           ))}

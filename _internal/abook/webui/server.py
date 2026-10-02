@@ -42,6 +42,7 @@ from .voice_picker import voice_choices
 from .work_items import work_items
 from .cast import CastError, CastPlayers
 from .cast import search as cast_search
+from .gcast import discover as gcast_discover
 from .peer_players import PeerPlayers
 from .sync import (LOCAL_PLAYER, SYNC_PORT, Devices, ExclusiveHTTPServer, Remote, SyncApp, SyncServer, away_addresses,
                    local_addresses, remote_command)
@@ -140,6 +141,10 @@ def index_part(chain: list[Path], project: Path) -> int:
     return chain.index(project) + 1
 
 
+def _cast_discovery() -> bool:
+    return os.environ.get("ABOOK_CAST_DISCOVERY") != "0"
+
+
 class App:
     def __init__(
         self,
@@ -198,10 +203,12 @@ class App:
         self.computers = remote_books.Computers(preferences.path.with_name("computers.json"))
         remote_books.configure(self.computers)
         self.peer_players = PeerPlayers(self.computers)
-        # Loa / TV trong mạng nhà (DLNA, webui/cast.py): hiện trong danh sách máy như điện thoại, máy này phục vụ audio.
-        # ABOOK_CAST_DISCOVERY=0 tắt việc tìm (bài thử - tests/conftest.py - không gửi multicast ra mạng người chạy).
+        # Loa / TV trong mạng nhà (DLNA - webui/cast.py, Google Cast - webui/gcast.py): hiện trong danh sách máy như điện
+        # thoại, máy này phục vụ audio. ABOOK_CAST_DISCOVERY=0 tắt việc tìm cả hai (bài thử - tests/conftest.py - không gửi
+        # multicast ra mạng người chạy).
         self.cast = CastPlayers(self._cast_book, self._cast_audio, self._cast_save, cover=self._cast_cover,
-                                find=lambda: cast_search() if os.environ.get("ABOOK_CAST_DISCOVERY") != "0" else [])
+                                find=lambda: cast_search() if _cast_discovery() else [],
+                                find_google=lambda: gcast_discover() if _cast_discovery() else [])
         self._remote_refreshed = 0.0
         self._remote_lock = threading.Lock()
         self._state_synced: dict[str, float] = {}

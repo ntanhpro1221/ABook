@@ -28,6 +28,8 @@ export interface RemotePhone {
   /** Điện thoại báo lên máy tính này, máy đã ghép ở "Máy tính khác" (máy tính / điện thoại chia sẻ thư viện), hay loa /
    *  TV trong mạng nhà (phát mọi cuốn của máy này). */
   via: "remote" | "peer" | "cast";
+  /** Loa / TV (`via` cast): "dlna" (UPnP) hay "gcast" (Chromecast, Google TV, loa Nest - webui/gcast.py). Cast chỉ phát 1x. */
+  protocol?: "dlna" | "gcast";
   /** Cuốn ấy ở máy này (sách của chính máy này, hoặc cuốn ảo "Trên <máy kia>") - "Nghe trên máy này" mở đúng nó. */
   localBookId: string | null;
   bookId: string;
@@ -57,7 +59,7 @@ interface RemoteView {
 }
 
 type RemoteCommand =
-  | { action: "play" | "pause" | "toggle" | "next" | "previous" }
+  | { action: "play" | "pause" | "toggle" | "next" | "previous" | "stop" }
   | { action: "skip" | "seek"; seconds: number }
   | { action: "jump"; chapterId: number; seconds: number }
   | { action: "rate"; rate: number }
@@ -167,6 +169,11 @@ function useTicking(active: boolean) {
   }, [active]);
 }
 
+/** Tên giao thức cạnh tên thiết bị: chỉ Google Cast cần nói (DLNA là loa, TV thông thường). */
+export function protocolLabel(phone: Pick<RemotePhone, "protocol">): string | null {
+  return phone.protocol === "gcast" ? "Google Cast" : null;
+}
+
 function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; receivedAt: number; onDismiss: () => void }) {
   const command = useRemoteCommand();
   const player = usePlayer();
@@ -183,7 +190,8 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
     setMoving(true);
     try {
       const here = phonePosition(phone, receivedAt);
-      send({ action: "pause" });
+      // Google Cast: dừng hẳn để màn hình TV / loa về như cũ; DLNA và điện thoại chỉ cần tạm dừng.
+      send({ action: phone.protocol === "gcast" ? "stop" : "pause" });
       const book = await source.book(phone.localBookId ?? phone.bookId);
       player.play(book, book.chapters ?? [], phone.chapterId, here);
       onDismiss();
@@ -209,6 +217,7 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
               <DeviceIcon kind={phone.kind} className="size-3.5 shrink-0" />
               <span className="truncate">
                 {phone.playing ? "Đang phát trên" : "Đang dừng trên"} {phone.name}
+                {protocolLabel(phone) && <span className="font-normal text-fg-3"> · {protocolLabel(phone)}</span>}
               </span>
             </div>
             <div className="truncate text-sm">
@@ -356,7 +365,7 @@ export function HandOffButton({ className }: { className?: string }) {
     const [only] = targets;
     return (
       <IconButton
-        label={`Phát trên ${only.name}`}
+        label={`Phát trên ${only.name}${protocolLabel(only) ? ` (${protocolLabel(only)})` : ""}`}
         icon={only.via === "cast" ? Cast : MonitorSmartphone}
         size="sm"
         className={cn(className)}
@@ -388,6 +397,7 @@ export function HandOffButton({ className }: { className?: string }) {
             <DropdownMenu.Item key={target.device} onSelect={() => handOff(target)} className={MENU_ITEM}>
               <DeviceIcon kind={target.kind} className="size-4 shrink-0 text-fg-2" />
               <span className="min-w-0 flex-1 truncate">{target.name}</span>
+              {protocolLabel(target) && <span className="shrink-0 text-xs text-fg-3">{protocolLabel(target)}</span>}
               {target.bookId && target.playing && <span className="shrink-0 text-xs text-fg-3">đang phát</span>}
             </DropdownMenu.Item>
           ))}
