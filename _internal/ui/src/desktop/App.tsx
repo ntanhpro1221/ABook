@@ -13,7 +13,7 @@ import { ReaderScreen } from "@/listen/ReaderScreen";
 import { PlayerProvider, usePlayer } from "@/listen/player";
 import { SourceProvider } from "@/listen/source";
 import { Button, Dialog, EmptyState, TooltipProvider } from "@/shared/ui";
-import { useMediaQuery } from "@/shared/media";
+import { useMediaQuery, useModalOpen } from "@/shared/media";
 import type { ListenBook } from "@/listen/model";
 import { coverArtwork } from "@/shared/cover";
 import { api } from "@/studio/api";
@@ -404,6 +404,9 @@ export function App() {
   // Màn hẹp (Studio từ xa trên điện thoại): thông báo ở đầu màn như app Android - ở đáy nó đè trình phát nhỏ và thanh
   // điều hướng suốt 8 giây của nút "Hoàn tác" (soát UX 30-09).
   const narrow = useMediaQuery("(max-width: 639px)");
+  // Hộp thoại đang mở: thông báo (nhất là cái có nút "Ở lại đây") lên đầu màn, khỏi đè nút chính của hộp ở góc dưới
+  // (soát UX 02-10: "Thiết bị khác đã nghe tới chỗ khác" che "Xuất" và "Chọn").
+  const modalOpen = useModalOpen();
   if (!info) return <div className="grid h-full place-items-center text-fg-3">Đang mở ABook…</div>;
   return (
     <TooltipProvider delayDuration={350} skipDelayDuration={150}>
@@ -459,10 +462,12 @@ export function App() {
         </PlayerProvider>
       </SourceProvider>
       <Toaster
-        position={narrow ? "top-center" : "bottom-right"}
+        position={narrow || modalOpen ? "top-center" : "bottom-right"}
         // Đáy nâng lên khi có thanh "Đang phát trên điện thoại" (RemotePhone.tsx đặt --toast-bottom).
-        offset={{ top: 96, right: 96, left: 96, bottom: "var(--toast-bottom, 96px)" }}
+        offset={{ top: modalOpen ? 16 : 96, right: 96, left: 96, bottom: "var(--toast-bottom, 96px)" }}
         containerAriaLabel="Thông báo"
+        // Radix tắt chuột của mọi thứ ngoài hộp thoại đang mở: không có dòng này nút trong thông báo không bấm được.
+        className="pointer-events-auto"
         toastOptions={{
           classNames: {
             toast: "!bg-panel !border !border-line !text-fg !shadow-float !rounded-xl",

@@ -1,6 +1,6 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Cast, Laptop, Loader2, MonitorSpeaker, Pause, Play, Smartphone, Speaker, Tv, X } from "lucide-react";
+import { Cast, Laptop, Loader2, MonitorSpeaker, Pause, Play, RefreshCw, Smartphone, Speaker, Tv, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useClockReader } from "@/listen/clock";
@@ -236,15 +236,24 @@ export function PhoneHandOffButton() {
   const player = usePlayer();
   const readClock = useClockReader();
   const client = useQueryClient();
+  const [searching, setSearching] = useState(false);
   const track = player.track;
   if (!track || !data) return null;
+  // Tìm lại loa / TV ngay, không đợi nhịp 30 giây (DlnaPlayers.scan); hỏi lại danh sách khi lượt tìm (~2 giây) xong.
+  const rescan = () => {
+    setSearching(true);
+    void EbookLibrary.scanPlayers().catch(() => undefined);
+    window.setTimeout(() => {
+      setSearching(false);
+      void client.invalidateQueries({ queryKey: ["remote-players"] });
+    }, 2500);
+  };
   const peer = /^p([0-9a-f]{8})_/.exec(track.bookId)?.[1];
   const owner = data.players.find((remote) => remote.device === (peer ?? "main"));
   // Loa / TV: điện thoại tự chọn đường (RemotePlayers.kt) - sách đã có trên điện thoại thì phát thẳng ("dlna:"), sách
   // nghe thẳng từ máy tính thì nhờ máy tính ("cast:"); không đường nào được thì lời báo nói lý do.
   const speakers = data.players.filter((remote) => remote.via === "cast");
   const targets = [...(owner ? [owner] : []), ...speakers];
-  if (!targets.length) return null;
   const handOff = async (target: RemotePlayer) => {
     const seconds = readClock().time;
     // Loa / TV mất vài giây (máy tính đưa chương, TV tải rồi mới tua tới đúng chỗ): có dòng "Đang mở…" tới lúc ấy.
@@ -270,7 +279,11 @@ export function PhoneHandOffButton() {
     );
   }
   return (
-    <DropdownMenu.Root>
+    <DropdownMenu.Root
+      onOpenChange={(open) => {
+        if (open && !searching) rescan();
+      }}
+    >
       <DropdownMenu.Trigger
         aria-label="Phát trên thiết bị khác"
         className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-fg-2 active:bg-hover data-[state=open]:bg-hover data-[state=open]:text-fg"
@@ -280,6 +293,25 @@ export function PhoneHandOffButton() {
       <DropdownMenu.Portal>
         <DropdownMenu.Content side="top" align="end" sideOffset={8} collisionPadding={12} className="z-50 min-w-56 max-w-[calc(100vw-24px)] rounded-xl border border-line bg-panel p-1.5 shadow-float">
           <DropdownMenu.Label className="px-2 pb-1 pt-0.5 text-xs font-medium text-fg-3">Phát trên</DropdownMenu.Label>
+          {/* Không có máy nào: nói rõ thay vì để nút biến mất (TV tắt, khác mạng Wi-Fi). */}
+          {!targets.length && (
+            <>
+              <div role="status" className="px-2 py-1.5 text-sm text-fg-2">
+                {searching ? "Đang tìm loa / TV trong mạng…" : "Không thấy loa / TV nào trong mạng"}
+              </div>
+              <DropdownMenu.Item
+                disabled={searching}
+                onSelect={(event) => {
+                  event.preventDefault();
+                  rescan();
+                }}
+                className="flex h-11 cursor-default items-center gap-2 rounded-lg px-2 text-sm text-accent-text outline-none data-[disabled]:text-fg-3 data-[highlighted]:bg-hover"
+              >
+                {searching ? <Loader2 className="size-4 shrink-0 animate-spin" /> : <RefreshCw className="size-4 shrink-0" />}
+                Tìm lại
+              </DropdownMenu.Item>
+            </>
+          )}
           {targets.map((target) => (
             <DropdownMenu.Item
               key={target.device}

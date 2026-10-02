@@ -20,6 +20,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   TV DLNA. Điện thoại cũng tự tìm thấy các thiết bị này và phát sách đã có trên máy, không cần mở máy tính (ghi "Google
   Cast" cạnh tên, bấm "Nghe ở đây" thì thiết bị trở về như cũ); sách của máy tính thì điện thoại đã ghép vẫn điều khiển
   được thiết bị qua máy tính.
+- **Vân tay máy đã ghép hiện ngay trong danh sách** ("Máy tính khác" trên máy tính; thẻ máy tính và "Thiết bị khác" trên
+  điện thoại) để đối chiếu với dòng "Vân tay" đang hiện bên máy kia. Và nút **"Phát trên…" không biến mất** khi chưa thấy
+  loa / TV nào: mở ra là "Không thấy loa / TV nào trong mạng" cùng nút "Tìm lại".
 
 ## [0.4.19] - 2026-10-02
 

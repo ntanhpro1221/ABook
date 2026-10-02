@@ -3,7 +3,7 @@ import * as TabsPrimitive from "@radix-ui/react-tabs";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { Loader2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import type { ButtonHTMLAttributes, ComponentType, CSSProperties, ReactNode } from "react";
+import type { ButtonHTMLAttributes, ComponentType, CSSProperties, ReactNode, Ref } from "react";
 import { cn } from "@/shared/cn";
 
 type IconType = ComponentType<{ className?: string; strokeWidth?: number }>;
@@ -32,6 +32,8 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: Size;
   icon?: IconType;
   loading?: boolean;
+  /** React 19: `ref` đi như một prop thường - đủ để chỗ gọi đặt tiêu điểm về nút (vd TemplateBar sau khi lưu mẫu). */
+  ref?: Ref<HTMLButtonElement>;
 }
 
 export function Button({
@@ -283,6 +285,12 @@ export function TabsTrigger({ value, children, count }: { value: string; childre
   );
 }
 
+/** Bấm vào thông báo (Toaster của sonner) trong lúc hộp thoại đang mở không được tính là bấm ra ngoài hộp - hộp đóng mất chữ đang
+ *  gõ. Dùng cho `onInteractOutside` của Dialog / Sheet; Toaster đặt `pointer-events-auto` để nút trong thông báo bấm được. */
+function keepOpenForToasts(event: { target: EventTarget | null; preventDefault: () => void }) {
+  if (event.target instanceof Element && event.target.closest("[data-sonner-toaster]")) event.preventDefault();
+}
+
 // ---- Hộp thoại --------------------------------------------------------------------------------------------
 
 export function Dialog({
@@ -309,6 +317,7 @@ export function Dialog({
             "fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-line bg-panel p-6 shadow-float focus:outline-none",
             width,
           )}
+          onInteractOutside={keepOpenForToasts}
           onOpenAutoFocus={(event) => {
             // Radix đặt con trỏ vào thứ bấm được đầu tiên - nút X ở đầu hộp - đè lên `autoFocus` của ô nhập (soát UX 30-09:
             // hộp Đổi tên). Ô nào mang `data-autofocus` thì nhận con trỏ, chữ có sẵn được chọn để gõ đè.
@@ -365,6 +374,7 @@ export function Sheet({
           aria-describedby={undefined}
           onCloseAutoFocus={(event) => event.preventDefault()}
           onEscapeKeyDown={onEscapeKeyDown}
+          onInteractOutside={keepOpenForToasts}
           className="fixed inset-x-0 bottom-0 z-50 max-h-[85dvh] overflow-y-auto overscroll-contain rounded-t-2xl border-t border-line bg-panel px-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-2 shadow-float focus:outline-none"
         >
           <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-line-strong" aria-hidden />
