@@ -227,10 +227,21 @@ export function useCreateBook() {
       seedFrom?: string;
       /** "Sửa thiết lập": cuốn chưa bắt đầu được thay - tạo xong thì nó vào Thùng rác (bìa đi theo). */
       replaces?: string;
+      /** "Chia thành nhiều tập": số chương đầu (từ 1) của mỗi tập trong `paths` - tập 1 là sách thường, các tập sau là phần
+       *  nối tiếp xếp hàng sau nó (App._create_volumes). */
+      volumeStarts?: number[];
       start: boolean;
     }) =>
       // `sharedReadings`: các từ của cách đọc chung có trong truyện - sách mới nhận luôn (webui/shared_readings.py).
-      api<{ id: string; sharedReadings?: string[]; queued?: number; replaceError?: string; unchanged?: boolean }>("/api/books", {
+      // `parts`: các tập đã tạo theo thứ tự (chỉ khi chia nhiều tập), `queued` là chỗ của từng tập trong hàng chờ.
+      api<{
+        id: string;
+        sharedReadings?: string[];
+        queued?: number;
+        replaceError?: string;
+        unchanged?: boolean;
+        parts?: { id: string; part: number; queued: number }[];
+      }>("/api/books", {
         method: "POST",
         body,
       }),

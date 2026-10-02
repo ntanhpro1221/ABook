@@ -1,4 +1,5 @@
 import type { CoverImage } from "@/shared/cover";
+import type { VolumeProposal } from "@/studio/volumes";
 // Hợp đồng với server Python (abook/webui/server.py). Mọi chữ hiển thị đã được server dịch sẵn
 // sang tiếng Việt (humanize.py); ở đây chỉ định kiểu và gọi.
 
@@ -44,6 +45,8 @@ export interface BookSummary {
   canPause?: boolean;
   /** Phần nối tiếp của "Làm tiếp cuốn này" (continues.json): mã phần đầu + thứ tự phần; phần đầu và sách lẻ: null. */
   series?: { root: string; part: number } | null;
+  /** Tập tạo cùng lúc với tập trước ("Tạo nhiều tập"): giọng và cách đọc tên gieo từ tập trước lúc tập này bắt đầu chạy. */
+  seedPending?: boolean;
   broken?: string;
   /** Ảnh bìa thật (webui/covers.py), hoặc null khi dùng bìa vẽ từ tên. */
   cover?: CoverImage | null;
@@ -173,6 +176,8 @@ export interface ScanResult {
   errors?: string[];
   /** Không phải lỗi nhưng nên biết (thư mục có cả TXT lẫn EPUB: chỉ lấy TXT). */
   notes?: string[];
+  /** Nhiều tập trong một nguồn (webui/volumes.py): máy ĐỀ XUẤT chia, null khi chỉ một tập. */
+  volumes?: VolumeProposal | null;
   suggestedTitle: string;
   totals: { chapters: number; words: number; audioSeconds: number };
   /** Dự án đã làm từ chính những file này (so nội dung): `shared` file trùng, dự án ấy có `chapters` chương. */

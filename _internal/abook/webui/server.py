@@ -28,7 +28,7 @@ from urllib.parse import parse_qs, quote, unquote, urlsplit
 
 from .. import aliases, bracket_rule, continuation, listener_overrides
 from . import (actions, bookfile, cover_search, covers, humanize, listen_view, music_catalog, music_plan,
-               music_select, packages, projectfile, remote_config, shared_readings, store)
+               music_select, packages, projectfile, remote_config, shared_readings, store, volumes)
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, legacy_ids
 from .listening import RECORD_ID, Listening
@@ -295,6 +295,8 @@ class App:
         # Phần nối tiếp của "Làm tiếp cuốn này": danh sách Dự án gom theo chuỗi, không theo tên (soát UX 29-09, N10).
         place = continuation.series_of(path)
         result["series"] = {"root": book_id(place[0]), "part": place[1]} if place else None
+        # Tập tạo cùng lúc với tập trước ("Tạo nhiều tập"): giọng và cách đọc tên sẽ gieo từ tập trước lúc nó bắt đầu chạy.
+        result["seedPending"] = continuation.seed_pending(path)
         if result["paused"]:
             result["statusLabel"] = humanize.pause_label(result["paused"], reached=result.get("status") == "paused")
             result["eta"] = None
@@ -327,7 +329,12 @@ class App:
                 with self._queue_lock:
                     if self.queue and self.queue[0] == head:
                         self.queue.pop(0)
-                self._launch(path)
+                try:
+                    self._launch(path)
+                except ApiError as error:
+                    # Không chạy được (phần trước chưa phân vai xong): ra khỏi hàng, nói ở trang sách; các phần sau trong hàng
+                    # cũng sẽ gặp đúng lỗi này và nói như thế.
+                    self.jobs.fail(path, error.message)
 
     def library_view(self) -> dict[str, Any]:
         books = []
@@ -353,12 +360,7 @@ class App:
         if self.runner.running(path):
             return self.summary(path)
         if not now and self._busy_elsewhere(path) is not None:
-            with self._queue_lock:
-                if value not in self.queue:
-                    self.queue.append(value)
-                if self._queue_thread is None:
-                    self._queue_thread = threading.Thread(target=self._drain_queue, name="production-queue", daemon=True)
-                    self._queue_thread.start()
+            self._enqueue(value)
             return self.summary(path)
         with self._queue_lock:
             if value in self.queue:
@@ -366,12 +368,38 @@ class App:
         self._launch(path)
         return self.summary(path)
 
+    def _enqueue(self, value: str) -> None:
+        with self._queue_lock:
+            if value not in self.queue:
+                self.queue.append(value)
+            if self._queue_thread is None:
+                self._queue_thread = threading.Thread(target=self._drain_queue, name="production-queue", daemon=True)
+                self._queue_thread.start()
+
+    def _queue_successors(self, path: Path) -> None:
+        """Các phần sau của "Tạo nhiều tập" còn chờ gieo (continuation.seed_pending) xếp hàng theo thứ tự sau phần vừa chạy,
+        trừ phần đã xếp hàng / đang chạy. Hàng đợi chỉ sống cùng app: mở lại app thì không gì tự chạy, nhưng bấm chạy một phần
+        là các phần chờ sau nó vào hàng lại."""
+        chain = continuation.series_parts(path, self.library.projects())
+        here = path.resolve()
+        for part in chain[chain.index(here) + 1:] if here in chain else []:
+            if continuation.seed_pending(part) and not self.runner.running(part) and not self.jobs.starting(part):
+                self._enqueue(book_id(part))
+
     def _launch(self, path: Path) -> None:
         """Khởi động lượt chạy và ghi mốc (store.mark_run_started) - mốc lấy TRƯỚC khi khởi động: yêu cầu ghi trong lúc
-        khởi động vẫn tính là đang chờ; khởi động hỏng thì không ghi gì."""
+        khởi động vẫn tính là đang chờ; khởi động hỏng thì không ghi gì.
+
+        Phần nối tiếp tạo cùng lúc với phần trước ("Tạo nhiều tập", continuation.link_pending) gieo ở đây: tới lượt chạy thì
+        phần trước đã phân vai xong, và đây vẫn là sau `create` - trước mọi câu phân tích của phần này."""
+        try:
+            continuation.seed_when_ready(path)
+        except continuation.ContinuationError as error:
+            raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
         started_at = time.time()
         self.jobs.start(path)
         store.mark_run_started(path, started_at)
+        self._queue_successors(path)
 
     def pause(self, value: str, paused: bool) -> dict[str, Any]:
         """"Tạm dừng" / "Tiếp tục" cuốn đang chạy: tiến trình vẫn sống, dây chuyền đứng ở checkpoint kế rồi làm tiếp đúng
@@ -536,9 +564,43 @@ class App:
             overrides["analysis"] = {**(overrides.get("analysis") or {}), "model": chosen}
         return overrides or None
 
+    def _create_book(self, body: dict[str, Any], paths: list[str], title: str,
+                     first_person_chapters: dict[str, str] | None) -> Path:
+        """Tạo một dự án từ các lựa chọn của trình tạo sách - dùng chung cho sách thường và từng tập của "Tạo nhiều tập"."""
+        root = actions.create_book(
+            self.library.root, paths, title, str(body.get("profile", "high_quality")),
+            humanize.voice_key(str(body.get("narrator", ""))), str(body.get("firstPerson", "")),
+            settings_overrides=self._analysis_overrides(str(body.get("analysisModel", "") or "")),
+            first_person_chapters=first_person_chapters,
+            drop_credit_lines=body["dropCreditLines"] if isinstance(body.get("dropCreditLines"), bool) else None,
+        )
+        self.preferences.add_recent(root)
+        return root
+
+    def _apply_shared_readings(self, root: Path, paths: list[str]) -> list[str]:
+        """Cách đọc dùng chung: mục nào có trong truyện thì sách mới nhận luôn, như người dùng sửa từng tên (trước khi chạy -
+        chưa có câu nào phải thu lại)."""
+        return shared_readings.apply(root, shared_readings.present(self.shared_readings.entries(),
+                                                                   shared_readings.file_texts(paths)))
+
+    def _queue_position(self, root: Path) -> int:
+        with self._queue_lock:
+            return self.queue.index(book_id(root)) + 1 if book_id(root) in self.queue else 0
+
+    @staticmethod
+    def _first_person_chapters(body: dict[str, Any]) -> dict[str, str] | None:
+        chapters = body.get("firstPersonChapters")
+        return {str(key): str(value) for key, value in chapters.items()} if isinstance(chapters, dict) else None
+
     def create(self, body: dict[str, Any]) -> dict[str, Any]:
         self._mutating()
         paths = [str(item) for item in body.get("paths", [])]
+        try:
+            split = volumes.split_paths(paths, body.get("volumeStarts"))
+        except ValueError as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+        if len(split) > 1:
+            return self._create_volumes(body, split)
         # "Làm tiếp cuốn này": phần mới gieo từ phần trước (continuation.py) - tìm phần trước TRƯỚC khi tạo, để id sai
         # không để lại một dự án mồ côi.
         previous = self._book(str(body["seedFrom"])) if body.get("seedFrom") else None
@@ -549,15 +611,7 @@ class App:
                                      or not store.not_started(replaced)):
             raise ApiError(HTTPStatus.CONFLICT, "Sách cũ đã bắt đầu chạy - không làm lại được nữa. Tạo sách mới hay dùng "
                                                 "“Làm tiếp cuốn này”.")
-        root = actions.create_book(
-            self.library.root, paths, str(body.get("title", "")), str(body.get("profile", "high_quality")),
-            humanize.voice_key(str(body.get("narrator", ""))), str(body.get("firstPerson", "")),
-            settings_overrides=self._analysis_overrides(str(body.get("analysisModel", "") or "")),
-            first_person_chapters={str(key): str(value) for key, value in body["firstPersonChapters"].items()}
-            if isinstance(body.get("firstPersonChapters"), dict) else None,
-            drop_credit_lines=body["dropCreditLines"] if isinstance(body.get("dropCreditLines"), bool) else None,
-        )
-        self.preferences.add_recent(root)
+        root = self._create_book(body, paths, str(body.get("title", "")), self._first_person_chapters(body))
         replace_error = ""
         unchanged = replaced is not None and root.resolve() == replaced.resolve()
         if unchanged:
@@ -581,20 +635,58 @@ class App:
             except continuation.ContinuationError as error:
                 raise ApiError(HTTPStatus.CONFLICT,
                                f"Đã tạo sách nhưng không mang được gì từ phần trước: {error}") from error
-        # Cách đọc dùng chung: mục nào có trong truyện thì sách mới nhận luôn, như người dùng sửa từng tên (trước khi chạy -
-        # chưa có câu nào phải thu lại).
-        shared = shared_readings.apply(root, shared_readings.present(self.shared_readings.entries(),
-                                                                      shared_readings.file_texts(paths)))
+        shared = self._apply_shared_readings(root, paths)
         if body.get("start"):
             # Qua hàng đợi như nút "Bắt đầu": cuốn đang chạy thì cuốn mới xếp hàng, không tranh GPU (soát 28-09 - trước
             # đây "Tạo + bắt đầu ngay" chạy song song với cuốn đang sản xuất).
             self.start(book_id(root))
         # Đang có cuốn khác chạy thì cuốn mới vào hàng chờ: lời báo nói đúng thế, không "Đang khởi động" (soát UX a6 01-10).
-        with self._queue_lock:
-            queued = self.queue.index(book_id(root)) + 1 if book_id(root) in self.queue else 0
+        queued = self._queue_position(root)
         return {"id": book_id(root), "sharedReadings": shared, "queued": queued,
                 **({"replaceError": replace_error} if replace_error else {}),
                 **({"unchanged": True} if unchanged else {})}
+
+    def _create_volumes(self, body: dict[str, Any], split: list[list[str]]) -> dict[str, Any]:
+        """"Tạo nhiều tập" (B7): tập 1 là sách thường (qua `create`: kể cả "Làm tiếp cuốn này" / "Sửa thiết lập" nếu có), các
+        tập sau là phần nối tiếp "Tên · Phần N" trong chuỗi continues.json - đúng quy ước của "Làm tiếp cuốn này".
+
+        Các tập sau tạo NGAY (người dùng thấy đủ bộ, đúng thứ tự) nhưng chưa gieo: tập 1 chưa chạy nên chưa có nhân vật hay
+        giọng để mang. Chúng ghi cờ "chờ gieo" (continuation.link_pending); `_launch` gieo từ phần trước đúng lúc tập ấy bắt
+        đầu chạy - tức sau khi phần trước phân vai xong (hàng đợi chỉ cho chạy khi không cuốn nào khác đang chạy)."""
+        title = str(body.get("title", ""))
+        chapters = self._first_person_chapters(body)
+        sizes = [len(volume) for volume in split]
+        offsets = [sum(sizes[:index]) for index in range(len(split))]
+        for number, volume in enumerate(split, start=1):
+            if volumes.reading_order_problem(volume):
+                raise ApiError(HTTPStatus.BAD_REQUEST, f"Tập {number} gồm chương của nhiều thư mục mà tên file xen nhau - dây chuyền "
+                                                       "xếp chương theo tên file nên không giữ được thứ tự đọc. Dời chỗ cắt về ranh "
+                                                       "giới giữa hai thư mục.")
+        first = self.create({**body, "paths": split[0], "volumeStarts": None,
+                             "firstPersonChapters": volumes.localize_chapters(chapters, offsets[0], sizes[0]) or {}})
+        parts = [{"id": first["id"], "part": 1, "queued": first.get("queued", 0)}]
+        made: list[str] = []
+        previous = self._book(first["id"])
+        try:
+            for number, volume in enumerate(split[1:], start=2):
+                root = self._create_book(body, volume, continuation.continued_title(title, number),
+                                         volumes.localize_chapters(chapters, offsets[number - 1], sizes[number - 1]))
+                made.append(book_id(root))
+                continuation.link_pending(previous, root)
+                self._apply_shared_readings(root, volume)
+                previous = root
+                if body.get("start"):
+                    self._enqueue(book_id(root))  # sau tập trước, đúng thứ tự (tập 1 đang chạy hay đang khởi động)
+                parts.append({"id": book_id(root), "part": number, "queued": self._queue_position(root)})
+        except (ValueError, continuation.ContinuationError, OSError) as error:
+            # Bộ dở dang không dùng được (tập sau nối vào chuỗi nào?): bỏ các tập sau vừa tạo, giữ tập 1 như sách thường.
+            for made_id in made:
+                try:
+                    self.delete(made_id)
+                except ApiError:
+                    pass
+            raise ApiError(HTTPStatus.CONFLICT, f"Đã tạo tập 1 nhưng không tạo được tập {len(parts) + 1}: {error}") from error
+        return {**first, "parts": parts}
 
     def shared_readings_view(self) -> dict[str, Any]:
         return {"entries": self.shared_readings.entries()}

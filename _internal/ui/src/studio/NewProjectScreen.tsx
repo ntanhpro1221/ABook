@@ -19,7 +19,7 @@ import {
   Upload,
   Wand2,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { Switch } from "@/desktop/PhoneSync";
@@ -47,6 +47,8 @@ import { api } from "@/studio/api";
 import { chapterNumberIssues } from "@/studio/chapterNumbers";
 import { uploadChapters } from "@/studio/upload";
 import { AnalysisModelPicker, modelLabel } from "@/studio/AnalysisModelPicker";
+import { VolumeSplit } from "@/studio/VolumeSplit";
+import { inOrder, ranges, startNumbers, volumeTitles } from "@/studio/volumes";
 
 type Profile = "fast" | "balanced" | "high_quality";
 
@@ -125,6 +127,8 @@ interface Draft {
   /** Chip "Đợt này làm N chương đầu": N chương đầu trong số chương CHƯA bị bỏ tay (null/không có = tất cả). Tách khỏi
    *  `excluded` - trước đây chip ghi đè danh sách bỏ tay, chương vừa bỏ tự quay lại (soát UX 29-09). */
   limit?: number | null;
+  /** "Chia thành nhiều tập" (B7): đường dẫn chương đầu mỗi tập người dùng đã đồng ý chia; null/không có = một sách. */
+  volumeStarts?: string[] | null;
   /** Người dùng ĐỒNG Ý bỏ dòng ghi công người dịch khỏi phần đọc. Mặc định không: app không tự sửa nội dung truyện. */
   dropCredits?: boolean;
   /** Model đọc hiểu truyện chỉ cho cuốn này ("" hay không có = mặc định của app). */
@@ -243,7 +247,15 @@ function SourceStep({
   onSplit,
   previousLast,
   replaces,
+  volumeSplit,
+  splitting,
+  volumeStarts,
 }: {
+  /** Số chương đầu mỗi tập khi đang chia: số chương soát riêng từng tập (mỗi tập đánh số lại từ 1). */
+  volumeStarts?: number[];
+  /** "Chia thành nhiều tập": khung đề xuất / danh sách tập (VolumeSplit) và đang chia hay không (chia rồi thì "N chương đầu" vô nghĩa). */
+  volumeSplit?: ReactNode;
+  splitting?: boolean;
   /** "Sửa thiết lập": cuốn đang được làm lại - không nhắc "đã có dự án" về chính nó. */
   replaces?: { id: string; title: string };
   scan: ScanResult | null;
@@ -380,7 +392,18 @@ function SourceStep({
               {problem.subfolders.length > 0 && (
                 <div className="mt-2 space-y-1">
                   <div className="text-fg-2">Có lẽ nên chọn thư mục con:</div>
-                  {problem.subfolders.map((folder) => (
+                  {problem.subfolders.length > 1 && (
+                    // Light novel ra từng tập, mỗi tập một thư mục: chọn cả bộ một lần; bước sau ĐỀ XUẤT chia tập, người dùng bấm mới chia.
+                    <button
+                      type="button"
+                      onClick={() => onPaths(problem.subfolders)}
+                      className="flex w-full items-center gap-2 truncate rounded-lg border border-accent/50 bg-panel px-3 py-2 text-left font-medium text-fg hover:border-accent"
+                    >
+                      <Layers className="size-4 shrink-0 text-accent-text" />
+                      <span className="truncate">Dùng cả {problem.subfolders.length} thư mục - mỗi thư mục một tập</span>
+                    </button>
+                  )}
+                  {problem.subfolders.slice(0, 8).map((folder) => (
                     <button
                       key={folder}
                       type="button"
@@ -450,7 +473,18 @@ function SourceStep({
           {files.filter((file) => file.split).map((file) => (
             <SplitSuggestion key={file.path} file={file} onSplit={onSplit} />
           ))}
-          <ChapterNumberWarning issues={chapterNumberIssues(files, previousLast)} />
+          <ChapterNumberWarning
+            issues={
+              splitting && volumeStarts
+                ? ranges(volumeStarts, files.length).flatMap((part, index) =>
+                    chapterNumberIssues(files.slice(part.start - 1, part.end), index === 0 ? previousLast : undefined).map(
+                      (issue) => `Phần ${index + 1}: ${issue}`,
+                    ),
+                  )
+                : chapterNumberIssues(files, previousLast)
+            }
+          />
+          {volumeSplit}
           <CreditSuggestion credits={creditSummary(files)} accepted={dropCredits} onChange={onDropCredits} />
           <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
             <div className="tabular text-sm text-fg-2">
@@ -470,7 +504,7 @@ function SourceStep({
           </div>
           {/* Truyện dài (còn ra tiếp, hay làm từng đợt bằng "Làm tiếp cuốn này"): bỏ từng chương một thì không xuể - chọn
               nhanh làm N chương đầu, phần còn lại để đợt sau. */}
-          {total > CHAPTER_LIMITS[0] && (
+          {total > CHAPTER_LIMITS[0] && !splitting && (
             <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-fg-2">
               <span>Đợt này làm</span>
               <Segmented<string>
@@ -1116,11 +1150,14 @@ function ConfirmStep({
   povChapters,
   profile,
   seed,
+  volumes,
   startNow,
   setStartNow,
   dropCredits,
   analysisModel,
 }: {
+  /** "Chia thành nhiều tập": các tập sẽ tạo (số chương mỗi tập), hay không có khi là một sách. */
+  volumes?: { chapters: number }[];
   title: string;
   scan: ScanResult;
   narrator: string;
@@ -1139,6 +1176,13 @@ function ConfirmStep({
   const measured = profile === "high_quality";
   const rows: [string, string][] = [
     ["Chương", `${scan.files.length} chương · ${formatNumber(scan.totals.words)} chữ`],
+    // Tập 1 là sách thường, tập sau nối tiếp nó (continuation.py): nói rõ tên từng sách và việc "tự chạy khi tập trước xong".
+    ...(volumes
+      ? ([
+          ["Chia thành", `${volumes.length} phần: ${volumeTitles(title, volumes.length).map((name, index) => `“${name}” (${formatNumber(volumes[index].chapters)} chương)`).join(", ")}`],
+          ["Các phần sau", startNow ? "Xếp hàng sau phần trước, tự bắt đầu khi phần trước xong; mang giọng nhân vật và cách đọc tên từ phần trước" : "Bấm bắt đầu phần 1 thì các phần sau tự xếp hàng; mang giọng nhân vật và cách đọc tên từ phần trước"],
+        ] as [string, string][])
+      : []),
     ...(dropCredits
       ? ([["Dòng ghi công", `bỏ ${formatNumber(creditSummary(scan.files).lines)} dòng khỏi phần đọc`]] as [string, string][])
       : []),
@@ -1344,14 +1388,25 @@ export function NewProjectScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draft.paths.join("\n")]);
 
+  // Chia nhiều tập: các chương theo thứ tự của đề xuất (mỗi thư mục / EPUB liền nhau - quét theo tên file thì chương các tập
+  // xen nhau), và "N chương đầu" không áp (nó cắt một sách, không phải một bộ).
+  const splitting = draft.volumeStarts != null;
+  const ordered = useMemo(
+    () => (rawScan ? (splitting ? inOrder(rawScan.files, rawScan.volumes?.order) : rawScan.files) : []),
+    [rawScan, splitting],
+  );
   const scan = useMemo<ScanResult | null>(() => {
     if (!rawScan) return null;
     const excluded = new Set(draft.excluded);
-    const kept = rawScan.files.filter((file) => !excluded.has(file.path));
-    const files = draft.limit ? kept.slice(0, draft.limit) : kept;
+    const kept = ordered.filter((file) => !excluded.has(file.path));
+    const files = draft.limit && !splitting ? kept.slice(0, draft.limit) : kept;
     const words = files.reduce((sum, file) => sum + file.words, 0);
     return { ...rawScan, files, totals: { chapters: files.length, words, audioSeconds: Math.round(words / 4.3) } };
-  }, [rawScan, draft.excluded, draft.limit]);
+  }, [rawScan, ordered, draft.excluded, draft.limit, splitting]);
+  const volumeStarts = useMemo(
+    () => (splitting && scan ? startNumbers(ordered, draft.volumeStarts, new Set(draft.excluded)) : [1]),
+    [splitting, scan, ordered, draft.volumeStarts, draft.excluded],
+  );
 
   // Cùng khoá truy vấn với bước "Tôi là ai?": lấy từ bộ nhớ đệm, không đọc lại sách.
   const { data: firstPersonHint } = useFirstPersonHint(scan?.files.map((file) => file.path) ?? [], draft.seed?.id);
@@ -1389,6 +1444,7 @@ export function NewProjectScreen() {
     create.mutate(
       {
         paths: scan.files.map((file) => file.path),
+        ...(volumeStarts.length > 1 ? { volumeStarts } : {}),
         title: title.trim(),
         profile: draft.profile,
         narrator: draft.narrator,
@@ -1413,13 +1469,22 @@ export function NewProjectScreen() {
             : result.queued
               ? `Đang có cuốn khác chạy - sách này vào hàng chờ (thứ ${result.queued}), tự bắt đầu khi cuốn ấy xong.`
               : "Đang khởi động - theo dõi tiến trình ngay trên trang sách.";
+          const volumes = result.parts?.length ?? 0;
           toast.success(
-            result.unchanged ? "Không có thiết lập nào thay đổi" : draft.replaces ? "Đã tạo lại sách với thiết lập mới" : "Đã tạo sách",
+            result.unchanged
+              ? "Không có thiết lập nào thay đổi"
+              : volumes > 1
+                ? `Đã tạo ${volumes} phần`
+                : draft.replaces
+                  ? "Đã tạo lại sách với thiết lập mới"
+                  : "Đã tạo sách",
             {
               description:
                 [
                   result.unchanged ? "Giữ nguyên sách cũ." : "",
                   starting,
+                  volumes > 1 && draft.startNow ? "Phần sau tự bắt đầu khi phần trước xong, mang giọng và cách đọc tên sang." : "",
+                  volumes > 1 && !draft.startNow ? "Bấm bắt đầu phần 1 thì các phần sau tự xếp hàng; mỗi phần chạy được khi phần trước đã phân tích xong." : "",
                   readings,
                   draft.replaces && !result.unchanged && !result.replaceError ? "Bản cũ đã vào Thùng rác." : "",
                 ]
@@ -1485,8 +1550,21 @@ export function NewProjectScreen() {
               title={title}
               onTitle={(value) => update({ title: value, titleEdited: true })}
               scanning={scanMutation.isPending}
-              onPaths={(paths) => update({ paths, excluded: [], limit: null, titleEdited: paths.length ? draft.titleEdited : false })}
-              onAddFiles={(paths) => update({ paths: [...draft.paths, ...paths] })}
+              onPaths={(paths) => update({ paths, excluded: [], limit: null, volumeStarts: null, titleEdited: paths.length ? draft.titleEdited : false })}
+              onAddFiles={(paths) => update({ paths: [...draft.paths, ...paths], volumeStarts: null })}
+              splitting={splitting}
+              volumeStarts={volumeStarts}
+              volumeSplit={
+                <VolumeSplit
+                  ordered={ordered}
+                  excluded={draft.excluded}
+                  files={scan?.files ?? []}
+                  proposal={rawScan?.volumes}
+                  title={title.trim()}
+                  value={draft.volumeStarts ?? null}
+                  onChange={(volumeStarts) => update({ volumeStarts })}
+                />
+              }
               total={rawScan?.files.length ?? 0}
               limit={draft.limit ?? null}
               later={(rawScan?.files.filter((file) => !draft.excluded.includes(file.path)).length ?? 0) - (scan?.files.length ?? 0)}
@@ -1515,8 +1593,8 @@ export function NewProjectScreen() {
                   const replaced = draft.paths.includes(path);
                   update(
                     replaced
-                      ? { paths: draft.paths.map((item) => (item === path ? folder : item)), excluded: [], limit: null }
-                      : { paths: [...draft.paths, folder], excluded: [...draft.excluded, path], limit: null },
+                      ? { paths: draft.paths.map((item) => (item === path ? folder : item)), excluded: [], limit: null, volumeStarts: null }
+                      : { paths: [...draft.paths, folder], excluded: [...draft.excluded, path], limit: null, volumeStarts: null },
                   );
                   toast.success("Đã tách thành các chương", { description: folder });
                 } catch (error) {
@@ -1551,6 +1629,7 @@ export function NewProjectScreen() {
               povChapters={povChapters}
               profile={draft.profile}
               seed={draft.seed}
+              volumes={volumeStarts.length > 1 ? ranges(volumeStarts, scan.files.length) : undefined}
               startNow={draft.startNow}
               setStartNow={(startNow) => update({ startNow })}
               dropCredits={Boolean(draft.dropCredits)}
