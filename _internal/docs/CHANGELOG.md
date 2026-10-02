@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.17] - 2026-10-02
+
 ### Studio
 
 - Tab Nhân vật: nút "…" ở mỗi người có **Đổi tên** (chỉ đổi tên trên màn hình, kịch bản và file sách; không thu lại câu
