@@ -391,6 +391,22 @@ báo số lượng.
 - Thắng thì việc kế là quyết định sản phẩm (model gốc thêm ~6 GB cho người dùng, hay đưa bài toán vào dữ liệu huấn luyện);
   thua thì ghi lại và giữ nhãn câu.
 
+**GHI TRƯỚC - KHÔNG KHÍ LÀ TỈ LỆ GEMS-9 (02-10 21:xx, đề xuất chủ sách qua Lead; trước mọi số):** một điểm V/E/T gộp đoạn
+"vừa buồn vừa ấm" về giữa; tỉ lệ trên 9 nhãn GEMS giữ được pha trộn. Bài: phân phối GEMS-9 của CLAP (đã hiệu chỉnh, có sẵn).
+Đoạn: LLM chia 100 điểm cho 9 nhãn - lượt gọi RIÊNG trong `segment_mood_llm.py` (cùng hàng GPU với segllm; prompt V/E/T đã
+ghi trước KHÔNG đổi). Hai người chấm mù Sonnet cũng chia điểm GEMS trên chính các đoạn đáp án bộ 4 (chỉ thấy ranh giới, không
+thấy V/E/T) - để biết LLM gần người tới đâu (Jensen-Shannon) và làm trần `humandist`.
+- Đo: `eval_matching_dist.py` (Corpus research/music) - CẢ CHUỖI trên bộ 4, ranh giới đáp án, đầu vào máy đoán; 5 bài / đoạn
+  trong phong cách hợp thể loại; bài chấm bằng nhãn NGƯỜI Incompetech như eval_matching (khoảng cách V, E, 0,6 T so đáp án) +
+  "trúng GEMS" (feel -> GEMS theo bảng cố định trong script, định nghĩa trước khi có số; đoạn tenderness / nostalgia không
+  tính vì không feel nào tương ứng). Thể loại các cuốn bộ 4 cũng định nghĩa trong script trước khi có số.
+- ỨNG VIÊN CHÍNH `distmix` (tổng thứ hạng: ba trục CLAP gần V/E/T nhãn câu + Jensen-Shannon giữa phân phối LLM và phân phối
+  bài) THẮNG `clap` (cách của app) nếu: khoảng cách thấp hơn, VÀ thấp hơn ở >= 6/8 cuốn, VÀ trúng GEMS không thấp hơn - VÀ
+  vẫn đúng khi bỏ HDST 090 (>= 6/7 cuốn). `dist` (chỉ tỉ lệ), `humandist` (tỉ lệ của người - trần nhánh) chỉ ghi lại.
+- Kiểm khô với phân phối NGẪU NHIÊN (trước khi có số thật): clap 0,862, distmix 0,863, dist 0,870, ngẫu nhiên 0,922, trần
+  0,264 -> luật trả KHÔNG ĐẠT như phải thế; cũng cho thấy trên bộ 4 khâu cả chuỗi của app chỉ hơn ngẫu nhiên một chút (đầu vào
+  máy đoán yếu - khớp kết quả bộ 4 ở trên).
+
 ## Thứ tự và tài nguyên
 
 0. Dữ liệu (đang chạy): Incompetech 1.443 bài (đọc 3 đoạn từ máy chủ), Jamendo CC BY 665 bài; tải Film soundtracks,
