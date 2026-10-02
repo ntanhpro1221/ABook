@@ -45,6 +45,10 @@ class PinTest {
         assertFalse(Pin.isCertificateProblem(SSLHandshakeException("connection closed")))
         val error = assertThrows(IllegalStateException::class.java) { Pin.guard { throw changed } }
         assertEquals(Pin.CHANGED, error.message)
+        assertTrue("giao diện nhận ra qua kiểu này, mã Pin.CODE", error is Pin.ChangedException)
+        // Trình phát Media3 bọc lỗi chứng chỉ vài lớp (PlaybackException > HttpDataSourceException > SSLException).
+        assertTrue(Pin.isCertificateProblem(java.io.IOException("playback", changed)))
+        assertFalse(Pin.isCertificateProblem(java.io.IOException("playback", java.net.SocketTimeoutException())))
         // Đứt mạng giữa lúc bắt tay vẫn là IOException thường - SyncLink còn thử đường Bluetooth.
         assertThrows(SSLHandshakeException::class.java) { Pin.guard { throw SSLHandshakeException("connection closed") } }
     }

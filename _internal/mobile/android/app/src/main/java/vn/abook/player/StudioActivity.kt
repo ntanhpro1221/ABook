@@ -14,6 +14,7 @@ import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -76,7 +77,16 @@ class StudioActivity : AppCompatActivity() {
                 val uri = Uri.parse(error.url)
                 val pinned = Pin.expected(uri.host, if (uri.port > 0) uri.port else 443)
                 val seen = certificateOf(error.certificate)?.let { Pin.fingerprint(it.encoded) }
-                if (pinned != null && pinned.isNotEmpty() && seen == pinned) handler.proceed() else handler.cancel()
+                if (pinned != null && pinned.isNotEmpty() && seen == pinned) {
+                    handler.proceed()
+                } else {
+                    // Không có trang để hiện (WebView để trắng): nói lý do rồi về màn trước, nơi cũng đang báo "ghép lại".
+                    handler.cancel()
+                    if (!isFinishing) {
+                        Toast.makeText(this@StudioActivity, Pin.CHANGED, Toast.LENGTH_LONG).show()
+                        finish()
+                    }
+                }
             }
 
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {

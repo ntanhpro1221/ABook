@@ -63,8 +63,14 @@ class LibraryPlugin : Plugin() {
         try {
             block()
         } catch (error: Exception) {
-            call.reject(error.message ?: error.javaClass.simpleName)
+            fail(call, error)
         }
+    }
+
+    /** Từ chối lời gọi; chứng chỉ máy kia đổi thì kèm mã [Pin.CODE] để giao diện hiện câu "ghép lại" thay vì "không kết nối được". */
+    private fun fail(call: PluginCall, error: Exception, fallback: String = error.javaClass.simpleName) {
+        val message = error.message ?: fallback
+        if (error is Pin.ChangedException) call.reject(message, Pin.CODE) else call.reject(message)
     }
 
     @PluginMethod
@@ -437,7 +443,7 @@ class LibraryPlugin : Plugin() {
                 call.resolve(JSObject().put("bookId", id))
             } catch (error: Exception) {
                 notifyListeners("download", JSObject().put("bookId", id).put("error", error.message ?: "lỗi tải"))
-                call.reject(error.message ?: "lỗi tải")
+                fail(call, error, "lỗi tải")
             } finally {
                 call.setKeepAlive(false)
             }
@@ -555,7 +561,7 @@ class LibraryPlugin : Plugin() {
             for (index in 0 until players.length()) out.put(JSObject.fromJSONObject(players.getJSONObject(index)))
             call.resolve(JSObject().put("players", out))
         } catch (error: Exception) {
-            call.reject(error.message ?: error.javaClass.simpleName)
+            fail(call, error)
         }
     }
 
@@ -566,7 +572,7 @@ class LibraryPlugin : Plugin() {
             val command = call.getObject("command") ?: throw IllegalArgumentException("thiếu lệnh")
             call.resolve(JSObject.fromJSONObject(RemotePlayers.command(context, device, JSONObject(command.toString()))))
         } catch (error: Exception) {
-            call.reject(error.message ?: error.javaClass.simpleName)
+            fail(call, error)
         }
     }
 
