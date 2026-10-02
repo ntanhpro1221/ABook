@@ -179,3 +179,54 @@ def test_a_scene_that_was_silent_for_lack_of_a_match_stays_silent_when_kept(near
     assert choose([scene], near, book_key="b")[0]["link"] is not None  # không giữ thì đoạn này có nhạc
     [entry] = choose([scene], near, book_key="b", keep={scene_key(scene): None})
     assert entry["link"] is None and entry["pinned"] is False
+
+
+def test_js_divergence_is_zero_for_equal_symmetric_and_none_without_data() -> None:
+    from abook.webui.music_scenes import gems_from_point
+    from abook.webui.music_select import js_divergence
+
+    calm, fight = gems_from_point(0.5, -0.8, -0.7), gems_from_point(-0.5, 0.6, 0.9)
+    assert js_divergence(calm, calm) == pytest.approx(0.0, abs=1e-9)
+    assert js_divergence(calm, fight) == pytest.approx(js_divergence(fight, calm))
+    assert js_divergence(calm, fight) > 0.3
+    assert js_divergence(calm, None) is None and js_divergence(None, calm) is None
+    assert js_divergence(calm, {}) is None and js_divergence(calm, ["wonder"]) is None
+
+
+def _gems_tracks(gems_a, gems_b) -> list[dict]:
+    base = {"valence": -0.5, "arousal": 0.6, "tension": 0.9, "duration": 200, "source": "incompetech"}
+    return [{"link": "https://x/a.mp3", **base, "gems": gems_a}, {"link": "https://x/b.mp3", **base, "gems": gems_b}]
+
+
+def test_rank_prefers_the_track_whose_gems_match_the_scene() -> None:
+    from abook.webui.music_scenes import gems_from_point
+    from abook.webui.music_select import rank
+
+    scene = {**_scene(1, -0.5, 0.6), "tension": 0.9, "gems": gems_from_point(-0.5, 0.6, 0.9)}
+    tracks = _gems_tracks({"peacefulness": 1.0}, gems_from_point(-0.5, 0.6, 0.9))  # b hợp, a lệch hẳn
+    ranked = rank(scene, lambda v, a: tracks, book_key="b")
+    assert [t["link"] for t in ranked] == ["https://x/b.mp3", "https://x/a.mp3"]
+    assert ranked[1]["score"] - ranked[0]["score"] > 1.0
+    swapped = rank(scene, lambda v, a: list(reversed(tracks)), book_key="b")
+    assert swapped[0]["link"] == "https://x/b.mp3"
+
+
+def test_gems_never_rescue_a_track_beyond_the_silence_ceiling() -> None:
+    from abook.webui.music_scenes import gems_from_point
+    from abook.webui.music_select import rank
+
+    scene = {**_scene(1, -0.5, 0.6), "tension": 0.9, "gems": gems_from_point(-0.5, 0.6, 0.9)}
+    far = {"link": "https://x/far.mp3", "valence": 0.9, "arousal": -0.9, "tension": -0.7, "duration": 200,
+           "source": "incompetech", "gems": gems_from_point(-0.5, 0.6, 0.9)}
+    assert rank(scene, lambda v, a: [far], book_key="b") == []
+
+
+def test_a_track_with_old_shape_gems_still_ranks_without_a_gems_term() -> None:
+    from abook.webui.music_scenes import gems_from_point
+    from abook.webui.music_select import rank
+
+    scene = {**_scene(1, -0.5, 0.6), "tension": 0.9, "gems": gems_from_point(-0.5, 0.6, 0.9)}
+    tracks = _gems_tracks(["wonder", "power"], None)
+    ranked = rank(scene, lambda v, a: tracks, book_key="b")
+    assert {t["link"] for t in ranked} == {"https://x/a.mp3", "https://x/b.mp3"}
+    assert abs(ranked[0]["score"] - ranked[1]["score"]) < 0.01, "cả hai đều không có số hạng GEMS"

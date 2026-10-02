@@ -41,6 +41,20 @@ EMOTION_TENSION: dict[str, float] = {
     "neutral": 0.0, "happy": -0.4, "excited": 0.1, "tender": -0.6, "surprised": 0.5, "sarcastic": 0.3,
     "angry": 0.75, "afraid": 0.85, "sad": 0.1, "tired": -0.3, "whispering": 0.3,
 }
+# Chín nhãn GEMS (Zentner 2008) và toạ độ (valence, arousal, tension) của từng nhãn: phân phối GEMS-9 của một đoạn là
+# softmax khoảng cách tới các toạ độ này; ngược lại V/E/T = kỳ vọng toạ độ dưới phân phối ấy.
+GEMS_POINTS: dict[str, tuple[float, float, float]] = {
+    "wonder": (0.6, 0.3, 0.0),
+    "transcendence": (0.4, -0.3, -0.2),
+    "tenderness": (0.6, -0.5, -0.5),
+    "nostalgia": (-0.1, -0.4, -0.2),
+    "peacefulness": (0.5, -0.8, -0.7),
+    "power": (0.3, 0.9, 0.3),
+    "joyful_activation": (0.9, 0.7, -0.3),
+    "tension": (-0.5, 0.6, 0.9),
+    "sadness": (-0.8, -0.5, 0.0),
+}
+GEMS_TAU = 0.1                 # độ "nhọn" của softmax; chọn trên bộ cảnh 3, docs/MUSIC_RESEARCH.md "trọng số ghép GEMS"
 PACE_AROUSAL = {"slow": -0.2, "normal": 0.0, "fast": 0.2}
 VOLUME_AROUSAL = {"soft": -0.15, "normal": 0.0, "loud": 0.15}
 NEUTRAL_WEIGHT = 0.35          # câu trung tính đóng góp ít vào không khí
@@ -58,6 +72,27 @@ TIME_JUMP = re.compile(
     r"(?:the\s+)?next\s+(?:morning|day)|(?:a\s+few|several|\d+)\s+(?:days|weeks|months|years)\s+later)",
     re.IGNORECASE,
 )
+
+
+def gems_from_point(valence: float, arousal: float, tension: float) -> dict[str, float]:
+    """Phân phối GEMS-9 từ một điểm V/E/T: softmax của -(khoảng cách bình phương tới toạ độ nhãn)/GEMS_TAU. Trừ max trước
+    khi mũ để không tràn số."""
+    logits = {label: -((valence - v) ** 2 + (arousal - a) ** 2 + (tension - t) ** 2) / GEMS_TAU
+              for label, (v, a, t) in GEMS_POINTS.items()}
+    top = max(logits.values())
+    weights = {label: math.exp(value - top) for label, value in logits.items()}
+    total = sum(weights.values())
+    return {label: round(weight / total, 4) for label, weight in weights.items()}
+
+
+def point_from_gems(dist: dict[str, float]) -> tuple[float, float, float]:
+    """V/E/T suy ra từ phân phối GEMS-9 (kỳ vọng toạ độ nhãn); rỗng hoặc tổng 0 -> (0, 0, 0)."""
+    total = sum(float(dist.get(label) or 0.0) for label in GEMS_POINTS)
+    if total <= 0:
+        return 0.0, 0.0, 0.0
+    v, a, t = (sum(float(dist.get(label) or 0.0) * point[axis] for label, point in GEMS_POINTS.items()) / total
+               for axis in range(3))
+    return v, a, t
 
 
 def line_tension(segment: dict[str, Any]) -> float:
@@ -250,6 +285,8 @@ def _merge_short(scenes: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 def _view(scene: dict[str, Any], segments: list[dict[str, Any]], timeline: list[float], seconds: list[float],
           script: dict[str, Any]) -> dict[str, Any]:
+    """Một đoạn cho bên ngoài. `gems` (phân phối GEMS-9) là dữ liệu gốc của không khí đoạn; ở đường nhãn câu nó suy từ
+    V/E/T, đường LLM (đang đo) sẽ ghi thẳng phân phối."""
     first, last = scene["first"], scene["last"]
     valence, arousal = scene["acc"].point()
     weight = scene["acc"].weight
@@ -264,6 +301,7 @@ def _view(scene: dict[str, Any], segments: list[dict[str, Any]], timeline: list[
         "valence": round(valence, 3),
         "arousal": round(arousal, 3),
         "tension": round(tension, 3),
+        "gems": gems_from_point(valence, arousal, tension),
         "confidence": round(scene["acc"].affective / weight, 3) if weight else 0.0,
         "reason": scene["reason"],
         "lines": last - first + 1,
