@@ -671,6 +671,24 @@ Mục 3 - nền êm chấm lại bằng mô tả không CLAP (`DESC=noclap score
 - 0,35 thắng 0,2: 5/11 = 0,45 [0,21-0,72]. 0,5 thắng 0,2: 17/29 = 0,59 [0,41-0,74].
 - **Giữ WEAK_MOOD = 0,2**, CÙNG kết luận với lần đầu. Quyết định này không dựa vào vòng tròn CLAP.
 
+**KẾT QUẢ (2) NGÔN NGỮ (03-10 03:54, `score_e1_checks.py`):**
+- Tập con: 50 đoạn ở vị trí chẵn, 150 lượt không lặp. Tóm tắt tiếng Anh do agent viết một lần (Corpus 1195a41).
+- Cả hai model: **NGÔN NGỮ LÀ RÀO**.
+
+| Model | so R_cũ: Việt → Anh | so R_mới: Việt → Anh | Ổn định a/b: Việt → Anh |
+|---|---|---|---|
+| Omni-7B | −0,02 → **0,23** | 0,00 → **0,26** | 0,87 → **0,81** |
+| Music Flamingo | −0,01 → 0,22 | 0,13 → 0,29 | 0,72 → **0,55** |
+
+- Omni-7B đọc tiếng Anh: ổn định ≥ 0,75 và kappa ≥ 0,20 → theo đúng luật E1b là **người chấm nghe DÙNG ĐƯỢC**. Chỉ trên tập con,
+  và vừa qua ngưỡng.
+- MF đọc tiếng Anh khớp người hơn nhưng không ổn định (0,55) → vẫn không dùng được.
+- BT của Omni tiếng Anh: gems > vet > app > mid > calm > far. far vẫn cuối, nhưng calm vẫn dưới mức người đọc xếp.
+- Hệ quả:
+  - Mọi người chấm nghe về sau nhận đoạn truyện qua tóm tắt tiếng Anh, không nhận nguyên văn tiếng Việt.
+  - Qwen3-Omni (nếu chạy) cũng vậy.
+  - Omni-7B tiếng Anh có thể làm thước nghe thứ ba bên cạnh R_mới; mở rộng ra mọi đoạn cần ~600 lượt GPU nữa (~40 phút).
+
 **GHI TRƯỚC - NỚI NGƯỠNG NỀN ÊM (02-10 23:xx, Lead duyệt; từ E1: calm đứng thứ hai, hơn app):**
 - **Giả thuyết:** kéo về nền êm (CALM_TARGET) cho nhiều đoạn hơn làm nhạc hợp hơn. Hiện chỉ kéo khi confidence < WEAK_MOOD
   0,2, và kéo tuyến tính.
