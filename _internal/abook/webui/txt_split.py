@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from ..io_utils import decode_text_bytes
+from .volumes import is_volume_heading
 
 # Số của chương: chữ số, số La Mã, hay số viết bằng chữ ("Chương Một", "Hồi thứ hai").
 _NUMBER_WORDS = (
@@ -37,6 +38,19 @@ def headings(lines: list[str]) -> list[int]:
     return [index for index, line in enumerate(lines) if len(line.strip()) <= MAX_HEADING and HEADING.match(line)]
 
 
+def starts(lines: list[str], found: list[int]) -> list[int]:
+    """Dòng bắt đầu của từng chương: dòng tiêu đề, hay dòng "Tập 2" đứng ngay trước nó (chỉ cách các dòng trống) - nó thuộc về
+    chương mở tập ấy, không phải cái đuôi của chương cuối tập trước; trình tạo sách nhìn dòng đầu chương mà đề xuất chia tập
+    (volumes.py)."""
+    result = []
+    for index in found:
+        before = index - 1
+        while before >= 0 and not lines[before].strip():
+            before -= 1
+        result.append(before if before >= 0 and is_volume_heading(lines[before]) else index)
+    return result
+
+
 def plan(path: Path) -> dict[str, Any] | None:
     """Đề xuất tách một file: số chương sẽ ra và vài tiêu đề đầu, hay None khi file chỉ là một chương (ít hơn hai tiêu đề)."""
     try:
@@ -46,7 +60,7 @@ def plan(path: Path) -> dict[str, Any] | None:
     found = headings(lines)
     if len(found) < 2:
         return None
-    preamble = any(line.strip() for line in lines[: found[0]])
+    preamble = any(line.strip() for line in lines[: starts(lines, found)[0]])
     return {
         "chapters": len(found) + (1 if preamble else 0),
         "titles": [lines[index].strip() for index in found[:3]],
@@ -71,11 +85,12 @@ def split(path: Path, root: Path) -> Path:
         return folder
     width = max(4, len(str(len(found))))
     parts: list[tuple[str, list[str]]] = []
-    if any(line.strip() for line in lines[: found[0]]):
-        parts.append((PREAMBLE, lines[: found[0]]))
-    for position, start in enumerate(found):
-        end = found[position + 1] if position + 1 < len(found) else len(lines)
-        parts.append((lines[start].strip(), lines[start:end]))
+    cuts = starts(lines, found)
+    if any(line.strip() for line in lines[: cuts[0]]):
+        parts.append((PREAMBLE, lines[: cuts[0]]))
+    for position, heading in enumerate(found):
+        end = cuts[position + 1] if position + 1 < len(found) else len(lines)
+        parts.append((lines[heading].strip(), lines[cuts[position]:end]))
     folder.mkdir(parents=True, exist_ok=True)
     first = 0 if parts[0][0] == PREAMBLE else 1
     for index, (title, body) in enumerate(parts, start=first):

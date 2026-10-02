@@ -195,12 +195,19 @@ def series_of(project: Path) -> tuple[Path, int] | None:
     return (chain[0], len(chain)) if len(chain) > 1 else None
 
 
-def _write_link(source: Path, target: Path) -> None:
+def _write_link(source: Path, target: Path, *, pending: bool = False) -> None:
+    """`pending`: phần nối tiếp đã được xếp vào chuỗi nhưng CHƯA gieo (tạo nhiều tập cùng lúc: phần trước chưa chạy nên chưa
+    có giọng nào để mang) - `seed_when_ready` gieo lúc phần này bắt đầu chạy và ghi lại file không còn cờ."""
     try:
         previous = os.path.relpath(source, target.parent) if source.parent == target.parent else str(source)
     except ValueError:  # hai ổ đĩa khác nhau trên Windows
         previous = str(source)
-    payload = {"previous": Path(previous).as_posix(), "part": part_number(source) + 1, "seededAt": time.time()}
+    payload: dict[str, Any] = {"previous": Path(previous).as_posix(), "part": part_number(source) + 1}
+    payload.update({"seedPending": True} if pending else {"seededAt": time.time()})
+    _store_link(target, payload)
+
+
+def _store_link(target: Path, payload: dict[str, Any]) -> None:
     temporary = target / f".{LINK_FILE}.tmp"
     temporary.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     os.replace(temporary, target / LINK_FILE)
@@ -715,3 +722,51 @@ def seed(source: Path, target: Path, log: Log = _quiet) -> dict[str, Any]:
     return {"from": str(source), "part": part_number(target), "pronunciations": len(readings), **casting,
             "acceptances": acceptances, "aliases": carried_aliases, "bracket": carried_bracket,
             "names": carried_names}
+
+
+# ---- nhiều tập cùng lúc: nối chuỗi ngay, gieo khi tới lượt -------------------------------------------------------------
+
+
+def link_pending(source: Path, target: Path) -> None:
+    """Xếp `target` (vừa tạo, chưa chạy) vào chuỗi sau `source` mà CHƯA gieo. Tạo nhiều tập cùng lúc: tập 1 chưa chạy thì chưa
+    có nhân vật, giọng hay cách đọc nào để mang - gieo lúc này là gieo một cái vỏ rỗng, rồi `seed` từ chối vì tập sau đã có
+    sổ. Chuỗi nối ngay (danh sách Dự án, thư viện nghe, "Làm tiếp" đều thấy đủ các tập, đúng thứ tự); gieo thật chờ tới lúc
+    tập này bắt đầu chạy (`seed_when_ready`)."""
+    source, target = Path(source).resolve(), Path(target).resolve()
+    if source == target:
+        raise ContinuationError("Không làm tiếp một dự án từ chính nó")
+    for project in (source, target):
+        if not is_project(project):
+            raise ContinuationError(f"Không phải dự án của ABook: {project}")
+    _write_link(source, target, pending=True)
+
+
+def seed_pending(project: Path) -> bool:
+    return bool(_link(project).get("seedPending"))
+
+
+def source_ready(source: Path) -> bool:
+    """Phần trước đã khoá phân vai (`book.casting_finalized`, cuối pha phân tích) - từ đó giọng, nhân vật và cách đọc tên
+    của nó không đổi nữa nên gieo từ nó là đúng. Chưa tới đó thì gieo ra thiếu, và phần sau lại không gieo lại được."""
+    with closing(_read_only(source)) as connection:
+        rows = _rows(connection, "SELECT casting_finalized FROM book WHERE id=1")
+    return bool(rows and rows[0][0])
+
+
+def seed_when_ready(target: Path, log: Log = _quiet) -> dict[str, Any] | None:
+    """Gieo một phần nối tiếp đang chờ (`link_pending`) ngay trước khi nó chạy. None: không có gì chờ. Phần trước chưa phân
+    vai xong -> ContinuationError (không chạy được: chạy bây giờ là ra giọng khác phần trước mà không ai hay). Phần trước đã
+    bị xoá thì không còn gì để mang: bỏ cờ chờ rồi cho chạy như sách lẻ."""
+    target = Path(target).resolve()
+    if not seed_pending(target):
+        return None
+    previous = previous_project(target)
+    if previous is None:
+        link = _link(target)
+        link.pop("seedPending", None)
+        _store_link(target, link)
+        return {"from": None}
+    if not source_ready(previous):
+        raise ContinuationError(
+            f"Phần trước ({previous.name}) chưa phân tích xong - tập này mang giọng và cách đọc tên từ nó nên phải chờ")
+    return seed(previous, target, log)

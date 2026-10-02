@@ -9,6 +9,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Studio
 
+- **Chia thành nhiều phần**: truyện nhiều tập (mỗi tập một thư mục hay một file EPUB, hay chương có dòng "Tập 2", "Volume 2"...)
+  được máy đề xuất chia; bấm đồng ý thì tạo một lượt cả bộ, sửa chỗ cắt theo số chương. Phần 1 như sách thường, các phần sau
+  nối tiếp, tự xếp hàng và mang giọng nhân vật, cách đọc tên từ phần trước khi tới lượt chạy.
 - **Xuất cả bộ**: truyện chia nhiều phần ("Làm tiếp cuốn này") có thêm lựa chọn "Cả bộ (N phần)" trong hộp Xuất - thư
   mục MP3 mỗi phần một thư mục con, hay mỗi phần một file `.abook` trong thư mục của bộ; phần chưa có chương xong được
   bỏ qua và kể tên.
