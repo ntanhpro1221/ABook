@@ -223,6 +223,13 @@ export interface ScriptSegment {
   start: number | null;
   end: number | null;
   status: string;
+  /** Mã ổn định + băm chữ của câu (sách đóng gói mang theo): ý muốn chờ Studio trỏ tới câu bằng cặp này. */
+  stableId?: string;
+  textSha256?: string;
+  /** Cảm xúc / mức của câu (sách đời cũ không có) và chữ đem đọc đã áp thay chữ sách. */
+  emotion?: string;
+  intensity?: number;
+  spoken?: string;
 }
 
 export interface Script {

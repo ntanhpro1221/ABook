@@ -660,6 +660,43 @@ object BookWishes {
         return "Giọng của $name: $change"
     }
 
+    /** `shown_name` của Python: tên người nghe thấy của một người trong ý muốn ("người kể", tên đã đổi, hay chính chữ gõ). */
+    private fun shownName(cast: List<JSONObject>, raw: String): String {
+        if (characterKey(raw) == NARRATOR) return "người kể"
+        val found = person(cast, raw) ?: return raw
+        return listOf(found.opt("displayName"), found.opt("name")).first { BookEdits.truthy(it) }.toString()
+    }
+
+    /** `by_line` của Python: ý muốn theo từng câu cho trang đọc - {pronunciations: [...], lines: {mã câu: {speaker?, delivery?, retake?}}}. */
+    fun byLine(folder: File, book: JSONObject, wishes: JSONObject?): JSONObject {
+        fun keys(section: String): List<String> =
+            wishes?.optJSONObject(section)?.let { entries -> BookEdits.names(entries).sortedWith { a, b -> BookEdits.byCodePoints(a, b) } } ?: emptyList()
+        fun entry(section: String, key: String): JSONObject = wishes!!.getJSONObject(section).getJSONObject(key)
+        val cast = if (keys("speakers").isNotEmpty()) people(folder, book) else emptyList()
+        val pronunciations = JSONArray()
+        for (key in keys("pronunciations")) {
+            val item = entry("pronunciations", key)
+            pronunciations.put(JSONObject().put("key", key).put("surface", item.getString("surface")).put("spokenForm", item.getString("spoken_form"))
+                .put("requestedAt", item.getDouble("requested_at")))
+        }
+        val lines = JSONObject()
+        fun slot(stableId: String): JSONObject = lines.optJSONObject(stableId) ?: JSONObject().also { lines.put(stableId, it) }
+        for (stableId in keys("speakers")) {
+            val item = entry("speakers", stableId)
+            slot(stableId).put("speaker", JSONObject().put("name", item.getString("speaker")).put("shown", shownName(cast, item.getString("speaker")))
+                .put("requestedAt", item.getDouble("requested_at")))
+        }
+        for (stableId in keys("lines")) {
+            val item = entry("lines", stableId)
+            val delivery = JSONObject().put("kind", item.getString("kind")).put("emotion", item.getString("emotion"))
+                .put("intensity", item.opt("intensity") ?: JSONObject.NULL).put("requestedAt", item.getDouble("requested_at"))
+            if (item.has("spoken")) delivery.put("spoken", item.getString("spoken"))
+            slot(stableId).put("delivery", delivery)
+        }
+        for (stableId in keys("retakes")) slot(stableId).put("retake", JSONObject().put("requestedAt", entry("retakes", stableId).getDouble("requested_at")))
+        return JSONObject().put("pronunciations", pronunciations).put("lines", lines)
+    }
+
     /**
      * Cùng hình dạng với `store.pending_details` của dự án ({items, lines, chapters, seconds}) - từng ý muốn nói bằng lời, đủ để rút
      * đúng nó (`section`, `key`, `requestedAt`) - nhưng không có câu nào "đã thu" để đếm: cuốn này chưa thu lại gì.
@@ -672,11 +709,7 @@ object BookWishes {
         val titles = lines.chapters.associate { lines.idOf(it) to (listOf(it.opt("fullTitle"), it.opt("title")).firstOrNull { v -> BookEdits.truthy(v) }?.toString() ?: "") }
         val items = out.getJSONArray("items")
 
-        fun who(raw: String): String {
-            if (characterKey(raw) == NARRATOR) return "người kể"
-            val found = person(cast, raw) ?: return raw
-            return listOf(found.opt("displayName"), found.opt("name")).first { BookEdits.truthy(it) }.toString()
-        }
+        fun who(raw: String): String = shownName(cast, raw)
 
         fun handle(item: JSONObject, section: String, key: String, entry: JSONObject): JSONObject =
             item.put("section", section).put("key", key).put("requestedAt", entry.optDouble("requested_at", 0.0))

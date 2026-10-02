@@ -196,6 +196,23 @@ def test_counting_follows_the_pending_list(imported) -> None:
     assert call("GET", "/api/books/{id}/edits")[1] == {"applied": 0, "waiting": 0, "wishes": 4}
 
 
+def test_the_reader_asks_which_lines_are_waiting_and_a_workshop_book_has_none(imported) -> None:
+    app, folder, identifier, call = imported
+    assert call("GET", "/api/books/{id}/wishes")[1] == {"pronunciations": [], "lines": {}}
+    _post(call, "/speaker", {"stableId": LUCIEN_LINE[0], "textSha256": LUCIEN_LINE[1], "speaker": "HEIDI"})
+    _post(call, "/line", {"stableId": HEIDI_LINE[0], "textSha256": HEIDI_LINE[1], "emotion": "sad", "spoken": "Chào."})
+    _post(call, "/review", {"verdict": "redo", "stableId": NARRATION[0], "chapterId": 1})
+    _post(call, "/pronunciation", {"surface": "Hailkes", "spokenForm": "Hên-khơ"})
+    status, view = call("GET", "/api/books/{id}/wishes")
+    assert status == 200
+    assert view["pronunciations"][0]["key"] == "hailkes" and view["pronunciations"][0]["spokenForm"] == "Hên-khơ"
+    assert set(view["lines"]) == {LUCIEN_LINE[0], HEIDI_LINE[0], NARRATION[0]}
+    assert view["lines"][LUCIEN_LINE[0]]["speaker"]["shown"] == "Hây-đi", "tên người nghe thấy, không phải tên chuẩn"
+    assert view["lines"][HEIDI_LINE[0]]["delivery"]["spoken"] == "Chào."
+    assert set(view["lines"][NARRATION[0]]) == {"retake"}
+    assert book_wishes.by_line(folder, None) == {"pronunciations": [], "lines": {}}
+
+
 # ---- lưu, mở lại, nhập lại ------------------------------------------------------------------------------------------
 
 

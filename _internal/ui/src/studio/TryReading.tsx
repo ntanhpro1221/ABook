@@ -19,19 +19,22 @@ interface ReadingPreview {
 
 /** Nút "Nghe thử" (`button`, đặt trước nút "Lưu") và dòng nói máy đang làm gì / đã đọc câu nào / vì sao không nghe được (`note`,
  *  đặt dưới hàng nút - nó rộng hơn nút nên không để chung hàng). `spoken`: cách đọc đang gõ. `disabled`: ô đang báo lỗi.
- *  `onRejected`: máy chủ chê cách đọc (sai chính tả, nhiều từ) - cùng lời báo và cách sửa như khi bấm "Lưu". */
+ *  `onRejected`: máy chủ chê cách đọc (sai chính tả, nhiều từ) - cùng lời báo và cách sửa như khi bấm "Lưu".
+ *  `unavailable`: lý do không nghe thử được ở cuốn này (không có xưởng để thu thử) - nút vẫn hiện, mờ đi, kèm câu ấy. */
 export function useTryReading({
   bookId,
   surface,
   spoken,
   disabled,
   onRejected,
+  unavailable,
 }: {
   bookId: string;
   surface: string;
   spoken: string;
   disabled: boolean;
   onRejected: (message: string, suggestion: string) => void;
+  unavailable?: string;
 }): { button: ReactNode; note: ReactNode } {
   const clip = useClip();
   const [heard, setHeard] = useState<{ surface: string; spoken: string; preview: ReadingPreview } | null>(null);
@@ -61,7 +64,7 @@ export function useTryReading({
       size="sm"
       variant="secondary"
       type="button"
-      disabled={disabled || !spoken}
+      disabled={disabled || !spoken || Boolean(unavailable)}
       loading={ask.isPending}
       onClick={() => {
         setRefusal("");
@@ -74,7 +77,9 @@ export function useTryReading({
       {playing ? "Dừng" : "Nghe thử"}
     </Button>
   );
-  const note = ask.isPending ? (
+  const note = unavailable ? (
+    <p className="text-xs text-fg-3">Chưa nghe thử được: {unavailable}</p>
+  ) : ask.isPending ? (
     <p role="status" className="text-xs text-fg-2">
       Máy đang đọc thử - lần đầu có thể mất vài chục giây
     </p>
