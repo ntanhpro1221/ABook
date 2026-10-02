@@ -1197,6 +1197,30 @@ Nếu LỆCH:
 - Báo lại cùng thước.
 - Cách sửa chỉ được vào app khi đo lại (c) bằng người đọc với cách sửa ấy vẫn ≥ 0,45, vì ánh xạ phân vị đã trượt (c).
 
+**KẾT QUẢ KHO TRỘN (03-10 05:25, `mixed_library.py`, `results/mixed_library.txt`):** **LỆCH**, nhưng theo chiều ƯU ÁI nhạc
+nhập, không phải thiệt cho nó.
+- 1.299 bài, 100 đoạn, 50 lượt × 20% bài nhập. Tam phân vị khoảng cách tới tâm cắt ở 0,61 / 0,84.
+
+| Vùng (vị trí thầy) | Vào 6 bài: mang số trò / mang số thầy | Tỉ lệ | Sau khi giãn |
+|---|---|---|---|
+| giữa | 10.463 / 6.761 | 1,55 (KTC 1,44–1,66) | 1,35 (1,26–1,44) |
+| vừa | 1.182 / 115 | 10,3 | 6,5 |
+| rìa | 461 / 0 | (thầy không bao giờ vào) | 477 / 0 |
+
+Đọc kết quả:
+- Mang số thầy, bài ở vùng vừa / rìa gần như không bao giờ vào danh sách: đoạn E1 có không khí máy ôn hoà, còn danh
+  mục trải đều tới ±1.
+- Mang số trò, bài bị kéo vào giữa (co + nhiễu dự đoán), nên được chọn cho đoạn mà chính nó không hợp.
+- Không phải do sd: sd trò 0,22 / 0,17 / 0,21 gần mặc định 0,2 của bài danh mục.
+- Cách sửa đã ghi trước (giãn hệ số 1,39 / 1,18 / 1,37) giảm lệch nhưng vẫn ngoài [0,8; 1,25], nên không đưa vào app.
+
+Hệ quả:
+- Nhạc người dùng không bị thiệt. Nó được chọn NHIỀU hơn, kể cả cho đoạn chỉ hợp vừa phải.
+- (c) cho thấy bài trò chọn không kém bài thầy chọn trong kho toàn trò. Phần kho trộn cần người đọc thì chưa đo.
+- Muốn sửa tiếp phải có ghi trước mới, đo kho trộn bằng người đọc. Ứng viên:
+  - trò v2 (MTG) nếu bớt co;
+  - nới phạt riêng cho bài nhập.
+
 **GHI TRƯỚC - TRÒ v2 HỌC THÊM MTG (03-10 05:4x, Lead giao; bổ sung ghi trước MTG 02-10):**
 
 Dữ liệu:
