@@ -467,6 +467,43 @@ Câu hỏi, kèm dự đoán ghi trước:
 Không chọn lại prompt sau khi thấy số. Lỗi định dạng thì chạy lại đúng lượt ấy và đếm riêng.
 Các mức trên đều ghi trước. Đây là trần MÁY: nó trả lời "các cách chọn khác nhau tới đâu theo máy nghe" chứ không thay được
 tai chủ sách. Chủ sách góp ý khi nào thích thì xếp lên trên mọi thứ.
+Chi tiết cách chạy (khi chấm, không đổi luật):
+- J-omni đọc logprob qua llama-server (`omni_judge.py`).
+- Mô tả giàu của clip ghép thêm chú thích J-omni (`describe_clips.py`, `build_e1_judge_packs.py`).
+- Lượt lặp nằm ở gói khác lượt gốc, mỗi gói một người chấm Sonnet riêng.
+- Chấm bằng `score_e1.py`.
+
+**LỚP 2 PHÍA BÀI - 13 cường độ độc lập (02-10 22:xx, `derive_emotions.py`):**
+- **Zero-shot CLAP** (3 câu mô tả mỗi lớp, z theo cả kho, sigmoid): AUC so feel người gắn của Incompetech (1.381 bài)
+  trung bình 0,69. Có lớp còn kém bản GEMS-9 cũ, như joy 0,46 so với 0,74.
+- **Đầu dò logistic trên vector CLAP đóng băng** (lý thuyết §3.3), nhãn là feel người gắn, kiểm chéo 5 phần chia theo bài:
+  AUC 0,73-0,92, trung bình 0,85. Cụ thể: anger 0,92, sadness 0,88, playful 0,88, power 0,87, joy 0,86,
+  peacefulness 0,85, fear 0,85, tension 0,82, wonder 0,79, mystery 0,73.
+- **Chọn nguồn từng lớp:** đầu dò thắng ở cả 10 lớp có nhãn nên dùng đầu dò. Bài có nhãn lấy dự đoán ngoài phần học.
+  Ba lớp tenderness / nostalgia / moved không có feel tương ứng nên giữ zero-shot.
+- **Cùng một thang:** logit được chuẩn hoá z rồi đưa qua cùng một sigmoid, nên mỗi lớp có khoảng 11-14% bài >= 0,5
+  (trung bình 1,6 lớp mỗi bài, gần mức người chấm gắn cho đoạn là 1,5).
+- **Giới hạn:** chỉ học trên Incompetech; với nguồn khác là chuyển miền, chưa đo.
+
+**KIỂM HỒI QUY LỚP 1-2 TRƯỚC KHI GỘP (02-10 22:xx; KHÔNG ghi trước, chỉ để chặn hồi quy, `compare_rankers.py`):**
+- **Cách làm:** chạy `choose` của main và của nhánh `dev/music-gems` trên 10 chương bộ 4, mỗi bản tự chia đoạn (57 đoạn).
+  Cùng danh mục thử 2.016 bài có `emotions`, cùng bảng phong cách theo thể loại.
+- **Thước:** khoảng cách nhãn người của bài chọn (chỉ bài Incompetech có feel, 40-52 đoạn) tới đáp án V/E/T của đoạn đáp án
+  chứa giữa đoạn app; thấp là hợp.
+
+| Cách chọn | Khoảng cách | Cùng bài với main |
+|---|---|---|
+| Lớp 1 (σ, trọng số 1,0 / 0,8 / 0,6) | 0,824 | 74% |
+| main | 0,845 | - |
+| Lớp 1 + Lớp 2 trọng số 1 | 0,859 | 49% |
+| Lớp 1 + Lớp 2 trọng số 3 | 0,936 | 28% |
+
+- Không bản nào có đoạn im lặng hay lặp bài.
+- **Kết luận:** số hạng Lớp 2 làm kém đi theo đúng liều. Cảm xúc của ĐOẠN đang suy từ nhãn câu (`LINE_EMOTIONS`) và còn quá
+  thô; phía bài thì đã có đầu dò AUC 0,85.
+- **Quyết định trên nhánh:** `EMOTION_WEIGHT = 0`, giữ cơ chế. Bật lại khi đường LLM (segllm) cho 13 cường độ của đoạn và
+  E4 đo lại.
+- **Thang phạt:** các mức phạt đổi sang thang z (chia 0,34), vì z-distance lớn hơn khoảng 3 lần thang Euclid cũ.
 
 ## Nguồn nhạc: giữ / loại và lý do (02-10, Lead + chủ sách - đọc trước khi hỏi lại)
 
