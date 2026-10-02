@@ -1310,6 +1310,9 @@ Cách sửa F1, cho bài mang số trò:
 - Dùng được: ổn định a/b 27 / 34 = 0,79 và 30 / 34 = 0,88; kappa 0,58.
 - 34 cặp khác bài. Cả hai chọn bài kho trộn 16, cả hai chọn bài kho toàn thầy 11, khác ý 7.
 - **p = 0,574** (KTC 0,41–0,72) ≥ 0,45. Từng người 0,59 / 0,56. Tính cả 100 đoạn: 0,525.
+- **Chưa chắc chắn:** ĐẠT theo luật điểm ước lượng, nhưng cận dưới KTC 0,41 < 0,45 (chỉ 34 cặp). Khi có bộ 5b, đo lại MỘT lần
+  cùng giao thức trên các đoạn mới. Lần ấy trượt thì gỡ F2 khỏi app.
+- Lead gộp vào main 165a3e16 (03-10 06:1x).
 
 Vào app (nhánh `dev/music-mixed-f2`), chỉ cho bài nhập:
 - Hiệu chỉnh a + b·trò từng trục.
