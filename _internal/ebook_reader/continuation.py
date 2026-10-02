@@ -35,6 +35,7 @@ from typing import Any
 from . import aliases, bracket_rule
 from .database import LISTENER_PRONUNCIATION_SOURCE, ProjectDB
 from .io_utils import discover_txt_files, natural_key
+from . import names as renames
 
 DB_NAME = "project.sqlite3"
 LINK_FILE = "continues.json"
@@ -699,6 +700,9 @@ def seed(source: Path, target: Path, log: Log = _quiet) -> dict[str, Any]:
     carried_aliases = aliases.carry(source, target)
     # Quy ước 『』 của cuốn ("lời trong 『』 là của X"): phần sau gán trước khi gom tên, như phần trước sau khi chọn.
     carried_bracket = bracket_rule.carry(source, target)
+    # Tên hiển thị người nghe đã đặt cho nhân vật ("Đổi tên" ở tab Nhân vật): chỉ là chữ trên màn hình, đi theo cuốn.
+    carried_names = renames.carry(source, target)
     _write_link(source, target)
     return {"from": str(source), "part": part_number(target), "pronunciations": len(readings), **casting,
-            "acceptances": acceptances, "aliases": carried_aliases, "bracket": carried_bracket}
+            "acceptances": acceptances, "aliases": carried_aliases, "bracket": carried_bracket,
+            "names": carried_names}
