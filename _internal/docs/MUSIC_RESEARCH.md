@@ -310,6 +310,14 @@ giúp** trên cả 17 chương (số phát triển - thiết kế sau khi đã t
 r không khí kém hơn. Khớp kết luận cũ: nhãn cảm xúc câu không thấy đổi cảnh. Chia đều trong đoạn (app) và cắt mỗi 180 s từ
 đầu chương (fixed3) khác nhau trong mức nhiễu (mỗi bên thắng một số chương).
 
+**GHI TRƯỚC cho BỘ KIỂM THỨ TƯ - thể loại mới (02-10, trước khi có phân tích và đáp án):** văn xuôi tình cảm Việt 1930
+(hết bản quyền, vi.wikisource): Khái Hưng "Nửa chừng xuân" chương 006, 016 và Hồ Biểu Chánh "Một chữ tình" chương 004, 007.
+Câu hỏi: luật app hiện tại (ranh giới cứng + chia đều đoạn dài hơn 3 phút, không khí từ nhãn câu) có giữ lợi thế "chia nhỏ"
+ở thể loại chưa từng đo không. So `app` với `hard` (không chia nhỏ) và `fixed3`. App GIỮ nếu r trung bình ba trục V/E/T của
+`app` hơn `hard` ít nhất 0,05 VÀ hơn ở >= 3/4 chương; `app` so `fixed3` chỉ ghi lại (kỳ vọng ngang). Đáp án: hai người chấm
+mù Sonnet + phân xử tự động (`adjudicate_scenes.py`). Tiên hiệp CHƯA có trong bộ này: không có nguồn hết bản quyền, và công cụ
+tải Hako (`hako.py`) dựa vào thư viện vượt trang chống bot - không dùng; cần chủ sách cung cấp văn bản.
+
 ## Thứ tự và tài nguyên
 
 0. Dữ liệu (đang chạy): Incompetech 1.443 bài (đọc 3 đoạn từ máy chủ), Jamendo CC BY 665 bài; tải Film soundtracks,
