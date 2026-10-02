@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Ban, Music2, Pin, RefreshCw, VolumeX, Volume2 } from "lucide-react";
+import { Ban, Music2, Pin, RefreshCw, Shuffle, VolumeX, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatClock } from "@/shared/format";
 import { Button } from "@/shared/ui";
@@ -38,6 +39,15 @@ interface MusicView {
   };
 }
 
+interface Alternative {
+  link: string;
+  title: string;
+  creator: string;
+  attribution: string;
+  duration?: number;
+  score: number;
+}
+
 const LEVELS: [number, string][] = [
   [-14, "To"],
   [-17, "Hơi to"],
@@ -62,14 +72,47 @@ function moodOf(scene: Scene, gems: MusicView["taxonomy"]["gems"]): string {
   return best;
 }
 
+/** "Đổi bài": các bài khác hợp đoạn này, hợp nhất trước (cùng cách chấm điểm với lúc máy chọn). Chọn = ghim bài ấy. */
+function Alternatives({ bookId, sceneKey, busy, onChoose }: { bookId: string; sceneKey: string; busy: boolean; onChoose: (link: string) => void }) {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["music-alternatives", bookId, sceneKey],
+    queryFn: () =>
+      api<{ alternatives: Alternative[] }>(`/api/books/${bookId}/music/scenes/${encodeURIComponent(sceneKey)}/alternatives`),
+    staleTime: 0,
+    gcTime: 0,
+  });
+  if (isLoading) return <p className="text-fg-2">Đang tìm bài khác…</p>;
+  if (error) return <p className="text-warning">{(error as Error).message}</p>;
+  if (!data?.alternatives.length) return <p className="text-fg-2">Không còn bài nào khác đủ hợp đoạn này.</p>;
+  return (
+    <ul className="space-y-1">
+      {data.alternatives.map((item) => (
+        <li key={item.link} className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span className="min-w-0 flex-1 break-words">
+            <Music2 className="mr-1.5 inline size-4 text-fg-2" />
+            {item.title || "Bài nhạc"}
+            {item.creator && <span className="text-fg-2"> · {item.creator}</span>}
+            {item.duration ? <span className="tabular text-fg-2"> · {formatClock(item.duration)}</span> : null}
+          </span>
+          <Button size="sm" variant="secondary" icon={Pin} disabled={busy} onClick={() => onChoose(item.link)}>
+            Chọn
+          </Button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitle: (id: number) => string }) {
   const client = useQueryClient();
+  const [swapping, setSwapping] = useState<string | null>(null); // khoá đoạn đang mở "Đổi bài"
   const key = ["music", bookId];
   const { data, isLoading } = useQuery({ queryKey: key, queryFn: () => api<MusicView>(`/api/books/${bookId}/music`) });
   const change = useMutation({
     mutationFn: (body: Record<string, unknown>) => api<MusicView>(`/api/books/${bookId}/music`, { method: "PUT", body }),
     onSuccess: (result) => {
       client.setQueryData(key, result);
+      setSwapping(null);
       if (result.error) toast.warning("Đã lưu lựa chọn", { description: result.error });
     },
     onError: (error: Error) => toast.error("Không đổi được nhạc nền", { description: error.message }),
@@ -162,6 +205,10 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                       )}
                     </span>
                     <span className="flex shrink-0 gap-1">
+                      <Button size="sm" variant="ghost" icon={Shuffle}
+                        onClick={() => setSwapping(swapping === scene.key ? null : scene.key)}>
+                        Đổi bài
+                      </Button>
                       {scene.pinned && (
                         <Button size="sm" variant="ghost" onClick={() => change.mutate({ pins: { [scene.key]: null } })}>
                           Bỏ ghim
@@ -177,6 +224,19 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                         </Button>
                       )}
                     </span>
+                    {swapping === scene.key && (
+                      <div className="basis-full rounded-lg bg-sunken p-2.5 text-sm">
+                        <Alternatives
+                          bookId={bookId}
+                          sceneKey={scene.key}
+                          busy={change.isPending}
+                          onChoose={(link) =>
+                            // Đoạn đang im lặng (bạn chọn) mà chọn bài thì có nhạc lại.
+                            change.mutate({ pins: { [scene.key]: link }, ...(scene.silenced ? { silence: { [scene.key]: false } } : {}) })
+                          }
+                        />
+                      </div>
+                    )}
                   </li>
                 );
               })}
