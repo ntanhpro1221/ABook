@@ -1,0 +1,380 @@
+# "Rokujouma no Shinryakusha" file 014 ("Chương 1: Dựng trại nào", tập 1). Đáp án KIỂM TRA LN Nhật 02-10 (chọn bằng luật cố
+# định: vị trí 30%/70% + chương phiên nhạc đã chép; <số>a = 25 KB đầu chương). Claude gán (A) 02-10.
+# NGÔI BA - không có "tôi" trong lời kể (không truyền --first-person). Koutarou chuyển vào phòng 106 ký túc Corona.
+# Tên (dùng chung cả bốn file rokujouma): KOUTAROU / SATOMI KOUTAROU / SATOMI ("Satomi-san" của Shizuka) / KOU (biệt danh
+# Kenji gọi); KENJI / MATSUDAIRA KENJI / MACKENZIE (biệt danh, lời kể 148 cũng dùng) / MATSUDAIRA; SHIZUKA / KASAGI SHIZUKA /
+# KASAGI / SHIZU (lời kể 218, 232); YUICHIROU / SATOMI YUICHIROU (bố Koutarou, qua điện thoại; SATOMI trơn là Koutarou).
+# "Bạn chủ nhà" (Ooya-san), "Bốn mắt-kun", "lão già" là xưng hô - không điểm (quy tắc 11).
+# 1-7: điều khoản "Hiệp ước CORONA" (văn bản trích, parser khoá D) -> NARRATOR đủ; người soạn không biết -> NPC*~, UNKNOWN~.
+# 45-73: người đàn ông của công ty vận chuyển, chỉ nói ở chương này -> NPC*. 62 "Bốn mắt-kun" = Kenji (đeo kính, 77, 191)
+# nên 61 là Kenji. 125: Shizuka nói trước khi lời kể gọi tên (152) -> SHIZUKA đủ, NPC*~ (quy tắc 5).
+# Câu kém chắc (đối đáp không lời dẫn): 65-67 (ai hỏi chỗ đặt vali), 75, 84 (cả hai cùng uống - cả hai đủ), 172, 182 "Ôi…"
+# (Shizuka trước cái cười trừ 183), 233-234, 252-254 (252 Kenji trách không được cảm ơn, 253 Koutarou mỉa "có đi có lại").
+# 235, 240: lời thoại hỏng dấu ngoặc nên parser khoá N -> NARRATOR (quy tắc 10). 333, 341 "Zzzz", 346 "Guehefuefuefue",
+# 361 "Uehhehehe": tiếng ngáy / nói mơ của Koutarou (347 "Koutarou nói mơ lần nữa", 362) -> KOUTAROU, NARRATOR~ (quy tắc 8).
+0 H
+1 D NARRATOR,NPC*~,UNKNOWN~ neutral 0-1 normal,slow normal u
+2 D NARRATOR,NPC*~,UNKNOWN~ neutral 0-1 normal,slow normal u
+3 D NARRATOR,NPC*~,UNKNOWN~ neutral 0-1 normal,slow normal u
+4 D NARRATOR,NPC*~,UNKNOWN~ neutral 0-1 normal,slow normal u
+5 D NARRATOR,NPC*~,UNKNOWN~ neutral 0-1 normal,slow normal u
+6 D NARRATOR,NPC*~,UNKNOWN~ neutral 0-1 normal,slow normal u
+7 D NARRATOR,NPC*~,UNKNOWN~ neutral 0-1 normal,slow normal u
+8 N
+9 N
+10 N
+11 N
+12 N
+13 N
+14 N
+15 N
+16 N
+17 N
+18 N
+19 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,angry,sarcastic 0-1 normal normal,loud m
+20 N
+21 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA sarcastic,neutral,happy 0-1 normal normal m
+22 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,sarcastic 0-1 normal normal m
+23 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA sarcastic,tired,neutral 0-1 normal normal m
+24 N
+25 N
+26 N
+27 N
+28 N
+29 N
+30 N
+31 N
+32 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA happy,neutral,excited 0-1 normal normal m
+33 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,happy,afraid 0-1 normal normal m
+34 N
+35 N
+36 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA neutral,sad 0-1 normal normal m
+37 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal,soft m
+38 N
+39 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU happy,excited,neutral 0-2 normal normal m
+40 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA sarcastic,happy 0-2 normal normal,loud m
+41 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU angry,sarcastic,surprised 1-2 normal normal,loud m
+42 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA angry,sarcastic 1-2 normal normal,loud m
+43 N
+44 N
+45 D NPC*:bác chuyển nhà,UNKNOWN~ neutral 0-1 normal normal m
+46 N
+47 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal m
+48 D NPC*:bác chuyển nhà,UNKNOWN~ neutral 0-1 normal normal m
+49 N
+50 N
+51 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA neutral,tired,surprised 0-1 normal normal m
+52 N
+53 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU sarcastic,happy 0-1 normal normal m
+54 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA neutral,sarcastic 0-1 normal normal m
+55 N
+56 N
+57 N
+58 N
+59 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA neutral,afraid 0-1 normal,fast normal m
+60 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,tired 0-1 normal normal m
+61 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA neutral 0-1 normal normal m
+62 D NPC*:bác chuyển nhà,UNKNOWN~ neutral,happy 0-1 normal normal m
+63 N
+64 N
+65 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA,KOUTAROU~,SATOMI KOUTAROU~,SATOMI~,KOU~ neutral,tired 0-1 normal normal m
+66 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU,KENJI~,MATSUDAIRA KENJI~,MACKENZIE~,MATSUDAIRA~ neutral 0-1 normal normal m
+67 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA,KOUTAROU~,SATOMI KOUTAROU~,SATOMI~,KOU~ neutral 0-1 normal normal m
+68 N
+69 N
+70 D NPC*:bác chuyển nhà,UNKNOWN~ neutral 0-1 normal normal m
+71 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU happy,neutral 0-1 normal normal,loud m
+72 N
+73 D NPC*:bác chuyển nhà,UNKNOWN~ happy,neutral 0-1 normal normal m
+74 N NARRATOR neutral,happy 0-1 normal normal u
+75 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU,KENJI~,MATSUDAIRA KENJI~,MACKENZIE~,MATSUDAIRA~ neutral,tired,happy 0-1 normal normal m
+76 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,happy 0-1 normal normal m
+77 N
+78 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA happy,neutral 0-1 normal normal m
+79 N
+80 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal m
+81 N
+82 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA neutral 0-1 normal normal m
+83 N
+84 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU,KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA happy,tired 0-1 normal normal m
+85 N
+86 N
+87 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA neutral,surprised 0-1 normal normal m
+88 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal m
+89 N
+90 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA surprised,neutral 0-1 normal normal m
+91 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal m
+92 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA surprised,neutral 0-1 normal normal m
+93 N NARRATOR neutral,surprised 0-1 normal normal u
+94 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU sarcastic,neutral 0-1 normal normal m
+95 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA neutral,surprised 0-1 normal normal m
+96 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal m
+97 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA sarcastic,tired,neutral 0-1 normal normal m
+98 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU happy,excited,sarcastic 0-2 normal normal,loud m
+99 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA tired,sarcastic,neutral 0-1 normal normal m
+100 N NARRATOR neutral,tired,happy 0-1 normal normal u
+101 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA neutral 0-1 normal normal m
+102 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal m
+103 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA neutral 0-1 normal normal m
+104 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,happy 0-1 normal normal m
+105 N
+106 N
+107 N
+108 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA neutral,sarcastic 0-1 normal normal m
+109 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,happy 0-1 normal normal m
+110 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA sarcastic,tired 0-1 normal normal m
+111 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,angry 0-1 normal normal m
+112 N
+113 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU happy,excited,neutral 0-1 normal normal m
+114 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA surprised,neutral 0-1 normal normal m
+115 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,sarcastic 0-1 normal normal m
+116 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA tired,sarcastic 0-1 normal normal m
+117 N
+118 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU happy,sarcastic 0-1 normal normal m
+119 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA tired,sad,sarcastic 0-1 normal,slow normal m
+120 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU happy,sarcastic 0-1 normal normal m
+121 N
+122 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU,KENJI~,MATSUDAIRA KENJI~,MACKENZIE~,MATSUDAIRA~,NARRATOR~ surprised 0-1 normal normal m
+123 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA,KOUTAROU~,SATOMI KOUTAROU~,SATOMI~,KOU~ surprised,neutral 0-1 normal normal m
+124 N
+125 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU,NPC*~ happy,neutral 0-1 normal normal,loud f
+126 N
+127 N
+128 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,happy 0-1 normal normal m
+129 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA surprised 0-1 normal normal m
+130 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal,fast normal,loud m
+131 N
+132 N
+133 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA happy,neutral 0-1 normal normal m
+134 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU happy 0-1 normal normal m
+135 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA neutral 0-1 normal normal m
+136 N
+137 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU happy,neutral 0-1 normal normal m
+138 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU happy,neutral 0-1 normal normal f
+139 N
+140 N
+141 N
+142 N
+143 N
+144 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA surprised 1-2 normal normal m
+145 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU happy,sarcastic 0-1 normal normal m
+146 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA surprised,neutral 0-1 normal normal m
+147 N NARRATOR neutral,surprised 0-1 normal normal u
+148 N,T NARRATOR,KENJI~,MATSUDAIRA KENJI~,MACKENZIE~,MATSUDAIRA~ neutral,surprised 0-1 normal normal u
+149 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU happy 0-1 normal normal m
+150 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU happy,tender 0-1 normal normal f
+151 N NARRATOR neutral,happy 0-1 normal normal u
+152 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU happy,neutral 0-1 normal normal f
+153 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA neutral,surprised 0-1 normal,fast normal m
+154 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU happy,tender 0-1 normal normal f
+155 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA neutral 0-1 normal normal m
+156 N
+157 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,happy 0-1 normal normal m
+158 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU surprised,neutral 0-1 normal normal f
+159 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,sarcastic 0-1 normal normal m
+160 N
+161 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU surprised,neutral 0-1 normal normal f
+162 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA neutral,tired 0-1 normal normal m
+163 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU happy 0-1 normal normal f
+164 N NARRATOR neutral,happy 0-1 normal normal u
+165 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA neutral,tired 0-1 normal normal m
+166 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU neutral 0-1 normal normal f
+167 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA neutral 0-1 normal normal m
+168 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU happy 0-1 normal normal f
+169 N NARRATOR neutral,happy 0-1 normal normal u
+170 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU happy,neutral 0-1 normal normal m
+171 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA surprised,happy 0-1 normal normal m
+172 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA,KOUTAROU~,SATOMI KOUTAROU~,SATOMI~,KOU~ happy,neutral 0-1 normal normal m
+173 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU happy,tender 0-1 normal normal f
+174 N
+175 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal m
+176 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU surprised,neutral 0-1 normal normal f
+177 N
+178 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU neutral,happy 0-1 normal normal f
+179 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA surprised 0-1 normal normal m
+180 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU neutral,happy 0-1 normal normal f
+181 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU happy,excited,sarcastic 0-1 normal normal m
+182 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU surprised,neutral 0-1 normal normal,soft f
+183 N
+184 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU happy,tender 0-1 normal normal f
+185 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA tired,sarcastic 0-1 normal normal m
+186 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,happy 0-1 normal normal m
+187 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU happy 0-1 normal normal f
+188 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA happy,sarcastic 0-1 normal normal m
+189 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU angry,surprised 1-2 normal,fast loud,normal m
+190 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA sarcastic,neutral 0-1 normal normal m
+191 N NARRATOR neutral,tired 0-1 normal normal u
+192 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU surprised,neutral 0-1 normal normal f
+193 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA tired,sarcastic 0-1 normal normal m
+194 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,happy 0-1 normal normal m
+195 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA sarcastic,neutral 0-1 normal normal m
+196 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU neutral,happy 0-1 normal normal f
+197 N NARRATOR neutral,happy 0-1 normal normal u
+198 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA neutral 0-1 normal normal m
+199 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU afraid,angry,surprised 1-2 fast,normal loud,normal m
+200 N NARRATOR neutral,afraid 0-1 normal normal u
+201 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA neutral 0-1 normal normal m
+202 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU afraid,neutral 0-1 fast,normal normal m
+203 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU neutral,tender 0-1 normal normal f
+204 N NARRATOR neutral,afraid,happy 0-1 normal normal u
+205 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU happy,tender 0-1 normal normal f
+206 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU surprised,tender,sad 0-1 normal normal,soft m
+207 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU neutral,sad 0-1 normal normal f
+208 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU,NARRATOR~ neutral,sad,afraid,happy 0-1 normal normal,soft m
+209 N NARRATOR neutral,sad 0-1 normal normal u
+210 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU neutral,afraid 0-1 slow,normal normal,soft f
+211 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA surprised,neutral 0-1 normal normal m
+212 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU neutral,afraid 0-1 normal,slow normal,soft f
+213 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA surprised,afraid 1-2 fast,normal loud,normal m
+214 N NARRATOR neutral,surprised,afraid 0-1 normal normal u
+215 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU neutral,afraid 0-1 normal normal f
+216 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA surprised,afraid,neutral 0-1 normal normal m
+217 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU neutral,afraid 0-1 normal normal f
+218 N NARRATOR neutral,afraid 0-1 normal normal u
+219 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU excited,happy 1-2 normal loud,normal m
+220 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU happy,tender 0-1 normal normal f
+221 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU excited,happy 1-2 normal loud,normal m
+222 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA afraid,neutral 0-1 normal,slow normal,soft m
+223 N
+224 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,happy 0-1 normal normal m
+225 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA neutral 0-1 normal normal m
+226 N
+227 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA sarcastic,happy 0-1 normal normal m
+228 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU sad,sarcastic,neutral 0-1 normal normal m
+229 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA sarcastic 0-1 normal normal m
+230 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU tired,neutral 0-1 normal normal m
+231 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU happy 0-1 normal normal f
+232 N NARRATOR neutral,happy 0-1 normal normal u
+233 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA,KOUTAROU~,SATOMI KOUTAROU~,SATOMI~,KOU~ sarcastic,surprised,neutral 0-1 normal normal m
+234 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU,KENJI~,MATSUDAIRA KENJI~,MACKENZIE~,MATSUDAIRA~ afraid,angry,neutral 0-1 normal normal m
+235 N
+236 N
+237 N
+238 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA neutral 0-1 normal normal m
+239 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU tired,neutral 0-1 normal normal m
+240 N
+241 N
+242 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU neutral,happy 0-1 normal normal f
+243 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,happy 0-1 normal normal m
+244 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU neutral,happy 0-1 normal normal f
+245 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU happy 0-1 normal normal m
+246 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU happy 0-1 normal normal f
+247 N NARRATOR neutral,happy 0-1 normal normal u
+248 N
+249 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU happy 0-1 normal normal m
+250 N
+251 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU happy,tender 0-1 normal normal f
+252 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA sarcastic,sad 0-1 normal normal m
+253 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU sarcastic,happy 0-1 normal normal m
+254 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA,KOUTAROU~,SATOMI KOUTAROU~,SATOMI~,KOU~ sarcastic,neutral 0-1 normal normal m
+255 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU happy,neutral 0-1 normal normal m
+256 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA neutral 0-1 normal normal m
+257 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU tired,neutral 0-1 normal normal m
+258 N
+259 N
+260 N
+261 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal,slow normal,soft m
+262 N
+263 N
+264 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,tender,happy 0-1 normal normal m
+265 N
+266 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal,soft m
+267 N
+268 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU happy,tender,neutral 0-1 normal normal m
+269 N
+270 N
+271 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal,soft m
+272 N
+273 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal,soft m
+274 N
+275 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal m
+276 N
+277 N
+278 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU surprised,neutral 0-1 normal normal m
+279 N
+280 N
+281 N
+282 N
+283 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal m
+284 D YUICHIROU,SATOMI YUICHIROU happy,neutral 0-1 normal normal m
+285 N
+286 D YUICHIROU,SATOMI YUICHIROU neutral,happy 0-1 normal normal m
+287 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,tired 0-1 normal normal m
+288 D YUICHIROU,SATOMI YUICHIROU neutral 0-1 normal normal m
+289 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal m
+290 D YUICHIROU,SATOMI YUICHIROU happy,neutral 0-1 normal normal m
+291 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU sarcastic,neutral 0-1 normal normal m
+292 D YUICHIROU,SATOMI YUICHIROU happy 0-1 normal normal m
+293 N
+294 N
+295 N
+296 N
+297 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU sarcastic,happy 0-1 normal normal m
+298 N
+299 N NARRATOR neutral,afraid 0-1 normal normal u
+300 D YUICHIROU,SATOMI YUICHIROU happy,sad 0-1 normal normal m
+301 N
+302 N NARRATOR neutral,sad 0-1 normal normal u
+303 N
+304 D YUICHIROU,SATOMI YUICHIROU neutral 0-1 normal normal m
+305 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal m
+306 D YUICHIROU,SATOMI YUICHIROU neutral,tired 0-1 normal normal m
+307 N NARRATOR neutral,afraid 0-1 normal normal u
+308 D YUICHIROU,SATOMI YUICHIROU neutral 0-1 normal normal m
+309 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal m
+310 D YUICHIROU,SATOMI YUICHIROU tender,neutral 0-1 normal normal m
+311 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,tender 0-1 normal normal m
+312 N
+313 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,afraid 0-1 normal,slow normal,soft m
+314 N
+315 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,happy 0-1 normal,slow normal,soft m
+316 N NARRATOR neutral,happy 0-1 normal normal u
+317 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU surprised 0-1 normal normal m
+318 N
+319 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,tired 0-1 normal normal m
+320 N
+321 N
+322 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal m
+323 N
+324 N
+325 N
+326 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal,soft m
+327 N
+328 N
+329 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,happy 0-1 normal normal m
+330 N
+331 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU happy,neutral 0-1 normal normal m
+332 N
+333 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU,NARRATOR~ tired,neutral 0-1 slow soft m
+334 N
+335 N
+336 N
+337 N
+338 N
+339 N
+340 N
+341 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU,NARRATOR~ tired,neutral 0-1 slow soft m
+342 N
+343 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU tired,neutral,whispering 0-1 slow,normal soft m
+344 N
+345 N
+346 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU,NARRATOR~ happy,tired 0-1 slow,normal soft,normal m
+347 N NARRATOR neutral,surprised 0-1 normal normal u
+348 N
+349 N
+350 N
+351 N
+352 N
+353 N
+354 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU happy,tired,sarcastic 0-1 slow,normal soft,normal m
+355 N
+356 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU sarcastic,tired 0-1 slow,normal soft,normal m
+357 N
+358 N
+359 N
+360 N
+361 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU,NARRATOR~ happy,tired 0-1 slow,normal soft,normal m
+362 N
+363 N
+364 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU angry,tired 0-2 normal soft,normal,loud m
+365 N NARRATOR neutral,surprised 0-1 normal normal u

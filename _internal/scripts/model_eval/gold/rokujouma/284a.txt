@@ -1,0 +1,178 @@
+# "Rokujouma no Shinryakusha" file 284a = 25 KB đầu file 284 ("Chương 3: Kabutonga chết lúc bình minh!?"). Đáp án KIỂM TRA LN
+# Nhật 02-10 (chọn bằng luật cố định: vị trí 30%/70% + chương phiên nhạc đã chép; <số>a = 25 KB đầu chương). Claude gán (A).
+# NGÔI BA - không có "tôi" trong lời kể (không truyền --first-person). Shizuka nhận vai Kabutonga; Ruth ghét bọ cánh cứng.
+# Tên (chung cả bốn file): KOUTAROU / SATOMI KOUTAROU / SATOMI / KOU; SHIZUKA / KASAGI SHIZUKA / KASAGI / SHIZU; KIRIHA /
+# KURANO KIRIHA / KURANO, KII~; YURIKA / NIJINO YURIKA / NIJINO; SANAE / HIGASHIHONGAN SANAE / HIGASHIHONGAN; THEIA /
+# THEIAMILLIS / THEIAMILLIS GRE FORTHORTHE; RUTH / RUTHKANIA / RUTHKHANIA / RUTHKANIA NYE PARDOMSHIHA (hai cách phiên trong
+# kho; PARDOMSHIHA trơn là gia tộc / "Lord Pardomshiha" - không điểm); MAKI / AIKA MAKI / AIKA. "Master" (Ruth gọi Koutarou),
+# "Ooya-san", "Ngài Thanh Kỵ sĩ", "công chúa" là xưng hô - không điểm.
+# 2-18: đạo diễn chương trình siêu anh hùng, không tên trong cả bộ, giới không rõ -> NPC*, giới u.
+# 55, 105, 112, 160: dòng 〔…〕 là suy nghĩ (Shizuka 56, Ruth 104-107, Koutarou 113, Kiriha 161) nhưng parser khoá N -> N,T
+# NARRATOR,<người nghĩ>, giới u (tiền lệ Yamiyo 141: host giữ khoá lời kể). 34, 38, 43, 45, 58, 60, 62, 80, 91, 124, 130, 137,
+# 148, 156: lời dẫn "- X nói -" tách riêng -> N. 95, 106: tiếng động *Roạt*, *Vụt* -> N.
+# 63 "Sanae-sama", 83 "Master" là cách gọi của Ruth. 87 "Au, sao cậu có thể ngu đến vậy!?" không lời dẫn: Sanae (hay mắng
+# Yurika, 77) - Maki~. 98 "Ế ế ế!" = "các cô gái khác trong phòng" (99) không nêu tên -> NPC* (cả đám) đủ, từng người ~.
+# 67/68: "Yurika và Maki về đến phòng" - 67 hớn hở là Yurika, 68 là Maki; đảo lại nửa điểm.
+0 H
+1 N
+2 D NPC*:đạo diễn,UNKNOWN~ afraid,sad,excited 1-2 normal,fast normal,loud u
+3 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU sad,neutral 0-1 normal normal,soft f
+4 N
+5 N
+6 D NPC*:đạo diễn,UNKNOWN~ excited,happy 1-2 normal,fast loud,normal u
+7 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU sad,afraid 0-1 normal normal,soft f
+8 D NPC*:đạo diễn,UNKNOWN~ excited,happy 1-2 fast,normal loud,normal u
+9 N NARRATOR neutral,happy 0-1 normal normal u
+10 N
+11 N
+12 D NPC*:đạo diễn,UNKNOWN~ excited,afraid,sad 1-2 fast,normal loud u
+13 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU neutral,tired 0-1 slow,normal normal,soft f
+14 N
+15 N
+16 N
+17 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU neutral,tired 0-1 normal,slow normal f
+18 D NPC*:đạo diễn,UNKNOWN~ happy,excited 1-2 fast,normal loud,normal u
+19 N
+20 N NARRATOR neutral,afraid 0-1 normal normal u
+21 N NARRATOR neutral,surprised 0-1 normal normal u
+22 D SANAE,HIGASHIHONGAN SANAE,HIGASHIHONGAN neutral 0-1 normal normal f
+23 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU surprised 0-1 normal normal f
+24 D SANAE,HIGASHIHONGAN SANAE,HIGASHIHONGAN neutral 0-1 normal normal f
+25 N
+26 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU surprised,neutral 0-1 normal normal f
+27 N
+28 D SANAE,HIGASHIHONGAN SANAE,HIGASHIHONGAN happy,neutral 0-1 normal normal f
+29 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU happy,neutral 0-1 normal normal f
+30 D SANAE,HIGASHIHONGAN SANAE,HIGASHIHONGAN happy,neutral 0-1 normal normal f
+31 N
+32 N
+33 D SANAE,HIGASHIHONGAN SANAE,HIGASHIHONGAN neutral,surprised 0-1 normal normal f
+34 N NARRATOR neutral,surprised 0-1 normal normal u
+35 D SANAE,HIGASHIHONGAN SANAE,HIGASHIHONGAN surprised,neutral 0-1 normal normal f
+36 N
+37 D SANAE,HIGASHIHONGAN SANAE,HIGASHIHONGAN neutral,surprised 0-1 normal normal f
+38 N
+39 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU neutral,tender 0-1 normal normal f
+40 N
+41 N
+42 D SANAE,HIGASHIHONGAN SANAE,HIGASHIHONGAN happy,sarcastic 0-1 normal normal f
+43 N NARRATOR neutral,happy 0-1 normal normal u
+44 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU happy,neutral 0-1 normal normal f
+45 N
+46 D SANAE,HIGASHIHONGAN SANAE,HIGASHIHONGAN,NARRATOR~ happy 0-1 normal normal f
+47 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU,NARRATOR~ happy 0-1 normal normal f
+48 N NARRATOR neutral,happy,afraid 0-1 normal normal u
+49 N
+50 N
+51 D RUTH,RUTHKANIA,RUTHKHANIA,RUTHKANIA NYE PARDOMSHIHA neutral,tender 0-1 normal normal f
+52 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU neutral,afraid 0-1 normal normal f
+53 D RUTH,RUTHKANIA,RUTHKHANIA,RUTHKANIA NYE PARDOMSHIHA neutral,happy 0-1 normal normal f
+54 N NARRATOR neutral,afraid 0-1 normal normal u
+55 N,T NARRATOR,SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU happy,neutral 0-1 normal normal u
+56 N NARRATOR neutral,happy 0-1 normal normal u
+57 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU neutral,happy 0-1 normal normal f
+58 N
+59 D RUTH,RUTHKANIA,RUTHKHANIA,RUTHKANIA NYE PARDOMSHIHA neutral,happy 0-1 normal normal f
+60 N
+61 D SANAE,HIGASHIHONGAN SANAE,HIGASHIHONGAN happy,sarcastic 0-1 normal normal f
+62 N
+63 D RUTH,RUTHKANIA,RUTHKHANIA,RUTHKANIA NYE PARDOMSHIHA neutral,sarcastic,happy 0-1 normal normal f
+64 D SANAE,HIGASHIHONGAN SANAE,HIGASHIHONGAN happy,sarcastic 0-1 normal normal f
+65 D RUTH,RUTHKANIA,RUTHKHANIA,RUTHKANIA NYE PARDOMSHIHA,SHIZUKA~,KASAGI SHIZUKA~,KASAGI~,SHIZU~ neutral,sarcastic 0-1 normal normal f
+66 N NARRATOR neutral,happy 0-1 normal normal u
+67 D YURIKA,NIJINO YURIKA,NIJINO,MAKI~,AIKA MAKI~,AIKA~ happy,excited 0-2 normal loud,normal f
+68 D MAKI,AIKA MAKI,AIKA,YURIKA~,NIJINO YURIKA~,NIJINO~ neutral 0-1 normal normal f
+69 N
+70 D YURIKA,NIJINO YURIKA,NIJINO happy,excited 1-2 normal,fast loud f
+71 N NARRATOR neutral,sad 0-1 normal normal u
+72 D MAKI,AIKA MAKI,AIKA neutral,sarcastic,tired 0-1 normal normal f
+73 N
+74 D YURIKA,NIJINO YURIKA,NIJINO neutral,happy 0-1 normal normal f
+75 D MAKI,AIKA MAKI,AIKA surprised 0-1 normal normal f
+76 N
+77 D SANAE,HIGASHIHONGAN SANAE,HIGASHIHONGAN tired,sarcastic 0-1 normal normal f
+78 N
+79 D RUTH,RUTHKANIA,RUTHKHANIA,RUTHKANIA NYE PARDOMSHIHA surprised,neutral 0-1 normal normal f
+80 N
+81 N
+82 D YURIKA,NIJINO YURIKA,NIJINO happy,sarcastic 0-1 normal normal f
+83 D RUTH,RUTHKANIA,RUTHKHANIA,RUTHKANIA NYE PARDOMSHIHA surprised,angry,sad 0-2 normal normal,soft f
+84 N NARRATOR neutral,afraid 0-1 normal normal u
+85 D YURIKA,NIJINO YURIKA,NIJINO,NARRATOR~ afraid,surprised 1-2 fast normal,loud f
+86 N
+87 D SANAE,HIGASHIHONGAN SANAE,HIGASHIHONGAN,SHIZUKA~,KASAGI SHIZUKA~,KASAGI~,SHIZU~ angry 1-2 normal,fast loud,normal f
+88 D RUTH,RUTHKANIA,RUTHKHANIA,RUTHKANIA NYE PARDOMSHIHA angry,sad 1-2 slow,normal soft f
+89 N NARRATOR neutral,angry,afraid 0-1 normal normal u
+90 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU angry,afraid 1-2 fast,normal loud f
+91 N
+92 D YURIKA,NIJINO YURIKA,NIJINO afraid,sad 1-2 fast loud,normal f
+93 D RUTH,RUTHKANIA,RUTHKHANIA,RUTHKANIA NYE PARDOMSHIHA angry,sad 1-3 slow,normal soft,normal f
+94 N NARRATOR neutral,angry,sad 0-1 normal normal u
+95 N
+96 N NARRATOR neutral,angry 0-1 normal normal u
+97 D RUTH,RUTHKANIA,RUTHKHANIA,RUTHKANIA NYE PARDOMSHIHA angry,sarcastic 1-2 slow soft f
+98 D NPC*:cả đám,UNKNOWN~,YURIKA~,NIJINO YURIKA~,NIJINO~,SHIZUKA~,KASAGI SHIZUKA~,KASAGI~,SHIZU~,SANAE~,HIGASHIHONGAN SANAE~,HIGASHIHONGAN~,MAKI~,AIKA MAKI~,AIKA~ afraid 1-2 fast loud f
+99 N NARRATOR neutral,afraid 0-1 normal normal u
+100 N
+101 N
+102 D RUTH,RUTHKANIA,RUTHKHANIA,RUTHKANIA NYE PARDOMSHIHA,NARRATOR~ angry,excited 1-2 fast loud f
+103 N NARRATOR neutral,angry 0-1 normal normal u
+104 N NARRATOR neutral,angry 0-1 normal normal u
+105 N,T NARRATOR,RUTH,RUTHKANIA,RUTHKHANIA,RUTHKANIA NYE PARDOMSHIHA angry,neutral 0-2 normal,fast normal u
+106 N
+107 N
+108 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,excited 0-1 normal normal,loud m
+109 N
+110 D RUTH,RUTHKANIA,RUTHKHANIA,RUTHKANIA NYE PARDOMSHIHA,NARRATOR~ angry,excited 1-2 fast loud f
+111 N
+112 N,T NARRATOR,KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU surprised,neutral,sad 0-1 normal normal u
+113 N NARRATOR neutral,sad,happy 0-1 normal normal u
+114 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal m
+115 D RUTH,RUTHKANIA,RUTHKHANIA,RUTHKANIA NYE PARDOMSHIHA neutral,excited 0-1 normal normal,loud f
+116 N
+117 N NARRATOR neutral,afraid 0-1 normal normal u
+118 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU afraid,neutral 0-1 normal soft,normal f
+119 N
+120 N
+121 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU angry,afraid 1-2 fast,normal loud,normal f
+122 N
+123 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,sad 0-1 normal normal m
+124 N
+125 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal m
+126 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU sad,angry,neutral 0-1 normal normal f
+127 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU sad,neutral 0-1 normal normal m
+128 N
+129 D THEIA,THEIAMILLIS,THEIAMILLIS GRE FORTHORTHE neutral,happy 0-1 normal normal f
+130 N
+131 N
+132 D THEIA,THEIAMILLIS,THEIAMILLIS GRE FORTHORTHE neutral,happy 0-1 normal normal f
+133 N
+134 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU angry,surprised 1-2 fast,normal loud m
+135 N NARRATOR neutral,surprised 0-1 normal normal u
+136 D THEIA,THEIAMILLIS,THEIAMILLIS GRE FORTHORTHE surprised,neutral 0-1 normal normal f
+137 N
+138 D THEIA,THEIAMILLIS,THEIAMILLIS GRE FORTHORTHE neutral,surprised 0-1 normal normal f
+139 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU angry 1-2 fast,normal loud,normal m
+140 N
+141 D THEIA,THEIAMILLIS,THEIAMILLIS GRE FORTHORTHE neutral,happy 0-1 normal normal f
+142 N
+143 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU angry,neutral 0-1 normal normal m
+144 N
+145 D THEIA,THEIAMILLIS,THEIAMILLIS GRE FORTHORTHE tired,sarcastic 0-1 normal normal f
+146 N NARRATOR neutral,tired,sad 0-1 normal normal u
+147 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,angry 0-1 normal normal m
+148 N
+149 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal m
+150 D THEIA,THEIAMILLIS,THEIAMILLIS GRE FORTHORTHE neutral,tender 0-1 normal normal,soft f
+151 N NARRATOR neutral,happy 0-1 normal normal u
+152 D THEIA,THEIAMILLIS,THEIAMILLIS GRE FORTHORTHE neutral 0-1 normal normal f
+153 N NARRATOR neutral,happy 0-1 normal normal u
+154 D KIRIHA,KURANO KIRIHA,KURANO,KII~ neutral,tender 0-1 normal normal f
+155 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU surprised,neutral 0-1 normal normal f
+156 N
+157 N NARRATOR neutral,afraid 0-1 normal normal u
+158 D KIRIHA,KURANO KIRIHA,KURANO,KII~ neutral 0-1 normal normal f
+159 N
+160 N,T NARRATOR,KIRIHA,KURANO KIRIHA,KURANO,KII~ neutral 0-1 normal normal u
+161 N
+162 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU surprised,afraid,angry 1-2 fast loud,normal f

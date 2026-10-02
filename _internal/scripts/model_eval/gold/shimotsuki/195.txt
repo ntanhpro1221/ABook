@@ -1,0 +1,68 @@
+# "Shimotsuki wa Mob ga Suki" file 195 ("Chương 195 - Shimotsuki Shiho không phải là cô ngốc"). Claude gán (A) 02-10.
+# Đáp án KIỂM TRA LN Nhật 02-10 (chọn bằng luật cố định: vị trí 30%/70% + chương phiên nhạc đã chép).
+# NGÔI BA - KHÔNG có "tôi" (không truyền --first-person): người kể toàn tri nói về "tác phẩm này" (2) và với người đọc
+# ("bạn sẽ hiểu", 9), rồi bám theo Shiho (cả 196 cũng thế). Không câu thoại nào; 14 dòng "(...)" đều là nội tâm Shiho - tự
+# xưng "mình"/"tớ", gọi "cậu ấy"/"Koutarou-kun", "Kurumizawa-san" - nên SHIMOTSUKI SHIHO / SHIHO / SHIMOTSUKI đủ điểm (quy
+# tắc 3), NARRATOR không điểm (tiền lệ Yamiyo 141: dòng T thật không cho NARRATOR). Chỉ được nhắc, không nói/nghĩ: Nakayama
+# Koutarou (24 "Koutaro" là lỗi gõ của bản dịch, lời kể), Kurumizawa Kururi (cô bạn tóc hồng ngồi chỗ cũ của Shiho).
+# Câu tự nhủ trong lời kể ngôi ba (quy tắc 4): 48 "Nhưng chuyện đó, nói sao nhỉ, có gì đó sai sai." trọn câu là tiếng lòng
+# -> N,T, Shiho đủ; 50 "Ví dụ như là được cứu mạng này." và 56 "Những cảm xúc đó, có phải là hàng thật không." là lời kể
+# gián tiếp tự do -> N,T, Shiho nửa điểm.
+0 H
+1 N
+2 N
+3 N
+4 N
+5 N
+6 N
+7 N
+8 N
+9 N
+10 T SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI afraid,sad,neutral 0-1 normal,slow normal,soft f
+11 N
+12 N
+13 N
+14 N
+15 N
+16 T SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI neutral,happy 0-1 normal normal f
+17 N
+18 N
+19 T SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI tender,happy,neutral 0-1 normal,slow normal,soft f
+20 N
+21 N,T NARRATOR,SHIMOTSUKI SHIHO~,SHIHO~,SHIMOTSUKI~ neutral,tender 0-1 normal normal u
+22 N,T NARRATOR,SHIMOTSUKI SHIHO~,SHIHO~,SHIMOTSUKI~ neutral 0-1 normal normal u
+23 T SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI neutral,angry,afraid 0-1 normal normal f
+24 N
+25 N
+26 T SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI neutral 0-1 normal normal f
+27 N
+28 T SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI sad,tired,neutral 0-1 slow,normal soft,normal f
+29 N NARRATOR neutral,sad 0-1 normal normal u
+30 N
+31 N NARRATOR neutral,sad,afraid 0-1 normal normal u
+32 T SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI neutral 0-1 normal normal f
+33 N
+34 N
+35 N
+36 T SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI neutral,surprised 0-1 normal normal f
+37 N NARRATOR neutral,sad 0-1 normal normal u
+38 N
+39 T SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI neutral,sad 0-1 normal normal f
+40 N
+41 N
+42 N
+43 N
+44 T SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI surprised,neutral 0-1 normal normal f
+45 N NARRATOR neutral,surprised 0-1 normal normal u
+46 T SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI neutral,surprised 0-1 normal normal f
+47 N
+48 N,T NARRATOR,SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI neutral,surprised 0-1 normal normal u
+49 T SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI neutral,surprised 0-1 normal normal f
+50 N,T NARRATOR,SHIMOTSUKI SHIHO~,SHIHO~,SHIMOTSUKI~ neutral 0-1 normal normal u
+51 N,T NARRATOR,SHIMOTSUKI SHIHO~,SHIHO~,SHIMOTSUKI~ neutral 0-1 normal normal u
+52 N
+53 T SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI angry,sad,neutral 0-1 normal normal f
+54 N NARRATOR neutral,angry 0-1 normal normal u
+55 T SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI neutral,afraid 0-1 normal normal f
+56 N,T NARRATOR,SHIMOTSUKI SHIHO~,SHIHO~,SHIMOTSUKI~ neutral 0-1 normal normal u
+57 N

@@ -1,0 +1,71 @@
+# "Shimotsuki wa Mob ga Suki" file 456 ("Chương 423 - Yêu quá"; bản dịch đánh số chương lệch số file). Claude gán (A) 02-10.
+# Đáp án KIỂM TRA LN Nhật 02-10 (chọn bằng luật cố định: vị trí 30%/70% + chương phiên nhạc đã chép).
+# NGÔI THỨ NHẤT: "tôi" = NAKAYAMA KOUTAROU / KOUTAROU / NAKAYAMA (m; 455 mở bằng 【Góc nhìn của Nakayama Koutarou】). Tên như
+# 029: SHIMOTSUKI SHIHO / SHIHO / SHIMOTSUKI (f). Azusa (em gái kế của Koutarou, "Azunyan") chỉ được nhắc; câu 『Azusa không
+# muốn...』 lồng trong lời Shiho ở 27 là Shiho thuật lại - cả dòng vẫn là Shiho.
+# 1-3 trong 『』: thầy phụ trách bệnh xá ở lều cứu hộ (455: "giáo viên phụ trách bệnh xá... coi như ông mình", tật "Cả ta khi
+# xưa cũng――"; 4 "trước khi thầy bắt đầu kể chuyện xưa") nói với Shiho rồi với Koutarou ("tên nhóc kia"); 2 là Shiho đáp
+# ("Cậu ấy không phải bạn trai em!"). Ông không có tên ở bất kỳ chương nào (chỉ nói ở 455-456) -> NPC* đủ, UNKNOWN~
+# (NPC*:thầy bệnh xá). Từ 5: đối đáp hai người gần như không lời dẫn - Koutarou gọi "Shiho", nói chậm rãi, ra lệnh 30
+# "Ngồi xuống"; Shiho gọi "Koutarou-kun", lắp bắp ("V-vậy sao", "Hee!? G-gì nhế――! Hong phải", "Đ-đừng"). 45 "Tớ, đã thay
+# đổi đến vậy rồi nhỉ" là Koutarou đáp 42 ("Koutarou-kun của tớ không còn là Koutarou-kun nữa rồi"); 46 "tiến hóa" là
+# Shiho (52 "Shiho chỉ bối rối trước cái vụ tiến hóa kia"); 47-49 Koutarou cãi thầm câu ấy -> N,T (quy tắc 4), như 14
+# "Nhìn Shiho lúc này kỳ quá." Bộ tách bỏ hai dòng câm 「「............」」 (p8, cả hai) và 「............」 (p12, Shiho).
+0 H
+1 D NPC*:thầy bệnh xá,UNKNOWN~ happy,sarcastic,neutral 0-1 normal normal m
+2 D SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI surprised,angry,excited 1-2 fast,normal loud f
+3 D NPC*:thầy bệnh xá,UNKNOWN~ happy,surprised,neutral 0-1 normal normal m
+4 N
+5 D NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral 0-1 normal normal m
+6 D SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI afraid,surprised,neutral 0-1 normal soft,normal f
+7 D NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral 0-1 normal normal m
+8 N
+9 N
+10 D NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral 0-1 normal normal m
+11 D NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral,surprised 0-1 normal normal m
+12 D SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI surprised,afraid 1-2 fast loud,normal f
+13 D NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral,tender 0-1 normal normal,soft m
+14 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral,surprised 0-1 normal normal u
+15 N NARRATOR neutral,surprised 0-1 normal normal u
+16 D NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral 0-1 normal normal m
+17 N
+18 N
+19 N
+20 D NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral,tender 0-1 normal normal m
+21 D SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI surprised,afraid,excited 1-2 fast loud,normal f
+22 N
+23 N
+24 N NARRATOR neutral,happy,tender 0-1 normal normal u
+25 N
+26 D NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral 0-1 normal normal m
+27 D SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI afraid,surprised 1-2 fast normal,loud f
+28 N NARRATOR neutral,happy 0-1 normal normal u
+29 N
+30 D NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral,tender 0-2 normal,slow normal,soft m
+31 N
+32 N
+33 N
+34 N NARRATOR neutral,happy 0-1 normal normal u
+35 N
+36 N
+37 N
+38 D SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI afraid,sad,neutral,tender,happy 0-1 normal,slow soft,normal f
+39 D NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral,happy,sarcastic 0-1 normal normal m
+40 D SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI tender,happy,neutral 0-1 normal soft,normal f
+41 D NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA tender,happy 0-1 normal normal,soft m
+42 D SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI sad,angry,surprised,tender 0-2 normal normal,soft f
+43 N NARRATOR neutral,sad 0-1 normal normal u
+44 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral,tender,happy 0-1 normal normal u
+45 D NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral,surprised 0-1 normal normal m
+46 D SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI neutral,sad,sarcastic 0-1 normal normal f
+47 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral 0-1 normal normal u
+48 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral 0-1 normal normal u
+49 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral 0-1 normal normal u
+50 D NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral,tender,sad 0-1 normal normal,soft m
+51 D SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI tender,happy 0-2 normal,slow soft,normal f
+52 N NARRATOR neutral,happy 0-1 normal normal u
+53 N
+54 N
+55 N
+56 N NARRATOR neutral,tender,happy 0-1 normal normal u
+57 N NARRATOR neutral,tender,happy 0-1 normal normal u

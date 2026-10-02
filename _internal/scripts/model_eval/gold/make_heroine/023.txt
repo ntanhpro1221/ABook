@@ -1,0 +1,48 @@
+# "Make Heroine ga Oosugiru" (Có quá nhiều nữ chính thua cuộc) file 23 ("Truyện ngắn mừng phát hành phiên bản Đài Loan: Bong
+# bóng và nỗi hoài niệm trào dâng của các thiếu nữ"). Đáp án KIỂM TRA LN Nhật 02-10 (chọn bằng luật cố định: vị trí 30%/70% +
+# chương phiên nhạc đã chép; 017a = 25 KB đầu chương 17). Claude gán (A) 02-10; chưa soát B.
+# NGÔI BA trọn chương: không có "tôi" trong lời kể (người kể cả bộ là NUKUMIZU / KAZUHIKO NUKUMIZU / NUKUMIZU KAZUHIKO /
+# KAZUHIKO, nhưng cậu không có mặt và không nói câu nào) - đo xem model có gán bừa câu cho người kể cả bộ không.
+# Tên dùng chung ba file: YANAMI / ANNA YANAMI / YANAMI ANNA / ANNA (nữ; Remon gọi "Yana-chan" - không tính, hậu tố xưng hô);
+# YAKISHIO / REMON / YAKISHIO REMON / REMON YAKISHIO (nữ; lời kể chương này gọi "Remon", Yanami gọi "Remon-chan").
+# Chỉ hai người trong phòng tắm nhà bà Yakishio; đối đáp không lời dẫn - người nói theo cách xưng hô: câu gọi "Remon-chan",
+# "bà cậu" là Yanami; câu gọi "Yana-chan" là Remon. 15 "Nhưng bọn mình mới là học sinh trung học thôi mà..." là Remon (16
+# "Yanami nghiêm túc lắc đầu" đáp lại). 18 "Ồ..." là Remon (19 "Remon thoáng lưỡng lự... giữ im lặng").
+# 29-30: Yanami sực nhận ra (28) vì sao nước tràn - 30 "Nguyên nhân thì đã rõ như ban ngày." là lời kể giễu theo góc Yanami ->
+# N,T, YANAMI chỉ nửa điểm (ngôi ba, quy tắc 4).
+0 H
+1 N
+2 D YANAMI,ANNA YANAMI,YANAMI ANNA,ANNA happy,excited 1-2 normal,fast loud,normal f
+3 N NARRATOR neutral,happy 0-1 normal normal u
+4 D YANAMI,ANNA YANAMI,YANAMI ANNA,ANNA surprised,happy,neutral 0-1 normal normal f
+5 N
+6 D YANAMI,ANNA YANAMI,YANAMI ANNA,ANNA surprised,neutral 0-1 normal,slow normal,soft f
+7 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO neutral,happy 0-1 normal normal f
+8 N
+9 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO neutral,happy 0-1 normal normal f
+10 D YANAMI,ANNA YANAMI,YANAMI ANNA,ANNA surprised,happy,excited 0-2 normal normal,loud f
+11 N NARRATOR neutral,happy 0-1 normal normal u
+12 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO happy,neutral,surprised 0-1 normal normal f
+13 D YANAMI,ANNA YANAMI,YANAMI ANNA,ANNA neutral,whispering,sad 0-1 slow,normal soft,normal f
+14 N NARRATOR neutral,surprised 0-1 normal normal u
+15 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO surprised,neutral 0-1 normal normal f
+16 N
+17 D YANAMI,ANNA YANAMI,YANAMI ANNA,ANNA neutral,sad,afraid 0-1 normal normal f
+18 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO neutral,surprised 0-1 slow,normal soft,normal f
+19 N
+20 D YANAMI,ANNA YANAMI,YANAMI ANNA,ANNA neutral,afraid,tender 0-1 normal normal f
+21 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO surprised,neutral 0-1 normal,fast normal f
+22 D YANAMI,ANNA YANAMI,YANAMI ANNA,ANNA excited,happy,neutral 0-2 normal,fast normal,loud f
+23 N
+24 D YANAMI,ANNA YANAMI,YANAMI ANNA,ANNA happy,neutral 0-1 normal normal f
+25 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO happy,neutral 0-1 normal normal f
+26 N
+27 D YANAMI,ANNA YANAMI,YANAMI ANNA,ANNA happy,neutral 0-1 normal normal f
+28 N NARRATOR neutral,surprised 0-1 normal normal u
+29 N
+30 N,T NARRATOR,YANAMI~,ANNA YANAMI~,YANAMI ANNA~,ANNA~ neutral,sarcastic 0-1 normal normal u
+31 D YANAMI,ANNA YANAMI,YANAMI ANNA,ANNA neutral,surprised,sarcastic 0-1 normal,slow normal,soft f
+32 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO surprised,neutral 0-1 normal normal f
+33 D YANAMI,ANNA YANAMI,YANAMI ANNA,ANNA neutral 0-1 normal normal f
+34 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO neutral,tired 0-1 normal normal,soft f
+35 N NARRATOR neutral,sad 0-1 normal normal u

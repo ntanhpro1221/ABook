@@ -1,0 +1,82 @@
+# "Shimotsuki wa Mob ga Suki" file 032 ("Chương 32 - Nhân vật chính-sama có thực lòng yêu bạn thuở nhỏ của mình không thế?").
+# Claude gán (A) 02-10. Đáp án KIỂM TRA LN Nhật 02-10 (chọn bằng luật cố định: vị trí 30%/70% + chương phiên nhạc đã chép).
+# NGÔI THỨ NHẤT: "tôi" = NAKAYAMA KOUTAROU / KOUTAROU / NAKAYAMA (m). Tên như 029: RYUUZAKI RYOUMA / RYUUZAKI / RYOUMA (m);
+# SHIMOTSUKI SHIHO / SHIHO / SHIMOTSUKI (f, chỉ được nhắc); Kirari (bạn thân cũ của người kể, nay nhuộm tóc gyaru) chỉ
+# được nhắc. Chương là đối đáp hai người KHÔNG lời dẫn: Ryuuzaki xưng "tao/mày" với Nakayama (15, 20, 24, 28, 40), Nakayama
+# xưng "tôi/cậu" (21 "cậu cũng phải tốn...", 26 "phương châm của tôi", 29) - 21 là NAKAYAMA (22 "À mà tôi cũng nghĩ thế."),
+# 3 là Ryuuzaki (4 "bài diễn thuyết đáng quý của nhân vật chính-sama"). 44, 48 "(...)": nội tâm người kể.
+# 54 『...』: câu của nhân vật chính trong một light novel người kể từng đọc (9-10, 52-53 "Tôi chợt nhớ lại một câu nói. Nhân
+# vật chính trong câu chuyện đó đã nói thế này.", 62 "câu chuyện... tôi vừa nhớ ra") -> văn bản trích (quy tắc 7):
+# NARRATOR và NPC* đủ, UNKNOWN~; KHÔNG phải Ryuuzaki (quy tắc 12). 55-61: phần tiếp của lời ấy chép lại không ngoặc, khoá N
+# -> NARRATOR; 60-61 ("Tôi sẽ mang đến hạnh phúc...") là "tôi" của nhân vật kia: NPC*~ giữ cho segment_diff.
+# Tiếng lòng tức thời của người kể -> N,T (quy tắc 4): 7 "À không, chắc đây cũng là...", 11-12 tự hỏi tự đáp, 17 "Ui, không
+# được rồi", 30-31 tự khen màn diễn, 37 "Hoặc không...", 41 "Hả?", 50 "Chẳng phải... à?", 63 "Chẳng lẽ...?". Câu giải
+# thích bối cảnh (6, 22-23, 33-36, 45-47, 64-67) giữ N.
+0 H
+1 N
+2 N NARRATOR neutral,tired 0-1 normal normal u
+3 D RYUUZAKI RYOUMA,RYUUZAKI,RYOUMA happy,neutral,excited 0-1 normal normal m
+4 N
+5 N
+6 N
+7 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral,sarcastic 0-1 normal normal u
+8 N NARRATOR neutral,sarcastic 0-1 normal normal u
+9 N
+10 N NARRATOR neutral,happy 0-1 normal normal u
+11 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA sad,neutral 0-1 normal,slow normal u
+12 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA sad,neutral 0-1 normal,slow normal,soft u
+13 N
+14 N
+15 D RYUUZAKI RYOUMA,RYUUZAKI,RYOUMA angry,neutral 0-1 normal normal,loud m
+16 D NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA surprised,neutral 0-1 normal normal m
+17 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA surprised,neutral 0-1 normal normal u
+18 N NARRATOR neutral,sarcastic 0-1 normal normal u
+19 N NARRATOR neutral,sarcastic,surprised 0-1 normal normal u
+20 D RYUUZAKI RYOUMA,RYUUZAKI,RYOUMA neutral,sarcastic 0-1 normal normal m
+21 D NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral,sad,sarcastic 0-1 normal normal m
+22 N
+23 N
+24 D RYUUZAKI RYOUMA,RYUUZAKI,RYOUMA happy,sarcastic,neutral 0-1 normal normal m
+25 N NARRATOR neutral,sarcastic 0-1 normal normal u
+26 D NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA excited,happy,sarcastic 1-2 normal,fast loud,normal m
+27 N NARRATOR neutral,tired 0-1 normal normal u
+28 D RYUUZAKI RYOUMA,RYUUZAKI,RYOUMA happy,sarcastic,neutral 0-1 normal normal m
+29 D NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA excited,surprised,sarcastic 1-2 fast,normal loud,normal m
+30 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA happy,neutral 0-1 normal normal u
+31 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA happy,sarcastic,neutral 0-1 normal normal u
+32 N
+33 N
+34 N
+35 N
+36 N
+37 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral 0-1 normal normal u
+38 N
+39 N NARRATOR neutral,sarcastic 0-1 normal normal u
+40 D RYUUZAKI RYOUMA,RYUUZAKI,RYOUMA afraid,surprised,neutral 0-1 normal,slow normal m
+41 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA surprised 0-1 normal normal u
+42 N NARRATOR neutral,surprised 0-1 normal normal u
+43 N
+44 T NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA surprised,afraid 0-1 normal normal m
+45 N
+46 N
+47 N NARRATOR neutral,afraid 0-1 normal normal u
+48 T NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA surprised,afraid,neutral 0-1 normal normal,soft m
+49 N
+50 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral,surprised,afraid 0-1 normal normal u
+51 N NARRATOR neutral,afraid,angry 0-1 normal normal u
+52 N
+53 N
+54 D NARRATOR,NPC*,UNKNOWN~ happy,excited 0-2 normal normal,loud u
+55 N
+56 N
+57 N
+58 N
+59 N NARRATOR,NPC*~ neutral 0-1 normal normal u
+60 N NARRATOR,NPC*~ neutral 0-1 normal normal u
+61 N NARRATOR,NPC*~ neutral 0-1 normal normal u
+62 N NARRATOR neutral,angry,sarcastic 0-1 normal normal u
+63 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA surprised,afraid,neutral 0-1 normal normal u
+64 N
+65 N NARRATOR neutral,angry 0-1 normal normal u
+66 N NARRATOR neutral,angry 0-1 normal normal u
+67 N NARRATOR neutral,angry 0-1 normal normal u

@@ -1,0 +1,211 @@
+# "Make Heroine ga Oosugiru" (Có quá nhiều nữ chính thua cuộc) file 17a = 25 KB đầu của 17.txt ("Chương 04: Remon Yakishio lên
+# tiếng", tập 2). Đáp án KIỂM TRA LN Nhật 02-10 (chọn bằng luật cố định: vị trí 30%/70% + chương phiên nhạc đã chép; 017a = 25 KB
+# đầu chương 17). Claude gán (A) 02-10; chưa soát B.
+# Hai góc kể trong một file: seq 2-82 NGÔI THỨ NHẤT, "tôi" = NUKUMIZU / KAZUHIKO NUKUMIZU / NUKUMIZU KAZUHIKO / KAZUHIKO
+# (02.txt, 31.txt); NUKKUN~ (biệt danh Yakishio gọi 125 lần, lời kể không dùng - nửa điểm). Từ seq 83 ("Dưới ánh trăng, sân chơi...
+# trong trí nhớ của Remon") chuyển NGÔI BA: Remon gặp Ayano Mitsuki ở sân trường tiểu học, "tôi" đứng ngoài cổng, không nói câu nào.
+# Tên dùng chung ba file: YAKISHIO / REMON / YAKISHIO REMON / REMON YAKISHIO (nữ; nửa đầu "tôi" gọi "Yakishio", nửa sau lời kể gọi
+# "Remon"); AYANO / MITSUKI / AYANO MITSUKI / MITSUKI AYANO (nam; nửa sau gọi "Mitsuki"); YANAMI / ANNA YANAMI / YANAMI ANNA / ANNA
+# (không nói ở file này). Dạng đầu cố định YAKISHIO, AYANO cho cả hai nửa - đổi dạng đầu theo lời kể là tách một người làm hai giọng.
+# Đối đáp không lời dẫn dài: người nói theo xưng hô ("Nukkun" = Yakishio nói; "Remon" trong câu = Mitsuki nói, "Mitsuki" = Remon
+# nói) và lời kể kề. 8, 11: "tôi" lẩm bẩm một mình trước giá sách. 57 "...Đèn trong trường đều tắt cả rồi." nối "Tôi cố ngó
+# nghiêng... qua hàng rào" (56) -> NUKUMIZU, YAKISHIO~. 59 "Sắp tới giờ rồi." nhập nhằng: "tôi" là người đeo đồng hồ (38), Yakishio
+# chuẩn bị ngay sau (60) -> NUKUMIZU đủ, YAKISHIO~. 80 "Thôi được rồi, tớ sẽ kết thúc mọi chuyện ở đây!" = Yakishio (81 "Yakishio
+# đập tay tôi thật mạnh, đoạn vọt đi"; chính cô đi kết thúc mối tình).
+# Tiếng lòng của "tôi" không ngoặc (12, 37, 58, 66, 69, 74, 82) -> N,T NARRATOR,NUKUMIZU (quy tắc 4). Ngôi ba: 87 "...Mitsuki đã ở
+# đây rồi nhỉ?" trọn đoạn là câu tự hỏi của Remon -> YAKISHIO đủ; 86, 91, 153 có lời kể/lời dẫn ("Cô mơ hồ nghĩ", "Cô thầm nghĩ")
+# -> người nghĩ nửa điểm (quy tắc 4, tiền lệ Nise 086:5). 173 "Cậu ấy cũng không hề lãng quên chuyện này. Remon thì thầm..." - lời
+# thì thầm không ngoặc trong đoạn kể bị khoá N -> chỉ NARRATOR (quy tắc 10, tiền lệ Yamiyo 155:43).
+# Parser: 133 “Tớ cũng không ngờ mình có thể ngồi tường thuật toàn bộ nội dung “Harry Potter” cho cậu nghe đấy.” là lời MITSUKI
+# (134 "Mitsuki hơi bĩu môi", 135 Remon cãi "Tớ mới là người phải phàn nàn chứ!") nhưng ngoặc lồng làm parser khoá N -> NARRATOR,
+# AYANO~ (quy tắc 10; host ép NARRATOR, ~ giữ cho segment_diff như Nageki 53).
+0 H
+1 N
+2 N
+3 N
+4 N
+5 N NARRATOR neutral,afraid 0-1 normal normal u
+6 N NARRATOR neutral,sad 0-1 normal normal u
+7 N
+8 D NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ surprised,happy,neutral 0-1 normal normal,soft m
+9 N
+10 N
+11 D NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ surprised,neutral 0-1 normal normal,soft m
+12 N,T NARRATOR,NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ neutral,happy 0-1 normal normal u
+13 N NARRATOR neutral,surprised 0-1 normal normal u
+14 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO happy,neutral 0-1 normal normal f
+15 D NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ surprised,neutral 0-1 normal normal m
+16 N
+17 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO happy,neutral 0-1 normal normal f
+18 D NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ surprised,sarcastic,neutral 0-1 normal normal m
+19 N
+20 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO neutral,happy 0-1 normal normal f
+21 N NARRATOR neutral,happy 0-1 normal normal u
+22 D NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ neutral,afraid 0-1 normal normal m
+23 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO happy,neutral 0-1 normal normal f
+24 N
+25 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO neutral,surprised 0-1 normal normal f
+26 D NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ surprised,neutral,happy 0-1 normal normal m
+27 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO neutral,happy 0-1 normal normal f
+28 D NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ surprised,neutral 1-2 normal,fast normal,loud m
+29 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO happy,neutral,excited 0-1 normal,fast normal f
+30 D NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ afraid,surprised,neutral 0-2 fast,normal normal m
+31 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO neutral,happy 0-1 normal normal f
+32 D NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ neutral,tired,afraid 0-1 normal normal m
+33 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO surprised,sad,neutral 0-1 normal normal f
+34 D NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ sarcastic,neutral 0-1 normal normal m
+35 N
+36 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO happy,excited 0-2 normal normal f
+37 N,T NARRATOR,NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ sarcastic,neutral 0-1 normal normal u
+38 N
+39 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO neutral,happy 0-1 normal normal f
+40 D NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ neutral 0-1 normal normal m
+41 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO sad,neutral 0-1 normal,slow soft,normal f
+42 N NARRATOR neutral,sad 0-1 normal normal u
+43 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO sad,neutral,tired 0-1 normal normal f
+44 D NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ neutral 0-1 normal normal m
+45 N
+46 D NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ neutral,tender 0-1 normal normal m
+47 N
+48 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO happy,neutral 0-1 normal normal f
+49 N NARRATOR neutral,happy 0-1 normal normal u
+50 D NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ happy,sarcastic,neutral 0-1 normal normal m
+51 N
+52 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO happy,sarcastic,neutral 0-1 normal normal f
+53 N NARRATOR neutral,happy 0-1 normal normal u
+54 N
+55 N
+56 N
+57 D NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~,YAKISHIO~,REMON~,YAKISHIO REMON~,REMON YAKISHIO~ neutral,surprised 0-1 normal normal,soft m
+58 N,T NARRATOR,NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ surprised,afraid,neutral 0-1 normal normal u
+59 D NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~,YAKISHIO~,REMON~,YAKISHIO REMON~,REMON YAKISHIO~ neutral,afraid 0-1 normal normal,soft m
+60 N NARRATOR neutral,afraid 0-1 normal normal u
+61 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO whispering,neutral,afraid 0-1 slow,normal soft f
+62 N
+63 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO neutral,afraid,excited 0-1 normal normal f
+64 D NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ afraid,neutral 0-1 normal,fast normal m
+65 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO tired,sarcastic,neutral 0-1 normal normal f
+66 N,T NARRATOR,NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ afraid,neutral,tired 0-1 normal normal u
+67 N NARRATOR neutral,tired 0-1 normal normal u
+68 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO neutral,happy 0-1 normal normal f
+69 N,T NARRATOR,NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ surprised,sarcastic,neutral 0-1 normal normal u
+70 N
+71 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO happy,tender,sarcastic,neutral 0-1 normal normal,soft f
+72 D NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ surprised,neutral 0-1 normal,fast normal m
+73 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO happy,tender 0-1 normal normal f
+74 N,T NARRATOR,NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ afraid,surprised,neutral 0-1 normal normal u
+75 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO sarcastic,happy,neutral 0-1 normal normal f
+76 D NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ neutral,tender 0-1 normal normal m
+77 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO happy,neutral 0-1 normal normal f
+78 N NARRATOR neutral,happy 0-1 normal normal u
+79 N NARRATOR neutral,afraid 0-1 normal normal u
+80 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO excited,neutral,happy,sad 1-2 normal,fast loud,normal f
+81 N
+82 N,T NARRATOR,NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ sarcastic,tired,neutral 0-1 normal normal u
+83 N
+84 N NARRATOR neutral,happy,sad 0-1 normal normal u
+85 N NARRATOR neutral,sad 0-1 normal normal u
+86 N,T NARRATOR,YAKISHIO~,REMON~,YAKISHIO REMON~,REMON YAKISHIO~ neutral,sad 0-1 normal,slow normal u
+87 N,T NARRATOR,YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO neutral,afraid 0-1 normal normal u
+88 N NARRATOR neutral,afraid 0-1 normal normal u
+89 N NARRATOR neutral,sad 0-1 normal normal u
+90 N NARRATOR neutral,sad 0-1 normal normal u
+91 N,T NARRATOR,YAKISHIO~,REMON~,YAKISHIO REMON~,REMON YAKISHIO~ neutral,afraid,surprised 0-1 normal normal u
+92 N
+93 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO neutral,tender,happy 0-1 normal normal,soft f
+94 D AYANO,MITSUKI,AYANO MITSUKI,MITSUKI AYANO neutral,tender 0-1 normal normal,soft m
+95 N
+96 N NARRATOR neutral,happy 0-1 normal normal u
+97 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO,AYANO~,MITSUKI~,AYANO MITSUKI~,MITSUKI AYANO~ happy,tender 0-1 normal normal f
+98 N
+99 N
+100 D AYANO,MITSUKI,AYANO MITSUKI,MITSUKI AYANO,YAKISHIO~,REMON~,YAKISHIO REMON~,REMON YAKISHIO~ sad,neutral,tender 0-1 normal,slow normal m
+101 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO,AYANO~,MITSUKI~,AYANO MITSUKI~,MITSUKI AYANO~ neutral,sad 0-1 normal normal f
+102 N NARRATOR neutral,sad 0-1 normal normal u
+103 N
+104 D AYANO,MITSUKI,AYANO MITSUKI,MITSUKI AYANO neutral,afraid,tender 0-1 normal normal m
+105 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO neutral,sarcastic,angry,happy 0-1 normal normal f
+106 N
+107 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO happy,tender 0-1 normal normal f
+108 D AYANO,MITSUKI,AYANO MITSUKI,MITSUKI AYANO happy,neutral 0-1 normal normal m
+109 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO happy,excited 0-2 normal normal f
+110 N
+111 N
+112 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO surprised,neutral 0-1 normal normal f
+113 D AYANO,MITSUKI,AYANO MITSUKI,MITSUKI AYANO neutral 0-1 normal normal m
+114 N NARRATOR neutral,happy,sad 0-1 normal normal u
+115 N
+116 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO tender,neutral,happy 0-1 slow,normal normal,soft f
+117 N
+118 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO happy,sarcastic 0-1 normal normal f
+119 N NARRATOR neutral,happy 0-1 normal normal u
+120 D AYANO,MITSUKI,AYANO MITSUKI,MITSUKI AYANO neutral,happy 0-1 normal normal m
+121 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO neutral,sad,tender 0-1 normal normal f
+122 D AYANO,MITSUKI,AYANO MITSUKI,MITSUKI AYANO neutral 0-1 normal normal m
+123 N
+124 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO surprised,happy 0-1 normal normal f
+125 D AYANO,MITSUKI,AYANO MITSUKI,MITSUKI AYANO sarcastic,happy 0-1 normal normal m
+126 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO surprised,angry 1-2 normal,fast loud f
+127 D AYANO,MITSUKI,AYANO MITSUKI,MITSUKI AYANO sarcastic,happy,neutral 0-1 normal normal m
+128 N NARRATOR neutral,happy 0-1 normal normal u
+129 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO happy,tender 0-1 normal normal f
+130 D AYANO,MITSUKI,AYANO MITSUKI,MITSUKI AYANO neutral,tender 0-1 normal soft,normal m
+131 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO happy,tender 0-1 normal normal f
+132 N
+133 N NARRATOR,AYANO~,MITSUKI~,AYANO MITSUKI~,MITSUKI AYANO~ sarcastic,happy,neutral 0-1 normal normal u
+134 N
+135 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO angry,excited,happy 1-2 fast,normal loud f
+136 D AYANO,MITSUKI,AYANO MITSUKI,MITSUKI AYANO sarcastic,happy,neutral 0-1 normal normal m
+137 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO angry,sad,surprised 0-1 normal normal f
+138 N NARRATOR neutral,happy 0-1 normal normal u
+139 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO tender,sad,happy 0-1 slow,normal soft,normal f
+140 D AYANO,MITSUKI,AYANO MITSUKI,MITSUKI AYANO tender,neutral,sad 0-1 normal normal m
+141 N NARRATOR neutral,sad 0-1 normal normal u
+142 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO happy,neutral,sarcastic 0-1 normal normal f
+143 D AYANO,MITSUKI,AYANO MITSUKI,MITSUKI AYANO neutral,sarcastic 0-1 normal normal m
+144 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO tender,happy,neutral 0-1 normal normal f
+145 D AYANO,MITSUKI,AYANO MITSUKI,MITSUKI AYANO neutral 0-1 normal normal m
+146 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO surprised,angry,excited 1-2 fast,normal loud,normal f
+147 N NARRATOR neutral,angry 0-1 normal normal u
+148 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO angry,sarcastic,happy 1-2 normal,fast loud,normal f
+149 D AYANO,MITSUKI,AYANO MITSUKI,MITSUKI AYANO neutral,tired,sarcastic 0-1 normal normal m
+150 N
+151 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO neutral,tender 0-1 normal normal f
+152 D AYANO,MITSUKI,AYANO MITSUKI,MITSUKI AYANO neutral,tender 0-1 normal,slow normal m
+153 N,T NARRATOR,YAKISHIO~,REMON~,YAKISHIO REMON~,REMON YAKISHIO~ sad,neutral 0-1 normal,slow normal u
+154 N NARRATOR neutral,sad 0-1 normal normal u
+155 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO neutral,tender,sad 0-1 normal normal f
+156 N
+157 D AYANO,MITSUKI,AYANO MITSUKI,MITSUKI AYANO neutral 0-1 normal normal m
+158 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO surprised,sarcastic,happy 0-1 normal normal f
+159 D AYANO,MITSUKI,AYANO MITSUKI,MITSUKI AYANO neutral,tender 0-1 normal normal m
+160 N
+161 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO neutral,happy,tender 0-1 normal normal f
+162 D AYANO,MITSUKI,AYANO MITSUKI,MITSUKI AYANO neutral,sad 0-1 normal normal m
+163 N
+164 N
+165 N NARRATOR neutral,happy 0-1 normal normal u
+166 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO neutral,sad 0-1 normal,slow normal,soft f
+167 N NARRATOR neutral,sad,afraid 0-1 normal normal u
+168 D AYANO,MITSUKI,AYANO MITSUKI,MITSUKI AYANO neutral 0-1 normal normal m
+169 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO neutral,sad,angry 0-1 normal normal f
+170 N
+171 D AYANO,MITSUKI,AYANO MITSUKI,MITSUKI AYANO neutral,afraid 0-1 normal normal m
+172 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO surprised,sad,neutral 0-1 normal normal f
+173 N,T NARRATOR,YAKISHIO~,REMON~,YAKISHIO REMON~,REMON YAKISHIO~ neutral,tender 0-1 normal normal u
+174 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO neutral,tender 0-1 normal normal f
+175 N NARRATOR neutral,surprised 0-1 normal normal u
+176 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO tender,neutral,sad 0-2 normal,slow normal f
+177 N NARRATOR neutral,surprised,tender 0-1 normal normal u
+178 D AYANO,MITSUKI,AYANO MITSUKI,MITSUKI AYANO surprised,tender 0-1 slow,normal soft m
+179 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO neutral,tender 0-1 normal normal f
+180 D AYANO,MITSUKI,AYANO MITSUKI,MITSUKI AYANO afraid,neutral,surprised 0-1 normal,slow soft,normal m
+181 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO neutral 0-1 normal normal f
+182 N NARRATOR neutral,afraid 0-1 normal normal u
+183 D AYANO,MITSUKI,AYANO MITSUKI,MITSUKI AYANO tender,afraid,neutral 0-1 slow,normal soft,normal m
+184 N NARRATOR neutral,sad 0-1 normal normal u
+185 D AYANO,MITSUKI,AYANO MITSUKI,MITSUKI AYANO neutral,tender,sad 0-1 slow,normal soft,normal m
+186 N
+187 D AYANO,MITSUKI,AYANO MITSUKI,MITSUKI AYANO tender,happy,excited,neutral 0-1 normal,slow normal,soft m
+188 N NARRATOR neutral,afraid 0-1 normal normal u
+189 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO surprised,tender,happy,sad 0-1 slow,normal soft,normal f

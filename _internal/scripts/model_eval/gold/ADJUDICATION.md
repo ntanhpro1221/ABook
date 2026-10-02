@@ -624,3 +624,29 @@ Tấn-công, Thân-hầu - quy tắc 6; Vệ-công là người nghe); 170 "Các
 178-180); 100 cùng NPC*:quân thám thính với 96 (cùng toán thám thính, câu 94); 148 NPC*:quân báo tin nước Thân; cảm xúc 90 thêm
 excited ("mừng rỡ, … kêu lớn"), 120/123 afraid. Dạng đầu Nghi-cựu cả 002-003 (cùng chương nêu lên ngôi ở 156); 004:10 dạng đầu
 BÌNH-VƯƠNG theo chữ của chương, NGHI-CỰU đủ (Hồi 3 nêu ngay trước).
+
+## Vòng LN Nhật 02-10: Make Heroine 009/023/017a, Rokujouma 014/015/122a/284a, Shimotsuki 029/032/195/456 (bộ kiểm tra mới)
+
+Chọn chương bằng luật cố định (vị trí 30%/70% trong bộ + chương phiên nhạc đã chép; chương > 30 KB lấy 25 KB đầu, tên
+`<số>a`), không nhìn nội dung. A = agent Opus (một agent mỗi truyện), B = agent Sonnet soát đối kháng, phân xử = Claude.
+
+Make Heroine - B: người nói chính sai 2 câu (017a:100-101), loại 1, tập tên 1; 009 và 023 không bất đồng người nói.
+
+| câu | A | B đề nghị | kết luận | lý do |
+|---|---|---|---|---|
+| 017a:100 "Sau lễ tốt nghiệp, tớ chưa từng trở lại đây" | YAKISHIO | AYANO, YAKISHIO~ | theo B | 102 giải thích vì sao REMON nói "Tớ cũng vậy" (nhà gần mà chưa từng quay lại) - câu 100 là Mitsuki |
+| 017a:101 "Tớ cũng vậy." | AYANO | YAKISHIO, AYANO~ | theo B | như trên |
+| 017a:97 | YAKISHIO | + AYANO~ | theo B | không lời dẫn; Remon dẫn đường ngay sau, giữ cô đủ điểm |
+| 017a:173 "Cậu ấy cũng không hề lãng quên... Remon thì thầm" | N NARRATOR | N,T + YAKISHIO~ | theo B | cùng dạng 86/91/153 đã N,T |
+| 017a:87, 009:31 nghĩ thuần bị khoá N | N,T NARRATOR trước | T trước | giữ A | loại bị khoá N: host ép lời kể (tiền lệ 248:32) - thứ tự chỉ ảnh hưởng nhãn dạy, cả hai đủ điểm |
+
+Shimotsuki - B: người nói chính sai 0/98 câu; 13 đề nghị nới tập, nhận cả: N,T cho tiếng lòng tức thời cùng khuôn câu A
+đã cho N,T (029:12, 19, 51; 456:44 người kể đủ điểm - ngôi một, quy tắc 4; 195:21, 22, 51 Shiho `~` - ngôi ba, quy tắc 4);
+032:59 NARRATOR,NPC*~ như 60-61 (cùng đoạn trích nhớ lại); cảm xúc 456:38/42 thêm tender(,happy), 032:26/29 thêm sarcastic
+(Nakayama đang diễn vai). 032:55-58 giữ N (trích dẫn chưa bắt đầu).
+
+Rokujouma - B (511 câu D/T): người nói chính sai 0; 9 loại, 6 tập tên, 9 cảm xúc. Nhận: 122a:118 KOUTAROU đủ, SANAE hạ `~`
+(120: "Koutarou dùng những lời lẽ nghiêm khắc ngăn Yurika" gom 118-119); 284a:87 bỏ MAKI~ (75 cô chưa biết chuyện), thêm
+SHIZUKA~ (90-91); 014:148 N,T + KENJI~ (cùng dạng 015:69); bỏ các `~` không căn cứ chữ: KENJI~ ở 014:182/208, SHIZUKA~ ở
+014:253. Giữ A: 015:145-146 và 014:313/315 lời Koutarou tự nói thành tiếng - D (bản dịch dùng ( ) cho nội tâm thật); thứ
+tự N,T/T,N như Make Heroine; cảm xúc lời kể trơn giữ (không chấm người nói).
