@@ -910,6 +910,23 @@ Thước trên bộ 5:
 - **Phụ (báo, không quyết):** Pk và WindowDiff so ranh giới đáp án; đoạn / giờ; số lượt gọi LLM mỗi chương.
 - **Nhiều nhánh cùng thắng:** chọn nhánh RẺ nhất (3 < 2 < 1). Nhánh đắt hơn chỉ được chọn nếu hơn nhánh rẻ ≥ 0,03 r VET.
 - **Không nhánh nào thắng:** ghi lại và giữ nhãn câu.
+- **Chi tiết chốt trong script trước lượt chạy đầu** (`split_experiment.py`, Corpus f91231b):
+  - **Nhánh 2:**
+    - Ranh giới ở câu đầu cửa sổ m. Điểm = khoảng cách TB V/E/T của cửa sổ m−3, m−2 với m, m+1.
+    - Cửa sổ cuối nuốt phần đuôi.
+  - **Đoạn tối thiểu 200 tiếng áp cả đoạn cuối:**
+    - Nhánh 1 gộp ngược.
+    - Nhánh 2 / 3 cắt tham lam theo điểm giảm dần.
+  - **Nhánh 1:**
+    - Chương LLM trả hỏng thì dùng ranh giới app (có báo số).
+    - Vùng chồng: bỏ đầu đoạn cách đầu trước ≤ 150 tiếng.
+  - **Nhánh 3:**
+    - Viết mới theo Hearst: khối k câu, độ sâu tuyệt đối ≥ c, không giữ ranh giới cứng.
+    - `tile_scenes` cũ dùng khối theo giây nên không khớp ghi trước.
+  - **Pk / WindowDiff:** k = max(2, round(độ dài đoạn đáp án TB / 2)); chọn tham số theo Pk TB theo chương; hoà thì θ / c lớn hơn.
+  - **Chống đo lần hai:**
+    - `tune` không ghi đè tham số đã chốt.
+    - `score` từ chối chạy lại khi đã có `split_score.txt`.
 
 ĐÁP ÁN BỘ 5 (03-10 05:xx, Corpus `scene_set5/`; mô tả, chưa phải phép thử):
 - 9 chương, 86 đoạn sau phân xử (26,6 đoạn/giờ).
