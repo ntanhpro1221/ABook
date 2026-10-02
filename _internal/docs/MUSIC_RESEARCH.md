@@ -1221,6 +1221,28 @@ Hệ quả:
   - trò v2 (MTG) nếu bớt co;
   - nới phạt riêng cho bài nhập.
 
+**GHI TRƯỚC - SỬA KHO TRỘN F1: KỲ VỌNG KHOẢNG CÁCH (03-10 05:5x, Lead: lệch phải hết, "máy chọn theo độ hợp, không vì bài
+là nhạc nhập"; trước khi chạy):**
+
+Vì sao không làm theo gợi ý "bài trò sd lớn hơn":
+- Trong `z_distance`, sd của bài nằm ở MẪU số (độ khoan dung). Tăng sd thì khoảng cách nhỏ đi, bài nhập càng được chọn
+  nhiều.
+
+Cách sửa F1, cho bài mang số trò:
+- **Trung bình:** E[thầy | trò] = a + b × trò từng trục. Hồi quy tuyến tính thầy trên trò, ghép trên dự đoán chéo.
+  - b = r × sd thầy / sd trò, nhỏ hơn hệ số giãn 1,39.
+- **Phạt:** cộng Var(thầy | trò) (phương sai phần dư của hồi quy ấy) vào TỬ số từng trục: (m − t)² + v. Mẫu số giữ nguyên.
+- **sd của bài:** = mặc định 0,2 như bài danh mục, không khoan dung thêm.
+- Đây là khoảng cách bình phương KỲ VỌNG tới vị trí thật của bài.
+- Trong app: thêm `vetVar` cho bài nhập, `z_distance` cộng nó. Bài danh mục không có `vetVar`, không đổi gì.
+
+Đo:
+- Cùng `mixed_library.py`, cùng 50 lượt.
+- F1 áp cho trò v1, và cho trò v2 nếu v2 xong.
+- ĐẠT nếu cả ba vùng nằm trong [0,8; 1,25] hoặc KTC chạm khoảng ấy.
+- Vùng mà mang số thầy < 30 lần qua 50 lượt thì báo số, không xét (mẫu số quá nhỏ).
+- ĐẠT thì mới đo (c) bằng người đọc trên kho trộn trước khi vào app.
+
 **GHI TRƯỚC - TRÒ v2 HỌC THÊM MTG (03-10 05:4x, Lead giao; bổ sung ghi trước MTG 02-10):**
 
 Dữ liệu:
@@ -1234,6 +1256,14 @@ Nhãn thầy MTG (đổi so với 02-10 để rẻ):
   theo bài thì đắt gấp 5.
   - Cùng định dạng ra như `text_llm`: 13 cường độ + valence / energy / tension + độ tin cậy.
   - Agent Claude Sonnet, lô ~250 tổ hợp.
+  - **Thực tế (ghi trước khi học):** agent lô 0 không đọc từng tổ hợp. Nó cho HỒ SƠ từng tag (59 tag) rồi gộp bằng luật cố
+    định (`mtg_reader/tag_profiles.py`):
+    - cảm xúc = max qua các tag;
+    - V/E/T = trung bình theo tin cậy;
+    - tin cậy = 1 − ∏(1 − c), ×0,7 khi tag trái chiều, trần 0,9;
+    - tin cậy < 0,3 thì kéo về trung tính.
+  - Tôi giữ cách ấy và áp CÙNG một luật cho cả 1.641 tổ hợp (lô 0 khớp 275 / 275), thay vì 6 lô đọc rời. Thông tin đầu vào
+    chỉ có tag, nên hồ sơ từng tag gần như là tất cả những gì một người đọc rút ra được.
 - Cảm xúc = max(bảng, người đọc × tin cậy). V/E/T = của người đọc.
 - Trọng số mẫu: 0,6 nếu có ≥ 1 tag ánh xạ, không thì 0,2.
 
