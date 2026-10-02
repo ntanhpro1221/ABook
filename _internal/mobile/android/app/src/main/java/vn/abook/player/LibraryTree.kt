@@ -58,14 +58,26 @@ object LibraryTree {
         val id = manifest.getString("id")
         val current = resumable(manifest, state)?.first?.id
         val heard = state.optJSONObject("chapters")
+        val parts = partsOf(manifest)
         return chapters(manifest).map { chapter ->
             val subtitle = when {
                 chapter.id == current -> "Đang nghe dở"
                 heard?.optJSONObject(chapter.id.toString())?.optBoolean("done") == true -> "Đã nghe"
                 else -> minutes(chapter.duration)
             }
-            Node("$CHAPTER$id/${chapter.id}", id, chapter.title, subtitle, playable = true, browsable = false)
+            // Cả bộ nhiều phần trong một file (bookfile.pack_series): màn Android Auto không có tiêu đề nhóm nên mỗi dòng
+            // tự nói mình ở phần nào.
+            val part = parts[chapter.id]?.let { "Phần $it · " }.orEmpty()
+            Node("$CHAPTER$id/${chapter.id}", id, chapter.title, part + subtitle, playable = true, browsable = false)
         }
+    }
+
+    /** Chương -> số phần, chỉ khi sách có nhiều hơn một phần (`parts` của book.json); sách một phần: rỗng. */
+    private fun partsOf(manifest: JSONObject): Map<Int, Int> {
+        if ((manifest.optJSONArray("parts")?.length() ?: 0) < 2) return emptyMap()
+        val array = manifest.optJSONArray("chapters") ?: return emptyMap()
+        return (0 until array.length()).mapNotNull { array.optJSONObject(it) }
+            .filter { it.optInt("part", 0) > 0 }.associate { it.getInt("id") to it.getInt("part") }
     }
 
     fun isBook(mediaId: String) = mediaId.startsWith(BOOK)

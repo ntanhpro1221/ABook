@@ -286,6 +286,8 @@ class App:
             target, how = packages.import_file(Path(path), self.library.root, self.library.projects(), self.fingerprints)
         except bookfile.BookFileError as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+        except OSError as error:  # ổ đầy giữa chừng, thư viện không ghi được: nói thật thay vì "lỗi máy chủ"
+            raise ApiError(HTTPStatus.INSUFFICIENT_STORAGE, f"Không ghi được sách vào thư viện ({error.strerror or error}).") from error
         return {"id": book_id(target), "how": how}
 
     def open_project_file(self, path: Path) -> dict[str, Any]:
@@ -1735,9 +1737,10 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.OK, result)
 
     def post_bookfile(self, _query: dict[str, list[str]], value: str) -> None:
-        # Một cuốn trong một file (bookfile.py) - mở bằng app ở máy khác, gửi cho người khác. Cả bộ: định dạng `.abook`
-        # chỉ chứa MỘT cuốn (mã chương, mã câu mẫu, dàn nhân vật là của một dự án), nên mỗi phần một file trong thư mục bộ.
-        from .export import export_series
+        # Một cuốn trong một file (bookfile.py) - mở bằng app ở máy khác, gửi cho người khác. Cả bộ: `single` (mặc định của
+        # giao diện) gộp mọi phần vào MỘT file phiên bản 3 (bookfile.pack_series); không thì mỗi phần một file trong thư
+        # mục bộ - cần khi thẻ nhớ / USB FAT32 không chứa nổi file trên 4 GiB.
+        from .export import export_series, export_series_file
 
         project = self.app._book(value)
         body = self._body()
@@ -1753,6 +1756,9 @@ class Handler(BaseHTTPRequestHandler):
             if parts is None:
                 path = pack(project, root, store.summarize(project)["title"] or project.name)
                 result = {**path, "folder": str(Path(path["file"]).parent)}
+            elif body.get("single"):
+                result = export_series_file(parts, root, lambda listed, file: bookfile.pack_series(
+                    listed, file, music_track=self.app.music_track_for_export))
             else:
                 result = export_series(parts, root, pack)
                 result["size"] = sum(part["size"] for part in result["parts"])
@@ -1760,6 +1766,14 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
         self.app.exports.add(result["folder"])
         self._send_json(HTTPStatus.OK, result)
+
+    def get_export_size(self, query: dict[str, list[str]], value: str) -> None:
+        # Cỡ ước lượng của bản xuất `.abook` (audio các chương nghe được; `series=1`: cả bộ) - hộp Xuất báo trước và cảnh
+        # báo khi quá 4 GiB (thẻ nhớ / USB FAT32 không chứa nổi một file lớn hơn).
+        from .export import audio_bytes
+
+        projects = self._series_parts(value, {"series": (query.get("series") or ["0"])[0] == "1"}) or [self.app._book(value)]
+        self._send_json(HTTPStatus.OK, {"bytes": audio_bytes(projects), "parts": len(projects)})
 
     def post_projectfile(self, _query: dict[str, list[str]], value: str) -> None:
         # Cả dự án trong một file (projectfile.py) - chuyển máy, sao lưu, làm tiếp ở chỗ khác.
@@ -2535,6 +2549,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(r"/api/analysis-models"), Handler.get_analysis_models),
     ("POST", re.compile(r"/api/readings"), Handler.post_shared_readings),
     ("POST", re.compile(BOOK + r"/bookfile"), Handler.post_bookfile),
+    ("GET", re.compile(BOOK + r"/export-size"), Handler.get_export_size),
     ("POST", re.compile(BOOK + r"/projectfile"), Handler.post_projectfile),
     ("POST", re.compile(BOOK + r"/speaker"), Handler.post_speaker),
     ("POST", re.compile(BOOK + r"/voice"), Handler.post_voice),

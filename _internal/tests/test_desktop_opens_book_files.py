@@ -201,3 +201,108 @@ def test_a_studio_project_is_not_removed_from_the_listening_side(tmp_path: Path)
         app.remove_imported(book_id(project))
     assert refused.value.status == 409 and "Studio" in refused.value.message
     assert project.is_dir()
+
+
+# ---- cả bộ trong một file (phiên bản 3) ------------------------------------------------------------------------
+
+
+def _produced_series(tmp_path: Path, *, parts: int = 2) -> tuple[Path, list[Path]]:
+    """Thư viện của "máy sản xuất" với `parts` phần nối tiếp nhau (cùng nguồn như test_export_series)."""
+    from tests.test_export_series import _part
+
+    library = tmp_path / "may_san_xuat"
+    library.mkdir()
+    projects: list[Path] = []
+    for number in range(1, parts + 1):
+        title = "Truyện X" if number == 1 else f"Truyện X · Phần {number}"
+        projects.append(_part(tmp_path, library, f"p{number}", title, projects[-1] if projects else None))
+        mp3 = projects[-1] / "output" / "chapters" / "00001_645.mp3"
+        mp3.write_bytes(b"ID3" + bytes([number]) * 300)  # mỗi phần một audio riêng
+    return library, projects
+
+
+def test_a_series_file_from_this_computer_opens_the_first_part_project(tmp_path: Path) -> None:
+    """File cả bộ do chính Studio máy này xuất ra chung chương với MỌI phần: mở phần đầu, không chép thêm một bản."""
+    library, projects = _produced_series(tmp_path)
+    file = bookfile.pack_series(projects, tmp_path / "bo.abook")
+    app = _app(tmp_path, library)
+
+    opened = app.open_book_file(str(file))
+
+    assert (opened["id"], opened["how"]) == (book_id(projects[0]), "project")
+    assert not (library / packages.IMPORTED_FOLDER).exists()
+    # Dù thư viện liệt kê phần sau trước: vẫn phần đầu.
+    reordered = [projects[1], projects[0]]
+    assert packages.import_file(file, library, reordered, app.fingerprints) == (projects[0], "project")
+
+
+def test_a_series_file_plays_on_another_computer_part_by_part(tmp_path: Path) -> None:
+    _library, projects = _produced_series(tmp_path)
+    file = bookfile.pack_series(projects, tmp_path / "bo.abook")
+    elsewhere = tmp_path / "thu_vien_nguoi_nghe"
+    elsewhere.mkdir()
+    app = _app(tmp_path, elsewhere)
+
+    opened = app.open_book_file(str(file))
+
+    assert opened["how"] == "new"
+    view = app.listen_book(opened["id"])
+    assert view["title"] == "Truyện X" and view["imported"]
+    assert [(p["part"], p["title"], p["chapters"]) for p in view["parts"]] == [
+        (1, "Truyện X · Phần 1", [100001, 100002]), (2, "Truyện X · Phần 2", [200001, 200002])]
+    assert [(c["id"], c["part"], c["available"]) for c in view["chapters"]] == [
+        (100001, 1, True), (100002, 1, False), (200001, 2, True), (200002, 2, False)]
+    # Dấu trang ở phần 2 trỏ về đúng chương của phần 2: audio, chữ đọc theo, câu mẫu đều tìm được bằng mã chung.
+    app.listening.add_bookmark(opened["id"], 200001, 12.0, "chỗ ở phần hai")
+    app.listening.progress(opened["id"], 200001, 5.0, 10.0)
+    folder = app.library.resolve_listenable(opened["id"])
+    assert packages.chapter_file(folder, 200001) == folder / "chapters" / "2" / "00001_645.mp3"
+    assert packages.chapter_file(folder, 100001).read_bytes() != packages.chapter_file(folder, 200001).read_bytes()
+    assert packages.script(folder, 200001)["chapterId"] == 200001
+    assert packages.sample_file(folder, 1) is not None and packages.cast(folder)["characters"][0]["parts"] == [1, 2]
+    assert app.listen_book(opened["id"])["state"]["bookmarks"][0]["chapterId"] == 200001
+    server = Server(app, port=0).start()
+    try:
+        status, data, _ = _request(server.port, "GET", f"/media/books/{opened['id']}/chapters/200001", headers=TOKEN)
+        assert status == 200 and data == (projects[1] / "output" / "chapters" / "00001_645.mp3").read_bytes()
+        status, data, _ = _request(server.port, "GET", f"/api/books/{opened['id']}/chapters/200001/script", headers=TOKEN)
+        assert status == 200 and json.loads(data)["chapterId"] == 200001
+    finally:
+        server.stop()
+
+
+def test_a_longer_series_file_replaces_the_book_and_the_listening_survives(tmp_path: Path) -> None:
+    """Máy sản xuất làm thêm phần 3 rồi xuất lại cả bộ: mở file mới thay cuốn đã nhập tại chỗ; chỗ đang nghe và dấu trang
+    ở phần 1, 2 vẫn nguyên vì mã chương chung của bộ không đổi khi thêm phần."""
+    from tests.test_export_series import _part
+
+    library, projects = _produced_series(tmp_path)
+    short = bookfile.pack_series(projects, tmp_path / "bo2.abook")
+    app = _app(tmp_path, tmp_path / "thu_vien_nguoi_nghe")
+    first = app.open_book_file(str(short))
+    app.listening.progress(first["id"], 200001, 7.0, 10.0)
+    app.listening.add_bookmark(first["id"], 100001, 3.0, "đầu truyện")
+    third = _part(tmp_path, library, "p3", "Truyện X · Phần 3", projects[1])
+    (third / "output" / "chapters" / "00001_645.mp3").write_bytes(b"ID3" + b"\3" * 300)
+    longer = bookfile.pack_series([*projects, third], tmp_path / "bo3.abook")
+
+    updated = app.open_book_file(str(longer))
+
+    assert (updated["id"], updated["how"]) == (first["id"], "updated")
+    view = app.listen_book(first["id"])
+    assert [c["id"] for c in view["chapters"] if c["available"]] == [100001, 200001, 300001]
+    assert view["state"]["last"] == {**view["state"]["last"], "chapterId": 200001, "seconds": 7.0}
+    assert [m["chapterId"] for m in view["state"]["bookmarks"]] == [100001]
+    assert app.open_book_file(str(short))["how"] == "existing", "bản ít phần hơn không đè bản đủ"
+
+
+def test_a_series_file_is_the_same_book_as_a_single_part_file_of_it(tmp_path: Path) -> None:
+    """Đã nhập file phần 1 (phiên bản 1) rồi nhận file cả bộ: cùng audio (dù khác thư mục trong gói) nên là một cuốn."""
+    _library, projects = _produced_series(tmp_path)
+    app = _app(tmp_path, tmp_path / "thu_vien_nguoi_nghe")
+    first = app.open_book_file(str(bookfile.pack(projects[0], tmp_path / "phan1.abook")))
+
+    again = app.open_book_file(str(bookfile.pack_series(projects, tmp_path / "bo.abook")))
+
+    assert (again["id"], again["how"]) == (first["id"], "updated")
+    assert len(app.listen_library()) == 1
