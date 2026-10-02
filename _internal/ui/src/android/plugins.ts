@@ -133,6 +133,8 @@ export interface PeerLibrary {
   books: RemoteBook[];
   /** Thiết bị không trả lời (tắt, khác mạng, chưa bật "Cho máy khác nghe"). */
   error?: string;
+  /** Chứng chỉ của thiết bị đã khác lúc ghép: `error` là câu bảo ghép lại, đọc thẳng được. */
+  pinChanged?: boolean;
 }
 
 export interface ManifestChapter {

@@ -81,7 +81,7 @@ class PlaybackService : MediaLibraryService() {
                 Playback.emit("state")
             }
 
-            override fun onPlayerError(error: PlaybackException) = Playback.onError()
+            override fun onPlayerError(error: PlaybackException) = Playback.onError(error)
 
             override fun onTimelineChanged(timeline: Timeline, reason: Int) {
                 if (reason == Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED) Playback.onQueueReplaced()

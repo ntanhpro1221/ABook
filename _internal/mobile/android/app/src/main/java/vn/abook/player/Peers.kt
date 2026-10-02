@@ -127,6 +127,7 @@ object Peers {
                 entry.put("name", reply.optString("name", peer.optString("name"))).put("books", books)
             } catch (error: Exception) {
                 entry.put("books", JSONArray()).put("error", error.message ?: "không kết nối được")
+                if (error is Pin.ChangedException) entry.put("pinChanged", true)
             }
             out.put(entry)
         }

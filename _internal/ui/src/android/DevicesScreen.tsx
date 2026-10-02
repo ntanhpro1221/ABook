@@ -256,6 +256,11 @@ function StudioAlertsRow() {
   );
 }
 
+/** Lỗi Capacitor mang mã PIN_CHANGED (Pin.CODE): chứng chỉ máy kia đã đổi - `message` là câu bảo ghép lại. */
+function pinChanged(error: unknown): error is Error {
+  return error instanceof Error && (error as Error & { code?: string }).code === "PIN_CHANGED";
+}
+
 // Thiết bị ghép ngoài máy tính chính (Peers.kt - mạng trạm bước 2): điện thoại khác bật "Cho máy khác nghe thư viện này",
 // hay một máy tính nữa. Sách của chúng nghe thẳng được trong Thư viện ("Trên <tên>") và tải về như sách máy tính.
 function PeersPanel() {
@@ -402,7 +407,7 @@ function PeersPanel() {
             <div className="min-w-0 flex-1">
               <div className="truncate font-semibold">{peer.name}</div>
               <div className={cn("text-xs", peer.error ? "text-danger" : "text-fg-2")}>
-                {peer.error ? "Không kết nối được - máy tắt, khác mạng hay chưa bật cho nghe" : `${peer.books.length} cuốn nghe được`}
+                {peer.pinChanged ? peer.error : peer.error ? "Không kết nối được - máy tắt, khác mạng hay chưa bật cho nghe" : `${peer.books.length} cuốn nghe được`}
               </div>
             </div>
             <button type="button" onClick={() => void forget(peer.key)} className="text-xs font-medium text-danger">
@@ -572,7 +577,7 @@ export function DevicesScreen() {
                   {connection.data.host.startsWith("bt:") && <span className="ml-1.5 text-xs font-normal text-fg-2">· qua Bluetooth</span>}
                 </div>
                 <div className={cn("text-xs", remote.isError ? "text-danger" : "text-fg-2")}>
-                  {remote.isError ? "Không kết nối được - máy tính đang tắt hoặc khác mạng Wi-Fi" : "Đã kết nối"}
+                  {remote.isError ? (pinChanged(remote.error) ? remote.error.message : "Không kết nối được - máy tính đang tắt hoặc khác mạng Wi-Fi") : "Đã kết nối"}
                 </div>
               </div>
               <button type="button" aria-label="Làm mới" onClick={() => void remote.refetch()} className="grid size-10 place-items-center rounded-full text-fg-2">
@@ -581,7 +586,7 @@ export function DevicesScreen() {
             </div>
             {/* Như Cài đặt → Điện thoại và thiết bị của máy tính (chủ sách 29-09: khác mạng có dùng được không): app không cần gì
                 riêng - mạng riêng ảo cho máy tính một địa chỉ tới được, và điện thoại học địa chỉ ấy mỗi lần liệt kê sách. */}
-            {remote.isError && (
+            {remote.isError && !pinChanged(remote.error) && (
               <p className="mt-2 px-1 text-xs leading-snug text-fg-2">
                 Ra khỏi nhà: sách đã tải về điện thoại vẫn nghe bình thường. Muốn nghe thẳng hay tải thêm từ máy tính khi ở ngoài,
                 cài Tailscale (hoặc ZeroTier, NetBird) trên cả điện thoại và máy tính, đăng nhập cùng một tài khoản, rồi mở mục này
