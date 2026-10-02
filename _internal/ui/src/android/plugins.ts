@@ -1,5 +1,5 @@
 import { registerPlugin, type PluginListenerHandle } from "@capacitor/core";
-import type { Bookmark, ListeningRecord, ListeningState, NightSession } from "@/listen/model";
+import type { Bookmark, BookPart, ListeningRecord, ListeningState, NightSession } from "@/listen/model";
 
 // Hai plugin native của app Android (mobile/android/app/src/main/java/vn/abook/player):
 //  EbookPlayer  - lõi phát Media3: hàng đợi chương, hẹn giờ ngủ, lắc để nghe thêm, nhật ký đêm.
@@ -152,6 +152,8 @@ export interface ManifestChapter {
   file: string | null;
   size: number;
   script: string | null;
+  /** File cả bộ (.abook phiên bản 3): số phần chứa chương. */
+  part?: number;
 }
 
 export interface LocalBook {
@@ -165,6 +167,8 @@ export interface LocalBook {
   complete: boolean;
   version: string;
   chapters: ManifestChapter[];
+  /** File cả bộ (.abook phiên bản 3): các phần theo thứ tự. */
+  parts?: BookPart[];
   samples: string[];
   /** Ảnh bìa thật tải về cùng gói (webui/covers.py), hoặc null. */
   cover?: { file: string; version: number; color: string; width: number; height: number } | null;

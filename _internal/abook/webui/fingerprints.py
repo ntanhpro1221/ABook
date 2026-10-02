@@ -27,6 +27,11 @@ def content_key(chapters: dict[str, str]) -> str:
     return "f-" + hashlib.sha256(text.encode("utf-8")).hexdigest()[:24]
 
 
+def base_name(name: str) -> str:
+    """Tên file của một mục `chapters/...` (bỏ thư mục phần của file cả bộ): `chapters/2/x.mp3` -> `x.mp3`."""
+    return name.rsplit("/", 1)[-1]
+
+
 class Fingerprints:
     """Mã băm file audio, nhớ theo (đường dẫn, cỡ, mốc sửa) - đổi file là băm lại."""
 
@@ -58,12 +63,13 @@ class Fingerprints:
 
     def shares_a_chapter(self, project_root: Path, chapters: dict[str, dict[str, Any]]) -> bool:
         """Cuốn trên máy này có chung ít nhất một chương audio với `chapters` ({"chapters/x.mp3": {size, sha256}})?
-        Chỉ băm file trùng tên và cỡ - thường là không băm gì cả."""
+        Chỉ băm file trùng tên và cỡ - thường là không băm gì cả. So theo TÊN FILE (không kể thư mục): file cả bộ
+        đặt audio ở `chapters/<phần>/x.mp3`, còn dự án mỗi phần giữ `output/chapters/x.mp3`."""
         folder = Path(project_root) / "output" / "chapters"
         for name, described in chapters.items():
             if not name.startswith("chapters/") or not isinstance(described, dict):
                 continue
-            candidate = folder / name.split("/", 1)[1]
+            candidate = folder / base_name(name)
             try:
                 if (candidate.is_file() and candidate.stat().st_size == int(described.get("size", -1))
                         and self.sha256(candidate) == described.get("sha256")):

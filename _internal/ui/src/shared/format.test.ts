@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { excerpt, formatFingerprint, licenseLabel, shownReading } from "./format";
+import { excerpt, formatFingerprint, formatSize, licenseLabel, shownReading } from "./format";
 
 describe("shownReading", () => {
   it("capitalises each word of a name's reading for display", () => {
@@ -60,5 +60,13 @@ describe("formatFingerprint", () => {
     expect(formatFingerprint("")).toBe("");
     expect(formatFingerprint(undefined)).toBe("");
     expect(formatFingerprint(null)).toBe("");
+  });
+});
+
+describe("formatSize", () => {
+  it("shows megabytes below a gigabyte and one decimal above", () => {
+    expect(formatSize(850 * 1024 ** 2)).toBe("850 MB");
+    expect(formatSize(3.25 * 1024 ** 3)).toBe("3,3 GB");
+    expect(formatSize(4 * 1024 ** 3)).toBe("4 GB");
   });
 });

@@ -25,6 +25,7 @@ function toListenBook(book: LocalBook, withChapters: boolean): ListenBook {
     fullTitle: chapter.fullTitle,
     duration: chapter.duration,
     available: chapter.available && Boolean(chapter.file),
+    part: chapter.part ?? null,
   }));
   const state: ListeningState = { ...book.state, chapters: book.state?.chapters ?? {}, bookmarks: book.state?.bookmarks ?? [] };
   return {
@@ -46,6 +47,7 @@ function toListenBook(book: LocalBook, withChapters: boolean): ListenBook {
       ? { url: `${fileUrl(book.id, book.cover.file)}?v=${book.cover.version}`, color: book.cover.color, width: book.cover.width, height: book.cover.height }
       : null,
     chapters: withChapters ? chapters : undefined,
+    parts: book.parts ?? [],
     // Nghe thẳng từ thiết bị ghép (Peers.kt): "Trên <tên máy>"; từ máy tính chính: "Trên máy tính".
     remote: book.sourceName ? { computer: book.sourceName } : Boolean(book.streamed),
     records: book.records,

@@ -7,6 +7,16 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Studio
+
+- **Xuất cả bộ nhiều phần thành MỘT file `.abook`**: trong hộp Xuất, chọn "Cả bộ" rồi file `.abook` - có hai cách,
+  "Một file" (mặc định: cả bộ gộp trong một file, mở ra là nghe liền từ phần 1 sang phần 2, danh sách chương chia theo
+  "Phần N · tên") hay "Mỗi phần một file". Hộp báo cỡ ước tính và cảnh báo khi quá 4 GB (thẻ nhớ / USB định dạng FAT32 không
+  chứa nổi một file lớn như vậy - khi đó chọn "Mỗi phần một file"). Thông báo sau khi xuất nói đúng "một file" hay "N file".
+  Mở file cả bộ ở máy khác (Windows hay điện thoại) thì nhân vật gộp theo tên, nhạc nền dùng chung chỉ nằm một lần; xuất lại
+  bộ dài hơn rồi mở đè lên thì chỗ đang nghe và dấu trang vẫn còn. Mở file trên máy mà ổ đĩa không đủ chỗ thì báo rõ cần bao
+  nhiêu thay vì chép dở. File `.abook` không còn mang mã nội bộ của máy xuất ra nó.
+
 ## [0.4.20] - 2026-10-02
 
 ### Điện thoại và thiết bị

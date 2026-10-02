@@ -178,3 +178,53 @@ def test_a_package_without_catalog_loudness_falls_back_to_the_median_track(tmp_p
     assert all("lufs" not in info for info in music["tracks"].values())
     median = music_plan.cue_gain_db(-18.0, None, None)
     assert [cue["gainDb"] for cue in music["chapters"]["1"]] == [median, median]
+
+
+def test_a_series_stores_a_shared_track_once_and_keys_the_cues_by_global_chapter_id(tmp_path: Path) -> None:
+    """Cả bộ một file: hai phần dùng chung bài CALM thì file nhạc chỉ nằm một lần; mốc nhạc theo mã chương chung của bộ
+    (phần x 100000 + mã trong phần), đúng như `scripts/<mã>.json` và `chapters[].id`."""
+    from tests.test_export_series import _part
+
+    library = tmp_path / "thu_vien"
+    library.mkdir()
+    one = _part(tmp_path, library, "p1", "Truyện X")
+    two = _part(tmp_path, library, "p2", "Truyện X · Phần 2", one)
+    _plan(one)
+    _plan(two)
+    plan = json.loads((two / music_plan.PLAN_FILE).read_text(encoding="utf-8"))
+    plan["scenes"] = [scene for scene in plan["scenes"] if scene["link"] == CALM]  # phần 2 chỉ dùng CALM
+    (two / music_plan.PLAN_FILE).write_text(json.dumps(plan), encoding="utf-8")
+    path = bookfile.pack_series([one, two], tmp_path / f"bo{bookfile.EXTENSION}", music_track=_tracks(tmp_path))
+
+    calm, battle = music_plan.track_name(CALM), music_plan.track_name(BATTLE)
+    with zipfile.ZipFile(path) as archive:
+        stored = [name for name in archive.namelist() if name.startswith("music/")]
+        assert sorted(stored) == sorted([calm, battle]), "mỗi bài một file, dù hai phần cùng dùng"
+        assert archive.getinfo(calm).compress_type == zipfile.ZIP_STORED
+    with BookFile(path) as book:
+        book.verify()
+        manifest = json.loads(book.read("book.json"))
+    music = manifest["music"]
+    assert manifest["package"]["version"] == 3 and set(music["tracks"]) == {calm, battle}
+    assert set(music["chapters"]) == {"100001", "200001"}, "mã chương chung của bộ"
+    assert [cue["track"] for cue in music["chapters"]["200001"]] == [calm]
+    assert music["chapters"]["100001"][0] == {"start": 0.0, "end": 60.0, "track": calm, "gainDb": -7.39}
+    assert music_plan.packaged_cues(music, 200001)[0]["track"] == calm and music_plan.packaged_cues(music, 1) == []
+
+
+def test_a_series_book_plays_the_music_of_its_second_part(studio, tmp_path: Path) -> None:  # noqa: F811
+    from tests.test_export_series import _part
+
+    _paths, app, server, _runner = studio
+    library = tmp_path / "may_khac"
+    library.mkdir()
+    one = _part(tmp_path, library, "p1", "Truyện X")
+    two = _part(tmp_path, library, "p2", "Truyện X · Phần 2", one)
+    _plan(two)
+    path = bookfile.pack_series([one, two], tmp_path / f"bo{bookfile.EXTENSION}", music_track=_tracks(tmp_path))
+    book = app.open_book_file(str(path))["id"]
+
+    status, cues = _call(server, "GET", f"/api/books/{book}/music/chapters/200001")
+    assert status == 200 and len(cues["cues"]) == 2 and cues["cues"][0]["start"] == 0.0
+    status, none = _call(server, "GET", f"/api/books/{book}/music/chapters/100001")
+    assert status == 200 and none["cues"] == []

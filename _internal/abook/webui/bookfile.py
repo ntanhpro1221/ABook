@@ -19,11 +19,17 @@ Hình dạng - một gói ZIP:
     music/<sha1>.mp3         nhạc nền người sản xuất đã gắn (02-10; mốc từng chương ở mục `music` của book.json,
                              music_plan.package) - chỉ khi cuốn có rãnh nhạc; KHÔNG nén như audio chương
 
+Phiên bản 3 (02-10, `pack_series`): CẢ BỘ nhiều phần trong một file. Audio nằm ở `chapters/<phần>/<tên>.mp3` (hai phần
+có thể trùng tên file), mã chương = phần x 100000 + mã chương trong phần (nên `scripts/<mã>.json` và mốc nhạc dùng mã
+chung của cả bộ), một `cast.json` gộp theo tên nhân vật, câu mẫu đánh số lại 1..K, một bìa (của phần đầu), mục `parts`
+trong book.json. Chi tiết: docs/ABOOK_FILE_FORMAT.md.
+
 Đường dẫn giữ y như gói điện thoại đang tải, nên nhập một file chỉ là giải nén vào chỗ sách tải về.
 
 KHÔNG chứa dữ liệu nghe (chỗ đang nghe, dấu trang, lịch sử) và KHÔNG mang mã sách nào (chủ sách 27-09: sách và dữ
-liệu nghe độc lập, không biết đến mã; app giữ liên kết giữa chúng). Muốn biết hai file có phải cùng một lần sản xuất,
-app so mã băm audio từng chương (`fingerprints.py`) - chính mã băm dùng để kiểm file hỏng, không phải thêm gì.
+liệu nghe độc lập, không biết đến mã; app giữ liên kết giữa chúng) - kể cả mục `series` của gói điện thoại, vì nó mang mã
+của máy làm ra file. Muốn biết hai file có phải cùng một lần sản xuất, app so mã băm audio từng chương
+(`fingerprints.py`) - chính mã băm dùng để kiểm file hỏng, không phải thêm gì.
 
 Mở một file là mở dữ liệu của người khác: mọi tên mục phải thuộc đúng danh sách trên (không đường dẫn tuyệt đối, không
 `..`), số mục và cỡ có trần, mọi file phải có cỡ và mã băm khớp `book.json`, định dạng mới hơn app thì từ chối kèm lời
@@ -47,8 +53,9 @@ import time
 import zipfile
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Callable, Self
+from typing import Any, Callable, Self, Sequence
 
+from .. import continuation
 from . import covers, music_plan, store, sync
 from .fingerprints import content_key
 from .library import book_id
@@ -59,16 +66,22 @@ from .library import book_id
 EXTENSION = ".abook"
 MIMETYPE = "application/vnd.ngdtuanh.abook+zip"
 FORMAT = "abook"
-# 1 = sách không nhạc nền; 2 = có mục `music` + music/*.mp3 (02-10). Gói ghi phiên bản THẤP NHẤT đủ chứa nội dung: sách
-# không nhạc vẫn là 1, app cũ mở được; sách có nhạc là 2, app cũ từ chối kèm lời nhắc cập nhật thay vì báo "mục lạ".
-FORMAT_VERSION = 2
+# 1 = sách không nhạc nền; 2 = có mục `music` + music/*.mp3 (02-10); 3 = cả bộ nhiều phần (`pack_series`). Gói ghi phiên bản
+# THẤP NHẤT đủ chứa nội dung: sách một phần không nhạc vẫn là 1, có nhạc là 2 - app cũ mở được; app cũ gặp file mới hơn thì
+# từ chối kèm lời nhắc cập nhật thay vì báo "mục lạ".
+FORMAT_VERSION = 3
 MANIFEST = "book.json"
 READIUM_MANIFEST = "manifest.json"
 MAX_ENTRIES = 20_000
 MAX_JSON_BYTES = 32 * 1024 * 1024
 MAX_TOTAL_BYTES = 64 * 1024**3
-_CONTENT = re.compile(r"cast\.json|cover\.jpg|chapters/[0-9A-Za-z_.\-]+\.mp3|scripts/\d+\.json|samples/\d+\.wav"
-                      r"|music/[0-9a-f]{40}\.mp3")
+PART_SPAN = 100_000  # mã chương trong bộ = số phần x PART_SPAN + mã chương trong phần
+_COMMON = r"cast\.json|cover\.jpg|scripts/\d+\.json|samples/\d+\.wav|music/[0-9a-f]{40}\.mp3"
+_CONTENT = re.compile(_COMMON + r"|chapters/[0-9A-Za-z_.\-]+\.mp3")
+# Phiên bản 3 thêm thư mục phần: chapters/<phần>/<tên>.mp3 (phiên bản 1-2 không có - gặp thì là mục lạ).
+_CONTENT_V3 = re.compile(_COMMON + r"|chapters/(?:\d{1,4}/)?[0-9A-Za-z_.\-]+\.mp3")
+# Chỗ trống dư ngoài cỡ giải nén (thư mục tạm, book.json): không cần sát từng byte, chỉ cần không để ổ đĩa đầy giữa chừng.
+_ROOM_MARGIN = 64 * 1024 * 1024
 _STORED = (".mp3", ".jpg", ".wav")  # đã nén sẵn hay cần đọc thẳng: nén thêm chỉ tốn công khi phát
 _CHUNK = 1024 * 1024
 
@@ -90,25 +103,51 @@ def default_name(title: str) -> str:
     return " ".join(name.split())[:150] + EXTENSION
 
 
+def _packaged_book(project_root: Path) -> dict[str, Any]:
+    """`book.json` của một dự án như điện thoại tải (`sync.manifest`), bỏ những gì là của máy này: mã (đường dẫn thư
+    mục) và mục `series` (nó mang mã của phần đầu)."""
+    book = sync.manifest(project_root, book_id(project_root), _NoListening())
+    for key in ("id", "series"):
+        book.pop(key, None)
+    return book
+
+
+def _add_chapters(project_root: Path, book: dict[str, Any], files: dict[str, Path | bytes], *,
+                  part: int | None = None) -> None:
+    """Audio + chữ đọc theo của từng chương vào `files`. `part` (cả bộ): chương `book["chapters"]` được sửa tại chỗ sang
+    mã chung của bộ, đường dẫn nằm trong thư mục phần, và mang số phần."""
+    for chapter in book["chapters"]:
+        local = chapter["id"]
+        audio = store.chapter_audio_path(project_root, local) if chapter.get("file") else None
+        script = store.chapter_script(project_root, local)
+        if part is not None:
+            if not 0 < local < PART_SPAN:
+                raise BookFileError(f"Mã chương {local} vượt cỡ một phần của bộ.")
+            chapter["id"] = part * PART_SPAN + local
+            chapter["part"] = part
+            if chapter.get("file"):
+                chapter["file"] = f"chapters/{part}/{chapter['file'].split('/', 1)[1]}"
+            chapter["script"] = f"scripts/{chapter['id']}.json"
+            if script is not None:
+                script = {**script, "chapterId": chapter["id"]}
+        if audio is not None:
+            files[chapter["file"]] = audio
+        if script is not None:
+            files[chapter["script"]] = _json_bytes(script)
+
+
 def pack(project_root: Path, out: Path | None = None, *, producer: str = "ABook",
          music_track: Callable[[str], Path | None] | None = None) -> Path:
     """Gói một cuốn thành một file; ghi file tạm cạnh đích rồi thay nguyên tử. Trả đường dẫn file.
 
     `music_track(link)` -> file của một bài nhạc nền (bộ đệm của máy, tải khi cần); có thì gói kèm rãnh nhạc."""
     project_root = Path(project_root)
-    book = sync.manifest(project_root, book_id(project_root), _NoListening())
-    book.pop("id", None)  # mã của máy này (đường dẫn thư mục): việc của app ở đây, không đi theo sách
+    book = _packaged_book(project_root)
     files: dict[str, Path | bytes] = {"cast.json": _json_bytes(store.cast(project_root))}
     cover = covers.cover_file(project_root)
     if cover is not None:
         files[covers.COVER_FILE] = cover
-    for chapter in book["chapters"]:
-        audio = store.chapter_audio_path(project_root, chapter["id"]) if chapter.get("file") else None
-        if audio is not None:
-            files[chapter["file"]] = audio
-        script = store.chapter_script(project_root, chapter["id"])
-        if script is not None:
-            files[chapter["script"]] = _json_bytes(script)
+    _add_chapters(project_root, book, files)
     samples = []
     for name in book["samples"]:
         path = store.sample_audio_path(project_root, int(name.split("/")[1].split(".")[0]))
@@ -122,19 +161,143 @@ def pack(project_root: Path, out: Path | None = None, *, producer: str = "ABook"
     if music is not None:
         book["music"], tracks = music
         files.update(tracks)
+    out = Path(out) if out is not None else project_root / "output" / default_name(book["title"])
+    return _seal(book, files, out, producer=producer, version=2 if music is not None else 1)
+
+
+def pack_series(parts: Sequence[tuple[int, Path] | Path], out: Path, *, producer: str = "ABook",
+                music_track: Callable[[str], Path | None] | None = None) -> Path:
+    """Cả bộ nhiều phần ("Làm tiếp cuốn này") trong MỘT file, phiên bản 3. `parts`: (số phần, thư mục dự án) theo thứ tự
+    - hay chỉ thư mục, số phần là vị trí từ 1. Số phần là số của bộ nên phần bị bỏ qua không làm các phần sau đổi mã.
+    Phần chưa có chương nào nghe được không vào file (người gọi nói tên chúng với người dùng: export.series_split)."""
+    books: list[tuple[int, Path, dict[str, Any]]] = []
+    musics: list[tuple[int, dict[str, Any]]] = []
+    files: dict[str, Path | bytes] = {}
+    for number, root in _numbered(parts):
+        book = _packaged_book(root)
+        playable = [chapter["id"] for chapter in book["chapters"] if chapter.get("file")]
+        if not playable:
+            continue
+        packed = music_plan.package(root, playable, music_track) if music_track is not None else None
+        _add_chapters(root, book, files, part=number)
+        books.append((number, root, book))
+        if packed is not None:
+            musics.append((number, packed[0]))
+            files.update(packed[1])
+    if not books:
+        raise BookFileError("Sách chưa có chương nào nghe được để xuất.")
+    first_root, first = books[0][1], books[0][2]
+    cover = covers.cover_file(first_root)
+    if cover is not None:
+        files[covers.COVER_FILE] = cover
+    cast, samples = _merge_cast([(number, root) for number, root, _ in books], files)
+    files["cast.json"] = _json_bytes(cast)
+    merged: dict[str, Any] = {
+        "format": first["format"],
+        "title": continuation.base_title(first["title"]),
+        "narrator": first["narrator"],
+        "duration": round(sum(float(book["duration"]) for _, _, book in books), 1),
+        "chaptersTotal": sum(int(book["chaptersTotal"]) for _, _, book in books),
+        "chaptersAvailable": sum(int(book["chaptersAvailable"]) for _, _, book in books),
+        "complete": all(book["complete"] for _, _, book in books),
+        "version": hashlib.sha256("".join(str(book["version"]) for _, _, book in books).encode()).hexdigest()[:16],
+        "chapters": [chapter for _, _, book in books for chapter in book["chapters"]],
+        "cast": "cast.json",
+        "samples": samples,
+        "cover": first.get("cover") if cover is not None else None,
+        "parts": [{"part": number, "title": continuation.continued_title(book["title"], number),
+                   "chapters": [book["chapters"][0]["id"], book["chapters"][-1]["id"]],
+                   "duration": round(float(book["duration"]), 1), "narrator": book["narrator"]}
+                  for number, _, book in books],
+    }
+    music = _merge_music(musics)
+    if music is not None:
+        merged["music"] = music
+    return _seal(merged, files, Path(out), producer=producer, version=3)
+
+
+def _numbered(parts: Sequence[tuple[int, Path] | Path]) -> list[tuple[int, Path]]:
+    numbered = [(item if isinstance(item, tuple) else (index, item)) for index, item in enumerate(parts, start=1)]
+    numbers = [number for number, _ in numbered]
+    if any(not 0 < number < 10_000 for number in numbers) or len(set(numbers)) != len(numbers):
+        raise ValueError("Số phần của bộ phải khác nhau và nằm trong 1..9999")
+    return [(number, Path(root)) for number, root in numbered]
+
+
+def _merge_cast(parts: list[tuple[int, Path]], files: dict[str, Path | bytes]) -> tuple[dict[str, Any], list[str]]:
+    """Dàn nhân vật của cả bộ: gộp theo tên chuẩn (`name`), cộng số câu, `parts` = phần nào người ấy lên tiếng. Câu mẫu
+    đánh số lại 1..K theo thứ tự gặp (mã câu của hai dự án có thể trùng nhau) và `sampleId` trỏ theo số mới; file mẫu vào
+    `files`. Người là nhân vật chính ở phần này, vai phụ ở phần kia: tính là nhân vật chính."""
+    people: dict[str, dict[str, Any]] = {}
+    section: dict[str, str] = {}
+    carried: dict[str, dict[str, Any]] = {}
+    narrator: dict[str, Any] | None = None
+    samples: list[str] = []
+    for number, root in parts:
+        cast = store.cast(root)
+        narrator = narrator or cast["narrator"]
+        for kind in ("characters", "extras"):
+            for person in cast[kind]:
+                name = person["name"]
+                entry = people.get(name)
+                if entry is None:
+                    entry = people[name] = {**person, "lines": 0, "seconds": 0.0, "recorded": 0, "parts": [],
+                                            "sampleId": None}
+                    section[name] = kind
+                elif kind == "characters":
+                    section[name] = kind
+                entry["lines"] += person["lines"]
+                entry["seconds"] = round(entry["seconds"] + person["seconds"], 1)
+                entry["recorded"] += person["recorded"]
+                entry["parts"].append(number)
+                entry["voice"] = entry.get("voice") or person.get("voice")
+                if entry["sampleId"] is None and person.get("sampleId"):
+                    path = store.sample_audio_path(root, int(person["sampleId"]))
+                    if path is not None:
+                        samples.append(f"samples/{len(samples) + 1}.wav")
+                        files[samples[-1]] = path
+                        entry["sampleId"] = len(samples)
+        for person in cast.get("carried") or []:
+            carried.setdefault(person["name"], {**person, "parts": []})
+
+    def ordered(kind: str) -> list[dict[str, Any]]:
+        return sorted((entry for name, entry in people.items() if section[name] == kind),
+                      key=lambda entry: (-entry["lines"], entry["displayName"]))
+
+    return ({"narrator": narrator or {}, "characters": ordered("characters"), "extras": ordered("extras"),
+             "carried": sorted((entry for name, entry in carried.items() if name not in people),
+                               key=lambda entry: entry["displayName"])}, samples)
+
+
+def _merge_music(parts: list[tuple[int, dict[str, Any]]]) -> dict[str, Any] | None:
+    """Mục `music` của cả bộ: bài trùng giữa các phần chỉ một mục (tên file là sha1 của link), mốc theo mã chương chung."""
+    if not parts:
+        return None
+    tracks: dict[str, Any] = {}
+    chapters: dict[str, Any] = {}
+    for number, music in parts:
+        for name, info in music["tracks"].items():
+            tracks.setdefault(name, info)
+        for local, cues in music["chapters"].items():
+            chapters[str(number * PART_SPAN + int(local))] = cues
+    return {"levelDb": parts[0][1]["levelDb"], "tracks": tracks, "chapters": chapters}
+
+
+def _seal(book: dict[str, Any], files: dict[str, Path | bytes], out: Path, *, producer: str, version: int) -> Path:
+    """Ghi `book.package` (cỡ + mã băm từng file) rồi gói ZIP: file tạm cạnh đích, thay nguyên tử."""
     if not any(name.startswith("chapters/") for name in files):
         raise BookFileError("Sách chưa có chương nào nghe được để xuất.")
     book["package"] = {
         "format": FORMAT,
-        "version": 2 if music is not None else 1,
+        "version": version,
         "createdAt": datetime.now(UTC).isoformat(timespec="seconds"),
         "producer": producer,
         "files": {name: _describe(source) for name, source in sorted(files.items())},
     }
-    unknown = [name for name in files if not _CONTENT.fullmatch(name)]
+    allowed = _CONTENT_V3 if version >= 3 else _CONTENT
+    unknown = [name for name in files if not allowed.fullmatch(name)]
     if unknown:
         raise BookFileError(f"Không gói được các file có tên ngoài định dạng: {unknown[:3]}")
-    out = Path(out) if out is not None else project_root / "output" / default_name(book["title"])
     out.parent.mkdir(parents=True, exist_ok=True)
     temporary = out.with_name(f".{out.name}.{secrets.token_hex(4)}.part")
     try:
@@ -215,20 +378,31 @@ class BookFile:
                 raise BookFileError(f"File sách bị hỏng hoặc bị sửa ({name}). Hãy chép lại file từ nguồn.")
 
     def extract(self, library: Path, folder: str | None = None) -> Path:
-        """Kiểm rồi giải nén vào `library/<folder>/` (mặc định: tên suy từ nội dung): thư mục tạm rồi đổi tên, không bao
-        giờ để lại nửa cuốn. Thư mục ấy đã có thì được thay - app chọn `folder` là cuốn cùng lần sản xuất đã có."""
-        self.verify()
+        """Giải nén vào `library/<folder>/` (mặc định: tên suy từ nội dung), kiểm cỡ + mã băm TRONG LÚC chép - một lần đọc,
+        không đọc cả file hai lượt (cả bộ có thể vài GB). Thư mục tạm rồi đổi tên: hỏng giữa chừng thì không có gì vào
+        thư viện, không bao giờ để lại nửa cuốn. Thư mục ấy đã có thì được thay - app chọn `folder` là cuốn cùng lần sản
+        xuất đã có. Ổ đĩa không đủ chỗ thì từ chối TRƯỚC khi chép gì."""
         library = Path(library)
         library.mkdir(parents=True, exist_ok=True)
+        self.require_room(library)
         name = folder or self.content_key
         target = library / name
         staging = library / f".{name}.{secrets.token_hex(4)}.part"
+        files = self.book["package"]["files"]
         try:
             for entry in [MANIFEST, READIUM_MANIFEST, *self.content]:
                 destination = staging.joinpath(*entry.split("/"))
                 destination.parent.mkdir(parents=True, exist_ok=True)
+                digest = hashlib.sha256()
+                size = 0
                 with self._zip.open(entry) as source, destination.open("wb") as sink:
-                    shutil.copyfileobj(source, sink, _CHUNK)
+                    while chunk := source.read(_CHUNK):
+                        digest.update(chunk)
+                        sink.write(chunk)
+                        size += len(chunk)
+                expected = files.get(entry)  # book.json / manifest.json không nằm trong danh sách mã băm
+                if expected is not None and (size != expected["size"] or digest.hexdigest() != expected["sha256"]):
+                    raise BookFileError(f"File sách bị hỏng hoặc bị sửa ({entry}). Hãy chép lại file từ nguồn.")
             if target.exists():
                 retired = library / f".{name}.{secrets.token_hex(4)}.old"
                 os.replace(target, retired)
@@ -240,6 +414,14 @@ class BookFile:
             shutil.rmtree(staging, ignore_errors=True)
             raise
         return target
+
+    def require_room(self, library: Path) -> None:
+        """Ổ chứa `library` còn đủ chỗ cho cả cuốn khi giải nén? Không thì `BookFileError` nói cần bao nhiêu, còn bao nhiêu."""
+        need = sum(info.file_size for info in self._zip.infolist()) + _ROOM_MARGIN
+        free = shutil.disk_usage(library).free
+        if free < need:
+            raise BookFileError(f"Ổ đĩa không đủ chỗ để mở sách này: cần khoảng {_gigabytes(need)}, còn {_gigabytes(free)}. "
+                                "Hãy dọn bớt ổ đĩa rồi mở lại file.")
 
     def _validate(self) -> dict[str, Any]:
         infos = self._zip.infolist()
@@ -255,8 +437,6 @@ class BookFile:
             name = info.filename
             if name in names or info.is_dir():
                 raise BookFileError(f"Gói có mục trùng hay thư mục lạ: {name!r}.")
-            if name not in ("mimetype", MANIFEST, READIUM_MANIFEST) and not _CONTENT.fullmatch(name):
-                raise BookFileError(f"Gói có mục lạ: {name!r}.")
             names.add(name)
             total += info.file_size
         if total > MAX_TOTAL_BYTES:
@@ -268,12 +448,16 @@ class BookFile:
         if not isinstance(package, dict) or package.get("format") != FORMAT:
             raise BookFileError("Đây không phải file sách của app.")
         version = package.get("version")
-        if not isinstance(version, int) or version < 1:
+        if not isinstance(version, int) or isinstance(version, bool) or version < 1:
             raise BookFileError("File sách có phiên bản định dạng không hợp lệ.")
         if version > FORMAT_VERSION:
             raise BookFileError("Sách này được làm bằng bản app mới hơn. Hãy cập nhật app để mở.")
         files = package.get("files")
         content = names - {"mimetype", MANIFEST, READIUM_MANIFEST}
+        allowed = _CONTENT_V3 if version >= 3 else _CONTENT  # thư mục phần chỉ có từ phiên bản 3
+        for name in content:
+            if not allowed.fullmatch(name):
+                raise BookFileError(f"Gói có mục lạ: {name!r}.")
         if not isinstance(files, dict) or set(files) != content:
             raise BookFileError("Danh sách file trong sách không khớp nội dung gói.")
         for name, meta in files.items():
@@ -330,6 +514,10 @@ def _readium(book: dict[str, Any]) -> dict[str, Any]:
     if book.get("cover"):
         manifest["resources"] = [{"href": covers.COVER_FILE, "type": "image/jpeg", "rel": "cover"}]
     return manifest
+
+
+def _gigabytes(size: int) -> str:
+    return f"{size / 1024**3:.1f} GB".replace(".", ",")
 
 
 def _order(name: str) -> tuple[int, str]:

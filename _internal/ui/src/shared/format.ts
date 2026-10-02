@@ -6,6 +6,12 @@ export function formatNumber(value: number): string {
   return numberFormat.format(Math.round(value));
 }
 
+/** Cỡ file: "850 MB", "3,2 GB" (một chữ số thập phân từ 1 GB trở lên). */
+export function formatSize(bytes: number): string {
+  if (bytes >= 1024 ** 3) return `${new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 1 }).format(bytes / 1024 ** 3)} GB`;
+  return `${formatNumber(bytes / 1024 ** 2)} MB`;
+}
+
 export function formatPercent(fraction: number): string {
   const value = Math.max(0, Math.min(1, fraction)) * 100;
   if (value > 0 && value < 1) return "<1%";

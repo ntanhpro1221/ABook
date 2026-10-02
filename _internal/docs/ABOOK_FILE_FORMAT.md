@@ -1,10 +1,11 @@
 # The ABook file format (`.abook`)
 
-Media type: `application/vnd.ngdtuanh.abook+zip` · File extension: `.abook` · Format version: 1
+Media type: `application/vnd.ngdtuanh.abook+zip` · File extension: `.abook` · Format versions: 1, 2, 3 (current: 3)
 
 An `.abook` file is one finished audiobook produced by ABook (https://github.com/ntanhpro1221/ABook): the audio of every
 chapter, the text with who speaks each line, the cast of characters and the cover, in a single file that the ABook apps
-for Windows and Android open. The reference implementation is `_internal/abook/webui/bookfile.py`.
+for Windows and Android open. Since version 3 one file can hold a whole multi-part series (a story split into parts with
+"continue this book"). The reference implementation is `_internal/abook/webui/bookfile.py`.
 
 ## Container
 
@@ -25,15 +26,54 @@ A ZIP archive (PKWARE APPNOTE, as used by EPUB and OOXML).
 | `cover.jpg` | deflate | cover image (optional) |
 | `cast.json` | deflate | characters and the voice each one speaks with |
 | `chapters/<name>.mp3` | stored | chapter audio, MP3; stored so players can seek inside the archive |
+| `chapters/<part>/<name>.mp3` | stored | version 3 only: chapter audio of part `<part>` (1-4 digits); two parts may use the same file name |
 | `scripts/<n>.json` | deflate | the lines of chapter `n`: text, kind (narration / dialogue / thought / heading), speaker, emotion, intensity, pace, volume, and the time span inside the chapter MP3 |
 | `samples/<n>.wav` | stored | short voice sample of a character |
+| `music/<sha1>.mp3` | stored | version 2 and later: a background-music track the producer attached; `<sha1>` is 40 hex digits and the file is stored once however many chapters or parts use it |
+
+## Versions
+
+`package.version` is the **lowest** version able to hold the content: a one-part book without music is version 1, so
+older apps still open it.
+
+| Version | Adds |
+|---|---|
+| 1 | the layout above without `music/` and without part folders |
+| 2 | background music: the `music` object of `book.json` (`levelDb`, `tracks`, and per chapter the cue list `chapters[<chapterId>]` of `{start, end, track, gainDb}`) and the `music/<sha1>.mp3` entries |
+| 3 | a whole series in one file: parts, nested chapter paths and a series-wide chapter id scheme, described next |
+
+### Version 3: a series in one file
+
+- **Chapter paths.** Audio is `chapters/<part>/<name>.mp3`. Each part keeps its own audio file names, which are not unique
+  across parts, hence the folder. (A version 3 reader also accepts the flat `chapters/<name>.mp3`.) Version 1 and 2 files
+  must not contain a part folder; a reader treats such an entry as an unknown name.
+- **Chapter ids.** The id of a chapter is `part * 100000 + id inside the part` (part 2, chapter 1: `200001`). It is the
+  `id` in `book.json`, the `<n>` of `scripts/<n>.json`, the `chapterId` inside that script, the key of the `music.chapters`
+  object, and what a listener's position and bookmarks refer to. Adding a part later never changes an existing id, so
+  listening data survives re-opening a longer file of the same series. Every chapter also has `part`.
+- **`parts`.** A top-level array in `book.json`, in reading order: `{part, title, chapters: [firstId, lastId], duration,
+  narrator}`. `title` is the series title with the suffix ` · Phần N` ("Part N"); `duration` is in seconds. Parts that had
+  nothing to hear yet are left out, so part numbers may skip.
+- **Series-wide metadata.** `title` is the series title without the part suffix. There is one `cover.jpg` (the first part's)
+  and one `cast.json`: characters are merged by their canonical `name`, line counts are summed, and each character has
+  `parts: [n, ...]`, the parts in which they speak.
+- **Samples.** `samples/<k>.wav` are numbered 1..K across the whole file, and `sampleId` in `cast.json` refers to that new
+  number (sample ids of different parts would otherwise collide).
+- **Music.** One `music/<sha1>.mp3` per track, shared by every part that uses it; `music.chapters` is keyed by the series-wide
+  chapter id.
+- **Size.** A series can be several gigabytes. A single file larger than 4 GiB cannot be stored on FAT32 media (some SD
+  cards and USB sticks), so the producing app also offers one file per part (each a normal version 1 or 2 file).
+
+No version carries the machine-local book id or the `series` link that the phone sync package has: the file names no
+location on the producing computer.
 
 ## Rules for readers
 
 - Reject the file if `mimetype` is not the first entry, is compressed, or does not hold the exact media type.
 - Reject entries whose size or SHA-256 differs from `book.json`, more than 20,000 entries, JSON entries over 32 MiB,
   or more than 64 GiB in total.
-- Reject a `package.version` greater than the version the reader supports, and tell the user to update.
+- Reject a `package.version` greater than the version the reader supports (currently 3), and tell the user to update.
+- Check that the destination has room for the whole book before extracting, and extract and hash in one pass.
 - Nothing inside the file is executed. The file carries no listening data (position, bookmarks, history) and no
   identifier of the person or device that made it.
 
@@ -46,4 +86,5 @@ readers hand to their platform's media decoders. The format has no active conten
 ## Versioning
 
 `package.version` in `book.json` is an integer. Additions that old readers can ignore keep the version; anything an old
-reader would misread raises it.
+reader would misread raises it (version 2 added `music/` entries, version 3 added part folders: an older reader would
+report them as unknown names, so the version was raised and the older reader asks the user to update the app).

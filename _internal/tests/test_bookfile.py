@@ -194,3 +194,174 @@ def test_the_studio_exports_the_book_file_where_the_user_picked(tmp_path: Path) 
     assert Path(result["file"]).name == f"Sách thử · Tập 1{bookfile.EXTENSION}"
     with BookFile(Path(result["file"])) as book:
         book.verify()
+
+
+# ---- phiên bản 3: cả bộ nhiều phần trong một file ------------------------------------------------------------
+
+
+def _series(tmp_path: Path, *, parts: int = 2) -> tuple[Path, list[Path]]:
+    """Bộ `parts` phần như `test_export_series`, mỗi phần có chương 1 đã xong. Phần 2 thêm nhân vật NATASHA có câu mẫu
+    riêng (câu 6) - mã câu mẫu của hai phần khác nhau nên phải được đánh số lại; câu 3 của mỗi phần thì trùng mã."""
+    import sqlite3
+
+    from tests.test_export_series import _part
+
+    library = tmp_path / "thu_vien"
+    library.mkdir()
+    projects: list[Path] = []
+    for number in range(1, parts + 1):
+        title = "Truyện X" if number == 1 else f"Truyện X · Phần {number}"
+        projects.append(_part(tmp_path, library, f"p{number}", title, projects[-1] if projects else None))
+    for number, project in enumerate(projects, start=1):
+        (project / "work" / "s3.wav").write_bytes(b"RIFF" + bytes([number]) * 400)  # câu mẫu của LUCIEN, khác nhau theo phần
+        (project / "output" / "chapters" / "00001_645.mp3").write_bytes(b"ID3" + bytes([number]) * 300)
+    second = sqlite3.connect(projects[1] / "project.sqlite3")
+    (projects[1] / "work" / "s6.wav").write_bytes(b"RIFF" + b"\6" * 400)
+    second.execute("INSERT INTO characters VALUES (2, 'NATASHA', 'NATASHA', 'female', 'young', 'main', 9, '')")
+    second.execute("INSERT INTO segments VALUES (6, 1, 4, 1, 0, '“Chào.”', 'dialogue', 'NATASHA', 2, 'verified', ?, 'x', 4.0, 1)",
+                   (str(projects[1] / "work" / "s6.wav"),))
+    second.commit()
+    second.close()
+    return library, projects
+
+
+def test_a_series_is_one_file_with_part_folders_and_global_ids(tmp_path: Path) -> None:
+    _library, projects = _series(tmp_path)
+
+    path = bookfile.pack_series([(1, projects[0]), (2, projects[1])], tmp_path / f"bo{bookfile.EXTENSION}")
+
+    with BookFile(path) as book:
+        book.verify()
+        manifest = json.loads(book.read("book.json"))
+        assert manifest["package"]["version"] == 3
+        assert set(book.content) == {
+            "cast.json", "chapters/1/00001_645.mp3", "chapters/2/00001_645.mp3", "samples/1.wav", "samples/2.wav",
+            "scripts/100001.json", "scripts/100002.json", "scripts/200001.json", "scripts/200002.json"}, \
+            "hai phần trùng tên file nên audio nằm trong thư mục phần"
+        assert [(c["id"], c["part"], c["file"], c["script"]) for c in manifest["chapters"]] == [
+            (100001, 1, "chapters/1/00001_645.mp3", "scripts/100001.json"),
+            (100002, 1, None, "scripts/100002.json"),
+            (200001, 2, "chapters/2/00001_645.mp3", "scripts/200001.json"),
+            (200002, 2, None, "scripts/200002.json")]
+        assert manifest["title"] == "Truyện X" and manifest["chaptersTotal"] == 4 and manifest["chaptersAvailable"] == 2
+        assert [(p["part"], p["title"], p["chapters"]) for p in manifest["parts"]] == [
+            (1, "Truyện X · Phần 1", [100001, 100002]), (2, "Truyện X · Phần 2", [200001, 200002])]
+        assert json.loads(book.read("scripts/200001.json"))["chapterId"] == 200001
+        assert book.read("chapters/2/00001_645.mp3") == (projects[1] / "output" / "chapters" / "00001_645.mp3").read_bytes()
+        readium = json.loads(book.read("manifest.json"))
+        assert [item["href"] for item in readium["readingOrder"]] == ["chapters/1/00001_645.mp3", "chapters/2/00001_645.mp3"]
+
+
+def test_a_series_merges_the_cast_and_renumbers_the_samples(tmp_path: Path) -> None:
+    _library, projects = _series(tmp_path)
+    path = bookfile.pack_series(projects, tmp_path / f"bo{bookfile.EXTENSION}")  # chỉ thư mục: số phần là vị trí
+
+    with BookFile(path) as book:
+        cast = json.loads(book.read("cast.json"))
+        people = {person["name"]: person for person in cast["characters"]}
+        assert set(people) == {"LUCIEN", "NATASHA"}
+        assert people["LUCIEN"]["parts"] == [1, 2] and people["LUCIEN"]["lines"] == 2, "gộp theo tên, cộng số câu"
+        assert people["NATASHA"]["parts"] == [2]
+        # Câu mẫu đánh số lại theo thứ tự gặp và trỏ đúng file: LUCIEN lấy câu 3 của phần 1 (không phải của phần 2).
+        assert (people["LUCIEN"]["sampleId"], people["NATASHA"]["sampleId"]) == (1, 2)
+        assert book.read("samples/1.wav") == b"RIFF" + b"\1" * 400
+        assert book.read("samples/2.wav") == b"RIFF" + b"\6" * 400
+        assert json.loads(book.read("book.json"))["samples"] == ["samples/1.wav", "samples/2.wav"]
+
+
+def test_a_part_without_audio_is_left_out_but_keeps_the_numbers_of_the_others(tmp_path: Path) -> None:
+    _library, projects = _series(tmp_path, parts=3)
+    (projects[1] / "output" / "chapters" / "00001_645.mp3").unlink()
+
+    path = bookfile.pack_series([(1, projects[0]), (2, projects[1]), (3, projects[2])], tmp_path / f"bo{bookfile.EXTENSION}")
+
+    with BookFile(path) as book:
+        manifest = json.loads(book.read("book.json"))
+    assert [part["part"] for part in manifest["parts"]] == [1, 3]
+    assert [chapter["id"] for chapter in manifest["chapters"] if chapter["file"]] == [100001, 300001]
+    with pytest.raises(BookFileError, match="chưa có chương nào"):
+        bookfile.pack_series([(2, projects[1])], tmp_path / f"rong{bookfile.EXTENSION}")
+    assert not list(tmp_path.glob("rong*")), "không để lại file dở"
+
+
+@pytest.mark.parametrize("series", [False, True])
+def test_no_version_carries_the_machines_series_link(tmp_path: Path, series: bool) -> None:
+    """`series.root` là mã sách của máy làm ra file - lộ tên ổ đĩa và thư mục (docstring: không mang mã nào)."""
+    _library, projects = _series(tmp_path)
+    assert manifest(projects[1], book_id(projects[1]), Listening(tmp_path / "l.json"))["series"], "gói điện thoại có series"
+    path = (bookfile.pack_series(projects, tmp_path / f"bo{bookfile.EXTENSION}") if series
+            else bookfile.pack(projects[1], tmp_path / f"bo{bookfile.EXTENSION}"))
+    with zipfile.ZipFile(path) as archive:
+        book = json.loads(archive.read("book.json"))
+        everything = "".join(archive.read(name).decode("utf-8") for name in archive.namelist() if name.endswith(".json"))
+    assert book["package"]["version"] == (3 if series else 1) and "series" not in book
+    assert book_id(projects[0]) not in everything and book_id(projects[1]) not in everything
+
+
+@pytest.mark.parametrize("name", ["chapters/../x.mp3", "chapters/1/2/x.mp3", "chapters/a/x.mp3", "chapters/1/../x.mp3",
+                                  "/chapters/1/x.mp3"])
+def test_a_series_file_refuses_names_outside_the_part_layout(tmp_path: Path, name: str) -> None:
+    _library, projects = _series(tmp_path)
+    path = bookfile.pack_series(projects, tmp_path / f"bo{bookfile.EXTENSION}")
+    target = tmp_path / f"la{bookfile.EXTENSION}"
+    with zipfile.ZipFile(path) as source, zipfile.ZipFile(target, "w") as sink:
+        for info in source.infolist():
+            sink.writestr(info, source.read(info.filename))
+        sink.writestr(name, b"x")
+    with pytest.raises(BookFileError, match="lạ"):
+        BookFile(target)
+
+
+def test_part_folders_exist_only_from_version_3(tmp_path: Path) -> None:
+    """Gói ghi phiên bản 2 mà có `chapters/1/x.mp3` là gói sai (app phiên bản 2 cũ sẽ báo "mục lạ") - không nhận."""
+    _library, projects = _series(tmp_path)
+    path = bookfile.pack_series(projects, tmp_path / f"bo{bookfile.EXTENSION}")
+
+    def older(name: str, data: bytes) -> bytes:
+        if name != "book.json":
+            return data
+        book = json.loads(data)
+        book["package"]["version"] = 2
+        return json.dumps(book).encode()
+
+    with pytest.raises(BookFileError, match="lạ"):
+        BookFile(_rewrite(path, tmp_path / f"cu{bookfile.EXTENSION}", older))
+
+
+def test_version_4_is_refused_with_the_update_hint_and_3_is_accepted(tmp_path: Path) -> None:
+    assert bookfile.FORMAT_VERSION == 3
+    _library, projects = _series(tmp_path)
+    path = bookfile.pack_series(projects, tmp_path / f"bo{bookfile.EXTENSION}")
+
+    def newer(name: str, data: bytes) -> bytes:
+        if name != "book.json":
+            return data
+        book = json.loads(data)
+        book["package"]["version"] = 4
+        return json.dumps(book).encode()
+
+    with pytest.raises(BookFileError, match="Hãy cập nhật app"):
+        BookFile(_rewrite(path, tmp_path / f"v4{bookfile.EXTENSION}", newer))
+    with BookFile(path):
+        pass
+
+
+def test_extracting_hashes_while_copying_and_does_not_read_the_file_twice(tmp_path: Path, monkeypatch) -> None:
+    _project, path = _pack(tmp_path)
+    monkeypatch.setattr(BookFile, "verify", lambda self: pytest.fail("extract phải tự kiểm, không đọc hai lượt"))
+    with BookFile(path) as book:
+        folder = book.extract(tmp_path / "thu_vien")
+    assert (folder / "chapters" / "00001_645.mp3").is_file()
+
+
+def test_a_book_that_does_not_fit_the_disk_is_refused_before_anything_is_copied(tmp_path: Path, monkeypatch) -> None:
+    import shutil
+    from collections import namedtuple
+
+    _project, path = _pack(tmp_path)
+    usage = namedtuple("usage", "total used free")
+    monkeypatch.setattr(shutil, "disk_usage", lambda _path: usage(10**9, 10**9 - 1000, 1000))
+    with BookFile(path) as book, pytest.raises(BookFileError, match="không đủ chỗ") as refused:
+        book.extract(tmp_path / "thu_vien")
+    assert "cần khoảng" in str(refused.value) and "còn" in str(refused.value)
+    assert not any((tmp_path / "thu_vien").iterdir()), "chưa chép gì vào thư viện"

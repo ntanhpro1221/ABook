@@ -58,4 +58,24 @@ class LibraryTreeTest {
         assertNull("gói của cuốn khác", LibraryTree.start("book/khac", manifest, listening))
         assertNull(LibraryTree.start(LibraryTree.ROOT, manifest, listening))
     }
+
+    @Test
+    fun a_chapter_of_a_whole_series_file_says_which_part_it_belongs_to() {
+        val manifest = JSONObject().put("id", "s1").put("title", "Truyện X")
+            .put("parts", JSONArray().put(JSONObject().put("part", 1)).put(JSONObject().put("part", 2)))
+            .put("chapters", JSONArray()
+                .put(chapter(100001, 1, "chapters/1/a.mp3")).put(chapter(200001, 2, "chapters/2/a.mp3")))
+        val nodes = LibraryTree.chapterNodes(manifest, state(200001, 12.0))
+        assertEquals(listOf("chapter/s1/100001", "chapter/s1/200001"), nodes.map { it.id })
+        assertEquals(listOf("Phần 1 · 15 phút", "Phần 2 · Đang nghe dở"), nodes.map { it.subtitle })
+        assertEquals(LibraryTree.Start("s1", 200001, 12.0), LibraryTree.start("chapter/s1/200001", manifest, state(200001, 12.0)))
+        assertEquals("chương ở thư mục phần vẫn nghe được", "chapters/2/a.mp3", LibraryTree.chapters(manifest)[1].file)
+        // Sách một phần (hay file chỉ có một phần) không thêm gì vào dòng phụ.
+        val single = JSONObject().put("id", "s2").put("parts", JSONArray().put(JSONObject().put("part", 1)))
+            .put("chapters", JSONArray().put(chapter(100001, 1, "chapters/1/a.mp3")))
+        assertEquals(listOf("15 phút"), LibraryTree.chapterNodes(single, state()).map { it.subtitle })
+    }
+
+    private fun chapter(id: Int, part: Int, file: String) = JSONObject().put("id", id).put("part", part)
+        .put("fullTitle", "Chương $id").put("available", true).put("file", file).put("duration", 900.0)
 }

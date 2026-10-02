@@ -11,7 +11,7 @@ import { formatClock, formatLength, formatNumber } from "@/shared/format";
 import { Button, Dialog, EmptyState, IconButton, Progress, Skeleton, Tabs, TabsContent, TabsList, TabsTrigger, Tooltip, Vu } from "@/shared/ui";
 import { useClip } from "./clip";
 import { bookStatusText, usePlayListenBook } from "./LibraryScreen";
-import { chapterHeard, resumePoint, type CastMember, type ListenBook, type ListenChapter } from "./model";
+import { chapterHeard, chaptersByPart, resumePoint, type CastMember, type ListenBook, type ListenChapter } from "./model";
 import { usePlayer } from "./player";
 import { BookmarkList, chapterStatusLabel } from "./PlayerViews";
 import { useCast, useListenBook, useListenMutations, useSource } from "./source";
@@ -755,13 +755,18 @@ export function BookScreen({
           <TabsTrigger value="cast">Nhân vật</TabsTrigger>
         </TabsList>
         <TabsContent value="chapters" className="mt-2">
-          {chapters.map((chapter) => (
-            <ChapterRow
-              key={chapter.id}
-              book={book}
-              chapter={chapter}
-              onDone={(chapterId, done) => mutations.chapterDone.mutate({ chapterId, done })}
-            />
+          {chaptersByPart(chapters, book.parts).map((group, index) => (
+            <section key={group.heading ?? index} aria-label={group.heading ?? undefined}>
+              {group.heading && <h3 className="px-2 pb-1 pt-4 text-sm font-semibold text-fg-2 sm:px-3">{group.heading}</h3>}
+              {group.chapters.map((chapter) => (
+                <ChapterRow
+                  key={chapter.id}
+                  book={book}
+                  chapter={chapter}
+                  onDone={(chapterId, done) => mutations.chapterDone.mutate({ chapterId, done })}
+                />
+              ))}
+            </section>
           ))}
         </TabsContent>
         <TabsContent value="bookmarks">

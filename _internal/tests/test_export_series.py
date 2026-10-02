@@ -126,7 +126,7 @@ def test_studio_exports_the_whole_series_as_mp3(series: tuple[Path, list[Path]],
 
 
 def test_studio_exports_the_whole_series_as_one_book_file_per_part(tmp_path: Path) -> None:
-    """`.abook` chứa đúng MỘT cuốn (mã chương/câu mẫu/dàn nhân vật của một dự án) nên bộ thành mỗi phần một file."""
+    """Không có `single`: bộ thành mỗi phần một file `.abook` (cho thẻ nhớ FAT32 không chứa nổi file trên 4 GiB)."""
     library = tmp_path / "thu_vien"
     library.mkdir()
     one = _part(tmp_path, library, "p1", "Truyện X")
@@ -150,3 +150,61 @@ def test_studio_exports_the_whole_series_as_one_book_file_per_part(tmp_path: Pat
         with bookfile.BookFile(path) as book:
             book.verify()
     assert lone_status == 409 and "chưa có phần nào khác" in lone_result["error"]
+
+
+def test_studio_exports_the_whole_series_as_a_single_book_file(tmp_path: Path) -> None:
+    """`single: true` ("Một file" trong hộp Xuất): cả bộ trong MỘT file phiên bản 3; phần chưa có chương nào bị bỏ qua và
+    được kể tên, số phần của các phần còn lại giữ nguyên."""
+    library = tmp_path / "thu_vien"
+    library.mkdir()
+    one = _part(tmp_path, library, "p1", "Truyện X")
+    two = _part(tmp_path, library, "p2", "Truyện X · Phần 2", one, finished=False)
+    three = _part(tmp_path, library, "p3", "Truyện X · Phần 3", two)
+    app, server = _studio(tmp_path, library)
+    try:
+        status, result = _post(server, three, "bookfile", {"target": str(tmp_path / "xuat"), "series": True, "single": True})
+    finally:
+        server.stop()
+    assert status == 200 and Path(result["folder"]) == tmp_path / "xuat"
+    assert [path.name for path in (tmp_path / "xuat").iterdir()] == [f"Truyện X{bookfile.EXTENSION}"], "đúng một file, không thư mục con"
+    assert result["file"] == str(tmp_path / "xuat" / f"Truyện X{bookfile.EXTENSION}")
+    assert result["size"] == Path(result["file"]).stat().st_size
+    assert [part["part"] for part in result["parts"]] == [1, 3] and result["partsTotal"] == 3
+    assert result["skipped"] == [{"part": 2, "title": "Truyện X · Phần 2"}]
+    with bookfile.BookFile(Path(result["file"])) as book:
+        book.verify()
+        manifest = json.loads(book.read("book.json"))
+    assert manifest["package"]["version"] == 3 and [part["part"] for part in manifest["parts"]] == [1, 3]
+    assert result["folder"] in app.exports
+
+
+def test_a_series_in_one_file_with_nothing_to_hear_is_refused_and_leaves_nothing(tmp_path: Path) -> None:
+    library = tmp_path / "thu_vien"
+    library.mkdir()
+    one = _part(tmp_path, library, "p1", "Truyện X", finished=False)
+    two = _part(tmp_path, library, "p2", "Truyện X · Phần 2", one, finished=False)
+    app, server = _studio(tmp_path, library)
+    try:
+        status, result = _post(server, two, "bookfile", {"target": str(tmp_path / "xuat"), "series": True, "single": True})
+    finally:
+        server.stop()
+    assert status == 409 and "Chưa phần nào" in result["error"] and not (tmp_path / "xuat").exists()
+
+
+def test_the_export_dialog_can_ask_how_big_the_book_file_will_be(series: tuple[Path, list[Path]], tmp_path: Path) -> None:
+    """Hộp Xuất báo cỡ ước lượng (audio các chương nghe được) và cảnh báo khi quá 4 GiB - thẻ nhớ FAT32 không chứa nổi."""
+    library, parts = series
+    app, server = _studio(tmp_path, library)
+    each = (parts[0] / "output" / "chapters" / "00001_645.mp3").stat().st_size
+    try:
+        status, whole = _get(server, parts[1], "export-size?series=1")
+        alone_status, alone = _get(server, parts[1], "export-size")
+    finally:
+        server.stop()
+    assert (status, whole) == (200, {"bytes": 3 * each, "parts": 3})
+    assert (alone_status, alone) == (200, {"bytes": each, "parts": 1})
+
+
+def _get(server, project: Path, route: str) -> tuple[int, dict]:
+    status, data, _ = _request(server.port, "GET", f"/api/books/{book_id(project)}/{route}", headers={"X-Ebook-Token": "t"})
+    return status, json.loads(data)
