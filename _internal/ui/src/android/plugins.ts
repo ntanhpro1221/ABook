@@ -102,7 +102,7 @@ export interface RemotePlayer {
   /** "cast": loa / TV trong mạng nhà - máy tính chính thấy (mã "cast:…", máy tính phục vụ audio) hay điện thoại tự thấy
    *  (mã "dlna:…", điện thoại phục vụ sách đã có trên nó); một thiết bị chỉ một mục (RemotePlayers.kt). */
   via?: "cast";
-  /** Loa / TV `via` cast: "gcast" là Google Cast (Chromecast, Google TV, loa Nest) - máy tính chính báo, điện thoại chưa tự tìm. */
+  /** Loa / TV `via` cast: "gcast" là Google Cast (Chromecast, Google TV, loa Nest) - máy tính chính hay điện thoại tự tìm thấy. */
   protocol?: "dlna" | "gcast";
   state: {
     bookId?: string;
@@ -124,7 +124,7 @@ export interface RemotePlayer {
 }
 
 export type RemotePlayerCommand =
-  | { action: "play" | "pause" | "toggle" | "next" | "previous" }
+  | { action: "play" | "pause" | "toggle" | "next" | "previous" | "stop" }
   | { action: "skip" | "seek"; seconds: number }
   | { action: "load"; bookId: string; chapterId: number; seconds: number };
 

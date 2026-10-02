@@ -20,9 +20,9 @@ import androidx.core.content.ContextCompat
 import org.json.JSONObject
 
 /**
- * Điện thoại phát sách CỦA NÓ lên loa / TV (01-10): [DlnaPlayers] với sách lấy từ Store (chỉ sách ĐÃ CÓ trên máy - tải
- * về, mở file .abook; chương phải có file thật) và chỗ nghe ghi vào đúng hồ sơ như trình phát trong app. Sách nghe thẳng
- * từ máy tính không ở đây - máy tính phát (RemotePlayers, mã "cast:").
+ * Điện thoại phát sách CỦA NÓ lên loa / TV DLNA và Chromecast / Google TV / loa Nest (01-10, Cast 02-10): [DlnaPlayers] với
+ * sách lấy từ Store (chỉ sách ĐÃ CÓ trên máy - tải về, mở file .abook; chương phải có file thật) và chỗ nghe ghi vào đúng
+ * hồ sơ như trình phát trong app. Sách nghe thẳng từ máy tính không ở đây - máy tính phát (RemotePlayers, mã "cast:").
  */
 object PhoneCast {
     private lateinit var appContext: Context
@@ -35,6 +35,7 @@ object PhoneCast {
         DlnaPlayers(
             book = ::book,
             save = { id, chapter, seconds, duration -> Store.progress(id, chapter, seconds, duration) },
+            findGoogle = { GCast.discover() }, // Chromecast, Google TV, loa Nest (mDNS - trả lời về thẳng, không cần MulticastLock)
             onSession = { CastService.start(appContext) },
         )
     }
