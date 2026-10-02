@@ -1,0 +1,18 @@
+# Đáp án cảnh - Tam quốc diễn nghĩa, Hồi 52: Khổng Minh mượn lời Lỗ Túc, Triệu Vân lấy Quế-dương. Thế giới: chinese_history.
+# 192 câu, ~3930 tiếng. BỘ KIỂM THỨ HAI (02-10, cách làm ghi trước ở MUSIC_RESEARCH.md). PHÂN XỬ A4 + B4 (Pk 0,26).
+scene 0-15 | V=-0.75 E=0.5 T=1 | gems=tension | function=doi_thoai | setting=doanh trại Đông Ngô | music=co | Chu Du giận đòi đánh, Lỗ Túc can
+scene 16-41 | V=0 E=0 T=0.5 | gems=tension/none | function=doi_thoai | setting=thành Kinh-châu | music=nhe | Lỗ Túc sang đòi đất, Khổng Minh đưa Lưu Kỳ ra
+scene 42-52 | V=-0.5 E=-0.25 T=0.25 | gems=tension/sadness | function=doi_thoai | setting=trại Chu Du | music=nhe | start=soft (chỉ B) - thuật lại, Chu Du vẫn tức, về Sài-tang
+scene 53-67 | V=0.5 E=-0.25 T=-0.5 | gems=none/peacefulness | function=doi_thoai | setting=phủ Huyền-đức | music=nhe | cầu hiền, Mã Lương bày kế
+scene 68-92 | V=0.5 E=1.25 T=1 | gems=power/tension | function=hanh_dong | setting=chiến trường Linh-lăng | music=co | Hình Đạo-vinh ra đánh, Trương Phi Triệu Vân ra, trá hàng
+accent 79-82 | "Ta là Trương Dực-đức đây!"
+scene 93-107 | V=0.25 E=1.5 T=1.25 | gems=tension/power | function=hanh_dong | setting=trại đêm Linh-lăng | music=co | start=soft (chỉ B) - kế trong kế, canh hai đốt trại, bắt Lưu Hiền, Linh-lăng hàng
+scene 108-116 | V=0.75 E=0.25 T=-0.25 | gems=joyful_activation/none | function=doi_thoai | setting=thành Linh-lăng, khao quân | music=nhe | ~170 tiếng: tranh nhau đi Quế-dương, rút thăm
+scene 117-132 | V=0.5 E=1 T=0.75 | gems=power/tension | function=hanh_dong | setting=trận ngoài thành Quế-dương | music=co | Trần Ứng ra đánh bị bắt, tha về
+scene 133-137 | V=0.75 E=0.25 T=-0.25 | gems=joyful_activation/tenderness | function=doi_thoai | setting=trại Triệu Vân | music=co | start=soft (chỉ B) - Triệu Phạm hàng, kết anh em
+scene 138-149 | V=0.5 E=0 T=0.5 | gems=joyful_activation/tension | function=doi_thoai | setting=tiệc trong thành Quế-dương | music=co | hôm sau tiệc, Phàn thị nâng chén, gả chị dâu
+scene 150-164 | V=-0.25 E=0.75 T=1.25 | gems=tension | function=doi_thoai | setting=tiệc rồi phủ Triệu Phạm | music=co | start=soft (chỉ B) - Vân nổi giận bỏ đi, bàn kế trá hàng
+scene 165-171 | V=0.5 E=1 T=1.25 | gems=tension/power | function=hanh_dong | setting=trại Triệu Vân đêm, cửa thành | music=co | đêm hôm ấy trá hàng, Vân lừa lại, lấy thành
+scene 172-190 | V=1 E=-0.25 T=-0.75 | gems=power/joyful_activation | function=ket | setting=Quế-dương, Huyền-đức đến | music=co | Vân từ chối Phàn thị, được khen trượng phu; Trương Phi xin đi
+duck 188-190 | câu đối kết hồi
+scene 191-191 | V=0 E=-0.5 T=-0.5 | gems=none | function=chu_thich | setting=chú thích | music=im |
