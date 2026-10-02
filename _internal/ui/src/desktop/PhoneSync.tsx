@@ -159,17 +159,12 @@ function PairingPanel({ sync, onPair, onCancel, busy }: { sync: SyncView; onPair
               <li>
                 Chọn máy <span className="font-medium text-fg">{sync.name}</span>.
               </li>
-              <li>Gõ mã bên cạnh. Mã chỉ dùng được một lần.</li>
+              <li>Gõ mã 6 số này. Mã chỉ dùng được một lần.</li>
             </ol>
             {sync.remoteStudio && (
               <p className="mt-2 text-[13px] text-fg-2">
-                Trình duyệt: mở <Where sync={sync} /> rồi gõ mã. Trình duyệt sẽ báo trang "không an toàn" vì chứng chỉ do
+                Trình duyệt: mở <Where sync={sync} /> rồi gõ mã. Trình duyệt sẽ báo trang “không an toàn” vì chứng chỉ do
                 chính máy này cấp - cứ chọn tiếp tục.
-              </p>
-            )}
-            {sync.fingerprint && (
-              <p className="mt-2 text-[12px] text-fg-3">
-                Vân tay chứng chỉ của máy này, để đối chiếu: <span className="tabular-nums">{sync.fingerprint}</span>
               </p>
             )}
           </div>
@@ -187,6 +182,12 @@ function PairingPanel({ sync, onPair, onCancel, busy }: { sync: SyncView; onPair
             </div>
           </div>
         </div>
+        {/* Dòng vân tay dài (64 ký tự): để NGOÀI hàng hướng dẫn / mã, không thì nó chiếm hết bề rộng và đẩy mã xuống dưới. */}
+        {sync.fingerprint && (
+          <p className="mt-3 break-words text-[12px] text-fg-3">
+            Vân tay chứng chỉ của máy này, để đối chiếu: <span className="tabular-nums">{sync.fingerprint}</span>
+          </p>
+        )}
         <div className="mt-4 flex justify-end">
           {/* Chỉ huỷ mã đang hiện, không gỡ thiết bị nào - "Huỷ ghép" dễ hiểu thành gỡ thiết bị (soát UX 29-09). */}
           <Button size="sm" variant="ghost" onClick={onCancel}>
@@ -328,9 +329,10 @@ export function PhoneSync() {
             ) : (
               <ul className="mt-2 divide-y divide-line rounded-xl border border-line">
                 {sync.devices.map((device) => (
-                  <li key={device.id} className="flex items-center gap-3 px-4 py-3">
+                  // Điện thoại hẹp + công tắc "Điều khiển sản xuất": hàng tự xuống dòng thay vì bóp tên máy còn "NGDtuanh-…".
+                  <li key={device.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
                     <Smartphone className="size-[18px] shrink-0 text-fg-3" />
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-0 flex-1 basis-44">
                       <div className="truncate text-sm font-medium">{device.name}</div>
                       <div className="text-xs text-fg-2">
                         Kết nối lần cuối {formatRelative(device.lastSeen)} · ghép ngày {formatDate(device.pairedAt)}

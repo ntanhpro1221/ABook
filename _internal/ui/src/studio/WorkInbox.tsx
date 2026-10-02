@@ -251,7 +251,7 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
         }}
       >
         <Button data-choice size="sm" variant="secondary" disabled={save.isPending} onClick={() => save.mutate(item.current)}>
-          Đúng rồi, giữ "{item.current}"
+          Đúng rồi, giữ “{item.current}”
         </Button>
         <label htmlFor={inputId} className="text-xs text-fg-2">
           hoặc đọc là

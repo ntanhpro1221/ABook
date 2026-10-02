@@ -15,7 +15,7 @@ export function refusalText(reason: unknown, fallback: string): string {
   return (typeof reason === "string" && REFUSALS[reason]) || fallback;
 }
 
-/** Dòng dưới nút sau khi nghe: bản thu đầu sẽ GẦN như vầy (âm thanh không phải lúc nào cũng tái lập từng byte), câu nào, giọng ai. */
+/** Dòng dưới nút sau khi nghe: lúc thu thật sẽ nghe GẦN như vậy (âm thanh không phải lúc nào cũng tái lập từng byte), câu nào, giọng ai. */
 export function previewCaption(text: string, speaker: string): string {
-  return `Bản thu đầu sẽ gần như vầy · câu “${excerpt(text, 70)}”${speaker ? ` · giọng ${speaker}` : ""}`;
+  return `Lúc thu thật sẽ nghe gần như vậy · câu “${excerpt(text, 70)}”${speaker ? ` · giọng ${speaker}` : ""}`;
 }
