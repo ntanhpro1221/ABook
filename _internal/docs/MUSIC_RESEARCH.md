@@ -851,6 +851,37 @@ Máy và đáp án:
 - CHÍNH: r của E so đáp án, `app+bwsE` so `app` (E nhãn câu). THẮNG nếu r E hơn ≥ 0,05 VÀ hơn ở ≥ 70% chương.
 - Ghi lại: `oracle+bwsE` và tổ hợp cuối `app + llmVT + bwsE` (r trung bình V/E/T).
 
+**KẾT QUẢ BỘ 5 - LLM (03-10 04:28, qwen3.5:9b, `set5_llm.py`, `results/set5_score.txt`; 0 lượt hỏng định dạng):**
+
+r trung bình theo chương:
+
+| Cách | V | E | T | VET |
+|---|---|---|---|---|
+| app (nhãn câu) | 0,389 | 0,319 | 0,260 | 0,323 |
+| app + llmVT | 0,358 | 0,319 | 0,350 | 0,343 |
+| app + bwsE | 0,389 | 0,394 | 0,260 | 0,348 |
+| app + llmVT + bwsE | 0,358 | 0,394 | 0,350 | 0,367 |
+| oracle | 0,417 | 0,429 | 0,250 | 0,365 |
+| oracle + llmVT + bwsE | 0,671 | 0,562 | 0,589 | **0,607** |
+
+- **(a) KHÔNG THẮNG:** app + llmVT hơn app +0,020, thắng 6/9 (cần +0,05 và 7/9).
+- **(c) KHÔNG THẮNG:** E từ BWS hơn +0,075 nhưng chỉ thắng 5/9 chương (cần 7/9).
+- **(b) THẮNG (sát mép):**
+  - Kiểm chéo 2 phần theo truyện: cosine 13 chiều 0,740 → 0,771 (+0,031, ngưỡng 0,03).
+  - Số nhãn ≥ 0,5 mỗi đoạn: người 1,38, LLM thô 3,99, sau hiệu chỉnh 1,59 (lệch 15%, ngưỡng 30%).
+  - γ học trên cả bộ (80 đoạn), theo đúng luật:
+    - peacefulness 3,25; tenderness 3,25; nostalgia 2,5; sadness 2,5; joy 2,0; playful 1,25; power 3,25;
+    - wonder 3,25; tension 1,5; fear 2,0; anger 1,5; mystery 2,0; moved 3,25.
+  - Chỉ có tác dụng khi đoạn lấy 13 cường độ từ LLM. App hiện lấy từ nhãn câu, nên KHÔNG đổi code bây giờ. Bật lại Lớp 2 là
+    thí nghiệm ghi trước riêng.
+- **Đọc (không phải luật):**
+  - Trên ranh giới ĐÁP ÁN, LLM (V/T cả đoạn + E so sánh) đạt 0,607 so với oracle nhãn câu 0,365. Không khí đoạn mà LLM đọc
+    là tốt.
+  - Đường LLM thua ở app vì ranh giới của app sai (Pk 0,40). Nút thắt kế tiếp của đường LLM là CHIA ĐOẠN, không phải đoán
+    không khí.
+  - Gợi ý thí nghiệm kế (cần ghi trước): LLM chia đoạn, hoặc chia theo thay đổi V/E/T của LLM trên cửa sổ trượt, rồi dùng
+    llmVT + bwsE.
+
 ĐÁP ÁN BỘ 5 (03-10 05:xx, Corpus `scene_set5/`; mô tả, chưa phải phép thử):
 - 9 chương, 86 đoạn sau phân xử (26,6 đoạn/giờ).
 - Hai người chấm mù Sonnet A so B: Pk 0,167, P / R ranh giới 0,73 / 0,86, r V/E/T 0,92 / 0,88 / 0,89. Đó là trần.
