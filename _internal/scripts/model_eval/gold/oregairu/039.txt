@@ -1,0 +1,123 @@
+# "Oregairu" (Yahari Ore no Seishun Love Comedy wa Machigatteiru - Chuyện tình thanh xuân bi hài của tôi quả nhiên là sai lầm;
+# bản dịch fan) file 039 ("[039] 8. Dù chỉ một chút nhưng Yukinoshita Yukino cũng đã đứng lại", chương cuối tập 3 trước Lời bạt).
+# Đáp án KIỂM TRA LN Nhật đợt 4 (02-10; luật cố định: vị trí 30% của bộ); mục đích: văn phong độc thoại mỉa mai ngôi một.
+# Agent A gán 02-10, B soát + phân xử 02-10 (85, 91, 94 N->N,T).
+# KHÁC THƯỜNG 1: file KHÔNG có dòng tiêu đề - seq 0 "Ngày 31 tháng 8..." là câu văn thật (parser khoá N) -> `0 N`, không `0 H`.
+# KHÁC THƯỜNG 2: nguồn tải từ Wattpad, công cụ tải tách MỖI CÂU thành một đoạn (xuống dòng sau mỗi dấu câu) - đoạn văn gốc bị
+# chia nhỏ, lời dẫn ("cậu ta... quay đầu lại nói", "Cậu ta tiếp tục nói.") nằm ở đoạn riêng, tách khỏi câu thoại; một câu thoại
+# cũng bị cắt làm hai seq (45-46, 71-72, 73-74). Gán theo đúng văn bản đã tách. Bộ tách bỏ hai dòng chỉ có dấu: p54 `"...`
+# (mở đầu lời Yukinoshita ở 55) và p92 `.` (dấu ngắt cảnh) - không có seq.
+# NGÔI THỨ NHẤT: "tôi" = HIKIGAYA HACHIMAN / HIKIGAYA / HACHIMAN (m) - truyền --first-person "HIKIGAYA HACHIMAN". Bằng chứng:
+# 3 "tôi bỗng muốn khép lại câu chuyện về Hikigaya Hachiman", 50 Yukinoshita gọi "Hikigaya này." và "tôi" đáp; 80 "Lớp F của
+# tôi" (Hachiman lớp 2F). Tên: YUKINOSHITA YUKINO / YUKINOSHITA / YUKINO (f; lời kể gọi "Yukinoshita"). Không tính biệt danh
+# HIKKI / YUKINON (Yuigahama gọi, chương này không có chữ nào - tiền lệ HIMARIN~ Kurakon 034). "chị tôi" ở 55 = Yukinoshita
+# Haruno (037: Hachiman gặp chị ấy ở lễ hội pháo hoa) - chỉ được nhắc. Chương chỉ có HAI người nói.
+# Đối đáp ở cầu thang: 44 Yukinoshita (43 "cậu ta... quay đầu lại nói"); 45-46 Hachiman đáp; 50 "Hikigaya này." Yukinoshita (51
+# "Cậu ta không ngoảnh lại mà nói vọng ra"); 55 Yukinoshita (54 "Cậu ta tiếp tục nói", 56 "nghe được rõ lời của Yukinoshita");
+# 57 Hachiman; 66 "Ừm.." Yukinoshita (65 "Yukinoshita đứng yên", 68 "tôi... hỏi trước khi cậu ta kịp nói" - cô định nói thì bị
+# cắt ngang); 67 "--- Hôm nay câu lạc bộ..." Hachiman (68); 71-72 Yukinoshita (69 "Cậu ta trả lời với một vẻ bối rối"); 73-74
+# Hachiman (75 "Chưa kịp nói xong câu, tôi đã bắt đầu bước đi").
+# 19 "cậu bị đen đi à?" - câu hỏi GIẢ ĐỊNH của "lũ ngây ngô" chung chung, nằm cuối câu kể 18 (parser tách thành D cùng p18) ->
+# NARRATOR đủ (không ai thật nói; đổi giọng giữa câu kể là sai, quy tắc 8), NPC*~.
+# 92 "— Đến cả Yukinoshita Yukino cũng nói dối." - câu chốt chương sau ngắt cảnh, gạch đầu dòng làm parser khoá D; thực chất là
+# kết luận trong đầu người kể -> T,D, HIKIGAYA HACHIMAN và NARRATOR đều đủ (ngôi một, người nghĩ = người kể; quy tắc 9).
+# Tiếng lòng tức thời của "tôi" không ngoặc -> N,T NARRATOR,HIKIGAYA... (quy tắc 4, ngôi một đủ điểm): 30-31 tự khen
+# ("Boku-sama-chan là tuyệt nhất!"), 34-35 tự hỏi/tự nhủ ("...rồi còn gì?", "Ra vậy, tôi đã từng là thánh thần cơ đấy") - 36
+# xác nhận đó là điều "tôi vừa nghĩ... vừa bước dọc hành lang"; 58-59 "Không biết giọng của tôi như thế nào? Cậu ta có nghe được
+# không?" (ngay trong cảnh); 83-84 "Tốt rồi. Tôi vẫn là tôi của mọi ngày." Các đoạn triết lý/giải thích (14-28, 85-91) vẫn chỉ N.
+# Lời kể mỉa mai cả chương: cảm xúc lời kể giữ neutral trước, thêm sarcastic ở các câu châm biếm, sad ở đoạn cuối tự ghét mình.
+0 N
+1 N
+2 N
+3 N
+4 N NARRATOR neutral,sarcastic,sad 0-1 normal normal u
+5 N NARRATOR neutral,sarcastic 0-1 normal normal u
+6 N
+7 N
+8 N
+9 N
+10 N
+11 N NARRATOR neutral,sarcastic 0-1 normal normal u
+12 N
+13 N
+14 N
+15 N NARRATOR neutral,sarcastic 0-1 normal normal u
+16 N
+17 N NARRATOR neutral,sarcastic 0-1 normal normal u
+18 N NARRATOR neutral,sarcastic 0-1 normal normal u
+19 D NARRATOR,NPC*~ sarcastic,neutral 0-1 normal normal u
+20 N NARRATOR neutral,sarcastic 0-1 normal normal u
+21 N
+22 N NARRATOR neutral,sarcastic 0-1 normal normal u
+23 N
+24 N
+25 N
+26 N
+27 N
+28 N
+29 N NARRATOR neutral,sarcastic,sad 0-1 normal normal u
+30 N,T NARRATOR,HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN sarcastic,happy,neutral 0-1 normal normal u
+31 N,T NARRATOR,HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN sarcastic,happy,excited,neutral 1-2 normal,fast normal,loud u
+32 N NARRATOR neutral,sarcastic 0-1 normal normal u
+33 N NARRATOR neutral,sarcastic 0-1 normal normal u
+34 N,T NARRATOR,HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN sarcastic,neutral,surprised 0-1 normal normal u
+35 N,T NARRATOR,HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN sarcastic,neutral,surprised 0-1 normal normal u
+36 N NARRATOR neutral,sarcastic 0-1 normal normal u
+37 N
+38 N
+39 N NARRATOR neutral,sad 0-1 normal normal u
+40 N NARRATOR neutral,tender 0-1 normal normal u
+41 N NARRATOR neutral,tender 0-1 normal normal u
+42 N
+43 N
+44 D YUKINOSHITA YUKINO,YUKINOSHITA,YUKINO neutral,surprised,happy 0-1 normal normal f
+45 D HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN neutral,tired 0-1 normal,slow normal,soft m
+46 D HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN neutral,tired 0-1 normal,slow normal,soft m
+47 N NARRATOR neutral,sarcastic 0-1 normal normal u
+48 N
+49 N
+50 D YUKINOSHITA YUKINO,YUKINOSHITA,YUKINO neutral 0-1 normal normal,soft f
+51 N
+52 N
+53 N
+54 N
+55 D YUKINOSHITA YUKINO,YUKINOSHITA,YUKINO neutral,sad 0-1 normal,slow normal,soft f
+56 N
+57 D HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN neutral 0-1 normal normal,soft m
+58 N,T NARRATOR,HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN neutral,afraid,sad 0-1 normal normal,soft u
+59 N,T NARRATOR,HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN neutral,afraid,sad 0-1 normal normal,soft u
+60 N
+61 N
+62 N
+63 N
+64 N
+65 N
+66 D YUKINOSHITA YUKINO,YUKINOSHITA,YUKINO neutral,sad,afraid 0-1 slow,normal soft,normal f
+67 D HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN neutral 0-1 normal,fast normal m
+68 N
+69 N NARRATOR neutral,surprised 0-1 normal normal u
+70 N NARRATOR neutral,surprised 0-1 normal normal u
+71 D YUKINOSHITA YUKINO,YUKINOSHITA,YUKINO neutral,surprised,sad,afraid 0-1 slow,normal soft,normal f
+72 D YUKINOSHITA YUKINO,YUKINOSHITA,YUKINO neutral,sad,afraid 0-1 slow,normal soft,normal f
+73 D HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN neutral,sad 0-1 normal,fast normal m
+74 D HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN neutral,sad 0-1 normal,fast normal m
+75 N
+76 N NARRATOR neutral,sad 0-1 normal normal u
+77 N NARRATOR neutral,sad 0-1 normal normal u
+78 N NARRATOR neutral,sad 0-1 normal normal u
+79 N NARRATOR neutral,happy 0-1 normal normal u
+80 N
+81 N
+82 N NARRATOR neutral,happy 0-1 normal normal u
+83 N,T NARRATOR,HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN neutral,happy,sarcastic 0-1 normal normal,soft u
+84 N,T NARRATOR,HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN neutral,sarcastic,happy 0-1 normal normal u
+85 N,T NARRATOR,HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN neutral,sarcastic,tender 0-1 normal normal u
+86 N NARRATOR neutral,sarcastic 0-1 normal normal u
+87 N NARRATOR neutral,sarcastic 0-1 normal normal u
+88 N NARRATOR neutral,sad 0-1 normal,slow normal u
+89 N NARRATOR neutral,sad,angry 0-2 normal,slow normal u
+90 N NARRATOR neutral,sad 0-1 normal,slow normal u
+91 N,T NARRATOR,HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN neutral,sad 0-1 normal,slow normal u
+92 T,D HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN,NARRATOR sad,neutral 0-2 slow,normal normal,soft m
+93 N NARRATOR neutral,sad 0-1 normal,slow normal u
+94 N,T NARRATOR,HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN sad,neutral 0-2 slow,normal normal,soft u
