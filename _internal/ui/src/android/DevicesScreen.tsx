@@ -491,6 +491,12 @@ function SharePanel() {
             <dd className="tabular break-all">
               {data.addresses.length ? data.addresses.map((address) => `${address}:${data.port}`).join(", ") : "chưa vào mạng Wi-Fi nào"}
             </dd>
+            {data.fingerprint && (
+              <>
+                <dt className="text-fg-2">Vân tay</dt>
+                <dd className="tabular break-all text-xs">{data.fingerprint}</dd>
+              </>
+            )}
           </dl>
           {pairing && left > 0 ? (
             <div className="rounded-xl bg-accent-soft p-4 text-center">

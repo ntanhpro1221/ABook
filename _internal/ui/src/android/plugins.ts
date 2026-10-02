@@ -193,6 +193,8 @@ export interface ShareStatus {
   pairing: { code: string; expiresAt: number } | null;
   /** Nhập sai mã quá 5 lần: mã bị huỷ, phải tạo mã mới. */
   blocked: boolean;
+  /** Vân tay SHA-256 chứng chỉ TLS của điện thoại (ShareTls.kt), nhóm 4 ký tự; "" khi chưa bật chia sẻ. */
+  fingerprint?: string;
   devices: { id: string; name: string; pairedAt: number; lastSeen: number }[];
   error: string;
   /** Phục vụ cả qua Bluetooth (BluetoothShare.kt): "running", "" (chưa bật) hay lý do không bật được. */

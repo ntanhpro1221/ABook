@@ -32,7 +32,7 @@ from . import (actions, bookfile, cover_search, covers, humanize, listen_view, m
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, legacy_ids
 from .listening import RECORD_ID, Listening
-from . import bluetooth, remote_books, spelling
+from . import bluetooth, remote_books, spelling, tls
 from .. import names as renames
 from .remote_studio import REMOTE_HEADER, StudioGate
 from .reviews import Reviews, review_view
@@ -1029,6 +1029,8 @@ class App:
             "addresses": local_addresses() if self.sync_host == "0.0.0.0" else [self.sync_host],
             "pairing": self.devices.pairing() if running else None,
             "pairingBlocked": running and self.devices.blocked,
+            # Vân tay chứng chỉ TLS của máy này (tls.py): hiện cạnh mã ghép để người dùng đối chiếu nếu muốn.
+            "fingerprint": tls.display(self.sync_server.fingerprint) if running else "",
             "devices": sorted(self.devices.list(), key=lambda device: -float(device.get("lastSeen") or 0)),
             # Studio từ xa (remote_studio.py): công tắc riêng, tách khỏi quyền nghe của điện thoại.
             "remoteStudio": bool(self.preferences.get().get("remoteStudio")),
@@ -1051,7 +1053,9 @@ class App:
                 app = SyncApp(self.library, self.listening, self.devices, socket_name(), self.remote, studio=studio,
                               routes=self.routes,
                               player=self.player, cast=self.cast, music_track=self.music_track_cached)
-                self.sync_server = SyncServer(app, host=self.sync_host, port=self.sync_port).start()
+                # Danh tính TLS sinh một lần, nằm cạnh tuỳ chọn: đổi nó là mọi thiết bị đã ghép phải ghép lại.
+                identity = tls.load_or_create(self.preferences.path.with_name(tls.FILE_NAME))
+                self.sync_server = SyncServer(app, host=self.sync_host, port=self.sync_port, identity=identity).start()
                 self.sync_error = ""
                 if self.sync_host == "0.0.0.0":  # máy chủ thật (không phải bài thử chỉ nghe 127.0.0.1)
                     try:

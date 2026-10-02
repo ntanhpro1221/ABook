@@ -38,8 +38,12 @@ object Streaming {
         StandaloneDatabaseProvider(context),
     ).also { cache = it }
 
-    /** Nguồn media cho ExoPlayer: file:// đọc thẳng; http:// mang mã thiết bị (đọc lại mỗi lần - ghép lại thì mã đổi). */
+    /**
+     * Nguồn media cho ExoPlayer: file:// đọc thẳng; https:// mang mã thiết bị (đọc lại mỗi lần - ghép lại thì mã đổi). Chứng
+     * chỉ máy kia được ghim ở HttpsURLConnection mặc định ([Pin.install]) - DefaultHttpDataSource đi qua đó.
+     */
     fun mediaSourceFactory(context: Context): MediaSource.Factory {
+        Pin.install(context)
         val http = DefaultHttpDataSource.Factory().setConnectTimeoutMs(5000).setReadTimeoutMs(20_000)
         val authorized = ResolvingDataSource.Factory(http) { spec ->
             spec.withAdditionalHeaders(mapOf("Authorization" to "Bearer ${SyncLink.tokenFor(context, spec.uri)}"))

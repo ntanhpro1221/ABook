@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from abook.webui import humanize, listen_view, store
+from abook.webui import humanize, listen_view, store, tls
 from abook.webui import sync as sync_module
 from abook.webui.library import Library, Preferences, book_id
 from abook.webui.listening import Listening, book_progress, merge_states
@@ -241,8 +241,12 @@ def test_sync_remembers_what_the_user_chose_not_what_happened(library) -> None:
     assert not app.set_sync(False)["wanted"] and not preferences.get()["syncEnabled"]
 
 
-def _request(port: int, method: str, path: str, token: str = "", body: dict | None = None, headers: dict | None = None):
-    connection = http.client.HTTPConnection("127.0.0.1", port, timeout=10)
+def _request(port: int, method: str, path: str, token: str = "", body: dict | None = None, headers: dict | None = None,
+             *, secure: bool = False):
+    """Một yêu cầu HTTP thường tới máy chủ giao diện cục bộ (127.0.0.1). `secure=True`: cổng đồng bộ - chỉ nói TLS, ghi nhận
+    chứng chỉ nào cũng được (bài thử chức năng, không phải bài thử ghim: xem test_sync_tls_pinning.py)."""
+    connection = (tls.PinnedHTTPSConnection("127.0.0.1", port, expected=None, timeout=10) if secure
+                  else http.client.HTTPConnection("127.0.0.1", port, timeout=10))
     all_headers = {"Authorization": f"Bearer {token}"} if token else {}
     all_headers.update(headers or {})
     payload = json.dumps(body).encode() if body is not None else None
@@ -255,33 +259,38 @@ def _request(port: int, method: str, path: str, token: str = "", body: dict | No
     return response.status, data, dict(response.getheaders())
 
 
+def _sync_request(port: int, method: str, path: str, token: str = "", body: dict | None = None, headers: dict | None = None):
+    """Như `_request` nhưng tới cổng đồng bộ (TLS)."""
+    return _request(port, method, path, token, body, headers, secure=True)
+
+
 def test_a_paired_phone_downloads_a_book_and_syncs_its_place(library, tmp_path: Path) -> None:
     lib, project, listening = library
     devices = Devices(tmp_path / "devices.json")
     server = SyncServer(SyncApp(lib, listening, devices, "Máy thử"), host="127.0.0.1", port=0).start()
     try:
-        status, _data, _ = _request(server.port, "GET", "/sync/v1/library")
+        status, _data, _ = _sync_request(server.port, "GET", "/sync/v1/library")
         assert status == 401, "chưa ghép nối thì không thấy gì"
         code = devices.start_pairing()["code"]
-        status, data, _ = _request(server.port, "POST", "/sync/v1/pair", body={"code": code, "device": "Pixel"})
+        status, data, _ = _sync_request(server.port, "POST", "/sync/v1/pair", body={"code": code, "device": "Pixel"})
         token = json.loads(data)["token"]
-        status, data, _ = _request(server.port, "GET", "/sync/v1/library", token)
+        status, data, _ = _sync_request(server.port, "GET", "/sync/v1/library", token)
         books = json.loads(data)["books"]
         assert status == 200 and len(books) == 1 and books[0]["chaptersAvailable"] == 1
         identifier = books[0]["id"]
-        status, data, _ = _request(server.port, "GET", f"/sync/v1/books/{identifier}/manifest", token)
+        status, data, _ = _sync_request(server.port, "GET", f"/sync/v1/books/{identifier}/manifest", token)
         book = json.loads(data)
         chapter = book["chapters"][0]
         assert chapter["file"] == "chapters/00001_645.mp3" and book["samples"] == ["samples/3.wav"]
-        status, data, headers = _request(server.port, "GET", f"/sync/v1/books/{identifier}/files/{chapter['file']}", token,
+        status, data, headers = _sync_request(server.port, "GET", f"/sync/v1/books/{identifier}/files/{chapter['file']}", token,
                                          headers={"Range": "bytes=10-19"})
         assert status == 206 and len(data) == 10 and headers["Content-Range"].startswith("bytes 10-19/")
-        status, _data, _ = _request(server.port, "GET", f"/sync/v1/books/{identifier}/files/../book_settings.json", token)
+        status, _data, _ = _sync_request(server.port, "GET", f"/sync/v1/books/{identifier}/files/../book_settings.json", token)
         assert status == 404, "chỉ phát file có trong gói"
-        status, data, _ = _request(server.port, "GET", f"/sync/v1/books/{identifier}/files/scripts/1.json", token)
+        status, data, _ = _sync_request(server.port, "GET", f"/sync/v1/books/{identifier}/files/scripts/1.json", token)
         assert json.loads(data)["segments"][0]["kind"] == "heading"
         phone_state = {"last": {"chapterId": 1, "seconds": 42.0, "at": time.time()}, "chapters": {}, "bookmarks": []}
-        status, data, _ = _request(server.port, "POST", f"/sync/v1/books/{identifier}/state", token, body=phone_state)
+        status, data, _ = _sync_request(server.port, "POST", f"/sync/v1/books/{identifier}/state", token, body=phone_state)
         assert status == 200 and listening.get(identifier)["last"]["seconds"] == 42.0
     finally:
         server.stop()
@@ -425,12 +434,12 @@ def test_the_desktop_sees_the_phone_and_its_pause_arrives(library, tmp_path: Pat
     try:
         sync_port = app.sync_server.port
         code = app.devices.start_pairing()["code"]
-        _status, data, _ = _request(sync_port, "POST", "/sync/v1/pair", body={"code": code, "device": "Pixel"})
+        _status, data, _ = _sync_request(sync_port, "POST", "/sync/v1/pair", body={"code": code, "device": "Pixel"})
         token = json.loads(data)["token"]
         identifier = book_id(project)
         report = {"state": {"bookId": identifier, "bookTitle": "Sách thử", "chapterId": 1, "chapterTitle": "Chương 645",
                             "position": 42.0, "duration": 600.0, "playing": True, "rate": 1.25}, "books": [identifier]}
-        status, data, _ = _request(sync_port, "POST", "/sync/v1/remote", token, body={**report, "wait": 0})
+        status, data, _ = _sync_request(sync_port, "POST", "/sync/v1/remote", token, body={**report, "wait": 0})
         assert status == 200 and json.loads(data) == {"commands": []}
 
         _status, data, _ = _request(ui.port, "GET", "/api/remote", headers=headers)
@@ -442,10 +451,10 @@ def test_the_desktop_sees_the_phone_and_its_pause_arrives(library, tmp_path: Pat
         status, _data, _ = _request(ui.port, "POST", f"/api/remote/{phone['device']}", headers=headers,
                                     body={"action": "format_disk"})
         assert status == 400
-        status, data, _ = _request(sync_port, "POST", "/sync/v1/remote", token, body={**report, "wait": 5})
+        status, data, _ = _sync_request(sync_port, "POST", "/sync/v1/remote", token, body={**report, "wait": 5})
         assert [command["action"] for command in json.loads(data)["commands"]] == ["pause"]
 
-        status, _data, _ = _request(sync_port, "POST", "/sync/v1/remote", "sai-ma", body=report)
+        status, _data, _ = _sync_request(sync_port, "POST", "/sync/v1/remote", "sai-ma", body=report)
         assert status == 401, "chỉ điện thoại đã ghép mới báo được"
         _request(ui.port, "DELETE", f"/api/sync/devices/{phone['device']}", headers=headers)
         _status, data, _ = _request(ui.port, "GET", "/api/remote", headers=headers)
@@ -474,12 +483,12 @@ def test_a_paired_device_sees_and_controls_the_player_on_this_computer(library, 
         app.set_sync(True)
         sync_port = app.sync_server.port
         code = app.devices.start_pairing()["code"]
-        _status, data, _ = _request(sync_port, "POST", "/sync/v1/pair", body={"code": code, "device": "Pixel"})
+        _status, data, _ = _sync_request(sync_port, "POST", "/sync/v1/pair", body={"code": code, "device": "Pixel"})
         token = json.loads(data)["token"]
-        status, data, _ = _request(sync_port, "GET", "/sync/v1/player", token)
+        status, data, _ = _sync_request(sync_port, "GET", "/sync/v1/player", token)
         view = json.loads(data)
         assert status == 200 and view["kind"] == "computer" and view["state"] is None, "giao diện chưa báo: chưa có trình phát"
-        status, data, _ = _request(sync_port, "POST", "/sync/v1/player", token, body={"action": "pause"})
+        status, data, _ = _sync_request(sync_port, "POST", "/sync/v1/player", token, body={"action": "pause"})
         assert status == 409 and "chưa mở ABook" in json.loads(data)["error"]
 
         identifier = book_id(project)
@@ -487,24 +496,24 @@ def test_a_paired_device_sees_and_controls_the_player_on_this_computer(library, 
                             "position": 30.0, "duration": 600.0, "playing": True, "rate": 1.0}}
         status, data, _ = _request(ui.port, "POST", "/api/player/report", headers=headers, body={**report, "wait": 0})
         assert status == 200 and json.loads(data) == {"commands": []}
-        _status, data, _ = _request(sync_port, "GET", "/sync/v1/player", token)
+        _status, data, _ = _sync_request(sync_port, "GET", "/sync/v1/player", token)
         view = json.loads(data)
         assert view["state"]["bookId"] == identifier and view["state"]["playing"] is True and view["age"] < 5
         assert view["stream"] is True, "máy tính phát được mọi cuốn của nó: điện thoại gửi được 'Phát trên máy tính'"
 
-        status, data, _ = _request(sync_port, "POST", "/sync/v1/player", token, body={"action": "skip", "seconds": -15})
+        status, data, _ = _sync_request(sync_port, "POST", "/sync/v1/player", token, body={"action": "skip", "seconds": -15})
         command = json.loads(data)["id"]
         assert status == 200 and command
-        status, _data, _ = _request(sync_port, "POST", "/sync/v1/player", token, body={"action": "format_disk"})
+        status, _data, _ = _sync_request(sync_port, "POST", "/sync/v1/player", token, body={"action": "format_disk"})
         assert status == 400
-        status, _data, _ = _request(sync_port, "GET", "/sync/v1/player", "sai-ma")
+        status, _data, _ = _sync_request(sync_port, "GET", "/sync/v1/player", "sai-ma")
         assert status == 401, "chỉ thiết bị đã ghép mới thấy và điều khiển được trình phát"
 
         _status, data, _ = _request(ui.port, "POST", "/api/player/report", headers=headers, body={**report, "wait": 5})
         assert json.loads(data)["commands"] == [{"action": "skip", "seconds": -15.0, "id": command}]
         acks = [{"id": command, "ok": False, "message": "Máy tính chưa nghe cuốn nào"}]
         _request(ui.port, "POST", "/api/player/report", headers=headers, body={**report, "acks": acks, "wait": 0})
-        _status, data, _ = _request(sync_port, "GET", "/sync/v1/player", token)
+        _status, data, _ = _sync_request(sync_port, "GET", "/sync/v1/player", token)
         assert json.loads(data)["acks"] == acks, "điện thoại thấy lệnh của nó không làm được, và vì sao"
     finally:
         ui.stop()

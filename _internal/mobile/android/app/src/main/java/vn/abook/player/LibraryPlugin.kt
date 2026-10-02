@@ -35,8 +35,8 @@ private const val SHARE_KEY = "shareLibrary"
 /**
  * Thư viện trên điện thoại + đồng bộ với máy tính qua Wi-Fi (abook/webui/sync.py).
  *
- * Mọi mạng đi qua đây (native) chứ không qua fetch của WebView: trang chạy ở https://localhost, gọi http://<máy
- * tính> sẽ bị chặn vì mixed content, và tải hàng trăm MB audio thì nên làm ở luồng nền, ghi thẳng ra file.
+ * Mọi mạng đi qua đây (native) chứ không qua fetch của WebView: trang chạy ở https://localhost, không ghim được chứng chỉ
+ * tự ký của máy tính (Pin.kt), và tải hàng trăm MB audio thì nên làm ở luồng nền, ghi thẳng ra file.
  */
 @CapacitorPlugin(
     name = "EbookLibrary",
@@ -156,9 +156,9 @@ class LibraryPlugin : Plugin() {
         val port = call.getInt("port") ?: 47630
         val device = call.getString("device") ?: "${Build.MANUFACTURER} ${Build.MODEL}"
         val body = JSONObject().put("code", call.getString("code") ?: "").put("device", device)
-        val reply = JSONObject(request("POST", "/sync/v1/pair", body, auth = false, root = "http://$host:$port"))
+        val (reply, fingerprint) = SyncLink.pair(context, "https://$host:$port", body)
         SyncLink.saveRoutes(prefs.edit().putString("host", host).putInt("port", port).putString("token", reply.getString("token"))
-            .putString("name", reply.optString("name")), reply).commit()
+            .putString("fingerprint", fingerprint).putString("name", reply.optString("name")), reply).commit()
         Remote.ensure()
         call.resolve(JSObject().put("name", reply.optString("name")))
     }
@@ -191,14 +191,14 @@ class LibraryPlugin : Plugin() {
         val device = call.getString("device") ?: "${Build.MANUFACTURER} ${Build.MODEL}"
         val body = JSONObject().put("code", call.getString("code") ?: "").put("device", device)
         val root = BluetoothLink.base(context, address)
-        val reply = try {
-            JSONObject(request("POST", "/sync/v1/pair", body, auth = false, root = root))
+        val (reply, fingerprint) = try {
+            SyncLink.pair(context, root, body)
         } catch (error: Exception) {
             val reason = BluetoothLink.lastError(address)
             throw IllegalStateException(reason.ifBlank { error.message ?: "không kết nối được qua Bluetooth" })
         }
         SyncLink.saveRoutes(prefs.edit().putString("host", "bt:$address").putInt("port", 0).putString("token", reply.getString("token"))
-            .putString("name", reply.optString("name")), reply).commit()
+            .putString("fingerprint", fingerprint).putString("name", reply.optString("name")), reply).commit()
         Remote.ensure()
         call.resolve(JSObject().put("name", reply.optString("name")))
     }
@@ -217,6 +217,7 @@ class LibraryPlugin : Plugin() {
             .put("port", LibraryServer.PORT).put("addresses", JSArray(LibraryServer.addresses()))
             .put("pairing", if (pairing != null) JSObject.fromJSONObject(pairing) else JSONObject.NULL)
             .put("blocked", LibraryServer.blocked).put("devices", devices).put("error", LibraryServer.lastError)
+            .put("fingerprint", if (LibraryServer.fingerprint.isEmpty()) "" else Pin.display(LibraryServer.fingerprint))
             .put("bluetooth", JSObject().put("status", BluetoothShare.status).put("connections", BluetoothShare.connections()))
     }
 
@@ -370,13 +371,14 @@ class LibraryPlugin : Plugin() {
         if (expectedSize > 0 && target.isFile && target.length() == expectedSize) return 0
         target.parentFile?.mkdirs()
         val partial = File(target.path + ".part")
+        Pin.install(context)
         val connection = URL("${link.base}/sync/v1/books/$remote/files/$relative").openConnection() as HttpURLConnection
         connection.connectTimeout = 5000
         connection.readTimeout = 30000
         connection.setRequestProperty("Authorization", "Bearer ${link.token}")
         val resumeFrom = if (partial.isFile) partial.length() else 0L
         if (resumeFrom > 0) connection.setRequestProperty("Range", "bytes=$resumeFrom-")
-        val code = connection.responseCode
+        val code = Pin.guard { connection.responseCode }
         if (code >= 400) throw IllegalStateException("Không tải được $relative (mã $code)")
         val append = code == 206
         java.io.FileOutputStream(partial, append).use { output -> connection.inputStream.use { it.copyTo(output, 256 * 1024) } }

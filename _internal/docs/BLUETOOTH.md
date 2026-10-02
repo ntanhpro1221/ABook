@@ -5,7 +5,7 @@ bước Wi-Fi (điện thoại nghe máy tính, điện thoại phục vụ thư
 
 ## Ý tưởng: đường hầm, không phải giao thức mới
 
-Mọi thứ giữa các máy đã là HTTP trên cổng đồng bộ (`webui/sync.py`, điện thoại `LibraryServer.kt`). Bluetooth chỉ thêm một
+Mọi thứ giữa các máy đã là HTTPS (chứng chỉ tự ký, ghim vân tay lúc ghép - `webui/tls.py`) trên cổng đồng bộ (`webui/sync.py`, điện thoại `LibraryServer.kt`); đường hầm chỉ chuyển byte nên TLS đi nguyên vẹn từ máy này tới máy kia. Bluetooth chỉ thêm một
 **đường hầm**: MỘT kết nối RFCOMM mang nhiều luồng TCP.
 
 - Điện thoại mở cổng TCP cục bộ `127.0.0.1:47670-47701` (ổn định theo địa chỉ Bluetooth của máy kia - `BluetoothLink.kt`).
