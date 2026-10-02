@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from . import humanize
+from .. import names as renames
 
 DB_NAME = "project.sqlite3"
 SETTINGS_NAME = "book_settings.json"
@@ -492,7 +493,7 @@ def pending_details(project_root: Path, since: float) -> dict[str, Any]:
         from .humanize import person_name
 
         raw = str(raw or "")
-        return "người kể" if raw.upper() == "NARRATOR" else person_name(raw)
+        return "người kể" if raw.upper() == "NARRATOR" else renames.shown(project_root, raw) or person_name(raw)
 
     with closing(connect(project_root)) as connection:
         rows = connection.execute(
@@ -869,6 +870,7 @@ def chapter_script(project_root: Path, chapter_id: int) -> dict[str, Any] | None
             for row in connection.execute("SELECT canonical_name, display_name FROM characters")
         }
         chapter_name = chapter_names(connection).get(int(chapter["id"]), {})
+    renamed = renames.load(project_root)
     timed = str(chapter["status"]) == "completed" and all(row["wav_duration"] for row in rows)
     starts: list[float] = []
     elapsed = 0.0
@@ -891,7 +893,8 @@ def chapter_script(project_root: Path, chapter_id: int) -> dict[str, Any] | None
             "paragraph": int(row["paragraph_index"] or 0),
             "text": str(row["text"]),
             "kind": "heading" if heading else str(row["kind"] or "narration"),
-            "speaker": "" if speaker in ("", "NARRATOR") else humanize.person_name(names.get(speaker, speaker)),
+            "speaker": "" if speaker in ("", "NARRATOR")
+            else renamed.get(renames.name_key(speaker)) or humanize.person_name(names.get(speaker, speaker)),
             "start": round(start, 3) if timed else None,
             "end": round(end, 3) if timed else None,
             "status": str(row["status"]),
@@ -965,7 +968,8 @@ def cast(project_root: Path) -> dict[str, Any]:
         }
         spoken = connection.execute(
             "SELECT speaker, kind, voice_profile_id, COUNT(*) AS lines,"
-            " COALESCE(SUM(wav_duration), 0) AS seconds, MIN(chapter_id) AS first_chapter"
+            " COALESCE(SUM(wav_duration), 0) AS seconds, MIN(chapter_id) AS first_chapter,"
+            " SUM(wav_path IS NOT NULL AND wav_path != '') AS recorded"
             " FROM segments GROUP BY speaker, kind, voice_profile_id"
         ).fetchall()
         samples = {
@@ -985,12 +989,14 @@ def cast(project_root: Path) -> dict[str, Any]:
         project_root, changes_since(project_root, float(book_row["updated_at"] or 0) if book_row is not None else 0.0))
     lines: dict[str, int] = defaultdict(int)
     seconds: dict[str, float] = defaultdict(float)
+    recorded: dict[str, int] = defaultdict(int)
     voice_votes: dict[str, Counter[int]] = defaultdict(Counter)
     first_seen: dict[str, int] = {}
     for row in spoken:
         speaker = str(row["speaker"] or "")
         lines[speaker] += int(row["lines"])
         seconds[speaker] += float(row["seconds"] or 0.0)
+        recorded[speaker] += int(row["recorded"] or 0)
         if row["voice_profile_id"] is not None:
             voice_votes[speaker][int(row["voice_profile_id"])] += int(row["lines"])
         first = int(row["first_chapter"])
@@ -1008,6 +1014,13 @@ def cast(project_root: Path) -> dict[str, Any]:
         "seconds": round(seconds.get("NARRATOR", 0.0), 1),
         "profile": voice_of("NARRATOR"),
     }
+    renamed = renames.load(project_root)
+
+    def shown_name(name: str, original: str) -> dict[str, str]:
+        """Tên người nghe đặt thay tên gốc (tab Nhân vật, "Đổi tên"); `originalName` chỉ có khi đã đổi."""
+        mine = renamed.get(renames.name_key(name))
+        return {"displayName": mine, "originalName": original} if mine else {"displayName": original}
+
     main, extras = [], []
     for speaker, count in lines.items():
         if speaker in ("", "NARRATOR"):
@@ -1015,11 +1028,13 @@ def cast(project_root: Path) -> dict[str, Any]:
         record = characters.get(speaker)
         entry = {
             "name": speaker,
-            "displayName": humanize.person_name(str(record["display_name"] or speaker) if record else speaker),
+            **shown_name(speaker, humanize.person_name(str(record["display_name"] or speaker) if record else speaker)),
             "gender": humanize.GENDER_LABELS.get(str(record["gender"] if record else ""), ""),
             "age": humanize.AGE_LABELS.get(str(record["age"] if record else ""), ""),
             "lines": count,
             "seconds": round(seconds[speaker], 1),
+            # Số câu đã có tiếng - đúng con số "Áp dụng thay đổi" sẽ báo phải thu lại khi đổi giọng người này.
+            "recorded": recorded[speaker],
             "voice": voice_of(speaker),
             "sampleId": samples.get(speaker),
             "firstChapter": chapter_numbers.get(first_seen.get(speaker, -1), ""),
@@ -1035,11 +1050,12 @@ def cast(project_root: Path) -> dict[str, Any]:
     carried = [
         {
             "name": name,
-            "displayName": humanize.person_name(str(record["display_name"] or name)),
+            **shown_name(name, humanize.person_name(str(record["display_name"] or name))),
             "gender": humanize.GENDER_LABELS.get(str(record["gender"] or ""), ""),
             "age": humanize.AGE_LABELS.get(str(record["age"] or ""), ""),
             "lines": 0,
             "seconds": 0.0,
+            "recorded": 0,
             "voice": _voice_view(by_key.get(str(record["locked_voice_key"]))),
             "sampleId": None,
             "firstChapter": "",
@@ -1050,6 +1066,17 @@ def cast(project_root: Path) -> dict[str, Any]:
     ]
     carried.sort(key=lambda entry: entry["displayName"])
     return {"narrator": narrator, "characters": main, "extras": extras, "carried": carried}
+
+
+def original_name(project_root: Path, character: str) -> str | None:
+    """Tên gốc (như sổ nhân vật ghi, chưa qua "Đổi tên") của một người nói trong sách này; None khi sách không có người ấy."""
+    with closing(connect(project_root)) as connection:
+        record = connection.execute(
+            "SELECT display_name FROM characters WHERE canonical_name = ?", (character,)).fetchone()
+        spoke = connection.execute("SELECT 1 FROM segments WHERE speaker = ? LIMIT 1", (character,)).fetchone()
+    if record is None and spoke is None:
+        return None
+    return humanize.person_name(str(record["display_name"] or character) if record else character)
 
 
 def sample_audio_path(project_root: Path, segment_id: int) -> Path | None:

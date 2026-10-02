@@ -98,6 +98,7 @@ ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = LISTEN_ROUTES + tuple((method
     ("POST", _BOOK + r"/pending-changes/withdraw"),
     ("POST", _BOOK + r"/chapters/\d+/retake"),
     ("POST", _BOOK + r"/characters/merge"),
+    ("POST", _BOOK + r"/characters/rename"),
     ("POST", _BOOK + r"/start"),
     ("POST", _BOOK + r"/stop"),
     ("POST", _BOOK + r"/pause"),

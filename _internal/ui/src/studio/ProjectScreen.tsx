@@ -77,6 +77,7 @@ import { VoicePicker } from "./VoicePicker";
 import { usePlayer } from "@/listen/player";
 import { useCast, useSource } from "@/listen/source";
 import type { CastMember } from "@/listen/model";
+import { GenderDialog, RenamePersonDialog } from "@/studio/CastEdits";
 import { MergeDialog } from "@/studio/MergePeople";
 import { ExportDialog } from "@/studio/ExportBook";
 
@@ -868,6 +869,8 @@ export function ProjectScreen() {
   const { data, isLoading, error } = useBook(id);
   const [picking, setPicking] = useState<{ name: string; displayName: string } | null>(null);
   const [merging, setMerging] = useState<CastMember | null>(null);
+  const [renaming, setRenaming] = useState<CastMember | null>(null);
+  const [gendering, setGendering] = useState<CastMember | null>(null);
   const { data: cast } = useCast(id);
   usePageTitle(data ? `${data.book.title} · Studio` : undefined);
   const location = useLocation();
@@ -1027,7 +1030,11 @@ export function ProjectScreen() {
             bookId={book.id}
             onPickVoice={(person) => setPicking({ name: person.name, displayName: person.displayName })}
             onMerge={setMerging}
+            onRename={setRenaming}
+            onGender={setGendering}
           />
+          <RenamePersonDialog bookId={book.id} person={renaming} onClose={() => setRenaming(null)} />
+          <GenderDialog bookId={book.id} person={gendering} onClose={() => setGendering(null)} />
           <MergeDialog
             bookId={book.id}
             person={merging}

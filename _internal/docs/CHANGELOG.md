@@ -7,6 +7,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Studio
+
+- Tab Nhân vật: nút "…" ở mỗi người có **Đổi tên** (chỉ đổi tên trên màn hình, kịch bản và file sách; không thu lại câu
+  nào, có hiệu lực ngay, mang sang phần sau; "Về tên gốc" để bỏ) và **Đổi giới tính** (một thay đổi chờ "Áp dụng thay
+  đổi"; hộp nói trước số câu đã thu sẽ phải thu lại nếu giọng đang đọc không hợp giới mới).
+
 ### Nhạc nền
 
 - Độ to nhạc so với giọng tính đúng như lúc phát ra hai loa: giọng đọc một kênh được tính to hơn 3 dB, nhạc đo hai kênh

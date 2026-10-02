@@ -33,6 +33,7 @@ from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, legacy_ids
 from .listening import RECORD_ID, Listening
 from . import bluetooth, remote_books, spelling
+from .. import names as renames
 from .remote_studio import REMOTE_HEADER, StudioGate
 from .reviews import Reviews, review_view
 from .casting_review import casting_chapter, casting_chapters
@@ -1511,6 +1512,23 @@ class Handler(BaseHTTPRequestHandler):
         aliases.add(path, source, target, now=now)
         self._send_json(HTTPStatus.OK, {"lines": len(lines), "requestedAt": now})
 
+    def post_rename_character(self, _query: dict[str, list[str]], value: str) -> None:
+        # Tab Nhân vật: "Đổi tên" - chỉ cái tên trên màn hình (names.json cạnh sổ dự án), không đụng sổ nhân vật, giọng hay
+        # audio, nên có hiệu lực ngay chứ không chờ "Áp dụng". Tên rỗng hay đúng tên gốc là trở về tên gốc.
+        self.app._mutating()
+        path = self.app._book(value)
+        body = self._body()
+        character = str(body.get("character", "")).strip()[:200]
+        if not character or character.upper() == "NARRATOR":
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu nhân vật")
+        original = store.original_name(path, character)
+        if original is None:
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Không có nhân vật này trong sách")
+        renames.set_name(path, character, str(body.get("name", "")), original)
+        now_shown = renames.shown(path, character)
+        self._send_json(HTTPStatus.OK, {"character": character, "name": now_shown or original,
+                                        "original": original, "renamed": bool(now_shown)})
+
     def post_chapter_retake(self, _query: dict[str, list[str]], value: str, chapter: str) -> None:
         # Menu "…" của một chương: thu lại MỌI câu đã thu của chương bằng hạt giống mới (soát UX a5/a6 01-10: cả chương nghe
         # không ổn thì phải bấm "Cần thu lại" từng câu). Cùng đường với "Cần thu lại" một câu (overrides.json `retakes`),
@@ -2299,6 +2317,7 @@ ROUTES: list[Route] = [
     ("POST", re.compile(BOOK + r"/pending-changes/withdraw"), Handler.post_pending_withdraw),
     ("POST", re.compile(BOOK + r"/chapters/(\d+)/retake"), Handler.post_chapter_retake),
     ("POST", re.compile(BOOK + r"/characters/merge"), Handler.post_merge_character),
+    ("POST", re.compile(BOOK + r"/characters/rename"), Handler.post_rename_character),
     ("GET", re.compile(BOOK + r"/chapters/(\d+)/script"), Handler.get_script),
     ("POST", re.compile(BOOK + r"/start"), Handler.post_start),
     ("POST", re.compile(BOOK + r"/stop"), Handler.post_stop),

@@ -216,6 +216,8 @@ export interface Script {
 export interface CastMember {
   name: string;
   displayName: string;
+  /** Tên gốc khi người nghe đã "Đổi tên" (displayName là tên đã đổi) - chỉ có khi đã đổi. */
+  originalName?: string;
   gender: string;
   age: string;
   lines: number;
@@ -223,6 +225,8 @@ export interface CastMember {
   voice: { key: string; preset: string; tone: string } | null;
   sampleId: number | null;
   firstChapter: string;
+  /** Số câu đã có tiếng (store.cast) - "Đổi giới tính" nói trước bấy nhiêu câu có thể phải thu lại. */
+  recorded?: number;
   /** Giọng/giới người nghe đã chọn mà dây chuyền chưa áp (store.pending_voices). */
   pendingVoice?: { preset: string; gender: string } | null;
 }

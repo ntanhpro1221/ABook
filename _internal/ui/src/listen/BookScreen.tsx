@@ -178,6 +178,8 @@ export function PersonRow({
   person,
   onPickVoice,
   onMerge,
+  onRename,
+  onGender,
 }: {
   bookId: string;
   person: CastMember;
@@ -186,6 +188,10 @@ export function PersonRow({
   onPickVoice?: (person: CastMember) => void;
   /** Chỉ Studio: "Gộp vào…" - máy tách một người thành hai tên. */
   onMerge?: (person: CastMember) => void;
+  /** Chỉ Studio: "Đổi tên" - tên trên màn hình, không đổi gì trong audio. */
+  onRename?: (person: CastMember) => void;
+  /** Chỉ Studio: "Đổi giới tính" - một thay đổi chờ "Áp dụng thay đổi" (POST /voice). */
+  onGender?: (person: CastMember) => void;
 }) {
   const source = useSource();
   const name = cleanName(person.displayName);
@@ -211,6 +217,7 @@ export function PersonRow({
           <span className="truncate font-semibold">{name}</span>
           {person.gender && <span className="shrink-0 text-xs text-fg-2">{person.gender}</span>}
         </div>
+        {person.originalName && <div className="truncate text-xs text-fg-3">(tên gốc: {cleanName(person.originalName)})</div>}
         <div className="mt-0.5 truncate text-xs text-fg-2">
           <AudioLines className="mr-1 inline size-3.5 -translate-y-px text-fg-3" />
           {person.voice ? `${person.voice.preset}${person.voice.tone ? ` · ${person.voice.tone}` : ""}` : "Chưa có giọng"}
@@ -238,6 +245,33 @@ export function PersonRow({
         {onMerge && person.lines > 0 ? (
           <IconButton label={`Gộp ${name} vào người khác`} icon={GitMerge} size="sm" onClick={() => onMerge(person)} />
         ) : null}
+        {onRename || onGender ? (
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger asChild>
+              <button
+                type="button"
+                aria-label={`Thêm tuỳ chọn cho ${name}`}
+                className="grid size-8 place-items-center rounded-md text-fg-2 hover:bg-hover hover:text-fg data-[state=open]:bg-hover"
+              >
+                <MoreHorizontal className="size-4" />
+              </button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content align="end" sideOffset={4} className="z-50 min-w-48 rounded-xl border border-line bg-panel p-1.5 shadow-float">
+                {onRename && (
+                  <DropdownMenu.Item onSelect={() => onRename(person)} className={MENU_ITEM}>
+                    <Pencil className="size-4" /> Đổi tên
+                  </DropdownMenu.Item>
+                )}
+                {onGender && person.voice && (
+                  <DropdownMenu.Item onSelect={() => onGender(person)} className={MENU_ITEM}>
+                    <UserRound className="size-4" /> Đổi giới tính
+                  </DropdownMenu.Item>
+                )}
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
+        ) : null}
       </div>
     </div>
   );
@@ -261,10 +295,12 @@ function reachedTitles(chapters: ListenChapter[], until: number | undefined): Se
 
 /** `reached`: tên các chương tới chỗ đang nghe (trang nghe) - người chỉ xuất hiện SAU đó bị ẩn tới khi bấm hiện, để dàn nhân
  *  vật không lộ nội dung ("Douglas · từ Chương 738" khi đang nghe Chương 725 - soát UX 29-09). Studio không truyền: hiện hết. */
-export function CastList({ bookId, onPickVoice, onMerge, reached }: {
+export function CastList({ bookId, onPickVoice, onMerge, onRename, onGender, reached }: {
   bookId: string;
   onPickVoice?: (person: CastMember) => void;
   onMerge?: (person: CastMember) => void;
+  onRename?: (person: CastMember) => void;
+  onGender?: (person: CastMember) => void;
   reached?: Set<string>;
 }) {
   const source = useSource();
@@ -300,7 +336,7 @@ export function CastList({ bookId, onPickVoice, onMerge, reached }: {
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {cast.characters
           .filter((person) => later || !reached || !person.firstChapter || reached.has(person.firstChapter))
-          .map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} onMerge={onMerge} />)}
+          .map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} onMerge={onMerge} onRename={onRename} onGender={onGender} />)}
       </div>
       {reached && ahead(cast.characters, reached) > 0 && (
         <button type="button" onClick={() => setLater((value) => !value)} className="mt-3 text-sm font-medium text-fg-2 hover:text-fg">
@@ -312,7 +348,7 @@ export function CastList({ bookId, onPickVoice, onMerge, reached }: {
           <button type="button" onClick={() => setExtras((value) => !value)} className="text-sm font-medium text-fg-2 hover:text-fg">
             {extras ? "Ẩn" : "Hiện"} {cast.extras.length} vai phụ chỉ xuất hiện trong một cảnh
           </button>
-          {extras && <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{cast.extras.map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} onMerge={onMerge} />)}</div>}
+          {extras && <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{cast.extras.map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} onMerge={onMerge} onRename={onRename} onGender={onGender} />)}</div>}
         </div>
       )}
       {/* Phần nối tiếp: dàn mang sang chưa nói ở phần này (soát UX a6 01-10, B2 - tab từng ghi "Chưa có dàn"). Mở sẵn khi chưa ai
@@ -330,7 +366,7 @@ export function CastList({ bookId, onPickVoice, onMerge, reached }: {
           )}
           {(carried || !cast.characters.length) && (
             <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {carriedPeople.map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} />)}
+              {carriedPeople.map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} onRename={onRename} onGender={onGender} />)}
             </div>
           )}
         </div>
