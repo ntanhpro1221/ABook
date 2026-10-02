@@ -704,6 +704,34 @@ Mục 3 - nền êm chấm lại bằng mô tả không CLAP (`DESC=noclap score
   - Cùng luật dùng được.
   - Dùng được thì thay L_min làm thước nghe chính. Nếu cả hai dùng được: phán quyết nghe chung = lượt hai model cùng ý.
 
+**KẾT QUẢ (i) Omni-7B-EN cả E1 (03-10 04:38):**
+- Ổn định a/b 0,809 (278 lượt); kappa với R_mới 0,258 (251 lượt; đồng ý 63%); với R_cũ 0,243.
+- → **L_min DÙNG ĐƯỢC.**
+
+Thứ hạng BT (R_cũ có CLAP, không dùng để quyết):
+
+| Thước | 1 | 2 | 3 | 4 | 5 | 6 |
+|---|---|---|---|---|---|---|
+| R_mới (đọc, không CLAP) | gems | calm | app | vet | mid | far |
+| L_min (nghe, tóm tắt Anh) | vet | gems | app | calm | mid | far |
+
+So từng cặp (L_min):
+- vet thắng far 15/19 = 0,79 [0,57-0,91].
+- app thắng vet 19/54 = 0,35 [0,24-0,49].
+- gems thắng app 31/56 = 0,55 [0,42-0,68].
+- calm thắng far 27/34 = 0,79 [0,63-0,90].
+- calm thắng mid 19/36 = 0,53.
+
+Hai thước:
+- **Đồng ý:** far cuối, mid gần cuối, gems cao, app giữa, calm thắng far rõ.
+- **BẤT ĐỒNG:**
+  - `vet`: đọc xếp 4, nghe xếp 1. "app thua vet" đúng theo thước NGHE (0,35, cận trên 0,49), không đúng theo thước ĐỌC (0,48).
+  - `calm`: đọc xếp 2, nghe xếp 4.
+  - Theo luật: ghi bất đồng, không chọn bên. Qwen3-Omni-EN (Kaggle) là phép phân xử kế.
+- Hệ quả tạm:
+  - "Nút thắt là đoán không khí đoạn" có thêm bằng chứng từ thước nghe (vet thắng app), cộng bộ 4 / bộ 5 (oracle + LLM 0,607).
+  - "Nền êm hợp" chỉ vững ở mức "hơn far / mid".
+
 
 **GHI TRƯỚC - NỚI NGƯỠNG NỀN ÊM (02-10 23:xx, Lead duyệt; từ E1: calm đứng thứ hai, hơn app):**
 - **Giả thuyết:** kéo về nền êm (CALM_TARGET) cho nhiều đoạn hơn làm nhạc hợp hơn. Hiện chỉ kéo khi confidence < WEAK_MOOD
