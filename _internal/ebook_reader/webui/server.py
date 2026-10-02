@@ -764,16 +764,19 @@ class App:
             cues = [dict(cue, src=f"/api/books/{quote(value, safe='')}/music/files/{cue['track'].split('/')[1]}")
                     for cue in music_plan.packaged_cues(music, chapter_id)]
             level = music.get("levelDb") if isinstance(music, dict) else None
+            level = level if isinstance(level, (int, float)) else music_plan.DEFAULT_LEVEL_DB
             tracks = music.get("tracks") if isinstance(music, dict) and isinstance(music.get("tracks"), dict) else {}
-            return {"cues": cues, "levelDb": level if isinstance(level, (int, float)) else music_plan.DEFAULT_LEVEL_DB,
-                    "credits": self._music_credits(cues, {cue["link"]: tracks.get(cue["track"]) for cue in cues})}
+            by_link = {cue["link"]: tracks.get(cue["track"]) for cue in cues}
+            music_plan.apply_gain(cues, level, by_link)  # sách xuất bởi bản cũ: mốc chưa có gainDb (không có file để đo)
+            return {"cues": cues, "levelDb": level, "credits": self._music_credits(cues, by_link)}
         plan = music_plan.read_plan(path)
         if plan is None:
             return {"cues": [], "levelDb": music_plan.DEFAULT_LEVEL_DB, "credits": {}}
         cues = [dict(cue, src="/api/music/track?link=" + quote(cue["link"], safe=""))
                 for cue in music_plan.chapter_cues(plan, chapter_id)]
-        return {"cues": cues, "levelDb": plan.get("levelDb", music_plan.DEFAULT_LEVEL_DB),
-                "credits": self._music_credits(cues, plan.get("tracks") or {})}
+        level = plan.get("levelDb", music_plan.DEFAULT_LEVEL_DB)
+        music_plan.apply_gain(cues, level, plan.get("tracks") or {}, self.music_track_cached)
+        return {"cues": cues, "levelDb": level, "credits": self._music_credits(cues, plan.get("tracks") or {})}
 
     @staticmethod
     def _music_credits(cues: list[dict[str, Any]], tracks: dict[str, Any]) -> dict[str, dict[str, str]]:
@@ -801,11 +804,13 @@ class App:
         links = sorted({scene["link"] for scene in (plan or {}).get("scenes") or [] if scene.get("link")})
         if not links:
             return
+        tracks = (plan or {}).get("tracks") or {}
 
         def fetch() -> None:
             for link in links:
-                if self.music_track_cached(link) is None:
-                    self.music_track_for_export(link)
+                path = self.music_track_cached(link) or self.music_track_for_export(link)
+                if path is not None and not isinstance((tracks.get(link) or {}).get("lufs"), (int, float)):
+                    music_plan.measured_lufs(path)  # danh mục chưa có độ to bài này: đo sẵn, trình phát khỏi chờ
 
         threading.Thread(target=fetch, name="music-warm", daemon=True).start()
 

@@ -1,8 +1,9 @@
 // Lớp nhạc nền của trình phát máy tính: một (hai, khi chuyển cảnh) <audio> chạy song song với giọng đọc, theo các MỐC
 // nhạc của chương (GET /api/books/<id>/music/chapters/<n> - webui/music_plan.py). Nhạc nền không cần khớp từng mili-giây
 // như lời thoại với hình: chỉ cần đổi đúng bài khi sang đoạn mới, chuyển mờ dần, lặp liền, dừng / chạy theo giọng đọc,
-// nhảy đúng chỗ khi người nghe tua. Âm lượng = âm lượng người nghe x mức nền của cuốn (dB, đường cơ sở -20 dB - Pha 4
-// của docs/MUSIC_RESEARCH.md đo lại bằng Whisper). Android: lõi native lo (chưa làm).
+// nhảy đúng chỗ khi người nghe tua. Âm lượng = âm lượng người nghe x `gainDb` của mốc (máy chủ tính từ `levelDb` = nhạc
+// thấp hơn giọng bao nhiêu LU, độ to và độ lấn dải tiếng nói của từng bài - Pha 4 của docs/MUSIC_RESEARCH.md).
+// Android: MusicBed.kt, cùng quy tắc.
 
 export interface MusicCue {
   start: number;
@@ -10,6 +11,9 @@ export interface MusicCue {
   link: string;
   key: string;
   src: string;
+  /** Độ khuếch đại (dB, <= 0) máy chủ đã tính cho bài này để nó nằm `levelDb` LU dưới giọng (music_plan.cue_gain_db):
+   *  trình phát chỉ áp con số này, không tự tính. Thiếu (máy chủ cũ) -> mức chung `levelDb` của cuốn như trước. */
+  gainDb?: number;
 }
 
 /** Ghi công tác giả một bài (CC BY đòi nêu tên ở nơi nhạc phát) - khoá theo `link` của mốc. */
@@ -53,6 +57,7 @@ export class MusicBed {
   private playing = false;
   private current: { cue: MusicCue; audio: BedAudio } | null = null;
   private fading: BedAudio[] = [];
+  private fadeFrom = new WeakMap<BedAudio, number>(); // âm lượng lúc bắt đầu mờ đi: bài to và bài nhỏ cùng tắt trong FADE_SECONDS
   private timer: ReturnType<typeof setInterval> | null = null;
   private lastTime = 0;
   private listeners = new Set<(link: string | null) => void>();
@@ -110,8 +115,11 @@ export class MusicBed {
     for (const listener of [...this.listeners]) listener(link);
   }
 
+  /** Âm lượng mục tiêu của bài đang phát: gainDb của chính mốc (bài to / nhỏ khác nhau), không có thì mức chung. */
   private target(): number {
-    return Math.min(1, this.gain * this.userVolume);
+    const gainDb = this.current?.cue.gainDb;
+    const gain = typeof gainDb === "number" && Number.isFinite(gainDb) ? Math.pow(10, Math.min(0, gainDb) / 20) : this.gain;
+    return Math.min(1, gain * this.userVolume);
   }
 
   private switchTo(cue: MusicCue | null, seconds: number): void {
@@ -121,6 +129,7 @@ export class MusicBed {
       return;
     }
     if (this.current) {
+      this.fadeFrom.set(this.current.audio, Math.max(this.current.audio.volume, 0.01));
       this.fading.push(this.current.audio);
       this.current = null;
     }
@@ -152,7 +161,7 @@ export class MusicBed {
         }
       }
       this.fading = this.fading.filter((audio) => {
-        audio.volume = Math.max(0, audio.volume - step * Math.max(this.target(), 0.01));
+        audio.volume = Math.max(0, audio.volume - step * (this.fadeFrom.get(audio) ?? 0.1));
         if (audio.volume <= 0.001) {
           audio.pause();
           return false;
