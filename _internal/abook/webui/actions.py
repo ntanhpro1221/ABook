@@ -224,10 +224,31 @@ def _credits_at_top(path: Path) -> list[str]:
     return credit_lines(decode_text_bytes(head[:cut] if cut > 0 else head))
 
 
+# Thư mục cha chung có tên chung chung (hay của chính app) không phải tên truyện.
+_GENERIC_FOLDERS = {
+    "downloads", "download", "desktop", "documents", "tải xuống", "tai xuong", "tài liệu", "truyen", "truyện", "books",
+    "sach", "sách", "temp", "tmp", "users", "home", UPLOAD_FOLDER.casefold(), SPLIT_FOLDER.casefold(), "nguồn epub",
+}
+
+
+def _shared_folder_name(files: list[Path]) -> str:
+    """Nhiều thư mục anh em cùng một thư mục cha ("Re Zero/Tập 1", "Re Zero/Tập 2"): tên truyện là tên thư mục cha, không phải
+    tên file đầu tiên ("001"). Rỗng khi các file chung một thư mục (đã có `infer_book_title`), không cùng cha, hay cha là gốc ổ
+    đĩa / tên chung chung ("Downloads", "Desktop"...)."""
+    parents = {path.resolve().parent for path in files}
+    if len(parents) < 2:
+        return ""
+    grandparents = {parent.parent for parent in parents}
+    if len(grandparents) != 1:
+        return ""
+    name = next(iter(grandparents)).name
+    return "" if not name or name.casefold() in _GENERIC_FOLDERS else name
+
+
 def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, Any]:
     """Những gì người dùng sắp đưa vào sách: file TXT (thư mục chỉ quét một tầng, như app cũ), xếp tự nhiên. File EPUB được
     tách thành thư mục chương TXT trong `epub_root` (thư viện; không có thì cạnh file EPUB) rồi quét như một thư mục."""
-    from . import epub_import, txt_split
+    from . import epub_import, txt_split, volumes
 
     files: list[Path] = []
     seen: set[str] = set()
@@ -318,7 +339,7 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, An
     if files and not title:
         from ..project import infer_book_title
 
-        title = infer_book_title(files)
+        title = _shared_folder_name(files) or infer_book_title(files)
     return {
         "files": rows,
         "skipped": skipped,
@@ -327,7 +348,10 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, An
         "errors": errors,
         # Không phải lỗi nhưng người dùng nên biết (thư mục có cả TXT lẫn EPUB: chỉ lấy TXT).
         "notes": notes,
-        "subfolders": subfolders[:8],
+        # Tối đa MAX_VOLUMES: giao diện hiện vài thư mục đầu, và "dùng cả các thư mục này, mỗi thư mục một tập" cần đủ bộ.
+        "subfolders": subfolders[:volumes.MAX_VOLUMES],
+        # Nhiều tập trong một nguồn (mỗi thư mục / EPUB một tập, hay tiêu đề "Tập 2"): ĐỀ XUẤT chia, None khi chỉ một tập.
+        "volumes": volumes.propose(rows),
         "suggestedTitle": title,
         "totals": {
             "chapters": len(rows),
@@ -407,6 +431,12 @@ class Jobs:
     def error(self, project_root: Path) -> str:
         with self._lock:
             return self._errors.get(str(project_root), "")
+
+    def fail(self, project_root: Path, message: str) -> None:
+        """Lượt chạy không bắt đầu được vì lý do có trước khi khởi động (hàng đợi: phần nối tiếp chưa gieo được) - hiện ở
+        trang sách như một lỗi khởi động."""
+        with self._lock:
+            self._errors[str(project_root)] = message
 
     def start(self, project_root: Path, on_done: Callable[[], None] | None = None) -> None:
         key = str(project_root)

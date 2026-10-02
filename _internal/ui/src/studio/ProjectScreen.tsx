@@ -479,6 +479,7 @@ function Actions({ book }: { book: BookSummary }) {
         <>
           <span className="inline-flex h-11 items-center gap-2 rounded-xl bg-warning-soft px-4 text-sm font-medium text-warning">
             Đang xếp hàng · thứ {book.queuePosition} - tự bắt đầu khi cuốn đang chạy xong
+            {book.seedPending ? ", rồi mang giọng và cách đọc tên từ phần trước" : ""}
           </span>
           <Button variant="ghost" size="lg" onClick={() => stop.mutate({ id: book.id, queued: true })}>
             Bỏ xếp hàng
