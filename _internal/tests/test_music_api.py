@@ -311,3 +311,25 @@ def test_a_track_whose_source_fails_comes_from_its_archive_mirror_only_if_it_mat
                         io.BytesIO(good))
     app.music_track_file("https://x/live.mp3")
     assert calls == ["https://x/live.mp3"], "nguồn gốc còn sống thì không đụng bản sao"
+
+
+def test_a_mirror_without_the_originals_sha1_is_never_used(studio, tmp_path: Path, monkeypatch) -> None:  # noqa: F811
+    """Danh mục chưa có `sha1` của bài (chưa kiểm bản sao) thì nguồn gốc hỏng là hỏng - không tải bản không kiểm được."""
+    import pytest
+    import urllib.error
+    import urllib.request
+
+    _paths, app, _server, _runner = studio
+    _with_catalog(app, tmp_path)
+    info = {"mirrors": ["https://archive.org/download/abook-music-x/a.mp3"]}
+    monkeypatch.setattr(app.music_catalog(), "lookup", lambda links: {link: info for link in links})
+    calls = []
+
+    def open_(request, timeout=0):
+        calls.append(request.full_url)
+        raise urllib.error.HTTPError(request.full_url, 404, "gone", {}, None)
+
+    monkeypatch.setattr(urllib.request, "urlopen", open_)
+    with pytest.raises(Exception):
+        app.music_track_file("https://x/gone.mp3")
+    assert calls == ["https://x/gone.mp3"]

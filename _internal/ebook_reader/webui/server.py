@@ -838,9 +838,12 @@ class App:
             raise ApiError(HTTPStatus.NOT_FOUND, "Bài này không có trong danh mục nhạc nền")
         info = known[link] if isinstance(known[link], dict) else {}
         # Nguồn gốc trước; hỏng (mạng, 404, nguồn gỡ bài) thì sang bản sao dự phòng trên archive.org mà danh mục ghi ở
-        # `mirrors`. Bản sao phải khớp `sha1` của bản gốc khi danh mục có - không thì bỏ, không phát nhầm bài.
-        mirrors = [url for url in info.get("mirrors") or [] if isinstance(url, str) and url.startswith("https://")]
+        # `mirrors`. Bản sao phải khớp `sha1` (và `bytes`) của bản gốc - bài không có `sha1` thì không dùng bản sao, không
+        # phát nhầm bài.
         expected = info.get("sha1") if isinstance(info.get("sha1"), str) else None
+        size = info.get("bytes") if isinstance(info.get("bytes"), int) else None
+        mirrors = [url for url in info.get("mirrors") or [] if isinstance(url, str) and url.startswith("https://")
+                   ] if expected else []
         target.parent.mkdir(parents=True, exist_ok=True)
         with self._music_lock:
             fetching = self._music_fetching.setdefault(link, threading.Lock())
@@ -855,7 +858,8 @@ class App:
                     request = urllib.request.Request(url, headers={"User-Agent": music_catalog.USER_AGENT})
                     with urllib.request.urlopen(request, timeout=60) as response, part.open("wb") as sink:
                         shutil.copyfileobj(response, sink, 1 << 16)
-                    if url != link and expected and hashlib.sha1(part.read_bytes()).hexdigest() != expected.lower():
+                    if url != link and ((size is not None and part.stat().st_size != size)
+                                        or hashlib.sha1(part.read_bytes()).hexdigest() != str(expected).lower()):
                         raise OSError(f"bản sao khác bản gốc: {url}")
                     os.replace(part, target)
                     return target
