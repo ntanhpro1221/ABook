@@ -1296,6 +1296,16 @@ Cách sửa F1, cho bài mang số trò:
   - Bài danh mục không đổi.
 - `build_mixed_c.py`, `score_student_c.py` với `SET=mixedc`.
 
+**KẾT QUẢ KHO TRỘN F2 BẰNG NGƯỜI ĐỌC, LƯỢT 1 (03-10 05:5x, `results/mixedc_score.txt`):** **không kết luận.**
+- 34 / 100 đoạn khác bài; ở 9 đoạn bài kho trộn là bài nhập.
+- p = 0,515 (KTC 0,35–0,67); tính cả 100 đoạn: 0,505. Kappa n1-n2 0,59.
+- Ổn định a/b: mỗi người 2 / 3. Chỉ có 3 cặp lặp nên dưới mốc 0,75 theo luật. Ba cặp không đo được gì.
+
+**GHI TRƯỚC - LƯỢT 2 (trước khi chạy):**
+- Cùng 34 cặp, LẶP 100%: mỗi cặp có bản đảo bên ở gói kia. Người chấm mới (agent mới), bộ `mixedc2`.
+- Lượt 2 QUYẾT theo luật cũ: dùng được (ổn định ≥ 0,75 trên 34 cặp lặp, kappa ≥ 0,20) và p ≥ 0,45.
+- p tính trên bản gốc. Lượt 1 chỉ báo.
+
 **KẾT QUẢ TRÒ v2 + MTG (03-10 05:3x, `results/student_eval_v2.txt`):** **KHÔNG THAY v1**, trượt cả ba điều kiện.
 
 | | v1 | v2 |
