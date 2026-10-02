@@ -420,6 +420,14 @@ Lưới trên bộ 3 (đầu vào đáp án, 32 đoạn): mọi ô 0,607-0,621, 
 Kiểm cả chuỗi bộ 4 (đầu vào máy, không dùng để chọn): 0,862 -> 0,825, hơn 5/8 cuốn (bỏ HDST: 0,854 -> 0,822, 4/7). Script
 `tune_gems_weight.py` (Corpus research/music).
 
+**CLAP với nhạc cụ Đông Á (02-10 23:xx, Lead hỏi vì AudioSet / MTG-Jamendo không có nhãn guzheng / erhu / koto):** bộ kiểm
+155 bài nêu ĐÍCH DANH nhạc cụ trong tên / tag (koto 39, taiko 33, erhu 29, guzheng 20, dizi 14, pipa 14, guqin 11, xiao /
+shamisen / shakuhachi 6; Freesound 120, OGA 26, Incompetech 8) so 300 bài không có yếu tố Đông Á nào: điểm phong cách
+`eastern_ancient` của CLAP tách hai nhóm AUC 0,994; nhãn đầu đúng 77% dương / 1% âm; từng nhạc cụ vượt phân vị 90 của nhóm âm
+92-100%. Chú ý: nhóm dương nghiêng về bản thu nhạc cụ đơn (dễ). Kết luận: CLAP NHẬN được nhạc cụ Đông Á; vấn đề là SỐ LƯỢNG
+- danh mục thử 2.016 bài chỉ có 67 bài cổ phong (dồn dập 9, buồn 14) - và taxonomy chưa tách Trung / Nhật. Việc kế: tìm nguồn
+CC0 / CC-BY nhạc Đông Á.
+
 ## Thứ tự và tài nguyên
 
 0. Dữ liệu (đang chạy): Incompetech 1.443 bài (đọc 3 đoạn từ máy chủ), Jamendo CC BY 665 bài; tải Film soundtracks,
