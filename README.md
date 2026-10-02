@@ -20,6 +20,9 @@ Làm sách chạy hoàn toàn trên máy của bạn: văn bản truyện và â
   cảm xúc và chữ đem đọc của từng câu; tab Nhân vật cho đổi giọng và sửa cách đọc mọi tên riêng (mục "Cách đọc tên");
   tab **Cần nghe lại** cho nghe những câu máy tự kiểm
   không chắc và bấm "Cần thu lại" để thu một bản mới. Máy vẫn tự quyết và chạy tiếp - không bắt ai chờ.
+- **Nhạc nền theo không khí từng đoạn**: mặc định bật, máy tự chọn bài (nhạc CC0 / CC BY, ghi công từng bài) và giữ nhạc
+  luôn nằm dưới giọng đọc; tab **Nhạc nền** cho đổi bài, ghim, im lặng một đoạn hay tắt hẳn. Nhạc đi theo file sách
+  `.abook`, nghe trên máy tính lẫn điện thoại.
 - **Mọi máy trong nhà làm việc cùng nhau**: điện thoại nghe thẳng thư viện máy tính không cần tải (hoặc tải về nghe khi
   không có mạng); chỗ đang nghe và dấu trang đi hai chiều; thấy và điều khiển máy khác đang phát, **"Nghe ở đây"** chuyển
   sang máy mình đúng chương, đúng giây. Nối qua Wi-Fi, hoặc Bluetooth khi không chung Wi-Fi - điện thoại tự chọn đường.
