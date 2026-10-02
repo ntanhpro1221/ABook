@@ -31,7 +31,7 @@ from urllib.parse import parse_qs, quote, unquote, urlsplit
 from .. import aliases, bracket_rule, continuation, listener_overrides
 from ..io_utils import atomic_write_json
 from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, humanize, listen_view, music_catalog, music_local,
-               music_plan, music_select, packages, projectfile, reading_preview, remote_config, shared_readings, store, volumes)
+               music_plan, music_select, music_student, packages, projectfile, reading_preview, remote_config, shared_readings, store, volumes)
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, clean_book_templates, legacy_ids
 from .listening import RECORD_ID, Listening
@@ -198,6 +198,9 @@ class App:
         self.music_dir = preferences.path.with_name("music")
         # "Nhạc của tôi" (music_local.py): nhạc người dùng tự nhập, của riêng máy này; file bài sách mang theo nằm trong files/.
         self.my_music = music_local.LocalMusic(self.music_dir / "mine", self.music_dir / "files")
+        # Bộ phân tích chỉ-nghe (music_student.py): cắm khi gói model + thư viện có đủ; không thì bài nhập ở "chưa phân tích".
+        music_student.configure(self.music_dir / music_student.PACKAGE_FOLDER)
+        music_student.register()
         self._music_catalog: music_catalog.MusicCatalog | None = None
         self._music_lock = threading.Lock()
         self._music_fetching: dict[str, threading.Lock] = {}  # mỗi bài một khoá: luồng tải sẵn và trình phát không ghi đè nhau
