@@ -86,7 +86,7 @@ class LibraryPlugin : Plugin() {
     fun importFrom(uri: Uri) = io.execute {
         val event = try {
             val imported = BookFileImport.import(context, uri)
-            JSObject().put("bookId", imported.id).put("title", imported.title)
+            JSObject().put("bookId", imported.id).put("title", imported.title).put("keptEdits", imported.keptEdits)
         } catch (error: BookFileImport.Refused) {
             JSObject().put("error", error.message)
         } catch (error: Exception) {
