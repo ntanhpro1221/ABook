@@ -367,6 +367,25 @@ def package(project_root: Path, chapter_ids: Iterable[int],
     return music, files
 
 
+def substituted_tracks(project_root: Path, track_file: Callable[[str], Path | None]) -> list[str]:
+    """Link các bài THAY THẾ mà `package` có thể dùng thay bài của plan mà máy này không lấy được: chỉ đoạn của chính cuốn
+    này, qua `TrackSource.alternatives` - để nơi phục vụ file chỉ mở đúng các bài ấy, không phải link tuỳ ý. Không có
+    `alternatives` (callable thường) hay plan tắt / chưa dựng -> rỗng."""
+    plan = read_plan(project_root)
+    alternatives = getattr(track_file, "alternatives", None)
+    if plan is None or not plan.get("enabled") or alternatives is None:
+        return []
+    out: list[str] = []
+    for scene in plan.get("scenes") or []:
+        link = scene.get("link")
+        if not link or track_file(link) is not None:
+            continue
+        for other in alternatives(project_root, scene["key"], [link]):
+            if other["link"] not in out:
+                out.append(other["link"])
+    return out
+
+
 def packaged_cues(music: dict[str, Any] | None, chapter_id: int) -> list[dict[str, Any]]:
     """Mốc nhạc của một chương từ mục `music` của một cuốn đã đóng gói: [{start, end, link, key, track}]."""
     if not isinstance(music, dict):
