@@ -128,3 +128,30 @@ def test_the_next_part_inherits_the_names(tmp_path: Path) -> None:
     names.set_name(source_root, "LUCIEN", "Lu Xi", "Lucien")
     report = continuation.seed(source_root, target_root)
     assert report["names"] == 1 and names.shown(target_root, "LUCIEN") == "Lu Xi"
+
+
+def test_cards_and_the_voice_picker_show_the_renamed_name_but_keep_the_key(tmp_path: Path) -> None:
+    from ebook_reader.webui.voice_picker import voice_choices
+    from ebook_reader.webui.work_items import work_items
+
+    paths, _db = _book(tmp_path)
+    before = {item["kind"]: item for item in work_items(paths.root)["items"]}["gender"]
+    assert before["subject"] == "Noah" and "Noah" in before["title"]
+
+    names.set_name(paths.root, "NOAH", "Nô-ê", "Noah")
+
+    card = {item["kind"]: item for item in work_items(paths.root)["items"]}["gender"]
+    assert card["subject"] == "Nô-ê" and card["title"] == before["title"].replace("Noah", "Nô-ê")
+    assert {choice["character"] for choice in card["voiceChoices"]} == {"NOAH"}, "khoá không đổi"
+    picker = voice_choices(paths.root, "NOAH")["character"]
+    assert (picker["label"], picker["value"]) == ("Nô-ê", "NOAH")
+
+
+def test_the_continue_screen_counts_the_carried_names(tmp_path: Path) -> None:
+    root = tmp_path / "phan1"
+    root.mkdir()
+    ProjectDB(root / "project.sqlite3").initialize_book(
+        title="T", project_root=root, settings={}, settings_hash="s", input_manifest_hash="m")
+    assert continuation.carried_summary(root)["names"] == 0
+    names.set_name(root, "LUCIEN", "Lu Xi", "Lucien")
+    assert continuation.carried_summary(root)["names"] == 1

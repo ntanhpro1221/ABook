@@ -668,6 +668,7 @@ def carried_summary(source: Path) -> dict[str, int]:
             "pins": count("SELECT COUNT(*) FROM characters WHERE locked=1 OR (locked_age IS NOT NULL AND locked_age <> '')"),
             "aliases": len(aliases.load(source)),
             "bracket": bracket_rule.load(source),
+            "names": len(renames.load(source)),
         }
 
 
