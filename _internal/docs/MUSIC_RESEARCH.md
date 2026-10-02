@@ -503,6 +503,39 @@ Phán quyết chung (c1 + c2, bỏ lượt hai người khác nhau, còn 272 lư
   - Việc kế (ghi trước riêng): ngưỡng "đoạn không chắc thì nền êm" chặt hơn hiện nay. Hiện chỉ kéo về CALM_TARGET khi
     confidence < 0,2.
 
+**GHI TRƯỚC - E1b "NGHE THẬT" TỪNG CLIP (02-10 23:xx, Lead duyệt; trước mọi lượt chấm):**
+Cách chấm:
+- Mỗi cặp (đoạn, clip) của E1 (600 cặp) được chấm độc lập. Không đưa hai clip cùng lúc, nên không có thiên vị vị trí.
+- Model nghe 30 giây đầu kèm cả đoạn truyện, rồi cho điểm hợp 1-7. Điểm là kỳ vọng theo xác suất bảy chữ số (logprob).
+- Có hai cách hỏi khác chữ (a, b), mỗi cách chạy một lượt.
+- Phán quyết lượt cặp: bài có điểm trung bình (a+b)/2 cao hơn thắng; chênh dưới 0,02 thì bỏ.
+
+Người chấm và luật dùng được:
+- **J-omni1** = Qwen2.5-Omni-7B Q4 (`omni_judge.py rate`).
+- **J-af3** = Audio Flamingo 3 (NVIDIA, giấy phép NC dùng được), cùng giao thức. Đo VRAM trước; không vừa 8 GB thì chạy Mac.
+- **Độ ổn định:** lượt lặp của E1 cho cùng đầu vào nên tầm thường. Thay vào đó dùng độ khớp phán quyết giữa cách hỏi a và b
+  trên 300 lượt.
+- **Dùng được** khi ổn định ≥ 0,75 và kappa với phán quyết chung của c1 + c2 (E1) ≥ 0,20.
+- Không có người chấm nghe nào dùng được thì mới tính Qwen3-Omni trên Modal (hạn mức miễn phí).
+
+Câu hỏi:
+- H1-H4 như E1, tính lại với người chấm nghe dùng được.
+- Thêm: phán quyết "nghe" có xếp `calm` thứ hai và `app` dưới `vet` như người chấm đọc mô tả không?
+
+**GHI TRƯỚC - NỚI NGƯỠNG NỀN ÊM (02-10 23:xx, Lead duyệt; từ E1: calm đứng thứ hai, hơn app):**
+- **Giả thuyết:** kéo về nền êm (CALM_TARGET) cho nhiều đoạn hơn làm nhạc hợp hơn. Hiện chỉ kéo khi confidence < WEAK_MOOD
+  0,2, và kéo tuyến tính.
+- **Cách làm:** thử WEAK_MOOD 0,2 (hiện tại) / 0,35 / 0,5 trên chương thật của bộ 3 và bộ 4, mỗi bản tự chia đoạn, cùng danh
+  mục và cùng bảng phong cách (`compare_rankers.py`). Cặp so sánh là những đoạn mà hai ngưỡng chọn KHÁC bài (0,2 so 0,35;
+  0,2 so 0,5).
+- **Thước chính:** hai người chấm mù Claude theo giao thức E1. Họ đọc đoạn truyện cùng mô tả giàu của clip 30 giây, clip
+  −23 LUFS, gồm số đo, CLAP và chú thích J-omni. Dựng thêm clip cho bài mới. Phán quyết chung lấy đa số của hai người.
+- **Thước phụ:** khoảng cách nhãn người tới đáp án như kiểm hồi quy ở trên.
+- **Cỡ mẫu:** mọi đoạn khác bài. Có dưới 20 đoạn thì thêm chương bộ 2 / bộ dev đã có đáp án.
+- **Luật thắng:** ngưỡng mới THẮNG nếu bài của nó thắng ≥ 60% số đoạn khác bài theo phán quyết chung, cận dưới KTC 95%
+  Wilson > 0,5, và thước phụ không kém quá 0,02. Nhiều ngưỡng cùng thắng thì chọn ngưỡng nhỏ nhất đạt luật (đổi ít nhất).
+  Không ngưỡng nào thắng thì giữ 0,2.
+
 **LỚP 2 PHÍA BÀI - 13 cường độ độc lập (02-10 22:xx, `derive_emotions.py`):**
 - **Zero-shot CLAP** (3 câu mô tả mỗi lớp, z theo cả kho, sigmoid): AUC so feel người gắn của Incompetech (1.381 bài)
   trung bình 0,69. Có lớp còn kém bản GEMS-9 cũ, như joy 0,46 so với 0,74.
