@@ -406,6 +406,12 @@ thấy V/E/T) - để biết LLM gần người tới đâu (Jensen-Shannon) và
 - Kiểm khô với phân phối NGẪU NHIÊN (trước khi có số thật): clap 0,862, distmix 0,863, dist 0,870, ngẫu nhiên 0,922, trần
   0,264 -> luật trả KHÔNG ĐẠT như phải thế; cũng cho thấy trên bộ 4 khâu cả chuỗi của app chỉ hơn ngẫu nhiên một chút (đầu vào
   máy đoán yếu - khớp kết quả bộ 4 ở trên).
+- Số của NGƯỜI CHẤM (02-10 22:xx, trước khi có số LLM; chỉ ghi lại, không đổi luật): hai người chấm mù đồng thuận cao về tỉ lệ
+  GEMS (Jensen-Shannon A-B 0,032; xáo đoạn 0,266; nhãn đầu trùng 80%, 84 đoạn). Ghép bằng tỉ lệ của người (`humandist`)
+  0,691, trúng GEMS 0,73 - so `clap` đầu vào máy 0,862 / 0,53. Đối chứng cùng đầu vào người: ba trục V/E/T của đáp án 0,692,
+  ba trục + tỉ lệ (tổng thứ hạng) 0,669. Đọc: tỉ lệ GEMS là cách biểu diễn NGANG ba trục khi đầu vào tốt, ghép cả hai nhỉnh
+  hơn; khoảng 0,86 -> 0,69 nằm ở CHẤT LƯỢNG ĐẦU VÀO. Nên câu hỏi thật của lượt LLM sáng mai là: LLM đoán tỉ lệ có gần người
+  hơn nhãn câu đoán ba trục không.
 
 ## Thứ tự và tài nguyên
 
