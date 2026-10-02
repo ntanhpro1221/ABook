@@ -570,6 +570,34 @@ chọn khác bài; luật thắng như thí nghiệm nền êm.
 Giới hạn: chỉ Incompetech có nhãn người. Nguồn khác chữ ít hơn nhiều (OGA / FreePD / Scott Buckley trung vị 4-10 chữ), nên độ tin
 cậy của C phải hạ trọng số khi gộp ở các nguồn ấy; điều này chưa đo được ở đây.
 
+**KẾT QUẢ GỘP BA NGUỒN (02-10 23:5x, `eval_fusion.py`, `results/fusion_ablation.txt`; 1.381 bài Incompetech, AUC TB 10 lớp):**
+
+| Tổ hợp | C=1 cố định (GHI TRƯỚC) | C chọn bằng CV lồng (THĂM DÒ) |
+|---|---|---|
+| A CLAP 512 chiều | 0,814 | 0,849 |
+| B âm học (42 đặc trưng) | 0,811 | 0,813 |
+| C người đọc chữ (16 số) | 0,871 | 0,871 |
+| A+B (chỉ âm thanh = trần của trò) | 0,819 | 0,856 |
+| B+C | **0,876** | 0,885 |
+| A+B+C | 0,851 | **0,886** |
+| C đọc thẳng, không học | 0,799 | |
+
+Cột thăm dò không được ghi trước: `eval_fusion_tuned.py`, Cs 0,003-1, 4 phần bên trong.
+
+- **Luật ghi trước:** GIỮ C (+0,033 trên A+B, thắng 10/10 lớp). KHÔNG giữ A (−0,025 trên B+C) và KHÔNG giữ B (+0,005, thắng 7/10,
+  dưới ngưỡng +0,01).
+- **Chữ là nguồn mạnh nhất ở nơi có chữ.** Người đọc Claude đọc mô tả của Kevin MacLeod mà không có feel, vẫn đạt 0,87.
+- **A thua ở cột ghi trước là do điều chuẩn.** C=1 trên 512 chiều đã chuẩn hoá thì quá khớp; chọn C bằng CV lồng thì A lên
+  0,849, ngang đầu dò cũ 0,85. Thầy tốt nhất (thăm dò) là A+B+C 0,886, gần như bằng B+C 0,885.
+- **Trò chỉ nghe (A+B, thăm dò) đạt 0,856, tức 97% thầy, trong cùng miền Incompetech.** Mốc ghi trước của trò (≥ 90% thầy trên
+  phần GIỮ NGOÀI, giấu ngữ cảnh) sẽ đo đúng cách khi dựng trò.
+
+Thầy cho danh mục (thiết kế theo kết quả này, sẽ đo bằng máy chấm trước khi dùng):
+- Mỗi lớp p = w · p_chữ + (1 − w) · p_âm. p_chữ là logistic trên 16 số của người đọc; p_âm là logistic A+B. Cả hai học trên
+  Incompetech với C chọn bằng CV lồng.
+- w = độ tin cậy của người đọc. Bài ít chữ (OGA / FreePD / Scott Buckley thường < 0,2) vì thế dựa vào âm.
+- tenderness / nostalgia / moved chưa có nhãn người: dùng cường độ người đọc pha zero-shot theo cùng w.
+
 **GHI TRƯỚC - THẦY → TRÒ CHO NHẠC NGƯỜI DÙNG TỰ NHẬP (02-10 23:xx, hướng chủ sách qua Lead; E_signal_sources.md §6):**
 
 Thầy và trò:
