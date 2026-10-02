@@ -10,6 +10,7 @@ mạng vẫn dùng bản đệm.
 """
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
 import os
@@ -104,10 +105,16 @@ class MusicCatalog:
             except OSError as exc:
                 raise CatalogError("Không tải được danh mục nhạc nền - kiểm tra mạng.") from exc
             value = json.loads(raw.decode("utf-8"))
+            # Bộ đệm trên đĩa chỉ để lần sau đỡ tải: hai luồng cùng ghi một mảnh (Windows không cho thay file đang mở)
+            # thì bên thua bỏ qua - nội dung như nhau, giá trị đã có trong tay.
             path.parent.mkdir(parents=True, exist_ok=True)
-            tmp = path.with_suffix(".part")
-            tmp.write_bytes(raw)
-            os.replace(tmp, path)
+            tmp = path.with_name(f"{path.stem}.{os.getpid()}.{threading.get_ident()}.part")
+            try:
+                tmp.write_bytes(raw)
+                os.replace(tmp, path)
+            except OSError:
+                with contextlib.suppress(OSError):
+                    tmp.unlink(missing_ok=True)
         self._memory[key] = value
         return value
 

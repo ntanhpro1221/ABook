@@ -109,3 +109,41 @@ def test_the_alternatives_of_an_unknown_scene_or_without_a_catalog_say_so(studio
     key = json.loads((paths.root / "music_plan.json").read_text(encoding="utf-8"))["scenes"][0]["key"]
     status, data = _call(server, "GET", f"/api/books/{book}/music/scenes/{quote(key, safe='')}/alternatives")
     assert status == 503 and "mạng" in data["error"]
+
+
+def test_two_requests_for_the_same_track_download_it_once_and_both_get_the_file(studio, tmp_path: Path,  # noqa: F811
+                                                                              monkeypatch) -> None:
+    """Luồng tải sẵn (sau khi đổi nhạc) và trình phát cùng xin một bài chưa có trong bộ đệm: trên Windows hai luồng ghi
+    cùng một file tạm thì một bên hỏng (lỗi 500, đoạn ấy mất nhạc) - nay bên sau chờ bên trước và dùng chung file."""
+    import io
+    import threading
+    import time
+    import urllib.request
+
+    _paths, app, _server, _runner = studio
+    _with_catalog(app, tmp_path)
+    link = "https://x/calm.mp3"
+    calls = []
+
+    def slow_open(request, timeout=0):
+        calls.append(request.full_url)
+        time.sleep(0.2)
+        return io.BytesIO(b"ID3" + b"\0" * 100)
+
+    monkeypatch.setattr(urllib.request, "urlopen", slow_open)
+    results, errors = [], []
+
+    def fetch() -> None:
+        try:
+            results.append(app.music_track_file(link))
+        except Exception as exc:  # noqa: BLE001 - kiểm: không bên nào được hỏng
+            errors.append(exc)
+
+    threads = [threading.Thread(target=fetch) for _ in range(3)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    assert not errors and len(results) == 3 and len(set(results)) == 1 and results[0].read_bytes().startswith(b"ID3")
+    assert calls == [link]
+    assert not list(results[0].parent.glob("*.part"))
