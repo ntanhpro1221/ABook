@@ -69,3 +69,5 @@ _internal/shell/node_modules/
 _internal/shell/src-tauri/target/
 _internal/shell/src-tauri/gen/
 _internal/shell/src-tauri/resources/
+!_internal/tests/fixtures/**/*.mp3
+!_internal/tests/fixtures/**/*.wav
