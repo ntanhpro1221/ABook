@@ -84,27 +84,45 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
         if key in pins:
             result.update(link=pins[key], pinned=True, distance=None)
         else:
-            target = (*target_of(scene), float(scene.get("tension") or 0.0))
-            best: tuple[float, str] | None = None
-            for track in candidates_near(target[0], target[1]):
-                link = str(track.get("link") or "")
-                if not link or link in banned or int(track.get("duration") or 0) < MIN_TRACK_SECONDS:
-                    continue
-                if style_fit(track, genre_styles) <= 0.0:
-                    continue  # lọc cứng: phong cách không hợp thế giới của cuốn
-                value = score(track, target, family=family, recent=recent[-RECENT_SCENES:], genre_styles=genre_styles)
-                value += _tiebreak(book_key, link)
-                if best is None or value < best[0]:
-                    best = (value, link)
-            if best is None or best[0] > MAX_DISTANCE + (FAMILY_PENALTY if family else 0.0):
-                result.update(link=None, distance=None)
+            # Cùng một cách xếp hạng với "Đổi bài" (`rank`): bài máy chọn luôn là bài đầu danh sách gợi ý.
+            best = rank(scene, candidates_near, book_key=book_key, family=family, banned=banned,
+                        genre_styles=genre_styles, recent=recent, limit=1)
+            if best:
+                result.update(link=best[0]["link"], distance=best[0]["score"])
             else:
-                result.update(link=best[1], distance=round(best[0], 3))
+                result.update(link=None, distance=None)
         # Đoạn kề chọn trúng bài đang chơi: chơi tiếp, không phải bài "mới" (không tính là lặp).
         if result["link"] and (not recent or recent[-1] != result["link"]):
             recent.append(result["link"])
         chosen.append(result)
     return chosen
+
+
+def rank(scene: dict[str, Any], candidates_near: Callable[[float, float], Iterable[dict[str, Any]]], *, book_key: str,
+         family: str | None = None, banned: Iterable[str] = (), genre_styles: dict[str, float] | None = None,
+         recent: list[str] | None = None, exclude: Iterable[str] = (), limit: int = 6) -> list[dict[str, Any]]:
+    """Các bài thay thế cho MỘT đoạn ("Đổi bài"), tốt nhất trước: cùng bộ lọc và cùng điểm với `choose` (bỏ bài đã bỏ,
+    bài quá ngắn, phong cách không hợp thế giới của cuốn; điểm = `score` + hoà điểm theo mã sách) và cùng ngưỡng
+    MAX_DISTANCE: bài xa không khí của đoạn thì không gợi ý. `recent`: các bài đã chơi ở mấy đoạn trước; `exclude`: link
+    không đưa ra (bài đang chọn). Mỗi mục: `{...bài, score}`, điểm càng thấp càng hợp."""
+    banned, exclude = set(banned), set(exclude)
+    target = (*target_of(scene), float(scene.get("tension") or 0.0))
+    ceiling = MAX_DISTANCE + (FAMILY_PENALTY if family else 0.0)
+    ranked: list[tuple[float, dict[str, Any]]] = []
+    seen: set[str] = set()
+    for track in candidates_near(target[0], target[1]):
+        link = str(track.get("link") or "")
+        if not link or link in seen or link in banned or link in exclude:
+            continue
+        seen.add(link)
+        if int(track.get("duration") or 0) < MIN_TRACK_SECONDS or style_fit(track, genre_styles) <= 0.0:
+            continue
+        value = score(track, target, family=family, recent=(recent or [])[-RECENT_SCENES:], genre_styles=genre_styles)
+        value += _tiebreak(book_key, link)
+        if value <= ceiling:
+            ranked.append((value, track))
+    ranked.sort(key=lambda item: item[0])
+    return [dict(track, score=round(value, 3)) for value, track in ranked[:limit]]
 
 
 def scene_key(scene: dict[str, Any]) -> str:

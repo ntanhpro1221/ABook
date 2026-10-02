@@ -26,8 +26,8 @@ from typing import Any, Callable, Protocol
 from urllib.parse import parse_qs, quote, unquote, urlsplit
 
 from .. import aliases, bracket_rule, continuation, listener_overrides
-from . import (actions, bookfile, cover_search, covers, humanize, listen_view, music_catalog, music_plan, packages,
-               projectfile, remote_config, shared_readings, store)
+from . import (actions, bookfile, cover_search, covers, humanize, listen_view, music_catalog, music_plan,
+               music_select, packages, projectfile, remote_config, shared_readings, store)
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, legacy_ids
 from .listening import RECORD_ID, Listening
@@ -691,6 +691,38 @@ class App:
             error = str(exc)
         return {"plan": music_plan.read_plan(path), "overrides": music_plan.read_overrides(path), "error": error,
                 "taxonomy": self._music_taxonomy()}
+
+    def music_alternatives(self, value: str, scene_key: str, limit: int = 6) -> dict[str, Any]:
+        """"Đổi bài": tối đa `limit` bài khác cho một đoạn, hợp nhất trước - cùng điểm và bộ lọc với lúc máy chọn
+        (music_select.rank), tôn trọng phong cách / thế giới của cuốn, bỏ bài đã bỏ và bài đang chọn."""
+        path = self._book(value)
+        plan = music_plan.read_plan(path)
+        scenes = (plan or {}).get("scenes") or []
+        index = next((i for i, scene in enumerate(scenes) if scene.get("key") == scene_key), None)
+        if index is None:
+            raise ApiError(HTTPStatus.NOT_FOUND, "Không thấy đoạn nhạc này - hãy chọn lại nhạc rồi thử lại.")
+        overrides = music_plan.read_overrides(path)
+        catalog = self.music_catalog()
+        genres = (catalog.manifest().get("taxonomy") or {}).get("genres") or {}
+        genre_styles = (genres.get(overrides["genre"]) or {}).get("styles") if overrides["genre"] else None
+        recent: list[str] = []  # như music_select.choose: bài đã chơi ở mấy đoạn trước, đoạn kề cùng bài không tính lặp
+        for scene in scenes[:index]:
+            if scene.get("link") and (not recent or recent[-1] != scene["link"]):
+                recent.append(scene["link"])
+        current = scenes[index].get("link")
+        ranked = music_select.rank(scenes[index], lambda v, a: catalog.near(v, a, radius=1), book_key=value,
+                                   family=overrides["family"], banned=overrides["banned"], genre_styles=genre_styles,
+                                   recent=recent, exclude=[current] if current else [], limit=limit)
+        info = catalog.lookup([track["link"] for track in ranked]) if ranked else {}
+        items = []
+        for track in ranked:
+            known = {**track, **info.get(track["link"], {})}
+            item = {"link": track["link"], "title": known.get("title") or "", "creator": known.get("creator") or "",
+                    "attribution": known.get("attribution") or "", "score": track["score"]}
+            if known.get("duration"):
+                item["duration"] = known["duration"]
+            items.append(item)
+        return {"key": scene_key, "alternatives": items}
 
     def music_cues(self, value: str, chapter_id: int) -> dict[str, Any]:
         """Nhạc của một chương cho trình phát: mốc thời gian + đường lấy file qua máy này (đệm, tua được)."""
@@ -1548,6 +1580,12 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.SERVICE_UNAVAILABLE, str(error)) from error
         self._send_json(HTTPStatus.OK, self.app.music_view(value))
 
+    def get_music_alternatives(self, _query: dict[str, list[str]], value: str, key: str) -> None:
+        try:
+            self._send_json(HTTPStatus.OK, self.app.music_alternatives(value, key))
+        except music_catalog.CatalogError as error:
+            raise ApiError(HTTPStatus.SERVICE_UNAVAILABLE, str(error)) from error
+
     def get_music_cues(self, _query: dict[str, list[str]], value: str, chapter: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.music_cues(value, int(chapter)))
 
@@ -2224,6 +2262,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(BOOK + r"/music"), Handler.get_music),
     ("PUT", re.compile(BOOK + r"/music"), Handler.put_music),
     ("POST", re.compile(BOOK + r"/music/rebuild"), Handler.post_music_rebuild),
+    ("GET", re.compile(BOOK + r"/music/scenes/([^/]+)/alternatives"), Handler.get_music_alternatives),
     ("GET", re.compile(BOOK + r"/music/chapters/(\d+)"), Handler.get_music_cues),
     ("GET", re.compile(BOOK + r"/music/files/([0-9a-f]{40}\.mp3)"), Handler.get_music_packaged),
     ("GET", re.compile(r"/api/music/track"), Handler.get_music_track),
