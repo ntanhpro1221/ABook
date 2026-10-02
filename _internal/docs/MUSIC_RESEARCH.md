@@ -437,26 +437,34 @@ CLAP (cộng 1); bản độc lập lấy được bằng sigmoid của chính z
 Kết quả phía người (02-10 23:xx): người chấm A so B - tỉ lệ r 0,938, độc lập r 0,942 (hai cách tin được như nhau); tỉ lệ so
 độc lập r 0,856; trung bình 1,5 nhãn >= 0,5 mỗi đoạn.
 
-## Nguồn nhạc: giữ / loại và lý do (02-10, Lead duyệt - đọc trước khi hỏi lại)
+## Nguồn nhạc: giữ / loại và lý do (02-10, Lead + chủ sách - đọc trước khi hỏi lại)
 
-Luật: chỉ CC0 / CC BY (không NC, không ND, không SA - kể cả chỉ để link). App tải từ `link` gốc trước, bản sao archive.org
-(`mirrors`, kiểm sha1) là dự phòng. Nguồn mà điều khoản cấm phát lại NÓI CHUNG, hoặc cấm dùng trong app / cho AI, thì KHÔNG
-đưa vào (thường kèm cấm hotlink, và ta không có bản dự phòng). Cấm riêng việc đăng lại lên nền tảng stream nhạc thì vẫn giữ,
-để `no_mirror`.
+LUẬT (02-10 khuya, thay luật chặt hơn cùng ngày - chủ sách: đừng loại quá khắt khe như lần Freesound): tách ba câu hỏi.
+(1) GIẤY PHÉP của tác phẩm quyết định có dùng được không: CC0 / CC BY / CC BY-SA / CC BY-NC dùng được (app miễn phí, phi
+thương mại; ghi `license` để lọc nếu sau này thương mại hoá). ND chưa rõ (trộn dưới lời đọc có thể là phái sinh) - mặc định
+không dùng tới khi Lead quyết. CC cấm thêm điều kiện, nên lời "đừng đăng lại" của tác giả không lấy mất quyền CC.
+(2) CÁCH LẤY theo điều khoản trang: có API / tải tay thì làm; trang cấm tự động thì tuyển tay một tập nhỏ giá trị cao và xin
+phép (Lead nhờ chủ sách gửi thư), KHÔNG tự loại.
+(3) MONG MUỐN tác giả (không đăng lại, không hotlink): tôn trọng bằng `no_mirror` hoặc không gọi thẳng link gốc; không loại
+hẳn vì lý do này. App tải `link` trước, bản sao archive.org (`mirrors`, kiểm sha1) là dự phòng.
 
-| nguồn | giấy phép | quyết định | lý do |
-|---|---|---|---|
-| Incompetech (Kevin MacLeod) | CC BY 4.0 | GIỮ, có mirror | nguồn chính; ghi công theo mẫu của tác giả |
-| Jamendo (qua Openverse) | CC BY | GIỮ, có mirror | chủ sách duyệt điều khoản 02-10; ghi "made using Openverse, not endorsed" |
-| Freesound | CC0 / CC BY | GIỮ, có mirror | chủ sách duyệt điều khoản API 4(a)/(f) 02-10 |
-| OpenGameArt | CC0 / CC BY / OGA-BY | GIỮ, có mirror; chỉ lấp ô thiếu | SA / GPL loại |
-| Scott Buckley | CC BY 4.0 | GIỮ, `no_mirror`; chỉ lấp ô thiếu | tác giả chỉ cấm "redistributed/reuploaded to music streaming platforms"; dùng trong dự án (app, game) được nêu là được phép |
-| FreePD | CC0 | GIỮ; link chính = bản sao của ta | trang gốc đã đóng; archive.org/details/freepd chuyển tới máy chủ hỏng (02-10, HTTP 500) |
-| Silverman Sound | CC BY 4.0 | LOẠI | "You can't redistribute the music as standalone audio"; T&C mục 11 cấm "data mining, extraction or utilisation of product information" |
-| 魔王魂, DOVA-SYNDROME / OpenTracks, 甘茶の音楽工房, Senses Circuit | giấy phép riêng | LOẠI | cấm phát lại từng bài / cần hỏi khi đưa vào nền tảng / cấm đưa vào AI |
-| Pixabay Music | Pixabay Content License | LOẠI | cấm phát lại "on a Standalone basis", cấm thu thập hàng loạt |
-| FMA | từng bài | ĐANG XÉT (chỉ bài CC BY / CC0), lọc qua bộ dữ liệu FMA (Defferrard 2017) | ToU của site cấm "data mine" -> không cào site |
-| 공유마당 국악 BGM | CC BY | ĐANG XÉT (sau FMA) | đã kiểm một mục CC BY có mp3 |
+| nguồn | (1) giấy phép | (2) cách lấy | (3) mong muốn | quyết định |
+|---|---|---|---|---|
+| Incompetech (Kevin MacLeod) | CC BY 4.0 | tải thẳng | - | GIỮ, có mirror |
+| Jamendo (qua Openverse) | CC BY (NC nay cũng được) | Openverse API | không cache theo điều khoản API Jamendo | GIỮ, có mirror (chủ sách duyệt 02-10); bài NC: thu lại nếu Lead gật |
+| Freesound | CC0 / CC BY (NC nay cũng được) | API | - | GIỮ, có mirror |
+| OpenGameArt | CC0 / CC BY / OGA-BY (BY-SA nay cũng được; GPL không) | trang | - | GIỮ, mirror; chỉ lấp ô thiếu |
+| Scott Buckley | CC BY 4.0 | trang | không đăng lại lên nền tảng stream nhạc | GIỮ, `no_mirror`; chỉ lấp ô thiếu |
+| FreePD | CC0 | archive.org | trang đã đóng | GIỮ; link chính = bản sao của ta (archive.org/freepd chuyển tới máy chủ hỏng 02-10) |
+| ccMixter | CC0 / BY / BY-NC (Sampling+ và ND không) | API công khai (chỉ cấm làm quá tải) | - | THU (Đông Á) |
+| FMA | từng bài (BY / BY-NC / SA; ND không) | site cấm "data mine" -> metadata từ bộ dữ liệu FMA (CC BY), audio lấy từng file trong fma_full.zip của bộ dữ liệu bằng HTTP range | - | SAU ccMixter: Asia-Far East 53 dùng được (43 NC) + 109 có từ khoá Đông Á |
+| Silverman Sound | CC BY 4.0 | VƯỚNG: T&C §11 cấm "data mining, extraction" | "can't redistribute ... as standalone audio" -> `no_mirror` | tuyển tay ~10-20 bài Đông Á + thư xin phép |
+| 魔王魂 | CC BY 4.0 ("クリエイティブ・コモンズ 表示 4.0") | không nêu -> tuyển tay ~8-15 bài 和風 | "曲単品を再配布するのはNG" -> `no_mirror`; cấm đưa vào AI tự soạn nhạc (ta không làm) | tuyển tay, link gốc; thư xin mirror |
+| 甘茶の音楽工房 | riêng: BGM web / game được | "音楽素材の直リンクでの使用は禁止" - app tải link gốc là vi phạm | cấm 2次配布 | chỉ đi được bằng thư xin phép |
+| DOVA-SYNDROME / OpenTracks | riêng; "ツール・プラットフォームへの組み込み" phải hỏi | không API | - | thư xin phép |
+| Senses Circuit | riêng; cấm dùng cho AI (từ 26-09) | - | - | GIỮ LOẠI tới khi đọc kỹ (ta chạy CLAP suy diễn, không huấn luyện) |
+| Pixabay Music | Pixabay Content License (không phải CC) | cấm thu thập hàng loạt | cấm phát lại standalone | chưa xét lại (tuyển tay + thư nếu cần) |
+| 공유마당 국악 BGM | CC BY (đã kiểm 1 mục) | API data.go.kr cần tài khoản + khoá (chủ sách tạo) | - | sau ccMixter / FMA |
 
 ## Thứ tự và tài nguyên
 
