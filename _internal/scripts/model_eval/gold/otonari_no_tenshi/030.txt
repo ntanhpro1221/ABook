@@ -1,0 +1,82 @@
+# "Otonari no Tenshi" (Otonari no Tenshi-sama ni Itsu no Ma ni ka Dame Ningen ni Sareteita Ken - Thiên thần nhà bên; bản dịch fan)
+# file 030 ("Chương 31: Cơn bão đã tan"). Đáp án KIỂM TRA LN Nhật đợt 4 (02-10; luật cố định: vị trí 30% của bộ); mục đích:
+# văn phong romcom hai người. Agent A gán 02-10, B soát + phân xử 02-10 (51 N->N,T).
+# NGÔI BA ("cậu" = Amane, lời kể bám góc nhìn Amane); KHÔNG truyền --first-person. Cảnh: chiều Giáng Sinh ở nhà Amane, ngay
+# sau 029 (Itsuki và Chitose phát hiện Mahiru nấu cơm cho Amane rồi ra về); chỉ HAI người nói: Amane và Mahiru.
+# Tên: AMANE / FUJIMIYA AMANE / FUJIMIYA (m; "Fujimiya Amane" 077, "Fujimiya-san" là cách Mahiru/Chitose gọi); MAHIRU /
+# SHIINA MAHIRU / SHIINA (f; "Shiina Mahiru" 000, 022, 040...; Amane gọi "Shiina" ở 029). Không tính "Amane-kun",
+# "Fujimiya-san", "Shiina-san", "Thiên thần-sama" (hậu tố xưng hô / danh hiệu, quy tắc 11). Itsuki (AKAZAWA ITSUKI, 001
+# "Akazawa Itsuka"), Chitose (SHIRAKAWA CHITOSE, 074 "Shirakawa-san"), Shihoko (mẹ Amane) chỉ được NHẮC, không nói câu nào.
+# Đối đáp không lời dẫn suốt chương -> người nói theo lượt xen kẽ + xưng hô + lời kể kề: Mahiru gọi Amane "cậu"/"Amane-kun";
+# Amane là người chê bạn "phiền phức" (8, 11-13 "Cậu cho rằng cái 'năng động' đó đã vào luôn phạm trù phiền phức"); 19 "chẳng
+# có ai khác nói chuyện với tôi ngoài cậu" = Mahiru (Amane có Itsuki); 21 "không quen đụng chạm cơ thể" = Mahiru (22 "cô nàng
+# đã mém nữa bỏ trốn khi Chitose muốn sờ mó"); 28-36 tuyết: 29 "không ảnh hưởng đến chúng ta" = Amane (31 "Vì hai người không
+# hẹn hò nên Giáng Sinh Trắng cũng không có mối liên hệ gì... vì Mahiru thấy vui"), 30 = Mahiru, 33/35 người "thực tế" = Amane,
+# 34 "Cậu thực tế quá nhỉ" và 36 "Đồng ý." = Mahiru; 39-47 đồ ăn: Mahiru là người mang đồ qua (47 "Vậy tôi mang nồi bò hầm qua
+# nhé"), 43 gọi "Amane-kun", 44 "Nghe ngon quá" = Amane (45 "cậu bắt đầu ngóng trông"), 46 phần trứng "của tôi" = Amane đặt món;
+# 56 "Có chuyện gì à?" = Mahiru (58 "Mahiru vừa quay lại và thắc mắc trước biểu cảm của Amane"), 57 Amane đáp.
+# Parser khoá T sai (dấu nháy đơn nhấn mạnh giữa câu kể, quy tắc 8/10): 12 ‘năng động’ = chữ Mahiru vừa nói (9), Amane nhắc lại
+# trong lời kể -> N,T NARRATOR, MAHIRU~ (gốc lời), AMANE~ (người nghĩ, quy tắc 10); 15 ‘con nhỏ’ = cách Amane gọi Chitose trong
+# đầu -> N,T NARRATOR, AMANE~. 53 "(Mình đang nghĩ cái quái gì vậy?)" nội tâm thật của Amane -> T AMANE.
+# Tiếng lòng trong lời kể ngôi ba: 51 (phân xử, cùng khuôn 55) và 55 "Mà, dù sao thì mọi việc cũng đã ổn thỏa..." câu tự nhủ trọn đoạn không có "cậu" -> N,T
+# NARRATOR, AMANE~ (quy tắc 4, ngôi ba). Các đoạn kể khác (kể VỀ Amane hay tả cảnh) -> chỉ N.
+0 H
+1 D AMANE,FUJIMIYA AMANE,FUJIMIYA sad,neutral,afraid 1-2 normal,fast normal,loud m
+2 N NARRATOR neutral,tired 0-1 normal normal u
+3 N NARRATOR neutral,tired,sad 0-1 normal normal u
+4 N NARRATOR neutral,tired 0-1 normal normal u
+5 D MAHIRU,SHIINA MAHIRU,SHIINA neutral,tired,sad,tender 0-1 normal,slow normal,soft f
+6 D AMANE,FUJIMIYA AMANE,FUJIMIYA neutral,sad,tired 0-1 normal normal m
+7 D MAHIRU,SHIINA MAHIRU,SHIINA tired,neutral,happy 0-1 slow,normal soft,normal f
+8 D AMANE,FUJIMIYA AMANE,FUJIMIYA sarcastic,tired,neutral,angry 0-1 normal normal m
+9 D MAHIRU,SHIINA MAHIRU,SHIINA happy,tender,neutral 0-1 normal normal f
+10 D AMANE,FUJIMIYA AMANE,FUJIMIYA tired,neutral 0-1 normal,slow normal,soft m
+11 N
+12 N,T NARRATOR,MAHIRU~,SHIINA MAHIRU~,SHIINA~,AMANE~,FUJIMIYA AMANE~,FUJIMIYA~ neutral,sarcastic 0-1 normal normal u
+13 N NARRATOR neutral,tender 0-1 normal normal u
+14 N NARRATOR neutral,happy 0-1 normal normal u
+15 N,T NARRATOR,AMANE~,FUJIMIYA AMANE~,FUJIMIYA~ neutral,sarcastic 0-1 normal normal u
+16 N
+17 N
+18 N
+19 D MAHIRU,SHIINA MAHIRU,SHIINA happy,tender,neutral 0-1 normal normal,soft f
+20 D AMANE,FUJIMIYA AMANE,FUJIMIYA sarcastic,neutral,surprised 0-2 normal normal m
+21 D MAHIRU,SHIINA MAHIRU,SHIINA afraid,excited,neutral 1-2 normal,fast normal,loud f
+22 N NARRATOR neutral,afraid 0-1 normal normal u
+23 N
+24 N NARRATOR neutral,tender 0-1 normal normal u
+25 N NARRATOR neutral,happy,tender 0-1 normal normal u
+26 N
+27 N
+28 D MAHIRU,SHIINA MAHIRU,SHIINA happy,tender,neutral 0-1 normal,slow soft,normal f
+29 D AMANE,FUJIMIYA AMANE,FUJIMIYA neutral,sarcastic 0-1 normal normal m
+30 D MAHIRU,SHIINA MAHIRU,SHIINA happy,tender,neutral 0-1 normal normal f
+31 N NARRATOR neutral,happy,tender 0-1 normal normal u
+32 N NARRATOR neutral,tender,sad 0-1 normal normal u
+33 D AMANE,FUJIMIYA AMANE,FUJIMIYA neutral,sarcastic 0-1 normal normal m
+34 D MAHIRU,SHIINA MAHIRU,SHIINA sarcastic,happy,neutral 0-1 normal normal f
+35 D AMANE,FUJIMIYA AMANE,FUJIMIYA neutral,sarcastic,happy 0-1 normal normal m
+36 D MAHIRU,SHIINA MAHIRU,SHIINA happy,neutral 0-1 normal normal f
+37 N NARRATOR neutral,tender 0-1 normal normal u
+38 N NARRATOR neutral,happy 0-1 normal normal u
+39 D MAHIRU,SHIINA MAHIRU,SHIINA neutral,happy 0-1 normal normal f
+40 D AMANE,FUJIMIYA AMANE,FUJIMIYA surprised,neutral 0-1 normal normal m
+41 D MAHIRU,SHIINA MAHIRU,SHIINA neutral,happy 0-1 normal normal f
+42 D AMANE,FUJIMIYA AMANE,FUJIMIYA neutral,sarcastic 0-1 normal normal m
+43 D MAHIRU,SHIINA MAHIRU,SHIINA sarcastic,happy,neutral 0-1 normal normal f
+44 D AMANE,FUJIMIYA AMANE,FUJIMIYA happy,excited 0-2 normal,slow normal,soft m
+45 N NARRATOR neutral,happy,excited 0-1 normal normal u
+46 D AMANE,FUJIMIYA AMANE,FUJIMIYA neutral,happy 0-1 normal normal m
+47 D MAHIRU,SHIINA MAHIRU,SHIINA neutral,happy,surprised 0-1 normal normal f
+48 N NARRATOR neutral,tired 0-1 normal normal u
+49 N NARRATOR neutral,surprised 0-1 normal normal u
+50 N NARRATOR neutral,surprised 0-1 normal normal u
+51 N,T NARRATOR,AMANE~,FUJIMIYA AMANE~,FUJIMIYA~ neutral,tired 0-1 normal normal u
+52 N NARRATOR neutral,tender,sad 0-1 normal normal u
+53 T AMANE,FUJIMIYA AMANE,FUJIMIYA surprised,neutral,sad 0-2 normal soft,normal m
+54 N NARRATOR neutral,sad 0-1 normal normal u
+55 N,T NARRATOR,AMANE~,FUJIMIYA AMANE~,FUJIMIYA~ neutral,tired 0-1 normal normal u
+56 D MAHIRU,SHIINA MAHIRU,SHIINA neutral,surprised,tender 0-1 normal normal,soft f
+57 D AMANE,FUJIMIYA AMANE,FUJIMIYA neutral,sad,tired 0-1 slow,normal soft,normal m
+58 N NARRATOR neutral,sad 0-1 normal normal u
+59 N NARRATOR neutral,sad 0-1 normal normal u
