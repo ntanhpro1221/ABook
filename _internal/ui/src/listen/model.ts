@@ -114,6 +114,8 @@ export interface ListenBook {
   capabilities?: Capabilities;
   /** Số thay đổi người nghe đã làm trên cuốn nhập từ file (lớp sửa, docs/EDITING.md); không có thì 0. */
   edits?: number;
+  /** Trong số `edits`: bao nhiêu là ý muốn chờ Studio (đổi giọng, giới, gộp người, cách đọc...) - chưa áp vào audio. */
+  wishes?: number;
 }
 
 export interface SeriesPlace {

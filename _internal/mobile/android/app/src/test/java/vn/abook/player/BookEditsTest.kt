@@ -39,10 +39,10 @@ class BookEditsTest {
 
     @Test
     fun the_shared_fixtures_are_all_there() {
-        assertTrue(BookEditsFixtures.cases("edits").size >= 8)
-        assertTrue(BookEditsFixtures.cases("invalid").size >= 30)
-        assertTrue(BookEditsFixtures.cases("merge").size >= 4)
-        assertTrue(BookEditsFixtures.cases("contract").size >= 6)
+        assertTrue(BookEditsFixtures.cases("edits").size >= 10)
+        assertTrue(BookEditsFixtures.cases("invalid").size >= 60)
+        assertTrue(BookEditsFixtures.cases("merge").size >= 7)
+        assertTrue(BookEditsFixtures.cases("contract").size >= 12)
     }
 
     @Test
@@ -97,7 +97,12 @@ class BookEditsTest {
         assertEquals("Phần sửa của sách bị hỏng.", said("{"))
         assertEquals("Phần sửa của sách bị hỏng.", said("""{$head, "music": {"levelDb": NaN}}"""))
         assertEquals("Phần sửa của sách có mục lạ.", said("[]"))
-        assertEquals("Phần sửa của sách có mục lạ.", said("""{$head, "wishes": []}"""))
+        assertEquals("Phần sửa của sách có mục lạ.", said("""{$head, "pins": []}"""))
+        assertEquals("Phần ý muốn chờ Studio trong phần sửa không hợp lệ hay quá dài.", said("""{$head, "wishes": []}"""))
+        assertEquals("Phần ý muốn chờ Studio trong phần sửa không hợp lệ hay quá dài.", said("""{$head, "wishes": {"dreams": {}}}"""))
+        assertEquals("Phần ý muốn chờ Studio trong phần sửa không hợp lệ hay quá dài.", said("""{$head, "wishes": {"retakes": {}}}"""))
+        assertEquals("Một ý muốn thu lại câu trong phần sửa không hợp lệ.", said("""{$head, "wishes": {"retakes": {"c1_s1": {"requested_at": 1.5}}}}"""))
+        assertEquals("Một ý muốn gộp tên trong phần sửa không hợp lệ.", said("""{$head, "wishes": {"aliases": [{"alias": "A", "person": "B"}]}}"""))
         assertEquals("Phần sửa của sách không đúng định dạng hay mới hơn app - hãy cập nhật app.", said("""{"format": "abook-edits", "version": 2}"""))
         assertEquals("Tên sách trong phần sửa không hợp lệ.", said("""{$head, "title": "Tên  sách"}"""))
         assertEquals("Tên sách trong phần sửa không hợp lệ.", said("""{$head, "title": "Tên\tsách"}"""))
@@ -142,6 +147,15 @@ class BookEditsTest {
         fun cues(count: Int) = """{$head, "music": {"silenced": [${(1..count).joinToString(",") { "\"1:$it\"" }}]}}""".toByteArray()
         BookEdits.parse(cues(5000))
         assertEquals("Danh sách đoạn nhạc im lặng trong phần sửa không hợp lệ.", refusal { BookEdits.parse(cues(5001)) })
+    }
+
+    @Test
+    fun too_many_wishes_refuse_the_whole_file() {
+        val head = """"format": "abook-edits", "version": 1"""
+        val sha = "a".repeat(64)
+        fun retakes(count: Int) = """{$head, "wishes": {"retakes": {${(0 until count).joinToString(",") { "\"c1_s$it\": {\"requested_at\": 1.5, \"text_sha256\": \"$sha\"}" }}}}}""".toByteArray()
+        BookEdits.parse(retakes(5000))
+        assertEquals("Phần ý muốn chờ Studio trong phần sửa không hợp lệ hay quá dài.", refusal { BookEdits.parse(retakes(5001)) })
     }
 
     @Test

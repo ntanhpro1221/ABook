@@ -8,6 +8,7 @@ import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
 import { Button, Dialog } from "@/shared/ui";
 import { api } from "./api";
+import { WAITING_STUDIO } from "./decisions";
 
 // Tab Nhân vật: "Gộp vào…" (soát UX a6 01-10: máy tách một người thành hai - tên đầy đủ và tên gọi, có chức danh và không -
 // mà Studio chỉ sửa được từng câu). Máy chủ chuyển mọi câu nói của người này sang người kia và ghi bí danh để phần sau
@@ -18,11 +19,17 @@ export function MergeDialog({
   person,
   people,
   onClose,
+  waiting = false,
+  onSaved,
 }: {
   bookId: string;
   person: CastMember | null;
   people: CastMember[];
   onClose: () => void;
+  /** Cuốn không có xưởng (file .abook): chỉ ghi ý muốn chờ Studio. */
+  waiting?: boolean;
+  /** Làm mới thêm các màn của trang nghe (số thay đổi chưa lưu). */
+  onSaved?: () => void;
 }) {
   const client = useQueryClient();
   const [query, setQuery] = useState("");
@@ -48,9 +55,12 @@ export function MergeDialog({
         body: { from: person.name, into: into.name },
       });
       toast.success(`Đã ghi: ${lines} câu của ${cleanName(person.displayName)} là của ${cleanName(into.displayName)}`, {
-        description: "Các phần sau của truyện cũng hiểu hai tên là một người. Bấm “Áp dụng thay đổi” để thu lại; bỏ được trong hộp ấy.",
+        description: waiting
+          ? WAITING_STUDIO
+          : "Các phần sau của truyện cũng hiểu hai tên là một người. Bấm “Áp dụng thay đổi” để thu lại; bỏ được trong hộp ấy.",
       });
       void client.invalidateQueries();
+      onSaved?.();
       close();
     } catch (error) {
       toast.error("Chưa gộp được", { description: (error as Error).message });

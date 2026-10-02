@@ -1,0 +1,16 @@
+{
+ "format": "abook-edits",
+ "version": 1,
+ "wishes": {
+  "speakers": {
+   "c1_s0003_fa1fe2": {
+    "new": {
+     "gender": "robot"
+    },
+    "requested_at": 1.5,
+    "speaker": "A",
+    "text_sha256": "fa1fe25f1922819e9fd94d48eeef9fddcaeb06be1653b73d618873e572498ea5"
+   }
+  }
+ }
+}

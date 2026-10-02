@@ -37,6 +37,10 @@ export const PENDING_NOTE: Record<ApplyWhen, string> = {
   paused: "chờ áp dụng khi sách chạy tiếp",
 };
 
+/** Cuốn không có xưởng (mở từ file .abook): thay đổi chỉ được ghi lại, Studio mới đưa vào giọng đọc - nói thế, không nói "áp ở
+ *  ranh giới chương" như dự án. */
+export const WAITING_STUDIO = "Đang chờ Studio - giọng đọc chưa đổi gì. Lưu file thì thay đổi đi cùng; mở file bằng Studio để áp.";
+
 /** Chỉ đọc bản của trang dự án trong bộ nhớ đệm - không thêm một nhịp hỏi máy chủ. */
 export function useApplyWhen(bookId: string): ApplyWhen {
   return applyWhen(useQuery<{ book: BookSummary }>({ queryKey: ["book", bookId], enabled: false }).data?.book);
@@ -55,6 +59,8 @@ export function refreshAfterDecision(client: QueryClient, bookId: string) {
   void client.invalidateQueries({ queryKey: ["work", bookId] });
   void client.invalidateQueries({ queryKey: ["book", bookId] });
   void client.invalidateQueries({ queryKey: ["library"] });
+  // Trang nghe: số thay đổi chưa lưu của cuốn không có xưởng.
+  void client.invalidateQueries({ queryKey: ["listen", "book", bookId] });
   void client.invalidateQueries({ queryKey: ["listen", "cast", bookId] });
   void client.invalidateQueries({ queryKey: ["cast", bookId] });
   void client.invalidateQueries({ queryKey: ["pronunciations", bookId] });

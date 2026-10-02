@@ -9,8 +9,9 @@ những file này.
     fixtures/book_edits/invalid/<ca>.json phần sửa phải bị từ chối
     fixtures/book_edits/expected/<ca>.json  {manifest, cast, scripts{mã chương: script}} người nghe thấy khi áp `<ca>` lên base
     fixtures/book_edits/merge/<ca>.json   {local, incoming, merged, report}: hợp hai lớp sửa khi nhập lại
-    fixtures/book_edits/contract/<ca>.json chuỗi yêu cầu / lời đáp của máy chủ Python cho từng đường "áp ngay" - LocalStudio.kt
-                                          phải đáp y hệt (trừ trường dễ đổi: `volatile`)
+    fixtures/book_edits/contract/<ca>.json chuỗi yêu cầu / lời đáp của máy chủ Python cho từng đường "áp ngay" và đường ý muốn
+                                          chờ Studio - LocalStudio.kt phải đáp y hệt (trừ trường dễ đổi: `volatile`). Trong thân
+                                          yêu cầu, chuỗi "$requestedAt#N" là `requestedAt` của lời đáp bước N (để rút đúng lần bấm)
     fixtures/book_edits/written/python_v4.abook, kotlin_v4.abook   file phiên bản 4 do từng bên ghi, bên kia phải mở được
 
 Sinh lại (chỉ khi cố ý đổi hành vi hay giao ước):  runtime/.venv/Scripts/python.exe -m tests.book_edits_fixtures
@@ -21,6 +22,7 @@ from __future__ import annotations
 import base64
 import io
 import json
+import re
 import shutil
 import sqlite3
 import sys
@@ -48,10 +50,42 @@ CASES: dict[str, dict[str, Any]] = {
         "music": {"enabled": True, "levelDb": -12.0, "silenced": ["1:0"]},
     },
 }
+
+# Các câu của base (chương 2 chưa thu; mã ổn định của dự án mẫu đều mở bằng c1_ nên tra câu phải duyệt cả hai chương).
+HEADING = ("c1_s0001_aa6eb2", "aa6eb21ef4206a0795ca5793883e40eb49b958ae12f60f879c0806d1f8138ab0")
+NARRATION = ("c1_s0002_c58b67", "c58b6788498e1756635f89b55a9906af2fa37a0d3ffbc49083eb56c5c5c5483c")
+LUCIEN_LINE = ("c1_s0003_fa1fe2", "fa1fe25f1922819e9fd94d48eeef9fddcaeb06be1653b73d618873e572498ea5")
+HEIDI_LINE = ("c1_s0006_34534a", "34534ad5d25c0cc74935800b021272b15ac53406accd068020698cea262c6ec0")
+SECOND_CHAPTER = ("c1_s0005_dd2e97", "dd2e97ef858a191e7163818f82551c5462dd647c3e2836e5e261a241552d1242")
+WISHES = {
+    "pronunciations": {"hailkes": {"requested_at": 1759400001.5, "spoken_form": "Hên-khơ", "surface": "Hailkes"}},
+    "speakers": {LUCIEN_LINE[0]: {"requested_at": 1759400002.0, "speaker": "HEIDI", "text_sha256": LUCIEN_LINE[1]}},
+    "lines": {HEIDI_LINE[0]: {"emotion": "tender", "intensity": 1, "kind": "", "requested_at": 1759400003.25,
+                              "spoken": "Chào anh nhé.", "text_sha256": HEIDI_LINE[1]}},
+    "voices": {"HEIDI": {"avoid": "", "gender": "male", "preset": "", "requested_at": 1759400004.0,
+                         "replaced": {"avoid": "", "gender": "female", "preset": "", "requested_at": 1759400000.5}}},
+    "retakes": {NARRATION[0]: {"requested_at": 1759400005.0, "text_sha256": NARRATION[1]},
+                SECOND_CHAPTER[0]: {"requested_at": 1759400005.0, "text_sha256": SECOND_CHAPTER[1]}},
+    "aliases": [{"alias": "Hây-đi", "at": 1759400002.0, "person": "LUCIEN"}],
+}
+CASES["wishes"] = {"wishes": WISHES}
+CASES["wishes_beside_edits"] = {
+    "title": "Sách của tôi",
+    "characters": {"LUCIEN": "Lu-xi-en"},
+    "wishes": {"voices": {"LUCIEN": {"avoid": "preset_a", "gender": "", "preset": "Thiện Minh", "requested_at": 1759400004.0}},
+               "speakers": {HEIDI_LINE[0]: {"new": {"gender": "female"}, "requested_at": 1759400006.0, "speaker": "Tiểu Mai",
+                                            "text_sha256": HEIDI_LINE[1]}}},
+}
 HEAD = {"format": "abook-edits", "version": 1}
+
+
+def _wish(section: str, entries: Any) -> dict[str, Any]:
+    return {**HEAD, "wishes": {section: entries}}
+
+
 INVALID: dict[str, Any] = {
     "not_an_object": [],
-    "unknown_key": {**HEAD, "wishes": []},
+    "unknown_key": {**HEAD, "pins": []},
     "wrong_format": {"format": "abook", "version": 1},
     "newer_version": {"format": "abook-edits", "version": 2},
     "title_empty": {**HEAD, "title": ""},
@@ -79,6 +113,46 @@ INVALID: dict[str, Any] = {
     "cover_bad_color": {**HEAD, "cover": {"color": "red", "width": 1, "height": 1, "version": 1}},
     "cover_negative_size": {**HEAD, "cover": {"color": "", "width": -1, "height": 1, "version": 1}},
     "cover_unknown_field": {**HEAD, "cover": {"color": "", "width": 1, "height": 1, "version": 1, "url": "x"}},
+    "wishes_not_an_object": {**HEAD, "wishes": []},
+    "wishes_empty": {**HEAD, "wishes": {}},
+    "wishes_unknown_section": {**HEAD, "wishes": {"dreams": {}}},
+    "wishes_section_empty": _wish("retakes", {}),
+    "wishes_section_not_an_object": _wish("retakes", [NARRATION[0]]),
+    "wish_bad_line_id": _wish("retakes", {"c1 s2": {"requested_at": 1.5, "text_sha256": NARRATION[1]}}),
+    "wish_bad_hash": _wish("retakes", {NARRATION[0]: {"requested_at": 1.5, "text_sha256": "abc"}}),
+    "wish_unknown_field": _wish("retakes", {NARRATION[0]: {"requested_at": 1.5, "text_sha256": NARRATION[1], "who": "x"}}),
+    "wish_time_missing": _wish("retakes", {NARRATION[0]: {"text_sha256": NARRATION[1]}}),
+    "wish_time_negative": _wish("retakes", {NARRATION[0]: {"requested_at": -1, "text_sha256": NARRATION[1]}}),
+    "wish_time_a_boolean": _wish("retakes", {NARRATION[0]: {"requested_at": True, "text_sha256": NARRATION[1]}}),
+    "wish_retake_replaced": _wish("retakes", {NARRATION[0]: {"requested_at": 1.5, "text_sha256": NARRATION[1],
+                                                           "replaced": {"requested_at": 1.0, "text_sha256": NARRATION[1]}}}),
+    "wish_replaced_twice": _wish("voices", {"HEIDI": {"avoid": "", "gender": "male", "preset": "", "requested_at": 3.0,
+                                                    "replaced": {"avoid": "", "gender": "male", "preset": "", "requested_at": 2.0,
+                                                                 "replaced": {"avoid": "", "gender": "", "preset": "", "requested_at": 1.0}}}}),
+    "wish_pronunciation_two_words": _wish("pronunciations", {"hai kes": {"requested_at": 1.5, "spoken_form": "Hên-khơ", "surface": "Hai kes"}}),
+    "wish_pronunciation_padded": _wish("pronunciations", {"hailkes": {"requested_at": 1.5, "spoken_form": " Hên-khơ", "surface": "Hailkes"}}),
+    "wish_pronunciation_empty_reading": _wish("pronunciations", {"hailkes": {"requested_at": 1.5, "spoken_form": "", "surface": "Hailkes"}}),
+    "wish_speaker_bad_new_gender": _wish("speakers", {LUCIEN_LINE[0]: {"new": {"gender": "robot"}, "requested_at": 1.5, "speaker": "A",
+                                                                      "text_sha256": LUCIEN_LINE[1]}}),
+    "wish_speaker_new_has_extra": _wish("speakers", {LUCIEN_LINE[0]: {"new": {"gender": "male", "age": "old"}, "requested_at": 1.5,
+                                                                    "speaker": "A", "text_sha256": LUCIEN_LINE[1]}}),
+    "wish_line_bad_kind": _wish("lines", {HEIDI_LINE[0]: {"emotion": "", "intensity": None, "kind": "shout", "requested_at": 1.5,
+                                                          "text_sha256": HEIDI_LINE[1]}}),
+    "wish_line_bad_emotion": _wish("lines", {HEIDI_LINE[0]: {"emotion": "bored", "intensity": None, "kind": "", "requested_at": 1.5,
+                                                             "text_sha256": HEIDI_LINE[1]}}),
+    "wish_line_intensity_too_high": _wish("lines", {HEIDI_LINE[0]: {"emotion": "", "intensity": 4, "kind": "", "requested_at": 1.5,
+                                                                    "text_sha256": HEIDI_LINE[1]}}),
+    "wish_line_intensity_a_float": _wish("lines", {HEIDI_LINE[0]: {"emotion": "", "intensity": 1.5, "kind": "", "requested_at": 1.5,
+                                                                   "text_sha256": HEIDI_LINE[1]}}),
+    "wish_line_spoken_double_space": _wish("lines", {HEIDI_LINE[0]: {"emotion": "", "intensity": None, "kind": "", "requested_at": 1.5,
+                                                                     "spoken": "Chào  anh", "text_sha256": HEIDI_LINE[1]}}),
+    "wish_line_spoken_too_long": _wish("lines", {HEIDI_LINE[0]: {"emotion": "", "intensity": None, "kind": "", "requested_at": 1.5,
+                                                                 "spoken": "a" * 2001, "text_sha256": HEIDI_LINE[1]}}),
+    "wish_voice_bad_gender": _wish("voices", {"HEIDI": {"avoid": "", "gender": "robot", "preset": "", "requested_at": 1.5}}),
+    "wish_voice_missing_field": _wish("voices", {"HEIDI": {"gender": "male", "preset": "", "requested_at": 1.5}}),
+    "wish_alias_duplicate": _wish("aliases", [{"alias": "A", "at": 1.5, "person": "B"}, {"alias": "A", "at": 2.5, "person": "C"}]),
+    "wish_alias_missing_field": _wish("aliases", [{"alias": "A", "person": "B"}]),
+    "wish_alias_not_a_list": _wish("aliases", {"A": "B"}),
 }
 INVALID_RAW = {  # văn bản thô: không phải JSON hợp lệ hay chứa hằng số JSON không chuẩn
     "not_json": "{",
@@ -98,10 +172,31 @@ MERGE_CASES = {
         {**HEAD, "title": "Của tôi"},
         {**HEAD, "cover": {"color": "#112233", "width": 10, "height": 10, "version": 5}},
     ),
+    "wishes_are_a_union": (
+        {**HEAD, "wishes": {"voices": {"HEIDI": {"avoid": "", "gender": "male", "preset": "", "requested_at": 1759400004.0}}}},
+        {**HEAD, "wishes": {"retakes": {NARRATION[0]: {"requested_at": 1759400005.0, "text_sha256": NARRATION[1]}},
+                            "pronunciations": {"hailkes": {"requested_at": 1759400001.5, "spoken_form": "Hên-khơ", "surface": "Hailkes"}}}},
+    ),
+    "wishes_conflict_local_wins": (
+        {**HEAD, "title": "Của tôi",
+         "wishes": {"voices": {"HEIDI": {"avoid": "", "gender": "male", "preset": "", "requested_at": 1759400004.0}},
+                    "aliases": [{"alias": "Hây-đi", "at": 1759400004.0, "person": "LUCIEN"}]}},
+        {**HEAD, "wishes": {"voices": {"HEIDI": {"avoid": "", "gender": "female", "preset": "", "requested_at": 1759400009.0}},
+                            "speakers": {LUCIEN_LINE[0]: {"requested_at": 1759400002.0, "speaker": "HEIDI", "text_sha256": LUCIEN_LINE[1]}},
+                            "aliases": [{"alias": "Hây-đi", "at": 1759400002.0, "person": "NOBODY"},
+                                        {"alias": "Cô bé", "at": 1759400002.0, "person": "HEIDI"}]}},
+    ),
+    "wishes_next_to_other_edits": (
+        {**HEAD, "characters": {"LUCIEN": "A"}},
+        {**HEAD, "title": "Của bạn", "wishes": {"retakes": {NARRATION[0]: {"requested_at": 1759400005.0, "text_sha256": NARRATION[1]}}}},
+    ),
 }
 # Chuỗi yêu cầu mỗi ca của hợp đồng máy chủ <-> LocalStudio (đường tính từ `/api/books/<mã>`). Ảnh bìa: `$cover` là data URL
 # của ảnh nhỏ (xem `tiny_cover`). Trường dễ đổi giữa hai bản cài (màu chủ đạo, phiên bản bìa) không so.
-VOLATILE = ["color", "version"]
+VOLATILE = ["color", "version", "requestedAt"]
+_LUCIEN = {"stableId": LUCIEN_LINE[0], "textSha256": LUCIEN_LINE[1]}
+_HEIDI = {"stableId": HEIDI_LINE[0], "textSha256": HEIDI_LINE[1]}
+_NARRATION = {"stableId": NARRATION[0], "textSha256": NARRATION[1]}
 CONTRACT: dict[str, list[dict[str, Any]]] = {
     "title": [
         {"method": "PUT", "path": "/title", "body": {"title": "  Tên \t mới \n"}},
@@ -152,6 +247,108 @@ CONTRACT: dict[str, list[dict[str, Any]]] = {
         {"method": "GET", "path": "/edits"},
         {"method": "DELETE", "path": "/edits"},
         {"method": "GET", "path": "/edits"},
+    ],
+    # Ý muốn chờ Studio (docs/EDITING.md, P2a): ghi vào lớp sửa, liệt kê, rút - không bao giờ áp vào chữ hay audio.
+    "wishes_pronunciation": [
+        {"method": "POST", "path": "/pronunciation", "body": {"surface": "Hailkes", "spokenForm": "Hên-khơ", "everywhere": True}},
+        {"method": "POST", "path": "/pronunciation", "body": {"surface": "Hai kes", "spokenForm": "Hên-khơ"}},
+        {"method": "POST", "path": "/pronunciation", "body": {"surface": "Hailkes", "spokenForm": "Xă-mon"}},
+        {"method": "POST", "path": "/pronunciation", "body": {"surface": "Hailkes", "spokenForm": "Hên-kơ"}},
+        {"method": "POST", "path": "/pronunciation", "body": {"surface": "Hailkes", "spokenForm": ""}},
+        {"method": "POST", "path": "/pronunciation", "body": {"surface": "Hailkes", "spokenForm": "Hên-xơ"}},
+        {"method": "GET", "path": "/pending-changes"},
+        {"method": "GET", "path": "/edits"},
+        {"method": "POST", "path": "/pronunciation", "body": {"surface": "Hailkes", "withdraw": True, "requestedAt": "$requestedAt#6"}},
+        {"method": "GET", "path": "/pending-changes"},
+        {"method": "POST", "path": "/pronunciation", "body": {"surface": "Hailkes", "withdraw": True, "requestedAt": "$requestedAt#6"}},
+        {"method": "POST", "path": "/pronunciation", "body": {"surface": "Hailkes", "withdraw": True, "requestedAt": "$requestedAt#1"}},
+        {"method": "GET", "path": "/edits"},
+        {"method": "POST", "path": "/pronunciation", "body": {"surface": "Hailkes", "withdraw": True}},
+    ],
+    "wishes_speaker": [
+        {"method": "POST", "path": "/speaker", "body": {**_LUCIEN, "speaker": "HEIDI"}},
+        {"method": "POST", "path": "/speaker", "body": {**_LUCIEN, "speaker": "NOBODY"}},
+        {"method": "POST", "path": "/speaker", "body": {**_NARRATION, "speaker": "HEIDI"}},
+        {"method": "POST", "path": "/speaker", "body": {"stableId": "c1_s9999_aaaaaa", "textSha256": LUCIEN_LINE[1], "speaker": "HEIDI"}},
+        {"method": "POST", "path": "/speaker", "body": {**_LUCIEN, "textSha256": HEIDI_LINE[1], "speaker": "HEIDI"}},
+        {"method": "POST", "path": "/speaker", "body": {**_LUCIEN, "speaker": "Tiểu Mai", "newGender": "female", "alias": "Cô gái lạ"}},
+        {"method": "POST", "path": "/speaker", "body": {**_LUCIEN, "speaker": "Tiểu Mai", "newGender": "robot"}},
+        {"method": "POST", "path": "/speaker", "body": {**_LUCIEN, "speaker": "LUCIEN", "bracketRule": True}},
+        {"method": "POST", "path": "/speaker", "body": {"lines": [_HEIDI, _LUCIEN], "speaker": "UNNAMED"}},
+        {"method": "GET", "path": "/pending-changes"},
+        {"method": "GET", "path": "/edits"},
+        {"method": "POST", "path": "/speaker", "body": {"withdraw": True, "lines": [_LUCIEN, _HEIDI], "requestedAt": "$requestedAt#9"}},
+        {"method": "GET", "path": "/pending-changes"},
+        {"method": "POST", "path": "/speaker", "body": {"withdraw": True, "lines": [_LUCIEN], "requestedAt": "$requestedAt#8"}},
+        {"method": "GET", "path": "/pending-changes"},
+        {"method": "POST", "path": "/speaker", "body": {"withdraw": True, "lines": [_LUCIEN], "requestedAt": "$requestedAt#6"}},
+        {"method": "GET", "path": "/pending-changes"},
+        {"method": "DELETE", "path": "/edits"},
+        {"method": "GET", "path": "/pending-changes"},
+    ],
+    "wishes_line": [
+        {"method": "POST", "path": "/line", "body": {**_HEIDI, "emotion": "tender", "intensity": 1}},
+        {"method": "POST", "path": "/line", "body": {**_HEIDI, "spoken": "Chào   anh nhé."}},
+        {"method": "POST", "path": "/line", "body": {**_HEIDI, "kind": "shout"}},
+        {"method": "POST", "path": "/line", "body": {**_HEIDI, "emotion": "bored"}},
+        {"method": "POST", "path": "/line", "body": {**_HEIDI, "spoken": "!!!"}},
+        {"method": "POST", "path": "/line", "body": {**_HEIDI, "intensity": 7}},
+        {"method": "POST", "path": "/line", "body": {**_NARRATION, "kind": "dialogue", "speaker": "HEIDI"}},
+        {"method": "POST", "path": "/line", "body": {**_NARRATION, "speaker": "LUCIEN"}},
+        {"method": "POST", "path": "/line", "body": {**_NARRATION, "kind": "dialogue", "speaker": "NOBODY"}},
+        {"method": "POST", "path": "/line", "body": dict(_HEIDI)},
+        {"method": "POST", "path": "/line", "body": {"stableId": "c1_s9999_aaaaaa", "textSha256": HEIDI_LINE[1], "emotion": "sad"}},
+        {"method": "GET", "path": "/pending-changes"},
+        {"method": "GET", "path": "/edits"},
+        {"method": "POST", "path": "/line", "body": {**_HEIDI, "spoken": ""}},
+        {"method": "GET", "path": "/pending-changes"},
+        {"method": "GET", "path": "/chapters/1/script"},
+    ],
+    "wishes_voice": [
+        {"method": "POST", "path": "/voice", "body": {"character": "HEIDI", "gender": "male"}},
+        {"method": "POST", "path": "/voice", "body": {"character": "HEIDI", "gender": "robot"}},
+        {"method": "POST", "path": "/voice", "body": {"character": "NARRATOR", "gender": "male"}},
+        {"method": "POST", "path": "/voice", "body": {"character": "NOBODY", "gender": "male"}},
+        {"method": "POST", "path": "/voice", "body": {"character": "HEIDI"}},
+        {"method": "POST", "path": "/voice", "body": {"character": "", "gender": "male"}},
+        {"method": "GET", "path": "/cast"},
+        {"method": "POST", "path": "/voice", "body": {"character": "heidi", "preset": "Thiện Minh", "avoid": "preset_a"}},
+        {"method": "GET", "path": "/cast"},
+        {"method": "GET", "path": "/pending-changes"},
+        {"method": "POST", "path": "/voice", "body": {"character": "HEIDI", "withdraw": True, "requestedAt": "$requestedAt#8"}},
+        {"method": "GET", "path": "/cast"},
+        {"method": "POST", "path": "/voice", "body": {"character": "HEIDI", "withdraw": True, "requestedAt": "$requestedAt#1"}},
+        {"method": "GET", "path": "/edits"},
+    ],
+    "wishes_retake_and_merge": [
+        {"method": "POST", "path": "/chapters/1/retake"},
+        {"method": "POST", "path": "/chapters/9/retake"},
+        {"method": "POST", "path": "/review", "body": {"verdict": "redo", **_LUCIEN, "chapterId": 1}},
+        {"method": "POST", "path": "/review", "body": {"verdict": "bogus", **_LUCIEN}},
+        {"method": "GET", "path": "/pending-changes"},
+        {"method": "POST", "path": "/characters/merge", "body": {"from": "HEIDI", "into": "LUCIEN"}},
+        {"method": "POST", "path": "/characters/merge", "body": {"from": "LUCIEN", "into": "lucien"}},
+        {"method": "POST", "path": "/characters/merge", "body": {"from": "NOBODY", "into": "LUCIEN"}},
+        {"method": "POST", "path": "/characters/merge", "body": {"from": "HEIDI", "into": "NOBODY"}},
+        {"method": "GET", "path": "/pending-changes"},
+        {"method": "GET", "path": "/edits"},
+        {"method": "POST", "path": "/pending-changes/withdraw", "body": {"section": "speakers", "key": HEIDI_LINE[0], "keys": [HEIDI_LINE[0]], "requestedAt": "$requestedAt#6"}},
+        {"method": "POST", "path": "/pending-changes/withdraw", "body": {"section": "retakes", "key": HEADING[0], "keys": [HEADING[0], NARRATION[0], HEIDI_LINE[0]], "requestedAt": "$requestedAt#1"}},
+        {"method": "POST", "path": "/pending-changes/withdraw", "body": {"section": "retakes", "key": HEADING[0], "keys": [HEADING[0]], "requestedAt": "$requestedAt#1"}},
+        {"method": "POST", "path": "/pending-changes/withdraw", "body": {"section": "dreams", "key": "x", "requestedAt": 5}},
+        {"method": "POST", "path": "/review", "body": {"verdict": None, **_LUCIEN}},
+        {"method": "GET", "path": "/pending-changes"},
+        {"method": "GET", "path": "/edits"},
+    ],
+    "wishes_beside_other_edits": [
+        {"method": "PUT", "path": "/title", "body": {"title": "Tên khác"}},
+        {"method": "POST", "path": "/voice", "body": {"character": "LUCIEN", "gender": "female"}},
+        {"method": "GET", "path": "/edits"},
+        {"method": "GET", "path": "/cast"},
+        {"method": "GET", "path": "/chapters/1/script"},
+        {"method": "DELETE", "path": "/edits"},
+        {"method": "GET", "path": "/edits"},
+        {"method": "GET", "path": "/pending-changes"},
     ],
 }
 
@@ -269,11 +466,13 @@ def record_contract(folder: Path, steps: list[dict[str, Any]]) -> list[dict[str,
         server = Server(app, port=0).start()
         try:
             identifier = book_id(copy)
-            recorded = []
+            recorded: list[dict[str, Any]] = []
             for step in steps:
                 body = step.get("body")
                 if body is not None:
-                    body = json.loads(json.dumps(body).replace('"$cover"', json.dumps(cover_data_url())))
+                    text = json.dumps(body).replace('"$cover"', json.dumps(cover_data_url()))
+                    text = re.sub(r'"\$requestedAt#(\d+)"', lambda match: json.dumps(recorded[int(match.group(1)) - 1]["response"]["requestedAt"]), text)
+                    body = json.loads(text)
                 status, data, _ = _request(server.port, step["method"], f"/api/books/{identifier}{step['path']}",
                                            headers={"X-Ebook-Token": "t"}, body=body)
                 recorded.append({**step, "status": status, "response": json.loads(data or b"null")})

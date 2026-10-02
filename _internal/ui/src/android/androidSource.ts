@@ -53,6 +53,7 @@ function toListenBook(book: LocalBook, withChapters: boolean): ListenBook {
     records: book.records,
     capabilities: book.capabilities,
     edits: book.edits ?? 0,
+    wishes: book.wishes ?? 0,
   };
 }
 

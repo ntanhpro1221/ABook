@@ -1,0 +1,13 @@
+{
+ "format": "abook-edits",
+ "version": 1,
+ "wishes": {
+  "voices": {
+   "HEIDI": {
+    "gender": "male",
+    "preset": "",
+    "requested_at": 1.5
+   }
+  }
+ }
+}
