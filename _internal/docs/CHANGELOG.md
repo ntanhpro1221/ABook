@@ -7,6 +7,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Studio
+
+- **Xuất cả bộ**: truyện chia nhiều phần ("Làm tiếp cuốn này") có thêm lựa chọn "Cả bộ (N phần)" trong hộp Xuất - thư
+  mục MP3 mỗi phần một thư mục con, hay mỗi phần một file `.abook` trong thư mục của bộ; phần chưa có chương xong được
+  bỏ qua và kể tên.
+
 ## [0.4.17] - 2026-10-02
 
 ### Studio
