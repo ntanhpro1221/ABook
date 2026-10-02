@@ -105,7 +105,8 @@ Kèm `salience` ∈ {`background`, `normal`, `climax`}: mức nổi bật của 
   - **Lọc cứng ở cấp CUỐN**: chỉ dùng các idiom trong bảng phong cách của cuốn, cộng `ambient_neutral`.
   - **Chấm mềm ở cấp đoạn**: ví dụ một đoạn hồi tưởng thế giới hiện đại trong truyện isekai.
 - `era` ∈ {ancient, medieval, early_modern, modern, futuristic}: phụ, ưu tiên thấp.
-- Phía đoạn: bảng phong cách cấp cuốn do LLM đọc tóm tắt / mấy chương đầu, chủ sách sửa được.
+- Phía đoạn: bảng phong cách cấp cuốn do LLM đọc tóm tắt / mấy chương đầu + thẻ thể loại của truyện (hako) + nhạc của bản
+  chuyển thể anime nếu có (E_signal_sources.md §2); người dùng sửa được nếu muốn.
 
 ### Lớp 5 - tính hợp làm nền dưới giọng đọc (chỉ phía bài)
 
@@ -133,18 +134,29 @@ bối cảnh mở [GT - B §5.3 cách D]. Tháp chữ của các model hai tháp
 
 ## 3. Phân tích phía nhạc (danh mục cố định, làm một lần)
 
+Rà soát đầy đủ mọi nguồn tín hiệu hai phía, cái nào đang dùng, cái nào thiếu, và hai đường ghép mới (chỉ thị nhạc bằng
+lời, LLM xếp lại top-K): **music_theory/E_signal_sources.md**.
+
+**Nguồn tín hiệu phía bài (02-10, chủ sách):** bài nhạc không phân tích từ số 0. Có ba nguồn, gộp lại và đo đóng góp từng
+nguồn bằng ablation (MUSIC_RESEARCH.md "GỘP BA NGUỒN"):
+- **Âm thanh qua model:** CLAP / đầu dò, model nghe.
+- **Âm học đo trực tiếp:** nhịp, trưởng / thứ, âm vực, độ nghịch tai, articulation, độ to và đường bao, âm sắc, mật độ.
+- **Văn bản và ngữ cảnh:** tên bài, mô tả và ghi chú tác giả, tag, nhạc cụ, bình luận, bài viết cho game / phim nào, lời.
+  Một LLM đọc phần chữ này, cho 13 cường độ + V/E/T + độ tin cậy.
+
 1. **Cắt mỗi bài thành các đoạn đồng nhất**, chấm từng đoạn: cửa sổ 10 giây không thấy được cung của cả bài [CM - D §1.5].
    Ranh giới đoạn nhạc là chỗ được phép chuyển bài.
 2. **Model dùng được (giấy phép tự do, chạy máy nhà):** LAION-CLAP music (Apache-2.0), MS-CLAP (MIT), PANNs CNN14 (MIT;
    cho sẵn 7 lớp cảm xúc của AudioSet), MusicFM-FMA (MIT), MusiCNN (ISC).
-   - MERT, MuQ, TTMR++ (CC-BY-NC) mạnh hơn. Theo `source-strictness`, NC dùng được nếu app không bao giờ thu tiền - **chủ
-     sách quyết**.
-   - Essentia (NC-SA + AGPL) và openSMILE (cấm sản phẩm) chỉ để đối chiếu khi phát triển.
+   - MERT, MuQ, TTMR++ (CC-BY-NC) mạnh hơn - DÙNG ĐƯỢC (chủ sách 02-10: mã nguồn công khai, không thu tiền, model NC ổn).
+   - Essentia: model ĐÃ HỌC sẵn V/A (DEAM, emoMusic, MuSe) và tâm trạng/chủ đề (MTG-Jamendo), CC BY-NC-SA - dùng được,
+     đưa vào ablation phía bài. openSMILE chỉ để đối chiếu khi phát triển.
 3. **Đừng tin CLAP đoán cảm xúc khi chưa huấn luyện.** Trên GlobalMood: r = 0,08; tinh chỉnh trên 1.180 bài lên 0,31 [CM].
    CLAP nhận **nhạc cụ** Đông Á tốt (phiên Music đo AUC 0,994), nhưng nhận nhạc cụ khác đoán cảm xúc. Cách đúng là đầu dò
    nhỏ (MLP) trên vector nhúng đóng băng, huấn luyện cho V/E/T và 13 cảm xúc [CM - D §4.2].
    - Dữ liệu: DEAM, PMEmo, EmoMusic, Soundtracks, Emotify (kiểm giấy phép từng bộ trước).
-   - Rồi **neo lại trên chính danh mục của ta** bằng phép so sánh (BWS / cặp) do chủ sách chấm.
+   - Rồi **neo lại trên chính danh mục của ta** bằng phép so sánh (BWS / cặp) do MÁY chấm (Claude chấm mù, model nghe chấm
+     từng clip) - chủ sách không chấm gì.
 4. **Lớp 5** đo bằng tín hiệu: độ to, onset, phổ trong dải 1-4 kHz, tách giọng.
 5. **IncompeBench (Clavié et al. 2026)** dựng trên chính Incompetech: 1.574 đoạn, 500 truy vấn, nhãn kiểm với người ở mức
    κ 0,94 [CM]. Dùng làm bài kiểm phía tìm nhạc.
@@ -183,7 +195,7 @@ bối cảnh mở [GT - B §5.3 cách D]. Tháp chữ của các model hai tháp
    ```
 
    Trọng số khởi đầu: **energy > tension > valence** (1,0 / 0,8 / 0,6 - theo độ tin cậy đo được) [CM về thứ tự, SL về con
-   số]. Rồi **học các trọng số bằng Bradley-Terry trên phán quyết cặp mù của chủ sách**: vài trăm phán quyết là đủ, vì chỉ
+   số]. Rồi **học các trọng số bằng Bradley-Terry trên phán quyết cặp mù của máy chấm** (chủ sách không chấm): vài trăm phán quyết là đủ, vì chỉ
    có vài tham số [GT - D §4.2 bước 4].
 4. **Lọc cứng trước khi chấm:** giấy phép, chất lượng, có lời hát, idiom ngoài bảng phong cách của cuốn, cú vọt âm lượng.
 5. **Ổn định:** chỉ đổi bài khi bài mới hơn bài đang phát một khoảng ≥ biên, liên tục ≥ N đơn vị chữ (trễ kiểu Bardo), ưu
@@ -218,7 +230,7 @@ của Won, hoặc SupCon với positive mềm `exp(−d_VAT)`). Chỉ giữ nế
 
 | # | Thí nghiệm | Vì sao trước |
 |---|---|---|
-| E1 | **Bộ đáp án + trần người**: 150-300 cảnh LN/KR/CN × 6-8 bài ứng viên; chủ sách chấm cặp mù (+1-2 người trên một phần); độ tin cậy chia đôi | mọi số đo sau cần nó; cho biết "tốt" tốt tới đâu |
+| E1 | **Bộ đáp án + trần người**: 150-300 cảnh LN/KR/CN × 6-8 bài ứng viên; máy chấm cặp mù (Claude mù x2 + model nghe chấm từng clip; chủ sách không chấm); độ tin cậy chia đôi | mọi số đo sau cần nó; cho biết "tốt" tốt tới đâu |
 | E2 | **Cảm xúc nhạc trên danh mục của ta**: PANNs-mood vs CLAP zero-shot vs đầu dò trên CLAP/MusicFM, so với BWS ~200 đoạn | phía nhạc cố định, sai ở đây hỏng mọi cuốn |
 | E3 | **Cảm xúc phía chữ**: LLM chấm thẳng vs so sánh trong chương vs PhoBERT; hiệu chỉnh isotonic; so với E1 | quyết định cách làm phía chữ |
 | E4 | **Bóc từng lớp của sợi dây**: VA → +T → +13 cảm xúc → +chức năng → +nhúng → trọng số học Bradley-Terry | biết lớp nào mang tín hiệu |

@@ -12,11 +12,12 @@ from abook.webui.music_select import choose, scene_key
 
 TRACKS = {
     "https://x/calm.mp3": {"valence": 0.3, "arousal": -0.7, "family": "piano", "duration": 180, "source": "incompetech"},
-    "https://x/calm2.mp3": {"valence": 0.2, "arousal": -0.6, "family": "eastern", "duration": 200,
+    "https://x/calm2.mp3": {"valence": 0.2, "arousal": -0.5, "family": "eastern", "duration": 200,
                             "source": "incompetech"},
     "https://x/battle.mp3": {"valence": -0.4, "arousal": 0.85, "family": "orchestral", "duration": 150,
                              "source": "incompetech", "title": "Battle", "creator": "Kevin MacLeod"},
-    "https://x/sad.mp3": {"valence": -0.7, "arousal": -0.4, "family": "piano", "duration": 240, "source": "incompetech"},
+    "https://x/sad.mp3": {"valence": -0.7, "arousal": -0.4, "family": "piano", "duration": 240, "source": "incompetech",
+                          "emotions": {"sadness": 0.8, "nostalgia": 0.4}, "sd": {"arousal": 0.3}},
     "https://x/short.mp3": {"valence": 0.3, "arousal": -0.7, "family": "piano", "duration": 20, "source": "incompetech"},
 }
 
@@ -179,3 +180,161 @@ def test_a_scene_that_was_silent_for_lack_of_a_match_stays_silent_when_kept(near
     assert choose([scene], near, book_key="b")[0]["link"] is not None  # không giữ thì đoạn này có nhạc
     [entry] = choose([scene], near, book_key="b", keep={scene_key(scene): None})
     assert entry["link"] is None and entry["pinned"] is False
+
+
+def _tracks_at(*offsets: tuple[str, dict]) -> list[dict]:
+    base = {"duration": 200, "source": "incompetech"}
+    return [{"link": f"https://x/{name}.mp3", **base, **fields} for name, fields in offsets]
+
+
+def _flat_scene(**extra) -> dict:
+    return {**_scene(1, 0.0, 0.0), "tension": 0.0, "confidence": 1.0, **extra}
+
+
+def test_an_energy_mismatch_costs_more_than_an_equal_valence_mismatch_and_tension_sits_between() -> None:
+    from abook.webui.music_select import AXIS_WEIGHTS, rank, scene_sigma, z_distance
+
+    assert AXIS_WEIGHTS["arousal"] > AXIS_WEIGHTS["tension"] > AXIS_WEIGHTS["valence"]
+    scene = _flat_scene()
+    sigma = scene_sigma(scene)
+    target = (0.0, 0.0, 0.0)
+    energy, tension, valence = (z_distance({"valence": v, "arousal": a, "tension": t}, target, sigma)
+                                for v, a, t in ((0.0, 0.4, 0.0), (0.0, 0.0, 0.4), (0.4, 0.0, 0.0)))
+    assert energy > tension > valence
+    tracks = _tracks_at(("energy", {"valence": 0.0, "arousal": 0.4, "tension": 0.0}),
+                        ("valence", {"valence": 0.4, "arousal": 0.0, "tension": 0.0}))
+    assert [t["link"] for t in rank(scene, lambda v, a: tracks, book_key="b")] == ["https://x/valence.mp3", "https://x/energy.mp3"]
+
+
+def test_a_wider_scene_spread_makes_the_same_mismatch_count_less() -> None:
+    from abook.webui.music_select import scene_sigma, z_distance
+
+    track = {"valence": 0.0, "arousal": 0.5, "tension": 0.0}
+    target = (0.0, 0.0, 0.0)
+    tight = z_distance(track, target, scene_sigma(_flat_scene(sd={"valence": 0.05, "arousal": 0.05, "tension": 0.05})))
+    loose = z_distance(track, target, scene_sigma(_flat_scene(sd={"valence": 0.4, "arousal": 0.4, "tension": 0.4})))
+    assert loose < tight
+    wide_track = z_distance({**track, "sd": {"arousal": 0.5}}, target, scene_sigma(_flat_scene()))
+    assert wide_track < z_distance(track, target, scene_sigma(_flat_scene())), "bài lẫn lộn hơn cũng khoan dung hơn"
+
+
+def test_a_scene_without_sd_uses_the_default_and_a_weak_scene_is_given_more_slack() -> None:
+    from abook.webui.music_select import SCENE_SD_DEFAULT, UNCERTAIN_SD, scene_sigma
+
+    sure = scene_sigma({"confidence": 1.0})
+    assert sure == {axis: pytest.approx(SCENE_SD_DEFAULT) for axis in ("valence", "arousal", "tension")}
+    weak = scene_sigma({"confidence": 0.1})
+    assert all(weak[axis] > sure[axis] for axis in sure)
+    assert weak["arousal"] == pytest.approx((SCENE_SD_DEFAULT ** 2 + (UNCERTAIN_SD * 0.9) ** 2) ** 0.5)
+
+
+def test_a_track_without_tension_is_scored_on_the_other_two_axes() -> None:
+    from abook.webui.music_select import z_distance
+
+    target = (0.0, 0.0, 0.5)
+    without = z_distance({"valence": 0.2, "arousal": 0.2}, target)
+    assert without == pytest.approx(z_distance({"valence": 0.2, "arousal": 0.2, "tension": 0.5}, target))
+    assert z_distance({"valence": 0.2, "arousal": 0.2, "tension": -0.5}, target) > without
+
+
+def _emotion_scene() -> dict:
+    return {**_flat_scene(), "emotions": {"sadness": 0.9, "tenderness": 0.7}}
+
+
+def _emotions_on(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Số hạng Lớp 2 đang tắt mặc định (EMOTION_WEIGHT 0 tới khi đường LLM vào) - các test cơ chế bật nó lên."""
+    from abook.webui import music_select
+    monkeypatch.setattr(music_select, "EMOTION_WEIGHT", 1.0)
+
+
+def test_emotion_cosine_prefers_the_track_with_the_scenes_blend_and_ignores_missing_data(monkeypatch: pytest.MonkeyPatch) -> None:
+    from abook.webui.music_select import emotion_cosine, rank
+
+    _emotions_on(monkeypatch)
+
+    assert emotion_cosine({"sadness": 1.0}, {"sadness": 0.3}) == pytest.approx(1.0), "cosine, không phải độ lớn"
+    assert emotion_cosine({"sadness": 1.0}, {"joy": 1.0}) == pytest.approx(0.0)
+    assert emotion_cosine({}, {"joy": 1.0}) is None and emotion_cosine(None, {"joy": 1.0}) is None
+    assert emotion_cosine({"joy": 1.0}, ["joy"]) is None and emotion_cosine({"joy": 0.0}, {"joy": 1.0}) is None
+    same = {"valence": 0.0, "arousal": 0.0, "tension": 0.0}
+    tracks = _tracks_at(("joyful", {**same, "emotions": {"joy": 0.9}}),
+                        ("blend", {**same, "emotions": {"sadness": 0.6, "tenderness": 0.5}}))
+    for order in (tracks, list(reversed(tracks))):
+        ranked = rank(_emotion_scene(), lambda v, a, order=order: order, book_key="b")
+        assert [t["link"] for t in ranked] == ["https://x/blend.mp3", "https://x/joyful.mp3"]
+        assert ranked[1]["score"] - ranked[0]["score"] > 0.4
+
+
+def test_a_track_or_scene_without_emotions_ranks_by_distance_alone(monkeypatch: pytest.MonkeyPatch) -> None:
+    from abook.webui.music_select import rank
+
+    _emotions_on(monkeypatch)
+
+    same = {"valence": 0.0, "arousal": 0.0, "tension": 0.0}
+    tracks = _tracks_at(("a", {**same}), ("b", {**same, "emotions": {"sadness": 0.9}}))
+    ranked = rank(_emotion_scene(), lambda v, a: tracks, book_key="b")
+    assert [t["link"] for t in ranked] == ["https://x/b.mp3", "https://x/a.mp3"], "bài có hồ sơ cảm xúc hợp thì lên trước"
+    plain = rank(_flat_scene(), lambda v, a: tracks, book_key="b")
+    assert abs(plain[0]["score"] - plain[1]["score"]) < 0.01
+
+
+def test_emotion_cosine_never_rescues_a_track_beyond_the_silence_ceiling(monkeypatch: pytest.MonkeyPatch) -> None:
+    from abook.webui import music_select
+    from abook.webui.music_select import MAX_Z, rank, scene_sigma, z_distance
+
+    _emotions_on(monkeypatch)
+    EMOTION_WEIGHT = music_select.EMOTION_WEIGHT
+
+    scene = {**_flat_scene(arousal=0.5), "emotions": {"sadness": 0.9}}
+    scene["arousal"] = 0.5
+    track = {"link": "https://x/far.mp3", "valence": 0.0, "arousal": -0.25, "tension": 0.0, "duration": 200,
+             "source": "incompetech", "emotions": {"sadness": 0.9}}
+    distance = z_distance(track, (0.0, 0.5, 0.0), scene_sigma(scene))
+    assert MAX_Z < distance < MAX_Z + EMOTION_WEIGHT, "cosine 1 sẽ kéo bài này xuống dưới ngưỡng nếu được tính"
+    assert rank(scene, lambda v, a: [track], book_key="b") == []
+    assert rank(scene, lambda v, a: [dict(track, arousal=0.4)], book_key="b"), "bài gần thì có"
+
+
+def test_the_catalog_hands_emotions_and_sd_through_to_the_ranking(tmp_path: Path) -> None:
+    from abook.webui.music_select import rank
+
+    catalog = MusicCatalog(tmp_path / "cache", str(_catalog_dir(tmp_path / "cloud")))
+    near_sad = catalog.near(-0.7, -0.4, radius=0)
+    sad = next(t for t in near_sad if t["link"] == "https://x/sad.mp3")
+    assert sad["emotions"]["sadness"] == 0.8 and sad["sd"]["arousal"] == 0.3
+    scene = {**_scene(1, -0.7, -0.4), "emotions": {"sadness": 0.9}}
+    ranked = rank(scene, lambda v, a: catalog.near(v, a, radius=1), book_key="b")
+    assert ranked[0]["link"] == "https://x/sad.mp3"
+
+
+def test_a_track_this_machine_cannot_get_is_skipped_and_the_next_best_is_used(near) -> None:
+    from abook.webui.music_select import rank
+
+    scene = _scene(1, 0.3, -0.6)
+    down = lambda link: link != "https://x/calm.mp3"  # noqa: E731
+    assert rank(scene, near, book_key="b")[0]["link"] == "https://x/calm.mp3"
+    ranked = rank(scene, near, book_key="b", available=down)
+    assert ranked and "https://x/calm.mp3" not in [t["link"] for t in ranked]
+    [entry] = choose([scene], near, book_key="b", available=down)
+    assert entry["link"] == ranked[0]["link"] == "https://x/calm2.mp3"
+    [nothing] = choose([scene], near, book_key="b", available=lambda link: False)
+    assert nothing["link"] is None, "không bài nào lấy được thì mới im lặng"
+
+
+def test_a_pinned_track_that_is_unavailable_falls_back_to_ranking_but_the_pin_stays_the_users(near) -> None:
+    scene = _scene(1, 0.3, -0.6)
+    pins = {scene_key(scene): "https://x/sad.mp3"}
+    [entry] = choose([scene], near, book_key="b", pins=pins, available=lambda link: link != "https://x/sad.mp3")
+    assert entry["link"] in ("https://x/calm.mp3", "https://x/calm2.mp3")
+    assert entry["pinUnavailable"] is True and entry["pinned"] is False and pins == {scene_key(scene): "https://x/sad.mp3"}
+    [back] = choose([scene], near, book_key="b", pins=pins, available=lambda link: True)
+    assert back["link"] == "https://x/sad.mp3" and back["pinned"] is True and "pinUnavailable" not in back
+
+
+def test_a_kept_track_that_is_unavailable_is_chosen_again_and_an_available_one_stays(near) -> None:
+    scene = _scene(1, 0.3, -0.6)
+    keep = {scene_key(scene): "https://x/calm.mp3"}
+    [stays] = choose([scene], near, book_key="b", keep=keep, available=lambda link: True)
+    assert stays["link"] == "https://x/calm.mp3"
+    [moved] = choose([scene], near, book_key="b", keep=keep, available=lambda link: link != "https://x/calm.mp3")
+    assert moved["link"] == "https://x/calm2.mp3"
