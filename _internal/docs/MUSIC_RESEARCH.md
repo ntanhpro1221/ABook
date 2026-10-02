@@ -296,8 +296,19 @@ r 0,48). Luật "LD của bài = LD cuốn + 8 × (speechBand − 0,30)", phần
 
 **Quyết định:** mặc định LD 20 LU (trùng WCAG, nằm trong 18-24 của sách nói, chừa chỗ cho người không chuyên / lớn tuổi /
 nghe nơi ồn) + bù theo speechBand từng bài; người dùng chỉnh mức trong Studio (nghĩa mới của `levelDb` = −LD so với giọng).
-Mỗi bài trong danh mục mang `lufs` và `speechBand`. Whisper WER (sàn an toàn, cùng bộ trộn) chờ khe GPU - Whisper chịu nhạc
-tốt hơn tai người nên không dùng để chọn mức. Chưa đo: hạ nhạc khi có giọng (sách nói gần như liền giọng, lợi nhỏ), độ dài
+Mỗi bài trong danh mục mang `lufs` và `speechBand`.
+
+Whisper WER (sàn an toàn, cùng bộ trộn; 03-10 00:18, `results/pha4_whisper.jsonl`, 216 dòng = 6 giọng × 6 bài × 6 LD).
+WER trung vị so bản sạch theo LD:
+
+| LD | 0 | 5 | 10 | 15 | 20 | 25 |
+|---|---|---|---|---|---|---|
+| WER trung vị | 0,102 | 0,044 | 0,026 | 0,019 | 0,016 | 0,015 |
+
+- Từ 20 LU, WER chạm sàn: mặc định 20 LU an toàn cả theo máy nhận dạng.
+- Trung bình bị kéo bởi 11 dòng WER ~0,94 KHÔNG đổi theo LD. Tất cả cùng một mẫu giọng (`lo18_…/00003_726`), với 3 bài.
+  Đó là Whisper hỏng trên mẫu ấy (đoán sai ngôn ngữ / ảo giác), không phải nhạc che lời.
+- Whisper chịu nhạc tốt hơn tai người nên không dùng để chọn mức; ESTOI (trên) vẫn là thước chính. Chưa đo: hạ nhạc khi có giọng (sách nói gần như liền giọng, lợi nhỏ), độ dài
 chuyển cảnh.
 
 **Danh mục dựng lại (02-10, chưa triển khai):** thêm Freesound (313 ứng viên CC0/CC BY -> 69 bài qua lọc; cổ phong phương
