@@ -1,0 +1,88 @@
+# Đáp án KIỂM TRA truyện Hàn 02-10 (luật cố định: vị trí 30%/70% của bộ, bỏ chương trong ±2 của chương gold cũ, >30 KB lấy 25 KB đầu)
+# "Young Master's PoV Woke Up As A Villain In A Game One Day" file 334 ("Chương 333: Hoàng Tử Kiếm Gãy [I]").
+# Claude gán (A) 02-10, B soát + phân xử 02-10 (gold_kr/B). NGÔI THỨ NHẤT: "tôi" = SAMAEL (m; cùng tập 134/188/199/248). XALDRETH (m, Hoàng Tử
+# Quỷ Thứ Sáu; "HOÀNG TỬ KIẾM GÃY" là danh hiệu khi đã biết tên -> không điểm, quy tắc 11). Chỉ hai người nói; mọi câu
+# có lời dẫn hoặc xưng hô rõ ("ta/ngươi" = Xaldreth, "tôi/ngài" = Samael). 43 "...Cái đéo gì thế này?" = Samael khi linh
+# hồn bị tách khỏi xác (44 "Tôi nuốt khan"). 62 "Thật ra tôi không bất ngờ. Chỉ giật mình thôi." đáp thầm câu hỏi 60 ->
+# N,T (quy tắc 4). 10, 28, 69-70 nói với người đọc -> chỉ N. 41 "Thịch—!!" tiếng động trong lời kể (khoá N).
+# Host sai (giữ đáp án): 38 đòi afraid nhưng câu nói rõ "Không phải vì sợ hãi" (phủ định).
+0 H
+1 N NARRATOR neutral,surprised 0-1 normal normal u
+2 N
+3 N
+4 N
+5 N NARRATOR neutral,afraid 0-1 normal normal u
+6 N
+7 N NARRATOR neutral,afraid 0-1 normal normal u
+8 N
+9 N NARRATOR neutral,afraid 0-1 normal normal u
+10 N
+11 N
+12 N
+13 N
+14 N
+15 N
+16 N
+17 N
+18 N
+19 N
+20 N NARRATOR neutral,afraid 0-1 normal normal u
+21 N
+22 N NARRATOR neutral,sad,afraid 0-1 normal normal u
+23 N
+24 N NARRATOR neutral,afraid 0-1 normal normal u
+25 N NARRATOR neutral,afraid 0-1 normal normal u
+26 N
+27 N
+28 N
+29 N
+30 N NARRATOR neutral,afraid,sad 0-1 normal normal u
+31 N NARRATOR neutral,sad 0-1 normal normal u
+32 N NARRATOR neutral,afraid 0-1 normal normal u
+33 N
+34 N
+35 N
+36 N NARRATOR neutral,afraid 0-1 normal normal u
+37 D XALDRETH sarcastic,neutral 0-1 slow,normal normal,soft m
+38 N
+39 N NARRATOR neutral,afraid 0-1 normal normal u
+40 N
+41 N NARRATOR neutral,surprised 0-1 normal normal u
+42 N NARRATOR neutral,surprised 0-1 normal normal u
+43 D SAMAEL surprised,afraid 1-2 normal soft,normal m
+44 N
+45 N NARRATOR neutral,surprised 0-1 normal normal u
+46 N
+47 N
+48 N
+49 N
+50 N
+51 N
+52 N
+53 N
+54 N
+55 N
+56 N
+57 N
+58 N
+59 N
+60 D XALDRETH neutral,sarcastic 0-1 normal normal m
+61 N
+62 N,T NARRATOR,SAMAEL neutral,surprised 0-1 normal normal u
+63 N
+64 D XALDRETH neutral,sarcastic 0-1 slow,normal normal m
+65 N NARRATOR neutral,afraid 0-1 normal normal u
+66 D XALDRETH neutral,sarcastic 0-1 slow,normal normal,soft m
+67 N NARRATOR neutral,afraid 0-1 normal normal u
+68 N
+69 N,T NARRATOR neutral,sarcastic 0-1 normal normal u
+70 N
+71 N
+72 N
+73 D SAMAEL happy,sarcastic,neutral 0-1 normal normal m
+74 N
+75 D SAMAEL happy,sarcastic,neutral 0-1 normal normal m
+76 N
+77 D XALDRETH sarcastic,happy,neutral 0-1 normal normal m
+78 N
+79 D SAMAEL happy,sarcastic,neutral 0-1 normal normal m

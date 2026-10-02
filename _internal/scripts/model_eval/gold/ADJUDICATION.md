@@ -693,3 +693,16 @@ là Futayo (0420:731-733), tên kênh chat đúng người - giữ A.
 
 Tổng đợt 2 sau phân xử: người nói chính sai được sửa/nới 3 câu (Gimai 14a:138, Konosuba 033:92 -> hai người đủ điểm; Eiyuu
 05:154 -> hai người đủ điểm).
+
+## 02-10 - bốn chương Hàn kiểm tra (Hướng dẫn sinh tồn 052a/122a, Young Master's PoV 143/334)
+
+Luật cố định (30%/70% của bộ, bỏ ±2 quanh chương gold cũ, >30 KB lấy 25 KB đầu); A Opus, B Sonnet soát đối kháng. B: người
+nói chính sai 0 chắc chắn, 1 tranh luận (052a:28); cảm xúc 0 bất đồng (4 chỗ lint cue host lệch, giữ A).
+
+| câu | A | B đề nghị | kết luận | lý do |
+|---|---|---|---|---|
+| HDST 052a:28 “C-cô… tại sao lại ở đây….” | AYLA, ED đủ (Ayla trước), f | ED trước, AYLA~ | ED trước, cả hai vẫn đủ, m | "cô" là cách Ed gọi Ayla (60), Ayla gọi Ed "anh"; nhưng nói lắp đúng kiểu Ayla cả chương - nhập nhằng thật |
+| HDST 052a:2-23 lời kết sách | NARRATOR | + GLOCKT~ | theo B | quy tắc 7: văn bản trích ra, tác giả đủ điểm; parser khoá N nên nửa điểm (tiền lệ Nise 086:57) |
+| HDST 122a:158 “Trước hết, ra ngoài đã.” | LORTEL, ED~ | bỏ ED~ | theo B | 157 lời dẫn của Lortel, Lortel nói đúng cụm này ở 94; Ed vừa bảo ở trong nhà (95) |
+| HDST 052a:76, 81, 87, 157, 172; 122a:127; YMP 143:83, 334:69 | N | N,T | theo B | tiếng lòng tức thời ngôi một (quy tắc 4), cùng mạch A đã cho N,T |
+| YMP 143:191-193 tiếng la đám đông | NPC* 1/2/3 | một NPC* chung | giữ A | quy tắc 6: mỗi câu đám đông một NPC* khác; điểm không đổi |
