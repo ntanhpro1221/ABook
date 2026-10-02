@@ -2,9 +2,12 @@
 ABOOK_MUSIC_STUDENT_DIR hay bản dựng ở LLM_Train) thì thử cả đường nhúng CLAP + âm học + đầu trò; không có thì bỏ qua các bài ấy."""
 from __future__ import annotations
 
+import hashlib
 import json
 import math
+import shutil
 import subprocess
+import urllib.request
 from pathlib import Path
 
 import numpy as np
@@ -12,7 +15,7 @@ import pytest
 import soundfile
 
 from abook.io_utils import ffmpeg_executable
-from abook.webui import music_local, music_student
+from abook.webui import music_local, music_mel, music_student
 
 MUSIC = Path("D:/Novels/LLM_Train/music")
 PACKAGE = Path("D:/Novels/LLM_Train/models/abook_music_student")
@@ -24,6 +27,7 @@ def _isolated(monkeypatch):
     music_student.reset()
     music_student.configure(None)
     monkeypatch.delenv(music_student.ENV_DIR, raising=False)
+    monkeypatch.delenv(music_student.ENV_BACKEND, raising=False)
     music_local.set_analyzer(None)
     yield
     music_student.reset()
@@ -171,3 +175,165 @@ def test_the_app_prediction_stays_close_to_build_student_on_catalog_tracks(packa
         assert diff.max() < PARITY_TOLERANCE, f"{track}: V/E/T khác {diff.round(4).tolist()} (mong {expected.round(3).tolist()})"
     with capsys.disabled():
         print(f"\nmusic_student parity: max |diff| V/E/T = {worst:.4f} trên {len(ids)} bài")
+
+
+# ---- đường ONNX (bản app chỉ-nghe: không torch / transformers / librosa) -------------------------------------------------------
+ONNX_KEYS = {"valence", "arousal", "tension", "sd", "emotions", "confidence", "fitsUnderNarration", "family"}
+
+
+@pytest.fixture(scope="module")
+def onnx_folder(tmp_path_factory) -> Path:
+    """Thư mục chỉ có ba file của đường ONNX (chép từ gói dựng ở LLM_Train): chứng tỏ ba file ấy là đủ."""
+    pytest.importorskip("onnxruntime")
+    folder = tmp_path_factory.mktemp("onnx_student")
+    for name in music_student.PACKAGE_FILES["onnx"]:
+        if not (PACKAGE / name).is_file():
+            pytest.skip("không có gói model của trò ở " + str(PACKAGE))
+        shutil.copyfile(PACKAGE / name, folder / name)
+    return folder
+
+
+@pytest.fixture
+def onnx(monkeypatch, onnx_folder: Path) -> Path:
+    monkeypatch.setenv(music_student.ENV_BACKEND, "onnx")
+    monkeypatch.setenv(music_student.ENV_DIR, str(onnx_folder))
+    return onnx_folder
+
+
+def test_the_backend_is_torch_when_it_imports_else_onnx_else_nothing(monkeypatch) -> None:
+    present = {"numpy", "librosa", "torch", "transformers", "onnxruntime"}
+    monkeypatch.setattr(music_student.importlib.util, "find_spec", lambda name: object() if name in present else None)
+    assert music_student.backend() == "torch"
+    present.discard("librosa")
+    assert music_student.backend() == "onnx"
+    present.discard("onnxruntime")
+    assert music_student.backend() is None and not music_student.available()
+    present.update({"librosa", "onnxruntime"})
+    monkeypatch.setenv(music_student.ENV_BACKEND, "onnx")
+    assert music_student.backend() == "onnx", "ép onnx dù có torch"
+    present.discard("onnxruntime")
+    assert music_student.backend() is None, "ép một đường mà thiếu thư viện của nó: không rơi sang đường kia"
+    monkeypatch.setenv(music_student.ENV_BACKEND, "torch")
+    present.add("onnxruntime")
+    assert music_student.backend() == "torch"
+
+
+def test_each_backend_needs_only_its_own_files(tmp_path: Path, monkeypatch) -> None:
+    for name in music_student.PACKAGE_FILES["onnx"]:
+        (tmp_path / name).write_bytes(b"x")
+    monkeypatch.setenv(music_student.ENV_BACKEND, "onnx")
+    assert music_student._complete(tmp_path) and not music_student._complete(tmp_path, "torch")
+    assert music_student.PACKAGE_HASHES.keys() >= {name for files in music_student.PACKAGE_FILES.values() for name in files}
+
+
+def test_an_onnx_track_gets_a_full_entry_without_the_acoustic_key(tmp_path: Path, onnx: Path) -> None:
+    song = _tones(tmp_path / "tones.wav")
+    result = music_student.analyze(song)
+    assert result is not None and ONNX_KEYS <= result.keys()
+    assert "loudness" not in result, "speechBand cần âm học: đường onnx không bịa"
+    assert result["confidence"] == 0.5 and set(result["sd"]) == {"valence", "arousal", "tension"}
+    assert len(result["emotions"]) == 13 and all(0.0 <= v <= 1.0 for v in result["emotions"].values())
+    cleaned = music_local.clean_analysis(result)
+    assert cleaned is not None and cleaned["background"] == result["fitsUnderNarration"] and "speechBand" not in cleaned
+    assert cleaned["family"] in music_local.music_plan.FAMILIES
+    assert music_student.register() is True and music_local.analyzer_available()
+    assert music_local.analyze(song)["valence"] == cleaned["valence"]
+    assert music_student._load().backend == "onnx"
+
+
+def test_onnx_too_short_or_unreadable_audio_is_not_analysed(tmp_path: Path, onnx: Path) -> None:
+    assert music_student.analyze(_tones(tmp_path / "blip.wav", 1.5)) is None
+    broken = tmp_path / "broken.mp3"
+    broken.write_bytes(b"not audio")
+    assert music_student.analyze(broken) is None
+
+
+def test_onnx_and_torch_agree_with_the_same_head_on_catalog_tracks(monkeypatch, onnx: Path, capsys) -> None:
+    """Cùng cửa sổ, cùng đầu A: mel numpy + tháp fp16 ONNX so với extractor transformers + tháp torch fp32 của gói, trong 0,02."""
+    pytest.importorskip("torch")
+    pytest.importorskip("transformers")
+    ids, stem = _reference_ids()
+    paths = [MUSIC / "audio_incompetech" / (stem(track) + ".mp3") for track in ids]
+    got = [music_student.analyze(path) for path in paths]
+    assert all(result is not None for result in got)
+    monkeypatch.setenv(music_student.ENV_BACKEND, "torch")
+    monkeypatch.setenv(music_student.ENV_DIR, str(PACKAGE))
+    music_student.reset()
+    tower = music_student._load()
+    assert tower is not None and tower.backend == "torch"
+    head = music_student._Head(PACKAGE / "student_head_A.npz")
+    worst = 0.0
+    for path, result in zip(paths, got):
+        clips = music_student._clap_windows(music_mel.decode(path, music_student.CLAP_RATE))
+        expected = head.predict(tower.embed(clips))
+        diff = np.abs(_vet(result) - _vet(expected))
+        worst = max(worst, float(diff.max()))
+        assert diff.max() < 0.02, f"{path.name}: V/E/T khác {diff.round(4).tolist()}"
+        assert max(abs(result["emotions"][name] - value) for name, value in expected["emotions"].items()) < 0.02, path.name
+        assert result["family"] == expected["family"], path.name
+    with capsys.disabled():
+        print(f"\nmusic_student onnx vs torch (same head A): max |diff| V/E/T = {worst:.5f} over {len(paths)} tracks")
+
+
+class _Reply:
+    """Thay phản hồi của urllib: trả `body` một lần rồi hết."""
+
+    status = 200
+
+    def __init__(self, body: bytes) -> None:
+        self.body = body
+
+    def __enter__(self) -> "_Reply":
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        return None
+
+    def read(self, count: int = -1) -> bytes:
+        body, self.body = self.body, b""
+        return body
+
+
+@pytest.mark.parametrize("name", ["onnx", "torch"])
+def test_no_download_happens_when_it_is_switched_off(tmp_path: Path, monkeypatch, name: str) -> None:
+    opened: list[object] = []
+
+    def refuse(*args, **kwargs):
+        opened.append(args)
+        raise AssertionError("không được chạm mạng")
+
+    monkeypatch.setattr(urllib.request, "urlopen", refuse)
+    monkeypatch.setenv(music_student.ENV_BACKEND, name)
+    assert music_student.os.environ[music_student.ENV_DOWNLOAD] == "0"
+    monkeypatch.setattr(music_student.importlib.util, "find_spec", lambda module: object())
+    music_student.configure(tmp_path / "student")
+    assert music_student._download(tmp_path / "student") is False and not (tmp_path / "student").exists()
+    assert music_student._load() is None and not music_student.available()
+    assert music_student.analyze(_tones(tmp_path / "t.wav", 5)) is None
+    assert opened == [], "ABOOK_MUSIC_STUDENT_DOWNLOAD=0 chặn mọi đường tải, kể cả HTTPS thuần"
+
+
+def test_the_plain_https_download_is_pinned_verified_and_atomic(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv(music_student.ENV_BACKEND, "onnx")
+    monkeypatch.setenv(music_student.ENV_DOWNLOAD, "1")
+    monkeypatch.setattr(music_student.importlib.util, "find_spec", lambda module: object())
+    bodies = {name: f"nội dung {name}".encode() for name in music_student.PACKAGE_FILES["onnx"]}
+    hashes = {name: (hashlib.sha256(body).hexdigest(), len(body)) for name, body in bodies.items()}
+    monkeypatch.setattr(music_student, "PACKAGE_HASHES", {**music_student.PACKAGE_HASHES, **hashes})
+    asked: list[str] = []
+
+    def fake(request, timeout=None):
+        asked.append(request.full_url)
+        return _Reply(bodies[request.full_url.rsplit("/", 1)[1]])
+
+    monkeypatch.setattr(urllib.request, "urlopen", fake)
+    folder = tmp_path / "student"
+    assert music_student._download(folder) is True
+    assert asked == [f"https://huggingface.co/NGDtuanh/abook-music-student/resolve/{music_student.REVISION}/{name}"
+                     for name in music_student.PACKAGE_FILES["onnx"]]
+    assert sorted(path.name for path in folder.iterdir()) == sorted(music_student.PACKAGE_FILES["onnx"]), "không còn file .part"
+    # Sai băm: không bao giờ giữ file.
+    monkeypatch.setattr(music_student, "PACKAGE_HASHES", {**music_student.PACKAGE_HASHES, "clap_audio_fp16.onnx": ("0" * 64, 5)})
+    other = tmp_path / "other"
+    assert music_student._download(other) is False
+    assert not (other / "clap_audio_fp16.onnx").exists() and not list(other.glob("*.part"))

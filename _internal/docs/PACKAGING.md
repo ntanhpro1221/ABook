@@ -140,7 +140,7 @@ kế tiếp.
   giữ nguyên để Windows+A và thông báo không đổi.
 - WebView2: Windows 11 có sẵn; bộ cài tự tải khi thiếu.
 - Python nhúng: bản embeddable chính thức mới nhất còn bản vá nhị phân (server đồng bộ nghe cả mạng LAN - cần bản vá bảo
-  mật); URL + SHA-256 ghi cứng trong script build. Gói phụ (Pillow, psutil, requests) cài `--require-hashes`.
+  mật); URL + SHA-256 ghi cứng trong script build. Gói phụ (Pillow, psutil, requests, numpy + onnxruntime cho bộ phân tích nhạc nhập) cài `--require-hashes`.
 
 ## Build
 

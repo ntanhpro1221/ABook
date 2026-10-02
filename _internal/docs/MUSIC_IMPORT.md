@@ -38,12 +38,24 @@ Nhạc huấn luyện) cắm vào bằng `music_local.set_analyzer(hàm)`; kết
   độ = sigmoid, valence / energy / tension kẹp -1..1). `sd` = RMSE giữ ngoài của từng trục, `confidence` cố định 0,5,
   `fitsUnderNarration` và `family` đọc từ vector nhúng so với vector chữ đã tính sẵn (họ ngoài danh sách của app như "rock"
   -> `other`), `loudness.speechBand` = tỉ lệ năng lượng 300-3000 Hz. Bài < 3 giây hay file không giải mã được -> `None`.
-- **Gói model** (~55 MB: `model.safetensors` fp16, `config.json`, `preprocessor_config.json`, `student_head.npz`) ở
-  `huggingface.co/NGDtuanh/abook-music-student`, ghim một commit (`music_student.REVISION`; còn trống thì app không tải gì), tải
-  một lần vào `<dữ liệu app>/music/student/` khi bài đầu tiên cần phân tích. Chưa có gói, không mạng, hay thiếu torch / transformers
-  / librosa (app đóng gói chỉ có phần nghe) -> `analyze` trả `None` và `register()` không cắm gì: bài ở "chưa phân tích", giao diện
-  nói chưa có bộ phân tích. `ABOOK_MUSIC_STUDENT_DIR` trỏ tới một thư mục gói có sẵn (bài thử, máy không mạng).
-- **Chi phí** (CPU máy chủ sách, 16 luồng): nạp gói ~5 giây một lần; một bài ~3 phút ~1,2 giây (lần đầu ~3,8 giây vì numba biên dịch).
+- **Hai đường chạy** (`music_student.backend()`): máy có Studio (torch + transformers + librosa) chạy đường **torch** như mô tả
+  trên. Bản app chỉ-nghe (Python nhúng, `shell/python/requirements.txt`: numpy + onnxruntime CPU) chạy đường **onnx**: mel numpy
+  (`music_mel.py`, khớp transformers 1e-5 dB) -> tháp CLAP fp16 `clap_audio_fp16.onnx` -> đầu A `student_head_A.npz` (chỉ 512 chiều
+  CLAP, không âm học) - cùng cửa sổ, cùng phép tính đầu, nên khoá đầu ra như nhau TRỪ `loudness.speechBand` (cần âm học; độ to
+  đã do app đo). Lệch V/E/T so với torch cùng đầu A < 0,001. Cả hai đủ thì torch thắng; ép bằng `ABOOK_MUSIC_STUDENT_BACKEND=onnx|torch`
+  (bài thử trên máy có cả hai). Thiếu thư viện của cả hai -> không bộ phân tích.
+- **Gói model** ở `huggingface.co/NGDtuanh/abook-music-student`, ghim một commit (`music_student.REVISION`; còn trống thì app không
+  tải gì) và SHA-256 từng file (`PACKAGE_HASHES`); mỗi đường chỉ tải file của mình, một lần vào `<dữ liệu app>/music/student/`
+  khi bài đầu tiên cần phân tích, bằng HTTPS thuần (`studio_setup.download`: `.part`, kiểm băm, rồi mới đổi tên; không cần
+  huggingface_hub). torch ~55 MB: `model.safetensors` fp16, `config.json`, `preprocessor_config.json`, `student_head.npz`. onnx
+  ~59 MB: `clap_audio_fp16.onnx`, `student_head_A.npz`, `preprocessor_config.json`. Chưa có gói, không mạng, hay thiếu thư viện
+  của cả hai đường -> `analyze` trả `None` và `register()` không cắm gì: bài ở "chưa phân tích", giao diện nói chưa có bộ phân tích.
+  `ABOOK_MUSIC_STUDENT_DIR` trỏ tới một thư mục gói có sẵn (bài thử, máy không mạng); `ABOOK_MUSIC_STUDENT_DOWNLOAD=0` chặn mọi lần tải.
+- **Đường onnx - chi phí**: bộ cài +~80 MB cài xong (numpy, onnxruntime và ba gói đi kèm; ~17 MB trong bộ cài nén), gói model 59 MB
+  tải riêng; một bài ~3 phút ~0,4 giây trên CPU 32 luồng (ffmpeg giải mã 0,2 + mel 0,03 + tháp 0,16), nạp phiên ~0,7 giây. Bản
+  đóng gói hiện CHƯA mang ffmpeg (`imageio-ffmpeg` không nằm trong `requirements.txt`): không có `ffmpeg.exe` trong PATH thì cả
+  việc nhập nhạc (`read_tags`) lẫn phân tích không chạy được.
+- **Chi phí** của đường torch (CPU máy chủ sách, 16 luồng): nạp gói ~5 giây một lần; một bài ~3 phút ~1,2 giây (lần đầu ~3,8 giây vì numba biên dịch).
   Khớp bản nghiên cứu: đầu trò + âm học trùng V/E/T tới 1e-3 khi nhận đúng vector nhúng của bản nghiên cứu; cả đường chạy của app
   lệch tối đa ~0,05 trên V/E/T vì bản nghiên cứu cắt cửa sổ bằng `ffmpeg -ss` theo độ dài ghi trong đầu file mp3.
 
