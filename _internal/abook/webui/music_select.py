@@ -22,7 +22,7 @@ from typing import Any, Callable, Iterable
 from . import music_scenes
 
 # Điểm Lớp 1-2 của docs/MUSIC_THEORY.md §5.3. Mọi hằng số dưới đây là GIÁ TRỊ KHỞI ĐẦU lấy từ tài liệu ấy và sẽ được học
-# (E4: Bradley-Terry trên phán quyết cặp mù của chủ sách).
+# (E4: Bradley-Terry trên phán quyết cặp mù của máy chấm - nghe bằng model âm thanh + Claude chấm mù; chủ sách không chấm).
 MAX_Z = 2.0                      # khoảng cách (đã chia theo độ không chắc) xa hơn mức này thì đoạn im lặng
 AXIS_WEIGHTS = {"arousal": 1.0, "tension": 0.8, "valence": 0.6}   # năng lượng > căng thẳng > vui/buồn (theo độ tin cậy đo được)
 TAU = 0.1                        # sàn độ không chắc mỗi trục: không bao giờ chia cho ~0
