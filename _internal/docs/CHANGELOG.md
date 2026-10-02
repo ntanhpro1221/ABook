@@ -17,7 +17,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   được": máy không tự đoán không khí của bài, và chưa tự chọn nó cho đoạn nào. Bài bạn ghim đi cùng file sách `.abook` /
   `.abookproj` (không ai khác tải được nó) và sang điện thoại khi nghe hay đồng bộ; nơi ghi công chỉ hiện tên bài và nghệ sĩ có
   sẵn trong file, không nói gì về giấy phép. Xoá một bài khỏi kho thì sách đã xuất vẫn giữ bản của nó. Điện thoại phát được
-  những bài này khi chúng nằm trong sách hay đến qua đồng bộ; nhập nhạc ngay trên điện thoại sẽ có sau.
+  những bài này khi chúng nằm trong sách hay đến qua đồng bộ; điện thoại cũng tự nhập được nhạc của riêng nó (xem mục
+  "Điện thoại và thiết bị").
 
 - **Xuất cả bộ nhiều phần thành MỘT file `.abook`**: trong hộp Xuất, chọn "Cả bộ" rồi file `.abook` - có hai cách,
   "Một file" (mặc định: cả bộ gộp trong một file, mở ra là nghe liền từ phần 1 sang phần 2, danh sách chương chia theo
@@ -29,6 +30,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Điện thoại và thiết bị
 
+- **Nhập nhạc của tôi ngay trên điện thoại, và đổi nhạc nền của một cuốn sách đã mở**: trong "Sửa sách" của một cuốn nhập từ file
+  (cả điện thoại lẫn máy tính) có mục "Nhạc của tôi" - bấm "Nhập nhạc của tôi…", chọn một hay nhiều bản (mp3, m4a, ogg, opus,
+  flac, wav) trong hộp chọn file của hệ thống; điện thoại chép chúng vào kho nhạc riêng của máy (nhập lại cùng một bài thì
+  không thành hai bản), đọc tên bài, nghệ sĩ, độ dài trong file và đo độ to để nhạc nằm đúng dưới giọng đọc. Ở từng đoạn nhạc
+  của sách có nút "Đổi bài": chọn một bài của bạn thay cho bài người làm sách gắn, "Về bài gốc" để trả lại. Bài bạn chọn đi cùng
+  file sách khi "Lưu" hay "Lưu thành…", nên máy khác mở file là nghe được đúng bài ấy dù không có nó trong kho; xoá bài khỏi kho thì
+  sách đã chọn nó vẫn giữ bản của nó. ABook chỉ hiện tên bài và nghệ sĩ có sẵn trong file, không nói gì về giấy phép. Máy chưa có
+  bộ phân tích âm thanh nên bài nhập vào là "chưa phân tích": ABook không đoán không khí của bài và không tự chọn nó - bạn chọn.
 - **Ghi ý muốn cho Studio ngay trên sách nhập từ file, không cần Studio**: trong tab "Nhân vật" của một cuốn không có
   xưởng, đổi giới tính hay gộp hai tên thành một người nay ghi lại được - giọng đọc và chữ truyện chưa đổi gì, chỉ có dấu
   "Đang chờ Studio" cạnh người ấy. "Tuỳ chọn khác" có thêm "Việc đang chờ Studio (N)" liệt kê từng việc, bỏ được từng việc

@@ -456,6 +456,145 @@ def test_files_written_by_each_platform_open_on_the_other() -> None:
     assert (written / "python_v4.abook").is_file()
 
 
+# ---- "Nhạc của tôi" trên sách không có xưởng (docs/MUSIC_IMPORT.md): ghim bài của người nghe vào một mốc nhạc -----------------
+
+
+def _my_tone(app: App) -> str:
+    """Nhập bài mẫu vào kho "Nhạc của tôi" của máy; trả link của nó."""
+    return app.my_music.import_file(shared.FIXTURES / "track" / "tone.wav")[0]["link"]
+
+
+def test_pinning_one_of_my_tracks_puts_its_file_in_the_book_and_the_player_plays_it(imported) -> None:
+    app, folder, identifier, call = imported
+    link = _my_tone(app)
+    assert link == shared.TRACK_LINK
+    before = {path: path.read_bytes() for path in folder.rglob("*") if path.is_file()}
+    status, view = call("PUT", "/api/books/{id}/music", {"pins": {"1:0": link}})
+    name = f"music/{shared.TRACK_SHA}.wav"
+    assert status == 200 and view["cues"][0]["pinned"] is True and "pinned" not in view["cues"][1]
+    assert (folder / name).read_bytes() == shared.tone_wav(), "file bài đi vào thư mục sách, đúng chỗ bài của người làm sách nằm"
+    after = {path: path.read_bytes() for path in folder.rglob("*") if path.is_file()}
+    assert {path.relative_to(folder).as_posix() for path in after if before.get(path) != after[path]} == {"edits.json", name}
+    stored = book_edits.load(folder)["music"]
+    assert stored["pins"] == {"1:0": link} and stored["tracks"][shared.TRACK_SHA]["ext"] == "wav"
+    cues = app.music_cues(identifier, 1)
+    assert [cue["start"] for cue in cues["cues"]] == [0.0, 60.0]
+    pinned = cues["cues"][0]
+    assert pinned["src"].endswith(f"/music/files/{shared.TRACK_SHA}.wav") and pinned["link"] == link
+    assert pinned["gainDb"] == music_plan.cue_gain_db(-18.0, stored["tracks"][shared.TRACK_SHA].get("lufs"), None)
+    assert cues["credits"][link] == {"title": "tone"}, "chỉ tên bài (và nghệ sĩ nếu có), không giấy phép"
+    served = call.raw("GET", pinned["src"].replace(identifier, "{id}"))
+    assert served[0] == 200 and served[1] == shared.tone_wav()
+    assert call("PUT", "/api/books/{id}/music", {"pins": {"1:0": None}})[0] == 200
+    assert not (folder / name).exists() and book_edits.is_empty(book_edits.load(folder)) and not (folder / "edits.json").exists()
+    assert call.raw("GET", f"/api/books/{{id}}/music/files/{shared.TRACK_SHA}.wav")[0] == 404, "bỏ ghim thì file không còn được phục vụ"
+
+
+def test_a_pin_that_does_not_fit_is_refused_with_a_sentence_and_changes_nothing(imported) -> None:
+    app, folder, _identifier, call = imported
+    link = _my_tone(app)
+    cases = [({"pins": {"1:0": f"local:{shared.OTHER_SHA}"}}, "không còn trong Nhạc của tôi"),
+             ({"pins": {"1:0": "https://x/y.mp3"}}, "Chỉ đổi được sang bài trong Nhạc của tôi"),
+             ({"pins": {"7:7": link}}, "Không có đoạn nhạc này"),
+             ({"pins": "tone"}, "không hợp lệ"),
+             ({"volume": 3}, "đổi bài")]
+    for body, message in cases:
+        status, answer = call("PUT", "/api/books/{id}/music", body)
+        assert status == 400 and message in answer["error"], body
+    assert not (folder / "edits.json").exists() and not (folder / "music" / f"{shared.TRACK_SHA}.wav").exists()
+    app.my_music.remove(shared.TRACK_SHA)
+    assert call("PUT", "/api/books/{id}/music", {"pins": {"1:0": link}})[0] == 400, "bài vừa xoá khỏi kho thì không ghim được"
+
+
+def test_the_alternatives_of_a_book_without_a_workshop_are_my_tracks_only(imported) -> None:
+    app, _folder, _identifier, call = imported
+    assert call("GET", "/api/books/{id}/music/scenes/1:0/alternatives")[1] == {"key": "1:0", "alternatives": [], "mine": []}
+    link = _my_tone(app)
+    mine = call("GET", "/api/books/{id}/music/scenes/1:0/alternatives")[1]["mine"]
+    assert [(item["link"], item["analysed"], item["fits"]) for item in mine] == [(link, False, False)]
+    call("PUT", "/api/books/{id}/music", {"pins": {"1:0": link}})
+    assert call("GET", "/api/books/{id}/music/scenes/1:0/alternatives")[1]["mine"] == [], "bài đang dùng ở mốc này không nằm trong danh sách đổi"
+    assert len(call("GET", "/api/books/{id}/music/scenes/1:60000/alternatives")[1]["mine"]) == 1
+    assert call("GET", "/api/books/{id}/music/scenes/9:9/alternatives")[0] == 404
+
+
+def test_clearing_all_edits_also_drops_the_pinned_files_but_never_a_book_layer_file(imported) -> None:
+    app, folder, _identifier, call = imported
+    link = _my_tone(app)
+    call("PUT", "/api/books/{id}/music", {"pins": {"1:0": link, "1:60000": link}})
+    assert (folder / "music" / f"{shared.TRACK_SHA}.wav").is_file() and book_edits.count(book_edits.load(folder)) == 2
+    layer = {name for name in book_edits._base(folder)["package"]["files"]}
+    call("DELETE", "/api/books/{id}/edits")
+    assert not (folder / "music" / f"{shared.TRACK_SHA}.wav").exists()
+    assert all((folder / name).is_file() for name in layer if name != "edits.json")
+
+
+def test_saving_carries_the_pinned_track_and_another_computer_plays_it(tmp_path: Path) -> None:
+    app, folder, _identifier = _edited_library(tmp_path)
+    link = _my_tone(app)
+    book_edits.set_music(folder, {"pins": {"1:0": link}}, app._my_track)
+    out = bookfile.repack(folder, tmp_path / "co_nhac.abook")
+    name = f"music/{shared.TRACK_SHA}.wav"
+    with zipfile.ZipFile(out) as archive:
+        assert archive.getinfo(name).compress_type == zipfile.ZIP_STORED and archive.read(name) == shared.tone_wav()
+    with BookFile(out) as opened:
+        opened.verify()
+        assert opened.book["package"]["version"] == 4 and name in opened.content
+        assert book_edits.pinned_files(opened.edits) == [name]
+        assert name not in json.loads(opened.read("book.json")).get("music", {}).get("tracks", {}), "lớp sách không bị sửa tại chỗ"
+    other, other_folder, _ = _edited_library(tmp_path, "may_b")
+    shutil.rmtree(other_folder)
+    opened_on_b = other.open_book_file(str(out))
+    assert opened_on_b["how"] == "new"
+    path = other.library.resolve_listenable(opened_on_b["id"])
+    assert (path / name).read_bytes() == shared.tone_wav()
+    played = other.music_cues(opened_on_b["id"], 1)["cues"]
+    assert played[0]["link"] == link and played[0]["src"].endswith(f"/music/files/{shared.TRACK_SHA}.wav")
+    assert packages.music_file(path, name) == path / name
+    assert other.my_music.entries() == [], "máy kia không có bài này trong kho của nó - vẫn phát được vì nó nằm trong sách"
+
+
+def test_the_file_a_phone_wrote_is_opened_and_its_pinned_track_kept(tmp_path: Path) -> None:
+    pinned = shared.FIXTURES / "written" / "python_v4_pins.abook"
+    app, folder, identifier = _edited_library(tmp_path)
+    book_edits.set_music(folder, {"levelDb": -30})
+    result = app.open_book_file(str(pinned))  # cùng cuốn, không nhiều chương hơn: không giải nén lại, phần sửa được hợp vào
+    assert result["how"] == "existing" and result["id"] == identifier
+    edits = book_edits.load(folder)
+    assert edits["music"]["levelDb"] == -30.0 and edits["music"]["pins"] == {"1:0": shared.TRACK_LINK}
+    assert (folder / "music" / f"{shared.TRACK_SHA}.wav").read_bytes() == shared.tone_wav(), "file bài ghim lấy về từ file"
+    assert app.music_cues(identifier, 1)["cues"][0]["link"] == shared.TRACK_LINK
+
+
+def test_opening_a_fuller_file_again_keeps_the_pinned_file_of_this_machine(tmp_path: Path) -> None:
+    app, folder, identifier = _edited_library(tmp_path)
+    book_edits.set_music(folder, {"pins": {"1:0": _my_tone(app)}}, app._my_track)
+    plain = tmp_path / "nguyen_ban.abook"
+    shutil.copytree(shared.BASE, tmp_path / "goc")
+    bookfile.repack(tmp_path / "goc", plain)
+    with BookFile(plain) as opened:
+        opened.extract(folder.parent, folder.name)  # nhập lại tại chỗ, như "updated"
+    assert (folder / "music" / f"{shared.TRACK_SHA}.wav").read_bytes() == shared.tone_wav()
+    assert book_edits.load(folder)["music"]["pins"] == {"1:0": shared.TRACK_LINK}
+
+
+def test_a_file_whose_pinned_track_is_missing_is_refused_whole(tmp_path: Path) -> None:
+    edits = book_edits.dump(book_edits.validate({**shared.HEAD, "music": shared.PINS}))
+    with pytest.raises(BookFileError, match="thiếu bài nhạc"):
+        BookFile(_forged(tmp_path, edits))
+
+
+def test_the_producer_skips_a_pin_the_project_cannot_have(tmp_path: Path) -> None:
+    producer = tmp_path / "may_san_xuat"
+    producer.mkdir()
+    project = shared.make_base_project(producer)
+    _plan(project)
+    book_edits.stash_incoming(project, book_edits.validate({**shared.HEAD, "music": shared.PINS}), None)
+    folded = book_edits.fold(project)
+    assert folded["skipped"] == 1 and folded["applied"] == 0, "bài chỉ có trong kho nhạc máy người nghe: không áp được vào dự án"
+    assert all(not link.startswith("local:") for link in music_plan.read_overrides(project)["pins"].values())
+
+
 # ---- chủ máy sản xuất ---------------------------------------------------------------------------------------------------
 
 

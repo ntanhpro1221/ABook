@@ -2,6 +2,9 @@
  "format": "abook-edits",
  "version": 1,
  "music": {
-  "fade": 2
+  "pins": {
+   "1:0": "local:ABC"
+  },
+  "tracks": {}
  }
 }

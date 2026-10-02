@@ -1,0 +1,230 @@
+{
+ "manifest": {
+  "format": "abook-book/1",
+  "title": "Sách thử · Tập 1",
+  "narrator": "Đức Trí",
+  "duration": 12.2,
+  "chaptersTotal": 2,
+  "chaptersAvailable": 1,
+  "complete": false,
+  "version": "eacac0f189d27043",
+  "chapters": [
+   {
+    "id": 1,
+    "index": 1,
+    "title": "Chương 646",
+    "subtitle": "Trở về (1)",
+    "fullTitle": "Chương 646 · Trở về (1)",
+    "duration": 12.2,
+    "available": true,
+    "file": "chapters/00001_645.mp3",
+    "size": 10243,
+    "script": "scripts/1.json"
+   },
+   {
+    "id": 2,
+    "index": 2,
+    "title": "Chương 647",
+    "subtitle": "Trở về (2)",
+    "fullTitle": "Chương 647 · Trở về (2)",
+    "duration": 0.0,
+    "available": false,
+    "file": null,
+    "size": 0,
+    "script": "scripts/2.json"
+   }
+  ],
+  "cast": "cast.json",
+  "samples": [
+   "samples/3.wav"
+  ],
+  "cover": {
+   "version": 1790950133,
+   "color": "#9b562f",
+   "width": 96,
+   "height": 128,
+   "file": "cover.jpg"
+  },
+  "music": {
+   "levelDb": -24.0,
+   "tracks": {
+    "music/c4c39b8782f721b05358033359f25876e70597f8.mp3": {
+     "file": "music/c4c39b8782f721b05358033359f25876e70597f8.mp3",
+     "link": "https://x/calm.mp3",
+     "title": "Calm",
+     "creator": "A",
+     "attribution": "Calm by A (CC BY 4.0)",
+     "lufs": -26.0,
+     "speechBand": 0.1
+    },
+    "music/bf36d3af630dc0c7d83324b545ade933affdfd90.mp3": {
+     "file": "music/bf36d3af630dc0c7d83324b545ade933affdfd90.mp3",
+     "link": "https://x/battle.mp3",
+     "title": "Battle",
+     "creator": "B",
+     "attribution": "Battle by B (CC BY 4.0)",
+     "lufs": -10.0,
+     "speechBand": 0.7
+    },
+    "music/51edf6872a24d2b85b1e73e348a961b28699578a.wav": {
+     "file": "music/51edf6872a24d2b85b1e73e348a961b28699578a.wav",
+     "link": "local:51edf6872a24d2b85b1e73e348a961b28699578a",
+     "title": "Bài của tôi",
+     "creator": "Tôi",
+     "lufs": -23.0
+    }
+   },
+   "chapters": {
+    "1": [
+     {
+      "start": 0.0,
+      "end": 60.0,
+      "track": "music/51edf6872a24d2b85b1e73e348a961b28699578a.wav",
+      "gainDb": -17.99
+     }
+    ]
+   }
+  }
+ },
+ "cast": {
+  "narrator": {
+   "voice": "Đức Trí",
+   "lines": 4,
+   "seconds": 7.0,
+   "profile": {
+    "key": "narrator",
+    "preset": "Đức Trí",
+    "tone": ""
+   }
+  },
+  "characters": [
+   {
+    "name": "HEIDI",
+    "displayName": "Hây-đi",
+    "originalName": "Heidi",
+    "gender": "Nữ",
+    "age": "Thanh niên",
+    "lines": 1,
+    "seconds": 2.5,
+    "recorded": 0,
+    "voice": {
+     "key": "preset_thanh_binh_f087_p+00",
+     "preset": "Thanh Bình",
+     "tone": "trầm hẳn"
+    },
+    "sampleId": null,
+    "firstChapter": "Chương 646",
+    "pendingVoice": null
+   },
+   {
+    "name": "LUCIEN",
+    "displayName": "Lucien",
+    "gender": "Nam",
+    "age": "Thanh niên",
+    "lines": 1,
+    "seconds": 4.0,
+    "recorded": 1,
+    "voice": {
+     "key": "preset_thanh_binh_f087_p+00",
+     "preset": "Thanh Bình",
+     "tone": "trầm hẳn"
+    },
+    "sampleId": 3,
+    "firstChapter": "Chương 646",
+    "pendingVoice": null
+   }
+  ],
+  "extras": [],
+  "carried": []
+ },
+ "scripts": {
+  "1": {
+   "chapterId": 1,
+   "title": "Chương 646 · Trở về (1)",
+   "timed": true,
+   "duration": 12.2,
+   "segments": [
+    {
+     "id": 1,
+     "paragraph": 0,
+     "text": "Chương 646 - Trở về (1)",
+     "kind": "heading",
+     "speaker": "",
+     "start": 0.0,
+     "end": 2.0,
+     "status": "verified",
+     "stableId": "c1_s0001_aa6eb2",
+     "textSha256": "aa6eb21ef4206a0795ca5793883e40eb49b958ae12f60f879c0806d1f8138ab0"
+    },
+    {
+     "id": 2,
+     "paragraph": 1,
+     "text": "Trời đã sáng.",
+     "kind": "narration",
+     "speaker": "",
+     "start": 2.4,
+     "end": 5.4,
+     "status": "verified",
+     "stableId": "c1_s0002_c58b67",
+     "textSha256": "c58b6788498e1756635f89b55a9906af2fa37a0d3ffbc49083eb56c5c5c5483c"
+    },
+    {
+     "id": 3,
+     "paragraph": 1,
+     "text": "“Đi thôi.”",
+     "kind": "dialogue",
+     "speaker": "Lucien",
+     "start": 5.7,
+     "end": 9.7,
+     "status": "verified",
+     "stableId": "c1_s0003_fa1fe2",
+     "textSha256": "fa1fe25f1922819e9fd94d48eeef9fddcaeb06be1653b73d618873e572498ea5"
+    },
+    {
+     "id": 6,
+     "paragraph": 1,
+     "text": "“Chào anh.”",
+     "kind": "dialogue",
+     "speaker": "Hây-đi",
+     "start": 9.7,
+     "end": 12.2,
+     "status": "verified",
+     "stableId": "c1_s0006_34534a",
+     "textSha256": "34534ad5d25c0cc74935800b021272b15ac53406accd068020698cea262c6ec0"
+    }
+   ]
+  },
+  "2": {
+   "chapterId": 2,
+   "title": "Chương 647 · Trở về (2)",
+   "timed": false,
+   "duration": 2.4,
+   "segments": [
+    {
+     "id": 4,
+     "paragraph": 0,
+     "text": "Chương 647 - Trở về (2)",
+     "kind": "heading",
+     "speaker": "",
+     "start": null,
+     "end": null,
+     "status": "verified",
+     "stableId": "c1_s0004_65dd7d",
+     "textSha256": "65dd7d9afa231cdf455a91fe50a917f8a8f803c0dbe4eb8e693a83b9a90ef57b"
+    },
+    {
+     "id": 5,
+     "paragraph": 1,
+     "text": "Chưa thu.",
+     "kind": "narration",
+     "speaker": "",
+     "start": null,
+     "end": null,
+     "status": "analyzed",
+     "stableId": "c1_s0005_dd2e97",
+     "textSha256": "dd2e97ef858a191e7163818f82551c5462dd647c3e2836e5e261a241552d1242"
+    }
+   ]
+  }
+ }
+}

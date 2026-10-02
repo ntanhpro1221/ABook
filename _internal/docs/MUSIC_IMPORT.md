@@ -3,7 +3,7 @@
 Người dùng tự nhập nhạc của riêng mình làm nhạc nền, ngoài danh mục trên mây (`MUSIC_RESEARCH.md`, `MUSIC_SELECTION_MODEL.md`).
 Mã: `abook/webui/music_local.py` (kho + phân tích), nối vào `server.py`, `music_plan.py`, `sync.py`, `bookfile.py`; giao diện:
 `ui/src/studio/MusicTab.tsx` (phần "Nhạc của tôi" và nhóm cùng tên trong "Đổi bài"). Giai đoạn A: máy tính + file sách + đồng
-bộ. Nhập nhạc ngay trên điện thoại là giai đoạn B; điện thoại đã PHÁT được bài nhập khi nó nằm trong sách hay đến qua đồng bộ.
+bộ. Giai đoạn B (cuối file): nhập nhạc ngay trên điện thoại, ghim vào sách nhập từ file, lưu thành file.
 
 ## Kho của máy
 
@@ -51,8 +51,8 @@ Nhạc huấn luyện) cắm vào bằng `music_local.set_analyzer(hàm)`; kết
 - **Máy khác / bài đã xoá**: bài không còn trong kho thì `music_track_available` False, ghim thành `pinUnavailable` (đoạn chọn bài
   khác ở lần dựng này, lựa chọn của người dùng vẫn giữ); gói xuất sau đó bỏ mốc ấy hoặc dùng bài thay thế như mọi bài không lấy
   được. Sách đã xuất giữ bản của bài.
-- **Điện thoại**: `MusicBed.kt`, `BookFileImport.kt`, `BookDocumentWriter.kt` nhận đuôi mới (cùng danh sách với Python);
-  `LibraryServer.kt` trả đúng Content-Type. Hạ mức / bật tắt / im lặng đoạn dùng lại công thức `gainDb` như mọi bài.
+- **Điện thoại** (xem "Giai đoạn B"): `MusicBed.kt`, `BookFileImport.kt`, `BookDocumentWriter.kt` nhận đuôi mới (cùng danh sách
+  với Python); `LibraryServer.kt` trả đúng Content-Type. Hạ mức / bật tắt / im lặng đoạn dùng lại công thức `gainDb` như mọi bài.
 
 ## Giao diện (Tiếng Việt, nói điều người dùng thấy)
 
@@ -62,9 +62,51 @@ Nhạc huấn luyện) cắm vào bằng `music_local.set_analyzer(hàm)`; kết
   giải thích bài nhập đi đâu và không có giấy phép. Câu báo sau nhập đếm bài mới / đã có / file lỗi và lý do.
 - "Đổi bài": nhóm "Nhạc của tôi" liệt kê MỌI bài (bài hợp không khí đoạn ấy đứng trước, kèm ghi chú), "Chọn" = ghim.
 - Studio từ xa (điện thoại điều khiển máy tính): không có hộp chọn file nên không nhập / xoá được (giao diện nói rõ); vẫn ghim
-  bài đã nhập qua "Đổi bài" và phát được. Các đường `/api/music/local*` không nằm trong danh sách trắng.
+  bài đã nhập qua "Đổi bài" và phát được. Các đường `/api/music/local*` không nằm trong danh sách trắng. Nhập nhạc vào kho của
+  MÁY TÍNH từ điện thoại vẫn ngoài phạm vi: kho điện thoại và kho máy tính là hai kho riêng, mỗi máy tự nhập.
 
 ## Kiểm
 
 `tests/test_music_local.py` (kho, thẻ, trùng nội dung, từ chối, phân tích, ứng viên tự động, ghim, nhúng sách, đồng bộ, file
 dự án, hộp chọn file, danh sách trắng Studio từ xa), `ui/src/studio/musicLocal.test.ts`, `BookFileImportTest` (đuôi flac).
+Giai đoạn B: `tests/test_book_edits.py` (ghim vào sách đóng gói, lưu, mở lại, nhập lại), `tests/book_edits_fixtures.py` (ca `music_pin*`,
+`music_pins` của hợp đồng, file `written/*_pins.abook`), `MusicStoreTest`, `Bs1770Test`, `LocalStudioTest`, `BookDocumentWriterTest`,
+`BookEditsTest`, `ui/src/studio/musicImport.test.ts`.
+
+## Giai đoạn B - điện thoại
+
+Điện thoại không có xưởng và không chọn nhạc tự động, nên phần này làm đúng những gì người nghe làm được trên một cuốn nhập từ file:
+nhập nhạc của mình, rồi ĐỔI MỘT ĐOẠN NHẠC của sách sang bài ấy. Cùng JSON, cùng câu báo lỗi với máy tính; mọi thứ chung đã có bộ ví
+dụ `tests/fixtures/book_edits/` (xem `EDITING.md`).
+
+- **Kho riêng của điện thoại** (`MusicStore.kt`, `<filesDir>/music/mine/`): cùng hình với kho máy tính - `files/<sha1>.<đuôi>` và sổ
+  `library.json`, link `local:<sha1>`, trùng nội dung thì một bản, cùng sáu đuôi, cùng câu từ chối. Nhập qua hộp chọn file của hệ
+  thống (`ACTION_OPEN_DOCUMENT`, chọn nhiều file; `LibraryPlugin.pickMusic`, sự kiện tiến độ `musicImport`), chép thẳng từ
+  `content://` (không giữ bản thứ hai trong bộ nhớ đệm), đọc tên bài / nghệ sĩ / album / thể loại / độ dài bằng
+  `MediaMetadataRetriever` (`AndroidMusicTags`; không có thẻ thì tên bài là tên file). Danh sách / xoá / "phân tích" đi qua
+  `LocalStudio.kt` (`GET /api/music/local`, `DELETE /api/music/local/<sha1>`, `POST /api/music/local/analyze`).
+- **Độ to**: `AndroidLoudness` giải mã bằng `MediaCodec` rồi đo `Bs1770` - cùng phép đo BS.1770-4 hai kênh với `music_plan.stereo_lufs`
+  (số mong đợi do pyloudnorm tính, `Bs1770Test`) nên `gainDb` của bài nhập trên điện thoại ra cùng con số với máy tính. Chỉ giải mã
+  8 phút đầu bài (một bản mix dài cả giờ không bắt người dùng chờ); không đo được thì dùng độ to trung vị của danh mục, như mọi bài
+  thiếu `lufs`.
+- **Phân tích**: móc `MusicStore.analyzer` + `cleanAnalysis` (bản Kotlin của `music_local.clean_analysis`) chưa cắm bộ phân tích nào
+  nên mọi bài là "Chưa phân tích": không bịa số, và điện thoại không có chọn nhạc tự động để mà chọn nó. `analyze` trả 409 với đúng
+  câu của máy tính. Không có `near` / `music_select` trên điện thoại.
+- **Ghim = một sửa L trong `edits.json`** (`music.pins` + `music.tracks`, xem `EDITING.md`; điều kiện thật của ghim là đoạn nhạc người
+  làm sách đã gắn - sách không nhạc thì không có đoạn nào để đổi). File bài chép từ kho vào thư mục sách ở `music/<sha1>.<đuôi>`
+  (đúng chỗ bài của người làm sách), "Lưu" / "Lưu thành…" (`BookDocumentWriter`, `bookfile.repack`) mang nó đi trong file `.abook`
+  phiên bản 4 - không nén, mở ở máy khác là phát được dù kho của máy ấy không có bài này. Lớp phủ đổi `track` của mốc và thêm mục
+  `music.tracks` (`file`, `link`, tên, nghệ sĩ, độ to; KHÔNG giấy phép), `gainDb` tính lại bằng `cue_gain_db`. Nhập lại cùng cuốn
+  không làm mất file bài đã ghim; chủ máy sản xuất mở file thì các ghim này được bỏ qua (đếm vào "bỏ qua") vì bài chỉ có trong kho
+  của người nghe. Bỏ ghim / "Bỏ mọi thay đổi" xoá file bài (trừ file nằm trong danh sách của lớp sách).
+- **Máy tính cũng đọc, ghi, phát** (`book_edits.py`, `bookfile.py`, `packages.py`, `server.py`): file do điện thoại lưu mở ra ở máy tính
+  là phát được; trang "Sửa sách" của máy tính cũng ghim được bài trong kho của MÁY TÍNH vào sách nhập từ file (cùng giao diện).
+- **Giao diện** (`ui/src/listen/EditBook.tsx` + `MyMusic.tsx`, dùng chung hai nền tảng): trong "Nhạc nền" của hộp "Sửa sách", mỗi đoạn có
+  "Đổi bài" (danh sách bài của tôi, "Chọn" = ghim) và "Về bài gốc" khi đã ghim; dưới danh sách là mục "Nhạc của tôi" (nhập, xem, xoá hai
+  bước). `studio/musicImport.ts` là một cửa nhập: máy tính gọi hộp chọn file của máy chủ, điện thoại đăng ký bản native
+  (`android/musicImport.ts`). MusicTab của Studio dùng lại cùng hàm. Không có "Nghe thử" trong hộp này (điện thoại không có máy chủ
+  để phát thử; bài ghim nghe thử bằng cách phát sách).
+- **Không có xử lý "giọng hát" nào**: người dùng chọn bài thì bài ấy được dùng, không bao giờ chặn.
+- **Ngoài phạm vi**: nhập nhạc vào kho của máy tính từ điện thoại (Studio từ xa giữ nguyên lời giải thích cũ); ghim bài danh mục trên
+  điện thoại (không có danh mục offline, không có không khí đoạn để xếp hạng); điện thoại phục vụ file nhạc cho máy khác qua
+  `LibraryServer` (hiện nó không phục vụ nhạc của bất kỳ sách nào).

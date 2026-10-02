@@ -5,6 +5,7 @@ import java.util.Base64
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.After
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -38,6 +39,7 @@ class LocalStudioTest {
         BookEditsFixtures.copyBase(dir)
         Store.rememberChapters(id, JSONObject(), imported = true)
         LocalStudio.coverCodec = FakeCodec()
+        LocalStudio.musicStore = MusicStore(File(root, "music"), FakeTags)
         LocalStudio.clock = { 1_790_950_256L }
         // đồng hồ của ý muốn chạy từng bước: mỗi yêu cầu một dấu giờ riêng (rút đúng lần bấm theo `requestedAt`)
         var tick = 0
@@ -47,6 +49,7 @@ class LocalStudioTest {
     @After
     fun tearDown() {
         LocalStudio.coverCodec = null
+        LocalStudio.musicStore = null
         LocalStudio.now = { System.currentTimeMillis() / 1000.0 }
     }
 
@@ -67,14 +70,20 @@ class LocalStudioTest {
     fun every_contract_case_is_answered_exactly_like_the_python_server() {
         var replayed = 0
         for (name in BookEditsFixtures.cases("contract")) {
-            // mỗi ca bắt đầu từ cuốn sạch
+            // mỗi ca bắt đầu từ cuốn sạch, kho "Nhạc của tôi" trống
             BookEdits.clear(dir)
+            LocalStudio.musicStore = MusicStore(File(root, "music-$name"), FakeTags)
             val case = BookEditsFixtures.obj("contract/$name.json")
             val volatile = case.getJSONArray("volatile").let { list -> (0 until list.length()).map { list.getString(it) }.toSet() }
             val steps = case.getJSONArray("steps")
             val answers = ArrayList<Any?>()
             for (index in 0 until steps.length()) {
                 val step = steps.getJSONObject(index)
+                if (step.has("import")) { // nhập một bài mẫu vào kho (bên Python: app.my_music.import_file)
+                    LocalStudio.musicStore!!.importFile(BookEditsFixtures.file("track/${step.getString("import")}"))
+                    answers.add(null)
+                    continue
+                }
                 val where = "$name #${index + 1} ${step.getString("method")} ${step.getString("path")}"
                 val body = step.optJSONObject("body")?.let { sent ->
                     // "$requestedAt#N": dấu giờ lời đáp của bước N (của chính bản Kotlin) - để rút đúng lần bấm ấy
@@ -95,6 +104,120 @@ class LocalStudioTest {
             }
         }
         assertTrue("đã phát lại cả bộ hợp đồng ($replayed bước)", replayed >= 120)
+    }
+
+    private val tone get() = BookEditsFixtures.file("track/tone.wav")
+    private val toneLink = "local:" + java.security.MessageDigest.getInstance("SHA-1").digest(tone.readBytes()).joinToString("") { "%02x".format(it) }
+
+    @Test
+    fun my_music_is_listed_and_removed_with_the_servers_words() {
+        val store = LocalStudio.musicStore!!
+        assertEquals(JSONObject().put("tracks", JSONArray()).put("analyzer", false).toString(),
+            (LocalStudio.handle("GET", "/api/music/local", null).second as JSONObject).toString())
+        val (track, duplicate) = store.importFile(tone)
+        assertFalse(duplicate)
+        assertEquals(toneLink, track.getString("link"))
+        val (status, view) = LocalStudio.handle("GET", "/api/music/local", null)
+        assertEquals(200, status)
+        val listed = (view as JSONObject).getJSONArray("tracks").getJSONObject(0)
+        assertEquals("tone", listed.getString("title"))
+        assertEquals("local", listed.getString("source"))
+        assertEquals(1, listed.getInt("duration"))
+        assertFalse(listed.getBoolean("analysed"))
+        // máy chưa có bộ phân tích: nói rõ, không bịa số
+        val (conflict, refusal) = LocalStudio.handle("POST", "/api/music/local/analyze", null)
+        assertEquals(409, conflict)
+        assertEquals("Chưa có bộ phân tích âm thanh - bài nhập vào vẫn ghim tay được, nhưng máy chưa tự chọn chúng.", (refusal as JSONObject).getString("error"))
+        val digest = toneLink.removePrefix("local:")
+        assertEquals(404, LocalStudio.handle("DELETE", "/api/music/local/${"0".repeat(40)}", null).first)
+        val (removed, after) = LocalStudio.handle("DELETE", "/api/music/local/$digest", null)
+        assertEquals(200, removed)
+        assertEquals(0, (after as JSONObject).getJSONArray("tracks").length())
+        assertEquals("Bài này không còn trong Nhạc của tôi", (LocalStudio.handle("DELETE", "/api/music/local/$digest", null).second as JSONObject).getString("error"))
+        assertEquals(404, LocalStudio.handle("PUT", "/api/music/local", null).first)
+    }
+
+    @Test
+    fun an_analyzer_that_gives_numbers_makes_the_track_analysed_and_one_that_fails_does_not() {
+        val store = LocalStudio.musicStore!!
+        store.importFile(tone)
+        store.analyzer = { null }
+        assertEquals("bộ phân tích không ra gì dùng được: vẫn chưa phân tích", 0, store.analyzePending())
+        store.analyzer = { throw IllegalStateException("model lỗi") }
+        assertEquals(0, store.analyzePending())
+        store.analyzer = { JSONObject().put("valence", 3.0).put("arousal", -0.25).put("fitsUnderNarration", 0.8).put("family", "nope") }
+        val (status, reply) = LocalStudio.handle("POST", "/api/music/local/analyze", null)
+        assertEquals(200, status)
+        assertEquals(1, (reply as JSONObject).getInt("analysed"))
+        val track = reply.getJSONArray("tracks").getJSONObject(0)
+        assertTrue(track.getBoolean("analysed"))
+        assertEquals("kẹp -1..1", 1.0, track.getDouble("valence"), 0.0)
+        assertEquals(0.8, track.getDouble("background"), 0.0)
+        assertFalse("họ nhạc lạ bị bỏ", track.has("family"))
+        assertNull(MusicStore.cleanAnalysis(JSONObject().put("valence", 0.2)))
+    }
+
+    @Test
+    fun pinning_one_of_my_tracks_copies_its_file_into_the_book_and_the_player_gets_it() {
+        val store = LocalStudio.musicStore!!
+        store.importFile(tone)
+        val name = "music/${toneLink.removePrefix("local:")}.wav"
+        val (status, view) = call("PUT", "/music", JSONObject().put("pins", JSONObject().put("1:0", toneLink)))
+        assertEquals(200, status)
+        assertTrue((view as JSONObject).getJSONArray("cues").getJSONObject(0).getBoolean("pinned"))
+        assertArrayEquals(tone.readBytes(), File(dir, name).readBytes())
+        val music = Store.manifest(id)!!.getJSONObject("music")
+        val cue = music.getJSONObject("chapters").getJSONArray("1").getJSONObject(0)
+        assertEquals(name, cue.getString("track"))
+        assertEquals(toneLink, music.getJSONObject("tracks").getJSONObject(name).getString("link"))
+        assertTrue("cue có gainDb tính bằng công thức chung", cue.getDouble("gainDb") <= 0.0)
+        assertEquals("tone", music.getJSONObject("tracks").getJSONObject(name).getString("title"))
+        // lớp sách không bị đụng: file chỉ thêm vào, book.json nguyên
+        assertFalse(Store.rawManifest(id)!!.getJSONObject("music").getJSONObject("tracks").has(name))
+        assertEquals(1, BookEdits.count(BookEdits.load(dir)))
+        // nhóm "Đổi bài" không còn đưa bài đang dùng ở đoạn này
+        val alternatives = call("GET", "/music/scenes/1:0/alternatives").second as JSONObject
+        assertEquals(0, alternatives.getJSONArray("mine").length())
+        assertEquals(1, (call("GET", "/music/scenes/1:60000/alternatives").second as JSONObject).getJSONArray("mine").length())
+        // giao diện gửi khoá mốc đã mã hoá URL ("1%3A60000"): máy chủ Python giải mã, lõi native cũng phải giải mã
+        assertEquals(1, (call("GET", "/music/scenes/1%3A60000/alternatives").second as JSONObject).getJSONArray("mine").length())
+        // xoá bài khỏi kho: sách vẫn giữ bản của nó
+        store.remove(toneLink.removePrefix("local:"))
+        assertTrue(File(dir, name).isFile)
+        // bỏ ghim: file bài đi theo
+        call("PUT", "/music", JSONObject().put("pins", JSONObject().put("1:0", JSONObject.NULL)))
+        assertFalse(File(dir, name).exists())
+        assertFalse(File(dir, "edits.json").exists())
+    }
+
+    @Test
+    fun a_pin_that_does_not_fit_is_refused_with_a_sentence_and_changes_nothing() {
+        LocalStudio.musicStore!!.importFile(tone)
+        fun refused(body: JSONObject): String {
+            val (status, reply) = call("PUT", "/music", body)
+            assertEquals(body.toString(), 400, status)
+            return (reply as JSONObject).getString("error")
+        }
+        assertEquals("Bài này không còn trong Nhạc của tôi", refused(JSONObject().put("pins", JSONObject().put("1:0", "local:" + "0".repeat(40)))))
+        assertEquals("Chỉ đổi được sang bài trong Nhạc của tôi", refused(JSONObject().put("pins", JSONObject().put("1:0", "https://x/y.mp3"))))
+        assertEquals("Không có đoạn nhạc này trong sách", refused(JSONObject().put("pins", JSONObject().put("7:7", toneLink))))
+        assertEquals("Phần sửa nhạc nền không hợp lệ.", refused(JSONObject().put("pins", "tone")))
+        assertEquals("Sách đã đóng gói chỉ chỉnh được bật/tắt nhạc, mức nhạc, im lặng từng đoạn và đổi bài", refused(JSONObject().put("volume", 3)))
+        assertFalse(File(dir, "edits.json").exists())
+        assertFalse(File(dir, "music/${toneLink.removePrefix("local:")}.wav").exists())
+    }
+
+    @Test
+    fun clearing_all_edits_drops_the_pinned_files_but_never_a_book_layer_file() {
+        LocalStudio.musicStore!!.importFile(tone)
+        val name = "music/${toneLink.removePrefix("local:")}.wav"
+        call("PUT", "/music", JSONObject().put("pins", JSONObject().put("1:0", toneLink).put("1:60000", toneLink)))
+        assertTrue(File(dir, name).isFile)
+        assertEquals(2, BookEdits.count(BookEdits.load(dir)))
+        call("DELETE", "/edits")
+        assertFalse(File(dir, name).exists())
+        val listed = Store.rawManifest(id)!!.getJSONObject("package").getJSONObject("files")
+        for (file in listed.keys().asSequence()) assertTrue("$file vẫn còn", File(dir, file).isFile)
     }
 
     @Test

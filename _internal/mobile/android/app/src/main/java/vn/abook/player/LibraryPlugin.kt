@@ -32,6 +32,9 @@ import java.util.concurrent.TimeUnit
 /** Công tắc "Cho máy khác nghe thư viện này" (SharedPreferences "sync"). */
 private const val SHARE_KEY = "shareLibrary"
 
+/** Số file tối đa trong một lượt nhập "Nhạc của tôi" (server.MY_MUSIC_IMPORT_LIMIT). */
+private const val MY_MUSIC_IMPORT_LIMIT = 500
+
 /**
  * Thư viện trên điện thoại + đồng bộ với máy tính qua Wi-Fi (abook/webui/sync.py).
  *
@@ -50,9 +53,12 @@ class LibraryPlugin : Plugin() {
     // Trình phát máy khác (mạng trạm bước 4): hỏi mạng tới vài giây, không được chặn hàng `io` của thư viện.
     private val remotes = Executors.newCachedThreadPool()
     private val downloads = Executors.newSingleThreadExecutor()
+    // Nhập nhạc của tôi: giải mã từng bản để đo độ to nên lâu - không được chặn hàng `io` của thư viện.
+    private val musicImports = Executors.newSingleThreadExecutor()
     private val prefs by lazy { SyncLink.prefs(context) }
 
     override fun load() {
+        LocalStudio.musicStore = MusicStore(File(context.filesDir, "music/mine"), AndroidMusicTags, AndroidLoudness)
         Playback.init(context)
         PhoneCast.init(context)
         // Đã bật "Cho máy khác nghe thư viện này" từ lần trước: mở lại máy chủ cùng app (LibraryServer).
@@ -111,6 +117,60 @@ class LibraryPlugin : Plugin() {
         }
         importFrom(uri)
         call?.resolve(JSObject().put("picked", true))
+    }
+
+    // ---- "Nhạc của tôi" (MusicStore, docs/MUSIC_IMPORT.md) -------------------------------------------------------------
+
+    /** Nút "Nhập nhạc của tôi…": bộ chọn file của hệ thống, chọn được nhiều bản một lúc; chọn xong thì nhập từng bản vào kho. */
+    @PluginMethod
+    fun pickMusic(call: PluginCall) {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*")
+            .putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true).putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("audio/*", "application/ogg"))
+        startActivityForResult(call, intent, "pickedMusic")
+    }
+
+    @ActivityCallback
+    private fun pickedMusic(call: PluginCall?, result: ActivityResult) {
+        if (call == null) return
+        val uris = ArrayList<Uri>()
+        result.data?.clipData?.let { clip -> for (index in 0 until clip.itemCount) uris.add(clip.getItemAt(index).uri) }
+        result.data?.data?.let { if (it !in uris) uris.add(it) }
+        if (uris.isEmpty()) {
+            call.resolve(JSObject().put("picked", false))
+            return
+        }
+        musicImports.execute {
+            try {
+                call.resolve(importMusic(uris.take(MY_MUSIC_IMPORT_LIMIT)))
+            } catch (error: Exception) {
+                fail(call, error, "không nhập được nhạc")
+            }
+        }
+    }
+
+    /** Nhập từng bản (một bản hỏng không làm hỏng cả lượt), báo tiến độ "musicImport" {done, total}; trả đúng JSON của `my_music_import`. */
+    private fun importMusic(uris: List<Uri>): JSObject {
+        val store = LocalStudio.musicStore ?: throw IllegalStateException("Kho nhạc chưa sẵn sàng")
+        val added = ArrayList<JSONObject>()
+        val existing = ArrayList<JSONObject>()
+        val failed = ArrayList<String>()
+        for ((index, uri) in uris.withIndex()) {
+            val name = runCatching {
+                context.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
+                    if (cursor.moveToFirst()) cursor.getString(0) else null
+                }
+            }.getOrNull() ?: uri.lastPathSegment ?: "nhạc"
+            try {
+                val (track, duplicate) = store.importStream(name) { context.contentResolver.openInputStream(uri) }
+                (if (duplicate) existing else added).add(track)
+            } catch (error: MusicStore.ImportError) {
+                failed.add(error.message.orEmpty())
+            } catch (error: Exception) {
+                failed.add("“$name”: không nhập được (${error.message ?: error.javaClass.simpleName}).")
+            }
+            notifyListeners("musicImport", JSObject().put("done", index + 1).put("total", uris.size))
+        }
+        return JSObject.fromJSONObject(LocalStudio.importAnswer(added, existing, failed)).put("picked", true)
     }
 
     // ---- ghép nối --------------------------------------------------------------------------------------------

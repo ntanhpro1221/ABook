@@ -1,0 +1,71 @@
+{
+ "local": {
+  "format": "abook-edits",
+  "version": 1,
+  "music": {
+   "pins": {
+    "1:0": "local:51edf6872a24d2b85b1e73e348a961b28699578a"
+   },
+   "tracks": {
+    "51edf6872a24d2b85b1e73e348a961b28699578a": {
+     "ext": "wav",
+     "title": "Bài của tôi",
+     "creator": "Tôi",
+     "duration": 1.0,
+     "lufs": -23.0
+    }
+   }
+  }
+ },
+ "incoming": {
+  "format": "abook-edits",
+  "version": 1,
+  "music": {
+   "pins": {
+    "1:0": "local:0123456789abcdef0123456789abcdef01234567",
+    "1:60000": "local:0123456789abcdef0123456789abcdef01234567"
+   },
+   "tracks": {
+    "0123456789abcdef0123456789abcdef01234567": {
+     "ext": "wav",
+     "title": "Bài khác",
+     "creator": "Tôi",
+     "duration": 1.0,
+     "lufs": -23.0
+    }
+   }
+  }
+ },
+ "merged": {
+  "format": "abook-edits",
+  "version": 1,
+  "music": {
+   "pins": {
+    "1:0": "local:51edf6872a24d2b85b1e73e348a961b28699578a",
+    "1:60000": "local:0123456789abcdef0123456789abcdef01234567"
+   },
+   "tracks": {
+    "0123456789abcdef0123456789abcdef01234567": {
+     "ext": "wav",
+     "title": "Bài khác",
+     "creator": "Tôi",
+     "duration": 1.0,
+     "lufs": -23.0
+    },
+    "51edf6872a24d2b85b1e73e348a961b28699578a": {
+     "ext": "wav",
+     "title": "Bài của tôi",
+     "creator": "Tôi",
+     "duration": 1.0,
+     "lufs": -23.0
+    }
+   }
+  }
+ },
+ "report": {
+  "adopted": 1,
+  "kept": 1,
+  "conflicts": 1,
+  "cover": null
+ }
+}

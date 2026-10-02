@@ -69,6 +69,12 @@ object BookDocumentWriter {
                 files[BookEdits.EDITS_COVER] = File(bookDir, BookEdits.EDITS_COVER).takeIf { it.isFile }
                     ?: throw Refused("Thiếu ảnh bìa trong phần sửa của sách.")
             }
+            // Bài nhạc của người nghe đã ghim: đi theo file như bài của người làm sách (music/<sha1>.<đuôi>).
+            for (name in BookEdits.pinnedFiles(edits)) {
+                if (name in files) continue
+                files[name] = runCatching { Store.contained(bookDir, name) }.getOrNull()?.takeIf { it.isFile }
+                    ?: throw Refused("Thiếu file bài nhạc người nghe đã chọn trong thư mục sách.")
+            }
         }
         val version = when {
             changes > 0 -> 4

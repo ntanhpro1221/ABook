@@ -7,17 +7,9 @@ import { formatClock } from "@/shared/format";
 import { MUSIC_LEVELS as LEVELS } from "@/shared/musicLevels";
 import { Button } from "@/shared/ui";
 import { api, mediaUrl } from "./api";
-import { pickFiles, useAppInfo } from "./data";
-import {
-  analysisLabel,
-  importSummary,
-  LOCAL_PREFIX,
-  mergeImports,
-  previewPath,
-  type ImportResult,
-  type LocalMusicView,
-  type LocalTrack,
-} from "./musicLocal";
+import { useAppInfo } from "./data";
+import { importMusic } from "./musicImport";
+import { analysisLabel, importSummary, LOCAL_PREFIX, previewPath, type LocalMusicView, type LocalTrack } from "./musicLocal";
 
 // Tab "Nhạc nền" của trang dự án (docs/MUSIC_SELECTION_MODEL.md, mục 4 - ba tầng chỉnh): cả cuốn (bật/tắt, thế giới
 // của truyện, mức nhạc), từng đoạn (im lặng, bỏ ghim), từng bài (không dùng bài này nữa). Máy tự làm hết; mọi chỉnh ở đây
@@ -300,29 +292,20 @@ function MyMusic({ bookId, previewing, onPreview }: { bookId: string; previewing
     void client.invalidateQueries({ queryKey: ["music-alternatives", bookId] });
   };
   const importFiles = async () => {
-    const paths = await pickFiles("Chọn nhạc của bạn", "", "music").catch((error: Error) => {
-      toast.error(error.message);
-      return [] as string[];
-    });
-    if (!paths.length) return;
-    const results: ImportResult[] = [];
-    setProgress({ done: 0, total: paths.length });
     try {
-      // Từng file một: thấy tiến độ, và một file hỏng không làm mất những file đã vào.
-      for (const [index, path] of paths.entries()) {
-        const result = await api<ImportResult>("/api/music/local/import", { method: "POST", body: { paths: [path] } });
-        results.push(result);
-        refresh(result);
-        setProgress({ done: index + 1, total: paths.length });
-      }
+      const { result, error } = await importMusic((done, total, latest) => {
+        setProgress({ done, total });
+        if (latest) refresh(latest);
+      });
+      if (error) toast.error("Đang nhập nhạc thì dừng", { description: error.message });
+      if (!result) return;
+      const summary = importSummary(result);
+      toast[summary.kind](summary.title, { description: summary.description });
     } catch (error) {
-      toast.error("Đang nhập nhạc thì dừng", { description: (error as Error).message });
+      toast.error((error as Error).message);
     } finally {
       setProgress(null);
     }
-    if (!results.length) return;
-    const summary = importSummary(mergeImports(results));
-    toast[summary.kind](summary.title, { description: summary.description });
   };
   const remove = useMutation({
     mutationFn: (link: string) => api<LocalMusicView>(`/api/music/local/${link.slice(LOCAL_PREFIX.length)}`, { method: "DELETE" }),

@@ -1,0 +1,9 @@
+{
+ "format": "abook-edits",
+ "version": 1,
+ "music": {
+  "pins": {
+   "1:0": "local:51edf6872a24d2b85b1e73e348a961b28699578a"
+  }
+ }
+}
