@@ -31,3 +31,12 @@ export function studioNeed(caps: Capabilities | null | undefined): string | null
 export function showsStudioOnly(caps: Capabilities | null | undefined): boolean {
   return studioNeed(caps) !== null;
 }
+
+/** Lý do không sửa được cuốn nghe thẳng từ máy khác - cùng câu với 409 của LocalStudio.kt (Android) và của máy tính. */
+export const LINK_BOOK = "Sách này lấy từ máy tính khác - muốn sửa thì sửa ở máy ấy";
+
+/** Sửa "áp ngay" bị chặn vì cuốn nghe thẳng từ máy khác: câu nói lý do, không thì `null` (sửa được, hay không có gì để nói).
+ *  Menu vẫn hiện mục sửa, mờ đi kèm câu này - như việc cần Studio ("explain, never hide"). */
+export function editBlockedNote(caps: Capabilities | null | undefined): string | null {
+  return caps?.link && !caps.workshop ? LINK_BOOK : null;
+}
