@@ -6,7 +6,7 @@ import { coverArtwork, type CoverImage } from "@/shared/cover";
 import { formatClock } from "@/shared/format";
 import { Clock, ClockContext } from "./clock";
 import { isNative, type AudioEngine } from "./engine";
-import { MusicBed, type MusicCredit } from "./musicBed";
+import { MUSIC_CHANGED_EVENT, MusicBed, type MusicCredit } from "./musicBed";
 import { resumePoint, type Bookmark, type ListenBook, type ListenChapter, type NightPosition } from "./model";
 import { NightRecorder } from "./night";
 import {
@@ -341,6 +341,16 @@ export function PlayerProvider({
   const bedChapter = track ? `${track.bookId}:${track.chapterId}` : "";
   // Dòng ghi công (CC BY): bài đang nghe được -> thông tin tác giả của chương này, theo `link` của mốc.
   const bedCredits = useRef<Record<string, MusicCredit>>({});
+  // Studio vừa sửa nhạc của cuốn đang nghe (cùng phiên): nạp lại mốc của chương này, bài đổi ngay không cần tải lại trang.
+  const [bedVersion, setBedVersion] = useState(0);
+  const bedBook = track?.bookId;
+  useEffect(() => {
+    const onChanged = (event: Event) => {
+      if ((event as CustomEvent<string>).detail === bedBook) setBedVersion((version) => version + 1);
+    };
+    window.addEventListener(MUSIC_CHANGED_EVENT, onChanged);
+    return () => window.removeEventListener(MUSIC_CHANGED_EVENT, onChanged);
+  }, [bedBook]);
   useEffect(() => {
     if (!bed) {
       setMusicCredit(null);
@@ -370,7 +380,7 @@ export function PlayerProvider({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bed, source, bedChapter]);
+  }, [bed, source, bedChapter, bedVersion]);
   useEffect(() => {
     if (!bed) return;
     let last = engine.time;

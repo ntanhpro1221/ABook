@@ -85,11 +85,15 @@ def book_scripts(project_root: Path) -> Iterable[dict[str, Any]]:
 
 def build(project_root: Path, candidates_near: Callable[[float, float], Iterable[dict[str, Any]]],
           lookup: Callable[[list[str]], dict[str, dict[str, Any]]], *, catalog_revision: str | None = None,
-          book_key: str | None = None, taxonomy: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Dựng lại music_plan.json: chia đoạn cả cuốn, chọn bài theo lựa chọn của người dùng, gắn thông tin bài."""
+          book_key: str | None = None, taxonomy: dict[str, Any] | None = None,
+          scenes: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+    """Dựng lại music_plan.json: chia đoạn cả cuốn, chọn bài theo lựa chọn của người dùng, gắn thông tin bài.
+    `scenes`: các đoạn đã có (từ plan cũ, qua `scenes_of`) - chọn lại bài trên đúng các đoạn ấy, không chia lại sách;
+    người dùng sửa một đoạn thì các đoạn khác không đổi theo (chỉ "Chọn lại nhạc" mới chia lại)."""
     project_root = Path(project_root)
     overrides = read_overrides(project_root)
-    scenes = music_scenes.book_scenes(book_scripts(project_root))
+    if scenes is None:
+        scenes = music_scenes.book_scenes(book_scripts(project_root))
     genres = (taxonomy or {}).get("genres") or {}
     genre_styles = (genres.get(overrides["genre"]) or {}).get("styles") if overrides["genre"] else None
     chosen = music_select.choose(scenes, candidates_near, book_key=book_key or project_root.name,
@@ -116,6 +120,17 @@ def build(project_root: Path, candidates_near: Callable[[float, float], Iterable
     }
     atomic_write_json(project_root / PLAN_FILE, plan)
     return plan
+
+
+CHOICE_FIELDS = ("key", "link", "distance", "pinned", "silenced")  # phần `choose` / `build` gắn thêm cho từng đoạn
+
+
+def scenes_of(plan: dict[str, Any] | None) -> list[dict[str, Any]] | None:
+    """Các đoạn của một plan đã dựng, bỏ phần lựa chọn bài (khoá, bài, ghim, im lặng) - để đưa lại cho `build`."""
+    scenes = (plan or {}).get("scenes")
+    if not isinstance(scenes, list) or not scenes:
+        return None
+    return [{k: v for k, v in scene.items() if k not in CHOICE_FIELDS} for scene in scenes]
 
 
 def read_plan(project_root: Path) -> dict[str, Any] | None:

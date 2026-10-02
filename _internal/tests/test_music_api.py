@@ -147,3 +147,27 @@ def test_two_requests_for_the_same_track_download_it_once_and_both_get_the_file(
     assert not errors and len(results) == 3 and len(set(results)) == 1 and results[0].read_bytes().startswith(b"ID3")
     assert calls == [link]
     assert not list(results[0].parent.glob("*.part"))
+
+
+def test_editing_one_scene_keeps_the_scenes_of_the_plan_and_only_rechoosing_resplits(studio, tmp_path: Path) -> None:  # noqa: F811
+    paths, app, server, _runner = studio
+    _with_catalog(app, tmp_path)
+    book = book_id(paths.root)
+    _status, view = _call(server, "GET", f"/api/books/{book}/music")
+    first = view["plan"]["scenes"][0]
+    # Plan dựng bởi bộ chia đoạn cũ: các đoạn khác những gì `book_scenes` cho ra bây giờ.
+    plan_file = paths.root / "music_plan.json"
+    plan = json.loads(plan_file.read_text(encoding="utf-8"))
+    plan["scenes"][0]["end"] = first["end"] + 1.25
+    plan["scenes"][0]["legacy"] = "old-splitter"
+    plan_file.write_bytes(json.dumps(plan).encode("utf-8"))
+    status, changed = _call(server, "PUT", f"/api/books/{book}/music", {"pins": {first["key"]: "https://x/sad.mp3"}})
+    assert status == 200
+    kept = changed["plan"]["scenes"][0]
+    assert kept["end"] == first["end"] + 1.25 and kept["legacy"] == "old-splitter" and kept["key"] == first["key"]
+    assert kept["link"] == "https://x/sad.mp3" and kept["pinned"] is True
+    assert len(changed["plan"]["scenes"]) == len(plan["scenes"])
+    # "Chọn lại nhạc" mới chia lại đoạn.
+    status, rebuilt = _call(server, "POST", f"/api/books/{book}/music/rebuild", {})
+    assert status == 200 and rebuilt["plan"]["scenes"][0]["end"] == first["end"]
+    assert "legacy" not in rebuilt["plan"]["scenes"][0]

@@ -665,14 +665,17 @@ class App:
         except music_catalog.CatalogError:
             return {}
 
-    def music_rebuild(self, value: str) -> dict[str, Any]:
+    def music_rebuild(self, value: str, *, keep_scenes: bool = False) -> dict[str, Any]:
+        """Dựng lại rãnh nhạc. `keep_scenes`: chọn lại bài trên các đoạn plan hiện có (người dùng sửa một đoạn - không
+        chia lại cả cuốn); mặc định chia lại đoạn ("Chọn lại nhạc", lần dựng đầu)."""
         path = self._book(value)
         catalog = self.music_catalog()
         # Dựng lại = muốn dữ liệu mới nhất: đọc lại mục lục (nhỏ) thay vì bản đệm 24 giờ.
         manifest = catalog.manifest(refresh=True)
         plan = music_plan.build(path, lambda v, a: catalog.near(v, a, radius=1), catalog.lookup,
                                 catalog_revision=str(manifest.get("revision") or ""), book_key=value,
-                                taxonomy=manifest.get("taxonomy"))
+                                taxonomy=manifest.get("taxonomy"),
+                                scenes=music_plan.scenes_of(music_plan.read_plan(path)) if keep_scenes else None)
         self._warm_music(plan)
         return plan
 
@@ -688,7 +691,7 @@ class App:
         path = self._book(value)
         error = ""
         try:
-            self.music_rebuild(value)
+            self.music_rebuild(value, keep_scenes=True)
         except music_catalog.CatalogError as exc:
             error = str(exc)
         return {"plan": music_plan.read_plan(path), "overrides": music_plan.read_overrides(path), "error": error,
@@ -749,13 +752,14 @@ class App:
     @staticmethod
     def _music_credits(cues: list[dict[str, Any]], tracks: dict[str, Any]) -> dict[str, dict[str, str]]:
         """Ghi công tác giả của các bài chương này dùng (CC BY đòi nêu tên ở nơi nhạc phát): {link: {title, creator,
-        attribution, landing}} - chỉ khoá nào có. `tracks`: dự án = plan["tracks"][link]; gói sách = {link: tracks[tên]}."""
+        attribution, landing, license, licenseUrl}} - chỉ khoá nào có. `tracks`: dự án = plan["tracks"][link];
+        gói sách = {link: tracks[tên]}."""
         credits: dict[str, dict[str, str]] = {}
         for cue in cues:
             info = tracks.get(cue["link"])
             if not isinstance(info, dict):
                 continue
-            credit = {key: info[key] for key in ("title", "creator", "attribution", "landing")
+            credit = {key: info[key] for key in ("title", "creator", "attribution", "landing", "license", "licenseUrl")
                       if isinstance(info.get(key), str) and info[key]}
             if credit:
                 credits[cue["link"]] = credit

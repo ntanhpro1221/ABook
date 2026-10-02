@@ -18,7 +18,12 @@ export interface MusicCredit {
   creator?: string;
   attribution?: string;
   landing?: string;
+  license?: string;
+  licenseUrl?: string;
 }
+
+/** MusicTab phát khi người dùng sửa / chọn lại nhạc của một cuốn (detail = mã sách): trình phát đang mở nạp lại mốc nhạc. */
+export const MUSIC_CHANGED_EVENT = "abook:music-changed";
 
 type BedAudio = Pick<HTMLAudioElement, "play" | "pause" | "paused" | "volume" | "loop" | "currentTime" | "duration"> & {
   addEventListener(type: "loadedmetadata", listener: () => void, options?: { once?: boolean }): void;
