@@ -762,6 +762,17 @@ Hai thước:
   - Luật thắng giữ nguyên: ≥ 60%, cận dưới Wilson > 0,5, thước phụ ≤ 0,02 (đáp án cảnh bộ 5).
   - Không gộp 31 lượt cũ.
   - Thắng thì đổi `WEAK_MOOD` = 0,5 trên nhánh dev, Lead gộp.
+- **KẾT QUẢ ĐO LẠI 0,5 TRÊN BỘ 5 (03-10 05:4x):** **giữ 0,2**, lần thứ ba.
+  - Chạy: 9 chương bộ 5, 5b chưa có. `GOLD_SETS=set5`, `CALM_SET=calm5`.
+  - Người đọc: không CLAP (n1, n2), theo bổ sung về mô tả.
+  - Thể loại cuốn: chốt trước khi chọn bài (`compare_rankers.BOOK_GENRE`).
+    - Dị giới: western_fantasy.
+    - CotE: modern.
+    - Otonari: romance.
+  - Cùng bài ở 46/66 đoạn.
+  - 20 đoạn khác bài; cả hai người cùng ý 10. 0,5 thắng 4/10 = 0,40 (KTC 0,17–0,69).
+  - Thước phụ: khoảng cách nhãn người tới đáp án 0,720 ở 0,2, 0,751 ở 0,5, tức +0,031 (mốc ≤ 0,02).
+  - Hỏng cả hai điều kiện.
 
 **GHI TRƯỚC - PHÍA BÀI GỘP BA NGUỒN: CLAP + ÂM HỌC + VĂN BẢN (02-10 23:xx, Lead + chủ sách; trước mọi số):**
 Ba nguồn:
@@ -1156,6 +1167,69 @@ Kết luận:
 - **Ánh xạ phân vị KHÔNG vào app:** trò-q kém hơn trò thô (0,43 so với 0,525).
 - Việc trò bị co về giữa trong kho trộn vẫn có thật nhưng chưa đo. Phép này so kho toàn trò với kho toàn thầy, không phải kho
   trộn. Muốn đo thì cần ghi trước riêng.
+
+**GHI TRƯỚC - KHO TRỘN: NHẠC NHẬP CÓ BỊ CHỌN LỆCH KHÔNG (03-10 05:4x, Lead giao; trước mọi số):**
+
+Câu hỏi:
+- Trong kho thật, bài danh mục mang số thầy, bài người dùng nhập mang số trò.
+- Trò co về giữa, nên một bài nhập có thể được chọn nhiều hơn hay ít hơn chính nó khi mang số thầy. Đây là chuyện công bằng
+  cho nhạc của người dùng.
+
+Cách đo (chỉ tính, không cần người chấm):
+- Đoạn: 100 đoạn E1, không khí máy, như (c). Kho: như (c).
+- 50 lượt. Mỗi lượt lấy ngẫu nhiên 20% bài làm "bài nhập" (hạt giống 1..50).
+  - Bài nhập mang số trò dự đoán chéo + sd trò; bài còn lại mang số thầy.
+  - Đối chứng: cùng các bài ấy mang số thầy.
+- Mỗi đoạn lấy danh sách `rank` 6 bài (danh sách "Đổi bài"). Hạng 1 báo riêng.
+- Vùng của bài theo vị trí THẦY:
+  - "giữa": khoảng cách V/E/T tới tâm thuộc tam phân vị thấp;
+  - "vừa": tam phân vị giữa;
+  - "rìa": tam phân vị cao.
+
+Thước:
+- Tỉ lệ phơi bày theo vùng = (số lần bài nhập vào danh sách khi mang số trò) / (số lần khi mang số thầy), cộng dồn 50 lượt.
+- KTC 95% bootstrap theo đoạn.
+- **LỆCH** nếu ở vùng nào đó tỉ lệ nằm ngoài [0,8; 1,25] và cả KTC nằm ngoài khoảng ấy. Không thì **CÔNG BẰNG**.
+
+Nếu LỆCH:
+- Thử cách sửa: giãn tuyến tính quanh trung bình danh mục, hệ số = tỉ lệ sd danh mục / sd trò từng trục, mốc ghép trên
+  dự đoán chéo.
+- Báo lại cùng thước.
+- Cách sửa chỉ được vào app khi đo lại (c) bằng người đọc với cách sửa ấy vẫn ≥ 0,45, vì ánh xạ phân vị đã trượt (c).
+
+**GHI TRƯỚC - TRÒ v2 HỌC THÊM MTG (03-10 05:4x, Lead giao; bổ sung ghi trước MTG 02-10):**
+
+Dữ liệu:
+- 7.634 bài MTG không lời (có lời ≤ 0,5). Mỗi bài có CLAP 3 cửa sổ + 42 âm học, tính y như danh mục.
+- Phần giữ ngoài MTG: 15% bài, chia theo hoán vị hạt giống 7 trên mã bài. split-0 của bộ là theo nghệ sĩ cho mọi bài;
+  sau khi lọc không lời, chia theo mã cho đơn giản, ghi rõ ở đây.
+
+Nhãn thầy MTG (đổi so với 02-10 để rẻ):
+- Bảng tag như ghi trước 02-10, làm mức sàn.
+- Người đọc chữ đọc TỔ HỢP TAG (1.641 tổ hợp khác nhau), không đọc tên bài. Tên bài Jamendo hiếm khi nói không khí, mà đọc
+  theo bài thì đắt gấp 5.
+  - Cùng định dạng ra như `text_llm`: 13 cường độ + valence / energy / tension + độ tin cậy.
+  - Agent Claude Sonnet, lô ~250 tổ hợp.
+- Cảm xúc = max(bảng, người đọc × tin cậy). V/E/T = của người đọc.
+- Trọng số mẫu: 0,6 nếu có ≥ 1 tag ánh xạ, không thì 0,2.
+
+Học:
+- Công thức như trò v1 (ridge trên logit thầy, RidgeCV cùng dãy alpha).
+- Tập học = phần học danh mục (như v1) + phần học MTG.
+- Giữ ngoài danh mục giống hệt v1.
+
+Thước:
+- (a) AUC trên Incompetech giữ ngoài.
+- (b) r Soundtracks V/E/T + DEAM V/E.
+- Độ co: sd trò / sd danh mục từng trục, dự đoán chéo trên danh mục như (c).
+- Phụ, chỉ để định vị: AUC 56 tag MTG trên phần giữ ngoài MTG.
+
+**v2 THAY v1 nếu cả ba:**
+- Trung bình 5 số r (b) tăng ≥ 0,01.
+- AUC (a) giảm không quá 0,005.
+- Độ co không tệ hơn: tỉ lệ sd trung bình 3 trục ≥ của v1.
+
+Thay thì: đăng revision HF mới (cả đầu A cho ONNX), đo lại parity, nâng `REVISION` trong app. Không thay thì ghi số rồi dừng.
 
 **GHI TRƯỚC - TRÒ ĐƯỜNG ONNX cho máy chỉ player + điện thoại (03-10 05:xx, Lead; trước khi làm):**
 
