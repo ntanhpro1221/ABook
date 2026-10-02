@@ -4,7 +4,7 @@ nào vừa thì lấy, ít nhất một), mono 22050 Hz giải mã bằng ffmpeg
 và trọng tâm phổ có thêm `_sd` (độ lệch chuẩn GIỮA các cửa sổ).
 
 ĐÂY LÀ BẢN CHÉP ĐÚNG SỐ của `LLM_Train/music/acoustic_features2.py` (đặc trưng mà đầu "trò" đã học trên đó): sửa một công thức là
-đầu trò lệch. Chỉ `decode` / `windows` đổi chỗ gọi ffmpeg (ffmpeg của app) và cho phép tần số lấy mẫu tuỳ ý (CLAP cần 48 kHz).
+đầu trò lệch. Chỉ `windows` đổi chỗ cắt; giải mã (ffmpeg của app, tần số tuỳ ý - CLAP cần 48 kHz) nằm ở `music_mel.decode`, dùng chung với đường ONNX.
 
 Định nghĩa không hiển nhiên:
 - pulse_clarity = đỉnh cao nhất của tự tương quan (đã chuẩn hoá theo độ trễ 0) của đường khởi âm trong độ trễ 0,25-2 s.
@@ -16,22 +16,16 @@ và trọng tâm phổ có thêm `_sd` (độ lệch chuẩn GIỮA các cửa s
 """
 from __future__ import annotations
 
-import os
-import subprocess
 import warnings
-from pathlib import Path
 
 import librosa
 import numpy as np
-
-from ..io_utils import ffmpeg_executable
 
 warnings.filterwarnings("ignore")
 RATE = 22050
 HOP = 512
 NFFT = 2048
 WIN = 30 * RATE
-MAX_SECONDS = 1800  # bài dài hơn thế chỉ nghe 30 phút đầu
 MAJOR = np.array([6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88])  # Krumhansl-Kessler
 MINOR = np.array([6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17])
 KEYS_MAJOR = np.array([np.roll(MAJOR, k) for k in range(12)])
@@ -39,17 +33,6 @@ KEYS_MINOR = np.array([np.roll(MINOR, k) for k in range(12)])
 FREQS = librosa.fft_frequencies(sr=RATE, n_fft=NFFT)
 PEAK_BAND = (FREQS >= 50) & (FREQS <= 5000)
 IDX_PAIRS = np.triu_indices(8, 1)
-
-
-def decode(path: Path, rate: int = RATE) -> np.ndarray:
-    """Mono float32 ở `rate` Hz, tối đa MAX_SECONDS giây đầu. Không đọc được thì mảng rỗng."""
-    try:
-        raw = subprocess.run([ffmpeg_executable(), "-v", "error", "-nostdin", "-threads", "1", "-i", str(path), "-ac", "1",
-                              "-ar", str(rate), "-t", str(MAX_SECONDS), "-f", "f32le", "-"], capture_output=True, check=False,
-                             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" else 0).stdout
-    except (OSError, subprocess.SubprocessError):
-        return np.zeros(0, dtype=np.float32)
-    return np.frombuffer(raw, dtype=np.float32)
 
 
 def windows(y: np.ndarray) -> list[np.ndarray]:
