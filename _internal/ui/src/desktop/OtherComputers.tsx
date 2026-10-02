@@ -125,7 +125,7 @@ export function OtherComputers() {
           ) : (
             <p className="text-xs leading-relaxed text-fg-2 text-pretty">
               Không thấy máy nào. Trên máy kia, bật kết nối trong Cài đặt → Điện thoại và thiết bị; hai máy phải cùng mạng
-              (qua Tailscale thì gõ địa chỉ Tailscale của máy kia).
+              (ở khác nơi thì vào cùng một mạng riêng ảo rồi gõ địa chỉ của máy kia trong mạng ấy).
             </p>
           ))}
       </div>
