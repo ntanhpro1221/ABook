@@ -817,6 +817,20 @@ Máy và đáp án:
 - CHÍNH: r của E so đáp án, `app+bwsE` so `app` (E nhãn câu). THẮNG nếu r E hơn ≥ 0,05 VÀ hơn ở ≥ 70% chương.
 - Ghi lại: `oracle+bwsE` và tổ hợp cuối `app + llmVT + bwsE` (r trung bình V/E/T).
 
+ĐÁP ÁN BỘ 5 (03-10 05:xx, Corpus `scene_set5/`; mô tả, chưa phải phép thử):
+- 9 chương, 86 đoạn sau phân xử (26,6 đoạn/giờ).
+- Hai người chấm mù Sonnet A so B: Pk 0,167, P / R ranh giới 0,73 / 0,86, r V/E/T 0,92 / 0,88 / 0,89. Đó là trần.
+- Nhãn câu 9B-v8 trên đáp án chung (r gộp, `eval_scenes.py`):
+
+| Cách | V | E | T | Pk |
+|---|---|---|---|---|
+| `app` | 0,46 | 0,50 | 0,40 | 0,402 |
+| `hard` | 0,27 | 0,47 | 0,35 | 0,262 |
+| `fixed3` | 0,50 | 0,47 | 0,42 | 0,459 |
+| oracle | 0,48 | 0,54 | 0,43 | |
+
+- Chương mới cao hơn bộ 4 (app 0,32 / 0,41 / 0,20) nhưng vẫn xa trần.
+
 Chung:
 - Đoạn LLM trả hỏng định dạng thì giữ nhãn câu, có báo số lượng.
 - Mọi script và prompt commit vào Corpus TRƯỚC lượt chạy đầu; không sửa sau khi thấy số.
