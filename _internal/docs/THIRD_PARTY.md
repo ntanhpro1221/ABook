@@ -31,6 +31,10 @@ Bộ cài mang theo:
 - Python 3.14 embeddable (Python Software Foundation License).
 - Pillow (HPND), psutil (BSD-3-Clause), requests (Apache-2.0), urllib3 (MIT), certifi (MPL-2.0), charset-normalizer
   (MIT), idna (BSD-3-Clause) - đúng các bản trong `shell/python/requirements.txt`.
+- Cho bộ phân tích nhạc nhập chạy không cần torch (`webui/music_student.py`, đường ONNX), cũng trong `requirements.txt`:
+  NumPy (BSD-3-Clause; wheel mang theo OpenBLAS BSD-3-Clause, LAPACK và thư viện chạy GCC GPL-3.0-or-later kèm GCC Runtime
+  Library Exception - giấy phép từng phần nằm trong `numpy-*.dist-info/licenses`), ONNX Runtime CPU (MIT), flatbuffers
+  (Apache-2.0), protobuf (BSD-3-Clause), packaging (Apache-2.0 hoặc BSD-2-Clause).
 - Thư viện chạy Microsoft Visual C++ (`msvcp140*.dll`, `vcruntime140*.dll`, `concrt140.dll` từ thư mục
   `Microsoft.VC145.CRT` của Visual Studio) - thuộc "Distributable Code" của giấy phép Visual Studio, được phép phát hành
   kèm ứng dụng; bộ cài chỉ mang để chép vào Python của Studio (máy chưa cài gói VC++ Redistributable vẫn chạy được).
@@ -70,7 +74,9 @@ từng bài; trình nghe hiện ghi công khi bài đang phát.
 
 Bộ phân tích "Nhạc của tôi" (`webui/music_student.py`) dùng tháp âm thanh của LAION-CLAP `laion/clap-htsat-unfused` (Apache-2.0,
 fp16, ~55 MB) cùng đầu hồi quy nhỏ của chính dự án; gói đăng ở huggingface.co/NGDtuanh/abook-music-student, tải về máy một lần
-khi cần, KHÔNG nằm trong bộ cài. Kèm giấy phép Apache-2.0 và ghi chú của LAION-CLAP khi phân phối gói.
+khi cần, KHÔNG nằm trong bộ cài. Kèm giấy phép Apache-2.0 và ghi chú của LAION-CLAP khi phân phối gói. Gói có thêm bản ONNX của
+chính tháp âm thanh ấy (`clap_audio_fp16.onnx`, ~59 MB, cùng trọng số fp16, xuất bằng torch.onnx - Apache-2.0 như model gốc) và
+đầu hồi quy A (`student_head_A.npz`) cho đường chạy bằng ONNX Runtime trên máy không có torch.
 
 ## Model phân tích và dữ liệu nghiên cứu (chưa đóng gói trong bản phát hành)
 
