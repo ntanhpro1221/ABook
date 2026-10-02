@@ -1268,6 +1268,49 @@ Cách sửa F1, cho bài mang số trò:
 - Kiểm trên nửa B, hạt giống 26–50, với λ đã chọn. Luật ĐẠT như F1.
 - ĐẠT thì chấm người đọc trên kho trộn (Lead đã duyệt), rồi mới vào app.
 
+**KẾT QUẢ F2 (03-10 05:31, `results/mixed_library_f2.txt`):** **TRƯỢT thước vùng.**
+- Trên nửa A, λ = 0,1 tốt nhất (max |log tỉ lệ| 0,036). λ = 0 cho 0,24; λ ≥ 0,3 làm bài nhập bị bỏ rơi.
+- Trên nửa B (47 đoạn, hạt 26–50):
+
+| Vùng | Vào 6 bài: trò / thầy | Tỉ lệ | Hạng 1 |
+|---|---|---|---|
+| giữa | 1.732 / 1.597 | **1,08** (KTC 0,98–1,19) | 0,63 (0,44–0,84) |
+| vừa | 176 / 32 | 5,5 (KTC 2,7–27) | |
+| rìa | 79 / 0 | | |
+
+- Gộp mọi vùng: 1.987 / 1.629 = 1,22.
+
+**ĐỔI THƯỚC SAU KHI THẤY SỐ (03-10 05:4x, Lead duyệt):**
+- Thước vùng đã TRƯỢT với cả F1 lẫn F2. Thước mới dưới đây được chọn SAU khi thấy các số ấy, không phải có từ đầu.
+- Lý do đổi:
+  - Ở vùng vừa / rìa, bài mang số thầy gần như không bao giờ vào danh sách (mẫu số ~0).
+  - Mọi bộ đoán có sai số (r ~0,9) sẽ thỉnh thoảng đưa một bài xa vào gần, nên tỉ lệ ấy nổ.
+  - Ép về 1 cần phạt nặng như F1, khi ấy vùng giữa sập.
+  - F2 đã bỏ phần ưu ái có hệ thống ở vùng giữa. Phần còn lại là nhiễu của bộ đoán, không còn là thiên lệch dịch / giãn được.
+- **Thước mới: độ hợp của bài được chọn.**
+  - 100 đoạn E1. So bài chọn từ kho TOÀN THẦY với bài chọn từ kho TRỘN F2.
+  - Kho trộn: 20% bài nhập, hạt giống 1, λ = 0,1, a / b như F1.
+  - Người đọc n1, n2 không CLAP, cặp lặp 10%, luật như (c).
+- **Vào app nếu p_trộn ≥ 0,45** và người đọc dùng được.
+  - App: thêm `vetVar` + hiệu chỉnh a, b (lưu trong đầu trò) + λ = 0,1 trong `z_distance`.
+  - Bài danh mục không đổi.
+- `build_mixed_c.py`, `score_student_c.py` với `SET=mixedc`.
+
+**KẾT QUẢ TRÒ v2 + MTG (03-10 05:3x, `results/student_eval_v2.txt`):** **KHÔNG THAY v1**, trượt cả ba điều kiện.
+
+| | v1 | v2 |
+|---|---|---|
+| (a) AUC trò / thầy | 0,880 / 0,904 (97,4%) | 0,826 / 0,904 (91,4%) |
+| Soundtracks V / E / T | 0,65 / 0,74 / 0,77 | 0,59 / 0,71 / 0,72 |
+| DEAM V / E | 0,32 / 0,69 | 0,32 / 0,70 |
+| Độ co (sd chéo / sd danh mục, TB) | 0,755 | 0,536 |
+
+- Phụ: AUC tag MTG giữ ngoài 0,769 (29 cặp tag-lớp, 1.145 bài).
+- Vì sao kém:
+  - Nhãn MTG chỉ từ tag: 79% bài có tag ánh xạ, nhưng tag nói ít thì V/E/T bị kéo về trung tính.
+  - 6.489 bài như thế lấn 1.389 bài danh mục, nên trò co thêm và AUC trên Incompetech giảm.
+- Giữ v1. Dữ liệu MTG chỉ dùng lại được nếu có nhãn tốt hơn (người đọc từng bài, hay nghe), và phải ghi trước riêng.
+
 **GHI TRƯỚC - TRÒ v2 HỌC THÊM MTG (03-10 05:4x, Lead giao; bổ sung ghi trước MTG 02-10):**
 
 Dữ liệu:
