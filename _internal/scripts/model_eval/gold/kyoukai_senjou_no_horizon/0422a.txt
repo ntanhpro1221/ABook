@@ -1,0 +1,294 @@
+# "Kyoukai Senjou no Horizon" (Horizon on the Middle of Nowhere) file 0422a = 25 KB đầu của 0422.txt (57 KB; "Chương 41 Kẻ gầm
+# vang bãi săn"). Đáp án KIỂM TRA LN Nhật đợt 2 (02-10; luật cố định: vị trí 30% của bộ, >30 KB lấy 25 KB đầu). Agent A gán 02-10;
+# chưa soát B.
+# NGÔI BA, không có người kể "tôi" ("Tôi:" ở 101, 129 là TÊN KÊNH CHAT của Aoi Toori - handle "Me").
+# Dòng tên kênh chat ("Tôi:", "Hori-ko:", "Người mới:"...) parser khoá N, đứng riêng một seq -> N; câu chat ngay sau là của chủ kênh.
+# Tra kênh trong kho: Tôi = AOI TOORI (0420:373 chị em chơi game khiêu dâm); Hori-ko = HORIZON (0400:475-477 Asama đáp "Horizon!");
+# Người mới/Tân Binh/Novice = NESHINBARA (0168:309 "Siêu Neshinbara", 0409:245-247); Chính nghĩa = SATOMI YOSHIYASU (0219:65-67
+# "Yoshy cũng vào trong cuộc trò chuyện", 0228:577-579 "Truyền tin thần thánh của Yoshiyasu"); Mar Vàng/Gold Mar = MARGOT NAITO
+# (gọi Naruze "Ga-chan", 0411:171); Mal-Ga = NARUZE (vẽ doujinshi, 0219:197); 10ZO = TENZOU CROSSUNITE (= "Sĩ Quan Đặc Vụ Số 1",
+# 248-256). Tên kênh lời kể không dùng làm tên -> nửa điểm (như biệt danh NUKKUN~ ở Make Heroine); "TÔI" bị bộ chấm gom về NPC*.
+# Tên: TORAHIDE / KAKEI TORAHIDE (m, rồng đất); FUTAYO / HONDA FUTAYO (f) - bản dịch chương này gọi cô "Phó Hội trưởng của Musashi"
+# (13-19) nhưng người cầm Tonbo Spare nhảy 100 m là Futayo (0420:293, 731-733 "Kích hoạt... Tonbo Spare!" Đó là Futayo); KHÔNG
+# phải Masazumi; TONBO SPARE (ngọn thương có trí tuệ đáp lệnh, 18 "Rõ.", 21 "Đang vươn ra." - u, NPC*~ vì nói ở nhiều chương);
+# HORIZON / HORIZON ARIADUST (f); ASAMA / TOMO / ASAMA TOMO (f, xưng "thần" với Horizon); MUNESHIGE / TACHIBANA MUNESHIGE (m,
+# "Tây Quốc Vô Song"); GIN / TACHIBANA GIN (f, vợ Muneshige); ADELE / ADELE BALFETTE (f, trong vỏ di động); YOSHINAO (m, Phó Hiệu
+# trưởng kiêm Vua Musashi - 0078:197); SUZU / MUKAI SUZU (f, nói lắp); MITOTSUDAIRA / NATE MITOTSUDAIRA / NATE (f, "con sói bạc");
+# REINE DES GAROUS / NỮ HOÀNG NGƯỜI SÓI (f, mẹ Mitotsudaira - cả bộ gọi bằng danh hiệu này 923 lần, quy tắc 11).
+# 10 "...Tuyệt!" = Torahide (11 "Hắn tự tin"). 37 "Tây Quốc Vô Song!" = Torahide nhận ra người đứng trên ngọn thương (35-36), 38
+# Muneshige đáp; NPC*~ (không lời dẫn). 84, 87, 91, 93-95, 100: người trên tàu / các pháo thủ vô danh (92 "một trong những pháo
+# thủ hét lên điều đó, những người khác đều đáp lại") -> NPC*, mỗi người một mô tả. 98 Thư Ký qua khung ký hiệu = Neshinbara.
+# 123 "Ahyaaaa...!" = Adele bên trong vỏ di động đang bị vung (126 "Adele-sama phải ở bên trong đó"); tiếng thét -> NARRATOR~.
+# 148-159: hạm kiều Musashino. 148 "Một người đàn ông" rồi 150 Suzu gọi "Thầy Phó Hiệu trưởng… Yoshinao…?" -> YOSHINAO đủ, NPC*~.
+# 155 KHÓ: câu hỏi không lời dẫn trước 156 "Yoshinao nhìn sang người vợ đang há hốc miệng kinh ngạc... và nói" -> YOSHINAO đủ,
+# NPC*~ (có thể là người vợ vô danh hỏi).
+# 188-233: Mitotsudaira (189 "lẩm bẩm", 201, 222 "cô nói", 226 "con sói bạc"). 218 đứng sau "Mitotsudaira nghĩ" nhưng 219 "Horizon
+# lắng nghe những lời của Mitotsudaira" -> nói thành tiếng, D. 238-239 KHÓ: một người phụ nữ nói với chồng giữa đêm trăng ("Một
+# con sói sẽ không bỏ mặc...") chen giữa 237 (cha mẹ cô) và 240 "chắc mẹ mình đang ở phong độ đỉnh cao, Mitotsudaira nghĩ" ->
+# mẹ Mitotsudaira = REINE DES GAROUS đủ, NPC*~.
+# Tiếng lòng trực tiếp không ngoặc (ngôi ba): trọn đoạn -> N,T người nghĩ đủ (7, 36 Torahide; 161, 165, 181 Adele; 206, 235, 242,
+# 247 Mitotsudaira); có lời dẫn "hắn nghĩ"/lẫn lời kể -> người nghĩ ~ (34, 111 Torahide; 45, 49 Muneshige; 169 Adele).
+# 1-4: thơ đề từ + tiêu đề phụ - văn bản viết, NARRATOR. Parser bỏ p72, p74, p213 (không có seq).
+0 H
+1 N
+2 N
+3 N
+4 N
+5 N NARRATOR neutral,excited 0-1 normal normal u
+6 N NARRATOR neutral,excited 0-1 normal normal u
+7 N,T NARRATOR,TORAHIDE,KAKEI TORAHIDE excited,angry,neutral 0-2 normal,fast normal u
+8 N
+9 N NARRATOR neutral,angry,excited 0-1 normal normal u
+10 D TORAHIDE,KAKEI TORAHIDE excited,happy 1-2 normal normal,loud m
+11 N NARRATOR neutral,happy 0-1 normal normal u
+12 N NARRATOR neutral,surprised 0-1 normal normal u
+13 N
+14 N
+15 N
+16 N
+17 D FUTAYO,HONDA FUTAYO neutral 0-1 normal normal f
+18 D TONBO SPARE,NPC*~ neutral 0-1 normal normal u
+19 N
+20 D FUTAYO,HONDA FUTAYO neutral,excited 0-2 normal loud,normal f
+21 D TONBO SPARE,NPC*~ neutral 0-1 normal normal u
+22 N NARRATOR neutral,surprised,excited 0-1 normal normal u
+23 N
+24 D HORIZON,HORIZON ARIADUST neutral,surprised 0-1 normal normal f
+25 D ASAMA,TOMO,ASAMA TOMO surprised,afraid,neutral 0-1 normal normal,soft f
+26 N
+27 N
+28 D ASAMA,TOMO,ASAMA TOMO excited,surprised,neutral 1-2 fast,normal normal,loud f
+29 N
+30 N NARRATOR neutral,angry 0-1 normal normal u
+31 D TORAHIDE,KAKEI TORAHIDE,NARRATOR~ angry,surprised 1-2 normal normal,loud m
+32 N
+33 N NARRATOR neutral,angry 0-1 normal normal u
+34 N,T NARRATOR,TORAHIDE~,KAKEI TORAHIDE~ angry,neutral 0-1 normal normal u
+35 N NARRATOR neutral,surprised 0-1 normal normal u
+36 N,T NARRATOR,TORAHIDE,KAKEI TORAHIDE surprised 0-2 normal normal u
+37 D TORAHIDE,KAKEI TORAHIDE surprised,angry 1-2 fast,normal loud m
+38 D MUNESHIGE,TACHIBANA MUNESHIGE neutral 0-1 normal normal m
+39 N
+40 N
+41 D MUNESHIGE,TACHIBANA MUNESHIGE neutral 0-1 normal normal,soft m
+42 N
+43 N NARRATOR neutral,surprised,happy 0-1 normal normal u
+44 N
+45 N,T NARRATOR,MUNESHIGE~,TACHIBANA MUNESHIGE~ neutral 0-1 normal normal u
+46 N
+47 N
+48 N
+49 N,T NARRATOR,MUNESHIGE~,TACHIBANA MUNESHIGE~ neutral 0-1 normal normal u
+50 N
+51 N
+52 N
+53 D MUNESHIGE,TACHIBANA MUNESHIGE neutral 0-1 normal normal m
+54 N
+55 N
+56 N
+57 D MUNESHIGE,TACHIBANA MUNESHIGE neutral,excited 0-1 normal normal,loud m
+58 D GIN,TACHIBANA GIN neutral 0-1 normal normal f
+59 N
+60 N
+61 N
+62 N
+63 N
+64 N
+65 D GIN,TACHIBANA GIN angry,neutral 0-1 normal normal f
+66 N
+67 N
+68 N
+69 N NARRATOR neutral,excited 0-1 normal normal u
+70 N
+71 N
+72 N
+73 N NARRATOR neutral,angry 0-1 normal normal u
+74 N
+75 D TORAHIDE,KAKEI TORAHIDE angry 1-2 normal normal,loud m
+76 N
+77 N
+78 N NARRATOR neutral,angry 0-1 normal normal u
+79 D TORAHIDE,KAKEI TORAHIDE,NARRATOR~ angry,excited 2-3 slow,normal loud m
+80 N
+81 N
+82 N NARRATOR neutral,surprised 0-1 normal normal u
+83 N
+84 D NPC*:người trên tàu 1 afraid,surprised 2-3 fast loud u
+85 N
+86 N
+87 D NPC*:người trên tàu 2 afraid,excited 1-2 fast loud u
+88 N NARRATOR neutral,afraid 0-1 normal normal u
+89 N
+90 N
+91 D NPC*:pháo thủ 1 afraid 2-3 fast loud u
+92 N
+93 D NPC*:pháo thủ 2 sarcastic,excited,happy 1-2 fast normal,loud u
+94 D NPC*:pháo thủ 3 sarcastic,excited 1-2 fast loud,normal u
+95 D NPC*:pháo thủ 4 excited 1-2 fast loud u
+96 N
+97 N
+98 D NESHINBARA neutral,happy 0-1 normal normal m
+99 N
+100 D NPC*:pháo thủ 5 surprised 1-2 fast normal,loud u
+101 N
+102 D TOORI,AOI TOORI neutral,sarcastic 0-1 normal normal m
+103 N
+104 D HORIZON,HORIZON ARIADUST,HORI-KO~ neutral 0-1 normal normal f
+105 N
+106 D NESHINBARA,NGƯỜI MỚI~ neutral,sarcastic 0-1 normal normal m
+107 N
+108 D SATOMI YOSHIYASU,YOSHIYASU,CHÍNH NGHĨA~ afraid,excited 1-2 fast normal,loud f
+109 N
+110 N
+111 N,T NARRATOR,TORAHIDE~,KAKEI TORAHIDE~ happy,neutral 0-1 normal normal u
+112 N
+113 N
+114 N
+115 N
+116 N
+117 N
+118 N
+119 N NARRATOR neutral,happy 0-1 normal normal u
+120 N
+121 N
+122 N
+123 D ADELE,ADELE BALFETTE,NARRATOR~ afraid,surprised 2-3 fast loud f
+124 N
+125 N
+126 D HORIZON,HORIZON ARIADUST,HORI-KO~ neutral 0-1 normal normal f
+127 N
+128 D ASAMA,TOMO,ASAMA TOMO neutral,sarcastic 0-1 normal normal f
+129 N
+130 D TOORI,AOI TOORI neutral,happy 0-1 normal normal m
+131 N
+132 D ASAMA,TOMO,ASAMA TOMO angry,surprised 1-2 fast loud f
+133 N
+134 D SATOMI YOSHIYASU,YOSHIYASU,CHÍNH NGHĨA~ tired,sarcastic,neutral 0-1 normal normal f
+135 N NARRATOR neutral,afraid 0-1 normal normal u
+136 N
+137 N
+138 N
+139 N
+140 N
+141 N
+142 N
+143 N
+144 N
+145 N NARRATOR neutral,sad,afraid 0-1 normal normal u
+146 N NARRATOR neutral,sad 0-1 normal normal u
+147 N
+148 D YOSHINAO,NPC*~ happy,surprised 0-1 normal normal m
+149 N NARRATOR neutral,happy 0-1 normal normal u
+150 D SUZU,MUKAI SUZU surprised,happy 0-1 slow,normal soft f
+151 D YOSHINAO neutral,tender 0-1 normal normal m
+152 N
+153 N
+154 N
+155 D YOSHINAO,NPC*~ surprised,happy 0-1 normal normal m
+156 N NARRATOR neutral,surprised 0-1 normal normal u
+157 D YOSHINAO tender,happy,neutral 0-1 normal normal,soft m
+158 N
+159 D YOSHINAO neutral,happy 0-1 normal normal m
+160 N NARRATOR neutral,afraid 0-1 normal normal u
+161 N,T NARRATOR,ADELE,ADELE BALFETTE surprised,afraid 0-1 normal normal u
+162 N
+163 N NARRATOR neutral,surprised 0-1 normal normal u
+164 N
+165 N,T NARRATOR,ADELE,ADELE BALFETTE afraid 1-2 normal normal u
+166 N
+167 N
+168 N NARRATOR neutral,afraid 0-1 normal normal u
+169 N,T NARRATOR,ADELE~,ADELE BALFETTE~ afraid,neutral 0-1 normal normal u
+170 D ADELE,ADELE BALFETTE afraid,angry 1-2 normal soft,normal f
+171 N NARRATOR neutral,afraid 0-1 normal normal u
+172 N
+173 N
+174 N
+175 N
+176 N
+177 N
+178 D ADELE,ADELE BALFETTE surprised,afraid 0-1 slow,normal soft f
+179 N
+180 N
+181 N,T NARRATOR,ADELE,ADELE BALFETTE surprised,afraid 0-1 normal normal u
+182 N
+183 N
+184 N
+185 N NARRATOR neutral,surprised 0-1 normal normal u
+186 N
+187 N
+188 D MITOTSUDAIRA,NATE MITOTSUDAIRA,NATE,MITOTSUDAIRA NATE neutral,surprised,whispering 0-1 normal soft f
+189 N
+190 N
+191 N
+192 N
+193 N
+194 N
+195 N
+196 N
+197 D MITOTSUDAIRA,NATE MITOTSUDAIRA,NATE,MITOTSUDAIRA NATE neutral 0-1 normal normal f
+198 N
+199 N
+200 D MITOTSUDAIRA,NATE MITOTSUDAIRA,NATE,MITOTSUDAIRA NATE neutral 0-1 normal normal f
+201 N
+202 D MITOTSUDAIRA,NATE MITOTSUDAIRA,NATE,MITOTSUDAIRA NATE neutral 0-1 normal normal f
+203 N
+204 N
+205 N
+206 N,T NARRATOR,MITOTSUDAIRA,NATE MITOTSUDAIRA,NATE,MITOTSUDAIRA NATE neutral 0-1 normal normal u
+207 N
+208 N
+209 N
+210 N
+211 N
+212 N
+213 N
+214 N
+215 D TORAHIDE,KAKEI TORAHIDE,NARRATOR~ sad,angry 1-2 slow normal,soft m
+216 N
+217 N
+218 D MITOTSUDAIRA,NATE MITOTSUDAIRA,NATE,MITOTSUDAIRA NATE neutral,tender 0-1 normal normal f
+219 N
+220 D MITOTSUDAIRA,NATE MITOTSUDAIRA,NATE,MITOTSUDAIRA NATE neutral,tender 0-1 normal normal f
+221 D MITOTSUDAIRA,NATE MITOTSUDAIRA,NATE,MITOTSUDAIRA NATE neutral,sad 0-1 normal normal f
+222 N
+223 D MITOTSUDAIRA,NATE MITOTSUDAIRA,NATE,MITOTSUDAIRA NATE neutral,tender 0-1 normal normal f
+224 D HORIZON,HORIZON ARIADUST neutral 0-1 normal normal f
+225 D MITOTSUDAIRA,NATE MITOTSUDAIRA,NATE,MITOTSUDAIRA NATE neutral 0-1 normal normal f
+226 N
+227 D HORIZON,HORIZON ARIADUST neutral 0-1 normal normal f
+228 D MITOTSUDAIRA,NATE MITOTSUDAIRA,NATE,MITOTSUDAIRA NATE neutral 0-1 normal normal f
+229 N
+230 N
+231 D MITOTSUDAIRA,NATE MITOTSUDAIRA,NATE,MITOTSUDAIRA NATE neutral,sad,tender 0-1 normal normal f
+232 N
+233 D MITOTSUDAIRA,NATE MITOTSUDAIRA,NATE,MITOTSUDAIRA NATE tender,neutral 0-1 normal normal f
+234 N
+235 N,T NARRATOR,MITOTSUDAIRA,NATE MITOTSUDAIRA,NATE,MITOTSUDAIRA NATE tender,happy,neutral 0-1 normal normal u
+236 N
+237 N
+238 D REINE DES GAROUS,NỮ HOÀNG NGƯỜI SÓI,NPC*~ happy,tender,sarcastic 0-1 normal soft,normal f
+239 D REINE DES GAROUS,NỮ HOÀNG NGƯỜI SÓI,NPC*~ happy,tender,sarcastic 0-1 normal soft,normal f
+240 N
+241 N
+242 N,T NARRATOR,MITOTSUDAIRA,NATE MITOTSUDAIRA,NATE,MITOTSUDAIRA NATE happy,neutral 0-1 normal normal u
+243 N
+244 N
+245 N NARRATOR neutral,happy 0-1 normal normal u
+246 N NARRATOR neutral,surprised,afraid 0-1 normal normal u
+247 N,T NARRATOR,MITOTSUDAIRA,NATE MITOTSUDAIRA,NATE,MITOTSUDAIRA NATE surprised,happy 0-1 normal normal u
+248 N
+249 N
+250 N
+251 D NAITO,MARGOT,MARGOT NAITO,NAITO MARGOT,MAR VÀNG~ sarcastic,happy 0-1 normal normal f
+252 N
+253 D NARUZE,MARGARITA,NARUZE MARGARITA,MARGARITA NARUZE,MAL-GA~ sarcastic,happy 0-1 normal normal f
+254 N
+255 D TENZOU,TENZOU CROSSUNITE,10ZO~ afraid,angry,surprised 1-2 fast loud,normal m
+256 N NARRATOR neutral,happy 0-1 normal normal u
+257 N
+258 N
+259 N
+260 N
+261 N
+262 N

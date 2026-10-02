@@ -1,0 +1,77 @@
+# "KuraNiKa" (Kurasu de Nibanme ni Kawaii Onnanoko to Tomodachi ni Natta) file 084.txt ("Chương 85 – Album gia đình").
+# Đáp án KIỂM TRA LN Nhật đợt 2 (02-10; luật cố định: vị trí 30% của bộ, >30 KB lấy 25 KB đầu; file này 8 KB nên lấy trọn).
+# Agent A gán 02-10; chưa soát B.
+# NGÔI THỨ NHẤT: "tôi" = MAKI / MAEHARA MAKI / MAEHARA (m; bộ dùng "Maki" 659 lần, "Maehara" 438 lần, "tôi, Maehara Maki").
+# Mẹ của Maki: MASAKI / MAEHARA MASAKI (f; tên lộ ở chương khác - 009/026 "mẹ tôi, 'Maehara Masaki'", "Masaki-san"); lời kể
+# chương này chỉ gọi "mẹ" nên NPC*~ (nhân vật nói ở nhiều chương - nhãn NPC chỉ sống một chương, quy tắc 5).
+# Cảnh chỉ có hai mẹ con nói chuyện: "con"/"mẹ" trong câu quyết định người nói ("mẹ này" = Maki, "Maki ơi"/"con" = mẹ).
+# 44 "Hồi đó con là một đứa mít ướt nhỉ..." = Maki (tự xưng "con", 45 mẹ đáp "Hehe... Đúng rồi").
+# 34 ‘Sao tự dưng con lại hỏi thế?’ bị khoá T: là câu Maki ĐỌC TỪ NÉT MẶT mẹ (35 "Gương mặt mẹ như muốn nói vậy") - ý của
+# mẹ nên MASAKI đủ; NARRATOR~ (thật ra là người kể diễn giải). Kém chắc nhất file.
+# 58 "...Mình đã không thể hỏi được..." Maki nói một mình (soft). 59 "Bố, mẹ và tôi. Tôi lẩm nhẩm..." - lời lẩm nhẩm không
+# ngoặc trong đoạn kể bị khoá N -> chỉ NARRATOR (quy tắc 10, tiền lệ Yamiyo 155:43).
+# Tiếng lòng tức thời của "tôi" (câu hỏi tu từ, phỏng đoán ngay trong cảnh): 15-18, 27, 48, 53, 61 -> N,T NARRATOR,MAKI.
+# 1-2 "Trans: Arteria", lời nhắn của người dịch - lời kể thường N (không chấm người nói).
+0 H
+1 N
+2 N
+3 N
+4 N
+5 N
+6 N
+7 N NARRATOR neutral,sad 0-1 normal,slow normal u
+8 D MASAKI,MAEHARA MASAKI,NPC*~ neutral,tender,tired 0-1 normal,slow normal,soft f
+9 D MAKI,MAEHARA MAKI,MAEHARA neutral,happy 0-1 normal normal m
+10 N
+11 N
+12 D MAKI,MAEHARA MAKI,MAEHARA neutral,afraid 0-1 normal,slow normal,soft m
+13 D MASAKI,MAEHARA MASAKI,NPC*~ neutral 0-1 normal normal f
+14 N
+15 N,T NARRATOR,MAKI,MAEHARA MAKI,MAEHARA neutral,afraid,sad 0-1 normal normal u
+16 N,T NARRATOR,MAKI,MAEHARA MAKI,MAEHARA neutral,afraid,sad 0-1 normal normal u
+17 N,T NARRATOR,MAKI,MAEHARA MAKI,MAEHARA neutral,sad,angry 0-1 normal normal u
+18 N,T NARRATOR,MAKI,MAEHARA MAKI,MAEHARA neutral,sad,afraid 0-1 normal normal u
+19 D MASAKI,MAEHARA MASAKI,NPC*~ surprised,neutral,tender 0-1 normal normal f
+20 D MAKI,MAEHARA MAKI,MAEHARA surprised,afraid 0-1 normal,fast normal m
+21 D MASAKI,MAEHARA MASAKI,NPC*~ tender,neutral,surprised 0-1 normal normal f
+22 D MAKI,MAEHARA MAKI,MAEHARA afraid,tired,neutral 0-1 normal,fast normal,soft m
+23 D MASAKI,MAEHARA MASAKI,NPC*~ neutral,tender 0-1 normal normal f
+24 D MAKI,MAEHARA MAKI,MAEHARA neutral,tired,afraid 0-1 normal normal m
+25 N,T NARRATOR,MAKI,MAEHARA MAKI,MAEHARA neutral 0-1 normal normal u
+26 N
+27 N,T NARRATOR,MAKI,MAEHARA MAKI,MAEHARA neutral,sad 0-1 normal normal u
+28 D MASAKI,MAEHARA MASAKI,NPC*~ tired,neutral 0-1 normal,slow normal,soft f
+29 D MAKI,MAEHARA MAKI,MAEHARA neutral,tender 0-1 normal normal m
+30 D MASAKI,MAEHARA MASAKI,NPC*~ neutral 0-1 normal normal f
+31 D MAKI,MAEHARA MAKI,MAEHARA neutral,afraid,sad 0-1 slow,normal soft,normal m
+32 N NARRATOR neutral,surprised 0-1 normal normal u
+33 D MASAKI,MAEHARA MASAKI,NPC*~ surprised,neutral 0-1 slow,normal soft,normal f
+34 T MASAKI,MAEHARA MASAKI,NARRATOR,NPC*~ surprised,neutral 0-1 normal normal f
+35 N
+36 D MAKI,MAEHARA MAKI,MAEHARA afraid,sad,neutral 0-1 fast,normal normal,soft m
+37 D MASAKI,MAEHARA MASAKI,NPC*~ tender,neutral 0-1 normal,slow normal,soft f
+38 N
+39 D MASAKI,MAEHARA MASAKI,NPC*~ sad,tender,neutral 0-1 slow,normal soft,normal f
+40 D MAKI,MAEHARA MAKI,MAEHARA surprised,neutral 0-1 normal normal m
+41 D MASAKI,MAEHARA MASAKI,NPC*~ tender,happy,sad,neutral 0-1 normal,slow normal,soft f
+42 N
+43 N
+44 D MAKI,MAEHARA MAKI,MAEHARA neutral,happy,tender 0-1 normal normal,soft m
+45 D MASAKI,MAEHARA MASAKI,NPC*~ happy,tender 0-1 normal normal f
+46 N
+47 N,T NARRATOR,MAKI,MAEHARA MAKI,MAEHARA neutral 0-1 normal normal u
+48 N,T NARRATOR,MAKI,MAEHARA MAKI,MAEHARA neutral,sarcastic 0-1 normal normal u
+49 D MAKI,MAEHARA MAKI,MAEHARA neutral 0-1 normal normal m
+50 D MASAKI,MAEHARA MASAKI,NPC*~ neutral,happy,tender 0-1 normal normal f
+51 D MAKI,MAEHARA MAKI,MAEHARA neutral,afraid 0-1 normal,slow soft,normal m
+52 N,T NARRATOR,MAKI,MAEHARA MAKI,MAEHARA neutral 0-1 normal normal u
+53 N,T NARRATOR,MAKI,MAEHARA MAKI,MAEHARA neutral,afraid 0-1 normal normal u
+54 D MASAKI,MAEHARA MASAKI,NPC*~ tender,tired,neutral 0-1 normal,slow normal,soft f
+55 D MAKI,MAEHARA MAKI,MAEHARA neutral,tender 0-1 normal normal m
+56 D MASAKI,MAEHARA MASAKI,NPC*~ tender,neutral 0-1 normal,slow soft,normal f
+57 N
+58 D MAKI,MAEHARA MAKI,MAEHARA sad,whispering,tired 0-1 slow,normal soft m
+59 N NARRATOR neutral,sad 0-1 normal,slow normal u
+60 N
+61 N,T NARRATOR,MAKI,MAEHARA MAKI,MAEHARA neutral,sad 0-1 normal normal u
+62 N

@@ -1,0 +1,315 @@
+# "Tsurekano" (Mamahaha no Tsurego ga Motokano datta - Con riêng của mẹ kế là bạn gái cũ) file 031a = 25 KB đầu của 031.txt
+# ("Chương 07 - Cặp đôi người yêu cũ thăm quê ③ “Vết thương mối tình đầu”"). Đáp án KIỂM TRA LN Nhật đợt 2 (02-10; luật cố
+# định: vị trí 30% của bộ, >30 KB lấy 25 KB đầu). Agent A gán 02-10; chưa soát B.
+# NGÔI THỨ NHẤT: "tôi" = YUME / IRIDO YUME / YUME IRIDO (f; truyền --first-person YUME). Bộ truyện đổi người kể theo chương
+# (030 là Kawanami "tui", 032 là Mizuto) - chương này Yume kể ("Chị là Irido Yume" 028; Madoka gọi "Yume-chan", Higashira gọi
+# "Yume-san"). Không cho AYAI (họ cũ, chỉ dùng cho quá khứ trung học).
+# Tên (tập dùng chung cả bộ): MIZUTO / IRIDO MIZUTO / MIZUTO IRIDO (m, em kế kiêm bạn trai cũ); MADOKA / TANESATO MADOKA /
+# MADOKA TANESATO (f, chị họ 20 tuổi, 028:345); CHIKUMA / TANESATO CHIKUMA / CHIKUMA TANESATO (m, em Madoka, học sinh tiểu học
+# sợ người lạ); HIGASHIRA / ISANA / HIGASHIRA ISANA / ISANA HIGASHIRA (f, qua điện thoại 197-290). Mẹ Higashira (284): chương này
+# không tên; tên NATORA chỉ lộ ở 035 -> NPC*:mẹ Higashira và NATORA đều đủ (kém chắc - xem quy tắc 5/13).
+# Câu khó: 18 "—Tôi thật không thể tin rằng lại có một đứa con trai đã đổ một đứa con gái như thế này." và 280 "—Muốn được cô
+# ấy đồng cảm cho mình." là câu tự nhủ của Yume nối dòng kể, parser khoá D vì gạch đầu dòng -> T,N,D, YUME đủ và NARRATOR đủ
+# (quy tắc 9/10). 26 「Chú Mineaki đang gọi cậu đấy」 nằm GIỮA câu kể (câu Yume định nói) -> NARRATOR, YUME~ (quy tắc 8). 208
+# 「Chỉ có vếu to...」 giữa câu hỏi tu từ của người kể, lời diễn ý của mẹ Higashira -> NARRATOR, NPC*~/NATORA~. 36 "—Là một
+# người rất thường hay cười chăng" = lời Mizuto hôm qua người kể nhớ lại (37 "Mizuto, người kể lại...") -> MIZUTO đủ, NARRATOR~.
+# 78 "A." / 79 "……A……": Yume bắt gặp Chikuma (81) - tiếng lắp bắp "……A……" là kiểu Chikuma -> 78 YUME (CHIKUMA~), 79 CHIKUMA
+# (YUME~). 122/124/126 "(Gật gật gật!)" là cử chỉ gật đầu của Chikuma viết như thoại -> NARRATOR đủ, CHIKUMA~. 151 "—Thất lễ vì
+# đã cắt ngang..." nói trước khi lời kể nêu Mizuto (152 "Một giọng nói gắt gỏng", 154) -> MIZUTO đủ, NPC*~. 194 ‘suỵt’ (tiếng
+# suỵt trong câu kể, khoá T) -> N,T NARRATOR, YUME~. 217 nhập nhằng nhẹ: Yume nói tiếp đề tài áo tắm (220 Yume "Khoan khoan. Cậu
+# nghĩ về chuyện đó à?") -> YUME, HIGASHIRA~. 219 "to đùng nữa! Cậu không thấy nó giống trẻ con sao!" là đuôi câu 218 của
+# Higashira, ngoặc lồng “Higashira” làm parser khoá N -> NARRATOR, HIGASHIRA~ (quy tắc 10). 257 chú thích người dịch khoá T ->
+# N,T NARRATOR. 205 Higashira thuật lời mẹ trong câu của mình -> HIGASHIRA.
+# Tiếng lòng tức thời của "tôi" (ngôi một) -> N,T NARRATOR,YUME đều đủ (quy tắc 4).
+0 H
+1 N
+2 N
+3 N
+4 N
+5 N
+6 N
+7 N
+8 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO neutral,sad 0-1 normal normal u
+9 N
+10 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO neutral,sad 0-1 normal normal u
+11 N
+12 N
+13 N
+14 N NARRATOR neutral,sad 0-1 normal normal u
+15 N
+16 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO neutral,sad,angry 0-1 normal normal u
+17 N NARRATOR neutral,sad 0-1 normal normal u
+18 T,N,D YUME,IRIDO YUME,YUME IRIDO,NARRATOR sad,neutral,angry 0-1 normal normal,soft f
+19 D YUME,IRIDO YUME,YUME IRIDO sad,afraid,tired 0-1 normal,slow soft,normal f
+20 N NARRATOR neutral,sad,afraid 0-1 normal normal u
+21 N
+22 N
+23 N
+24 N
+25 N
+26 D NARRATOR,YUME~,IRIDO YUME~,YUME IRIDO~ neutral 0-1 normal normal u
+27 N
+28 N NARRATOR neutral,afraid 0-1 normal normal u
+29 N
+30 N NARRATOR neutral,afraid 0-1 normal normal u
+31 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO sad,neutral 0-1 normal normal u
+32 N
+33 N
+34 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO neutral,surprised,sad 0-1 normal normal u
+35 N NARRATOR neutral,angry 0-1 normal normal u
+36 D MIZUTO,IRIDO MIZUTO,MIZUTO IRIDO,NARRATOR~ neutral,tender,happy 0-1 normal,slow normal,soft m
+37 N NARRATOR neutral,sad,angry 0-1 normal normal u
+38 N
+39 N
+40 D MADOKA,TANESATO MADOKA,MADOKA TANESATO surprised,neutral 0-1 normal normal f
+41 N NARRATOR neutral,surprised,afraid 0-1 normal normal u
+42 N
+43 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO neutral,surprised 0-1 normal normal u
+44 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO neutral,surprised 0-1 normal normal u
+45 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO neutral,afraid 0-1 normal normal u
+46 D YUME,IRIDO YUME,YUME IRIDO afraid,neutral,surprised 0-1 normal,fast normal,soft f
+47 N
+48 N NARRATOR neutral,sad 0-1 normal normal u
+49 D MADOKA,TANESATO MADOKA,MADOKA TANESATO surprised,tender,neutral 0-1 normal normal f
+50 N
+51 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO neutral,surprised 0-1 normal normal u
+52 D MADOKA,TANESATO MADOKA,MADOKA TANESATO neutral,happy 0-1 normal normal f
+53 N
+54 D MADOKA,TANESATO MADOKA,MADOKA TANESATO happy,neutral 0-1 normal normal,loud f
+55 N NARRATOR neutral,sad 0-1 normal normal u
+56 D MIZUTO,IRIDO MIZUTO,MIZUTO IRIDO neutral 0-1 normal normal,soft m
+57 N
+58 D MIZUTO,IRIDO MIZUTO,MIZUTO IRIDO surprised,neutral 0-1 normal soft,normal m
+59 N
+60 D MIZUTO,IRIDO MIZUTO,MIZUTO IRIDO neutral,surprised 0-1 normal normal m
+61 D YUME,IRIDO YUME,YUME IRIDO angry,afraid,neutral 0-1 normal normal f
+62 N NARRATOR neutral,sad 0-1 normal normal u
+63 N
+64 D MIZUTO,IRIDO MIZUTO,MIZUTO IRIDO neutral 0-1 normal normal m
+65 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO neutral,afraid 0-1 normal normal u
+66 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO neutral,sad 0-1 normal normal u
+67 D YUME,IRIDO YUME,YUME IRIDO afraid,angry,neutral 1-2 fast,normal loud,normal f
+68 N NARRATOR neutral,afraid 0-1 normal normal u
+69 N
+70 N
+71 N
+72 N
+73 N NARRATOR neutral,sad 0-1 normal normal u
+74 N
+75 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO neutral,sad 0-1 normal normal u
+76 N
+77 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO neutral,sad,angry 0-1 normal normal u
+78 D YUME,IRIDO YUME,YUME IRIDO,CHIKUMA~,TANESATO CHIKUMA~,CHIKUMA TANESATO~ surprised,neutral 0-1 normal normal f
+79 D CHIKUMA,TANESATO CHIKUMA,CHIKUMA TANESATO,YUME~,IRIDO YUME~,YUME IRIDO~ surprised,afraid,neutral 0-1 normal soft,normal m
+80 N NARRATOR neutral,surprised 0-1 normal normal u
+81 N
+82 N
+83 N
+84 N
+85 D YUME,IRIDO YUME,YUME IRIDO tender,neutral,happy 0-1 normal normal,soft f
+86 D CHIKUMA,TANESATO CHIKUMA,CHIKUMA TANESATO afraid,neutral 0-1 slow,normal soft m
+87 N
+88 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO neutral,sad,surprised 0-1 normal normal u
+89 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO neutral 0-1 normal normal u
+90 N
+91 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO neutral,happy,afraid 0-1 normal normal u
+92 D YUME,IRIDO YUME,YUME IRIDO tender,happy,neutral 0-1 normal normal,soft f
+93 D CHIKUMA,TANESATO CHIKUMA,CHIKUMA TANESATO afraid,neutral 0-1 slow,normal soft m
+94 D YUME,IRIDO YUME,YUME IRIDO tender,happy,neutral 0-1 normal normal,soft f
+95 D CHIKUMA,TANESATO CHIKUMA,CHIKUMA TANESATO afraid,neutral 0-1 slow,normal soft m
+96 D YUME,IRIDO YUME,YUME IRIDO surprised,happy,neutral 0-1 normal normal f
+97 D CHIKUMA,TANESATO CHIKUMA,CHIKUMA TANESATO afraid,neutral 0-1 slow,normal soft m
+98 D YUME,IRIDO YUME,YUME IRIDO happy,tender,neutral 0-1 normal normal f
+99 D CHIKUMA,TANESATO CHIKUMA,CHIKUMA TANESATO afraid,neutral 0-1 slow,normal soft m
+100 D YUME,IRIDO YUME,YUME IRIDO neutral,sad 0-1 normal normal,soft f
+101 N NARRATOR neutral,sad 0-1 normal normal u
+102 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO afraid,neutral 0-1 normal normal u
+103 N
+104 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO neutral,afraid 0-1 normal normal u
+105 D YUME,IRIDO YUME,YUME IRIDO neutral,tender,happy 0-1 normal normal f
+106 N
+107 N
+108 N
+109 D CHIKUMA,TANESATO CHIKUMA,CHIKUMA TANESATO surprised,afraid 1-2 normal,fast loud,normal m
+110 N NARRATOR neutral,surprised 0-1 normal normal u
+111 D CHIKUMA,TANESATO CHIKUMA,CHIKUMA TANESATO surprised,afraid 0-1 normal normal,soft m
+112 D YUME,IRIDO YUME,YUME IRIDO surprised,happy,neutral 0-1 normal normal f
+113 D CHIKUMA,TANESATO CHIKUMA,CHIKUMA TANESATO afraid,surprised 0-1 slow,normal soft m
+114 N
+115 D CHIKUMA,TANESATO CHIKUMA,CHIKUMA TANESATO afraid,neutral 0-1 slow,normal soft m
+116 D YUME,IRIDO YUME,YUME IRIDO neutral,tender 0-1 normal normal f
+117 D CHIKUMA,TANESATO CHIKUMA,CHIKUMA TANESATO afraid,neutral,sad 0-1 slow,normal soft m
+118 D YUME,IRIDO YUME,YUME IRIDO happy,tender,neutral 0-1 normal normal f
+119 N NARRATOR neutral,happy 0-1 normal normal u
+120 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO happy,surprised,neutral 0-1 normal normal u
+121 D YUME,IRIDO YUME,YUME IRIDO happy,neutral,tender 0-1 normal normal f
+122 D NARRATOR,CHIKUMA~,TANESATO CHIKUMA~,CHIKUMA TANESATO~ happy,excited,neutral 0-1 normal,fast normal u
+123 D YUME,IRIDO YUME,YUME IRIDO happy,neutral,tender 0-1 normal normal f
+124 D NARRATOR,CHIKUMA~,TANESATO CHIKUMA~,CHIKUMA TANESATO~ happy,excited,neutral 0-1 normal,fast normal u
+125 D YUME,IRIDO YUME,YUME IRIDO happy,neutral,sad 0-1 normal normal f
+126 D NARRATOR,CHIKUMA~,TANESATO CHIKUMA~,CHIKUMA TANESATO~ excited,happy,neutral 0-2 fast,normal normal u
+127 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO surprised,happy,neutral 0-1 normal normal u
+128 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO surprised,happy,neutral 0-1 normal normal u
+129 N NARRATOR neutral,happy 0-1 normal normal u
+130 N
+131 D YUME,IRIDO YUME,YUME IRIDO sad,tender,neutral 0-1 normal normal,soft f
+132 D CHIKUMA,TANESATO CHIKUMA,CHIKUMA TANESATO sad,neutral 0-1 slow,normal soft m
+133 D YUME,IRIDO YUME,YUME IRIDO tender,happy,neutral 0-1 normal normal f
+134 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO neutral,surprised,happy 0-1 normal normal u
+135 D YUME,IRIDO YUME,YUME IRIDO happy,tender,neutral 0-1 normal normal f
+136 N NARRATOR neutral,happy 0-1 normal normal u
+137 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO neutral,sad 0-1 normal normal u
+138 N
+139 N
+140 N
+141 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO neutral,sad 0-1 normal normal u
+142 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO sad,neutral 0-1 normal normal u
+143 D YUME,IRIDO YUME,YUME IRIDO neutral,tender 0-1 normal normal f
+144 N
+145 D CHIKUMA,TANESATO CHIKUMA,CHIKUMA TANESATO afraid,happy,tender 0-1 slow,normal soft m
+146 N NARRATOR neutral,happy 0-1 normal normal u
+147 D YUME,IRIDO YUME,YUME IRIDO happy,tender,sarcastic 0-1 normal normal f
+148 D CHIKUMA,TANESATO CHIKUMA,CHIKUMA TANESATO afraid,sad,neutral 0-1 normal,slow soft m
+149 D YUME,IRIDO YUME,YUME IRIDO happy,excited 0-2 normal normal,loud f
+150 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO neutral,happy,tender 0-1 normal normal u
+151 D MIZUTO,IRIDO MIZUTO,MIZUTO IRIDO,NPC*~ angry,sarcastic,neutral 0-1 normal normal m
+152 N NARRATOR neutral,surprised 0-1 normal normal u
+153 N
+154 N NARRATOR neutral,angry 0-1 normal normal u
+155 D MIZUTO,IRIDO MIZUTO,MIZUTO IRIDO sarcastic,angry,neutral 0-1 normal normal m
+156 N NARRATOR neutral,angry 0-1 normal normal u
+157 D YUME,IRIDO YUME,YUME IRIDO angry,neutral 0-1 normal normal f
+158 D MIZUTO,IRIDO MIZUTO,MIZUTO IRIDO sarcastic,neutral,angry 0-1 normal normal m
+159 D YUME,IRIDO YUME,YUME IRIDO angry,surprised 0-1 normal normal f
+160 D MIZUTO,IRIDO MIZUTO,MIZUTO IRIDO sarcastic,neutral 0-1 normal normal m
+161 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO angry,surprised 0-1 normal normal u
+162 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO angry,neutral 0-1 normal normal u
+163 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO angry 0-1 normal normal u
+164 D YUME,IRIDO YUME,YUME IRIDO angry,sarcastic 0-1 normal normal f
+165 D MIZUTO,IRIDO MIZUTO,MIZUTO IRIDO neutral,sarcastic 0-1 normal normal m
+166 N NARRATOR neutral,angry 0-1 normal normal u
+167 D MIZUTO,IRIDO MIZUTO,MIZUTO IRIDO neutral,sarcastic 0-1 normal normal m
+168 N NARRATOR neutral,angry,sad 0-1 normal normal u
+169 D YUME,IRIDO YUME,YUME IRIDO angry,sad,sarcastic 0-2 normal normal f
+170 D MIZUTO,IRIDO MIZUTO,MIZUTO IRIDO surprised,neutral 0-1 normal normal,soft m
+171 N NARRATOR neutral,angry,sad 0-1 normal normal u
+172 N NARRATOR neutral,angry,sad 0-1 normal normal u
+173 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO angry,sad 0-1 normal normal u
+174 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO angry,sad 0-1 normal normal u
+175 D YUME,IRIDO YUME,YUME IRIDO angry,sad 1-2 normal normal,loud f
+176 N NARRATOR neutral,angry 0-1 normal normal u
+177 D YUME,IRIDO YUME,YUME IRIDO angry,sad,sarcastic 1-2 normal normal,loud f
+178 N
+179 N
+180 N NARRATOR neutral,sad 0-1 normal normal u
+181 D MIZUTO,IRIDO MIZUTO,MIZUTO IRIDO tired,neutral,sad 0-1 normal,slow normal,soft m
+182 N NARRATOR neutral,sad 0-1 normal normal u
+183 N NARRATOR neutral,sad 0-1 normal normal u
+184 N
+185 N NARRATOR neutral,afraid 0-1 normal normal u
+186 D YUME,IRIDO YUME,YUME IRIDO surprised,afraid,sad 0-1 fast,normal normal f
+187 N
+188 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO angry,sad,afraid 0-1 normal normal u
+189 D YUME,IRIDO YUME,YUME IRIDO neutral,afraid,happy 0-1 fast,normal normal f
+190 N NARRATOR neutral,sad 0-1 normal normal u
+191 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO neutral,sad,tired 0-1 normal normal u
+192 D YUME,IRIDO YUME,YUME IRIDO happy,tender,neutral 0-1 normal normal,soft f
+193 N
+194 N,T NARRATOR,YUME~,IRIDO YUME~,YUME IRIDO~ whispering,neutral 0-1 normal soft,normal u
+195 N
+196 N NARRATOR neutral,sad 0-1 normal normal u
+197 D HIGASHIRA,ISANA,HIGASHIRA ISANA,ISANA HIGASHIRA happy,neutral 0-1 normal normal f
+198 N NARRATOR neutral,happy 0-1 normal normal u
+199 D YUME,IRIDO YUME,YUME IRIDO neutral,tender 0-1 normal normal f
+200 D HIGASHIRA,ISANA,HIGASHIRA ISANA,ISANA HIGASHIRA tired,happy,neutral 0-1 normal normal f
+201 D YUME,IRIDO YUME,YUME IRIDO surprised,neutral 0-1 normal normal f
+202 N
+203 D HIGASHIRA,ISANA,HIGASHIRA ISANA,ISANA HIGASHIRA tired,happy 0-1 normal normal,soft f
+204 D YUME,IRIDO YUME,YUME IRIDO surprised,neutral,sarcastic 0-1 normal normal f
+205 D HIGASHIRA,ISANA,HIGASHIRA ISANA,ISANA HIGASHIRA tired,sad,neutral 0-1 normal normal f
+206 D YUME,IRIDO YUME,YUME IRIDO neutral,surprised,sarcastic 0-1 normal normal f
+207 N
+208 D NARRATOR,NPC*:mẹ Higashira~,NATORA~ neutral,sarcastic 0-1 normal normal u
+209 N
+210 D HIGASHIRA,ISANA,HIGASHIRA ISANA,ISANA HIGASHIRA tired,happy 0-1 normal normal f
+211 D YUME,IRIDO YUME,YUME IRIDO sarcastic,neutral 0-1 normal normal f
+212 D HIGASHIRA,ISANA,HIGASHIRA ISANA,ISANA HIGASHIRA neutral,happy 0-1 normal normal f
+213 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO neutral,sarcastic 0-1 normal normal u
+214 N
+215 D YUME,IRIDO YUME,YUME IRIDO neutral 0-1 normal,slow normal f
+216 D HIGASHIRA,ISANA,HIGASHIRA ISANA,ISANA HIGASHIRA sad,neutral,afraid 0-1 normal normal,soft f
+217 D YUME,IRIDO YUME,YUME IRIDO neutral 0-1 normal normal f
+218 D HIGASHIRA,ISANA,HIGASHIRA ISANA,ISANA HIGASHIRA angry,sad,excited 1-2 fast,normal normal,loud f
+219 N NARRATOR,HIGASHIRA~,ISANA~,HIGASHIRA ISANA~,ISANA HIGASHIRA~ neutral 0-1 normal normal u
+220 D YUME,IRIDO YUME,YUME IRIDO surprised,neutral 0-1 normal normal f
+221 D HIGASHIRA,ISANA,HIGASHIRA ISANA,ISANA HIGASHIRA surprised,neutral 0-1 normal normal f
+222 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO surprised,neutral 0-1 normal normal u
+223 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO neutral 0-1 normal normal u
+224 D YUME,IRIDO YUME,YUME IRIDO neutral,surprised,sarcastic 0-1 normal normal f
+225 D HIGASHIRA,ISANA,HIGASHIRA ISANA,ISANA HIGASHIRA neutral,surprised 0-1 normal normal f
+226 D YUME,IRIDO YUME,YUME IRIDO neutral 0-1 normal normal f
+227 D HIGASHIRA,ISANA,HIGASHIRA ISANA,ISANA HIGASHIRA neutral,sad 0-1 normal normal f
+228 D YUME,IRIDO YUME,YUME IRIDO neutral,surprised 0-1 normal normal f
+229 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO neutral 0-1 normal normal u
+230 D HIGASHIRA,ISANA,HIGASHIRA ISANA,ISANA HIGASHIRA happy,excited 0-1 normal normal,soft f
+231 D YUME,IRIDO YUME,YUME IRIDO sarcastic,afraid,neutral 0-1 normal normal f
+232 D HIGASHIRA,ISANA,HIGASHIRA ISANA,ISANA HIGASHIRA neutral,sad 0-1 normal normal f
+233 D YUME,IRIDO YUME,YUME IRIDO sad,neutral,whispering 0-1 normal soft,normal f
+234 N NARRATOR neutral,sad 0-1 normal normal u
+235 D YUME,IRIDO YUME,YUME IRIDO sad,neutral,tired 0-1 normal soft,normal f
+236 D HIGASHIRA,ISANA,HIGASHIRA ISANA,ISANA HIGASHIRA neutral,sarcastic,afraid 0-1 normal normal f
+237 D YUME,IRIDO YUME,YUME IRIDO neutral,sarcastic,afraid 0-1 normal normal f
+238 N NARRATOR neutral,sad 0-1 normal normal u
+239 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO sad,neutral 0-1 normal normal u
+240 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO sad,neutral 0-1 normal normal u
+241 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO sad,neutral 0-1 normal normal u
+242 D YUME,IRIDO YUME,YUME IRIDO neutral,sad 0-1 normal normal f
+243 D HIGASHIRA,ISANA,HIGASHIRA ISANA,ISANA HIGASHIRA neutral,happy,excited 0-1 normal normal f
+244 D YUME,IRIDO YUME,YUME IRIDO neutral,sarcastic 0-1 normal normal f
+245 N
+246 D YUME,IRIDO YUME,YUME IRIDO neutral 0-1 normal normal f
+247 D HIGASHIRA,ISANA,HIGASHIRA ISANA,ISANA HIGASHIRA neutral 0-1 normal normal f
+248 D YUME,IRIDO YUME,YUME IRIDO neutral,sad 0-1 normal normal f
+249 D HIGASHIRA,ISANA,HIGASHIRA ISANA,ISANA HIGASHIRA surprised,neutral 0-1 normal normal f
+250 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO neutral,surprised 0-1 normal normal u
+251 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO neutral,surprised 0-1 normal normal u
+252 D HIGASHIRA,ISANA,HIGASHIRA ISANA,ISANA HIGASHIRA surprised,neutral,excited 0-1 normal normal f
+253 D YUME,IRIDO YUME,YUME IRIDO sad,neutral 0-1 normal soft,normal f
+254 D HIGASHIRA,ISANA,HIGASHIRA ISANA,ISANA HIGASHIRA excited,surprised,happy 0-2 normal normal,loud f
+255 D YUME,IRIDO YUME,YUME IRIDO surprised,sarcastic,angry 0-1 normal normal f
+256 D HIGASHIRA,ISANA,HIGASHIRA ISANA,ISANA HIGASHIRA happy,excited 0-1 normal normal f
+257 N,T NARRATOR neutral 0-1 normal normal u
+258 D YUME,IRIDO YUME,YUME IRIDO surprised 0-1 normal normal f
+259 N NARRATOR neutral,surprised 0-1 normal normal u
+260 D HIGASHIRA,ISANA,HIGASHIRA ISANA,ISANA HIGASHIRA excited,happy 1-2 fast,normal normal,loud f
+261 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO surprised,neutral 0-1 normal normal u
+262 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO surprised,neutral 0-1 normal normal u
+263 D YUME,IRIDO YUME,YUME IRIDO surprised,sad,neutral 0-1 normal normal f
+264 D HIGASHIRA,ISANA,HIGASHIRA ISANA,ISANA HIGASHIRA happy,excited,neutral 0-1 normal normal f
+265 D YUME,IRIDO YUME,YUME IRIDO surprised,neutral,tired 0-1 normal normal f
+266 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO neutral,surprised,tired 0-1 normal normal u
+267 D HIGASHIRA,ISANA,HIGASHIRA ISANA,ISANA HIGASHIRA neutral 0-1 normal normal f
+268 N NARRATOR neutral,surprised 0-1 normal normal u
+269 D HIGASHIRA,ISANA,HIGASHIRA ISANA,ISANA HIGASHIRA neutral 0-1 normal normal f
+270 D YUME,IRIDO YUME,YUME IRIDO surprised 0-1 normal soft,normal f
+271 N NARRATOR neutral,surprised,afraid 0-1 normal normal u
+272 N NARRATOR neutral,surprised,afraid 0-1 normal normal u
+273 D HIGASHIRA,ISANA,HIGASHIRA ISANA,ISANA HIGASHIRA neutral,tender 0-1 normal normal f
+274 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO sad,surprised 0-1 normal normal u
+275 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO sad,surprised 0-1 normal normal u
+276 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO sad 0-1 normal normal u
+277 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO sad 0-1 normal normal u
+278 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO sad 0-1 normal normal u
+279 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO sad 0-1 normal normal u
+280 T,N,D YUME,IRIDO YUME,YUME IRIDO,NARRATOR sad 0-1 normal normal,soft f
+281 N,T NARRATOR,YUME,IRIDO YUME,YUME IRIDO sad,angry 0-1 normal normal u
+282 D YUME,IRIDO YUME,YUME IRIDO sad,neutral 0-1 normal soft,normal f
+283 D HIGASHIRA,ISANA,HIGASHIRA ISANA,ISANA HIGASHIRA neutral,tender 0-1 normal normal f
+284 D NPC*:mẹ Higashira,NATORA~,UNKNOWN~ angry,excited 2-3 normal loud f
+285 D HIGASHIRA,ISANA,HIGASHIRA ISANA,ISANA HIGASHIRA surprised,afraid 2-3 fast loud f
+286 N NARRATOR neutral,surprised 0-1 normal normal u
+287 D YUME,IRIDO YUME,YUME IRIDO surprised,afraid 0-1 fast,normal normal f
+288 D HIGASHIRA,ISANA,HIGASHIRA ISANA,ISANA HIGASHIRA afraid,excited,surprised 1-2 fast normal,loud f
+289 D YUME,IRIDO YUME,YUME IRIDO surprised,neutral 0-1 normal normal f
+290 D HIGASHIRA,ISANA,HIGASHIRA ISANA,ISANA HIGASHIRA happy,afraid,neutral 0-1 fast,normal normal,loud f
+291 N

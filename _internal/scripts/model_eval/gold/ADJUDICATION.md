@@ -650,3 +650,49 @@ Rokujouma - B (511 câu D/T): người nói chính sai 0; 9 loại, 6 tập tên
 SHIZUKA~ (90-91); 014:148 N,T + KENJI~ (cùng dạng 015:69); bỏ các `~` không căn cứ chữ: KENJI~ ở 014:182/208, SHIZUKA~ ở
 014:253. Giữ A: 015:145-146 và 014:313/315 lời Koutarou tự nói thành tiếng - D (bản dịch dùng ( ) cho nội tâm thật); thứ
 tự N,T/T,N như Make Heroine; cảm xúc lời kể trơn giữ (không chấm người nói).
+
+## Vòng LN Nhật đợt 2 (02-10): mười bộ mới, mỗi bộ một chương (Gimai 14a, Kurakon 034, KuraNiKa 084, Tensei 14, Tsurekano 031a, Eiyuu to Majo 05, Roshidere 00, Evil Lord 02, Konosuba 033, Horizon 0422a)
+
+Chọn bằng cùng luật cố định (vị trí 30%; chương không có thoại -> 70%: Tensei 06 -> 14; Roshidere: luật tìm lùi khi file
+cuối là quảng cáo). A = agent Opus (ba nhóm), B = agent Sonnet soát đối kháng, phân xử = Claude.
+
+Nhóm 1 (Gimai, Kurakon, KuraNiKa, Tensei) - B: người nói chính sai 1 (Gimai 14a:138), Tensei: mọi dòng 『』 là Master truyền
+ý nghĩ (10.txt:33) -> D MASTER đúng.
+
+| câu | A | B đề nghị | kết luận | lý do |
+|---|---|---|---|---|
+| Gimai 14a:138 "Vậy là tổng chỉ có ba cuốn hử... chị thực sự không thể xếp" | ASAMURA, YOMIURI~ | YOMIURI, ASAMURA~ | cả hai đủ | lượt xen kẽ (137 Yomiuri) nghiêng Asamura gọi "chị"; khuôn câu 124 nghiêng Yomiuri - nhập nhằng thật |
+| Tensei 14:36, 38, 40, 41 | GARRUS | GARRUS,NPC*~ | theo B | trước 43 "Tên: Garrus", như 29/31 A đã cho |
+| KuraNiKa 084:34 câu đọc từ nét mặt mẹ | MASAKI, NARRATOR~ | cả hai đủ | theo B | người kể đọc vẻ mặt - lời kể và giọng mẹ đều được; khớp Gimai 42/126 |
+| Kurakon 034: HIMARIN~ (13 câu) | có | bỏ | theo B | chương không có chữ nào gọi vậy - như Rokujouma |
+| Gimai 1, 47, 54, 85; KuraNiKa 25, 47, 52; Kurakon 5; Tensei 23, 134 | N | N,T | theo B | tiếng lòng tức thời (quy tắc 4); ngôi một người nghĩ đủ, Kurakon ngôi ba `~` |
+| Gimai 156, 155, 17/19 | giữ | tuỳ chọn | giữ A | B tự xếp mức thấp |
+
+Nhóm 2 (Tsurekano, Eiyuu to Majo, Roshidere) - B: người nói chính sai 0 (1 nghi); ranh giới hai người kể Roshidere 00 đúng
+(1-114 Himuro, 115 ghi chú dịch giả, 116-207 Aria).
+
+| câu | A | B đề nghị | kết luận | lý do |
+|---|---|---|---|---|
+| Eiyuu 05:154 "...cùng nhau đi biển đi!" | HINA, YUUKA~ | cả hai đủ | theo B | lặp gần nguyên câu Yuuka ở 143 |
+| Tsurekano 031a:284 mẹ Higashira | NPC*:mẹ Higashira, NATORA đủ | NATORA~ | theo B | tên chỉ lộ từ chương 035 (quy tắc 12-13, khắt khe) |
+| Tsurekano 031a:208 | NPC*~ | NPC*:mẹ Higashira~ | theo B | cùng người với 284 |
+| Tsurekano 031a:217 | + HIGASHIRA~ | bỏ | theo B | 220 cho thấy 217 là Yume; ba dòng liền một người không lời dẫn thì vô căn cứ |
+| Roshidere 00:82 "VÂNG~" | + NPC*~ | bỏ | theo B | 81 cô giáo nói "hai đứa", 83 "chúng tôi" |
+| Eiyuu 05:49, 85, 163; Tsurekano 031a:137 | N | N,T + người kể | theo B | tiếng lòng tức thời ngôi một (quy tắc 4), cùng khuôn câu kề A đã cho |
+| Roshidere 00:1 "Thôi xong, mình quên mang sách" | D | D,T | theo B | lời tự nhủ, người nói như nhau |
+
+Nhóm 3 (Evil Lord, Konosuba, Horizon) - B: người nói chính sai 1 (Konosuba 033:92); Horizon: Phó Hội trưởng cầm Tonbo Spare
+là Futayo (0420:731-733), tên kênh chat đúng người - giữ A.
+
+| câu | A | B đề nghị | kết luận | lý do |
+|---|---|---|---|---|
+| Konosuba 033:92 “—Nên, Wiz định sẽ trả lời hắn ta vào ngày mai.” | KAZUMA | N,D NARRATOR, KAZUMA~ | cả hai đủ | trong ngoặc kép sau ngắt cảnh: Kazuma kể lại cho nhóm hay câu chốt của người kể - nhập nhằng thật |
+| Konosuba 033:118 | N | N,T + KAZUMA | theo B (người kể đủ) | giữa chuỗi tiếng lòng 113-119 A đã cho N,T; ngôi một nên người nghĩ đủ điểm |
+| Konosuba 033:72 | + AQUA~ | bỏ | theo B | nối thẳng 70-71, 73 Vanir đáp "ngươi" |
+| Horizon 0422a:37 | + NPC*~ | bỏ | theo B | 36 là nghĩ của Torahide, 38 Muneshige đáp đúng danh hiệu |
+| Evil Lord 02:128 | N | N,T + LIAM | theo B (người kể đủ) | than thở tức thời của "tôi", cùng kiểu 139 |
+| Evil Lord 02: NGƯỜI DẪN LỐI (174-193) | tên chức danh | + NPC*~ | theo B | không có tên riêng cả bộ; model gán NPC thì nửa điểm |
+| Konosuba 033:59, Horizon 0422a:218 | giữ | thêm T | giữ A | B tự xếp chắc thấp |
+
+Tổng đợt 2 sau phân xử: người nói chính sai được sửa/nới 3 câu (Gimai 14a:138, Konosuba 033:92 -> hai người đủ điểm; Eiyuu
+05:154 -> hai người đủ điểm).

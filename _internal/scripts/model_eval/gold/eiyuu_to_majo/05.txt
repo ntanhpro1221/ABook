@@ -1,0 +1,191 @@
+# "Eiyuu to Majo" (Anh hùng và Phù thủy chuyển sinh) file 05 ("Chương cuối cùng - Shiraishi Godou và Shiina Mai", hết tập 1).
+# Đáp án KIỂM TRA LN Nhật đợt 2 (02-10; luật cố định: vị trí 30% của bộ, >30 KB lấy 25 KB đầu). Agent A gán 02-10; chưa soát B.
+# NGÔI THỨ NHẤT: "tôi" = GODOU / SHIRAISHI GODOU / GODOU SHIRAISHI (m, anh hùng chuyển sinh; truyền --first-person GODOU).
+# Bộ có chương do Shiina kể (11, 12) - chương này Godou kể.
+# Tên (tập dùng chung cả bộ): SHIINA / MAI / SHIINA MAI / MAI SHIINA (f, phù thủy chuyển sinh; lời kể gọi "Shiina" và "Phù
+# thủy" - danh hiệu trơn không tính, quy tắc 11); HINA / KIRISHIMA / KIRISHIMA HINA / HINA KIRISHIMA (f, gọi Shiina "Mai-chan",
+# xưng "tui"); YUUKA / SHINDOU / SHINDOU YUUKA / YUUKA SHINDOU (f, 02:125); SHINJI / KUDOU / KUDOU SHINJI / SHINJI KUDOU (m,
+# 01:41, xưng "tao").
+# Câu khó: 61-63 ba câu, 64 "Hina, Yuuka và cả Shinji lần lượt nói" -> theo thứ tự HINA, YUUKA, SHINJI. 146 「ra cũng như thế ha」
+# nằm giữa câu kể ngay sau "thì nói" -> lời thật của YUUKA đủ, NARRATOR~ (như 88 của Hina). 56 "—Chính vì thế mà chúng tôi đã đi
+# Karaoke." là lời kể mở cảnh bị khoá D vì gạch đầu dòng -> N,D NARRATOR, GODOU~ (quy tắc 10). 150 "—Phù thủy không thể trở nên
+# hạnh phúc, à." = Godou nhớ lại câu Shiina nói ở 04:1061 rồi ngẫm ("à"), khoá D -> T,N,D GODOU, NARRATOR đủ, SHIINA~. 20
+# ‘tôi sẽ có thể trở thành anh hùng duy nhất của cô’ (khoá T) là câu cũ của chính Godou (04:1097) trích trong câu tự giễu ->
+# N,T NARRATOR, GODOU đủ. 153 "……Đi du lịch ở đâu đó đi nhỉ?" không lời dẫn, ngay sau cảnh Shiina hát vui với mọi người, dấu
+# "……" là lối Shiina -> SHIINA, GODOU~ (kém chắc); 154 "Ừm ừm! ... cùng nhau đi biển đi!" hồ hởi kiểu Hina (Yuuka là người đề xuất
+# đi biển ở 143) -> HINA, YUUKA~ (kém chắc). 168/170: cảnh kết "Phù Thủy cất câu hỏi" / "Anh Hùng đáp lại" = Shiina / Godou kiếp
+# trước (prologue 00) -> SHIINA / GODOU; PHÙ THỦY / ANH HÙNG không điểm (danh hiệu). 100 "Thế tại sao mẹ lại nghĩ..." - "mẹ" là
+# tiếng cảm thán của Godou. 50 "……Đi chơi với tôi nhé." Godou mời (nối 46-49), 53/55 Shiina nhận lời.
+# Tiếng lòng tức thời của "tôi" -> N,T NARRATOR,GODOU đều đủ (quy tắc 4).
+0 H
+1 N
+2 N NARRATOR neutral,sad 0-1 normal normal u
+3 N NARRATOR neutral,sad 0-1 normal normal u
+4 D SHIINA,MAI,SHIINA MAI,MAI SHIINA neutral,tender 0-1 normal normal f
+5 N
+6 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI sad,tired,sarcastic 0-1 normal normal m
+7 D SHIINA,MAI,SHIINA MAI,MAI SHIINA neutral,sarcastic 0-1 normal normal f
+8 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI sarcastic,angry,neutral 0-1 normal normal m
+9 D SHIINA,MAI,SHIINA MAI,MAI SHIINA angry,neutral,sarcastic 0-1 normal normal f
+10 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI sarcastic,tired,neutral 0-1 normal normal m
+11 N
+12 D SHIINA,MAI,SHIINA MAI,MAI SHIINA tender,neutral,afraid 0-1 fast,normal normal,soft f
+13 N
+14 N NARRATOR neutral,afraid 0-1 normal normal u
+15 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI afraid,neutral,tender 0-1 normal normal m
+16 D SHIINA,MAI,SHIINA MAI,MAI SHIINA afraid,neutral,tender 0-1 normal normal,soft f
+17 N,T NARRATOR,GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral,afraid 0-1 normal normal u
+18 N,T NARRATOR,GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral,afraid,sad 0-1 normal normal u
+19 N
+20 N,T NARRATOR,GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI sarcastic,neutral 0-1 normal normal u
+21 N,T NARRATOR,GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI sarcastic,angry,neutral 0-1 normal normal u
+22 N,T NARRATOR,GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI sarcastic,neutral 0-1 normal normal u
+23 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral 0-1 normal normal m
+24 D SHIINA,MAI,SHIINA MAI,MAI SHIINA happy,sarcastic,neutral 0-1 normal normal f
+25 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI angry,sarcastic 0-1 normal,fast normal,loud m
+26 N NARRATOR neutral,surprised 0-1 normal normal u
+27 D SHIINA,MAI,SHIINA MAI,MAI SHIINA afraid,sad,neutral 0-1 normal normal,soft f
+28 N NARRATOR neutral,afraid 0-1 normal normal u
+29 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral,tender 0-1 normal normal m
+30 N
+31 N
+32 N
+33 N
+34 D SHIINA,MAI,SHIINA MAI,MAI SHIINA sad,neutral,afraid 0-1 normal,slow normal,soft f
+35 N
+36 N
+37 N
+38 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral,happy 0-1 normal normal m
+39 D SHIINA,MAI,SHIINA MAI,MAI SHIINA surprised,neutral 0-1 normal normal,soft f
+40 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral,happy 0-1 normal normal m
+41 D SHIINA,MAI,SHIINA MAI,MAI SHIINA neutral 0-1 normal normal f
+42 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI happy,excited,neutral 0-1 normal normal m
+43 D SHIINA,MAI,SHIINA MAI,MAI SHIINA neutral 0-1 normal normal f
+44 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI sarcastic,neutral,angry 0-1 normal normal m
+45 N,T NARRATOR,GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral,tired 0-1 normal normal u
+46 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral,tender 0-1 normal normal m
+47 N,T NARRATOR,GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral,afraid 0-1 normal normal u
+48 N
+49 N,T NARRATOR,GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral 0-1 normal normal u
+50 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI tender,neutral 0-1 normal normal m
+51 N
+52 N
+53 D SHIINA,MAI,SHIINA MAI,MAI SHIINA happy,tender 0-1 normal normal f
+54 N NARRATOR neutral,happy 0-1 normal normal u
+55 D SHIINA,MAI,SHIINA MAI,MAI SHIINA happy,tender 0-1 normal normal f
+56 N,D NARRATOR,GODOU~,SHIRAISHI GODOU~,GODOU SHIRAISHI~ neutral 0-1 normal normal u
+57 D SHIINA,MAI,SHIINA MAI,MAI SHIINA afraid,neutral 0-1 normal soft,normal f
+58 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral,tired 0-1 normal normal m
+59 N NARRATOR neutral,afraid 0-1 normal normal u
+60 N
+61 D HINA,KIRISHIMA,KIRISHIMA HINA,HINA KIRISHIMA happy,excited 0-2 normal normal,loud f
+62 D YUUKA,SHINDOU,SHINDOU YUUKA,YUUKA SHINDOU happy,neutral 0-1 normal normal f
+63 D SHINJI,KUDOU,KUDOU SHINJI,SHINJI KUDOU happy,neutral,excited 0-1 normal normal m
+64 N
+65 N
+66 N
+67 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral 0-1 normal normal m
+68 D SHIINA,MAI,SHIINA MAI,MAI SHIINA afraid,neutral 0-1 normal normal,soft f
+69 N
+70 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral,tender 0-1 normal normal,soft m
+71 N
+72 D SHIINA,MAI,SHIINA MAI,MAI SHIINA surprised,neutral 0-1 normal soft,normal f
+73 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI tender,neutral,happy 0-1 normal normal m
+74 D SHIINA,MAI,SHIINA MAI,MAI SHIINA surprised,afraid 0-1 normal normal f
+75 N
+76 N
+77 D SHINJI,KUDOU,KUDOU SHINJI,SHINJI KUDOU sarcastic,happy 0-1 normal normal m
+78 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral 0-1 normal normal m
+79 D SHINJI,KUDOU,KUDOU SHINJI,SHINJI KUDOU surprised,sarcastic,happy 0-1 normal normal m
+80 N
+81 N
+82 D HINA,KIRISHIMA,KIRISHIMA HINA,HINA KIRISHIMA happy,neutral 0-1 normal normal f
+83 D SHIINA,MAI,SHIINA MAI,MAI SHIINA afraid,neutral 0-1 normal,slow soft,normal f
+84 N
+85 N,T NARRATOR,GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral 0-1 normal normal u
+86 N,T NARRATOR,GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral,sad 0-1 normal normal u
+87 N NARRATOR neutral,happy 0-1 normal normal u
+88 D HINA,KIRISHIMA,KIRISHIMA HINA,HINA KIRISHIMA excited,happy 0-2 normal normal,loud f
+89 N
+90 D HINA,KIRISHIMA,KIRISHIMA HINA,HINA KIRISHIMA excited,happy 0-1 normal normal,loud f
+91 D YUUKA,SHINDOU,SHINDOU YUUKA,YUUKA SHINDOU happy,neutral 0-1 normal normal f
+92 N
+93 N
+94 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI surprised,neutral 0-1 normal normal m
+95 N
+96 N
+97 D SHIINA,MAI,SHIINA MAI,MAI SHIINA afraid,neutral 0-1 normal soft f
+98 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI surprised,tired,neutral 0-1 normal normal m
+99 D SHIINA,MAI,SHIINA MAI,MAI SHIINA sad,afraid 0-1 normal soft,normal f
+100 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI tired,surprised,sarcastic 0-1 normal normal m
+101 N
+102 D SHIINA,MAI,SHIINA MAI,MAI SHIINA neutral,sad 0-1 normal normal,soft f
+103 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral 0-1 normal normal m
+104 D SHIINA,MAI,SHIINA MAI,MAI SHIINA neutral 0-1 normal normal f
+105 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral,tired 0-1 normal normal m
+106 D SHIINA,MAI,SHIINA MAI,MAI SHIINA neutral,sad 0-1 normal normal,soft f
+107 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI tired,neutral,sarcastic 0-1 normal normal m
+108 N
+109 N
+110 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral 0-1 normal normal m
+111 D SHIINA,MAI,SHIINA MAI,MAI SHIINA neutral 0-1 normal,slow normal f
+112 N
+113 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral,happy 0-1 normal normal m
+114 D SHIINA,MAI,SHIINA MAI,MAI SHIINA sarcastic,afraid,neutral 0-1 normal normal f
+115 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral,tender 0-1 normal normal m
+116 N
+117 D HINA,KIRISHIMA,KIRISHIMA HINA,HINA KIRISHIMA angry,excited,happy 1-2 normal loud f
+118 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral 0-1 normal normal m
+119 D SHIINA,MAI,SHIINA MAI,MAI SHIINA afraid,happy,surprised 0-1 fast,normal normal f
+120 D HINA,KIRISHIMA,KIRISHIMA HINA,HINA KIRISHIMA surprised,happy 0-1 normal normal f
+121 N
+122 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI sarcastic,neutral 0-1 normal normal m
+123 D HINA,KIRISHIMA,KIRISHIMA HINA,HINA KIRISHIMA angry 0-2 normal,fast normal,loud f
+124 D SHIINA,MAI,SHIINA MAI,MAI SHIINA surprised,afraid 0-1 fast,normal normal f
+125 N NARRATOR neutral,afraid 0-1 normal normal u
+126 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral 0-1 normal normal m
+127 D HINA,KIRISHIMA,KIRISHIMA HINA,HINA KIRISHIMA happy,surprised 0-1 normal normal f
+128 D SHIINA,MAI,SHIINA MAI,MAI SHIINA happy,afraid,neutral 0-1 normal normal,soft f
+129 D HINA,KIRISHIMA,KIRISHIMA HINA,HINA KIRISHIMA happy,excited 0-1 normal normal f
+130 N NARRATOR neutral,happy 0-1 normal normal u
+131 N
+132 D SHINJI,KUDOU,KUDOU SHINJI,SHINJI KUDOU neutral,happy 0-1 normal normal,soft m
+133 N
+134 D SHINJI,KUDOU,KUDOU SHINJI,SHINJI KUDOU neutral,happy 0-1 normal normal m
+135 N
+136 N NARRATOR neutral,happy 0-1 normal normal u
+137 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral 0-1 normal normal m
+138 D SHINJI,KUDOU,KUDOU SHINJI,SHINJI KUDOU neutral 0-1 normal normal m
+139 N
+140 N
+141 D YUUKA,SHINDOU,SHINDOU YUUKA,YUUKA SHINDOU happy,excited 0-1 normal normal f
+142 N NARRATOR neutral,happy 0-1 normal normal u
+143 D YUUKA,SHINDOU,SHINDOU YUUKA,YUUKA SHINDOU happy,excited 0-1 normal normal f
+144 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral 0-1 normal normal m
+145 N
+146 D YUUKA,SHINDOU,SHINDOU YUUKA,YUUKA SHINDOU,NARRATOR~ neutral,happy 0-1 normal normal f
+147 N
+148 N
+149 N NARRATOR neutral,happy 0-1 normal normal u
+150 T,N,D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI,NARRATOR,SHIINA~,MAI~,SHIINA MAI~,MAI SHIINA~ neutral,sad,sarcastic 0-1 normal,slow normal,soft m
+151 N,T NARRATOR,GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral,sarcastic 0-1 normal normal u
+152 N NARRATOR neutral,happy 0-1 normal normal u
+153 D SHIINA,MAI,SHIINA MAI,MAI SHIINA,GODOU~,SHIRAISHI GODOU~,GODOU SHIRAISHI~ happy,neutral 0-1 normal normal,soft f
+154 D HINA,KIRISHIMA,KIRISHIMA HINA,HINA KIRISHIMA,YUUKA,SHINDOU,SHINDOU YUUKA,YUUKA SHINDOU happy,excited 0-1 normal normal,loud f
+155 N
+156 N,T NARRATOR,GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral,tired 0-1 normal normal u
+157 D SHIINA,MAI,SHIINA MAI,MAI SHIINA afraid,neutral 0-1 normal normal,soft f
+158 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral,sarcastic 0-1 normal normal m
+159 D SHIINA,MAI,SHIINA MAI,MAI SHIINA surprised,sad,angry 0-1 normal,fast normal f
+160 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI tired,neutral 0-1 normal normal m
+161 N NARRATOR neutral,sad 0-1 normal normal u
+162 N
+163 N,T NARRATOR,GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral 0-1 normal normal u
+164 N
+165 N NARRATOR neutral,happy 0-1 normal normal u
+166 N NARRATOR neutral,happy 0-1 normal normal u
+167 N
+168 D SHIINA,MAI,SHIINA MAI,MAI SHIINA neutral,sad,tender 0-1 normal,slow normal,soft f
+169 N
+170 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral,tender 0-1 normal,slow normal m
+171 N
