@@ -1,0 +1,7 @@
+# Đáp án cảnh nise_seiken/132 - PHÂN XỬ TỰ ĐỘNG (adjudicate_scenes.py, luật SCENE_GOLD_GUIDE.md) từ hai người chấm mù: OPUS + SONNET.
+scene 0-27 | V=0.5 E=-0.25 T=-0.5 | gems=tenderness/peacefulness | function=mo_dau | setting=bãi cỏ làng quê dưới trời sao, hồi ức tuổi thơ | music=co | tone=hai nhẹ: Magali ngủ quên tới đêm, hốt hoảng vì mất phần rau; Alistar ngái ngủ, chạnh lòng vì người lớn bóc lột cô bé, rủ đi "lừa đảo tống thức ăn"
+scene 28-75 | V=1 E=0.5 T=0.5 | gems=joyful_activation/tension | function=doi_thoai | setting=cửa nhà ông chú trong làng, tối | music=co | tone=hai: Alistar giả vờ đáng thương, dồn ông chú đổ mồ hôi rồi nhận rổ thức ăn "đút lót"; lật mặt sau lưng
+scene 76-100 | V=1.25 E=0.5 T=-0.75 | gems=joyful_activation | function=ket | setting=đường làng ban đêm, núi thức ăn | music=co | tone=hai: Magali mừng mà áy náy, Alistar kéo đi lừa tiếp cả làng; kết châm biếm "bước đệm cho sự suy đồi đạo đức"
+accent 56 | Alistar doạ đi kể chuyện cho người khác
+accent 74-75 | "Thấy chưa? Dễ như bỡn." - nụ cười hiểm ác
+accent 97-97 | Magali kêu "Eeeeeehhhhhhh" bị kéo đi

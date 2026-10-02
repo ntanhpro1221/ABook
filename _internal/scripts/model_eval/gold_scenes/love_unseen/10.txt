@@ -1,0 +1,10 @@
+# Đáp án cảnh love_unseen/10 - PHÂN XỬ TỰ ĐỘNG (adjudicate_scenes.py, luật SCENE_GOLD_GUIDE.md) từ hai người chấm mù: OPUS + SONNET.
+scene 0-19 | V=-1 E=-0.25 T=0.75 | gems=sadness/tension | function=mo_dau | setting=văn phòng thức trắng, công ty khách hàng, phố Tokyo chiều tối | music=co | Yuuko kiệt sức gọi nhầm tên khách, xấu hổ muốn khóc; sếp ra lệnh về nhà, cô bực mà không cãi được
+scene 20-55 | V=-1.5 E=-1.25 T=0 | gems=sadness | function=noi_tam | setting=hồi tưởng mấy năm đi làm, căn hộ trống, đường tới ga Asakusa | music=nhe | : đồng nghiệp bỏ đi, mất lý do làm việc, mẹ hỏi, dọn ra ở riêng, "Mệt quá đi"; lê bước qua đám đông
+scene 56-78 | V=0.75 E=-0.5 T=-1 | gems=nostalgia/tenderness | function=noi_tam | setting=hồi ức lễ khai giảng đại học ở Hamamatsucho | music=co | câu quát gợi nhớ Koharu khiếm thị: chiếc váy, "Cậu trông tuyệt lắm", Yuuko ghen tỵ rồi đổi mình, thần tượng bạn
+scene 79-100 | V=0.75 E=-0.25 T=-0.5 | gems=nostalgia/tenderness | function=noi_tam | setting=hồi tưởng, rồi đường phố hiện tại | music=nhe | start=soft - thiếu tự tin, nhuộm tóc, Koharu là thần tượng, "Koharu sẽ làm gì?", quyết nghỉ việc
+scene 101-115 | V=0.25 E=-0.5 T=0.5 | gems=tenderness/sadness | function=doi_thoai | setting=giữa dòng người Asakusa, gọi điện cho mẹ | music=co | start=soft - : "Koharu sẽ làm gì?", tự bật cười, quyết nghỉ việc; mẹ vui vẻ đón về, giọng dịu dàng, Yuuko muốn bật khóc
+scene 116-129 | V=1.75 E=0.75 T=-1 | gems=transcendence/joyful_activation | function=cao_trao | setting=lễ hội pháo hoa sông Sumida | music=co | pháo hoa nở rộ: nhiệt huyết thời đại học trở lại, mệt mỏi tan, đầu đầy ý tưởng, cười thoải mái - giải toả, hy vọng
+accent 53-54 | người lạ tặc lưỡi "Cô bị mù à?"
+accent 116-117 | tiếng pháo hoa đầu tiên nổ
+accent 116-117 | pháo hoa nổ "Đoàng, đoàng, đoàng"

@@ -1,0 +1,18 @@
+# Đáp án cảnh nageki_no_bourei/65 - PHÂN XỬ TỰ ĐỘNG (adjudicate_scenes.py, luật SCENE_GOLD_GUIDE.md) từ hai người chấm mù: OPUS + SONNET.
+scene 0-18 | V=1 E=0 T=-1 | gems=joyful_activation/nostalgia | function=mo_dau | setting=thủ đô đông đúc, trước nhà hội | music=co | tone=hai: về tới thủ đô, chút hoài niệm; đấu khẩu với Kris, Killigan lộ là Killiam, nhiệm vụ hộ tống kết thúc
+scene 19-55 | V=1 E=0.5 T=-0.75 | gems=joyful_activation/nostalgia | function=mo_dau | setting=thủ đô đông đúc, trước nhà hội | music=co | start=soft - tone=hai: về tới thủ đô, chút hoài niệm; đấu khẩu với Kris, Killigan lộ là Killiam, nhiệm vụ hộ tống kết thúc
+scene 56-112 | V=0.75 E=-0.75 T=-1 | gems=peacefulness | function=doi_thoai | setting=phòng làm việc nhà hội | music=nhe | tone=hai nhẹ: Krai nằm dài thư giãn, Eva báo tin vặt (Knights of the Torch, khu rừng Toweyezant, đầu rồng nhồi bông); Krai mở lời về yêu cầu của hoàng đế, Eva thở dài
+scene 113-137 | V=-0.25 E=-0.25 T=1 | gems=tension | function=noi_tam | setting=hồi ức của Murina, lời thì thầm của Éclair | music=co | start=soft - đổi điểm nhìn sang Murina, giọng nghiêm: danh tiếng Thiên Biến Vạn Hoá, Éclair bất an cảnh báo, "Ngàn Thử Luyện" cận kề cái chết - u ám đe doạ
+scene 138-154 | V=-1.5 E=-0.75 T=0.5 | gems=sadness | function=noi_tam | setting=hoàng cung, thân phận công chúa xui xẻo | music=nhe | : vận rủi của Murina, Franz chịu thương thay, hoàng đô gặp hoạ, cô buông hy vọng hoá giải - buồn lặng
+scene 155-196 | V=0.5 E=0.75 T=1 | gems=tension | function=doi_thoai | setting=diện kiến hoàng đế, Franz, công chúa | music=co | tone=hai: người nghe biết Krai chỉ hoảng mà người trong cảnh tưởng hắn tinh quái - "Thôi tha cho tôi đi", Franz quát, cả hoàng đế trách, Krai bỗng quay ngoắt nhận việc
+scene 197-214 | V=0 E=-0.5 T=0.75 | gems=tension/tenderness | function=noi_tam | setting=hoàng cung | music=co | : Murina đoán hắn thử lòng mình, sợ mà gồng niềm kiêu hãnh hoàng gia, hít thở nhận huấn luyện - nghiêm, khẽ dũng cảm
+scene 215-251 | V=1 E=-0.25 T=-1 | gems=peacefulness/joyful_activation | function=doi_thoai | setting=phòng làm việc nhà hội | music=nhe | tone=hai: quay về Krai kể với Eva; độc thoại tự bào chữa - vận xui của mình còn tệ hơn công chúa, định đẩy việc cho Ark
+scene 252-293 | V=1 E=0.5 T=-0.75 | gems=joyful_activation | function=ket | setting=phòng làm việc nhà hội, vé bạch kim | music=co | tone=hai: khoe vé Lễ Hội Chiến Binh Tối Thượng, rủ Eva rồi cả hội đi; hai bên hiểu lệch nhau, Eva khó xử mà gật
+scene 294-309 | V=1 E=0.25 T=-0.75 | gems=joyful_activation | function=ket | setting=phòng làm việc nhà hội, vé bạch kim | music=co | start=soft - tone=hai: khoe vé Lễ Hội Chiến Binh Tối Thượng, rủ Eva rồi cả hội đi; hai bên hiểu lệch nhau, Eva khó xử mà gật
+accent 38-42 | Killigan nhấc mũ giáp: túi giấy khoét hai lỗ, "Kill, kill"
+accent 39-42 | Killigan nhấc mũ giáp lộ cái túi giấy, "Kill, kill"
+accent 160-162 | "Thôi tha cho tôi đi" - Franz đỏ mặt hét
+accent 175-176 | Franz quát "Đừng nói nhảm!"
+accent 196 | Krai bất ngờ đổi ý nhận nhiệm vụ
+accent 196-196 | Krai lật ý, rối rít nhận nhiệm vụ
+accent 261-266 | mô tả Lễ Hội Chiến Binh Tối Thượng hoành tráng
