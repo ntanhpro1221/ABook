@@ -1,0 +1,5 @@
+# Đáp án cảnh - Nageki no Bourei wa Intai shitai (LN Nhật, bản dịch Việt), Ngoại truyện "May Rủi và Vận Xui".
+# 147 câu, ~2070 tiếng. Thế giới: western_fantasy. BỘ KIỂM THỨ HAI. PHÂN XỬ A4 + B4 (Pk 0,03).
+scene 0-22 | V=0.5 E=-0.5 T=0.5 | gems=wonder/tension | function=mo_dau | setting=phố kinh đô, bàn bói | music=co | tone=hai - bà lão gọi lại, Lucia cảnh giác
+scene 23-109 | V=0.5 E=0.5 T=0.25 | gems=joyful_activation/tension | function=doi_thoai | setting=bàn bói bên đường | music=co | start=soft (cả hai) - tone=hai - tiên tri vận xui dồn dập
+scene 110-146 | V=0.75 E=0 T=-0.25 | gems=joyful_activation | function=doi_thoai | setting=bàn bói bên đường | music=co | start=soft (cả hai) - tone=hai - vận nhân duyên, vận đào hoa, Lucia kéo đi

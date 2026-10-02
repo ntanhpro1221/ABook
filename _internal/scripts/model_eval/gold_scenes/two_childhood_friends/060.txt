@@ -1,0 +1,7 @@
+# Đáp án cảnh - Two Childhood Friends... (LN Nhật, bản dịch Việt), Chương 61 "Có Fan Hâm Mộ Rồi Nhé". Thế giới: modern.
+# 183 câu, ~1980 tiếng. BỘ KIỂM THỨ HAI. PHÂN XỬ A4 + B4 (Pk 0,33). Khúc mở 0-14 (~140 tiếng) quá ngắn -> điểm nhấn.
+scene 0-63 | V=0.25 E=1.25 T=0.75 | gems=tension/joyful_activation | function=hanh_dong | setting=rừng đêm, sát thủ sườn xám | music=co | tone=hai - tưởng bị đâm chết, vẫn đứng, Linlin lao lại, Phản Đòn thổi bay
+accent 0-14 | Linlin tin đã đâm thủng tim - khúc nghiêm ngắn
+scene 64-108 | V=1.25 E=0.5 T=-0.75 | gems=joyful_activation | function=doi_thoai | setting=rừng đêm | music=co | tone=hai - đắc thắng, Kirako chọc vết thương, mừng bỏ được chuyến đi biển
+scene 109-153 | V=0.5 E=1 T=0.75 | gems=tension/joyful_activation | function=doi_thoai | setting=rừng đêm | music=co | tone=hai - Linlin quay lại, nhiệm vụ là bắt sống
+scene 154-182 | V=0.75 E=0.75 T=0 | gems=joyful_activation | function=ket | setting=rừng đêm | music=co | start=soft (chỉ B) - tone=hai - ve vãn rồi chuồn, giáo viên tới muộn, "có fan rồi nhé"
