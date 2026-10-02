@@ -1139,6 +1139,24 @@ Chấm hai loại cặp, cùng người đọc, cùng gói:
 
 Đoạn hai bên trùng bài thì không chấm, như trên.
 
+**KẾT QUẢ TRÒ (c) (03-10 05:3x):**
+- Code: `build_student.py` CROSSFIT=1, `build_student_c.py`, `score_student_c.py`, `results/student_c_score.txt`.
+- Dự đoán chéo: r trò–thầy V/E/T 0,82 / 0,92 / 0,85 (trò-A 0,81 / 0,92 / 0,84).
+- Bài chọn không trải đều: qua 100 đoạn, thầy dùng 23 bài khác nhau, trò 34, trò-q 25 (`rank` hạng 1, không phạt lặp).
+- Người đọc n1, n2: mỗi gói một agent Sonnet riêng, 212 / 212 lượt.
+  - **Dùng được:** ổn định a/b 0,89 / 0,95, kappa 0,70.
+
+| So với thầy | Cặp khác bài | Cả hai chọn bên kia | Cả hai chọn thầy | Khác ý | p | KTC 95% | Mốc ≥ 0,45 |
+|---|---|---|---|---|---|---|---|
+| trò | 100 | 44 | 39 | 17 | **0,525** | 0,43–0,62 | **ĐẠT** |
+| trò-q | 93 | 34 | 47 | 12 | 0,430 | 0,33–0,53 | trượt |
+
+Kết luận:
+- **Trò ĐẠT (c):** bài trò chọn không kém bài thầy chọn, đo bằng thước vốn nghiêng về thầy. Trò đạt cả (a), (b), (c), (d).
+- **Ánh xạ phân vị KHÔNG vào app:** trò-q kém hơn trò thô (0,43 so với 0,525).
+- Việc trò bị co về giữa trong kho trộn vẫn có thật nhưng chưa đo. Phép này so kho toàn trò với kho toàn thầy, không phải kho
+  trộn. Muốn đo thì cần ghi trước riêng.
+
 **GHI TRƯỚC - TRÒ ĐƯỜNG ONNX cho máy chỉ player + điện thoại (03-10 05:xx, Lead; trước khi làm):**
 
 Bản torch hiện có là CHUẨN. Đường ONNX phải khớp nó, đo trên 20 bài danh mục cố định (20 mã đầu của `embedding_ids.json` có
@@ -1225,6 +1243,13 @@ Giữ ngoài:
 - 15% bài MTG (theo split-0 của bộ, phần test).
 - Thước phụ của trò: AUC từng tag MTG (56 tag) trên phần test, so với baseline đã công bố cho mood/theme (PR-AUC
   ~0,12-0,15, ROC-AUC ~0,75-0,77 cho effnet/musicnn) để biết trò đứng đâu.
+
+**TẢI XONG (03-10 03:45):**
+- Đã tải đủ 100 gói moodtheme: máy nhà gói 0–57, Mac gói 58–99 (`feats.jsonl` 7.512 dòng, CLAP npz theo gói).
+- Phần của Mac đã chép về `C:/abook_data/mtg_jamendo/mac/`. Audio không lời giữ trên Mac (~22 GB).
+- Bài có lời chỉ còn dòng tối thiểu, không có đặc trưng.
+- Chưa đem học: trò đã đạt (a) không cần thêm dữ liệu. Đây là kho dự trữ cho lần đổi trò kế tiếp.
+- Essentia trên Mac (chỉ để so, CC BY-NC-ND) xong 3.927 bài danh mục: `essentia_out.jsonl` + `essentia_effnet.npy`.
 
 **LỚP 2 PHÍA BÀI - 13 cường độ độc lập (02-10 22:xx, `derive_emotions.py`):**
 - **Zero-shot CLAP** (3 câu mô tả mỗi lớp, z theo cả kho, sigmoid): AUC so feel người gắn của Incompetech (1.381 bài)
