@@ -434,7 +434,8 @@ class SyncApp:
         self.routes = routes or (lambda: {})
         # Loa / TV trong mạng nhà của máy này (webui/cast.CastPlayers): điện thoại đã ghép điều khiển chúng QUA máy này.
         self.cast = cast
-        # Bài nhạc nền đã có trên máy này (bộ đệm của máy chủ giao diện): điện thoại nhận nhạc của cuốn qua gói.
+        # Bài nhạc nền đã có trên máy này (bộ đệm của máy chủ giao diện): điện thoại nhận nhạc của cuốn qua gói. Là
+        # music_plan.TrackSource thì bài máy này không lấy được được thay bằng bài thay thế (cả manifest lẫn file phục vụ).
         self.music_track = music_track
         # Số "việc cần duyệt" của mỗi dự án, tính lại chỉ khi sách đổi (studio_view): điện thoại hỏi mỗi 15 phút.
         self._work: dict[str, tuple[tuple[float, ...], int]] = {}  # đường dẫn -> (dấu thời gian, số việc)
@@ -596,6 +597,10 @@ class SyncApp:
         if music_plan.TRACK_FILE.fullmatch(relative) and self.music_track is not None:
             plan = music_plan.read_plan(project_root)
             for link in (plan or {}).get("tracks") or {}:
+                if music_plan.track_name(link) == relative:
+                    return self.music_track(link)
+            # Bài thay thế (bài của plan máy này không lấy được, manifest đã đưa bài khác vào gói): chỉ các bài ấy.
+            for link in music_plan.substituted_tracks(project_root, self.music_track):
                 if music_plan.track_name(link) == relative:
                     return self.music_track(link)
             return None
