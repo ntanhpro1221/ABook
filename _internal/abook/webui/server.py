@@ -834,7 +834,7 @@ class App:
                 for link in banned if isinstance(known.get(link), dict) and known[link].get("title")}
 
     def _music_taxonomy(self) -> dict[str, Any]:
-        """Bảng phong cách / thể loại / nhãn GEMS từ danh mục (đổi được không cần cập nhật app); mất mạng thì rỗng."""
+        """Bảng phong cách / thể loại / tên 13 cảm xúc từ danh mục (đổi được không cần cập nhật app); mất mạng thì rỗng."""
         try:
             catalog = self.music_catalog()
             taxonomy = catalog.manifest().get("taxonomy")
