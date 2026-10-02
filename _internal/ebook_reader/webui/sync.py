@@ -38,7 +38,7 @@ from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import unquote, urlsplit
 
-from . import covers, listen_view, remote_studio, store
+from . import covers, listen_view, music_plan, remote_studio, store
 from .cast import CastError
 from .fingerprints import Fingerprints
 from .library import Library, book_id
@@ -338,8 +338,12 @@ class Devices:
         os.replace(temporary, self.path)
 
 
-def manifest(project_root: Path, book: str, listening: Listening) -> dict[str, Any]:
-    """`book.json` của một cuốn: chỉ các chương ĐÃ nghe được, kèm tên file để điện thoại tải về."""
+def manifest(project_root: Path, book: str, listening: Listening,
+             music_track: Callable[[str], Path | None] | None = None) -> dict[str, Any]:
+    """`book.json` của một cuốn: chỉ các chương ĐÃ nghe được, kèm tên file để điện thoại tải về.
+
+    `music_track(link)` -> file bài nhạc nền ĐÃ có trên máy (không tải trong lượt hỏi này): có thì kèm mục `music` như
+    file `.abook` (music_plan.package) - điện thoại nghe thẳng hay tải về đều có nhạc người sản xuất đã gắn."""
     summary = store.summarize(project_root)
     summary["id"] = book
     view = listen_view.book(project_root, book, summary, listening.get(book))
@@ -356,9 +360,14 @@ def manifest(project_root: Path, book: str, listening: Listening) -> dict[str, A
     cast = store.cast(project_root)
     samples = sorted({person["sampleId"] for person in cast["characters"] + cast["extras"] if person.get("sampleId")})
     cover = covers.cover_meta(project_root)
-    # Đổi ảnh bìa cũng là một phiên bản mới của gói: điện thoại thấy "có cập nhật" và tải lại bìa.
+    music = None
+    if music_track is not None:
+        packed = music_plan.package(project_root, [c["id"] for c in chapters if c["available"]], music_track)
+        music = packed[0] if packed else None
+    # Đổi ảnh bìa hay nhạc nền cũng là một phiên bản mới của gói: điện thoại thấy "có cập nhật" và tải lại.
     version = hashlib.sha256(json.dumps([[(c["id"], c["size"]) for c in chapters],
-                                         cover["version"] if cover else 0]).encode()).hexdigest()[:16]
+                                         cover["version"] if cover else 0] + ([music] if music else []),
+                                        sort_keys=True).encode()).hexdigest()[:16]
     return {
         "format": listen_view.FORMAT,
         "id": book,
@@ -375,6 +384,7 @@ def manifest(project_root: Path, book: str, listening: Listening) -> dict[str, A
         "cast": "cast.json",
         "samples": [f"samples/{sample}.wav" for sample in samples],
         "cover": {**cover, "file": covers.COVER_FILE} if cover else None,
+        **({"music": music} if music else {}),
     }
 
 
@@ -382,7 +392,8 @@ class SyncApp:
     def __init__(self, library: Library, listening: Listening, devices: Devices, name: str,
                  remote: Remote | None = None, fingerprints: Fingerprints | None = None,
                  studio: StudioGate | None = None, player: Remote | None = None,
-                 routes: Callable[[], dict[str, Any]] | None = None, cast: Any = None) -> None:
+                 routes: Callable[[], dict[str, Any]] | None = None, cast: Any = None,
+                 music_track: Callable[[str], Path | None] | None = None) -> None:
         self.library = library
         self.listening = listening
         self.devices = devices
@@ -396,6 +407,8 @@ class SyncApp:
         self.routes = routes or (lambda: {})
         # Loa / TV trong mạng nhà của máy này (webui/cast.CastPlayers): điện thoại đã ghép điều khiển chúng QUA máy này.
         self.cast = cast
+        # Bài nhạc nền đã có trên máy này (bộ đệm của máy chủ giao diện): điện thoại nhận nhạc của cuốn qua gói.
+        self.music_track = music_track
         # Số "việc cần duyệt" của mỗi dự án, tính lại chỉ khi sách đổi (studio_view): điện thoại hỏi mỗi 15 phút.
         self._work: dict[str, tuple[tuple[float, ...], int]] = {}  # đường dẫn -> (dấu thời gian, số việc)
         self._work_lock = threading.Lock()
@@ -550,6 +563,12 @@ class SyncApp:
             cast = store.cast(project_root)
             allowed = {person.get("sampleId") for person in cast["characters"] + cast["extras"]}
             return store.sample_audio_path(project_root, int(match.group(1))) if int(match.group(1)) in allowed else None
+        if music_plan.TRACK_FILE.fullmatch(relative) and self.music_track is not None:
+            plan = music_plan.read_plan(project_root)
+            for link in (plan or {}).get("tracks") or {}:
+                if music_plan.track_name(link) == relative:
+                    return self.music_track(link)
+            return None
         match = re.fullmatch(r"chapters/([^/\\]+\.mp3)", relative)
         if match:
             for chapter in store.chapters(project_root):
@@ -787,7 +806,8 @@ class SyncHandler(BaseHTTPRequestHandler):
             # đúng mã nó dùng - không thì nó tưởng hồ sơ đã chuyển sang cuốn khác và gỡ khỏi cuốn đang nghe.
             key = book_id(project)
             if method == "GET" and match.group(2) == "manifest":
-                self._json(HTTPStatus.OK, {**manifest(project, key, self.app.listening), "id": book})
+                self._json(HTTPStatus.OK, {**manifest(project, key, self.app.listening, self.app.music_track),
+                                           "id": book})
             elif method == "POST" and match.group(2) == "state":
                 body = self._body()
                 record = body.get("record")
