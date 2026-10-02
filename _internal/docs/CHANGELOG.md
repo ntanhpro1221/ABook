@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.16] - 2026-10-02
+
 ### Studio
 
 - Bước chọn chương soát **số chương**: chương trùng (hai file cùng "Chương 11"), chương thiếu (14 rồi 18), thứ tự lùi, và
