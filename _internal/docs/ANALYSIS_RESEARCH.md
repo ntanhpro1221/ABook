@@ -50,10 +50,44 @@ Instruct-2507 4-bit, r16, 1 epoch): v8m (data_v8, đối chứng) và v9m (data_
 LN 6 + Tam quốc trên Modal, host 26dec3dc (`LLM_Train/modal/launch_v9_01_10.sh`, `v9_chain_01_10.sh`). Luật nhận như v7/v8:
 không thua v8m quá 2 điểm ở LN, và Tam quốc phải về gần v6 (87,5).
 
+LN 6 (01-10 22:1x): v9m 63,7 vs v8m 58,2 = **+5,5 [+1,6; +10,2]**, hơn 5/6 chương; chặt −2,1 [−23,0; +8,3]; NHẬP người
+lạ 86% vs 50% (22 câu, lu 8/11 vs 0/11). NHƯNG đối chứng v8m (data_v8, trình unsloth trên Modal) thấp hơn v8 nhà (cùng
+data_v8, `train_lora.py`) −6,0 [−8,2; −2,8], thua 6/6 - khác trình/lượt huấn luyện đã to ngang hiệu của 184 mẫu, và v9m
+chỉ ngang v8 nhà (63,7 vs 64,2). KTC bootstrap theo chương KHÔNG gồm nhiễu giữa hai lượt huấn luyện. Chưa nhận: chờ Tam
+quốc; nếu v9m hồi ở Tam quốc thì huấn luyện v9 ở NHÀ bằng đúng trình của v8 nhà rồi so thẳng với v8 nhà.
+
+Tam quốc (01-10 22:2x): v8m 87,8 / v9m 87,2 (chặt 86,8 / 88,1) - KHÔNG khác, cả hai ngang v6 (87,5). Mà v8 NHÀ chỉ 83,0:
+"v8 thua Tam quốc 4,5" là của LƯỢT huấn luyện ở nhà, không phải của data_v8. **Kết luận: v9 không nhận** (Tam quốc không
+có gì để sửa, LN +5,5 nằm trong nhiễu giữa hai lượt). **Bài học lớn hơn: hai lượt cùng dữ liệu lệch ~6 F1 LN và ~5 Tam
+quốc** - mọi so sánh model trước đây hơn kém dưới mức ấy (v7, v6b, 9B-v8 ±0) là CHƯA phân định; muốn tách hiệu của dữ liệu
+phải huấn luyện >= 2-3 hạt giống mỗi bên rồi so trung bình. Việc kế: 3 hạt giống v8 cùng trình (Modal, rẻ) đo LN6 + Tam
+quốc để biết độ rộng nhiễu thật trước khi đổi model mặc định.
+
 8B dữ liệu SẠCH (Modal 01-10, đo trên Mac cùng host với 8B-v5 lượt A, 5 chương chung): v6n-e1 F1 giọng 56,6 vs 8B-v5 63,8
 (−8,0 [−12,7; −3,0], thua 5/5 chương), chặt −20,8; nhưng NHẬP người lạ vào nhân vật có tên 0% (v5 39%) - mọi câu vô danh
 đọc bằng giọng người lạ. Dữ liệu "bẩn" của v5 (nhãn chữ hoa, có chương cổng) vẫn cho F1 cao hơn; chờ v6-e1 / v6n-e2 trước
 khi kết luận về 8B.
+
+**ĐỘ NHIỄU GIỮA HAI LƯỢT HUẤN LUYỆN (02-10 01:2x)** - cùng data_v8, cùng trình unsloth trên Modal, chỉ khác hạt giống:
+LN6 F1 giọng 58,2 / 63,9 / 60,5 (hạt 3407 / 1 / 2; trung bình 60,9, lệch ~2,9), riêng chương TCF 40,5 / **83,1** / 42,7 - một
+chương ngôi thứ nhất lật theo hạt giống; Tam quốc 87,8 / 84,3 / 88,2. v9m (63,7; 87,2) nằm trong dải -> v9 không phân biệt
+được, đúng như đã không nhận. Luật từ nay: so hai công thức bằng >= 3 hạt giống mỗi bên (Modal ~2,5 USD/lượt), báo trung
+bình +- lệch; một lượt đơn chỉ đủ để loại thứ thua xa. 9B-v8: Tam quốc 91,9 chỉ hơn dải v8 (84-88) 4-8 điểm - dè dặt; YMP +15
+lớn hơn mọi dao động đã thấy, nhưng chưa đo hạt giống trên cổng YMP.
+
+**Tốc độ THẬT theo chương (02-10 02:xx, log hàng GPU, 13 chương LN chung, cùng máy nhà):** 9B-v8 Q4 chậm hơn v8 4B Q8
+trung vị **1,32 lần** (TCF 042: 412 / 313 giây; Nageki 65: 1379 / 1103), gần ngang 8B-v5 Q4 (356 / 1196). Con số 47 vs 22 tok/s
+ở trên chỉ là tốc độ SINH trong phép thử riêng; cả chương thì đọc prompt dài chiếm phần lớn. 9B nằm trọn VRAM, 8B tràn.
+Nên cái giá của 9B là ~30% thời gian phân tích - cân với +4..+15 ở hai cổng khó. Qwen3.5-4B công thức v8 (chưa huấn luyện được
+ở nhà - Windows thiếu kernel lớp gated delta) là phép thử còn thiếu: nếu giữ phần lớn mức hơn của 9B mà nhanh như 4B thì hơn.
+
+**9B-v8 ĐỦ CỔNG (02-10 01:0x)** - LN 12 chương: 64,7 = v8 4B (-0,1 [-3,4; +3,7], hơn 6 thua 6); cổng: Tam quốc F1 giọng
+**91,9 vs 83,0** (chặt 89,0 vs 82,2; v8m Modal 87,8 - vẫn hơn), YMP ngôi thứ nhất **92,2 vs 77,0** (chặt 92,0 vs 86,0),
+Tắt đèn 77,7 vs 76,3 (chặt 92,0 vs 84,8); cổng 351/381 OK, 363/378 hỏng vì QUÁ GIỜ do bộ giữ êm (lỗi đo - đo lại bằng
+scratchpad/redo_9bv8_gates.sh). Chạy được trên card 8 GB (Q4, 16k ngữ cảnh, 5,35 GiB, 47 tok/s - nhanh hơn 8B). Hơn hẳn ở
+hai cổng khó nhất (cảnh nhiều người kiểu Tam quốc, kể ngôi thứ nhất) vượt cỡ nhiễu giữa hai lượt huấn luyện (~5-6) ->
+**ỨNG VIÊN đổi model mặc định** (đổi = file khoá config.py + đăng model: chủ sách quyết). Trước khi đổi: đo lại 363/378,
+và một lượt 9B-v8 hạt giống khác nếu tín dụng cho phép.
 
 9B-v8 (Qwen3.5-9B công thức v8, đo ở nhà, 6 chương LN cơ sở): F1 giọng 64,2 = v8 4B (+0,0 [−3,5; +4,6]), chặt −6,0
 [−16,0; +3,9]; chênh lớn theo chương (Nise 79,0 vs 62,8; TCF 25,8 vs 40,7). Chưa đủ để nói 9B hơn; chờ LN mở rộng + cổng.
