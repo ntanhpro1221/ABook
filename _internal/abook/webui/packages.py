@@ -16,7 +16,8 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from . import covers, store
-from .fingerprints import Fingerprints
+from .. import continuation
+from .fingerprints import Fingerprints, base_name
 from .listen_view import FORMAT
 from .listening import book_progress
 
@@ -75,6 +76,12 @@ def chapter_prints(book: dict[str, Any]) -> dict[str, dict[str, Any]]:
     files = (book.get("package") or {}).get("files") or {}
     return {name: {"size": meta.get("size"), "sha256": meta.get("sha256")}
             for name, meta in files.items() if name.startswith("chapters/") and isinstance(meta, dict)}
+
+
+def _prints_by_file(prints: dict[str, dict[str, Any]]) -> set[tuple[str, Any, Any]]:
+    """Chương theo (tên file, cỡ, mã băm), không kể thư mục phần: cuốn nhập từ file một phần và file cả bộ đặt cùng một
+    audio ở hai đường dẫn khác nhau mà vẫn là một lần sản xuất."""
+    return {(base_name(name), meta.get("size"), meta.get("sha256")) for name, meta in prints.items()}
 
 
 def _inside(root: Path, relative: Any) -> Path | None:
@@ -161,6 +168,7 @@ def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bo
             "fullTitle": chapter.get("fullTitle") or chapter.get("title") or "",
             "duration": round(float(chapter.get("duration") or 0), 1) if available else 0.0,
             "available": available,
+            "part": chapter.get("part") if isinstance(chapter.get("part"), int) else None,
         })
     available = [chapter for chapter in items if chapter["available"]]
     complete = bool(book.get("complete")) and len(available) == len(items)
@@ -184,10 +192,24 @@ def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bo
         "cover": covers.cover_view(Path(path), book_id),
         "lastChapterTitle": next((chapter["fullTitle"] for chapter in items
                                   if chapter["id"] == (state.get("last") or {}).get("chapterId")), ""),
+        # Cả bộ trong một file (bookfile.pack_series): các phần theo thứ tự; sách một phần thì rỗng.
+        "parts": _parts(book),
     }
     if with_chapters:
         result["chapters"] = items
     return result
+
+
+def _parts(book: dict[str, Any]) -> list[dict[str, Any]]:
+    """Mục `parts` của book.json, chỉ giữ những gì giao diện dùng (số phần, tên, mã chương đầu/cuối, thời lượng, người đọc)."""
+    out = []
+    for part in book.get("parts") or []:
+        span = part.get("chapters") if isinstance(part, dict) else None
+        if not isinstance(span, list) or len(span) != 2 or not isinstance(part.get("part"), int):
+            continue
+        out.append({"part": part["part"], "title": str(part.get("title") or ""), "chapters": span,
+                    "duration": float(part.get("duration") or 0), "narrator": str(part.get("narrator") or "")})
+    return out
 
 
 def _remote_view(book: dict[str, Any]) -> dict[str, Any]:
@@ -221,13 +243,15 @@ def import_file(source: Path, library_root: Path, projects: Iterable[Path],
 
     with bookfile.BookFile(Path(source)) as opened:
         prints = opened.chapter_prints
-        for project in projects:
-            if fingerprints.shares_a_chapter(project, prints):
-                return Path(project), "project"
+        # File cả bộ chung chương với nhiều dự án (mỗi phần một dự án): mở phần đầu của bộ.
+        mine = [project for project in projects if fingerprints.shares_a_chapter(project, prints)]
+        if mine:
+            return Path(min(mine, key=continuation.part_number)), "project"
         imported = Path(library_root).expanduser() / IMPORTED_FOLDER
+        wanted = _prints_by_file(prints)
         for existing in folders(library_root):
             theirs = chapter_prints(manifest(existing))
-            if any(theirs.get(name) == meta for name, meta in prints.items()):
+            if wanted & _prints_by_file(theirs):
                 if len(prints) <= len(theirs):
                     return existing, "existing"
                 target = opened.extract(imported, existing.name)

@@ -107,25 +107,59 @@ def export_book(project_root: Path, target_root: Path, *, cover: str | None = No
     return {"folder": str(folder), "files": len(written), "chaptersTotal": summary["chapters"]["total"]}
 
 
+def _title_of(project: Path) -> str:
+    return store.summarize(project)["title"] or project.name
+
+
+def series_split(parts: list[Path]) -> tuple[list[tuple[int, Path]], list[dict[str, Any]]]:
+    """Các phần của bộ chia làm hai: phần có chương nghe được [(số phần, dự án)] và phần chưa có chương nào [{part, title}].
+    Số phần là vị trí trong bộ, không đếm lại sau khi bỏ qua - "Phần 3" vẫn là phần 3. Mọi kiểu xuất cả bộ dùng chung."""
+    listed: list[tuple[int, Path]] = []
+    skipped: list[dict[str, Any]] = []
+    for number, project in enumerate(parts, start=1):
+        if _listenable(project):
+            listed.append((number, project))
+        else:
+            skipped.append({"part": number, "title": _title_of(project)})
+    if not listed:
+        raise ValueError("Chưa phần nào của bộ có chương nghe được để xuất")
+    return listed, skipped
+
+
+def audio_bytes(projects: list[Path]) -> int:
+    """Tổng cỡ audio các chương nghe được - ước lượng cỡ file `.abook` (audio chiếm gần hết) trước khi xuất."""
+    total = 0
+    for project in projects:
+        for chapter in _listenable(project):
+            path = store.chapter_audio_path(project, chapter["id"])
+            if path is not None:
+                total += path.stat().st_size
+    return total
+
+
 def export_series(parts: list[Path], target_root: Path,
                   export_part: Callable[[Path, Path, str], dict[str, Any]]) -> dict[str, Any]:
     """Xuất cả bộ ("Làm tiếp cuốn này" chia một truyện thành nhiều dự án): một thư mục cho bộ, mỗi phần xuất bằng đúng đường
     xuất một phần. `export_part(dự án, thư mục bộ, "Phần N - tên")` làm một phần và trả kết quả của nó (MP3: thư mục
     con theo nhãn; .abook: một file mang nhãn). Chỉ chương đã xong như xuất một phần; phần chưa có chương nào bị bỏ qua và
     được kể tên - người dùng thấy bộ thiếu phần nào thay vì nghĩ là xuất sót."""
-    def title_of(project: Path) -> str:
-        return store.summarize(project)["title"] or project.name
-
-    folder = target_root / safe_name(continuation.base_title(title_of(parts[0])))
-    done: list[dict[str, Any]] = []
-    skipped: list[dict[str, Any]] = []
-    for number, project in enumerate(parts, start=1):
-        title = title_of(project)
-        if not _listenable(project):
-            skipped.append({"part": number, "title": title})
-            continue
-        label = f"Phần {number} - {continuation.base_title(title)}"
-        done.append({"part": number, "title": title, **export_part(project, folder, label)})
-    if not done:
-        raise ValueError("Chưa phần nào của bộ có chương nghe được để xuất")
+    listed, skipped = series_split(parts)
+    folder = target_root / safe_name(continuation.base_title(_title_of(parts[0])))
+    done = [{"part": number, "title": _title_of(project),
+             **export_part(project, folder, f"Phần {number} - {continuation.base_title(_title_of(project))}")}
+            for number, project in listed]
     return {"folder": str(folder), "parts": done, "skipped": skipped, "partsTotal": len(parts)}
+
+
+def export_series_file(parts: list[Path], target_root: Path,
+                       pack: Callable[[list[tuple[int, Path]], Path], Path]) -> dict[str, Any]:
+    """Cả bộ trong MỘT file `.abook` (phiên bản 3, bookfile.pack_series) nằm thẳng trong `target_root`, tên theo tên bộ.
+    `pack(các phần, đường file)` ghi file và trả đường dẫn. Kết quả cùng hình dạng với `export_series` (parts, skipped,
+    partsTotal) cộng `file` + `size`: giao diện phân biệt "một file" với "mỗi phần một file" bằng chỗ có `file`."""
+    from .bookfile import default_name
+
+    listed, skipped = series_split(parts)
+    path = pack(listed, target_root / default_name(continuation.base_title(_title_of(parts[0]))))
+    return {"folder": str(path.parent), "file": str(path), "size": path.stat().st_size,
+            "parts": [{"part": number, "title": _title_of(project)} for number, project in listed],
+            "skipped": skipped, "partsTotal": len(parts)}

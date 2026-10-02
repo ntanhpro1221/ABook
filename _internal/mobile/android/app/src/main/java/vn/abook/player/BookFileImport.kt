@@ -2,6 +2,7 @@ package vn.abook.player
 
 import android.content.Context
 import android.net.Uri
+import android.provider.OpenableColumns
 import org.json.JSONObject
 import java.io.File
 import java.security.MessageDigest
@@ -17,15 +18,24 @@ import java.util.zip.ZipFile
  * định dạng (không đường dẫn tuyệt đối, không ".."), số mục và cỡ có trần, định dạng mới hơn app thì nhắc cập nhật, và
  * mọi file phải đúng cỡ + mã băm ghi trong book.json TRƯỚC khi sách vào thư viện. Giải nén vào thư mục tạm rồi mới đổi
  * tên: hỏng giữa chừng không bao giờ để lại nửa cuốn. Nhập lại cùng cuốn thì thay bản cũ.
+ *
+ * Phiên bản 3 (cả bộ nhiều phần trong một file, bookfile.pack_series): audio ở chapters/<phần>/<tên>.mp3 và có thể vài GB,
+ * nên trước khi chép từ trình quản lý file và trước khi giải nén phải còn đủ chỗ - không thì từ chối rõ ràng thay vì để
+ * bộ nhớ đầy giữa chừng.
  */
 object BookFileImport {
     const val MIMETYPE = "application/vnd.ngdtuanh.abook+zip"
     private const val FORMAT = "abook"
-    private const val FORMAT_VERSION = 2  // 2 = có thêm rãnh nhạc nền (music/<sha1>.mp3)
+    private const val FORMAT_VERSION = 3  // 2 = có thêm rãnh nhạc nền (music/<sha1>.mp3); 3 = cả bộ nhiều phần (chapters/<phần>/...)
+    /** Chỗ trống dư ngoài cỡ giải nén (book.json, thư mục tạm): đủ để không đầy bộ nhớ giữa chừng. */
+    private const val ROOM_MARGIN = 64L shl 20
     private const val MAX_ENTRIES = 20_000
     private const val MAX_TOTAL_BYTES = 64L shl 30
     private const val MAX_JSON_BYTES = 32L shl 20
-    private val CONTENT = Regex("""cast\.json|cover\.jpg|chapters/[0-9A-Za-z_.\-]+\.mp3|scripts/\d+\.json|samples/\d+\.wav|music/[0-9a-f]{40}\.mp3""")
+    private const val COMMON = """cast\.json|cover\.jpg|scripts/\d+\.json|samples/\d+\.wav|music/[0-9a-f]{40}\.mp3"""
+    private val CONTENT = Regex("""$COMMON|chapters/[0-9A-Za-z_.\-]+\.mp3""")
+    /** Phiên bản 3 thêm thư mục phần: chapters/<phần>/<tên>.mp3 (phiên bản 1-2 không có - gặp thì là mục lạ). */
+    private val CONTENT_V3 = Regex("""$COMMON|chapters/(?:\d{1,4}/)?[0-9A-Za-z_.\-]+\.mp3""")
     private val DESCRIPTIONS = setOf("mimetype", "book.json", "manifest.json")
 
     /** Lý do không nhận file - câu chữ để người dùng đọc. */
@@ -38,6 +48,7 @@ object BookFileImport {
         Store.init(context)
         val copy = File(context.cacheDir, "import-${System.nanoTime()}.abook")
         try {
+            sizeOf(context, uri)?.let { requireRoom(context.cacheDir, it + ROOM_MARGIN) }
             val input = context.contentResolver.openInputStream(uri) ?: throw Refused("Không đọc được file.")
             input.use { source -> copy.outputStream().use { source.copyTo(it) } }
             return importFile(copy)
@@ -46,7 +57,26 @@ object BookFileImport {
         }
     }
 
-    fun importFile(file: File): Imported {
+    /** Cỡ file theo trình quản lý file (content://), nếu nó cho biết. */
+    private fun sizeOf(context: Context, uri: Uri): Long? = runCatching {
+        context.contentResolver.query(uri, arrayOf(OpenableColumns.SIZE), null, null, null)?.use { cursor ->
+            if (cursor.moveToFirst() && !cursor.isNull(0)) cursor.getLong(0) else null
+        }
+    }.getOrNull()
+
+    /** Ổ chứa `dir` còn đủ `need` byte không? Không thì từ chối, nói cần bao nhiêu và còn bao nhiêu (`File.usableSpace` là
+     *  số StatFs báo cho ứng dụng). `freeSpace` cho test JVM đặt số khác. */
+    private fun requireRoom(dir: File, need: Long, freeSpace: (File) -> Long = { it.usableSpace }) {
+        val free = freeSpace(dir)
+        if (free < need) {
+            throw Refused("Bộ nhớ máy không đủ chỗ để mở sách này: cần khoảng ${gigabytes(need)}, còn ${gigabytes(free)}. " +
+                "Hãy xoá bớt rồi mở lại file.")
+        }
+    }
+
+    private fun gigabytes(bytes: Long) = "%.1f GB".format(java.util.Locale.ROOT, bytes / (1L shl 30).toDouble()).replace('.', ',')
+
+    fun importFile(file: File, freeSpace: (File) -> Long = { it.usableSpace }): Imported {
         val zip = try {
             ZipFile(file)
         } catch (error: Exception) {
@@ -66,7 +96,6 @@ object BookFileImport {
             for (entry in entries) {
                 val name = entry.name
                 if (entry.isDirectory || !names.add(name)) throw Refused("Gói có mục trùng hay thư mục lạ: $name")
-                if (name !in DESCRIPTIONS && !CONTENT.matches(name)) throw Refused("Gói có mục lạ: $name")
                 total += maxOf(0L, entry.size)
             }
             if (total > MAX_TOTAL_BYTES) throw Refused("File sách quá lớn.")
@@ -82,6 +111,8 @@ object BookFileImport {
             val version = pack.optInt("version", -1)
             if (version < 1) throw Refused("File sách có phiên bản định dạng không hợp lệ.")
             if (version > FORMAT_VERSION) throw Refused("Sách này được làm bằng bản app mới hơn. Hãy cập nhật app để mở.")
+            val allowed = if (version >= 3) CONTENT_V3 else CONTENT  // thư mục phần chỉ có từ phiên bản 3
+            for (name in names - DESCRIPTIONS) if (!allowed.matches(name)) throw Refused("Gói có mục lạ: $name")
             val files = pack.optJSONObject("files") ?: throw Refused("Danh sách file trong sách không khớp nội dung gói.")
             val content = names - DESCRIPTIONS
             if (files.keys().asSequence().toSet() != content) {
@@ -102,6 +133,7 @@ object BookFileImport {
                 return Imported(target, current.optString("title"))
             }
             val books = File(Store.root, "books").apply { mkdirs() }
+            requireRoom(books, total + ROOM_MARGIN, freeSpace)
             val staging = File(books, ".$target.${System.nanoTime()}.part")
             try {
                 for (name in DESCRIPTIONS.filter { it != "mimetype" && it in names } + content.sorted()) {

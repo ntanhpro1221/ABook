@@ -110,6 +110,7 @@ ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = LISTEN_ROUTES + tuple((method
     ("POST", _BOOK + r"/pause"),
     ("POST", _BOOK + r"/export"),
     ("POST", _BOOK + r"/bookfile"),
+    ("GET", _BOOK + r"/export-size"),
     ("GET", _BOOK + r"/review"),
     ("POST", _BOOK + r"/review"),
     ("GET", _BOOK + r"/work"),

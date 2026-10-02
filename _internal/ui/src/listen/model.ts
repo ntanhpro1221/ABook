@@ -11,6 +11,17 @@ export interface ListenChapter {
   fullTitle: string;
   duration: number;
   available: boolean;
+  /** Cả bộ trong một file .abook (phiên bản 3): số phần chứa chương này; sách một phần: không có. */
+  part?: number | null;
+}
+
+/** Một phần của sách mở từ file cả bộ (`parts` của book.json, webui/bookfile.pack_series). `chapters`: mã chương đầu và cuối. */
+export interface BookPart {
+  part: number;
+  title: string;
+  chapters: [number, number];
+  duration: number;
+  narrator: string;
 }
 
 export interface Bookmark {
@@ -87,6 +98,8 @@ export interface ListenBook {
   /** Sách đang làm: ước lượng của giai đoạn hiện tại (máy tính). */
   eta?: { phase: string; seconds: number } | null;
   chapters?: ListenChapter[];
+  /** File cả bộ nhiều phần: các phần theo thứ tự (danh sách chương gom theo phần); sách một phần: rỗng hay không có. */
+  parts?: BookPart[];
   /** Điện thoại: cuốn này nằm trên máy tính, nghe thẳng qua mạng (chưa tải về). */
   /** Cuốn nằm ở máy khác, nghe thẳng qua mạng: điện thoại - `true` (trên máy tính đã ghép); máy tính - tên máy tính
    *  kia (webui/remote_books.py). */
@@ -225,6 +238,8 @@ export interface CastMember {
   voice: { key: string; preset: string; tone: string } | null;
   sampleId: number | null;
   firstChapter: string;
+  /** Sách cả bộ: những phần người này lên tiếng. */
+  parts?: number[];
   /** Số câu đã có tiếng (store.cast) - "Đổi giới tính" nói trước bấy nhiêu câu có thể phải thu lại. */
   recorded?: number;
   /** Giọng/giới người nghe đã chọn mà dây chuyền chưa áp (store.pending_voices). */
@@ -237,6 +252,31 @@ export interface Cast {
   extras: CastMember[];
   /** Studio, phần nối tiếp: giọng mang từ phần trước của những người chưa nói câu nào ở phần này. */
   carried?: CastMember[];
+}
+
+/** "Phần 2 · Tên": tên phần là tên cuốn không kèm hậu tố "· Phần N" mà `parts[].title` mang theo. */
+export function partHeading(part: BookPart): string {
+  const name = seriesOf(part.title).series;
+  return name ? `Phần ${part.part} · ${name}` : `Phần ${part.part}`;
+}
+
+/** Danh sách chương gom theo phần: chỉ khi cuốn có nhiều hơn một phần (không thì một nhóm không tiêu đề). Chương thuộc phần
+ *  theo `chapter.part`, thiếu thì theo khoảng mã chương của `parts`; chương liền nhau cùng phần vào một nhóm. */
+export function chaptersByPart(chapters: ListenChapter[], parts: BookPart[] | undefined): { heading: string | null; chapters: ListenChapter[] }[] {
+  if (!parts || parts.length < 2) return [{ heading: null, chapters }];
+  const partOf = (chapter: ListenChapter) =>
+    chapter.part ?? parts.find((part) => chapter.id >= part.chapters[0] && chapter.id <= part.chapters[1])?.part ?? null;
+  const groups: { heading: string | null; chapters: ListenChapter[]; part: number | null }[] = [];
+  for (const chapter of chapters) {
+    const part = partOf(chapter);
+    const last = groups[groups.length - 1];
+    if (last && last.part === part) last.chapters.push(chapter);
+    else {
+      const found = parts.find((item) => item.part === part);
+      groups.push({ heading: found ? partHeading(found) : null, chapters: [chapter], part });
+    }
+  }
+  return groups.map(({ heading, chapters: items }) => ({ heading, chapters: items }));
 }
 
 /** Chương nên phát khi bấm "Nghe": chỗ đang nghe dở nếu chương ấy còn nghe được (nghe gần hết thì sang chương
