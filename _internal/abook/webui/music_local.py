@@ -4,7 +4,7 @@ Kho nhạc là của TỪNG MÁY (thư mục dữ liệu của app, không nằm
 (nhập hai lần cùng một file thì chỉ một bản), kèm sổ `library.json` ghi tên bài, nghệ sĩ, độ dài, độ to và - khi đã phân tích -
 không khí của bài. Link của bài là `local:<sha1>` (music_plan.LOCAL_PREFIX), ở mọi chỗ nhận link danh mục.
 
-Phân tích: `analyze(path)` trả mục theo hình danh mục (valence, arousal, tension, sd, emotions, confidence,
+Phân tích: `analyze(path)` trả mục theo hình danh mục (valence, arousal, tension, sd, vetVar, emotions, confidence,
 fitsUnderNarration, loudness) hay None. Model nghe chỉ-âm-thanh (music_student.py) cắm vào qua `set_analyzer`; khi chưa có gói
 model hay thư viện, `analyze` trả None và bài ở trạng thái "chưa phân tích": KHÔNG BAO GIỜ bịa số. Bài chưa phân tích không bao giờ được
 máy tự chọn nhưng ghim tay được; bài đã phân tích vào danh sách ứng viên tự động như bài danh mục (music_select không đổi).
@@ -74,8 +74,8 @@ def _clip(value: float, low: float, high: float) -> float:
 
 
 def clean_analysis(result: Any) -> dict[str, Any] | None:
-    """Kết quả của bộ phân tích -> khoá của một bài danh mục: valence / arousal (bắt buộc, kẹp -1..1), tension, sd, emotions
-    (13 cường độ 0..1), confidence, `fitsUnderNarration` -> `background`, `loudness` (số LUFS hay {lufs, speechBand}) ->
+    """Kết quả của bộ phân tích -> khoá của một bài danh mục: valence / arousal (bắt buộc, kẹp -1..1), tension, sd, vetVar
+    (phương sai dư của bộ đoán từng trục, >= 0: music_select cộng vào khoảng cách), emotions (13 cường độ 0..1), confidence, `fitsUnderNarration` -> `background`, `loudness` (số LUFS hay {lufs, speechBand}) ->
     lufs / speechBand, family / style nếu có. Thiếu valence hoặc arousal -> None (không điền số nào thay bộ phân tích)."""
     if not isinstance(result, dict):
         return None
@@ -91,6 +91,11 @@ def clean_analysis(result: Any) -> dict[str, Any] | None:
         kept = {axis: max(0.0, number) for axis, value in sd.items() if (number := _finite(value)) is not None}
         if kept:
             out["sd"] = kept
+    vet_var = result.get("vetVar")
+    if isinstance(vet_var, dict):
+        kept = {axis: max(0.0, number) for axis, value in vet_var.items() if (number := _finite(value)) is not None}
+        if kept:
+            out["vetVar"] = kept
     emotions = result.get("emotions")
     if isinstance(emotions, dict):
         kept = {name: _clip(number, 0.0, 1.0) for name in music_scenes.EMOTION_CLASSES
