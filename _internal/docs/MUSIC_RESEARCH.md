@@ -750,8 +750,11 @@ Bộ dữ liệu:
 - **Sửa 03-10 (chủ sách qua Lead: "nhạc có lời không bao giờ dùng làm nhạc nền thì quan tâm làm gì?"):** chỉ bài KHÔNG LỜI
   (có lời ≤ 0,5) vào danh mục LẪN tập học của trò; trò chỉ phải phân tích nhạc nền không lời, học trên bài có lời là lệch
   miền. Bài có lời chỉ qua bộ dò lời (CLAP 3 cửa sổ, cần cho chính việc loại) rồi bỏ: không âm học, không lưu nhúng, chỉ ghi
-  `{id, có lời, kept=false}`. Số đã tính của bài có lời ở gói 00-01 / 58 đã xoá. Bộ dò lời vẫn là một phần của trò để app
-  báo "có lời, không dùng được" cho nhạc người dùng nhập. Gói đầu: 43-45% bài không lời. Áp như nhau cho FMA.
+  `{id, có lời, kept=false}`. Số đã tính của bài có lời ở gói 00-01 / 58 đã xoá. Gói đầu: 43-45% bài không lời. Áp như
+  nhau cho FMA.
+- **Nhạc NGƯỜI DÙNG tự nhập (chủ sách, sau đó):** KHÔNG dò lời, không gắn nhãn "có lời", không chặn - bài có lời là lựa chọn
+  của người dùng, và máy không được cấm người dùng dựa trên phán đoán của máy. Bộ dò lời chỉ dùng để lọc danh mục máy tự gom
+  và dữ liệu học của trò.
 - Hệ quả cho thước phụ: AUC 56 tag MTG đo trên phần test KHÔNG LỜI, nên không so thẳng được với baseline công bố (đo trên mọi
   bài); chỉ dùng để định vị.
 
