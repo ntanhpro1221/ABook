@@ -114,6 +114,7 @@ object Playback {
         appContext = context.applicationContext
         Store.init(appContext)
         Remote.init(appContext)
+        MusicBed.init(appContext)
     }
 
     fun onMain(block: () -> Unit) {
@@ -362,6 +363,7 @@ object Playback {
         SleepTimer.onPlaying(playing)
         Motion.refresh()
         Remote.onPlaying(playing)
+        MusicBed.sync(bookId, currentChapter?.id, positionSeconds, playing)
         if (!playing) {
             pausedAtMs = System.currentTimeMillis()
             saveNow()
@@ -405,6 +407,7 @@ object Playback {
                 }
                 if (beats % 60 == 0) SleepTimer.maybeSafetyStop(lastInteractionMs)
                 Bedtime.checkpoint()
+                MusicBed.sync(bookId, currentChapter?.id, positionSeconds, true)
                 emit("tick")
                 main.postDelayed(this, 500)
             }
