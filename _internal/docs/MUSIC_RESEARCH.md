@@ -305,6 +305,30 @@ chuyển cảnh.
 festival... + điểm CLAP "tạp âm" vượt phân vị 99 của Incompetech, `probe_noise.py`) bỏ 58 bài mà bộ lọc "có lời" không bắt
 (đàn tranh có tiếng người lao xao, múa lân, phố xá). 1.826 bài (bản triển khai 01:08 có 955 - lúc ấy phân tích chưa xong kho).
 
+**Nguồn và điều khoản - QUYẾT ĐỊNH CỦA CHỦ SÁCH (02-10, đã chốt, đừng hỏi lại):** danh mục công khai giữ CẢ BA nguồn
+(Incompetech + Jamendo + Freesound; revision 356f77aa5bcc, 1.826 bài = 1.443 / 314 / 69). Điều khoản đã đọc trước khi quyết:
+Freesound API (freesound.org/help/tos_api) mục 4(a) cấm "Distribute, publish, or allow access or linking to ... Content from
+any location or source other than your Application", 4(f) cấm "build similar databases"; Jamendo API (sửa 17-09-2013) chỉ
+miễn phí phi thương mại, "must not be specifically designed to cache the content nor offering an offline access", phải ghi
+Jamendo + "a direct backlink from each Content"; trang Jamendo cấp quyền tải "for private and personal use only"; Openverse
+ToS: cấm cào, phải ghi "made using Openverse but is not endorsed". Lý do chủ sách: dùng cá nhân, phi thương mại, mã mở, ghi
+công đủ; danh sách của các nguồn vốn công khai, ta chỉ gắn số đo tự làm và không để app gọi API của họ (giảm tải cho họ).
+Danh mục ghi công CC BY từng bài + `landing` (trang gốc từng bài) + notice nêu Openverse / Jamendo / Freesound.
+Tải nhạc: `link` gốc TRƯỚC; hỏng (mạng / 404 / gỡ bài) mới sang `mirrors` = bản sao archive.org (DỰ PHÒNG, chậm hơn gốc), và
+bản sao phải khớp `sha1` (+ `bytes`) của file gốc tải từ `link` - danh mục mang cả hai trường. Bản sao chỉ cho bài có giấy
+phép cho phân phối lại (CC0 / CC BY); KHÔNG cho nguồn tự cấm tải lên lại (vd Scott Buckley: "cannot be ... redistributed/
+reuploaded ... must be synchronised with other media" - dùng được làm nền đồng bộ trong .abook, không bản sao).
+
+**Một cách đo độ to (02-10, Lead duyệt, app main f25ea91d):** BS.1770 tích hợp, có gating, 48 kHz, cả file, CỘNG HAI KÊNH như
+khi phát; file mono tính là dual-mono (= LUFS mono + 3,01). Đo 8 bài Incompetech tải trọn: cách cũ của app ((L+R)/sqrt2 mono)
+thấp hơn 0,45..2,83 dB (lệch nhiều khi hai kênh ít tương quan); số danh mục Incompetech ước từ 3 đoạn lệch -1,7..+0,5. Chương
+giọng là file MONO cân -20 LUFS -> phát hai kênh = -17 LUFS; mốc LD 20 LU (Pha 4) hiểu theo cách đo này. Incompetech đang được
+tải trọn để đo lại cả bài.
+
+**Văn bản cho bộ kiểm cảnh:** docln.sbs (Hako) nay mã hoá nội dung chương (`chapter-c-protected`, `data-s="xor_shuffle"`,
+giải bằng JavaScript) - không tải được bằng requests, và giải mã là vượt biện pháp bảo vệ -> không làm; LN Nhật mới cần chủ
+sách đưa văn bản.
+
 **Pha 2c - chọn chỗ cắt (dời mốc 3 phút tới chỗ không khí đổi mạnh nhất từ nhãn câu, `snap:W` trong eval_scenes.py): KHÔNG
 giúp** trên cả 17 chương (số phát triển - thiết kế sau khi đã thấy mọi đáp án): W 30/60/90 s không hơn chia đều về ranh giới,
 r không khí kém hơn. Khớp kết luận cũ: nhãn cảm xúc câu không thấy đổi cảnh. Chia đều trong đoạn (app) và cắt mỗi 180 s từ
