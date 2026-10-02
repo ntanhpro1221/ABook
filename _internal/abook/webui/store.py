@@ -1047,6 +1047,9 @@ def cast(project_root: Path) -> dict[str, Any]:
     # phần này nên danh sách trên trống ("Chưa có dàn") dù cuốn mang theo cả trăm giọng. Liệt kê riêng để Studio cho thấy.
     by_key = {str(row["voice_key"]): row for row in profiles.values() if "voice_key" in row.keys()}
     spoke = {speaker_key(name) for name in lines}
+    from .. import continuation
+
+    # Chỉ phần nối tiếp (continues.json, phần 2 trở đi): ở sách lẻ, người có giọng ghim mà không có câu là người đã gộp đi.
     carried = [
         {
             "name": name,
@@ -1063,7 +1066,7 @@ def cast(project_root: Path) -> dict[str, Any]:
         }
         for name, record in characters.items()
         if speaker_key(name) not in spoke and "locked_voice_key" in record.keys() and str(record["locked_voice_key"] or "")
-    ]
+    ] if continuation.part_number(project_root) > 1 else []
     carried.sort(key=lambda entry: entry["displayName"])
     return {"narrator": narrator, "characters": main, "extras": extras, "carried": carried}
 
