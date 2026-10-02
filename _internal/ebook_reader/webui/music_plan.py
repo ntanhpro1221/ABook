@@ -32,6 +32,10 @@ PLAN_VERSION = 1
 # `levelDb` = nhạc nền thấp hơn GIỌNG bao nhiêu LU (Pha 4, docs/MUSIC_RESEARCH.md: -20 + bù theo bài -> 94% cặp ESTOI >= 0,9).
 DEFAULT_LEVEL_DB = -20.0
 VOICE_LUFS = float(DEFAULT_SETTINGS["audio"]["loudness_lufs"])  # giọng mọi chương được chuẩn hoá về mức này
+# Chương giọng đọc là file MỘT kênh, chuẩn hoá về VOICE_LUFS đo một kênh; phát ra hai loa / tai nghe thì BS.1770 cộng hai
+# kênh giống nhau -> to hơn 3,01 dB. Nhạc đo đúng như lúc phát (hai kênh, `stereo_lufs`), nên mốc giọng cũng tính như lúc phát.
+VOICE_PLAYED_LUFS = VOICE_LUFS + 10 * math.log10(2)
+LUFS_SIDECAR = ".lufs2"  # 2: đo hai kênh như lúc phát; số cũ (`.lufs`, trộn xuống một kênh) thấp 0,5-3 dB với bài stereo rộng
 DEFAULT_TRACK_LUFS = -16.6  # trung vị danh mục: bài chưa có `lufs` (plan / danh mục cũ) và chưa có file để đo
 MASKING_CENTER = 0.30  # trung vị `speechBand` của danh mục: bài lấn dải tiếng nói hơn mức này thì hạ thêm
 MASKING_SLOPE_DB = 8.0
@@ -192,31 +196,45 @@ def _number(value: Any) -> float | None:
     return float(value) if isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value) else None
 
 
-def measured_lufs(path: Path) -> float | None:
-    """LUFS tích hợp (BS.1770) của file bài nhạc, đo một lần rồi ghi cạnh file (`<tên>.lufs`) cho lần sau. Nguồn: bài
-    chưa có `lufs` trong danh mục mà file đã nằm trong bộ đệm. Giải mã stereo -> một kênh bằng (L+R)/sqrt(2) để công
-    suất tổng đúng như BS.1770 cộng hai kênh (đo kênh đơn thuần sẽ thấp hơn ~3 dB). Không đo được -> None."""
-    sidecar = Path(path).with_suffix(".lufs")
+def stereo_lufs(audio: Any, sample_rate: int) -> float | None:
+    """LUFS tích hợp BS.1770 như lúc PHÁT trên hai loa: cộng công suất hai kênh; một kênh -> chép ra hai kênh giống nhau
+    (+3,01 dB), nhiều hơn hai -> hai kênh đầu. Trộn xuống một kênh trước khi đo thì thấp hơn tới 3 dB khi hai kênh khác nhau."""
+    import numpy as np
+    import pyloudnorm
+
+    frames = np.asarray(audio, dtype=np.float64)
+    frames = frames[:, None] if frames.ndim == 1 else frames
+    frames = np.repeat(frames, 2, axis=1) if frames.shape[1] == 1 else frames[:, :2]
+    if sample_rate <= 0 or frames.shape[0] < int(round(sample_rate * 0.4)):
+        return None
+    try:
+        value = float(pyloudnorm.Meter(sample_rate).integrated_loudness(frames))
+    except (ValueError, ZeroDivisionError):
+        return None
+    return value if math.isfinite(value) else None
+
+
+def measured_lufs(path: Path, *, measure: bool = True) -> float | None:
+    """Độ to (`stereo_lufs`) của file bài nhạc, đo một lần rồi ghi cạnh file (`<tên>.lufs2`) cho lần sau. `measure=False`:
+    chỉ đọc số đã ghi, không giải mã (đường nóng của trình phát). Không đo được -> None."""
+    sidecar = Path(path).with_suffix(LUFS_SIDECAR)
     try:
         cached = _number(float(sidecar.read_text(encoding="utf-8").strip()))
     except (OSError, ValueError):
         cached = None
-    if cached is not None:
+    if cached is not None or not measure:
         return cached
-    from .. import audio_io  # nặng (numpy, pyloudnorm): chỉ nạp khi thật sự phải đo
-
     wav = Path(path).with_suffix(f".{os.getpid()}.measure.wav")
     try:
         command = [ffmpeg_executable(), "-hide_banner", "-nostats", "-loglevel", "error", "-nostdin", "-y", "-i",
-                   str(path), "-map", "0:a:0", "-af", "pan=mono|c0=0.7071*c0+0.7071*c1", "-ar", "48000",
-                   "-codec:a", "pcm_f32le", str(wav)]
+                   str(path), "-map", "0:a:0", "-ar", "48000", "-codec:a", "pcm_f32le", str(wav)]
         if run_hidden(command, timeout=300, check=False).returncode != 0:
             return None
         import soundfile
 
         audio, rate = soundfile.read(wav, dtype="float32", always_2d=True)
-        value = audio_io.integrated_loudness_lufs(audio[:, 0], int(rate))
-    except (OSError, ValueError, subprocess.SubprocessError, RuntimeError):
+        value = stereo_lufs(audio, int(rate))
+    except (OSError, ValueError, subprocess.SubprocessError, RuntimeError, ImportError):
         return None
     finally:
         with contextlib.suppress(OSError):
@@ -228,36 +246,40 @@ def measured_lufs(path: Path) -> float | None:
     return value
 
 
-def track_lufs(info: dict[str, Any] | None, path: Path | None) -> float | None:
-    """Độ to của một bài: `lufs` của danh mục nếu có, không thì đo từ file đã có (`measured_lufs`), không thì None."""
+def track_lufs(info: dict[str, Any] | None, path: Path | None, *, measure: bool = True) -> float | None:
+    """Độ to của một bài: số đo từ chính file trên máy (chính xác nhất - danh mục có bài chỉ ước lượng từ vài đoạn), không thì
+    `lufs` của danh mục, không thì None. Có số danh mục thì không bắt giải mã khi `measure=False`."""
     known = _number((info or {}).get("lufs"))
-    if known is not None:
-        return known
-    return measured_lufs(path) if path is not None else None
+    if path is not None:
+        measured = measured_lufs(path, measure=measure or known is None)
+        if measured is not None:
+            return measured
+    return known
 
 
 def cue_gain_db(level_db: float, lufs: float | None, speech_band: float | None) -> float:
-    """Độ khuếch đại (dB, <= 0) cho một bài để nó nằm `level_db` LU dưới giọng: VOICE_LUFS + level_db - lufs - bù, với bù
+    """Độ khuếch đại (dB, <= 0) cho một bài để nó nằm `level_db` LU dưới giọng: VOICE_PLAYED_LUFS + level_db - lufs - bù, với bù
     = 8 x (speechBand - 0,30) kẹp +-6 (bài lấn dải tiếng nói nhiều thì thấp thêm, ít thì cao hơn). MỘT chỗ tính duy nhất:
     hai trình phát (musicBed.ts, MusicBed.kt) chỉ áp con số này. Thiếu `lufs` -> trung vị danh mục; thiếu `speechBand`
     -> không bù."""
     loudness = DEFAULT_TRACK_LUFS if lufs is None else lufs
     band = MASKING_CENTER if speech_band is None else speech_band
     masking = max(-MASKING_LIMIT_DB, min(MASKING_LIMIT_DB, MASKING_SLOPE_DB * (band - MASKING_CENTER)))
-    return round(min(0.0, VOICE_LUFS + level_db - loudness - masking), 2)  # volume HTML / ExoPlayer tối đa 1
+    return round(min(0.0, VOICE_PLAYED_LUFS + level_db - loudness - masking), 2)  # volume HTML / ExoPlayer tối đa 1
 
 
 def apply_gain(cues: list[dict[str, Any]], level_db: float, tracks: dict[str, Any],
                track_path: Callable[[str], Path | None] | None = None) -> None:
     """Gắn `gainDb` cho từng mốc chưa có (mốc của gói sách xuất bởi bản mới đã mang sẵn). `tracks`: {link: thông tin bài};
-    `track_path(link)` -> file bài ĐÃ có trên máy (không tải) để đo khi thiếu `lufs`."""
+    `track_path(link)` -> file bài ĐÃ có trên máy (không tải): số đo của nó thắng `lufs` danh mục; chỉ giải mã khi danh mục
+    thiếu `lufs` (còn lại dùng số đã đo sẵn, `server` đo nền lúc tải bài)."""
     for cue in cues:
         if _number(cue.get("gainDb")) is not None:
             continue
         info = tracks.get(cue["link"])
         info = info if isinstance(info, dict) else {}
-        path = track_path(cue["link"]) if track_path is not None and _number(info.get("lufs")) is None else None
-        cue["gainDb"] = cue_gain_db(level_db, track_lufs(info, path), _number(info.get("speechBand")))
+        path = track_path(cue["link"]) if track_path is not None else None
+        cue["gainDb"] = cue_gain_db(level_db, track_lufs(info, path, measure=False), _number(info.get("speechBand")))
 
 
 TRACK_FILE = re.compile(r"music/[0-9a-f]{40}\.mp3")
@@ -293,8 +315,8 @@ def package(project_root: Path, chapter_ids: Iterable[int],
                 tracks[name] = {"file": name, "link": cue["link"],
                                 **{key: info.get(key) for key in ("title", "creator", "license", "licenseUrl",
                                                                   "attribution", "landing") if info.get(key)}}
-                # Độ to + độ lấn dải tiếng nói đi theo bài (sách đọc lại / cập nhật mà không cần danh mục); thiếu `lufs` thì
-                # đo từ chính file đang đóng gói.
+                # Độ to + độ lấn dải tiếng nói đi theo bài (sách đọc lại / cập nhật mà không cần danh mục); số đo từ
+                # chính file đang đóng gói thắng số danh mục.
                 lufs = track_lufs(info, path)
                 for key, value in (("lufs", lufs), ("speechBand", _number(info.get("speechBand")))):
                     if value is not None:

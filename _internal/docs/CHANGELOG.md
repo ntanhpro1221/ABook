@@ -7,6 +7,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nhạc nền
+
+- Độ to nhạc so với giọng tính đúng như lúc phát ra hai loa: giọng đọc một kênh được tính to hơn 3 dB, nhạc đo hai kênh
+  thay vì trộn xuống một kênh (trước lệch 0,5-3 dB tuỳ bài), và bài đã có trên máy dùng số đo thật thay cho số ước lượng
+  của danh mục. Nhạc ở mức "Vừa" vì thế to hơn trước khoảng 1-2 dB, đúng khoảng cách 20 LU đã chọn.
+
 ## [0.4.16] - 2026-10-02
 
 ### Studio

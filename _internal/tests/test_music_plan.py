@@ -101,7 +101,7 @@ def test_a_track_that_covers_the_speech_band_sits_lower_and_the_correction_is_cl
 
 
 def test_a_missing_loudness_means_the_median_track_and_a_missing_band_means_no_correction() -> None:
-    assert music_plan.cue_gain_db(-20.0, None, None) == music_plan.cue_gain_db(-20.0, -16.6, 0.30) == -23.4
+    assert music_plan.cue_gain_db(-20.0, None, None) == music_plan.cue_gain_db(-20.0, -16.6, 0.30) == -20.39
     assert music_plan.DEFAULT_TRACK_LUFS == -16.6 and music_plan.VOICE_LUFS == -20.0
 
 
@@ -115,15 +115,39 @@ def test_cues_get_their_gain_from_the_catalog_loudness_or_measure_a_cached_file(
     soundfile.write(cached, np.stack([tone, tone], axis=1), 48000, format="WAV")
     tracks = {"https://x/a.mp3": {"lufs": -26.0, "speechBand": 0.3}, "https://x/b.mp3": {}, "https://x/c.mp3": {}}
     music_plan.apply_gain(cues, -20.0, tracks, lambda link: cached if link.endswith("b.mp3") else None)
-    assert cues[0]["gainDb"] == -14.0
-    assert abs(cues[1]["gainDb"] - (-20.0)) < 1.0, "độ to đo từ file: ~ -20 LUFS -> hạ ~20 dB"
+    assert cues[0]["gainDb"] == -10.99, "giọng một kênh phát hai loa: -20 + 3,01"
+    assert abs(cues[1]["gainDb"] - (-17.0)) < 1.0, "độ to đo từ file: ~ -20 LUFS -> hạ ~17 dB"
     assert cues[2]["gainDb"] == music_plan.cue_gain_db(-20.0, None, None), "chưa có file: trung vị danh mục"
     assert cues[3]["gainDb"] == -3.0, "mốc đã có gainDb (sách đóng gói) giữ nguyên"
-    assert cached.with_suffix(".lufs").is_file(), "đo một lần rồi ghi cạnh bộ đệm"
+    assert cached.with_suffix(".lufs2").is_file(), "đo một lần rồi ghi cạnh bộ đệm"
     cached.unlink()  # chỉ còn số đã ghi: lần sau không giải mã lại
     again = [{"link": "https://x/b.mp3", "key": "b"}]
     music_plan.apply_gain(again, -20.0, tracks, lambda _link: cached)
     assert again[0]["gainDb"] == cues[1]["gainDb"]
+
+
+def test_loudness_is_measured_as_played_on_two_speakers() -> None:
+    rng = np.random.default_rng(7)
+    left, right = (0.05 * rng.standard_normal(48000 * 3) for _ in range(2))
+    mono = music_plan.stereo_lufs(left, 48000)
+    assert math.isclose(mono, music_plan.stereo_lufs(np.stack([left, left], axis=1), 48000), abs_tol=0.01), \
+        "một kênh = hai kênh giống nhau"
+    wide = music_plan.stereo_lufs(np.stack([left, right], axis=1), 48000)
+    downmix = music_plan.stereo_lufs((left + right) / math.sqrt(2) / math.sqrt(2), 48000)
+    assert wide - downmix > 2.5, "hai kênh khác nhau: trộn xuống một kênh đo thấp ~3 dB"
+    assert math.isclose(music_plan.VOICE_PLAYED_LUFS - music_plan.VOICE_LUFS, 3.01, abs_tol=0.01)
+
+
+def test_a_measured_cached_file_beats_the_catalog_estimate_without_decoding_on_the_hot_path(tmp_path: Path) -> None:
+    cached = tmp_path / "a.mp3"
+    cached.write_bytes(b"not audio")  # giải mã thì hỏng: chứng minh đường nóng không giải mã
+    info = {"lufs": -26.0}
+    assert music_plan.track_lufs(info, cached, measure=False) == -26.0, "chưa đo: dùng số danh mục, không giải mã"
+    cached.with_suffix(".lufs2").write_text("-18.50\n", encoding="utf-8")
+    assert music_plan.track_lufs(info, cached, measure=False) == -18.5, "đã đo: số thật thắng số ước lượng"
+    cached.with_suffix(".lufs").write_text("-30.00\n", encoding="utf-8")
+    cached.with_suffix(".lufs2").unlink()
+    assert music_plan.track_lufs(info, cached, measure=False) == -26.0, "số đo kiểu cũ (một kênh) bị bỏ qua"
 
 
 def test_a_built_plan_carries_the_loudness_and_speech_band_of_its_tracks(tmp_path: Path) -> None:

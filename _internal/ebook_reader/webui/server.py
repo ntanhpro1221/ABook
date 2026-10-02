@@ -809,8 +809,8 @@ class App:
         def fetch() -> None:
             for link in links:
                 path = self.music_track_cached(link) or self.music_track_for_export(link)
-                if path is not None and not isinstance((tracks.get(link) or {}).get("lufs"), (int, float)):
-                    music_plan.measured_lufs(path)  # danh mục chưa có độ to bài này: đo sẵn, trình phát khỏi chờ
+                if path is not None:
+                    music_plan.measured_lufs(path)  # đo sẵn độ to thật của bài (thắng số danh mục), trình phát khỏi chờ
 
         threading.Thread(target=fetch, name="music-warm", daemon=True).start()
 
