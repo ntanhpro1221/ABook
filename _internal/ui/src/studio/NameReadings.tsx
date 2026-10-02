@@ -10,6 +10,7 @@ import { Button } from "@/shared/ui";
 import { api, suggestionOf, urls, type BookSummary } from "./api";
 import { ReadingProblem } from "./ReadingProblem";
 import { SharedReadingsOffer, useSharedEntry } from "./sharedReadings";
+import { useTryReading } from "./TryReading";
 import { refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied } from "./decisions";
 
 // Tab Nhân vật, mục "Cách đọc tên" (webui/name_readings.py): mọi tên riêng máy đọc thế nào - kể cả tên máy chắc và cách
@@ -316,6 +317,17 @@ function EditReading({ bookId, item, onDone, fresh }: { bookId: string; item: Na
     setSuggestion("");
     save.mutate(spoken);
   };
+  // "Nghe thử" cách đang gõ trước khi lưu: máy chê cách đọc thì hiện đúng chỗ lỗi của "Lưu".
+  const tryIt = useTryReading({
+    bookId,
+    surface: item.surface,
+    spoken: typed,
+    disabled: Boolean(problem),
+    onRejected: (message, suggestionText) => {
+      setProblem(message);
+      setSuggestion(suggestionText);
+    },
+  });
   // Lỗi nằm DƯỚI cụm ô nhập, cùng bề rộng với cụm - trước đây dòng lỗi rộng hết dòng kéo cả cụm từ mép phải vào giữa.
   return (
     <div className="flex w-full flex-col gap-1 sm:w-auto sm:max-w-sm">
@@ -353,6 +365,7 @@ function EditReading({ bookId, item, onDone, fresh }: { bookId: string; item: Na
       <Button size="sm" variant="ghost" type="button" onClick={onDone}>
         Huỷ
       </Button>
+      {tryIt.button}
       <Button
         size="sm"
         variant="primary"
@@ -368,6 +381,7 @@ function EditReading({ bookId, item, onDone, fresh }: { bookId: string; item: Na
         Dùng cho mọi sách
       </label>
     </form>
+      {tryIt.note}
       <ReadingProblem id={`${inputId}-problem`} problem={problem} suggestion={suggestion} onUse={use} className="" />
     </div>
   );

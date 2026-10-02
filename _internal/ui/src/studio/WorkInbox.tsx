@@ -8,6 +8,7 @@ import { formatNumber } from "@/shared/format";
 import { Button, Dialog, EmptyState, Kbd, Segmented } from "@/shared/ui";
 import { api, suggestionOf, urls, type BookSummary } from "./api";
 import { ReadingProblem } from "./ReadingProblem";
+import { useTryReading } from "./TryReading";
 import { applyWhen, PENDING_NOTE, refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied } from "./decisions";
 
 // "Việc cần duyệt" (docs/STUDIO_REVIEW.md, webui/work_items.py): chỗ máy nghi ngờ, xếp theo lợi trên mỗi lần bấm. Máy đã tự
@@ -222,6 +223,17 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
     setSuggestion("");
     save.mutate(spoken);
   };
+  // "Nghe thử" cách đang gõ trước khi lưu: máy chê cách đọc thì hiện đúng chỗ lỗi của "Đọc thế này".
+  const tryIt = useTryReading({
+    bookId,
+    surface: item.surface ?? "",
+    spoken: typed,
+    disabled: Boolean(problem),
+    onRejected: (message, suggestionText) => {
+      setProblem(message);
+      setSuggestion(suggestionText);
+    },
+  });
   return (
     <div className="mt-3">
       {item.requested && (
@@ -262,6 +274,7 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
             problem ? "border-danger" : "border-line",
           )}
         />
+        {tryIt.button}
         <Button
           size="sm"
           variant="primary"
@@ -278,6 +291,7 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
           </Button>
         )}
       </form>
+      {tryIt.note && <div className="mt-1.5">{tryIt.note}</div>}
       <ReadingProblem id={`${inputId}-problem`} problem={problem} suggestion={suggestion} onUse={use} />
     </div>
   );

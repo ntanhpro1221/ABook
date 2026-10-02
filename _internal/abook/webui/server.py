@@ -28,7 +28,7 @@ from urllib.parse import parse_qs, quote, unquote, urlsplit
 
 from .. import aliases, bracket_rule, continuation, listener_overrides
 from . import (actions, bookfile, cover_search, covers, humanize, listen_view, music_catalog, music_plan,
-               music_select, packages, projectfile, remote_config, shared_readings, store, volumes)
+               music_select, packages, projectfile, reading_preview, remote_config, shared_readings, store, volumes)
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, clean_book_templates, legacy_ids
 from .listening import RECORD_ID, Listening
@@ -210,6 +210,14 @@ class App:
         self.update: dict[str, Any] | None = None
         self.shell: Callable[[dict[str, Any]], None] | None = None
         self.studio: Any = None
+        # "Nghe thử" một cách đọc tên trước khi lưu (reading_preview.py): một tiến trình giọng dùng chung, tắt trước khi cuốn nào chạy.
+        self.previews = reading_preview.ReadingPreviews(
+            preferences.path.with_name("reading-previews"), studio=lambda: self.studio, fake=self._fake_engine,
+            busy=lambda: self._busy_elsewhere() is not None)
+
+    def _fake_engine(self) -> bool:
+        """Dựng giao diện / bài thử: runner giả thì "nghe thử" cũng dùng giọng giả (không đòi Studio hay card đồ hoạ)."""
+        return isinstance(self.runner, actions.FakeRunner) or os.environ.get("ABOOK_FAKE_RUNNER") == "1"
 
     def _adopt_new_book_ids(self) -> None:
         """Dữ liệu lưu theo mã sách kiểu cũ (đường dẫn base64 - docs/BOOK_IDS.md): đổi khoá sang mã mới, một
@@ -306,7 +314,8 @@ class App:
             result["queuePosition"] = self.queue.index(result["id"]) + 1 if result["id"] in self.queue else None
         return result
 
-    def _busy_elsewhere(self, path: Path) -> Path | None:
+    def _busy_elsewhere(self, path: Path | None = None) -> Path | None:
+        """Cuốn khác `path` đang chạy hay khởi động (không `path`: cuốn nào cũng tính)."""
         for other in self.library.projects():
             if other != path and (self.runner.running(other) or self.jobs.starting(other)):
                 return other
@@ -392,6 +401,7 @@ class App:
 
         Phần nối tiếp tạo cùng lúc với phần trước ("Tạo nhiều tập", continuation.link_pending) gieo ở đây: tới lượt chạy thì
         phần trước đã phân vai xong, và đây vẫn là sau `create` - trước mọi câu phân tích của phần này."""
+        self.previews.shutdown()  # model nghe thử giữ VRAM: nhả trước khi cuốn bắt đầu (cả hai đường tới đây: Bắt đầu và hàng đợi)
         try:
             continuation.seed_when_ready(path)
         except continuation.ContinuationError as error:
@@ -1087,6 +1097,7 @@ class App:
         """App đóng: tắt cổng đồng bộ nhưng giữ nguyên lựa chọn của người dùng cho lần mở sau."""
         self._stop_sync()
         self.cast.close()
+        self.previews.shutdown()
 
     def routes(self) -> dict[str, Any]:
         """Các đường tới máy này cho thiết bị vừa ghép: địa chỉ LAN + cổng đồng bộ, và địa chỉ Bluetooth khi cổng
@@ -1821,6 +1832,45 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.NOT_FOUND, "Không có chương này")
         self._send_json(HTTPStatus.OK, view)
 
+    def _checked_reading(self, body: dict[str, Any], surface: str) -> str:
+        """Cách đọc người nghe gửi (`spokenForm`) cho tên `surface`, sau phép kiểm của dây chuyền - dùng chung cho "Lưu" và
+        "Nghe thử": nghe được là lưu được."""
+        spoken = " ".join(str(body.get("spokenForm", "")).split())[:120]
+        if not surface or not spoken:
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu tên hoặc cách đọc")
+        problem = listener_overrides.pronunciation_problem(surface, spoken)
+        if problem is not None:
+            # Gõ theo tai mà sai chính tả ("Hên-kơ"): nói đúng âm tiết sai và mời dùng bản sửa - bản sửa qua đúng phép kiểm
+            # vừa từ chối thì mới mời (soát UX 29-09: câu báo chung không chỉ chỗ sửa).
+            fixed = spelling.respelled(spoken)
+            if problem == listener_overrides.NOT_VIETNAMESE and fixed != spoken and \
+                    listener_overrides.pronunciation_problem(surface, fixed) is None:
+                raise ApiError(HTTPStatus.BAD_REQUEST, f"{spelling.respelling_note(spoken, fixed)} Viết: “{fixed}”.",
+                               suggestion=fixed)
+            raise ApiError(HTTPStatus.BAD_REQUEST, PRONUNCIATION_PROBLEMS.get(problem, "Cách đọc này không dùng được"))
+        return spoken
+
+    def post_pronunciation_preview(self, _query: dict[str, list[str]], value: str) -> None:
+        # "Nghe thử" trước khi lưu: thu thử một câu có tên ấy với cách đọc đang gõ - không ghi gì vào sách (reading_preview.py).
+        self.app._mutating()
+        path = self.app._book(value)
+        body = self._body()
+        surface = str(body.get("surface", "")).strip()[:80]
+        spoken = self._checked_reading(body, surface)
+        segment = body.get("segmentId")
+        try:
+            result = self.app.previews.preview(path, book_id(path), surface, spoken,
+                                               int(segment) if isinstance(segment, int) and not isinstance(segment, bool) else None)
+        except reading_preview.PreviewError as error:
+            raise ApiError(error.status, error.message, reason=error.reason) from error
+        self._send_json(HTTPStatus.OK, result)
+
+    def media_reading_preview(self, _query: dict[str, list[str]], value: str, key: str) -> None:
+        target = self.app.previews.file(book_id(self.app._book(value)), key)
+        if target is None:
+            raise ApiError(HTTPStatus.NOT_FOUND, "Bản nghe thử này không còn - bấm Nghe thử lại.")
+        self._send_file(target, cache=True)
+
     def post_pronunciation(self, _query: dict[str, list[str]], value: str) -> None:
         # Sửa cách đọc một tên. Giao diện KHÔNG ghi SQLite của sách: nó ghi mong muốn vào overrides.json, dây chuyền áp
         # ở ranh giới chương kế tiếp (hoặc lần chạy tới) và thu lại mọi câu đã thu có tên ấy - listener_overrides.py.
@@ -1843,19 +1893,7 @@ class Handler(BaseHTTPRequestHandler):
                            restore=(lambda now: listener_overrides.request_pronunciation(path, surface, previous, now=now))
                            if usable else None)
             return
-        spoken = " ".join(str(body.get("spokenForm", "")).split())[:120]
-        if not surface or not spoken:
-            raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu tên hoặc cách đọc")
-        problem = listener_overrides.pronunciation_problem(surface, spoken)
-        if problem is not None:
-            # Gõ theo tai mà sai chính tả ("Hên-kơ"): nói đúng âm tiết sai và mời dùng bản sửa - bản sửa qua đúng phép kiểm
-            # vừa từ chối thì mới mời (soát UX 29-09: câu báo chung không chỉ chỗ sửa).
-            fixed = spelling.respelled(spoken)
-            if problem == listener_overrides.NOT_VIETNAMESE and fixed != spoken and \
-                    listener_overrides.pronunciation_problem(surface, fixed) is None:
-                raise ApiError(HTTPStatus.BAD_REQUEST, f"{spelling.respelling_note(spoken, fixed)} Viết: “{fixed}”.",
-                               suggestion=fixed)
-            raise ApiError(HTTPStatus.BAD_REQUEST, PRONUNCIATION_PROBLEMS.get(problem, "Cách đọc này không dùng được"))
+        spoken = self._checked_reading(body, surface)
         now = time.time()
         listener_overrides.request_pronunciation(path, surface, spoken, now=now)
         if body.get("everywhere") is True:
@@ -2372,16 +2410,19 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.OK, self._studio_setup().status())
 
     def post_studio_setup(self, _query: dict[str, list[str]]) -> None:
-        self._send_json(HTTPStatus.OK, self._studio_setup().start())
+        setup = self._studio_setup()
+        self.app.previews.shutdown()  # cập nhật thay Python của Studio: tiến trình nghe thử đang mở nó thì Windows không cho thay
+        self._send_json(HTTPStatus.OK, setup.start())
 
     def post_studio_setup_cancel(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self._studio_setup().cancel())
 
     def delete_studio_setup(self, _query: dict[str, list[str]]) -> None:
         setup = self._studio_setup()
-        busy = self.app._busy_elsewhere(Path())
+        busy = self.app._busy_elsewhere()
         if busy is not None:
             raise ApiError(HTTPStatus.CONFLICT, f"Đang làm cuốn \"{busy.name}\" - dừng cuốn ấy trước khi gỡ Studio")
+        self.app.previews.shutdown()
         self._send_json(HTTPStatus.OK, setup.remove())
 
     def post_pick_folder(self, _query: dict[str, list[str]]) -> None:
@@ -2477,6 +2518,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(BOOK + r"/casting/(\d+)"), Handler.get_casting_chapter),
     ("POST", re.compile(BOOK + r"/review"), Handler.post_review),
     ("POST", re.compile(BOOK + r"/pronunciation"), Handler.post_pronunciation),
+    ("POST", re.compile(BOOK + r"/pronunciation/preview"), Handler.post_pronunciation_preview),
     ("GET", re.compile(BOOK + r"/shared-readings"), Handler.get_book_shared_readings),
     ("POST", re.compile(BOOK + r"/shared-readings"), Handler.post_book_shared_readings),
     ("GET", re.compile(r"/api/readings"), Handler.get_shared_readings),
@@ -2537,6 +2579,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(r"/media/books/([A-Za-z0-9_-]+)/chapters/(\d+)"), Handler.media_chapter),
     ("GET", re.compile(r"/media/books/([A-Za-z0-9_-]+)/samples/(\d+)"), Handler.media_sample),
     ("GET", re.compile(r"/media/books/([A-Za-z0-9_-]+)/cover"), Handler.media_cover),
+    ("GET", re.compile(r"/media/books/([A-Za-z0-9_-]+)/reading-previews/([0-9a-f]{32})\.wav"), Handler.media_reading_preview),
 ]
 
 

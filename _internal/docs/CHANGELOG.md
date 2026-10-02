@@ -9,6 +9,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Studio
 
+- **Nghe thử cách đọc tên trước khi lưu**: sửa cách đọc một tên (tab Nhân vật, hay thẻ "Cách đọc tên" ở Việc cần duyệt) có
+  nút "Nghe thử" cạnh "Lưu" - máy đọc thử một câu ngắn có tên ấy bằng cách đang gõ, đúng giọng của người nói câu, không ghi
+  gì vào sách. Bản thu thật có thể khác đôi chút (âm thanh không phải lúc nào cũng giống từng chi tiết), nên đó là "bản thu
+  đầu sẽ gần như vầy". Nghe thử cần máy rảnh: đang làm sách hay card đồ hoạ đang bận thì máy nói rõ, và bấm "Bắt đầu" một cuốn
+  thì phần nghe thử tự nhả card. Lần đầu mất vài chục giây nạp giọng; các lần sau trong vài phút thì tức thì. Điều khiển từ xa
+  nghe thử được khi thiết bị có quyền điều khiển sản xuất.
 - **Mẫu thiết lập cho sách mới**: làm nhiều kiểu truyện (light novel, tiên hiệp...) thì lưu bộ lựa chọn - giọng kể, chất lượng,
   model đọc hiểu, có bắt đầu ngay không - thành một mẫu có tên ("Lưu thành mẫu…" ở trình tạo sách), lần sau chọn lại một cú
   bấm. Chọn mẫu chỉ đổi các lựa chọn ấy, không đụng tới truyện hay tên sách; đổi tay sau khi chọn thì tên mẫu hiện "(đã sửa)".
