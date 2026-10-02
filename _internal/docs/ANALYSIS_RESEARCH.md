@@ -94,7 +94,7 @@ quốc để biết độ rộng nhiễu thật trước khi đổi model mặc 
 đọc bằng giọng người lạ. Dữ liệu "bẩn" của v5 (nhãn chữ hoa, có chương cổng) vẫn cho F1 cao hơn; chờ v6-e1 / v6n-e2 trước
 khi kết luận về 8B.
 
-**ĐỘ NHIỄU GIỮA HAI LƯỢT HUẤN LUYỆN (02-10 01:2x)** - cùng data_v8, cùng trình unsloth trên Modal, chỉ khác hạt giống:
+**ĐỘ NHIỄU GIỮA HAI LƯỢT HUẤN LUYỆN (02-10 01:2x)** - cùng data_v8, cùng trình unsloth trên Modal, chỉ khác hạt giống (training_args.bin: seed 3407/1/2 nhưng data_seed 3407 cả ba - CÙNG thứ tự mẫu, dải này chỉ gồm khởi tạo + ngẫu nhiên khi học; bản trình có --seed đã mất, trình hiện tại ghi cứng 3407):
 LN6 F1 giọng 58,2 / 63,9 / 60,5 (hạt 3407 / 1 / 2; trung bình 60,9, lệch ~2,9), riêng chương TCF 40,5 / **83,1** / 42,7 - một
 chương ngôi thứ nhất lật theo hạt giống; Tam quốc 87,8 / 84,3 / 88,2. v9m (63,7; 87,2) nằm trong dải -> v9 không phân biệt
 được, đúng như đã không nhận. Luật từ nay: so hai công thức bằng >= 3 hạt giống mỗi bên (Modal ~2,5 USD/lượt), báo trung
