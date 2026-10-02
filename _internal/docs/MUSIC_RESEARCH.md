@@ -221,6 +221,24 @@ Việt) trước khi tin.
 độ khớp giữa không khí đoạn (đáp án cảnh) và nhãn người gắn của bài được chọn (Incompetech feel, Film soundtracks); giám
 khảo audio-LLM trên mẫu nhỏ, chỉ tin khi nó đồng ý với nhãn người ở các ca đã biết. Trang nghe thử A/B vẫn có, là tuỳ chọn.
 
+### Kết quả Pha 3 đầu tiên (02-10 08:3x, `LLM_Train/music/eval_matching.py`)
+
+Tách riêng khâu CHỌN BÀI: đầu vào = không khí ĐÚNG của 77 đoạn đáp án (16 chương, bỏ đoạn im lặng) + thế giới của cuốn;
+mỗi cách chọn 5 bài trong 440 bài Incompetech có nhãn feel; bài được chấm bằng nhãn NGƯỜI gắn (FEEL_VA / FEEL_TENSION) -
+cách chọn chỉ thấy số đo CLAP thuần, không thấy nhãn người.
+
+| cách chọn | khoảng cách (thấp = hợp) | r V / E / T |
+|---|---|---|
+| ngẫu nhiên (trong phong cách hợp thế giới) | 0,861 | 0,01 / -0,05 / -0,17 |
+| CLAP gần nhất ba trục (cách của app) | 0,590 | **0,84 / 0,83** / 0,64 |
+| nhãn GEMS của CLAP | 0,632 | 0,53 / 0,65 / 0,68 |
+| CLAP + GEMS (tổng thứ hạng) | **0,585** | 0,74 / 0,82 / **0,70** |
+| trần: gần nhất theo chính nhãn người | 0,255 | 0,94 / 0,95 / 0,94 |
+
+Đọc: khâu chọn bài đã TỐT - CLAP xếp đúng hướng cả ba trục; khoảng cách còn xa trần vì nhãn người thô (vài chữ "feel") và
+CLAP chỉ nghe 3 cửa sổ 10 giây. Khâu yếu nhất của cả chuỗi là đoán không khí ĐOẠN từ chữ (Pha 2, r 0,3-0,7), không phải
+chọn bài. Việc kế của Pha 3: thử truy hồi chữ-nhạc (mô tả cảnh -> CLAP văn bản -> bài) và cân trục T (GEMS giúp T).
+
 ## Pha 4 - trộn
 
 Đo bằng chính dây chuyền: Whisper trên chương có nhạc ở nhiều mức (nền thấp hơn giọng 15 / 18 / 21 / 24 / 27 LU, có / không
