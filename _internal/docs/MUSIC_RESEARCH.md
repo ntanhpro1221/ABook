@@ -547,6 +547,13 @@ Câu hỏi:
   vừa chạm trần 0,02).
 - **QUYẾT: giữ WEAK_MOOD = 0,2.** Nghiêng về 0,5 nhưng chưa đủ bằng chứng; nếu sau này có bộ cảnh lớn hơn (bộ 5) thì đo lại
   0,5 một lần, ghi trước, không gộp mẫu cũ.
+- **GHI TRƯỚC - ĐO LẠI 0,5 TRÊN BỘ 5 (03-10 00:0x, Lead duyệt):**
+  - Chỉ so 0,5 với 0,2, trên các chương bộ 5 (cả 5b nếu đã có trước lượt chấm). Dùng phân tích 9B-v8 của bộ 5, cùng danh mục
+    `catalog_e4test`.
+  - Giao thức như trên: `compare_rankers.py` + `build_calm.py` + hai người chấm mù Sonnet + `score_calm.py`.
+  - Luật thắng giữ nguyên: ≥ 60%, cận dưới Wilson > 0,5, thước phụ ≤ 0,02 (đáp án cảnh bộ 5).
+  - Không gộp 31 lượt cũ.
+  - Thắng thì đổi `WEAK_MOOD` = 0,5 trên nhánh dev, Lead gộp.
 
 **GHI TRƯỚC - PHÍA BÀI GỘP BA NGUỒN: CLAP + ÂM HỌC + VĂN BẢN (02-10 23:xx, Lead + chủ sách; trước mọi số):**
 Ba nguồn:
