@@ -434,6 +434,29 @@ mỗi bài, nhãn là tỉ lệ tán thành ĐỘC LẬP; ép cộng 1 làm mấ
 `compare_gems_reps.py` báo r Pearson theo từng nhãn (trung bình 9 nhãn), JS, BCE, trần = người A so B. CHỈ GHI LẠI - bộ nhãn
 còn chờ bản tổng hợp lý thuyết (đề xuất 13 nhãn độc lập + V/E/T có độ trải). Phía bài hiện là softmax trên z-score cột của
 CLAP (cộng 1); bản độc lập lấy được bằng sigmoid của chính z-score ấy nếu chốt dùng điểm độc lập.
+Kết quả phía người (02-10 23:xx): người chấm A so B - tỉ lệ r 0,938, độc lập r 0,942 (hai cách tin được như nhau); tỉ lệ so
+độc lập r 0,856; trung bình 1,5 nhãn >= 0,5 mỗi đoạn.
+
+## Nguồn nhạc: giữ / loại và lý do (02-10, Lead duyệt - đọc trước khi hỏi lại)
+
+Luật: chỉ CC0 / CC BY (không NC, không ND, không SA - kể cả chỉ để link). App tải từ `link` gốc trước, bản sao archive.org
+(`mirrors`, kiểm sha1) là dự phòng. Nguồn mà điều khoản cấm phát lại NÓI CHUNG, hoặc cấm dùng trong app / cho AI, thì KHÔNG
+đưa vào (thường kèm cấm hotlink, và ta không có bản dự phòng). Cấm riêng việc đăng lại lên nền tảng stream nhạc thì vẫn giữ,
+để `no_mirror`.
+
+| nguồn | giấy phép | quyết định | lý do |
+|---|---|---|---|
+| Incompetech (Kevin MacLeod) | CC BY 4.0 | GIỮ, có mirror | nguồn chính; ghi công theo mẫu của tác giả |
+| Jamendo (qua Openverse) | CC BY | GIỮ, có mirror | chủ sách duyệt điều khoản 02-10; ghi "made using Openverse, not endorsed" |
+| Freesound | CC0 / CC BY | GIỮ, có mirror | chủ sách duyệt điều khoản API 4(a)/(f) 02-10 |
+| OpenGameArt | CC0 / CC BY / OGA-BY | GIỮ, có mirror; chỉ lấp ô thiếu | SA / GPL loại |
+| Scott Buckley | CC BY 4.0 | GIỮ, `no_mirror`; chỉ lấp ô thiếu | tác giả chỉ cấm "redistributed/reuploaded to music streaming platforms"; dùng trong dự án (app, game) được nêu là được phép |
+| FreePD | CC0 | GIỮ; link chính = bản sao của ta | trang gốc đã đóng; archive.org/details/freepd chuyển tới máy chủ hỏng (02-10, HTTP 500) |
+| Silverman Sound | CC BY 4.0 | LOẠI | "You can't redistribute the music as standalone audio"; T&C mục 11 cấm "data mining, extraction or utilisation of product information" |
+| 魔王魂, DOVA-SYNDROME / OpenTracks, 甘茶の音楽工房, Senses Circuit | giấy phép riêng | LOẠI | cấm phát lại từng bài / cần hỏi khi đưa vào nền tảng / cấm đưa vào AI |
+| Pixabay Music | Pixabay Content License | LOẠI | cấm phát lại "on a Standalone basis", cấm thu thập hàng loạt |
+| FMA | từng bài | ĐANG XÉT (chỉ bài CC BY / CC0), lọc qua bộ dữ liệu FMA (Defferrard 2017) | ToU của site cấm "data mine" -> không cào site |
+| 공유마당 국악 BGM | CC BY | ĐANG XÉT (sau FMA) | đã kiểm một mục CC BY có mp3 |
 
 ## Thứ tự và tài nguyên
 
