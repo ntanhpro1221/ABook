@@ -12,6 +12,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - **Ở ngoài nhà dùng mạng riêng ảo nào cũng được**: Cài đặt nhận ra địa chỉ "dùng khi ở ngoài" trên mọi mạng riêng ảo
   (Tailscale, ZeroTier, NetBird, WireGuard, OpenVPN...) theo card mạng của nó, không còn chỉ nhận Tailscale; chữ hướng dẫn
   nói "mạng riêng ảo" và chỉ lấy Tailscale làm một ví dụ.
+- Máy tính: **phát lên Chromecast, TV Google TV và loa Nest** (Google Cast) trong mạng nhà, bên cạnh loa / TV DLNA. Mở
+  "Phát trên…" là thấy thiết bị, ghi "Google Cast" cạnh tên; bấm là phát đúng chương, đúng giây đang nghe. Thiết bị tự tải
+  chương từ máy tính, máy tính lưu chỗ nghe và tự sang chương sau, thanh "Đang phát trên…" có tạm dừng / tua / "Nghe trên
+  máy này" (bấm thì màn hình TV, loa trở về như cũ). Có người khác phát gì đó lên thiết bị, hay tắt nó đi, thì ABook thôi
+  điều khiển và giữ chỗ nghe ở đó. Chỉ phát ở tốc độ 1x và giọng đọc thôi - nhạc nền không đi theo sang thiết bị, như loa /
+  TV DLNA. Điện thoại đã ghép điều khiển được các thiết bị này qua máy tính; điện thoại tự tìm Google Cast thì để bản sau.
 
 ## [0.4.19] - 2026-10-02
 
@@ -28,6 +34,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   bấm. Chọn mẫu chỉ đổi các lựa chọn ấy, không đụng tới truyện hay tên sách; đổi tay sau khi chọn thì tên mẫu hiện "(đã sửa)".
   Đổi tên hay xoá mẫu (có "Hoàn tác") ở Cài đặt > Studio. Việc bỏ dòng ghi công vẫn do bạn đồng ý riêng từng cuốn, không nằm
   trong mẫu. Điều khiển từ xa chỉ chọn được mẫu có sẵn.
+
 
 ## [0.4.18] - 2026-10-02
 

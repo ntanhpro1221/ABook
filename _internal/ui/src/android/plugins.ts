@@ -102,6 +102,8 @@ export interface RemotePlayer {
   /** "cast": loa / TV trong mạng nhà - máy tính chính thấy (mã "cast:…", máy tính phục vụ audio) hay điện thoại tự thấy
    *  (mã "dlna:…", điện thoại phục vụ sách đã có trên nó); một thiết bị chỉ một mục (RemotePlayers.kt). */
   via?: "cast";
+  /** Loa / TV `via` cast: "gcast" là Google Cast (Chromecast, Google TV, loa Nest) - máy tính chính báo, điện thoại chưa tự tìm. */
+  protocol?: "dlna" | "gcast";
   state: {
     bookId?: string;
     bookTitle?: string;
