@@ -428,6 +428,13 @@ shamisen / shakuhachi 6; Freesound 120, OGA 26, Incompetech 8) so 300 bài khôn
 - danh mục thử 2.016 bài chỉ có 67 bài cổ phong (dồn dập 9, buồn 14) - và taxonomy chưa tách Trung / Nhật. Việc kế: tìm nguồn
 CC0 / CC-BY nhạc Đông Á.
 
+**GHI TRƯỚC - TỈ LỆ CỘNG 1 hay 9 ĐIỂM ĐỘC LẬP (02-10 23:xx, rà soát tâm lý học của Lead: Emotify cho chọn tới 3/9 cảm xúc
+mỗi bài, nhãn là tỉ lệ tán thành ĐỘC LẬP; ép cộng 1 làm mất pha trộn):** thêm lượt LLM thứ ba trong `segment_mood_llm.py`
+(9 điểm 0-1 độc lập; hai prompt đã ghi trước không đổi) và hai người chấm mù chấm 9 điểm độc lập trên chính 84 đoạn bộ 4.
+`compare_gems_reps.py` báo r Pearson theo từng nhãn (trung bình 9 nhãn), JS, BCE, trần = người A so B. CHỈ GHI LẠI - bộ nhãn
+còn chờ bản tổng hợp lý thuyết (đề xuất 13 nhãn độc lập + V/E/T có độ trải). Phía bài hiện là softmax trên z-score cột của
+CLAP (cộng 1); bản độc lập lấy được bằng sigmoid của chính z-score ấy nếu chốt dùng điểm độc lập.
+
 ## Thứ tự và tài nguyên
 
 0. Dữ liệu (đang chạy): Incompetech 1.443 bài (đọc 3 đoạn từ máy chủ), Jamendo CC BY 665 bài; tải Film soundtracks,
