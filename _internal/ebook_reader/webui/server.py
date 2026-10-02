@@ -701,13 +701,31 @@ class App:
             cues = [dict(cue, src=f"/api/books/{quote(value, safe='')}/music/files/{cue['track'].split('/')[1]}")
                     for cue in music_plan.packaged_cues(music, chapter_id)]
             level = music.get("levelDb") if isinstance(music, dict) else None
-            return {"cues": cues, "levelDb": level if isinstance(level, (int, float)) else music_plan.DEFAULT_LEVEL_DB}
+            tracks = music.get("tracks") if isinstance(music, dict) and isinstance(music.get("tracks"), dict) else {}
+            return {"cues": cues, "levelDb": level if isinstance(level, (int, float)) else music_plan.DEFAULT_LEVEL_DB,
+                    "credits": self._music_credits(cues, {cue["link"]: tracks.get(cue["track"]) for cue in cues})}
         plan = music_plan.read_plan(path)
         if plan is None:
-            return {"cues": [], "levelDb": music_plan.DEFAULT_LEVEL_DB}
+            return {"cues": [], "levelDb": music_plan.DEFAULT_LEVEL_DB, "credits": {}}
         cues = [dict(cue, src="/api/music/track?link=" + quote(cue["link"], safe=""))
                 for cue in music_plan.chapter_cues(plan, chapter_id)]
-        return {"cues": cues, "levelDb": plan.get("levelDb", music_plan.DEFAULT_LEVEL_DB)}
+        return {"cues": cues, "levelDb": plan.get("levelDb", music_plan.DEFAULT_LEVEL_DB),
+                "credits": self._music_credits(cues, plan.get("tracks") or {})}
+
+    @staticmethod
+    def _music_credits(cues: list[dict[str, Any]], tracks: dict[str, Any]) -> dict[str, dict[str, str]]:
+        """Ghi công tác giả của các bài chương này dùng (CC BY đòi nêu tên ở nơi nhạc phát): {link: {title, creator,
+        attribution, landing}} - chỉ khoá nào có. `tracks`: dự án = plan["tracks"][link]; gói sách = {link: tracks[tên]}."""
+        credits: dict[str, dict[str, str]] = {}
+        for cue in cues:
+            info = tracks.get(cue["link"])
+            if not isinstance(info, dict):
+                continue
+            credit = {key: info[key] for key in ("title", "creator", "attribution", "landing")
+                      if isinstance(info.get(key), str) and info[key]}
+            if credit:
+                credits[cue["link"]] = credit
+        return credits
 
     def music_track_cached(self, link: str) -> Path | None:
         """Bài đã có trong bộ đệm của máy (không tải): cho gói điện thoại hỏi thường xuyên."""
