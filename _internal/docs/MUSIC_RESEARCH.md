@@ -570,6 +570,37 @@ chọn khác bài; luật thắng như thí nghiệm nền êm.
 Giới hạn: chỉ Incompetech có nhãn người. Nguồn khác chữ ít hơn nhiều (OGA / FreePD / Scott Buckley trung vị 4-10 chữ), nên độ tin
 cậy của C phải hạ trọng số khi gộp ở các nguồn ấy; điều này chưa đo được ở đây.
 
+**GHI TRƯỚC - THẦY → TRÒ CHO NHẠC NGƯỜI DÙNG TỰ NHẬP (02-10 23:xx, hướng chủ sách qua Lead; E_signal_sources.md §6):**
+
+Thầy và trò:
+- **Thầy** = tổ hợp nguồn thắng ablation "GỘP BA NGUỒN" (có ngữ cảnh: chữ, tag người gắn, âm học, model nghe). Thầy cho mỗi
+  bài danh mục 13 cường độ + V/E/T + độ tin cậy.
+- **Trò** = chỉ nghe, chạy trên máy người dùng: tháp âm thanh CLAP htsat-unfused (ONNX 116 MB, CPU 0,5 giây/bài) + âm học
+  librosa (khoảng 1 giây/bài) + đầu dò nhỏ (logistic / MLP 1 lớp ẩn).
+- **Cách học:** trò học bắt chước thầy. Mất mát là BCE trên cường độ mềm và MSE trên V/E/T, nhân độ tin cậy của thầy.
+- **Giao diện** theo Lead: `analyze(path) -> {valence, arousal, tension, sd, emotions{13}, confidence, fitsUnderNarration,
+  loudness}`.
+
+Hai bậc:
+1. Máy tính: CPU.
+2. Điện thoại: thử ONNX int8. Nhanh hơn 3 giây/bài và trong 50 MB thì chạy trên điện thoại; không thì điện thoại gửi file sang
+   máy tính phân tích.
+
+Dữ liệu:
+- Tập học: các bài danh mục; sau đó mở rộng bằng MTG-Jamendo (tag mood/theme, thầy gán nhãn) và FMA nếu bước 1 cho thấy thiếu dữ
+  liệu (đường cong học theo số bài).
+- Giữ ngoài: 20% bài danh mục (chia theo bài, seed 7), GIẤU ngữ cảnh. Trò chỉ thấy âm thanh; thầy thấy đủ.
+
+Thước (ghi trước):
+- **(a)** AUC so feel người gắn trên phần Incompetech giữ ngoài. Trò ĐẠT nếu ≥ 90% AUC của thầy trên cùng phần.
+- **(b)** r Pearson V/E/T trên bộ ngoài: Soundtracks (Eerola 360, nhạc phim) và DEAM. Báo kèm đầu dò CLAP cũ để so.
+- **(c)** Máy chấm kiểu E1 trên đoạn bộ 3 + 4. Chọn bài bằng mô tả của TRÒ so với mô tả của THẦY, chỉ trên các đoạn chọn khác bài.
+  Trò không được thua quá 5 điểm phần trăm (phán quyết chung, KTC Wilson báo kèm).
+- **(d)** Kích thước và thời gian/bài trên CPU máy tính, và trên điện thoại nếu thử.
+
+Trò không đạt (a) thì thêm dữ liệu (MTG-Jamendo) hoặc đổi nhúng (MuQ / MERT, NC dùng được) rồi đo lại. Mỗi lần đổi ghi một dòng
+ở đây trước khi đo.
+
 **LỚP 2 PHÍA BÀI - 13 cường độ độc lập (02-10 22:xx, `derive_emotions.py`):**
 - **Zero-shot CLAP** (3 câu mô tả mỗi lớp, z theo cả kho, sigmoid): AUC so feel người gắn của Incompetech (1.381 bài)
   trung bình 0,69. Có lớp còn kém bản GEMS-9 cũ, như joy 0,46 so với 0,74.
