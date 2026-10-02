@@ -239,6 +239,15 @@ cách chọn chỉ thấy số đo CLAP thuần, không thấy nhãn người.
 CLAP chỉ nghe 3 cửa sổ 10 giây. Khâu yếu nhất của cả chuỗi là đoán không khí ĐOẠN từ chữ (Pha 2, r 0,3-0,7), không phải
 chọn bài. Việc kế của Pha 3: thử truy hồi chữ-nhạc (mô tả cảnh -> CLAP văn bản -> bài) và cân trục T (GEMS giúp T).
 
+**Pha 3 tiếp (02-10 09:0x):** truy hồi chữ-nhạc - câu mô tả nhạc từ nhãn GEMS + mức V/E/T bằng chữ -> bộ mã hoá văn bản
+CLAP -> bài có vector âm thanh gần nhất. Một mình kém (khoảng cách 0,641; r 0,57/0,70/0,63); GHÉP với khớp ba trục (tổng thứ
+hạng, `textmix`) tốt nhất: 0,560, r 0,84/0,76/**0,75**. Bootstrap ghép cặp theo đoạn: textmix - clap = −0,031 [−0,063;
++0,001], hơn ở 7/9 cuốn - ỨNG VIÊN, chưa chắc. Đưa vào app KHÔNG cần chở CLAP: danh mục tính sẵn độ khớp của mỗi bài với một
+lưới câu mô tả cố định (9 GEMS x 3 V x 3 E x 3 T), app tra theo ô của đoạn.
+
+**Pha 2b - học ánh xạ nhãn câu -> không khí đoạn (eval_scene_mood.py): KHÔNG hơn bảng viết tay.** 77 đoạn / 9 cuốn, ridge
+kiểm chéo giữ từng cuốn: tốt nhất r 0,48/0,53/0,43 so với bảng tay 0,51/0,61/0,50 - quá ít dữ liệu để học; giữ bảng tay.
+
 ## Pha 4 - trộn
 
 Đo bằng chính dây chuyền: Whisper trên chương có nhạc ở nhiều mức (nền thấp hơn giọng 15 / 18 / 21 / 24 / 27 LU, có / không
