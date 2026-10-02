@@ -12,7 +12,8 @@ import java.text.Normalizer
  * bản cài đọc chung bộ ví dụ tests/fixtures/book_edits/ nên phải ra ĐÚNG cùng kết quả, cùng câu báo lỗi.
  *
  * Lớp sách (book.json, cast.json, scripts/, nhạc, audio, bìa) là của người làm sách và không bao giờ bị sửa tại chỗ. Người
- * nghe đổi được tên sách, bìa, tên nhân vật, tên chương, nhạc nền (bật/tắt, mức, im lặng một đoạn); chúng nằm ở `edits.json` (+
+ * nghe đổi được tên sách, bìa, tên nhân vật, tên chương, nhạc nền (bật/tắt, mức, im lặng một đoạn) và ghi ý muốn chờ Studio (cách
+ * đọc tên, người nói, giọng... - [BookWishes], không bao giờ áp vào sách); chúng nằm ở `edits.json` (+
  * `edits/cover.jpg`) trong thư mục sách, và mọi nơi đọc lớp sách (Store.manifest, LibraryPlugin.readText, LibraryServer) đi
  * qua đây để thấy bản đã sửa.
  *
@@ -35,7 +36,8 @@ object BookEdits {
     private const val LEVEL_MIN = -40.0
     private const val LEVEL_MAX = -6.0
     private const val DEFAULT_LEVEL_DB = -20.0 // music_plan.DEFAULT_LEVEL_DB
-    private val TOP_KEYS = setOf("format", "version", "title", "cover", "characters", "chapters", "music")
+    private val TOP_KEYS = setOf("format", "version", "title", "cover", "characters", "chapters", "music", "wishes")
+    const val TOO_BIG = "Quá nhiều thay đổi đang chờ trong cuốn này - hãy lưu, áp bớt vào dự án rồi làm tiếp."
     private val COVER_KEYS = setOf("color", "width", "height", "version")
     private val MUSIC_KEYS = setOf("enabled", "levelDb", "silenced")
     private val CHAPTER_KEYS = setOf("title", "subtitle")
@@ -109,7 +111,7 @@ object BookEdits {
      * Chữ đã ở dạng `cleanText` ghi ra: không ký tự điều khiển, không khoảng trắng nào ngoài dấu cách đơn, không dấu cách
      * đầu/cuối/kép, không dài quá `limit`. [validate] KHÔNG sửa chữ của người lạ - gặp chữ chưa sạch là từ chối.
      */
-    private fun isClean(text: String, limit: Int): Boolean {
+    internal fun isClean(text: String, limit: Int): Boolean {
         if (text.codePointCount(0, text.length) > limit || text.startsWith(' ') || text.endsWith(' ') || text.contains("  ")) return false
         return codePoints(text).none { isControl(it) || (it != ' '.code && Character.isValidCodePoint(it) && it < 0x10000 && isSpace(it.toChar())) }
     }
@@ -123,10 +125,10 @@ object BookEdits {
     fun isEmpty(edits: JSONObject) = count(edits) == 0
 
     /**
-     * Số thay đổi người nghe đã làm (cho dòng "N thay đổi"): tên sách, bìa, mỗi tên nhân vật, mỗi chương đổi tên, bật/tắt
-     * nhạc, mức nhạc, mỗi đoạn nhạc im lặng.
+     * Số thay đổi "áp ngay" người nghe đã làm: tên sách, bìa, mỗi tên nhân vật, mỗi chương đổi tên, bật/tắt nhạc, mức nhạc, mỗi
+     * đoạn nhạc im lặng. Không kể ý muốn chờ Studio ([BookWishes]) - chúng chưa áp vào đâu cả.
      */
-    fun count(edits: JSONObject): Int {
+    fun countApplied(edits: JSONObject): Int {
         val music = edits.optJSONObject("music")
         return (if (edits.has("title")) 1 else 0) + (if (edits.has("cover")) 1 else 0) +
             (edits.optJSONObject("characters")?.length() ?: 0) + (edits.optJSONObject("chapters")?.length() ?: 0) +
@@ -134,11 +136,17 @@ object BookEdits {
             (music?.optJSONArray("silenced")?.length() ?: 0)
     }
 
-    private fun isNumber(value: Any?) = value is Number && !(value is Double && (value.isNaN() || value.isInfinite()))
+    /** Số ý muốn chờ Studio ([BookWishes.count]). */
+    fun countWishes(edits: JSONObject): Int = BookWishes.count(edits.optJSONObject("wishes"))
+
+    /** Số thay đổi người nghe đã làm (cho dòng "N thay đổi" và việc mời lưu): thay đổi áp ngay + ý muốn chờ Studio. */
+    fun count(edits: JSONObject): Int = countApplied(edits) + countWishes(edits)
+
+    internal fun isNumber(value: Any?) = value is Number && !(value is Double && (value.isNaN() || value.isInfinite()))
 
     private fun isInteger(value: Any?) = value is Int || value is Long || value is BigInteger
 
-    private fun names(value: JSONObject): List<String> = value.keys().asSequence().toList()
+    internal fun names(value: JSONObject): List<String> = value.keys().asSequence().toList()
 
     /** `edits.json` đã đọc -> dạng chuẩn; sai thì [EditsError]. Khoá lạ, kiểu sai, chữ chưa sạch, quá trần: từ chối. */
     fun validate(raw: Any?): JSONObject {
@@ -194,6 +202,7 @@ object BookEdits {
             out.put("chapters", kept)
         }
         if (raw.has("music")) out.put("music", validateMusic(raw.opt("music")))
+        if (raw.has("wishes")) out.put("wishes", BookWishes.validate(raw.opt("wishes")))
         return out
     }
 
@@ -256,7 +265,7 @@ object BookEdits {
     /** Byte ghi ra `edits.json`: khoá xếp cố định, UTF-8, xuống dòng LF - cùng nội dung thì cùng byte. */
     fun dump(edits: JSONObject): ByteArray = (StrictJson.dumps(ordered(edits), 1) + "\n").toByteArray(Charsets.UTF_8)
 
-    private fun byCodePoints(first: String, second: String): Int {
+    internal fun byCodePoints(first: String, second: String): Int {
         val a = codePoints(first)
         val b = codePoints(second)
         for (index in 0 until minOf(a.size, b.size)) if (a[index] != b[index]) return a[index].compareTo(b[index])
@@ -280,6 +289,7 @@ object BookEdits {
         edits.optJSONObject("music")?.takeIf { it.length() > 0 }?.let { music ->
             out["music"] = listOf("enabled", "levelDb", "silenced").filter { music.has(it) }.associateWith { music.opt(it) }
         }
+        edits.optJSONObject("wishes")?.takeIf { it.length() > 0 }?.let { out["wishes"] = BookWishes.ordered(it) }
         return out
     }
 
@@ -367,6 +377,9 @@ object BookEdits {
         val silenced = (strings(ourMusic.optJSONArray("silenced")) + strings(theirMusic.optJSONArray("silenced"))).toSortedSet().toList()
         if (silenced.isNotEmpty()) music.put("silenced", JSONArray(silenced))
         if (music.length() > 0) out.put("music", music)
+        val (wishes, wishConflicts) = BookWishes.merge(local.optJSONObject("wishes"), incoming.optJSONObject("wishes"))
+        conflicts += wishConflicts
+        if (wishes.length() > 0) out.put("wishes", wishes)
         val cover = if (out.opt("cover") is JSONObject) (if (local.opt("cover") is JSONObject) "local" else "incoming") else null
         val taken = count(out) - count(local)
         val report = JSONObject().put("adopted", maxOf(0, taken)).put("kept", count(local)).put("conflicts", conflicts)
@@ -476,10 +489,13 @@ object BookEdits {
     fun applyCast(cast: JSONObject, edits: JSONObject, base: JSONObject? = null): JSONObject {
         val people = edits.optJSONObject("characters") ?: JSONObject()
         val chapterNames = renamedChapters(base, edits)
-        if (people.length() == 0 && chapterNames.isEmpty()) return cast
+        val waiting = BookWishes.pendingVoices(edits.optJSONObject("wishes"))
+        if (people.length() == 0 && chapterNames.isEmpty() && waiting.isEmpty()) return cast
         val out = deepCopy(cast) as JSONObject
         for (person in peopleOf(out)) {
             val name = person.opt("name")
+            // Ý muốn đổi giọng/giới chờ Studio: chỉ một dấu "đang chờ" - giọng và audio của người ấy giữ nguyên.
+            if (name is String) waiting[BookWishes.characterKey(name)]?.let { person.put("pendingVoice", BookEdits.deepCopy(it)) }
             if (name is String && people.has(name)) {
                 val original = listOf(person.opt("originalName"), person.opt("displayName")).firstOrNull { truthy(it) } ?: name
                 val shown = people.getString(name)
@@ -670,7 +686,11 @@ object BookEdits {
 
     // ---- sửa (ghi) ---------------------------------------------------------------------------------------------------
 
-    private fun write(folder: File, edits: JSONObject): JSONObject {
+    internal fun <T> locked(block: () -> T): T = synchronized(lock) { block() }
+
+    internal fun write(folder: File, edits: JSONObject): JSONObject {
+        // File quá cỡ thì lần đọc sau từ chối cả file: không ghi ra thứ chính mình không đọc lại được.
+        if (dump(edits).size > MAX_EDITS_BYTES) throw EditsError(TOO_BIG)
         save(folder, edits)
         return edits
     }

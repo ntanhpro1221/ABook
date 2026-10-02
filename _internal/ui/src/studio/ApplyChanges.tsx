@@ -11,7 +11,7 @@ import { api } from "./api";
 // (store.pending_details) liệt kê đủ từng thay đổi bằng lời, số câu ĐÃ THU sẽ thu lại, ở chương nào, và thời gian ước theo
 // tốc độ thật của chính cuốn này.
 
-interface PendingItem {
+export interface PendingItem {
   kind: "pronunciation" | "speaker" | "line" | "voice" | "retake";
   label: string;
   chapter?: string;
@@ -24,14 +24,58 @@ interface PendingItem {
   requestedAt: number;
 }
 
-interface PendingDetails {
+export interface PendingDetails {
   items: PendingItem[];
   lines: number;
   chapters: string[];
   seconds: number;
 }
 
-const KIND_ICON = { pronunciation: BookOpenCheck, speaker: UserRound, line: AudioLines, voice: Mic2, retake: RefreshCw } as const;
+export const KIND_ICON = { pronunciation: BookOpenCheck, speaker: UserRound, line: AudioLines, voice: Mic2, retake: RefreshCw } as const;
+
+/** Danh sách từng thay đổi đang chờ, mỗi dòng có nút "Bỏ thay đổi này" - dùng cho cả hộp "Áp dụng" (dự án) lẫn hộp "Việc đang chờ
+ *  Studio" của sách không có xưởng (listen/WishesDialog.tsx). `dropping` = id đang bỏ dở; `showLines`: hiện số câu thu lại. */
+export function PendingList({
+  items,
+  dropping,
+  onDrop,
+  showLines = true,
+}: {
+  items: PendingItem[];
+  dropping: string | null;
+  onDrop: (item: PendingItem) => void;
+  showLines?: boolean;
+}) {
+  return (
+    <ul className="max-h-72 divide-y divide-line overflow-y-auto rounded-xl border border-line">
+      {items.map((item) => {
+        const Icon = KIND_ICON[item.kind] ?? RefreshCw;
+        return (
+          <li key={`${item.section}:${item.key}`} className="flex items-start gap-3 px-3 py-2 text-sm">
+            <Icon className="mt-0.5 size-4 shrink-0 text-fg-3" />
+            <span className="min-w-0 flex-1 text-pretty">
+              {item.label}
+              {item.chapter && <span className="text-fg-3"> · {item.chapter}</span>}
+            </span>
+            {showLines && (
+              <span className="shrink-0 pt-0.5 text-xs tabular text-fg-3">
+                {item.lines ? `${formatNumber(item.lines)} câu thu lại` : "chưa thu - không tốn gì"}
+              </span>
+            )}
+            <IconButton
+              size="sm"
+              icon={X}
+              label="Bỏ thay đổi này"
+              className="-my-1.5 -mr-1.5"
+              disabled={dropping !== null}
+              onClick={() => onDrop(item)}
+            />
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
 
 export function ApplyChangesDialog({
   bookId,
@@ -85,31 +129,7 @@ export function ApplyChangesDialog({
         <p className="text-sm text-fg-2">Đang xem các thay đổi…</p>
       ) : (
         <>
-          <ul className="max-h-72 divide-y divide-line overflow-y-auto rounded-xl border border-line">
-            {data.items.map((item) => {
-              const Icon = KIND_ICON[item.kind] ?? RefreshCw;
-              return (
-                <li key={`${item.section}:${item.key}`} className="flex items-start gap-3 px-3 py-2 text-sm">
-                  <Icon className="mt-0.5 size-4 shrink-0 text-fg-3" />
-                  <span className="min-w-0 flex-1 text-pretty">
-                    {item.label}
-                    {item.chapter && <span className="text-fg-3"> · {item.chapter}</span>}
-                  </span>
-                  <span className="shrink-0 pt-0.5 text-xs tabular text-fg-3">
-                    {item.lines ? `${formatNumber(item.lines)} câu thu lại` : "chưa thu - không tốn gì"}
-                  </span>
-                  <IconButton
-                    size="sm"
-                    icon={X}
-                    label="Bỏ thay đổi này"
-                    className="-my-1.5 -mr-1.5"
-                    disabled={dropping !== null}
-                    onClick={() => void drop(item)}
-                  />
-                </li>
-              );
-            })}
-          </ul>
+          <PendingList items={data.items} dropping={dropping} onDrop={(item) => void drop(item)} />
           <p className="mt-3 text-sm text-pretty">
             {data.lines ? (
               <>

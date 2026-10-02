@@ -1,0 +1,13 @@
+{
+ "format": "abook-edits",
+ "version": 1,
+ "wishes": {
+  "pronunciations": {
+   "hai kes": {
+    "requested_at": 1.5,
+    "spoken_form": "Hên-khơ",
+    "surface": "Hai kes"
+   }
+  }
+ }
+}

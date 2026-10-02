@@ -186,6 +186,7 @@ def cast(path: Path) -> Any:
 def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bool = True) -> dict[str, Any]:
     """Cùng hình dạng với `listen_view.book` của một dự án - giao diện Nghe không phân biệt hai loại."""
     book = edited_manifest(path)
+    edits = book_edits.load(Path(path))
     remote = _remote(path)
     items = []
     for chapter in book.get("chapters") or []:
@@ -223,8 +224,10 @@ def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bo
         "state": state,
         "progress": book_progress(state, available, complete=complete),
         "cover": book_edits.cover_view(Path(path), book_id),
-        # Số thay đổi của người nghe trên cuốn này (lớp sửa): giao diện ghi "N thay đổi" và mời lưu thành file.
-        "edits": book_edits.count(book_edits.load(Path(path))),
+        # Số thay đổi của người nghe trên cuốn này (lớp sửa): giao diện ghi "N thay đổi" và mời lưu thành file. `wishes`: trong
+        # số ấy, bao nhiêu là ý muốn chờ Studio (book_wishes.py) - chưa áp vào audio.
+        "edits": book_edits.count(edits),
+        "wishes": book_edits.count_wishes(edits),
         "lastChapterTitle": next((chapter["fullTitle"] for chapter in items
                                   if chapter["id"] == (state.get("last") or {}).get("chapterId")), ""),
         # Cả bộ trong một file (bookfile.pack_series): các phần theo thứ tự; sách một phần thì rỗng.

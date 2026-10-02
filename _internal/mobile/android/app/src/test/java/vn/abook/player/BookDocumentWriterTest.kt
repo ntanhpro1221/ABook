@@ -120,7 +120,7 @@ class BookDocumentWriterTest {
             BookEditsFixtures.useStoreRoot(library)
             val imported = BookFileImport.importFile(file)
             assertTrue("$name: phần sửa còn nguyên", StrictJson.equal(edits, BookEdits.load(Store.bookDir(imported.id))))
-            val shown = (BookEdits.deepCopy(Store.manifest(imported.id)!!) as JSONObject).also { listOf("id", "edits", "capabilities", "package").forEach(it::remove) }
+            val shown = (BookEdits.deepCopy(Store.manifest(imported.id)!!) as JSONObject).also { listOf("id", "edits", "wishes", "capabilities", "package").forEach(it::remove) }
             assertTrue("$name: sách người nghe thấy khớp bản Python", StrictJson.equal(BookEditsFixtures.obj("expected/$name.json").getJSONObject("manifest"), shown))
             assertEquals(imported.title, shown.getString("title"))
         }
@@ -231,7 +231,7 @@ class BookDocumentWriterTest {
         assertArrayEquals(BookEditsFixtures.bytes("edits/everything.cover.jpg"), File(Store.bookDir(imported.id), "edits/cover.jpg").readBytes())
         assertEquals("Sách của tôi", imported.title)
         assertNotNull(Store.coverFile(imported.id))
-        val shown = (BookEdits.deepCopy(Store.manifest(imported.id)!!) as JSONObject).also { listOf("id", "edits", "capabilities", "package").forEach(it::remove) }
+        val shown = (BookEdits.deepCopy(Store.manifest(imported.id)!!) as JSONObject).also { listOf("id", "edits", "wishes", "capabilities", "package").forEach(it::remove) }
         assertTrue(StrictJson.equal(BookEditsFixtures.obj("expected/everything.json").getJSONObject("manifest"), shown))
         assertEquals(BookEdits.count(edits), Store.manifest(imported.id)!!.getInt("edits"))
         // và mở lại bản vừa nhập: ghi ra lần nữa vẫn đúng từng mục

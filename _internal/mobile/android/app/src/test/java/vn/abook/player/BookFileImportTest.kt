@@ -463,7 +463,7 @@ class BookFileImportTest {
             return message
         }
         val head = """{"format": "abook-edits", "version": 1"""
-        assertEquals("Phần sửa của sách có mục lạ.", refused(editsBytes = "$head, \"wishes\": []}".toByteArray()))
+        assertEquals("Phần sửa của sách có mục lạ.", refused(editsBytes = "$head, \"pins\": []}".toByteArray()))
         assertEquals("Phần sửa của sách bị hỏng.", refused(editsBytes = "{".toByteArray()))
         assertEquals("Phần sửa của sách bị hỏng.", refused(editsBytes = "$head, \"music\": {\"levelDb\": NaN}}".toByteArray()))
         assertEquals("Tên sách trong phần sửa không hợp lệ.", refused(editsBytes = "$head, \"title\": \"Tên  sách\"}".toByteArray()))

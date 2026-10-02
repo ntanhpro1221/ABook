@@ -436,6 +436,7 @@ object LibraryServer {
         val copy = JSONObject(manifest.toString())
         copy.remove("package")
         copy.remove("edits") // của điện thoại này: máy kia không cần, và không phải sách
+        copy.remove("wishes")
         copy.remove("capabilities")
         copy.put("id", id)
         // Bìa người nghe đặt (edits/cover.jpg) đi ra dưới tên bìa thường - máy kia chỉ biết một cover.jpg.

@@ -1,6 +1,6 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, FileDown, GitMerge, History, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, Save, SlidersHorizontal, Trash2, UserRound } from "lucide-react";
+import { ArrowLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, FileDown, GitMerge, History, Hourglass, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, Save, SlidersHorizontal, Trash2, UserRound } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
@@ -9,13 +9,15 @@ import { cn } from "@/shared/cn";
 import { usePageTitle } from "@/shared/title";
 import { formatClock, formatLength, formatNumber } from "@/shared/format";
 import { Button, Dialog, EmptyState, IconButton, Progress, Skeleton, Tabs, TabsContent, TabsList, TabsTrigger, Tooltip, Vu } from "@/shared/ui";
-import { RenamePersonDialog } from "@/studio/CastEdits";
+import { GenderDialog, RenamePersonDialog } from "@/studio/CastEdits";
+import { MergeDialog } from "@/studio/MergePeople";
 import { useClip } from "./clip";
 import { canEditBook, EditBlockedItem, EditBookDialog, refreshAfterEdit, RenameChapterDialog, SaveAsDialog, StudioOnlyItem, useSaveBook } from "./EditBook";
 import { bookStatusText, usePlayListenBook } from "./LibraryScreen";
 import { chapterHeard, chaptersByPart, resumePoint, type CastMember, type ListenBook, type ListenChapter } from "./model";
 import { usePlayer } from "./player";
 import { BookmarkList, chapterStatusLabel } from "./PlayerViews";
+import { WishesDialog } from "./WishesDialog";
 import { useCast, useListenBook, useListenMutations, useSource } from "./source";
 
 const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[highlighted]:bg-hover";
@@ -190,10 +192,13 @@ export function PersonRow({
   onMerge,
   onRename,
   onGender,
+  waiting,
 }: {
   bookId: string;
   person: CastMember;
   top?: number;
+  /** Cuốn không có xưởng: thay đổi người nghe ghi chỉ chờ Studio - dòng "Đang chờ Studio" thay cho "Chờ áp dụng". */
+  waiting?: boolean;
   /** Chỉ Studio: mở màn "Đổi giọng" cho nhân vật (giọng ấy có từ bước phân vai). Người mang từ phần trước (0 câu) không có
    *  nút này và "Đổi giới tính": dây chuyền chỉ đổi giọng của người đã có câu (NO_VOICE), còn "Đổi tên" thì được. */
   onPickVoice?: (person: CastMember) => void;
@@ -234,9 +239,9 @@ export function PersonRow({
           {person.voice ? `${person.voice.preset}${person.voice.tone ? ` · ${person.voice.tone}` : ""}` : "Chưa có giọng"}
         </div>
         {/* Việc của Studio (giọng người nghe đã chọn, chưa áp) - trang nghe không cần (soát UX 29-09). */}
-        {person.pendingVoice && onPickVoice && (
+        {person.pendingVoice && (onPickVoice || waiting) && (
           <div className="mt-0.5 truncate text-xs font-medium text-accent-text">
-            Chờ áp dụng:{" "}
+            {waiting ? "Đang chờ Studio" : "Chờ áp dụng"}:{" "}
             {[person.pendingVoice.preset && `giọng ${person.pendingVoice.preset}`, person.pendingVoice.gender.toLowerCase()]
               .filter(Boolean)
               .join(" · ")}
@@ -306,13 +311,15 @@ function reachedTitles(chapters: ListenChapter[], until: number | undefined): Se
 
 /** `reached`: tên các chương tới chỗ đang nghe (trang nghe) - người chỉ xuất hiện SAU đó bị ẩn tới khi bấm hiện, để dàn nhân
  *  vật không lộ nội dung ("Douglas · từ Chương 738" khi đang nghe Chương 725 - soát UX 29-09). Studio không truyền: hiện hết. */
-export function CastList({ bookId, onPickVoice, onMerge, onRename, onGender, reached }: {
+export function CastList({ bookId, onPickVoice, onMerge, onRename, onGender, reached, waiting }: {
   bookId: string;
   onPickVoice?: (person: CastMember) => void;
   onMerge?: (person: CastMember) => void;
   onRename?: (person: CastMember) => void;
   onGender?: (person: CastMember) => void;
   reached?: Set<string>;
+  /** Cuốn không có xưởng: đổi giới tính, gộp người ghi thành ý muốn chờ Studio (docs/EDITING.md, P2a). */
+  waiting?: boolean;
 }) {
   const source = useSource();
   const { data: cast, isLoading } = useCast(bookId);
@@ -347,7 +354,7 @@ export function CastList({ bookId, onPickVoice, onMerge, onRename, onGender, rea
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {cast.characters
           .filter((person) => later || !reached || !person.firstChapter || reached.has(person.firstChapter))
-          .map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} onMerge={onMerge} onRename={onRename} onGender={onGender} />)}
+          .map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} onMerge={onMerge} onRename={onRename} onGender={onGender} waiting={waiting} />)}
       </div>
       {reached && ahead(cast.characters, reached) > 0 && (
         <button type="button" onClick={() => setLater((value) => !value)} className="mt-3 text-sm font-medium text-fg-2 hover:text-fg">
@@ -359,7 +366,7 @@ export function CastList({ bookId, onPickVoice, onMerge, onRename, onGender, rea
           <button type="button" onClick={() => setExtras((value) => !value)} className="text-sm font-medium text-fg-2 hover:text-fg">
             {extras ? "Ẩn" : "Hiện"} {cast.extras.length} vai phụ chỉ xuất hiện trong một cảnh
           </button>
-          {extras && <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{cast.extras.map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} onMerge={onMerge} onRename={onRename} onGender={onGender} />)}</div>}
+          {extras && <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{cast.extras.map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} onMerge={onMerge} onRename={onRename} onGender={onGender} waiting={waiting} />)}</div>}
         </div>
       )}
       {/* Phần nối tiếp: dàn mang sang chưa nói ở phần này (soát UX a6 01-10, B2 - tab từng ghi "Chưa có dàn"). Mở sẵn khi chưa ai
@@ -623,6 +630,10 @@ export function BookScreen({
   const [saveAsOpen, setSaveAsOpen] = useState(false);
   const [renamingChapter, setRenamingChapter] = useState<ListenChapter | null>(null);
   const [renamingPerson, setRenamingPerson] = useState<CastMember | null>(null);
+  const [genderPerson, setGenderPerson] = useState<CastMember | null>(null);
+  const [mergingPerson, setMergingPerson] = useState<CastMember | null>(null);
+  const [wishesOpen, setWishesOpen] = useState(false);
+  const { data: castView } = useCast(id);
   // Hook không được đặt sau `return` sớm: cuốn chưa nạp xong thì dùng một cuốn rỗng (nút lưu chưa hiện lúc ấy).
   const saver = useSaveBook(book ?? ({ id: id ?? "" } as ListenBook));
   // Điện thoại: mở sách là hỏi máy tính đã ghép bản mới nhất của hồ sơ nghe (chỗ nghe, tên, hồ sơ vừa chọn bên ấy) -
@@ -650,6 +661,8 @@ export function BookScreen({
   const chapters = book.chapters ?? [];
   const editable = editing !== false && canEditBook(book);
   const workshop = Boolean(book.capabilities?.workshop);
+  // Cuốn của máy này không có xưởng (file .abook): việc của Studio (giới tính, gộp người...) ghi lại thành ý muốn chờ Studio.
+  const waiting = editable && !workshop;
   const point = resumePoint(book, chapters);
   const listening = player.track?.bookId === book.id;
   const heard = book.progress.heardSeconds;
@@ -786,6 +799,11 @@ export function BookScreen({
                           <DropdownMenu.Item onSelect={() => setSaveAsOpen(true)} className={MENU_ITEM}>
                             <FileDown className="size-4" /> Lưu thành…
                           </DropdownMenu.Item>
+                          {Boolean(book.wishes) && (
+                            <DropdownMenu.Item onSelect={() => setWishesOpen(true)} className={MENU_ITEM}>
+                              <Hourglass className="size-4" /> Việc đang chờ Studio ({book.wishes})
+                            </DropdownMenu.Item>
+                          )}
                         </>
                       )}
                     </>
@@ -829,7 +847,14 @@ export function BookScreen({
           <HistoryTab book={book} />
         </TabsContent>
         <TabsContent value="cast">
-          <CastList bookId={book.id} reached={reachedTitles(chapters, point?.chapter.id)} onRename={editable ? setRenamingPerson : undefined} />
+          <CastList
+            bookId={book.id}
+            reached={reachedTitles(chapters, point?.chapter.id)}
+            onRename={editable ? setRenamingPerson : undefined}
+            onGender={waiting ? setGenderPerson : undefined}
+            onMerge={waiting ? setMergingPerson : undefined}
+            waiting={waiting}
+          />
         </TabsContent>
       </Tabs>
       {editing !== false && editable && (
@@ -838,6 +863,20 @@ export function BookScreen({
           <RenameChapterDialog book={book} chapter={renamingChapter} onClose={() => setRenamingChapter(null)} />
           <RenamePersonDialog bookId={book.id} person={renamingPerson} onClose={() => setRenamingPerson(null)} onSaved={() => refreshAfterEdit(client, book.id)} />
           <SaveAsDialog book={book} open={saveAsOpen} onOpenChange={setSaveAsOpen} pickFolder={editing.pickFolder} />
+          {waiting && (
+            <>
+              <GenderDialog bookId={book.id} person={genderPerson} onClose={() => setGenderPerson(null)} waiting onSaved={() => refreshAfterEdit(client, book.id)} />
+              <MergeDialog
+                bookId={book.id}
+                person={mergingPerson}
+                people={castView?.characters ?? []}
+                onClose={() => setMergingPerson(null)}
+                waiting
+                onSaved={() => refreshAfterEdit(client, book.id)}
+              />
+              <WishesDialog bookId={book.id} count={book.edits ?? 0} open={wishesOpen} onOpenChange={setWishesOpen} />
+            </>
+          )}
         </>
       )}
     </div>

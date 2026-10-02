@@ -439,7 +439,10 @@ export function SaveAsDialog({
           Dự án (.abookproj) mang cả xưởng làm sách - cần máy có Studio để dựng xưởng từ file sách. Tính năng này sắp có; lúc này lưu thành sách nghe (.abook).
         </p>
       ) : (
-        <p className="mt-3 text-sm text-fg-2">Sách nghe mở được bằng ABook trên máy tính và điện thoại, mang theo tên, bìa, tên nhân vật, tên chương, nhạc bạn đã sửa.</p>
+        <p className="mt-3 text-sm text-fg-2">
+          Sách nghe mở được bằng ABook trên máy tính và điện thoại, mang theo tên, bìa, tên nhân vật, tên chương, nhạc bạn đã sửa
+          {book.wishes ? `, cùng ${book.wishes} việc đang chờ Studio (chưa làm gì trong giọng đọc)` : ""}.
+        </p>
       )}
       {pickFolder && kind === "abook" && (
         <div className="mt-3 flex items-center gap-2 text-sm">
@@ -476,7 +479,7 @@ export function StudioOnlyItem({ book }: { book: ListenBook }) {
       <Wrench className="mt-0.5 size-4 shrink-0" />
       <span className="min-w-0">
         <span className="block">Đổi giọng, sửa lời đọc, thu lại chương</span>
-        <span className="block text-xs text-fg-3">{need}</span>
+        <span className="block text-xs text-fg-3">{need} - đổi giới tính, gộp người ghi được ở tab Nhân vật, chờ Studio làm</span>
       </span>
     </DropdownMenu.Item>
   );

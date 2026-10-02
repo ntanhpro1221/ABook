@@ -1,0 +1,200 @@
+{
+ "volatile": [
+  "color",
+  "version",
+  "requestedAt"
+ ],
+ "steps": [
+  {
+   "method": "POST",
+   "path": "/pronunciation",
+   "body": {
+    "surface": "Hailkes",
+    "spokenForm": "Hên-khơ",
+    "everywhere": true
+   },
+   "status": 200,
+   "response": {
+    "surface": "Hailkes",
+    "spokenForm": "Hên-khơ",
+    "requestedAt": 1790955304.2140899
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/pronunciation",
+   "body": {
+    "surface": "Hai kes",
+    "spokenForm": "Hên-khơ"
+   },
+   "status": 400,
+   "response": {
+    "error": "Chỉ sửa được cách đọc của MỘT từ - cách đọc lưu theo từng từ."
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/pronunciation",
+   "body": {
+    "surface": "Hailkes",
+    "spokenForm": "Xă-mon"
+   },
+   "status": 400,
+   "response": {
+    "error": "Cách đọc phải là các âm tiết tiếng Việt nối bằng gạch nối, ví dụ Hên-khơ."
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/pronunciation",
+   "body": {
+    "surface": "Hailkes",
+    "spokenForm": "Hên-kơ"
+   },
+   "status": 400,
+   "response": {
+    "error": "Tiếng Việt viết “cơ”, không viết “kơ”. Viết: “Hên-cơ”.",
+    "suggestion": "Hên-cơ"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/pronunciation",
+   "body": {
+    "surface": "Hailkes",
+    "spokenForm": ""
+   },
+   "status": 400,
+   "response": {
+    "error": "Thiếu tên hoặc cách đọc"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/pronunciation",
+   "body": {
+    "surface": "Hailkes",
+    "spokenForm": "Hên-xơ"
+   },
+   "status": 200,
+   "response": {
+    "surface": "Hailkes",
+    "spokenForm": "Hên-xơ",
+    "requestedAt": 1790955304.256379
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/pending-changes",
+   "status": 200,
+   "response": {
+    "items": [
+     {
+      "kind": "pronunciation",
+      "label": "“Hailkes” đọc là “Hên-xơ”",
+      "lines": 0,
+      "section": "pronunciations",
+      "key": "hailkes",
+      "requestedAt": 1790955304.256379
+     }
+    ],
+    "lines": 0,
+    "chapters": [],
+    "seconds": 0.0
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/edits",
+   "status": 200,
+   "response": {
+    "applied": 0,
+    "waiting": 0,
+    "wishes": 1
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/pronunciation",
+   "body": {
+    "surface": "Hailkes",
+    "withdraw": true,
+    "requestedAt": "$requestedAt#6"
+   },
+   "status": 200,
+   "response": {
+    "undone": 1,
+    "restored": false
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/pending-changes",
+   "status": 200,
+   "response": {
+    "items": [
+     {
+      "kind": "pronunciation",
+      "label": "“Hailkes” đọc là “Hên-khơ”",
+      "lines": 0,
+      "section": "pronunciations",
+      "key": "hailkes",
+      "requestedAt": 1790955304.2140899
+     }
+    ],
+    "lines": 0,
+    "chapters": [],
+    "seconds": 0.0
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/pronunciation",
+   "body": {
+    "surface": "Hailkes",
+    "withdraw": true,
+    "requestedAt": "$requestedAt#6"
+   },
+   "status": 409,
+   "response": {
+    "error": "Quyết định này đã được thay bằng một lựa chọn sau - không còn gì để hoàn tác."
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/pronunciation",
+   "body": {
+    "surface": "Hailkes",
+    "withdraw": true,
+    "requestedAt": "$requestedAt#1"
+   },
+   "status": 200,
+   "response": {
+    "undone": 1,
+    "restored": false
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/edits",
+   "status": 200,
+   "response": {
+    "applied": 0,
+    "waiting": 0,
+    "wishes": 0
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/pronunciation",
+   "body": {
+    "surface": "Hailkes",
+    "withdraw": true
+   },
+   "status": 400,
+   "response": {
+    "error": "Thiếu quyết định cần hoàn tác"
+   }
+  }
+ ]
+}

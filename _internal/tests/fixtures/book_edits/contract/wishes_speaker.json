@@ -1,0 +1,312 @@
+{
+ "volatile": [
+  "color",
+  "version",
+  "requestedAt"
+ ],
+ "steps": [
+  {
+   "method": "POST",
+   "path": "/speaker",
+   "body": {
+    "stableId": "c1_s0003_fa1fe2",
+    "textSha256": "fa1fe25f1922819e9fd94d48eeef9fddcaeb06be1653b73d618873e572498ea5",
+    "speaker": "HEIDI"
+   },
+   "status": 200,
+   "response": {
+    "lines": 1,
+    "speaker": "HEIDI",
+    "new": false,
+    "alias": false,
+    "requestedAt": 1790955304.9331691
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/speaker",
+   "body": {
+    "stableId": "c1_s0003_fa1fe2",
+    "textSha256": "fa1fe25f1922819e9fd94d48eeef9fddcaeb06be1653b73d618873e572498ea5",
+    "speaker": "NOBODY"
+   },
+   "status": 400,
+   "response": {
+    "error": "Người này chưa có giọng trong sách (chưa nói câu nào) - chưa gán được."
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/speaker",
+   "body": {
+    "stableId": "c1_s0002_c58b67",
+    "textSha256": "c58b6788498e1756635f89b55a9906af2fa37a0d3ffbc49083eb56c5c5c5483c",
+    "speaker": "HEIDI"
+   },
+   "status": 400,
+   "response": {
+    "error": "Câu này là lời kể, không có người nói để đổi."
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/speaker",
+   "body": {
+    "stableId": "c1_s9999_aaaaaa",
+    "textSha256": "fa1fe25f1922819e9fd94d48eeef9fddcaeb06be1653b73d618873e572498ea5",
+    "speaker": "HEIDI"
+   },
+   "status": 400,
+   "response": {
+    "error": "Không còn câu này trong sách."
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/speaker",
+   "body": {
+    "stableId": "c1_s0003_fa1fe2",
+    "textSha256": "34534ad5d25c0cc74935800b021272b15ac53406accd068020698cea262c6ec0",
+    "speaker": "HEIDI"
+   },
+   "status": 400,
+   "response": {
+    "error": "Chữ của câu này đã đổi từ lúc máy chấm - tải lại danh sách việc."
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/speaker",
+   "body": {
+    "stableId": "c1_s0003_fa1fe2",
+    "textSha256": "fa1fe25f1922819e9fd94d48eeef9fddcaeb06be1653b73d618873e572498ea5",
+    "speaker": "Tiểu Mai",
+    "newGender": "female",
+    "alias": "Cô gái lạ"
+   },
+   "status": 200,
+   "response": {
+    "lines": 1,
+    "speaker": "Tiểu Mai",
+    "new": true,
+    "alias": true,
+    "requestedAt": 1790955305.009513
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/speaker",
+   "body": {
+    "stableId": "c1_s0003_fa1fe2",
+    "textSha256": "fa1fe25f1922819e9fd94d48eeef9fddcaeb06be1653b73d618873e572498ea5",
+    "speaker": "Tiểu Mai",
+    "newGender": "robot"
+   },
+   "status": 400,
+   "response": {
+    "error": "Giới của người mới không hợp lệ"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/speaker",
+   "body": {
+    "stableId": "c1_s0003_fa1fe2",
+    "textSha256": "fa1fe25f1922819e9fd94d48eeef9fddcaeb06be1653b73d618873e572498ea5",
+    "speaker": "LUCIEN",
+    "bracketRule": true
+   },
+   "status": 200,
+   "response": {
+    "lines": 1,
+    "speaker": "LUCIEN",
+    "new": false,
+    "alias": false,
+    "requestedAt": 1790955305.088765
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/speaker",
+   "body": {
+    "lines": [
+     {
+      "stableId": "c1_s0006_34534a",
+      "textSha256": "34534ad5d25c0cc74935800b021272b15ac53406accd068020698cea262c6ec0"
+     },
+     {
+      "stableId": "c1_s0003_fa1fe2",
+      "textSha256": "fa1fe25f1922819e9fd94d48eeef9fddcaeb06be1653b73d618873e572498ea5"
+     }
+    ],
+    "speaker": "UNNAMED"
+   },
+   "status": 200,
+   "response": {
+    "lines": 2,
+    "speaker": "UNNAMED",
+    "new": false,
+    "alias": false,
+    "requestedAt": 1790955305.1136658
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/pending-changes",
+   "status": 200,
+   "response": {
+    "items": [
+     {
+      "kind": "speaker",
+      "label": "2 câu là lời của UNNAMED",
+      "chapter": "Chương 646 · Trở về (1)",
+      "lines": 0,
+      "section": "speakers",
+      "key": "c1_s0003_fa1fe2",
+      "keys": [
+       "c1_s0003_fa1fe2",
+       "c1_s0006_34534a"
+      ],
+      "requestedAt": 1790955305.1136658
+     }
+    ],
+    "lines": 0,
+    "chapters": [],
+    "seconds": 0.0
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/edits",
+   "status": 200,
+   "response": {
+    "applied": 0,
+    "waiting": 0,
+    "wishes": 1
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/speaker",
+   "body": {
+    "withdraw": true,
+    "lines": [
+     {
+      "stableId": "c1_s0003_fa1fe2",
+      "textSha256": "fa1fe25f1922819e9fd94d48eeef9fddcaeb06be1653b73d618873e572498ea5"
+     },
+     {
+      "stableId": "c1_s0006_34534a",
+      "textSha256": "34534ad5d25c0cc74935800b021272b15ac53406accd068020698cea262c6ec0"
+     }
+    ],
+    "requestedAt": "$requestedAt#9"
+   },
+   "status": 200,
+   "response": {
+    "undone": 2,
+    "restored": false
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/pending-changes",
+   "status": 200,
+   "response": {
+    "items": [
+     {
+      "kind": "speaker",
+      "label": "“Đi thôi.” là lời của Lucien",
+      "chapter": "Chương 646 · Trở về (1)",
+      "lines": 0,
+      "section": "speakers",
+      "key": "c1_s0003_fa1fe2",
+      "requestedAt": 1790955305.088765
+     }
+    ],
+    "lines": 0,
+    "chapters": [],
+    "seconds": 0.0
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/speaker",
+   "body": {
+    "withdraw": true,
+    "lines": [
+     {
+      "stableId": "c1_s0003_fa1fe2",
+      "textSha256": "fa1fe25f1922819e9fd94d48eeef9fddcaeb06be1653b73d618873e572498ea5"
+     }
+    ],
+    "requestedAt": "$requestedAt#8"
+   },
+   "status": 200,
+   "response": {
+    "undone": 1,
+    "restored": false
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/pending-changes",
+   "status": 200,
+   "response": {
+    "items": [],
+    "lines": 0,
+    "chapters": [],
+    "seconds": 0.0
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/speaker",
+   "body": {
+    "withdraw": true,
+    "lines": [
+     {
+      "stableId": "c1_s0003_fa1fe2",
+      "textSha256": "fa1fe25f1922819e9fd94d48eeef9fddcaeb06be1653b73d618873e572498ea5"
+     }
+    ],
+    "requestedAt": "$requestedAt#6"
+   },
+   "status": 409,
+   "response": {
+    "error": "Quyết định này đã được thay bằng một lựa chọn sau - không còn gì để hoàn tác."
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/pending-changes",
+   "status": 200,
+   "response": {
+    "items": [],
+    "lines": 0,
+    "chapters": [],
+    "seconds": 0.0
+   }
+  },
+  {
+   "method": "DELETE",
+   "path": "/edits",
+   "status": 200,
+   "response": {
+    "applied": 0,
+    "waiting": 0
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/pending-changes",
+   "status": 200,
+   "response": {
+    "items": [],
+    "lines": 0,
+    "chapters": [],
+    "seconds": 0.0
+   }
+  }
+ ]
+}

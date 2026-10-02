@@ -294,17 +294,17 @@ function offerFold(client: QueryClient, id: string, edits: number) {
     void client.invalidateQueries({ queryKey: ["listen"] });
   };
   toast(`${edits} thay đổi trong file - áp vào dự án?`, {
-    description: "Tên sách, bìa, tên nhân vật, tên chương, nhạc nền mà người nghe đã sửa. Chưa áp gì cho tới khi bạn đồng ý.",
+    description: "Tên sách, bìa, tên nhân vật, tên chương, nhạc nền người nghe đã sửa, và những việc họ ghi cho Studio (giọng, giới tính, gộp người, cách đọc, thu lại). Chưa áp gì cho tới khi bạn đồng ý.",
     duration: 30000,
     action: {
       label: "Áp vào dự án",
       onClick: () =>
-        void api<{ applied: number; skipped: number }>(`/api/books/${id}/edits/fold`, { method: "POST", body: {} })
+        void api<{ applied: number; skipped: number; requests?: number }>(`/api/books/${id}/edits/fold`, { method: "POST", body: {} })
           .then((report) => {
             refresh();
-            toast.success(`Đã áp ${report.applied} thay đổi vào dự án`, {
-              description: report.skipped ? `${report.skipped} thay đổi không còn chỗ trong dự án nên bỏ qua.` : undefined,
-            });
+            const asked = report.requests ? `${report.requests} việc đã vào danh sách chờ áp dụng của dự án. ` : "";
+            const lost = report.skipped ? `${report.skipped} thay đổi không còn chỗ trong dự án nên bỏ qua.` : "";
+            toast.success(`Đã áp ${report.applied} thay đổi vào dự án`, { description: `${asked}${lost}`.trim() || undefined });
           })
           .catch((error: Error) => toast.error("Chưa áp được thay đổi", { description: error.message })),
     },

@@ -1,7 +1,8 @@
 {
  "volatile": [
   "color",
-  "version"
+  "version",
+  "requestedAt"
  ],
  "steps": [
   {
@@ -181,7 +182,8 @@
    "status": 200,
    "response": {
     "applied": 1,
-    "waiting": 0
+    "waiting": 0,
+    "wishes": 0
    }
   }
  ]

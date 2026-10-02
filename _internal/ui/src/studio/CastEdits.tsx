@@ -6,7 +6,7 @@ import type { CastMember } from "@/listen/model";
 import { formatNumber } from "@/shared/format";
 import { Button, Dialog, Segmented } from "@/shared/ui";
 import { api } from "./api";
-import { refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied } from "./decisions";
+import { refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied, WAITING_STUDIO } from "./decisions";
 
 // Tab Nhân vật: "Đổi tên" và "Đổi giới tính" của một người.
 // - Đổi tên chỉ là cái tên trên màn hình (POST /characters/rename -> names.json): không đổi giọng hay audio, có hiệu lực ngay.
@@ -103,7 +103,15 @@ function shownGender(person: CastMember | null): Gender | null {
   return label === "Nam" ? "male" : label === "Nữ" ? "female" : null;
 }
 
-export function GenderDialog({ bookId, person, onClose }: { bookId: string; person: CastMember | null; onClose: () => void }) {
+/** `waiting`: cuốn không có xưởng (file .abook) - chỉ ghi ý muốn chờ Studio, câu nói và việc làm lại ở trên không đúng nữa.
+ *  `onSaved`: làm mới thêm các màn của trang nghe (số thay đổi chưa lưu). */
+export function GenderDialog({ bookId, person, onClose, waiting = false, onSaved }: {
+  bookId: string;
+  person: CastMember | null;
+  onClose: () => void;
+  waiting?: boolean;
+  onSaved?: () => void;
+}) {
   const client = useQueryClient();
   const when = useWhenApplied(bookId);
   const current = shownGender(person);
@@ -111,7 +119,7 @@ export function GenderDialog({ bookId, person, onClose }: { bookId: string; pers
   const [busy, setBusy] = useState(false);
   useEffect(() => setChoice(shownGender(person)), [person]);
   const name = person ? cleanName(person.displayName) : "";
-  const recorded = person?.recorded ?? 0;
+  const recorded = waiting ? 0 : (person?.recorded ?? 0);
   const save = async () => {
     if (!person || !choice) return;
     setBusy(true);
@@ -121,9 +129,12 @@ export function GenderDialog({ bookId, person, onClose }: { bookId: string; pers
         body: { character: person.name, gender: choice },
       });
       refreshAfterDecision(client, bookId);
+      onSaved?.();
       const label = choice === "female" ? "nữ" : "nam";
       toast.success(`Đã ghi: ${name} là nhân vật ${label}`, {
-        description: `${recorded ? "Nếu giọng đang đọc chưa hợp giới này, các câu đã thu của người ấy sẽ đọc lại bằng giọng mới. " : ""}${when}`,
+        description: waiting
+          ? WAITING_STUDIO
+          : `${recorded ? "Nếu giọng đang đọc chưa hợp giới này, các câu đã thu của người ấy sẽ đọc lại bằng giọng mới. " : ""}${when}`,
         action: undoAction(client, bookId, "voice", [{ character: person.name, requestedAt, keep: false }], `${name} trở lại như trước khi đổi giới tính.`),
         duration: UNDO_MS,
       });
@@ -143,6 +154,7 @@ export function GenderDialog({ bookId, person, onClose }: { bookId: string; pers
       description={current ? `Hiện đang là nhân vật ${current === "female" ? "nữ" : "nam"}.` : "Máy chưa xác định được giới của người này."}
     >
       <Segmented<Gender> value={(choice ?? "") as Gender} onChange={setChoice} options={GENDERS} label="Giới tính" />
+      {waiting && <p className="mt-3 text-sm text-pretty">Giọng đọc của {name} chưa đổi ngay - Studio sẽ làm khi bạn mở file này ở máy có Studio.</p>}
       {recorded > 0 && (
         <p className="mt-3 text-sm text-pretty">
           {name} đã có {formatNumber(recorded)} câu được thu. Khi bấm “Áp dụng thay đổi”, nếu giọng đang đọc không hợp giới mới,

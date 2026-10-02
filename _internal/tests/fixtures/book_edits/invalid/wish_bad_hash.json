@@ -1,0 +1,12 @@
+{
+ "format": "abook-edits",
+ "version": 1,
+ "wishes": {
+  "retakes": {
+   "c1_s0002_c58b67": {
+    "requested_at": 1.5,
+    "text_sha256": "abc"
+   }
+  }
+ }
+}

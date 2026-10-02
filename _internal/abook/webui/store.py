@@ -510,6 +510,44 @@ EMOTIONS = {"neutral": "Bình thường", "happy": "Vui", "sad": "Buồn", "angr
 LINE_KINDS = {"narration": "lời kể", "dialogue": "lời thoại", "thought": "nội tâm"}
 
 
+def quote_line(text: str) -> str:
+    """Một câu trích trong hộp thay đổi: cắt ở 70 ký tự. Câu thoại đã có ngoặc của sách ("“Cái… cái này là gì?”") thì không
+    bọc thêm một lớp nữa. Dùng chung cho hộp "Áp dụng" của dự án và danh sách ý muốn chờ của sách không có xưởng."""
+    text = " ".join(str(text or "").split())
+    if text[:1] in QUOTE_OPENERS:
+        return f"{text[:70]}…{QUOTE_OPENERS[text[0]]}" if len(text) > 70 else text
+    return f"“{text[:70]}…”" if len(text) > 70 else f"“{text}”"
+
+
+def label_pronunciation(surface: str, spoken_form: Any) -> str:
+    return f"“{surface}” đọc là “{spoken_form}”"
+
+
+def label_speaker(text: str, who: str, count: int) -> str:
+    """"“Đi thôi.” là lời của Lucien", hay (cả nhóm câu của một lần bấm) "12 câu là lời của Lucien"."""
+    return f"{quote_line(text)} là lời của {who}" if count == 1 else f"{count} câu là lời của {who}"
+
+
+def label_line(text: str, entry: dict[str, Any]) -> str:
+    what = []
+    if entry.get("kind"):
+        what.append(f"đọc là {LINE_KINDS.get(str(entry['kind']), str(entry['kind']))}")
+    if entry.get("emotion"):
+        what.append(f"cảm xúc {EMOTIONS.get(str(entry['emotion']), str(entry['emotion'])).lower()}")
+    if isinstance(entry.get("spoken"), str):
+        what.append(f"chữ đem đọc “{entry['spoken'][:50]}”" if entry["spoken"] else "đọc lại theo chữ sách")
+    return f"{quote_line(text)}: {', '.join(what) or 'cách đọc mới'}"
+
+
+def label_voice(name: str, entry: dict[str, Any]) -> str:
+    change = entry.get("preset") or {"male": "giọng nam", "female": "giọng nữ"}.get(str(entry.get("gender")), "giọng khác")
+    return f"Giọng của {name}: {change}"
+
+
+def label_retake(text: str, count: int) -> str:
+    return f"Thu lại {quote_line(text)}" if count == 1 else f"Thu lại cả chương ({count} câu)"
+
+
 def pending_details(project_root: Path, since: float) -> dict[str, Any]:
     """Nút "Áp dụng N thay đổi" mở hộp xem trước (soát UX a6 01-10: bấm là chạy ngay, không nói sẽ thu lại gì, hết bao lâu):
     từng thay đổi nói bằng lời, số câu sẽ thu lại, ở những chương nào, và thời gian ước theo TỐC ĐỘ THẬT của chính cuốn này
@@ -536,12 +574,7 @@ def pending_details(project_root: Path, since: float) -> dict[str, Any]:
     def same(left: Any, right: Any) -> bool:
         return " ".join(str(left or "").casefold().split()) == " ".join(str(right or "").casefold().split())
 
-    def quote(text: str) -> str:
-        # Câu thoại đã có ngoặc của sách ("“Cái… cái này là gì?”") thì không bọc thêm một lớp nữa.
-        text = " ".join(str(text or "").split())
-        if text[:1] in QUOTE_OPENERS:
-            return f"{text[:70]}…{QUOTE_OPENERS[text[0]]}" if len(text) > 70 else text
-        return f"“{text[:70]}…”" if len(text) > 70 else f"“{text}”"
+    quote = quote_line
 
     def handle(section: str, key: str, entry: dict[str, Any]) -> dict[str, Any]:
         # Đủ để bỏ ĐÚNG yêu cầu này khỏi hộp (POST …/pending-changes/withdraw): lần bấm sau đã thay thì không bỏ nhầm.
@@ -580,7 +613,7 @@ def pending_details(project_root: Path, since: float) -> dict[str, Any]:
             surface = str(entry.get("surface") or key)
             pattern = re.compile(rf"(?<![\w]){re.escape(surface)}(?![\w])", re.IGNORECASE)
             ids = [str(row["stable_id"]) for row in recorded if pattern.search(str(row["text"] or ""))]
-            items.append({"kind": "pronunciation", "label": f"“{surface}” đọc là “{entry.get('spoken_form', '')}”",
+            items.append({"kind": "pronunciation", "label": label_pronunciation(surface, entry.get("spoken_form", "")),
                           "lines": hit(ids), **handle("pronunciations", key, entry)})
         speaker_clicks: dict[float, list[str]] = {}
         for stable_id, entry in fresh["speakers"].items():
@@ -592,13 +625,13 @@ def pending_details(project_root: Path, since: float) -> dict[str, Any]:
             entry = fresh["speakers"][stable_ids[0]]
             row = by_id[stable_ids[0]]
             if len(stable_ids) == 1:
-                items.append({"kind": "speaker", "label": f"{quote(row['text'])} là lời của {who(entry.get('speaker'))}",
+                items.append({"kind": "speaker", "label": label_speaker(row["text"], who(entry.get("speaker")), 1),
                               "chapter": titles.get(int(row["chapter_id"]), ""), "lines": hit(stable_ids),
                               **handle("speakers", stable_ids[0], entry)})
                 continue
             # Một lần bấm cho nhiều câu (nhóm vai phụ, "Gộp vào…", Shift-chọn): một mục, bỏ thì bỏ cả nhóm.
             places = sorted({int(by_id[stable_id]["chapter_id"]) for stable_id in stable_ids})
-            items.append({"kind": "speaker", "label": f"{len(stable_ids)} câu là lời của {who(entry.get('speaker'))}",
+            items.append({"kind": "speaker", "label": label_speaker("", who(entry.get("speaker")), len(stable_ids)),
                           "chapter": titles.get(places[0], "") + (f" và {len(places) - 1} chương khác" if len(places) > 1 else ""),
                           "lines": hit(stable_ids), "section": "speakers", "key": stable_ids[0], "keys": stable_ids,
                           "requestedAt": at})
@@ -606,22 +639,14 @@ def pending_details(project_root: Path, since: float) -> dict[str, Any]:
             row = by_id.get(stable_id)
             if row is None:
                 continue
-            what = []
-            if entry.get("kind"):
-                what.append(f"đọc là {LINE_KINDS.get(str(entry['kind']), str(entry['kind']))}")
-            if entry.get("emotion"):
-                what.append(f"cảm xúc {EMOTIONS.get(str(entry['emotion']), str(entry['emotion'])).lower()}")
-            if isinstance(entry.get("spoken"), str):
-                what.append(f"chữ đem đọc “{entry['spoken'][:50]}”" if entry["spoken"] else "đọc lại theo chữ sách")
-            items.append({"kind": "line", "label": f"{quote(row['text'])}: {', '.join(what) or 'cách đọc mới'}",
+            items.append({"kind": "line", "label": label_line(row["text"], entry),
                           "chapter": titles.get(int(row["chapter_id"]), ""), "lines": hit([stable_id]),
                           **handle("lines", stable_id, entry)})
         for key, entry in fresh["voices"].items():
             ids = [str(row["stable_id"]) for row in recorded if character_key(str(row["speaker"] or "")) == key]
             # Khoá giọng là tên đã hạ chữ thường - lấy lại cách viết trong sách từ một câu của người ấy.
             name = next((who(row["speaker"]) for row in rows if character_key(str(row["speaker"] or "")) == key), who(key))
-            change = entry.get("preset") or {"male": "giọng nam", "female": "giọng nữ"}.get(str(entry.get("gender")), "giọng khác")
-            items.append({"kind": "voice", "label": f"Giọng của {name}: {change}", "lines": hit(ids),
+            items.append({"kind": "voice", "label": label_voice(name, entry), "lines": hit(ids),
                           **handle("voices", key, entry)})
         clicks: dict[float, list[str]] = {}
         for stable_id, entry in fresh["retakes"].items():
@@ -633,11 +658,11 @@ def pending_details(project_root: Path, since: float) -> dict[str, Any]:
             row = by_id[known[0]]
             chapter = titles.get(int(row["chapter_id"]), "")
             if len(stable_ids) == 1:
-                items.append({"kind": "retake", "label": f"Thu lại {quote(row['text'])}", "chapter": chapter,
+                items.append({"kind": "retake", "label": label_retake(row["text"], 1), "chapter": chapter,
                               "lines": hit(known), **handle("retakes", known[0], fresh["retakes"][known[0]])})
             else:
                 # Một lần bấm "Thu lại cả chương": một mục, bỏ thì bỏ cả nhóm (`keys`).
-                items.append({"kind": "retake", "label": f"Thu lại cả chương ({len(stable_ids)} câu)", "chapter": chapter,
+                items.append({"kind": "retake", "label": label_retake("", len(stable_ids)), "chapter": chapter,
                               "lines": hit(known), "section": "retakes", "key": stable_ids[0], "keys": stable_ids,
                               "requestedAt": at})
         # Tốc độ thật: các chương đã xong của chính cuốn này (bắt đầu -> xong, chia số câu).

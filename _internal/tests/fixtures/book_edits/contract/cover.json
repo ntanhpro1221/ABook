@@ -1,7 +1,8 @@
 {
  "volatile": [
   "color",
-  "version"
+  "version",
+  "requestedAt"
  ],
  "steps": [
   {
@@ -16,7 +17,7 @@
      "color": "#9b562f",
      "width": 96,
      "height": 128,
-     "version": 1790950256
+     "version": 1790955303
     }
    }
   },
@@ -45,7 +46,8 @@
    "status": 200,
    "response": {
     "applied": 1,
-    "waiting": 0
+    "waiting": 0,
+    "wishes": 0
    }
   }
  ]

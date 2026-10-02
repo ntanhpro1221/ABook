@@ -185,6 +185,8 @@ export interface LocalBook {
   capabilities?: Capabilities;
   /** Số thay đổi người nghe đã làm trên cuốn nhập từ file (lớp sửa, BookEdits.kt). */
   edits?: number;
+  /** Trong số `edits`: ý muốn chờ Studio (BookWishes.kt) - chưa áp vào audio. */
+  wishes?: number;
 }
 
 export interface DownloadEvent {

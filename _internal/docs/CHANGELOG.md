@@ -19,6 +19,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Điện thoại và thiết bị
 
+- **Ghi ý muốn cho Studio ngay trên sách nhập từ file, không cần Studio**: trong tab "Nhân vật" của một cuốn không có
+  xưởng, đổi giới tính hay gộp hai tên thành một người nay ghi lại được - giọng đọc và chữ truyện chưa đổi gì, chỉ có dấu
+  "Đang chờ Studio" cạnh người ấy. "Tuỳ chọn khác" có thêm "Việc đang chờ Studio (N)" liệt kê từng việc, bỏ được từng việc
+  một. "Lưu" và "Lưu thành…" mang các ý muốn đi cùng file; mở lại file ở máy khác thì hợp với những gì máy ấy đã ghi (chỗ hai
+  bên khác nhau thì theo máy đang mở). Máy của người làm sách mở file sẽ hỏi có áp vào dự án không, và đồng ý thì các ý muốn
+  thành những thay đổi thật chờ "Áp dụng thay đổi" - audio chỉ đổi khi người làm sách áp. Nút bấm trên từng câu truyện
+  (cách đọc tên, người nói, thu lại câu) chưa có; đường ghi phía sau đã sẵn.
 - **Sửa sách đã nhập ngay trên trang nghe, cả máy tính lẫn điện thoại, không cần Studio**: trong "Tuỳ chọn khác" của một
   cuốn nhập từ file `.abook`, đổi được tên sách, bìa, nhạc nền (bật/tắt, to nhỏ, im lặng một đoạn); trong danh sách chương
   đổi được tên chương, trong "Nhân vật" đổi được tên hiển thị. Đổi xong là thấy ngay ở thư viện, thông báo, widget, màn

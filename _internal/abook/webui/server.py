@@ -27,7 +27,7 @@ from typing import Any, Callable, Protocol
 from urllib.parse import parse_qs, quote, unquote, urlsplit
 
 from .. import aliases, bracket_rule, continuation, listener_overrides
-from . import (actions, book_edits, bookfile, cover_search, covers, humanize, listen_view, music_catalog, music_plan,
+from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, humanize, listen_view, music_catalog, music_plan,
                music_select, packages, projectfile, reading_preview, remote_config, shared_readings, store, volumes)
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, clean_book_templates, legacy_ids
@@ -1624,7 +1624,11 @@ class Handler(BaseHTTPRequestHandler):
 
     def get_pending_changes(self, _query: dict[str, list[str]], value: str) -> None:
         # Hộp xem trước của nút "Áp dụng N thay đổi": từng thay đổi, số câu / chương thu lại, thời gian ước (store.pending_details).
-        project = self.app._book(value)
+        # Cuốn không có xưởng: danh sách ý muốn đang chờ Studio trong lớp sửa (book_wishes.pending_details).
+        project = self.app._editable(value)
+        if packages.is_package(project):
+            self._send_json(HTTPStatus.OK, book_wishes.pending_details(project, book_edits.load(project).get("wishes")))
+            return
         with closing(store.connect(project)) as connection:
             row = connection.execute("SELECT updated_at FROM book WHERE id=1").fetchone()
         since = store.changes_since(project, float(row["updated_at"] or 0) if row is not None else 0.0)
@@ -1635,8 +1639,9 @@ class Handler(BaseHTTPRequestHandler):
         # đúng thẻ / đúng câu ở ba tab khác nhau). Chỉ khi sách KHÔNG chạy: đang chạy thì dây chuyền có thể đang áp chính
         # yêu cầu ấy ở ranh giới chương. Yêu cầu từng thay một yêu cầu cũ thì yêu cầu cũ trở lại (withdraw_requests).
         self.app._mutating()
-        path = self.app._book(value)
-        if self.app.runner.running(path) or self.app.jobs.starting(path):
+        path = self.app._editable(value)
+        package = packages.is_package(path)
+        if not package and (self.app.runner.running(path) or self.app.jobs.starting(path)):
             raise ApiError(HTTPStatus.CONFLICT, "Sách đang chạy - máy có thể đang áp chính thay đổi này. Tạm dừng hẳn rồi bỏ.")
         body = self._body()
         section, key = str(body.get("section") or ""), str(body.get("key") or "")
@@ -1648,10 +1653,15 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu thay đổi cần bỏ")
         group = ([str(item) for item in body.get("keys") or [] if isinstance(item, str)][:5000]
                  if section in store.BY_CLICK else [])
-        mine = listener_overrides.requests_made_at(listener_overrides.read_overrides(path), section, group or [key], requested_at)
+        if package:
+            mine = book_wishes.made_at(path, section, group or [key], requested_at)
+        else:
+            mine = listener_overrides.requests_made_at(listener_overrides.read_overrides(path), section, group or [key], requested_at)
         if not mine:
             raise ApiError(HTTPStatus.CONFLICT, "Thay đổi này vừa được thay bằng một lựa chọn sau - mở lại hộp để xem.")
-        if section == "retakes":
+        if package:
+            book_wishes.withdraw(path, section, list(mine), requested_at)  # cả bí danh của lần "Gộp vào…" ấy
+        elif section == "retakes":
             # "Thu lại cả chương" là một nhóm: bỏ cả nhóm - chỉ những câu còn đúng lần bấm ấy.
             for stable_id in mine:
                 listener_overrides.cancel_retake(path, stable_id)
@@ -1668,12 +1678,26 @@ class Handler(BaseHTTPRequestHandler):
         # `speakers`, một lần ghi, một mốc) + bí danh cấp TÊN (aliases.json) để phần sau của cuốn tự hiểu. Bỏ trong hộp
         # "Áp dụng" là bỏ cả hai.
         self.app._mutating()
-        path = self.app._book(value)
+        path = self.app._editable(value)
         body = self._body()
         source = str(body.get("from", "")).strip()[:200]
         target = str(body.get("into", "")).strip()[:200]
         if not source or not target or aliases.key(source) == aliases.key(target):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Chọn hai người khác nhau")
+        if packages.is_package(path):
+            # Cuốn không có xưởng: mọi câu nói của người này thành ý muốn "là lời của người kia" + bí danh, chờ Studio.
+            index, cast = book_wishes.Lines(path), book_wishes.people(path)
+            found = book_wishes.speaker_lines(index, cast, source)
+            if not found:
+                raise ApiError(HTTPStatus.BAD_REQUEST, "Người này không còn câu nói nào để gộp")
+            problem = book_wishes.speaker_problem(index, cast, found[0][0], found[0][1], target)
+            if problem is not None:
+                raise ApiError(HTTPStatus.BAD_REQUEST, SPEAKER_PROBLEMS.get(problem, "Không gộp được vào người này"))
+            now = time.time()
+            book_wishes.request_speakers(path, found, target, now=now)
+            book_wishes.request_alias(path, source, target, now=now)
+            self._send_json(HTTPStatus.OK, {"lines": len(found), "requestedAt": now})
+            return
         with closing(store.connect(path)) as connection:
             rows = connection.execute(
                 "SELECT stable_id, text_sha256, speaker FROM segments WHERE kind IN ('dialogue', 'thought')"
@@ -1718,7 +1742,15 @@ class Handler(BaseHTTPRequestHandler):
         # không ổn thì phải bấm "Cần thu lại" từng câu). Cùng đường với "Cần thu lại" một câu (overrides.json `retakes`),
         # cùng một mốc thời gian để hộp "Áp dụng" coi là một thay đổi; dây chuyền áp ở ranh giới như mọi yêu cầu.
         self.app._mutating()
-        path = self.app._book(value)
+        path = self.app._editable(value)
+        if packages.is_package(path):
+            found = book_wishes.chapter_lines(book_wishes.Lines(path), int(chapter))
+            if not found:
+                raise ApiError(HTTPStatus.BAD_REQUEST, "Chương này chưa có câu nào đã thu để thu lại.")
+            now = time.time()
+            book_wishes.request_retakes(path, found, now=now)
+            self._send_json(HTTPStatus.OK, {"lines": len(found), "requestedAt": now})
+            return
         with closing(store.connect(path)) as connection:
             rows = connection.execute(
                 "SELECT stable_id, text_sha256 FROM segments WHERE chapter_id=? AND wav_path IS NOT NULL AND wav_path != ''"
@@ -1791,7 +1823,9 @@ class Handler(BaseHTTPRequestHandler):
         # `.abook` vừa mở ra đúng dự án của máy này, chờ người dùng đồng ý áp (book_edits.fold).
         path = self.app._editable(value)
         if packages.is_package(path):
-            self._send_json(HTTPStatus.OK, {"applied": book_edits.count(book_edits.load(path)), "waiting": 0})
+            edits = book_edits.load(path)
+            self._send_json(HTTPStatus.OK, {"applied": book_edits.count_applied(edits), "waiting": 0,
+                                            "wishes": book_edits.count_wishes(edits)})
         else:
             self._send_json(HTTPStatus.OK, {"applied": 0, "waiting": book_edits.count(book_edits.incoming(path))})
 
@@ -2038,9 +2072,13 @@ class Handler(BaseHTTPRequestHandler):
         # Sửa cách đọc một tên. Giao diện KHÔNG ghi SQLite của sách: nó ghi mong muốn vào overrides.json, dây chuyền áp
         # ở ranh giới chương kế tiếp (hoặc lần chạy tới) và thu lại mọi câu đã thu có tên ấy - listener_overrides.py.
         self.app._mutating()
-        path = self.app._book(value)
+        path = self.app._editable(value)
+        package = packages.is_package(path)  # không có xưởng: ý muốn vào lớp sửa (book_wishes), chờ Studio
         body = self._body()
         surface = str(body.get("surface", "")).strip()[:80]
+        if body.get("withdraw") and package:
+            self._withdraw(path, "pronunciations", [listener_overrides.surface_key(surface)] if surface else [], body)
+            return
         if body.get("withdraw"):
             # Cách đọc chỉ sửa được trên thẻ, mà thẻ biến mất khi cách đọc đã vào sách: đã áp thì hoàn tác bằng cách xin
             # lại cách đọc cũ (`previous`, cách máy đọc lúc bấm) - câu có từ ấy được đọc lại như trước.
@@ -2058,6 +2096,10 @@ class Handler(BaseHTTPRequestHandler):
             return
         spoken = self._checked_reading(body, surface)
         now = time.time()
+        if package:
+            book_wishes.request_pronunciation(path, surface, spoken, now=now)
+            self._send_json(HTTPStatus.OK, {"surface": surface, "spokenForm": spoken, "requestedAt": now})
+            return
         listener_overrides.request_pronunciation(path, surface, spoken, now=now)
         if body.get("everywhere") is True:
             # "Dùng cho mọi sách": cùng cách đọc vào từ điển chung - sách mới có từ này tự nhận nó.
@@ -2076,9 +2118,16 @@ class Handler(BaseHTTPRequestHandler):
             requested_at = 0.0
         if not keys or requested_at <= 0:
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu quyết định cần hoàn tác")
-        mine = listener_overrides.requests_made_at(listener_overrides.read_overrides(path), section, keys, requested_at)
+        package = packages.is_package(path)
+        mine = (book_wishes.made_at(path, section, keys, requested_at) if package
+                else listener_overrides.requests_made_at(listener_overrides.read_overrides(path), section, keys, requested_at))
         if not mine:
             raise ApiError(HTTPStatus.CONFLICT, "Quyết định này đã được thay bằng một lựa chọn sau - không còn gì để hoàn tác.")
+        if package:
+            # Ý muốn chờ Studio chưa vào sách bao giờ: rút là xong, ý muốn nó thay (`replaced`) trở lại.
+            removed = book_wishes.withdraw(path, section, list(mine), requested_at)
+            self._send_json(HTTPStatus.OK, {"undone": len(removed), "restored": False})
+            return
         if not body.get("keep") and store.already_applied(path, section, mine):
             if restore is None:
                 raise ApiError(HTTPStatus.CONFLICT, WITHDRAW_APPLIED[section])
@@ -2093,7 +2142,8 @@ class Handler(BaseHTTPRequestHandler):
         # SQLite (chỉ đọc) ngay bây giờ để từ chối tại chỗ những gì dây chuyền chắc chắn sẽ từ chối: câu đã đổi chữ, câu
         # không phải lời nói, người chưa có giọng.
         self.app._mutating()
-        path = self.app._book(value)
+        path = self.app._editable(value)
+        package = packages.is_package(path)
         body = self._body()
         speaker = str(body.get("speaker", "")).strip()[:200]
         # Một câu ("Ai nói câu này") hay cả nhóm câu của một vai phụ; cả nhóm được nhận hoặc cả nhóm bị từ chối.
@@ -2109,11 +2159,21 @@ class Handler(BaseHTTPRequestHandler):
         new_gender = str(body.get("newGender", "")).strip()
         if new_gender and new_gender not in listener_overrides.NEW_CHARACTER_GENDERS:
             raise ApiError(HTTPStatus.BAD_REQUEST, "Giới của người mới không hợp lệ")
+        if package:
+            index, cast = book_wishes.Lines(path), book_wishes.people(path)
         for stable_id, text_sha256 in lines:
-            problem = store.speaker_request_problem(path, stable_id, text_sha256, speaker, new_gender)
+            problem = (book_wishes.speaker_problem(index, cast, stable_id, text_sha256, speaker, new_gender) if package
+                       else store.speaker_request_problem(path, stable_id, text_sha256, speaker, new_gender))
             if problem is not None:
                 raise ApiError(HTTPStatus.BAD_REQUEST, SPEAKER_PROBLEMS.get(problem, "Không đổi được người nói câu này"))
         now = time.time()
+        if package:
+            book_wishes.request_speakers(path, lines, speaker, now=now, new_gender=new_gender)
+            alias = str(body.get("alias", "") or "").strip()[:200]
+            remembered = bool(alias) and book_wishes.request_alias(path, alias, speaker, now=now)
+            self._send_json(HTTPStatus.OK, {"lines": len(lines), "speaker": speaker, "new": bool(new_gender),
+                                            "alias": remembered, "requestedAt": now})
+            return
         listener_overrides.request_speakers(path, lines, speaker, now=now, new_gender=new_gender)
         # Thẻ "Một người hai tên": ngoài các câu này, ghi luôn cấp TÊN (aliases.py) - phần sau của cuốn tự hiểu.
         alias = str(body.get("alias", "") or "").strip()[:200]
@@ -2136,7 +2196,8 @@ class Handler(BaseHTTPRequestHandler):
         # Như người nói: ghi mong muốn vào overrides.json, dây chuyền áp ở ranh giới chương; từ chối tại chỗ những gì dây
         # chuyền chắc chắn sẽ từ chối.
         self.app._mutating()
-        path = self.app._book(value)
+        path = self.app._editable(value)
+        package = packages.is_package(path)
         body = self._body()
         stable_id = str(body.get("stableId", "")).strip()[:120]
         text_sha256 = str(body.get("textSha256", "")).strip()[:64]
@@ -2149,12 +2210,19 @@ class Handler(BaseHTTPRequestHandler):
         spoken = str(body["spoken"])[:2200] if isinstance(body.get("spoken"), str) else None
         if not stable_id or not text_sha256 or not (kind or emotion or intensity is not None or speaker or spoken is not None):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu câu hoặc thay đổi")
-        problem = store.line_request_problem(path, stable_id, text_sha256, kind=kind, emotion=emotion,
-                                             intensity=intensity, speaker=speaker, spoken=spoken)
+        if package:
+            if intensity is not None and not 0 <= intensity <= book_wishes.INTENSITY_MAX:
+                raise ApiError(HTTPStatus.BAD_REQUEST, f"Cường độ phải từ 0 tới {book_wishes.INTENSITY_MAX}")
+            problem = book_wishes.line_problem(book_wishes.Lines(path), book_wishes.people(path), stable_id, text_sha256,
+                                               kind=kind, emotion=emotion, speaker=speaker, spoken=spoken)
+        else:
+            problem = store.line_request_problem(path, stable_id, text_sha256, kind=kind, emotion=emotion,
+                                                 intensity=intensity, speaker=speaker, spoken=spoken)
         if problem is not None:
             raise ApiError(HTTPStatus.BAD_REQUEST, LINE_PROBLEMS.get(problem, "Không đổi được cách đọc câu này"))
-        listener_overrides.request_line(path, stable_id, text_sha256, kind=kind, emotion=emotion, intensity=intensity,
-                                        speaker=speaker, spoken=spoken, now=time.time())
+        write = book_wishes.request_line if package else listener_overrides.request_line
+        write(path, stable_id, text_sha256, kind=kind, emotion=emotion, intensity=intensity,
+              speaker=speaker, spoken=spoken, now=time.time())
         self._send_json(HTTPStatus.OK, {"stableId": stable_id, "kind": kind, "emotion": emotion, "intensity": intensity,
                                         "spoken": spoken})
 
@@ -2162,7 +2230,8 @@ class Handler(BaseHTTPRequestHandler):
         # Giọng / giới của MỘT nhân vật (thẻ "Nam hay nữ", "Chung giọng"): như người nói - ghi mong muốn vào overrides.json,
         # dây chuyền áp ở ranh giới chương; hỏi SQLite chỉ đọc bằng đúng phép dây chuyền dùng để từ chối tại chỗ.
         self.app._mutating()
-        path = self.app._book(value)
+        path = self.app._editable(value)
+        package = packages.is_package(path)
         body = self._body()
         character = str(body.get("character", "")).strip()[:200]
         if body.get("withdraw"):
@@ -2173,11 +2242,15 @@ class Handler(BaseHTTPRequestHandler):
         avoid = str(body.get("avoid", "") or "").strip()[:200]
         if not character:
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu nhân vật")
-        problem = store.voice_request_problem(path, character, preset=preset, gender=gender, avoid=avoid)
+        if package and not (preset or gender or avoid):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu giọng hoặc giới tính")
+        problem = (book_wishes.voice_problem(book_wishes.people(path), character, gender=gender) if package
+                   else store.voice_request_problem(path, character, preset=preset, gender=gender, avoid=avoid))
         if problem is not None:
             raise ApiError(HTTPStatus.BAD_REQUEST, VOICE_PROBLEMS.get(problem, "Không đổi được giọng nhân vật này"))
         now = time.time()
-        listener_overrides.request_voice(path, character, preset=preset, gender=gender, avoid=avoid, now=now)
+        write = book_wishes.request_voice if package else listener_overrides.request_voice
+        write(path, character, preset=preset, gender=gender, avoid=avoid, now=now)
         self._send_json(HTTPStatus.OK, {"character": character, "preset": humanize.voice_label(preset), "gender": gender,
                                         "avoid": avoid, "requestedAt": now})
 
@@ -2188,7 +2261,16 @@ class Handler(BaseHTTPRequestHandler):
         if verdict not in (None, "ok", "redo"):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Phán quyết không hợp lệ")
         stable_id = str(body.get("stableId", ""))[:80]
-        project = self.app._book(value)
+        project = self.app._editable(value)
+        if packages.is_package(project):
+            # Cuốn không có xưởng chưa có hàng đợi "Cần nghe lại": chỉ phần "Cần thu lại" - ý muốn chờ Studio.
+            found = book_wishes.Lines(project).get(stable_id)
+            if verdict == "redo" and found is not None and found[1].get("textSha256"):
+                book_wishes.request_retakes(project, [(stable_id, str(found[1]["textSha256"]))], now=time.time())
+            elif verdict != "redo":
+                book_wishes.cancel_retake(project, stable_id)
+            self._send_json(HTTPStatus.OK, {"ok": True})
+            return
         self.app.reviews.set(value, stable_id, verdict, int(body.get("chapterId", 0)))
         # "Cần thu lại" là một yêu cầu cho dây chuyền (overrides.json `retakes`: thu bằng hạt giống mới ở lần chạy tới -
         # sách đã xong: nút "Áp dụng thay đổi"); đổi ý thì bỏ yêu cầu chưa áp.

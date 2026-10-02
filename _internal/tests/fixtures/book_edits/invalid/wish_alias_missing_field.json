@@ -1,0 +1,12 @@
+{
+ "format": "abook-edits",
+ "version": 1,
+ "wishes": {
+  "aliases": [
+   {
+    "alias": "A",
+    "person": "B"
+   }
+  ]
+ }
+}

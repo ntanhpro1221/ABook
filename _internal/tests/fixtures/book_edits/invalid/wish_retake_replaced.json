@@ -1,0 +1,16 @@
+{
+ "format": "abook-edits",
+ "version": 1,
+ "wishes": {
+  "retakes": {
+   "c1_s0002_c58b67": {
+    "requested_at": 1.5,
+    "text_sha256": "c58b6788498e1756635f89b55a9906af2fa37a0d3ffbc49083eb56c5c5c5483c",
+    "replaced": {
+     "requested_at": 1.0,
+     "text_sha256": "c58b6788498e1756635f89b55a9906af2fa37a0d3ffbc49083eb56c5c5c5483c"
+    }
+   }
+  }
+ }
+}
