@@ -41,6 +41,26 @@ EMOTION_TENSION: dict[str, float] = {
     "neutral": 0.0, "happy": -0.4, "excited": 0.1, "tender": -0.6, "surprised": 0.5, "sarcastic": 0.3,
     "angry": 0.75, "afraid": 0.85, "sad": 0.1, "tired": -0.3, "whispering": 0.3,
 }
+# 13 cảm xúc nhạc (Lớp 2 của docs/MUSIC_THEORY.md: GEMS-9 + 4 lớp truyện cần), mỗi cái một cường độ độc lập 0..1 - không
+# ép cộng bằng 1, để cảnh buồn-mà-ấm giữ được cả `sadness` lẫn `tenderness`.
+EMOTION_CLASSES = ("peacefulness", "tenderness", "nostalgia", "sadness", "joy", "playful", "power", "wonder", "tension",
+                   "fear", "anger", "mystery", "moved")
+# Đường nhãn câu: nhãn cảm xúc của câu -> các lớp nó góp vào. Đây chỉ là ĐƯỜNG CƠ SỞ (baseline theo nhãn) cho tới khi đường
+# LLM (đọc cả đoạn, ghi thẳng 13 cường độ) vào; số là giá trị khởi đầu từ MUSIC_THEORY.md, sẽ học (E4, Bradley-Terry).
+LINE_EMOTIONS: dict[str, dict[str, float]] = {
+    "happy": {"joy": 1.0},
+    "excited": {"joy": 0.6, "power": 0.6},
+    "tender": {"tenderness": 1.0},
+    "surprised": {"wonder": 0.5, "tension": 0.4},
+    "sarcastic": {"playful": 0.7},
+    "angry": {"anger": 1.0, "tension": 0.4},
+    "afraid": {"fear": 1.0, "tension": 0.6},
+    "sad": {"sadness": 1.0, "nostalgia": 0.3},
+    "tired": {"sadness": 0.3, "peacefulness": 0.3},
+    "whispering": {"mystery": 0.6, "tension": 0.3},
+    "neutral": {"peacefulness": 0.15},
+}
+EMOTION_SCALE = 0.25           # cường độ lớp = 1 - exp(-phần của đoạn / EMOTION_SCALE); giá trị khởi đầu, sẽ học
 PACE_AROUSAL = {"slow": -0.2, "normal": 0.0, "fast": 0.2}
 VOLUME_AROUSAL = {"soft": -0.15, "normal": 0.0, "loud": 0.15}
 NEUTRAL_WEIGHT = 0.35          # câu trung tính đóng góp ít vào không khí
@@ -66,6 +86,16 @@ def line_tension(segment: dict[str, Any]) -> float:
     except (TypeError, ValueError):
         intensity = 0
     return EMOTION_TENSION.get(str(segment.get("emotion") or "neutral"), 0.0) * (0.4 + 0.2 * intensity)
+
+
+def line_emotions(segment: dict[str, Any]) -> dict[str, float]:
+    """Phần góp của một câu vào từng lớp trong 13 cảm xúc (chưa nhân thời lượng): ánh xạ nhãn x (0,4 + 0,2 x cường độ)."""
+    try:
+        intensity = max(0, min(3, int(segment.get("intensity") or 0)))
+    except (TypeError, ValueError):
+        intensity = 0
+    scale = 0.4 + 0.2 * intensity
+    return {name: share * scale for name, share in LINE_EMOTIONS.get(str(segment.get("emotion") or "neutral"), {}).items()}
 
 
 def line_point(segment: dict[str, Any]) -> tuple[float, float, float, bool]:
@@ -104,28 +134,61 @@ def hard_break(segment: dict[str, Any]) -> str | None:
 
 
 class _Accumulator:
-    def __init__(self) -> None:
-        self.valence = self.arousal = self.weight = self.affective = self.seconds = 0.0
+    """Tổng có trọng số (trọng số câu x giây) của các câu trong một đoạn: trung bình và độ lệch chuẩn của V/E/T, và tổng
+    cường độ x giây của 13 cảm xúc. Chỉ giữ TỔNG (và tổng bình phương) nên `merge` đúng như thêm từng câu vào một chỗ."""
 
-    def add(self, valence: float, arousal: float, weight: float, affective: bool, seconds: float) -> None:
+    def __init__(self) -> None:
+        self.valence = self.arousal = self.tension = self.weight = self.affective = self.seconds = 0.0
+        self.valence2 = self.arousal2 = self.tension2 = 0.0
+        self.emotions: dict[str, float] = {}
+
+    def add(self, valence: float, arousal: float, weight: float, affective: bool, seconds: float,
+            tension: float = 0.0, emotions: dict[str, float] | None = None) -> None:
         w = weight * seconds
         self.valence += valence * w
         self.arousal += arousal * w
+        self.tension += tension * w
+        self.valence2 += valence * valence * w
+        self.arousal2 += arousal * arousal * w
+        self.tension2 += tension * tension * w
         self.weight += w
         self.affective += w if affective else 0.0
         self.seconds += seconds
+        for name, share in (emotions or {}).items():
+            self.emotions[name] = self.emotions.get(name, 0.0) + share * seconds
+
+    def add_line(self, segment: dict[str, Any], seconds: float, point: tuple[float, float, float, bool] | None = None) -> None:
+        """Thêm một câu đủ cả V/E/T và 13 cảm xúc (`point` = `line_point(segment)` nếu đã tính)."""
+        self.add(*(point or line_point(segment)), seconds, tension=line_tension(segment), emotions=line_emotions(segment))
 
     def merge(self, other: "_Accumulator") -> None:
-        self.valence += other.valence
-        self.arousal += other.arousal
-        self.weight += other.weight
-        self.affective += other.affective
-        self.seconds += other.seconds
+        for name in ("valence", "arousal", "tension", "valence2", "arousal2", "tension2", "weight", "affective", "seconds"):
+            setattr(self, name, getattr(self, name) + getattr(other, name))
+        for name, total in other.emotions.items():
+            self.emotions[name] = self.emotions.get(name, 0.0) + total
 
     def point(self) -> tuple[float, float]:
         if not self.weight:
             return 0.0, 0.0
         return self.valence / self.weight, self.arousal / self.weight
+
+    def mean_tension(self) -> float:
+        return self.tension / self.weight if self.weight else 0.0
+
+    def sd(self) -> dict[str, float]:
+        """Độ lệch chuẩn có trọng số của các điểm câu trong đoạn, cùng trọng số với trung bình."""
+        out = {}
+        for name, total, squares in (("valence", self.valence, self.valence2), ("arousal", self.arousal, self.arousal2),
+                                     ("tension", self.tension, self.tension2)):
+            mean = total / self.weight if self.weight else 0.0
+            out[name] = math.sqrt(max(0.0, squares / self.weight - mean * mean)) if self.weight else 0.0
+        return out
+
+    def emotion_intensities(self) -> dict[str, float]:
+        """13 cường độ độc lập 0..1: 1 - exp(-phần của đoạn / EMOTION_SCALE). Không chuẩn hoá giữa các lớp."""
+        seconds = self.seconds or 1.0
+        return {name: round(1.0 - math.exp(-(self.emotions.get(name, 0.0) / seconds) / EMOTION_SCALE), 3)
+                for name in EMOTION_CLASSES}
 
 
 def chapter_scenes(script: dict[str, Any]) -> list[dict[str, Any]]:
@@ -178,16 +241,16 @@ def chapter_scenes(script: dict[str, Any]) -> list[dict[str, Any]]:
                 # Cắt ở chỗ không khí BẮT ĐẦU đổi, không ở chỗ phát hiện: các câu từ đó thuộc đoạn mới.
                 tail = _Accumulator()
                 for j in range(pending_shift, index):
-                    tail.add(*points[j], seconds[j])
+                    tail.add_line(segments[j], seconds[j], points[j])
                 head = _Accumulator()
                 for j in range(current["first"], pending_shift):
-                    head.add(*points[j], seconds[j])
+                    head.add_line(segments[j], seconds[j], points[j])
                 current["acc"], current["last"] = head, pending_shift - 1
                 scenes.append(current)
                 current = open_scene(pending_shift, "mood_shift")
                 current["acc"] = tail
                 pending_shift = None
-        current["acc"].add(*points[index], seconds[index])
+        current["acc"].add_line(segments[index], seconds[index], points[index])
         current["last"] = index
     scenes.append(current)
     scenes = _split_long(_merge_short(scenes), segments, seconds)
@@ -215,14 +278,14 @@ def _split_long(scenes: list[dict[str, Any]], segments: list[dict[str, Any]], se
                 piece = {"first": start, "last": index, "reason": scene["reason"] if start == first else "length",
                          "acc": _Accumulator()}
                 for j in range(start, index + 1):
-                    piece["acc"].add(*line_point(segments[j]), seconds[j])
+                    piece["acc"].add_line(segments[j], seconds[j])
                 out.append(piece)
                 start, clock = index + 1, 0.0
         if start <= last:
             piece = {"first": start, "last": last, "reason": scene["reason"] if start == first else "length",
                      "acc": _Accumulator()}
             for j in range(start, last + 1):
-                piece["acc"].add(*line_point(segments[j]), seconds[j])
+                piece["acc"].add_line(segments[j], seconds[j])
             out.append(piece)
     return out
 
@@ -250,11 +313,13 @@ def _merge_short(scenes: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 def _view(scene: dict[str, Any], segments: list[dict[str, Any]], timeline: list[float], seconds: list[float],
           script: dict[str, Any]) -> dict[str, Any]:
+    """Một đoạn cho bên ngoài. `valence`/`arousal`/`tension` là trung bình, `sd` là độ lệch chuẩn của các câu trong đoạn
+    (đoạn càng lẫn lộn càng khoan dung với bài lệch), `emotions` là 13 cường độ độc lập; ở đường nhãn câu chúng suy từ nhãn,
+    đường LLM (đang đo) sẽ ghi thẳng."""
     first, last = scene["first"], scene["last"]
-    valence, arousal = scene["acc"].point()
-    weight = scene["acc"].weight
-    weights = [line_point(segments[i])[2] * seconds[i] for i in range(first, last + 1)]
-    tension = sum(line_tension(segments[i]) * w for i, w in zip(range(first, last + 1), weights)) / (sum(weights) or 1.0)
+    acc = scene["acc"]
+    valence, arousal = acc.point()
+    weight = acc.weight
     return {
         "chapterId": script.get("chapterId"),
         "firstSegment": segments[first].get("id"),
@@ -263,8 +328,10 @@ def _view(scene: dict[str, Any], segments: list[dict[str, Any]], timeline: list[
         "end": round(timeline[last] + seconds[last], 3),
         "valence": round(valence, 3),
         "arousal": round(arousal, 3),
-        "tension": round(tension, 3),
-        "confidence": round(scene["acc"].affective / weight, 3) if weight else 0.0,
+        "tension": round(acc.mean_tension(), 3),
+        "sd": {axis: round(value, 3) for axis, value in acc.sd().items()},
+        "emotions": acc.emotion_intensities(),
+        "confidence": round(acc.affective / weight, 3) if weight else 0.0,
         "reason": scene["reason"],
         "lines": last - first + 1,
     }

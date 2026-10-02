@@ -1,0 +1,203 @@
+# Đáp án KIỂM TRA truyện Hàn 02-10 (luật cố định: vị trí 30%/70% của bộ, bỏ chương trong ±2 của chương gold cũ, >30 KB lấy 25 KB đầu)
+# "Hướng dẫn sinh tồn trong học viện" file 052a = 25 KB đầu của 052.txt ("Chương 53: Trận chiến chinh phạt Glast (2)").
+# Claude gán (A) 02-10, B soát + phân xử 02-10 (gold_kr/B). NGÔI THỨ NHẤT: "tôi" = ED / ED ROSTAILER (m; 135, 181 Glast gọi đủ tên) - cùng tập
+# với 060/062/090/130. AYLA / AYLA TRIST (f, 34 "Ayla Trist", gọi Ed "anh"); GLAST (m; "GIÁO SƯ GLAST" không tính - quy
+# tắc 11); YENNICA / YENNICA FAILOVER (f, chỉ có câu nhớ lại ở 96). GLOCKT (tác giả sách, 24): 2-23 GLOCKT~ (soát B).
+# 2-23: lời kết sách của Glockt (đề từ chương) - parser khoá N -> NARRATOR (quy tắc 7 + 10); 24 dòng trích nguồn khoá D ->
+# NARRATOR; 93 tựa hồ sơ chỉ được nhìn thấy -> NARRATOR. 3, 31, 54, 114, 123, 132, 167: tên sách/phép trong nháy đơn khoá
+# T -> N,T NARRATOR (tiền lệ 060:142).
+# 28 “C-cô… tại sao lại ở đây….” KHÓ (phân xử: ED trước, cả hai vẫn đủ): chữ "cô" là cách Ed gọi Ayla (60 "Cô đến đây làm gì?") nên đọc theo chữ là ED; nhưng
+# câu đứng ngay trước "Cô gái mở cửa và bước vào..." (29) và nói lắp đúng kiểu Ayla cả chương (35 "Đ-đừng", 68 "A-Anh",
+# 102 "G-giáo sư", 105 "C-cứu"), Ed không lắp câu nào -> nhập nhằng thật, cả hai đủ, AYLA trước. 56 “Này.” = Ed gọi Ayla
+# (60 Ed hỏi tiếp). 96 câu Yennica nói hôm trước vọng lại trong đầu Ed (97) -> YENNICA và NARRATOR đủ, ED~ (tiền lệ 130:58).
+# 83 "– Cộp, cộp, cộp", 106, 107, 126: tiếng động -> NARRATOR, UNKNOWN~ (quy tắc 8). 109 "Áaaa!" = Ayla bị Ngục tù thời
+# gian đè (110); 127 "Ực!" = Glast dính vụ nổ (128) - NARRATOR~. 120 "Mug!" = Ed gọi tinh linh dơi lửa. 175 "Hừm…" = Ed
+# cân nhắc (176). Tiếng lòng tức thời của "tôi" -> N,T (quy tắc 4): 38, 47, 88, 139, 156, 159, 165, 170, 171, 174.
+# Host sai (giữ đáp án): 26 đòi angry vì "trực giác gào thét" (ẩn dụ, cảnh là điềm báo -> afraid).
+0 H
+1 N
+2 N NARRATOR,GLOCKT~ neutral 0-1 normal normal u
+3 N,T NARRATOR,GLOCKT~ neutral 0-1 normal normal u
+4 N NARRATOR,GLOCKT~ neutral 0-1 normal normal u
+5 N NARRATOR,GLOCKT~ neutral,sad 0-1 normal normal u
+6 N NARRATOR,GLOCKT~ neutral 0-1 normal normal u
+7 N NARRATOR,GLOCKT~ neutral 0-1 normal normal u
+8 N NARRATOR,GLOCKT~ neutral,sad 0-1 normal normal u
+9 N NARRATOR,GLOCKT~ neutral,sad 0-1 normal normal u
+10 N NARRATOR,GLOCKT~ neutral 0-1 normal normal u
+11 N NARRATOR,GLOCKT~ neutral,sad,tender 0-1 normal normal u
+12 N NARRATOR,GLOCKT~ neutral,sad 0-1 normal normal u
+13 N NARRATOR,GLOCKT~ neutral,sad 0-1 normal normal u
+14 N NARRATOR,GLOCKT~ neutral,sad,tender 0-1 normal normal u
+15 N NARRATOR,GLOCKT~ neutral,sad,tender 0-1 normal normal u
+16 N NARRATOR,GLOCKT~ neutral,sad 0-1 normal normal u
+17 N NARRATOR,GLOCKT~ neutral,sad 0-1 normal normal u
+18 N NARRATOR,GLOCKT~ neutral,sad 0-1 normal normal u
+19 N NARRATOR,GLOCKT~ neutral,sad 0-1 normal normal u
+20 N NARRATOR,GLOCKT~ neutral,sad 0-1 normal normal u
+21 N NARRATOR,GLOCKT~ neutral 0-1 normal normal u
+22 N NARRATOR,GLOCKT~ neutral,tender,sad 0-1 normal normal u
+23 N NARRATOR,GLOCKT~ neutral,tender,sad 0-1 normal normal u
+24 D NARRATOR neutral 0-1 normal normal u
+25 N NARRATOR neutral,afraid 0-1 normal normal u
+26 N NARRATOR neutral,afraid 0-1 normal normal u
+27 N
+28 D ED,ED ROSTAILER,AYLA,AYLA TRIST surprised,afraid 1-2 normal,fast normal,soft m
+29 N
+30 N
+31 N,T NARRATOR neutral 0-1 normal normal u
+32 N
+33 N
+34 N NARRATOR neutral,surprised 0-1 normal normal u
+35 D AYLA,AYLA TRIST afraid,angry,surprised 1-2 normal,fast normal,loud f
+36 N
+37 N NARRATOR neutral,afraid 0-1 normal normal u
+38 N,T NARRATOR,ED,ED ROSTAILER neutral,sarcastic 0-1 normal normal u
+39 N
+40 N
+41 N
+42 N NARRATOR neutral,sarcastic 0-1 normal normal u
+43 N
+44 N
+45 N
+46 N
+47 N,T NARRATOR,ED,ED ROSTAILER neutral 0-1 normal normal u
+48 N
+49 N
+50 N
+51 N
+52 N
+53 N
+54 N,T NARRATOR neutral 0-1 normal normal u
+55 N
+56 D ED,ED ROSTAILER neutral 0-1 normal normal m
+57 N
+58 N
+59 N
+60 D ED,ED ROSTAILER neutral 0-1 normal normal m
+61 D AYLA,AYLA TRIST afraid,angry,neutral 0-2 normal normal,soft f
+62 N NARRATOR neutral,afraid 0-1 normal normal u
+63 N
+64 N
+65 N
+66 N
+67 N NARRATOR neutral,afraid 0-1 normal normal u
+68 D AYLA,AYLA TRIST afraid,surprised 2-3 fast loud f
+69 N
+70 N
+71 N
+72 N
+73 N
+74 N
+75 N
+76 N,T NARRATOR neutral 0-1 normal normal u
+77 N
+78 N
+79 N
+80 N
+81 N,T NARRATOR neutral 0-1 normal normal u
+82 N
+83 D NARRATOR,UNKNOWN~ neutral,afraid 0-1 normal normal,soft u
+84 N
+85 D AYLA,AYLA TRIST afraid,sad 1-2 normal,slow soft,normal f
+86 N NARRATOR neutral,afraid,sad 0-1 normal normal u
+87 N,T NARRATOR neutral 0-1 normal normal u
+88 N,T NARRATOR,ED,ED ROSTAILER neutral,sarcastic 0-1 normal normal u
+89 N
+90 N
+91 N
+92 N
+93 D NARRATOR neutral 0-1 normal normal u
+94 N
+95 N
+96 D YENNICA,YENNICA FAILOVER,NARRATOR,ED~,ED ROSTAILER~ neutral,happy 0-1 normal normal f
+97 N
+98 N
+99 N NARRATOR neutral,surprised 0-1 normal normal u
+100 N NARRATOR neutral,surprised 0-1 normal normal u
+101 N
+102 D AYLA,AYLA TRIST surprised,afraid 1-2 normal,fast loud,normal f
+103 N NARRATOR neutral,afraid 0-1 normal normal u
+104 N
+105 D AYLA,AYLA TRIST afraid 2-3 fast loud f
+106 D NARRATOR,UNKNOWN~ surprised,neutral,excited 0-2 normal loud,normal u
+107 D NARRATOR,UNKNOWN~ surprised,neutral,excited 0-2 normal loud,normal u
+108 N NARRATOR neutral,afraid,surprised 0-1 normal normal u
+109 D AYLA,AYLA TRIST,NARRATOR~ afraid,surprised 2-3 fast loud f
+110 N
+111 N
+112 N
+113 N
+114 N,T NARRATOR neutral 0-1 normal normal u
+115 N
+116 N
+117 N
+118 N
+119 N NARRATOR neutral,afraid 0-1 normal normal u
+120 D ED,ED ROSTAILER excited,neutral,angry 1-2 fast loud,normal m
+121 N
+122 N
+123 N,T NARRATOR neutral 0-1 normal normal u
+124 N
+125 N
+126 D NARRATOR,UNKNOWN~ surprised,neutral,excited 0-2 normal loud,normal u
+127 D GLAST,NARRATOR~ surprised,angry,afraid 1-2 fast normal,loud m
+128 N
+129 N
+130 N NARRATOR neutral,surprised,afraid 0-1 normal normal u
+131 N
+132 N,T NARRATOR neutral 0-1 normal normal u
+133 N
+134 N
+135 D GLAST neutral,sarcastic 0-1 normal normal m
+136 N
+137 D GLAST neutral,surprised,sarcastic 0-1 normal normal m
+138 N
+139 N,T NARRATOR,ED,ED ROSTAILER neutral,sarcastic 0-1 normal normal u
+140 N
+141 D GLAST neutral,surprised 0-1 normal normal m
+142 D ED,ED ROSTAILER neutral 0-1 normal normal m
+143 N
+144 N
+145 N
+146 N
+147 N
+148 N
+149 N
+150 N
+151 N
+152 N
+153 N
+154 D ED,ED ROSTAILER neutral 0-1 normal normal m
+155 D GLAST neutral 0-1 normal normal m
+156 N,T NARRATOR,ED,ED ROSTAILER neutral,surprised 0-1 normal normal u
+157 N,T NARRATOR neutral 0-1 normal normal u
+158 D GLAST neutral 0-1 normal normal,soft m
+159 N,T NARRATOR,ED,ED ROSTAILER neutral,sarcastic,angry 0-1 normal normal u
+160 N
+161 N
+162 N
+163 N
+164 N
+165 N,T NARRATOR,ED,ED ROSTAILER neutral,surprised 0-1 normal normal u
+166 N
+167 N,T NARRATOR neutral 0-1 normal normal u
+168 N
+169 N
+170 N,T NARRATOR,ED,ED ROSTAILER neutral,sarcastic,happy 0-1 normal normal u
+171 N,T NARRATOR,ED,ED ROSTAILER neutral 0-1 normal normal u
+172 N,T NARRATOR neutral 0-1 normal normal u
+173 N
+174 N,T NARRATOR,ED,ED ROSTAILER neutral,surprised 0-1 normal normal u
+175 D ED,ED ROSTAILER neutral 0-1 slow,normal soft,normal m
+176 N
+177 N
+178 N
+179 N
+180 N
+181 D GLAST neutral 0-1 normal normal m
+182 N
+183 N
+184 D GLAST neutral,sarcastic,surprised 0-1 normal normal m
+185 N NARRATOR neutral,afraid 0-1 normal normal u
+186 N NARRATOR neutral,afraid 0-1 normal normal u

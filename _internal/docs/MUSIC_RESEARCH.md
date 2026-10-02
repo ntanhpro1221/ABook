@@ -467,6 +467,207 @@ Câu hỏi, kèm dự đoán ghi trước:
 Không chọn lại prompt sau khi thấy số. Lỗi định dạng thì chạy lại đúng lượt ấy và đếm riêng.
 Các mức trên đều ghi trước. Đây là trần MÁY: nó trả lời "các cách chọn khác nhau tới đâu theo máy nghe" chứ không thay được
 tai chủ sách. Chủ sách góp ý khi nào thích thì xếp lên trên mọi thứ.
+Chi tiết cách chạy (khi chấm, không đổi luật):
+- J-omni đọc logprob qua llama-server (`omni_judge.py`).
+- Mô tả giàu của clip ghép thêm chú thích J-omni (`describe_clips.py`, `build_e1_judge_packs.py`).
+- Lượt lặp nằm ở gói khác lượt gốc, mỗi gói một người chấm Sonnet riêng.
+- Chấm bằng `score_e1.py`.
+
+**KẾT QUẢ E1 MÁY CHẤM (02-10 22:4x, `score_e1.py`, số đầy đủ ở Corpus research/music/results/e1_score.txt):**
+
+Người chấm:
+- **J-omni KHÔNG dùng được.** Hai thứ tự chỉ khớp ở 6% lượt; P(chọn bài đứng trước) là 0,66. Qwen2.5-Omni-7B Q4 nghe hai
+  clip 30 giây gần như chọn theo vị trí. Kappa với người chấm Claude là 0,16-0,17. Chú thích từng clip của nó vẫn dùng làm
+  mô tả.
+- **J-c1, J-c2 dùng được:**
+
+| | J-c1 | J-c2 |
+|---|---|---|
+| Ổn định lượt lặp | 0,80 | 0,87 |
+| Kappa giữa hai người | 0,81 (đồng ý 91%) | |
+
+- **Giới hạn phải nhớ:** hai người chấm Claude đọc CÙNG một mô tả, và mô tả có nhãn không khí CLAP. Vai `vet` chọn theo
+  V/E/T của danh mục, mà V/E/T này một phần cũng từ CLAP. Vì vậy độ khớp cao và H1/H2 có một phần vòng tròn: chúng nói
+  "mô tả bài hợp đoạn tới đâu", chưa phải "nghe hợp tới đâu".
+
+Phán quyết chung (c1 + c2, bỏ lượt hai người khác nhau, còn 272 lượt):
+- **Bradley-Terry:** vet +0,59 > calm +0,35 > gems +0,08 > mid −0,10 > app −0,13 > far −0,79.
+- **H1 ĐẠT:** vet thắng far 13/17 = 0,76 (KTC 0,53-0,90).
+- **H2 vừa chạm mức:** Spearman 0,60 so dự đoán ≥ 0,6.
+- **H3 không khác:** app thắng gems 23/45 = 0,51 (KTC 0,37-0,65). Nhánh GEMS không hơn cách cũ, khớp kiểm hồi quy ở
+  trên.
+- **app thua vet:** 11/43 = 0,26 (KTC 0,15-0,40). Cùng danh mục và cùng bộ lọc mà chọn theo V/E/T ĐÁP ÁN thắng rõ chọn theo
+  V/E/T máy đoán. Nút thắt vẫn là ĐOÁN không khí đoạn, như bộ 4.
+- **calm đứng thứ hai:** nền êm trung tính thắng far 0,82, ngang mid, hơn app. Đây là bằng chứng máy chấm cho lý thuyết
+  §5.6 "không chắc thì êm".
+  - Việc kế (ghi trước riêng): ngưỡng "đoạn không chắc thì nền êm" chặt hơn hiện nay. Hiện chỉ kéo về CALM_TARGET khi
+    confidence < 0,2.
+
+**GHI TRƯỚC - E1b "NGHE THẬT" TỪNG CLIP (02-10 23:xx, Lead duyệt; trước mọi lượt chấm):**
+Cách chấm:
+- Mỗi cặp (đoạn, clip) của E1 (600 cặp) được chấm độc lập. Không đưa hai clip cùng lúc, nên không có thiên vị vị trí.
+- Model nghe 30 giây đầu kèm cả đoạn truyện, rồi cho điểm hợp 1-7. Điểm là kỳ vọng theo xác suất bảy chữ số (logprob).
+- Có hai cách hỏi khác chữ (a, b), mỗi cách chạy một lượt.
+- Phán quyết lượt cặp: bài có điểm trung bình (a+b)/2 cao hơn thắng; chênh dưới 0,02 thì bỏ.
+
+Người chấm và luật dùng được:
+- **J-omni1** = Qwen2.5-Omni-7B Q4 (`omni_judge.py rate`).
+- **J-af3** = Audio Flamingo 3 (NVIDIA, giấy phép NC dùng được), cùng giao thức. Đo VRAM trước; không vừa 8 GB thì chạy Mac.
+  - SỬA TRƯỚC KHI CÓ SỐ (02-10 23:xx): dùng **Music Flamingo 2601** (`nvidia/music-flamingo-2601-hf`). Đây là bản NVIDIA
+    dựng trên AF3, chuyên hiểu nhạc, cùng giấy phép NC, tải 16,5 GB thay vì 33 GB của AF3. Model nạp 4-bit NF4, riêng bộ
+    mã hoá âm thanh giữ bf16 (`mf_rate.py`). Cùng hai cách hỏi, cùng thang 1-7.
+- **Độ ổn định:** lượt lặp của E1 cho cùng đầu vào nên tầm thường. Thay vào đó dùng độ khớp phán quyết giữa cách hỏi a và b
+  trên 300 lượt.
+- **Dùng được** khi ổn định ≥ 0,75 và kappa với phán quyết chung của c1 + c2 (E1) ≥ 0,20.
+- Không có người chấm nghe nào dùng được thì mới tính Qwen3-Omni trên Modal (hạn mức miễn phí).
+
+Câu hỏi:
+- H1-H4 như E1, tính lại với người chấm nghe dùng được.
+- Thêm: phán quyết "nghe" có xếp `calm` thứ hai và `app` dưới `vet` như người chấm đọc mô tả không?
+
+**GHI TRƯỚC - NỚI NGƯỠNG NỀN ÊM (02-10 23:xx, Lead duyệt; từ E1: calm đứng thứ hai, hơn app):**
+- **Giả thuyết:** kéo về nền êm (CALM_TARGET) cho nhiều đoạn hơn làm nhạc hợp hơn. Hiện chỉ kéo khi confidence < WEAK_MOOD
+  0,2, và kéo tuyến tính.
+- **Cách làm:** thử WEAK_MOOD 0,2 (hiện tại) / 0,35 / 0,5 trên chương thật của bộ 3 và bộ 4, mỗi bản tự chia đoạn, cùng danh
+  mục và cùng bảng phong cách (`compare_rankers.py`). Cặp so sánh là những đoạn mà hai ngưỡng chọn KHÁC bài (0,2 so 0,35;
+  0,2 so 0,5).
+- **Thước chính:** hai người chấm mù Claude theo giao thức E1. Họ đọc đoạn truyện cùng mô tả giàu của clip 30 giây, clip
+  −23 LUFS, gồm số đo, CLAP và chú thích J-omni. Dựng thêm clip cho bài mới. Phán quyết chung lấy đa số của hai người.
+- **Thước phụ:** khoảng cách nhãn người tới đáp án như kiểm hồi quy ở trên.
+- **Cỡ mẫu:** mọi đoạn khác bài. Có dưới 20 đoạn thì thêm chương bộ 2 / bộ dev đã có đáp án.
+- **Luật thắng:** ngưỡng mới THẮNG nếu bài của nó thắng ≥ 60% số đoạn khác bài theo phán quyết chung, cận dưới KTC 95%
+  Wilson > 0,5, và thước phụ không kém quá 0,02. Nhiều ngưỡng cùng thắng thì chọn ngưỡng nhỏ nhất đạt luật (đổi ít nhất).
+  Không ngưỡng nào thắng thì giữ 0,2.
+
+**GHI TRƯỚC - PHÍA BÀI GỘP BA NGUỒN: CLAP + ÂM HỌC + VĂN BẢN (02-10 23:xx, Lead + chủ sách; trước mọi số):**
+Ba nguồn:
+- **(A) CLAP:** vector 512 chiều đã lưu (đầu dò như trên).
+- **(B) Âm học đo trực tiếp:** `acoustic_features2.py`, khoảng 50 đặc trưng kinh điển (Juslin & Lindström, MIRtoolbox): nhịp
+  + độ ổn định, trưởng / thứ + độ rõ giọng, âm vực + tầm, độ nghịch tai, articulation, độ to + đường bao, âm sắc MFCC, độ
+  phức tạp hoà âm, mật độ. Trung bình ba cửa sổ 30 giây.
+- **(C) Văn bản:** `collect_text_meta.py`.
+  - Chữ gồm tên, tác giả, mô tả, tag, nhạc cụ, bình luận / ghi chú trang gốc, album FMA.
+  - Một người đọc Claude (Sonnet, theo lô) đọc toàn bộ chữ của từng bài, cho 13 cường độ + V/E/T + độ tin cậy (theo lượng
+    và độ rõ của chữ).
+  - Feel người gắn của Incompetech là NHÃN đo, không bao giờ vào chữ.
+
+Đo trên 1.381 bài Incompetech có feel:
+- 10 lớp ánh xạ được (bảng `FEEL` của `derive_emotions.py`), AUC kiểm chéo 5 phần (StratifiedKFold, seed 7, chia theo bài),
+  dự đoán ngoài phần học.
+- Mỗi tổ hợp nguồn là MỘT hồi quy logistic L2 (C = 1, đặc trưng chuẩn hoá z) trên khối đặc trưng nối lại. A = 512 chiều;
+  B = các đặc trưng âm học; C = 16 số của người đọc (13 + V/E/T + độ tin cậy). Riêng C còn báo AUC của chính cường độ lớp ấy,
+  không học.
+- Tổ hợp: A, B, C, A+B, A+C, A+B+C.
+
+Luật GIỮ một nguồn:
+- Thêm nguồn ấy vào tổ hợp tốt nhất chưa có nó làm AUC trung bình 10 lớp tăng ≥ 0,01 VÀ thắng ≥ 6/10 lớp.
+- Thắng thì danh mục dùng tổ hợp ấy. Ba lớp không có nhãn (tenderness / nostalgia / moved) lấy từ người đọc chữ nếu C được giữ,
+  không thì giữ zero-shot.
+
+Thước phụ ghi trước: phán quyết máy chấm kiểu E1. Chọn bài bằng phía bài gộp so với phía bài chỉ CLAP, trên các đoạn bộ 3 + 4
+chọn khác bài; luật thắng như thí nghiệm nền êm.
+
+Giới hạn: chỉ Incompetech có nhãn người. Nguồn khác chữ ít hơn nhiều (OGA / FreePD / Scott Buckley trung vị 4-10 chữ), nên độ tin
+cậy của C phải hạ trọng số khi gộp ở các nguồn ấy; điều này chưa đo được ở đây.
+
+**GHI TRƯỚC - THẦY → TRÒ CHO NHẠC NGƯỜI DÙNG TỰ NHẬP (02-10 23:xx, hướng chủ sách qua Lead; E_signal_sources.md §6):**
+
+Thầy và trò:
+- **Thầy** = tổ hợp nguồn thắng ablation "GỘP BA NGUỒN" (có ngữ cảnh: chữ, tag người gắn, âm học, model nghe). Thầy cho mỗi
+  bài danh mục 13 cường độ + V/E/T + độ tin cậy.
+- **Trò** = chỉ nghe, chạy trên máy người dùng: tháp âm thanh CLAP htsat-unfused (ONNX 116 MB, CPU 0,5 giây/bài) + âm học
+  librosa (khoảng 1 giây/bài) + đầu dò nhỏ (logistic / MLP 1 lớp ẩn).
+- **Cách học:** trò học bắt chước thầy. Mất mát là BCE trên cường độ mềm và MSE trên V/E/T, nhân độ tin cậy của thầy.
+- **Giao diện** theo Lead: `analyze(path) -> {valence, arousal, tension, sd, emotions{13}, confidence, fitsUnderNarration,
+  loudness}`.
+
+Hai bậc:
+1. Máy tính: CPU.
+2. Điện thoại: thử ONNX int8. Nhanh hơn 3 giây/bài và trong 50 MB thì chạy trên điện thoại; không thì điện thoại gửi file sang
+   máy tính phân tích.
+
+Dữ liệu:
+- Tập học: các bài danh mục; sau đó mở rộng bằng MTG-Jamendo (tag mood/theme, thầy gán nhãn) và FMA nếu bước 1 cho thấy thiếu dữ
+  liệu (đường cong học theo số bài).
+- Giữ ngoài: 20% bài danh mục (chia theo bài, seed 7), GIẤU ngữ cảnh. Trò chỉ thấy âm thanh; thầy thấy đủ.
+
+Thước (ghi trước):
+- **(a)** AUC so feel người gắn trên phần Incompetech giữ ngoài. Trò ĐẠT nếu ≥ 90% AUC của thầy trên cùng phần.
+- **(b)** r Pearson V/E/T trên bộ ngoài: Soundtracks (Eerola 360, nhạc phim) và DEAM. Báo kèm đầu dò CLAP cũ để so.
+- **(c)** Máy chấm kiểu E1 trên đoạn bộ 3 + 4. Chọn bài bằng mô tả của TRÒ so với mô tả của THẦY, chỉ trên các đoạn chọn khác bài.
+  Trò không được thua quá 5 điểm phần trăm (phán quyết chung, KTC Wilson báo kèm).
+- **(d)** Kích thước và thời gian/bài trên CPU máy tính, và trên điện thoại nếu thử.
+
+Trò không đạt (a) thì thêm dữ liệu (MTG-Jamendo) hoặc đổi nhúng (MuQ / MERT, NC dùng được) rồi đo lại. Mỗi lần đổi ghi một dòng
+ở đây trước khi đo.
+
+**GHI TRƯỚC - MTG-JAMENDO LÀM DỮ LIỆU HỌC CHO TRÒ (02-10 23:xx, Lead + chủ sách):**
+
+Bộ dữ liệu:
+- autotagging_moodtheme: 18.486 bài, 56 tag mood/theme. Metadata CC BY-NC-SA, audio CC từng bài.
+- Bản audio đầy đủ, xử lý cuốn chiếu trần ~20 GB mỗi máy (`mtg_rolling.py`). Gói 00-57 chạy máy nhà, 58-99 chạy Mac.
+- Mỗi bài lưu nhúng CLAP + có lời / nền + âm học `acoustic_features2`. Chỉ giữ audio bài không lời (ứng viên danh mục).
+- Sổ gói: `done_tars.txt` mỗi máy.
+
+Nhãn thầy từ tag (ghi trước, cường độ 1 hoặc 0,5; lấy max khi nhiều tag cùng lớp; bài không có tag nào ánh xạ thì không có
+nhãn lớp ấy):
+
+| Lớp | Tag cường độ 1 | Tag cường độ 0,5 |
+|---|---|---|
+| peacefulness | calm, relaxing, meditative, nature | soft |
+| tenderness | love, romantic | ballad, soft |
+| nostalgia | | retro, melancholic |
+| sadness | sad, melancholic | emotional |
+| joy | happy, fun, positive, upbeat, party, summer, holiday | christmas |
+| playful | funny, children | fun |
+| power | epic, powerful, heavy, action, trailer, sport | motivational, energetic |
+| wonder | space | dream, inspiring, epic |
+| tension | | dramatic, dark, action, drama |
+| fear | dark | |
+| anger | | heavy |
+| mystery | dream, deep | space, soundscape |
+| moved | emotional, inspiring | hopeful, uplifting |
+
+Gộp với kênh chữ:
+- Người đọc chữ đọc tag MTG cộng tên bài theo cùng prompt; bảng trên là mức sàn.
+- Nhãn thầy MTG = max(bảng, người đọc chữ × độ tin cậy). Độ tin cậy nhãn = 0,6 nếu có ≥ 1 tag ánh xạ, không thì 0,2.
+
+Giữ ngoài:
+- 15% bài MTG (theo split-0 của bộ, phần test).
+- Thước phụ của trò: AUC từng tag MTG (56 tag) trên phần test, so với baseline đã công bố cho mood/theme (PR-AUC
+  ~0,12-0,15, ROC-AUC ~0,75-0,77 cho effnet/musicnn) để biết trò đứng đâu.
+
+**LỚP 2 PHÍA BÀI - 13 cường độ độc lập (02-10 22:xx, `derive_emotions.py`):**
+- **Zero-shot CLAP** (3 câu mô tả mỗi lớp, z theo cả kho, sigmoid): AUC so feel người gắn của Incompetech (1.381 bài)
+  trung bình 0,69. Có lớp còn kém bản GEMS-9 cũ, như joy 0,46 so với 0,74.
+- **Đầu dò logistic trên vector CLAP đóng băng** (lý thuyết §3.3), nhãn là feel người gắn, kiểm chéo 5 phần chia theo bài:
+  AUC 0,73-0,92, trung bình 0,85. Cụ thể: anger 0,92, sadness 0,88, playful 0,88, power 0,87, joy 0,86,
+  peacefulness 0,85, fear 0,85, tension 0,82, wonder 0,79, mystery 0,73.
+- **Chọn nguồn từng lớp:** đầu dò thắng ở cả 10 lớp có nhãn nên dùng đầu dò. Bài có nhãn lấy dự đoán ngoài phần học.
+  Ba lớp tenderness / nostalgia / moved không có feel tương ứng nên giữ zero-shot.
+- **Cùng một thang:** logit được chuẩn hoá z rồi đưa qua cùng một sigmoid, nên mỗi lớp có khoảng 11-14% bài >= 0,5
+  (trung bình 1,6 lớp mỗi bài, gần mức người chấm gắn cho đoạn là 1,5).
+- **Giới hạn:** chỉ học trên Incompetech; với nguồn khác là chuyển miền, chưa đo.
+
+**KIỂM HỒI QUY LỚP 1-2 TRƯỚC KHI GỘP (02-10 22:xx; KHÔNG ghi trước, chỉ để chặn hồi quy, `compare_rankers.py`):**
+- **Cách làm:** chạy `choose` của main và của nhánh `dev/music-gems` trên 10 chương bộ 4, mỗi bản tự chia đoạn (57 đoạn).
+  Cùng danh mục thử 2.016 bài có `emotions`, cùng bảng phong cách theo thể loại.
+- **Thước:** khoảng cách nhãn người của bài chọn (chỉ bài Incompetech có feel, 40-52 đoạn) tới đáp án V/E/T của đoạn đáp án
+  chứa giữa đoạn app; thấp là hợp.
+
+| Cách chọn | Khoảng cách | Cùng bài với main |
+|---|---|---|
+| Lớp 1 (σ, trọng số 1,0 / 0,8 / 0,6) | 0,824 | 74% |
+| main | 0,845 | - |
+| Lớp 1 + Lớp 2 trọng số 1 | 0,859 | 49% |
+| Lớp 1 + Lớp 2 trọng số 3 | 0,936 | 28% |
+
+- Không bản nào có đoạn im lặng hay lặp bài.
+- **Kết luận:** số hạng Lớp 2 làm kém đi theo đúng liều. Cảm xúc của ĐOẠN đang suy từ nhãn câu (`LINE_EMOTIONS`) và còn quá
+  thô; phía bài thì đã có đầu dò AUC 0,85.
+- **Quyết định trên nhánh:** `EMOTION_WEIGHT = 0`, giữ cơ chế. Bật lại khi đường LLM (segllm) cho 13 cường độ của đoạn và
+  E4 đo lại.
+- **Thang phạt:** các mức phạt đổi sang thang z (chia 0,34), vì z-distance lớn hơn khoảng 3 lần thang Euclid cũ.
 
 ## Nguồn nhạc: giữ / loại và lý do (02-10, Lead + chủ sách - đọc trước khi hỏi lại)
 

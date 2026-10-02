@@ -1,0 +1,177 @@
+# Đáp án KIỂM TRA truyện Hàn 02-10 (luật cố định: vị trí 30%/70% của bộ, bỏ chương trong ±2 của chương gold cũ, >30 KB lấy 25 KB đầu)
+# "Hướng dẫn sinh tồn trong học viện" file 122a = 25 KB đầu của 122.txt ("Chương 123: Buổi thực hành chiến đấu chung 2 (10)").
+# Claude gán (A) 02-10, B soát + phân xử 02-10 (gold_kr/B). Hai đoạn: 2-42 NGÔI BA (quá khứ của Adel Seris, không thoại); 43-162 NGÔI THỨ NHẤT,
+# "tôi" = ED / ED ROSTAILER (m). Tên (cùng tập 060/062/090/130): LORTEL / LORTEL KEHELN (f, xưng "em", gọi "tiền bối Ed",
+# hay "ạ", "~"); CLARICE / KYLIE~ / KYLIE ECKNE~ (f; Thánh nữ - "THÁNH NỮ" không điểm); ADEL / ADEL SERIS (f, chỉ nghĩ ở 41).
+# Verdio, người chủ nhà giữ xe không có câu thoại. Đối đáp Ed - Lortel không lời dẫn: theo xưng hô ("em/ạ/tiền bối" =
+# Lortel, "cô/tôi" = Ed). 43 câu mở cảnh = Lortel (46 "ngay khi Lortel bước vào"). 134 "Vậy thì..." + 136 "...bao nhiêu
+# đây...?" = Ed hỏi giá mấy tờ thông tin Lortel đang cầm (135), 140 Lortel đáp "So với giá mạng của em...". 158 "Trước hết,
+# ra ngoài đã." theo lời dẫn 157 (Lortel nén giọng run nhìn tôi) -> LORTEL, ED~ (Ed vừa bảo ở trong, 95). 96 "Dạ?" không
+# ngoặc, parser khoá N (97 "Lortel còn chưa kịp đáp lời") -> NARRATOR, LORTEL~ (quy tắc 10; ~ giữ cho segment_diff).
+# 41 "Nếu vị Thần... liệu có phải là một quang cảnh như thế này không?" trọn đoạn là ý nghĩ của Adel (42 "Vừa có một suy
+# nghĩ phù du như vậy") -> N,T, ADEL đủ (ngôi ba, tiền lệ 017a:87). 117 "Kh, khặc!", 124 = Ed trúng vảy; 161 "Ư... khặc...!"
+# = Clarice cố kéo cửa (162). 23, 24 tiếng động khoá D -> NARRATOR, UNKNOWN~; 102, 105, 110, 113, 114, 132 tiếng động
+# trong lời kể (khoá N). 115 tên kỹ năng khoá T -> N,T NARRATOR.
+0 H
+1 N
+2 N
+3 N
+4 N NARRATOR neutral,sad 0-1 normal normal u
+5 N
+6 N
+7 N
+8 N
+9 N
+10 N
+11 N
+12 N
+13 N
+14 N
+15 N
+16 N
+17 N
+18 N
+19 N
+20 N NARRATOR neutral,surprised 0-1 normal normal u
+21 N NARRATOR neutral,surprised 0-1 normal normal u
+22 N NARRATOR neutral,surprised 0-1 normal normal u
+23 D NARRATOR,UNKNOWN~ surprised,neutral,excited 1-2 normal loud,normal u
+24 D NARRATOR,UNKNOWN~ surprised,neutral,excited 1-2 normal loud,normal u
+25 N NARRATOR neutral,surprised 0-1 normal normal u
+26 N
+27 N NARRATOR neutral,surprised 0-1 normal normal u
+28 N
+29 N NARRATOR neutral,surprised 0-1 normal normal u
+30 N
+31 N
+32 N
+33 N
+34 N
+35 N
+36 N
+37 N
+38 N
+39 N
+40 N NARRATOR neutral,happy 0-1 normal normal u
+41 N,T NARRATOR,ADEL,ADEL SERIS neutral,sad,tender 0-1 normal normal u
+42 N NARRATOR neutral,sad 0-1 normal normal u
+43 D LORTEL,LORTEL KEHELN sarcastic,happy,neutral 0-1 normal normal f
+44 N
+45 N
+46 N NARRATOR neutral,surprised 0-1 normal normal u
+47 D LORTEL,LORTEL KEHELN sarcastic,surprised,neutral 0-1 normal normal f
+48 D ED,ED ROSTAILER tired,neutral 0-1 normal,slow normal,soft m
+49 N
+50 N NARRATOR neutral,sad,sarcastic 0-1 normal normal u
+51 N
+52 N
+53 N NARRATOR neutral,sarcastic,tired 0-1 normal normal u
+54 N NARRATOR neutral,sarcastic,tired 0-1 normal normal u
+55 N
+56 N
+57 N
+58 D LORTEL,LORTEL KEHELN neutral,sarcastic 0-1 normal normal f
+59 N
+60 N NARRATOR neutral,tired 0-1 normal normal u
+61 D LORTEL,LORTEL KEHELN sarcastic,neutral,happy 0-1 normal normal f
+62 D ED,ED ROSTAILER tired,neutral 0-1 normal,slow normal,soft m
+63 N NARRATOR neutral,angry,sarcastic 0-1 normal normal u
+64 D LORTEL,LORTEL KEHELN sarcastic,angry,neutral 0-2 normal normal f
+65 D ED,ED ROSTAILER tired,neutral 0-1 normal,slow normal,soft m
+66 N
+67 D ED,ED ROSTAILER neutral,tired 0-1 normal normal,soft m
+68 D LORTEL,LORTEL KEHELN surprised,neutral 0-1 normal normal f
+69 D ED,ED ROSTAILER neutral 0-1 normal normal m
+70 N
+71 N
+72 N
+73 N
+74 N
+75 N
+76 N
+77 N
+78 D LORTEL,LORTEL KEHELN neutral,happy 0-1 normal normal f
+79 D ED,ED ROSTAILER neutral 0-1 normal normal m
+80 D LORTEL,LORTEL KEHELN surprised,neutral,sarcastic 0-1 normal normal f
+81 D ED,ED ROSTAILER neutral 0-1 normal normal m
+82 D LORTEL,LORTEL KEHELN surprised,neutral 0-1 normal normal f
+83 N
+84 N
+85 D ED,ED ROSTAILER neutral 0-1 normal normal m
+86 D LORTEL,LORTEL KEHELN neutral,surprised 0-1 normal normal f
+87 D ED,ED ROSTAILER neutral 0-1 normal normal m
+88 D LORTEL,LORTEL KEHELN surprised,neutral,afraid 0-1 normal normal,soft f
+89 N
+90 D ED,ED ROSTAILER neutral,tender 0-1 normal,fast normal m
+91 D LORTEL,LORTEL KEHELN neutral,surprised,sarcastic 0-1 normal normal f
+92 D ED,ED ROSTAILER neutral,tender 0-1 normal normal m
+93 N
+94 D LORTEL,LORTEL KEHELN neutral,surprised 0-1 normal,fast normal f
+95 D ED,ED ROSTAILER neutral 0-1 normal normal m
+96 N NARRATOR,LORTEL~,LORTEL KEHELN~ neutral,surprised 0-1 normal normal u
+97 N
+98 N NARRATOR neutral,surprised,afraid 0-1 normal normal u
+99 N NARRATOR neutral,afraid,surprised 0-1 normal normal u
+100 N NARRATOR neutral,surprised 0-1 normal normal u
+101 N NARRATOR neutral,afraid 0-1 normal normal u
+102 N NARRATOR neutral,surprised,afraid 0-2 normal normal,loud u
+103 N NARRATOR neutral,afraid 0-1 normal normal u
+104 N
+105 N NARRATOR neutral,surprised,afraid 0-2 normal normal,loud u
+106 N NARRATOR neutral,afraid 0-1 normal normal u
+107 D LORTEL,LORTEL KEHELN surprised,afraid 1-2 fast normal,loud f
+108 N
+109 D LORTEL,LORTEL KEHELN surprised,afraid,angry 1-2 fast loud,normal f
+110 N NARRATOR neutral,surprised,afraid 0-2 normal normal,loud u
+111 N NARRATOR neutral,afraid 0-1 normal normal u
+112 N
+113 N NARRATOR neutral,surprised,afraid 0-2 normal normal,loud u
+114 N NARRATOR neutral,surprised,afraid 0-2 normal normal,loud u
+115 N,T NARRATOR neutral 0-1 normal normal u
+116 N
+117 D ED,ED ROSTAILER,NARRATOR~ sad,surprised,angry,afraid 1-2 fast normal,loud m
+118 N NARRATOR neutral,afraid 0-1 normal normal u
+119 N
+120 N NARRATOR neutral,sad,afraid 0-1 normal normal u
+121 N NARRATOR neutral,sad 0-1 normal normal u
+122 N
+123 N
+124 D ED,ED ROSTAILER tired,sad,angry 1-2 slow,normal soft,normal m
+125 N NARRATOR neutral,afraid 0-1 normal normal u
+126 N
+127 N,T NARRATOR neutral 0-1 normal normal u
+128 D LORTEL,LORTEL KEHELN afraid,surprised 1-2 slow,normal soft f
+129 N NARRATOR neutral,afraid 0-1 normal normal u
+130 N
+131 N NARRATOR neutral,afraid 0-1 normal normal u
+132 N NARRATOR neutral,surprised,afraid 0-2 normal normal,loud u
+133 N NARRATOR neutral,afraid 0-1 normal normal u
+134 D ED,ED ROSTAILER tired,neutral 0-1 slow,normal soft,normal m
+135 N
+136 D ED,ED ROSTAILER tired,neutral,sarcastic 0-1 slow,normal soft,normal m
+137 N NARRATOR neutral,sad,afraid 0-1 normal normal u
+138 N NARRATOR neutral,afraid 0-1 normal normal u
+139 N
+140 D LORTEL,LORTEL KEHELN afraid,sarcastic,neutral 0-2 normal soft,normal f
+141 N NARRATOR neutral,afraid 0-1 normal normal u
+142 D ED,ED ROSTAILER tired,neutral,sarcastic 0-1 normal normal,soft m
+143 D LORTEL,LORTEL KEHELN neutral,sarcastic,afraid 0-1 normal normal f
+144 D ED,ED ROSTAILER tired,neutral 0-1 normal normal,soft m
+145 N NARRATOR neutral,afraid 0-1 normal normal u
+146 N NARRATOR neutral,afraid 0-1 normal normal u
+147 N
+148 D LORTEL,LORTEL KEHELN neutral,afraid 0-1 normal,fast normal f
+149 D LORTEL,LORTEL KEHELN neutral,afraid 0-1 normal,fast normal f
+150 D ED,ED ROSTAILER neutral,surprised 0-1 normal normal m
+151 D LORTEL,LORTEL KEHELN neutral 0-1 normal normal f
+152 D ED,ED ROSTAILER surprised,neutral 0-1 normal normal m
+153 D LORTEL,LORTEL KEHELN neutral,sarcastic 0-1 normal normal f
+154 N
+155 N
+156 N
+157 N NARRATOR neutral,afraid 0-1 normal normal u
+158 D LORTEL,LORTEL KEHELN neutral,afraid 0-1 normal,fast normal f
+159 N
+160 N NARRATOR neutral,sad 0-1 normal normal u
+161 D CLARICE,KYLIE~,KYLIE ECKNE~,NARRATOR~ sad,afraid,angry 1-2 normal normal f
+162 N NARRATOR neutral,sad 0-1 normal normal u
