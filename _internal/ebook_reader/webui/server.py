@@ -668,9 +668,11 @@ class App:
         catalog = self.music_catalog()
         # Dựng lại = muốn dữ liệu mới nhất: đọc lại mục lục (nhỏ) thay vì bản đệm 24 giờ.
         manifest = catalog.manifest(refresh=True)
-        return music_plan.build(path, lambda v, a: catalog.near(v, a, radius=1), catalog.lookup,
+        plan = music_plan.build(path, lambda v, a: catalog.near(v, a, radius=1), catalog.lookup,
                                 catalog_revision=str(manifest.get("revision") or ""), book_key=value,
                                 taxonomy=manifest.get("taxonomy"))
+        self._warm_music(plan)
+        return plan
 
     def music_update(self, value: str, body: dict[str, Any]) -> dict[str, Any]:
         """Người dùng sửa (bật/tắt, phong cách, âm lượng, ghim, im lặng, bỏ bài): lưu lựa chọn rồi dựng lại rãnh nhạc.
@@ -706,6 +708,24 @@ class App:
         cues = [dict(cue, src="/api/music/track?link=" + quote(cue["link"], safe=""))
                 for cue in music_plan.chapter_cues(plan, chapter_id)]
         return {"cues": cues, "levelDb": plan.get("levelDb", music_plan.DEFAULT_LEVEL_DB)}
+
+    def music_track_cached(self, link: str) -> Path | None:
+        """Bài đã có trong bộ đệm của máy (không tải): cho gói điện thoại hỏi thường xuyên."""
+        target = self.music_dir / "files" / (hashlib.sha1(link.encode("utf-8")).hexdigest() + ".mp3")
+        return target if target.is_file() else None
+
+    def _warm_music(self, plan: dict[str, Any] | None) -> None:
+        """Tải sẵn các bài của rãnh nhạc vừa dựng (luồng nền): điện thoại và file sách lấy được nhạc ngay."""
+        links = sorted({scene["link"] for scene in (plan or {}).get("scenes") or [] if scene.get("link")})
+        if not links:
+            return
+
+        def fetch() -> None:
+            for link in links:
+                if self.music_track_cached(link) is None:
+                    self.music_track_for_export(link)
+
+        threading.Thread(target=fetch, name="music-warm", daemon=True).start()
 
     def music_track_for_export(self, link: str) -> Path | None:
         """Bài nhạc để gói vào file sách: lấy từ bộ đệm / tải về; không lấy được thì None (chỗ ấy im lặng)."""
@@ -831,7 +851,7 @@ class App:
                                     port=lambda: self.local_port, token=self.token, static_dir=self.static_dir)
                 app = SyncApp(self.library, self.listening, self.devices, socket_name(), self.remote, studio=studio,
                               routes=self.routes,
-                              player=self.player, cast=self.cast)
+                              player=self.player, cast=self.cast, music_track=self.music_track_cached)
                 self.sync_server = SyncServer(app, host=self.sync_host, port=self.sync_port).start()
                 self.sync_error = ""
                 if self.sync_host == "0.0.0.0":  # máy chủ thật (không phải bài thử chỉ nghe 127.0.0.1)

@@ -330,6 +330,7 @@ class PlaybackService : MediaLibraryService() {
             release()
         }
         session = null
+        MusicBed.stop()
         Playback.player = null
         instance = null
         super.onDestroy()

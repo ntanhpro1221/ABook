@@ -120,3 +120,25 @@ def test_a_book_opened_from_a_file_plays_its_packaged_music(studio, tmp_path: Pa
     status, _body, _headers = _request(server.port, "GET", f"/api/books/{book}/music/files/{'0' * 40}.mp3",
                                        headers={"X-Ebook-Token": "t"})
     assert status == 404, "chỉ bài có trong sách"
+
+
+def test_the_phone_package_carries_the_music_already_on_this_machine(tmp_path: Path) -> None:
+    from ebook_reader.webui.library import Library, Preferences
+    from ebook_reader.webui.listening import Listening
+    from ebook_reader.webui.sync import Devices, SyncApp, manifest
+
+    project = make_project(tmp_path)
+    listening = Listening(tmp_path / "listening.json")
+    before = manifest(project, "b", listening, music_track=lambda _link: None)
+    _plan(project)
+    track = _tracks(tmp_path, missing=(BATTLE,))
+    book = manifest(project, "b", listening, music_track=track)
+    assert "music" not in before and [cue["track"] for cue in book["music"]["chapters"]["1"]] == [
+        music_plan.track_name(CALM)], "chỉ bài đã có trên máy: lượt hỏi gói không tải gì"
+    assert book["version"] != before["version"], "điện thoại thấy có cập nhật khi nhạc đổi"
+    library = Library(Preferences(tmp_path / "prefs.json"))
+    app = SyncApp(library, listening, Devices(tmp_path / "devices.json"), "may", music_track=track)
+    found = app.resolve_file(project, music_plan.track_name(CALM))
+    assert isinstance(found, Path) and found.read_bytes().startswith(b"ID3")
+    assert app.resolve_file(project, music_plan.track_name(BATTLE)) is None
+    assert app.resolve_file(project, f"music/{'0' * 40}.mp3") is None
