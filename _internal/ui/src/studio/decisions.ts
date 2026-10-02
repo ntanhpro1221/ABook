@@ -66,6 +66,9 @@ export function refreshAfterDecision(client: QueryClient, bookId: string) {
   void client.invalidateQueries({ queryKey: ["pronunciations", bookId] });
   void client.invalidateQueries({ queryKey: ["casting", bookId] });
   void client.invalidateQueries({ queryKey: ["voice-choices", bookId] });
+  // Cuốn không có xưởng: câu nào đang chờ Studio (trang đọc) và danh sách "Việc đang chờ Studio".
+  void client.invalidateQueries({ queryKey: ["wishes", bookId] });
+  void client.invalidateQueries({ queryKey: ["pending-changes", bookId] });
   // Cả danh sách cách đọc chung lẫn gợi ý "Dùng N cách đọc chung" của mọi cuốn (hoàn tác có thể gỡ một mục chung).
   void client.invalidateQueries({ queryKey: ["shared-readings"] });
 }

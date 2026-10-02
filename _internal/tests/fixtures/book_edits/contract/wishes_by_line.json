@@ -1,0 +1,305 @@
+{
+ "volatile": [
+  "color",
+  "version",
+  "requestedAt"
+ ],
+ "steps": [
+  {
+   "method": "GET",
+   "path": "/wishes",
+   "status": 200,
+   "response": {
+    "pronunciations": [],
+    "lines": {}
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/speaker",
+   "body": {
+    "stableId": "c1_s0003_fa1fe2",
+    "textSha256": "fa1fe25f1922819e9fd94d48eeef9fddcaeb06be1653b73d618873e572498ea5",
+    "speaker": "HEIDI"
+   },
+   "status": 200,
+   "response": {
+    "lines": 1,
+    "speaker": "HEIDI",
+    "new": false,
+    "alias": false,
+    "requestedAt": 1790957770.1138718
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/speaker",
+   "body": {
+    "stableId": "c1_s0006_34534a",
+    "textSha256": "34534ad5d25c0cc74935800b021272b15ac53406accd068020698cea262c6ec0",
+    "speaker": "Tiểu Mai",
+    "newGender": "female"
+   },
+   "status": 200,
+   "response": {
+    "lines": 1,
+    "speaker": "Tiểu Mai",
+    "new": true,
+    "alias": false,
+    "requestedAt": 1790957770.1543303
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/line",
+   "body": {
+    "stableId": "c1_s0006_34534a",
+    "textSha256": "34534ad5d25c0cc74935800b021272b15ac53406accd068020698cea262c6ec0",
+    "emotion": "tender",
+    "intensity": 1,
+    "spoken": "Chào anh nhé."
+   },
+   "status": 200,
+   "response": {
+    "stableId": "c1_s0006_34534a",
+    "kind": "",
+    "emotion": "tender",
+    "intensity": 1,
+    "spoken": "Chào anh nhé."
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/line",
+   "body": {
+    "stableId": "c1_s0002_c58b67",
+    "textSha256": "c58b6788498e1756635f89b55a9906af2fa37a0d3ffbc49083eb56c5c5c5483c",
+    "kind": "dialogue",
+    "speaker": "LUCIEN"
+   },
+   "status": 200,
+   "response": {
+    "stableId": "c1_s0002_c58b67",
+    "kind": "dialogue",
+    "emotion": "",
+    "intensity": null,
+    "spoken": null
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/review",
+   "body": {
+    "verdict": "redo",
+    "stableId": "c1_s0002_c58b67",
+    "textSha256": "c58b6788498e1756635f89b55a9906af2fa37a0d3ffbc49083eb56c5c5c5483c",
+    "chapterId": 1
+   },
+   "status": 200,
+   "response": {
+    "ok": true
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/pronunciation",
+   "body": {
+    "surface": "Hailkes",
+    "spokenForm": "Hên-khơ"
+   },
+   "status": 200,
+   "response": {
+    "surface": "Hailkes",
+    "spokenForm": "Hên-khơ",
+    "requestedAt": 1790957770.340496
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/pronunciation",
+   "body": {
+    "surface": "Lucien",
+    "spokenForm": "Lu-xi-en"
+   },
+   "status": 200,
+   "response": {
+    "surface": "Lucien",
+    "spokenForm": "Lu-xi-en",
+    "requestedAt": 1790957770.381608
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/voice",
+   "body": {
+    "character": "HEIDI",
+    "gender": "male"
+   },
+   "status": 200,
+   "response": {
+    "character": "HEIDI",
+    "preset": "",
+    "gender": "male",
+    "avoid": "",
+    "requestedAt": 1790957770.43563
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/wishes",
+   "status": 200,
+   "response": {
+    "pronunciations": [
+     {
+      "key": "hailkes",
+      "surface": "Hailkes",
+      "spokenForm": "Hên-khơ",
+      "requestedAt": 1790957770.340496
+     },
+     {
+      "key": "lucien",
+      "surface": "Lucien",
+      "spokenForm": "Lu-xi-en",
+      "requestedAt": 1790957770.381608
+     }
+    ],
+    "lines": {
+     "c1_s0002_c58b67": {
+      "speaker": {
+       "name": "LUCIEN",
+       "shown": "Lucien",
+       "requestedAt": 1790957770.2458115
+      },
+      "delivery": {
+       "kind": "dialogue",
+       "emotion": "",
+       "intensity": null,
+       "requestedAt": 1790957770.2458115
+      },
+      "retake": {
+       "requestedAt": 1790957770.3063605
+      }
+     },
+     "c1_s0003_fa1fe2": {
+      "speaker": {
+       "name": "HEIDI",
+       "shown": "Hây-đi",
+       "requestedAt": 1790957770.1138718
+      }
+     },
+     "c1_s0006_34534a": {
+      "speaker": {
+       "name": "Tiểu Mai",
+       "shown": "Tiểu Mai",
+       "requestedAt": 1790957770.1543303
+      },
+      "delivery": {
+       "kind": "",
+       "emotion": "tender",
+       "intensity": 1,
+       "requestedAt": 1790957770.1954312,
+       "spoken": "Chào anh nhé."
+      }
+     }
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/pending-changes/withdraw",
+   "body": {
+    "section": "speakers",
+    "key": "c1_s0003_fa1fe2",
+    "keys": [
+     "c1_s0003_fa1fe2"
+    ],
+    "requestedAt": "$requestedAt#2"
+   },
+   "status": 200,
+   "response": {
+    "withdrawn": 1
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/review",
+   "body": {
+    "verdict": null,
+    "stableId": "c1_s0002_c58b67",
+    "textSha256": "c58b6788498e1756635f89b55a9906af2fa37a0d3ffbc49083eb56c5c5c5483c"
+   },
+   "status": 200,
+   "response": {
+    "ok": true
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/wishes",
+   "status": 200,
+   "response": {
+    "pronunciations": [
+     {
+      "key": "hailkes",
+      "surface": "Hailkes",
+      "spokenForm": "Hên-khơ",
+      "requestedAt": 1790957770.340496
+     },
+     {
+      "key": "lucien",
+      "surface": "Lucien",
+      "spokenForm": "Lu-xi-en",
+      "requestedAt": 1790957770.381608
+     }
+    ],
+    "lines": {
+     "c1_s0002_c58b67": {
+      "speaker": {
+       "name": "LUCIEN",
+       "shown": "Lucien",
+       "requestedAt": 1790957770.2458115
+      },
+      "delivery": {
+       "kind": "dialogue",
+       "emotion": "",
+       "intensity": null,
+       "requestedAt": 1790957770.2458115
+      }
+     },
+     "c1_s0006_34534a": {
+      "speaker": {
+       "name": "Tiểu Mai",
+       "shown": "Tiểu Mai",
+       "requestedAt": 1790957770.1543303
+      },
+      "delivery": {
+       "kind": "",
+       "emotion": "tender",
+       "intensity": 1,
+       "requestedAt": 1790957770.1954312,
+       "spoken": "Chào anh nhé."
+      }
+     }
+    }
+   }
+  },
+  {
+   "method": "DELETE",
+   "path": "/edits",
+   "status": 200,
+   "response": {
+    "applied": 0,
+    "waiting": 0
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/wishes",
+   "status": 200,
+   "response": {
+    "pronunciations": [],
+    "lines": {}
+   }
+  }
+ ]
+}

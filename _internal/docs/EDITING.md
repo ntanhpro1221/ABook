@@ -189,7 +189,8 @@ Code: Python `abook/webui/book_wishes.py` (validate/merge/count, the writers, `p
   the "replaced" memory and Hoàn tác are Studio's own; the locked files are untouched). Kotlin re-implements those few writers and
   is held to the same JSON by the contract fixtures (`"$requestedAt#N"` stands for the clock stamped by step N).
 - **Same routes, same JSON** (Python server for a package book, `LocalStudio.kt` on the phone): `POST /pronunciation`, `/speaker`,
-  `/line`, `/voice`, `/review`, `/characters/merge`, `/chapters/<n>/retake`, `GET /pending-changes`, `POST /pending-changes/withdraw`;
+  `/line`, `/voice`, `/review`, `/characters/merge`, `/chapters/<n>/retake`, `GET /pending-changes`, `POST /pending-changes/withdraw`,
+  `GET /wishes` (the reader's per-line view, below);
   `GET /edits` -> `{applied, waiting: 0, wishes}`. Validation uses the script segments (`stableId` + `textSha256`) and `cast.json`
   instead of SQLite; the Vietnamese error sentences are the workshop's. Not on a package: `bracketRule` / `everywhere` (they need
   the analysis database) are ignored; `/review` records only the retake; `/voice` with neither preset nor gender is refused.
@@ -205,14 +206,29 @@ Code: Python `abook/webui/book_wishes.py` (validate/merge/count, the writers, `p
   `listener_overrides.request_*` writers, `requested_at` re-stamped (now + index * 1e-3 per distinct original click, so clicks keep
   their order and the phone's clock skew does not matter), pre-checked with `store.*_request_problem`; the ones that no longer fit
   the project are skipped. Response `{applied, skipped, music, requests}`; the requests then sit in the normal pending list.
+- **`GET /wishes`** (same JSON on the Python server and `LocalStudio.kt`; `book_wishes.by_line` / `BookWishes.byLine`; contract case
+  `wishes_by_line`): what the reader marks "đang chờ Studio" - `{"pronunciations": [{key, surface, spokenForm, requestedAt}],
+  "lines": {"<stableId>": {"speaker"?: {name, shown, requestedAt}, "delivery"?: {kind, emotion, intensity, spoken?, requestedAt},
+  "retake"?: {requestedAt}}}}`. `shown` is the name the listener sees (`displayName`, "người kể", or the typed name); nothing is
+  checked against the book (a line that is gone is simply never asked for). A workshop book answers it empty (its requests live in
+  `overrides.json`).
 - **UI** (`ui/src`): on a book without a workshop the cast tab offers "Đổi giới tính" and "Gộp vào…" (`GenderDialog` / `MergeDialog`
   with `waiting`), the book menu shows "Việc đang chờ Studio (N)" (`listen/WishesDialog.tsx`, sharing `PendingList` with
-  "Áp dụng thay đổi"), and the producer's fold toast reports `requests`. Not built yet: the reader-line actions (pronunciation, who
-  says it, kind/emotion/spoken text, retake) - the routes and the "chờ Studio" pending marks are there, the buttons on a line
-  are not; `POST /pending-changes/withdraw` is not propagated through re-import (see above).
+  "Áp dụng thay đổi"), and the producer's fold toast reports `requests`. **Per line**, in the reader (`listen/ReaderScreen.tsx`,
+  desktop and phone - the same screen): tap a sentence -> "Sửa câu này" (`listen/LineWishes.tsx`) opens one dialog with who says it
+  (`SpeakerMenu`), kind / emotion / spoken text (`DeliveryMenu`), the reading of one word of the line (`EditReading`, picked from the
+  line's own words - a book without a workshop has no name list), and retake the line (`POST /review`). These are the very menus of
+  Studio's script tab (exported from `studio/ScriptTab.tsx` / `NameReadings.tsx`), so the rules and words are shared; only the write
+  differs. A line with something waiting carries a clock mark in the text, and the dialog lists each waiting item with "Bỏ"
+  (`POST /pending-changes/withdraw`) under the `WAITING_STUDIO` sentence; speaker and reading toasts offer "Hoàn tác". Greyed, with
+  the reason, never hidden: "Nghe thử" and "Dùng cho mọi sách" in the reading editor (they need a workshop / the computer's shared
+  list), speaker on a narration line, retake in a chapter with no audio, a line without `stableId` (a file packed by an old Studio),
+  and the whole button on a streamed ("link") book (`LINK_BOOK`) or a workshop book without Studio. A workshop book with Studio gets
+  "Sửa trong Studio" (desktop: the same line in the script tab). `shared/capabilities.ts`: `lineEditing(caps)` decides which.
+  `POST /pending-changes/withdraw` is not propagated through re-import (see above).
 
 ## Not built (later phases)
 
-The sync edits inbox, `.abookproj` v2, phone music swap, phone cover web search; the reader-line buttons for wishes; edits on
+The sync edits inbox, `.abookproj` v2, phone music swap, phone cover web search; edits on
 streamed ("link") books; an in-place "Lưu" that overwrites the original file (desktop "Lưu" writes `Đã xuất/<title>.abook`,
 Android asks where with the system "create document" picker).

@@ -523,6 +523,38 @@ def withdraw(folder: Path, section: str, keys: list[str], requested_at: float) -
 # ---- danh sách "đang chờ Studio" ---------------------------------------------------------------------------------
 
 
+def shown_name(cast: list[dict[str, Any]], raw: Any) -> str:
+    """Tên người nghe thấy của một người trong ý muốn ("người kể", tên đã đổi, hay chính chữ gõ nếu chưa có trong sách)."""
+    raw = str(raw or "")
+    if overrides.character_key(raw) == overrides.NARRATOR:
+        return "người kể"
+    person = _person(cast, raw)
+    return str(person.get("displayName") or person["name"]) if person is not None else raw
+
+
+def by_line(folder: Path, wishes: dict[str, Any] | None) -> dict[str, Any]:
+    """Ý muốn theo TỪNG CÂU, cho trang đọc (đánh dấu "đang chờ Studio" ngay trên câu): {"pronunciations": [{key, surface,
+    spokenForm, requestedAt}], "lines": {mã câu: {"speaker"?, "delivery"?, "retake"?}}}. Không kiểm câu còn trong sách hay không
+    - câu nào không còn thì trang đọc không bao giờ hỏi tới."""
+    wishes = wishes or {}
+    cast = people(folder) if wishes.get("speakers") else []
+    pronunciations = [{"key": key, "surface": entry["surface"], "spokenForm": entry["spoken_form"], "requestedAt": float(entry["requested_at"])}
+                      for key, entry in sorted((wishes.get("pronunciations") or {}).items())]
+    lines: dict[str, dict[str, Any]] = {}
+    for stable_id, entry in (wishes.get("speakers") or {}).items():
+        lines.setdefault(stable_id, {})["speaker"] = {"name": entry["speaker"], "shown": shown_name(cast, entry["speaker"]),
+                                                      "requestedAt": float(entry["requested_at"])}
+    for stable_id, entry in (wishes.get("lines") or {}).items():
+        delivery = {"kind": entry["kind"], "emotion": entry["emotion"], "intensity": entry["intensity"],
+                    "requestedAt": float(entry["requested_at"])}
+        if "spoken" in entry:
+            delivery["spoken"] = entry["spoken"]
+        lines.setdefault(stable_id, {})["delivery"] = delivery
+    for stable_id, entry in (wishes.get("retakes") or {}).items():
+        lines.setdefault(stable_id, {})["retake"] = {"requestedAt": float(entry["requested_at"])}
+    return {"pronunciations": pronunciations, "lines": lines}
+
+
 def pending_details(folder: Path, wishes: dict[str, Any] | None) -> dict[str, Any]:
     """Cùng hình dạng với `store.pending_details` của dự án ({items, lines, chapters, seconds}) - từng ý muốn nói bằng lời,
     đủ để rút đúng nó (`section`, `key`, `requestedAt`) - nhưng không có câu nào "đã thu" để đếm: cuốn này chưa thu lại gì."""
@@ -534,11 +566,7 @@ def pending_details(folder: Path, wishes: dict[str, Any] | None) -> dict[str, An
     titles = {chapter["id"]: str(chapter.get("fullTitle") or chapter.get("title") or "") for chapter in lines.chapters}
 
     def who(raw: Any) -> str:
-        raw = str(raw or "")
-        if overrides.character_key(raw) == overrides.NARRATOR:
-            return "người kể"
-        person = _person(cast, raw)
-        return str(person.get("displayName") or person["name"]) if person is not None else raw
+        return shown_name(cast, raw)
 
     def handle(section: str, key: str, entry: dict[str, Any]) -> dict[str, Any]:
         return {"section": section, "key": key, "requestedAt": float(entry.get("requested_at") or 0)}

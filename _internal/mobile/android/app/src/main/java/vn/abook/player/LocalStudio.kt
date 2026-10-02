@@ -85,6 +85,7 @@ object LocalStudio {
                 JSONObject().put("applied", BookEdits.countApplied(edits)).put("waiting", 0).put("wishes", BookEdits.countWishes(edits))
             }
             "GET" to "/pending-changes" -> { dir, _ -> BookWishes.pendingDetails(dir, BookEdits.rawBook(dir), BookEdits.load(dir).optJSONObject("wishes")) }
+            "GET" to "/wishes" -> { dir, _ -> BookWishes.byLine(dir, BookEdits.rawBook(dir), BookEdits.load(dir).optJSONObject("wishes")) }
             "POST" to "/pending-changes/withdraw" -> ::pendingWithdraw
             "POST" to "/characters/merge" -> ::mergeCharacters
             "POST" to "/pronunciation" -> ::pronunciation

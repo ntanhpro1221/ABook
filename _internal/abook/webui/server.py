@@ -1775,6 +1775,13 @@ class Handler(BaseHTTPRequestHandler):
         since = store.changes_since(project, float(row["updated_at"] or 0) if row is not None else 0.0)
         self._send_json(HTTPStatus.OK, store.pending_details(project, since))
 
+    def get_wishes(self, _query: dict[str, list[str]], value: str) -> None:
+        # Trang đọc của cuốn không có xưởng: câu nào đang có ý muốn chờ Studio (book_wishes.by_line). Cuốn có xưởng ghi thẳng
+        # yêu cầu vào dự án (overrides.json) nên không có ý muốn nào ở đây.
+        project = self.app._editable(value)
+        wishes = book_edits.load(project).get("wishes") if packages.is_package(project) else None
+        self._send_json(HTTPStatus.OK, book_wishes.by_line(project, wishes))
+
     def post_pending_withdraw(self, _query: dict[str, list[str]], value: str) -> None:
         # Bỏ một thay đổi khỏi hộp "Áp dụng N thay đổi" trước khi áp (soát UX a6 01-10: muốn bỏ một mục thì phải đi tìm lại
         # đúng thẻ / đúng câu ở ba tab khác nhau). Chỉ khi sách KHÔNG chạy: đang chạy thì dây chuyền có thể đang áp chính
@@ -2887,6 +2894,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(BOOK + r"/cast"), Handler.get_cast),
     ("GET", re.compile(BOOK + r"/activity"), Handler.get_activity),
     ("GET", re.compile(BOOK + r"/pending-changes"), Handler.get_pending_changes),
+    ("GET", re.compile(BOOK + r"/wishes"), Handler.get_wishes),
     ("POST", re.compile(BOOK + r"/pending-changes/withdraw"), Handler.post_pending_withdraw),
     ("POST", re.compile(BOOK + r"/chapters/(\d+)/retake"), Handler.post_chapter_retake),
     ("POST", re.compile(BOOK + r"/characters/merge"), Handler.post_merge_character),

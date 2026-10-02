@@ -19,7 +19,7 @@ import { UNDO_MS, undoAction, usePendingNote, useWhenApplied } from "./decisions
 // cả chương. Sửa đi đúng đường của thẻ "Ai nói câu này" (POST /speaker -> overrides.json -> dây chuyền áp ở ranh giới
 // chương, câu đã thu thì thu lại), nên không có gì phải chờ; mỗi lần sửa hay xác nhận là một nhãn cho vòng học.
 
-interface Person {
+export interface Person {
   value: string;
   label: string;
   lines: number;
@@ -40,7 +40,7 @@ interface Wish {
   reason?: string;
 }
 
-interface Line {
+export interface Line {
   segmentId: number;
   stableId: string;
   textSha256: string;
@@ -73,7 +73,7 @@ interface LineWish {
   reason?: string;
 }
 
-interface Delivery {
+export interface Delivery {
   kind?: string;
   emotion?: string;
   intensity?: number;
@@ -81,7 +81,7 @@ interface Delivery {
   spoken?: string;
 }
 
-interface ChapterScript {
+export interface ChapterScript {
   chapterId: number;
   index: number;
   title: string;
@@ -112,8 +112,8 @@ interface Contents {
 
 type Filter = "all" | "speech" | "doubt";
 
-const NARRATOR = "NARRATOR";
-const UNNAMED = "UNNAMED";
+export const NARRATOR = "NARRATOR";
+export const UNNAMED = "UNNAMED";
 const FIXED: Person[] = [
   { value: NARRATOR, label: "Người kể", lines: 0 },
   { value: UNNAMED, label: "Vai phụ không tên", lines: 0 },
@@ -121,7 +121,7 @@ const FIXED: Person[] = [
 // Gán nhanh bằng phím số: người nói nhiều nhất của chương đứng trước.
 const HOTKEYS = 9;
 // Bộ cảm xúc của khâu phân tích (analysis.ALLOWED_EMOTIONS) và bốn mức cường độ.
-const EMOTIONS: [string, string][] = [
+export const EMOTIONS: [string, string][] = [
   ["neutral", "Bình thường"],
   ["happy", "Vui"],
   ["sad", "Buồn"],
@@ -136,13 +136,13 @@ const EMOTIONS: [string, string][] = [
 ];
 const EMOTION_LABEL = Object.fromEntries(EMOTIONS) as Record<string, string>;
 const LEVELS = ["Nhẹ", "Vừa", "Mạnh", "Rất mạnh"];
-const KINDS = [
+export const KINDS = [
   { value: "narration", label: "Lời kể" },
   { value: "dialogue", label: "Lời thoại" },
   { value: "thought", label: "Nội tâm" },
 ];
 
-function deliveryText(emotion: string, intensity: number | null): string {
+export function deliveryText(emotion: string, intensity: number | null): string {
   const label = EMOTION_LABEL[emotion] ?? emotion;
   return intensity ? `${label} · ${LEVELS[intensity]?.toLowerCase() ?? intensity}` : label;
 }
@@ -302,7 +302,23 @@ function useLineFix(bookId: string, chapterId: number) {
 
 // Bảng sửa cách đọc một câu: loại đoạn, cảm xúc, mức. Lời kể thành lời thoại / nội tâm thì phải chọn người nói (một câu
 // thoại luôn có chủ). Mức do khâu phân tích hiệu chỉnh lại theo cảm xúc - thì thầm, dịu dàng tối đa "Vừa".
-function DeliveryMenu({ bookId, line, script, onSave, wide = false }: { bookId: string; line: Line; script: ChapterScript; onSave: (change: Delivery) => void; wide?: boolean }) {
+// `noWorkshop`: cuốn không có xưởng - tên riêng không có danh sách sẵn (cần sổ phân tích), nên không có mục "Tên trong câu" ở đây:
+// trang đọc có hộp riêng chọn từ trong câu (listen/LineWishes.tsx).
+export function DeliveryMenu({
+  bookId,
+  line,
+  script,
+  onSave,
+  wide = false,
+  noWorkshop = false,
+}: {
+  bookId: string;
+  line: Line;
+  script: ChapterScript;
+  onSave: (change: Delivery) => void;
+  wide?: boolean;
+  noWorkshop?: boolean;
+}) {
   const waiting = line.lineWish?.state === "pending" ? line.lineWish : null;
   const [kind, setKind] = useState(waiting?.kind || line.kind);
   const [emotion, setEmotion] = useState(waiting?.emotion || line.emotion || "neutral");
@@ -312,7 +328,7 @@ function DeliveryMenu({ bookId, line, script, onSave, wide = false }: { bookId: 
   const reading = line.spoken ?? line.text;
   const [words, setWords] = useState(waiting?.spoken || reading);
   const needsSpeaker = line.kind === "narration" && kind !== "narration";
-  const names = useNamesInLine(bookId, line.text);
+  const names = useNamesInLine(bookId, line.text, !noWorkshop);
   const change: Delivery = {};
   if (kind !== line.kind) change.kind = kind;
   if (line.emotion !== null && emotion !== line.emotion) change.emotion = emotion;
@@ -506,12 +522,12 @@ function DeliveryChip({
 }
 
 /** Tấm trượt trên điện thoại che mất đúng câu vừa chạm (soát UX 30-09) - trích lại câu ấy ở đầu tấm. */
-function LineQuote({ line }: { line: Line }) {
+export function LineQuote({ line }: { line: Line }) {
   return <p className="mx-1.5 mt-2 line-clamp-3 rounded-lg bg-hover px-3 py-2 text-sm leading-snug text-fg-2">{line.text}</p>;
 }
 
 /** `phone`: trong tấm trượt - ô tìm không tự bật bàn phím (bàn phím che danh sách người của chương, lối chọn chính). */
-function SpeakerMenu({ line, script, onPick, phone = false }: { line: Line; script: ChapterScript; onPick: (person: Person) => void; phone?: boolean }) {
+export function SpeakerMenu({ line, script, onPick, phone = false }: { line: Line; script: ChapterScript; onPick: (person: Person) => void; phone?: boolean }) {
   const [query, setQuery] = useState("");
   const everyone = [...script.cast, ...script.others];
   const suggested = line.hint?.suggest ? everyone.find((person) => person.value === line.hint?.suggest) : undefined;

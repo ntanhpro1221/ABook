@@ -504,7 +504,17 @@ export function App() {
                       />
                     }
                   />
-                  <Route path="/book/:id/read/:chapterId?" element={<ReaderScreen />} />
+                  <Route
+                    path="/book/:id/read/:chapterId?"
+                    element={
+                      <ReaderScreen
+                        editing={!info.remote}
+                        onOpenStudioScript={(bookId, chapterId, stableId) =>
+                          window.location.assign(`#/studio/${bookId}?tab=script&chapter=${chapterId}&line=${encodeURIComponent(stableId)}`)
+                        }
+                      />
+                    }
+                  />
                   <Route path="/studio" element={<StudioClosed><ProjectsScreen /></StudioClosed>} />
                   <Route path="/studio/new" element={<StudioClosed><NewProjectScreen /></StudioClosed>} />
                   <Route path="/studio/:id" element={<StudioClosed><ProjectScreen /></StudioClosed>} />

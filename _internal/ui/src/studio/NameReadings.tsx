@@ -11,7 +11,7 @@ import { api, suggestionOf, urls, type BookSummary } from "./api";
 import { ReadingProblem } from "./ReadingProblem";
 import { SharedReadingsOffer, useSharedEntry } from "./sharedReadings";
 import { useTryReading } from "./TryReading";
-import { refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied } from "./decisions";
+import { refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied, WAITING_STUDIO } from "./decisions";
 
 // Tab Nhân vật, mục "Cách đọc tên" (webui/name_readings.py): mọi tên riêng máy đọc thế nào - kể cả tên máy chắc và cách
 // người nghe đã chọn, hai thứ hộp việc không bao giờ hỏi lại. Sửa ở đây đi đúng đường của thẻ cách đọc: ghi mong muốn,
@@ -30,9 +30,10 @@ interface NameReading {
 
 const PAGE = 30;
 
-export function useNameReadings(bookId: string) {
+export function useNameReadings(bookId: string, enabled = true) {
   return useQuery({
     queryKey: ["pronunciations", bookId],
+    enabled,
     queryFn: () => api<{ items: NameReading[]; unseen: number }>(`/api/books/${bookId}/pronunciations`),
   });
 }
@@ -202,8 +203,8 @@ function ReadingRow({ bookId, item, fresh = false }: { bookId: string; item: Nam
 
 /** Tên riêng có cách đọc nằm trong một câu - so như TTS khớp: nguyên từ, không phân biệt hoa thường, GIỮ dấu ("hàn" không
  *  phải "Han"). Mỗi tên một lần, theo thứ tự xuất hiện. */
-export function useNamesInLine(bookId: string, text: string): NameReading[] {
-  const { data } = useNameReadings(bookId);
+export function useNamesInLine(bookId: string, text: string, enabled = true): NameReading[] {
+  const { data } = useNameReadings(bookId, enabled);
   return useMemo(() => {
     if (!data) return [];
     const index = new Map(data.items.map((item) => [item.surface.normalize("NFC").toLowerCase(), item]));
@@ -247,7 +248,9 @@ export function NameInLine({ bookId, item }: { bookId: string; item: NameReading
   );
 }
 
-function EditReading({ bookId, item, onDone, fresh }: { bookId: string; item: NameReading; onDone: () => void; fresh: boolean }) {
+/** `waiting`: cuốn không có xưởng (file .abook) - chỉ ghi ý muốn chờ Studio; giá trị là lý do chưa nghe thử / chưa dùng chung được
+ *  (nút và ô vẫn hiện, mờ đi kèm lý do). */
+export function EditReading({ bookId, item, onDone, fresh, waiting }: { bookId: string; item: NameReading; onDone: () => void; fresh: boolean; waiting?: string }) {
   const client = useQueryClient();
   const when = useWhenApplied(bookId);
   // Ô sửa hiện như dòng bên cạnh (“Rên-ta-rô”, chữ đầu mỗi từ viết hoa - soát UX 30-09); lưu mà chỉ khác hoa thường thì
@@ -259,11 +262,11 @@ function EditReading({ bookId, item, onDone, fresh }: { bookId: string; item: Na
   const [suggestion, setSuggestion] = useState("");
   // "Dùng cho mọi sách": cùng cách đọc vào từ điển chung (webui/shared_readings.py) - sách mới có tên này tự dùng.
   // Tên đã có trong cách đọc chung: ô tự tích - lưu là sửa luôn mục chung (soát UX 01-10: không biết tên nào đã dùng chung).
-  const sharedEntry = useSharedEntry(item.surface);
-  const [everywhere, setEverywhere] = useState(Boolean(sharedEntry));
+  const sharedEntry = useSharedEntry(item.surface, undefined, !waiting);
+  const [everywhere, setEverywhere] = useState(Boolean(sharedEntry) && !waiting);
   useEffect(() => {
-    if (sharedEntry) setEverywhere(true);
-  }, [sharedEntry]);
+    if (sharedEntry && !waiting) setEverywhere(true);
+  }, [sharedEntry, waiting]);
   const save = useMutation({
     mutationFn: (spokenForm: string) =>
       api<{ surface: string; spokenForm: string; requestedAt: number }>(`/api/books/${bookId}/pronunciation`, {
@@ -276,6 +279,14 @@ function EditReading({ bookId, item, onDone, fresh }: { bookId: string; item: Na
       const shared = everywhere ? " Đã thêm vào cách đọc chung - sách mới có tên này tự dùng." : "";
       onDone();
       const keep = spokenForm === item.spoken;
+      if (waiting) {
+        toast.success(`Đã ghi: “${item.surface}” đọc là “${shownReading(spokenForm)}”`, {
+          description: WAITING_STUDIO,
+          action: undoAction(client, bookId, "pronunciation", [{ surface: item.surface, requestedAt, keep: false }], `Đã bỏ cách đọc vừa ghi cho “${item.surface}”.`),
+          duration: UNDO_MS,
+        });
+        return;
+      }
       // Như thẻ trong hộp việc: sửa nhầm thì "Hoàn tác" trả về đúng như trước lần lưu này (`previous` = cách đang đọc).
       const undo = {
         action: undoAction(
@@ -323,6 +334,7 @@ function EditReading({ bookId, item, onDone, fresh }: { bookId: string; item: Na
     surface: item.surface,
     spoken: typed,
     disabled: Boolean(problem),
+    unavailable: waiting,
     onRejected: (message, suggestionText) => {
       setProblem(message);
       setSuggestion(suggestionText);
@@ -377,8 +389,14 @@ function EditReading({ bookId, item, onDone, fresh }: { bookId: string; item: Na
         Lưu
       </Button>
       <label className="flex basis-full items-center gap-1.5 text-xs text-fg-2">
-        <input type="checkbox" checked={everywhere} onChange={(event) => setEverywhere(event.target.checked)} className="accent-[var(--color-accent)]" />
-        Dùng cho mọi sách
+        <input
+          type="checkbox"
+          checked={everywhere}
+          disabled={Boolean(waiting)}
+          onChange={(event) => setEverywhere(event.target.checked)}
+          className="accent-[var(--color-accent)]"
+        />
+        <span className={cn(waiting && "opacity-60")}>Dùng cho mọi sách{waiting ? ` - ${waiting}` : ""}</span>
       </label>
     </form>
       {tryIt.note}

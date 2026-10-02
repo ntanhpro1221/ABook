@@ -20,17 +20,18 @@ export interface SharedReading {
   current?: string;
 }
 
-export function useSharedReadings() {
+export function useSharedReadings(enabled = true) {
   return useQuery({
     queryKey: ["shared-readings"],
+    enabled,
     queryFn: () => api<{ entries: SharedReading[] }>("/api/readings"),
   });
 }
 
 /** Mục cách đọc chung của một từ (không phân biệt hoa thường); `reading` có thì chỉ khi mục ấy đọc ĐÚNG như vậy - dấu
  *  "dùng chung" trên dòng tên. */
-export function useSharedEntry(surface: string, reading?: string | null): SharedReading | undefined {
-  const { data } = useSharedReadings();
+export function useSharedEntry(surface: string, reading?: string | null, enabled = true): SharedReading | undefined {
+  const { data } = useSharedReadings(enabled);
   const key = surface.toLocaleLowerCase("vi");
   return data?.entries.find(
     (entry) => entry.surface.toLocaleLowerCase("vi") === key && (reading == null || entry.spokenForm === reading),
