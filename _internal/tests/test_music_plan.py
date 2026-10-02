@@ -158,3 +158,50 @@ def test_a_built_plan_carries_the_loudness_and_speech_band_of_its_tracks(tmp_pat
 
     plan = music_plan.build(project, near, with_loudness, catalog_revision="r1")
     assert plan["tracks"] and all(info["lufs"] == -21.5 and info["speechBand"] == 0.42 for info in plan["tracks"].values())
+
+
+def test_the_plan_avoids_tracks_this_machine_cannot_get_and_marks_an_unavailable_pin(tmp_path: Path) -> None:
+    project = make_project(tmp_path)
+    plan = music_plan.build(project, near, lookup, available=lambda link: link != "https://x/calm.mp3")
+    assert plan["scenes"] and {scene["link"] for scene in plan["scenes"]} == {"https://x/other.mp3"}
+    assert list(plan["tracks"]) == ["https://x/other.mp3"]
+    key = plan["scenes"][0]["key"]
+    music_plan.write_overrides(project, {"pins": {key: "https://x/calm.mp3"}})
+    plan = music_plan.build(project, near, lookup, available=lambda link: link != "https://x/calm.mp3")
+    assert plan["scenes"][0]["link"] == "https://x/other.mp3" and plan["scenes"][0]["pinUnavailable"] is True
+    assert music_plan.read_overrides(project)["pins"] == {key: "https://x/calm.mp3"}, "ghim của người dùng không bị xoá"
+    assert "pinUnavailable" not in music_plan.scenes_of(plan)[0], "dấu này là kết quả chọn, không phải đoạn"
+    plan = music_plan.build(project, near, lookup)
+    assert plan["scenes"][0]["link"] == "https://x/calm.mp3" and "pinUnavailable" not in plan["scenes"][0]
+
+
+def test_a_cue_whose_track_cannot_be_exported_uses_the_first_exportable_alternative(tmp_path: Path) -> None:
+    project = make_project(tmp_path)
+    plan = music_plan.build(project, near, lookup)
+    chapter = plan["scenes"][0]["chapterId"]
+    first = plan["scenes"][0]["link"]
+    other = next(t["link"] for t in TRACKS if t["link"] != first)
+    folder = tmp_path / "cache"
+    folder.mkdir()
+
+    def file(link: str) -> Path | None:
+        if link == first:
+            return None
+        path = folder / music_plan.track_name(link).split("/")[1]
+        path.write_bytes(b"ID3")
+        return path
+
+    asked = []
+
+    def alternatives(root: Path, key: str, exclude: list[str]) -> list[dict]:
+        asked.append((key, exclude))
+        return [{"link": other, **lookup([other])[other]}]
+
+    assert music_plan.package(project, [chapter], file) is None, "không có bài thay thế: chỗ ấy im lặng như cũ"
+    music, files = music_plan.package(project, [chapter], music_plan.TrackSource(file, alternatives))
+    assert set(files) == {music_plan.track_name(other)}
+    assert music["tracks"][music_plan.track_name(other)]["link"] == other
+    assert {cue["track"] for cue in music["chapters"][str(chapter)]} == {music_plan.track_name(other)}
+    assert asked and asked[0][1] == [first]
+    none = music_plan.package(project, [chapter], music_plan.TrackSource(file, lambda root, key, exclude: []))
+    assert none is None

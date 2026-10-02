@@ -6,6 +6,7 @@ import android.os.Looper
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import org.json.JSONObject
@@ -48,6 +49,7 @@ object MusicBed {
     private var current: Bed? = null
     private val fading = mutableListOf<Bed>()
     private var fadingTicker = false
+    private val failed = mutableSetOf<String>() // bài không đọc / phát được trong phiên này: im lặng, không thử lại
 
     fun init(appContext: Context) {
         context = appContext.applicationContext
@@ -66,6 +68,7 @@ object MusicBed {
         if (context == null) return
         if (bookId != book) {
             stop()
+            failed.clear()
             book = bookId
             music = if (bookId.isEmpty()) null else Store.playableManifest(bookId)?.optJSONObject("music")
             val level = music?.optDouble("levelDb", -20.0) ?: -20.0
@@ -79,7 +82,7 @@ object MusicBed {
         val seeked = abs(seconds - lastSeconds) > SEEK_JUMP_SECONDS
         lastSeconds = seconds
         playing = isPlaying
-        val cue = cues.firstOrNull { seconds >= it.start && seconds < it.end }
+        val cue = cues.firstOrNull { seconds >= it.start && seconds < it.end }?.takeUnless { it.track in failed }
         if (cue?.track != current?.track || (seeked && cue != null && current == null)) switchTo(cue, seconds)
         for (bed in listOfNotNull(current) + fading) {
             if (playing && !bed.player.isPlaying) bed.player.play()
@@ -140,6 +143,17 @@ object MusicBed {
                         player.removeListener(this)
                         val duration = player.duration
                         if (duration > 0) player.seekTo(offsetMs % duration)
+                    }
+                }
+            })
+            player.addListener(object : Player.Listener {
+                // Điện thoại không tự tải nhạc từ mạng: file thiếu trong gói / máy tính không phát được thì cho đoạn này im lặng.
+                override fun onPlayerError(error: PlaybackException) {
+                    failed += cue.track
+                    main.post {
+                        player.release()
+                        if (current?.player === player) current = null
+                        fading.removeAll { it.player === player }
                     }
                 }
             })
