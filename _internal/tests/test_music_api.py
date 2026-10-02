@@ -40,6 +40,12 @@ def test_the_player_gets_timed_cues_through_this_machine(studio, tmp_path: Path)
     assert status == 200 and cues["cues"]
     first = cues["cues"][0]
     assert first["src"] == "/api/music/track?link=" + quote(first["link"], safe="")
+    # Ghi công (CC BY) của bài chương này dùng, khoá theo link của mốc - lấy từ plan["tracks"].
+    tracks = json.loads((paths.root / "music_plan.json").read_text(encoding="utf-8")).get("tracks") or {}
+    for cue in cues["cues"]:
+        want = {key: tracks[cue["link"]][key] for key in ("title", "creator", "attribution", "landing")
+                if tracks.get(cue["link"], {}).get(key)}
+        assert cues["credits"].get(cue["link"], {}) == want
 
 
 def test_only_catalog_tracks_are_fetched_and_a_cached_file_is_served(studio, tmp_path: Path) -> None:  # noqa: F811

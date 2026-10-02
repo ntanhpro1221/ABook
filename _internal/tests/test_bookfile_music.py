@@ -122,6 +122,23 @@ def test_a_book_opened_from_a_file_plays_its_packaged_music(studio, tmp_path: Pa
     assert status == 404, "chỉ bài có trong sách"
 
 
+def test_the_music_credits_ride_along_with_the_cues_of_a_packaged_book(studio, tmp_path: Path) -> None:  # noqa: F811
+    """CC BY đòi nêu tác giả ở nơi nhạc phát: trình phát lấy ghi công của bài đang nghe từ chính phản hồi mốc nhạc."""
+    _paths, app, server, _runner = studio
+    project = make_project(tmp_path / "may_khac")
+    _plan(project)
+    path = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", music_track=_tracks(tmp_path))
+    book = app.open_book_file(str(path))["id"]
+    status, cues = _call(server, "GET", f"/api/books/{book}/music/chapters/1")
+    assert status == 200
+    # Khoá theo `link` của mốc (cùng chuỗi trình phát giữ ở MusicBed.activeLink); chỉ khoá nào có thì mới có mặt.
+    assert {cue["link"] for cue in cues["cues"]} == {CALM, BATTLE}
+    assert cues["credits"] == {CALM: {"title": "Calm", "creator": "A", "attribution": "Calm by A (CC BY 4.0)"},
+                               BATTLE: {"title": "Battle", "creator": "B", "attribution": "Battle by B (CC BY 4.0)"}}
+    status, none = _call(server, "GET", f"/api/books/{book}/music/chapters/2")
+    assert status == 200 and none["cues"] == [] and none["credits"] == {}
+
+
 def test_the_phone_package_carries_the_music_already_on_this_machine(tmp_path: Path) -> None:
     from ebook_reader.webui.library import Library, Preferences
     from ebook_reader.webui.listening import Listening

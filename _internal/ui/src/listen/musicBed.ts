@@ -12,6 +12,14 @@ export interface MusicCue {
   src: string;
 }
 
+/** Ghi công tác giả một bài (CC BY đòi nêu tên ở nơi nhạc phát) - khoá theo `link` của mốc. */
+export interface MusicCredit {
+  title?: string;
+  creator?: string;
+  attribution?: string;
+  landing?: string;
+}
+
 type BedAudio = Pick<HTMLAudioElement, "play" | "pause" | "paused" | "volume" | "loop" | "currentTime" | "duration"> & {
   addEventListener(type: "loadedmetadata", listener: () => void, options?: { once?: boolean }): void;
 };
@@ -42,6 +50,8 @@ export class MusicBed {
   private fading: BedAudio[] = [];
   private timer: ReturnType<typeof setInterval> | null = null;
   private lastTime = 0;
+  private listeners = new Set<(link: string | null) => void>();
+  private announced: string | null = null;
 
   setCues(cues: MusicCue[], levelDb: number): void {
     this.cues = cues;
@@ -74,11 +84,25 @@ export class MusicBed {
     return this.current?.cue.link ?? null;
   }
 
+  /** Báo mỗi khi bài đang phát đổi (kể cả thành im lặng = null): giao diện vẽ dòng ghi công theo đó. */
+  onActiveChange(listener: (link: string | null) => void): () => void {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+
   stop(): void {
     for (const audio of [this.current?.audio, ...this.fading]) audio?.pause();
     this.current = null;
     this.fading = [];
     this.cues = [];
+    this.emitActive();
+  }
+
+  private emitActive(): void {
+    const link = this.activeLink;
+    if (link === this.announced) return;
+    this.announced = link;
+    for (const listener of [...this.listeners]) listener(link);
   }
 
   private target(): number {
@@ -105,6 +129,7 @@ export class MusicBed {
       this.current = { cue, audio };
       if (this.playing) void audio.play().catch(() => undefined);
     }
+    this.emitActive();
     this.startFade();
   }
 
