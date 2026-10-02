@@ -1,6 +1,6 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Cast, Laptop, Loader2, MonitorSmartphone, MonitorSpeaker, Pause, Play, Smartphone, Speaker, Tv, X } from "lucide-react";
+import { Cast, Laptop, Loader2, MonitorSmartphone, MonitorSpeaker, Pause, Play, RefreshCw, Smartphone, Speaker, Tv, X } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useClockReader } from "@/listen/clock";
@@ -335,6 +335,8 @@ export function HandOffButton({ className }: { className?: string }) {
   const command = useRemoteCommand();
   const player = usePlayer();
   const readPosition = useClockReader();
+  const client = useQueryClient();
+  const [searching, setSearching] = useState(false);
   const track = player.track;
   const book = useListenBook(track?.bookId);
   // Máy đã ghép chỉ phát được sách của CHÍNH nó - cuốn ảo "Trên <máy ấy>" - host đổi mã cuốn sang mã của máy kia.
@@ -344,7 +346,16 @@ export function HandOffButton({ className }: { className?: string }) {
         candidate.via === "cast" ||
         (candidate.via === "peer" ? candidate.device === owner : candidate.stream || candidate.books.includes(track.bookId)))
     : [];
-  if (!targets.length || !track) return null;
+  if (!track || !data) return null;
+  // Tìm lại loa / TV ngay, không đợi nhịp 30 giây của máy chủ (cast.scan); hỏi lại danh sách sau khi lượt tìm (~2 giây) xong.
+  const rescan = () => {
+    setSearching(true);
+    void api("/api/cast/scan", { method: "POST" }).catch(() => undefined);
+    window.setTimeout(() => {
+      setSearching(false);
+      void client.invalidateQueries({ queryKey: ["remote"] });
+    }, 2500);
+  };
   // Không cần thông báo "đã chuyển": thanh "Đang phát trên <máy>" hiện ra sau một lượt mạng chính là lời xác nhận. Loa /
   // TV mất vài giây (tải chương, đợi chạy rồi mới tua tới đúng chỗ) nên có dòng "Đang mở…" tới lúc ấy.
   const handOff = (target: RemotePhone) => {
@@ -381,7 +392,7 @@ export function HandOffButton({ className }: { className?: string }) {
   return (
     <DropdownMenu.Root
       onOpenChange={(open) => {
-        if (open) void api("/api/cast/scan", { method: "POST" }).catch(() => undefined);
+        if (open && !searching) rescan();
       }}
     >
       <Tooltip label="Phát trên thiết bị khác">
@@ -398,6 +409,25 @@ export function HandOffButton({ className }: { className?: string }) {
       <DropdownMenu.Portal>
         <DropdownMenu.Content side="top" align="end" sideOffset={8} collisionPadding={12} className="z-50 min-w-56 max-w-80 rounded-xl border border-line bg-panel p-1.5 shadow-float">
           <DropdownMenu.Label className="px-2 pb-1 pt-0.5 text-xs font-medium text-fg-3">Phát trên</DropdownMenu.Label>
+          {/* Không có máy nào: nói rõ thay vì để nút biến mất (TV tắt, khác mạng - người dùng không biết đang tìm hay đã hết). */}
+          {!targets.length && (
+            <>
+              <div role="status" className="px-2 py-1.5 text-sm text-fg-2">
+                {searching ? "Đang tìm loa / TV trong mạng…" : "Không thấy loa / TV nào trong mạng"}
+              </div>
+              <DropdownMenu.Item
+                disabled={searching}
+                onSelect={(event) => {
+                  event.preventDefault();
+                  rescan();
+                }}
+                className={cn(MENU_ITEM, "text-accent-text data-[disabled]:text-fg-3")}
+              >
+                {searching ? <Loader2 className="size-4 shrink-0 animate-spin" /> : <RefreshCw className="size-4 shrink-0" />}
+                Tìm lại
+              </DropdownMenu.Item>
+            </>
+          )}
           {targets.map((target) => (
             <DropdownMenu.Item key={target.device} onSelect={() => handOff(target)} className={MENU_ITEM}>
               <DeviceIcon kind={target.kind} className="size-4 shrink-0 text-fg-2" />

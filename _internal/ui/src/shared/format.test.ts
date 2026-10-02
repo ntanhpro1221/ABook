@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { excerpt, licenseLabel, shownReading } from "./format";
+import { excerpt, formatFingerprint, licenseLabel, shownReading } from "./format";
 
 describe("shownReading", () => {
   it("capitalises each word of a name's reading for display", () => {
@@ -47,5 +47,18 @@ describe("licenseLabel", () => {
     expect(licenseLabel("cc0")).toBe("CC0");
     expect(licenseLabel("ISC", "https://example.org/isc")).toBe("ISC");
     expect(licenseLabel(undefined)).toBe("");
+  });
+});
+
+describe("formatFingerprint", () => {
+  it("groups the stored hex in fours, upper case, and leaves a grouped one as it is", () => {
+    expect(formatFingerprint("ab12cd34ef56")).toBe("AB12 CD34 EF56");
+    expect(formatFingerprint("AB12 CD34 EF56")).toBe("AB12 CD34 EF56");
+    expect(formatFingerprint("ab12c")).toBe("AB12 C");
+  });
+  it("shows nothing when there is no fingerprint", () => {
+    expect(formatFingerprint("")).toBe("");
+    expect(formatFingerprint(undefined)).toBe("");
+    expect(formatFingerprint(null)).toBe("");
   });
 });

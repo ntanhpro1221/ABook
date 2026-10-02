@@ -262,7 +262,7 @@ class LibraryPlugin : Plugin() {
         val paired = !prefs.getString("token", "").isNullOrBlank()
         call.resolve(
             JSObject().put("paired", paired).put("host", prefs.getString("host", "")).put("port", prefs.getInt("port", 47630))
-                .put("name", prefs.getString("name", "")),
+                .put("name", prefs.getString("name", "")).put("fingerprint", prefs.getString("fingerprint", "") ?: ""),
         )
     }
 
@@ -563,6 +563,13 @@ class LibraryPlugin : Plugin() {
         } catch (error: Exception) {
             fail(call, error)
         }
+    }
+
+    /** "Tìm lại" ở nút "Phát trên…": điện thoại tìm loa / TV của nó ngay, không đợi nhịp 30 giây (DlnaPlayers.scan). */
+    @PluginMethod
+    fun scanPlayers(call: PluginCall) {
+        runCatching { PhoneCast.players.scan() }
+        call.resolve()
     }
 
     @PluginMethod

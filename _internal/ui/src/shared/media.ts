@@ -18,3 +18,17 @@ export function useMediaQuery(query: string): boolean {
   }, [query]);
   return matches;
 }
+
+/** Có hộp thoại (Radix, modal) đang mở không. Radix khoá cuộn bằng thuộc tính `data-scroll-locked` trên <body> - một chỗ
+ *  nhìn chung cho Dialog lẫn Sheet, khỏi phải từng hộp báo lên. Thông báo (Toaster) dùng để né nút chính của hộp. */
+export function useModalOpen(): boolean {
+  const read = () => typeof document !== "undefined" && document.body.hasAttribute("data-scroll-locked");
+  const [open, setOpen] = useState(read);
+  useEffect(() => {
+    const observer = new MutationObserver(() => setOpen(read()));
+    observer.observe(document.body, { attributes: true, attributeFilter: ["data-scroll-locked"] });
+    setOpen(read());
+    return () => observer.disconnect();
+  }, []);
+  return open;
+}

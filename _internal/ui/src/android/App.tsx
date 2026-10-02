@@ -267,6 +267,8 @@ export function AndroidApp() {
       <Toaster
         position="top-center"
         containerAriaLabel="Thông báo"
+        // Radix tắt chuột của mọi thứ ngoài hộp thoại đang mở: không có dòng này nút trong thông báo không bấm được.
+        className="pointer-events-auto"
         toastOptions={{
           classNames: {
             toast: "!bg-panel !border !border-line !text-fg !rounded-xl",
