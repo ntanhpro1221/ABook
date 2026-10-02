@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { excerpt, shownReading } from "./format";
+import { excerpt, licenseLabel, shownReading } from "./format";
 
 describe("shownReading", () => {
   it("capitalises each word of a name's reading for display", () => {
@@ -32,5 +32,20 @@ describe("excerpt", () => {
 
   it("cuts inside a word only when the line has no early space", () => {
     expect(excerpt("Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 10)).toBe("Aaaaaaaaaa…");
+  });
+});
+
+describe("licenseLabel", () => {
+  it("turns the catalog's short codes into readable licences, taking the version from the licence link", () => {
+    expect(licenseLabel("by", "https://creativecommons.org/licenses/by/4.0/")).toBe("CC BY 4.0");
+    expect(licenseLabel("by", "https://creativecommons.org/licenses/by-sa/3.0/deed.en")).toBe("CC BY-SA 3.0");
+    expect(licenseLabel("cc0", "https://creativecommons.org/publicdomain/zero/1.0/")).toBe("CC0 1.0");
+  });
+  it("does not invent a version when there is no link, and keeps unknown codes as they are", () => {
+    expect(licenseLabel("by")).toBe("CC BY");
+    expect(licenseLabel("by-sa", "")).toBe("CC BY-SA");
+    expect(licenseLabel("cc0")).toBe("CC0");
+    expect(licenseLabel("ISC", "https://example.org/isc")).toBe("ISC");
+    expect(licenseLabel(undefined)).toBe("");
   });
 });
