@@ -473,6 +473,36 @@ Chi tiết cách chạy (khi chấm, không đổi luật):
 - Lượt lặp nằm ở gói khác lượt gốc, mỗi gói một người chấm Sonnet riêng.
 - Chấm bằng `score_e1.py`.
 
+**KẾT QUẢ E1 MÁY CHẤM (02-10 22:4x, `score_e1.py`, số đầy đủ ở Corpus research/music/results/e1_score.txt):**
+
+Người chấm:
+- **J-omni KHÔNG dùng được.** Hai thứ tự chỉ khớp ở 6% lượt; P(chọn bài đứng trước) là 0,66. Qwen2.5-Omni-7B Q4 nghe hai
+  clip 30 giây gần như chọn theo vị trí. Kappa với người chấm Claude là 0,16-0,17. Chú thích từng clip của nó vẫn dùng làm
+  mô tả.
+- **J-c1, J-c2 dùng được:**
+
+| | J-c1 | J-c2 |
+|---|---|---|
+| Ổn định lượt lặp | 0,80 | 0,87 |
+| Kappa giữa hai người | 0,81 (đồng ý 91%) | |
+
+- **Giới hạn phải nhớ:** hai người chấm Claude đọc CÙNG một mô tả, và mô tả có nhãn không khí CLAP. Vai `vet` chọn theo
+  V/E/T của danh mục, mà V/E/T này một phần cũng từ CLAP. Vì vậy độ khớp cao và H1/H2 có một phần vòng tròn: chúng nói
+  "mô tả bài hợp đoạn tới đâu", chưa phải "nghe hợp tới đâu".
+
+Phán quyết chung (c1 + c2, bỏ lượt hai người khác nhau, còn 272 lượt):
+- **Bradley-Terry:** vet +0,59 > calm +0,35 > gems +0,08 > mid −0,10 > app −0,13 > far −0,79.
+- **H1 ĐẠT:** vet thắng far 13/17 = 0,76 (KTC 0,53-0,90).
+- **H2 vừa chạm mức:** Spearman 0,60 so dự đoán ≥ 0,6.
+- **H3 không khác:** app thắng gems 23/45 = 0,51 (KTC 0,37-0,65). Nhánh GEMS không hơn cách cũ, khớp kiểm hồi quy ở
+  trên.
+- **app thua vet:** 11/43 = 0,26 (KTC 0,15-0,40). Cùng danh mục và cùng bộ lọc mà chọn theo V/E/T ĐÁP ÁN thắng rõ chọn theo
+  V/E/T máy đoán. Nút thắt vẫn là ĐOÁN không khí đoạn, như bộ 4.
+- **calm đứng thứ hai:** nền êm trung tính thắng far 0,82, ngang mid, hơn app. Đây là bằng chứng máy chấm cho lý thuyết
+  §5.6 "không chắc thì êm".
+  - Việc kế (ghi trước riêng): ngưỡng "đoạn không chắc thì nền êm" chặt hơn hiện nay. Hiện chỉ kéo về CALM_TARGET khi
+    confidence < 0,2.
+
 **LỚP 2 PHÍA BÀI - 13 cường độ độc lập (02-10 22:xx, `derive_emotions.py`):**
 - **Zero-shot CLAP** (3 câu mô tả mỗi lớp, z theo cả kho, sigmoid): AUC so feel người gắn của Incompetech (1.381 bài)
   trung bình 0,69. Có lớp còn kém bản GEMS-9 cũ, như joy 0,46 so với 0,74.
