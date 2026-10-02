@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.21] - 2026-10-03
+
 ### Studio
 
 - **Nhập nhạc của tôi làm nhạc nền**: trong tab "Nhạc nền" của một cuốn có phần "Nhạc của tôi" - bấm "Nhập nhạc của tôi…",

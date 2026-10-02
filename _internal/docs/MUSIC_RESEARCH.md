@@ -595,6 +595,116 @@ Ký hiệu:
 
 Sau cả hai: báo Lead trước khi tốn Kaggle cho Qwen3-Omni.
 
+**KẾT QUẢ (1) VÒNG TRÒN (03-10 04:xx, `score_e1_checks.py`, `results/e1_checks.txt`):**
+- Hai người chấm mới n1 / n2 (mô tả không CLAP, `describe_noclap.py`), 330 lượt mỗi người: đồng thuận cao, kappa n1-n2 0,740
+  (87%).
+- kappa(R_mới, R_cũ) = 0,300 (237 lượt; đồng ý 65%) và kappa(R_mới, L) = 0,120 → theo luật: **KHÔNG PHÂN ĐỊNH**.
+- Thứ hạng BT:
+
+| Thước | 1 | 2 | 3 | 4 | 5 | 6 |
+|---|---|---|---|---|---|---|
+| R_cũ (đọc mô tả CÓ CLAP) | vet | calm | gems | mid | app | far |
+| R_mới (đọc mô tả KHÔNG CLAP) | gems | calm | app | vet | mid | far |
+| L (hai model nghe) | gems | vet | app | far | mid | calm |
+
+- Đọc (không phải luật):
+  - `vet` (dựng bằng V/E/T suy từ CLAP) tụt từ hạng 1 xuống hạng 4 khi bỏ chữ CLAP khỏi mô tả. Lợi thế `vet` ở E1 phần lớn
+    là vòng tròn.
+  - `gems` đứng đầu ở cả hai thước không vòng tròn.
+  - `far` gần cuối ở mọi thước.
+  - `calm` vẫn hạng 2 với người đọc, nhưng cuối với model nghe. Bất đồng này chưa giải được; chờ phép (2).
+- Hệ quả: kết luận E1 "app thua vet" (dùng để định hướng việc đoán V/E/T đoạn) không đứng vững khi bỏ CLAP. Kết luận nào dựa
+  trên R_cũ phải được đo lại bằng R_mới trước khi dùng.
+
+**GHI TRƯỚC - ĐO LẠI MỌI QUYẾT ĐỊNH DỰA TRÊN R_CŨ (03-10 04:xx, Lead; KHÔNG đảo quyết định nào trước khi đo lại):**
+
+Quyết định / kết luận đã dựa trên người chấm đọc mô tả CÓ CLAP, và phép đo lại:
+1. **E1 H1 / H2 / H3 + "app thua vet" + "calm hạng 2"** (định hướng "nút thắt là đoán không khí đoạn"; mở thí nghiệm nền êm).
+   - Đo lại trên dữ liệu đã có: cùng bảng H1-H3 và các cặp phụ, phán quyết = R_mới.
+   - Luật giữ nguyên như E1: H1 ≥ 0,70; H3 theo KTC Wilson.
+   - Riêng "nút thắt là đoán không khí đoạn" còn có bằng chứng độc lập từ bộ 4 (đáp án cảnh chỉ đọc chữ: oracle r 0,29-0,45 so
+     người 0,83-0,91). Kết luận ấy đứng hay đổ theo bộ 4, không theo E1.
+2. **H3 "nhánh GEMS không hơn app"** (một lý do không đưa phân phối GEMS / Lớp 2 vào chọn bài).
+   - Đo lại: `gems` thắng `app` theo R_mới.
+   - Nếu tỉ lệ ≥ 0,60 VÀ cận dưới Wilson > 0,5: ghi trước thí nghiệm "bật lại Lớp 2" trên bộ 5, thước R_mới.
+     - Bật lại = `EMOTION_WEIGHT` > 0 với 13 cường độ. Vai `gems` của E1 là GEMS-9 + JS, không phải bản 13 cường độ hiện tại,
+       nên không áp thẳng.
+     - Không đổi code trước thí nghiệm ấy.
+3. **Ngưỡng nền êm giữ 0,2** (52 lượt `calm/`, người chấm đọc mô tả có CLAP + chú thích Omni).
+   - Đo lại: hai người chấm Sonnet mới đọc mô tả KHÔNG CLAP (`describe_noclap.py` đã có cả 17 clip nền êm), gói
+     `PACK_SET=calm DESC=noclap`.
+   - Luật thắng y như cũ (`score_calm.py`). Kết quả lần đo lại là quyết định; nếu khác lần cũ thì theo lần đo lại.
+   - Ghi trước "đo lại 0,5 trên bộ 5" SỬA trước khi có dữ liệu: dùng mô tả KHÔNG CLAP.
+4. **E1b "omni1 / mf không dùng được"** (luật: kappa với R_cũ ≥ 0,20).
+   - Đo lại: kappa với R_mới, cùng ngưỡng 0,20.
+
+Không dính R_cũ (giữ nguyên, không đo lại):
+- Kiểm hồi quy Lớp 1-2 / `EMOTION_WEIGHT = 0`: thước là feel do người gắn (Incompetech) so đáp án cảnh chỉ đọc chữ.
+  - Mục 2 có thể mở lại câu hỏi bằng thí nghiệm riêng.
+- Bộ 4 / segllm / bộ 5: đáp án cảnh do Sonnet đọc chữ truyện, không mô tả nhạc.
+- Gộp ba nguồn, thầy, trò: nhãn feel người gắn.
+- Độ to 20 LU: ESTOI + Whisper.
+
+**KẾT QUẢ ĐO LẠI mục 1, 2, 4 (03-10 04:xx, dữ liệu có sẵn, `score_e1_checks.py`):**
+
+Mục 1 - E1 theo R_mới:
+
+| Kiểm | R_cũ | R_mới |
+|---|---|---|
+| H1 vet thắng far | 0,76 ĐẠT | 11/17 = 0,65 [0,41-0,83] KHÔNG ĐẠT |
+| H2 Spearman | 0,60 | 0,49 |
+| app thắng vet | 0,26 | 21/44 = 0,48 [0,34-0,62] - hết thua |
+| calm thắng far | 0,82 | 30/32 = 0,94 [0,80-0,98] |
+| calm thắng mid | 0,53 | 21/31 = 0,68 [0,50-0,81] |
+
+- "app thua vet" KHÔNG còn. "nền êm hợp" MẠNH hơn với người đọc không CLAP. Nhưng hai model nghe xếp calm cuối; chờ phép (2).
+
+Mục 2:
+- gems thắng app 25/41 = 0,61 [0,46-0,74]. Cận dưới không > 0,5 → **không đạt**, chưa mở thí nghiệm bật lại Lớp 2.
+- Đây là ứng viên mạnh nhất cho thí nghiệm kế khi bộ 5 có đáp án.
+
+Mục 4:
+- Kappa với R_mới: omni1 0,030, mf 0,150 → cả hai **vẫn không dùng được**. Kết luận E1b không đổi.
+
+Mục 3 - nền êm chấm lại bằng mô tả không CLAP (`DESC=noclap score_calm.py`, `results/calm_noclap.txt`):
+- Hai người chấm mới cùng ý 40/52.
+- 0,35 thắng 0,2: 5/11 = 0,45 [0,21-0,72]. 0,5 thắng 0,2: 17/29 = 0,59 [0,41-0,74].
+- **Giữ WEAK_MOOD = 0,2**, CÙNG kết luận với lần đầu. Quyết định này không dựa vào vòng tròn CLAP.
+
+**KẾT QUẢ (2) NGÔN NGỮ (03-10 03:54, `score_e1_checks.py`):**
+- Tập con: 50 đoạn ở vị trí chẵn, 150 lượt không lặp. Tóm tắt tiếng Anh do agent viết một lần (Corpus 1195a41).
+- Cả hai model: **NGÔN NGỮ LÀ RÀO**.
+
+| Model | so R_cũ: Việt → Anh | so R_mới: Việt → Anh | Ổn định a/b: Việt → Anh |
+|---|---|---|---|
+| Omni-7B | −0,02 → **0,23** | 0,00 → **0,26** | 0,87 → **0,81** |
+| Music Flamingo | −0,01 → 0,22 | 0,13 → 0,29 | 0,72 → **0,55** |
+
+- Omni-7B đọc tiếng Anh: ổn định ≥ 0,75 và kappa ≥ 0,20 → theo đúng luật E1b là **người chấm nghe DÙNG ĐƯỢC**. Chỉ trên tập con,
+  và vừa qua ngưỡng.
+- MF đọc tiếng Anh khớp người hơn nhưng không ổn định (0,55) → vẫn không dùng được.
+- BT của Omni tiếng Anh: gems > vet > app > mid > calm > far. far vẫn cuối, nhưng calm vẫn dưới mức người đọc xếp.
+- Hệ quả:
+  - Mọi người chấm nghe về sau nhận đoạn truyện qua tóm tắt tiếng Anh, không nhận nguyên văn tiếng Việt.
+  - Qwen3-Omni (nếu chạy) cũng vậy.
+  - Omni-7B tiếng Anh có thể làm thước nghe thứ ba bên cạnh R_mới; mở rộng ra mọi đoạn cần ~600 lượt GPU nữa (~40 phút).
+
+**GHI TRƯỚC - THƯỚC NGHE TIẾNG ANH (03-10 04:xx, Lead; trước mọi số của phần mở rộng):**
+- **Luật chung:** từ nay mọi người chấm nghe nhận đoạn truyện qua tóm tắt tiếng Anh. Tóm tắt cố định, agent Claude viết một lần,
+  chỉ thấy đoạn truyện, lưu ở `e1/en_summaries.json`.
+- **(i) Omni-7B-EN mở rộng ra cả 100 đoạn E1:**
+  - 50 tóm tắt còn lại (vị trí lẻ) viết cùng prompt; chấm từng clip a / b như trước.
+  - DÙNG ĐƯỢC nếu trên cả 300 lượt không lặp: ổn định a/b ≥ 0,75 VÀ kappa với R_mới ≥ 0,20.
+  - Báo kèm kappa với R_cũ.
+  - Dùng được thì gọi là **L_min**, thước nghe TỐI THIỂU (vừa chạm luật). Mọi kết luận về nhạc báo theo R_mới và L_min.
+  - Khi hai thước nghịch nhau thì ghi "bất đồng", không chọn bên.
+- **(ii) Qwen3-Omni-30B-A3B-EN trên Kaggle 2×T4:**
+  - Model xếp vào ngân sách 30 giờ sau bộ Hàn.
+  - Cùng giao thức: 30 giây đầu clip, tóm tắt tiếng Anh, prompt rate a / b, điểm = kỳ vọng xác suất 7 chữ số, nạp 4-bit.
+  - Cùng luật dùng được.
+  - Dùng được thì thay L_min làm thước nghe chính. Nếu cả hai dùng được: phán quyết nghe chung = lượt hai model cùng ý.
+
+
 **GHI TRƯỚC - NỚI NGƯỠNG NỀN ÊM (02-10 23:xx, Lead duyệt; từ E1: calm đứng thứ hai, hơn app):**
 - **Giả thuyết:** kéo về nền êm (CALM_TARGET) cho nhiều đoạn hơn làm nhạc hợp hơn. Hiện chỉ kéo khi confidence < WEAK_MOOD
   0,2, và kéo tuyến tính.
@@ -741,6 +851,20 @@ Máy và đáp án:
 - CHÍNH: r của E so đáp án, `app+bwsE` so `app` (E nhãn câu). THẮNG nếu r E hơn ≥ 0,05 VÀ hơn ở ≥ 70% chương.
 - Ghi lại: `oracle+bwsE` và tổ hợp cuối `app + llmVT + bwsE` (r trung bình V/E/T).
 
+ĐÁP ÁN BỘ 5 (03-10 05:xx, Corpus `scene_set5/`; mô tả, chưa phải phép thử):
+- 9 chương, 86 đoạn sau phân xử (26,6 đoạn/giờ).
+- Hai người chấm mù Sonnet A so B: Pk 0,167, P / R ranh giới 0,73 / 0,86, r V/E/T 0,92 / 0,88 / 0,89. Đó là trần.
+- Nhãn câu 9B-v8 trên đáp án chung (r gộp, `eval_scenes.py`):
+
+| Cách | V | E | T | Pk |
+|---|---|---|---|---|
+| `app` | 0,46 | 0,50 | 0,40 | 0,402 |
+| `hard` | 0,27 | 0,47 | 0,35 | 0,262 |
+| `fixed3` | 0,50 | 0,47 | 0,42 | 0,459 |
+| oracle | 0,48 | 0,54 | 0,43 | |
+
+- Chương mới cao hơn bộ 4 (app 0,32 / 0,41 / 0,20) nhưng vẫn xa trần.
+
 Chung:
 - Đoạn LLM trả hỏng định dạng thì giữ nhãn câu, có báo số lượng.
 - Mọi script và prompt commit vào Corpus TRƯỚC lượt chạy đầu; không sửa sau khi thấy số.
@@ -809,6 +933,38 @@ Thước (ghi trước):
 
 Trò không đạt (a) thì thêm dữ liệu (MTG-Jamendo) hoặc đổi nhúng (MuQ / MERT, NC dùng được) rồi đo lại. Mỗi lần đổi ghi một dòng
 ở đây trước khi đo.
+
+**KẾT QUẢ THẦY + TRÒ (03-10 03:48, `build_teacher.py` + `build_student.py`, `results/student_eval.txt`):**
+
+Thầy:
+- Có chữ của người đọc cho mọi nguồn: Incompetech, Jamendo / Freesound, OGA, FMA, FreePD, Scott Buckley, ccMixter, 魔王魂,
+  Silverman. Tổng 4.763 bài.
+- AUC thầy ngoài phần học trên 1.381 bài Incompetech có feel, TB 10 lớp 0,895:
+  - peacefulness 0,904; sadness 0,937; joy 0,898; playful 0,918; power 0,913;
+  - wonder 0,834; tension 0,874; fear 0,898; anger 0,957; mystery 0,821.
+- 835 bài mới (FMA / ccMixter / OGA BY-SA…) chưa có âm học lúc chạy, nên âm học điền trung bình. Đang đo bù; thầy chạy lại
+  khi xong.
+
+Trò:
+- CLAP 512 + 42 âm học, ridge trên logit thầy, alpha chọn CV lồng.
+- Học trên 1.657 bài không lời, giữ ngoài 331 bài (hạt giống 7). Trò chỉ thấy âm thanh.
+- **(a) ĐẠT:** AUC trên Incompetech giữ ngoài (202 bài có feel): trò 0,863, thầy 0,880, tức **98,0%** (mốc ≥ 90%).
+  - Lớp hụt nhiều nhất: sadness 0,867 so 0,912; playful 0,882 so 0,926.
+  - r trò-thầy V/E/T trên phần giữ ngoài: 0,83 / 0,93 / 0,86.
+- **(b)** r Pearson trên bộ ngoài (trò | zero-shot CLAP cũ):
+
+| Bộ | V | E | T |
+|---|---|---|---|
+| Soundtracks (Eerola, 470) | 0,646 \| 0,594 | 0,745 \| 0,714 | 0,771 |
+| DEAM (1.802) | 0,348 \| 0,271 | 0,691 \| 0,644 | |
+
+  Trò hơn zero-shot cũ ở mọi trục.
+- **(d)** Đầu trò 8.880 tham số (0,04 MB). Tháp âm thanh CLAP fp16 56,8 MB; cosine với bản đầy đủ 0,999998. Gói ~57 MB.
+  App đã có torch / transformers / librosa, nên không thêm thư viện. sd V/E/T (RMSE giữ ngoài) 0,22 / 0,18 / 0,21.
+- **(c)** máy chấm kiểu E1 (trò so thầy) chưa chạy. Theo bài học E1 phải dùng người đọc mô tả KHÔNG CLAP (thước R_mới).
+- Việc kế:
+  - cắm vào `music_local.set_analyzer` (nhánh `dev/music-student`), gói đăng Hugging Face `NGDtuanh/abook-music-student`;
+  - MTG-Jamendo không lời dùng làm dữ liệu thêm khi cần (hiện chưa cần, (a) đã đạt).
 
 **GHI TRƯỚC - MTG-JAMENDO LÀM DỮ LIỆU HỌC CHO TRÒ (02-10 23:xx, Lead + chủ sách):**
 
