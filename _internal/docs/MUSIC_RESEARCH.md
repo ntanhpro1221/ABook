@@ -353,6 +353,30 @@ trục TRONG từng chương; `hard` thường chỉ một đoạn mỗi chươn
 thông tin), cùng quy ước cho mọi cách. Khi bỏ HDST 090 còn 9 chương: cần >= 7/9. Chấm bằng `score_set4.py` (Corpus
 research/music).
 
+**KẾT QUẢ BỘ KIỂM 4 (02-10 16:2x; 10 chương, phân tích 9B-v8, hai người chấm mù Sonnet + phân xử tự động; dữ liệu
+Corpus research/music/scene_set4):**
+
+| | r V | r E | r T | r tb VET | thắng `hard` | Pk | P / R ranh giới | đoạn/giờ (đáp án 31,7) |
+|---|---|---|---|---|---|---|---|---|
+| `app` | 0,32 | 0,41 | 0,20 | **0,310** | **7/10** | 0,451 | 0,30 / 0,21 | 21,5 |
+| `hard` | 0,31 | 0,22 | 0,23 | 0,253 | - | 0,361 | - / 0 | 3,8 |
+| `fixed3` | 0,33 | 0,42 | 0,21 | 0,321 | | 0,452 | 0,19 / 0,12 | 21,5 |
+| đúng ranh giới, máy đoán không khí (oracle) | 0,39 | 0,45 | 0,29 | | | | | |
+| người chấm A so B (trần) | 0,86 | 0,83 | 0,91 | | | 0,125 | 0,82 / 0,88 | |
+
+- Theo luật ghi trước: **`app` GIỮ** - hơn `hard` +0,057 (ngưỡng 0,05) và thắng đúng 7/10 chương. Đạt SÁT MÉP.
+- Kiểm thêm đã ghi trước, bỏ HDST 090 (nằm trong dữ liệu huấn luyện 9B-v8): +0,007, thắng 6/9 - **KHÔNG đạt**. Lợi thế
+  của "chia nhỏ" dựa phần lớn vào một chương mà model đã học; trên 9 chương còn lại nó ngang `hard`.
+- Lợi thế ở đâu: gần như chỉ trục E (+0,19); V ngang, T kém hơn chút. Ranh giới: `hard` có Pk tốt hơn (ít ranh giới sai);
+  `app` chỉ trúng 21% ranh giới bắt buộc.
+- `app` so `fixed3` (chỉ ghi lại): ngang trong mức nhiễu (0,310 / 0,321; `fixed3` hơn ở 7/10 chương) - khớp Pha 2c: chia
+  theo nhãn câu không thấy đổi cảnh tốt hơn cắt đều mỗi 3 phút.
+- Hai người chấm đồng thuận cao (r 0,83-0,91, Pk 0,125) - đáp án đáng tin; khoảng cách tới máy là thật. Ngay cả khi biết
+  ĐÚNG ranh giới, đoán không khí từ nhãn câu chỉ đạt r 0,29-0,45: **nút thắt là đoán không khí đoạn, không phải chia đoạn**.
+- Quyết định theo luật: giữ luật chia của app (không đổi code). Bằng chứng yếu (đạt sát mép, không bền khi bỏ chương đã
+  học). Việc kế có lợi nhất: đoán không khí đoạn tốt hơn (vd LLM đọc cả đoạn, không cộng nhãn câu) - đo trên chính bộ 4 này
+  với đáp án đã có, bằng thí nghiệm ghi trước riêng.
+
 ## Thứ tự và tài nguyên
 
 0. Dữ liệu (đang chạy): Incompetech 1.443 bài (đọc 3 đoạn từ máy chủ), Jamendo CC BY 665 bài; tải Film soundtracks,
