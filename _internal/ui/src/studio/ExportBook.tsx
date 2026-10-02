@@ -6,12 +6,17 @@ import { coverArtwork } from "@/shared/cover";
 import { formatNumber } from "@/shared/format";
 import { Button, Dialog } from "@/shared/ui";
 import { api, type BookSummary } from "./api";
-import { pickFolder, useAppInfo } from "./data";
+import { pickFolder, useAppInfo, useParts } from "./data";
 
 // Xuất ngay trong Studio (soát UX a6 01-10, H1-H2: người làm sách phải sang Thư viện nghe mới tìm thấy "Xuất", và bản xuất
 // lặng lẽ thiếu chương / bỏ qua sửa chưa áp). Hộp nói trước bản xuất sẽ có gì, rồi mới hỏi chỗ lưu.
 
 type Kind = "mp3" | "abook" | "abookproj";
+/** Truyện chia nhiều phần bằng "Làm tiếp cuốn này": xuất riêng phần đang xem hay cả bộ. */
+type Scope = "part" | "series";
+
+type PartResult = { part: number; title: string };
+type SeriesResult = { folder: string; parts: PartResult[]; skipped: PartResult[]; partsTotal: number; files?: number; size?: number };
 
 const KINDS: { value: Kind; title: string; detail: string; icon: typeof FolderDown }[] = [
   { value: "mp3", title: "Thư mục MP3", detail: "Mỗi chương một file, có tên sách, tên chương, bìa - nghe bằng mọi trình phát.", icon: FolderDown },
@@ -45,6 +50,8 @@ export function ExportDialog({
   const { data: info } = useAppInfo();
   const [kind, setKind] = useState<Kind>("mp3");
   const [busy, setBusy] = useState(false);
+  const [scope, setScope] = useState<Scope>("part");
+  const parts = useParts(book.id).data?.parts ?? [];
   const missing = book.chapters.missingAudio ?? 0;
   const ready = Math.max(0, book.chapters.completed - missing);
   const total = book.chapters.total;
@@ -56,25 +63,40 @@ export function ExportDialog({
       target = picked;
     }
     setBusy(true);
-    const pending = toast.loading(SAVING[kind][1], { description: kind === "abookproj" ? undefined : `${ready} chương` });
+    const pending = toast.loading(SAVING[kind][1], {
+      description: kind === "abookproj" ? undefined : wholeSeries ? `${parts.length} phần` : `${ready} chương`,
+    });
     try {
       const result =
         kind === "mp3"
-          ? await api<{ folder: string; files: number }>(`/api/books/${book.id}/export`, {
+          ? await api<{ folder: string; files: number } & Partial<SeriesResult>>(`/api/books/${book.id}/export`, {
               method: "POST",
-              body: { target, cover: coverArtwork(book.title) },
+              body: { target, cover: coverArtwork(book.title), series: wholeSeries },
             })
-          : await api<{ folder: string; file: string; size: number; missingSources?: string[] }>(
+          : await api<{ folder: string; file: string; size: number; missingSources?: string[] } & Partial<SeriesResult>>(
               `/api/books/${book.id}/${kind === "abook" ? "bookfile" : "projectfile"}`,
-              { method: "POST", body: { target } },
+              { method: "POST", body: { target, series: wholeSeries } },
             );
       const lost = "missingSources" in result ? (result.missingSources?.length ?? 0) : 0;
-      const title =
-        kind === "mp3" ? `Đã xuất ${"files" in result ? result.files : ready} chương` : kind === "abook" ? "Đã xuất file sách" : "Đã gói dự án";
+      const skipped = result.skipped?.length ? ` · chưa có chương nào nên bỏ qua: ${result.skipped.map((part) => `Phần ${part.part}`).join(", ")}` : "";
+      const title = result.parts
+        ? kind === "mp3"
+          ? `Đã xuất ${result.files ?? 0} chương của ${result.parts.length} phần`
+          : `Đã xuất ${result.parts.length} file sách`
+        : kind === "mp3"
+          ? `Đã xuất ${"files" in result ? result.files : ready} chương`
+          : kind === "abook"
+            ? "Đã xuất file sách"
+            : "Đã gói dự án";
       toast.success(title, {
         id: pending,
         description:
-          ("file" in result ? `${result.file} · ${Math.round(result.size / 1048576)} MB` : result.folder) +
+          (result.parts && kind === "abook"
+            ? `${result.folder} · mỗi phần một file .abook riêng`
+            : "file" in result
+              ? `${result.file} · ${Math.round(result.size / 1048576)} MB`
+              : result.folder) +
+          skipped +
           (lost ? ` · ${lost} file nguồn chương đã bị dời hay xoá nên không có trong gói` : ""),
         action: info?.remote
           ? undefined
@@ -88,19 +110,43 @@ export function ExportDialog({
     }
   };
   const whole = kind === "abookproj";
+  // Cả bộ chỉ nói được về MỌI phần chung chung: số chương xong của phần khác không nằm trong tóm tắt của sách này.
+  const wholeSeries = scope === "series" && parts.length > 1 && !whole;
   const warnings = (
     whole
       ? [book.running && "Dự án đang chạy - gói khi nó đã chạy xong hoặc đã dừng."]
       : [
-          ready < total && `${formatNumber(total - ready)}/${formatNumber(total)} chương chưa có audio${missing ? ` (${missing} chương mất file)` : ""} - không có trong bản xuất.`,
-          book.running && "Sách đang chạy - bản xuất chỉ gồm các chương đã xong tới lúc này.",
+          !wholeSeries && ready < total && `${formatNumber(total - ready)}/${formatNumber(total)} chương chưa có audio${missing ? ` (${missing} chương mất file)` : ""} - không có trong bản xuất.`,
+          wholeSeries && "Phần nào chưa có chương xong sẽ bị bỏ qua; phần đang chạy chỉ có các chương đã xong tới lúc này.",
+          !wholeSeries && book.running && "Sách đang chạy - bản xuất chỉ gồm các chương đã xong tới lúc này.",
         ]
   ).filter(Boolean) as string[];
   // Studio từ xa (trình duyệt máy khác) không gói dự án: file nằm ở máy tính, việc của người ngồi trước nó.
   const kinds = info?.remote ? KINDS.filter((item) => item.value !== "abookproj") : KINDS;
   return (
     <Dialog open={open} onOpenChange={onOpenChange} width="max-w-lg" title={`Xuất “${book.title}”`}
-      description={`${formatNumber(ready)} chương nghe được sẽ vào bản xuất.`}>
+      description={wholeSeries ? `Các chương nghe được của cả ${parts.length} phần sẽ vào bản xuất.` : `${formatNumber(ready)} chương nghe được sẽ vào bản xuất.`}>
+      {parts.length > 1 && !whole && (
+        <div className="mb-3 grid grid-cols-2 gap-1 rounded-xl bg-sunken p-1 text-sm" role="radiogroup" aria-label="Phạm vi bản xuất">
+          {(
+            [
+              ["part", "Phần này"],
+              ["series", `Cả bộ (${parts.length} phần)`],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              role="radio"
+              aria-checked={scope === value}
+              onClick={() => setScope(value)}
+              className={cn("rounded-lg px-3 py-1.5 font-medium", scope === value ? "bg-panel shadow-sm" : "text-fg-2")}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="grid gap-2" role="radiogroup" aria-label="Kiểu bản xuất">
         {kinds.map(({ value, title, detail, icon: Icon }) => (
           <button
@@ -122,6 +168,9 @@ export function ExportDialog({
           </button>
         ))}
       </div>
+      {wholeSeries && kind === "abook" && (
+        <p className="mt-3 text-sm text-fg-2 text-pretty">Mỗi phần là một file .abook riêng, cùng nằm trong một thư mục của bộ.</p>
+      )}
       {(warnings.length > 0 || (!whole && Boolean(book.pendingChanges))) && (
         <div className="mt-3 space-y-1.5 rounded-xl bg-warning-soft p-3 text-sm">
           {warnings.map((line) => (
@@ -151,7 +200,7 @@ export function ExportDialog({
           variant="primary"
           icon={KINDS.find((item) => item.value === kind)?.icon ?? FolderDown}
           loading={busy}
-          disabled={whole ? Boolean(book.running) : !ready}
+          disabled={whole ? Boolean(book.running) : !wholeSeries && !ready}
           onClick={() => void run()}
         >
           {info?.dialogs ? "Chọn nơi lưu và xuất" : "Xuất"}

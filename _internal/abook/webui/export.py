@@ -12,9 +12,11 @@ import base64
 import os
 import re
 import shutil
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from .. import continuation
 from ..io_utils import ffmpeg_executable, run_hidden
 from . import covers, listen_view, store
 
@@ -51,14 +53,21 @@ def _real_cover(project_root: Path, folder: Path) -> Path | None:
     return target
 
 
-def export_book(project_root: Path, target_root: Path, *, cover: str | None = None) -> dict[str, Any]:
+def _listenable(project_root: Path) -> list[dict[str, Any]]:
+    """Các chương đã nghe được - đúng những chương mọi kiểu xuất lấy."""
+    return [chapter for chapter in listen_view.chapters(project_root) if chapter["available"]]
+
+
+def export_book(project_root: Path, target_root: Path, *, cover: str | None = None,
+                folder_name: str | None = None) -> dict[str, Any]:
+    """`folder_name`: tên thư mục thay cho tên sách - bản xuất cả bộ đặt mỗi phần vào "Phần N - ..."."""
     summary = store.summarize(project_root)
     title = summary["title"] or project_root.name
     narrator = summary["settings"]["narrator"] or ""
-    chapters = [chapter for chapter in listen_view.chapters(project_root) if chapter["available"]]
+    chapters = _listenable(project_root)
     if not chapters:
         raise ValueError("Sách chưa có chương nào nghe được để xuất")
-    folder = target_root / safe_name(title)
+    folder = target_root / safe_name(folder_name or title)
     folder.mkdir(parents=True, exist_ok=True)
     cover_path = _real_cover(project_root, folder) or _cover_file(folder, cover)
     ffmpeg = ffmpeg_executable()
@@ -96,3 +105,27 @@ def export_book(project_root: Path, target_root: Path, *, cover: str | None = No
         playlist += [f"#EXTINF:{int(round(chapter['duration']))},{chapter['fullTitle']}", name]
     (folder / f"{safe_name(title)}.m3u8").write_text("\n".join(playlist) + "\n", encoding="utf-8")
     return {"folder": str(folder), "files": len(written), "chaptersTotal": summary["chapters"]["total"]}
+
+
+def export_series(parts: list[Path], target_root: Path,
+                  export_part: Callable[[Path, Path, str], dict[str, Any]]) -> dict[str, Any]:
+    """Xuất cả bộ ("Làm tiếp cuốn này" chia một truyện thành nhiều dự án): một thư mục cho bộ, mỗi phần xuất bằng đúng đường
+    xuất một phần. `export_part(dự án, thư mục bộ, "Phần N - tên")` làm một phần và trả kết quả của nó (MP3: thư mục
+    con theo nhãn; .abook: một file mang nhãn). Chỉ chương đã xong như xuất một phần; phần chưa có chương nào bị bỏ qua và
+    được kể tên - người dùng thấy bộ thiếu phần nào thay vì nghĩ là xuất sót."""
+    def title_of(project: Path) -> str:
+        return store.summarize(project)["title"] or project.name
+
+    folder = target_root / safe_name(continuation.base_title(title_of(parts[0])))
+    done: list[dict[str, Any]] = []
+    skipped: list[dict[str, Any]] = []
+    for number, project in enumerate(parts, start=1):
+        title = title_of(project)
+        if not _listenable(project):
+            skipped.append({"part": number, "title": title})
+            continue
+        label = f"Phần {number} - {continuation.base_title(title)}"
+        done.append({"part": number, "title": title, **export_part(project, folder, label)})
+    if not done:
+        raise ValueError("Chưa phần nào của bộ có chương nghe được để xuất")
+    return {"folder": str(folder), "parts": done, "skipped": skipped, "partsTotal": len(parts)}
