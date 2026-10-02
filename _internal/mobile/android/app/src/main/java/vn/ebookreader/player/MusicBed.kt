@@ -16,7 +16,8 @@ import kotlin.math.pow
  * Nhạc nền dưới giọng đọc - bản Android của ui/src/listen/musicBed.ts.
  *
  * Mốc nhạc từng chương nằm ở mục `music` của book.json (file `.abook` hay gói tải qua Wi-Fi - webui/music_plan.package):
- * `{levelDb, tracks: {"music/<sha1>.mp3": {...}}, chapters: {"<id>": [{start, end, track}]}}`. File bài lấy cùng đường với
+ * `{levelDb, tracks: {"music/<sha1>.mp3": {...}}, chapters: {"<id>": [{start, end, track, gainDb}]}}`
+ * (`levelDb` = nhạc thấp hơn giọng bao nhiêu LU; `gainDb` tính sẵn cho từng bài ở máy chủ). File bài lấy cùng đường với
  * audio chương (Streaming.chapterUri): có trên máy thì đọc thẳng, không thì nghe thẳng từ máy tính, qua bộ đệm đĩa.
  *
  * Một ExoPlayer riêng cho mỗi bài đang kêu (hai khi đang chuyển mờ), lặp liền, KHÔNG giành audio focus: trình phát giọng
@@ -28,8 +29,12 @@ object MusicBed {
     private const val STEP_MS = 50L
     private const val SEEK_JUMP_SECONDS = 3.0
 
-    private data class Cue(val start: Double, val end: Double, val track: String)
-    private class Bed(val track: String, val player: ExoPlayer)
+    /** `gainDb`: độ khuếch đại máy chủ đã tính cho bài này (music_plan.cue_gain_db, ghi sẵn vào mốc khi đóng gói); null = sách
+     *  xuất bởi bản cũ -> mức chung `levelDb` của cuốn. Máy điện thoại không tự tính lại, chỉ áp con số. */
+    private data class Cue(val start: Double, val end: Double, val track: String, val gainDb: Double?)
+    private class Bed(val track: String, val player: ExoPlayer, val gain: Float) {
+        var fadeFrom = 0.01f // âm lượng lúc bắt đầu mờ đi: bài to và bài nhỏ cùng tắt trong FADE_MS
+    }
 
     private val main = Handler(Looper.getMainLooper())
     private var context: Context? = null
@@ -94,12 +99,23 @@ object MusicBed {
             val cue = list.optJSONObject(index) ?: return@mapNotNull null
             val track = cue.optString("track")
             if (!TRACK.matches(track) || !tracks.has(track)) null
-            else Cue(cue.optDouble("start", 0.0), cue.optDouble("end", 0.0), track)
+            else Cue(
+                cue.optDouble("start", 0.0), cue.optDouble("end", 0.0), track,
+                if (cue.has("gainDb")) cue.optDouble("gainDb").takeIf { it.isFinite() } else null,
+            )
         }
     }
 
+    /** Âm lượng mục tiêu của bài: gainDb của mốc, không có
+     *  thì mức chung. Tối đa 1 (ExoPlayer). */
+    private fun gainOf(cue: Cue): Float =
+        cue.gainDb?.let { 10.0.pow(it.coerceAtMost(0.0) / 20.0).toFloat() } ?: gain
+
     private fun switchTo(cue: Cue?, seconds: Double) {
-        current?.let { fading += it }
+        current?.let {
+            it.fadeFrom = maxOf(it.player.volume, 0.01f)
+            fading += it
+        }
         current = null
         val appContext = context ?: return
         if (cue != null) {
@@ -125,7 +141,7 @@ object MusicBed {
             player.setMediaItem(MediaItem.fromUri(Streaming.chapterUri(appContext, book, cue.track)))
             player.prepare()
             if (playing) player.play()
-            current = Bed(cue.track, player)
+            current = Bed(cue.track, player, gainOf(cue))
         }
         startFade()
     }
@@ -137,16 +153,17 @@ object MusicBed {
         main.post(object : Runnable {
             override fun run() {
                 var busy = false
-                current?.player?.let { player ->
-                    if (player.volume < gain) {
-                        player.volume = minOf(gain, player.volume + step * gain)
-                        busy = busy || player.volume < gain
+                current?.let { bed ->
+                    val player = bed.player
+                    if (player.volume < bed.gain) {
+                        player.volume = minOf(bed.gain, player.volume + step * bed.gain)
+                        busy = busy || player.volume < bed.gain
                     }
                 }
                 val iterator = fading.iterator()
                 while (iterator.hasNext()) {
                     val bed = iterator.next()
-                    bed.player.volume = maxOf(0f, bed.player.volume - step * maxOf(gain, 0.01f))
+                    bed.player.volume = maxOf(0f, bed.player.volume - step * bed.fadeFrom)
                     if (bed.player.volume <= 0.001f) {
                         bed.player.release()
                         iterator.remove()
