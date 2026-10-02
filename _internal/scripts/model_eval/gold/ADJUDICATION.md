@@ -733,3 +733,10 @@ SHIRO (chương "Chap" của Shiro, Oni gọi "Shiro-san" ở 75). B: người n
 |---|---|---|---|---|
 | Kumo 396:27, 51, 66-67, 74, 120-121 | N | N,T + SHIRO | theo B | nằm giữa chuỗi tiếng lòng A đã cho N,T (26/28, 63-65/68, 60, 118-119, 62) |
 | Kumo 396:22, 33, 42-43, 91-92 | N | N,T | giữ A | B tự xếp yếu; lời bình nói với người đọc |
+
+Oregairu 039 (đợt 4, độc thoại mỉa mai ngôi một; nguồn Wattpad tách mỗi câu một đoạn, chương không có dòng tiêu đề - seq 0 là
+câu thật): "tôi" = HIKIGAYA HACHIMAN. B: người nói chính sai 0/95; câu thoại bị tách đoạn (45-46, 71-72, 73-74) khớp A.
+
+| câu | A | B đề nghị | kết luận | lý do |
+|---|---|---|---|---|
+| Oregairu 039:85, 94, 91 | N | N,T + HACHIMAN | theo B | 85 liền 83-84 (A cho N,T); 94 câu tự nhủ chốt chương sau 92; 91 than thở tức thời (tiền lệ Evil Lord 02:128) |
