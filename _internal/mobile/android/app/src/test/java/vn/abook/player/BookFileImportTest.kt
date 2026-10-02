@@ -268,6 +268,24 @@ class BookFileImportTest {
     }
 
     @Test
+    fun a_users_own_music_keeps_its_format_and_comes_along_with_the_book() {
+        // "Nhạc của tôi": bài người dùng nhập đi theo sách nguyên định dạng (music_plan.TRACK_EXTENSIONS), không chỉ .mp3.
+        val flac = "music/" + "b".repeat(40) + ".flac"
+        val imported = BookFileImport.importFile(
+            abookproj(
+                listening = mapOf(
+                    chapterEntry to "ID3-chuong-mot".toByteArray(),
+                    "cast.json" to "{}".toByteArray(),
+                    "scripts/1.json" to "{}".toByteArray(),
+                    flac to "fLaC-nhac".toByteArray(),
+                ),
+            ),
+        )
+
+        assertEquals("fLaC-nhac", File(Store.bookDir(imported.id), flac).readText())
+    }
+
+    @Test
     fun a_project_files_chapters_become_ordinary_imported_chapters() {
         val imported = BookFileImport.importFile(abookproj())
 

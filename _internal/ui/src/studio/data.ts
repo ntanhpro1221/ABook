@@ -282,7 +282,8 @@ export async function pickFolder(title: string, start = ""): Promise<string | nu
   return result.path;
 }
 
-export async function pickFiles(title: string, start = ""): Promise<string[]> {
-  const result = await api<{ paths: string[] }>("/api/dialog/files", { method: "POST", body: { title, start } });
+/** `kind`: loại file hộp chọn cho xem - chương truyện (TXT, EPUB; mặc định) hay nhạc ("Nhập nhạc của tôi"). */
+export async function pickFiles(title: string, start = "", kind: "chapters" | "music" = "chapters"): Promise<string[]> {
+  const result = await api<{ paths: string[] }>("/api/dialog/files", { method: "POST", body: { title, start, kind } });
   return result.paths;
 }

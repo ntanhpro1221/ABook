@@ -28,7 +28,7 @@ A ZIP archive (PKWARE APPNOTE, as used by EPUB and OOXML).
 | `project/<path>` | stored for audio and images, deflate otherwise | every file of the project folder. `project/project.sqlite3` is a consistent SQLite snapshot (no `-wal`/`-shm`); logs, lock files, partial `.part` files and exported `.abook` files are left out |
 | `sources/<n>_<name>` | deflate | chapter source text files that lived outside the project folder; `n` is the chapter number |
 | `book.json` | deflate | version 2: the listening layer's description, exactly the `book.json` of an `.abook` (`ABOOK_FILE_FORMAT.md`) without any identifier, with `package.files` listing the size and SHA-256 of each listening entry. Present only when at least one chapter was finished at packing time |
-| `cast.json`, `scripts/<n>.json`, `samples/<n>.wav`, `music/<sha1>.mp3` | as in `.abook` | version 2: the cast, the lines of each chapter, voice samples, and every background-music track the book's music plan uses (taken from the packing computer's music cache, downloaded if needed; a track that cannot be obtained is left out and its cues dropped, as for `.abook`) |
+| `cast.json`, `scripts/<n>.json`, `samples/<n>.wav`, `music/<sha1>.<ext>` | as in `.abook` | version 2: the cast, the lines of each chapter, voice samples, and every background-music track the book's music plan uses (taken from the packing computer's music cache, downloaded if needed; a track that cannot be obtained is left out and its cues dropped, as for `.abook`; tracks the producer imported from their own files are copied from the personal music store and keep their format) |
 
 ### The listening layer
 

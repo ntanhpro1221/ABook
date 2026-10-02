@@ -507,6 +507,9 @@ object LibraryServer {
         val type = when (file.extension.lowercase()) {
             "mp3" -> "audio/mpeg"
             "wav" -> "audio/wav"
+            "m4a" -> "audio/mp4"
+            "ogg", "opus" -> "audio/ogg"
+            "flac" -> "audio/flac"
             "json" -> "application/json; charset=utf-8"
             "jpg", "jpeg" -> "image/jpeg"
             "png" -> "image/png"

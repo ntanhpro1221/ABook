@@ -595,15 +595,9 @@ class SyncApp:
             allowed = {person.get("sampleId") for person in cast["characters"] + cast["extras"]}
             return store.sample_audio_path(project_root, int(match.group(1))) if int(match.group(1)) in allowed else None
         if music_plan.TRACK_FILE.fullmatch(relative) and self.music_track is not None:
-            plan = music_plan.read_plan(project_root)
-            for link in (plan or {}).get("tracks") or {}:
-                if music_plan.track_name(link) == relative:
-                    return self.music_track(link)
-            # Bài thay thế (bài của plan máy này không lấy được, manifest đã đưa bài khác vào gói): chỉ các bài ấy.
-            for link in music_plan.substituted_tracks(project_root, self.music_track):
-                if music_plan.track_name(link) == relative:
-                    return self.music_track(link)
-            return None
+            # Bài của plan, hay bài thay thế (bài của plan máy này không lấy được, manifest đã đưa bài khác vào gói): chỉ
+            # các bài ấy - kể cả bài người dùng nhập, chỉ cuốn có đoạn dùng nó mới lấy được.
+            return music_plan.track_file_named(project_root, relative, self.music_track)
         match = re.fullmatch(r"chapters/([^/\\]+\.mp3)", relative)
         if match:
             for chapter in store.chapters(project_root):
@@ -719,7 +713,7 @@ class SyncHandler(BaseHTTPRequestHandler):
                 return
             status = HTTPStatus.PARTIAL_CONTENT
         self.send_response(status)
-        self.send_header("Content-Type", "audio/mpeg" if path.suffix == ".mp3" else "audio/wav")
+        self.send_header("Content-Type", music_plan.TRACK_TYPES.get(path.suffix.lower(), "audio/wav"))
         self.send_header("Accept-Ranges", "bytes")
         self.send_header("Content-Length", str(end - start + 1))
         if status == HTTPStatus.PARTIAL_CONTENT:

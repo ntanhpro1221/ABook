@@ -30,8 +30,8 @@ from urllib.parse import parse_qs, quote, unquote, urlsplit
 
 from .. import aliases, bracket_rule, continuation, listener_overrides
 from ..io_utils import atomic_write_json
-from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, humanize, listen_view, music_catalog, music_plan,
-               music_select, packages, projectfile, reading_preview, remote_config, shared_readings, store, volumes)
+from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, humanize, listen_view, music_catalog, music_local,
+               music_plan, music_select, packages, projectfile, reading_preview, remote_config, shared_readings, store, volumes)
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, clean_book_templates, legacy_ids
 from .listening import RECORD_ID, Listening
@@ -63,6 +63,7 @@ VOICE_PREVIEW_DIR = ASSET_DIR / "voice_previews"
 CHUNK = 256 * 1024
 MUSIC_UNAVAILABLE_SECONDS = 24 * 3600  # bài tải hỏng (nguồn gỡ, 404...) nghỉ 24 giờ rồi thử lại
 MUSIC_OFFLINE_SECONDS = 300            # tải hỏng vì mạng: cả máy coi như offline 5 phút
+MY_MUSIC_IMPORT_LIMIT = 500             # số file tối đa trong một lượt nhập "Nhạc của tôi"
 MUSIC_WARM_ROUNDS = 3                  # tải sẵn rồi chọn lại bài thay cho bài hỏng: tối đa 3 vòng
 MAX_BODY = 1024 * 1024
 TYPES = {
@@ -83,7 +84,7 @@ TYPES = {
 
 class Dialogs(Protocol):
     def pick_folder(self, title: str, start: str) -> str | None: ...
-    def pick_files(self, title: str, start: str) -> list[str]: ...
+    def pick_files(self, title: str, start: str, kind: str = "chapters") -> list[str]: ...
     def pick_book_file(self, title: str, start: str) -> str | None: ...
 
 
@@ -195,6 +196,8 @@ class App:
         # Nhạc nền (webui/music_*.py): địa chỉ danh mục lấy từ cấu hình từ xa có chữ ký (remote_config.py), không ghi cứng.
         self.remote_config = remote_config.RemoteConfig(preferences.path.with_name("remote"))
         self.music_dir = preferences.path.with_name("music")
+        # "Nhạc của tôi" (music_local.py): nhạc người dùng tự nhập, của riêng máy này; file bài sách mang theo nằm trong files/.
+        self.my_music = music_local.LocalMusic(self.music_dir / "mine", self.music_dir / "files")
         self._music_catalog: music_catalog.MusicCatalog | None = None
         self._music_lock = threading.Lock()
         self._music_fetching: dict[str, threading.Lock] = {}  # mỗi bài một khoá: luồng tải sẵn và trình phát không ghi đè nhau
@@ -826,7 +829,7 @@ class App:
             return {}
         known = dict((plan or {}).get("tracks") or {})
         try:
-            known.update(self.music_catalog().lookup(banned))
+            known.update(self._music_lookup(banned))
         except (music_catalog.CatalogError, OSError, ValueError):
             pass
         return {link: {key: known[link][key] for key in ("title", "creator")
@@ -844,6 +847,69 @@ class App:
         except music_catalog.CatalogError:
             return {}
 
+    def _music_candidates(self, valence: float, arousal: float) -> Iterable[dict[str, Any]]:
+        """Ứng viên tự động quanh một không khí: bài danh mục + bài "Nhạc của tôi" đã phân tích (chưa phân tích thì không)."""
+        yield from self.music_catalog().near(valence, arousal, radius=1)
+        yield from self.my_music.near(valence, arousal, radius=1)
+
+    def _music_lookup(self, links: Iterable[str], project_root: Path | None = None) -> dict[str, dict[str, Any]]:
+        """Thông tin các bài: danh mục cho link mạng, kho "Nhạc của tôi" cho link `local:`. Bài `local:` mà kho máy này không có
+        (sách mở từ file, bài người làm sách tự nhập) thì lấy bản đã ghi trong rãnh nhạc của cuốn - tên bài không mất."""
+        links = list(links)
+        remote = [link for link in links if not music_plan.is_local(link)]
+        found = self.music_catalog().lookup(remote) if remote else {}
+        mine = [link for link in links if music_plan.is_local(link)]
+        if mine:
+            found.update(self.my_music.lookup(mine))
+            lost = [link for link in mine if link not in found]
+            kept = ((music_plan.read_plan(project_root) or {}).get("tracks") or {}) if project_root is not None and lost else {}
+            found.update({link: kept[link] for link in lost if isinstance(kept.get(link), dict)})
+        return found
+
+    # ---- "Nhạc của tôi" (music_local.py) ---------------------------------------------------------------------------------
+    def my_music_view(self) -> dict[str, Any]:
+        """Danh sách bài đã nhập + có bộ phân tích âm thanh chưa (chưa có thì bài mới nhập ở trạng thái "chưa phân tích")."""
+        return {"tracks": self.my_music.entries(), "analyzer": music_local.analyzer_available()}
+
+    def my_music_import(self, paths: list[str]) -> dict[str, Any]:
+        """Nhập các file nhạc (đường dẫn trên máy này, từ hộp chọn file). Từng file một: file hỏng không làm hỏng cả lượt - kết
+        quả nói rõ file nào đã nhập, file nào đã có sẵn trong kho, file nào không nhập được và vì sao."""
+        self._mutating()
+        added: list[dict[str, Any]] = []
+        existing: list[dict[str, Any]] = []
+        failed: list[str] = []
+        for raw in paths[:MY_MUSIC_IMPORT_LIMIT]:
+            try:
+                if not isinstance(raw, str) or not Path(raw).is_absolute():
+                    raise music_local.MusicImportError("Đường dẫn file không hợp lệ.")
+                track, duplicate = self.my_music.import_file(Path(raw))
+            except music_local.MusicImportError as exc:
+                failed.append(str(exc))
+                continue
+            (existing if duplicate else added).append(track)
+        return {"added": added, "existing": existing, "failed": failed, **self.my_music_view()}
+
+    def my_music_remove(self, digest: str) -> dict[str, Any]:
+        self._mutating()
+        if not self.my_music.remove(digest):
+            raise ApiError(HTTPStatus.NOT_FOUND, "Bài này không còn trong Nhạc của tôi")
+        return self.my_music_view()
+
+    def my_music_analyze(self) -> dict[str, Any]:
+        """Phân tích các bài chưa phân tích (khi bộ phân tích đã có); chưa có thì nói rõ, không bịa."""
+        self._mutating()
+        if not music_local.analyzer_available():
+            raise ApiError(HTTPStatus.CONFLICT, "Chưa có bộ phân tích âm thanh - bài nhập vào vẫn ghim tay được, "
+                                                "nhưng máy chưa tự chọn chúng.")
+        return {"analysed": self.my_music.analyze_pending(), **self.my_music_view()}
+
+    def my_music_file(self, digest: str) -> Path:
+        """File bài của người dùng cho "Nghe thử" trên máy này (không qua Studio từ xa - đường theo sách lo phần phát)."""
+        path = self.my_music.file(music_plan.LOCAL_PREFIX + digest)
+        if path is None:
+            raise ApiError(HTTPStatus.NOT_FOUND, "Không thấy bài này trong Nhạc của tôi")
+        return path
+
     def music_rebuild(self, value: str, *, keep_scenes: bool = False, edited: set[str] | None = None) -> dict[str, Any]:
         """Dựng lại rãnh nhạc. `keep_scenes`: chọn lại bài trên các đoạn plan hiện có (người dùng sửa một đoạn - không
         chia lại cả cuốn); mặc định chia lại đoạn ("Chọn lại nhạc", lần dựng đầu). `edited` (cần `keep_scenes`): các đoạn
@@ -858,8 +924,7 @@ class App:
     def _music_build(self, value: str, path: Path, manifest: dict[str, Any], previous: dict[str, Any] | None,
                      edited: set[str] | None) -> dict[str, Any]:
         """Dựng + lưu rãnh nhạc, chỉ chọn bài dùng được TRÊN MÁY NÀY (`music_track_available`)."""
-        catalog = self.music_catalog()
-        return music_plan.build(path, lambda v, a: catalog.near(v, a, radius=1), catalog.lookup,
+        return music_plan.build(path, self._music_candidates, lambda links: self._music_lookup(links, path),
                                 catalog_revision=str(manifest.get("revision") or ""), book_key=value,
                                 taxonomy=manifest.get("taxonomy"),
                                 scenes=music_plan.scenes_of(previous),
@@ -896,9 +961,10 @@ class App:
 
     def _music_ranked(self, path: Path, scene_key: str, *, limit: int, exclude: Iterable[str] = (),
                       available: Callable[[str], bool] | None = None,
-                      book_key: str | None = None) -> list[dict[str, Any]] | None:
+                      book_key: str | None = None, pool: str = "all") -> list[dict[str, Any]] | None:
         """Bài hợp nhất cho MỘT đoạn của plan (music_select.rank): cùng điểm và bộ lọc với lúc máy chọn, tôn trọng phong cách
-        / thế giới của cuốn và bài đã bỏ. None = plan không có đoạn này."""
+        / thế giới của cuốn và bài đã bỏ. None = plan không có đoạn này. `pool`: "all" (danh mục + Nhạc của tôi đã phân tích,
+        như lúc máy chọn), "catalog" hay "mine"."""
         plan = music_plan.read_plan(path)
         scenes = (plan or {}).get("scenes") or []
         index = next((i for i, scene in enumerate(scenes) if scene.get("key") == scene_key), None)
@@ -912,7 +978,9 @@ class App:
         for scene in scenes[:index]:
             if scene.get("link") and (not recent or recent[-1] != scene["link"]):
                 recent.append(scene["link"])
-        return music_select.rank(scenes[index], lambda v, a: catalog.near(v, a, radius=1), book_key=book_key or book_id(path),
+        near = {"all": self._music_candidates, "catalog": lambda v, a: catalog.near(v, a, radius=1),
+                "mine": lambda v, a: self.my_music.near(v, a, radius=1)}[pool]
+        return music_select.rank(scenes[index], near, book_key=book_key or book_id(path),
                                  family=overrides["family"], banned=overrides["banned"], genre_styles=genre_styles,
                                  recent=recent, exclude=exclude, limit=limit, available=available)
 
@@ -924,7 +992,7 @@ class App:
         current = next((scene.get("link") for scene in (plan or {}).get("scenes") or []
                         if scene.get("key") == scene_key), None)
         ranked = self._music_ranked(path, scene_key, limit=limit, exclude=[current] if current else [], book_key=value,
-                                    available=self.music_track_available)
+                                    available=self.music_track_available, pool="catalog")
         if ranked is None:
             raise ApiError(HTTPStatus.NOT_FOUND, "Không thấy đoạn nhạc này - hãy chọn lại nhạc rồi thử lại.")
         info = self.music_catalog().lookup([track["link"] for track in ranked]) if ranked else {}
@@ -936,7 +1004,26 @@ class App:
             if known.get("duration"):
                 item["duration"] = known["duration"]
             items.append(item)
-        return {"key": scene_key, "alternatives": items}
+        return {"key": scene_key, "alternatives": items, "mine": self._music_mine(path, scene_key, current, value)}
+
+    def _music_mine(self, path: Path, scene_key: str, current: str | None, book_key: str) -> list[dict[str, Any]]:
+        """Nhóm "Nhạc của tôi" trong "Đổi bài": MỌI bài người dùng đã nhập (trừ bài đang chọn và bài đã bỏ cho cuốn này) - ghim
+        tay được kể cả bài chưa phân tích. Bài hợp không khí đoạn này (qua ngưỡng im lặng) đứng trước, kèm điểm."""
+        banned = set(music_plan.read_overrides(path)["banned"])
+        fits = {track["link"]: track["score"] for track in self._music_ranked(
+            path, scene_key, limit=1_000_000, book_key=book_key, available=self.music_track_available, pool="mine") or []}
+        items = []
+        for track in self.my_music.entries():
+            link = track["link"]
+            if link == current or link in banned:
+                continue
+            item = {"link": link, "title": track["title"], "creator": track["creator"], "attribution": "",
+                    "duration": track["duration"], "analysed": track["analysed"], "fits": link in fits}
+            if link in fits:
+                item["score"] = fits[link]
+            items.append(item)
+        items.sort(key=lambda item: (not item["fits"], not item["analysed"], item.get("score", 0.0), item["title"].lower()))
+        return items
 
     def _music_alternatives(self, path: Path, scene_key: str, exclude: list[str], *, limit: int = 6,
                             available: Callable[[str], bool] | None = None) -> list[dict[str, Any]]:
@@ -944,7 +1031,7 @@ class App:
         mục hay không có bài nào hợp thì rỗng - chỗ ấy im lặng."""
         try:
             ranked = self._music_ranked(path, scene_key, limit=limit, exclude=exclude, available=available) or []
-            info = self.music_catalog().lookup([track["link"] for track in ranked]) if ranked else {}
+            info = self._music_lookup([track["link"] for track in ranked]) if ranked else {}
         except (music_catalog.CatalogError, OSError, ValueError):
             return []
         return [{**track, **info.get(track["link"], {})} for track in ranked]
@@ -983,11 +1070,19 @@ class App:
         if plan is None:
             return {"cues": [], "levelDb": music_plan.DEFAULT_LEVEL_DB, "credits": {}}
         tracks = dict(plan.get("tracks") or {})
-        cues = [dict(cue, src="/api/music/track?link=" + quote(cue["link"], safe=""))
+        cues = [dict(cue, src=self._music_src(value, cue["link"]))
                 for cue in self._music_playable(path, music_plan.chapter_cues(plan, chapter_id), tracks)]
         level = plan.get("levelDb", music_plan.DEFAULT_LEVEL_DB)
         music_plan.apply_gain(cues, level, tracks, self.music_track_cached)
         return {"cues": cues, "levelDb": level, "credits": self._music_credits(cues, tracks)}
+
+    def _music_src(self, value: str, link: str) -> str:
+        """Đường lấy file bài qua máy này. Bài danh mục: `/api/music/track?link=` (máy chủ chỉ tải bài CÓ trong danh mục); bài
+        "Nhạc của tôi": đường THEO SÁCH như file trong gói - chỉ cuốn có đoạn dùng bài ấy mới lấy được."""
+        path = self.music_track_cached(link) if music_plan.is_local(link) else None
+        if path is None:
+            return "/api/music/track?link=" + quote(link, safe="")
+        return f"/api/books/{quote(value, safe='')}/music/files/{music_plan.track_name(link, path).split('/')[1]}"
 
     def _music_playable(self, path: Path, cues: list[dict[str, Any]], tracks: dict[str, Any]) -> list[dict[str, Any]]:
         """Mốc nhạc mà máy này phát được: mốc có bài không dùng được (offline và chưa có trong bộ đệm, hay nguồn đã hỏng) thì
@@ -1021,7 +1116,9 @@ class App:
         return credits
 
     def music_track_cached(self, link: str) -> Path | None:
-        """Bài đã có trong bộ đệm của máy (không tải): cho gói điện thoại hỏi thường xuyên."""
+        """Bài đã có trong bộ đệm của máy (không tải): cho gói điện thoại hỏi thường xuyên. Bài "Nhạc của tôi": file trong kho."""
+        if music_plan.is_local(link):
+            return self.my_music.file(link)
         target = self.music_dir / "files" / (hashlib.sha1(link.encode("utf-8")).hexdigest() + ".mp3")
         return target if target.is_file() else None
 
@@ -1084,6 +1181,8 @@ class App:
         5 phút qua) hay bài đã bị đánh dấu hỏng (chưa quá 24 giờ) thì không; chưa biết thì cứ coi là được."""
         if self.music_track_cached(link) is not None:
             return True
+        if music_plan.is_local(link):
+            return False  # nhạc người dùng nhập không tải được từ đâu: không có file là không dùng được
         with self._music_lock:
             now = self._music_clock()
             if now < self._music_offline_until:
@@ -1100,6 +1199,8 @@ class App:
 
     def music_track_for_export(self, link: str) -> Path | None:
         """Bài nhạc để gói vào file sách: lấy từ bộ đệm / tải về; không lấy được thì None (chỗ ấy im lặng)."""
+        if music_plan.is_local(link):
+            return self.my_music.file(link)
         try:
             return self.music_track_file(link)
         except (ApiError, OSError):
@@ -1593,7 +1694,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def _send_file(self, path: Path, *, cache: bool = False) -> None:
         size = path.stat().st_size
-        content_type = TYPES.get(path.suffix.lower()) or mimetypes.guess_type(path.name)[0] or "application/octet-stream"
+        content_type = (TYPES.get(path.suffix.lower()) or music_plan.TRACK_TYPES.get(path.suffix.lower())
+                        or mimetypes.guess_type(path.name)[0] or "application/octet-stream")
         start, end = 0, size - 1
         status = HTTPStatus.OK
         match = re.match(r"bytes=(\d*)-(\d*)$", self.headers.get("Range") or "")
@@ -2146,10 +2248,30 @@ class Handler(BaseHTTPRequestHandler):
 
     def get_music_packaged(self, _query: dict[str, list[str]], value: str, name: str) -> None:
         path = self.app._listenable(value)
-        target = packages.music_file(path, f"music/{name}") if packages.is_package(path) else None
+        # Sách mở từ file: bài trong gói. Dự án: bài "Nhạc của tôi" mà đoạn của chính cuốn này dùng (music_plan.track_file_named).
+        target = (packages.music_file(path, f"music/{name}") if packages.is_package(path)
+                  else music_plan.track_file_named(path, f"music/{name}", self.app.music_sync_source()))
         if target is None:
             raise ApiError(HTTPStatus.NOT_FOUND, "Không có bài nhạc này trong sách")
         self._send_file(target, cache=True)
+
+    def get_my_music(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.my_music_view())
+
+    def post_my_music_import(self, _query: dict[str, list[str]]) -> None:
+        paths = self._body().get("paths")
+        if not isinstance(paths, list):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu danh sách file nhạc")
+        self._send_json(HTTPStatus.OK, self.app.my_music_import(paths))
+
+    def post_my_music_analyze(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.my_music_analyze())
+
+    def delete_my_music(self, _query: dict[str, list[str]], digest: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.my_music_remove(digest))
+
+    def get_my_music_file(self, _query: dict[str, list[str]], digest: str) -> None:
+        self._send_file(self.app.my_music_file(digest), cache=True)
 
     def get_music_track(self, query: dict[str, list[str]]) -> None:
         self._send_file(self.app.music_track_file((query.get("link") or [""])[0]), cache=True)
@@ -2842,7 +2964,8 @@ class Handler(BaseHTTPRequestHandler):
         if self.app.dialogs is None:
             raise ApiError(HTTPStatus.NOT_IMPLEMENTED, "Không có hộp thoại chọn file ở chế độ này")
         body = self._body()
-        paths = self.app.dialogs.pick_files(str(body.get("title", "Chọn file TXT")), str(body.get("start", "")))
+        kind = "music" if body.get("kind") == "music" else "chapters"  # loại file hộp chọn cho xem: chương truyện hay nhạc
+        paths = self.app.dialogs.pick_files(str(body.get("title", "Chọn file TXT")), str(body.get("start", "")), kind)
         self._send_json(HTTPStatus.OK, {"paths": paths})
 
     def media_voice(self, _query: dict[str, list[str]], name: str) -> None:
@@ -2923,8 +3046,14 @@ ROUTES: list[Route] = [
     ("POST", re.compile(BOOK + r"/music/rebuild"), Handler.post_music_rebuild),
     ("GET", re.compile(BOOK + r"/music/scenes/([^/]+)/alternatives"), Handler.get_music_alternatives),
     ("GET", re.compile(BOOK + r"/music/chapters/(\d+)"), Handler.get_music_cues),
-    ("GET", re.compile(BOOK + r"/music/files/([0-9a-f]{40}\.mp3)"), Handler.get_music_packaged),
+    ("GET", re.compile(BOOK + r"/music/files/(" + music_plan.TRACK_NAME + ")"), Handler.get_music_packaged),
     ("GET", re.compile(r"/api/music/track"), Handler.get_music_track),
+    # "Nhạc của tôi": chỉ trên máy này (Studio từ xa không có các đường này - nhạc của người dùng không ra khỏi máy trừ qua sách).
+    ("GET", re.compile(r"/api/music/local"), Handler.get_my_music),
+    ("POST", re.compile(r"/api/music/local/import"), Handler.post_my_music_import),
+    ("POST", re.compile(r"/api/music/local/analyze"), Handler.post_my_music_analyze),
+    ("DELETE", re.compile(r"/api/music/local/([0-9a-f]{40})"), Handler.delete_my_music),
+    ("GET", re.compile(r"/api/music/local/([0-9a-f]{40})/file"), Handler.get_my_music_file),
     ("GET", re.compile(BOOK + r"/parts"), Handler.get_parts),
     ("GET", re.compile(BOOK + r"/pronunciations"), Handler.get_name_readings),
     ("GET", re.compile(BOOK + r"/casting/(\d+)"), Handler.get_casting_chapter),
