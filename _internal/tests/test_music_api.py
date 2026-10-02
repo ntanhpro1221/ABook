@@ -348,14 +348,17 @@ def test_a_mirror_without_the_originals_sha1_is_never_used(studio, tmp_path: Pat
 CALM, CALM2 = "https://x/calm.mp3", "https://x/calm2.mp3"
 
 
-def _forced_plan(paths, link: str, count: int = 3) -> dict:
-    """Ép plan về `count` đoạn êm cùng dùng `link` (hai bài "calm" của danh mục thử cùng hợp)."""
+def _forced_plan(paths, link: str, count: int = 3, only_listed: bool = False) -> dict:
+    """Ép plan về `count` đoạn êm cùng dùng `link` (hai bài "calm" của danh mục thử cùng hợp). `only_listed`: plan["tracks"]
+    chỉ liệt kê `link` như plan thật (chỉ bài của các đoạn)."""
     plan_file = paths.root / "music_plan.json"
     plan = json.loads(plan_file.read_text(encoding="utf-8"))
     base = plan["scenes"][0]
     plan["scenes"] = [dict(base, firstSegment=100 + i, lastSegment=100 + i, start=i * 20.0, end=i * 20.0 + 20.0,
                            key=f"{base['chapterId']}:{100 + i}", link=link, pinned=False, valence=0.3, arousal=-0.6,
                            confidence=0.9, tension=0.0) for i in range(count)]
+    if only_listed:
+        plan["tracks"] = {link: plan["tracks"].get(link) or {"title": "Calm", "creator": "A"}}
     plan_file.write_bytes(json.dumps(plan).encode("utf-8"))
     return plan
 
@@ -537,3 +540,94 @@ def test_warming_offline_keeps_only_cached_tracks_and_stops(studio, tmp_path: Pa
     _forced_plan(paths, CALM, count=2)
     app._warm_run(music_plan.read_plan(paths.root), book)
     assert [scene["link"] for scene in music_plan.read_plan(paths.root)["scenes"]] == [CALM2, CALM2]
+
+
+def _phone_side(app, paths, tmp_path: Path):
+    """Điện thoại nghe cuốn của máy này: (gói nhạc trong manifest, SyncApp phục vụ file) - cùng nguồn `music_sync_source`."""
+    from abook.webui.library import Library, Preferences
+    from abook.webui.listening import Listening
+    from abook.webui.sync import Devices, SyncApp
+
+    from abook.webui import music_plan
+
+    source = app.music_sync_source()
+    packed = music_plan.package(paths.root, [1], source)
+    sync = SyncApp(Library(Preferences(tmp_path / "prefs2.json")), Listening(tmp_path / "listening2.json"),
+                   Devices(tmp_path / "devices2.json"), "may", music_track=source)
+    return (packed[0] if packed else None), sync
+
+
+def test_the_phone_gets_the_substitute_track_and_the_file_of_it_when_the_chosen_one_is_unavailable(  # noqa: F811
+        studio, tmp_path: Path, monkeypatch) -> None:
+    from abook.webui import music_plan
+    from tests.test_music_catalog_and_select import TRACKS
+
+    for key, value in (("title", "Calm Two"), ("creator", "B"), ("attribution", "Calm Two by B"), ("lufs", -20.0)):
+        monkeypatch.setitem(TRACKS[CALM2], key, value)  # ghi công + độ to của bài thay thế đi theo gói
+    paths, app, server, _runner = studio
+    _with_catalog(app, tmp_path)
+    book = book_id(paths.root)
+    _call(server, "GET", f"/api/books/{book}/music")
+    plan = _forced_plan(paths, CALM, only_listed=True)
+    chapter = plan["scenes"][0]["chapterId"]
+    # Chưa hỏng: gói giữ bài đã chọn, bài kia (dù có trong bộ đệm) không được phục vụ.
+    _cache(app, CALM), _cache(app, CALM2)
+    music, sync = _phone_side(app, paths, tmp_path)
+    assert [t["link"] for t in music["tracks"].values()] == [CALM] and list(music["chapters"]) == [str(chapter)]
+    assert isinstance(sync.resolve_file(paths.root, music_plan.track_name(CALM)), Path)
+    assert sync.resolve_file(paths.root, music_plan.track_name(CALM2)) is None
+    # Bài đã chọn hỏng (và hết trong bộ đệm): gói mang bài thay thế kèm thông tin, file của nó được phục vụ.
+    _cache(app, CALM).unlink()
+    app._music_mark(CALM, True)
+    music, sync = _phone_side(app, paths, tmp_path)
+    name = music_plan.track_name(CALM2)
+    assert list(music["tracks"]) == [name] and music["tracks"][name]["link"] == CALM2
+    assert music["tracks"][name]["title"] == "Calm Two" and music["tracks"][name]["attribution"] == "Calm Two by B"
+    assert music["tracks"][name]["lufs"] == -20.0
+    assert [cue["track"] for cue in music["chapters"][str(chapter)]] == [name]
+    found = sync.resolve_file(paths.root, name)
+    assert isinstance(found, Path) and found.read_bytes().startswith(b"ID3")
+    assert sync.resolve_file(paths.root, music_plan.track_name(CALM)) is None
+    # Link tuỳ ý (kể cả bài có trong danh mục và đã đệm nhưng không được thay cho đoạn nào của cuốn) vẫn không được phục vụ.
+    other = "https://x/short.mp3"
+    _cache(app, other)
+    assert sync.resolve_file(paths.root, music_plan.track_name(other)) is None
+    assert sync.resolve_file(paths.root, music_plan.track_name("https://ke-la.example/x.mp3")) is None
+
+
+def test_the_phone_package_has_no_music_when_the_chosen_track_is_unavailable_and_nothing_replaces_it(  # noqa: F811
+        studio, tmp_path: Path) -> None:
+    from abook.webui import music_plan
+
+    paths, app, server, _runner = studio
+    _with_catalog(app, tmp_path)
+    _call(server, "GET", f"/api/books/{book_id(paths.root)}/music")
+    _forced_plan(paths, CALM, only_listed=True)
+    app._music_mark(CALM, True)
+    app._music_mark(CALM2, True)
+    music, sync = _phone_side(app, paths, tmp_path)
+    assert music is None, "không bài nào dùng được: mốc bỏ đi, im lặng"
+    assert sync.resolve_file(paths.root, music_plan.track_name(CALM2)) is None
+    # Bài mới chọn mà chưa tải xong (chưa hỏng): chờ đợt tải sẵn, không thay vội bằng bài khác.
+    app._music_mark(CALM, False)
+    _cache(app, CALM2)
+    app._music_mark(CALM2, False)
+    music, sync = _phone_side(app, paths, tmp_path)
+    assert music is None and sync.resolve_file(paths.root, music_plan.track_name(CALM2)) is None
+
+
+def test_change_track_does_not_offer_tracks_this_machine_cannot_get(studio, tmp_path: Path) -> None:  # noqa: F811
+    paths, app, server, _runner = studio
+    _with_catalog(app, tmp_path)
+    book = book_id(paths.root)
+    _call(server, "GET", f"/api/books/{book}/music")
+    plan = _forced_plan(paths, CALM)
+    url = f"/api/books/{book}/music/scenes/{quote(plan['scenes'][0]['key'], safe='')}/alternatives"
+    _status, data = _call(server, "GET", url)
+    assert CALM2 in [item["link"] for item in data["alternatives"]]
+    app._music_mark(CALM2, True)
+    status, data = _call(server, "GET", url)
+    assert status == 200 and CALM2 not in [item["link"] for item in data["alternatives"]]
+    _cache(app, CALM2)  # đã có trong bộ đệm thì dùng được dù có dấu hỏng
+    _status, data = _call(server, "GET", url)
+    assert CALM2 in [item["link"] for item in data["alternatives"]]

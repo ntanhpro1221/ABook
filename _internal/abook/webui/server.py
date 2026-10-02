@@ -918,12 +918,13 @@ class App:
 
     def music_alternatives(self, value: str, scene_key: str, limit: int = 6) -> dict[str, Any]:
         """"Đổi bài": tối đa `limit` bài khác cho một đoạn, hợp nhất trước - cùng điểm và bộ lọc với lúc máy chọn
-        (music_select.rank), tôn trọng phong cách / thế giới của cuốn, bỏ bài đã bỏ và bài đang chọn."""
+        (music_select.rank), tôn trọng phong cách / thế giới của cuốn, bỏ bài đã bỏ, bài đang chọn và bài máy này không lấy được."""
         path = self._book(value)
         plan = music_plan.read_plan(path)
         current = next((scene.get("link") for scene in (plan or {}).get("scenes") or []
                         if scene.get("key") == scene_key), None)
-        ranked = self._music_ranked(path, scene_key, limit=limit, exclude=[current] if current else [], book_key=value)
+        ranked = self._music_ranked(path, scene_key, limit=limit, exclude=[current] if current else [], book_key=value,
+                                    available=self.music_track_available)
         if ranked is None:
             raise ApiError(HTTPStatus.NOT_FOUND, "Không thấy đoạn nhạc này - hãy chọn lại nhạc rồi thử lại.")
         info = self.music_catalog().lookup([track["link"] for track in ranked]) if ranked else {}
@@ -953,6 +954,16 @@ class App:
         trên máy này (music_plan.package)."""
         return music_plan.TrackSource(self.music_track_for_export, lambda root, key, exclude: self._music_alternatives(
             root, key, exclude, available=self.music_track_available))
+
+    def music_sync_source(self) -> music_plan.TrackSource:
+        """Nguồn file nhạc cho điện thoại nghe / đồng bộ (webui/sync.py): chỉ bài ĐÃ có trong bộ đệm (không tải trong lượt
+        hỏi). Bài của plan mà máy này không dùng được (`music_track_available`) thì thay bằng bài kế dùng được - như
+        `_music_playable` ở trình phát máy tính; bài chỉ mới chưa tải xong thì chờ đợt tải sẵn, không thay vội."""
+        def alternatives(root: Path, key: str, exclude: list[str]) -> list[dict[str, Any]]:
+            if any(self.music_track_available(link) for link in exclude):
+                return []
+            return self._music_alternatives(root, key, exclude, available=self.music_track_available)
+        return music_plan.TrackSource(self.music_track_cached, alternatives)
 
     def music_cues(self, value: str, chapter_id: int) -> dict[str, Any]:
         """Nhạc của một chương cho trình phát: mốc thời gian + đường lấy file qua máy này (đệm, tua được)."""
@@ -1244,7 +1255,7 @@ class App:
                                     port=lambda: self.local_port, token=self.token, static_dir=self.static_dir)
                 app = SyncApp(self.library, self.listening, self.devices, socket_name(), self.remote, studio=studio,
                               routes=self.routes,
-                              player=self.player, cast=self.cast, music_track=self.music_track_cached)
+                              player=self.player, cast=self.cast, music_track=self.music_sync_source())
                 # Danh tính TLS sinh một lần, nằm cạnh tuỳ chọn: đổi nó là mọi thiết bị đã ghép phải ghép lại.
                 identity = tls.load_or_create(self.preferences.path.with_name(tls.FILE_NAME))
                 self.sync_server = SyncServer(app, host=self.sync_host, port=self.sync_port, identity=identity).start()
