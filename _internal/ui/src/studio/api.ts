@@ -334,5 +334,7 @@ export function mediaUrl(path: string): string {
 export const urls = {
   chapterAudio: (bookId: string, chapterId: number) => mediaUrl(`/media/books/${bookId}/chapters/${chapterId}`),
   sample: (bookId: string, segmentId: number) => mediaUrl(`/media/books/${bookId}/samples/${segmentId}`),
+  /** Bản "Nghe thử" một cách đọc tên: máy chủ trả sẵn đường dẫn (có mã bản nghe thử trong đó). */
+  readingPreview: (path: string) => mediaUrl(path),
   voice: (name: string) => mediaUrl(`/media/voices/${encodeURIComponent(name)}`),
 };
