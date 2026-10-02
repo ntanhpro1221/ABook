@@ -1243,6 +1243,31 @@ Cách sửa F1, cho bài mang số trò:
 - Vùng mà mang số thầy < 30 lần qua 50 lượt thì báo số, không xét (mẫu số quá nhỏ).
 - ĐẠT thì mới đo (c) bằng người đọc trên kho trộn trước khi vào app.
 
+**KẾT QUẢ F1 (03-10 05:29, `results/mixed_library_f1.txt`):** **LỆCH theo chiều ngược lại**, sửa quá tay.
+- Hồi quy thầy trên trò:
+
+| Trục | a | b | var |
+|---|---|---|---|
+| V | −0,055 | 1,25 | 0,040 |
+| E | 0,002 | 1,10 | 0,031 |
+| T | 0,009 | 1,24 | 0,040 |
+
+- Bài nhập vào 6 bài:
+  - vùng giữa: 361 / 6.761 = 0,05;
+  - vùng vừa: 60 / 115 = 0,52;
+  - hạng 1: 0.
+- Lý do: var cộng vào tử thành một khoản phạt gần cố định (~0,86 trong z²). Sáu bài đứng đầu trên ~900 bài đều có z rất nhỏ,
+  nên khoản ấy đủ loại bài nhập.
+- Gốc rễ: F1 coi số thầy là sự thật không nhiễu. Thật ra số thầy cũng chỉ là một ước lượng.
+
+**GHI TRƯỚC - F2: TRUNG BÌNH HIỆU CHỈNH + λ·var, λ CHỌN TRÊN NỬA KIA (03-10 05:3x, trước khi chạy):**
+- Bài nhập: trung bình = a + b·trò như F1; tử cộng λ·var; sd = 0,2.
+- Chia 100 đoạn E1 thành hai nửa THEO CHƯƠNG: xếp tên chương, xen kẽ.
+- Chọn λ trên nửa A, hạt giống 1–25, lưới λ ∈ {0; 0,05; 0,1; 0,15; 0,2; 0,3; 0,4; 0,5; 0,7; 1}.
+  - Tiêu chí: nhỏ nhất max |log tỉ lệ| qua các vùng mà mang số thầy ≥ 30 lần.
+- Kiểm trên nửa B, hạt giống 26–50, với λ đã chọn. Luật ĐẠT như F1.
+- ĐẠT thì chấm người đọc trên kho trộn (Lead đã duyệt), rồi mới vào app.
+
 **GHI TRƯỚC - TRÒ v2 HỌC THÊM MTG (03-10 05:4x, Lead giao; bổ sung ghi trước MTG 02-10):**
 
 Dữ liệu:
