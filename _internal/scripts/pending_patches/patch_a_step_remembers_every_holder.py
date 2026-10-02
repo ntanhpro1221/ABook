@@ -45,7 +45,7 @@ def write_atomic(path: Path, text: str) -> None:
 
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "character_registry.py"
+p = root / "abook" / "character_registry.py"
 s = io.open(p, encoding="utf-8").read()
 
 # ---------------------------------------------------------------- kieu cua holders
@@ -139,7 +139,7 @@ cùng chương 071 - vô hình với lần chọn kế tiếp.
 """
 from __future__ import annotations
 
-from ebook_reader.character_registry import PresetAllocator
+from abook.character_registry import PresetAllocator
 
 
 def _allocator() -> PresetAllocator:

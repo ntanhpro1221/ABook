@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 from PIL import Image
 
-from ebook_reader.webui import covers
+from abook.webui import covers
 
 
 def data_url(image: Image.Image, kind: str = "PNG") -> str:
@@ -70,7 +70,7 @@ def test_the_colour_prefers_a_hue_over_a_grey_background(tmp_path: Path) -> None
 
 
 def test_only_the_providers_image_hosts_can_be_fetched() -> None:
-    from ebook_reader.webui import cover_search
+    from abook.webui import cover_search
 
     assert cover_search.allowed_image_url("https://is1-ssl.mzstatic.com/image/thumb/x/1000x1000bb.jpg")
     assert cover_search.allowed_image_url("https://covers.openlibrary.org/b/id/42-L.jpg")
@@ -82,7 +82,7 @@ def test_only_the_providers_image_hosts_can_be_fetched() -> None:
 
 
 def test_a_failing_provider_does_not_spoil_the_search(monkeypatch: pytest.MonkeyPatch) -> None:
-    from ebook_reader.webui import cover_search
+    from abook.webui import cover_search
 
     def works(query: str) -> list[dict]:
         hit = {"provider": "A", "title": query, "author": "", "thumb": "https://covers.openlibrary.org/b/id/1-M.jpg",

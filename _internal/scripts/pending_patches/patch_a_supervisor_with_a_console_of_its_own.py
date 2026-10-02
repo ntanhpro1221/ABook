@@ -27,7 +27,7 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "background_runner.py"
+p = root / "abook" / "background_runner.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD = '''def _detached_creation_flags() -> int:
@@ -80,7 +80,7 @@ from __future__ import annotations
 
 import os
 
-from ebook_reader import background_runner
+from abook import background_runner
 
 
 def test_the_supervisor_is_hidden_but_not_detached() -> None:

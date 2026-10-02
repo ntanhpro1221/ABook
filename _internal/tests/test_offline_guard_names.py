@@ -26,7 +26,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-WORKER_SOURCE = (Path(__file__).resolve().parent.parent / "ebook_reader" / "worker.py").read_text(encoding="utf-8")
+WORKER_SOURCE = (Path(__file__).resolve().parent.parent / "abook" / "worker.py").read_text(encoding="utf-8")
 
 # Còn sống: đây là lớp đang thật sự chặn.
 LIVE = [

@@ -47,7 +47,7 @@ def write_atomic(path: Path, text: str) -> None:
 
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "character_registry.py"
+p = root / "abook" / "character_registry.py"
 s = io.open(p, encoding="utf-8").read()
 
 # ---------------------------------------------------------------- import Path
@@ -198,12 +198,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ebook_reader.character_registry import (
+from abook.character_registry import (
     build_registry_and_cast,
     fold_to_source_spelling,
     source_occurrences,
 )
-from ebook_reader.config import build_settings
+from abook.config import build_settings
 
 from tests.test_character_casting import _identity_db
 
@@ -288,7 +288,7 @@ CASES = [
 
 @pytest.mark.parametrize("names, counts", CASES)
 def test_the_two_copies_agree(names: list[str], counts: dict[str, int]) -> None:
-    registry = pytest.importorskip("ebook_reader.character_registry")
+    registry = pytest.importorskip("abook.character_registry")
     if not hasattr(registry, "fold_to_source_spelling"):
         pytest.skip("registry chưa mang bản chính - patch_the_book_decides_the_spelling chưa áp")
 

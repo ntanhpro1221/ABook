@@ -32,7 +32,7 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "analysis.py"
+p = root / "abook" / "analysis.py"
 s = io.open(p, encoding="utf-8").read()
 
 
@@ -104,7 +104,7 @@ test = root / "tests" / "test_a_name_at_the_start_of_a_sentence_is_still_a_name.
 test.write_text('''"""Tên nước ngoài đứng đầu câu vẫn được phiên âm; từ tiếng Việt đầu câu vẫn không bị tưởng là tên."""
 from __future__ import annotations
 
-from ebook_reader.analysis import _name_candidate_contexts
+from abook.analysis import _name_candidate_contexts
 
 
 def _candidates(*texts: str) -> dict[str, tuple[int, int]]:

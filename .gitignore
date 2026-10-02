@@ -27,7 +27,7 @@ output/
 *.part
 *.part.*
 *.wav
-!_internal/ebook_reader/assets/voice_previews/*.wav
+!_internal/abook/assets/voice_previews/*.wav
 *.mp3
 *.m3u8
 
@@ -49,7 +49,7 @@ Desktop.ini
 # Frontend giao diện: cài bằng npm, không commit
 _internal/ui/node_modules/
 # Bản dựng giao diện máy tính (npm run build trong _internal/ui) - cửa sổ app phục vụ nó; dựng tại máy
-_internal/ebook_reader/webui/static/
+_internal/abook/webui/static/
 
 # App Android: file sinh tự động
 _internal/mobile/node_modules/

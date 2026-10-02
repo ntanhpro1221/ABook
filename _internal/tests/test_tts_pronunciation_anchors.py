@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ebook_reader.config import build_settings
-from ebook_reader.database import ProjectDB
-from ebook_reader.models import (
+from abook.config import build_settings
+from abook.database import ProjectDB
+from abook.models import (
     CONTEXTUAL_ENGLISH_NAME_PRONUNCIATION_SOURCE,
     ENGLISH_NAME_PRONUNCIATION_SOURCE,
 )
-from ebook_reader.tts import (
+from abook.tts import (
     PRONUNCIATION_DELIVERY_SOURCE,
     TTSCoordinator,
 )

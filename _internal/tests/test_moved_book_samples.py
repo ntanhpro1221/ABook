@@ -1,11 +1,11 @@
 """Câu mẫu của một cuốn đã chuyển chỗ vẫn nghe được (webui/store.segment_audio): đường dẫn WAV trong DB là tuyệt đối lúc thu -
-thư mục dự án đổi tên (28-09: "Ebook Reader" -> "ABook"), hay chép sang máy khác, thì tìm lại theo phần đuôi của đường dẫn
+thư mục dự án đổi tên (28-09: "ABook" -> "ABook"), hay chép sang máy khác, thì tìm lại theo phần đuôi của đường dẫn
 ngay trong thư mục sách. Không bao giờ phục vụ file ngoài thư mục sách."""
 from __future__ import annotations
 
 from pathlib import Path
 
-from ebook_reader.webui.store import segment_audio
+from abook.webui.store import segment_audio
 
 
 def test_a_moved_book_finds_its_takes_by_the_tail_of_the_old_path(tmp_path: Path) -> None:
@@ -13,7 +13,7 @@ def test_a_moved_book_finds_its_takes_by_the_tail_of_the_old_path(tmp_path: Path
     take = book / "work" / "chunks" / "chapter_00001" / "0000000.wav"
     take.parent.mkdir(parents=True)
     take.write_bytes(b"RIFF")
-    recorded = r"D:\Novels\Ebook Reader\Audiobooks\lo18_78b5dddf74\work\chunks\chapter_00001\0000000.wav"
+    recorded = r"D:\Novels\ABook\Audiobooks\lo18_78b5dddf74\work\chunks\chapter_00001\0000000.wav"
 
     assert segment_audio(book, recorded) == take.resolve()
 

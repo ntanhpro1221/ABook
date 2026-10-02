@@ -53,7 +53,7 @@ def write_atomic(path: Path, text: str) -> None:
 root = Path(sys.argv[1])
 
 # ============================================================ database.py
-p = root / "ebook_reader" / "database.py"
+p = root / "abook" / "database.py"
 s = io.open(p, encoding="utf-8").read()
 
 # ---- hang so
@@ -417,7 +417,7 @@ write_atomic(p, s)
 print("da va", p)
 
 # ============================================================ pipeline.py
-q = root / "ebook_reader" / "pipeline.py"
+q = root / "abook" / "pipeline.py"
 t = io.open(q, encoding="utf-8").read()
 
 # Neo vao dau khoi import + ten dau tien: `    SEGMENT_ASR_DECODE_QUALITY_STAGE,` xuat hien them
@@ -791,7 +791,7 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.database import (
+from abook.database import (
     KEEP_LOCKED_READING_ACTION,
     PRONUNCIATION_DELIVERY_LOCKED,
     PRONUNCIATION_DELIVERY_SOURCE,
@@ -987,7 +987,7 @@ def test_a_drifted_spoken_text_checksum_is_skipped_not_raised(tmp_path: Path) ->
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     from scripts.keep_the_locked_reading import bare_pipeline
 
-    from ebook_reader.cli import _open_project
+    from abook.cli import _open_project
 
     shutil.copyfile(REAL / "project.sqlite3", tmp_path / "project.sqlite3")
     shutil.copyfile(REAL / "book_settings.json", tmp_path / "book_settings.json")

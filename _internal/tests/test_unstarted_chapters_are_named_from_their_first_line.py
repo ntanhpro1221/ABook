@@ -8,7 +8,7 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-from ebook_reader.webui.store import chapter_names
+from abook.webui.store import chapter_names
 
 
 def test_an_unsegmented_chapter_takes_its_heading_from_the_file(tmp_path: Path) -> None:

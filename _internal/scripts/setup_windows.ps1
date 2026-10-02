@@ -24,7 +24,7 @@ $PerceptualReadyMarker = Join-Path $UtmosRoot "cache_ready_v1.json"
 New-Item -ItemType Directory -Force -Path $RuntimeRoot | Out-Null
 
 $env:PYTHONUTF8 = "1"
-$env:EBOOK_READER_RUNTIME = $RuntimeRoot
+$env:ABOOK_RUNTIME = $RuntimeRoot
 $env:HF_HOME = Join-Path $ModelsRoot "huggingface"
 $env:HF_HUB_CACHE = Join-Path $env:HF_HOME "hub"
 $env:HF_HUB_DISABLE_XET = "1"
@@ -163,7 +163,7 @@ function Install-PerceptualQaAssets {
     $markerPayload | ConvertTo-Json | Set-Content -Encoding UTF8 $markerTemp
     Move-Item -Force -LiteralPath $markerTemp -Destination $PerceptualReadyMarker
     Invoke-NativeChecked {
-        & $Python -c "from pathlib import Path; from ebook_reader.runtime_contract import perceptual_cache_check; result=perceptual_cache_check(Path(r'$RuntimeRoot')); assert result['ok'], result['detail']; print('UTMOSv2 pinned cache integrity passed')"
+        & $Python -c "from pathlib import Path; from abook.runtime_contract import perceptual_cache_check; result=perceptual_cache_check(Path(r'$RuntimeRoot')); assert result['ok'], result['detail']; print('UTMOSv2 pinned cache integrity passed')"
     } "Kiểm tra integrity cache UTMOSv2"
 }
 
@@ -226,13 +226,13 @@ try {
 }
 Invoke-NativeChecked { & ollama pull qwen3:8b } "Tải Qwen3 8B"
 Write-Host "Tải model phân tích của ABook (Hugging Face NGDtuanh/abook-analyzer)..."
-Invoke-NativeChecked { & $Python -m ebook_reader.webui.studio_setup --install-model abook-analyzer:v3 } "Tải model phân tích ABook"
+Invoke-NativeChecked { & $Python -m abook.webui.studio_setup --install-model abook-analyzer:v3 } "Tải model phân tích ABook"
 Write-Host "Tải Qwen3 4B cho profile Nhanh..."
 Invoke-NativeChecked { & ollama pull qwen3:4b } "Tải Qwen3 4B"
 
 Write-Host "Tải và smoke-load VieNeu..."
 Invoke-NativeChecked {
-    & $Python -c "from ebook_reader.character_registry import VIENEU_PRESETS; from ebook_reader.config import build_settings; from ebook_reader.tts import VieNeuEngine; s=build_settings(); e=VieNeuEngine(s, print); e.load(); required={p['name'] for p in VIENEU_PRESETS}; missing=required-set(e.voices); assert not missing, f'VieNeu presets missing: {sorted(missing)}'; print('VieNeu voices:', len(e.voices)); e.unload(); print('VieNeu ready')"
+    & $Python -c "from abook.character_registry import VIENEU_PRESETS; from abook.config import build_settings; from abook.tts import VieNeuEngine; s=build_settings(); e=VieNeuEngine(s, print); e.load(); required={p['name'] for p in VIENEU_PRESETS}; missing=required-set(e.voices); assert not missing, f'VieNeu presets missing: {sorted(missing)}'; print('VieNeu voices:', len(e.voices)); e.unload(); print('VieNeu ready')"
 } "Smoke-load VieNeu"
 
 Write-Host "Tải Whisper Turbo..."

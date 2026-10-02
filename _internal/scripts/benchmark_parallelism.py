@@ -112,13 +112,13 @@ def _pin_worker_threads() -> None:
     """
     import torch
 
-    threads = max(1, int(os.environ.get("EBOOK_READER_WORKER_THREADS", "1")))
+    threads = max(1, int(os.environ.get("ABOOK_WORKER_THREADS", "1")))
     torch.set_num_threads(threads)
 
 
 def _perceptual_init() -> None:
-    from ebook_reader.config import build_settings
-    from ebook_reader.perceptual_qa import UTMOSNaturalnessVerifier
+    from abook.config import build_settings
+    from abook.perceptual_qa import UTMOSNaturalnessVerifier
 
     _pin_worker_threads()
 
@@ -144,8 +144,8 @@ _WHISPER: list[Any] = []
 
 
 def _asr_init() -> None:
-    from ebook_reader.config import build_settings
-    from ebook_reader.asr import WhisperVerifier
+    from abook.config import build_settings
+    from abook.asr import WhisperVerifier
 
     settings = build_settings("high_quality")
     verifier = WhisperVerifier(settings, lambda _message: None)
@@ -165,8 +165,8 @@ _ENGINE: list[Any] = []
 
 
 def _tts_init() -> None:
-    from ebook_reader.config import build_settings
-    from ebook_reader.tts import VieNeuEngine
+    from abook.config import build_settings
+    from abook.tts import VieNeuEngine
 
     _pin_worker_threads()
 
@@ -286,7 +286,7 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.worker_threads:
-        os.environ["EBOOK_READER_WORKER_THREADS"] = str(args.worker_threads)
+        os.environ["ABOOK_WORKER_THREADS"] = str(args.worker_threads)
     rows = _select_wavs(args.project_root, args.segments)
     if not rows:
         print("No committed WAV long enough to benchmark.", file=sys.stderr)

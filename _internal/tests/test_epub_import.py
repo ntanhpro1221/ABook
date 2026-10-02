@@ -5,7 +5,7 @@ from __future__ import annotations
 import zipfile
 from pathlib import Path
 
-from ebook_reader.webui import actions, epub_import
+from abook.webui import actions, epub_import
 
 CONTAINER = """<?xml version="1.0"?>
 <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">

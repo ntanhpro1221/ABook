@@ -322,7 +322,7 @@ nhiên (10:37:25) — con `python.exe` nhận `conhost.exe 0x4` (console không 
 mới** trong 7 + 13 phút theo dõi, gồm cả bốn lượt của tác vụ tự chạy lại 5 phút.
 
 **Chặn tái phát:** `tests/test_a_windowless_daemon_opens_no_window.py` đọc cây cú pháp của mọi
-tiến trình chạy dưới `pythonw` — daemon, tác vụ tự chạy lại, watchdog, và toàn bộ `ebook_reader/`
+tiến trình chạy dưới `pythonw` — daemon, tác vụ tự chạy lại, watchdog, và toàn bộ `abook/`
 (supervisor của mọi lô là `pythonw`) — và đỏ khi có lệnh gọi `subprocess` thiếu cờ. Danh sách lấy
 từ `grep pythonw` chứ không từ trí nhớ; lúc viết, 0 vi phạm thật trên 33 file.
 
@@ -474,7 +474,7 @@ Get-CimInstance Win32_Process -Filter "Name='bash.exe'" |
 chúng thành ranh giới thứ hai; xem `ParentProcessId` để phân biệt.
 
 Giết cả hai rồi thả lại đúng một cái. Giết `boundary.sh` **không** ảnh hưởng lô đang chạy: lô là
-một tiến trình `ebook_reader.cli run` riêng, và nhịp tim của nó vẫn 3,8 giây sau khi giết ba
+một tiến trình `abook.cli run` riêng, và nhịp tim của nó vẫn 3,8 giây sau khi giết ba
 tiến trình bash (đã kiểm, không đoán).
 
 ## Đừng `git add -A` khi một ranh giới tự chạy đang bay (2026-09-11, 07:30)
@@ -559,7 +559,7 @@ lệch là cả project bị bỏ qua và in ra vì sao. Hash khoá được bă
 `validate` xanh lại đúng nghĩa. Sổ `source_repoint_ledger.json` nằm trong thư mục project.
 
 Ca thật: cuốn 1, 478 chương, `D:/Novels/Tools/Text` vào Thùng rác giữa lô 10 (22:25). Chủ sách bảo khôi
-phục *nhưng chuyển vào thư mục project* → `D:/Novels/Ebook Reader/Text`. 118 project quét, **109 trỏ lại
+phục *nhưng chuyển vào thư mục project* → `D:/Novels/ABook/Text`. 118 project quét, **109 trỏ lại
 (701 chương), 9 bỏ qua đúng** (alpha.10–15 và alpha.46-nguon-sai đọc `Text_Tmp` tháng 8 — file cùng tên,
 khác cỡ, không phải cuốn này). `validate` lô 9, lô 10 xanh cả `input_manifest_hash` và `source_files`.
 
@@ -578,7 +578,7 @@ nhau ở nguyên nhân và ở việc phải làm gì.
   của harness, nên lượt chạy **sống sót**; chỉ script đang đợi (`boundary.sh`, `launch_repair.sh`) chết.
   Việc phải làm: thả lại ranh giới, đừng chạm vào lượt chạy.
 - **Máy tắt / mất điện** — chết tất, kể cả supervisor. Việc phải làm: không làm gì, để Scheduled Task
-  `EbookReaderAutoResume` (5 phút một lần, gọi `resume_interrupted.py`) khởi động lại; nó đã làm đúng
+  `ABookAutoResume` (5 phút một lần, gọi `resume_interrupted.py`) khởi động lại; nó đã làm đúng
   việc ấy 2 phút 19 giây sau khi boot, và recovery giữ nguyên 2.549 đoạn đã có bằng chứng QA.
 
 Phân biệt bằng hai câu lệnh, không bằng phỏng đoán:
@@ -614,7 +614,7 @@ bản rút nhầm 40 giây, pin khoẻ tụt chậm hai giờ, tụt 1%/phút, �
 ### Trong app: Studio tự tạm dừng khi rút sạc
 
 Người gác pin là công cụ của máy chủ sách (treo cả tiến trình từ bên ngoài). Người dùng app có cùng cơ chế nhưng hiền hơn,
-trong chính supervisor (`background_runner.run_supervisor` + `ebook_reader/power_source.py`): chạy pin quá 60 giây thì bật
+trong chính supervisor (`background_runner.run_supervisor` + `abook/power_source.py`): chạy pin quá 60 giây thì bật
 `pause_event` của worker, dây chuyền đứng ở checkpoint kế (`Pipeline._wait_pause_or_stop`, ghi sổ `status=paused`) và làm
 tiếp đúng chỗ khi cắm sạc. Tiến trình không chết, nên **tạm dừng an toàn cả giữa pha phân tích** - khác "Dừng" (mục
 "Đừng stop giữa pha phân tích" ở AGENTS.md). Cùng đường ấy là nút "Tạm dừng" / "Tiếp tục" ở trang dự án (`POST

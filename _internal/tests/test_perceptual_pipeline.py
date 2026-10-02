@@ -7,26 +7,26 @@ import numpy as np
 import pytest
 import soundfile as sf
 
-from ebook_reader.audio_io import ChapterQualityError
-from ebook_reader.config import build_settings
-from ebook_reader.database import (
+from abook.audio_io import ChapterQualityError
+from abook.config import build_settings
+from abook.database import (
     QUALITY_SCOPE_CHAPTER,
     QUALITY_SCOPE_SEGMENT,
     QUALITY_VERDICT_PASS,
     SEGMENT_AUDIO_QUALITY_STAGE,
     SEGMENT_PERCEPTUAL_QUALITY_STAGE,
 )
-from ebook_reader.io_utils import sha256_file
-from ebook_reader.models import ResourceDecision, ResourceLevel
-from ebook_reader.perceptual_qa import PerceptualQAUnavailable
-from ebook_reader.perceptual_contract import (
+from abook.io_utils import sha256_file
+from abook.models import ResourceDecision, ResourceLevel
+from abook.perceptual_qa import PerceptualQAUnavailable
+from abook.perceptual_contract import (
     NATURALNESS_IMPROVEMENT_REQUIREMENT,
     NATURALNESS_REPAIR_ACTION,
 )
-from ebook_reader.pipeline import BookPipeline
-from ebook_reader.project import create_or_open_project
-from ebook_reader.quality_policy import CHAPTER_QUALITY_STAGE, QUALITY_POLICY_VERSION
-from ebook_reader.voice_catalog import VOICE_PREVIEW_FILENAMES
+from abook.pipeline import BookPipeline
+from abook.project import create_or_open_project
+from abook.quality_policy import CHAPTER_QUALITY_STAGE, QUALITY_POLICY_VERSION
+from abook.voice_catalog import VOICE_PREVIEW_FILENAMES
 
 
 class StaticPerceptualVerifier:

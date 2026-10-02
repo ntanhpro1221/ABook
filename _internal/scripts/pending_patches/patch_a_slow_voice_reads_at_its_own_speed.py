@@ -38,7 +38,7 @@ def replace_once(path: Path, old: str, new: str) -> None:
 
 
 # ------------------------------------------------------------------ voice_catalog.py
-catalog = root / "ebook_reader" / "voice_catalog.py"
+catalog = root / "abook" / "voice_catalog.py"
 replace_once(catalog, '''PRESET_BASE_PITCH_SEMITONES = {
     "Thanh Bình": -4,
 }''', '''PRESET_BASE_PITCH_SEMITONES = {
@@ -66,7 +66,7 @@ def speed_factor_for_preset(preset_name: str) -> float:
 print(f"da va {catalog}")
 
 # ------------------------------------------------------------------ tts.py
-tts = root / "ebook_reader" / "tts.py"
+tts = root / "abook" / "tts.py"
 replace_once(tts, "from .voice_catalog import FORMANT_RATIO_MAX, FORMANT_RATIO_MIN\n",
              "from .voice_catalog import (\n"
              "    FORMANT_RATIO_MAX,\n"
@@ -175,8 +175,8 @@ import numpy as np
 import pytest
 import pyworld
 
-from ebook_reader.tts import apply_speed_change
-from ebook_reader.voice_catalog import (
+from abook.tts import apply_speed_change
+from abook.voice_catalog import (
     PRESET_SPEED_FACTOR,
     SPEED_FACTOR_MAX,
     SPEED_FACTOR_MIN,
@@ -235,7 +235,7 @@ def test_the_speed_step_runs_after_pitch_and_skips_the_laugh() -> None:
     # tự hai dòng là quá nặng.
     from pathlib import Path
 
-    source = (Path(__file__).resolve().parent.parent / "ebook_reader" / "tts.py").read_text(encoding="utf-8")
+    source = (Path(__file__).resolve().parent.parent / "abook" / "tts.py").read_text(encoding="utf-8")
     pitch_at = source.index("pitched_audio = apply_pitch_variant(\\n                        audio,\\n                        self.vieneu.sample_rate,\\n                        pitch_steps,\\n                    )")
     speed_at = source.index("audio = apply_speed_change(audio, self.vieneu.sample_rate, speed_factor)")
     assert pitch_at < speed_at

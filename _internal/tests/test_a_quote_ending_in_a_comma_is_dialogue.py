@@ -6,7 +6,7 @@ Young Master's POV (Hàn) và Nageki; chỉ 5 câu là thuật ngữ đặt dấ
 """
 from __future__ import annotations
 
-from ebook_reader.text_processing import segment_chapter_text
+from abook.text_processing import segment_chapter_text
 
 
 def _kinds(text: str) -> list[tuple[str, str]]:

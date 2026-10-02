@@ -38,7 +38,7 @@ def _warning_classes() -> tuple[frozenset[str], frozenset[str]]:
     kế. Đọc từ `pipeline` chứ không chép lại, để hai bản không lệch nhau.
     """
     try:
-        from ebook_reader.pipeline import (  # noqa: PLC0415
+        from abook.pipeline import (  # noqa: PLC0415
             HIGH_QUALITY_ALLOWED_SEGMENT_WARNINGS,
             MACHINE_ACCEPTABLE_SEGMENT_WARNINGS,
         )

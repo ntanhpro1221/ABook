@@ -3,13 +3,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ebook_reader import continuation
-from ebook_reader.database import ProjectDB
+from abook import continuation
+from abook.database import ProjectDB
 from tests.test_a_project_can_be_renamed_or_deleted import _call, studio  # noqa: F401 - fixture dùng chung
 
 
 def test_the_next_part_is_offered_then_created_with_the_old_voices(studio, tmp_path: Path) -> None:  # noqa: F811
-    from ebook_reader.webui.library import book_id
+    from abook.webui.library import book_id
 
     paths, app, server, _runner = studio
     (tmp_path / "002.txt").write_text("Lucien quay lại.\n", encoding="utf-8")

@@ -189,7 +189,7 @@ def preset_gender_of_voice(voice_key: str) -> str:
     global _PRESET_GENDER_BY_SLUG
     if _PRESET_GENDER_BY_SLUG is None:
         try:
-            import ebook_reader.voice_catalog as catalogue
+            import abook.voice_catalog as catalogue
         except ImportError:
             _PRESET_GENDER_BY_SLUG = {}
         else:

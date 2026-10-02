@@ -36,7 +36,7 @@ def write_atomic(path: Path, text: str) -> None:
 root = Path(sys.argv[1])
 
 # ---------------------------------------------------- hàm dọn, đặt ở io_utils
-p = root / "ebook_reader" / "io_utils.py"
+p = root / "abook" / "io_utils.py"
 s = io.open(p, encoding="utf-8").read()
 OLD = '''def sha256_text(text: str) -> str:
     return sha256_bytes(text.encode("utf-8"))'''
@@ -67,7 +67,7 @@ write_atomic(p, s)
 print(f"da va {p}")
 
 # ---------------------------------------------------- dọn ngay khi transcript ra đời
-p = root / "ebook_reader" / "asr.py"
+p = root / "abook" / "asr.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD = """        if self.engine == "faster":
@@ -100,7 +100,7 @@ write_atomic(p, s)
 print(f"da va {p}")
 
 # ---------------------------------------------------- analysis.py dùng lại hàm chung
-p = root / "ebook_reader" / "analysis.py"
+p = root / "abook" / "analysis.py"
 s = io.open(p, encoding="utf-8").read()
 OLD = '''LONE_SURROGATE_PATTERN = re.compile("[\\ud800-\\udfff]")
 
@@ -144,7 +144,7 @@ import sqlite3
 
 import pytest
 
-from ebook_reader.io_utils import sha256_text, strip_lone_surrogates
+from abook.io_utils import sha256_text, strip_lone_surrogates
 
 VO = json.loads('"\\\\ud83d"')
 
@@ -170,7 +170,7 @@ def test_both_engine_branches_are_cleaned() -> None:
     """Hai nhánh engine, hai đường trả transcript. Dọn một nhánh là chưa dọn."""
     import inspect
 
-    from ebook_reader import asr
+    from abook import asr
 
     source = inspect.getsource(asr.WhisperVerifier._transcribe_audio)
     assert source.count("strip_lone_surrogates") == 2, (

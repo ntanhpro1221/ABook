@@ -6,9 +6,9 @@ from __future__ import annotations
 from pathlib import Path
 from types import SimpleNamespace
 
-from ebook_reader.config import build_settings
-from ebook_reader.pipeline import BookPipeline
-from ebook_reader.text_processing import credit_lines, drop_credit_lines, segment_chapter_text
+from abook.config import build_settings
+from abook.pipeline import BookPipeline
+from abook.text_processing import credit_lines, drop_credit_lines, segment_chapter_text
 
 NISE = "Chương 85: Hồn Xiêu Phách Lạc\n\nTranslator: NicK\n\nEditor: Deemo\n\n______________________\n\n“Ồ… Ta biết rồi.”\n\nCô gật đầu."
 THRONE = "Chương 655 - Dạ tiệc\n\n*Edit: Lắc\n\nLucien bước vào sảnh."
@@ -48,8 +48,8 @@ def test_story_lines_that_look_like_credits_are_never_suggested() -> None:
 
 
 def test_the_wizard_counts_the_credits_and_a_book_keeps_the_readers_choice(tmp_path: Path) -> None:
-    from ebook_reader.config import load_settings
-    from ebook_reader.webui import actions
+    from abook.config import load_settings
+    from abook.webui import actions
 
     source = tmp_path / "truyen"
     source.mkdir()

@@ -30,7 +30,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import datetime as _dt  # noqa: E402
 
-from ebook_reader.background_runner import BackgroundPaths, _read_json, get_status, start_background  # noqa: E402
+from abook.background_runner import BackgroundPaths, _read_json, get_status, start_background  # noqa: E402
 
 
 def _paused_by_listener(project: Path) -> bool:

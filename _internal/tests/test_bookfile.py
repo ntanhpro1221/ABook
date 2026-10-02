@@ -10,11 +10,11 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.webui import bookfile
-from ebook_reader.webui.bookfile import MIMETYPE, BookFile, BookFileError
-from ebook_reader.webui.library import Library, Preferences, book_id
-from ebook_reader.webui.listening import Listening
-from ebook_reader.webui.sync import Devices, SyncApp, manifest
+from abook.webui import bookfile
+from abook.webui.bookfile import MIMETYPE, BookFile, BookFileError
+from abook.webui.library import Library, Preferences, book_id
+from abook.webui.listening import Listening
+from abook.webui.sync import Devices, SyncApp, manifest
 from tests.test_webui_listen_and_sync import make_project
 
 
@@ -175,8 +175,8 @@ def test_a_book_with_nothing_to_hear_is_not_packed(tmp_path: Path) -> None:
 
 
 def test_the_studio_exports_the_book_file_where_the_user_picked(tmp_path: Path) -> None:
-    from ebook_reader.webui.library import Preferences
-    from ebook_reader.webui.server import App, Server
+    from abook.webui.library import Preferences
+    from abook.webui.server import App, Server
     from tests.test_webui_listen_and_sync import FakeRunner, _request
 
     project = make_project(tmp_path / "thu_vien")

@@ -19,7 +19,7 @@ bằng `AudioEngine` (`ui/src/listen/engine.ts`).
 | `ListenSource` | HTTP tới server cục bộ (`desktop/httpSource.ts`) | sách đã tải trên máy (`android/androidSource.ts`) |
 | `AudioEngine` | `<audio>` của trình duyệt | lõi Media3 native (`android/nativeEngine.ts` -> `Playback.kt`) |
 
-Hợp đồng dữ liệu chung là `book.json` (`ebook_reader/webui/listen_view.py`): tên, người đọc, các chương nghe
+Hợp đồng dữ liệu chung là `book.json` (`abook/webui/listen_view.py`): tên, người đọc, các chương nghe
 được kèm thời lượng, trạng thái nghe. Máy tính dựng nó từ project đang sản xuất (chương nào xong là nghe được
 chương đó); điện thoại tải nó về cùng các file.
 
@@ -46,7 +46,7 @@ Studio (máy tính):
 
 ## Máy tính: web trong Qt WebEngine
 
-- Cửa sổ: `ebook_reader/desktop.py` - `QWebEngineView` (PySide6 đã có sẵn, **không thêm gói Python**: đổi
+- Cửa sổ: `abook/desktop.py` - `QWebEngineView` (PySide6 đã có sẵn, **không thêm gói Python**: đổi
   `pyproject.toml`/`uv.lock` là đổi hash chất lượng của dây chuyền giữa cuốn sách). Là cửa sổ mặc định của lối tắt
   (`app.py`; giao diện cũ: `app.py --classic`). Phục vụ bản dựng `webui/static/` - dựng tại máy, không commit.
 - File sách `.abook` (`webui/packages.py`): bấm đúp trong Explorer (`register_file_types.ps1` đăng ký lệnh mở:
@@ -55,7 +55,7 @@ Studio (máy tính):
   dẫn đi qua khoá một phiên bản (`desktop_shell.open_file_message`), cửa sổ báo trang web bằng sự kiện `abook-opened`.
   Chống trùng bằng dấu vân tay audio: file do dự án trong thư viện xuất -> mở dự án ấy; đã nhập -> về cuốn ấy (bản nhiều
   chương hơn thay tại chỗ, giữ mã và dữ liệu nghe).
-- Server: `ebook_reader/webui/server.py`, stdlib `ThreadingHTTPServer`, chỉ nghe `127.0.0.1`, mọi `/api` và
+- Server: `abook/webui/server.py`, stdlib `ThreadingHTTPServer`, chỉ nghe `127.0.0.1`, mọi `/api` và
   `/media` cần mã phiên, `Host` phải là chính server (chặn DNS rebinding).
 - Dữ liệu sách: `webui/store.py` chỉ đọc (`mode=ro` + `query_only`), không dùng `_ReadOnlyProjectDB` của CLI vì
   nó chép cả file DB (136 MB/lô) mỗi lần mở.
@@ -115,13 +115,13 @@ Capacitor bọc giao diện Nghe; mọi thứ phải chạy khi tắt màn hình
 
 ```text
 # server giao diện trên thư viện sandbox, bộ chạy giả (bấm Bắt đầu không khởi động worker thật)
-runtime/.venv/Scripts/python.exe -m ebook_reader.webui --dev --port 8765 --library <thư mục> --preferences <file>
+runtime/.venv/Scripts/python.exe -m abook.webui --dev --port 8765 --library <thư mục> --preferences <file>
 # giao diện có hot reload (proxy /api, /media sang 8765)
 node ui/node_modules/vite/bin/vite.js ui
 # kiểm thử tự động không phát tiếng ra loa: thêm ?mute=1
 http://localhost:5173/?mute=1#/
 
-# bản build nhúng vào app máy tính (ra ebook_reader/webui/static - không đặt tên dist/, .gitignore bỏ qua nó)
+# bản build nhúng vào app máy tính (ra abook/webui/static - không đặt tên dist/, .gitignore bỏ qua nó)
 npm --prefix ui run build
 # app Android
 npm --prefix ui run build:android && cd mobile && npx cap sync android && cd android && gradlew assembleDebug

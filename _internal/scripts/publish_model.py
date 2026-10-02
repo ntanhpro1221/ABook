@@ -10,7 +10,7 @@ digest của Ollama, tải thẳng từ blob lên Hugging Face (không chép 4 G
 `PUBLISHED_MODELS` cho `webui/studio_setup.py` với đường tải ghim theo commit (không đổi dưới chân Studio). Model tạo lại ở
 Studio bằng /api/create từ đúng file ấy trùng từng byte bản đã đo (thử 28-09). Lớp khuôn chat và tham số đi theo (nền
 Qwen3-8B cần khuôn qwen3 của Ollama - tạo chỉ từ GGUF thì ra khuôn Jinja thô, đo 29-09): khuôn ghi vào
-`ebook_reader/webui/model_templates/` để đi cùng app, ghim băm; tham số in thẳng vào mục. Lớp giấy phép chỉ lên Modelfile
+`abook/webui/model_templates/` để đi cùng app, ghim băm; tham số in thẳng vào mục. Lớp giấy phép chỉ lên Modelfile
 ở Hugging Face. Lớp khác (adapter, system, messages...) thì từ chối - Studio không tạo lại được.
 
 Hugging Face tách model khỏi repo app có chủ ý: model học từ nhãn trên truyện có bản quyền - khiếu nại nếu có chỉ chạm
@@ -32,7 +32,7 @@ from pathlib import Path
 MODEL_LAYER = "application/vnd.ollama.image.model"
 SIDE_LAYERS = {"application/vnd.ollama.image.template": "template", "application/vnd.ollama.image.params": "params",
                "application/vnd.ollama.image.license": "license"}
-TEMPLATES = Path(__file__).resolve().parents[1] / "ebook_reader" / "webui" / "model_templates"
+TEMPLATES = Path(__file__).resolve().parents[1] / "abook" / "webui" / "model_templates"
 
 
 def models_dir() -> Path:

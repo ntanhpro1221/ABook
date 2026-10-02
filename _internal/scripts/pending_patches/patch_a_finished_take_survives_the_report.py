@@ -29,7 +29,7 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "database.py"
+p = root / "abook" / "database.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD_CONST = '''KEEP_LOCKED_READING_ACTION = "keep_locked_reading_over_spelling_take"
@@ -124,7 +124,7 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.database import (
+from abook.database import (
     PROMOTE_FINISHED_TAKE_ACTION,
     SEGMENT_CANDIDATE_PROMOTED,
     ProjectDB,
@@ -229,7 +229,7 @@ def test_the_keep_locked_reading_exemption_is_unchanged(tmp_path: Path) -> None:
 
 
 def test_the_action_name_is_the_one_the_pipeline_writes() -> None:
-    source = (ROOT / "ebook_reader" / "pipeline.py").read_text(encoding="utf-8")
+    source = (ROOT / "abook" / "pipeline.py").read_text(encoding="utf-8")
     assert re.search(r'repair_action="' + re.escape(PROMOTE_FINISHED_TAKE_ACTION) + '"', source)
 '''
 t = root / "tests" / "test_a_finished_take_survives_the_report.py"

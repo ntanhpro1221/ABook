@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from ebook_reader.listener_overrides import (
+from abook.listener_overrides import (
     SOURCE_CHANGED,
     UNKNOWN_LINE,
     cancel_retake,
@@ -49,8 +49,8 @@ def test_a_retake_resets_the_line_once_per_request_and_counts(tmp_path: Path) ->
 
 
 def test_a_retaken_line_gets_a_new_seed_and_an_untouched_line_keeps_the_old_one(tmp_path: Path) -> None:
-    from ebook_reader.config import build_settings
-    from ebook_reader.tts import TTSCoordinator
+    from abook.config import build_settings
+    from abook.tts import TTSCoordinator
 
     _paths, db = _book(tmp_path)
     coordinator = TTSCoordinator(build_settings(), db, lambda _message: None)
@@ -76,12 +76,12 @@ def test_the_pipeline_applies_a_retake_at_the_boundary(tmp_path: Path) -> None:
 
 
 def test_the_review_verdict_writes_and_withdraws_the_request(tmp_path: Path) -> None:
-    from ebook_reader.config import build_settings, save_settings
-    from ebook_reader.webui.actions import FakeRunner
-    from ebook_reader.webui.library import Preferences, book_id
-    from ebook_reader.webui.listening import Listening
-    from ebook_reader.webui.server import App, Server
-    from ebook_reader.webui.store import changes_since, pending_changes
+    from abook.config import build_settings, save_settings
+    from abook.webui.actions import FakeRunner
+    from abook.webui.library import Preferences, book_id
+    from abook.webui.listening import Listening
+    from abook.webui.server import App, Server
+    from abook.webui.store import changes_since, pending_changes
     from tests.test_webui_listen_and_sync import _request
 
     paths, _db = _book(tmp_path)

@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "pipeline.py"
+p = root / "abook" / "pipeline.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD = """            blocking_segment_warnings = self._high_quality_blocking_segment_warnings(

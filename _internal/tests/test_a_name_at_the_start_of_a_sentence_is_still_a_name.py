@@ -1,7 +1,7 @@
 """Tên nước ngoài đứng đầu câu vẫn được phiên âm; từ tiếng Việt đầu câu vẫn không bị tưởng là tên."""
 from __future__ import annotations
 
-from ebook_reader.analysis import _name_candidate_contexts
+from abook.analysis import _name_candidate_contexts
 
 
 def _candidates(*texts: str) -> dict[str, tuple[int, int]]:

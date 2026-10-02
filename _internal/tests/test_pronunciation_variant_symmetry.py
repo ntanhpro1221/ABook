@@ -12,8 +12,8 @@ from __future__ import annotations
 
 import inspect
 
-from ebook_reader import tts
-from ebook_reader.database import (
+from abook import tts
+from abook.database import (
     PRONUNCIATION_DELIVERY_LOCKED,
     PRONUNCIATION_DELIVERY_SOURCE,
 )
@@ -57,7 +57,7 @@ def test_spoken_form_is_not_part_of_anchor_identity() -> None:
 
 def test_the_allocator_still_compares_the_two_variants() -> None:
     """The fix is to the data the check reads, never to the check itself."""
-    from ebook_reader import pipeline
+    from abook import pipeline
 
     source = inspect.getsource(pipeline.BookPipeline._segment_candidate_pronunciation_delivery)
     assert "source-spelling pronunciation anchors drifted from locked anchors" in source

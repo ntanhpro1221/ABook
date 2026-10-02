@@ -18,7 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from ebook_reader.analysis import (  # noqa: E402
+from abook.analysis import (  # noqa: E402
     ATTRIBUTION_SENTENCE_START_EXCLUSIONS,
     NAME_CANDIDATE_EXCLUSIONS,
     _name_candidate_key,

@@ -12,8 +12,8 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.first_person import first_person_hint
-from ebook_reader.webui import actions
+from abook.first_person import first_person_hint
+from abook.webui import actions
 
 FIRST_PERSON = (
     "Tôi bước vào lớp học. Tôi nhìn quanh một lượt.\n\n"

@@ -8,7 +8,7 @@ from pathlib import Path
 import numpy as np
 import soundfile
 
-from ebook_reader.webui import music_plan
+from abook.webui import music_plan
 from tests.test_webui_listen_and_sync import make_project
 
 TRACKS = [

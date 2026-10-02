@@ -20,7 +20,7 @@ def write_atomic(path: Path, text: str) -> None:
 
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "pipeline.py"
+p = root / "abook" / "pipeline.py"
 s = io.open(p, encoding="utf-8").read()
 
 # ---------------------------------------------------------------- hằng số + hàm
@@ -166,7 +166,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from ebook_reader.pipeline import (
+from abook.pipeline import (
     EDGE_FADE_MIN_AMPLITUDE,
     EDGE_FADE_SECONDS,
     edge_amplitude,

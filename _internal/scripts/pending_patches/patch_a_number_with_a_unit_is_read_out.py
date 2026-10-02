@@ -46,7 +46,7 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "asr.py"
+p = root / "abook" / "asr.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD_ANCHOR = '''def normalize_transcript(text: str) -> str:'''
@@ -152,7 +152,7 @@ Bài `test_the_sentence_that_would_get_worse_does_not` giữ lý do phép nở p
 """
 from __future__ import annotations
 
-from ebook_reader.asr import (
+from abook.asr import (
     fold_number_units,
     has_unit_number,
     normalize_transcript,

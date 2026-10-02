@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from ebook_reader.character_registry import PresetAllocator
-from ebook_reader.config import build_settings, validate_settings
+from abook.character_registry import PresetAllocator
+from abook.config import build_settings, validate_settings
 
 # Ba giọng nam phân vai được hôm nay: Phạm Tuyên, Thanh Bình, Thái Sơn. Thanh Bình kể, Phạm Tuyên
 # từng kể - nên chỉ còn Thái Sơn cho nhân vật nam.

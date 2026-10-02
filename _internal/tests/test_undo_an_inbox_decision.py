@@ -9,11 +9,11 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.config import build_settings
-from ebook_reader.listener_overrides import read_overrides
-from ebook_reader.webui.library import Preferences, book_id
-from ebook_reader.webui.listening import Listening
-from ebook_reader.webui.server import WITHDRAW_APPLIED, App, Server
+from abook.config import build_settings
+from abook.listener_overrides import read_overrides
+from abook.webui.library import Preferences, book_id
+from abook.webui.listening import Listening
+from abook.webui.server import WITHDRAW_APPLIED, App, Server
 from tests.test_listener_overrides import _Pipeline
 from tests.test_listener_speakers import _book, _segment
 from tests.test_webui_listen_and_sync import FakeRunner, _request

@@ -49,13 +49,13 @@ try:
 except ImportError:  # chạy trực tiếp: scripts/ là sys.path[0]
     from book_paths import VERSIONS  # noqa: E402
 
-from ebook_reader.cli import _open_project  # noqa: E402
-from ebook_reader.pipeline import (  # noqa: E402
+from abook.cli import _open_project  # noqa: E402
+from abook.pipeline import (  # noqa: E402
     SPOKEN_TEXT_DRIFT_MESSAGE,
     BookPipeline,
 )
-from ebook_reader.quality_policy import build_quality_policy, quality_policy_hash  # noqa: E402
-from ebook_reader.tts import TTSCoordinator  # noqa: E402
+from abook.quality_policy import build_quality_policy, quality_policy_hash  # noqa: E402
+from abook.tts import TTSCoordinator  # noqa: E402
 
 # Cùng một chuỗi với `pipeline.SPOKEN_TEXT_DRIFT_MESSAGE`, nhập từ đó chứ không chép lại: hai
 # bản sao là hai chỗ để lệch, và ngày chúng lệch là ngày phép so này im lặng bỏ sót mọi đoạn.

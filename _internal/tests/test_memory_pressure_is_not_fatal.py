@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import pytest
 
-from ebook_reader.tts import is_fatal_tts_error, is_transient_tts_memory_error
+from abook.tts import is_fatal_tts_error, is_transient_tts_memory_error
 
 TRANSIENT = (
     "CUDA out of memory. Tried to allocate 2.00 GiB",

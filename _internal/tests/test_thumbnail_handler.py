@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 from PIL import Image
 
-from ebook_reader.webui import bookfile, covers
+from abook.webui import bookfile, covers
 from tests.test_webui_listen_and_sync import make_project
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))

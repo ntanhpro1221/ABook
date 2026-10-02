@@ -104,7 +104,7 @@ def main(project_root: str, sample: int, batch_size: int) -> int:
     # normalises first, stripping everything but letters, digits and spaces. So the
     # difference that matters is the normalised one.
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-    from ebook_reader.asr import normalize_transcript
+    from abook.asr import normalize_transcript
 
     raw_differing = sum(
         1 for left, right in zip(one_at_a_time, batched_out) if left != right

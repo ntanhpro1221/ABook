@@ -5,8 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from ebook_reader.webui.actions import FakeRunner
-from ebook_reader.webui.server import App
+from abook.webui.actions import FakeRunner
+from abook.webui.server import App
 from tests.test_webui_listen_and_sync import _request, library  # noqa: F401 - fixture dùng chung
 
 

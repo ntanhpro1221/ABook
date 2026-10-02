@@ -21,8 +21,8 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.database import ProjectDB
-from ebook_reader.recovery import _listener_accepted_takes, _segment_has_current_audio_qa
+from abook.database import ProjectDB
+from abook.recovery import _listener_accepted_takes, _segment_has_current_audio_qa
 
 HEARD = "a" * 64
 OTHER = "b" * 64

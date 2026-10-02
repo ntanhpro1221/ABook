@@ -17,7 +17,7 @@ from typing import Any
 
 import pytest
 
-from ebook_reader.pipeline import (
+from abook.pipeline import (
     BookPipeline,
     DELIVERY_CLARITY,
     GENERATION_STRATEGY_SPLIT,

@@ -9,8 +9,8 @@ from typing import Any
 
 import pytest
 
-from ebook_reader import background_runner
-from ebook_reader.background_runner import (
+from abook import background_runner
+from abook.background_runner import (
     BackgroundAlreadyRunning,
     BackgroundIdentityError,
     BackgroundPaths,
@@ -24,7 +24,7 @@ from ebook_reader.background_runner import (
     start_background,
     tail_log,
 )
-from ebook_reader.io_utils import atomic_write_json
+from abook.io_utils import atomic_write_json
 
 
 def test_default_startup_timeout_envelops_strict_worker_bootstrap() -> None:
@@ -204,7 +204,7 @@ def test_windows_detached_spawn_has_no_console_and_redirects_stdio(
     assert captured["command"] == [
         str(executable),
         "-m",
-        "ebook_reader.background_runner",
+        "abook.background_runner",
         "supervise",
         "--project-root",
         str(project.resolve()),

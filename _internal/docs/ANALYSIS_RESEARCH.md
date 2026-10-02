@@ -493,7 +493,7 @@ câu 『』, cũng là hai chỗ v7 (nhãn người vô danh có mô tả) và v
 **Lỗi 『』 phần lớn KHÔNG phải việc của model** (`research/ln/bracket_flip.py` trong repo riêng tư):
 - Two Childhood Friends 042: 30/35 câu 『』 là lời kể/thông báo, cả v3 lẫn 8B đều gán cho người trong cảnh.
 - Yamiyo 141: 43 câu 『』 của linh thể Tọa Phu Đồng Tử, không model nào gán cho nó.
-- Mỗi cuốn một quy ước. Máy không đoán được, người nghe thì biết ngay. Vì vậy app có **quy ước 『』 theo cả cuốn** (0.4.2, `ebook_reader/bracket_rule.py`): chọn một lần, các phần sau tự áp trước bước phân vai.
+- Mỗi cuốn một quy ước. Máy không đoán được, người nghe thì biết ngay. Vì vậy app có **quy ước 『』 theo cả cuốn** (0.4.2, `abook/bracket_rule.py`): chọn một lần, các phần sau tự áp trước bước phân vai.
 
 **Gieo sổ nhân vật đã biết** (Mac, v3), đúng thứ "Làm tiếp cuốn này" mang sang phần sau:
 
@@ -1210,7 +1210,7 @@ Bộ chấm chỉ thay TRỤC NGƯỜI NÓI; loại đoạn, cảm xúc, cườn
 CẢ cuốn": `reconcile_local_speaker_identities` (hỏi LLM một lần: nhãn NPC mô tả có phải nhân vật được nêu tên sau đó
 không) -> `reconcile_name_pronunciations` -> `build_registry_and_cast` -> `finalize_casting`. Bộ chấm là một bước mới
 cùng khuôn, ĐẦU chuỗi ấy:
-1. `ebook_reader/speaker_scorer.py` (chỉ suy luận): dựng cửa sổ theo chương từ `segments` (seq, kind, paragraph_index,
+1. `abook/speaker_scorer.py` (chỉ suy luận): dựng cửa sổ theo chương từ `segments` (seq, kind, paragraph_index,
    dàn trang paragraph), bí danh từ tên nhân vật phân tích đã gặp + bảng `characters`, dòng danh sách nhân vật chương (N9),
    người kể "tôi" (N7b tự suy, hoặc câu trả lời Studio); ra cho mỗi đoạn thoại/nội tâm: thực thể, độ tin cậy đã hiệu
    chỉnh, xác suất "không ai".

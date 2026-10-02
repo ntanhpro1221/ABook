@@ -1,11 +1,11 @@
 ﻿<#
 Dựng bộ cài app Windows ABook (docs/PACKAGING.md):
-  giao diện (ui/) -> Python nhúng (kiểm SHA-256) -> gói phụ (--require-hashes) -> mã ebook_reader -> chạy thử host
+  giao diện (ui/) -> Python nhúng (kiểm SHA-256) -> gói phụ (--require-hashes) -> mã abook -> chạy thử host
   bằng chính Python nhúng -> cargo tauri build (bộ cài NSIS + chữ ký cập nhật).
 
     powershell -ExecutionPolicy Bypass -File scripts\build_windows_app.ps1 [-SkipUi] [-SkipBundle] [-SkipResources]
 
--SkipUi: dùng bản dựng giao diện đang có trong ebook_reader\webui\static. -SkipBundle: chỉ dựng thư mục tài nguyên và
+-SkipUi: dùng bản dựng giao diện đang có trong abook\webui\static. -SkipBundle: chỉ dựng thư mục tài nguyên và
 chạy thử host (không gọi Tauri). -SkipResources: giữ thư mục tài nguyên đã dựng (dựng lại vỏ/bộ cài nhanh). -TauriConfig:
 file JSON gộp đè tauri.conf.json cho riêng lần dựng này (bản thử cập nhật: số phiên bản khác, endpoint http cục bộ) -
 không bao giờ dùng cho bản phát hành. Bộ cài + chữ ký cập nhật (.sig) ra shell\src-tauri\target\release\bundle\nsis\.
@@ -102,11 +102,11 @@ function Build-Python {
 }
 
 function Copy-App {
-    Step "Mã ebook_reader"
+    Step "Mã abook"
     $app = Join-Path $Resources "app"
     New-Item -ItemType Directory -Force $app | Out-Null
     # robocopy: mã thoát 0-7 là thành công.
-    & robocopy (Join-Path $Internal "ebook_reader") (Join-Path $app "ebook_reader") /E /XD __pycache__ /XF *.pyc /NFL /NDL /NJH /NJS /NP | Out-Null
+    & robocopy (Join-Path $Internal "abook") (Join-Path $app "abook") /E /XD __pycache__ /XF *.pyc /NFL /NDL /NJH /NJS /NP | Out-Null
     if ($LASTEXITCODE -ge 8) { throw "robocopy thất bại (mã $LASTEXITCODE)" }
     foreach ($file in @("pyproject.toml", "uv.lock", "LICENSE")) {
         $source = Join-Path $Internal $file
@@ -115,7 +115,7 @@ function Copy-App {
     # Danh sách thư viện của Studio tải thêm (webui/studio_setup.py đọc ở thư mục app).
     Copy-Item (Join-Path $Shell "python\studio-requirements.txt") $app
     Copy-VcRuntime (Join-Path $app "vcruntime")
-    Invoke-Checked { & (Join-Path $Resources "python\python.exe") -m compileall -q -j 0 (Join-Path $app "ebook_reader") } "compileall"
+    Invoke-Checked { & (Join-Path $Resources "python\python.exe") -m compileall -q -j 0 (Join-Path $app "abook") } "compileall"
 }
 
 function Copy-VcRuntime([string]$Target) {
@@ -141,7 +141,7 @@ function Test-Host {
     New-Item -ItemType Directory -Force $smokeData | Out-Null
     $info = New-Object System.Diagnostics.ProcessStartInfo
     $info.FileName = Join-Path $Resources "python\python.exe"
-    $info.Arguments = "-m ebook_reader.webui.host --version smoke --fake-runner"
+    $info.Arguments = "-m abook.webui.host --version smoke --fake-runner"
     $info.WorkingDirectory = Join-Path $Resources "app"
     $info.UseShellExecute = $false
     $info.CreateNoWindow = $true
@@ -149,7 +149,7 @@ function Test-Host {
     $info.RedirectStandardOutput = $true
     $info.RedirectStandardError = $true
     $info.StandardOutputEncoding = [System.Text.Encoding]::UTF8
-    $info.EnvironmentVariables["EBOOK_READER_PREFERENCES"] = (Join-Path $smokeData "preferences.json")
+    $info.EnvironmentVariables["ABOOK_PREFERENCES"] = (Join-Path $smokeData "preferences.json")
     $info.EnvironmentVariables["PYTHONIOENCODING"] = "utf-8"
     $process = [System.Diagnostics.Process]::Start($info)
     try {
@@ -234,8 +234,8 @@ function Write-LatestJson([System.IO.FileInfo]$Setup) {
 
 if (-not $SkipResources) {
     if (-not $SkipUi) { Build-Ui }
-    if (-not (Test-Path (Join-Path $Internal "ebook_reader\webui\static\index.html"))) {
-        throw "Chưa có bản dựng giao diện (ebook_reader\webui\static) - bỏ -SkipUi"
+    if (-not (Test-Path (Join-Path $Internal "abook\webui\static\index.html"))) {
+        throw "Chưa có bản dựng giao diện (abook\webui\static) - bỏ -SkipUi"
     }
     Build-Python
     Copy-App

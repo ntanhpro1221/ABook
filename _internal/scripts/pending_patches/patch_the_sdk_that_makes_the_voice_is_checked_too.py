@@ -34,7 +34,7 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "runtime_contract.py"
+p = root / "abook" / "runtime_contract.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD = '''    "transformers": ("transformers", "5.16.1"),

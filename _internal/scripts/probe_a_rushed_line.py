@@ -48,10 +48,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import soundfile as sf  # noqa: E402
 
-from ebook_reader.audio_io import spoken_speakable_chars, spoken_syllables  # noqa: E402
-from ebook_reader.config import load_settings  # noqa: E402
-from ebook_reader.database import ProjectDB  # noqa: E402
-from ebook_reader.tts import TTSCoordinator  # noqa: E402
+from abook.audio_io import spoken_speakable_chars, spoken_syllables  # noqa: E402
+from abook.config import load_settings  # noqa: E402
+from abook.database import ProjectDB  # noqa: E402
+from abook.tts import TTSCoordinator  # noqa: E402
 
 
 def _say(line: str) -> None:

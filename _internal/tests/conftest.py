@@ -77,14 +77,14 @@ def _app_data_in_a_temporary_folder(tmp_path_factory: pytest.TempPathFactory) ->
     """Dữ liệu của app mà test không tự chỉ chỗ - nhất là khoá mã sách (webui/library.book_id: `book_ids.key` cạnh
     preferences.json, tạo lần đầu cần tới) - nằm trong thư mục tạm của phiên test, không bao giờ ở %LOCALAPPDATA%/ABook
     thật của người chạy test. Test tự đặt biến này (monkeypatch) thì theo test."""
-    if os.environ.get("EBOOK_READER_PREFERENCES"):
+    if os.environ.get("ABOOK_PREFERENCES"):
         yield
         return
-    os.environ["EBOOK_READER_PREFERENCES"] = str(tmp_path_factory.mktemp("app-data") / "preferences.json")
+    os.environ["ABOOK_PREFERENCES"] = str(tmp_path_factory.mktemp("app-data") / "preferences.json")
     try:
         yield
     finally:
-        os.environ.pop("EBOOK_READER_PREFERENCES", None)
+        os.environ.pop("ABOOK_PREFERENCES", None)
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -107,7 +107,7 @@ def _no_cast_discovery() -> Iterator[None]:
 def _count_sleeping(request: pytest.FixtureRequest) -> Iterator[None]:
     """Bọc `time.sleep` để đếm. Vẫn ngủ thật, trừ khi có người bật công tắc đo.
 
-    Vá thẳng vào module `time` chứ không vá `ebook_reader.pipeline.time`, vì hai cái là **một
+    Vá thẳng vào module `time` chứ không vá `abook.pipeline.time`, vì hai cái là **một
     đối tượng**: `import time` trong pipeline trỏ tới chính module ấy. Ghi ra đây để lần sau
     không ai tưởng mình đang vá hẹp hơn thực tế.
     """

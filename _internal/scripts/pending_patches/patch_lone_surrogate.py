@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "analysis.py"
+p = root / "abook" / "analysis.py"
 s = io.open(p, encoding="utf-8").read()
 
 # ------------------------------------------------------------------ hàm dọn
@@ -126,8 +126,8 @@ import json
 
 import pytest
 
-from ebook_reader.analysis import contains_lone_surrogate, strip_lone_surrogates
-from ebook_reader.io_utils import sha256_text
+from abook.analysis import contains_lone_surrogate, strip_lone_surrogates
+from abook.io_utils import sha256_text
 
 VO = json.loads('"\\\\ud83d"')  # đúng thứ model đã nhả ra: nửa đầu, không có nửa sau
 

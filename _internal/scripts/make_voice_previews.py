@@ -14,7 +14,7 @@ với điểm của CHÍNH preview của giọng ấy (`VOICE_PREVIEW_FILENAMES`
 
 `quality_policy` băm `assets/voice_previews` (`voice_previews_sha256`). Ghi một file vào đó giữa lúc
 một lô dở thì lần resume kế tiếp bị từ chối, và lô mất phần chưa xuất bản. Nên script chỉ ghi vào
-thư mục chờ; bản vá nâng VieNeu chép chúng vào `ebook_reader/assets/voice_previews/` ở ranh giới.
+thư mục chờ; bản vá nâng VieNeu chép chúng vào `abook/assets/voice_previews/` ở ranh giới.
 
 ## Nội dung clip
 
@@ -42,9 +42,9 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from ebook_reader.config import build_settings  # noqa: E402
-from ebook_reader.io_utils import slugify  # noqa: E402
-from ebook_reader.tts import VieNeuEngine  # noqa: E402
+from abook.config import build_settings  # noqa: E402
+from abook.io_utils import slugify  # noqa: E402
+from abook.tts import VieNeuEngine  # noqa: E402
 from scripts.compare_voice_regions import PROBE_SENTENCES, SEED  # noqa: E402
 
 DEFAULT_OUT = Path(__file__).resolve().parent / "pending_patches" / "assets" / "voice_previews"

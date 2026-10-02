@@ -9,7 +9,7 @@ book" - as the reason its whole route exists. It arrived through a door nobody w
 """
 from __future__ import annotations
 
-from ebook_reader.analysis import name_component_corrections
+from abook.analysis import name_component_corrections
 
 
 def test_the_alpha47_case() -> None:

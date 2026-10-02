@@ -223,7 +223,7 @@ for CH in $BROKEN; do
   if [ -n "$NARR_OUT" ]; then
     mapfile -t NARR_ARGS < <(printf '%s\n' "$NARR_OUT" | tr -d '\r')
   fi
-  PYTHONIOENCODING=utf-8 "$PY" -m ebook_reader.cli create \
+  PYTHONIOENCODING=utf-8 "$PY" -m abook.cli create \
     --output-root "$OUT" --source-dir "$SOURCE_DIR" \
     --range "$CH..$CH" --width 3 --title "$TITLE" --profile high_quality --json \
     ${FP_ARGS[@]+"${FP_ARGS[@]}"} ${NARR_ARGS[@]+"${NARR_ARGS[@]}"} > /dev/null
@@ -283,7 +283,7 @@ for CH in $BROKEN; do
   printf '%s\n' "$RESYNC_OUT" | tail -1 | sed 's/^ */  /'
   # `run` tra JSON; `ok: false` (vi du resume bi tu choi vi hash ma doi) tung bi do vao /dev/null
   # va vong doi ben duoi thay lease chet + chuong khong "chua xong" nen coi la xong. Noi ra.
-  RUN_OUT="$(PYTHONIOENCODING=utf-8 "$PY" -m ebook_reader.cli run "$PROJECT" --json 2>&1)"
+  RUN_OUT="$(PYTHONIOENCODING=utf-8 "$PY" -m abook.cli run "$PROJECT" --json 2>&1)"
   if ! printf '%s' "$RUN_OUT" | grep -q '"ok": true'; then
     echo "  run KHONG khoi dong duoc cho chuong $CH:"
     printf '%s\n' "$RUN_OUT" | grep -oE '"error": "[^"]{0,200}' | head -2

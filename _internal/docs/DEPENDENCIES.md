@@ -66,7 +66,7 @@ tự động của việc nâng package.
 
 ```bash
 cd _internal
-./runtime/.venv/Scripts/python.exe -m ebook_reader.cli doctor --json
+./runtime/.venv/Scripts/python.exe -m abook.cli doctor --json
 ./runtime/.venv/Scripts/python.exe scripts/check_dependency_updates.py
 ```
 
@@ -251,7 +251,7 @@ Dự án có **hai** môi trường, và chúng không thay thế được cho n
 | `_internal/.venv` | script, test, truy vấn SQLite | 209 gói, torch 2.13.0, **không có** torchaudio/librosa/transformers/utmosv2 |
 | `_internal/runtime/.venv` | **mọi lệnh CLI thật** | torch 2.11.0+cu128, CUDA True, đủ ngăn xếp ML |
 
-Chạy `python -m ebook_reader.cli resume` bằng `_internal/.venv` cho ra:
+Chạy `python -m abook.cli resume` bằng `_internal/.venv` cho ra:
 
 ```
 BackgroundStartError: High-quality runtime contract is invalid:
@@ -265,7 +265,7 @@ mtime của `site-packages` (đổi, nhưng chỉ vì `__pycache__`), xem `uv.lo
 04-09), tìm tiến trình cài đặt (không có). Chỉ tới khi thấy `torch-2.13.0.dist-info` đề ngày
 **03-08** mới rõ: venv này chưa bao giờ có ngăn xếp ML, và nó không phải venv đang chạy.
 
-**Luôn dùng `_internal/runtime/.venv/Scripts/python.exe` cho mọi lệnh `ebook_reader.cli`.**
+**Luôn dùng `_internal/runtime/.venv/Scripts/python.exe` cho mọi lệnh `abook.cli`.**
 Tài liệu này và `VERSIONS.md` vẫn luôn ghi `runtime/.venv`; cái sai là thói quen gõ tắt.
 
 Dấu hiệu nhận ra ngay: nếu lỗi liệt kê **nhiều** gói cùng thiếu và torch lệch phiên bản
@@ -298,7 +298,7 @@ không phải "nên nâng" chung chung.
   giữa ranh giới 6 thì bước 6 còn phải tự chạy bộ test trước khi thả lô 7, và đổi pytest ngay trước đó là
   đặt cược lô 7 vào một phiên bản test runner chưa ai chạy thử.
   **ĐÃ SỬA sớm hơn, 19-09 00:2x, giữa lô 7** — an toàn vì dây chuyền không import `pytest` (grep
-  `ebook_reader/`: 0) và `ruff` là công cụ ngoài. Wheel tải về đối chiếu sha256 với `uv.lock` (khớp cả
+  `abook/`: 0) và `ruff` là công cụ ngoài. Wheel tải về đối chiếu sha256 với `uv.lock` (khớp cả
   hai), cài `--no-deps --no-index` từ chính file ấy; phụ thuộc (pluggy 1.6.0, iniconfig 2.3.0, packaging
   26.2) vốn đã khớp khoá. Bộ test đầy đủ dưới pytest 9.1.1: **2967 passed**, không đỏ, không cảnh báo mới.
   `ruff check` 0.16.5 báo 1066 mục — ruff KHÔNG phải cổng của dự án, phần lớn là văn phong. Lọc những

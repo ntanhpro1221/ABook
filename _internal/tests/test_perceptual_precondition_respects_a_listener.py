@@ -23,7 +23,7 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.database import ProjectDB
+from abook.database import ProjectDB
 
 HEARD = "a" * 64
 OTHER = "b" * 64

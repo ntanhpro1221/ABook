@@ -31,7 +31,7 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "character_registry.py"
+p = root / "abook" / "character_registry.py"
 s = io.open(p, encoding="utf-8").read()
 
 
@@ -104,7 +104,7 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-from ebook_reader.character_registry import _book_exposure, _drop_pins_that_share_a_chapter
+from abook.character_registry import _book_exposure, _drop_pins_that_share_a_chapter
 
 VOICE = "preset_thai_son_f100_p+00"
 

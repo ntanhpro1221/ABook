@@ -10,7 +10,7 @@ Repo rules (break none of them):
 - Never `git commit`, `git add -A`, `git checkout`/`reset` on any branch. Leave changes unstaged.
 - Python: use `_internal/runtime/.venv/Scripts/python.exe` (never the system Python or LLM_Train/.venv). Run tests with it, e.g. `cd _internal && runtime/.venv/Scripts/python.exe -m pytest tests/test_x.py -q`; pytest output may hide the summary line, so judge by the exit code.
 - Files are LF. Edit with the Edit/Write tools; never `Path.write_text` (writes CRLF on Windows). If a script must write, use `write_bytes` with LF.
-- Locked files: before and after touching anything under `_internal/ebook_reader/`, print `quality_implementation_hash()` (command in AGENTS.md). If it changed, say so prominently in your report.
+- Locked files: before and after touching anything under `_internal/abook/`, print `quality_implementation_hash()` (command in AGENTS.md). If it changed, say so prominently in your report.
 - Reuse existing functions; do not copy logic into a second place. If the spec seems to require duplication, refactor so both callers share one function, or report the conflict.
 - Never play audio through the speakers (use `?mute=1` before `#` in browser URLs; emulator with `-no-audio`). Never send commands to real network devices (DLNA/Chromecast) - only the emulator/fake ones the task names.
 - Never push, never touch keys, story text, audio or personal data.

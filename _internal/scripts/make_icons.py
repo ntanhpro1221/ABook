@@ -10,10 +10,10 @@ Hai loại file là biến thể của chính icon app:
     runtime/.venv/Scripts/python.exe scripts/make_icons.py [--preview <thư mục>]
 
 Ra (vẽ lại toàn bộ mỗi lần chạy):
-    ebook_reader/assets/app.ico + .png   icon app Windows: cửa sổ, khay, shortcut (16-256 px)
-    ebook_reader/assets/book_file.ico + .png      file .abook
-    ebook_reader/assets/project_file.ico + .png   file .abookproj
-    ebook_reader/assets/icon/*.svg                bản vector gốc: phóng to bao nhiêu cũng không vỡ
+    abook/assets/app.ico + .png   icon app Windows: cửa sổ, khay, shortcut (16-256 px)
+    abook/assets/book_file.ico + .png      file .abook
+    abook/assets/project_file.ico + .png   file .abookproj
+    abook/assets/icon/*.svg                bản vector gốc: phóng to bao nhiêu cũng không vỡ
     mobile/android/app/src/main/res/...           launcher (thường, tròn, thích ứng + đơn sắc Android 13), màn chờ
 
 Cỡ 16-32 px vẽ bản GIẢN LƯỢC (ba tay sách, nét dày, không đường trang): thu nhỏ bản đầy đủ xuống 16 px chỉ còn vệt nhoè.
@@ -33,7 +33,7 @@ from PySide6.QtGui import QGuiApplication, QImage, QPainter
 from PySide6.QtSvg import QSvgRenderer
 
 ROOT = Path(__file__).resolve().parents[1]
-ASSETS = ROOT / "ebook_reader" / "assets"
+ASSETS = ROOT / "abook" / "assets"
 RES = ROOT / "mobile" / "android" / "app" / "src" / "main" / "res"
 
 FOREST_TOP, FOREST_BOTTOM = "#1f4c3c", "#0e2a21"

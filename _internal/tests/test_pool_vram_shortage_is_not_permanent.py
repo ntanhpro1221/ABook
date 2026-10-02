@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from ebook_reader.pipeline import BookPipeline
+from abook.pipeline import BookPipeline
 
 
 class _Recorder:

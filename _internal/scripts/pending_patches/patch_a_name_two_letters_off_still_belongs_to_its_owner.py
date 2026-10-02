@@ -40,7 +40,7 @@ def patch(path: Path, old: str, new: str) -> None:
 
 
 patch(
-    root / "ebook_reader" / "character_registry.py",
+    root / "abook" / "character_registry.py",
     '''def fold_to_source_spelling(''',
     '''# Nhãn vắng mặt trong sách mà lệch HAI ký tự: vẫn là cùng một người viết sai, nhưng chỉ gom khi đích duy nhất và
 # nhãn đủ dài - hai ký tự trên bốn thì đã là một cái tên khác.
@@ -79,7 +79,7 @@ def fold_to_source_spelling(''',
 )
 
 patch(
-    root / "ebook_reader" / "character_registry.py",
+    root / "abook" / "character_registry.py",
     '''        if not candidates:
             continue
         redirected[name] = max(
@@ -102,7 +102,7 @@ test = root / "tests" / "test_a_name_two_letters_off_still_belongs_to_its_owner.
 test.write_text('''"""Nhãn vắng mặt trong sách lệch hai ký tự thì gom, nhưng chỉ khi đích duy nhất và nhãn đủ dài."""
 from __future__ import annotations
 
-from ebook_reader.character_registry import fold_for_source_search, fold_to_source_spelling
+from abook.character_registry import fold_for_source_search, fold_to_source_spelling
 
 SOURCE = fold_for_source_search(
     "Jocelyn quay sang Artil. Artil im lặng. Jocelyn nói với Artil rằng Norman đã tới. "

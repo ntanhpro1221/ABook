@@ -8,9 +8,9 @@ from pathlib import Path
 from queue import Empty, Queue
 from typing import Any
 
-from ebook_reader.database import ProjectDB
-from ebook_reader.models import BookStatus, ProjectPaths
-from ebook_reader.worker import run_worker
+from abook.database import ProjectDB
+from abook.models import BookStatus, ProjectPaths
+from abook.worker import run_worker
 
 
 def _print_message(message: dict[str, Any]) -> None:
@@ -48,7 +48,7 @@ def main() -> int:
     message_thread = threading.Thread(
         target=_drain_messages
         , args=(message_queue, run_finished)
-        , name="ebook-reader-message-drain"
+        , name="abook-message-drain"
         , daemon=True
     )
     message_thread.start()

@@ -22,7 +22,7 @@ from pathlib import Path
 ROOT = Path(r"D:\Novels\ABook\_internal")
 sys.path.insert(0, str(ROOT))
 
-from ebook_reader.asr import (  # noqa: E402
+from abook.asr import (  # noqa: E402
     normalize_transcript,
     tone_folded_transcript_metrics,
     transcript_metrics,

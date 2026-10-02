@@ -69,7 +69,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from ebook_reader.database import ProjectDB  # noqa: E402
+from abook.database import ProjectDB  # noqa: E402
 from scripts.pin_the_book_cast import (  # noqa: E402
     majority_voices,
     pinned_character_names,
@@ -317,7 +317,7 @@ def main(argv: list[str]) -> int:
     if not (target / "project.sqlite3").is_file():
         _say(f"không phải project: {target}")
         return 2
-    from ebook_reader.background_runner import get_status
+    from abook.background_runner import get_status
 
     if get_status(target).running:
         _say(f"{target.name} đang chạy - ghim giọng lúc này là đổi dàn giọng giữa lượt. Dừng.")

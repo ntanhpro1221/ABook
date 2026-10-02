@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ebook_reader.voice_catalog import narrator_presets
-from ebook_reader.webui import humanize
-from ebook_reader.webui.actions import FakeRunner
-from ebook_reader.webui.library import Preferences
-from ebook_reader.webui.server import App
+from abook.voice_catalog import narrator_presets
+from abook.webui import humanize
+from abook.webui.actions import FakeRunner
+from abook.webui.library import Preferences
+from abook.webui.server import App
 
 
 def test_a_renamed_voice_goes_out_under_its_vieneu_name_and_comes_back_as_its_key() -> None:

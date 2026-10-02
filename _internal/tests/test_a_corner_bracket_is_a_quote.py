@@ -1,8 +1,8 @@
 """Ngoặc góc 「…」 của bản dịch light novel Nhật là ngoặc thoại (patch_a_corner_bracket_is_a_quote)."""
 from __future__ import annotations
 
-from ebook_reader.analysis import DIALOGUE_OPENERS
-from ebook_reader.text_processing import normalize_text, segment_chapter_text
+from abook.analysis import DIALOGUE_OPENERS
+from abook.text_processing import normalize_text, segment_chapter_text
 
 
 def _kinds(text: str) -> list[tuple[str, str]]:

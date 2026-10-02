@@ -11,9 +11,9 @@ a small machine is owed is a straight answer up front, not a looser threshold.
 """
 from __future__ import annotations
 
-import ebook_reader.cli as cli
-from ebook_reader.perceptual_qa import PERCEPTUAL_WORKER_RAM_GB
-from ebook_reader.tts_pool import (
+import abook.cli as cli
+from abook.perceptual_qa import PERCEPTUAL_WORKER_RAM_GB
+from abook.tts_pool import (
     TTS_POOL_BASE_VRAM_MB,
     TTS_POOL_FOREGROUND_RESERVE_MB,
     TTS_POOL_WORKER_VRAM_MB,
@@ -30,7 +30,7 @@ def _with_machine(monkeypatch, *, ram_gb: float, vram_mb: int | None) -> dict:
 
     monkeypatch.setattr(psutil, "virtual_memory", lambda: _Memory(ram_gb))
     monkeypatch.setattr(
-        "ebook_reader.resource_manager.NvidiaProbe.gpu_memory",
+        "abook.resource_manager.NvidiaProbe.gpu_memory",
         lambda _self: (None, None) if vram_mb is None else (vram_mb // 2, vram_mb),
     )
     return cli._headroom_checks()
@@ -69,7 +69,7 @@ def test_the_requirement_moves_with_the_constants_it_is_made_of(monkeypatch) -> 
     """Written as a number instead, this would keep passing after the thing it describes
     grew - which is how the scoring pool came to promise five workers on memory that fits
     two."""
-    monkeypatch.setattr("ebook_reader.perceptual_qa.PERCEPTUAL_WORKER_RAM_GB", 8.0)
+    monkeypatch.setattr("abook.perceptual_qa.PERCEPTUAL_WORKER_RAM_GB", 8.0)
     checks = _with_machine(monkeypatch, ram_gb=16.0, vram_mb=8151)
     assert checks["headroom:ram"]["ok"] is False
     assert "8.0" in checks["headroom:ram"]["detail"]

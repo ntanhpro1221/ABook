@@ -22,8 +22,8 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.config import build_settings
-from ebook_reader.project import create_or_open_project
+from abook.config import build_settings
+from abook.project import create_or_open_project
 
 ANCHOR = "ASR_LOCKED_NAME_ANCHOR_MISMATCH"
 PERCEPTUAL = "PERCEPTUAL_NATURALNESS_REVIEW"
@@ -165,7 +165,7 @@ class _FakeDB:
 
 
 def _grant(rows: list[_Row]) -> tuple[list[dict], _FakeDB]:
-    from ebook_reader.pipeline import BookPipeline
+    from abook.pipeline import BookPipeline
 
     pipeline = BookPipeline.__new__(BookPipeline)
     pipeline.settings = {"quality_profile": "high_quality", "asr": {}}
@@ -288,7 +288,7 @@ def test_nothing_is_granted_twice(tmp_path) -> None:
     granted, db = _grant(rows)
     assert len(granted) == 1
 
-    from ebook_reader.pipeline import BookPipeline
+    from abook.pipeline import BookPipeline
 
     again = BookPipeline._grant_machine_acceptances(
         type("P", (), {"settings": {"quality_profile": "high_quality", "asr": {}},
@@ -300,7 +300,7 @@ def test_nothing_is_granted_twice(tmp_path) -> None:
 
 def test_the_switch_turns_the_whole_thing_off(tmp_path) -> None:
     """Hành vi cũ phải quay lại nguyên vẹn bằng một cài đặt, không bằng một bản vá ngược."""
-    from ebook_reader.pipeline import BookPipeline
+    from abook.pipeline import BookPipeline
 
     pipeline = BookPipeline.__new__(BookPipeline)
     pipeline.settings = {
@@ -326,7 +326,7 @@ def test_a_switch_you_can_only_turn_off_by_typing_the_right_type_is_not_a_switch
     Ai sửa settings JSON bằng tay để **tắt** cơ chế sẽ vô tình **bật** nó, im lặng. Đây là
     công tắc an toàn duy nhất của toàn bộ cơ chế, nên nó phải nổ chứ không được đoán ý.
     """
-    from ebook_reader.config import build_settings, validate_settings
+    from abook.config import build_settings, validate_settings
 
     settings = build_settings()
     settings["asr"]["ship_without_a_listener"] = "false"
@@ -354,7 +354,7 @@ def _db_with_a_failed_segment(tmp_path: Path):
     _paths, db, settings = create_or_open_project(
         [source], tmp_path / "out", build_settings(), "Ba cong"
     )
-    from ebook_reader.text_processing import load_and_segment_chapter
+    from abook.text_processing import load_and_segment_chapter
 
     chapter = db.list_chapters()[0]
     rows = load_and_segment_chapter(

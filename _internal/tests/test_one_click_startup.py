@@ -1,7 +1,7 @@
 import tomllib
 from pathlib import Path
 
-from ebook_reader.desktop_shell import APP_USER_MODEL_ID
+from abook.desktop_shell import APP_USER_MODEL_ID
 
 
 INTERNAL_ROOT = Path(__file__).resolve().parents[1]
@@ -37,7 +37,7 @@ def test_one_click_startup_contract() -> None:
     assert '" -OpenFile """ & WScript.Arguments(0)' in start
     assert "[string]$OpenFile" in launcher and '$arguments += " `"$OpenFile`""' in launcher
     app = (INTERNAL_ROOT / "app.py").read_text(encoding="utf-8")
-    assert "from ebook_reader.desktop import run_desktop" in app and '"--classic"' in app
+    assert "from abook.desktop import run_desktop" in app and '"--classic"' in app
     assert '$SetupMarker = Join-Path $RuntimeRoot ".setup_complete"' in launcher
     assert '[switch]$SetupConsole' not in launcher
     assert "Start-SetupConsole" not in launcher
@@ -45,7 +45,7 @@ def test_one_click_startup_contract() -> None:
     assert '$ShortcutScript = Join-Path $PSScriptRoot "install_windows_shortcut.ps1"' in launcher
     assert '$AppScript = Join-Path $InternalRoot "app.py"' in launcher
     assert '$Pythonw = Join-Path $RuntimeRoot ".venv\\Scripts\\pythonw.exe"' in launcher
-    assert 'import ebook_reader.gui' in launcher
+    assert 'import abook.gui' in launcher
     assert "runtime_contract_errors" in launcher
     assert "sys.path.insert(0" in launcher
     assert '$ErrorActionPreference = "Continue"' in launcher
@@ -55,7 +55,7 @@ def test_one_click_startup_contract() -> None:
     assert "Wait-AppWindow" in launcher
     assert "MainWindowHandle" in launcher
     assert '$StartupReadyFile = Join-Path $RuntimeRoot ".gui_ready_$PID"' in launcher
-    assert '$env:EBOOK_READER_READY_FILE = $StartupReadyFile' in launcher
+    assert '$env:ABOOK_READY_FILE = $StartupReadyFile' in launcher
     assert "Test-Path -LiteralPath $ReadyFile -PathType Leaf" in launcher
     assert "$Process.ExitCode -eq 0" in launcher
     assert "Đang khởi động ABook..." in launcher
@@ -71,7 +71,7 @@ def test_one_click_startup_contract() -> None:
     assert "cửa sổ sẽ không tự đóng" in launcher
     assert "& $SetupScript -NoPause -DependenciesOnly" in launcher
     assert "Dữ liệu project và các checkpoint audiobook được giữ nguyên." in launcher
-    assert "Đang mở Ebook Reader..." not in launcher
+    assert "Đang mở ABook..." not in launcher
     assert '[switch]$NoPause' in setup
     assert '[switch]$DependenciesOnly' in setup
     assert "if ($DependenciesOnly)" in setup
@@ -110,7 +110,7 @@ def test_one_click_startup_contract() -> None:
     assert "$Shortcut.TargetPath = $Launcher" in shortcut
     assert '$Shortcut.Arguments = ""' in shortcut
     assert "wscript.exe" not in shortcut.lower()
-    assert '"_internal\\ebook_reader\\assets\\app.ico"' in shortcut
+    assert '"_internal\\abook\\assets\\app.ico"' in shortcut
     assert "$Shortcut.IconLocation = $IconLocation" in shortcut
     # Thẻ media ở Windows+A tra tên và biểu tượng app qua mã này trên shortcut Start Menu: phải trùng mã cửa sổ tự đặt.
     assert f'$AppUserModelId = "{APP_USER_MODEL_ID}"' in shortcut

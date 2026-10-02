@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from ebook_reader.expression import (
+from abook.expression import (
     EXPRESSION_GAIN_LIMIT_DB,
     EXPRESSION_TEMPO_LIMIT,
     NARRATION_AFFECT_WEIGHT,

@@ -12,7 +12,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from ebook_reader.audio_io import (
+from abook.audio_io import (
     SEGMENT_ONSET_CLICK_MAX_WIDTH_MS,
     SEGMENT_ONSET_CLICK_RATIO,
     onset_click_metrics,
@@ -77,7 +77,7 @@ def test_the_measurement_never_fails_a_segment() -> None:
     """The A/B test rejected it as a gate; nothing may fail audio on it until that changes."""
     import inspect
 
-    from ebook_reader import audio_io
+    from abook import audio_io
 
     source = inspect.getsource(audio_io.validate_audio_array)
     assert "onset_click" not in source

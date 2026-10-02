@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from ebook_reader.audio_transform_contract import (
+from abook.audio_transform_contract import (
     POSTPROCESS_ALGORITHM,
     POSTPROCESS_OUTPUT_CODEC,
     POSTPROCESS_PROFILE_TEMPO,
     POSTPROCESS_TEMPO_DENOMINATOR,
     POSTPROCESS_TEMPO_NUMERATOR,
 )
-from ebook_reader.config import build_settings
-from ebook_reader.quality_policy import (
+from abook.config import build_settings
+from abook.quality_policy import (
     ANALYSIS_CASTING_IMPLEMENTATION_FILES,
     ANALYSIS_CASTING_STAGE,
     QUALITY_IMPLEMENTATION_FILES,
@@ -21,7 +21,7 @@ from ebook_reader.quality_policy import (
     quality_policy_hash,
     text_segmentation_implementation_hash,
 )
-from ebook_reader.runtime_contract import (
+from abook.runtime_contract import (
     CRITICAL_RUNTIME_DISTRIBUTIONS,
     TIMM_CACHE_REVISION,
     WAV2VEC2_CACHE_REVISION,
@@ -74,9 +74,9 @@ def test_the_apps_own_version_number_does_not_retire_quality_evidence() -> None:
     """Mỗi bản phát hành nâng `version` của pyproject. Nếu con số ấy vào hash, mọi cuốn cũ mất bằng chứng QA sau mỗi lần
     cập nhật app (ASR lại cả cuốn, dựng lại mọi MP3) mà không mẫu âm thanh nào đổi. Đổi thư viện phụ thuộc thì vẫn phải
     đổi hash."""
-    from ebook_reader.quality_policy import _hashed_bytes
+    from abook.quality_policy import _hashed_bytes
 
-    pyproject = b'[project]\nname = "ebook_reader"\nversion = "0.4.5"\ndependencies = ["vieneu==3.8.1"]\n'
+    pyproject = b'[project]\nname = "abook"\nversion = "0.4.5"\ndependencies = ["vieneu==3.8.1"]\n'
     bumped = pyproject.replace(b'"0.4.5"', b'"0.4.6"')
     new_voice_engine = pyproject.replace(b"vieneu==3.8.1", b"vieneu==3.9.0")
 

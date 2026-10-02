@@ -21,8 +21,8 @@ from PySide6.QtWidgets import (
     QTableWidgetItem,
 )
 
-from ebook_reader.config import build_settings
-from ebook_reader.gui import (
+from abook.config import build_settings
+from abook.gui import (
     APP_ICON_PATH,
     STARTUP_READY_FILE_ENV,
     VOICE_CHILD_INDENT_SAMPLE,
@@ -33,8 +33,8 @@ from ebook_reader.gui import (
     _connect_instance_activation,
     _signal_startup_ready,
 )
-from ebook_reader.project import create_or_open_project
-from ebook_reader.voice_catalog import VOICE_PREVIEW_FILENAMES
+from abook.project import create_or_open_project
+from abook.voice_catalog import VOICE_PREVIEW_FILENAMES
 
 
 def _window(tmp_path: Path) -> tuple[QApplication, MainWindow, QSettings]:
@@ -175,7 +175,7 @@ def test_voice_options_foldout_collapses_and_restores(tmp_path: Path) -> None:
 
 def test_second_instance_activates_the_existing_window(tmp_path: Path) -> None:
     app, window, _store = _window(tmp_path)
-    server_name = f"EbookReader.Test.{uuid4().hex}"
+    server_name = f"ABook.Test.{uuid4().hex}"
     server = _claim_single_instance(app, server_name)
     assert server is not None
     _connect_instance_activation(server, window)
@@ -385,7 +385,7 @@ def test_finished_worker_error_restores_window_and_opens_modal(
     dialogs: list[tuple[str, str]] = []
     monkeypatch.setattr(window, "_show_from_tray", lambda: restored.append(True))
     monkeypatch.setattr(
-        "ebook_reader.gui.QMessageBox.critical",
+        "abook.gui.QMessageBox.critical",
         lambda _parent, title, text: dialogs.append((title, text)),
     )
 
@@ -492,7 +492,7 @@ def test_tray_quit_terminates_worker_without_waiting_for_checkpoint(tmp_path: Pa
     window.stop_event = stop_event
     window._force_quit = True
     monkeypatch.setattr(
-        "ebook_reader.gui.terminate_process_tree",
+        "abook.gui.terminate_process_tree",
         lambda pid, *, grace_seconds: calls.append((pid, grace_seconds)),
     )
     event = QCloseEvent()
@@ -731,7 +731,7 @@ def test_double_clicking_empty_mp3_cell_does_not_open_explorer(
     window.chapter_table.setCurrentCell(0, 6)
     opened: list[object] = []
     monkeypatch.setattr(
-        "ebook_reader.gui.QDesktopServices.openUrl",
+        "abook.gui.QDesktopServices.openUrl",
         lambda url: opened.append(url),
     )
 

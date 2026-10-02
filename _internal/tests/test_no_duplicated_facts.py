@@ -11,8 +11,8 @@ lists the rest for a human to judge; most are coincidence.
 
 from __future__ import annotations
 
-from ebook_reader import expression, quality_policy, tts
-from ebook_reader.database import CHAPTER_POST_ENCODE_QUALITY_STAGE
+from abook import expression, quality_policy, tts
+from abook.database import CHAPTER_POST_ENCODE_QUALITY_STAGE
 
 
 def test_the_voice_pitch_range_has_one_definition() -> None:
@@ -37,5 +37,5 @@ def test_expression_still_imports_cleanly_on_its_own() -> None:
     """Sharing the constant must not have introduced an import cycle."""
     import importlib
 
-    for name in ("ebook_reader.expression", "ebook_reader.quality_policy"):
+    for name in ("abook.expression", "abook.quality_policy"):
         assert importlib.import_module(name) is not None

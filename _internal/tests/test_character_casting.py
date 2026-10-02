@@ -4,19 +4,19 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.character_registry import (
+from abook.character_registry import (
     PresetAllocator,
     assert_voice_stability,
     build_registry_and_cast,
 )
-from ebook_reader.analysis import local_speaker_label
-from ebook_reader.config import build_settings
-from ebook_reader.database import (
+from abook.analysis import local_speaker_label
+from abook.config import build_settings
+from abook.database import (
     EXPLICIT_ATTRIBUTION_NOTE,
     ProjectDB,
     canonical_analysis_note,
 )
-from ebook_reader.voice_catalog import (
+from abook.voice_catalog import (
     EXCLUDED_PRESETS,
     voice_variant_deviation,
     formant_variants_for_preset,

@@ -11,8 +11,8 @@ cryptography = pytest.importorskip("cryptography")
 from cryptography.hazmat.primitives import serialization  # noqa: E402
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey  # noqa: E402
 
-from ebook_reader.webui.ed25519_verify import verify  # noqa: E402
-from ebook_reader.webui.remote_config import DEFAULTS, PUBLIC_KEY, RemoteConfig  # noqa: E402
+from abook.webui.ed25519_verify import verify  # noqa: E402
+from abook.webui.remote_config import DEFAULTS, PUBLIC_KEY, RemoteConfig  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[2]
 

@@ -11,10 +11,10 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.webui import remote_studio
-from ebook_reader.webui.actions import FakeRunner
-from ebook_reader.webui.library import book_id
-from ebook_reader.webui.server import ROUTES, App, Server
+from abook.webui import remote_studio
+from abook.webui.actions import FakeRunner
+from abook.webui.library import book_id
+from abook.webui.server import ROUTES, App, Server
 from tests.test_webui_listen_and_sync import _request, library, make_project  # noqa: F401 - fixture dùng chung
 
 
@@ -363,7 +363,7 @@ def test_a_remote_studio_continues_a_book_only_with_its_next_chapters(studio, tm
     (continuation.next_chapters) - thiết bị chỉ chọn trong danh sách ấy, không mở được đường dẫn nào khác."""
     import sqlite3
 
-    from ebook_reader import continuation
+    from abook import continuation
 
     app, project = studio
     app.set_remote_studio(True)

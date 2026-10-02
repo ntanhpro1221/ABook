@@ -31,7 +31,7 @@ HERE = Path(__file__).resolve().parent
 if str(HERE.parents[1]) not in sys.path:
     sys.path.insert(0, str(HERE.parents[1]))
 
-from ebook_reader.character_registry import PRONOUNS  # noqa: E402
+from abook.character_registry import PRONOUNS  # noqa: E402
 
 # Một thư mục cho mỗi truyện: số chương của các truyện trùng nhau (cuốn 1 cũng có chương 351).
 GOLD_ROOT = HERE / "gold"

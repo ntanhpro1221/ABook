@@ -131,7 +131,7 @@ def audit(root: Path) -> int:
 def main() -> int:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("root", type=Path, nargs="?", default=Path("ebook_reader"))
+    parser.add_argument("root", type=Path, nargs="?", default=Path("abook"))
     return audit(parser.parse_args().root)
 
 

@@ -25,7 +25,7 @@ sys.path.insert(0, "D:/Novels/ABook/_internal")
 from score_models import GOLD_ROOT, load_gold, read_project, speaker_credit  # noqa: E402
 from voice_identity import source_text  # noqa: E402
 
-from ebook_reader.character_registry import canonical_speaker_names  # noqa: E402
+from abook.character_registry import canonical_speaker_names  # noqa: E402
 
 FIRST_PERSON = {"hdst": "ED ROSTAILER", "yamiyo": "TOMOBE", "nageki": "KRAI ANDREY", "lu": "KAKERU SORANO",
                 "yamiyo225": "TOMOBE", "nageki62": "KRAI ANDREY", "hdst130": "ED ROSTAILER", "lu10": "YUUKO HAYASE"}

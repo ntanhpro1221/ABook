@@ -1,13 +1,13 @@
 """Va pipeline.py: neo ten tren doan qua ngan khong duoc chan chuong.
 
-    python patch_short_anchor.py <thu muc chua ebook_reader/>
+    python patch_short_anchor.py <thu muc chua abook/>
 """
 import io
 import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "pipeline.py"
+p = root / "abook" / "pipeline.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD = '''                    # Only an ASR verdict can be forgiven for being unobtainable. A

@@ -1,8 +1,8 @@
 """Một dòng nguyên vẹn trong 『…』 là một giọng nói; 『…』 giữa câu kể vẫn là chữ của người kể."""
 from __future__ import annotations
 
-from ebook_reader.analysis import DIALOGUE_CLOSERS, DIALOGUE_OPENERS
-from ebook_reader.text_processing import segment_chapter_text
+from abook.analysis import DIALOGUE_CLOSERS, DIALOGUE_OPENERS
+from abook.text_processing import segment_chapter_text
 
 
 def _kinds(text: str) -> list[tuple[str, str]]:

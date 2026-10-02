@@ -70,7 +70,7 @@ def build_project(surface: str, spoken: str, takes: int, index: int) -> Path | N
     )
     created = subprocess.run(
         [
-            str(PYTHON), "-m", "ebook_reader.cli", "create",
+            str(PYTHON), "-m", "abook.cli", "create",
             "--output-root", str(folder / "out"),
             "--source-dir", str(source),
             "--range", "000..000", "--width", "3",
@@ -88,8 +88,8 @@ def build_project(surface: str, spoken: str, takes: int, index: int) -> Path | N
         return None
     project = projects[-1]
     sys.path.insert(0, str(ROOT))
-    from ebook_reader.character_registry import canonical_key  # noqa: PLC0415
-    from ebook_reader.database import ProjectDB  # noqa: PLC0415
+    from abook.character_registry import canonical_key  # noqa: PLC0415
+    from abook.database import ProjectDB  # noqa: PLC0415
 
     ProjectDB(project / "project.sqlite3").upsert_pronunciation(
         surface=surface,
@@ -104,7 +104,7 @@ def build_project(surface: str, spoken: str, takes: int, index: int) -> Path | N
 
 def run_project(project: Path) -> None:
     subprocess.run(
-        [str(PYTHON), "-m", "ebook_reader.cli", "run", str(project), "--json"],
+        [str(PYTHON), "-m", "abook.cli", "run", str(project), "--json"],
         cwd=str(ROOT), capture_output=True, text=True, encoding="utf-8", errors="replace",
     )
     while True:

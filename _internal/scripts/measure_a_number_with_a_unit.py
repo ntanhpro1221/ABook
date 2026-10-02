@@ -40,8 +40,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from ebook_reader.asr import transcript_metrics  # noqa: E402
-from ebook_reader.text_processing import vietnamese_number_words  # noqa: E402
+from abook.asr import transcript_metrics  # noqa: E402
+from abook.text_processing import vietnamese_number_words  # noqa: E402
 
 try:
     from scripts.book_paths import VERSIONS  # noqa: E402

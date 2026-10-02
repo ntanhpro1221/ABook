@@ -20,7 +20,7 @@ def write_atomic(path: Path, text: str) -> None:
 
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "pipeline.py"
+p = root / "abook" / "pipeline.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD = """        ASR_TRANSCRIPT_TIMELINE_IMPOSSIBLE,
@@ -87,7 +87,7 @@ cái nhãn ghi lại quyết định ấy.
 """
 from __future__ import annotations
 
-from ebook_reader.pipeline import (
+from abook.pipeline import (
     HIGH_QUALITY_ALLOWED_SEGMENT_WARNINGS,
     PACE_BAND_RELAXED_WARNING,
     BookPipeline,
@@ -140,7 +140,7 @@ def test_the_concession_and_the_gate_cannot_disagree() -> None:
     """
     import inspect
 
-    from ebook_reader import pipeline
+    from abook import pipeline
 
     source = inspect.getsource(pipeline)
     has_relaxed_retry = "_retry_in_normal_pace_band" in source

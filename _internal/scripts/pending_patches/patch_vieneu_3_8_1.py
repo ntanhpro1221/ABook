@@ -51,7 +51,7 @@ assert digest == OLD_LOCK_SHA256, f"uv.lock da doi tu luc sinh ban va ({digest[:
 shutil.copyfile(here / "assets" / "uv.lock.vieneu381", lock)
 print(f"da thay {lock}")
 
-replace_once(root / "ebook_reader" / "runtime_contract.py",
+replace_once(root / "abook" / "runtime_contract.py",
              '"vieneu": ("vieneu", "3.3.0"),', '"vieneu": ("vieneu", "3.8.1"),')
 replace_once(root / "tests" / "test_one_click_startup.py", '"vieneu==3.3.0",', '"vieneu==3.8.1",')
 replace_once(root / "tests" / "test_runtime_contract.py",

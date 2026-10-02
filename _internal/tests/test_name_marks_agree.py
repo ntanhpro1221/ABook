@@ -45,7 +45,7 @@ def test_fold_prefers_the_spelling_with_more_marks_not_the_frequent_one() -> Non
 
 
 def test_the_script_copy_agrees_with_the_registry() -> None:
-    registry = pytest.importorskip("ebook_reader.character_registry")
+    registry = pytest.importorskip("abook.character_registry")
     if not hasattr(registry, "dropped_marks_variant_of"):
         pytest.skip(
             "registry chưa mang bản chính - patch_dropped_marks_are_the_same_name chưa áp"

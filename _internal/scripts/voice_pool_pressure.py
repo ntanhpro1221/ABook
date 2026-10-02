@@ -26,7 +26,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from ebook_reader import voice_catalog as vc  # noqa: E402
+from abook import voice_catalog as vc  # noqa: E402
 
 
 def _say(line: str) -> None:

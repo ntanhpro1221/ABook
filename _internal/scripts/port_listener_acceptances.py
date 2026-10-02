@@ -39,7 +39,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from ebook_reader.database import ProjectDB  # noqa: E402
+from abook.database import ProjectDB  # noqa: E402
 
 
 def _say_safely(line: str) -> None:

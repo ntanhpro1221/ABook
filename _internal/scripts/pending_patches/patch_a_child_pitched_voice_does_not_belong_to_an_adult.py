@@ -50,7 +50,7 @@ def patch(path: Path, old: str, new: str) -> None:
 
 
 patch(
-    root / "ebook_reader" / "character_registry.py",
+    root / "abook" / "character_registry.py",
     '''def _drop_pins_that_contradict_a_person(''',
     '''VOICE_KEY_SUFFIX_PATTERN = re.compile(r"^preset_(?P<body>.+)_f(?P<formant>\\d+)_p(?P<pitch>[+-]\\d+)$")
 
@@ -80,7 +80,7 @@ def _drop_pins_that_contradict_a_person(''',
 )
 
 patch(
-    root / "ebook_reader" / "character_registry.py",
+    root / "abook" / "character_registry.py",
     '''        contradicts = bool(
             gender and preset and preset != gender and (age or "") != "child"
         )''',
@@ -96,7 +96,7 @@ patch(
 )
 
 patch(
-    root / "ebook_reader" / "character_registry.py",
+    root / "abook" / "character_registry.py",
     '''        log(
             f"Bỏ giọng ghim của {key}: {voice_key} là preset {preset}, còn người nghe đã ghim"
             f" {gender}" + (f"/{age}" if age else "") + " - cấp lại giọng."
@@ -113,7 +113,7 @@ test = root / "tests" / "test_a_child_pitched_voice_does_not_belong_to_an_adult.
 test.write_text('''"""Giọng mang pitch trẻ con bị bỏ khi người nghe đã ghim một tuổi khác trẻ con."""
 from __future__ import annotations
 
-from ebook_reader.character_registry import _drop_pins_that_contradict_a_person, voice_is_child_pitched
+from abook.character_registry import _drop_pins_that_contradict_a_person, voice_is_child_pitched
 
 
 class _Events:

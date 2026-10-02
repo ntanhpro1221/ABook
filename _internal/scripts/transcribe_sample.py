@@ -10,7 +10,7 @@ against the text the voice was actually given.
 Two engines cannot share one virtual environment safely while a book job is running:
 installing faster-whisper pulls ctranslate2 and tokenizers and may move numpy under a job
 that is using it. So this script is deliberately small and dependency-light - it needs its
-engine and soundfile, nothing from ebook_reader - and is meant to be run once per venv.
+engine and soundfile, nothing from abook - and is meant to be run once per venv.
 
     <venv-a>/python scripts/transcribe_sample.py <project_root> openai out-openai.json 60
     <venv-b>/python scripts/transcribe_sample.py <project_root> faster out-faster.json 60
@@ -74,8 +74,8 @@ def _openai(paths: list[tuple[str, str, float]]) -> list[dict]:
 def _faster(paths: list[tuple[str, str, float]]) -> list[dict]:
     # CTranslate2 links cuBLAS and cuDNN at load time and does not ship them. torch does,
     # in its own lib directory, so an isolated venv can borrow those without the two
-    # environments sharing anything else. EBOOK_READER_TORCH_LIB names that directory.
-    torch_lib = os.environ.get("EBOOK_READER_TORCH_LIB", "")
+    # environments sharing anything else. ABOOK_TORCH_LIB names that directory.
+    torch_lib = os.environ.get("ABOOK_TORCH_LIB", "")
     if torch_lib and hasattr(os, "add_dll_directory") and Path(torch_lib).is_dir():
         os.add_dll_directory(torch_lib)
 

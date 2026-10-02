@@ -12,9 +12,9 @@ import shutil
 import sqlite3
 from pathlib import Path
 
-from ebook_reader import cli
-from ebook_reader.config import build_settings
-from ebook_reader.project import create_or_open_project
+from abook import cli
+from abook.config import build_settings
+from abook.project import create_or_open_project
 
 ROOT = Path(__file__).resolve().parents[1]
 _spec = importlib.util.spec_from_file_location(

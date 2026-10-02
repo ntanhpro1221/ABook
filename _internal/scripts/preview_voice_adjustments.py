@@ -33,9 +33,9 @@ import soundfile as sf
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from ebook_reader.audio_io import AudioQualityError, validate_audio_array  # noqa: E402
-from ebook_reader.config import build_settings  # noqa: E402
-from ebook_reader.tts import (  # noqa: E402
+from abook.audio_io import AudioQualityError, validate_audio_array  # noqa: E402
+from abook.config import build_settings  # noqa: E402
+from abook.tts import (  # noqa: E402
     WORLD_F0_CEIL_HZ,
     WORLD_F0_FLOOR_HZ,
     WORLD_FRAME_PERIOD_MS,

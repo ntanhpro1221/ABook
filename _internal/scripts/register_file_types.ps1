@@ -17,7 +17,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 $Internal = Split-Path -Parent $PSScriptRoot
-$Assets = Join-Path $Internal "ebook_reader\assets"
+$Assets = Join-Path $Internal "abook\assets"
 $Dll = Join-Path $Internal "build\windows\abook_thumbnail.dll"
 $Classes = "HKCU:\Software\Classes"
 $HandlerClsid = "{8464156A-A4BD-4FDE-9FDD-57CB16936684}"  # windows/thumbnail/abook_thumbnail.h

@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import pytest
 
-from ebook_reader.character_registry import _validate_casting_inputs
+from abook.character_registry import _validate_casting_inputs
 
 
 def _row(speaker: str, gender: str = "unknown", **extra):

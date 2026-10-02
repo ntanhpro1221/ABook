@@ -3,7 +3,7 @@
     python scripts/backfill_exposure.py <project lô 1> <project lô 2> ... <project lô N>
 
 Ghi bảng `character_exposure` vào project **cuối cùng** trong danh sách, tức project sắp được
-gieo đi. Bảng ấy nằm ngoài `SCHEMA` của `database.py` và không module nào trong `ebook_reader`
+gieo đi. Bảng ấy nằm ngoài `SCHEMA` của `database.py` và không module nào trong `abook`
 đọc hay ghi nó — đó là lý do nó tồn tại.
 
 Vì sao cần: `upsert_character` **ghi đè** `mention_count` bằng số câu của lô hiện tại. Đo ngày

@@ -65,14 +65,14 @@ def patch(path: Path, old: str, new: str) -> None:
 
 
 patch(
-    root / "ebook_reader" / "database.py",
+    root / "abook" / "database.py",
     '''IN_SENTENCE_QUOTE_NARRATOR_NOTE = "đã trả cụm trích giữa câu kể về người kể"''',
     '''IN_SENTENCE_QUOTE_NARRATOR_NOTE = "đã trả cụm trích giữa câu kể về người kể"
 THOUGHT_OUTSIDE_QUOTES_NARRATOR_NOTE = "đã trả đoạn nội tâm ngoài mọi nhịp ngoặc về người kể"''',
 )
 
 patch(
-    root / "ebook_reader" / "database.py",
+    root / "abook" / "database.py",
     '''ANALYSIS_HOST_NOTE_MARKERS = (
     EXPLICIT_ATTRIBUTION_NOTE,''',
     '''ANALYSIS_HOST_NOTE_MARKERS = (
@@ -81,14 +81,14 @@ patch(
 )
 
 patch(
-    root / "ebook_reader" / "analysis.py",
+    root / "abook" / "analysis.py",
     '''    IN_SENTENCE_QUOTE_NARRATOR_NOTE,''',
     '''    IN_SENTENCE_QUOTE_NARRATOR_NOTE,
     THOUGHT_OUTSIDE_QUOTES_NARRATOR_NOTE,''',
 )
 
 patch(
-    root / "ebook_reader" / "analysis.py",
+    root / "abook" / "analysis.py",
     '''    IN_SENTENCE_QUOTE_NARRATOR_NOTE: "in_sentence_quote",
 }''',
     '''    IN_SENTENCE_QUOTE_NARRATOR_NOTE: "in_sentence_quote",
@@ -97,7 +97,7 @@ patch(
 )
 
 patch(
-    root / "ebook_reader" / "analysis.py",
+    root / "abook" / "analysis.py",
     '''def _repair_same_paragraph_speakers(''',
     '''# Mỗi truyện viết nội tâm bằng một loại ngoặc khác nhau, và bỏ sót một loại là trả nội tâm thật về
 # người kể. `(`/`)` nằm đây vì `yamiyo_no_hotaru` dùng CHÚNG cho nội tâm - cổng phát lại đáp án bắt được
@@ -164,7 +164,7 @@ def _repair_same_paragraph_speakers(''',
 )
 
 patch(
-    root / "ebook_reader" / "analysis.py",
+    root / "abook" / "analysis.py",
     '''    # CUỐI chuỗi sửa: hai khoá trên (đoạn văn, thoại nối tiếp) sẽ ghi đè nếu chạy sau.
     _repair_in_sentence_quote_speakers(group, result)''',
     '''    # CUỐI chuỗi sửa: hai khoá trên (đoạn văn, thoại nối tiếp) sẽ ghi đè nếu chạy sau.
@@ -184,7 +184,7 @@ ngoặc mở từ đoạn trước, và bản luật chỉ-xét-một-đoạn đ
 """
 from __future__ import annotations
 
-from ebook_reader.analysis import (
+from abook.analysis import (
     _repair_thought_outside_quotes,
     _segments_outside_every_quote_span,
 )
