@@ -645,6 +645,29 @@ Không dính R_cũ (giữ nguyên, không đo lại):
 - Gộp ba nguồn, thầy, trò: nhãn feel người gắn.
 - Độ to 20 LU: ESTOI + Whisper.
 
+**KẾT QUẢ ĐO LẠI mục 1, 2, 4 (03-10 04:xx, dữ liệu có sẵn, `score_e1_checks.py`):**
+
+Mục 1 - E1 theo R_mới:
+
+| Kiểm | R_cũ | R_mới |
+|---|---|---|
+| H1 vet thắng far | 0,76 ĐẠT | 11/17 = 0,65 [0,41-0,83] KHÔNG ĐẠT |
+| H2 Spearman | 0,60 | 0,49 |
+| app thắng vet | 0,26 | 21/44 = 0,48 [0,34-0,62] - hết thua |
+| calm thắng far | 0,82 | 30/32 = 0,94 [0,80-0,98] |
+| calm thắng mid | 0,53 | 21/31 = 0,68 [0,50-0,81] |
+
+- "app thua vet" KHÔNG còn. "nền êm hợp" MẠNH hơn với người đọc không CLAP. Nhưng hai model nghe xếp calm cuối; chờ phép (2).
+
+Mục 2:
+- gems thắng app 25/41 = 0,61 [0,46-0,74]. Cận dưới không > 0,5 → **không đạt**, chưa mở thí nghiệm bật lại Lớp 2.
+- Đây là ứng viên mạnh nhất cho thí nghiệm kế khi bộ 5 có đáp án.
+
+Mục 4:
+- Kappa với R_mới: omni1 0,030, mf 0,150 → cả hai **vẫn không dùng được**. Kết luận E1b không đổi.
+
+Mục 3 (nền êm chấm lại bằng mô tả không CLAP) đang chạy.
+
 **GHI TRƯỚC - NỚI NGƯỠNG NỀN ÊM (02-10 23:xx, Lead duyệt; từ E1: calm đứng thứ hai, hơn app):**
 - **Giả thuyết:** kéo về nền êm (CALM_TARGET) cho nhiều đoạn hơn làm nhạc hợp hơn. Hiện chỉ kéo khi confidence < WEAK_MOOD
   0,2, và kéo tuyến tính.
