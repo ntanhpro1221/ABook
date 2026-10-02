@@ -727,3 +727,12 @@ nói chính sai 0 (chốt 34: Mahiru gọi Amane "cậu", Amane gọi Mahiru "c�
 | câu | A | B đề nghị | kết luận | lý do |
 |---|---|---|---|---|
 | Otonari 030:51 | N | N,T + AMANE~ | theo B | câu đánh giá chủ quan cùng khuôn 55; ghi chú đầu file sửa (không phải đoạn kể nào cũng có "cậu") |
+
+Kumo Desu ga 396 (đợt 4, độc thoại nội tâm dày; chương 30% = 170 toàn bảng chỉ số không thoại -> lấy 70%): ngôi một, "tôi" =
+SHIRO (chương "Chap" của Shiro, Oni gọi "Shiro-san" ở 75). B: người nói chính sai 0; ONI-KUN~ / BÉ VAMPIRE~ giữ nửa điểm
+(biệt danh, nhân vật có tên riêng - tiền lệ ANH DẬU).
+
+| câu | A | B đề nghị | kết luận | lý do |
+|---|---|---|---|---|
+| Kumo 396:27, 51, 66-67, 74, 120-121 | N | N,T + SHIRO | theo B | nằm giữa chuỗi tiếng lòng A đã cho N,T (26/28, 63-65/68, 60, 118-119, 62) |
+| Kumo 396:22, 33, 42-43, 91-92 | N | N,T | giữ A | B tự xếp yếu; lời bình nói với người đọc |
