@@ -68,6 +68,10 @@ từng bài; trình nghe hiện ghi công khi bài đang phát.
 - Jamendo (bài CC BY / CC0 theo từng bài; thông tin bài qua Openverse - không do Openverse bảo trợ).
 - Freesound (bài CC0 / CC BY theo từng âm thanh).
 
+Bộ phân tích "Nhạc của tôi" (`webui/music_student.py`) dùng tháp âm thanh của LAION-CLAP `laion/clap-htsat-unfused` (Apache-2.0,
+fp16, ~55 MB) cùng đầu hồi quy nhỏ của chính dự án; gói đăng ở huggingface.co/NGDtuanh/abook-music-student, tải về máy một lần
+khi cần, KHÔNG nằm trong bộ cài. Kèm giấy phép Apache-2.0 và ghi chú của LAION-CLAP khi phân phối gói.
+
 ## Model phân tích và dữ liệu nghiên cứu (chưa đóng gói trong bản phát hành)
 
 - LoRA tự huấn luyện trên nền Qwen3-4B-Instruct-2507 (Apache-2.0), dữ liệu huấn luyện là đáp án chuẩn của chính dự án.
