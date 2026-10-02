@@ -1073,6 +1073,47 @@ Trò:
 - 03-10 04:xx: bản cuối (đủ âm học, 1.736 bài không lời) 97,4% (0,880 / 0,904); Soundtracks 0,65 / 0,74 / 0,77; DEAM
   0,32 / 0,69. Gói HF `NGDtuanh/abook-music-student` @ c6e1485f; Lead đã gộp vào main (đường torch, máy có Studio).
 
+**GHI TRƯỚC - TRÒ (c): TRÒ CHỌN BÀI CÓ TỆ HƠN THẦY KHÔNG (03-10 05:3x, trước khi tính bài nào được chọn):**
+
+Câu hỏi: nhạc người dùng nhập chỉ có số của trò. Nếu cả kho chỉ có số của trò, bài app chọn cho đoạn có tệ hơn không?
+
+Đoạn:
+- 100 đoạn của E1 (bộ 4: 82, bộ 3: 18).
+- Không khí đoạn = số MÁY như vai `app` của E1: V/E/T, độ tin cậy 1, không có cảm xúc đoạn.
+
+Kho:
+- Các bài của `catalog_e1` qua lọc phong cách của cuốn + dài ≥ 60 s, có file âm thanh, như E1.
+- Thêm điều kiện: bài KHÔNG LỜI, đủ đặc trưng của trò.
+
+Hai điều kiện, khác nhau DUY NHẤT ở số của từng bài:
+- **THẦY:** V/E/T + sd như danh mục (`catalog_e1`).
+- **TRÒ:** V/E/T dự đoán CHÉO 5 phần (chia theo bài, hạt giống 7). Mỗi bài được đoán bởi một trò không học bài ấy, như bài
+  người dùng nhập.
+  - Công thức như `build_student.py`: CLAP 512 + 42 âm học, RidgeCV cùng dãy alpha.
+  - sd = `vet_sd` của trò.
+  - Biến thể trò-A (chỉ CLAP) báo kèm, không quyết định.
+
+Bài chọn:
+- Hạng 1 của `music_select.rank` (code main), giống hệt nhau ở hai bên trừ số của bài.
+- Hai bên chọn cùng bài: hoà, không đem chấm. Báo tỉ lệ trùng.
+
+Chấm, trên các đoạn hai bên chọn KHÁC bài:
+- Người đọc n1, n2 (agent Claude) đọc mô tả không CLAP như phép (1) của E1, mù vai, trái / phải xáo theo hạt giống.
+- Thêm 10% cặp lặp, đảo bên.
+- Gói và đề như E1 (`build_e1_judge_packs.py`, `PACK_SET=studentc`, `DESC=noclap`).
+
+Thước:
+- Phán quyết chung n1 + n2: cùng chọn thì bên ấy thắng; khác nhau thì nửa - nửa.
+- p_trò = (thắng + 0,5 × nửa) / số cặp khác bài.
+- **Trò ĐẠT nếu p_trò ≥ 0,45**, tức không thua quá 5 điểm phần trăm. Báo kèm KTC Wilson 95%.
+- Báo thêm trên cả 100 đoạn (trùng bài = hoà).
+- Dùng được chỉ khi: ổn định a/b trên cặp lặp ≥ 0,75 VÀ kappa n1-n2 ≥ 0,20. Không đạt thì báo "không kết luận", không phán.
+
+Thiên lệch biết trước:
+- Mô tả không CLAP mang chữ trang nguồn (tag, mô tả, feel) mà THẦY đã đọc. Thước vì thế nghiêng về thầy.
+- Trò đạt dưới thước này thì kết luận càng chắc. Trò trượt thì phải đo lại bằng thước nghe L_min trước khi bỏ trò.
+- L_min (Omni-7B-EN) chạy kèm nếu hàng GPU có chỗ. Chỉ báo, không quyết định.
+
 **GHI TRƯỚC - TRÒ ĐƯỜNG ONNX cho máy chỉ player + điện thoại (03-10 05:xx, Lead; trước khi làm):**
 
 Bản torch hiện có là CHUẨN. Đường ONNX phải khớp nó, đo trên 20 bài danh mục cố định (20 mã đầu của `embedding_ids.json` có
