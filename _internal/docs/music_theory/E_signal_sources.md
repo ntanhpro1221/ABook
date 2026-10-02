@@ -81,3 +81,23 @@ Hiện: khoảng cách trên Lớp 1 (+ Lớp 2 đang tắt). Nghiên cứu cho 
 5. LLM xếp lại top-K.
 6. Đầu dò học trên nhiều bộ dữ liệu (Soundtracks, DEAM, PMEmo, EmoMusic).
 7. Về sau: OST anime cho phong cách cuốn, bình luận chương, tranh minh hoạ.
+
+## 6. Thầy - trò: bài có ngữ cảnh dạy model chỉ-nghe (chủ sách 02-10)
+
+Danh mục của ta có ngữ cảnh đầy đủ (chữ quanh bài, tag người gắn, tác giả), nên nhãn suy từ đó khá đáng tin. Nhưng app còn
+phân tích **âm thanh người dùng tự nhập**, không có ngữ cảnh: lúc ấy model nghe quyết định 100%. Hướng đúng là **học với
+thông tin đặc quyền** (Vapnik & Vashist 2009, LUPI) / **chưng cất chéo kênh**: ngữ cảnh chỉ có lúc học, lúc dùng chỉ có âm
+thanh.
+
+1. **Thầy** = gộp mọi nguồn (kênh chữ + tag người gắn + âm học + model nghe lớn) -> 13 cường độ + V/E/T + độ tin cậy cho mỗi
+   bài có ngữ cảnh.
+2. **Trò** = model NHỎ chỉ nhận âm thanh (đầu dò / tinh chỉnh nhẹ trên nhúng CLAP / MERT / MuQ + đặc trưng âm học), học bắt
+   chước nhãn thầy, mất mát nhân trọng số theo độ tin cậy của thầy.
+3. **Thêm dữ liệu cho trò**: thầy gán nhãn cho kho nhạc mở có siêu dữ liệu (MTG-Jamendo ~55k bài có tag mood/theme, FMA có
+   tag/thể loại) -> hàng chục nghìn bài thay vì 2.000.
+4. **Kiểm**: (a) giữ ngoài một phần danh mục, GIẤU ngữ cảnh, đo trò so nhãn thầy; (b) bài kiểm có nhãn người: DEAM,
+   Soundtracks; (c) máy chấm kiểu E1 trên chọn nhạc cuối. Ghi trước.
+5. **Chạy ở đâu**: trò phải chạy trên máy người dùng (card 8 GB hoặc CPU). Model nghe lớn (Music Flamingo, Qwen3-Omni) chỉ
+   làm thầy / giám khảo khi phát triển, không đi theo app.
+6. Âm thanh người dùng nhập vẫn có thể mang chút ngữ cảnh (tên file, thẻ ID3 tên bài / nghệ sĩ / thể loại): dùng nếu có, như
+   thầy, nhưng không trông vào.
