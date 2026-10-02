@@ -17,7 +17,11 @@ và độ dài, không ký tự điều khiển - và file sai thì bị từ ch
                                                                  đối tượng = dùng edits/cover.jpg)
      "characters": {"<name trong cast.json>": "<tên hiện>"},
      "chapters": {"<mã chương>": {"title": "Chương 12", "subtitle": "Hồi kết"}},   (mỗi trường tuỳ chọn)
-     "music": {"enabled": false, "levelDb": -24.0, "silenced": ["<mã chương>:<mili giây đầu mốc>"]},
+     "music": {"enabled": false, "levelDb": -24.0, "silenced": ["<mã chương>:<mili giây đầu mốc>"],
+               "pins": {"<mã chương>:<mili giây đầu mốc>": "local:<sha1>"},          (đổi bài một mốc sang bài "Nhạc của tôi")
+               "tracks": {"<sha1>": {"ext": "mp3", "title": "...", "creator": "...", "duration": 184.0, "lufs": -14.2}}},
+                                                                (thông tin các bài được ghim, đúng những sha1 mà `pins` nhắc tới;
+                                                                 file nằm ở music/<sha1>.<đuôi> như bài của người làm sách)
      "wishes": {...}}                                           (ý muốn chờ Studio - book_wishes.py: cách đọc tên, người nói,
                                                                  cách đọc câu, giọng, thu lại; KHÔNG BAO GIỜ áp vào sách)
 
@@ -27,12 +31,14 @@ from __future__ import annotations
 
 import copy
 import json
+import os
 import re
+import shutil
 import threading
 import time
 import unicodedata
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, Iterable
 
 from .. import listener_overrides
 from .. import names as renames
@@ -50,10 +56,15 @@ NAME_MAX = renames.MAX_NAME
 MAX_CHARACTERS = 2000
 MAX_CHAPTERS = 5000
 MAX_SILENCED = 5000
+MAX_PINS = 5000
+TRACK_TEXT_MAX = 200  # tên bài / nghệ sĩ trong thẻ file nhạc (music_local._TAG_MAX)
 LEVEL_RANGE = (-40.0, -6.0)
 _TOP_KEYS = {"format", "version", "title", "cover", "characters", "chapters", "music", "wishes"}
 _COVER_KEYS = {"color", "width", "height", "version"}
-_MUSIC_KEYS = {"enabled", "levelDb", "silenced"}
+_MUSIC_KEYS = {"enabled", "levelDb", "silenced", "pins", "tracks"}
+_TRACK_KEYS = {"ext", "title", "creator", "duration", "lufs"}
+_LOCAL_LINK = re.compile(r"local:[0-9a-f]{40}")
+_SHA1 = re.compile(r"[0-9a-f]{40}")
 _CHAPTER_KEYS = {"title", "subtitle"}
 _CHAPTER_ID = re.compile(r"\d{1,9}")
 _CUE_KEY = re.compile(r"\d{1,9}:\d{1,12}")
@@ -96,10 +107,11 @@ def is_empty(edits: dict[str, Any]) -> bool:
 
 def count_applied(edits: dict[str, Any]) -> int:
     """Số thay đổi "áp ngay" người nghe đã làm: tên sách, bìa, mỗi tên nhân vật, mỗi chương đổi tên, bật/tắt nhạc, mức nhạc,
-    mỗi đoạn nhạc im lặng. Không kể ý muốn chờ Studio (`wishes`) - chúng chưa áp vào đâu cả."""
+    mỗi đoạn nhạc im lặng, mỗi đoạn nhạc đổi sang bài của người nghe. Không kể ý muốn chờ Studio (`wishes`) - chúng chưa áp
+    vào đâu cả."""
     music = edits.get("music") or {}
     return (("title" in edits) + ("cover" in edits) + len(edits.get("characters") or {}) + len(edits.get("chapters") or {})
-            + ("enabled" in music) + ("levelDb" in music) + len(music.get("silenced") or []))
+            + ("enabled" in music) + ("levelDb" in music) + len(music.get("silenced") or []) + len(music.get("pins") or {}))
 
 
 def count_wishes(edits: dict[str, Any]) -> int:
@@ -201,6 +213,41 @@ def _validate_music(music: Any) -> dict[str, Any]:
                 or any(not isinstance(key, str) or not _CUE_KEY.fullmatch(key) for key in silenced)):
             raise EditsError("Danh sách đoạn nhạc im lặng trong phần sửa không hợp lệ.")
         out["silenced"] = sorted(silenced)
+    pins: dict[str, str] = {}
+    if "pins" in music:
+        pins = music["pins"]
+        if (not isinstance(pins, dict) or len(pins) > MAX_PINS
+                or any(not isinstance(key, str) or not _CUE_KEY.fullmatch(key) or not isinstance(link, str)
+                       or not _LOCAL_LINK.fullmatch(link) for key, link in pins.items())):
+            raise EditsError("Danh sách đoạn nhạc đã đổi bài trong phần sửa không hợp lệ.")
+        out["pins"] = {key: pins[key] for key in sorted(pins)}
+    wanted = {link[len(music_plan.LOCAL_PREFIX):] for link in pins.values()}
+    if "tracks" in music or wanted:
+        tracks = music.get("tracks")
+        if not isinstance(tracks, dict) or set(tracks) != wanted:
+            raise EditsError("Nhạc đã chọn trong phần sửa không khớp với các đoạn đổi bài.")
+        out["tracks"] = {sha: _validate_track(tracks[sha]) for sha in sorted(tracks)}
+    return out
+
+
+def _validate_track(entry: Any) -> dict[str, Any]:
+    """Thông tin một bài người nghe đã chọn: đuôi file thật (đúng danh sách của music_plan), tên bài và nghệ sĩ nếu có, độ dài
+    và độ to đo từ chính file. Không có giấy phép / ghi công: ABook không nói gì ngoài tên + nghệ sĩ có sẵn trong file."""
+    if not isinstance(entry, dict) or set(entry) - _TRACK_KEYS or entry.get("ext") not in music_plan.TRACK_EXTENSIONS:
+        raise EditsError("Thông tin một bài nhạc trong phần sửa không hợp lệ.")
+    out: dict[str, Any] = {"ext": entry["ext"]}
+    for key in ("title", "creator"):
+        if key in entry:
+            text = entry[key]
+            if not isinstance(text, str) or not text or not _is_clean(text, TRACK_TEXT_MAX):
+                raise EditsError("Thông tin một bài nhạc trong phần sửa không hợp lệ.")
+            out[key] = text
+    for key, low, high in (("duration", 0.0, 1e6), ("lufs", -100.0, 20.0)):
+        if key in entry:
+            value = entry[key]
+            if not _number(value) or not low <= value <= high or (key == "duration" and value <= 0):
+                raise EditsError("Thông tin một bài nhạc trong phần sửa không hợp lệ.")
+            out[key] = float(value)
     return out
 
 
@@ -234,7 +281,12 @@ def _ordered(edits: dict[str, Any]) -> dict[str, Any]:
     if edits.get("chapters"):
         out["chapters"] = {key: edits["chapters"][key] for key in sorted(edits["chapters"], key=int)}
     if edits.get("music"):
-        out["music"] = {key: edits["music"][key] for key in ("enabled", "levelDb", "silenced") if key in edits["music"]}
+        music = edits["music"]
+        out["music"] = {key: music[key] for key in ("enabled", "levelDb", "silenced") if key in music}
+        if music.get("pins"):
+            out["music"]["pins"] = {key: music["pins"][key] for key in sorted(music["pins"])}
+            out["music"]["tracks"] = {sha: {key: music["tracks"][sha][key] for key in ("ext", "title", "creator", "duration", "lufs")
+                                            if key in music["tracks"][sha]} for sha in sorted(music["tracks"])}
     if edits.get("wishes"):
         from . import book_wishes
 
@@ -314,6 +366,15 @@ def merge(local: dict[str, Any], incoming: dict[str, Any]) -> tuple[dict[str, An
     silenced = sorted({*(local_music.get("silenced") or []), *(incoming_music.get("silenced") or [])})
     if silenced:
         music["silenced"] = silenced
+    # Đổi bài: mốc nào cả hai cùng đổi thì bài của máy này thắng; thông tin bài chỉ giữ cho các bài còn được ghim.
+    pins = {**(incoming_music.get("pins") or {}), **(local_music.get("pins") or {})}
+    conflicts += sum(1 for key, link in (local_music.get("pins") or {}).items()
+                     if key in (incoming_music.get("pins") or {}) and incoming_music["pins"][key] != link)
+    if pins:
+        wanted = {link[len(music_plan.LOCAL_PREFIX):] for link in pins.values()}
+        known = {**(incoming_music.get("tracks") or {}), **(local_music.get("tracks") or {})}
+        music["pins"] = {key: pins[key] for key in sorted(pins)}
+        music["tracks"] = {sha: copy.deepcopy(known[sha]) for sha in sorted(wanted)}
     if music:
         out["music"] = music
     from . import book_wishes
@@ -443,16 +504,53 @@ def _track_number(info: Any, key: str) -> float | None:
     return float(value) if _number(value) else None
 
 
+def pinned_name(sha: str, entry: dict[str, Any]) -> str:
+    """Tên file trong sách của một bài người nghe đã ghim: `music/<sha1>.<đuôi>`, đúng chỗ bài của người làm sách nằm."""
+    return f"music/{sha}.{entry['ext']}"
+
+
+def pinned_files(edits: dict[str, Any]) -> list[str]:
+    """Tên file (`music/<sha1>.<đuôi>`) của mọi bài người nghe đã ghim trong phần sửa."""
+    return [pinned_name(sha, entry) for sha, entry in sorted(((edits.get("music") or {}).get("tracks") or {}).items())]
+
+
+def _pinned_track(link: str, name: str, entry: dict[str, Any]) -> dict[str, Any]:
+    """Mục `music.tracks[tên]` của một bài đã ghim, như bài người làm sách tự nhập (music_plan.package): file, link, tên, nghệ
+    sĩ, độ to - không giấy phép."""
+    info: dict[str, Any] = {"file": name, "link": link}
+    for key in ("title", "creator", "lufs"):
+        if key in entry:
+            info[key] = entry[key]
+    return info
+
+
 def apply_music(music: dict[str, Any] | None, edits: dict[str, Any]) -> dict[str, Any] | None:
-    """Mục `music` của book.json sau khi người nghe sửa: tắt hết, mức khác (tính lại `gainDb` từng mốc bằng đúng công thức
-    của người làm sách - music_plan.cue_gain_db), bỏ các mốc đã cho im lặng."""
+    """Mục `music` của book.json sau khi người nghe sửa: mốc đổi sang bài của họ (`pins`: bài nằm ở music/<sha1>.<đuôi>, gắn
+    vào `tracks`), tắt hết, mức khác (tính lại `gainDb` từng mốc bằng đúng công thức của người làm sách -
+    music_plan.cue_gain_db), bỏ các mốc đã cho im lặng."""
     if music is None:
         return None
     changes = edits.get("music") or {}
     if not changes:
         return music
     out = copy.deepcopy(music)
-    tracks = out.get("tracks") if isinstance(out.get("tracks"), dict) else {}
+    if not isinstance(out.get("tracks"), dict):
+        out["tracks"] = {}
+    tracks = out["tracks"]
+    pins, shown = changes.get("pins") or {}, changes.get("tracks") or {}
+    base_level = out["levelDb"] if _number(out.get("levelDb")) else music_plan.DEFAULT_LEVEL_DB
+    level = changes.get("levelDb", base_level)
+    for chapter_id, cues in (out.get("chapters") or {}).items():
+        for cue in cues:
+            link = pins.get(cue_key(chapter_id, cue.get("start", 0)))
+            if link is None:
+                continue
+            sha = link[len(music_plan.LOCAL_PREFIX):]
+            name = pinned_name(sha, shown[sha])
+            tracks.setdefault(name, _pinned_track(link, name, shown[sha]))
+            cue["track"] = name
+            info = tracks[name]
+            cue["gainDb"] = music_plan.cue_gain_db(level, _track_number(info, "lufs"), _track_number(info, "speechBand"))
     if "levelDb" in changes:
         out["levelDb"] = changes["levelDb"]
         for cues in (out.get("chapters") or {}).values():
@@ -481,6 +579,7 @@ def music_view(book: dict[str, Any], edits: dict[str, Any]) -> dict[str, Any]:
     changes = edits.get("music") or {}
     base_level = float(music["levelDb"]) if music and _number(music.get("levelDb")) else music_plan.DEFAULT_LEVEL_DB
     silenced = set(changes.get("silenced") or [])
+    pins = changes.get("pins") or {}
     cues: list[dict[str, Any]] = []
     tracks = music.get("tracks") if music and isinstance(music.get("tracks"), dict) else {}
     for chapter in book.get("chapters") or []:
@@ -491,10 +590,13 @@ def music_view(book: dict[str, Any], edits: dict[str, Any]) -> dict[str, Any]:
         for cue in ((music or {}).get("chapters") or {}).get(chapter_id) or []:
             info = tracks.get(cue.get("track")) or {}
             key = cue_key(chapter_id, cue.get("start", 0))
+            pinned = pins.get(key)
+            if pinned is not None:  # bài người nghe đã chọn thay bài của người làm sách
+                info = (changes.get("tracks") or {}).get(pinned[len(music_plan.LOCAL_PREFIX):]) or {}
             cues.append({"key": key, "chapterId": int(chapter_id), "chapter": shown.get("fullTitle") or shown.get("title") or "",
                          "start": float(cue.get("start", 0)), "end": float(cue.get("end", 0)),
                          "title": str(info.get("title") or ""), "creator": str(info.get("creator") or ""),
-                         "silenced": key in silenced})
+                         "silenced": key in silenced, **({"pinned": True} if pinned is not None else {})})
     return {"package": True, "hasMusic": bool(cues), "enabled": changes.get("enabled", True),
             "levelDb": changes.get("levelDb", base_level), "defaultLevelDb": base_level, "cues": cues}
 
@@ -653,13 +755,73 @@ def set_chapter_title(folder: Path, chapter_id: int, title: str | None, subtitle
             "fullTitle": shown.get("fullTitle") or shown.get("title", "")}
 
 
-def set_music(folder: Path, body: dict[str, Any]) -> dict[str, Any]:
+def base_links(book: dict[str, Any]) -> dict[str, str]:
+    """{khoá mốc: link bài người làm sách đã gắn} của book.json GỐC."""
+    music = book.get("music") if isinstance(book.get("music"), dict) else {}
+    tracks = music.get("tracks") if isinstance(music.get("tracks"), dict) else {}
+    out: dict[str, str] = {}
+    for chapter_id, cues in (music.get("chapters") or {}).items():
+        for cue in cues:
+            link = (tracks.get(cue.get("track")) or {}).get("link")
+            if isinstance(link, str):
+                out[cue_key(chapter_id, cue.get("start", 0))] = link
+    return out
+
+
+def _track_entry(info: dict[str, Any], path: Path) -> dict[str, Any]:
+    """Mục `music.tracks[<sha1>]` của phần sửa cho một bài trong kho "Nhạc của tôi" (`info`: music_local.LocalMusic.info; `path`:
+    file của nó). Tên bài / nghệ sĩ làm sạch như mọi chữ người gõ; số đo ngoài khoảng cho phép thì bỏ."""
+    extension = path.suffix.lower().lstrip(".")
+    if extension not in music_plan.TRACK_EXTENSIONS:
+        raise EditsError("Định dạng bài nhạc này chưa dùng được")
+    entry: dict[str, Any] = {"ext": extension}
+    for key in ("title", "creator"):
+        text = clean_text(info.get(key), TRACK_TEXT_MAX)
+        if text:
+            entry[key] = text
+    duration, lufs = info.get("duration"), info.get("lufs")
+    if _number(duration) and 0 < duration <= 1e6:
+        entry["duration"] = float(duration)
+    if _number(lufs) and -100.0 <= lufs <= 20.0:
+        entry["lufs"] = round(float(lufs), 2)
+    return entry
+
+
+def _place(folder: Path, name: str, source: Path) -> None:
+    """Chép file bài đã ghim vào thư mục sách (music/<sha1>.<đuôi>) - nguyên tử, không ghi đè file cùng cỡ đã có."""
+    target = Path(folder).joinpath(*name.split("/"))
+    if target.is_file() and target.stat().st_size == Path(source).stat().st_size:
+        return
+    target.parent.mkdir(parents=True, exist_ok=True)
+    part = target.with_name(f".{target.name}.{os.getpid()}.part")
+    try:
+        shutil.copyfile(source, part)
+        os.replace(part, target)
+    except OSError as exc:
+        raise EditsError(f"Không chép được bài nhạc vào sách ({exc.strerror or exc}).") from exc
+    finally:
+        part.unlink(missing_ok=True)
+
+
+def _drop_unused(folder: Path, book: dict[str, Any], names: Iterable[str]) -> None:
+    """Xoá file các bài đã bỏ ghim - trừ file nằm trong danh sách của lớp sách (không bao giờ đụng lớp sách)."""
+    listed = (book.get("package") or {}).get("files") or {}
+    for name in names:
+        if name not in listed:
+            Path(folder).joinpath(*name.split("/")).unlink(missing_ok=True)
+
+
+def set_music(folder: Path, body: dict[str, Any],
+              track: Callable[[str], tuple[dict[str, Any], Path] | None] | None = None) -> dict[str, Any]:
     """Sửa nhạc nền của sách đóng gói: `enabled`, `levelDb` (kẹp -40..-6 như `music_plan.write_overrides`), `silence`
-    {khoá mốc: True/False}. Khoá lạ: `EditsError`. Trả `music_view`."""
+    {khoá mốc: True/False}, `pins` {khoá mốc: "local:<sha1>" | null} (đổi bài một mốc sang bài trong "Nhạc của tôi", null = về
+    bài người làm sách gắn). `track(link)` -> (thông tin, file) của bài trong kho của máy này; file được chép vào thư mục sách
+    (music/<sha1>.<đuôi>) để `repack` mang đi. Khoá lạ: `EditsError`. Trả `music_view`."""
     book = _base(folder)
     with _LOCK:
         edits = load(folder)
         music = dict(edits.get("music") or {})
+        before = dict(music.get("tracks") or {})
         base_level = music_view(book, empty())["levelDb"]
         if "enabled" in body:
             if body["enabled"]:
@@ -687,31 +849,83 @@ def set_music(folder: Path, body: dict[str, Any]) -> dict[str, Any]:
                 music["silenced"] = sorted(silenced)
             else:
                 music.pop("silenced", None)
+        placing: list[tuple[str, Path]] = []
+        if body.get("pins"):
+            if not isinstance(body["pins"], dict):
+                raise EditsError("Phần sửa nhạc nền không hợp lệ.")
+            known = {cue["key"] for cue in music_view(book, empty())["cues"]}
+            original = base_links(book)
+            pins, shown = dict(music.get("pins") or {}), dict(before)
+            for key, link in body["pins"].items():
+                key = str(key)
+                if key not in known:
+                    raise EditsError("Không có đoạn nhạc này trong sách")
+                if not link:
+                    pins.pop(key, None)
+                    continue
+                sha = music_plan.local_hash(link) if isinstance(link, str) else None
+                if sha is None:
+                    raise EditsError("Chỉ đổi được sang bài trong Nhạc của tôi")
+                if link == original.get(key):
+                    pins.pop(key, None)
+                    continue
+                if sha not in shown:
+                    found = track(link) if track is not None else None
+                    if found is None:
+                        raise EditsError("Bài này không còn trong Nhạc của tôi")
+                    info, path = found
+                    shown[sha] = _track_entry(info, path)
+                    placing.append((pinned_name(sha, shown[sha]), path))
+                pins[key] = link
+            used = {link[len(music_plan.LOCAL_PREFIX):] for link in pins.values()}
+            if pins:
+                music["pins"], music["tracks"] = pins, {sha: shown[sha] for sha in sorted(used)}
+            else:
+                music.pop("pins", None)
+                music.pop("tracks", None)
         if music:
             edits["music"] = music
         else:
             edits.pop("music", None)
-        _write(folder, edits)
+        for name, path in placing:
+            _place(folder, name, path)
+        try:
+            _write(folder, edits)
+        except EditsError:
+            _drop_unused(folder, book, [name for name, _ in placing])
+            raise
+        after = (edits.get("music") or {}).get("tracks") or {}
+        _drop_unused(folder, book, [pinned_name(sha, before[sha]) for sha in before if sha not in after])
         return music_view(book, edits)
 
 
 def clear(folder: Path) -> None:
-    """Bỏ mọi thay đổi của người nghe: sách trở về đúng như người làm sách đã đóng gói."""
+    """Bỏ mọi thay đổi của người nghe: sách trở về đúng như người làm sách đã đóng gói (kể cả file các bài đã ghim)."""
     with _LOCK:
+        pinned = pinned_files(load(folder))
         save(folder, empty())
+        if pinned:
+            _drop_unused(folder, _base(folder), pinned)
 
 
 # ---- file `.abook` mang phần sửa theo ----------------------------------------------------------------------------
 
 
-def adopt(folder: Path, incoming: dict[str, Any], cover: bytes | None) -> dict[str, Any]:
+def adopt(folder: Path, incoming: dict[str, Any], cover: bytes | None,
+          member: Callable[[str, Path], None] | None = None) -> dict[str, Any]:
     """Nhập lại một file sách ĐÃ có trên máy mà file mang phần sửa: hợp vào phần sửa của máy (`merge`: máy này thắng) -
-    không giải nén lại audio. `cover`: byte edits/cover.jpg của file (nếu có). Trả báo cáo của `merge`."""
+    không giải nén lại audio. `cover`: byte edits/cover.jpg của file (nếu có). `member(tên, đích)`: chép một mục của file ra
+    thư mục sách - cho file các bài nhạc người nghe đã ghim mà máy này chưa có. Trả báo cáo của `merge`."""
     folder = Path(folder)
     with _LOCK:
         merged, report = merge(load(folder), incoming)
         if report["cover"] == "incoming" and cover is not None:
             atomic_write_bytes(folder / EDITS_COVER, cover)
+        if member is not None:
+            for name in pinned_files(merged):
+                target = folder.joinpath(*name.split("/"))
+                if not target.is_file():
+                    member(name, target)
         save(folder, merged)
     return report
 
@@ -800,6 +1014,7 @@ def fold(project: Path) -> dict[str, Any]:
         music_changes["enabled"] = music["enabled"]
     if "levelDb" in music:
         music_changes["levelDb"] = music["levelDb"]
+    skipped += len(music.get("pins") or {})  # bài của người nghe chỉ có trong kho nhạc của máy họ: không áp được vào dự án
     silence: dict[str, bool] = {}
     plan = music_plan.read_plan(project)
     for key in music.get("silenced") or []:

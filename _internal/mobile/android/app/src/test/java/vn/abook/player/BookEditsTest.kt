@@ -119,6 +119,34 @@ class BookEditsTest {
     }
 
     @Test
+    fun refusals_about_pinned_tracks_say_the_same_thing_as_python() {
+        val sha = "0123456789abcdef0123456789abcdef01234567"
+        fun music(vararg fields: String) = "{\"format\": \"abook-edits\", \"version\": 1, \"music\": {${fields.joinToString(", ")}}}".toByteArray(Charsets.UTF_8)
+        fun said(vararg fields: String) = refusal { BookEdits.parse(music(*fields)) }
+        val pins = "\"pins\": {\"1:0\": \"local:$sha\"}"
+        val tracks = "\"tracks\": {\"$sha\": {\"ext\": \"wav\", \"title\": \"Bài\", \"duration\": 1.5, \"lufs\": -20}}"
+        fun entry(body: String) = "\"tracks\": {\"$sha\": {$body}}"
+        assertEquals(1, BookEdits.count(BookEdits.parse(music(pins, tracks))))
+        val badPins = "Danh sách đoạn nhạc đã đổi bài trong phần sửa không hợp lệ."
+        assertEquals(badPins, said("\"pins\": {\"x\": \"local:$sha\"}", tracks))
+        assertEquals(badPins, said("\"pins\": {\"1:0\": \"https://x/y.mp3\"}", tracks))
+        assertEquals(badPins, said("\"pins\": [\"local:$sha\"]", tracks))
+        val mismatch = "Nhạc đã chọn trong phần sửa không khớp với các đoạn đổi bài."
+        assertEquals(mismatch, said(pins))
+        assertEquals(mismatch, said(tracks))
+        assertEquals(mismatch, said(pins, "\"tracks\": {\"$sha\": {\"ext\": \"wav\"}, \"${"1".repeat(40)}\": {\"ext\": \"wav\"}}"))
+        val badTrack = "Thông tin một bài nhạc trong phần sửa không hợp lệ."
+        assertEquals(badTrack, said(pins, entry("\"ext\": \"exe\"")))
+        assertEquals(badTrack, said(pins, entry("\"ext\": \"wav\", \"path\": \"/x\"")))
+        assertEquals(badTrack, said(pins, entry("\"ext\": \"wav\", \"title\": \" Bài\"")))
+        assertEquals(badTrack, said(pins, entry("\"ext\": \"wav\", \"title\": \"\"")))
+        assertEquals(badTrack, said(pins, entry("\"ext\": \"wav\", \"duration\": 0")))
+        assertEquals(badTrack, said(pins, entry("\"ext\": \"wav\", \"lufs\": 21")))
+        assertEquals(badTrack, said(pins, entry("\"ext\": \"wav\", \"lufs\": \"-23\"")))
+        assertEquals("Phần sửa nhạc nền không hợp lệ.", said("\"fade\": 2"))
+    }
+
+    @Test
     fun a_boolean_is_not_a_number_and_a_title_is_cut_at_160_code_points() {
         val head = """"format": "abook-edits", "version": 1"""
         refusal { BookEdits.parse("""{$head, "version": true}""".toByteArray()) }

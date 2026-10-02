@@ -62,6 +62,21 @@ class BookFileImportTest {
         return target
     }
 
+    @Test
+    fun a_file_whose_pinned_track_is_missing_is_refused_whole() {
+        val edits = BookEdits.parse(BookEditsFixtures.bytes("edits/music_pin.json"))
+        val book = JSONObject().put("title", "X").put("chaptersAvailable", 1).put("chapters", JSONArray().put(chapter(1, 0, "chapters/00001.mp3")))
+        val file = abook("pin.abook", 4, mapOf("cast.json" to "{}".toByteArray(), "chapters/00001.mp3" to "ID3-x".toByteArray(),
+            "scripts/1.json" to "{}".toByteArray(), "edits.json" to BookEdits.dump(edits)), book)
+        try {
+            BookFileImport.importFile(file)
+            fail("lẽ ra bị từ chối")
+        } catch (error: BookFileImport.Refused) {
+            assertEquals("File sách thiếu bài nhạc mà người nghe đã chọn.", error.message)
+        }
+        assertFalse(File(root, "books").listFiles()?.isNotEmpty() ?: false)
+    }
+
     private fun chapter(id: Int, part: Int, file: String) = JSONObject().put("id", id).put("part", part)
         .put("title", "Chương $id").put("fullTitle", "Chương $id").put("available", true).put("file", file)
         .put("script", "scripts/$id.json").put("duration", 60.0)

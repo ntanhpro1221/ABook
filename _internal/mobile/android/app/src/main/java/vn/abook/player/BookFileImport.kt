@@ -193,7 +193,9 @@ object BookFileImport {
             val keptEdits = if (existing != null && editable) BookEdits.count(BookEdits.load(Store.bookDir(target))) else 0
             if (current != null && current.optInt("chaptersAvailable") > book.optInt("chaptersAvailable")) {
                 // Giữ bản trên máy, nhưng phần sửa trong file vẫn được hợp vào (bên máy này thắng) - không mất công của ai.
-                if (editable && BookEdits.count(incoming.edits) > 0) BookEdits.adopt(Store.bookDir(target), incoming.edits, incoming.cover)
+                if (editable && BookEdits.count(incoming.edits) > 0) {
+                    BookEdits.adopt(Store.bookDir(target), incoming.edits, incoming.cover) { name, destination -> extract(zip, name, destination) }
+                }
                 return Imported(target, Store.manifest(target)?.optString("title") ?: current.optString("title"), keptEdits)
             }
             val books = File(Store.root, "books").apply { mkdirs() }
@@ -239,6 +241,7 @@ object BookFileImport {
                 throw Refused(error.message.orEmpty())
             }
         }
+        if (BookEdits.pinnedFiles(edits).any { zip.getEntry(it) == null }) throw Refused("File sách thiếu bài nhạc mà người nghe đã chọn.")
         val entry = zip.getEntry(BookEdits.EDITS_COVER)
         if ((entry != null) != (edits.opt("cover") is JSONObject)) throw Refused("Ảnh bìa trong phần sửa của sách không khớp.")
         if (entry == null) return Edits(edits, null)
@@ -277,6 +280,14 @@ object BookFileImport {
         if (report.opt("cover") == "local") {
             File(staging, BookEdits.EDITS_COVER).parentFile?.mkdirs()
             File(old, BookEdits.EDITS_COVER).copyTo(File(staging, BookEdits.EDITS_COVER), overwrite = true)
+        }
+        for (name in BookEdits.pinnedFiles(merged)) { // bài người nghe đã ghim ở máy này: file của nó không mất khi nhập lại
+            val kept = File(old, name)
+            val fresh = File(staging, name)
+            if (kept.isFile && !fresh.exists()) {
+                fresh.parentFile?.mkdirs()
+                kept.copyTo(fresh)
+            }
         }
     }
 

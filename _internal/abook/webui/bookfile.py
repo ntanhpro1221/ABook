@@ -226,6 +226,11 @@ def repack(folder: Path, out: Path, *, producer: str = "ABook") -> Path:
             files[book_edits.EDITS_COVER] = folder / book_edits.EDITS_COVER
             if not files[book_edits.EDITS_COVER].is_file():
                 raise BookFileError("Thiếu ảnh bìa trong phần sửa của sách.")
+        for name in book_edits.pinned_files(edits):  # bài nhạc của người nghe đã ghim: đi theo file như bài của người làm sách
+            if name not in files:
+                files[name] = folder.joinpath(*name.split("/"))
+                if not files[name].is_file():
+                    raise BookFileError("Thiếu file bài nhạc người nghe đã chọn trong thư mục sách.")
     if not book_edits.is_empty(edits):
         version = 4
     elif any(re.fullmatch(r"chapters/\d+/.+", name) for name in files):
@@ -522,6 +527,11 @@ class BookFile:
             destination = staging / book_edits.EDITS_COVER
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(target / book_edits.EDITS_COVER, destination)
+        for name in book_edits.pinned_files(merged):  # bài người nghe đã ghim ở máy này: file của nó không mất khi nhập lại
+            kept, fresh = target.joinpath(*name.split("/")), staging.joinpath(*name.split("/"))
+            if kept.is_file() and not fresh.exists():
+                fresh.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(kept, fresh)
         return report
 
     def require_room(self, library: Path) -> None:
@@ -602,6 +612,8 @@ class BookFile:
                 self._edits = book_edits.parse(self._zip.read(book_edits.EDITS_FILE))
             except book_edits.EditsError as exc:
                 raise BookFileError(str(exc)) from exc
+        if any(name not in content for name in book_edits.pinned_files(self._edits)):
+            raise BookFileError("File sách thiếu bài nhạc mà người nghe đã chọn.")
         has_cover = book_edits.EDITS_COVER in content
         if has_cover != isinstance(self._edits.get("cover"), dict):
             raise BookFileError("Ảnh bìa trong phần sửa của sách không khớp.")
@@ -616,6 +628,18 @@ class BookFile:
     def edits(self) -> dict[str, Any]:
         """Lớp sửa của người nghe mà file mang theo (đã kiểm); rỗng khi file không có."""
         return self._edits
+
+    def copy_member(self, name: str, target: Path) -> None:
+        """Chép một mục của gói ra `target` (nguyên tử): bài nhạc người nghe đã ghim, khi nhập lại vào cuốn đã có (`book_edits.adopt`)."""
+        target = Path(target)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        part = target.with_name(f".{target.name}.{secrets.token_hex(4)}.part")
+        try:
+            with self._zip.open(name) as source, part.open("wb") as sink:
+                shutil.copyfileobj(source, sink, _CHUNK)
+            os.replace(part, target)
+        finally:
+            part.unlink(missing_ok=True)
 
     def edits_cover(self) -> bytes | None:
         """Byte ảnh bìa sửa của file (edits/cover.jpg), hay None."""

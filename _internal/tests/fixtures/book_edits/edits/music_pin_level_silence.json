@@ -1,0 +1,22 @@
+{
+ "format": "abook-edits",
+ "version": 1,
+ "music": {
+  "levelDb": -24.0,
+  "silenced": [
+   "1:60000"
+  ],
+  "pins": {
+   "1:0": "local:51edf6872a24d2b85b1e73e348a961b28699578a"
+  },
+  "tracks": {
+   "51edf6872a24d2b85b1e73e348a961b28699578a": {
+    "ext": "wav",
+    "title": "Bài của tôi",
+    "creator": "Tôi",
+    "duration": 1.0,
+    "lufs": -23.0
+   }
+  }
+ }
+}

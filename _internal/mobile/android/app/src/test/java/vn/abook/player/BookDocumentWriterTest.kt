@@ -38,6 +38,10 @@ class BookDocumentWriterTest {
             File(dir, "edits.json").writeBytes(BookEditsFixtures.bytes("edits/$name.json"))
             val cover = BookEditsFixtures.file("edits/$name.cover.jpg")
             if (cover.isFile) File(dir, "edits/cover.jpg").apply { parentFile?.mkdirs() }.writeBytes(cover.readBytes())
+            // bài nhạc người nghe đã ghim (ca `music_pin*`): file của nó nằm trong thư mục sách như khi ghim ở máy
+            for (pinned in BookEdits.pinnedFiles(BookEdits.parse(BookEditsFixtures.bytes("edits/$name.json")))) {
+                File(dir, pinned).apply { parentFile?.mkdirs() }.writeBytes(BookEditsFixtures.bytes("track/tone.wav"))
+            }
         }
         return dir
     }
@@ -239,6 +243,92 @@ class BookDocumentWriterTest {
         verify(again)
         assertEquals(4, written.version)
         assertEquals(BookEdits.count(edits), written.edits)
+    }
+
+    private val toneSha = MessageDigest.getInstance("SHA-1").digest(BookEditsFixtures.bytes("track/tone.wav")).joinToString("") { "%02x".format(it) }
+
+    /** Một cuốn đã nhập mà người nghe đã ghim bài `tone.wav` của kho "Nhạc của tôi" vào đoạn 1:0 (bằng đúng đường của app). */
+    private fun pinnedBook(): File {
+        val dir = bookWith(null)
+        val store = MusicStore(File(work, "music"), FakeTags)
+        store.importFile(BookEditsFixtures.file("track/tone.wav"))
+        BookEdits.setMusic(dir, JSONObject().put("pins", JSONObject().put("1:0", "local:$toneSha")), store::track)
+        return dir
+    }
+
+    @Test
+    fun a_pinned_track_travels_with_the_file_and_opens_again() {
+        val name = "music/$toneSha.wav"
+        val (file, written) = write(pinnedBook(), "pins.abook")
+        val book = verify(file)
+        assertEquals(4, book.getJSONObject("package").getInt("version"))
+        assertEquals(1, written.edits)
+        ZipFile(file).use { zip ->
+            val entry = zip.getEntry(name)
+            assertEquals("bài ghim không nén (phát và tua thẳng trong gói)", ZipEntry.STORED, entry.method)
+            assertArrayEquals(BookEditsFixtures.bytes("track/tone.wav"), zip.getInputStream(entry).readBytes())
+            assertFalse("lớp sách không bị sửa tại chỗ", book.getJSONObject("music").getJSONObject("tracks").has(name))
+        }
+        val library = BookEditsFixtures.tempDir("abook-pins-lib")
+        BookEditsFixtures.useStoreRoot(library)
+        val imported = BookFileImport.importFile(file)
+        assertArrayEquals(BookEditsFixtures.bytes("track/tone.wav"), File(Store.bookDir(imported.id), name).readBytes())
+        val cue = Store.manifest(imported.id)!!.getJSONObject("music").getJSONObject("chapters").getJSONArray("1").getJSONObject(0)
+        assertEquals(name, cue.getString("track"))
+        // bản Kotlin ghi ra file bản Python mở được: `-Dabook.writeFixtures=true` ghi thẳng vào written/kotlin_v4_pins.abook
+        val build = File("build/kotlin_v4_pins.abook").apply { parentFile?.mkdirs() }
+        file.copyTo(build, overwrite = true)
+        if (System.getProperty("abook.writeFixtures") == "true") file.copyTo(BookEditsFixtures.file("written/kotlin_v4_pins.abook"), overwrite = true)
+    }
+
+    @Test
+    fun the_pins_file_python_wrote_opens_and_plays_the_same_overlay() {
+        val python = BookEditsFixtures.file("written/python_v4_pins.abook")
+        assertTrue("thiếu file bản Python ghi: ${python.absolutePath}", python.isFile)
+        verify(python)
+        BookEditsFixtures.useStoreRoot(BookEditsFixtures.tempDir("abook-python-pins"))
+        val imported = BookFileImport.importFile(python)
+        val dir = Store.bookDir(imported.id)
+        assertTrue(StrictJson.equal(BookEdits.parse(BookEditsFixtures.bytes("edits/music_pin.json")), BookEdits.load(dir)))
+        assertArrayEquals(BookEditsFixtures.bytes("track/tone.wav"), File(dir, "music/$toneSha.wav").readBytes())
+        val shown = (BookEdits.deepCopy(Store.manifest(imported.id)!!) as JSONObject).also { listOf("id", "edits", "wishes", "capabilities", "package").forEach(it::remove) }
+        assertTrue(StrictJson.equal(BookEditsFixtures.obj("expected/music_pin.json").getJSONObject("manifest"), shown))
+        // ghi lại bản vừa nhập: vẫn mang bài ghim
+        ZipFile(write(dir, "again.abook").first).use { zip -> assertNotNull(zip.getEntry("music/$toneSha.wav")) }
+    }
+
+    @Test
+    fun opening_the_book_again_keeps_the_pinned_file_and_a_file_with_pins_brings_its_own() {
+        val library = BookEditsFixtures.tempDir("abook-pins-again")
+        BookEditsFixtures.useStoreRoot(library)
+        val withPins = BookEditsFixtures.file("written/python_v4_pins.abook")
+        val without = BookEditsFixtures.file("written/python_v4.abook")
+        // 1) cuốn đã ghim bài; mở lại một file khác của cùng cuốn (không bài ghim): phần sửa hợp lại, file bài ghim không mất
+        val first = BookFileImport.importFile(withPins)
+        val dir = Store.bookDir(first.id)
+        val second = BookFileImport.importFile(without)
+        assertEquals(first.id, second.id)
+        assertEquals("local:$toneSha", BookEdits.load(dir).getJSONObject("music").getJSONObject("pins").getString("1:0"))
+        assertArrayEquals(BookEditsFixtures.bytes("track/tone.wav"), File(dir, "music/$toneSha.wav").readBytes())
+        // 2) cuốn chưa có bài ghim, bản trên máy nhiều chương hơn file: file không giải nén lại nhưng phần sửa + file bài ghim của nó vào
+        BookEdits.clear(dir)
+        assertFalse(File(dir, "music/$toneSha.wav").exists())
+        File(dir, "book.json").writeText(JSONObject(File(dir, "book.json").readText()).put("chaptersAvailable", 99).toString())
+        BookFileImport.importFile(withPins)
+        assertEquals(1, BookEdits.count(BookEdits.load(dir)))
+        assertArrayEquals(BookEditsFixtures.bytes("track/tone.wav"), File(dir, "music/$toneSha.wav").readBytes())
+    }
+
+    @Test
+    fun a_pin_without_its_file_is_refused_when_saving() {
+        val dir = bookWith(null)
+        File(dir, "edits.json").writeBytes(BookEditsFixtures.bytes("edits/music_pin.json"))
+        try {
+            BookDocumentWriter.write(dir, java.io.ByteArrayOutputStream())
+            fail("lẽ ra bị từ chối")
+        } catch (error: BookDocumentWriter.Refused) {
+            assertEquals("Thiếu file bài nhạc người nghe đã chọn trong thư mục sách.", error.message)
+        }
     }
 
     @Test

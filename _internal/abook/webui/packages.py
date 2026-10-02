@@ -125,10 +125,11 @@ def _file(path: Path, relative: Any) -> Path | None:
 
 
 def music_file(path: Path, name: str) -> Path | None:
-    """File nhạc nền mang theo trong gói (music/<sha1>.mp3, chỉ tên có trong mục `music` của book.json)."""
+    """File nhạc nền mang theo trong gói (music/<sha1>.<đuôi>, chỉ tên có trong mục `music` của book.json - kể cả bài người nghe
+    đã ghim, `book_edits.apply_music`)."""
     from .music_plan import TRACK_FILE
 
-    music = manifest(path).get("music")
+    music = edited_manifest(path).get("music")
     tracks = music.get("tracks") if isinstance(music, dict) else None
     if not TRACK_FILE.fullmatch(name) or not isinstance(tracks, dict) or name not in tracks:
         return None
@@ -301,7 +302,7 @@ def import_file(source: Path, library_root: Path, projects: Iterable[Path],
             if wanted & _prints_by_file(theirs):
                 if len(prints) <= len(theirs):
                     if report["edits"]:
-                        report["merge"] = book_edits.adopt(existing, opened.edits, opened.edits_cover())
+                        report["merge"] = book_edits.adopt(existing, opened.edits, opened.edits_cover(), opened.copy_member)
                     elif not book_edits.is_empty(local := book_edits.load(existing)):
                         # File không mang thay đổi nào, nhưng cuốn trên máy có: báo "giữ nguyên N thay đổi" cho người dùng.
                         report["merge"] = book_edits.merge(local, book_edits.empty())[1]

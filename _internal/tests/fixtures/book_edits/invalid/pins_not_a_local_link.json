@@ -1,0 +1,18 @@
+{
+ "format": "abook-edits",
+ "version": 1,
+ "music": {
+  "pins": {
+   "1:0": "https://x/y.mp3"
+  },
+  "tracks": {
+   "51edf6872a24d2b85b1e73e348a961b28699578a": {
+    "ext": "wav",
+    "title": "Bài của tôi",
+    "creator": "Tôi",
+    "duration": 1.0,
+    "lufs": -23.0
+   }
+  }
+ }
+}

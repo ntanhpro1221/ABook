@@ -4,7 +4,9 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.io.IOException
+import java.math.BigDecimal
 import java.math.BigInteger
+import java.math.RoundingMode
 import java.text.Normalizer
 
 /**
@@ -12,7 +14,8 @@ import java.text.Normalizer
  * bản cài đọc chung bộ ví dụ tests/fixtures/book_edits/ nên phải ra ĐÚNG cùng kết quả, cùng câu báo lỗi.
  *
  * Lớp sách (book.json, cast.json, scripts/, nhạc, audio, bìa) là của người làm sách và không bao giờ bị sửa tại chỗ. Người
- * nghe đổi được tên sách, bìa, tên nhân vật, tên chương, nhạc nền (bật/tắt, mức, im lặng một đoạn) và ghi ý muốn chờ Studio (cách
+ * nghe đổi được tên sách, bìa, tên nhân vật, tên chương, nhạc nền (bật/tắt, mức, im lặng một đoạn, đổi một đoạn sang bài trong
+ * "Nhạc của tôi" - [MusicStore]) và ghi ý muốn chờ Studio (cách
  * đọc tên, người nói, giọng... - [BookWishes], không bao giờ áp vào sách); chúng nằm ở `edits.json` (+
  * `edits/cover.jpg`) trong thư mục sách, và mọi nơi đọc lớp sách (Store.manifest, LibraryPlugin.readText, LibraryServer) đi
  * qua đây để thấy bản đã sửa.
@@ -33,13 +36,17 @@ object BookEdits {
     private const val MAX_CHARACTERS = 2000
     private const val MAX_CHAPTERS = 5000
     private const val MAX_SILENCED = 5000
+    private const val MAX_PINS = 5000
+    private const val TRACK_TEXT_MAX = 200 // tên bài / nghệ sĩ trong thẻ file nhạc (music_local._TAG_MAX)
     private const val LEVEL_MIN = -40.0
     private const val LEVEL_MAX = -6.0
     private const val DEFAULT_LEVEL_DB = -20.0 // music_plan.DEFAULT_LEVEL_DB
     private val TOP_KEYS = setOf("format", "version", "title", "cover", "characters", "chapters", "music", "wishes")
     const val TOO_BIG = "Quá nhiều thay đổi đang chờ trong cuốn này - hãy lưu, áp bớt vào dự án rồi làm tiếp."
     private val COVER_KEYS = setOf("color", "width", "height", "version")
-    private val MUSIC_KEYS = setOf("enabled", "levelDb", "silenced")
+    private val MUSIC_KEYS = setOf("enabled", "levelDb", "silenced", "pins", "tracks")
+    private val TRACK_KEYS = setOf("ext", "title", "creator", "duration", "lufs")
+    private val LOCAL_LINK = Regex("local:[0-9a-f]{40}")
     private val CHAPTER_KEYS = setOf("title", "subtitle")
     private val CHAPTER_ID = Regex("[0-9]{1,9}")
     private val CUE_KEY = Regex("[0-9]{1,9}:[0-9]{1,12}")
@@ -126,14 +133,15 @@ object BookEdits {
 
     /**
      * Số thay đổi "áp ngay" người nghe đã làm: tên sách, bìa, mỗi tên nhân vật, mỗi chương đổi tên, bật/tắt nhạc, mức nhạc, mỗi
-     * đoạn nhạc im lặng. Không kể ý muốn chờ Studio ([BookWishes]) - chúng chưa áp vào đâu cả.
+     * đoạn nhạc im lặng, mỗi đoạn nhạc đổi sang bài của người nghe. Không kể ý muốn chờ Studio ([BookWishes]) - chúng chưa áp vào
+     * đâu cả.
      */
     fun countApplied(edits: JSONObject): Int {
         val music = edits.optJSONObject("music")
         return (if (edits.has("title")) 1 else 0) + (if (edits.has("cover")) 1 else 0) +
             (edits.optJSONObject("characters")?.length() ?: 0) + (edits.optJSONObject("chapters")?.length() ?: 0) +
             (if (music?.has("enabled") == true) 1 else 0) + (if (music?.has("levelDb") == true) 1 else 0) +
-            (music?.optJSONArray("silenced")?.length() ?: 0)
+            (music?.optJSONArray("silenced")?.length() ?: 0) + (music?.optJSONObject("pins")?.length() ?: 0)
     }
 
     /** Số ý muốn chờ Studio ([BookWishes.count]). */
@@ -244,6 +252,52 @@ object BookEdits {
             if (keys.any { it !is String || !CUE_KEY.matches(it) } || keys.toSet().size != keys.size) throw bad
             out.put("silenced", JSONArray(keys.map { it as String }.sorted()))
         }
+        val pins = if (music.has("pins")) {
+            val raw = music.opt("pins")
+            val bad = EditsError("Danh sách đoạn nhạc đã đổi bài trong phần sửa không hợp lệ.")
+            if (raw !is JSONObject || raw.length() > MAX_PINS) throw bad
+            val sorted = JSONObject()
+            for (key in names(raw).sorted()) {
+                val link = raw.opt(key)
+                if (!CUE_KEY.matches(key) || link !is String || !LOCAL_LINK.matches(link)) throw bad
+                sorted.put(key, link)
+            }
+            out.put("pins", sorted)
+            sorted
+        } else JSONObject()
+        val wanted = names(pins).map { (pins.getString(it)).removePrefix(MusicStore.LOCAL_PREFIX) }.toSet()
+        if (music.has("tracks") || wanted.isNotEmpty()) {
+            val tracks = music.opt("tracks")
+            if (tracks !is JSONObject || names(tracks).toSet() != wanted) {
+                throw EditsError("Nhạc đã chọn trong phần sửa không khớp với các đoạn đổi bài.")
+            }
+            val kept = JSONObject()
+            for (sha in names(tracks).sorted()) kept.put(sha, validateTrack(tracks.opt(sha)))
+            out.put("tracks", kept)
+        }
+        return out
+    }
+
+    /**
+     * Thông tin một bài người nghe đã chọn: đuôi file thật (đúng danh sách của [MusicStore.EXTENSIONS]), tên bài và nghệ sĩ nếu có,
+     * độ dài và độ to đo từ chính file. Không có giấy phép / ghi công: ABook không nói gì ngoài tên + nghệ sĩ có sẵn trong file.
+     */
+    private fun validateTrack(entry: Any?): JSONObject {
+        val bad = EditsError("Thông tin một bài nhạc trong phần sửa không hợp lệ.")
+        if (entry !is JSONObject || names(entry).any { it !in TRACK_KEYS } || (entry.opt("ext") as? String) !in MusicStore.EXTENSIONS) throw bad
+        val out = JSONObject().put("ext", entry.getString("ext"))
+        for (key in listOf("title", "creator")) {
+            if (!entry.has(key)) continue
+            val text = entry.opt(key)
+            if (text !is String || text.isEmpty() || !isClean(text, TRACK_TEXT_MAX)) throw bad
+            out.put(key, text)
+        }
+        for ((key, range) in listOf("duration" to (0.0..1e6), "lufs" to (-100.0..20.0))) {
+            if (!entry.has(key)) continue
+            val value = entry.opt(key)
+            if (!isNumber(value) || (value as Number).toDouble() !in range || (key == "duration" && value.toDouble() <= 0.0)) throw bad
+            out.put(key, value.toDouble())
+        }
         return out
     }
 
@@ -287,7 +341,17 @@ object BookEdits {
             }
         }
         edits.optJSONObject("music")?.takeIf { it.length() > 0 }?.let { music ->
-            out["music"] = listOf("enabled", "levelDb", "silenced").filter { music.has(it) }.associateWith { music.opt(it) }
+            val shown = LinkedHashMap<String, Any?>()
+            for (key in listOf("enabled", "levelDb", "silenced")) if (music.has(key)) shown[key] = music.opt(key)
+            music.optJSONObject("pins")?.takeIf { it.length() > 0 }?.let { pins ->
+                shown["pins"] = names(pins).sorted().associateWith { pins.opt(it) }
+                val tracks = music.getJSONObject("tracks")
+                shown["tracks"] = names(tracks).sorted().associateWith { sha ->
+                    val entry = tracks.getJSONObject(sha)
+                    listOf("ext", "title", "creator", "duration", "lufs").filter { entry.has(it) }.associateWith { entry.opt(it) }
+                }
+            }
+            out["music"] = shown
         }
         edits.optJSONObject("wishes")?.takeIf { it.length() > 0 }?.let { out["wishes"] = BookWishes.ordered(it) }
         return out
@@ -376,6 +440,25 @@ object BookEdits {
         }
         val silenced = (strings(ourMusic.optJSONArray("silenced")) + strings(theirMusic.optJSONArray("silenced"))).toSortedSet().toList()
         if (silenced.isNotEmpty()) music.put("silenced", JSONArray(silenced))
+        // Đổi bài: mốc nào cả hai cùng đổi thì bài của máy này thắng; thông tin bài chỉ giữ cho các bài còn được ghim.
+        val ourPins = ourMusic.optJSONObject("pins") ?: JSONObject()
+        val theirPins = theirMusic.optJSONObject("pins") ?: JSONObject()
+        val pins = JSONObject()
+        for (key in names(theirPins)) pins.put(key, theirPins.opt(key))
+        for (key in names(ourPins)) {
+            pins.put(key, ourPins.opt(key))
+            if (theirPins.has(key) && theirPins.opt(key) != ourPins.opt(key)) conflicts++
+        }
+        if (pins.length() > 0) {
+            val known = JSONObject()
+            theirMusic.optJSONObject("tracks")?.let { for (sha in names(it)) known.put(sha, it.opt(sha)) }
+            ourMusic.optJSONObject("tracks")?.let { for (sha in names(it)) known.put(sha, it.opt(sha)) }
+            val kept = JSONObject()
+            for (link in names(pins).map { pins.getString(it).removePrefix(MusicStore.LOCAL_PREFIX) }.toSortedSet()) {
+                kept.put(link, deepCopy(known.opt(link)))
+            }
+            music.put("pins", pins).put("tracks", kept)
+        }
         if (music.length() > 0) out.put("music", music)
         val (wishes, wishConflicts) = BookWishes.merge(local.optJSONObject("wishes"), incoming.optJSONObject("wishes"))
         conflicts += wishConflicts
@@ -543,19 +626,54 @@ object BookEdits {
         return if (isNumber(value) && value !is Boolean) (value as Number).toDouble() else null
     }
 
+    /** Tên file trong sách của một bài người nghe đã ghim: `music/<sha1>.<đuôi>`, đúng chỗ bài của người làm sách nằm. */
+    fun pinnedName(sha: String, entry: JSONObject): String = "music/$sha.${entry.getString("ext")}"
+
+    /** Tên file (`music/<sha1>.<đuôi>`) của mọi bài người nghe đã ghim trong phần sửa. */
+    fun pinnedFiles(edits: JSONObject): List<String> {
+        val tracks = edits.optJSONObject("music")?.optJSONObject("tracks") ?: return emptyList()
+        return names(tracks).sorted().map { pinnedName(it, tracks.getJSONObject(it)) }
+    }
+
+    /** Mục `music.tracks[tên]` của một bài đã ghim, như bài người làm sách tự nhập: file, link, tên, nghệ sĩ, độ to - không giấy phép. */
+    private fun pinnedTrack(link: String, name: String, entry: JSONObject): JSONObject {
+        val info = JSONObject().put("file", name).put("link", link)
+        for (key in listOf("title", "creator", "lufs")) if (entry.has(key)) info.put(key, entry.opt(key))
+        return info
+    }
+
     /**
-     * Mục `music` của book.json sau khi người nghe sửa: tắt hết, mức khác (tính lại `gainDb` từng mốc bằng đúng công thức của
-     * người làm sách - [MusicGain.cueGainDb]), bỏ các mốc đã cho im lặng.
+     * Mục `music` của book.json sau khi người nghe sửa: mốc đổi sang bài của họ (`pins`: bài nằm ở music/<sha1>.<đuôi>, gắn vào
+     * `tracks`), tắt hết, mức khác (tính lại `gainDb` từng mốc bằng đúng công thức của người làm sách - [MusicGain.cueGainDb]),
+     * bỏ các mốc đã cho im lặng.
      */
     fun applyMusic(music: Any?, edits: JSONObject): Any? {
         if (music == null || music === JSONObject.NULL) return null
         val changes = edits.optJSONObject("music")
         if (changes == null || changes.length() == 0 || music !is JSONObject) return music
         val out = deepCopy(music) as JSONObject
-        val tracks = out.optJSONObject("tracks") ?: JSONObject()
+        if (out.optJSONObject("tracks") == null) out.put("tracks", JSONObject())
+        val tracks = out.getJSONObject("tracks")
         val chapters = out.optJSONObject("chapters") ?: JSONObject()
+        val pins = changes.optJSONObject("pins") ?: JSONObject()
+        val shown = changes.optJSONObject("tracks") ?: JSONObject()
+        val baseLevel = out.opt("levelDb").takeIf { isNumber(it) }?.let { (it as Number).toDouble() } ?: DEFAULT_LEVEL_DB
+        val level = if (changes.has("levelDb")) changes.getDouble("levelDb") else baseLevel
+        for (key in names(chapters)) {
+            val cues = chapters.optJSONArray(key) ?: continue
+            for (index in 0 until cues.length()) {
+                val cue = cues.optJSONObject(index) ?: continue
+                val link = pins.optString(cueKey(key, cue.optDouble("start", 0.0)), "")
+                if (link.isEmpty()) continue
+                val sha = link.removePrefix(MusicStore.LOCAL_PREFIX)
+                val name = pinnedName(sha, shown.getJSONObject(sha))
+                if (!tracks.has(name)) tracks.put(name, pinnedTrack(link, name, shown.getJSONObject(sha)))
+                cue.put("track", name)
+                val info = tracks.opt(name)
+                cue.put("gainDb", MusicGain.cueGainDb(level, trackNumber(info, "lufs"), trackNumber(info, "speechBand")))
+            }
+        }
         if (changes.has("levelDb")) {
-            val level = changes.getDouble("levelDb")
             out.put("levelDb", level)
             for (key in names(chapters)) {
                 val cues = chapters.optJSONArray(key) ?: continue
@@ -596,6 +714,7 @@ object BookEdits {
         val changes = edits.optJSONObject("music") ?: JSONObject()
         val baseLevel = music?.opt("levelDb")?.takeIf { isNumber(it) && it !is Boolean }?.let { (it as Number).toDouble() } ?: DEFAULT_LEVEL_DB
         val silenced = strings(changes.optJSONArray("silenced")).toSet()
+        val pins = changes.optJSONObject("pins") ?: JSONObject()
         val cues = JSONArray()
         val tracks = music?.optJSONObject("tracks") ?: JSONObject()
         val chapters = book.optJSONArray("chapters")
@@ -606,13 +725,17 @@ object BookEdits {
             val list = music?.optJSONObject("chapters")?.optJSONArray(chapterId) ?: continue
             for (item in 0 until list.length()) {
                 val cue = list.optJSONObject(item) ?: continue
-                val info = (cue.opt("track") as? String)?.let { tracks.optJSONObject(it) } ?: JSONObject()
+                var info = (cue.opt("track") as? String)?.let { tracks.optJSONObject(it) } ?: JSONObject()
                 val key = cueKey(chapterId, cue.optDouble("start", 0.0))
-                cues.put(JSONObject().put("key", key).put("chapterId", chapterId.toLongOrNull() ?: 0L)
+                val pinned = pins.optString(key, "").takeIf { it.isNotEmpty() }
+                if (pinned != null) info = changes.optJSONObject("tracks")?.optJSONObject(pinned.removePrefix(MusicStore.LOCAL_PREFIX)) ?: JSONObject()
+                val item = JSONObject().put("key", key).put("chapterId", chapterId.toLongOrNull() ?: 0L)
                     .put("chapter", listOf(shown.opt("fullTitle"), shown.opt("title")).firstOrNull { truthy(it) }?.toString() ?: "")
                     .put("start", cue.optDouble("start", 0.0)).put("end", cue.optDouble("end", 0.0))
                     .put("title", pyText(info.opt("title"))).put("creator", pyText(info.opt("creator")))
-                    .put("silenced", key in silenced))
+                    .put("silenced", key in silenced)
+                if (pinned != null) item.put("pinned", true)
+                cues.put(item)
             }
         }
         return JSONObject().put("package", true).put("hasMusic", cues.length() > 0)
@@ -793,15 +916,78 @@ object BookEdits {
             .put("fullTitle", listOf(shown.opt("fullTitle"), shown.opt("title")).firstOrNull { truthy(it) }?.toString() ?: "")
     }
 
+    /** {khoá mốc: link bài người làm sách đã gắn} của book.json GỐC. */
+    fun baseLinks(book: JSONObject): Map<String, String> {
+        val music = book.optJSONObject("music") ?: return emptyMap()
+        val tracks = music.optJSONObject("tracks") ?: JSONObject()
+        val chapters = music.optJSONObject("chapters") ?: return emptyMap()
+        val out = LinkedHashMap<String, String>()
+        for (chapterId in names(chapters)) {
+            val cues = chapters.optJSONArray(chapterId) ?: continue
+            for (index in 0 until cues.length()) {
+                val cue = cues.optJSONObject(index) ?: continue
+                val link = tracks.optJSONObject(cue.optString("track"))?.opt("link")
+                if (link is String) out[cueKey(chapterId, cue.optDouble("start", 0.0))] = link
+            }
+        }
+        return out
+    }
+
+    /**
+     * Mục `music.tracks[<sha1>]` của phần sửa cho một bài trong kho "Nhạc của tôi" (`info`: [MusicStore.info]; `file`: file của nó).
+     * Tên bài / nghệ sĩ làm sạch như mọi chữ người gõ; số đo ngoài khoảng cho phép thì bỏ.
+     */
+    private fun trackEntry(info: JSONObject, file: File): JSONObject {
+        val extension = file.extension.lowercase()
+        if (extension !in MusicStore.EXTENSIONS) throw EditsError("Định dạng bài nhạc này chưa dùng được")
+        val entry = JSONObject().put("ext", extension)
+        for (key in listOf("title", "creator")) cleanText(info.opt(key), TRACK_TEXT_MAX).takeIf { it.isNotEmpty() }?.let { entry.put(key, it) }
+        val duration = info.opt("duration")
+        val lufs = info.opt("lufs")
+        if (isNumber(duration) && (duration as Number).toDouble() > 0 && duration.toDouble() <= 1e6) entry.put("duration", duration.toDouble())
+        if (isNumber(lufs) && (lufs as Number).toDouble() in -100.0..20.0) {
+            entry.put("lufs", BigDecimal(lufs.toDouble()).setScale(2, RoundingMode.HALF_EVEN).toDouble())
+        }
+        return entry
+    }
+
+    /** Chép file bài đã ghim vào thư mục sách (music/<sha1>.<đuôi>) - nguyên tử, không ghi đè file cùng cỡ đã có. */
+    private fun place(folder: File, name: String, source: File) {
+        val target = File(folder, name)
+        if (target.isFile && target.length() == source.length()) return
+        target.parentFile?.mkdirs()
+        val part = File(target.parentFile, ".${target.name}.part")
+        try {
+            source.copyTo(part, overwrite = true)
+            if (!part.renameTo(target)) {
+                target.delete()
+                if (!part.renameTo(target)) throw IOException("không đổi tên được file tạm")
+            }
+        } catch (error: IOException) {
+            throw EditsError("Không chép được bài nhạc vào sách (${error.message ?: error.javaClass.simpleName}).")
+        } finally {
+            part.delete()
+        }
+    }
+
+    /** Xoá file các bài đã bỏ ghim - trừ file nằm trong danh sách của lớp sách (không bao giờ đụng lớp sách). */
+    private fun dropUnused(folder: File, book: JSONObject, names: Collection<String>) {
+        val listed = book.optJSONObject("package")?.optJSONObject("files")
+        for (name in names) if (listed == null || !listed.has(name)) File(folder, name).delete()
+    }
+
     /**
      * Sửa nhạc nền của sách đóng gói: `enabled`, `levelDb` (kẹp -40..-6 như `music_plan.write_overrides`), `silence` {khoá mốc:
-     * true/false}. Khoá lạ: [EditsError]. Trả [musicView].
+     * true/false}, `pins` {khoá mốc: "local:<sha1>" | null} (đổi bài một mốc sang bài trong "Nhạc của tôi", null = về bài người
+     * làm sách gắn). `track(link)` -> (thông tin, file) của bài trong kho của máy này; file được chép vào thư mục sách
+     * (music/<sha1>.<đuôi>) để việc lưu mang đi. Khoá lạ: [EditsError]. Trả [musicView].
      */
-    fun setMusic(folder: File, body: JSONObject): JSONObject {
+    fun setMusic(folder: File, body: JSONObject, track: ((String) -> Pair<JSONObject, File>?)? = null): JSONObject {
         val book = rawBook(folder)
         synchronized(lock) {
             val edits = load(folder)
             val music = edits.optJSONObject("music")?.let { deepCopy(it) as JSONObject } ?: JSONObject()
+            val before = music.optJSONObject("tracks")?.let { deepCopy(it) as JSONObject } ?: JSONObject()
             val base = musicView(book, empty())
             if (body.has("enabled")) {
                 if (truthy(body.opt("enabled"))) music.remove("enabled") else music.put("enabled", false)
@@ -822,14 +1008,63 @@ object BookEdits {
                 }
                 if (silenced.isNotEmpty()) music.put("silenced", JSONArray(silenced.sorted())) else music.remove("silenced")
             }
+            val placing = ArrayList<Pair<String, File>>()
+            if (truthy(body.opt("pins"))) {
+                val wanted = body.opt("pins") as? JSONObject ?: throw EditsError("Phần sửa nhạc nền không hợp lệ.")
+                val known = (0 until base.getJSONArray("cues").length()).map { base.getJSONArray("cues").getJSONObject(it).getString("key") }.toSet()
+                val original = baseLinks(book)
+                val pins = music.optJSONObject("pins")?.let { deepCopy(it) as JSONObject } ?: JSONObject()
+                val shown = deepCopy(before) as JSONObject
+                for (key in names(wanted)) {
+                    if (key !in known) throw EditsError("Không có đoạn nhạc này trong sách")
+                    val link = wanted.opt(key)
+                    if (!truthy(link)) {
+                        pins.remove(key)
+                        continue
+                    }
+                    val sha = (link as? String)?.takeIf { LOCAL_LINK.matches(it) }?.removePrefix(MusicStore.LOCAL_PREFIX)
+                        ?: throw EditsError("Chỉ đổi được sang bài trong Nhạc của tôi")
+                    if (link == original[key]) {
+                        pins.remove(key)
+                        continue
+                    }
+                    if (!shown.has(sha)) {
+                        val (info, file) = track?.invoke(link as String) ?: throw EditsError("Bài này không còn trong Nhạc của tôi")
+                        shown.put(sha, trackEntry(info, file))
+                        placing.add(pinnedName(sha, shown.getJSONObject(sha)) to file)
+                    }
+                    pins.put(key, link)
+                }
+                if (pins.length() > 0) {
+                    val used = names(pins).map { pins.getString(it).removePrefix(MusicStore.LOCAL_PREFIX) }.toSortedSet()
+                    val kept = JSONObject()
+                    for (sha in used) kept.put(sha, shown.getJSONObject(sha))
+                    music.put("pins", pins).put("tracks", kept)
+                } else {
+                    music.remove("pins")
+                    music.remove("tracks")
+                }
+            }
             if (music.length() > 0) edits.put("music", music) else edits.remove("music")
-            write(folder, edits)
+            for ((name, file) in placing) place(folder, name, file)
+            try {
+                write(folder, edits)
+            } catch (error: EditsError) {
+                dropUnused(folder, book, placing.map { it.first })
+                throw error
+            }
+            val after = edits.optJSONObject("music")?.optJSONObject("tracks") ?: JSONObject()
+            dropUnused(folder, book, names(before).filter { !after.has(it) }.map { pinnedName(it, before.getJSONObject(it)) })
             return musicView(book, edits)
         }
     }
 
-    /** Bỏ mọi thay đổi của người nghe: sách trở về đúng như người làm sách đã đóng gói. */
-    fun clear(folder: File) = save(folder, empty())
+    /** Bỏ mọi thay đổi của người nghe: sách trở về đúng như người làm sách đã đóng gói (kể cả file các bài đã ghim). */
+    fun clear(folder: File) = synchronized(lock) {
+        val pinned = pinnedFiles(load(folder))
+        save(folder, empty())
+        if (pinned.isNotEmpty()) dropUnused(folder, rawBook(folder), pinned)
+    }
 
     // ---- file `.abook` mang phần sửa theo ---------------------------------------------------------------------------
 
@@ -837,9 +1072,10 @@ object BookEdits {
      * Nhập lại một file sách ĐÃ có trên máy mà file mang phần sửa: hợp vào phần sửa của máy ([merge]: máy này thắng) - không
      * giải nén lại audio. `cover`: byte edits/cover.jpg của file (nếu có). Trả báo cáo của [merge].
      */
-    fun adopt(folder: File, incoming: JSONObject, cover: ByteArray?): JSONObject = synchronized(lock) {
+    fun adopt(folder: File, incoming: JSONObject, cover: ByteArray?, member: ((String, File) -> Unit)? = null): JSONObject = synchronized(lock) {
         val (merged, report) = merge(load(folder), incoming)
         if (report.opt("cover") == "incoming" && cover != null) Store.writeAtomic(File(folder, EDITS_COVER), cover)
+        if (member != null) for (name in pinnedFiles(merged)) File(folder, name).let { if (!it.isFile) member(name, it) }
         save(folder, merged)
         report
     }
