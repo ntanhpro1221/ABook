@@ -265,6 +265,24 @@ def test_a_book_keeps_the_code_that_started_it_across_app_updates(tmp_path: Path
         setup.code_for(old_book)
 
 
+def test_peeking_at_a_books_code_writes_nothing(tmp_path: Path, ollama: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    """"Nghe thử" một cách đọc tên chạy trước khi cuốn bắt đầu: hỏi bản mã của cuốn mà không ghim và không chép gì."""
+    from abook import quality_policy
+
+    setup = _setup(tmp_path, ollama, [])
+    (setup.app_root / "abook").mkdir()
+    monkeypatch.setattr(quality_policy, "quality_implementation_hash", lambda: "a" * 64)
+    book = tmp_path / "cuon"
+    book.mkdir()
+
+    assert setup.peek_code(book) == ("a" * 16, setup.app_root)
+    assert not (book / "studio_code.json").exists() and not (setup.root / "code").exists()
+
+    setup.code_for(book)  # ghim thật: từ đây peek trả đúng bản đã ghim
+    monkeypatch.setattr(quality_policy, "quality_implementation_hash", lambda: "b" * 64)
+    assert setup.peek_code(book) == ("a" * 16, setup.root / "code" / ("a" * 16))
+
+
 def test_removing_the_studio_deletes_its_folder_even_read_only_files(tmp_path: Path, ollama: str) -> None:
     import os
     import stat

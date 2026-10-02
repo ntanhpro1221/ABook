@@ -502,13 +502,7 @@ class StudioSetup:
           `Studio\\code\\<hash>` dành cho lúc app lên bản khác hash;
         - đã khác: chạy bản chép của hash đã ghim, file khoá y hệt lúc cuốn bắt đầu."""
         pin = project_root / CODE_PIN_FILE
-        try:
-            code_id = str(json.loads(pin.read_text(encoding="utf-8"))["code"])
-        except (OSError, ValueError, KeyError, TypeError):
-            code_id = ""
-        from ..quality_policy import quality_implementation_hash
-
-        current = quality_implementation_hash()[:16]
+        code_id, current = self._pinned_code_id(project_root)
         if not code_id:
             code_id = current
             payload = {"code": code_id, "since": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
@@ -517,6 +511,29 @@ class StudioSetup:
             os.replace(temporary_pin, pin)
         if code_id == current:
             self._snapshot(current)
+        return self._code_folder(code_id, current)
+
+    def peek_code(self, project_root: Path) -> tuple[str, Path]:
+        """(mã bản mã, thư mục mã) mà `code_for` sẽ trả cho cuốn này - KHÔNG ghi gì: không ghim, không chép bản mã. Cuốn
+        chưa chạy lần nào sẽ được ghim vào bản mã hiện tại của app, nên đó cũng là câu trả lời ở đây (nghe thử một cách đọc
+        tên trước khi cuốn bắt đầu - reading_preview.py)."""
+        code_id, current = self._pinned_code_id(project_root)
+        code_id = code_id or current
+        return code_id, self._code_folder(code_id, current)
+
+    @staticmethod
+    def _pinned_code_id(project_root: Path) -> tuple[str, str]:
+        """(mã đã ghim trong dự án hoặc "", mã bản mã hiện tại của app)."""
+        try:
+            code_id = str(json.loads((project_root / CODE_PIN_FILE).read_text(encoding="utf-8"))["code"])
+        except (OSError, ValueError, KeyError, TypeError):
+            code_id = ""
+        from ..quality_policy import quality_implementation_hash
+
+        return code_id, quality_implementation_hash()[:16]
+
+    def _code_folder(self, code_id: str, current: str) -> Path:
+        if code_id == current:
             return self.app_root
         folder = self.root / "code" / code_id
         if not (folder / "abook").is_dir():
