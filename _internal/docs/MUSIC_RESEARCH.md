@@ -900,6 +900,38 @@ Thước (ghi trước):
 Trò không đạt (a) thì thêm dữ liệu (MTG-Jamendo) hoặc đổi nhúng (MuQ / MERT, NC dùng được) rồi đo lại. Mỗi lần đổi ghi một dòng
 ở đây trước khi đo.
 
+**KẾT QUẢ THẦY + TRÒ (03-10 03:48, `build_teacher.py` + `build_student.py`, `results/student_eval.txt`):**
+
+Thầy:
+- Có chữ của người đọc cho mọi nguồn: Incompetech, Jamendo / Freesound, OGA, FMA, FreePD, Scott Buckley, ccMixter, 魔王魂,
+  Silverman. Tổng 4.763 bài.
+- AUC thầy ngoài phần học trên 1.381 bài Incompetech có feel, TB 10 lớp 0,895:
+  - peacefulness 0,904; sadness 0,937; joy 0,898; playful 0,918; power 0,913;
+  - wonder 0,834; tension 0,874; fear 0,898; anger 0,957; mystery 0,821.
+- 835 bài mới (FMA / ccMixter / OGA BY-SA…) chưa có âm học lúc chạy, nên âm học điền trung bình. Đang đo bù; thầy chạy lại
+  khi xong.
+
+Trò:
+- CLAP 512 + 42 âm học, ridge trên logit thầy, alpha chọn CV lồng.
+- Học trên 1.657 bài không lời, giữ ngoài 331 bài (hạt giống 7). Trò chỉ thấy âm thanh.
+- **(a) ĐẠT:** AUC trên Incompetech giữ ngoài (202 bài có feel): trò 0,863, thầy 0,880, tức **98,0%** (mốc ≥ 90%).
+  - Lớp hụt nhiều nhất: sadness 0,867 so 0,912; playful 0,882 so 0,926.
+  - r trò-thầy V/E/T trên phần giữ ngoài: 0,83 / 0,93 / 0,86.
+- **(b)** r Pearson trên bộ ngoài (trò | zero-shot CLAP cũ):
+
+| Bộ | V | E | T |
+|---|---|---|---|
+| Soundtracks (Eerola, 470) | 0,646 \| 0,594 | 0,745 \| 0,714 | 0,771 |
+| DEAM (1.802) | 0,348 \| 0,271 | 0,691 \| 0,644 | |
+
+  Trò hơn zero-shot cũ ở mọi trục.
+- **(d)** Đầu trò 8.880 tham số (0,04 MB). Tháp âm thanh CLAP fp16 56,8 MB; cosine với bản đầy đủ 0,999998. Gói ~57 MB.
+  App đã có torch / transformers / librosa, nên không thêm thư viện. sd V/E/T (RMSE giữ ngoài) 0,22 / 0,18 / 0,21.
+- **(c)** máy chấm kiểu E1 (trò so thầy) chưa chạy. Theo bài học E1 phải dùng người đọc mô tả KHÔNG CLAP (thước R_mới).
+- Việc kế:
+  - cắm vào `music_local.set_analyzer` (nhánh `dev/music-student`), gói đăng Hugging Face `NGDtuanh/abook-music-student`;
+  - MTG-Jamendo không lời dùng làm dữ liệu thêm khi cần (hiện chưa cần, (a) đã đạt).
+
 **GHI TRƯỚC - MTG-JAMENDO LÀM DỮ LIỆU HỌC CHO TRÒ (02-10 23:xx, Lead + chủ sách):**
 
 Bộ dữ liệu:
