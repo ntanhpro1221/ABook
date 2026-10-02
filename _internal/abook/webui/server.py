@@ -904,9 +904,7 @@ class App:
         """Các phần của cuốn mà sách này thuộc về (chuỗi dài nhất qua nó, phần đầu trước) - trang dự án chỉ sang phần kia
         (soát UX 29-09: phần 1 không nói đã có phần 2, phần 2 không nói nối tiếp cuốn nào). Một phần lẻ thì rỗng."""
         here = self._book(value).resolve()
-        chain = continuation.chain_of(continuation.latest_part(here, self.library.projects()))
-        if here not in chain:
-            chain = continuation.chain_of(here)
+        chain = continuation.series_parts(here, self.library.projects())
         if len(chain) < 2:
             return []
         out = []
@@ -1590,32 +1588,61 @@ class Handler(BaseHTTPRequestHandler):
         actions.reveal(self.app._book(value))
         self._send_json(HTTPStatus.OK, {"ok": True})
 
+    def _series_parts(self, value: str, body: dict[str, Any]) -> list[Path] | None:
+        """"Cả bộ" trong hộp Xuất: các phần của cuốn (continuation.series_parts), None khi xuất riêng phần này."""
+        if not body.get("series"):
+            return None
+        parts = continuation.series_parts(self.app._book(value), self.app.library.projects())
+        if len(parts) < 2:
+            raise ApiError(HTTPStatus.CONFLICT, "Cuốn này chưa có phần nào khác để xuất cùng")
+        return parts
+
     def post_export(self, _query: dict[str, list[str]], value: str) -> None:
-        from .export import export_book
+        from .export import export_book, export_series
 
         project = self.app._book(value)
         body = self._body()
         target = self._target(body)
         root = Path(target) if target else Path(self.app.preferences.get()["libraryRoot"]) / "Đã xuất"
+        parts = self._series_parts(value, body)
         try:
-            result = export_book(project, root, cover=body.get("cover"))
+            if parts is None:
+                result = export_book(project, root, cover=body.get("cover"))
+            else:
+                result = export_series(parts, root, lambda part, folder, label: export_book(
+                    part, folder, cover=body.get("cover"), folder_name=label))
+                result["files"] = sum(part["files"] for part in result["parts"])
         except ValueError as error:
             raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
         self.app.exports.add(result["folder"])
         self._send_json(HTTPStatus.OK, result)
 
     def post_bookfile(self, _query: dict[str, list[str]], value: str) -> None:
-        # Một cuốn trong một file (bookfile.py) - mở bằng app ở máy khác, gửi cho người khác.
+        # Một cuốn trong một file (bookfile.py) - mở bằng app ở máy khác, gửi cho người khác. Cả bộ: định dạng `.abook`
+        # chỉ chứa MỘT cuốn (mã chương, mã câu mẫu, dàn nhân vật là của một dự án), nên mỗi phần một file trong thư mục bộ.
+        from .export import export_series
+
         project = self.app._book(value)
-        target = self._target(self._body())
+        body = self._body()
+        target = self._target(body)
         root = Path(target) if target else Path(self.app.preferences.get()["libraryRoot"]) / "Đã xuất"
+        parts = self._series_parts(value, body)
+
+        def pack(part: Path, folder: Path, name: str) -> dict[str, Any]:
+            path = bookfile.pack(part, folder / bookfile.default_name(name), music_track=self.app.music_track_for_export)
+            return {"file": str(path), "size": path.stat().st_size}
+
         try:
-            path = bookfile.pack(project, root / bookfile.default_name(store.summarize(project)["title"] or project.name),
-                                 music_track=self.app.music_track_for_export)
-        except bookfile.BookFileError as error:
+            if parts is None:
+                path = pack(project, root, store.summarize(project)["title"] or project.name)
+                result = {**path, "folder": str(Path(path["file"]).parent)}
+            else:
+                result = export_series(parts, root, pack)
+                result["size"] = sum(part["size"] for part in result["parts"])
+        except (bookfile.BookFileError, ValueError) as error:
             raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
-        self.app.exports.add(str(path.parent))
-        self._send_json(HTTPStatus.OK, {"file": str(path), "folder": str(path.parent), "size": path.stat().st_size})
+        self.app.exports.add(result["folder"])
+        self._send_json(HTTPStatus.OK, result)
 
     def post_projectfile(self, _query: dict[str, list[str]], value: str) -> None:
         # Cả dự án trong một file (projectfile.py) - chuyển máy, sao lưu, làm tiếp ở chỗ khác.

@@ -232,6 +232,14 @@ def latest_part(project: Path, candidates: Iterable[Path]) -> Path:
     return best
 
 
+def series_parts(project: Path, candidates: Iterable[Path]) -> list[Path]:
+    """Mọi phần của cuốn mà `project` thuộc về, phần đầu trước: lần ngược `previous` về phần 1, rồi đi xuôi theo các dự án
+    của thư viện (`candidates`) nối tiếp nó - chuỗi dài nhất đi qua `project` (`latest_part`). Phần lẻ: chỉ chính nó."""
+    here = Path(project).resolve()
+    chain = chain_of(latest_part(here, candidates))
+    return chain if here in chain else chain_of(here)
+
+
 def _input_paths(project: Path) -> list[Path]:
     with closing(_read_only(project)) as connection:
         return [Path(str(row[0])) for row in _rows(connection, "SELECT input_path FROM chapters ORDER BY chapter_index")
