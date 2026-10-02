@@ -8,12 +8,16 @@ nếu muốn (ghim bài cho một đoạn, đổi không khí, chọn phong các
 - hai đoạn liền nhau chọn trúng cùng bài thì nhạc chơi liền, không bắt đầu lại.
 Không bài nào đủ gần (MAX_DISTANCE) thì đoạn ấy IM LẶNG - im lặng tốt hơn nhạc sai không khí. Hoà điểm thì chọn tất định
 theo mã sách: làm lại vẫn ra đúng bài cũ.
+Bài tương đương còn được cộng một số hạng Jensen-Shannon giữa phân phối GEMS-9 của đoạn và của bài (bài chưa có `gems`
+thì không có số hạng này); nó chỉ xếp hạng, không đổi ngưỡng im lặng.
 """
 from __future__ import annotations
 
 import hashlib
 import math
 from typing import Any, Callable, Iterable
+
+from . import music_scenes
 
 MAX_DISTANCE = 0.75
 TENSION_WEIGHT = 0.6             # trục căng thẳng nhẹ hơn vui/buồn và năng lượng (đường cơ sở - đo lại ở Pha 3)
@@ -25,6 +29,9 @@ RECENT_SCENES = 3
 MIN_TRACK_SECONDS = 60
 WEAK_MOOD = 0.2                 # đoạn không có không khí rõ (ít câu có cảm xúc) ...
 CALM_TARGET = (0.15, -0.55)     # ... thì nhạc nền nhẹ, êm - nhạc mặc định bật (chủ sách 01-10)
+# Đo 02-10: bộ 3 (đầu vào đáp án) phẳng 0,607 vs 0,608; bộ 4 cả chuỗi 0,862 -> 0,825, hơn 5/8 cuốn (docs/MUSIC_RESEARCH.md).
+GEMS_WEIGHT = 2.0
+GEMS_EPS = 1e-9
 
 
 def _tiebreak(book_key: str, link: str) -> float:
@@ -39,6 +46,46 @@ def target_of(scene: dict[str, Any]) -> tuple[float, float]:
         return valence, arousal
     weight = confidence / WEAK_MOOD
     return (weight * valence + (1 - weight) * CALM_TARGET[0], weight * arousal + (1 - weight) * CALM_TARGET[1])
+
+
+def js_divergence(p: Any, q: Any) -> float | None:
+    """Jensen-Shannon (log tự nhiên) giữa hai phân phối GEMS-9; None nếu một bên không phải dict có dữ liệu (danh mục cũ)."""
+    if not isinstance(p, dict) or not isinstance(q, dict) or not p or not q:
+        return None
+    labels = list(music_scenes.GEMS_POINTS)
+
+    def normal(dist: dict[str, Any]) -> list[float]:
+        raw = []
+        for label in labels:
+            try:
+                raw.append(max(0.0, float(dist.get(label) or 0.0)) + GEMS_EPS)
+            except (TypeError, ValueError):
+                raw.append(GEMS_EPS)
+        total = sum(raw)
+        return [value / total for value in raw]
+
+    a, b = normal(p), normal(q)
+    mid = [(x + y) / 2 for x, y in zip(a, b)]
+
+    def kl(x: list[float], m: list[float]) -> float:
+        return sum(xi * math.log(xi / mi) for xi, mi in zip(x, m))
+
+    return max(0.0, (kl(a, mid) + kl(b, mid)) / 2)
+
+
+def scene_gems(scene: dict[str, Any]) -> dict[str, float]:
+    """Phân phối GEMS-9 cần tìm nhạc của đoạn. Đoạn có sẵn `gems` thì dùng nó, đoạn không có không khí rõ được kéo về nền
+    êm nhẹ như `target_of`; đoạn chưa có `gems` thì suy từ V/E/T (đã kéo về nền êm ở `target_of` nên không kéo lần hai)."""
+    tension = float(scene.get("tension") or 0.0)
+    dist = scene.get("gems")
+    if not isinstance(dist, dict) or not dist:
+        return music_scenes.gems_from_point(*target_of(scene), tension)
+    confidence = float(scene.get("confidence") or 0.0)
+    if confidence >= WEAK_MOOD:
+        return dist
+    weight = confidence / WEAK_MOOD
+    calm = music_scenes.gems_from_point(CALM_TARGET[0], CALM_TARGET[1], tension)
+    return {label: weight * float(dist.get(label) or 0.0) + (1 - weight) * calm[label] for label in music_scenes.GEMS_POINTS}
 
 
 def style_fit(track: dict[str, Any], genre_styles: dict[str, float] | None) -> float:
@@ -115,6 +162,7 @@ def rank(scene: dict[str, Any], candidates_near: Callable[[float, float], Iterab
     banned, exclude = set(banned), set(exclude)
     target = (*target_of(scene), float(scene.get("tension") or 0.0))
     ceiling = MAX_DISTANCE + (FAMILY_PENALTY if family else 0.0)
+    wanted = scene_gems(scene)
     ranked: list[tuple[float, dict[str, Any]]] = []
     seen: set[str] = set()
     for track in candidates_near(target[0], target[1]):
@@ -126,8 +174,8 @@ def rank(scene: dict[str, Any], candidates_near: Callable[[float, float], Iterab
             continue
         value = score(track, target, family=family, recent=(recent or [])[-RECENT_SCENES:], genre_styles=genre_styles)
         value += _tiebreak(book_key, link)
-        if value <= ceiling:
-            ranked.append((value, track))
+        if value <= ceiling:  # ngưỡng im lặng vẫn tính trên V/E/T; GEMS chỉ xếp hạng các bài đã qua ngưỡng
+            ranked.append((value + GEMS_WEIGHT * (js_divergence(wanted, track.get("gems")) or 0.0), track))
     ranked.sort(key=lambda item: item[0])
     return [dict(track, score=round(value, 3)) for value, track in ranked[:limit]]
 
