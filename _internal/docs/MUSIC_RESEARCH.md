@@ -666,7 +666,10 @@ Mục 2:
 Mục 4:
 - Kappa với R_mới: omni1 0,030, mf 0,150 → cả hai **vẫn không dùng được**. Kết luận E1b không đổi.
 
-Mục 3 (nền êm chấm lại bằng mô tả không CLAP) đang chạy.
+Mục 3 - nền êm chấm lại bằng mô tả không CLAP (`DESC=noclap score_calm.py`, `results/calm_noclap.txt`):
+- Hai người chấm mới cùng ý 40/52.
+- 0,35 thắng 0,2: 5/11 = 0,45 [0,21-0,72]. 0,5 thắng 0,2: 17/29 = 0,59 [0,41-0,74].
+- **Giữ WEAK_MOOD = 0,2**, CÙNG kết luận với lần đầu. Quyết định này không dựa vào vòng tròn CLAP.
 
 **GHI TRƯỚC - NỚI NGƯỠNG NỀN ÊM (02-10 23:xx, Lead duyệt; từ E1: calm đứng thứ hai, hơn app):**
 - **Giả thuyết:** kéo về nền êm (CALM_TARGET) cho nhiều đoạn hơn làm nhạc hợp hơn. Hiện chỉ kéo khi confidence < WEAK_MOOD
