@@ -131,8 +131,8 @@ def test_the_next_part_inherits_the_names(tmp_path: Path) -> None:
 
 
 def test_cards_and_the_voice_picker_show_the_renamed_name_but_keep_the_key(tmp_path: Path) -> None:
-    from ebook_reader.webui.voice_picker import voice_choices
-    from ebook_reader.webui.work_items import work_items
+    from abook.webui.voice_picker import voice_choices
+    from abook.webui.work_items import work_items
 
     paths, _db = _book(tmp_path)
     before = {item["kind"]: item for item in work_items(paths.root)["items"]}["gender"]
