@@ -341,8 +341,13 @@ nhất trong 145-157 - mọi chương Nise chỉ ~10 KB), Yamiyo no Hotaru 160, 
 truyện CHƯA dùng: "Đã bảo là cùng nhau tự sát..." 060 (đô thị), "Năng lực bá đạo của tôi trong game tử thần..." 0100 (kinh dị
 hệ thống - thể loại mới cho nhạc u tối). Câu hỏi: luật app hiện tại (ranh giới cứng + chia đều đoạn dài hơn 3 phút, không khí
 từ nhãn câu) có giữ lợi thế "chia nhỏ" không. So `app` với `hard` (không chia nhỏ) và `fixed3`. App GIỮ nếu r trung bình ba
-trục V/E/T của `app` hơn `hard` ít nhất 0,05 VÀ hơn ở >= 4/5 chương; `app` so `fixed3` chỉ ghi lại (kỳ vọng ngang). Đáp án:
+trục V/E/T của `app` hơn `hard` ít nhất 0,05 VÀ hơn ở >= 7/10 chương (sau khi thêm 5 chương LN Nhật mới dưới đây); `app` so `fixed3` chỉ ghi lại (kỳ vọng ngang). Đáp án:
 hai người chấm mù Sonnet + phân xử tự động (`adjudicate_scenes.py`). Tu tiên bỏ (chủ sách đọc ít, không có văn bản).
+BỔ SUNG TRƯỚC KHI CÓ ĐÁP ÁN (02-10 trưa): 5 chương LN Nhật MỚI hẳn (chủ sách tự tải - docln nay mã hoá chương, không
+tải tự động), chọn bằng luật cố định chỉ đọc dòng tiêu đề - 2 chương truyện đầu tiên từ file 03, 15-60 KB, tiêu đề "Chương"
+(truyện mọi chương < 15 KB: 2 chương đầu tiên >= 8 KB): Make Heroine ga Oosugiru 017 (file 018 là lời bạt nên chỉ một
+chương), Rokujouma no Shinryakusha 014, 015, Shimotsuki wa Mob ga Suki 029, 032. Tổng bộ 4 = 10 chương. Lưu ý: Hướng dẫn
+sinh tồn 090 nằm trong dữ liệu huấn luyện 9B-v8 (nhãn câu có thể đẹp hơn thật) - báo thêm kết quả khi bỏ chương này.
 
 ## Thứ tự và tài nguyên
 
