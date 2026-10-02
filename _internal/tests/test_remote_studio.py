@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from abook.webui import remote_studio, tls
+from abook.webui import music_plan, remote_studio, tls
 from abook.webui.actions import FakeRunner
 from abook.webui.library import book_id
 from abook.webui.server import ROUTES, App, Server
@@ -348,7 +348,7 @@ def test_head_keeps_the_connection_in_step_and_private_preferences_stay_home(stu
 def test_every_allowed_route_exists_on_the_computer() -> None:
     # Danh sách trắng không được mở tên đường nào mà máy chủ giao diện không có: một đường gõ sai là một nút bấm trên
     # điện thoại lặng lẽ không làm gì.
-    samples = (("r-[0-9a-f]{16}", "r-0123456789abcdef"), (r"[0-9a-f]{40}\.mp3", "a" * 40 + ".mp3"),
+    samples = (("r-[0-9a-f]{16}", "r-0123456789abcdef"), (music_plan.TRACK_NAME, "a" * 40 + ".mp3"),
                (r"[0-9a-f]{32}\.wav", "b" * 32 + ".wav"),
                ("[A-Za-z0-9_-]+", "YWJj"), (r"\d+", "7"),
                ("[0-9a-f]+", "ab12"), ("[^/]+", "Duc"))

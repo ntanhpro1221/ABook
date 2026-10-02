@@ -195,5 +195,6 @@ object MusicBed {
         })
     }
 
-    private val TRACK = Regex("music/[0-9a-f]{40}\\.mp3")
+    // Bài danh mục luôn .mp3; bài người dùng nhập ("Nhạc của tôi") giữ định dạng của file (music_plan.TRACK_EXTENSIONS).
+    private val TRACK = Regex("music/[0-9a-f]{40}\\.(?:mp3|m4a|ogg|opus|flac|wav)")
 }

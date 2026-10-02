@@ -68,7 +68,7 @@ class PipeDialogs:
         self._waiting: dict[int, tuple[threading.Event, dict[str, Any]]] = {}
         self._closed = False
 
-    def _ask(self, kind: str, title: str, start: str) -> Any:
+    def _ask(self, kind: str, title: str, start: str, filter: str = "") -> Any:
         done = threading.Event()
         box: dict[str, Any] = {}
         with self._lock:
@@ -76,7 +76,7 @@ class PipeDialogs:
                 return None
             dialog = next(self._ids)
             self._waiting[dialog] = (done, box)
-        self.channel.send({"dialog": dialog, "kind": kind, "title": title, "start": start})
+        self.channel.send({"dialog": dialog, "kind": kind, "title": title, "start": start, "filter": filter})
         done.wait()
         return box.get("result")
 
@@ -99,8 +99,8 @@ class PipeDialogs:
         result = self._ask("folder", title, start)
         return result if isinstance(result, str) and result else None
 
-    def pick_files(self, title: str, start: str) -> list[str]:
-        result = self._ask("files", title, start)
+    def pick_files(self, title: str, start: str, kind: str = "chapters") -> list[str]:
+        result = self._ask("files", title, start, kind)
         return [item for item in result if isinstance(item, str) and item] if isinstance(result, list) else []
 
     def pick_book_file(self, title: str, start: str) -> str | None:
