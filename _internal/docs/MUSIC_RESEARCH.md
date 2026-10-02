@@ -882,6 +882,35 @@ r trung bình theo chương:
   - Gợi ý thí nghiệm kế (cần ghi trước): LLM chia đoạn, hoặc chia theo thay đổi V/E/T của LLM trên cửa sổ trượt, rồi dùng
     llmVT + bwsE.
 
+**GHI TRƯỚC - CHIA ĐOẠN CHO ĐƯỜNG LLM (03-10 05:xx, Lead duyệt; trước mọi số):**
+
+Câu hỏi: ranh giới tốt hơn có đưa đường LLM (llmVT + bwsE) vượt nhãn câu của app không? Nếu có, nhánh nào đáng chi phí?
+
+Ba nhánh chia đoạn:
+- **(1) LLM chia trực tiếp:**
+  - qwen3.5:9b đọc cả chương (`seq<TAB>câu`; chương dài hơn 6.000 tiếng thì chia hai nửa chồng 300 tiếng).
+  - Trả danh sách seq mở đầu đoạn theo luật SCENE_GOLD_GUIDE (đoạn ≥ ~1 phút, đổi LOẠI không khí mới cắt).
+  - Prompt chốt trong script, không chỉnh.
+- **(2) Điểm đổi trên V/E/T của LLM:**
+  - Cửa sổ trượt W tiếng, bước W/2. LLM chấm V/E/T mỗi cửa sổ, prompt `segment_mood_llm.PROMPT` không đổi.
+  - Cắt ở chỗ khoảng cách V/E/T giữa hai nửa kề vượt ngưỡng θ, đoạn tối thiểu 200 tiếng.
+- **(3) Nền rẻ, nhúng câu kiểu TextTiling:**
+  - qwen3-embedding:0.6b (nhúng câu qua Ollama). Khối k câu, cắt ở chỗ "độ sâu" tương đồng vượt ngưỡng c, đoạn tối thiểu 200 tiếng.
+
+Tham số:
+- W, θ (nhánh 2) và k, c (nhánh 3) chọn trên **bộ 4** (10 chương, đáp án có sẵn) để Pk nhỏ nhất.
+- Nhánh 1 không có tham số. Nó vẫn chạy trên bộ 4 để báo cáo.
+- **Bộ 5 chỉ đo MỘT lần** với tham số đã chốt.
+
+Không khí mỗi đoạn của mọi nhánh = llmVT + bwsE (như `set5_llm.py`: V / T từ LLM đọc cả đoạn, E từ BWS nhóm 4 trong chương).
+
+Thước trên bộ 5:
+- **CHÍNH:** r VET trung bình theo chương, so `app` (nhãn câu + ranh giới app).
+- **Luật như (a):** nhánh THẮNG nếu hơn ≥ 0,05 VÀ thắng ≥ 7/9 chương.
+- **Phụ (báo, không quyết):** Pk và WindowDiff so ranh giới đáp án; đoạn / giờ; số lượt gọi LLM mỗi chương.
+- **Nhiều nhánh cùng thắng:** chọn nhánh RẺ nhất (3 < 2 < 1). Nhánh đắt hơn chỉ được chọn nếu hơn nhánh rẻ ≥ 0,03 r VET.
+- **Không nhánh nào thắng:** ghi lại và giữ nhãn câu.
+
 ĐÁP ÁN BỘ 5 (03-10 05:xx, Corpus `scene_set5/`; mô tả, chưa phải phép thử):
 - 9 chương, 86 đoạn sau phân xử (26,6 đoạn/giờ).
 - Hai người chấm mù Sonnet A so B: Pk 0,167, P / R ranh giới 0,73 / 0,86, r V/E/T 0,92 / 0,88 / 0,89. Đó là trần.
