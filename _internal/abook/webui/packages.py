@@ -293,7 +293,7 @@ def import_file(source: Path, library_root: Path, projects: Iterable[Path],
         if mine:
             project = Path(min(mine, key=continuation.part_number))
             if report["edits"]:
-                book_edits.stash_incoming(project, opened.edits, opened.edits_cover())
+                book_edits.stash_incoming(project, opened.edits, opened.edits_cover(), opened.copy_member)
             return project, "project"
         imported = Path(library_root).expanduser() / IMPORTED_FOLDER
         wanted = _prints_by_file(prints)

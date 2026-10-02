@@ -273,9 +273,10 @@ class LocalMusic:
         return out
 
     # -- ghi --------------------------------------------------------------------------------------------------------------
-    def import_file(self, source: Path) -> tuple[dict[str, Any], bool]:
+    def import_file(self, source: Path, fallback: dict[str, str] | None = None) -> tuple[dict[str, Any], bool]:
         """Nhập một file: kiểm đuôi và đọc được như âm thanh, chép vào kho theo mã sha1 nội dung, đo độ to, phân tích nếu có bộ
-        phân tích. Trả (thông tin bài, đã có sẵn trong kho?). File trùng nội dung với bài đã có thì không chép lại."""
+        phân tích. Trả (thông tin bài, đã có sẵn trong kho?). File trùng nội dung với bài đã có thì không chép lại.
+        `fallback` {"title", "artist"}: tên bài / nghệ sĩ dùng khi thẻ trong file không có (bài mang theo trong file sách)."""
         source = Path(source)
         extension = source.suffix.lower().lstrip(".")
         if not source.is_file():
@@ -305,8 +306,9 @@ class LocalMusic:
                 with contextlib.suppress(OSError):
                     part.unlink(missing_ok=True)
             entry: dict[str, Any] = {"ext": extension, "name": source.name, "bytes": target.stat().st_size,
-                                     "added": time.time(), "duration": tags["duration"], "title": tags.get("title") or "",
-                                     "artist": tags.get("artist") or "", "album": tags.get("album") or "",
+                                     "added": time.time(), "duration": tags["duration"],
+                                     "title": tags.get("title") or (fallback or {}).get("title") or "",
+                                     "artist": tags.get("artist") or (fallback or {}).get("artist") or "", "album": tags.get("album") or "",
                                      "genre": tags.get("genre") or "", "analysis": None, "lufs": None}
             entry["lufs"] = music_plan.measured_lufs(target)  # độ to thật của file - cue_gain_db dùng, như bài danh mục
             entry["analysis"] = analyze(target)

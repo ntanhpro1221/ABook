@@ -584,15 +584,70 @@ def test_a_file_whose_pinned_track_is_missing_is_refused_whole(tmp_path: Path) -
         BookFile(_forged(tmp_path, edits))
 
 
-def test_the_producer_skips_a_pin_the_project_cannot_have(tmp_path: Path) -> None:
+def _producer_project(tmp_path: Path) -> Path:
     producer = tmp_path / "may_san_xuat"
     producer.mkdir()
     project = shared.make_base_project(producer)
     _plan(project)
+    return project
+
+
+def _carry_tone(name: str, target: Path) -> None:
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(shared.FIXTURES / "track" / "tone.wav", target)
+
+
+def test_the_producer_skips_a_pin_whose_file_is_not_in_the_book(tmp_path: Path) -> None:
+    project = _producer_project(tmp_path)
+    app = _app(tmp_path, project.parent)
     book_edits.stash_incoming(project, book_edits.validate({**shared.HEAD, "music": shared.PINS}), None)
-    folded = book_edits.fold(project)
-    assert folded["skipped"] == 1 and folded["applied"] == 0, "bài chỉ có trong kho nhạc máy người nghe: không áp được vào dự án"
+    folded = book_edits.fold(project, app.my_music)
+    assert folded["skipped"] == 1 and folded["applied"] == 0 and folded["music"] is False
+    assert folded["reasons"] == ["1:0: file nhạc không có trong sách"]
     assert all(not link.startswith("local:") for link in music_plan.read_overrides(project)["pins"].values())
+    assert app.my_music.entries() == []
+
+
+def test_the_producer_takes_a_listeners_pinned_track_into_their_own_store_and_pins_it(tmp_path: Path) -> None:
+    project = _producer_project(tmp_path)
+    app = _app(tmp_path, project.parent)
+    book_edits.stash_incoming(project, book_edits.validate({**shared.HEAD, "music": shared.PINS}), None, _carry_tone)
+    assert (project / book_edits.INCOMING_MUSIC / f"{shared.TRACK_SHA}.wav").is_file()
+    folded = book_edits.fold(project, app.my_music)
+    assert (folded["applied"], folded["skipped"], folded["music"]) == (1, 0, True) and "reasons" not in folded
+    # mốc 1:0 = hai đoạn CALM (1:1, 1:5); đoạn BATTLE (1:9) không đổi
+    assert music_plan.read_overrides(project)["pins"] == {"1:1": shared.TRACK_LINK, "1:5": shared.TRACK_LINK}
+    mine = app.my_music.lookup([shared.TRACK_LINK])[shared.TRACK_LINK]
+    assert app.my_music.file(shared.TRACK_LINK) is not None
+    assert (mine["title"], mine["creator"]) == ("Bài của tôi", "Tôi"), "file không có thẻ: lấy tên từ lớp sửa"
+    assert not (project / book_edits.INCOMING_MUSIC).exists() and not (project / book_edits.INCOMING_FILE).exists()
+    # áp lần nữa không nhập thêm bản nào (cùng sha1)
+    book_edits.stash_incoming(project, book_edits.validate({**shared.HEAD, "music": shared.PINS}), None, _carry_tone)
+    book_edits.fold(project, app.my_music)
+    assert len(app.my_music.entries()) == 1
+
+
+def test_the_producer_skips_a_pin_on_a_cue_the_project_no_longer_has(tmp_path: Path) -> None:
+    project = _producer_project(tmp_path)
+    app = _app(tmp_path, project.parent)
+    edits = book_edits.validate({**shared.HEAD, "music": {"pins": {"1:777": shared.TRACK_LINK}, "tracks": shared.PINS["tracks"]}})
+    book_edits.stash_incoming(project, edits, None, _carry_tone)
+    folded = book_edits.fold(project, app.my_music)
+    assert (folded["applied"], folded["skipped"], folded["reasons"]) == (0, 1, ["1:777: mốc nhạc này không còn trong dự án"])
+    assert app.my_music.entries() == []
+
+
+def test_a_file_that_is_not_the_pinned_track_is_not_taken(tmp_path: Path) -> None:
+    project = _producer_project(tmp_path)
+    app = _app(tmp_path, project.parent)
+
+    def other(name: str, target: Path) -> None:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(b"not audio")
+
+    book_edits.stash_incoming(project, book_edits.validate({**shared.HEAD, "music": shared.PINS}), None, other)
+    folded = book_edits.fold(project, app.my_music)
+    assert (folded["applied"], folded["skipped"]) == (0, 1) and folded["music"] is False and app.my_music.entries() == []
 
 
 # ---- chủ máy sản xuất ---------------------------------------------------------------------------------------------------
@@ -690,3 +745,20 @@ def test_odd_request_bodies_are_refused_or_ignored_not_crashes(imported) -> None
     (folder / "cover.jpg").unlink()
     call("DELETE", "/api/books/{id}/cover")
     assert not (folder / book_edits.EDITS_FILE).exists() and app.listen_book(identifier)["edits"] == 0
+
+
+def test_a_pin_in_an_edited_file_reaches_the_producers_store_through_the_open_and_fold(tmp_path: Path) -> None:
+    project = _producer_project(tmp_path)
+    packed = bookfile.pack(project, tmp_path / "v1.abook", music_track=_tracks(tmp_path))
+    listener = tmp_path / "nguoi_nghe"
+    listener.mkdir()
+    folder = BookFile(packed).extract(listener / "thu_vien", "b")
+    theirs = _app(tmp_path / "nguoi", listener)
+    book_edits.set_music(folder, {"pins": {"1:0": _my_tone(theirs)}}, theirs._my_track)
+    edited = bookfile.repack(folder, tmp_path / "da_sua.abook")
+    app = _app(tmp_path, project.parent)
+    assert app.open_book_file(str(edited))["how"] == "project"
+    folded = book_edits.fold(project, app.my_music)
+    assert (folded["applied"], folded["skipped"]) == (1, 0)
+    assert app.my_music.file(shared.TRACK_LINK) is not None
+    assert music_plan.read_overrides(project)["pins"] == {"1:1": shared.TRACK_LINK, "1:5": shared.TRACK_LINK}
