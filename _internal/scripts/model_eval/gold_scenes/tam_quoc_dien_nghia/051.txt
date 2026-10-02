@@ -1,0 +1,29 @@
+# Đáp án cảnh tam_quoc_dien_nghia/051 - PHÂN XỬ TỰ ĐỘNG (adjudicate_scenes.py, luật SCENE_GOLD_GUIDE.md) từ hai người chấm mù: OPUS + SONNET.
+scene 0-30 | V=-0.25 E=0 T=0.75 | gems=tension | function=mo_dau | setting=trại Chu Du bên sông, trướng bàn việc | music=co | Khổng Minh tha Vân-trường; Chu Du nghe Lưu Bị đóng Du-giang thì giật mình, giận, quyết sang dò ý - căng ngầm, lời lẽ chính trị
+scene 31-56 | V=0 E=-0.25 T=0.75 | gems=tension | function=doi_thoai | setting=dinh Huyền-đức cửa Du-giang, tiệc rượu; trại Ngô | music=co | đổi nơi nhưng vẫn không khí đấu mưu: tiệc đấu khẩu, giao ước Nam-quận, Khổng Minh cười bày kế, Chu Du về tự tin sai Tưởng Khâm
+scene 57-79 | V=0.25 E=-0.25 T=0.25 | gems=tension | function=doi_thoai | setting=dinh Huyền-đức cửa Du-giang, tiệc rượu; trại Ngô | music=co | start=soft - đổi nơi nhưng vẫn không khí đấu mưu: tiệc đấu khẩu, giao ước Nam-quận, Khổng Minh cười bày kế, Chu Du về tự tin sai Tưởng Khâm
+scene 80-86 | V=-0.25 E=1.5 T=1.5 | gems=power/tension | function=hanh_dong | setting=ngoài thành Nam-quận, trận dã chiến | music=co | start=soft - Ngưu Kim xin đánh, bị vây; Tào Nhân xông vào cứu, quân Ngô thua
+scene 87-111 | V=-0.25 E=0.5 T=1.5 | gems=tension | function=doi_thoai | setting=trướng Chu Du, Di-lăng bị vây | music=co | Chu Du giận Tưởng Khâm; Cam Ninh lấy Di-lăng rồi bị vây; bàn cứu, Lăng Thống giữ nhà, Lã Mông hiến kế chặn đường
+scene 112-117 | V=0.25 E=1.75 T=1.5 | gems=power | function=hanh_dong | setting=dưới thành Di-lăng, phá vây | music=co | start=soft - Chu Thái đánh thốc vào thành, trong ngoài giáp công, quân Tào bỏ ngựa chạy
+scene 118-125 | V=-0.25 E=1 T=1.5 | gems=tension | function=doi_thoai | setting=thành Nam-quận, cẩm nang Tào Tháo; tướng đài Chu Du | music=co | khúc ngắn ~210 tiếng: mở cẩm nang, bày kế bỏ thành; Chu Du quan sát, đoán Tào Nhân sắp chạy - lắng trước trận
+scene 126-131 | V=-0.75 E=1.75 T=2 | gems=tension/power | function=hanh_dong | setting=cửa thành Nam-quận bỏ trống, phục binh | music=co | start=soft - Ngô thắng ban đầu, Chu Du xông vào thành trống thì trúng phục, trúng tên ngã ngựa, quân Ngô thua to
+scene 132-137 | V=-1 E=-0.25 T=1.25 | gems=tension/sadness | function=ta_canh | setting=trướng Chu Du bị thương, trại Ngô cố thủ | music=nhe | khúc ~180 tiếng đổi hẳn không khí hai phía: thuốc độc, Chu Du đau đớn, Ngưu Kim ngày ngày chửi, Trình Phổ nín nhịn
+scene 138-159 | V=-1 E=1 T=1.75 | gems=tension/power | function=cao_trao | setting=trướng rồi trước cửa trại, hai quân đối trận | music=co | start=soft - Chu Du biết bị giấu, giận, gượng mặc giáp ra trận, hai bên chửi nhau, Chu Du thổ huyết ngã ngựa
+scene 160-178 | V=0.5 E=0 T=1 | gems=tension | function=doi_thoai | setting=trướng Chu Du; thành Nam-quận | music=co | lộ mẹo giả chết, cả trại để tang giả; Tào Nhân nghe hàng binh báo, mừng, quyết đêm cướp trại - mưu đang giăng
+scene 179-181 | V=0.25 E=2 T=1.75 | gems=power | function=hanh_dong | setting=trại Ngô bỏ trống ban đêm, phục binh bốn mặt | music=co | khúc ~190 tiếng: Tào Nhân mắc mẹo, pháo nổ bốn mặt, quân Tào tan vỡ, bị chặn đánh mãi tới canh năm
+scene 182-196 | V=-0.5 E=0.75 T=1 | gems=tension/sadness | function=cao_trao | setting=dưới thành Nam-quận đã cắm cờ Lưu | music=co | cao trào treo cuối hồi: Triệu Vân đã chiếm thành, Khổng Minh dùng binh phù lấy luôn Kinh-châu, Tương-dương; Chu Du kêu to, nhọt vỡ; thơ ngắn và lời hẹn hồi sau
+accent 85 | Tào Nhân xông vào vòng vây cứu Ngưu Kim
+accent 92-93 | Cam Ninh bị vây chặt ở Di-lăng, tin dữ
+accent 112 | Chu Thái đánh thốc vào vòng vây
+accent 130-131 | hiệu mõ nổ, mưa tên, Chu Du trúng tên ngã ngựa
+accent 130-130 | hiệu mõ, tên bắn như mưa, Chu Du trúng tên nhào xuống ngựa
+accent 151-152 | Chu Du choàng dậy: da ngựa bọc thây
+accent 159-159 | Chu Du rú lên, mồm đổ máu tươi, ngã ngựa
+accent 159 | Chu Du rú lên, thổ huyết ngã ngựa
+accent 162-163 | "Đó là mẹo của ta đấy!"
+accent 179-179 | bốn mặt pháo nổ ầm ầm
+accent 182-183 | Triệu Tử-long gọi từ địch lâu: thành đã lấy rồi
+accent 192-192 | Chu Du kêu to, nhọt vỡ tung
+accent 192 | Chu Du kêu to vỡ vết thương
+duck 193-195 | thơ ngắn "Rõ là" - hạ nhạc
+duck 193-195 | thơ ngắn kết hồi và câu hẹn hồi sau
