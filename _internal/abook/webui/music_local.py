@@ -5,8 +5,8 @@ Kho nhạc là của TỪNG MÁY (thư mục dữ liệu của app, không nằm
 không khí của bài. Link của bài là `local:<sha1>` (music_plan.LOCAL_PREFIX), ở mọi chỗ nhận link danh mục.
 
 Phân tích: `analyze(path)` trả mục theo hình danh mục (valence, arousal, tension, sd, emotions, confidence,
-fitsUnderNarration, loudness) hay None. Model nghe chỉ-âm-thanh do phiên Nhạc huấn luyện sẽ cắm vào qua `set_analyzer`; cho tới
-lúc đó `analyze` trả None và bài ở trạng thái "chưa phân tích": KHÔNG BAO GIỜ bịa số. Bài chưa phân tích không bao giờ được
+fitsUnderNarration, loudness) hay None. Model nghe chỉ-âm-thanh (music_student.py) cắm vào qua `set_analyzer`; khi chưa có gói
+model hay thư viện, `analyze` trả None và bài ở trạng thái "chưa phân tích": KHÔNG BAO GIỜ bịa số. Bài chưa phân tích không bao giờ được
 máy tự chọn nhưng ghim tay được; bài đã phân tích vào danh sách ứng viên tự động như bài danh mục (music_select không đổi).
 """
 from __future__ import annotations

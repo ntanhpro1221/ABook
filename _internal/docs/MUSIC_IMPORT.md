@@ -31,6 +31,22 @@ Nhạc huấn luyện) cắm vào bằng `music_local.set_analyzer(hàm)`; kết
 -> `None`: bài ở trạng thái "chưa phân tích", KHÔNG bao giờ điền số thay model. `LocalMusic.analyze_pending()` (và
 `POST /api/music/local/analyze`) phân tích nốt các bài nhập từ trước khi bộ phân tích có mặt.
 
+- **Bộ phân tích "trò"** (`abook/webui/music_student.py`, `server.py` cắm lúc dựng kho nhạc qua `register()`): chỉ nghe, không dò
+  "có lời", không chặn bài nào. Một bài: ffmpeg giải mã -> ba cửa sổ 10 giây ở 20 / 50 / 80% (bài ngắn: một cửa sổ) mono 48 kHz
+  -> tháp âm thanh LAION-CLAP (L2 từng cửa sổ, trung bình, L2) -> cùng 42 đặc trưng âm học 22.050 Hz của bản nghiên cứu
+  (`music_acoustic.py`, bản chép đúng số của `acoustic_features2.py`) -> đầu trò `student_head.npz` (z-score, 16 hàng: 13 cường
+  độ = sigmoid, valence / energy / tension kẹp -1..1). `sd` = RMSE giữ ngoài của từng trục, `confidence` cố định 0,5,
+  `fitsUnderNarration` và `family` đọc từ vector nhúng so với vector chữ đã tính sẵn (họ ngoài danh sách của app như "rock"
+  -> `other`), `loudness.speechBand` = tỉ lệ năng lượng 300-3000 Hz. Bài < 3 giây hay file không giải mã được -> `None`.
+- **Gói model** (~55 MB: `model.safetensors` fp16, `config.json`, `preprocessor_config.json`, `student_head.npz`) ở
+  `huggingface.co/NGDtuanh/abook-music-student`, ghim một commit (`music_student.REVISION`; còn trống thì app không tải gì), tải
+  một lần vào `<dữ liệu app>/music/student/` khi bài đầu tiên cần phân tích. Chưa có gói, không mạng, hay thiếu torch / transformers
+  / librosa (app đóng gói chỉ có phần nghe) -> `analyze` trả `None` và `register()` không cắm gì: bài ở "chưa phân tích", giao diện
+  nói chưa có bộ phân tích. `ABOOK_MUSIC_STUDENT_DIR` trỏ tới một thư mục gói có sẵn (bài thử, máy không mạng).
+- **Chi phí** (CPU máy chủ sách, 16 luồng): nạp gói ~5 giây một lần; một bài ~3 phút ~1,2 giây (lần đầu ~3,8 giây vì numba biên dịch).
+  Khớp bản nghiên cứu: đầu trò + âm học trùng V/E/T tới 1e-3 khi nhận đúng vector nhúng của bản nghiên cứu; cả đường chạy của app
+  lệch tối đa ~0,05 trên V/E/T vì bản nghiên cứu cắt cửa sổ bằng `ffmpeg -ss` theo độ dài ghi trong đầu file mp3.
+
 - **Chưa phân tích**: không bao giờ được máy tự chọn; vẫn ghim tay được và có trong nhóm "Nhạc của tôi" của "Đổi bài".
 - **Đã phân tích**: vào ứng viên tự động như bài danh mục (`LocalMusic.near` chia ô như `MusicCatalog.near`; `music_select`
   KHÔNG đổi). Khoá thiếu được đối xử như bài danh mục thiếu khoá (không `family` / `style` thì bị phạt khi cuốn đã chọn phong
