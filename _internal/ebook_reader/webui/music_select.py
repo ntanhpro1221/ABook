@@ -71,10 +71,15 @@ def score(track: dict[str, Any], target: tuple[float, ...], *, family: str | Non
 
 def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float], Iterable[dict[str, Any]]], *,
            book_key: str, family: str | None = None, pins: dict[str, str] | None = None,
-           banned: Iterable[str] = (), genre_styles: dict[str, float] | None = None) -> list[dict[str, Any]]:
+           banned: Iterable[str] = (), genre_styles: dict[str, float] | None = None,
+           keep: dict[str, str | None] | None = None) -> list[dict[str, Any]]:
     """Mỗi đoạn kèm `link` (None = im lặng), `distance`, `pinned`. `pins`: {khoá đoạn: link} người dùng ghim
-    (khoá = `scene_key`); `banned`: link người dùng đã bỏ (không chọn lại cho cuốn này)."""
+    (khoá = `scene_key`); `banned`: link người dùng đã bỏ (không chọn lại cho cuốn này).
+    `keep`: {khoá đoạn: link đã chọn trước đó (None = đoạn đã im lặng)} - như ghim "mềm": đoạn nào có trong `keep` giữ
+    nguyên bài cũ (không tính là ghim), trừ khi bài ấy đã bị bỏ thì chọn lại. Người dùng sửa MỘT đoạn / MỘT bài thì các
+    đoạn khác không được đổi bài theo chỉ vì phạt "vừa dùng" lan dọc cuốn."""
     pins = pins or {}
+    keep = keep or {}
     banned = set(banned)
     chosen: list[dict[str, Any]] = []
     recent: list[str] = []
@@ -83,6 +88,8 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
         result = dict(scene, key=key, pinned=False)
         if key in pins:
             result.update(link=pins[key], pinned=True, distance=None)
+        elif key in keep and keep[key] not in banned:
+            result.update(link=keep[key], distance=None)
         else:
             # Cùng một cách xếp hạng với "Đổi bài" (`rank`): bài máy chọn luôn là bài đầu danh sách gợi ý.
             best = rank(scene, candidates_near, book_key=book_key, family=family, banned=banned,

@@ -34,7 +34,7 @@ import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import { useMediaQuery } from "@/shared/media";
-import { excerpt, formatClock, formatLength, formatPercent, formatWhen, spokenClock } from "@/shared/format";
+import { excerpt, formatClock, formatLength, formatPercent, formatWhen, licenseLabel, spokenClock } from "@/shared/format";
 import { IconButton, Tooltip, Vu } from "@/shared/ui";
 import { useClock, useClockReader, useDuration, usePlaybackSecond } from "./clock";
 import { usePlayListenBook, useNextVolume } from "./LibraryScreen";
@@ -638,10 +638,10 @@ function MusicCreditLine() {
               Giấy phép:{" "}
               {musicCredit.licenseUrl ? (
                 <a href={musicCredit.licenseUrl} target="_blank" rel="noreferrer" className="underline">
-                  {musicCredit.license}
+                  {licenseLabel(musicCredit.license, musicCredit.licenseUrl)}
                 </a>
               ) : (
-                musicCredit.license
+                licenseLabel(musicCredit.license)
               )}
             </p>
           )}

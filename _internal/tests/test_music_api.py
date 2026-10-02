@@ -171,3 +171,92 @@ def test_editing_one_scene_keeps_the_scenes_of_the_plan_and_only_rechoosing_resp
     status, rebuilt = _call(server, "POST", f"/api/books/{book}/music/rebuild", {})
     assert status == 200 and rebuilt["plan"]["scenes"][0]["end"] == first["end"]
     assert "legacy" not in rebuilt["plan"]["scenes"][0]
+
+
+def _calm_plan(paths, view: dict, count: int = 8) -> None:
+    """Ép plan về `count` đoạn cùng không khí êm (hai bài "calm" cùng hợp): phạt "vừa dùng" lan dọc cuốn."""
+    plan_file = paths.root / "music_plan.json"
+    plan = json.loads(plan_file.read_text(encoding="utf-8"))
+    base = plan["scenes"][0]
+    plan["scenes"] = [dict(base, firstSegment=100 + i, lastSegment=100 + i, start=i * 20.0, end=i * 20.0 + 20.0,
+                           valence=0.3, arousal=-0.6, confidence=0.9, tension=0.0) for i in range(count)]
+    plan_file.write_bytes(json.dumps(plan).encode("utf-8"))
+
+
+def _links(view: dict) -> list:
+    return [scene["link"] for scene in view["plan"]["scenes"]]
+
+
+def test_pinning_one_scene_keeps_the_track_of_every_other_scene(studio, tmp_path: Path) -> None:  # noqa: F811
+    paths, app, server, _runner = studio
+    _with_catalog(app, tmp_path)
+    book = book_id(paths.root)
+    _call(server, "GET", f"/api/books/{book}/music")
+    _view = json.loads((paths.root / "music_plan.json").read_text(encoding="utf-8"))
+    _calm_plan(paths, _view)
+    # Đổi phong cách là chọn lại tất cả: dựng nền để so.
+    _status, base = _call(server, "PUT", f"/api/books/{book}/music", {"family": "piano"})
+    _status, base = _call(server, "PUT", f"/api/books/{book}/music", {"family": ""})
+    before = _links(base)
+    assert len(before) == 8 and len(set(before)) > 1
+    first = base["plan"]["scenes"][0]["key"]
+    status, pinned = _call(server, "PUT", f"/api/books/{book}/music", {"pins": {first: "https://x/sad.mp3"}})
+    assert status == 200
+    after = _links(pinned)
+    assert after[0] == "https://x/sad.mp3" and after[1:] == before[1:]
+    assert [s["pinned"] for s in pinned["plan"]["scenes"]] == [True] + [False] * 7
+    # Không giữ bài thì cùng thao tác này làm các đoạn sau đổi theo (đây là cái đã sửa): chọn lại tất cả với cùng ghim.
+    _status, base = _call(server, "PUT", f"/api/books/{book}/music", {"pins": {first: None}})
+    assert _links(base)[1:] == before[1:]
+    status, cascaded = _call(server, "PUT", f"/api/books/{book}/music", {"genre": "", "pins": {first: "https://x/sad.mp3"}})
+    assert status == 200 and _links(cascaded)[1:] != before[1:]
+    # Bỏ ghim, im lặng / có nhạc lại, mức nhạc, bật/tắt: cũng không đổi bài của đoạn khác.
+    _status, base = _call(server, "PUT", f"/api/books/{book}/music", {"genre": "", "pins": {first: None}})
+    before = _links(base)
+    for body in ({"silence": {first: True}}, {"levelDb": -24}, {"enabled": False}, {"enabled": True}):
+        _status, now = _call(server, "PUT", f"/api/books/{book}/music", body)
+        assert _links(now)[1:] == before[1:], body
+    _status, now = _call(server, "PUT", f"/api/books/{book}/music", {"silence": {first: False}})
+    assert _links(now)[1:] == before[1:] and now["plan"]["scenes"][0]["link"]
+
+
+def test_banning_a_track_rechooses_only_the_scenes_that_used_it_and_drops_pins_to_it(studio, tmp_path: Path) -> None:  # noqa: F811
+    paths, app, server, _runner = studio
+    _with_catalog(app, tmp_path)
+    book = book_id(paths.root)
+    _call(server, "GET", f"/api/books/{book}/music")
+    _calm_plan(paths, {})
+    _status, base = _call(server, "PUT", f"/api/books/{book}/music", {"family": ""})
+    before = _links(base)
+    victim = before[0]
+    # Ghim bài này vào đoạn cuối nữa: bỏ bài thì ghim ấy cũng phải gỡ.
+    last = base["plan"]["scenes"][-1]["key"]
+    _status, base = _call(server, "PUT", f"/api/books/{book}/music", {"pins": {last: victim}})
+    before = _links(base)
+    status, banned = _call(server, "PUT", f"/api/books/{book}/music", {"ban": [victim]})
+    assert status == 200
+    after = _links(banned)
+    for was, now in zip(before, after):
+        assert now != victim and now is not None
+        if was != victim:
+            assert now == was
+    assert banned["overrides"]["pins"] == {} and banned["plan"]["scenes"][-1]["pinned"] is False
+    assert victim in banned["overrides"]["banned"]
+    # Dùng lại bài: không đoạn nào đổi (chỉ các lần "Chọn lại nhạc" mới đưa nó về).
+    _status, back = _call(server, "PUT", f"/api/books/{book}/music", {"unban": [victim]})
+    assert _links(back) == after
+
+
+def test_the_view_names_the_banned_tracks_and_survives_a_missing_catalog(studio, tmp_path: Path) -> None:  # noqa: F811
+    paths, app, server, _runner = studio
+    _with_catalog(app, tmp_path)
+    book = book_id(paths.root)
+    _call(server, "GET", f"/api/books/{book}/music")
+    link = "https://x/battle.mp3"
+    status, view = _call(server, "PUT", f"/api/books/{book}/music", {"ban": [link]})
+    assert status == 200 and link in view["overrides"]["banned"]
+    assert view["bannedTracks"] == {link: {"title": "Battle", "creator": "Kevin MacLeod"}}
+    # Mất danh mục (mất mạng, chưa có bản đệm): vẫn xem được, chỉ không có tên - giao diện lùi về tên file.
+    app._music_catalog = music_catalog.MusicCatalog(tmp_path / "empty_cache", str(tmp_path / "khong_co"))
+    status, offline = _call(server, "GET", f"/api/books/{book}/music")
+    assert status == 200 and offline["bannedTracks"] == {}

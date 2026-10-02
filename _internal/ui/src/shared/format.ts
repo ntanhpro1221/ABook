@@ -106,3 +106,19 @@ export function formatTime(epochSeconds: number): string {
   const time = date.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
   return sameDay ? time : `${time} · ${date.toLocaleDateString("vi-VN", { day: "numeric", month: "numeric" })}`;
 }
+
+/** Giấy phép nhạc đọc được: "CC BY 4.0", "CC BY-SA 4.0", "CC0 1.0". Danh mục chỉ giữ mã ("by", "cc0"); phiên bản lấy từ
+ *  liên kết giấy phép nếu có (không đoán phiên bản khi không có), mã lạ thì giữ nguyên. */
+export function licenseLabel(code?: string | null, url?: string | null): string {
+  const match = url?.match(/creativecommons\.org\/(licenses|publicdomain)\/([a-z-]+)\/(\d+(?:\.\d+)?)/i);
+  if (match) {
+    const [, kind, slug, version] = match;
+    if (kind.toLowerCase() === "licenses") return `CC ${slug.toUpperCase()} ${version}`;
+    if (slug.toLowerCase() === "zero") return `CC0 ${version}`;
+  }
+  const raw = (code ?? "").trim();
+  const lower = raw.toLowerCase();
+  if (lower === "cc0") return "CC0";
+  if (/^by(-(nc|nd|sa))*$/.test(lower)) return `CC ${lower.toUpperCase()}`;
+  return raw;
+}

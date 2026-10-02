@@ -651,8 +651,26 @@ class App:
                 plan = self.music_rebuild(value)
             except music_catalog.CatalogError as exc:
                 error = str(exc)
-        return {"plan": plan, "overrides": music_plan.read_overrides(path), "error": error,
-                "taxonomy": self._music_taxonomy()}
+        return self._music_payload(path, plan, error)
+
+    def _music_payload(self, path: Path, plan: dict[str, Any] | None, error: str) -> dict[str, Any]:
+        overrides = music_plan.read_overrides(path)
+        return {"plan": plan, "overrides": overrides, "error": error, "taxonomy": self._music_taxonomy(),
+                "bannedTracks": self._banned_tracks(overrides["banned"], plan)}
+
+    def _banned_tracks(self, banned: list[str], plan: dict[str, Any] | None) -> dict[str, dict[str, str]]:
+        """Tên các bài đã bỏ ("Bài đã bỏ"): {link: {title, creator}} lấy từ danh mục; mất mạng / bài không còn thì bỏ qua
+        (giao diện hiện tên file) - không bao giờ làm hỏng cả màn hình."""
+        if not banned:
+            return {}
+        known = dict((plan or {}).get("tracks") or {})
+        try:
+            known.update(self.music_catalog().lookup(banned))
+        except (music_catalog.CatalogError, OSError, ValueError):
+            pass
+        return {link: {key: known[link][key] for key in ("title", "creator")
+                       if isinstance(known[link].get(key), str) and known[link][key]}
+                for link in banned if isinstance(known.get(link), dict) and known[link].get("title")}
 
     def _music_taxonomy(self) -> dict[str, Any]:
         """Bảng phong cách / thể loại / nhãn GEMS từ danh mục (đổi được không cần cập nhật app); mất mạng thì rỗng."""
@@ -665,17 +683,20 @@ class App:
         except music_catalog.CatalogError:
             return {}
 
-    def music_rebuild(self, value: str, *, keep_scenes: bool = False) -> dict[str, Any]:
+    def music_rebuild(self, value: str, *, keep_scenes: bool = False, edited: set[str] | None = None) -> dict[str, Any]:
         """Dựng lại rãnh nhạc. `keep_scenes`: chọn lại bài trên các đoạn plan hiện có (người dùng sửa một đoạn - không
-        chia lại cả cuốn); mặc định chia lại đoạn ("Chọn lại nhạc", lần dựng đầu)."""
+        chia lại cả cuốn); mặc định chia lại đoạn ("Chọn lại nhạc", lần dựng đầu). `edited` (cần `keep_scenes`): các đoạn
+        vừa bị sửa - khác None thì mọi đoạn KHÁC giữ bài cũ (trừ bài đã bị bỏ); None thì chọn lại tất cả."""
         path = self._book(value)
         catalog = self.music_catalog()
         # Dựng lại = muốn dữ liệu mới nhất: đọc lại mục lục (nhỏ) thay vì bản đệm 24 giờ.
         manifest = catalog.manifest(refresh=True)
+        previous = music_plan.read_plan(path) if keep_scenes else None
         plan = music_plan.build(path, lambda v, a: catalog.near(v, a, radius=1), catalog.lookup,
                                 catalog_revision=str(manifest.get("revision") or ""), book_key=value,
                                 taxonomy=manifest.get("taxonomy"),
-                                scenes=music_plan.scenes_of(music_plan.read_plan(path)) if keep_scenes else None)
+                                scenes=music_plan.scenes_of(previous),
+                                keep=music_plan.kept_tracks(previous, edited) if edited is not None else None)
         self._warm_music(plan)
         return plan
 
@@ -685,17 +706,22 @@ class App:
         self._mutating()
         path = self._book(value)
         music_plan.write_overrides(path, body)
-        return self.music_view(value) if music_plan.read_plan(path) is None else self._music_after_change(value)
+        if music_plan.read_plan(path) is None:
+            return self.music_view(value)
+        # Sửa một đoạn / một bài (ghim, im lặng, bỏ bài, bật/tắt, mức nhạc): các đoạn khác giữ bài cũ - chỉ đoạn vừa sửa
+        # và đoạn đang dùng bài vừa bỏ mới chọn lại. Đổi thể loại / phong cách là đổi gu của cả cuốn: chọn lại tất cả.
+        retaste = "genre" in body or "family" in body
+        edited = None if retaste else {str(key) for part in ("pins", "silence") for key in (body.get(part) or {})}
+        return self._music_after_change(value, edited)
 
-    def _music_after_change(self, value: str) -> dict[str, Any]:
+    def _music_after_change(self, value: str, edited: set[str] | None = None) -> dict[str, Any]:
         path = self._book(value)
         error = ""
         try:
-            self.music_rebuild(value, keep_scenes=True)
+            self.music_rebuild(value, keep_scenes=True, edited=edited)
         except music_catalog.CatalogError as exc:
             error = str(exc)
-        return {"plan": music_plan.read_plan(path), "overrides": music_plan.read_overrides(path), "error": error,
-                "taxonomy": self._music_taxonomy()}
+        return self._music_payload(path, music_plan.read_plan(path), error)
 
     def music_alternatives(self, value: str, scene_key: str, limit: int = 6) -> dict[str, Any]:
         """"Đổi bài": tối đa `limit` bài khác cho một đoạn, hợp nhất trước - cùng điểm và bộ lọc với lúc máy chọn

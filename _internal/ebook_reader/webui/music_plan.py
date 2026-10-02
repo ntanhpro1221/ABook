@@ -69,7 +69,10 @@ def write_overrides(project_root: Path, changes: dict[str, Any]) -> dict[str, An
         (silenced.add if on else silenced.discard)(str(key))
     current["silenced"] = sorted(silenced)
     banned = set(current["banned"])
-    banned.update(str(link) for link in changes.get("ban") or [])
+    newly_banned = {str(link) for link in changes.get("ban") or []}
+    banned.update(newly_banned)
+    # Bỏ một bài = muốn nó biến khỏi cuốn, kể cả chỗ người dùng từng ghim: ghim trỏ vào bài ấy bị gỡ (đoạn đó chọn lại).
+    current["pins"] = {key: link for key, link in current["pins"].items() if link not in newly_banned}
     banned.difference_update(str(link) for link in changes.get("unban") or [])
     current["banned"] = sorted(banned)
     atomic_write_json(Path(project_root) / OVERRIDES_FILE, current)
@@ -86,19 +89,25 @@ def book_scripts(project_root: Path) -> Iterable[dict[str, Any]]:
 def build(project_root: Path, candidates_near: Callable[[float, float], Iterable[dict[str, Any]]],
           lookup: Callable[[list[str]], dict[str, dict[str, Any]]], *, catalog_revision: str | None = None,
           book_key: str | None = None, taxonomy: dict[str, Any] | None = None,
-          scenes: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+          scenes: list[dict[str, Any]] | None = None,
+          keep: dict[str, str | None] | None = None) -> dict[str, Any]:
     """Dựng lại music_plan.json: chia đoạn cả cuốn, chọn bài theo lựa chọn của người dùng, gắn thông tin bài.
     `scenes`: các đoạn đã có (từ plan cũ, qua `scenes_of`) - chọn lại bài trên đúng các đoạn ấy, không chia lại sách;
-    người dùng sửa một đoạn thì các đoạn khác không đổi theo (chỉ "Chọn lại nhạc" mới chia lại)."""
+    người dùng sửa một đoạn thì các đoạn khác không đổi theo (chỉ "Chọn lại nhạc" mới chia lại).
+    `keep`: {khoá đoạn: bài cũ} (từ `kept_tracks`) - đoạn nào có trong đó giữ nguyên bài, trừ khi bài đã bị bỏ hoặc không
+    còn trong danh mục (không dùng được nữa) thì chọn lại như thường."""
     project_root = Path(project_root)
     overrides = read_overrides(project_root)
     if scenes is None:
         scenes = music_scenes.book_scenes(book_scripts(project_root))
     genres = (taxonomy or {}).get("genres") or {}
     genre_styles = (genres.get(overrides["genre"]) or {}).get("styles") if overrides["genre"] else None
+    if keep:
+        usable = lookup(sorted({link for link in keep.values() if link}))
+        keep = {key: link for key, link in keep.items() if link is None or link in usable}
     chosen = music_select.choose(scenes, candidates_near, book_key=book_key or project_root.name,
                                  family=overrides["family"], pins=overrides["pins"], banned=overrides["banned"],
-                                 genre_styles=genre_styles)
+                                 genre_styles=genre_styles, keep=keep)
     silenced = set(overrides["silenced"])
     for scene in chosen:
         if scene["key"] in silenced:
@@ -131,6 +140,15 @@ def scenes_of(plan: dict[str, Any] | None) -> list[dict[str, Any]] | None:
     if not isinstance(scenes, list) or not scenes:
         return None
     return [{k: v for k, v in scene.items() if k not in CHOICE_FIELDS} for scene in scenes]
+
+
+def kept_tracks(plan: dict[str, Any] | None, edited: Iterable[str] = ()) -> dict[str, str | None]:
+    """Bài đang chọn của từng đoạn trong plan: {khoá đoạn: link (None = im lặng)}, trừ các đoạn vừa bị sửa (`edited`) - để
+    đưa cho `build(keep=...)`: sửa một đoạn / một bài thì các đoạn khác giữ bài cũ. Đoạn người dùng đang để im lặng không
+    vào đây (build tự đặt im lặng theo sổ lựa chọn; bỏ im lặng thì đoạn ấy chọn lại)."""
+    skip = set(edited)
+    return {scene["key"]: scene.get("link") for scene in (plan or {}).get("scenes") or []
+            if scene.get("key") and scene["key"] not in skip and not scene.get("silenced")}
 
 
 def read_plan(project_root: Path) -> dict[str, Any] | None:

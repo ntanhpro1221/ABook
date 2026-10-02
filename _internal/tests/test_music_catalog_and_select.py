@@ -15,7 +15,7 @@ TRACKS = {
     "https://x/calm2.mp3": {"valence": 0.2, "arousal": -0.6, "family": "eastern", "duration": 200,
                             "source": "incompetech"},
     "https://x/battle.mp3": {"valence": -0.4, "arousal": 0.85, "family": "orchestral", "duration": 150,
-                             "source": "incompetech"},
+                             "source": "incompetech", "title": "Battle", "creator": "Kevin MacLeod"},
     "https://x/sad.mp3": {"valence": -0.7, "arousal": -0.4, "family": "piano", "duration": 240, "source": "incompetech"},
     "https://x/short.mp3": {"valence": 0.3, "arousal": -0.7, "family": "piano", "duration": 20, "source": "incompetech"},
 }
@@ -139,3 +139,43 @@ def test_tension_tells_fear_from_excitement(near) -> None:
     scene = {**_scene(1, -0.25, 0.7), "tension": 0.8}
     [entry] = pick([scene], lambda v, a: tracks, book_key="b")
     assert entry["link"] == "https://x/thrill.mp3"
+
+
+def _eight_calm_scenes() -> list[dict]:
+    return [_scene(i * 40, 0.3, -0.6) for i in range(8)]
+
+
+def test_pinning_one_scene_cascades_through_the_recent_penalty_unless_the_others_are_kept(near) -> None:
+    scenes = _eight_calm_scenes()
+    first = choose(scenes, near, book_key="b")
+    pin = {scene_key(scenes[0]): "https://x/sad.mp3"}
+    cascaded = choose(scenes, near, book_key="b", pins=pin)
+    # Cái cũ: ghim đoạn 0 làm các đoạn sau đổi bài theo (bài ghim chiếm chỗ trong "vừa dùng", bài khác hết bị phạt).
+    assert [e["link"] for e in cascaded[1:]] != [e["link"] for e in first[1:]]
+    keep = {entry["key"]: entry["link"] for entry in first}
+    sticky = choose(scenes, near, book_key="b", pins=pin, keep={k: v for k, v in keep.items() if k not in pin})
+    assert sticky[0]["link"] == "https://x/sad.mp3" and sticky[0]["pinned"] is True
+    assert [e["link"] for e in sticky[1:]] == [e["link"] for e in first[1:]]
+    assert not any(e["pinned"] for e in sticky[1:])
+
+
+def test_a_kept_track_that_is_now_banned_is_chosen_again_and_the_rest_stay(near) -> None:
+    scenes = _eight_calm_scenes()
+    first = choose(scenes, near, book_key="b")
+    used = {entry["link"] for entry in first}
+    victim = first[0]["link"]
+    keep = {entry["key"]: entry["link"] for entry in first}
+    after = choose(scenes, near, book_key="b", banned={victim}, keep=keep)
+    for before, now in zip(first, after):
+        if before["link"] == victim:
+            assert now["link"] != victim and now["link"] is not None
+        else:
+            assert now["link"] == before["link"]
+    assert victim in used and victim not in {entry["link"] for entry in after}
+
+
+def test_a_scene_that_was_silent_for_lack_of_a_match_stays_silent_when_kept(near) -> None:
+    scene = _scene(1, 0.3, -0.6)
+    assert choose([scene], near, book_key="b")[0]["link"] is not None  # không giữ thì đoạn này có nhạc
+    [entry] = choose([scene], near, book_key="b", keep={scene_key(scene): None})
+    assert entry["link"] is None and entry["pinned"] is False

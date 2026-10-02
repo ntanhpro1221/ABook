@@ -34,6 +34,8 @@ interface MusicView {
   plan: { enabled: boolean; levelDb: number; genre: string | null; scenes: Scene[]; tracks: Record<string, TrackInfo> } | null;
   overrides: { enabled: boolean; levelDb: number; genre: string | null; pins: Record<string, string>; silenced: string[]; banned: string[] };
   error: string;
+  /** Tên các bài đã bỏ (từ danh mục; thiếu thì hiện tên file). */
+  bannedTracks?: Record<string, TrackInfo>;
   taxonomy: {
     genres?: Record<string, { vi: string }>;
     gems?: Record<string, { vi: string; va: [number, number, number] }>;
@@ -221,18 +223,21 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
     onError: (error: Error) => toast.error("Không chọn lại được nhạc", { description: error.message }),
   });
 
-  /** Bỏ một bài cho cả cuốn: lặng lẽ thì khó hiểu vì sao các đoạn khác cũng đổi bài, nên báo kèm "Hoàn tác". */
-  const ban = (link: string, label: string) =>
+  /** Bỏ một bài cho cả cuốn: lặng lẽ thì khó hiểu vì sao các đoạn khác cũng đổi bài, nên báo (kèm số đoạn đang dùng bài
+   *  ấy, đếm trước khi đổi) và cho "Hoàn tác". */
+  const ban = (link: string, label: string) => {
+    const used = (data?.plan?.scenes ?? []).filter((scene) => scene.link === link).length;
     change.mutate(
       { ban: [link] },
       {
         onSuccess: () =>
-          toast("Đã bỏ bài này cho cả cuốn", {
+          toast(`Đã bỏ bài này cho cả cuốn (đang dùng ở ${used} đoạn)`, {
             description: label,
             action: { label: "Hoàn tác", onClick: () => change.mutate({ unban: [link] }) },
           }),
       },
     );
+  };
 
   if (isLoading || !data) return <p className="mt-6 text-sm text-fg-2">Đang dựng nhạc nền…</p>;
   const { plan, overrides, taxonomy } = data;
@@ -296,7 +301,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
             <ul className="mt-2 space-y-1">
               {overrides.banned.map((link) => (
                 <li key={link} className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <span className="min-w-0 flex-1 break-words">{trackLabel(link, plan?.tracks[link])}</span>
+                  <span className="min-w-0 flex-1 break-words">{trackLabel(link, data.bannedTracks?.[link] ?? plan?.tracks[link])}</span>
                   <Button size="sm" variant="ghost" disabled={change.isPending} onClick={() => change.mutate({ unban: [link] })}>
                     Dùng lại
                   </Button>
