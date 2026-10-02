@@ -1,0 +1,249 @@
+# "Evil Lord" (Ore wa Seikan Kokka no Akutoku Ryoushu! - Tôi là ác vương của đế chế liên thiên hà) file 02.txt ("Chương 02:
+# Người Quản Gia Và Người Kiếm SĨ"). Đáp án KIỂM TRA LN Nhật đợt 2 (02-10; luật cố định: vị trí 30% của bộ, >30 KB lấy 25 KB
+# đầu) - file 25,7 KB nên lấy trọn. Agent A gán 02-10; chưa soát B.
+# BỐN cảnh, hai ngôi kể: seq 1-120 NGÔI BA theo quản gia Brian; seq 121-170 NGÔI THỨ NHẤT, "tôi" = LIAM / LIAM SERA BANFIELD
+# (01.txt:5 "Tên mới của tôi là [Liam Sera Banfield]"; ngôi kể chính của cả bộ); 171-194 ngôi ba theo người dẫn lối;
+# 195-222 ngôi ba theo Yasushi.
+# Tên: LIAM / LIAM SERA BANFIELD (m, 5 tuổi rồi 7 tuổi; xưng "ta", gọi Brian "ông", Amagi "cô"); AMAGI (f, android hầu gái, xưng
+# "em", gọi Liam "Chủ nhân"); BRIAN (m, quản gia, xưng "tôi"/"lão", gọi Liam "ngài"/"Chúa tể của tôi"); NGƯỜI DẪN LỐI (m, cả bộ
+# không có tên riêng - 00.txt:69 hắn tự nhận "người dẫn lối", lời kể gọi "Người dẫn lối" mọi chỗ: chức danh trọn cuốn = tên,
+# quy tắc 11); YASUSHI (m, kiếm sĩ lừa đảo, được nêu tên ở 201 ngay sau câu nói đầu 200 -> tên đủ, NPC*~).
+# 12-14: hai người hầu thì thầm, 9 "lần lượt của một người đàn ông trẻ tuổi và của một người phụ nữ" -> 12 người làm vườn, 13 cô
+# hầu gái (lo bị phát hiện), 14 người làm vườn (rủ đi phòng trống rồi kéo cô đi, 15).
+# 30 giọng qua thiết bị = Liam (31 "giọng nói khó chịu không phù hợp với sự trẻ trung", 32 Liam trong văn phòng).
+# 94 "Chúa tể của tôi..." = Brian (cùng lối gọi ở 101, 109; Amagi luôn gọi "Chủ nhân").
+# 97-98: không lời dẫn; 97 ra lệnh bắt đầu tái cơ cấu = Liam (AMAGI~), 98 "Ngừng làm khuôn mặt đó đi" nói với Brian (99).
+# Parser khoá D cho chữ kể: 57 "-bởi vì ngay từ đầu...", 96 (nháy mở ở 95 không đóng), 116 "-Brian không thể không nghĩ," ->
+# N,D NARRATOR (tiền lệ Love Unseen 07:90). 43 "- Cậu chủ sẽ nghĩ gì..." là câu nghĩ của Brian bị khoá D -> T,D BRIAN (quy tắc 9),
+# NARRATOR~ (gạch đầu dòng, "ngài ấy" - nửa như lời kể).
+# 62, 75, 117 "(...)" = nội tâm Brian (62 nhắc "ngài Alistair" mà 117-118 nói Brian ngưỡng mộ; 75 ngay sau "Brian nhẹ nhõm").
+# 186 "Tôi muốn có sức mạnh để đảm bảo rằng tôi sẽ không bao giờ đánh mất..." KHÓ: đứng sau 184 "Trong video, Liam bất ngờ tuyên
+# bố" và 185 "người dẫn lối yêu những người như thế"; nhưng Liam chưa hề nói câu ấy (155-159 cậu xưng "ta" với Amagi, câu khác
+# hẳn) - đây là người dẫn lối diễn lại/nhại động cơ của Liam (169-170) -> NGƯỜI DẪN LỐI đủ, LIAM~.
+# 206 'Nhận yêu cầu này thay cho tôi.' lời bậc thầy võ thuật (vô danh) bị khoá N -> NARRATOR, NPC*~ (quy tắc 10).
+# Tiếng lòng tức thời của "tôi"-Liam -> N,T NARRATOR,LIAM (quy tắc 4): 121 "...điều này, thật tệ.", 129, 138, 139, 141; 142 nửa
+# tự nhủ nửa kể -> LIAM~. Lời kể ngôi một giải thích/quyết tâm (160-170) chỉ N.
+# Sau 120, 170, 194: parser bỏ dòng ngăn cảnh (p121, p172, p197 không có seq).
+0 H
+1 N NARRATOR neutral,sad 0-1 normal normal u
+2 N
+3 N
+4 N
+5 N NARRATOR neutral,happy 0-1 normal normal u
+6 N
+7 N
+8 N
+9 N
+10 N
+11 N
+12 D NPC*:người làm vườn neutral,happy,whispering 0-1 normal soft,normal m
+13 D NPC*:cô hầu gái afraid,neutral,whispering 0-1 normal soft,normal f
+14 D NPC*:người làm vườn happy,neutral,whispering 0-1 normal soft,normal m
+15 N
+16 N
+17 N
+18 N NARRATOR neutral,sad 0-1 normal normal u
+19 D BRIAN sad,tired 0-1 slow,normal soft,normal m
+20 N
+21 N
+22 N NARRATOR neutral,angry,sad 0-1 normal normal u
+23 N NARRATOR neutral,sad,angry 0-1 normal normal u
+24 N
+25 N NARRATOR neutral,sad 0-1 normal normal u
+26 N
+27 N
+28 D BRIAN neutral 0-1 normal normal m
+29 N
+30 D LIAM,LIAM SERA BANFIELD neutral,angry,tired 0-1 normal normal m
+31 N NARRATOR neutral,angry 0-1 normal normal u
+32 N
+33 N
+34 N
+35 N
+36 D BRIAN neutral,tender 0-1 normal normal m
+37 N
+38 N
+39 D LIAM,LIAM SERA BANFIELD neutral,sad 0-1 normal normal m
+40 D BRIAN surprised,neutral,afraid 0-1 normal normal m
+41 N
+42 N
+43 T,D BRIAN,NARRATOR~ afraid,neutral 0-1 normal soft,normal m
+44 D LIAM,LIAM SERA BANFIELD angry,neutral,sarcastic 0-1 normal normal m
+45 N
+46 D BRIAN neutral,afraid,happy 0-1 normal normal m
+47 D LIAM,LIAM SERA BANFIELD angry 2-3 fast,normal loud m
+48 N NARRATOR neutral,angry 0-1 normal normal u
+49 N
+50 N
+51 N NARRATOR neutral,afraid 0-1 normal normal u
+52 D LIAM,LIAM SERA BANFIELD angry 2-3 fast,normal loud m
+53 N
+54 N
+55 N
+56 N
+57 N,D NARRATOR neutral 0-1 normal normal u
+58 N
+59 N
+60 N
+61 N
+62 T BRIAN sad,tired,angry 0-1 normal,slow soft,normal m
+63 N
+64 D LIAM,LIAM SERA BANFIELD neutral,angry 0-2 normal normal,loud m
+65 N NARRATOR neutral,afraid 0-1 normal normal u
+66 D BRIAN afraid,surprised 1-2 fast,normal normal,loud m
+67 N NARRATOR neutral,sad 0-1 normal normal u
+68 D LIAM,LIAM SERA BANFIELD sad,neutral 0-1 normal normal,soft m
+69 N NARRATOR neutral,afraid,surprised 0-1 normal normal u
+70 D AMAGI neutral,tender 0-1 normal normal f
+71 D LIAM,LIAM SERA BANFIELD surprised,neutral,angry 0-1 normal normal m
+72 D AMAGI neutral,tender 0-1 normal normal f
+73 N
+74 N NARRATOR neutral,happy 0-1 normal normal u
+75 T BRIAN afraid,neutral,tired 0-1 normal soft,normal m
+76 N
+77 D LIAM,LIAM SERA BANFIELD neutral 0-1 normal normal m
+78 N
+79 D AMAGI neutral 0-1 normal normal f
+80 D LIAM,LIAM SERA BANFIELD surprised,neutral 0-1 normal normal m
+81 N
+82 N
+83 N
+84 D LIAM,LIAM SERA BANFIELD surprised,neutral 0-2 normal normal m
+85 N
+86 D AMAGI neutral 0-1 normal normal f
+87 N
+88 N NARRATOR neutral,afraid 0-1 normal normal u
+89 D AMAGI neutral 0-1 normal normal f
+90 D LIAM,LIAM SERA BANFIELD neutral,surprised,sarcastic 0-1 normal normal m
+91 N
+92 N
+93 N
+94 D BRIAN neutral,afraid 0-1 normal normal m
+95 D LIAM,LIAM SERA BANFIELD neutral 0-1 normal normal m
+96 N,D NARRATOR neutral 0-1 normal normal u
+97 D LIAM,LIAM SERA BANFIELD,AMAGI~ neutral,happy,excited 0-1 normal normal m
+98 D LIAM,LIAM SERA BANFIELD neutral,angry,sarcastic 0-1 normal normal m
+99 N NARRATOR neutral,afraid 0-1 normal normal u
+100 N
+101 D BRIAN afraid,angry 2-3 fast loud m
+102 N NARRATOR neutral,surprised 0-1 normal normal u
+103 D AMAGI neutral 0-1 normal normal f
+104 N
+105 N NARRATOR neutral,afraid 0-1 normal normal u
+106 N
+107 N NARRATOR neutral,afraid 0-1 normal normal u
+108 N
+109 D BRIAN afraid 1-2 fast,normal loud m
+110 N
+111 D LIAM,LIAM SERA BANFIELD neutral,angry 0-1 normal normal m
+112 N
+113 D AMAGI neutral 0-1 normal normal f
+114 N NARRATOR neutral,happy 0-1 normal normal u
+115 D LIAM,LIAM SERA BANFIELD neutral,happy 0-1 normal normal m
+116 N,D NARRATOR neutral 0-1 normal normal u
+117 T BRIAN tender,happy,neutral 0-1 slow,normal soft,normal m
+118 N NARRATOR neutral,tender 0-1 normal normal u
+119 N
+120 N
+121 N,T NARRATOR,LIAM,LIAM SERA BANFIELD sad,neutral,tired 0-1 normal normal u
+122 N NARRATOR neutral,surprised 0-1 normal normal u
+123 D LIAM,LIAM SERA BANFIELD angry,surprised 1-2 fast,normal loud,normal m
+124 N
+125 N NARRATOR neutral,sad 0-1 normal normal u
+126 N
+127 N
+128 N,T NARRATOR,LIAM,LIAM SERA BANFIELD neutral 0-1 normal normal u
+129 N,T NARRATOR,LIAM,LIAM SERA BANFIELD angry,neutral,surprised 0-1 normal normal u
+130 D LIAM,LIAM SERA BANFIELD angry,neutral 0-1 normal normal m
+131 N
+132 D AMAGI neutral 0-1 normal normal f
+133 D LIAM,LIAM SERA BANFIELD neutral,sarcastic,angry 0-1 normal normal m
+134 D AMAGI neutral,tender 0-1 normal normal f
+135 N NARRATOR neutral,angry 0-1 normal normal u
+136 N
+137 N
+138 N,T NARRATOR,LIAM,LIAM SERA BANFIELD sad,neutral,angry 0-1 normal normal u
+139 N,T NARRATOR,LIAM,LIAM SERA BANFIELD afraid,sad,neutral 0-2 normal normal u
+140 D LIAM,LIAM SERA BANFIELD sad,surprised,angry 0-1 slow,normal soft,normal m
+141 N,T NARRATOR,LIAM,LIAM SERA BANFIELD afraid,angry,neutral 0-1 normal normal u
+142 N,T NARRATOR,LIAM~,LIAM SERA BANFIELD~ neutral,afraid 0-1 normal normal u
+143 D AMAGI tender,neutral 0-1 normal soft,normal f
+144 N
+145 N
+146 N NARRATOR neutral,surprised 0-1 normal normal u
+147 N
+148 D LIAM,LIAM SERA BANFIELD surprised,neutral 0-1 normal normal m
+149 D AMAGI neutral,tender 0-1 normal normal f
+150 N
+151 N
+152 N
+153 N
+154 N
+155 D LIAM,LIAM SERA BANFIELD neutral,excited 0-1 normal normal m
+156 D AMAGI surprised,neutral 0-1 normal normal f
+157 D LIAM,LIAM SERA BANFIELD neutral,excited 0-1 normal normal m
+158 D AMAGI surprised,neutral 0-1 normal normal f
+159 D LIAM,LIAM SERA BANFIELD excited,neutral 0-1 normal normal m
+160 N NARRATOR neutral,sad 0-1 normal normal u
+161 N NARRATOR neutral,afraid 0-1 normal normal u
+162 N
+163 N
+164 N NARRATOR neutral,afraid 0-1 normal normal u
+165 N
+166 N
+167 D AMAGI neutral 0-1 normal normal f
+168 D LIAM,LIAM SERA BANFIELD neutral 0-1 normal normal m
+169 N
+170 N
+171 N
+172 N NARRATOR neutral,happy 0-1 normal normal u
+173 N NARRATOR neutral,sad 0-1 normal normal u
+174 D NGƯỜI DẪN LỐI,NPC*~ sarcastic,happy 0-1 normal normal m
+175 N
+176 N NARRATOR neutral,happy 0-1 normal normal u
+177 N NARRATOR neutral,sad 0-1 normal normal u
+178 D NGƯỜI DẪN LỐI,NPC*~ happy,neutral,surprised 0-1 normal normal,soft m
+179 N
+180 N
+181 N NARRATOR neutral,happy 0-1 normal normal u
+182 D NGƯỜI DẪN LỐI,NPC*~ sarcastic,happy 0-1 normal normal m
+183 N
+184 N
+185 N NARRATOR neutral,happy 0-1 normal normal u
+186 D NGƯỜI DẪN LỐI,NPC*~,LIAM~,LIAM SERA BANFIELD~ sarcastic,excited,happy 0-2 normal,fast normal,loud m
+187 N
+188 N
+189 D NGƯỜI DẪN LỐI,NPC*~ happy,sarcastic,excited 0-2 normal normal,loud m
+190 N
+191 N
+192 N
+193 D NGƯỜI DẪN LỐI,NPC*~ sarcastic,happy 0-1 normal normal,soft m
+194 N NARRATOR neutral,happy 0-1 normal normal u
+195 N
+196 N
+197 N
+198 N
+199 N
+200 D YASUSHI,NPC*~ neutral,tired 0-1 normal normal,soft m
+201 N
+202 N
+203 N
+204 N
+205 N
+206 N NARRATOR,NPC*~ neutral 0-1 normal normal u
+207 N
+208 N
+209 N
+210 N
+211 N
+212 D YASUSHI neutral,sarcastic,happy 0-1 normal normal,soft m
+213 N
+214 N
+215 N
+216 D YASUSHI neutral,surprised,sarcastic 0-1 normal normal,soft m
+217 N
+218 N
+219 N
+220 D YASUSHI happy,sarcastic 0-1 normal normal,soft m
+221 N
+222 N

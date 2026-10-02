@@ -1,0 +1,145 @@
+# "Konosuba" (Kono Subarashii Sekai ni Shukufuku wo!) file 033.txt ("Chương 03 p2", "Part 2" - Wiz gặp kẻ bám đuôi Duke).
+# Đáp án KIỂM TRA LN Nhật đợt 2 (02-10; luật cố định: vị trí 30% của bộ, >30 KB lấy 25 KB đầu) - file 16,8 KB nên lấy trọn.
+# Agent A gán 02-10; chưa soát B.
+# NGÔI THỨ NHẤT, "tôi" = KAZUMA / SATOU KAZUMA / KAZUMA SATOU (m; 116 tự gọi "Satou Kazuma"; 38 lần dạng ấy trong bộ).
+# Tên: AQUA (f, xưng "tôi"/"ta", gọi Kazuma "Kazuma-san", gọi Vanir "ngươi", tự xưng "Aqua-sama"); VANIR (m, quỷ, xưng "ta", gọi Wiz
+# "bà chủ"); WIZ (f, lich chủ tiệm, gọi "Vanir-san", "Aqua-sama"); MEGUMIN (f, xưng "em"); DARKNESS / LALATINA / DUSTINESS FORD
+# LALATINA (f). Duke (kẻ bám đuôi) không nói trực tiếp: 52, 55, 57 lời hắn nằm TRONG câu Wiz kể lại -> WIZ (người đọc to).
+# 17 "Này, ngươi đang đùa... Đầu tiên là Kazuma và giờ là cô ta" = Aqua (gọi Vanir "ngươi", nói Kazuma ngôi ba; 18 "tôi" đồng cảm
+# với Wiz "đang bị nói xấu").
+# 21 "Có vẻ như Wiz quay về đây bằng cách sử dụng teleport." và 48 "—Có một nhà hàng sẽ bỏ đi đồ ăn thừa..." bị parser khoá D nhưng
+# là lời kể -> N,D NARRATOR (48 thêm WIZ~ vì ngay sau câu Wiz mở chuyện ở 47).
+# 28, 38, 110 cụm ‘...’ giữa câu kể bị khoá T: 28 nằm giữa câu cãi thầm của "tôi" (27-29 "Không ai lại dùng ma pháp thanh tẩy cho
+# cái ‘trừng phạt nho nhỏ’ đó cả!") -> N,T NARRATOR,KAZUMA, AQUA~ (gốc lời Aqua, quy tắc 8); 38 nằm giữa câu giải thích -> NARRATOR,
+# KAZUMA~, AQUA~ (quy tắc 10); 110 lời giả định của kẻ bám đuôi -> NARRATOR, KAZUMA~, DUKE~.
+# 42 "—Đây, uống chút trà nóng..." = Aqua (43 Wiz đáp "Cảm ơn cô, Aqua-sama... thứ trà này sẽ khiến tôi bị tê liệt").
+# 60-61: 60 Aqua (lo chuyện tiễn hồn ma); 61 "Bọn họ không phải... Aqua... tới tận bây giờ cô mới quay về" = Kazuma (62 "Tôi nghĩ
+# là mình đã đoán khá chính xác"). 65 Kazuma ("kết luận mà tôi và Vanir đã đưa ra", 68). 72 KHÓ: không lời dẫn; trả lời 70
+# (Wiz hỏi "Cậu" = Kazuma), Kazuma gọi Vanir "ngươi" ở 028:33, 044:799 -> KAZUMA đủ; Aqua cũng hay khích Vanir -> AQUA~.
+# 81 người giao thư (83) -> NPC*. 96 Megumin ("đối thủ tự xưng của em" = Yunyun, 97). 101 "A-Anh nghĩ mình là ai hả?" = Darkness
+# đáp 100 (Kazuma chê cô nói "biến thái"). 104 Megumin ("Em không giống như Darkness"). 105 "Ey…!" Darkness (106).
+# Tiếng lòng tức thời của "tôi" không ngoặc -> N,T NARRATOR,KAZUMA (quy tắc 4): 27-29, 32, 53, 58, 64, 71, 74, 79, 84, 97, 113-117,
+# 119; lời kể giải thích (108, 112, 118) chỉ N.
+# Parser bỏ dòng ngăn cảnh p36-41, p92-95 (không có seq).
+0 H
+1 N
+2 N
+3 N
+4 N
+5 N
+6 D AQUA angry,excited 1-2 fast,normal loud f
+7 N NARRATOR neutral,angry 0-1 normal normal u
+8 D VANIR sarcastic,angry 0-1 normal normal m
+9 N
+10 D AQUA angry,sarcastic 1-2 normal,fast normal,loud f
+11 D AQUA angry,sarcastic 1-2 normal,fast normal,loud f
+12 D VANIR sarcastic,happy 0-1 normal normal m
+13 D VANIR surprised,angry,afraid 1-2 fast loud,normal m
+14 N NARRATOR neutral,angry 0-1 normal normal u
+15 D KAZUMA,SATOU KAZUMA,KAZUMA SATOU neutral 0-1 normal normal m
+16 D VANIR sarcastic,neutral 0-1 normal normal m
+17 D AQUA surprised,angry 1-2 fast,normal loud,normal f
+18 N NARRATOR neutral,sad,surprised 0-1 normal normal u
+19 N
+20 D WIZ afraid,excited 1-2 fast normal,loud f
+21 N,D NARRATOR neutral 0-1 normal normal u
+22 D AQUA angry,excited 1-2 fast,normal loud f
+23 D WIZ,NARRATOR~ afraid,surprised 2-3 fast loud f
+24 N NARRATOR neutral,surprised,afraid 0-1 normal normal u
+25 D KAZUMA,SATOU KAZUMA,KAZUMA SATOU angry,surprised 1-2 fast,normal loud m
+26 D AQUA sarcastic,neutral 0-1 normal normal f
+27 N,T NARRATOR,KAZUMA,SATOU KAZUMA,KAZUMA SATOU angry,neutral 0-1 normal normal u
+28 N,T NARRATOR,KAZUMA,SATOU KAZUMA,KAZUMA SATOU,AQUA~ angry,neutral 0-1 normal normal u
+29 N,T NARRATOR,KAZUMA,SATOU KAZUMA,KAZUMA SATOU angry,neutral 0-1 normal normal u
+30 D VANIR angry,sarcastic 0-1 normal normal m
+31 D AQUA sarcastic,angry 1-2 normal,fast normal,loud f
+32 N,T NARRATOR,KAZUMA,SATOU KAZUMA,KAZUMA SATOU angry,neutral 0-1 normal normal u
+33 N NARRATOR neutral,angry,afraid 0-1 normal normal u
+34 D WIZ afraid,sad,surprised 1-2 fast loud,normal f
+35 N NARRATOR neutral,sad 0-1 normal normal u
+36 D KAZUMA,SATOU KAZUMA,KAZUMA SATOU neutral 0-1 normal normal m
+37 N
+38 N,T NARRATOR,KAZUMA~,SATOU KAZUMA~,KAZUMA SATOU~,AQUA~ neutral 0-1 normal normal u
+39 N
+40 N NARRATOR neutral,afraid 0-1 normal normal u
+41 D WIZ afraid 2-3 fast loud f
+42 D AQUA tender,neutral 0-1 normal normal f
+43 D WIZ afraid,neutral,tired 0-1 normal soft,normal f
+44 N
+45 D KAZUMA,SATOU KAZUMA,KAZUMA SATOU neutral 0-1 normal normal m
+46 N
+47 D WIZ afraid,excited 1-2 fast,normal normal,loud f
+48 N,D NARRATOR,WIZ~ neutral,afraid 0-1 normal normal u
+49 N
+50 N
+51 N NARRATOR neutral,afraid 0-1 normal normal u
+52 D WIZ afraid,neutral 0-1 normal normal,soft f
+53 N,T NARRATOR,KAZUMA,SATOU KAZUMA,KAZUMA SATOU afraid,neutral 0-1 normal normal u
+54 N NARRATOR neutral,angry 0-1 normal normal u
+55 D WIZ afraid 1-2 fast normal f
+56 N NARRATOR neutral,afraid 0-1 normal normal u
+57 D WIZ afraid,sad 1-2 fast,normal normal f
+58 N,T NARRATOR,KAZUMA,SATOU KAZUMA,KAZUMA SATOU afraid,surprised,neutral 0-1 normal normal u
+59 N NARRATOR neutral,surprised,afraid 0-1 normal normal u
+60 D AQUA neutral,sarcastic 0-1 normal normal f
+61 D KAZUMA,SATOU KAZUMA,KAZUMA SATOU neutral 0-1 normal normal m
+62 N
+63 D WIZ afraid,sad,neutral 0-1 normal normal,soft f
+64 N,T NARRATOR,KAZUMA,SATOU KAZUMA,KAZUMA SATOU afraid,neutral 0-1 normal normal u
+65 D KAZUMA,SATOU KAZUMA,KAZUMA SATOU sarcastic,neutral 0-1 normal normal m
+66 D VANIR sarcastic,happy 0-1 normal normal m
+67 D AQUA angry 1-2 fast loud f
+68 N NARRATOR neutral,angry 0-1 normal normal u
+69 N NARRATOR neutral,afraid 0-1 normal normal u
+70 D WIZ afraid,sad 0-1 slow,normal soft f
+71 N,T NARRATOR,KAZUMA,SATOU KAZUMA,KAZUMA SATOU neutral,sad 0-1 normal normal u
+72 D KAZUMA,SATOU KAZUMA,KAZUMA SATOU neutral,sarcastic 0-1 normal normal m
+73 D VANIR angry,neutral 1-2 normal normal,loud m
+74 N,T NARRATOR,KAZUMA,SATOU KAZUMA,KAZUMA SATOU afraid,sarcastic,neutral 0-1 normal normal u
+75 N
+76 D VANIR sarcastic,happy 0-1 normal normal m
+77 D WIZ angry,afraid,surprised 1-2 fast loud f
+78 N
+79 N,T NARRATOR,KAZUMA,SATOU KAZUMA,KAZUMA SATOU neutral,surprised 0-1 normal normal u
+80 N
+81 D NPC*:người giao thư neutral 0-1 normal normal u
+82 D WIZ neutral,happy 0-1 normal normal f
+83 N
+84 N,T NARRATOR,KAZUMA,SATOU KAZUMA,KAZUMA SATOU afraid,neutral 0-1 normal normal u
+85 N NARRATOR neutral,sad 0-1 normal normal u
+86 D VANIR neutral 0-1 normal normal m
+87 N NARRATOR neutral,afraid,surprised 0-1 normal normal u
+88 D WIZ neutral 0-1 normal normal f
+89 N
+90 D WIZ tender,neutral,happy 0-1 normal,slow normal,soft f
+91 N
+92 D KAZUMA,SATOU KAZUMA,KAZUMA SATOU,NARRATOR neutral 0-1 normal normal m
+93 N
+94 N
+95 N
+96 D MEGUMIN afraid,neutral 0-1 normal normal f
+97 N,T NARRATOR,KAZUMA,SATOU KAZUMA,KAZUMA SATOU sarcastic,neutral 0-1 normal normal u
+98 D DARKNESS,LALATINA,DUSTINESS FORD LALATINA angry 1-2 normal normal,loud f
+99 N
+100 D KAZUMA,SATOU KAZUMA,KAZUMA SATOU sarcastic 0-1 normal normal m
+101 D DARKNESS,LALATINA,DUSTINESS FORD LALATINA angry,surprised 1-2 fast normal,loud f
+102 N
+103 D AQUA sad,afraid,neutral 0-1 normal normal f
+104 D MEGUMIN angry 1-2 fast loud f
+105 D DARKNESS,LALATINA,DUSTINESS FORD LALATINA sad,surprised 1-2 normal normal f
+106 N NARRATOR neutral,sad 0-1 normal normal u
+107 N
+108 N
+109 N
+110 N,T NARRATOR,KAZUMA~,SATOU KAZUMA~,KAZUMA SATOU~,DUKE~ neutral,happy 0-1 normal normal u
+111 N NARRATOR neutral,happy 0-1 normal normal u
+112 N
+113 N,T NARRATOR,KAZUMA,SATOU KAZUMA,KAZUMA SATOU afraid,neutral 0-1 normal normal u
+114 N,T NARRATOR,KAZUMA,SATOU KAZUMA,KAZUMA SATOU happy,neutral 0-1 normal normal u
+115 N,T NARRATOR,KAZUMA,SATOU KAZUMA,KAZUMA SATOU surprised,angry 0-2 normal normal u
+116 N,T NARRATOR,KAZUMA,SATOU KAZUMA,KAZUMA SATOU angry,surprised 0-2 normal normal u
+117 N,T NARRATOR,KAZUMA,SATOU KAZUMA,KAZUMA SATOU neutral 0-1 normal normal u
+118 N,T NARRATOR,KAZUMA,SATOU KAZUMA,KAZUMA SATOU neutral,angry,sad 0-1 normal normal u
+119 N,T NARRATOR,KAZUMA,SATOU KAZUMA,KAZUMA SATOU neutral,excited 0-1 normal normal u
+120 D AQUA sarcastic,neutral,surprised 0-1 normal normal f
+121 D KAZUMA,SATOU KAZUMA,KAZUMA SATOU excited,angry,neutral 1-2 normal normal,loud m

@@ -1,0 +1,54 @@
+# "Kurakon" (Kurasu no Daikirai na Joshi to Kekkon suru Koto ni Natta) file 034.txt ("Prologue" - mở đầu tập mới: Himari gặp
+# Saito ở công viên hồi năm nhất). Đáp án KIỂM TRA LN Nhật đợt 2 (02-10; luật cố định: vị trí 30% của bộ, >30 KB lấy 25 KB đầu;
+# file này 4 KB nên lấy trọn). Agent A gán 02-10; chưa soát B.
+# NGÔI BA (lời kể theo góc Himari, gọi "nhỏ"/"cậu"), không có "tôi" người kể -> KHÔNG truyền --first-person.
+# Tên (cả bộ): SAITO / HOUJOU SAITO / SAITO HOUJOU / HOUJOU (m; "Houjou" 275 lần trong bộ); HIMARI / ISHIKURA HIMARI /
+# HIMARI ISHIKURA / ISHIKURA (f; Saito gọi "Ishikura" ở 7); HIMARIN~ (biệt danh Akane gọi, lời kể không dùng - nửa điểm).
+# Chỉ hai người trong cảnh, đối đáp xen kẽ không lời dẫn: xưng hô quyết định ("tớ"/"cậu" = Himari, "tôi" = Saito; 6 "Saito-kun"
+# = Himari gọi, 7 "Ishikura đấy à" = Saito đáp). 17 "A……" = Himari (18 "Câu nói đó đã làm cho Himari...").
+# 40 "—Mình muốn lấp đầy khoảng trống của cậu ấy." là ý nghĩ của Himari (41 "Himari đã bắt đầu nghĩ như thế") nhưng parser khoá
+# D -> T,D HIMARI đủ (quy tắc 9, câu nghĩ bị khoá thoại).
+# 20, 39: lời kể ngôi ba nhuốm ý nghĩ của Himari ("Nhưng mà, chẳng phải thế...", "Chắc chắn là cậu chưa nhận ra...") ->
+# N,T với Himari chỉ `~` (quy tắc 4, ngôi ba). 19 có "Nhỏ đã nghĩ" -> lời kể thuật lại, chỉ N.
+0 H
+1 N
+2 N
+3 N NARRATOR neutral,sad 0-1 normal,slow normal u
+4 N
+5 N,T NARRATOR,HIMARI~,ISHIKURA HIMARI~,HIMARI ISHIKURA~,ISHIKURA~ neutral 0-1 normal normal u
+6 D HIMARI,ISHIKURA HIMARI,HIMARI ISHIKURA,ISHIKURA neutral,tender,happy 0-1 normal normal,soft f
+7 D SAITO,HOUJOU SAITO,SAITO HOUJOU,HOUJOU surprised,neutral,tired 0-1 normal,slow normal,soft m
+8 N
+9 D HIMARI,ISHIKURA HIMARI,HIMARI ISHIKURA,ISHIKURA neutral,tender 0-1 normal normal f
+10 D SAITO,HOUJOU SAITO,SAITO HOUJOU,HOUJOU neutral,tired,sad 0-1 normal,slow normal,soft m
+11 N
+12 D HIMARI,ISHIKURA HIMARI,HIMARI ISHIKURA,ISHIKURA neutral,tender 0-1 normal normal f
+13 D SAITO,HOUJOU SAITO,SAITO HOUJOU,HOUJOU neutral,sad,tired 0-1 normal,slow normal,soft m
+14 D HIMARI,ISHIKURA HIMARI,HIMARI ISHIKURA,ISHIKURA neutral,surprised 0-1 normal normal f
+15 N
+16 D SAITO,HOUJOU SAITO,SAITO HOUJOU,HOUJOU sad,neutral,sarcastic 0-1 normal,slow normal,soft m
+17 D HIMARI,ISHIKURA HIMARI,HIMARI ISHIKURA,ISHIKURA surprised,sad 0-1 normal,slow soft,normal f
+18 N
+19 N
+20 N,T NARRATOR,HIMARI~,ISHIKURA HIMARI~,HIMARI ISHIKURA~,ISHIKURA~ neutral,sad 0-1 normal normal u
+21 D HIMARI,ISHIKURA HIMARI,HIMARI ISHIKURA,ISHIKURA happy,excited 1-2 normal,fast normal,loud f
+22 N NARRATOR neutral,happy 0-1 normal normal u
+23 D SAITO,HOUJOU SAITO,SAITO HOUJOU,HOUJOU neutral,surprised,sarcastic 0-1 normal normal m
+24 D HIMARI,ISHIKURA HIMARI,HIMARI ISHIKURA,ISHIKURA neutral,happy,tender 0-1 normal normal f
+25 D SAITO,HOUJOU SAITO,SAITO HOUJOU,HOUJOU neutral,sarcastic 0-1 normal normal m
+26 D HIMARI,ISHIKURA HIMARI,HIMARI ISHIKURA,ISHIKURA happy,tender,neutral 0-1 normal normal f
+27 D SAITO,HOUJOU SAITO,SAITO HOUJOU,HOUJOU neutral,tired 0-1 normal,slow normal,soft m
+28 N
+29 N
+30 D HIMARI,ISHIKURA HIMARI,HIMARI ISHIKURA,ISHIKURA happy,excited 1-2 normal,fast normal,loud f
+31 D SAITO,HOUJOU SAITO,SAITO HOUJOU,HOUJOU sarcastic,happy 0-1 normal,slow normal m
+32 D HIMARI,ISHIKURA HIMARI,HIMARI ISHIKURA,ISHIKURA excited,happy,angry,surprised 1-2 normal,fast normal,loud f
+33 N
+34 D SAITO,HOUJOU SAITO,SAITO HOUJOU,HOUJOU neutral,sarcastic,happy 0-1 slow,normal normal m
+35 D HIMARI,ISHIKURA HIMARI,HIMARI ISHIKURA,ISHIKURA surprised,angry,excited 1-2 fast,normal loud,normal f
+36 D SAITO,HOUJOU SAITO,SAITO HOUJOU,HOUJOU sarcastic,happy 0-1 normal normal m
+37 D HIMARI,ISHIKURA HIMARI,HIMARI ISHIKURA,ISHIKURA excited,angry,happy 1-2 normal,fast loud,normal f
+38 N NARRATOR neutral,sad 0-1 normal normal u
+39 N,T NARRATOR,HIMARI~,ISHIKURA HIMARI~,HIMARI ISHIKURA~,ISHIKURA~ neutral,sad 0-1 normal,slow normal u
+40 T,D HIMARI,ISHIKURA HIMARI,HIMARI ISHIKURA,ISHIKURA tender,sad,neutral 0-1 slow,normal soft,normal f
+41 N
