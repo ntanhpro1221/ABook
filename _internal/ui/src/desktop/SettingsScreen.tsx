@@ -6,6 +6,15 @@ import { cn } from "@/shared/cn";
 import { api } from "@/studio/api";
 import { pickFolder, useAppInfo, usePreferences, useVoices } from "@/studio/data";
 import { StudioSettings } from "@/studio/StudioSetup";
+import {
+  NAME_MAX,
+  PROFILE_LABEL,
+  nameProblem,
+  removeTemplate,
+  renameTemplate,
+  templatesOf,
+  type BookTemplate,
+} from "@/studio/bookTemplates";
 import { SharedReadingsSettings } from "@/studio/sharedReadings";
 import { OtherComputers } from "./OtherComputers";
 import { PhoneSync, Switch } from "./PhoneSync";
@@ -42,11 +51,110 @@ function NewBookDefaults() {
           value={preferences?.newBookProfile ?? "high_quality"}
           onChange={(event) => update({ newBookProfile: event.target.value })}
         >
-          <option value="high_quality">Chất lượng cao</option>
-          <option value="balanced">Cân bằng</option>
-          <option value="fast">Nhanh</option>
+          {(Object.keys(PROFILE_LABEL) as (keyof typeof PROFILE_LABEL)[]).map((value) => (
+            <option key={value} value={value}>
+              {PROFILE_LABEL[value]}
+            </option>
+          ))}
         </select>
       </label>
+    </div>
+  );
+}
+
+// Mẫu thiết lập đã lưu từ trình tạo sách (studio/bookTemplates.ts): đổi tên, xoá (có "Hoàn tác"). Lưu mẫu mới làm ở trình tạo.
+function BookTemplates() {
+  const { data: preferences, update } = usePreferences();
+  const templates = templatesOf(preferences?.bookTemplates);
+  const [renaming, setRenaming] = useState<string | null>(null);
+  const [typed, setTyped] = useState("");
+  const [problem, setProblem] = useState("");
+  const save = (next: BookTemplate[], onSuccess?: () => void) =>
+    update({ bookTemplates: next }, { onSuccess, onError: (error) => toast.error("Không lưu được mẫu", { description: error.message }) });
+  const finishRename = (from: string) => {
+    const wrong = nameProblem(templates, typed, from);
+    if (wrong) {
+      setProblem(wrong);
+      return;
+    }
+    save(renameTemplate(templates, from, typed), () => setRenaming(null));
+  };
+  const remove = (template: BookTemplate) =>
+    save(removeTemplate(templates, template.name), () =>
+      toast(`Đã xoá mẫu “${template.name}”`, { duration: 10000, action: { label: "Hoàn tác", onClick: () => save(templates) } }),
+    );
+  return (
+    <div className="mb-4 max-w-xl">
+      <div className="text-sm font-medium">Mẫu thiết lập cho sách mới</div>
+      <p className="mt-0.5 text-[13px] text-fg-2 text-pretty">
+        Bộ lựa chọn đặt tên sẵn (giọng kể, chất lượng...) để chọn lại ở trình tạo sách. Muốn lưu mẫu mới: chọn xong ở trình tạo sách
+        rồi bấm “Lưu thành mẫu…”.
+      </p>
+      {!templates.length ? (
+        <p className="mt-2 text-[13px] text-fg-3">Chưa có mẫu nào.</p>
+      ) : (
+        <ul className="mt-2 divide-y divide-line rounded-lg border border-line">
+          {templates.map((template) => (
+            <li key={template.name} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2">
+              {renaming === template.name ? (
+                <form
+                  className="flex min-w-0 flex-1 flex-wrap items-center gap-2"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    finishRename(template.name);
+                  }}
+                >
+                  <input
+                    autoFocus
+                    value={typed}
+                    maxLength={NAME_MAX}
+                    aria-label={`Tên mới của mẫu “${template.name}”`}
+                    aria-invalid={Boolean(problem)}
+                    onChange={(event) => {
+                      setTyped(event.target.value);
+                      setProblem("");
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Escape") setRenaming(null);
+                    }}
+                    className="h-8 min-w-0 flex-1 rounded-lg border border-line bg-bg px-2.5 text-sm outline-none focus:border-accent"
+                  />
+                  <Button type="submit" size="sm" variant="primary" disabled={!typed.trim()}>
+                    Lưu
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setRenaming(null)}>
+                    Huỷ
+                  </Button>
+                  {problem && <p role="alert" className="basis-full text-[13px] text-danger">{problem}</p>}
+                </form>
+              ) : (
+                <>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium">{template.name}</div>
+                    <div className="truncate text-[13px] text-fg-2">
+                      {[template.narrator || "Giọng máy đề xuất", PROFILE_LABEL[template.profile], template.startNow ? "bắt đầu ngay" : "chờ bấm bắt đầu"].join(" · ")}
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setRenaming(template.name);
+                      setTyped(template.name);
+                      setProblem("");
+                    }}
+                  >
+                    Đổi tên
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => remove(template)}>
+                    Xoá
+                  </Button>
+                </>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
@@ -335,6 +443,7 @@ export function SettingsScreen() {
               />
             </div>
             <NewBookDefaults />
+            <BookTemplates />
             <SharedReadingsSettings />
             <StudioSettings />
           </Section>

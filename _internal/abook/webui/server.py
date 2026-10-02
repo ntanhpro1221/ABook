@@ -30,7 +30,7 @@ from .. import aliases, bracket_rule, continuation, listener_overrides
 from . import (actions, bookfile, cover_search, covers, humanize, listen_view, music_catalog, music_plan,
                music_select, packages, projectfile, remote_config, shared_readings, store, volumes)
 from .fingerprints import Fingerprints
-from .library import Library, Preferences, book_id, legacy_ids
+from .library import Library, Preferences, book_id, clean_book_templates, legacy_ids
 from .listening import RECORD_ID, Listening
 from . import bluetooth, remote_books, spelling, tls
 from .. import names as renames
@@ -2344,6 +2344,12 @@ class Handler(BaseHTTPRequestHandler):
             narrator = body["newBookNarrator"].strip()[:80]
             if not narrator or narrator in {voice["name"] for voice in self.app.voices()}:
                 allowed["newBookNarrator"] = narrator
+        # Mẫu thiết lập có tên: sai (tên trùng, quá 20 mẫu...) thì báo lại để người dùng sửa, không lặng lẽ bỏ mất mẫu vừa lưu.
+        if "bookTemplates" in body:
+            try:
+                allowed["bookTemplates"] = clean_book_templates(body["bookTemplates"], {voice["name"] for voice in self.app.voices()})
+            except ValueError as error:
+                raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
         if "sleepSchedule" in body:
             schedule = body["sleepSchedule"]
             clock = re.compile(r"([01]\d|2[0-3]):[0-5]\d")
