@@ -545,7 +545,17 @@ Câu hỏi:
 - Sửa script trước khi đọc kết luận: bản cũ áp luật dùng được của E1 (kappa với BẤT KỲ người chấm nào). Luật đó cho omni1
   qua nhờ kappa 0,355 với chính Omni bản E1. Nay áp đúng luật E1b đã ghi trước.
 - Phán quyết chung vẫn là c1 + c2: vet > calm > gems > mid > app > far.
-- Còn chờ Music Flamingo 2601 (`mf_rate.py`, hàng GPU sau Whisper pha 4). MF cũng không đạt thì mới tính Qwen3-Omni trên Modal.
+- **J-mf (Music Flamingo 2601, 03-10 01:19):** ổn định a/b 0,66 (< 0,75), kappa với chung c1 + c2 0,113 (< 0,20) → **KHÔNG
+  dùng được**. Xếp hạng BT riêng: gems > vet > app > far > calm > mid.
+- **Cả hai người chấm nghe đều trượt. Theo luật, bước kế là Qwen3-Omni.** Modal tháng 10 đã hết nên chạy Kaggle 2×T4 (Lead), khi
+  Model xếp lịch.
+- **Quan sát (không dùng để quyết):**
+  - Hai người chấm nghe độc lập khớp NHAU hơn khớp người đọc: kappa omni1-mf 0,236, so với 0,04-0,11 với c1 / c2.
+  - Cả hai cùng xếp `gems` đầu và `calm` gần cuối.
+  - Hai cách hiểu: (i) model nghe 7B chưa đủ sức hiểu đoạn truyện tiếng Việt; hoặc (ii) người chấm đọc mô tả có thiên lệch riêng.
+    Mô tả có nhãn CLAP, mà CLAP cũng tham gia dựng các vai, nên phán quyết "đọc" có phần vòng tròn (đã nêu ở E1).
+  - Qwen3-Omni là phép phân xử. Nếu nó cũng xếp gần hai model nghe, phải ghi trước một phép kiểm vòng tròn của người chấm đọc
+    (vd bỏ nhãn CLAP khỏi mô tả) trước khi tiếp tục dùng E1 làm thước.
 
 **GHI TRƯỚC - NỚI NGƯỠNG NỀN ÊM (02-10 23:xx, Lead duyệt; từ E1: calm đứng thứ hai, hơn app):**
 - **Giả thuyết:** kéo về nền êm (CALM_TARGET) cho nhiều đoạn hơn làm nhạc hợp hơn. Hiện chỉ kéo khi confidence < WEAK_MOOD
