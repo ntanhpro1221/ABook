@@ -1,0 +1,61 @@
+{
+ "volatile": [
+  "color",
+  "version"
+ ],
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/title",
+   "body": {
+    "title": "A"
+   },
+   "status": 200,
+   "response": {
+    "title": "A"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/characters/rename",
+   "body": {
+    "character": "LUCIEN",
+    "name": "B"
+   },
+   "status": 200,
+   "response": {
+    "character": "LUCIEN",
+    "name": "B",
+    "original": "Lucien",
+    "renamed": true
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/edits",
+   "status": 200,
+   "response": {
+    "applied": 2,
+    "waiting": 0
+   }
+  },
+  {
+   "method": "DELETE",
+   "path": "/edits",
+   "status": 200,
+   "response": {
+    "applied": 0,
+    "waiting": 0
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/edits",
+   "status": 200,
+   "response": {
+    "applied": 0,
+    "waiting": 0
+   }
+  }
+ ]
+}

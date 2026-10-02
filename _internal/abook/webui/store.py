@@ -243,8 +243,10 @@ def _first_line(path: Any) -> str | None:
     return next((line.strip() for line in text.splitlines() if line.strip()), None)
 
 
-def chapter_names(connection: sqlite3.Connection) -> dict[int, dict[str, Any]]:
-    """chapter_id -> {index, name, subtitle, full} theo dòng tiêu đề đầu chương (xem `humanize.chapter_names`)."""
+def chapter_names(connection: sqlite3.Connection, project_root: Path | None = None) -> dict[int, dict[str, Any]]:
+    """chapter_id -> {index, name, subtitle, full} theo dòng tiêu đề đầu chương (xem `humanize.chapter_names`). Có
+    `project_root` thì tên người nghe đặt lại (`CHAPTER_TITLES_FILE`) thay tên suy ra - mọi nơi hiện tên chương như nhau."""
+    renamed = chapter_title_overrides(project_root) if project_root is not None else {}
     headings = {
         int(row["chapter_id"]): str(row["text"] or "")
         for row in connection.execute("SELECT chapter_id, text, MIN(seq) FROM segments GROUP BY chapter_id")
@@ -259,13 +261,26 @@ def chapter_names(connection: sqlite3.Connection) -> dict[int, dict[str, Any]]:
             # (soát UX 29-09).
             heading = _first_line(row["input_path"])
         name, subtitle = humanize.chapter_names(str(row["title"]), heading)
+        name, subtitle = apply_chapter_title(name, subtitle, renamed.get(int(row["id"])))
         out[int(row["id"])] = {
             "index": int(row["chapter_index"]),
             "name": name,
             "subtitle": subtitle,
-            "full": f"{name} · {subtitle}" if subtitle else name,
+            "full": chapter_full_title(name, subtitle),
         }
     return out
+
+
+def chapter_full_title(name: str, subtitle: str) -> str:
+    """Tên đầy đủ của chương: "Chương 12 · Hồi kết", hay chỉ tên khi không có tên phụ."""
+    return f"{name} · {subtitle}" if subtitle else name
+
+
+def apply_chapter_title(name: str, subtitle: str, edit: dict[str, str] | None) -> tuple[str, str]:
+    """Tên (`title`) và tên phụ (`subtitle`) của chương sau khi người nghe đặt lại: chỉ phần nào có trong `edit` đổi."""
+    if not edit:
+        return name, subtitle
+    return edit.get("title", name), edit.get("subtitle", subtitle)
 
 
 RUN_MARKER = "studio_last_run.json"
@@ -273,6 +288,49 @@ RUN_MARKER = "studio_last_run.json"
 # riêng này thay vì cột `book.title` của dây chuyền. Mọi nơi hiện/xuất tên đi qua `summarize`.
 TITLE_FILE = "studio_title.json"
 TITLE_MAX = 160
+
+
+# Tên chương người dùng đặt lại (Studio, trang nghe, điện thoại): file riêng cạnh sổ dự án như `TITLE_FILE` - sổ chỉ đọc,
+# tên chương thật của dây chuyền (`chapters.title`) giữ nguyên. {"<mã chương>": {"title"?: ..., "subtitle"?: ...}}.
+CHAPTER_TITLES_FILE = "chapter_titles.json"
+
+
+def chapter_title_overrides(project_root: Path) -> dict[int, dict[str, str]]:
+    """{mã chương: {"title"?, "subtitle"?}} người dùng đã đặt lại; file hỏng hay mục lạ thì bỏ mục ấy."""
+    try:
+        data = json.loads((Path(project_root) / CHAPTER_TITLES_FILE).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    out: dict[int, dict[str, str]] = {}
+    for key, entry in (data.items() if isinstance(data, dict) else ()):
+        if not isinstance(entry, dict) or not str(key).isdigit():
+            continue
+        kept = {field: entry[field] for field in ("title", "subtitle") if isinstance(entry.get(field), str)}
+        if kept.get("title", "x"):
+            out[int(key)] = kept
+    return out
+
+
+def set_chapter_title(project_root: Path, chapter_id: int, title: str | None, subtitle: str | None = None) -> None:
+    """Đặt lại tên chương `chapter_id`. `title` rỗng/None và `subtitle` None: trở về tên gốc của dây chuyền. `subtitle` ""
+    (khác None) là bỏ hẳn tên phụ. Ghi nguyên tử; không còn mục nào thì xoá file."""
+    from ..io_utils import atomic_write_json
+
+    entries = {str(key): value for key, value in chapter_title_overrides(project_root).items()}
+    entry: dict[str, str] = {}
+    if title:
+        entry["title"] = title
+    if subtitle is not None:
+        entry["subtitle"] = subtitle
+    if entry:
+        entries[str(int(chapter_id))] = entry
+    else:
+        entries.pop(str(int(chapter_id)), None)
+    target = Path(project_root) / CHAPTER_TITLES_FILE
+    if entries:
+        atomic_write_json(target, entries)
+    else:
+        target.unlink(missing_ok=True)
 
 
 def source_digests(project_root: Path) -> set[str]:
@@ -785,7 +843,7 @@ def chapters(project_root: Path) -> list[dict[str, Any]]:
             "SELECT id, chapter_index, title, status, total_segments, output_mp3, started_at, completed_at, last_error"
             " FROM chapters ORDER BY chapter_index"
         ).fetchall()
-        names = chapter_names(connection)
+        names = chapter_names(connection, project_root)
     out = []
     for row in rows:
         counts = per_chapter.get(int(row["id"]))
@@ -859,9 +917,12 @@ def chapter_script(project_root: Path, chapter_id: int) -> dict[str, Any] | None
         # sách rất cũ thì không: chỉ lấy cột nào có.
         columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(segments)")}
         tags = [column for column in DELIVERY_TAGS if column in columns]
+        # Mã ổn định + băm chữ: định danh câu qua các lần sản xuất lại - lớp sửa của người nghe (docs/EDITING.md) và yêu
+        # cầu "ai nói câu này" trỏ tới câu bằng cặp này, nên sách xuất ra mang chúng theo (cộng thêm, không đổi phiên bản).
+        identity = [column for column in ("stable_id", "text_sha256") if column in columns]
         rows = connection.execute(
             "SELECT id, seq, paragraph_index, text, kind, speaker, wav_duration, break_ms, status"
-            + "".join(f", {column}" for column in tags)
+            + "".join(f", {column}" for column in (*identity, *tags))
             + " FROM segments WHERE chapter_id = ? ORDER BY seq",
             (chapter_id,),
         ).fetchall()
@@ -869,7 +930,7 @@ def chapter_script(project_root: Path, chapter_id: int) -> dict[str, Any] | None
             str(row["canonical_name"]): str(row["display_name"] or row["canonical_name"])
             for row in connection.execute("SELECT canonical_name, display_name FROM characters")
         }
-        chapter_name = chapter_names(connection).get(int(chapter["id"]), {})
+        chapter_name = chapter_names(connection, project_root).get(int(chapter["id"]), {})
     renamed = renames.load(project_root)
     timed = str(chapter["status"]) == "completed" and all(row["wav_duration"] for row in rows)
     starts: list[float] = []
@@ -898,6 +959,8 @@ def chapter_script(project_root: Path, chapter_id: int) -> dict[str, Any] | None
             "start": round(start, 3) if timed else None,
             "end": round(end, 3) if timed else None,
             "status": str(row["status"]),
+            **({"stableId": str(row["stable_id"])} if "stable_id" in identity and row["stable_id"] else {}),
+            **({"textSha256": str(row["text_sha256"])} if "text_sha256" in identity and row["text_sha256"] else {}),
             **{column: row[column] for column in tags if row[column] is not None},
         })
     return {
@@ -983,7 +1046,7 @@ def cast(project_root: Path) -> dict[str, Any]:
                 ") WHERE rank = 1"
             )
         }
-        chapter_numbers = {chapter_id: item["name"] for chapter_id, item in chapter_names(connection).items()}
+        chapter_numbers = {chapter_id: item["name"] for chapter_id, item in chapter_names(connection, project_root).items()}
         book_row = connection.execute("SELECT updated_at FROM book WHERE id=1").fetchone()
     pending = pending_voices(
         project_root, changes_since(project_root, float(book_row["updated_at"] or 0) if book_row is not None else 0.0))
@@ -1105,7 +1168,7 @@ def activity(project_root: Path, *, technical: bool = False, limit: int = 200) -
                  "code": str(row["code"]), "text": str(row["message"])}
                 for row in rows
             ]
-        names = chapter_names(connection)
+        names = chapter_names(connection, project_root)
         chapter_titles = {item["index"]: item["name"] for item in names.values()}
         items: list[dict[str, Any]] = []
         book = connection.execute("SELECT created_at FROM book WHERE id=1").fetchone()

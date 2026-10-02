@@ -134,7 +134,7 @@ def _line_wish(connection: Any, row: Any, wish: dict[str, Any] | None) -> dict[s
 def casting_chapters(project_root: Path) -> dict[str, Any]:
     """Mục lục của tab: mỗi chương có bao nhiêu câu thoại, bao nhiêu chỗ máy nghi, bao nhiêu câu người nghe đã quyết."""
     with closing(store.connect(project_root)) as connection:
-        names = store.chapter_names(connection)
+        names = store.chapter_names(connection, project_root)
         counts = {
             int(row["chapter_id"]): int(row["lines"])
             for row in connection.execute("SELECT chapter_id, COUNT(*) AS lines FROM segments GROUP BY chapter_id")
@@ -211,7 +211,7 @@ def casting_chapter(project_root: Path, chapter_id: int) -> dict[str, Any] | Non
                 " ORDER BY c.chapter_index, s.chapter_id"
             )
         ]
-        chapter_name = store.chapter_names(connection).get(chapter_id, {})
+        chapter_name = store.chapter_names(connection, project_root).get(chapter_id, {})
     here = Counter(str(row["speaker"]) for row in rows if str(row["kind"]) in SPEECH_KINDS)
     cast = [
         {"value": raw, "label": label(raw), "lines": count}

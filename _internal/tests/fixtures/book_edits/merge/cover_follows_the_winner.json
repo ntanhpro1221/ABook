@@ -1,0 +1,34 @@
+{
+ "local": {
+  "format": "abook-edits",
+  "version": 1,
+  "title": "Của tôi"
+ },
+ "incoming": {
+  "format": "abook-edits",
+  "version": 1,
+  "cover": {
+   "color": "#112233",
+   "width": 10,
+   "height": 10,
+   "version": 5
+  }
+ },
+ "merged": {
+  "format": "abook-edits",
+  "version": 1,
+  "title": "Của tôi",
+  "cover": {
+   "color": "#112233",
+   "width": 10,
+   "height": 10,
+   "version": 5
+  }
+ },
+ "report": {
+  "adopted": 1,
+  "kept": 1,
+  "conflicts": 0,
+  "cover": "incoming"
+ }
+}

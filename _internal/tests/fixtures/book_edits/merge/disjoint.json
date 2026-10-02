@@ -1,0 +1,28 @@
+{
+ "local": {
+  "format": "abook-edits",
+  "version": 1,
+  "title": "Của tôi"
+ },
+ "incoming": {
+  "format": "abook-edits",
+  "version": 1,
+  "characters": {
+   "LUCIEN": "Lu-xi-en"
+  }
+ },
+ "merged": {
+  "format": "abook-edits",
+  "version": 1,
+  "title": "Của tôi",
+  "characters": {
+   "LUCIEN": "Lu-xi-en"
+  }
+ },
+ "report": {
+  "adopted": 1,
+  "kept": 1,
+  "conflicts": 0,
+  "cover": null
+ }
+}

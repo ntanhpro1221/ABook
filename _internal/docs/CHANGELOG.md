@@ -19,6 +19,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Điện thoại và thiết bị
 
+- **Sửa sách đã nhập ngay trên trang nghe, cả máy tính lẫn điện thoại, không cần Studio**: trong "Tuỳ chọn khác" của một
+  cuốn nhập từ file `.abook`, đổi được tên sách, bìa, nhạc nền (bật/tắt, to nhỏ, im lặng một đoạn); trong danh sách chương
+  đổi được tên chương, trong "Nhân vật" đổi được tên hiển thị. Đổi xong là thấy ngay ở thư viện, thông báo, widget, màn
+  hình xe và máy khác nghe qua mạng nhà; chữ truyện và audio không bao giờ bị đụng tới. Mở lại cùng một file sách (bản mới
+  hơn) thì phần đã sửa vẫn còn. "Lưu" và "Lưu thành…" ghi các thay đổi ra một file `.abook` mới để chuyển sang máy khác; máy
+  của người làm sách mở file ấy sẽ hỏi có áp thay đổi vào dự án không. Cuốn đã có Studio vẫn sửa như trước (thêm đổi tên
+  chương); những việc cần Studio ghi rõ "cần cài Studio".
 - **File dự án `.abookproj` giờ nghe được ở mọi nơi nghe được file sách `.abook`**: điện thoại mở file dự án (từ trình
   quản lý file, Zalo, Drive...) là các chương đã xong vào Thư viện để nghe, không chép sổ dự án hay nguồn chương và chỉ cần
   chỗ trống cho phần nghe, không phải cho cả dự án. File dự án cũng mang theo cả nhạc nền của sách, nên mở ở máy khác là

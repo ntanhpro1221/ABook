@@ -1,3 +1,4 @@
+import type { Capabilities } from "@/shared/capabilities";
 import type { CoverImage } from "@/shared/cover";
 // Hợp đồng dữ liệu của phía NGHE - chung cho máy tính và Android.
 // Máy tính: server cục bộ dựng từ project (abook/webui/listen_view.py).
@@ -109,6 +110,10 @@ export interface ListenBook {
   series?: SeriesLink | null;
   /** Hồ sơ nghe gắn với cuốn này (chưa nghe lần nào thì rỗng). */
   records?: ListeningRecord[];
+  /** Máy này làm được gì với cuốn này (shared/capabilities.ts): có xưởng không, nghe thẳng từ máy khác không, có Studio không. */
+  capabilities?: Capabilities;
+  /** Số thay đổi người nghe đã làm trên cuốn nhập từ file (lớp sửa, docs/EDITING.md); không có thì 0. */
+  edits?: number;
 }
 
 export interface SeriesPlace {

@@ -4,6 +4,7 @@ import { Ban, Music2, Pin, Play, RefreshCw, Shuffle, Square, VolumeX, Volume2 } 
 import { toast } from "sonner";
 import { MUSIC_CHANGED_EVENT } from "@/listen/musicBed";
 import { formatClock } from "@/shared/format";
+import { MUSIC_LEVELS as LEVELS } from "@/shared/musicLevels";
 import { Button } from "@/shared/ui";
 import { api, mediaUrl } from "./api";
 
@@ -50,14 +51,6 @@ interface Alternative {
   duration?: number;
   score: number;
 }
-
-const LEVELS: [number, string][] = [
-  [-14, "To"],
-  [-17, "Hơi to"],
-  [-20, "Vừa (mặc định)"],
-  [-24, "Nhỏ"],
-  [-28, "Rất nhỏ"],
-];
 
 const PREVIEW_SECONDS = 20;
 

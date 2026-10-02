@@ -39,7 +39,7 @@ def name_readings(project_root: Path) -> dict[str, Any]:
         # đúng như TTS chỉ ghi đè từng từ.
         lines: dict[str, int] = defaultdict(int)
         examples: dict[str, Any] = {}
-        names = store.chapter_names(connection) if "segments" in tables else {}
+        names = store.chapter_names(connection, project_root) if "segments" in tables else {}
         for segment in connection.execute(
             "SELECT id, chapter_id, seq, text, speaker, wav_path FROM segments ORDER BY wav_path IS NULL, chapter_id, seq"
         ) if "segments" in tables else ():

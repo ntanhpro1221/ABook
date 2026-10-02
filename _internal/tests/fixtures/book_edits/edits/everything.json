@@ -1,0 +1,30 @@
+{
+ "format": "abook-edits",
+ "version": 1,
+ "title": "Sách của tôi",
+ "cover": {
+  "color": "#aa5522",
+  "width": 96,
+  "height": 128,
+  "version": 1759400000
+ },
+ "characters": {
+  "LUCIEN": "Lu-xi-en"
+ },
+ "chapters": {
+  "1": {
+   "title": "Chương Một"
+  },
+  "2": {
+   "title": "Chương Hai",
+   "subtitle": ""
+  }
+ },
+ "music": {
+  "enabled": true,
+  "levelDb": -12.0,
+  "silenced": [
+   "1:0"
+  ]
+ }
+}

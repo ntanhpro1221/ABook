@@ -27,7 +27,7 @@ from typing import Any, Callable, Protocol
 from urllib.parse import parse_qs, quote, unquote, urlsplit
 
 from .. import aliases, bracket_rule, continuation, listener_overrides
-from . import (actions, bookfile, cover_search, covers, humanize, listen_view, music_catalog, music_plan,
+from . import (actions, book_edits, bookfile, cover_search, covers, humanize, listen_view, music_catalog, music_plan,
                music_select, packages, projectfile, reading_preview, remote_config, shared_readings, store, volumes)
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, clean_book_templates, legacy_ids
@@ -261,6 +261,25 @@ class App:
             raise ApiError(HTTPStatus.NOT_FOUND, "Không tìm thấy sách này trong thư viện")
         return path
 
+    def _editable(self, value: str) -> Path:
+        """Sách người dùng sửa được ("áp ngay", docs/EDITING.md): dự án có xưởng, hay cuốn nhập từ file `.abook` (lớp sửa
+        `book_edits`). Cuốn nghe thẳng từ máy tính khác thì không - sửa ở máy ấy."""
+        path = self._listenable(value)
+        if packages.is_package(path) and remote_books.remote_of(packages.manifest(path)) is not None:
+            raise ApiError(HTTPStatus.CONFLICT, "Sách này lấy từ máy tính khác - muốn sửa thì sửa ở máy ấy")
+        return path
+
+    def capabilities(self, path: Path | None = None) -> dict[str, bool]:
+        """Máy này làm được gì với cuốn `path` (ui/src/shared/capabilities.ts): `toolchain` - Studio dùng được trên máy này
+        (bản dev: luôn có; bản đóng gói: đã cài và không cũ); `workshop` - cuốn có dự án sản xuất ở đây; `link` - cuốn lấy từ
+        máy tính khác (nghe thẳng, chưa phải của máy này). Không có `path`: chỉ `toolchain` có nghĩa."""
+        studio = self.studio
+        toolchain = studio is None or bool(studio.installed() and not studio.outdated())
+        workshop = path is not None and store.is_project(path)
+        link = (path is not None and not workshop and packages.is_package(path)
+                and remote_books.remote_of(packages.manifest(path)) is not None)
+        return {"toolchain": toolchain, "workshop": workshop, "link": link}
+
     def install_update(self) -> dict[str, Any]:
         """Người dùng bấm "Cập nhật": vỏ tải gói đã ký, dừng server này, chạy bộ cài rồi mở lại app (docs/PACKAGING.md)."""
         if self.shell is None or not self.update:
@@ -282,13 +301,22 @@ class App:
             raise ApiError(HTTPStatus.NOT_FOUND, "Không tìm thấy file sách này - có thể nó đã bị chuyển hay xoá")
         if path.lower().endswith(projectfile.EXTENSION):
             return self.open_project_file(Path(path))
+        report: dict[str, Any] = {}
         try:
-            target, how = packages.import_file(Path(path), self.library.root, self.library.projects(), self.fingerprints)
+            target, how = packages.import_file(Path(path), self.library.root, self.library.projects(), self.fingerprints,
+                                               report)
         except bookfile.BookFileError as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
         except OSError as error:  # ổ đầy giữa chừng, thư viện không ghi được: nói thật thay vì "lỗi máy chủ"
             raise ApiError(HTTPStatus.INSUFFICIENT_STORAGE, f"Không ghi được sách vào thư viện ({error.strerror or error}).") from error
-        return {"id": book_id(target), "how": how}
+        result: dict[str, Any] = {"id": book_id(target), "how": how}
+        if report.get("edits"):
+            # File mang theo thay đổi của người nghe: cuốn của máy này thì chờ người dùng quyết áp vào dự án (`edits` =
+            # số thay đổi, giao diện hiện thông báo có nút); cuốn nhập thì phần sửa đã được hợp vào máy (`merge`).
+            result["edits"] = report["edits"]
+        if report.get("merge"):
+            result["merge"] = report["merge"]
+        return result
 
     def open_project_file(self, path: Path) -> dict[str, Any]:
         """Mở một file `.abookproj` (projectfile.py): giải nén thành một dự án MỚI trong thư viện, mở ở Studio."""
@@ -482,10 +510,13 @@ class App:
         """Đặt lại tên sách hiện trong thư viện, trên điện thoại và trong file xuất (store.TITLE_FILE) - thư mục dự án và
         sổ của dây chuyền giữ nguyên, nên đổi được cả lúc sách đang chạy."""
         self._mutating()
-        path = self._book(value)
+        path = self._editable(value)
         cleaned = store.clean_title(title)
         if not cleaned:
             raise ApiError(HTTPStatus.BAD_REQUEST, "Tên sách không được để trống")
+        if not store.is_project(path):
+            # Cuốn nhập từ file: lớp sửa của người nghe (book_edits), lớp sách giữ nguyên.
+            return {"title": book_edits.set_title(path, cleaned)}
         try:
             store.set_display_title(path, cleaned)
         except OSError as error:
@@ -755,8 +786,11 @@ class App:
             return self._music_catalog
 
     def music_view(self, value: str) -> dict[str, Any]:
-        """Rãnh nhạc của cuốn + lựa chọn của người dùng. Chưa có thì dựng (cần danh mục: lần đầu cần mạng)."""
-        path = self._book(value)
+        """Rãnh nhạc của cuốn + lựa chọn của người dùng. Chưa có thì dựng (cần danh mục: lần đầu cần mạng). Cuốn nhập từ
+        file: các mốc nhạc người làm sách đã gắn + phần người nghe đã sửa (`book_edits.music_view`), không dựng gì."""
+        path = self._listenable(value)
+        if packages.is_package(path):
+            return book_edits.music_view(packages.manifest(path), book_edits.load(path))
         plan = music_plan.read_plan(path)
         error = ""
         if plan is None:
@@ -817,7 +851,12 @@ class App:
         """Người dùng sửa (bật/tắt, phong cách, âm lượng, ghim, im lặng, bỏ bài): lưu lựa chọn rồi dựng lại rãnh nhạc.
         Mất mạng thì lựa chọn vẫn được lưu, rãnh nhạc dựng lại lần sau."""
         self._mutating()
-        path = self._book(value)
+        path = self._editable(value)
+        if packages.is_package(path):
+            extra = set(body) - {"enabled", "levelDb", "silence"}
+            if extra:
+                raise ApiError(HTTPStatus.BAD_REQUEST, "Sách đã đóng gói chỉ chỉnh được bật/tắt nhạc, mức nhạc và im lặng từng đoạn")
+            return book_edits.set_music(path, body)
         music_plan.write_overrides(path, body)
         if music_plan.read_plan(path) is None:
             return self.music_view(value)
@@ -873,7 +912,7 @@ class App:
         path = self._listenable(value)
         if packages.is_package(path):
             # Cuốn mở từ file `.abook`: nhạc người sản xuất đã gắn nằm sẵn trong gói (bookfile.py, music_plan.package).
-            music = packages.manifest(path).get("music")
+            music = packages.edited_manifest(path).get("music")  # đã qua lớp sửa: tắt, mức mới, đoạn im lặng
             cues = [dict(cue, src=f"/api/books/{quote(value, safe='')}/music/files/{cue['track'].split('/')[1]}")
                     for cue in music_plan.packaged_cues(music, chapter_id)]
             level = music.get("levelDb") if isinstance(music, dict) else None
@@ -1208,7 +1247,12 @@ class App:
 
     def _cast_cover(self, value: str) -> Path | None:
         book = self.library.resolve_listenable(value)
-        return covers.cover_file(book) if book is not None else None
+        return self.cover_file(book) if book is not None else None
+
+    @staticmethod
+    def cover_file(path: Path) -> Path | None:
+        """Ảnh bìa như người nghe thấy: dự án và sách của máy khác theo `covers`, cuốn nhập từ file theo lớp sửa."""
+        return book_edits.cover_file(path) if packages.is_package(path) else covers.cover_file(path)
 
     def report_player(self, body: dict[str, Any]) -> dict[str, Any]:
         """Giao diện máy này báo trình phát của nó và treo tới `wait` giây chờ lệnh từ máy đã ghép (như điện thoại báo
@@ -1293,6 +1337,11 @@ class App:
         tạo, đang làm mà chưa có chương nào, cũng có mặt (chưa nghe được) - người mới tạo sách hỏi "sách của tôi đâu?"."""
         self.refresh_remote()
         books = []
+        toolchain = self.capabilities()["toolchain"]  # một lần cho cả danh sách
+
+        def capabilities_of(path: Path) -> dict[str, bool]:
+            return {**self.capabilities(path), "toolchain": toolchain}
+
         for path in self.library.projects():
             try:
                 summary = self.summary(path)
@@ -1303,13 +1352,16 @@ class App:
                 continue
             view = listen_view.book(path, summary["id"], summary, self.listening.get(summary["id"]), with_chapters=False)
             view["eta"] = summary.get("eta")
+            view["capabilities"] = capabilities_of(path)
             books.append(view)
         for path in self.library.packages():
             value = book_id(path)
             try:
-                books.append(packages.listen(path, value, self.listening.get(value), with_chapters=False))
+                view = packages.listen(path, value, self.listening.get(value), with_chapters=False)
             except (OSError, ValueError):  # gói hỏng: bỏ qua, như sách hỏng
                 continue
+            view["capabilities"] = capabilities_of(path)
+            books.append(view)
         books.sort(key=lambda item: ((item["state"].get("last") or {}).get("at") or 0, item.get("updatedAt") or 0),
                    reverse=True)
         return books
@@ -1322,6 +1374,7 @@ class App:
         else:
             view = listen_view.book(path, value, self.summary(path), self.listening.get(value))
         view["records"] = self.listening.records(value)  # hồ sơ nghe gắn với cuốn này (webui/listening.py)
+        view["capabilities"] = self.capabilities(path)
         return view
 
     def voices(self) -> list[dict[str, Any]]:
@@ -1538,9 +1591,13 @@ class Handler(BaseHTTPRequestHandler):
 
     # ---- các đường dẫn ---------------------------------------------------------------------------------
 
-    def get_app(self, _query: dict[str, list[str]]) -> None:
+    def get_app(self, query: dict[str, list[str]]) -> None:
         prefs = self.app.preferences.get()
+        # `?book=<mã>`: khả năng của máy này với CUỐN ấy (workshop, link); không có thì chỉ `toolchain` có nghĩa.
+        wanted = (query.get("book") or [""])[0]
+        located = self.app.library.resolve_listenable(self.app.library.canonical(wanted)) if wanted else None
         self._send_json(HTTPStatus.OK, {
+            "capabilities": self.app.capabilities(located),
             "version": self.app.version,
             "readOnly": self.app.read_only,
             "dialogs": self.app.dialogs is not None,
@@ -1638,15 +1695,20 @@ class Handler(BaseHTTPRequestHandler):
         # Tab Nhân vật: "Đổi tên" - chỉ cái tên trên màn hình (names.json cạnh sổ dự án), không đụng sổ nhân vật, giọng hay
         # audio, nên có hiệu lực ngay chứ không chờ "Áp dụng". Tên rỗng hay đúng tên gốc là trở về tên gốc.
         self.app._mutating()
-        path = self.app._book(value)
+        path = self.app._editable(value)
         body = self._body()
         character = str(body.get("character", "")).strip()[:200]
         if not character or character.upper() == "NARRATOR":
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu nhân vật")
+        new_name = body.get("name")
+        new_name = new_name if isinstance(new_name, str) else ""  # null / số / danh sách = bỏ tên đã đặt, không phải chữ "None"
+        if packages.is_package(path):
+            self._send_json(HTTPStatus.OK, book_edits.set_character_name(path, character, new_name))
+            return
         original = store.original_name(path, character)
         if original is None:
             raise ApiError(HTTPStatus.BAD_REQUEST, "Không có nhân vật này trong sách")
-        renames.set_name(path, character, str(body.get("name", "")), original)
+        renames.set_name(path, character, new_name, original)
         now_shown = renames.shown(path, character)
         self._send_json(HTTPStatus.OK, {"character": character, "name": now_shown or original,
                                         "original": original, "renamed": bool(now_shown)})
@@ -1700,6 +1762,82 @@ class Handler(BaseHTTPRequestHandler):
 
     def put_title(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.rename(value, str(self._body().get("title") or "")))
+
+    def put_chapter_title(self, _query: dict[str, list[str]], value: str, chapter: str) -> None:
+        # Đổi tên một chương (trang nghe, điện thoại): `title` (nhãn, "Chương 12") và/hay `subtitle` (tên phụ, "" là bỏ);
+        # `revert` hay cả hai trống là trở về tên gốc. Dự án: chapter_titles.json cạnh sổ; cuốn nhập từ file: lớp sửa.
+        self.app._mutating()
+        path = self.app._editable(value)
+        body = self._body()
+        title = None if body.get("revert") else body.get("title")
+        subtitle = None if body.get("revert") else body.get("subtitle")
+        if (title is not None and not isinstance(title, str)) or (subtitle is not None and not isinstance(subtitle, str)):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Tên chương phải là chữ")
+        if packages.is_package(path):
+            self._send_json(HTTPStatus.OK, book_edits.set_chapter_title(path, int(chapter), title, subtitle))
+            return
+        number = int(chapter)
+        if not any(item["id"] == number for item in store.chapters(path)):
+            raise ApiError(HTTPStatus.NOT_FOUND, "Không có chương này trong sách")
+        clean_title = book_edits.clean_text(title, store.TITLE_MAX) if title is not None else ""
+        clean_subtitle = book_edits.clean_text(subtitle, store.TITLE_MAX) if subtitle is not None else None
+        store.set_chapter_title(path, number, clean_title, clean_subtitle)
+        shown = next(item for item in store.chapters(path) if item["id"] == number)
+        self._send_json(HTTPStatus.OK, {"chapterId": number, "title": shown["displayTitle"], "subtitle": shown["subtitle"],
+                                        "fullTitle": shown["fullTitle"]})
+
+    def get_edits(self, _query: dict[str, list[str]], value: str) -> None:
+        # "N thay đổi" của người nghe: `applied` - đã áp trên cuốn nhập từ file (lớp sửa); `waiting` - phần sửa trong file
+        # `.abook` vừa mở ra đúng dự án của máy này, chờ người dùng đồng ý áp (book_edits.fold).
+        path = self.app._editable(value)
+        if packages.is_package(path):
+            self._send_json(HTTPStatus.OK, {"applied": book_edits.count(book_edits.load(path)), "waiting": 0})
+        else:
+            self._send_json(HTTPStatus.OK, {"applied": 0, "waiting": book_edits.count(book_edits.incoming(path))})
+
+    def delete_edits(self, _query: dict[str, list[str]], value: str) -> None:
+        # "Bỏ mọi thay đổi" của cuốn nhập từ file: sách trở về như người làm sách đã đóng gói. Dự án: bỏ phần sửa đang chờ.
+        self.app._mutating()
+        path = self.app._editable(value)
+        if packages.is_package(path):
+            book_edits.clear(path)
+        else:
+            book_edits.dismiss_incoming(path)
+        self._send_json(HTTPStatus.OK, {"applied": 0, "waiting": 0})
+
+    def post_edits_fold(self, _query: dict[str, list[str]], value: str) -> None:
+        # Người dùng đồng ý "N thay đổi - áp vào dự án?": áp phần sửa của file `.abook` vào dự án bằng chính các hàm Studio dùng.
+        self.app._mutating()
+        path = self.app._editable(value)
+        if not store.is_project(path):
+            raise ApiError(HTTPStatus.CONFLICT, "Chỉ dự án trên máy này mới áp được thay đổi từ file")
+        report = book_edits.fold(path)
+        if report["music"]:
+            try:
+                self.app._music_after_change(value)
+            except (music_catalog.CatalogError, OSError):
+                pass  # mất mạng: lựa chọn đã lưu, rãnh nhạc dựng lại lần sau
+        self._send_json(HTTPStatus.OK, report)
+
+    def post_save(self, _query: dict[str, list[str]], value: str) -> None:
+        # "Lưu" / "Lưu thành…" một cuốn nhập từ file: đóng lại thành file `.abook` mới kèm thay đổi của người nghe (phiên bản
+        # 4 nếu có thay đổi). Ra thư mục xuất (như "Xuất"), hay `target`. `.abookproj` chỉ có từ dự án có xưởng.
+        path = self.app._editable(value)
+        body = self._body()
+        if not packages.is_package(path):
+            raise ApiError(HTTPStatus.CONFLICT, "Dự án có xưởng: dùng nút Xuất (file sách .abook hay dự án .abookproj)")
+        if str(body.get("as") or "abook") != "abook":
+            raise ApiError(HTTPStatus.CONFLICT, "Cần máy có Studio để dựng xưởng - chưa lưu thành dự án (.abookproj) được")
+        target = self._target(body)
+        root = Path(target) if target else Path(self.app.preferences.get()["libraryRoot"]) / "Đã xuất"
+        title = str(packages.edited_manifest(path).get("title") or path.name)
+        try:
+            out = bookfile.repack(path, root / bookfile.default_name(title))
+        except bookfile.BookFileError as error:
+            raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
+        self.app.exports.add(str(out.parent))
+        self._send_json(HTTPStatus.OK, {"file": str(out), "folder": str(out.parent), "size": out.stat().st_size,
+                                        "edits": book_edits.count(book_edits.load(path))})
 
     def delete_book(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.delete(value))
@@ -2063,9 +2201,18 @@ class Handler(BaseHTTPRequestHandler):
 
     def put_cover(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._mutating()
-        path = self.app._book(value)
+        path = self.app._editable(value)
         # Ảnh chụp điện thoại vài MB thành data URL còn to hơn 1/3: trần riêng cho đúng yêu cầu này.
         body = self._body(limit=covers.MAX_UPLOAD_BYTES * 4 // 3 + 4096)
+        if packages.is_package(path):
+            # Cuốn nhập từ file: bìa người nghe đặt nằm ở lớp sửa (edits/cover.jpg), bìa của người làm sách giữ nguyên.
+            try:
+                raw = (cover_search.download_image(str(body["url"])) if body.get("url")
+                       else covers.decode_data_url(str(body.get("image", ""))))
+            except covers.CoverError as exc:
+                raise ApiError(HTTPStatus.BAD_REQUEST, str(exc)) from exc
+            self._send_json(HTTPStatus.OK, {"cover": book_edits.set_cover(path, raw, now=int(time.time()))})
+            return
         try:
             if body.get("url"):
                 # Ảnh chọn từ kết quả "Tìm bìa trên mạng": máy chủ tự tải, chỉ từ các nguồn đã cho phép.
@@ -2082,11 +2229,15 @@ class Handler(BaseHTTPRequestHandler):
 
     def delete_cover(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._mutating()
-        covers.remove_cover(self.app._book(value))
+        path = self.app._editable(value)
+        if packages.is_package(path):
+            book_edits.remove_cover(path)
+        else:
+            covers.remove_cover(path)
         self._send_json(HTTPStatus.OK, {"cover": None})
 
     def media_cover(self, _query: dict[str, list[str]], value: str) -> None:
-        path = covers.cover_file(self.app._listenable(value))
+        path = self.app.cover_file(self.app._listenable(value))
         if path is None:
             raise ApiError(HTTPStatus.NOT_FOUND, "Sách này chưa có ảnh bìa")
         self._send_file(path, cache=True)
@@ -2524,6 +2675,11 @@ ROUTES: list[Route] = [
     ("POST", re.compile(BOOK + r"/reveal"), Handler.post_reveal),
     # Chỉ trên máy này: Studio từ xa (remote_studio.ALLOWED) không có hai đường này.
     ("PUT", re.compile(BOOK + r"/title"), Handler.put_title),
+    ("PUT", re.compile(BOOK + r"/chapters/(\d+)/title"), Handler.put_chapter_title),
+    ("GET", re.compile(BOOK + r"/edits"), Handler.get_edits),
+    ("DELETE", re.compile(BOOK + r"/edits"), Handler.delete_edits),
+    ("POST", re.compile(BOOK + r"/edits/fold"), Handler.post_edits_fold),
+    ("POST", re.compile(BOOK + r"/save"), Handler.post_save),
     ("DELETE", re.compile(BOOK), Handler.delete_book),
     ("POST", re.compile(BOOK + r"/export"), Handler.post_export),
     ("GET", re.compile(BOOK + r"/review"), Handler.get_review),

@@ -1,0 +1,49 @@
+{
+ "local": {
+  "format": "abook-edits",
+  "version": 1,
+  "title": "Của tôi",
+  "characters": {
+   "LUCIEN": "A"
+  },
+  "chapters": {
+   "1": {
+    "title": "X"
+   }
+  }
+ },
+ "incoming": {
+  "format": "abook-edits",
+  "version": 1,
+  "title": "Của bạn",
+  "characters": {
+   "LUCIEN": "B"
+  },
+  "chapters": {
+   "1": {
+    "title": "Y",
+    "subtitle": "Z"
+   }
+  }
+ },
+ "merged": {
+  "format": "abook-edits",
+  "version": 1,
+  "title": "Của tôi",
+  "characters": {
+   "LUCIEN": "A"
+  },
+  "chapters": {
+   "1": {
+    "title": "X",
+    "subtitle": "Z"
+   }
+  }
+ },
+ "report": {
+  "adopted": 0,
+  "kept": 3,
+  "conflicts": 3,
+  "cover": null
+ }
+}

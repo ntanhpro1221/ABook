@@ -1,0 +1,70 @@
+{
+ "format": "abook-book/1",
+ "title": "Bộ truyện",
+ "narrator": "Đức Trí",
+ "duration": 11.0,
+ "chaptersTotal": 2,
+ "chaptersAvailable": 2,
+ "complete": true,
+ "version": "v",
+ "chapters": [
+  {
+   "id": 100001,
+   "index": 1,
+   "part": 1,
+   "title": "Chương 1",
+   "subtitle": "",
+   "fullTitle": "Chương 1",
+   "duration": 5.0,
+   "available": true,
+   "file": "chapters/1/a.mp3",
+   "size": 1,
+   "script": "scripts/100001.json"
+  },
+  {
+   "id": 200001,
+   "index": 1,
+   "part": 2,
+   "title": "Chương 1",
+   "subtitle": "Mở đầu",
+   "fullTitle": "Chương 1 · Mở đầu",
+   "duration": 6.0,
+   "available": true,
+   "file": "chapters/2/a.mp3",
+   "size": 1,
+   "script": "scripts/200001.json"
+  }
+ ],
+ "cast": "cast.json",
+ "samples": [],
+ "cover": null,
+ "parts": [
+  {
+   "part": 1,
+   "title": "Bộ truyện · Phần 1",
+   "chapters": [
+    100001,
+    100001
+   ],
+   "duration": 5.0,
+   "narrator": "Đức Trí"
+  },
+  {
+   "part": 2,
+   "title": "Bộ truyện · Phần 2",
+   "chapters": [
+    200001,
+    200001
+   ],
+   "duration": 6.0,
+   "narrator": "Đức Trí"
+  }
+ ],
+ "package": {
+  "format": "abook",
+  "version": 3,
+  "createdAt": "2026-10-03T00:00:00+00:00",
+  "producer": "ABook",
+  "files": {}
+ }
+}

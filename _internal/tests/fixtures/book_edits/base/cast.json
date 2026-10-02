@@ -1,0 +1,51 @@
+{
+ "narrator": {
+  "voice": "Đức Trí",
+  "lines": 4,
+  "seconds": 7.0,
+  "profile": {
+   "key": "narrator",
+   "preset": "Đức Trí",
+   "tone": ""
+  }
+ },
+ "characters": [
+  {
+   "name": "HEIDI",
+   "displayName": "Hây-đi",
+   "originalName": "Heidi",
+   "gender": "Nữ",
+   "age": "Thanh niên",
+   "lines": 1,
+   "seconds": 2.5,
+   "recorded": 0,
+   "voice": {
+    "key": "preset_thanh_binh_f087_p+00",
+    "preset": "Thanh Bình",
+    "tone": "trầm hẳn"
+   },
+   "sampleId": null,
+   "firstChapter": "Chương 646",
+   "pendingVoice": null
+  },
+  {
+   "name": "LUCIEN",
+   "displayName": "Lucien",
+   "gender": "Nam",
+   "age": "Thanh niên",
+   "lines": 1,
+   "seconds": 4.0,
+   "recorded": 1,
+   "voice": {
+    "key": "preset_thanh_binh_f087_p+00",
+    "preset": "Thanh Bình",
+    "tone": "trầm hẳn"
+   },
+   "sampleId": 3,
+   "firstChapter": "Chương 646",
+   "pendingVoice": null
+  }
+ ],
+ "extras": [],
+ "carried": []
+}

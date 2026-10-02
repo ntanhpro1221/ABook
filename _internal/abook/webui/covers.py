@@ -102,8 +102,10 @@ def save_cover(project_root: Path, data_url: str) -> dict[str, Any]:
     return save_cover_bytes(project_root, _decode(data_url))
 
 
-def save_cover_bytes(project_root: Path, raw: bytes) -> dict[str, Any]:
-    """Chuẩn hoá và lưu một ảnh bìa từ byte thô (ảnh người dùng gửi lên, hay ảnh tải về từ cover_search)."""
+def render_cover(raw: bytes) -> tuple[bytes, dict[str, Any]]:
+    """Chuẩn hoá một ảnh bìa từ byte thô: JPEG đã xoay theo EXIF, bỏ kênh trong suốt, cạnh dài tối đa `MAX_SIDE`, kèm
+    {"color", "width", "height"}. Dùng chung cho bìa của dự án (`save_cover_bytes`) và bìa người nghe đặt cho sách
+    không có xưởng (book_edits.py)."""
     from PIL import Image, ImageOps, UnidentifiedImageError  # noqa: PLC0415 - Pillow chỉ cần khi có người đặt bìa
 
     if len(raw) > MAX_UPLOAD_BYTES:
@@ -122,13 +124,25 @@ def save_cover_bytes(project_root: Path, raw: bytes) -> dict[str, Any]:
         image = backdrop
     image = image.convert("RGB")
     image.thumbnail((MAX_SIDE, MAX_SIDE), Image.Resampling.LANCZOS)
+    out = io.BytesIO()
+    image.save(out, "JPEG", quality=88, optimize=True, progressive=True)
+    return out.getvalue(), {"color": dominant_color(image), "width": image.width, "height": image.height}
+
+
+def save_cover_bytes(project_root: Path, raw: bytes) -> dict[str, Any]:
+    """Chuẩn hoá và lưu một ảnh bìa từ byte thô (ảnh người dùng gửi lên, hay ảnh tải về từ cover_search)."""
+    jpeg, meta = render_cover(raw)
     target = project_root / COVER_FILE
     partial = target.with_suffix(".jpg.part")
-    image.save(partial, "JPEG", quality=88, optimize=True, progressive=True)
+    partial.write_bytes(jpeg)
     os.replace(partial, target)
-    meta = {"color": dominant_color(image), "width": image.width, "height": image.height, "savedAt": time.time()}
-    (project_root / META_FILE).write_text(json.dumps(meta, ensure_ascii=False), encoding="utf-8")
+    (project_root / META_FILE).write_text(json.dumps({**meta, "savedAt": time.time()}, ensure_ascii=False), encoding="utf-8")
     return cover_meta(project_root) or {}
+
+
+def decode_data_url(data_url: str) -> bytes:
+    """Byte của ảnh trong một data URL do giao diện gửi (PNG, JPEG, WebP, GIF, BMP); lỗi thì `CoverError`."""
+    return _decode(data_url)
 
 
 def remove_cover(project_root: Path) -> None:

@@ -41,7 +41,7 @@ object Artwork {
      * từ tên như bản web. Ảnh dọc không bị cắt: đặt trọn ở giữa khung vuông, nền là chính ảnh ấy phóng to và nhoè.
      */
     fun cover(title: String, bookId: String?): ByteArray {
-        val file = bookId?.let { Store.file(it, "cover.jpg") }
+        val file = bookId?.let { Store.coverFile(it) } // bìa người nghe đặt (BookEdits), hay bìa của sách
         if (file == null || !file.isFile) return cover(title)
         return cache.getOrPut("${file.path}:${file.lastModified()}") { photo(file) ?: cover(title) }
     }

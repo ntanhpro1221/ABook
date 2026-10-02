@@ -1,0 +1,41 @@
+{
+ "local": {
+  "format": "abook-edits",
+  "version": 1,
+  "music": {
+   "levelDb": -20.0,
+   "silenced": [
+    "1:0"
+   ]
+  }
+ },
+ "incoming": {
+  "format": "abook-edits",
+  "version": 1,
+  "music": {
+   "enabled": false,
+   "levelDb": -30.0,
+   "silenced": [
+    "1:60000"
+   ]
+  }
+ },
+ "merged": {
+  "format": "abook-edits",
+  "version": 1,
+  "music": {
+   "enabled": false,
+   "levelDb": -20.0,
+   "silenced": [
+    "1:0",
+    "1:60000"
+   ]
+  }
+ },
+ "report": {
+  "adopted": 2,
+  "kept": 2,
+  "conflicts": 1,
+  "cover": null
+ }
+}

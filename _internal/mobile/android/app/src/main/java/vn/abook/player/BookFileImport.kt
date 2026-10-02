@@ -40,7 +40,7 @@ object BookFileImport {
     private const val PROJECT_FORMAT = "abookproj"
     private const val PROJECT_FORMAT_VERSION = 2  // 1 = dự án thuần (không có phần nghe); 2 = thêm book.json + cast/scripts/samples/music
     private const val PROJECT_MAX_ENTRIES = 1_000_000
-    private const val FORMAT_VERSION = 3  // 2 = có thêm rãnh nhạc nền (music/<sha1>.mp3); 3 = cả bộ nhiều phần (chapters/<phần>/...)
+    private const val FORMAT_VERSION = 4  // 2 = có thêm rãnh nhạc nền (music/<sha1>.mp3); 3 = cả bộ nhiều phần (chapters/<phần>/...); 4 = lớp sửa của người nghe (edits.json, edits/cover.jpg)
     /** Chỗ trống dư ngoài cỡ giải nén (book.json, thư mục tạm): đủ để không đầy bộ nhớ giữa chừng. */
     private const val ROOM_MARGIN = 64L shl 20
     private const val MAX_ENTRIES = 20_000
@@ -50,6 +50,8 @@ object BookFileImport {
     private val CONTENT = Regex("""$COMMON|chapters/[0-9A-Za-z_.\-]+\.mp3""")
     /** Phiên bản 3 thêm thư mục phần: chapters/<phần>/<tên>.mp3 (phiên bản 1-2 không có - gặp thì là mục lạ). */
     private val CONTENT_V3 = Regex("""$COMMON|chapters/(?:\d{1,4}/)?[0-9A-Za-z_.\-]+\.mp3""")
+    /** Phiên bản 4 thêm lớp sửa của người nghe (BookEdits): edits.json và edits/cover.jpg - chỉ file .abook, không phải .abookproj. */
+    private val CONTENT_V4 = Regex("""$COMMON|chapters/(?:\d{1,4}/)?[0-9A-Za-z_.\-]+\.mp3|edits\.json|edits/cover\.jpg""")
     private val DESCRIPTIONS = setOf("mimetype", "book.json", "manifest.json")
     /** Audio chương trong file dự án: chỗ nó nằm trong thư mục dự án (webui/store.py chapter_mp3). */
     private val PROJECT_AUDIO = Regex("""project/output/chapters/([^\x00-\x1f<>:"|?*\\/]+\.mp3)""")
@@ -157,7 +159,8 @@ object BookFileImport {
             val version = pack.optInt("version", -1)
             if (version < 1) throw Refused("File sách có phiên bản định dạng không hợp lệ.")
             if (version > FORMAT_VERSION) throw Refused("Sách này được làm bằng bản app mới hơn. Hãy cập nhật app để mở.")
-            val allowed = if (version >= 3) CONTENT_V3 else CONTENT  // thư mục phần chỉ có từ phiên bản 3
+            // Thư mục phần chỉ có từ phiên bản 3, lớp sửa của người nghe từ phiên bản 4 (và chỉ file .abook - file dự án thì không).
+            val allowed = if (project) (if (version >= 3) CONTENT_V3 else CONTENT) else contentPattern(version)
             // File dự án: chỉ phần nghe (những gì `package.files` kể) được nhận; mọi mục khác của gói (sổ dự án, bản thu từng
             // câu, nguồn chương) không bao giờ được giải nén nên không cần xét.
             val listening = if (project) names.filter { allowed.matches(it) || PROJECT_AUDIO.matches(it) }.toSet() else null
@@ -167,8 +170,10 @@ object BookFileImport {
             if (files.keys().asSequence().toSet() != content) {
                 throw Refused("Danh sách file trong sách không khớp nội dung gói.")
             }
+            // Lớp sửa của người nghe mà file mang theo (phiên bản 4): sai thì từ chối cả file, TRƯỚC khi chép gì.
+            val incoming = if (project) Edits(BookEdits.empty(), null) else readEdits(zip)
             // File dự án: audio chương về chapters/<tên>.mp3 như mọi cuốn nhập từ file; book.json và `package` sửa theo.
-            val local = { name: String -> PROJECT_AUDIO.matchEntire(name)?.let { "chapters/${it.groupValues[1]}" } ?: name }
+            val local ={ name: String -> PROJECT_AUDIO.matchEntire(name)?.let { "chapters/${it.groupValues[1]}" } ?: name }
             if (project) relocateChapters(book, pack, files, content, local)
             // Sách không mang mã nào (chủ sách 27-09): app nhận ra cùng một lần sản xuất bằng audio từng chương.
             val chapters = JSONObject()
@@ -180,9 +185,13 @@ object BookFileImport {
             // chỗ nghe vẫn nối - không thành hai cuốn. Bản trên máy nhiều chương hơn file thì giữ nguyên bản trên máy.
             val existing = Store.findByChapters(chapters)
             val target = existing ?: contentKey(chapters)
-            val current = existing?.let { Store.manifest(it) }
+            val current = existing?.let { Store.rawManifest(it) }
+            // Chỉ cuốn mở từ file mới nhận phần sửa của người nghe; cuốn của máy tính thì sửa ở máy ấy.
+            val editable = existing == null || Store.isImported(existing)
             if (current != null && current.optInt("chaptersAvailable") > book.optInt("chaptersAvailable")) {
-                return Imported(target, current.optString("title"))
+                // Giữ bản trên máy, nhưng phần sửa trong file vẫn được hợp vào (bên máy này thắng) - không mất công của ai.
+                if (editable && BookEdits.count(incoming.edits) > 0) BookEdits.adopt(Store.bookDir(target), incoming.edits, incoming.cover)
+                return Imported(target, Store.manifest(target)?.optString("title") ?: current.optString("title"))
             }
             val books = File(Store.root, "books").apply { mkdirs() }
             // File dự án: chỗ cần là cỡ phần nghe sẽ giải nén, không phải cả gói.
@@ -197,6 +206,8 @@ object BookFileImport {
                         throw Refused("File sách bị hỏng hoặc bị sửa ($name). Hãy chép lại file từ nguồn.")
                     }
                 }
+                if (editable) keepLocalEdits(Store.bookDir(target), staging, incoming.edits)
+                else File(staging, BookEdits.EDITS_FILE).delete().also { File(staging, BookEdits.EDITS_COVER).delete() }
                 // Bản sách của app trên máy mang mã thư mục của app (book.json không nằm trong danh sách mã băm).
                 Store.writeAtomic(File(staging, "book.json"), book.put("id", target).toString())
                 replace(books, staging, Store.bookDir(target), target)
@@ -204,9 +215,70 @@ object BookFileImport {
                 staging.deleteRecursively()
             }
             Store.rememberChapters(target, chapters, imported = existing == null || Store.isImported(existing))
-            return Imported(target, book.optString("title"))
+            return Imported(target, Store.manifest(target)?.optString("title") ?: book.optString("title"))
         }
     }
+
+    /** Phần sửa của người nghe trong file (đã kiểm) và byte ảnh bìa sửa của nó. */
+    private class Edits(val edits: JSONObject, val cover: ByteArray?)
+
+    /**
+     * `edits.json` đúng giao ước (BookEdits.validate - sai thì từ chối cả file) và bìa sửa đi đôi với nó: có `cover` là đối tượng
+     * thì phải có edits/cover.jpg, và ngược lại; là JPEG, không quá cỡ (bookfile.py `_check_edits`).
+     */
+    private fun readEdits(zip: ZipFile): Edits {
+        var edits = BookEdits.empty()
+        zip.getEntry(BookEdits.EDITS_FILE)?.let { entry ->
+            val data = readLimited(zip, entry, BookEdits.MAX_EDITS_BYTES) ?: throw Refused("Phần sửa của sách quá lớn.")
+            edits = try {
+                BookEdits.parse(data)
+            } catch (error: BookEdits.EditsError) {
+                throw Refused(error.message.orEmpty())
+            }
+        }
+        val entry = zip.getEntry(BookEdits.EDITS_COVER)
+        if ((entry != null) != (edits.opt("cover") is JSONObject)) throw Refused("Ảnh bìa trong phần sửa của sách không khớp.")
+        if (entry == null) return Edits(edits, null)
+        val cover = readLimited(zip, entry, BookEdits.MAX_COVER_BYTES)
+        if (cover == null || cover.size < 3 || cover[0] != 0xFF.toByte() || cover[1] != 0xD8.toByte() || cover[2] != 0xFF.toByte()) {
+            throw Refused("Ảnh bìa trong phần sửa của sách không dùng được.")
+        }
+        return Edits(edits, cover)
+    }
+
+    /** Đọc một mục của gói, không quá `limit` byte (nhiều hơn thì null) - không tin cỡ khai trong gói. */
+    private fun readLimited(zip: ZipFile, entry: ZipEntry, limit: Int): ByteArray? {
+        if (entry.size > limit) return null
+        val out = java.io.ByteArrayOutputStream()
+        zip.getInputStream(entry).use { input ->
+            val buffer = ByteArray(1 shl 16)
+            while (true) {
+                val read = input.read(buffer)
+                if (read < 0) break
+                out.write(buffer, 0, read)
+                if (out.size() > limit) return null
+            }
+        }
+        return out.toByteArray()
+    }
+
+    /**
+     * Thư mục cũ của cuốn này đã có phần sửa của người nghe: hợp nó với phần sửa của file (BookEdits.merge: bên máy này thắng)
+     * vào bản vừa giải nén, TRƯỚC khi bản cũ bị thay - nhập lại một cuốn không bao giờ xoá việc người nghe đã làm.
+     */
+    private fun keepLocalEdits(old: File, staging: File, incoming: JSONObject) {
+        val local = BookEdits.load(old)
+        if (BookEdits.isEmpty(local)) return
+        val (merged, report) = BookEdits.merge(local, incoming)
+        BookEdits.save(staging, merged)
+        if (report.opt("cover") == "local") {
+            File(staging, BookEdits.EDITS_COVER).parentFile?.mkdirs()
+            File(old, BookEdits.EDITS_COVER).copyTo(File(staging, BookEdits.EDITS_COVER), overwrite = true)
+        }
+    }
+
+    /** Tên mục hợp lệ của một file .abook phiên bản `version` (BookDocumentWriter dùng cùng bộ luật với bộ nhập). */
+    internal fun contentPattern(version: Int): Regex = if (version >= 4) CONTENT_V4 else if (version >= 3) CONTENT_V3 else CONTENT
 
     /** File dự án: `project.json` đúng loại và không mới hơn app (không thì nhắc cập nhật, như file sách). */
     private fun requireSupportedProject(zip: ZipFile) {

@@ -30,21 +30,51 @@ object Store {
 
     fun bookDir(id: String) = File(root, "books/$id")
 
-    fun file(id: String, relative: String): File {
-        val target = File(bookDir(id), relative).canonicalFile
-        require(target.path.startsWith(bookDir(id).canonicalPath)) { "đường dẫn ra ngoài thư mục sách" }
+    fun file(id: String, relative: String): File = contained(bookDir(id), relative)
+
+    /** `relative` trong thư mục `dir`; ra ngoài thì từ chối (đường dẫn lấy từ book.json hay từ người lạ). */
+    fun contained(dir: File, relative: String): File {
+        val target = File(dir, relative).canonicalFile
+        require(target.path.startsWith(dir.canonicalPath)) { "đường dẫn ra ngoài thư mục sách" }
         return target
     }
 
+    /**
+     * `book.json` NGUYÊN VĂN của người làm sách (hay của máy tính), không có lớp sửa của người nghe. Chỗ nào GHI book.json lại
+     * (nhận mã, đổi mã) hay so sách với file dùng hàm này - `manifest` đã phủ lớp sửa lên, ghi ngược nó là biến thay đổi của
+     * người nghe thành nội dung của sách.
+     */
     @Synchronized
-    fun manifest(id: String): JSONObject? {
+    fun rawManifest(id: String): JSONObject? {
         val file = File(bookDir(id), "book.json")
         return if (file.isFile) JSONObject(file.readText()) else null
     }
 
+    /**
+     * `book.json` như NGƯỜI NGHE thấy: lớp sửa (BookEdits: tên sách, bìa, tên chương, nhạc) phủ lên sách, kèm `edits` (số
+     * thay đổi) và `capabilities` (docs/EDITING.md) - trình phát, thông báo, widget, thư viện đều đọc qua đây.
+     */
     @Synchronized
-    fun books(): List<JSONObject> =
-        File(root, "books").listFiles()?.mapNotNull { dir -> manifest(dir.name) } ?: emptyList()
+    fun manifest(id: String): JSONObject? = rawManifest(id)?.let { shown(id, it, printsBook()) }
+
+    private fun shown(id: String, raw: JSONObject, prints: JSONObject): JSONObject {
+        val edits = BookEdits.load(bookDir(id))
+        return BookEdits.applyManifest(raw, edits).put("edits", BookEdits.count(edits))
+            .put("capabilities", capabilities(isComputer(raw, prints.optJSONObject(id))))
+    }
+
+    /** Điện thoại không có Studio ({toolchain, workshop} luôn false); `link`: cuốn lấy từ máy tính, sửa ở máy ấy. */
+    fun capabilities(link: Boolean): JSONObject =
+        JSONObject().put("toolchain", false).put("workshop", false).put("link", link)
+
+    /** Gói sách của cuốn chưa tải (nghe thẳng): không có lớp sửa, luôn là cuốn "Trên máy khác". */
+    fun linked(manifest: JSONObject): JSONObject = manifest.put("edits", 0).put("capabilities", capabilities(true))
+
+    @Synchronized
+    fun books(): List<JSONObject> {
+        val prints = printsBook()
+        return File(root, "books").listFiles()?.mapNotNull { dir -> rawManifest(dir.name)?.let { shown(dir.name, it, prints) } } ?: emptyList()
+    }
 
     /**
      * Sách nghe thẳng từ máy tính, chưa tải (Streaming): gói sách cất ở `stream.json` - KHÔNG phải `book.json` - nên
@@ -61,13 +91,41 @@ object Store {
     fun playableManifest(id: String): JSONObject? = manifest(id) ?: streamManifest(id)
 
     @Synchronized
-    fun playableBooks(): List<JSONObject> =
-        File(root, "books").listFiles()?.mapNotNull { dir -> playableManifest(dir.name) } ?: emptyList()
+    fun playableBooks(): List<JSONObject> {
+        val prints = printsBook()
+        return File(root, "books").listFiles()?.mapNotNull { dir ->
+            rawManifest(dir.name)?.let { shown(dir.name, it, prints) } ?: streamManifest(dir.name)
+        } ?: emptyList()
+    }
 
-    fun writeAtomic(target: File, text: String) {
+    /** Ảnh bìa người nghe thấy: bìa họ đặt (edits/cover.jpg), hay bìa của sách; null khi họ đã bỏ bìa hay sách không có. */
+    fun coverFile(id: String): File? = BookEdits.coverFile(bookDir(id))
+
+    /**
+     * Văn bản trong gói như người nghe thấy khi lớp sửa làm nó khác đi: `cast.json` (tên nhân vật đã đổi) và
+     * `scripts/<n>.json` (tên người nói, tên chương). null = không có gì phủ lên - dùng đúng file.
+     */
+    fun overlaidText(id: String, relative: String): String? {
+        val dir = bookDir(id)
+        val edits = BookEdits.load(dir)
+        if (BookEdits.isEmpty(edits)) return null
+        val book = rawManifest(id) ?: return null
+        return BookEdits.overlaidText(dir, book, edits, relative)
+    }
+
+    /** Nội dung một file văn bản của gói (đã qua lớp sửa); null khi file không có. */
+    fun readText(id: String, relative: String): String? {
+        val file = file(id, relative)
+        if (!file.isFile) return null
+        return overlaidText(id, relative) ?: file.readText()
+    }
+
+    fun writeAtomic(target: File, text: String) = writeAtomic(target, text.toByteArray(Charsets.UTF_8))
+
+    fun writeAtomic(target: File, bytes: ByteArray) {
         target.parentFile?.mkdirs()
         val temporary = File(target.path + ".part")
-        temporary.writeText(text)
+        temporary.writeBytes(bytes)
         if (!temporary.renameTo(target)) {
             target.delete()
             temporary.renameTo(target)
@@ -592,7 +650,7 @@ object Store {
     @Synchronized
     fun importedBooks(): List<String> {
         val all = printsBook()
-        return all.keys().asSequence().filter { all.getJSONObject(it).optBoolean("imported") && manifest(it) != null }.toList()
+        return all.keys().asSequence().filter { all.getJSONObject(it).optBoolean("imported") && rawManifest(it) != null }.toList()
     }
 
     /** Cỡ + mã băm các chương của một cuốn, như đã ghi trong sổ. */
@@ -660,11 +718,11 @@ object Store {
      */
     @Synchronized
     fun adopt(localId: String, syncId: String) {
-        if (localId == syncId || !isImported(localId) || manifest(localId) == null || manifest(syncId) != null) return
+        if (localId == syncId || !isImported(localId) || rawManifest(localId) == null || rawManifest(syncId) != null) return
         val target = bookDir(syncId)
         target.deleteRecursively() // chỉ là bộ nhớ đệm nghe thẳng (stream.json + file nhỏ): lấy lại được
         if (!bookDir(localId).renameTo(target)) return
-        val book = manifest(syncId) ?: return
+        val book = rawManifest(syncId) ?: return
         writeAtomic(File(target, "book.json"), book.put("id", syncId).toString())
         moveLinks(localId, syncId)
         val all = printsBook()
@@ -680,11 +738,20 @@ object Store {
     fun computerBooks(): List<String> {
         val prints = printsBook()
         return File(root, "books").listFiles()?.filter { it.isDirectory }?.mapNotNull { dir ->
-            val manifest = playableManifest(dir.name) ?: return@mapNotNull null
-            val imported = prints.optJSONObject(dir.name)?.optBoolean("imported") == true
-            dir.name.takeIf { manifest.optString("source").isEmpty() && !imported }
+            val manifest = rawManifest(dir.name) ?: streamManifest(dir.name) ?: return@mapNotNull null
+            dir.name.takeIf { isComputer(manifest, prints.optJSONObject(dir.name)) }
         } ?: emptyList()
     }
+
+    /** Cuốn này lấy từ máy tính chính (không phải mở từ file, không phải của thiết bị ghép khác)? */
+    @Synchronized
+    fun isComputerBook(id: String): Boolean {
+        val manifest = rawManifest(id) ?: streamManifest(id) ?: return false
+        return isComputer(manifest, printsBook().optJSONObject(id))
+    }
+
+    private fun isComputer(manifest: JSONObject, print: JSONObject?) =
+        manifest.optString("source").isEmpty() && print?.optBoolean("imported") != true
 
     /**
      * Máy tính đổi mã một cuốn (mã kiểu cũ - đường dẫn thư mục mã hoá - sang mã mới, docs/BOOK_IDS.md): thư
@@ -696,10 +763,10 @@ object Store {
         if (oldId == newId) return
         val target = runCatching { deletableBookDir(newId) }.getOrNull() ?: return
         val source = runCatching { deletableBookDir(oldId) }.getOrNull() ?: return
-        if (!source.isDirectory || manifest(newId) != null) return
+        if (!source.isDirectory || rawManifest(newId) != null) return
         target.deleteRecursively() // chỉ có thể là bộ nhớ đệm nghe thẳng của mã mới: lấy lại được
         if (!source.renameTo(target)) return
-        manifest(newId)?.let { writeAtomic(File(target, "book.json"), it.put("id", newId).toString()) }
+        rawManifest(newId)?.let { writeAtomic(File(target, "book.json"), it.put("id", newId).toString()) }
         streamManifest(newId)?.let { writeAtomic(File(target, "stream.json"), it.put("id", newId).toString()) }
         moveLinks(oldId, newId)
         val all = printsBook()

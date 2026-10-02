@@ -1,6 +1,6 @@
 # The ABook file format (`.abook`)
 
-Media type: `application/vnd.ngdtuanh.abook+zip` · File extension: `.abook` · Format versions: 1, 2, 3 (current: 3)
+Media type: `application/vnd.ngdtuanh.abook+zip` · File extension: `.abook` · Format versions: 1, 2, 3, 4 (current: 4)
 
 An `.abook` file is one finished audiobook produced by ABook (https://github.com/ntanhpro1221/ABook): the audio of every
 chapter, the text with who speaks each line, the cast of characters and the cover, in a single file that the ABook apps
@@ -37,6 +37,10 @@ A ZIP archive (PKWARE APPNOTE, as used by EPUB and OOXML).
 | `scripts/<n>.json` | deflate | the lines of chapter `n`: text, kind (narration / dialogue / thought / heading), speaker, emotion, intensity, pace, volume, and the time span inside the chapter MP3 |
 | `samples/<n>.wav` | stored | short voice sample of a character |
 | `music/<sha1>.mp3` | stored | version 2 and later: a background-music track the producer attached; `<sha1>` is 40 hex digits and the file is stored once however many chapters or parts use it |
+| `edits.json` | deflate | version 4 only: the listener's edit layer (see below), at most 1 MiB |
+| `edits/cover.jpg` | deflate | version 4 only: a cover the listener chose, JPEG, at most 8 MiB; only with `edits.json` |
+
+A `.abook` never contains `project/`, `sources/` or `views/` (the producer's workshop): a reader refuses those names.
 
 ## Versions
 
@@ -48,6 +52,7 @@ older apps still open it.
 | 1 | the layout above without `music/` and without part folders |
 | 2 | background music: the `music` object of `book.json` (`levelDb`, `tracks`, and per chapter the cue list `chapters[<chapterId>]` of `{start, end, track, gainDb}`) and the `music/<sha1>.mp3` entries |
 | 3 | a whole series in one file: parts, nested chapter paths and a series-wide chapter id scheme, described next |
+| 4 | the listener's edit layer: `edits.json` and `edits/cover.jpg`, described after version 3. Only written when the listener changed something; an unedited book stays at version 1-3 |
 
 ### Version 3: a series in one file
 
@@ -71,6 +76,30 @@ older apps still open it.
 - **Size.** A series can be several gigabytes. A single file larger than 4 GiB cannot be stored on FAT32 media (some SD
   cards and USB sticks), so the producing app also offers one file per part (each a normal version 1 or 2 file).
 
+### Version 4: the edit layer
+
+The book layer (`book.json`, `cast.json`, `scripts/`, `cover.jpg`, `music/`, audio) is the producer's and is never
+rewritten by a listener's app. What a listener changes lives next to it in `edits.json`, a JSON object:
+
+| Key | Content |
+|---|---|
+| `format`, `version` | `"abook-edits"`, `1` |
+| `title` | book title shown instead of the one in `book.json` |
+| `cover` | absent: the book's cover; `{color, width, height, version}` and `edits/cover.jpg`: the listener's cover |
+| `characters` | `{canonical name: display name}` |
+| `chapters` | `{chapter id: {title?, subtitle?}}` |
+| `music` | `{enabled?, levelDb?, silenced?: ["<chapter id>:<start in ms>", ...]}` - cues the listener silenced |
+
+Readers validate it strictly and refuse the whole file when it is malformed: more than 1 MiB, more than 2,000
+characters, 5,000 chapters or 5,000 silenced cues, text that is not clean (titles longer than 160 code points, names
+longer than 80, control characters, leading or trailing blanks), `levelDb` outside -40..-6, a cover colour that is not
+`#rrggbb`. Edits are only the minimum: a value equal to the book's is not stored. The layer never edits story text.
+
+Opening the same book again keeps the listener's own edits (theirs win on a clash; silenced cues are merged). When the
+computer that made the book opens a file with edits, it may offer to apply them to its project.
+
+**Privacy.** `edits.json` holds no device name, account, path or time of listening: only the edits themselves.
+
 No version carries the machine-local book id or the `series` link that the phone sync package has: the file names no
 location on the producing computer.
 
@@ -79,7 +108,7 @@ location on the producing computer.
 - Reject the file if `mimetype` is not the first entry, is compressed, or does not hold the exact media type.
 - Reject entries whose size or SHA-256 differs from `book.json`, more than 20,000 entries, JSON entries over 32 MiB,
   or more than 64 GiB in total.
-- Reject a `package.version` greater than the version the reader supports (currently 3), and tell the user to update.
+- Reject a `package.version` greater than the version the reader supports (currently 4), and tell the user to update.
 - Check that the destination has room for the whole book before extracting, and extract and hash in one pass.
 - Nothing inside the file is executed. The file carries no listening data (position, bookmarks, history) and no
   identifier of the person or device that made it.
@@ -93,5 +122,5 @@ readers hand to their platform's media decoders. The format has no active conten
 ## Versioning
 
 `package.version` in `book.json` is an integer. Additions that old readers can ignore keep the version; anything an old
-reader would misread raises it (version 2 added `music/` entries, version 3 added part folders: an older reader would
+reader would misread raises it (version 2 added `music/` entries, version 3 added part folders, version 4 the `edits.json` / `edits/` entries: an older reader would
 report them as unknown names, so the version was raised and the older reader asks the user to update the app).

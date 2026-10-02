@@ -70,7 +70,7 @@ def review_items(project_root: Path) -> list[dict[str, Any]]:
             " wav_path" + "".join(f", {column}" for column in extra)
             + " FROM segments WHERE status IN ('warning', 'failed') ORDER BY chapter_id, seq"
         ).fetchall()
-        names = store.chapter_names(connection)
+        names = store.chapter_names(connection, project_root)
     # Chữ đem đọc đang chờ áp (tab Kịch bản hay chính thẻ này): thẻ hiện nó thay vì mời sửa lại từ đầu.
     waiting = {entry["stable_id"]: entry for entry in line_requests(read_overrides(project_root))
                if isinstance(entry.get("spoken"), str)}

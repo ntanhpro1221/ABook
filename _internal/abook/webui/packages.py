@@ -15,7 +15,7 @@ import re
 from pathlib import Path
 from typing import Any, Iterable
 
-from . import covers, store
+from . import book_edits, covers, store
 from .. import continuation
 from .fingerprints import Fingerprints, base_name
 from .listen_view import FORMAT
@@ -40,6 +40,23 @@ def manifest(path: Path) -> dict[str, Any]:
         raise ValueError("book.json không phải một đối tượng")
     _CACHE[str(file)] = (stamp, data)
     return data
+
+
+_EDITED: dict[str, tuple[Any, dict[str, Any]]] = {}
+
+
+def edited_manifest(path: Path) -> dict[str, Any]:
+    """`book.json` như NGƯỜI NGHE thấy: lớp sách (`manifest`) cộng lớp sửa của họ (`book_edits`: tên sách, tên chương, bìa,
+    nhạc). Đệm theo lần ghi của cả hai file. Chỗ nào cần lớp sách nguyên (mã băm, danh sách file, sách của máy khác) dùng `manifest`."""
+    base = manifest(path)
+    info = (Path(path) / MANIFEST).stat()
+    stamp = ((info.st_mtime_ns, info.st_size), book_edits.stamp(path))
+    cached = _EDITED.get(str(path))
+    if cached and cached[0] == stamp:
+        return cached[1]
+    result = book_edits.apply_manifest(base, book_edits.load(path))
+    _EDITED[str(path)] = (stamp, result)
+    return result
 
 
 def is_package(path: Path) -> bool:
@@ -140,19 +157,35 @@ def sample_file(path: Path, sample_id: int) -> Path | None:
 
 
 def script(path: Path, chapter_id: int) -> Any | None:
-    chapter = _chapter(manifest(path), chapter_id)
+    """Chữ đọc theo của một chương, đã qua lớp sửa (tên người nói, tên chương)."""
+    book = manifest(path)
+    chapter = _chapter(book, chapter_id)
     file = _file(path, chapter.get("script")) if chapter else None
-    return json.loads(file.read_text(encoding="utf-8")) if file else None
+    if not file:
+        return None
+    result = json.loads(file.read_text(encoding="utf-8"))
+    edits = book_edits.load(path)
+    if book_edits.is_empty(edits) or not isinstance(result, dict):
+        return result
+    return book_edits.apply_script(result, raw_cast(path), edits, chapter)
 
 
-def cast(path: Path) -> Any:
+def raw_cast(path: Path) -> Any:
+    """`cast.json` của lớp sách, chưa qua lớp sửa."""
     file = _file(path, manifest(path).get("cast") or "cast.json")
     return json.loads(file.read_text(encoding="utf-8")) if file else {"characters": [], "extras": []}
 
 
+def cast(path: Path) -> Any:
+    """Dàn nhân vật như người nghe thấy (tên đã đổi, chương đầu theo tên chương mới)."""
+    result = raw_cast(path)
+    edits = book_edits.load(path)
+    return result if book_edits.is_empty(edits) or not isinstance(result, dict) else book_edits.apply_cast(result, edits, manifest(path))
+
+
 def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bool = True) -> dict[str, Any]:
     """Cùng hình dạng với `listen_view.book` của một dự án - giao diện Nghe không phân biệt hai loại."""
-    book = manifest(path)
+    book = edited_manifest(path)
     remote = _remote(path)
     items = []
     for chapter in book.get("chapters") or []:
@@ -186,10 +219,12 @@ def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bo
         "paused": False,
         "imported": True,
         "remote": _remote_view(book) if remote else None,
-        "updatedAt": (Path(path) / MANIFEST).stat().st_mtime,
+        "updatedAt": max((Path(path) / MANIFEST).stat().st_mtime, book_edits.stamp(Path(path))[0] / 1e9),
         "state": state,
         "progress": book_progress(state, available, complete=complete),
-        "cover": covers.cover_view(Path(path), book_id),
+        "cover": book_edits.cover_view(Path(path), book_id),
+        # Số thay đổi của người nghe trên cuốn này (lớp sửa): giao diện ghi "N thay đổi" và mời lưu thành file.
+        "edits": book_edits.count(book_edits.load(Path(path))),
         "lastChapterTitle": next((chapter["fullTitle"] for chapter in items
                                   if chapter["id"] == (state.get("last") or {}).get("chapterId")), ""),
         # Cả bộ trong một file (bookfile.pack_series): các phần theo thứ tự; sách một phần thì rỗng.
@@ -235,26 +270,38 @@ def _write_cover_meta(target: Path, book: dict[str, Any]) -> None:
 
 
 def import_file(source: Path, library_root: Path, projects: Iterable[Path],
-                fingerprints: Fingerprints) -> tuple[Path, str]:
+                fingerprints: Fingerprints, report: dict[str, Any] | None = None) -> tuple[Path, str]:
     """Nhập một file `.abook`. Trả (thư mục cuốn trong thư viện, cách): "project" - file do chính máy này xuất, mở
     dự án ấy; "existing" - đã nhập rồi, bản đã có đủ chương bằng hoặc hơn; "updated" - đã nhập rồi, bản mới nhiều
-    chương hơn nên thay tại chỗ; "new" - cuốn mới. File hỏng, bị sửa hay không phải sách: `bookfile.BookFileError`."""
+    chương hơn nên thay tại chỗ; "new" - cuốn mới. File hỏng, bị sửa hay không phải sách: `bookfile.BookFileError`.
+
+    File phiên bản 4 mang lớp sửa của người nghe (book_edits.py): cuốn đã nhập thì phần sửa được HỢP với phần sửa trên máy
+    (máy này thắng, không bị xoá); cuốn là dự án của chính máy này thì phần sửa được cất chờ người dùng đồng ý áp vào dự án
+    (`book_edits.fold`). `report` (nếu có) nhận {"edits": số thay đổi trong file, "merge": báo cáo hợp}."""
     from . import bookfile
 
+    report = report if report is not None else {}
     with bookfile.BookFile(Path(source)) as opened:
         prints = opened.chapter_prints
+        report["edits"] = book_edits.count(opened.edits)
         # File cả bộ chung chương với nhiều dự án (mỗi phần một dự án): mở phần đầu của bộ.
         mine = [project for project in projects if fingerprints.shares_a_chapter(project, prints)]
         if mine:
-            return Path(min(mine, key=continuation.part_number)), "project"
+            project = Path(min(mine, key=continuation.part_number))
+            if report["edits"]:
+                book_edits.stash_incoming(project, opened.edits, opened.edits_cover())
+            return project, "project"
         imported = Path(library_root).expanduser() / IMPORTED_FOLDER
         wanted = _prints_by_file(prints)
         for existing in folders(library_root):
             theirs = chapter_prints(manifest(existing))
             if wanted & _prints_by_file(theirs):
                 if len(prints) <= len(theirs):
+                    if report["edits"]:
+                        report["merge"] = book_edits.adopt(existing, opened.edits, opened.edits_cover())
                     return existing, "existing"
                 target = opened.extract(imported, existing.name)
+                report["merge"] = opened.last_merge
                 _write_cover_meta(target, opened.book)
                 return target.resolve(), "updated"
         target = opened.extract(imported, _folder_name(str(opened.book.get("title") or ""), opened.content_key))

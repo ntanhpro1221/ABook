@@ -328,8 +328,8 @@ def test_part_folders_exist_only_from_version_3(tmp_path: Path) -> None:
         BookFile(_rewrite(path, tmp_path / f"cu{bookfile.EXTENSION}", older))
 
 
-def test_version_4_is_refused_with_the_update_hint_and_3_is_accepted(tmp_path: Path) -> None:
-    assert bookfile.FORMAT_VERSION == 3
+def test_a_newer_version_is_refused_with_the_update_hint_and_3_is_accepted(tmp_path: Path) -> None:
+    assert bookfile.FORMAT_VERSION == 4, "4 = lớp sửa của người nghe (test_book_edits.py)"
     _library, projects = _series(tmp_path)
     path = bookfile.pack_series(projects, tmp_path / f"bo{bookfile.EXTENSION}")
 
@@ -337,11 +337,11 @@ def test_version_4_is_refused_with_the_update_hint_and_3_is_accepted(tmp_path: P
         if name != "book.json":
             return data
         book = json.loads(data)
-        book["package"]["version"] = 4
+        book["package"]["version"] = bookfile.FORMAT_VERSION + 1
         return json.dumps(book).encode()
 
     with pytest.raises(BookFileError, match="Hãy cập nhật app"):
-        BookFile(_rewrite(path, tmp_path / f"v4{bookfile.EXTENSION}", newer))
+        BookFile(_rewrite(path, tmp_path / f"moi{bookfile.EXTENSION}", newer))
     with BookFile(path):
         pass
 

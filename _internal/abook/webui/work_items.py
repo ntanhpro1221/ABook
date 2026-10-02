@@ -290,7 +290,7 @@ def work_items(project_root: Path) -> dict[str, Any]:
         return renamed.get(renames.name_key(str(raw))) or _speaker_label(raw)
 
     with closing(store.connect(project_root)) as connection:
-        names = store.chapter_names(connection)
+        names = store.chapter_names(connection, project_root)
         # Văn bản sách cho thẻ biệt danh (3a); sổ tối thiểu của test không có cột này.
         chapter_paths = [
             str(row[0] or "") for row in connection.execute("SELECT input_path FROM chapters")
