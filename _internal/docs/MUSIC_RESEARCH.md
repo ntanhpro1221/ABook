@@ -1095,6 +1095,25 @@ audio, xếp theo mã):
 - Hệ quả: máy chỉ player và điện thoại dùng trò-A (mel + tháp CLAP ONNX + đầu 0,03 MB). Không cần librosa hay port âm học sang
   Kotlin. Máy có Studio giữ bản đủ âm học.
 
+**KẾT QUẢ ĐƯỜNG ONNX (03-10 04:47, Corpus `research/music/onnx_student/`, `results/onnx_parity.txt`): ĐẠT MỌI NGƯỠNG.**
+- 20 bài cố định ("8bit Dungeon Boss" … "Agnus Dei X").
+- Đường ONNX: mel numpy + tháp fp16 + đầu trò-A. Bản torch dùng cùng đầu trò-A.
+
+| Tiêu chí | Ngưỡng | Đo được |
+|---|---|---|
+| Cosine nhúng | ≥ 0,999 mọi bài | min 0,999999 |
+| \|ΔV / ΔE / ΔT\| tối đa | ≤ 0,02 | 0,00026 / 0,00024 / 0,00038 |
+| \|Δ cường độ\| tối đa | ≤ 0,02 | 0,00044 |
+| family trùng | ≥ 19/20 | 20/20 |
+| Mel lệch TB / tối đa | ≤ 1e-3 / 0,05 dB | 9,6e-8 / 7,6e-6 dB |
+
+- Mel float32 thuần cũng đạt (TB 4e-6, tối đa 2,3e-3 dB). Kotlin không cần double.
+- Kích thước: tháp ONNX fp16 59,0 MB, đầu trò-A 54 KB. Thời gian CPU ~0,21 giây / bài (mel 30 ms + tháp 183 ms).
+- Gói HF `NGDtuanh/abook-music-student` @ 60e11bce đã thêm `clap_audio_fp16.onnx` + `student_head_A.npz`. README trong
+  `onnx_student/` ghi mọi hằng số mel, luật cửa sổ và công thức đầu trò cho bản Android.
+- Lưu ý: phép so dùng cùng bộ giải mã ffmpeg ở hai đường. Máy khác giải mã khác thì mẫu lệch nhẹ; cần đo lại trên chính máy đó
+  khi port.
+
 **GHI TRƯỚC - MTG-JAMENDO LÀM DỮ LIỆU HỌC CHO TRÒ (02-10 23:xx, Lead + chủ sách):**
 
 Bộ dữ liệu:
