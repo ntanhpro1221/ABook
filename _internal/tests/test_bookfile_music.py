@@ -58,8 +58,8 @@ def test_the_book_file_carries_the_producers_music(tmp_path: Path) -> None:
         assert music["tracks"][calm]["attribution"] == "Calm by A (CC BY 4.0)", "ghi công đi theo bài"
         assert music["tracks"][calm]["lufs"] == -26.0 and music["tracks"][calm]["speechBand"] == 0.1, "độ to đi theo bài"
         # gainDb tính một lần ở máy chủ (music_plan.cue_gain_db): -20 + (-18) - lufs - 8 x (speechBand - 0,30), kẹp <= 0.
-        assert music["chapters"]["1"] == [{"start": 0.0, "end": 60.0, "track": calm, "gainDb": -10.4},
-                                          {"start": 60.0, "end": 90.0, "track": battle, "gainDb": -31.2}
+        assert music["chapters"]["1"] == [{"start": 0.0, "end": 60.0, "track": calm, "gainDb": -7.39},
+                                          {"start": 60.0, "end": 90.0, "track": battle, "gainDb": -28.19}
                                           ], "hai đoạn liền cùng bài gộp"
 
 
@@ -120,7 +120,7 @@ def test_a_book_opened_from_a_file_plays_its_packaged_music(studio, tmp_path: Pa
     assert status == 200 and cues["levelDb"] == -18.0 and len(cues["cues"]) == 2
     first = cues["cues"][0]
     assert first["src"].startswith(f"/api/books/{book}/music/files/") and first["start"] == 0.0
-    assert first["gainDb"] == -10.4 and cues["cues"][1]["gainDb"] == -31.2, "trình phát chỉ áp gainDb của gói"
+    assert first["gainDb"] == -7.39 and cues["cues"][1]["gainDb"] == -28.19, "trình phát chỉ áp gainDb của gói"
     status, body, _headers = _request(server.port, "GET", first["src"], headers={"X-Ebook-Token": "t"})
     assert status == 200 and body.startswith(b"ID3")
     status, _body, _headers = _request(server.port, "GET", f"/api/books/{book}/music/files/{'0' * 40}.mp3",

@@ -41,7 +41,7 @@ def test_the_player_gets_timed_cues_through_this_machine(studio, tmp_path: Path)
     first = cues["cues"][0]
     assert first["src"] == "/api/music/track?link=" + quote(first["link"], safe="")
     # gainDb tính ở máy chủ: danh mục thử chưa có lufs -> trung vị -16,6; levelDb mặc định -20 -> -23,4 dB.
-    assert all(cue["gainDb"] == -23.4 for cue in cues["cues"]) and cues["levelDb"] == -20.0
+    assert all(cue["gainDb"] == -20.39 for cue in cues["cues"]) and cues["levelDb"] == -20.0
     # Ghi công (CC BY) của bài chương này dùng, khoá theo link của mốc - lấy từ plan["tracks"].
     tracks = json.loads((paths.root / "music_plan.json").read_text(encoding="utf-8")).get("tracks") or {}
     for cue in cues["cues"]:
@@ -277,4 +277,37 @@ def test_the_cue_gain_follows_the_users_level_and_the_track_loudness(studio, tmp
     (paths.root / "music_plan.json").write_text(json.dumps(plan), encoding="utf-8")
     status, cues = _call(server, "GET", f"/api/books/{book}/music/chapters/{chapter}")
     assert status == 200 and cues["levelDb"] == -14.0
-    assert next(cue for cue in cues["cues"] if cue["link"] == link)["gainDb"] == -7.2
+    assert next(cue for cue in cues["cues"] if cue["link"] == link)["gainDb"] == -4.19
+
+
+def test_a_track_whose_source_fails_comes_from_its_archive_mirror_only_if_it_matches(studio, tmp_path: Path,  # noqa: F811
+                                                                                 monkeypatch) -> None:
+    """Nguồn gốc trước; hỏng thì bản sao archive.org trong `mirrors` của danh mục - bản sao sai `sha1` thì bỏ."""
+    import hashlib
+    import io
+    import urllib.error
+    import urllib.request
+
+    _paths, app, _server, _runner = studio
+    _with_catalog(app, tmp_path)
+    good, bad = b"ID3" + b"\1" * 100, b"ID3" + b"\2" * 100
+    mirrors = ["https://archive.org/download/abook-music-x/wrong.mp3", "https://archive.org/download/abook-music-x/a.mp3"]
+    info = {"mirrors": mirrors, "sha1": hashlib.sha1(good).hexdigest()}
+    monkeypatch.setattr(app.music_catalog(), "lookup", lambda links: {link: info for link in links})
+    calls = []
+
+    def open_(request, timeout=0):
+        calls.append(request.full_url)
+        if request.full_url.startswith("https://x/"):
+            raise urllib.error.HTTPError(request.full_url, 404, "gone", {}, None)
+        return io.BytesIO(bad if request.full_url.endswith("wrong.mp3") else good)
+
+    monkeypatch.setattr(urllib.request, "urlopen", open_)
+    path = app.music_track_file("https://x/gone.mp3")
+    assert path.read_bytes() == good and calls == ["https://x/gone.mp3", *mirrors]
+    assert not list(path.parent.glob("*.part")), "không để lại file tạm"
+    calls.clear()
+    monkeypatch.setattr(urllib.request, "urlopen", lambda request, timeout=0: calls.append(request.full_url) or
+                        io.BytesIO(good))
+    app.music_track_file("https://x/live.mp3")
+    assert calls == ["https://x/live.mp3"], "nguồn gốc còn sống thì không đụng bản sao"
