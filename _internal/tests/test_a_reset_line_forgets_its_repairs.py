@@ -19,7 +19,7 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.database import ProjectDB
+from abook.database import ProjectDB
 from tests.test_a_finished_take_survives_the_report import _copy, _promote_the_real_finished_take
 
 
@@ -44,7 +44,7 @@ def test_recovery_still_starts_after_a_repaired_line_is_reset(tmp_path: Path) ->
 
 def test_a_listener_reading_on_a_repaired_line_does_not_break_the_next_start(tmp_path: Path) -> None:
     """Đúng đường của hộp "Việc cần duyệt": áp cách đọc lúc khởi động chạy TRƯỚC recovery."""
-    from ebook_reader.database import LISTENER_PRONUNCIATION_SOURCE
+    from abook.database import LISTENER_PRONUNCIATION_SOURCE
 
     db = _copy(tmp_path)
     segment_id, policy_hash, _candidate_id = _promote_the_real_finished_take(db)

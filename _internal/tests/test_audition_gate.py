@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import os  # noqa: E402
 
-from ebook_reader.voice_catalog import VOCAL_TRACT_MAX_CM, VOCAL_TRACT_MIN_CM  # noqa: E402
+from abook.voice_catalog import VOCAL_TRACT_MAX_CM, VOCAL_TRACT_MIN_CM  # noqa: E402
 
 # `audition_presets` ép offline NGAY KHI NẠP (có lý do: SDK VieNeu mới từng tự tải `main` và dời
 # `refs/main` của cache). Nạp nó trong bộ test thì hai biến ấy rò sang mọi bài chạy sau - và ranh

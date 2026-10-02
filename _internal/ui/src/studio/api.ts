@@ -1,5 +1,5 @@
 import type { CoverImage } from "@/shared/cover";
-// Hợp đồng với server Python (ebook_reader/webui/server.py). Mọi chữ hiển thị đã được server dịch sẵn
+// Hợp đồng với server Python (abook/webui/server.py). Mọi chữ hiển thị đã được server dịch sẵn
 // sang tiếng Việt (humanize.py); ở đây chỉ định kiểu và gọi.
 
 export type Phase = "idle" | "analysis" | "casting" | "synthesis" | "done" | "stopped" | "error";
@@ -147,7 +147,7 @@ export interface ScannedFile {
   split?: { chapters: number; titles: string[]; preamble: boolean } | null;
 }
 
-/** Truyện kể ngôi thứ nhất? (ebook_reader/first_person.py) - cho câu hỏi "'Tôi' là ai?" ở bước chọn giọng. */
+/** Truyện kể ngôi thứ nhất? (abook/first_person.py) - cho câu hỏi "'Tôi' là ai?" ở bước chọn giọng. */
 export interface FirstPersonHint {
   /** Tỉ lệ đoạn lời kể có "tôi/tớ/mình" trong ~20 chương đầu. */
   rate: number;
@@ -179,7 +179,7 @@ export interface ScanResult {
   existing?: { id: string; title: string; statusLabel: string; shared: number; chapters: number }[];
 }
 
-/** "Làm tiếp cuốn này" (ebook_reader/continuation.py): trình tạo sách điền sẵn phần kế tiếp của một truyện dài, gieo từ
+/** "Làm tiếp cuốn này" (abook/continuation.py): trình tạo sách điền sẵn phần kế tiếp của một truyện dài, gieo từ
  * phần trước để nhân vật giữ giọng và tên giữ cách đọc. */
 /** "Sửa thiết lập" của sách chưa bắt đầu (GET /api/books/<id>/redo - store.redo_plan): lựa chọn lúc tạo, điền lại vào trình
  *  tạo sách; tạo xong thì cuốn cũ vào Thùng rác. */
@@ -264,7 +264,7 @@ export interface Preferences {
   sleepExtendMinutes: number;
   safetyStopHours: number;
   sleepSchedule: { from: string; to: string; minutes: number } | null;
-  /** Máy tính xách tay rút sạc: tạm dừng tạo sách (ebook_reader/power_source.py). */
+  /** Máy tính xách tay rút sạc: tạm dừng tạo sách (abook/power_source.py). */
   pauseOnBattery?: boolean;
   /** Mặc định của trình tạo sách cho sách mới ("" = giọng máy đề xuất). */
   newBookNarrator?: string;
@@ -272,7 +272,7 @@ export interface Preferences {
 }
 
 // Mã phiên do cửa sổ app gắn vào URL (?t=...). Giữ lại trong phiên để điều hướng nội bộ không làm mất nó.
-const TOKEN_KEY = "ebook-reader-token";
+const TOKEN_KEY = "abook-token";
 const token: string = (() => {
   const fromUrl = new URLSearchParams(window.location.search).get("t");
   try {

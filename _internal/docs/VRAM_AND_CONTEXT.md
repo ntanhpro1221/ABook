@@ -65,7 +65,7 @@ num_ctx là một phép so sánh chứ không phải một suy đoán.
 Lấy ra khỏi log:
 
 ```bash
-grep -o "prompt [0-9,]* tok" logs/ebook_reader.log | tr -d ', ' | grep -o '[0-9]*' | sort -n | tail -1
+grep -o "prompt [0-9,]* tok" logs/abook.log | tr -d ', ' | grep -o '[0-9]*' | sort -n | tail -1
 ```
 
 ## Đã sửa, và đã đo lại (2026-09-03)

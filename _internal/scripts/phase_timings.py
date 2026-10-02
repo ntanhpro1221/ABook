@@ -134,7 +134,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    log_path = args.project_root / "logs" / "ebook_reader.log"
+    log_path = args.project_root / "logs" / "abook.log"
     if not log_path.is_file():
         print(f"Không thấy log: {log_path}", file=sys.stderr)
         return 66

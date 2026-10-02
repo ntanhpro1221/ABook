@@ -3,7 +3,7 @@
 Chủ sách, 20-09: *"đáp án rất quan trọng để chấm điểm và chọn model... cả 2 phải thật khắt khe"*. File này là quy
 ước CHUNG cho mọi người gán nhãn (Claude và agent review). Đáp án nằm ở `scripts/model_eval/gold/<truyện>/<file>.txt`;
 tranh chấp và kết luận ghi ở `scripts/model_eval/gold/ADJUDICATION.md`. Quy ước này bám theo luật của chính dự án
-(SYSTEM_PROMPT trong `ebook_reader/analysis.py`) - đáp án chấm model theo đúng cái dự án đòi, không theo sở thích riêng.
+(SYSTEM_PROMPT trong `abook/analysis.py`) - đáp án chấm model theo đúng cái dự án đòi, không theo sở thích riêng.
 
 ## Cú pháp một dòng
 

@@ -4,10 +4,10 @@ import threading
 import time
 from pathlib import Path
 
-from ebook_reader import project as project_module
-from ebook_reader.config import build_settings, load_settings, settings_hash
-from ebook_reader.database import ProjectDB
-from ebook_reader.project import create_or_open_project
+from abook import project as project_module
+from abook.config import build_settings, load_settings, settings_hash
+from abook.database import ProjectDB
+from abook.project import create_or_open_project
 
 
 def test_changed_settings_create_a_separate_project(tmp_path: Path) -> None:

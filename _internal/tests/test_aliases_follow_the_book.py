@@ -1,4 +1,4 @@
-"""Bí danh người nghe đã xác nhận ("Thiên Biến Vạn Hóa" là Krai) đi theo cuốn sách (ebook_reader/aliases.py): thẻ "Một người
+"""Bí danh người nghe đã xác nhận ("Thiên Biến Vạn Hóa" là Krai) đi theo cuốn sách (abook/aliases.py): thẻ "Một người
 hai tên" ghi cấp TÊN, "Làm tiếp cuốn này" chép sang phần sau, và bước gom tên trước khi phân vai trỏ nhãn bí danh về người
 ấy - câu của bí danh không có giọng thứ hai ở phần nào của cuốn."""
 from __future__ import annotations
@@ -6,9 +6,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from ebook_reader import aliases, continuation
-from ebook_reader.character_registry import _canonicalize_named_speakers
-from ebook_reader.database import ProjectDB
+from abook import aliases, continuation
+from abook.character_registry import _canonicalize_named_speakers
+from abook.database import ProjectDB
 
 
 def test_a_decision_is_kept_by_name_and_the_latest_wins(tmp_path: Path) -> None:
@@ -86,11 +86,11 @@ def test_the_next_part_inherits_the_decision(tmp_path: Path) -> None:
 
 
 def test_merging_two_names_in_the_inbox_is_remembered_by_name(tmp_path: Path) -> None:
-    from ebook_reader.config import build_settings, save_settings
-    from ebook_reader.webui.actions import FakeRunner
-    from ebook_reader.webui.library import Preferences, book_id
-    from ebook_reader.webui.listening import Listening
-    from ebook_reader.webui.server import App, Server
+    from abook.config import build_settings, save_settings
+    from abook.webui.actions import FakeRunner
+    from abook.webui.library import Preferences, book_id
+    from abook.webui.listening import Listening
+    from abook.webui.server import App, Server
     from tests.test_a_project_can_be_renamed_or_deleted import _call
     from tests.test_listener_speakers import _book
 

@@ -60,11 +60,11 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from ebook_reader.asr import WhisperVerifier, normalize_transcript, transcript_metrics  # noqa: E402
-from ebook_reader.audio_io import atomic_write_wav  # noqa: E402
-from ebook_reader.config import build_settings  # noqa: E402
-from ebook_reader.tts import VieNeuEngine  # noqa: E402
-from ebook_reader.voice_catalog import (  # noqa: E402
+from abook.asr import WhisperVerifier, normalize_transcript, transcript_metrics  # noqa: E402
+from abook.audio_io import atomic_write_wav  # noqa: E402
+from abook.config import build_settings  # noqa: E402
+from abook.tts import VieNeuEngine  # noqa: E402
+from abook.voice_catalog import (  # noqa: E402
     EXCLUDED_PRESETS,
     VOCAL_TRACT_MAX_CM,
     VOCAL_TRACT_MIN_CM,
@@ -325,7 +325,7 @@ def main() -> int:
         verifier.unload()
 
     if not args.no_utmos:
-        from ebook_reader.perceptual_qa import UTMOSNaturalnessVerifier
+        from abook.perceptual_qa import UTMOSNaturalnessVerifier
 
         # `perceptual_qa.enabled` mặc định False trong mọi profile - lượt đo đầu 17-09 in UTMOS "nan"
         # vì thế. Bật riêng cho verifier này, checkpoint lấy theo đường dẫn mặc định của config.

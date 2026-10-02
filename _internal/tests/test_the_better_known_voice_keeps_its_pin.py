@@ -4,7 +4,7 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-from ebook_reader.character_registry import _book_exposure, _drop_pins_that_share_a_chapter
+from abook.character_registry import _book_exposure, _drop_pins_that_share_a_chapter
 
 VOICE = "preset_thai_son_f100_p+00"
 

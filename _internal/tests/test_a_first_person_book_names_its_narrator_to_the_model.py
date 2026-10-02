@@ -10,8 +10,8 @@ Cuốn kể ngôi thứ ba phải thấy đúng prompt và đúng dấu vân tay
 """
 from __future__ import annotations
 
-from ebook_reader.analysis import OllamaBookAnalyzer, _analysis_policy_fingerprint
-from ebook_reader.config import build_settings
+from abook.analysis import OllamaBookAnalyzer, _analysis_policy_fingerprint
+from abook.config import build_settings
 from test_analysis_required import FakeDB, FakeSession, analysis_group, analysis_item
 
 

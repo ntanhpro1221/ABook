@@ -45,7 +45,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from ebook_reader.pipeline import HIGH_QUALITY_ALLOWED_SEGMENT_WARNINGS  # noqa: E402
+from abook.pipeline import HIGH_QUALITY_ALLOWED_SEGMENT_WARNINGS  # noqa: E402
 
 PAGE_NAME = "review.html"
 
@@ -210,7 +210,7 @@ def main(project_root: str, output: str | None, notes_path: str | None = None) -
                     "heard": str(row["asr_text"] or ""),
                     "note": notes.get(str(row["stable_id"])),
                     "command": (
-                        f'ebook-reader-headless accept "{root}" --segment {row["stable_id"]} '
+                        f'abook-headless accept "{root}" --segment {row["stable_id"]} '
                         f'--warning {code} --note "đã nghe"'
                     ),
                 })

@@ -11,7 +11,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from ebook_reader.character_registry import PresetAllocator, formant_variants_for_preset
+from abook.character_registry import PresetAllocator, formant_variants_for_preset
 
 ROOT = Path(__file__).resolve().parents[1]
 PRESET = "Thanh Bình"
@@ -61,7 +61,7 @@ def test_the_registry_notes_the_anonymous_groups_before_it_casts_them() -> None:
     `patch_two_pins_do_not_share_a_chapter` viết "đi qua `allocator.choose()`"), tức bài test
     báo đỏ về một thứ hoàn toàn không đổi. Lời gọi thật xuống dòng ngay sau dấu mở ngoặc.
     """
-    source = (ROOT / "ebook_reader" / "character_registry.py").read_text(encoding="utf-8")
+    source = (ROOT / "abook" / "character_registry.py").read_text(encoding="utf-8")
     note = source.index('f"ANONYMOUS_{anonymous_gender.upper()}"')
     call = re.search(r"allocator\.choose\($", source, re.MULTILINE)
     assert call is not None, "không tìm thấy lời gọi allocator.choose(...) nhiều dòng"

@@ -22,7 +22,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from ebook_reader.pipeline import HIGH_QUALITY_ALLOWED_SEGMENT_WARNINGS  # noqa: E402
+from abook.pipeline import HIGH_QUALITY_ALLOWED_SEGMENT_WARNINGS  # noqa: E402
 
 # The chapter error that means the perceptual repair loop never got to run.
 ASR_EVIDENCE_ABORT = "Perceptual QA requires current ASR evidence"
@@ -209,7 +209,7 @@ def main(project_root: str) -> int:
             # can only fail.
             if row["wav_path"] and Path(str(row["wav_path"])).is_file():
                 print(
-                    f"      chấp nhận: ebook-reader-headless accept \"{root}\" "
+                    f"      chấp nhận: abook-headless accept \"{root}\" "
                     f"--segment {row['stable_id']} --warning {code} --note \"đã nghe\""
                 )
             else:

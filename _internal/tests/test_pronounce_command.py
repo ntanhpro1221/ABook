@@ -14,8 +14,8 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.cli import LISTENER_PRONUNCIATION_SOURCE, _command_pronounce
-from ebook_reader.database import ProjectDB
+from abook.cli import LISTENER_PRONUNCIATION_SOURCE, _command_pronounce
+from abook.database import ProjectDB
 
 
 @pytest.fixture()
@@ -122,7 +122,7 @@ def test_it_reports_failure_rather_than_a_write_that_did_not_happen(
     project: Path, monkeypatch
 ) -> None:
     """Saying "ok" while discarding the input is the bug this command shipped with."""
-    from ebook_reader import cli
+    from abook import cli
 
     monkeypatch.setattr(
         ProjectDB, "apply_listener_pronunciation", lambda self, **kwargs: None

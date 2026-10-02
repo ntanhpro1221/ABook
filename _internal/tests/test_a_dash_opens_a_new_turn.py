@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ebook_reader.analysis import _repair_continued_dialogue_speakers
+from abook.analysis import _repair_continued_dialogue_speakers
 
 
 def _run(lines: list[tuple[int, str, str]]) -> list[str]:

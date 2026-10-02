@@ -1,7 +1,7 @@
 """Giọng mang pitch trẻ con bị bỏ khi người nghe đã ghim một tuổi khác trẻ con."""
 from __future__ import annotations
 
-from ebook_reader.character_registry import _drop_pins_that_contradict_a_person, voice_is_child_pitched
+from abook.character_registry import _drop_pins_that_contradict_a_person, voice_is_child_pitched
 
 
 class _Events:

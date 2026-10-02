@@ -1,7 +1,7 @@
 import { registerPlugin, type PluginListenerHandle } from "@capacitor/core";
 import type { Bookmark, ListeningRecord, ListeningState, NightSession } from "@/listen/model";
 
-// Hai plugin native của app Android (mobile/android/app/src/main/java/vn/ebookreader/player):
+// Hai plugin native của app Android (mobile/android/app/src/main/java/vn/abook/player):
 //  EbookPlayer  - lõi phát Media3: hàng đợi chương, hẹn giờ ngủ, lắc để nghe thêm, nhật ký đêm.
 //  EbookLibrary - sách đã tải + đồng bộ với máy tính qua Wi-Fi.
 

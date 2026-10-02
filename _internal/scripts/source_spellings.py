@@ -104,7 +104,7 @@ def occurrences(name: str, folded_source: str) -> int:
 
 def _vietnamese_order_name(name: str) -> bool:
     """Mọi chữ là âm tiết tiếng Việt - như `character_registry._vietnamese_order_name`."""
-    from ebook_reader.analysis import is_vietnamese_syllable
+    from abook.analysis import is_vietnamese_syllable
 
     parts = [part for part in re.split(r"[\s-]+", " ".join(name.strip().casefold().split())) if part]
     return bool(parts) and all(is_vietnamese_syllable(part) for part in parts)

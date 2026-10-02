@@ -6,7 +6,7 @@ from pathlib import Path
 root = Path(sys.argv[1])
 
 # ------------------------------------------------------------------ config.py
-p = root / "ebook_reader" / "config.py"
+p = root / "abook" / "config.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD = '''        "repair_rounds": 2,
@@ -35,7 +35,7 @@ io.open(p, "w", encoding="utf-8").write(s)
 print(f"da va {p}")
 
 # ------------------------------------------------------------------ recovery.py
-p = root / "ebook_reader" / "recovery.py"
+p = root / "abook" / "recovery.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD = '''def _listener_accepted_takes(db: ProjectDB) -> set[tuple[str, str]]:

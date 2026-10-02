@@ -27,7 +27,7 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "database.py"
+p = root / "abook" / "database.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD = '''                if not keeping_the_locked_reading:
@@ -82,7 +82,7 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.database import SEGMENT_CANDIDATE_PROMOTED, ProjectDB
+from abook.database import SEGMENT_CANDIDATE_PROMOTED, ProjectDB
 
 FIXTURE = Path("D:/Novels/Audiobooks/_fixtures/lo09_223_cut_off")
 SEGMENT_SUFFIX = "5b7f60a11624"  # "Gục đi!"

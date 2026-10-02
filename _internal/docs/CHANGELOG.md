@@ -21,6 +21,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Bài nhạc tải từ nguồn gốc như trước; nguồn gốc hỏng (mất mạng tới nguồn, bài bị gỡ) thì tải bản dự phòng trên
   archive.org mà danh mục ghi kèm, chỉ nhận bản dự phòng khớp đúng bản gốc.
 
+### Phát triển
+
+- Gói Python và mọi tên bên trong đã đổi theo tên app: `ebook_reader` thành `abook` (`python -m abook.cli`, lệnh `abook-headless`),
+  biến môi trường `EBOOK_READER_*` thành `ABOOK_*`, và các tên lưu trữ nội bộ cũng theo. Mã chất lượng bị khoá đổi hash theo.
+
 ## [0.4.16] - 2026-10-02
 
 ### Studio

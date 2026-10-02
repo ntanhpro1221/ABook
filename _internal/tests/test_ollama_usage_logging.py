@@ -7,7 +7,7 @@ guess - and with it every decision that depends on the size: whether ``num_ctx``
 is twice what the work needs, whether five segments is the right batch, whether the model
 spilling part of itself onto the CPU is worth freeing VRAM for.
 """
-from ebook_reader.analysis import _ollama_usage, _ollama_usage_line
+from abook.analysis import _ollama_usage, _ollama_usage_line
 
 
 DONE_CHUNK = {

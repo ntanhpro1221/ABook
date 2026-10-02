@@ -6,7 +6,7 @@ cuối là họ chung của cả nhà). Bộ đo LN 28-09 (docs/ANALYSIS_RESEARC
 """
 from __future__ import annotations
 
-from ebook_reader.character_registry import (
+from abook.character_registry import (
     canonical_speaker_names,
     merge_given_names,
     strip_japanese_honorific,

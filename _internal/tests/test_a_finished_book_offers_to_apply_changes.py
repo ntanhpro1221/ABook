@@ -5,8 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from ebook_reader.listener_overrides import overrides_path, request_pronunciation, request_speakers
-from ebook_reader.webui.store import pending_changes
+from abook.listener_overrides import overrides_path, request_pronunciation, request_speakers
+from abook.webui.store import pending_changes
 
 
 def test_only_requests_written_after_the_last_run_are_pending(tmp_path: Path) -> None:
@@ -29,7 +29,7 @@ def test_no_file_or_a_broken_entry_is_not_a_change(tmp_path: Path) -> None:
 def test_a_run_that_found_nothing_to_redo_still_clears_the_button(tmp_path: Path) -> None:
     """"Giữ nguyên" không làm dây chuyền ghi gì vào sổ, nên chỉ `book.updated_at` thì nút "Áp dụng" không bao giờ tắt:
     Studio ghi mốc khởi động lượt chạy, và lượt ấy áp mọi yêu cầu ghi trước mốc."""
-    from ebook_reader.webui.store import changes_since, mark_run_started
+    from abook.webui.store import changes_since, mark_run_started
 
     request_pronunciation(tmp_path, "Arcanist", "A-rờ-ca-nít", now=500.0)
     assert changes_since(tmp_path, 100.0) == 100.0, "chưa chạy lần nào: chỉ còn mốc sổ"

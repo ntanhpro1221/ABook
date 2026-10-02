@@ -222,7 +222,7 @@ while :; do
     # ca chuoi vi mot phep don dep.
     py scripts/resync_spoken_text.py "$BATCH_PROJECT" --apply >> "$LOG" 2>&1 \
       || say "  resync truoc khi run lai that bai - xem $LOG; van run lai."
-    py -m ebook_reader.cli run "$BATCH_PROJECT" --json >> "$LOG" 2>&1
+    py -m abook.cli run "$BATCH_PROJECT" --json >> "$LOG" 2>&1
     sleep 300
     continue
   fi

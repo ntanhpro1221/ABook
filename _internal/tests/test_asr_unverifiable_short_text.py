@@ -12,14 +12,14 @@ from __future__ import annotations
 import inspect
 import json
 
-from ebook_reader.asr import (
+from abook.asr import (
     ASR_MIN_VERIFIABLE_CHARS,
     ASR_TRANSCRIPT_TIMELINE_IMPOSSIBLE,
     ASR_UNVERIFIABLE_SHORT_TEXT,
     asr_answer_is_about_other_audio,
     asr_verdict_is_unverifiable,
 )
-from ebook_reader.pipeline import BookPipeline
+from abook.pipeline import BookPipeline
 
 
 def test_rank_labels_and_gasps_cannot_be_verified() -> None:
@@ -72,7 +72,7 @@ def test_unreadable_evidence_is_not_an_excuse() -> None:
 
 def test_the_warning_does_not_block_a_high_quality_chapter() -> None:
     """Otherwise the segment publishes and the chapter still refuses it."""
-    from ebook_reader.pipeline import HIGH_QUALITY_ALLOWED_SEGMENT_WARNINGS
+    from abook.pipeline import HIGH_QUALITY_ALLOWED_SEGMENT_WARNINGS
 
     assert ASR_UNVERIFIABLE_SHORT_TEXT in HIGH_QUALITY_ALLOWED_SEGMENT_WARNINGS
 
@@ -84,7 +84,7 @@ def test_the_decision_lives_in_exactly_one_place() -> None:
 
 
 def test_other_warnings_still_block() -> None:
-    from ebook_reader.pipeline import HIGH_QUALITY_ALLOWED_SEGMENT_WARNINGS
+    from abook.pipeline import HIGH_QUALITY_ALLOWED_SEGMENT_WARNINGS
 
     for code in ("ASR_SEVERE_MISMATCH", "ASR_MISMATCH_UNRESOLVED", "SEGMENT_FAILED"):
         assert code not in HIGH_QUALITY_ALLOWED_SEGMENT_WARNINGS
@@ -164,6 +164,6 @@ def test_a_transcript_about_other_audio_is_also_unanswerable() -> None:
 
 
 def test_the_off_audio_warning_does_not_block_a_high_quality_chapter() -> None:
-    from ebook_reader.pipeline import HIGH_QUALITY_ALLOWED_SEGMENT_WARNINGS
+    from abook.pipeline import HIGH_QUALITY_ALLOWED_SEGMENT_WARNINGS
 
     assert ASR_TRANSCRIPT_TIMELINE_IMPOSSIBLE in HIGH_QUALITY_ALLOWED_SEGMENT_WARNINGS

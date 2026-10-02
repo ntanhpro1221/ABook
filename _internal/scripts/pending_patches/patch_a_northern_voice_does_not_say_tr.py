@@ -59,7 +59,7 @@ from pathlib import Path
 root = Path(sys.argv[1])
 
 # ------------------------------------------------------------------ asr.py
-p = root / "ebook_reader" / "asr.py"
+p = root / "abook" / "asr.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD_FOLD_HELPERS = '''def _tone_folded_words(words: list[str]) -> list[str]:'''
@@ -292,7 +292,7 @@ io.open(p, "w", encoding="utf-8").write(s)
 print(f"da va {p}")
 
 # ------------------------------------------------------------------ pipeline.py
-p = root / "ebook_reader" / "pipeline.py"
+p = root / "abook" / "pipeline.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD_DECODE = '''        expected_text, locked_name_anchors = self._spoken_text_and_anchors(item)
@@ -386,7 +386,7 @@ from __future__ import annotations
 
 import pytest
 
-from ebook_reader.asr import (
+from abook.asr import (
     REGIONAL_CONSONANT_FOLDS,
     regional_consonant_folds,
     tone_folded_transcript_metrics,
@@ -445,7 +445,7 @@ def test_a_southern_voice_keeps_the_strict_comparison() -> None:
 
 
 def test_the_fold_only_touches_the_start_of_a_syllable() -> None:
-    from ebook_reader.asr import _fold_regional_consonants
+    from abook.asr import _fold_regional_consonants
 
     assert _fold_regional_consonants("trầm", NORTH) == "chầm"
     # `tr` giữa từ không phải phụ âm đầu: "outro" không được thành "ouchо"

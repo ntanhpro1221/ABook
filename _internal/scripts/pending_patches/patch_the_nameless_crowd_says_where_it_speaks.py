@@ -27,7 +27,7 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "character_registry.py"
+p = root / "abook" / "character_registry.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD = '''    for speaker, speaker_rows in speaker_groups:
@@ -75,7 +75,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from ebook_reader.character_registry import PresetAllocator, formant_variants_for_preset
+from abook.character_registry import PresetAllocator, formant_variants_for_preset
 
 ROOT = Path(__file__).resolve().parents[1]
 PRESET = "Thanh Bình"
@@ -119,7 +119,7 @@ def test_a_silent_crowd_lands_exactly_on_the_protagonist() -> None:
 
 def test_the_registry_notes_the_anonymous_groups_before_it_casts_them() -> None:
     """Chỗ ghi phải nằm TRƯỚC lần `choose()` đầu tiên, không phải cạnh khối cast nhóm vô danh."""
-    source = (ROOT / "ebook_reader" / "character_registry.py").read_text(encoding="utf-8")
+    source = (ROOT / "abook" / "character_registry.py").read_text(encoding="utf-8")
     note = source.index('f"ANONYMOUS_{anonymous_gender.upper()}"')
     first_choose = source.index("allocator.choose(")
     assert note < first_choose, "ghi chương cho nhóm vô danh phải đứng trước choose() đầu tiên"

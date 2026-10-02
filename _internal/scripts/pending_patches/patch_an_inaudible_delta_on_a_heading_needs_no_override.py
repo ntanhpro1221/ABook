@@ -51,7 +51,7 @@ def patch(path: Path, old: str, new: str) -> None:
 
 
 patch(
-    root / "ebook_reader" / "analysis.py",
+    root / "abook" / "analysis.py",
     '''        if heading_delivery_is_locked and deltas:''',
     '''        # `blocking_deltas`, KHÔNG phải `deltas`: một tiêu đề lệch chỉ ở `emotion`/`intensity` đã được
         # `host_derived_agreement` nhận, nên không có gì để ghi đè - mà ghi một `structural_override` khai
@@ -73,8 +73,8 @@ from __future__ import annotations
 
 import inspect
 
-from ebook_reader.analysis import _adjudicate_director_critic
-from ebook_reader.database import AFFECT_CUE_DISAGREEMENT_BLOCKS, INAUDIBLE_DELIVERY_FIELDS, host_derived_accept
+from abook.analysis import _adjudicate_director_critic
+from abook.database import AFFECT_CUE_DISAGREEMENT_BLOCKS, INAUDIBLE_DELIVERY_FIELDS, host_derived_accept
 
 
 def _critic_source() -> str:

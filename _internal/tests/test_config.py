@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from ebook_reader.config import (
+from abook.config import (
     ANALYSIS_RETRY_POLICY_VERSION,
     ANALYSIS_RETRY_SETTING_KEYS,
     DIRECTOR_CRITIC_SETTING_KEYS,

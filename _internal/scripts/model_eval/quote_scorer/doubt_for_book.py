@@ -28,7 +28,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE.parent))
-sys.path.insert(0, str(HERE.parents[2]))  # _internal: ebook_reader.character_registry
+sys.path.insert(0, str(HERE.parents[2]))  # _internal: abook.character_registry
 
 from build_vi import (
     aliases_for,
@@ -66,7 +66,7 @@ def build_windows(project: Path, out: Path, tokenizer_name: str, budget: int
         return len(tokenizer(text, add_special_tokens=False)["input_ids"])
 
     connection = sqlite3.connect((project / "project.sqlite3").resolve().as_uri() + "?mode=ro", uri=True)
-    from ebook_reader.character_registry import PRONOUNS, canonical_key
+    from abook.character_registry import PRONOUNS, canonical_key
 
     # Ứng viên = dàn diễn viên THẬT: người dây chuyền đã giao ít nhất một câu. Bảng `characters` của một lô gieo từ lô trước
     # tích cả rác (throne_18: 706 tên, có "HẮN TA", "CÔ", "Y", "NGHE") - lấy nó làm ứng viên thì "Hắn nói" đầu câu thành

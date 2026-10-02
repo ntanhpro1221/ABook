@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import inspect
 
-from ebook_reader.database import (
+from abook.database import (
     AFFECT_CUE_DISAGREEMENT_BLOCKS,
     INAUDIBLE_DELIVERY_FIELDS,
     ProjectDB,
@@ -71,7 +71,7 @@ def test_neither_validator_recomputes_acceptance_for_itself() -> None:
 
 def test_the_same_rule_governs_both_flags() -> None:
     """`accept` and `effective_accept` ask the same question of different lists."""
-    from ebook_reader.database import accept_flag_is_coherent
+    from abook.database import accept_flag_is_coherent
 
     assert accept_flag_is_coherent(True, ["emotion", "intensity"])
     assert not accept_flag_is_coherent(True, ["kind"])
@@ -81,7 +81,7 @@ def test_the_same_rule_governs_both_flags() -> None:
 
 def test_it_accepts_bare_field_names_and_full_deltas_alike() -> None:
     """Deltas arrive as "field:from->to"; unresolved fields arrive as bare names."""
-    from ebook_reader.database import accept_flag_is_coherent
+    from abook.database import accept_flag_is_coherent
 
     assert accept_flag_is_coherent(True, ["emotion:surprised->neutral"])
     assert accept_flag_is_coherent(True, ["emotion"])

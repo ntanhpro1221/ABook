@@ -28,7 +28,7 @@ from typing import Any, Iterator
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parents[1]))
 
-from ebook_reader.listener_overrides import (  # noqa: E402
+from abook.listener_overrides import (  # noqa: E402
     line_requests,
     pronunciation_requests,
     read_overrides,

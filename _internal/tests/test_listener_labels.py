@@ -5,8 +5,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from ebook_reader.config import build_settings
-from ebook_reader.listener_overrides import request_line, request_pronunciation, request_speaker, request_voice
+from abook.config import build_settings
+from abook.listener_overrides import request_line, request_pronunciation, request_speaker, request_voice
 from tests.test_listener_overrides import _Pipeline
 from tests.test_listener_speakers import _book
 

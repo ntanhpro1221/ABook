@@ -25,7 +25,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from ebook_reader.database import LISTENER_PRONUNCIATION_SOURCE, ProjectDB
+from abook.database import LISTENER_PRONUNCIATION_SOURCE, ProjectDB
 
 SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
 sys.path.insert(0, str(SCRIPTS))

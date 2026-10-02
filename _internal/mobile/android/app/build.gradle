@@ -11,7 +11,7 @@ if (releaseSigningFile.isFile()) {
 }
 
 android {
-    namespace = "vn.ebookreader.player"
+    namespace = "vn.abook.player"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
         applicationId "com.ngdtuanh.abook"

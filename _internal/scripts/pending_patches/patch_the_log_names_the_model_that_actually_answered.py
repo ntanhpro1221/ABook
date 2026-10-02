@@ -36,7 +36,7 @@ def patch(path: Path, old: str, new: str) -> None:
 
 
 patch(
-    root / "ebook_reader" / "analysis.py",
+    root / "abook" / "analysis.py",
     '''                        "Tên ngắn dùng cách đọc suy từ từ điển CMU vì Qwen thất bại: "''',
     '''                        # `self.model`, KHÔNG phải "Qwen" cứng: bước này dùng cùng model với bước phân
                         # tích, nên khi so nhiều model thì nhãn cứng nói sai đúng lúc log quan trọng nhất.
@@ -44,7 +44,7 @@ patch(
 )
 
 patch(
-    root / "ebook_reader" / "analysis.py",
+    root / "abook" / "analysis.py",
     '''                        f"Qwen không tạo được cách đọc hợp lệ ở batch {batch_index} cho {remaining}: "''',
     '''                        f"{self.model} không tạo được cách đọc hợp lệ ở batch {batch_index} cho {remaining}: "''',
 )
@@ -62,7 +62,7 @@ from __future__ import annotations
 
 import inspect
 
-from ebook_reader.analysis import OllamaBookAnalyzer
+from abook.analysis import OllamaBookAnalyzer
 
 
 def _source() -> str:

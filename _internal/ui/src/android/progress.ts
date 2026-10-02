@@ -1,6 +1,6 @@
 import type { BookProgress, ListenChapter, ListeningState } from "@/listen/model";
 
-/** Đã nghe bao nhiêu phần của cuốn - cùng phép tính với máy tính (ebook_reader/webui/listening.py): sách chưa đủ
+/** Đã nghe bao nhiêu phần của cuốn - cùng phép tính với máy tính (abook/webui/listening.py): sách chưa đủ
  *  chương mà nghe hết phần đã có thì "đã theo kịp", chưa phải "nghe xong". */
 export function bookProgress(state: ListeningState, chapters: ListenChapter[], complete = true): BookProgress {
   const total = chapters.reduce((sum, chapter) => sum + chapter.duration, 0);

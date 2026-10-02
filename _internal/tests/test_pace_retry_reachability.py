@@ -55,7 +55,7 @@ def test_main_flags_the_gap_in_the_table(tmp_path: Path, capsys) -> None:
         for i, pace in enumerate(CHAPTER_140, start=1)
     ]
     lines.append(f"TTS segment {segment} thất bại hoàn toàn")
-    (logs / "ebook_reader.log").write_text("\n".join(lines), encoding="utf-8")
+    (logs / "abook.log").write_text("\n".join(lines), encoding="utf-8")
 
     assert reach.main(str(tmp_path)) == 0
     out = capsys.readouterr().out

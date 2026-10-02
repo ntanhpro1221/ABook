@@ -11,10 +11,10 @@ import time
 from pathlib import Path
 from typing import Any
 
-from ebook_reader import background_runner, power_source
-from ebook_reader.background_runner import BackgroundPaths, _pause_reason, get_status, run_supervisor, tail_log
-from ebook_reader.io_utils import atomic_write_json
-from ebook_reader.power_source import BatteryWatch
+from abook import background_runner, power_source
+from abook.background_runner import BackgroundPaths, _pause_reason, get_status, run_supervisor, tail_log
+from abook.io_utils import atomic_write_json
+from abook.power_source import BatteryWatch
 
 
 def _make_project(tmp_path: Path) -> Path:
@@ -73,7 +73,7 @@ def test_the_listener_pause_wins_and_resuming_on_battery_lasts_until_the_next_ch
 
 def test_the_setting_turns_it_off(tmp_path: Path, monkeypatch) -> None:
     preferences = tmp_path / "preferences.json"
-    monkeypatch.setenv("EBOOK_READER_PREFERENCES", str(preferences))
+    monkeypatch.setenv("ABOOK_PREFERENCES", str(preferences))
     assert power_source.pause_on_battery_enabled() is True  # chưa mở app lần nào (CLI)
     preferences.write_text('{"pauseOnBattery": false}', encoding="utf-8")
     assert power_source.pause_on_battery_enabled() is False
@@ -108,7 +108,7 @@ def _fake_worker_waits_for_a_pause(
 
 def test_the_supervisor_pauses_on_battery_and_resumes_when_charging(tmp_path: Path, monkeypatch) -> None:
     project = _make_project(tmp_path)
-    monkeypatch.setenv("EBOOK_READER_PREFERENCES", str(tmp_path / "preferences.json"))
+    monkeypatch.setenv("ABOOK_PREFERENCES", str(tmp_path / "preferences.json"))
     monkeypatch.setattr(background_runner, "POWER_CHECK_SECONDS", 0.0)
     monkeypatch.setattr(power_source, "GRACE_SECONDS", 0.0)
     # Chạy pin cho tới khi worker đã đứng, rồi "cắm sạc lại".
@@ -127,7 +127,7 @@ def test_the_setting_off_keeps_working_on_battery(tmp_path: Path, monkeypatch) -
     project = _make_project(tmp_path)
     preferences = tmp_path / "preferences.json"
     preferences.write_text(json.dumps({"pauseOnBattery": False}), encoding="utf-8")
-    monkeypatch.setenv("EBOOK_READER_PREFERENCES", str(preferences))
+    monkeypatch.setenv("ABOOK_PREFERENCES", str(preferences))
     monkeypatch.setattr(background_runner, "POWER_CHECK_SECONDS", 0.0)
     monkeypatch.setattr(power_source, "GRACE_SECONDS", 0.0)
     monkeypatch.setattr(power_source, "on_battery", lambda: True)
@@ -164,7 +164,7 @@ def _fake_worker_presses_continue(
 
 def test_the_listener_can_pause_and_continue_a_running_book(tmp_path: Path, monkeypatch) -> None:
     project = _make_project(tmp_path)
-    monkeypatch.setenv("EBOOK_READER_PREFERENCES", str(tmp_path / "preferences.json"))
+    monkeypatch.setenv("ABOOK_PREFERENCES", str(tmp_path / "preferences.json"))
     monkeypatch.setattr(background_runner, "POWER_CHECK_SECONDS", 0.0)
     monkeypatch.setattr(power_source, "on_battery", lambda: False)
     paths = BackgroundPaths.for_project(project)
@@ -186,7 +186,7 @@ def test_the_listener_can_pause_and_continue_a_running_book(tmp_path: Path, monk
 
 def test_a_pause_request_of_another_run_is_ignored(tmp_path: Path, monkeypatch) -> None:
     project = _make_project(tmp_path)
-    monkeypatch.setenv("EBOOK_READER_PREFERENCES", str(tmp_path / "preferences.json"))
+    monkeypatch.setenv("ABOOK_PREFERENCES", str(tmp_path / "preferences.json"))
     monkeypatch.setattr(power_source, "on_battery", lambda: False)
     paths = BackgroundPaths.for_project(project)
     paths.ensure_root()
@@ -205,7 +205,7 @@ def test_a_run_started_by_older_code_says_it_cannot_pause(tmp_path: Path, monkey
     cầu rồi báo "Đang tạm dừng" (soát QA 29-09)."""
     import pytest
 
-    from ebook_reader.background_runner import BackgroundIdentityError, request_pause
+    from abook.background_runner import BackgroundIdentityError, request_pause
 
     project = _make_project(tmp_path)
     paths = BackgroundPaths.for_project(project)

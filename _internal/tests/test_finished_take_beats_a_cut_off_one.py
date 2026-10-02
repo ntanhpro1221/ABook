@@ -20,15 +20,15 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.asr_contract import ASR_MIN_VERIFIABLE_CHARS
-from ebook_reader.config import build_settings
-from ebook_reader.database import (
+from abook.asr_contract import ASR_MIN_VERIFIABLE_CHARS
+from abook.config import build_settings
+from abook.database import (
     SEGMENT_CANDIDATE_DUAL_FAILED,
     SEGMENT_CANDIDATE_DUAL_PASSED,
     ProjectDB,
     _asr_only_failure_codes,
 )
-from ebook_reader.project import create_or_open_project
+from abook.project import create_or_open_project
 
 CUT_OFF = {"generation_ceiling_hit": 1.0}
 FINISHED: dict[str, float] = {}

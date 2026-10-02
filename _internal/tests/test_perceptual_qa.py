@@ -8,8 +8,8 @@ import numpy as np
 import pytest
 import soundfile as sf
 
-from ebook_reader import perceptual_qa as perceptual_module
-from ebook_reader.perceptual_qa import (
+from abook import perceptual_qa as perceptual_module
+from abook.perceptual_qa import (
     PERCEPTUAL_INCONCLUSIVE,
     PERCEPTUAL_OK,
     PERCEPTUAL_REVIEW,
@@ -17,7 +17,7 @@ from ebook_reader.perceptual_qa import (
     PerceptualScorePool,
     UTMOSNaturalnessVerifier,
 )
-from ebook_reader.voice_catalog import VOICE_PREVIEW_FILENAMES
+from abook.voice_catalog import VOICE_PREVIEW_FILENAMES
 
 
 PRESET_NAME = "Phạm Tuyên"

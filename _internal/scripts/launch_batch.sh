@@ -129,7 +129,7 @@ echo "=== 0. kiem truoc lo ==="
 
 echo
 echo "=== 1. create ==="
-"$PY" -m ebook_reader.cli create \
+"$PY" -m abook.cli create \
   --output-root "$OUT" --source-dir "$SOURCE_DIR" \
   --range "$RANGE" --width 3 --title "$TITLE" --profile high_quality --json \
   ${FP_ARGS[@]+"${FP_ARGS[@]}"} ${NARR_ARGS[@]+"${NARR_ARGS[@]}"}
@@ -203,7 +203,7 @@ echo "=== 2b. dong bo chuoi noi ==="
 
 echo
 echo "=== 3. run ==="
-"$PY" -m ebook_reader.cli run "$PROJECT" --json
+"$PY" -m abook.cli run "$PROJECT" --json
 echo
 echo "Da khoi dong. Theo doi bang:"
 echo "  python scripts/throttle_report.py \"$PROJECT\""

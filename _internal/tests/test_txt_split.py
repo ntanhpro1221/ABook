@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ebook_reader.webui import actions, txt_split
+from abook.webui import actions, txt_split
 
 WHOLE_BOOK = """Ánh Trăng Phương Bắc
 Tác giả: Ai Đó

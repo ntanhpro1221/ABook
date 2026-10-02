@@ -7,8 +7,8 @@ bằng số chương hai người cùng có mặt - và khi PHẢI dùng chung t
 """
 from __future__ import annotations
 
-from ebook_reader.character_registry import PresetAllocator
-from ebook_reader.voice_catalog import formant_variants_for_preset
+from abook.character_registry import PresetAllocator
+from abook.voice_catalog import formant_variants_for_preset
 
 
 def _full_preset(allocator: PresetAllocator) -> tuple[str, list[str]]:

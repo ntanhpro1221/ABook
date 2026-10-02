@@ -23,7 +23,7 @@ from __future__ import annotations
 import inspect
 from typing import Any
 
-from ebook_reader.character_registry import (
+from abook.character_registry import (
     FIRST_PERSON_PRONOUNS,
     PRONOUNS,
     build_registry_and_cast,
@@ -115,7 +115,7 @@ def test_a_pronoun_is_not_an_answer_to_who_i_am() -> None:
 def test_the_command_line_refuses_what_cannot_work() -> None:
     import argparse
 
-    from ebook_reader.cli import CliUsageError, _settings_from_args
+    from abook.cli import CliUsageError, _settings_from_args
 
     def _args(**overrides: Any) -> argparse.Namespace:
         base: dict[str, Any] = {

@@ -18,7 +18,7 @@ is the strategy, so max_retries can move.
 """
 from __future__ import annotations
 
-from ebook_reader.database import GENERATION_STRATEGY_DIRECT, GENERATION_STRATEGY_SPLIT
+from abook.database import GENERATION_STRATEGY_DIRECT, GENERATION_STRATEGY_SPLIT
 
 
 def _retry_range(candidate: dict, max_retries: int) -> range:

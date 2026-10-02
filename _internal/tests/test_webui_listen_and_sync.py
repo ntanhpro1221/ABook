@@ -1,4 +1,4 @@
-"""Giao diện mới (ebook_reader/webui): dữ liệu chỉ đọc, trạng thái nghe, đồng bộ sang điện thoại.
+"""Giao diện mới (abook/webui): dữ liệu chỉ đọc, trạng thái nghe, đồng bộ sang điện thoại.
 
 Mọi phép thử dựng một project SQLite tối thiểu trong thư mục tạm - chỉ các bảng và cột mà webui đọc - nên không
 phụ thuộc dữ liệu sản xuất và chạy được giữa lúc ranh giới đang sống.
@@ -15,13 +15,13 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.webui import humanize, listen_view, store
-from ebook_reader.webui import sync as sync_module
-from ebook_reader.webui.library import Library, Preferences, book_id
-from ebook_reader.webui.listening import Listening, book_progress, merge_states
-from ebook_reader.webui.server import App, Server
-from ebook_reader.webui.actions import FakeRunner
-from ebook_reader.webui.sync import PAIRING_ATTEMPTS, Devices, Remote, SyncApp, SyncServer, manifest, remote_command
+from abook.webui import humanize, listen_view, store
+from abook.webui import sync as sync_module
+from abook.webui.library import Library, Preferences, book_id
+from abook.webui.listening import Listening, book_progress, merge_states
+from abook.webui.server import App, Server
+from abook.webui.actions import FakeRunner
+from abook.webui.sync import PAIRING_ATTEMPTS, Devices, Remote, SyncApp, SyncServer, manifest, remote_command
 
 
 def make_project(root: Path, title: str = "Sách thử · Tập 1") -> Path:
@@ -534,7 +534,7 @@ def test_the_listen_view_lists_only_chapters_you_can_hear(library) -> None:
 
 
 def test_export_file_names_are_safe_and_keep_vietnamese() -> None:
-    from ebook_reader.webui.export import safe_name
+    from abook.webui.export import safe_name
 
     assert safe_name('Chương 646: Trở về/1?') == "Chương 646 Trở về 1"
     assert safe_name('  "..."  ') == "Sach"
@@ -543,7 +543,7 @@ def test_export_file_names_are_safe_and_keep_vietnamese() -> None:
 def test_export_takes_only_a_real_png_cover(tmp_path: Path) -> None:
     import base64
 
-    from ebook_reader.webui.export import _cover_file
+    from abook.webui.export import _cover_file
 
     gif = "data:image/png;base64," + base64.b64encode(b"GIF89a" + b"\0" * 20).decode()
     assert _cover_file(tmp_path, gif) is None, "đuôi PNG nhưng ruột không phải PNG"
@@ -563,7 +563,7 @@ def test_the_reading_place_is_kept_and_the_newest_device_wins(tmp_path: Path) ->
 
 
 def test_scanning_tells_a_missing_folder_from_a_parent_folder(tmp_path: Path) -> None:
-    from ebook_reader.webui.actions import scan_inputs
+    from abook.webui.actions import scan_inputs
 
     book = tmp_path / "Truyện" / "Tập 1"
     book.mkdir(parents=True)
@@ -591,7 +591,7 @@ def test_listening_sessions_are_kept_merged_and_left_out_of_lists(tmp_path: Path
 def test_a_continued_part_carries_its_chain_to_the_phone(library) -> None:
     """Sách tải về điện thoại gom phần theo chuỗi continues.json như trên máy tính - kể cả khi không nối máy tính: book.json
     mang {phần đầu, thứ tự phần} (soát UX 29-09, N10)."""
-    from ebook_reader import continuation
+    from abook import continuation
 
     _lib, project, listening = library
     assert manifest(project, book_id(project), listening)["series"] is None, "sách lẻ không mang gì"

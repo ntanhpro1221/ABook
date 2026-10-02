@@ -7,7 +7,7 @@
     python scripts/repoint_the_source.py --undo <project dir>                           # trả lại đường cũ theo sổ
 
 Vì sao có file này (2026-09-13, 23:30): thư mục nguồn của cuốn 1 (`D:/Novels/Tools/Text`, 478 chương) bị
-xoá giữa lô 10, rồi chủ sách bảo khôi phục *nhưng chuyển vào thư mục project* (`D:/Novels/Ebook Reader/Text`).
+xoá giữa lô 10, rồi chủ sách bảo khôi phục *nhưng chuyển vào thư mục project* (`D:/Novels/ABook/Text`).
 Project ghi **đường dẫn tuyệt đối** của từng chương vào `chapters.input_path` lúc `create`, và khoá cả
 danh sách bằng `book.input_manifest_hash` = sha256 của `chapter_index|input_path|input_sha256|input_size`
 mọi chương. Dời thư mục là 118 project của cuốn 1 cùng trỏ vào chỗ trống: `cli run` dừng ngay ("Source
@@ -52,7 +52,7 @@ try:
 except ImportError:  # chạy trực tiếp: scripts/ là sys.path[0]
     from book_paths import VERSIONS  # noqa: E402
 
-from ebook_reader.text_processing import input_manifest_hash, sha256_file  # noqa: E402
+from abook.text_processing import input_manifest_hash, sha256_file  # noqa: E402
 
 LEDGER_NAME = "source_repoint_ledger.json"
 

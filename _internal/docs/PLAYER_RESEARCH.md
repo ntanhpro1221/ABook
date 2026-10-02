@@ -67,7 +67,7 @@ track, ảnh bìa) hoặc gộp thành một file M4B có mốc chương.
 | 1 | **Tự dừng khi nghe liên tục quá lâu mà không chạm máy** (mặc định 2 giờ), ghi luôn mốc "tự dừng" vào nhật ký đêm | SABP | Ngủ quên KHÔNG hẹn giờ là trường hợp tệ nhất cho nỗi đau "sáng dậy tìm chỗ"; lưới này làm thẻ "Tối qua" chạy cả khi quên hẹn giờ |
 | 2 | **Lịch tự bật hẹn giờ** (vd 22:00-06:00) | SABP, AntennaPod | Người nghe buồn ngủ hay quên bấm hẹn giờ |
 | 3 | **Hỏi khi thiết bị kia nghe xa hơn**: "Trên điện thoại bạn đã nghe tới Chương 726 · 12:40 (23:41 tối qua) - Nghe tiếp từ đó?" | Audible, Audiobookshelf | Hiện ta lặng lẽ lấy bản mới hơn khi đồng bộ; hỏi thì không ai bị nhảy chỗ bất ngờ. Đồng bộ lúc mở sách |
-| 4 | **Đọc ⇄ nghe cùng một chỗ**: chế độ đọc sách (không tiếng) đi theo đúng câu đang nghe, và ngược lại | Whispersync (Kindle + Audible) | Ta đã có văn bản kèm mốc từng câu - thứ Audible phải bán hai sản phẩm mới có. App tên "Ebook Reader" |
+| 4 | **Đọc ⇄ nghe cùng một chỗ**: chế độ đọc sách (không tiếng) đi theo đúng câu đang nghe, và ngược lại | Whispersync (Kindle + Audible) | Ta đã có văn bản kèm mốc từng câu - thứ Audible phải bán hai sản phẩm mới có. App tên "ABook" |
 | 5 | **Tiến độ cả cuốn trên trình phát** ("Đã nghe 5 giờ 12 / 9 giờ · Còn 3 giờ 48 ở 1,5×") | SABP, Libby | Người nghe muốn biết còn bao lâu hết sách |
 | 6 | **Xuất sách có tag đúng / M4B** | (lỗi phát hiện được) | Mục ⚠ |
 | 7 | **Lịch sử nghe** theo ngày (phiên: giờ, thiết bị, từ đâu tới đâu) + thống kê | Audiobookshelf, Libby | Cũng là một cách tìm lại chỗ; nền cho thống kê |

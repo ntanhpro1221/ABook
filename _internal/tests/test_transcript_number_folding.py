@@ -11,7 +11,7 @@ damaged 1.
 
 from __future__ import annotations
 
-from ebook_reader.asr import normalize_transcript, tone_folded_transcript_metrics
+from abook.asr import normalize_transcript, tone_folded_transcript_metrics
 
 
 def test_a_digit_reads_as_its_word() -> None:

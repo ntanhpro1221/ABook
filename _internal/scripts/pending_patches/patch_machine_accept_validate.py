@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "config.py"
+p = root / "abook" / "config.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD = '''    if asr.get("required") and asr.get("failure_policy") != "fail":

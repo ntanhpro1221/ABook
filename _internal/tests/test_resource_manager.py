@@ -3,10 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 from types import SimpleNamespace
 
-from ebook_reader.config import build_settings
-from ebook_reader.models import ResourceLevel
-from ebook_reader import resource_manager
-from ebook_reader.resource_manager import (
+from abook.config import build_settings
+from abook.models import ResourceLevel
+from abook import resource_manager
+from abook.resource_manager import (
     AdaptiveResourceManager,
     ResourceSnapshot,
     trim_process_working_set,

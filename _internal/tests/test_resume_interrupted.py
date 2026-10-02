@@ -282,7 +282,7 @@ def test_it_can_tell_whether_a_resume_lands_inside_the_analysis_phase(tmp_path) 
     The watchdog still resumes - a run dead until morning is worse than a slightly different
     book - so the requirement is that it can say so, loudly, in the log.
     """
-    from ebook_reader.database import ProjectDB
+    from abook.database import ProjectDB
     from scripts.resume_interrupted import pending_analysis_count
 
     root = tmp_path / "proj"

@@ -1,7 +1,7 @@
 """Model chia phiếu về giới tính thì văn bản quyết, model nhất trí thì model quyết."""
 from __future__ import annotations
 
-from ebook_reader.character_registry import resolve_gender
+from abook.character_registry import resolve_gender
 
 
 def row(speaker: str, gender: str, text: str = "") -> dict[str, str]:

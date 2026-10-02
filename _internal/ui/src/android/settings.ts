@@ -39,7 +39,7 @@ export const DEFAULT_SETTINGS: PlayerSettings = {
   sleepSchedule: null,
 };
 
-const KEY = "ebook-reader-player-settings";
+const KEY = "abook-player-settings";
 
 export function loadSettings(): PlayerSettings {
   try {

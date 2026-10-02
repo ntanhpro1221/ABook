@@ -21,7 +21,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from ebook_reader.audio_io import (
+from abook.audio_io import (
     REPEATED_UTTERANCE_MIN_GAP_SECONDS,
     REPEATED_UTTERANCE_THRESHOLD,
     repeated_utterance_score,

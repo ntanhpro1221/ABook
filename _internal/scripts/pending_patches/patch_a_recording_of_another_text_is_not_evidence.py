@@ -70,7 +70,7 @@ from pathlib import Path
 root = Path(sys.argv[1])
 
 # ---------------------------------------------------------------- 1. pipeline.py
-p = root / "ebook_reader" / "pipeline.py"
+p = root / "abook" / "pipeline.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD_CONST = '''QUALITY_VERDICT_REPAIR = "repair"
@@ -171,7 +171,7 @@ io.open(p, "w", encoding="utf-8", newline="\n").write(s)
 print(f"da va {p}")
 
 # ---------------------------------------------------------------- 2. recovery.py
-p = root / "ebook_reader" / "recovery.py"
+p = root / "abook" / "recovery.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD_IMPORT = '''from dataclasses import dataclass, field
@@ -244,8 +244,8 @@ DRIFT_MESSAGE = SPOKEN_TEXT_DRIFT_MESSAGE'''
 assert s.count(OLD_MESSAGE) == 1, "khong khop DRIFT_MESSAGE trong resync_spoken_text.py"
 s = s.replace(OLD_MESSAGE, NEW_MESSAGE, 1)
 
-OLD_PIPELINE_IMPORT = '''from ebook_reader.pipeline import BookPipeline  # noqa: E402'''
-NEW_PIPELINE_IMPORT = '''from ebook_reader.pipeline import (  # noqa: E402
+OLD_PIPELINE_IMPORT = '''from abook.pipeline import BookPipeline  # noqa: E402'''
+NEW_PIPELINE_IMPORT = '''from abook.pipeline import (  # noqa: E402
     SPOKEN_TEXT_DRIFT_MESSAGE,
     BookPipeline,
 )'''
@@ -283,9 +283,9 @@ from pathlib import Path
 
 import numpy as np
 
-from ebook_reader.audio_io import atomic_write_wav
-from ebook_reader.pipeline import SPOKEN_TEXT_DRIFT_MESSAGE, BookPipeline
-from ebook_reader.recovery import recover_project
+from abook.audio_io import atomic_write_wav
+from abook.pipeline import SPOKEN_TEXT_DRIFT_MESSAGE, BookPipeline
+from abook.recovery import recover_project
 from tests.test_recovery import setup_db
 
 

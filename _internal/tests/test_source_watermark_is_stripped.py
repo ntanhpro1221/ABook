@@ -8,7 +8,7 @@ hiệu lực - với một câu chữ y hệt.
 """
 from __future__ import annotations
 
-from ebook_reader.text_processing import normalize_text, segment_chapter_text
+from abook.text_processing import normalize_text, segment_chapter_text
 
 WATERMARK = "\u200c\u200d" * 26 + "\u200c"
 CAU = "Vì tôi đã bất tỉnh gần hai ngày, Juliana đã"

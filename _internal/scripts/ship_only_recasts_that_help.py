@@ -314,7 +314,7 @@ def main(argv: list[str]) -> int:
     if not (target / "project.sqlite3").is_file():
         _say(f"khong phai project: {target}")
         return 2
-    from ebook_reader.background_runner import get_status
+    from abook.background_runner import get_status
 
     if not settled(target, get_status):
         _say(f"{target.name} dang chay - chua co gi de phan.")

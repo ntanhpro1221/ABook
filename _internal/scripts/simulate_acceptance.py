@@ -31,8 +31,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from ebook_reader.database import ProjectDB  # noqa: E402
-from ebook_reader.pipeline import (  # noqa: E402
+from abook.database import ProjectDB  # noqa: E402
+from abook.pipeline import (  # noqa: E402
     HIGH_QUALITY_ALLOWED_SEGMENT_WARNINGS,
     SEGMENT_AUDIO_QUALITY_STAGE,
     SEGMENT_PERCEPTUAL_QUALITY_STAGE,

@@ -11,7 +11,7 @@ Two independent causes, and the arithmetic only lands on 2.0 GB with both:
 """
 from __future__ import annotations
 
-from ebook_reader.perceptual_qa import PERCEPTUAL_WORKER_RAM_GB, PerceptualScorePool
+from abook.perceptual_qa import PERCEPTUAL_WORKER_RAM_GB, PerceptualScorePool
 
 
 def _pool(workers: int = 8, threads: int = 2) -> PerceptualScorePool:

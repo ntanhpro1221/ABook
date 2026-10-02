@@ -1,7 +1,7 @@
 """Đoạn và không khí của đoạn cho nhạc nền (webui/music_scenes.py): tính từ cảm xúc từng câu, không cần model."""
 from __future__ import annotations
 
-from ebook_reader.webui.music_scenes import MAX_SCENE_SECONDS, chapter_scenes, line_point
+from abook.webui.music_scenes import MAX_SCENE_SECONDS, chapter_scenes, line_point
 
 
 def _script(lines: list[tuple[str, str, int, float]], *, timed: bool = True) -> dict:

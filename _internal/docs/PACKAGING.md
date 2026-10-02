@@ -14,7 +14,7 @@ Ollama và model (~15-20 GB). Phần lớn người dùng app nghe, không sản
 
 | phần | gồm | cỡ | khi nào có |
 |---|---|---|---|
-| **ABook** | vỏ Tauri (WebView2 của Windows) + Python nhúng + `ebook_reader` + giao diện đã build | ~20 MB bộ cài | cài là có |
+| **ABook** | vỏ Tauri (WebView2 của Windows) + Python nhúng + `abook` + giao diện đã build | ~20 MB bộ cài | cài là có |
 | **Studio** | venv dây chuyền (torch cu128, VieNeu, Whisper...) + Ollama + model | ~15-20 GB | bấm "Cài Studio" |
 
 Không có Studio vẫn làm được mọi thứ trừ **chạy** sách: nghe, đồng bộ điện thoại, nghe máy tính khác, mở `.abook`, duyệt
@@ -24,7 +24,7 @@ kịch bản, sửa người nói/giọng/cách đọc của sách đã có.
 
 ```text
 ABook.exe (Tauri 2, Rust)
- ├─ chạy: python\pythonw.exe -m ebook_reader.webui.host      (con, không cửa sổ console)
+ ├─ chạy: python\pythonw.exe -m abook.webui.host      (con, không cửa sổ console)
  │    └─ HTTP 127.0.0.1:<cổng ngẫu nhiên>/?t=<token>         = đúng server webui + giao diện hôm nay
  ├─ cửa sổ WebView2 mở địa chỉ ấy
  ├─ một phiên bản: lần mở thứ hai (bấm đúp .abook) chuyển đường dẫn cho cửa sổ đang chạy
@@ -95,7 +95,7 @@ Studio" ở màn Dự án chạy lại đúng các bước ấy rồi "Kiểm tr
 trên Studio cài từ mã chưa ghi ghim: nhận ra 4 bước cũ, tải Ollama 0.33.2 thay bản 0.34.4 đang chạy (dừng nó trước), 3 phút.
 
 Worker chạy bằng `Studio\runtime\.venv\Scripts\pythonw.exe`, mã lấy từ thư mục `app` của bản cài (PYTHONPATH),
-`EBOOK_READER_RUNTIME=Studio\runtime`. Hash chất lượng tính trên đúng các file ấy (kể cả `pyproject.toml` + `uv.lock`
+`ABOOK_RUNTIME=Studio\runtime`. Hash chất lượng tính trên đúng các file ấy (kể cả `pyproject.toml` + `uv.lock`
 chép vào `app`) - nên cập nhật app đổi file khoá là sách dở không làm tiếp được: xem mục dưới.
 
 ### Tự chứa: không dựa vào thứ gì cài sẵn trên máy (kiểm 28-09)
@@ -144,7 +144,7 @@ kế tiếp.
 
 ## Build
 
-`scripts/build_windows_app.ps1`: build giao diện (`ui/`) -> tải + kiểm Python nhúng -> cài gói phụ -> chép `ebook_reader`
+`scripts/build_windows_app.ps1`: build giao diện (`ui/`) -> tải + kiểm Python nhúng -> cài gói phụ -> chép `abook`
 (không `__pycache__`, không test) + VC++ runtime (tìm bằng `vswhere`, cho Studio) -> chạy thử host -> `tauri build
 --no-bundle`, chờ tới khi không ai giữ `ABook.exe`, rồi `tauri bundle` (ký gói cập nhật bằng khoá ngoài repo). Tách hai
 bước vì bước đóng gói ghi vào exe vừa dựng và đụng trình diệt virus đang quét nó (os error 32; 28-09 `tauri build` thử lại
@@ -190,5 +190,5 @@ Mỗi bước một commit có test, không bước nào đụng file khoá ch�
   `Page.captureScreenshot`).
 - Đóng cửa sổ bằng WM_CLOSE: gửi vào cửa sổ lớp `Tauri Window`. `Process.MainWindowHandle` của .NET hay trỏ nhầm vào
   cửa sổ ẩn `Tao Thread Event Target` - đóng "không ăn" là do phép thử, không phải app.
-- Dữ liệu thử: `EBOOK_READER_PREFERENCES=<thư mục tạm>\preferences.json` (host chuyển cho server), `EBOOK_READER_FAKE_RUNNER=1`
+- Dữ liệu thử: `ABOOK_PREFERENCES=<thư mục tạm>\preferences.json` (host chuyển cho server), `ABOOK_FAKE_RUNNER=1`
   (không khởi động worker thật), `ABOOK_UPDATE_URL=<latest.json cục bộ>`.

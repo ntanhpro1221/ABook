@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "analysis.py"
+p = root / "abook" / "analysis.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD = '''        self._chapter_titles = {

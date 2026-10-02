@@ -13,11 +13,11 @@ from tests.test_listener_speakers import _book
 
 @pytest.fixture
 def studio(tmp_path):
-    from ebook_reader.config import build_settings, save_settings
-    from ebook_reader.webui.actions import FakeRunner
-    from ebook_reader.webui.library import Preferences
-    from ebook_reader.webui.listening import Listening
-    from ebook_reader.webui.server import App, Server
+    from abook.config import build_settings, save_settings
+    from abook.webui.actions import FakeRunner
+    from abook.webui.library import Preferences
+    from abook.webui.listening import Listening
+    from abook.webui.server import App, Server
 
     paths, db = _book(tmp_path)
     save_settings(paths.settings, build_settings())
@@ -40,7 +40,7 @@ def _call(server, method: str, path: str, body: dict | None = None):
 
 
 def test_pausing_needs_a_running_book(studio) -> None:
-    from ebook_reader.webui.library import book_id
+    from abook.webui.library import book_id
 
     paths, _db, server, _runner = studio
     status, data = _call(server, "POST", f"/api/books/{book_id(paths.root)}/pause", {"paused": True})
@@ -48,7 +48,7 @@ def test_pausing_needs_a_running_book(studio) -> None:
 
 
 def test_the_listener_pauses_and_continues_a_running_book(studio) -> None:
-    from ebook_reader.webui.library import book_id
+    from abook.webui.library import book_id
 
     paths, db, server, runner = studio
     runner._running.add(str(paths.root.resolve()))
@@ -69,7 +69,7 @@ def test_the_listener_pauses_and_continues_a_running_book(studio) -> None:
 
 
 def test_a_book_paused_for_the_battery_says_so(studio) -> None:
-    from ebook_reader.webui.library import book_id
+    from abook.webui.library import book_id
 
     paths, db, server, runner = studio
     runner._running.add(str(paths.root.resolve()))
@@ -83,7 +83,7 @@ def test_a_book_paused_for_the_battery_says_so(studio) -> None:
 
 
 def test_the_phone_can_pause_through_the_remote_studio() -> None:
-    from ebook_reader.webui.remote_studio import permitted
+    from abook.webui.remote_studio import permitted
 
     assert permitted("POST", "/api/books/abc123/pause")
 
@@ -91,7 +91,7 @@ def test_the_phone_can_pause_through_the_remote_studio() -> None:
 def test_a_paused_book_whose_process_died_reads_as_interrupted_mid_phase(tmp_path) -> None:
     """Máy tắt khi đang tạm dừng: sổ còn status "paused". Trang sách nói tạm ngưng ĐÚNG pha, để người dùng biết (pha phân
     tích) chạy tiếp là ra sách khác."""
-    from ebook_reader.webui import store
+    from abook.webui import store
 
     paths, db = _book(tmp_path)
     db.update_book(status="paused", stage="paused")
@@ -108,13 +108,13 @@ def test_a_paused_book_whose_process_died_reads_as_interrupted_mid_phase(tmp_pat
 
 
 def test_the_setting_is_saved_with_the_other_preferences(tmp_path, monkeypatch) -> None:
-    from ebook_reader import power_source
-    from ebook_reader.webui.library import Preferences
+    from abook import power_source
+    from abook.webui.library import Preferences
 
     preferences = Preferences(tmp_path / "preferences.json")
     assert preferences.get()["pauseOnBattery"] is True
     preferences.update({"pauseOnBattery": False})
-    monkeypatch.setenv("EBOOK_READER_PREFERENCES", str(tmp_path / "preferences.json"))
+    monkeypatch.setenv("ABOOK_PREFERENCES", str(tmp_path / "preferences.json"))
     assert power_source.pause_on_battery_enabled() is False, "supervisor đọc đúng file, đúng khoá"
 
 
@@ -130,11 +130,11 @@ def test_the_settings_screen_can_turn_it_off(studio) -> None:
 
 def test_the_supervisor_reads_the_same_preferences_file_as_the_app(tmp_path, monkeypatch) -> None:
     """power_source chép cách tìm preferences.json của webui.library (supervisor không nhập webui) - hai bên phải trùng."""
-    from ebook_reader import power_source
-    from ebook_reader.webui import library
+    from abook import power_source
+    from abook.webui import library
 
-    monkeypatch.delenv("EBOOK_READER_PREFERENCES", raising=False)
+    monkeypatch.delenv("ABOOK_PREFERENCES", raising=False)
     monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
     assert power_source._preferences_path() == library.preferences_path()
-    monkeypatch.setenv("EBOOK_READER_PREFERENCES", str(tmp_path / "rieng.json"))
+    monkeypatch.setenv("ABOOK_PREFERENCES", str(tmp_path / "rieng.json"))
     assert power_source._preferences_path() == library.preferences_path()

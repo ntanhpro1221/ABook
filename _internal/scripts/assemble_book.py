@@ -30,15 +30,15 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from ebook_reader.io_utils import ffmpeg_executable, run_hidden  # noqa: E402
-from ebook_reader.text_processing import sha256_file  # noqa: E402
+from abook.io_utils import ffmpeg_executable, run_hidden  # noqa: E402
+from abook.text_processing import sha256_file  # noqa: E402
 
 try:
     from scripts.book_paths import ALBUM, BOOK, SOURCE_DIR as SOURCE, VERSIONS  # noqa: E402
 except ImportError:  # chạy trực tiếp: python scripts/x.py
     from book_paths import ALBUM, BOOK, SOURCE_DIR as SOURCE, VERSIONS  # noqa: E402
 # `SOURCE` từng ghim cứng `D:/Novels/Tools/Text` - thư mục nguồn CŨ của cuốn 1, bị xoá ngày
-# 13-09 và khôi phục sang `Ebook Reader/Text`. Hệ quả im lặng: `_expected()` đọc một thư mục
+# 13-09 và khôi phục sang `ABook/Text`. Hệ quả im lặng: `_expected()` đọc một thư mục
 # không tồn tại nên trả về rỗng, và phép kiểm "nguồn có N chương, **thiếu M**" chưa bao giờ
 # chạy cho cuốn nào - kể cả cuốn 2, vốn chưa từng dùng đường dẫn ấy. Tìm ra 00:15 ngày
 # 2026-09-16, cùng họ với `before_a_batch._versions` và bộ canh của `apply_all` đã sửa cùng

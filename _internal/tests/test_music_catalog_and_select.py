@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.webui.music_catalog import CatalogError, MusicCatalog, cell_of, shard_of
-from ebook_reader.webui.music_select import choose, scene_key
+from abook.webui.music_catalog import CatalogError, MusicCatalog, cell_of, shard_of
+from abook.webui.music_select import choose, scene_key
 
 TRACKS = {
     "https://x/calm.mp3": {"valence": 0.3, "arousal": -0.7, "family": "piano", "duration": 180, "source": "incompetech"},
@@ -116,7 +116,7 @@ def test_short_tracks_are_not_used_and_choices_repeat_exactly(near) -> None:
 
 
 def test_a_style_that_does_not_fit_the_books_world_is_never_chosen(near) -> None:
-    from ebook_reader.webui.music_select import choose as pick
+    from abook.webui.music_select import choose as pick
 
     tracks = [{"link": "https://x/rock.mp3", "valence": 0.3, "arousal": -0.6, "tension": 0.0, "style": "rock",
                "duration": 200, "source": "incompetech"},
@@ -130,7 +130,7 @@ def test_a_style_that_does_not_fit_the_books_world_is_never_chosen(near) -> None
 
 
 def test_tension_tells_fear_from_excitement(near) -> None:
-    from ebook_reader.webui.music_select import choose as pick
+    from abook.webui.music_select import choose as pick
 
     tracks = [{"link": "https://x/thrill.mp3", "valence": -0.3, "arousal": 0.7, "tension": 0.9, "duration": 200,
                "source": "incompetech"},

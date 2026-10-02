@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.asr_contract import ASR_LOCKED_NAME_ANCHOR_REVIEW
-from ebook_reader.asr import (
+from abook.asr_contract import ASR_LOCKED_NAME_ANCHOR_REVIEW
+from abook.asr import (
     tone_folded_transcript_metrics,
     ANCHOR_COMPARISON_DIACRITIC_FOLDED_EXACT,
     ANCHOR_COMPARISON_NORMALIZED_EXACT,

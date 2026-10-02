@@ -8,8 +8,8 @@ import numpy as np
 import pytest
 import soundfile as sf
 
-from ebook_reader import asr as asr_module
-from ebook_reader.asr import (
+from abook import asr as asr_module
+from abook.asr import (
     ASR_INCONCLUSIVE,
     ASR_PASS,
     WhisperVerifier,
@@ -19,7 +19,7 @@ from ebook_reader.asr import (
     transcript_metrics,
     transcription_exceeds_audio_timeline,
 )
-from ebook_reader.config import build_settings
+from abook.config import build_settings
 
 
 

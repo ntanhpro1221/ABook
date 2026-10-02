@@ -8,8 +8,8 @@ Xem docs/TWO_CHARACTERS_ONE_VOICE.md.
 """
 from __future__ import annotations
 
-from ebook_reader.character_registry import PresetAllocator
-from ebook_reader.voice_catalog import formant_variants_for_preset
+from abook.character_registry import PresetAllocator
+from abook.voice_catalog import formant_variants_for_preset
 
 
 def _allocator() -> PresetAllocator:

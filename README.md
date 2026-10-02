@@ -133,14 +133,14 @@ Mã nguồn, test và tài liệu kỹ thuật nằm trong `_internal/`:
 Dây chuyền cũng chạy không cần giao diện, từ thư mục `_internal` có môi trường Studio:
 
 ```powershell
-.\runtime\.venv\Scripts\python.exe -m ebook_reader.cli create `
+.\runtime\.venv\Scripts\python.exe -m abook.cli create `
   --source-dir "D:\Books\Truyen" --range 000..099 `
   --output-root "C:\Users\<user>\Audiobooks" --title "Tên sách" `
   --profile high_quality --start --json
 
-.\runtime\.venv\Scripts\python.exe -m ebook_reader.cli status "<project-root>" --json
-.\runtime\.venv\Scripts\python.exe -m ebook_reader.cli stop "<project-root>" --timeout 60 --json
-.\runtime\.venv\Scripts\python.exe -m ebook_reader.cli run "<project-root>" --json
+.\runtime\.venv\Scripts\python.exe -m abook.cli status "<project-root>" --json
+.\runtime\.venv\Scripts\python.exe -m abook.cli stop "<project-root>" --timeout 60 --json
+.\runtime\.venv\Scripts\python.exe -m abook.cli run "<project-root>" --json
 ```
 
 Thêm `--dry-run` vào `create` để xem trước số file, file đầu/cuối và đường dẫn project mà không ghi gì. `status`, `report`,

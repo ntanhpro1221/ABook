@@ -25,7 +25,7 @@ interface ReaderPrefs {
   tapped?: boolean;
 }
 
-const PREFS_KEY = "ebook-reader-reader";
+const PREFS_KEY = "abook-reader";
 const SIZES = [16, 18, 20, 22, 24];
 const LEADINGS = [1.6, 1.8, 2];
 
@@ -38,7 +38,7 @@ function loadPrefs(): ReaderPrefs {
 }
 
 function localReadingKey(bookId: string) {
-  return `ebook-reader-reading-${bookId}`;
+  return `abook-reading-${bookId}`;
 }
 
 export function ReaderScreen() {

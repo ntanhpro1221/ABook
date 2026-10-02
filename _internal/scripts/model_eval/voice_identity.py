@@ -39,8 +39,8 @@ for path in (HERE, ROOT):
 
 from score_models import GOLD_ROOT, load_gold, read_project, speaker_credit, speaker_key  # noqa: E402
 
-from ebook_reader import character_registry  # noqa: E402
-from ebook_reader.character_registry import canonical_speaker_names, is_local_speaker  # noqa: E402
+from abook import character_registry  # noqa: E402
+from abook.character_registry import canonical_speaker_names, is_local_speaker  # noqa: E402
 
 
 def source_text(projects: list[Path]) -> str:

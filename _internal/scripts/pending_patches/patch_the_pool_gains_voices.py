@@ -63,7 +63,7 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "voice_catalog.py"
+p = root / "abook" / "voice_catalog.py"
 s = io.open(p, encoding="utf-8").read()
 
 
@@ -315,7 +315,7 @@ print(f"da va {p}")
 # Preview đi cùng: kho giọng đọc file theo tên trong VOICE_PREVIEW_FILENAMES, thiếu file là hỏng.
 # Hai file cuối THAY file cũ: Xuân Vĩnh và Trúc Ly phát khác ở 3.8.1.
 staged = root / "scripts" / "pending_patches" / "assets" / "voice_previews"
-shipped = root / "ebook_reader" / "assets" / "voice_previews"
+shipped = root / "abook" / "assets" / "voice_previews"
 for filename in (
     "adam.wav",
     "adam_bua.wav",

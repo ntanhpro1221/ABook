@@ -9,7 +9,7 @@ $AppName = "ABook"
 # Tên cũ của app (trước 27-09): lối tắt mang tên này mà trỏ đúng trình khởi động dưới đây thì gỡ, để không còn hai mục.
 $LegacyNames = @("Ebook Reader")
 $Launcher = Join-Path $ProjectRoot "_internal\ABook.vbs"
-$Icon = Join-Path $ProjectRoot "_internal\ebook_reader\assets\app.ico"
+$Icon = Join-Path $ProjectRoot "_internal\abook\assets\app.ico"
 $ProgramsRoot = [Environment]::GetFolderPath([Environment+SpecialFolder]::Programs)
 $RootShortcutPath = Join-Path $ProjectRoot "$AppName.lnk"
 $StartMenuShortcutPath = Join-Path $ProgramsRoot "$AppName.lnk"
@@ -56,9 +56,9 @@ function Remove-LegacyShortcut([string]$ShortcutPath) {
 }
 
 # Windows maps the app window to its Start Menu entry through the AppUserModelID the app sets on itself
-# (ebook_reader/desktop_shell.py: APP_USER_MODEL_ID). Without the same ID on the shortcut, the media card in
+# (abook/desktop_shell.py: APP_USER_MODEL_ID). Without the same ID on the shortcut, the media card in
 # Windows+A (and the media key overlay) cannot show the "ABook" name and icon for the player.
-$AppUserModelId = "EbookReader.Desktop"
+$AppUserModelId = "ABook.Desktop"
 
 function Get-ShortcutAppId([string]$ShortcutPath) {
     $ShellApp = New-Object -ComObject Shell.Application
@@ -72,12 +72,12 @@ function Set-ShortcutAppId([string]$ShortcutPath) {
         return
     }
     # Compiled only when the ID is missing: this script runs on every start.
-    if (-not ("EbookReaderShortcutIdentity" -as [type])) {
+    if (-not ("ABookShortcutIdentity" -as [type])) {
         Add-Type -TypeDefinition @'
 using System;
 using System.Runtime.InteropServices;
 
-public static class EbookReaderShortcutIdentity {
+public static class ABookShortcutIdentity {
     [StructLayout(LayoutKind.Sequential, Pack = 4)]
     struct PropertyKey { public Guid FormatId; public int PropertyId; }
 
@@ -114,7 +114,7 @@ public static class EbookReaderShortcutIdentity {
 }
 '@
     }
-    [EbookReaderShortcutIdentity]::Set($ShortcutPath, $AppUserModelId)
+    [ABookShortcutIdentity]::Set($ShortcutPath, $AppUserModelId)
 }
 
 Set-AppShortcut $RootShortcutPath

@@ -4,7 +4,7 @@
 Danh sách file bị khoá **không** phải 14 file như các bản tóm tắt vẫn chép. Đọc thẳng:
 
 ```bash
-_internal/runtime/.venv/Scripts/python.exe -c "import sys; sys.path.insert(0,'_internal'); from ebook_reader.quality_policy import QUALITY_IMPLEMENTATION_FILES; print(*QUALITY_IMPLEMENTATION_FILES, sep='\n')"
+_internal/runtime/.venv/Scripts/python.exe -c "import sys; sys.path.insert(0,'_internal'); from abook.quality_policy import QUALITY_IMPLEMENTATION_FILES; print(*QUALITY_IMPLEMENTATION_FILES, sep='\n')"
 ```
 
 Ngày 2026-09-06 nó trả về **22** mục. Những cái hay bị bỏ sót khỏi bản chép tay:
@@ -16,10 +16,10 @@ Tôi đã sửa `recovery.py` ngay trong production vì bản chép tay không c
 Nó **không** an toàn: hash đổi từ `b63e95be` sang `365ad7ee`, và nếu để nguyên thì lần
 `resume` sau của alpha.48 bị từ chối — tức mất sạch bằng chứng QA audio của cả quyển.
 
-**Cách kiểm chắc chắn, trước mọi commit đụng vào `_internal/ebook_reader/`:**
+**Cách kiểm chắc chắn, trước mọi commit đụng vào `_internal/abook/`:**
 
 ```bash
-_internal/runtime/.venv/Scripts/python.exe -c "import sys; sys.path.insert(0,'_internal'); from ebook_reader.quality_policy import quality_implementation_hash; print(quality_implementation_hash())"
+_internal/runtime/.venv/Scripts/python.exe -c "import sys; sys.path.insert(0,'_internal'); from abook.quality_policy import quality_implementation_hash; print(quality_implementation_hash())"
 ```
 
 Chạy trước và sau khi sửa. Hash đổi thì bản sửa ấy **phải** nằm ở nhánh dev và chờ hết run,
@@ -52,7 +52,7 @@ mọi phán quyết của chủ sách trên những đoạn ấy **hết hiệu 
   trang dự án, hay `background_runner.request_pause(project, True)`). Worker vẫn sống, đứng ở
   checkpoint kế (`Pipeline._wait_pause_or_stop`) rồi làm tiếp đúng chỗ - không có resume nào,
   nên vẫn là cùng một quyển sách. Supervisor cũng tự tạm dừng khi máy xách tay chạy pin quá
-  60 giây (`ebook_reader/power_source.py`). Treo tiến trình từ ngoài (người gác pin của máy
+  60 giây (`abook/power_source.py`). Treo tiến trình từ ngoài (người gác pin của máy
   chủ sách) cũng an toàn cùng lý do; chỉ việc tiến trình CHẾT mới đổi quyển sách.
 
 Điều này áp cả cho crash: alpha.50 chết vì `PermissionError` giữa pha phân tích, resume, và

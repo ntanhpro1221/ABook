@@ -40,9 +40,9 @@ class _Studio:
 
 @pytest.fixture()
 def app(tmp_path: Path):
-    from ebook_reader.webui.library import Preferences
-    from ebook_reader.webui.listening import Listening
-    from ebook_reader.webui.server import App
+    from abook.webui.library import Preferences
+    from abook.webui.listening import Listening
+    from abook.webui.server import App
     from tests.test_webui_listen_and_sync import FakeRunner
 
     ollama = ThreadingHTTPServer(("127.0.0.1", 0), _Tags)
@@ -73,7 +73,7 @@ def test_the_wizard_lists_the_models_in_ollama_with_the_default_first(app) -> No
 
 
 def test_a_book_keeps_the_model_chosen_for_it_and_the_studio_ollama(app) -> None:
-    from ebook_reader.webui.server import ApiError
+    from abook.webui.server import ApiError
 
     application, chapter = app
     chosen = application.create({"paths": [str(chapter)], "title": "Thử 8B", "profile": "high_quality",

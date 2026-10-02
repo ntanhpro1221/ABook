@@ -7,8 +7,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ebook_reader.character_registry import build_registry_and_cast, canonical_speaker_names, merge_given_names
-from ebook_reader.config import build_settings
+from abook.character_registry import build_registry_and_cast, canonical_speaker_names, merge_given_names
+from abook.config import build_settings
 from tests.test_character_casting import _identity_db
 
 

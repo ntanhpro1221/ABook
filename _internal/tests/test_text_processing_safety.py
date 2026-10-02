@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.io_utils import decode_text_bytes, sha256_file
-from ebook_reader.text_processing import (
+from abook.io_utils import decode_text_bytes, sha256_file
+from abook.text_processing import (
     CLAUSE_SPLIT_MAX_CHARS,
     build_chapter_manifest,
     is_standalone_ha_gasp,
@@ -462,7 +462,7 @@ def test_load_and_segment_chapter_forwards_the_warnings_list() -> None:
     """The recovery is only useful if it reaches whoever is watching."""
     import inspect
 
-    from ebook_reader.text_processing import load_and_segment_chapter
+    from abook.text_processing import load_and_segment_chapter
 
     signature = inspect.signature(load_and_segment_chapter)
 
@@ -484,7 +484,7 @@ def test_the_pipeline_asks_for_the_warnings_and_says_them_out_loud() -> None:
     """
     import inspect
 
-    from ebook_reader.pipeline import BookPipeline
+    from abook.pipeline import BookPipeline
 
     source = inspect.getsource(BookPipeline)
 

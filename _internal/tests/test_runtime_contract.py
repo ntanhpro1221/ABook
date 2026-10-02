@@ -7,9 +7,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from ebook_reader import runtime_contract
-from ebook_reader.config import build_settings
-from ebook_reader.runtime_contract import perceptual_settings_check
+from abook import runtime_contract
+from abook.config import build_settings
+from abook.runtime_contract import perceptual_settings_check
 
 
 class FakeDistribution:

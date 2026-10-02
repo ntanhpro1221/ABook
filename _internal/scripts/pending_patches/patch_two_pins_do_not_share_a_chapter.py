@@ -36,7 +36,7 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "character_registry.py"
+p = root / "abook" / "character_registry.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD_HELPER = '''def _drop_pins_that_contradict_a_person(
@@ -145,7 +145,7 @@ already avoids same-chapter holders, gives them another variant.
 """
 from __future__ import annotations
 
-from ebook_reader.character_registry import _drop_pins_that_share_a_chapter
+from abook.character_registry import _drop_pins_that_share_a_chapter
 
 VOICE = "preset_thanh_binh_f090_p-04"
 OTHER = "preset_thai_son_f100_p+00"

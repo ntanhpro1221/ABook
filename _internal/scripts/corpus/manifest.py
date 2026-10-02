@@ -27,8 +27,8 @@ MANIFEST = CORPUS / "manifest.json"
 
 # Nguồn lúc gom 19-09 (docs/LLM_EVAL.md, mục "Kho dữ liệu").
 SOURCES = {
-    "Young Master's PoV Woke Up As A Villain In A Game One Day": "cuốn 1 của dự án (Ebook Reader/Text), kể ngôi thứ nhất (SAMAEL)",
-    "Throne of Magical Arcana": "cuốn 2 của dự án (Ebook Reader/Text_Tmp)",
+    "Young Master's PoV Woke Up As A Villain In A Game One Day": "cuốn 1 của dự án (ABook/Text), kể ngôi thứ nhất (SAMAEL)",
+    "Throne of Magical Arcana": "cuốn 2 của dự án (ABook/Text_Tmp)",
     "Nise Seiken Monogatari": "D:/Novels/Tools/Text Nise Seiken Monogatari",
     "Two Childhood Friends Who Have the Strongest Power Kick Each Other in the Dungeon With All Their Might": "D:/Novels/Tools",
     "Đã bảo là cùng nhau tự sát, cớ sao lại thành sống chung": "D:/Novels/Tools",

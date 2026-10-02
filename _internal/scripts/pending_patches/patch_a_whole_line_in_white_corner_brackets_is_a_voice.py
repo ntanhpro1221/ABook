@@ -46,7 +46,7 @@ def patch(path: Path, old: str, new: str) -> None:
 
 
 patch(
-    root / "ebook_reader" / "text_processing.py",
+    root / "abook" / "text_processing.py",
     '''QUOTE_CLOSING_MARKS = {"”", "’", '"'}''',
     '''QUOTE_CLOSING_MARKS = {"”", "’", '"'}
 # Một dòng NGUYÊN VẸN trong 『…』 là một giọng nói: kẻ nhập xác (Yamiyo no Hotaru), bảng thông báo game (Năng lực bá
@@ -56,7 +56,7 @@ WHITE_CORNER_QUOTE_LINE_PATTERN = re.compile(r"『[^』]{1,1600}』")''',
 )
 
 patch(
-    root / "ebook_reader" / "text_processing.py",
+    root / "abook" / "text_processing.py",
     '''def _line_pieces(line: str) -> list[tuple[str, str]]:
     if re.match(r"^[—–-]\\s*\\S", line):
         return [(line, "dialogue")]''',
@@ -69,7 +69,7 @@ patch(
 )
 
 patch(
-    root / "ebook_reader" / "analysis.py",
+    root / "abook" / "analysis.py",
     '''DIALOGUE_OPENERS = frozenset({'"', "'", "“", "‘"})
 DIALOGUE_CLOSERS = frozenset({'"', "'", "”", "’"})''',
     '''# 『 và 』: một dòng nguyên vẹn trong 『…』 là một giọng nói (xem text_processing). Thiếu chúng ở đây thì khoá "thoại
@@ -82,8 +82,8 @@ test = root / "tests" / "test_a_whole_line_in_white_corner_brackets_is_a_voice.p
 test.write_text('''"""Một dòng nguyên vẹn trong 『…』 là một giọng nói; 『…』 giữa câu kể vẫn là chữ của người kể."""
 from __future__ import annotations
 
-from ebook_reader.analysis import DIALOGUE_CLOSERS, DIALOGUE_OPENERS
-from ebook_reader.text_processing import segment_chapter_text
+from abook.analysis import DIALOGUE_CLOSERS, DIALOGUE_OPENERS
+from abook.text_processing import segment_chapter_text
 
 
 def _kinds(text: str) -> list[tuple[str, str]]:

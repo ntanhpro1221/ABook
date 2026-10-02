@@ -9,12 +9,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from ebook_reader.webui import packages
-from ebook_reader.webui.library import Preferences, book_id
-from ebook_reader.webui.listening import Listening
-from ebook_reader.webui.remote_books import REMOTE_FOLDER
-from ebook_reader.webui.server import App
-from ebook_reader.webui.sync import Devices, SyncApp, SyncServer
+from abook.webui import packages
+from abook.webui.library import Preferences, book_id
+from abook.webui.listening import Listening
+from abook.webui.remote_books import REMOTE_FOLDER
+from abook.webui.server import App
+from abook.webui.sync import Devices, SyncApp, SyncServer
 from tests.test_webui_listen_and_sync import FakeRunner, library  # noqa: F401 - fixture dùng chung
 
 
@@ -91,7 +91,7 @@ def test_the_place_you_are_listening_travels_both_ways_between_computers(library
 def test_pairing_refuses_a_bad_code_or_address_with_a_readable_reason(library, tmp_path: Path) -> None:  # noqa: F811
     import pytest
 
-    from ebook_reader.webui.server import ApiError
+    from abook.webui.server import ApiError
 
     other_library, _project, other_listening = library
     devices = Devices(tmp_path / "kia" / "devices.json")
@@ -115,8 +115,8 @@ def test_a_computer_finds_other_computers_on_the_network_like_phones_do() -> Non
     Chính máy này (cùng cổng đồng bộ) không hiện trong danh sách."""
     import socket
 
-    from ebook_reader.webui import remote_books
-    from ebook_reader.webui.sync import Discovery
+    from abook.webui import remote_books
+    from abook.webui.sync import Discovery
 
     free = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     free.bind(("127.0.0.1", 0))
@@ -139,7 +139,7 @@ def test_a_phone_sharing_its_library_is_found_and_labelled_as_a_phone() -> None:
     import socket
     import threading
 
-    from ebook_reader.webui import remote_books
+    from abook.webui import remote_books
 
     phone = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     phone.bind(("127.0.0.1", 0))
@@ -148,8 +148,8 @@ def test_a_phone_sharing_its_library_is_found_and_labelled_as_a_phone() -> None:
 
     def answer() -> None:
         data, address = phone.recvfrom(512)
-        if data.strip() == b"EBOOKREADER_DISCOVER":
-            reply = {"app": "ebook-reader", "name": "Samsung SM-A546E", "port": 47630, "kind": "phone"}
+        if data.strip() == b"ABOOK_DISCOVER":
+            reply = {"app": "abook", "name": "Samsung SM-A546E", "port": 47630, "kind": "phone"}
             phone.sendto(json.dumps(reply).encode("utf-8"), address)
 
     worker = threading.Thread(target=answer, daemon=True)
@@ -170,8 +170,8 @@ def test_this_computer_sees_and_controls_the_player_of_another_computer(library,
 
     import pytest
 
-    from ebook_reader.webui.server import ApiError
-    from ebook_reader.webui.sync import LOCAL_PLAYER, Remote
+    from abook.webui.server import ApiError
+    from abook.webui.sync import LOCAL_PLAYER, Remote
 
     other_library, project, other_listening = library
     devices = Devices(tmp_path / "kia" / "devices.json")

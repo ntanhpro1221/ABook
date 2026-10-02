@@ -35,15 +35,15 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from ebook_reader.asr import (  # noqa: E402
+from abook.asr import (  # noqa: E402
     WhisperVerifier,
     normalize_transcript,
     transcript_metrics,
 )
-from ebook_reader.audio_io import atomic_write_wav  # noqa: E402
-from ebook_reader.config import build_settings  # noqa: E402
-from ebook_reader.tts import VieNeuEngine  # noqa: E402
-from ebook_reader.voice_catalog import VIENEU_PRESETS  # noqa: E402
+from abook.audio_io import atomic_write_wav  # noqa: E402
+from abook.config import build_settings  # noqa: E402
+from abook.tts import VieNeuEngine  # noqa: E402
+from abook.voice_catalog import VIENEU_PRESETS  # noqa: E402
 
 
 # Ordinary narrative prose with a dense spread of tones, no foreign names: names would

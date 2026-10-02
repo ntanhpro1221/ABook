@@ -19,7 +19,7 @@ ghi sổ) — chương lên được, và báo cáo vẫn nói chưa ai nghe.
 """
 from __future__ import annotations
 
-from ebook_reader.pipeline import (
+from abook.pipeline import (
     HIGH_QUALITY_ALLOWED_SEGMENT_WARNINGS,
     MACHINE_ACCEPTABLE_SEGMENT_WARNINGS,
     PACE_BAND_RELAXED_WARNING,
@@ -67,7 +67,7 @@ def test_the_machine_list_is_no_longer_only_asr_and_says_so() -> None:
     Không phải *"chỉ đè lên ASR"* mà là *"chỉ đè lên phép kiểm không nói bản thu hỏng"*. Nếu
     ai đó sửa lại docstring về câu cũ thì mã này không còn chỗ đứng trong danh sách.
     """
-    from ebook_reader import pipeline
+    from abook import pipeline
 
     doc = pipeline.__dict__.get("MACHINE_ACCEPTABLE_SEGMENT_WARNINGS")
     assert doc is not None

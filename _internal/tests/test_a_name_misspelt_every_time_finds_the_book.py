@@ -5,7 +5,7 @@ LoRA v5 (29-09) không viết đúng "Glast" lần nào trong HDST 062 - 21 câu
 """
 from __future__ import annotations
 
-from ebook_reader.character_registry import (
+from abook.character_registry import (
     canonical_speaker_names,
     fold_for_source_search,
     snap_to_source_names,

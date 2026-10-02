@@ -1,6 +1,6 @@
 import type { CoverImage } from "@/shared/cover";
 // Hợp đồng dữ liệu của phía NGHE - chung cho máy tính và Android.
-// Máy tính: server cục bộ dựng từ project (ebook_reader/webui/listen_view.py).
+// Máy tính: server cục bộ dựng từ project (abook/webui/listen_view.py).
 // Android: đọc từ gói sách đã tải về (book.json cùng hình dạng).
 
 export interface ListenChapter {

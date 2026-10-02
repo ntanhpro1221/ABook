@@ -12,12 +12,12 @@ from pathlib import Path
 import numpy as np
 import soundfile as sf
 
-from ebook_reader.config import build_settings
-from ebook_reader.io_utils import sha256_file
-from ebook_reader.models import ResourceDecision, ResourceLevel
-from ebook_reader.pipeline import BookPipeline
-from ebook_reader.project import create_or_open_project
-from ebook_reader.voice_catalog import VOICE_PREVIEW_FILENAMES
+from abook.config import build_settings
+from abook.io_utils import sha256_file
+from abook.models import ResourceDecision, ResourceLevel
+from abook.pipeline import BookPipeline
+from abook.project import create_or_open_project
+from abook.voice_catalog import VOICE_PREVIEW_FILENAMES
 
 
 class _StubPool:
@@ -125,7 +125,7 @@ def _arrange(tmp_path, monkeypatch, *, decision: ResourceDecision | None = None)
     _StubPool.instances.clear()
     _StubPool.next_scores = {}
     pipeline, db, chapter = _pipeline(tmp_path)
-    monkeypatch.setattr("ebook_reader.pipeline.PerceptualScorePool", _StubPool)
+    monkeypatch.setattr("abook.pipeline.PerceptualScorePool", _StubPool)
     monkeypatch.setattr(pipeline.resources, "decide", lambda _s: decision or _allow())
     return pipeline, db, chapter
 

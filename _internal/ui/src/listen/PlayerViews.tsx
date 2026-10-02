@@ -548,8 +548,8 @@ function BookmarkShortcut() {
   const add = useAddBookmark();
   useEffect(() => {
     const onShortcut = () => void add();
-    window.addEventListener("ebook-reader:bookmark", onShortcut);
-    return () => window.removeEventListener("ebook-reader:bookmark", onShortcut);
+    window.addEventListener("abook:bookmark", onShortcut);
+    return () => window.removeEventListener("abook:bookmark", onShortcut);
   }, [add]);
   return null;
 }
@@ -1211,7 +1211,7 @@ const PANELS: { value: Panel; label: string; icon: typeof Text }[] = [
   { value: "chapters", label: "Chương", icon: ListOrdered },
   { value: "bookmarks", label: "Dấu trang", icon: BookmarkIcon },
 ];
-const PANEL_KEY = "ebook-reader-now-playing-panel";
+const PANEL_KEY = "abook-now-playing-panel";
 
 function initialPanel(): Panel {
   try {

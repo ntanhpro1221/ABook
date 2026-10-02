@@ -73,7 +73,7 @@ root = Path(sys.argv[1])
 def edit(relative: str, pairs: list[tuple[str, str]]) -> None:
     """Thay tung cap, giu nguyen KIEU XUONG DONG cua file.
 
-    `ebook_reader/cli.py` dung CRLF trong khi moi file khac dung LF, va mot ban va ghi de bang
+    `abook/cli.py` dung CRLF trong khi moi file khac dung LF, va mot ban va ghi de bang
     `newline="\\n"` se doi ca 1.565 dong cua no - mot diff khong ai doc duoc, cho mot thay doi
     ba dong. Doc bang `newline=""` de thay nguyen van, roi ghi lai dung kieu cu.
     """
@@ -91,7 +91,7 @@ def edit(relative: str, pairs: list[tuple[str, str]]) -> None:
 
 
 # ---------------------------------------------------------------- 1. character_registry.py
-registry = io.open(root / "ebook_reader" / "character_registry.py", encoding="utf-8").read()
+registry = io.open(root / "abook" / "character_registry.py", encoding="utf-8").read()
 assert '"me", "tao", "tui", "tớ", "chúng tôi", "chúng mình",' in registry, (
     "phai ap patch_a_pronoun_is_not_a_character.py TRUOC ban va nay: `me` chua co trong PRONOUNS"
 )
@@ -200,7 +200,7 @@ NEW_CALL = '''        if reserved and speaker != reserved:
     _repair_cross_batch_dialogue_continuations(db, log)'''
 
 edit(
-    "ebook_reader/character_registry.py",
+    "abook/character_registry.py",
     [(OLD_RESERVED, NEW_RESERVED), (OLD_BUILD, NEW_BUILD), (OLD_CALL, NEW_CALL)],
 )
 
@@ -246,7 +246,7 @@ NEW_SETTINGS = '''def _settings_from_args(args: argparse.Namespace) -> dict[str,
     overrides = {"voices": {"first_person_identity": first_person}} if first_person else None
     return build_settings(str(args.profile), overrides)'''
 
-edit("ebook_reader/cli.py", [(OLD_IMPORT, NEW_IMPORT), (OLD_ARG, NEW_ARG), (OLD_SETTINGS, NEW_SETTINGS)])
+edit("abook/cli.py", [(OLD_IMPORT, NEW_IMPORT), (OLD_ARG, NEW_ARG), (OLD_SETTINGS, NEW_SETTINGS)])
 
 # ---------------------------------------------------------------- 3. scripts/book_paths.py
 OLD_TABLE = '''    EBOOK_ALBUM             tên đĩa ghi vào thẻ ID3 của mọi chương                mặc định Throne of Magical Arcana
@@ -304,12 +304,12 @@ fi
 '''
 
 OLD_CREATE_BATCH = (
-    '"$PY" -m ebook_reader.cli create \\\n'
+    '"$PY" -m abook.cli create \\\n'
     '  --output-root "$OUT" --source-dir "$SOURCE_DIR" \\\n'
     '  --range "$RANGE" --width 3 --title "$TITLE" --profile high_quality --json\n'
 )
 NEW_CREATE_BATCH = (
-    '"$PY" -m ebook_reader.cli create \\\n'
+    '"$PY" -m abook.cli create \\\n'
     '  --output-root "$OUT" --source-dir "$SOURCE_DIR" \\\n'
     '  --range "$RANGE" --width 3 --title "$TITLE" --profile high_quality --json \\\n'
     '  ${FP_ARGS[@]+"${FP_ARGS[@]}"}\n'
@@ -317,12 +317,12 @@ NEW_CREATE_BATCH = (
 edit("scripts/launch_batch.sh", [(GUARD_ANCHOR, GUARD), (OLD_CREATE_BATCH, NEW_CREATE_BATCH)])
 
 OLD_CREATE_REPAIR = (
-    '  PYTHONIOENCODING=utf-8 "$PY" -m ebook_reader.cli create \\\n'
+    '  PYTHONIOENCODING=utf-8 "$PY" -m abook.cli create \\\n'
     '    --output-root "$OUT" --source-dir "$SOURCE_DIR" \\\n'
     '    --range "$CH..$CH" --width 3 --title "$TITLE" --profile high_quality --json > /dev/null\n'
 )
 NEW_CREATE_REPAIR = (
-    '  PYTHONIOENCODING=utf-8 "$PY" -m ebook_reader.cli create \\\n'
+    '  PYTHONIOENCODING=utf-8 "$PY" -m abook.cli create \\\n'
     '    --output-root "$OUT" --source-dir "$SOURCE_DIR" \\\n'
     '    --range "$CH..$CH" --width 3 --title "$TITLE" --profile high_quality --json \\\n'
     '    ${FP_ARGS[@]+"${FP_ARGS[@]}"} > /dev/null\n'
@@ -355,7 +355,7 @@ from __future__ import annotations
 import inspect
 from typing import Any
 
-from ebook_reader.character_registry import (
+from abook.character_registry import (
     FIRST_PERSON_PRONOUNS,
     PRONOUNS,
     build_registry_and_cast,
@@ -447,7 +447,7 @@ def test_a_pronoun_is_not_an_answer_to_who_i_am() -> None:
 def test_the_command_line_refuses_what_cannot_work() -> None:
     import argparse
 
-    from ebook_reader.cli import CliUsageError, _settings_from_args
+    from abook.cli import CliUsageError, _settings_from_args
 
     def _args(**overrides: Any) -> argparse.Namespace:
         base: dict[str, Any] = {

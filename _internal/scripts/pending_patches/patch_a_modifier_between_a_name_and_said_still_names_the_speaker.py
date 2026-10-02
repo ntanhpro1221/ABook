@@ -37,7 +37,7 @@ def patch(path: Path, old: str, new: str) -> None:
 
 
 patch(
-    root / "ebook_reader" / "analysis.py",
+    root / "abook" / "analysis.py",
     '''SPEECH_ATTRIBUTION_PATTERN = re.compile(
     rf"(?P<speaker>{LATIN_PROPER_NAME_SURFACE_PATTERN.pattern})\\s+"
     r"(?:nói|hỏi|đáp|trả lời|lên tiếng|thì thầm|quát|kêu|thốt lên)\\s*[:：]\\s*$"
@@ -55,7 +55,7 @@ OBJECT_MARKER_BEFORE_NAME_WORDS = frozenset({"vào", "cho", "tới", "đến", "
 )
 
 patch(
-    root / "ebook_reader" / "analysis.py",
+    root / "abook" / "analysis.py",
     '''    speaker = match.group("speaker")
     if _name_candidate_key(speaker) in NAME_CANDIDATE_EXCLUSIONS:
         return None
@@ -69,7 +69,7 @@ patch(
 )
 
 patch(
-    root / "ebook_reader" / "analysis.py",
+    root / "abook" / "analysis.py",
     '''        if previous.casefold() in NOT_A_SPEAKER_BEFORE_NAME_WORDS:
             return None
         if any(word.casefold().strip(",.;") in LISTENER_DIRECTED_WORDS for word in before[-3:]):
@@ -88,7 +88,7 @@ test = root / "tests" / "test_a_modifier_between_a_name_and_said_still_names_the
 test.write_text('''"""Trạng ngữ giữa tên và động từ nói không xoá người nói; ba chốt chống gán sai."""
 from __future__ import annotations
 
-from ebook_reader.analysis import _trailing_speech_attribution
+from abook.analysis import _trailing_speech_attribution
 
 
 def test_a_modifier_between_a_name_and_said() -> None:

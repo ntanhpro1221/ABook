@@ -7,10 +7,10 @@ import numpy as np
 import pytest
 import soundfile as sf
 
-from ebook_reader.audio_io import atomic_write_wav
-from ebook_reader.background_runner import BACKGROUND_DIRECTORY
-from ebook_reader.config import build_settings, settings_hash
-from ebook_reader.database import (
+from abook.audio_io import atomic_write_wav
+from abook.background_runner import BACKGROUND_DIRECTORY
+from abook.config import build_settings, settings_hash
+from abook.database import (
     CHAPTER_POST_ENCODE_QUALITY_STAGE,
     QUALITY_SCOPE_CHAPTER,
     QUALITY_SCOPE_SEGMENT,
@@ -19,9 +19,9 @@ from ebook_reader.database import (
     SEGMENT_PERCEPTUAL_QUALITY_STAGE,
     ProjectDB,
 )
-from ebook_reader.io_utils import sha256_file
-from ebook_reader.models import ProjectPaths
-from ebook_reader.recovery import RecoveryError, recover_project
+from abook.io_utils import sha256_file
+from abook.models import ProjectPaths
+from abook.recovery import RecoveryError, recover_project
 
 
 def setup_db(tmp_path: Path):
@@ -234,7 +234,7 @@ def test_recovery_rebuilds_completed_mp3_when_artifact_checksum_mismatches(tmp_p
         verified=True,
     )
     db.update_chapter_status(int(chapter["id"]), "completed")
-    monkeypatch.setattr("ebook_reader.recovery.verify_mp3", lambda _path: (True, "ok"))
+    monkeypatch.setattr("abook.recovery.verify_mp3", lambda _path: (True, "ok"))
 
     report = recover_project(paths, db, settings)
 
@@ -245,9 +245,9 @@ def test_recovery_rebuilds_completed_mp3_when_artifact_checksum_mismatches(tmp_p
 def test_completed_project_uses_verified_mp3_fast_path(tmp_path: Path, monkeypatch) -> None:
     paths, settings, db, row = setup_db(tmp_path)
     complete_project_with_current_qa(paths, settings, db, row)
-    monkeypatch.setattr("ebook_reader.recovery.verify_mp3", lambda _path: (True, "ok"))
+    monkeypatch.setattr("abook.recovery.verify_mp3", lambda _path: (True, "ok"))
     monkeypatch.setattr(
-        "ebook_reader.recovery.inspect_wav",
+        "abook.recovery.inspect_wav",
         lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("deep recovery ran")),
     )
 
@@ -264,7 +264,7 @@ def test_completed_project_without_perceptual_evidence_is_requeued(tmp_path: Pat
             "DELETE FROM quality_checks WHERE scope=? AND stage=?",
             (QUALITY_SCOPE_SEGMENT, SEGMENT_PERCEPTUAL_QUALITY_STAGE),
         )
-    monkeypatch.setattr("ebook_reader.recovery.verify_mp3", lambda _path: (True, "ok"))
+    monkeypatch.setattr("abook.recovery.verify_mp3", lambda _path: (True, "ok"))
 
     report = recover_project(paths, db, settings)
 
@@ -300,7 +300,7 @@ def test_completed_fast_path_rejects_missing_or_changed_source(
         source.write_bytes(bytes([original[0] ^ 1]) + original[1:])
         assert source.stat().st_size == len(original)
     monkeypatch.setattr(
-        "ebook_reader.recovery.verify_mp3",
+        "abook.recovery.verify_mp3",
         lambda _path: (_ for _ in ()).throw(AssertionError("MP3 validation ran first")),
     )
 
@@ -368,7 +368,7 @@ def test_completed_project_without_current_quality_metadata_is_not_fast_pathed(
     )
     db.update_chapter_status(int(chapter["id"]), "completed")
     db.update_book(status="completed", stage="completed")
-    monkeypatch.setattr("ebook_reader.recovery.verify_mp3", lambda _path: (True, "ok"))
+    monkeypatch.setattr("abook.recovery.verify_mp3", lambda _path: (True, "ok"))
 
     report = recover_project(paths, db, settings)
 

@@ -26,7 +26,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from ebook_reader.asr import load_audio_for_whisper  # noqa: E402
+from abook.asr import load_audio_for_whisper  # noqa: E402
 
 DEFAULT_SAMPLE = 60
 

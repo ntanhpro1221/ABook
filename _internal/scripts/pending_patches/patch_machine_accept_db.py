@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "database.py"
+p = root / "abook" / "database.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD_SCHEMA = """CREATE TABLE IF NOT EXISTS listener_audio_acceptances (

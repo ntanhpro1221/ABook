@@ -18,14 +18,14 @@ from __future__ import annotations
 
 import pytest
 
-from ebook_reader.audio_transform_contract import POSTPROCESS_PROFILE_NONE
-from ebook_reader.database import (
+from abook.audio_transform_contract import POSTPROCESS_PROFILE_NONE
+from abook.database import (
     GENERATION_STRATEGY_SPLIT,
     PRONUNCIATION_DELIVERY_LOCKED,
     PRONUNCIATION_DELIVERY_SOURCE,
 )
-from ebook_reader.pipeline import BookPipeline
-from ebook_reader.tts_pool import TTS_POOL_MIN_BATCH
+from abook.pipeline import BookPipeline
+from abook.tts_pool import TTS_POOL_MIN_BATCH
 
 VARIANTS = (PRONUNCIATION_DELIVERY_LOCKED, PRONUNCIATION_DELIVERY_SOURCE)
 

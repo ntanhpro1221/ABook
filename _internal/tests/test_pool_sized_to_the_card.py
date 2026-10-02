@@ -13,7 +13,7 @@ failing outright.
 """
 from __future__ import annotations
 
-from ebook_reader.tts_pool import (
+from abook.tts_pool import (
     TTS_POOL_BASE_VRAM_MB,
     TTS_POOL_FOREGROUND_RESERVE_MB,
     TTS_POOL_WORKER_VRAM_MB,

@@ -6,12 +6,12 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.webui import library
+from abook.webui import library
 
 
 @pytest.fixture()
 def local_app_data(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    monkeypatch.delenv("EBOOK_READER_PREFERENCES", raising=False)
+    monkeypatch.delenv("ABOOK_PREFERENCES", raising=False)
     monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
     return tmp_path
 
@@ -51,6 +51,6 @@ def test_a_file_already_under_the_new_name_is_never_overwritten(local_app_data: 
 
 
 def test_the_override_still_wins(local_app_data: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("EBOOK_READER_PREFERENCES", str(local_app_data / "thu" / "prefs.json"))
+    monkeypatch.setenv("ABOOK_PREFERENCES", str(local_app_data / "thu" / "prefs.json"))
     assert library.preferences_path() == local_app_data / "thu" / "prefs.json"
     assert not (local_app_data / "ABook").exists()

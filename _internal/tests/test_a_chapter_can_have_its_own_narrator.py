@@ -10,9 +10,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from ebook_reader.analysis import OllamaBookAnalyzer, _analysis_policy_fingerprint, first_person_chapters
-from ebook_reader.character_registry import resolve_first_person_labels
-from ebook_reader.config import build_settings
+from abook.analysis import OllamaBookAnalyzer, _analysis_policy_fingerprint, first_person_chapters
+from abook.character_registry import resolve_first_person_labels
+from abook.config import build_settings
 from test_analysis_required import FakeDB
 
 
@@ -108,7 +108,7 @@ def test_pronoun_labels_go_to_the_narrator_of_their_own_chapter() -> None:
 
 
 def test_a_real_database_runs_the_chapter_scoped_rewrite(tmp_path) -> None:
-    from ebook_reader.database import ProjectDB
+    from abook.database import ProjectDB
 
     db = ProjectDB(tmp_path / "project.sqlite3")
     assert db.rewrite_speaker("Tôi", "YUUKO HAYASE", chapter_ids=[]) == 0
@@ -121,8 +121,8 @@ def test_the_command_line_takes_chapter_narrators_and_refuses_what_cannot_work()
 
     import pytest
 
-    from ebook_reader.cli import CliUsageError, _settings_from_args
-    from ebook_reader.config import validate_settings
+    from abook.cli import CliUsageError, _settings_from_args
+    from abook.config import validate_settings
 
     def _args(**overrides: Any) -> argparse.Namespace:
         base: dict[str, Any] = {"settings_file": None, "profile": "high_quality", "first_person": "KAKERU SORANO",
@@ -154,7 +154,7 @@ def _book(tmp_path, chapters: list[tuple[str, str]]) -> list:
 
 
 def test_the_studio_suggests_chapters_named_after_a_character_told_in_first_person(tmp_path) -> None:
-    from ebook_reader.first_person import pov_chapters
+    from abook.first_person import pov_chapters
 
     kakeru = "Tôi nhìn cô ấy rồi nói với Hayase một câu. Tôi đi về nhà. Tôi nghĩ mãi về Hayase và Narumi.\n\n" * 4
     hayase = "Tôi lại dành cả đêm ở văn phòng. Tôi mệt mỏi.\n\n“Em về được rồi Hayase.” Anh ta thở dài.\n\nTôi về nhà.\n\n" * 3
@@ -168,8 +168,8 @@ def test_the_studio_suggests_chapters_named_after_a_character_told_in_first_pers
 def test_creating_a_book_writes_the_chapter_narrators(tmp_path) -> None:
     import pytest
 
-    from ebook_reader.config import load_settings
-    from ebook_reader.webui import actions
+    from abook.config import load_settings
+    from abook.webui import actions
 
     files = _book(tmp_path / "src", [("Chương 1: Mở đầu", "Tôi đi.\n"), ("Chương 2: Yuuko Hayase", "Tôi về.\n")]) \
         if (tmp_path / "src").mkdir() is None else []

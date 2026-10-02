@@ -23,7 +23,7 @@ def write_atomic(path: Path, text: str) -> None:
 root = Path(sys.argv[1])
 
 # ================================================================= tts_pool.py
-p = root / "ebook_reader" / "tts_pool.py"
+p = root / "abook" / "tts_pool.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD = """TTS_POOL_WORKER_THREADS = 1"""
@@ -81,7 +81,7 @@ write_atomic(p, s)
 print("da va", p)
 
 # ================================================================= pipeline.py
-p = root / "ebook_reader" / "pipeline.py"
+p = root / "abook" / "pipeline.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD = """            from .tts_pool import SynthesisPool, workers_for_vram"""
@@ -163,7 +163,7 @@ worker nào chạy được. Xem docs/A_POOL_THAT_FORBIDS_ITSELF.md.
 """
 from __future__ import annotations
 
-from ebook_reader.tts_pool import workers_for_ram
+from abook.tts_pool import workers_for_ram
 
 WORKER_GB = 2.65
 FLOOR = 3.5

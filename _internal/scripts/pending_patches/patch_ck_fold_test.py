@@ -17,7 +17,7 @@ def test_k_before_a_back_vowel_sounds_like_c() -> None:
     gives kˈɔ and `ko` gives kˈoʊ. Two spellings of one sound, landing nowhere near each
     other.
     """
-    from ebook_reader.asr import _vietnamese_phonemes
+    from abook.asr import _vietnamese_phonemes
 
     for vietnamese, whisper in (("cai", "kai"), ("ca", "ka"), ("co", "ko")):
         assert _vietnamese_phonemes(vietnamese) == _vietnamese_phonemes(whisper)
@@ -25,7 +25,7 @@ def test_k_before_a_back_vowel_sounds_like_c() -> None:
 
 def test_k_before_a_front_vowel_is_left_alone() -> None:
     """`ke`, `kê`, `ki`, `ky` are correct Vietnamese and must not be rewritten."""
-    from ebook_reader.asr import _fold_vietnamese_k_to_c
+    from abook.asr import _fold_vietnamese_k_to_c
 
     for token in ("ke", "kê", "ki", "ky", "kỳ"):
         assert _fold_vietnamese_k_to_c(token) == token
@@ -42,7 +42,7 @@ def test_the_protagonists_name_survives_whispers_spelling() -> None:
     The tone was never the problem: `caidở` matched the locked `cai-dờ` before this fix,
     despite dở and dờ carrying different tones. `k` against `c` was all of it.
     """
-    from ebook_reader.asr import (
+    from abook.asr import (
         _anchor_component_sounds_right,
         _locked_name_anchor_components,
     )
@@ -76,7 +76,7 @@ def test_the_protagonists_name_survives_whispers_spelling() -> None:
 
 def test_the_fold_does_not_merge_two_different_names() -> None:
     """It stays an equality test on sound, and Lucien still does not swallow Lusienne."""
-    from ebook_reader.asr import _anchor_component_sounds_right
+    from abook.asr import _anchor_component_sounds_right
 
     syllables = ["Lu", "xi", "en"]
 

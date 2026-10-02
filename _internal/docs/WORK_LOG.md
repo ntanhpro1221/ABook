@@ -27,8 +27,8 @@ Bố cục hai thư mục làm việc này khả thi:
 
 | thư mục | dùng để |
 |---|---|
-| `D:\Novels\Ebook Reader` | chạy run thật (không sửa mã khi đang chạy) |
-| `D:\Novels\Ebook Reader_dev` | worktree git, sửa mã và chạy test song song |
+| `D:\Novels\ABook` | chạy run thật (không sửa mã khi đang chạy) |
+| `D:\Novels\ABook_dev` | worktree git, sửa mã và chạy test song song |
 
 ## 2026-09-27
 
@@ -340,7 +340,7 @@ bắt chạy lại cả pha. Một lỗi model mà người nghe trả lời tro
 máy chạy.
 
 ```bash
-ebook-reader-headless cast <project> --character NOAH --gender male
+abook-headless cast <project> --character NOAH --gender male
 ```
 
 Ghi vào `characters.locked`, cột đã tồn tại sẵn trên bảng mà **chưa đoạn nào tôn trọng** -
@@ -385,7 +385,7 @@ Và đây là lần thứ ba cùng một khoảng trống: `pronounce` tồn t�
 người, `cast` vì một giới tính cần, và giờ `accept` vì **một bản thu cần**.
 
 ```bash
-ebook-reader-headless accept <project> --segment c00003_s0000001_571c52609c96 \
+abook-headless accept <project> --segment c00003_s0000001_571c52609c96 \
     --warning PERCEPTUAL_NATURALNESS_REVIEW --note "đã nghe, chấp nhận"
 ```
 
@@ -417,8 +417,8 @@ từng chữ**, bản ghi chỉ khác ở "tháng Mười hai" so với "tháng 
 được viết ra để sửa.
 
 ```bash
-ebook-reader-headless retry <project> --note "đã sửa gộp số"        # mọi segment hỏng
-ebook-reader-headless retry <project> --segment c00006_s0000089_... # một segment
+abook-headless retry <project> --note "đã sửa gộp số"        # mọi segment hỏng
+abook-headless retry <project> --segment c00006_s0000089_... # một segment
 ```
 
 Dùng `reset_segment_pending` đã có sẵn: trả segment về `analyzed`, xoá WAV, xoá bằng chứng
@@ -2053,7 +2053,7 @@ Truy vết trên đĩa, không đoán:
 
     22:25:50   D:\Novels\Tools\Text (478 .txt) vào Thùng rác — còn nguyên ở $RECYCLE.BIN/…/$RVDLKSP, metadata $IVDLKSP
     22:38:06   D:\Novels\Tools\Text_Tmp được tạo — 60 .txt, bộ KHÁC (có 000, không có 261/478)
-    (D:\Novels\Ebook Reader\Text_Tmp là bản cũ từ tháng 8, 915 file — không liên quan)
+    (D:\Novels\ABook\Text_Tmp là bản cũ từ tháng 8, 915 file — không liên quan)
 
 Tức chủ sách đang sắp xếp lại nguồn ngay lúc ấy. Tôi có thể nối lại đường dẫn trong một giây (junction
 `Tools\Text` → thư mục khác, hoặc khôi phục thùng rác) và lô 10 sẽ chạy tiếp — nhưng đó là đụng vào việc
@@ -2067,7 +2067,7 @@ Trạng thái để yên: lô 10 `unrecoverable_error` 8 completed / 18 pending 
 
 ## 2026-09-13, 22:45–23:15 — chủ sách chỉ sang cuốn khác; gốc sách thành tham số; cuốn 2 (915 chương) khởi động từ lô 1
 
-Chủ sách trả lời push bằng một đường dẫn và một câu: `D:/Novels/Ebook Reader/Text_Tmp` — *"lay tai lieu o day
+Chủ sách trả lời push bằng một đường dẫn và một câu: `D:/Novels/ABook/Text_Tmp` — *"lay tai lieu o day
 ma dev"*. Thư mục ấy có **915 chương** (000..914, 2.417.255 từ, 84.211 đoạn), không chung một byte với cuốn cũ.
 Tức là: cuốn 1 tạm dừng ở 253/478 (nguồn trong Thùng rác, lô 10 chết 8/26), và máy phải sản xuất một cuốn mới.
 
@@ -2121,7 +2121,7 @@ tay tên kế hoạch cuốn 1; output của `before_a_batch.py` qua ống của
 ## 2026-09-13, 23:15–23:40 — khôi phục nguồn cuốn 1 vào thư mục project; 109 project trỏ lại có kiểm hash; cổng biết nhìn cuốn khác
 
 Chủ sách: *"khoi phuc di nhung chuyen no vao trong folder cua project"*. Làm đúng thứ tự: `undelete` qua Shell
-API (mục Thùng rác trả về `D:/Novels/Tools/Text`, 478 file), `Move-Item` sang `D:/Novels/Ebook Reader/Text`, xoá
+API (mục Thùng rác trả về `D:/Novels/Tools/Text`, 478 file), `Move-Item` sang `D:/Novels/ABook/Text`, xoá
 bản ghi chỉ mục `$I` mồ côi (70 byte) mà `undelete` để lại. Không đụng gì khác trong `Tools/` — chủ sách đang
 đặt lại tên các thư mục ở đó theo tựa sách.
 
@@ -2142,7 +2142,7 @@ hoàn tác khi DB đã trôi.
 Kết quả thật: 118 quét, **109 ghi, 701 chương đổi đường, 9 bỏ qua đúng** (alpha.10–15, alpha.46-nguon-sai: đọc
 `Text_Tmp` tháng 8, `000.txt` 20.247 byte so với 183 byte của cuốn 1 — khác sách). Bằng chứng sau khi ghi:
 `cli validate` lô 9 và lô 10 `ok`, `input_manifest_hash = True`, `source_files = True`; thư mục bằng chứng của
-registry giải ra `D:/Novels/Ebook Reader/Text` → 478 file; `assemble_book.py --verify` dưới `book1.env`: 253
+registry giải ra `D:/Novels/ABook/Text` → 478 file; `assemble_book.py --verify` dưới `book1.env`: 253
 chương không lệch. `book1.env` trỏ `EBOOK_SOURCE_DIR` sang chỗ mới.
 
 **Lỗ thứ hai do chính việc có hai cuốn:** `before_a_batch` chỉ nhìn `_versions` của cuốn đang chọn, nên từ
@@ -2336,8 +2336,8 @@ Bằng chứng trên đĩa, không suy đoán:
     07:50:57   dòng log cuối của worker (đang xác nhận clarity chương 4)
     07:51:15   System / Kernel-Power id 109: "the kernel power manager has initiated a shutdown transition"
     08:47:43   LastBootUpTime
-    08:50:02   hai `pythonw -m ebook_reader.background_runner supervise` mới ra đời
-    08:55:01   Scheduled Task EbookReaderAutoResume, LastTaskResult 0 (chạy mỗi 5 phút)
+    08:50:02   hai `pythonw -m abook.background_runner supervise` mới ra đời
+    08:55:01   Scheduled Task ABookAutoResume, LastTaskResult 0 (chạy mỗi 5 phút)
     08:56:49   RECOVERY_SCAN: recovered_verified=2.549, stale_leases=1, stale_candidates=150, requeue 0, reset 0
     08:57:01   "Tạo audio chapter 4: 003" — đúng chương đang dở lúc máy tắt
 
@@ -2651,9 +2651,9 @@ tính là bằng chứng; `identity_instability` **vẫn** ném vì đó là d�
 test cũ** kèm lý lẽ mà bản trước thiếu. 116 test dàn giọng + giới tính xanh trên bản sao cách ly.
 
 **Một sai phương pháp của tôi, ghi lại để không lặp:** lần chạy test đầu tiên trên bản sao dùng
-`PYTHONPATH=$S` mà cwd vẫn là cây thật, nên `python -m pytest` nhập `ebook_reader` **từ cây thật** — test
+`PYTHONPATH=$S` mà cwd vẫn là cây thật, nên `python -m pytest` nhập `abook` **từ cây thật** — test
 xanh mà chẳng kiểm bản vá. Phải `cd` vào bản sao, và kiểm bằng
-`python -c "import ebook_reader; print(...__file__)"` trước khi tin con số.
+`python -c "import abook; print(...__file__)"` trước khi tin con số.
 
 ## 2026-09-14, 21:05 — ba đoạn hỏng đầu của lô 2: hai cái là số viết bằng chữ, và giọng đọc không sai
 
@@ -2975,7 +2975,7 @@ và 12 bản thu của phép thử GPU là chỗ duy nhất còn giữ chúng.
 với phép nhân âm lượng.
 
 **Bộ test đầy đủ trên bản sao cách ly: xanh, trừ 2 bài đo HÌNH CÂY** —
-`test_one_click_startup_contract` (cần `Ebook Reader.vbs`) và `test_doctor_...runtime_contract_checks` (cần
+`test_one_click_startup_contract` (cần `ABook.vbs`) và `test_doctor_...runtime_contract_checks` (cần
 `runtime/`), cả hai không được chép sang bản sao. Đã dựng **bản sao đối chứng chưa vá**: đúng 2 bài ấy cũng
 đỏ ở đó. Không phải do bản vá.
 
@@ -3487,7 +3487,7 @@ thấy lô của **cuốn 2** đang bay và không cho khởi động cuốn 1. 
 ### 00:35 — nguồn khôi phục của cuốn 1 có đúng là thứ 261 chương đã đọc không? Có, từng byte
 
 Trước khi cho cuốn 1 chạy tiếp, một rủi ro chưa ai kiểm: nguồn của nó bị **xoá** ngày 13-09 và khôi phục từ
-Thùng rác sang `Ebook Reader/Text`. Nếu bản khôi phục lệch dù một ký tự thì 18 chương mới sẽ được đọc từ
+Thùng rác sang `ABook/Text`. Nếu bản khôi phục lệch dù một ký tự thì 18 chương mới sẽ được đọc từ
 một văn bản khác với 261 chương cũ, và không cổng nào bắt được — chương nào tự nó cũng hợp lệ.
 
 Đối chiếu `chapters.input_sha256` + `input_size` đã lưu trong project với file nguồn hiện tại:
@@ -3725,8 +3725,8 @@ giả nên nó không trả lời được câu "phép dẫn chuỗi có chạy 
 model đã nạp thì mọi đoạn sẽ rơi vào nhánh "lỗi khác" và phép kiểm im lặng thành vô dụng. Phép thử trên
 dữ liệu thật là chỗ trả lời câu ấy.
 
-Bộ test đầy đủ trên bản sao đã vá: **2.819 xanh**, 2 đỏ và cả hai đỏ vì bản sao thiếu `Ebook Reader.vbs`
-/ `Ebook Reader.lnk` (một-cú-nhấp và `doctor`) — đã kiểm bằng cách chạy đúng hai bài ấy trên một bản sao
+Bộ test đầy đủ trên bản sao đã vá: **2.819 xanh**, 2 đỏ và cả hai đỏ vì bản sao thiếu `ABook.vbs`
+/ `ABook.lnk` (một-cú-nhấp và `doctor`) — đã kiểm bằng cách chạy đúng hai bài ấy trên một bản sao
 **chưa vá**: đỏ y như thế. Cây thật thì xanh cả (2.821 + 8 bài mới sẽ vào lúc áp vá).
 
 ### 04:15 — "tôi" là ai: hai cuốn, hai câu trả lời trái nhau, nên nó là công tắc chứ không phải luật
@@ -3763,12 +3763,12 @@ Và hai cái bẫy bắt được **trong lúc thử, trước khi ship**:
    `launch_batch.sh 4` chạy lại sẽ thu lại 49 chương thay vì tiếp tục. Nên khoá ấy **chỉ tồn tại khi cuốn
    sách nói ra nó**; đã đo: không có khoá thì `settings_hash` y như cũ.
 
-Thêm: `ebook_reader/cli.py` là file **CRLF** duy nhất trong số các file bị sửa, và bản vá ghi bằng
+Thêm: `abook/cli.py` là file **CRLF** duy nhất trong số các file bị sửa, và bản vá ghi bằng
 `newline="\n"` sẽ đổi cả 1.565 dòng của nó. Hàm `edit()` của bản vá đọc bằng `newline=""`, nhớ kiểu cũ,
 rồi ghi lại đúng kiểu ấy.
 
 Bộ test: 8 bài mới. Bốn bản vá trong `ORDER` áp liên tiếp lên một cây sạch rồi chạy cả bộ:
-**2.843 xanh, 2 đỏ**, và cả hai đỏ vì bản sao thiếu `Ebook Reader.vbs`/`.lnk` (đã kiểm trên bản sao
+**2.843 xanh, 2 đỏ**, và cả hai đỏ vì bản sao thiếu `ABook.vbs`/`.lnk` (đã kiểm trên bản sao
 **chưa vá**: đỏ y như thế).
 
 **Còn mở, câu của chủ sách:** cuốn 1 kể ngôi thứ nhất, nên tường thuật cũng là lời Samael — mà nó đọc

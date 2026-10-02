@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.webui import bookfile, music_plan, packages
-from ebook_reader.webui.bookfile import BookFile, BookFileError
+from abook.webui import bookfile, music_plan, packages
+from abook.webui.bookfile import BookFile, BookFileError
 from tests.test_a_project_can_be_renamed_or_deleted import _call, studio  # noqa: F401 - fixture dùng chung
 from tests.test_webui_listen_and_sync import _request, make_project
 
@@ -146,9 +146,9 @@ def test_the_music_credits_ride_along_with_the_cues_of_a_packaged_book(studio, t
 
 
 def test_the_phone_package_carries_the_music_already_on_this_machine(tmp_path: Path) -> None:
-    from ebook_reader.webui.library import Library, Preferences
-    from ebook_reader.webui.listening import Listening
-    from ebook_reader.webui.sync import Devices, SyncApp, manifest
+    from abook.webui.library import Library, Preferences
+    from abook.webui.listening import Listening
+    from abook.webui.sync import Devices, SyncApp, manifest
 
     project = make_project(tmp_path)
     listening = Listening(tmp_path / "listening.json")

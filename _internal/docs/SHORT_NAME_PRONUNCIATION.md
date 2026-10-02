@@ -46,7 +46,7 @@ thứ ba là để thứ đó lọt vào sách.
 ## Cách xử lý: một cái van cho người nghe
 
 ```bash
-ebook-reader-headless pronounce <project> --surface Deck --spoken Deck
+abook-headless pronounce <project> --surface Deck --spoken Deck
 ```
 
 Ghi một mục `locked=1`, `confidence=1.0`, `source='listener_choice'`. Khoá nên các pha sau

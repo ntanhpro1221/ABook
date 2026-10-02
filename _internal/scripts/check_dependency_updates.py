@@ -38,7 +38,7 @@ REQUEST_TIMEOUT_SECONDS = 30
 
 
 def _get_json(url: str, *, github: bool = False) -> Any:
-    headers = {"User-Agent": "ebook-reader-dependency-audit"}
+    headers = {"User-Agent": "abook-dependency-audit"}
     if github:
         headers["Accept"] = "application/vnd.github+json"
     request = urllib.request.Request(url, headers=headers)
@@ -193,7 +193,7 @@ def check_ollama() -> dict[str, Any]:
 # ---------------------------------------------------------------------------------------------
 TORCH_FAMILY = ("torch", "torchaudio", "torchvision")
 HF_PINNED_MODELS = {
-    # repo -> hằng số revision trong ebook_reader.runtime_contract (None = không ghim ở đó)
+    # repo -> hằng số revision trong abook.runtime_contract (None = không ghim ở đó)
     "pnnbao-ump/VieNeu-TTS-v3-Turbo": "VIENEU_CACHE_REVISION",
     "facebook/wav2vec2-base": "WAV2VEC2_CACHE_REVISION",
     "timm/tf_efficientnetv2_s.in21k_ft_in1k": "TIMM_CACHE_REVISION",
@@ -205,7 +205,7 @@ VRAM_BUDGET_GB = 7.5
 
 
 def _get_text(url: str, headers: dict[str, str] | None = None) -> str:
-    request = urllib.request.Request(url, headers={"User-Agent": "ebook-reader-dependency-audit", **(headers or {})})
+    request = urllib.request.Request(url, headers={"User-Agent": "abook-dependency-audit", **(headers or {})})
     with urllib.request.urlopen(request, timeout=REQUEST_TIMEOUT_SECONDS) as response:
         return response.read().decode("utf-8", "replace")
 
@@ -248,7 +248,7 @@ def check_hf_models(*, offline: bool) -> list[dict[str, Any]]:
         return []
     try:
         sys.path.insert(0, str(PYPROJECT.parent))
-        from ebook_reader import runtime_contract
+        from abook import runtime_contract
     except Exception:  # noqa: BLE001
         runtime_contract = None
     rows = []

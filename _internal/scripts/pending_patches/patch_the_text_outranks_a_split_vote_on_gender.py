@@ -54,7 +54,7 @@ def patch(path: Path, old: str, new: str) -> None:
 
 
 patch(
-    root / "ebook_reader" / "character_registry.py",
+    root / "abook" / "character_registry.py",
     '''    if ranked and (len(ranked) == 1 or ranked[0][1] > ranked[1][1]):
         return ranked[0][0], "model_majority"
     names = {str(row["speaker"]) for row in identity_rows}
@@ -80,7 +80,7 @@ test = root / "tests" / "test_the_text_outranks_a_split_vote_on_gender.py"
 test.write_text('''"""Model chia phiếu về giới tính thì văn bản quyết, model nhất trí thì model quyết."""
 from __future__ import annotations
 
-from ebook_reader.character_registry import resolve_gender
+from abook.character_registry import resolve_gender
 
 
 def row(speaker: str, gender: str, text: str = "") -> dict[str, str]:

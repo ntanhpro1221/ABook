@@ -8,9 +8,9 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-import ebook_reader.pipeline as pipeline_module
-from ebook_reader.asr_contract import ASR_LOCKED_NAME_ANCHOR_REVIEW
-from ebook_reader.asr import (
+import abook.pipeline as pipeline_module
+from abook.asr_contract import ASR_LOCKED_NAME_ANCHOR_REVIEW
+from abook.asr import (
     adjudicate_locked_name_anchors,
     ASR_INCONCLUSIVE,
     ASR_LOCKED_NAME_ANCHOR_MISMATCH,
@@ -20,10 +20,10 @@ from ebook_reader.asr import (
     LOCKED_NAME_ANCHOR_METRICS_KEY,
     LOCKED_NAME_ANCHOR_METRICS_VERSION,
 )
-from ebook_reader.asr_contract import COLLAPSED_SHORT_CONTEXT_MODE
-from ebook_reader.audio_io import AudioQualityError, ChapterQualityError, atomic_write_wav
-from ebook_reader.config import build_settings
-from ebook_reader.database import (
+from abook.asr_contract import COLLAPSED_SHORT_CONTEXT_MODE
+from abook.audio_io import AudioQualityError, ChapterQualityError, atomic_write_wav
+from abook.config import build_settings
+from abook.database import (
     GENERATION_STRATEGY_SPLIT,
     PRONUNCIATION_DELIVERY_LOCKED,
     PRONUNCIATION_DELIVERY_SOURCE,
@@ -32,26 +32,26 @@ from ebook_reader.database import (
     SEGMENT_ASR_DECODE_QUALITY_STAGE,
     SEGMENT_AUDIO_QUALITY_STAGE,
 )
-from ebook_reader.io_utils import sha256_file, stable_int
-from ebook_reader.models import ResourceLevel
-from ebook_reader.pipeline import (
+from abook.io_utils import sha256_file, stable_int
+from abook.models import ResourceLevel
+from abook.pipeline import (
     HIGH_QUALITY_ALLOWED_SEGMENT_WARNINGS,
     BookPipeline,
     CriticalResourceStop,
     _candidate_budget_exhausted_on_perceptual_review,
     unresolved_asr_is_fatal,
 )
-from ebook_reader.perceptual_contract import PERCEPTUAL_NATURALNESS_REVIEW_CODE
-from ebook_reader.project import create_or_open_project
-from ebook_reader.quality_policy import (
+from abook.perceptual_contract import PERCEPTUAL_NATURALNESS_REVIEW_CODE
+from abook.project import create_or_open_project
+from abook.quality_policy import (
     ANALYSIS_CASTING_STAGE,
     CHAPTER_QUALITY_STAGE,
     QUALITY_POLICY_VERSION,
     TEXT_SEGMENTATION_STAGE,
     quality_policy_hash,
 )
-from ebook_reader.resource_manager import ResourceSnapshot
-from ebook_reader.text_processing import (
+from abook.resource_manager import ResourceSnapshot
+from abook.text_processing import (
     CLAUSE_SPLIT_MAX_CHARS,
     CLAUSE_SPLIT_STRATEGY,
     SENTENCE_SPLIT_MAX_CHARS,
@@ -60,7 +60,7 @@ from ebook_reader.text_processing import (
     SPLIT_STRATEGY_FIELD,
     split_text_for_strategy,
 )
-from ebook_reader.tts_contract import (
+from abook.tts_contract import (
     HA_VOCALIZATION_DELIVERY_PROFILE,
     HA_VOCALIZATION_FINAL_SAMPLES_FIELD,
     HA_VOCALIZATION_MAX_NEW_FRAMES,
@@ -549,7 +549,7 @@ def _plausible_duration(text: str) -> float:
     "impossibly fast" line it had always been on the wrong side of. Deriving the duration
     keeps the stand-in inside physics.
     """
-    from ebook_reader.audio_io import PAUSE_GROUP_SECONDS, pause_group_count
+    from abook.audio_io import PAUSE_GROUP_SECONDS, pause_group_count
 
     speakable = sum(char.isalnum() for char in str(text))
     return speakable / 16.9 + PAUSE_GROUP_SECONDS * pause_group_count(str(text))
@@ -3729,7 +3729,7 @@ def test_mock_pipeline_completes_without_interactive_prompt(tmp_path: Path, monk
         return 0
 
     monkeypatch.setattr(
-        "ebook_reader.analysis.OllamaBookAnalyzer.reconcile_name_pronunciations",
+        "abook.analysis.OllamaBookAnalyzer.reconcile_name_pronunciations",
         fake_name_pronunciations,
     )
 
@@ -3742,8 +3742,8 @@ def test_mock_pipeline_completes_without_interactive_prompt(tmp_path: Path, monk
         )
         return SimpleNamespace(checksum="chapterhash", quality=quality)
 
-    monkeypatch.setattr("ebook_reader.pipeline.assemble_chapter_atomic_with_metrics", fake_chapter)
-    monkeypatch.setattr("ebook_reader.pipeline.verify_mp3", lambda path: (path.exists(), "ok"))
+    monkeypatch.setattr("abook.pipeline.assemble_chapter_atomic_with_metrics", fake_chapter)
+    monkeypatch.setattr("abook.pipeline.verify_mp3", lambda path: (path.exists(), "ok"))
     verify_calls = 0
     verify_calls_by_path: dict[str, int] = {}
     verified_texts: list[str] = []
@@ -3767,9 +3767,9 @@ def test_mock_pipeline_completes_without_interactive_prompt(tmp_path: Path, monk
             "repairable": True,
         }
 
-    monkeypatch.setattr("ebook_reader.pipeline.WhisperVerifier.verify", fake_verify)
+    monkeypatch.setattr("abook.pipeline.WhisperVerifier.verify", fake_verify)
     monkeypatch.setattr(
-        "ebook_reader.pipeline.WhisperVerifier.can_verify_repeated_short",
+        "abook.pipeline.WhisperVerifier.can_verify_repeated_short",
         lambda _verifier, _expected: False,
     )
 
@@ -4197,7 +4197,7 @@ def test_critical_ram_unloads_models_and_continues_after_recovery(
     pipeline.notifier = notifier
     snapshots = iter((resource_snapshot(0.8), resource_snapshot(8.0)))
     monkeypatch.setattr(pipeline.resources, "snapshot", lambda force=False: next(snapshots))
-    monkeypatch.setattr("ebook_reader.pipeline.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.pipeline.time.sleep", lambda _seconds: None)
 
     decision = pipeline._resource_gate("chapter 1 segment 75", keep_engine="vieneu")
 
@@ -4227,7 +4227,7 @@ def test_critical_ram_stops_only_when_recovery_is_insufficient(
     test_waiting_for_foreign_ram.py covers the waiting itself.
     """
     monkeypatch.setattr(
-        "ebook_reader.pipeline.CRITICAL_RAM_WAIT_TIMEOUT_SECONDS", 0.0
+        "abook.pipeline.CRITICAL_RAM_WAIT_TIMEOUT_SECONDS", 0.0
     )
     source = tmp_path / "001.txt"
     source.write_text("Nội dung kiểm tra RAM vẫn thiếu.", encoding="utf-8")
@@ -4246,7 +4246,7 @@ def test_critical_ram_stops_only_when_recovery_is_insufficient(
     pipeline.notifier = notifier
     snapshots = iter((resource_snapshot(0.8), resource_snapshot(0.7)))
     monkeypatch.setattr(pipeline.resources, "snapshot", lambda force=False: next(snapshots))
-    monkeypatch.setattr("ebook_reader.pipeline.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.pipeline.time.sleep", lambda _seconds: None)
 
     with pytest.raises(CriticalResourceStop, match="available RAM 0.7 GB"):
         pipeline._resource_gate("chapter 1 segment 75", keep_engine="vieneu")
@@ -4289,7 +4289,7 @@ def test_the_gate_carries_on_when_borrowed_memory_comes_back(
         (resource_snapshot(0.8), resource_snapshot(0.7), resource_snapshot(16.0))
     )
     monkeypatch.setattr(pipeline.resources, "snapshot", lambda force=False: next(snapshots))
-    monkeypatch.setattr("ebook_reader.pipeline.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("abook.pipeline.time.sleep", lambda _seconds: None)
 
     decision = pipeline._resource_gate("chapter 1 segment 75", keep_engine="vieneu")
 
@@ -4504,7 +4504,7 @@ def test_a_ceiling_hit_take_is_repairable_even_when_asr_cannot_judge_it() -> Non
     scripts/probe_frame_cap.py regenerated that exact line at five caps and four came back
     clean at 0.64-0.80s, ending naturally with no ceiling hit. A re-roll is the right cure.
     """
-    from ebook_reader.pipeline import BookPipeline
+    from abook.pipeline import BookPipeline
 
     runaway = {
         "warning_code": "TTS_GENERATION_CEILING_REACHED|ASR_TRANSCRIPT_TIMELINE_IMPOSSIBLE",
@@ -4526,7 +4526,7 @@ def test_a_ceiling_hit_take_is_repairable_even_when_asr_cannot_judge_it() -> Non
 
 def test_a_take_that_never_hit_the_ceiling_is_still_not_repaired() -> None:
     """The narrowing must not turn every blind ASR verdict into a re-record."""
-    from ebook_reader.pipeline import BookPipeline
+    from abook.pipeline import BookPipeline
 
     ordinary_short_line = {
         "warning_code": "ASR_UNVERIFIABLE_SHORT_TEXT",
@@ -4538,7 +4538,7 @@ def test_a_take_that_never_hit_the_ceiling_is_still_not_repaired() -> None:
 
 def test_the_ceiling_warning_alone_is_enough_when_metrics_are_missing() -> None:
     """A row whose signal did not survive still carries its warning code."""
-    from ebook_reader.pipeline import BookPipeline
+    from abook.pipeline import BookPipeline
 
     assert BookPipeline._segment_generation_hit_ceiling(
         {"warning_code": "TTS_GENERATION_CEILING_REACHED", "signal_json": None}

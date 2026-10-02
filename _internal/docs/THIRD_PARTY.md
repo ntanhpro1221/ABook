@@ -19,7 +19,7 @@ của chính thành phần ấy.
 - PySide6 / Qt (LGPLv3) - cửa sổ app máy tính.
 - FFmpeg / imageio-ffmpeg (LGPL hoặc GPL tuỳ bản build).
 - CMU Pronouncing Dictionary (`cmudict.dict`, dữ liệu từ CMU Sphinx; sử dụng và phân phối không hạn chế, yêu cầu ghi nhận
-  nguồn). Source đi kèm giữ nguyên `_internal/ebook_reader/assets/CMUDICT_LICENSE.txt`.
+  nguồn). Source đi kèm giữ nguyên `_internal/abook/assets/CMUDICT_LICENSE.txt`.
 
 ## App Windows đóng gói (bộ cài NSIS, `docs/PACKAGING.md`)
 

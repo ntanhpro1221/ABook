@@ -16,7 +16,7 @@ import unicodedata
 
 import pytest
 
-from ebook_reader.analysis import (
+from abook.analysis import (
     VIETNAMESE_SYLLABLE_ONSETS,
     _cmu_phrase_to_vietnamese,
     _cmu_pronunciation_to_vietnamese,
@@ -26,8 +26,8 @@ from ebook_reader.analysis import (
     _vowel_letter_groups,
     is_vietnamese_syllable,
 )
-from ebook_reader.analysis import _local_name_fallback
-from ebook_reader.text_processing import vietnamese_number_words
+from abook.analysis import _local_name_fallback
+from abook.text_processing import vietnamese_number_words
 
 CORPUS = (
     "Seed", "King", "Card", "Deck", "Epic", "Incredible", "Blade", "Gate", "Game",
@@ -614,7 +614,7 @@ def test_the_spelling_route_reads_a_phrase_one_word_at_a_time() -> None:
 def test_a_single_letter_is_a_grade_not_a_hundred() -> None:
     """This book ranks things "C \u00bb B \u00bb A \u00bb S", and C was being read as a Roman hundred -
     which then crashed the number words, because they stopped at ninety-nine."""
-    from ebook_reader.text_processing import roman_numeral_value
+    from abook.text_processing import roman_numeral_value
 
     assert roman_numeral_value("C") is None
     assert roman_numeral_value("D") is None
@@ -650,7 +650,7 @@ def test_the_dictionary_is_read_once() -> None:
     """Every lookup used to scan the file, and a word it does not have scanned all 134,000
     lines before saying so - 70ms, paid again for every name. Reading a name one word at a
     time made that most of a minute on a book with eight hundred invented names."""
-    from ebook_reader.analysis import _cmu_pronunciations, _cmudict_entries
+    from abook.analysis import _cmu_pronunciations, _cmudict_entries
 
     entries = _cmudict_entries()
     assert len(entries) > 100_000
@@ -666,7 +666,7 @@ def test_eo_is_a_rime_and_is_not_cut_in_half() -> None:
     """Every other e- pair was in the table; "eo" was not, so the letters fell through
     separately to "êô", which is no rime at all, and the splitter cut it. But eo is as
     Vietnamese as a rime gets - theo, kéo, mèo."""
-    from ebook_reader.analysis import _latin_name_vowel_reading, _split_illegal_rime
+    from abook.analysis import _latin_name_vowel_reading, _split_illegal_rime
 
     assert _latin_name_vowel_reading("eo") == "eo"
     assert _split_illegal_rime("theo") == ["theo"]
@@ -681,7 +681,7 @@ def test_a_compound_half_that_is_a_vietnamese_word_is_read_as_one() -> None:
     "The-ô-bên". The owner asked twice for "theo-bên"; so had this function's own docstring
     since it was written.
     """
-    from ebook_reader.analysis import _local_name_fallback
+    from abook.analysis import _local_name_fallback
 
     assert _local_name_fallback("Theosbane") == "Theo-bên"
 
@@ -689,14 +689,14 @@ def test_a_compound_half_that_is_a_vietnamese_word_is_read_as_one() -> None:
 def test_the_half_that_is_not_a_vietnamese_word_still_reads_from_its_phonemes() -> None:
     """Otherwise the rule would be "prefer spelling", which would wreck "bane" - it is not
     a Vietnamese syllable, and its phonemes are what make it "bên" rather than "ban"."""
-    from ebook_reader.analysis import _local_name_fallback
+    from abook.analysis import _local_name_fallback
 
     assert _local_name_fallback("Theosbane").endswith("-bên")
 
 
 def test_the_owners_full_name_reads_the_same_way_everywhere() -> None:
     """The defect this whole path exists for: one name read two ways in one book."""
-    from ebook_reader.analysis import _local_name_fallback
+    from abook.analysis import _local_name_fallback
 
     standalone = _local_name_fallback("Theosbane")
     in_phrase = _local_name_fallback("Arthur Kaizer Theosbane")

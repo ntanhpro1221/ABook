@@ -7,8 +7,8 @@ import sqlite3
 import time
 from pathlib import Path
 
-from ebook_reader import listener_overrides
-from ebook_reader.webui import store
+from abook import listener_overrides
+from abook.webui import store
 from tests.test_webui_listen_and_sync import make_project
 
 
@@ -68,9 +68,9 @@ def test_one_change_can_be_dropped_from_the_box_and_the_older_wish_comes_back(tm
     # Soát UX a6 01-10: muốn bỏ một mục trong "Áp dụng N thay đổi" thì phải đi tìm lại đúng thẻ ở ba tab khác nhau.
     import json
 
-    from ebook_reader.webui.actions import FakeRunner
-    from ebook_reader.webui.library import Preferences, book_id
-    from ebook_reader.webui.server import App, Server
+    from abook.webui.actions import FakeRunner
+    from abook.webui.library import Preferences, book_id
+    from abook.webui.server import App, Server
     from tests.test_webui_listen_and_sync import _request
 
     root = tmp_path / "thu_vien"
@@ -109,9 +109,9 @@ def test_a_whole_chapter_retake_is_one_change_and_drops_as_one(tmp_path: Path) -
     # Menu "…" của chương: "Thu lại cả chương" - mọi câu đã thu, MỘT lần bấm = một thay đổi trên nút và trong hộp.
     import json
 
-    from ebook_reader.webui.actions import FakeRunner
-    from ebook_reader.webui.library import Preferences, book_id
-    from ebook_reader.webui.server import App, Server
+    from abook.webui.actions import FakeRunner
+    from abook.webui.library import Preferences, book_id
+    from abook.webui.server import App, Server
     from tests.test_webui_listen_and_sync import _request
 
     root = tmp_path / "thu_vien"

@@ -39,14 +39,14 @@ def patch(path: Path, old: str, new: str) -> None:
 
 
 patch(
-    root / "ebook_reader" / "database.py",
+    root / "abook" / "database.py",
     '''CROWD_SPEAKER_LOCK_NOTE = "đã khóa người nói từ lời dẫn tập thể kế tiếp"''',
     '''CROWD_SPEAKER_LOCK_NOTE = "đã khóa người nói từ lời dẫn tập thể kế tiếp"
 IN_SENTENCE_QUOTE_NARRATOR_NOTE = "đã trả cụm trích giữa câu kể về người kể"''',
 )
 
 patch(
-    root / "ebook_reader" / "database.py",
+    root / "abook" / "database.py",
     '''    CHAPTER_HEADING_NOTE,
     CROWD_SPEAKER_LOCK_NOTE,
 )''',
@@ -57,7 +57,7 @@ patch(
 )
 
 patch(
-    root / "ebook_reader" / "database.py",
+    root / "abook" / "database.py",
     '''        PARAGRAPH_SPEAKER_LOCK_NOTE,
         CONTINUED_DIALOGUE_LOCK_NOTE,
     }
@@ -70,7 +70,7 @@ patch(
 )
 
 patch(
-    root / "ebook_reader" / "analysis.py",
+    root / "abook" / "analysis.py",
     '''    ADDRESSEE_REPAIR_NOTE,
     ANALYSIS_ACTIVE_PRIDE_CUE_FRAGMENT,''',
     '''    ADDRESSEE_REPAIR_NOTE,
@@ -79,7 +79,7 @@ patch(
 )
 
 patch(
-    root / "ebook_reader" / "analysis.py",
+    root / "abook" / "analysis.py",
     '''    CONTINUED_DIALOGUE_LOCK_NOTE: "continued_dialogue",
 }''',
     '''    CONTINUED_DIALOGUE_LOCK_NOTE: "continued_dialogue",
@@ -88,7 +88,7 @@ patch(
 )
 
 patch(
-    root / "ebook_reader" / "analysis.py",
+    root / "abook" / "analysis.py",
     '''    _repair_continued_dialogue_speakers(group, result)
     _canonicalize_analysis_notes(result)''',
     '''    _repair_continued_dialogue_speakers(group, result)
@@ -98,7 +98,7 @@ patch(
 )
 
 patch(
-    root / "ebook_reader" / "analysis.py",
+    root / "abook" / "analysis.py",
     '''def _repair_same_paragraph_speakers(''',
     '''def _repair_in_sentence_quote_speakers(
     group: list[Any],
@@ -128,8 +128,8 @@ test = root / "tests" / "test_a_term_quoted_mid_sentence_is_the_narrators_own_li
 test.write_text('''"""Cụm trích giữa câu kể trả về NGƯỜI KỂ; câu thoại thật thì không bị chạm."""
 from __future__ import annotations
 
-from ebook_reader.analysis import _repair_in_sentence_quote_speakers
-from ebook_reader.database import IN_SENTENCE_QUOTE_NARRATOR_NOTE
+from abook.analysis import _repair_in_sentence_quote_speakers
+from abook.database import IN_SENTENCE_QUOTE_NARRATOR_NOTE
 
 
 def row(stable_id: str, paragraph: int, text: str) -> dict[str, object]:

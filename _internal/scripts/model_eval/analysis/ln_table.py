@@ -26,7 +26,7 @@ except ImportError:
     def gold_person(entry):  # noqa: D103 - cây mã cũ chưa có
         return entry.speakers[0][0]
 
-from ebook_reader.character_registry import canonical_speaker_names  # noqa: E402
+from abook.character_registry import canonical_speaker_names  # noqa: E402
 
 EVAL = Path("D:/Novels/Audiobooks/_model_eval_v2")
 CHAPTERS = [("tcf", "two_childhood_friends", "042"), ("nise", "nise_seiken", "132"), ("hdst", "huong_dan_sinh_ton", "062"),

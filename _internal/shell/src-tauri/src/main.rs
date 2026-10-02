@@ -1,7 +1,7 @@
 //! Vỏ Tauri 2 của app Windows ABook (docs/PACKAGING.md).
 //!
 //! Vỏ chỉ làm những việc một trang web không tự làm được; mọi thứ khác là server giao diện Python
-//! (`ebook_reader.webui.host`) - đúng server của cửa sổ Qt. Vỏ chạy host làm tiến trình con, nói chuyện qua stdin/stdout
+//! (`abook.webui.host`) - đúng server của cửa sổ Qt. Vỏ chạy host làm tiến trình con, nói chuyện qua stdin/stdout
 //! (JSON từng dòng), mở cửa sổ ở địa chỉ host báo, mở hộp thoại Windows khi host nhờ, chuyển file `.abook` của lần mở
 //! thứ hai, tìm và cài bản mới có chữ ký khi người dùng bấm, và khi cửa sổ đóng thì dừng host. Trang web không được cấp
 //! IPC của Tauri: nó nằm ở `http://127.0.0.1`.
@@ -108,7 +108,7 @@ fn host_log() -> Stdio {
 
 /// Lệnh chạy host. Bản cài: Python nhúng trong thư mục tài nguyên (`scripts/build_windows_app.ps1` dựng; đường dẫn
 /// mã nằm trong `python*._pth`, PYTHONPATH bị bỏ qua). Bản dev:
-/// python của runtime cạnh mã nguồn, hoặc `ABOOK_HOST_PYTHON` (+ `ABOOK_HOST_APP` = thư mục chứa `ebook_reader`).
+/// python của runtime cạnh mã nguồn, hoặc `ABOOK_HOST_PYTHON` (+ `ABOOK_HOST_APP` = thư mục chứa `abook`).
 fn host_command(app: &AppHandle) -> Result<Command, String> {
     let (python, folder, bundled) = if let Some(python) = std::env::var_os("ABOOK_HOST_PYTHON") {
         let folder = std::env::var_os("ABOOK_HOST_APP")
@@ -141,7 +141,7 @@ fn host_command(app: &AppHandle) -> Result<Command, String> {
     let version = app.package_info().version.to_string();
     let mut command = Command::new(python);
     command
-        .args(["-m", "ebook_reader.webui.host", "--version", &version])
+        .args(["-m", "abook.webui.host", "--version", &version])
         .current_dir(folder)
         .env("PYTHONIOENCODING", "utf-8")
         .stdin(Stdio::piped())
@@ -158,7 +158,7 @@ fn host_command(app: &AppHandle) -> Result<Command, String> {
         command
             .arg("--studio")
             .arg(&studio)
-            .env("EBOOK_READER_RUNTIME", studio.join("runtime"));
+            .env("ABOOK_RUNTIME", studio.join("runtime"));
     }
     #[cfg(windows)]
     command.creation_flags(CREATE_NO_WINDOW);

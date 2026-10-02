@@ -7,7 +7,7 @@ weigh tract reach and ignore the shift entirely.
 
 from __future__ import annotations
 
-from ebook_reader.voice_catalog import (
+from abook.voice_catalog import (
     AGE_PITCH_RANK_BUCKET,
     EXCLUDED_PRESETS,
     LAST_RESORT_PRESETS,
@@ -49,7 +49,7 @@ def test_reach_still_outranks_shift() -> None:
     """A clean voice that sounds like the wrong person is not the cheaper option."""
     import inspect
 
-    from ebook_reader import character_registry
+    from abook import character_registry
 
     source = inspect.getsource(character_registry.PresetAllocator.choose)
     reach = source.index("preset_age_reach(name, age, gender)")

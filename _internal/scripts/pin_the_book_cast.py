@@ -68,7 +68,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from ebook_reader.database import ProjectDB  # noqa: E402
+from abook.database import ProjectDB  # noqa: E402
 from scripts.book_paths import SOURCE_DIR, TAG_PREFIX  # noqa: E402
 from scripts.voice_matches_the_person import BOOK, VERSIONS, fold_names, shipped_rows  # noqa: E402
 
@@ -213,7 +213,7 @@ def voice_contradicts_a_person(voice_key: str, gender: str | None, age: str | No
     không dành cho người đã ghim một tuổi khác. Hai bên phải nói cùng một câu - nếu script này chọn
     một giọng mà phân vai sẽ bỏ, thì lựa chọn ấy chỉ là một lần rút thăm lại được hoãn tới lượt chạy.
     """
-    from ebook_reader.character_registry import preset_gender_of_voice_key, voice_is_child_pitched
+    from abook.character_registry import preset_gender_of_voice_key, voice_is_child_pitched
 
     preset = preset_gender_of_voice_key(voice_key)
     wrong_side = bool(gender and preset and preset != gender and (age or "") != "child")
@@ -512,7 +512,7 @@ def pin(
         return 0
     database = ProjectDB(target / "project.sqlite3")
     pins = database.locked_character_voices()
-    from ebook_reader.character_registry import canonical_key
+    from abook.character_registry import canonical_key
 
     # Ghim giới tính/tuổi của NGƯỜI NGHE, cùng nguồn mà phân vai đọc. Giọng đa số chỉ được tính trên
     # những hàng không trái với chúng - xem `rows_the_listener_would_accept` cho phép đo CAMIL.
@@ -662,7 +662,7 @@ def main(argv: list[str]) -> int:
     if not (target / "project.sqlite3").is_file():
         _say(f"không phải project: {target}")
         return 2
-    from ebook_reader.background_runner import get_status
+    from abook.background_runner import get_status
 
     if get_status(target).running:
         _say(f"{target.name} đang chạy - ghim giọng lúc này là đổi dàn giọng giữa lượt. Dừng.")

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ebook_reader.webui import store
+from abook.webui import store
 from tests.test_listener_speakers import _book
 
 

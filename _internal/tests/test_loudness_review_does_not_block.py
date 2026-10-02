@@ -10,7 +10,7 @@ thấy được và vẫn chặn.
 """
 from __future__ import annotations
 
-from ebook_reader.audio_io import (
+from abook.audio_io import (
     CHAPTER_LOUDNESS_HARD_TOLERANCE_LU,
     CHAPTER_LOUDNESS_REVIEW_TOLERANCE_LU,
     chapter_review_flags_that_block,

@@ -5,7 +5,7 @@ nguyên âm lặp; bộ sinh chạy tới trần khung, ASR bịa ra câu chào 
 """
 from __future__ import annotations
 
-from ebook_reader.text_processing import normalize_vocalizations_for_tts
+from abook.text_processing import normalize_vocalizations_for_tts
 
 
 def test_an_accented_lead_vowel_joins_the_held_sound() -> None:

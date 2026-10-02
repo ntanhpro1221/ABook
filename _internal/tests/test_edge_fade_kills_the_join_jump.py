@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from ebook_reader.pipeline import (
+from abook.pipeline import (
     EDGE_FADE_MIN_AMPLITUDE,
     EDGE_FADE_SECONDS,
     edge_amplitude,

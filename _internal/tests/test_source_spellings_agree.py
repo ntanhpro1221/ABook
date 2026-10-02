@@ -25,7 +25,7 @@ CASES = [
 
 @pytest.mark.parametrize("names, counts", CASES)
 def test_the_two_copies_agree(names: list[str], counts: dict[str, int]) -> None:
-    registry = pytest.importorskip("ebook_reader.character_registry")
+    registry = pytest.importorskip("abook.character_registry")
     if not hasattr(registry, "fold_to_source_spelling"):
         pytest.skip("registry chưa mang bản chính - patch_the_book_decides_the_spelling chưa áp")
 

@@ -154,12 +154,12 @@ def log_event(kind: str, detail: str = "") -> None:
         handle.write(line + "\n")
 
 
-APP_SUPERVISOR = re.compile(r"ebook_reader\.background_runner\S*\s+supervise")
+APP_SUPERVISOR = re.compile(r"abook\.background_runner\S*\s+supervise")
 
 
 def suspend_servers(commands: list[str]) -> bool:
     """Treo cả máy chủ Ollama không. KHÔNG khi có sách của app đang chạy (supervisor của background_runner): app tự tạm
-    dừng khi rút sạc (ebook_reader/power_source.py) ở ranh giới lô, và worker của nó không nằm trong cây việc bị treo -
+    dừng khi rút sạc (abook/power_source.py) ở ranh giới lô, và worker của nó không nằm trong cây việc bị treo -
     treo máy chủ giữa một lô phân tích thì yêu cầu đang bay hết hạn chờ (90 giây), lô ấy chạy khác lượt liền mạch (soát QA
     29-09)."""
     return not any(APP_SUPERVISOR.search(command) for command in commands)

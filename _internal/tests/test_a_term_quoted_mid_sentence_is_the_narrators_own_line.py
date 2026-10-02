@@ -1,8 +1,8 @@
 """Cụm trích giữa câu kể trả về NGƯỜI KỂ; câu thoại thật thì không bị chạm."""
 from __future__ import annotations
 
-from ebook_reader.analysis import _repair_in_sentence_quote_speakers
-from ebook_reader.database import IN_SENTENCE_QUOTE_NARRATOR_NOTE
+from abook.analysis import _repair_in_sentence_quote_speakers
+from abook.database import IN_SENTENCE_QUOTE_NARRATOR_NOTE
 
 
 def row(stable_id: str, paragraph: int, text: str) -> dict[str, object]:

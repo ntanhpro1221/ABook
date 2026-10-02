@@ -13,9 +13,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ebook_reader.config import build_settings
-from ebook_reader.models import ChapterStatus, SegmentStatus
-from ebook_reader.project import create_or_open_project
+from abook.config import build_settings
+from abook.models import ChapterStatus, SegmentStatus
+from abook.project import create_or_open_project
 
 
 def _project(tmp_path: Path):
@@ -27,7 +27,7 @@ def _project(tmp_path: Path):
     paths, db, settings = create_or_open_project(
         [source], tmp_path / "out", build_settings(), "Retry"
     )
-    from ebook_reader.text_processing import load_and_segment_chapter
+    from abook.text_processing import load_and_segment_chapter
 
     chapter = db.list_chapters()[0]
     rows = load_and_segment_chapter(dict(chapter), max_chars=int(settings["tts"]["max_segment_chars"]))

@@ -1,7 +1,7 @@
 """Luật "tên đầu câu kể sau câu thoại là người nói" im khi tên là chữ Việt hoặc người ấy chưa nói (đáp án chuẩn 378, 407)."""
 from __future__ import annotations
 
-from ebook_reader.analysis import _leading_proper_name, _names_someone_who_had_not_spoken, _validate
+from abook.analysis import _leading_proper_name, _names_someone_who_had_not_spoken, _validate
 
 
 def _row(seq: int, kind_hint: str, text: str) -> dict:

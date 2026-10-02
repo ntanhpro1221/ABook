@@ -15,9 +15,9 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.webui import bluetooth
-from ebook_reader.webui.bluetooth import HEADER, BluetoothServer, LocalPort, Mux
-from ebook_reader.webui.sync import Devices, SyncApp, SyncServer
+from abook.webui import bluetooth
+from abook.webui.bluetooth import HEADER, BluetoothServer, LocalPort, Mux
+from abook.webui.sync import Devices, SyncApp, SyncServer
 from tests.test_webui_listen_and_sync import library  # noqa: F401 - fixture dùng chung
 
 BIG = bytes(range(256)) * 16 * 1024  # 4 MB, lớn hơn nhiều lần cửa sổ 256 KB

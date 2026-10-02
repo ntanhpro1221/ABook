@@ -7,7 +7,7 @@ worker nào chạy được. Xem docs/A_POOL_THAT_FORBIDS_ITSELF.md.
 """
 from __future__ import annotations
 
-from ebook_reader.tts_pool import workers_for_ram
+from abook.tts_pool import workers_for_ram
 
 WORKER_GB = 2.65
 FLOOR = 3.5

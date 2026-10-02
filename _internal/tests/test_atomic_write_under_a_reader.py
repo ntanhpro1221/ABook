@@ -23,8 +23,8 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader import io_utils
-from ebook_reader.io_utils import atomic_write_json
+from abook import io_utils
+from abook.io_utils import atomic_write_json
 
 
 def test_a_transient_permission_error_is_retried(tmp_path: Path, monkeypatch) -> None:

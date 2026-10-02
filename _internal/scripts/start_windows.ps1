@@ -36,7 +36,7 @@ $script:TranscriptStarted = $false
 Set-Location $ProjectRoot
 
 $env:PYTHONUTF8 = "1"
-$env:EBOOK_READER_RUNTIME = $RuntimeRoot
+$env:ABOOK_RUNTIME = $RuntimeRoot
 $env:HF_HOME = Join-Path $RuntimeRoot "models\huggingface"
 $env:HF_HUB_CACHE = Join-Path $env:HF_HOME "hub"
 $env:HF_HUB_DISABLE_XET = "1"
@@ -62,7 +62,7 @@ function Test-AppRuntime {
         # Windows PowerShell 5.1 có thể biến stderr của native process thành terminating error.
         # Thu traceback lại để launcher tự phân loại repair thay vì thoát trước khi đọc exit code.
         $ErrorActionPreference = "Continue"
-        $checkOutput = & $Python -c "import sys; from pathlib import Path; sys.path.insert(0, r'''$InternalRoot'''); from ebook_reader.runtime_contract import runtime_contract_errors; errors=runtime_contract_errors(Path(r'''$RuntimeRoot''')); assert not errors, '\n'.join(errors); import ebook_reader.gui" 2>&1
+        $checkOutput = & $Python -c "import sys; from pathlib import Path; sys.path.insert(0, r'''$InternalRoot'''); from abook.runtime_contract import runtime_contract_errors; errors=runtime_contract_errors(Path(r'''$RuntimeRoot''')); assert not errors, '\n'.join(errors); import abook.gui" 2>&1
         $checkExitCode = $LASTEXITCODE
     } finally {
         $ErrorActionPreference = $previousErrorAction
@@ -153,7 +153,7 @@ function Wait-AppWindow(
 function Start-App {
     Write-Host "Đang nạp giao diện..."
     Remove-Item -Force -LiteralPath $StartupReadyFile -ErrorAction SilentlyContinue
-    $env:EBOOK_READER_READY_FILE = $StartupReadyFile
+    $env:ABOOK_READY_FILE = $StartupReadyFile
     try {
         $arguments = "`"$AppScript`""
         if ($OpenFile) {
@@ -164,7 +164,7 @@ function Start-App {
         Write-Host "Cửa sổ ABook đã sẵn sàng." -ForegroundColor Green
     } finally {
         Remove-Item -Force -LiteralPath $StartupReadyFile -ErrorAction SilentlyContinue
-        Remove-Item Env:EBOOK_READER_READY_FILE -ErrorAction SilentlyContinue
+        Remove-Item Env:ABOOK_READY_FILE -ErrorAction SilentlyContinue
     }
 }
 

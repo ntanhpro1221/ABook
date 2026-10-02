@@ -30,7 +30,7 @@ from pathlib import Path
 
 CEILING = "generation_ceiling_hit"
 
-# Giữ bản sao ở đây thay vì import từ `ebook_reader.pipeline`: script này chạy trên project
+# Giữ bản sao ở đây thay vì import từ `abook.pipeline`: script này chạy trên project
 # **đã lưu trữ**, và danh sách lúc ấy mới là danh sách đúng để phán xử chúng. Import bản hiện
 # tại là lặng lẽ chấm điểm quá khứ bằng luật của hiện tại.
 UNINFORMATIVE_AT_TIME_OF_WRITING = frozenset(

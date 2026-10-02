@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.io_utils import ffmpeg_executable, run_hidden
+from abook.io_utils import ffmpeg_executable, run_hidden
 from scripts.assemble_book import (
     DEFAULT_ALBUM,
     copy_needed,

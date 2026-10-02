@@ -10,7 +10,7 @@ from pathlib import Path
 
 
 def test_no_docstring_holds_a_lone_surrogate() -> None:
-    root = Path(__file__).resolve().parents[1] / "ebook_reader"
+    root = Path(__file__).resolve().parents[1] / "abook"
     offenders = []
     for path in sorted(root.rglob("*.py")):
         tree = ast.parse(path.read_text(encoding="utf-8"))

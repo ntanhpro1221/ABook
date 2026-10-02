@@ -14,11 +14,11 @@ from typing import Any
 
 import pytest
 
-from ebook_reader.character_registry import assert_voice_stability, voice_profile_spec
-from ebook_reader.config import build_settings, settings_hash
-from ebook_reader.database import ProjectDB
-from ebook_reader.io_utils import sha256_file
-from ebook_reader.listener_overrides import (
+from abook.character_registry import assert_voice_stability, voice_profile_spec
+from abook.config import build_settings, settings_hash
+from abook.database import ProjectDB
+from abook.io_utils import sha256_file
+from abook.listener_overrides import (
     BAD_GENDER,
     NOT_A_CHARACTER,
     UNKNOWN_CHARACTER,
@@ -27,8 +27,8 @@ from ebook_reader.listener_overrides import (
     request_voice,
     voice_requests,
 )
-from ebook_reader.models import ProjectPaths
-from ebook_reader.voice_catalog import casting_presets, preset_by_name
+from abook.models import ProjectPaths
+from abook.voice_catalog import casting_presets, preset_by_name
 from tests.test_listener_overrides import _Pipeline
 
 SETTINGS = build_settings()
@@ -234,13 +234,13 @@ def test_the_inbox_offers_one_click_gender_and_voice_fixes_and_the_studio_record
     """Thẻ "Nam hay nữ" nói máy đang đọc bằng giọng gì và cái giá của từng lựa chọn; thẻ "Chung giọng" tách đúng giọng
     đang dùng chung. Studio ghi yêu cầu qua POST /voice (từ chối tại chỗ những gì dây chuyền sẽ từ chối), không bao giờ
     ghi SQLite; dây chuyền áp ở ranh giới và thẻ tự biến mất."""
-    from ebook_reader.webui.library import Preferences, book_id
-    from ebook_reader.webui.listening import Listening
-    from ebook_reader.webui.server import App, Server
-    from ebook_reader.webui.work_items import work_items
+    from abook.webui.library import Preferences, book_id
+    from abook.webui.listening import Listening
+    from abook.webui.server import App, Server
+    from abook.webui.work_items import work_items
     from tests.test_webui_listen_and_sync import FakeRunner, _request
 
-    from ebook_reader.config import save_settings
+    from abook.config import save_settings
 
     paths, db = _book(tmp_path)
     save_settings(paths.settings, SETTINGS)  # thư viện nhận ra sách nhờ file này
@@ -288,12 +288,12 @@ def test_the_inbox_offers_one_click_gender_and_voice_fixes_and_the_studio_record
 def test_the_voice_picker_lists_every_castable_voice_with_what_the_listener_needs_to_choose(tmp_path: Path) -> None:
     """Màn "Đổi giọng": mọi giọng dùng được (không giọng người kể), giọng đang dùng, giọng máy gợi ý cho mỗi giới, và ai
     đang dùng giọng ấy cùng mấy chương - để người nghe không vô tình chọn đúng giọng người cùng cảnh."""
-    from ebook_reader.config import save_settings
-    from ebook_reader.webui.library import Preferences, book_id
-    from ebook_reader.webui.listening import Listening
-    from ebook_reader.webui.remote_studio import permitted
-    from ebook_reader.webui.server import App, Server
-    from ebook_reader.webui.voice_picker import voice_choices
+    from abook.config import save_settings
+    from abook.webui.library import Preferences, book_id
+    from abook.webui.listening import Listening
+    from abook.webui.remote_studio import permitted
+    from abook.webui.server import App, Server
+    from abook.webui.voice_picker import voice_choices
     from tests.test_webui_listen_and_sync import FakeRunner, _request
 
     paths, _db = _book(tmp_path)
@@ -328,11 +328,11 @@ def test_the_voice_picker_lists_every_castable_voice_with_what_the_listener_need
 def test_the_voice_picker_shows_a_choice_still_waiting_and_can_drop_it_after_the_undo_toast(tmp_path: Path) -> None:
     """Soát UX 30-09: chọn giọng rồi lỡ 8 giây "Hoàn tác" thì mở lại hộp không thấy lựa chọn đang chờ, giọng đang dùng bị
     khoá "Đang dùng" - không còn đường bỏ lựa chọn. Hộp nay nói giọng nào đang chờ và bỏ được nó bằng đúng mốc của nó."""
-    from ebook_reader.config import save_settings
-    from ebook_reader.webui.library import Preferences, book_id
-    from ebook_reader.webui.listening import Listening
-    from ebook_reader.webui.server import App, Server
-    from ebook_reader.webui.voice_picker import voice_choices
+    from abook.config import save_settings
+    from abook.webui.library import Preferences, book_id
+    from abook.webui.listening import Listening
+    from abook.webui.server import App, Server
+    from abook.webui.voice_picker import voice_choices
     from tests.test_webui_listen_and_sync import FakeRunner, _request
 
     paths, _db = _book(tmp_path)

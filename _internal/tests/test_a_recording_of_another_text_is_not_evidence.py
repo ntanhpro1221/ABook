@@ -20,9 +20,9 @@ from pathlib import Path
 
 import numpy as np
 
-from ebook_reader.audio_io import atomic_write_wav
-from ebook_reader.pipeline import SPOKEN_TEXT_DRIFT_MESSAGE, BookPipeline
-from ebook_reader.recovery import recover_project
+from abook.audio_io import atomic_write_wav
+from abook.pipeline import SPOKEN_TEXT_DRIFT_MESSAGE, BookPipeline
+from abook.recovery import recover_project
 from tests.test_recovery import setup_db
 
 

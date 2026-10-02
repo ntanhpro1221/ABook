@@ -24,8 +24,8 @@ def main() -> int:
     from cryptography.hazmat.primitives import serialization
 
     sys.path.insert(0, str(ROOT / "_internal"))
-    from ebook_reader.webui.ed25519_verify import verify
-    from ebook_reader.webui.remote_config import PUBLIC_KEY
+    from abook.webui.ed25519_verify import verify
+    from abook.webui.remote_config import PUBLIC_KEY
 
     key = serialization.load_pem_private_key(args.key.read_bytes(), password=None)
     value = json.loads(CONFIG.read_text(encoding="utf-8"))

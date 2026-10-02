@@ -3,7 +3,7 @@ import type { Bookmark, Cast, ListenBook, ListeningRecord, ListeningSession, Lis
 import type { ListenSource } from "@/listen/source";
 import { api, mediaUrl } from "@/studio/api";
 
-/** Phía Nghe trên máy tính: đọc từ server cục bộ (ebook_reader/webui). */
+/** Phía Nghe trên máy tính: đọc từ server cục bộ (abook/webui). */
 export const httpSource: ListenSource = {
   kind: "desktop",
   library: () => api<ListenBook[]>("/api/listen/library"),

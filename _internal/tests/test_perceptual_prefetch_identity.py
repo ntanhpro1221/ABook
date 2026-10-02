@@ -11,8 +11,8 @@ from pathlib import Path
 import numpy as np
 import soundfile as sf
 
-from ebook_reader.io_utils import sha256_file
-from ebook_reader.perceptual_qa import (
+from abook.io_utils import sha256_file
+from abook.perceptual_qa import (
     PerceptualScorePool,
     _score_worker_job,
     _WORKER,
@@ -97,7 +97,7 @@ def test_a_worker_is_budgeted_for_what_it_actually_costs() -> None:
     7.3 GB of free memory - about 8.8 GB of workers - which is not slow, it is how a run
     dies: alpha.26 stopped at 357 of 948 segments on "available RAM 1.1 GB".
     """
-    from ebook_reader.perceptual_qa import PERCEPTUAL_WORKER_RAM_GB
+    from abook.perceptual_qa import PERCEPTUAL_WORKER_RAM_GB
 
     assert PERCEPTUAL_WORKER_RAM_GB >= 1.5, "below the smallest marginal cost measured"
 
@@ -115,7 +115,7 @@ def test_the_pool_never_sizes_itself_into_the_throttle_it_lives_under() -> None:
     The old rule reserved a hardcoded 2.0 GB against a 3.5 GB threshold, so it landed
     squarely inside the band.
     """
-    from ebook_reader.perceptual_qa import PERCEPTUAL_WORKER_RAM_GB
+    from abook.perceptual_qa import PERCEPTUAL_WORKER_RAM_GB
 
     settings = _pool_settings()
     settings["resources"] = {"min_free_ram_gb": 3.5}

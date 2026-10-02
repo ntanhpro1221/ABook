@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "audio_io.py"
+p = root / "abook" / "audio_io.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD_IMPORT = "from .io_utils import atomic_write_text, ffmpeg_executable, run_hidden, sha256_file"

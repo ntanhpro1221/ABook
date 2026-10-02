@@ -41,7 +41,7 @@ def write_atomic(path: Path, text: str) -> None:
 
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "audio_io.py"
+p = root / "abook" / "audio_io.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD = '''def spoken_syllables(text: str) -> int:
@@ -92,7 +92,7 @@ thay vì đếm cái giọng đọc phát ra.
 """
 from __future__ import annotations
 
-from ebook_reader.audio_io import (
+from abook.audio_io import (
     PACE_SYLLABLES_PER_SECOND_FLOOR,
     pace_is_outlier,
     spoken_speakable_chars,

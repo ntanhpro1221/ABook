@@ -42,7 +42,7 @@ def replace_exactly(path: Path, old: str, new: str, count: int) -> None:
 
 
 # ------------------------------------------------------------------ character_registry.py
-registry = root / "ebook_reader" / "character_registry.py"
+registry = root / "abook" / "character_registry.py"
 replace_once(registry, '''from typing import Any, Callable
 ''', '''from typing import Any, Callable, Iterable
 ''')
@@ -86,7 +86,7 @@ replace_once(registry, '''    allocator = PresetAllocator(
 ''')
 
 # ------------------------------------------------------------------ config.py
-config = root / "ebook_reader" / "config.py"
+config = root / "abook" / "config.py"
 replace_once(config, '''    if narrator_voice not in {preset["name"] for preset in narrator_presets(narrator_gender)}:
         raise ValueError("Unsupported narrator voice")
 ''', '''    if narrator_voice not in {preset["name"] for preset in narrator_presets(narrator_gender)}:
@@ -112,8 +112,8 @@ from __future__ import annotations
 
 import pytest
 
-from ebook_reader.character_registry import PresetAllocator
-from ebook_reader.config import build_settings, validate_settings
+from abook.character_registry import PresetAllocator
+from abook.config import build_settings, validate_settings
 
 # Ba giọng nam phân vai được hôm nay: Phạm Tuyên, Thanh Bình, Thái Sơn. Thanh Bình kể, Phạm Tuyên
 # từng kể - nên chỉ còn Thái Sơn cho nhân vật nam.

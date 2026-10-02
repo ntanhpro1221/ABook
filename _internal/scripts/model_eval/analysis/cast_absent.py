@@ -11,7 +11,7 @@ from pathlib import Path
 ABOOK = Path("D:/Novels/ABook/_internal")
 sys.path.insert(0, str(ABOOK))
 sys.path.insert(0, str(ABOOK / "scripts" / "model_eval"))
-from ebook_reader.character_registry import fold_for_source_search  # noqa: E402
+from abook.character_registry import fold_for_source_search  # noqa: E402
 from replay_all import BOOKS  # noqa: E402
 from score_models import GOLD_ROOT, load_gold  # noqa: E402
 

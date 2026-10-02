@@ -47,7 +47,7 @@ def _percentile(values: list[float], fraction: float) -> float:
 
 def main(argument: str) -> int:
     target = Path(argument)
-    log = target if target.is_file() else target / "logs" / "ebook_reader.log"
+    log = target if target.is_file() else target / "logs" / "abook.log"
     if not log.is_file():
         print(f"không tìm thấy log: {log}")
         return 2
@@ -115,7 +115,7 @@ def main(argument: str) -> int:
         # min(512 + segments * 192, num_ctx // 2, 6144), so halving the window can quietly
         # halve the answer, and the batch that finally needs the room may not have run yet.
         sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-        from ebook_reader.config import analysis_context_window, build_settings
+        from abook.config import analysis_context_window, build_settings
 
         analysis = build_settings("high_quality")["analysis"]
         entitled = analysis_context_window(analysis)

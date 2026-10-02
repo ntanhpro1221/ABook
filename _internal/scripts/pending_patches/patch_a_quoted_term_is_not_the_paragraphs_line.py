@@ -27,7 +27,7 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "analysis.py"
+p = root / "abook" / "analysis.py"
 s = io.open(p, encoding="utf-8").read()
 
 
@@ -106,7 +106,7 @@ test = root / "tests" / "test_a_quoted_term_is_not_the_paragraphs_line.py"
 test.write_text('''"""Khoá "một đoạn văn một người nói" không nuốt cụm trích nằm giữa một câu kể (đáp án chuẩn TMA 419:24, 26)."""
 from __future__ import annotations
 
-from ebook_reader.analysis import _validate
+from abook.analysis import _validate
 
 
 def _row(seq: int, kind_hint: str, text: str) -> dict:

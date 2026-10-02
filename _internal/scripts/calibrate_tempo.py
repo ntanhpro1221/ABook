@@ -33,10 +33,10 @@ import soundfile as sf
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from ebook_reader.audio_io import signal_metrics  # noqa: E402
-from ebook_reader.config import build_settings  # noqa: E402
-from ebook_reader.io_utils import ffmpeg_executable, run_hidden  # noqa: E402
-from ebook_reader.perceptual_qa import UTMOSNaturalnessVerifier  # noqa: E402
+from abook.audio_io import signal_metrics  # noqa: E402
+from abook.config import build_settings  # noqa: E402
+from abook.io_utils import ffmpeg_executable, run_hidden  # noqa: E402
+from abook.perceptual_qa import UTMOSNaturalnessVerifier  # noqa: E402
 
 
 DEFAULT_FACTORS = (0.88, 0.92, 0.94, 0.97, 1.03, 1.06, 1.10)

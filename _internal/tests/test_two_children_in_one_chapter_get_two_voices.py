@@ -6,7 +6,7 @@ chạm tới trẻ con, và `usage` đếm theo pool nên đứa có tên và NP
 """
 from __future__ import annotations
 
-from ebook_reader.character_registry import PresetAllocator
+from abook.character_registry import PresetAllocator
 
 
 def _key(choice) -> tuple[str, float, int]:

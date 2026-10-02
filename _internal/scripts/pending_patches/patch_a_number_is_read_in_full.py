@@ -50,7 +50,7 @@ def write_atomic(path: Path, text: str) -> None:
 root = Path(sys.argv[1])
 
 # ============================================================ text_processing.py
-p = root / "ebook_reader" / "text_processing.py"
+p = root / "abook" / "text_processing.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD = '''        if rest < 10:
@@ -109,7 +109,7 @@ write_atomic(p, s)
 print("da va", p)
 
 # ============================================================ audio_io.py
-p = root / "ebook_reader" / "audio_io.py"
+p = root / "abook" / "audio_io.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD = "from .text_processing import vietnamese_number_words\n"
@@ -228,7 +228,7 @@ OLD = """def test_a_number_too_large_to_spell_is_left_alone_rather_than_guessed(
     gap. Inventing a multiplier for them would be guessing, and guessing is what produced
     this bug in the first place.
     \"\"\"
-    from ebook_reader.audio_io import spoken_speakable_chars
+    from abook.audio_io import spoken_speakable_chars
 
     text = "Chương 1000 - 1000: xa quá"
 
@@ -240,7 +240,7 @@ NEW = """def test_a_number_from_a_thousand_up_is_counted_as_it_is_read() -> None
     speller now reaches below 10^12 by the grammar of counting, and a digit run from 1000 up
     counts the shorter of its two possible readings - never a made-up multiplier.
     \"\"\"
-    from ebook_reader.audio_io import spoken_speakable_chars
+    from abook.audio_io import spoken_speakable_chars
 
     text = "Chương 1000 - 1000: xa quá"
     spoken = "Chương một nghìn - một nghìn: xa quá"
@@ -262,14 +262,14 @@ from __future__ import annotations
 
 import pytest
 
-from ebook_reader.asr import NUMBER_FOLD_CEILING, normalize_transcript
-from ebook_reader.audio_io import (
+from abook.asr import NUMBER_FOLD_CEILING, normalize_transcript
+from abook.audio_io import (
     PACE_SYLLABLES_PER_SECOND_FLOOR,
     pace_is_outlier,
     spoken_speakable_chars,
     spoken_syllables,
 )
-from ebook_reader.text_processing import vietnamese_number_words
+from abook.text_processing import vietnamese_number_words
 
 NORMAL = (12.5, 24.5)
 LOST_LINE_106 = (

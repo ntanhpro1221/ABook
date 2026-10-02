@@ -10,11 +10,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ebook_reader.character_registry import (
+from abook.character_registry import (
     build_registry_and_cast,
     dropped_marks_variant_of,
 )
-from ebook_reader.config import build_settings
+from abook.config import build_settings
 
 from tests.test_character_casting import _identity_db
 

@@ -47,7 +47,7 @@ def write_atomic(path: Path, text: str) -> None:
 root = Path(sys.argv[1])
 
 # ============================================================ database.py
-p = root / "ebook_reader" / "database.py"
+p = root / "abook" / "database.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD = '''            if keeping_the_locked_reading:
@@ -132,7 +132,7 @@ write_atomic(p, s)
 print("da va", p)
 
 # ============================================================ pipeline.py
-p = root / "ebook_reader" / "pipeline.py"
+p = root / "abook" / "pipeline.py"
 t = io.open(p, encoding="utf-8").read()
 
 OLD = '''    def _promote_a_finished_take_over_a_cut_off_one(
@@ -199,8 +199,8 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.cli import _open_project
-from ebook_reader.database import (
+from abook.cli import _open_project
+from abook.database import (
     KEEP_LOCKED_READING_ACTION,
     SEGMENT_CANDIDATE_PROMOTED,
     ProjectDB,

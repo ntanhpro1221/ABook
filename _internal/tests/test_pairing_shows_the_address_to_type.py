@@ -5,7 +5,7 @@ không bao giờ tới được, lại trông như router), 100.73 là Tailscale
 """
 from __future__ import annotations
 
-import ebook_reader.webui.sync as sync
+import abook.webui.sync as sync
 
 
 class _Probe:

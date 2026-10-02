@@ -21,9 +21,9 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.analysis import _group_rows_to_analyse
-from ebook_reader.database import ProjectDB
-from ebook_reader.models import SegmentStatus
+from abook.analysis import _group_rows_to_analyse
+from abook.database import ProjectDB
+from abook.models import SegmentStatus
 
 
 class _Row(dict):
@@ -120,7 +120,7 @@ def _segment(db: ProjectDB) -> dict:
 
 
 def _update(db: ProjectDB, *, expected_status: str, speaker: str) -> None:
-    from ebook_reader.database import canonical_analysis_note
+    from abook.database import canonical_analysis_note
 
     row = _segment(db)
     data = {

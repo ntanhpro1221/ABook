@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from ebook_reader.text_processing import spoken_symbols_to_words
+from abook.text_processing import spoken_symbols_to_words
 
 
 @pytest.mark.parametrize(

@@ -19,7 +19,7 @@ import sys, pathlib, shutil, re
 
 SRC = pathlib.Path(r'D:\Novels\Tools\Text')
 SCRATCH = pathlib.Path(r'C:\Users\NGDtuanh\AppData\Local\Temp\claude'
-                       r'\D--Novels-Ebook-Reader\eba3e3d6-08dd-4ad9-8ba0-dc9003c54c4a'
+                       r'\D--Novels-ABook\eba3e3d6-08dd-4ad9-8ba0-dc9003c54c4a'
                        r'\scratchpad\quotefix_test')
 
 # (file, dong 1-based, kieu, moc)
@@ -85,7 +85,7 @@ else:
     target = SCRATCH
 
 sys.path.insert(0, r'D:\Novels\ABook\_internal')
-from ebook_reader.text_processing import segment_chapter_text
+from abook.text_processing import segment_chapter_text
 
 files = sorted(target.glob('*.txt'))
 bad, segs = [], 0

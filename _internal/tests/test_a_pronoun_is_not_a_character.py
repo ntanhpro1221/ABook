@@ -16,13 +16,13 @@ Hai đường sinh, và mỗi đường một chỗ sửa:
 """
 from __future__ import annotations
 
-from ebook_reader.analysis import (
+from abook.analysis import (
     ATTRIBUTION_SENTENCE_START_EXCLUSIONS,
     NAME_CANDIDATE_EXCLUSIONS,
     _leading_proper_name,
     _name_candidate_key,
 )
-from ebook_reader.character_registry import PRONOUNS, normalize_name
+from abook.character_registry import PRONOUNS, normalize_name
 
 
 def test_the_key_folds_the_marks_so_the_lists_can_match() -> None:

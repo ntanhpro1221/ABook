@@ -11,7 +11,7 @@ cùng chương 071 - vô hình với lần chọn kế tiếp.
 """
 from __future__ import annotations
 
-from ebook_reader.character_registry import PresetAllocator
+from abook.character_registry import PresetAllocator
 
 
 def _allocator() -> PresetAllocator:

@@ -154,7 +154,7 @@ interface Seed {
   analysisModelMissing?: string;
 }
 
-const DRAFT_KEY = "ebook-reader-new-book-draft";
+const DRAFT_KEY = "abook-new-book-draft";
 const EMPTY_DRAFT: Draft = {
   paths: [], excluded: [], title: "", titleEdited: false, narrator: "", firstPerson: "", profile: "high_quality", startNow: true,
 };

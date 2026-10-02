@@ -37,7 +37,7 @@ KEEP_BYTES = 400_000
 # mà thiếu cờ này thì Windows cấp cho một console MỚI, và Windows 11 mở một cửa sổ terminal để hiện nó: nó
 # nháy lên vài giây rồi tắt. Bản đầu thiếu cờ ở cả hai lệnh gọi dưới đây, nên từ 18-09 21:16 cứ mỗi nhịp
 # (30 phút) là một cửa sổ nháy - chủ sách hỏi 21-09 "thi thoảng tôi cứ thấy cái terminal nó pop ra rồi biến
-# mất". Cùng lỗi mà `ebook_reader/background_runner.py::_detached_creation_flags` đã ghi và sửa hôm 11-09.
+# mất". Cùng lỗi mà `abook/background_runner.py::_detached_creation_flags` đã ghi và sửa hôm 11-09.
 NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000) if os.name == "nt" else 0
 
 

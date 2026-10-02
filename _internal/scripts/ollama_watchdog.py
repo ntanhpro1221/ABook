@@ -45,7 +45,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from ebook_reader.background_runner import get_status  # noqa: E402
+from abook.background_runner import get_status  # noqa: E402
 
 try:
     from scripts.book_paths import VERSIONS as _BOOK_VERSIONS  # noqa: E402
@@ -113,7 +113,7 @@ def running_projects(root: Path) -> list[Path]:
 
 def seconds_since_progress(project: Path) -> float | None:
     """How long the worker's log has been silent, or None when there is no log yet."""
-    log = project / "logs" / "ebook_reader.log"
+    log = project / "logs" / "abook.log"
     try:
         return max(0.0, time.time() - log.stat().st_mtime)
     except OSError:

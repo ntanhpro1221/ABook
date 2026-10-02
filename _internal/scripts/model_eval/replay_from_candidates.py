@@ -37,7 +37,7 @@ ROOT = HERE.parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from ebook_reader.analysis import _validate  # noqa: E402
+from abook.analysis import _validate  # noqa: E402
 from scripts.model_eval.score_models import (  # noqa: E402
     GOLD_DIR,
     GOLD_ROOT,

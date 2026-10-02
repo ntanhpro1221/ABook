@@ -8,15 +8,15 @@ from types import ModuleType
 import numpy as np
 import pytest
 
-import ebook_reader.tts as tts_module
-from ebook_reader.audio_io import (
+import abook.tts as tts_module
+from abook.audio_io import (
     VIENEU_V3_CODEC_SAMPLES_PER_FRAME,
     AudioQualityError,
     segment_duration_policy,
 )
-from ebook_reader.config import build_settings
-from ebook_reader.database import ProjectDB
-from ebook_reader.tts import (
+from abook.config import build_settings
+from abook.database import ProjectDB
+from abook.tts import (
     CLARITY_MAX_TEMPERATURE,
     CLARITY_MAX_TOP_P,
     DELIVERY_CLARITY,
@@ -32,7 +32,7 @@ from ebook_reader.tts import (
     is_transient_tts_memory_error,
     vieneu_sampling_for_segment,
 )
-from ebook_reader.tts_contract import (
+from abook.tts_contract import (
     HA_VOCALIZATION_DELIVERY_PROFILE,
     HA_VOCALIZATION_FINAL_SAMPLES_FIELD,
     HA_VOCALIZATION_MAX_NEW_FRAMES,

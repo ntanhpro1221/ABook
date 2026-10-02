@@ -9,7 +9,7 @@ from pathlib import Path
 
 import psutil
 
-from ebook_reader.process_utils import terminate_process_tree
+from abook.process_utils import terminate_process_tree
 
 
 def status(ok: bool, label: str, detail: str = "") -> None:
@@ -139,7 +139,7 @@ def main() -> int:
     if failures:
         print(
             f"System check found {failures} blocking/missing item(s). "
-            "Run Ebook Reader or inspect output above."
+            "Run ABook or inspect output above."
         )
         return 1
     print("System check passed. Start with one 2,000–5,000 word chapter before a full book.")

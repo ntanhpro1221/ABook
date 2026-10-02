@@ -29,7 +29,7 @@ def _project(root: Path, name: str, *, running: bool, log_age: float | None) -> 
     (project / "logs").mkdir(parents=True, exist_ok=True)
     (project / "project.sqlite3").write_bytes(b"")
     if log_age is not None:
-        log = project / "logs" / "ebook_reader.log"
+        log = project / "logs" / "abook.log"
         log.write_text("x", encoding="utf-8")
         stamp = time.time() - log_age
         os.utime(log, (stamp, stamp))

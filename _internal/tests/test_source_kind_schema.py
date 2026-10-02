@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from ebook_reader.analysis import (
+from abook.analysis import (
     ALLOWED_KINDS,
     _allowed_kinds_by_id,
     _output_schema_for_batch,

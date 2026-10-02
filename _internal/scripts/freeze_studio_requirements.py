@@ -1,7 +1,7 @@
 """Sinh `shell/python/studio-requirements.txt`: thư viện của Studio trong app Windows đóng gói (docs/PACKAGING.md).
 
 Lấy từ runtime dev ĐANG CHẠY TỐT (`pip freeze` của runtime/.venv - chính môi trường đã làm ra các lô sách), bỏ những
-gì Studio đóng gói không cần: bản thân `ebook_reader` (mã đi theo bộ cài), PySide6 (giao diện là Tauri), công cụ dev.
+gì Studio đóng gói không cần: bản thân `abook` (mã đi theo bộ cài), PySide6 (giao diện là Tauri), công cụ dev.
 Studio cài danh sách này bằng `uv pip install --no-deps` rồi `uv pip check`: đúng từng phiên bản, không để bộ giải phụ
 thuộc chọn bản khác - môi trường nào làm ra sách thì cài lại đúng môi trường ấy.
 
@@ -35,7 +35,7 @@ def main() -> int:
     for line in frozen.splitlines():
         line = line.strip()
         if not line or line.startswith(("#", "-e ")) or "@ file:" in line:
-            continue  # bản thân ebook_reader (cài editable) và wheel cài tay từ thư mục tạm
+            continue  # bản thân abook (cài editable) và wheel cài tay từ thư mục tạm
         if _name(line) in EXCLUDED:
             continue
         kept.append(line)

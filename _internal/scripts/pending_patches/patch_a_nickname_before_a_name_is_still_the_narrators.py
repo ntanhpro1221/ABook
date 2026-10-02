@@ -25,7 +25,7 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "analysis.py"
+p = root / "abook" / "analysis.py"
 s = io.open(p, encoding="utf-8").read()
 
 old = '''    if before is not None and str(before["text"]).rstrip().endswith(IN_SENTENCE_QUOTE_OPEN_ENDINGS):
@@ -78,7 +78,7 @@ test = root / "tests" / "test_a_nickname_before_a_name_is_still_the_narrators.py
 test.write_text('''"""Cụm trích giữa câu kể vẫn của người kể khi câu kể sau mở bằng một cái tên (đáp án chuẩn TMA 449:65)."""
 from __future__ import annotations
 
-from ebook_reader.analysis import _validate
+from abook.analysis import _validate
 
 
 def _row(seq: int, kind_hint: str, text: str) -> dict:

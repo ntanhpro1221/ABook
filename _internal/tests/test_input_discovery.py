@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ebook_reader.io_utils import discover_txt_files
+from abook.io_utils import discover_txt_files
 
 
 def test_folder_import_is_direct_txt_only_and_natural_sorted(tmp_path) -> None:

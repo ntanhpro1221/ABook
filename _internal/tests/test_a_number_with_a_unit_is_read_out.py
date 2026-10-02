@@ -13,7 +13,7 @@ Bài `test_the_sentence_that_would_get_worse_does_not` giữ lý do phép nở p
 """
 from __future__ import annotations
 
-from ebook_reader.asr import (
+from abook.asr import (
     fold_number_units,
     has_unit_number,
     normalize_transcript,

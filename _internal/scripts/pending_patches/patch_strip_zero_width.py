@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "text_processing.py"
+p = root / "abook" / "text_processing.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD = '''    text = text.replace("\\u00a0", " ").replace("\\u200b", "")'''
@@ -51,7 +51,7 @@ hiệu lực - với một câu chữ y hệt.
 """
 from __future__ import annotations
 
-from ebook_reader.text_processing import normalize_text, segment_chapter_text
+from abook.text_processing import normalize_text, segment_chapter_text
 
 WATERMARK = "\\u200c\\u200d" * 26 + "\\u200c"
 CAU = "Vì tôi đã bất tỉnh gần hai ngày, Juliana đã"

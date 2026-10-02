@@ -1,7 +1,7 @@
 """Câu nội tâm giữ người đang nghĩ; chỉ câu nội tâm không ai nhận mới về người kể (7e4d74c + chỗ bị sót)."""
 from __future__ import annotations
 
-from ebook_reader.analysis import _validate
+from abook.analysis import _validate
 
 
 def _row(seq: int, kind_hint: str, text: str) -> dict:

@@ -15,7 +15,7 @@ Khác sản xuất đúng hai chỗ, đều không đổi một câu hỏi nào 
     của sách không nhìn vào `_model_eval`.
 
 Kết quả thời gian ghi vào `<project>/model_eval_run.json`; số liệu Ollama từng lượt ghi trong
-`logs/ebook_reader.log` như sản xuất, đọc bằng `scripts/ollama_usage.py`.
+`logs/abook.log` như sản xuất, đọc bằng `scripts/ollama_usage.py`.
 """
 from __future__ import annotations
 
@@ -31,16 +31,16 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from ebook_reader.analysis import OllamaBookAnalyzer  # noqa: E402
-from ebook_reader.database import ProjectDB  # noqa: E402
-from ebook_reader.models import BookStatus, ProjectPaths  # noqa: E402
-from ebook_reader.quality_policy import (  # noqa: E402
+from abook.analysis import OllamaBookAnalyzer  # noqa: E402
+from abook.database import ProjectDB  # noqa: E402
+from abook.models import BookStatus, ProjectPaths  # noqa: E402
+from abook.quality_policy import (  # noqa: E402
     QUALITY_POLICY_VERSION,
     build_quality_policy,
     quality_policy_hash,
 )
-from ebook_reader.text_processing import load_and_segment_chapter  # noqa: E402
-from ebook_reader.worker import ProjectRunLock, _configure_logging, _load_locked_settings  # noqa: E402
+from abook.text_processing import load_and_segment_chapter  # noqa: E402
+from abook.worker import ProjectRunLock, _configure_logging, _load_locked_settings  # noqa: E402
 
 
 def segment(db: ProjectDB, settings: dict, log) -> int:
@@ -136,7 +136,7 @@ def main(argv: list[str] | None = None) -> int:
     paths = ProjectPaths.build(args.project.resolve())
     lock = ProjectRunLock(paths.root / ".worker.lock")
     lock.acquire()
-    _configure_logging(paths.logs / "ebook_reader.log")
+    _configure_logging(paths.logs / "abook.log")
     db = ProjectDB(paths.db, synchronous="FULL")
     settings = _load_locked_settings(paths, db)
     policy = build_quality_policy(settings)

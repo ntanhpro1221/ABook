@@ -10,7 +10,7 @@ SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "check_system.py
 
 
 def _load_checker() -> ModuleType:
-    spec = importlib.util.spec_from_file_location("ebook_reader_check_system", SCRIPT_PATH)
+    spec = importlib.util.spec_from_file_location("abook_check_system", SCRIPT_PATH)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)

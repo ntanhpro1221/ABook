@@ -15,11 +15,11 @@ from tests.test_listener_speakers import _book
 
 @pytest.fixture
 def studio(tmp_path: Path):
-    from ebook_reader.config import build_settings, save_settings
-    from ebook_reader.webui.actions import FakeRunner
-    from ebook_reader.webui.library import Preferences
-    from ebook_reader.webui.listening import Listening
-    from ebook_reader.webui.server import App, Server
+    from abook.config import build_settings, save_settings
+    from abook.webui.actions import FakeRunner
+    from abook.webui.library import Preferences
+    from abook.webui.listening import Listening
+    from abook.webui.server import App, Server
 
     paths, _db = _book(tmp_path)
     save_settings(paths.settings, build_settings())
@@ -42,8 +42,8 @@ def _call(server, method: str, path: str, body: dict | None = None):
 
 
 def test_a_rename_shows_everywhere_and_leaves_the_pipeline_book_alone(studio) -> None:
-    from ebook_reader.webui.library import book_id
-    from ebook_reader.webui.remote_studio import permitted
+    from abook.webui.library import book_id
+    from abook.webui.remote_studio import permitted
 
     paths, _app, server, _runner = studio
     path = f"/api/books/{book_id(paths.root)}"
@@ -59,7 +59,7 @@ def test_a_rename_shows_everywhere_and_leaves_the_pipeline_book_alone(studio) ->
 
 
 def test_a_running_book_is_not_deleted(studio) -> None:
-    from ebook_reader.webui.library import book_id
+    from abook.webui.library import book_id
 
     paths, _app, server, runner = studio
     runner._running.add(str(paths.root.resolve()))
@@ -69,8 +69,8 @@ def test_a_running_book_is_not_deleted(studio) -> None:
 
 
 def test_a_deleted_project_goes_to_the_recycle_bin_and_leaves_the_list(studio, monkeypatch: pytest.MonkeyPatch) -> None:
-    from ebook_reader.webui import actions
-    from ebook_reader.webui.library import book_id
+    from abook.webui import actions
+    from abook.webui.library import book_id
 
     paths, app, server, _runner = studio
     moved: list[Path] = []
@@ -92,8 +92,8 @@ def test_a_deleted_project_goes_to_the_recycle_bin_and_leaves_the_list(studio, m
 
 
 def test_a_failed_move_says_what_to_close(studio, monkeypatch: pytest.MonkeyPatch) -> None:
-    from ebook_reader.webui import actions
-    from ebook_reader.webui.library import book_id
+    from abook.webui import actions
+    from abook.webui.library import book_id
 
     paths, _app, server, _runner = studio
 

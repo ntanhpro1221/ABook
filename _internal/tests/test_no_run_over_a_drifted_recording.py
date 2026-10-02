@@ -27,7 +27,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ["boundary.sh", "launch_batch.sh", "launch_repair.sh"]
 
 RESYNC = "scripts/resync_spoken_text.py"
-RUN = "ebook_reader.cli run"
+RUN = "abook.cli run"
 
 
 def _live_lines(name: str) -> list[str]:

@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "asr.py"
+p = root / "abook" / "asr.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD = '''    if not token:

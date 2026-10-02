@@ -14,10 +14,10 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from ebook_reader import cli
-from ebook_reader.config import build_settings, save_settings, settings_hash
-from ebook_reader.database import ProjectDB
-from ebook_reader.models import ProjectPaths
+from abook import cli
+from abook.config import build_settings, save_settings, settings_hash
+from abook.database import ProjectDB
+from abook.models import ProjectPaths
 
 
 def _project(tmp_path: Path) -> Path:
@@ -50,7 +50,7 @@ class _Status:
 def test_a_running_project_refuses_the_edit(tmp_path: Path, monkeypatch) -> None:
     root = _project(tmp_path)
     monkeypatch.setattr(
-        "ebook_reader.background_runner.get_status", lambda _p: _Status(True)
+        "abook.background_runner.get_status", lambda _p: _Status(True)
     )
 
     result = cli._command_pronounce(_args(root))
@@ -64,7 +64,7 @@ def test_a_stopped_project_still_accepts_it(tmp_path: Path, monkeypatch) -> None
     away, only move it to a moment when nothing is mid-verification."""
     root = _project(tmp_path)
     monkeypatch.setattr(
-        "ebook_reader.background_runner.get_status", lambda _p: _Status(False)
+        "abook.background_runner.get_status", lambda _p: _Status(False)
     )
 
     result = cli._command_pronounce(_args(root))
@@ -77,7 +77,7 @@ def test_the_refusal_names_the_way_out(tmp_path: Path, monkeypatch) -> None:
     """A refusal that does not say what to do instead is just an obstacle."""
     root = _project(tmp_path)
     monkeypatch.setattr(
-        "ebook_reader.background_runner.get_status", lambda _p: _Status(True)
+        "abook.background_runner.get_status", lambda _p: _Status(True)
     )
 
     error = str(cli._command_pronounce(_args(root)).error)

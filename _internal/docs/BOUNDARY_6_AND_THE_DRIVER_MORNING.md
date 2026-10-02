@@ -50,7 +50,7 @@ Xem `date` rồi chọn đúng một nhánh:
 - **Sau 08:45 hoặc lô chưa xong** → không bắt đầu gì mới. Chờ. Nếu 09:00 lô vẫn đang đọc thì dừng
   theo lệnh của chủ sách (*"dừng lô để cài driver"*):
 
-      runtime/.venv/Scripts/python.exe -m ebook_reader.cli stop
+      runtime/.venv/Scripts/python.exe -m abook.cli stop
       # và dừng cả tiến trình canh: taskkill theo pid của boundary.sh trong runtime/big_batch_chain.log
 
 ## Sau khi chủ sách cài xong driver
@@ -59,7 +59,7 @@ Kiểm trước khi chạy lại bất cứ thứ gì có GPU — driver mới c
 
     nvidia-smi
     runtime/.venv/Scripts/python.exe -c "import torch; print(torch.__version__, torch.cuda.is_available(), torch.cuda.get_device_name(0))"
-    runtime/.venv/Scripts/python.exe -m ebook_reader.cli doctor
+    runtime/.venv/Scripts/python.exe -m abook.cli doctor
 
 Cả ba xanh thì tiếp phần còn lại của ranh giới (hoặc cả ranh giới nếu nhánh trên chưa chạy), rồi thả
 lô 7:

@@ -24,8 +24,8 @@ sys.path.insert(0, str(HERE.parents[2]))
 
 from build_vi import NARRATOR_I  # noqa: E402
 
-from ebook_reader.io_utils import decode_text_bytes  # noqa: E402
-from ebook_reader.text_processing import segment_chapter_text  # noqa: E402
+from abook.io_utils import decode_text_bytes  # noqa: E402
+from abook.text_processing import segment_chapter_text  # noqa: E402
 
 UPPER = "A-ZÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ"
 WORD = rf"[{UPPER}][\w'-]*"

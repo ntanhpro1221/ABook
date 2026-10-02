@@ -1,7 +1,7 @@
 """Phép kiểm "nguồn có N chương, thiếu M" phải đọc nguồn của CUỐN ĐANG GHÉP.
 
 `assemble_book.py` ghim cứng `SOURCE = D:/Novels/Tools/Text` — thư mục nguồn **cũ** của cuốn 1,
-bị xoá ngày 13-09 và khôi phục sang `Ebook Reader/Text`. Hệ quả im lặng: `_expected()` đọc một
+bị xoá ngày 13-09 và khôi phục sang `ABook/Text`. Hệ quả im lặng: `_expected()` đọc một
 thư mục không tồn tại, trả về rỗng, nên phép kiểm thiếu-chương **chưa bao giờ chạy cho cuốn
 nào** — kể cả cuốn 2, vốn chưa từng dùng đường dẫn ấy.
 

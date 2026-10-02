@@ -1,7 +1,7 @@
 // Thumbnail của Explorer cho .abook / .abookproj: bìa sách (mục `cover.jpg` trong gói ZIP).
 //
 // Explorer đưa một IStream của file; ta chỉ đọc MỤC LỤC ZIP ở cuối file rồi đúng đoạn byte của bìa - không bao giờ
-// lướt qua hàng trăm MB audio. Gói của app luôn cất bìa KHÔNG NÉN (ebook_reader/webui/bookfile.py: _STORED), nên không
+// lướt qua hàng trăm MB audio. Gói của app luôn cất bìa KHÔNG NÉN (abook/webui/bookfile.py: _STORED), nên không
 // cần zlib: bìa nén (gói lạ) hay không có bìa thì trả lỗi và Explorer hiện icon loại file như thường.
 // Giải mã JPEG, thu nhỏ bằng WIC của Windows. Icon nhỏ ở góc thumbnail là TypeOverlay trong registry (trình cài đặt).
 //

@@ -51,7 +51,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import numpy as np  # noqa: E402
 import soundfile as sf  # noqa: E402
 
-from ebook_reader.audio_io import (  # noqa: E402
+from abook.audio_io import (  # noqa: E402
     MAX_PAUSE_FRACTION,
     MIN_SPEECH_SECONDS,
     PAUSE_GROUP_SECONDS,

@@ -9,8 +9,8 @@ The voice read it exactly right. Whisper writes digits where the book writes wor
 folding table stopped at ten, so "mười hai" against "12" scored as an error. The same gap
 turned "thứ Mười" into a near miss and "bốn mươi mốt" into a full one.
 """
-from ebook_reader.asr import NUMBER_FOLD_CEILING, normalize_transcript
-from ebook_reader.text_processing import vietnamese_number_words
+from abook.asr import NUMBER_FOLD_CEILING, normalize_transcript
+from abook.text_processing import vietnamese_number_words
 
 
 def _same(left: str, right: str) -> bool:

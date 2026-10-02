@@ -9,8 +9,8 @@ import json
 import sqlite3
 from pathlib import Path
 
-from ebook_reader.webui.address_cues import address_doubts, tokens
-from ebook_reader.webui.work_items import work_items
+from abook.webui.address_cues import address_doubts, tokens
+from abook.webui.work_items import work_items
 
 TOMOBE = [
     "“Tôi hiểu rồi, thưa tiểu thư. Tôi sẽ đi ngay.”",
@@ -117,7 +117,7 @@ def split_rows(narrated: bool = True) -> tuple[list[dict], callable]:
 
 
 def test_one_name_speaking_two_ways_to_the_narrator_is_two_people() -> None:
-    from ebook_reader.webui.address_cues import split_doubts
+    from abook.webui.address_cues import split_doubts
 
     rows, narrator_of = split_rows()
     found = split_doubts(rows, narrator_of, lambda speaker: speaker != "NARRATOR")
@@ -131,7 +131,7 @@ def test_one_name_speaking_two_ways_to_the_narrator_is_two_people() -> None:
 def test_no_split_card_in_a_third_person_chapter_or_without_the_other_chapters() -> None:
     """Ngôi ba: một người đổi xưng hô theo vai vế (Chu Du "ta… ngươi" với tướng dưới, "tôi… ngài" với chúa). Không có câu
     ở chương khác thì không biết nhóm nào là người thật - không hỏi."""
-    from ebook_reader.webui.address_cues import split_doubts
+    from abook.webui.address_cues import split_doubts
 
     rows, narrator_of = split_rows(narrated=False)
     assert split_doubts(rows, narrator_of, lambda speaker: True) == []
@@ -141,7 +141,7 @@ def test_no_split_card_in_a_third_person_chapter_or_without_the_other_chapters()
 
 def test_calling_mother_and_friend_differently_is_one_person() -> None:
     """Kakeru gọi mẹ "con", gọi bạn "cậu… mình": một người, hai người nghe - không tự xưng nào mâu thuẫn."""
-    from ebook_reader.webui.address_cues import split_doubts
+    from abook.webui.address_cues import split_doubts
 
     friends = ["“Cậu đi đâu thế, mình chờ mãi.”", "“Mình với cậu đi ăn nhé.”", "“Cậu biết mình mà.”"]
     mother = ["“Con về rồi đây.”", "“Con không sao đâu.”"]
@@ -153,7 +153,7 @@ def test_calling_mother_and_friend_differently_is_one_person() -> None:
 def test_saying_we_is_not_a_second_self() -> None:
     """01-10, Nageki 79: Franz hét "tôi… cậu" với Krai và hai lần nói "chúng ta" - một người. Tự xưng số nhiều không phải
     cách tự xưng của người khác."""
-    from ebook_reader.webui.address_cues import split_doubts
+    from abook.webui.address_cues import split_doubts
 
     shouting = ["“Tôi nói rồi, tôi không phải bạn cậu!”", "“Cậu nghĩ tôi cần cậu trấn an chắc?”", "“Cậu mưu tính gì, tôi hỏi!”"]
     we = ["“Chúng ta đi thôi.”", "“Chúng ta không còn thời gian.”"]
@@ -200,7 +200,7 @@ def test_the_inbox_asks_once_for_the_whole_odd_group(tmp_path: Path) -> None:
 def test_the_narrators_own_label_is_left_to_the_line_by_line_card() -> None:
     """Hai giọng dưới nhãn NGƯỜI KỂ: thẻ xưng hô từng câu lo (address_doubts); hồ sơ người kể ở chương khác nhiễm lời người
     khác mà model gộp vào, nên chọn nhóm lạ theo nó dễ ngược (HDST 130, 29-09)."""
-    from ebook_reader.webui.address_cues import split_doubts
+    from abook.webui.address_cues import split_doubts
 
     rows, _ = split_rows()
     as_narrator = [{**row, "speaker": "KRAI"} for row in rows]

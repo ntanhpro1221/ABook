@@ -19,7 +19,7 @@ already assumed, so the two agree.
 """
 from __future__ import annotations
 
-from ebook_reader.text_processing import spoken_symbols_to_words
+from abook.text_processing import spoken_symbols_to_words
 
 
 def test_guillemet_becomes_a_pause() -> None:

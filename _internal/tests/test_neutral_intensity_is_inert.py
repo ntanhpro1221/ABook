@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from ebook_reader.expression import prosody_targets
+from abook.expression import prosody_targets
 
 
 @pytest.mark.parametrize("intensity", [0, 1, 2, 3])

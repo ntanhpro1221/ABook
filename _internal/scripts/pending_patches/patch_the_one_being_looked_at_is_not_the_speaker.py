@@ -30,7 +30,7 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "analysis.py"
+p = root / "abook" / "analysis.py"
 s = io.open(p, encoding="utf-8").read()
 
 
@@ -81,7 +81,7 @@ test = root / "tests" / "test_the_one_being_looked_at_is_not_the_speaker.py"
 test.write_text('''"""Luật "tên ngay trước 'nói:' là người nói" im khi tên là người NGHE hay mẩu tên bị cắt (cuốn 2: ~29 câu)."""
 from __future__ import annotations
 
-from ebook_reader.analysis import _trailing_speech_attribution
+from abook.analysis import _trailing_speech_attribution
 
 
 def test_the_listener_named_before_the_speech_verb_is_not_the_speaker() -> None:

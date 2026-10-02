@@ -44,14 +44,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from ebook_reader.audio_io import (  # noqa: E402
+from abook.audio_io import (  # noqa: E402
     MAX_PAUSE_FRACTION,
     MIN_SPEECH_SECONDS,
     PAUSE_GROUP_SECONDS,
     pause_group_count,
 )
-from ebook_reader.database import ProjectDB  # noqa: E402
-from ebook_reader.tts import TTSCoordinator  # noqa: E402
+from abook.database import ProjectDB  # noqa: E402
+from abook.tts import TTSCoordinator  # noqa: E402
 
 
 def _pace(spoken: str, duration: float) -> float | None:

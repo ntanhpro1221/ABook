@@ -11,7 +11,7 @@ import re
 import sys
 from pathlib import Path
 
-from ebook_reader.database import ProjectDB
+from abook.database import ProjectDB
 
 SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
 sys.path.insert(0, str(SCRIPTS))

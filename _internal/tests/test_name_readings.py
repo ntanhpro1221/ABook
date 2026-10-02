@@ -6,9 +6,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from ebook_reader.database import LISTENER_PRONUNCIATION_SOURCE
-from ebook_reader.listener_overrides import request_pronunciation
-from ebook_reader.webui.name_readings import name_readings
+from abook.database import LISTENER_PRONUNCIATION_SOURCE
+from abook.listener_overrides import request_pronunciation
+from abook.webui.name_readings import name_readings
 from tests.test_listener_speakers import _book
 
 
@@ -67,9 +67,9 @@ def test_keeping_the_machines_reading_is_a_decision_not_a_change(tmp_path: Path)
 
 
 def test_the_studio_serves_the_list(tmp_path: Path) -> None:
-    from ebook_reader.webui.library import Preferences, book_id
-    from ebook_reader.webui.listening import Listening
-    from ebook_reader.webui.server import App, Server
+    from abook.webui.library import Preferences, book_id
+    from abook.webui.listening import Listening
+    from abook.webui.server import App, Server
     from tests.test_webui_listen_and_sync import FakeRunner, _request
 
     paths, db = _book(tmp_path)

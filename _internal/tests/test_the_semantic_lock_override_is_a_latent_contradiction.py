@@ -20,7 +20,7 @@
 
 Và cả 7 lần ấy model đã trả đúng cảm xúc bị khoá, nên điều kiện thứ hai (`corrected["emotion"]` nằm ngoài
 `allowed_emotions`) chưa từng xảy ra. Phơi nhiễm 7/53.899 = 0,013%, dồn vào một cảnh, và cần thêm một sự
-trùng hợp nữa mới nổ. Sửa `ebook_reader/database.py` - một trong ba cổng của file bị khoá chặt nhất dự án -
+trùng hợp nữa mới nổ. Sửa `abook/database.py` - một trong ba cổng của file bị khoá chặt nhất dự án -
 cho con số ấy là đổi sai chiều. Ghim bằng test, để lại cho ca tái hiện thật.
 
 Kiểm bằng cách soi mã nguồn, cùng lối với `tests/test_critic_accept_coherence.py`, vì cả hai nhánh nằm sâu
@@ -30,8 +30,8 @@ from __future__ import annotations
 
 import inspect
 
-from ebook_reader.analysis import _adjudicate_director_critic
-from ebook_reader.database import host_derived_accept
+from abook.analysis import _adjudicate_director_critic
+from abook.database import host_derived_accept
 
 
 def _critic_source() -> str:

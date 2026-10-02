@@ -303,9 +303,9 @@ deltas=['intensity:0->1'] expected=['intensity:0->1']
 Đoạn ấy là **tiêu đề chương 461**, và `deltas == expected` - nên cái sai không phải delta mà là **cờ**.
 
 **Một cái bẫy đọc log, ghi lại để không ai mất thời gian như tôi.** Ngay TRƯỚC dòng critical là
-`Đã dừng Ollama ẩn do Ebook Reader tự khởi động.` Tôi đọc nó thành nguyên nhân ("app tắt Ollama, lô mất LLM") và
+`Đã dừng Ollama ẩn do ABook tự khởi động.` Tôi đọc nó thành nguyên nhân ("app tắt Ollama, lô mất LLM") và
 báo sai một lần. Nó là dấu vết **dọn dẹp của chính dây chuyền** trên đường thoát: câu ấy nghĩa là *"đã dừng con
-Ollama ẩn mà Ebook Reader đã tự khởi động"*. Thứ tự trong log không phải quan hệ nhân quả.
+Ollama ẩn mà ABook đã tự khởi động"*. Thứ tự trong log không phải quan hệ nhân quả.
 
 **Mâu thuẫn, đọc từ hai phía.** `analysis.py` ghi vào sổ `"accept": host_derived_agreement` - tức cờ accept LƯU LẠI
 chính là sự đồng ý của host. Nhưng nhánh tiêu đề ghi `structural_override` với `"raw_accept": False` **cứng**, cho

@@ -9,19 +9,19 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.analysis import _analysis_context_hash, _original_neighbor_context
-from ebook_reader.asr import (
+from abook.analysis import _analysis_context_hash, _original_neighbor_context
+from abook.asr import (
     ASR_LOCKED_NAME_ANCHOR_MISMATCH,
     LOCKED_NAME_ANCHOR_METRICS_KEY,
     LOCKED_NAME_ANCHOR_METRICS_VERSION,
 )
-from ebook_reader.asr_contract import (
+from abook.asr_contract import (
     COLLAPSED_SHORT_CONTEXT_EFFECTIVE_REPEAT_COUNT,
     COLLAPSED_SHORT_CONTEXT_MODE,
     SHORT_CONTEXT_REPEAT_COUNT,
 )
-from ebook_reader import database as database_module
-from ebook_reader.database import (
+from abook import database as database_module
+from abook.database import (
     ANALYSIS_CHAPTER_HEADING_CONFIDENCE,
     ANALYSIS_CHAPTER_HEADING_DELIVERY,
     ANALYSIS_CONTEXT_POLICY_NARRATION_BEFORE_NEXT_PARAGRAPH_THOUGHT,
@@ -67,24 +67,24 @@ from ebook_reader.database import (
     canonical_analysis_critic_per_id_source_anchor_map,
     canonical_analysis_critic_source_anchors,
 )
-from ebook_reader.io_utils import sha256_file, sha256_text, stable_int
-from ebook_reader.models import CONTEXTUAL_ENGLISH_NAME_PRONUNCIATION_SOURCE
-from ebook_reader.text_processing import (
+from abook.io_utils import sha256_file, sha256_text, stable_int
+from abook.models import CONTEXTUAL_ENGLISH_NAME_PRONUNCIATION_SOURCE
+from abook.text_processing import (
     SENTENCE_SPLIT_MAX_CHARS,
     SENTENCE_SPLIT_STRATEGY,
     SPLIT_MAX_CHARS_FIELD,
     SPLIT_STRATEGY_FIELD,
 )
-from ebook_reader.perceptual_contract import (
+from abook.perceptual_contract import (
     NATURALNESS_IMPROVEMENT_REQUIREMENT,
     NATURALNESS_REPAIR_ACTION,
     PERCEPTUAL_NATURALNESS_REVIEW_CODE,
     PERCEPTUAL_SHORT_AUDIO_REASON,
     STANDARD_CANDIDATE_GATE_REQUIREMENT,
 )
-from ebook_reader.config import build_settings
-from ebook_reader.tts import TTSCoordinator
-from ebook_reader.tts_contract import (
+from abook.config import build_settings
+from abook.tts import TTSCoordinator
+from abook.tts_contract import (
     HA_VOCALIZATION_DELIVERY_PROFILE,
     HA_VOCALIZATION_FINAL_SAMPLES_FIELD,
     HA_VOCALIZATION_MAX_NEW_FRAMES,

@@ -6,7 +6,7 @@ có 2,25 chữ mỗi từ so với trung vị kho 3,33; theo âm tiết nó đ�
 """
 from __future__ import annotations
 
-from ebook_reader.audio_io import (
+from abook.audio_io import (
     PACE_SYLLABLES_PER_SECOND_FLOOR,
     pace_is_outlier,
     spoken_speakable_chars,

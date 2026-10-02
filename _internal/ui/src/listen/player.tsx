@@ -165,7 +165,7 @@ const SAVE_EVERY_MS = 10_000;
 const JUMP_SECONDS = 30;
 const HISTORY = 5;
 /** Sự kiện mở ô ghi chú cho một dấu trang (từ toast "Thêm dấu trang"). */
-export const EDIT_BOOKMARK_EVENT = "ebook-reader:edit-bookmark";
+export const EDIT_BOOKMARK_EVENT = "abook:edit-bookmark";
 
 function availableAfter(queue: ListenChapter[], chapterId: number, step: 1 | -1): ListenChapter | undefined {
   const index = queue.findIndex((chapter) => chapter.id === chapterId);
@@ -1087,7 +1087,7 @@ export function PlayerProvider({
         case "b":
         case "B":
           event.preventDefault();
-          window.dispatchEvent(new CustomEvent("ebook-reader:bookmark"));
+          window.dispatchEvent(new CustomEvent("abook:bookmark"));
           break;
         case "m":
         case "M":

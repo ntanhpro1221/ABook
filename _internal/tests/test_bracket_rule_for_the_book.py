@@ -1,14 +1,14 @@
-"""Quy ước 『』 của cả cuốn (ebook_reader/bracket_rule.py): lỗi 『』 phần lớn là quy ước riêng từng cuốn (TCF: lời kể; Yamiyo:
+"""Quy ước 『』 của cả cuốn (abook/bracket_rule.py): lỗi 『』 phần lớn là quy ước riêng từng cuốn (TCF: lời kể; Yamiyo:
 linh thể - đo 29-09) - người nghe chọn một lần ở thẻ 『』 với phạm vi "Cả cuốn", mọi câu 『』 của dự án về người ấy, và các
 phần sau của cuốn tự áp trước bước phân vai."""
 from __future__ import annotations
 
 from pathlib import Path
 
-from ebook_reader import bracket_rule, continuation
-from ebook_reader.character_registry import _canonicalize_named_speakers
-from ebook_reader.database import ProjectDB
-from ebook_reader.webui.work_items import work_items
+from abook import bracket_rule, continuation
+from abook.character_registry import _canonicalize_named_speakers
+from abook.database import ProjectDB
+from abook.webui.work_items import work_items
 from tests.test_work_items import make_bracket_book
 
 
@@ -80,11 +80,11 @@ def test_the_next_part_inherits_the_rule(tmp_path: Path) -> None:
 
 
 def test_choosing_the_whole_book_in_the_inbox_records_the_rule(tmp_path: Path) -> None:
-    from ebook_reader.config import build_settings, save_settings
-    from ebook_reader.webui.actions import FakeRunner
-    from ebook_reader.webui.library import Preferences, book_id
-    from ebook_reader.webui.listening import Listening
-    from ebook_reader.webui.server import App, Server
+    from abook.config import build_settings, save_settings
+    from abook.webui.actions import FakeRunner
+    from abook.webui.library import Preferences, book_id
+    from abook.webui.listening import Listening
+    from abook.webui.server import App, Server
     from tests.test_a_project_can_be_renamed_or_deleted import _call
     from tests.test_listener_speakers import _book
 

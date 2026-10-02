@@ -30,7 +30,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from ebook_reader.database import ProjectDB  # noqa: E402
+from abook.database import ProjectDB  # noqa: E402
 
 from scripts.port_listener_acceptances import _say_safely  # noqa: E402
 from scripts.name_marks import fold_dropped_marks  # noqa: E402
@@ -126,7 +126,7 @@ def read_casting(source: Path) -> list[tuple[str, str, dict]]:
         connection.close()
     from collections import Counter
 
-    from ebook_reader.analysis import is_local_speaker
+    from abook.analysis import is_local_speaker
 
     # Hai cách viết của cùng một tên - THU LÃNH / THỦ LÃNH, NGUOI TRA LOI / NGƯỜI TRẢ LỜI - phải
     # về một tên TRƯỚC khi lọc va chạm, nếu không hai "người" ấy sẽ được coi là hai giọng hợp lệ
@@ -368,7 +368,7 @@ def read_known_characters(source: Path) -> list[dict]:
         return []
     finally:
         connection.close()
-    from ebook_reader.analysis import RESERVED_SPEAKERS, is_local_speaker
+    from abook.analysis import RESERVED_SPEAKERS, is_local_speaker
 
     # Gộp cách viết rơi dấu trước khi mang "đã biết" đi, cùng lý do như ở `read_casting`: đây
     # chính là danh sách `_known_summary` đưa vào prompt lô sau, tức chỗ cái sai tự củng cố.
@@ -454,7 +454,7 @@ def port(source: Path, target: Path, *, dry_run: bool = False) -> tuple[int, int
         if (target / "project.sqlite3").is_file()
         else set()
     )
-    from ebook_reader.character_registry import canonical_key
+    from abook.character_registry import canonical_key
 
     pinned = skipped = 0
     for name, voice_key, profile in casting:

@@ -9,7 +9,7 @@
 Yêu cầu bắt buộc:
 
 - workflow GUI mở shortcut **ABook** ở root hoặc trong Start Menu (tên cũ "Ebook Reader" tự gỡ khi khởi động); workflow tự động dùng
-  `python -m ebook_reader.cli`/entrypoint `ebook-reader-headless` và tuyệt đối không điều khiển cửa sổ;
+  `python -m abook.cli`/entrypoint `abook-headless` và tuyệt đối không điều khiển cửa sổ;
 - không hỏi người dùng trong lúc job đang chạy;
 - settings, model, voice mapping, seed và threshold bị khóa theo book;
 - dependency trực tiếp được pin; setup nâng cấp phải tái sử dụng runtime, không `uv venv --clear`;
@@ -396,7 +396,7 @@ _internal/
 ├── ABook.vbs          # launcher thật; shortcut root/Start Menu trỏ trực tiếp vào đây
 ├── AGENTS.md          # tài liệu dành cho agent/lập trình viên
 ├── app.py
-├── ebook_reader/      # Python package chính
+├── abook/      # Python package chính
 ├── tests/
 ├── scripts/            # setup và system check
 ├── docs/               # test report và third-party notices
@@ -405,7 +405,7 @@ _internal/
 └── LICENSE
 ```
 
-Tên kỹ thuật duy nhất là `ebook_reader`; tên hiển thị là `ABook` (tên cũ `Ebook Reader` chỉ còn ở dấu log Ollama trong file khoá chất lượng và các định danh lưu trữ như QSettings, AppUserModelID; thư mục dự án là `D:\Novels\ABook`, repo `ntanhpro1221/ABook` từ 28-09). Không đưa file kỹ thuật mới ra root nếu không thật sự cần cho người dùng.
+Tên kỹ thuật duy nhất là `abook`; tên hiển thị là `ABook` (tên cũ `Ebook Reader` chỉ còn trong mã chuyển dữ liệu/lối tắt cũ (`webui/library.py`, `install_windows_shortcut.ps1`); thư mục dự án là `D:\Novels\ABook`, repo `ntanhpro1221/ABook` từ 28-09). Không đưa file kỹ thuật mới ra root nếu không thật sự cần cho người dùng.
 
 Module chính:
 
@@ -467,7 +467,7 @@ cli create --profile high_quality  →  scripts/run_book_job.py <project-root>
   Không bao giờ mở Ollama desktop app. Nếu thấy icon Ollama ở system tray thì đó là do một lệnh `ollama`
   thủ công (ví dụ `ollama list`) đã kích hoạt stub tự khởi động `ollama app.exe --hide --fast-startup` của Windows,
   chứ không phải app này. Bằng chứng phân biệt: server do app khởi động luôn ghi dòng
-  `--- Ebook Reader started Ollama at <thời điểm> ---` vào `runtime/logs/ollama-server.log`.
+  `--- ABook started Ollama at <thời điểm> ---` vào `runtime/logs/ollama-server.log`.
 - Đổi bất kỳ file nào trong `QUALITY_IMPLEMENTATION_FILES` sẽ đổi quality-policy hash và làm project đang dở
   không resume được. Đây là hành vi đúng: sửa code xong thì tạo project sạch, đừng cố resume.
 - Iterate bằng project nhỏ (2–3 chapter) để có audio nhanh, chỉ mở rộng phạm vi khi chất lượng đã ổn.
@@ -510,7 +510,7 @@ là bước kiểm read-only chạy mỗi phiên bản (nó không bao giờ t�
   - Muốn lấy một commit khi đang có job chạy: **`git cherry-pick` commit đó**, đừng merge nhánh.
   - Hoặc tốt hơn: đừng để việc chạm file bị khoá nằm chung nhánh với việc merge được.
   - Cách kiểm tra sau khi merge, mất một giây:
-    `git diff --stat <trước> HEAD -- _internal/ebook_reader/` — phải rỗng.
+    `git diff --stat <trước> HEAD -- _internal/abook/` — phải rỗng.
   - Cách kiểm chứng job vẫn còn nguyên vẹn: tính lại `quality_policy_hash(build_quality_policy(settings))`
     từ `settings_json` của project và so với `generation_policy_hash` trong bảng `segments`.
 - Chỉ nâng khi có lý do. `numpy`, `librosa`, `transformers`, `huggingface-hub`, `torch*` và `timm` ràng buộc
@@ -539,7 +539,7 @@ phải thêm vào đúng module (`audio_io.py` cho tín hiệu chương, `pipeli
 Từ thư mục `_internal`:
 
 ```text
-python -m compileall -q ebook_reader tests scripts
+python -m compileall -q abook tests scripts
 python -m pytest
 ```
 

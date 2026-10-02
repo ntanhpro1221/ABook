@@ -991,7 +991,7 @@ Hai điều rút ra:
    là mục tiêu chứ không phải điều kiện cứng.
 2. **Đo tỉ lệ siết theo chế độ vẫn chưa đủ.** Muốn biết một lần chạy mất bao nhiêu vì áp lực
    tài nguyên thì phải cộng cả thời gian chờ:
-   `grep -ao "sau [0-9]*s chờ" logs/ebook_reader.log`.
+   `grep -ao "sau [0-9]*s chờ" logs/abook.log`.
 
 **Đừng so tổng thời lượng alpha.50 với alpha.48.** Một bản nhường máy 23% thời gian *và* đứng
 chờ RAM thêm 19 phút thì dài hơn là đương nhiên; muốn so tốc độ thì so phần `maximum`.

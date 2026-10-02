@@ -25,7 +25,7 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "character_registry.py"
+p = root / "abook" / "character_registry.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD_COMMENT = '''        # Chọn bậc mà người đang giữ nó có ÍT chương chung nhất với người sắp được cast; hoà
@@ -71,8 +71,8 @@ nên người nghe không lẫn, nhưng sáu người một giọng là mười 
 """
 from __future__ import annotations
 
-from ebook_reader.character_registry import PresetAllocator
-from ebook_reader.voice_catalog import formant_variants_for_preset
+from abook.character_registry import PresetAllocator
+from abook.voice_catalog import formant_variants_for_preset
 
 
 def _fill_every_male_preset(allocator: PresetAllocator) -> list[str]:

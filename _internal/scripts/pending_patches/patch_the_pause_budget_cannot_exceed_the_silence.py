@@ -62,7 +62,7 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "audio_io.py"
+p = root / "abook" / "audio_io.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD_CONSTANTS = '''MAX_PAUSE_FRACTION = 0.60
@@ -248,8 +248,8 @@ import inspect
 import numpy as np
 import pytest
 
-from ebook_reader import audio_io
-from ebook_reader.audio_io import (
+from abook import audio_io
+from abook.audio_io import (
     MAX_PAUSE_FRACTION,
     MIN_SPEECH_SECONDS,
     PAUSE_GROUP_SECONDS,

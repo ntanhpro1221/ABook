@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 import scripts.keep_the_chapter_cast as keeper
-from ebook_reader.database import ProjectDB
+from abook.database import ProjectDB
 
 
 def _rows(*items: tuple[str, str, str, int]) -> list[dict]:
@@ -156,7 +156,7 @@ def test_launch_repair_keeps_the_chapter_cast_before_it_runs_a_recast() -> None:
 
     call = text.index("scripts/keep_the_chapter_cast.py")
     assert text.index('scripts/pin_the_book_cast.py "$PROJECT" --apply') < call
-    assert call < text.index('-m ebook_reader.cli run "$PROJECT"')
+    assert call < text.index('-m abook.cli run "$PROJECT"')
     guard = text.rfind('if [ -n "$EXPLICIT" ] && [ "$AS_REPAIR" != 1 ]; then', 0, call)
     block_end = text.index("\n  fi\n", guard)
     assert guard != -1 and block_end > call, "chỉ chạy ở chế độ đúc lại"

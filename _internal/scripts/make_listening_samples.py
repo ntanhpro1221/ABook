@@ -27,9 +27,9 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from ebook_reader.config import build_settings  # noqa: E402
-from ebook_reader.io_utils import slugify  # noqa: E402
-from ebook_reader.tts import VieNeuEngine  # noqa: E402
+from abook.config import build_settings  # noqa: E402
+from abook.io_utils import slugify  # noqa: E402
+from abook.tts import VieNeuEngine  # noqa: E402
 from scripts.audition_presets import book_sentences, sdk_version  # noqa: E402
 from scripts.compare_voice_regions import PROBE_SENTENCES, SEED  # noqa: E402
 

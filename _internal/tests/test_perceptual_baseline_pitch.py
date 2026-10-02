@@ -12,9 +12,9 @@ from __future__ import annotations
 
 import inspect
 
-from ebook_reader.database import ProjectDB
-from ebook_reader.perceptual_contract import PERCEPTUAL_BASELINE_PITCH_SEMITONES
-from ebook_reader.pipeline import BookPipeline
+from abook.database import ProjectDB
+from abook.perceptual_contract import PERCEPTUAL_BASELINE_PITCH_SEMITONES
+from abook.pipeline import BookPipeline
 
 
 def test_the_baseline_register_is_the_untouched_preview() -> None:
@@ -39,7 +39,7 @@ def test_the_validator_checks_the_policy_not_the_take() -> None:
 
 def test_a_register_shifted_voice_is_not_excluded_by_construction() -> None:
     """The narration register for one preset is -4; the check must survive that."""
-    from ebook_reader.voice_catalog import REGISTER_FORMANT_TRADE_PER_SEMITONE
+    from abook.voice_catalog import REGISTER_FORMANT_TRADE_PER_SEMITONE
 
     assert REGISTER_FORMANT_TRADE_PER_SEMITONE > 0, "register shifts are a real feature"
     assert PERCEPTUAL_BASELINE_PITCH_SEMITONES == 0, (

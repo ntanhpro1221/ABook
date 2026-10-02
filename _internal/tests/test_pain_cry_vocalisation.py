@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from ebook_reader.text_processing import (
+from abook.text_processing import (
     is_vocalization_only,
     normalize_vocalizations_for_tts,
 )

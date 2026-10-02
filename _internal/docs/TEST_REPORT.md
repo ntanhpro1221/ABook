@@ -215,7 +215,7 @@ bằng interpreter `.venv` rõ ràng; sau toàn bộ run/probe `OpenWith.exe` gi
   `runtime/background` để không xóa state/handshake atomic đang được ghi;
 - settings bất biến và cấm prompt/silent replacement;
 - import nhiều TXT hoặc folder, natural sort và loại file không hợp lệ;
-- one-click startup qua shortcut `Ebook Reader` ở root/Start Menu trỏ thẳng tới `_internal\Ebook Reader.vbs`;
+- one-click startup qua shortcut `ABook` ở root/Start Menu trỏ thẳng tới `_internal\ABook.vbs`;
   console hiện ngay, báo tiến độ và tự đóng theo ready marker do GUI ghi sau khi render;
   output được append vào `runtime/logs/startup.log`, boundary ngoài cùng bắt lỗi và giữ console mở cho tới khi
   người dùng chủ động đóng; runtime cũ thiếu dependency chỉ chạy repair Python, không cài lại PyTorch/model;

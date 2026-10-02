@@ -15,7 +15,7 @@ and unknown ten times, while the words in the segments naming him run 47 male to
 """
 from __future__ import annotations
 
-from ebook_reader.character_registry import (
+from abook.character_registry import (
     GENDER_EVIDENCE_MINIMUM_HITS,
     _gendered_word_evidence,
     resolve_gender,

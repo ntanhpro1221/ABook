@@ -18,7 +18,7 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.database import (
+from abook.database import (
     PROMOTE_FINISHED_TAKE_ACTION,
     SEGMENT_CANDIDATE_PROMOTED,
     ProjectDB,
@@ -123,5 +123,5 @@ def test_the_keep_locked_reading_exemption_is_unchanged(tmp_path: Path) -> None:
 
 
 def test_the_action_name_is_the_one_the_pipeline_writes() -> None:
-    source = (ROOT / "ebook_reader" / "pipeline.py").read_text(encoding="utf-8")
+    source = (ROOT / "abook" / "pipeline.py").read_text(encoding="utf-8")
     assert re.search(r'repair_action="' + re.escape(PROMOTE_FINISHED_TAKE_ACTION) + '"', source)

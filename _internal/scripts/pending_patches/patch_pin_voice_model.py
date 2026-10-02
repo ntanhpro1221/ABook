@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "runtime_contract.py"
+p = root / "abook" / "runtime_contract.py"
 s = io.open(p, encoding="utf-8").read()
 
 # ------------------------------------------------------------------ hằng số
@@ -163,7 +163,7 @@ io.open(p, "w", encoding="utf-8").write(s)
 print(f"da va {p}")
 
 # ------------------------------------------------------------------ cli
-p = root / "ebook_reader" / "cli.py"
+p = root / "abook" / "cli.py"
 s = io.open(p, encoding="utf-8").read()
 OLD = '''    checks["model:utmosv2_cache"] = perceptual_cache_check(runtime_root)'''
 NEW = '''    checks["model:utmosv2_cache"] = perceptual_cache_check(runtime_root)
@@ -195,7 +195,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from ebook_reader import runtime_contract as contract
+from abook import runtime_contract as contract
 
 
 def test_the_voice_model_revision_is_pinned() -> None:

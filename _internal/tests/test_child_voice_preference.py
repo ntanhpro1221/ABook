@@ -9,8 +9,8 @@ from __future__ import annotations
 
 import inspect
 
-from ebook_reader import character_registry
-from ebook_reader.voice_catalog import (
+from abook import character_registry
+from abook.voice_catalog import (
     CHILD_VOICE_PREFERENCE,
     age_pitch_semitones,
     LAST_RESORT_PRESETS,

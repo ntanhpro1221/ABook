@@ -23,7 +23,7 @@ cd _internal
 ./.venv/Scripts/python.exe scripts/plan_batches.py "D:/Novels/Tools/Text" --hours 8
 
 # 2. Tạo project.
-./runtime/.venv/Scripts/python.exe -m ebook_reader.cli create \
+./runtime/.venv/Scripts/python.exe -m abook.cli create \
   --output-root "D:/Novels/Audiobooks/_versions/<tag>" \
   --source-dir "D:/Novels/Tools/Text" \
   --range "000..009" --width 3 --title "<tag>" --profile high_quality --json
@@ -34,7 +34,7 @@ cd _internal
 ./runtime/.venv/Scripts/python.exe scripts/seed_listener_acceptances.py "<project trước>" "<project-root>"
 
 # 4. Chạy.
-./runtime/.venv/Scripts/python.exe -m ebook_reader.cli run "<project-root>" --json
+./runtime/.venv/Scripts/python.exe -m abook.cli run "<project-root>" --json
 ```
 
 **Ba bước gieo, ba thứ khác nhau, bỏ cái nào cũng mất một thứ cụ thể:**
@@ -109,7 +109,7 @@ Nó **từ chối** một project đã phân tích segment: đổi cách đọc 
 dưới audio đã có — đúng cái bẫy khiến `pronounce` phải từ chối chạy giữa chừng.
 
 > **Nguồn phải là `D:/Novels/Tools/Text`, không phải `Text_Tmp`.** Chỗ này từng ghi sai và
-> đã tốn một lần chạy: alpha.46 lần đầu được tạo từ `Ebook Reader/Text_Tmp`, ra 995 segment
+> đã tốn một lần chạy: alpha.46 lần đầu được tạo từ `ABook/Text_Tmp`, ra 995 segment
 > thay vì 948, tức **một quyển sách khác** - không so được với alpha.43/44/45 nên toàn bộ ý
 > nghĩa của việc đánh số phiên bản mất sạch.
 >
@@ -694,7 +694,7 @@ rule đang sở hữu một lock. Có test khoá riêng điều này lại.
 Sửa file trong `QUALITY_IMPLEMENTATION_FILES` giữa lúc đang chạy làm đổi `quality_policy_hash`, khiến
 candidate đã commit thành lạc hậu. Trước đây điều đó buộc phải chọn: hoặc chạy, hoặc sửa.
 
-Nay có `D:\Novels\Ebook Reader_dev` (git worktree, branch `dev/alpha13`), dùng chung venv và model qua
+Nay có `D:\Novels\ABook_dev` (git worktree, branch `dev/alpha13`), dùng chung venv và model qua
 junction `_internal/runtime`. Cây chính chạy, cây dev sửa.
 
 **Giới hạn cần biết:** junction dùng chung venv, nên **nâng cấp package thì cả hai cây cùng đổi**.

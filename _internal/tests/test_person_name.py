@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from ebook_reader.webui.humanize import person_name
+from abook.webui.humanize import person_name
 
 
 @pytest.mark.parametrize(
@@ -28,7 +28,7 @@ def test_person_name_reads_like_a_name(raw: str, shown: str) -> None:
 
 def test_a_reading_is_shown_with_each_word_capitalised() -> None:
     """Cách đọc để HIỆN (tiêu đề thẻ cách đọc): "rên-ta-rô" - phần tên máy tách từ "Nam rên-ta-rô" - thành "Rên-ta-rô"."""
-    from ebook_reader.webui.humanize import shown_reading
+    from abook.webui.humanize import shown_reading
 
     assert shown_reading("rên-ta-rô") == "Rên-ta-rô"
     assert shown_reading("Mu-rờ-lốc Cu-ô toa hain") == "Mu-rờ-lốc Cu-ô Toa Hain"

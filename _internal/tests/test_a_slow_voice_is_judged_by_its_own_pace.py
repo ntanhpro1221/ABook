@@ -7,16 +7,16 @@ import re
 import numpy as np
 import pytest
 
-from ebook_reader import audio_io, pipeline, tts, voice_catalog
-from ebook_reader.audio_io import (
+from abook import audio_io, pipeline, tts, voice_catalog
+from abook.audio_io import (
     VOICE_PRESET_FIELD,
     pace_is_outlier,
     segment_duration_policy,
     spoken_speakable_chars,
     validate_audio_array,
 )
-from ebook_reader.config import build_settings
-from ebook_reader.voice_catalog import (
+from abook.config import build_settings
+from abook.voice_catalog import (
     PACE_SCALE_MAX,
     PACE_SCALE_MIN,
     PRESET_PACE_SCALE,

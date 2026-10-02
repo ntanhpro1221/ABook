@@ -16,10 +16,10 @@ import json
 import sqlite3
 from pathlib import Path
 
-from ebook_reader.cli import _open_project
-from ebook_reader.config import build_settings
-from ebook_reader.database import ProjectDB
-from ebook_reader.project import create_or_open_project
+from abook.cli import _open_project
+from abook.config import build_settings
+from abook.database import ProjectDB
+from abook.project import create_or_open_project
 
 ROOT = Path(__file__).resolve().parents[1]
 _spec = importlib.util.spec_from_file_location(

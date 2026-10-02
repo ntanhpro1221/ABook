@@ -6,7 +6,7 @@ vì thế; sai là chữ chủ sách đọc trong Studio - nên lượt này ch�
 """
 from __future__ import annotations
 
-from ebook_reader.character_registry import canonical_speaker_names, restore_source_marks
+from abook.character_registry import canonical_speaker_names, restore_source_marks
 
 BOOK = (
     "Rồi Hoàng Cái nói với Chu Du. Du cười. Rồi Huyền-đức hỏi Hoàng Cái về Đông Ngô, và Khổng Minh im lặng.\n"

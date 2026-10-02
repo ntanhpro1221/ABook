@@ -9,9 +9,9 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader import listener_overrides
-from ebook_reader.webui import shared_readings
-from ebook_reader.webui.shared_readings import SharedReadings
+from abook import listener_overrides
+from abook.webui import shared_readings
+from abook.webui.shared_readings import SharedReadings
 
 
 def test_entries_are_checked_like_a_hand_fix_and_kept_by_word(tmp_path: Path) -> None:
@@ -40,9 +40,9 @@ def test_a_word_counts_only_as_a_whole_word_in_any_case() -> None:
 
 
 def _app(tmp_path: Path):
-    from ebook_reader.webui.library import Preferences
-    from ebook_reader.webui.listening import Listening
-    from ebook_reader.webui.server import App
+    from abook.webui.library import Preferences
+    from abook.webui.listening import Listening
+    from abook.webui.server import App
     from tests.test_webui_listen_and_sync import FakeRunner
 
     preferences = Preferences(tmp_path / "prefs" / "preferences.json")
@@ -72,7 +72,7 @@ def test_a_new_book_takes_the_shared_readings_its_text_uses(tmp_path: Path) -> N
 
 
 def test_a_fix_marked_for_every_book_lands_in_the_shared_list(tmp_path: Path) -> None:
-    from ebook_reader.webui.server import Server
+    from abook.webui.server import Server
     from tests.test_webui_listen_and_sync import _request
 
     app = _app(tmp_path)

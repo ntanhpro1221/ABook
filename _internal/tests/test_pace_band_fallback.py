@@ -12,7 +12,7 @@ failed, so an unreachable directive costs the sentence only when nothing else wo
 """
 from __future__ import annotations
 
-from ebook_reader.pipeline import (
+from abook.pipeline import (
     HIGH_QUALITY_ALLOWED_SEGMENT_WARNINGS,
     PACE_BAND_RELAXED_METRIC,
     PACE_BAND_RELAXED_WARNING,
@@ -55,7 +55,7 @@ def test_the_machine_may_let_it_through_but_only_on_the_record() -> None:
     và đã lùi lại. Làm thế là biến nó thành im lặng, tức vứt đúng cái tín hiệu mà test ở trên
     được viết ra để giữ.
     """
-    from ebook_reader.pipeline import MACHINE_ACCEPTABLE_SEGMENT_WARNINGS
+    from abook.pipeline import MACHINE_ACCEPTABLE_SEGMENT_WARNINGS
 
     assert PACE_BAND_RELAXED_WARNING in MACHINE_ACCEPTABLE_SEGMENT_WARNINGS
     assert "TTS_PACE_OUTLIER" not in MACHINE_ACCEPTABLE_SEGMENT_WARNINGS, (

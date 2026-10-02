@@ -40,7 +40,7 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
-p = root / "ebook_reader" / "worker.py"
+p = root / "abook" / "worker.py"
 s = io.open(p, encoding="utf-8").read()
 
 OLD_PATHS = '''    cached_paths = (

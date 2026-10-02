@@ -11,7 +11,7 @@ import sqlite3
 
 import pytest
 
-from ebook_reader.tts_pool import (
+from abook.tts_pool import (
     TTS_POOL_WORKER_THREADS,
     TTS_POOL_WORKERS_DEFAULT,
     ReadOnlyVoiceDB,

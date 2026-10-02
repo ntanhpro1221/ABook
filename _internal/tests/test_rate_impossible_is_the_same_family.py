@@ -16,13 +16,13 @@ danh sách không-chặn; cái này bị bỏ sót trong đúng lần dọn ấy
 """
 from __future__ import annotations
 
-from ebook_reader.asr import (
+from abook.asr import (
     ASR_TRANSCRIPT_RATE_IMPOSSIBLE,
     ASR_TRANSCRIPT_TIMELINE_IMPOSSIBLE,
     asr_answer_is_about_other_audio,
     transcript_exceeds_physical_rate,
 )
-from ebook_reader.pipeline import (
+from abook.pipeline import (
     HIGH_QUALITY_ALLOWED_SEGMENT_WARNINGS,
     MACHINE_ACCEPTABLE_SEGMENT_WARNINGS,
 )

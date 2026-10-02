@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.webui import projectfile, store
-from ebook_reader.webui.projectfile import MIMETYPE, ProjectFile, ProjectFileError
+from abook.webui import projectfile, store
+from abook.webui.projectfile import MIMETYPE, ProjectFile, ProjectFileError
 from tests.test_webui_listen_and_sync import make_project
 
 
@@ -21,7 +21,7 @@ def _project(tmp_path: Path) -> Path:
     (sources / "645.txt").write_text("Chương 645 - Trở về (1)\n\nTrời đã sáng.\n“Đi thôi.”\n", encoding="utf-8")
     (sources / "646.txt").write_text("Chương 646 - Trở về (2)\n\nChưa thu.\n", encoding="utf-8")
     (project / "logs").mkdir()
-    (project / "logs" / "ebook_reader.log").write_text("nhật ký", encoding="utf-8")
+    (project / "logs" / "abook.log").write_text("nhật ký", encoding="utf-8")
     (project / ".worker.lock").write_text("", encoding="utf-8")
     (project / "output" / "Sách thử.abook").write_bytes(b"PK")
     with sqlite3.connect(project / store.DB_NAME) as db:
@@ -158,7 +158,7 @@ def test_a_newer_format_asks_to_update_the_app(tmp_path: Path) -> None:
 
 
 def test_a_book_file_is_not_a_project_file(tmp_path: Path) -> None:
-    from ebook_reader.webui import bookfile
+    from abook.webui import bookfile
 
     book = bookfile.pack(_project(tmp_path), tmp_path / "sach.abook")
     with pytest.raises(ProjectFileError, match="không phải file dự án"):
@@ -177,10 +177,10 @@ def test_a_source_moved_away_does_not_block_the_backup(tmp_path: Path) -> None:
 
 
 def _app(tmp_path: Path, library_root: Path):
-    from ebook_reader.webui.actions import FakeRunner
-    from ebook_reader.webui.library import Preferences
-    from ebook_reader.webui.listening import Listening
-    from ebook_reader.webui.server import App
+    from abook.webui.actions import FakeRunner
+    from abook.webui.library import Preferences
+    from abook.webui.listening import Listening
+    from abook.webui.server import App
 
     preferences = Preferences(tmp_path / "prefs" / "preferences.json")
     preferences.update({"libraryRoot": str(library_root)})
@@ -189,8 +189,8 @@ def _app(tmp_path: Path, library_root: Path):
 
 
 def test_the_studio_packs_a_project_where_the_user_picked(tmp_path: Path) -> None:
-    from ebook_reader.webui.library import book_id
-    from ebook_reader.webui.server import Server
+    from abook.webui.library import book_id
+    from abook.webui.server import Server
     from tests.test_webui_listen_and_sync import _request
 
     project = _project(tmp_path)
@@ -214,7 +214,7 @@ def test_the_studio_packs_a_project_where_the_user_picked(tmp_path: Path) -> Non
 
 
 def test_double_clicking_a_project_file_opens_it_in_the_studio(tmp_path: Path) -> None:
-    from ebook_reader.webui.library import book_id
+    from abook.webui.library import book_id
 
     packed = projectfile.pack(_project(tmp_path), tmp_path / "du_an.abookproj")
     library = tmp_path / "thu_vien_moi"

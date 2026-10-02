@@ -15,10 +15,10 @@ from typing import Any
 
 import pytest
 
-from ebook_reader.config import build_settings, settings_hash
-from ebook_reader.database import LISTENER_PRONUNCIATION_SOURCE, ProjectDB
-from ebook_reader.io_utils import sha256_file
-from ebook_reader.listener_overrides import (
+from abook.config import build_settings, settings_hash
+from abook.database import LISTENER_PRONUNCIATION_SOURCE, ProjectDB
+from abook.io_utils import sha256_file
+from abook.listener_overrides import (
     MULTI_WORD,
     NOT_VIETNAMESE,
     overrides_path,
@@ -27,9 +27,9 @@ from ebook_reader.listener_overrides import (
     read_overrides,
     request_pronunciation,
 )
-from ebook_reader.models import ProjectPaths
-from ebook_reader.pipeline import BookPipeline
-from ebook_reader.recovery import recover_project
+from abook.models import ProjectPaths
+from abook.pipeline import BookPipeline
+from abook.recovery import recover_project
 from tests.test_recovery import complete_project_with_current_qa, setup_db
 
 LINES = {
@@ -164,7 +164,7 @@ def test_a_finished_book_no_longer_skips_recovery_after_a_new_reading(tmp_path: 
     """Đường tắt của sách đã xong chỉ nhìn MP3 và QA; chương có câu bị đặt lại phải kéo nó xuống đường sâu."""
     paths, settings, db, row = setup_db(tmp_path)
     complete_project_with_current_qa(paths, settings, db, row)
-    monkeypatch.setattr("ebook_reader.recovery.verify_mp3", lambda _path: (True, "ok"))  # như test_recovery
+    monkeypatch.setattr("abook.recovery.verify_mp3", lambda _path: (True, "ok"))  # như test_recovery
     assert recover_project(paths, db, settings).completed_verified
 
     assert db.apply_listener_pronunciation(surface="Xin", normalized_surface="xin", spoken_form="Xinh",
@@ -301,7 +301,7 @@ def test_the_cli_command_now_rerecords_too(tmp_path: Path) -> None:
     """`cli pronounce` đi cùng đường: trước đây nó chỉ ghim, và sách đã xong giữ audio đọc tên cũ mãi mãi."""
     import argparse
 
-    from ebook_reader.cli import _command_pronounce
+    from abook.cli import _command_pronounce
 
     paths, db = _book(tmp_path)
     (paths.root / "book_settings.json").write_text("{}", encoding="utf-8")
@@ -325,7 +325,7 @@ def test_every_listener_write_is_one_sqlite_transaction(tmp_path: Path) -> None:
         other.close()
         seen.append((spoken, verified))
 
-    from ebook_reader import database
+    from abook import database
 
     database.ProjectDB._reset_segment_pending_conn = staticmethod(spy)
     try:

@@ -18,12 +18,12 @@ from pathlib import Path
 
 import pytest
 
-from ebook_reader.database import (
+from abook.database import (
     QUALITY_SCOPE_SEGMENT,
     SEGMENT_AUDIO_QUALITY_STAGE,
     ProjectDB,
 )
-from ebook_reader.models import SegmentStatus
+from abook.models import SegmentStatus
 
 WAV = "d" * 64
 OTHER = "e" * 64

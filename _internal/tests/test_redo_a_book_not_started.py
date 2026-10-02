@@ -26,7 +26,7 @@ def _created(server, tmp_path: Path, **choices) -> str:
 
 @pytest.fixture
 def recycled(monkeypatch: pytest.MonkeyPatch) -> list[Path]:
-    from ebook_reader.webui import actions
+    from abook.webui import actions
 
     moved: list[Path] = []
 
@@ -64,7 +64,7 @@ def test_a_book_not_started_comes_back_with_its_choices_and_is_replaced(studio, 
 
 
 def test_a_book_that_has_started_is_not_replaced(studio, tmp_path: Path, recycled: list[Path]) -> None:  # noqa: F811
-    from ebook_reader.webui.library import book_id
+    from abook.webui.library import book_id
 
     paths, _app, server, _runner = studio  # sách của fixture đã phân tích xong
     started = book_id(paths.root)

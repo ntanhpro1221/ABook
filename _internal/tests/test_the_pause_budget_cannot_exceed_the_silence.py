@@ -25,8 +25,8 @@ import inspect
 import numpy as np
 import pytest
 
-from ebook_reader import audio_io
-from ebook_reader.audio_io import (
+from abook import audio_io
+from abook.audio_io import (
     MAX_PAUSE_FRACTION,
     MIN_SPEECH_SECONDS,
     PAUSE_GROUP_SECONDS,

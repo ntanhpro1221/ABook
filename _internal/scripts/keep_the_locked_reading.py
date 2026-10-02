@@ -46,16 +46,16 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from ebook_reader.audio_io import AudioQualityError  # noqa: E402
-from ebook_reader.background_runner import get_status  # noqa: E402
-from ebook_reader.cli import _open_project  # noqa: E402
-from ebook_reader.models import ChapterStatus, SegmentStatus  # noqa: E402
-from ebook_reader.notifier import WindowsNotifier  # noqa: E402
-from ebook_reader.perceptual_qa import UTMOSNaturalnessVerifier  # noqa: E402
-from ebook_reader.pipeline import BookPipeline  # noqa: E402
-from ebook_reader.quality_policy import QUALITY_POLICY_VERSION, quality_policy_hash  # noqa: E402
-from ebook_reader.resource_manager import AdaptiveResourceManager  # noqa: E402
-from ebook_reader.tts import TTSCoordinator  # noqa: E402
+from abook.audio_io import AudioQualityError  # noqa: E402
+from abook.background_runner import get_status  # noqa: E402
+from abook.cli import _open_project  # noqa: E402
+from abook.models import ChapterStatus, SegmentStatus  # noqa: E402
+from abook.notifier import WindowsNotifier  # noqa: E402
+from abook.perceptual_qa import UTMOSNaturalnessVerifier  # noqa: E402
+from abook.pipeline import BookPipeline  # noqa: E402
+from abook.quality_policy import QUALITY_POLICY_VERSION, quality_policy_hash  # noqa: E402
+from abook.resource_manager import AdaptiveResourceManager  # noqa: E402
+from abook.tts import TTSCoordinator  # noqa: E402
 
 try:
     from scripts.book_paths import BOOK, VERSIONS  # noqa: E402

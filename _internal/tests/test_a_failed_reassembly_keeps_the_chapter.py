@@ -14,7 +14,7 @@ from typing import Any
 
 import pytest
 
-from ebook_reader.models import ChapterStatus
+from abook.models import ChapterStatus
 from scripts.keep_the_locked_reading import reassemble, restore_shipped_state, shipped_state
 
 SHIPPED_AT = 1_789_000_000.0
@@ -143,7 +143,7 @@ def test_a_failed_reassembly_leaves_the_chapter_shipped(tmp_path: Path, boom: Ex
 
 def test_a_quality_gate_refusal_also_leaves_it_shipped(tmp_path: Path) -> None:
     """Cổng chất lượng chương đặt `failed`; lượt cải thiện phải hoàn nguyên."""
-    from ebook_reader.audio_io import ChapterQualityError
+    from abook.audio_io import ChapterQualityError
 
     db = _db(tmp_path)
     before = shipped_state(db, db.chapter())
@@ -216,7 +216,7 @@ def test_a_chapter_that_never_shipped_is_left_to_cli_run(tmp_path: Path) -> None
     """
     import sqlite3 as _sqlite3
 
-    from ebook_reader.cli import _open_project
+    from abook.cli import _open_project
     from scripts.keep_the_locked_reading import run_project
 
     real = Path("D:/Novels/Audiobooks/_fixtures/lo03r_084b_pre6b")
