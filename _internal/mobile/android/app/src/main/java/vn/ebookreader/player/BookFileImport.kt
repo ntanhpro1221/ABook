@@ -21,11 +21,11 @@ import java.util.zip.ZipFile
 object BookFileImport {
     const val MIMETYPE = "application/vnd.ngdtuanh.abook+zip"
     private const val FORMAT = "abook"
-    private const val FORMAT_VERSION = 1
+    private const val FORMAT_VERSION = 2  // 2 = có thêm rãnh nhạc nền (music/<sha1>.mp3)
     private const val MAX_ENTRIES = 20_000
     private const val MAX_TOTAL_BYTES = 64L shl 30
     private const val MAX_JSON_BYTES = 32L shl 20
-    private val CONTENT = Regex("""cast\.json|cover\.jpg|chapters/[0-9A-Za-z_.\-]+\.mp3|scripts/\d+\.json|samples/\d+\.wav""")
+    private val CONTENT = Regex("""cast\.json|cover\.jpg|chapters/[0-9A-Za-z_.\-]+\.mp3|scripts/\d+\.json|samples/\d+\.wav|music/[0-9a-f]{40}\.mp3""")
     private val DESCRIPTIONS = setOf("mimetype", "book.json", "manifest.json")
 
     /** Lý do không nhận file - câu chữ để người dùng đọc. */
