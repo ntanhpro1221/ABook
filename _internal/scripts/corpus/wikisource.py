@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 import time
@@ -19,7 +20,9 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-CORPUS = Path(__file__).resolve().parents[3] / "Corpus"
+# Kho chung, không theo worktree: parents[3] trỏ <worktree>/Corpus nên chạy từ worktree khác bản chính là ghi sai chỗ
+# (02-10). Cùng quy ước với model_eval/make_eval_project.py.
+CORPUS = Path(os.environ.get("ABOOK_CORPUS", "D:/Novels/ABook/Corpus"))
 RAW = "https://vi.wikisource.org/w/index.php?title={title}&action=raw"
 REDIRECT = re.compile(r"^#(?:đổi|redirect)\s*\[\[([^\]]+)\]\]", re.IGNORECASE)
 USER_AGENT = "ABook-corpus/1.0 (research; contact via github.com/ntanhpro1221)"
