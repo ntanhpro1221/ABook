@@ -310,13 +310,15 @@ giúp** trên cả 17 chương (số phát triển - thiết kế sau khi đã t
 r không khí kém hơn. Khớp kết luận cũ: nhãn cảm xúc câu không thấy đổi cảnh. Chia đều trong đoạn (app) và cắt mỗi 180 s từ
 đầu chương (fixed3) khác nhau trong mức nhiễu (mỗi bên thắng một số chương).
 
-**GHI TRƯỚC cho BỘ KIỂM THỨ TƯ - thể loại mới (02-10, trước khi có phân tích và đáp án):** văn xuôi tình cảm Việt 1930
-(hết bản quyền, vi.wikisource): Khái Hưng "Nửa chừng xuân" chương 006, 016 và Hồ Biểu Chánh "Một chữ tình" chương 004, 007.
-Câu hỏi: luật app hiện tại (ranh giới cứng + chia đều đoạn dài hơn 3 phút, không khí từ nhãn câu) có giữ lợi thế "chia nhỏ"
-ở thể loại chưa từng đo không. So `app` với `hard` (không chia nhỏ) và `fixed3`. App GIỮ nếu r trung bình ba trục V/E/T của
-`app` hơn `hard` ít nhất 0,05 VÀ hơn ở >= 3/4 chương; `app` so `fixed3` chỉ ghi lại (kỳ vọng ngang). Đáp án: hai người chấm
-mù Sonnet + phân xử tự động (`adjudicate_scenes.py`). Tiên hiệp CHƯA có trong bộ này: không có nguồn hết bản quyền, và công cụ
-tải Hako (`hako.py`) dựa vào thư viện vượt trang chống bot - không dùng; cần chủ sách cung cấp văn bản.
+**GHI TRƯỚC cho BỘ KIỂM THỨ TƯ (02-10 tối, trước khi có phân tích và đáp án; thay bản văn Việt 1930 đã huỷ - chủ sách
+gần như chỉ đọc LN Nhật, rồi Hàn, Trung):** Corpus không còn LN Nhật nào chưa dùng, nên Nhật / Hàn lấy chương MỚI của truyện
+đã có (luật cắt của app không chỉnh theo truyện, chương chưa thấy vẫn là dữ liệu giữ riêng): Nise Seiken 147 (chương dài
+nhất trong 145-157 - mọi chương Nise chỉ ~10 KB), Yamiyo no Hotaru 160, Hướng dẫn sinh tồn trong học viện 090 (Hàn); Trung,
+truyện CHƯA dùng: "Đã bảo là cùng nhau tự sát..." 060 (đô thị), "Năng lực bá đạo của tôi trong game tử thần..." 0100 (kinh dị
+hệ thống - thể loại mới cho nhạc u tối). Câu hỏi: luật app hiện tại (ranh giới cứng + chia đều đoạn dài hơn 3 phút, không khí
+từ nhãn câu) có giữ lợi thế "chia nhỏ" không. So `app` với `hard` (không chia nhỏ) và `fixed3`. App GIỮ nếu r trung bình ba
+trục V/E/T của `app` hơn `hard` ít nhất 0,05 VÀ hơn ở >= 4/5 chương; `app` so `fixed3` chỉ ghi lại (kỳ vọng ngang). Đáp án:
+hai người chấm mù Sonnet + phân xử tự động (`adjudicate_scenes.py`). Tu tiên bỏ (chủ sách đọc ít, không có văn bản).
 
 ## Thứ tự và tài nguyên
 
