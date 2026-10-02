@@ -616,6 +616,35 @@ Sau cả hai: báo Lead trước khi tốn Kaggle cho Qwen3-Omni.
 - Hệ quả: kết luận E1 "app thua vet" (dùng để định hướng việc đoán V/E/T đoạn) không đứng vững khi bỏ CLAP. Kết luận nào dựa
   trên R_cũ phải được đo lại bằng R_mới trước khi dùng.
 
+**GHI TRƯỚC - ĐO LẠI MỌI QUYẾT ĐỊNH DỰA TRÊN R_CŨ (03-10 04:xx, Lead; KHÔNG đảo quyết định nào trước khi đo lại):**
+
+Quyết định / kết luận đã dựa trên người chấm đọc mô tả CÓ CLAP, và phép đo lại:
+1. **E1 H1 / H2 / H3 + "app thua vet" + "calm hạng 2"** (định hướng "nút thắt là đoán không khí đoạn"; mở thí nghiệm nền êm).
+   - Đo lại trên dữ liệu đã có: cùng bảng H1-H3 và các cặp phụ, phán quyết = R_mới.
+   - Luật giữ nguyên như E1: H1 ≥ 0,70; H3 theo KTC Wilson.
+   - Riêng "nút thắt là đoán không khí đoạn" còn có bằng chứng độc lập từ bộ 4 (đáp án cảnh chỉ đọc chữ: oracle r 0,29-0,45 so
+     người 0,83-0,91). Kết luận ấy đứng hay đổ theo bộ 4, không theo E1.
+2. **H3 "nhánh GEMS không hơn app"** (một lý do không đưa phân phối GEMS / Lớp 2 vào chọn bài).
+   - Đo lại: `gems` thắng `app` theo R_mới.
+   - Nếu tỉ lệ ≥ 0,60 VÀ cận dưới Wilson > 0,5: ghi trước thí nghiệm "bật lại Lớp 2" trên bộ 5, thước R_mới.
+     - Bật lại = `EMOTION_WEIGHT` > 0 với 13 cường độ. Vai `gems` của E1 là GEMS-9 + JS, không phải bản 13 cường độ hiện tại,
+       nên không áp thẳng.
+     - Không đổi code trước thí nghiệm ấy.
+3. **Ngưỡng nền êm giữ 0,2** (52 lượt `calm/`, người chấm đọc mô tả có CLAP + chú thích Omni).
+   - Đo lại: hai người chấm Sonnet mới đọc mô tả KHÔNG CLAP (`describe_noclap.py` đã có cả 17 clip nền êm), gói
+     `PACK_SET=calm DESC=noclap`.
+   - Luật thắng y như cũ (`score_calm.py`). Kết quả lần đo lại là quyết định; nếu khác lần cũ thì theo lần đo lại.
+   - Ghi trước "đo lại 0,5 trên bộ 5" SỬA trước khi có dữ liệu: dùng mô tả KHÔNG CLAP.
+4. **E1b "omni1 / mf không dùng được"** (luật: kappa với R_cũ ≥ 0,20).
+   - Đo lại: kappa với R_mới, cùng ngưỡng 0,20.
+
+Không dính R_cũ (giữ nguyên, không đo lại):
+- Kiểm hồi quy Lớp 1-2 / `EMOTION_WEIGHT = 0`: thước là feel do người gắn (Incompetech) so đáp án cảnh chỉ đọc chữ.
+  - Mục 2 có thể mở lại câu hỏi bằng thí nghiệm riêng.
+- Bộ 4 / segllm / bộ 5: đáp án cảnh do Sonnet đọc chữ truyện, không mô tả nhạc.
+- Gộp ba nguồn, thầy, trò: nhãn feel người gắn.
+- Độ to 20 LU: ESTOI + Whisper.
+
 **GHI TRƯỚC - NỚI NGƯỠNG NỀN ÊM (02-10 23:xx, Lead duyệt; từ E1: calm đứng thứ hai, hơn app):**
 - **Giả thuyết:** kéo về nền êm (CALM_TARGET) cho nhiều đoạn hơn làm nhạc hợp hơn. Hiện chỉ kéo khi confidence < WEAK_MOOD
   0,2, và kéo tuyến tính.
