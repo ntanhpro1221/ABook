@@ -20,6 +20,8 @@ interface Scene {
   valence: number;
   arousal: number;
   tension?: number;
+  /** 13 cường độ cảm xúc độc lập 0..1 (docs/MUSIC_THEORY.md Lớp 2) - không cộng thành 1, đoạn có thể vừa buồn vừa dịu. */
+  emotions?: Record<string, number>;
   link: string | null;
   pinned?: boolean;
   silenced?: boolean;
@@ -39,7 +41,8 @@ interface MusicView {
   bannedTracks?: Record<string, TrackInfo>;
   taxonomy: {
     genres?: Record<string, { vi: string }>;
-    gems?: Record<string, { vi: string; va: [number, number, number] }>;
+    /** Tên tiếng Việt của 13 cảm xúc (danh mục gửi, đổi được không cần cập nhật app). */
+    emotions?: Record<string, string>;
   };
 }
 
@@ -117,20 +120,24 @@ function usePreview() {
   return { playing, toggle, stop };
 }
 
-/** Nhãn không khí đọc được (GEMS) gần nhất với toạ độ của đoạn. */
-function moodOf(scene: Scene, gems: MusicView["taxonomy"]["gems"]): string {
-  if (!gems) return "";
-  let best = "";
-  let distance = Infinity;
-  for (const item of Object.values(gems)) {
-    const [v, a, t] = item.va;
-    const d = (v - scene.valence) ** 2 + (a - scene.arousal) ** 2 + 0.6 * (t - (scene.tension ?? 0)) ** 2;
-    if (d < distance) {
-      distance = d;
-      best = item.vi;
-    }
-  }
-  return best;
+// Danh mục cũ chưa gửi tên: dùng bảng có sẵn (cùng bộ với build_catalog.EMOTION_VI).
+const EMOTION_VI: Record<string, string> = {
+  peacefulness: "bình yên", tenderness: "dịu dàng", nostalgia: "hoài niệm", sadness: "buồn", joy: "vui tươi",
+  playful: "tinh nghịch", power: "hào hùng", wonder: "kỳ vĩ", tension: "căng thẳng", fear: "rùng rợn",
+  anger: "giận dữ", mystery: "bí ẩn", moved: "xúc động",
+};
+const MOOD_SHOWN = 0.5; // cường độ từ mức này mới gọi tên
+const MOOD_MAX = 2;      // tối đa hai cảm xúc mạnh nhất - pha trộn thì hiện cả hai ("buồn · dịu dàng")
+
+/** Không khí đọc được của đoạn: các cảm xúc mạnh nhất (cường độ độc lập, nên có thể hai cảm xúc cùng cao); không cảm xúc
+ * nào đủ mạnh thì "êm" - đoạn kể bình thường, nhạc nền nhẹ. */
+function moodOf(scene: Scene, names: Record<string, string> | undefined): string {
+  const strong = Object.entries(scene.emotions ?? {})
+    .filter(([, value]) => value >= MOOD_SHOWN)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, MOOD_MAX)
+    .map(([key]) => names?.[key] ?? EMOTION_VI[key] ?? key);
+  return strong.length ? strong.join(" · ") : scene.emotions ? "êm" : "";
 }
 
 /** "Đổi bài": các bài khác hợp đoạn này, hợp nhất trước (cùng cách chấm điểm với lúc máy chọn). Chọn = ghim bài ấy. */
@@ -325,7 +332,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                       {/* Các đoạn nối liền: đoạn này hết ở đúng chỗ đoạn sau bắt đầu (cùng cách làm tròn). */}
                       {formatClock(scene.start)}–{formatClock(scenes[index + 1]?.start ?? scene.end)}
                     </span>
-                    <span className="w-24 shrink-0">{moodOf(scene, taxonomy.gems)}</span>
+                    <span className="w-32 shrink-0">{moodOf(scene, taxonomy.emotions)}</span>
                     <span className="min-w-0 basis-full break-words sm:flex-1 sm:basis-0">
                       {scene.link ? (
                         <>
