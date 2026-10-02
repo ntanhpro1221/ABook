@@ -24,8 +24,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   "Đang chờ Studio" cạnh người ấy. "Tuỳ chọn khác" có thêm "Việc đang chờ Studio (N)" liệt kê từng việc, bỏ được từng việc
   một. "Lưu" và "Lưu thành…" mang các ý muốn đi cùng file; mở lại file ở máy khác thì hợp với những gì máy ấy đã ghi (chỗ hai
   bên khác nhau thì theo máy đang mở). Máy của người làm sách mở file sẽ hỏi có áp vào dự án không, và đồng ý thì các ý muốn
-  thành những thay đổi thật chờ "Áp dụng thay đổi" - audio chỉ đổi khi người làm sách áp. Nút bấm trên từng câu truyện
-  (cách đọc tên, người nói, thu lại câu) chưa có; đường ghi phía sau đã sẵn.
+  thành những thay đổi thật chờ "Áp dụng thay đổi" - audio chỉ đổi khi người làm sách áp. Trong trang Đọc, chạm vào một
+  câu rồi bấm "Sửa câu này": đổi người nói, loại câu / cảm xúc / chữ đem đọc, sửa cách đọc một từ (tên riêng), hay thu lại câu
+  - cùng những việc tab Kịch bản của Studio làm. Câu có việc đang chờ hiện dấu đồng hồ "Đang chờ Studio", mỗi việc bỏ được
+  ngay trong hộp; "Nghe thử" cách đọc và "Dùng cho mọi sách" vẫn hiện nhưng mờ, nói rõ cần Studio. Cuốn nghe thẳng từ máy
+  tính khác hiện nút mờ kèm lý do (sửa ở máy ấy); cuốn có xưởng thì nút mở đúng câu ấy trong Kịch bản của Studio.
 - **Sửa sách đã nhập ngay trên trang nghe, cả máy tính lẫn điện thoại, không cần Studio**: trong "Tuỳ chọn khác" của một
   cuốn nhập từ file `.abook`, đổi được tên sách, bìa, nhạc nền (bật/tắt, to nhỏ, im lặng một đoạn); trong danh sách chương
   đổi được tên chương, trong "Nhân vật" đổi được tên hiển thị. Đổi xong là thấy ngay ở thư viện, thông báo, widget, màn

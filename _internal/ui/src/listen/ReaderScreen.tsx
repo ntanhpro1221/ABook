@@ -1,12 +1,14 @@
 import * as Popover from "@radix-ui/react-popover";
-import { ArrowLeft, ArrowRight, BookOpenText, ChevronLeft, ChevronRight, Headphones, Locate, Play, Type } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpenText, ChevronLeft, ChevronRight, Headphones, Locate, Pencil, Play, Type } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { cn } from "@/shared/cn";
+import { lineEditing } from "@/shared/capabilities";
 import { excerpt } from "@/shared/format";
 import { usePageTitle } from "@/shared/title";
 import { Button, EmptyState, IconButton, Skeleton } from "@/shared/ui";
 import { useClock } from "./clock";
+import { LineWishDialog, useWishes, WaitingMark } from "./LineWishes";
 import { usePlayListenBook } from "./LibraryScreen";
 import { usePlayer } from "./player";
 import { sentenceIndexAt } from "./PlayerViews";
@@ -41,7 +43,15 @@ function localReadingKey(bookId: string) {
   return `abook-reading-${bookId}`;
 }
 
-export function ReaderScreen() {
+/** `editing`: false ở thiết bị điều khiển từ xa (không sửa sách ở đó). `onOpenStudioScript`: máy tính, cuốn có xưởng - mở đúng câu ở
+ *  tab Kịch bản của Studio, nơi sửa thật. */
+export function ReaderScreen({
+  editing = true,
+  onOpenStudioScript,
+}: {
+  editing?: boolean;
+  onOpenStudioScript?: (bookId: string, chapterId: number, stableId: string) => void;
+}) {
   const { id = "", chapterId: chapterParam } = useParams();
   const [params] = useSearchParams();
   const navigate = useNavigate();
@@ -55,8 +65,13 @@ export function ReaderScreen() {
   const index = chapters.findIndex((item) => item.id === chapterId);
   usePageTitle(book && chapter ? `${chapter.subtitle || chapter.title} · ${book.title}` : book?.title);
   const { data: script, isLoading } = useScript(id, chapterId || undefined);
+  // Sửa một câu (docs/EDITING.md, P2a): cuốn không có xưởng ghi ý muốn chờ Studio ngay tại đây; cuốn có xưởng sửa ở Studio; cuốn
+  // nghe thẳng từ máy khác hay chưa cài Studio: nút vẫn hiện, mờ đi, kèm lý do.
+  const lineEdit = editing ? lineEditing(book?.capabilities) : null;
+  const wishes = useWishes(id, lineEdit?.mode === "wish");
   const [prefs, setPrefs] = useState<ReaderPrefs>(loadPrefs);
   const [selected, setSelected] = useState<number | null>(null);
+  const [editingLine, setEditingLine] = useState<number | null>(null);
   const [current, setCurrent] = useState(0);
   const container = useRef<HTMLDivElement | null>(null);
   const saveTimer = useRef<number | undefined>(undefined);
@@ -163,14 +178,15 @@ export function ReaderScreen() {
     }
     listenFrom(current);
   };
+  const selectable = script.timed || lineEdit !== null;
   const go = (step: 1 | -1) => {
     const next = chapters[index + step];
     if (next) navigate(`/book/${id}/read/${next.id}`, { replace: true });
   };
-  const paragraphs: { key: number; items: { index: number; text: string; kind: string; speaker: string }[] }[] = [];
+  const paragraphs: { key: number; items: { index: number; text: string; kind: string; speaker: string; stableId?: string }[] }[] = [];
   script.segments.forEach((segment, position) => {
     const last = paragraphs[paragraphs.length - 1];
-    const item = { index: position, text: segment.text, kind: segment.kind, speaker: segment.speaker };
+    const item = { index: position, text: segment.text, kind: segment.kind, speaker: segment.speaker, stableId: segment.stableId };
     if (last && last.key === segment.paragraph) last.items.push(item);
     else paragraphs.push({ key: segment.paragraph, items: [item] });
   });
@@ -245,7 +261,11 @@ export function ReaderScreen() {
               Chương này chưa có audio - vẫn đọc được. Khi Studio thu xong, “Nghe từ đây” sẽ hiện ra.
             </p>
           )}
-          {script.timed && !prefs.tapped && <p className="mb-6 text-sm text-fg-2">Chạm vào một câu rồi bấm “Nghe từ câu này” để nghe từ câu ấy.</p>}
+          {script.timed && !prefs.tapped && (
+            <p className="mb-6 text-sm text-fg-2">
+              Chạm vào một câu rồi bấm “Nghe từ câu này” để nghe từ câu ấy{lineEdit?.mode === "wish" ? "; “Sửa câu này” để đổi người nói, cách đọc, tên hay thu lại câu" : ""}.
+            </p>
+          )}
           <div className="space-y-[0.9em]">
             {paragraphs.map((paragraph) => {
               const first = paragraph.items[0];
@@ -262,11 +282,11 @@ export function ReaderScreen() {
                     <span key={item.index}>
                       <span
                         data-index={item.index}
-                        onClick={() => script.timed && setSelected(item.index === selected ? null : item.index)}
+                        onClick={() => selectable && setSelected(item.index === selected ? null : item.index)}
                         className={cn(
                           // scroll-mt: câu được cuộn tới không nằm khuất dưới thanh đầu dính (soát UX 29-09).
                           "scroll-mt-20 rounded-[4px] [box-decoration-break:clone]",
-                          script.timed && "cursor-pointer",
+                          selectable && "cursor-pointer",
                           item.kind === "thought" && "italic",
                           item.index === playingIndex && "read-along-active",
                           // Câu đang chọn: gạch chân màu nhấn - khung bao từng dòng của câu dài thành nhiều ô rời, và gạch
@@ -275,6 +295,7 @@ export function ReaderScreen() {
                         )}
                       >
                         {item.text}
+                        {item.stableId && wishes.data?.lines[item.stableId] && <WaitingMark />}
                       </span>{" "}
                     </span>
                   ))}
@@ -297,15 +318,39 @@ export function ReaderScreen() {
           )}
         </article>
         {selected !== null && (
-          <div className="pointer-events-none sticky bottom-6 flex justify-center">
-            <button
-              type="button"
-              onClick={() => listenFrom(selected)}
-              onMouseDown={(event) => event.preventDefault()}
-              className="pointer-events-auto inline-flex items-center gap-2 rounded-full bg-fg px-5 py-2.5 text-sm font-semibold text-bg shadow-float"
-            >
-              <Play className="size-4" fill="currentColor" strokeWidth={0} /> Nghe từ câu này
-            </button>
+          <div className="pointer-events-none sticky bottom-6 flex flex-col items-center gap-2">
+            <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-2">
+              {script.timed && (
+                <button
+                  type="button"
+                  onClick={() => listenFrom(selected)}
+                  onMouseDown={(event) => event.preventDefault()}
+                  className="inline-flex items-center gap-2 rounded-full bg-fg px-5 py-2.5 text-sm font-semibold text-bg shadow-float"
+                >
+                  <Play className="size-4" fill="currentColor" strokeWidth={0} /> Nghe từ câu này
+                </button>
+              )}
+              {lineEdit && (
+                <button
+                  type="button"
+                  disabled={lineEdit.mode === "blocked"}
+                  onClick={() => {
+                    const stableId = script.segments[selected]?.stableId;
+                    if (lineEdit.mode === "wish") setEditingLine(selected);
+                    else if (lineEdit.mode === "studio" && stableId) onOpenStudioScript?.(id, chapterId, stableId);
+                  }}
+                  onMouseDown={(event) => event.preventDefault()}
+                  className="inline-flex items-center gap-2 rounded-full bg-panel px-4 py-2.5 text-sm font-semibold shadow-float ring-1 ring-line disabled:opacity-60"
+                >
+                  <Pencil className="size-4" /> {lineEdit.mode === "studio" ? "Sửa trong Studio" : "Sửa câu này"}
+                </button>
+              )}
+            </div>
+            {lineEdit?.mode === "blocked" && (
+              <p className="pointer-events-auto max-w-sm rounded-xl bg-panel px-3 py-1.5 text-center text-xs text-fg-2 shadow-float ring-1 ring-line">
+                Sửa câu này: {lineEdit.note}
+              </p>
+            )}
           </div>
         )}
         {selected === null && listeningHere && playingIndex >= 0 && Math.abs(playingIndex - current) > 12 && (
@@ -320,6 +365,9 @@ export function ReaderScreen() {
           </div>
         )}
       </div>
+      {lineEdit?.mode === "wish" && (
+        <LineWishDialog book={book} script={script} segmentIndex={editingLine} wishes={wishes.data} onClose={() => setEditingLine(null)} />
+      )}
     </div>
   );
 }

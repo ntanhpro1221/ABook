@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canEditLayer, editBlockedNote, showsStudioOnly, studioNeed, type Capabilities } from "./capabilities";
+import { canEditLayer, editBlockedNote, lineEditing, showsStudioOnly, studioNeed, type Capabilities } from "./capabilities";
 
 const caps = (over: Partial<Capabilities>): Capabilities => ({ toolchain: false, workshop: false, link: false, ...over });
 
@@ -46,5 +46,27 @@ describe("cuốn nghe thẳng từ máy khác", () => {
     expect(editBlockedNote(caps({}))).toBeNull();
     expect(editBlockedNote(caps({ link: true, workshop: true }))).toBeNull();
     expect(editBlockedNote(undefined)).toBeNull();
+  });
+});
+
+describe("sửa một câu từ trang đọc", () => {
+  it("cuốn không có xưởng: ghi ý muốn chờ Studio, trên cả máy có Studio lẫn điện thoại", () => {
+    expect(lineEditing(caps({}))).toEqual({ mode: "wish" });
+    expect(lineEditing(caps({ toolchain: true }))).toEqual({ mode: "wish" });
+  });
+
+  it("cuốn có xưởng và có Studio: sửa thật ở Studio", () => {
+    expect(lineEditing(caps({ workshop: true, toolchain: true }))).toEqual({ mode: "studio" });
+  });
+
+  it("cuốn có xưởng mà chưa cài Studio: mờ, nói cần cài Studio", () => {
+    expect(lineEditing(caps({ workshop: true }))).toEqual({ mode: "blocked", note: "cần cài Studio" });
+  });
+
+  it("cuốn nghe thẳng từ máy khác: mờ, nói sửa ở máy ấy; chưa biết khả năng: không có gì", () => {
+    const blocked = lineEditing(caps({ link: true }));
+    expect(blocked).toMatchObject({ mode: "blocked" });
+    expect(blocked && "note" in blocked && blocked.note).toContain("sửa ở máy ấy");
+    expect(lineEditing(undefined)).toBeNull();
   });
 });

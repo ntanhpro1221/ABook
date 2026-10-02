@@ -40,3 +40,17 @@ export const LINK_BOOK = "Sách này lấy từ máy tính khác - muốn sửa 
 export function editBlockedNote(caps: Capabilities | null | undefined): string | null {
   return caps?.link && !caps.workshop ? LINK_BOOK : null;
 }
+
+/** Sửa MỘT CÂU từ trang đọc (người nói, loại câu / cảm xúc / chữ đem đọc, cách đọc tên, thu lại) - docs/EDITING.md, P2a:
+ *  - `wish`: cuốn không có xưởng - ghi ý muốn "đang chờ Studio" ngay trên trang đọc;
+ *  - `studio`: cuốn có xưởng và có Studio - sửa thật ở tab Kịch bản của Studio;
+ *  - `blocked`: chưa làm được ở đây - nút vẫn hiện, mờ đi, kèm `note` (cuốn nghe thẳng từ máy khác, hay xưởng chưa dùng được).
+ *  `null`: chưa biết máy làm được gì. */
+export type LineEditing = { mode: "wish" } | { mode: "studio" } | { mode: "blocked"; note: string };
+
+export function lineEditing(caps: Capabilities | null | undefined): LineEditing | null {
+  if (!caps) return null;
+  if (caps.link && !caps.workshop) return { mode: "blocked", note: LINK_BOOK };
+  if (caps.workshop) return caps.toolchain ? { mode: "studio" } : { mode: "blocked", note: studioNeed(caps) ?? "cần cài Studio" };
+  return { mode: "wish" };
+}
