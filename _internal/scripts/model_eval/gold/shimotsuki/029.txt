@@ -1,0 +1,86 @@
+# "Shimotsuki wa Mob ga Suki" file 029 ("Chương 29 - Khi bạn tự mãn với vị thế 『Thanh Mai Trúc Mã』"). Claude gán (A) 02-10.
+# Đáp án KIỂM TRA LN Nhật 02-10 (chọn bằng luật cố định: vị trí 30%/70% + chương phiên nhạc đã chép).
+# NGÔI THỨ NHẤT: "tôi" = NAKAYAMA KOUTAROU / KOUTAROU / NAKAYAMA (m, tự nhận "nhân vật nền"; 46-47 cô giáo gọi nhầm
+# "Nakagawa... Nakayama...san?"). Tên (cùng tập cho cả 029/032/195/456): SHIMOTSUKI SHIHO / SHIHO / SHIMOTSUKI (f);
+# RYUUZAKI RYOUMA / RYUUZAKI / RYOUMA (m, "nhân vật chính-sama", bạn thuở nhỏ của Shiho, gọi cô "Shiho"); SUZUKI (f, giáo
+# viên chủ nhiệm; lời kể cả cuốn không bao giờ bỏ kính xưng - "Suzuki-sensei", "cô Suzuki" - nên SUZUKI-SENSEI chỉ nửa
+# điểm, tiền lệ "ANH DẬU" quy tắc 11; "Suzuki-chan" ở 37 là cách Ryuuzaki trêu, không tính).
+# 7, 11: lời Shimotsuki "hôm qua" người kể chép lại trong 『』 (6 "Hôm qua cô đã nói như vầy:") -> SHIMOTSUKI đủ, NARRATOR~.
+# 38: câu của Suzuki ("Cô là giáo viên nên em không được thêm "-chan"...") bị khoá N vì dấu nháy lồng -> NARRATOR (quy
+# tắc 10), SUZUKI~ giữ cho segment_diff. 42, 49 "(...)": nội tâm chính người kể (49 kèm 50 "Tôi nghĩ thế"). Tiếng lòng tức
+# thời của người kể -> N,T (quy tắc 4): 40 "Định mệnh.", 43-44 cân nhắc chọn ghế ngay tại cảnh (45 nửa giải thích nửa tự
+# nhủ -> Nakayama ~), 53 "Nhầm rồi cô ơi" (cãi thầm cô giáo), 58 "chắc chẳng lộ đâu. Mong là thế.", 69-71 (70-71 nói
+# thầm với Ryuuzaki). 64 "Cái gì!?" không lời dẫn trực tiếp nhưng 65 "người ngạc nhiên nhất là Ryuuzaki", 66-67 cùng người.
+# Bộ tách bỏ ba dòng câm 「.........」 (p20 Shimotsuki, p34 Shimotsuki, p59 Ryuuzaki) - không có seq.
+0 H
+1 N
+2 N
+3 N
+4 N
+5 N
+6 N
+7 D SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI,NARRATOR~ happy,excited,sarcastic 0-2 normal normal f
+8 N
+9 N
+10 N
+11 D SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI,NARRATOR~ neutral,happy 0-1 normal normal,soft f
+12 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral 0-1 normal normal u
+13 N
+14 N NARRATOR neutral,afraid 0-1 normal normal u
+15 N NARRATOR neutral,afraid 0-1 normal normal u
+16 N
+17 D SUZUKI,SUZUKI-SENSEI~ happy,neutral,sarcastic 0-1 normal normal f
+18 N
+19 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral 0-1 normal normal u
+20 N NARRATOR neutral,afraid 0-1 normal normal u
+21 N
+22 N
+23 D SUZUKI,SUZUKI-SENSEI~ happy,neutral 0-1 normal normal f
+24 D SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI neutral,afraid 0-1 slow,normal soft,normal f
+25 N
+26 D SUZUKI,SUZUKI-SENSEI~ happy,neutral 0-1 normal normal f
+27 N
+28 N
+29 D RYUUZAKI RYOUMA,RYUUZAKI,RYOUMA neutral,surprised,tender 0-1 normal normal m
+30 D SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI neutral,sad,tired 0-1 slow,normal soft,normal f
+31 N NARRATOR neutral,sad 0-1 normal normal u
+32 D RYUUZAKI RYOUMA,RYUUZAKI,RYOUMA happy,neutral,tender 0-1 normal normal m
+33 N
+34 N NARRATOR neutral,angry 0-1 normal normal u
+35 N NARRATOR neutral,happy 0-1 normal normal u
+36 D SUZUKI,SUZUKI-SENSEI~ neutral,happy 0-1 normal normal f
+37 D RYUUZAKI RYOUMA,RYUUZAKI,RYOUMA happy,neutral 0-1 normal normal m
+38 N NARRATOR,SUZUKI~,SUZUKI-SENSEI~ neutral,happy,sarcastic 0-1 normal normal u
+39 N NARRATOR neutral,surprised 0-1 normal normal u
+40 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA surprised,neutral,sad 0-1 normal,slow normal u
+41 N NARRATOR neutral,surprised 0-1 normal normal u
+42 T NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA afraid,surprised,neutral 0-1 normal normal,soft m
+43 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral,afraid 0-1 normal normal u
+44 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral 0-1 normal normal u
+45 N,T NARRATOR,NAKAYAMA KOUTAROU~,KOUTAROU~,NAKAYAMA~ neutral 0-1 normal normal u
+46 D SUZUKI,SUZUKI-SENSEI~ neutral,surprised 0-1 normal normal f
+47 N
+48 N
+49 T NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA afraid,surprised 0-1 normal,fast normal,soft m
+50 N
+51 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral,happy 0-1 normal normal u
+52 D SUZUKI,SUZUKI-SENSEI~ happy,sarcastic,neutral 0-1 normal normal f
+53 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral,tired,sarcastic 0-1 normal normal u
+54 D NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral,tired 0-1 normal normal,soft m
+55 N
+56 N
+57 N NARRATOR neutral,afraid 0-1 normal normal u
+58 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral,afraid 0-1 normal normal u
+59 D SUZUKI,SUZUKI-SENSEI~ neutral,happy 0-1 normal normal f
+60 N
+61 N NARRATOR neutral,happy,excited 0-1 normal normal u
+62 D SUZUKI,SUZUKI-SENSEI~ neutral,happy 0-1 normal normal f
+63 N
+64 D RYUUZAKI RYOUMA,RYUUZAKI,RYOUMA surprised,angry 1-2 fast,normal loud,normal m
+65 N NARRATOR neutral,surprised 0-1 normal normal u
+66 N NARRATOR neutral,surprised 0-1 normal normal u
+67 D RYUUZAKI RYOUMA,RYUUZAKI,RYOUMA surprised,afraid,sad 1-2 fast,normal normal,loud m
+68 N NARRATOR neutral,happy 0-1 normal normal u
+69 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA happy,neutral,sarcastic 0-1 normal normal u
+70 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA sarcastic,happy,neutral,angry 0-1 normal normal u
+71 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA sarcastic,happy,neutral 0-1 normal normal u

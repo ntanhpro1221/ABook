@@ -1,0 +1,50 @@
+# "Make Heroine ga Oosugiru" (Có quá nhiều nữ chính thua cuộc) file 09 ("Chương giao đoạn: Không đâu bằng ở nhà", truyện ngắn
+# mừng bản Đài Loan). Đáp án KIỂM TRA LN Nhật 02-10 (chọn bằng luật cố định: vị trí 30%/70% + chương phiên nhạc đã chép;
+# 017a = 25 KB đầu chương 17). Claude gán (A) 02-10; chưa soát B.
+# Ngôi thứ nhất: "tôi" = NUKUMIZU / KAZUHIKO NUKUMIZU / NUKUMIZU KAZUHIKO / KAZUHIKO (02.txt "Tôi, Kazuhiko Nukumizu, học sinh
+# lớp 1C"; 31.txt "Nukumizu Kazuhiko"); NUKKUN~ (biệt danh Yakishio gọi, lời kể không dùng - nửa điểm). Yanami gọi "Nukumizu-kun".
+# Tên dùng chung ba file: YANAMI / ANNA YANAMI / YANAMI ANNA / ANNA (nữ); YAKISHIO / REMON / YAKISHIO REMON / REMON YAKISHIO
+# (nữ); AYANO / MITSUKI / AYANO MITSUKI / MITSUKI AYANO (nam). Không tính "YANA-CHAN" (hậu tố xưng hô, quy tắc 11).
+# Chỉ hai người trong cảnh: Nukumizu và Yanami (khu ăn uống Apita Mukaiyama).
+# Câu khó: 5 "Lâu lắm rồi tớ mới tới đây đấy. …A, cà phê hạt xuống giá rồi này." đứng TRƯỚC lúc "tôi" gặp Yanami (10) - lúc
+# ấy "tôi" đang "coi cọp" một mình (7) -> NUKUMIZU đủ, YANAMI~ (xưng "tớ" gợi lời nói với bạn, nhưng Yanami chưa ở cạnh).
+# 31 "Thế hôm nay bắt tớ vác xác tới đây...?" là câu "tôi suýt chút nữa vọt miệng" (32) - không nói ra, parser khoá N -> N,T
+# NARRATOR,NUKUMIZU (quy tắc 4). 36 "Chậc, hẳn đây là..." tiếng lòng tức thời -> N,T.
+0 H
+1 N
+2 N
+3 N
+4 N
+5 D NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~,YANAMI~,ANNA YANAMI~,YANAMI ANNA~,ANNA~ neutral,happy,surprised 0-1 normal normal,soft m
+6 N
+7 N
+8 N
+9 N NARRATOR neutral,afraid 0-1 normal normal u
+10 N
+11 N NARRATOR neutral,surprised 0-1 normal normal u
+12 D NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ neutral,surprised 0-1 normal normal m
+13 D YANAMI,ANNA YANAMI,YANAMI ANNA,ANNA afraid,sad,neutral 0-2 normal,slow soft,normal f
+14 N NARRATOR neutral,afraid 0-1 normal normal u
+15 D NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ surprised,sarcastic,tired,neutral 0-1 normal normal m
+16 D YANAMI,ANNA YANAMI,YANAMI ANNA,ANNA afraid,sad,neutral 0-2 normal,fast normal,soft f
+17 N
+18 N
+19 D YANAMI,ANNA YANAMI,YANAMI ANNA,ANNA afraid,excited,angry 1-2 fast,normal loud,normal f
+20 D NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ tired,neutral 0-1 normal,slow normal m
+21 N NARRATOR neutral,tired 0-1 normal normal u
+22 D YANAMI,ANNA YANAMI,YANAMI ANNA,ANNA happy,neutral 0-1 normal normal f
+23 N
+24 D YANAMI,ANNA YANAMI,YANAMI ANNA,ANNA happy,excited,neutral 0-2 normal,fast normal f
+25 N
+26 N NARRATOR neutral,happy 0-1 normal normal u
+27 N
+28 D NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ neutral 0-1 normal normal m
+29 D YANAMI,ANNA YANAMI,YANAMI ANNA,ANNA neutral,happy 0-1 normal normal f
+30 N
+31 N,T NARRATOR,NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ angry,tired,sarcastic,neutral 0-2 normal,fast normal u
+32 N
+33 N NARRATOR neutral,happy 0-1 normal normal u
+34 N NARRATOR neutral,tired 0-1 normal normal u
+35 D NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ neutral,tired,sarcastic,surprised 0-1 normal normal m
+36 N,T NARRATOR,NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ neutral,tired,happy,sarcastic 0-1 normal normal u
+37 N NARRATOR neutral,tired,happy 0-1 normal normal u

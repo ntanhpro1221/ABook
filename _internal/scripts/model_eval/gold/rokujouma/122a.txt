@@ -1,0 +1,230 @@
+# "Rokujouma no Shinryakusha" file 122a = 25 KB đầu file 122 ("Chương 2: Phòng 106 ngày hôm đó", Phần 1-3). Đáp án KIỂM TRA
+# LN Nhật 02-10 (chọn bằng luật cố định: vị trí 30%/70% + chương phiên nhạc đã chép; <số>a = 25 KB đầu chương). Claude gán (A).
+# NGÔI BA - không có "tôi" trong lời kể (không truyền --first-person). Cả phòng 106: Koutarou, Shizuka, Kiriha, Yurika, Sanae
+# (Theia và Ruth vắng - 3).
+# Tên (chung cả bốn file): KOUTAROU / SATOMI KOUTAROU / SATOMI / KOU; SHIZUKA / KASAGI SHIZUKA / KASAGI / SHIZU; KIRIHA /
+# KURANO KIRIHA / KURANO (018:1221 "Kurano Kiriha"), KII~ (Kii là Kiriha lúc nhỏ - 57-58 "Kii và Kiriha thật ra là một người";
+# nửa điểm vì nhãn KII thành giọng thứ hai của cùng người); YURIKA / NIJINO YURIKA / NIJINO; SANAE / HIGASHIHONGAN SANAE /
+# HIGASHIHONGAN. "Bạn chủ nhà", "onii-chan", "sếp", "binh nhì" là xưng hô - không điểm.
+# 43, 44, 49, 50, 111: tiếng anime trên TV Sanae và Yurika đang xem (111 lời kể 112 nói rõ là "kẻ phản diện trong bộ anime";
+# 45 hai cô "dán mắt vào màn hình") -> NPC* đủ, UNKNOWN~; 43-44, 49-50 có thể là hai cô hô theo màn hình -> SANAE~, YURIKA~.
+# 61, 102: Kiriha nói bằng giọng Kii ("onii-chan") - vẫn là KIRIHA (lời kể gọi Kiriha). 107: câu Kiriha nói một năm trước,
+# trích lại trong hồi ức -> KIRIHA. 118 "Đừng có háu ăn như vậy chứ, gừ…" không lời dẫn: Koutarou (cùng tiếng "gừ" ở 149 lúc
+# cậu bực vì Yurika) hoặc Sanae trêu Yurika -> cả hai đủ. 149 "Oh gừ..." = Koutarou bực, Yurika~.
+# Tiếng kêu/sủa của Yurika (121, 123, 127, 130, 132, 143, 145, 162), "Fufufu" 59, "A..." 103, "Hehehe~" 212 -> người ấy, NARRATOR~.
+0 H
+1 N
+2 N
+3 N
+4 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU happy,surprised,neutral 0-1 normal normal f
+5 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU afraid,surprised,neutral 0-1 fast,normal normal,soft m
+6 N
+7 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU happy,excited,surprised 0-1 normal normal f
+8 N NARRATOR neutral,happy,excited 0-1 normal normal u
+9 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,afraid 0-1 normal normal m
+10 N
+11 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU sad,neutral,sarcastic 0-1 normal normal f
+12 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU surprised,sarcastic,neutral 0-1 normal normal m
+13 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU happy,excited 0-1 normal normal f
+14 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU tired,sarcastic 0-1 normal,slow normal m
+15 D KIRIHA,KURANO KIRIHA,KURANO,KII~ tender,happy,neutral 0-1 normal normal f
+16 N NARRATOR neutral,sad,happy 0-1 normal normal u
+17 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU happy,neutral 0-1 normal normal f
+18 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal m
+19 N
+20 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU happy,neutral 0-1 normal normal f
+21 N
+22 N
+23 N
+24 D KIRIHA,KURANO KIRIHA,KURANO,KII~ neutral 0-1 normal normal f
+25 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU neutral,happy 0-1 normal normal f
+26 D KIRIHA,KURANO KIRIHA,KURANO,KII~ neutral 0-1 normal normal f
+27 N
+28 N
+29 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU happy,surprised 0-1 normal normal m
+30 N
+31 N
+32 D KIRIHA,KURANO KIRIHA,KURANO,KII~ neutral,happy,tender 0-1 normal normal f
+33 N NARRATOR neutral,happy 0-1 normal normal u
+34 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU happy 0-1 normal normal m
+35 D KIRIHA,KURANO KIRIHA,KURANO,KII~ happy,tender 0-1 normal normal f
+36 N NARRATOR neutral,tender,happy 0-1 normal normal u
+37 D KIRIHA,KURANO KIRIHA,KURANO,KII~ neutral 0-1 normal normal f
+38 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal m
+39 N
+40 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal m
+41 D KIRIHA,KURANO KIRIHA,KURANO,KII~ happy,neutral 0-1 normal normal f
+42 N
+43 D NPC*:nhân vật anime,UNKNOWN~,SANAE~,HIGASHIHONGAN SANAE~,HIGASHIHONGAN~,YURIKA~,NIJINO YURIKA~,NIJINO~ afraid,excited 1-2 fast loud u
+44 D NPC*:nhân vật anime,UNKNOWN~,SANAE~,HIGASHIHONGAN SANAE~,HIGASHIHONGAN~,YURIKA~,NIJINO YURIKA~,NIJINO~ afraid,excited 1-2 fast loud u
+45 N NARRATOR neutral,happy 0-1 normal normal u
+46 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal,soft m
+47 D KIRIHA,KURANO KIRIHA,KURANO,KII~ neutral,happy 0-1 normal normal f
+48 N
+49 D NPC*:nhân vật anime,UNKNOWN~,SANAE~,HIGASHIHONGAN SANAE~,HIGASHIHONGAN~,YURIKA~,NIJINO YURIKA~,NIJINO~ excited,angry 1-3 fast,normal loud u
+50 D NPC*:nhân vật anime,UNKNOWN~,SANAE~,HIGASHIHONGAN SANAE~,HIGASHIHONGAN~,YURIKA~,NIJINO YURIKA~,NIJINO~ excited,angry 1-3 fast,normal loud u
+51 N NARRATOR neutral,afraid 0-1 normal normal u
+52 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal,soft m
+53 D KIRIHA,KURANO KIRIHA,KURANO,KII~ neutral,surprised 0-1 normal normal f
+54 N
+55 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,surprised 0-1 normal normal,soft m
+56 N NARRATOR neutral,afraid,surprised 0-1 normal normal u
+57 N
+58 N NARRATOR neutral,afraid 0-1 normal normal u
+59 D KIRIHA,KURANO KIRIHA,KURANO,KII~,NARRATOR~ happy,tender 0-1 normal normal,soft f
+60 N
+61 D KIRIHA,KURANO KIRIHA,KURANO,KII~ whispering,tender,happy 0-1 slow,normal soft f
+62 N
+63 D KIRIHA,KURANO KIRIHA,KURANO,KII~ neutral,sad,tender 0-1 normal normal f
+64 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal,slow normal,soft m
+65 N
+66 T KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,sad,tender 0-1 normal normal m
+67 N
+68 D KIRIHA,KURANO KIRIHA,KURANO,KII~ tender,sarcastic,neutral 0-1 normal normal f
+69 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal m
+70 N
+71 N
+72 D KIRIHA,KURANO KIRIHA,KURANO,KII~ tender,happy,neutral 0-1 normal normal f
+73 N
+74 N
+75 D KIRIHA,KURANO KIRIHA,KURANO,KII~ tender,neutral,happy 0-1 normal normal f
+76 N
+77 D KIRIHA,KURANO KIRIHA,KURANO,KII~ tender,happy 0-1 normal,slow normal,soft f
+78 N NARRATOR neutral,tender,happy 0-1 normal normal u
+79 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,sad 0-1 normal normal m
+80 D KIRIHA,KURANO KIRIHA,KURANO,KII~ neutral,happy,tender 0-1 normal normal f
+81 N
+82 T KIRIHA,KURANO KIRIHA,KURANO,KII~ neutral,sad 0-1 normal normal f
+83 N
+84 N
+85 N
+86 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,sad 0-1 normal normal m
+87 N
+88 N
+89 D KIRIHA,KURANO KIRIHA,KURANO,KII~ neutral,tender 0-1 normal normal f
+90 N
+91 D KIRIHA,KURANO KIRIHA,KURANO,KII~ tender,happy,neutral 0-1 normal normal f
+92 N
+93 N
+94 N
+95 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU sad,neutral 0-1 normal,slow normal,soft m
+96 N NARRATOR neutral,sad 0-1 normal normal u
+97 N
+98 D KIRIHA,KURANO KIRIHA,KURANO,KII~ tender,happy,neutral 0-1 normal normal f
+99 N NARRATOR neutral,happy,afraid 0-1 normal normal u
+100 D KIRIHA,KURANO KIRIHA,KURANO,KII~ tender,neutral 0-1 normal,slow normal f
+101 N
+102 D KIRIHA,KURANO KIRIHA,KURANO,KII~ tender,neutral 0-1 slow,normal normal,soft f
+103 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU,NARRATOR~ surprised 0-1 normal normal,soft m
+104 N
+105 N
+106 N
+107 D KIRIHA,KURANO KIRIHA,KURANO,KII~ happy,sarcastic,neutral 0-1 normal normal f
+108 N
+109 N
+110 N
+111 D NPC*:phản diện anime,UNKNOWN~ excited,sarcastic,angry 1-3 normal loud u
+112 N
+113 N
+114 N
+115 D SANAE,HIGASHIHONGAN SANAE,HIGASHIHONGAN happy,excited 0-1 normal normal,loud f
+116 D YURIKA,NIJINO YURIKA,NIJINO excited,happy 1-2 normal,fast loud,normal f
+117 N NARRATOR neutral,happy 0-1 normal normal u
+118 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU,SANAE~,HIGASHIHONGAN SANAE~,HIGASHIHONGAN~ angry,sarcastic,tired 0-1 normal normal m
+119 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU angry 1-2 normal loud,normal m
+120 N
+121 D YURIKA,NIJINO YURIKA,NIJINO,NARRATOR~ sad,surprised 1-2 slow,normal normal,loud f
+122 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU angry,neutral 0-2 normal normal m
+123 D YURIKA,NIJINO YURIKA,NIJINO,NARRATOR~ afraid,sad 0-1 normal soft,normal f
+124 N NARRATOR neutral,afraid 0-1 normal normal u
+125 N
+126 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,happy 0-1 normal normal m
+127 D YURIKA,NIJINO YURIKA,NIJINO,NARRATOR~ happy,excited 0-1 normal normal f
+128 N
+129 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal m
+130 D YURIKA,NIJINO YURIKA,NIJINO,NARRATOR~ happy,excited 0-1 normal normal f
+131 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal m
+132 D YURIKA,NIJINO YURIKA,NIJINO,NARRATOR~ happy,excited 1-2 normal normal,loud f
+133 N
+134 N NARRATOR neutral,sad,tired 0-1 normal normal u
+135 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU tired,sad 0-1 slow,normal normal m
+136 N
+137 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU tired,neutral,angry 0-1 normal normal m
+138 D YURIKA,NIJINO YURIKA,NIJINO neutral,surprised 0-1 normal normal f
+139 N
+140 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU angry,tired 0-1 normal normal m
+141 D YURIKA,NIJINO YURIKA,NIJINO neutral,happy 0-1 normal normal f
+142 N
+143 D YURIKA,NIJINO YURIKA,NIJINO,NARRATOR~ surprised 1-2 fast normal,loud f
+144 N
+145 D YURIKA,NIJINO YURIKA,NIJINO,NARRATOR~ afraid,surprised,sad 2-3 fast loud f
+146 N
+147 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU angry,afraid 1-2 fast loud m
+148 D YURIKA,NIJINO YURIKA,NIJINO afraid,sad 1-2 fast loud,normal f
+149 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU,YURIKA~,NIJINO YURIKA~,NIJINO~ tired,angry 0-1 normal normal m
+150 N
+151 D YURIKA,NIJINO YURIKA,NIJINO happy,tired 0-1 normal normal f
+152 N
+153 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU sad,tired 0-1 slow,normal normal,soft m
+154 N NARRATOR neutral,sad 0-1 normal normal u
+155 N NARRATOR neutral,afraid 0-1 normal normal u
+156 D YURIKA,NIJINO YURIKA,NIJINO neutral,sarcastic 0-1 normal normal f
+157 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU surprised,angry 0-1 normal normal m
+158 D YURIKA,NIJINO YURIKA,NIJINO neutral,sarcastic,happy 0-1 normal normal f
+159 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU angry 1-2 normal loud,normal m
+160 D YURIKA,NIJINO YURIKA,NIJINO happy,sarcastic 0-1 normal normal f
+161 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU angry 1-2 normal loud m
+162 D YURIKA,NIJINO YURIKA,NIJINO,NARRATOR~ surprised,afraid 1-2 fast loud f
+163 N NARRATOR neutral,sad 0-1 normal normal u
+164 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU neutral,tender 0-1 slow,normal normal,soft f
+165 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal m
+166 N
+167 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU tender,neutral 0-1 normal normal f
+168 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU surprised 1-2 normal loud,normal m
+169 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU neutral,tender 0-1 normal normal f
+170 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU surprised 1-2 normal loud,normal m
+171 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU neutral,afraid 0-1 normal normal f
+172 N NARRATOR neutral,afraid 0-1 normal normal u
+173 N
+174 N NARRATOR neutral,afraid 0-1 normal normal u
+175 D YURIKA,NIJINO YURIKA,NIJINO happy,neutral 0-1 normal normal f
+176 N
+177 N
+178 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU angry,sarcastic 1-2 normal loud,normal m
+179 D YURIKA,NIJINO YURIKA,NIJINO happy,sarcastic 0-1 normal normal f
+180 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU angry 1-2 normal loud m
+181 D YURIKA,NIJINO YURIKA,NIJINO happy,sarcastic 0-1 normal normal f
+182 N
+183 D YURIKA,NIJINO YURIKA,NIJINO sad,afraid 0-1 normal normal,soft f
+184 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal m
+185 D YURIKA,NIJINO YURIKA,NIJINO happy,neutral 0-1 normal normal f
+186 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,happy,sarcastic 0-1 normal normal m
+187 D YURIKA,NIJINO YURIKA,NIJINO happy 0-1 normal normal f
+188 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU surprised,tender 0-1 normal,slow normal,soft f
+189 N
+190 T SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU neutral,tender 0-1 normal normal f
+191 N
+192 N
+193 N
+194 D SANAE,HIGASHIHONGAN SANAE,HIGASHIHONGAN neutral,happy 0-1 normal normal f
+195 N
+196 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal m
+197 D SANAE,HIGASHIHONGAN SANAE,HIGASHIHONGAN surprised,neutral 0-1 normal normal f
+198 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal m
+199 N
+200 D SANAE,HIGASHIHONGAN SANAE,HIGASHIHONGAN excited,happy 0-1 normal normal f
+201 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU surprised,neutral 0-1 normal normal m
+202 N
+203 N
+204 N
+205 N
+206 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU happy 0-1 normal normal m
+207 D SANAE,HIGASHIHONGAN SANAE,HIGASHIHONGAN happy,excited 1-2 normal normal,loud f
+208 N NARRATOR neutral,happy 0-1 normal normal u
+209 D SANAE,HIGASHIHONGAN SANAE,HIGASHIHONGAN happy,excited 0-1 normal normal f
+210 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal m
+211 N
+212 D SANAE,HIGASHIHONGAN SANAE,HIGASHIHONGAN,NARRATOR~ happy 0-1 normal normal f
+213 N
+214 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU neutral,afraid 0-1 normal normal f
+215 N NARRATOR neutral,afraid 0-1 normal normal u
