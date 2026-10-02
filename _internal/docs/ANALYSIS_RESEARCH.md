@@ -24,6 +24,21 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
 7. **Người vô danh xác định được là MỘT người phải ghi `NPC*:<mô tả>` trong đáp án, cả ở chương kiểm tra**; đám đông
    để `NPC*` trơn. Thiếu mô tả thì F1 giọng không biết hai câu vô danh là một người, và xếp model ngược (mục 29-09 tối).
 
+## 02-10 chiều - Bộ LN Nhật thứ hai: thêm 767 câu có người nói để tách q35-4B / 9B / v8
+
+Mục đích: LN Nhật dịch Việt là nhóm trọng số cao nhất của chủ sách, và trên 10 chương LN Nhật cũ bốn model HOÀ (hiệu với
+v8 đều trong nhiễu) - phép so cần thêm câu để quyết model mặc định. Gold mới (bộ KIỂM TRA, không vào dữ liệu học): Make
+Heroine ga Oosugiru 009, 023, 017a; Rokujouma no Shinryakusha 014, 015, 122a, 284a; Shimotsuki wa Mob ga Suki 029, 032,
+195, 456 - 1.475 đoạn, 767 câu có người nói. Chọn bằng LUẬT CỐ ĐỊNH, không nhìn nội dung: file ở vị trí 30% và 70% của bộ
+(bỏ file < 3 KB) + các chương phiên nhạc đã chép; chương > 30 KB chỉ lấy các đoạn đầu tới 25 KB (`<số>a.txt` trong Corpus).
+A = agent Opus một truyện một người, B = agent soát đối kháng, Claude phân xử (ADJUDICATION.md): B bắt 2 câu sai người nói
+(Make Heroine 017a:100-101), Rokujouma và Shimotsuki 0. Người kể cấp cuốn như Studio (Nukumizu, Nakayama; Rokujouma ngôi
+ba). Đo 11 model (ba ứng viên, 4 hạt giống q35/9B, 3 hạt v8, 8B-v5) xếp sau hạt giống - kết quả ghi ở đây khi xong.
+
+Dải hạt giống v8 trên hai cổng quyết định (4 lượt: nhà + Modal 3407/1/2), F1 giọng: TMA 65,4-72,1, YMP 72,5-83,7. q35-4B
+v8 79,5 / 86,7 và 9B-v8 77,8 / 92,2 đều trên trần dải ở cả hai cổng; YMP chỉ một chương nên dải rộng - q35 hơn trần 3 điểm
+là chưa chắc. Hai hạt mới mỗi ứng viên (Modal 02-10, trình có `--seed`) đang đo.
+
 ## 02-10 - So bốn model trên đủ bộ đo: q35-4B v8 giữ phần lớn mức hơn của 9B ở cổng Hàn/Trung, nhanh như 4B
 
 Bốn model, cùng thước (cây mặc định `D:/Novels/ABook`, `gold_person`), đo ở nhà: 4B v8 (`train_lora.py`), Qwen3.5-4B công
