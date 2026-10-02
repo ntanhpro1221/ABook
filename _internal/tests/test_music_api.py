@@ -62,3 +62,50 @@ def test_only_catalog_tracks_are_fetched_and_a_cached_file_is_served(studio, tmp
     status, body, _headers = _request(server.port, "GET", "/api/music/track?link=" + quote(link, safe=""),
                                       headers={"X-Ebook-Token": "t"})
     assert status == 200 and body.startswith(b"ID3")
+
+
+def test_a_scene_offers_other_tracks_best_first_and_choosing_one_pins_it(studio, tmp_path: Path) -> None:  # noqa: F811
+    paths, app, server, _runner = studio
+    _with_catalog(app, tmp_path)
+    book = book_id(paths.root)
+    _status, view = _call(server, "GET", f"/api/books/{book}/music")
+    scene = view["plan"]["scenes"][0]
+    current = scene["link"]
+    # Ép đoạn về không khí êm (cả hai bài "calm" cùng hợp): bài đang chọn là một trong hai, bài kia là gợi ý.
+    plan = json.loads((paths.root / "music_plan.json").read_text(encoding="utf-8"))
+    plan["scenes"][0].update(valence=0.25, arousal=-0.65, confidence=0.9, tension=0.0)
+    (paths.root / "music_plan.json").write_text(json.dumps(plan), encoding="utf-8")
+    url = f"/api/books/{book}/music/scenes/{quote(scene['key'], safe='')}/alternatives"
+    status, data = _call(server, "GET", url)
+    assert status == 200 and data["key"] == scene["key"]
+    items = data["alternatives"]
+    assert items and len(items) <= 6
+    assert [item["score"] for item in items] == sorted(item["score"] for item in items)
+    links = [item["link"] for item in items]
+    assert current not in links and len(set(links)) == len(links)
+    assert "https://x/short.mp3" not in links  # quá ngắn để lặp - cùng bộ lọc với lúc máy chọn
+    assert all(item["title"] is not None and "creator" in item and "attribution" in item for item in items)
+    # Bài đã bỏ không được gợi ý nữa.
+    _call(server, "PUT", f"/api/books/{book}/music", {"ban": [links[0]]})
+    _status, again = _call(server, "GET", url)
+    assert links[0] not in [item["link"] for item in again["alternatives"]]
+    # Chọn một bài = ghim (đường PUT có sẵn): link của đoạn đổi sang bài ấy.
+    _call(server, "PUT", f"/api/books/{book}/music", {"unban": [links[0]]})
+    pick = links[0]
+    status, changed = _call(server, "PUT", f"/api/books/{book}/music", {"pins": {scene["key"]: pick}})
+    assert status == 200
+    now = next(s for s in changed["plan"]["scenes"] if s["key"] == scene["key"])
+    assert now["link"] == pick and now["pinned"] is True and pick != current
+
+
+def test_the_alternatives_of_an_unknown_scene_or_without_a_catalog_say_so(studio, tmp_path: Path) -> None:  # noqa: F811
+    paths, app, server, _runner = studio
+    _with_catalog(app, tmp_path)
+    book = book_id(paths.root)
+    _call(server, "GET", f"/api/books/{book}/music")
+    status, data = _call(server, "GET", f"/api/books/{book}/music/scenes/99%3A99/alternatives")
+    assert status == 404 and data["error"]
+    app._music_catalog = music_catalog.MusicCatalog(tmp_path / "empty_cache", str(tmp_path / "khong_co"))
+    key = json.loads((paths.root / "music_plan.json").read_text(encoding="utf-8"))["scenes"][0]["key"]
+    status, data = _call(server, "GET", f"/api/books/{book}/music/scenes/{quote(key, safe='')}/alternatives")
+    assert status == 503 and "mạng" in data["error"]
