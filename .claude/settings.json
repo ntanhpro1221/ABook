@@ -1,0 +1,22 @@
+{
+  "enabledPlugins": {
+    "unity@knowledge-work-plugins": false,
+    "engineering@knowledge-work-plugins": false,
+    "cowork-plugin-management@knowledge-work-plugins": false,
+    "pdf-viewer@knowledge-work-plugins": false
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [{ "type": "command", "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard_bash.py\"", "timeout": 10 }]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [{ "type": "command", "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/after_edit.py\"", "timeout": 90 }]
+      }
+    ]
+  }
+}
