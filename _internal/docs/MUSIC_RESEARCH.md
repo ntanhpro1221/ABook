@@ -248,6 +248,12 @@ lưới câu mô tả cố định (9 GEMS x 3 V x 3 E x 3 T), app tra theo ô c
 **Pha 2b - học ánh xạ nhãn câu -> không khí đoạn (eval_scene_mood.py): KHÔNG hơn bảng viết tay.** 77 đoạn / 9 cuốn, ridge
 kiểm chéo giữ từng cuốn: tốt nhất r 0,48/0,53/0,43 so với bảng tay 0,51/0,61/0,50 - quá ít dữ liệu để học; giữ bảng tay.
 
+**CẢ CHUỖI (02-10 09:1x):** đầu vào = không khí MÁY ĐOÁN (bảng tay từ nhãn câu, trên ranh giới đáp án; nhãn GEMS = nhãn
+gần nhất trên ba trục), chấm bằng nhãn người so với không khí ĐÚNG: ngẫu nhiên 0,861 / clap 0,752 / mix 0,730 / **textmix
+0,688** / trần 0,255. Với đầu vào nhiễu, textmix hơn clap rõ hơn (−0,064) so với khi đầu vào đúng (−0,031) - câu mô tả chữ
+"cứu" một phần sai số của ba trục. Ứng viên mạnh nhất cho bước chọn bài; việc kế: kiểm bootstrap theo cuốn rồi dựng lưới câu
+mô tả trong danh mục.
+
 ## Pha 4 - trộn
 
 Đo bằng chính dây chuyền: Whisper trên chương có nhạc ở nhiều mức (nền thấp hơn giọng 15 / 18 / 21 / 24 / 27 LU, có / không
