@@ -53,6 +53,7 @@ import {
   usePause,
   useReveal,
   useStart,
+  useStudioMissing,
   useStop,
 } from "@/studio/data";
 import {
@@ -446,6 +447,15 @@ function Actions({ book }: { book: BookSummary }) {
   const reveal = useReveal();
   const remote = Boolean(useAppInfo().data?.remote);
   const navigate = useNavigate();
+  const studio = useStudioMissing();
+  // Phân tích và thu âm chạy bằng Studio: máy chưa có thì giải thích ở đây, không gửi lệnh rồi nhận lỗi.
+  const begin = (id: string) => {
+    if (!studio.missing) return start.mutate(id);
+    toast.error(studio.update ? "Cần cập nhật Studio" : "Cần cài Studio", {
+      description: "Phân tích và thu âm chạy bằng Studio. Xem, nghe, sửa cách đọc, nhạc nền, bìa và xuất sách vẫn làm được.",
+      action: remote ? undefined : { label: studio.update ? "Cập nhật Studio" : "Cài Studio", onClick: () => navigate("/studio") },
+    });
+  };
   const [confirmStop, setConfirmStop] = useState(false);
   const [confirmApply, setConfirmApply] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -508,7 +518,7 @@ function Actions({ book }: { book: BookSummary }) {
         </>
       ) : book.phase === "idle" ? (
         <>
-          <Button variant="primary" size="lg" icon={Wand2} loading={start.isPending} onClick={() => start.mutate(book.id)}>
+          <Button variant="primary" size="lg" icon={Wand2} loading={start.isPending} onClick={() => begin(book.id)}>
             Bắt đầu tạo sách nói
           </Button>
           {/* Chưa chạy bước nào: chọn lại chương, giọng kể, chất lượng, "tôi" (soát UX a5 01-10, #4). Cài đặt khoá theo sách
@@ -520,7 +530,7 @@ function Actions({ book }: { book: BookSummary }) {
           )}
         </>
       ) : book.phase !== "done" ? (
-        <Button variant="primary" size="lg" icon={Play} loading={start.isPending} onClick={() => start.mutate(book.id)}>
+        <Button variant="primary" size="lg" icon={Play} loading={start.isPending} onClick={() => begin(book.id)}>
           Tiếp tục tạo
         </Button>
       ) : book.pendingChanges ? (
@@ -544,8 +554,14 @@ function Actions({ book }: { book: BookSummary }) {
         count={book.pendingChanges ?? 0}
         open={confirmApply}
         onOpenChange={setConfirmApply}
-        onApply={() => start.mutate(book.id)}
+        onApply={() => begin(book.id)}
       />
+      {studio.missing && !live && (book.phase !== "done" || Boolean(book.pendingChanges)) && (
+        <p className="basis-full text-pretty text-sm text-fg-2">
+          Máy này {studio.update ? "cần cập nhật" : "chưa cài"} Studio nên chưa làm tiếp được phần phân tích và thu âm. Nghe, xem,
+          sửa cách đọc, nhạc nền, bìa và xuất sách vẫn được{remote ? "" : " - cài Studio ở trang Studio khi cần"}.
+        </p>
+      )}
       {live && book.paused === "battery" && (
         <p className="basis-full text-pretty text-sm text-fg-2">
           Máy tính đang chạy pin: tạo sách trên pin chậm hơn nhiều mà hao pin, nên Studio tạm dừng và tự làm tiếp khi cắm sạc.

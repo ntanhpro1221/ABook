@@ -35,6 +35,13 @@ export function useAppInfo() {
   return useQuery({ queryKey: ["app"], queryFn: () => api<AppInfo>("/api/app"), staleTime: Infinity });
 }
 
+/** App đóng gói chưa cài (hay cần cập nhật) Studio: xem, nghe, sửa cách đọc / nhạc nền / bìa, xuất sách vẫn làm được - chỉ phần
+ *  phân tích và thu âm cần Studio. Bấm chúng thì nói rõ điều đó và chỉ chỗ cài, thay vì để lỗi khởi động hiện ra sau. */
+export function useStudioMissing(): { missing: boolean; update: boolean } {
+  const studio = useAppInfo().data?.studio;
+  return { missing: Boolean(studio && (!studio.installed || studio.outdated)), update: Boolean(studio?.installed && studio.outdated) };
+}
+
 /** `live`: đang ở Studio thì tiến độ sách đang chạy cập nhật 5 giây một lần; ở nơi khác (thanh bên) thì thưa hẳn -
  *  app có thể mở suốt nhiều giờ sản xuất, và mỗi lần hỏi là một lượt đọc DB của sách đang chạy. */
 export function useLibrary({ live = true }: { live?: boolean } = {}) {

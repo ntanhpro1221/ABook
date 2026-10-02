@@ -226,3 +226,161 @@ def test_double_clicking_a_project_file_opens_it_in_the_studio(tmp_path: Path) -
     [project] = app.library.projects()
     assert opened == {"id": book_id(project), "how": "studio", "missingSources": 0, "outside": 0}
     assert project.parent == library.resolve()
+
+
+# ---- phần nghe: .abook là tập con của .abookproj (chủ sách 02-10) -------------------------------------------------
+
+
+def _with_cover(project: Path) -> Path:
+    (project / "cover.jpg").write_bytes(b"\xff\xd8\xff" + bytes(range(200)))
+    (project / "cover.json").write_text(json.dumps({"color": "#123456", "width": 2, "height": 3}), encoding="utf-8")
+    return project
+
+
+def _read_book(packed: Path) -> dict:
+    with zipfile.ZipFile(packed) as archive:
+        return json.loads(archive.read("book.json"))
+
+
+def test_the_project_file_carries_the_listening_layer_of_the_book(tmp_path: Path) -> None:
+    packed = projectfile.pack(_with_cover(_project(tmp_path)), tmp_path / "du_an.abookproj")
+    with zipfile.ZipFile(packed) as archive:
+        names = set(archive.namelist())
+        book = json.loads(archive.read("book.json"))
+        sizes = {info.filename: info.file_size for info in archive.infolist()}
+    assert {"book.json", "cast.json", "cover.jpg", "scripts/1.json", "samples/3.wav"} <= names
+    assert book["package"]["format"] == "abook" and book["package"]["version"] == 1 and "id" not in book
+    [chapter] = [item for item in book["chapters"] if item["file"]]
+    assert chapter["id"] == 1 and chapter["available"] and chapter["script"] == "scripts/1.json"
+    assert chapter["file"] == "project/output/chapters/00001_645.mp3", "audio ở chỗ nó đã nằm trong gói"
+    assert [item["available"] for item in book["chapters"]] == [True, False] and book["chaptersAvailable"] == 1
+    listed = book["package"]["files"]
+    assert {"project/output/chapters/00001_645.mp3", "cast.json", "scripts/1.json", "scripts/2.json", "samples/3.wav",
+            "cover.jpg"} == set(listed), "chữ đọc theo của cả chương chưa xong - như file .abook"
+    assert all(listed[name]["size"] == sizes[name] for name in listed)
+    with ProjectFile(packed) as opened:
+        opened.verify()
+        assert opened.listenable
+        assert {name: opened.manifest["files"][name] for name in listed} == listed, "một bảng mã băm, không tính hai lần"
+
+
+def test_a_chapters_audio_is_stored_once(tmp_path: Path) -> None:
+    project = _project(tmp_path)
+    packed = projectfile.pack(project, tmp_path / "du_an.abookproj")
+    audio = (project / "output" / "chapters" / "00001_645.mp3").read_bytes()
+    with zipfile.ZipFile(packed) as archive:
+        mp3 = [name for name in archive.namelist() if name.endswith(".mp3")]
+        assert mp3 == ["project/output/chapters/00001_645.mp3"] and not any(
+            name.startswith("chapters/") for name in archive.namelist())
+        assert archive.read(mp3[0]) == audio
+        assert archive.getinfo(mp3[0]).compress_type == zipfile.ZIP_STORED, "phát và tua thẳng trong gói"
+        copies = [name for name in archive.namelist() if archive.read(name) == audio]
+    assert copies == mp3, "không có bản chép thứ hai của audio"
+
+
+def test_the_project_file_carries_the_background_music(tmp_path: Path) -> None:
+    from abook.webui import music_plan
+    from tests.test_bookfile_music import BATTLE, CALM, _plan, _tracks
+
+    project = _project(tmp_path)
+    _plan(project)
+    packed = projectfile.pack(project, tmp_path / "du_an.abookproj", music_track=_tracks(tmp_path))
+    calm, battle = music_plan.track_name(CALM), music_plan.track_name(BATTLE)
+    book = _read_book(packed)
+    assert book["package"]["version"] == 2 and set(book["music"]["tracks"]) == {calm, battle}
+    assert {calm, battle} <= set(book["package"]["files"])
+    with zipfile.ZipFile(packed) as archive:
+        assert archive.read(calm).startswith(b"ID3") and archive.getinfo(calm).compress_type == zipfile.ZIP_STORED
+    with ProjectFile(packed) as opened:
+        opened.verify()
+
+
+def test_a_music_track_that_cannot_be_fetched_is_left_out(tmp_path: Path) -> None:
+    from abook.webui import music_plan
+    from tests.test_bookfile_music import BATTLE, CALM, _plan, _tracks
+
+    project = _project(tmp_path)
+    _plan(project)
+    packed = projectfile.pack(project, tmp_path / "du_an.abookproj", music_track=_tracks(tmp_path, missing=(BATTLE,)))
+    book = _read_book(packed)
+    assert set(book["music"]["tracks"]) == {music_plan.track_name(CALM)}
+    assert all(cue["track"] == music_plan.track_name(CALM) for cue in book["music"]["chapters"]["1"])
+    with ProjectFile(packed) as opened:
+        opened.verify()
+
+
+def test_a_project_without_a_finished_chapter_has_nothing_to_listen_to(tmp_path: Path) -> None:
+    project = _project(tmp_path)
+    with sqlite3.connect(project / store.DB_NAME) as db:
+        db.execute("UPDATE chapters SET status = 'synthesizing'")
+    packed = projectfile.pack(project, tmp_path / "du_an.abookproj")
+    with zipfile.ZipFile(packed) as archive:
+        assert "book.json" not in archive.namelist() and not any(
+            name.startswith(("scripts/", "samples/")) or name == "cast.json" for name in archive.namelist())
+    with ProjectFile(packed) as opened:
+        assert not opened.listenable
+        opened.verify()
+        target, _ = opened.open_into(tmp_path / "may_moi")
+    assert store.is_project(target)
+
+
+def test_opening_a_project_file_does_not_unpack_the_listening_layer(tmp_path: Path) -> None:
+    packed = projectfile.pack(_with_cover(_project(tmp_path)), tmp_path / "du_an.abookproj")
+    with ProjectFile(packed) as opened:
+        target, _ = opened.open_into(tmp_path / "may_moi")
+    assert not (target / "book.json").exists() and not (target / "scripts").exists() and not (target / "cast.json").exists()
+    assert (target / "output" / "chapters" / "00001_645.mp3").is_file()
+
+
+@pytest.mark.parametrize("damage", ["extra", "missing", "chapter", "hash"])
+def test_a_listening_layer_that_does_not_match_the_package_is_refused(tmp_path: Path, damage: str) -> None:
+    packed = projectfile.pack(_project(tmp_path), tmp_path / "du_an.abookproj")
+
+    def change(name: str, data: bytes) -> bytes | None:
+        if damage == "chapter" and name == "book.json":
+            book = json.loads(data)
+            book["chapters"][0]["file"] = "project/output/chapters/khong_co.mp3"
+            return json.dumps(book).encode("utf-8")
+        if damage in ("hash", "missing") and name == projectfile.MANIFEST:
+            manifest = json.loads(data)
+            if damage == "hash":
+                manifest["files"]["cast.json"]["sha256"] = "0" * 64
+            else:
+                del manifest["files"]["cast.json"]
+            return json.dumps(manifest).encode("utf-8")
+        if damage == "missing" and name == "cast.json":
+            return None
+        return data
+
+    bad = _rewrite(packed, tmp_path / "hong.abookproj", change)
+    if damage == "extra":
+        with zipfile.ZipFile(bad, "a") as archive:
+            archive.writestr("scripts/9.json", b"{}")
+    with pytest.raises(ProjectFileError):
+        ProjectFile(bad)
+
+
+def test_the_studio_packs_the_music_and_unpacks_it_into_the_music_cache(tmp_path: Path) -> None:
+    from abook.webui import music_plan
+    from abook.webui.library import book_id
+    from abook.webui.server import Server
+    from tests.test_bookfile_music import CALM, _plan, _tracks
+    from tests.test_webui_listen_and_sync import _request
+
+    project = _project(tmp_path)
+    _plan(project)
+    app = _app(tmp_path, project.parent)
+    app.music_track_for_export = _tracks(tmp_path)
+    server = Server(app, port=0).start()
+    try:
+        status, data, _ = _request(server.port, "POST", f"/api/books/{book_id(project)}/projectfile",
+                                   headers={"X-Ebook-Token": "t"}, body={"target": str(tmp_path / "xuat")})
+    finally:
+        server.stop()
+    packed = Path(json.loads(data)["file"])
+    assert status == 200 and music_plan.track_name(CALM) in _read_book(packed)["package"]["files"]
+
+    other = _app(tmp_path / "may_khac", tmp_path / "thu_vien_moi")
+    other.open_book_file(str(packed))
+    cached = other.music_dir / "files" / music_plan.track_name(CALM).split("/")[1]
+    assert cached.read_bytes().startswith(b"ID3"), "nhạc đã nằm sẵn trong bộ đệm của máy mới"
