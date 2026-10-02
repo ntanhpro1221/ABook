@@ -7,6 +7,13 @@ chapter, the text with who speaks each line, the cast of characters and the cove
 for Windows and Android open. Since version 3 one file can hold a whole multi-part series (a story split into parts with
 "continue this book"). The reference implementation is `_internal/abook/webui/bookfile.py`.
 
+An `.abook` is, logically, a **subset of an `.abookproj`** (`ABOOKPROJ_FILE_FORMAT.md`): a project file carries the same
+listening layer (`book.json`, `cast.json`, `scripts/`, `samples/`, `music/`, `cover.jpg`) next to the production
+workshop, so anything that opens an `.abook` can play the listening layer of an `.abookproj`. The one difference is the
+chapter audio: a project file stores each chapter MP3 once, under `project/output/chapters/<name>.mp3`, and its
+`book.json` points there instead of at `chapters/<name>.mp3`. An `.abook` itself keeps the strict names listed below; the
+`project/` paths are valid only inside an `.abookproj`.
+
 ## Container
 
 A ZIP archive (PKWARE APPNOTE, as used by EPUB and OOXML).

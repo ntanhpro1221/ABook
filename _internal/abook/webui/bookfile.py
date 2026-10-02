@@ -80,6 +80,9 @@ _COMMON = r"cast\.json|cover\.jpg|scripts/\d+\.json|samples/\d+\.wav|music/[0-9a
 _CONTENT = re.compile(_COMMON + r"|chapters/[0-9A-Za-z_.\-]+\.mp3")
 # Phiên bản 3 thêm thư mục phần: chapters/<phần>/<tên>.mp3 (phiên bản 1-2 không có - gặp thì là mục lạ).
 _CONTENT_V3 = re.compile(_COMMON + r"|chapters/(?:\d{1,4}/)?[0-9A-Za-z_.\-]+\.mp3")
+# Phần nghe của một file dự án `.abookproj` (projectfile.py) cùng tên mục như file sách, trừ audio chương: nằm ở chỗ nó đã
+# nằm trong gói (`project/output/chapters/...mp3`), không chép hai lần.
+LISTENING_ENTRY = re.compile(_COMMON)
 # Chỗ trống dư ngoài cỡ giải nén (thư mục tạm, book.json): không cần sát từng byte, chỉ cần không để ổ đĩa đầy giữa chừng.
 _ROOM_MARGIN = 64 * 1024 * 1024
 _STORED = (".mp3", ".jpg", ".wav")  # đã nén sẵn hay cần đọc thẳng: nén thêm chỉ tốn công khi phát
@@ -113,13 +116,21 @@ def _packaged_book(project_root: Path) -> dict[str, Any]:
 
 
 def _add_chapters(project_root: Path, book: dict[str, Any], files: dict[str, Path | bytes], *,
-                  part: int | None = None) -> None:
+                  part: int | None = None, audio_entry: Callable[[Path], str | None] | None = None) -> None:
     """Audio + chữ đọc theo của từng chương vào `files`. `part` (cả bộ): chương `book["chapters"]` được sửa tại chỗ sang
-    mã chung của bộ, đường dẫn nằm trong thư mục phần, và mang số phần."""
+    mã chung của bộ, đường dẫn nằm trong thư mục phần, và mang số phần. `audio_entry` (file dự án): audio KHÔNG vào `files`
+    - chương trỏ tới mục đã có trong gói (`audio_entry(file MP3)`); không có mục ấy thì chương tính là chưa nghe được."""
     for chapter in book["chapters"]:
         local = chapter["id"]
         audio = store.chapter_audio_path(project_root, local) if chapter.get("file") else None
         script = store.chapter_script(project_root, local)
+        if audio is not None and audio_entry is not None:
+            entry = audio_entry(audio)
+            if entry is None:
+                chapter.update(available=False, file=None, size=0)
+            else:
+                chapter["file"] = entry
+            audio = None
         if part is not None:
             if not 0 < local < PART_SPAN:
                 raise BookFileError(f"Mã chương {local} vượt cỡ một phần của bộ.")
@@ -133,21 +144,23 @@ def _add_chapters(project_root: Path, book: dict[str, Any], files: dict[str, Pat
         if audio is not None:
             files[chapter["file"]] = audio
         if script is not None:
-            files[chapter["script"]] = _json_bytes(script)
+            files[chapter["script"]] = json_bytes(script)
 
 
-def pack(project_root: Path, out: Path | None = None, *, producer: str = "ABook",
-         music_track: Callable[[str], Path | None] | None = None) -> Path:
-    """Gói một cuốn thành một file; ghi file tạm cạnh đích rồi thay nguyên tử. Trả đường dẫn file.
-
-    `music_track(link)` -> file của một bài nhạc nền (bộ đệm của máy, tải khi cần); có thì gói kèm rãnh nhạc."""
-    project_root = Path(project_root)
+def listening_layer(project_root: Path, music_track: Callable[[str], Path | None] | None = None, *,
+                    audio_entry: Callable[[Path], str | None] | None = None) -> tuple[dict[str, Any], dict[str, Path | bytes]]:
+    """Phần NGHE của một cuốn: `book.json` (chưa có mục `package`) + các file đi cùng (`cast.json`, bìa, `scripts/`,
+    `samples/`, nhạc nền) - dùng chung cho file `.abook` (`pack`) và phần nghe nằm trong file dự án (projectfile.pack, truyền
+    `audio_entry` để audio chương không chép hai lần). `music_track(link)` -> file của một bài nhạc nền (bộ đệm của máy,
+    tải khi cần); có thì kèm rãnh nhạc."""
     book = _packaged_book(project_root)
-    files: dict[str, Path | bytes] = {"cast.json": _json_bytes(store.cast(project_root))}
+    files: dict[str, Path | bytes] = {"cast.json": json_bytes(store.cast(project_root))}
     cover = covers.cover_file(project_root)
     if cover is not None:
         files[covers.COVER_FILE] = cover
-    _add_chapters(project_root, book, files)
+    _add_chapters(project_root, book, files, audio_entry=audio_entry)
+    if audio_entry is not None:
+        book["chaptersAvailable"] = sum(1 for chapter in book["chapters"] if chapter.get("file"))
     samples = []
     for name in book["samples"]:
         path = store.sample_audio_path(project_root, int(name.split("/")[1].split(".")[0]))
@@ -161,8 +174,23 @@ def pack(project_root: Path, out: Path | None = None, *, producer: str = "ABook"
     if music is not None:
         book["music"], tracks = music
         files.update(tracks)
+    return book, files
+
+
+def pack(project_root: Path, out: Path | None = None, *, producer: str = "ABook",
+         music_track: Callable[[str], Path | None] | None = None) -> Path:
+    """Gói một cuốn thành một file; ghi file tạm cạnh đích rồi thay nguyên tử. Trả đường dẫn file.
+
+    `music_track(link)` -> file của một bài nhạc nền (bộ đệm của máy, tải khi cần); có thì gói kèm rãnh nhạc."""
+    project_root = Path(project_root)
+    book, files = listening_layer(project_root, music_track)
     out = Path(out) if out is not None else project_root / "output" / default_name(book["title"])
-    return _seal(book, files, out, producer=producer, version=2 if music is not None else 1)
+    return _seal(book, files, out, producer=producer, version=package_version(book))
+
+
+def package_version(book: dict[str, Any]) -> int:
+    """Phiên bản THẤP NHẤT đủ chứa sách một phần: có nhạc nền là 2, không thì 1 (cả bộ: 3, `pack_series`)."""
+    return 2 if "music" in book else 1
 
 
 def pack_series(parts: Sequence[tuple[int, Path] | Path], out: Path, *, producer: str = "ABook",
@@ -191,7 +219,7 @@ def pack_series(parts: Sequence[tuple[int, Path] | Path], out: Path, *, producer
     if cover is not None:
         files[covers.COVER_FILE] = cover
     cast, samples = _merge_cast([(number, root) for number, root, _ in books], files)
-    files["cast.json"] = _json_bytes(cast)
+    files["cast.json"] = json_bytes(cast)
     merged: dict[str, Any] = {
         "format": first["format"],
         "title": continuation.base_title(first["title"]),
@@ -292,7 +320,7 @@ def _seal(book: dict[str, Any], files: dict[str, Path | bytes], out: Path, *, pr
         "version": version,
         "createdAt": datetime.now(UTC).isoformat(timespec="seconds"),
         "producer": producer,
-        "files": {name: _describe(source) for name, source in sorted(files.items())},
+        "files": {name: describe(source) for name, source in sorted(files.items())},
     }
     allowed = _CONTENT_V3 if version >= 3 else _CONTENT
     unknown = [name for name in files if not allowed.fullmatch(name)]
@@ -303,15 +331,9 @@ def _seal(book: dict[str, Any], files: dict[str, Path | bytes], out: Path, *, pr
     try:
         with zipfile.ZipFile(temporary, "w", allowZip64=True) as archive:
             archive.writestr(_entry("mimetype", stored=True), MIMETYPE)
-            archive.writestr(_entry(MANIFEST), _json_bytes(book))
-            archive.writestr(_entry(READIUM_MANIFEST), _json_bytes(_readium(book)))
-            for name in sorted(files, key=_order):
-                source = files[name]
-                stored = name.endswith(_STORED)
-                if isinstance(source, Path):
-                    archive.write(source, name, compress_type=zipfile.ZIP_STORED if stored else zipfile.ZIP_DEFLATED)
-                else:
-                    archive.writestr(_entry(name, stored=stored), source)
+            archive.writestr(_entry(MANIFEST), json_bytes(book))
+            archive.writestr(_entry(READIUM_MANIFEST), json_bytes(_readium(book)))
+            write_entries(archive, files, order=_order)
         with temporary.open("rb+") as handle:
             os.fsync(handle.fileno())
         os.replace(temporary, out)
@@ -319,6 +341,18 @@ def _seal(book: dict[str, Any], files: dict[str, Path | bytes], out: Path, *, pr
         temporary.unlink(missing_ok=True)
         raise
     return out
+
+
+def write_entries(archive: zipfile.ZipFile, files: dict[str, Path | bytes], *, order: Callable[[str], Any],
+                  stored_suffixes: tuple[str, ...] = _STORED) -> None:
+    """Ghi từng mục vào gói theo `order`: audio và ảnh KHÔNG nén (phát thẳng trong gói), còn lại nén."""
+    for name in sorted(files, key=order):
+        source = files[name]
+        stored = name.lower().endswith(stored_suffixes)
+        if isinstance(source, Path):
+            archive.write(source, name, compress_type=zipfile.ZIP_STORED if stored else zipfile.ZIP_DEFLATED)
+        else:
+            archive.writestr(_entry(name, stored=stored), source)
 
 
 class BookFile:
@@ -532,11 +566,11 @@ def _entry(name: str, *, stored: bool = False) -> zipfile.ZipInfo:
     return info
 
 
-def _json_bytes(value: Any) -> bytes:
+def json_bytes(value: Any) -> bytes:
     return json.dumps(value, ensure_ascii=False, indent=1).encode("utf-8")
 
 
-def _describe(source: Path | bytes) -> dict[str, Any]:
+def describe(source: Path | bytes) -> dict[str, Any]:
     digest = hashlib.sha256()
     if isinstance(source, Path):
         size = 0

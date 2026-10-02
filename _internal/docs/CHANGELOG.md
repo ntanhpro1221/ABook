@@ -17,6 +17,15 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   bộ dài hơn rồi mở đè lên thì chỗ đang nghe và dấu trang vẫn còn. Mở file trên máy mà ổ đĩa không đủ chỗ thì báo rõ cần bao
   nhiêu thay vì chép dở. File `.abook` không còn mang mã nội bộ của máy xuất ra nó.
 
+### Điện thoại và thiết bị
+
+- **File dự án `.abookproj` giờ nghe được ở mọi nơi nghe được file sách `.abook`**: điện thoại mở file dự án (từ trình
+  quản lý file, Zalo, Drive...) là các chương đã xong vào Thư viện để nghe, không chép sổ dự án hay nguồn chương và chỉ cần
+  chỗ trống cho phần nghe, không phải cho cả dự án. File dự án cũng mang theo cả nhạc nền của sách, nên mở ở máy khác là
+  nghe đúng bản có nhạc, không phải tải lại. Mở file dự án trên máy tính vẫn ra thẳng dự án trong Studio; máy chưa cài Studio
+  vẫn xem, nghe, sửa cách đọc, nhạc nền, bìa và xuất được - chỉ phần phân tích và thu âm cần cài Studio, và các nút ấy nói rõ
+  điều đó.
+
 ## [0.4.20] - 2026-10-02
 
 ### Điện thoại và thiết bị

@@ -39,7 +39,8 @@ const KINDS: { value: Kind; title: string; detail: string; icon: typeof FolderDo
   {
     value: "abookproj",
     title: "Cả dự án (.abookproj)",
-    detail: "Sổ dự án, audio đã thu, nguồn chương - để sao lưu hay làm tiếp ở máy khác. Mở file là có lại dự án trong Studio.",
+    detail:
+      "Sổ dự án, audio đã thu, nguồn chương, nhạc nền - để sao lưu hay làm tiếp ở máy khác. Mở file là có lại dự án trong Studio; điện thoại mở file này cũng nghe được các chương đã xong.",
     icon: FolderArchive,
   },
 ];
