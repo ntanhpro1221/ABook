@@ -133,6 +133,13 @@ bối cảnh mở [GT - B §5.3 cách D]. Tháp chữ của các model hai tháp
 
 ## 3. Phân tích phía nhạc (danh mục cố định, làm một lần)
 
+**Nguồn tín hiệu phía bài (02-10, chủ sách):** bài nhạc không phân tích từ số 0. Có ba nguồn, gộp lại và đo đóng góp từng
+nguồn bằng ablation (MUSIC_RESEARCH.md "GỘP BA NGUỒN"):
+- **Âm thanh qua model:** CLAP / đầu dò, model nghe.
+- **Âm học đo trực tiếp:** nhịp, trưởng / thứ, âm vực, độ nghịch tai, articulation, độ to và đường bao, âm sắc, mật độ.
+- **Văn bản và ngữ cảnh:** tên bài, mô tả và ghi chú tác giả, tag, nhạc cụ, bình luận, bài viết cho game / phim nào, lời.
+  Một LLM đọc phần chữ này, cho 13 cường độ + V/E/T + độ tin cậy.
+
 1. **Cắt mỗi bài thành các đoạn đồng nhất**, chấm từng đoạn: cửa sổ 10 giây không thấy được cung của cả bài [CM - D §1.5].
    Ranh giới đoạn nhạc là chỗ được phép chuyển bài.
 2. **Model dùng được (giấy phép tự do, chạy máy nhà):** LAION-CLAP music (Apache-2.0), MS-CLAP (MIT), PANNs CNN14 (MIT;
