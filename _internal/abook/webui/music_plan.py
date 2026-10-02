@@ -105,12 +105,14 @@ def build(project_root: Path, candidates_near: Callable[[float, float], Iterable
           lookup: Callable[[list[str]], dict[str, dict[str, Any]]], *, catalog_revision: str | None = None,
           book_key: str | None = None, taxonomy: dict[str, Any] | None = None,
           scenes: list[dict[str, Any]] | None = None,
-          keep: dict[str, str | None] | None = None) -> dict[str, Any]:
+          keep: dict[str, str | None] | None = None,
+          available: Callable[[str], bool] | None = None) -> dict[str, Any]:
     """Dựng lại music_plan.json: chia đoạn cả cuốn, chọn bài theo lựa chọn của người dùng, gắn thông tin bài.
     `scenes`: các đoạn đã có (từ plan cũ, qua `scenes_of`) - chọn lại bài trên đúng các đoạn ấy, không chia lại sách;
     người dùng sửa một đoạn thì các đoạn khác không đổi theo (chỉ "Chọn lại nhạc" mới chia lại).
     `keep`: {khoá đoạn: bài cũ} (từ `kept_tracks`) - đoạn nào có trong đó giữ nguyên bài, trừ khi bài đã bị bỏ hoặc không
-    còn trong danh mục (không dùng được nữa) thì chọn lại như thường."""
+    còn trong danh mục (không dùng được nữa) thì chọn lại như thường.
+    `available(link)`: bài dùng được trên máy này không (music_select.choose) - bài không lấy được thì đoạn chọn bài kế."""
     project_root = Path(project_root)
     overrides = read_overrides(project_root)
     if scenes is None:
@@ -122,7 +124,7 @@ def build(project_root: Path, candidates_near: Callable[[float, float], Iterable
         keep = {key: link for key, link in keep.items() if link is None or link in usable}
     chosen = music_select.choose(scenes, candidates_near, book_key=book_key or project_root.name,
                                  family=overrides["family"], pins=overrides["pins"], banned=overrides["banned"],
-                                 genre_styles=genre_styles, keep=keep)
+                                 genre_styles=genre_styles, keep=keep, available=available)
     silenced = set(overrides["silenced"])
     for scene in chosen:
         if scene["key"] in silenced:
@@ -138,16 +140,16 @@ def build(project_root: Path, candidates_near: Callable[[float, float], Iterable
         "family": overrides["family"],
         "genre": overrides["genre"],
         "scenes": chosen,
-        "tracks": {link: {key: tracks.get(link, {}).get(key) for key in
-                          ("title", "creator", "license", "licenseUrl", "attribution", "duration", "source", "landing",
-                           "lufs", "speechBand")}
-                   for link in links},
+        "tracks": {link: {key: tracks.get(link, {}).get(key) for key in TRACK_INFO_KEYS} for link in links},
     }
     atomic_write_json(project_root / PLAN_FILE, plan)
     return plan
 
 
-CHOICE_FIELDS = ("key", "link", "distance", "pinned", "silenced")  # phần `choose` / `build` gắn thêm cho từng đoạn
+# Thông tin bài ghi vào plan["tracks"] (ghi công, độ to) - bài thay thế tạm lúc phát cũng mang đúng bộ này.
+TRACK_INFO_KEYS = ("title", "creator", "license", "licenseUrl", "attribution", "duration", "source", "landing", "lufs",
+                   "speechBand")
+CHOICE_FIELDS = ("key", "link", "distance", "pinned", "silenced", "pinUnavailable")  # phần `choose` / `build` gắn thêm cho từng đoạn
 
 
 def scenes_of(plan: dict[str, Any] | None) -> list[dict[str, Any]] | None:
@@ -291,11 +293,24 @@ def track_name(link: str) -> str:
     return f"music/{hashlib.sha1(link.encode('utf-8')).hexdigest()}.mp3"
 
 
+class TrackSource:
+    """Cách lấy file bài nhạc cho gói sách: gọi như `file(link)`, kèm `alternatives(project_root, khoá đoạn, [link bỏ])` ->
+    các bài thay thế (kèm thông tin), tốt nhất trước - để chỗ có bài không lấy được thì dùng bài kế thay vì im lặng."""
+
+    def __init__(self, file: Callable[[str], Path | None],
+                 alternatives: Callable[[Path, str, list[str]], list[dict[str, Any]]] | None = None) -> None:
+        self.file, self.alternatives = file, alternatives
+
+    def __call__(self, link: str) -> Path | None:
+        return self.file(link)
+
+
 def package(project_root: Path, chapter_ids: Iterable[int],
             track_file: Callable[[str], Path | None]) -> tuple[dict[str, Any], dict[str, Path]] | None:
     """Nhạc nền đi theo cuốn sách khi xuất (chủ sách 01-10: sách xuất ra mang nhạc người sản xuất đã gắn): mục `music`
-    của book.json + các file bài. Bài nào không lấy được file (mất mạng, nguồn gỡ) thì các mốc của nó bỏ đi - chỗ đó
-    im lặng, sách vẫn xuất được. Rãnh nhạc tắt / chưa dựng -> None (sách không nhạc, định dạng cũ)."""
+    của book.json + các file bài. Bài nào không lấy được file (mất mạng, nguồn gỡ) thì dùng bài thay thế đầu tiên lấy được
+    (`TrackSource.alternatives`); không có bài nào thì các mốc của nó bỏ đi - chỗ đó im lặng, sách vẫn xuất được. Rãnh
+    nhạc tắt / chưa dựng -> None (sách không nhạc, định dạng cũ)."""
     plan = read_plan(project_root)
     if plan is None or not plan.get("enabled"):
         return None
@@ -303,17 +318,36 @@ def package(project_root: Path, chapter_ids: Iterable[int],
     files: dict[str, Path] = {}
     tracks: dict[str, dict[str, Any]] = {}
     chapters: dict[str, list[dict[str, Any]]] = {}
+    alternatives = getattr(track_file, "alternatives", None)
+    failed: set[str] = set()  # bài đã thử mà không lấy được: không thử lại ở mốc khác
+
+    def resolve(cue: dict[str, Any]) -> tuple[str, dict[str, Any], Path] | None:
+        """(link, thông tin, file) của bài dùng cho mốc này: chính bài đã chọn, không lấy được thì bài thay thế đầu tiên."""
+        link = cue["link"]
+        info = (plan.get("tracks") or {}).get(link) or {}
+        if track_name(link) in files:
+            return link, info, files[track_name(link)]
+        path = None if link in failed else track_file(link)
+        if path is not None:
+            return link, info, path
+        failed.add(link)
+        for other in (alternatives(project_root, cue["key"], [link]) if alternatives else []):
+            path = files.get(track_name(other["link"])) or track_file(other["link"])
+            if path is not None:
+                return other["link"], other, path
+        return None
+
     for chapter_id in chapter_ids:
         kept = []
         for cue in chapter_cues(plan, chapter_id):
-            name = track_name(cue["link"])
+            found = resolve(cue)
+            if found is None:
+                continue
+            link, info, path = found
+            name = track_name(link)
             if name not in files:
-                path = track_file(cue["link"])
-                if path is None:
-                    continue
                 files[name] = path
-                info = (plan.get("tracks") or {}).get(cue["link"]) or {}
-                tracks[name] = {"file": name, "link": cue["link"],
+                tracks[name] = {"file": name, "link": link,
                                 **{key: info.get(key) for key in ("title", "creator", "license", "licenseUrl",
                                                                   "attribution", "landing") if info.get(key)}}
                 # Độ to + độ lấn dải tiếng nói đi theo bài (sách đọc lại / cập nhật mà không cần danh mục); số đo từ

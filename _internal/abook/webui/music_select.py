@@ -119,28 +119,41 @@ def score(track: dict[str, Any], target: tuple[float, ...], *, family: str | Non
 def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float], Iterable[dict[str, Any]]], *,
            book_key: str, family: str | None = None, pins: dict[str, str] | None = None,
            banned: Iterable[str] = (), genre_styles: dict[str, float] | None = None,
-           keep: dict[str, str | None] | None = None) -> list[dict[str, Any]]:
+           keep: dict[str, str | None] | None = None,
+           available: Callable[[str], bool] | None = None) -> list[dict[str, Any]]:
     """Mỗi đoạn kèm `link` (None = im lặng), `distance`, `pinned`. `pins`: {khoá đoạn: link} người dùng ghim
     (khoá = `scene_key`); `banned`: link người dùng đã bỏ (không chọn lại cho cuốn này).
     `keep`: {khoá đoạn: link đã chọn trước đó (None = đoạn đã im lặng)} - như ghim "mềm": đoạn nào có trong `keep` giữ
     nguyên bài cũ (không tính là ghim), trừ khi bài ấy đã bị bỏ thì chọn lại. Người dùng sửa MỘT đoạn / MỘT bài thì các
-    đoạn khác không được đổi bài theo chỉ vì phạt "vừa dùng" lan dọc cuốn."""
+    đoạn khác không được đổi bài theo chỉ vì phạt "vừa dùng" lan dọc cuốn.
+    `available(link)`: bài có dùng được TRÊN MÁY NÀY không (đã có trong bộ đệm hay tải được) - bài không dùng được thì không
+    chọn, đoạn lấy bài hợp nhất kế tiếp thay vì im lặng. Bài ghim vẫn là lựa chọn của người dùng (ghim không bị xoá) nhưng
+    lần dựng này đoạn ấy chọn theo xếp hạng và có `pinUnavailable`. None = bài nào cũng dùng được."""
     pins = pins or {}
     keep = keep or {}
     banned = set(banned)
+
+    def usable(link: str | None) -> bool:
+        return link is None or available is None or available(link)
+
     chosen: list[dict[str, Any]] = []
     recent: list[str] = []
     for scene in scenes:
         key = scene_key(scene)
         result = dict(scene, key=key, pinned=False)
-        if key in pins:
+        pin_down = key in pins and not usable(pins[key])
+        if key in pins and not pin_down:
             result.update(link=pins[key], pinned=True, distance=None)
-        elif key in keep and keep[key] not in banned:
+        elif key in keep and keep[key] not in banned and usable(keep[key]):
             result.update(link=keep[key], distance=None)
+            if pin_down:
+                result["pinUnavailable"] = True
         else:
             # Cùng một cách xếp hạng với "Đổi bài" (`rank`): bài máy chọn luôn là bài đầu danh sách gợi ý.
             best = rank(scene, candidates_near, book_key=book_key, family=family, banned=banned,
-                        genre_styles=genre_styles, recent=recent, limit=1)
+                        genre_styles=genre_styles, recent=recent, limit=1, available=available)
+            if pin_down:
+                result["pinUnavailable"] = True
             if best:
                 result.update(link=best[0]["link"], distance=best[0]["score"])
             else:
@@ -154,11 +167,13 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
 
 def rank(scene: dict[str, Any], candidates_near: Callable[[float, float], Iterable[dict[str, Any]]], *, book_key: str,
          family: str | None = None, banned: Iterable[str] = (), genre_styles: dict[str, float] | None = None,
-         recent: list[str] | None = None, exclude: Iterable[str] = (), limit: int = 6) -> list[dict[str, Any]]:
+         recent: list[str] | None = None, exclude: Iterable[str] = (), limit: int = 6,
+         available: Callable[[str], bool] | None = None) -> list[dict[str, Any]]:
     """Các bài thay thế cho MỘT đoạn ("Đổi bài"), tốt nhất trước: cùng bộ lọc và cùng điểm với `choose` (bỏ bài đã bỏ,
     bài quá ngắn, phong cách không hợp thế giới của cuốn; điểm = `score` + hoà điểm theo mã sách) và cùng ngưỡng
     MAX_DISTANCE: bài xa không khí của đoạn thì không gợi ý. `recent`: các bài đã chơi ở mấy đoạn trước; `exclude`: link
-    không đưa ra (bài đang chọn). Mỗi mục: `{...bài, score}`, điểm càng thấp càng hợp."""
+    không đưa ra (bài đang chọn). `available(link)` False (máy này không có và không tải được) thì bỏ như bài đã bỏ.
+    Mỗi mục: `{...bài, score}`, điểm càng thấp càng hợp."""
     banned, exclude = set(banned), set(exclude)
     target = (*target_of(scene), float(scene.get("tension") or 0.0))
     ceiling = MAX_DISTANCE + (FAMILY_PENALTY if family else 0.0)
@@ -168,6 +183,8 @@ def rank(scene: dict[str, Any], candidates_near: Callable[[float, float], Iterab
     for track in candidates_near(target[0], target[1]):
         link = str(track.get("link") or "")
         if not link or link in seen or link in banned or link in exclude:
+            continue
+        if available is not None and not available(link):
             continue
         seen.add(link)
         if int(track.get("duration") or 0) < MIN_TRACK_SECONDS or style_fit(track, genre_styles) <= 0.0:
