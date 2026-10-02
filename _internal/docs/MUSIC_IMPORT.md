@@ -9,8 +9,12 @@ bộ. Giai đoạn B (cuối file): nhập nhạc ngay trên điện thoại, gh
 
 - Thư mục `<dữ liệu app>/music/mine/` (cạnh bộ đệm danh mục, KHÔNG nằm trong sách): `files/<sha1 nội dung>.<đuôi>` và sổ
   `library.json`. Nhập mp3, m4a, ogg, opus, flac, wav; nhập hai lần cùng nội dung (dù tên khác) chỉ giữ một bản.
-- Đọc thẻ (tên bài, nghệ sĩ, album, thể loại) và độ dài bằng ffmpeg đã có sẵn trong app - không thêm thư viện nào (`THIRD_PARTY.md`
-  không đổi). Thẻ Ogg / Opus nằm ở luồng âm thanh, `read_tags` đọc cả hai chỗ. Không có thẻ thì tên bài là tên file.
+- Đọc thẻ (tên bài, nghệ sĩ, album, thể loại) và độ dài bằng ffmpeg - không thêm thư viện nào. Máy chạy từ mã nguồn / máy có Studio
+  đã có sẵn ffmpeg; bản app chỉ-nghe thì KHÔNG: **lần nhập đầu tiên tải "bộ đọc nhạc"** (~30 MB, một lần; `webui/ffmpeg_setup.py`, ghim URL +
+  SHA-256, `THIRD_PARTY.md`). Lúc ấy `POST /api/music/local/import` chưa nhập gì và trả `needsReader`; giao diện hiện "Đang tải bộ
+  đọc nhạc" kèm phần trăm (hỏi `GET /api/music/local` -> `reader` mỗi giây), xong thì tự gửi lại đúng các file ấy; tải hỏng thì nói lý
+  do + "Thử lại" (`POST /api/music/local/reader`). `ABOOK_FFMPEG_DOWNLOAD=0` chặn mọi lần tải. Nền tảng không phải Windows 64-bit: tự cài
+  ffmpeg vào PATH. Thẻ Ogg / Opus nằm ở luồng âm thanh, `read_tags` đọc cả hai chỗ. Không có thẻ thì tên bài là tên file.
 - Độ to đo bằng đúng mã của bài danh mục (`music_plan.measured_lufs`, hai kênh, ghi `<sha1>.lufs2` cạnh file), nên `gainDb` của
   mốc nhạc tính bằng cùng một công thức (`cue_gain_db`) - bài nhập to hay nhỏ đều nằm đúng `levelDb` dưới giọng.
 - File không phải nhạc / đuôi lạ / không thấy / quá 1 GB: bị từ chối kèm lý do bằng tiếng Việt, các file khác trong lượt vẫn vào.
@@ -53,8 +57,8 @@ Nhạc huấn luyện) cắm vào bằng `music_local.set_analyzer(hàm)`; kết
   `ABOOK_MUSIC_STUDENT_DIR` trỏ tới một thư mục gói có sẵn (bài thử, máy không mạng); `ABOOK_MUSIC_STUDENT_DOWNLOAD=0` chặn mọi lần tải.
 - **Đường onnx - chi phí**: bộ cài +~80 MB cài xong (numpy, onnxruntime và ba gói đi kèm; ~17 MB trong bộ cài nén), gói model 59 MB
   tải riêng; một bài ~3 phút ~0,4 giây trên CPU 32 luồng (ffmpeg giải mã 0,2 + mel 0,03 + tháp 0,16), nạp phiên ~0,7 giây. Bản
-  đóng gói hiện CHƯA mang ffmpeg (`imageio-ffmpeg` không nằm trong `requirements.txt`): không có `ffmpeg.exe` trong PATH thì cả
-  việc nhập nhạc (`read_tags`) lẫn phân tích không chạy được.
+  đóng gói không mang ffmpeg (`imageio-ffmpeg` không nằm trong `requirements.txt`): ffmpeg tải ở lần nhập đầu (xem "Kho của máy"),
+  nên bài nhập được rồi mới phân tích được.
 - **Chi phí** của đường torch (CPU máy chủ sách, 16 luồng): nạp gói ~5 giây một lần; một bài ~3 phút ~1,2 giây (lần đầu ~3,8 giây vì numba biên dịch).
   Khớp bản nghiên cứu: đầu trò + âm học trùng V/E/T tới 1e-3 khi nhận đúng vector nhúng của bản nghiên cứu; cả đường chạy của app
   lệch tối đa ~0,05 trên V/E/T vì bản nghiên cứu cắt cửa sổ bằng `ffmpeg -ss` theo độ dài ghi trong đầu file mp3.

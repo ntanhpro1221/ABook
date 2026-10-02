@@ -14,16 +14,31 @@ export interface LocalTrack {
   bytes: number;
 }
 
+/** Bộ đọc nhạc (ffmpeg) của máy tính: bản app chỉ-nghe tải ở lần nhập đầu tiên (abook/webui/ffmpeg_setup.py). */
+export interface MusicReader {
+  state: "idle" | "downloading" | "ready" | "error";
+  done: number;
+  total: number;
+  /** Lý do tải hỏng, tiếng Việt; rỗng nếu không lỗi. */
+  error: string;
+  /** Dùng được ngay (đã tải xong, hay máy có sẵn ffmpeg). */
+  ready: boolean;
+}
+
 export interface LocalMusicView {
   tracks: LocalTrack[];
   /** Đã có bộ phân tích âm thanh trên máy này chưa. */
   analyzer: boolean;
+  /** Máy tính có; điện thoại đọc nhạc ở lõi native nên không có. */
+  reader?: MusicReader;
 }
 
 export interface ImportResult extends LocalMusicView {
   added: LocalTrack[];
   existing: LocalTrack[];
   failed: string[];
+  /** Máy chưa có bộ đọc nhạc: chưa nhập gì, bộ đọc đang được tải - đợi `reader.ready` rồi gửi lại đúng các file ấy. */
+  needsReader?: boolean;
 }
 
 export const LOCAL_PREFIX = "local:";
