@@ -103,6 +103,21 @@ def _no_cast_discovery() -> Iterator[None]:
             os.environ["ABOOK_CAST_DISCOVERY"] = previous
 
 
+@pytest.fixture(autouse=True, scope="session")
+def _no_music_model_download() -> Iterator[None]:
+    """Bộ phân tích nhạc chỉ-nghe (webui/music_student.py) không tải gói model từ Hugging Face trong bài thử: bài cần model
+    trỏ ABOOK_MUSIC_STUDENT_DIR vào gói có sẵn, còn lại thì bài nhập ở trạng thái "chưa phân tích" như máy chưa tải gói."""
+    previous = os.environ.get("ABOOK_MUSIC_STUDENT_DOWNLOAD")
+    os.environ["ABOOK_MUSIC_STUDENT_DOWNLOAD"] = "0"
+    try:
+        yield
+    finally:
+        if previous is None:
+            os.environ.pop("ABOOK_MUSIC_STUDENT_DOWNLOAD", None)
+        else:
+            os.environ["ABOOK_MUSIC_STUDENT_DOWNLOAD"] = previous
+
+
 @pytest.fixture(autouse=True)
 def _count_sleeping(request: pytest.FixtureRequest) -> Iterator[None]:
     """Bọc `time.sleep` để đếm. Vẫn ngủ thật, trừ khi có người bật công tắc đo.
