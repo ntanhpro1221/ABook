@@ -24,6 +24,32 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
 7. **Người vô danh xác định được là MỘT người phải ghi `NPC*:<mô tả>` trong đáp án, cả ở chương kiểm tra**; đám đông
    để `NPC*` trơn. Thiếu mô tả thì F1 giọng không biết hai câu vô danh là một người, và xếp model ngược (mục 29-09 tối).
 
+## 02-10 - So bốn model trên đủ bộ đo: q35-4B v8 giữ phần lớn mức hơn của 9B ở cổng Hàn/Trung, nhanh như 4B
+
+Bốn model, cùng thước (cây mặc định `D:/Novels/ABook`, `gold_person`), đo ở nhà: 4B v8 (`train_lora.py`), Qwen3.5-4B công
+thức v8 (Modal, unsloth), 8B-v5 (Kaggle), 9B-v8 (Modal). Theo trọng số chủ sách (02-10: LN Nhật dịch Việt > Hàn > Trung;
+văn Việt gốc chỉ tham khảo). F1 giọng, thứ tự v8 / q35-4B v8 / 8B-v5 / 9B-v8:
+
+| nhóm | bộ | v8 | q35-4B v8 | 8B-v5 | 9B-v8 |
+|---|---|---|---|---|---|
+| Nhật | LN+LNX 10 chương (866 câu) | 64,8 | 63,4 | 63,3 | 64,4 |
+| Hàn | cổng YMP 248 (ngôi 1) | 77,0 | 86,7 | 84,6 | 92,2 |
+| Hàn | HDST 062+130 (148 câu) | 64,3 | 65,0 | 58,1 | 66,3 |
+| Trung | cổng TMA (4 chương) | 72,1 | 79,5 | 70,7 | 77,8 |
+| Trung | cổng Tam quốc | 83,0 | 88,3 | (đã học) | 91,9 |
+| tham khảo | Tắt đèn | 76,3 | 75,4 | (đã học) | 77,7 |
+| | thời gian LN6 | 1,00x | 1,06x | 1,11x | 1,28x |
+
+Nhật: hiệu với v8 đều trong nhiễu (q35 -1,4 [-5,2; +2,9], 8B -1,5, 9B -0,4). Gộp LN+LNX 12 chương: 64,7 / 63,6 / 62,6 /
+64,7, người nói chặt 66,7 / 67,3 / 66,7 / 64,0. Mức hơn ở YMP (+10..+15) và TMA (+6..+7) lớn hơn mọi dao động đã thấy,
+nhưng mỗi model mới MỘT lượt huấn luyện; Tam quốc của q35 (88,3) chạm mép dải hạt giống v8 (84,3-88,2). TMA của 9B-v8
+ghép hai lượt (351/381 lượt đầu + 363/378 đo lại sau khi bộ giữ êm làm quá giờ; gốc `02-10-9bv8-tmamerged`).
+
+8B dữ liệu sạch BỎ (11-12 giờ GPU không trả lời câu hỏi nào còn mở: 8B thua q35 mọi nơi mà chậm hơn). Việc kế: dải hạt
+giống v8 trên YMP + TMA (ba lượt v8m Modal, đo ở nhà); hạt giống cho q35-4B và 9B cần Modal (Kaggle T4 không chạy được
+Qwen3.5: không bf16, float32 không vừa 16 GB; tín dụng Modal tháng 10 đã hết). Đổi model mặc định = chủ sách quyết sau khi
+có hạt giống.
+
 ## 01-10 16:3x - Qwen3.5-9B Q4 VỪA card 8 GB và nhanh gấp đôi 8B
 
 `vram_probe.py` ở ngữ cảnh 16384, máy đang bận 2,2 GB VRAM (app khác): 8B-v5 Q4 (Qwen3) cần 7,09 GiB, chỉ 83% nằm trên GPU
