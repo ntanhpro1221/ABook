@@ -132,6 +132,8 @@ export interface PeerLibrary {
   key: string;
   name: string;
   host: string;
+  /** Vân tay chứng chỉ TLS thiết bị đã ghi lúc ghép (hex), "" nếu chưa có. */
+  fingerprint?: string;
   books: RemoteBook[];
   /** Thiết bị không trả lời (tắt, khác mạng, chưa bật "Cho máy khác nghe"). */
   error?: string;
@@ -218,7 +220,8 @@ export interface EbookLibraryPlugin {
   bluetoothDevices(): Promise<{ devices: { address: string; name: string; kind: "computer" | "phone"; abook: boolean }[] }>;
   /** Ghép máy tính chính qua Bluetooth - cùng mã 6 số, đi qua đường hầm; sau đó `connection().host` là "bt:<địa chỉ>". */
   pairBluetooth(options: { address: string; code: string; device?: string }): Promise<{ name: string }>;
-  connection(): Promise<{ paired: boolean; host: string; port: number; name: string }>;
+  /** `fingerprint`: vân tay chứng chỉ TLS máy tính đã ghi lúc ghép (hex; Pin.kt) - để đối chiếu, "" nếu chưa có. */
+  connection(): Promise<{ paired: boolean; host: string; port: number; name: string; fingerprint?: string }>;
   unpair(): Promise<void>;
   /** Studio từ xa: mở trang Studio của máy tính đã ghép (StudioActivity.kt, webui/remote_studio.py). */
   openStudio(): Promise<void>;
@@ -238,6 +241,8 @@ export interface EbookLibraryPlugin {
   peerForget(options: { key: string }): Promise<void>;
   peerLibraries(): Promise<{ peers: PeerLibrary[] }>;
   remotePlayers(): Promise<{ players: RemotePlayer[] }>;
+  /** Tìm lại loa / TV ngay (điện thoại tự tìm - PhoneCast); danh sách mới hiện ở lần `remotePlayers` kế. */
+  scanPlayers(): Promise<void>;
   /** "load" mang mã cuốn của điện thoại này - bên native đổi sang mã của máy kia (hoặc từ chối: máy kia không có). */
   remoteCommand(options: { device: string; command: RemotePlayerCommand }): Promise<{ id?: string; ok?: boolean; message?: string }>;
   localBooks(): Promise<{ books: LocalBook[] }>;

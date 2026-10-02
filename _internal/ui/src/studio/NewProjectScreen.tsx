@@ -19,7 +19,7 @@ import {
   Upload,
   Wand2,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { Switch } from "@/desktop/PhoneSync";
@@ -538,28 +538,37 @@ function SourceStep({
             </div>
           )}
           <div className="mt-3 max-h-[340px] overflow-y-auto rounded-xl border border-line bg-panel">
-            {files.map((file, index) => (
-              <div
-                key={file.path}
-                className="group grid grid-cols-[40px_minmax(0,1fr)_90px_36px] items-center gap-2 border-b border-line px-3 py-2 [contain-intrinsic-size:auto_48px] [content-visibility:auto] last:border-b-0"
-              >
-                <span className="tabular text-xs text-fg-2">{index + 1}</span>
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-medium">{file.firstLine || file.title}</div>
-                  <div className="truncate text-xs text-fg-2">{file.name}</div>
-                </div>
-                <span className="tabular text-right text-xs text-fg-2">{formatNumber(file.words)} chữ</span>
-                <button
-                  type="button"
-                  aria-label={`Bỏ chương ${file.name}`}
-                  title="Bỏ chương này"
-                  onClick={() => onRemove(file.path)}
-                  className="grid size-8 place-items-center rounded-md text-fg-2 opacity-0 hover:bg-hover hover:text-danger group-hover:opacity-100 focus-visible:opacity-100 max-md:opacity-100"
-                >
-                  <Trash2 className="size-4" />
-                </button>
-              </div>
-            ))}
+            {files.map((file, index) => {
+              // Chia phần: một vạch "Phần N bắt đầu" trước chương đầu mỗi phần - khỏi phải đối số chương với ô "từ chương" ở trên.
+              const part = splitting && volumeStarts && volumeStarts.length > 1 ? volumeStarts.indexOf(index + 1) : -1;
+              return (
+                <Fragment key={file.path}>
+                  {part >= 0 && (
+                    <div className="flex items-center gap-2 border-b border-accent/30 bg-accent-soft px-3 py-1.5 text-xs font-semibold text-accent-text">
+                      <Layers className="size-3.5 shrink-0" />
+                      <span className="min-w-0 truncate">Phần {part + 1} bắt đầu</span>
+                    </div>
+                  )}
+                  <div className="group grid grid-cols-[40px_minmax(0,1fr)_90px_36px] items-center gap-2 border-b border-line px-3 py-2 [contain-intrinsic-size:auto_48px] [content-visibility:auto] last:border-b-0">
+                    <span className="tabular text-xs text-fg-2">{index + 1}</span>
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-medium">{file.firstLine || file.title}</div>
+                      <div className="truncate text-xs text-fg-2">{file.name}</div>
+                    </div>
+                    <span className="tabular text-right text-xs text-fg-2">{formatNumber(file.words)} chữ</span>
+                    <button
+                      type="button"
+                      aria-label={`Bỏ chương ${file.name}`}
+                      title="Bỏ chương này"
+                      onClick={() => onRemove(file.path)}
+                      className="grid size-8 place-items-center rounded-md text-fg-2 opacity-0 hover:bg-hover hover:text-danger group-hover:opacity-100 focus-visible:opacity-100 max-md:opacity-100"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                  </div>
+                </Fragment>
+              );
+            })}
           </div>
           {scan!.skipped.length > 0 && <p className="mt-2 text-xs text-fg-2">Bỏ qua {scan!.skipped.length} file không phải .txt.</p>}
           {/* EPUB hỏng nằm cạnh EPUB tốt, thư mục có cả TXT lẫn EPUB: không chặn, nhưng nói ra (soát UX 01-10: bị bỏ âm thầm). */}

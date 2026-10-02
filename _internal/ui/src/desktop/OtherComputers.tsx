@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/studio/api";
 import { cn } from "@/shared/cn";
-import { formatRelative } from "@/shared/format";
+import { formatFingerprint, formatRelative } from "@/shared/format";
 import { Button, IconButton, Skeleton } from "@/shared/ui";
 
 // Máy tính khác (webui/remote_books.py): ghép bằng địa chỉ + mã 6 số đang hiện trên máy ấy - đúng mã điện thoại dùng - rồi
@@ -18,6 +18,8 @@ interface Computer {
   port: number;
   lastSeen?: number;
   error?: string;
+  /** Vân tay chứng chỉ TLS máy kia đưa ra lúc ghép (hex) - hiện để đối chiếu với dòng "Vân tay" bên máy kia. */
+  fingerprint?: string;
 }
 
 interface ComputersView {
@@ -86,6 +88,11 @@ export function OtherComputers() {
                     ? computer.error
                     : `${computer.host}:${computer.port}${computer.lastSeen ? ` · thấy ${formatRelative(computer.lastSeen)}` : ""}`}
                 </div>
+                {computer.fingerprint && (
+                  <div className="mt-0.5 break-words text-[11px] text-fg-3">
+                    Vân tay <span className="tabular-nums">{formatFingerprint(computer.fingerprint)}</span>
+                  </div>
+                )}
               </div>
               <IconButton label="Hỏi lại thư viện" icon={RefreshCw} size="sm" disabled={refresh.isPending} onClick={() => refresh.mutate()} />
               <IconButton label={`Thôi ghép ${computer.name}`} icon={Unplug} size="sm" onClick={() => forget.mutate(computer.id)} />
@@ -124,10 +131,7 @@ export function OtherComputers() {
               ))}
             </ul>
           ) : (
-            <p className="text-xs leading-relaxed text-fg-2 text-pretty">
-              Không thấy máy nào. Trên máy kia, bật kết nối trong Cài đặt → Điện thoại và thiết bị; hai máy phải cùng mạng
-              (ở khác nơi thì vào cùng một mạng riêng ảo rồi gõ địa chỉ của máy kia trong mạng ấy).
-            </p>
+            <p className="text-xs text-fg-2">Không thấy máy nào trong mạng này - xem cách ghép bên dưới.</p>
           ))}
       </div>
       <form
@@ -168,9 +172,10 @@ export function OtherComputers() {
         </Button>
       </form>
       <p className="text-xs leading-relaxed text-fg-3">
-        Trên máy kia: Cài đặt → Điện thoại và thiết bị → bật “Cho phép điện thoại kết nối qua Wi-Fi” → “Ghép thiết bị mới”
-        để lấy mã 6 số; địa chỉ máy ấy ghi ở dòng “Trình duyệt” ngay cạnh mã. Điện thoại Android: màn Tải sách → bật “Cho máy khác nghe thư viện này” → “Ghép máy mới”. Máy này tên
-        “{data.name}” trong danh sách thiết bị đã ghép của máy kia.
+        Hai máy phải cùng mạng (ở khác nơi thì vào cùng một mạng riêng ảo rồi gõ địa chỉ của máy kia trong mạng ấy). Trên máy
+        kia: Cài đặt → Điện thoại và thiết bị → bật “Cho phép điện thoại kết nối qua Wi-Fi” → “Ghép thiết bị mới” để lấy mã
+        6 số; địa chỉ máy ấy ghi ở dòng “Trình duyệt” ngay cạnh mã. Điện thoại Android: màn Tải sách → bật “Cho máy khác nghe
+        thư viện này” → “Ghép máy mới”. Máy này tên “{data.name}” trong danh sách thiết bị đã ghép của máy kia.
       </p>
     </div>
   );

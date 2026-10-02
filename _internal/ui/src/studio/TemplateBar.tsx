@@ -1,5 +1,5 @@
 import { BookmarkPlus } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button, Segmented } from "@/shared/ui";
 import { useAppInfo, usePreferences } from "@/studio/data";
@@ -34,6 +34,13 @@ export function TemplateBar({ draft, onPick }: {
   const [name, setName] = useState("");
   const [confirming, setConfirming] = useState(false);
   const [problem, setProblem] = useState("");
+  // Lưu / huỷ xong thì ô tên biến mất và tiêu điểm rơi về đầu trang: trả nó về nút "Lưu thành mẫu…" (soát UX 02-10).
+  const saveButton = useRef<HTMLButtonElement>(null);
+  const wasSaving = useRef(false);
+  useEffect(() => {
+    if (wasSaving.current && !saving) saveButton.current?.focus();
+    wasSaving.current = saving;
+  }, [saving]);
 
   const active = findTemplate(templates, draft.template);
   const modified = active ? isModified(draft, active) : false;
@@ -87,6 +94,7 @@ export function TemplateBar({ draft, onPick }: {
         )}
         {!remote && !saving && (
           <Button
+            ref={saveButton}
             size="sm"
             variant="ghost"
             icon={BookmarkPlus}

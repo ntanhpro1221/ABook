@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
-import { formatLength } from "@/shared/format";
+import { formatFingerprint, formatLength } from "@/shared/format";
 import { Button, EmptyState, Progress } from "@/shared/ui";
 import { useDownloadProgress } from "./downloads";
 import { pickBookFile } from "./imports";
@@ -257,6 +257,17 @@ function StudioAlertsRow() {
 }
 
 /** Lỗi Capacitor mang mã PIN_CHANGED (Pin.CODE): chứng chỉ máy kia đã đổi - `message` là câu bảo ghép lại. */
+/** Vân tay chứng chỉ của máy đã ghép, để so với dòng "Vân tay" bên máy ấy; chưa có thì không hiện gì. */
+function Fingerprint({ value }: { value?: string }) {
+  const shown = formatFingerprint(value);
+  if (!shown) return null;
+  return (
+    <div className="mt-0.5 break-words text-[11px] text-fg-3">
+      Vân tay <span className="tabular-nums">{shown}</span>
+    </div>
+  );
+}
+
 function pinChanged(error: unknown): error is Error {
   return error instanceof Error && (error as Error & { code?: string }).code === "PIN_CHANGED";
 }
@@ -409,6 +420,7 @@ function PeersPanel() {
               <div className={cn("text-xs", peer.error ? "text-danger" : "text-fg-2")}>
                 {peer.pinChanged ? peer.error : peer.error ? "Không kết nối được - máy tắt, khác mạng hay chưa bật cho nghe" : `${peer.books.length} cuốn nghe được`}
               </div>
+              <Fingerprint value={peer.fingerprint} />
             </div>
             <button type="button" onClick={() => void forget(peer.key)} className="text-xs font-medium text-danger">
               Thôi ghép
@@ -579,6 +591,7 @@ export function DevicesScreen() {
                 <div className={cn("text-xs", remote.isError ? "text-danger" : "text-fg-2")}>
                   {remote.isError ? (pinChanged(remote.error) ? remote.error.message : "Không kết nối được - máy tính đang tắt hoặc khác mạng Wi-Fi") : "Đã kết nối"}
                 </div>
+                <Fingerprint value={connection.data.fingerprint} />
               </div>
               <button type="button" aria-label="Làm mới" onClick={() => void remote.refetch()} className="grid size-10 place-items-center rounded-full text-fg-2">
                 <RefreshCw className={cn("size-4", remote.isFetching && "animate-spin")} />

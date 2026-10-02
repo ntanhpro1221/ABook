@@ -122,3 +122,10 @@ export function licenseLabel(code?: string | null, url?: string | null): string 
   if (/^by(-(nc|nd|sa))*$/.test(lower)) return `CC ${lower.toUpperCase()}`;
   return raw;
 }
+
+/** Vân tay chứng chỉ để người dùng nhìn và đối chiếu: nhóm 4 ký tự, hoa - "AB12 CD34 ..." như `tls.display` / `Pin.display`.
+ *  Nhận cả dạng hex lưu sẵn lẫn dạng đã nhóm (chạy lại không đổi); rỗng thì trả rỗng. */
+export function formatFingerprint(value?: string | null): string {
+  const hex = (value ?? "").replace(/\s+/g, "").toUpperCase();
+  return hex.replace(/(.{4})(?=.)/g, "$1 ");
+}

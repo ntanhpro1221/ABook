@@ -112,6 +112,7 @@ object Peers {
         for (key in peers.keys()) {
             val peer = peers.getJSONObject(key)
             val entry = JSONObject().put("key", key).put("name", peer.optString("name")).put("host", peer.optString("host"))
+                .put("fingerprint", peer.optString("fingerprint"))
             try {
                 val reply = JSONObject(request(context, key, "GET", "/sync/v1/library", readTimeoutMs = 8000, connectTimeoutMs = 1500))
                 val books = reply.optJSONArray("books") ?: JSONArray()
