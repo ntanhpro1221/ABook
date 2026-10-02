@@ -1114,6 +1114,31 @@ Thiên lệch biết trước:
 - Trò đạt dưới thước này thì kết luận càng chắc. Trò trượt thì phải đo lại bằng thước nghe L_min trước khi bỏ trò.
 - L_min (Omni-7B-EN) chạy kèm nếu hàng GPU có chỗ. Chỉ báo, không quyết định.
 
+**BỔ SUNG GHI TRƯỚC (03-10 05:2x, SAU khi tính bài chọn, TRƯỚC mọi lượt chấm):**
+
+Đã thấy khi tính bài chọn:
+- Hai bên chọn trùng bài 0/100 đoạn.
+- Trò bị CO so với danh mục. Danh mục V/E/T là hạng đổi ra −1..1. Trên 1.646 bài:
+
+| Trục | sd danh mục | sd trò | r |
+|---|---|---|---|
+| V | 0,46 | 0,33 | 0,90 |
+| E | 0,50 | 0,43 | 0,94 |
+| T | 0,47 | 0,34 | 0,91 |
+
+- Hệ quả trong kho trộn (danh mục + nhạc nhập): bài nhập luôn bị đặt gần giữa.
+
+Thêm điều kiện **TRÒ-q**:
+- Số của trò ánh xạ phân vị về phân bố danh mục, đơn điệu từng trục, 101 mốc.
+- Mốc ghép trên chính dự đoán chéo, không nhìn bài nào được chọn.
+- sd nhân tỉ lệ sd danh mục / sd trò.
+
+Chấm hai loại cặp, cùng người đọc, cùng gói:
+- **thầy–trò:** quyết theo ghi trước ở trên.
+- **thầy–trò-q:** cùng thước p ≥ 0,45, quyết cho ĐỀ XUẤT đưa ánh xạ phân vị vào app (lưu mốc trong đầu trò).
+
+Đoạn hai bên trùng bài thì không chấm, như trên.
+
 **GHI TRƯỚC - TRÒ ĐƯỜNG ONNX cho máy chỉ player + điện thoại (03-10 05:xx, Lead; trước khi làm):**
 
 Bản torch hiện có là CHUẨN. Đường ONNX phải khớp nó, đo trên 20 bài danh mục cố định (20 mã đầu của `embedding_ids.json` có
