@@ -28,7 +28,9 @@ PowerShell: `(Get-CimInstance Win32_OperatingSystem).LastBootUpTime`. Mới hơn
 Luôn thả bằng `Start-Process pythonw scripts/run_detached.py <lệnh>` - gọi `python.exe run_detached.py` từ Bash sẽ CHẶN
 chờ việc con (02-10 làm thả trùng). Dòng lệnh thả không được chứa chữ `gpu_queue_` (làm hàng sau chờ mãi).
 
-1. Người gác pin `scripts/power_guard.py` và bộ giữ êm quạt `runtime/quiet_keeper.py` (venv pythonw).
+1. Người gác pin `runtime/power_guard.py` và bộ giữ êm quạt `runtime/quiet_keeper.py` (venv pythonw).
+   Ollama KHÔNG tự chạy sau reboot: script GPU nào không tự gọi `ollama_up.py` sẽ đứng chờ model -> bật Ollama ẩn bằng
+   `ollama_up.py` (không gọi CLI `ollama`, nó mở app khay) trước khi thả hàng GPU (việc của phiên Model).
 2. Hàng GPU: script hàng đang dở trong scratchpad của phiên / `D:/Novels/LLM_Train` - các script đều bỏ qua phần đã đo,
    thả lại là chạy tiếp. Mọi việc GPU qua MỘT hàng; không sửa script bash đang chạy.
 3. Việc đám mây dở (Modal `finish_one`, Kaggle) - kiểm trạng thái trước, không thả trùng.
