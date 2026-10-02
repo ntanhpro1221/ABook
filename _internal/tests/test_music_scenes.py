@@ -1,7 +1,10 @@
 """Đoạn và không khí của đoạn cho nhạc nền (webui/music_scenes.py): tính từ cảm xúc từng câu, không cần model."""
 from __future__ import annotations
 
-from abook.webui.music_scenes import MAX_SCENE_SECONDS, chapter_scenes, line_point
+import pytest
+
+from abook.webui.music_scenes import (GEMS_POINTS, MAX_SCENE_SECONDS, chapter_scenes, gems_from_point, line_point,
+                                      point_from_gems)
 
 
 def _script(lines: list[tuple[str, str, int, float]], *, timed: bool = True) -> dict:
@@ -83,3 +86,27 @@ def test_a_frightening_scene_is_tense_and_an_excited_one_is_not() -> None:
     afraid = chapter_scenes(_script([("Có tiếng động!", "afraid", 3, 6.0)] * 20))[0]
     excited = chapter_scenes(_script([("Thắng rồi!", "excited", 3, 6.0)] * 20))[0]
     assert afraid["tension"] > 0.5 > excited["tension"]
+
+
+def test_gems_distribution_sums_to_one_and_peaks_at_each_labels_own_point() -> None:
+    assert len(GEMS_POINTS) == 9
+    for label, point in GEMS_POINTS.items():
+        dist = gems_from_point(*point)
+        assert set(dist) == set(GEMS_POINTS)
+        assert abs(sum(dist.values()) - 1.0) < 1e-3
+        assert max(dist, key=dist.get) == label
+
+
+def test_the_point_of_a_one_hot_gems_distribution_is_the_labels_coordinate() -> None:
+    for label, point in GEMS_POINTS.items():
+        assert point_from_gems({label: 1.0}) == pytest.approx(point)
+    assert point_from_gems({}) == (0.0, 0.0, 0.0)
+    assert point_from_gems({"wonder": 0.0}) == (0.0, 0.0, 0.0)
+
+
+def test_every_scene_carries_a_gems_distribution() -> None:
+    scenes = chapter_scenes(_script(_calm(30) + _battle(36)))
+    for scene in scenes:
+        assert len(scene["gems"]) == 9 and abs(sum(scene["gems"].values()) - 1.0) < 1e-3
+    assert scenes[0]["gems"]["tension"] < 0.05 < scenes[0]["gems"]["transcendence"]
+    assert max(scenes[-1]["gems"], key=scenes[-1]["gems"].get) == "tension"
