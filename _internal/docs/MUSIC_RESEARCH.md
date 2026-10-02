@@ -195,6 +195,25 @@ cách chính = `ens:qwen3.5:9b#v3|tile:bge-m3:1` (TextTiling bge-m3 c = 1, khôn
 V/E/T theo thời gian, P/R ranh giới dung sai 20 giây, đoạn/giờ; Pk phụ. Cách chính thắng nếu r trung bình ba trục hơn
 `hard` và `tile:bge-m3:1` mà P ranh giới không thấp hơn `fixed3`.
 
+**KẾT QUẢ BỘ KIỂM THỨ HAI (02-10 08:0x; Tam quốc 052, Nageki 62, Two Childhood Friends 060; đồng thuận Pk 0,21, r
+0,63/0,74/0,63) - cách ghi trước THUA:**
+
+| cách | P / R ranh giới | đoạn/giờ (gold 32) | r V / E / T |
+|---|---|---|---|
+| hard (= app) | 0,50 / 0,09 | 8 | 0,15 / 0,19 / 0,08 |
+| **cắt đều 3 phút + nhãn câu** | 0,25 / 0,18 | 23 | **0,39 / 0,26 / 0,50** |
+| TextTiling + nhãn câu | 0,14 / 0,18 | 26 | 0,35 / 0,09 / 0,37 |
+| ghi trước: TextTiling + trung bình nhãn câu và LLM | 0,14 / 0,18 | 26 | 0,23 / 0,19 / 0,33 |
+
+**Điều đứng vững qua cả ba bộ:** chia chương thành khúc ~2-3 phút làm nhạc bám không khí hơn hẳn một bài cả chương (bộ kiểm 1:
+r V 0,43 -> 0,76; bộ kiểm 2: 0,15 -> 0,39; T 0,29 -> 0,58 và 0,08 -> 0,50). TextTiling KHÔNG ổn định (bộ phát triển và bộ kiểm
+1 hơn cắt đều về P ranh giới, bộ kiểm 2 kém). LLM chỉ giúp ở truyện văn kể (Tam quốc, Tắt đèn), không giúp ở LN hài. Nhãn cảm
+xúc từng câu (app có sẵn, không cần model thêm) là nguồn không khí ổn định nhất.
+**Hệ quả cho app (đường cơ sở mới, chưa phải đích):** `music_scenes` hiện KHÔNG BAO GIỜ cắt trong chương (ngưỡng đổi không
+khí 0,5 quá cao) -> đổi sang trần độ dài đoạn ~3 phút, không khí từ nhãn câu. Hướng còn mở: chọn CHỖ cắt tốt hơn cắt đều
+(ranh giới cứng + đổi không khí cục bộ trong cửa sổ quanh mốc 3 phút), cần bộ kiểm thứ ba (thể loại mới: tiên hiệp, ngôn tình
+Việt) trước khi tin.
+
 ## Pha 3 - ghép đoạn với nhạc
 
 Ứng viên: (1) gần nhất trên hai trục (đường cơ sở); (2) truy hồi chữ-nhạc: model đọc hiểu viết mô tả nhạc cho đoạn ("tiếng
