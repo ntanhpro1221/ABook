@@ -103,7 +103,7 @@ def test_one_click_startup_contract() -> None:
     assert "revision='$Wav2Vec2Revision'" in setup
     assert "revision='$TimmBackboneRevision'" in setup
     assert '$AppName = "ABook"' in shortcut
-    assert '$LegacyNames = @("Ebook Reader")' in shortcut and "Remove-LegacyShortcut" in shortcut
+    assert "Legacy" not in shortcut, "app chưa phát hành cho ai: không còn gỡ lối tắt tên cũ"
     assert '$Launcher = Join-Path $ProjectRoot "_internal\\ABook.vbs"' in shortcut
     assert '$RootShortcutPath = Join-Path $ProjectRoot "$AppName.lnk"' in shortcut
     assert '$StartMenuShortcutPath = Join-Path $ProgramsRoot "$AppName.lnk"' in shortcut

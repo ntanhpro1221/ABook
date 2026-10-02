@@ -6,8 +6,6 @@ param(
 $ErrorActionPreference = "Stop"
 
 $AppName = "ABook"
-# Tên cũ của app (trước 27-09): lối tắt mang tên này mà trỏ đúng trình khởi động dưới đây thì gỡ, để không còn hai mục.
-$LegacyNames = @("Ebook Reader")
 $Launcher = Join-Path $ProjectRoot "_internal\ABook.vbs"
 $Icon = Join-Path $ProjectRoot "_internal\abook\assets\app.ico"
 $ProgramsRoot = [Environment]::GetFolderPath([Environment+SpecialFolder]::Programs)
@@ -43,15 +41,6 @@ function Set-AppShortcut([string]$ShortcutPath) {
         $Shortcut.IconLocation = $IconLocation
         $Shortcut.Description = $AppName
         $Shortcut.Save()
-    }
-}
-
-function Remove-LegacyShortcut([string]$ShortcutPath) {
-    if (-not (Test-Path -LiteralPath $ShortcutPath -PathType Leaf)) {
-        return
-    }
-    if ($Shell.CreateShortcut($ShortcutPath).TargetPath -eq $Launcher) {
-        Remove-Item -LiteralPath $ShortcutPath -Force
     }
 }
 
@@ -119,10 +108,6 @@ public static class ABookShortcutIdentity {
 
 Set-AppShortcut $RootShortcutPath
 Set-AppShortcut $StartMenuShortcutPath
-foreach ($LegacyName in $LegacyNames) {
-    Remove-LegacyShortcut (Join-Path $ProjectRoot "$LegacyName.lnk")
-    Remove-LegacyShortcut (Join-Path $ProgramsRoot "$LegacyName.lnk")
-}
 # Only the Start Menu entry: Windows resolves the ID there, and the root shortcut is a tracked file in the repo.
 Set-ShortcutAppId $StartMenuShortcutPath
 Write-Output $RootShortcutPath, $StartMenuShortcutPath

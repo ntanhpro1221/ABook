@@ -9,8 +9,7 @@ Windows qua link `#/book/<mã>`, ảnh chụp màn hình, nghe từ xa (docs/BOO
 (`Library.resolve`, `canonical`) - link cũ, điện thoại chưa đổi khoá; dữ liệu lưu theo mã cũ được đổi khoá một lần lúc
 mở app (`legacy_ids`, server.App).
 
-Tuỳ chọn và vị trí nghe dở lưu ở `%LOCALAPPDATA%/ABook/preferences.json` - ghi atomic. (Tên cũ của thư mục là
-"Ebook Reader": lần đầu mở với tên mới, các file của app được chuyển sang - `preferences_path`.)
+Tuỳ chọn và vị trí nghe dở lưu ở `%LOCALAPPDATA%/ABook/preferences.json` - ghi atomic.
 """
 from __future__ import annotations
 
@@ -57,9 +56,6 @@ MAX_RECENTS = 30
 
 
 APP_DATA_FOLDER = "ABook"
-LEGACY_APP_DATA_FOLDERS = ("Ebook Reader",)
-# File của app nằm cạnh preferences.json (tuỳ chọn, dữ liệu nghe, máy đã ghép, phán quyết nghe lại, dấu vân tay audio).
-APP_DATA_FILES = ("preferences.json", "listening.json", "devices.json", "reviews.json", "fingerprints.json")
 
 
 def preferences_path() -> Path:
@@ -69,30 +65,7 @@ def preferences_path() -> Path:
     base = os.environ.get("LOCALAPPDATA")
     if not base:
         return Path.home() / ".abook" / "preferences.json"
-    root = Path(base) / APP_DATA_FOLDER
-    _move_legacy_app_data(Path(base), root)
-    return root / "preferences.json"
-
-
-def _move_legacy_app_data(base: Path, root: Path) -> None:
-    """Thư mục dữ liệu mang tên cũ của app: chuyển các file của app sang thư mục tên mới, một lần - khi thư mục mới
-    chưa có tuỳ chọn nào. Chỉ chuyển file của app (không đụng bộ nhớ đệm của trình duyệt nhúng)."""
-    if (root / "preferences.json").exists():
-        return
-    for name in LEGACY_APP_DATA_FOLDERS:
-        legacy = base / name
-        files = [legacy / file for file in APP_DATA_FILES if (legacy / file).is_file()]
-        if not files:
-            continue
-        root.mkdir(parents=True, exist_ok=True)
-        for file in files:
-            if (root / file.name).exists():
-                continue  # thư mục mới đã có bản của nó: không đè
-            try:
-                os.replace(file, root / file.name)
-            except OSError:
-                continue  # file đang bị giữ: lần sau thử lại, app vẫn mở với tuỳ chọn mặc định
-        return
+    return Path(base) / APP_DATA_FOLDER / "preferences.json"
 
 
 def _legacy_output_folder() -> str:
