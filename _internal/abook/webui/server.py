@@ -296,6 +296,7 @@ class App:
             with projectfile.ProjectFile(path) as opened:
                 target, report = opened.open_into(self.library.root)
                 missing = len(opened.missing_sources)
+                opened.copy_music(self.music_dir / "files")  # nhạc nền đi cùng gói: không phải tải lại
         except projectfile.ProjectFileError as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
         self.library.preferences.add_recent(target)
@@ -1783,7 +1784,7 @@ class Handler(BaseHTTPRequestHandler):
         title = store.summarize(project)["title"] or project.name
         try:
             path = projectfile.pack(project, root / projectfile.default_name(title),
-                                    running=self.app.runner.running(project))
+                                    running=self.app.runner.running(project), music_track=self.app.music_track_for_export)
             with projectfile.ProjectFile(path) as packed:
                 missing = packed.missing_sources
         except projectfile.ProjectFileError as error:

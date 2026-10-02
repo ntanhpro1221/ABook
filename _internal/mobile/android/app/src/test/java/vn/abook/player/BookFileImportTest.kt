@@ -192,4 +192,168 @@ class BookFileImportTest {
         assertTrue(message, "không đủ chỗ" in message && "cần khoảng" in message && "còn" in message)
         assertTrue("chưa chép gì vào thư viện", File(root, "books").listFiles().orEmpty().isEmpty())
     }
+
+    // ---- file dự án .abookproj: điện thoại chỉ nhập phần nghe -------------------------------------------------------
+
+    private val chapterEntry = "project/output/chapters/00001_645.mp3"
+    private val musicEntry = "music/" + "a".repeat(40) + ".mp3"
+
+    /**
+     * Dựng một file .abookproj: `junk` là phần của xưởng (sổ dự án, bản thu từng câu, nguồn chương); phần nghe là
+     * `listening` - book.json kể đúng các mục ấy trong `package.files`, như projectfile.pack.
+     */
+    private fun abookproj(
+        name: String = "du_an.abookproj",
+        projectVersion: Int = 2,
+        listening: Map<String, ByteArray> = mapOf(
+            chapterEntry to "ID3-chuong-mot".toByteArray(),
+            "cast.json" to "{}".toByteArray(),
+            "scripts/1.json" to "{}".toByteArray(),
+            musicEntry to "ID3-nhac".toByteArray(),
+        ),
+        junk: Map<String, ByteArray> = mapOf(
+            "project/project.sqlite3" to ByteArray(300_000) { 7 },
+            "project/book_settings.json" to "{}".toByteArray(),
+            "project/work/s3.wav" to ByteArray(200_000) { 3 },
+            "sources/00001_645.txt" to "Chương 645".toByteArray(),
+        ),
+        book: JSONObject? = null,
+        withBook: Boolean = true,
+    ): File {
+        val files = JSONObject()
+        for ((entry, bytes) in listening) files.put(entry, JSONObject().put("size", bytes.size).put("sha256", sha256(bytes)))
+        val manifest = book ?: JSONObject().put("title", "Dự án thử").put("chaptersAvailable", 1).put("chaptersTotal", 2)
+            .put("chapters", JSONArray().put(chapter(1, 0, chapterEntry).also { it.remove("part") })
+                .put(JSONObject().put("id", 2).put("available", false).put("file", JSONObject.NULL)))
+        manifest.put("package", JSONObject().put("format", "abook").put("version", 1).put("files", files))
+        val target = File(work, name)
+        ZipOutputStream(target.outputStream()).use { zip ->
+            fun put(entry: String, bytes: ByteArray, stored: Boolean) {
+                val item = ZipEntry(entry)
+                if (stored) {
+                    item.method = ZipEntry.STORED
+                    item.size = bytes.size.toLong()
+                    item.compressedSize = bytes.size.toLong()
+                    item.crc = CRC32().also { it.update(bytes) }.value
+                }
+                zip.putNextEntry(item)
+                zip.write(bytes)
+                zip.closeEntry()
+            }
+            put("mimetype", BookFileImport.PROJECT_MIMETYPE.toByteArray(), stored = true)
+            put("project.json", JSONObject().put("format", "abookproj").put("version", projectVersion).toString().toByteArray(), false)
+            if (withBook) put("book.json", manifest.toString().toByteArray(), stored = false)
+            for ((entry, bytes) in listening + junk) put(entry, bytes, stored = true)
+        }
+        return target
+    }
+
+    private fun filesUnder(dir: File): Set<String> =
+        dir.walkTopDown().filter { it.isFile }.map { it.relativeTo(dir).path.replace('\\', '/') }.toSet()
+
+    @Test
+    fun a_project_file_imports_only_its_listening_layer() {
+        val imported = BookFileImport.importFile(abookproj())
+
+        assertEquals("Dự án thử", imported.title)
+        val dir = Store.bookDir(imported.id)
+        assertEquals(
+            setOf("book.json", "cast.json", "scripts/1.json", "chapters/00001_645.mp3", musicEntry),
+            filesUnder(dir),
+        )
+        assertEquals("ID3-chuong-mot", File(dir, "chapters/00001_645.mp3").readText())
+        assertFalse("không có sổ dự án", File(dir, "project").exists())
+        assertFalse("không có nguồn chương", File(dir, "sources").exists())
+        assertTrue(Store.importedBooks().contains(imported.id))
+    }
+
+    @Test
+    fun a_project_files_chapters_become_ordinary_imported_chapters() {
+        val imported = BookFileImport.importFile(abookproj())
+
+        val book = Store.manifest(imported.id)!!
+        assertEquals(imported.id, book.getString("id"))
+        assertEquals("chapters/00001_645.mp3", LibraryTree.chapters(book)[0].file)
+        assertTrue(Store.file(imported.id, "chapters/00001_645.mp3").isFile)
+        val files = book.getJSONObject("package").getJSONObject("files")
+        assertTrue("khoá của package.files đổi theo", files.has("chapters/00001_645.mp3") && !files.has(chapterEntry))
+        assertEquals(setOf("chapters/00001_645.mp3"), Store.chapterPrints(imported.id).keys().asSequence().toSet())
+    }
+
+    @Test
+    fun a_project_file_and_a_book_file_of_the_same_chapters_are_one_book() {
+        val audio = "ID3-chuong-mot".toByteArray()
+        val flat = abook("sach.abook", 1, mapOf("chapters/00001_645.mp3" to audio),
+            JSONObject().put("title", "Dự án thử").put("chaptersAvailable", 1)
+                .put("chapters", JSONArray().put(chapter(1, 0, "chapters/00001_645.mp3").also { it.remove("part") })))
+        val first = BookFileImport.importFile(flat)
+        val again = BookFileImport.importFile(abookproj())
+
+        assertEquals("cùng một lần sản xuất: nhập vào đúng cuốn đã có", first.id, again.id)
+        assertEquals(1, File(root, "books").listFiles()!!.count { it.isDirectory && !it.name.startsWith(".") })
+        assertTrue(File(root, "books/${first.id}/cast.json").isFile)
+    }
+
+    @Test
+    fun a_project_file_newer_than_the_app_asks_to_update_and_copies_nothing() {
+        val message = refusal { BookFileImport.importFile(abookproj("moi.abookproj", projectVersion = 3)) }
+        assertTrue(message, "Hãy cập nhật app" in message)
+        assertTrue(File(root, "books").listFiles().orEmpty().isEmpty())
+    }
+
+    @Test
+    fun a_project_without_a_finished_chapter_says_so() {
+        val message = refusal { BookFileImport.importFile(abookproj("trong.abookproj", listening = emptyMap(), withBook = false)) }
+        assertTrue(message, "chưa có chương nào nghe được" in message)
+    }
+
+    @Test
+    fun the_room_check_counts_the_listening_layer_not_the_whole_project() {
+        val listeningBytes = "ID3-chuong-mot".length + 2 + 2 + "ID3-nhac".length  // chương + cast + script + nhạc
+        val whole = abookproj()
+        assertTrue("gói lớn hơn phần nghe rất nhiều", whole.length() > 500_000)
+        val margin = 64L shl 20
+        val message = refusal { BookFileImport.importFile(whole) { margin + listeningBytes - 1 } }
+        assertTrue(message, "không đủ chỗ" in message)
+        assertTrue(File(root, "books").listFiles().orEmpty().isEmpty())
+        // Đủ chỗ cho phần nghe là nhập được, dù không đủ chỗ cho cả gói.
+        val imported = BookFileImport.importFile(whole) { margin + listeningBytes + 1 }
+        assertTrue(File(Store.bookDir(imported.id), "chapters/00001_645.mp3").isFile)
+    }
+
+    @Test
+    fun a_project_chapter_that_points_outside_the_listening_layer_is_refused() {
+        val book = JSONObject().put("title", "X").put("chaptersAvailable", 1)
+            .put("chapters", JSONArray().put(chapter(1, 0, "project/output/chapters/khong_co.mp3").also { it.remove("part") }))
+        val message = refusal { BookFileImport.importFile(abookproj("la.abookproj", book = book)) }
+        assertTrue(message, "thiếu audio" in message)
+        assertTrue(File(root, "books").listFiles().orEmpty().none { it.isDirectory })
+    }
+
+    @Test
+    fun a_damaged_project_chapter_is_refused_and_leaves_no_half_book() {
+        val good = abookproj()
+        val broken = File(work, "hong.abookproj")
+        java.util.zip.ZipFile(good).use { zip ->
+            ZipOutputStream(broken.outputStream()).use { out ->
+                for (entry in zip.entries().toList()) {
+                    var bytes = zip.getInputStream(entry).use { it.readBytes() }
+                    if (entry.name == chapterEntry) bytes = "ID3-chuong-xxx".toByteArray()
+                    val item = ZipEntry(entry.name)
+                    if (entry.method == ZipEntry.STORED) {
+                        item.method = ZipEntry.STORED
+                        item.size = bytes.size.toLong()
+                        item.compressedSize = bytes.size.toLong()
+                        item.crc = CRC32().also { it.update(bytes) }.value
+                    }
+                    out.putNextEntry(item)
+                    out.write(bytes)
+                    out.closeEntry()
+                }
+            }
+        }
+        val message = refusal { BookFileImport.importFile(broken) }
+        assertTrue(message, "hỏng" in message)
+        assertTrue(File(root, "books").listFiles().orEmpty().none { it.isDirectory })
+    }
 }

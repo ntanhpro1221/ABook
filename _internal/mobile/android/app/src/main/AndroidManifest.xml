@@ -23,7 +23,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- File sách .abook (webui/bookfile.py, BookFileImport.kt): mở từ trình quản lý file, trình duyệt, Drive.
+            <!-- File sách .abook (webui/bookfile.py, BookFileImport.kt) và file dự án .abookproj (webui/projectfile.py - điện
+                 thoại chỉ nhập phần nghe của nó): mở từ trình quản lý file, trình duyệt, Drive.
                  Nơi gửi biết loại riêng của ta thì khớp bộ lọc đầu; không biết (đuôi lạ -> octet-stream/zip) thì khớp
                  theo đuôi file ở bộ lọc sau. Không nhận "*/*": app không chen vào mọi lệnh "Mở bằng". -->
             <intent-filter>
@@ -33,6 +34,7 @@
                 <data android:scheme="content" />
                 <data android:scheme="file" />
                 <data android:mimeType="application/vnd.ngdtuanh.abook+zip" />
+                <data android:mimeType="application/vnd.ngdtuanh.abookproj+zip" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -46,12 +48,16 @@
                 <data android:pathPattern=".*\\.abook" />
                 <data android:pathPattern=".*\\..*\\.abook" />
                 <data android:pathPattern=".*\\..*\\..*\\.abook" />
+                <data android:pathPattern=".*\\.abookproj" />
+                <data android:pathPattern=".*\\..*\\.abookproj" />
+                <data android:pathPattern=".*\\..*\\..*\\.abookproj" />
             </intent-filter>
             <!-- Chia sẻ một file sách tới app (Zalo, Telegram, email). -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="application/vnd.ngdtuanh.abook+zip" />
+                <data android:mimeType="application/vnd.ngdtuanh.abookproj+zip" />
             </intent-filter>
 
         </activity>
