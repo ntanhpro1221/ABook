@@ -1,10 +1,12 @@
 """Đoạn và không khí của đoạn cho nhạc nền (webui/music_scenes.py): tính từ cảm xúc từng câu, không cần model."""
 from __future__ import annotations
 
+import math
+
 import pytest
 
-from abook.webui.music_scenes import (GEMS_POINTS, MAX_SCENE_SECONDS, chapter_scenes, gems_from_point, line_point,
-                                      point_from_gems)
+from abook.webui.music_scenes import (EMOTION_CLASSES, EMOTION_SCALE, LINE_EMOTIONS, MAX_SCENE_SECONDS, chapter_scenes,
+                                      line_emotions, line_point, line_tension)
 
 
 def _script(lines: list[tuple[str, str, int, float]], *, timed: bool = True) -> dict:
@@ -88,25 +90,72 @@ def test_a_frightening_scene_is_tense_and_an_excited_one_is_not() -> None:
     assert afraid["tension"] > 0.5 > excited["tension"]
 
 
-def test_gems_distribution_sums_to_one_and_peaks_at_each_labels_own_point() -> None:
-    assert len(GEMS_POINTS) == 9
-    for label, point in GEMS_POINTS.items():
-        dist = gems_from_point(*point)
-        assert set(dist) == set(GEMS_POINTS)
-        assert abs(sum(dist.values()) - 1.0) < 1e-3
-        assert max(dist, key=dist.get) == label
+def test_scene_sd_is_the_weighted_spread_of_its_lines_and_merge_adds_up() -> None:
+    from abook.webui.music_scenes import _Accumulator
+
+    lines = [({"emotion": "happy", "intensity": 3}, 5.0), ({"emotion": "sad", "intensity": 3}, 3.0),
+             ({"emotion": "neutral", "intensity": 0}, 8.0), ({"emotion": "afraid", "intensity": 2}, 4.0)]
+    whole = _Accumulator()
+    for segment, seconds in lines:
+        whole.add_line(segment, seconds)
+    # Tính tay theo định nghĩa: trọng số = trọng số câu x giây.
+    rows = [(line_point(segment), line_tension(segment), seconds) for segment, seconds in lines]
+    for axis, pick in (("valence", lambda r: r[0][0]), ("arousal", lambda r: r[0][1]), ("tension", lambda r: r[1])):
+        w = [r[0][2] * r[2] for r in rows]
+        mean = sum(wi * pick(r) for wi, r in zip(w, rows)) / sum(w)
+        var = sum(wi * (pick(r) - mean) ** 2 for wi, r in zip(w, rows)) / sum(w)
+        assert whole.sd()[axis] == pytest.approx(var ** 0.5)
+    left, right = _Accumulator(), _Accumulator()
+    for segment, seconds in lines[:2]:
+        left.add_line(segment, seconds)
+    for segment, seconds in lines[2:]:
+        right.add_line(segment, seconds)
+    left.merge(right)
+    assert left.sd() == pytest.approx(whole.sd()) and left.point() == pytest.approx(whole.point())
+    assert left.emotion_intensities() == pytest.approx(whole.emotion_intensities())
+    assert _Accumulator().sd() == {"valence": 0.0, "arousal": 0.0, "tension": 0.0}
 
 
-def test_the_point_of_a_one_hot_gems_distribution_is_the_labels_coordinate() -> None:
-    for label, point in GEMS_POINTS.items():
-        assert point_from_gems({label: 1.0}) == pytest.approx(point)
-    assert point_from_gems({}) == (0.0, 0.0, 0.0)
-    assert point_from_gems({"wonder": 0.0}) == (0.0, 0.0, 0.0)
+def test_every_scene_carries_sd_and_a_mixed_scene_spreads_more_than_a_uniform_one() -> None:
+    uniform = chapter_scenes(_script([("Có tiếng động!", "afraid", 3, 6.0)] * 20))[0]
+    mixed = chapter_scenes(_script([("Có tiếng động!", "afraid", 3, 6.0), ("Thắng rồi!", "happy", 3, 6.0)] * 10))[0]
+    assert set(uniform["sd"]) == {"valence", "arousal", "tension"}
+    assert all(value == pytest.approx(0.0, abs=1e-9) for value in uniform["sd"].values())
+    assert mixed["sd"]["valence"] > 0.5 and mixed["sd"]["tension"] > 0.5 and mixed["sd"]["arousal"] > 0.05
 
 
-def test_every_scene_carries_a_gems_distribution() -> None:
-    scenes = chapter_scenes(_script(_calm(30) + _battle(36)))
-    for scene in scenes:
-        assert len(scene["gems"]) == 9 and abs(sum(scene["gems"].values()) - 1.0) < 1e-3
-    assert scenes[0]["gems"]["tension"] < 0.05 < scenes[0]["gems"]["transcendence"]
-    assert max(scenes[-1]["gems"], key=scenes[-1]["gems"].get) == "tension"
+def test_the_sd_of_split_pieces_is_computed_from_each_piece_not_the_whole() -> None:
+    pieces = chapter_scenes(_script(_calm(100)))  # cùng không khí, chia thành các khúc ~3 phút
+    assert len(pieces) == 4
+    assert all(0.0 < piece["sd"]["valence"] < 0.35 for piece in pieces), "mỗi khúc có sd riêng (chỉ còn câu êm / trung tính)"
+
+
+def test_a_scene_has_thirteen_independent_emotion_intensities() -> None:
+    scene = chapter_scenes(_script([("Có tiếng động!", "afraid", 3, 6.0)] * 20))[0]
+    assert tuple(scene["emotions"]) == EMOTION_CLASSES and len(EMOTION_CLASSES) == 13
+    assert all(0.0 <= value <= 1.0 for value in scene["emotions"].values())
+    # `afraid` góp fear 1,0 và tension 0,6: cả hai cùng cao, tổng vượt 1 (không ép thành phân phối).
+    assert scene["emotions"]["fear"] == pytest.approx(round(1 - math.exp(-1.0 / EMOTION_SCALE), 3))
+    assert scene["emotions"]["tension"] == pytest.approx(round(1 - math.exp(-0.6 / EMOTION_SCALE), 3))
+    assert scene["emotions"]["fear"] + scene["emotions"]["tension"] > 1.5
+    assert scene["emotions"]["joy"] == 0.0 and scene["emotions"]["moved"] == 0.0
+    assert "gems" not in scene
+
+
+def test_emotion_intensity_follows_label_strength_and_share_of_the_scene() -> None:
+    soft = chapter_scenes(_script([("Có tiếng động!", "afraid", 0, 6.0)] * 20))[0]["emotions"]["fear"]
+    strong = chapter_scenes(_script([("Có tiếng động!", "afraid", 3, 6.0)] * 20))[0]["emotions"]["fear"]
+    assert soft == pytest.approx(round(1 - math.exp(-0.4 / EMOTION_SCALE), 3)) and soft < strong
+    half = chapter_scenes(_script([("Có tiếng động!", "afraid", 3, 6.0), ("Gió thổi.", "neutral", 0, 6.0)] * 10))[0]
+    assert half["emotions"]["fear"] == pytest.approx(round(1 - math.exp(-0.5 / EMOTION_SCALE), 3))
+    blend = chapter_scenes(_script([("Buồn quá.", "sad", 3, 6.0), ("Ấm áp.", "tender", 3, 6.0)] * 10))[0]["emotions"]
+    assert blend["sadness"] > 0.5 and blend["tenderness"] > 0.5, "buồn mà ấm giữ được cả hai"
+
+
+def test_the_label_mapping_only_names_real_classes_and_known_labels() -> None:
+    from abook.webui.music_scenes import EMOTION_VA
+
+    assert set(LINE_EMOTIONS) == set(EMOTION_VA)
+    assert all(name in EMOTION_CLASSES for mapping in LINE_EMOTIONS.values() for name in mapping)
+    assert line_emotions({"emotion": "excited", "intensity": 3}) == {"joy": 0.6, "power": 0.6}
+    assert line_emotions({"emotion": "no_such_label", "intensity": 1}) == {}
