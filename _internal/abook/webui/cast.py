@@ -6,6 +6,9 @@ Máy tính là bộ não, thiết bị chỉ phát một file: tìm thiết bị
 giây đang ở đâu để lưu chỗ nghe và tự sang chương sau khi hết chương. Thiết bị tự tải audio qua một cổng riêng
 (`CastMedia`) chỉ phục vụ đúng file đã đưa, dưới một mã ngẫu nhiên 128 bit: loa, TV không ghép mã 6 số như điện thoại.
 
+Mỗi giao thức một "backend" (`Backend`): DLNA ở đây, Google Cast (Chromecast, Google TV, loa Nest) ở `gcast.py`. Phiên phát,
+vòng hỏi mỗi giây, lưu chỗ nghe, sang chương, nhận ra bị chiếm máy đều chung - backend chỉ nói chuyện với một thiết bị.
+
 Trong `/api/remote` mỗi thiết bị là một "máy" như điện thoại (`via` cast, `kind` speaker | tv): thanh "Đang phát trên…",
 nút "Phát trên…" và "Nghe trên máy này" dùng chung đường với điện thoại và máy đã ghép (server.remote_view/remote_send).
 
@@ -32,7 +35,7 @@ from dataclasses import dataclass
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 from xml.etree import ElementTree
 from xml.sax.saxutils import escape
 
@@ -88,12 +91,14 @@ class Renderer:
     id: str  # 12 hex, ổn định theo UDN - nằm trong đường /api/remote/<id> như mã điện thoại
     name: str
     kind: str  # "tv" | "media" (máy tính bật trình phát nhận lệnh từ xa) | "speaker" - chỉ để chọn biểu tượng
-    host: str  # địa chỉ IP đã trả lời SSDP; mô tả và lệnh chỉ đi tới đây
-    location: str
-    av_url: str
-    av_type: str  # serviceType đầy đủ (có số phiên bản) - SOAPACTION phải khớp đúng
+    host: str  # địa chỉ IP đã trả lời SSDP / mDNS; mô tả và lệnh chỉ đi tới đây
+    location: str = ""
+    av_url: str = ""
+    av_type: str = ""  # serviceType đầy đủ (có số phiên bản) - SOAPACTION phải khớp đúng
     rc_url: str = ""
     rc_type: str = ""
+    protocol: str = "dlna"  # "dlna" | "gcast" (Google Cast, gcast.py): chọn backend
+    port: int = 0  # cổng điều khiển (Cast: cổng SRV, thường 8009); DLNA đi theo av_url
 
 
 def _clean(value: Any, limit: int = 120) -> str:
@@ -191,27 +196,28 @@ def _location(data: bytes) -> str:
     return headers.get("location", "")[:500]
 
 
-def search(timeout: float = 2.0, *, addresses: Iterable[str] | None = None,
-           targets: Iterable[tuple[str, int]] = ()) -> list[tuple[str, str]]:
-    """M-SEARCH tìm thiết bị phát ra từng card mạng (multicast, gửi hai lần - UDP trên Wi-Fi hay rơi) và thẳng tới
-    `targets` (bài thử, thiết bị giả); gom trả lời trong `timeout` giây -> [(LOCATION, địa chỉ đã trả lời)]."""
+def probe(message: bytes, group: tuple[str, int], timeout: float, accept: Callable[[bytes, str], list[tuple[Any, Any]]],
+          *, addresses: Iterable[str] | None = None, targets: Iterable[tuple[str, int]] = (),
+          ttl: int = 2) -> list[tuple[Any, Any]]:
+    """Gửi `message` (UDP) tới nhóm multicast `group` ra từng card mạng (hai lần - UDP trên Wi-Fi hay rơi) và thẳng tới
+    `targets` (bài thử, thiết bị giả); gom trả lời trong `timeout` giây. `accept(dữ liệu, địa chỉ đã trả lời)` -> các cặp
+    (khoá, giá trị); khoá trùng thì giữ lần đầu. Dùng chung cho SSDP (DLNA) ở đây và mDNS (Google Cast, gcast.py)."""
     if addresses is None:
         from .sync import local_addresses
 
         addresses = [address for address in local_addresses() if _lan(address)]
-    message = _search_message(max(1, int(timeout)))
     sockets: list[socket.socket] = []
     sends: list[tuple[socket.socket, tuple[str, int]]] = []
     for address in addresses:
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-            sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
+            sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
             sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF, socket.inet_aton(address))
             sock.bind((address, 0))
         except OSError:
             continue
         sockets.append(sock)
-        sends.append((sock, SSDP_GROUP))
+        sends.append((sock, group))
     targets = list(targets)
     if targets:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
@@ -219,7 +225,7 @@ def search(timeout: float = 2.0, *, addresses: Iterable[str] | None = None,
         sock.bind(("127.0.0.1" if loopback else "0.0.0.0", 0))
         sockets.append(sock)
         sends.extend((sock, target) for target in targets)
-    found: dict[str, str] = {}
+    found: dict[Any, Any] = {}
     try:
         start = time.monotonic()
         rounds = [start, start + min(0.6, timeout / 3)]
@@ -242,13 +248,23 @@ def search(timeout: float = 2.0, *, addresses: Iterable[str] | None = None,
                     data, (source, _port) = sock.recvfrom(8192)
                 except OSError:  # Windows: ICMP "cổng đóng" của lần gửi thẳng trước trả về ở đây
                     continue
-                location = _location(data)
-                if location and location not in found:
-                    found[location] = source
+                for key, value in accept(data, source):
+                    found.setdefault(key, value)
     finally:
         for sock in sockets:
             sock.close()
     return list(found.items())
+
+
+def search(timeout: float = 2.0, *, addresses: Iterable[str] | None = None,
+           targets: Iterable[tuple[str, int]] = ()) -> list[tuple[str, str]]:
+    """M-SEARCH tìm thiết bị phát ra từng card mạng (multicast) và thẳng tới `targets` (bài thử, thiết bị giả); gom trả
+    lời trong `timeout` giây -> [(LOCATION, địa chỉ đã trả lời)]."""
+    def accept(data: bytes, source: str) -> list[tuple[Any, Any]]:
+        location = _location(data)
+        return [(location, source)] if location else []
+
+    return probe(_search_message(max(1, int(timeout))), SSDP_GROUP, timeout, accept, addresses=addresses, targets=targets)
 
 
 def describe(location: str, host: str, *, timeout: float = 3.0) -> Renderer | None:
@@ -350,6 +366,136 @@ def route_to(host: str) -> str:
         probe.close()
 
 
+# ---- backend theo giao thức -------------------------------------------------------------------------------------
+
+
+class Track(NamedTuple):
+    """Một chương đưa cho thiết bị: `url` đã qua CastMedia, `art` là URL bìa (hay "")."""
+
+    url: str
+    title: str
+    album: str
+    duration: float
+    size: int
+    mime: str
+    art: str = ""
+
+
+class Status(NamedTuple):
+    """Thiết bị đang làm gì, nói theo từ vựng UPnP cho mọi giao thức: state PLAYING | PAUSED_PLAYBACK | TRANSITIONING |
+    STOPPED | NO_MEDIA_PRESENT. `uri` là thứ nó đang phát ("" = không biết); `reason` khi nó dừng và biết vì sao:
+    "finished" (hết chương), "interrupted" (có người khác chiếm máy), "error" (không phát được)."""
+
+    state: str
+    position: float
+    duration: float
+    uri: str
+    reason: str = ""
+
+
+class Backend:
+    """Nói chuyện với MỘT thiết bị bằng một giao thức. Mọi lệnh lỗi -> CastError câu tiếng Việt; `status()` phải trả ngay
+    (đọc bản chụp hay hỏi một lượt), thiết bị im lặng thì CastError - CastPlayers lo phần còn lại (phiên, sang chương)."""
+
+    def load(self, track: Track, seconds: float) -> float:
+        """Đưa chương và phát từ `seconds` -> vị trí thật đã bắt đầu (0 nếu không tua được)."""
+        raise NotImplementedError
+
+    def play(self) -> None:
+        raise NotImplementedError
+
+    def pause(self) -> bool:
+        """True: thiết bị không có Pause nên đã dừng hẳn - "phát" phải đưa lại chương."""
+        raise NotImplementedError
+
+    def stop(self, timeout: float = 5.0) -> None:
+        raise NotImplementedError
+
+    def seek(self, seconds: float) -> None:
+        raise NotImplementedError
+
+    def status(self) -> Status:
+        raise NotImplementedError
+
+    def close(self, release: bool = False) -> None:
+        """Bỏ kết nối; `release`: trả luôn thiết bị về nguyên trạng (Cast: đóng ứng dụng phát nếu máy này đã mở nó)."""
+
+
+class DlnaBackend(Backend):
+    """DLNA / UPnP AV: SOAP AVTransport tới địa chỉ điều khiển của thiết bị; không giữ kết nối nên `close` không việc gì."""
+
+    def __init__(self, renderer: Renderer) -> None:
+        self.renderer = renderer
+
+    def _call(self, action: str, *arguments: tuple[str, Any], timeout: float = 5.0) -> dict[str, str]:
+        return soap(self.renderer.av_url, self.renderer.av_type, action, (("InstanceID", 0), *arguments), timeout=timeout)
+
+    def load(self, track: Track, seconds: float) -> float:
+        metadata = didl(track.url, title=track.title, album=track.album, duration=track.duration, size=track.size,
+                        mime=track.mime, art=track.art)
+        arguments = (("CurrentURI", track.url), ("CurrentURIMetaData", metadata))
+        try:
+            self._call("SetAVTransportURI", *arguments)
+        except CastError as error:
+            if error.code not in (701, 705):
+                raise
+            self._call("Stop")  # có TV không nhận bài mới khi đang phát bài cũ
+            self._call("SetAVTransportURI", *arguments)
+        self._call("Play", ("Speed", "1"))
+        return self._seek_when_ready(seconds) if seconds >= 1 else 0.0
+
+    def _seek_when_ready(self, seconds: float) -> float:
+        """Phần lớn TV chỉ tua được khi đã chạy: đợi PLAYING (tới 8 giây) rồi tua. Không tua được thì phát từ đầu."""
+        deadline = time.time() + 8
+        while time.time() < deadline:
+            try:
+                state = self._call("GetTransportInfo").get("CurrentTransportState", "")
+            except CastError:
+                state = ""
+            if state in ("PLAYING", "PAUSED_PLAYBACK"):
+                try:
+                    self.seek(seconds)
+                    return seconds
+                except CastError:
+                    return 0.0
+            time.sleep(0.3)
+        return 0.0
+
+    def play(self) -> None:
+        self._call("Play", ("Speed", "1"))
+
+    def pause(self) -> bool:
+        try:
+            self._call("Pause")
+        except CastError as error:
+            if error.code not in (401, 701):
+                raise
+            self._call("Stop")  # thiết bị không có Pause: dừng hẳn, "phát" sẽ đưa lại đúng chỗ
+            return True
+        return False
+
+    def stop(self, timeout: float = 5.0) -> None:
+        self._call("Stop", timeout=timeout)
+
+    def seek(self, seconds: float) -> None:
+        self._call("Seek", ("Unit", "REL_TIME"), ("Target", clock(seconds)))
+
+    def status(self) -> Status:
+        state = self._call("GetTransportInfo").get("CurrentTransportState", "").strip().upper()
+        info = self._call("GetPositionInfo")
+        return Status(state, seconds_of(info.get("RelTime", "")), seconds_of(info.get("TrackDuration", "")),
+                      info.get("TrackURI") or "")
+
+
+def backend_for(renderer: Renderer) -> Backend:
+    if renderer.protocol == "gcast":
+        # gcast.py dùng lại CastError, Backend... ở đây: nhập muộn để khỏi vòng tròn.
+        from .gcast import GoogleCast
+
+        return GoogleCast(renderer)
+    return DlnaBackend(renderer)
+
+
 # ---- cổng audio cho thiết bị ------------------------------------------------------------------------------------
 
 
@@ -443,6 +589,7 @@ def _media_handler(media: CastMedia) -> type[BaseHTTPRequestHandler]:
             self.send_header("Content-Type", mime)
             self.send_header("Content-Length", str(end - start + 1))
             self.send_header("Accept-Ranges", "bytes")
+            self.send_header("Access-Control-Allow-Origin", "*")  # ứng dụng nhận của Cast là trang web: tải audio, bìa bằng CORS
             if status == HTTPStatus.PARTIAL_CONTENT:
                 self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
             self.send_header("transferMode.dlna.org", "Interactive" if mime.startswith("image/") else "Streaming")
@@ -515,13 +662,18 @@ class CastPlayers:
                  save: Callable[[str, int, float, float], None], *,
                  cover: Callable[[str], Path | None] = lambda _book: None, media: CastMedia | None = None,
                  find: Callable[[], list[tuple[str, str]]] = search,
-                 read: Callable[[str, str], Renderer | None] = describe) -> None:
+                 read: Callable[[str, str], Renderer | None] = describe,
+                 find_google: Callable[[], list[Renderer]] = list,
+                 backend: Callable[[Renderer], Backend] = backend_for) -> None:
+        """`find` + `read`: DLNA (SSDP rồi đọc mô tả). `find_google`: Google Cast (mDNS, đã đủ thông tin) - mặc định
+        không tìm gì, để bài thử không gửi multicast ra mạng người chạy; app đưa `gcast.discover` vào."""
         self.book, self.audio, self.save, self.cover = book, audio, save, cover
         self.media = media or CastMedia()
-        self.find, self.read = find, read
+        self.find, self.read, self.find_google, self.backend = find, read, find_google, backend
         self._lock = threading.Lock()
         self._renderers: dict[str, tuple[Renderer, float]] = {}  # mã -> (thiết bị, lúc thấy cuối)
         self._described: dict[str, tuple[float, Renderer | None]] = {}  # LOCATION -> (lúc đọc, mô tả)
+        self._backends: dict[str, Backend] = {}  # thiết bị -> backend đang giữ kết nối (có phiên) hay vừa dùng
         self._sessions: dict[str, _Session] = {}
         self._device_locks: dict[str, threading.Lock] = {}
         self._wanted = 0.0
@@ -560,15 +712,28 @@ class CastPlayers:
         for renderer, session in active:
             session.ended = True
             self._store(session, session.estimate(time.time()))
-            try:
-                soap(renderer.av_url, renderer.av_type, "Stop", (("InstanceID", 0),), timeout=2.0)
-            except CastError:
-                pass
+            self._stop(renderer, 2.0)
+        with self._lock:
+            rest, self._backends = list(self._backends.values()), {}
+        for backend in rest:
+            backend.close()
         self.media.close()
 
+    def _stop(self, renderer: Renderer, timeout: float) -> None:
+        """Dừng thiết bị và trả nó về nguyên trạng; thiết bị không trả lời thì thôi - chỗ nghe đã lưu rồi."""
+        with self._lock:
+            backend = self._backends.pop(renderer.id, None)
+        if backend is None:
+            return
+        try:
+            backend.stop(timeout)
+        except CastError:
+            pass
+        backend.close(release=True)
+
     def _presence(self, renderer: Renderer, session: _Session | None, now: float) -> dict[str, Any]:
-        base = {"device": renderer.id, "name": renderer.name, "kind": renderer.kind, "via": "cast", "rate": 1.0,
-                "books": [], "stream": True, "acks": []}
+        base = {"device": renderer.id, "name": renderer.name, "kind": renderer.kind, "via": "cast",
+                "protocol": renderer.protocol, "rate": 1.0, "books": [], "stream": True, "acks": []}
         if session is None or session.ended:
             return {**base, "bookId": "", "bookTitle": "", "chapterId": None, "chapterTitle": "", "position": 0.0,
                     "duration": 0.0, "playing": False, "buffering": False, "age": 0.0}
@@ -612,8 +777,17 @@ class CastPlayers:
                 raise CastError("loa, TV chỉ phát ở tốc độ 1x")
             return
         if session is None:
+            if action == "stop":
+                return  # "Nghe trên máy này" sau khi thiết bị đã bị chiếm hay tự hết: không còn gì để dừng
             raise CastError("chưa phát gì từ máy này - bấm “Phát trên…” ở thanh phát")
+        backend = self._backend(renderer)
         now = time.time()
+        if action == "stop":
+            # Người nghe chuyển về máy này: dừng hẳn, trả thiết bị về nguyên trạng, chỗ nghe lưu đúng chỗ dừng.
+            session.ended = True
+            self._store(session, session.estimate(now))
+            self._stop(renderer, 5.0)
+            return
         if action in ("play", "pause", "toggle"):
             want = not session.playing if action == "toggle" else action == "play"
             if want:
@@ -622,17 +796,11 @@ class CastPlayers:
                     self._load(renderer, session.book_id, session.book_title, session.chapters, chapter,
                                session.position)
                     return
-                self._call(renderer, "Play", ("Speed", "1"))
+                backend.play()
                 session.grace = now + GRACE_SECONDS
             else:
                 session.position = session.estimate(now)
-                try:
-                    self._call(renderer, "Pause")
-                except CastError as error:
-                    if error.code not in (401, 701):
-                        raise
-                    self._call(renderer, "Stop")  # thiết bị không có Pause: dừng hẳn, "phát" sẽ đưa lại đúng chỗ
-                    session.held = True
+                session.held = backend.pause() or session.held
                 self._store(session, session.position)
             session.playing, session.buffering, session.polled = want, want, now
             return
@@ -644,7 +812,7 @@ class CastPlayers:
                     self._load(renderer, session.book_id, session.book_title, session.chapters, following, 0.0)
                     return
             target = max(0.0, min(target, session.duration - 1 if session.duration > 1 else target))
-            self._call(renderer, "Seek", ("Unit", "REL_TIME"), ("Target", clock(target)))
+            backend.seek(target)
             session.position, session.peak, session.polled = target, target, now
             return
         if action in ("next", "previous", "jump"):
@@ -668,23 +836,24 @@ class CastPlayers:
         url = self.media.share(path, renderer.host)
         cover = self.cover(book_id)
         art = self.media.share(cover, renderer.host) if cover is not None else ""
-        metadata = didl(url, title=chapter["title"], album=book_title, duration=chapter["duration"],
-                        size=path.stat().st_size, mime=TYPES.get(path.suffix.lower(), "audio/mpeg"), art=art)
-        arguments = (("CurrentURI", url), ("CurrentURIMetaData", metadata))
+        track = Track(url, chapter["title"], book_title, chapter["duration"], path.stat().st_size,
+                      TYPES.get(path.suffix.lower(), "audio/mpeg"), art)
+        resume = seconds >= 1 and (chapter["duration"] <= 0 or seconds < chapter["duration"] - 1)
+        backend = self._backend(renderer)
         try:
-            self._call(renderer, "SetAVTransportURI", *arguments)
-        except CastError as error:
-            if error.code not in (701, 705):
-                raise
-            self._call(renderer, "Stop")  # có TV không nhận bài mới khi đang phát bài cũ
-            self._call(renderer, "SetAVTransportURI", *arguments)
-        self._call(renderer, "Play", ("Speed", "1"))
+            started = backend.load(track, seconds if resume else 0.0)
+        except CastError:
+            with self._lock:
+                idle = renderer.id not in self._sessions or self._sessions[renderer.id].ended
+            if idle:
+                self._release(renderer.id, stop=True)  # lần đưa đầu hỏng: đừng giữ kết nối (Cast: cả ứng dụng đã mở) cho một phiên không có
+            raise
         now = time.time()
         session = _Session(book_id=book_id, book_title=book_title, chapters=chapters, chapter_id=chapter["id"],
                            chapter_title=chapter["title"], duration=chapter["duration"], url=url, position=0.0,
                            polled=now, heard=now, saved=now, grace=now + GRACE_SECONDS)
-        if seconds >= 1 and (chapter["duration"] <= 0 or seconds < chapter["duration"] - 1):
-            session.position = session.peak = self._seek_when_ready(renderer, seconds)
+        if resume:
+            session.position = session.peak = started
         with self._lock:
             previous = self._sessions.get(renderer.id)
             self._sessions[renderer.id] = session
@@ -692,25 +861,27 @@ class CastPlayers:
             self._store(previous, previous.position)
         self._store(session, session.position)  # "Nghe tiếp" trỏ ngay tới chương đang phát trên thiết bị
 
-    def _seek_when_ready(self, renderer: Renderer, seconds: float) -> float:
-        """Phần lớn TV chỉ tua được khi đã chạy: đợi PLAYING (tới 8 giây) rồi tua. Không tua được thì phát từ đầu."""
-        deadline = time.time() + 8
-        while time.time() < deadline:
-            try:
-                state = self._call(renderer, "GetTransportInfo").get("CurrentTransportState", "")
-            except CastError:
-                state = ""
-            if state in ("PLAYING", "PAUSED_PLAYBACK"):
-                try:
-                    self._call(renderer, "Seek", ("Unit", "REL_TIME"), ("Target", clock(seconds)))
-                    return seconds
-                except CastError:
-                    return 0.0
-            time.sleep(0.3)
-        return 0.0
+    def _backend(self, renderer: Renderer) -> Backend:
+        with self._lock:
+            found = self._backends.get(renderer.id)
+            if found is None:
+                found = self._backends[renderer.id] = self.backend(renderer)
+            return found
 
-    def _call(self, renderer: Renderer, action: str, *arguments: tuple[str, Any]) -> dict[str, str]:
-        return soap(renderer.av_url, renderer.av_type, action, (("InstanceID", 0), *arguments))
+    def _release(self, device: str, *, stop: bool = False) -> None:
+        """Bỏ backend của thiết bị (phiên đã hết); `stop`: trả thiết bị về nguyên trạng - không dùng khi bị chiếm máy."""
+        with self._lock:
+            backend = self._backends.pop(device, None)
+        if backend is not None:
+            backend.close(release=stop)
+
+    def _end(self, device: str, session: _Session) -> None:
+        """Phiên hết (bị chiếm máy, thiết bị tắt, hết chương cuối): thôi hỏi, đóng kết nối - không đụng tới thứ đang phát."""
+        session.ended = True
+        with self._lock:
+            current = self._sessions.get(device) is session
+        if current:
+            self._release(device)
 
     def _device(self, device: str) -> threading.Lock:
         with self._lock:
@@ -768,10 +939,13 @@ class CastPlayers:
             self._wake.clear()
 
     def _search(self) -> None:
-        try:
-            found = self.find()
-        except OSError:
-            found = []
+        with ThreadPoolExecutor(max_workers=1, thread_name_prefix="cast-google") as pool:
+            google = pool.submit(self._find_google)  # mDNS và SSDP cùng lúc: một lượt tìm vẫn chừng 2 giây
+            try:
+                found = self.find()
+            except OSError:
+                found = []
+            casts = google.result()
         now = time.time()
 
         def one(item: tuple[str, str]) -> Renderer | None:
@@ -795,7 +969,7 @@ class CastPlayers:
         else:
             renderers = []
         with self._lock:
-            for renderer in renderers:
+            for renderer in [*renderers, *casts]:
                 if renderer is not None:
                     self._renderers[renderer.id] = (renderer, now)
             for device, (_renderer, seen) in list(self._renderers.items()):
@@ -803,11 +977,18 @@ class CastPlayers:
                 if now - seen > FORGET_SECONDS and (session is None or session.ended):
                     del self._renderers[device]
 
+    def _find_google(self) -> list[Renderer]:
+        try:
+            return [renderer for renderer in self.find_google() if isinstance(renderer, Renderer)]
+        except (CastError, OSError, ValueError):
+            return []
+
     def _poll(self, device: str) -> None:
         with self._lock:
             entry = self._renderers.get(device)
             session = self._sessions.get(device)
-        if entry is None or session is None or session.ended:
+            backend = self._backends.get(device)
+        if entry is None or session is None or session.ended or backend is None:
             return
         renderer = entry[0]
         lock = self._device(device)
@@ -817,41 +998,46 @@ class CastPlayers:
             if self._sessions.get(device) is not session:
                 return
             try:
-                state = self._call(renderer, "GetTransportInfo").get("CurrentTransportState", "").strip().upper()
-                info = self._call(renderer, "GetPositionInfo")
+                status = backend.status()
             except CastError:
                 now = time.time()
                 session.buffering = session.playing
                 if now - session.heard > LOST_SECONDS:
                     self._store(session, session.position)
-                    session.ended = True
+                    self._end(device, session)
                 return
-            advance = self._observe(session, state, info)
+            advance = self._observe(session, status)
+            if session.ended:  # bị chiếm máy hay thiết bị báo lỗi: lưu chỗ nghe cuối rồi thôi
+                self._store(session, session.estimate(time.time()))
+                self._end(device, session)
+                return
             if advance:
                 self._store(session, session.duration)  # chương xong: "đã nghe hết" như trình phát trong app
                 following = self._neighbour(session, 1)
                 if following is None:
-                    session.ended = True
+                    self._end(device, session)
                     return
                 try:
                     self._load(renderer, session.book_id, session.book_title, session.chapters, following, 0.0)
                 except CastError:
-                    session.ended = True
+                    self._end(device, session)
         finally:
             lock.release()
 
-    def _observe(self, session: _Session, state: str, info: dict[str, str]) -> bool:
-        """Cập nhật phiên theo lời thiết bị; True khi vừa hết chương (đã tới cuối rồi về STOPPED)."""
+    def _observe(self, session: _Session, status: Status) -> bool:
+        """Cập nhật phiên theo lời thiết bị; True khi vừa hết chương (thiết bị báo hết, hay đã tới cuối rồi về STOPPED)."""
         now = time.time()
         session.heard = now
-        uri = info.get("TrackURI") or ""
-        if uri and session.token not in uri and state in ("PLAYING", "PAUSED_PLAYBACK", "TRANSITIONING"):
+        state = status.state
+        if status.uri and session.token not in status.uri and state in ("PLAYING", "PAUSED_PLAYBACK", "TRANSITIONING"):
             session.ended = True  # có người phát thứ khác trên thiết bị (app khác, điều khiển TV)
             return False
-        duration = seconds_of(info.get("TrackDuration", ""))
-        if duration > 1 and abs(duration - session.duration) > 1:
-            session.duration = duration  # độ dài thật của file (độ dài trong sách là tổng câu + khoảng lặng)
-        reported = seconds_of(info.get("RelTime", ""))
+        if status.reason in ("interrupted", "error"):
+            session.ended = True  # bị chiếm máy, hay thiết bị không phát được file
+            return False
+        if status.duration > 1 and abs(status.duration - session.duration) > 1:
+            session.duration = status.duration  # độ dài thật của file (độ dài trong sách là tổng câu + khoảng lặng)
+        reported = status.position
         before = session.state
         session.state = state
         advance = False
@@ -866,6 +1052,8 @@ class CastPlayers:
             session.position = reported or session.position
         elif state == "TRANSITIONING":
             session.buffering = True
+        elif status.reason == "finished" and session.playing and not session.held:
+            advance = True  # thiết bị tự nói đã hết (Cast: IDLE / FINISHED): không đoán theo vị trí
         elif now < session.grace:
             session.buffering = session.playing
         elif session.held or not session.playing:
