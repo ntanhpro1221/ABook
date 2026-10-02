@@ -22,6 +22,17 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Sách đã tạo mà **chưa bắt đầu** có nút **Sửa thiết lập**: trình tạo sách mở lại với mọi lựa chọn cũ (chương, tên, giọng kể,
   chất lượng, người xưng "tôi", model đọc hiểu) để đổi; tạo xong thì bản cũ vào Thùng rác, bìa đã chọn đi theo.
 
+### Nhạc nền
+
+- Mỗi cuốn có **rãnh nhạc nền**, mặc định bật, máy tự chọn bài theo không khí từng đoạn (danh mục nhạc CC0 / CC BY đã phân
+  tích sẵn, cập nhật qua mạng). Tab **Nhạc nền** của dự án: bật / tắt, thế giới của truyện, mức nhạc dưới giọng đọc, im
+  lặng một đoạn, không dùng một bài nữa, chọn lại nhạc - mọi chỉnh là tuỳ chọn và được giữ khi máy chọn lại.
+- Trình nghe trên máy tính phát nhạc nền dưới giọng đọc: đổi bài mờ dần khi sang đoạn mới, dừng và tua theo giọng.
+- Đoạn nhạc dài tối đa khoảng **3 phút**: nhạc đổi theo không khí trong chương thay vì một bài cho cả chương (đo trên 13
+  chương có đáp án cảnh, docs/MUSIC_RESEARCH.md).
+- **File sách `.abook` mang theo nhạc nền** người sản xuất đã gắn (cả file nhạc và ghi công): mở ở máy khác vẫn nghe đúng
+  nhạc ấy. Sách có nhạc dùng định dạng mới - app bản cũ sẽ nhắc cập nhật; sách không nhạc vẫn mở được ở app cũ.
+
 ## [0.4.15] - 2026-10-01
 
 ### Studio

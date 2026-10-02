@@ -692,13 +692,27 @@ class App:
 
     def music_cues(self, value: str, chapter_id: int) -> dict[str, Any]:
         """Nhạc của một chương cho trình phát: mốc thời gian + đường lấy file qua máy này (đệm, tua được)."""
-        path = self._book(value)
+        path = self._listenable(value)
+        if packages.is_package(path):
+            # Cuốn mở từ file `.abook`: nhạc người sản xuất đã gắn nằm sẵn trong gói (bookfile.py, music_plan.package).
+            music = packages.manifest(path).get("music")
+            cues = [dict(cue, src=f"/api/books/{quote(value, safe='')}/music/files/{cue['track'].split('/')[1]}")
+                    for cue in music_plan.packaged_cues(music, chapter_id)]
+            level = music.get("levelDb") if isinstance(music, dict) else None
+            return {"cues": cues, "levelDb": level if isinstance(level, (int, float)) else music_plan.DEFAULT_LEVEL_DB}
         plan = music_plan.read_plan(path)
         if plan is None:
             return {"cues": [], "levelDb": music_plan.DEFAULT_LEVEL_DB}
         cues = [dict(cue, src="/api/music/track?link=" + quote(cue["link"], safe=""))
                 for cue in music_plan.chapter_cues(plan, chapter_id)]
         return {"cues": cues, "levelDb": plan.get("levelDb", music_plan.DEFAULT_LEVEL_DB)}
+
+    def music_track_for_export(self, link: str) -> Path | None:
+        """Bài nhạc để gói vào file sách: lấy từ bộ đệm / tải về; không lấy được thì None (chỗ ấy im lặng)."""
+        try:
+            return self.music_track_file(link)
+        except (ApiError, OSError):
+            return None
 
     def music_track_file(self, link: str) -> Path:
         """File nhạc của một bài trong danh mục: tải một lần từ nguồn gốc vào bộ nhớ đệm, lần sau dùng lại. Chỉ bài CÓ
@@ -1450,7 +1464,8 @@ class Handler(BaseHTTPRequestHandler):
         target = self._target(self._body())
         root = Path(target) if target else Path(self.app.preferences.get()["libraryRoot"]) / "Đã xuất"
         try:
-            path = bookfile.pack(project, root / bookfile.default_name(store.summarize(project)["title"] or project.name))
+            path = bookfile.pack(project, root / bookfile.default_name(store.summarize(project)["title"] or project.name),
+                                 music_track=self.app.music_track_for_export)
         except bookfile.BookFileError as error:
             raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
         self.app.exports.add(str(path.parent))
@@ -1497,6 +1512,13 @@ class Handler(BaseHTTPRequestHandler):
 
     def get_music_cues(self, _query: dict[str, list[str]], value: str, chapter: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.music_cues(value, int(chapter)))
+
+    def get_music_packaged(self, _query: dict[str, list[str]], value: str, name: str) -> None:
+        path = self.app._listenable(value)
+        target = packages.music_file(path, f"music/{name}") if packages.is_package(path) else None
+        if target is None:
+            raise ApiError(HTTPStatus.NOT_FOUND, "Không có bài nhạc này trong sách")
+        self._send_file(target, cache=True)
 
     def get_music_track(self, query: dict[str, list[str]]) -> None:
         self._send_file(self.app.music_track_file((query.get("link") or [""])[0]), cache=True)
@@ -2165,6 +2187,7 @@ ROUTES: list[Route] = [
     ("PUT", re.compile(BOOK + r"/music"), Handler.put_music),
     ("POST", re.compile(BOOK + r"/music/rebuild"), Handler.post_music_rebuild),
     ("GET", re.compile(BOOK + r"/music/chapters/(\d+)"), Handler.get_music_cues),
+    ("GET", re.compile(BOOK + r"/music/files/([0-9a-f]{40}\.mp3)"), Handler.get_music_packaged),
     ("GET", re.compile(r"/api/music/track"), Handler.get_music_track),
     ("GET", re.compile(BOOK + r"/parts"), Handler.get_parts),
     ("GET", re.compile(BOOK + r"/pronunciations"), Handler.get_name_readings),

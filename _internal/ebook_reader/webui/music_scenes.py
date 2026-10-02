@@ -48,6 +48,7 @@ SMOOTH_SECONDS = 45.0          # cửa sổ không khí trượt
 SHIFT_DISTANCE = 0.5           # khoảng cách (trên mặt phẳng VA) coi là "đổi không khí"
 SHIFT_HOLD_SECONDS = 40.0      # ... và phải giữ chừng ấy giây
 MIN_SCENE_SECONDS = 60.0
+MAX_SCENE_SECONDS = 180.0       # đoạn dài hơn thì chia đều (_split_long)
 UNTIMED_SECONDS_PER_CHAR = 0.065  # chương chưa có audio: ước thời lượng đọc theo số ký tự (~15 ký tự/giây)
 
 SEPARATOR = re.compile(r"^\s*(?:[*~#=_\-·•oO0]\s*){3,}\s*$")
@@ -189,8 +190,41 @@ def chapter_scenes(script: dict[str, Any]) -> list[dict[str, Any]]:
         current["acc"].add(*points[index], seconds[index])
         current["last"] = index
     scenes.append(current)
-    scenes = _merge_short(scenes)
+    scenes = _split_long(_merge_short(scenes), segments, seconds)
     return [_view(scene, segments, timeline, seconds, script) for scene in scenes]
+
+
+def _split_long(scenes: list[dict[str, Any]], segments: list[dict[str, Any]], seconds: list[float]) -> list[dict[str, Any]]:
+    """Đoạn dài hơn MAX_SCENE_SECONDS chia đều theo thời lượng, cắt ở ranh giới câu. Đo trên 13 chương có đáp án cảnh
+    (docs/MUSIC_RESEARCH.md, 02-10): một bài cho cả chương bỏ lỡ gần hết thay đổi không khí trong chương (r vui-buồn với
+    đáp án 0,15-0,43); chia khúc ~3 phút nâng lên 0,39-0,76 ở cả hai bộ kiểm giữ riêng - ổn định hơn mọi cách chọn chỗ
+    cắt khéo hơn đã thử (TextTiling, LLM)."""
+    out: list[dict[str, Any]] = []
+    for scene in scenes:
+        first, last = scene["first"], scene["last"]
+        total = sum(seconds[first:last + 1])
+        parts = math.ceil(total / MAX_SCENE_SECONDS)
+        if parts <= 1:
+            out.append(scene)
+            continue
+        target = total / parts
+        start, clock = first, 0.0
+        for index in range(first, last + 1):
+            clock += seconds[index]
+            if clock >= target and index < last:
+                piece = {"first": start, "last": index, "reason": scene["reason"] if start == first else "length",
+                         "acc": _Accumulator()}
+                for j in range(start, index + 1):
+                    piece["acc"].add(*line_point(segments[j]), seconds[j])
+                out.append(piece)
+                start, clock = index + 1, 0.0
+        if start <= last:
+            piece = {"first": start, "last": last, "reason": scene["reason"] if start == first else "length",
+                     "acc": _Accumulator()}
+            for j in range(start, last + 1):
+                piece["acc"].add(*line_point(segments[j]), seconds[j])
+            out.append(piece)
+    return out
 
 
 def _merge_short(scenes: list[dict[str, Any]]) -> list[dict[str, Any]]:

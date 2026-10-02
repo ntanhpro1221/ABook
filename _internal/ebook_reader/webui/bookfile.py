@@ -16,6 +16,8 @@ Hình dạng - một gói ZIP:
     scripts/<chương>.json    từng câu: chữ, loại (kể/thoại/nội tâm/tiêu đề), người nói, cảm xúc, cường độ, nhịp, âm
                              lượng, mốc thời gian trong MP3 - cho đọc theo và chế độ đọc
     samples/<câu>.wav        câu mẫu giọng của từng nhân vật
+    music/<sha1>.mp3         nhạc nền người sản xuất đã gắn (02-10; mốc từng chương ở mục `music` của book.json,
+                             music_plan.package) - chỉ khi cuốn có rãnh nhạc; KHÔNG nén như audio chương
 
 Đường dẫn giữ y như gói điện thoại đang tải, nên nhập một file chỉ là giải nén vào chỗ sách tải về.
 
@@ -45,9 +47,9 @@ import time
 import zipfile
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Self
+from typing import Any, Callable, Self
 
-from . import covers, store, sync
+from . import covers, music_plan, store, sync
 from .fingerprints import content_key
 from .library import book_id
 
@@ -57,13 +59,16 @@ from .library import book_id
 EXTENSION = ".abook"
 MIMETYPE = "application/vnd.ngdtuanh.abook+zip"
 FORMAT = "abook"
-FORMAT_VERSION = 1
+# 1 = sách không nhạc nền; 2 = có mục `music` + music/*.mp3 (02-10). Gói ghi phiên bản THẤP NHẤT đủ chứa nội dung: sách
+# không nhạc vẫn là 1, app cũ mở được; sách có nhạc là 2, app cũ từ chối kèm lời nhắc cập nhật thay vì báo "mục lạ".
+FORMAT_VERSION = 2
 MANIFEST = "book.json"
 READIUM_MANIFEST = "manifest.json"
 MAX_ENTRIES = 20_000
 MAX_JSON_BYTES = 32 * 1024 * 1024
 MAX_TOTAL_BYTES = 64 * 1024**3
-_CONTENT = re.compile(r"cast\.json|cover\.jpg|chapters/[0-9A-Za-z_.\-]+\.mp3|scripts/\d+\.json|samples/\d+\.wav")
+_CONTENT = re.compile(r"cast\.json|cover\.jpg|chapters/[0-9A-Za-z_.\-]+\.mp3|scripts/\d+\.json|samples/\d+\.wav"
+                      r"|music/[0-9a-f]{40}\.mp3")
 _STORED = (".mp3", ".jpg", ".wav")  # đã nén sẵn hay cần đọc thẳng: nén thêm chỉ tốn công khi phát
 _CHUNK = 1024 * 1024
 
@@ -85,8 +90,11 @@ def default_name(title: str) -> str:
     return " ".join(name.split())[:150] + EXTENSION
 
 
-def pack(project_root: Path, out: Path | None = None, *, producer: str = "ABook") -> Path:
-    """Gói một cuốn thành một file; ghi file tạm cạnh đích rồi thay nguyên tử. Trả đường dẫn file."""
+def pack(project_root: Path, out: Path | None = None, *, producer: str = "ABook",
+         music_track: Callable[[str], Path | None] | None = None) -> Path:
+    """Gói một cuốn thành một file; ghi file tạm cạnh đích rồi thay nguyên tử. Trả đường dẫn file.
+
+    `music_track(link)` -> file của một bài nhạc nền (bộ đệm của máy, tải khi cần); có thì gói kèm rãnh nhạc."""
     project_root = Path(project_root)
     book = sync.manifest(project_root, book_id(project_root), _NoListening())
     book.pop("id", None)  # mã của máy này (đường dẫn thư mục): việc của app ở đây, không đi theo sách
@@ -108,11 +116,17 @@ def pack(project_root: Path, out: Path | None = None, *, producer: str = "ABook"
             files[name] = path
             samples.append(name)
     book["samples"] = samples
+    music = None
+    if music_track is not None:
+        music = music_plan.package(project_root, [c["id"] for c in book["chapters"] if c.get("file")], music_track)
+    if music is not None:
+        book["music"], tracks = music
+        files.update(tracks)
     if not any(name.startswith("chapters/") for name in files):
         raise BookFileError("Sách chưa có chương nào nghe được để xuất.")
     book["package"] = {
         "format": FORMAT,
-        "version": FORMAT_VERSION,
+        "version": 2 if music is not None else 1,
         "createdAt": datetime.now(UTC).isoformat(timespec="seconds"),
         "producer": producer,
         "files": {name: _describe(source) for name, source in sorted(files.items())},
@@ -266,6 +280,15 @@ class BookFile:
             if (not isinstance(meta, dict) or self._zip.getinfo(name).file_size != meta.get("size")
                     or not isinstance(meta.get("sha256"), str)):
                 raise BookFileError(f"Mô tả file {name!r} không khớp gói.")
+        music = book.get("music")
+        if music is not None:
+            tracks = music.get("tracks") if isinstance(music, dict) else None
+            if not isinstance(tracks, dict) or not isinstance(music.get("chapters"), dict):
+                raise BookFileError("Phần nhạc nền của sách bị hỏng.")
+            for name, track in tracks.items():
+                if (not music_plan.TRACK_FILE.fullmatch(name) or not isinstance(track, dict)
+                        or track.get("file") != name or name not in content):
+                    raise BookFileError("Sách thiếu file nhạc nền.")
         for chapter in book.get("chapters") or []:
             for key in ("file", "script"):
                 reference = chapter.get(key) if isinstance(chapter, dict) else None
@@ -311,7 +334,7 @@ def _readium(book: dict[str, Any]) -> dict[str, Any]:
 
 def _order(name: str) -> tuple[int, str]:
     """Phần nhỏ trước, audio sau cùng: đọc mô tả, bìa, chữ mà không phải lướt qua hàng trăm MB audio."""
-    rank = ("cover.jpg", "cast.json", "scripts/", "samples/", "chapters/")
+    rank = ("cover.jpg", "cast.json", "scripts/", "samples/", "chapters/", "music/")
     return next(index for index, prefix in enumerate(rank) if name.startswith(prefix)), name
 
 
