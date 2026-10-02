@@ -1,0 +1,198 @@
+# "Re Zero" (Re:Zero - Bắt đầu lại ở thế giới khác từ số không; bản dịch fan, người dịch Ame / Arto) file 065a = 25 KB đầu của
+# 065.txt ("Chương 59: Chiếc bánh ngọt ngào và câu chuyện không ngọt ngào"). Đáp án KIỂM TRA LN Nhật đợt 4 (02-10; luật cố định:
+# vị trí 30% của bộ, >30 KB lấy 25 KB đầu); mục đích: văn phong đông nhân vật. Agent A gán 02-10, B soát + phân xử 02-10 (33, 85 D->D,T; 83 N->N,T).
+# NGÔI BA ("cậu" = Subaru); KHÔNG truyền --first-person. Cảnh: Subaru về dinh thự Roswaal (sau 064 rời Thánh Địa trên lưng
+# Patrasche), gặp Frederica rồi Petra; chỉ ba người nói (Patrasche là rồng đất, không nói).
+# Tên: SUBARU / NATSUKI SUBARU / SUBARU NATSUKI (m; "Natsuki Subaru" 228 lần trong bộ); FREDERICA / FREDERICA BAUMANN (f; 104
+# "Frederica thì lấy họ của người cha, Baumann"; chị của Garfiel); PETRA / PETRA LEYTE (f; 193, 201). Không tính "Frederica-
+# neesama", "Subaru-sama" (tiền tố/hậu tố xưng hô). Garfiel, Lewes, Emilia, Echidna, Ram chỉ được NHẮC, không nói câu nào.
+# Xưng hô quyết định người nói ở đối đáp không lời dẫn: Subaru gọi Frederica "cô", tự xưng "tôi", gọi Petra "em", tự xưng "anh";
+# Frederica gọi Subaru "cậu"/"Subaru-sama", gọi Petra "em"; Petra gọi Subaru "anh"/"Subaru-sama", tự xưng "em", gọi Frederica
+# "Frederica-neesama". 2 "…Hình như cậu trở về sớm hơn tôi nghĩ đấy." nói trước khi tên lộ (3 "cô hầu gái cao to thì thầm", 5
+# "cô hầu gái — Frederica") -> FREDERICA đủ (quy tắc 5, tên lộ cùng chương; nhân vật cũ của bộ).
+# GHI CHÚ NGƯỜI DỊCH chèn vào truyện (quy tắc 7, tiền lệ KuraNiKa 084:1-2, Tsurekano 031a:257): 1 "VIỆT NAM THẮNG RỒI!!!! QUẨY
+# LÊN NÀO ANH CHỊ EM!!!!" (lời reo của người dịch đứng ngay dưới tiêu đề, không phải lời nhân vật) -> N NARRATOR, cảm xúc
+# excited/happy được; 42-44 "(*Ame: ... "desuka" ...)" bị cắt ba mảnh: 42, 44 N; 43 “desuka” khoá D là chữ trích trong ghi chú
+# -> NARRATOR, PETRA~ (quy tắc 8: gốc là đuôi câu lịch sự của Petra ở 41); 59 "(*Ame: Petra à, em đang nghĩ...)" khoá T (ngoặc
+# đơn) -> N,T NARRATOR (quy tắc 10, không ai trong truyện nghĩ câu ấy); 76 "(*Ame: Từ hẹn hò, hay “deeto”...)" N.
+# Câu khó: 130 "—Petra thu về những tách trà rỗng..." là lời kể (gạch ngắt cảnh) bị parser khoá D -> N,D NARRATOR (quy tắc 10).
+# 14 “Guwa” tiếng kêu của Subaru khi Patrasche dụi vào -> SUBARU, NARRATOR~ (quy tắc 8). 33 "Trước khi kết thúc bắt đầu, mình sẽ
+# tìm ra cách ngừng nó lại." Subaru nói một mình trước dinh thự (soft). 85 "Anh chắc chắn sẽ giữ trọn lời hứa đó, Petra ạ." nói
+# khi Petra đã chạy đi (82-83) - vẫn là Subaru nói thành tiếng. 152 "Tính cách của hắn là một chuyện, nhưng mình có thể tha thứ
+# cho hắn hay không..." Subaru lẩm bẩm, 153 Frederica hỏi lại "Subaru-sama?" -> D SUBARU (nói thành tiếng). 95, 120 "Ư~~~." = Petra
+# (96 "Petra chán nản thè lưỡi", 121 "nuốt những ấm ức").
+# Tiếng lòng trong lời kể ngôi ba: 46 ("Như đã nói, hồi phục theo đúng nghĩa đen luôn mà." cuối đoạn kể), 155, 157 (câu hỏi tu
+# từ về Garfiel rồi "Vẫn có quá nhiều câu hỏi Subaru chưa hiểu") -> N,T NARRATOR, SUBARU~ (quy tắc 4, ngôi ba).
+0 H
+1 N NARRATOR neutral,excited,happy 0-2 normal,fast normal,loud u
+2 D FREDERICA,FREDERICA BAUMANN whispering,neutral,tender,surprised 0-1 normal,slow soft,normal f
+3 N
+4 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI tired,neutral 0-1 normal normal m
+5 N NARRATOR neutral,tired,happy 0-1 normal normal u
+6 D FREDERICA,FREDERICA BAUMANN happy,neutral,tender 0-1 normal normal f
+7 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI neutral,tired,happy 0-1 normal normal m
+8 N NARRATOR neutral,tired 0-1 normal normal u
+9 N NARRATOR neutral,tired 0-1 normal normal u
+10 N NARRATOR neutral,tired 0-1 normal normal u
+11 N
+12 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI tender,happy,tired,neutral 0-1 normal,slow normal,soft m
+13 N NARRATOR neutral,happy 0-1 normal normal u
+14 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI,NARRATOR~ surprised,happy,neutral 0-1 normal,fast normal,soft m
+15 N
+16 D FREDERICA,FREDERICA BAUMANN happy,tender,neutral 0-1 normal normal f
+17 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI neutral,happy 0-1 normal normal m
+18 D FREDERICA,FREDERICA BAUMANN neutral,surprised 0-1 normal normal f
+19 N
+20 N
+21 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI neutral 0-1 normal,slow normal,soft m
+22 D FREDERICA,FREDERICA BAUMANN surprised,neutral 0-1 normal normal f
+23 N
+24 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI neutral 0-1 normal normal,soft m
+25 N
+26 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI neutral 0-1 normal normal m
+27 D FREDERICA,FREDERICA BAUMANN neutral 0-1 normal normal f
+28 N
+29 N
+30 N
+31 N NARRATOR neutral,sad,afraid 0-1 normal normal u
+32 N
+33 D,T SUBARU,NATSUKI SUBARU,SUBARU NATSUKI neutral,sad,angry 0-2 normal,slow soft,normal m
+34 N NARRATOR neutral,sad 0-1 normal normal u
+35 N NARRATOR neutral,sad 0-1 normal normal u
+36 N NARRATOR neutral,sad 0-1 normal normal u
+37 N NARRATOR neutral,sad 0-1 normal normal u
+38 D PETRA,PETRA LEYTE happy,excited,surprised 0-2 normal,fast normal,loud f
+39 N NARRATOR neutral,happy 0-1 normal normal u
+40 N NARRATOR neutral,happy 0-1 normal normal u
+41 D PETRA,PETRA LEYTE happy,tender,surprised,neutral 0-1 normal,fast normal f
+42 N
+43 D NARRATOR,PETRA~ neutral 0-1 normal normal u
+44 N
+45 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI happy,tender 0-1 normal normal m
+46 N,T NARRATOR,SUBARU~,NATSUKI SUBARU~,SUBARU NATSUKI~ neutral,happy 0-1 normal normal u
+47 N NARRATOR neutral,sad,afraid 0-1 normal normal u
+48 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI neutral,tender 0-1 normal normal m
+49 D PETRA,PETRA LEYTE surprised,neutral,happy 0-1 normal normal f
+50 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI happy,neutral,tender 0-1 normal normal m
+51 D PETRA,PETRA LEYTE surprised,neutral 0-1 normal normal f
+52 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI neutral 0-1 normal normal m
+53 D PETRA,PETRA LEYTE surprised,neutral 0-1 normal,slow normal,soft f
+54 N NARRATOR neutral,surprised,happy 0-1 normal normal u
+55 D PETRA,PETRA LEYTE excited,happy,surprised 0-2 normal,fast normal f
+56 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI neutral,surprised 0-1 normal normal m
+57 D PETRA,PETRA LEYTE happy,excited,neutral 0-1 normal normal f
+58 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI surprised,neutral 0-1 normal,fast normal m
+59 N,T NARRATOR neutral,happy,sarcastic 0-1 normal normal u
+60 N NARRATOR neutral,happy 0-1 normal normal u
+61 D PETRA,PETRA LEYTE excited,happy 1-2 fast,normal loud,normal f
+62 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI happy,tender,neutral 0-1 normal normal,loud m
+63 N
+64 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI neutral 0-1 normal loud,normal m
+65 N
+66 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI tender,happy,neutral 0-1 normal normal m
+67 D PETRA,PETRA LEYTE surprised,happy,excited 0-1 normal normal f
+68 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI neutral,tender 0-1 normal normal m
+69 N
+70 N NARRATOR neutral,sad 0-1 normal normal u
+71 N
+72 N
+73 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI tender,neutral,happy 0-1 normal normal m
+74 D PETRA,PETRA LEYTE excited,happy 0-2 normal,fast normal,loud f
+75 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI surprised,neutral,sarcastic 0-1 normal normal m
+76 N
+77 N NARRATOR neutral,happy 0-1 normal normal u
+78 N
+79 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI happy,tender,sarcastic 0-1 normal normal m
+80 D PETRA,PETRA LEYTE happy,excited 0-2 normal,fast normal,loud f
+81 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI happy,neutral,tender 0-1 normal normal m
+82 N NARRATOR neutral,happy 0-1 normal normal u
+83 N,T NARRATOR,SUBARU~,NATSUKI SUBARU~,SUBARU NATSUKI~ neutral,tender,happy 0-1 normal normal u
+84 N NARRATOR neutral,sad,tender 0-1 normal normal u
+85 D,T SUBARU,NATSUKI SUBARU,SUBARU NATSUKI tender,sad,neutral 0-1 slow,normal soft,normal m
+86 N NARRATOR neutral,sad 0-1 normal normal u
+87 N NARRATOR neutral,sad 0-1 normal normal u
+88 N
+89 N NARRATOR neutral,happy 0-1 normal normal u
+90 N NARRATOR neutral,angry 0-1 normal normal u
+91 N
+92 D FREDERICA,FREDERICA BAUMANN neutral,angry 0-1 normal normal f
+93 D PETRA,PETRA LEYTE sad,angry 0-1 normal normal f
+94 D FREDERICA,FREDERICA BAUMANN neutral,angry,tender 0-1 normal normal f
+95 D PETRA,PETRA LEYTE sad,tired,angry 0-1 normal,slow soft,normal f
+96 N NARRATOR neutral,sad 0-1 normal normal u
+97 N NARRATOR neutral,sad 0-1 normal normal u
+98 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI neutral,tender,afraid 0-1 normal normal,soft m
+99 N NARRATOR neutral,angry 0-1 normal normal u
+100 N
+101 N NARRATOR neutral,angry 0-1 normal normal u
+102 D PETRA,PETRA LEYTE sad,angry 0-2 normal normal f
+103 N NARRATOR neutral,sad 0-1 normal normal u
+104 N NARRATOR neutral,sad,afraid 0-1 normal normal u
+105 N
+106 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI neutral,tender,sad 0-1 normal normal m
+107 D PETRA,PETRA LEYTE sad,angry 0-1 normal normal f
+108 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI neutral,afraid,sad 0-1 normal normal m
+109 N NARRATOR neutral,afraid 0-1 normal normal u
+110 N NARRATOR neutral,afraid 0-1 normal normal u
+111 N
+112 N
+113 D FREDERICA,FREDERICA BAUMANN neutral,afraid 0-1 normal normal f
+114 D PETRA,PETRA LEYTE excited,angry,happy 1-2 normal,fast loud,normal f
+115 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI sad,neutral,sarcastic 0-1 normal normal m
+116 N NARRATOR neutral,sad 0-1 normal normal u
+117 D FREDERICA,FREDERICA BAUMANN tender,neutral 0-1 normal,slow normal,soft f
+118 D PETRA,PETRA LEYTE sad,neutral 0-1 normal,slow soft,normal f
+119 D FREDERICA,FREDERICA BAUMANN tender,neutral 0-1 normal,slow normal f
+120 D PETRA,PETRA LEYTE sad,tired 0-1 normal,slow soft,normal f
+121 N NARRATOR neutral,sad 0-1 normal normal u
+122 D PETRA,PETRA LEYTE sad,afraid 0-2 normal,slow normal,soft f
+123 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI sad,neutral,tender 0-1 normal,slow normal,soft m
+124 N NARRATOR neutral,sad 0-1 normal normal u
+125 N NARRATOR neutral,sad 0-1 normal normal u
+126 D PETRA,PETRA LEYTE neutral,sad,tender 0-1 normal normal f
+127 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI neutral,tender,sad 0-1 normal,slow normal m
+128 N NARRATOR neutral,happy,tender 0-1 normal normal u
+129 N
+130 N,D NARRATOR neutral 0-1 normal normal u
+131 N
+132 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI neutral 0-1 normal normal m
+133 D FREDERICA,FREDERICA BAUMANN neutral,sarcastic 0-1 normal normal f
+134 N
+135 N
+136 N
+137 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI neutral,angry 0-1 normal normal m
+138 D FREDERICA,FREDERICA BAUMANN surprised,neutral,afraid 0-1 normal normal f
+139 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI neutral,sarcastic,tired 0-1 normal normal m
+140 N
+141 N
+142 D FREDERICA,FREDERICA BAUMANN neutral 0-1 normal normal f
+143 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI neutral 0-1 normal normal m
+144 D FREDERICA,FREDERICA BAUMANN neutral,tender 0-1 normal normal f
+145 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI neutral 0-1 normal normal m
+146 N NARRATOR neutral,sad 0-1 normal normal u
+147 N NARRATOR neutral,sad 0-1 normal normal u
+148 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI neutral 0-1 normal normal m
+149 D FREDERICA,FREDERICA BAUMANN neutral,tender 0-1 normal normal f
+150 N
+151 N NARRATOR neutral,angry 0-1 normal normal u
+152 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI angry,neutral,sad 0-1 normal,slow soft,normal m
+153 D FREDERICA,FREDERICA BAUMANN surprised,neutral 0-1 normal normal f
+154 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI angry,neutral,tired 0-1 normal normal m
+155 N,T NARRATOR,SUBARU~,NATSUKI SUBARU~,SUBARU NATSUKI~ neutral,angry,afraid 0-1 normal normal u
+156 N
+157 N,T NARRATOR,SUBARU~,NATSUKI SUBARU~,SUBARU NATSUKI~ neutral,surprised 0-1 normal normal u
+158 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI neutral 0-1 normal normal m
+159 D FREDERICA,FREDERICA BAUMANN surprised,afraid 0-1 normal normal f
+160 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI neutral 0-1 normal normal m
+161 N NARRATOR neutral,surprised 0-1 normal normal u
+162 D FREDERICA,FREDERICA BAUMANN neutral 0-1 normal normal f
+163 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI neutral,surprised,sarcastic 0-1 normal normal m
+164 D FREDERICA,FREDERICA BAUMANN neutral,angry 0-1 normal normal f
+165 N
+166 N
+167 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI surprised,neutral 0-1 normal,fast normal m
+168 D FREDERICA,FREDERICA BAUMANN surprised,neutral 0-1 normal normal f
+169 N NARRATOR neutral,tired,sad 0-1 normal normal u
+170 D FREDERICA,FREDERICA BAUMANN neutral,sad 0-1 normal normal f
+171 D SUBARU,NATSUKI SUBARU,SUBARU NATSUKI neutral,tired 0-1 normal normal m
+172 D FREDERICA,FREDERICA BAUMANN neutral 0-1 normal normal f

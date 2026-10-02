@@ -709,3 +709,14 @@ nói chính sai 0 chắc chắn, 1 tranh luận (052a:28); cảm xúc 0 bất đ
 | HDST 122a:158 “Trước hết, ra ngoài đã.” | LORTEL, ED~ | bỏ ED~ | theo B | 157 lời dẫn của Lortel, Lortel nói đúng cụm này ở 94; Ed vừa bảo ở trong nhà (95) |
 | HDST 052a:76, 81, 87, 157, 172; 122a:127; YMP 143:83, 334:69 | N | N,T | theo B | tiếng lòng tức thời ngôi một (quy tắc 4), cùng mạch A đã cho N,T |
 | YMP 143:191-193 tiếng la đám đông | NPC* 1/2/3 | một NPC* chung | giữ A | quy tắc 6: mỗi câu đám đông một NPC* khác; điểm không đổi |
+
+## 02-10 - LN Nhật đợt 4 (văn phong mới): Re Zero 065a
+
+Luật cố định (30% của bộ, >30 KB lấy 25 KB đầu). Chương chỉ có ba người nói (Subaru, Frederica, Petra), ngôi ba. B: người nói
+chính sai 0; đối đáp không lời dẫn quyết theo xưng hô khớp A cả chương.
+
+| câu | A | B đề nghị | kết luận | lý do |
+|---|---|---|---|---|
+| 065a:33 | D | D,T | theo B | Frederica đã đi (28), không chữ nào cho thấy nói thành tiếng (khác 152, có 153 đáp) |
+| 065a:85 | D | D,T | theo B | Petra đã đi xa, không phản ứng; 86 tiếng lòng cùng mạch - nhập nhằng, nới cả hai |
+| 065a:83 | N | N,T + SUBARU~ | theo B | tự sửa số tức thời, cùng kiểu 46/155/157 A đã cho |
