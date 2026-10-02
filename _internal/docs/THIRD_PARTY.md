@@ -17,7 +17,10 @@ của chính thành phần ấy.
 - PyWORLD và WORLD vocoder; Praat qua parselmouth.
 - pyloudnorm; NumPy, SciPy, SoundFile, psutil, requests, huggingface-hub.
 - PySide6 / Qt (LGPLv3) - cửa sổ app máy tính.
-- FFmpeg / imageio-ffmpeg (LGPL hoặc GPL tuỳ bản build).
+- FFmpeg / imageio-ffmpeg (LGPL hoặc GPL tuỳ bản build). Bản app chỉ-nghe KHÔNG mang ffmpeg trong bộ cài: lần nhập "Nhạc của tôi"
+  đầu tiên tải bánh xe `imageio-ffmpeg` 0.6.0 (PyPI, ghim URL + SHA-256, `webui/ffmpeg_setup.py`) và lấy ra đúng một file, FFmpeg 7.1
+  bản "essentials" của gyan.dev (cấu hình GPL-3.0, mã nguồn: https://www.gyan.dev/ffmpeg/builds/); phần bọc imageio-ffmpeg là BSD-2-Clause.
+  Tải về thư mục dữ liệu của app (`tools/ffmpeg`), gỡ app là gỡ nó.
 - CMU Pronouncing Dictionary (`cmudict.dict`, dữ liệu từ CMU Sphinx; sử dụng và phân phối không hạn chế, yêu cầu ghi nhận
   nguồn). Source đi kèm giữ nguyên `_internal/abook/assets/CMUDICT_LICENSE.txt`.
 
