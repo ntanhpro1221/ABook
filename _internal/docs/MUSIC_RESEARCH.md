@@ -984,6 +984,12 @@ audio, xếp theo mã):
 
 Điện thoại: onnxruntime-android + mel Kotlin, cùng ngưỡng. Kích thước: tháp fp16 ONNX ~58 MB, đầu < 0,1 MB.
 
+**KẾT QUẢ trò-A (03-10 05:xx, `STUDENT_A=1 build_student.py`, `results/student_eval_A.txt`): DÙNG ĐƯỢC.**
+- (a) AUC trò-A 0,873, thầy 0,904 → 96,5% (≥ 90%). Thêm âm học chỉ lên 97,4%.
+- (b) Soundtracks 0,642 / 0,733 / 0,762, DEAM V / A 0,308 / 0,675. Hơn zero-shot cũ ở mọi trục (0,594 / 0,714; 0,271 / 0,644).
+- Hệ quả: máy chỉ player và điện thoại dùng trò-A (mel + tháp CLAP ONNX + đầu 0,03 MB). Không cần librosa hay port âm học sang
+  Kotlin. Máy có Studio giữ bản đủ âm học.
+
 **GHI TRƯỚC - MTG-JAMENDO LÀM DỮ LIỆU HỌC CHO TRÒ (02-10 23:xx, Lead + chủ sách):**
 
 Bộ dữ liệu:
