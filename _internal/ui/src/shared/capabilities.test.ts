@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canEditLayer, showsStudioOnly, studioNeed, type Capabilities } from "./capabilities";
+import { canEditLayer, editBlockedNote, showsStudioOnly, studioNeed, type Capabilities } from "./capabilities";
 
 const caps = (over: Partial<Capabilities>): Capabilities => ({ toolchain: false, workshop: false, link: false, ...over });
 
@@ -35,5 +35,16 @@ describe("việc cần Studio vẫn hiện, nói rõ thiếu gì", () => {
   it("cuốn của máy khác: không hiện gì (việc đó nằm ở máy kia)", () => {
     expect(showsStudioOnly(caps({ link: true }))).toBe(false);
     expect(showsStudioOnly(undefined)).toBe(false);
+  });
+});
+
+describe("cuốn nghe thẳng từ máy khác", () => {
+  it("sửa bị chặn kèm lý do, không bị giấu", () => {
+    expect(editBlockedNote(caps({ link: true }))).toContain("sửa ở máy ấy");
+  });
+  it("không có lý do khi sửa được hay khi chưa biết khả năng", () => {
+    expect(editBlockedNote(caps({}))).toBeNull();
+    expect(editBlockedNote(caps({ link: true, workshop: true }))).toBeNull();
+    expect(editBlockedNote(undefined)).toBeNull();
   });
 });

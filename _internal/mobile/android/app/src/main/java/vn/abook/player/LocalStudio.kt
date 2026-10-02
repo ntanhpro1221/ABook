@@ -19,6 +19,7 @@ object LocalStudio {
     private val CHAPTER_SCRIPT = Regex("/chapters/([0-9]+)/script")
     private val EDITS_ONLY_KEYS = setOf("enabled", "levelDb", "silence")
     private val lock = Any()
+    private const val LINK_BOOK = "Sách này lấy từ máy tính khác - muốn sửa thì sửa ở máy ấy"
 
     /** Bộ chuẩn hoá ảnh bìa: máy thật dùng [AndroidCoverCodec]; test JVM đặt bản giả. */
     @Volatile
@@ -50,9 +51,10 @@ object LocalStudio {
 
     /** Thư mục cuốn nhập từ file mà người nghe sửa được; không có thì 404, cuốn lấy từ máy tính thì 409. */
     private fun editable(id: String): java.io.File {
-        val raw = Store.rawManifest(id) ?: throw Api(404, "Không tìm thấy sách này trong thư viện")
+        // Cuốn nghe thẳng chưa tải chỉ có `stream.json`: vẫn là sách của máy tính khác (409), không phải "không thấy" (404).
+        val raw = Store.rawManifest(id) ?: throw if (Store.streamManifest(id) != null) Api(409, LINK_BOOK) else Api(404, "Không tìm thấy sách này trong thư viện")
         if (Store.isComputerBook(id) || raw.optString("source").isNotEmpty() || raw.optJSONObject("package") == null) {
-            throw Api(409, "Sách này lấy từ máy tính khác - muốn sửa thì sửa ở máy ấy")
+            throw Api(409, LINK_BOOK)
         }
         return Store.bookDir(id)
     }

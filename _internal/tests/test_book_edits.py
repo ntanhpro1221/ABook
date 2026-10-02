@@ -377,6 +377,18 @@ def test_a_file_with_edits_merges_into_a_book_that_is_already_complete(tmp_path:
     assert (folder / book_edits.EDITS_COVER).is_file() and edits["cover"]["version"] == 1759400000, "bìa file mang theo lấy về"
 
 
+def test_opening_a_file_without_edits_still_reports_the_edits_kept_on_this_machine(tmp_path: Path) -> None:
+    app, folder, identifier = _edited_library(tmp_path)
+    plain = bookfile.repack(folder, tmp_path / "khong_sua.abook")  # đóng gói từ chính cuốn này, lúc chưa sửa gì
+    book_edits.set_title(folder, "Của tôi")
+    book_edits.set_character_name(folder, "LUCIEN", "Lu-xi-en")
+    assert book_edits.is_empty(BookFile(plain).edits)
+    result = app.open_book_file(str(plain))
+    assert result["how"] == "existing" and result["id"] == identifier
+    assert result["merge"]["kept"] == 2 and result["merge"]["adopted"] == 0 and "edits" not in result
+    assert book_edits.load(folder)["title"] == "Của tôi"
+
+
 def _forged(tmp_path: Path, edits_bytes: bytes, *, cover: bytes | None = None, version: int = 4) -> Path:
     """File phiên bản `version` mang `edits.json` do người lạ viết: dựng từ file đúng rồi thay phần sửa và ghi lại mã băm."""
     source = shared.FIXTURES / "written" / "python_v4.abook"
