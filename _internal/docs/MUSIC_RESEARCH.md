@@ -570,6 +570,33 @@ chọn khác bài; luật thắng như thí nghiệm nền êm.
 Giới hạn: chỉ Incompetech có nhãn người. Nguồn khác chữ ít hơn nhiều (OGA / FreePD / Scott Buckley trung vị 4-10 chữ), nên độ tin
 cậy của C phải hạ trọng số khi gộp ở các nguồn ấy; điều này chưa đo được ở đây.
 
+**KẾT QUẢ SEGLLM - LLM ĐỌC CẢ ĐOẠN (02-10 23:20, qwen3.5:9b, bộ 4; `results/segllm_*.txt`; chấm theo các luật ghi trước):**
+
+r trung bình V/E/T theo chương:
+
+| Cách | Đủ 10 chương | Bỏ HDST (9) | Ghi chú |
+|---|---|---|---|
+| app (nhãn câu) | 0,310 (V 0,32 / E 0,41 / T 0,20) | 0,276 | |
+| app+llm | 0,330 (V 0,29 / E 0,17 / T 0,53) | 0,345 | |
+| app+llmVT (THĂM DÒ) | 0,410 | 0,402 | LLM cho V/T, nhãn câu cho E |
+| oracle | 0,378 | 0,346 | |
+| oracle+llm | 0,509 | 0,512 | |
+
+- **Luật CHÍNH KHÔNG ĐẠT:** đủ bộ +0,020, thắng 9/10; bỏ HDST thì +0,069, thắng 9/9; luật đòi cả hai.
+- **Luật phụ ĐẠT:** oracle+llm so oracle +0,131, thắng 9/10.
+- **LLM khác hẳn theo trục:** độ CĂNG T 0,20 → 0,53 (rất mạnh), NĂNG LƯỢNG E 0,41 → 0,17 (kém). Khớp với lý thuyết: LLM 8-9B chấm
+  energy kém (r ≈ 0,2).
+- Tổ hợp V/T của LLM + E của nhãn câu (+0,10) chỉ là thăm dò sau khi thấy số. Phải ghi trước rồi đo trên đoạn MỚI.
+
+Ghép theo GEMS (`segllm_matching.txt`):
+- [CHÍNH] distmix so clap: −0,035, hơn 5/8 cuốn, KHÔNG ĐẠT.
+- [phụ] dist: −0,066, hơn 6/8, ĐẠT trên đủ bộ; bỏ HDST thì 5/7, KHÔNG ĐẠT.
+- JS LLM-người 0,138 (người A-B 0,032).
+
+Biểu diễn (`segllm_gems_reps.txt`):
+- LLM 9 cường độ ĐỘC LẬP khớp người r 0,705, dạng tỉ lệ r 0,605 (trần người 0,94). Ủng hộ Lớp 2 độc lập.
+- Nhưng LLM gắn 2,86 nhãn ≥ 0,5 mỗi đoạn, người chỉ 1,48. Cần hiệu chỉnh ngưỡng / độ nhọn trước khi dùng cho cosine Lớp 2.
+
 **KẾT QUẢ GỘP BA NGUỒN (02-10 23:5x, `eval_fusion.py`, `results/fusion_ablation.txt`; 1.381 bài Incompetech, AUC TB 10 lớp):**
 
 | Tổ hợp | C=1 cố định (GHI TRƯỚC) | C chọn bằng CV lồng (THĂM DÒ) |
@@ -589,6 +616,9 @@ Cột thăm dò không được ghi trước: `eval_fusion_tuned.py`, Cs 0,003-1
 - **Chữ là nguồn mạnh nhất ở nơi có chữ.** Người đọc Claude đọc mô tả của Kevin MacLeod mà không có feel, vẫn đạt 0,87.
 - **A thua ở cột ghi trước là do điều chuẩn.** C=1 trên 512 chiều đã chuẩn hoá thì quá khớp; chọn C bằng CV lồng thì A lên
   0,849, ngang đầu dò cũ 0,85. Thầy tốt nhất (thăm dò) là A+B+C 0,886, gần như bằng B+C 0,885.
+- **Giới hạn (Lead):** feel và mô tả đều do CHÍNH Kevin MacLeod viết, cùng một nguồn, nên AUC của chữ có thể lạc quan hơn thực.
+  Phép kiểm thật là máy chấm kiểu E1 trên lựa chọn cuối, cộng AUC theo TỪNG nguồn khác khi có nhãn người.
+- **Sửa trước khi dựng trò (Lead):** trò dùng logistic có C chọn bằng CV lồng (cấu hình 0,856), không dùng C=1.
 - **Trò chỉ nghe (A+B, thăm dò) đạt 0,856, tức 97% thầy, trong cùng miền Incompetech.** Mốc ghi trước của trò (≥ 90% thầy trên
   phần GIỮ NGOÀI, giấu ngữ cảnh) sẽ đo đúng cách khi dựng trò.
 
