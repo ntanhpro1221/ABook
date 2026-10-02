@@ -1,0 +1,68 @@
+{
+ "local": {
+  "format": "abook-edits",
+  "version": 1,
+  "wishes": {
+   "voices": {
+    "HEIDI": {
+     "avoid": "",
+     "gender": "male",
+     "preset": "",
+     "requested_at": 1759400004.0
+    }
+   }
+  }
+ },
+ "incoming": {
+  "format": "abook-edits",
+  "version": 1,
+  "wishes": {
+   "pronunciations": {
+    "hailkes": {
+     "requested_at": 1759400001.5,
+     "spoken_form": "Hên-khơ",
+     "surface": "Hailkes"
+    }
+   },
+   "retakes": {
+    "c1_s0002_c58b67": {
+     "requested_at": 1759400005.0,
+     "text_sha256": "c58b6788498e1756635f89b55a9906af2fa37a0d3ffbc49083eb56c5c5c5483c"
+    }
+   }
+  }
+ },
+ "merged": {
+  "format": "abook-edits",
+  "version": 1,
+  "wishes": {
+   "pronunciations": {
+    "hailkes": {
+     "requested_at": 1759400001.5,
+     "spoken_form": "Hên-khơ",
+     "surface": "Hailkes"
+    }
+   },
+   "voices": {
+    "HEIDI": {
+     "avoid": "",
+     "gender": "male",
+     "preset": "",
+     "requested_at": 1759400004.0
+    }
+   },
+   "retakes": {
+    "c1_s0002_c58b67": {
+     "requested_at": 1759400005.0,
+     "text_sha256": "c58b6788498e1756635f89b55a9906af2fa37a0d3ffbc49083eb56c5c5c5483c"
+    }
+   }
+  }
+ },
+ "report": {
+  "adopted": 2,
+  "kept": 1,
+  "conflicts": 0,
+  "cover": null
+ }
+}

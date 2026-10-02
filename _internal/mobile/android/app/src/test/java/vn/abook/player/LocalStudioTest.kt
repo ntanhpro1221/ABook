@@ -39,11 +39,15 @@ class LocalStudioTest {
         Store.rememberChapters(id, JSONObject(), imported = true)
         LocalStudio.coverCodec = FakeCodec()
         LocalStudio.clock = { 1_790_950_256L }
+        // đồng hồ của ý muốn chạy từng bước: mỗi yêu cầu một dấu giờ riêng (rút đúng lần bấm theo `requestedAt`)
+        var tick = 0
+        LocalStudio.now = { 1_790_950_256.0 + (tick++) * 0.25 }
     }
 
     @After
     fun tearDown() {
         LocalStudio.coverCodec = null
+        LocalStudio.now = { System.currentTimeMillis() / 1000.0 }
     }
 
     private fun call(method: String, suffix: String, body: JSONObject? = null) = LocalStudio.handle(method, "/api/books/$id$suffix", body)
@@ -68,13 +72,19 @@ class LocalStudioTest {
             val case = BookEditsFixtures.obj("contract/$name.json")
             val volatile = case.getJSONArray("volatile").let { list -> (0 until list.length()).map { list.getString(it) }.toSet() }
             val steps = case.getJSONArray("steps")
+            val answers = ArrayList<Any?>()
             for (index in 0 until steps.length()) {
                 val step = steps.getJSONObject(index)
                 val where = "$name #${index + 1} ${step.getString("method")} ${step.getString("path")}"
                 val body = step.optJSONObject("body")?.let { sent ->
-                    JSONObject(sent.toString().replace("\"\$cover\"", JSONObject.quote(dataUrl())))
+                    // "$requestedAt#N": dấu giờ lời đáp của bước N (của chính bản Kotlin) - để rút đúng lần bấm ấy
+                    val text = Regex("\"\\\$requestedAt#([0-9]+)\"").replace(sent.toString().replace("\"\$cover\"", JSONObject.quote(dataUrl()))) { match ->
+                        StrictJson.pyFloat(((answers[match.groupValues[1].toInt() - 1] as JSONObject).getDouble("requestedAt")))
+                    }
+                    JSONObject(text)
                 }
                 val (status, reply) = call(step.getString("method"), step.getString("path"), body)
+                answers.add(reply)
                 assertEquals("$where: mã trạng thái", step.getInt("status"), status)
                 val expected = withoutVolatile(step.opt("response"), volatile)
                 val actual = withoutVolatile(reply, volatile)
@@ -84,7 +94,7 @@ class LocalStudioTest {
                 replayed++
             }
         }
-        assertTrue("đã phát lại cả bộ hợp đồng ($replayed bước)", replayed >= 35)
+        assertTrue("đã phát lại cả bộ hợp đồng ($replayed bước)", replayed >= 120)
     }
 
     @Test

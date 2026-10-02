@@ -1,0 +1,336 @@
+{
+ "volatile": [
+  "color",
+  "version",
+  "requestedAt"
+ ],
+ "steps": [
+  {
+   "method": "POST",
+   "path": "/voice",
+   "body": {
+    "character": "HEIDI",
+    "gender": "male"
+   },
+   "status": 200,
+   "response": {
+    "character": "HEIDI",
+    "preset": "",
+    "gender": "male",
+    "avoid": "",
+    "requestedAt": 1790955306.6288695
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/voice",
+   "body": {
+    "character": "HEIDI",
+    "gender": "robot"
+   },
+   "status": 400,
+   "response": {
+    "error": "Giới phải là nam hoặc nữ."
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/voice",
+   "body": {
+    "character": "NARRATOR",
+    "gender": "male"
+   },
+   "status": 400,
+   "response": {
+    "error": "Giọng người kể chọn khi tạo sách, không đổi ở đây."
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/voice",
+   "body": {
+    "character": "NOBODY",
+    "gender": "male"
+   },
+   "status": 400,
+   "response": {
+    "error": "Không có nhân vật này trong sách."
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/voice",
+   "body": {
+    "character": "HEIDI"
+   },
+   "status": 400,
+   "response": {
+    "error": "Thiếu giọng hoặc giới tính"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/voice",
+   "body": {
+    "character": "",
+    "gender": "male"
+   },
+   "status": 400,
+   "response": {
+    "error": "Thiếu nhân vật"
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/cast",
+   "status": 200,
+   "response": {
+    "narrator": {
+     "voice": "Đức Trí",
+     "lines": 4,
+     "seconds": 7.0,
+     "profile": {
+      "key": "narrator",
+      "preset": "Đức Trí",
+      "tone": ""
+     }
+    },
+    "characters": [
+     {
+      "name": "HEIDI",
+      "displayName": "Hây-đi",
+      "originalName": "Heidi",
+      "gender": "Nữ",
+      "age": "Thanh niên",
+      "lines": 1,
+      "seconds": 2.5,
+      "recorded": 0,
+      "voice": {
+       "key": "preset_thanh_binh_f087_p+00",
+       "preset": "Thanh Bình",
+       "tone": "trầm hẳn"
+      },
+      "sampleId": null,
+      "firstChapter": "Chương 646",
+      "pendingVoice": {
+       "preset": "",
+       "gender": "Nam"
+      }
+     },
+     {
+      "name": "LUCIEN",
+      "displayName": "Lucien",
+      "gender": "Nam",
+      "age": "Thanh niên",
+      "lines": 1,
+      "seconds": 4.0,
+      "recorded": 1,
+      "voice": {
+       "key": "preset_thanh_binh_f087_p+00",
+       "preset": "Thanh Bình",
+       "tone": "trầm hẳn"
+      },
+      "sampleId": 3,
+      "firstChapter": "Chương 646",
+      "pendingVoice": null
+     }
+    ],
+    "extras": [],
+    "carried": []
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/voice",
+   "body": {
+    "character": "heidi",
+    "preset": "Thiện Minh",
+    "avoid": "preset_a"
+   },
+   "status": 200,
+   "response": {
+    "character": "heidi",
+    "preset": "Thiện Minh",
+    "gender": "",
+    "avoid": "preset_a",
+    "requestedAt": 1790955306.6926475
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/cast",
+   "status": 200,
+   "response": {
+    "narrator": {
+     "voice": "Đức Trí",
+     "lines": 4,
+     "seconds": 7.0,
+     "profile": {
+      "key": "narrator",
+      "preset": "Đức Trí",
+      "tone": ""
+     }
+    },
+    "characters": [
+     {
+      "name": "HEIDI",
+      "displayName": "Hây-đi",
+      "originalName": "Heidi",
+      "gender": "Nữ",
+      "age": "Thanh niên",
+      "lines": 1,
+      "seconds": 2.5,
+      "recorded": 0,
+      "voice": {
+       "key": "preset_thanh_binh_f087_p+00",
+       "preset": "Thanh Bình",
+       "tone": "trầm hẳn"
+      },
+      "sampleId": null,
+      "firstChapter": "Chương 646",
+      "pendingVoice": {
+       "preset": "Thiện Minh",
+       "gender": ""
+      }
+     },
+     {
+      "name": "LUCIEN",
+      "displayName": "Lucien",
+      "gender": "Nam",
+      "age": "Thanh niên",
+      "lines": 1,
+      "seconds": 4.0,
+      "recorded": 1,
+      "voice": {
+       "key": "preset_thanh_binh_f087_p+00",
+       "preset": "Thanh Bình",
+       "tone": "trầm hẳn"
+      },
+      "sampleId": 3,
+      "firstChapter": "Chương 646",
+      "pendingVoice": null
+     }
+    ],
+    "extras": [],
+    "carried": []
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/pending-changes",
+   "status": 200,
+   "response": {
+    "items": [
+     {
+      "kind": "voice",
+      "label": "Giọng của Hây-đi: Anh Khôi",
+      "lines": 0,
+      "section": "voices",
+      "key": "HEIDI",
+      "requestedAt": 1790955306.6926475
+     }
+    ],
+    "lines": 0,
+    "chapters": [],
+    "seconds": 0.0
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/voice",
+   "body": {
+    "character": "HEIDI",
+    "withdraw": true,
+    "requestedAt": "$requestedAt#8"
+   },
+   "status": 200,
+   "response": {
+    "undone": 1,
+    "restored": false
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/cast",
+   "status": 200,
+   "response": {
+    "narrator": {
+     "voice": "Đức Trí",
+     "lines": 4,
+     "seconds": 7.0,
+     "profile": {
+      "key": "narrator",
+      "preset": "Đức Trí",
+      "tone": ""
+     }
+    },
+    "characters": [
+     {
+      "name": "HEIDI",
+      "displayName": "Hây-đi",
+      "originalName": "Heidi",
+      "gender": "Nữ",
+      "age": "Thanh niên",
+      "lines": 1,
+      "seconds": 2.5,
+      "recorded": 0,
+      "voice": {
+       "key": "preset_thanh_binh_f087_p+00",
+       "preset": "Thanh Bình",
+       "tone": "trầm hẳn"
+      },
+      "sampleId": null,
+      "firstChapter": "Chương 646",
+      "pendingVoice": {
+       "preset": "",
+       "gender": "Nam"
+      }
+     },
+     {
+      "name": "LUCIEN",
+      "displayName": "Lucien",
+      "gender": "Nam",
+      "age": "Thanh niên",
+      "lines": 1,
+      "seconds": 4.0,
+      "recorded": 1,
+      "voice": {
+       "key": "preset_thanh_binh_f087_p+00",
+       "preset": "Thanh Bình",
+       "tone": "trầm hẳn"
+      },
+      "sampleId": 3,
+      "firstChapter": "Chương 646",
+      "pendingVoice": null
+     }
+    ],
+    "extras": [],
+    "carried": []
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/voice",
+   "body": {
+    "character": "HEIDI",
+    "withdraw": true,
+    "requestedAt": "$requestedAt#1"
+   },
+   "status": 200,
+   "response": {
+    "undone": 1,
+    "restored": false
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/edits",
+   "status": 200,
+   "response": {
+    "applied": 0,
+    "waiting": 0,
+    "wishes": 0
+   }
+  }
+ ]
+}

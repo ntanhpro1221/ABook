@@ -17,7 +17,9 @@ và độ dài, không ký tự điều khiển - và file sai thì bị từ ch
                                                                  đối tượng = dùng edits/cover.jpg)
      "characters": {"<name trong cast.json>": "<tên hiện>"},
      "chapters": {"<mã chương>": {"title": "Chương 12", "subtitle": "Hồi kết"}},   (mỗi trường tuỳ chọn)
-     "music": {"enabled": false, "levelDb": -24.0, "silenced": ["<mã chương>:<mili giây đầu mốc>"]}}
+     "music": {"enabled": false, "levelDb": -24.0, "silenced": ["<mã chương>:<mili giây đầu mốc>"]},
+     "wishes": {...}}                                           (ý muốn chờ Studio - book_wishes.py: cách đọc tên, người nói,
+                                                                 cách đọc câu, giọng, thu lại; KHÔNG BAO GIỜ áp vào sách)
 
 Bộ ví dụ dùng chung với bản Kotlin (BookEdits.kt): tests/fixtures/book_edits/.
 """
@@ -27,10 +29,12 @@ import copy
 import json
 import re
 import threading
+import time
 import unicodedata
 from pathlib import Path
 from typing import Any
 
+from .. import listener_overrides
 from .. import names as renames
 from ..io_utils import atomic_write_bytes
 from . import covers, music_plan, store
@@ -47,7 +51,7 @@ MAX_CHARACTERS = 2000
 MAX_CHAPTERS = 5000
 MAX_SILENCED = 5000
 LEVEL_RANGE = (-40.0, -6.0)
-_TOP_KEYS = {"format", "version", "title", "cover", "characters", "chapters", "music"}
+_TOP_KEYS = {"format", "version", "title", "cover", "characters", "chapters", "music", "wishes"}
 _COVER_KEYS = {"color", "width", "height", "version"}
 _MUSIC_KEYS = {"enabled", "levelDb", "silenced"}
 _CHAPTER_KEYS = {"title", "subtitle"}
@@ -90,12 +94,24 @@ def is_empty(edits: dict[str, Any]) -> bool:
     return count(edits) == 0
 
 
-def count(edits: dict[str, Any]) -> int:
-    """Số thay đổi người nghe đã làm (cho dòng "N thay đổi"): tên sách, bìa, mỗi tên nhân vật, mỗi chương đổi tên, bật/tắt
-    nhạc, mức nhạc, mỗi đoạn nhạc im lặng."""
+def count_applied(edits: dict[str, Any]) -> int:
+    """Số thay đổi "áp ngay" người nghe đã làm: tên sách, bìa, mỗi tên nhân vật, mỗi chương đổi tên, bật/tắt nhạc, mức nhạc,
+    mỗi đoạn nhạc im lặng. Không kể ý muốn chờ Studio (`wishes`) - chúng chưa áp vào đâu cả."""
     music = edits.get("music") or {}
     return (("title" in edits) + ("cover" in edits) + len(edits.get("characters") or {}) + len(edits.get("chapters") or {})
             + ("enabled" in music) + ("levelDb" in music) + len(music.get("silenced") or []))
+
+
+def count_wishes(edits: dict[str, Any]) -> int:
+    """Số ý muốn chờ Studio (book_wishes.count)."""
+    from . import book_wishes
+
+    return book_wishes.count(edits.get("wishes"))
+
+
+def count(edits: dict[str, Any]) -> int:
+    """Số thay đổi người nghe đã làm (cho dòng "N thay đổi" và việc mời lưu): thay đổi áp ngay + ý muốn chờ Studio."""
+    return count_applied(edits) + count_wishes(edits)
 
 
 def _number(value: Any) -> bool:
@@ -142,6 +158,10 @@ def validate(raw: Any) -> dict[str, Any]:
         out["chapters"] = kept
     if "music" in raw:
         out["music"] = _validate_music(raw["music"])
+    if "wishes" in raw:
+        from . import book_wishes
+
+        out["wishes"] = book_wishes.validate(raw["wishes"])
     return out
 
 
@@ -215,6 +235,10 @@ def _ordered(edits: dict[str, Any]) -> dict[str, Any]:
         out["chapters"] = {key: edits["chapters"][key] for key in sorted(edits["chapters"], key=int)}
     if edits.get("music"):
         out["music"] = {key: edits["music"][key] for key in ("enabled", "levelDb", "silenced") if key in edits["music"]}
+    if edits.get("wishes"):
+        from . import book_wishes
+
+        out["wishes"] = book_wishes.ordered(edits["wishes"])
     return out
 
 
@@ -292,6 +316,12 @@ def merge(local: dict[str, Any], incoming: dict[str, Any]) -> tuple[dict[str, An
         music["silenced"] = silenced
     if music:
         out["music"] = music
+    from . import book_wishes
+
+    wishes, wish_conflicts = book_wishes.merge(local.get("wishes"), incoming.get("wishes"))
+    conflicts += wish_conflicts
+    if wishes:
+        out["wishes"] = wishes
     cover = None
     if isinstance(out.get("cover"), dict):
         cover = "local" if isinstance(local.get("cover"), dict) else "incoming"
@@ -347,9 +377,12 @@ def apply_manifest(book: dict[str, Any], edits: dict[str, Any]) -> dict[str, Any
 def apply_cast(cast: dict[str, Any], edits: dict[str, Any], base: dict[str, Any] | None = None) -> dict[str, Any]:
     """`cast.json` -> bản người nghe thấy: tên nhân vật đã đổi (`displayName`, và `originalName` khi khác tên gốc), và
     `firstChapter` theo tên chương mới. `base`: book.json lớp sách (để biết tên chương gốc)."""
+    from . import book_wishes
+
     people = edits.get("characters") or {}
     chapter_names = _chapter_renames(base, edits)
-    if not people and not chapter_names:
+    waiting = book_wishes.pending_voices(edits.get("wishes"))
+    if not people and not chapter_names and not waiting:
         return cast
     out = copy.deepcopy(cast)
     for kind in ("characters", "extras", "carried"):
@@ -357,6 +390,9 @@ def apply_cast(cast: dict[str, Any], edits: dict[str, Any], base: dict[str, Any]
             if not isinstance(person, dict):
                 continue
             name = person.get("name")
+            if isinstance(name, str) and listener_overrides.character_key(name) in waiting:
+                # Ý muốn đổi giọng/giới chờ Studio: chỉ một dấu "đang chờ" - giọng và audio của người ấy giữ nguyên.
+                person["pendingVoice"] = waiting[listener_overrides.character_key(name)]
             if name in people:
                 original = person.get("originalName") or person.get("displayName") or name
                 person["displayName"] = people[name]
@@ -503,7 +539,12 @@ def _base_cast(folder: Path) -> dict[str, Any]:
     return packages.raw_cast(folder)
 
 
+TOO_BIG = "Quá nhiều thay đổi đang chờ trong cuốn này - hãy lưu, áp bớt vào dự án rồi làm tiếp."
+
+
 def _write(folder: Path, edits: dict[str, Any]) -> dict[str, Any]:
+    if len(dump(edits)) > MAX_EDITS_BYTES:
+        raise EditsError(TOO_BIG)  # file quá cỡ thì lần đọc sau từ chối cả file: không ghi ra thứ chính mình không đọc lại được
     save(folder, edits)
     return edits
 
@@ -710,8 +751,9 @@ def dismiss_incoming(project: Path) -> None:
 def fold(project: Path) -> dict[str, Any]:
     """Áp phần sửa đang chờ (`incoming`) vào dự án bằng ĐÚNG những hàm Studio dùng: tên sách (store.set_display_title), bìa
     (covers), tên nhân vật (names.set_name), tên chương (store.set_chapter_title), nhạc nền (music_plan.write_overrides).
-    Thay đổi nào không còn chỗ (nhân vật / chương không có trong dự án, nhạc chưa dựng) thì bỏ qua và đếm. Xong thì xoá phần
-    chờ. Trả {"applied", "skipped", "music": có đổi lựa chọn nhạc không (người gọi dựng lại rãnh nhạc)}."""
+    Thay đổi nào không còn chỗ (nhân vật / chương không có trong dự án, nhạc chưa dựng) thì bỏ qua và đếm. Ý muốn chờ Studio
+    (`wishes`) thành yêu cầu của dự án qua `book_wishes.fold`, không áp. Xong thì xoá phần chờ. Trả {"applied", "skipped",
+    "music": có đổi lựa chọn nhạc không (người gọi dựng lại rãnh nhạc), "requests": số ý muốn đã thành yêu cầu}."""
     from .. import continuation
 
     project = Path(project)
@@ -778,5 +820,13 @@ def fold(project: Path) -> dict[str, Any]:
     if music_changes:
         music_plan.write_overrides(project, music_changes)
         applied += ("enabled" in music_changes) + ("levelDb" in music_changes)
+    requests = 0
+    if edits.get("wishes"):
+        from . import book_wishes
+
+        # Ý muốn chờ Studio KHÔNG được áp: chúng thành yêu cầu trong overrides.json (đóng dấu lại giờ), vào danh sách "Áp dụng
+        # N thay đổi" như mọi yêu cầu - dây chuyền áp ở ranh giới chương kế tiếp hay lần chạy tới.
+        folded = book_wishes.fold(project, edits["wishes"], now=time.time())
+        requests, skipped = folded["requests"], skipped + folded["skipped"]
     dismiss_incoming(project)
-    return {"applied": applied, "skipped": skipped, "music": bool(music_changes)}
+    return {"applied": applied, "skipped": skipped, "music": bool(music_changes), "requests": requests}

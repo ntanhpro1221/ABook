@@ -59,7 +59,8 @@ object Store {
 
     private fun shown(id: String, raw: JSONObject, prints: JSONObject): JSONObject {
         val edits = BookEdits.load(bookDir(id))
-        return BookEdits.applyManifest(raw, edits).put("edits", BookEdits.count(edits))
+        // `edits`: mọi thay đổi (áp ngay + ý muốn); `wishes`: trong số ấy bao nhiêu là ý muốn chờ Studio (chưa áp vào audio).
+        return BookEdits.applyManifest(raw, edits).put("edits", BookEdits.count(edits)).put("wishes", BookEdits.countWishes(edits))
             .put("capabilities", capabilities(isComputer(raw, prints.optJSONObject(id))))
     }
 
@@ -68,7 +69,7 @@ object Store {
         JSONObject().put("toolchain", false).put("workshop", false).put("link", link)
 
     /** Gói sách của cuốn chưa tải (nghe thẳng): không có lớp sửa, luôn là cuốn "Trên máy khác". */
-    fun linked(manifest: JSONObject): JSONObject = manifest.put("edits", 0).put("capabilities", capabilities(true))
+    fun linked(manifest: JSONObject): JSONObject = manifest.put("edits", 0).put("wishes", 0).put("capabilities", capabilities(true))
 
     @Synchronized
     fun books(): List<JSONObject> {

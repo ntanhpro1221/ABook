@@ -1,0 +1,97 @@
+{
+ "local": {
+  "format": "abook-edits",
+  "version": 1,
+  "title": "Của tôi",
+  "wishes": {
+   "voices": {
+    "HEIDI": {
+     "avoid": "",
+     "gender": "male",
+     "preset": "",
+     "requested_at": 1759400004.0
+    }
+   },
+   "aliases": [
+    {
+     "alias": "Hây-đi",
+     "at": 1759400004.0,
+     "person": "LUCIEN"
+    }
+   ]
+  }
+ },
+ "incoming": {
+  "format": "abook-edits",
+  "version": 1,
+  "wishes": {
+   "speakers": {
+    "c1_s0003_fa1fe2": {
+     "requested_at": 1759400002.0,
+     "speaker": "HEIDI",
+     "text_sha256": "fa1fe25f1922819e9fd94d48eeef9fddcaeb06be1653b73d618873e572498ea5"
+    }
+   },
+   "voices": {
+    "HEIDI": {
+     "avoid": "",
+     "gender": "female",
+     "preset": "",
+     "requested_at": 1759400009.0
+    }
+   },
+   "aliases": [
+    {
+     "alias": "Hây-đi",
+     "at": 1759400002.0,
+     "person": "NOBODY"
+    },
+    {
+     "alias": "Cô bé",
+     "at": 1759400002.0,
+     "person": "HEIDI"
+    }
+   ]
+  }
+ },
+ "merged": {
+  "format": "abook-edits",
+  "version": 1,
+  "title": "Của tôi",
+  "wishes": {
+   "speakers": {
+    "c1_s0003_fa1fe2": {
+     "requested_at": 1759400002.0,
+     "speaker": "HEIDI",
+     "text_sha256": "fa1fe25f1922819e9fd94d48eeef9fddcaeb06be1653b73d618873e572498ea5"
+    }
+   },
+   "voices": {
+    "HEIDI": {
+     "avoid": "",
+     "gender": "male",
+     "preset": "",
+     "requested_at": 1759400004.0
+    }
+   },
+   "aliases": [
+    {
+     "alias": "Hây-đi",
+     "at": 1759400004.0,
+     "person": "LUCIEN"
+    },
+    {
+     "alias": "Cô bé",
+     "at": 1759400002.0,
+     "person": "HEIDI"
+    }
+   ]
+  }
+ },
+ "report": {
+  "adopted": 1,
+  "kept": 2,
+  "conflicts": 2,
+  "cover": null
+ }
+}
