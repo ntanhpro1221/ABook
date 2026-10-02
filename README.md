@@ -27,8 +27,10 @@ Làm sách chạy hoàn toàn trên máy của bạn: văn bản truyện và â
   không có mạng); chỗ đang nghe và dấu trang đi hai chiều; thấy và điều khiển máy khác đang phát, **"Nghe ở đây"** chuyển
   sang máy mình đúng chương, đúng giây. Nối qua Wi-Fi, hoặc Bluetooth khi không chung Wi-Fi - điện thoại tự chọn đường.
   Máy tính nghe được thư viện của máy tính khác; điện thoại nghe được thư viện của điện thoại khác.
-- **Nghe trong trình duyệt** của iPhone, iPad, TV hay máy bất kỳ: mở `http://<tên hoặc địa chỉ máy tính>:47630`. Ở ngoài
-  nhà thì dùng địa chỉ Tailscale của máy tính (Cài đặt ghi rõ địa chỉ nào dùng trong nhà, địa chỉ nào dùng khi ở ngoài).
+- **Nghe trong trình duyệt** của iPhone, iPad, TV hay máy bất kỳ: mở `https://<tên hoặc địa chỉ máy tính>:47630` (trình
+  duyệt báo "không an toàn" một lần vì chứng chỉ do chính máy tính cấp - chọn tiếp tục). Ở ngoài nhà thì cho thiết bị và
+  máy tính vào cùng một mạng riêng ảo (VPN) rồi dùng địa chỉ của máy tính trong mạng ấy - Cài đặt ghi rõ địa chỉ nào dùng
+  trong nhà, địa chỉ nào dùng khi ở ngoài.
 
 Thay đổi của từng bản phát hành: [`_internal/docs/CHANGELOG.md`](_internal/docs/CHANGELOG.md).
 
@@ -39,7 +41,7 @@ Thay đổi của từng bản phát hành: [`_internal/docs/CHANGELOG.md`](_int
 | nghe trên máy tính | Windows 10 hoặc 11, 64-bit |
 | làm sách (Studio) | thêm card đồ hoạ **NVIDIA** (đã thử trên RTX 5060 8 GB), ổ đĩa trống từ 30 GB, mạng để tải Studio lần đầu |
 | nghe trên điện thoại | Android 7.0 trở lên |
-| nghe trong trình duyệt | trình duyệt bất kỳ, cùng mạng với máy tính - hoặc cùng mạng Tailscale khi ở ngoài nhà |
+| nghe trong trình duyệt | trình duyệt bất kỳ, cùng mạng với máy tính - hoặc cùng một mạng riêng ảo (VPN) khi ở ngoài nhà |
 
 Không có card NVIDIA vẫn cài và nghe được bình thường; chỉ phần làm sách cần nó.
 
@@ -70,8 +72,9 @@ chữ ký thì không cài). Bản mới cần phần Studio khác thì thẻ "C
    - Trên điện thoại: tab **Tải sách** → chọn máy tính tìm thấy → gõ mã 6 số.
 3. Không chung Wi-Fi (ra khỏi nhà, máy tính cắm dây mạng...): ghép hai máy trong Cài đặt Bluetooth của Android, bật
    Bluetooth trên máy tính, rồi trên điện thoại vào **Tải sách → "Không chung Wi-Fi? Kết nối qua Bluetooth"**. Điện thoại
-   đã ghép qua Wi-Fi mà máy tính có Bluetooth thì tự chuyển sang Bluetooth khi rời Wi-Fi, không phải ghép lại. Mạng
-   riêng như Tailscale, ZeroTier, NetBird cũng dùng được.
+   đã ghép qua Wi-Fi mà máy tính có Bluetooth thì tự chuyển sang Bluetooth khi rời Wi-Fi, không phải ghép lại. Ở xa hơn
+   tầm Bluetooth thì dùng một mạng riêng ảo (VPN) bất kỳ cho cả hai máy - Tailscale, ZeroTier, NetBird, WireGuard... đều
+   được; app không cần cài đặt gì riêng.
 
 Sau khi ghép, sách trên máy tính hiện ngay trong Thư viện điện thoại (nhãn "Máy tính") để nghe thẳng hoặc tải về.
 
@@ -83,7 +86,7 @@ Android Auto bật chế độ nhà phát triển (chạm nhiều lần vào s�
 
 ### Thiết bị khác
 
-- **Trình duyệt** (iPhone, iPad, TV, máy tính không cài ABook): mở `http://<máy tính>:47630` rồi gõ mã 6 số như trên.
+- **Trình duyệt** (iPhone, iPad, TV, máy tính không cài ABook): mở `https://<máy tính>:47630` rồi gõ mã 6 số như trên.
   Thiết bị chỉ nghe được sách, không thấy Studio hay thư mục trên máy tính - trừ khi bạn bật **"Cho phép điều khiển sản
   xuất từ thiết bị đã ghép"** trong Cài đặt và cho riêng thiết bị ấy quyền đó.
 - **Máy tính khác có ABook**: Cài đặt → **"Máy tính khác"** → "Tìm máy trong mạng" → gõ mã 6 số đang hiện trên máy kia.

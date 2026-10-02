@@ -7,6 +7,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Điện thoại và thiết bị
+
+- **Ở ngoài nhà dùng mạng riêng ảo nào cũng được**: Cài đặt nhận ra địa chỉ "dùng khi ở ngoài" trên mọi mạng riêng ảo
+  (Tailscale, ZeroTier, NetBird, WireGuard, OpenVPN...) theo card mạng của nó, không còn chỉ nhận Tailscale; chữ hướng dẫn
+  nói "mạng riêng ảo" và chỉ lấy Tailscale làm một ví dụ.
+
 ## [0.4.19] - 2026-10-02
 
 ### Studio

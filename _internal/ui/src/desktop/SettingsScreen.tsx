@@ -451,7 +451,7 @@ export function SettingsScreen() {
         <Section
           id="computers"
           title="Máy tính khác"
-          description="Nghe sách trên máy tính khác cùng mạng (hay qua Tailscale) mà không phải chép sang: sách của máy ấy hiện trong Thư viện, chương tải về lần đầu nghe tới."
+          description="Nghe sách trên máy tính khác cùng mạng (hay cùng mạng riêng ảo) mà không phải chép sang: sách của máy ấy hiện trong Thư viện, chương tải về lần đầu nghe tới."
         >
           <OtherComputers />
         </Section>

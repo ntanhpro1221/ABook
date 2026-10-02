@@ -28,6 +28,8 @@ export interface SyncView {
   name: string;
   port: number;
   addresses: string[];
+  /** Trong `addresses`, địa chỉ trên card mạng riêng ảo (Tailscale, ZeroTier, WireGuard... - sync.away_addresses). */
+  awayAddresses: string[];
   pairing: { code: string; expiresAt: number } | null;
   pairingBlocked: boolean;
   /** Vân tay SHA-256 chứng chỉ TLS của máy này (webui/tls.py), nhóm 4 ký tự; "" khi đồng bộ tắt. */
@@ -39,18 +41,12 @@ export interface SyncView {
   bluetooth: { running: boolean; channel: number; error: string; connections: number } | null;
 }
 
-/** Tailscale (100.64.0.0/10, như `sync._tailscale`): thiết bị kia cũng bật Tailscale cùng tài khoản thì mở được từ bất cứ
- *  đâu, không cần chung Wi-Fi. Soát 29-09: chủ sách tưởng khác mạng là không dùng được, vì giao diện ghép mọi địa chỉ bằng
- *  "hoặc" mà không nói địa chỉ nào để làm gì. */
-function isTailscale(address: string): boolean {
-  const [first, second] = address.split(".").map(Number);
-  return first === 100 && second >= 64 && second <= 127;
-}
-
-/** Địa chỉ của máy này cho thiết bị khác: trong nhà (LAN) và khi ở ngoài (Tailscale), nói rõ cái nào để làm gì. */
+/** Địa chỉ của máy này cho thiết bị khác: trong nhà (LAN) và khi ở ngoài (mạng riêng ảo - máy chủ nhận theo card mạng, không
+ *  riêng Tailscale), nói rõ cái nào để làm gì. Soát 29-09: chủ sách tưởng khác mạng là không dùng được, vì giao diện ghép mọi
+ *  địa chỉ bằng "hoặc" mà không nói địa chỉ nào để làm gì. */
 function Where({ sync, scheme = true }: { sync: SyncView; scheme?: boolean }) {
-  const home = sync.addresses.filter((address) => !isTailscale(address));
-  const away = sync.addresses.filter(isTailscale);
+  const away = sync.addresses.filter((address) => sync.awayAddresses.includes(address));
+  const home = sync.addresses.filter((address) => !away.includes(address));
   const show = (list: string[]) => (
     <span className="font-medium text-fg tabular-nums">{list.map((address) => `${scheme ? "https://" : ""}${address}:${sync.port}`).join(" hoặc ")}</span>
   );
@@ -60,7 +56,7 @@ function Where({ sync, scheme = true }: { sync: SyncView; scheme?: boolean }) {
       {home.length > 0 && away.length > 0 && " trong nhà, hoặc "}
       {away.length > 0 && (
         <>
-          {show(away)} khi ở ngoài (thiết bị kia bật Tailscale cùng tài khoản)
+          {show(away)} khi ở ngoài (thiết bị kia vào cùng mạng riêng ảo)
         </>
       )}
     </>
@@ -377,7 +373,7 @@ export function PhoneSync() {
               máy này một địa chỉ điện thoại tới được, và điện thoại học địa chỉ ấy mỗi lần mở Thư viện (SyncLink.refreshRoutes). */}
           <p className="text-xs text-fg-3">
             Ra khỏi nhà: sách đã tải về điện thoại thì nghe ở đâu cũng được. Muốn nghe thẳng từ máy này hay điều khiển từ xa,
-            cài Tailscale (hoặc ZeroTier, NetBird) trên cả máy này và điện thoại, đăng nhập cùng một tài khoản, rồi mở Thư viện
+            cho máy này và điện thoại vào cùng một mạng riêng ảo (VPN - ví dụ Tailscale, ZeroTier, NetBird, WireGuard), rồi mở Thư viện
             trên điện thoại một lần khi còn ở nhà - ra ngoài điện thoại tự nối qua đó.
           </p>
         </>

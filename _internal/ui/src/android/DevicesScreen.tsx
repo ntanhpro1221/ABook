@@ -589,7 +589,7 @@ export function DevicesScreen() {
             {remote.isError && !pinChanged(remote.error) && (
               <p className="mt-2 px-1 text-xs leading-snug text-fg-2">
                 Ra khỏi nhà: sách đã tải về điện thoại vẫn nghe bình thường. Muốn nghe thẳng hay tải thêm từ máy tính khi ở ngoài,
-                cài Tailscale (hoặc ZeroTier, NetBird) trên cả điện thoại và máy tính, đăng nhập cùng một tài khoản, rồi mở mục này
+                cho điện thoại và máy tính vào cùng một mạng riêng ảo (VPN - ví dụ Tailscale, ZeroTier, NetBird, WireGuard), rồi mở mục này
                 một lần khi còn ở nhà - điện thoại tự nhớ đường.
               </p>
             )}

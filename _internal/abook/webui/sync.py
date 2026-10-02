@@ -982,16 +982,53 @@ def _virtual_addresses() -> set[str]:
         return set()
 
 
-def _tailscale(address: str) -> bool:
-    """100.64.0.0/10 - dải của Tailscale (CGNAT): dùng được từ xa, nhưng cùng Wi-Fi thì không phải địa chỉ nên gõ."""
+# Card của mạng riêng ảo (VPN) - Tailscale, ZeroTier, NetBird, WireGuard, OpenVPN, Hamachi...: địa chỉ của chúng dùng được
+# khi ở ngoài nhà (thiết bị kia cùng mạng riêng ảo ấy), còn cùng Wi-Fi thì không phải địa chỉ nên gõ. Tên card do phần mềm
+# VPN đặt; WireGuard / NetBird đặt theo tên đường hầm (wg0, wt0...) nên so cả tiền tố.
+VPN_ADAPTERS = ("tailscale", "zerotier", "netbird", "wireguard", "openvpn", "tap-windows", "hamachi", "radmin", "nordlynx",
+                "mullvad", "proton")
+VPN_ADAPTER_PREFIXES = ("wg", "wt", "tun", "utun")
+
+
+def _vpn_adapter(name: str) -> bool:
+    name = name.casefold()
+    return any(marker in name for marker in VPN_ADAPTERS) or name.startswith(VPN_ADAPTER_PREFIXES)
+
+
+def _vpn_range(address: str) -> bool:
+    """100.64.0.0/10 (CGNAT): Tailscale, NetBird và vài VPN khác cấp địa chỉ ở đây - đoán được cả khi không đọc được tên card."""
     parts = address.split(".")
     return len(parts) == 4 and parts[0] == "100" and parts[1].isdigit() and 64 <= int(parts[1]) <= 127
 
 
+def vpn_addresses() -> set[str]:
+    """Địa chỉ IPv4 của máy trên các card mạng riêng ảo."""
+    try:
+        import psutil
+    except ImportError:
+        return set()
+    try:
+        return {
+            address.address
+            for name, addresses in psutil.net_if_addrs().items()
+            if _vpn_adapter(name)
+            for address in addresses
+            if address.family == socket.AF_INET
+        }
+    except OSError:
+        return set()
+
+
+def away_addresses(addresses: list[str]) -> list[str]:
+    """Trong `addresses`, những địa chỉ dùng khi ở ngoài nhà (mạng riêng ảo) - phần còn lại là địa chỉ trong nhà."""
+    vpn = vpn_addresses()
+    return [address for address in addresses if address in vpn or _vpn_range(address)]
+
+
 def local_addresses() -> list[str]:
-    """Địa chỉ LAN của máy (để hiện cho người dùng khi điện thoại không tự tìm thấy): địa chỉ ra mạng chính ĐẦU TIÊN, Tailscale
-    cuối, bỏ card ảo và địa chỉ link-local 169.254.x.x. Soát UX 29-09: "gõ 100.73.x.x hoặc 192.168.0.1 hoặc 192.168.0.230" -
-    192.168.0.1 là card WSL, 100.73 là Tailscale, người dùng không biết gõ cái nào."""
+    """Địa chỉ LAN của máy (để hiện cho người dùng khi điện thoại không tự tìm thấy): địa chỉ ra mạng chính ĐẦU TIÊN, mạng
+    riêng ảo cuối, bỏ card ảo và địa chỉ link-local 169.254.x.x. Soát UX 29-09: "gõ 100.73.x.x hoặc 192.168.0.1 hoặc
+    192.168.0.230" - 192.168.0.1 là card WSL, 100.73 là Tailscale, người dùng không biết gõ cái nào."""
     addresses: set[str] = set()
     primary = ""
     try:
@@ -1013,4 +1050,5 @@ def local_addresses() -> list[str]:
         addresses.add(primary)
     else:
         primary = ""
-    return sorted(addresses, key=lambda address: (address != primary, _tailscale(address), address))
+    away = set(away_addresses(sorted(addresses)))
+    return sorted(addresses, key=lambda address: (address != primary, address in away, address))

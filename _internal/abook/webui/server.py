@@ -43,8 +43,8 @@ from .work_items import work_items
 from .cast import CastError, CastPlayers
 from .cast import search as cast_search
 from .peer_players import PeerPlayers
-from .sync import (LOCAL_PLAYER, SYNC_PORT, Devices, ExclusiveHTTPServer, Remote, SyncApp, SyncServer, local_addresses,
-                   remote_command)
+from .sync import (LOCAL_PLAYER, SYNC_PORT, Devices, ExclusiveHTTPServer, Remote, SyncApp, SyncServer, away_addresses,
+                   local_addresses, remote_command)
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 MISSING_UI_PAGE = (
@@ -1030,13 +1030,16 @@ class App:
 
     def sync_view(self) -> dict[str, Any]:
         running = self.sync_server is not None
+        addresses = local_addresses() if self.sync_host == "0.0.0.0" else [self.sync_host]
         return {
             "enabled": running,
             "wanted": bool(self.preferences.get().get("syncEnabled")),
             "error": self.sync_error,
             "name": socket_name(),
             "port": self.sync_server.port if running else self.sync_port,
-            "addresses": local_addresses() if self.sync_host == "0.0.0.0" else [self.sync_host],
+            "addresses": addresses,
+            # Địa chỉ trên card mạng riêng ảo (Tailscale, ZeroTier, WireGuard...): dùng khi ở ngoài nhà.
+            "awayAddresses": away_addresses(addresses),
             "pairing": self.devices.pairing() if running else None,
             "pairingBlocked": running and self.devices.blocked,
             # Vân tay chứng chỉ TLS của máy này (tls.py): hiện cạnh mã ghép để người dùng đối chiếu nếu muốn.
