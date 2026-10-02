@@ -362,6 +362,10 @@ def _describe(source: Path | bytes) -> dict[str, Any]:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # Tên sách tiếng Việt: console Windows mặc định cp1252 thì print vỡ (UnicodeEncodeError) - in UTF-8, thay ký tự lạ.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     commands = parser.add_subparsers(dest="command", required=True)
     pack_command = commands.add_parser("pack", help="gói một cuốn sách thành một file")
