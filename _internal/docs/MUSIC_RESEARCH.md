@@ -539,6 +539,37 @@ Câu hỏi:
   Wilson > 0,5, và thước phụ không kém quá 0,02. Nhiều ngưỡng cùng thắng thì chọn ngưỡng nhỏ nhất đạt luật (đổi ít nhất).
   Không ngưỡng nào thắng thì giữ 0,2.
 
+**GHI TRƯỚC - PHÍA BÀI GỘP BA NGUỒN: CLAP + ÂM HỌC + VĂN BẢN (02-10 23:xx, Lead + chủ sách; trước mọi số):**
+Ba nguồn:
+- **(A) CLAP:** vector 512 chiều đã lưu (đầu dò như trên).
+- **(B) Âm học đo trực tiếp:** `acoustic_features2.py`, khoảng 50 đặc trưng kinh điển (Juslin & Lindström, MIRtoolbox): nhịp
+  + độ ổn định, trưởng / thứ + độ rõ giọng, âm vực + tầm, độ nghịch tai, articulation, độ to + đường bao, âm sắc MFCC, độ
+  phức tạp hoà âm, mật độ. Trung bình ba cửa sổ 30 giây.
+- **(C) Văn bản:** `collect_text_meta.py`.
+  - Chữ gồm tên, tác giả, mô tả, tag, nhạc cụ, bình luận / ghi chú trang gốc, album FMA.
+  - Một người đọc Claude (Sonnet, theo lô) đọc toàn bộ chữ của từng bài, cho 13 cường độ + V/E/T + độ tin cậy (theo lượng
+    và độ rõ của chữ).
+  - Feel người gắn của Incompetech là NHÃN đo, không bao giờ vào chữ.
+
+Đo trên 1.381 bài Incompetech có feel:
+- 10 lớp ánh xạ được (bảng `FEEL` của `derive_emotions.py`), AUC kiểm chéo 5 phần (StratifiedKFold, seed 7, chia theo bài),
+  dự đoán ngoài phần học.
+- Mỗi tổ hợp nguồn là MỘT hồi quy logistic L2 (C = 1, đặc trưng chuẩn hoá z) trên khối đặc trưng nối lại. A = 512 chiều;
+  B = các đặc trưng âm học; C = 16 số của người đọc (13 + V/E/T + độ tin cậy). Riêng C còn báo AUC của chính cường độ lớp ấy,
+  không học.
+- Tổ hợp: A, B, C, A+B, A+C, A+B+C.
+
+Luật GIỮ một nguồn:
+- Thêm nguồn ấy vào tổ hợp tốt nhất chưa có nó làm AUC trung bình 10 lớp tăng ≥ 0,01 VÀ thắng ≥ 6/10 lớp.
+- Thắng thì danh mục dùng tổ hợp ấy. Ba lớp không có nhãn (tenderness / nostalgia / moved) lấy từ người đọc chữ nếu C được giữ,
+  không thì giữ zero-shot.
+
+Thước phụ ghi trước: phán quyết máy chấm kiểu E1. Chọn bài bằng phía bài gộp so với phía bài chỉ CLAP, trên các đoạn bộ 3 + 4
+chọn khác bài; luật thắng như thí nghiệm nền êm.
+
+Giới hạn: chỉ Incompetech có nhãn người. Nguồn khác chữ ít hơn nhiều (OGA / FreePD / Scott Buckley trung vị 4-10 chữ), nên độ tin
+cậy của C phải hạ trọng số khi gộp ở các nguồn ấy; điều này chưa đo được ở đây.
+
 **LỚP 2 PHÍA BÀI - 13 cường độ độc lập (02-10 22:xx, `derive_emotions.py`):**
 - **Zero-shot CLAP** (3 câu mô tả mỗi lớp, z theo cả kho, sigmoid): AUC so feel người gắn của Incompetech (1.381 bài)
   trung bình 0,69. Có lớp còn kém bản GEMS-9 cũ, như joy 0,46 so với 0,74.
