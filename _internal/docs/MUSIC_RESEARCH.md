@@ -185,6 +185,16 @@ triển (Tam quốc, Tắt đèn - văn kể nhiều), nhãn câu thắng ở LN
 **Thước chính từ nay:** r và sai số không khí theo thời gian + P/R ranh giới (dung sai 20 giây) + số đoạn/giờ gần gold; Pk là
 thước phụ (nó thưởng việc không bao giờ đổi nhạc).
 
+**Model phân tích 9B-v8 (LoRA người nói) làm bộ gắn nhãn cảnh: KHÔNG được** - bộ phát triển T r −0,19 (ngược thang), V 0,29;
+tinh chỉnh cho người nói làm hỏng việc khác. Muốn một model cho cả hai thì phải đưa bài toán cảnh vào dữ liệu huấn luyện; hiện
+phải dùng model gốc qwen3.5:9b (thêm ~6 GB cho người dùng) hoặc chỉ nhãn câu.
+
+**GHI TRƯỚC cho BỘ KIỂM THỨ HAI (02-10 07:3x, trước khi có đáp án Tam quốc 052, Nageki 62, Two Childhood Friends 060):**
+cách chính = `ens:qwen3.5:9b#v3|tile:bge-m3:1` (TextTiling bge-m3 c = 1, không khí = trung bình nhãn câu và nhãn khối LLM);
+đối chứng = `tile:bge-m3:1` (chỉ nhãn câu), `moodvt:qwen3.5:9b#v3|tile:bge-m3:1`, `fixed3`, `hard`. Thước chính: r và sai số
+V/E/T theo thời gian, P/R ranh giới dung sai 20 giây, đoạn/giờ; Pk phụ. Cách chính thắng nếu r trung bình ba trục hơn
+`hard` và `tile:bge-m3:1` mà P ranh giới không thấp hơn `fixed3`.
+
 ## Pha 3 - ghép đoạn với nhạc
 
 Ứng viên: (1) gần nhất trên hai trục (đường cơ sở); (2) truy hồi chữ-nhạc: model đọc hiểu viết mô tả nhạc cho đoạn ("tiếng
