@@ -437,7 +437,50 @@ CLAP (cộng 1); bản độc lập lấy được bằng sigmoid của chính z
 Kết quả phía người (02-10 23:xx): người chấm A so B - tỉ lệ r 0,938, độc lập r 0,942 (hai cách tin được như nhau); tỉ lệ so
 độc lập r 0,856; trung bình 1,5 nhãn >= 0,5 mỗi đoạn.
 
+**GHI TRƯỚC - E1 MÁY CHẤM (02-10 22:xx, Lead: chủ sách KHÔNG chấm; trước mọi lượt chấm):** E1 giữ nguyên bộ đã dựng:
+100 đoạn (82 bộ 4, 18 bộ 3) × 6 vai (`app` = music_select main, `vet` = gần V/E/T đáp án nhất, `gems` = nhánh GEMS,
+`mid`, `far`, `calm`), 330 lượt cặp (30 lượt lặp). Khoảng cách tới đáp án lúc dựng: vet 0,13 < app 0,73 ≈ gems 0,74 < calm
+1,05 ≈ mid 1,06 < far 1,70.
+Có ba người chấm máy, không ai được biết vai:
+- **J-omni:** Qwen2.5-Omni-7B Q4_K_M (llama.cpp, máy nhà qua hàng GPU) nghe thật 30 giây đầu của hai clip, kèm cả đoạn truyện.
+  Câu hỏi: bài nào hợp làm nhạc nền dưới giọng đọc. Mỗi lượt chấm cả hai thứ tự. Điểm là P("1") / (P("1") + P("2")) từ
+  logprob, lấy trung bình hai thứ tự. Thiên vị vị trí = P(chọn bài đứng trước) trung bình.
+- **J-c1, J-c2:** hai người chấm mù Claude Sonnet, mỗi người một thứ tự xáo riêng. Họ đọc đoạn truyện cùng mô tả giàu của
+  từng clip: chú thích do J-omni nghe rồi viết (prompt mô tả riêng, không thấy đoạn truyện); nhãn CLAP về không khí,
+  phong cách, nhạc cụ, có lời, nền/nổi; nhịp, mật độ nốt, độ sáng, biên độ, xu hướng, bộ gõ. Mô tả đo trên cùng 30 giây
+  (`describe_clips.py`). Họ không thấy tên bài hay nguồn. Kết quả là chọn 1/2 kèm độ chắc 1-5.
+
+Trần đo bằng hai thứ:
+(a) Độ ổn định của từng người chấm trên 30 lượt lặp; riêng J-omni thêm độ khớp giữa hai thứ tự trên 300 lượt.
+(b) Kappa Cohen giữa từng cặp người chấm trên 300 lượt không lặp.
+
+Một người chấm DÙNG ĐƯỢC khi ổn định ≥ 0,75 và kappa với ít nhất một người khác ≥ 0,20. Phán quyết chung là đa số người
+chấm dùng được (hoà thì bỏ lượt).
+
+Câu hỏi, kèm dự đoán ghi trước:
+- **H1 (kiểm tỉnh):** vet thắng far ≥ 70% (19 lượt). Không đạt thì máy chấm không bám tín hiệu V/E/T. Khi đó báo cả hai
+  khả năng (máy chấm kém, hoặc V/E/T không phải điều quyết định) và không xếp hạng vai.
+- **H2:** xếp hạng vai bằng Bradley-Terry, so với thứ tự khoảng cách lúc dựng bằng Spearman. Dự đoán ρ ≥ 0,6.
+- **H3:** app so gems trên 50 lượt, báo tỉ lệ thắng kèm KTC 95% Wilson. KTC chứa 0,5 nghĩa là không khác.
+- **H4:** độ khớp J-omni với J-c so với độ khớp J-c1 với J-c2. Câu hỏi là mô tả chữ có giữ được điều model nghe thấy không.
+
+Không chọn lại prompt sau khi thấy số. Lỗi định dạng thì chạy lại đúng lượt ấy và đếm riêng.
+Các mức trên đều ghi trước. Đây là trần MÁY: nó trả lời "các cách chọn khác nhau tới đâu theo máy nghe" chứ không thay được
+tai chủ sách. Chủ sách góp ý khi nào thích thì xếp lên trên mọi thứ.
+
 ## Nguồn nhạc: giữ / loại và lý do (02-10, Lead + chủ sách - đọc trước khi hỏi lại)
+
+LUẬT CUỐI (02-10 22:xx, Lead + chủ sách; thay đoạn ba câu hỏi bên dưới ở chỗ nào khác nhau):
+- **Giấy phép:** mọi giấy phép đều dùng được (NC, ND, giấy phép riêng). Bài NC mang cờ `nc`.
+- **Tải được ở mọi máy:** mọi bài trong danh mục phải tải được trên máy bất kỳ, nên KHÔNG có `localOnly`. Trang cấm link thẳng
+  thì không vào danh mục chung.
+- **Bản sao archive.org:** chỉ tạo khi giấy phép cho phân phối lại. Ngược lại thì gắn `noMirror` và chỉ dùng link gốc.
+- **Cách lấy:** theo điều khoản từng trang. Có API thì dùng API, không thì tải tay. Trang cấm thu tự động thì tuyển tay một
+  tập nhỏ.
+- **Không xin phép:** không gửi thư xin phép (chủ sách không muốn).
+- **甘茶の音楽工房 LOẠI:** cấm link thẳng, cấm 2次配布 nên không có bản sao. Ô 和風 lấp bằng Silverman / 魔王魂 / DOVA
+  (tuyển tay, link gốc, `noMirror`).
+- **Máy không tải được bài:** chọn bài kế, không im lặng vô cớ. Nhánh `dev/music-gems` làm phần này.
 
 LUẬT (02-10 khuya, thay luật chặt hơn cùng ngày - chủ sách: đừng loại quá khắt khe như lần Freesound): tách ba câu hỏi.
 (1) GIẤY PHÉP của tác phẩm quyết định có dùng được không: CC0 / CC BY / CC BY-SA / CC BY-NC dùng được (app miễn phí, phi
