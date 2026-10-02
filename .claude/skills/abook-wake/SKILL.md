@@ -8,8 +8,8 @@ description: Thủ tục khi phiên ABook thức dậy - sau khi máy khởi đ�
 Mục tiêu: không việc nền nào nằm chết, không ngồi chờ. Làm theo thứ tự; bước nào đã ổn thì bỏ qua.
 
 Ba phiên theo luồng (bộ nhớ `session-lanes`): Lead (đầu mối duy nhất với chủ sách, giữ chuông và ngưỡng nén), Model
-(DUY NHẤT thả việc GPU), Music. Mỗi phiên chỉ thả lại việc rời của luồng mình. Phiên Lead được tác vụ hẹn giờ
-`abook-watchdog` của app đánh thức mỗi giờ và ngay khi app mở lại sau reboot (mở phiên KHÔNG tự làm Claude chạy).
+(DUY NHẤT thả việc GPU), Music. Mỗi phiên chỉ thả lại việc rời của luồng mình. Phiên Lead được tác vụ Windows
+`ABookWakeLead` (`runtime/wake_lead.py`) đánh thức khi không thấy chuông A quá 8 phút (mở phiên KHÔNG tự làm Claude chạy).
 
 ## 1. Có khởi động lại không?
 
@@ -38,10 +38,11 @@ chờ việc con (02-10 làm thả trùng). Dòng lệnh thả không được c
 
 ## 4. Chuông
 
-Bash `run_in_background`, từ `D:/Novels/ABook/_internal`:
+Bash `run_in_background` với `timeout: 7200000` (mặc định chỉ 30 phút rồi bị giết; 2 giờ là tối đa), từ
+`D:/Novels/ABook/_internal`:
 - A: `runtime/.venv/Scripts/python.exe scripts/heartbeat_event.py` (reo khi việc rời xong / hỏng / chạy pin).
-- B: `runtime/.venv/Scripts/python.exe scripts/heartbeat_timeout.py --hours 2` (đặt lại bằng `--reset` mỗi lần A reo).
-Mỗi lần A reo: xử lý sự kiện, thả lại A, đặt lại B.
+- B: `runtime/.venv/Scripts/python.exe scripts/heartbeat_timeout.py --hours 1.9` (dưới hạn 2 giờ của A; đặt lại bằng `--reset` mỗi lần A reo).
+Mỗi lần A hoặc B reo (hay bị giết vì hết hạn): xử lý sự kiện, thả lại cả hai.
 
 ## 5. Đánh thức cấp dưới (chỉ phiên Lead)
 
