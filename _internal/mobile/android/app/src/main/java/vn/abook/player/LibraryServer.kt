@@ -349,8 +349,12 @@ object LibraryServer {
             request.method == "GET" && match.groupValues[2] == "manifest" -> json(output, 200, served(book, manifest))
             (request.method == "GET" || request.method == "HEAD") && match.groupValues[3].isNotEmpty() -> {
                 val relative = URLDecoder.decode(match.groupValues[3], "UTF-8")
-                val target = if (relative in allowedFiles(manifest)) Store.file(book, relative) else null
-                if (target == null || !target.isFile) json(output, 404, JSONObject().put("error", "Không có file này"))
+                val allowed = relative in allowedFiles(manifest)
+                // Máy kia nhận sách như người nghe thấy: dàn nhân vật / chữ đọc theo đã qua lớp sửa, bìa là bìa họ đặt.
+                val overlaid = if (allowed) Store.overlaidText(book, relative) else null
+                val target = if (!allowed) null else if (relative == "cover.jpg") Store.coverFile(book) else Store.file(book, relative)
+                if (overlaid != null) sendBytes(output, overlaid.toByteArray(Charsets.UTF_8), "application/json; charset=utf-8", request.method == "HEAD")
+                else if (target == null || !target.isFile) json(output, 404, JSONObject().put("error", "Không có file này"))
                 else sendFile(output, target, request.headers["range"], request.method == "HEAD")
             }
             // Chỗ nghe hai chiều: máy kia gửi bản của nó, điện thoại gộp vào hồ sơ đang dùng của cuốn này (Store.mergeRemote,
@@ -410,7 +414,7 @@ object LibraryServer {
                 .put("chaptersTotal", manifest.optInt("chaptersTotal", chapters))
                 .put("chaptersAvailable", chapters)
                 .put("complete", manifest.optBoolean("complete"))
-                .put("updatedAt", File(Store.bookDir(id), "book.json").lastModified() / 1000.0)
+                .put("updatedAt", maxOf(File(Store.bookDir(id), "book.json").lastModified(), File(Store.bookDir(id), BookEdits.EDITS_FILE).lastModified()) / 1000.0)
             val cover = manifest.optJSONObject("cover")
             entry.put("cover", if (cover == null) JSONObject.NULL
             else JSONObject().put("color", cover.opt("color") ?: JSONObject.NULL).put("version", cover.opt("version") ?: 0))
@@ -431,7 +435,11 @@ object LibraryServer {
     private fun served(id: String, manifest: JSONObject): JSONObject {
         val copy = JSONObject(manifest.toString())
         copy.remove("package")
+        copy.remove("edits") // của điện thoại này: máy kia không cần, và không phải sách
+        copy.remove("capabilities")
         copy.put("id", id)
+        // Bìa người nghe đặt (edits/cover.jpg) đi ra dưới tên bìa thường - máy kia chỉ biết một cover.jpg.
+        copy.optJSONObject("cover")?.put("file", "cover.jpg")
         val chapters = copy.optJSONArray("chapters") ?: JSONArray()
         for (index in 0 until chapters.length()) {
             val chapter = chapters.getJSONObject(index)
@@ -455,7 +463,8 @@ object LibraryServer {
         manifest.optString("cast").takeIf { it.isNotBlank() }?.let(names::add)
         val samples = manifest.optJSONArray("samples") ?: JSONArray()
         for (index in 0 until samples.length()) names += samples.getString(index)
-        manifest.optJSONObject("cover")?.optString("file", "cover.jpg")?.let(names::add)
+        // Bìa của người nghe nằm ở edits/cover.jpg nhưng ra ngoài dưới tên cover.jpg (xem `served` và đường file ở trên).
+        if (manifest.optJSONObject("cover") != null) names += "cover.jpg"
         return names.filter { !it.contains("..") }.toSet()
     }
 
@@ -463,6 +472,13 @@ object LibraryServer {
         val body = payload.toString().toByteArray()
         head(output, status, "application/json; charset=utf-8", body.size.toLong(), mapOf("Cache-Control" to "no-store"))
         output.write(body)
+        output.flush()
+    }
+
+    /** Nội dung dựng sẵn (văn bản gói đã qua lớp sửa) - nhỏ, không cần Range. */
+    private fun sendBytes(output: OutputStream, bytes: ByteArray, type: String, headOnly: Boolean) {
+        head(output, 200, type, bytes.size.toLong(), mapOf("Cache-Control" to "no-store"))
+        if (!headOnly) output.write(bytes)
         output.flush()
     }
 

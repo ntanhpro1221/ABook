@@ -138,7 +138,7 @@ class BookFileImportTest {
 
     @Test
     fun a_newer_format_asks_to_update_the_app_and_copies_nothing() {
-        val message = refusal { BookFileImport.importFile(seriesFile("moi.abook", version = 4)) }
+        val message = refusal { BookFileImport.importFile(seriesFile("moi.abook", version = 5)) }
         assertTrue(message, "Hãy cập nhật app" in message)
         assertFalse(File(root, "books").exists() && File(root, "books").listFiles()!!.isNotEmpty())
     }
@@ -355,5 +355,159 @@ class BookFileImportTest {
         val message = refusal { BookFileImport.importFile(broken) }
         assertTrue(message, "hỏng" in message)
         assertTrue(File(root, "books").listFiles().orEmpty().none { it.isDirectory })
+    }
+
+    // ---- lớp sửa của người nghe (phiên bản 4: edits.json, edits/cover.jpg - BookEdits) --------------------------------------
+
+    private val jpeg = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte(), 0xE0.toByte(), 1, 2, 3)
+    private val otherJpeg = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte(), 0xE1.toByte(), 9, 9)
+
+    private fun cover(color: String, version: Long) = JSONObject().put("color", color).put("width", 10L).put("height", 20L).put("version", version)
+
+    /** Một file .abook có một chương nghe được (và một chưa có), cùng audio mỗi lần - nhập lại là nhập lại CÙNG một cuốn. */
+    private fun editedBook(name: String, version: Int = 4, edits: JSONObject? = null, cover: ByteArray? = null, available: Int = 1,
+                           editsBytes: ByteArray? = null): File {
+        val content = linkedMapOf("cast.json" to "{}".toByteArray(), "chapters/00001.mp3" to "ID3-mot".toByteArray(),
+            "scripts/1.json" to "{}".toByteArray(), "scripts/2.json" to "{}".toByteArray())
+        if (editsBytes != null) content["edits.json"] = editsBytes else if (edits != null) content["edits.json"] = BookEdits.dump(edits)
+        if (cover != null) content["edits/cover.jpg"] = cover
+        val chapters = JSONArray()
+            .put(JSONObject().put("id", 1).put("title", "Chương 1").put("subtitle", "").put("fullTitle", "Chương 1").put("available", true)
+                .put("file", "chapters/00001.mp3").put("script", "scripts/1.json").put("duration", 60.0))
+            .put(JSONObject().put("id", 2).put("title", "Chương 2").put("subtitle", "").put("fullTitle", "Chương 2").put("available", false)
+                .put("file", JSONObject.NULL).put("script", "scripts/2.json").put("duration", 0.0))
+        val book = JSONObject().put("title", "Truyện Y").put("chaptersAvailable", available).put("chaptersTotal", 2).put("chapters", chapters)
+        return abook(name, version, content, book)
+    }
+
+    private fun dirOf(imported: BookFileImport.Imported) = Store.bookDir(imported.id)
+
+    private class FakeCodec(private val color: String) : CoverCodec {
+        override fun normalize(raw: ByteArray) = CoverCodec.Normalized(raw, color, 10, 20)
+    }
+
+    @Test
+    fun a_version_4_file_brings_the_listeners_edits_in() {
+        val edits = BookEdits.empty().put("title", "Tên của bạn").put("chapters", JSONObject().put("1", JSONObject().put("subtitle", "Hồi một")))
+            .put("cover", cover("#112233", 5L))
+        val imported = BookFileImport.importFile(editedBook("v4.abook", edits = edits, cover = jpeg))
+
+        assertEquals("tên đã sửa là tên hiện trong thư viện", "Tên của bạn", imported.title)
+        assertTrue(StrictJson.equal(edits, BookEdits.load(dirOf(imported))))
+        assertTrue(File(dirOf(imported), "edits/cover.jpg").readBytes().contentEquals(jpeg))
+        val shown = Store.manifest(imported.id)!!
+        assertEquals("Tên của bạn", shown.getString("title"))
+        assertEquals("Chương 1 · Hồi một", shown.getJSONArray("chapters").getJSONObject(0).getString("fullTitle"))
+        assertEquals("edits/cover.jpg", shown.getJSONObject("cover").getString("file"))
+        assertEquals(3, shown.getInt("edits"))
+        assertEquals("lớp sách nguyên văn không bị sửa", "Truyện Y", Store.rawManifest(imported.id)!!.getString("title"))
+    }
+
+    @Test
+    fun reimporting_over_an_edited_book_keeps_the_local_edits_and_takes_the_rest_from_the_file() {
+        val first = BookFileImport.importFile(editedBook("v1.abook", version = 1))
+        val dir = dirOf(first)
+        BookEdits.setTitle(dir, "Của tôi")
+        BookEdits.setChapterTitle(dir, 1, null, "Phụ của tôi")
+
+        val again = BookFileImport.importFile(editedBook("v4.abook", edits = BookEdits.empty().put("title", "Của file")
+            .put("chapters", JSONObject().put("1", JSONObject().put("title", "Chương Mới").put("subtitle", "Phụ của file")))
+            .put("cover", cover("#112233", 5L)), cover = jpeg))
+
+        assertEquals("cùng một cuốn", first.id, again.id)
+        val edits = BookEdits.load(dir)
+        assertEquals("máy này thắng", "Của tôi", edits.getString("title"))
+        assertEquals("Phụ của tôi", edits.getJSONObject("chapters").getJSONObject("1").getString("subtitle"))
+        assertEquals("phần còn lại lấy từ file", "Chương Mới", edits.getJSONObject("chapters").getJSONObject("1").getString("title"))
+        assertTrue(File(dir, "edits/cover.jpg").readBytes().contentEquals(jpeg))
+        assertEquals("Của tôi", again.title)
+        assertEquals("Của tôi", Store.manifest(again.id)!!.getString("title"))
+    }
+
+    @Test
+    fun the_local_cover_wins_over_the_files_cover() {
+        val first = BookFileImport.importFile(editedBook("v1.abook", version = 1))
+        val dir = dirOf(first)
+        BookEdits.setCover(dir, otherJpeg, 77L, FakeCodec("#aabbcc"))
+
+        BookFileImport.importFile(editedBook("v4.abook", edits = BookEdits.empty().put("cover", cover("#112233", 5L)), cover = jpeg))
+
+        assertTrue("bìa của máy này còn đó", File(dir, "edits/cover.jpg").readBytes().contentEquals(otherJpeg))
+        assertEquals("#aabbcc", BookEdits.load(dir).getJSONObject("cover").getString("color"))
+    }
+
+    @Test
+    fun a_file_with_fewer_chapters_than_the_phone_still_hands_over_its_edits() {
+        val first = BookFileImport.importFile(editedBook("full.abook", version = 1, available = 2))
+        val dir = dirOf(first)
+        BookEdits.setTitle(dir, "Của tôi")
+
+        val again = BookFileImport.importFile(editedBook("short.abook", available = 1, edits = BookEdits.empty().put("title", "Của file")
+            .put("characters", JSONObject().put("LUCIEN", "Lu-xi-en"))))
+
+        assertEquals(first.id, again.id)
+        val edits = BookEdits.load(dir)
+        assertEquals("Của tôi", edits.getString("title"))
+        assertEquals("Lu-xi-en", edits.getJSONObject("characters").getString("LUCIEN"))
+        assertEquals("bản trên máy (nhiều chương hơn) giữ nguyên", 2, Store.rawManifest(first.id)!!.getInt("chaptersAvailable"))
+    }
+
+    @Test
+    fun a_malformed_edits_file_refuses_the_whole_book() {
+        fun refused(editsBytes: ByteArray? = null, cover: ByteArray? = null, edits: JSONObject? = null): String {
+            val message = refusal { BookFileImport.importFile(editedBook("la.abook", edits = edits, cover = cover, editsBytes = editsBytes)) }
+            assertTrue("chưa chép gì vào thư viện", File(root, "books").listFiles().orEmpty().none { it.isDirectory })
+            return message
+        }
+        val head = """{"format": "abook-edits", "version": 1"""
+        assertEquals("Phần sửa của sách có mục lạ.", refused(editsBytes = "$head, \"wishes\": []}".toByteArray()))
+        assertEquals("Phần sửa của sách bị hỏng.", refused(editsBytes = "{".toByteArray()))
+        assertEquals("Phần sửa của sách bị hỏng.", refused(editsBytes = "$head, \"music\": {\"levelDb\": NaN}}".toByteArray()))
+        assertEquals("Tên sách trong phần sửa không hợp lệ.", refused(editsBytes = "$head, \"title\": \"Tên  sách\"}".toByteArray()))
+        assertEquals("Phần sửa của sách quá lớn.", refused(editsBytes = "$head, \"title\": \"${"a".repeat(BookEdits.MAX_EDITS_BYTES)}\"}".toByteArray()))
+        // bìa sửa đi đôi với phần sửa: có một mà không có kia là sai
+        assertEquals("Ảnh bìa trong phần sửa của sách không khớp.", refused(edits = BookEdits.empty().put("cover", cover("#112233", 5L))))
+        assertEquals("Ảnh bìa trong phần sửa của sách không khớp.", refused(edits = BookEdits.empty().put("title", "x"), cover = jpeg))
+        assertEquals("Ảnh bìa trong phần sửa của sách không dùng được.",
+            refused(edits = BookEdits.empty().put("cover", cover("#112233", 5L)), cover = "không phải JPEG".toByteArray()))
+        assertEquals("Ảnh bìa trong phần sửa của sách không dùng được.",
+            refused(edits = BookEdits.empty().put("cover", cover("#112233", 5L)), cover = jpeg + ByteArray(BookEdits.MAX_COVER_BYTES)))
+    }
+
+    @Test
+    fun edits_belong_to_version_4_only() {
+        val edits = BookEdits.empty().put("title", "Tên khác")
+        for (version in listOf(1, 2, 3)) {
+            val message = refusal { BookFileImport.importFile(editedBook("cu$version.abook", version = version, edits = edits)) }
+            assertTrue("phiên bản $version: $message", "mục lạ" in message && "edits.json" in message)
+        }
+        val message = refusal { BookFileImport.importFile(editedBook("cover3.abook", version = 3, edits = BookEdits.empty().put("cover", cover("#112233", 5L)), cover = jpeg)) }
+        assertTrue(message, "mục lạ" in message)
+        assertTrue(File(root, "books").listFiles().orEmpty().none { it.isDirectory })
+    }
+
+    @Test
+    fun a_file_still_cannot_carry_project_sources_or_views() {
+        for (name in listOf("project/project.sqlite3", "sources/1.txt", "views/cast.json")) {
+            val file = abook("du.abook", 4, mapOf("chapters/00001.mp3" to byteArrayOf(1), name to byteArrayOf(2)), JSONObject().put("chapters", JSONArray()))
+            assertTrue(name, "mục lạ" in refusal { BookFileImport.importFile(file) })
+        }
+    }
+
+    @Test
+    fun edits_in_a_file_do_not_land_on_a_book_that_came_from_the_computer() {
+        // Cuốn tải qua Wi-Fi (không mở từ file) cùng audio với file: sửa của người nghe sửa ở máy tính, không rơi vào đây.
+        val existing = "0123456789abcdef01234567"
+        File(root, "books/$existing/chapters").mkdirs()
+        File(root, "books/$existing/chapters/00001.mp3").writeBytes("ID3-mot".toByteArray())
+        File(root, "books/$existing/book.json").writeText(JSONObject().put("id", existing).put("title", "Truyện Y").put("chaptersAvailable", 1)
+            .put("chapters", JSONArray().put(JSONObject().put("id", 1).put("available", true).put("file", "chapters/00001.mp3"))).toString())
+
+        val imported = BookFileImport.importFile(editedBook("v4.abook", edits = BookEdits.empty().put("title", "Của file")))
+
+        assertEquals(existing, imported.id)
+        assertFalse(File(root, "books/$existing/edits.json").exists())
+        assertEquals("Truyện Y", Store.manifest(existing)!!.getString("title"))
+        assertTrue(Store.manifest(existing)!!.getJSONObject("capabilities").getBoolean("link"))
     }
 }

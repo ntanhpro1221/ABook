@@ -1,6 +1,6 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, GitMerge, History, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, SlidersHorizontal, Trash2, UserRound } from "lucide-react";
+import { ArrowLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, FileDown, GitMerge, History, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, Save, SlidersHorizontal, Trash2, UserRound } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
@@ -9,7 +9,9 @@ import { cn } from "@/shared/cn";
 import { usePageTitle } from "@/shared/title";
 import { formatClock, formatLength, formatNumber } from "@/shared/format";
 import { Button, Dialog, EmptyState, IconButton, Progress, Skeleton, Tabs, TabsContent, TabsList, TabsTrigger, Tooltip, Vu } from "@/shared/ui";
+import { RenamePersonDialog } from "@/studio/CastEdits";
 import { useClip } from "./clip";
+import { canEditBook, EditBookDialog, refreshAfterEdit, RenameChapterDialog, SaveAsDialog, StudioOnlyItem, useSaveBook } from "./EditBook";
 import { bookStatusText, usePlayListenBook } from "./LibraryScreen";
 import { chapterHeard, chaptersByPart, resumePoint, type CastMember, type ListenBook, type ListenChapter } from "./model";
 import { usePlayer } from "./player";
@@ -22,10 +24,13 @@ function ChapterRow({
   book,
   chapter,
   onDone,
+  onRename,
 }: {
   book: ListenBook;
   chapter: ListenChapter;
   onDone: (chapterId: number, done: boolean) => void;
+  /** Sách sửa được trên máy này (shared/capabilities.ts): "Đổi tên chương…" - cái tên hiện trên màn hình, không đổi audio. */
+  onRename?: (chapter: ListenChapter) => void;
 }) {
   const player = usePlayer();
   const playBook = usePlayListenBook();
@@ -110,6 +115,11 @@ function ChapterRow({
                   <DropdownMenu.Item onSelect={() => onDone(chapter.id, !done)} className={MENU_ITEM}>
                     {done ? <CircleDashed className="size-4" /> : <CheckCheck className="size-4" />}
                     {done ? "Đánh dấu chưa nghe" : "Đánh dấu đã nghe xong"}
+                  </DropdownMenu.Item>
+                )}
+                {onRename && (
+                  <DropdownMenu.Item onSelect={() => onRename(chapter)} className={MENU_ITEM}>
+                    <Pencil className="size-4" /> Đổi tên chương…
                   </DropdownMenu.Item>
                 )}
               </DropdownMenu.Content>
@@ -579,13 +589,23 @@ function RecordPicker({ book }: { book: ListenBook }) {
   );
 }
 
+/** Sửa sách "áp ngay" trên trang nghe (EditBook.tsx). `false`: không cho sửa ở đây (thiết bị điều khiển từ xa). */
+export interface EditingOptions {
+  /** Máy tính trong cửa sổ app: chọn thư mục lưu file ("Lưu thành…"). Điện thoại để trống - hệ thống hỏi chỗ lưu. */
+  pickFolder?: () => Promise<string | null>;
+  /** Máy tính, cuốn có xưởng: mở tab Nhạc nền của Studio. */
+  onOpenStudio?: (book: ListenBook) => void;
+}
+
 export function BookScreen({
   extraActions,
   studioLink,
+  editing = {},
 }: {
   extraActions?: (book: ListenBook) => ReactNode;
   /** Máy tính: lối sang Studio ngay trên dòng trạng thái của sách đang làm. */
   studioLink?: (book: ListenBook) => ReactNode;
+  editing?: false | EditingOptions;
 }) {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -599,6 +619,12 @@ export function BookScreen({
   const source = useSource();
   const client = useQueryClient();
   usePageTitle(book?.title);
+  const [editOpen, setEditOpen] = useState(false);
+  const [saveAsOpen, setSaveAsOpen] = useState(false);
+  const [renamingChapter, setRenamingChapter] = useState<ListenChapter | null>(null);
+  const [renamingPerson, setRenamingPerson] = useState<CastMember | null>(null);
+  // Hook không được đặt sau `return` sớm: cuốn chưa nạp xong thì dùng một cuốn rỗng (nút lưu chưa hiện lúc ấy).
+  const saver = useSaveBook(book ?? ({ id: id ?? "" } as ListenBook));
   // Điện thoại: mở sách là hỏi máy tính đã ghép bản mới nhất của hồ sơ nghe (chỗ nghe, tên, hồ sơ vừa chọn bên ấy) -
   // không thì chỉ biết khi chính điện thoại phát hay dừng cuốn này.
   useEffect(() => {
@@ -622,6 +648,8 @@ export function BookScreen({
     );
   }
   const chapters = book.chapters ?? [];
+  const editable = editing !== false && canEditBook(book);
+  const workshop = Boolean(book.capabilities?.workshop);
   const point = resumePoint(book, chapters);
   const listening = player.track?.bookId === book.id;
   const heard = book.progress.heardSeconds;
@@ -740,6 +768,29 @@ export function BookScreen({
                     <CheckCheck className="size-4" />
                     {book.progress.finished ? "Đánh dấu chưa nghe xong" : "Đánh dấu đã nghe xong"}
                   </DropdownMenu.Item>
+                  {editing !== false && editable && (
+                    <>
+                      <DropdownMenu.Separator className="my-1 h-px bg-line" />
+                      <DropdownMenu.Item onSelect={() => setEditOpen(true)} className={MENU_ITEM}>
+                        <Pencil className="size-4" /> Sửa tên, bìa, nhạc nền…
+                      </DropdownMenu.Item>
+                      {!workshop && saver.available && (
+                        <>
+                          <DropdownMenu.Item
+                            disabled={!book.edits || saver.busy}
+                            onSelect={() => void saver.save()}
+                            className={cn(MENU_ITEM, "data-[disabled]:opacity-50")}
+                          >
+                            <Save className="size-4" /> {book.edits ? `Lưu (${book.edits} thay đổi)` : "Lưu (chưa có thay đổi)"}
+                          </DropdownMenu.Item>
+                          <DropdownMenu.Item onSelect={() => setSaveAsOpen(true)} className={MENU_ITEM}>
+                            <FileDown className="size-4" /> Lưu thành…
+                          </DropdownMenu.Item>
+                        </>
+                      )}
+                    </>
+                  )}
+                  {editing !== false && <StudioOnlyItem book={book} />}
                   {extraActions?.(book)}
                 </DropdownMenu.Content>
               </DropdownMenu.Portal>
@@ -764,6 +815,7 @@ export function BookScreen({
                   book={book}
                   chapter={chapter}
                   onDone={(chapterId, done) => mutations.chapterDone.mutate({ chapterId, done })}
+                  onRename={editable ? setRenamingChapter : undefined}
                 />
               ))}
             </section>
@@ -776,9 +828,17 @@ export function BookScreen({
           <HistoryTab book={book} />
         </TabsContent>
         <TabsContent value="cast">
-          <CastList bookId={book.id} reached={reachedTitles(chapters, point?.chapter.id)} />
+          <CastList bookId={book.id} reached={reachedTitles(chapters, point?.chapter.id)} onRename={editable ? setRenamingPerson : undefined} />
         </TabsContent>
       </Tabs>
+      {editing !== false && editable && (
+        <>
+          <EditBookDialog book={book} open={editOpen} onOpenChange={setEditOpen} onOpenStudio={editing.onOpenStudio ? () => editing.onOpenStudio?.(book) : undefined} />
+          <RenameChapterDialog book={book} chapter={renamingChapter} onClose={() => setRenamingChapter(null)} />
+          <RenamePersonDialog bookId={book.id} person={renamingPerson} onClose={() => setRenamingPerson(null)} onSaved={() => refreshAfterEdit(client, book.id)} />
+          <SaveAsDialog book={book} open={saveAsOpen} onOpenChange={setSaveAsOpen} pickFolder={editing.pickFolder} />
+        </>
+      )}
     </div>
   );
 }

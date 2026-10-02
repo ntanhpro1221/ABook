@@ -1,5 +1,6 @@
 import { registerPlugin, type PluginListenerHandle } from "@capacitor/core";
 import type { Bookmark, BookPart, ListeningRecord, ListeningState, NightSession } from "@/listen/model";
+import type { Capabilities } from "@/shared/capabilities";
 
 // Hai plugin native của app Android (mobile/android/app/src/main/java/vn/abook/player):
 //  EbookPlayer  - lõi phát Media3: hàng đợi chương, hẹn giờ ngủ, lắc để nghe thêm, nhật ký đêm.
@@ -180,6 +181,10 @@ export interface LocalBook {
   sourceName?: string;
   /** Hồ sơ nghe gắn với cuốn (Store.records) - chỉ có khi mở một cuốn. */
   records?: ListeningRecord[];
+  /** Máy này làm được gì với cuốn (shared/capabilities.ts): điện thoại không có xưởng, không có Studio; `link` = cuốn của máy tính. */
+  capabilities?: Capabilities;
+  /** Số thay đổi người nghe đã làm trên cuốn nhập từ file (lớp sửa, BookEdits.kt). */
+  edits?: number;
 }
 
 export interface DownloadEvent {
@@ -254,6 +259,13 @@ export interface EbookLibraryPlugin {
   streamableBooks(): Promise<{ books: LocalBook[] }>;
   book(options: { id: string }): Promise<LocalBook>;
   readText(options: { id: string; path: string }): Promise<{ text: string }>;
+  /** Sửa sách "áp ngay" trên điện thoại (LocalStudio.kt): cùng đường dẫn `/api/books/<mã>/...`, cùng JSON như máy chủ máy tính
+   *  (docs/EDITING.md); `status` >= 400 là lỗi, `body.error` là câu cho người dùng (android/localStudio.ts đổi thành ApiError). */
+  studio(options: { method: string; path: string; body?: unknown }): Promise<{ status: number; body: unknown }>;
+  /** Điện thoại làm được gì (BookEdits.kt): luôn không có Studio, không có xưởng; `link` theo cuốn `id` (có là cuốn của máy tính). */
+  capabilities(options: { id?: string }): Promise<Capabilities>;
+  /** Lưu cuốn nhập từ file (kèm thay đổi của người nghe) thành file `.abook` mới - hộp thoại "tạo file" của hệ thống hỏi chỗ lưu. */
+  saveBook(options: { id: string }): Promise<{ saved: boolean; name?: string; size?: number; edits?: number }>;
   deleteBook(options: { id: string }): Promise<void>;
   storage(): Promise<{ bytes: number; free: number }>;
   progress(options: { id: string; chapterId: number; seconds: number; duration: number }): Promise<ListeningState>;

@@ -1,3 +1,4 @@
+import type { Capabilities } from "@/shared/capabilities";
 import type { CoverImage } from "@/shared/cover";
 import type { VolumeProposal } from "@/studio/volumes";
 import type { BookTemplate } from "@/studio/bookTemplates";
@@ -253,6 +254,8 @@ export interface AppInfo {
   update?: { version: string; notes: string } | null;
   /** App Windows đóng gói: Studio (thư viện + model làm sách) tải thêm đã cài chưa. null: bản dev (runtime cạnh mã). */
   studio?: { installed: boolean; outdated?: boolean } | null;
+  /** Máy này làm được gì (shared/capabilities.ts): `/api/app?book=<mã>` điền thêm `workshop` / `link` của cuốn ấy. */
+  capabilities?: Capabilities;
   libraryRoot: string;
   theme: "system" | "light" | "dark";
   playbackRate: number;
@@ -284,7 +287,8 @@ export interface Preferences {
 // Mã phiên do cửa sổ app gắn vào URL (?t=...). Giữ lại trong phiên để điều hướng nội bộ không làm mất nó.
 const TOKEN_KEY = "abook-token";
 const token: string = (() => {
-  const fromUrl = new URLSearchParams(window.location.search).get("t");
+  // Không có `window` khi chạy bài thử (vitest, môi trường node): không có mã phiên để đọc.
+  const fromUrl = typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("t");
   try {
     if (fromUrl) sessionStorage.setItem(TOKEN_KEY, fromUrl);
     return fromUrl ?? sessionStorage.getItem(TOKEN_KEY) ?? "";
@@ -310,7 +314,19 @@ export function suggestionOf(error: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
-export async function api<T>(path: string, init?: { method?: string; body?: unknown }): Promise<T> {
+export type ApiInit = { method?: string; body?: unknown };
+
+/** Đường truyền thay cho `fetch` tới server cục bộ: điện thoại không có server, các lệnh sửa sách ("áp ngay") đi thẳng vào
+ *  lõi native (android/localStudio.ts, EbookLibrary.studio) với cùng đường dẫn, cùng JSON như máy chủ máy tính. Máy tính không đặt. */
+export type ApiTransport = (path: string, init?: ApiInit) => Promise<unknown>;
+let transport: ApiTransport | null = null;
+
+export function setApiTransport(next: ApiTransport | null): void {
+  transport = next;
+}
+
+export async function api<T>(path: string, init?: ApiInit): Promise<T> {
+  if (transport) return (await transport(path, init)) as T;
   const response = await fetch(path, {
     method: init?.method ?? "GET",
     headers: {

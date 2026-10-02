@@ -51,6 +51,8 @@ function toListenBook(book: LocalBook, withChapters: boolean): ListenBook {
     // Nghe thẳng từ thiết bị ghép (Peers.kt): "Trên <tên máy>"; từ máy tính chính: "Trên máy tính".
     remote: book.sourceName ? { computer: book.sourceName } : Boolean(book.streamed),
     records: book.records,
+    capabilities: book.capabilities,
+    edits: book.edits ?? 0,
   };
 }
 
@@ -104,6 +106,10 @@ export const androidSource: ListenSource = {
     return session?.bookId ? { bookId: session.bookId, night: session } : null;
   },
   dismissNight: () => EbookPlayer.dismissLastNight(),
+  saveBook: async (id) => {
+    const reply = await EbookLibrary.saveBook({ id });
+    return { saved: reply.saved, file: reply.name, size: reply.size, edits: reply.edits };
+  },
   records: {
     create: async (id, name) => (await EbookLibrary.createRecord({ id, name })).records,
     activate: async (id, record) => (await EbookLibrary.activateRecord({ id, record })).records,
