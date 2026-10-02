@@ -595,6 +595,27 @@ Ký hiệu:
 
 Sau cả hai: báo Lead trước khi tốn Kaggle cho Qwen3-Omni.
 
+**KẾT QUẢ (1) VÒNG TRÒN (03-10 04:xx, `score_e1_checks.py`, `results/e1_checks.txt`):**
+- Hai người chấm mới n1 / n2 (mô tả không CLAP, `describe_noclap.py`), 330 lượt mỗi người: đồng thuận cao, kappa n1-n2 0,740
+  (87%).
+- kappa(R_mới, R_cũ) = 0,300 (237 lượt; đồng ý 65%) và kappa(R_mới, L) = 0,120 → theo luật: **KHÔNG PHÂN ĐỊNH**.
+- Thứ hạng BT:
+
+| Thước | 1 | 2 | 3 | 4 | 5 | 6 |
+|---|---|---|---|---|---|---|
+| R_cũ (đọc mô tả CÓ CLAP) | vet | calm | gems | mid | app | far |
+| R_mới (đọc mô tả KHÔNG CLAP) | gems | calm | app | vet | mid | far |
+| L (hai model nghe) | gems | vet | app | far | mid | calm |
+
+- Đọc (không phải luật):
+  - `vet` (dựng bằng V/E/T suy từ CLAP) tụt từ hạng 1 xuống hạng 4 khi bỏ chữ CLAP khỏi mô tả. Lợi thế `vet` ở E1 phần lớn
+    là vòng tròn.
+  - `gems` đứng đầu ở cả hai thước không vòng tròn.
+  - `far` gần cuối ở mọi thước.
+  - `calm` vẫn hạng 2 với người đọc, nhưng cuối với model nghe. Bất đồng này chưa giải được; chờ phép (2).
+- Hệ quả: kết luận E1 "app thua vet" (dùng để định hướng việc đoán V/E/T đoạn) không đứng vững khi bỏ CLAP. Kết luận nào dựa
+  trên R_cũ phải được đo lại bằng R_mới trước khi dùng.
+
 **GHI TRƯỚC - NỚI NGƯỠNG NỀN ÊM (02-10 23:xx, Lead duyệt; từ E1: calm đứng thứ hai, hơn app):**
 - **Giả thuyết:** kéo về nền êm (CALM_TARGET) cho nhiều đoạn hơn làm nhạc hợp hơn. Hiện chỉ kéo khi confidence < WEAK_MOOD
   0,2, và kéo tuyến tính.
