@@ -73,8 +73,8 @@ ASSET_PATHS = ("cmudict.dict", "voice_previews")
 # Gói zip của scripts/pack_studio_assets.py (đúng các ASSET_PATHS, giữ nguyên byte của abook/assets). Nâng: đóng gói lại,
 # đăng lên nơi chứa, đổi URL (ghim theo commit) + băm + cỡ ở đây. QUY ƯỚC: URL còn chữ PIN_REVISION nghĩa là chưa đăng -
 # scripts/release.py từ chối dựng bản phát hành.
-STUDIO_ASSETS = Download("studio-assets", "https://huggingface.co/NGDtuanh/abook-studio-assets/resolve/PIN_REVISION/"
-                         "studio-assets-1.zip", "3e7d31b536a6fe1765b520758c8fdc5707149ac702368e904c884f47d74ecd32", 14_561_173)
+STUDIO_ASSETS = Download("studio-assets", "https://huggingface.co/NGDtuanh/abook-analyzer/resolve/234640f0b6fe53abbcaeaa758edb2aaedee39c07/"
+                         "studio-assets/studio-assets-1.zip", "3e7d31b536a6fe1765b520758c8fdc5707149ac702368e904c884f47d74ecd32", 14_561_173)
 
 
 @dataclass(frozen=True)

@@ -47,8 +47,6 @@ $UnusedStdlib = @("pydoc_data", "pdb", "_pyrepl", "rlcompleter", "mailbox", "ima
 # Pillow chỉ dùng để chuẩn hoá bìa (webui/covers.py: PNG / JPEG / WebP / GIF / BMP -> JPEG): bỏ codec AVIF (7,7 MB; bìa
 # không nhận AVIF), vẽ chữ (FreeType), quản lý màu ICC (lcms) và cầu Tk. Pillow tự bỏ qua phần thiếu (ImportError).
 $UnusedPillow = @("_avif", "_imagingft", "_imagingcms", "_imagingtk")
-# Công cụ dòng lệnh / chuyển đổi / lượng tử hoá đi kèm onnxruntime - app chỉ chạy InferenceSession.
-$UnusedOnnxruntime = @("transformers", "tools", "quantization", "datasets", "backend")
 
 function Step([string]$Text) { Write-Host "== $Text" -ForegroundColor Cyan }
 
@@ -142,15 +140,11 @@ function Remove-UnusedFromPython([string]$Python) {
         }
     } finally { $target.Dispose(); $source.Dispose() }
     Move-Item "$zip.new" $zip -Force
-    # Gói phụ: trình chạy dòng lệnh (bin\*.exe), bộ test, bản khai kiểu (.pyi), header/thư viện biên dịch, f2py.
+    # Gói phụ: trình chạy dòng lệnh (bin\*.exe), bộ test, bản khai kiểu (.pyi).
     Remove-Item (Join-Path $site "bin") -Recurse -Force -ErrorAction SilentlyContinue
     Get-ChildItem $site -Recurse -Directory | Where-Object { $_.Name -in @("tests", "test") } | Sort-Object { $_.FullName.Length } -Descending |
         ForEach-Object { Remove-Item $_.FullName -Recurse -Force -ErrorAction SilentlyContinue }
     Get-ChildItem $site -Recurse -File -Include *.pyi, py.typed | Remove-Item -Force
-    foreach ($relative in @("numpy\_core\include", "numpy\_core\lib", "numpy\f2py")) {
-        Remove-Item (Join-Path $site $relative) -Recurse -Force -ErrorAction SilentlyContinue
-    }
-    foreach ($name in $UnusedOnnxruntime) { Remove-Item (Join-Path $site "onnxruntime\$name") -Recurse -Force -ErrorAction SilentlyContinue }
     foreach ($name in $UnusedPillow) { Remove-Item (Join-Path $site "PIL\$name.cp$PythonTag-win_amd64.pyd") -Force -ErrorAction SilentlyContinue }
     Write-Host ("   {0} MB -> {1} MB" -f $before, (Get-SizeMB $Python))
 }
@@ -200,7 +194,7 @@ function Test-Layout {
 }
 
 function Test-Python {
-    # Chạy bằng chính Python nhúng đã cắt: nạp mọi mô-đun webui, bìa đủ 5 định dạng, numpy/onnxruntime, ssl/sqlite.
+    # Chạy bằng chính Python nhúng đã cắt: nạp mọi mô-đun webui, bìa đủ 5 định dạng, bộ nhập sách (abook\vendor), ssl/sqlite.
     Step "Thử Python nhúng"
     $python = Join-Path $Resources "python\python.exe"
     Push-Location (Join-Path $Resources "app")

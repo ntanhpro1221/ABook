@@ -92,7 +92,7 @@ duyệt nghe cùng một thư viện.
 
 ## Cài đặt
 
-- **Windows**: tải `ABook_{version}_x64-setup.exe` bên dưới và chạy (khoảng 30 MB, không cần quyền quản trị). Bản đã cài tự
+- **Windows**: tải `ABook_{version}_x64-setup.exe` bên dưới và chạy (khoảng 17 MB, không cần quyền quản trị). Bản đã cài tự
   báo có bản mới trong Cài đặt.
 - **Android**: tải file `.apk` bên dưới và cài; ghép với máy tính bằng mã 6 số (Cài đặt → "Ghép thiết bị mới" trên máy tính).
   App điện thoại từ 0.4.11 tự báo khi có bản mới.

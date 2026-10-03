@@ -155,23 +155,19 @@ bước vì bước đóng gói ghi vào exe vừa dựng và đụng trình di�
 
 ### Bộ cài chỉ mang phần nghe (đo 03-10)
 
-Chủ sách 03-10: cái gì chỉ Studio hay một tính năng tuỳ chọn cần thì KHÔNG nằm trong bộ cài - đi cùng Studio hay tải khi cần.
-Số đo trên thư mục tài nguyên đã dựng (`shell\src-tauri\resources`); "nén" là LZMA đặc 8 MB như NSIS, ước lượng hiệu chỉnh
-bằng bộ cài 0.4.21 thật (31,4 MB = ước lượng 29,6 + 1,85 cố định):
+Chủ sách 03-10: cái gì chỉ Studio hay một tính năng tuỳ chọn cần thì KHÔNG nằm trong bộ cài - đi cùng Studio hay tải khi cần
+(numpy + onnxruntime + ffmpeg + model nhạc: mô-đun "Phân tích nhạc"; từ điển phát âm + giọng nghe thử: bước "assets" của Studio).
+Số đo trên thư mục tài nguyên đã dựng (`shell\src-tauri\resources`, cây đã gộp main có `abook/vendor`); "nén" là LZMA đặc 8 MB như
+NSIS, ước lượng hiệu chỉnh bằng bộ cài 0.4.21 thật (31,4 MB = ước lượng 29,6 + 1,85 cố định):
 
 | phần | trước (chưa nén / nén) | sau | cách |
 |---|---|---|---|
 | giọng nghe thử (21 wav) | 17,6 / 11,1 MB | 0 | Studio tải (bước "assets") |
 | `cmudict.dict` | 3,6 / 0,8 MB | 0 | Studio tải (bước "assets") |
 | Pillow | 14,6 / 3,8 MB | 4,3 / 1,1 MB | bỏ `_avif` (7,7 MB), `_imagingft`, `_imagingcms`, `_imagingtk`; vẫn đọc PNG/JPEG/WebP/GIF/BMP |
-| numpy | 40,8 / 7,4 MB | 31,7 / 6,0 MB | bỏ `tests`, `.pyi`, `f2py`, header |
-| onnxruntime | 40,4 / 9,5 MB | 36,7 / 9,0 MB | bỏ `transformers`, `tools`, `quantization`, `datasets`, `backend` |
 | thư viện chuẩn (`python314.zip`) | 4,1 / 4,1 MB | 8,1 / 2,2 MB | bỏ mô-đun gỡ lỗi / thư tín / REPL; ghi zip KHÔNG nén vì LZMA không nén được file đã deflate |
-| **tài nguyên cả bộ** | **158,8 / 47,0 MB** | **117,8 / 28,5 MB** | |
-| **bộ cài ước lượng** | **~50,6 MB** | **~32,1 MB** | cộng `ABook.exe` (4,9 / 1,7 MB) và 1,85 MB cố định |
-
-Còn lại phần lớn là numpy + onnxruntime (cho bộ phân tích nhạc nhập "Nhạc của tôi", tuỳ chọn): bỏ chúng khỏi bộ cài còn
-khoảng 13,0 MB tài nguyên nén (bộ cài ~16,6 MB) - xem docs/MUSIC_IMPORT.md nếu chuyển sang tải khi cần (như ffmpeg).
+| **tài nguyên cả bộ** | **79,0 / 30,4 MB** | **51,3 / 13,8 MB** | |
+| **bộ cài ước lượng** | **~34,0 MB** | **~17,4 MB** | cộng `ABook.exe` (4,9 / 1,7 MB) và 1,85 MB cố định |
 
 `Test-Layout` của script dựng từ chối thư mục tài nguyên có thứ lạ (từng có `ebook_reader` 45 MB còn sót từ lần dựng cũ dưới
 `-SkipResources`) hay dữ liệu của Studio; `release.py build` từ chối khi gói dữ liệu của Studio chưa được ghim (URL còn
