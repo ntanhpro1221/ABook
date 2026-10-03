@@ -1,13 +1,9 @@
 package vn.abook.player
 
 import org.json.JSONObject
+import vn.abook.player.PinnedFiles.Part
 import java.io.File
-import java.io.FileOutputStream
 import java.io.IOException
-import java.net.HttpURLConnection
-import java.net.URL
-import java.security.MessageDigest
-import java.util.zip.GZIPInputStream
 
 /**
  * "Gói nhạc" của điện thoại - mọi thứ bộ phân tích nhạc ([MusicStudent]) cần mà APK không mang: model (~59 MB) cùng thư viện chạy ONNX
@@ -31,25 +27,6 @@ class MusicStudentSetup(
     /** Máy đang dùng mạng tính phí (dữ liệu di động)? Chỉ để giao diện nhắc, không chặn. */
     private val metered: () -> Boolean = { false },
 ) {
-    /** Một file của gói. [name] là đường tương đối trong thư mục gói (kèm thư mục con được), [remote] là đường trên máy chủ. [packed]: máy chủ
-     *  giữ bản nén gzip của file (nhỏ hơn nhiều với .so) - tải bản nén, kiểm nó, giải nén, rồi kiểm tiếp file thật ([sha256], [size]). */
-    class Part(
-        val name: String,
-        val sha256: String,
-        val size: Long,
-        val remote: String = name,
-        val packed: Packed? = null,
-        /** Thư viện chạy phải khớp phần Java trong APK: bản cũ của nó thì không chạy được, bản cũ của model thì vẫn chạy. */
-        val blocking: Boolean = false,
-        /** Tên người dùng thấy cho phần này (thẻ "có bản mới"). */
-        val label: String = "Model nghe nhạc",
-    ) {
-        /** Số byte phải tải qua mạng cho file này. */
-        val wireSize get() = packed?.size ?: size
-    }
-
-    class Packed(val sha256: String, val size: Long)
-
     private val lock = Any()
     private var state = MISSING
     private var error = ""
@@ -58,7 +35,7 @@ class MusicStudentSetup(
     private var todoTotal = 0L // tổng byte của các file lần tải này phải lấy
     private var analysing = false
     private var worker: Thread? = null
-    private val stampFile = File(dir, STAMP)
+    private val pinned = PinnedFiles(dir, base)
 
     /** Mã nhận dạng model của gói này (băm các SHA-256 ghim của file model): bài phân tích bằng model khác thì là bài "cũ" cần phân tích lại. */
     val modelId: String = sha256Of(files.filter { !it.blocking }.joinToString("\n") { it.name + " " + it.sha256 }.toByteArray()).take(12)
@@ -68,32 +45,10 @@ class MusicStudentSetup(
     }
 
     /** Mọi file có mặt với đúng cỡ đã ghim (dùng được, kể cả khi đã có bản mới hơn: bản cũ vẫn chạy cho tới khi người dùng cập nhật). */
-    fun complete(): Boolean = supported && files.all { part -> File(dir, part.name).let { it.isFile && it.length() == part.size } }
-
-    // ---- dấu bản: gói đã tải là bản nào -------------------------------------------------------------------------------
-
-    /** Dấu ghi lúc tải: tên file -> SHA-256 đã ghim và đã kiểm của nó. So với ghim của bản app này, không băm lại 59 MB mỗi lần mở. */
-    private fun readStamp(): Map<String, String> = try {
-        val parts = JSONObject(stampFile.readText(Charsets.UTF_8)).getJSONObject("parts")
-        parts.keys().asSequence().associateWith { parts.getString(it) }
-    } catch (_: Exception) {
-        emptyMap()
-    }
-
-    private fun writeStamp(parts: Map<String, String>) {
-        val listed = JSONObject()
-        parts.forEach { (name, sha) -> listed.put(name, sha) }
-        Store.writeAtomic(stampFile, JSONObject().put("version", 1).put("parts", listed).toString())
-    }
-
-    private fun isCurrent(part: Part, stamp: Map<String, String>) =
-        stamp[part.name] == part.sha256 && File(dir, part.name).let { it.isFile && it.length() == part.size }
+    fun complete(): Boolean = supported && files.all { pinned.present(it) }
 
     /** Các file mà bản app này ghim khác (hay chưa có) so với gói đã tải. Rỗng nếu chưa tải gói nào (khi ấy là "chưa có", không phải "cũ"). */
-    fun outdatedParts(): List<Part> {
-        val stamp = readStamp()
-        return if (stamp.isEmpty()) emptyList() else files.filter { !isCurrent(it, stamp) }
-    }
+    fun outdatedParts(): List<Part> = pinned.outdated(files)
 
     /** Số byte phải tải qua mạng cho [parts]. */
     private fun wireBytes(parts: List<Part>) = parts.sumOf { it.wireSize }
@@ -117,8 +72,8 @@ class MusicStudentSetup(
      */
     fun attachIfPresent(): Boolean {
         if (!complete()) return false
-        val stamp = readStamp()
-        if (files.any { it.blocking && !isCurrent(it, stamp) }) return false
+        val stamp = pinned.readStamp()
+        if (files.any { it.blocking && !pinned.isCurrent(it, stamp) }) return false
         if (!attach()) return false
         analysePending()
         return true
@@ -137,8 +92,8 @@ class MusicStudentSetup(
             error = ""
             finished = 0
             current = 0
-            val stamp = readStamp()
-            todoTotal = wireBytes(files.filter { !isCurrent(it, stamp) })
+            val stamp = pinned.readStamp()
+            todoTotal = wireBytes(files.filter { !pinned.isCurrent(it, stamp) })
             worker = Thread({ download() }, "abook-music-student").apply {
                 isDaemon = true
                 priority = Thread.MIN_PRIORITY
@@ -154,25 +109,13 @@ class MusicStudentSetup(
 
     private fun download() {
         try {
-            dir.mkdirs()
-            val stamp = readStamp().toMutableMap()
-            for (part in files) {
-                if (isCurrent(part, stamp)) continue
-                // Có file đúng cỡ mà chưa có dấu (tải từ bản app trước khi có dấu): băm một lần, đúng ghim thì nhận luôn.
-                if (File(dir, part.name).let { it.isFile && it.length() == part.size } && sha256(File(dir, part.name)) == part.sha256) {
-                    stamp[part.name] = part.sha256
-                    writeStamp(stamp)
-                    synchronized(lock) { finished += part.wireSize }
-                    continue
-                }
-                fetch(part)
-                stamp[part.name] = part.sha256
-                writeStamp(stamp) // sau từng file: tải dở rồi dừng thì file đã xong vẫn được nhận, không tải lại
-                synchronized(lock) {
+            pinned.download(files, object : PinnedFiles.Progress {
+                override fun current(bytes: Long) = synchronized(lock) { current = bytes }
+                override fun done(part: Part) = synchronized(lock) {
                     finished += part.wireSize
                     current = 0
                 }
-            }
+            })
         } catch (failure: Exception) {
             fail(describe(failure))
             return
@@ -192,8 +135,7 @@ class MusicStudentSetup(
             true
         } catch (failure: Exception) {
             // gói đủ file mà không dùng được (cấu hình lạ, đầu hỏng): xoá để lần bấm sau tải lại sạch
-            files.forEach { File(dir, it.name).delete() }
-            stampFile.delete()
+            pinned.wipe(files)
             fail("Bộ phân tích tải về không dùng được (${failure.message ?: failure.javaClass.simpleName}) - bấm Thử lại để tải lại.")
             false
         }
@@ -236,101 +178,9 @@ class MusicStudentSetup(
     }
 
     private fun describe(failure: Exception): String = when (failure) {
-        is ChecksumError -> "Bộ phân tích tải về bị hỏng (không khớp mã kiểm) - bấm Thử lại để tải lại."
+        is PinnedFiles.ChecksumError -> "Bộ phân tích tải về bị hỏng (không khớp mã kiểm) - bấm Thử lại để tải lại."
         is IOException -> "Không tải được bộ phân tích nhạc (${failure.message ?: "mất kết nối"}). Bấm Thử lại - phần đã tải được giữ."
         else -> "Không tải được bộ phân tích nhạc (${failure.message ?: failure.javaClass.simpleName})."
-    }
-
-    private class ChecksumError : IOException("sai mã kiểm")
-
-    /**
-     * Tải một file: `.part`, tải tiếp bằng Range nếu có phần dở, kiểm cỡ + SHA-256, rồi đổi tên. File nén ([Part.packed]) thì tải bản nén
-     * (kiểm riêng), giải nén ra `.part`, kiểm file thật, rồi mới đổi tên - file có tên thật luôn đã được kiểm. Mất kết nối giữa chừng thì
-     * thử lại vài lần.
-     */
-    private fun fetch(part: Part) {
-        val target = File(dir, part.name).also { it.parentFile?.mkdirs() }
-        val wire = part.packed?.let { File(dir, part.name + ".gz") } ?: target
-        val partial = File(wire.path + ".part")
-        var attempts = 0
-        while (true) {
-            try {
-                transfer(part.remote, part.packed?.sha256 ?: part.sha256, part.wireSize, partial)
-                break
-            } catch (failure: IOException) {
-                if (failure is ChecksumError || ++attempts >= RETRIES) throw failure
-            }
-        }
-        promote(partial, wire, part.name)
-        if (part.packed != null) {
-            val raw = File(target.path + ".part")
-            try {
-                GZIPInputStream(wire.inputStream().buffered()).use { input -> raw.outputStream().use { input.copyTo(it, 1 shl 16) } }
-            } catch (failure: IOException) {
-                raw.delete()
-                wire.delete()
-                throw ChecksumError()
-            }
-            wire.delete()
-            if (raw.length() != part.size || sha256(raw) != part.sha256) {
-                raw.delete()
-                throw ChecksumError()
-            }
-            promote(raw, target, part.name)
-        }
-        // Thư viện nạp động (.so): chỉ-đọc, như Android 14+ đòi cho mã nạp động.
-        if (part.name.endsWith(".so")) target.setReadOnly()
-    }
-
-    private fun promote(from: File, to: File, name: String) {
-        if (from.renameTo(to)) return
-        to.delete()
-        if (!from.renameTo(to)) throw IOException("không ghi được file $name")
-    }
-
-    private fun transfer(remote: String, expected: String, size: Long, partial: File) {
-        var have = partial.length()
-        if (have > size) {
-            partial.delete()
-            have = 0
-        }
-        if (have < size) {
-            val connection = URL(base + remote).openConnection() as HttpURLConnection
-            try {
-                connection.connectTimeout = 20_000
-                connection.readTimeout = 30_000
-                connection.instanceFollowRedirects = true
-                if (have > 0) connection.setRequestProperty("Range", "bytes=$have-")
-                val code = connection.responseCode
-                when (code) {
-                    HttpURLConnection.HTTP_PARTIAL -> {}
-                    HttpURLConnection.HTTP_OK -> have = 0 // máy chủ bỏ qua Range: tải lại từ đầu
-                    else -> throw IOException("máy chủ trả mã $code")
-                }
-                connection.inputStream.use { input ->
-                    FileOutputStream(partial, have > 0).use { output ->
-                        val buffer = ByteArray(1 shl 16)
-                        var written = have
-                        synchronized(lock) { current = written }
-                        while (true) {
-                            val read = input.read(buffer)
-                            if (read < 0) break
-                            if (written + read > size) throw IOException("file lớn hơn dự kiến")
-                            output.write(buffer, 0, read)
-                            written += read
-                            synchronized(lock) { current = written }
-                        }
-                    }
-                }
-            } finally {
-                connection.disconnect()
-            }
-        }
-        if (partial.length() != size) throw IOException("tải chưa đủ (${partial.length()}/$size byte)")
-        if (sha256(partial) != expected) {
-            partial.delete()
-            throw ChecksumError()
-        }
     }
 
     companion object {
@@ -339,8 +189,7 @@ class MusicStudentSetup(
         private const val READY = "ready"
         private const val OUTDATED = "outdated"
         private const val ERROR = "error"
-        const val STAMP = "bundle.json"
-        private const val RETRIES = 3
+        const val STAMP = PinnedFiles.STAMP
 
         // Ghim đúng như webui/music_student.py (REPO_ID, REVISION, PACKAGE_FILES["onnx"], PACKAGE_HASHES): đổi bên kia thì đổi ở đây
         // (tests/test_music_student_android.py so hai bảng).
@@ -353,19 +202,6 @@ class MusicStudentSetup(
             Part("preprocessor_config.json", "b089fad772ef3242a3ff8b9e4a6449083253d28d83a1ad8aa346cea116bfe514", 524),
         )
 
-        fun sha256Of(bytes: ByteArray): String = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
-
-        fun sha256(file: File): String {
-            val digest = MessageDigest.getInstance("SHA-256")
-            file.inputStream().use { input ->
-                val buffer = ByteArray(1 shl 16)
-                while (true) {
-                    val read = input.read(buffer)
-                    if (read < 0) break
-                    digest.update(buffer, 0, read)
-                }
-            }
-            return digest.digest().joinToString("") { "%02x".format(it) }
-        }
+        fun sha256Of(bytes: ByteArray): String = PinnedFiles.sha256Of(bytes)
     }
 }

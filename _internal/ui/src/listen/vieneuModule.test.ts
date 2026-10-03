@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { benchmarkLabel, initialChoices, selectionBytes, suggestionText, vieneuLabel, type VieneuStatus } from "./vieneuModule";
+import { benchmarkLabel, initialChoices, meteredNotice, selectionBytes, suggestionText, vieneuLabel, type VieneuStatus } from "./vieneuModule";
 
 const MB = 1024 * 1024;
 
@@ -66,5 +66,32 @@ describe("mô-đun Giọng VieNeu", () => {
     expect(vieneuLabel(status({ state: "outdated", outdatedBytes: 3 * MB }))).toContain("3,0 MB");
     expect(vieneuLabel(status({ state: "error", error: "Không tải được." }))).toBe("Không tải được.");
     expect(vieneuLabel(status())).toContain("không cần mạng");
+  });
+
+  it("điện thoại: thư viện chạy model của Gói nhạc không tính lại, Nano khuyên dùng", () => {
+    const phone = status({
+      choices: [
+        { id: "nano", label: "Giọng VieNeu Nano", detail: "", needs: ["ort", "g2p", "voices", "nano"], bytes: 0, installed: false, recommended: true, default: true },
+        { id: "turbo", label: "Giọng VieNeu", detail: "", needs: ["ort", "g2p", "voices", "turbo"], bytes: 0, installed: false, recommended: false, default: false },
+      ],
+      parts: [
+        { id: "ort", label: "", bytes: 12 * MB, state: "current", external: true },
+        { id: "g2p", label: "", bytes: 28 * MB, state: "missing" },
+        { id: "voices", label: "", bytes: 3 * MB, state: "missing" },
+        { id: "turbo", label: "", bytes: 200 * MB, state: "missing" },
+        { id: "nano", label: "", bytes: 270 * MB, state: "missing" },
+      ],
+      recommended: "nano",
+    });
+    expect(initialChoices(phone)).toEqual(["nano"]);
+    expect(selectionBytes(phone, ["nano"])).toBe(301 * MB);
+    expect(selectionBytes(phone, ["nano", "turbo"])).toBe(501 * MB);
+  });
+
+  it("nhắc tốn dữ liệu di động trước khi tải, không chặn", () => {
+    expect(meteredNotice({ metered: true }, 301 * MB)).toContain("dữ liệu di động");
+    expect(meteredNotice({ metered: false }, 301 * MB)).toBeNull();
+    expect(meteredNotice({ metered: true }, 0)).toBeNull();
+    expect(meteredNotice({}, 5 * MB)).toBeNull();
   });
 });

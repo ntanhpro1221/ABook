@@ -3,9 +3,9 @@
 Runs on the desktop (runtime venv). For 5 fixed Vietnamese sentences it records everything the phone needs to repeat the
 synthesis WITHOUT the Python-only parts (G2P, tokenizer, RNG) and what the desktop produced from the same ONNX graphs:
 
-  <out>/models/turbo_int8/   VieNeu-TTS-v3-Turbo onnx_int8 graphs + heads as raw float32 (text_emb, audio_emb, xvec_*)
+  <out>/models/turbo_int8/   VieNeu-TTS-v3-Turbo onnx_int8 graphs + vieneu_v3_heads.npz (the phone reads the npz in place)
   <out>/models/codec/        MOSS audio tokenizer decode graph (Turbo's vocoder)
-  <out>/models/nano/         VieNeu-TTS-v3-Nano graphs + constants as raw float32
+  <out>/models/nano/         VieNeu-TTS-v3-Nano graphs + constants.npz
   <out>/bundle/              manifest.json (phonemes, ids, sampling params, desktop timings) + one raw file per tensor:
                              voice, uniform random streams (Turbo sampling), Nano start noise, desktop codes and audio
 
@@ -127,24 +127,15 @@ def _copy(src: Path, dst: Path) -> None:
 def export_models(out: Path, turbo_dir: Path, codec_dir: Path, nano_dir: Path, tag: str, with_nano: bool) -> None:
     t = out / "models" / f"turbo_{tag}"
     for name in ["vieneu_prefill.onnx", "vieneu_decode_step.onnx", "vieneu_acoustic_cached.onnx", "vieneu_backbone_shared.data",
-                 "config.json", "tokenizer.json"]:
+                 "config.json", "tokenizer.json", "vieneu_v3_heads.npz"]:
         _copy(turbo_dir / name, t / name)
-    z = np.load(turbo_dir / "vieneu_v3_heads.npz")
-    for key in ["text_emb", "audio_emb", "xvec_w", "xvec_b", "xvec_ln_w", "xvec_ln_b"]:
-        _write(t / f"{key}.f32", z[key], "<f4")
-    (t / "heads.json").write_bytes(json.dumps({"xvec_ln_eps": float(z["xvec_ln_eps"]),
-                                                "text_emb": list(z["text_emb"].shape), "audio_emb": list(z["audio_emb"].shape),
-                                                "xvec_w": list(z["xvec_w"].shape)}).encode())
     for name in ["moss_audio_tokenizer_decode_full.onnx", "moss_audio_tokenizer_decode_shared.data"]:
         _copy(codec_dir / name, out / "models" / "codec" / name)
     if not with_nano:
         return
     n = out / "models" / "nano"
-    for name in ["text_encoder.onnx", "duration_predictor.onnx", "vector_estimator.onnx", "codec_decoder.onnx", "config.json"]:
+    for name in ["text_encoder.onnx", "duration_predictor.onnx", "vector_estimator.onnx", "codec_decoder.onnx", "config.json", "constants.npz"]:
         _copy(nano_dir / name, n / name)
-    c = np.load(nano_dir / "constants.npz")
-    _write(n / "null_spk.f32", c["null_spk"], "<f4")
-    _write(n / "null_style.f32", c["null_style"], "<f4")
 
 
 def run_turbo(turbo_dir: Path, codec_dir: Path, voice: dict, threads: int, record: bool, bundle: Path | None):

@@ -7,6 +7,7 @@ import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.CapacitorPlugin
 import vn.abook.player.Playback
+import vn.abook.player.vieneu.VieneuVoices
 
 /**
  * Cầu nối giao diện <-> đọc to (ReadAloud). Giao diện chọn giọng và hỏi mốc thời gian; việc phát đi qua `EbookPlayer` (lõi phát: `load` với chương
@@ -20,6 +21,8 @@ import vn.abook.player.Playback
  * - `sample({voice, text})` -> `{path}`: "Thử giọng" trong Cài đặt (đúng giọng ấy, không rơi sang giọng khác).
  * - Giọng dùng khoá của người dùng (OnlineVoices.kt): `onlineProviders()` -> `{providers: [...]}` (khoá chỉ ở dạng che), `setOnlineKey({provider, key, region})`,
  *   `removeOnlineKey({provider})`, `checkOnlineKey({provider})` -> `{ok, reason?, message?, voices?, provider}`. Khoá đi vào qua lệnh plugin, không bao giờ ra lại.
+ * - Mô-đun "Giọng VieNeu" (vieneu/VieneuModule.kt, cùng hình trạng thái với máy tính - ui/src/listen/vieneuModule.ts): `vieneuStatus()`,
+ *   `vieneuStart({choices?})` (không có `choices`: cập nhật phần cũ), `vieneuMeasure()` (đo lại tốc độ), `vieneuRemove({choice})` - đều trả trạng thái mới.
  */
 @CapacitorPlugin(name = "ReadAloud")
 class ReadAloudPlugin : Plugin() {
@@ -109,6 +112,39 @@ class ReadAloudPlugin : Plugin() {
             call.resolve(JSObject.fromJSONObject(result.put("provider", keyed.describe())))
         } catch (error: IllegalArgumentException) {
             call.reject(error.message ?: "Nhà cung cấp lạ")
+        }
+    }
+
+    private fun resolveVieneu(call: PluginCall) = call.resolve(JSObject.fromJSONObject(VieneuVoices.module(context).status()))
+
+    @PluginMethod
+    fun vieneuStatus(call: PluginCall) = resolveVieneu(call)
+
+    @PluginMethod
+    fun vieneuStart(call: PluginCall) {
+        val picked = call.getArray("choices")?.toList<String>()
+        try {
+            VieneuVoices.module(context).start(picked)
+            resolveVieneu(call)
+        } catch (error: IllegalArgumentException) {
+            call.reject(error.message ?: "Lựa chọn lạ")
+        }
+    }
+
+    @PluginMethod
+    fun vieneuMeasure(call: PluginCall) {
+        VieneuVoices.module(context).measureAgain()
+        resolveVieneu(call)
+    }
+
+    @PluginMethod
+    fun vieneuRemove(call: PluginCall) {
+        val choice = call.getString("choice") ?: return call.reject("thiếu choice")
+        try {
+            VieneuVoices.module(context).remove(choice)
+            resolveVieneu(call)
+        } catch (error: IllegalArgumentException) {
+            call.reject(error.message ?: "Lựa chọn lạ")
         }
     }
 }

@@ -3,6 +3,7 @@ import { Download } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Capacitor } from "@capacitor/core";
 import { Button, Segmented, TimeSelect } from "@/shared/ui";
+import { VieneuModuleCard, type VieneuBackend } from "@/listen/VieneuModuleCard";
 import { VoiceSettings, type VoiceSettingsApi } from "@/listen/VoiceSettings";
 import { ReadAloud } from "./plugins";
 import { applyTheme, loadSettings, saveSettings, type PlayerSettings } from "./settings";
@@ -26,6 +27,15 @@ const phoneVoices: VoiceSettingsApi = {
   saveKey: (provider, key, region) => ReadAloud.setOnlineKey({ provider, key, region }),
   removeKey: (provider) => ReadAloud.removeOnlineKey({ provider }),
   checkKey: (provider) => ReadAloud.checkOnlineKey({ provider }),
+};
+
+/** "Giọng VieNeu" trên điện thoại: lõi native tải, đo, gỡ (VieneuModule.kt) - cùng thẻ với máy tính. */
+const phoneVieneu: VieneuBackend = {
+  status: () => ReadAloud.vieneuStatus(),
+  start: (choices) => ReadAloud.vieneuStart(choices ? { choices } : {}),
+  measure: () => ReadAloud.vieneuMeasure(),
+  remove: (choice) => ReadAloud.vieneuRemove({ choice }),
+  voices: async () => (await ReadAloud.voices()).voices,
 };
 
 function Row({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
@@ -205,6 +215,7 @@ export function SettingsScreen() {
           <VoiceSettings
             api={phoneVoices}
             deviceHint="Máy chưa có giọng tiếng Việt. Cài trong Cài đặt của điện thoại → Chuyển văn bản thành giọng nói → tải dữ liệu giọng Tiếng Việt."
+            modules={(reload) => <VieneuModuleCard backend={phoneVieneu} onChanged={reload} />}
           />
         </div>
       </Group>

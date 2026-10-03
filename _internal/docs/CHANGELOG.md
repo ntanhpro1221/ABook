@@ -33,6 +33,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   phần đổi. Máy không kịp đọc trực tiếp vẫn nghe được giọng VieNeu: nút Giọng đọc có "Làm trước các chương tới" - máy đọc sẵn ở nền
   (việc đang nghe luôn được ưu tiên), nói rõ còn bao lâu, bấm "Dừng làm trước" là thôi.
 
+- **Giọng VieNeu trên điện thoại**: Cài đặt → Giọng đọc có cùng mục "Giọng VieNeu" để tải giọng đọc ngay trên điện thoại, không cần mạng.
+  Điện thoại được khuyên Giọng VieNeu Nano (nhẹ hơn); Giọng VieNeu chỉ được khuyên khi lần tự thử sau khi tải cho thấy máy đủ nhanh. Dung
+  lượng ghi là phần điện thoại còn thiếu (thư viện chạy model của "Gói nhạc" đã có thì không tải lại); đang dùng dữ liệu di động thì app
+  nhắc trước. Mỗi giọng gỡ được để lấy lại chỗ. Điện thoại tầm trung chưa đọc kịp trực tiếp (máy đo thử đọc chậm khoảng 1,8 lần so với tốc độ nghe) - app nói rõ và gợi ý "Làm trước", cách dùng tốt nhất trên máy loại này. Giọng
+  VieNeu chưa đọc được (chưa tải xong, thiếu bộ nhớ) thì đoạn ấy tạm đọc bằng giọng của máy, không bao giờ gửi chữ ra mạng.
+
 - **Cài đặt → Giọng đọc: chọn giọng mặc định, nghe thử, và dùng giọng trực tuyến bằng khóa của bạn (máy tính và điện thoại)**: mục mới
   liệt kê mọi giọng đọc được cho "Nghe ngay" - Edge, giọng của máy, và giọng của các dịch vụ bạn có tài khoản - kèm gợi ý giọng nam / nữ,
   nút "Thử giọng" đọc một câu mẫu, và chọn một giọng làm mặc định cho các cuốn chưa chọn giọng riêng (giọng riêng của từng cuốn vẫn đổi ở

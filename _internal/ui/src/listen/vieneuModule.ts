@@ -1,5 +1,6 @@
-// Mô-đun "Giọng VieNeu" của máy tính (abook/webui/vieneu_module.py, docs/LISTEN_ANYTHING.md mục 3): giọng đọc ngay trên máy cho "Nghe ngay",
-// tải khi người dùng bấm. Phần thuần (không React) để thử riêng; thẻ ở VieneuModuleCard.tsx.
+// Mô-đun "Giọng VieNeu" (docs/LISTEN_ANYTHING.md mục 3): giọng đọc ngay trên máy cho "Nghe ngay", tải khi người dùng bấm - máy tính
+// (abook/webui/vieneu_module.py) và điện thoại (mobile/android/.../vieneu/VieneuModule.kt) cùng một hình trạng thái. Phần thuần (không React) để
+// thử riêng; thẻ ở VieneuModuleCard.tsx.
 
 import { formatSize } from "@/studio/musicLocal";
 
@@ -18,6 +19,8 @@ export interface VieneuChoice {
   recommended: boolean;
   /** Đánh dấu sẵn lần đầu. */
   default: boolean;
+  /** Gỡ được khỏi máy này (điện thoại). */
+  removable?: boolean;
 }
 
 export interface VieneuPart {
@@ -63,6 +66,14 @@ export interface VieneuStatus {
   slowRtf?: number;
   /** Bản mới chỉ dùng được sau khi mở lại app. */
   restart?: boolean;
+  /** Đang dùng mạng tính phí (dữ liệu di động của điện thoại): chỉ để nhắc, không chặn. */
+  metered?: boolean;
+}
+
+/** Câu nhắc trước khi tải bằng dữ liệu di động (null khi không cần nhắc). */
+export function meteredNotice(status: Pick<VieneuStatus, "metered">, bytes: number): string | null {
+  if (!status.metered || bytes <= 0) return null;
+  return `Điện thoại đang dùng dữ liệu di động - tải ${formatSize(bytes)} có thể tốn tiền mạng. Nên chờ có Wi-Fi.`;
 }
 
 /** Byte phải tải cho các lựa chọn đang đánh dấu: hợp các phần còn thiếu, phần dùng chung tính một lần. */

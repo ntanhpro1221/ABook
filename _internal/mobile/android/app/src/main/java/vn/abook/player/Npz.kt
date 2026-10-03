@@ -42,7 +42,11 @@ object Npz {
         return found
     }
 
-    fun parse(bytes: ByteArray, name: String = "npy"): NpyArray {
+    /** Đầu một file `.npy`: kiểu số (`descr`), thứ tự Fortran hay không, hình dạng, và vị trí byte đầu tiên của dữ liệu. */
+    class Header(val descr: String, val fortran: Boolean, val shape: IntArray, val dataOffset: Int)
+
+    /** Đọc đầu `.npy` từ [bytes] (chỉ cần phần đầu file); đầu hỏng thì ném lỗi kèm lý do. */
+    fun header(bytes: ByteArray, name: String = "npy"): Header {
         fun bad(why: String): Nothing = throw IllegalArgumentException("$name: $why")
         if (bytes.size < 10 || !bytes.copyOfRange(0, 6).contentEquals(MAGIC)) bad("không phải file .npy")
         val major = bytes[6].toInt()
@@ -62,13 +66,21 @@ object Npz {
         if (headerLength < 0 || headerStart + headerLength > bytes.size) bad("đầu file hỏng")
         val header = String(bytes, headerStart, headerLength, if (major == 3) Charsets.UTF_8 else Charsets.ISO_8859_1)
         val descr = DESCR.find(header)?.groupValues?.get(1) ?: bad("thiếu kiểu số")
-        if (FORTRAN.find(header)?.groupValues?.get(1) != "False") bad("chỉ đọc được thứ tự C")
+        val fortran = FORTRAN.find(header)?.groupValues?.get(1) != "False"
         val dimensions = SHAPE.find(header)?.groupValues?.get(1)?.split(',')?.map { it.trim() }?.filter { it.isNotEmpty() }?.map { it.toInt() }
             ?: bad("thiếu hình dạng")
-        val shape = dimensions.toIntArray()
+        return Header(descr, fortran, dimensions.toIntArray(), headerStart + headerLength)
+    }
+
+    fun parse(bytes: ByteArray, name: String = "npy"): NpyArray {
+        fun bad(why: String): Nothing = throw IllegalArgumentException("$name: $why")
+        val head = header(bytes, name)
+        if (head.fortran) bad("chỉ đọc được thứ tự C")
+        val descr = head.descr
+        val shape = head.shape
         val count = shape.fold(1L) { total, dimension -> total * dimension }
         if (count > Int.MAX_VALUE) bad("mảng quá lớn")
-        val data = ByteBuffer.wrap(bytes, headerStart + headerLength, bytes.size - headerStart - headerLength).order(ByteOrder.LITTLE_ENDIAN)
+        val data = ByteBuffer.wrap(bytes, head.dataOffset, bytes.size - head.dataOffset).order(ByteOrder.LITTLE_ENDIAN)
         val numbers = when (descr) {
             "<f4" -> 4
             "<f8" -> 8

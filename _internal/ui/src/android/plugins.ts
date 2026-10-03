@@ -6,6 +6,7 @@ import type { Capabilities } from "@/shared/capabilities";
 import type { EditsSyncState } from "@/shared/editsSync";
 import type { AddedBook, ImportPreview } from "@/listen/textImport";
 import type { ImportResult } from "@/studio/musicLocal";
+import type { VieneuChoiceId, VieneuStatus } from "@/listen/vieneuModule";
 
 // Hai plugin native của app Android (mobile/android/app/src/main/java/vn/abook/player):
 //  EbookPlayer  - lõi phát Media3: hàng đợi chương, hẹn giờ ngủ, lắc để nghe thêm, nhật ký đêm.
@@ -353,6 +354,11 @@ export interface ReadAloudPlugin {
   setOnlineKey(options: { provider: string; key: string; region: string }): Promise<OnlineProviderInfo>;
   removeOnlineKey(options: { provider: string }): Promise<OnlineProviderInfo>;
   checkOnlineKey(options: { provider: string }): Promise<KeyCheck>;
+  /** Mô-đun "Giọng VieNeu" (vieneu/VieneuModule.kt): cùng hình trạng thái với máy tính. `vieneuStart` không kèm `choices` = cập nhật phần đã cũ. */
+  vieneuStatus(): Promise<VieneuStatus>;
+  vieneuStart(options: { choices?: VieneuChoiceId[] }): Promise<VieneuStatus>;
+  vieneuMeasure(): Promise<VieneuStatus>;
+  vieneuRemove(options: { choice: VieneuChoiceId }): Promise<VieneuStatus>;
 }
 
 export const EbookPlayer = registerPlugin<EbookPlayerPlugin>("EbookPlayer");

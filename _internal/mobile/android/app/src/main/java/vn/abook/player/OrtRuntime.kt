@@ -2,8 +2,8 @@ package vn.abook.player
 
 import android.os.Build
 import android.os.Process
-import vn.abook.player.MusicStudentSetup.Packed
-import vn.abook.player.MusicStudentSetup.Part
+import vn.abook.player.PinnedFiles.Packed
+import vn.abook.player.PinnedFiles.Part
 import java.io.File
 
 /**
