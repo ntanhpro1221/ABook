@@ -1,5 +1,6 @@
 import { registerPlugin, type PluginListenerHandle } from "@capacitor/core";
 import type { Bookmark, BookPart, ListeningRecord, ListeningState, NightSession } from "@/listen/model";
+import type { PreparePlan, PrepareStatus } from "@/listen/prepareAhead";
 import type { ReadAloudTimings, ReadAloudVoice } from "@/listen/readAloud";
 import type { KeyCheck, OnlineProviderInfo } from "@/listen/VoiceSettings";
 import type { Capabilities } from "@/shared/capabilities";
@@ -353,6 +354,14 @@ export interface ReadAloudPlugin {
   setOnlineKey(options: { provider: string; key: string; region: string }): Promise<OnlineProviderInfo>;
   removeOnlineKey(options: { provider: string }): Promise<OnlineProviderInfo>;
   checkOnlineKey(options: { provider: string }): Promise<KeyCheck>;
+  /** "Làm trước" (PrepareAhead.kt): việc nền của WorkManager đọc sẵn các chương này bằng đúng giọng ấy vào bộ đệm - chạy cả khi app đã đóng. */
+  preparePlan(options: { bookId: string; voice: string; chapterIds: number[] }): Promise<PreparePlan>;
+  prepareStart(options: { bookId: string; voice: string; chapterIds: number[]; label: string; chargingOnly?: boolean }): Promise<PrepareStatus>;
+  prepareStatus(): Promise<PrepareStatus>;
+  prepareCancel(): Promise<PrepareStatus>;
+  prepareOptions(options: { chargingOnly: boolean }): Promise<PrepareStatus>;
+  /** Tiến độ làm trước (sau mỗi đoạn, mỗi lần đổi). */
+  addListener(event: "readAloudPrepare", handler: (status: PrepareStatus) => void): Promise<PluginListenerHandle>;
 }
 
 export const EbookPlayer = registerPlugin<EbookPlayerPlugin>("EbookPlayer");

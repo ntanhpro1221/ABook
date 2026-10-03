@@ -20,6 +20,9 @@ import vn.abook.player.Playback
  * - `sample({voice, text})` -> `{path}`: "Thử giọng" trong Cài đặt (đúng giọng ấy, không rơi sang giọng khác).
  * - Giọng dùng khoá của người dùng (OnlineVoices.kt): `onlineProviders()` -> `{providers: [...]}` (khoá chỉ ở dạng che), `setOnlineKey({provider, key, region})`,
  *   `removeOnlineKey({provider})`, `checkOnlineKey({provider})` -> `{ok, reason?, message?, voices?, provider}`. Khoá đi vào qua lệnh plugin, không bao giờ ra lại.
+ * - "Làm trước" (PrepareAhead.kt): `preparePlan({bookId, voice, chapterIds})` -> `{chapters, offered, audioSeconds, secondsEstimate}` (ước trước khi bấm);
+ *   `prepareStart({bookId, voice, chapterIds, label, chargingOnly})`, `prepareStatus()`, `prepareCancel()`, `prepareOptions({chargingOnly})` -> trạng thái
+ *   (`PrepareStatus` của ui/src/listen/prepareAhead.ts). Sự kiện `readAloudPrepare` (trạng thái) sau mỗi đoạn và mỗi lần đổi.
  */
 @CapacitorPlugin(name = "ReadAloud")
 class ReadAloudPlugin : Plugin() {
@@ -29,13 +32,17 @@ class ReadAloudPlugin : Plugin() {
 
     private val noticeListener: (String) -> Unit = { message -> notifyListeners("readAloudNotice", JSObject().put("message", message)) }
 
+    private val prepareListener: (org.json.JSONObject) -> Unit = { status -> notifyListeners("readAloudPrepare", JSObject.fromJSONObject(status)) }
+
     override fun load() {
         Playback.init(context)
         ReadAloud.addScriptListener(listener)
         ReadAloud.addNoticeListener(noticeListener)
+        PrepareAhead.addListener(prepareListener)
     }
 
     override fun handleOnDestroy() {
+        PrepareAhead.removeListener(prepareListener)
         ReadAloud.removeNoticeListener(noticeListener)
         ReadAloud.removeScriptListener(listener)
         super.handleOnDestroy()
@@ -67,6 +74,42 @@ class ReadAloudPlugin : Plugin() {
         } catch (error: VoiceException) {
             call.reject(error.message ?: "Không đọc thử được", error.reason)
         }
+    }
+
+    private fun chapterIds(call: PluginCall): List<Int>? =
+        call.getArray("chapterIds")?.let { array -> (0 until array.length()).mapNotNull { array.opt(it)?.toString()?.toDoubleOrNull()?.toInt() } }
+
+    @PluginMethod
+    fun preparePlan(call: PluginCall) {
+        val book = call.getString("bookId") ?: return call.reject("thiếu bookId")
+        val voice = call.getString("voice") ?: return call.reject("thiếu voice")
+        val ids = chapterIds(call) ?: return call.reject("thiếu chapterIds")
+        call.resolve(JSObject.fromJSONObject(PrepareAhead.plan(context, book, voice, ids)))
+    }
+
+    @PluginMethod
+    fun prepareStart(call: PluginCall) {
+        val book = call.getString("bookId") ?: return call.reject("thiếu bookId")
+        val voice = call.getString("voice") ?: return call.reject("thiếu voice")
+        val ids = chapterIds(call) ?: return call.reject("thiếu chapterIds")
+        val chargingOnly = call.getBoolean("chargingOnly", PrepareAhead.chargingOnly(context))!!
+        call.resolve(JSObject.fromJSONObject(PrepareAhead.start(context, book, voice, ids, call.getString("label", "")!!, chargingOnly)))
+    }
+
+    @PluginMethod
+    fun prepareStatus(call: PluginCall) {
+        call.resolve(JSObject.fromJSONObject(PrepareAhead.status(context)))
+    }
+
+    @PluginMethod
+    fun prepareCancel(call: PluginCall) {
+        call.resolve(JSObject.fromJSONObject(PrepareAhead.cancel(context)))
+    }
+
+    @PluginMethod
+    fun prepareOptions(call: PluginCall) {
+        val on = call.getBoolean("chargingOnly") ?: return call.reject("thiếu chargingOnly")
+        call.resolve(JSObject.fromJSONObject(PrepareAhead.setChargingOnly(context, on)))
     }
 
     @PluginMethod
