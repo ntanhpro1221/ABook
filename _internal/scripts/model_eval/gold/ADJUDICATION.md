@@ -769,3 +769,16 @@ là sót N,T ở tiếng lòng tức thời ngôi một.
 
 JAMDI'EL~ (Breakthrough 094): tên chỉ gắn với Đại Tư Tế ở 099.txt:91 (chương sau) và chính 092 nói "sẽ cho cậu biết tên thật
 của ta sau" -> ĐẠI TƯ TẾ đủ, JAMDI'EL nửa (cùng tinh thần Tsurekano 031a:284).
+
+Kuma Kuma Kuma Bear 133 + Overlord 25 (đợt 4: nữ chính ngôi một; nhiều điểm nhìn). Overlord: mốc 30% = 23 sát chương nhạc 22
+-> luật dời sang 25 (giao đoạn, ngôi ba theo đội trưởng Black Scripture; cả bộ không đặt tên hai người nói -> NPC*:<mô tả>,
+ĐỘI TRƯỞNG nửa điểm vì chức danh dùng cho người khác). B: người nói chính sai 0 ở cả hai.
+
+| câu | A | B đề nghị | kết luận | lý do |
+|---|---|---|---|---|
+| Kuma 133:116 "Và chị muốn em làm..." | SHERRY, MYLENE~ | cả hai đủ | theo B | "Và" nối lời nhờ 114 của Mylene, lời dẫn 117 ghi Sherry |
+| Kuma 133:122, 124 | YUNA, MYLENE~ | cả hai đủ | theo B | 121 Yuna đứng ngoài nhìn, Mylene đang nhờ - nhập nhằng thật |
+| Kuma 133:49, 54, 64 | YUNA, MYLENE~ | bỏ MYLENE~ | theo B | "cậu" gọi Anzu là giọng Yuna (131:69); Mylene gọi "Anzu-chan"/"em" |
+| Kuma 133:14 | MYLENE, YUNA~ | bỏ YUNA~ | theo B | lời xin phép gửi CHO Yuna |
+| Kuma 133:53, 82; Overlord 25:70 | N | N,T | theo B | tiếng lòng / cuối chuỗi suy luận A đã cho N,T |
+| Overlord 25:9, 44 | giữ | D,T / N,T | giữ A | B tự xếp yếu |
