@@ -132,6 +132,49 @@ class BookImportTest {
     }
 
     @Test
+    fun the_preview_keeps_very_short_items_as_unticked_chapters_exactly_like_python() {
+        val expected = StrictJson.parse(File(dir, "expected/keep_short.json").readText(Charsets.UTF_8)) as org.json.JSONObject
+        val actual = org.json.JSONObject()
+        for (name in listOf("epub3.epub", "split.epub")) {
+            val book = BookImport.importFile(File(dir, name), keepShort = true)
+            actual.put(
+                name,
+                org.json.JSONObject()
+                    .put("chapters", JSONArray(book.chapters.map { org.json.JSONObject().put("title", it.title).put("short", it.short).put("text", it.text) }))
+                    .put("defaults", JSONArray(BookImport.defaultPicks(book).map { it.first }))
+                    .put("notes", JSONArray(book.notes)),
+            )
+            // Không keepShort: như trước - chúng bị bỏ và có ghi chú.
+            val plain = BookImport.importFile(File(dir, name))
+            assertEquals(book.chapters.filter { !it.short }.map { it.title }, titles(plain))
+            assertTrue(plain.notes.contains("Bỏ qua 1 mục rất ngắn (bìa, trang bản quyền?)."))
+        }
+        assertTrue("khác bản Python: ${StrictJson.dumps(actual)}", StrictJson.equal(expected, actual))
+    }
+
+    @Test
+    fun picking_chapters_keeps_file_order_renames_only_the_name_and_renumbers_the_credits() {
+        val kept = BookImport.importFile(File(dir, "epub3.epub"), keepShort = true) // [bìa (ngắn), Chương 1, Chương 2 (ghi công), Chương 3]
+        assertEquals(listOf(3 to "Dịch: Nhóm Lục Bình"), kept.credits)
+        val chosen = BookImport.selectChapters(kept, listOf(4 to "", 1 to "  Trang   đề tựa ", 3 to "Chương 2: Người khách lạ"))
+        assertEquals(listOf("Chuyến phà cuối ngày", "Chương 2: Người khách lạ", "Chương 3"), titles(chosen)) // theo thứ tự trong file
+        assertEquals(listOf("Trang đề tựa", "", ""), chosen.chapters.map { it.name }) // rỗng hay trùng tên cũ = giữ tên cũ
+        assertEquals(listOf(0, 2, 3).map { kept.chapters[it].text }, chosen.chapters.map { it.text }) // chỉ đổi tên, chữ không đổi
+        assertEquals(listOf(2 to "Dịch: Nhóm Lục Bình"), chosen.credits)
+        assertEquals(4, kept.chapters.size) // cuốn gốc không bị sửa
+        assertEquals(listOf(1 to "Dịch: Nhóm Lục Bình"), BookImport.selectChapters(kept, listOf(3 to "")).credits)
+        assertTrue(BookImport.selectChapters(kept, listOf(2 to "")).credits.isEmpty())
+    }
+
+    @Test
+    fun a_choice_of_chapters_that_makes_no_sense_is_refused() {
+        val kept = BookImport.importFile(File(dir, "epub3.epub"), keepShort = true)
+        for (picks in listOf(emptyList(), listOf(5 to ""), listOf(0 to ""), listOf(2 to "", 2 to "Lặp"))) {
+            failure { BookImport.selectChapters(kept, picks) }
+        }
+    }
+
+    @Test
     fun a_txt_with_fewer_than_two_chapter_headings_or_only_volume_headings_offers_no_split() {
         assertTrue(BookImport.splitTxtChapters("Chương 1\nChỉ một chương thôi.").isEmpty())
         assertTrue(BookImport.splitTxtChapters("Quyển 1\nA\n\nQuyển 2\nB").isEmpty())

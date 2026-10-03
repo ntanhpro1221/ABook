@@ -23,7 +23,7 @@ import sys
 import unicodedata
 import zipfile
 from collections.abc import Iterator
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
@@ -91,6 +91,8 @@ class ImportFailed(ValueError):
 class Chapter:
     title: str
     text: str  # các đoạn cách nhau một dòng trống; KHÔNG gồm tên chương (trừ file TXT: nguyên văn file)
+    short: bool = False  # mục EPUB rất ngắn (bìa, trang bản quyền): bị bỏ, trừ khi `import_text(keep_short=True)` đưa nó về như chương CHƯA CHỌN
+    name: str = ""  # tên người dùng đặt ở bước xem trước (`select_chapters`); rỗng = `title`. Chỉ là tên: `text` và tên trong chữ không đổi
 
 
 @dataclass
@@ -127,9 +129,11 @@ class ImportedBook:
         }
 
 
-def import_text(path: Path | str, *, split_chapters: bool = False) -> ImportedBook:
+def import_text(path: Path | str, *, split_chapters: bool = False, keep_short: bool = False) -> ImportedBook:
     """Mở một thư mục TXT, hay file .epub / .docx / .pdf / .txt. Lỗi dự đoán được là `ImportFailed`. `split_chapters`: file .txt cả
-    truyện thì tách thành các chương theo dòng "Chương N" (người dùng tích gợi ý `split_offer`; mặc định cả file là một chương)."""
+    truyện thì tách thành các chương theo dòng "Chương N" (người dùng tích gợi ý `split_offer`; mặc định cả file là một chương).
+    `keep_short`: bước xem trước - mục rất ngắn (`Chapter.short`) vẫn nằm trong danh sách, đúng chỗ của nó trong file, để người dùng tích
+    nếu muốn giữ (`default_picks` bỏ chúng); không có thì chúng bị bỏ như trước."""
     path = Path(path)
     if path.is_dir():
         book = _txt_folder(path)
@@ -144,28 +148,57 @@ def import_text(path: Path | str, *, split_chapters: bool = False) -> ImportedBo
         book = reader(path)
     else:
         raise ImportFailed(f"Không thấy {path}.")
-    return _finish(book)
+    return _finish(book, keep_short)
 
 
-def _finish(book: ImportedBook) -> ImportedBook:
+def _finish(book: ImportedBook, keep_short: bool = False) -> ImportedBook:
     """Mọi định dạng đi qua đây: Unicode NFC, và gợi ý (không bỏ) dòng ghi công ở đầu chương."""
     book.title = _nfc(book.title)
     book.author = _nfc(book.author) if book.author else None
     for chapter in book.chapters:
         chapter.title, chapter.text = _nfc(chapter.title), _nfc(chapter.text)
     book.notes = [_nfc(note) for note in book.notes]
-    if not book.chapters or not any(chapter.text.strip() for chapter in book.chapters):
+    short = sum(chapter.short for chapter in book.chapters)
+    if short:
+        book.notes.append(f"{short} mục rất ngắn chưa chọn - tích nếu muốn giữ." if keep_short
+                          else f"Bỏ qua {short} mục rất ngắn (bìa, trang bản quyền?).")
+    if not keep_short:
+        book.chapters = [chapter for chapter in book.chapters if not chapter.short]
+    if not book.chapters or not any(chapter.text.strip() or chapter.short for chapter in book.chapters):
         raise ImportFailed("Không có chương nào có chữ")
     if len(book.chapters) > 1:
-        # File TXT rỗng (hay chỉ có khoảng trắng) không thành chương - nói ra, để số chương ít hơn số file có lý do.
-        book.notes += [f"Bỏ qua mục trống: {chapter.title}" for chapter in book.chapters if not chapter.text.strip()]
-        book.chapters = [chapter for chapter in book.chapters if chapter.text.strip()]
+        # File TXT rỗng (hay chỉ có khoảng trắng) không thành chương - nói ra, để số chương ít hơn số file có lý do. Mục rất ngắn mà chỉ có
+        # tên (trang đề tựa) thì ở lại: người dùng quyết có tích nó không.
+        book.notes += [f"Bỏ qua mục trống: {chapter.title}" for chapter in book.chapters if not chapter.text.strip() and not chapter.short]
+        book.chapters = [chapter for chapter in book.chapters if chapter.text.strip() or chapter.short]
     for number, chapter in enumerate(book.chapters, start=1):
         # Tên chương tính là một dòng của chương (cửa sổ 6 dòng đầu), như file chương mà Studio đọc.
         for line in credit_suggestions(book.chapter_source(chapter)):
             book.credits.append((number, line))
             book.notes.append(f"Gợi ý: chương {number} có dòng ghi công ở đầu - “{line}”. Có thể bỏ khỏi phần đọc, nhưng ABook không tự bỏ.")
     return book
+
+
+def default_picks(book: ImportedBook) -> list[tuple[int, str]]:
+    """Lựa chọn chương mặc định của bước xem trước: mọi chương trừ mục rất ngắn (`Chapter.short`). [(số chương 1-based, tên mới "")]. Kotlin: BookImport.defaultPicks."""
+    return [(number, "") for number, chapter in enumerate(book.chapters, start=1) if not chapter.short]
+
+
+def select_chapters(book: ImportedBook, picks: list[tuple[int, str]]) -> ImportedBook:
+    """Cuốn chỉ gồm các chương người dùng tích ở bước xem trước, theo THỨ TỰ TRONG FILE (không theo thứ tự `picks`). `picks`: (số chương
+    1-based trong `book.chapters`, tên mới - rỗng hay trùng tên cũ là giữ tên cũ). Chỉ đổi TÊN (`Chapter.name`, tên hiện ở thư viện / trang sách, như
+    đổi tên chương ở lớp sửa): chữ của chương không đổi, kể cả dòng tên nằm trong chữ (TXT, đầu chương EPUB). `credits` đánh số lại theo cuốn mới. Không chọn gì, hay số chương không có / lặp: `ImportFailed`. Kotlin: BookImport.selectChapters."""
+    if not picks:
+        raise ImportFailed("Chọn ít nhất một chương để thêm vào thư viện")
+    numbers = [number for number, _name in picks]
+    if len(set(numbers)) != len(numbers) or any(not 1 <= number <= len(book.chapters) for number in numbers):
+        raise ImportFailed("Danh sách chương đã chọn không khớp với file - mở lại file rồi chọn lại")
+    chapters, renumbered = [], {}
+    for position, (number, name) in enumerate(sorted(picks), start=1):
+        chapter, name = book.chapters[number - 1], _nfc(" ".join(name.split()))
+        chapters.append(replace(chapter, name=name if name != chapter.title else ""))
+        renumbered[number] = position
+    return replace(book, chapters=chapters, credits=[(renumbered[number], line) for number, line in book.credits if number in renumbered])
 
 
 def credit_suggestions(source: str) -> list[str]:
@@ -447,7 +480,7 @@ def _epub(path: Path) -> ImportedBook:
         cover = _epub_cover(book, opf, manifest)
         if cover:
             result.cover_bytes, result.cover_type = cover
-        images = short = 0  # trang chỉ có ảnh, mục rất ngắn: một ghi chú đếm, không kể tên file trong gói
+        images = 0  # trang chỉ có ảnh: một ghi chú đếm, không kể tên file trong gói (mục rất ngắn: `_finish` đếm)
         for itemref in spine.iterfind("opf:itemref", NS):
             if itemref.get("linear", "yes") == "no":
                 continue
@@ -472,9 +505,7 @@ def _epub(path: Path) -> ImportedBook:
                     continue
                 if not lines:
                     continue
-                if sum(len(line) for line in lines) < MIN_CHARS and not listed:
-                    short += 1
-                    continue
+                is_short = sum(len(line) for line in lines) < MIN_CHARS and not listed  # bìa, trang bản quyền: `_finish` bỏ, hay để người dùng tích
                 title = listed or heading or lines[0][:80]
                 first = lines[0].casefold()
                 # Dòng đầu là tiêu đề của chính chương: bỏ khi nó đã nằm trong tên chương ("Gặp gỡ" trong "Chương 2: Gặp gỡ"),
@@ -483,11 +514,9 @@ def _epub(path: Path) -> ImportedBook:
                     lines = lines[1:]
                 elif heading and first == heading.casefold() and title.casefold() in first:
                     title, lines = lines[0], lines[1:]
-                result.chapters.append(Chapter(title, "\n\n".join(lines)))
+                result.chapters.append(Chapter(title, "\n\n".join(lines), short=is_short))
         if images:
             result.notes.append(f"Bỏ qua {images} trang chỉ có ảnh.")
-        if short:
-            result.notes.append(f"Bỏ qua {short} mục rất ngắn (bìa, trang bản quyền?).")
         return result
 
 

@@ -107,21 +107,24 @@
        "title": "Chương 1: Bến phà lúc bình minh",
        "firstLine": "Chương 1: Bến phà lúc bình minh",
        "words": 107,
-       "chars": 368
+       "chars": 368,
+       "included": true
       },
       {
        "index": 2,
        "title": "Chương 2: Người khách lạ",
        "firstLine": "Chương 2: Người khách lạ",
        "words": 78,
-       "chars": 264
+       "chars": 264,
+       "included": true
       },
       {
        "index": 3,
        "title": "Chương 3",
        "firstLine": "Chương 3",
        "words": 66,
-       "chars": 233
+       "chars": 233,
+       "included": true
       }
      ],
      "notes": [],
@@ -301,42 +304,48 @@
        "title": "Chương 1",
        "firstLine": "Bản trùng số với 1.txt - xếp theo tên gốc, đứng trước.",
        "words": 12,
-       "chars": 43
+       "chars": 43,
+       "included": true
       },
       {
        "index": 2,
        "title": "Chương 1",
        "firstLine": "Sương sớm",
        "words": 17,
-       "chars": 60
+       "chars": 60,
+       "included": true
       },
       {
        "index": 3,
        "title": "Chương hai",
        "firstLine": "Chương hai",
        "words": 7,
-       "chars": 27
+       "chars": 27,
+       "included": true
       },
       {
        "index": 4,
        "title": "9 Ngoại truyện",
        "firstLine": "Một chương viết bằng UTF-8 thường, không BOM.",
        "words": 8,
-       "chars": 38
+       "chars": 38,
+       "included": true
       },
       {
        "index": 5,
        "title": "Chương ba",
        "firstLine": "Chương ba",
        "words": 10,
-       "chars": 40
+       "chars": 40,
+       "included": true
       },
       {
        "index": 6,
        "title": "Chương ١١",
        "firstLine": "Tên bằng chữ số Ả Rập: vẫn là số 11.",
        "words": 10,
-       "chars": 27
+       "chars": 27,
+       "included": true
       }
      ],
      "notes": [],
@@ -454,21 +463,24 @@
        "title": "Chương 1: Bến phà lúc bình minh",
        "firstLine": "Chương 1: Bến phà lúc bình minh",
        "words": 95,
-       "chars": 329
+       "chars": 329,
+       "included": true
       },
       {
        "index": 2,
        "title": "Chương 2: Người khách lạ",
        "firstLine": "Chương 2: Người khách lạ",
        "words": 74,
-       "chars": 248
+       "chars": 248,
+       "included": true
       },
       {
        "index": 3,
        "title": "Chương 3: Cơn mưa cuối mùa",
        "firstLine": "Chương 3: Cơn mưa cuối mùa",
        "words": 66,
-       "chars": 234
+       "chars": 234,
+       "included": true
       }
      ],
      "notes": [],
@@ -564,14 +576,16 @@
        "title": "Mở đầu",
        "firstLine": "Mở đầu",
        "words": 6,
-       "chars": 21
+       "chars": 21,
+       "included": true
       },
       {
        "index": 2,
        "title": "Chương 2",
        "firstLine": "Chỉ có một dòng.",
        "words": 4,
-       "chars": 13
+       "chars": 13,
+       "included": true
       }
      ],
      "notes": [],
@@ -579,6 +593,144 @@
      "totals": {
       "chapters": 2,
       "words": 10
+     }
+    }
+   }
+  },
+  {
+   "name": "preview_choices",
+   "input": {
+    "title": "Sách có bìa",
+    "author": null,
+    "language": null,
+    "chapters": [
+     {
+      "title": "Bìa",
+      "text": "",
+      "short": true
+     },
+     {
+      "title": "Chương 1",
+      "text": "Một đoạn.",
+      "name": "  Mở   đầu  mới "
+     },
+     {
+      "title": "Chương 2",
+      "text": "Đoạn hai.",
+      "name": ""
+     }
+    ],
+    "textHasTitle": false
+   },
+   "expected": {
+    "book": {
+     "format": "abook-book/1",
+     "title": "Sách có bìa",
+     "narrator": "",
+     "duration": 0,
+     "chaptersTotal": 3,
+     "chaptersAvailable": 0,
+     "complete": false,
+     "version": "d8371e7ff57b1c32",
+     "chapters": [
+      {
+       "id": 1,
+       "index": 1,
+       "title": "Bìa",
+       "subtitle": "",
+       "fullTitle": "Bìa",
+       "duration": 0,
+       "available": false,
+       "size": 0,
+       "state": "text",
+       "text": "texts/1.txt"
+      },
+      {
+       "id": 2,
+       "index": 2,
+       "title": "Mở đầu mới",
+       "subtitle": "",
+       "fullTitle": "Mở đầu mới",
+       "duration": 0,
+       "available": false,
+       "size": 0,
+       "state": "text",
+       "text": "texts/2.txt"
+      },
+      {
+       "id": 3,
+       "index": 3,
+       "title": "Chương 2",
+       "subtitle": "",
+       "fullTitle": "Chương 2",
+       "duration": 0,
+       "available": false,
+       "size": 0,
+       "state": "text",
+       "text": "texts/3.txt"
+      }
+     ],
+     "samples": [],
+     "cover": null
+    },
+    "version": 5,
+    "files": {
+     "texts/1.txt": {
+      "size": 7,
+      "sha256": "a508e107cb2ed80a5b16c5d64d3fd51b037976112dba8f92e723749718d18df9"
+     },
+     "texts/2.txt": {
+      "size": 27,
+      "sha256": "5242ed8e6d698b11991a0952538a0e3f49acd0fade5a5e9da8f8eec707c2588d"
+     },
+     "texts/3.txt": {
+      "size": 25,
+      "sha256": "01b9f94ae6e9af5e3c2e11f9a8078cb3a9ce477bb496f3ca855e3789bfd04303"
+     }
+    },
+    "texts": {
+     "texts/1.txt": "Bìa\n\n\n",
+     "texts/2.txt": "Chương 1\n\nMột đoạn.\n",
+     "texts/3.txt": "Chương 2\n\nĐoạn hai.\n"
+    },
+    "contentKey": "f-4fa22e7d9eea97ca91bad45d",
+    "preview": {
+     "title": "Sách có bìa",
+     "author": null,
+     "language": null,
+     "hasCover": false,
+     "chapters": [
+      {
+       "index": 1,
+       "title": "Bìa",
+       "firstLine": "Bìa",
+       "words": 1,
+       "chars": 3,
+       "included": false,
+       "short": true
+      },
+      {
+       "index": 2,
+       "title": "Mở đầu mới",
+       "firstLine": "Chương 1",
+       "words": 4,
+       "chars": 15,
+       "included": true
+      },
+      {
+       "index": 3,
+       "title": "Chương 2",
+       "firstLine": "Chương 2",
+       "words": 4,
+       "chars": 15,
+       "included": true
+      }
+     ],
+     "notes": [],
+     "suggestions": [],
+     "totals": {
+      "chapters": 2,
+      "words": 8
      }
     }
    }

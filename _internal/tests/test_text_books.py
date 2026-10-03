@@ -300,9 +300,9 @@ def test_the_import_flow_previews_the_chapters_then_adds_the_book(tmp_path: Path
         server.stop()
     preview = json.loads(data)
     assert status == 200 and preview["title"] == "Chuyến phà cuối ngày" and preview["totals"] == {
-        "chapters": 3, "words": sum(row["words"] for row in preview["chapters"])}
-    assert [row["title"] for row in preview["chapters"]][0] == "Chương 1: Bến phà lúc bình minh"
-    assert preview["chapters"][0]["firstLine"] == "Chương 1: Bến phà lúc bình minh" and preview["chapters"][0]["words"] > 20
+        "chapters": 3, "words": sum(row["words"] for row in preview["chapters"] if row["included"])}
+    assert [row["title"] for row in preview["chapters"]][1] == "Chương 1: Bến phà lúc bình minh", "hàng 1 là trang đề tựa rất ngắn, chưa tích"
+    assert preview["chapters"][1]["firstLine"] == "Chương 1: Bến phà lúc bình minh" and preview["chapters"][1]["words"] > 20
     assert any("ghi công" in note and "không tự bỏ" in note for note in preview["notes"]), "gợi ý hiện ra, không tự áp"
     assert json.loads(empty_library[1]) == [], "xem trước chưa ghi gì vào thư viện"
     result = json.loads(added[1])
@@ -329,6 +329,81 @@ def test_a_whole_story_txt_is_split_into_chapters_only_when_the_listener_ticks_i
     assert [row["title"] for row in split["chapters"]][:2] == ["Mở đầu", "Chương 1: Bến phà lúc bình minh"]
     assert added["chapters"] == 4 and len(studio.listen_book(added["id"])["chapters"]) == 4
     assert "splitOffer" not in studio.preview_text_book(str(IMPORTS / "epub3.epub")), "sách không có gì để tách thì không có gợi ý"
+
+
+def test_the_preview_lists_very_short_items_unticked_and_the_totals_count_only_the_ticked(tmp_path: Path) -> None:
+    studio = _app(tmp_path / "studio", tmp_path / "thu_vien")
+    preview = studio.preview_text_book(str(IMPORTS / "epub3.epub"))
+    assert [(row["index"], row["included"], row.get("short")) for row in preview["chapters"]] == [
+        (1, False, True), (2, True, None), (3, True, None), (4, True, None)], "bìa ở đúng chỗ của nó, chưa tích"
+    assert preview["chapters"][0]["title"] == "Chuyến phà cuối ngày"
+    assert preview["totals"] == {"chapters": 3, "words": sum(row["words"] for row in preview["chapters"][1:])}
+    assert "1 mục rất ngắn chưa chọn - tích nếu muốn giữ." in preview["notes"]
+    assert preview["suggestions"] == [{"chapter": 3, "line": "Dịch: Nhóm Lục Bình"}], "gợi ý đánh số theo danh sách xem trước"
+    assert studio.preview_text_book(str(IMPORTS / "epub3.epub"))["existing"] is None
+
+
+def test_a_listener_unticks_chapters_renames_one_and_brings_back_a_short_item(tmp_path: Path) -> None:
+    studio = _app(tmp_path / "studio", tmp_path / "thu_vien")
+    source = str(IMPORTS / "epub3.epub")
+    added = studio.add_text_book(source, chapters=[{"index": 1, "title": "Trang đề tựa"}, {"index": 3, "title": "  Người   khách  "},
+                                                   {"index": 4}])
+    assert added["how"] == "new" and added["chapters"] == 3
+    book = studio.listen_book(added["id"])
+    assert [chapter["title"] for chapter in book["chapters"]] == ["Trang đề tựa", "Người khách", "Chương 3"], "đúng thứ tự trong file"
+    folder = studio._listenable(added["id"])
+    texts = [(folder / "texts" / f"{number}.txt").read_text(encoding="utf-8") for number in (1, 2, 3)]
+    assert texts[0].strip() == "Chuyến phà cuối ngày", "mục ngắn vào sách với chữ của nó"
+    assert texts[1].startswith("Chương 2: Người khách lạ\n\nDịch: Nhóm Lục Bình"), "đổi tên chỉ đổi tên - chữ của chương giữ nguyên, kể cả dòng tên đầu chương"
+    assert texts[2].startswith("Chương 3\n\nCơn mưa cuối mùa")
+    assert studio.add_text_book(source)["how"] == "new", "bộ chương mặc định khác bộ này: là một cuốn khác"
+
+
+def test_a_txt_keeps_its_own_heading_line_when_the_listener_renames_the_chapter(tmp_path: Path) -> None:
+    studio = _app(tmp_path / "studio", tmp_path / "thu_vien")
+    whole = str(IMPORTS / "whole.txt")
+    added = studio.add_text_book(whole, split_chapters=True, chapters=[{"index": 1, "title": "Lời mở"}, {"index": 3, "title": "Khách lạ"}])
+    book = studio.listen_book(added["id"])
+    assert [chapter["title"] for chapter in book["chapters"]] == ["Lời mở", "Khách lạ"]
+    second = (studio._listenable(added["id"]) / "texts" / "2.txt").read_text(encoding="utf-8")
+    assert second.startswith("Chương 2: Người khách lạ\nDịch: Nhóm Lục Bình"), "dòng 'Chương 2' vẫn nằm trong chữ"
+
+
+def test_adding_with_every_chapter_unticked_or_a_wrong_list_is_refused_and_adds_nothing(tmp_path: Path) -> None:
+    studio = _app(tmp_path / "studio", tmp_path / "thu_vien")
+    for bad in ([], [{"index": 9}], [{"index": 2}, {"index": 2}], [{"index": "2"}], [{"title": "x"}], "2", [{"index": 2, "title": 5}]):
+        with pytest.raises(Exception) as error:
+            studio.add_text_book(str(IMPORTS / "epub3.epub"), chapters=bad)
+        assert getattr(error.value, "status", None) == 400, bad
+    assert studio.listen_library() == []
+
+
+def test_the_import_route_takes_the_chapter_choice_as_json(tmp_path: Path) -> None:
+    studio = _app(tmp_path / "studio", tmp_path / "thu_vien")
+    server = Server(studio, port=0).start()
+    source = str(IMPORTS / "epub3.epub")
+    try:
+        none = _request(server.port, "POST", "/api/listen/import", headers=TOKEN, body={"path": source, "chapters": []})
+        added = _request(server.port, "POST", "/api/listen/import", headers=TOKEN,
+                         body={"path": source, "chapters": [{"index": 3, "title": "Khách lạ"}, {"index": 2}]})
+    finally:
+        server.stop()
+    assert none[0] == 400 and "ít nhất một chương" in json.loads(none[1])["error"]
+    result = json.loads(added[1])
+    assert added[0] == 200 and result["chapters"] == 2
+    assert [chapter["title"] for chapter in studio.listen_book(result["id"])["chapters"]] == ["Chương 1: Bến phà lúc bình minh", "Khách lạ"]
+
+
+def test_the_preview_asks_about_an_existing_book_by_the_default_chapters_only(tmp_path: Path) -> None:
+    studio = _app(tmp_path / "studio", tmp_path / "thu_vien")
+    source = str(IMPORTS / "epub3.epub")
+    first = studio.add_text_book(source, chapters=[{"index": 2}, {"index": 3}, {"index": 4, "title": "Tên khác"}])
+    assert studio.preview_text_book(source)["existing"]["id"] == first["id"], "bộ chương mặc định = bộ đã thêm (tên khác không tính)"
+    assert studio.add_text_book(source, chapters=[{"index": 2}, {"index": 3}, {"index": 4}])["how"] == "existing", "đổi tên không làm thành cuốn khác"
+    other = studio.add_text_book(source, chapters=[{"index": 2}, {"index": 3}])
+    assert other["how"] == "new" and other["id"] != first["id"], "bỏ một chương = bộ chữ khác = cuốn khác"
+    copy = studio.add_text_book(source, "Bản riêng", separate=True, chapters=[{"index": 2}, {"index": 3}, {"index": 4}])
+    assert copy["how"] == "new" and copy["id"] not in (first["id"], other["id"])
 
 
 def test_adding_the_same_book_again_says_it_is_already_there(tmp_path: Path) -> None:
@@ -368,7 +443,8 @@ def test_a_txt_folder_keeps_the_chapter_names_the_preview_showed(tmp_path: Path)
 def test_a_credit_line_suggestion_is_skipped_only_when_the_listener_accepts_it(tmp_path: Path) -> None:
     studio, added = _studio_with_text_book(tmp_path)
     preview = studio.preview_text_book(str(IMPORTS / "epub3.epub"))
-    assert preview["suggestions"] == [{"chapter": 2, "line": "Dịch: Nhóm Lục Bình"}]
+    assert preview["suggestions"] == [{"chapter": 3, "line": "Dịch: Nhóm Lục Bình"}], \
+        "đánh số theo hàng của bước xem trước (hàng 1 là bìa chưa tích); trong sách mặc định nó là chương 2"
     folder = studio._listenable(added["id"])
     server = Server(studio, port=0).start()
     try:

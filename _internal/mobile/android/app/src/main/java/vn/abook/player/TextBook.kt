@@ -31,7 +31,8 @@ object TextBook {
         val chapters = JSONArray()
         for ((index, name) in texts.keys.withIndex()) {
             val number = index + 1
-            val title = cleanTitle(book.chapters[index].title, "Chương $number")
+            val chapter = book.chapters[index]
+            val title = cleanTitle(chapter.name.ifEmpty { chapter.title }, "Chương $number")
             chapters.put(
                 JSONObject().put("id", number).put("index", number).put("title", title).put("subtitle", "").put("fullTitle", title)
                     .put("duration", 0).put("available", false).put("size", 0).put("state", TEXT_STATE).put("text", name),
@@ -84,18 +85,25 @@ object TextBook {
 
     /**
      * Danh sách chương cho bước xem trước (`textbook.preview`): tên, dòng đầu, số chữ, số ký tự. `notes` là gợi ý - hiện ra, không tự áp.
+     * Mỗi hàng có `included` (mặc định có vào sách không: mục rất ngắn - bìa, trang bản quyền - hiện ra CHƯA tích, kèm `short`); `index` và
+     * `suggestions[].chapter` là số thứ tự trong danh sách này, không phải mã chương trong sách.
      */
     fun preview(book: BookImport.Book): JSONObject {
         val rows = JSONArray()
         var words = 0
+        var chapters = 0
         for ((index, chapter) in book.chapters.withIndex()) {
             val source = BookImport.chapterSource(book, chapter)
             val count = BookImport.wordCount(source)
-            words += count
+            if (!chapter.short) {
+                words += count
+                chapters++
+            }
             val first = source.lines().map { it.trim { c -> c.isWhitespace() || Character.isSpaceChar(c) } }.firstOrNull { it.isNotEmpty() }.orEmpty()
             rows.put(
-                JSONObject().put("index", index + 1).put("title", cleanTitle(chapter.title, "Chương ${index + 1}"))
-                    .put("firstLine", BookEdits.cut(first, 200)).put("words", count).put("chars", BookImport.charCount(source)),
+                JSONObject().put("index", index + 1).put("title", cleanTitle(chapter.name.ifEmpty { chapter.title }, "Chương ${index + 1}"))
+                    .put("firstLine", BookEdits.cut(first, 200)).put("words", count).put("chars", BookImport.charCount(source))
+                    .put("included", !chapter.short).also { if (chapter.short) it.put("short", true) },
             )
         }
         return JSONObject().put("title", cleanTitle(book.title, "Sách")).put("author", book.author ?: JSONObject.NULL)
@@ -103,7 +111,7 @@ object TextBook {
             .put("notes", JSONArray(book.notes))
             // Gợi ý chọn được: dòng ghi công người nghe có thể bỏ khỏi phần đọc (mặc định KHÔNG bỏ). `chapter` = mã chương trong sách.
             .put("suggestions", JSONArray(book.credits.map { (chapter, line) -> JSONObject().put("chapter", chapter).put("line", line) }))
-            .put("totals", JSONObject().put("chapters", rows.length()).put("words", words))
+            .put("totals", JSONObject().put("chapters", chapters).put("words", words))
             // File TXT cả truyện: số chương nếu tách theo "Chương N" - giao diện đề xuất (ô KHÔNG tích sẵn). Không có gì để tách thì không có khoá.
             .also { if (book.splitOffer > 0) it.put("splitOffer", book.splitOffer) }
     }

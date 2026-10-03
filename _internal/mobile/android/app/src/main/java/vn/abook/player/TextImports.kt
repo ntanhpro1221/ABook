@@ -126,18 +126,20 @@ object TextImports {
     }
 
     /** Đọc thứ đã chọn bằng luật nhập sách và trả danh sách chương (`textbook.preview`). PDF: `pages` là các dòng từng trang do pdf.js lấy.
-     *  `splitChapters`: file TXT cả truyện tách theo "Chương N" - cuốn giữ lại là cuốn của lần xem trước cuối, nên [create] thêm đúng thứ người dùng thấy. */
+     *  `splitChapters`: file TXT cả truyện tách theo "Chương N" - cuốn giữ lại là cuốn của lần xem trước cuối, nên [create] thêm đúng thứ người dùng thấy.
+     *  Cuốn giữ lại gồm MỌI hàng của danh sách xem trước (kể cả mục rất ngắn chưa tích); [create] nhận phần người dùng chọn. */
     fun preview(ref: String, pages: List<List<String>>? = null, title: String = "", author: String = "", splitChapters: Boolean = false): JSONObject {
         val source = staged(ref)
         val book = if (source.isFile && source.extension.lowercase() == "pdf") {
             BookImport.fromPdfPages(source.nameWithoutExtension, pages ?: throw BookImport.Failed("Chưa lấy được chữ của PDF này - thử lại."), title, author)
         } else {
-            BookImport.importFile(source, splitChapters)
+            BookImport.importFile(source, splitChapters, keepShort = true)
         }
         kept[ref] = book
-        // Đúng bộ chữ này đã có trong thư viện: hỏi ngay ở bước xem trước ("Mở cuốn đó" / "Thêm bản riêng") - như máy tính
-        // (`server.preview_text_book`).
-        val existing = Store.findByChapters(TextBook.prints(book))
+        // Đúng bộ chữ này đã có trong thư viện (với các chương mặc định): hỏi ngay ở bước xem trước ("Mở cuốn đó" / "Thêm bản riêng") - như máy
+        // tính (`server.preview_text_book`, `textbook.find_existing`).
+        val defaults = BookImport.defaultPicks(book)
+        val existing = if (defaults.isEmpty()) null else Store.findByChapters(TextBook.prints(BookImport.selectChapters(book, defaults)))
         return TextBook.preview(book).put("existing", existing?.let { id ->
             JSONObject().put("id", id).put("title", Store.manifest(id)?.optString("title").orEmpty())
         } ?: JSONObject.NULL)
@@ -146,10 +148,12 @@ object TextImports {
     /**
      * Nhập thành sách chỉ-có-chữ trong thư viện (`textbook.add_to_library`): ghi file `.abook` tạm trong `cacheDir` rồi [BookFileImport.importFile].
      * `title` trống thì giữ tên của file sách. Trả {id, how, chapters}; `how` "existing" khi đúng cuốn này đã có (nhập lại không nhân đôi),
-     * trừ khi người dùng chọn "Thêm bản riêng" (`separate`).
+     * trừ khi người dùng chọn "Thêm bản riêng" (`separate`). `picks`: các chương người dùng tích ở bước xem trước kèm tên mới
+     * ([picksOf]); không có thì các chương mặc định.
      */
-    fun create(ref: String, title: String, cacheDir: File, separate: Boolean = false): JSONObject {
-        val book = kept[ref] ?: throw BookImport.Failed("Lần chọn này đã hết hạn - chọn lại file.")
+    fun create(ref: String, title: String, cacheDir: File, separate: Boolean = false, picks: List<Pair<Int, String>>? = null): JSONObject {
+        val candidates = kept[ref] ?: throw BookImport.Failed("Lần chọn này đã hết hạn - chọn lại file.")
+        val book = BookImport.selectChapters(candidates, picks ?: BookImport.defaultPicks(candidates))
         if (BookEdits.cleanText(title, 160, normalize = false).isNotEmpty()) book.title = title
         val packed = File.createTempFile("text-book-", ".abook", cacheDir)
         try {
@@ -167,6 +171,17 @@ object TextImports {
     fun discard(ref: String) {
         kept.remove(ref)
         runCatching { dir(ref).deleteRecursively() }
+    }
+
+    /** `chapters` của lời gọi plugin ([{index, title?}], `textbook.picks_from_json`) thành lựa chọn cho [BookImport.selectChapters]; không có là mặc định. */
+    fun picksOf(array: JSONArray?): List<Pair<Int, String>>? = array?.let { all ->
+        (0 until all.length()).map { number ->
+            val item = all.optJSONObject(number)
+            val index = (item?.opt("index") as? Number)?.takeIf { it.toDouble() == it.toInt().toDouble() }?.toInt()
+            val title = item?.opt("title") ?: ""
+            if (index == null || title !is String) throw BookImport.Failed("Danh sách chương đã chọn không hợp lệ")
+            index to title
+        }
     }
 
     /** `pages` của lời gọi plugin (mảng các mảng chữ) thành danh sách. */

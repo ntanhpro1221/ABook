@@ -318,6 +318,10 @@ export function Dialog({
             width,
           )}
           onInteractOutside={keepOpenForToasts}
+          // Ô mang `data-escape-local` (vd ô đổi tên chương) tự xử lý phím Esc để huỷ việc đang gõ; Esc ở đó không đóng cả hộp.
+          onEscapeKeyDown={(event) => {
+            if ((event.target as HTMLElement | null)?.closest?.("[data-escape-local]")) event.preventDefault();
+          }}
           onOpenAutoFocus={(event) => {
             // Radix đặt con trỏ vào thứ bấm được đầu tiên - nút X ở đầu hộp - đè lên `autoFocus` của ô nhập (soát UX 30-09:
             // hộp Đổi tên). Ô nào mang `data-autofocus` thì nhận con trỏ, chữ có sẵn được chọn để gõ đè.

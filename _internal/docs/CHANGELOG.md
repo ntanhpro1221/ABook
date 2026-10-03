@@ -13,6 +13,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   dòng "Chương N" trở lên hiện ô "Tách thành N chương theo các dòng “Chương N”", không tích sẵn. Tích thì danh sách chương xem trước đổi theo
   và sách vào Thư viện có N chương (chữ trước chương đầu thành chương "Mở đầu"); không tích thì cả file vẫn là một chương như trước. Chữ của
   truyện không đổi, chỉ chỗ cắt.
+- **Chọn chương và đổi tên chương trước khi thêm sách (máy tính và điện thoại)**: bước xem trước của "Thêm sách từ file…" cho tích / bỏ tích từng
+  chương (có "Chọn hết" / "Bỏ chọn hết"; bỏ hết thì nút Thêm mờ và nói lý do), bấm tên chương để sửa (Enter lưu, Esc huỷ), và tên dài xuống dòng
+  thay vì bị cắt. Mục rất ngắn mà trước đây bị bỏ âm thầm (bìa, trang bản quyền) nay hiện ra đúng chỗ của nó, chưa tích, ghi "rất ngắn - có thể là
+  bìa / trang bản quyền" - tích là đưa vào sách. Đổi tên chỉ đổi tên hiện ở thư viện và trang sách; chữ của chương không đổi.
 - **Thư viện trống mời thêm sách trước**: nút chính là "Thêm sách từ file…" (nghe ngay), "Tạo sách nói" là nút phụ. Menu "…" của trang sách
   không còn rộng cả màn hình, mô tả tự xuống dòng. Sách chỉ có chữ ghi "Chỉ có chữ · nghe bằng giọng đọc" thay cho dòng nghe như lỗi.
 

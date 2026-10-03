@@ -1,0 +1,104 @@
+{
+ "epub3.epub": {
+  "chapters": [
+   {
+    "title": "Chuyến phà cuối ngày",
+    "short": true,
+    "text": ""
+   },
+   {
+    "title": "Chương 1: Bến phà lúc bình minh",
+    "short": false,
+    "text": "Sương còn phủ kín mặt sông khi ông Tám đẩy chiếc phà ra khỏi bến. Tiếng máy nổ trầm đục vang lên giữa buổi sớm yên ắng, và đàn cò giật mình bay tản vào những lùm bần ven bờ.\n\n“Hôm nay nước lớn,” ông nói với cậu bé đứng bên mạn thuyền. “Con giữ chắc cây sào, đừng để phà trôi vào bãi.”\n\nCậu bé gật đầu, siết chặt cây sào tre trong đôi bàn tay nhỏ. Cậu chưa từng thấy dòng sông nào rộng đến thế.\n\nÔng Tám cười: “Phà cũ rồi.” © 1975 ă\n\nNước lớn dần."
+   },
+   {
+    "title": "Chương 2: Người khách lạ",
+    "short": false,
+    "text": "Dịch: Nhóm Lục Bình\n\nChuyến đầu tiên chỉ có một hành khách. Người đàn ông mặc chiếc áo mưa cũ, mang theo một cái hộp gỗ buộc dây cẩn thận, ngồi lặng lẽ ở đầu phà suốt quãng đường.\n\n— Ông đi đâu mà sớm vậy? — cậu bé hỏi.\n\n— Về quê thôi, cháu ạ. — Người lạ mỉm cười. — Mát-xcơ-va xa lắm, còn quê ta thì ngay bên kia sông."
+   },
+   {
+    "title": "Chương 3",
+    "short": false,
+    "text": "Cơn mưa cuối mùa\n\nMưa kéo đến lúc xế chiều, nặng hạt và lạnh.\n\nÔng Tám cho phà cập bến sớm hơn mọi hôm, buộc dây thật chặt vào cột sắt rồi đứng nhìn những giọt nước nhảy múa trên mặt sông.\n\nCậu bé ngồi co chân trong khoang, nghe tiếng mưa gõ lên mái tôn như một bản nhạc không đầu không cuối."
+   }
+  ],
+  "defaults": [
+   2,
+   3,
+   4
+  ],
+  "notes": [
+   "Bỏ qua 1 trang chỉ có ảnh.",
+   "1 mục rất ngắn chưa chọn - tích nếu muốn giữ.",
+   "Gợi ý: chương 3 có dòng ghi công ở đầu - “Dịch: Nhóm Lục Bình”. Có thể bỏ khỏi phần đọc, nhưng ABook không tự bỏ."
+  ]
+ },
+ "split.epub": {
+  "chapters": [
+   {
+    "title": "Chương 1: Bến sông",
+    "short": false,
+    "text": "Buổi sáng ở bến sông bắt đầu bằng tiếng chèo khua nhẹ. Nước sông vẫn chảy chậm qua những bãi bồi, mang theo mùi phù sa và tiếng gà gáy từ xóm bên kia.\n\nBà Sáu gánh hai thúng cá ra chợ sớm."
+   },
+   {
+    "title": "Chương 2: Chợ nổi",
+    "short": false,
+    "text": "Ghe xuồng chen nhau dưới cầu, ai cũng rao to hàng của mình. Nước sông vẫn chảy chậm qua những bãi bồi, mang theo mùi phù sa và tiếng gà gáy từ xóm bên kia."
+   },
+   {
+    "title": "Chương 3: Gặp gỡ",
+    "short": false,
+    "text": "Chương ba mở ra bằng một cuộc gặp tình cờ giữa hai người bạn cũ. Nước sông vẫn chảy chậm qua những bãi bồi, mang theo mùi phù sa và tiếng gà gáy từ xóm bên kia.\n\nHọ hẹn nhau chiều mai, cùng một bến."
+   },
+   {
+    "title": "Lời dẫn dài của người ghi chép, đứng trước phần đầu và không có mục nào trong mụ",
+    "short": false,
+    "text": "Lời dẫn dài của người ghi chép, đứng trước phần đầu và không có mục nào trong mục lục gọi tên nó cả. Nước sông vẫn chảy chậm qua những bãi bồi, mang theo mùi phù sa và tiếng gà gáy từ xóm bên kia."
+   },
+   {
+    "title": "Phần một",
+    "short": false,
+    "text": "Phần một kể về con đường đất đỏ dẫn ra bến. Nước sông vẫn chảy chậm qua những bãi bồi, mang theo mùi phù sa và tiếng gà gáy từ xóm bên kia."
+   },
+   {
+    "title": "Phần hai",
+    "short": false,
+    "text": "Phần hai kể về chiếc cầu tre bắc qua kênh nhỏ. Nước sông vẫn chảy chậm qua những bãi bồi, mang theo mùi phù sa và tiếng gà gáy từ xóm bên kia."
+   },
+   {
+    "title": "Lời dẫn ngắn.",
+    "short": true,
+    "text": ""
+   },
+   {
+    "title": "Mục thứ nhất",
+    "short": false,
+    "text": "Đoạn mở đầu của mục thứ nhất, đủ dài để không bị coi là trang trống. Nước sông vẫn chảy chậm qua những bãi bồi, mang theo mùi phù sa và tiếng gà gáy từ xóm bên kia."
+   },
+   {
+    "title": "Mục thứ hai",
+    "short": false,
+    "text": "Đoạn mở đầu của mục thứ hai, cũng đủ dài như vậy. Nước sông vẫn chảy chậm qua những bãi bồi, mang theo mùi phù sa và tiếng gà gáy từ xóm bên kia."
+   },
+   {
+    "title": "Một mục lẻ",
+    "short": false,
+    "text": "Chỉ có một mục lục trỏ vào file này, nên nó vẫn là một chương trọn vẹn. Nước sông vẫn chảy chậm qua những bãi bồi, mang theo mùi phù sa và tiếng gà gáy từ xóm bên kia."
+   }
+  ],
+  "defaults": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   8,
+   9,
+   10
+  ],
+  "notes": [
+   "1 mục rất ngắn chưa chọn - tích nếu muốn giữ."
+  ]
+ }
+}

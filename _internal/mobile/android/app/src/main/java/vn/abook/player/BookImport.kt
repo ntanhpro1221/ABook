@@ -29,7 +29,9 @@ object BookImport {
     /** Không nhập được; câu chữ cho người dùng đọc. */
     class Failed(message: String) : Exception(message)
 
-    class Chapter(val title: String, val text: String)
+    /** `short`: mục EPUB rất ngắn (bìa, trang bản quyền) - bị bỏ, trừ khi bước xem trước giữ nó làm chương CHƯA CHỌN (`keepShort`).
+     *  `name`: tên người dùng đặt ở bước xem trước ([selectChapters]); rỗng = `title`. Chỉ là tên - `text` không đổi (`importers.Chapter`). */
+    class Chapter(val title: String, val text: String, val short: Boolean = false, val name: String = "")
 
     class Book(
         var title: String,
@@ -63,8 +65,9 @@ object BookImport {
     // ---- vào ----------------------------------------------------------------------------------------------------------
 
     /** Một thư mục TXT, hay file .epub / .docx / .txt. (PDF đi qua `fromPdfPages`: lấy chữ ra là việc của pdf.js.) `splitChapters`: file .txt cả
-     *  truyện thì tách thành các chương theo dòng "Chương N" (người dùng tích gợi ý `splitOffer`). */
-    fun importFile(path: File, splitChapters: Boolean = false): Book {
+     *  truyện thì tách thành các chương theo dòng "Chương N" (người dùng tích gợi ý `splitOffer`). `keepShort`: bước xem trước - mục rất ngắn vẫn nằm
+     *  trong danh sách, đúng chỗ của nó trong file ([defaultPicks] bỏ chúng); không có thì chúng bị bỏ như trước. */
+    fun importFile(path: File, splitChapters: Boolean = false, keepShort: Boolean = false): Book {
         val book = when {
             path.isDirectory -> txtFolder(path)
             path.isFile -> when (val suffix = path.extension.lowercase()) {
@@ -76,7 +79,34 @@ object BookImport {
             }
             else -> throw Failed("Không thấy ${path.path}.")
         }
-        return finish(book)
+        return finish(book, keepShort)
+    }
+
+    /** Lựa chọn chương mặc định của bước xem trước: mọi chương trừ mục rất ngắn. (số chương 1-based, tên mới ""). `importers.default_picks`. */
+    fun defaultPicks(book: Book): List<Pair<Int, String>> =
+        book.chapters.mapIndexedNotNull { index, chapter -> if (chapter.short) null else (index + 1) to "" }
+
+    /**
+     * Cuốn chỉ gồm các chương người dùng tích ở bước xem trước, theo THỨ TỰ TRONG FILE (không theo thứ tự `picks`) - `importers.select_chapters`.
+     * `picks`: (số chương 1-based trong `book.chapters`, tên mới - rỗng hay trùng tên cũ là giữ tên cũ). Chỉ đổi TÊN, chữ không đổi; `credits`
+     * đánh số lại. Không chọn gì, hay số chương không có / lặp: [Failed]. Trả cuốn MỚI; `book` không đổi.
+     */
+    fun selectChapters(book: Book, picks: List<Pair<Int, String>>): Book {
+        if (picks.isEmpty()) throw Failed("Chọn ít nhất một chương để thêm vào thư viện")
+        val numbers = picks.map { it.first }
+        if (numbers.toSet().size != numbers.size || numbers.any { it < 1 || it > book.chapters.size }) {
+            throw Failed("Danh sách chương đã chọn không khớp với file - mở lại file rồi chọn lại")
+        }
+        val renumbered = HashMap<Int, Int>()
+        val chapters = mutableListOf<Chapter>()
+        for ((position, pick) in picks.sortedBy { it.first }.withIndex()) {
+            val chapter = book.chapters[pick.first - 1]
+            val name = words(pick.second)
+            chapters.add(Chapter(chapter.title, chapter.text, chapter.short, if (name != chapter.title) name else ""))
+            renumbered[pick.first] = position + 1
+        }
+        val credits = book.credits.mapNotNull { (number, line) -> renumbered[number]?.let { it to line } }.toMutableList()
+        return Book(book.title, book.author, book.language, book.cover, book.coverType, chapters, book.notes.toMutableList(), book.textHasTitle, credits, book.splitOffer)
     }
 
     /** PDF có lớp chữ: `pages` là các dòng CÓ CHỮ của từng trang (pdf.js, như file pages trong bộ ví dụ). */
@@ -114,19 +144,25 @@ object BookImport {
 
     private fun sha256(bytes: ByteArray) = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
 
-    private fun finish(book: Book): Book {
+    private fun finish(book: Book, keepShort: Boolean = false): Book {
         book.title = nfc(book.title)
         book.author = book.author?.takeIf { it.isNotEmpty() }?.let(::nfc)
-        val chapters = book.chapters.map { Chapter(nfc(it.title), nfc(it.text)) }
+        val all = book.chapters.map { Chapter(nfc(it.title), nfc(it.text), it.short, it.name) }
         val notes = book.notes.map(::nfc)
         book.notes.clear()
         book.notes.addAll(notes)
-        if (chapters.none { pyStrip(it.text).isNotEmpty() }) throw Failed("Không có chương nào có chữ")
+        val short = all.count { it.short }
+        if (short > 0) {
+            book.notes.add(if (keepShort) "$short mục rất ngắn chưa chọn - tích nếu muốn giữ." else "Bỏ qua $short mục rất ngắn (bìa, trang bản quyền?).")
+        }
+        val chapters = if (keepShort) all else all.filter { !it.short }
+        if (chapters.none { pyStrip(it.text).isNotEmpty() || it.short }) throw Failed("Không có chương nào có chữ")
         book.chapters.clear()
         if (chapters.size > 1) {
-            // File TXT rỗng (hay chỉ có khoảng trắng) không thành chương - nói ra, để số chương ít hơn số file có lý do.
-            for (chapter in chapters) if (pyStrip(chapter.text).isEmpty()) book.notes.add("Bỏ qua mục trống: ${chapter.title}")
-            book.chapters.addAll(chapters.filter { pyStrip(it.text).isNotEmpty() })
+            // File TXT rỗng (hay chỉ có khoảng trắng) không thành chương - nói ra, để số chương ít hơn số file có lý do. Mục rất ngắn mà chỉ có
+            // tên (trang đề tựa) thì ở lại: người dùng quyết có tích nó không.
+            for (chapter in chapters) if (pyStrip(chapter.text).isEmpty() && !chapter.short) book.notes.add("Bỏ qua mục trống: ${chapter.title}")
+            book.chapters.addAll(chapters.filter { pyStrip(it.text).isNotEmpty() || it.short })
         } else {
             book.chapters.addAll(chapters)
         }
@@ -787,8 +823,7 @@ object BookImport {
             result.cover = bytes
             result.coverType = media
         }
-        var images = 0 // trang chỉ có ảnh, mục rất ngắn: một ghi chú đếm, không kể tên file trong gói
-        var short = 0
+        var images = 0 // trang chỉ có ảnh: một ghi chú đếm, không kể tên file trong gói (mục rất ngắn: `finish` đếm)
         for (itemref in spine.children.filter { it.local == "itemref" }) {
             if ((itemref.attr("linear") ?: "yes") == "no") continue
             val item = manifest[itemref.attr("idref") ?: ""] ?: ManifestItem("", "", "")
@@ -815,10 +850,7 @@ object BookImport {
                     continue
                 }
                 if (lines.isEmpty()) continue
-                if (lines.sumOf { cpLen(it) } < MIN_CHARS && listed.isEmpty()) {
-                    short++
-                    continue
-                }
+                val isShort = lines.sumOf { cpLen(it) } < MIN_CHARS && listed.isEmpty() // bìa, trang bản quyền: `finish` bỏ, hay để người dùng tích
                 var title = listed.ifEmpty { heading.ifEmpty { cpTake(lines[0], 80) } }
                 val first = casefold(lines[0])
                 // Dòng đầu là tiêu đề của chính chương: bỏ khi nó đã nằm trong tên chương ("Gặp gỡ" trong "Chương 2: Gặp gỡ"),
@@ -829,11 +861,10 @@ object BookImport {
                     title = lines[0]
                     lines = lines.drop(1)
                 }
-                result.chapters.add(Chapter(title, lines.joinToString("\n\n")))
+                result.chapters.add(Chapter(title, lines.joinToString("\n\n"), short = isShort))
             }
         }
         if (images > 0) result.notes.add("Bỏ qua $images trang chỉ có ảnh.")
-        if (short > 0) result.notes.add("Bỏ qua $short mục rất ngắn (bìa, trang bản quyền?).")
         result
     }
 

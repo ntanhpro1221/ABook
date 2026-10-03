@@ -32,7 +32,8 @@ def book_json(book: importers.ImportedBook, texts: dict[str, bytes], cover: dict
     """`book.json` (chưa có mục `package`) của sách chỉ-chữ. `texts` = {tên mục: byte chữ} theo thứ tự chương."""
     chapters = []
     for number, (name, data) in enumerate(texts.items(), start=1):
-        title = _title(book.chapters[number - 1].title, f"Chương {number}")
+        chapter = book.chapters[number - 1]
+        title = _title(chapter.name or chapter.title, f"Chương {number}")
         chapters.append({
             "id": number, "index": number, "title": title, "subtitle": "", "fullTitle": title,
             "duration": 0, "available": False, "size": 0, "state": bookfile.TEXT_STATE, "text": name,
@@ -57,7 +58,13 @@ def texts_of(book: importers.ImportedBook) -> dict[str, bytes]:
 
 
 def find_existing(book: importers.ImportedBook, library_root: Path) -> Path | None:
-    """Cuốn trong thư viện có đúng bộ chữ này (sẽ là "existing" khi thêm) - để hỏi người dùng ngay ở bước xem trước."""
+    """Cuốn trong thư viện có đúng bộ chữ này (sẽ là "existing" khi thêm) - để hỏi người dùng ngay ở bước xem trước, với các chương
+    MẶC ĐỊNH (`importers.default_picks`). Cuốn nhận ra theo bộ chữ của các chương đã chọn (`packages.same_book`): chọn khác đi hay
+    thêm bản chưa chọn là cuốn khác; đổi tên chương thì không (tên không nằm trong chữ)."""
+    picks = importers.default_picks(book)
+    if not picks:
+        return None
+    book = importers.select_chapters(book, picks)
     prints = {name: {"size": len(data), "sha256": hashlib.sha256(data).hexdigest()} for name, data in texts_of(book).items()}
     return packages.find_imported(prints, library_root)
 
@@ -79,17 +86,22 @@ def build(book: importers.ImportedBook, out: Path, *, producer: str = "ABook") -
 
 def preview(book: importers.ImportedBook) -> dict[str, Any]:
     """Danh sách chương cho bước xem trước (cùng hàng chữ với danh sách chương của trình tạo sách Studio): tên, dòng đầu, số chữ,
-    số ký tự. `notes` là gợi ý - hiện ra, không tự áp."""
+    số ký tự. `notes` là gợi ý - hiện ra, không tự áp. Mỗi hàng có `included` (mặc định có vào sách không: mục rất ngắn - bìa, trang
+    bản quyền - hiện ra CHƯA tích, kèm `short`); người dùng tích / bỏ tích rồi gửi lại danh sách khi thêm (`picks_from_json`).
+    `suggestions[].chapter` và `index` đều là số thứ tự trong danh sách này, không phải mã chương trong sách."""
     rows = []
     for number, chapter in enumerate(book.chapters, start=1):
         source = book.chapter_source(chapter)
         rows.append({
             "index": number,
-            "title": _title(chapter.title, f"Chương {number}"),
+            "title": _title(chapter.name or chapter.title, f"Chương {number}"),
             "firstLine": next((line.strip() for line in source.splitlines() if line.strip()), "")[:200],
             "words": len(source.split()),
             "chars": sum(not ch.isspace() for ch in source),
+            "included": not chapter.short,
+            **({"short": True} if chapter.short else {}),
         })
+    kept = [row for row in rows if row["included"]]
     return {
         "title": _title(book.title, "Sách"), "author": book.author, "language": book.language,
         "hasCover": bool(book.cover_bytes), "chapters": rows, "notes": list(book.notes),
@@ -97,18 +109,37 @@ def preview(book: importers.ImportedBook) -> dict[str, Any]:
         **({"splitOffer": book.split_offer} if book.split_offer else {}),
         # Gợi ý chọn được: dòng ghi công người nghe có thể bỏ khỏi phần đọc (mặc định KHÔNG bỏ). `chapter` = mã chương trong sách.
         "suggestions": [{"chapter": number, "line": line} for number, line in book.credits],
-        "totals": {"chapters": len(rows), "words": sum(row["words"] for row in rows)},
+        "totals": {"chapters": len(kept), "words": sum(row["words"] for row in kept)},
     }
+
+
+def picks_from_json(raw: Any) -> list[tuple[int, str]] | None:
+    """`chapters` của lời gọi thêm sách: [{"index": số chương trong bước xem trước, "title": tên mới (tuỳ chọn)}, ...] -> lựa chọn cho
+    `importers.select_chapters`. Không có (None) = các chương mặc định. Dạng sai: `ImportFailed`."""
+    if raw is None:
+        return None
+    if not isinstance(raw, list):
+        raise importers.ImportFailed("Danh sách chương đã chọn không hợp lệ")
+    picks = []
+    for item in raw:
+        index, title = (item.get("index"), item.get("title", "")) if isinstance(item, dict) else (None, None)
+        if not isinstance(index, int) or isinstance(index, bool) or not isinstance(title, str):
+            raise importers.ImportFailed("Danh sách chương đã chọn không hợp lệ")
+        picks.append((index, title))
+    return picks
 
 
 def add_to_library(source: Path, title: str | None, library_root: Path, projects: Iterable[Path],
                    fingerprints: Fingerprints, *, separate: bool = False,
-                   split_chapters: bool = False) -> tuple[Path, str, importers.ImportedBook]:
+                   split_chapters: bool = False, picks: list[tuple[int, str]] | None = None) -> tuple[Path, str, importers.ImportedBook]:
     """Đọc `source` (thư mục TXT / .epub / .docx / .pdf / .txt) và đưa vào thư viện thành sách chỉ-chữ. Trả (thư mục cuốn, cách -
     "new" / "existing" / "updated" như `packages.import_opened`, cuốn đã đọc). `title` (nếu có) thay tên sách của file.
     `separate`: "Thêm bản riêng" - cuốn mới dù thư viện đã có đúng bộ chữ này. `split_chapters`: file .txt cả truyện tách theo "Chương N".
+    `picks`: các chương người dùng tích ở bước xem trước (+ tên mới, `picks_from_json`); không có thì các chương mặc định.
     `importers.ImportFailed` / `bookfile.BookFileError` khi không nhập được."""
-    book = importers.import_text(source, split_chapters=split_chapters)
+    book = importers.import_text(source, split_chapters=split_chapters, keep_short=picks is not None)
+    if picks is not None:
+        book = importers.select_chapters(book, picks)
     if title and store.clean_title(title):
         book.title = title
     with tempfile.TemporaryDirectory(prefix="abook-text-") as scratch:

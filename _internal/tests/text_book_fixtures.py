@@ -31,7 +31,8 @@ SOURCES = [("epub3", "epub3", False), ("txt", "txt", True), ("story", "story", F
 def _book(data: dict[str, Any], text_has_title: bool) -> importers.ImportedBook:
     return importers.ImportedBook(
         title=data["title"], author=data.get("author"), language=data.get("language"), text_has_title=text_has_title,
-        chapters=[importers.Chapter(chapter["title"], chapter["text"]) for chapter in data["chapters"]])
+        chapters=[importers.Chapter(chapter["title"], chapter["text"], short=chapter.get("short", False), name=chapter.get("name", ""))
+                  for chapter in data["chapters"]])
 
 
 def _inputs() -> list[tuple[str, dict[str, Any], bool]]:
@@ -43,6 +44,12 @@ def _inputs() -> list[tuple[str, dict[str, Any], bool]]:
     cases.append(("messy", {
         "title": "  Sách   thử\u0007 nghiệm  ", "author": None, "language": None,
         "chapters": [{"title": "Mở đầu", "text": "Đoạn một.\n\nĐoạn hai."}, {"title": "", "text": "Chỉ có một dòng."}],
+    }, False))
+    # Bước xem trước: mục rất ngắn chưa tích (`short`), chương người dùng đổi tên (`name` - chỉ tên, chữ nguyên).
+    cases.append(("preview_choices", {
+        "title": "Sách có bìa", "author": None, "language": None,
+        "chapters": [{"title": "Bìa", "text": "", "short": True}, {"title": "Chương 1", "text": "Một đoạn.", "name": "  Mở   đầu  mới "},
+                     {"title": "Chương 2", "text": "Đoạn hai.", "name": ""}],
     }, False))
     return cases
 

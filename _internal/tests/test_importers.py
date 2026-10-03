@@ -148,6 +148,39 @@ def test_a_whole_story_txt_is_one_chapter_unless_the_listener_asks_to_split_it()
     assert split.credits == [(3, "Dịch: Nhóm Lục Bình")], "gợi ý ghi công đi theo chương mới (chương 3 = 'Chương 2' vì có 'Mở đầu')"
 
 
+@pytest.mark.parametrize("name", ["epub3.epub", "split.epub"])
+def test_the_preview_keeps_very_short_items_as_unticked_chapters_in_file_order(name: str) -> None:
+    kept = importers.import_text(FIXTURES / name, keep_short=True)
+    assert json.loads((FIXTURES / "expected" / "keep_short.json").read_text(encoding="utf-8"))[name] == {
+        "chapters": [{"title": c.title, "short": c.short, "text": c.text} for c in kept.chapters],
+        "defaults": [number for number, _name in importers.default_picks(kept)], "notes": kept.notes}
+    plain = importers.import_text(FIXTURES / name)
+    assert [c.title for c in plain.chapters] == [c.title for c in kept.chapters if not c.short], "mặc định: như trước, không có mục ngắn"
+    assert any(note == "Bỏ qua 1 mục rất ngắn (bìa, trang bản quyền?)." for note in plain.notes)
+    assert "1 mục rất ngắn chưa chọn - tích nếu muốn giữ." in kept.notes and not any("Bỏ qua 1 mục rất ngắn" in note for note in kept.notes)
+    assert [c.text for c in kept.chapters if not c.short] == [c.text for c in plain.chapters], "chữ các chương còn lại y nguyên"
+
+
+def test_picking_chapters_keeps_file_order_renames_only_the_name_and_renumbers_the_credits() -> None:
+    kept = importers.import_text(FIXTURES / "epub3.epub", keep_short=True)  # [bìa(ngắn), Chương 1, Chương 2 (có dòng ghi công), Chương 3]
+    assert kept.credits == [(3, "Dịch: Nhóm Lục Bình")]
+    chosen = importers.select_chapters(kept, [(4, ""), (1, "  Trang   đề tựa "), (3, "Chương 2: Người khách lạ")])
+    assert [c.title for c in chosen.chapters] == ["Chuyến phà cuối ngày", "Chương 2: Người khách lạ", "Chương 3"], "theo thứ tự trong file"
+    assert [c.name for c in chosen.chapters] == ["Trang đề tựa", "", ""], "tên rỗng hay trùng tên cũ = giữ tên cũ; khoảng trắng gọn lại"
+    assert [c.text for c in chosen.chapters] == [kept.chapters[i].text for i in (0, 2, 3)], "chỉ đổi tên, chữ không đổi"
+    assert chosen.credits == [(2, "Dịch: Nhóm Lục Bình")], "gợi ý ghi công đánh số lại theo cuốn mới"
+    assert len(kept.chapters) == 4, "cuốn gốc không bị sửa"
+    assert importers.select_chapters(kept, [(3, "")]).credits == [(1, "Dịch: Nhóm Lục Bình")]
+    assert importers.select_chapters(kept, [(2, "")]).credits == [], "bỏ chương thì bỏ gợi ý của nó"
+
+
+def test_a_choice_of_chapters_that_makes_no_sense_is_refused() -> None:
+    kept = importers.import_text(FIXTURES / "epub3.epub", keep_short=True)
+    for picks in ([], [(5, "")], [(0, "")], [(2, ""), (2, "Lặp")]):
+        with pytest.raises(importers.ImportFailed):
+            importers.select_chapters(kept, picks)
+
+
 def test_a_txt_with_fewer_than_two_chapter_headings_offers_no_split(tmp_path: Path) -> None:
     one = tmp_path / "mot.txt"
     one.write_text("Chương 1\nChỉ một chương thôi.\n", encoding="utf-8")

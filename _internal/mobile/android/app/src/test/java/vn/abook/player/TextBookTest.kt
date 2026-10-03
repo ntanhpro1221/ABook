@@ -56,7 +56,10 @@ class TextBookTest {
             title = input.getString("title"),
             author = if (input.isNull("author")) null else input.getString("author"),
             language = if (input.isNull("language")) null else input.getString("language"),
-            chapters = (0 until chapters.length()).map { BookImport.Chapter(chapters.getJSONObject(it).getString("title"), chapters.getJSONObject(it).getString("text")) }.toMutableList(),
+            chapters = (0 until chapters.length()).map {
+                val chapter = chapters.getJSONObject(it)
+                BookImport.Chapter(chapter.getString("title"), chapter.getString("text"), chapter.optBoolean("short", false), chapter.optString("name", ""))
+            }.toMutableList(),
             textHasTitle = input.getBoolean("textHasTitle"),
         )
     }
