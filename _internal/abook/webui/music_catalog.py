@@ -3,6 +3,7 @@
 Không máy chủ, không khoá, không đăng nhập: app tải `manifest.json` (nhỏ), rồi CHỈ những mảnh cần:
 - `tracks/<xx>.json`: dữ liệu đã gắn cho các link nhạc - có danh sách link thì tính mảnh (`shard_of`) và tải đúng mảnh ấy;
 - `cells/<v>_<a>.json`: bài theo ô cảm xúc - "bài nào hợp với đoạn này".
+Mục lục còn mang `playlists` - các danh sách phát cố định cho sách nghe bằng "Nghe ngay" (music_playlist.py).
 Mảnh đã tải giữ trong bộ nhớ đệm trên máy theo `revision` của danh mục: danh mục mới thì tải lại, không thì dùng lại, mất
 mạng vẫn dùng bản đệm.
 
@@ -11,6 +12,7 @@ mạng vẫn dùng bản đệm.
 from __future__ import annotations
 
 import contextlib
+import concurrent.futures
 import hashlib
 import json
 import os
@@ -26,6 +28,7 @@ USER_AGENT = "ABook (+https://github.com/ntanhpro1221/ABook)"
 MANIFEST_MAX_AGE = 24 * 3600
 FORMAT = "abook-music-catalog"
 FORMAT_VERSION = 1
+SHARD_WORKERS = 8  # một danh sách phát chạm ~100 mảnh: tải song song, lần đầu không phải chờ từng mảnh một
 
 
 class CatalogError(Exception):
@@ -126,14 +129,26 @@ class MusicCatalog:
         for link in links:
             wanted.setdefault(shard_of(link), []).append(link)
         existing = set(self.manifest().get("shards") or [])
-        for shard, items in wanted.items():
-            if shard not in existing:
-                continue  # danh mục không có mảnh ấy = không link nào trong đó có dữ liệu (không phải lỗi mạng)
-            data = self._part(f"tracks/{shard}.json")
-            for link in items:
+        # danh mục không có mảnh ấy = không link nào trong đó có dữ liệu (không phải lỗi mạng)
+        shards = [shard for shard in wanted if shard in existing]
+        if len(shards) > 1:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=SHARD_WORKERS) as pool:
+                parts = dict(zip(shards, pool.map(lambda shard: self._part(f"tracks/{shard}.json"), shards)))
+        else:
+            parts = {shard: self._part(f"tracks/{shard}.json") for shard in shards}
+        for shard in shards:
+            data = parts[shard]
+            for link in wanted[shard]:
                 if link in data:
                     found[link] = data[link]
         return found
+
+    def playlists(self) -> list[dict[str, Any]]:
+        """Danh sách phát của danh mục (mục `playlists` của mục lục), đã kiểm hình dạng: [{id, name, description, minutes,
+        tracks: [link theo thứ tự trộn sẵn]}]. Mục lục cũ chưa có thì rỗng."""
+        from . import music_playlist
+
+        return music_playlist.catalogue_playlists(self.manifest())
 
     def cell(self, valence_index: int, arousal_index: int) -> list[dict[str, Any]]:
         manifest = self.manifest()
