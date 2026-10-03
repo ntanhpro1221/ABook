@@ -753,3 +753,16 @@ Luật cố định (30% của bộ). B: người nói chính sai 0 chắc chắ
 | Mẹ kế 031:83-84 | 83 N,T ABIGAIL~; 84 N | N,T, ABIGAIL đủ | theo B | đoạn ngôi một nên người nghĩ đủ điểm |
 | Mẹ kế 031:12, 16 | TIỂU THƯ WHATELEY đủ | nửa điểm | theo B | danh xưng kèm họ (quy tắc 11), WHATELEY trơn vẫn đủ |
 | Villain 22:95, 178, 200-208 (BECK~, JUPERN~) | giữ | nới | giữ A | B tự xếp yếu |
+
+Nhóm 2 (Kẻ yếu nhất 26, Võ lâm 110, Breakthrough 094, Demon King 15): B: người nói chính sai 0 ở cả bốn; lỗi còn lại chủ yếu
+là sót N,T ở tiếng lòng tức thời ngôi một.
+
+| câu | A | B đề nghị | kết luận | lý do |
+|---|---|---|---|---|
+| Kẻ yếu nhất 26:7 | FERNANDO, MARCO~, NPC*~ | bỏ MARCO~, NPC*~ | theo B | 27.txt:85 "Như Giáo sư Fernando đã nói ban nãy..." đúng nội dung câu này |
+| Kẻ yếu nhất 26:2, 27, 58; Võ lâm 110:17-19, 33, 38, 41, 67; Breakthrough 094:49; Demon King 15:4, 7 | N | N,T + người kể | theo B | phản ứng / tự sửa tức thời của "tôi", cùng mạch câu kề A đã cho N,T |
+| Demon King 15:31 "Ý ngươi là..." | gã áo choàng, YURIA~ | cả hai đủ, YURIA trước | theo B | 32 "liền giương mắt về phía tôi", 33 hắn xưng "tôi" với Yuria |
+| Breakthrough 094:10, 15, 66 (D,T), 77 (NPC*~); Demon King 15:29, THAM LAM~ | giữ | nới nhẹ | giữ A | B tự xếp nhẹ |
+
+JAMDI'EL~ (Breakthrough 094): tên chỉ gắn với Đại Tư Tế ở 099.txt:91 (chương sau) và chính 092 nói "sẽ cho cậu biết tên thật
+của ta sau" -> ĐẠI TƯ TẾ đủ, JAMDI'EL nửa (cùng tinh thần Tsurekano 031a:284).

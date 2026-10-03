@@ -1,0 +1,122 @@
+# Đáp án KIỂM TRA truyện Hàn đợt 3 (03-10; luật cố định: vị trí 30% của bộ); mục đích: tăng gold Hàn (nhóm mỏng nhất).
+# "Demon King and Hero" file 15 ("Chương 4.4"). Claude gán (A) 03-10; B soát + phân xử 03-10 (gold_kr3/B/kr3b_review.md).
+# Ba góc kể: 1 lời dịch giả; 2-43 ("4 - [Góc nhìn của Yuria]") NGÔI THỨ NHẤT, "tôi" = YURIA / YURIA ASHRIEN (f, nữ dũng giả)
+# -> --first-person Yuria (chỉ khoảng 2-43); 44 "Quay lại góc nhìn thứ 3 nào" rồi 45-95 NGÔI BA; 96-101 "Lời tác giả" ("tôi"
+# = tác giả, không tên - lời kể N).
+# Tên: quỷ vương KHÔNG có tên riêng cả bộ (345 lần "quỷ vương", không lần nào tên) -> QUỶ VƯƠNG là tên trọn cuốn, đủ điểm (quy
+# tắc 11, như "Trịnh lão"/"QUAN PHỦ"), NPC*~ (nói ở nhiều chương - quy tắc 5); m. Gã áo choàng đen (thủ lĩnh giáo phái, tự đâm
+# mình ở 014, chết ở 95; "cái bóng đèn sáng trưng" 76, "kẻ ai cũng biết là ai đấy" 81) -> NPC*:gã áo choàng đen, UNKNOWN~.
+# Cách xưng hô quyết người nói khi không lời dẫn: quỷ vương "tôi/cô" với Yuria, "ta/ngươi" với gã áo choàng; Yuria "ta/ngươi".
+# 3 “Củ lạc giòn tan!” (câu mở cảnh ngay sau 014: Yuria sắp liều mạng chém, quỷ vương chặn tay) không lời dẫn -> QUỶ VƯƠNG
+# và YURIA đều đủ (nhập nhằng thật). 6 “Mau chuồn đi!... cả hai đứa mình...” = quỷ vương rủ chạy, 7 Yuria nghĩ "tôi chỉ hi
+# vọng mình là người duy nhất bỏ mạng" -> QUỶ VƯƠNG. 21 quỷ vương hỏi gã áo choàng (20 "hướng mắt về phía gã"), 22, 29, 31 gã
+# đáp (khuôn "Ý ngươi là..." lặp ở 22/31) -> NPC*, YURIA~ ở 29/31. 71 “Ngươi điêu à?” -> YURIA (72 "Yuria sởn gai ốc", 73 quỷ
+# vương đáp "tôi... cô"). 79-80 sau 81 "Yuria và kẻ ai cũng biết là ai đấy đồng thanh" - hai câu, mỗi câu một người theo thứ tự
+# lời dẫn, cách đọc đảo nửa điểm (quy tắc 6). 87 hỏi về sức mạnh, 88 quỷ vương đáp "tôi" -> YURIA.
+# Parser: 26-28 lời quỷ vương mất ngoặc mở nên KHOÁ N (26, 28) và T (27 ‘hi sinh’ nhấn mạnh giữa câu) -> NARRATOR đủ, QUỶ VƯƠNG~
+# (quy tắc 10). 24 “tội nghiệp” khoá D là ngoặc nhấn mạnh giữa câu kể -> NARRATOR (quy tắc 8). 65 lời kể bị khoá D (ngoặc của
+# 64 không đóng) -> N,D NARRATOR, QUỶ VƯƠNG~. 66 tiếng cười "Pw, pwahahahaha!..." kèm câu kể cùng đoạn, khoá D -> gã áo choàng
+# và NARRATOR đều đủ. 99 câu tác giả định cho gã áo choàng nói (lời tác giả, khoá D) -> NARRATOR đủ, NPC*~.
+# Tiếng lòng của Yuria (ngôi một) -> 9 T; 13 "Quân khốn nạn, người ta đang tập trung mà!" N,T NARRATOR,YURIA đủ.
+0 H
+1 N
+2 N
+3 D QUỶ VƯƠNG,YURIA,YURIA ASHRIEN,NPC*~ surprised,excited,neutral 0-2 fast,normal normal,loud m
+4 N,T NARRATOR,YURIA,YURIA ASHRIEN neutral,surprised 0-1 normal normal u
+5 D QUỶ VƯƠNG,NPC*~ neutral,tender,sarcastic 0-1 normal normal m
+6 D QUỶ VƯƠNG,NPC*~ afraid,neutral,excited 0-2 fast,normal normal m
+7 N,T NARRATOR,YURIA,YURIA ASHRIEN neutral,sad 0-1 normal normal u
+8 N
+9 T YURIA,YURIA ASHRIEN neutral,excited 0-2 normal normal f
+10 N
+11 N
+12 D YURIA,YURIA ASHRIEN angry,surprised 1-2 fast loud,normal f
+13 N,T NARRATOR,YURIA,YURIA ASHRIEN angry 1-2 normal normal u
+14 N NARRATOR neutral,angry 0-1 normal normal u
+15 D YURIA,YURIA ASHRIEN angry,surprised 1-2 fast loud,normal f
+16 D QUỶ VƯƠNG,NPC*~ neutral,sarcastic,happy 0-1 normal normal m
+17 N
+18 D QUỶ VƯƠNG,NPC*~ neutral,happy 0-1 normal normal m
+19 D YURIA,YURIA ASHRIEN angry,sarcastic 1-2 fast loud,normal f
+20 N
+21 D QUỶ VƯƠNG,NPC*~ sarcastic,neutral 0-1 normal normal m
+22 D NPC*:gã áo choàng đen,UNKNOWN~ afraid,surprised 1-2 normal,slow soft,normal m
+23 N
+24 D NARRATOR neutral,sarcastic 0-1 normal normal u
+25 N
+26 N NARRATOR,QUỶ VƯƠNG~ neutral,sarcastic 0-1 normal normal u
+27 T NARRATOR,QUỶ VƯƠNG~ neutral,sarcastic 0-1 normal normal u
+28 N NARRATOR,QUỶ VƯƠNG~ neutral,sarcastic 0-1 normal normal u
+29 D NPC*:gã áo choàng đen,UNKNOWN~,YURIA~ angry,surprised 1-2 normal normal m
+30 D QUỶ VƯƠNG,NPC*~ sarcastic,neutral 0-1 normal normal m
+31 D YURIA,YURIA ASHRIEN,NPC*:gã áo choàng đen,UNKNOWN~ surprised,afraid 0-1 normal,slow soft,normal u
+32 N
+33 D QUỶ VƯƠNG,NPC*~ neutral,sarcastic 0-1 normal normal m
+34 N
+35 D QUỶ VƯƠNG,NPC*~ sarcastic,happy 0-2 normal normal m
+36 N
+37 D QUỶ VƯƠNG,NPC*~ neutral 0-1 normal,slow normal m
+38 N NARRATOR neutral,afraid 0-1 normal normal u
+39 D QUỶ VƯƠNG,NPC*~ neutral 0-1 normal,slow normal m
+40 N
+41 D QUỶ VƯƠNG,NPC*~ neutral 0-1 normal,slow normal m
+42 N
+43 N
+44 N
+45 D QUỶ VƯƠNG,NPC*~ happy,sarcastic 0-1 normal normal m
+46 N
+47 D YURIA,YURIA ASHRIEN surprised,neutral 0-1 normal normal,soft f
+48 N NARRATOR neutral,surprised 0-1 normal normal u
+49 N NARRATOR neutral,afraid 0-1 normal normal u
+50 D QUỶ VƯƠNG,NPC*~ neutral 0-1 normal normal m
+51 N
+52 D YURIA,YURIA ASHRIEN surprised,neutral 0-1 normal,slow soft,normal f
+53 N NARRATOR neutral,surprised 0-1 normal normal u
+54 N
+55 D QUỶ VƯƠNG,NPC*~ happy,sarcastic 0-1 normal normal m
+56 N
+57 D YURIA,YURIA ASHRIEN surprised 1-2 normal normal f
+58 D QUỶ VƯƠNG,NPC*~ happy,sarcastic 0-1 normal normal m
+59 D YURIA,YURIA ASHRIEN surprised,angry 1-2 normal normal f
+60 N NARRATOR neutral,surprised 0-1 normal normal u
+61 D QUỶ VƯƠNG,NPC*~ happy,sarcastic 0-1 normal normal m
+62 N
+63 D YURIA,YURIA ASHRIEN angry 2-3 fast loud f
+64 D QUỶ VƯƠNG,NPC*~ happy,sarcastic,tender 0-1 normal normal m
+65 N,D NARRATOR,QUỶ VƯƠNG~ neutral,happy 0-1 normal normal u
+66 D,N NPC*:gã áo choàng đen,NARRATOR,UNKNOWN~ happy,sarcastic 1-2 normal normal,loud m
+67 D NPC*:gã áo choàng đen,UNKNOWN~ sarcastic,angry 0-1 normal normal m
+68 D QUỶ VƯƠNG,NPC*~ sarcastic,happy,neutral 0-1 normal normal m
+69 D NPC*:gã áo choàng đen,UNKNOWN~ sarcastic,angry 0-2 normal normal m
+70 D QUỶ VƯƠNG,NPC*~ neutral,sarcastic,tender 0-1 normal normal m
+71 D YURIA,YURIA ASHRIEN,NPC*~ surprised,angry,sarcastic 0-1 normal normal f
+72 N NARRATOR neutral,afraid,surprised 0-1 normal normal u
+73 D QUỶ VƯƠNG,NPC*~ neutral,tender,sarcastic 0-1 normal normal m
+74 D YURIA,YURIA ASHRIEN angry,surprised 2-3 fast loud f
+75 N NARRATOR neutral,angry 0-1 normal normal u
+76 N
+77 D NPC*:gã áo choàng đen,UNKNOWN~ surprised,angry,sarcastic 0-1 normal normal m
+78 D QUỶ VƯƠNG,NPC*~ neutral,happy,sarcastic 0-1 normal normal m
+79 D YURIA,YURIA ASHRIEN,NPC*~ sarcastic,angry 0-1 normal normal f
+80 D NPC*:gã áo choàng đen,UNKNOWN~,YURIA~ sarcastic,angry 0-1 normal normal m
+81 N
+82 D QUỶ VƯƠNG,NPC*~ happy,sarcastic,afraid 0-1 fast,normal normal m
+83 D YURIA,YURIA ASHRIEN angry 1-2 normal normal,loud f
+84 D QUỶ VƯƠNG,NPC*~ afraid,neutral 0-1 normal soft,normal m
+85 N NARRATOR neutral,angry,afraid 0-1 normal normal u
+86 D QUỶ VƯƠNG,NPC*~ neutral 0-1 normal normal m
+87 D YURIA,YURIA ASHRIEN neutral,surprised 0-1 normal normal f
+88 D QUỶ VƯƠNG,NPC*~ neutral 0-1 normal normal m
+89 D YURIA,YURIA ASHRIEN neutral 0-1 normal normal f
+90 N NARRATOR neutral,happy 0-1 normal normal u
+91 D QUỶ VƯƠNG,NPC*~ happy,excited,sarcastic 0-2 normal normal m
+92 D QUỶ VƯƠNG,NPC*~ happy,excited,sarcastic 0-2 normal normal m
+93 N NARRATOR neutral,sad 0-1 normal normal u
+94 D NPC*:gã áo choàng đen,UNKNOWN~ sad,tired,sarcastic 0-1 slow,normal soft,normal m
+95 N NARRATOR neutral,sad 0-1 normal normal u
+96 N
+97 N NARRATOR neutral,sad,sarcastic 0-1 normal normal u
+98 N
+99 D NARRATOR,NPC*:gã áo choàng đen~ sarcastic,sad,neutral 0-1 normal normal u
+100 N
+101 N
