@@ -169,11 +169,15 @@ cai-ồ theo luật 1.5, cùng âm), Doyle → đoi-ồ.
 **Lần 5 (04-10):** fireball → phai-bôn, Rose → ro-xe, great → gờ-rít, late → lết, Grace → gờ-rây, Gate → gết (viết ghết như ghêm),
 Nate → na-te / nết.
 
+**Lần 6 (04-10):** Paul → pau, higher → hai-gờ, Laplace → la-pờ-lết, Jane → giên / dên, Cage → ca-ghe, Cale → ca-le, Walt → guốt,
+Dalton → đan-tơn, days → đay, Luce → lu-xe.
+
 Luật rút ra (chung các lần):
-- Tên ngắn MỘT phụ âm đầu + nguyên âm + MỘT phụ âm (mọi phụ âm, trừ h w x y) + e câm đọc theo MẶT CHỮ, e cuối đọc **e** (mi-ke,
-  gia-ke, de-ke, ro-xe, na-te; o → o, s → x, z → d; c / g trước e mềm: la-xe). Cụm phụ âm đầu thì đi đường âm vị (Blake → bờ-lếch,
-  Grace → gờ-rây). Chỉ áp cho chữ viết hoa: từ thường (make, late) đi đường âm vị.
+- Tên ngắn MỘT phụ âm đầu + nguyên âm + MỘT phụ âm + e câm đọc theo MẶT CHỮ, e cuối đọc **e** (mi-ke, gia-ke, de-ke, ro-xe, na-te,
+  ca-le; o → o, s → x, z → d; c + e mềm: lu-xe; g + e cứng: ca-ghe). Phụ âm mũi (m, n) thì đi đường âm vị (Jane → giên, game → ghêm),
+  cụm phụ âm đầu cũng vậy (Blake → bờ-lếch, Grace → gờ-rây). Chỉ áp cho chữ viết hoa: từ thường (make, late) đi đường âm vị.
 - Ca riêng, không suy rộng: Kate → ca-tê, Pete → pi-tờ, guild → gui, time → tham, Thomas → tho-mát, great → gờ-rít (ea không thành i),
+  Paul → pau, higher → hai-gờ, Dalton → đan-tơn, days → đay, Laplace → (la-pờ-)lết, Walt → guốt (l bỏ trước t),
   Gate → gết (từ thường viết hoa: luật theo mặt chữ không phân được tên với từ thường). t đầu từ vẫn là **t** (Tom, Tony,
   Tina, team): tham / tho-mát không phải luật bật hơi.
 - Cụm phụ âm ĐẦU từ → "Cờ-" thanh HUYỀN (xờ-kiu, xờ-lam, bờ-lếch). Phụ âm thừa giữa từ vẫn "ơ" ngang như sách báo (Sếch-xơ-pia).
@@ -184,6 +188,12 @@ Luật rút ra (chung các lần):
   ây, s bỏ (gờ-rây).
 - /aɪər/ (fire) → ai, r bỏ (phai). /ɔːl/ → ôn (bôn, như gôn): l sau nguyên âm đầy đủ thành n, chỉ sau schwa / nguyên âm đôi mới thành ồ.
 - Từ ghép không có trong từ điển phát âm mà hai nửa có (sandworm) đọc từng phần.
+- Phụ âm tắc + l / r GIỮA từ tách thành "Cờ" thanh HUYỀN, âm tiết trước mở (la-pờ-, ta-bờ-lét, An-đờ-ru); chủ sách thắng Sếch-xơ-pia
+  của SGK ở kiểu này. t + r vẫn giữ "tr" (Đi-troi).
+- w đầu từ → **gu** CHỈ khi nguyên âm sau là âm o (/ɔ/, /ɔː/, /oʊ/; /ɑ/ viết o): Walt → guốt, như won → guôn của tiếng Hàn; các từ
+  khác cùng dạng có cờ `analogy:w_gu` (Walter → Guôn-tơ). w trước âm khác giữ oa / uy / oe (Oa-sinh-tơn - chủ sách xác nhận, Uy-li-am,
+  Oen-đi). "guô" chỉ đứng trước phụ âm cuối nên âm tiết mở giữ w như cũ (Warrior → Oa-ri-ơ). Nửa sau của từ ghép không
+  áp (sandworm → xan-uơm).
 - /aɪ/ + m → **am** (xờ-lam, tham); /aɪ/ + phụ âm khác bỏ phụ âm (nai, phai).
 - /æŋk/ → **anh** (tanh; rank → ranh, thank → thanh theo đó, cờ `analogy:ank`). /iː/ → i (tim).
 - -er cuối → ơ thanh NGANG (mát-tơ).

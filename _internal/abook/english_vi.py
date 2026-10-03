@@ -35,7 +35,9 @@ PHONES_PATH = Path(__file__).resolve().parent / "assets" / "english_phones.txt.g
 
 # Phán quyết chủ sách 04-10 (mục 4): cố định, đứng trên mọi nguồn. game -> gêm viết theo chính tả là ghêm; level -> le-vồ (le-vờ cũng được).
 # Ca riêng, không suy rộng: Kate (ca-tê), Pete (pi-tờ), guild (gui), time (tham), Thomas (tho-mát), great (gờ-rít: ea không thành i),
-# Gate (gết, viết ghết như ghêm: từ thường viết hoa, không theo mặt chữ như tên) - t đầu từ vẫn là t (Tom -> tom, Tina -> ti-na); các ca còn lại luật cũng ra được (tests/english_vi_evidence.py). Sau "/" trong ghi chú chủ sách là cách đọc khác cũng được.
+# Gate (gết, viết ghết như ghêm: từ thường viết hoa, không theo mặt chữ như tên), Paul (pau), higher (hai-gờ), Dalton (đan-tơn), days
+# (đay), Laplace (la-pờ-lết), Walt (guốt: l bỏ trước t) - t đầu từ vẫn là t (Tom -> tom, Tina -> ti-na); các ca còn lại luật cũng ra được
+# (tests/english_vi_evidence.py). Sau "/" trong ghi chú chủ sách là cách đọc khác cũng được.
 OWNER = {
     "game": "ghêm", "level": "le-vồ", "maple": "máp-pồ", "michael": "mai-cồ", "kate": "ca-tê",
     "mike": "mi-ke", "jake": "gia-ke", "luke": "lu-ke", "pete": "pi-tờ", "skill": "xờ-kiu", "boss": "bót", "slime": "xờ-lam", "quest": "quét",
@@ -43,6 +45,8 @@ OWNER = {
     "master": "mát-tơ", "zeke": "de-ke", "gold": "gôn",
     "tom": "tom", "tony": "to-ni", "team": "tim", "tank": "tanh", "tina": "ti-na", "lyle": "lai-ồ", "kyle": "cai-ồ", "doyle": "đoi-ồ",
     "fireball": "phai-bôn", "rose": "ro-xe", "great": "gờ-rít", "late": "lết", "grace": "gờ-rây", "gate": "ghết", "nate": "na-te",
+    "paul": "pau", "higher": "hai-gờ", "laplace": "la-pờ-lết", "jane": "giên", "cage": "ca-ghe", "cale": "ca-le", "walt": "guốt",
+    "dalton": "đan-tơn", "days": "đay", "luce": "lu-xe", "washington": "oa-sinh-tơn",
 }  # Kyle: chủ sách viết kai-ồ; chính tả luật 1.5 viết c trước a (bộ kiểm âm tiết không nhận "kai"), cùng một âm
 # Chữ viết tắt đã đọc thành từ (chủ sách 04-10): khoá là đúng chữ hoa như viết; chữ viết tắt khác là việc của luật mục 5.
 ACRONYMS = {"VIP": "víp", "ID": "ai-đi"}
@@ -85,8 +89,8 @@ CHOICES = {
     "geminate": "primary",      # p t k giữa hai nguyên âm sau nguyên âm nhấn: khép âm tiết trước + đầu âm tiết sau (máp-pồ, Rốc-ki):
                                 # "primary" (nhấn chính) | "stressed" (cả nhấn phụ) | "short" (chỉ nguyên âm ngắn nhấn) | "none"
     "tr": "tr",                 # t + r đầu âm tiết: "tr" (Đi-troi, Xtrây-li-a) | "split" (tơ-r)
-    "short_silent_e": "face",   # tên ngắn MỘT phụ âm đầu + nguyên âm + MỘT phụ âm + e câm: "face" (theo mặt chữ, e cuối -> e: chủ sách
-                                # mi-ke, gia-ke, lu-ke, de-ke, ro-xe, na-te) | "phonemes" (Mai, Giác)
+    "short_silent_e": "face",   # tên ngắn MỘT phụ âm đầu + nguyên âm + MỘT phụ âm không phải âm mũi + e câm: "face" (theo mặt chữ, e
+                                # cuối -> e: chủ sách mi-ke, de-ke, ro-xe, ca-le, lu-xe, ca-ghe) | "phonemes" (Mai, Giác)
 }
 # Bộ kiểm âm tiết có bật không (quét tắt đi để đếm cả biến thể bộ kiểm không nhận; dùng thật luôn bật).
 _CHECK_SYLLABLES = True
@@ -95,6 +99,7 @@ _VOWELS = frozenset({"AA", "AE", "AH", "AO", "AW", "AY", "EH", "ER", "EY", "IH",
 _GLIDE_VOWELS = frozenset({"AY", "AW", "OY"})          # nguyên âm đôi kết bằng bán âm: ai, ao, oi không đứng trước phụ âm cuối
 _SHORT_VOWELS = frozenset({"AE", "EH", "IH", "AA", "AH", "UH"})
 _STOPS = frozenset({"P", "T", "K"})
+_ALL_STOPS = frozenset({"P", "T", "K", "B", "D", "G"})
 _ONSET = {
     "B": "b", "CH": "ch", "D": "đ", "F": "ph", "G": "G", "HH": "h", "JH": "gi", "K": "K", "L": "l", "M": "m", "N": "n", "NG": "NG",
     "P": "p", "R": "r", "S": "x", "SH": "s", "T": "t", "V": "v", "Z": "d", "ZH": "gi", "W": "u", "Y": "i",
@@ -365,16 +370,17 @@ def _face_short(word: str) -> list[Phone]:
     chữ, e cuối đọc e. Chỉ gọi khi `_short_silent_e` đúng."""
     phones = _spell_phones(word[:-1]) or []
     if word[-2] in "cg" and phones:
-        phones[-1] = ("S" if word[-2] == "c" else "JH", -1, "")  # c, g trước e mềm: Lace -> la-xe, Page -> pa-gie
+        phones[-1] = ("S" if word[-2] == "c" else "G", -1, "")  # c trước e mềm (Luce -> lu-xe), g cứng (Cage -> ca-ghe): chủ sách 04-10
     vowel = word[-3]
     return [(_FACE[vowel], 0, vowel) if phone[1] >= 0 else phone for phone in phones] + [("EH", 0, "e")]
 
 
 def _short_silent_e(word: str) -> bool:
-    """MỘT phụ âm đầu (một chữ, hay ch / sh / th / ph / wh) + một nguyên âm + MỘT phụ âm (trừ h w x y) + e câm: Jake, Mike, Zeke, Rose
-    (chủ sách 04-10). Cụm phụ âm đầu (Blake -> bờ-lếch, Grace -> gờ-rây) và từ viết thường (make, late) đi đường âm vị."""
+    """MỘT phụ âm đầu (một chữ, hay ch / sh / th / ph / wh) + một nguyên âm + MỘT phụ âm (trừ âm mũi m n và h w x y) + e câm: Jake,
+    Zeke, Rose, Cale, Luce, Cage (chủ sách 04-10). Âm mũi đi đường âm vị (Jane -> giên, game -> ghêm), cũng như cụm phụ âm đầu
+    (Blake -> bờ-lếch, Grace -> gờ-rây) và từ viết thường (make, late)."""
     onset = word[:-3]
-    if not (word.endswith("e") and word[-2] in "bcdfgjklmnpqrstvz" and word[-3] in "aeiou"):
+    if not (word.endswith("e") and word[-2] in "bcdfgjklpqrstvz" and word[-3] in "aeiou"):
         return False
     return (len(onset) == 1 and onset not in "aeiouy") or onset in ("ch", "sh", "th", "ph", "wh")
 
@@ -484,7 +490,8 @@ def _glide_w(nucleus: str) -> str | None:
     return None
 
 
-def _syllabify(phones: list[Phone], flags: list[str]) -> list[_Syl] | None:
+def _syllabify(phones: list[Phone], flags: list[str], word_start: bool = True) -> list[_Syl] | None:
+    """`word_start` False: phần sau của từ ghép (w ở đó không thành gu)."""
     # /aɪər/ (fire, higher): ơ sau ai nuốt vào ai, r bỏ (chủ sách 04-10: fireball -> phai-bôn)
     phones = [phone for index, phone in enumerate(phones)
               if not (phone[0] == "ER" and phone[1] == 0 and index > 0 and phones[index - 1][0] == "AY")]
@@ -492,7 +499,8 @@ def _syllabify(phones: list[Phone], flags: list[str]) -> list[_Syl] | None:
     if not vowels:
         return None
     out: list[_Syl] = []
-    onset, glide = _onset_run([phone[0] for phone in phones[:vowels[0]]], out)
+    onset, glide = _onset_run([phone[0] for phone in phones[:vowels[0]]], out, flags, phones[vowels[0]] if word_start else None)
+    w_gu = onset == "G" and vowels[0] == 1 and phones[0][0] == "W"  # w đầu từ đã thành gu (_onset_run)
     for k, at in enumerate(vowels):
         vowel = phones[at]
         last = k == len(vowels) - 1
@@ -543,8 +551,12 @@ def _syllabify(phones: list[Phone], flags: list[str]) -> list[_Syl] | None:
                 head, next_onset = head + ["NG"], ""  # ng tiếng Anh không mở âm tiết: Hê-minh-uây
             if not run and vowel[0] == "ER":
                 next_onset = "R"  # r của ơ trước nguyên âm mở âm tiết sau: Cô-lô-ra-đô, ca-mê-ra
+            liquid_stop = ""
+            if next_onset in ("L", "R") and head and head[-1] in _ALL_STOPS:
+                # tắc + l / r giữa từ: tách thành "Cờ" thanh huyền, âm tiết trước không khép bằng nó (chủ sách 04-10: Laplace -> la-pờ-lết)
+                liquid_stop, head = head[-1], head[:-1]
             geminate = CHOICES["geminate"]
-            if not head and next_onset and len(run) == 1 and run[0] in _STOPS and can_close and vowel[1] >= 1 and (
+            if not head and not liquid_stop and next_onset and len(run) == 1 and run[0] in _STOPS and can_close and vowel[1] >= 1 and (
                 geminate == "stressed" or (geminate == "primary" and vowel[1] == 1)
                 or (geminate == "short" and vowel[0] in _SHORT_VOWELS)
             ):
@@ -555,9 +567,16 @@ def _syllabify(phones: list[Phone], flags: list[str]) -> list[_Syl] | None:
                     coda, coda_phone = letter, head[0]
                     head = head[1:]
             tail = [_epenthetic(base) for base in head]
+            if liquid_stop:
+                tail.append(_Syl(_onset_letter(liquid_stop), "ơ", "", True))
         nucleus = _nucleus(vowel, coda, r_colored)
         if vowel[0] == "AO" and coda_phone == "L" and coda:
             nucleus = "ô"  # /ɔːl/ -> ôn (chủ sách 04-10: fireball -> phai-bôn, như gôn)
+        if k == 0 and w_gu and not coda:
+            onset = ""  # guô chỉ đứng trước phụ âm cuối: âm tiết mở giữ w như cũ (Warrior -> Oa-ri-ơ)
+            flags.remove("analogy:w_gu")
+        elif k == 0 and w_gu and vowel[0] in ("AO", "AA"):
+            nucleus = "ô"  # gu + âm o đọc guô (chủ sách 04-10: Walt -> guốt): water -> guốt-tơ
         if vowel[0] == "AE" and coda == "ng" and run[:2] == ["NG", "K"]:
             nucleus, coda = "a", "nh"  # /æŋk/ -> anh (chủ sách 04-10: tank -> tanh; rank, thank theo đó)
             flags.append("analogy:ank")
@@ -569,9 +588,16 @@ def _syllabify(phones: list[Phone], flags: list[str]) -> list[_Syl] | None:
     return out
 
 
-def _onset_run(run: list[str], out: list[_Syl]) -> tuple[str, str]:
+def _onset_run(run: list[str], out: list[_Syl], flags: list[str], first_vowel: Phone | None) -> tuple[str, str]:
     head, onset, glide = _split_onset(run)
     out.extend(_epenthetic(base, True) for base in head)
+    if run == ["W"] and first_vowel is not None and (
+        first_vowel[0] in ("AO", "OW") or (first_vowel[0] == "AA" and "o" in first_vowel[2])
+    ):
+        # w đầu từ trước âm o -> gu (chủ sách 04-10: Walt -> guốt; như won -> guôn của tiếng Hàn); w trước âm khác giữ oa / uy / oe
+        # (Oa-sinh-tơn). Các từ ngoài Walt suy theo, có cờ
+        flags.append("analogy:w_gu")
+        onset = "G"
     return onset, glide
 
 
@@ -673,7 +699,8 @@ def _compound_parts(key: str, dictionary: Mapping[str, str]) -> tuple[str, str] 
     return None
 
 
-def _read_word(key: str, capital: bool, dictionary: Mapping[str, str], overrides: bool, flags: list[str]) -> str | None:
+def _read_word(key: str, capital: bool, dictionary: Mapping[str, str], overrides: bool, flags: list[str], word_start: bool = True,
+               ) -> str | None:
     if overrides and key in OVERRIDES:
         flags.append("via:override")
         reading = OVERRIDES[key]
@@ -688,14 +715,15 @@ def _read_word(key: str, capital: bool, dictionary: Mapping[str, str], overrides
         parts = _compound_parts(key, dictionary)
         if parts is not None:
             inner: list[str] = []
-            readings = [_read_word(part, capital and index == 0, dictionary, overrides, inner) for index, part in enumerate(parts)]
+            readings = [_read_word(part, capital and index == 0, dictionary, overrides, inner, word_start and index == 0)
+                        for index, part in enumerate(parts)]
             if all(readings):
                 flags.append("via:compound")
                 flags.extend(inner)
                 return "-".join(readings)
     if phones is not None:
         trial: list[str] = []
-        syllables = _syllabify(phones, trial)
+        syllables = _syllabify(phones, trial, word_start)
         reading = None if syllables is None else _validated(syllables, capital)
         if reading is not None:
             flags.append(route)
@@ -706,7 +734,7 @@ def _read_word(key: str, capital: bool, dictionary: Mapping[str, str], overrides
     if phones is None:
         return None
     trial = []
-    syllables = _syllabify(phones, trial)
+    syllables = _syllabify(phones, trial, word_start)
     reading = None if syllables is None else _validated(syllables, capital)
     if reading is None:
         return None
