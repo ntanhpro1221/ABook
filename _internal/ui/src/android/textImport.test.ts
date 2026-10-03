@@ -50,6 +50,13 @@ describe("preview", () => {
     expect(pdf.readPdfPages).not.toHaveBeenCalled();
   });
 
+  it("passes the listener's choice to split a whole-story TXT, and only when it was ticked", async () => {
+    await phoneTextImport.preview({ ref: "i5", name: "truyen.txt" }, { splitChapters: true });
+    expect(library.previewImport).toHaveBeenLastCalledWith({ ref: "i5", splitChapters: true });
+    await phoneTextImport.preview({ ref: "i5", name: "truyen.txt" }, { splitChapters: false });
+    expect(library.previewImport).toHaveBeenLastCalledWith({ ref: "i5" });
+  });
+
   it("reads a PDF's lines with pdf.js and hands them to Kotlin, which applies the chapter rules", async () => {
     const bytes = new Uint8Array([37, 80, 68, 70]).buffer;
     const fetched = vi.fn().mockResolvedValue({ arrayBuffer: async () => bytes });

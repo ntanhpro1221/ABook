@@ -14,6 +14,7 @@ import {
   onlineNotice,
   resolveVoice,
 } from "./readAloudVoice";
+import { voiceSections } from "./voiceGroups";
 
 // Cài đặt → "Giọng đọc" (máy tính và điện thoại dùng chung): giọng mặc định của "Nghe ngay", nghe thử từng giọng, gợi ý giọng nam / nữ, câu nói
 // rõ chữ của sách đi đâu với từng nhóm giọng trực tuyến, và mục "Giọng trực tuyến dùng khóa của bạn" (nhập khóa, Kiểm tra, Xóa). Mỗi nền tảng
@@ -52,10 +53,10 @@ export interface VoiceSettingsApi {
 
 /** Lấy khóa ở đâu - nói theo những gì người dùng thấy trên trang của nhà cung cấp. */
 const KEY_HELP: Record<string, string> = {
-  azure: "Trên Azure: tạo tài nguyên Speech (bậc F0 miễn phí), mở “Keys and Endpoint”, chép Key 1 và Location/Region.",
-  google: "Trên Google Cloud: bật Cloud Text-to-Speech API, rồi APIs & Services → Credentials → Create credentials → API key.",
-  fpt: "Trên console.fpt.ai: đăng nhập, mở mục Text to Speech, chép API key.",
-  viettel: "Trên viettelai.vn: đăng nhập, mở Tài khoản → Token, chép token.",
+  azure: "Trên Azure: tạo tài nguyên Speech (bậc F0 miễn phí), mở mục “Keys and Endpoint” (Khoá và địa chỉ), chép “Key 1” (Khoá 1) và “Location/Region” (Vùng, ví dụ southeastasia).",
+  google: "Trên Google Cloud: bật “Cloud Text-to-Speech API” (dịch vụ đọc văn bản), rồi vào “APIs & Services” (API và dịch vụ) › “Credentials” (Thông tin xác thực) › “Create credentials” (Tạo thông tin xác thực) › “API key” (Khoá API).",
+  fpt: "Trên console.fpt.ai: đăng nhập, mở mục “Text to Speech” (Chuyển văn bản thành giọng nói), chép “API key” (khoá API).",
+  viettel: "Trên viettelai.vn: đăng nhập, mở Tài khoản › Token, chép token.",
 };
 
 const GROUPS: { provider: string; title: string }[] = [
@@ -158,7 +159,7 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
         {status}
       </div>
       <p className="mt-1 text-[13px] text-fg-2 text-pretty">
-        {info.limits.free}. {info.limits.timings === "exact" ? "Sáng đúng từng chữ khi đọc." : "Sáng từng chữ theo ước lượng."}
+        {info.limits.free}. {info.limits.timings === "exact" ? "Tô đúng từng chữ đang đọc." : "Tô từng chữ đang đọc theo ước lượng."}
       </p>
       <p className="mt-1 text-xs text-fg-3 text-pretty">{KEY_HELP[info.id]}</p>
       <div className="mt-2.5 flex flex-wrap items-center gap-2">
@@ -180,7 +181,7 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
             <input
               value={region}
               onChange={(event) => setRegion(event.target.value)}
-              placeholder="Vùng: southeastasia"
+              placeholder="Vùng, ví dụ southeastasia"
               spellCheck={false}
               className="h-9 w-full rounded-lg border border-line bg-panel px-3 text-sm"
             />
@@ -242,43 +243,48 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
             <div key={provider} role="radiogroup" aria-label={title}>
               <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-fg-3">{title}</div>
               {!list.length && <p className="py-1 text-[13px] text-fg-2 text-pretty">{deviceHint}</p>}
-              <ul className="divide-y divide-line">
-                {list.map((voice) => {
-                  const selected = voice.id === current?.id;
-                  const playing = sample.playing === voice.id;
-                  return (
-                    <li key={voice.id} className="flex items-center gap-3 py-2">
-                      <button
-                        type="button"
-                        role="radio"
-                        aria-checked={selected}
-                        onClick={() => {
-                          chooseDefaultVoice(voice.id);
-                          setChosen(voice.id);
-                        }}
-                        className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
-                      >
-                        <span className={cn("grid size-5 shrink-0 place-items-center rounded-full border", selected ? "border-accent bg-accent text-accent-ink" : "border-line-strong")}>
-                          {selected && <Check className="size-3" strokeWidth={3} />}
-                        </span>
-                        <span className="min-w-0 truncate text-sm font-medium">{voice.name}</span>
-                        {genderLabel(voice.gender) && <span className="shrink-0 text-xs text-fg-2">{genderLabel(voice.gender)}</span>}
-                        {selected && <span className="shrink-0 text-xs text-accent-text">Mặc định</span>}
-                      </button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        icon={playing ? Square : Play}
-                        loading={sample.loading === voice.id}
-                        onClick={() => (playing ? sample.stop() : void sample.play(voice.id))}
-                        aria-label={`${playing ? "Dừng" : "Thử"} giọng ${voice.name}`}
-                      >
-                        {playing ? "Dừng" : "Thử giọng"}
-                      </Button>
-                    </li>
-                  );
-                })}
-              </ul>
+              {voiceSections(list).map((section) => (
+                <div key={section.label ?? ""}>
+                  {section.label && <div className="mb-0.5 mt-2 text-[13px] font-medium text-fg-2">{section.label}</div>}
+                  <ul className="divide-y divide-line">
+                    {section.voices.map(({ voice, shown }) => {
+                      const selected = voice.id === current?.id;
+                      const playing = sample.playing === voice.id;
+                      return (
+                        <li key={voice.id} className="flex items-center gap-3 py-2">
+                          <button
+                            type="button"
+                            role="radio"
+                            aria-checked={selected}
+                            onClick={() => {
+                              chooseDefaultVoice(voice.id);
+                              setChosen(voice.id);
+                            }}
+                            className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
+                          >
+                            <span className={cn("grid size-5 shrink-0 place-items-center rounded-full border", selected ? "border-accent bg-accent text-accent-ink" : "border-line-strong")}>
+                              {selected && <Check className="size-3" strokeWidth={3} />}
+                            </span>
+                            <span className="min-w-0 truncate text-sm font-medium">{shown}</span>
+                            {genderLabel(voice.gender) && <span className="shrink-0 text-xs text-fg-2">{genderLabel(voice.gender)}</span>}
+                            {selected && <span className="shrink-0 text-xs text-accent-text">Mặc định</span>}
+                          </button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            icon={playing ? Square : Play}
+                            loading={sample.loading === voice.id}
+                            onClick={() => (playing ? sample.stop() : void sample.play(voice.id))}
+                            aria-label={`${playing ? "Dừng" : "Thử"} giọng ${voice.name}`}
+                          >
+                            {playing ? "Dừng" : "Thử giọng"}
+                          </Button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ))}
               {sample.failed && list.some((voice) => voice.id === sample.failed!.voice) && (
                 <p className="mt-1 text-[13px] text-danger text-pretty">{sample.failed.message}</p>
               )}

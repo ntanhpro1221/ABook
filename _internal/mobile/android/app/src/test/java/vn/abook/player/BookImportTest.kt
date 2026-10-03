@@ -115,7 +115,28 @@ class BookImportTest {
         assertEquals("Sương sớm\n\nChuyến phà đầu tiên rời bến lúc năm giờ.\nCậu bé đứng ở mạn thuyền.", book.chapters[1].text)
         assertEquals("Chương hai\n\nTiếng máy nổ trầm đục.", book.chapters[2].text)
         assertTrue(book.chapters[4].text.contains("Mưa rơi suốt chiều."))
-        assertEquals("Bỏ qua mục không có chữ: Chương 3", book.notes[0])
+        assertEquals("Bỏ qua mục trống: Chương 3", book.notes[0])
+    }
+
+    @Test
+    fun a_whole_story_txt_is_one_chapter_unless_the_listener_ticks_the_split_exactly_like_python() {
+        val file = File(dir, "whole.txt")
+        val plain = BookImport.importFile(file)
+        assertEquals(expectedText("whole"), dump(plain))
+        assertEquals(1, plain.chapters.size)
+        assertEquals(4, plain.splitOffer)
+        val split = BookImport.importFile(file, splitChapters = true)
+        assertEquals(expectedText("whole.split"), dump(split))
+        assertEquals(listOf("Mở đầu", "Chương 1: Bến phà lúc bình minh", "Chương 2: Người khách lạ", "Chương 3"), titles(split))
+        assertEquals(listOf(3 to "Dịch: Nhóm Lục Bình"), split.credits)
+    }
+
+    @Test
+    fun a_txt_with_fewer_than_two_chapter_headings_or_only_volume_headings_offers_no_split() {
+        assertTrue(BookImport.splitTxtChapters("Chương 1\nChỉ một chương thôi.").isEmpty())
+        assertTrue(BookImport.splitTxtChapters("Quyển 1\nA\n\nQuyển 2\nB").isEmpty())
+        // "Chương trình hôm nay" không phải tiêu đề: nó là chữ dẫn ("Mở đầu"), rồi hai chương thật.
+        assertEquals(listOf("Mở đầu", "Chương 1", "Chương 2"), BookImport.splitTxtChapters("Chương trình hôm nay\n\nChương 1\nA\n\nChương 2\nB").map { it.title })
     }
 
     @Test

@@ -125,13 +125,14 @@ object TextImports {
         return children.singleOrNull() ?: throw BookImport.Failed("Lần chọn này đã hết hạn - chọn lại file.")
     }
 
-    /** Đọc thứ đã chọn bằng luật nhập sách và trả danh sách chương (`textbook.preview`). PDF: `pages` là các dòng từng trang do pdf.js lấy. */
-    fun preview(ref: String, pages: List<List<String>>? = null, title: String = "", author: String = ""): JSONObject {
+    /** Đọc thứ đã chọn bằng luật nhập sách và trả danh sách chương (`textbook.preview`). PDF: `pages` là các dòng từng trang do pdf.js lấy.
+     *  `splitChapters`: file TXT cả truyện tách theo "Chương N" - cuốn giữ lại là cuốn của lần xem trước cuối, nên [create] thêm đúng thứ người dùng thấy. */
+    fun preview(ref: String, pages: List<List<String>>? = null, title: String = "", author: String = "", splitChapters: Boolean = false): JSONObject {
         val source = staged(ref)
         val book = if (source.isFile && source.extension.lowercase() == "pdf") {
             BookImport.fromPdfPages(source.nameWithoutExtension, pages ?: throw BookImport.Failed("Chưa lấy được chữ của PDF này - thử lại."), title, author)
         } else {
-            BookImport.importFile(source)
+            BookImport.importFile(source, splitChapters)
         }
         kept[ref] = book
         // Đúng bộ chữ này đã có trong thư viện: hỏi ngay ở bước xem trước ("Mở cuốn đó" / "Thêm bản riêng") - như máy tính

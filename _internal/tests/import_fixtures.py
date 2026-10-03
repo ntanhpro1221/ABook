@@ -11,6 +11,9 @@
     fixtures/import/scan.pdf                 PDF không có lớp chữ (scan) -> lỗi "cần OCR"
     fixtures/import/txt/                     thư mục TXT: UTF-8 có BOM + CRLF, UTF-16 LE, cp1258, thứ tự tự nhiên (1, 2, 10), file
                                              chỉ có khoảng trắng, file ".txt" không tên, "01"/"1" trùng số, chữ số Ả Rập
+    fixtures/import/whole.txt                MỘT file TXT cả truyện: chữ dẫn trước chương đầu, ba dòng "Chương N", một dòng ghi công,
+                                             câu văn mở đầu bằng "Chương trình" (không phải tiêu đề). expected/whole.json = KHÔNG tách
+                                             (mặc định), expected/whole.split.json = người dùng tích "Tách thành N chương"
     fixtures/import/expected/<tên>.json      kết quả mong đợi (ImportedBook.to_dict, hay {"error": ...})
     fixtures/import/pages/story.pages.json   lớp thô của PDF (pypdf VÀ pdf.js phải ra đúng các dòng này)
 
@@ -431,6 +434,19 @@ def txt_files() -> dict[str, bytes]:
     }
 
 
+WHOLE_STORY = (
+    "Chuyến phà cuối ngày\nMột truyện ngắn thử nghiệm.\n\n"
+    "Chương 1: Bến phà lúc bình minh\n\nSương còn phủ kín mặt sông.\nÔng Tám đẩy chiếc phà ra khỏi bến.\n\n"
+    "Chương 2: Người khách lạ\nDịch: Nhóm Lục Bình\n\n\nChuyến đầu tiên chỉ có một hành khách.\n"
+    "Chương trình của ngày hôm ấy rất đơn giản: đưa người qua sông.\n\n"
+    "Chương 3\nMưa kéo đến lúc xế chiều.\n"
+)
+
+
+def whole_txt() -> bytes:
+    return WHOLE_STORY.encode("utf-8")
+
+
 # --- toàn bộ ----------------------------------------------------------------------------------------------------------
 
 SOURCES = {
@@ -447,6 +463,7 @@ def source_files() -> dict[str, bytes]:
     """Mọi file đầu vào của bộ ví dụ (đường tương đối trong FIXTURES -> byte)."""
     files = {name: build() for name, build in SOURCES.items()}
     files.update({f"txt/{name}": data for name, data in txt_files().items()})
+    files["whole.txt"] = whole_txt()
     return files
 
 
@@ -462,6 +479,9 @@ def expected_files(root: Path) -> dict[str, bytes]:
         except importers.ImportFailed as error:
             value = {"error": str(error)}
         out[f"expected/{stem}.json"] = dumps(value)
+    # Một file TXT cả truyện: không tách (mặc định) và có tách (người dùng tích ô gợi ý).
+    out["expected/whole.json"] = dumps(importers.import_text(root / "whole.txt").to_dict())
+    out["expected/whole.split.json"] = dumps(importers.import_text(root / "whole.txt", split_chapters=True).to_dict())
     pages, title, author = importers.pdf_pages(root / "story.pdf")
     out["pages/story.pages.json"] = dumps({"title": title, "author": author, "pages": pages})
     return out
