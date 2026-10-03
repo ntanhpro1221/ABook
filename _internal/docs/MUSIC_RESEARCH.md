@@ -1720,6 +1720,81 @@ Giới hạn:
 - Đề xuất, chưa làm: hạ ngưỡng `vocals` của chính danh mục (đang 0,5) cũng cần ghi trước riêng, vì nó đổi cả chọn nhạc
   theo cảnh chứ không chỉ "Nghe ngay".
 
+**GHI TRƯỚC - "ĐÚNG CẢM GIÁC" CỦA 12 DANH SÁCH PHÁT (03-10 15:1x, Lead giao; trước mọi lượt chấm):**
+
+Câu hỏi: nghe bằng tai máy thì bài trong danh sách có đúng cảm giác của danh sách không?
+
+Độc lập với luật lọc:
+- Hai giám khảo chỉ nghe âm thanh. Không thấy tên bài, tag, trang gốc, nhãn thầy (chữ) hay số trò (CLAP).
+- Danh mục: **64f4a577f86b** (bản đã siết).
+
+**(M) Music Flamingo 2601** (4-bit, card nhà, qua hàng GPU của Model):
+- Mẫu: 10 bài mỗi danh sách, `random.Random(20261003).sample` theo thứ tự danh sách trong manifest. Bài đã rơi vào mẫu
+  của danh sách trước thì bỏ, bốc bài khác cùng danh sách.
+- Đoạn nghe: 30 giây giữa bài (bắt đầu ở max(0, dài/2 − 15)), mono 16 kHz.
+- Mỗi bài chấm hợp với CẢ 12 mô tả tiếng Anh (viết trong `playlist_feel.py` trước lượt chạy, chỉ tả cảm giác / phong
+  cách, không có tên bài).
+  - Hai cách hỏi a / b.
+  - Điểm = kỳ vọng xác suất chữ số 1–7 ở token đầu, như J-mf.
+  - 120 × 12 × 2 = 2.880 lượt forward.
+- Mỗi bài, mỗi cách hỏi: chuẩn hoá z trên 12 mô tả (bỏ thiên lệch riêng của bài).
+  - **ĐÚNG** nếu z của danh sách mình > z trung bình các danh sách ĐỐI (ghi sẵn dưới đây).
+  - Phán quyết chính dùng z trung bình của a và b.
+- Danh sách đối (theo cảm xúc / năng lượng ngược nhau):
+  - fantasy_adventure ↔ sleep, sad, horror
+  - fantasy_calm ↔ action, horror, comedy
+  - school_light ↔ horror, sad, mystery
+  - romance ↔ horror, action, mystery
+  - comedy ↔ sad, horror, sleep
+  - action ↔ sleep, fantasy_calm, romance
+  - horror ↔ comedy, school_light, romance
+  - mystery ↔ comedy, school_light, romance
+  - sad ↔ comedy, action, school_light
+  - sleep ↔ action, horror, comedy
+  - eastern, scifi (danh sách theo phong cách) ↔ cả 11 danh sách còn lại
+- **Cổng dùng được:** hai phán quyết riêng a và b khớp nhau ≥ 0,75 trên 120 bài, VÀ trung vị khối xác suất chữ số
+  ≥ 0,5. Trượt cổng → M không dùng được, chỉ còn A.
+- Mỗi danh sách:
+  - **ĐẠT** nếu ≥ 8/10 bài ĐÚNG;
+  - **NGHI** nếu ≤ 6/10;
+  - 7/10 là chưa chắc.
+- Ghi lại, không phải thước: ma trận nhầm theo mô tả điểm cao nhất; hạng của danh sách mình trong 12.
+
+**(A) AST AudioSet** (`MIT/ast-finetuned-audioset-10-10-0.4593`, CPU):
+- Chạy trên MỌI bài trong 12 danh sách.
+- Ba cửa sổ 10 giây ở 25 / 50 / 75 % bài; lấy trung bình xác suất sigmoid.
+- Lớp AudioSet mong đợi (ghi sẵn; điểm = trung bình các lớp):
+
+| danh sách | lớp AudioSet |
+|---|---|
+| fantasy_adventure | Exciting music |
+| fantasy_calm | Tender music, New-age music, Ambient music |
+| school_light | Happy music |
+| romance | Tender music |
+| comedy | Funny music, Happy music |
+| action | Exciting music, Angry music |
+| horror | Scary music |
+| mystery | Scary music |
+| eastern | Music of Asia, Traditional music |
+| scifi | Electronic music, Synthesizer |
+| sad | Sad music |
+| sleep | Lullaby, Ambient music, New-age music |
+
+- Mỗi danh sách: AUC của điểm lớp mong đợi, bài trong danh sách so với bài của 11 danh sách kia (bài có mặt cả hai phía thì
+  bỏ khỏi phía kia).
+  - **ĐẠT** nếu AUC ≥ 0,65 VÀ cận dưới KTC 95 % (bootstrap 2.000 lần, hạt giống 7) > 0,5.
+- Ghi lại: xác suất "Singing" (kiểm chéo bộ lọc có lời).
+
+Kết luận mỗi danh sách:
+- **"Đúng cảm giác"**: cả M (nếu qua cổng) và A đều ĐẠT.
+- Một giám khảo ĐẠT: báo riêng từng giám khảo.
+- Không giám khảo nào ĐẠT: **NGHI**. Đề xuất sửa luật lọc danh sách ấy, kèm ghi trước mới, không sửa thẳng.
+
+Giới hạn:
+- Lớp cảm xúc của AudioSet vốn yếu (mAP thấp), nên A trượt một danh sách chưa chắc là danh sách sai.
+- M từng không ổn định khi chấm đoạn truyện khớp clip (J-mf 0,66). Phép này có cổng a / b riêng.
+- Hai giám khảo đều là máy, không phải người nghe.
+
 ## Nguồn nhạc: giữ / loại và lý do (02-10, Lead + chủ sách - đọc trước khi hỏi lại)
 
 LUẬT CUỐI (02-10 22:xx, Lead + chủ sách; thay đoạn ba câu hỏi bên dưới ở chỗ nào khác nhau):
