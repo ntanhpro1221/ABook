@@ -19,6 +19,7 @@ import { canPlay, chapterHeard, chaptersByPart, knownDuration, resumePoint, type
 import { usePlayer } from "./player";
 import { BookmarkList, chapterStatusLabel } from "./PlayerViews";
 import { EditsSyncBanner, SendEditsItem } from "./SendEdits";
+import { PlaylistSubmenu } from "./PlaylistChoice";
 import { ProjectFileItems, ProjectViewsDialog, TextBookItems } from "./ProjectFileItems";
 import { WishesDialog } from "./WishesDialog";
 import { useCast, useListenBook, useListenMutations, useSource } from "./source";
@@ -815,6 +816,7 @@ export function BookScreen({
                       <DropdownMenu.Item onSelect={() => setEditOpen(true)} className={MENU_ITEM}>
                         <Pencil className="size-4" /> {textOnly ? "Sửa tên, bìa…" : "Sửa tên, bìa, nhạc nền…"}
                       </DropdownMenu.Item>
+                      {textOnly && <PlaylistSubmenu bookId={book.id} />}
                       {syncs && <SendEditsItem book={book} />}
                       {!workshop && !syncs && saver.available && (
                         <>
