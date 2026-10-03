@@ -1,0 +1,138 @@
+# Đáp án KIỂM TRA truyện Hàn đợt 3 (03-10; luật cố định: vị trí 30% của bộ); mục đích: tăng gold Hàn (nhóm mỏng nhất).
+# "Breakthrough with the Forbidden Master" file 094 ("Chương 91: Nhà thờ"). Claude gán (A) 03-10; B soát + phân xử 03-10 (gold_kr3/B/kr3b_review.md).
+# NGÔI THỨ NHẤT cả chương, "tôi" = EARTH LAGANN / EARTH (m; 92 Đại Tư Tế gọi "Earth Lagann"; "Earth" ~1300 lần cả bộ) ->
+# --first-person "Earth Lagann". 1-2 ("Trans: Zard", "Chúc các bạn buổi tối tốt lành.") là lời dịch giả -> N.
+# Tên: TRE’AINAR / TRE'AINAR (m, "ông"; hồn Đại Ma Vương chỉ Earth thấy, nói bằng dòng 『...』 - parser khoá D; tên viết
+# với ’ - dạng ' cũng đủ vì model hay gõ lại); KARUI (f, 13 tuổi, tự giới thiệu ở 50); AMAE (f, cô bé nhút nhát, tật nói "Un"
+# - 097:95, 099:33-45); Đại Tư Tế (f) chưa nói tên thật ở chương này (92 "sẽ cho cậu biết tên thật của ta sau"), tên
+# JAMDI’EL chỉ lộ ở 099:91 -> ĐẠI TƯ TẾ (tên chương này gọi, quy tắc 13) đủ, JAMDI’EL~ (tên lộ chương sau), NPC*~ (nói ở nhiều
+# chương). MAMU (mẹ), SADIZ, SHINOBU, BRO, TSUKSHI, MACHO, ông AKA không nói.
+# 46 “Úi!... Yo, anh dậy rồi đó à!?” trước khi tự giới thiệu (50) -> KARUI đủ, NPC*~ (quy tắc 5); 47 “……Un……” = Amae (tật nói
+# "Un", 54 “……’Amae’….un”) -> AMAE đủ, NPC*~. 76 “Đúng vậy đấy.” giọng mới chen vào, 78 cùng người ("ta... cậu"), 79-84 tả Đại
+# Tư Tế -> ĐẠI TƯ TẾ. 77 “””Ể !!??””” ba ngoặc = ba người cùng kêu (Earth, Karui, Amae), parser khoá N -> NARRATOR (quy tắc 10),
+# ba người ~. 22 T ‘cuối cùng cũng chịu dậy’ là lời Tre’ainar thuật lại giữa câu kể ("Tre’ainar đang thở dài bảo, ...") ->
+# NARRATOR đủ, TRE’AINAR~ (quy tắc 8/10). 87 T ‘người phụ nữ xinh đẹp và quyến rũ’ cụm giữa câu kể ("ai cũng sẽ nghĩ cô là
+# một ... , nhưng") -> NARRATOR, EARTH~.
+# Tiếng lòng tức thời của "tôi" -> N,T NARRATOR,EARTH LAGANN (quy tắc 4 ngôi một): 7, 9, 14, 16, 34-35, 45, 60, 62, 72, 75, 91,
+# 100-101, 105, 111-112, 118-120. Câu "tôi" nói thành tiếng (10, 15 tự lẩm bẩm khi vừa tỉnh; 66) -> D.
+0 H
+1 N
+2 N
+3 N
+4 N NARRATOR neutral,tired 0-1 normal normal u
+5 N
+6 N
+7 N,T NARRATOR,EARTH LAGANN,EARTH surprised,neutral,afraid 0-1 normal normal u
+8 N NARRATOR neutral,tired 0-1 normal normal u
+9 N,T NARRATOR,EARTH LAGANN,EARTH surprised,neutral 0-1 normal normal u
+10 D EARTH LAGANN,EARTH surprised,tired,neutral 0-1 slow,normal soft,normal m
+11 N
+12 N
+13 N
+14 N,T NARRATOR,EARTH LAGANN,EARTH surprised,neutral 0-1 normal normal u
+15 D EARTH LAGANN,EARTH afraid,surprised 0-1 slow,normal soft,normal m
+16 N,T NARRATOR,EARTH LAGANN,EARTH afraid,neutral 0-1 normal normal u
+17 N
+18 D TRE’AINAR,TRE'AINAR neutral 0-1 normal normal m
+19 D EARTH LAGANN,EARTH surprised,afraid 1-2 fast loud,normal m
+20 D TRE’AINAR,TRE'AINAR neutral,tired 0-1 normal normal m
+21 N
+22 T NARRATOR,TRE’AINAR~,TRE'AINAR~ tired,neutral 0-1 normal normal u
+23 D EARTH LAGANN,EARTH surprised,afraid 0-1 fast,normal normal m
+24 D TRE’AINAR,TRE'AINAR tired,neutral 0-1 slow,normal normal,soft m
+25 D EARTH LAGANN,EARTH surprised 0-1 normal normal m
+26 N NARRATOR neutral,surprised 0-1 normal normal u
+27 N NARRATOR neutral,surprised 0-1 normal normal u
+28 D EARTH LAGANN,EARTH surprised,neutral 0-1 normal normal m
+29 D TRE’AINAR,TRE'AINAR neutral 0-1 normal normal m
+30 D EARTH LAGANN,EARTH surprised 1-2 normal,fast normal m
+31 D TRE’AINAR,TRE'AINAR neutral 0-1 normal normal m
+32 D EARTH LAGANN,EARTH surprised,afraid 1-2 fast normal,loud m
+33 D TRE’AINAR,TRE'AINAR neutral,sarcastic 0-1 normal normal m
+34 N,T NARRATOR,EARTH LAGANN,EARTH surprised,neutral 0-1 normal normal u
+35 N,T NARRATOR,EARTH LAGANN,EARTH surprised,neutral 0-1 normal normal u
+36 D EARTH LAGANN,EARTH sad,afraid 0-1 slow,normal soft,normal m
+37 N NARRATOR neutral,sad,afraid 0-1 normal normal u
+38 D TRE’AINAR,TRE'AINAR neutral 0-1 normal normal m
+39 D EARTH LAGANN,EARTH surprised,afraid 1-2 fast,normal normal m
+40 D TRE’AINAR,TRE'AINAR neutral 0-1 normal normal,soft m
+41 D EARTH LAGANN,EARTH surprised,afraid,angry 1-2 fast normal,loud m
+42 D TRE’AINAR,TRE'AINAR neutral,surprised 0-1 normal normal m
+43 D EARTH LAGANN,EARTH surprised 1-2 normal,fast normal m
+44 N
+45 N,T NARRATOR,EARTH LAGANN,EARTH neutral,surprised 0-1 normal normal u
+46 D KARUI,NPC*~ happy,surprised,excited 0-2 fast,normal normal,loud f
+47 D AMAE,NPC*~ neutral 0-1 slow,normal soft f
+48 N
+49 N,T NARRATOR,EARTH LAGANN,EARTH neutral 0-1 normal normal u
+50 D KARUI happy,excited 1-2 fast,normal normal,loud f
+51 N
+52 N
+53 N
+54 D AMAE neutral 0-1 slow soft f
+55 N
+56 N
+57 N
+58 D KARUI happy,excited 0-2 fast,normal normal f
+59 N
+60 N,T NARRATOR,EARTH LAGANN,EARTH sarcastic,neutral 0-1 normal normal u
+61 D EARTH LAGANN,EARTH surprised,neutral 0-1 normal normal m
+62 N,T NARRATOR,EARTH LAGANN,EARTH neutral 0-1 normal normal u
+63 D KARUI happy,neutral 0-1 normal normal f
+64 D EARTH LAGANN,EARTH surprised,afraid 1-2 fast normal,loud m
+65 D KARUI happy,excited 0-1 normal normal f
+66 D EARTH LAGANN,EARTH afraid,angry 0-1 normal normal,soft m
+67 N
+68 N
+69 N
+70 N
+71 N
+72 N,T NARRATOR,EARTH LAGANN,EARTH afraid,neutral 0-1 normal normal u
+73 D KARUI happy,neutral 0-1 normal normal f
+74 D EARTH LAGANN,EARTH surprised 0-1 normal normal m
+75 N,T NARRATOR,EARTH LAGANN,EARTH surprised,neutral 0-1 normal normal u
+76 D ĐẠI TƯ TẾ,JAMDI’EL~,JAMDI'EL~,NPC*~ neutral,happy 0-1 normal normal f
+77 N NARRATOR,EARTH LAGANN~,EARTH~,KARUI~,AMAE~ surprised 2-3 fast loud u
+78 D ĐẠI TƯ TẾ,JAMDI’EL~,JAMDI'EL~,NPC*~ neutral,sarcastic 0-1 normal normal f
+79 N NARRATOR neutral,surprised,afraid 0-1 normal normal u
+80 D EARTH LAGANN,EARTH surprised,afraid 1-2 fast normal m
+81 D ĐẠI TƯ TẾ,JAMDI’EL~,JAMDI'EL~,NPC*~ neutral,happy 0-1 normal normal f
+82 N NARRATOR neutral,afraid 0-1 normal normal u
+83 N
+84 N
+85 N
+86 N
+87 T NARRATOR,EARTH LAGANN~,EARTH~ neutral 0-1 normal normal u
+88 N
+89 N NARRATOR neutral,afraid 0-1 normal normal u
+90 D EARTH LAGANN,EARTH afraid,angry 1-2 fast normal,loud m
+91 N,T NARRATOR,EARTH LAGANN,EARTH afraid,neutral 0-2 normal normal u
+92 D ĐẠI TƯ TẾ,JAMDI’EL~,JAMDI'EL~,NPC*~ neutral 0-1 normal normal f
+93 D EARTH LAGANN,EARTH surprised,afraid 0-1 normal normal m
+94 D ĐẠI TƯ TẾ,JAMDI’EL~,JAMDI'EL~,NPC*~ neutral 0-1 normal normal f
+95 D EARTH LAGANN,EARTH afraid,sad,surprised 0-1 normal normal m
+96 D ĐẠI TƯ TẾ,JAMDI’EL~,JAMDI'EL~,NPC*~ neutral 0-1 normal normal f
+97 D EARTH LAGANN,EARTH afraid,sad 0-1 slow,normal soft,normal m
+98 D ĐẠI TƯ TẾ,JAMDI’EL~,JAMDI'EL~,NPC*~ neutral 0-1 normal normal f
+99 N
+100 N,T NARRATOR,EARTH LAGANN,EARTH surprised,neutral 0-1 normal normal u
+101 N,T NARRATOR,EARTH LAGANN,EARTH neutral,afraid 0-1 normal normal u
+102 D ĐẠI TƯ TẾ,JAMDI’EL~,JAMDI'EL~,NPC*~ neutral 0-1 normal normal f
+103 D EARTH LAGANN,EARTH surprised 0-1 normal normal m
+104 D ĐẠI TƯ TẾ,JAMDI’EL~,JAMDI'EL~,NPC*~ neutral,surprised 0-1 normal normal f
+105 N,T NARRATOR,EARTH LAGANN,EARTH surprised,neutral 0-1 normal normal u
+106 D KARUI neutral,sad,sarcastic 0-1 normal,fast normal f
+107 D KARUI surprised,angry,afraid 1-2 fast loud,normal f
+108 D ĐẠI TƯ TẾ,JAMDI’EL~,JAMDI'EL~,NPC*~ neutral,happy 0-1 normal normal f
+109 D KARUI surprised,excited 1-2 fast normal,loud f
+110 N NARRATOR neutral,surprised 0-1 normal normal u
+111 N,T NARRATOR,EARTH LAGANN,EARTH surprised 0-1 normal normal u
+112 N,T NARRATOR,EARTH LAGANN,EARTH surprised 0-1 normal normal u
+113 N
+114 N
+115 D ĐẠI TƯ TẾ,JAMDI’EL~,JAMDI'EL~,NPC*~ neutral,happy 0-1 normal normal f
+116 D EARTH LAGANN,EARTH surprised 1-2 fast loud,normal m
+117 D ĐẠI TƯ TẾ,JAMDI’EL~,JAMDI'EL~,NPC*~ neutral,happy 0-1 normal normal f
+118 N,T NARRATOR,EARTH LAGANN,EARTH surprised,angry,neutral 0-1 normal normal u
+119 N,T NARRATOR,EARTH LAGANN,EARTH angry,neutral,sarcastic 0-1 normal normal u
+120 N,T NARRATOR,EARTH LAGANN,EARTH angry,afraid,neutral 0-1 normal normal u

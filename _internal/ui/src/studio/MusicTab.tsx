@@ -9,7 +9,8 @@ import { Button } from "@/shared/ui";
 import { api, mediaUrl } from "./api";
 import { useAppInfo } from "./data";
 import { importMusic } from "./musicImport";
-import { analysisLabel, importSummary, LOCAL_PREFIX, previewPath, type LocalMusicView, type LocalTrack } from "./musicLocal";
+import { analysisLabel, importSummary, LOCAL_PREFIX, previewPath, type LocalMusicView, type LocalTrack, type MusicReader } from "./musicLocal";
+import { MusicReaderNotice } from "./MusicReaderNotice";
 
 // Tab "Nhạc nền" của trang dự án (docs/MUSIC_SELECTION_MODEL.md, mục 4 - ba tầng chỉnh): cả cuốn (bật/tắt, thế giới
 // của truyện, mức nhạc), từng đoạn (im lặng, bỏ ghim), từng bài (không dùng bài này nữa). Máy tự làm hết; mọi chỉnh ở đây
@@ -286,6 +287,7 @@ function MyMusic({ bookId, previewing, onPreview }: { bookId: string; previewing
   const key = ["music-local"];
   const { data } = useQuery({ queryKey: key, queryFn: () => api<LocalMusicView>("/api/music/local"), enabled: canImport });
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const [reader, setReader] = useState<MusicReader | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
   const refresh = (view: LocalMusicView) => {
     client.setQueryData(key, view);
@@ -296,7 +298,7 @@ function MyMusic({ bookId, previewing, onPreview }: { bookId: string; previewing
       const { result, error } = await importMusic((done, total, latest) => {
         setProgress({ done, total });
         if (latest) refresh(latest);
-      });
+      }, setReader);
       if (error) toast.error("Đang nhập nhạc thì dừng", { description: error.message });
       if (!result) return;
       const summary = importSummary(result);
@@ -329,6 +331,7 @@ function MyMusic({ bookId, previewing, onPreview }: { bookId: string; previewing
           </Button>
         )}
       </div>
+      <MusicReaderNotice reader={reader} />
       <p className="text-sm text-fg-2 text-pretty">
         Thêm nhạc của riêng bạn (mp3, m4a, ogg, opus, flac, wav) làm nhạc nền. File được chép vào kho nhạc của máy này. Bài nào bạn
         ghim cho một đoạn (ở “Đổi bài”) sẽ đi cùng file sách .abook / .abookproj và sang điện thoại, vì không ai khác tải được nó.

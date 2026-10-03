@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import math
 import shutil
 from pathlib import Path
 
@@ -235,6 +236,27 @@ def test_a_track_without_tension_is_scored_on_the_other_two_axes() -> None:
     without = z_distance({"valence": 0.2, "arousal": 0.2}, target)
     assert without == pytest.approx(z_distance({"valence": 0.2, "arousal": 0.2, "tension": 0.5}, target))
     assert z_distance({"valence": 0.2, "arousal": 0.2, "tension": -0.5}, target) > without
+
+
+def test_the_residual_variance_of_an_imported_track_widens_its_distance_only() -> None:
+    from abook.webui.music_select import AXIS_WEIGHTS, SCENE_SD_DEFAULT, TAU, TRACK_SD_DEFAULT, VET_VAR_WEIGHT, z_distance
+
+    target = (0.3, -0.2, 0.1)
+    track = {"valence": 0.1, "arousal": 0.0, "tension": 0.4}
+    plain = z_distance(track, target)
+    assert VET_VAR_WEIGHT == 0.1
+    assert z_distance({**track, "vetVar": {}}, target) == plain, "bài danh mục (không có vetVar) y hệt trước"
+    var = {"valence": 0.04, "arousal": 0.03, "tension": 0.04}
+    denominator = SCENE_SD_DEFAULT ** 2 + TRACK_SD_DEFAULT ** 2 + TAU ** 2
+    expected = math.sqrt(sum(AXIS_WEIGHTS[axis] * ((track[axis] - wanted) ** 2 + VET_VAR_WEIGHT * var[axis]) / denominator
+                             for axis, wanted in zip(("valence", "arousal", "tension"), target)))
+    widened = z_distance({**track, "vetVar": var}, target)
+    assert widened > plain and widened == pytest.approx(expected)
+    # trục không có trong vetVar thì không cộng gì; bài chưa có tension thì bỏ cả số hạng của trục ấy
+    assert z_distance({**track, "vetVar": {"valence": 0.04}}, target) < widened
+    assert z_distance({"valence": 0.1, "arousal": 0.0, "vetVar": var}, target) == pytest.approx(
+        math.sqrt(sum(AXIS_WEIGHTS[axis] * ((track[axis] - wanted) ** 2 + VET_VAR_WEIGHT * var[axis]) / denominator
+                      for axis, wanted in zip(("valence", "arousal"), target))))
 
 
 def _emotion_scene() -> dict:

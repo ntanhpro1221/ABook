@@ -1,0 +1,233 @@
+# Đáp án KIỂM TRA truyện Hàn đợt 3 (03-10; luật cố định: vị trí 30% của bộ); mục đích: tăng gold Hàn (nhóm mỏng nhất).
+# "Childhood Friend of the Zenith" file 058 ("Chương 52: Mai Hoa Kiếm Long (2)"). Claude gán (A) 03-10; B soát + phân xử 03-10 (gold_kr3/B/kr3a_review.md).
+# NGÔI THỨ NHẤT: "tôi" = GU YANGCHEON / YANGCHEON (m; thiếu gia nhà Gu dẫn đoàn - 057, "Gu Yangcheon" 40 lần ở 050-062).
+# "Thiếu gia", "Thiếu hiệp", "Thiếu gia Gu" là cách gọi - không điểm (quy tắc 11). YUNG PUNG (m, đệ tử Hoa Sơn, danh hiệu
+# "Mai Hoa Kiếm Long" - không điểm). MUYEON có mặt (205) nhưng không nói.
+# Hồn ma trong bảo vật Hoa Sơn nói bằng dòng "[...]" (parser KHOÁ N): tự xưng "Thần Kiếm Hoa Sơn, Shincheol" (84); cả cuốn
+# lời kể gọi "lão Shin" ~700 lần, không bao giờ bỏ "lão" (quy tắc 11, tiền lệ ANH DẬU) -> SHINCHEOL là tên, LÃO SHIN chỉ nửa
+# điểm; "Thần Kiếm Hoa Sơn"/"ác linh"/"hồn ma" là danh hiệu/cách gọi - không điểm. Dòng "[...]" khoá N -> NARRATOR,
+# SHINCHEOL~, LÃO SHIN~ (quy tắc 10/7c, tiền lệ Nise 086 "[...]" thanh kiếm). 214 "[…Sao tên này hành xử kỳ quặc vậy?]"
+# cũng ngoặc vuông -> hồn ma.
+# Hồn ma NGHE được ý nghĩ của "tôi" nên các câu tự hỏi/chửi thầm không ngoặc (4-10, 29-38, 42, 50-53, 59-67, 122-133...)
+# vừa là tiếng lòng vừa là lượt "đối đáp" với hồn ma -> N,T NARRATOR,GU YANGCHEON,YANGCHEON (quy tắc 4 ngôi một). 114 đoạn
+# chủ yếu tả giọng ông lão, chỉ câu cuối tự hỏi -> người nghĩ ~.
+# 170 “Teehee! Tôi vô tình hấp thụ Khí...” là câu GIẢ ĐỊNH nằm giữa câu kể "Tôi không thể nói mấy câu như ... được" (khoá
+# D) -> NARRATOR đủ, GU YANGCHEON~ (quy tắc 8: cụm giữa câu kể). 1, 19, 21, 23, 45, 200, 211 Yung Pung (2, 18, 202, 210);
+# 20, 22, 25 "tôi" cãi Yung Pung (chỉ "tôi" nghe được giọng); 44 "tôi" nói to với hồn ma, 45 Yung Pung hoảng.
+# 86-104 lời kể lịch sử Đại Chiến Huyết Ma (danh sách năm anh hùng) - N.
+0 H
+1 D YUNG PUNG surprised,neutral 0-1 normal normal m
+2 N
+3 N
+4 N,T NARRATOR,GU YANGCHEON,YANGCHEON surprised,afraid,neutral 0-1 normal normal u
+5 N,T NARRATOR,GU YANGCHEON,YANGCHEON surprised,afraid,neutral 0-1 normal normal u
+6 N,T NARRATOR,GU YANGCHEON,YANGCHEON neutral,afraid 0-1 normal normal u
+7 N,T NARRATOR,GU YANGCHEON,YANGCHEON neutral,afraid 0-1 normal normal u
+8 N,T NARRATOR,GU YANGCHEON,YANGCHEON neutral,afraid,sarcastic 0-1 normal normal u
+9 N,T NARRATOR,GU YANGCHEON,YANGCHEON neutral,afraid 0-1 normal normal u
+10 N,T NARRATOR,GU YANGCHEON,YANGCHEON neutral,afraid 0-1 normal normal u
+11 N
+12 D GU YANGCHEON,YANGCHEON neutral,afraid,surprised 0-1 normal normal,soft m
+13 N NARRATOR,SHINCHEOL~,LÃO SHIN~ happy,excited,surprised,neutral 0-2 normal normal,loud u
+14 D GU YANGCHEON,YANGCHEON surprised,afraid,angry 2-3 fast loud m
+15 N NARRATOR neutral,surprised 0-1 normal normal u
+16 N NARRATOR neutral,surprised 0-1 normal normal u
+17 N
+18 N NARRATOR neutral,surprised,afraid 0-1 normal normal u
+19 D YUNG PUNG surprised,afraid 1-2 fast,normal normal,loud m
+20 D GU YANGCHEON,YANGCHEON afraid,surprised 1-2 fast normal,loud m
+21 D YUNG PUNG surprised,neutral 0-1 normal normal m
+22 D GU YANGCHEON,YANGCHEON afraid,angry,surprised 1-2 fast normal,loud m
+23 D YUNG PUNG surprised,neutral 0-1 normal normal m
+24 N NARRATOR,SHINCHEOL~,LÃO SHIN~ angry 1-2 normal normal,loud u
+25 D GU YANGCHEON,YANGCHEON afraid,surprised,angry 1-2 fast normal,loud m
+26 N
+27 N
+28 N,T NARRATOR,GU YANGCHEON,YANGCHEON neutral,sarcastic,sad 0-1 normal normal u
+29 N,T NARRATOR,GU YANGCHEON,YANGCHEON angry,surprised,afraid 0-2 normal normal u
+30 N,T NARRATOR,GU YANGCHEON,YANGCHEON neutral,surprised 0-1 normal normal u
+31 N,T NARRATOR,GU YANGCHEON,YANGCHEON neutral,afraid,surprised 0-1 normal normal u
+32 N NARRATOR,SHINCHEOL~,LÃO SHIN~ angry,sarcastic 1-2 normal normal,loud u
+33 N,T NARRATOR,GU YANGCHEON,YANGCHEON afraid,surprised 0-2 normal,fast normal u
+34 N NARRATOR,SHINCHEOL~,LÃO SHIN~ angry 1-2 normal,fast normal,loud u
+35 N,T NARRATOR,GU YANGCHEON,YANGCHEON afraid,surprised,angry 1-2 normal,fast normal u
+36 N,T NARRATOR,GU YANGCHEON,YANGCHEON afraid,angry,sad 0-2 normal normal u
+37 N NARRATOR,SHINCHEOL~,LÃO SHIN~ angry 1-2 normal normal,loud u
+38 N,T NARRATOR,GU YANGCHEON,YANGCHEON afraid,surprised 1-2 normal normal u
+39 N
+40 N NARRATOR,SHINCHEOL~,LÃO SHIN~ angry,surprised 2-3 fast,normal loud,normal u
+41 N
+42 N,T NARRATOR,GU YANGCHEON,YANGCHEON surprised,neutral 0-1 normal normal u
+43 N NARRATOR,SHINCHEOL~,LÃO SHIN~ angry,sarcastic 1-2 normal normal,loud u
+44 D GU YANGCHEON,YANGCHEON surprised,angry 1-2 normal,fast loud,normal m
+45 D YUNG PUNG afraid,surprised,neutral 0-1 normal normal,soft m
+46 N NARRATOR neutral,afraid 0-1 normal normal u
+47 N
+48 N NARRATOR neutral,surprised 0-1 normal normal u
+49 N NARRATOR,SHINCHEOL~,LÃO SHIN~ surprised,sarcastic,neutral 0-1 normal normal u
+50 N,T NARRATOR,GU YANGCHEON,YANGCHEON surprised,neutral,angry 0-1 normal normal u
+51 N,T NARRATOR,GU YANGCHEON,YANGCHEON surprised,neutral 0-1 normal normal u
+52 N NARRATOR,SHINCHEOL~,LÃO SHIN~ sarcastic,angry 0-2 normal normal u
+53 N,T NARRATOR,GU YANGCHEON,YANGCHEON surprised,neutral 0-1 normal normal u
+54 N
+55 N
+56 N
+57 N
+58 N NARRATOR neutral,afraid 0-1 normal normal u
+59 N,T NARRATOR,GU YANGCHEON,YANGCHEON afraid,surprised 0-2 normal normal u
+60 N NARRATOR,SHINCHEOL~,LÃO SHIN~ happy,sarcastic 0-2 normal normal u
+61 N,T NARRATOR,GU YANGCHEON,YANGCHEON afraid,sad 0-2 normal normal,soft u
+62 N NARRATOR,SHINCHEOL~,LÃO SHIN~ angry,sarcastic 0-2 normal normal u
+63 N NARRATOR neutral,surprised 0-1 normal normal u
+64 N,T NARRATOR,GU YANGCHEON,YANGCHEON angry,sarcastic 0-2 normal normal u
+65 N NARRATOR,SHINCHEOL~,LÃO SHIN~ sarcastic,happy,neutral 0-1 normal normal u
+66 N,T NARRATOR,GU YANGCHEON,YANGCHEON neutral,afraid 0-1 normal normal u
+67 N,T NARRATOR,GU YANGCHEON,YANGCHEON neutral,afraid 0-1 normal normal u
+68 N NARRATOR,SHINCHEOL~,LÃO SHIN~ sarcastic,angry,neutral 0-1 normal normal u
+69 N
+70 N
+71 N NARRATOR neutral,afraid 0-1 normal normal u
+72 N NARRATOR neutral,afraid 0-1 normal normal u
+73 N NARRATOR neutral,afraid 0-1 normal normal u
+74 N,T NARRATOR,GU YANGCHEON,YANGCHEON afraid,sad 1-2 normal normal u
+75 N NARRATOR neutral,sad 0-1 normal normal u
+76 N NARRATOR neutral,sad 0-1 normal normal u
+77 N
+78 N NARRATOR,SHINCHEOL~,LÃO SHIN~ neutral 0-1 normal,slow normal u
+79 N
+80 N NARRATOR neutral,afraid 0-1 normal normal u
+81 N
+82 N
+83 N
+84 N NARRATOR,SHINCHEOL~,LÃO SHIN~ neutral,happy 0-1 normal,slow normal u
+85 N
+86 N
+87 N
+88 N
+89 N
+90 N
+91 N
+92 N
+93 N
+94 N
+95 N
+96 N
+97 N
+98 N
+99 N
+100 N
+101 N
+102 N
+103 N
+104 N
+105 N
+106 D GU YANGCHEON,YANGCHEON neutral,tired,surprised 0-1 normal normal,soft m
+107 N NARRATOR,SHINCHEOL~,LÃO SHIN~ angry,tired,neutral 0-1 normal normal u
+108 D GU YANGCHEON,YANGCHEON neutral,surprised,tired 0-1 normal normal m
+109 N NARRATOR,SHINCHEOL~,LÃO SHIN~ angry,tired 0-2 normal normal u
+110 D GU YANGCHEON,YANGCHEON tired,sarcastic,neutral 0-1 normal normal m
+111 N
+112 N NARRATOR neutral,sad 0-1 normal normal u
+113 N NARRATOR,SHINCHEOL~,LÃO SHIN~ angry 1-2 normal normal,loud u
+114 N,T NARRATOR,GU YANGCHEON~,YANGCHEON~ neutral,sarcastic 0-1 normal normal u
+115 N
+116 N
+117 N
+118 N NARRATOR,SHINCHEOL~,LÃO SHIN~ sarcastic,angry,tired 0-1 normal normal u
+119 N
+120 N
+121 N NARRATOR,SHINCHEOL~,LÃO SHIN~ sarcastic,neutral 0-1 normal normal u
+122 N,T NARRATOR,GU YANGCHEON,YANGCHEON sarcastic,angry 0-1 normal normal u
+123 N,T NARRATOR,GU YANGCHEON,YANGCHEON sarcastic,angry 0-1 normal normal u
+124 N,T NARRATOR,GU YANGCHEON,YANGCHEON sarcastic,neutral 0-1 normal normal u
+125 N
+126 N,T NARRATOR,GU YANGCHEON,YANGCHEON sarcastic,neutral 0-1 normal normal u
+127 N,T NARRATOR,GU YANGCHEON,YANGCHEON sad,neutral,sarcastic 0-1 normal normal u
+128 N,T NARRATOR,GU YANGCHEON,YANGCHEON neutral,sarcastic,tired 0-1 normal normal u
+129 N NARRATOR,SHINCHEOL~,LÃO SHIN~ angry 1-2 normal normal,loud u
+130 N
+131 N,T NARRATOR,GU YANGCHEON,YANGCHEON sarcastic,angry 0-1 normal normal u
+132 N,T NARRATOR,GU YANGCHEON,YANGCHEON neutral,sarcastic 0-1 normal normal u
+133 N,T NARRATOR,GU YANGCHEON,YANGCHEON sarcastic,neutral 0-1 normal normal u
+134 N NARRATOR,SHINCHEOL~,LÃO SHIN~ sarcastic,angry 0-1 normal normal u
+135 D GU YANGCHEON,YANGCHEON surprised,neutral 0-1 normal normal m
+136 N NARRATOR,SHINCHEOL~,LÃO SHIN~ angry,surprised,sarcastic 0-2 normal normal u
+137 N
+138 N
+139 N
+140 N
+141 N,T NARRATOR,GU YANGCHEON,YANGCHEON surprised,afraid 0-1 normal normal u
+142 N
+143 N,T NARRATOR,GU YANGCHEON,YANGCHEON surprised,neutral 0-1 normal normal u
+144 N,T NARRATOR,GU YANGCHEON,YANGCHEON afraid,sad 0-2 normal normal u
+145 N NARRATOR neutral,afraid 0-1 normal normal u
+146 N NARRATOR,SHINCHEOL~,LÃO SHIN~ neutral,surprised 0-1 normal normal u
+147 D GU YANGCHEON,YANGCHEON neutral,surprised 0-1 normal normal m
+148 N NARRATOR,SHINCHEOL~,LÃO SHIN~ neutral 0-1 normal normal u
+149 D GU YANGCHEON,YANGCHEON surprised,neutral 0-1 normal normal m
+150 N,T NARRATOR,GU YANGCHEON,YANGCHEON surprised,neutral 0-1 normal normal u
+151 N NARRATOR,SHINCHEOL~,LÃO SHIN~ neutral 0-1 normal normal u
+152 D GU YANGCHEON,YANGCHEON surprised 0-1 normal normal m
+153 N,T NARRATOR,GU YANGCHEON,YANGCHEON surprised,neutral 0-1 normal normal u
+154 N NARRATOR,SHINCHEOL~,LÃO SHIN~ neutral 0-1 normal normal u
+155 N,T NARRATOR,GU YANGCHEON,YANGCHEON surprised,sarcastic 0-1 normal normal u
+156 N,T NARRATOR,GU YANGCHEON,YANGCHEON surprised,neutral 0-1 normal normal u
+157 N,T NARRATOR,GU YANGCHEON,YANGCHEON neutral,surprised 0-1 normal normal u
+158 N
+159 N
+160 N NARRATOR,SHINCHEOL~,LÃO SHIN~ angry,sarcastic 1-2 normal normal,loud u
+161 N
+162 N,T NARRATOR,GU YANGCHEON,YANGCHEON neutral 0-1 normal normal u
+163 N
+164 N
+165 N
+166 N
+167 N
+168 D GU YANGCHEON,YANGCHEON afraid,sad,neutral 0-1 normal soft,normal m
+169 N
+170 D NARRATOR,GU YANGCHEON~,YANGCHEON~ happy,sarcastic,neutral 0-1 normal normal u
+171 N
+172 N
+173 N NARRATOR neutral,afraid 0-1 normal normal u
+174 N
+175 N NARRATOR,SHINCHEOL~,LÃO SHIN~ sarcastic,happy 0-1 normal normal u
+176 D GU YANGCHEON,YANGCHEON angry,sarcastic,sad 0-1 normal normal m
+177 N NARRATOR,SHINCHEOL~,LÃO SHIN~ sarcastic,angry 0-1 normal normal u
+178 N,T NARRATOR,GU YANGCHEON,YANGCHEON sad,surprised,neutral 0-1 normal normal u
+179 N NARRATOR neutral,angry 0-1 normal normal u
+180 N,T NARRATOR,GU YANGCHEON,YANGCHEON angry 1-2 normal normal u
+181 N NARRATOR neutral,angry 0-1 normal normal u
+182 D GU YANGCHEON,YANGCHEON neutral,angry 0-1 normal normal m
+183 N
+184 N
+185 N
+186 N NARRATOR,SHINCHEOL~,LÃO SHIN~ neutral 0-1 normal,slow normal,soft u
+187 N,T NARRATOR,GU YANGCHEON,YANGCHEON neutral,surprised 0-1 normal normal u
+188 N
+189 N
+190 N NARRATOR,SHINCHEOL~,LÃO SHIN~ neutral,sad 0-1 normal,slow soft,normal u
+191 N NARRATOR neutral,tired 0-1 normal normal u
+192 N,T NARRATOR,GU YANGCHEON,YANGCHEON neutral,sarcastic 0-1 normal normal u
+193 N,T NARRATOR,GU YANGCHEON,YANGCHEON neutral,sarcastic 0-1 normal normal u
+194 N
+195 N,T NARRATOR,GU YANGCHEON,YANGCHEON sarcastic,angry 0-1 normal normal u
+196 N
+197 N
+198 N NARRATOR,SHINCHEOL~,LÃO SHIN~ angry 1-2 normal normal,loud u
+199 D GU YANGCHEON,YANGCHEON sarcastic,angry 0-1 normal normal m
+200 D YUNG PUNG happy,excited 1-2 normal,fast normal,loud m
+201 N NARRATOR neutral,surprised 0-1 normal normal u
+202 N
+203 N
+204 N
+205 N
+206 N
+207 D GU YANGCHEON,YANGCHEON surprised 0-1 normal normal,soft m
+208 N
+209 N
+210 N
+211 D YUNG PUNG happy,excited 1-2 normal,fast normal,loud m
+212 D GU YANGCHEON,YANGCHEON surprised 0-1 normal normal m
+213 N NARRATOR neutral,surprised 0-1 normal normal u
+214 N NARRATOR,SHINCHEOL~,LÃO SHIN~ surprised,sarcastic,neutral 0-1 normal normal u
+215 N
