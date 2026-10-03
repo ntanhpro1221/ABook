@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { skipToken, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pause, Play, Search, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -43,7 +43,7 @@ export function useNameReadings(bookId: string, enabled = true) {
 /** Sách đã phân tích xong chưa - đọc bản của trang dự án trong bộ nhớ đệm (không hỏi thêm máy chủ); không có bản ấy thì
  *  coi như đã phân tích (cách hiện cũ). */
 function useAnalyzed(bookId: string): boolean {
-  const book = useQuery<{ book: BookSummary }>({ queryKey: ["book", bookId], enabled: false }).data?.book;
+  const book = useQuery<{ book: BookSummary }>({ queryKey: ["book", bookId], queryFn: skipToken }).data?.book;
   return !book || (book.segments.total > 0 && book.segments.analyzed === book.segments.total);
 }
 
