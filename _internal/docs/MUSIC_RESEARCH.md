@@ -1930,6 +1930,23 @@ Chung:
   - revision mới cho Lead deploy.
 - Kiểm chéo, ghi lại không quyết: 30 bài S5 của (2) có trong (R) thì nhãn mới phải trùng nhãn cũ (cùng đoạn, cùng prompt).
 
+**KẾT QUẢ NHÃN LỜI HÁT MF CHO DANH MỤC (03-10 18:4x, `results/mfv_label.txt`, nhãn ở `mf_vocals.jsonl`):**
+- Đã gán nhãn đủ 1.599 bài, 6.396 lượt MF, chạy 17:20–18:44 trên card nhà.
+- (R) 1.254 bài bị loại vì CLAP > 0,5: 300 bài có hát (24 %) → **trả lại 954 bài không lời**.
+- (I) 345 bài Incompetech đang được miễn: **loại 8 bài có hát**.
+- Kiểm chéo với 26 bài S5 của (2): trùng nhãn 26/26.
+- Danh mục mới **fd5679c5c32c**: 2.415 bài (trước 2.087).
+  - Bỏ: vocals_mf 308, CLAP vocals (chưa có nhãn MF) 174, field 130, short 224, fill 1.507.
+  - Nhiều bài trả lại rơi vào phần "fill" vì ô đã đầy.
+  - Cả 25 ô đều tăng; ô 0_0 21 → 37, ô 4_0 15 → 27.
+- Danh sách phát (bài / phút):
+  - fantasy_adventure 150 / 458; fantasy_calm 150 / 1.171; school_light 150 / 565; romance 137 / 887;
+  - comedy 150 / 505; action 150 / 504; horror 150 / 598; mystery 86 / 444;
+  - eastern 34 / 103; scifi 90 / 633; sad 150 / 693; sleep 146 / 1.218.
+- Còn lại: khoảng 550 bài không phải Incompetech chưa có bản sao archive.org, chủ yếu là bài vừa trả lại. Link gốc vẫn
+  dùng được. Đăng bản sao khi hàng tác vụ của archive.org thông (đang ~1.000 tác vụ chờ từ 02-10).
+- Bài mới vào danh mục sau này chưa có nhãn MF thì vẫn theo luật CLAP 0,5, cho tới khi được gán nhãn.
+
 **GHI TRƯỚC - NGƯỠNG LỜI HÁT CỦA CẢ DANH MỤC (03-10 15:3x; trước khi có số AST nào ngoài 55 bài đầu đã bỏ):**
 
 Câu hỏi: `vocals` (CLAP zero-shot) trong khoảng 0,3–0,5 có thật là có tiếng hát không?
