@@ -10,7 +10,7 @@ import org.json.JSONObject
  * nhân vật, tên chương, nhạc nền, xem/bỏ thay đổi; và phần W (ý muốn chờ Studio - [BookWishes]): cách đọc tên, ai nói câu này,
  * gộp tên, cách đọc câu, giọng/giới, thu lại, danh sách chờ và rút. Cộng "Nhạc của tôi" ([MusicStore], docs/MUSIC_IMPORT.md): danh
  * sách bài đã nhập, xoá, và - cho từng cuốn - nhóm bài của tôi trong "Đổi bài" + ghim một bài vào một đoạn nhạc (`PUT /music {pins}`).
- * Mọi thứ khác: 404. Cuốn lấy từ máy tính khác thì sửa ở máy ấy: 409.
+ * Cộng "Tìm bìa trên mạng" ([CoverSearch]): `GET /cover/search?q=` và `PUT /cover {url}`. Mọi thứ khác: 404. Cuốn lấy từ máy tính khác thì sửa ở máy ấy: 409.
  *
  * Lời đáp phải y hệt bản Python (tests/fixtures/book_edits/contract/ - LocalStudioTest phát lại từng bước), nên câu báo lỗi
  * và mã trạng thái theo đúng server.py: sửa sai (ValueError bên Python) là 400.
@@ -88,11 +88,26 @@ object LocalStudio {
         }
     }
 
-    private fun run(method: String, path: String, body: JSONObject): Pair<Int, Any?> {
+    private fun run(method: String, rawPath: String, body: JSONObject): Pair<Int, Any?> {
+        val path = rawPath.substringBefore('?') // tham số của GET do giao diện gửi trong `body` (android/localStudio.ts)
         MY_MUSIC.matchEntire(path)?.let { return myMusic(method, it.groups[1]?.value, it.groups[2] != null) }
         val match = ROUTE.matchEntire(path) ?: throw Api(404, "Không có đường dẫn này")
         val id = match.groupValues[1]
         val rest = match.groupValues[2]
+        // Hai đường cần MẠNG (tìm bìa, tải bìa đã chọn) chạy ngoài khoá: vài giây chờ nguồn ảnh không được chặn các lần sửa khác.
+        if (method == "GET" && rest == "/cover/search") {
+            editable(id)
+            return 200 to CoverSearch.search(BookEdits.pyText(body.opt("q")))
+        }
+        if (method == "PUT" && rest == "/cover" && BookEdits.truthy(body.opt("url"))) {
+            val dir = editable(id)
+            val raw = try {
+                CoverSearch.downloadImage(BookEdits.pyStr(body.opt("url")))
+            } catch (error: CoverCodec.CoverError) {
+                throw BookEdits.EditsError(error.message.orEmpty())
+            }
+            return synchronized(lock) { 200 to setCover(dir, raw) }
+        }
         val handler = route(method, rest) ?: throw Api(404, "Không có đường dẫn này")
         val dir = editable(id)
         // Mỗi cuốn một lần sửa một lúc: đọc-sửa-ghi của hai yêu cầu không được chen nhau.
@@ -155,14 +170,20 @@ object LocalStudio {
         return JSONObject().put("title", BookEdits.setTitle(dir, cleaned))
     }
 
-    /** PUT /cover {image: data URL}: bìa người nghe đặt nằm ở edits/cover.jpg, bìa của sách giữ nguyên. */
+    /**
+     * PUT /cover {image: data URL} (hay {url} - ảnh chọn từ "Tìm bìa trên mạng", tải ở [run] qua [CoverSearch]): bìa người nghe đặt
+     * nằm ở edits/cover.jpg, bìa của sách giữ nguyên.
+     */
     private fun cover(dir: java.io.File, body: JSONObject): Any? {
-        if (BookEdits.truthy(body.opt("url"))) throw BookEdits.EditsError("Điện thoại chưa tải bìa từ địa chỉ mạng - hãy chọn ảnh có sẵn trong máy")
         val raw = try {
             Covers.decodeDataUrl(BookEdits.pyText(body.opt("image")))
         } catch (error: CoverCodec.CoverError) {
             throw BookEdits.EditsError(error.message.orEmpty())
         }
+        return setCover(dir, raw)
+    }
+
+    private fun setCover(dir: java.io.File, raw: ByteArray): JSONObject {
         val codec = coverCodec ?: AndroidCoverCodec
         return JSONObject().put("cover", BookEdits.setCover(dir, raw, clock(), codec))
     }
