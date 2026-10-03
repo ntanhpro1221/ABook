@@ -39,6 +39,13 @@ OPENERS = "\"'“‘([«"
 ROMAN = re.compile(r"X{0,3}(?:IX|IV|V?I{0,3})")  # I..XXXIX (chuỗi rỗng khớp, bị loại riêng)
 _ROMAN_VALUE = {"I": 1, "V": 5, "X": 10}
 _DIGITS = ("", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín")
+# Dấu bộ chuẩn hoá của sea-g2p đọc sai: "~" luôn là "khoảng", "500,000" là "năm trăm", "<Tên>" là "nhỏ hơn ... lớn hơn", "a / b" là "a trên b".
+TILDES = re.compile(r"~+")
+THOUSANDS = re.compile(r"(?<![0-9.,])[0-9]{1,3}(?:,[0-9]{3})+(?![0-9]|[.,][0-9])")  # kiểu Anh: 1,500 là một nghìn rưỡi; thập phân Việt "1,5" thì không khớp
+ANGLE_OPEN = "<《〈"
+ANGLE_CLOSE = ">》〉"
+ANGLE_REACH = 12  # ngoặc nhọn mở và đóng cách nhau tối đa bấy nhiêu chữ hiện
+PUNCT_MARKS = ".,;:!?…"
 # Số La Mã MỘT chữ (I, V, X) hay là chữ cái ("ông X", "tia X", "điểm V"): chỉ đọc thành số sau danh từ đánh số (hay tên riêng viết hoa kép: "Louis X").
 NUMBERED_NOUNS = frozenset(unicodedata.normalize("NFC", word) for word in (
     "chương", "phần", "tập", "quyển", "hồi", "mục", "khoá", "khóa", "lớp", "cấp", "hạng", "bậc", "đệ", "đời", "kỳ", "kì", "số", "bài", "điều",
@@ -108,11 +115,103 @@ def numbered_by(toks: list[str], index: int) -> bool:
     return _capitalised(before) and _capitalised(earlier)
 
 
+def _digit(char: str) -> bool:
+    return "0" <= char <= "9" and len(char) == 1
+
+
+def _tilde(token: str) -> str:
+    def replace(match: re.Match) -> str:
+        left = token[match.start() - 1] if match.start() else ""
+        right = token[match.end()] if match.end() < len(token) else ""
+        if _digit(left) and _digit(right):
+            return " đến "
+        if _digit(right) and not left.isalnum():
+            return match.group()  # "~50 người": để sea-g2p đọc "khoảng"
+        return " " if left.isalpha() and right.isalpha() else ""  # "Hmm~", "Har~kun"
+    return TILDES.sub(replace, token)
+
+
+def _tildes(out: list[str]) -> None:
+    """"~" kéo dài giọng ("Hmm~") thì bỏ, giữa hai số ("3~5", "10,000 ~ 15,000") là "đến", trước số ("~50") là "khoảng" (sea-g2p đọc)."""
+    for index, token in enumerate(out):
+        if "~" not in token:
+            continue
+        if token.strip(OPENERS + CLOSERS + PUNCT_MARKS).strip("~"):  # còn chữ khác: xét trong chính chữ này
+            out[index] = _tilde(token)
+            continue
+        before = out[index - 1].rstrip(CLOSERS) if index else ""  # "~" đứng riêng: nhìn chữ kề hai bên
+        after = out[index + 1].lstrip(OPENERS) if index + 1 < len(out) else ""
+        number_after = bool(after) and _digit(after[0])
+        said = TILDES.sub("đến" if number_after and bool(before) and _digit(before[-1]) else "~" if number_after else "", token)
+        if index and not said.strip(CLOSERS + PUNCT_MARKS):  # "Ô ~," -> "Ô,": dấu câu còn lại dính vào chữ trước
+            out[index - 1] += said
+            said = ""
+        out[index] = said
+
+
+def _angle(out: list[str]) -> None:
+    """<Tên kỹ năng> -> Tên kỹ năng (sea-g2p đọc "nhỏ hơn ... lớn hơn"): bỏ ngoặc nhọn bao chữ, cụm từ hai chữ trở lên thêm dấu phẩy hai bên để ngắt.
+    "<" chỉ là ngoặc khi liền một chữ cái và có ">" đóng trong ANGLE_REACH chữ; "3 < 5", "<3", ">:)" để nguyên."""
+    index = 0
+    while index < len(out):
+        body = out[index].lstrip(OPENERS)
+        start = len(out[index]) - len(body)
+        nxt = out[index + 1].lstrip(OPENERS) if index + 1 < len(out) else ""
+        if not body or body[0] not in ANGLE_OPEN or (body[0] == "<" and not (body[1:2].isalpha() or (body == "<" and nxt[:1].isalpha()))):
+            index += 1
+            continue
+        run = len(body) - len(body.lstrip(ANGLE_OPEN))
+        end = None
+        for last in range(index, min(len(out), index + ANGLE_REACH)):
+            text = out[last]
+            for at in range(start + run if last == index else 0, len(text)):
+                if text[at] in ANGLE_CLOSE and not (text[at] == ">" and at and text[at - 1] in "-="):
+                    end = (last, at)
+                    break
+            if end:
+                break
+        if end is None:
+            index += 1
+            continue
+        last, at = end
+        size = len(out[last][at:]) - len(out[last][at:].lstrip(ANGLE_CLOSE))
+        out[last] = out[last][:at] + out[last][at + size:]
+        out[index] = out[index][:start] + out[index][start + run:]
+        if last > index:  # tên nhiều chữ: dấu phẩy trước và sau để ngắt
+            rest = out[last][at:]  # phần còn lại của chữ sau ngoặc đóng ("Star〉[Cầu" -> "[Cầu")
+            if at and out[last][at - 1].isalnum() and rest[:1] not in tuple(PUNCT_MARKS) and (rest.lstrip(CLOSERS) or last + 1 < len(out)):
+                out[last] = out[last][:at] + "," + rest
+            core = out[index - 1].rstrip(CLOSERS) if index else ""
+            if core and core[-1].isalnum():
+                out[index - 1] = core + "," + out[index - 1][len(core):]
+        index = last + 1
+
+
+def _slashes(out: list[str]) -> None:
+    """"Đóng băng / yếu": gạch chéo đứng riêng giữa hai từ chữ là dấu phẩy gắn vào từ trước (sea-g2p đọc "trên"); giữa hai số (3/5, 15 / 8) để nguyên."""
+    for index in range(1, len(out) - 1):
+        after = out[index + 1].lstrip(OPENERS)
+        if out[index] == "/" and out[index - 1][-1:].isalpha() and after[:1].isalpha():
+            out[index - 1] += ","
+            out[index] = ""
+
+
+def reading_marks(out: list[str]) -> None:
+    """Dấu câu / ký hiệu mà sea-g2p đọc sai thành lời (nó đọc "~" là "khoảng", "500,000" là "năm trăm"): sửa tại chỗ, số chữ không đổi."""
+    _tildes(out)
+    for index, token in enumerate(out):
+        out[index] = THOUSANDS.sub(lambda match: match.group().replace(",", ""), token)
+    _angle(out)
+    _slashes(out)
+    for index, token in enumerate(out):  # 《》〈〉 còn sót (không có cặp) cũng chỉ là khung
+        out[index] = token.translate({ord(c): None for c in ANGLE_OPEN[1:] + ANGLE_CLOSE[1:]})
+
+
 def spoken_tokens(toks: list[str]) -> list[str]:
     """Chữ hiện -> chữ đem đọc (biến đổi để đọc, chữ hiện không đổi): số La Mã HOA hợp lệ (I..XXXIX) đứng riêng sau một từ ("Phổ thông II",
     "Chương IV", "Thế chiến II") hay làm đề mục đầu đoạn ("I. Mở đầu") thì đọc thành số tiếng Việt - bộ chuẩn hoá của sea-g2p chỉ biết
     "Benedict III", còn "thông II" nó đọc "i i". Số MỘT chữ (I, V, X) chỉ khi từ trước đánh số được (`numbered_by`): "ông X", "tia X", "điểm V" là chữ cái.
-    Giữ nguyên "I am" đầu câu, chữ "I" sau dấu câu và các viết tắt (CV, MC, VIP)."""
+    Giữ nguyên "I am" đầu câu, chữ "I" sau dấu câu và các viết tắt (CV, MC, VIP). Sau cùng `reading_marks` sửa "~", nghìn kiểu Anh, <ngoặc nhọn>, " / "."""
     out = list(toks)
     for index, token in enumerate(toks):
         core = token.lstrip(OPENERS).rstrip(CLOSERS + ".,;:!?…")
@@ -128,6 +227,7 @@ def spoken_tokens(toks: list[str]) -> list[str]:
                 if not (before.isalpha() and any(c.islower() for c in before)) or (len(core) == 1 and not numbered_by(toks, index)):
                     continue
         out[index] = token.replace(core, vietnamese_number(value), 1)
+    reading_marks(out)
     return out
 
 
@@ -182,9 +282,9 @@ def units(text: str, max_chars: int) -> tuple[list[str], list[Unit]]:
     for first, last in pieces:  # gói câu vào khúc như vieneu (pack_sentences_into_chunks)
         if result and _length(toks, result[-1].first, last) <= max_chars:
             result[-1].last = last
-            result[-1].pieces.append(" ".join(said[first:last + 1]))
+            result[-1].pieces.append(" ".join(word for word in said[first:last + 1] if word))
         else:
-            result.append(Unit(first, last, [" ".join(said[first:last + 1])]))
+            result.append(Unit(first, last, [" ".join(word for word in said[first:last + 1] if word)]))
     while len(result) > 1:  # khúc quá ngắn gộp vào khúc kề ngắn hơn (bằng nhau: khúc sau)
         short = [i for i, unit in enumerate(result) if _length(toks, unit.first, unit.last) < MIN_UNIT_CHARS]
         if not short:
