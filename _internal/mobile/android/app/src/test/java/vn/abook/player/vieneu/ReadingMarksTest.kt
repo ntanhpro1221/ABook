@@ -17,7 +17,7 @@ class ReadingMarksTest {
 
     @Test
     fun aTildeIsDroppedOrReadAsARange() = check(
-        "Hmm~ Har~kun? EMMMMM~!" to "Hmm Har kun? EMMMMM!",
+        "Hmm~ Har~kun? EMMMMM~!" to "hừm Har kun? em…!",
         "Ưm~~~, xong. Ô ~, vậy sao. Ồ~”." to "Ưm, xong. Ô, vậy sao. Ồ”.",
         "Từ 10,000 ~ 15,000 đồng và 3~5 người." to "Từ 10000 đến 15000 đồng và 3 đến 5 người.",
         "Khoảng ~50 người, “~50” nữa." to "Khoảng ~50 người, “~50” nữa.",
@@ -49,7 +49,7 @@ class ReadingMarksTest {
     fun aSlashBetweenTwoWordsIsAPause() = check(
         "Bị 【Đóng băng / yếu】 rồi." to "Bị 【Đóng băng, yếu】 rồi.",
         "Chạy / bay." to "Chạy, bay.",
-        "HP: 5813 / 5813 và 3/5, 15/8, 3 / 5." to "HP: 5813 / 5813 và 3/5, 15/8, 3 / 5.",
+        "HP: 5813 / 5813 và 3/5, 15/8, 3 / 5." to "hát pê: 5813 / 5813 và 3/5, 15/8, 3 / 5.",
         "Mở/đóng và km/h." to "Mở/đóng và km/h.",
     )
 

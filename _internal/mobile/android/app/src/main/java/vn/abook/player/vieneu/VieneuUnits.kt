@@ -1,6 +1,8 @@
 package vn.abook.player.vieneu
 
+import vn.abook.player.readaloud.Abbreviations
 import vn.abook.player.readaloud.Names
+import vn.abook.player.readaloud.Shouts
 import vn.abook.player.readaloud.WordTokens
 import java.text.Normalizer
 
@@ -181,8 +183,9 @@ object VieneuUnits {
      * Shown words -> words to read (a reading-only change, the shown text stays): an upper-case Roman numeral I..XXXIX standing alone after a word
      * with a lower-case letter ("Phổ thông II", "Chương IV"), after a numeral just read ("Mục II, III"), or as a heading at the start of the
      * paragraph ("I. Mở đầu") is read as a Vietnamese number - sea-g2p only knows "Benedict III" and reads "thông II" as "i i". "I am" at the
-     * start, an "I" after punctuation and abbreviations (CV, MC, VIP) stay. In a book with a Japanese / Korean [origin] ("ja" / "ko") romaji / RR names are read by the
-     * romanization rules ("Haruto" -> "Ha-ru-tô", [Names.readNames]); real English words are left to sea-g2p. Last `readingMarks` fixes "~", English thousands,
+     * start, an "I" after punctuation and abbreviations (CV, MC, VIP) never become numbers. In a book with a Japanese / Korean [origin] ("ja" / "ko") romaji / RR names are read by the
+     * romanization rules ("Haruto" -> "Ha-ru-tô", [Names.readNames]); real English words are left to sea-g2p. In every book: stretched sounds ("Aaaa" -> "a… a", [Shouts]),
+     * capital abbreviations by their letter names ("HP" -> "hát pê", [Abbreviations]) and hyphenated honorifics ("Ariel-sama" -> "Ariel-xa-ma", [Names.readHonorifics]). Last `readingMarks` fixes "~", English thousands,
      * <angle brackets> and " / ". `spoken_tokens` of vieneu.py.
      */
     fun spokenTokens(toks: List<String>, origin: String? = null): List<String> {
@@ -199,7 +202,10 @@ object VieneuUnits {
             }
             out[index] = token.replaceFirst(core, vietnameseNumber(value))
         }
+        Shouts.readShouts(toks, out)
+        Abbreviations.spellAbbreviations(toks, out)
         Names.readNames(toks, out, origin)
+        Names.readHonorifics(toks, out, origin)
         readingMarks(out)
         return out
     }

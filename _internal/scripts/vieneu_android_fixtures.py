@@ -289,6 +289,20 @@ NAME_PARAGRAPHS = [
     ("Haruto-kun, Kyouko-san đã đến. Kate hỏi Mike, còn Rose và Hana thì cười.", "ko"),
     ("Haruto-kun, Kyouko-san đã đến. Kate hỏi Mike, còn Rose và Hana thì cười.", None),
 ]
+# Paragraphs for the reading-only sounds (abbreviations.py letter names, shouts.py stretched sounds and Latin interjections, names.honorific_reading suffixes): read with
+# and without a book origin. Written for these fixtures (no book text).
+SOUND_PARAGRAPHS = [
+    ("Chỉ số HP và MP của cô còn 15%. NPC đứng cạnh SSR, VIP, ID, OK, TV, GOTY. LINE, MAX, YES, TIP, BAKA, HAHA. 10KG, LV5, A12-B, TP.HCM, PGS.TS.", None),
+    ("CÚT ĐI, AI ĐÓ! ONII-CHAN LO LẮNG CHO CON KÌA. Hạng AAA và AAA+++, rồi SSS. Chương III, XXX. Ôi, XXX! IIII.", None),
+    ("Aaaa, Haaa… Uuu! Viiiiii, rồiiiii, tớơơơơ, chứứứứ, quẹooo, đâuuuu. Khônggg, Emmmm, Hầyyy, rấtttt, Oáppp~", None),
+    ("Hmmm, Ummm…Ý bạn; Haaa…..cuối; màaaa—nếu; Oáppp~....Hầy; -EH....nhìn. Xoạttt- *Viiiii*- ‘nhaaa’ (Hmmm)", None),
+    ("Kyaaa! Uwaaa! Yaaa! Aー, Haー, EMMMMMMM, AAAA, Weisss, Onii-channnn, zzz, Cccchhhhàaaaaaoooo.", "ja"),
+    ("Umm, Ugh, Boom, Oh, Hmm, Ahhhh, Oooh, Hm, UGH.", "ko"),
+    ("Ariel-sama, Mary-san, Zeros-sensei, Goblin Slayer-san, Sora-sama, Hinata-sama, Haruto-kun, Tanaka-senpai, Kate-san, sĩ-sama, thần-chan.", None),
+    ("Ariel-sama, Mary-san, Zeros-sensei, Sora-sama, Haruto-kun, onee-chan, ojou-sama, Tsukinoki-senpai.", "ja"),
+    ("Oppa, unnie! hyung noona. Hyung-nim, Soleum-ssi, Minho-oppa, Seo-yeon-ssi, Mary-san.", "ko"),
+    ("Oppa, unnie! hyung noona. Hyung-nim, Soleum-ssi, Minho-oppa, san, sama, tan, nee, nii.", None),
+]
 JA_NAMES = "Haruto Yuki Sakura Kyouko Takeshi Hiroshi Akira Kenji Yamato Naoki Satoshi Ayaka Reiji Tsubasa Shinji Kaori".split()
 KO_NAMES = "Si-eun So-hye Hwi-min Seo-ram Deok-gu Kang-ho Ha-jin Joo-seon Min-jun Seo-yeon Ji-ho Geun-hye".split()
 WEST_NAMES = "Alberu Eruhaben Henituse Harol Witira Cale Mirabelle Ruel Alon Gideon Damien Aurora Nora Stella".split()
@@ -343,7 +357,7 @@ def text_fixture() -> dict:
     normalize = [{"text": text, "plain": normalizer.normalize(text, punc_norm=False), "punc": normalizer.normalize(text, punc_norm=True),
                   "puncNorm": punc_norm(text)} for text in SENTENCES]
     units = []
-    for text, origin in [(text, None) for text in PARAGRAPHS + [CLIP_TEXT]] + NAME_PARAGRAPHS:
+    for text, origin in [(text, None) for text in PARAGRAPHS + [CLIP_TEXT]] + NAME_PARAGRAPHS + SOUND_PARAGRAPHS:
         for limit in (256, 140, 40):
             toks, parts = vieneu.units(text, limit, origin)
             rows = [{"first": unit.first, "last": unit.last, "pieces": unit.pieces, "phonemes": ve.phonemize(unit.pieces)} for unit in parts]

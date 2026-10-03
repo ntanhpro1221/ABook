@@ -24,7 +24,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable
 
-from . import names
+from . import abbreviations, names, shouts
 from .model import Synthesis, Voice, VoiceError
 
 PREFIX = "vieneu"
@@ -212,9 +212,10 @@ def spoken_tokens(toks: list[str], origin: str | None = None, speaks_english: bo
     """Chữ hiện -> chữ đem đọc (biến đổi để đọc, chữ hiện không đổi): số La Mã HOA hợp lệ (I..XXXIX) đứng riêng sau một từ ("Phổ thông II",
     "Chương IV", "Thế chiến II") hay làm đề mục đầu đoạn ("I. Mở đầu") thì đọc thành số tiếng Việt - bộ chuẩn hoá của sea-g2p chỉ biết
     "Benedict III", còn "thông II" nó đọc "i i". Số MỘT chữ (I, V, X) chỉ khi từ trước đánh số được (`numbered_by`): "ông X", "tia X", "điểm V" là chữ cái.
-    Giữ nguyên "I am" đầu câu, chữ "I" sau dấu câu và các viết tắt (CV, MC, VIP). Cuốn có gốc Nhật / Hàn (`origin` "ja" / "ko", `names.book_origin`) thì tên
+    Giữ nguyên "I am" đầu câu, chữ "I" sau dấu câu và không biến viết tắt (CV, MC, VIP) thành số. Cuốn có gốc Nhật / Hàn (`origin` "ja" / "ko", `names.book_origin`) thì tên
     romaji / RR đọc theo luật phiên âm ("Haruto" -> "Ha-ru-tô"; `names.spoken_names`), từ tiếng Anh thật vẫn để sea-g2p đọc - trừ giọng không nói được âm Anh (`speaks_english` False: Supertonic) thì
-    từ / tên Anh được Việt hoá thành âm tiết ("Rose" -> "Râu-dơ"). Sau cùng `reading_marks`
+    từ / tên Anh được Việt hoá thành âm tiết ("Rose" -> "Râu-dơ"). Với MỌI cuốn và giọng: thán từ kéo dài ("Aaaa" -> "a… a", `shouts`), viết tắt toàn hoa đọc tên chữ cái
+    ("HP" -> "hát pê", `abbreviations`), hậu tố gọi nối gạch ("Ariel-sama" -> "Ariel-xa-ma", `names.honorific_reading`). Sau cùng `reading_marks`
     sửa "~", nghìn kiểu Anh, <ngoặc nhọn>, " / "."""
     out = list(toks)
     for index, token in enumerate(toks):
@@ -231,6 +232,8 @@ def spoken_tokens(toks: list[str], origin: str | None = None, speaks_english: bo
                 if not (before.isalpha() and any(c.islower() for c in before)) or (len(core) == 1 and not numbered_by(toks, index)):
                     continue
         out[index] = token.replace(core, vietnamese_number(value), 1)
+    shouts.read_shouts(toks, out)
+    abbreviations.spell_abbreviations(toks, out)
     names.spoken_names(toks, origin, speaks_english, out)
     reading_marks(out)
     return out
