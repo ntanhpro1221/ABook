@@ -22,6 +22,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   "<Angel Wings>" đọc trơn, ngắt hai bên, không còn "nhỏ hơn ... lớn hơn"; "Đóng băng / yếu" ngắt ở dấu gạch chéo thay vì "trên". Chữ hiện trên màn hình
   không đổi.
 
+- "Nghe ngay" (máy tính và điện thoại, mọi giọng) đọc đúng ba thứ hay gặp trong truyện dịch: chữ viết tắt toàn hoa đọc bằng tên chữ cái ("HP" thành "hát pê", "NPC" thành "en pê xê";
+  "VIP", "ID", "OK", "TV" đọc như từ, còn "LINE", "MAX" vẫn là chữ), tiếng kêu kéo dài thành một tiếng ngân ("Aaaa" thành "a… a", "Hmmm" thành "hừm…", "rồiiii" thành "rồi… ì"),
+  và hậu tố gọi dù app chưa nhận ra gốc của cuốn ("Ariel-sama" thành "Ariel-xa-ma", "hiệp sĩ-sama" thành "hiệp sĩ-xa-ma", "Oppa" thành "ốp-pa"). Chữ hiện trên màn hình không đổi.
+
 - Chuẩn bị cho giọng chỉ nói được tiếng Việt (chưa dùng khi đọc): app biết đọc từ / tên tiếng Anh bằng âm tiết Việt theo cách chủ sách chọn - "level" thành
   "le-vồ", "Michael" thành "Mai-cồ", "skill" thành "xờ-kiu", "Mike" thành "Mi-ke"; tên tự đặt không có trong từ điển đọc theo mặt chữ ("Encrid" thành
   "En-cơ-rít"). Bản máy tính mang theo từ điển phát âm gọn (0,8 MB); điện thoại sẽ tải khi cần.
