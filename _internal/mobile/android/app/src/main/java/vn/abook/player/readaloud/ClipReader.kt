@@ -22,6 +22,10 @@ class ClipReader(
         const val EDGE_BREAK_MS = 120_000L
         const val ONLINE_ERROR_BREAK_MS = 30_000L
         const val KEY_BREAK_MS = 600_000L
+        /** Mất mạng mà máy không có giọng nào đọc được khi không có mạng (không giọng tiếng Việt của máy, chưa tải VieNeu): nói thật và chỉ cách,
+         *  thay vì câu của giọng trực tuyến (trước đây "... - đọc bằng giọng của máy" rồi dừng - thấy 03-10 trên máy ảo không có giọng tiếng Việt). */
+        const val NO_OFFLINE_VOICE = "Không có mạng, và máy chưa có giọng tiếng Việt đọc được khi không có mạng. Đoạn đã đọc sẵn vẫn nghe được; " +
+            "để nghe không cần mạng, cài giọng tiếng Việt cho máy (Cài đặt Android › Chuyển văn bản thành giọng nói) hoặc tải Giọng VieNeu"
 
         private fun provider(voice: Voice) = voice.id.substringBefore(':')
         /** Đọc trên máy nhưng có thể chưa sẵn sàng (mô-đun tải thêm): hỏng thì đỡ bằng giọng của máy. */
@@ -63,6 +67,9 @@ class ClipReader(
                 fallback()?.let { add(it) }
             }
         }.distinctBy { it.id }
+        val noOfflineVoice = chain.all { online(it) }
+        fun offlineHelp(error: VoiceException?) =
+            if (noOfflineVoice && error?.offline == true) VoiceException(NO_OFFLINE_VOICE, offline = true, cause = error, reason = error.reason) else null
         var first: VoiceException? = null // lỗi của giọng đã chọn: câu chính khi mọi giọng đều hỏng
         var failed: Voice? = null
         var problem: VoiceException? = null
@@ -86,6 +93,7 @@ class ClipReader(
             } catch (error: VoiceException) {
                 val earlier = first
                 if (!(online(voice) || local(voice)) || index == chain.lastIndex) {
+                    offlineHelp(earlier ?: error)?.let { throw it }
                     if (earlier == null) throw error
                     throw VoiceException("${earlier.message}; ${error.message}", earlier.offline, error, earlier.reason)
                 }
@@ -100,7 +108,7 @@ class ClipReader(
                 problem = error
             }
         }
-        throw first ?: problem ?: VoiceException("Không có giọng nào đọc được - kiểm tra mạng hoặc cài giọng tiếng Việt cho máy")
+        throw offlineHelp(first ?: problem) ?: first ?: problem ?: VoiceException("Không có giọng nào đọc được - kiểm tra mạng hoặc cài giọng tiếng Việt cho máy")
     }
 
     /** Đúng giọng này, không rơi sang giọng khác ("Thử giọng" trong Cài đặt: người nghe muốn nghe chính giọng ấy, hỏng thì phải thấy lỗi). */

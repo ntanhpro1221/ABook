@@ -55,6 +55,29 @@ class ClipReaderTest {
     }
 
     @Test
+    fun offlineWithNoVoiceThatWorksOfflineSaysSoInsteadOfPromisingTheDeviceVoice() {
+        val edge = FakeVoice("edge:v", VoiceException("Không có mạng để dùng giọng Edge", offline = true))
+        val reader = reader(edge, null)
+        for (attempt in 0 until 2) { // lần sau (Edge đang "nghỉ") cũng cùng câu ấy
+            try {
+                reader.read("Xin $attempt", "edge:v")
+                fail("không có giọng nào đọc được")
+            } catch (error: VoiceException) {
+                assertEquals(ClipReader.NO_OFFLINE_VOICE, error.message)
+                assertTrue(error.offline)
+            }
+        }
+        // Có giọng máy mà giọng máy cũng hỏng: không phải chuyện "thiếu giọng ngoại tuyến", giữ lời của từng giọng.
+        val broken = FakeVoice("device:vi", VoiceException("Giọng của máy hỏng"))
+        try {
+            reader(FakeVoice("edge:v", VoiceException("Không có mạng để dùng giọng Edge", offline = true)), broken).read("Xin", "edge:v")
+            fail("cả hai giọng đều hỏng")
+        } catch (error: VoiceException) {
+            assertTrue(error.message!!.startsWith("Không có mạng để dùng giọng Edge;"))
+        }
+    }
+
+    @Test
     fun aFailedEdgeIsNotRetriedOnEveryParagraphButIsRetriedLater() {
         val edge = FakeVoice("edge:v", VoiceException("Không có mạng", offline = true))
         val device = FakeVoice("device:vi")
@@ -108,13 +131,14 @@ class ClipReaderTest {
     }
 
     @Test
-    fun withNoDeviceVoiceTheNetworkErrorIsWhatTheListenerSees() {
-        val edge = FakeVoice("edge:v", VoiceException("Không có mạng để dùng giọng Edge", offline = true))
+    fun withNoDeviceVoiceTheServiceErrorIsWhatTheListenerSees() {
+        // Có mạng mà dịch vụ hỏng: lời của chính dịch vụ (mất mạng thì là NO_OFFLINE_VOICE - test ở trên).
+        val edge = FakeVoice("edge:v", VoiceException("Dịch vụ đọc to đang bận (HTTP 503)"))
         try {
             reader(edge, null).read("Xin", "edge:v")
             fail("đáng ra lỗi")
         } catch (error: VoiceException) {
-            assertEquals("Không có mạng để dùng giọng Edge", error.message)
+            assertEquals("Dịch vụ đọc to đang bận (HTTP 503)", error.message)
         }
     }
 
