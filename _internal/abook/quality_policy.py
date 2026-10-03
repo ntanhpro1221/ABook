@@ -38,6 +38,8 @@ ANALYSIS_CASTING_IMPLEMENTATION_FILES = (
     "analysis.py",
     "character_registry.py",
     "models.py",
+    "voice_balance.py",
+    "assets/voice_balance.json",
     "voice_catalog.py",
 )
 QUALITY_IMPLEMENTATION_FILES = (
@@ -61,6 +63,8 @@ QUALITY_IMPLEMENTATION_FILES = (
     "text_processing.py",
     "tts.py",
     "tts_contract.py",
+    "voice_balance.py",
+    "assets/voice_balance.json",
     "voice_catalog.py",
     "../pyproject.toml",
     "../uv.lock",

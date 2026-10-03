@@ -21,6 +21,7 @@ from .database import (
     ProjectDB,
 )
 from .io_utils import slugify, stable_int
+from .voice_balance import formant_key as balance_formant_key
 from .voice_catalog import (
     CASTING_REGIONS,
     AGE_PITCH_RANK_BUCKET,
@@ -1546,7 +1547,7 @@ def voice_profile_spec(preset: dict[str, str], formant_ratio: float, *, age_pitc
     # for: children speak about three semitones above an adult, and ageing moves men up
     # while it moves women down.
     base_pitch = base_pitch_for_preset(name) + int(age_pitch)
-    formant_key = f"f{int(round(float(formant_ratio) * 100)):03d}"
+    formant_key = balance_formant_key(formant_ratio)
     pitch_key = f"p{int(base_pitch):+03d}"
     if abs(float(formant_ratio) - 1.0) <= 1e-6:
         description = "âm sắc gốc"

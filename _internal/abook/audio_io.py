@@ -23,7 +23,7 @@ from .audio_transform_contract import (
 )
 from .io_utils import atomic_write_text, ffmpeg_executable, run_hidden, sha256_file
 from .text_processing import VIETNAMESE_UNITS, vietnamese_number_words
-from .voice_catalog import pace_scale_for_preset, speed_factor_for_preset
+from . import voice_balance
 
 
 class AudioQualityError(RuntimeError):
@@ -200,26 +200,27 @@ MIN_GENERATION_SECONDS = 3.0
 MIN_VALIDATION_SECONDS = 5.0
 VALIDATION_PADDING_SECONDS = 8.0
 DEFAULT_PACE_LOWER_BOUNDS = {"slow": 6.0, "normal": 10.5, "fast": 12.0}
-# Tên preset đọc đoạn này, ghi vào hàng đoạn trước khi soi bản thu (`synthesize_atomic`,
-# `Pipeline._segment_for_audio_check`). Hàng trong DB chỉ mang `voice_profile_id`; vắng trường này
-# thì hệ số nhịp là 1,0 và cổng y như trước.
-VOICE_PRESET_FIELD = "voice_preset"
+# Khoá bảng cân bằng giọng của giọng đọc đoạn này (`voice_balance.voice_key`), ghi vào hàng đoạn
+# trước ngân sách sinh và trước độ to (`synthesize_atomic`). Hàng trong DB chỉ mang
+# `voice_profile_id`; vắng trường này thì không biết giọng nào, và độ to hằng số không áp được.
+VOICE_BALANCE_FIELD = "voice_balance_key"
 
 
-def _voice_preset(segment: Any) -> str:
-    """Tên preset trong hàng đoạn, rỗng khi hàng không mang nó.
+def _voice_balance_key(segment: Any) -> str:
+    """Khoá giọng trong hàng đoạn, rỗng khi hàng không mang nó.
 
     Không dùng `_segment_value`: hàng `sqlite3.Row` báo thiếu cột bằng `IndexError`, không phải
-    `KeyError`, và mọi hàng đi thẳng từ DB (ghép chương, recovery) đều thiếu cột này. Bản thử đầu
-    dùng `_segment_value` và làm mọi lần soi trên hàng DB ném lỗi - chương không xuất được MP3.
+    `KeyError`, và mọi hàng đi thẳng từ DB (ghép chương, recovery) đều thiếu cột này.
     """
     if segment is None:
         return ""
     try:
-        value = segment[VOICE_PRESET_FIELD]
+        value = segment[VOICE_BALANCE_FIELD]
     except (IndexError, KeyError, TypeError):
         return ""
     return str(value or "")
+
+
 SHORT_UTTERANCE_MAX_WORDS = 2
 SHORT_UTTERANCE_MAX_SPEAKABLE_CHARS = 8
 SHORT_UTTERANCE_MIN_GENERATION_FRAMES = 12
@@ -467,8 +468,8 @@ def pace_is_outlier(
 ) -> bool:
     """Chậm chỉ khi chậm theo CẢ chữ lẫn âm tiết; nhanh vẫn xét theo chữ như cũ.
 
-    `floor_scale` là nhịp riêng của giọng (`PRESET_PACE_SCALE`): cả hai sàn nhân với nó, cận trên
-    thì không. Mặc định 1,0 - mọi chỗ gọi cũ ra đúng câu trả lời cũ.
+    `floor_scale` là nhịp chung của bảng cân bằng (`voice_balance.pace_gate_scale`): cả hai sàn nhân
+    với nó, cận trên thì không. Mặc định 1,0 - mọi chỗ gọi cũ ra đúng câu trả lời cũ.
 
     Chương 075 của lô 3 mất câu "Và Alice đã ở đó để tận dụng sơ hở ấy." sau 10/10 lần thử ở
     10,64–11,80 chars/s, sàn 12,5. Câu ấy có 2,25 chữ mỗi từ (trung vị kho: 3,33): cùng một
@@ -534,12 +535,16 @@ def segment_duration_policy(
     configured_bounds = tts.get("pace_chars_per_second", {})
     configured = configured_bounds.get(pace, DEFAULT_PACE_LOWER_BOUNDS.get(pace, 10.5))
     lower_bound = float(configured[0] if isinstance(configured, (list, tuple)) else configured)
-    # Sàn của NHỊP THÔ: một giọng chậm (`PRESET_PACE_SCALE`) sinh bản thu chậm hơn băng, và tốc
-    # độ của nó (`PRESET_SPEED_FACTOR`) chỉ được tăng SAU khi sinh. Cấp khung theo sàn chung thì
-    # câu dài của Đức Trí (11,39 kt/s thô) chạm trần và bị cắt cụt.
-    preset = _voice_preset(segment)
-    if preset:
-        lower_bound *= pace_scale_for_preset(preset) / speed_factor_for_preset(preset)
+    # Sàn của NHỊP THÔ: tốc độ của giọng (`tempo = x * r_v`) chỉ được áp SAU khi sinh, nên bản thu
+    # thô chậm hơn bản nghe `tempo` lần. Cấp khung theo sàn chung thì câu dài của Đức Trí (11,39
+    # kt/s thô) chạm trần và bị cắt cụt. Sàn cổng là `pace_floor_scale * x`, chia cho tempo còn
+    # `pace_floor_scale / r_v`: `x` triệt tiêu. Hàng không mang giọng (chỉ soi, không sinh) thì
+    # giữ sàn chung.
+    balance_key = _voice_balance_key(segment)
+    if balance_key:
+        lower_bound *= voice_balance.raw_pace_floor_scale(voice_balance.constants_for_key(balance_key))
+    else:
+        lower_bound *= voice_balance.pace_floor_scale()
     speakable_chars = max(1, spoken_speakable_chars(text))
     generation_seconds = max(
         MIN_GENERATION_SECONDS,
@@ -683,15 +688,76 @@ def integrated_loudness_lufs(audio: np.ndarray, sample_rate: int) -> float | Non
     return loudness if math.isfinite(loudness) else None
 
 
-def normalize_segment_level(
+def segment_offsets_db(segment: Any, settings: dict[str, Any]) -> float:
+    """Độ lệch TƯƠNG ĐỐI của câu so với mức chung L, dB: volume + cảm xúc + người kể.
+
+    - volume: `segment_target_lufs[volume] - segment_target_lufs["normal"]` (soft -3,0 / normal 0 /
+      loud +1,2 với cấu hình mặc định). Chỉ lấy HIỆU giữa các neo; mức tuyệt đối của `normal`
+      là `L` của bảng cân bằng giọng, không phải số trong cấu hình;
+    - cảm xúc: `LOUDNESS_EMOTION_OFFSETS_DB[emotion] * intensity / 3`, chỉ khi volume là normal;
+    - người kể: `segment_narrator_offset_db` khi speaker là NARRATOR.
+    """
+    audio_cfg = settings["audio"]
+    targets = audio_cfg["segment_target_lufs"]
+    volume = str(_segment_value(segment, "volume", "normal"))
+    offset = float(targets.get(volume, targets["normal"])) - float(targets["normal"])
+    if str(_segment_value(segment, "speaker", "")) == "NARRATOR":
+        offset += float(audio_cfg.get("segment_narrator_offset_db", 0.0))
+    if volume == "normal":
+        emotion = str(_segment_value(segment, "emotion", "neutral"))
+        intensity = max(0, min(3, int(_segment_value(segment, "intensity", 0))))
+        offset += LOUDNESS_EMOTION_OFFSETS_DB.get(emotion, 0.0) * intensity / 3.0
+    return offset
+
+
+def segment_gain_db(segment: Any, settings: dict[str, Any]) -> float:
+    """Gain HẰNG SỐ (dB) áp lên bản thô của giọng, không đo gì ở câu này.
+
+        gain_dB = L + o_v + offsets(câu) - ref_lufs_v
+
+    `L` là mức chung, `o_v` là độ lệch riêng của giọng (đo ở x = 1, sau cao độ và tempo),
+    `offsets` là `segment_offsets_db`, và `ref_lufs_v` là LUFS trung bình đã đo của bản thô của
+    giọng: bản thô trung bình được kéo về `L + o_v`, các giọng gặp nhau ở một trục. Hai câu cùng giọng
+    ra cùng gain bất kể câu nào to nhỏ hơn - dao động trong một giọng là của cảm xúc, không phải
+    của phép đo.
+
+    Thiếu khoá giọng trong hàng đoạn, hoặc giọng chưa có trong bảng: LỖI (`VoiceBalanceError`).
+    """
+    key = _voice_balance_key(segment)
+    if not key:
+        raise voice_balance.VoiceBalanceError(
+            "đoạn không mang giọng nào (thiếu voice_balance_key) nên không biết áp độ to hằng số nào"
+        )
+    constants = voice_balance.constants_for_key(key)
+    return (
+        voice_balance.level_lufs()
+        + constants.o_db
+        + segment_offsets_db(segment, settings)
+        - constants.ref_lufs
+    )
+
+
+def level_segment(
     audio: np.ndarray,
     sample_rate: int,
     segment: Any,
     settings: dict[str, Any],
-) -> np.ndarray:
+    *,
+    already_leveled: bool = False,
+) -> tuple[np.ndarray, dict[str, float]]:
+    """Đưa bản thu về mức của giọng. Trả (âm thanh, số đo): `level_gain_db` đã áp và `peak_limited_db`.
+
+    Với sách mới (có `segment_target_lufs`) đây là `segment_gain_db`, hằng số; không còn đo LUFS câu rồi
+    kéo về đích. Trần đỉnh `segment_peak_dbfs` giữ làm chốt an toàn: đỉnh vượt thì hạ cho vừa, phần hạ
+    thêm ghi ở `peak_limited_db` (dB, >= 0). `already_leveled` dành cho bản ghép từ các phần đã áp gain:
+    áp lần nữa là gấp đôi gain, nên chỉ còn trần đỉnh.
+
+    Sách khoá từ trước thời LUFS (chỉ có `segment_target_dbfs`) giữ nguyên chính sách RMS đo từng câu.
+    """
     array = np.asarray(audio, dtype=np.float32).reshape(-1)
+    info = {"level_gain_db": 0.0, "peak_limited_db": 0.0}
     if not array.size:
-        return array
+        return array, info
     audio_cfg = settings["audio"]
     active_rms = _active_rms(
         array,
@@ -699,36 +765,36 @@ def normalize_segment_level(
         float(audio_cfg.get("segment_active_floor_dbfs", -45.0)),
     )
     if active_rms <= 0:
-        return array
-    volume = str(_segment_value(segment, "volume", "normal"))
+        return array, info
     lufs_targets = audio_cfg.get("segment_target_lufs")
     if isinstance(lufs_targets, dict) and "normal" in lufs_targets:
-        target_level = float(lufs_targets.get(volume, lufs_targets["normal"]))
-        speaker = str(_segment_value(segment, "speaker", ""))
-        if speaker == "NARRATOR":
-            target_level += float(audio_cfg.get("segment_narrator_offset_db", 0.0))
-        if volume == "normal":
-            emotion = str(_segment_value(segment, "emotion", "neutral"))
-            intensity = max(0, min(3, int(_segment_value(segment, "intensity", 0))))
-            target_level += LOUDNESS_EMOTION_OFFSETS_DB.get(emotion, 0.0) * intensity / 3.0
-        measured_level = integrated_loudness_lufs(array, sample_rate)
-        if measured_level is None:
-            measured_level = 20.0 * math.log10(active_rms)
+        desired_db = 0.0 if already_leveled else segment_gain_db(segment, settings)
     else:
         # Locked books created before LUFS leveling retain their original RMS policy.
+        volume = str(_segment_value(segment, "volume", "normal"))
         targets = audio_cfg["segment_target_dbfs"]
         target_level = float(targets.get(volume, targets["normal"]))
         if volume == "normal":
             emotion = str(_segment_value(segment, "emotion", "neutral"))
             intensity = max(0, min(3, int(_segment_value(segment, "intensity", 0))))
             target_level += EMOTION_LEVEL_OFFSETS_DB.get(emotion, 0.0) * intensity / 3.0
-        measured_level = 20.0 * math.log10(active_rms)
-    desired_gain = 10 ** ((target_level - measured_level) / 20.0)
+        desired_db = target_level - 20.0 * math.log10(active_rms)
     peak = float(np.max(np.abs(array)))
-    peak_limit = 10 ** (float(audio_cfg.get("segment_peak_dbfs", -2.0)) / 20.0)
-    peak_safe_gain = peak_limit / peak if peak > 0 else desired_gain
-    gain = min(desired_gain, peak_safe_gain)
-    return np.asarray(array * gain, dtype=np.float32)
+    peak_limit_db = float(audio_cfg.get("segment_peak_dbfs", -2.0))
+    peak_safe_db = peak_limit_db - 20.0 * math.log10(peak)
+    gain_db = min(desired_db, peak_safe_db)
+    info["level_gain_db"] = float(gain_db)
+    info["peak_limited_db"] = float(max(0.0, desired_db - peak_safe_db))
+    return np.asarray(array * (10 ** (gain_db / 20.0)), dtype=np.float32), info
+
+
+def normalize_segment_level(
+    audio: np.ndarray,
+    sample_rate: int,
+    segment: Any,
+    settings: dict[str, Any],
+) -> np.ndarray:
+    return level_segment(audio, sample_rate, segment, settings)[0]
 
 
 def validate_audio_array(
@@ -819,9 +885,8 @@ def validate_audio_array(
         metrics["chars_per_second"] = float(rate)
         metrics["chars_per_second_heard"] = float(heard_rate)
         metrics["syllables_per_second"] = float(syllable_rate)
-        pace_scale = pace_scale_for_preset(_voice_preset(segment))
-        if pace_scale != 1.0:
-            metrics["pace_scale"] = float(pace_scale)
+        pace_scale = voice_balance.pace_gate_scale()
+        metrics["pace_scale"] = float(pace_scale)
         metrics["pace_outlier"] = float(
             pace_is_outlier(
                 rate,
@@ -925,13 +990,17 @@ def atomic_write_wav(
     text: str,
     settings: dict[str, Any],
     segment: Any | None = None,
+    already_leveled: bool = False,
 ) -> tuple[str, dict[str, float]]:
     path.parent.mkdir(parents=True, exist_ok=True)
     temp = path.with_name(path.stem + ".part" + path.suffix)
     temp.unlink(missing_ok=True)
     array, _ = validate_audio_array(audio, text, settings, sample_rate, segment=segment)
+    level_info: dict[str, float] = {}
     if segment is not None:
-        array = normalize_segment_level(array, sample_rate, segment, settings)
+        array, level_info = level_segment(
+            array, sample_rate, segment, settings, already_leveled=already_leveled
+        )
     array, _ = validate_audio_array(array, text, settings, sample_rate, segment=segment)
     sf.write(temp, array, sample_rate, subtype="PCM_16")
     # Windows rejects fsync on a read-only descriptor (WinError 9).
@@ -943,6 +1012,7 @@ def atomic_write_wav(
         raise AudioQualityError(f"temporary WAV failed validation: {reason}")
     checksum = sha256_file(temp)
     os.replace(temp, path)
+    metrics.update(level_info)
     return checksum, metrics
 
 
@@ -1074,7 +1144,10 @@ def merge_wav_parts_atomic(
             arrays.append(np.zeros(int(sample_rate * pause_seconds), dtype=np.float32))
     assert sample_rate is not None
     merged = np.concatenate(arrays)
-    return atomic_write_wav(destination, merged, sample_rate, text, settings, segment=segment)
+    # Các phần đã được áp gain của giọng lúc chúng được thu; ghép xong chỉ còn trần đỉnh.
+    return atomic_write_wav(
+        destination, merged, sample_rate, text, settings, segment=segment, already_leveled=True
+    )
 
 
 def verify_mp3(path: Path) -> tuple[bool, str]:
