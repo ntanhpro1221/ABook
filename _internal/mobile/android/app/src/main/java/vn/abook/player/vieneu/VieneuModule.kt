@@ -324,7 +324,7 @@ class VieneuModule(
         private const val MUSIC_BASE = vn.abook.player.MusicStudentSetup.BASE
 
         /** Commit of NGDtuanh/abook-music-student that holds `sea-g2p/0.9.1/` (scripts/prepare_sea_g2p_android.py). Empty = not uploaded yet. */
-        const val G2P_REVISION = ""
+        const val G2P_REVISION = "a8446407cc4f4775b0f0029da63a24756ebc966f"
         private const val G2P_BASE = "https://huggingface.co/NGDtuanh/abook-music-student/resolve/$G2P_REVISION/sea-g2p/0.9.1/"
 
         private fun g2pLib(abi: String, sha256: String, size: Long, packedSha256: String, packedSize: Long) =
