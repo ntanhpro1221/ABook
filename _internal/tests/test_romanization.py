@@ -1,0 +1,154 @@
+"""Luật đọc romaji Nhật / RR Hàn thành âm tiết Việt (abook/romanization.py, docs/READING_FOREIGN_NAMES.md mục 1-3).
+
+Ba lớp kiểm:
+  - mọi dạng CÓ NGUỒN (tests/romanization_evidence.py): khớp, hoặc không khớp kèm lý do là một dòng quy ước đã [Chọn] khác nguồn;
+  - từng dòng luật, bằng ca nhỏ tự dựng;
+  - bộ ví dụ dùng chung với Kotlin (tests/fixtures/romanization/cases.json): bản Python phải ra đúng file, và file phải là bản sinh mới nhất.
+"""
+from __future__ import annotations
+
+import importlib.util
+import json
+import re
+from pathlib import Path
+
+import pytest
+
+from abook.analysis import _valid_vietnamese_spoken_form
+from abook.romanization import OPEN_CHOICES, romanized_reading, romanized_reading_flags
+from tests import romanization_evidence as evidence
+
+ROOT = Path(__file__).resolve().parents[1]
+FIXTURE = ROOT / "tests" / "fixtures" / "romanization" / "cases.json"
+
+
+def _cases() -> list[dict]:
+    return json.loads(FIXTURE.read_text(encoding="utf-8"))["cases"]
+
+
+def _matches(token: str, origin: str, sources: tuple[str, ...]) -> bool:
+    found = romanized_reading(token, origin)
+    return found is not None and found.casefold() in {source.casefold() for source in sources}
+
+
+# ---- dạng có nguồn -----------------------------------------------------------------------------------------------------
+
+def test_every_sourced_form_matches_or_is_explained_by_a_chosen_rule():
+    matched, unexplained, stale = [], [], []
+    for token, origin, sources, _kind in evidence.SOURCED:
+        reading = romanized_reading(token, origin)
+        if _matches(token, origin, sources):
+            matched.append(token)
+            assert token not in evidence.EXPLAINED, f"{token} khớp nhưng vẫn ghi là không khớp"
+        elif token not in evidence.EXPLAINED:
+            unexplained.append((token, reading, sources))
+        elif evidence.EXPLAINED[token][0] != (reading or ""):
+            stale.append((token, reading, evidence.EXPLAINED[token][0]))
+    assert not unexplained, f"không khớp mà chưa có lý do: {unexplained}"
+    assert not stale, f"cách đọc đổi mà lý do còn viết cho cách đọc cũ: {stale}"
+    assert len(matched) + len(evidence.EXPLAINED) == len(evidence.SOURCED)
+    # 46 / 94: 44 / 92 dạng có nguồn + 2 ca của chủ sách; 48 còn lại đều do luật của chủ sách, điểm đã quét hay nguồn tự lệch (EXPLAINED)
+    assert len(matched) == 46
+
+
+def test_tally_of_sourced_forms_by_kind():
+    tally: dict[tuple[str, str], list[int]] = {}
+    for token, origin, sources, kind in evidence.SOURCED:
+        entry = tally.setdefault((kind, origin), [0, 0])
+        entry[0] += _matches(token, origin, sources)
+        entry[1] += 1
+    # (khớp, tổng). Dạng "community" (Doraemon cũ) chỉ để xem, không là chuẩn.
+    assert tally == {("owner", "ja"): [2, 2], ("textbook", "ja"): [27, 46], ("official", "ja"): [5, 12], ("community", "ja"): [0, 8],
+                     ("official", "ko"): [12, 26]}
+
+
+# ---- từng dòng luật ----------------------------------------------------------------------------------------------------
+
+@pytest.mark.parametrize("token,origin,reading", [
+    # chủ sách 04-10 (đứng trên mọi nguồn): u Nhật -> u ở mọi chỗ, hậu tố nối gạch thành một chuỗi
+    ("Haruto-kun", "ja", "Ha-ru-tô-cun"), ("Fukushima", "ja", "Phu-cu-si-ma"), ("Suzu", "ja", "Xu-du"), ("Gugu", "ja", "Gu-gu"),
+    ("Tsuru", "ja", "Chu-ru"), ("Kuro", "ja", "Cu-rô"), ("Fumio", "ja", "Phu-mi-ô"), ("Masakazu", "ja", "Ma-xa-ca-du"),
+    # mục 1.2: thanh ngang; khép p / t / c / ch thì sắc (phụ âm đôi khép âm tiết trước)
+    ("Sapporo", "ja", "Xáp-pô-rô"), ("Hokkaido", "ja", "Hốc-cai-đô"), ("Matcha", "ja", "Mát-cha"), ("Kenta", "ja", "Ken-ta"),
+    # mục 1.4: s -> x, sh -> s
+    ("Osaka", "ja", "Ô-xa-ca"), ("Hiroshima", "ja", "Hi-rô-si-ma"), ("Shimoda", "ja", "Si-mô-đa"),
+    # mục 2: iu / u sau âm vòm, chu, tsu -> chu, ji -> gi, wa -> oa
+    ("Kyuushuu", "ja", "Kiu-xiu"), ("Chuubu", "ja", "Chu-bu"), ("Tsubasa", "ja", "Chu-ba-xa"),
+    ("Hajime", "ja", "Ha-gi-mê"), ("Kawasaki", "ja", "Ca-oa-xa-ki"),
+    # nguyên âm dài không kéo dài; ei -> ay (quét); ai giữ; n âm tiết khép; e khép là e
+    ("Koutarou", "ja", "Cô-ta-rô"), ("Tōkyō", "ja", "Tô-ki-ô"), ("Reiji", "ja", "Ray-gi"), ("Saitama", "ja", "Xai-ta-ma"),
+    ("Sendai", "ja", "Xen-đai"), ("Shinzō", "ja", "Sin-dô"),
+    # c / k / g theo chính tả
+    ("Kenji", "ja", "Ken-gi"), ("Ginko", "ja", "Gin-cô"),
+    # hậu tố: nối gạch vào tên thành một chuỗi (chủ sách 04-10), hậu tố giữ chữ thường
+    ("Subaru-kun", "ja", "Xu-ba-ru-cun"), ("Tanaka-senpai", "ja", "Ta-na-ca-xen-pai"), ("Sato-sensei", "ja", "Xa-tô-xen-xay"),
+    ("Aiko-san", "ja", "Ai-cô-xan"), ("Rin-chan", "ja", "Rin-chan"), ("Ojou-sama", "ja", "Ô-giô-xa-ma"), ("Hiiragi-chan", "ja", "Hi-i-ra-gi-chan"),
+    ("senpai", "ja", "xen-pai"),
+    # tiếng Hàn: g / d / b đầu từ vô thanh, giữa hai âm hữu thanh thì hữu thanh; k t p cuối -> c t p + sắc; l cuối -> n
+    ("Geun", "ko", "Cưn"), ("Dae", "ko", "Te"), ("Changdeok", "ko", "Chang-đớc"), ("Park", "ko", "Pắc"), ("Seoul", "ko", "Sơ-un"),
+    ("Hanbit", "ko", "Han-bít"), ("Hallasan", "ko", "Han-la-san"), ("Jeju", "ko", "Chê-chu"), ("Daegu", "ko", "Te-gu"),
+    # tên người Hàn: mỗi âm tiết RR một bộ phận cách nhau dấu cách khi viết nối gạch
+    ("Park Geun-hye", "ko", "Pắc Cưn Hê"), ("Kim Dae-jung", "ko", "Kim Te Chung"), ("Lee Myung-bak", "ko", "Li Miêng Bắc"),
+])
+def test_reading_follows_the_convention(token, origin, reading):
+    assert romanized_reading(token, origin) == reading
+
+
+@pytest.mark.parametrize("token,origin", [
+    ("Cale", "ja"), ("Lily", "ja"), ("Ah", "ja"), ("IZUMO", "ja"), ("iPhone", "ja"), ("Ko1", "ja"), ("Tuka", "ja"), ("Kaz", "ja"), ("", "ja"),
+    ("Ka-", "ja"), ("Cale", "ko"), ("Hmm", "ko"), ("PARK", "ko"),
+    ("Hajime", None), ("Seoul", None),                # không biết gốc thì không đoán
+    ("Yongin", "ko"), ("Hangang", "ko"), ("Jiwoo", "ko"),  # yong-in / yon-gin không phân được; Jiwoo không là RR
+])
+def test_unsure_is_none(token, origin):
+    assert romanized_reading(token, origin) is None
+
+
+def test_open_choices_are_flagged_not_silent():
+    # ya / yo: mặc định ya / i-ô (quét), có cờ; k bật hơi của Hàn có cờ; wo / oe / wi / ui có cờ
+    assert romanized_reading_flags("Yamato", "ja") == ("Ya-ma-tô", ("open:y_initial",))
+    assert romanized_reading_flags("Yokohama", "ja") == ("I-ô-cô-ha-ma", ("open:y_initial",))
+    assert romanized_reading_flags("Kyoko", "ja") == ("Ki-ô-cô", ())  # kyo đã có nguồn (Ki-ô-tô): không mở
+    assert romanized_reading_flags("Taehyung", "ko")[1] == ("open:ko_aspirated",)
+    assert romanized_reading_flags("Kwon", "ko")[1] == ("open:ko_rare_vowels",)
+    assert set(OPEN_CHOICES) == {"y_initial", "ko_aspirated", "ko_rare_vowels"}
+
+
+def test_a_reading_is_the_same_whatever_the_capitalisation_of_the_input():
+    assert romanized_reading("osaka", "ja") == "ô-xa-ca"
+    assert romanized_reading("Osaka", "ja") == "Ô-xa-ca"
+    assert romanized_reading("OSAKA", "ja") is None  # toàn hoa là chữ viết tắt, việc của luật khác
+
+
+# ---- bộ ví dụ dùng chung với Kotlin ------------------------------------------------------------------------------------
+
+def test_the_shared_fixture_is_what_the_python_rule_says():
+    cases = _cases()
+    assert len(cases) > 300
+    wrong = []
+    for case in cases:
+        found = romanized_reading_flags(case["token"], case["origin"])
+        reading = None if found is None else found[0]
+        flags = [] if found is None else list(found[1])
+        if (reading, flags) != (case["reading"], case["flags"]):
+            wrong.append((case["token"], case["origin"], reading, flags, case["reading"], case["flags"]))
+    assert not wrong, wrong[:10]
+
+
+def test_the_shared_fixture_is_the_latest_generated_one():
+    spec = importlib.util.spec_from_file_location("build_romanization_fixture", ROOT / "scripts" / "build_romanization_fixture.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    assert FIXTURE.read_bytes() == module.cases_bytes(), "chạy lại scripts/build_romanization_fixture.py"
+    assert b"\r" not in FIXTURE.read_bytes()
+
+
+def test_every_syllable_of_every_reading_is_a_valid_vietnamese_syllable():
+    checked = 0
+    for case in _cases():
+        if case["reading"] is None:
+            continue
+        for syllable in re.split(r"[ -]", case["reading"]):
+            assert _valid_vietnamese_spoken_form("", syllable), (case["token"], case["reading"], syllable)
+            checked += 1
+    assert checked > 800
