@@ -127,8 +127,10 @@ class VieneuModule(
         return readBench().optJSONObject(tier)?.optDouble("rtf")?.takeIf { !it.isNaN() }
     }
 
-    /** Before any measurement Nano; Turbo once a measurement says this phone keeps up with it (or Nano runs well under the limit). */
+    /** Before any measurement Nano; Turbo once a measurement says this phone keeps up with it (or Nano runs well under the limit) - and only with
+     *  enough memory for it ([TURBO_MIN_RAM_GB]). */
     fun recommended(bench: JSONObject = readBench()): String {
+        if (facts.ramGb < TURBO_MIN_RAM_GB) return "nano"
         val turbo = bench.optJSONObject("turbo")?.optDouble("rtf") ?: Double.NaN
         val nano = bench.optJSONObject("nano")?.optDouble("rtf") ?: Double.NaN
         return if ((!turbo.isNaN() && turbo < SLOW_RTF) || (turbo.isNaN() && !nano.isNaN() && nano < TURBO_HEADROOM_RTF)) "turbo" else "nano"
@@ -151,7 +153,11 @@ class VieneuModule(
         }
         val choices = JSONArray()
         for (choice in CHOICES) {
-            val (label, detail) = CHOICE_TEXT.getValue(choice)
+            val (label, text) = CHOICE_TEXT.getValue(choice)
+            // Turbo trên máy ít RAM: vẫn tải được (người dùng quyết), nhưng nói trước vì sao Nano hợp hơn.
+            val detail = if (choice == "turbo" && facts.ramGb < TURBO_MIN_RAM_GB)
+                "$text. Máy này có khoảng ${"%.0f".format(java.util.Locale.ROOT, facts.ramGb)} GB RAM, mà Turbo cần khoảng 1,3 GB khi đọc nên Android dễ tắt nó - Nano hợp hơn"
+            else text
             choices.put(JSONObject().put("id", choice).put("label", label).put("detail", detail).put("needs", JSONArray(NEEDS.getValue(choice)))
                 .put("bytes", lacking(listOf(choice), states).sumOf { bytes(it, states) }).put("installed", choice in tiers)
                 .put("recommended", choice == best).put("default", choice == best).put("removable", choice in tiers))
@@ -307,6 +313,9 @@ class VieneuModule(
         const val SLOW_RTF = 0.8
         /** Nano this much faster than listening -> Turbo (about as fast on a phone, measured 03-10) is worth recommending. */
         const val TURBO_HEADROOM_RTF = 0.6
+        /** Turbo peaks at about 1.25-1.3 GB while reading (PSS, OPPO A93 and the emulator 03-10); under a 6 GB phone (Android reports ~5.5) it is
+         *  likely to be killed in the background, so it is not recommended there. */
+        const val TURBO_MIN_RAM_GB = 5.5
         val TIERS = listOf("turbo", "nano")
         val CHOICES = listOf("nano", "turbo")
         val NEEDS = mapOf("turbo" to listOf("ort", "g2p", "voices", "turbo"), "nano" to listOf("ort", "g2p", "voices", "nano"))
