@@ -7,6 +7,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Sửa lỗi
+
+- **File Word có câu bị xuống dòng giữa chừng không còn đọc thành hai đoạn (máy tính và điện thoại)**: chữ dán từ web hay PDF vào Word
+  thường xuống dòng cứng (Shift+Enter) ở cuối mỗi dòng hiển thị, nên một câu bị tách làm hai đoạn và giọng đọc ngừng ở giữa câu. Giờ
+  dòng chưa hết câu mà dòng sau viết thường thì được nối lại; thơ (mỗi dòng viết hoa) và thoại từng dòng vẫn giữ nguyên. Chữ của
+  truyện không đổi, chỉ chỗ ngắt đoạn.
+
 ## [0.4.22] - 2026-10-03
 
 ### Thư viện
