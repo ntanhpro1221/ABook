@@ -13,6 +13,7 @@ Mức độ của từng quy tắc:
 - **[Có nguồn]:** dạng đã thấy trong nguồn chính thức hay sách giáo khoa.
 - **[Chọn]:** các nguồn vênh nhau; app chọn một và ghi lý do.
 - **[App]:** không có nguồn nào đủ tin; quyết định riêng của app, kiểm bằng âm thanh (thu thử → ASR / máy nghe).
+- **[Chủ sách]:** chủ sách đã chốt bằng tai; đứng trên mọi nguồn.
 
 ## 0. Điều nền: không có chuẩn đọc chính thức
 
@@ -58,7 +59,7 @@ Hệ quả: ABook phải tự chọn một quy ước, neo vào nguồn chính t
 |---|---|---|---|
 | a, i, o | a, i, ô | Có nguồn | Ô-xa-ca, Tô-ky-ô, Hi-rô-si-ma |
 | e | ê | Có nguồn | Sa-na-ê, Mô-tê-gi, Cô-bê (đa số) |
-| u | ư | Chọn | Bộ Ngoại giao: Phư-mi-ô, Ê-xư-kê, Ma-xa-ca-dư, Xê-ki-gư-chi; SGK: Xi-cô-cư, Tô-hô-cư ở cuối từ; "u" Nhật là nguyên âm không tròn môi |
+| u | **u** ở mọi chỗ (fu → phu, ku → cu, ru → ru) | **Chủ sách** | Chủ sách 04-10: "Fukushima => phu-cu-si-ma", "haruto-kun => ha-ru-tô-cun". Khớp SGK (Phu-cu-ô-ca, Mu-rô-ran, Cu-si-rô, Chu-bu); bỏ kiểu "ư" của Bộ Ngoại giao (Phư-mi-ô, Ê-xư-kê) |
 | yu, kyu, ryu, shu, chu, ju | iu / u sau âm vòm | Có nguồn | Kiu-xiu, Riu-kiu, Chu-bu |
 | nguyên âm dài ō, ou, oo / ū, uu | ô / ư (không kéo dài) | Có nguồn | Tô-ky-ô, Hô-cai-đô, Kiu-xiu |
 | ei | ê | Chọn | Bộ Ngoại giao Ê-xư-kê; SGK cũ Kô-mây, May-gi |
@@ -70,9 +71,9 @@ Hệ quả: ABook phải tự chọn một quy ước, neo vào nguồn chính t
 | z, j | d / gi (zu → dư, ji → gi) | Có nguồn | Ma-xa-ca-dư, Sin-dô |
 | t, d | t, đ | Có nguồn | Ta-ca-i-chi, Hô-cai-đô, E-đô |
 | chi | chi | Có nguồn | Cô-chi, Ta-ca-i-chi |
-| tsu | chư | Chọn | Bộ Ngoại giao Tô-si-mi-chư (mới nhất); SGK cũ Mát-xu-ya-ma |
+| tsu | chu | Chọn | theo quyết định u → u của chủ sách (Bộ Ngoại giao Tô-si-mi-chư → chu); SGK cũ Mát-xu-ya-ma |
 | h, b, p, m, n, r | h, b, p, m, n, r | Có nguồn | Ha-kô-ne, Mô-ri |
-| fu | phư | Chọn | Bộ Ngoại giao Phư-mi-ô; SGK Phu-cu-ô-ca |
+| fu | phu | Chủ sách | "Fukushima => phu-cu-si-ma"; SGK Phu-cu-ô-ca |
 | w (wa) | oa | Có nguồn | Ca-oa-xa-ki, Bi-oa, Tô-ku-ga-oa |
 | ya, yo (đầu từ) | **mở** | App | SGK: Ya-ma-tô, I-ô-cô-ha-ma / Y-ô-cô-ha-ma; "ya" không phải âm tiết Việt; chọn bằng âm thanh |
 | kyo, ryo, nyo… | ki-ô, ri-ô, ni-ô | Có nguồn | Ki-ô-tô (CTST) |
@@ -80,8 +81,9 @@ Hệ quả: ABook phải tự chọn một quy ước, neo vào nguồn chính t
 | phụ âm đôi kk, pp, tt, ss | khép âm tiết trước bằng c / p / t + thanh sắc | Có nguồn | Hốc-cai-đô, Xáp-pô-rô |
 | "u" vô thanh (desu, Matsu…) | vẫn đọc ư / u | Có nguồn | dạng viết không bỏ âm nào |
 
-**Hậu tố gọi** (-san, -kun, -chan, -sama, senpai, sensei): không có nguồn đọc tiếng Việt. Đọc theo chính bảng trên: xan, cưn, chan,
-xa-ma, xen-pai, xen-xê. [App: áp nhất quán bảng romaji]
+**Hậu tố gọi** (-san, -kun, -chan, -sama, senpai, sensei): không có nguồn đọc tiếng Việt. Đọc theo bảng trên: xan, cun, chan, xa-ma,
+xen-pai, xen-xê. Hậu tố nối vào tên bằng GẠCH NỐI thành một chuỗi: "Haruto-kun" → "Ha-ru-tô-cun". [Chủ sách 04-10 cho -kun; các hậu
+tố khác áp cùng cách]
 
 ## 3. Tiếng Hàn (phiên âm Latinh RR / McCune, như bản dịch viết)
 
