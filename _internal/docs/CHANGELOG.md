@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.23] - 2026-10-03
+
 ### Thư viện
 
 - **File TXT cả truyện tách được thành từng chương khi thêm sách (máy tính và điện thoại)**: "Thêm sách từ file…" với một file TXT có từ hai
