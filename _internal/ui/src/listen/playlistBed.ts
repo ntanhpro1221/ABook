@@ -7,6 +7,7 @@
 // chuyển bài, âm lượng theo `gainDb`) là chính MusicBed: mỗi bài là một "mốc" trên đồng hồ ấy.
 
 import { api } from "@/studio/api";
+import type { ImportResult } from "@/studio/musicLocal";
 import type { MusicBed, MusicCredit, MusicCue } from "./musicBed";
 
 export const MINE_PLAYLIST = "mine";
@@ -200,8 +201,32 @@ function hours(minutes: number): string {
   return `dài ${Math.round(minutes / 60)} giờ`;
 }
 
-/** Các lựa chọn của menu "Nhạc nền", theo thứ tự hiện: Tắt, các danh sách của danh mục, Nhạc của tôi. */
-export function playlistOptions(menu: PlaylistMenu | undefined): PlaylistOption[] {
+/** Mục thêm nhạc ở cuối menu "Nhạc nền" (chỉ khi máy nhập được nhạc). */
+export const ADD_MUSIC_LABEL = "Thêm nhạc của bạn…";
+
+/** Lời nói khi "Nhạc của tôi" còn trống. Máy nhập được thì mục "Thêm nhạc của bạn…" ngay dưới đã là đường đi (không cần nói thêm);
+ *  máy không nhập được (điện thoại nghe thư viện máy tính, Studio từ xa) thì chỉ đường sang máy tính. */
+export function emptyMineHint(canImport: boolean): string | undefined {
+  return canImport ? undefined : "Máy này chưa thêm nhạc được. Thêm ở ABook trên máy tính (tab Nhạc nền của Studio), bài sẽ có ở đây.";
+}
+
+/** Câu báo sau khi thêm nhạc từ menu: bao nhiêu bài vào, và có nên chọn "Nhạc của tôi" cho cuốn đang nghe không (có bài trong kho là chọn;
+ *  không vào được bài nào thì không đổi gì). Phần đã nhập vẫn giữ khi có file lỗi. */
+export function addMusicOutcome(result: Pick<ImportResult, "added" | "existing" | "failed">): {
+  select: boolean;
+  kind: "success" | "warning" | "error";
+  title: string;
+  description?: string;
+} {
+  const { added, existing, failed } = result;
+  const description = failed.join("\n") || undefined;
+  if (added.length) return { select: true, kind: failed.length ? "warning" : "success", title: `Đã thêm ${added.length} bài`, description };
+  if (existing.length) return { select: true, kind: failed.length ? "warning" : "success", title: "Những bài này đã có trong Nhạc của tôi", description };
+  return { select: false, kind: "error", title: failed.length > 1 ? "Không thêm được file nào" : "Không thêm được file này", description };
+}
+
+/** Các lựa chọn của menu "Nhạc nền", theo thứ tự hiện: Tắt, các danh sách của danh mục, Nhạc của tôi. `canImport`: máy nhập được nhạc. */
+export function playlistOptions(menu: PlaylistMenu | undefined, canImport = false): PlaylistOption[] {
   return [
     { id: null, label: "Tắt", hint: "" },
     ...(menu?.playlists ?? []).map((item) => ({ id: item.id, label: item.name, hint: hours(item.minutes), description: item.description || undefined })),
@@ -209,8 +234,7 @@ export function playlistOptions(menu: PlaylistMenu | undefined): PlaylistOption[
       id: MINE_PLAYLIST,
       label: "Nhạc của tôi",
       hint: menu?.mine ? `${menu.mine} bài` : "chưa có bài nào",
-      // Đường thêm nhạc là nút “Nhập nhạc của tôi…” trong Sửa sách › Nhạc nền của sách nói (và tab Nhạc nền của Studio); sách chỉ có chữ chưa có.
-      description: menu?.mine ? undefined : "Thêm nhạc của bạn ở “Sửa sách › Nhạc nền” của một cuốn sách nói (hay tab Nhạc nền trong Studio). Chưa thêm được ngay từ menu này.",
+      description: menu?.mine ? undefined : emptyMineHint(canImport),
       disabled: !menu?.mine,
     },
   ];
