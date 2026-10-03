@@ -31,7 +31,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   tích nhạc hay Studio) không tải lại. Tải xong máy tự thử vài giây và nói giọng có kịp tốc độ nghe không; không kịp thì đề nghị đổi
   sang giọng nhẹ hơn - chỉ đổi khi bạn bấm. Giọng mới hiện ngay trong nút Giọng đọc lúc nghe. Có bản mới thì một lần bấm chỉ tải
   phần đổi. Máy không kịp đọc trực tiếp vẫn nghe được giọng VieNeu: nút Giọng đọc có "Làm trước các chương tới" - máy đọc sẵn ở nền
-  (việc đang nghe luôn được ưu tiên), nói rõ còn bao lâu, bấm "Dừng làm trước" là thôi.
+  (việc đang nghe luôn được ưu tiên), nói rõ còn bao lâu, bấm "Dừng làm trước" là thôi. Trên điện thoại "Làm trước" có cho cả giọng
+  trực tuyến (Edge, giọng dùng khóa của bạn): làm sẵn ở nhà rồi nghe trên tàu điện, máy bay mà không cần mạng. Điện thoại làm cả khi app
+  đã đóng, mặc định chỉ khi đang cắm sạc (tắt được ở ô "Chỉ khi đang sạc"), giọng trực tuyến chỉ làm khi có Wi-Fi, pin yếu thì chờ; báo
+  "Đã sẵn sàng 3/5 chương · còn khoảng 12 phút" ở nút Giọng đọc và ở thông báo, nói đang chờ gì (cắm sạc, Wi-Fi), và trước khi bấm cho
+  biết máy cần bao lâu. Chương đã làm xong có dấu "Đã làm sẵn" trong danh sách chương; nghe trực tiếp không đẩy chúng ra khỏi bộ nhớ
+  trước khi bạn nghe tới. Tắt app hay khởi động lại máy thì làm tiếp đúng chỗ. Mất mạng giữa chừng thì dừng và nói rõ - phần đã xong vẫn
+  giữ; chương làm trước luôn đọc bằng đúng giọng bạn chọn, không bao giờ xen giọng khác.
 
 - **Cài đặt → Giọng đọc: chọn giọng mặc định, nghe thử, và dùng giọng trực tuyến bằng khóa của bạn (máy tính và điện thoại)**: mục mới
   liệt kê mọi giọng đọc được cho "Nghe ngay" - Edge, giọng của máy, và giọng của các dịch vụ bạn có tài khoản - kèm gợi ý giọng nam / nữ,

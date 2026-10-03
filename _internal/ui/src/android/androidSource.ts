@@ -3,6 +3,7 @@ import type { Cast, ListenBook, ListeningSession, ListeningState, Script } from 
 import { bookProgress } from "./progress";
 import type { ListenSource } from "@/listen/source";
 import { EbookLibrary, EbookPlayer, ReadAloud, type LocalBook } from "./plugins";
+import { phonePrepare } from "./readAloud";
 import { phoneTextImport } from "./textImport";
 
 // Phía Nghe trên Android: đọc sách đã tải về máy, và sách trên máy tính nghe thẳng qua mạng (EbookLibrary). Audio chương do lõi phát native mở thẳng từ
@@ -93,6 +94,8 @@ export const androidSource: ListenSource = {
   // "Nghe ngay": lõi native tự đọc chương chữ bằng giọng của máy (TextToSpeech); JS chỉ hỏi giọng và mốc (android/readAloud.ts).
   readAloudVoices: async () => (await ReadAloud.voices()).voices,
   readAloudTimings: (bookId, chapterId) => ReadAloud.script({ bookId, chapterId }),
+  // "Làm trước": việc nền native đọc sẵn các chương tới (khi đang sạc, Wi-Fi) để nghe không cần mạng hay không phải chờ giọng chậm.
+  ...phonePrepare(),
   textImport: phoneTextImport,
   async script(bookId, chapterId) {
     const { text } = await EbookLibrary.readText({ id: bookId, path: `scripts/${chapterId}.json` });
