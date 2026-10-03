@@ -275,8 +275,9 @@ export interface EbookLibraryPlugin {
   sendEdits(options: { id: string }): Promise<EditsSyncState>;
   /** Gửi tự động xong (hay lỗi): trạng thái `editsSync` của cuốn đã đổi - giao diện làm mới. */
   addListener(event: "editsSync", handler: (event: { bookId: string }) => void): Promise<PluginListenerHandle>;
-  /** Lưu cuốn nhập từ file (kèm thay đổi của người nghe) thành file `.abook` mới - hộp thoại "tạo file" của hệ thống hỏi chỗ lưu. */
-  saveBook(options: { id: string }): Promise<{ saved: boolean; name?: string; size?: number; edits?: number }>;
+  /** Lưu cuốn nhập từ file (kèm thay đổi của người nghe) thành file mới - hộp thoại "tạo file" của hệ thống hỏi chỗ lưu. `as` không nói:
+   *  giữ loại file cuốn đã đến (`.abookproj` hay `.abook`). */
+  saveBook(options: { id: string; as?: "abook" | "abookproj" }): Promise<{ saved: boolean; name?: string; size?: number; edits?: number }>;
   deleteBook(options: { id: string }): Promise<void>;
   storage(): Promise<{ bytes: number; free: number }>;
   progress(options: { id: string; chapterId: number; seconds: number; duration: number }): Promise<ListeningState>;

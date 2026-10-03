@@ -21,6 +21,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - **Mở file `.abook` đã sửa của chính dự án**: bài nhạc người nghe ghim vào sách giờ cũng được áp - bài được nhập vào "Nhạc của tôi" của máy này (không trùng bản) rồi ghim đúng đoạn; bài nào thiếu file thì bỏ qua và nói rõ lý do.
 
+- **File dự án `.abookproj` nhỏ hơn, mở được và lưu được cả trên điện thoại**: audio chương, câu mẫu và bìa không còn nằm hai lần trong file (bản chép giống hệt chỉ còn là một dòng ghi chú). File thêm ba bản chụp chỉ đọc của "Việc cần duyệt", mục lục kịch bản và "Cách đọc tên", nên điện thoại (hay máy Windows chưa cài Studio) cho xem được mà không mở sổ dự án. Điện thoại mở file dự án để nghe, sửa tên sách / bìa / tên nhân vật / nhạc như mọi cuốn, rồi "Lưu" ra lại đúng file dự án - phần xưởng đi theo nguyên vẹn. Mở file của một dự án đã có trên máy tính thì không tạo dự án thứ hai: các thay đổi trong file chờ bạn bấm "áp vào dự án". Một cuốn sách `.abook` cũng lưu thành `.abookproj` được: file chỉ có phần nghe, và máy có Studio mời "Dựng xưởng" - tạo dự án mới từ chữ, giọng nhân vật, tên bạn đặt và những việc bạn ghi cho Studio (làm lại toàn bộ audio; nguồn chương gốc, lịch sử phân tích, từng câu đã thu không có trong file). File dự án của các bản dev cũ không còn đọc được: mở bằng bản đã gói rồi gói lại.
+
 ## [0.4.21] - 2026-10-03
 
 ### Studio
