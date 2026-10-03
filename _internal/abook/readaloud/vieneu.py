@@ -154,6 +154,27 @@ def wav_bytes(samples: Any, rate: int) -> bytes:
     return buffer.getvalue()
 
 
+def timed_synthesis(audio: Any, rate: int, toks: list[str], parts: list[Unit], spans: list[tuple[int, int]], aligner: Any) -> Synthesis:
+    """Clip WAV của cả đoạn + mốc từng chữ hiện: mỗi khúc `parts` đã biết chỗ của nó (`spans`, theo mẫu), chữ của khúc ấy được căn vào audio
+    của riêng nó. Dùng chung cho mọi giọng chạy trên máy (VieNeu, Supertonic)."""
+    from ..webui import word_timing
+
+    duration = len(audio) * 1000 // rate
+    words: list[list[int]] = []
+    for unit, (start, stop) in zip(parts, spans):
+        if stop <= start:  # khúc không ra tiếng: các chữ đứng ở chỗ khúc ấy
+            words += [[start * 1000 // rate, start * 1000 // rate] for _ in range(unit.last - unit.first + 1)]
+            continue
+        found, _how, _confidence = word_timing.line_words(resample(audio[start:stop], rate), unit.text(toks), start / rate, aligner)
+        words += found
+    previous = 0
+    for pair in words:  # không lùi, không quá cuối clip
+        pair[0] = min(max(pair[0], previous), duration)
+        pair[1] = min(max(pair[1], pair[0]), duration)
+        previous = pair[0]
+    return Synthesis(wav_bytes(audio, rate), [], duration, "wav", "audio/wav", words=words)
+
+
 def seed_of(*parts: str) -> int:
     """Hạt giống cố định theo giọng + chữ: cùng đoạn cùng giọng luôn ra cùng audio (bộ đệm, đọc lại)."""
     return int(hashlib.sha256("|".join(parts).encode("utf-8")).hexdigest()[:8], 16)
@@ -271,25 +292,9 @@ class VieneuProvider:
         return joined, engine.SAMPLE_RATE, toks, parts, spans
 
     def synthesize(self, text: str, native_voice: str) -> Synthesis:
-        from ..webui import word_timing
-
         tier, name, installed, preset = self._voice(native_voice)
         audio, rate, toks, parts, spans = self._speak(tier, name, installed, preset, text)
-        duration = len(audio) * 1000 // rate
-        aligner = self._aligner() if installed.aligner else None
-        words: list[list[int]] = []
-        for unit, (start, stop) in zip(parts, spans):
-            if stop <= start:  # khúc không ra tiếng: các chữ đứng ở chỗ khúc ấy
-                words += [[start * 1000 // rate, start * 1000 // rate] for _ in range(unit.last - unit.first + 1)]
-                continue
-            found, _how, _confidence = word_timing.line_words(resample(audio[start:stop], rate), unit.text(toks), start / rate, aligner)
-            words += found
-        previous = 0
-        for pair in words:  # không lùi, không quá cuối clip
-            pair[0] = min(max(pair[0], previous), duration)
-            pair[1] = min(max(pair[1], pair[0]), duration)
-            previous = pair[0]
-        return Synthesis(wav_bytes(audio, rate), [], duration, "wav", "audio/wav", words=words)
+        return timed_synthesis(audio, rate, toks, parts, spans, self._aligner() if installed.aligner else None)
 
     def benchmark(self, tier: str) -> dict[str, Any]:
         """Tự đo vài giây sau khi tải: nạp engine, đọc một đoạn mẫu ngắn bằng giọng đầu tiên. RTF = giây máy làm / giây nghe được (dưới 1 là

@@ -43,6 +43,18 @@ describe("nhóm giọng dùng chung với trình phát", () => {
     expect(groups[2].title).toBe("Khác");
   });
 
+  it("giọng Supertonic có nhóm riêng, đứng sau VieNeu và trước giọng của máy", () => {
+    const groups = groupedVoices([
+      voice("device:an", "An", "female"),
+      voice("supertonic:F1", "Supertonic F1", "female"),
+      voice("vieneu:turbo/A", "A (VieNeu)"),
+      voice("supertonic:M4", "Supertonic M4", "male"),
+    ]);
+    expect(groups.map((group) => group.provider)).toEqual(["vieneu", "supertonic", "device"]);
+    expect(groups[1].voices.map((item) => item.name)).toEqual(["Supertonic F1", "Supertonic M4"]);
+    expect(voiceSections(groups[1].voices).flatMap((section) => section.voices.map((item) => item.shown))).toEqual(["Supertonic F1", "Supertonic M4"]);
+  });
+
   it("nam / nữ nói bằng tiếng Việt, không biết thì để trống", () => {
     expect(genderLabel("female")).toBe("Nữ");
     expect(genderLabel("male")).toBe("Nam");

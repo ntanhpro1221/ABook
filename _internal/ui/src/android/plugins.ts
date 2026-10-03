@@ -88,6 +88,12 @@ export interface EbookPlayerPlugin {
     /** Nhà cung cấp giọng trực tuyến người nghe đã đồng ý gửi chữ tới (listen/onlineConsent.ts): lõi tự sang chương chữ chỉ với những giọng ấy. */
     readAloudOnlineOk?: string[];
   }): Promise<NativeState>;
+  /** Quyền hiện thông báo (Android 13+): "off" = chưa cho, khay thông báo / màn khoá không có nút tạm dừng, tua. `load` KHÔNG chờ quyền này. */
+  notificationAccess(): Promise<{ state: "granted" | "off" }>;
+  /** Hiện hộp xin quyền của hệ thống (chỉ gọi sau khi đã nói vì sao - android/notifications.ts). */
+  requestNotificationAccess(): Promise<{ state: "granted" | "off" }>;
+  /** Mở trang thông báo của ABook trong Cài đặt Android. */
+  openNotificationSettings(): Promise<void>;
   lastNight(): Promise<{ session: BedtimeSession | null }>;
   dismissLastNight(): Promise<void>;
   addListener(event: "state", handler: (state: NativeState) => void): Promise<PluginListenerHandle>;

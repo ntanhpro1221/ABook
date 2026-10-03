@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { benchmarkLabel, initialChoices, meteredNotice, selectionBytes, suggestionText, vieneuLabel, type VieneuStatus } from "./vieneuModule";
+import {
+  benchmarkLabel,
+  initialChoices,
+  meteredNotice,
+  selectionBytes,
+  SUPERTONIC_COPY,
+  suggestionText,
+  tierVoicePrefix,
+  vieneuLabel,
+  type VieneuStatus,
+} from "./vieneuModule";
 
 const MB = 1024 * 1024;
 
@@ -86,6 +96,30 @@ describe("mô-đun Giọng VieNeu", () => {
     expect(initialChoices(phone)).toEqual(["nano"]);
     expect(selectionBytes(phone, ["nano"])).toBe(301 * MB);
     expect(selectionBytes(phone, ["nano", "turbo"])).toBe(501 * MB);
+  });
+
+  it("giọng Supertonic: cùng khung, lời riêng, không nhắc “Làm trước” (giọng này đọc trực tiếp)", () => {
+    const one = status({
+      choices: [{ id: "supertonic", label: "Giọng Supertonic", detail: "", needs: ["libs", "g2p", "supertonic"], bytes: 0, installed: false, recommended: false, default: true, removable: true }],
+      parts: [
+        { id: "libs", label: "", bytes: 27 * MB, state: "current", external: true },
+        { id: "g2p", label: "", bytes: 26 * MB, state: "missing" },
+        { id: "supertonic", label: "", bytes: 380 * MB, state: "missing" },
+      ],
+      recommended: "supertonic",
+    });
+    expect(initialChoices(one)).toEqual(["supertonic"]);
+    expect(selectionBytes(one, ["supertonic"])).toBe(406 * MB);
+    expect(vieneuLabel(one, SUPERTONIC_COPY)).toContain("Mười giọng nam nữ");
+    expect(vieneuLabel({ ...one, state: "ready" }, SUPERTONIC_COPY)).toBe("Giọng Supertonic đã có trên máy: chọn trong nút Giọng đọc khi nghe sách chỉ có chữ.");
+    expect(vieneuLabel({ ...one, state: "downloading", done: 40, total: 100 * MB }, SUPERTONIC_COPY)).toContain("Đang tải giọng Supertonic");
+    expect(benchmarkLabel("supertonic", { rtf: 0.2, firstAudioMs: 1400 })).toContain("nhanh gấp 5,0 lần");
+    expect(benchmarkLabel("supertonic", { rtf: 1.1, firstAudioMs: 9000 })).not.toContain("Làm trước");
+    const slow = suggestionText({ tier: "supertonic", rtf: 1.1, switchTo: "online", installed: true });
+    expect(slow.message).toContain("Giọng Supertonic không theo kịp");
+    expect(slow.message).not.toContain("Làm trước");
+    expect(tierVoicePrefix("supertonic")).toBe("supertonic:");
+    expect(tierVoicePrefix("nano")).toBe("vieneu:nano/");
   });
 
   it("nhắc tốn dữ liệu di động trước khi tải, không chặn", () => {

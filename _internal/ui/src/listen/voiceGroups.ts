@@ -9,6 +9,7 @@ export const VOICE_GROUPS: { provider: string; title: string }[] = [
   { provider: "edge", title: "Microsoft Edge · trực tuyến, miễn phí" },
   ...Object.entries(KEYED_PROVIDERS).map(([provider, name]) => ({ provider, title: `${name} · dùng khóa của bạn` })),
   { provider: "vieneu", title: "VieNeu · trên máy này, không cần mạng" },
+  { provider: "supertonic", title: "Supertonic · trên máy này, không cần mạng" },
   { provider: "device", title: "Giọng của máy · không cần mạng" },
 ];
 

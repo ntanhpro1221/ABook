@@ -13,16 +13,24 @@ export const FALLBACK_NOTICE = "Không dùng được giọng trực tuyến - t
 export const ONLINE_KEYS_CHANGED_EVENT = "abook:readaloud-online-keys";
 /** Lý do mà giọng kế đỡ được: dịch vụ trực tuyến không với tới / không chạy, hay khoá của người dùng bị từ chối / hết hạn mức. Chữ không đọc
  *  được (`empty`) hay giọng không có (`voice`) thì không. */
-/** Mở đầu chung của thông báo mất mạng ở máy tính và điện thoại (ClipReader.NO_OFFLINE_VOICE): giao diện nhận ra thông báo này nhờ nó để
- *  thêm nút “Mở Cài đặt › Giọng đọc”. */
-export const NO_OFFLINE_LEAD = "Không có mạng, và máy chưa có giọng tiếng Việt đọc được khi không có mạng.";
-/** Mất mạng mà máy không có giọng nào đọc được khi không có mạng: nói thật và chỉ cách (cùng ý với ClipReader.NO_OFFLINE_VOICE của điện thoại). */
-export const NO_OFFLINE_VOICE =
-  `${NO_OFFLINE_LEAD} Đoạn đã đọc sẵn vẫn nghe được. Để nghe không cần mạng, thêm giọng tiếng Việt trong Cài đặt của Windows ` +
-  "(Thời gian và ngôn ngữ › Giọng nói), hoặc tải Giọng VieNeu trong Cài đặt của ABook.";
+/** Mở đầu chung của thông báo mất mạng ở máy tính và điện thoại (ClipReader.NO_OFFLINE_LEAD): giao diện nhận ra thông báo này nhờ nó để đưa
+ *  nút theo tình huống (“Đọc bằng …” nếu đã có giọng chạy trên máy, “Tải giọng VieNeu” nếu chưa) thay cho câu dài. */
+export const NO_OFFLINE_LEAD = "Không có mạng - giọng ";
+/** Câu ngắn khi mất mạng mà máy không có giọng nào đọc được khi không có mạng. `name`: tên giọng đang chọn. */
+export function noOfflineMessage(name: string): string {
+  return `${NO_OFFLINE_LEAD}${name} cần mạng.`;
+}
+/** Bản của lõi điện thoại (ClipReader.NO_OFFLINE_VOICE) chưa biết tên giọng: giao diện thay bằng `noOfflineMessage(tên)`. */
+export const NO_OFFLINE_VOICE = "Không có mạng - giọng đang chọn cần mạng.";
 
 export function isNoOfflineVoice(message: string): boolean {
   return message.startsWith(NO_OFFLINE_LEAD);
+}
+
+/** Giọng chạy trên máy (đã tải: VieNeu, Supertonic…; không kể giọng của máy, nó đã tự đỡ) để đổi sang khi mất mạng; cùng giới với giọng đang chọn nếu có. */
+export function localVoiceFor(voices: ReadAloudVoice[], current: ReadAloudVoice | undefined): ReadAloudVoice | undefined {
+  const local = voices.filter((voice) => !voice.online && voice.provider !== "device");
+  return local.find((voice) => current?.gender && voice.gender === current.gender) ?? local[0];
 }
 
 const FALLBACK_REASONS = new Set(["offline", "timeout", "rejected", "service", "auth", "quota"]);
@@ -95,6 +103,14 @@ export const SAMPLE_TEXT = "Xin chào, tôi sẽ đọc sách cho bạn nghe. B�
 /** Giọng dùng thật: giọng đã chọn nếu còn trong danh sách, không thì giọng mặc định, không thì giọng đầu tiên. */
 export function resolveVoice(voices: ReadAloudVoice[], chosen: string): ReadAloudVoice | undefined {
   return voices.find((voice) => voice.id === chosen) ?? voices.find((voice) => voice.default) ?? voices[0];
+}
+
+/** Giọng đang đọc cuốn này, viết cho người nghe thấy ở Thư viện: "Đức Trí (VieNeu)", "Hoài My (Edge)"; giọng của máy (hay chưa biết) thì "Giọng máy đọc". */
+export function voiceCaption(voice: ReadAloudVoice | undefined): string {
+  if (!voice || voice.provider === "device") return "Giọng máy đọc";
+  if (/\([^)]*\)\s*$/.test(voice.name)) return voice.name;
+  const maker = voice.provider === "edge" ? "Edge" : voice.provider === "vieneu" ? "VieNeu" : voice.provider === "supertonic" ? "Supertonic" : KEYED_PROVIDERS[voice.provider];
+  return maker ? `${voice.name} (${maker})` : voice.name;
 }
 
 let fellBack = false; // lời nhắn rơi sang giọng máy: một lần cho cả phiên, không mỗi chương một lần
@@ -186,7 +202,7 @@ export function speechFetcher(source: ListenSource, bookId: string, notify: (mes
       } catch (error) {
         const why = (error as { reason?: string }).reason ?? "";
         if (last && why === "offline" && !options?.cachedOnly && chain.every((item) => item.online)) {
-          throw Object.assign(new Error(NO_OFFLINE_VOICE), { reason: "offline" });
+          throw Object.assign(new Error(noOfflineMessage(voice.name.replace(/\s*\([^)]*\)\s*$/, "").trim() || voice.name)), { reason: "offline" });
         }
         if (!candidate.online || !FALLBACK_REASONS.has(why) || last) throw error;
         if (KEYED_PROVIDERS[candidate.provider] && (why === "auth" || why === "quota")) {

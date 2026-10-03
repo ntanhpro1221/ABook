@@ -22,11 +22,11 @@ class ClipReader(
         const val EDGE_BREAK_MS = 120_000L
         const val ONLINE_ERROR_BREAK_MS = 30_000L
         const val KEY_BREAK_MS = 600_000L
-        /** Mất mạng mà máy không có giọng nào đọc được khi không có mạng (không giọng tiếng Việt của máy, chưa tải VieNeu): nói thật và chỉ cách,
-         *  thay vì câu của giọng trực tuyến (trước đây "... - đọc bằng giọng của máy" rồi dừng - thấy 03-10 trên máy ảo không có giọng tiếng Việt). */
-        const val NO_OFFLINE_LEAD = "Không có mạng, và máy chưa có giọng tiếng Việt đọc được khi không có mạng."
-        const val NO_OFFLINE_VOICE = "$NO_OFFLINE_LEAD Đoạn đã đọc sẵn vẫn nghe được. Để nghe không cần mạng, cài giọng tiếng Việt cho máy " +
-            "(Cài đặt Android › Chuyển văn bản thành giọng nói), hoặc tải Giọng VieNeu trong Cài đặt của ABook."
+        /** Mất mạng mà máy không có giọng nào đọc được khi không có mạng (không giọng tiếng Việt của máy, chưa tải VieNeu): một câu ngắn thay cho câu của giọng mạng
+         *  (trước đây "... - đọc bằng giọng của máy" rồi dừng - thấy 03-10 trên máy ảo không có giọng tiếng Việt). Giao diện nhận ra nó nhờ [NO_OFFLINE_LEAD]
+         *  (readAloudVoice.ts), thay "đang chọn" bằng tên giọng và đưa nút theo tình huống: "Đọc bằng …" nếu đã có giọng chạy trên máy, "Tải giọng VieNeu" nếu chưa. */
+        const val NO_OFFLINE_LEAD = "Không có mạng - giọng "
+        const val NO_OFFLINE_VOICE = "${NO_OFFLINE_LEAD}đang chọn cần mạng."
 
         private fun provider(voice: Voice) = voice.id.substringBefore(':')
         /** Đọc trên máy nhưng có thể chưa sẵn sàng (mô-đun tải thêm): hỏng thì đỡ bằng giọng của máy. */

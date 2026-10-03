@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { api } from "@/studio/api";
 import { refreshAfterEdit } from "./EditBook";
 import type { ListenBook } from "./model";
+import { usePlayer } from "./player";
 
 // Gợi ý của bộ nhập sách cho phần ĐỌC (dòng ghi công của người dịch / biên tập ở đầu chương): người nghe chọn bỏ dòng nào khỏi phần
 // đọc - màn đọc và giọng đọc bỏ qua nó (lớp sửa `skip`, listen/textScript.ts `withoutLines`), chữ của truyện trong sách KHÔNG đổi, bỏ
@@ -77,6 +78,7 @@ export function SuggestionChoices({ groups, isOn, onChange, disabled }: {
 /** Trang sách (cuốn chỉ-có-chữ sửa được): gợi ý còn chờ và gợi ý đã áp, chọn / bỏ chọn được bất cứ lúc nào. */
 export function BookSuggestions({ book }: { book: ListenBook }) {
   const client = useQueryClient();
+  const { track } = usePlayer();
   const query = useQuery({
     queryKey: ["book", book.id, "suggestions"],
     queryFn: () => api<{ suggestions: Suggestion[] }>(`/api/books/${book.id}/suggestions`),
@@ -84,8 +86,11 @@ export function BookSuggestions({ book }: { book: ListenBook }) {
   });
   const toggle = useMutation({
     mutationFn: ({ group, on }: { group: SuggestionGroup; on: boolean }) => setSkipLine(book.id, group.line, group.chapters, on),
-    onSuccess: () => {
+    onSuccess: async () => {
       void client.invalidateQueries({ queryKey: ["book", book.id, "suggestions"] });
+      // Sách (kèm `skip` của từng chương) phải mới TRƯỚC, rồi mới bỏ kịch bản đã dựng: màn đọc mở ngay sau cú tích mà còn thấy sách cũ thì dựng lại kịch
+      // bản theo `skip` cũ và giữ nó mãi (staleTime vô hạn).
+      await client.refetchQueries({ queryKey: ["listen", "book", book.id] }).catch(() => undefined);
       // Các đoạn của chương đổi: bỏ kịch bản chữ đã dựng (khoá ["listen", "script", …]) cùng mọi thứ của trang nghe.
       client.removeQueries({ queryKey: ["listen", "script", book.id] });
       refreshAfterEdit(client, book.id);
@@ -103,6 +108,7 @@ export function BookSuggestions({ book }: { book: ListenBook }) {
       <p className="mt-0.5 text-xs text-fg-2 text-pretty">
         Dòng ghi công của người dịch, biên tập ở đầu chương. Bỏ dòng này chỉ khiến màn đọc và giọng đọc bỏ qua nó - chữ của sách vẫn giữ
         nguyên, bỏ chọn là đọc lại.
+        {track?.bookId === book.id && " Chương đang nghe sẽ đổi từ lần nghe sau; các chương khác đổi ngay."}
       </p>
       <div className="mt-2">
         <SuggestionChoices

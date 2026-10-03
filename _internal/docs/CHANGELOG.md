@@ -7,6 +7,31 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Giọng đọc
+
+- **Giọng Supertonic cho "Nghe ngay" (máy tính)**: Cài đặt › Giọng đọc có thêm "Giọng Supertonic" - mười giọng nam nữ (Supertonic F1, F3, M4,
+  M5 xếp đầu) đọc ngay trên máy, không cần mạng, chữ của sách không rời khỏi máy. Bấm "Tải" một lần (khoảng 400 MB; bộ cài không mang gì), tải
+  xong máy tự thử vài giây xem có kịp đọc trực tiếp không, và bấm "Gỡ" là lấy lại chỗ. Số, ngày, giờ được đổi thành chữ trước khi đọc. Giọng
+  này đọc nhanh nên không cần "Làm trước"; lỗi thì đoạn ấy tạm đọc bằng giọng của máy như các giọng khác.
+- **Mất mạng nói gọn và đưa đúng nút**: "Không có mạng - giọng Hoài My cần mạng." Đã tải giọng chạy trên máy (VieNeu…) thì nút chính là "Đọc bằng
+  …" (đổi giọng cuốn này rồi đọc tiếp); chưa tải thì "Tải giọng VieNeu" đưa thẳng tới thẻ tải giọng trong Cài đặt. Có mạng lại là khung tự ẩn; ở màn
+  Cài đặt khung không che nữa. "Thử giọng" gặp lỗi thì lỗi hiện ngay dưới giọng vừa bấm.
+- Thư viện ghi giọng đang đọc từng cuốn ("Đức Trí (VieNeu)", "Hoài My (Edge)") thay cho "Giọng máy đọc". Menu giọng trong trình phát có bóng mờ và dòng
+  nhắc khi còn giọng ở dưới. Lúc tải giọng VieNeu, phần trăm không lùi và cỡ mỗi giọng đứng yên (không nhảy từ 313 xuống 297 MB).
+
+### Thư viện
+
+- Thêm lại cùng một file mà chọn chương khác: bước xem trước nói "Bạn đã thêm file này thành “…” (N chương)" kèm "Mở cuốn đó" / "Vẫn thêm bản mới"
+  (máy tính và điện thoại), thay vì lặng lẽ thành cuốn thứ hai cùng tên.
+- Tích "Bỏ dòng này khỏi phần đọc" ở trang sách: màn đọc và giọng đọc bỏ dòng ấy ngay cả khi cuốn đang nằm trong trình phát (trước đây kịch bản dựng
+  sẵn theo bản cũ có thể ở lại). Chương đang nghe đổi từ lần nghe sau.
+- Màn "Đang nghe" phủ kín thì phần bên dưới ra khỏi cây trợ năng (đọc màn hình và phím Tab không lạc xuống đó).
+
+### Điện thoại
+
+- Quyền thông báo (Android 13+) không còn chặn lần nghe đầu: tiếng phát trước, rồi một câu nói vì sao ("để có nút tạm dừng và tua ở khay thông báo
+  và màn khoá") với nút "Cho phép". Từ chối hay bỏ qua thì Cài đặt › Nghe có một dòng và nút mở cài đặt thông báo của ABook.
+
 ## [0.4.23] - 2026-10-03
 
 ### Thư viện

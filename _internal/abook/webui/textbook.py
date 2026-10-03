@@ -13,6 +13,7 @@ trước, không có gì tự bỏ.
 from __future__ import annotations
 
 import hashlib
+import json
 import tempfile
 from pathlib import Path
 from typing import Any, Iterable
@@ -22,6 +23,7 @@ from . import bookfile, covers, packages, store
 from .fingerprints import Fingerprints
 
 COVER_VERSION = 1  # bìa của file sách không đổi theo mốc ghi file như bìa của dự án (covers.cover_meta)
+SOURCE_FILE = "source.json"  # nằm cạnh book.json trong thư mục cuốn: mã băm file nguồn đã thêm cuốn này (xem `source_digest`)
 
 
 def _title(raw: Any, fallback: str) -> str:
@@ -67,6 +69,36 @@ def find_existing(book: importers.ImportedBook, library_root: Path) -> Path | No
     book = importers.select_chapters(book, picks)
     prints = {name: {"size": len(data), "sha256": hashlib.sha256(data).hexdigest()} for name, data in texts_of(book).items()}
     return packages.find_imported(prints, library_root)
+
+
+def source_digest(source: Path) -> str:
+    """Mã băm của thứ người dùng chọn để thêm sách: nội dung file, hay (thư mục TXT) tên + nội dung từng file theo thứ tự tên. Cùng file thì cùng mã
+    bất kể sau đó chọn chương nào, tách chương hay không, đặt tên gì."""
+    digest = hashlib.sha256()
+    files = sorted(source.iterdir()) if source.is_dir() else [source]
+    for path in files:
+        if path.is_file():
+            digest.update(path.name.encode("utf-8") if source.is_dir() else b"")
+            with path.open("rb") as handle:
+                for block in iter(lambda: handle.read(1 << 20), b""):
+                    digest.update(block)
+    return digest.hexdigest()
+
+
+def remember_source(folder: Path, digest: str) -> None:
+    """Ghi lại cuốn này do file nguồn nào thêm vào (bước xem trước lần sau nhận ra cùng một file)."""
+    (Path(folder) / SOURCE_FILE).write_bytes(json.dumps({"sha256": digest}).encode("utf-8"))
+
+
+def find_same_source(digest: str, library_root: Path) -> Path | None:
+    """Cuốn trong thư viện được thêm từ CHÍNH file này (xem `remember_source`), chọn chương nào cũng vậy; không có thì None."""
+    for folder in packages.folders(library_root):
+        try:
+            if json.loads((folder / SOURCE_FILE).read_text(encoding="utf-8")).get("sha256") == digest:
+                return folder
+        except (OSError, ValueError, AttributeError):
+            continue
+    return None
 
 
 def build(book: importers.ImportedBook, out: Path, *, producer: str = "ABook") -> Path:
@@ -145,4 +177,6 @@ def add_to_library(source: Path, title: str | None, library_root: Path, projects
     with tempfile.TemporaryDirectory(prefix="abook-text-") as scratch:
         packed = build(book, Path(scratch) / bookfile.default_name(book.title))
         folder, how = packages.import_file(packed, library_root, projects, fingerprints, separate=separate)
+    if how == "new":
+        remember_source(folder, source_digest(source))
     return folder, how, book

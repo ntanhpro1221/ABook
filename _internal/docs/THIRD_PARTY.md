@@ -119,6 +119,15 @@ Studio một lần (bước "wordalign"), KHÔNG nằm trong bộ cài chỉ-ngh
   luận (`abook/readaloud/vieneu_engine.py`) viết lại theo mã của `vieneu` 3.8.1 (Phạm Nguyễn Ngọc Bảo, Apache-2.0) - ghi nguồn ở đầu
   file. Chữ -> phoneme: wheel `sea-g2p` 0.9.1 (pnnbao97, Apache-2.0) tải cùng mô-đun. Mốc từng chữ dùng lại model căn chữ của Studio
   (mục trên). Khi phân phối: kèm giấy phép Apache-2.0 và ghi chú của các dự án này.
+- Giọng Supertonic 3 (mô-đun tải khi người dùng bấm, `webui/supertonic_module.py`; không nằm trong bộ cài): model Supertonic 3 (Supertone Inc.,
+  99 triệu tham số, ONNX) giấy phép **BigScience OpenRAIL-M** - trọng số và mười file giọng tải thẳng từ Hugging Face `Supertone/supertonic-3`
+  (ghim commit + SHA-256 từng file; hãng đã giải thể, repo lưu trữ 09-09-2026 nên đây là bản cuối), kèm file LICENSE của hãng đặt cạnh model.
+  OpenRAIL-M cho dùng, chỉnh sửa, phân phối lại kể cả thương mại, với **hạn chế dùng** (Phụ lục A của giấy phép) phải chuyển tiếp tới người dùng:
+  không dùng để giả giọng người thật khi chưa có sự đồng ý của họ, không tạo nội dung giả nhằm hại người khác, không đưa nội dung do máy tạo ra
+  vào bối cảnh nào mà không nói rõ đó là máy tạo, không quấy rối / phân biệt đối xử, không đưa lời khuyên y tế... (đọc đủ ở file LICENSE).
+  ABook luôn gọi đây là giọng đọc của máy và không có tính năng nhân bản giọng. Phần suy luận (`abook/readaloud/supertonic.py`) viết lại theo
+  mã mẫu chính thức của hãng (gói pip `supertonic` 1.3.1, giấy phép **MIT**, Copyright (c) 2025 Supertone Inc.) - ghi nguồn ở đầu file; không
+  cài gói đó. Chữ -> chữ đã đọc số: `sea-g2p` dùng chung với mô-đun VieNeu (mục trên).
 
 ## Model phân tích và dữ liệu nghiên cứu (chưa đóng gói trong bản phát hành)
 

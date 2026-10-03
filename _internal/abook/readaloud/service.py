@@ -9,7 +9,7 @@ import threading
 from pathlib import Path
 from typing import Any, Callable, Protocol
 
-from . import azure, edge, fpt, google, loudness, vieneu, viettel, windows
+from . import azure, edge, fpt, google, loudness, supertonic, vieneu, viettel, windows
 from .byok import KeyedProvider
 from .cache import ClipCache, clip_key
 from .keys import KeyStore
@@ -65,10 +65,12 @@ def keyed_providers(keys: KeyStore) -> list[KeyedProvider]:
 class ReadAloud:
     """`keys`: kho khoá của giọng dùng khoá riêng - có thì (khi `providers` để trống) các giọng ấy xếp sau Edge, trước giọng của máy.
     `vieneu_locate`: nơi mô-đun "Giọng VieNeu" đặt các phần (webui/vieneu_module.installed) - có thì thêm giọng VieNeu vào danh sách;
+    `supertonic_locate`: như vậy cho mô-đun "Giọng Supertonic" (webui/supertonic_module.installed);
     `rtf`: tốc độ tự đo của giọng (để "Làm trước" ước thời gian)."""
 
     def __init__(self, folder: Path | str, providers: list[Provider] | None = None, *, limit: int | None = None,
                  keys: KeyStore | None = None, vieneu_locate: Callable[[], vieneu.Installed | None] | None = None,
+                 supertonic_locate: Callable[[], supertonic.Installed | None] | None = None,
                  rtf: Callable[[str], float | None] = lambda _voice: None) -> None:
         self.folder = Path(folder)
         kwargs = {} if limit is None else {"limit": limit}
@@ -79,6 +81,9 @@ class ReadAloud:
         self.vieneu = vieneu.VieneuProvider(vieneu_locate) if vieneu_locate is not None else None
         if self.vieneu is not None:
             self.providers[self.vieneu.id] = self.vieneu
+        self.supertonic = supertonic.SupertonicProvider(supertonic_locate) if supertonic_locate is not None else None
+        if self.supertonic is not None:
+            self.providers[self.supertonic.id] = self.supertonic
         self._locks: dict[str, threading.Lock] = {}
         self._locks_guard = threading.Lock()
         self._live = 0  # clip của người đang nghe đang được đọc: "Làm trước" nhường

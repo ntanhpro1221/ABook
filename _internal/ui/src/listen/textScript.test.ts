@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { paragraphsOf, textScript, withoutLines } from "./textScript";
+import { paragraphsOf, textScript, withFreshSkips, withoutLines } from "./textScript";
 
 // Cùng các ca với ParagraphsTest.kt (Paragraphs.withoutLines): lõi đọc to của điện thoại phải chia ra đúng các đoạn như màn đọc.
 describe("withoutLines", () => {
@@ -69,5 +69,26 @@ describe("textScript", () => {
   it("does not take a first sentence for the heading when it is not the title", () => {
     const script = textScript(1, "Chương 1", "Chương 1 - Khởi đầu\n\nNội dung.");
     expect(script.segments[0].kind).toBe("narration");
+  });
+});
+
+describe("withFreshSkips", () => {
+  const chapter = (id: number, skip?: string[]) => ({ id, index: id, title: `Chương ${id}`, subtitle: "", fullTitle: `Chương ${id}`, duration: 0, available: true, part: null, state: "text" as const, ...(skip ? { skip } : {}) });
+
+  it("brings the lines skipped after the queue was loaded into the queue's chapters (the voice and the next script read the new ones)", () => {
+    const queue = [chapter(1), chapter(2)];
+    const fresh = [chapter(1), chapter(2, ["Dịch: Nhóm A"])];
+    const next = withFreshSkips(queue, fresh);
+    expect(next).not.toBe(queue);
+    expect(next[0]).toBe(queue[0]);
+    expect(next[1].skip).toEqual(["Dịch: Nhóm A"]);
+    expect(textScript(2, "Chương 2", "Chương 2\n\nDịch: Nhóm A\n\nMở đầu.", next[1].skip).segments).toHaveLength(2);
+  });
+
+  it("drops the lines that were taken back, and leaves the very same queue when nothing changed", () => {
+    const queue = [chapter(1, ["Dịch: Nhóm A"])];
+    expect(withFreshSkips(queue, [chapter(1)])[0].skip).toBeUndefined();
+    expect(withFreshSkips(queue, [chapter(1, ["Dịch: Nhóm A"])])).toBe(queue);
+    expect(withFreshSkips(queue, undefined)).toBe(queue);
   });
 });

@@ -215,12 +215,15 @@ export function Shell({ children }: { children: ReactNode }) {
         <main ref={main} className="min-h-0 flex-1 overflow-y-auto" inert={expanded}>
           {children}
         </main>
-        {!remote && <RemoteBars />}
+        {/* Màn "Đang nghe" phủ kín cột này: mọi thứ nằm dưới nó cũng ra khỏi cây trợ năng và Tab (inert), không chỉ khuất mắt. */}
+        {!remote && <div className="contents" inert={expanded}><RemoteBars /></div>}
         {!remote && <ThisPlayerReporter />}
         {/* Cửa sổ hẹp (trình duyệt điện thoại nghe thư viện máy tính, soát UX 29-09): thanh phát gọn như app Android -
             thanh đầy đủ ở 375px chồng các nút lên nhau; các nút phụ vẫn có ở màn "Đang nghe". */}
-        <PlayerBar compact={compactBar} notices extra={remote ? undefined : <HandOffButton />} />
-        <nav aria-label="Điều hướng" className="flex border-t border-line bg-sunken pb-[env(safe-area-inset-bottom)] md:hidden">
+        <div className="contents" inert={expanded}>
+          <PlayerBar compact={compactBar} notices extra={remote ? undefined : <HandOffButton />} />
+        </div>
+        <nav aria-label="Điều hướng" inert={expanded} className="flex border-t border-line bg-sunken pb-[env(safe-area-inset-bottom)] md:hidden">
           <TabItem to="/" icon={Library} match={(path) => path === "/" || path.startsWith("/book/")}>
             Thư viện
           </TabItem>

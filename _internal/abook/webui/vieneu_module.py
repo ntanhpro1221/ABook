@@ -21,31 +21,26 @@ nghị đổi - không bao giờ tự đổi. Giao diện hỏi `status()` ~mỗ
 """
 from __future__ import annotations
 
-import hashlib
 import importlib
 import importlib.util
-import json
 import os
 import shutil
 import sys
-import threading
 import zipfile
 from pathlib import Path
 from typing import Any, Callable
 
-from .. import io_utils
 from ..readaloud.vieneu import Installed
-from . import music_module, studio_setup, word_timing
+from . import music_module, studio_setup, voice_module, word_timing
 from .music_module import Component
 from .studio_setup import Download
+from .voice_module import ModuleCore
 
 FOLDER = "vieneu"
-STAMP_FILE = "module.json"
 LIB_FOLDER = "lib"
 LIB_NEXT = "lib.next"  # sea-g2p mới khi bản cũ đã nạp vào tiến trình (.pyd không thay tại chỗ được): đổi chỗ ở lần mở app sau
 VOICES_FOLDER = "voices"
 ALIGNER_FOLDER = "wordalign"
-DOWNLOADS = "dl"
 ENV_DOWNLOAD = "ABOOK_VIENEU_DOWNLOAD"  # "0" = không bao giờ tải (bộ kiểm đặt sẵn)
 SLOW_RTF = 0.8  # trên mức này giọng khó theo kịp người nghe ở tốc độ 1x (còn phải đọc trước, nghe nhanh hơn)
 
@@ -99,12 +94,10 @@ CHOICE_TEXT = {
 PART_LABEL = {"g2p": "Bộ đọc chữ tiếng Việt", "voices": "Danh sách giọng", "turbo": "Giọng VieNeu", "nano": "Giọng VieNeu Nano",
               "aligner": "Bộ căn chữ"}
 
-_lock = threading.RLock()
-_folder: Path | None = None
-_thread: threading.Thread | None = None
-_bench: Callable[[str], dict[str, Any]] | None = None
-_after: Callable[[], None] | None = None
-_state: dict[str, Any] = {"downloading": False, "benchmarking": False, "done": 0, "total": 0, "error": ""}
+_core = ModuleCore("giọng VieNeu", "vieneu-module", frozenset({"libs"}), lambda: installed() is not None)
+_lock = _core.lock
+_state = _core.state
+pin = voice_module.pin
 
 
 # ---- cấu hình, dấu ----------------------------------------------------------------------------------------------------------------
@@ -112,40 +105,18 @@ def configure(folder: Path | str | None, *, benchmark: Callable[[str], dict[str,
               after_install: Callable[[], None] | None = None) -> None:
     """Thư mục của mô-đun (server.py: <dữ liệu app>/vieneu). `benchmark(tầng)`: tự đo sau khi tải (VieneuProvider.benchmark); `after_install`:
     nạp lại giọng (VieneuProvider.forget). Đã tải từ trước thì đưa sea-g2p vào sys.path và chỉ chỗ bộ căn chữ cho word_timing ngay."""
-    global _folder, _bench, _after
     with _lock:
-        _folder = Path(folder) if folder is not None else None
-        _bench, _after = benchmark, after_install
-        _state.update(downloading=False, benchmarking=False, done=0, total=0, error="")
-        if _folder is not None:
-            word_timing.add_model_dir(_folder / ALIGNER_FOLDER)
+        _core.configure(folder, benchmark, after_install)
+        if _core.folder is not None:
+            word_timing.add_model_dir(_core.folder / ALIGNER_FOLDER)
             _activate()
 
 
-def _read_stamp() -> dict[str, Any]:
-    if _folder is None:
-        return {}
-    try:
-        data = json.loads((_folder / STAMP_FILE).read_bytes().decode("utf-8"))
-    except (OSError, ValueError):
-        return {}
-    return data if isinstance(data, dict) else {}
-
-
-def _write_stamp(data: dict[str, Any]) -> None:
-    if _folder is not None:
-        io_utils.atomic_write_json(_folder / STAMP_FILE, {"version": 1, **{k: v for k, v in data.items() if k != "version"}})
-
-
-def _pins(stamp: dict[str, Any]) -> dict[str, str]:
-    pins = stamp.get("pins")
-    return {str(k): str(v) for k, v in pins.items()} if isinstance(pins, dict) else {}
-
-
 def _activate() -> None:
-    if _folder is None:
+    folder = _core.folder
+    if folder is None:
         return
-    lib, pending = _folder / LIB_FOLDER, _folder / LIB_NEXT
+    lib, pending = folder / LIB_FOLDER, folder / LIB_NEXT
     if pending.is_dir() and "sea_g2p" not in sys.modules:
         shutil.rmtree(lib, ignore_errors=True)
         try:
@@ -158,11 +129,7 @@ def _activate() -> None:
 
 
 def _restart_pending() -> bool:
-    return _folder is not None and (_folder / LIB_NEXT).is_dir() and "sea_g2p" in sys.modules
-
-
-def pin(files: tuple[Download, ...]) -> str:
-    return hashlib.sha256("\n".join(f"{item.name} {item.sha256}" for item in files).encode()).hexdigest()
+    return _core.folder is not None and (_core.folder / LIB_NEXT).is_dir() and "sea_g2p" in sys.modules
 
 
 # ---- máy này ----------------------------------------------------------------------------------------------------------------------
@@ -212,9 +179,9 @@ def _complete(folder: Path | None, files: tuple[Download, ...]) -> bool:
 
 
 def _dir(part: str) -> Path | None:
-    if _folder is None:
+    if _core.folder is None:
         return None
-    return _folder / {"g2p": LIB_FOLDER, "voices": VOICES_FOLDER, "aligner": ALIGNER_FOLDER}.get(part, part)
+    return _core.folder / {"g2p": LIB_FOLDER, "voices": VOICES_FOLDER, "aligner": ALIGNER_FOLDER}.get(part, part)
 
 
 def _download_off() -> str:
@@ -232,7 +199,7 @@ def _g2p_external() -> bool:
 
 
 def _g2p_present() -> bool:
-    return _folder is not None and any((_folder / name / "sea_g2p").is_dir() for name in (LIB_FOLDER, LIB_NEXT))
+    return _core.folder is not None and any((_core.folder / name / "sea_g2p").is_dir() for name in (LIB_FOLDER, LIB_NEXT))
 
 
 def _aligner_external() -> bool:
@@ -260,7 +227,7 @@ def _parts() -> list[Component]:
 
 def _judged(parts: list[Component]) -> dict[str, str]:
     """Phần thư viện theo dấu của mô-đun nhạc (nơi nó sống), các phần khác theo dấu của mô-đun này."""
-    judged = music_module.judge_parts([part for part in parts if part.id != "libs"], _pins(_read_stamp()))
+    judged = music_module.judge_parts([part for part in parts if part.id != "libs"], _core.pins())
     libs = next(part for part in parts if part.id == "libs")
     judged["libs"] = "current" if libs.external else music_module.libs_state()
     return judged
@@ -276,7 +243,7 @@ def _lacking(choices: list[str] | tuple[str, ...], parts: dict[str, Component], 
 
 def installed() -> Installed | None:
     """Nơi các phần đang nằm (cho VieneuProvider); None khi chưa có giọng nào dùng được (bản cũ vẫn dùng được cho tới lúc cập nhật xong)."""
-    if _folder is None:
+    if _core.folder is None:
         return None
     if importlib.util.find_spec("numpy") is None or importlib.util.find_spec("onnxruntime") is None:
         return None
@@ -294,8 +261,8 @@ def installed() -> Installed | None:
 def rtf(voice: str) -> float | None:
     """Tốc độ tự đo của giọng VieNeu `voice` ("vieneu:turbo/...") trên máy này - để "Làm trước" ước thời gian; None nếu chưa đo / giọng khác."""
     tier = voice.removeprefix("vieneu:").partition("/")[0] if voice.startswith("vieneu:") else ""
-    bench = _read_stamp().get("benchmark")
-    value = bench.get(tier, {}).get("rtf") if isinstance(bench, dict) and isinstance(bench.get(tier), dict) else None
+    bench = _core.benchmarks()
+    value = bench.get(tier, {}).get("rtf") if isinstance(bench.get(tier), dict) else None
     return float(value) if isinstance(value, (int, float)) else None
 
 
@@ -317,7 +284,6 @@ def status() -> dict[str, Any]:
         parts = _parts()
         by_id = {part.id: part for part in parts}
         judged = _judged(parts)
-        stamp = _read_stamp()
         tiers = [tier for tier in ("turbo", "nano") if all(judged[part] != "missing" for part in NEEDS[tier])]
         have = [choice for choice in CHOICES if all(judged[part] != "missing" for part in NEEDS[choice])]
         behind = _lacking(have, by_id, judged)
@@ -333,7 +299,7 @@ def status() -> dict[str, Any]:
             state = "outdated" if behind else "ready"
         else:
             state = "unsupported" if blocked else "missing"
-        bench = stamp.get("benchmark") if isinstance(stamp.get("benchmark"), dict) else {}
+        bench = _core.benchmarks()
         choices = []
         for choice in CHOICES:
             label, detail = CHOICE_TEXT[choice]
@@ -356,11 +322,10 @@ def status() -> dict[str, Any]:
 # ---- tải --------------------------------------------------------------------------------------------------------------------------
 def start(choices: list[str] | None = None) -> None:
     """Tải các phần mà `choices` còn thiếu (hay cập nhật những phần đã cũ của những gì đã tải khi `choices` là None) ở luồng nền."""
-    global _thread
     with _lock:
-        if _folder is None:
+        if _core.folder is None:
             raise ValueError("Mô-đun giọng VieNeu chưa được cấu hình")
-        if (_state["downloading"] or _state["benchmarking"]) and _thread is not None and _thread.is_alive():
+        if _core.busy():
             return
         parts = _parts()
         by_id = {part.id: part for part in parts}
@@ -370,37 +335,27 @@ def start(choices: list[str] | None = None) -> None:
         unknown = [choice for choice in choices if choice not in CHOICES]
         if unknown:
             raise ValueError(f"Không có lựa chọn {unknown[0]!r}")
-        needed = _lacking(choices, by_id, judged)
-        _state.update(error="", done=0)
-        if not needed:
-            return
-        reason = next((part.blocked for part in needed if part.blocked and not part.external), "")
-        if reason:
-            _state["error"] = reason[0].upper() + reason[1:] + "."
-            return
-        _state.update(downloading=True, total=sum(part.size for part in needed))
-        _thread = threading.Thread(target=_run, args=(needed,), name="vieneu-module", daemon=True)
-        _thread.start()
+        _core.begin(_lacking(choices, by_id, judged), _install, _activate,
+                    lambda changed: [tier for tier in ("turbo", "nano") if changed & set(NEEDS[tier])])
 
 
 def join(timeout: float | None = None) -> None:
-    thread = _thread
-    if thread is not None:
-        thread.join(timeout)
+    _core.join(timeout)
 
 
 def _install(part: Component, progress: Callable[[int], None]) -> None:
-    assert _folder is not None
+    folder = _core.folder
+    assert folder is not None
     if part.id == "libs":
         music_module.install_libs_part(lambda done, _total: progress(done))
         return
     target = _dir(part.id)
     assert target is not None
     if part.id == "g2p" and "sea_g2p" in sys.modules and target.is_dir():
-        target = _folder / LIB_NEXT
+        target = folder / LIB_NEXT
     if part.id in ("g2p", "voices"):
         item = part.downloads[0]
-        wheel = _folder / DOWNLOADS / f"{item.name}.whl"
+        wheel = folder / voice_module.DOWNLOADS / f"{item.name}.whl"
         studio_setup.download(item, wheel, lambda have, _total: progress(have), lambda: False)
         staging = target.with_name(target.name + ".part")
         shutil.rmtree(staging, ignore_errors=True)
@@ -415,80 +370,37 @@ def _install(part: Component, progress: Callable[[int], None]) -> None:
         os.replace(staging, target)
         wheel.unlink(missing_ok=True)
         return
-    done = 0  # file model tải thẳng vào chỗ (download ghi .part rồi đổi tên sau khi khớp băm): engine đang chạy chỉ thấy file đủ
-    for item in part.downloads:
-        studio_setup.download(item, target / item.name, lambda have, _total, offset=done: progress(offset + have), lambda: False)
-        done += item.size
+    voice_module.download_files(part, target, progress)  # file model tải thẳng vào chỗ: engine đang chạy chỉ thấy file đủ
 
 
-def _run(needed: list[Component]) -> None:
-    try:
-        finished = 0
-        stamp = _read_stamp()
-        pins = _pins(stamp)
-        if _after is not None:
-            _after()  # bỏ engine đang nạp: file model sắp được thay
-        for part in needed:
-            def progress(done: int, base: int = finished) -> None:
-                with _lock:
-                    _state["done"] = base + done
-
-            _install(part, progress)
-            finished += part.size
-            if part.id != "libs":
-                pins[part.id] = part.pin
-                stamp["pins"] = pins
-                _write_stamp(stamp)
-            with _lock:
-                _state["done"] = finished
-        _activate()
-        shutil.rmtree(_folder / DOWNLOADS, ignore_errors=True)  # type: ignore[operator]
-        if _after is not None:
-            _after()
-        with _lock:
-            _state.update(downloading=False, error="")
-        changed = {part.id for part in needed}
-        _measure([tier for tier in ("turbo", "nano") if changed & set(NEEDS[tier])])
-    except Exception as error:  # noqa: BLE001 - mọi lỗi thành một câu cho người dùng
-        with _lock:
-            _state.update(downloading=False, error=f"Không tải được giọng VieNeu: {music_module._reason(error)}.")
-    finally:
-        with _lock:
-            _state["downloading"] = False
+# ---- bộ đọc chữ dùng chung ----------------------------------------------------------------------------------------------------------
+# Mô-đun "Giọng Supertonic" (supertonic_module.py) cũng cần sea-g2p để đổi số / ngày / giờ thành chữ: MỘT bản cho cả máy, nằm ở đây, dấu ở dấu của
+# mô-đun này - như thư viện chạy model của mô-đun nhạc (music_module.libs_part) mà cả hai mô-đun giọng dùng chung.
+def g2p_part() -> Component:
+    for part in _parts():
+        if part.id == "g2p":
+            return part
+    raise AssertionError("thiếu phần g2p")
 
 
-def _measure(tiers: list[str]) -> None:
-    """Tự đo các giọng vừa tải (vài giây mỗi giọng); lỗi đo không làm hỏng lần tải."""
-    if _bench is None or installed() is None:
-        return
+def g2p_state() -> str:
+    """`current` / `outdated` / `missing` của bộ đọc chữ, theo dấu của mô-đun này."""
+    part = g2p_part()
+    return music_module.judge_parts([part], _core.pins())[part.id]
+
+
+def install_g2p_part(progress: Callable[[int], None]) -> None:
+    """Tải bộ đọc chữ cho mô-đun khác: giải vào chỗ chung, ghi dấu ở đây, đưa vào sys.path (bản đã nạp thì chờ lần mở app sau, `LIB_NEXT`)."""
     with _lock:
-        _state["benchmarking"] = True
-    try:
-        stamp = _read_stamp()
-        results = stamp.get("benchmark") if isinstance(stamp.get("benchmark"), dict) else {}
-        for tier in tiers:
-            try:
-                results[tier] = _bench(tier)
-            except Exception:  # noqa: BLE001
-                results.pop(tier, None)
-        stamp = _read_stamp()
-        stamp["benchmark"] = results
-        _write_stamp(stamp)
-    finally:
-        with _lock:
-            _state["benchmarking"] = False
+        part = g2p_part()
+        _install(part, progress)
+        stamp = _core.read_stamp()
+        stamp["pins"] = {**_core.pins(), "g2p": part.pin}
+        _core.write_stamp(stamp)
+        _activate()
 
 
 def measure_again() -> None:
     """Người dùng bấm "Đo lại" (máy vừa rảnh hơn, vừa cắm sạc): đo lại mọi giọng đã tải ở luồng nền."""
-    global _thread
-    with _lock:
-        if _state["downloading"] or _state["benchmarking"]:
-            return
-        found = installed()
-        tiers = [tier for tier in ("turbo", "nano") if found is not None and getattr(found, tier) is not None]
-        if not tiers:
-            return
-        _state["benchmarking"] = True
-        _thread = threading.Thread(target=_measure, args=(tiers,), name="vieneu-bench", daemon=True)
-        _thread.start()
+    found = installed()
+    _core.measure_again([tier for tier in ("turbo", "nano") if found is not None and getattr(found, tier) is not None])

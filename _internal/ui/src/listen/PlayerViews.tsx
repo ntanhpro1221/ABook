@@ -33,7 +33,7 @@ import {
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
@@ -47,7 +47,7 @@ import { EDIT_BOOKMARK_EVENT, SKIP_SECONDS, SPEEDS, useNowPlaying, usePlayer } f
 import { SLEEP_CHOICES, sleepLabel, sleepLeftMs, sleepSpoken } from "./sleep";
 import { useVoiceSample } from "./VoiceSettings";
 import { genderLabel, groupedVoices, voiceSections } from "./voiceGroups";
-import { chooseVoice, chosenVoice, isNoOfflineVoice, onlineNotice, resolveVoice } from "./readAloudVoice";
+import { chooseVoice, chosenVoice, isNoOfflineVoice, localVoiceFor, noOfflineMessage, onlineNotice, resolveVoice, voiceCaption } from "./readAloudVoice";
 import { bookProgressText, nextChapterLabel, PREPARING_VOICE, textChapterLine, toggleLabel } from "./labels";
 import { spokenVoiceName } from "./onlineConsent";
 import { PlaylistOptionLabel, playlistNote, usePlaylistChoice } from "./PlaylistChoice";
@@ -355,21 +355,56 @@ function MusicMenuFor({ bookId }: { bookId: string }) {
 
 /** Giọng đọc của "Nghe ngay" (chương chỉ-có-chữ đang nghe): chọn nhớ riêng cho cuốn này và làm giọng chung cho cuốn khác; đổi giữa chừng
  *  có hiệu lực từ đoạn kế. Không hiện khi đang nghe chương có audio. */
-/** Mở Cài đặt › Giọng đọc (nơi tải thêm giọng): đóng màn "Đang nghe" nếu đang mở, rồi cuộn tới mục giọng khi trang đã dựng xong. */
+/** Mở Cài đặt › Giọng đọc (nơi tải thêm giọng): đóng màn "Đang nghe" nếu đang mở, rồi cuộn tới mục giọng khi trang đã dựng xong. `anchor`: mã của chỗ cần cuộn
+ *  tới (mặc định đầu mục Giọng đọc; "vieneu-module" = thẻ tải giọng VieNeu). */
 function useOpenVoiceSettings() {
   const navigate = useNavigate();
   const { setExpanded } = useNowPlaying();
-  return useCallback(() => {
+  return useCallback((anchor = "voices") => {
     setExpanded(false);
     navigate("/settings");
     let tries = 0;
     const reveal = () => {
-      const target = document.getElementById("voices");
-      if (target) target.scrollIntoView({ block: "start" });
-      else if (tries++ < 20) setTimeout(reveal, 50);
+      const target = document.getElementById(anchor);
+      if (target) {
+        target.scrollIntoView({ block: "start" });
+        // Danh sách giọng phía trên hiện ra SAU (hỏi máy xong mới dựng): chỗ cần tới bị đẩy xuống - cuộn lại vài lần cho tới khi trang yên.
+        for (const wait of [250, 600, 1200]) setTimeout(() => target.scrollIntoView({ block: "start" }), wait);
+      } else if (tries++ < 20) setTimeout(reveal, 50);
     };
     setTimeout(reveal, 0);
   }, [navigate, setExpanded]);
+}
+
+/** Vùng cuộn có dấu hiệu "còn nữa": bóng mờ ở đáy kèm dòng nhắc khi phần dưới chưa cuộn tới - danh sách giọng dài hơn khung của menu mà không
+ *  có dấu hiệu nào thì người nghe tưởng chỉ có bấy nhiêu giọng (soát điện thoại 03-10). */
+function ScrollHint({ className, children }: { className: string; children: ReactNode }) {
+  const box = useRef<HTMLDivElement | null>(null);
+  const [more, setMore] = useState(false);
+  const measure = useCallback(() => {
+    const element = box.current;
+    if (element) setMore(element.scrollHeight - element.scrollTop - element.clientHeight > 8);
+  }, []);
+  useEffect(() => {
+    measure();
+    const element = box.current;
+    if (!element || typeof ResizeObserver === "undefined") return;
+    const watcher = new ResizeObserver(measure);
+    watcher.observe(element);
+    return () => watcher.disconnect();
+  }, [measure]);
+  return (
+    <div className="relative">
+      <div ref={box} onScroll={measure} className={className}>
+        {children}
+      </div>
+      {more && (
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 flex h-12 items-end justify-center bg-gradient-to-t from-panel via-panel/80 to-transparent pb-1">
+          <span className="rounded-full bg-panel px-2.5 py-0.5 text-[11px] font-medium text-fg-2 ring-1 ring-line">Kéo xuống còn giọng khác</span>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function VoiceMenu() {
@@ -392,7 +427,7 @@ export function VoiceMenu() {
     >
       <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Giọng đọc · nhớ riêng cho cuốn này</div>
       {/* Cùng nhóm, cùng tên giọng với Cài đặt › Giọng đọc; "Thử" dùng cùng cách nghe thử. */}
-      <div className="max-h-[50vh] overflow-y-auto p-1">
+      <ScrollHint className="max-h-[50vh] overflow-y-auto p-1">
         {groupedVoices(voices).map((group) => (
           <div key={group.provider} role="group" aria-label={group.title} className="mb-1.5">
             <div className="px-2 pb-0.5 pt-1 text-[11px] font-semibold uppercase tracking-wider text-fg-3">{group.title}</div>
@@ -440,10 +475,10 @@ export function VoiceMenu() {
           </div>
         ))}
         {sample.failed && <p className="px-2 pb-1 text-xs text-danger text-pretty">{sample.failed.message}</p>}
-      </div>
+      </ScrollHint>
       <button
         type="button"
-        onClick={openVoiceSettings}
+        onClick={() => openVoiceSettings()}
         className="flex min-h-9 w-full items-center rounded-lg px-3 text-left text-sm text-accent-text hover:bg-hover max-sm:min-h-[44px]"
       >
         Thêm giọng…
@@ -919,33 +954,51 @@ function TrackSubtitle() {
 }
 
 /** Không phát được (mất mạng, giọng đọc không phản hồi, file hỏng): một khối riêng đọc màn hình đọc ngay (role="alert") kèm "Thử lại" - không
- *  thay tên sách bằng chữ đỏ. Lời nhắn đã rơi sang giọng của máy (vẫn đang đọc) là một dòng trạng thái, tự ẩn. */
-function PlayerAlert({ className }: { className?: string }) {
-  const { error, notice, resume } = usePlayer();
+ *  thay tên sách bằng chữ đỏ. Lời nhắn đã rơi sang giọng của máy (vẫn đang đọc) là một dòng trạng thái, tự ẩn.
+ *  Mất mạng mà máy không có giọng đọc không cần mạng: một câu ngắn nói tên giọng, nút chính theo tình huống - đã có giọng chạy trên máy (VieNeu…) thì
+ *  "Đọc bằng …" (đổi giọng cuốn này rồi phát tiếp), chưa thì "Tải giọng VieNeu" (tới thẻ tải giọng trong Cài đặt). Mạng về thì khối tự ẩn.
+ *  `overlay`: trong màn "Đang nghe"; ở thanh phát thì không đè lên màn Cài đặt (nơi người nghe đang đi tải giọng). */
+function PlayerAlert({ className, overlay = false }: { className?: string; overlay?: boolean }) {
+  const { error, notice, resume, dismissError, track } = usePlayer();
   const openVoiceSettings = useOpenVoiceSettings();
+  const { pathname } = useLocation();
+  const voices = useReadAloudVoices().data;
+  const offline = Boolean(error) && isNoOfflineVoice(error);
+  useEffect(() => {
+    if (!offline) return;
+    window.addEventListener("online", dismissError);
+    return () => window.removeEventListener("online", dismissError);
+  }, [offline, dismissError]);
   if (error) {
-    // Mất mạng mà máy chưa có giọng đọc không cần mạng: chỉ cách xong thì đưa người nghe tới đúng chỗ tải giọng (Cài đặt › Giọng đọc).
-    const noVoice = isNoOfflineVoice(error);
+    if (!overlay && pathname.startsWith("/settings")) return null;
+    const current = voices && track ? resolveVoice(voices, chosenVoice(track.bookId)) : undefined;
+    const local = offline && voices ? localVoiceFor(voices, current) : undefined;
+    const button = "min-h-9 shrink-0 rounded-lg bg-panel px-3 text-xs font-semibold ring-1 ring-line hover:bg-hover max-sm:min-h-[44px]";
     return (
       <div role="alert" className={cn("flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl bg-danger-soft px-3 py-2 text-sm text-fg", className)}>
         <TriangleAlert className="size-4 shrink-0 text-danger" />
-        <span className="min-w-[14rem] flex-1">{error}</span>
-        {noVoice && (
+        <span className="min-w-[14rem] flex-1">{offline && current ? noOfflineMessage(spokenVoiceName(current.name)) : error}</span>
+        {offline && local && track && (
           <button
             type="button"
-            onClick={openVoiceSettings}
+            onClick={() => {
+              chooseVoice(track.bookId, local.id);
+              dismissError();
+              // Lõi điện thoại nhận giọng mới qua một lệnh riêng: cho nó kịp tới trước lệnh phát.
+              window.setTimeout(resume, 300);
+            }}
             {...keepFocus}
-            className="min-h-9 shrink-0 rounded-lg bg-panel px-3 text-xs font-semibold ring-1 ring-line hover:bg-hover max-sm:min-h-[44px]"
+            className={button}
           >
-            Mở Cài đặt › Giọng đọc
+            Đọc bằng {voiceCaption(local)}
           </button>
         )}
-        <button
-          type="button"
-          onClick={resume}
-          {...keepFocus}
-          className="min-h-9 shrink-0 rounded-lg bg-panel px-3 text-xs font-semibold ring-1 ring-line hover:bg-hover max-sm:min-h-[44px]"
-        >
+        {offline && !local && (
+          <button type="button" onClick={() => openVoiceSettings("vieneu-module")} {...keepFocus} className={button}>
+            Tải giọng VieNeu
+          </button>
+        )}
+        <button type="button" onClick={resume} {...keepFocus} className={button}>
           Thử lại
         </button>
       </div>
@@ -1663,7 +1716,7 @@ export function NowPlaying({ mobile = false, actions }: { mobile?: boolean; acti
         {/* Đang nhỏ dần thì "Sắp tắt…" đã nói thay - hai dòng cùng lúc ở chương rất ngắn đọc như mâu thuẫn. */}
         {sleep.kind === "chapter" && !fading && <p className="mt-2 text-center text-xs text-fg-2">Sẽ dừng khi hết chương này.</p>}
         <FadingNotice className="mt-3" />
-        <PlayerAlert className="mt-3" />
+        <PlayerAlert className="mt-3" overlay />
         <CaughtUpNotice />
         {mobile && <div className="mt-4 flex justify-center">{panelTabs}</div>}
       </aside>

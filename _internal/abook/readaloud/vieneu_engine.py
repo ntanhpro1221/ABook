@@ -306,15 +306,20 @@ def _sea() -> Any:
         return _pipeline
 
 
+def normalize(sentences: Sequence[str]) -> str:
+    """Chữ của MỘT khúc gồm các câu `sentences` sau chuẩn hoá của sea-g2p (số, ngày, giờ, đơn vị thành chữ; chữ thường), từng câu một và nối
+    bằng dấu cách. Chưa chốt dấu cuối, chưa thành phoneme - phần chữ này cũng đem đọc cho giọng nhận chữ (Supertonic)."""
+    pipeline = _sea()
+    return " ".join(part for part in (pipeline.normalizer.normalize(text, punc_norm=False) for text in sentences) if part)
+
+
 def phonemize(sentences: Sequence[str]) -> str:
-    """Phoneme của MỘT khúc gồm các câu `sentences`, đúng chuỗi của vieneu 3.8.1 cho khúc ấy: chuẩn hoá từng câu (không chốt dấu cuối), nối
-    bằng dấu cách, chốt dấu cuối của cả khúc (`punc_norm`), rồi sea-g2p (chuẩn hoá + G2P, punc_norm bật) như `phonemize_text_with_emotions`."""
+    """Phoneme của MỘT khúc gồm các câu `sentences`, đúng chuỗi của vieneu 3.8.1 cho khúc ấy: chuẩn hoá từng câu (`normalize`), chốt dấu cuối
+    của cả khúc (`punc_norm`), rồi sea-g2p (chuẩn hoá + G2P, punc_norm bật) như `phonemize_text_with_emotions`."""
     from sea_g2p import punc_norm
 
-    pipeline = _sea()
-    normalized = " ".join(part for part in (pipeline.normalizer.normalize(text, punc_norm=False) for text in sentences) if part)
-    chunk = punc_norm(normalized)
-    return pipeline.run(chunk, punc_norm=True) if chunk.strip() else ""
+    chunk = punc_norm(normalize(sentences))
+    return _sea().run(chunk, punc_norm=True) if chunk.strip() else ""
 
 
 # ---- phiên onnxruntime ----------------------------------------------------------------------------------------------------------

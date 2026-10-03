@@ -191,7 +191,7 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
 }
 
 /** Mục "Giọng đọc" của Cài đặt. `deviceHint`: câu cho khi máy chưa có giọng tiếng Việt (mỗi nền tảng cài theo cách riêng). */
-/** `modules`: phần tải thêm giọng của nền tảng (máy tính: thẻ "Giọng VieNeu" - VieneuModuleCard), nhận `reload` để danh sách giọng hỏi lại khi
+/** `modules`: phần tải thêm giọng của nền tảng (máy tính: thẻ "Giọng VieNeu" và "Giọng Supertonic" - VieneuModuleCard), nhận `reload` để danh sách giọng hỏi lại khi
  *  giọng mới vừa tải xong. */
 export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettingsApi; deviceHint: string; modules?: (reload: () => void) => ReactNode }) {
   const client = useQueryClient();
@@ -240,7 +240,8 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
                       const selected = voice.id === current?.id;
                       const playing = sample.playing === voice.id;
                       return (
-                        <li key={voice.id} className="flex items-center gap-3 py-2">
+                        <li key={voice.id} className="py-2">
+                          <div className="flex items-center gap-3">
                           <button
                             type="button"
                             role="radio"
@@ -268,15 +269,17 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
                           >
                             {playing ? "Dừng" : "Thử giọng"}
                           </Button>
+                          </div>
+                          {/* Lỗi nghe thử nằm ngay dưới hàng giọng vừa bấm, không ở cuối cả nhóm. */}
+                          {sample.failed?.voice === voice.id && (
+                            <p className="mt-1 text-[13px] text-danger text-pretty" role="alert">{sample.failed.message}</p>
+                          )}
                         </li>
                       );
                     })}
                   </ul>
                 </div>
               ))}
-              {sample.failed && list.some((voice) => voice.id === sample.failed!.voice) && (
-                <p className="mt-1 text-[13px] text-danger text-pretty">{sample.failed.message}</p>
-              )}
               {notice && list.length > 0 && <p className="mt-1 text-xs text-fg-2 text-pretty">{notice}</p>}
             </div>
           );

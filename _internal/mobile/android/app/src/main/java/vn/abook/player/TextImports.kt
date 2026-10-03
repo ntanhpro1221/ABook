@@ -140,9 +140,33 @@ object TextImports {
         // tính (`server.preview_text_book`, `textbook.find_existing`).
         val defaults = BookImport.defaultPicks(book)
         val existing = if (defaults.isEmpty()) null else Store.findByChapters(TextBook.prints(BookImport.selectChapters(book, defaults)))
+        // Cũng đúng FILE này đã được thêm (chọn chương khác, tách hay không tách): nói ngay, đừng để thành cuốn trùng tên không ai báo
+        // (`server.preview_text_book`, `textbook.find_same_source`).
+        val same = Store.findBySource(sourceDigest(source))
         return TextBook.preview(book).put("existing", existing?.let { id ->
             JSONObject().put("id", id).put("title", Store.manifest(id)?.optString("title").orEmpty())
+        } ?: JSONObject.NULL).put("sameSource", same?.let { id ->
+            val shown = Store.manifest(id)
+            JSONObject().put("id", id).put("title", shown?.optString("title").orEmpty()).put("chapters", shown?.optInt("chaptersTotal") ?: 0)
         } ?: JSONObject.NULL)
+    }
+
+    /** Mã băm của thứ người dùng chọn để thêm sách: nội dung file, hay (thư mục TXT) tên + nội dung từng file theo thứ tự tên (`textbook.source_digest`). */
+    private fun sourceDigest(source: File): String {
+        val digest = java.security.MessageDigest.getInstance("SHA-256")
+        val files = if (source.isDirectory) source.listFiles()!!.sortedBy { it.name } else listOf(source)
+        for (file in files.filter { it.isFile }) {
+            if (source.isDirectory) digest.update(file.name.toByteArray(Charsets.UTF_8))
+            file.inputStream().use { input ->
+                val buffer = ByteArray(1 shl 16)
+                while (true) {
+                    val read = input.read(buffer)
+                    if (read < 0) break
+                    digest.update(buffer, 0, read)
+                }
+            }
+        }
+        return digest.digest().joinToString("") { "%02x".format(it) }
     }
 
     /**
@@ -160,6 +184,7 @@ object TextImports {
             packed.outputStream().use { TextBook.build(book, it, codec) }
             val before = Store.books().map { it.optString("id") }.toSet()
             val imported = BookFileImport.importFile(packed, separate = separate)
+            if (imported.id !in before) Store.rememberSource(imported.id, sourceDigest(staged(ref)))
             discard(ref)
             return JSONObject().put("id", imported.id).put("how", if (imported.id in before) "existing" else "new").put("chapters", book.chapters.size)
         } finally {
