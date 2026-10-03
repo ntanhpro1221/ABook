@@ -61,7 +61,7 @@ Online voices (owner 03-10: "đọc ngay, cần mạng" is its own group; Edge T
 
 VieNeu 3.8.1 (installed) has CPU modes: `v3nano` (48M-parameter flow model, ONNX, 24 kHz) and `v3turbo` (ONNX on CPU,
 48 kHz). Measured 03-10 on the home laptop CPU (busy with GPU evals): v3nano RTF 0.18, first audio after 0.76 s.
-v3turbo: being measured. ONNX means the same runtime as the music module, so a phone build is plausible; phone speed not
+v3turbo (ONNX on CPU, 48 kHz, 25 voices): RTF 0.36 (~2.8x faster than listening), first streamed audio after 0.21 s; first load downloads the model (~20 min here). ONNX means the same runtime as the music module, so a phone build is plausible; phone speed not
 measured yet.
 
 Read-aloud runs a little ahead of the listener (sentence queue, like video buffering), caches what it read as quick audio
