@@ -91,6 +91,62 @@ object Names {
         }
     }
 
+    /** Hậu tố gọi Nhật nối gạch (JA_SUFFIXES còn "tan", "nee", "nii": dễ lẫn với chữ thường nên chỉ đi theo tên đã nhận) - `HONORIFICS` của names.py. */
+    private val HONORIFICS = setOf("san", "kun", "chan", "sama", "senpai", "sensei", "dono")
+    /** Tiếng gọi Hàn cố định (bộ thử TN) - `KOREAN_TERMS`. */
+    private val KOREAN_TERMS = mapOf("oppa" to "ốp-pa", "unnie" to "un-ni", "noona" to "nu-na", "hyung" to "hi-ung", "ssi" to "si", "nim" to "nim")
+    private val KOREAN_ALONE = setOf("oppa", "unnie", "noona", "hyung")
+
+    /**
+     * Dấu câu sau chữ, đổi cho vừa với cách đọc: sea-g2p đọc nháy đơn đóng sau MỘT chữ cái ("a’", "nha… a'") là "phẩy", nên khi cách đọc kết thúc bằng một chữ cái đứng riêng
+     * thì ’ và ' thành dấu ngoặc kép đóng ” (bỏ qua khi đọc) - `closing`.
+     */
+    fun closing(after: String, reading: String): String {
+        val lone = reading.isNotEmpty() && reading.last().isLetter() && !(reading.length >= 2 && reading[reading.length - 2].isLetter())
+        return if (lone) after.replace("’", "”").replace("'", "”") else after
+    }
+
+    private fun isSuffix(segment: String) = lower(segment) in HONORIFICS || lower(segment) in KOREAN_TERMS
+
+    private fun suffixOk(segment: String) = isSuffix(segment) && !(segment.length > 1 && segment.any { it.isUpperCase() } && segment.none { it.isLowerCase() })
+
+    private fun term(segment: String): String {
+        val lowered = lower(segment)
+        return KOREAN_TERMS[lowered] ?: Romanization.reading(lowered, "ja") ?: lowered
+    }
+
+    /**
+     * Cách đọc nối gạch của [core] (đã bỏ dấu câu quanh) khi nó mang hậu tố gọi nối gạch ("Sora-sama", "hiệp sĩ-sama", "Mary-san", "Lane-ssi") hay là tiếng gọi Hàn đứng riêng ("oppa"),
+     * null khi để nguyên. Hậu tố đọc theo bảng của nó với MỌI cuốn; phần tên đứng trước đọc theo luật romaji khi nó là tên Nhật rõ (cuốn gốc Hàn thì để [readNames]), còn lại (tên Âu,
+     * từ Việt, từ Anh) giữ nguyên chữ - `honorific_reading`.
+     */
+    fun honorificReading(core: String, origin: String?): String? {
+        val segments = core.split("-").toMutableList()
+        if (!segments.all { segment -> segment.replace("'", "").let { it.isNotEmpty() && it.all(Char::isLetter) } }) return null
+        val popped = ArrayList<String>()
+        while (segments.isNotEmpty() && suffixOk(segments.last())) popped.add(0, segments.removeAt(segments.size - 1))
+        if (popped.isEmpty() || (segments.isEmpty() && lower(popped[0]) !in KOREAN_ALONE)) return null
+        val terms = popped.joinToString("-") { term(it) }
+        val head = segments.joinToString("-")
+        if (head.isEmpty()) return terms
+        if (origin != "ko" && popped.all { lower(it) in HONORIFICS }) {
+            val whole = if (head[0].isUpperCase()) nameReading(core, "ja")
+            else if (head.all { it.code < 128 } && head == lower(head) && !knownWord(head)) Romanization.reading(core, "ja") else null
+            if (whole != null) return whole
+        }
+        return "$head-$terms"
+    }
+
+    /** Thay tại chỗ, trong `out`, token (chưa bị đổi) mang hậu tố gọi bằng cách đọc của nó ([honorificReading]), giữ dấu câu quanh; số chữ không đổi. */
+    fun readHonorifics(toks: List<String>, out: MutableList<String>, origin: String?) {
+        for ((index, token) in toks.withIndex()) {
+            if (out[index] != token) continue
+            val (before, core, after) = splitToken(token)
+            val reading = if (core.isEmpty()) null else honorificReading(core, origin)
+            if (reading != null) out[index] = before + reading + after
+        }
+    }
+
     // ---- gốc của cuốn ---------------------------------------------------------------------------------------------------------
 
     /** (mỗi tên đã bỏ hậu tố gọi và số lần nó xuất hiện, riêng những lần nó đi kèm hậu tố gọi kiểu Nhật). `scan_names` của names.py. */

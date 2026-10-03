@@ -40,6 +40,10 @@ KO_ONLY_SHARE = 0.5  # phần lần xuất hiện của tên đọc được b�
 RULE_VERSION = 2  # đổi khi đổi cách đoán: gốc đã lưu của cuốn được đoán lại
 ENGLISH_READING = 1  # đổi khi đổi cách Việt hoá từ Anh (`english_vi`, `english_reading`): clip đã đệm của giọng Việt hoá được đọc lại (dấu "en<số>" của khoá clip)
 _ALLOWED_MARKS = "āīūēōâîûêôĀĪŪĒŌÂÎÛÊÔ"
+HONORIFICS = ("san", "kun", "chan", "sama", "senpai", "sensei", "dono")  # hậu tố gọi Nhật nối gạch (JA_SUFFIXES còn "tan", "nee", "nii": dễ lẫn với chữ thường nên chỉ đi theo tên đã nhận)
+KOREAN_TERMS = {"oppa": "ốp-pa", "unnie": "un-ni", "noona": "nu-na", "hyung": "hi-ung", "ssi": "si", "nim": "nim"}  # tiếng gọi Hàn cố định (bộ thử TN); luật RR chưa khớp quy ước ở "ssi", "unnie", "oppa"
+KOREAN_ALONE = ("oppa", "unnie", "noona", "hyung")  # đứng riêng cũng đọc (không cần tên đi trước)
+_SUFFIXES = frozenset(HONORIFICS) | frozenset(KOREAN_TERMS)
 
 
 @lru_cache(maxsize=1)
@@ -112,6 +116,60 @@ def read_names(toks: list[str], out: list[str], origin: str | None) -> None:
             out[index] = before + reading + after
 
 
+def closing(after: str, reading: str) -> str:
+    """Dấu câu sau chữ, đổi cho vừa với cách đọc: sea-g2p đọc nháy đơn đóng sau MỘT chữ cái ("a’", "nha… a'") là "phẩy", nên khi cách đọc kết thúc bằng một chữ cái
+    đứng riêng thì ’ và ' thành dấu ngoặc kép đóng ” (bỏ qua khi đọc)."""
+    lone = len(reading) >= 1 and reading[-1].isalpha() and not reading[-2:-1].isalpha()
+    return after.replace("’", "”").replace("'", "”") if lone else after
+
+
+def _suffix(segment: str) -> bool:
+    return segment.lower() in _SUFFIXES and not (len(segment) > 1 and segment.isupper())
+
+
+def _term(segment: str) -> str:
+    lowered = segment.lower()
+    return KOREAN_TERMS.get(lowered) or romanized_reading(lowered, "ja") or lowered
+
+
+@lru_cache(maxsize=8192)
+def honorific_reading(core: str, origin: str | None) -> str | None:
+    """Cách đọc nối gạch của `core` (đã bỏ dấu câu quanh) khi nó mang hậu tố gọi nối gạch ("Sora-sama", "hiệp sĩ-sama", "Mary-san", "Lane-ssi") hay là tiếng gọi Hàn đứng riêng
+    ("oppa"), None khi để nguyên. Hậu tố đọc theo bảng của nó với MỌI cuốn; phần tên đứng trước đọc theo luật romaji khi nó là tên Nhật rõ (cuốn gốc Hàn thì để `read_names`),
+    còn lại (tên Âu, từ Việt, từ Anh) giữ nguyên chữ."""
+    segments = core.split("-")
+    if not all(segment.replace("'", "").isalpha() for segment in segments):
+        return None
+    popped: list[str] = []
+    while segments and _suffix(segments[-1]):
+        popped.insert(0, segments.pop())
+    if not popped or (not segments and popped[0].lower() not in KOREAN_ALONE):
+        return None
+    terms = "-".join(_term(segment) for segment in popped)
+    head = "-".join(segments)
+    if not head:
+        return terms
+    if origin != "ko" and all(segment.lower() in HONORIFICS for segment in popped):
+        if head[:1].isupper():
+            whole = name_reading(core, "ja")
+        else:
+            whole = romanized_reading(core, "ja") if head.isascii() and head == head.lower() and not _known_word(head) else None
+        if whole:
+            return whole
+    return f"{head}-{terms}"
+
+
+def read_honorifics(toks: list[str], out: list[str], origin: str | None) -> None:
+    """Thay tại chỗ, trong `out`, token (chưa bị đổi) mang hậu tố gọi bằng cách đọc của nó (`honorific_reading`), giữ dấu câu quanh; số chữ không đổi."""
+    for index, token in enumerate(toks):
+        if out[index] != token:
+            continue
+        before, core, after = split_token(token)
+        reading = honorific_reading(core, origin) if core else None
+        if reading:
+            out[index] = before + reading + after
+
+
 @lru_cache(maxsize=8192)
 def english_reading(core: str) -> str | None:
     """Cách đọc nối gạch của một từ / tên tiếng Anh bằng âm tiết Việt (`english_vi.vietnamized_english`), None khi để nguyên: viết tắt TOÀN HOA, âm tiết
@@ -148,6 +206,7 @@ def spoken_names(toks: list[str], origin: str | None, speaks_english: bool, out:
     if out is None:
         out = list(toks)
     read_names(toks, out, origin)
+    read_honorifics(toks, out, origin)
     if not speaks_english:
         read_english(toks, out)
     return out

@@ -84,10 +84,10 @@ def test_a_roman_numeral_after_a_word_is_read_as_a_number(text: str, said: str) 
     ("I am here.", "I am here."),  # chữ "I" đứng đầu câu, không có dấu chấm đề mục
     ("I.", "I."),
     ("Xong rồi. I am đây.", "Xong rồi. I am đây."),  # sau dấu câu là câu mới
-    ("Anh ấy là MC của CV VIP, ở DIV.", "Anh ấy là MC của CV VIP, ở DIV."),  # viết tắt
-    ("Mã XL và IIII và VX.", "Mã XL và IIII và VX."),  # không phải số La Mã hợp lệ / ngoài I..XXXIX
+    ("Anh ấy là MC của CV VIP, ở DIV.", "Anh ấy là em xê của xê vê víp, ở đê i vê."),  # viết tắt: không thành số, đọc tên chữ cái (abbreviations.py)
+    ("Mã XL và IIII và VX.", "Mã ích e-lờ và i i i i và vê ích."),  # không phải số La Mã hợp lệ / ngoài I..XXXIX
     ("Chương iv và Chương Iv.", "Chương iv và Chương Iv."),  # chỉ chữ HOA
-    ("Khoa CV II", "Khoa CV II"),  # sau viết tắt (không có chữ thường) thì để nguyên
+    ("Khoa CV II", "Khoa xê vê i i"),  # sau viết tắt (không có chữ thường) không thành số
     # số MỘT chữ sau từ thường khác là chữ cái, không phải số
     ("Ông X, nhân vật X, tia X, điểm V, loại I.", "Ông X, nhân vật X, tia X, điểm V, loại I."),
     ("Ông ta nói rằng I", "Ông ta nói rằng I"),
@@ -100,7 +100,7 @@ def test_other_capitals_and_headings_are_left_alone(text: str, said: str) -> Non
 
 # ---- dấu sea-g2p đọc sai thành lời (vieneu.reading_marks): "~", nghìn kiểu Anh, <ngoặc nhọn>, " / " ---------------------------------------
 @pytest.mark.parametrize("text, said", [
-    ("Hmm~ Har~kun? EMMMMM~!", "Hmm Har kun? EMMMMM!"),  # kéo giọng: bỏ; có chữ ngay sau thì thành khoảng trắng
+    ("Hmm~ Har~kun? EMMMMM~!", "hừm Har kun? em…!"),  # kéo giọng: bỏ; có chữ ngay sau thì thành khoảng trắng
     ("Ưm~~~, xong. Ô ~, vậy sao. Ồ~”.", "Ưm, xong. Ô, vậy sao. Ồ”."),
     ("Từ 10,000 ~ 15,000 đồng và 3~5 người.", "Từ 10000 đến 15000 đồng và 3 đến 5 người."),  # giữa hai số: đến
     ("Khoảng ~50 người, “~50” nữa.", "Khoảng ~50 người, “~50” nữa."),  # trước số: để sea-g2p đọc "khoảng"
@@ -140,7 +140,7 @@ def test_angle_brackets_around_words_are_not_comparisons(text: str, said: str) -
 @pytest.mark.parametrize("text, said", [
     ("Bị 【Đóng băng / yếu】 rồi.", "Bị 【Đóng băng, yếu】 rồi."),
     ("Chạy / bay.", "Chạy, bay."),
-    ("HP: 5813 / 5813 và 3/5, 15/8, 3 / 5.", "HP: 5813 / 5813 và 3/5, 15/8, 3 / 5."),  # giữa hai số: sea-g2p đọc "trên"
+    ("HP: 5813 / 5813 và 3/5, 15/8, 3 / 5.", "hát pê: 5813 / 5813 và 3/5, 15/8, 3 / 5."),  # giữa hai số: sea-g2p đọc "trên"
     ("Mở/đóng và km/h.", "Mở/đóng và km/h."),  # dính liền: có thể là đơn vị (triệu/tháng), để nguyên
 ])
 def test_a_slash_between_two_words_is_a_pause(text: str, said: str) -> None:

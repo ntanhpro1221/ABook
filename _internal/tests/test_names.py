@@ -61,15 +61,16 @@ def test_an_english_name_is_left_to_the_voice_even_in_a_japanese_book(token: str
     assert _said(f"Rồi {token}.", "ja") == ["Rồi", f"{token}."]
 
 
-@pytest.mark.parametrize("token", ["Hm", "Hmm", "Nn", "Eh", "Haiz", "Goblin", "Elf", "Wizard", "Hoa", "Nam", "Mai", "Tôi", "Ôi", "Anh", "AI", "CV", "A", "Aaaa", "Haaa", "Aa", "McDonald", "Hmm", "Ugh", "Spider-Man", "Haruto's"])
+@pytest.mark.parametrize("token", ["Hm", "Nn", "Haiz", "Goblin", "Elf", "Wizard", "Hoa", "Nam", "Mai", "Tôi", "Ôi", "Anh", "A", "Aa", "McDonald", "Spider-Man", "Haruto's", "Weisss"])
 def test_vietnamese_syllables_shouts_capitals_and_odd_words_are_left_alone(token: str) -> None:
     assert _said(f"Rồi {token}.", "ja") == ["Rồi", f"{token}."]
     assert _said(f"Rồi {token}.", "ko") == ["Rồi", f"{token}."]
 
 
-def test_nothing_changes_without_an_origin_and_punctuation_around_a_name_is_kept() -> None:
+def test_names_stay_without_an_origin_and_punctuation_around_a_name_is_kept() -> None:
     toks = word_timing.tokens("“Haruto-kun,” Yamato! (Kyouko) Sakura… Hajime")
-    assert vieneu.spoken_tokens(toks) == toks == vieneu.spoken_tokens(toks, None) == vieneu.spoken_tokens(toks, "zz")
+    # không gốc: chỉ hậu tố gọi nối gạch cho biết là tên Nhật (names.honorific_reading); tên trần để nguyên
+    assert vieneu.spoken_tokens(toks) == ["“Ha-ru-tô-cun,”", "Yamato!", "(Kyouko)", "Sakura…", "Hajime"] == vieneu.spoken_tokens(toks, None) == vieneu.spoken_tokens(toks, "zz")
     assert vieneu.spoken_tokens(toks, "ja") == ["“Ha-ru-tô-cun,”", "Gia-ma-tô!", "(Ki-âu-cô)", "Xa-cu-ra…", "Ha-gi-me"]
 
 
@@ -238,7 +239,7 @@ def test_a_voice_that_speaks_english_keeps_english_words_exactly_as_before() -> 
     for origin in (None, "ja", "ko"):
         assert vieneu.spoken_tokens(toks, origin, True) == vieneu.spoken_tokens(toks, origin) == names.spoken_names(toks, origin, True)
         assert vieneu.spoken_tokens(toks, origin) == vieneu.spoken_tokens(toks, origin, True)
-    assert names.spoken_names(toks, None, True) == toks, "không gốc, nói được Anh: không đổi gì"
+    assert [a for a, b in zip(names.spoken_names(toks, None, True), toks) if a != b] == ["Ha-ru-tô-cun,"], "không gốc, nói được Anh: chỉ tên có hậu tố gọi Nhật đổi"
 
 
 def test_english_words_and_names_become_syllables_for_a_voice_that_cannot_say_them() -> None:
@@ -253,8 +254,8 @@ def test_english_words_and_names_become_syllables_for_a_voice_that_cannot_say_th
     assert _said_en("Dùng skill, level và Boss.") == ["Dùng", "xờ-kiu,", "le-vồ", "và", "Bót."]
 
 
-@pytest.mark.parametrize("token", ["VIP", "ID", "CV", "NPC", "AI", "Hoa", "Nam", "ba", "con", "may", "Tôi", "Hà-Nội", "10kg", "x", "A"])
-def test_acronyms_vietnamese_syllables_and_odd_words_are_left_to_the_voice(token: str) -> None:
+@pytest.mark.parametrize("token", ["Hoa", "Nam", "ba", "con", "may", "Tôi", "Hà-Nội", "10kg", "x", "A"])
+def test_vietnamese_syllables_and_odd_words_are_left_to_the_voice(token: str) -> None:
     assert _said_en(f"Rồi {token} đến.") == ["Rồi", token, "đến."]
 
 

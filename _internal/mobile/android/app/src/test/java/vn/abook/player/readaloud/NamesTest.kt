@@ -49,7 +49,7 @@ class NamesTest {
     @Test
     fun aJapaneseNameIsReadByTheRulesAndEnglishAndVietnameseWordsAreNot() {
         assertEquals(listOf("“Ha-ru-tô-cun,”", "Gia-ma-tô!", "(Ki-âu-cô)", "Xa-cu-ra…"), said("“Haruto-kun,” Yamato! (Kyouko) Sakura…", "ja"))
-        assertEquals(listOf("Kate", "và", "Mike", "Rose,", "Anne", "Emma", "Hoa", "Tôi", "AI", "Aaaa", "Level"), said("Kate và Mike Rose, Anne Emma Hoa Tôi AI Aaaa Level", "ja"))
+        assertEquals(listOf("Kate", "và", "Mike", "Rose,", "Anne", "Emma", "Hoa", "Tôi", "a i", "a… a", "Level"), said("Kate và Mike Rose, Anne Emma Hoa Tôi AI Aaaa Level", "ja"))
         assertEquals(VieneuUnits.tokens("Haruto đến"), said("Haruto đến", null))
         assertEquals(listOf("Xeo-gie-on", "gặp", "Gi-hô"), said("Seo-yeon gặp Ji-ho", "ko"))
         assertEquals(listOf("Gin-đô-nô", "Giu-ki-tan", "Câu-ni", "Hm", "Goblin", "Elf"), said("Jin-dono Yuki-tan Kou-nii Hm Goblin Elf", "ja"))

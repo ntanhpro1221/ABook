@@ -31,8 +31,12 @@ class SpokenNumeralsTest {
     fun otherCapitalsAndHeadingsAreLeftAlone() {
         assertEquals("một. Mở đầu", said("I. Mở đầu"))
         assertEquals("chín) Phụ lục", said("IX) Phụ lục"))
-        for (same in listOf("I am here.", "I.", "Xong rồi. I am đây.", "Anh ấy là MC của CV VIP, ở DIV.", "Mã XL và IIII và VX.",
-            "Chương iv và Chương Iv.", "Khoa CV II",
+        // abbreviations are not numerals: they read as letter names (Abbreviations.kt)
+        assertEquals("Anh ấy là em xê của xê vê víp, ở đê i vê.", said("Anh ấy là MC của CV VIP, ở DIV."))
+        assertEquals("Mã ích e-lờ và i i i i và vê ích.", said("Mã XL và IIII và VX."))
+        assertEquals("Khoa xê vê i i", said("Khoa CV II"))
+        for (same in listOf("I am here.", "I.", "Xong rồi. I am đây.",
+            "Chương iv và Chương Iv.",
             "Ông X, nhân vật X, tia X, điểm V, loại I.", "Ông ta nói rằng I", "Hoàng đế Napoleon I và Napoleon I.", "Trường Phổ thông I")) assertEquals(same, said(same))
     }
 
