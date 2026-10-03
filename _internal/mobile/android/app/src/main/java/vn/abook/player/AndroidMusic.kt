@@ -1,5 +1,6 @@
 package vn.abook.player
 
+import android.content.Context
 import android.media.AudioFormat
 import android.media.MediaCodec
 import android.media.MediaExtractor
@@ -131,4 +132,22 @@ object AndroidLoudness : MusicStore.LoudnessMeter {
             runCatching { extractor.release() }
         }
     }
+}
+
+/**
+ * Kho "Nhạc của tôi" ([MusicStore]) và danh mục nhạc nền ([MusicCatalog]) của máy này: MỘT bản cho cả giao diện (LocalStudio) lẫn
+ * trình phát ([MusicBed]) - dịch vụ phát chạy lại sau khi app bị đóng vẫn có chúng mà không cần giao diện nạp trước. File bài của
+ * danh mục nằm trong bộ nhớ đệm của app (hệ thống dọn được khi cần chỗ; nghe lại thì tải lại).
+ */
+object DeviceMusic {
+    private var store: MusicStore? = null
+    private var catalog: MusicCatalog? = null
+
+    @Synchronized
+    fun store(context: Context): MusicStore = store
+        ?: MusicStore(File(context.applicationContext.filesDir, "music/mine"), AndroidMusicTags, AndroidLoudness).also { store = it }
+
+    @Synchronized
+    fun catalog(context: Context): MusicCatalog = catalog
+        ?: MusicCatalog(File(context.applicationContext.cacheDir, "music-catalog")).also { catalog = it }
 }
