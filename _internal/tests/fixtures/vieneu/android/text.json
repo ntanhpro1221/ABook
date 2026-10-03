@@ -1474,6 +1474,88 @@
   },
   {
    "sentences": [
+    "Trường Phổ thông I, Trường Phổ thông hai và Thế chiến hai.",
+    "Benedict ba lên ngôi ở chương mười bốn."
+   ],
+   "phonemes": "tʃˈyə2ŋ fˈo4 tˈoŋ ˈi, tʃˈyə2ŋ fˈo4 tˈoŋ hˈaːj vˌaː2 tˈeɜ tʃˈiɛɜn hˈaːj. bˈɛnɪdˌɪkt bˈaː lˈen ŋˈoj ˈəː4 tʃˈyəŋ mˈyə2j bˈoɜn."
+  },
+  {
+   "sentences": [
+    "Trường Phổ thông I, Trường Phổ thông hai và Thế chiến hai.",
+    "Benedict ba lên ngôi ở chương mười bốn."
+   ],
+   "phonemes": "tʃˈyə2ŋ fˈo4 tˈoŋ ˈi, tʃˈyə2ŋ fˈo4 tˈoŋ hˈaːj vˌaː2 tˈeɜ tʃˈiɛɜn hˈaːj. bˈɛnɪdˌɪkt bˈaː lˈen ŋˈoj ˈəː4 tʃˈyəŋ mˈyə2j bˈoɜn."
+  },
+  {
+   "sentences": [
+    "Trường Phổ thông I,",
+    "Trường Phổ thông hai và Thế chiến hai."
+   ],
+   "phonemes": "tʃˈyə2ŋ fˈo4 tˈoŋ ˈi tʃˈyə2ŋ fˈo4 tˈoŋ hˈaːj vˌaː2 tˈeɜ tʃˈiɛɜn hˈaːj."
+  },
+  {
+   "sentences": [
+    "một.",
+    "Mở đầu"
+   ],
+   "phonemes": "mˈo6t̪, mˈəː4 ɗˈə2w."
+  },
+  {
+   "sentences": [
+    "một.",
+    "Mở đầu"
+   ],
+   "phonemes": "mˈo6t̪, mˈəː4 ɗˈə2w."
+  },
+  {
+   "sentences": [
+    "một.",
+    "Mở đầu"
+   ],
+   "phonemes": "mˈo6t̪, mˈəː4 ɗˈə2w."
+  },
+  {
+   "sentences": [
+    "Chương một, thế kỷ mười và Phần năm; ông X, nhân vật X, tia X, điểm V, loại I.",
+    "Vua Louis mười lên ngôi, Hoàng đế Napoleon I thì không."
+   ],
+   "phonemes": "tʃˈyəŋ mˈo6t̪, tˈeɜ kˈi4 mˈyə2j vˌaː2 fˈə2n nˈam, ˈoŋ ˈiɜc, ɲˈən vˈə6t̪ ˈiɜc, t̪ˈiə ˈiɜc, ɗˈiɛ4m vˈe, lwˈaː6j ˈi. vˈuə lˈuːi mˈyə2j lˈen ŋˈoj, hwˈaː2ŋ ɗˈeɜ nɐpˈoʊlɪən mˈo6t̪ tˌi2 xˌoŋ."
+  },
+  {
+   "sentences": [
+    "Chương một, thế kỷ mười và Phần năm; ông X, nhân vật X, tia X, điểm V, loại I.",
+    "Vua Louis mười lên ngôi, Hoàng đế Napoleon I thì không."
+   ],
+   "phonemes": "tʃˈyəŋ mˈo6t̪, tˈeɜ kˈi4 mˈyə2j vˌaː2 fˈə2n nˈam, ˈoŋ ˈiɜc, ɲˈən vˈə6t̪ ˈiɜc, t̪ˈiə ˈiɜc, ɗˈiɛ4m vˈe, lwˈaː6j ˈi. vˈuə lˈuːi mˈyə2j lˈen ŋˈoj, hwˈaː2ŋ ɗˈeɜ nɐpˈoʊlɪən mˈo6t̪ tˌi2 xˌoŋ."
+  },
+  {
+   "sentences": [
+    "I am here.",
+    "Xong.",
+    "I am đây.",
+    "Anh ấy là MC của CV VIP."
+   ],
+   "phonemes": "ˈaɪ æm hˈɪɹ. sˈɔŋ, ˈi ˈaːm ɗˈəɪ. ˈe-ɲ ˈəɪɜ lˌaː2 ˈɛm sˈiː kˌuə4 sˈiː vˈiː vˈɪp."
+  },
+  {
+   "sentences": [
+    "I am here.",
+    "Xong.",
+    "I am đây.",
+    "Anh ấy là MC của CV VIP."
+   ],
+   "phonemes": "ˈaɪ æm hˈɪɹ. sˈɔŋ, ˈi ˈaːm ɗˈəɪ. ˈe-ɲ ˈəɪɜ lˌaː2 ˈɛm sˈiː kˌuə4 sˈiː vˈiː vˈɪp."
+  },
+  {
+   "sentences": [
+    "I am here.",
+    "Xong.",
+    "I am đây."
+   ],
+   "phonemes": "ˈaɪ æm hˈɪɹ. sˈɔŋ, ˈi ˈaːm ɗˈəɪ."
+  },
+  {
+   "sentences": [
     "Chiếc thuyền nhỏ trôi chậm giữa dòng sông, mang theo những mùa hè đã xa.",
     "Anh ấy mở cuốn sổ cũ, đọc lại từng dòng chữ mà mẹ đã viết cho mình từ nhiều năm trước."
    ],
@@ -3573,6 +3655,242 @@
    ]
   },
   {
+   "text": "Trường Phổ thông I, Trường Phổ thông II và Thế chiến II. Benedict III lên ngôi ở chương XIV.",
+   "max": 256,
+   "tokens": 19,
+   "units": [
+    {
+     "first": 0,
+     "last": 18,
+     "pieces": [
+      "Trường Phổ thông I, Trường Phổ thông hai và Thế chiến hai.",
+      "Benedict ba lên ngôi ở chương mười bốn."
+     ],
+     "phonemes": "tʃˈyə2ŋ fˈo4 tˈoŋ ˈi, tʃˈyə2ŋ fˈo4 tˈoŋ hˈaːj vˌaː2 tˈeɜ tʃˈiɛɜn hˈaːj. bˈɛnɪdˌɪkt bˈaː lˈen ŋˈoj ˈəː4 tʃˈyəŋ mˈyə2j bˈoɜn."
+    }
+   ]
+  },
+  {
+   "text": "Trường Phổ thông I, Trường Phổ thông II và Thế chiến II. Benedict III lên ngôi ở chương XIV.",
+   "max": 140,
+   "tokens": 19,
+   "units": [
+    {
+     "first": 0,
+     "last": 18,
+     "pieces": [
+      "Trường Phổ thông I, Trường Phổ thông hai và Thế chiến hai.",
+      "Benedict ba lên ngôi ở chương mười bốn."
+     ],
+     "phonemes": "tʃˈyə2ŋ fˈo4 tˈoŋ ˈi, tʃˈyə2ŋ fˈo4 tˈoŋ hˈaːj vˌaː2 tˈeɜ tʃˈiɛɜn hˈaːj. bˈɛnɪdˌɪkt bˈaː lˈen ŋˈoj ˈəː4 tʃˈyəŋ mˈyə2j bˈoɜn."
+    }
+   ]
+  },
+  {
+   "text": "Trường Phổ thông I, Trường Phổ thông II và Thế chiến II. Benedict III lên ngôi ở chương XIV.",
+   "max": 40,
+   "tokens": 19,
+   "units": [
+    {
+     "first": 0,
+     "last": 11,
+     "pieces": [
+      "Trường Phổ thông I,",
+      "Trường Phổ thông hai và Thế chiến hai."
+     ],
+     "phonemes": "tʃˈyə2ŋ fˈo4 tˈoŋ ˈi tʃˈyə2ŋ fˈo4 tˈoŋ hˈaːj vˌaː2 tˈeɜ tʃˈiɛɜn hˈaːj."
+    },
+    {
+     "first": 12,
+     "last": 18,
+     "pieces": [
+      "Benedict ba lên ngôi ở chương mười bốn."
+     ],
+     "phonemes": "bˈɛnɪdˌɪkt bˈaː lˈen ŋˈoj ˈəː4 tʃˈyəŋ mˈyə2j bˈoɜn."
+    }
+   ]
+  },
+  {
+   "text": "I. Mở đầu",
+   "max": 256,
+   "tokens": 3,
+   "units": [
+    {
+     "first": 0,
+     "last": 2,
+     "pieces": [
+      "một.",
+      "Mở đầu"
+     ],
+     "phonemes": "mˈo6t̪, mˈəː4 ɗˈə2w."
+    }
+   ]
+  },
+  {
+   "text": "I. Mở đầu",
+   "max": 140,
+   "tokens": 3,
+   "units": [
+    {
+     "first": 0,
+     "last": 2,
+     "pieces": [
+      "một.",
+      "Mở đầu"
+     ],
+     "phonemes": "mˈo6t̪, mˈəː4 ɗˈə2w."
+    }
+   ]
+  },
+  {
+   "text": "I. Mở đầu",
+   "max": 40,
+   "tokens": 3,
+   "units": [
+    {
+     "first": 0,
+     "last": 2,
+     "pieces": [
+      "một.",
+      "Mở đầu"
+     ],
+     "phonemes": "mˈo6t̪, mˈəː4 ɗˈə2w."
+    }
+   ]
+  },
+  {
+   "text": "Chương I, thế kỷ X và Phần V; ông X, nhân vật X, tia X, điểm V, loại I. Vua Louis X lên ngôi, Hoàng đế Napoleon I thì không.",
+   "max": 256,
+   "tokens": 30,
+   "units": [
+    {
+     "first": 0,
+     "last": 29,
+     "pieces": [
+      "Chương một, thế kỷ mười và Phần năm; ông X, nhân vật X, tia X, điểm V, loại I.",
+      "Vua Louis mười lên ngôi, Hoàng đế Napoleon I thì không."
+     ],
+     "phonemes": "tʃˈyəŋ mˈo6t̪, tˈeɜ kˈi4 mˈyə2j vˌaː2 fˈə2n nˈam, ˈoŋ ˈiɜc, ɲˈən vˈə6t̪ ˈiɜc, t̪ˈiə ˈiɜc, ɗˈiɛ4m vˈe, lwˈaː6j ˈi. vˈuə lˈuːi mˈyə2j lˈen ŋˈoj, hwˈaː2ŋ ɗˈeɜ nɐpˈoʊlɪən mˈo6t̪ tˌi2 xˌoŋ."
+    }
+   ]
+  },
+  {
+   "text": "Chương I, thế kỷ X và Phần V; ông X, nhân vật X, tia X, điểm V, loại I. Vua Louis X lên ngôi, Hoàng đế Napoleon I thì không.",
+   "max": 140,
+   "tokens": 30,
+   "units": [
+    {
+     "first": 0,
+     "last": 29,
+     "pieces": [
+      "Chương một, thế kỷ mười và Phần năm; ông X, nhân vật X, tia X, điểm V, loại I.",
+      "Vua Louis mười lên ngôi, Hoàng đế Napoleon I thì không."
+     ],
+     "phonemes": "tʃˈyəŋ mˈo6t̪, tˈeɜ kˈi4 mˈyə2j vˌaː2 fˈə2n nˈam, ˈoŋ ˈiɜc, ɲˈən vˈə6t̪ ˈiɜc, t̪ˈiə ˈiɜc, ɗˈiɛ4m vˈe, lwˈaː6j ˈi. vˈuə lˈuːi mˈyə2j lˈen ŋˈoj, hwˈaː2ŋ ɗˈeɜ nɐpˈoʊlɪən mˈo6t̪ tˌi2 xˌoŋ."
+    }
+   ]
+  },
+  {
+   "text": "Chương I, thế kỷ X và Phần V; ông X, nhân vật X, tia X, điểm V, loại I. Vua Louis X lên ngôi, Hoàng đế Napoleon I thì không.",
+   "max": 40,
+   "tokens": 30,
+   "units": [
+    {
+     "first": 0,
+     "last": 9,
+     "pieces": [
+      "Chương một, thế kỷ mười và Phần năm; ông X,"
+     ],
+     "phonemes": "tʃˈyəŋ mˈo6t̪, tˈeɜ kˈi4 mˈyə2j vˌaː2 fˈə2n nˈam, ˈoŋ ˈiɜc."
+    },
+    {
+     "first": 10,
+     "last": 18,
+     "pieces": [
+      "nhân vật X, tia X, điểm V, loại I."
+     ],
+     "phonemes": "ɲˈən vˈə6t̪ ˈiɜc, t̪ˈiə ˈiɜc, ɗˈiɛ4m vˈe, lwˈaː6j ˈi."
+    },
+    {
+     "first": 19,
+     "last": 23,
+     "pieces": [
+      "Vua Louis mười lên ngôi,"
+     ],
+     "phonemes": "vˈuə lˈuːi mˈyə2j lˈen ŋˈoj."
+    },
+    {
+     "first": 24,
+     "last": 29,
+     "pieces": [
+      "Hoàng đế Napoleon I thì không."
+     ],
+     "phonemes": "hwˈaː2ŋ ɗˈeɜ nɐpˈoʊlɪən mˈo6t̪ tˌi2 xˌoŋ."
+    }
+   ]
+  },
+  {
+   "text": "I am here. Xong. I am đây. Anh ấy là MC của CV VIP.",
+   "max": 256,
+   "tokens": 14,
+   "units": [
+    {
+     "first": 0,
+     "last": 13,
+     "pieces": [
+      "I am here.",
+      "Xong.",
+      "I am đây.",
+      "Anh ấy là MC của CV VIP."
+     ],
+     "phonemes": "ˈaɪ æm hˈɪɹ. sˈɔŋ, ˈi ˈaːm ɗˈəɪ. ˈe-ɲ ˈəɪɜ lˌaː2 ˈɛm sˈiː kˌuə4 sˈiː vˈiː vˈɪp."
+    }
+   ]
+  },
+  {
+   "text": "I am here. Xong. I am đây. Anh ấy là MC của CV VIP.",
+   "max": 140,
+   "tokens": 14,
+   "units": [
+    {
+     "first": 0,
+     "last": 13,
+     "pieces": [
+      "I am here.",
+      "Xong.",
+      "I am đây.",
+      "Anh ấy là MC của CV VIP."
+     ],
+     "phonemes": "ˈaɪ æm hˈɪɹ. sˈɔŋ, ˈi ˈaːm ɗˈəɪ. ˈe-ɲ ˈəɪɜ lˌaː2 ˈɛm sˈiː kˌuə4 sˈiː vˈiː vˈɪp."
+    }
+   ]
+  },
+  {
+   "text": "I am here. Xong. I am đây. Anh ấy là MC của CV VIP.",
+   "max": 40,
+   "tokens": 14,
+   "units": [
+    {
+     "first": 0,
+     "last": 6,
+     "pieces": [
+      "I am here.",
+      "Xong.",
+      "I am đây."
+     ],
+     "phonemes": "ˈaɪ æm hˈɪɹ. sˈɔŋ, ˈi ˈaːm ɗˈəɪ."
+    },
+    {
+     "first": 7,
+     "last": 13,
+     "pieces": [
+      "Anh ấy là MC của CV VIP."
+     ],
+     "phonemes": "ˈe-ɲ ˈəɪɜ lˌaː2 ˈɛm sˈiː kˌuə4 sˈiː vˈiː vˈɪp."
+    }
+   ]
+  },
+  {
    "text": "Chiếc thuyền nhỏ trôi chậm giữa dòng sông, mang theo những mùa hè đã xa. Anh ấy mở cuốn sổ cũ, đọc lại từng dòng chữ mà mẹ đã viết cho mình từ nhiều năm trước.",
    "max": 256,
    "tokens": 36,
@@ -4127,6 +4445,11 @@
    "cap": 154
   },
   {
+   "phonemes": "mˈo6t̪, mˈəː4 ɗˈə2w.",
+   "syllables": 3,
+   "cap": 23
+  },
+  {
    "phonemes": "mˈuə2 ɗˈoŋ nˈam hˈaːj ŋˈi2n xˌoŋ tʃˈam mˈyə2j lˈe-6ɲ ɲˈəɜt̪ tʃˈɔŋ bˈaː mˈyəj nˈam.",
    "syllables": 14,
    "cap": 188
@@ -4262,9 +4585,24 @@
    "cap": 464
   },
   {
+   "phonemes": "tʃˈyə2ŋ fˈo4 tˈoŋ ˈi tʃˈyə2ŋ fˈo4 tˈoŋ hˈaːj vˌaː2 tˈeɜ tʃˈiɛɜn hˈaːj.",
+   "syllables": 12,
+   "cap": 164
+  },
+  {
+   "phonemes": "tʃˈyə2ŋ fˈo4 tˈoŋ ˈi, tʃˈyə2ŋ fˈo4 tˈoŋ hˈaːj vˌaː2 tˈeɜ tʃˈiɛɜn hˈaːj. bˈɛnɪdˌɪkt bˈaː lˈen ŋˈoj ˈəː4 tʃˈyəŋ mˈyə2j bˈoɜn.",
+   "syllables": 22,
+   "cap": 270
+  },
+  {
    "phonemes": "tʃˈyəŋ bˈoɜn bˈaɜt̪ ɗˈə2w ˈəː4 tʃˈaːŋ mˈo6t̪ tʃˈam bˈaː mˈyəj hˈaːj.",
    "syllables": 11,
    "cap": 160
+  },
+  {
+   "phonemes": "tʃˈyəŋ mˈo6t̪, tˈeɜ kˈi4 mˈyə2j vˌaː2 fˈə2n nˈam, ˈoŋ ˈiɜc, ɲˈən vˈə6t̪ ˈiɜc, t̪ˈiə ˈiɜc, ɗˈiɛ4m vˈe, lwˈaː6j ˈi. vˈuə lˈuːi mˈyə2j lˈen ŋˈoj, hwˈaː2ŋ ɗˈeɜ nɐpˈoʊlɪən mˈo6t̪ tˌi2 xˌoŋ.",
+   "syllables": 32,
+   "cap": 392
   },
   {
    "phonemes": "tʃˈɔŋ xwˌaː4ŋ mˈyə2j ɗˌeɜn mˈyə2j lˈam fˈuɜt̪ nˈyə5 t̪ˈa2w sˌɛ5 t̪ˌəːɜj.",
@@ -4645,6 +4983,16 @@
    "phonemes": "ɹˈo2j ˈaː6.",
    "syllables": 2,
    "cap": 18
+  },
+  {
+   "phonemes": "ˈaɪ æm hˈɪɹ. sˈɔŋ, ˈi ˈaːm ɗˈəɪ.",
+   "syllables": 7,
+   "cap": 88
+  },
+  {
+   "phonemes": "ˈaɪ æm hˈɪɹ. sˈɔŋ, ˈi ˈaːm ɗˈəɪ. ˈe-ɲ ˈəɪɜ lˌaː2 ˈɛm sˈiː kˌuə4 sˈiː vˈiː vˈɪp.",
+   "syllables": 16,
+   "cap": 182
   },
   {
    "phonemes": "ˈaː2, ɹˈaː lˌaː2 vˈəɪ6.",
