@@ -24,7 +24,7 @@ object LocalStudio {
     private val CHAPTER_RETAKE = Regex("/chapters/([0-9]+)/retake")
     private val CASTING_CHAPTER = Regex("/casting/([0-9]+)")
     private val SCENE_ALTERNATIVES = Regex("/music/scenes/([^/]+)/alternatives")
-    private val MY_MUSIC = Regex("/api/music/local(?:/([0-9a-f]{40})|/(analyze))?")
+    private val MY_MUSIC = Regex("/api/music/local(?:/([0-9a-f]{40})|/(analyze)|/(module)|/(reanalyse))?")
     private val EDITS_ONLY_KEYS = setOf("enabled", "levelDb", "silence", "pins")
     private val lock = Any()
     private const val LINK_BOOK = "Sách này lấy từ máy tính khác - muốn sửa thì sửa ở máy ấy"
@@ -32,6 +32,10 @@ object LocalStudio {
     /** Kho "Nhạc của tôi" của điện thoại này (LibraryPlugin đặt khi nạp; test JVM đặt kho trong thư mục tạm). */
     @Volatile
     var musicStore: MusicStore? = null
+
+    /** Mô-đun "Phân tích nhạc" (model + thư viện ONNX Runtime; điện thoại tải khi người dùng bấm - MusicStudentSetup). Null: không có việc tải (test JVM); view không kèm `module`. */
+    @Volatile
+    var student: MusicStudentSetup? = null
 
     /** Bộ chuẩn hoá ảnh bìa: máy thật dùng [AndroidCoverCodec]; test JVM đặt bản giả. */
     @Volatile
@@ -60,20 +64,34 @@ object LocalStudio {
     /** `my_music_view` của server.py: danh sách bài đã nhập + có bộ phân tích âm thanh chưa. */
     fun musicView(): JSONObject {
         val store = musicStore ?: throw Api(404, "Không có đường dẫn này")
-        return JSONObject().put("tracks", JSONArray(store.entries())).put("analyzer", store.analyzerAvailable())
+        val view = JSONObject().put("tracks", JSONArray(store.entries())).put("analyzer", store.analyzerAvailable())
+        // Mô-đun "Phân tích nhạc" (model + thư viện ONNX Runtime): tải một lần khi người dùng bấm, cùng hình `module` với máy tính.
+        student?.let { view.put("module", it.status()) }
+        return view
     }
 
     /** Lời đáp của một lượt nhập (`my_music_import` của server.py): bài mới, bài đã có, file lỗi kèm lý do, cộng danh sách mới. */
     fun importAnswer(added: List<JSONObject>, existing: List<JSONObject>, failed: List<String>): JSONObject =
         JSONObject().put("added", JSONArray(added)).put("existing", JSONArray(existing)).put("failed", JSONArray(failed)).also { out ->
             val view = musicView()
-            for (key in listOf("tracks", "analyzer")) out.put(key, view.opt(key))
+            for (key in listOf("tracks", "analyzer", "module")) out.put(key, view.opt(key))
         }
 
     /** `/api/music/local...`: kho nhạc của máy, không thuộc cuốn nào. Nhập file đi qua hộp chọn file của hệ thống (LibraryPlugin.pickMusic). */
-    private fun myMusic(method: String, digest: String?, analyze: Boolean): Pair<Int, Any?> {
+    private fun myMusic(method: String, digest: String?, analyze: Boolean, download: Boolean, reanalyse: Boolean): Pair<Int, Any?> {
         val store = musicStore ?: throw Api(404, "Không có đường dẫn này")
         return when {
+            method == "POST" && download -> {
+                // Người dùng bấm "Tải bộ phân tích": chạy ở luồng riêng, giao diện hỏi lại view để thấy tiến độ.
+                (student ?: throw Api(404, "Không có đường dẫn này")).start()
+                200 to musicView()
+            }
+            method == "POST" && reanalyse -> {
+                // Người dùng bấm "Phân tích lại N bài bằng bản mới" sau khi cập nhật Phân tích nhạc: không bao giờ tự chạy.
+                if (!store.analyzerAvailable()) throw Api(409, MusicStore.NO_ANALYZER)
+                (student ?: throw Api(404, "Không có đường dẫn này")).reanalyse()
+                200 to musicView()
+            }
             method == "GET" && digest == null && !analyze -> 200 to musicView()
             method == "DELETE" && digest != null -> {
                 if (!store.remove(digest)) throw Api(404, "Bài này không còn trong Nhạc của tôi")
@@ -90,7 +108,7 @@ object LocalStudio {
 
     private fun run(method: String, rawPath: String, body: JSONObject): Pair<Int, Any?> {
         val path = rawPath.substringBefore('?') // tham số của GET do giao diện gửi trong `body` (android/localStudio.ts)
-        MY_MUSIC.matchEntire(path)?.let { return myMusic(method, it.groups[1]?.value, it.groups[2] != null) }
+        MY_MUSIC.matchEntire(path)?.let { return myMusic(method, it.groups[1]?.value, it.groups[2] != null, it.groups[3] != null, it.groups[4] != null) }
         val match = ROUTE.matchEntire(path) ?: throw Api(404, "Không có đường dẫn này")
         val id = match.groupValues[1]
         val rest = match.groupValues[2]

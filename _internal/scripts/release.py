@@ -138,9 +138,21 @@ def _apk_certificate(apk: Path) -> str:
     return match.group(1)
 
 
+def check_studio_assets_pinned() -> None:
+    """Bộ cài chỉ-nghe không mang từ điển phát âm và giọng nghe thử: Studio tải gói riêng ghim ở studio_setup.STUDIO_ASSETS.
+    Chưa đăng gói (URL còn PIN_REVISION) thì Studio cài từ bộ cài này sẽ hỏng ở bước đầu - không dựng bản phát hành."""
+    sys.path.insert(0, str(ROOT))
+    from abook.webui.studio_setup import STUDIO_ASSETS
+
+    assert "PIN_REVISION" not in STUDIO_ASSETS.url and STUDIO_ASSETS.size > 0 and re.fullmatch(r"[0-9a-f]{64}", STUDIO_ASSETS.sha256), (
+        "STUDIO_ASSETS (webui/studio_setup.py) chưa ghim gói dữ liệu của Studio: chạy scripts/pack_studio_assets.py, đăng gói, "
+        "điền URL ghim theo commit")
+
+
 def build(version: str, out: Path) -> None:
     """Bộ cài Windows (NSIS + chữ ký cập nhật + latest.json) và APK ký khoá phát hành, chép vào `out`, kiểm cả hai."""
     assert current_version() == version, f"repo đang là {current_version()}, chưa bump {version}?"
+    check_studio_assets_pinned()
     out.mkdir(parents=True, exist_ok=True)
     _run(["powershell", "-ExecutionPolicy", "Bypass", "-File", str(ROOT / "scripts/build_windows_app.ps1")], ROOT, low=True)
     nsis = ROOT / "shell/src-tauri/target/release/bundle/nsis"

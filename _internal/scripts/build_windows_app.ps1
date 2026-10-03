@@ -36,6 +36,20 @@ $PythonTag = "314"
 $PythonUrl = "https://www.python.org/ftp/python/$PythonVersion/python-$PythonVersion-embed-amd64.zip"
 $PythonSha256 = "d297e5ff019966817ad8502465176139f2d3d840fa4ed84b13bed399a6ab1f15"
 
+# Bộ cài chỉ-nghe chỉ mang cái người NGHE cần; cái chỉ Studio hay một tính năng tuỳ chọn cần thì đi cùng Studio / tải khi cần.
+# Dữ liệu của Studio (studio_setup.ASSET_PATHS - test_studio_assets kiểm hai danh sách trùng nhau): Studio tải ở bước "assets".
+$StudioOnlyAssets = @("cmudict.dict", "voice_previews")
+# Mô-đun thư viện chuẩn của Python nhúng mà app và các gói phụ không bao giờ nạp (công cụ gỡ lỗi, REPL, máy khách thư tín,
+# ví dụ). Kiểm bằng scripts/smoke_embedded_python.py trên chính Python đã cắt.
+$UnusedStdlib = @("pydoc_data", "pdb", "_pyrepl", "rlcompleter", "mailbox", "imaplib", "poplib", "smtplib", "xmlrpc", "cProfile",
+    "profile", "pstats", "trace", "tabnanny", "pyclbr", "antigravity", "this", "__hello__", "__phello__", "curses", "cmd", "code",
+    "sched", "zipapp", "modulefinder", "wsgiref", "pty", "tty")
+# Pillow chỉ dùng để chuẩn hoá bìa (webui/covers.py: PNG / JPEG / WebP / GIF / BMP -> JPEG): bỏ codec AVIF (7,7 MB; bìa
+# không nhận AVIF), vẽ chữ (FreeType), quản lý màu ICC (lcms) và cầu Tk. Pillow tự bỏ qua phần thiếu (ImportError).
+$UnusedPillow = @("_avif", "_imagingft", "_imagingcms", "_imagingtk")
+# Công cụ dòng lệnh / chuyển đổi / lượng tử hoá đi kèm onnxruntime - app chỉ chạy InferenceSession.
+$UnusedOnnxruntime = @("transformers", "tools", "quantization", "datasets", "backend")
+
 function Step([string]$Text) { Write-Host "== $Text" -ForegroundColor Cyan }
 
 function Invoke-Checked([scriptblock]$Command, [string]$Label) {
@@ -92,13 +106,53 @@ function Build-Python {
     $pth = @("python$PythonTag.zip", ".", "..\app", "Lib\site-packages") -join "`r`n"
     [System.IO.File]::WriteAllText((Join-Path $python "python$PythonTag._pth"), $pth + "`r`n")
 
-    Step "Gói phụ (Pillow, psutil, requests, numpy, onnxruntime) - chỉ đúng wheel đã ghi băm"
+    Step "Gói phụ (Pillow, psutil, requests) - chỉ đúng wheel đã ghi băm"
     $buildPython = Get-BuildPython
     Invoke-Checked {
         & $buildPython -m pip install --disable-pip-version-check --no-deps --no-compile --require-hashes `
             --only-binary=:all: --platform win_amd64 --python-version $PythonVersion --implementation cp `
             --target (Join-Path $python "Lib\site-packages") -r (Join-Path $Shell "python\requirements.txt")
     } "pip install"
+    Remove-UnusedFromPython $python
+}
+
+function Get-SizeMB([string]$Path) {
+    [math]::Round(((Get-ChildItem $Path -Recurse -File | Measure-Object Length -Sum).Sum) / 1MB, 1)
+}
+
+function Remove-UnusedFromPython([string]$Python) {
+    # Chỉ cắt cái KHÔNG nạp lúc chạy (kiểm lại bằng Test-Python sau khi dựng xong mã app).
+    Step "Bỏ phần Python nhúng không dùng đến"
+    $before = Get-SizeMB $Python
+    $site = Join-Path $Python "Lib\site-packages"
+    # Thư viện chuẩn: ghi lại python314.zip không nén và không mô-đun thừa. Không nén vì bộ cài nén lại cả khối bằng LZMA - file
+    # đã deflate sẵn thì LZMA không nén thêm được (3,4 MB), còn file chưa nén ra 2,2 MB; Python nạp từ zip không nén như thường.
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $zip = Join-Path $Python "python$PythonTag.zip"
+    $source = [System.IO.Compression.ZipFile]::OpenRead($zip)
+    $target = [System.IO.Compression.ZipFile]::Open("$zip.new", "Create")
+    try {
+        foreach ($entry in $source.Entries) {
+            if ($UnusedStdlib -contains (($entry.FullName -split "/")[0] -replace "\.pyc$", "")) { continue }
+            $copy = $target.CreateEntry($entry.FullName, [System.IO.Compression.CompressionLevel]::NoCompression)
+            $copy.LastWriteTime = $entry.LastWriteTime
+            $from = $entry.Open()
+            $to = $copy.Open()
+            try { $from.CopyTo($to) } finally { $to.Dispose(); $from.Dispose() }
+        }
+    } finally { $target.Dispose(); $source.Dispose() }
+    Move-Item "$zip.new" $zip -Force
+    # Gói phụ: trình chạy dòng lệnh (bin\*.exe), bộ test, bản khai kiểu (.pyi), header/thư viện biên dịch, f2py.
+    Remove-Item (Join-Path $site "bin") -Recurse -Force -ErrorAction SilentlyContinue
+    Get-ChildItem $site -Recurse -Directory | Where-Object { $_.Name -in @("tests", "test") } | Sort-Object { $_.FullName.Length } -Descending |
+        ForEach-Object { Remove-Item $_.FullName -Recurse -Force -ErrorAction SilentlyContinue }
+    Get-ChildItem $site -Recurse -File -Include *.pyi, py.typed | Remove-Item -Force
+    foreach ($relative in @("numpy\_core\include", "numpy\_core\lib", "numpy\f2py")) {
+        Remove-Item (Join-Path $site $relative) -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    foreach ($name in $UnusedOnnxruntime) { Remove-Item (Join-Path $site "onnxruntime\$name") -Recurse -Force -ErrorAction SilentlyContinue }
+    foreach ($name in $UnusedPillow) { Remove-Item (Join-Path $site "PIL\$name.cp$PythonTag-win_amd64.pyd") -Force -ErrorAction SilentlyContinue }
+    Write-Host ("   {0} MB -> {1} MB" -f $before, (Get-SizeMB $Python))
 }
 
 function Copy-App {
@@ -106,7 +160,9 @@ function Copy-App {
     $app = Join-Path $Resources "app"
     New-Item -ItemType Directory -Force $app | Out-Null
     # robocopy: mã thoát 0-7 là thành công.
-    & robocopy (Join-Path $Internal "abook") (Join-Path $app "abook") /E /XD __pycache__ /XF *.pyc /NFL /NDL /NJH /NJS /NP | Out-Null
+    # Dữ liệu chỉ Studio dùng ($StudioOnlyAssets) ở lại ngoài: Studio tải gói riêng (webui/studio_setup.py, bước "assets").
+    $excludeDirs = @("__pycache__") + $StudioOnlyAssets
+    & robocopy (Join-Path $Internal "abook") (Join-Path $app "abook") /E /XD @excludeDirs /XF *.pyc @($StudioOnlyAssets) /NFL /NDL /NJH /NJS /NP | Out-Null
     if ($LASTEXITCODE -ge 8) { throw "robocopy thất bại (mã $LASTEXITCODE)" }
     foreach ($file in @("pyproject.toml", "uv.lock", "LICENSE")) {
         $source = Join-Path $Internal $file
@@ -133,8 +189,28 @@ function Copy-VcRuntime([string]$Target) {
     Write-Host "   VC++ runtime: $($crt.FullName)"
 }
 
+function Test-Layout {
+    # Thư mục tài nguyên dựng bằng -SkipResources có thể còn rác của lần dựng cũ (từng có `ebook_reader` 45 MB nằm trong bộ cài).
+    $allowed = @("abook", "pyproject.toml", "uv.lock", "LICENSE", "studio-requirements.txt", "vcruntime")
+    $extra = Get-ChildItem (Join-Path $Resources "app") | Where-Object { $allowed -notcontains $_.Name }
+    if ($extra) { throw "Thư mục tài nguyên có thứ không thuộc bộ cài: $($extra.Name -join ', ') - dựng lại không có -SkipResources" }
+    foreach ($name in $StudioOnlyAssets) {
+        if (Test-Path (Join-Path $Resources "app\abook\assets\$name")) { throw "$name là dữ liệu của Studio, không được nằm trong bộ cài" }
+    }
+}
+
+function Test-Python {
+    # Chạy bằng chính Python nhúng đã cắt: nạp mọi mô-đun webui, bìa đủ 5 định dạng, numpy/onnxruntime, ssl/sqlite.
+    Step "Thử Python nhúng"
+    $python = Join-Path $Resources "python\python.exe"
+    Push-Location (Join-Path $Resources "app")
+    try { Invoke-Checked { & $python (Join-Path $PSScriptRoot "smoke_embedded_python.py") } "smoke_embedded_python" } finally { Pop-Location }
+}
+
 function Test-Host {
     # Host chạy bằng chính Python nhúng, dữ liệu app tạm: báo sẵn sàng, trả /api/app, phục vụ trang, thoát khi ống đóng.
+    Test-Layout
+    Test-Python
     Step "Chạy thử host"
     $smokeData = Join-Path $Cache "smoke"
     if (Test-Path $smokeData) { Remove-Item $smokeData -Recurse -Force }

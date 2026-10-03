@@ -145,6 +145,8 @@ export interface ScannedFile {
   title: string;
   firstLine: string;
   words: number;
+  /** Số ký tự có chữ (không tính khoảng trắng) - hiện cạnh số chữ trong danh sách chương. */
+  chars: number;
   bytes: number;
   /** Dòng ghi công người dịch ở đầu chương - trình tạo sách ĐỀ XUẤT bỏ chúng khỏi phần đọc, không bao giờ tự bỏ. */
   credits?: string[];
@@ -174,7 +176,7 @@ export interface ScanResult {
   missing: string[];
   /** Thư mục đã chọn không có TXT ngay bên trong - đây là các thư mục con có. */
   subfolders: string[];
-  /** File EPUB không tách được thành chương, kèm lý do (webui/epub_import.py). */
+  /** File EPUB / DOCX / PDF không tách được thành chương, kèm lý do (abook/importers.py). */
   errors?: string[];
   /** Không phải lỗi nhưng nên biết (thư mục có cả TXT lẫn EPUB: chỉ lấy TXT). */
   notes?: string[];

@@ -11,6 +11,7 @@ Chạy ở một luồng nền của host (webui/host.py); giao diện hỏi `st
 from __future__ import annotations
 
 import argparse
+import filecmp
 import hashlib
 import json
 import os
@@ -63,6 +64,18 @@ MINGIT = Download("git", "https://github.com/git-for-windows/git/releases/downlo
 OLLAMA = Download("ollama", "https://github.com/ollama/ollama/releases/download/v0.33.2/ollama-windows-amd64.zip",
                   "2439cbea65310b1aadf7d8fc41d7faf5d033f920d42e00a476c58bf9bff6950e", 1_460_134_793)
 
+# Dữ liệu chỉ Studio dùng, bộ cài chỉ-nghe KHÔNG mang (~21 MB chưa nén, chiếm hơn nửa mã app): từ điển phát âm tiếng Anh
+# của khâu phân tích (analysis.CMUDICT_PATH) và 21 giọng nghe thử (voice_catalog, perceptual_qa, "Nghe thử giọng"). Tên
+# tương đối với `abook/assets`. Mã khoá chất lượng đọc chúng ở `<thư mục abook>/assets/...` (đường cố định trong file khoá)
+# nên Studio đặt đúng chỗ ấy (`place_assets`) - cả ở mã của app lẫn mỗi bản chép mã. scripts/build_windows_app.ps1 loại đúng
+# các tên này khỏi bộ cài (test_studio_assets kiểm hai danh sách trùng nhau); scripts/pack_studio_assets.py đóng gói.
+ASSET_PATHS = ("cmudict.dict", "voice_previews")
+# Gói zip của scripts/pack_studio_assets.py (đúng các ASSET_PATHS, giữ nguyên byte của abook/assets). Nâng: đóng gói lại,
+# đăng lên nơi chứa, đổi URL (ghim theo commit) + băm + cỡ ở đây. QUY ƯỚC: URL còn chữ PIN_REVISION nghĩa là chưa đăng -
+# scripts/release.py từ chối dựng bản phát hành.
+STUDIO_ASSETS = Download("studio-assets", "https://huggingface.co/NGDtuanh/abook-studio-assets/resolve/PIN_REVISION/"
+                         "studio-assets-1.zip", "3e7d31b536a6fe1765b520758c8fdc5707149ac702368e904c884f47d74ecd32", 14_561_173)
+
 
 @dataclass(frozen=True)
 class PublishedModel:
@@ -107,6 +120,7 @@ PUBLISHED_MODELS: dict[str, PublishedModel] = {
 # (mã, nhãn cho người dùng, ước lượng cho người dùng)
 STEPS: tuple[tuple[str, str, str], ...] = (
     ("check", "Kiểm tra máy", "card NVIDIA, chỗ trống trên ổ đĩa"),
+    ("assets", "Từ điển phát âm và giọng nghe thử", "15 MB"),
     ("uv", "Công cụ cài đặt", "18 MB"),
     ("git", "Git nhúng", "39 MB"),
     ("python", "Python 3.11", "30 MB"),
@@ -204,6 +218,37 @@ def _sha256(path: Path) -> str:
         while chunk := handle.read(1 << 20):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _same_bytes(first: Path, second: Path) -> bool:
+    try:
+        return filecmp.cmp(first, second, shallow=False)
+    except OSError:
+        return False
+
+
+def place_assets(store: Path, target: Path) -> None:
+    """Đặt mọi file của kho dữ liệu Studio (`store`) vào `target` (= `<thư mục abook>/assets`), cùng đường tương đối.
+    Chép (không liên kết cứng: sửa nhầm một bản sẽ sửa luôn kho). File đã có y hệt thì để yên."""
+    for path in sorted(store.rglob("*")):
+        destination = target / path.relative_to(store)
+        if not path.is_file() or _same_bytes(path, destination):
+            continue
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(path, destination)
+
+
+def withdraw_assets(store: Path, target: Path) -> None:
+    """Ngược lại của `place_assets`: bỏ khỏi `target` những file y hệt file trong kho (file khác - không do Studio đặt - giữ)."""
+    for path in sorted(store.rglob("*")):
+        destination = target / path.relative_to(store)
+        if path.is_file() and _same_bytes(path, destination):
+            destination.unlink(missing_ok=True)
+    for name in ASSET_PATHS:
+        try:
+            (target / name).rmdir()
+        except OSError:
+            pass
 
 
 def _unzip(archive: Path, folder: Path) -> None:
@@ -368,6 +413,7 @@ class StudioSetup:
         self.runtime = root / "runtime"
         self.venv = self.runtime / ".venv"
         self.tools = root / "tools"
+        self.assets = root / "assets"
         self.state_path = root / "setup.json"
         self._lock = threading.Lock()
         self._thread: threading.Thread | None = None
@@ -407,14 +453,18 @@ class StudioSetup:
     def _pins(self) -> dict[str, str]:
         """Bản ghim của các bước tải công cụ/model. App lên bản mới đổi ghim (nâng uv, Git, Ollama, đổi model phân tích)
         thì bước ấy phải chạy lại trên Studio đã cài - không thì Studio cứ chạy bản cũ mà app không hề biết."""
-        return {"uv": UV.sha256, "git": MINGIT.sha256, "ollama": OLLAMA.sha256, "llm": self.analysis_model}
+        return {"uv": UV.sha256, "git": MINGIT.sha256, "ollama": OLLAMA.sha256, "llm": self.analysis_model,
+                "assets": STUDIO_ASSETS.sha256}
 
     def outdated(self) -> list[str]:
-        """Bước đã xong nhưng bằng bản ghim khác bản app này mang (Studio cài từ bản app cũ hơn)."""
+        """Bước đã xong nhưng bằng bản ghim khác bản app này mang, hay bước app này có mà Studio cài từ bản app cũ hơn chưa
+        từng làm."""
         state = self._state()
         done = set(state.get("done") or [])
         pins = state.get("pins") or {}
-        return [step for step, pin in self._pins().items() if step in done and pins.get(step) != pin]
+        installed = self.installed()
+        return [step for step, pin in self._pins().items()
+                if (step in done and pins.get(step) != pin) or (step not in done and installed)]
 
     def status(self) -> dict[str, Any]:
         state = self._state()
@@ -459,6 +509,7 @@ class StudioSetup:
         self.cancel()
         self.wait(30)
         self.stop_processes()
+        withdraw_assets(self.assets, self.app_root / "abook" / "assets")  # bộ cài trở lại như bản chỉ-nghe
 
         def writable(function: Callable[..., Any], path: str, _error: Any) -> None:
             os.chmod(path, 0o700)  # MinGit có file chỉ-đọc
@@ -510,6 +561,7 @@ class StudioSetup:
             temporary_pin.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
             os.replace(temporary_pin, pin)
         if code_id == current:
+            self.ensure_assets()  # app vừa cập nhật thì thư mục mã mới chưa có dữ liệu của Studio
             self._snapshot(current)
         return self._code_folder(code_id, current)
 
@@ -684,6 +736,29 @@ class StudioSetup:
         free = shutil.disk_usage(self.root).free
         if free < MIN_FREE_BYTES:
             raise SetupError(f"Ổ đĩa của {self.root} còn {free / 1024**3:.0f} GB - Studio cần khoảng 30 GB trống.")
+
+    def ensure_assets(self) -> None:
+        """Dữ liệu của Studio (ASSET_PATHS) có mặt trong mã của app: lúc cài xong, mỗi lần bắt đầu một cuốn, mỗi lần host mở -
+        app cập nhật thay cả thư mục mã nên dữ liệu phải đặt lại (kho `Studio\\assets` còn nguyên). Rẻ: file đã đặt thì bỏ qua."""
+        package = self.app_root / "abook"
+        if not self.assets.is_dir() or not package.is_dir():
+            return
+        try:
+            place_assets(self.assets, package / "assets")
+        except OSError as error:
+            raise SetupError(f"Không đặt được từ điển phát âm và giọng nghe thử của Studio vào {package / 'assets'} "
+                             f"({error}) - bấm Cài tiếp để thử lại.") from error
+
+    def _step_assets(self) -> None:
+        """Tải gói dữ liệu ghim, giải vào kho `Studio\\assets`, rồi đặt vào mã của app."""
+        archive = self._get(STUDIO_ASSETS)
+        _unzip(archive, self.assets)
+        archive.unlink(missing_ok=True)
+        missing = [name for name in ASSET_PATHS if not (self.assets / name).exists()]
+        if missing:
+            shutil.rmtree(self.assets, ignore_errors=True)
+            raise SetupError(f"Gói dữ liệu của Studio thiếu {', '.join(missing)} - bấm Cài tiếp để tải lại.")
+        self.ensure_assets()
 
     def _step_uv(self) -> None:
         self._install_archive(UV, self.tools / "uv")

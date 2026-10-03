@@ -215,6 +215,11 @@ def ffmpeg_executable() -> str:
     return "ffmpeg.exe" if os.name == "nt" else "ffmpeg"
 
 
+def ffmpeg_available() -> bool:
+    """Có ffmpeg dùng được ngay không (imageio_ffmpeg, bản đã tải, hay trong PATH). Rẻ: không chạy tiến trình nào."""
+    return Path(ffmpeg_executable()).is_file()
+
+
 def run_hidden(command: Iterable[str], *, timeout: float | None = None, check: bool = True) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         list(command),

@@ -1,11 +1,11 @@
-"""Tạo sách từ EPUB (webui/epub_import.py, actions.scan_inputs) - 2026-10-01: EPUB tách thành chương TXT trong thư viện rồi
+"""Tạo sách từ EPUB (abook/importers.py, actions.scan_inputs) - 2026-10-01: EPUB tách thành chương TXT trong thư viện rồi
 đi tiếp như một thư mục chương."""
 from __future__ import annotations
 
 import zipfile
 from pathlib import Path
 
-from abook.webui import actions, epub_import
+from abook.webui import actions
 
 CONTAINER = """<?xml version="1.0"?>
 <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
@@ -99,4 +99,3 @@ def test_a_broken_or_hostile_epub_says_why_instead_of_finding_nothing(tmp_path: 
     scan = actions.scan_inputs([str(broken), str(hostile)], epub_root=tmp_path / "lib")
     assert scan["files"] == [] and len(scan["errors"]) == 2
     assert "hong.epub" in scan["errors"][0] and "entity" in scan["errors"][1]
-    assert epub_import.title_of(broken) == "hong"

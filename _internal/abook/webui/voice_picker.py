@@ -18,8 +18,20 @@ from . import store
 from .humanize import voice_label
 from .reviews import speaker_label
 
+# Giọng nghe thử là dữ liệu của Studio (studio_setup.ASSET_PATHS): bộ cài chỉ-nghe không mang. Máy chưa cài Studio thì
+# giọng vẫn liệt kê được nhưng không có nút nghe thử (giao diện ẩn nút khi `preview` là False).
+VOICE_PREVIEW_DIR = Path(__file__).resolve().parents[1] / "assets" / "voice_previews"
 GENDER_LABELS = {"male": "Nam", "female": "Nữ"}
 STYLE_LABELS = {"tu_nhien": "Tự nhiên", "doc_truyen": "Kể chuyện"}
+
+
+def preview_file(preset_name: str) -> Path | None:
+    """File nghe thử của một giọng; None khi giọng không có bản nghe thử hay máy này chưa có dữ liệu của Studio."""
+    from ..voice_catalog import VOICE_PREVIEW_FILENAMES
+
+    filename = VOICE_PREVIEW_FILENAMES.get(preset_name)
+    path = VOICE_PREVIEW_DIR / filename if filename else None
+    return path if path is not None and path.is_file() else None
 
 
 def _key(name: str) -> str:
@@ -29,7 +41,7 @@ def _key(name: str) -> str:
 def voice_choices(project_root: Path, character: str) -> dict[str, Any] | None:
     from ..character_registry import listener_voice_choice
     from ..config import build_settings
-    from ..voice_catalog import VOICE_PREVIEW_FILENAMES, casting_presets
+    from ..voice_catalog import casting_presets
 
     stored = store.read_settings(project_root).get("voices")
     voices = {**build_settings()["voices"], **(stored if isinstance(stored, dict) else {})}
@@ -99,7 +111,7 @@ def voice_choices(project_root: Path, character: str) -> dict[str, Any] | None:
                 "genderLabel": GENDER_LABELS[gender],
                 "region": str(preset["region"]),
                 "style": STYLE_LABELS.get(str(preset["style"]), str(preset["style"])),
-                "preview": bool(VOICE_PREVIEW_FILENAMES.get(name)),
+                "preview": preview_file(name) is not None,
                 "current": name == current,
                 "pending": pending is not None and pending["preset"] == name,
                 "suggested": suggested.get(gender) == name,

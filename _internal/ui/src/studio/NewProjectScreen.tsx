@@ -53,7 +53,7 @@ import { VolumeSplit } from "@/studio/VolumeSplit";
 import { inOrder, ranges, startNumbers, volumeTitles } from "@/studio/volumes";
 
 const STEPS = [
-  { title: "Nội dung", hint: "Chương TXT hay EPUB" },
+  { title: "Nội dung", hint: "TXT, EPUB, DOCX hay PDF" },
   { title: "Giọng kể", hint: "Người dẫn truyện" },
   { title: "Chất lượng", hint: "Nhanh hay kỹ" },
   { title: "Xác nhận", hint: "Xem lại và tạo" },
@@ -312,7 +312,7 @@ function SourceStep({
     if (path) onPaths([path]);
   };
   const chooseFiles = async (append: boolean) => {
-    const chosen = await pickFiles("Chọn các chương TXT hay một file EPUB").catch((error: Error) => {
+    const chosen = await pickFiles("Chọn các chương TXT hay một file sách (EPUB, DOCX, PDF)").catch((error: Error) => {
       toast.error(error.message);
       return [];
     });
@@ -323,8 +323,9 @@ function SourceStep({
     <div>
       <h2 className="text-xl font-semibold">Chọn các chương của truyện</h2>
       <p className="mt-1 text-sm text-fg-2 text-pretty">
-        Mỗi file TXT là một chương. Chương được xếp theo tên file như người đọc mong đợi: 2 đứng trước 10. Có sẵn file EPUB
-        thì chọn nó: mỗi chương trong EPUB thành một chương, tên chương theo mục lục. Cả truyện nằm trong một file TXT thì máy
+        Mỗi file TXT là một chương. Chương được xếp theo tên file như người đọc mong đợi: 2 đứng trước 10. Có sẵn file EPUB,
+        Word (DOCX) hay PDF thì chọn nó: máy tách thành các chương theo mục lục hay các tiêu đề “Chương N”, bạn xem danh sách
+        chương trước khi tạo. PDF phải có chữ (PDF chụp từ máy quét thì chưa đọc được). Cả truyện nằm trong một file TXT thì máy
         đề nghị tách theo các dòng “Chương N”.
       </p>
       {!files.length ? (
@@ -333,12 +334,12 @@ function SourceStep({
             {scanning ? <Loader2 className="size-7 animate-spin" /> : <FolderInput className="size-7" strokeWidth={1.75} />}
           </div>
           <p className="mt-4 font-medium">
-            {scanning ? "Đang đọc các chương…" : info?.remote ? "Gửi các chương từ máy này" : "Chọn thư mục truyện hay một file EPUB"}
+            {scanning ? "Đang đọc các chương…" : info?.remote ? "Gửi các chương từ máy này" : "Chọn thư mục truyện hay một file EPUB, DOCX, PDF"}
           </p>
           <p className="mt-1 text-sm text-fg-2">
             {info?.remote
-              ? "Chọn cùng lúc mọi file .txt của truyện, hay một file .epub. Máy tính giữ chúng trong thư viện, mục “Nguồn tải lên”."
-              : "Thư mục: lấy các file .txt nằm ngay bên trong (không quét thư mục con). File .epub: mỗi chương trong EPUB thành một chương."}
+              ? "Chọn cùng lúc mọi file .txt của truyện, hay một file .epub / .docx / .pdf. Máy tính giữ chúng trong thư viện, mục “Nguồn tải lên”."
+              : "Thư mục: lấy các file .txt nằm ngay bên trong (không quét thư mục con). File .epub, .docx, .pdf: máy tách thành các chương."}
           </p>
           {info?.remote && (
             <div className="mt-6 flex justify-center">
@@ -346,7 +347,7 @@ function SourceStep({
                 ref={uploadInput}
                 type="file"
                 multiple
-                accept=".txt,.epub,text/plain,application/epub+zip"
+                accept=".txt,.epub,.docx,.pdf,text/plain,application/epub+zip,application/pdf"
                 className="sr-only"
                 tabIndex={-1}
                 aria-hidden
@@ -384,7 +385,7 @@ function SourceStep({
               aria-label="Đường dẫn thư mục"
               aria-invalid={Boolean(problem)}
               aria-describedby={problem ? "source-problem" : undefined}
-              placeholder={info?.dialogs ? "…hoặc dán đường dẫn thư mục hay file .epub" : "Dán đường dẫn thư mục hay file .epub, ví dụ D:\\Truyện\\Tên truyện"}
+              placeholder={info?.dialogs ? "…hoặc dán đường dẫn thư mục hay file sách" : "Dán đường dẫn thư mục hay file sách, ví dụ D:\\Truyện\\Tên truyện"}
               className={cn(
                 "h-10 flex-1 rounded-lg border bg-bg px-3 text-sm outline-none placeholder:text-fg-3 focus:border-accent",
                 problem ? "border-danger" : "border-line",
@@ -555,7 +556,10 @@ function SourceStep({
                       <div className="truncate text-sm font-medium">{file.firstLine || file.title}</div>
                       <div className="truncate text-xs text-fg-2">{file.name}</div>
                     </div>
-                    <span className="tabular text-right text-xs text-fg-2">{formatNumber(file.words)} chữ</span>
+                    <div className="tabular text-right text-xs text-fg-2">
+                      <div>{formatNumber(file.words)} chữ</div>
+                      {file.chars > 0 && <div className="text-fg-3">{formatNumber(file.chars)} ký tự</div>}
+                    </div>
                     <button
                       type="button"
                       aria-label={`Bỏ chương ${file.name}`}
@@ -571,7 +575,7 @@ function SourceStep({
             })}
           </div>
           {scan!.skipped.length > 0 && <p className="mt-2 text-xs text-fg-2">Bỏ qua {scan!.skipped.length} file không phải .txt.</p>}
-          {/* EPUB hỏng nằm cạnh EPUB tốt, thư mục có cả TXT lẫn EPUB: không chặn, nhưng nói ra (soát UX 01-10: bị bỏ âm thầm). */}
+          {/* File sách hỏng / PDF scan nằm cạnh file tốt, thư mục có cả TXT lẫn EPUB, trang chỉ có ảnh bị bỏ, gợi ý dòng ghi công: không chặn, nhưng nói ra (soát UX 01-10: bị bỏ âm thầm). */}
           {[...(scan!.errors ?? []).map((error) => `Bỏ qua ${error}`), ...(scan!.notes ?? [])].map((line) => (
             <p key={line} className="mt-2 text-xs text-warning">
               {line}
@@ -1415,7 +1419,7 @@ export function NewProjectScreen() {
               ? { text: `Không mở được ${result.errors[0]}`, subfolders: [] }
               : result.missing.length
               ? { text: `Không tìm thấy “${result.missing[0]}”. Kiểm tra lại đường dẫn.`, subfolders: [] }
-              : { text: "Thư mục này không có file .txt (hay .epub) nằm ngay bên trong.", subfolders: result.subfolders },
+              : { text: "Thư mục này không có file .txt (hay .epub, .docx, .pdf) nằm ngay bên trong.", subfolders: result.subfolders },
           );
           return;
         }

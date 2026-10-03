@@ -9,23 +9,11 @@ import re
 from pathlib import Path
 from typing import Any
 
+from ..importers import CHAPTER_WORDS, MAX_HEADING, PREAMBLE, heading_pattern
 from ..io_utils import decode_text_bytes
 from .volumes import is_volume_heading
 
-# Số của chương: chữ số, số La Mã, hay số viết bằng chữ ("Chương Một", "Hồi thứ hai").
-_NUMBER_WORDS = (
-    "một|hai|ba|bốn|tư|năm|lăm|sáu|bảy|tám|chín|mười|mươi|mốt|trăm|nghìn|ngàn|linh|lẻ|"
-    "one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve"
-)
-HEADING = re.compile(
-    r"^\s*(?:"
-    r"(?:chương|chuong|hồi|hoi|chapter|tiết)\s+(?:thứ\s+)?(?:\d+|[ivxlcdm]+|(?:(?:" + _NUMBER_WORDS + r")\s*)+)(?![\w])"
-    r"|第\s*[\d一二三四五六七八九十百千零〇两]+\s*[章回]"
-    r")",
-    re.IGNORECASE,
-)
-MAX_HEADING = 120  # dòng dài hơn là một câu văn mở đầu bằng "Chương…", không phải tiêu đề
-PREAMBLE = "Mở đầu"
+HEADING = heading_pattern(CHAPTER_WORDS)
 _UNSAFE_NAME = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 
 

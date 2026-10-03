@@ -40,6 +40,30 @@ One function `import_text(path) -> {title, author?, cover?, chapters: [{title, t
 
 Text is never auto-edited (owner rule): cleanup proposals (e.g. a credit line) are suggestions the user accepts.
 
+### What was built (Importers, 03-10)
+
+- `abook/importers.py`: `import_text(path) -> ImportedBook{title, author, language, cover_bytes, chapters[{title, text}], notes}` for a
+  folder of `.txt` (Studio's order and `decode_text_bytes`: UTF-8 with/without BOM, UTF-16, cp1258, cp1252), EPUB (spine order, nav/NCX titles,
+  cover from the manifest, image-only pages noted), DOCX (Heading 1/2, fallback `Chương|Chapter|Hồi|Quyển N` lines) and text-layer PDF.
+  EPUB/DOCX use only `zipfile` + `xml.etree`/`html.parser`; PDF uses `pypdf` 6.16.2 (BSD-3, pure Python), vendored unchanged in
+  `abook/vendor/pypdf/` (LICENSE + wheel SHA-256 in its README; `pyproject.toml` is hash-locked so nothing is declared there). A PDF with no text
+  layer fails with "PDF scan, cần OCR". `epub_import.py` moved into it; `extract()` writes the Studio chapter folder (+ `import.json`, cover).
+- One spec, three places: the **rules** (heading regex, running header/footer removal = lines in the first/last 2 of a page whose digits-normalised
+  text repeats on >= 40% of >= 3 pages or that are a bare page number; paragraph joining = a sentence-final line shorter than 75% of the
+  90th-percentile line length, or a next line opening with a dash/quote, ends a paragraph; `xyz-` + lowercase joins without a space and keeps
+  the hyphen because Vietnamese hyphens belong to the word ("Mát-xcơ-va"), only U+00AD is dropped; split on heading lines, text before the first
+  one is "Mở đầu") live in Python (`importers.py`) and Kotlin (`BookImport.kt`) and are replayed on `tests/fixtures/import/` (made by
+  `tests/import_fixtures.py`: EPUB 2/3, DOCX with/without headings, PDF, scanned PDF, TXT folder in four encodings, own text only).
+  Golden JSON is byte-identical in both languages. Credit lines are never removed: they appear in `notes` as suggestions.
+- Phone PDF: **pdf.js** (`pdfjs-dist` legacy build, Apache-2.0) in the WebView, lazy-loaded. It only extracts lines per page
+  (`ui/src/shared/pdfPages.ts`, same `pages/story.pages.json` as pypdf on the fixture); the rules above run in Kotlin (`BookImport.fromPdfPages`).
+  Measured: debug APK 9,480,805 -> 10,216,254 bytes (+735 KB, +7.8%; the chunk is 488 KB + worker 1,317 KB raw, ~540 KB gzip), the main
+  JS bundle is unchanged. PdfBox-Android was the alternative (Apache-2.0, 3.25 MB aar, JVM-heavy); not chosen. The desktop UI does not need the
+  TS extractor (Studio runs the Python importer), though the same module would work in its webview.
+- Not wired yet: the phone has no text-book library until section 1 (stages) lands, so `BookImport` + `readPdfPages` are libraries with tests,
+  not a screen. Studio: the new-book flow, remote upload and the Tauri file dialog accept `.epub/.docx/.pdf/.txt` and a folder; the chapter
+  list shows title, words and characters.
+
 ## 3. Voices for Listen now
 
 | Voice | Download | Network | Notes |
@@ -61,8 +85,14 @@ Online voices (owner 03-10: "đọc ngay, cần mạng" is its own group; Edge T
 
 VieNeu 3.8.1 (installed) has CPU modes: `v3nano` (48M-parameter flow model, ONNX, 24 kHz) and `v3turbo` (ONNX on CPU,
 48 kHz). Measured 03-10 on the home laptop CPU (busy with GPU evals): v3nano RTF 0.18, first audio after 0.76 s.
-v3turbo: being measured. ONNX means the same runtime as the music module, so a phone build is plausible; phone speed not
+v3turbo (ONNX on CPU, 48 kHz, 25 voices): RTF 0.36 (~2.8x faster than listening), first streamed audio after 0.21 s; first load downloads the model (~20 min here). ONNX means the same runtime as the music module, so a phone build is plausible; phone speed not
 measured yet.
+
+Device choice (owner 03-10: never force CPU when a GPU is there), picked automatically:
+- Studio installed (NVIDIA): GPU through Studio's torch. Yield to Studio work and fall back to CPU while the card is busy.
+- GPU but no Studio: ONNX Runtime with DirectML (any vendor, about +20 MB in the module). Not measured with VieNeu yet.
+- No GPU: CPU (numbers above).
+- Phone: CPU with ARM-optimised kernels (XNNPACK). Try NNAPI/QNN if they help, but expect to rely on CPU. Measure on a real phone.
 
 Read-aloud runs a little ahead of the listener (sentence queue, like video buffering), caches what it read as quick audio
 in the book, and a phone without a voice engine can stream it from a paired computer (existing stream path).
@@ -72,8 +102,15 @@ in the book, and a phone without a voice engine can stream it from a paired comp
 Listen now reuses the existing reading mode (`ui/src/listen/ReaderScreen.tsx`: chapter text as an ebook, the playing
 sentence lit and followed, "Nghe từ đây" on a tapped sentence, remembered position). New: the current WORD lit too, as Edge
 does, where the voice gives word timings - Edge TTS (WordBoundary events with offsets), the device voice (Android
-`UtteranceProgressListener.onRangeStart`, Windows SAPI word events). VieNeu gives none: estimate by characters, or align
-with an ASR model later. Studio audiobooks could get word timings from the Whisper pass they already run.
+`UtteranceProgressListener.onRangeStart`, Windows SAPI word events). Owner 03-10: word highlighting is REQUIRED for both Listen now and Studio audiobooks.
+- VieNeu gives no word timings (checked: v3nano's duration predictor returns one total duration per utterance). Two ways:
+  (a) synthesize per phrase (split at punctuation) and spread each phrase's time over its syllables. Vietnamese
+  syllables are fairly even, so this is good enough to look right, though sometimes one beat off.
+  (b) run a small CTC forced aligner (ONNX, CPU) on each synthesized sentence: exact. Measure its speed and pick.
+- Studio audiobooks: a "word timing" step at packing time, OUTSIDE the hash-locked pipeline. It force-aligns each line's
+  known text inside its known time span, with the same aligner as (b). The result is stored additively as
+  `scripts/<n>.json` lines[i].words = [[start_ms, end_ms], ...] per word. Existing books get it by re-packing on a
+  Studio machine.
 
 ## 4. Music while listening
 

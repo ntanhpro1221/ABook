@@ -31,8 +31,8 @@ from urllib.parse import parse_qs, quote, unquote, urlsplit
 from .. import aliases, bracket_rule, continuation, listener_overrides
 from ..io_utils import atomic_write_json
 from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, edits_inbox, ffmpeg_setup, humanize, listen_view,
-               music_catalog, music_local, music_plan, music_select, music_student, packages, project_views, projectfile,
-               reading_preview, remote_config, shared_readings, store, volumes, workshop)
+               music_catalog, music_local, music_module, music_plan, music_select, music_student, packages, project_views,
+               projectfile, reading_preview, remote_config, shared_readings, store, volumes, workshop)
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, clean_book_templates, legacy_ids
 from .listening import RECORD_ID, Listening
@@ -42,7 +42,7 @@ from .remote_studio import REMOTE_HEADER, StudioGate
 from .reviews import Reviews, review_view
 from .casting_review import casting_chapter, casting_chapters
 from .name_readings import name_readings
-from .voice_picker import voice_choices
+from .voice_picker import preview_file, voice_choices
 from .work_items import work_items
 from .cast import CastError, CastPlayers
 from .cast import search as cast_search
@@ -59,8 +59,6 @@ MISSING_UI_PAGE = (
     "<p>Chạy <code>npm run build</code> trong thư mục <code>_internal\\ui</code> rồi mở lại ABook.</p>"
     "<p>Trong lúc chờ, giao diện cũ vẫn mở được: <code>app.py --classic</code>.</p></body></html>"
 )
-ASSET_DIR = Path(__file__).resolve().parents[1] / "assets"
-VOICE_PREVIEW_DIR = ASSET_DIR / "voice_previews"
 CHUNK = 256 * 1024
 MUSIC_UNAVAILABLE_SECONDS = 24 * 3600  # bài tải hỏng (nguồn gỡ, 404...) nghỉ 24 giờ rồi thử lại
 MUSIC_OFFLINE_SECONDS = 300            # tải hỏng vì mạng: cả máy coi như offline 5 phút
@@ -199,11 +197,12 @@ class App:
         self.music_dir = preferences.path.with_name("music")
         # "Nhạc của tôi" (music_local.py): nhạc người dùng tự nhập, của riêng máy này; file bài sách mang theo nằm trong files/.
         self.my_music = music_local.LocalMusic(self.music_dir / "mine", self.music_dir / "files")
-        # Bộ phân tích chỉ-nghe (music_student.py): cắm khi gói model + thư viện có đủ; không thì bài nhập ở "chưa phân tích".
+        # Mô-đun "Phân tích nhạc" (music_module.py): ffmpeg + thư viện + model, người dùng bấm mới tải (không bao giờ tự tải). Thư viện đã tải
+        # lần trước vào sys.path TRƯỚC khi cắm bộ phân tích; không thì bài nhập ở "chưa phân tích" và nhập vẫn chạy (thẻ đọc bằng tinytag).
+        ffmpeg_setup.configure(self.music_dir.parent / ffmpeg_setup.FOLDER)
+        music_module.configure(self.music_dir, after_install=self._music_module_installed)
         music_student.configure(self.music_dir / music_student.PACKAGE_FOLDER)
         music_student.register()
-        # ffmpeg của bản app chỉ-nghe: tải ở lần nhập nhạc đầu tiên (ffmpeg_setup.py), đặt cạnh thư mục nhạc trong dữ liệu app.
-        ffmpeg_setup.configure(self.music_dir.parent / ffmpeg_setup.FOLDER)
         self._music_catalog: music_catalog.MusicCatalog | None = None
         self._music_lock = threading.Lock()
         self._music_fetching: dict[str, threading.Lock] = {}  # mỗi bài một khoá: luồng tải sẵn và trình phát không ghi đè nhau
@@ -908,25 +907,31 @@ class App:
 
     # ---- "Nhạc của tôi" (music_local.py) ---------------------------------------------------------------------------------
     def my_music_view(self) -> dict[str, Any]:
-        """Danh sách bài đã nhập + có bộ phân tích âm thanh chưa (chưa có thì bài mới nhập ở trạng thái "chưa phân tích")."""
+        """Danh sách bài đã nhập + có bộ phân tích âm thanh chưa (chưa có thì bài mới nhập ở trạng thái "chưa phân tích") + mô-đun "Phân tích
+        nhạc" (tải một lần khi người dùng bấm; giao diện hỏi lại view này mỗi giây trong lúc tải). `stale`: số bài phân tích bằng bản model cũ."""
         return {"tracks": self.my_music.entries(), "analyzer": music_local.analyzer_available(),
-                # bộ đọc nhạc (ffmpeg): máy chỉ-nghe tải ở lần nhập đầu; giao diện hỏi lại view này mỗi giây trong lúc tải
-                "reader": ffmpeg_setup.status() | {"ready": ffmpeg_setup.ready()}}
+                "module": music_module.status() | {"stale": self.my_music.stale_count()}}
 
-    def my_music_reader(self) -> dict[str, Any]:
-        """Tải (hay tải lại sau lỗi) bộ đọc nhạc rồi trả view; đã có ffmpeg thì không làm gì."""
+    def my_music_module(self) -> dict[str, Any]:
+        """Người dùng bấm "Phân tích nhạc": tải (hay cập nhật) mô-đun ở luồng nền rồi trả view. Đã đủ thì không làm gì."""
         self._mutating()
-        ffmpeg_setup.start()
+        music_module.start()
         return self.my_music_view()
+
+    def _music_module_installed(self) -> None:
+        """Sau khi mô-đun tải/cập nhật xong: phân tích nốt bài CHƯA phân tích và đo độ to bù. Bài đã có kết quả của bản cũ KHÔNG bị phân tích
+        lại (kết quả cũ vẫn dùng được) - người dùng bấm "Phân tích lại"."""
+        try:
+            self.my_music.measure_missing()
+            self.my_music.analyze_pending()
+        except Exception:  # noqa: BLE001 - việc bù không được làm hỏng mô-đun vừa tải xong
+            pass
 
     def my_music_import(self, paths: list[str]) -> dict[str, Any]:
         """Nhập các file nhạc (đường dẫn trên máy này, từ hộp chọn file). Từng file một: file hỏng không làm hỏng cả lượt - kết
-        quả nói rõ file nào đã nhập, file nào đã có sẵn trong kho, file nào không nhập được và vì sao. Máy chưa có ffmpeg thì
-        KHÔNG nhập gì: bắt đầu tải bộ đọc nhạc và trả `needsReader` - giao diện đợi tải xong rồi gửi lại đúng các file ấy."""
+        quả nói rõ file nào đã nhập, file nào đã có sẵn trong kho, file nào không nhập được và vì sao. Không cần mô-đun "Phân tích nhạc":
+        chưa có thì bài ở "chưa phân tích" và chưa có độ to đo (mức mặc định)."""
         self._mutating()
-        if not ffmpeg_setup.ready():
-            ffmpeg_setup.start()
-            return {"added": [], "existing": [], "failed": [], "needsReader": True, **self.my_music_view()}
         added: list[dict[str, Any]] = []
         existing: list[dict[str, Any]] = []
         failed: list[str] = []
@@ -954,6 +959,15 @@ class App:
             raise ApiError(HTTPStatus.CONFLICT, "Chưa có bộ phân tích âm thanh - bài nhập vào vẫn ghim tay được, "
                                                 "nhưng máy chưa tự chọn chúng.")
         return {"analysed": self.my_music.analyze_pending(), **self.my_music_view()}
+
+    def my_music_reanalyse(self) -> dict[str, Any]:
+        """Người dùng bấm "Phân tích lại N bài bằng bản mới" sau khi cập nhật mô-đun: ở luồng nền, không bao giờ tự chạy."""
+        self._mutating()
+        if not music_local.analyzer_available():
+            raise ApiError(HTTPStatus.CONFLICT, "Chưa có bộ phân tích âm thanh - bài nhập vào vẫn ghim tay được, "
+                                                "nhưng máy chưa tự chọn chúng.")
+        music_module.run_job(self.my_music.reanalyse)
+        return self.my_music_view()
 
     def my_music_file(self, digest: str) -> Path:
         """File bài của người dùng cho "Nghe thử" trên máy này (không qua Studio từ xa - đường theo sách lo phần phát)."""
@@ -1726,7 +1740,7 @@ class App:
         return view
 
     def voices(self) -> list[dict[str, Any]]:
-        from ..voice_catalog import DEFAULT_NARRATOR_BY_GENDER, VOICE_PREVIEW_FILENAMES, narrator_presets
+        from ..voice_catalog import DEFAULT_NARRATOR_BY_GENDER, narrator_presets
 
         defaults = set(DEFAULT_NARRATOR_BY_GENDER.values())
         return [
@@ -1736,17 +1750,13 @@ class App:
                 "region": preset["region"],
                 "style": {"tu_nhien": "Tự nhiên", "doc_truyen": "Kể chuyện"}.get(preset["style"], preset["style"]),
                 "recommended": preset["name"] in defaults,
-                "preview": bool(VOICE_PREVIEW_FILENAMES.get(preset["name"])),
+                "preview": preview_file(preset["name"]) is not None,
             }
             for preset in narrator_presets()
         ]
 
     def voice_file(self, name: str) -> Path | None:
-        from ..voice_catalog import VOICE_PREVIEW_FILENAMES
-
-        filename = VOICE_PREVIEW_FILENAMES.get(name)
-        path = VOICE_PREVIEW_DIR / filename if filename else None
-        return path if path and path.is_file() else None
+        return preview_file(name)
 
 
 # ---- HTTP ------------------------------------------------------------------------------------------------
@@ -2416,8 +2426,11 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu danh sách file nhạc")
         self._send_json(HTTPStatus.OK, self.app.my_music_import(paths))
 
-    def post_my_music_reader(self, _query: dict[str, list[str]]) -> None:
-        self._send_json(HTTPStatus.OK, self.app.my_music_reader())
+    def post_my_music_module(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.my_music_module())
+
+    def post_my_music_reanalyse(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.my_music_reanalyse())
 
     def post_my_music_analyze(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.my_music_analyze())
@@ -3128,7 +3141,7 @@ class Handler(BaseHTTPRequestHandler):
     def media_voice(self, _query: dict[str, list[str]], name: str) -> None:
         path = self.app.voice_file(humanize.voice_key(name))
         if path is None:
-            raise ApiError(HTTPStatus.NOT_FOUND, "Không có bản nghe thử cho giọng này")
+            raise ApiError(HTTPStatus.NOT_FOUND, "Giọng này chưa có bản nghe thử trên máy này (bản nghe thử đi kèm Studio)")
         self._send_file(path, cache=True)
 
     def media_chapter(self, _query: dict[str, list[str]], value: str, chapter: str) -> None:
@@ -3212,7 +3225,8 @@ ROUTES: list[Route] = [
     # "Nhạc của tôi": chỉ trên máy này (Studio từ xa không có các đường này - nhạc của người dùng không ra khỏi máy trừ qua sách).
     ("GET", re.compile(r"/api/music/local"), Handler.get_my_music),
     ("POST", re.compile(r"/api/music/local/import"), Handler.post_my_music_import),
-    ("POST", re.compile(r"/api/music/local/reader"), Handler.post_my_music_reader),
+    ("POST", re.compile(r"/api/music/local/module"), Handler.post_my_music_module),
+    ("POST", re.compile(r"/api/music/local/reanalyse"), Handler.post_my_music_reanalyse),
     ("POST", re.compile(r"/api/music/local/analyze"), Handler.post_my_music_analyze),
     ("DELETE", re.compile(r"/api/music/local/([0-9a-f]{40})"), Handler.delete_my_music),
     ("GET", re.compile(r"/api/music/local/([0-9a-f]{40})/file"), Handler.get_my_music_file),

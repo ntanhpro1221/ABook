@@ -4,6 +4,10 @@ Kho nhạc là của TỪNG MÁY (thư mục dữ liệu của app, không nằm
 (nhập hai lần cùng một file thì chỉ một bản), kèm sổ `library.json` ghi tên bài, nghệ sĩ, độ dài, độ to và - khi đã phân tích -
 không khí của bài. Link của bài là `local:<sha1>` (music_plan.LOCAL_PREFIX), ở mọi chỗ nhận link danh mục.
 
+Nhập nhạc KHÔNG cần mô-đun "Phân tích nhạc" (docs/MUSIC_IMPORT.md): độ dài + thẻ đọc bằng mutagen (thuần Python, có sẵn trong bộ cài), phát
+và đóng gói vào .abook dùng nguyên file. Chưa có mô-đun thì bài chưa có độ to đo (app dùng mức mặc định) và chưa phân tích; có
+mô-đun rồi (`measure_missing`, `analyze_pending`) thì bù cả hai.
+
 Phân tích: `analyze(path)` trả mục theo hình danh mục (valence, arousal, tension, sd, vetVar, emotions, confidence,
 fitsUnderNarration, loudness) hay None. Model nghe chỉ-âm-thanh (music_student.py) cắm vào qua `set_analyzer`; khi chưa có gói
 model hay thư viện, `analyze` trả None và bài ở trạng thái "chưa phân tích": KHÔNG BAO GIỜ bịa số. Bài chưa phân tích không bao giờ được
@@ -19,19 +23,17 @@ import os
 import re
 import secrets
 import shutil
-import subprocess
 import threading
 import time
 from pathlib import Path
 from typing import Any, Callable
 
-from ..io_utils import atomic_write_json, ffmpeg_executable
+from ..io_utils import atomic_write_json
 from . import music_catalog, music_plan, music_scenes
 
 INDEX_FILE = "library.json"
 INDEX_VERSION = 1
 MAX_TRACK_BYTES = 1 << 30  # 1 GiB: một bản nhạc dài hơn thế không phải nhạc nền
-PROBE_SECONDS = 60
 _TAG_MAX = 200
 _CHUNK = 1 << 20
 
@@ -48,6 +50,19 @@ def set_analyzer(analyzer: Callable[[Path], dict[str, Any] | None] | None) -> No
     """Cắm bộ phân tích âm thanh (model chỉ-nghe của phiên Nhạc); None = gỡ."""
     global _analyzer
     _analyzer = analyzer
+
+
+_analyzer_id: str = ""
+
+
+def set_analyzer_id(identifier: str) -> None:
+    """Mã của bản model đang cắm (music_student.model_id): ghi cạnh mỗi kết quả phân tích để biết bài nào do bản cũ phân tích."""
+    global _analyzer_id
+    _analyzer_id = identifier
+
+
+def analyzer_id() -> str:
+    return _analyzer_id
 
 
 def analyzer_available() -> bool:
@@ -122,52 +137,26 @@ def clean_analysis(result: Any) -> dict[str, Any] | None:
 
 
 # ---- đọc file ------------------------------------------------------------------------------------------------------------
-def _ffmpeg(path: Path, *extra: str) -> subprocess.CompletedProcess[bytes]:
-    # Bytes, không phải text: thẻ tên bài / nghệ sĩ là UTF-8, còn `run_hidden` giải mã theo bảng mã của máy.
-    command = [ffmpeg_executable(), "-hide_banner", "-nostdin", "-i", str(path), *extra, "-f", "ffmetadata", "-"]
-    return subprocess.run(command, capture_output=True, timeout=PROBE_SECONDS, check=False,
-                          creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" else 0)
-
-
-def _parse_metadata(text: str) -> dict[str, str]:
-    """Đầu ra `-f ffmetadata`: `khoá=giá trị`, dấu `\\` thoát `=` `;` `#` `\\` và xuống dòng; mục [STREAM] bỏ."""
-    tags: dict[str, str] = {}
-    for line in text.splitlines():
-        if not line or line[0] in ";#[":
-            continue
-        key, sign, value = line.partition("=")
-        if sign:
-            tags.setdefault(key.strip().lower(), re.sub(r"\\(.)", r"\1", value).strip())
-    return tags
-
-
 def read_tags(path: Path) -> dict[str, Any]:
-    """Đọc file nhạc bằng ffmpeg (đã có sẵn trong app - không thêm thư viện): {duration (giây), title, artist, album, genre}.
-    Thẻ có thể thiếu (key vắng). Không đọc được như âm thanh hay không có độ dài -> MusicImportError."""
+    """Đọc file nhạc bằng tinytag (thuần Python, MIT, chép vào gói ở abook/vendor/tinytag - KHÔNG cần ffmpeg): {duration (giây), title, artist, album,
+    genre}. Thẻ có thể thiếu (key vắng). Hỗ trợ cả sáu đuôi app nhận (mp3, m4a, ogg, opus, flac, wav). Không đọc được như âm thanh hay không có
+    độ dài -> MusicImportError."""
+    from ..vendor.tinytag import TinyTag
+
     try:
-        probed = _ffmpeg(path)
-        stderr = probed.stderr.decode("utf-8", "replace")
-        match = re.search(r"Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)", stderr)
-        if not re.search(r"Stream #\d+:\d+.*: Audio:", stderr):
-            raise MusicImportError("không đọc được như một bản nhạc")
-        if not match:
-            raise MusicImportError("không biết bài dài bao lâu")
-        hours, minutes, seconds = match.groups()
-        duration = int(hours) * 3600 + int(minutes) * 60 + float(seconds)
-        tags = _parse_metadata(probed.stdout.decode("utf-8", "replace"))
-        if not (tags.get("title") and tags.get("artist")):
-            # Ogg / Opus để thẻ ở luồng âm thanh, không ở đầu file.
-            with contextlib.suppress(subprocess.SubprocessError, OSError):
-                for key, value in _parse_metadata(_ffmpeg(path, "-map_metadata", "0:s:0").stdout.decode("utf-8", "replace")).items():
-                    tags.setdefault(key, value)
-    except (subprocess.SubprocessError, OSError) as exc:
+        tag = TinyTag.get(str(path))
+    except Exception as exc:  # tinytag ném nhiều loại lỗi tuỳ định dạng hỏng ở chỗ nào
         raise MusicImportError("không đọc được như một bản nhạc") from exc
+    if not tag.samplerate and not tag.duration:
+        raise MusicImportError("không đọc được như một bản nhạc")
+    duration = float(tag.duration or 0)
     if not math.isfinite(duration) or duration <= 0:
         raise MusicImportError("không biết bài dài bao lâu")
     out: dict[str, Any] = {"duration": round(duration, 2)}
     for key in ("title", "artist", "album", "genre"):
-        if tags.get(key):
-            out[key] = tags[key][:_TAG_MAX]
+        text = str(getattr(tag, key, None) or "").strip()
+        if text:
+            out[key] = text[:_TAG_MAX]
     return out
 
 
@@ -315,8 +304,10 @@ class LocalMusic:
                                      "title": tags.get("title") or (fallback or {}).get("title") or "",
                                      "artist": tags.get("artist") or (fallback or {}).get("artist") or "", "album": tags.get("album") or "",
                                      "genre": tags.get("genre") or "", "analysis": None, "lufs": None}
-            entry["lufs"] = music_plan.measured_lufs(target)  # độ to thật của file - cue_gain_db dùng, như bài danh mục
+            entry["lufs"] = music_plan.measured_lufs(target)  # độ to thật của file - cue_gain_db dùng; chưa có ffmpeg thì None (mức mặc định)
             entry["analysis"] = analyze(target)
+            if entry["analysis"]:
+                entry["by"] = analyzer_id()
             self._tracks()[digest] = entry
             self._save()
             return self.info(digest, entry), False
@@ -346,6 +337,49 @@ class LocalMusic:
                 result = analyze(path)
                 if result is not None:
                     entry["analysis"] = result
+                    entry["by"] = analyzer_id()
+                    done += 1
+            if done:
+                self._save()
+        return done
+
+    def stale_count(self) -> int:
+        """Số bài đã phân tích bằng một bản model khác bản đang cắm (mới cập nhật): kết quả cũ vẫn dùng được, người dùng tự quyết có phân
+        tích lại không (`reanalyse`) - không bao giờ tự chạy."""
+        if _analyzer is None or not _analyzer_id:
+            return 0
+        with self._lock:
+            return sum(1 for entry in self._tracks().values() if entry.get("analysis") and entry.get("by") != _analyzer_id)
+
+    def reanalyse(self) -> int:
+        """Phân tích lại các bài `stale_count` đếm bằng bản model đang cắm. Không phân tích được bài nào thì giữ kết quả cũ của nó."""
+        if _analyzer is None or not _analyzer_id:
+            return 0
+        done = 0
+        with self._lock:
+            for digest, entry in self._tracks().items():
+                path = self._path(digest, entry)
+                if not entry.get("analysis") or entry.get("by") == _analyzer_id or not path.is_file():
+                    continue
+                result = analyze(path)
+                if result is not None:
+                    entry["analysis"], entry["by"] = result, _analyzer_id
+                    done += 1
+            if done:
+                self._save()
+        return done
+
+    def measure_missing(self) -> int:
+        """Đo độ to các bài nhập lúc máy chưa có ffmpeg (mô-đun "Phân tích nhạc" vừa tải xong). Trả số bài vừa có số đo."""
+        done = 0
+        with self._lock:
+            for digest, entry in self._tracks().items():
+                path = self._path(digest, entry)
+                if entry.get("lufs") is not None or not path.is_file():
+                    continue
+                value = music_plan.measured_lufs(path)
+                if value is not None:
+                    entry["lufs"] = value
                     done += 1
             if done:
                 self._save()

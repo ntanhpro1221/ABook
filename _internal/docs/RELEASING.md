@@ -56,6 +56,11 @@ tương ứng, để hiểu script làm gì:
    `gradlew assembleRelease` trong `mobile\android\` - Gradle ký bằng `%USERPROFILE%\.abook-keys\android-release.properties`
    (thiếu file ấy thì APK không ký, không phát hành được). Mất khoá APK là người dùng phải gỡ app rồi cài lại: bản sao lưu
    của cả hai khoá nằm ở `keys/` trong repo riêng tư `ntanhpro1221/ABook-Private` (README ở đó chỉ cách khôi phục).
+   Bộ cài chỉ-nghe KHÔNG mang từ điển phát âm và giọng nghe thử (`webui/studio_setup.py` > `STUDIO_ASSETS`: Studio tải gói
+   ghim ở bước đầu tiên). Gói đổi (file trong `abook/assets/voice_previews` hay `cmudict.dict` đổi) thì: `python
+   scripts/pack_studio_assets.py`, đăng gói lên nơi chứa, điền URL ghim theo commit + băm + cỡ vào `STUDIO_ASSETS`;
+   `release.py build` từ chối khi URL còn `PIN_REVISION`. Script dựng cũng cắt Python nhúng (Pillow, numpy, onnxruntime,
+   thư viện chuẩn) rồi chạy `scripts/smoke_embedded_python.py` trên chính bản đã cắt - đừng bỏ qua khi nâng Python hay gói phụ.
 3. `gh release create vX.Y.Z` (dùng `GH_TOKEN="$(gh auth token --user ntanhpro1221)"` cho riêng lệnh ấy) với ghi chú ở mục
    "Tài liệu bắt buộc" và đính kèm bộ cài, `.sig`, `latest.json`, APK, `LICENSE`, `THIRD_PARTY.md`. Các bản đã cài đọc
    `releases/latest/download/latest.json`: Release phải là bản "latest" (không đánh dấu pre-release) thì mới tự cập nhật.
