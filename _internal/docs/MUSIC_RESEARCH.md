@@ -1795,6 +1795,27 @@ Giới hạn:
 - M từng không ổn định khi chấm đoạn truyện khớp clip (J-mf 0,66). Phép này có cổng a / b riêng.
 - Hai giám khảo đều là máy, không phải người nghe.
 
+**GHI TRƯỚC - NGƯỠNG LỜI HÁT CỦA CẢ DANH MỤC (03-10 15:3x; trước khi có số AST nào ngoài 55 bài đầu đã bỏ):**
+
+Câu hỏi: `vocals` (CLAP zero-shot) trong khoảng 0,3–0,5 có thật là có tiếng hát không?
+- Danh mục chỉ loại bài > 0,5 (Incompetech được miễn), còn chọn nhạc theo cảnh vẫn nhận các bài này.
+
+Đo:
+- AST (cùng lượt chạy với phép A ở trên), trên MỌI bài của danh mục 64f4a577f86b.
+- `Singing_max` = xác suất "Singing" cao nhất trong ba cửa sổ 10 giây.
+- Bài **có tiếng hát theo AST** nếu `Singing_max` ≥ 0,3.
+
+Nhóm theo `vocals`, chỉ bài không phải Incompetech: < 0,1 / 0,1–0,3 / 0,3–0,5.
+
+Luật:
+- **ĐỀ XUẤT hạ `VOCALS_MAX` xuống 0,3 cho cả danh mục** nếu tỉ lệ có tiếng hát ở nhóm 0,3–0,5 ≥ 25 % VÀ ≥ 2 × nhóm < 0,1.
+- Kèm số bài mất ở mỗi ô vui/buồn × êm/dồn dập (25 ô).
+- Lead / chủ sách quyết. Không đạt → giữ 0,5; 0,3 chỉ áp cho "Nghe ngay".
+
+Ghi lại, không phải thước:
+- tỉ lệ có tiếng hát của bài Incompetech theo từng nhóm `vocals`, vì nguồn này đang được miễn;
+- `Speech` trung bình mỗi nhóm.
+
 ## Nguồn nhạc: giữ / loại và lý do (02-10, Lead + chủ sách - đọc trước khi hỏi lại)
 
 LUẬT CUỐI (02-10 22:xx, Lead + chủ sách; thay đoạn ba câu hỏi bên dưới ở chỗ nào khác nhau):
