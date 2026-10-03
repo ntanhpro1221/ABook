@@ -26,6 +26,7 @@ của chính thành phần ấy.
   Tải về thư mục dữ liệu của app (`tools/ffmpeg`), gỡ app là gỡ nó.
 - CMU Pronouncing Dictionary (`cmudict.dict`, dữ liệu từ CMU Sphinx; sử dụng và phân phối không hạn chế, yêu cầu ghi nhận
   nguồn). Source đi kèm giữ nguyên `_internal/abook/assets/CMUDICT_LICENSE.txt`.
+- `abook/readaloud/english_words.txt` (danh sách từ tiếng Anh cho "Nghe ngay", `scripts/build_english_words.py`): các từ nguyên vẹn trong từ vựng `bert-base-uncased` (Apache-2.0, Google) cũng có trong CMU Pronouncing Dictionary (ở trên), cộng danh sách tên gọi và họ Anh / Âu do ABook tự viết. Chỉ là danh sách từ viết thường, không kèm trọng số hay model.
 
 ## App Windows đóng gói (bộ cài NSIS, `docs/PACKAGING.md`)
 

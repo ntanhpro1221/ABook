@@ -3229,6 +3229,27 @@ class Handler(BaseHTTPRequestHandler):
     def get_readaloud_voices(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.readaloud.voices())
 
+    def _reading_origin(self, body: dict[str, Any]) -> str | None:
+        """Gốc Nhật / Hàn để đọc tên ("ja" / "ko"/ None): `origin` trong yêu cầu thắng ("none" = không phiên âm); không có thì theo cuốn `bookId`
+        (ghi đè của người dùng, không thì máy đoán từ các chương đầu và nhớ - readaloud/names.py)."""
+        explicit = body.get("origin")
+        if explicit in ("ja", "ko", "none"):
+            return None if explicit == "none" else explicit
+        book = body.get("bookId")
+        if not isinstance(book, str) or not book:
+            return None
+
+        def texts() -> Any:
+            path = self.app._listenable(book)
+            chapters = packages.edited_manifest(path).get("chapters") or [] if packages.is_package(path) else []
+            ids = [chapter["id"] for chapter in chapters if isinstance(chapter, dict) and isinstance(chapter.get("id"), int)]
+            return (text for text in (packages.chapter_text(path, chapter) for chapter in ids) if text)
+
+        try:
+            return self.app.readaloud.origins.origin(book, texts)
+        except ApiError:
+            return None
+
     def post_readaloud_clip(self, _query: dict[str, list[str]]) -> None:
         # Một đoạn chữ -> một clip (audio tốc độ 1,0 + mốc từng chữ). Lỗi nói đúng lý do (`reason`) để trình phát đổi sang giọng máy hay báo người nghe.
         body = self._body()
@@ -3236,7 +3257,7 @@ class Handler(BaseHTTPRequestHandler):
         if not isinstance(text, str) or not isinstance(voice, str):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu giọng hay chữ")
         try:
-            clip = self.app.readaloud.clip(voice, text, cached_only=bool(body.get("cachedOnly")))
+            clip = self.app.readaloud.clip(voice, text, cached_only=bool(body.get("cachedOnly")), origin=self._reading_origin(body))
         except VoiceError as error:
             if error.reason == "uncached":
                 # Chỉ tra bộ đệm mà chưa có là câu trả lời bình thường (trình phát hỏi hàng loạt lúc nạp chương), không phải lỗi: 200 để
@@ -3303,7 +3324,7 @@ class Handler(BaseHTTPRequestHandler):
         except VoiceError as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error), reason=error.reason) from error
         texts = [text for text in texts if len(text) <= readaloud.MAX_TEXT]
-        self._send_json(HTTPStatus.OK, self.app.readaloud.prepare.start(voice, texts, str(body.get("label") or "")[:200]))
+        self._send_json(HTTPStatus.OK, self.app.readaloud.prepare.start(voice, texts, str(body.get("label") or "")[:200], self._reading_origin(body)))
 
     def delete_readaloud_prepare(self, _query: dict[str, list[str]]) -> None:
         self.app._mutating()

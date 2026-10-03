@@ -9,6 +9,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Giọng đọc
 
+- "Nghe ngay" bằng giọng VieNeu (máy tính và điện thoại) đọc tên Nhật / Hàn theo cách người Việt quen thay vì âm tiếng Anh: cuốn mà tên nhân vật là romaji ("Haruto-kun", "Kyouko", "Yamato")
+  được app tự nhận ra, và các tên ấy đọc thành "Ha-ru-tô-cun", "Ki-âu-cô", "Gia-ma-tô". Tên Anh / Âu (Kate, Mike, Rose, Anne, Emma), từ tiếng Anh và tiếng Việt vẫn đọc như cũ; cuốn
+  không rõ gốc thì không đổi gì. Chữ hiện trên màn hình không đổi.
+
 - "Nghe ngay" (máy tính và điện thoại) không còn đọc sai bốn kiểu ký hiệu: "Hmm~" không còn thành "hmm khoảng" ("~" kéo giọng thì bỏ, "3~5" và
   "10,000 ~ 15,000" đọc "đến", "~50" vẫn là "khoảng"); "500,000" và "100,000 yen" đọc đủ "năm trăm nghìn" thay vì "năm trăm"; tên kỹ năng trong
   "<Angel Wings>" đọc trơn, ngắt hai bên, không còn "nhỏ hơn ... lớn hơn"; "Đóng băng / yếu" ngắt ở dấu gạch chéo thay vì "trên". Chữ hiện trên màn hình

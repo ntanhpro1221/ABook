@@ -18,8 +18,9 @@ NAME = re.compile(r"[0-9a-f]{64}\.(mp3|wav)")
 TYPES = {"mp3": "audio/mpeg", "wav": "audio/wav"}
 
 
-def clip_key(provider: str, voice: str, text: str) -> str:
-    return hashlib.sha256(f"{provider}|{voice}|{text}".encode("utf-8")).hexdigest()
+def clip_key(provider: str, voice: str, text: str, reading: str = "") -> str:
+    """`reading`: dấu của cách đọc riêng của cuốn (gốc Nhật / Hàn làm tên đọc khác: `VieneuProvider.reading_tag`); rỗng thì khoá y như trước."""
+    return hashlib.sha256((f"{provider}|{voice}|{text}" + (f"|{reading}" if reading else "")).encode("utf-8")).hexdigest()
 
 
 @dataclass(frozen=True)

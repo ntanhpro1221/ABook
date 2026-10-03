@@ -43,6 +43,36 @@ class VoiceChoices(private val file: File) {
         save()
     }
 
+    /**
+     * Gốc Nhật / Hàn của cuốn để đọc tên theo luật phiên âm ([Names]): người dùng ghi đè ("ja" / "ko" / "none") thì theo đó, không thì lần máy đoán đã lưu, chưa có thì đoán từ
+     * `texts` (các chương đầu) và lưu ở `"origins": {"<mã cuốn>": {"guess", "rule", "override"}}`. Trả "" khi không có gốc.
+     */
+    @Synchronized
+    fun originFor(bookId: String, texts: () -> Sequence<String>): String {
+        val entry = origins().optJSONObject(bookId) ?: JSONObject().also { origins().put(bookId, it) }
+        val override = entry.optString("override", "")
+        if (override == "none") return ""
+        if (override in Names.ORIGINS) return override
+        var guess = if (entry.optInt("rule", 0) == Names.RULE_VERSION) entry.optString("guess", "") else ""
+        if (guess.isEmpty()) {
+            guess = Names.bookOrigin(texts()) ?: "none"
+            entry.put("guess", guess).put("rule", Names.RULE_VERSION)
+            save()
+        }
+        return if (guess in Names.ORIGINS) guess else ""
+    }
+
+    /** Người dùng chọn gốc của cuốn: "ja" / "ko" / "none"; null bỏ ghi đè (theo máy đoán). */
+    @Synchronized
+    fun setOriginOverride(bookId: String, value: String?) {
+        require(value == null || value == "none" || value in Names.ORIGINS) { "gốc phải là ja, ko, none hay bỏ trống" }
+        val entry = origins().optJSONObject(bookId) ?: JSONObject().also { origins().put(bookId, it) }
+        if (value == null) entry.remove("override") else entry.put("override", value)
+        save()
+    }
+
+    private fun origins(): JSONObject = data.optJSONObject("origins") ?: JSONObject().also { data.put("origins", it) }
+
     private fun save() {
         try {
             file.parentFile?.mkdirs()

@@ -4,10 +4,12 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.security.MessageDigest
+import vn.abook.player.vieneu.VieneuUnits
 
 /**
  * Bộ nhớ đệm các đoạn đã đọc, trong thư mục cache của app (`readaloud/`): mỗi đoạn hai file `<khoá>.<mp3|wav>` + `<khoá>.json` (độ dài, mốc từng chữ), khoá =
- * sha256(nhà cung cấp | giọng | chữ) - cùng chữ cùng giọng thì nghe lại không đọc lại, đổi giọng thì đoạn mới. Quá `capBytes` (300 MB) thì xoá đoạn lâu không
+ * sha256(nhà cung cấp | giọng | chữ) - cùng chữ cùng giọng thì nghe lại không đọc lại, đổi giọng thì đoạn mới. Giọng VieNeu đọc tên Nhật / Hàn theo luật phiên âm
+ * ([Names]): đoạn nào gốc của cuốn làm nghe khác thì khoá thêm "|gốc", đoạn khác không đổi khoá (tham số `origin` của các hàm dưới đây). Quá `capBytes` (300 MB) thì xoá đoạn lâu không
  * dùng nhất trước (LRU theo giờ sửa file, mỗi lần dùng được cập nhật). Android tự dọn thư mục cache khi máy đầy, nên mất đoạn nào cũng chỉ là đọc lại.
  *
  * Đoạn "Làm trước" ([PrepareAhead]) được GHIM (danh sách khoá trong `pinFile`, ngoài thư mục đệm): khi dọn, đoạn không ghim đi trước hết, đoạn ghim chỉ đi khi
@@ -24,8 +26,13 @@ class ClipCache(
         const val CAP_BYTES = 300L * 1024 * 1024
         private val EXTENSIONS = setOf("mp3", "wav")
 
-        fun key(provider: String, voice: String, text: String): String =
-            MessageDigest.getInstance("SHA-256").digest("$provider|$voice|$text".toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
+        fun key(provider: String, voice: String, text: String, reading: String = ""): String =
+            MessageDigest.getInstance("SHA-256").digest("$provider|$voice|$text${if (reading.isEmpty()) "" else "|$reading"}".toByteArray(Charsets.UTF_8))
+                .joinToString("") { "%02x".format(it) }
+
+        /** Dấu cách đọc riêng của cuốn trong khoá (`VieneuProvider.reading_tag`): chỉ giọng VieNeu, và chỉ đoạn mà gốc làm nghe khác. */
+        fun reading(voiceId: String, text: String, origin: String?): String =
+            if (origin != null && voiceId.startsWith("vieneu:")) VieneuUnits.readingTag(text, origin) else ""
 
         /** "edge:vi-VN-X" -> ("edge", "vi-VN-X"). */
         fun split(voiceId: String): Pair<String, String> = voiceId.substringBefore(':') to voiceId.substringAfter(':', "")
@@ -39,7 +46,8 @@ class ClipCache(
         ?.let { file -> runCatching { file.readLines().map { it.trim() }.filter { it.isNotEmpty() } }.getOrNull() }
         ?.toMutableSet() ?: mutableSetOf()
 
-    private fun keyOf(voiceId: String, text: String): String = split(voiceId).let { (provider, voice) -> key(provider, voice, text) }
+    private fun keyOf(voiceId: String, text: String, origin: String? = null): String =
+        split(voiceId).let { (provider, voice) -> key(provider, voice, text, reading(voiceId, text, origin)) }
 
     private fun savePins() {
         val file = pinFile ?: return
@@ -51,14 +59,14 @@ class ClipCache(
 
     /** Ghim đoạn (đã có hay sắp đọc): dọn bộ đệm chỉ đụng tới nó khi không còn đoạn không ghim nào. */
     @Synchronized
-    fun pin(voiceId: String, text: String) {
-        if (pinned.add(keyOf(voiceId, text))) savePins()
+    fun pin(voiceId: String, text: String, origin: String? = null) {
+        if (pinned.add(keyOf(voiceId, text, origin))) savePins()
     }
 
     /** Người nghe đã tới đoạn này: nó lại là đoạn thường. */
     @Synchronized
-    fun unpin(voiceId: String, text: String) {
-        if (pinned.remove(keyOf(voiceId, text))) savePins()
+    fun unpin(voiceId: String, text: String, origin: String? = null) {
+        if (pinned.remove(keyOf(voiceId, text, origin))) savePins()
     }
 
     @Synchronized
@@ -69,7 +77,7 @@ class ClipCache(
     }
 
     @Synchronized
-    fun isPinned(voiceId: String, text: String): Boolean = keyOf(voiceId, text) in pinned
+    fun isPinned(voiceId: String, text: String, origin: String? = null): Boolean = keyOf(voiceId, text, origin) in pinned
 
     @Synchronized
     private fun pinnedKeys(): Set<String> = pinned.toSet()
@@ -82,17 +90,16 @@ class ClipCache(
     }
 
     /** Đoạn đã có trong bộ đệm (không tính là một lần dùng - không đổi thứ tự dọn). */
-    fun contains(voiceId: String, text: String): Boolean {
-        val key = keyOf(voiceId, text)
+    fun contains(voiceId: String, text: String, origin: String? = null): Boolean {
+        val key = keyOf(voiceId, text, origin)
         return File(dir, "$key.json").isFile && EXTENSIONS.any { File(dir, "$key.$it").length() > 0L }
     }
 
     /** File tạm cho giọng ghi vào (cùng thư mục để đổi tên không phải chép). Không tính vào bộ nhớ đệm tới khi [put]. */
     fun temp(extension: String): File = File(dir, "tmp-${java.util.UUID.randomUUID()}.$extension.part")
 
-    fun get(voiceId: String, text: String): Clip? {
-        val (provider, voice) = split(voiceId)
-        val key = key(provider, voice, text)
+    fun get(voiceId: String, text: String, origin: String? = null): Clip? {
+        val key = keyOf(voiceId, text, origin)
         val meta = File(dir, "$key.json")
         if (!meta.isFile) return null
         return try {
@@ -111,10 +118,9 @@ class ClipCache(
     }
 
     /** Nhận file `tmp` (đã ghi xong) vào bộ nhớ đệm; trả đoạn trỏ tới file chính thức. */
-    fun put(voiceId: String, text: String, tmp: File, extension: String, durationMs: Long, words: List<Span>): Clip {
+    fun put(voiceId: String, text: String, tmp: File, extension: String, durationMs: Long, words: List<Span>, origin: String? = null): Clip {
         require(extension in EXTENSIONS) { "đuôi file lạ: $extension" }
-        val (provider, voice) = split(voiceId)
-        val key = key(provider, voice, text)
+        val key = keyOf(voiceId, text, origin)
         val audio = File(dir, "$key.$extension")
         audio.delete()
         if (!tmp.renameTo(audio)) {
