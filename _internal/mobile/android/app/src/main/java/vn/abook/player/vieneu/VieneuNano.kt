@@ -4,14 +4,13 @@ import ai.onnxruntime.OnnxTensor
 import ai.onnxruntime.OrtEnvironment
 import org.json.JSONObject
 import java.io.File
-import java.util.Random
 import kotlin.math.exp
 
 /**
  * VieNeu-TTS v3 Nano on ONNX Runtime, a port of `vieneu/v3nano.py` (`OnnxV3NanoEngine`): a 48M-parameter flow-matching model.
  * Text encoder + duration predictor give the length, then [steps] Euler steps of the vector estimator (two passes each with
  * classifier-free guidance [cfg]) turn noise into a 144-channel latent that the codec decoder turns into 24 kHz audio. Not
- * autoregressive, so the whole chunk is ready at once. [dir] holds the four graphs, `config.json` and `null_spk.f32` / `null_style.f32`.
+ * autoregressive, so the whole chunk is ready at once. [dir] holds the repo's files as pinned (four graphs, `config.json`, `constants.npz`).
  */
 class VieneuNano(dir: File, threads: Int, backend: VieneuBackend = VieneuBackend.CPU, spinning: Boolean = false) : AutoCloseable {
     class Timings {
@@ -25,7 +24,10 @@ class VieneuNano(dir: File, threads: Int, backend: VieneuBackend = VieneuBackend
 
     private val env = OrtEnvironment.getEnvironment()
     private val cfg = JSONObject(File(dir, "config.json").readText())
-    private val vocab: Map<Int, Int> = cfg.getJSONObject("vocab").let { json -> json.keys().asSequence().associate { it.codePointAt(0) to json.getInt(it) } }
+    // single characters only: "<pad>" / "<bos>" / "<eos>" are not characters of a phoneme string (the desktop's `ch in vocab` never matches them)
+    private val vocab: Map<Int, Int> = cfg.getJSONObject("vocab").let { json ->
+        json.keys().asSequence().filter { it.codePointCount(0, it.length) == 1 }.associate { it.codePointAt(0) to json.getInt(it) }
+    }
     private val emotionTags: Map<String, String> = cfg.optJSONObject("emotion_tags")?.let { json -> json.keys().asSequence().associateWith { json.getString(it) } }.orEmpty()
     private val bos = cfg.getInt("bos_id")
     private val eos = cfg.getInt("eos_id")
@@ -34,8 +36,9 @@ class VieneuNano(dir: File, threads: Int, backend: VieneuBackend = VieneuBackend
     private val latentChannels = 144
     private val nStyle = cfg.getInt("n_style")
     private val styleDim = cfg.getInt("style_dim")
-    private val nullSpeaker = RawFiles.floats(File(dir, "null_spk.f32"))
-    private val nullStyle = RawFiles.floats(File(dir, "null_style.f32"))
+    private val constants = NpzFile(File(dir, "constants.npz"))
+    private val nullSpeaker = constants.floats("null_spk").data
+    private val nullStyle = constants.floats("null_style").data
 
     private val options = sessionOptions(threads, backend, spinning)
     private val textEncoder = env.createSession(File(dir, "text_encoder.onnx").absolutePath, options)
@@ -59,7 +62,8 @@ class VieneuNano(dir: File, threads: Int, backend: VieneuBackend = VieneuBackend
         return ids.toLongArray()
     }
 
-    /** One chunk of phonemes -> 24 kHz audio. [noise] is the start latent `[144][frames]` (the bench replays the desktop's); null draws it from [seed]. */
+    /** One chunk of phonemes -> 24 kHz audio. [noise] is the start latent `[144][frames]` (the bench replays the desktop's); null draws it from [seed]
+     *  exactly as the desktop does (`np.random.default_rng(seed).standard_normal`). */
     fun synthesize(phones: String, speaker: FloatArray, style: FloatArray, noise: FloatArray?, seed: Long, steps: Int = 16, cfgScale: Float = 3f, sway: Double = 0.0, speed: Double = 1.0): Result {
         val timings = Timings()
         val started = System.nanoTime()
@@ -87,7 +91,7 @@ class VieneuNano(dir: File, threads: Int, backend: VieneuBackend = VieneuBackend
                 }
                 val seconds = minOf(exp(logSeconds.toDouble()) / maxOf(speed, 1e-3), MAX_CHUNK_SECONDS)
                 val frames = maxOf(MIN_FRAMES, Math.rint(seconds * fps).toInt())
-                var x = if (noise != null && noise.size == latentChannels * frames) noise.copyOf() else Random(seed).let { random -> FloatArray(latentChannels * frames) { random.nextGaussian().toFloat() } }
+                var x = if (noise != null && noise.size == latentChannels * frames) noise.copyOf() else NumpyGenerator(seed).standardNormalFloats(latentChannels * frames)
                 for (i in 0 until steps) {
                     val from = swayed(i, steps, sway)
                     val to = swayed(i + 1, steps, sway)

@@ -11,6 +11,7 @@ import vn.abook.player.Artwork
 import vn.abook.player.Playback
 import vn.abook.player.SleepTimer
 import vn.abook.player.Store
+import vn.abook.player.vieneu.VieneuVoices
 import java.io.File
 import java.util.concurrent.Executors
 
@@ -94,6 +95,7 @@ object ReadAloud {
         return when (provider) {
             "edge" -> EdgeTts(name.ifEmpty { "vi-VN-HoaiMyNeural" })
             "device" -> DeviceTts(context ?: throw VoiceException("Chưa khởi động"), name)
+            VieneuVoices.PREFIX -> VieneuVoices.voice(context ?: throw VoiceException("Chưa khởi động"), id)
             else -> OnlineVoices.voiceFor(context ?: throw VoiceException("Chưa khởi động"), id) ?: throw VoiceException("Giọng lạ: $id")
         }
     }
@@ -119,6 +121,7 @@ object ReadAloud {
         val list = ArrayList<VoiceInfo>()
         list.add(VoiceInfo("edge:vi-VN-HoaiMyNeural", "Hoài My (Edge)", "edge", true, true, "female"))
         list.add(VoiceInfo("edge:vi-VN-NamMinhNeural", "Nam Minh (Edge)", "edge", true, false, "male"))
+        list.addAll(VieneuVoices.voices(ctx)) // giọng VieNeu: chỉ khi mô-đun đã tải về điện thoại
         list.addAll(OnlineVoices.voices(ctx)) // giọng dùng khoá của người dùng: chỉ khi khoá đã kiểm tra được
         list.addAll(DeviceTts.voices(ctx))
         return list.map {

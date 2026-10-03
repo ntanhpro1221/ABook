@@ -69,6 +69,21 @@ class ClipReaderTest {
     }
 
     @Test
+    fun aVieneuVoiceThatFailsFallsBackToTheDeviceVoiceNeverToAnOnlineOne() {
+        val vieneu = FakeVoice("vieneu:nano/Adam", VoiceException("Giọng VieNeu chưa tải", reason = "voice"))
+        val edge = FakeVoice("edge:v")
+        val device = FakeVoice("device:vi")
+        val notices = ArrayList<String>()
+        val reader = ClipReader(ClipCache(dir), { if (it.startsWith("vieneu:")) vieneu else edge }, { device }, { now },
+            onlineFallback = { edge }, notice = { notices.add(it) })
+        assertEquals("device:vi", reader.read("một", "vieneu:nano/Adam").voice)
+        reader.read("hai", "vieneu:nano/Adam")
+        assertEquals("chữ của sách không rời điện thoại", 0, edge.calls)
+        assertEquals("không thử lại VieNeu ở mỗi đoạn", 1, vieneu.calls)
+        assertEquals(listOf("Giọng VieNeu chưa đọc được lúc này - tạm đọc bằng giọng của máy."), notices)
+    }
+
+    @Test
     fun aClipAlreadyInTheCacheNeedsNoNetworkEvenWhileEdgeIsDown() {
         val edge = FakeVoice("edge:v")
         val reader = reader(edge, FakeVoice("device:vi"))

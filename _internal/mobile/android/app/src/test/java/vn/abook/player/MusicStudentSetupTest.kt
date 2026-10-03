@@ -40,8 +40,8 @@ class MusicStudentSetupTest {
     private fun digest(bytes: ByteArray) = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
 
     private val parts get() = listOf(
-        MusicStudentSetup.Part("big.bin", digest(big), big.size.toLong()),
-        MusicStudentSetup.Part("small.json", digest(small), small.size.toLong()),
+        PinnedFiles.Part("big.bin", digest(big), big.size.toLong()),
+        PinnedFiles.Part("small.json", digest(small), small.size.toLong()),
     )
 
     @Before
@@ -102,12 +102,12 @@ class MusicStudentSetupTest {
     private fun setup(
         store: MusicStore,
         open: (File) -> ((File) -> JSONObject?) = { { JSONObject().put("valence", 0.25).put("arousal", -0.5) } },
-        files: List<MusicStudentSetup.Part> = parts,
+        files: List<PinnedFiles.Part> = parts,
         supported: Boolean = true,
     ) = MusicStudentSetup(File(root, "student"), store, open, base, files, supported)
 
-    private val libPart get() = MusicStudentSetup.Part("ort/lib.so", digest(lib), lib.size.toLong(), remote = "ort/1/lib.so.gz",
-        packed = MusicStudentSetup.Packed(digest(libGz), libGz.size.toLong()))
+    private val libPart get() = PinnedFiles.Part("ort/lib.so", digest(lib), lib.size.toLong(), remote = "ort/1/lib.so.gz",
+        packed = PinnedFiles.Packed(digest(libGz), libGz.size.toLong()))
 
     @Test
     fun the_stamp_written_at_download_time_says_unchanged_pins_are_current_without_hashing_again() {
@@ -133,7 +133,7 @@ class MusicStudentSetupTest {
         requests.clear()
         // bản app mới ghim file small.json khác nội dung nhưng CÙNG tên và CÙNG cỡ
         small = """{"x": 2}""".toByteArray()
-        val newParts = listOf(parts[0], MusicStudentSetup.Part("small.json", digest(small), small.size.toLong()))
+        val newParts = listOf(parts[0], PinnedFiles.Part("small.json", digest(small), small.size.toLong()))
         val store = store()
         val updated = setup(store, files = newParts)
         // bản cũ vẫn chạy cho tới khi người dùng cập nhật, nhưng giao diện biết có bản mới và nó nặng bao nhiêu
@@ -161,11 +161,11 @@ class MusicStudentSetupTest {
         first.start()
         first.join()
         // thư viện ghim khác: phải khớp phần Java của APK nên không cắm bản cũ; model khác: bản cũ vẫn chạy
-        val newLib = MusicStudentSetup.Part("ort/lib.so", "0".repeat(64), lib.size.toLong(), remote = lib2.remote, packed = lib2.packed, blocking = true)
+        val newLib = PinnedFiles.Part("ort/lib.so", "0".repeat(64), lib.size.toLong(), remote = lib2.remote, packed = lib2.packed, blocking = true)
         val blocked = setup(store(), files = parts + newLib)
         assertFalse(blocked.attachIfPresent())
         assertEquals("outdated", blocked.status().getString("state"))
-        val newSmall = MusicStudentSetup.Part("small.json", "1".repeat(64), small.size.toLong())
+        val newSmall = PinnedFiles.Part("small.json", "1".repeat(64), small.size.toLong())
         val soft = setup(store(), files = listOf(parts[0], newSmall, lib2))
         assertTrue(soft.attachIfPresent())
         assertEquals("outdated", soft.status().getString("state"))
@@ -179,7 +179,7 @@ class MusicStudentSetupTest {
         first.start()
         first.join()
         assertEquals(0, store.staleCount())
-        val newSmall = MusicStudentSetup.Part("small.json", "1".repeat(64), small.size.toLong())
+        val newSmall = PinnedFiles.Part("small.json", "1".repeat(64), small.size.toLong())
         var calls = 0
         val newer = setup(store, open = { { calls++; JSONObject().put("valence", -0.5).put("arousal", 0.5) } }, files = listOf(parts[0], newSmall))
         assertTrue("model đổi ghim nên mã model khác", newer.modelId != first.modelId)

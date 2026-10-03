@@ -74,6 +74,12 @@ băm trong `webui/studio_setup.py`):
   `app/src/main/java/ai/onnxruntime` (giữ đầu giấy phép MIT của từng file; chỉ `OnnxRuntime.java` sửa chỗ nạp thư viện). Hai thư viện native
   (`libonnxruntime.so`, `libonnxruntime4j_jni.so`) KHÔNG nằm trong APK: tải cùng "Gói nhạc" khi người dùng bấm, lấy từ AAR chính thức trên
   Maven Central (`scripts/prepare_ort_runtime.py`).
+- Giọng VieNeu trên điện thoại (mô-đun tải khi người dùng bấm, `vieneu/VieneuModule.kt`; không nằm trong APK): cùng các file model, file
+  giọng và từ điển như máy tính (mục dưới). Chữ -> phoneme: crate Rust của `sea-g2p` 0.9.1 (pnnbao97, Apache-2.0, sdist trên PyPI) dựng thành
+  thư viện JNI `libabook_sea_g2p.so` (`mobile/sea_g2p_jni`, `scripts/prepare_sea_g2p_android.py`: chỉ bỏ phần nối Python, mã chuẩn hoá và
+  G2P giữ nguyên) cùng các crate nó dùng - `regex`, `fancy-regex`, `once_cell`, `memmap2`, `unicode-normalization`, `jni` (MIT hay
+  Apache-2.0). Bảng ziggurat của bộ sinh số ngẫu nhiên chép từ numpy (`vieneu/NumpyZiggurat.kt`, BSD-3-Clause) để nhiễu đầu của Nano
+  trùng máy tính.
 - pdf.js / `pdfjs-dist` (Mozilla, Apache-2.0), bản "legacy" - đọc chữ của PDF có lớp chữ khi nhập sách trên điện thoại
   (`ui/src/shared/pdfPages.ts`); tải lười, chỉ chạy khi người dùng mở một file PDF. EPUB và DOCX do `BookImport.kt` tự đọc
   bằng java.util.zip, không thêm thư viện.

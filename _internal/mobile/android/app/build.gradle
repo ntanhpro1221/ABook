@@ -32,6 +32,8 @@ android {
         androidTest.java.srcDirs += "src/sharedTest/java"
         // Mp3 + số vàng của bộ phân tích nhạc (tests/music_student_goldens.py) dùng chung với pytest; bài thử trên máy Android đọc từ assets.
         androidTest.assets.srcDirs += "../../../tests/fixtures/music_student"
+        // Số của máy tính cho giọng VieNeu (scripts/vieneu_android_fixtures.py): VieneuOnDeviceTest so phoneme + clip trên máy thật.
+        androidTest.assets.srcDirs += "../../../tests/fixtures/vieneu/android"
     }
     signingConfigs {
         if (releaseSigning.getProperty("storeFile")) {
