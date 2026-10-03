@@ -262,13 +262,13 @@ fn answer_dialog(app: &AppHandle, message: &Value) {
     let result = match message.get("kind").and_then(Value::as_str) {
         Some("folder") => dialog.blocking_pick_folder().and_then(path_text).map(Value::from),
         Some("files") => {
-            // "Nhập nhạc của tôi" xin bộ lọc nhạc; mọi nơi khác chọn chương truyện (TXT) hay EPUB.
+            // "Nhập nhạc của tôi" xin bộ lọc nhạc; mọi nơi khác chọn chương truyện (TXT) hay file sách (EPUB, DOCX, PDF).
             let dialog = match message.get("filter").and_then(Value::as_str) {
                 Some("music") => dialog.add_filter(
                     "Nhạc (mp3, m4a, ogg, opus, flac, wav)",
                     &["mp3", "m4a", "ogg", "opus", "flac", "wav"],
                 ),
-                _ => dialog.add_filter("Chương truyện (TXT) hay EPUB", &["txt", "epub"]),
+                _ => dialog.add_filter("Chương truyện (TXT) hay sách (EPUB, DOCX, PDF)", &["txt", "epub", "docx", "pdf"]),
             };
             dialog
                 .blocking_pick_files()

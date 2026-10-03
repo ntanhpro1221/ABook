@@ -1333,6 +1333,8 @@ def _command_doctor(args: argparse.Namespace) -> CommandResult:
     for executable in ("nvidia-smi", "ollama"):
         resolved = shutil.which(executable)
         checks[f"executable:{executable}"] = {"ok": bool(resolved), "detail": resolved or "not found"}
+    # Dữ liệu của Studio (webui/studio_setup.ASSET_PATHS): bộ cài chỉ-nghe không mang, Studio đặt vào đây. Lệnh kiểm này đòi
+    # runtime của Studio (ABOOK_RUNTIME ở dưới) nên chỉ chạy trên máy có Studio hay bản dev - nơi chúng phải có mặt.
     asset_root = Path(__file__).resolve().parent / "assets"
     cmudict = asset_root / "cmudict.dict"
     previews = list((asset_root / "voice_previews").glob("*.wav"))

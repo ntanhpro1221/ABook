@@ -134,6 +134,10 @@ def run(reader: TextIO, writer: TextIO, argv: list[str] | None = None) -> int:
 
         studio = StudioSetup(Path(args.studio), Path(__file__).resolve().parents[2],
                              analysis_model=str(build_settings()["analysis"]["model"]))
+        try:
+            studio.ensure_assets()  # app vừa cập nhật: dữ liệu của Studio (giọng nghe thử...) đặt lại vào mã mới
+        except Exception:  # noqa: BLE001 - chỉ mất "Nghe thử giọng"; sách vẫn nghe được, lần bắt đầu một cuốn sẽ báo rõ
+            pass
     runner = FakeRunner() if fake else StudioRunner(studio) if studio is not None else BackgroundRunner()
     web = App(preferences=preferences, runner=runner, token=new_token(), dialogs=dialogs, version=args.version)
     web.studio = studio

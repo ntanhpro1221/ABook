@@ -79,6 +79,7 @@ không được đụng PATH hay cài gì toàn máy, nên mỗi công cụ là 
 | bước | nguồn | cỡ |
 |---|---|---|
 | kiểm máy | NVML (`nvml.dll` của driver NVIDIA) - không có GPU NVIDIA thì dừng, nói rõ; ổ đĩa còn ≥ 30 GB | - |
+| dữ liệu của Studio | `studio-assets-1.zip` (từ điển phát âm `cmudict.dict` + 21 giọng nghe thử `voice_previews`; `scripts/pack_studio_assets.py` đóng gói, ghim ở `studio_setup.STUDIO_ASSETS`) giải vào `Studio\assets`, rồi CHÉP vào `<mã app>\abook\assets` - đường mà mã khoá chất lượng (`analysis.CMUDICT_PATH`, `quality_policy.voice_preview_assets_hash`) đọc, nên hash không đổi. App cập nhật thay thư mục mã thì host (mỗi lần mở) và `code_for` (mỗi cuốn) đặt lại từ kho; gỡ Studio gỡ luôn bản đã đặt | ~15 MB |
 | uv | bản phát hành GitHub của astral-sh/uv, ghim | ~20 MB |
 | Python 3.11 + venv | `uv python install` + `uv venv` vào `Studio\runtime\.venv` | ~50 MB |
 | thư viện C++ của Microsoft | `msvcp140.dll`, `vcruntime140*.dll`, `concrt140.dll` - bản redist của Visual Studio đi kèm BỘ CÀI app (`resources\app\vcruntime`), chép vào thư mục Python của Studio: Windows tìm DLL ở thư mục của exe trước System32, nên máy chưa cài "Visual C++ Redistributable" vẫn chạy được torch | ~2 MB |
@@ -111,8 +112,8 @@ Chủ sách 28-09: "tất tần tận mọi thứ cần thiết khi bấm nút t
 Trước 28-09 Studio còn mượn ba thứ của máy, giờ đều là bản riêng: `msvcp140.dll`/`vcruntime140*.dll` nạp từ System32
 (của gói Visual C++ Redistributable, Windows sạch không có) -> chép kèm; Ollama của máy (`%LOCALAPPDATA%\Programs\Ollama`)
 được dùng lại nếu có, model kéo vào `%USERPROFILE%\.ollama` -> bản riêng, cổng riêng; Python cài sẵn -> `only-managed`.
-Bản chỉ-nghe không mang ffmpeg: lần nhập "Nhạc của tôi" đầu tiên tải riêng một bản (~30 MB, ghim, `webui/ffmpeg_setup.py`) vào
-`<dữ liệu app>	oolsfmpeg`, không nằm trong bộ cài. Phần còn lại vốn đã riêng: Git là MinGit trong `Studio\tools\git`, FFmpeg là bản trong gói `imageio-ffmpeg`, CUDA/cuDNN
+Bản chỉ-nghe không mang ffmpeg, numpy, onnxruntime hay model nhạc: mô-đun "Phân tích nhạc" (~117 MB, `webui/music_module.py`; người dùng bấm
+mới tải, ghim URL + SHA-256) đặt chúng vào `<dữ liệu app>/music/` và `<dữ liệu app>/tools/ffmpeg`, không nằm trong bộ cài. Phần còn lại vốn đã riêng: Git là MinGit trong `Studio\tools\git`, FFmpeg là bản trong gói `imageio-ffmpeg`, CUDA/cuDNN
 là thư viện trong venv (`torch\lib`, `ctranslate2`; máy thử không cài CUDA toolkit), bộ nhớ đệm uv/Hugging Face/torch trỏ
 vào `Studio\`. Thử gỡ trên bộ cài thật (`/S`): gỡ thật -> Studio, WebView2 cache, khoá gỡ cài đặt, liên kết `.abook` mất,
 dữ liệu cá nhân còn; gỡ lúc cài lại -> Studio còn.
@@ -141,15 +142,40 @@ kế tiếp.
   giữ nguyên để Windows+A và thông báo không đổi.
 - WebView2: Windows 11 có sẵn; bộ cài tự tải khi thiếu.
 - Python nhúng: bản embeddable chính thức mới nhất còn bản vá nhị phân (server đồng bộ nghe cả mạng LAN - cần bản vá bảo
-  mật); URL + SHA-256 ghi cứng trong script build. Gói phụ (Pillow, psutil, requests, numpy + onnxruntime cho bộ phân tích nhạc nhập) cài `--require-hashes`.
+  mật); URL + SHA-256 ghi cứng trong script build. Gói phụ (Pillow, psutil, requests) cài `--require-hashes`.
 
 ## Build
 
-`scripts/build_windows_app.ps1`: build giao diện (`ui/`) -> tải + kiểm Python nhúng -> cài gói phụ -> chép `abook`
-(không `__pycache__`, không test) + VC++ runtime (tìm bằng `vswhere`, cho Studio) -> chạy thử host -> `tauri build
+`scripts/build_windows_app.ps1`: build giao diện (`ui/`) -> tải + kiểm Python nhúng -> cài gói phụ -> cắt phần không dùng -> chép `abook`
+(không `__pycache__`, không test, không dữ liệu của Studio) + VC++ runtime (tìm bằng `vswhere`, cho Studio) -> thử Python nhúng
+(`scripts/smoke_embedded_python.py`) -> chạy thử host -> `tauri build
 --no-bundle`, chờ tới khi không ai giữ `ABook.exe`, rồi `tauri bundle` (ký gói cập nhật bằng khoá ngoài repo). Tách hai
 bước vì bước đóng gói ghi vào exe vừa dựng và đụng trình diệt virus đang quét nó (os error 32; 28-09 `tauri build` thử lại
 3 lần hỏng cả 3 - mỗi lần thử lại dựng lại exe). Bộ cài ra `_internal/shell/src-tauri/target/release/bundle/nsis/`.
+
+### Bộ cài chỉ mang phần nghe (đo 03-10)
+
+Chủ sách 03-10: cái gì chỉ Studio hay một tính năng tuỳ chọn cần thì KHÔNG nằm trong bộ cài - đi cùng Studio hay tải khi cần.
+Số đo trên thư mục tài nguyên đã dựng (`shell\src-tauri\resources`); "nén" là LZMA đặc 8 MB như NSIS, ước lượng hiệu chỉnh
+bằng bộ cài 0.4.21 thật (31,4 MB = ước lượng 29,6 + 1,85 cố định):
+
+| phần | trước (chưa nén / nén) | sau | cách |
+|---|---|---|---|
+| giọng nghe thử (21 wav) | 17,6 / 11,1 MB | 0 | Studio tải (bước "assets") |
+| `cmudict.dict` | 3,6 / 0,8 MB | 0 | Studio tải (bước "assets") |
+| Pillow | 14,6 / 3,8 MB | 4,3 / 1,1 MB | bỏ `_avif` (7,7 MB), `_imagingft`, `_imagingcms`, `_imagingtk`; vẫn đọc PNG/JPEG/WebP/GIF/BMP |
+| numpy | 40,8 / 7,4 MB | 31,7 / 6,0 MB | bỏ `tests`, `.pyi`, `f2py`, header |
+| onnxruntime | 40,4 / 9,5 MB | 36,7 / 9,0 MB | bỏ `transformers`, `tools`, `quantization`, `datasets`, `backend` |
+| thư viện chuẩn (`python314.zip`) | 4,1 / 4,1 MB | 8,1 / 2,2 MB | bỏ mô-đun gỡ lỗi / thư tín / REPL; ghi zip KHÔNG nén vì LZMA không nén được file đã deflate |
+| **tài nguyên cả bộ** | **158,8 / 47,0 MB** | **117,8 / 28,5 MB** | |
+| **bộ cài ước lượng** | **~50,6 MB** | **~32,1 MB** | cộng `ABook.exe` (4,9 / 1,7 MB) và 1,85 MB cố định |
+
+Còn lại phần lớn là numpy + onnxruntime (cho bộ phân tích nhạc nhập "Nhạc của tôi", tuỳ chọn): bỏ chúng khỏi bộ cài còn
+khoảng 13,0 MB tài nguyên nén (bộ cài ~16,6 MB) - xem docs/MUSIC_IMPORT.md nếu chuyển sang tải khi cần (như ffmpeg).
+
+`Test-Layout` của script dựng từ chối thư mục tài nguyên có thứ lạ (từng có `ebook_reader` 45 MB còn sót từ lần dựng cũ dưới
+`-SkipResources`) hay dữ liệu của Studio; `release.py build` từ chối khi gói dữ liệu của Studio chưa được ghim (URL còn
+`PIN_REVISION`).
 
 Công cụ: Rust stable MSVC (rustup, cài 28-09), MSVC C++ (Visual Studio Community 2026 có sẵn), `tauri-cli` 2.x. NSIS do
 Tauri tự tải.
