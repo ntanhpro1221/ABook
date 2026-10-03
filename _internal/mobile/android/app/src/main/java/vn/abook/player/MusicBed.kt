@@ -42,6 +42,7 @@ object MusicBed {
     private const val MAX_STEP_SECONDS = 3.0 // đồng hồ nhạc không nhảy xa khi máy ngủ giữa hai nhịp
     private const val SAVE_EVERY_MS = 5000L
     private const val PREFS = "music_bed"
+    private const val RETRY_MS = 5 * 60_000L // bài tải hỏng (mất mạng): chừng ấy sau, tới lúc đổi bài, thử lại
 
     /** `gainDb`: độ khuếch đại máy chủ đã tính cho bài này (music_plan.cue_gain_db, ghi sẵn vào mốc khi đóng gói); null = sách
      *  xuất bởi bản cũ -> mức chung `levelDb` của cuốn. Máy điện thoại không tự tính lại, chỉ áp con số. */
@@ -63,10 +64,12 @@ object MusicBed {
     private var current: Bed? = null
     private val fading = mutableListOf<Bed>()
     private var fadingTicker = false
-    private val failed = mutableSetOf<String>() // bài không đọc / phát được trong phiên này: im lặng, không thử lại
+    // Bài không phát được -> lúc được thử lại (SystemClock.elapsedRealtime): tải hỏng (mất mạng) thì sau RETRY_MS, file hỏng thì không bao giờ trong phiên.
+    private val failed = mutableMapOf<String, Long>()
 
     // ---- danh sách phát ("Nghe ngay") ----
     private var playlist: String? = null // danh sách đang dùng cho cuốn này; null = nhạc theo mốc của sách (hay không nhạc)
+    private var tracks: List<Playlists.Track> = emptyList() // cả hàng bài của danh sách, kể cả bài đang bị bỏ tạm
     private var spans: List<Playlists.Span> = emptyList()
     private var infos: Map<String, JSONObject> = emptyMap()
     private var currentSpan = -1
@@ -113,7 +116,7 @@ object MusicBed {
         val seeked = abs(seconds - lastSeconds) > SEEK_JUMP_SECONDS
         lastSeconds = seconds
         playing = isPlaying
-        val cue = cues.firstOrNull { seconds >= it.start && seconds < it.end }?.takeUnless { it.track in failed }
+        val cue = cues.firstOrNull { seconds >= it.start && seconds < it.end }?.takeUnless { isFailed(it.track) }
         if (cue?.track != current?.track || (seeked && cue != null && current == null)) {
             switchTo(cue?.let { (it.track to Streaming.chapterUri(appContext, book, it.track)) }, gainOf(cue), seconds - (cue?.start ?: 0.0))
         }
@@ -131,6 +134,7 @@ object MusicBed {
         cues = emptyList()
         chapter = Int.MIN_VALUE
         playlist = null
+        tracks = emptyList()
         spans = emptyList()
         infos = emptyMap()
         currentSpan = -1
@@ -164,6 +168,7 @@ object MusicBed {
             main.post {
                 if (ticket != generation) return@post
                 infos = found
+                this.tracks = tracks
                 spans = Playlists.timeline(tracks)
                 syncPlaylist(playing)
             }
@@ -186,7 +191,7 @@ object MusicBed {
 
     /** File của một bài để phát; bài danh mục chưa tải thì tải ở luồng nền (lần `sync` sau mới phát) và trả null. */
     private fun uriOf(appContext: Context, link: String): Uri? {
-        if (link in failed) return null
+        if (isFailed(link)) return null
         if (link.startsWith(MusicStore.LOCAL_PREFIX)) return DeviceMusic.store(appContext).file(link)?.let { Uri.fromFile(it) }
         val catalog = DeviceMusic.catalog(appContext)
         catalog.cached(link)?.let { return Uri.fromFile(it) }
@@ -195,22 +200,40 @@ object MusicBed {
     }
 
     private fun fetch(appContext: Context, link: String) {
-        if (link in failed || link.startsWith(MusicStore.LOCAL_PREFIX) || !downloading.add(link)) return
+        if (isFailed(link) || link.startsWith(MusicStore.LOCAL_PREFIX) || !downloading.add(link)) return
         val info = infos[link]
         worker.execute {
             val file = runCatching { DeviceMusic.catalog(appContext).download(link, info) }.getOrNull()
             main.post {
                 downloading.remove(link)
-                if (file == null) drop(link) // không tải được (mạng, nguồn gỡ bài): bỏ qua bài này trong phiên
+                if (file == null) drop(link, retry = true) // không tải được (mạng, nguồn gỡ bài): bỏ qua bài này một lúc
             }
         }
     }
 
-    /** Bài không phát được trong phiên này: với danh sách phát, các bài sau dồn lên thay vì im lặng suốt khoảng của nó. */
-    private fun drop(link: String) {
-        failed += link
+    /** Bài không phát được (`retry`: tải hỏng - thử lại sau [RETRY_MS]; không thì cả phiên): với danh sách phát, các bài sau dồn lên thay vì
+     *  im lặng suốt khoảng của nó. Trước đây tải hỏng một lần lúc mất mạng là bài ấy im tới khi mở lại cuốn. */
+    private fun drop(link: String, retry: Boolean = false) {
+        failed[link] = if (retry) SystemClock.elapsedRealtime() + RETRY_MS else Long.MAX_VALUE
         if (playlist == null || spans.none { it.track.link == link }) return
-        spans = Playlists.timeline(spans.map { it.track }.filter { it.link !in failed })
+        rebuild()
+    }
+
+    private fun isFailed(link: String): Boolean = (failed[link] ?: return false) > SystemClock.elapsedRealtime()
+
+    /** Bỏ các bài đã hết hạn chờ khỏi danh sách hỏng; true nếu hàng bài của danh sách phát vì thế đổi. */
+    private fun retryDue(): Boolean {
+        val now = SystemClock.elapsedRealtime()
+        val due = failed.filterValues { it <= now }.keys
+        if (due.isEmpty()) return false
+        failed.keys.removeAll(due)
+        if (playlist == null || tracks.none { it.link in due }) return false
+        rebuild()
+        return true
+    }
+
+    private fun rebuild() {
+        spans = Playlists.timeline(tracks.filter { !isFailed(it.link) })
         currentSpan = spans.firstOrNull { it.track.link == current?.track }?.index ?: -1
     }
 
@@ -257,6 +280,8 @@ object MusicBed {
         }
         val (span, offset) = found
         if (span.index != currentSpan) {
+            // Sắp đổi bài: bài bỏ tạm vì mất mạng đã tới lúc thử lại thì đưa về hàng - ngay lúc này chứ không giữa bài, nhạc không nhảy.
+            if (retryDue()) return syncPlaylist(isPlaying)
             val uri = uriOf(appContext, span.track.link)
             if (uri != null) {
                 currentSpan = span.index
