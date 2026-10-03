@@ -471,7 +471,7 @@ function usePrepareStatus(enabled = true) {
 export function usePreparedChapters(bookId: string, enabled: boolean): Set<number> {
   // Chỉ nguồn báo từng chương (điện thoại); máy tính làm theo đoạn, không có dấu - khỏi hỏi máy chủ.
   const source = useSource();
-  const { data } = usePrepareStatus(enabled && Boolean(source.readAloudPrepareOnline));
+  const { data } = usePrepareStatus(enabled && Boolean(source.readAloudPreparePlan));
   return useMemo(() => readyChapterIds(data, bookId, chosenVoice(bookId)), [data, bookId]);
 }
 
