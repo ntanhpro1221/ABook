@@ -35,7 +35,7 @@ A ZIP archive (PKWARE APPNOTE, as used by EPUB and OOXML).
 | `cast.json` | deflate | characters and the voice each one speaks with |
 | `chapters/<name>.mp3` | stored | chapter audio, MP3; stored so players can seek inside the archive |
 | `chapters/<part>/<name>.mp3` | stored | version 3 only: chapter audio of part `<part>` (1-4 digits); two parts may use the same file name |
-| `scripts/<n>.json` | deflate | the lines of chapter `n`: text, kind (narration / dialogue / thought / heading), speaker, emotion, intensity, pace, volume, and the time span inside the chapter MP3 |
+| `scripts/<n>.json` | deflate | the lines of chapter `n`: text, kind (narration / dialogue / thought / heading), speaker, emotion, intensity, pace, volume, and the time span inside the chapter MP3; since 2026-10-03 optionally the time of every word (`words`, see "Word timings") |
 | `samples/<n>.wav` | stored | short voice sample of a character |
 | `music/<sha1>.<ext>` | stored | version 2 and later: a background-music track the producer attached; `<sha1>` is 40 hex digits and the file is stored once however many chapters or parts use it. `<ext>` is `mp3` for catalogue tracks; a track the producer imported from their own files (`music.tracks[...].link` starts with `local:`) keeps its own format: `mp3`, `m4a`, `ogg`, `opus`, `flac` or `wav`, and `<sha1>` is then the hash of the file's content. Such a track carries no licence fields, only the title and artist read from the file's own tags |
 | `texts/<n>.txt` | deflate | version 5 only: the text of chapter `n` (1-9 digits, the same id as in `book.json`), UTF-8, the file Studio would read as that chapter's source; only for a chapter with `state: "text"` |
@@ -132,6 +132,32 @@ that is not in the file makes the file invalid.
 
 No version carries the machine-local book id or the `series` link that the phone sync package has: the file names no
 location on the producing computer.
+
+## Word timings (`words`)
+
+Each entry of `segments` in `scripts/<n>.json` may carry `words`, which lets a player light the word being spoken (read-along). It is
+additive: the format version does not change, a reader that does not know `words` ignores it, and a reader must work without it
+(light the whole sentence, as before). Absence is normal: books packed before 2026-10-03, or on a machine that could not align.
+
+```json
+{"id": 12, "text": "Trời vừa hửng sáng, sương mù.", "start": 3.412, "end": 6.05, "words": [[3450, 3820], [3820, 4010], [4010, 4300], [4300, 5150], [5390, 5700], [5700, 6020]]}
+```
+
+- One `[start_ms, end_ms]` pair per **displayed token**, in order. The tokens of `text` are its maximal runs of non-whitespace characters
+  (JavaScript `/\S+/g`, Python `re.findall(r"\S+", text)`): punctuation stays attached to its word, a number such as `2.500.000` is one token.
+- Times are integer milliseconds from the **start of the chapter MP3** (the clock `start` / `end`, which are seconds, are on), not from the
+  start of the sentence.
+- A word ends where the next one starts (`words[i][1] == words[i+1][0]`), so the highlight is continuous; the last word keeps its own end.
+  `start <= end` and starts never decrease. A token with no sound (a lone dash) has zero length.
+- A reader uses `words` only when it is an array whose length equals the number of tokens of `text` and whose pairs are numbers in
+  non-decreasing order; otherwise it ignores it for that sentence. The listener's edit layer never changes story text, so `words` stays
+  valid; a Studio that re-renders or edits a sentence aligns it again.
+- Producer side (`abook/webui/word_timing.py`): at packing time each line's known text is force-aligned inside its known time span with
+  a CTC speech model (wav2vec2 Vietnamese, ONNX int8, Apache-2.0), numbers read out and foreign letters mapped to the model's alphabet; when
+  the model is absent or the fit is poor it spreads the span over syllables and snaps phrase breaks to detected silences. The result is
+  cached per project (`word_timings/<chapter>.json`: SHA-256 of the chapter audio, and per line the SHA-256 of the text, the span and
+  the method), so packing again aligns nothing new. Measured on 1,696 Edge TTS words: 99% of word starts within 100 ms of the reference
+  after one constant offset, median 15 ms.
 
 ## Rules for readers
 

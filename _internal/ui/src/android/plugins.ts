@@ -91,6 +91,9 @@ export interface RemoteBook {
   /** Bìa trên máy tính (phiên bản) và bìa đã tải: khác nhau là có ảnh bìa mới để tải. */
   cover?: { color: string; version: number } | null;
   localCoverVersion: number;
+  /** Dấu mốc chữ (sync.manifest `wordsVersion`) trên máy tính và trên máy này: khác nhau là có chữ sáng theo giọng đọc mới để tải. */
+  wordsVersion?: string;
+  localWordsVersion?: string;
   /** Sách của thiết bị ghép (Peers.kt): mã thiết bị ở đây và mã sách bên ấy - `id` là mã cục bộ. */
   source?: string;
   remoteId?: string;

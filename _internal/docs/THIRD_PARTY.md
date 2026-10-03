@@ -94,6 +94,11 @@ khi cần, KHÔNG nằm trong bộ cài. Kèm giấy phép Apache-2.0 và ghi ch
 chính tháp âm thanh ấy (`clap_audio_fp16.onnx`, ~59 MB, cùng trọng số fp16, xuất bằng torch.onnx - Apache-2.0 như model gốc) và
 đầu hồi quy A (`student_head_A.npz`) cho đường chạy bằng ONNX Runtime trên máy không có torch.
 
+Căn từng chữ khi đóng gói sách (`webui/word_timing.py`) dùng model nhận dạng tiếng Việt `dragonSwing/wav2vec2-base-vietnamese`
+(Apache-2.0; tinh chỉnh từ facebook/wav2vec2-base, Apache-2.0), xuất sang ONNX và lượng tử hoá int8 (~122 MB) bằng onnxruntime; cùng từ
+điển ký tự và cấu hình tiền xử lý của model gốc. Gói đăng ở huggingface.co/NGDtuanh/abook-analyzer (thư mục `word-align`), tải về
+Studio một lần (bước "wordalign"), KHÔNG nằm trong bộ cài chỉ-nghe. Kèm giấy phép Apache-2.0 và ghi chú của model gốc khi phân phối.
+
 ## Model phân tích và dữ liệu nghiên cứu (chưa đóng gói trong bản phát hành)
 
 - LoRA tự huấn luyện trên nền Qwen3-4B-Instruct-2507 (Apache-2.0), dữ liệu huấn luyện là đáp án chuẩn của chính dự án.
