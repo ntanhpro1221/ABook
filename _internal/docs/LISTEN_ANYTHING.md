@@ -158,6 +158,9 @@ Listen now reuses the existing reading mode (`ui/src/listen/ReaderScreen.tsx`: c
 sentence lit and followed, "Nghe từ đây" on a tapped sentence, remembered position). New: the current WORD lit too, as Edge
 does, where the voice gives word timings - Edge TTS (WordBoundary events with offsets), the device voice (Android
 `UtteranceProgressListener.onRangeStart`, Windows SAPI word events). Owner 03-10: word highlighting is REQUIRED for both Listen now and Studio audiobooks.
+Tap a word to read from it (owner 03-10, as Edge's Immersive Reader does): any word in the reading view is a start point,
+for Listen now and Studio audiobooks alike - seek to that word's start from `words`; a Listen-now paragraph not yet
+synthesized is made first, then played from the word's offset. No usable `words`: start at the line.
 - VieNeu gives no word timings (checked: v3nano's duration predictor returns one total duration per utterance). Two ways:
   (a) synthesize per phrase (split at punctuation) and spread each phrase's time over its syllables. Vietnamese
   syllables are fairly even, so this is good enough to look right, though sometimes one beat off.
