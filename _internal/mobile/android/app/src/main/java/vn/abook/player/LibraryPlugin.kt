@@ -60,9 +60,10 @@ class LibraryPlugin : Plugin() {
     override fun load() {
         val musicStore = MusicStore(File(context.filesDir, "music/mine"), AndroidMusicTags, AndroidLoudness)
         LocalStudio.musicStore = musicStore
-        // Bộ phân tích nhạc: gói model tải khi người dùng bấm (không bao giờ tự tải); đã có từ lần trước thì cắm luôn, ở luồng nền.
+        // Bộ phân tích nhạc: "Gói nhạc" (model + thư viện ONNX Runtime) tải khi người dùng bấm (không bao giờ tự tải); đã có từ lần trước thì cắm luôn, ở luồng nền.
+        val abi = OrtRuntime.deviceAbi()
         val student = MusicStudentSetup(File(context.filesDir, "music/student"), musicStore, { AndroidMusicStudent.open(it, context.cacheDir) },
-            metered = { AndroidMusicStudent.metered(context) })
+            files = MusicStudentSetup.PACKAGE + OrtRuntime.parts(abi), supported = abi != null, metered = { AndroidMusicStudent.metered(context) })
         LocalStudio.student = student
         musicImports.execute { runCatching { student.attachIfPresent() } }
         // Gửi phần sửa về máy tính xong: tải lại sách từ máy tính (không báo "Đã tải xong") và báo giao diện làm mới.

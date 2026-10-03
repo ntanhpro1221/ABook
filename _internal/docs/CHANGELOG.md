@@ -21,12 +21,23 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - **Mở file `.abook` đã sửa của chính dự án**: bài nhạc người nghe ghim vào sách giờ cũng được áp - bài được nhập vào "Nhạc của tôi" của máy này (không trùng bản) rồi ghim đúng đoạn; bài nào thiếu file thì bỏ qua và nói rõ lý do.
 
+- **Nhập nhạc không còn phải đợi tải gì, và bộ cài nhẹ hơn**: nhập “Nhạc của tôi” đọc tên bài, nghệ sĩ, độ dài ngay trên máy, không cần ffmpeg
+  nữa. Phần nghe nhạc để hiểu không khí của bài (ffmpeg, thư viện chạy model, model: ~117 MB) giờ là một mô-đun “Phân tích nhạc” gộp một
+  nút, một thanh tiến độ, một dung lượng; chỉ tải khi bạn bấm, không nằm trong bộ cài (bộ cài không còn mang numpy và onnxruntime, ~25 MB).
+  Chưa tải thì bài nhập vẫn nghe, ghim tay, đi theo sách .abook như thường - chỉ chưa có “Đã phân tích” và chưa đo độ to (nhạc nền dùng mức
+  mặc định). Máy có Studio chỉ tải phần model. Có bản mới thì báo “có bản mới - N MB”, một lần bấm chỉ tải phần đổi, và không tự phân tích
+  lại các bài cũ (nút “Phân tích lại N bài bằng bản mới”).
+
 ### Điện thoại và thiết bị
 
-- **Điện thoại tự nghe nhạc bạn nhập để hiểu không khí của bài**: ở “Nhạc của tôi” có nút “Tải bộ phân tích (~59 MB)” - tải một
-  lần, chỉ khi bạn bấm (không bao giờ tự tải, và app nhắc nếu bạn đang dùng dữ liệu di động). Tải xong, các bài đã nhập từ trước
-  được nghe nốt ngay trên điện thoại, bài nhập sau được nghe ngay lúc nhập, không cần mạng và không gửi nhạc đi đâu. Bài chưa
-  nghe được (quá ngắn, file lạ) vẫn hiện “Chưa phân tích”, ghim tay như trước; việc nhập không bao giờ phải chờ việc phân tích.
+- **Điện thoại tự nghe nhạc bạn nhập để hiểu không khí của bài**: ở “Nhạc của tôi” có nút “Phân tích nhạc (N MB)” - một nút, một dung
+  lượng, tải một lần, chỉ khi bạn bấm (không bao giờ tự tải, và app nhắc nếu bạn đang dùng dữ liệu di động). Tải xong, các bài đã
+  nhập từ trước được nghe nốt ngay trên điện thoại, bài nhập sau được nghe ngay lúc nhập, không cần mạng và không gửi nhạc đi đâu.
+  Bài chưa nghe được (quá ngắn, file lạ) vẫn hiện “Chưa phân tích”, ghim tay như trước; việc nhập không bao giờ phải chờ việc phân tích.
+  Phần chạy model không nằm trong app (app vẫn ~7 MB, không phải 31 MB): nó là một phần của gói tải ấy.
+- **“Phân tích nhạc” có bản mới thì báo và chỉ tải phần đổi**: khi bản app mới mang model hay thư viện khác, “Nhạc của tôi” hiện “Phân tích
+  nhạc có bản mới - N MB”; bấm một lần chỉ tải phần đổi. Bản cũ vẫn chạy cho tới lúc đó. Các bài đã phân tích giữ kết quả cũ - app KHÔNG
+  tự phân tích lại; có nút “Phân tích lại N bài bằng bản mới” để bạn quyết.
 
 ## [0.4.21] - 2026-10-03
 
