@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.24] - 2026-10-04
+
 ### Giọng đọc
 
 - **Giọng Supertonic cho "Nghe ngay" (máy tính)**: Cài đặt › Giọng đọc có thêm "Giọng Supertonic" - mười giọng nam nữ (Supertonic F1, F3, M4,
