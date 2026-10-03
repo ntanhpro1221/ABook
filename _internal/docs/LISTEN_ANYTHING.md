@@ -139,6 +139,26 @@ Device choice (owner 03-10: never force CPU when a GPU is there), picked automat
 - No GPU: CPU (numbers above).
 - Phone: CPU with ARM-optimised kernels (XNNPACK). Try NNAPI/QNN if they help, but expect to rely on CPU. Measure on a real phone.
 
+Phone, measured 03-10 (owner's OPPO A93 = CPH2121, MediaTek Helio P95 MT6779: 2x Cortex-A75 2.2 GHz + 6x A55 2.0 GHz,
+7.6 GB RAM, Android 12; ONNX Runtime 1.30; run in the background while the owner watched YouTube, so a busy phone;
+Kotlin port `mobile/android/.../vieneu/`, bench `scripts/vieneu_phone_bench.sh`, 3-5 sentences of 21-132 characters):
+- Turbo int8, best = 2 threads for the per-frame graphs + 8 for the codec: RTF 1.75 (desktop 0.315, ~5.5x slower), first
+  audio 1.0 s, load 4.2 s, peak memory 0.7-1.0 GB (the codec on the longest sentence). 1 thread 2.3; 6-8 threads 2.5
+  (more threads than big cores slows the small per-frame graphs). XNNPACK 3.2 at 4-8 threads. Per audio second at the best
+  setting: backbone step 0.41 s, acoustic decoder 0.52, output heads + sampling (Kotlin) 0.53, codec 0.30, prefill 0.23.
+- Nano: RTF 1.8-1.9 at 4-8 threads (2.4 at 6 on a busier minute; 3.7 at 1), desktop 0.18; first audio = the whole
+  sentence (6-7 s for a 45-character one); load 2.2 s; peak 0.5 GB. XNNPACK 3.9-4.3, NNAPI 4.4 (falls back, load 7.6 s).
+- Two minutes of non-stop Turbo: RTF 2.35 first half, 2.16 second half, battery 39.6 -> 41.6 C - no thermal slow-down
+  in that time; the spread (1.6-3.1 per sentence) is the phone's other work.
+- Output sane: Nano is bit-identical to the desktop on all 5 sentences; Turbo's codec is bit-identical on the desktop's
+  codes; Turbo int8 picks different codes from frame 0-1 (int8 kernels differ between ARM and x86) but every sentence
+  keeps the desktop's length (+-7%) and loudness (RMS 0.10-0.11), no NaN.
+- So on a 2020 mid-range phone neither voice keeps up with listening (needs RTF < 1, ideally < 0.8 for headroom).
+  "Khuyên dùng" on phones: never live VieNeu below flagship-class big cores; offer it as "make ahead" (synthesize the next
+  chapters while charging) or stream from a paired computer. A phone ~2.5x faster per big core (A78/X1 and newer) is the
+  estimated break-even for Turbo; the after-download self-benchmark decides. Cheapest speed-ups left: move the 16 output
+  heads into ORT (MLAS GEMV instead of Kotlin loops) and cut the 16 acoustic calls per frame.
+
 How it is built (Lead 03-10): every voice does one thing - turn ONE paragraph of the text script (`textScript.ts`
 `paragraphsOf`) into one audio clip at speed 1.0 plus `words` (one [start_ms, end_ms] per whitespace token, the
 `words.ts` convention). The player strings clips into a virtual chapter clock (unknown paragraphs estimated at ~14
