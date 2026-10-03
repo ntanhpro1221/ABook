@@ -62,7 +62,7 @@ export const httpSource: ListenSource = {
   saveBook: async (bookId, options) => {
     const result = await api<{ file: string; folder: string; size: number; edits: number }>(`/api/books/${bookId}/save`, {
       method: "POST",
-      body: options?.folder ? { target: options.folder } : {},
+      body: { ...(options?.folder ? { target: options.folder } : {}), ...(options?.as ? { as: options.as } : {}) },
     });
     return { saved: true, ...result };
   },

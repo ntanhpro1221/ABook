@@ -31,8 +31,8 @@ from urllib.parse import parse_qs, quote, unquote, urlsplit
 from .. import aliases, bracket_rule, continuation, listener_overrides
 from ..io_utils import atomic_write_json
 from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, edits_inbox, ffmpeg_setup, humanize, listen_view,
-               music_catalog, music_local, music_plan, music_select, music_student, packages, projectfile, reading_preview,
-               remote_config, shared_readings, store, volumes)
+               music_catalog, music_local, music_plan, music_select, music_student, packages, project_views, projectfile,
+               reading_preview, remote_config, shared_readings, store, volumes, workshop)
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, clean_book_templates, legacy_ids
 from .listening import RECORD_ID, Listening
@@ -342,16 +342,50 @@ class App:
         return result
 
     def open_project_file(self, path: Path) -> dict[str, Any]:
-        """Mở một file `.abookproj` (projectfile.py): giải nén thành một dự án MỚI trong thư viện, mở ở Studio."""
+        """Mở một file `.abookproj` (projectfile.py). Máy có Studio và file mang xưởng: dự án này đã có ở đây thì KHÔNG tạo bản
+        trùng (phần sửa trong file được cất chờ người dùng đồng ý áp), chưa có thì giải nén thành dự án MỚI và mở ở Studio.
+        Còn lại - file chỉ có phần nghe ("chờ dựng xưởng"), hay máy chưa cài Studio - nhập như một cuốn sách để nghe (và sửa
+        lớp sửa), giữ nguyên xưởng trong thư mục để lưu lại được."""
         try:
             with projectfile.ProjectFile(path) as opened:
-                target, report = opened.open_into(self.library.root)
-                missing = len(opened.missing_sources)
-                opened.copy_music(self.music_dir / "files")  # nhạc nền đi cùng gói: không phải tải lại
-        except projectfile.ProjectFileError as error:
+                if opened.workshop == projectfile.PRESENT and self.capabilities()["toolchain"]:
+                    return self._open_workshop(opened)
+                report: dict[str, Any] = {}
+                target, how = packages.import_opened(opened, self.library.root, self.library.projects(), self.fingerprints,
+                                                     report)
+        except (projectfile.ProjectFileError, bookfile.BookFileError) as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+        except OSError as error:
+            raise ApiError(HTTPStatus.INSUFFICIENT_STORAGE, f"Không ghi được sách vào thư viện ({error.strerror or error}).") from error
+        result: dict[str, Any] = {"id": book_id(target), "how": how}
+        if report.get("edits"):
+            result["edits"] = report["edits"]
+        if report.get("merge"):
+            result["merge"] = report["merge"]
+        return result
+
+    def _open_workshop(self, opened: projectfile.ProjectFile) -> dict[str, Any]:
+        """File dự án có xưởng, máy có Studio. Cùng dự án đã có ở đây (mọi chương của file đều có y hệt trong dự án - file không
+        mới hơn dự án) -> mở dự án ấy; file mang chương mà dự án này chưa có thì là bản KHÁC (làm tiếp ở nơi khác), thành dự án
+        mới như trước. Phần sửa của người nghe trong file (điện thoại sửa rồi lưu) luôn được cất chờ người dùng quyết."""
+        prints = opened.chapter_prints
+        edits = book_edits.count(opened.edits)
+        same = [project for project in self.library.projects()
+                if prints and self.fingerprints.shared_chapters(project, prints) == len(prints)]
+        if same:
+            project = Path(min(same, key=continuation.part_number))
+            if edits:
+                book_edits.stash_incoming(project, opened.edits, opened.edits_cover(), opened.copy_member)
+            self.library.preferences.add_recent(project)
+            return {"id": book_id(project), "how": "project", **({"edits": edits} if edits else {})}
+        target, report = opened.open_into(self.library.root)
+        missing = len(opened.missing_sources)
+        opened.copy_music(self.music_dir / "files")  # nhạc nền đi cùng gói: không phải tải lại
+        if edits:
+            book_edits.stash_incoming(target, opened.edits, opened.edits_cover(), opened.copy_member)
         self.library.preferences.add_recent(target)
-        return {"id": book_id(target), "how": "studio", "missingSources": missing, "outside": report["outside"]}
+        return {"id": book_id(target), "how": "studio", "missingSources": missing, "outside": report["outside"],
+                **({"edits": edits} if edits else {})}
 
     def summary(self, path: Path) -> dict[str, Any]:
         running = self.runner.running(path)
@@ -1648,17 +1682,43 @@ class App:
                 view = packages.listen(path, value, self.listening.get(value), with_chapters=False)
             except (OSError, ValueError):  # gói hỏng: bỏ qua, như sách hỏng
                 continue
+            self._built_workshop(view, path)
             view["capabilities"] = capabilities_of(path)
             books.append(view)
         books.sort(key=lambda item: ((item["state"].get("last") or {}).get("at") or 0, item.get("updatedAt") or 0),
                    reverse=True)
         return books
 
+    def _built_workshop(self, view: dict[str, Any], path: Path) -> None:
+        """Cuốn chờ xưởng đã được “Dựng xưởng”: `projectFile.built` = mã dự án (nếu dự án còn trong thư viện) - giao diện mời mở nó
+        thay vì dựng thêm một cái nữa."""
+        info = view.get("projectFile")
+        if isinstance(info, dict) and info.get("workshop") == "pending":
+            made = workshop.built(path)
+            info["built"] = made if made and self.library.resolve(made) is not None else None
+
+    def build_workshop(self, value: str) -> dict[str, Any]:
+        """“Dựng xưởng” (workshop.py): cuốn sách đang chờ xưởng thành một dự án Studio mới, chưa chạy."""
+        self._mutating()
+        path = self._listenable(value)
+        if not self.capabilities()["toolchain"]:
+            raise ApiError(HTTPStatus.CONFLICT, "Cần cài Studio để dựng xưởng")
+        try:
+            result = workshop.build(path, self.library.root, lambda paths, title, narrator: self._create_book(
+                {"narrator": narrator}, paths, title, None))
+        except workshop.WorkshopError as error:
+            raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
+        except ValueError as error:  # dây chuyền từ chối tạo (không có chữ nào dùng được...)
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+        project = result.pop("project")
+        return {"id": book_id(project), **result}
+
     def listen_book(self, value: str) -> dict[str, Any]:
         path = self._listenable(value)
         self.sync_remote_state(value, wait=True)
         if packages.is_package(path):
             view = packages.listen(path, value, self.listening.get(value))
+            self._built_workshop(view, path)
         else:
             view = listen_view.book(path, value, self.summary(path), self.listening.get(value))
         view["records"] = self.listening.records(value)  # hồ sơ nghe gắn với cuốn này (webui/listening.py)
@@ -2176,21 +2236,29 @@ class Handler(BaseHTTPRequestHandler):
         path, device, items = self._inbox_target(value)
         self._send_json(HTTPStatus.OK, edits_inbox.skip(path, device, items))
 
+    def post_workshop(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.CREATED, self.app.build_workshop(value))
+
     def post_save(self, _query: dict[str, list[str]], value: str) -> None:
-        # "Lưu" / "Lưu thành…" một cuốn nhập từ file: đóng lại thành file `.abook` mới kèm thay đổi của người nghe (phiên bản
-        # 4 nếu có thay đổi). Ra thư mục xuất (như "Xuất"), hay `target`. `.abookproj` chỉ có từ dự án có xưởng.
+        # "Lưu" / "Lưu thành…" một cuốn nhập từ file: đóng lại thành file mới kèm thay đổi của người nghe. `as` "abook" (phiên bản
+        # 4 nếu có thay đổi) hay "abookproj" (cuốn từ `.abookproj` giữ xưởng của nó, copy nguyên byte; cuốn từ `.abook` thành
+        # file "chờ dựng xưởng"); không nói thì giữ đúng loại file cuốn đã đến. Ra thư mục xuất (như "Xuất"), hay `target`.
         path = self.app._editable(value)
         body = self._body()
         if not packages.is_package(path):
             raise ApiError(HTTPStatus.CONFLICT, "Dự án có xưởng: dùng nút Xuất (file sách .abook hay dự án .abookproj)")
-        if str(body.get("as") or "abook") != "abook":
-            raise ApiError(HTTPStatus.CONFLICT, "Cần máy có Studio để dựng xưởng - chưa lưu thành dự án (.abookproj) được")
+        kind = str(body.get("as") or ("abookproj" if packages.workshop_state(path) else "abook"))
+        if kind not in ("abook", "abookproj"):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Loại file không biết")
         target = self._target(body)
         root = Path(target) if target else Path(self.app.preferences.get()["libraryRoot"]) / "Đã xuất"
         title = str(packages.edited_manifest(path).get("title") or path.name)
         try:
-            out = bookfile.repack(path, root / bookfile.default_name(title))
-        except bookfile.BookFileError as error:
+            if kind == "abookproj":
+                out = projectfile.repack(path, root / projectfile.default_name(title))
+            else:
+                out = bookfile.repack(path, root / bookfile.default_name(title))
+        except (bookfile.BookFileError, projectfile.ProjectFileError) as error:
             raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
         self.app.exports.add(str(out.parent))
         self._send_json(HTTPStatus.OK, {"file": str(out), "folder": str(out.parent), "size": out.stat().st_size,
@@ -2293,9 +2361,20 @@ class Handler(BaseHTTPRequestHandler):
         verdicts = self.app.reviews.get(value)
         self._send_json(HTTPStatus.OK, review_view(project, verdicts, include_minor=query.get("all") == ["1"]))
 
+    def _view(self, value: str, name: str, make: Callable[[Path], Any]) -> Any:
+        """Một màn chỉ đọc của xưởng: dự án có xưởng trên máy này thì tính từ sổ dự án; cuốn nhập từ `.abookproj` thì đọc bản chụp
+        trong file (project_views.py, cùng JSON) - 404 nếu file không mang bản chụp ấy."""
+        path = self.app._listenable(value)
+        if not packages.is_package(path):
+            return make(self.app._book(value))
+        data = packages.view(path, name)
+        if data is None:
+            raise ApiError(HTTPStatus.NOT_FOUND, "File dự án này không kèm bản chụp của màn đó")
+        return data
+
     def get_work(self, _query: dict[str, list[str]], value: str) -> None:
         # "Việc cần duyệt" (docs/STUDIO_REVIEW.md): chỗ máy nghi ngờ, xếp theo lợi trên mỗi lần bấm.
-        self._send_json(HTTPStatus.OK, work_items(self.app._book(value)))
+        self._send_json(HTTPStatus.OK, self._view(value, "work", work_items))
 
     def get_music(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.music_view(value))
@@ -2363,13 +2442,15 @@ class Handler(BaseHTTPRequestHandler):
 
     def get_name_readings(self, _query: dict[str, list[str]], value: str) -> None:
         # Tab Nhân vật, mục "Cách đọc tên" (name_readings.py): mọi cách đọc của cuốn, kể cả cách máy chắc và cách đã ghim.
-        self._send_json(HTTPStatus.OK, name_readings(self.app._book(value)))
+        self._send_json(HTTPStatus.OK, self._view(value, "names", name_readings))
 
     def get_casting(self, _query: dict[str, list[str]], value: str) -> None:
         # Tab "Kịch bản" (casting_review.py): chương nào bao nhiêu câu thoại, bao nhiêu chỗ máy nghi, bao nhiêu câu đã quyết.
-        self._send_json(HTTPStatus.OK, casting_chapters(self.app._book(value)))
+        self._send_json(HTTPStatus.OK, self._view(value, "casting", casting_chapters))
 
     def get_casting_chapter(self, _query: dict[str, list[str]], value: str, chapter: str) -> None:
+        if packages.is_package(self.app._listenable(value)):
+            raise ApiError(HTTPStatus.NOT_FOUND, "File dự án không kèm từng câu của chương - đọc chữ trong sách")
         view = casting_chapter(self.app._book(value), int(chapter))
         if view is None:
             raise ApiError(HTTPStatus.NOT_FOUND, "Không có chương này")
@@ -3113,6 +3194,7 @@ ROUTES: list[Route] = [
     ("POST", re.compile(BOOK + r"/edits-inbox/apply"), Handler.post_edits_inbox_apply),
     ("POST", re.compile(BOOK + r"/edits-inbox/skip"), Handler.post_edits_inbox_skip),
     ("POST", re.compile(BOOK + r"/save"), Handler.post_save),
+    ("POST", re.compile(BOOK + r"/workshop"), Handler.post_workshop),
     ("DELETE", re.compile(BOOK), Handler.delete_book),
     ("POST", re.compile(BOOK + r"/export"), Handler.post_export),
     ("GET", re.compile(BOOK + r"/review"), Handler.get_review),

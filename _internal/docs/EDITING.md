@@ -154,7 +154,7 @@ All under `/api/books/<id>`; the server also accepts them for workshop books (sa
 | `GET /edits` | `{applied: N, waiting: 0}` (workshop: `waiting` = edits from a file awaiting "áp vào dự án?") |
 | `DELETE /edits` | `{applied: 0, waiting: 0}` |
 | `GET /cast`, `GET /chapters/<n>/script` | the overlaid cast / script |
-| `POST /save {as?: "abook"}` (desktop) | `{file, folder, size, edits}`; `as: "abookproj"` -> 409 "cần máy có Studio để dựng xưởng" |
+| `POST /save {as?: "abook"}` (desktop) | `{file, folder, size, edits}`; `as: "abookproj"` -> a `.abookproj` (P3); no `as` keeps the file type the book came in |
 | `POST /edits/fold` (workshop only) | `{applied, skipped, music, requests}` (`requests`: wishes turned into pending requests) |
 
 Errors are `{"error": "<Vietnamese sentence>"}` with 400 / 404 / 409 (`ValueError` -> 400).
@@ -166,7 +166,7 @@ and `edits/cover.jpg` when there are edits; then `package.version` is 4 (otherwi
 `package.files` is recomputed over every entry; `manifest.json` (Readium) is regenerated from the overlaid book. Android:
 `BookDocumentWriter.write(bookDir, out)` does the same with `ZipOutputStream` (mimetype first and stored, `.mp3` / `.wav` /
 `.jpg` stored with CRC). `.abook` v4 rejects `project/`, `sources/`, `views/` (unknown names). "Lưu thành .abookproj" from a
-no-workshop book is not built: the UI shows it as a later feature ("cần máy có Studio để dựng xưởng").
+no-workshop book writes a "waiting for its workshop" project file (P3, below).
 
 Re-importing the same book never wipes edits: `BookFile.extract` merges the folder's `edits.json` with the file's (local
 wins); an "existing" book adopts the file's edits in place (`book_edits.adopt`). Android `BookFileImport` does the same.
@@ -304,7 +304,69 @@ books shared by a phone (`LibraryServer.kt`) do not accept pushes; the inbox can
 
 ## Not built (later phases)
 
-`.abookproj` v2, phone cover web search; swapping a cue to a CATALOG track on the phone (only the listener's
+Phone cover web search; swapping a cue to a CATALOG track on the phone (only the listener's
 own tracks can be pinned to a packaged book - there is no catalogue offline and no mood to rank by); edits on
-streamed ("link") books; an in-place "Lưu" that overwrites the original file (desktop "Lưu" writes `Đã xuất/<title>.abook`,
+streamed ("link") books; an in-place "Lưu" that overwrites the original file (desktop "Lưu" writes `Đã xuất/<title>.abook` or `.abookproj`,
 Android asks where with the system "create document" picker).
+
+## P3 - `.abookproj` version 3 (built 03-10)
+
+Format reference: `docs/ABOOKPROJ_FILE_FORMAT.md`. Code: Python `webui/projectfile.py` (+ `project_views.py`, `workshop.py`, `packages.py`,
+`fingerprints.py`, shared helpers in `bookfile.py`), Kotlin `ProjectDocument.kt` (shared rules, `project.json` kept in the book folder),
+`BookFileImport.kt` (the reader: both mimetypes), `BookDocumentWriter.kt` (`write(dir, out, asProject)`), `LocalStudio.kt` (views routes),
+`LibraryPlugin.saveBook({id, as})`. Version 1 and 2 of the file are not read (the app is unreleased; the format version went from the
+development 2 to 3 cleanly).
+
+**What existed before.** The listening layer inside a project file and its Android import (chapter audio addressed at
+`project/output/chapters/...`, one-way) were there; chapter MP3s were already stored once. What was missing: the same bytes still
+occurred twice for the voice samples (`samples/n.wav` and `project/work/...wav`) and the cover; there was no way to keep or save a
+project on the phone; no marker; no same-project check on open.
+
+**Dedupe = aliases.** `aliases_for(described)` (Python) / `ProjectDocument.aliasesFor` (Kotlin): media entries with equal size + SHA-256
+collapse to one real entry (listening-layer name preferred, else first by name); the others are listed in `project.json` `aliases` and not
+written. Chapters now use the very `.abook` names (`chapters/x.mp3`, a `book.json` identical to the one of an `.abook`), which removed the
+`audio_entry` special case from `bookfile.listening_layer` and the `relocateChapters` hack on the phone. Readers resolve aliases when they
+read bytes (`ProjectFile.read/copy_member/_copy_checked`, `book_edits.read_layer` through `_Resolved`; Kotlin `ProjectLayout.resolve`). Hashing is
+done once per file on disk (`_described` caches by real path), so the chapter MP3 is not hashed twice.
+
+**Views.** `views/work.json|casting.json|names.json` = the very JSON of `GET /work`, `/casting`, `/pronunciations`, taken by
+`project_views.snapshot` (a view that fails is left out; a backup never fails because of a snapshot). A book imported from a project file
+answers those routes from the snapshot (Python `Handler._view` for a package book, `LocalStudio.projectView`), 404 when there is none;
+`/casting/<n>` (per-line detail) is not snapshotted. UI: "Việc của xưởng (chỉ đọc)" in the book menu (`listen/ProjectFileItems.tsx`), same on both platforms.
+
+**One book, three kinds of folder.** An imported book folder may hold nothing extra (from `.abook`), or `project.json` (verbatim) +
+`views/` (+ `project/` + `sources/` byte for byte when `workshop` is `present`) (from `.abookproj`). `packages.workshop_state/project_file`
+(and `ProjectDocument.info`, in `Store.shown`) expose `projectFile: {workshop, views, built?}` in the listen book JSON. "Lưu" keeps the file type
+(server `POST /save` with no `as`, `saveBook` with no `as`); "Lưu thành..." offers both. `projectfile.repack(folder, out)` / `BookDocumentWriter(asProject)` write
+the book layer (`bookfile.book_layer` - the same function `bookfile.repack` uses) + edit layer + the kept workshop. A folder without
+`project.json` becomes `workshop: "pending"`. `repack` never opens `project.sqlite3`; aliased `project/` entries are re-derived from sizes + hashes.
+
+**Open on a computer** (`App.open_project_file`): Studio present + workshop present -> if every chapter of the file is byte-identical to a chapter
+of an existing project, that project is the same project (no duplicate): the file edits are stashed (`book_edits.stash_incoming`) and the
+existing "N thay đổi - áp vào dự án?" toast offers the fold (`how: "project"`); otherwise a new project (`how: "studio"`, edits stashed too).
+Workshop pending, or no Studio on this machine -> imported as a book (`packages.import_opened`, shared with `.abook`), workshop kept in the
+folder. A project file for a book already imported from an `.abook` replaces it (local edits merged) so it gains the marker.
+
+**"Dựng xưởng"** (`POST /api/books/<id>/workshop`, `workshop.build`): pending book -> new project through the same `_create_book` as the new-book
+wizard; chapter text from the `sources/` of the file if present else rebuilt from `scripts/`; voices seeded by recreating the profile from the
+`cast.json` voice key with `character_registry.voice_profile_spec` and pinning it (`ProjectDB.upsert_voice_profile` /
+`set_locked_character_voice` - CALLED, never edited); display names via `names.set_name`; cover; wishes through `book_wishes.fold`
+(wishes tied to a stableId drop out and are counted). `workshop_built.json` in the book folder remembers the project so the menu offers "Mở xưởng đã
+dựng". Lost, said in the menu text: sources (unless included), analysis history, recorded lines, seeds, candidates; all audio is produced again.
+
+**Shared fixtures.** `tests/fixtures/book_edits/written/`: `python_workshop.abookproj` (aliases, views, sources; local paths rewritten to neutral ones and the
+sqlite vacuumed), `python_pending.abookproj` (base + `everything` edits), and the Kotlin-written `kotlin_workshop.abookproj`, `kotlin_pending.abookproj`
+(copied from `app/build/` after `:app:testDebugUnitTest`). Python checks the Kotlin files (`tests/test_project_file_workshop.py`), Kotlin imports the
+Python ones and writes them again (`BookFileImportTest`, `BookDocumentWriterTest`, `LocalStudioTest`).
+
+**Limits / decisions to revisit.**
+- The phone keeps the whole workshop (GBs for a long project) next to the listening layer: the price of saving a `.abookproj` without opening the database.
+  The aliases keep the chapter audio single, but per-line WAVs and candidates are on the phone too.
+- A `present` workshop on a machine without Studio is editable (L edits and wishes, as for an `.abook`) but nothing of it can run.
+- The text rebuilt for "Dựng xưởng" is the text of the scripts joined by paragraph: close to, but not, the original source.
+- Assumptions that a later "layered book" (text only -> analysed -> cast -> partial audio) will have to relax. P3 kept them out of the new code where it
+  was cheap (a project file does not require any chapter with audio; `BookDocumentWriter(asProject)` does not either), but these remain:
+  `bookfile.listening_layer` / `projectfile._listening_book` return no `book.json` when no chapter has audio (a project with scripts but no
+  audio has no listening layer); `content_key` / `fingerprints.shared_chapters` / `Store.findByChapters` identify a book by its chapter AUDIO
+  hashes, so text-only books have no identity and would all collide on one folder; `workshop._sources` rebuilds text from `scripts/`; the `.abook`
+  writers (`bookfile._seal`, `BookDocumentWriter.write`) still refuse a book without audio; aliases are media-only (text layers are not deduplicated).

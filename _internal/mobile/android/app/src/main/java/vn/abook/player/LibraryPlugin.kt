@@ -715,7 +715,9 @@ class LibraryPlugin : Plugin() {
 
     /**
      * "Lưu thành…": hộp thoại "tạo file" của hệ thống (người dùng chọn chỗ và tên), rồi ghi cuốn - kèm thay đổi của người nghe
-     * nếu có (file phiên bản 4) - bằng BookDocumentWriter. Trả {saved: true, name, size, edits}, hay {saved: false} khi huỷ.
+     * nếu có (file phiên bản 4) - bằng BookDocumentWriter. `as` "abook" hay "abookproj" (cuốn nhập từ file dự án giữ xưởng của nó; cuốn
+     * từ file `.abook` thành file chờ dựng xưởng); không nói thì giữ đúng loại file cuốn đã đến. Trả {saved: true, name, size, edits},
+     * hay {saved: false} khi huỷ.
      */
     @PluginMethod
     fun saveBook(call: PluginCall) {
@@ -725,10 +727,16 @@ class LibraryPlugin : Plugin() {
             return call.reject("Sách này lấy từ máy tính khác - muốn lưu thành file thì lưu ở máy ấy")
         }
         val title = Store.manifest(id)?.optString("title").orEmpty()
-        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType(BookFileImport.MIMETYPE)
-            .putExtra(Intent.EXTRA_TITLE, BookDocumentWriter.defaultName(title))
+        val project = savesAsProject(call, id)
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
+            .setType(if (project) BookFileImport.PROJECT_MIMETYPE else BookFileImport.MIMETYPE)
+            .putExtra(Intent.EXTRA_TITLE, BookDocumentWriter.defaultName(title, project))
         startActivityForResult(call, intent, "savedBook")
     }
+
+    /** "Lưu" giữ loại file cuốn đã đến (có `project.json` = file dự án); "Lưu thành…" chọn `as`. */
+    private fun savesAsProject(call: PluginCall, id: String): Boolean =
+        (call.getString("as") ?: if (ProjectDocument.kept(Store.bookDir(id)) != null) "abookproj" else "abook") == "abookproj"
 
     @ActivityCallback
     private fun savedBook(call: PluginCall?, result: ActivityResult) {
@@ -742,7 +750,7 @@ class LibraryPlugin : Plugin() {
             try {
                 val id = call.getString("id") ?: throw IllegalArgumentException("thiếu id")
                 val out = context.contentResolver.openOutputStream(uri, "wt") ?: throw IllegalStateException("Không ghi được vào chỗ đã chọn")
-                val written = out.use { BookDocumentWriter.write(Store.bookDir(id), it) }
+                val written = out.use { BookDocumentWriter.write(Store.bookDir(id), it, savesAsProject(call, id)) }
                 val name = runCatching {
                     context.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
                         if (cursor.moveToFirst()) cursor.getString(0) else null

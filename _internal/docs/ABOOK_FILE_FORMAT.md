@@ -8,11 +8,10 @@ for Windows and Android open. Since version 3 one file can hold a whole multi-pa
 "continue this book"). The reference implementation is `_internal/abook/webui/bookfile.py`.
 
 An `.abook` is, logically, a **subset of an `.abookproj`** (`ABOOKPROJ_FILE_FORMAT.md`): a project file carries the same
-listening layer (`book.json`, `cast.json`, `scripts/`, `samples/`, `music/`, `cover.jpg`) next to the production
-workshop, so anything that opens an `.abook` can play the listening layer of an `.abookproj`. The one difference is the
-chapter audio: a project file stores each chapter MP3 once, under `project/output/chapters/<name>.mp3`, and its
-`book.json` points there instead of at `chapters/<name>.mp3`. An `.abook` itself keeps the strict names listed below; the
-`project/` paths are valid only inside an `.abookproj`.
+listening layer (`book.json`, `cast.json`, `chapters/`, `scripts/`, `samples/`, `music/`, `cover.jpg`, and the version 4 edit
+layer) with exactly the entry names below, next to the production workshop, so anything that opens an `.abook` can play the
+listening layer of an `.abookproj`. The project file stores no byte twice: where the same audio also lives under
+`project/`, that copy is an alias of the `chapters/<name>.mp3` entry. An `.abook` itself keeps the strict names listed below.
 
 ## Container
 

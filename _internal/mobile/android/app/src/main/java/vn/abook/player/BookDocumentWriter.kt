@@ -21,12 +21,19 @@ import java.util.zip.ZipOutputStream
  *
  * Gói: `mimetype` đầu tiên và KHÔNG nén; `.mp3` / `.wav` / `.jpg` không nén (phát và tua thẳng trong gói), cỡ + CRC ghi trước
  * vì ZipOutputStream không quay lại sửa mục đã ghi. Thứ tự các mục như `_order` bên Python.
+ *
+ * `asProject`: ghi file dự án `.abookproj` (`projectfile.repack`, phiên bản 3; docs/EDITING.md phase P3) - cùng lớp sách + lớp sửa, cộng
+ * phần xưởng mà cuốn mang từ file dự án (`project.json` + `project/` + `sources/` chép NGUYÊN BYTE, không mở sổ dự án - [ProjectDocument])
+ * và `views/`. Cuốn nhập từ file `.abook` ra file `workshop: "pending"`: chỉ phần nghe, máy có Studio mời "Dựng xưởng". Mục media trùng
+ * byte chỉ nằm một lần trong gói, các mục kia là bí danh (`aliases` trong project.json, cùng luật `aliases_for` bên Python).
  */
 object BookDocumentWriter {
     const val EXTENSION = ".abook"
+    const val PROJECT_EXTENSION = ".abookproj"
     private const val PRODUCER = "ABook"
     private const val FORMAT = "abook"
     private val STORED = listOf(".mp3", ".jpg", ".wav", ".m4a", ".ogg", ".opus", ".flac")
+    private val PROJECT_STORED = STORED + listOf(".png", ".zip")
     private val RANK = listOf("edits", "cover.jpg", "cast.json", "scripts/", "samples/", "chapters/", "music/")
     private val PART_AUDIO = Regex("chapters/[0-9]+/.+")
 
@@ -36,14 +43,14 @@ object BookDocumentWriter {
     /** Kết quả: cỡ file, số thay đổi của người nghe trong đó, phiên bản định dạng. */
     class Written(val size: Long, val edits: Int, val version: Int)
 
-    /** Tên file từ tên sách, giữ tiếng Việt, bỏ ký tự Windows cấm (`bookfile.default_name`). */
-    fun defaultName(title: String): String {
-        val name = title.replace(Regex("""[\\/:*?"<>|\u0000-\u001f]+"""), " ").trim(' ', '.').ifEmpty { "Sách nói" }
+    /** Tên file từ tên sách, giữ tiếng Việt, bỏ ký tự Windows cấm (`bookfile.default_name` / `projectfile.default_name`). */
+    fun defaultName(title: String, project: Boolean = false): String {
+        val name = title.replace(Regex("""[\\/:*?"<>|\u0000-\u001f]+"""), " ").trim(' ', '.').ifEmpty { if (project) "Dự án sách nói" else "Sách nói" }
         val words = name.split(Regex("[\\p{Z}\\s]+")).filter { it.isNotEmpty() }.joinToString(" ")
-        return BookEdits.cut(words, 150) + EXTENSION
+        return BookEdits.cut(words, 150) + if (project) PROJECT_EXTENSION else EXTENSION
     }
 
-    fun write(bookDir: File, out: OutputStream): Written {
+    fun write(bookDir: File, out: OutputStream, asProject: Boolean = false): Written {
         val book = try {
             JSONObject(File(bookDir, "book.json").readText())
         } catch (error: Exception) {
@@ -82,6 +89,8 @@ object BookDocumentWriter {
             book.has("music") -> 2
             else -> 1
         }
+        // File dự án không đòi chương nào có audio (phần nghe có thể còn thiếu); file .abook thì đòi.
+        if (asProject) return writeProject(bookDir, out, book, files, known, edits, version)
         if (files.keys.none { it.startsWith("chapters/") }) throw Refused("Sách chưa có chương nào nghe được để xuất.")
         val sorted = files.keys.sorted()
         val described = LinkedHashMap<String, Any>()
@@ -114,6 +123,84 @@ object BookDocumentWriter {
     }
 
     private fun rank(name: String) = RANK.indexOfFirst { name.startsWith(it) }
+
+    /**
+     * `projectfile.repack` + `_seal`: lớp sách và lớp sửa (đã ở `files`) cộng phần xưởng của cuốn. Cuốn không có `project.json` (đến từ
+     * file `.abook`) ra file chờ dựng xưởng. Phần xưởng lấy theo danh sách của `project.json` đã lưu; mục nào là bí danh (không giải ra
+     * thư mục) thì đọc byte của mục thật. Cỡ + mã băm tính lại một lần cho mỗi file thật trên đĩa.
+     */
+    private fun writeProject(bookDir: File, out: OutputStream, book: JSONObject, files: HashMap<String, Any>,
+                             known: HashMap<String, JSONObject>, edits: JSONObject, version: Int): Written {
+        val unknown = files.keys.filter { !BookFileImport.contentPattern(version).matches(it) }
+        if (unknown.isNotEmpty()) throw Refused("Không gói được các file có tên ngoài định dạng: ${unknown.take(3)}")
+        val kept = ProjectDocument.kept(bookDir)
+        if (kept != null) {
+            for (name in kept.files.keys().asSequence().toList()) {
+                if (!name.startsWith("project/") && !name.startsWith("sources/")) continue
+                val own = runCatching { Store.contained(bookDir, name) }.getOrNull()?.takeIf { it.isFile }
+                val target = kept.aliases.optString(name)
+                files[name] = own ?: target.takeIf { it.isNotEmpty() }?.let { runCatching { Store.contained(bookDir, it) }.getOrNull()?.takeIf { f -> f.isFile } }
+                    ?: throw Refused("Thư mục sách thiếu file $name.")
+                kept.files.optJSONObject(name)?.let { known[name] = it }
+            }
+        }
+        for (view in ProjectDocument.VIEWS) {
+            File(bookDir, ProjectDocument.viewEntry(view)).takeIf { it.isFile }?.let { files[ProjectDocument.viewEntry(view)] = it }
+        }
+        val byPath = HashMap<String, JSONObject>()
+        val described = LinkedHashMap<String, JSONObject>()
+        for (name in files.keys.sorted()) {
+            val source = files.getValue(name)
+            described[name] = if (source is File) byPath.getOrPut(source.canonicalPath) { describe(name, source, known[name]) } else describe(name, source, null)
+        }
+        val aliases = ProjectDocument.aliasesFor(described.mapValues { it.value.getLong("size") to it.value.getString("sha256") }).toSortedMap()
+        val createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'+00:00'", Locale.ROOT).apply { timeZone = TimeZone.getTimeZone("UTC") }.format(Date())
+        val listed = LinkedHashMap<String, Any>()
+        for ((name, meta) in described) if (ProjectDocument.listeningName(name)) listed[name] = meta
+        val packageInfo = LinkedHashMap<String, Any>()
+        packageInfo["format"] = FORMAT
+        packageInfo["version"] = version
+        packageInfo["createdAt"] = createdAt
+        packageInfo["producer"] = PRODUCER
+        packageInfo["files"] = listed
+        book.put("package", packageInfo as Any)
+        val bookBytes = StrictJson.dumps(book, 1).toByteArray(Charsets.UTF_8)
+        files["book.json"] = bookBytes
+        described["book.json"] = describe("book.json", bookBytes, null)
+        val manifest = LinkedHashMap<String, Any?>()
+        manifest["format"] = ProjectDocument.FORMAT
+        manifest["version"] = ProjectDocument.VERSION
+        manifest["createdAt"] = createdAt
+        manifest["producer"] = PRODUCER
+        manifest["title"] = BookEdits.applyManifest(book, edits).optString("title")
+        manifest["workshop"] = kept?.workshop ?: ProjectDocument.PENDING
+        manifest["projectRoot"] = kept?.projectRoot ?: ""
+        manifest["sources"] = kept?.sources ?: org.json.JSONArray()
+        manifest["missingSources"] = kept?.missing ?: org.json.JSONArray()
+        manifest["aliases"] = aliases
+        manifest["files"] = described.toSortedMap()
+        val counting = Counting(out)
+        ZipOutputStream(counting).use { zip ->
+            put(zip, "mimetype", BookFileImport.PROJECT_MIMETYPE.toByteArray(Charsets.US_ASCII), stored = true)
+            put(zip, ProjectDocument.MANIFEST, StrictJson.dumps(manifest, 1).toByteArray(Charsets.UTF_8), stored = false)
+            for (name in files.keys.filter { it !in aliases }.sortedWith(compareBy({ projectRank(it) }, { it }))) {
+                val stored = PROJECT_STORED.any { name.lowercase(Locale.ROOT).endsWith(it) }
+                when (val source = files.getValue(name)) {
+                    is File -> putFile(zip, name, source, stored)
+                    else -> put(zip, name, source as ByteArray, stored)
+                }
+            }
+        }
+        return Written(counting.written, BookEdits.count(edits), version)
+    }
+
+    /** Thứ tự mục của file dự án (`projectfile._order`): mô tả, bìa, sổ dự án và chữ trước; audio sau cùng. */
+    private fun projectRank(name: String) = when {
+        name == "cover.jpg" || name == "book.json" -> 0
+        name == "project/project.sqlite3" -> 1
+        PROJECT_STORED.any { name.lowercase(Locale.ROOT).endsWith(it) } -> 3
+        else -> 2
+    }
 
     private fun describe(name: String, source: Any, known: JSONObject?): JSONObject {
         if (source is File && known != null && known.optLong("size", -1) == source.length() && known.opt("sha256") is String) {
