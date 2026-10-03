@@ -237,6 +237,64 @@ class EdgeTtsTest {
     }
 
     @Test
+    fun aBusyHandshakeIsRetriedLikeADroppedTurn() {
+        // Soát 03-10 (như edge.py): HTTP 429 / 5xx lúc bắt tay là lỗi thoáng qua - thử lại, không phải mất mạng, không phải đổi giao thức.
+        val calls = intArrayOf(0)
+        val waits = mutableListOf<Long>()
+        val connector = EdgeTts.Connector { _, _ ->
+            if (calls[0]++ < 2) throw HandshakeException(503, emptyMap())
+            WebSocket({ }, ByteArrayInputStream(session(audio(6000), text("turn.end"))), ByteArrayOutputStream())
+        }
+        val clip = EdgeTts("v", connector) { waits += it }.synthesize("Xin", File(dir, "busy.mp3"))
+        assertEquals(3, calls[0])
+        assertEquals(1000, clip.durationMs)
+        assertEquals(listOf(300L, 600L), waits)
+        assertEquals(6000, File(dir, "busy.mp3").length())
+
+        calls[0] = -1 // bận cả ba lần: báo bận (không phải mất mạng - không nghỉ giọng Edge 2 phút)
+        try {
+            EdgeTts("v", connector) { }.synthesize("Xin", File(dir, "busy2.mp3"))
+            fail("đáng ra lỗi")
+        } catch (error: VoiceException) {
+            assertFalse(error.offline)
+            assertTrue(error.message!!.contains("503"))
+            assertEquals(2, calls[0])
+        }
+    }
+
+    @Test
+    fun aResetHandshakeAndADroppedTurnAreRetriedWithoutKeepingHalfTheAudio() {
+        val calls = intArrayOf(0)
+        val connector = EdgeTts.Connector { _, _ ->
+            when (calls[0]++) {
+                0 -> throw java.net.SocketException("Connection reset")
+                1 -> WebSocket({ }, ByteArrayInputStream(session(audio(3000))), ByteArrayOutputStream()) // cắt giữa lượt sau nửa âm thanh
+                else -> WebSocket({ }, ByteArrayInputStream(session(audio(6000), text("turn.end"))), ByteArrayOutputStream())
+            }
+        }
+        val clip = EdgeTts("v", connector) { }.synthesize("Xin", File(dir, "reset.mp3"))
+        assertEquals(3, calls[0])
+        assertEquals(1000, clip.durationMs)
+        assertEquals(6000, File(dir, "reset.mp3").length())
+    }
+
+    @Test
+    fun aRefusedConnectionStaysOffline() {
+        val calls = intArrayOf(0)
+        val connector = EdgeTts.Connector { _, _ ->
+            calls[0]++
+            throw java.net.ConnectException("Connection refused")
+        }
+        try {
+            EdgeTts("v", connector) { }.synthesize("Xin", File(dir, "refused.mp3"))
+            fail("đáng ra lỗi")
+        } catch (error: VoiceException) {
+            assertTrue(error.offline)
+            assertEquals(1, calls[0])
+        }
+    }
+
+    @Test
     fun aSecondRefusalIsReportedNotRetriedForever() {
         val calls = intArrayOf(0)
         val connector = EdgeTts.Connector { _, _ ->
