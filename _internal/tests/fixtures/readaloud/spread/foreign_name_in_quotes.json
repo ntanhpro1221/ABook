@@ -1,0 +1,6 @@
+{
+ "note": "tên ngoại ASCII đếm theo cụm nguyên âm (Harry = 2); dấu phẩy nằm trong ngoặc kép vẫn là ngắt phẩy",
+ "text": "\"Harry,\" cô nói.",
+ "durationMs": 2000,
+ "words": [[0, 800], [1200, 1600], [1600, 2000]]
+}

@@ -23,7 +23,7 @@ const ONLINE_VOICE = "edge:vi-VN-HoaiMyNeural";
 
 /** Thẻ của mô-đun "Giọng VieNeu" trong Cài đặt (máy tính): chọn giọng muốn tải (có "Khuyên dùng" theo máy), thấy đúng dung lượng máy còn thiếu,
  *  bấm mới tải; tải xong máy tự thử vài giây và nói giọng có kịp người nghe không - không kịp thì đề nghị đổi, người dùng bấm mới đổi. */
-export function VieneuModuleCard() {
+export function VieneuModuleCard({ onChanged }: { onChanged?: () => void } = {}) {
   const client = useQueryClient();
   const { data: status } = useQuery({ queryKey: KEY, queryFn: () => api<VieneuStatus>("/api/readaloud/vieneu") });
   const [chosen, setChosen] = useState<VieneuChoiceId[] | null>(null);
@@ -40,9 +40,10 @@ export function VieneuModuleCard() {
     if (wasWorking.current && !working) {
       forgetVoices();
       void client.invalidateQueries({ queryKey: ["readaloud", "voices"] });
+      onChanged?.();
     }
     wasWorking.current = working;
-  }, [working, client]);
+  }, [working, client, onChanged]);
   if (!status) return null;
   const picked = chosen ?? initialChoices(status);
   const missing = picked.filter((id) => !status.choices.find((choice) => choice.id === id)?.installed);
@@ -75,6 +76,7 @@ export function VieneuModuleCard() {
   const suggestion = status.suggestion && !working ? suggestionText(status.suggestion) : null;
   return (
     <div className="max-w-xl space-y-3">
+      <h3 className="text-sm font-semibold">Giọng VieNeu · tải thêm, đọc ngay trên máy</h3>
       <p role="status" className={cn("text-sm text-pretty", failed ? "text-danger" : "text-fg-2")}>{vieneuLabel(status)}</p>
       {status.state === "downloading" && <Progress value={vieneuPercent(status) / 100} size="sm" running label="Đang tải giọng VieNeu" />}
       <ul className="divide-y divide-line rounded-xl border border-line">

@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import type { Script } from "@/listen/model";
 import { mergeTimings, VOICE_CHANGED_EVENT, type ReadAloudTimings } from "@/listen/readAloud";
 import { chosenVoice } from "@/listen/readAloudVoice";
@@ -44,17 +45,21 @@ export async function refreshScript(
 export function watchReadAloud(
   client: ScriptCache,
   api: Pick<ReadAloudPlugin, "script" | "addListener"> = ReadAloud,
-  configure: (options: { readAloudVoice: string }) => unknown = (options) => EbookPlayer.configure(options).catch(() => undefined),
+  configure: (options: { readAloudVoice: string; readAloudBook: string }) => unknown = (options) => EbookPlayer.configure(options).catch(() => undefined),
+  notify: (message: string) => unknown = (message) => toast(message, { duration: 8000 }),
 ): () => void {
   const handle = api.addListener("readAloudScript", (event) => void refreshScript(client, api, event.bookId, event.chapterId));
-  // Người nghe đổi giọng ở menu "Giọng đọc": lõi đọc các đoạn sau bằng giọng mới.
+  // Lõi vừa đọc tạm một đoạn bằng giọng kế (khóa bị từ chối, hết hạn mức, mất mạng): nói cho người nghe, lõi đã lo chỉ nói một lần.
+  const notice = api.addListener("readAloudNotice", (event) => void notify(event.message));
+  // Người nghe đổi giọng ở menu "Giọng đọc": lõi nhớ cho cuốn ấy (phát tiếp từ widget / xe hơi vẫn đúng giọng) và đọc các đoạn sau bằng giọng mới.
   const onVoice = (event: Event) => {
     const bookId = String((event as CustomEvent).detail ?? "");
-    void configure({ readAloudVoice: chosenVoice(bookId) });
+    void configure({ readAloudVoice: chosenVoice(bookId), readAloudBook: bookId });
   };
   window.addEventListener(VOICE_CHANGED_EVENT, onVoice);
   return () => {
     window.removeEventListener(VOICE_CHANGED_EVENT, onVoice);
     void handle.then((listener) => listener.remove());
+    void notice.then((listener) => listener.remove());
   };
 }
