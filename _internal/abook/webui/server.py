@@ -35,7 +35,7 @@ from ..readaloud import keys as readaloud_keys
 from ..readaloud import service as readaloud
 from ..readaloud.model import VoiceError
 from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, edits_inbox, ffmpeg_setup, humanize, listen_view,
-               music_catalog, music_local, music_module, music_plan, music_select, music_student, packages, project_views,
+               music_catalog, music_local, music_module, music_plan, music_playlist, music_select, music_student, packages, project_views,
                projectfile, reading_preview, remote_config, shared_readings, store, textbook, volumes, word_timing, workshop)
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, clean_book_templates, legacy_ids
@@ -1048,9 +1048,9 @@ class App:
         self._mutating()
         path = self._editable(value)
         if packages.is_package(path):
-            extra = set(body) - {"enabled", "levelDb", "silence", "pins"}
+            extra = set(body) - {"enabled", "levelDb", "silence", "pins", "playlist"}
             if extra:
-                raise ApiError(HTTPStatus.BAD_REQUEST, "Sách đã đóng gói chỉ chỉnh được bật/tắt nhạc, mức nhạc, im lặng từng đoạn và đổi bài")
+                raise ApiError(HTTPStatus.BAD_REQUEST, "Sách đã đóng gói chỉ chỉnh được bật/tắt nhạc, mức nhạc, im lặng từng đoạn, đổi bài và danh sách nhạc nền")
             return book_edits.set_music(path, body, self._my_track)
         music_plan.write_overrides(path, body)
         if music_plan.read_plan(path) is None:
@@ -1213,6 +1213,49 @@ class App:
         level = plan.get("levelDb", music_plan.DEFAULT_LEVEL_DB)
         music_plan.apply_gain(cues, level, tracks, self.music_track_cached)
         return {"cues": cues, "levelDb": level, "credits": self._music_credits(cues, tracks)}
+
+    # ---- danh sách phát cho sách nghe bằng "Nghe ngay" (music_playlist.py) ---------------------------------------------
+    def music_playlists(self) -> dict[str, Any]:
+        """Menu "Nhạc nền" của sách chỉ có chữ: các danh sách phát của danh mục + số bài trong "Nhạc của tôi". Chưa tải được
+        danh mục (mất mạng lần đầu) thì không có danh sách nào, kèm lý do."""
+        error = ""
+        try:
+            playlists = music_playlist.summaries(self.music_catalog().playlists())
+        except music_catalog.CatalogError as exc:
+            playlists, error = [], str(exc)
+        return {"playlists": playlists, "mine": len(self.my_music.entries()), "error": error}
+
+    def music_playlist_queue(self, value: str) -> dict[str, Any]:
+        """Hàng bài của danh sách phát người nghe đã chọn cho cuốn này (`music.playlist` của lớp sửa): [{link, src, duration,
+        gainDb}] theo thứ tự phát, kèm ghi công. Cuốn có nhạc của người làm sách (nhạc theo cảnh thắng), chưa chọn, hay danh
+        mục không còn danh sách ấy: không bài nào. Bài máy này không dùng được (offline chưa có trong bộ đệm, nguồn hỏng) bị bỏ."""
+        path = self._listenable(value)
+        result: dict[str, Any] = {"playlist": None, "tracks": [], "levelDb": music_plan.DEFAULT_LEVEL_DB, "credits": {}, "error": ""}
+        if not packages.is_package(path) or packages.manifest(path).get("music"):
+            return result
+        changes = book_edits.load(path).get("music") or {}
+        choice = changes.get("playlist")
+        if not choice:
+            return result
+        level = float(changes.get("levelDb", music_plan.DEFAULT_LEVEL_DB))
+        result.update(playlist=choice, levelDb=level)
+        if choice == music_playlist.MINE:
+            info = {entry["link"]: entry for entry in reversed(self.my_music.entries())}  # cũ trước: bài mới nhập nối vào cuối
+            links = list(info)
+        else:
+            try:
+                catalog = self.music_catalog()
+                links = music_playlist.links_of(catalog.playlists(), choice)
+                info = catalog.lookup(links) if links else {}
+            except music_catalog.CatalogError as exc:
+                return {**result, "error": str(exc)}
+        tracks = music_playlist.queue(links, info, self.music_track_available)
+        music_plan.apply_gain(tracks, level, info, self.music_track_cached)
+        for track in tracks:
+            digest = music_plan.local_hash(track["link"])
+            track["src"] = (f"/api/music/local/{digest}/file" if digest is not None
+                            else "/api/music/track?link=" + quote(track["link"], safe=""))
+        return {**result, "tracks": tracks, "credits": self._music_credits(tracks, info)}
 
     def _music_src(self, value: str, link: str) -> str:
         """Đường lấy file bài qua máy này. Bài danh mục: `/api/music/track?link=` (máy chủ chỉ tải bài CÓ trong danh mục); bài
@@ -2474,6 +2517,12 @@ class Handler(BaseHTTPRequestHandler):
     def get_music_cues(self, _query: dict[str, list[str]], value: str, chapter: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.music_cues(value, int(chapter)))
 
+    def get_music_playlist(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.music_playlist_queue(value))
+
+    def get_music_playlists(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.music_playlists())
+
     def get_music_packaged(self, _query: dict[str, list[str]], value: str, name: str) -> None:
         path = self.app._listenable(value)
         # Sách mở từ file: bài trong gói. Dự án: bài "Nhạc của tôi" mà đoạn của chính cuốn này dùng (music_plan.track_file_named).
@@ -3352,6 +3401,8 @@ ROUTES: list[Route] = [
     ("POST", re.compile(BOOK + r"/music/rebuild"), Handler.post_music_rebuild),
     ("GET", re.compile(BOOK + r"/music/scenes/([^/]+)/alternatives"), Handler.get_music_alternatives),
     ("GET", re.compile(BOOK + r"/music/chapters/(\d+)"), Handler.get_music_cues),
+    ("GET", re.compile(BOOK + r"/music/playlist"), Handler.get_music_playlist),
+    ("GET", re.compile(r"/api/music/playlists"), Handler.get_music_playlists),
     ("GET", re.compile(BOOK + r"/music/files/(" + music_plan.TRACK_NAME + ")"), Handler.get_music_packaged),
     ("GET", re.compile(r"/api/music/track"), Handler.get_music_track),
     # "Nhạc của tôi": chỉ trên máy này (Studio từ xa không có các đường này - nhạc của người dùng không ra khỏi máy trừ qua sách).

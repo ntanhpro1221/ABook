@@ -162,13 +162,19 @@ object ReadAloud {
     fun wantsPlay(): Boolean = waiting?.play ?: (Playback.player?.playWhenReady == true)
 
     /** Vị trí ảo trong chương (ms), null nếu không ở chương chữ. */
-    fun positionMs(): Long? {
+    fun positionMs(): Long? = chapterMs(Playback.player?.currentPosition ?: 0L)
+
+    /**
+     * Mốc `clipMs` của đoạn đang phát, đổi sang đồng hồ ảo của chương (ms); đang chờ đọc đoạn thì là chỗ sẽ bắt đầu. null nếu không ở chương chữ. Cũng dùng cho
+     * mốc đã đệm tới (thanh tiến độ ở thông báo / màn hình khoá - PlaybackService).
+     */
+    fun chapterMs(clipMs: Long): Long? {
         if (!active) return null
         val slot = currentSlot()
         if (slot != null && slot.segment >= 0) {
             val chap = chaps[slot.chapterIndex] ?: return null
             val clip = chap.clips[slot.segment]
-            val inClip = (Playback.player?.currentPosition ?: 0L).coerceIn(0L, clip?.durationMs ?: Long.MAX_VALUE)
+            val inClip = clipMs.coerceIn(0L, clip?.durationMs ?: Long.MAX_VALUE)
             return chap.timeline.startOf(slot.segment) + inClip
         }
         val target = waiting ?: return null
@@ -219,7 +225,10 @@ object ReadAloud {
         if (!chapter.isText) return null
         return try {
             val text = Store.file(Playback.bookId, chapter.text).readText(Charsets.UTF_8)
-            Chap(index, Paragraphs.of(text)).also { chaps[index] = it }
+            Chap(index, Paragraphs.of(text)).also {
+                fromCache(it)
+                chaps[index] = it
+            }
         } catch (error: Exception) {
             null
         }
@@ -380,8 +389,10 @@ object ReadAloud {
         chap.timeline.setDuration(segment, clip.durationMs)
         val item = clipItem(chap, segment, clip)
         val target = waiting
-        deliver(listOf(item), if (target != null) SeekPlan.offsetIn(clip, target.word, target.offsetMs) else 0L)
+        // Dời chỗ nạp TRƯỚC khi đặt vào ExoPlayer: setMediaItems báo đổi mục ngay trong lúc gọi (onMediaTransition -> onClipChanged -> pump), và pump lúc ấy
+        // mà còn thấy đoạn này là "đoạn kế" thì đọc lại nó - hàng đợi có hai lần cùng một đoạn, đồng hồ ảo lùi về đầu đoạn (thấy 03-10 trên máy thật).
         feedSegment = segment + 1
+        deliver(listOf(item), if (target != null) SeekPlan.offsetIn(clip, target.word, target.offsetMs) else 0L)
         notifyScript(chap)
         prune()
         pump()
@@ -558,19 +569,25 @@ object ReadAloud {
         return JSONObject().put("segments", segments)
     }
 
+    /**
+     * Đoạn nào đã đọc bằng giọng đang chọn (còn trong bộ nhớ đệm) thì đồng hồ ảo dùng độ dài thật ngay từ lúc nạp chương: nghe tiếp từ giây đã lưu (widget, xe
+     * hơi, mở lại app) rơi đúng đoạn đã nghe, không lệch theo ước lượng 14 ký tự/giây.
+     */
+    private fun fromCache(chap: Chap) {
+        val cache = runCatching { cache() }.getOrNull() ?: return
+        for (i in chap.paragraphs.indices) cache.get(voiceId, chap.paragraphs[i])?.let {
+            chap.clips[i] = it
+            chap.timeline.setDuration(i, it.durationMs)
+        }
+    }
+
     /** Chương của một cuốn không đang nạp: chữ từ gói sách, mốc từ bộ nhớ đệm (nếu đoạn đã từng được đọc bằng giọng đang chọn). */
     private fun peek(bookId: String, chapterId: Int): Chap? {
         return try {
             val array = Store.manifest(bookId)?.optJSONArray("chapters") ?: return null
             val chapter = (0 until array.length()).map { array.getJSONObject(it) }.firstOrNull { it.optInt("id") == chapterId } ?: return null
             val entry = chapter.optString("text").takeIf { it.startsWith("texts/") } ?: return null
-            val chap = Chap(-1, Paragraphs.of(Store.file(bookId, entry).readText(Charsets.UTF_8)))
-            val cache = cache()
-            for (i in chap.paragraphs.indices) cache.get(voiceId, chap.paragraphs[i])?.let {
-                chap.clips[i] = it
-                chap.timeline.setDuration(i, it.durationMs)
-            }
-            chap
+            Chap(-1, Paragraphs.of(Store.file(bookId, entry).readText(Charsets.UTF_8))).also(::fromCache)
         } catch (error: Exception) {
             null
         }
