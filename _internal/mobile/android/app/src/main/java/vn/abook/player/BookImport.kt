@@ -155,6 +155,25 @@ object BookImport {
         return nfc(out.toString())
     }
 
+    /** Số "từ" tách bằng khoảng trắng (`len(text.split())`). */
+    internal fun wordCount(text: String): Int {
+        var count = 0
+        var inside = false
+        for (c in text) {
+            if (isPySpace(c)) inside = false else if (!inside) { inside = true; count++ }
+        }
+        return count
+    }
+
+    /** Số ký tự có chữ, không tính khoảng trắng (`sum(not ch.isspace() for ch in text)`), theo điểm mã. */
+    internal fun charCount(text: String): Int = text.codePoints().filter { it >= 0x10000 || !isPySpace(it.toChar()) }.count().toInt()
+
+    /**
+     * Chữ của chương như FILE NGUỒN mà Studio đọc (`ImportedBook.chapter_source` bên Python): TXT nguyên văn (tên chương nằm sẵn trong
+     * chữ); EPUB / DOCX / PDF: tên chương, một dòng trống, rồi chữ. Kết thúc bằng một dòng mới.
+     */
+    fun chapterSource(book: Book, chapter: Chapter): String = (if (book.textHasTitle) chapter.text else "${chapter.title}\n\n${chapter.text}") + "\n"
+
     private fun pyStrip(text: String): String = text.trim { isPySpace(it) }
 
     private fun pyRstrip(text: String): String = text.trimEnd { isPySpace(it) }

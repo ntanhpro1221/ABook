@@ -17,10 +17,11 @@ from typing import Any, Iterable
 
 from . import book_edits, covers, project_views, store
 from .. import continuation
-from .fingerprints import Fingerprints, base_name
+from .fingerprints import Fingerprints, base_name, identity_prints, is_text_identity
 from .listen_view import FORMAT
 from .listening import book_progress
 
+TEXT_STATE = "text"  # = bookfile.TEXT_STATE
 MANIFEST = "book.json"  # = bookfile.MANIFEST (bookfile nhập library, library nhập module này - nên không nhập ở đây)
 IMPORTED_FOLDER = "Sách đã nhập"
 PROJECT_MARKER = "project.json"  # = projectfile.MANIFEST: có trong thư mục một cuốn nhập từ file `.abookproj` (xưởng đang chờ hay đi theo)
@@ -125,10 +126,8 @@ def folders(library_root: Path) -> list[Path]:
 
 
 def chapter_prints(book: dict[str, Any]) -> dict[str, dict[str, Any]]:
-    """Cỡ + mã băm audio từng chương, ghi trong gói lúc xuất (như `BookFile.chapter_prints`)."""
-    files = (book.get("package") or {}).get("files") or {}
-    return {name: {"size": meta.get("size"), "sha256": meta.get("sha256")}
-            for name, meta in files.items() if name.startswith("chapters/") and isinstance(meta, dict)}
+    """Cỡ + mã băm audio từng chương, ghi trong gói lúc xuất (như `BookFile.chapter_prints`); cuốn chưa có audio: mã băm chữ."""
+    return identity_prints((book.get("package") or {}).get("files") or {})
 
 
 def _prints_by_file(prints: dict[str, dict[str, Any]]) -> set[tuple[str, Any, Any]]:
@@ -193,6 +192,19 @@ def sample_file(path: Path, sample_id: int) -> Path | None:
     return _file(path, name) if name in (manifest(path).get("samples") or []) else None
 
 
+def text_book(book: dict[str, Any]) -> bool:
+    """Sách CHỈ CÓ CHỮ: có chương và mọi chương là chữ không audio (giai đoạn 0, docs/LISTEN_ANYTHING.md mục 1)."""
+    chapters = [chapter for chapter in book.get("chapters") or [] if isinstance(chapter, dict)]
+    return bool(chapters) and all(chapter.get("text") and not chapter.get("file") for chapter in chapters)
+
+
+def chapter_text(path: Path, chapter_id: int) -> str | None:
+    """Chữ của một chương chỉ-chữ (`texts/<mã>.txt`), hay None khi chương không có chữ."""
+    chapter = _chapter(manifest(path), chapter_id)
+    file = _file(path, chapter.get("text")) if chapter else None
+    return file.read_text(encoding="utf-8") if file else None
+
+
 def script(path: Path, chapter_id: int) -> Any | None:
     """Chữ đọc theo của một chương, đã qua lớp sửa (tên người nói, tên chương)."""
     book = manifest(path)
@@ -210,7 +222,9 @@ def script(path: Path, chapter_id: int) -> Any | None:
 def raw_cast(path: Path) -> Any:
     """`cast.json` của lớp sách, chưa qua lớp sửa."""
     file = _file(path, manifest(path).get("cast") or "cast.json")
-    return json.loads(file.read_text(encoding="utf-8")) if file else {"characters": [], "extras": []}
+    if file:
+        return json.loads(file.read_text(encoding="utf-8"))
+    return {"narrator": {"voice": "", "lines": 0, "seconds": 0}, "characters": [], "extras": []}  # sách chỉ-chữ: chưa phân vai
 
 
 def cast(path: Path) -> Any:
@@ -240,6 +254,8 @@ def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bo
             "duration": round(float(chapter.get("duration") or 0), 1) if available else 0.0,
             "available": available,
             "part": chapter.get("part") if isinstance(chapter.get("part"), int) else None,
+            # Chương chỉ có chữ: đọc được, chưa nghe được ("state" của book.json; chương cũ không có trường này).
+            "state": TEXT_STATE if chapter.get("text") and not available else None,
         })
     available = [chapter for chapter in items if chapter["available"]]
     complete = bool(book.get("complete")) and len(available) == len(items)
@@ -253,6 +269,8 @@ def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bo
         "chaptersTotal": max(int(book.get("chaptersTotal") or 0), len(items)),
         "chaptersAvailable": len(available),
         "complete": complete,
+        # Giai đoạn của cả cuốn: "text" = chỉ có chữ (chưa chương nào có audio); None = như mọi sách nghe được.
+        "stage": TEXT_STATE if text_book(book) else None,
         "producing": False,
         "paused": False,
         "imported": True,
@@ -346,7 +364,9 @@ def import_opened(opened: Any, library_root: Path, projects: Iterable[Path], fin
     wanted = _prints_by_file(prints)
     for existing in folders(library_root):
         theirs = chapter_prints(manifest(existing))
-        if wanted & _prints_by_file(theirs):
+        # Audio: chung một chương là cùng một lần sản xuất. Chữ: hai cuốn có thể chung một chương ngắn ("Lời nói đầu") mà là hai
+        # cuốn khác nhau, nên cuốn chỉ-chữ phải trùng cả bộ chữ.
+        if (wanted == _prints_by_file(theirs)) if is_text_identity(prints) else (wanted & _prints_by_file(theirs)):
             # Cuốn đã nhập từ file `.abook`, nay gặp file `.abookproj` của nó: nhập lại để cuốn mang phần xưởng (project.json).
             gains_workshop = hasattr(opened, "workshop") and not (existing / PROJECT_MARKER).is_file()
             if len(prints) < len(theirs) or (len(prints) == len(theirs) and not gains_workshop):

@@ -1,7 +1,34 @@
 import type { MusicCredit, MusicCue } from "@/listen/musicBed";
 import type { Bookmark, Cast, ListenBook, ListeningRecord, ListeningSession, ListeningState, NightSession, Script } from "@/listen/model";
 import type { ListenSource } from "@/listen/source";
+import type { AddedBook, ImportPreview, TextImport } from "@/listen/textImport";
 import { api, mediaUrl } from "@/studio/api";
+import { pickFiles, pickFolder } from "@/studio/data";
+
+function fileName(path: string): string {
+  return path.split(/[\\/]/).filter(Boolean).pop() ?? path;
+}
+
+/** "Thêm sách từ file…" trên máy tính: máy chủ cục bộ đọc file bằng `abook/importers.py` (webui/textbook.py). Có hộp thoại của
+ *  cửa sổ app thì chọn file / thư mục ở đó; không (chạy trong trình duyệt) thì dán đường dẫn. */
+export function desktopTextImport(dialogs: boolean): TextImport {
+  return {
+    typedPath: true,
+    choose: dialogs
+      ? async (kind) => {
+          if (kind === "folder") {
+            const path = await pickFolder("Chọn thư mục có các chương TXT");
+            return path ? { ref: path, name: fileName(path) } : null;
+          }
+          const paths = await pickFiles("Chọn một file sách (EPUB, DOCX, PDF, TXT)");
+          if (paths.length > 1) throw new Error("Chọn một file sách thôi. Truyện nhiều file TXT thì để vào một thư mục rồi chọn thư mục ấy.");
+          return paths[0] ? { ref: paths[0], name: fileName(paths[0]) } : null;
+        }
+      : undefined,
+    preview: (choice) => api<ImportPreview>("/api/listen/import/preview", { method: "POST", body: { path: choice.ref } }),
+    add: (choice, title) => api<AddedBook>("/api/listen/import", { method: "POST", body: { path: choice.ref, title } }),
+  };
+}
 
 /** Phía Nghe trên máy tính: đọc từ server cục bộ (abook/webui). */
 export const httpSource: ListenSource = {
@@ -9,6 +36,8 @@ export const httpSource: ListenSource = {
   library: () => api<ListenBook[]>("/api/listen/library"),
   book: (id) => api<ListenBook>(`/api/listen/books/${id}`),
   script: (bookId, chapterId) => api<Script>(`/api/books/${bookId}/chapters/${chapterId}/script`),
+  chapterText: async (bookId, chapterId) =>
+    (await api<{ text: string }>(`/api/listen/books/${bookId}/chapters/${chapterId}/text`)).text,
   cast: (bookId) => api<Cast>(`/api/books/${bookId}/cast`),
   musicCues: async (bookId, chapterId) => {
     const result = await api<{ cues: MusicCue[]; levelDb: number; credits?: Record<string, MusicCredit> }>(`/api/books/${bookId}/music/chapters/${chapterId}`);

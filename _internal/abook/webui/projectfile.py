@@ -69,7 +69,7 @@ from pathlib import Path, PureWindowsPath
 from typing import Any, Callable, Self
 
 from . import book_edits, bookfile, covers, project_views, store
-from .fingerprints import content_key
+from .fingerprints import content_key, identity_prints
 
 EXTENSION = ".abookproj"
 MIMETYPE = "application/vnd.ngdtuanh.abookproj+zip"
@@ -136,9 +136,10 @@ def _sources(database: Path, project_root: Path) -> dict[str, str]:
 def _listening_book(project_root: Path, files: dict[str, Path | bytes],
                     music_track: Callable[[str], Path | None] | None) -> dict[str, Any] | None:
     """Phần nghe của dự án (`book.json` chưa có `package`; các file đi cùng vào `files`), hay None nếu chưa có chương nào
-    xong - dự án mới bắt đầu vẫn sao lưu được, chỉ chưa có gì để nghe."""
+    xong audio và cũng không chương nào còn chữ nguồn để đọc - dự án mới bắt đầu vẫn sao lưu được, chỉ chưa có gì để nghe.
+    Chưa có audio nào mà còn chữ: phần nghe là sách chỉ-chữ (`bookfile.listening_layer`)."""
     book, layer = bookfile.listening_layer(project_root, music_track)
-    if not any(chapter.get("file") for chapter in book["chapters"]):
+    if not any(chapter.get("file") or chapter.get("text") for chapter in book["chapters"]):
         return None
     files.update(layer)
     return book
@@ -411,8 +412,7 @@ class ProjectFile:
         """Cỡ + mã băm audio từng chương - app so với sách đã có để nhận ra cùng một lần sản xuất (như `BookFile.chapter_prints`)."""
         if self.book is None:
             return {}
-        return {name: {"size": meta["size"], "sha256": meta["sha256"]}
-                for name, meta in self.book["package"]["files"].items() if name.startswith("chapters/")}
+        return identity_prints(self.book["package"]["files"])
 
     @property
     def content_key(self) -> str:
@@ -673,6 +673,9 @@ class ProjectFile:
             reference = chapter.get("file") if isinstance(chapter, dict) else None
             if reference and reference not in listed:
                 raise ProjectFileError("Phần nghe của dự án thiếu audio của một chương.")
+            written = chapter.get("text") if isinstance(chapter, dict) else None
+            if written and (not isinstance(written, str) or written not in listed):
+                raise ProjectFileError("Phần nghe của dự án thiếu chữ của một chương.")
         self.book = book
         try:
             self._edits, self._cover = book_edits.read_layer(_Resolved(self._zip, manifest["aliases"]), listening)

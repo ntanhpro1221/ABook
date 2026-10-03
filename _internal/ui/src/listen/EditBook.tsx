@@ -322,6 +322,7 @@ export function EditBookDialog({
           onOpenChange={setSearching}
           onChosen={() => refreshAfterEdit(client, book.id)}
         />
+        {book.stage !== "text" && (
         <Section title="Nhạc nền">
           {workshop ? (
             <div className="flex flex-wrap items-center gap-3 text-sm text-fg-2">
@@ -336,7 +337,11 @@ export function EditBookDialog({
             <MusicSection book={book} />
           )}
         </Section>
-        <Section title="Tên chương và tên nhân vật" hint="Bấm “…” ở dòng chương để đổi tên chương, “…” ở tab Nhân vật để đổi tên người." />
+        )}
+        <Section
+          title={book.stage === "text" ? "Tên chương" : "Tên chương và tên nhân vật"}
+          hint={book.stage === "text" ? "Bấm “…” ở dòng chương để đổi tên chương." : "Bấm “…” ở dòng chương để đổi tên chương, “…” ở tab Nhân vật để đổi tên người."}
+        />
         {!workshop && (book.edits ?? 0) > 0 && (
           <Section title={`Bỏ mọi thay đổi (${book.edits})`} hint="Sách trở về đúng như người làm sách đã đóng gói.">
             {confirmRevert ? (
@@ -534,7 +539,7 @@ export function SaveAsDialog({
 /** Việc cần Studio vẫn hiện trong menu, mờ đi, nói rõ thiếu gì - không giấu (docs/EDITING.md: "explain, never hide"). */
 export function StudioOnlyItem({ book }: { book: ListenBook }) {
   const need = studioNeed(book.capabilities);
-  if (!need) return null;
+  if (!need || book.stage === "text") return null; // sách chỉ có chữ chưa có giọng nào để đổi (có "Làm sách nói từ cuốn này")
   const syncs = syncsToComputer(book.capabilities);
   return (
     <DropdownMenu.Item disabled className={cn(MENU_ITEM, "h-auto items-start py-1.5 data-[disabled]:opacity-60")}>

@@ -679,34 +679,53 @@ object Store {
      * ({"chapters/x.mp3": {size, sha256}}). So theo TÊN FILE, không kể thư mục: file cả bộ đặt audio ở
      * `chapters/<phần>/x.mp3` còn cuốn tải qua Wi-Fi giữ `chapters/x.mp3`. Chỉ băm file trùng tên và cỡ, rồi ghi vào sổ để
      * lần sau khỏi băm.
+     *
+     * Cuốn chưa có audio nào thì `chapters` là mã băm CHỮ từng chương ({"texts/1.txt": ...}): hai cuốn khác nhau có thể chung một
+     * chương ngắn ("Lời nói đầu"), nên phải trùng cả bộ chữ - mọi chương của file có mặt, và cuốn trên máy không có chương chữ nào
+     * thừa (`packages.import_opened` bên Python đòi tập chữ bằng nhau).
      */
     @Synchronized
     fun findByChapters(chapters: JSONObject): String? {
+        val names = chapters.keys().asSequence().toList()
+        val wholeBook = names.isNotEmpty() && names.all { it.startsWith("texts/") }
         for (book in books()) {
             val id = book.optString("id")
             if (id.isBlank()) continue
             val known = chapterPrints(id)
             val own = chapterFiles(book)
-            for (name in chapters.keys()) {
-                val wanted = chapters.getJSONObject(name)
-                val base = name.substringAfterLast('/')
-                for (candidate in (own.filter { it.substringAfterLast('/') == base } + name).distinct()) {
-                    val local = runCatching { file(id, candidate) }.getOrNull() ?: continue
-                    if (!local.isFile || local.length() != wanted.optLong("size", -1)) continue
-                    val recorded = known.optJSONObject(candidate)
-                    val sha256 = if (recorded != null && recorded.optLong("size") == local.length()) {
-                        recorded.optString("sha256")
-                    } else {
-                        sha256(local).also {
-                            rememberChapters(id, JSONObject().put(candidate, JSONObject().put("size", local.length()).put("sha256", it)),
-                                isImported(id))
-                        }
-                    }
-                    if (sha256 == wanted.optString("sha256")) return id
-                }
+            val shares = { name: String -> sharesChapter(id, known, own, name, chapters.getJSONObject(name)) }
+            if (wholeBook) {
+                if (textChapterCount(book) == names.size && names.all(shares)) return id
+            } else if (names.any(shares)) {
+                return id
             }
         }
         return null
+    }
+
+    /** Cuốn `id` có đúng file của chương `name` (cỡ + mã băm như `wanted`) ở một trong các đường dẫn nó dùng? */
+    private fun sharesChapter(id: String, known: JSONObject, own: List<String>, name: String, wanted: JSONObject): Boolean {
+        val base = name.substringAfterLast('/')
+        for (candidate in (own.filter { it.substringAfterLast('/') == base } + name).distinct()) {
+            val local = runCatching { file(id, candidate) }.getOrNull() ?: continue
+            if (!local.isFile || local.length() != wanted.optLong("size", -1)) continue
+            val recorded = known.optJSONObject(candidate)
+            val sha256 = if (recorded != null && recorded.optLong("size") == local.length()) {
+                recorded.optString("sha256")
+            } else {
+                sha256(local).also {
+                    rememberChapters(id, JSONObject().put(candidate, JSONObject().put("size", local.length()).put("sha256", it)), isImported(id))
+                }
+            }
+            if (sha256 == wanted.optString("sha256")) return true
+        }
+        return false
+    }
+
+    /** Số chương của cuốn mang chữ riêng (`texts/<n>.txt`). */
+    private fun textChapterCount(book: JSONObject): Int {
+        val array = book.optJSONArray("chapters") ?: return 0
+        return (0 until array.length()).count { array.optJSONObject(it)?.optString("text").orEmpty().startsWith("texts/") }
     }
 
     /** Đường dẫn audio các chương như `book.json` của cuốn ghi (`chapters/x.mp3`, hay `chapters/<phần>/x.mp3` ở file cả bộ). */

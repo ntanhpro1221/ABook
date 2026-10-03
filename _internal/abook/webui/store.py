@@ -929,6 +929,21 @@ def audio_duration(path: Path) -> float | None:
 DELIVERY_TAGS = ("emotion", "intensity", "pace", "volume")
 
 
+def chapter_source_text(project_root: Path, chapter_id: int) -> str | None:
+    """Chữ nguồn của một chương (file TXT người dùng đã đưa vào lúc tạo sách), giải mã như dây chuyền; None khi file nguồn không
+    còn đó. Dùng để gói một cuốn chưa có audio thành sách chỉ-chữ (bookfile.listening_layer)."""
+    from ..io_utils import decode_text_bytes
+
+    with closing(connect(project_root)) as connection:
+        row = connection.execute("SELECT input_path FROM chapters WHERE id = ?", (chapter_id,)).fetchone()
+    if row is None or not row["input_path"]:
+        return None
+    try:
+        return decode_text_bytes(Path(str(row["input_path"])).read_bytes())
+    except OSError:
+        return None
+
+
 def chapter_script(project_root: Path, chapter_id: int) -> dict[str, Any] | None:
     """Văn bản chương theo từng câu, kèm mốc thời gian trong file MP3 - cho chế độ "đọc theo".
 

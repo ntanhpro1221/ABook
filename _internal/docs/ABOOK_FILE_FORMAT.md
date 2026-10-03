@@ -1,11 +1,13 @@
 # The ABook file format (`.abook`)
 
-Media type: `application/vnd.ngdtuanh.abook+zip` · File extension: `.abook` · Format versions: 1, 2, 3, 4 (current: 4)
+Media type: `application/vnd.ngdtuanh.abook+zip` · File extension: `.abook` · Format versions: 1, 2, 3, 4, 5 (current: 5)
 
 An `.abook` file is one finished audiobook produced by ABook (https://github.com/ntanhpro1221/ABook): the audio of every
 chapter, the text with who speaks each line, the cast of characters and the cover, in a single file that the ABook apps
 for Windows and Android open. Since version 3 one file can hold a whole multi-part series (a story split into parts with
-"continue this book"). The reference implementation is `_internal/abook/webui/bookfile.py`.
+"continue this book"). Since version 5 a book can also sit at an earlier stage than "finished": a chapter may hold only its
+text and have no audio yet, and a file may have no audio chapter at all (a book imported from an EPUB, Word, PDF or TXT file,
+readable at once). The reference implementation is `_internal/abook/webui/bookfile.py`.
 
 An `.abook` is, logically, a **subset of an `.abookproj`** (`ABOOKPROJ_FILE_FORMAT.md`): a project file carries the same
 listening layer (`book.json`, `cast.json`, `chapters/`, `scripts/`, `samples/`, `music/`, `cover.jpg`, and the version 4 edit
@@ -36,8 +38,9 @@ A ZIP archive (PKWARE APPNOTE, as used by EPUB and OOXML).
 | `scripts/<n>.json` | deflate | the lines of chapter `n`: text, kind (narration / dialogue / thought / heading), speaker, emotion, intensity, pace, volume, and the time span inside the chapter MP3 |
 | `samples/<n>.wav` | stored | short voice sample of a character |
 | `music/<sha1>.<ext>` | stored | version 2 and later: a background-music track the producer attached; `<sha1>` is 40 hex digits and the file is stored once however many chapters or parts use it. `<ext>` is `mp3` for catalogue tracks; a track the producer imported from their own files (`music.tracks[...].link` starts with `local:`) keeps its own format: `mp3`, `m4a`, `ogg`, `opus`, `flac` or `wav`, and `<sha1>` is then the hash of the file's content. Such a track carries no licence fields, only the title and artist read from the file's own tags |
-| `edits.json` | deflate | version 4 only: the listener's edit layer (see below), at most 1 MiB |
-| `edits/cover.jpg` | deflate | version 4 only: a cover the listener chose, JPEG, at most 8 MiB; only with `edits.json` |
+| `texts/<n>.txt` | deflate | version 5 only: the text of chapter `n` (1-9 digits, the same id as in `book.json`), UTF-8, the file Studio would read as that chapter's source; only for a chapter with `state: "text"` |
+| `edits.json` | deflate | version 4 and later: the listener's edit layer (see below), at most 1 MiB |
+| `edits/cover.jpg` | deflate | version 4 and later: a cover the listener chose, JPEG, at most 8 MiB; only with `edits.json` |
 
 A `.abook` never contains `project/`, `sources/` or `views/` (the producer's workshop): a reader refuses those names.
 
@@ -52,6 +55,7 @@ older apps still open it.
 | 2 | background music: the `music` object of `book.json` (`levelDb`, `tracks`, and per chapter the cue list `chapters[<chapterId>]` of `{start, end, track, gainDb}`) and the `music/<sha1>.<ext>` entries |
 | 3 | a whole series in one file: parts, nested chapter paths and a series-wide chapter id scheme, described next |
 | 4 | the listener's edit layer: `edits.json` and `edits/cover.jpg`, described after version 3. Only written when the listener changed something; an unedited book stays at version 1-3 |
+| 5 | chapters that have only text: `texts/<n>.txt` entries and `chapters[i].state` / `chapters[i].text`, described after version 4. A book without a single audio chapter is valid. Only written when a chapter has text; an ordinary audiobook stays at version 1-4 |
 
 ### Version 3: a series in one file
 
@@ -101,6 +105,31 @@ computer that made the book opens a file with edits, it may offer to apply them 
 **Privacy.** `edits.json` holds no device name, account, path or time of listening: only the edits themselves (a wish carries the
 time it was made, `requested_at`, which the producer re-stamps when it applies the wish).
 
+### Version 5: chapters that have only text
+
+A book is layered (docs/LISTEN_ANYTHING.md section 1); the text layer is the lowest one. In `book.json`:
+
+| Key (on a chapter) | Content |
+|---|---|
+| `state` | `"text"`: the chapter has its text and nothing else yet. Absent on every older chapter (a chapter with `file` is an audio chapter). Later stages (`analysed`, `cast`, `quick`, `produced`) are not written yet |
+| `text` | the entry name of its text, `texts/<id>.txt` |
+| `duration`, `available`, `size` | `0`, `false`, `0` (no audio); there is no `file` and no `script` key |
+
+- **No audio needed.** A version 5 file may have no `chapters/` entry at all: `chaptersAvailable` is `0`, `complete` is `false`, the Readium
+  `readingOrder` is empty, and `cast.json` may be absent (no characters yet). The producing apps refuse a file with neither audio nor text.
+- **The text is never edited.** `texts/<n>.txt` is the chapter as the source gave it, only reformatted (tags removed, spacing normalised,
+  Unicode NFC). Suggestions such as a translator's credit line are shown to the user and never applied to the text.
+- **What a book is called on a disk.** Two files hold the same book when their chapter audio is byte-identical; a book with no audio chapter
+  at all is identified by the SHA-256 of its chapter texts instead (`texts/<n>.txt` names and hashes feed the same folder-name formula, so
+  opening the same file twice gives one folder). Two text books are the same book only when every chapter text matches; a chapter shared
+  by two different books does not merge them.
+- **Reading order of entries.** `texts/` comes after `scripts/` and before `samples/`.
+- **A project file.** The listening layer of an `.abookproj` may be a text-only book too (a Studio project whose chapters have no audio yet
+  packs its chapter sources as `texts/<id>.txt`), so a project that was only started can be opened and read.
+
+A reader that finds `texts/` in a file whose `package.version` is below 5 treats the entry as unknown; a chapter whose `text` names an entry
+that is not in the file makes the file invalid.
+
 No version carries the machine-local book id or the `series` link that the phone sync package has: the file names no
 location on the producing computer.
 
@@ -109,7 +138,8 @@ location on the producing computer.
 - Reject the file if `mimetype` is not the first entry, is compressed, or does not hold the exact media type.
 - Reject entries whose size or SHA-256 differs from `book.json`, more than 20,000 entries, JSON entries over 32 MiB,
   or more than 64 GiB in total.
-- Reject a `package.version` greater than the version the reader supports (currently 4), and tell the user to update.
+- Reject a `package.version` greater than the version the reader supports (currently 5), and tell the user to update.
+- Reject a chapter whose `file` or `text` names an entry that is not in the package.
 - Check that the destination has room for the whole book before extracting, and extract and hash in one pass.
 - Nothing inside the file is executed. The file carries no listening data (position, bookmarks, history) and no
   identifier of the person or device that made it.
@@ -123,5 +153,6 @@ readers hand to their platform's media decoders. The format has no active conten
 ## Versioning
 
 `package.version` in `book.json` is an integer. Additions that old readers can ignore keep the version; anything an old
-reader would misread raises it (version 2 added `music/` entries, version 3 added part folders, version 4 the `edits.json` / `edits/` entries: an older reader would
-report them as unknown names, so the version was raised and the older reader asks the user to update the app).
+reader would misread raises it (version 2 added `music/` entries, version 3 added part folders, version 4 the `edits.json` / `edits/` entries, version 5
+the `texts/` entries and audio-less chapters: an older reader would report them as unknown names, so the version was raised and the older reader asks
+the user to update the app).

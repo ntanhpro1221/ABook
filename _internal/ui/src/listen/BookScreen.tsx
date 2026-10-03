@@ -19,7 +19,7 @@ import { chapterHeard, chaptersByPart, resumePoint, type CastMember, type Listen
 import { usePlayer } from "./player";
 import { BookmarkList, chapterStatusLabel } from "./PlayerViews";
 import { EditsSyncBanner, SendEditsItem } from "./SendEdits";
-import { ProjectFileItems, ProjectViewsDialog } from "./ProjectFileItems";
+import { ProjectFileItems, ProjectViewsDialog, TextBookItems } from "./ProjectFileItems";
 import { WishesDialog } from "./WishesDialog";
 import { useCast, useListenBook, useListenMutations, useSource } from "./source";
 
@@ -86,7 +86,7 @@ function ChapterRow({
         </div>
         <div className="tabular truncate text-xs text-fg-2">
           {chapter.subtitle ? `${chapter.title} · ` : ""}
-          {chapter.available ? formatLength(chapter.duration) : chapterStatusLabel(book.producing)}
+          {chapter.available ? formatLength(chapter.duration) : chapter.state === "text" ? "Chưa có âm thanh" : chapterStatusLabel(book.producing)}
         </div>
         {heard > 0 && heard < 1 && (
           <div className="mt-1.5 h-[3px] w-24 overflow-hidden rounded-full bg-line-strong">
@@ -663,6 +663,8 @@ export function BookScreen({
     );
   }
   const chapters = book.chapters ?? [];
+  // Sách chỉ có chữ (nhập từ EPUB / DOCX / PDF / TXT): đọc được, chưa có âm thanh - không phát, không nhân vật, không nhạc.
+  const textOnly = book.stage === "text";
   const editable = editing !== false && canEditBook(book);
   const workshop = Boolean(book.capabilities?.workshop);
   // Cuốn tải từ máy tính (điện thoại): phần sửa gửi về máy tính thay vì lưu thành file.
@@ -710,11 +712,18 @@ export function BookScreen({
           <h1 className="text-2xl font-bold leading-tight tracking-tight sm:text-[30px]">{book.title}</h1>
           <p className="tabular mt-2 text-sm text-fg-2">
             {book.narrator && `Giọng kể ${book.narrator} · `}
-            {book.complete
-              ? `${book.chaptersTotal} chương · ${formatLength(book.duration)}`
-              : `${book.chaptersAvailable}/${book.chaptersTotal} chương có audio · ${formatLength(book.duration)} phần đã có`}
+            {textOnly
+              ? `${book.chaptersTotal} chương · Chỉ có chữ`
+              : book.complete
+                ? `${book.chaptersTotal} chương · ${formatLength(book.duration)}`
+                : `${book.chaptersAvailable}/${book.chaptersTotal} chương có audio · ${formatLength(book.duration)} phần đã có`}
           </p>
-          {!book.complete && (
+          {textOnly && (
+            <p className="mt-2 inline-flex flex-wrap items-center gap-2 rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent-text">
+              Chưa có âm thanh - đọc được ngay
+            </p>
+          )}
+          {!book.complete && !textOnly && (
             <p className="mt-2 inline-flex flex-wrap items-center gap-2 rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent-text">
               {book.producing && <Vu className="h-2.5" />}
               {book.producing
@@ -735,13 +744,17 @@ export function BookScreen({
           )}
           {syncs && <EditsSyncBanner book={book} />}
           <div className="mt-4 max-w-md max-sm:mx-auto">
-            <Progress value={book.progress.fraction} tone={book.progress.finished ? "success" : "accent"} size="sm" label="Đã nghe" />
-            <div className="tabular mt-1.5 flex justify-between text-xs text-fg-2">
-              <span>{book.progress.finished || book.progress.caughtUp ? bookStatusText(book) : heard > 0 ? `Đã nghe ${formatLength(heard)}` : listening ? "Đang nghe" : "Chưa nghe"}</span>
-              {/* Tính theo phần ĐÃ PHỦ (chỗ tua qua vẫn là chưa nghe), khác "còn X" theo vị trí ở màn "Đang nghe" - nói rõ để hai con
-                  số không trông như mâu thuẫn (soát UX 29-09). */}
-              {!book.progress.finished && !book.progress.caughtUp && heard > 0 && <span>còn {formatLength(left)} chưa nghe</span>}
-            </div>
+            {!textOnly && (
+              <>
+                <Progress value={book.progress.fraction} tone={book.progress.finished ? "success" : "accent"} size="sm" label="Đã nghe" />
+                <div className="tabular mt-1.5 flex justify-between text-xs text-fg-2">
+                  <span>{book.progress.finished || book.progress.caughtUp ? bookStatusText(book) : heard > 0 ? `Đã nghe ${formatLength(heard)}` : listening ? "Đang nghe" : "Chưa nghe"}</span>
+                  {/* Tính theo phần ĐÃ PHỦ (chỗ tua qua vẫn là chưa nghe), khác "còn X" theo vị trí ở màn "Đang nghe" - nói rõ để hai con
+                      số không trông như mâu thuẫn (soát UX 29-09). */}
+                  {!book.progress.finished && !book.progress.caughtUp && heard > 0 && <span>còn {formatLength(left)} chưa nghe</span>}
+                </div>
+              </>
+            )}
             <RecordPicker book={book} />
           </div>
           <div className="mt-5 flex flex-wrap items-center gap-2 max-sm:justify-center">
@@ -763,7 +776,7 @@ export function BookScreen({
             )}
             <Tooltip label="Đọc bằng mắt - đọc được cả chương chưa thu âm; “Nghe từ đây” chuyển sang nghe đúng câu đang đọc">
               <Button
-                variant="outline"
+                variant={textOnly ? "primary" : "outline"}
                 size="lg"
                 icon={BookOpen}
                 onClick={() => navigate(`/book/${book.id}/read/${book.state.reading?.chapterId ?? point?.chapter.id ?? chapters[0]?.id ?? ""}`)}
@@ -784,15 +797,17 @@ export function BookScreen({
               </DropdownMenu.Trigger>
               <DropdownMenu.Portal>
                 <DropdownMenu.Content align="start" sideOffset={6} collisionPadding={12} className="z-50 min-w-56 rounded-xl border border-line bg-panel p-1.5 shadow-float">
-                  <DropdownMenu.Item onSelect={() => mutations.finished.mutate(!book.progress.finished)} className={MENU_ITEM}>
-                    <CheckCheck className="size-4" />
-                    {book.progress.finished ? "Đánh dấu chưa nghe xong" : "Đánh dấu đã nghe xong"}
-                  </DropdownMenu.Item>
+                  {!textOnly && (
+                    <DropdownMenu.Item onSelect={() => mutations.finished.mutate(!book.progress.finished)} className={MENU_ITEM}>
+                      <CheckCheck className="size-4" />
+                      {book.progress.finished ? "Đánh dấu chưa nghe xong" : "Đánh dấu đã nghe xong"}
+                    </DropdownMenu.Item>
+                  )}
                   {editing !== false && editable && (
                     <>
                       <DropdownMenu.Separator className="my-1 h-px bg-line" />
                       <DropdownMenu.Item onSelect={() => setEditOpen(true)} className={MENU_ITEM}>
-                        <Pencil className="size-4" /> Sửa tên, bìa, nhạc nền…
+                        <Pencil className="size-4" /> {textOnly ? "Sửa tên, bìa…" : "Sửa tên, bìa, nhạc nền…"}
                       </DropdownMenu.Item>
                       {syncs && <SendEditsItem book={book} />}
                       {!workshop && !syncs && saver.available && (
@@ -819,6 +834,7 @@ export function BookScreen({
                   {editing !== false && <EditBlockedItem book={book} />}
                   {editing !== false && <StudioOnlyItem book={book} />}
                   {editing !== false && <ProjectFileItems book={book} onViews={() => setViewsOpen(true)} />}
+                  {editing !== false && <TextBookItems book={book} />}
                   {extraActions?.(book)}
                 </DropdownMenu.Content>
               </DropdownMenu.Portal>
@@ -831,7 +847,7 @@ export function BookScreen({
           <TabsTrigger value="chapters" count={chapters.length}>Chương</TabsTrigger>
           <TabsTrigger value="bookmarks" count={book.state.bookmarks.length || undefined}>Dấu trang</TabsTrigger>
           <TabsTrigger value="history">Lịch sử</TabsTrigger>
-          <TabsTrigger value="cast">Nhân vật</TabsTrigger>
+          {!textOnly && <TabsTrigger value="cast">Nhân vật</TabsTrigger>}
         </TabsList>
         <TabsContent value="chapters" className="mt-2">
           {chaptersByPart(chapters, book.parts).map((group, index) => (

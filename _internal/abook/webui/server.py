@@ -28,11 +28,11 @@ from pathlib import Path
 from typing import Any, Callable, Iterable, Protocol
 from urllib.parse import parse_qs, quote, unquote, urlsplit
 
-from .. import aliases, bracket_rule, continuation, listener_overrides
+from .. import aliases, bracket_rule, continuation, importers, listener_overrides
 from ..io_utils import atomic_write_json
 from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, edits_inbox, ffmpeg_setup, humanize, listen_view,
                music_catalog, music_local, music_module, music_plan, music_select, music_student, packages, project_views,
-               projectfile, reading_preview, remote_config, shared_readings, store, volumes, workshop)
+               projectfile, reading_preview, remote_config, shared_readings, store, textbook, volumes, workshop)
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, clean_book_templates, legacy_ids
 from .listening import RECORD_ID, Listening
@@ -339,6 +339,38 @@ class App:
         if report.get("merge"):
             result["merge"] = report["merge"]
         return result
+
+    def _book_source(self, path: str) -> Path:
+        """File sách (EPUB / DOCX / PDF / TXT) hay thư mục TXT người dùng chọn để thêm vào thư viện."""
+        cleaned = str(path).strip().strip('"').strip("'").strip()
+        source = Path(cleaned).expanduser()
+        if not cleaned or not source.exists():
+            raise ApiError(HTTPStatus.NOT_FOUND, "Không thấy file hay thư mục này - có thể nó đã bị chuyển hay xoá")
+        return source
+
+    def preview_text_book(self, path: str) -> dict[str, Any]:
+        """"Thêm sách từ file…", bước xem trước: đọc file sách bằng `importers.import_text` và trả danh sách chương + gợi ý. Chưa
+        ghi gì vào thư viện."""
+        source = self._book_source(path)
+        try:
+            return textbook.preview(importers.import_text(source))
+        except importers.ImportFailed as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+        except OSError as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, f"Không đọc được file này ({error.strerror or error}).") from error
+
+    def add_text_book(self, path: str, title: str = "") -> dict[str, Any]:
+        """"Thêm sách từ file…": nhập thành sách CHỈ-CÓ-CHỮ trong thư viện (textbook.py) - đọc được ngay, chưa có audio. Nhập lại
+        đúng file ấy thì về cuốn đã có (`how`: "new" / "existing")."""
+        self._mutating()
+        source = self._book_source(path)
+        try:
+            folder, how, book = textbook.add_to_library(source, title, self.library.root, self.library.projects(), self.fingerprints)
+        except (importers.ImportFailed, bookfile.BookFileError) as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+        except OSError as error:
+            raise ApiError(HTTPStatus.INSUFFICIENT_STORAGE, f"Không ghi được sách vào thư viện ({error.strerror or error}).") from error
+        return {"id": book_id(folder), "how": how, "chapters": len(book.chapters)}
 
     def open_project_file(self, path: Path) -> dict[str, Any]:
         """Mở một file `.abookproj` (projectfile.py). Máy có Studio và file mang xưởng: dự án này đã có ở đây thì KHÔNG tạo bản
@@ -1705,11 +1737,14 @@ class App:
 
     def _built_workshop(self, view: dict[str, Any], path: Path) -> None:
         """Cuốn chờ xưởng đã được “Dựng xưởng”: `projectFile.built` = mã dự án (nếu dự án còn trong thư viện) - giao diện mời mở nó
-        thay vì dựng thêm một cái nữa."""
+        thay vì dựng thêm một cái nữa. Sách chỉ-chữ ("Làm sách nói từ cuốn này") thì `studioProject`."""
         info = view.get("projectFile")
         if isinstance(info, dict) and info.get("workshop") == "pending":
             made = workshop.built(path)
             info["built"] = made if made and self.library.resolve(made) is not None else None
+        if view.get("stage") == packages.TEXT_STATE:
+            made = workshop.built(path)
+            view["studioProject"] = made if made and self.library.resolve(made) is not None else None
 
     def build_workshop(self, value: str) -> dict[str, Any]:
         """“Dựng xưởng” (workshop.py): cuốn sách đang chờ xưởng thành một dự án Studio mới, chưa chạy."""
@@ -2849,6 +2884,21 @@ class Handler(BaseHTTPRequestHandler):
     def post_open_book_file(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.open_book_file(str(self._body().get("path") or "")))
 
+    def post_import_preview(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.preview_text_book(str(self._body().get("path") or "")))
+
+    def post_import_book(self, _query: dict[str, list[str]]) -> None:
+        body = self._body()
+        self._send_json(HTTPStatus.OK, self.app.add_text_book(str(body.get("path") or ""), str(body.get("title") or "")))
+
+    def get_chapter_text(self, _query: dict[str, list[str]], value: str, chapter: str) -> None:
+        # Chữ của chương trong sách CHỈ-CÓ-CHỮ (texts/<mã>.txt): trang đọc dựng các đoạn từ đây (listen/textScript.ts).
+        path = self.app._listenable(value)
+        text = packages.chapter_text(path, int(chapter)) if packages.is_package(path) else None
+        if text is None:
+            raise ApiError(HTTPStatus.NOT_FOUND, "Chương này không có chữ riêng")
+        self._send_json(HTTPStatus.OK, {"chapterId": int(chapter), "text": text})
+
     def get_listen_book(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.listen_book(value))
 
@@ -3270,6 +3320,10 @@ ROUTES: list[Route] = [
     ("DELETE", re.compile(r"/api/computers/([0-9a-f]{12})"), Handler.delete_computer),
     ("GET", re.compile(r"/api/listen/library"), Handler.get_listen_library),
     ("POST", re.compile(r"/api/listen/open-book-file"), Handler.post_open_book_file),
+    # Thêm sách từ EPUB / DOCX / PDF / TXT: xem trước danh sách chương, rồi nhập thành sách chỉ-chữ (chỉ trên máy này).
+    ("POST", re.compile(r"/api/listen/import/preview"), Handler.post_import_preview),
+    ("POST", re.compile(r"/api/listen/import"), Handler.post_import_book),
+    ("GET", re.compile(LISTEN + r"/chapters/(\d+)/text"), Handler.get_chapter_text),
     ("GET", re.compile(LISTEN), Handler.get_listen_book),
     # Chỉ trên máy này (remote_studio không có): bỏ một cuốn nhập từ file .abook khỏi thư viện.
     ("DELETE", re.compile(LISTEN), Handler.delete_listen_book),

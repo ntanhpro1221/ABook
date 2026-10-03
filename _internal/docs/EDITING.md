@@ -370,6 +370,10 @@ Python ones and writes them again (`BookFileImportTest`, `BookDocumentWriterTest
   audio has no listening layer); `content_key` / `fingerprints.shared_chapters` / `Store.findByChapters` identify a book by its chapter AUDIO
   hashes, so text-only books have no identity and would all collide on one folder; `workshop._sources` rebuilds text from `scripts/`; the `.abook`
   writers (`bookfile._seal`, `BookDocumentWriter.write`) still refuse a book without audio; aliases are media-only (text layers are not deduplicated).
+  **Fixed 03-10 by the text-only book (format version 5, docs/LISTEN_ANYTHING.md section 1)**: `listening_layer` / `_listening_book` produce a layer from chapter sources
+  when there is no audio; `content_key` / `fingerprints` / `Store.findByChapters` fall back to the hashes of the chapter texts (`identity_prints`); the writers are
+  `bookfile.seal` / `BookDocumentWriter.seal` and accept a book with texts and no audio; `workshop._sources` copies `texts/<n>.txt`. Still open: aliases stay media-only,
+  and a book that has only SOME chapters as text (a mix) is not written by any producer yet.
 
 # What P4 built (phone: music swap, cover web search - 03-10)
 
