@@ -1,0 +1,100 @@
+"""Sinh bộ ví dụ DÙNG CHUNG cho luật Việt hoá từ tiếng Anh: `tests/fixtures/english_vi/cases.json`.
+
+Bản Python (`abook/english_vi.py`) và bản Kotlin (`readaloud/EnglishVi.kt`) cùng đọc file này (test_english_vi.py, EnglishViTest.kt) và
+phải ra đúng cách đọc + đúng cờ, cả khi có từ điển phát âm (`assets/english_phones.txt.gz`) lẫn khi không (`*_nodict`: chỉ đường chính
+tả). Bốn nhóm ca:
+  sourced   mọi dạng có nguồn trong `tests/english_vi_evidence.py` (kèm dạng nguồn, cách đọc của LUẬT khi tắt bảng ghi đè, khớp hay không)
+  override  mọi mục của bảng ghi đè (chủ sách, từ mượn, chữ viết tắt thành từ)
+  edge      ca tự dựng cho từng dòng luật
+  trial     ~300 từ tiếng Anh thật trong kho truyện thử (`trial.json`; chỉ từ / tên)
+
+Sinh lại (chỉ khi cố ý đổi luật):  runtime/.venv/Scripts/python.exe scripts/build_english_vi_fixture.py
+"""
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+from abook.english_vi import ACRONYMS, OVERRIDES, vietnamized_english_flags
+from tests import english_vi_evidence
+
+FIXTURES = ROOT / "tests" / "fixtures" / "english_vi"
+
+# Mỗi ca một dòng luật; ca nào luật không nhận thì reading là null.
+EDGE: list[str] = [
+    # -əl cuối -> ồ; l sau ai -> lồ; l cuối sau i -> u; l khép khác -> n
+    "table", "little", "Daniel", "Lyle", "mile", "bill", "feel", "guild", "Melbourne", "Dalton",
+    # s + phụ âm đầu -> xờ (chủ sách); cụm khác -> ơ (mở); t + r giữ tr
+    "spell", "star", "smile", "Blake", "Brian", "Grace", "trust", "strong", "Francis",
+    # phụ âm tắc nhân đôi sau nguyên âm nhấn chính; không nhân đôi sau nhấn phụ
+    "happy", "Rocky", "copper", "cookie", "ticket", "Appalachian",
+    # /eɪ/ mở ây, khép tắc a, khép mũi ê; ai / ao / oi không khép (bỏ phụ âm cuối)
+    "day", "name", "make", "Grey", "time", "night", "five", "town", "Lloyd",
+    # w, y bán âm; qu; ng không mở âm tiết; /ɚ/ trước nguyên âm mở r
+    "William", "Wendy", "queen", "quick", "you", "music", "Hemingway", "singer", "camera", "Colorado",
+    # phụ âm cuối hữu thanh / xát -> tắc; cụm cuối giữ một
+    "bad", "dog", "love", "bath", "judge", "Ruth", "first", "world", "Edward",
+    # tên ngắn tắc + e câm theo mặt chữ; nguyên âm e là điểm mở
+    "Coke", "Duke", "Zeke", "Nate", "Pike",
+    # đường chính tả (tên tự chế / không có trong từ điển)
+    "Encrid", "Lancel", "Calian", "Theia", "Arna", "Rudeus", "Sylphy", "Kraken", "Wyvern", "Ainz", "Thorne", "Phoebus", "Knightley",
+    "Brightwater", "Xylo", "Quinzel", "Shalltear", "Lucretia", "Ashford", "Whitlock",
+    # nối gạch, viết hoa, chữ lạ, chữ viết tắt
+    "Jean-Paul", "Mary-Ann", "MARY", "iPhone", "McDonald", "O'Brien", "Ko1", "", "VIP", "ID", "id", "Vip",
+]
+
+
+def _trial() -> list[str]:
+    return json.loads((FIXTURES / "trial.json").read_text(encoding="utf-8"))["tokens"]
+
+
+def _read(token: str, **options) -> dict:
+    found = vietnamized_english_flags(token, **options)
+    return {"reading": None if found is None else found[0], "flags": [] if found is None else list(found[1])}
+
+
+def _case(group: str, token: str) -> dict:
+    with_dict = _read(token)
+    without = _read(token, dictionary={})
+    return {"group": group, "token": token, **with_dict, "reading_nodict": without["reading"], "flags_nodict": without["flags"]}
+
+
+def cases() -> dict:
+    out = []
+    for token, sources, kind in english_vi_evidence.SOURCED:
+        rule = _read(token, overrides=False)
+        matched = rule["reading"] is not None and rule["reading"].casefold() in {source.casefold() for source in sources}
+        entry = {**_case("sourced", token), "rule": rule["reading"], "rule_flags": rule["flags"], "sources": list(sources), "kind": kind,
+                 "matches": matched}
+        if not matched:
+            entry["because"] = english_vi_evidence.EXPLAINED[token][1]
+        out.append(entry)
+    for token in list(OVERRIDES) + list(ACRONYMS):
+        out.append(_case("override", token))
+    for group, items in (("edge", EDGE), ("trial", _trial())):
+        for token in items:
+            out.append(_case(group, token))
+    return {"cases": out}
+
+
+def cases_bytes() -> bytes:
+    lines = ['{', ' "cases": [']
+    body = [json.dumps(case, ensure_ascii=False) for case in cases()["cases"]]
+    for index, line in enumerate(body):
+        lines.append("  " + line + ("," if index < len(body) - 1 else ""))
+    lines += [" ]", "}", ""]
+    return "\n".join(lines).encode("utf-8")
+
+
+def main() -> None:
+    FIXTURES.mkdir(parents=True, exist_ok=True)
+    (FIXTURES / "cases.json").write_bytes(cases_bytes())  # write_bytes: LF, không CRLF của Windows
+    print(f"{len(cases()['cases'])} ca -> {FIXTURES / 'cases.json'}")
+
+
+if __name__ == "__main__":
+    main()
