@@ -1,4 +1,5 @@
 import type { MusicCredit, MusicCue } from "./musicBed";
+import type { PlaylistQueue } from "./playlistBed";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, useContext, useMemo, type ReactNode } from "react";
 import type { Bookmark, Cast, ListenBook, ListenChapter, ListeningRecord, ListeningSession, ListeningState, NightSession, Script } from "./model";
@@ -46,6 +47,9 @@ export interface ListenSource {
   /** Nhạc nền của một chương (rãnh nhạc của cuốn - webui/music_plan.py): mốc thời gian + đường lấy file. Nguồn nào
    *  chưa có thì trình phát không chơi nhạc nền. */
   musicCues?(bookId: string, chapterId: number): Promise<{ cues: MusicCue[]; levelDb: number; credits?: Record<string, MusicCredit> }>;
+  /** Danh sách phát người nghe đã chọn cho cả cuốn (sách chỉ có chữ - playlistBed.ts): hàng bài theo thứ tự phát; không bài nào
+   *  thì trình phát dùng mốc nhạc của chương như thường. Android: lõi native tự phát (MusicBed.kt). */
+  musicPlaylist?(bookId: string): Promise<PlaylistQueue>;
   audioUrl(bookId: string, chapterId: number): string;
   sampleUrl(bookId: string, sampleId: number): string;
   voiceUrl(name: string): string;

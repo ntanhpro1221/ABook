@@ -3,7 +3,7 @@
 #
 #   1. desktop, once:  runtime/.venv/Scripts/python.exe scripts/vieneu_phone_bench_export.py --out $BENCH   (models + bundle, ~470 MB)
 #   2. scripts/vieneu_phone_bench.sh <adb serial> all [instrumentation args]      build + install + push + check + speed + results + clean
-#      or one step:  build | install | push | check | speed | results | clean
+#      or one step:  build | install | push | check | speed | sustain | results | clean  (app check|speed|sustain + wait-app: the same without installing)
 #
 # Needs: JAVA_HOME (Android Studio jbr), adb on PATH or in %LOCALAPPDATA%/Android/Sdk/platform-tools, BENCH (the export folder),
 # ORT_JNI (folder with <abi>/libonnxruntime*.so from the onnxruntime-android AAR, default D:/Novels/LLM_Train/ort_build/maven/aar/jni).
@@ -56,7 +56,7 @@ clean()   { adb shell rm -rf "$REMOTE" /data/local/tmp/vneu_run.log || true; adb
 case "$STEP" in
   build) build ;; install) install ;; push) push ;;
   check) run theTurboLoopRepeatsTheDesktop "$@"; run theNanoLoopRepeatsTheDesktop "$@" ;;
-  speed) run speed "$@" ;; results) results ;; clean) clean ;;
+  speed) run speed "$@" ;; sustain) run sustain "$@" ;; results) results ;; clean) clean ;;
   app) app "$@" ;; wait-app) wait_app ;; app-results) adb shell cat "$REMOTE/results.jsonl" ;;
   all) build; install; push; run theTurboLoopRepeatsTheDesktop "$@"; run theNanoLoopRepeatsTheDesktop "$@"; run speed "$@"; results; clean ;;
   *) echo "unknown step $STEP" >&2; exit 2 ;;

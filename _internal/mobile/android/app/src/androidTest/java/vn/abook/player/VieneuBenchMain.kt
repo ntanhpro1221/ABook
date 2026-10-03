@@ -22,6 +22,7 @@ object VieneuBenchMain {
             }
             "check-turbo" -> println(bench.checkTurbo(manifest))
             "speed" -> bench.speed(manifest)
+            "sustain" -> bench.sustain(manifest)
             else -> error("unknown mode $mode")
         }
         println("VNEU_FINISHED $mode")

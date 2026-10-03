@@ -24,7 +24,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   phải chờ giữa các đoạn, đoạn đã đọc được giữ lại để nghe lại không cần mạng. Tốc độ, hẹn giờ ngủ, nhớ chỗ đang nghe như
   sách nói; trên điện thoại tắt màn hình vẫn đọc tiếp và tự sang chương sau, điều khiển được ở màn hình khoá và tai nghe.
 
-- **Giọng VieNeu: nghe ngay bằng giọng hay mà không cần mạng (máy tính)**: Cài đặt > "Giọng đọc trên máy" cho tải thêm giọng VieNeu
+- **Giọng VieNeu: nghe ngay bằng giọng hay mà không cần mạng (máy tính)**: Cài đặt → Giọng đọc có mục "Giọng VieNeu" để tải thêm giọng VieNeu
   đọc ngay trên máy - chữ của sách không rời khỏi máy. Chọn Giọng VieNeu (25 giọng, âm thanh 48 kHz), Giọng VieNeu Nano (11 giọng, nhẹ
   hơn cho máy yếu) hay cả hai; app ghi "Khuyên dùng" cho loại hợp với máy của bạn. "Sáng đúng từng chữ" (đánh dấu sẵn) tải thêm bộ căn
   chữ để chữ đang đọc sáng đúng lúc; không tải thì máy ước theo âm tiết. Dung lượng ghi là phần máy còn thiếu - phần đã có (của Phân
@@ -32,6 +32,22 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   sang giọng nhẹ hơn - chỉ đổi khi bạn bấm. Giọng mới hiện ngay trong nút Giọng đọc lúc nghe. Có bản mới thì một lần bấm chỉ tải
   phần đổi. Máy không kịp đọc trực tiếp vẫn nghe được giọng VieNeu: nút Giọng đọc có "Làm trước các chương tới" - máy đọc sẵn ở nền
   (việc đang nghe luôn được ưu tiên), nói rõ còn bao lâu, bấm "Dừng làm trước" là thôi.
+
+- **Cài đặt → Giọng đọc: chọn giọng mặc định, nghe thử, và dùng giọng trực tuyến bằng khóa của bạn (máy tính và điện thoại)**: mục mới
+  liệt kê mọi giọng đọc được cho "Nghe ngay" - Edge, giọng của máy, và giọng của các dịch vụ bạn có tài khoản - kèm gợi ý giọng nam / nữ,
+  nút "Thử giọng" đọc một câu mẫu, và chọn một giọng làm mặc định cho các cuốn chưa chọn giọng riêng (giọng riêng của từng cuốn vẫn đổi ở
+  nút "Giọng đọc" trong trình phát). Ở "Giọng trực tuyến dùng khóa của bạn", dán khóa của Azure Speech (kèm vùng), Google Cloud, FPT.AI hay
+  Viettel AI rồi bấm "Kiểm tra": khóa dùng được thì giọng tiếng Việt của dịch vụ ấy hiện trong danh sách giọng. Azure và Google sáng đúng
+  từng chữ khi đọc; FPT.AI và Viettel AI sáng từng chữ theo ước lượng. Khi đọc, chữ của sách được gửi tới dịch vụ đó và dịch vụ có thể tính
+  tiền vào tài khoản của bạn khi vượt phần miễn phí - app nói rõ điều này; khóa chỉ lưu trên máy (trên điện thoại được mã hoá), chỉ hiện 4
+  ký tự cuối. Khóa hết hạn mức hay bị từ chối thì đoạn ấy tạm đọc bằng giọng Edge, rồi giọng của máy, không dừng, và app báo một lần.
+
+- **Nghe ngay có nhạc nền: chọn một danh sách nhạc cho cả cuốn (máy tính và điện thoại)**: sách chỉ có chữ có mục "Nhạc nền" ở menu
+  của sách và ở trình phát lúc đang nghe: Tắt (mặc định), một trong 12 danh sách nhạc theo kiểu truyện - kỳ ảo phiêu lưu, kỳ ảo êm
+  đềm, học đường, lãng mạn, hài hước, hành động, kinh dị, trinh thám, tiên hiệp - cổ phong, khoa học viễn tưởng, buồn, êm để ngủ -
+  hay "Nhạc của tôi". Các bài nối nhau, chuyển êm, nằm dưới giọng đọc như nhạc của sách nói, và chơi tiếp qua các chương thay vì
+  bắt đầu lại mỗi chương; mở lại sách là nghe tiếp đúng bài. Lựa chọn nằm trong phần sửa của cuốn nên đi theo khi "Lưu thành .abook"
+  hay gửi sang máy kia. Lần đầu cần mạng để tải danh sách và bài; bài đã tải thì nghe lại không cần mạng.
 
 ### Cài đặt
 

@@ -17,8 +17,11 @@ import kotlin.math.sqrt
  *
  * [dir] holds `vieneu_{prefill,decode_step,acoustic_cached}.onnx` + `vieneu_backbone_shared.data`, `config.json` and the heads as raw
  * float32 (`text_emb.f32`, `audio_emb.f32`, `xvec_*.f32`, `heads.json`); [codecDir] holds the codec decode graph.
+ * [threads] runs the per-frame graphs (small, latency-bound: on a phone more threads than big cores makes them slower), [codecThreads]
+ * the codec (one large graph per chunk, gains from every core), [headThreads] the output-head dot products.
  */
-class VieneuTurbo(dir: File, codecDir: File, threads: Int, private val headThreads: Int = threads) : AutoCloseable {
+class VieneuTurbo(dir: File, codecDir: File, threads: Int, private val headThreads: Int = threads, codecThreads: Int = threads,
+                  backend: VieneuBackend = VieneuBackend.CPU, spinning: Boolean = false) : AutoCloseable {
     class Sampling(val temperature: Float = 0.8f, val topK: Int = 25, val topP: Double = 0.95, val repetitionPenalty: Float = 1.2f, val repetitionWindow: Int = 64)
 
     /** Wall times in ns: ORT time per graph, and the rest of the loop (embeddings, output heads, sampling). */
@@ -59,11 +62,12 @@ class VieneuTurbo(dir: File, codecDir: File, threads: Int, private val headThrea
     private val xvecLnB = RawFiles.floats(File(dir, "xvec_ln_b.f32"))
     private val xvecLnEps = heads.getDouble("xvec_ln_eps").toFloat()
 
-    private val options = sessionOptions(threads)
+    private val options = sessionOptions(threads, backend, spinning)
+    private val codecOptions = if (codecThreads == threads) options else sessionOptions(codecThreads, backend, spinning)
     private val prefill = env.createSession(File(dir, "vieneu_prefill.onnx").absolutePath, options)
     private val decodeStep = env.createSession(File(dir, "vieneu_decode_step.onnx").absolutePath, options)
     private val acoustic = env.createSession(File(dir, "vieneu_acoustic_cached.onnx").absolutePath, options)
-    private val codec = env.createSession(File(codecDir, "moss_audio_tokenizer_decode_full.onnx").absolutePath, options)
+    private val codec = env.createSession(File(codecDir, "moss_audio_tokenizer_decode_full.onnx").absolutePath, codecOptions)
     private val pool = if (headThreads > 1) Executors.newFixedThreadPool(headThreads - 1) { task -> Thread(task, "vieneu-heads").apply { isDaemon = true } } else null
 
     /** 192-d x-vector -> hidden-size anchor added to every prompt/step embedding (xvec_proj: Linear + LayerNorm). */
@@ -297,6 +301,7 @@ class VieneuTurbo(dir: File, codecDir: File, threads: Int, private val headThrea
         pool?.shutdownNow()
         listOf(prefill, decodeStep, acoustic, codec).forEach { runCatching { it.close() } }
         options.close()
+        if (codecOptions !== options) codecOptions.close()
     }
 
     companion object {

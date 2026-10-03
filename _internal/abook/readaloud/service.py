@@ -9,8 +9,10 @@ import threading
 from pathlib import Path
 from typing import Any, Callable, Protocol
 
-from . import edge, loudness, vieneu, windows
+from . import azure, edge, fpt, google, loudness, vieneu, viettel, windows
+from .byok import KeyedProvider
 from .cache import ClipCache, clip_key
+from .keys import KeyStore
 from .mapping import fold, map_boundaries
 from .model import Synthesis, Voice, VoiceError
 from .prepare import SHARE as PREPARE_SHARE
@@ -34,7 +36,7 @@ class EdgeProvider:
         self.client = client or edge.EdgeClient()
 
     def voices(self) -> list[Voice]:
-        return [Voice(f"edge:{code}", name, "edge", True, code == edge.DEFAULT_VOICE) for code, name in edge.VOICES]
+        return [Voice(f"edge:{code}", name, "edge", True, code == edge.DEFAULT_VOICE, gender=gender) for code, name, gender in edge.VOICES]
 
     def synthesize(self, text: str, native_voice: str) -> Synthesis:
         return self.client.synthesize(text, native_voice)
@@ -55,17 +57,25 @@ class DeviceProvider:
         return windows.synthesize(self.folder, native_voice, text)
 
 
+def keyed_providers(keys: KeyStore) -> list[KeyedProvider]:
+    """Giọng dùng khoá của người dùng (byok.py), Azure đứng đầu: nhà chính thức của chính các giọng Edge."""
+    return [azure.AzureProvider(keys), google.GoogleProvider(keys), fpt.FptProvider(keys), viettel.ViettelProvider(keys)]
+
+
 class ReadAloud:
-    """`vieneu_locate`: nơi mô-đun "Giọng VieNeu" đặt các phần (webui/vieneu_module.installed) - có thì thêm giọng VieNeu vào danh sách."""
+    """`keys`: kho khoá của giọng dùng khoá riêng - có thì (khi `providers` để trống) các giọng ấy xếp sau Edge, trước giọng của máy.
+    `vieneu_locate`: nơi mô-đun "Giọng VieNeu" đặt các phần (webui/vieneu_module.installed) - có thì thêm giọng VieNeu vào danh sách;
+    `rtf`: tốc độ tự đo của giọng (để "Làm trước" ước thời gian)."""
 
     def __init__(self, folder: Path | str, providers: list[Provider] | None = None, *, limit: int | None = None,
-                 vieneu_locate: Callable[[], vieneu.Installed | None] | None = None,
+                 keys: KeyStore | None = None, vieneu_locate: Callable[[], vieneu.Installed | None] | None = None,
                  rtf: Callable[[str], float | None] = lambda _voice: None) -> None:
         self.folder = Path(folder)
         kwargs = {} if limit is None else {"limit": limit}
         self.cache = ClipCache(self.folder, **kwargs)
-        self.providers: dict[str, Provider] = {provider.id: provider for provider in (
-            providers if providers is not None else [EdgeProvider(), DeviceProvider(self.folder / "tools")])}
+        if providers is None:
+            providers = [EdgeProvider(), *(keyed_providers(keys) if keys is not None else []), DeviceProvider(self.folder / "tools")]
+        self.providers: dict[str, Provider] = {provider.id: provider for provider in providers}
         self.vieneu = vieneu.VieneuProvider(vieneu_locate) if vieneu_locate is not None else None
         if self.vieneu is not None:
             self.providers[self.vieneu.id] = self.vieneu
@@ -91,15 +101,48 @@ class ReadAloud:
         for provider in self.providers.values():
             for voice in provider.voices():
                 listed.append({"id": voice.id, "name": voice.name, "provider": voice.provider, "online": voice.online,
-                               "default": voice.default, "language": voice.language, "gain_db": loudness.gain_db(voice.id)})
+                               "default": voice.default, "language": voice.language, "gender": voice.gender,
+                               "gain_db": loudness.gain_db(voice.id)})
         return listed
 
     def _resolve(self, voice_id: str) -> tuple[Provider, str]:
         name, _, native = voice_id.partition(":")
         provider = self.providers.get(name)
         if provider is None or not native or not any(voice.id == voice_id for voice in provider.voices()):
+            if isinstance(provider, KeyedProvider) and native:
+                # Khoá vừa bị từ chối / bị gỡ: lý do "auth" để trình phát đọc tạm đoạn này bằng giọng kế thay vì dừng.
+                raise VoiceError(f"Khoá {provider.name} chưa dùng được - kiểm tra lại trong Cài đặt.", "auth")
             raise VoiceError("Giọng này không có trên máy.", "voice")
         return provider, native
+
+    # ---- giọng dùng khoá của người dùng (Cài đặt "Giọng trực tuyến dùng khóa của bạn") ------------------------------------------------
+
+    def keyed(self, provider_id: str) -> KeyedProvider:
+        provider = self.providers.get(provider_id)
+        if not isinstance(provider, KeyedProvider):
+            raise KeyError(provider_id)
+        return provider
+
+    def online_providers(self) -> list[dict[str, Any]]:
+        return [provider.describe() for provider in self.providers.values() if isinstance(provider, KeyedProvider)]
+
+    def set_key(self, provider_id: str, key: str, region: str = "") -> dict[str, Any]:
+        """Lưu khoá (+ vùng). `key` rỗng = giữ khoá đã lưu, chỉ đổi vùng (giao diện không bao giờ có lại khoá thật). Chưa có khoá -> ValueError."""
+        provider = self.keyed(provider_id)
+        key = key.strip() or str(provider.keys.get(provider_id).get("key") or "")
+        if not key:
+            raise ValueError("Thiếu khoá")
+        provider.keys.put(provider_id, key, region)
+        return provider.describe()
+
+    def remove_key(self, provider_id: str) -> dict[str, Any]:
+        provider = self.keyed(provider_id)
+        provider.keys.remove(provider_id)
+        return provider.describe()
+
+    def check_key(self, provider_id: str) -> dict[str, Any]:
+        provider = self.keyed(provider_id)
+        return {**provider.check(), "provider": provider.describe()}
 
     def clip(self, voice_id: str, text: str, *, cached_only: bool = False, background: bool = False) -> dict[str, Any]:
         """Clip của `text` bằng `voice_id`: `{file, duration_ms, words}` (từ bộ đệm hay đọc mới). `cached_only`: không đọc mới - chưa có thì `VoiceError("uncached")`.
