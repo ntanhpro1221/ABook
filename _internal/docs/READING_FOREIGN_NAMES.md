@@ -131,11 +131,13 @@ nhận được; viết Việt hoá "Rô-dơ", "Mai-cơ" lại bị nghe thành 
 
 **Phán quyết của chủ sách (04-10) cho dạng Việt hoá** — đứng trên các nguồn viết bên dưới, cố định:
 game → gêm (viết ghêm), level → le-vờ / le-vồ, maple → máp-pồ, Michael → mai-cồ, Kate → ca-tê.
-- Âm tiết cuối do phụ âm cuối tách ra (schwa) mang thanh HUYỀN, không phải ngang như dạng viết của sách báo (Oa-sinh-tơn): -əl (l
-  tối) → "ồ" (máp-pồ, mai-cồ, le-vồ; le-vờ cũng được); các phụ âm khác → "ờ" (analogy, chưa có ca chủ sách).
-- l cuối của -əl bỏ (không thành "n" như Oa-sinh-tơn): mai-cồ, không "mai-cơn".
+- Chủ sách xác nhận dạng sách báo Oa-sinh-tơn, Ê-đi-xơn là ĐÚNG: schwa + phụ âm cuối hợp lệ (n, m, ng) giữ phụ âm cuối, thanh ngang
+  (tơn, xơn; game → gêm).
+- Thanh HUYỀN chỉ ở âm tiết schwa MỞ sinh ra vì phụ âm cuối không đứng được cuối âm tiết Việt: -əl (l tối) → "ồ", l bỏ (máp-pồ,
+  mai-cồ, le-vồ; le-vờ cũng được); phụ âm khác → "ờ" (analogy, chưa có ca chủ sách).
 - Âm tiết khép trước đó giữ sắc theo luật 1 (máp).
-- Kate → ca-tê: đọc theo chữ viết, không theo âm vị /keɪt/. Chưa rõ đây là luật cho mọi tên ngắn hay riêng ca này; ghi thành ca cố định.
+- Kate → ca-tê: chủ sách "dễ nghe hơn là 'kết'" - tránh âm tiết khép tắc mang sắc nghe gắt ở tên ngắn, đọc mở theo mặt chữ. Tên ngắn
+  khác cùng dạng (phụ âm tắc + e câm: Jake, Pete, Luke, Mike) là điểm MỞ, chưa suy rộng.
 
 - Đi qua âm vị (từ điển phát âm CMU / IPA), không đi theo chữ viết.
 - Áp luật chung mục 1 và các dạng đã có trong sách giáo khoa / báo chính thống (Oa-sinh-tơn, Niu Oóc, Ê-đi-xơn, Sếch-xơ-pia,
