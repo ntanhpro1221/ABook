@@ -42,7 +42,7 @@ import { usePlayListenBook, useNextVolume } from "./LibraryScreen";
 import { canPlay, seriesOf, type Bookmark, type ListenChapter, type Script } from "./model";
 import { EDIT_BOOKMARK_EVENT, SKIP_SECONDS, SPEEDS, useNowPlaying, usePlayer } from "./player";
 import { SLEEP_CHOICES, sleepLabel, sleepLeftMs, sleepSpoken } from "./sleep";
-import { ONLINE_NOTICE, chooseVoice, chosenVoice, resolveVoice } from "./readAloudVoice";
+import { chooseVoice, chosenVoice, onlineNotice, resolveVoice } from "./readAloudVoice";
 import { chapterScriptQuery, useChapterScript, useListenBook, useListenMutations, useReadAloudVoices, useSource } from "./source";
 
 export function speedLabel(rate: number): string {
@@ -338,7 +338,7 @@ export function VoiceMenu() {
           </Popover.Close>
         ))}
       </div>
-      {current?.online && <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{ONLINE_NOTICE}</p>}
+      {current?.online && <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{onlineNotice(current)}</p>}
     </MenuShell>
   );
 }
