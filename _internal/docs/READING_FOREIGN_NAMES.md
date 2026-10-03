@@ -80,7 +80,7 @@ Hệ quả: ABook phải tự chọn một quy ước, neo vào nguồn chính t
 | h, b, p, m, n, r | h, b, p, m, n, r | Có nguồn | Ha-kô-ne, Mô-ri |
 | fu | phu | Chủ sách | "Fukushima => phu-cu-si-ma"; SGK Phu-cu-ô-ca |
 | w (wa) | oa | Có nguồn | Ca-oa-xa-ki, Bi-oa, Tô-ku-ga-oa |
-| ya, yu, yo (đầu từ và giữa từ) | **gia, giu, giô**; **ya cuối từ sau nguyên âm**: y thành bán âm cuối của âm tiết trước + a riêng (**may-a, cay-a, xây-a**); yu / yo cuối từ cùng cách (May-u, Xay-ô: analogy `analogy:y_final`) | **Chủ sách** | Chủ sách 04-10 (lần 2): "Yamato => Gia-ma-tô", "Ayaka => A-gia-ca". yu, yo theo ya (cờ `analogy:y_gi`). Thay dạng SGK Ya-ma-tô, I-ô-cô-ha-ma. Lần 5: "Maaya => may-a", "Maya => may-a", "Kaya => cay-a", "Seiya => xây-a (alt xay-a)"; Ayaka, Yamato vẫn gia. Hai nguyên âm rồi ya mà vần không thành (Kouya, Raiya) còn mở: cờ `open:y_after_vowel_pair` |
+| ya, yu, yo (đầu từ và giữa từ) | **gia** (chủ sách); giu, giô (analogy, CHƯA có ca chủ sách); **ya cuối từ sau nguyên âm**: y thành bán âm cuối của âm tiết trước + a riêng (**may-a, cay-a, xây-a**); yu / yo cuối từ cùng cách (May-u, Xay-ô: analogy `analogy:y_final`) | **Chủ sách** | Chủ sách 04-10 (lần 2): "Yamato => Gia-ma-tô", "Ayaka => A-gia-ca". yu, yo theo ya (cờ `analogy:y_gi`). Thay dạng SGK Ya-ma-tô, I-ô-cô-ha-ma. Lần 5: "Maaya => may-a", "Maya => may-a", "Kaya => cay-a", "Seiya => xây-a (alt xay-a)"; Ayaka, Yamato vẫn gia. Hai nguyên âm rồi ya mà vần không thành (Kouya, Raiya) còn mở: cờ `open:y_after_vowel_pair` |
 | kyo, ryo, nyo… | ki-ô, ri-ô, ni-ô (kyou, ryou → ki-âu, ri-âu: xem dòng ou) | Có nguồn | Ki-ô-tô (CTST) |
 | n âm tiết | n khép âm tiết trước | Có nguồn | Hôn-su, Can-tô, Sin-dô |
 | phụ âm đôi kk, pp, tt, ss | khép âm tiết trước bằng c / p / t + thanh sắc | Có nguồn | Hốc-cai-đô, Xáp-pô-rô |
@@ -93,7 +93,7 @@ tố khác áp cùng cách]
 **Phán quyết của chủ sách (04-10)** — đứng trên mọi nguồn, cố định, không quét; mỗi cái là một ca kind `owner` trong
 `tests/romanization_evidence.py` và test phải khớp:
 - Lần 1: Fukushima → Phu-cu-si-ma; Haruto-kun → Ha-ru-tô-cun (u → u ở mọi chỗ, fu → phu, tsu → chu, hậu tố nối gạch).
-- Lần 2: Yamato → Gia-ma-tô, Ayaka → A-gia-ca (y + nguyên âm → gi: ya gia, yu giu, yo giô); Rei → Rây, sensei → xen-xây (ei → ây);
+- Lần 2: Yamato → Gia-ma-tô, Ayaka → A-gia-ca (y + nguyên âm → gi: ya gia; yu giu, yo giô là suy theo ya, chưa có ca chủ sách); Rei → Rây, sensei → xen-xây (ei → ây);
   Hajime → Ha-gi-me, Kenji → Ken-gi (e → e, không ê; ge → ghe, ke → ke). Giữ: s → x, sh → s, ji → gi, u → u, tsu → chu, -kun → cun nối gạch.
   Âm vòm kya / kyo / ryo… giữ như cũ (Ki-ô-cô, Ri-ô-ma).
 - Lần 4 (Nhật): Onee-san → o-ne-xan, Onii-chan → o-ni-chan, Okaa-san → o-ca-xan (alt ô-), Ojii-san → o-gi-xan (alt ô-), Osaka → o-xa-ca (alt ô-xa-ca) (o không phụ âm đầu → o,
