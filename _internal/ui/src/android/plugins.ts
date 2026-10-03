@@ -77,6 +77,8 @@ export interface EbookPlayerPlugin {
     schedule?: { from: string; to: string; minutes: number } | null;
     /** Giọng đọc của "Nghe ngay" (mã giọng của ReadAloud.voices); "" = giọng mặc định của máy. */
     readAloudVoice?: string;
+    /** Cuốn của `readAloudVoice`: lõi nhớ giọng ấy cho cuốn ấy (ReadAloud.chooseFor); không có thì cuốn đang nạp. */
+    readAloudBook?: string;
   }): Promise<NativeState>;
   lastNight(): Promise<{ session: BedtimeSession | null }>;
   dismissLastNight(): Promise<void>;
