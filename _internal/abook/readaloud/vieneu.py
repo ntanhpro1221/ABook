@@ -15,8 +15,10 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import re
 import threading
 import time
+import unicodedata
 import wave
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -33,6 +35,15 @@ MIN_UNIT_CHARS = 20
 SENTENCE_END = ".!?…"
 PHRASE_END = ",;:"
 CLOSERS = "\"'”’)]»"
+OPENERS = "\"'“‘([«"
+ROMAN = re.compile(r"X{0,3}(?:IX|IV|V?I{0,3})")  # I..XXXIX (chuỗi rỗng khớp, bị loại riêng)
+_ROMAN_VALUE = {"I": 1, "V": 5, "X": 10}
+_DIGITS = ("", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín")
+# Số La Mã MỘT chữ (I, V, X) hay là chữ cái ("ông X", "tia X", "điểm V"): chỉ đọc thành số sau danh từ đánh số (hay tên riêng viết hoa kép: "Louis X").
+NUMBERED_NOUNS = frozenset(unicodedata.normalize("NFC", word) for word in (
+    "chương", "phần", "tập", "quyển", "hồi", "mục", "khoá", "khóa", "lớp", "cấp", "hạng", "bậc", "đệ", "đời", "kỳ", "kì", "số", "bài", "điều",
+    "khoản", "chặng", "vòng", "màn", "cảnh", "tầng"))
+NUMBERED_PAIRS = frozenset(unicodedata.normalize("NFC", pair) for pair in ("thế kỷ", "thế kỉ", "thế chiến"))
 ALIGN_RATE = 16_000
 BENCH_TEXT = "Chiếc thuyền nhỏ trôi chậm giữa dòng sông, mang theo những mùa hè đã xa. Trời hôm nay đẹp quá."
 
@@ -57,6 +68,67 @@ class Unit:
 
     def text(self, toks: list[str]) -> str:
         return " ".join(toks[self.first:self.last + 1])
+
+
+def roman_value(core: str) -> int | None:
+    """Số La Mã viết HOA hợp lệ I..XXXIX (đúng chuẩn: không IIII, VX...), None nếu `core` không phải."""
+    if not core or not ROMAN.fullmatch(core):
+        return None
+    total = 0
+    for index, letter in enumerate(core):
+        value = _ROMAN_VALUE[letter]
+        total += -value if index + 1 < len(core) and _ROMAN_VALUE[core[index + 1]] > value else value
+    return total
+
+
+def vietnamese_number(value: int) -> str:
+    """1..39 thành chữ: mười bốn, mười lăm, hai mươi mốt, hai mươi lăm, ba mươi."""
+    tens, ones = divmod(value, 10)
+    head = "" if tens == 0 else "mười" if tens == 1 else f"{_DIGITS[tens]} mươi"
+    tail = "" if ones == 0 else "lăm" if ones == 5 and tens else "mốt" if ones == 1 and tens > 1 else _DIGITS[ones]
+    return f"{head} {tail}".strip()
+
+
+def _word(token: str) -> str:
+    return unicodedata.normalize("NFC", token.lstrip(OPENERS).rstrip(CLOSERS))
+
+
+def _capitalised(word: str) -> bool:
+    return word.isalpha() and word[0].isupper()
+
+
+def numbered_by(toks: list[str], index: int) -> bool:
+    """Từ đứng trước `toks[index]` có đánh số được không: danh từ đánh số ("chương", "thế kỷ"...) hay hai tên riêng viết hoa liền nhau ("Louis X")."""
+    before = _word(toks[index - 1]) if index >= 1 else ""
+    if before.lower() in NUMBERED_NOUNS:
+        return True
+    earlier = _word(toks[index - 2]) if index >= 2 else ""
+    if f"{earlier} {before}".lower() in NUMBERED_PAIRS:
+        return True
+    return _capitalised(before) and _capitalised(earlier)
+
+
+def spoken_tokens(toks: list[str]) -> list[str]:
+    """Chữ hiện -> chữ đem đọc (biến đổi để đọc, chữ hiện không đổi): số La Mã HOA hợp lệ (I..XXXIX) đứng riêng sau một từ ("Phổ thông II",
+    "Chương IV", "Thế chiến II") hay làm đề mục đầu đoạn ("I. Mở đầu") thì đọc thành số tiếng Việt - bộ chuẩn hoá của sea-g2p chỉ biết
+    "Benedict III", còn "thông II" nó đọc "i i". Số MỘT chữ (I, V, X) chỉ khi từ trước đánh số được (`numbered_by`): "ông X", "tia X", "điểm V" là chữ cái.
+    Giữ nguyên "I am" đầu câu, chữ "I" sau dấu câu và các viết tắt (CV, MC, VIP)."""
+    out = list(toks)
+    for index, token in enumerate(toks):
+        core = token.lstrip(OPENERS).rstrip(CLOSERS + ".,;:!?…")
+        value = roman_value(core)
+        if value is None:
+            continue
+        if index == 0:  # đề mục "I. Mở đầu": số có dấu chấm / ngoặc ngay sau và còn chữ theo sau
+            if len(toks) < 2 or token.lstrip(OPENERS)[len(core):] not in (".", ")"):
+                continue
+        else:  # sau một từ có chữ thường, không dính dấu câu (sau dấu câu là chữ "I" của câu mới); hay nối tiếp số La Mã vừa đọc ("Mục II, III")
+            before = toks[index - 1].lstrip(OPENERS).rstrip(CLOSERS)
+            if out[index - 1] == toks[index - 1]:
+                if not (before.isalpha() and any(c.islower() for c in before)) or (len(core) == 1 and not numbered_by(toks, index)):
+                    continue
+        out[index] = token.replace(core, vietnamese_number(value), 1)
+    return out
 
 
 def _ends(token: str, marks: str) -> bool:
@@ -95,6 +167,7 @@ def units(text: str, max_chars: int) -> tuple[list[str], list[Unit]]:
     toks = tokens(text)
     if not toks:
         return toks, []
+    said = spoken_tokens(toks)
     pieces: list[tuple[int, int]] = []
     for first, last in _groups(toks, 0, len(toks) - 1, SENTENCE_END):
         if _length(toks, first, last) <= max_chars:
@@ -109,9 +182,9 @@ def units(text: str, max_chars: int) -> tuple[list[str], list[Unit]]:
     for first, last in pieces:  # gói câu vào khúc như vieneu (pack_sentences_into_chunks)
         if result and _length(toks, result[-1].first, last) <= max_chars:
             result[-1].last = last
-            result[-1].pieces.append(" ".join(toks[first:last + 1]))
+            result[-1].pieces.append(" ".join(said[first:last + 1]))
         else:
-            result.append(Unit(first, last, [" ".join(toks[first:last + 1])]))
+            result.append(Unit(first, last, [" ".join(said[first:last + 1])]))
     while len(result) > 1:  # khúc quá ngắn gộp vào khúc kề ngắn hơn (bằng nhau: khúc sau)
         short = [i for i, unit in enumerate(result) if _length(toks, unit.first, unit.last) < MIN_UNIT_CHARS]
         if not short:
