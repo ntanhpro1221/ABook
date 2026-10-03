@@ -35,7 +35,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - **Nghe ngay: máy đọc to sách chỉ có chữ, chữ đang đọc sáng lên (máy tính và điện thoại)**: sách vừa thêm từ file có nút "Nghe ngay" -
   không cần phân tích hay cài thêm gì. Giọng mặc định là Hoài My của Microsoft Edge (cần mạng; có thêm giọng Nam Minh), lần đầu dùng app
-  nói rõ chữ của đoạn đang đọc được gửi tới Microsoft; mất mạng thì đoạn ấy chuyển sang giọng của máy (Windows hay Android) mà không dừng.
+  hỏi trước khi chữ của đoạn đang đọc được gửi tới Microsoft (kể cả khi chương có audio vừa hết và sắp tự sang một chương chỉ có chữ: app
+  đứng ở đầu chương ấy chờ bạn bấm phát); mất mạng thì đoạn ấy chuyển sang giọng của máy (Windows hay Android) mà không dừng.
   Màn đọc sáng đoạn và từng chữ đang đọc như "Đọc to" của Edge; bấm vào chữ nào thì đọc từ đúng chữ ấy. Đọc trước vài đoạn nên không
   phải chờ giữa các đoạn, đoạn đã đọc được giữ lại để nghe lại không cần mạng. Tốc độ, hẹn giờ ngủ, nhớ chỗ đang nghe như
   sách nói; trên điện thoại tắt màn hình vẫn đọc tiếp và tự sang chương sau, điều khiển được ở màn hình khoá và tai nghe.
