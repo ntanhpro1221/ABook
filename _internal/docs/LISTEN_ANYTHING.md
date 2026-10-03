@@ -101,8 +101,8 @@ Text is never auto-edited (owner rule): cleanup proposals (e.g. a credit line) a
 
 | Voice | Download | Network | Notes |
 |---|---|---|---|
-| the device's own TTS | none | no | default. Android `TextToSpeech` (Google vi-VN); Windows SAPI/OneCore (vi-VN voice "An" needs the Vietnamese speech pack) |
-| Edge TTS | none | yes | Microsoft neural vi-VN voices (HoaiMy, NamMinh) through Edge's read-aloud service; unofficial, may stop working - opt-in, falls back to the device voice |
+| Edge TTS | none | yes | default (owner 03-10). Microsoft neural vi-VN voices (HoaiMy, NamMinh) through Edge's read-aloud service; offline or failing -> that paragraph falls back to the device voice without stopping |
+| the device's own TTS | none | no | offline voice. Android `TextToSpeech` (Google vi-VN); Windows OneCore (vi-VN voice "An" needs the Vietnamese speech pack) |
 | VieNeu module | yes | no | best quality, several voices; a module like "Phân tích nhạc" (versioned pins, download on tap) |
 
 Online voices (owner 03-10: "đọc ngay, cần mạng" is its own group; Edge TTS is what the owner already uses):
@@ -139,6 +139,16 @@ Device choice (owner 03-10: never force CPU when a GPU is there), picked automat
 - No GPU: CPU (numbers above).
 - Phone: CPU with ARM-optimised kernels (XNNPACK). Try NNAPI/QNN if they help, but expect to rely on CPU. Measure on a real phone.
 
+How it is built (Lead 03-10): every voice does one thing - turn ONE paragraph of the text script (`textScript.ts`
+`paragraphsOf`) into one audio clip at speed 1.0 plus `words` (one [start_ms, end_ms] per whitespace token, the
+`words.ts` convention). The player strings clips into a virtual chapter clock (unknown paragraphs estimated at ~14
+chars/s, corrected as clips arrive) and writes the timings into the chapter's text script, so the reading view lights
+the paragraph and the word with no special case. Speed is the player's playback rate, never re-synthesis, so cached
+clips stay valid. Desktop: voices run in the local server (`abook/readaloud/`, stdlib WebSocket client for Edge, OneCore
+through PowerShell for the device voice), the web player plays the clips. Phone: voices run in the native core (Edge
+client + `TextToSpeech.synthesizeToFile` with `onRangeStart` frames), so reading goes on with the screen off and across
+chapters like an audiobook; the reading view asks the `ReadAloud` plugin for timings.
+
 Read-aloud runs a little ahead of the listener (sentence queue, like video buffering), caches what it read as quick audio
 in the book, and a phone without a voice engine can stream it from a paired computer (existing stream path).
 
@@ -148,6 +158,9 @@ Listen now reuses the existing reading mode (`ui/src/listen/ReaderScreen.tsx`: c
 sentence lit and followed, "Nghe từ đây" on a tapped sentence, remembered position). New: the current WORD lit too, as Edge
 does, where the voice gives word timings - Edge TTS (WordBoundary events with offsets), the device voice (Android
 `UtteranceProgressListener.onRangeStart`, Windows SAPI word events). Owner 03-10: word highlighting is REQUIRED for both Listen now and Studio audiobooks.
+Tap a word to read from it (owner 03-10, as Edge's Immersive Reader does): any word in the reading view is a start point,
+for Listen now and Studio audiobooks alike - seek to that word's start from `words`; a Listen-now paragraph not yet
+synthesized is made first, then played from the word's offset. No usable `words`: start at the line.
 - VieNeu gives no word timings (checked: v3nano's duration predictor returns one total duration per utterance). Two ways:
   (a) synthesize per phrase (split at punctuation) and spread each phrase's time over its syllables. Vietnamese
   syllables are fairly even, so this is good enough to look right, though sometimes one beat off.
