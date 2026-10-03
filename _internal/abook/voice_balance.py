@@ -218,16 +218,31 @@ def preset_pitch_st(preset: str, engine: str = DEFAULT_ENGINE) -> int:
     return constants_for(engine, engine_version(engine), preset, 1.0).pitch_st
 
 
-def castable_keys() -> Iterator[str]:
-    """Mọi khoá mà phân vai có thể tạo ra cho engine VieNeu: thang formant + formant theo tuổi.
+def balanced_preset_names() -> list[str]:
+    """Các preset VieNeu PHẢI có số trong bảng: phân vai được ∪ chọn được làm người kể.
 
-    Dùng chung cho test độ phủ và cho người nhập số: bảng phải có bản ghi cho từng khoá này.
+    Quang Sơn, Ngọc Trân (miền Trung) không phân vai nhưng vẫn là người kể chọn được; giọng Tin tức thì không ở đâu chọn được
+    nên không có bản ghi. Khi casting mở thêm giọng, giọng ấy phải được đo rồi mới vào bảng (test độ phủ sẽ đòi).
+    """
+    from .voice_catalog import casting_presets, narrator_presets
+
+    names: list[str] = []
+    for gender in ("male", "female"):
+        for preset in casting_presets(gender) + narrator_presets(gender):
+            if preset["name"] not in names:
+                names.append(preset["name"])
+    return names
+
+
+def castable_keys() -> Iterator[str]:
+    """Mọi khoá mà phân vai hay người kể có thể tạo ra cho engine VieNeu: thang formant + formant theo tuổi.
+
+    Dùng chung cho test độ phủ và cho người nhập số: bảng phải có bản ghi cho từng khoá này, và chỉ những khoá này.
     """
     from .voice_catalog import (
         GENDER_FEMALE,
         GENDER_MALE,
         GENDER_UNKNOWN,
-        VIENEU_PRESETS,
         VOCAL_TRACT_CM_BY_AGE,
         formant_ratio_for_age,
         formant_variants_for_preset,
@@ -235,8 +250,7 @@ def castable_keys() -> Iterator[str]:
 
     version = engine_version(DEFAULT_ENGINE)
     seen: set[str] = set()
-    for preset in VIENEU_PRESETS:
-        name = preset["name"]
+    for name in balanced_preset_names():
         ratios = list(formant_variants_for_preset(name))
         for age in VOCAL_TRACT_CM_BY_AGE:
             for gender in (GENDER_MALE, GENDER_FEMALE, GENDER_UNKNOWN):

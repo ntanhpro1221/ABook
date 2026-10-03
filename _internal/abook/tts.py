@@ -134,6 +134,9 @@ WORLD_FRAME_PERIOD_MS = 5.0
 WORLD_F0_FLOOR_HZ = 55.0
 WORLD_F0_CEIL_HZ = 600.0
 WORLD_MIN_VOICED_FRAMES = 3
+# pyworld.harvest trên vài mẫu làm hỏng heap native và GIẾT cả tiến trình (Windows 0xc0000374), không ném lỗi: đo 04-10, 2 mẫu
+# sập, 50 mẫu chạy. Không câu nói thật nào ngắn hơn 10 ms; bản ngắn thế để nguyên cho cổng "audio too short" loại.
+WORLD_MIN_SECONDS = 0.010
 VOICE_VARIANT_PITCH_FLOOR_HZ = 60.0
 VOICE_VARIANT_PITCH_CEILING_HZ = 600.0
 VOICE_VARIANT_PEAK_CEILING = 0.98
@@ -222,7 +225,7 @@ def apply_pitch_variant(
     array = np.asarray(audio, dtype=np.float32).reshape(-1)
     steps = int(pitch_semitones)
     ratio = float(formant_ratio)
-    if (steps == 0 and abs(ratio - 1.0) <= 1e-6) or array.size == 0:
+    if (steps == 0 and abs(ratio - 1.0) <= 1e-6) or array.size < WORLD_MIN_SECONDS * sample_rate:
         return array
     if not FORMANT_RATIO_MIN <= ratio <= FORMANT_RATIO_MAX:
         raise ValueError(
@@ -290,7 +293,7 @@ def apply_speed_change(audio: Any, sample_rate: int, speed: float) -> np.ndarray
     """
     array = np.asarray(audio, dtype=np.float32).reshape(-1)
     speed = float(speed)
-    if abs(speed - 1.0) <= 1e-6 or array.size == 0:
+    if abs(speed - 1.0) <= 1e-6 or array.size < WORLD_MIN_SECONDS * sample_rate:
         return array
     if not SPEED_FACTOR_MIN <= speed <= SPEED_FACTOR_MAX:
         raise ValueError(f"speed factor {speed} is outside [{SPEED_FACTOR_MIN}, {SPEED_FACTOR_MAX}]")
