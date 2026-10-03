@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { askOnlineConsent, needsOnlineConsent, onlineConsentGiven, onlinePromptText, pendingConsent, spokenVoiceName } from "./onlineConsent";
+import { askOnlineConsent, chooseVoiceText, needsOnlineConsent, onlineConsentGiven, onlinePromptText, pendingConsent, spokenVoiceName } from "./onlineConsent";
 import type { ReadAloudVoice } from "./readAloud";
 
 const store = new Map<string, string>();
@@ -36,6 +36,15 @@ describe("hỏi trước khi gửi chữ cho giọng trực tuyến", () => {
     const banMai = onlinePromptText({ name: "Ban Mai", provider: "fpt" });
     expect(banMai).toContain("khóa FPT.AI của bạn");
     expect(banMai).toContain("tính tiền vào tài khoản của bạn");
+  });
+
+  it("bước 'Chọn giọng đọc' chỉ nói 'không gửi chữ' khi danh sách có giọng của máy", () => {
+    expect(chooseVoiceText(voices, hoaiMy)).toContain("không gửi chữ đi đâu");
+    expect(chooseVoiceText(voices, hoaiMy)).toContain("gửi tới Microsoft");
+    const onlineOnly = chooseVoiceText([hoaiMy, namMinh], hoaiMy);
+    expect(onlineOnly).not.toContain("không gửi chữ");
+    expect(onlineOnly).toBe(onlinePromptText(hoaiMy));
+    expect(chooseVoiceText([device], device)).toContain("không gửi chữ đi đâu");
   });
 
   it("'Nghe' nhớ đồng ý cho nhà cung cấp ấy - không bao giờ hỏi lại", async () => {

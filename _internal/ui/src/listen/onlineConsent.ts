@@ -64,6 +64,16 @@ export function onlinePromptText(voice: Pick<ReadAloudVoice, "name" | "provider"
     : `Giọng ${name} là giọng trực tuyến: chữ của đoạn đang đọc được gửi tới dịch vụ ngoài để đọc.`;
 }
 
+/** Lời trong bước "Chọn giọng đọc": đúng với danh sách đang hiện - chỉ nói "không gửi chữ" khi trong đó có giọng chạy trên máy,
+ *  còn giọng trực tuyến thì nói rõ chữ được gửi tới đâu (cùng lời với hộp hỏi). `current`: giọng đang được hỏi. */
+export function chooseVoiceText(voices: readonly Pick<ReadAloudVoice, "online">[], current: Pick<ReadAloudVoice, "name" | "provider">): string {
+  const hasLocal = voices.some((item) => !item.online);
+  const hasOnline = voices.some((item) => item.online);
+  const local = "Giọng của máy đọc ngay trên máy này, không gửi chữ đi đâu.";
+  if (!hasOnline) return local;
+  return hasLocal ? `${local} ${onlinePromptText(current)}` : onlinePromptText(current);
+}
+
 // ---- hộp hỏi đang mở (một lúc một hộp) -------------------------------------------------------------------------
 
 export interface ConsentRequest {

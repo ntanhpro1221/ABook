@@ -67,6 +67,7 @@ export const httpSource: ListenSource = {
     if ("cached" in clip) throw new ReadAloudError("Chưa đọc đoạn này.", clip.reason || "uncached");
     return { url: mediaUrl(clip.url), durationMs: clip.duration_ms, words: clip.words } satisfies ReadAloudClip;
   },
+  readAloudSample: async (voice, text) => (await httpSource.readAloudClip!(voice, text)).url,
   // Máy chủ nhận chữ từng đoạn, chia đúng như trình phát (cùng khoá bộ đệm với lúc nghe).
   readAloudPrepare: async ({ voice, bookId, chapters, label }) => {
     const texts = await paragraphsFor(chapters, (id) => httpSource.chapterText(bookId, id));

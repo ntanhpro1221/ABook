@@ -22,6 +22,7 @@ import {
   RotateCw,
   SkipBack,
   SkipForward,
+  Square,
   Text,
   Trash2,
   TriangleAlert,
@@ -37,21 +38,23 @@ import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import { useMediaQuery } from "@/shared/media";
-import { excerpt, formatClock, formatLength, formatPercent, formatWhen, licenseLabel, spokenClock } from "@/shared/format";
+import { excerpt, formatClock, formatLength, formatWhen, licenseLabel, spokenClock } from "@/shared/format";
 import { IconButton, Tooltip, Vu } from "@/shared/ui";
 import { useClock, useClockReader, useDuration, usePlaybackSecond } from "./clock";
 import { usePlayListenBook, useNextVolume } from "./LibraryScreen";
 import { canPlay, seriesOf, type Bookmark, type ListenChapter, type Script } from "./model";
 import { EDIT_BOOKMARK_EVENT, SKIP_SECONDS, SPEEDS, useNowPlaying, usePlayer } from "./player";
 import { SLEEP_CHOICES, sleepLabel, sleepLeftMs, sleepSpoken } from "./sleep";
+import { useVoiceSample } from "./VoiceSettings";
+import { genderLabel, groupedVoices, voiceSections } from "./voiceGroups";
 import { chooseVoice, chosenVoice, isNoOfflineVoice, onlineNotice, resolveVoice } from "./readAloudVoice";
-import { nextChapterLabel, PREPARING_VOICE, textChapterLine, toggleLabel } from "./labels";
+import { bookProgressText, nextChapterLabel, PREPARING_VOICE, textChapterLine, toggleLabel } from "./labels";
 import { spokenVoiceName } from "./onlineConsent";
 import { PlaylistOptionLabel, playlistNote, usePlaylistChoice } from "./PlaylistChoice";
 import { JumpToPlaying, ReadAlongText, sentenceIndexAt, useFollowVoice, useListenFrom, usePlayingSentence } from "./ReadAlongText";
 import { canPrepare, planLabel, PREPARE_STATUS_KEY, prepareIntro, prepareLabel, readyChapterIds, upcomingTextChapters, type PrepareStatus } from "./prepareAhead";
 import type { ReadAloudVoice } from "./readAloud";
-import { chapterScriptQuery, useChapterScript, useListenBook, useListenMutations, useReadAloudVoices, useSource } from "./source";
+import { chapterScriptQuery, useChapterScript, useListenBook, useLastNight, useListenMutations, useReadAloudVoices, useSource } from "./source";
 
 export function speedLabel(rate: number): string {
   return `${rate.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}×`;
@@ -335,7 +338,7 @@ function MusicMenuFor({ bookId }: { bookId: string }) {
               aria-pressed={option.id === chosen}
               onClick={() => choose(option.id)}
               className={cn(
-                "flex min-h-9 items-center gap-2 rounded-lg px-2 py-1 text-left text-sm hover:bg-hover disabled:opacity-50",
+                "flex min-h-9 shrink-0 items-center gap-2 rounded-lg px-2 py-1 text-left text-sm hover:bg-hover disabled:opacity-50",
                 option.id === chosen ? "bg-accent-soft font-semibold text-accent-text" : "text-fg",
               )}
             >
@@ -352,12 +355,31 @@ function MusicMenuFor({ bookId }: { bookId: string }) {
 
 /** Giọng đọc của "Nghe ngay" (chương chỉ-có-chữ đang nghe): chọn nhớ riêng cho cuốn này và làm giọng chung cho cuốn khác; đổi giữa chừng
  *  có hiệu lực từ đoạn kế. Không hiện khi đang nghe chương có audio. */
+/** Mở Cài đặt › Giọng đọc (nơi tải thêm giọng): đóng màn "Đang nghe" nếu đang mở, rồi cuộn tới mục giọng khi trang đã dựng xong. */
+function useOpenVoiceSettings() {
+  const navigate = useNavigate();
+  const { setExpanded } = useNowPlaying();
+  return useCallback(() => {
+    setExpanded(false);
+    navigate("/settings");
+    let tries = 0;
+    const reveal = () => {
+      const target = document.getElementById("voices");
+      if (target) target.scrollIntoView({ block: "start" });
+      else if (tries++ < 20) setTimeout(reveal, 50);
+    };
+    setTimeout(reveal, 0);
+  }, [navigate, setExpanded]);
+}
+
 export function VoiceMenu() {
   const { track, queue } = usePlayer();
   const source = useSource();
   const { data: voices } = useReadAloudVoices();
   const [chosen, setChosen] = useState("");
   const speaking = queue.find((chapter) => chapter.id === track?.chapterId)?.state === "text";
+  const sample = useVoiceSample((voiceId, text) => source.readAloudSample!(voiceId, text));
+  const openVoiceSettings = useOpenVoiceSettings();
   useEffect(() => setChosen(track ? chosenVoice(track.bookId) : ""), [track]);
   if (!track || !speaking || !voices?.length) return null;
   const current = resolveVoice(voices, chosen);
@@ -366,30 +388,66 @@ export function VoiceMenu() {
       label="Giọng đọc"
       // Tên giọng hiện cả trên điện thoại: người nghe thấy ngay giọng nào đang đọc, không chỉ một biểu tượng.
       trigger={<><AudioLines className="size-4" /><span className="max-w-24 truncate">{current ? spokenVoiceName(current.name) : ""}</span></>}
-      width="w-64"
+      width="w-80 max-w-[calc(100vw-1.5rem)]"
     >
       <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Giọng đọc · nhớ riêng cho cuốn này</div>
-      <div className="flex flex-col gap-0.5 p-1">
-        {voices.map((voice) => (
-          <Popover.Close asChild key={voice.id}>
-            <button
-              type="button"
-              aria-pressed={voice.id === current?.id}
-              onClick={() => {
-                chooseVoice(track.bookId, voice.id);
-                setChosen(voice.id);
-              }}
-              className={cn(
-                "flex h-9 items-center justify-between gap-2 rounded-lg px-2 text-left text-sm hover:bg-hover",
-                voice.id === current?.id ? "bg-accent-soft font-semibold text-accent-text" : "text-fg",
-              )}
-            >
-              <span className="truncate">{voice.name}</span>
-              <span className="shrink-0 text-xs font-normal text-fg-2">{voice.online ? "trực tuyến" : "của máy"}</span>
-            </button>
-          </Popover.Close>
+      {/* Cùng nhóm, cùng tên giọng với Cài đặt › Giọng đọc; "Thử" dùng cùng cách nghe thử. */}
+      <div className="max-h-[50vh] overflow-y-auto p-1">
+        {groupedVoices(voices).map((group) => (
+          <div key={group.provider} role="group" aria-label={group.title} className="mb-1.5">
+            <div className="px-2 pb-0.5 pt-1 text-[11px] font-semibold uppercase tracking-wider text-fg-3">{group.title}</div>
+            {voiceSections(group.voices).map((section) => (
+              <div key={section.label ?? ""}>
+                {section.label && <div className="px-2 pb-0.5 pt-1 text-xs font-medium text-fg-2">{section.label}</div>}
+                {section.voices.map(({ voice, shown }) => {
+                  const selected = voice.id === current?.id;
+                  const playing = sample.playing === voice.id;
+                  return (
+                    <div key={voice.id} className="flex items-center gap-1">
+                      <Popover.Close asChild>
+                        <button
+                          type="button"
+                          aria-pressed={selected}
+                          onClick={() => {
+                            chooseVoice(track.bookId, voice.id);
+                            setChosen(voice.id);
+                          }}
+                          className={cn(
+                            "flex min-h-9 min-w-0 flex-1 items-center gap-2 rounded-lg px-2 text-left text-sm hover:bg-hover max-sm:min-h-[44px]",
+                            selected ? "bg-accent-soft font-semibold text-accent-text" : "text-fg",
+                          )}
+                        >
+                          <span className="truncate">{shown}</span>
+                          {genderLabel(voice.gender) && <span className="shrink-0 text-xs font-normal text-fg-2">{genderLabel(voice.gender)}</span>}
+                        </button>
+                      </Popover.Close>
+                      {source.readAloudSample && (
+                        <button
+                          type="button"
+                          onClick={() => (playing ? sample.stop() : void sample.play(voice.id))}
+                          aria-label={`${playing ? "Dừng" : "Thử"} giọng ${voice.name}`}
+                          className="inline-flex h-9 shrink-0 items-center gap-1 rounded-lg px-2 text-xs font-medium text-fg-2 hover:bg-hover hover:text-fg max-sm:h-[44px]"
+                        >
+                          {sample.loading === voice.id ? <Loader2 className="size-3.5 animate-spin" /> : playing ? <Square className="size-3.5" /> : <Play className="size-3.5" />}
+                          {playing ? "Dừng" : "Thử"}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
         ))}
+        {sample.failed && <p className="px-2 pb-1 text-xs text-danger text-pretty">{sample.failed.message}</p>}
       </div>
+      <button
+        type="button"
+        onClick={openVoiceSettings}
+        className="flex min-h-9 w-full items-center rounded-lg px-3 text-left text-sm text-accent-text hover:bg-hover max-sm:min-h-[44px]"
+      >
+        Thêm giọng…
+      </button>
       {current?.online && <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{onlineNotice(current)}</p>}
       {current && canPrepare(current, Boolean(source.readAloudPrepareOnline)) && (
         <PrepareAhead voice={current} bookId={track.bookId} chapterId={track.chapterId} />
@@ -488,6 +546,8 @@ function PrepareAhead({ voice, bookId, chapterId }: { voice: ReadAloudVoice; boo
 export function SleepMenu() {
   const { sleep, setSleep, extendSleep, options, sleepStoppedAt, lastSleepMinutes, track } = usePlayer();
   const [custom, setCustom] = useState(lastSleepMinutes || 20);
+  // Thẻ "Tối qua" chỉ đáng nhắc khi người nghe đã từng có đêm nào được ghi lại (chưa có thì nhắc là nhắc một thứ họ chưa thấy bao giờ).
+  const hadNight = Boolean(useLastNight().data);
   const counting = sleep.kind === "minutes" && sleep.since !== null;
   const now = useTicker(counting);
   const active = sleep.kind !== "off";
@@ -596,19 +656,21 @@ export function SleepMenu() {
           </button>
         </Popover.Close>
       </div>
-      <Popover.Close asChild>
-        <button
-          type="button"
-          disabled={!track}
-          onClick={() => setSleep({ kind: "chapter" })}
-          className="flex h-9 w-full items-center rounded-lg px-2 text-sm hover:bg-hover disabled:opacity-40"
-        >
-          Hết chương này
-        </button>
-      </Popover.Close>
+      <div className="px-1 pb-1">
+        <Popover.Close asChild>
+          <button
+            type="button"
+            disabled={!track}
+            onClick={() => setSleep({ kind: "chapter" })}
+            className="h-9 w-full rounded-lg bg-hover text-sm font-medium hover:bg-line disabled:opacity-40"
+          >
+            Dừng khi hết chương này
+          </button>
+        </Popover.Close>
+      </div>
       <p className="px-2 pb-1 pt-2 text-xs leading-snug text-fg-2">
         Tiếng nhỏ dần {options.fadeSeconds} giây trước khi dừng. Lúc đó {EXTEND_GESTURE} để nghe thêm {options.extendMinutes} phút.
-        Sáng hôm sau, thẻ “Tối qua” giúp tìm lại đoạn còn nhớ.
+        {hadNight && " Sáng hôm sau, thẻ “Tối qua” giúp tìm lại đoạn còn nhớ."}
       </p>
     </MenuShell>
   );
@@ -860,7 +922,7 @@ function TrackSubtitle() {
  *  thay tên sách bằng chữ đỏ. Lời nhắn đã rơi sang giọng của máy (vẫn đang đọc) là một dòng trạng thái, tự ẩn. */
 function PlayerAlert({ className }: { className?: string }) {
   const { error, notice, resume } = usePlayer();
-  const navigate = useNavigate();
+  const openVoiceSettings = useOpenVoiceSettings();
   if (error) {
     // Mất mạng mà máy chưa có giọng đọc không cần mạng: chỉ cách xong thì đưa người nghe tới đúng chỗ tải giọng (Cài đặt › Giọng đọc).
     const noVoice = isNoOfflineVoice(error);
@@ -871,16 +933,7 @@ function PlayerAlert({ className }: { className?: string }) {
         {noVoice && (
           <button
             type="button"
-            onClick={() => {
-              navigate("/settings");
-              let tries = 0;
-              const reveal = () => {
-                const target = document.getElementById("voices");
-                if (target) target.scrollIntoView({ block: "start" });
-                else if (tries++ < 20) setTimeout(reveal, 50);
-              };
-              setTimeout(reveal, 0);
-            }}
+            onClick={openVoiceSettings}
             {...keepFocus}
             className="min-h-9 shrink-0 rounded-lg bg-panel px-3 text-xs font-semibold ring-1 ring-line hover:bg-hover max-sm:min-h-[44px]"
           >
@@ -1372,7 +1425,7 @@ function initialPanel(): Panel {
   return "text";
 }
 
-/** Tiến độ cả cuốn (phần đã có audio): "Cả cuốn 42% · còn 3 giờ 48 phút (2 giờ 32 phút ở 1,5×)". */
+/** Tiến độ cả cuốn (phần đã có audio): "Đã nghe 42% cả cuốn · còn khoảng 2 giờ 32 phút ở tốc độ 1,5×". */
 function BookProgressLine() {
   const { queue, track, rate } = usePlayer();
   const tens = useClock((time) => Math.floor(time / 10));
@@ -1392,11 +1445,9 @@ function BookProgressLine() {
   const heard = Math.min(total, before + tens * 10);
   // Sách chưa thu xong: "Cả cuốn 99%" đọc như sắp hết truyện (soát UX 29-09) - đó là phần đã có.
   const whole = queue.every((chapter) => chapter.available);
-  const left = Math.max(0, total - heard);
   return (
     <p className="tabular mt-1 text-xs text-fg-2">
-      {whole ? "Cả cuốn" : "Phần đã có"} {formatPercent(heard / total)} · còn {formatLength(left)}
-      {rate !== 1 && left > 60 ? ` (${formatLength(left / rate)} ở ${speedLabel(rate)})` : ""}
+      {bookProgressText({ whole, heard, total, rate, speed: speedLabel(rate) })}
     </p>
   );
 }
