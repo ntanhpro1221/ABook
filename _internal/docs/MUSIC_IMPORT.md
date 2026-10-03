@@ -9,8 +9,12 @@ bộ. Giai đoạn B (cuối file): nhập nhạc ngay trên điện thoại, gh
 
 - Thư mục `<dữ liệu app>/music/mine/` (cạnh bộ đệm danh mục, KHÔNG nằm trong sách): `files/<sha1 nội dung>.<đuôi>` và sổ
   `library.json`. Nhập mp3, m4a, ogg, opus, flac, wav; nhập hai lần cùng nội dung (dù tên khác) chỉ giữ một bản.
-- Đọc thẻ (tên bài, nghệ sĩ, album, thể loại) và độ dài bằng ffmpeg đã có sẵn trong app - không thêm thư viện nào (`THIRD_PARTY.md`
-  không đổi). Thẻ Ogg / Opus nằm ở luồng âm thanh, `read_tags` đọc cả hai chỗ. Không có thẻ thì tên bài là tên file.
+- Đọc thẻ (tên bài, nghệ sĩ, album, thể loại) và độ dài bằng ffmpeg - không thêm thư viện nào. Máy chạy từ mã nguồn / máy có Studio
+  đã có sẵn ffmpeg; bản app chỉ-nghe thì KHÔNG: **lần nhập đầu tiên tải "bộ đọc nhạc"** (~30 MB, một lần; `webui/ffmpeg_setup.py`, ghim URL +
+  SHA-256, `THIRD_PARTY.md`). Lúc ấy `POST /api/music/local/import` chưa nhập gì và trả `needsReader`; giao diện hiện "Đang tải bộ
+  đọc nhạc" kèm phần trăm (hỏi `GET /api/music/local` -> `reader` mỗi giây), xong thì tự gửi lại đúng các file ấy; tải hỏng thì nói lý
+  do + "Thử lại" (`POST /api/music/local/reader`). `ABOOK_FFMPEG_DOWNLOAD=0` chặn mọi lần tải. Nền tảng không phải Windows 64-bit: tự cài
+  ffmpeg vào PATH. Thẻ Ogg / Opus nằm ở luồng âm thanh, `read_tags` đọc cả hai chỗ. Không có thẻ thì tên bài là tên file.
 - Độ to đo bằng đúng mã của bài danh mục (`music_plan.measured_lufs`, hai kênh, ghi `<sha1>.lufs2` cạnh file), nên `gainDb` của
   mốc nhạc tính bằng cùng một công thức (`cue_gain_db`) - bài nhập to hay nhỏ đều nằm đúng `levelDb` dưới giọng.
 - File không phải nhạc / đuôi lạ / không thấy / quá 1 GB: bị từ chối kèm lý do bằng tiếng Việt, các file khác trong lượt vẫn vào.
@@ -24,12 +28,45 @@ hiện tên + nghệ sĩ của chính file, không tuyên bố giấy phép.
 
 ## Phân tích - chưa bịa số
 
-`music_local.analyze(path)` trả mục theo hình danh mục `{valence, arousal, tension, sd, emotions{13}, confidence,
+`music_local.analyze(path)` trả mục theo hình danh mục `{valence, arousal, tension, vetVar, emotions{13}, confidence,
 fitsUnderNarration, loudness}` hay `None`. Bộ phân tích âm thanh chỉ-nghe (trò của `music_theory/E_signal_sources.md` §6, phiên
 Nhạc huấn luyện) cắm vào bằng `music_local.set_analyzer(hàm)`; kết quả qua `clean_analysis` (kẹp miền, bỏ khoá lạ,
 `fitsUnderNarration` -> `background`, `loudness` -> `lufs` / `speechBand`). Thiếu valence hay arousal, hay bộ phân tích lỗi
 -> `None`: bài ở trạng thái "chưa phân tích", KHÔNG bao giờ điền số thay model. `LocalMusic.analyze_pending()` (và
 `POST /api/music/local/analyze`) phân tích nốt các bài nhập từ trước khi bộ phân tích có mặt.
+
+- **Bộ phân tích "trò"** (`abook/webui/music_student.py`, `server.py` cắm lúc dựng kho nhạc qua `register()`): chỉ nghe, không dò
+  "có lời", không chặn bài nào. Một bài: ffmpeg giải mã -> ba cửa sổ 10 giây ở 20 / 50 / 80% (bài ngắn: một cửa sổ) mono 48 kHz
+  -> tháp âm thanh LAION-CLAP (L2 từng cửa sổ, trung bình, L2) -> cùng 42 đặc trưng âm học 22.050 Hz của bản nghiên cứu
+  (`music_acoustic.py`, bản chép đúng số của `acoustic_features2.py`) -> đầu trò `student_head.npz` (z-score, 16 hàng: 13 cường
+  độ = sigmoid, valence / energy / tension kẹp -1..1, rồi hiệu chỉnh - xem đoạn dưới). `confidence` cố định 0,5,
+  `fitsUnderNarration` và `family` đọc từ vector nhúng so với vector chữ đã tính sẵn (họ ngoài danh sách của app như "rock"
+  -> `other`), `loudness.speechBand` = tỉ lệ năng lượng 300-3000 Hz. Bài < 3 giây hay file không giải mã được -> `None`.
+- **Hiệu chỉnh cho kho trộn** (`music_student.CALIBRATION`): V/E/T của trò bị nén về giữa, nên trong kho lẫn nhạc danh mục (số của thầy)
+  và nhạc nhập, bài nhập được chọn quá thường. Mỗi trục, theo từng đường chạy: `v' = kẹp(a + b*v, -1, 1)`; trò KHÔNG còn ghi `sd`
+  (bài nhập dùng `TRACK_SD_DEFAULT` như bài danh mục) mà ghi `vetVar` = phương sai dư của từng trục, và
+  `music_select.z_distance` cộng `VET_VAR_WEIGHT` (0,1) x `vetVar` vào tử số của trục ấy. Bài danh mục không có `vetVar` nên
+  khoảng cách không đổi. Số đã đo trên phép chấm mù, xem docs/MUSIC_RESEARCH.md "F2".
+- **Hai đường chạy** (`music_student.backend()`): máy có Studio (torch + transformers + librosa) chạy đường **torch** như mô tả
+  trên. Bản app chỉ-nghe (Python nhúng, `shell/python/requirements.txt`: numpy + onnxruntime CPU) chạy đường **onnx**: mel numpy
+  (`music_mel.py`, khớp transformers 1e-5 dB) -> tháp CLAP fp16 `clap_audio_fp16.onnx` -> đầu A `student_head_A.npz` (chỉ 512 chiều
+  CLAP, không âm học) - cùng cửa sổ, cùng phép tính đầu, nên khoá đầu ra như nhau TRỪ `loudness.speechBand` (cần âm học; độ to
+  đã do app đo). Lệch V/E/T so với torch cùng đầu A < 0,001. Cả hai đủ thì torch thắng; ép bằng `ABOOK_MUSIC_STUDENT_BACKEND=onnx|torch`
+  (bài thử trên máy có cả hai). Thiếu thư viện của cả hai -> không bộ phân tích.
+- **Gói model** ở `huggingface.co/NGDtuanh/abook-music-student`, ghim một commit (`music_student.REVISION`; còn trống thì app không
+  tải gì) và SHA-256 từng file (`PACKAGE_HASHES`); mỗi đường chỉ tải file của mình, một lần vào `<dữ liệu app>/music/student/`
+  khi bài đầu tiên cần phân tích, bằng HTTPS thuần (`studio_setup.download`: `.part`, kiểm băm, rồi mới đổi tên; không cần
+  huggingface_hub). torch ~55 MB: `model.safetensors` fp16, `config.json`, `preprocessor_config.json`, `student_head.npz`. onnx
+  ~59 MB: `clap_audio_fp16.onnx`, `student_head_A.npz`, `preprocessor_config.json`. Chưa có gói, không mạng, hay thiếu thư viện
+  của cả hai đường -> `analyze` trả `None` và `register()` không cắm gì: bài ở "chưa phân tích", giao diện nói chưa có bộ phân tích.
+  `ABOOK_MUSIC_STUDENT_DIR` trỏ tới một thư mục gói có sẵn (bài thử, máy không mạng); `ABOOK_MUSIC_STUDENT_DOWNLOAD=0` chặn mọi lần tải.
+- **Đường onnx - chi phí**: bộ cài +~80 MB cài xong (numpy, onnxruntime và ba gói đi kèm; ~17 MB trong bộ cài nén), gói model 59 MB
+  tải riêng; một bài ~3 phút ~0,4 giây trên CPU 32 luồng (ffmpeg giải mã 0,2 + mel 0,03 + tháp 0,16), nạp phiên ~0,7 giây. Bản
+  đóng gói không mang ffmpeg (`imageio-ffmpeg` không nằm trong `requirements.txt`): ffmpeg tải ở lần nhập đầu (xem "Kho của máy"),
+  nên bài nhập được rồi mới phân tích được.
+- **Chi phí** của đường torch (CPU máy chủ sách, 16 luồng): nạp gói ~5 giây một lần; một bài ~3 phút ~1,2 giây (lần đầu ~3,8 giây vì numba biên dịch).
+  Khớp bản nghiên cứu: đầu trò + âm học trùng V/E/T tới 1e-3 khi nhận đúng vector nhúng của bản nghiên cứu; cả đường chạy của app
+  lệch tối đa ~0,05 trên V/E/T vì bản nghiên cứu cắt cửa sổ bằng `ffmpeg -ss` theo độ dài ghi trong đầu file mp3.
 
 - **Chưa phân tích**: không bao giờ được máy tự chọn; vẫn ghim tay được và có trong nhóm "Nhạc của tôi" của "Đổi bài".
 - **Đã phân tích**: vào ứng viên tự động như bài danh mục (`LocalMusic.near` chia ô như `MusicCatalog.near`; `music_select`

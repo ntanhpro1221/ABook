@@ -704,6 +704,34 @@ Mục 3 - nền êm chấm lại bằng mô tả không CLAP (`DESC=noclap score
   - Cùng luật dùng được.
   - Dùng được thì thay L_min làm thước nghe chính. Nếu cả hai dùng được: phán quyết nghe chung = lượt hai model cùng ý.
 
+**KẾT QUẢ (i) Omni-7B-EN cả E1 (03-10 04:38):**
+- Ổn định a/b 0,809 (278 lượt); kappa với R_mới 0,258 (251 lượt; đồng ý 63%); với R_cũ 0,243.
+- → **L_min DÙNG ĐƯỢC.**
+
+Thứ hạng BT (R_cũ có CLAP, không dùng để quyết):
+
+| Thước | 1 | 2 | 3 | 4 | 5 | 6 |
+|---|---|---|---|---|---|---|
+| R_mới (đọc, không CLAP) | gems | calm | app | vet | mid | far |
+| L_min (nghe, tóm tắt Anh) | vet | gems | app | calm | mid | far |
+
+So từng cặp (L_min):
+- vet thắng far 15/19 = 0,79 [0,57-0,91].
+- app thắng vet 19/54 = 0,35 [0,24-0,49].
+- gems thắng app 31/56 = 0,55 [0,42-0,68].
+- calm thắng far 27/34 = 0,79 [0,63-0,90].
+- calm thắng mid 19/36 = 0,53.
+
+Hai thước:
+- **Đồng ý:** far cuối, mid gần cuối, gems cao, app giữa, calm thắng far rõ.
+- **BẤT ĐỒNG:**
+  - `vet`: đọc xếp 4, nghe xếp 1. "app thua vet" đúng theo thước NGHE (0,35, cận trên 0,49), không đúng theo thước ĐỌC (0,48).
+  - `calm`: đọc xếp 2, nghe xếp 4.
+  - Theo luật: ghi bất đồng, không chọn bên. Qwen3-Omni-EN (Kaggle) là phép phân xử kế.
+- Hệ quả tạm:
+  - "Nút thắt là đoán không khí đoạn" có thêm bằng chứng từ thước nghe (vet thắng app), cộng bộ 4 / bộ 5 (oracle + LLM 0,607).
+  - "Nền êm hợp" chỉ vững ở mức "hơn far / mid".
+
 
 **GHI TRƯỚC - NỚI NGƯỠNG NỀN ÊM (02-10 23:xx, Lead duyệt; từ E1: calm đứng thứ hai, hơn app):**
 - **Giả thuyết:** kéo về nền êm (CALM_TARGET) cho nhiều đoạn hơn làm nhạc hợp hơn. Hiện chỉ kéo khi confidence < WEAK_MOOD
@@ -734,6 +762,17 @@ Mục 3 - nền êm chấm lại bằng mô tả không CLAP (`DESC=noclap score
   - Luật thắng giữ nguyên: ≥ 60%, cận dưới Wilson > 0,5, thước phụ ≤ 0,02 (đáp án cảnh bộ 5).
   - Không gộp 31 lượt cũ.
   - Thắng thì đổi `WEAK_MOOD` = 0,5 trên nhánh dev, Lead gộp.
+- **KẾT QUẢ ĐO LẠI 0,5 TRÊN BỘ 5 (03-10 05:4x):** **giữ 0,2**, lần thứ ba.
+  - Chạy: 9 chương bộ 5, 5b chưa có. `GOLD_SETS=set5`, `CALM_SET=calm5`.
+  - Người đọc: không CLAP (n1, n2), theo bổ sung về mô tả.
+  - Thể loại cuốn: chốt trước khi chọn bài (`compare_rankers.BOOK_GENRE`).
+    - Dị giới: western_fantasy.
+    - CotE: modern.
+    - Otonari: romance.
+  - Cùng bài ở 46/66 đoạn.
+  - 20 đoạn khác bài; cả hai người cùng ý 10. 0,5 thắng 4/10 = 0,40 (KTC 0,17–0,69).
+  - Thước phụ: khoảng cách nhãn người tới đáp án 0,720 ở 0,2, 0,751 ở 0,5, tức +0,031 (mốc ≤ 0,02).
+  - Hỏng cả hai điều kiện.
 
 **GHI TRƯỚC - PHÍA BÀI GỘP BA NGUỒN: CLAP + ÂM HỌC + VĂN BẢN (02-10 23:xx, Lead + chủ sách; trước mọi số):**
 Ba nguồn:
@@ -851,6 +890,83 @@ Máy và đáp án:
 - CHÍNH: r của E so đáp án, `app+bwsE` so `app` (E nhãn câu). THẮNG nếu r E hơn ≥ 0,05 VÀ hơn ở ≥ 70% chương.
 - Ghi lại: `oracle+bwsE` và tổ hợp cuối `app + llmVT + bwsE` (r trung bình V/E/T).
 
+**KẾT QUẢ BỘ 5 - LLM (03-10 04:28, qwen3.5:9b, `set5_llm.py`, `results/set5_score.txt`; 0 lượt hỏng định dạng):**
+
+r trung bình theo chương:
+
+| Cách | V | E | T | VET |
+|---|---|---|---|---|
+| app (nhãn câu) | 0,389 | 0,319 | 0,260 | 0,323 |
+| app + llmVT | 0,358 | 0,319 | 0,350 | 0,343 |
+| app + bwsE | 0,389 | 0,394 | 0,260 | 0,348 |
+| app + llmVT + bwsE | 0,358 | 0,394 | 0,350 | 0,367 |
+| oracle | 0,417 | 0,429 | 0,250 | 0,365 |
+| oracle + llmVT + bwsE | 0,671 | 0,562 | 0,589 | **0,607** |
+
+- **(a) KHÔNG THẮNG:** app + llmVT hơn app +0,020, thắng 6/9 (cần +0,05 và 7/9).
+- **(c) KHÔNG THẮNG:** E từ BWS hơn +0,075 nhưng chỉ thắng 5/9 chương (cần 7/9).
+- **(b) THẮNG (sát mép):**
+  - Kiểm chéo 2 phần theo truyện: cosine 13 chiều 0,740 → 0,771 (+0,031, ngưỡng 0,03).
+  - Số nhãn ≥ 0,5 mỗi đoạn: người 1,38, LLM thô 3,99, sau hiệu chỉnh 1,59 (lệch 15%, ngưỡng 30%).
+  - γ học trên cả bộ (80 đoạn), theo đúng luật:
+    - peacefulness 3,25; tenderness 3,25; nostalgia 2,5; sadness 2,5; joy 2,0; playful 1,25; power 3,25;
+    - wonder 3,25; tension 1,5; fear 2,0; anger 1,5; mystery 2,0; moved 3,25.
+  - Chỉ có tác dụng khi đoạn lấy 13 cường độ từ LLM. App hiện lấy từ nhãn câu, nên KHÔNG đổi code bây giờ. Bật lại Lớp 2 là
+    thí nghiệm ghi trước riêng.
+- **Đọc (không phải luật):**
+  - Trên ranh giới ĐÁP ÁN, LLM (V/T cả đoạn + E so sánh) đạt 0,607 so với oracle nhãn câu 0,365. Không khí đoạn mà LLM đọc
+    là tốt.
+  - Đường LLM thua ở app vì ranh giới của app sai (Pk 0,40). Nút thắt kế tiếp của đường LLM là CHIA ĐOẠN, không phải đoán
+    không khí.
+  - Gợi ý thí nghiệm kế (cần ghi trước): LLM chia đoạn, hoặc chia theo thay đổi V/E/T của LLM trên cửa sổ trượt, rồi dùng
+    llmVT + bwsE.
+
+**GHI TRƯỚC - CHIA ĐOẠN CHO ĐƯỜNG LLM (03-10 05:xx, Lead duyệt; trước mọi số):**
+
+Câu hỏi: ranh giới tốt hơn có đưa đường LLM (llmVT + bwsE) vượt nhãn câu của app không? Nếu có, nhánh nào đáng chi phí?
+
+Ba nhánh chia đoạn:
+- **(1) LLM chia trực tiếp:**
+  - qwen3.5:9b đọc cả chương (`seq<TAB>câu`; chương dài hơn 6.000 tiếng thì chia hai nửa chồng 300 tiếng).
+  - Trả danh sách seq mở đầu đoạn theo luật SCENE_GOLD_GUIDE (đoạn ≥ ~1 phút, đổi LOẠI không khí mới cắt).
+  - Prompt chốt trong script, không chỉnh.
+- **(2) Điểm đổi trên V/E/T của LLM:**
+  - Cửa sổ trượt W tiếng, bước W/2. LLM chấm V/E/T mỗi cửa sổ, prompt `segment_mood_llm.PROMPT` không đổi.
+  - Cắt ở chỗ khoảng cách V/E/T giữa hai nửa kề vượt ngưỡng θ, đoạn tối thiểu 200 tiếng.
+- **(3) Nền rẻ, nhúng câu kiểu TextTiling:**
+  - qwen3-embedding:0.6b (nhúng câu qua Ollama). Khối k câu, cắt ở chỗ "độ sâu" tương đồng vượt ngưỡng c, đoạn tối thiểu 200 tiếng.
+
+Tham số:
+- W, θ (nhánh 2) và k, c (nhánh 3) chọn trên **bộ 4** (10 chương, đáp án có sẵn) để Pk nhỏ nhất.
+- Nhánh 1 không có tham số. Nó vẫn chạy trên bộ 4 để báo cáo.
+- **Bộ 5 chỉ đo MỘT lần** với tham số đã chốt.
+
+Không khí mỗi đoạn của mọi nhánh = llmVT + bwsE (như `set5_llm.py`: V / T từ LLM đọc cả đoạn, E từ BWS nhóm 4 trong chương).
+
+Thước trên bộ 5:
+- **CHÍNH:** r VET trung bình theo chương, so `app` (nhãn câu + ranh giới app).
+- **Luật như (a):** nhánh THẮNG nếu hơn ≥ 0,05 VÀ thắng ≥ 7/9 chương.
+- **Phụ (báo, không quyết):** Pk và WindowDiff so ranh giới đáp án; đoạn / giờ; số lượt gọi LLM mỗi chương.
+- **Nhiều nhánh cùng thắng:** chọn nhánh RẺ nhất (3 < 2 < 1). Nhánh đắt hơn chỉ được chọn nếu hơn nhánh rẻ ≥ 0,03 r VET.
+- **Không nhánh nào thắng:** ghi lại và giữ nhãn câu.
+- **Chi tiết chốt trong script trước lượt chạy đầu** (`split_experiment.py`, Corpus f91231b):
+  - **Nhánh 2:**
+    - Ranh giới ở câu đầu cửa sổ m. Điểm = khoảng cách TB V/E/T của cửa sổ m−3, m−2 với m, m+1.
+    - Cửa sổ cuối nuốt phần đuôi.
+  - **Đoạn tối thiểu 200 tiếng áp cả đoạn cuối:**
+    - Nhánh 1 gộp ngược.
+    - Nhánh 2 / 3 cắt tham lam theo điểm giảm dần.
+  - **Nhánh 1:**
+    - Chương LLM trả hỏng thì dùng ranh giới app (có báo số).
+    - Vùng chồng: bỏ đầu đoạn cách đầu trước ≤ 150 tiếng.
+  - **Nhánh 3:**
+    - Viết mới theo Hearst: khối k câu, độ sâu tuyệt đối ≥ c, không giữ ranh giới cứng.
+    - `tile_scenes` cũ dùng khối theo giây nên không khớp ghi trước.
+  - **Pk / WindowDiff:** k = max(2, round(độ dài đoạn đáp án TB / 2)); chọn tham số theo Pk TB theo chương; hoà thì θ / c lớn hơn.
+  - **Chống đo lần hai:**
+    - `tune` không ghi đè tham số đã chốt.
+    - `score` từ chối chạy lại khi đã có `split_score.txt`.
+
 ĐÁP ÁN BỘ 5 (03-10 05:xx, Corpus `scene_set5/`; mô tả, chưa phải phép thử):
 - 9 chương, 86 đoạn sau phân xử (26,6 đoạn/giờ).
 - Hai người chấm mù Sonnet A so B: Pk 0,167, P / R ranh giới 0,73 / 0,86, r V/E/T 0,92 / 0,88 / 0,89. Đó là trần.
@@ -965,6 +1081,349 @@ Trò:
 - Việc kế:
   - cắm vào `music_local.set_analyzer` (nhánh `dev/music-student`), gói đăng Hugging Face `NGDtuanh/abook-music-student`;
   - MTG-Jamendo không lời dùng làm dữ liệu thêm khi cần (hiện chưa cần, (a) đã đạt).
+- 03-10 04:xx: bản cuối (đủ âm học, 1.736 bài không lời) 97,4% (0,880 / 0,904); Soundtracks 0,65 / 0,74 / 0,77; DEAM
+  0,32 / 0,69. Gói HF `NGDtuanh/abook-music-student` @ c6e1485f; Lead đã gộp vào main (đường torch, máy có Studio).
+
+**GHI TRƯỚC - TRÒ (c): TRÒ CHỌN BÀI CÓ TỆ HƠN THẦY KHÔNG (03-10 05:3x, trước khi tính bài nào được chọn):**
+
+Câu hỏi: nhạc người dùng nhập chỉ có số của trò. Nếu cả kho chỉ có số của trò, bài app chọn cho đoạn có tệ hơn không?
+
+Đoạn:
+- 100 đoạn của E1 (bộ 4: 82, bộ 3: 18).
+- Không khí đoạn = số MÁY như vai `app` của E1: V/E/T, độ tin cậy 1, không có cảm xúc đoạn.
+
+Kho:
+- Các bài của `catalog_e1` qua lọc phong cách của cuốn + dài ≥ 60 s, có file âm thanh, như E1.
+- Thêm điều kiện: bài KHÔNG LỜI, đủ đặc trưng của trò.
+
+Hai điều kiện, khác nhau DUY NHẤT ở số của từng bài:
+- **THẦY:** V/E/T + sd như danh mục (`catalog_e1`).
+- **TRÒ:** V/E/T dự đoán CHÉO 5 phần (chia theo bài, hạt giống 7). Mỗi bài được đoán bởi một trò không học bài ấy, như bài
+  người dùng nhập.
+  - Công thức như `build_student.py`: CLAP 512 + 42 âm học, RidgeCV cùng dãy alpha.
+  - sd = `vet_sd` của trò.
+  - Biến thể trò-A (chỉ CLAP) báo kèm, không quyết định.
+
+Bài chọn:
+- Hạng 1 của `music_select.rank` (code main), giống hệt nhau ở hai bên trừ số của bài.
+- Hai bên chọn cùng bài: hoà, không đem chấm. Báo tỉ lệ trùng.
+
+Chấm, trên các đoạn hai bên chọn KHÁC bài:
+- Người đọc n1, n2 (agent Claude) đọc mô tả không CLAP như phép (1) của E1, mù vai, trái / phải xáo theo hạt giống.
+- Thêm 10% cặp lặp, đảo bên.
+- Gói và đề như E1 (`build_e1_judge_packs.py`, `PACK_SET=studentc`, `DESC=noclap`).
+
+Thước:
+- Phán quyết chung n1 + n2: cùng chọn thì bên ấy thắng; khác nhau thì nửa - nửa.
+- p_trò = (thắng + 0,5 × nửa) / số cặp khác bài.
+- **Trò ĐẠT nếu p_trò ≥ 0,45**, tức không thua quá 5 điểm phần trăm. Báo kèm KTC Wilson 95%.
+- Báo thêm trên cả 100 đoạn (trùng bài = hoà).
+- Dùng được chỉ khi: ổn định a/b trên cặp lặp ≥ 0,75 VÀ kappa n1-n2 ≥ 0,20. Không đạt thì báo "không kết luận", không phán.
+
+Thiên lệch biết trước:
+- Mô tả không CLAP mang chữ trang nguồn (tag, mô tả, feel) mà THẦY đã đọc. Thước vì thế nghiêng về thầy.
+- Trò đạt dưới thước này thì kết luận càng chắc. Trò trượt thì phải đo lại bằng thước nghe L_min trước khi bỏ trò.
+- L_min (Omni-7B-EN) chạy kèm nếu hàng GPU có chỗ. Chỉ báo, không quyết định.
+
+**BỔ SUNG GHI TRƯỚC (03-10 05:2x, SAU khi tính bài chọn, TRƯỚC mọi lượt chấm):**
+
+Đã thấy khi tính bài chọn:
+- Hai bên chọn trùng bài 0/100 đoạn.
+- Trò bị CO so với danh mục. Danh mục V/E/T là hạng đổi ra −1..1. Trên 1.646 bài:
+
+| Trục | sd danh mục | sd trò | r |
+|---|---|---|---|
+| V | 0,46 | 0,33 | 0,90 |
+| E | 0,50 | 0,43 | 0,94 |
+| T | 0,47 | 0,34 | 0,91 |
+
+- Hệ quả trong kho trộn (danh mục + nhạc nhập): bài nhập luôn bị đặt gần giữa.
+
+Thêm điều kiện **TRÒ-q**:
+- Số của trò ánh xạ phân vị về phân bố danh mục, đơn điệu từng trục, 101 mốc.
+- Mốc ghép trên chính dự đoán chéo, không nhìn bài nào được chọn.
+- sd nhân tỉ lệ sd danh mục / sd trò.
+
+Chấm hai loại cặp, cùng người đọc, cùng gói:
+- **thầy–trò:** quyết theo ghi trước ở trên.
+- **thầy–trò-q:** cùng thước p ≥ 0,45, quyết cho ĐỀ XUẤT đưa ánh xạ phân vị vào app (lưu mốc trong đầu trò).
+
+Đoạn hai bên trùng bài thì không chấm, như trên.
+
+**KẾT QUẢ TRÒ (c) (03-10 05:3x):**
+- Code: `build_student.py` CROSSFIT=1, `build_student_c.py`, `score_student_c.py`, `results/student_c_score.txt`.
+- Dự đoán chéo: r trò–thầy V/E/T 0,82 / 0,92 / 0,85 (trò-A 0,81 / 0,92 / 0,84).
+- Bài chọn không trải đều: qua 100 đoạn, thầy dùng 23 bài khác nhau, trò 34, trò-q 25 (`rank` hạng 1, không phạt lặp).
+- Người đọc n1, n2: mỗi gói một agent Sonnet riêng, 212 / 212 lượt.
+  - **Dùng được:** ổn định a/b 0,89 / 0,95, kappa 0,70.
+
+| So với thầy | Cặp khác bài | Cả hai chọn bên kia | Cả hai chọn thầy | Khác ý | p | KTC 95% | Mốc ≥ 0,45 |
+|---|---|---|---|---|---|---|---|
+| trò | 100 | 44 | 39 | 17 | **0,525** | 0,43–0,62 | **ĐẠT** |
+| trò-q | 93 | 34 | 47 | 12 | 0,430 | 0,33–0,53 | trượt |
+
+Kết luận:
+- **Trò ĐẠT (c):** bài trò chọn không kém bài thầy chọn, đo bằng thước vốn nghiêng về thầy. Trò đạt cả (a), (b), (c), (d).
+- **Ánh xạ phân vị KHÔNG vào app:** trò-q kém hơn trò thô (0,43 so với 0,525).
+- Việc trò bị co về giữa trong kho trộn vẫn có thật nhưng chưa đo. Phép này so kho toàn trò với kho toàn thầy, không phải kho
+  trộn. Muốn đo thì cần ghi trước riêng.
+
+**GHI TRƯỚC - KHO TRỘN: NHẠC NHẬP CÓ BỊ CHỌN LỆCH KHÔNG (03-10 05:4x, Lead giao; trước mọi số):**
+
+Câu hỏi:
+- Trong kho thật, bài danh mục mang số thầy, bài người dùng nhập mang số trò.
+- Trò co về giữa, nên một bài nhập có thể được chọn nhiều hơn hay ít hơn chính nó khi mang số thầy. Đây là chuyện công bằng
+  cho nhạc của người dùng.
+
+Cách đo (chỉ tính, không cần người chấm):
+- Đoạn: 100 đoạn E1, không khí máy, như (c). Kho: như (c).
+- 50 lượt. Mỗi lượt lấy ngẫu nhiên 20% bài làm "bài nhập" (hạt giống 1..50).
+  - Bài nhập mang số trò dự đoán chéo + sd trò; bài còn lại mang số thầy.
+  - Đối chứng: cùng các bài ấy mang số thầy.
+- Mỗi đoạn lấy danh sách `rank` 6 bài (danh sách "Đổi bài"). Hạng 1 báo riêng.
+- Vùng của bài theo vị trí THẦY:
+  - "giữa": khoảng cách V/E/T tới tâm thuộc tam phân vị thấp;
+  - "vừa": tam phân vị giữa;
+  - "rìa": tam phân vị cao.
+
+Thước:
+- Tỉ lệ phơi bày theo vùng = (số lần bài nhập vào danh sách khi mang số trò) / (số lần khi mang số thầy), cộng dồn 50 lượt.
+- KTC 95% bootstrap theo đoạn.
+- **LỆCH** nếu ở vùng nào đó tỉ lệ nằm ngoài [0,8; 1,25] và cả KTC nằm ngoài khoảng ấy. Không thì **CÔNG BẰNG**.
+
+Nếu LỆCH:
+- Thử cách sửa: giãn tuyến tính quanh trung bình danh mục, hệ số = tỉ lệ sd danh mục / sd trò từng trục, mốc ghép trên
+  dự đoán chéo.
+- Báo lại cùng thước.
+- Cách sửa chỉ được vào app khi đo lại (c) bằng người đọc với cách sửa ấy vẫn ≥ 0,45, vì ánh xạ phân vị đã trượt (c).
+
+**KẾT QUẢ KHO TRỘN (03-10 05:25, `mixed_library.py`, `results/mixed_library.txt`):** **LỆCH**, nhưng theo chiều ƯU ÁI nhạc
+nhập, không phải thiệt cho nó.
+- 1.299 bài, 100 đoạn, 50 lượt × 20% bài nhập. Tam phân vị khoảng cách tới tâm cắt ở 0,61 / 0,84.
+
+| Vùng (vị trí thầy) | Vào 6 bài: mang số trò / mang số thầy | Tỉ lệ | Sau khi giãn |
+|---|---|---|---|
+| giữa | 10.463 / 6.761 | 1,55 (KTC 1,44–1,66) | 1,35 (1,26–1,44) |
+| vừa | 1.182 / 115 | 10,3 | 6,5 |
+| rìa | 461 / 0 | (thầy không bao giờ vào) | 477 / 0 |
+
+Đọc kết quả:
+- Mang số thầy, bài ở vùng vừa / rìa gần như không bao giờ vào danh sách: đoạn E1 có không khí máy ôn hoà, còn danh
+  mục trải đều tới ±1.
+- Mang số trò, bài bị kéo vào giữa (co + nhiễu dự đoán), nên được chọn cho đoạn mà chính nó không hợp.
+- Không phải do sd: sd trò 0,22 / 0,17 / 0,21 gần mặc định 0,2 của bài danh mục.
+- Cách sửa đã ghi trước (giãn hệ số 1,39 / 1,18 / 1,37) giảm lệch nhưng vẫn ngoài [0,8; 1,25], nên không đưa vào app.
+
+Hệ quả:
+- Nhạc người dùng không bị thiệt. Nó được chọn NHIỀU hơn, kể cả cho đoạn chỉ hợp vừa phải.
+- (c) cho thấy bài trò chọn không kém bài thầy chọn trong kho toàn trò. Phần kho trộn cần người đọc thì chưa đo.
+- Muốn sửa tiếp phải có ghi trước mới, đo kho trộn bằng người đọc. Ứng viên:
+  - trò v2 (MTG) nếu bớt co;
+  - nới phạt riêng cho bài nhập.
+
+**GHI TRƯỚC - SỬA KHO TRỘN F1: KỲ VỌNG KHOẢNG CÁCH (03-10 05:5x, Lead: lệch phải hết, "máy chọn theo độ hợp, không vì bài
+là nhạc nhập"; trước khi chạy):**
+
+Vì sao không làm theo gợi ý "bài trò sd lớn hơn":
+- Trong `z_distance`, sd của bài nằm ở MẪU số (độ khoan dung). Tăng sd thì khoảng cách nhỏ đi, bài nhập càng được chọn
+  nhiều.
+
+Cách sửa F1, cho bài mang số trò:
+- **Trung bình:** E[thầy | trò] = a + b × trò từng trục. Hồi quy tuyến tính thầy trên trò, ghép trên dự đoán chéo.
+  - b = r × sd thầy / sd trò, nhỏ hơn hệ số giãn 1,39.
+- **Phạt:** cộng Var(thầy | trò) (phương sai phần dư của hồi quy ấy) vào TỬ số từng trục: (m − t)² + v. Mẫu số giữ nguyên.
+- **sd của bài:** = mặc định 0,2 như bài danh mục, không khoan dung thêm.
+- Đây là khoảng cách bình phương KỲ VỌNG tới vị trí thật của bài.
+- Trong app: thêm `vetVar` cho bài nhập, `z_distance` cộng nó. Bài danh mục không có `vetVar`, không đổi gì.
+
+Đo:
+- Cùng `mixed_library.py`, cùng 50 lượt.
+- F1 áp cho trò v1, và cho trò v2 nếu v2 xong.
+- ĐẠT nếu cả ba vùng nằm trong [0,8; 1,25] hoặc KTC chạm khoảng ấy.
+- Vùng mà mang số thầy < 30 lần qua 50 lượt thì báo số, không xét (mẫu số quá nhỏ).
+- ĐẠT thì mới đo (c) bằng người đọc trên kho trộn trước khi vào app.
+
+**KẾT QUẢ F1 (03-10 05:29, `results/mixed_library_f1.txt`):** **LỆCH theo chiều ngược lại**, sửa quá tay.
+- Hồi quy thầy trên trò:
+
+| Trục | a | b | var |
+|---|---|---|---|
+| V | −0,055 | 1,25 | 0,040 |
+| E | 0,002 | 1,10 | 0,031 |
+| T | 0,009 | 1,24 | 0,040 |
+
+- Bài nhập vào 6 bài:
+  - vùng giữa: 361 / 6.761 = 0,05;
+  - vùng vừa: 60 / 115 = 0,52;
+  - hạng 1: 0.
+- Lý do: var cộng vào tử thành một khoản phạt gần cố định (~0,86 trong z²). Sáu bài đứng đầu trên ~900 bài đều có z rất nhỏ,
+  nên khoản ấy đủ loại bài nhập.
+- Gốc rễ: F1 coi số thầy là sự thật không nhiễu. Thật ra số thầy cũng chỉ là một ước lượng.
+
+**GHI TRƯỚC - F2: TRUNG BÌNH HIỆU CHỈNH + λ·var, λ CHỌN TRÊN NỬA KIA (03-10 05:3x, trước khi chạy):**
+- Bài nhập: trung bình = a + b·trò như F1; tử cộng λ·var; sd = 0,2.
+- Chia 100 đoạn E1 thành hai nửa THEO CHƯƠNG: xếp tên chương, xen kẽ.
+- Chọn λ trên nửa A, hạt giống 1–25, lưới λ ∈ {0; 0,05; 0,1; 0,15; 0,2; 0,3; 0,4; 0,5; 0,7; 1}.
+  - Tiêu chí: nhỏ nhất max |log tỉ lệ| qua các vùng mà mang số thầy ≥ 30 lần.
+- Kiểm trên nửa B, hạt giống 26–50, với λ đã chọn. Luật ĐẠT như F1.
+- ĐẠT thì chấm người đọc trên kho trộn (Lead đã duyệt), rồi mới vào app.
+
+**KẾT QUẢ F2 (03-10 05:31, `results/mixed_library_f2.txt`):** **TRƯỢT thước vùng.**
+- Trên nửa A, λ = 0,1 tốt nhất (max |log tỉ lệ| 0,036). λ = 0 cho 0,24; λ ≥ 0,3 làm bài nhập bị bỏ rơi.
+- Trên nửa B (47 đoạn, hạt 26–50):
+
+| Vùng | Vào 6 bài: trò / thầy | Tỉ lệ | Hạng 1 |
+|---|---|---|---|
+| giữa | 1.732 / 1.597 | **1,08** (KTC 0,98–1,19) | 0,63 (0,44–0,84) |
+| vừa | 176 / 32 | 5,5 (KTC 2,7–27) | |
+| rìa | 79 / 0 | | |
+
+- Gộp mọi vùng: 1.987 / 1.629 = 1,22.
+
+**ĐỔI THƯỚC SAU KHI THẤY SỐ (03-10 05:4x, Lead duyệt):**
+- Thước vùng đã TRƯỢT với cả F1 lẫn F2. Thước mới dưới đây được chọn SAU khi thấy các số ấy, không phải có từ đầu.
+- Lý do đổi:
+  - Ở vùng vừa / rìa, bài mang số thầy gần như không bao giờ vào danh sách (mẫu số ~0).
+  - Mọi bộ đoán có sai số (r ~0,9) sẽ thỉnh thoảng đưa một bài xa vào gần, nên tỉ lệ ấy nổ.
+  - Ép về 1 cần phạt nặng như F1, khi ấy vùng giữa sập.
+  - F2 đã bỏ phần ưu ái có hệ thống ở vùng giữa. Phần còn lại là nhiễu của bộ đoán, không còn là thiên lệch dịch / giãn được.
+- **Thước mới: độ hợp của bài được chọn.**
+  - 100 đoạn E1. So bài chọn từ kho TOÀN THẦY với bài chọn từ kho TRỘN F2.
+  - Kho trộn: 20% bài nhập, hạt giống 1, λ = 0,1, a / b như F1.
+  - Người đọc n1, n2 không CLAP, cặp lặp 10%, luật như (c).
+- **Vào app nếu p_trộn ≥ 0,45** và người đọc dùng được.
+  - App: thêm `vetVar` + hiệu chỉnh a, b (lưu trong đầu trò) + λ = 0,1 trong `z_distance`.
+  - Bài danh mục không đổi.
+- `build_mixed_c.py`, `score_student_c.py` với `SET=mixedc`.
+
+**KẾT QUẢ KHO TRỘN F2 BẰNG NGƯỜI ĐỌC, LƯỢT 1 (03-10 05:5x, `results/mixedc_score.txt`):** **không kết luận.**
+- 34 / 100 đoạn khác bài; ở 9 đoạn bài kho trộn là bài nhập.
+- p = 0,515 (KTC 0,35–0,67); tính cả 100 đoạn: 0,505. Kappa n1-n2 0,59.
+- Ổn định a/b: mỗi người 2 / 3. Chỉ có 3 cặp lặp nên dưới mốc 0,75 theo luật. Ba cặp không đo được gì.
+
+**GHI TRƯỚC - LƯỢT 2 (trước khi chạy):**
+- Cùng 34 cặp, LẶP 100%: mỗi cặp có bản đảo bên ở gói kia. Người chấm mới (agent mới), bộ `mixedc2`.
+- Lượt 2 QUYẾT theo luật cũ: dùng được (ổn định ≥ 0,75 trên 34 cặp lặp, kappa ≥ 0,20) và p ≥ 0,45.
+- p tính trên bản gốc. Lượt 1 chỉ báo.
+
+**KẾT QUẢ LƯỢT 2 (03-10 06:0x, `results/mixedc2_score.txt`):** **F2 ĐẠT → vào app.**
+- Dùng được: ổn định a/b 27 / 34 = 0,79 và 30 / 34 = 0,88; kappa 0,58.
+- 34 cặp khác bài. Cả hai chọn bài kho trộn 16, cả hai chọn bài kho toàn thầy 11, khác ý 7.
+- **p = 0,574** (KTC 0,41–0,72) ≥ 0,45. Từng người 0,59 / 0,56. Tính cả 100 đoạn: 0,525.
+- **Chưa chắc chắn:** ĐẠT theo luật điểm ước lượng, nhưng cận dưới KTC 0,41 < 0,45 (chỉ 34 cặp). Khi có bộ 5b, đo lại MỘT lần
+  cùng giao thức trên các đoạn mới. Lần ấy trượt thì gỡ F2 khỏi app.
+- Lead gộp vào main 165a3e16 (03-10 06:1x).
+
+Vào app (nhánh `dev/music-mixed-f2`), chỉ cho bài nhập:
+- Hiệu chỉnh a + b·trò từng trục.
+- Bỏ sd của trò; bài dùng mặc định 0,2.
+- Thêm `vetVar`; `z_distance` cộng 0,1 × vetVar vào tử.
+- Hằng số riêng cho đầu A (ONNX), ghép cùng cách trên dự đoán chéo của A. Đầu A không chấm người đọc riêng: cách làm giống
+  hệt, số gần như trùng.
+
+| Trục | a | b | var |
+|---|---|---|---|
+| V | −0,055 | 1,251 | 0,041 |
+| E | 0,002 | 1,096 | 0,031 |
+| T | 0,009 | 1,277 | 0,041 |
+
+**KẾT QUẢ TRÒ v2 + MTG (03-10 05:3x, `results/student_eval_v2.txt`):** **KHÔNG THAY v1**, trượt cả ba điều kiện.
+
+| | v1 | v2 |
+|---|---|---|
+| (a) AUC trò / thầy | 0,880 / 0,904 (97,4%) | 0,826 / 0,904 (91,4%) |
+| Soundtracks V / E / T | 0,65 / 0,74 / 0,77 | 0,59 / 0,71 / 0,72 |
+| DEAM V / E | 0,32 / 0,69 | 0,32 / 0,70 |
+| Độ co (sd chéo / sd danh mục, TB) | 0,755 | 0,536 |
+
+- Phụ: AUC tag MTG giữ ngoài 0,769 (29 cặp tag-lớp, 1.145 bài).
+- Vì sao kém:
+  - Nhãn MTG chỉ từ tag: 79% bài có tag ánh xạ, nhưng tag nói ít thì V/E/T bị kéo về trung tính.
+  - 6.489 bài như thế lấn 1.389 bài danh mục, nên trò co thêm và AUC trên Incompetech giảm.
+- Giữ v1. Dữ liệu MTG chỉ dùng lại được nếu có nhãn tốt hơn (người đọc từng bài, hay nghe), và phải ghi trước riêng.
+
+**GHI TRƯỚC - TRÒ v2 HỌC THÊM MTG (03-10 05:4x, Lead giao; bổ sung ghi trước MTG 02-10):**
+
+Dữ liệu:
+- 7.634 bài MTG không lời (có lời ≤ 0,5). Mỗi bài có CLAP 3 cửa sổ + 42 âm học, tính y như danh mục.
+- Phần giữ ngoài MTG: 15% bài, chia theo hoán vị hạt giống 7 trên mã bài. split-0 của bộ là theo nghệ sĩ cho mọi bài;
+  sau khi lọc không lời, chia theo mã cho đơn giản, ghi rõ ở đây.
+
+Nhãn thầy MTG (đổi so với 02-10 để rẻ):
+- Bảng tag như ghi trước 02-10, làm mức sàn.
+- Người đọc chữ đọc TỔ HỢP TAG (1.641 tổ hợp khác nhau), không đọc tên bài. Tên bài Jamendo hiếm khi nói không khí, mà đọc
+  theo bài thì đắt gấp 5.
+  - Cùng định dạng ra như `text_llm`: 13 cường độ + valence / energy / tension + độ tin cậy.
+  - Agent Claude Sonnet, lô ~250 tổ hợp.
+  - **Thực tế (ghi trước khi học):** agent lô 0 không đọc từng tổ hợp. Nó cho HỒ SƠ từng tag (59 tag) rồi gộp bằng luật cố
+    định (`mtg_reader/tag_profiles.py`):
+    - cảm xúc = max qua các tag;
+    - V/E/T = trung bình theo tin cậy;
+    - tin cậy = 1 − ∏(1 − c), ×0,7 khi tag trái chiều, trần 0,9;
+    - tin cậy < 0,3 thì kéo về trung tính.
+  - Tôi giữ cách ấy và áp CÙNG một luật cho cả 1.641 tổ hợp (lô 0 khớp 275 / 275), thay vì 6 lô đọc rời. Thông tin đầu vào
+    chỉ có tag, nên hồ sơ từng tag gần như là tất cả những gì một người đọc rút ra được.
+- Cảm xúc = max(bảng, người đọc × tin cậy). V/E/T = của người đọc.
+- Trọng số mẫu: 0,6 nếu có ≥ 1 tag ánh xạ, không thì 0,2.
+
+Học:
+- Công thức như trò v1 (ridge trên logit thầy, RidgeCV cùng dãy alpha).
+- Tập học = phần học danh mục (như v1) + phần học MTG.
+- Giữ ngoài danh mục giống hệt v1.
+
+Thước:
+- (a) AUC trên Incompetech giữ ngoài.
+- (b) r Soundtracks V/E/T + DEAM V/E.
+- Độ co: sd trò / sd danh mục từng trục, dự đoán chéo trên danh mục như (c).
+- Phụ, chỉ để định vị: AUC 56 tag MTG trên phần giữ ngoài MTG.
+
+**v2 THAY v1 nếu cả ba:**
+- Trung bình 5 số r (b) tăng ≥ 0,01.
+- AUC (a) giảm không quá 0,005.
+- Độ co không tệ hơn: tỉ lệ sd trung bình 3 trục ≥ của v1.
+
+Thay thì: đăng revision HF mới (cả đầu A cho ONNX), đo lại parity, nâng `REVISION` trong app. Không thay thì ghi số rồi dừng.
+
+**GHI TRƯỚC - TRÒ ĐƯỜNG ONNX cho máy chỉ player + điện thoại (03-10 05:xx, Lead; trước khi làm):**
+
+Bản torch hiện có là CHUẨN. Đường ONNX phải khớp nó, đo trên 20 bài danh mục cố định (20 mã đầu của `embedding_ids.json` có
+audio, xếp theo mã):
+- **Nhúng CLAP:** cosine(ONNX, torch) ≥ 0,999 ở mọi bài.
+- **Đầu ra:** |ΔV|, |ΔE|, |ΔT| ≤ 0,02 và mọi |Δ cường độ| ≤ 0,02 ở mọi bài; `family` trùng ở ≥ 19/20 bài.
+- **Mel:** phổ mel tự tính (numpy cho máy tính, Kotlin cho điện thoại) so `ClapFeatureExtractor` trên cùng mẫu: sai số tuyệt đối
+  TB ≤ 1e-3 dB, tối đa ≤ 0,05 dB.
+
+Âm học (42 đặc trưng, librosa: beat_track, chroma…) có thể không có ở máy chỉ player / điện thoại. Khi đó:
+- **Biến thể "trò-A"**: đầu chỉ học trên CLAP 512 chiều, cùng cách học, cùng phần giữ ngoài.
+- Dùng được nếu (a) ≥ 90% AUC thầy VÀ (b) r V/E/T bộ ngoài không kém zero-shot cũ ở trục nào.
+- Không đạt thì máy đó gửi file sang máy có Studio để phân tích (mạng trạm), không dùng số kém hơn.
+
+Điện thoại: onnxruntime-android + mel Kotlin, cùng ngưỡng. Kích thước: tháp fp16 ONNX ~58 MB, đầu < 0,1 MB.
+
+**KẾT QUẢ trò-A (03-10 05:xx, `STUDENT_A=1 build_student.py`, `results/student_eval_A.txt`): DÙNG ĐƯỢC.**
+- (a) AUC trò-A 0,873, thầy 0,904 → 96,5% (≥ 90%). Thêm âm học chỉ lên 97,4%.
+- (b) Soundtracks 0,642 / 0,733 / 0,762, DEAM V / A 0,308 / 0,675. Hơn zero-shot cũ ở mọi trục (0,594 / 0,714; 0,271 / 0,644).
+- Hệ quả: máy chỉ player và điện thoại dùng trò-A (mel + tháp CLAP ONNX + đầu 0,03 MB). Không cần librosa hay port âm học sang
+  Kotlin. Máy có Studio giữ bản đủ âm học.
+
+**KẾT QUẢ ĐƯỜNG ONNX (03-10 04:47, Corpus `research/music/onnx_student/`, `results/onnx_parity.txt`): ĐẠT MỌI NGƯỠNG.**
+- 20 bài cố định ("8bit Dungeon Boss" … "Agnus Dei X").
+- Đường ONNX: mel numpy + tháp fp16 + đầu trò-A. Bản torch dùng cùng đầu trò-A.
+
+| Tiêu chí | Ngưỡng | Đo được |
+|---|---|---|
+| Cosine nhúng | ≥ 0,999 mọi bài | min 0,999999 |
+| \|ΔV / ΔE / ΔT\| tối đa | ≤ 0,02 | 0,00026 / 0,00024 / 0,00038 |
+| \|Δ cường độ\| tối đa | ≤ 0,02 | 0,00044 |
+| family trùng | ≥ 19/20 | 20/20 |
+| Mel lệch TB / tối đa | ≤ 1e-3 / 0,05 dB | 9,6e-8 / 7,6e-6 dB |
+
+- Mel float32 thuần cũng đạt (TB 4e-6, tối đa 2,3e-3 dB). Kotlin không cần double.
+- Kích thước: tháp ONNX fp16 59,0 MB, đầu trò-A 54 KB. Thời gian CPU ~0,21 giây / bài (mel 30 ms + tháp 183 ms).
+- Gói HF `NGDtuanh/abook-music-student` @ 60e11bce đã thêm `clap_audio_fp16.onnx` + `student_head_A.npz`. README trong
+  `onnx_student/` ghi mọi hằng số mel, luật cửa sổ và công thức đầu trò cho bản Android.
+- Lưu ý: phép so dùng cùng bộ giải mã ffmpeg ở hai đường. Máy khác giải mã khác thì mẫu lệch nhẹ; cần đo lại trên chính máy đó
+  khi port.
 
 **GHI TRƯỚC - MTG-JAMENDO LÀM DỮ LIỆU HỌC CHO TRÒ (02-10 23:xx, Lead + chủ sách):**
 
@@ -1011,6 +1470,13 @@ Giữ ngoài:
 - 15% bài MTG (theo split-0 của bộ, phần test).
 - Thước phụ của trò: AUC từng tag MTG (56 tag) trên phần test, so với baseline đã công bố cho mood/theme (PR-AUC
   ~0,12-0,15, ROC-AUC ~0,75-0,77 cho effnet/musicnn) để biết trò đứng đâu.
+
+**TẢI XONG (03-10 03:45):**
+- Đã tải đủ 100 gói moodtheme: máy nhà gói 0–57, Mac gói 58–99 (`feats.jsonl` 7.512 dòng, CLAP npz theo gói).
+- Phần của Mac đã chép về `C:/abook_data/mtg_jamendo/mac/`. Audio không lời giữ trên Mac (~22 GB).
+- Bài có lời chỉ còn dòng tối thiểu, không có đặc trưng.
+- Chưa đem học: trò đã đạt (a) không cần thêm dữ liệu. Đây là kho dự trữ cho lần đổi trò kế tiếp.
+- Essentia trên Mac (chỉ để so, CC BY-NC-ND) xong 3.927 bài danh mục: `essentia_out.jsonl` + `essentia_effnet.npy`.
 
 **LỚP 2 PHÍA BÀI - 13 cường độ độc lập (02-10 22:xx, `derive_emotions.py`):**
 - **Zero-shot CLAP** (3 câu mô tả mỗi lớp, z theo cả kho, sigmoid): AUC so feel người gắn của Incompetech (1.381 bài)

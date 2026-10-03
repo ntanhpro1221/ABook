@@ -111,7 +111,8 @@ Chủ sách 28-09: "tất tần tận mọi thứ cần thiết khi bấm nút t
 Trước 28-09 Studio còn mượn ba thứ của máy, giờ đều là bản riêng: `msvcp140.dll`/`vcruntime140*.dll` nạp từ System32
 (của gói Visual C++ Redistributable, Windows sạch không có) -> chép kèm; Ollama của máy (`%LOCALAPPDATA%\Programs\Ollama`)
 được dùng lại nếu có, model kéo vào `%USERPROFILE%\.ollama` -> bản riêng, cổng riêng; Python cài sẵn -> `only-managed`.
-Phần còn lại vốn đã riêng: Git là MinGit trong `Studio\tools\git`, FFmpeg là bản trong gói `imageio-ffmpeg`, CUDA/cuDNN
+Bản chỉ-nghe không mang ffmpeg: lần nhập "Nhạc của tôi" đầu tiên tải riêng một bản (~30 MB, ghim, `webui/ffmpeg_setup.py`) vào
+`<dữ liệu app>	oolsfmpeg`, không nằm trong bộ cài. Phần còn lại vốn đã riêng: Git là MinGit trong `Studio\tools\git`, FFmpeg là bản trong gói `imageio-ffmpeg`, CUDA/cuDNN
 là thư viện trong venv (`torch\lib`, `ctranslate2`; máy thử không cài CUDA toolkit), bộ nhớ đệm uv/Hugging Face/torch trỏ
 vào `Studio\`. Thử gỡ trên bộ cài thật (`/S`): gỡ thật -> Studio, WebView2 cache, khoá gỡ cài đặt, liên kết `.abook` mất,
 dữ liệu cá nhân còn; gỡ lúc cài lại -> Studio còn.
@@ -140,7 +141,7 @@ kế tiếp.
   giữ nguyên để Windows+A và thông báo không đổi.
 - WebView2: Windows 11 có sẵn; bộ cài tự tải khi thiếu.
 - Python nhúng: bản embeddable chính thức mới nhất còn bản vá nhị phân (server đồng bộ nghe cả mạng LAN - cần bản vá bảo
-  mật); URL + SHA-256 ghi cứng trong script build. Gói phụ (Pillow, psutil, requests) cài `--require-hashes`.
+  mật); URL + SHA-256 ghi cứng trong script build. Gói phụ (Pillow, psutil, requests, numpy + onnxruntime cho bộ phân tích nhạc nhập) cài `--require-hashes`.
 
 ## Build
 

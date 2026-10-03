@@ -28,7 +28,8 @@ AXIS_WEIGHTS = {"arousal": 1.0, "tension": 0.8, "valence": 0.6}   # năng lượ
 TAU = 0.1                        # sàn độ không chắc mỗi trục: không bao giờ chia cho ~0
 SCENE_SD_DEFAULT = 0.25          # đoạn chưa có `sd`
 TRACK_SD_DEFAULT = 0.2           # bài chưa có `sd`
-UNCERTAIN_SD = 0.35              # đoạn ít câu có cảm xúc (confidence thấp) được khoan dung thêm chừng này x (1 - confidence)
+VET_VAR_WEIGHT = 0.1             # x `vetVar` (phương sai dư của bộ đoán, chỉ bài nhập có) cộng vào tử số mỗi trục - docs/MUSIC_RESEARCH.md "F2"
+UNCERTAIN_SD = 0.35             # đoạn ít câu có cảm xúc (confidence thấp) được khoan dung thêm chừng này x (1 - confidence)
 # x cosine 13 cảm xúc, trừ khỏi điểm (Lớp 2). TẮT: đo 02-10 trên 10 chương bộ cảnh 4 (57 đoạn, khoảng cách nhãn người
 # tới đáp án, thấp = hợp): Lớp 1 riêng 0,824, main 0,845, +Lớp 2 trọng số 1 0,859, trọng số 3 0,936 - cảm xúc đoạn suy
 # từ nhãn câu (LINE_EMOTIONS) còn quá thô. Bật lại khi đường LLM cho 13 cường độ của đoạn và đo lại (E4).
@@ -70,17 +71,20 @@ def scene_sigma(scene: dict[str, Any]) -> dict[str, float]:
 
 
 def z_distance(track: dict[str, Any], target: tuple[float, ...], sigma: dict[str, float] | None = None) -> float:
-    """Khoảng cách đoạn - bài trên ba trục, mỗi trục bình phương chia (sig_đoạn^2 + sig_bài^2 + TAU^2), nhân trọng số trục.
-    Bài chưa có tension thì bỏ trục ấy (danh mục cũ). `sigma` None -> độ không chắc mặc định của đoạn."""
+    """Khoảng cách đoạn - bài trên ba trục, mỗi trục (bình phương + VET_VAR_WEIGHT x vetVar) chia (sig_đoạn^2 + sig_bài^2 + TAU^2),
+    nhân trọng số trục. Bài chưa có tension thì bỏ trục ấy (danh mục cũ). Bài chưa có `vetVar` (danh mục) thì không có số hạng
+    phương sai. `sigma` None -> độ không chắc mặc định của đoạn."""
     sigma = sigma or {axis: SCENE_SD_DEFAULT for axis in AXIS_WEIGHTS}
     track_sd = track.get("sd") if isinstance(track.get("sd"), dict) else {}
+    vet_var = track.get("vetVar") if isinstance(track.get("vetVar"), dict) else {}
     means = {"valence": (float(track["valence"]), target[0]), "arousal": (float(track["arousal"]), target[1])}
     if len(target) > 2 and track.get("tension") is not None:
         means["tension"] = (float(track["tension"]), target[2])
     total = 0.0
     for axis, (mine, wanted) in means.items():
         sig_m = float(track_sd.get(axis) if track_sd.get(axis) is not None else TRACK_SD_DEFAULT)
-        total += AXIS_WEIGHTS[axis] * (mine - wanted) ** 2 / (sigma[axis] ** 2 + sig_m ** 2 + TAU ** 2)
+        var = float(vet_var[axis]) if vet_var.get(axis) is not None else 0.0
+        total += AXIS_WEIGHTS[axis] * ((mine - wanted) ** 2 + VET_VAR_WEIGHT * var) / (sigma[axis] ** 2 + sig_m ** 2 + TAU ** 2)
     return math.sqrt(total)
 
 
