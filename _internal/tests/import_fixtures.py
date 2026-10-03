@@ -3,7 +3,9 @@
 
     fixtures/import/epub3.epub, epub2.epub   EPUB3 (nav, bìa properties="cover-image") và EPUB2 (NCX, bìa <meta name="cover">);
                                              EPUB3 có thực thể HTML (&ocirc; &#147; &copy không chấm phẩy) cả trong mục lục
-    fixtures/import/headings.docx            DOCX có kiểu Heading 1/2, Title, tab, xuống dòng cứng, chữ đã xoá, bảng, mục lục Word
+    fixtures/import/split.epub               EPUB3 có nhiều chương trong MỘT file XHTML, mục lục trỏ vào mảnh (#id, <a name>); chữ dẫn
+                                             trước mảnh đầu, mảnh không có trong trang, mục lẻ chỉ một mảnh
+    fixtures/import/headings.docx           DOCX có kiểu Heading 1/2, Title, tab, xuống dòng cứng, chữ đã xoá, bảng, mục lục Word
     fixtures/import/plain.docx               DOCX không có kiểu Heading: tách theo dòng "Chương N"; viết bằng xmlns mặc định (không "w:")
     fixtures/import/story.pdf                PDF có lớp chữ: tiêu đề chạy (kèm số trang), số trang, đoạn vắt qua trang, gạch nối cuối dòng
     fixtures/import/scan.pdf                 PDF không có lớp chữ (scan) -> lỗi "cần OCR"
@@ -162,6 +164,58 @@ def build_epub2() -> bytes:
     entries = [("mimetype", b"application/epub+zip"), ("META-INF/container.xml", CONTAINER.encode()),
                ("OEBPS/content.opf", opf.encode()), ("OEBPS/toc.ncx", ncx.encode()), ("OEBPS/bia.jpg", b"\xff\xd8\xff\xe0not-really-a-jpeg\xff\xd9")]
     entries += [(f"OEBPS/{name}", data) for name, data in pages]
+    return _zip(entries, stored_first="mimetype")
+
+
+SPLIT_PAD = "Nước sông vẫn chảy chậm qua những bãi bồi, mang theo mùi phù sa và tiếng gà gáy từ xóm bên kia."
+
+
+def build_epub_split() -> bytes:
+    """Nhiều chương trong MỘT file XHTML, mục lục (nav) trỏ vào các mảnh: book.xhtml (mục đầu không mảnh, hai mảnh `id` và `a name`,
+    một mảnh không có trong trang), extra.xhtml (chữ dẫn trước mảnh đầu -> phần riêng), tail.xhtml (chữ dẫn ngắn -> bỏ), solo.xhtml
+    (một mảnh duy nhất -> vẫn một chương như trước)."""
+    pad = SPLIT_PAD
+    book = _xhtml(
+        "<h1>Chương 1: Bến sông</h1>\n<p>Buổi sáng ở bến sông bắt đầu bằng tiếng chèo khua nhẹ. " + pad + "</p>\n"
+        "<p>Bà Sáu gánh hai thúng cá ra chợ sớm.</p>\n"
+        '<h2 id="c2">Chương 2: Chợ nổi</h2>\n<p>Ghe xuồng chen nhau dưới cầu, ai cũng rao to hàng của mình. ' + pad + "</p>\n"
+        '<div><a name="c3"></a><h2>Gặp gỡ</h2></div>\n<p>Chương ba mở ra bằng một cuộc gặp tình cờ giữa hai người bạn cũ. ' + pad + "</p>\n"
+        "<p>Họ hẹn nhau chiều mai, cùng một bến.</p>")
+    extra = _xhtml(
+        "<p>Lời dẫn dài của người ghi chép, đứng trước phần đầu và không có mục nào trong mục lục gọi tên nó cả. " + pad + "</p>\n"
+        '<h3 id="p1">Phần một</h3>\n<p>Phần một kể về con đường đất đỏ dẫn ra bến. ' + pad + "</p>\n"
+        '<h3 id="p2">Phần hai</h3>\n<p>Phần hai kể về chiếc cầu tre bắc qua kênh nhỏ. ' + pad + "</p>")
+    tail = _xhtml(
+        "<p>Lời dẫn ngắn.</p>\n"
+        '<p id="t1">Đoạn mở đầu của mục thứ nhất, đủ dài để không bị coi là trang trống. ' + pad + "</p>\n"
+        '<p id="t2">Đoạn mở đầu của mục thứ hai, cũng đủ dài như vậy. ' + pad + "</p>")
+    solo = _xhtml('<h2 id="top">Một mục lẻ</h2>\n<p>Chỉ có một mục lục trỏ vào file này, nên nó vẫn là một chương trọn vẹn. ' + pad + "</p>")
+    opf = f"""<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="id">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>Sách một file nhiều chương</dc:title><dc:creator>{AUTHOR}</dc:creator><dc:language>vi</dc:language>
+  </metadata>
+  <manifest>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+    <item id="book" href="text/book.xhtml" media-type="application/xhtml+xml"/>
+    <item id="extra" href="text/extra.xhtml" media-type="application/xhtml+xml"/>
+    <item id="tail" href="text/tail.xhtml" media-type="application/xhtml+xml"/>
+    <item id="solo" href="text/solo.xhtml" media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine><itemref idref="book"/><itemref idref="extra"/><itemref idref="tail"/><itemref idref="solo"/></spine>
+</package>"""
+    nav = ('<?xml version="1.0" encoding="utf-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">'
+           '<body><nav epub:type="toc"><ol>\n'
+           '<li><a href="text/book.xhtml">Chương 1: Bến sông</a></li>\n'
+           '<li><a href="text/book.xhtml#khong-co-mach-nay">Mục trỏ vào mảnh không có</a></li>\n'
+           '<li><a href="text/book.xhtml#c2">Chương 2: Chợ nổi</a></li>\n'
+           '<li><a href="text/book.xhtml#c3">Chương 3: Gặp gỡ</a></li>\n'
+           '<li><a href="text/extra.xhtml#p1">Phần một</a></li>\n<li><a href="text/extra.xhtml#p2">Phần hai</a></li>\n'
+           '<li><a href="text/tail.xhtml#t1">Mục thứ nhất</a></li>\n<li><a href="text/tail.xhtml#t2">Mục thứ hai</a></li>\n'
+           '<li><a href="text/solo.xhtml#top">Một mục lẻ</a></li>\n</ol></nav></body></html>')
+    entries = [("mimetype", b"application/epub+zip"), ("META-INF/container.xml", CONTAINER.encode()), ("OEBPS/content.opf", opf.encode()),
+               ("OEBPS/nav.xhtml", nav.encode()), ("OEBPS/text/book.xhtml", book), ("OEBPS/text/extra.xhtml", extra),
+               ("OEBPS/text/tail.xhtml", tail), ("OEBPS/text/solo.xhtml", solo)]
     return _zip(entries, stored_first="mimetype")
 
 
@@ -378,7 +432,7 @@ def txt_files() -> dict[str, bytes]:
 # --- toàn bộ ----------------------------------------------------------------------------------------------------------
 
 SOURCES = {
-    "epub3.epub": build_epub3, "epub2.epub": build_epub2, "headings.docx": build_docx_headings, "plain.docx": build_docx_plain,
+    "epub3.epub": build_epub3, "epub2.epub": build_epub2, "split.epub": build_epub_split, "headings.docx": build_docx_headings, "plain.docx": build_docx_plain,
     "story.pdf": build_story_pdf, "scan.pdf": build_scan_pdf,
 }
 
