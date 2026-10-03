@@ -1879,6 +1879,18 @@ Chung:
   - Dựng lại danh sách và danh mục; Lead deploy.
 - Ghi lại, không quyết: tỉ lệ có hát của S5. Nếu thấp thì bộ lọc danh mục 0,5 đang loại nhầm nhiều bài; đó là đề xuất riêng.
 
+**KẾT QUẢ (1) EASTERN (03-10 17:0x, `results/evc_eastern.txt`): KHÔNG GIÁM KHẢO NGHE NÀO ĐẠT → luật dự phòng.**
+- M (MF): AUC 0,672 [0,549-0,782]. Spearman a/b 0,95 (ổn định nhưng không nhận ra).
+- A (AST "Music of Asia" + "Traditional music"): AUC 0,752 [0,638-0,854].
+- So sánh: điểm `eastern_ancient` của CLAP trên chính bộ kiểm này (đủ 155 / 300, 02-10) là AUC 0,994. Đọc: CLAP nhận nhạc cụ
+  Đông Á tốt hơn hẳn MF và AST.
+- Eastern mới = style `eastern_ancient` VÀ tên / tag có chữ Đông Á: 36 bài / 108 phút (kho 132). Vẫn ≥ 40 phút.
+  - Đa số đúng là nhạc phương Đông: 民族 (魔王魂), guzheng, shakuhachi, taiko, "Samurai", "Imperial China".
+  - Vài bài vào nhờ tag: "Tequila Suicide", "ネオロック73", "Streichpsalter1". Ghi lại, không sửa tay.
+- Áp qua `playlists.EASTERN_KEEP` (`evc/eastern_list.json`). Điều "lời" chờ (2).
+- Lỗi khâu cắt (không đổi phương pháp): một đoạn 30,004 giây làm MF lỗi chỉ số ngoài biên ở lượt 526. Từ nay đoạn được cắt
+  đúng 30,0 giây (resample trước khi trim). Phần (2) chạy lại từ lượt ấy.
+
 **GHI TRƯỚC - NGƯỠNG LỜI HÁT CỦA CẢ DANH MỤC (03-10 15:3x; trước khi có số AST nào ngoài 55 bài đầu đã bỏ):**
 
 Câu hỏi: `vocals` (CLAP zero-shot) trong khoảng 0,3–0,5 có thật là có tiếng hát không?
