@@ -16,7 +16,9 @@ Chỉ khi bạn chọn một giọng trực tuyến cho "Nghe ngay" thì chữ c
   bấm **"Nghe ngay"** - máy đọc to từng đoạn, chữ đang đọc sáng lên như "Đọc to" của Edge, bấm vào chữ nào là đọc từ chữ ấy, tắt
   màn hình điện thoại vẫn đọc tiếp. Giọng mặc định là Hoài My của Microsoft Edge (cần mạng; app hỏi trước khi gửi chữ của đoạn
   đang đọc tới Microsoft), hay giọng của máy, giọng dùng khoá của bạn (Azure, Google, FPT.AI, Viettel), hoặc **Giọng VieNeu** tải
-  về chạy ngay trên máy, không cần mạng ("Làm trước" khi đang sạc cho điện thoại tầm trung). Không bao giờ tự sửa chữ của truyện.
+  về chạy ngay trên máy, không cần mạng ("Làm trước" khi đang sạc cho điện thoại tầm trung); trên máy tính còn có **Giọng
+  Supertonic** (mười giọng nam nữ, chạy trên máy, đọc kịp trực tiếp). Hết sách thì app mời nghe tiếp cuốn khác; nhạc nền có thể
+  là nhạc của chính bạn, thêm ngay từ menu nhạc. Không bao giờ tự sửa chữ của truyện.
 - **Làm sách nói (Studio)**: đọc cả truyện để nhận ra lời thoại, ai đang nói và cảm xúc từng câu; mỗi nhân vật một giọng
   riêng giữ nguyên suốt cuốn; thu từng câu rồi tự nghe lại bằng nhận dạng giọng nói và thu lại câu lệch. Truyện kể ngôi
   thứ nhất: Studio hỏi "tôi" là ai. Tạm dừng bất cứ lúc nào - kể cả giữa lúc phân tích - rồi làm tiếp đúng chỗ; máy tính

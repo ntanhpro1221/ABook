@@ -21,7 +21,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Điện thoại: gỡ giọng VieNeu (hay xoá khoá giọng) khi cuốn đang nhớ giọng ấy thì bấm nghe đọc luôn bằng giọng đang hiển thị (Hoài My), không còn ra
   "Giọng VieNeu chưa tải"; tải lại giọng thì cuốn tự về giọng cũ.
 - "Nghe ngay" đọc số La Mã sau danh từ chung thành số ("Trường Phổ thông II" thành "hai", "Chương IV" thành "bốn", "Thế chiến II" thành "hai") thay vì
-  đánh vần "i i"; chữ "I" đầu câu, đề mục "I. Mở đầu" (đọc "một") và các chữ viết tắt (CV, MC, VIP) giữ như cũ. Chữ hiện trên màn hình không đổi.
+  đánh vần "i i"; đề mục "I. Mở đầu" đọc "một". Chữ cái đơn chỉ thành số sau từ dùng để đánh số ("Phần V", "thế kỷ X"), nên "ông X", "tia X" vẫn
+  là chữ; chữ "I" đầu câu và các chữ viết tắt (CV, MC, VIP) giữ như cũ. Chữ hiện trên màn hình không đổi.
 
 ### Thư viện
 
