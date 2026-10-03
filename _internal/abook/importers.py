@@ -268,6 +268,8 @@ class _Text(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.lines: list[str] = []
         self.heading = ""
+        self.headings: list[tuple[int, str]] = []  # (dòng của tiêu đề, chữ): mọi tiêu đề h1-h3 có chữ, theo thứ tự
+        self.anchors: dict[str, int] = {}  # id / <a name> -> chỉ số dòng bắt đầu từ chỗ ấy (mục lục trỏ #mảnh vào đây)
         self.images = 0
         self._current: list[str] = []
         self._skip = 0
@@ -290,6 +292,11 @@ class _Text(HTMLParser):
             self._flush()
             if tag in HEADINGS:
                 self._in_heading += 1
+        if not self._skip:
+            for name, value in attrs:
+                key = name.partition(":")[2] or name  # như bản Kotlin: bỏ tiền tố ("xml:id" thành "id")
+                if value and (key == "id" or (tag == "a" and key == "name")):
+                    self.anchors.setdefault(value, len(self.lines))
 
     def handle_endtag(self, tag: str) -> None:
         if tag in {"script", "style", "head", "title"}:
@@ -297,8 +304,11 @@ class _Text(HTMLParser):
         elif tag in BLOCKS:
             if tag in HEADINGS and self._in_heading:
                 self._in_heading -= 1
+                text = _words("".join(self._current))
+                if text:
+                    self.headings.append((len(self.lines), text))
                 if not self.heading:
-                    self.heading = _words("".join(self._current))
+                    self.heading = text
             self._flush()
 
     def handle_data(self, data: str) -> None:
@@ -317,30 +327,48 @@ def _page(raw: bytes) -> _Text:
     return parser
 
 
-def _toc(book: zipfile.ZipFile, manifest: dict[str, tuple[str, str, str]], spine_toc: str) -> dict[str, str]:
-    """Tên chương theo mục lục: href (không #) -> tên đầu tiên trỏ tới nó. EPUB3 nav trước, EPUB2 NCX sau."""
-    titles: dict[str, str] = {}
+def _toc(book: zipfile.ZipFile, manifest: dict[str, tuple[str, str, str]], spine_toc: str) -> list[tuple[str, str, str]]:
+    """Mục lục theo thứ tự: (href không #, mảnh sau #, tên). EPUB3 nav trước, EPUB2 NCX sau."""
+    entries: list[tuple[str, str, str]] = []
+
+    def add(base: str, target: str, label: str) -> None:
+        path, _hash, fragment = target.partition("#")
+        entries.append((posixpath.normpath(posixpath.join(base, unquote(path))), unquote(fragment), label))
+
     nav = next((href for href, _media, props in manifest.values() if "nav" in props.split()), "")
     if nav:
         root = _xml(_read(book, nav))
-        nav_dir = posixpath.dirname(nav)
         for anchor in root.iter(f"{{{NS['x']}}}a"):
             href = anchor.get("href", "")
             label = _words("".join(anchor.itertext()))
             if href and label:
-                titles.setdefault(posixpath.normpath(posixpath.join(nav_dir, unquote(href.split("#")[0]))), label)
+                add(posixpath.dirname(nav), href, label)
     ncx = manifest.get(spine_toc, ("", "", ""))[0] or next(
         (href for href, media, _props in manifest.values() if media == "application/x-dtbncx+xml"), "")
-    if ncx and not titles:
+    if ncx and not entries:
         root = _xml(_read(book, ncx))
-        ncx_dir = posixpath.dirname(ncx)
         for point in root.iter(f"{{{NS['ncx']}}}navPoint"):
             label = point.find("ncx:navLabel/ncx:text", NS)
             content = point.find("ncx:content", NS)
             if label is not None and content is not None and (label.text or "").strip():
-                src = posixpath.normpath(posixpath.join(ncx_dir, unquote(content.get("src", "").split("#")[0])))
-                titles.setdefault(src, _words(label.text))
-    return titles
+                add(posixpath.dirname(ncx), content.get("src", ""), _words(label.text))
+    return entries
+
+
+def _split_points(page: _Text, entries: list[tuple[str, str]]) -> list[tuple[int, str]]:
+    """Một file chứa nhiều chương: các mục lục (mảnh, tên) trỏ vào file này -> [(dòng bắt đầu, tên)] theo thứ tự đọc. Chỉ tính mục
+    không mảnh (đầu file) và mục có mảnh mà trang thật sự có; dưới hai điểm thì không tách ([])."""
+    points: list[tuple[int, str]] = []
+    seen: set[str] = set()
+    for fragment, label in entries:
+        if fragment in seen:
+            continue
+        seen.add(fragment)
+        if not fragment:
+            points.append((0, label))
+        elif fragment in page.anchors:
+            points.append((page.anchors[fragment], label))
+    return sorted(points, key=lambda point: point[0]) if len(points) >= 2 and page.lines else []
 
 
 def _meta_text(opf: ElementTree.Element, name: str) -> str | None:
@@ -382,7 +410,11 @@ def _epub(path: Path) -> ImportedBook:
         spine = opf.find("opf:spine", NS)
         if spine is None:
             raise ImportFailed(BROKEN.format(kind="EPUB"))
-        titles = _toc(book, manifest, spine.get("toc", ""))
+        titles: dict[str, str] = {}  # href -> tên đầu tiên trỏ tới nó
+        listed_in: dict[str, list[tuple[str, str]]] = {}  # href -> [(mảnh, tên)] theo thứ tự mục lục
+        for toc_href, toc_fragment, toc_label in _toc(book, manifest, spine.get("toc", "")):
+            titles.setdefault(toc_href, toc_label)
+            listed_in.setdefault(toc_href, []).append((toc_fragment, toc_label))
         result = ImportedBook(title=_meta_text(opf, "title") or path.stem, author=_meta_text(opf, "creator"),
                               language=_meta_text(opf, "language"))
         cover = _epub_cover(book, opf, manifest)
@@ -396,25 +428,35 @@ def _epub(path: Path) -> ImportedBook:
             if not href or "nav" in props.split() or "html" not in media:
                 continue
             page = _page(_read(book, href))
-            lines, heading = page.lines, page.heading
-            listed = titles.get(href, "")
-            if not lines and page.images:
-                images += 1
-                continue
-            if not lines:
-                continue
-            if sum(len(line) for line in lines) < MIN_CHARS and not listed:
-                short += 1
-                continue
-            title = listed or heading or lines[0][:80]
-            first = lines[0].casefold()
-            # Dòng đầu là tiêu đề của chính chương: bỏ khi nó đã nằm trong tên chương ("Gặp gỡ" trong "Chương 2: Gặp gỡ"),
-            # hay lấy nó làm tên khi nó đầy đủ hơn tên mục lục - không để người nghe nghe tên chương hai lần.
-            if first == title.casefold() or (heading and first == heading.casefold() and first in title.casefold()):
-                lines = lines[1:]
-            elif heading and first == heading.casefold() and title.casefold() in first:
-                title, lines = lines[0], lines[1:]
-            result.chapters.append(Chapter(title, "\n\n".join(lines)))
+            # Nhiều chương trong MỘT file: mục lục trỏ vào các mảnh (#id) của file này thì cắt chữ tại các mảnh ấy, theo thứ tự đọc,
+            # mỗi phần mang tên của mục lục. Chữ trước mảnh đầu là phần riêng (không tên) nếu không mục nào trỏ về đầu file.
+            points = _split_points(page, listed_in.get(href, []))
+            if points:
+                if points[0][0] > 0:
+                    points.insert(0, (0, ""))
+                ends = [start for start, _label in points[1:]] + [len(page.lines)]
+                parts = [(page.lines[start:end], next((text for at, text in page.headings if start <= at < end), ""), label)
+                         for (start, label), end in zip(points, ends)]
+            else:
+                parts = [(page.lines, page.heading, titles.get(href, ""))]
+            for lines, heading, listed in parts:
+                if not lines and page.images and not points:
+                    images += 1
+                    continue
+                if not lines:
+                    continue
+                if sum(len(line) for line in lines) < MIN_CHARS and not listed:
+                    short += 1
+                    continue
+                title = listed or heading or lines[0][:80]
+                first = lines[0].casefold()
+                # Dòng đầu là tiêu đề của chính chương: bỏ khi nó đã nằm trong tên chương ("Gặp gỡ" trong "Chương 2: Gặp gỡ"),
+                # hay lấy nó làm tên khi nó đầy đủ hơn tên mục lục - không để người nghe nghe tên chương hai lần.
+                if first == title.casefold() or (heading and first == heading.casefold() and first in title.casefold()):
+                    lines = lines[1:]
+                elif heading and first == heading.casefold() and title.casefold() in first:
+                    title, lines = lines[0], lines[1:]
+                result.chapters.append(Chapter(title, "\n\n".join(lines)))
         if images:
             result.notes.append(f"Bỏ qua {images} trang chỉ có ảnh.")
         if short:
