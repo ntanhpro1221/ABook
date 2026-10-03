@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import type { Script } from "@/listen/model";
 import { mergeTimings, VOICE_CHANGED_EVENT, type ReadAloudTimings } from "@/listen/readAloud";
 import { chosenVoice } from "@/listen/readAloudVoice";
@@ -45,8 +46,11 @@ export function watchReadAloud(
   client: ScriptCache,
   api: Pick<ReadAloudPlugin, "script" | "addListener"> = ReadAloud,
   configure: (options: { readAloudVoice: string }) => unknown = (options) => EbookPlayer.configure(options).catch(() => undefined),
+  notify: (message: string) => unknown = (message) => toast(message, { duration: 8000 }),
 ): () => void {
   const handle = api.addListener("readAloudScript", (event) => void refreshScript(client, api, event.bookId, event.chapterId));
+  // Lõi vừa đọc tạm một đoạn bằng giọng kế (khóa bị từ chối, hết hạn mức, mất mạng): nói cho người nghe, lõi đã lo chỉ nói một lần.
+  const notice = api.addListener("readAloudNotice", (event) => void notify(event.message));
   // Người nghe đổi giọng ở menu "Giọng đọc": lõi đọc các đoạn sau bằng giọng mới.
   const onVoice = (event: Event) => {
     const bookId = String((event as CustomEvent).detail ?? "");
@@ -56,5 +60,6 @@ export function watchReadAloud(
   return () => {
     window.removeEventListener(VOICE_CHANGED_EVENT, onVoice);
     void handle.then((listener) => listener.remove());
+    void notice.then((listener) => listener.remove());
   };
 }

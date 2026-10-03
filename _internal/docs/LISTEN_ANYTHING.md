@@ -115,6 +115,12 @@ Online voices (owner 03-10: "đọc ngay, cần mạng" is its own group; Edge T
 - Google Translate's read-aloud is a last resort only: unofficial, ~200 chars per call, robotic.
 - Every provider is a separate adapter behind one interface (`speak(text, voice) -> audio`, `voices()`, `limits`). A failure or an exhausted quota falls back to the device voice without stopping playback.
 - The UI says plainly that an online voice sends the book's text to that provider.
+- Built 03-10 (desktop `abook/readaloud/byok.py` + azure/google/fpt/viettel.py, phone `OnlineVoices.kt` + `*Tts.kt`, settings
+  `ui/src/listen/VoiceSettings.tsx`): Azure speaks the Speech SDK WebSocket protocol (same frames as Edge, exact word timings); Google puts a
+  `<mark>` before every word (exact); FPT.AI / Viettel AI give no timings, so words are spread over syllables with punctuation pauses
+  (`spread.py` / `SyllableSpread.kt`, shared fixtures `tests/fixtures/readaloud/spread/`). Keys: desktop `voice-keys.json` next to the
+  preferences (never in `GET /api/preferences`), phone AES-GCM with an Android Keystore key. Fallback chain per paragraph: keyed voice ->
+  Edge -> device voice, one notice per provider and reason. Google Translate's read-aloud is deliberately not built.
 
 VieNeu 3.8.1 (installed) has CPU modes: `v3nano` (48M-parameter flow model, ONNX, 24 kHz) and `v3turbo` (ONNX on CPU,
 48 kHz). Measured 03-10 on the home laptop CPU (busy with GPU evals): v3nano RTF 0.18, first audio after 0.76 s.

@@ -121,6 +121,46 @@ object EdgeProtocol {
         return list
     }
 
+    /**
+     * Nhận một lượt đọc tới `turn.end`: ghi mp3 (tin nhị phân `Path:audio`) vào `sink`, thêm mốc của `audio.metadata` (cộng `shiftMs`), trả số byte âm thanh. Dùng
+     * chung cho Edge và Azure Speech (cùng khung tin - AzureTts.kt). `label`: tên giọng trong câu báo lỗi; `onClose`: đổi khung CLOSE của máy chủ thành lỗi riêng
+     * (Azure báo hết hạn mức bằng lý do đóng) - null thì là "đóng trước khi đọc xong". Quá `totalMs` hay mất kết nối: [VoiceException] (offline).
+     */
+    fun readTurn(
+        socket: WebSocket, sink: OutputStream, shiftMs: Long, boundaries: MutableList<Boundary>, label: String, totalMs: Long,
+        onClose: (WebSocket.Message.Closed) -> VoiceException? = { null },
+    ): Long {
+        val deadline = System.nanoTime() + totalMs * 1_000_000
+        var audio = 0L
+        while (true) {
+            if (System.nanoTime() > deadline) throw VoiceException("$label trả lời quá chậm", offline = true)
+            val message = try {
+                socket.receive()
+            } catch (error: java.net.SocketTimeoutException) {
+                throw VoiceException("$label trả lời quá chậm", offline = true, cause = error)
+            } catch (error: java.io.IOException) {
+                throw VoiceException("Mất kết nối với ${label.replaceFirstChar { it.lowercase() }} giữa chừng", offline = true, cause = error)
+            }
+            when (message) {
+                is WebSocket.Message.Closed -> throw onClose(message) ?: VoiceException("$label đóng kết nối trước khi đọc xong", offline = true)
+                is WebSocket.Message.Text -> {
+                    val head = message.text.substringBefore("\r\n\r\n")
+                    when (headers(head)["Path"]) {
+                        "audio.metadata" -> boundaries.addAll(parseMetadata(message.text.substringAfter("\r\n\r\n"), shiftMs))
+                        "turn.end" -> return audio
+                    }
+                }
+                is WebSocket.Message.Binary -> {
+                    val (headers, data) = parseBinary(message.data) ?: throw VoiceException("$label gửi tin hỏng")
+                    if (headers["Path"] == "audio" && data.isNotEmpty()) {
+                        sink.write(data)
+                        audio += data.size
+                    }
+                }
+            }
+        }
+    }
+
     /** Độ dài tính từ số byte mp3 (48 kbps không đổi). */
     fun durationMs(bytes: Long): Long = bytes * 1000 / BYTES_PER_SECOND
 }
@@ -181,35 +221,7 @@ class EdgeTts(private val voiceName: String, private val connect: Connector = Co
             val stamp = EdgeProtocol.dateString(System.currentTimeMillis())
             socket.sendText(EdgeProtocol.speechConfig(stamp))
             socket.sendText(EdgeProtocol.ssml(voiceName, EdgeProtocol.escape(part), EdgeProtocol.connectionId(random), stamp))
-            val deadline = System.nanoTime() + TOTAL_MS * 1_000_000
-            var audio = 0L
-            while (true) {
-                if (System.nanoTime() > deadline) throw VoiceException("Giọng Edge trả lời quá chậm", offline = true)
-                val message = try {
-                    socket.receive()
-                } catch (error: SocketTimeoutException) {
-                    throw VoiceException("Giọng Edge trả lời quá chậm", offline = true, cause = error)
-                } catch (error: IOException) {
-                    throw VoiceException("Mất kết nối với giọng Edge giữa chừng", offline = true, cause = error)
-                }
-                when (message) {
-                    is WebSocket.Message.Closed -> throw VoiceException("Giọng Edge đóng kết nối trước khi đọc xong", offline = true)
-                    is WebSocket.Message.Text -> {
-                        val head = message.text.substringBefore("\r\n\r\n")
-                        when (EdgeProtocol.headers(head)["Path"]) {
-                            "audio.metadata" -> boundaries.addAll(EdgeProtocol.parseMetadata(message.text.substringAfter("\r\n\r\n"), shiftMs))
-                            "turn.end" -> return audio
-                        }
-                    }
-                    is WebSocket.Message.Binary -> {
-                        val (headers, data) = EdgeProtocol.parseBinary(message.data) ?: throw VoiceException("Giọng Edge gửi tin hỏng")
-                        if (headers["Path"] == "audio" && data.isNotEmpty()) {
-                            sink.write(data)
-                            audio += data.size
-                        }
-                    }
-                }
-            }
+            return EdgeProtocol.readTurn(socket, sink, shiftMs, boundaries, "Giọng Edge", TOTAL_MS)
         } finally {
             socket.close()
         }

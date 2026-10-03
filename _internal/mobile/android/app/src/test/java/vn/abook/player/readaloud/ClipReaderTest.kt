@@ -125,6 +125,67 @@ class ClipReaderTest {
         assertEquals("device:vi", reader.read("Xin", "edge:v").voice)
     }
 
+    // ---- giọng dùng khoá của người dùng: khoá -> Edge -> giọng của máy -------------------------------------------------------
+
+    private fun keyedReader(keyed: FakeVoice, edge: FakeVoice, device: FakeVoice?, notices: MutableList<String>) = ClipReader(
+        ClipCache(dir), { if (it.startsWith("fpt:")) keyed else edge }, { device }, { now }, onlineFallback = { edge }, notice = { notices += it },
+    )
+
+    @Test
+    fun anExhaustedKeyFallsToEdgeSaysSoOnceAndStopsCallingThatProvider() {
+        val keyed = FakeVoice("fpt:banmai", VoiceException("Khóa FPT.AI đã hết hạn mức", reason = "quota"))
+        val edge = FakeVoice("edge:vi-VN-HoaiMyNeural")
+        val notices = mutableListOf<String>()
+        val reader = keyedReader(keyed, edge, FakeVoice("device:vi"), notices)
+        assertEquals("edge:vi-VN-HoaiMyNeural", reader.read("một", "fpt:banmai").voice)
+        assertEquals("edge:vi-VN-HoaiMyNeural", reader.read("hai", "fpt:banmai").voice)
+        assertEquals("không gọi lại khoá đã hết hạn mức ở mỗi đoạn", 1, keyed.calls)
+        assertEquals(listOf("Khóa FPT.AI đã hết hạn mức - tạm đọc bằng giọng Edge."), notices)
+        now += ClipReader.KEY_BREAK_MS + 1
+        reader.read("ba", "fpt:banmai")
+        assertEquals(2, keyed.calls)
+    }
+
+    @Test
+    fun aRejectedKeyAndAnOfflineEdgeEndOnTheDeviceVoice() {
+        val keyed = FakeVoice("fpt:banmai", VoiceException("FPT.AI từ chối khóa của bạn", reason = "auth"))
+        val edge = FakeVoice("edge:vi-VN-HoaiMyNeural", VoiceException("Không có mạng", offline = true))
+        val device = FakeVoice("device:vi")
+        val notices = mutableListOf<String>()
+        val clip = keyedReader(keyed, edge, device, notices).read("Xin", "fpt:banmai")
+        assertEquals("device:vi", clip.voice)
+        assertEquals(listOf(1, 1, 1), listOf(keyed.calls, edge.calls, device.calls))
+        assertEquals(listOf(
+            "Khóa FPT.AI không dùng được - tạm đọc bằng giọng Edge. Kiểm tra lại khóa trong Cài đặt.",
+            "Không dùng được giọng trực tuyến - tạm đọc bằng giọng của máy.",
+        ), notices)
+    }
+
+    @Test
+    fun whenEveryVoiceFailsTheChosenVoicesProblemLeads() {
+        val keyed = FakeVoice("fpt:banmai", VoiceException("Khóa FPT.AI đã hết hạn mức", reason = "quota"))
+        val edge = FakeVoice("edge:vi-VN-HoaiMyNeural", VoiceException("Không có mạng", offline = true))
+        try {
+            keyedReader(keyed, edge, FakeVoice("device:vi", VoiceException("Máy chưa có giọng tiếng Việt")), mutableListOf()).read("Xin", "fpt:banmai")
+            fail("đáng ra lỗi")
+        } catch (error: VoiceException) {
+            assertTrue(error.message!!.startsWith("Khóa FPT.AI đã hết hạn mức"))
+            assertTrue(error.message!!.contains("giọng tiếng Việt"))
+            assertEquals("quota", error.reason)
+        }
+    }
+
+    @Test
+    fun aSampleUsesExactlyThatVoiceWithoutFallingBack() {
+        val edge = FakeVoice("edge:v", VoiceException("Không có mạng", offline = true))
+        try {
+            reader(edge, FakeVoice("device:vi")).readExactly("Xin", "edge:v")
+            fail("đáng ra lỗi")
+        } catch (error: VoiceException) {
+            assertEquals("offline", error.reason)
+        }
+    }
+
     @Test
     fun failedAttemptsLeaveNoTempFilesBehind() {
         val edge = FakeVoice("edge:v", VoiceException("hỏng", offline = true))
