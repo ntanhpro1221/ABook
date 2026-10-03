@@ -21,7 +21,8 @@ from abook.asr import (
     LOCKED_NAME_ANCHOR_METRICS_VERSION,
 )
 from abook.asr_contract import COLLAPSED_SHORT_CONTEXT_MODE
-from abook.audio_io import AudioQualityError, ChapterQualityError, atomic_write_wav
+from abook import voice_balance
+from abook.audio_io import VOICE_BALANCE_FIELD, AudioQualityError, ChapterQualityError, atomic_write_wav
 from abook.config import build_settings
 from abook.database import (
     GENERATION_STRATEGY_SPLIT,
@@ -124,6 +125,15 @@ def test_candidate_item_validates_vocalization_against_source_segment() -> None:
     assert item["segment_candidate_id"] == 1
 
 
+def _voiced(db, row):
+    """Hàng đoạn như `TTSCoordinator.synthesize_atomic` đưa cho `atomic_write_wav`: có khoá giọng trong bảng cân bằng."""
+    if row["voice_profile_id"]:
+        key = voice_balance.constants_for_profile(db.voice_profile(int(row["voice_profile_id"]))).key
+    else:  # test dựng tay, hàng chưa phân vai: giọng người kể mặc định
+        key = voice_balance.voice_key("vieneu", voice_balance.engine_version("vieneu"), "Phạm Tuyên", 1.0)
+    return {**dict(row), VOICE_BALANCE_FIELD: key}
+
+
 class FakeTTS:
     def __init__(self, settings, db):
         self.settings = settings
@@ -182,7 +192,7 @@ class FakeTTS:
             48000,
             spoken_text,
             self.settings,
-            segment=row,
+            segment=_voiced(self.db, row),
         )
         profile = self.db.voice_profile(int(row["voice_profile_id"]))
         pitch_semitones = int(profile["pitch_semitones"] or 0)
@@ -299,7 +309,7 @@ class LockedNameVariantFakeTTS(FakeTTS):
             48_000,
             spoken_text,
             self.settings,
-            segment=row,
+            segment=_voiced(self.db, row),
         )
         profile = self.db.voice_profile(int(row["voice_profile_id"]))
         pitch_semitones = int(profile["pitch_semitones"] or 0)
@@ -415,7 +425,7 @@ class ScriptedShortTTS:
             sample_rate,
             str(row["text"]),
             self.settings,
-            segment=row,
+            segment=_voiced(self.db, row),
         )
         metrics.update(dict(outcome))
         profile = self.db.voice_profile(int(row["voice_profile_id"]))
@@ -574,7 +584,7 @@ def _checkpoint_short_ceiling_incumbent(
         sample_rate,
         str(row["text"]),
         pipeline.settings,
-        segment=row,
+        segment=_voiced(pipeline.db, row),
     )
     profile = pipeline.db.voice_profile(int(row["voice_profile_id"]))
     pitch_semitones = int(profile["pitch_semitones"] or 0)
@@ -651,7 +661,7 @@ def _asr_signal_pipeline(tmp_path: Path, *, repair_rounds: int):
         48_000,
         str(row["text"]),
         settings,
-        segment=row,
+        segment=_voiced(db, row),
     )
     db.mark_signal_passed(
         int(row["id"]),
@@ -1964,7 +1974,7 @@ def _locked_name_variant_pipeline(
         48_000,
         canonical_text,
         settings,
-        segment=row,
+        segment=_voiced(db, row),
     )
     profile = db.voice_profile(int(db.get_segment(int(row["id"]))["voice_profile_id"]))
     pitch_semitones = int(profile["pitch_semitones"] or 0)
@@ -3636,7 +3646,7 @@ def test_successful_confirmation_decode_clears_initial_asr_false_negative(
         48_000,
         str(row["text"]),
         settings,
-        segment=row,
+        segment=_voiced(db, row),
     )
     db.mark_signal_passed(
         int(row["id"]),
