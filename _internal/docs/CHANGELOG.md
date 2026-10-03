@@ -21,6 +21,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - **Mở file `.abook` đã sửa của chính dự án**: bài nhạc người nghe ghim vào sách giờ cũng được áp - bài được nhập vào "Nhạc của tôi" của máy này (không trùng bản) rồi ghim đúng đoạn; bài nào thiếu file thì bỏ qua và nói rõ lý do.
 
+### Điện thoại và thiết bị
+
+- **Tìm ảnh bìa trên mạng, ngay trên điện thoại**: trong "Sửa sách", cạnh "Chọn ảnh bìa…" có "Tìm ảnh bìa trên mạng…" - hỏi iTunes,
+  Open Library và Google Books theo tên bộ truyện (như trên máy tính), bấm một ảnh là đặt làm bìa. Ảnh chỉ lấy từ các nguồn ấy,
+  tối đa 16 MB, và là gợi ý để bạn chọn - không bao giờ tự đặt. Nguồn nào không trả lời thì báo tên nguồn, các nguồn khác vẫn
+  hiện. Máy tính cũng có nút này trong "Sửa sách" của cuốn không có xưởng.
+
 ## [0.4.21] - 2026-10-03
 
 ### Studio
