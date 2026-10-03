@@ -331,6 +331,23 @@ export function listeningBook(books: readonly ListenBook[], playingBookId: strin
     .sort((a, b) => (b.state.last?.at ?? 0) - (a.state.last?.at ?? 0))[0];
 }
 
+/** Các cuốn mời nghe khi vừa hết một cuốn ("Nghe cuốn khác", tối đa `limit`): cuốn đang nghe dở trước (gần nhất trước), rồi cuốn chưa nghe
+ *  (theo thứ tự thư viện). Bỏ cuốn vừa nghe, cuốn đã nghe xong / đã nghe hết phần có, cuốn chưa có chương nào nghe được, và sách chỉ có chữ khi
+ *  máy chưa có giọng đọc (`speaks` false) - bấm vào đó không phát được. */
+export function otherBooksToHear(books: readonly ListenBook[], currentId: string | undefined, speaks: boolean, limit = 3): ListenBook[] {
+  const open = books.filter(
+    (book) =>
+      book.id !== currentId &&
+      !book.progress.finished &&
+      !book.progress.caughtUp &&
+      // Sách chỉ có chữ chưa chương nào có audio (chaptersAvailable 0) nhưng giọng máy đọc được ngay.
+      (book.stage === "text" ? speaks && book.chaptersTotal > 0 : book.chaptersAvailable > 0),
+  );
+  const started = (book: ListenBook) => Boolean(book.state.last);
+  const listening = open.filter(started).sort((a, b) => (b.state.last?.at ?? 0) - (a.state.last?.at ?? 0));
+  return [...listening, ...open.filter((book) => !started(book))].slice(0, limit);
+}
+
 /** Chương nên phát khi bấm "Nghe": chỗ đang nghe dở nếu chương ấy còn nghe được (nghe gần hết thì sang chương
  *  kế), không thì chương đầu tiên chưa nghe xong, cuối cùng là chương đầu. */
 export function resumePoint(book: ListenBook, chapters: ListenChapter[]): { chapter: ListenChapter; at: number } | null {

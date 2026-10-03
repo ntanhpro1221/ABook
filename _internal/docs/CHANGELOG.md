@@ -30,6 +30,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Tích "Bỏ dòng này khỏi phần đọc" ở trang sách: màn đọc và giọng đọc bỏ dòng ấy ngay cả khi cuốn đang nằm trong trình phát (trước đây kịch bản dựng
   sẵn theo bản cũ có thể ở lại). Chương đang nghe đổi từ lần nghe sau.
 - Màn "Đang nghe" phủ kín thì phần bên dưới ra khỏi cây trợ năng (đọc màn hình và phím Tab không lạc xuống đó).
+- **Hết sách thì có chỗ đi tiếp (máy tính và điện thoại)**: màn "Đã nghe hết sách" ngoài "Nghe lại từ đầu" còn mời tối đa ba cuốn khác (cuốn đang nghe dở
+  trước, rồi cuốn chưa nghe; có bìa nhỏ, tên và tiến độ; bấm là nghe tiếp từ chỗ đã dừng) và nút "Về thư viện".
+- **Thêm nhạc của bạn ngay từ menu "Nhạc nền" của trình phát (máy tính và điện thoại)**: mục "Thêm nhạc của bạn…" mở hộp chọn file, nhập xong tự chọn
+  "Nhạc của tôi" cho cuốn đang nghe và báo "Đã thêm N bài". Máy không thêm nhạc được (điện thoại nghe thư viện máy tính) thì menu chỉ đường sang máy tính.
 
 ### Điện thoại
 

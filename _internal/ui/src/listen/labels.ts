@@ -20,6 +20,15 @@ export function bookProgressText(state: { whole: boolean; heard: number; total: 
   return `Đã nghe ${formatPercent(state.heard / state.total)} ${scope} · ${remaining}`;
 }
 
+/** Dòng dưới tên một cuốn trong danh sách mời "Nghe cuốn khác": đã nghe dở thì tiến độ (cùng lời với màn "Đang nghe"), chưa nghe thì độ dài. */
+export function otherBookLine(book: { duration: number; chaptersTotal: number; complete: boolean; progress: { heardSeconds: number; totalSeconds: number } }): string {
+  const { heardSeconds, totalSeconds } = book.progress;
+  if (heardSeconds > 0 && totalSeconds > 0) {
+    return bookProgressText({ whole: book.complete, heard: Math.min(heardSeconds, totalSeconds), total: totalSeconds, rate: 1, speed: "" });
+  }
+  return book.duration > 0 ? `Chưa nghe · ${formatLength(book.duration)}` : `Chưa nghe · ${book.chaptersTotal} chương`;
+}
+
 /** Nút chính của trang sách: nói rõ nghe bắt đầu từ đâu. Không đổi theo việc giọng máy đã đọc sẵn tới đâu. */
 export function primaryListenLabel(state: {
   /** Cuốn này đang phát trong trình phát. */
