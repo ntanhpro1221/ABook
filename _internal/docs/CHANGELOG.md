@@ -22,6 +22,15 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   đọc" để tải Giọng VieNeu. Danh sách giọng trong Cài đặt gom theo mô-đun (không lặp "(VieNeu Nano)" ở từng giọng); giọng VieNeu ghi nam / nữ.
   Giọng VieNeu Nano được mô tả đúng: đọc tốn ít bộ nhớ hơn nhưng file tải nặng hơn. "Sáng đúng từng chữ" đổi thành "Tô đúng từng chữ đang
   đọc"; hướng dẫn lấy khoá giọng trực tuyến giữ tên nút của hãng kèm giải nghĩa tiếng Việt.
+- Menu chọn giọng trong trình phát gom giọng theo nhóm như Cài đặt, ghi nam / nữ, có nút "Thử" cho từng giọng và dòng "Thêm giọng…" mở
+  Cài đặt › Giọng đọc. Hộp chọn giọng lần đầu chỉ nói "không gửi chữ đi đâu" khi trong danh sách có giọng chạy trên máy.
+
+### Trình phát
+
+- Thẻ "Đang nghe dở" ở Thư viện theo đúng cuốn đang phát. Đang mở màn nghe thì không còn hiện thêm thông báo "Đã nghe hết sách". Dòng
+  tiến độ nói rõ: "Đã nghe 10% phần đã có · còn khoảng 33 phút ở tốc độ 1,5×".
+- Menu nhạc nền: mô tả không bị cắt, độ dài danh sách phát ghi "dài 8 giờ", chọn xong có xác nhận. Hẹn giờ ngủ: "Dừng khi hết chương
+  này" là một nút rõ ràng.
 
 ### Sửa lỗi
 
