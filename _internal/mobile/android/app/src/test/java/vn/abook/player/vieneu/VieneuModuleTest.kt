@@ -106,8 +106,8 @@ class VieneuModuleTest {
         root.deleteRecursively()
     }
 
-    private fun module(shared: File? = null, blocked: String = "", parts: Map<String, List<Part>> = groups) = VieneuModule(
-        File(root, "vieneu"), shared, "arm64-v8a", VieneuModule.Facts(8, 7.6),
+    private fun module(shared: File? = null, blocked: String = "", parts: Map<String, List<Part>> = groups, ramGb: Double = 7.6) = VieneuModule(
+        File(root, "vieneu"), shared, "arm64-v8a", VieneuModule.Facts(8, ramGb),
         benchmark = { tier -> benched.add(tier); VieneuModule.Benchmark(rtf.getValue(tier), 6000, 2000, 5.0) },
         groups = parts, blocked = blocked,
     )
@@ -161,6 +161,18 @@ class VieneuModuleTest {
         module.join()
         assertEquals("nano fast enough -> turbo recommended", "turbo", module.status().getString("recommended"))
         assertTrue(module.status().isNull("suggestion"))
+    }
+
+    @Test
+    fun aFastPhoneWithLittleMemoryIsStillToldNanoAndWhy() {
+        rtf = mapOf("turbo" to 0.5, "nano" to 0.4)
+        val module = module(ramGb = 3.6)
+        module.start(listOf("nano"))
+        module.join()
+        val status = module.status()
+        assertEquals("nano", status.getString("recommended"))
+        assertTrue(choice(status, "turbo").getString("detail").contains("4 GB RAM"))
+        assertFalse(choice(status, "nano").getString("detail").contains("RAM"))
     }
 
     @Test
