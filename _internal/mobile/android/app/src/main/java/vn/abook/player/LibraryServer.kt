@@ -31,6 +31,9 @@ import android.util.Base64
  * /sync/v1/books/<mã>/state (chỗ nghe hai chiều), và trả lời tìm máy UDP như máy tính (cổng 47631, "abook"). Nên
  * bên kết nối (webui/remote_books.py) không cần biết đầu kia là máy tính hay điện thoại.
  *
+ * Nhạc nền đi theo sách như bên máy tính: mục `music` của gói (mốc từng chương) kèm đúng các file `music/<sha1>.<đuôi>` mà một
+ * mốc đang dùng - bài trong file sách và bài người nghe ghim (đã chép vào thư mục sách), không bao giờ cả kho "Nhạc của tôi".
+ *
  * Không nhận sách: chỉ phục vụ sách đã tải về máy (book.json) và đúng các file book.json kể tên; ghi duy nhất danh sách
  * thiết bị đã ghép (`share.json`, lưu băm của mã thiết bị, không lưu mã thật) và chỗ nghe gộp từ máy kia. Chỉ chạy khi
  * người dùng bật "Cho máy khác nghe thư viện này". Mã ghép 6 số dùng một lần, sống 5 phút, sai 5 lần là huỷ - như máy
@@ -50,6 +53,8 @@ object LibraryServer {
     private const val MAX_BODY_BYTES = 2 * 1024 * 1024
     private val PROBE = "ABOOK_DISCOVER".toByteArray()
     private val BOOK_ID = Regex("[A-Za-z0-9_-]+")
+    // Tên file một bài nhạc nền trong sách: `music/<sha1>.<đuôi>` (music_plan.TRACK_FILE) - bài trong file sách lẫn bài người nghe ghim.
+    private val TRACK_FILE = Regex("music/[0-9a-f]{40}\\.(?:${MusicStore.EXTENSIONS.joinToString("|")})")
 
     private lateinit var devicesFile: File
     private var server: ServerSocket? = null
@@ -262,7 +267,7 @@ object LibraryServer {
         }
     }
 
-    private class Request(val method: String, val path: String, val headers: Map<String, String>, val body: ByteArray)
+    internal class Request(val method: String, val path: String, val headers: Map<String, String>, val body: ByteArray)
 
     private fun read(input: InputStream): Request? {
         val header = StringBuilder() // dòng đầu + header là ASCII (đường dẫn đã mã hoá %)
@@ -302,7 +307,7 @@ object LibraryServer {
         }
     }
 
-    private fun route(request: Request, output: OutputStream) {
+    internal fun route(request: Request, output: OutputStream) {
         val path = request.path
         if (request.method == "POST" && path == "/sync/v1/pair") {
             val body = runCatching { JSONObject(String(request.body)) }.getOrDefault(JSONObject())
@@ -450,7 +455,37 @@ object LibraryServer {
             if (!present) chapter.put("available", false).put("file", JSONObject.NULL).put("size", 0)
         }
         copy.put("chaptersAvailable", availableChapters(id, manifest))
+        // Nhạc nền như người nghe nghe ở đây (đã qua lớp sửa: tắt, mức, im lặng, bài họ ghim), cùng hình `music` của file sách /
+        // gói máy tính (music_plan.package): chỉ mốc có file bài thật, và chỉ các bài ấy.
+        val music = playableMusic(id, copy.optJSONObject("music"))
+        if (music == null) copy.remove("music") else copy.put("music", music)
         return copy
+    }
+
+    /** Tên bài (`music/<sha1>.<đuôi>`) mà mốc `cue` dùng, nếu tên hợp lệ và có trong `music.tracks`; không thì null. */
+    private fun cuedTrack(music: JSONObject, cue: JSONObject): String? =
+        cue.optString("track").takeIf { TRACK_FILE.matches(it) && music.optJSONObject("tracks")?.optJSONObject(it) != null }
+
+    /** Mục `music` chỉ giữ mốc có bài còn file trong sách (mốc không có file thì im lặng, như máy tính bỏ mốc); không còn mốc nào -> null. */
+    private fun playableMusic(id: String, music: JSONObject?): JSONObject? {
+        val tracks = music?.optJSONObject("tracks") ?: return null
+        val chapters = music.optJSONObject("chapters") ?: return null
+        val keptChapters = JSONObject()
+        val keptTracks = JSONObject()
+        for (chapter in chapters.keys().asSequence().toList()) {
+            val cues = chapters.optJSONArray(chapter) ?: continue
+            val kept = JSONArray()
+            for (index in 0 until cues.length()) {
+                val cue = cues.optJSONObject(index) ?: continue
+                val track = cuedTrack(music, cue) ?: continue
+                if (!runCatching { Store.file(id, track).isFile }.getOrDefault(false)) continue
+                kept.put(cue)
+                keptTracks.put(track, tracks.getJSONObject(track))
+            }
+            if (kept.length() > 0) keptChapters.put(chapter, kept)
+        }
+        if (keptChapters.length() == 0) return null
+        return JSONObject(music.toString()).put("tracks", keptTracks).put("chapters", keptChapters)
     }
 
     /** Đúng các file book.json kể tên - không bao giờ một đường dẫn tuỳ ý. */
@@ -467,6 +502,14 @@ object LibraryServer {
         for (index in 0 until samples.length()) names += samples.getString(index)
         // Bìa của người nghe nằm ở edits/cover.jpg nhưng ra ngoài dưới tên cover.jpg (xem `served` và đường file ở trên).
         if (manifest.optJSONObject("cover") != null) names += "cover.jpg"
+        // Nhạc nền: đúng các bài mà một mốc đang dùng (file sách của người làm, hay bài người nghe ghim) - không bao giờ cả kho
+        // "Nhạc của tôi", cũng không bài nằm trong sách mà không mốc nào dùng.
+        val music = manifest.optJSONObject("music")
+        val musicChapters = music?.optJSONObject("chapters")
+        for (chapter in musicChapters?.keys()?.asSequence()?.toList().orEmpty()) {
+            val cues = musicChapters?.optJSONArray(chapter) ?: continue
+            for (index in 0 until cues.length()) cues.optJSONObject(index)?.let { cue -> cuedTrack(music, cue)?.let(names::add) }
+        }
         return names.filter { !it.contains("..") }.toSet()
     }
 
