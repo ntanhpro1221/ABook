@@ -9,7 +9,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Cài đặt
 
-- **Bộ cài ABook trên Windows chỉ còn mang phần nghe (bớt khoảng 18 MB)**: từ điển phát âm tiếng Anh và 21 bản nghe thử giọng
+- **Bộ cài ABook trên Windows chỉ còn mang phần nghe (bớt khoảng 16 MB)**: từ điển phát âm tiếng Anh và 21 bản nghe thử giọng
   đọc chỉ Studio dùng nên không còn nằm trong bộ cài; khi bạn bấm "Cài Studio" chúng được tải cùng (bước đầu tiên, 15 MB) và
   nghe thử giọng vẫn nghe được như cũ. Máy chưa cài Studio thì danh sách giọng không hiện nút nghe thử, thay vì báo lỗi. Bộ cài
   cũng bỏ phần thư viện ảnh và Python không dùng đến (codec ảnh AVIF, bộ vẽ chữ, công cụ gỡ lỗi...); đặt ảnh bìa vẫn nhận PNG,
