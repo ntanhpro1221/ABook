@@ -129,6 +129,14 @@ Tên người Hàn: mỗi âm tiết RR một âm tiết, không gạch nối (P
 nhận được; viết Việt hoá "Rô-dơ", "Mai-cơ" lại bị nghe thành "Roger", "Michael". Phần dưới đây (Việt hoá qua âm vị) chỉ dành cho máy
 đọc CHỈ nói được âm tiết tiếng Việt.
 
+**Phán quyết của chủ sách (04-10) cho dạng Việt hoá** — đứng trên các nguồn viết bên dưới, cố định:
+game → gêm (viết ghêm), level → le-vờ / le-vồ, maple → máp-pồ, Michael → mai-cồ, Kate → ca-tê.
+- Âm tiết cuối do phụ âm cuối tách ra (schwa) mang thanh HUYỀN, không phải ngang như dạng viết của sách báo (Oa-sinh-tơn): -əl (l
+  tối) → "ồ" (máp-pồ, mai-cồ, le-vồ; le-vờ cũng được); các phụ âm khác → "ờ" (analogy, chưa có ca chủ sách).
+- l cuối của -əl bỏ (không thành "n" như Oa-sinh-tơn): mai-cồ, không "mai-cơn".
+- Âm tiết khép trước đó giữ sắc theo luật 1 (máp).
+- Kate → ca-tê: đọc theo chữ viết, không theo âm vị /keɪt/. Chưa rõ đây là luật cho mọi tên ngắn hay riêng ca này; ghi thành ca cố định.
+
 - Đi qua âm vị (từ điển phát âm CMU / IPA), không đi theo chữ viết.
 - Áp luật chung mục 1 và các dạng đã có trong sách giáo khoa / báo chính thống (Oa-sinh-tơn, Niu Oóc, Ê-đi-xơn, Sếch-xơ-pia,
   Bét-tô-ven, Gioóc-giơ, Ru-dơ-ven).
