@@ -1,27 +1,25 @@
 import * as Popover from "@radix-ui/react-popover";
-import { ArrowLeft, ArrowRight, BookOpenText, ChevronLeft, ChevronRight, Headphones, Locate, Pencil, Play, Type } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeft, ArrowRight, BookOpenText, ChevronLeft, ChevronRight, Headphones, Pencil, Play, Type } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { cn } from "@/shared/cn";
 import { lineEditing } from "@/shared/capabilities";
-import { excerpt } from "@/shared/format";
+import { useMediaQuery } from "@/shared/media";
 import { usePageTitle } from "@/shared/title";
 import { Button, EmptyState, IconButton, Skeleton } from "@/shared/ui";
-import { useClock } from "./clock";
+import { firstVisibleIndex } from "./follow";
+import { readerHint } from "./labels";
 import { LineWishDialog, useWishes, WaitingMark } from "./LineWishes";
-import { usePlayListenBook } from "./LibraryScreen";
 import { usePlayer } from "./player";
-import { sentenceIndexAt } from "./PlayerViews";
-import { estimatedStarts } from "./readAloud";
+import { JumpToPlaying, ReadAlongText, useFollowVoice, useListenFrom, usePlayingSentence } from "./ReadAlongText";
 import { useChapterScript, useListenBook, useSource } from "./source";
-import { wordAtPoint } from "./wordTap";
-import { splitPieces, usableWords, wordIndexAt } from "./words";
 
 // Chế độ ĐỌC: văn bản chương như một cuốn ebook, đi cùng chỗ đang nghe.
 //
 // Học từ Whispersync của Audible + Kindle (docs/PLAYER_RESEARCH.md): chuyển qua lại đọc ⇄ nghe đúng chỗ. Ta có sẵn thứ
 // họ phải ghép hai sản phẩm mới có: văn bản kèm mốc thời gian từng câu. Đọc được cả chương CHƯA thu âm (văn bản có từ
 // lúc tạo sách), nhớ chỗ đọc dở, "Nghe từ đây" bắt đầu nghe đúng câu đang đọc, và câu đang phát sáng lên nếu đang nghe.
+// Văn bản, chữ sáng, bấm chữ để nghe và tự cuộn theo giọng dùng chung với tab "Đọc theo" của trình phát (ReadAlongText.tsx).
 
 interface ReaderPrefs {
   size: number;
@@ -33,6 +31,8 @@ interface ReaderPrefs {
 const PREFS_KEY = "abook-reader";
 const SIZES = [16, 18, 20, 22, 24];
 const LEADINGS = [1.6, 1.8, 2];
+/** Điện thoại: nút trên thanh đầu đủ 44 px để chạm. */
+const TOUCH = "max-sm:size-[44px]";
 
 function loadPrefs(): ReaderPrefs {
   try {
@@ -44,6 +44,17 @@ function loadPrefs(): ReaderPrefs {
 
 function localReadingKey(bookId: string) {
   return `abook-reading-${bookId}`;
+}
+
+/** Câu đầu tiên còn thấy trong khung đọc (follow.firstVisibleIndex trên các câu đang hiện). */
+function visibleSentence(box: HTMLElement | null): number {
+  if (!box) return 0;
+  const view = box.getBoundingClientRect();
+  const items = [...box.querySelectorAll<HTMLElement>("[data-sentence]")].map((span) => {
+    const rect = span.getBoundingClientRect();
+    return { index: Number(span.dataset.index), top: rect.top, bottom: rect.bottom };
+  });
+  return firstVisibleIndex(items, view);
 }
 
 /** `editing`: false ở thiết bị điều khiển từ xa (không sửa sách ở đó). `onOpenStudioScript`: máy tính, cuốn có xưởng - mở đúng câu ở
@@ -60,7 +71,6 @@ export function ReaderScreen({
   const navigate = useNavigate();
   const source = useSource();
   const player = usePlayer();
-  const playBook = usePlayListenBook();
   const { data: book } = useListenBook(id);
   const chapters = book?.chapters ?? [];
   const chapterId = Number(chapterParam ?? book?.state.reading?.chapterId ?? chapters[0]?.id ?? 0);
@@ -68,14 +78,14 @@ export function ReaderScreen({
   const index = chapters.findIndex((item) => item.id === chapterId);
   usePageTitle(book && chapter ? `${chapter.subtitle || chapter.title} · ${book.title}` : book?.title);
   const { data: script, isLoading } = useChapterScript(id, chapter);
-  // Chương chỉ có chữ (sách nhập từ EPUB / DOCX / PDF / TXT, chưa có audio): đọc được, không nghe được, không sửa từng câu.
+  // Chương chỉ có chữ (sách nhập từ EPUB / DOCX / PDF / TXT, chưa có audio): đọc được, không sửa từng câu; máy có giọng thì giọng máy đọc.
   const textOnly = chapter?.state === "text";
-  // Chương chỉ có chữ mà máy có giọng đọc: "Nghe ngay" - giọng máy đọc, màn này sáng đoạn và chữ đang đọc (listen/readAloud.ts).
-  const canSpeak = textOnly && chapter?.speech === true;
+  const { canSpeak, canListen, listenFrom } = useListenFrom(id, book, chapter, script);
   // Sửa một câu (docs/EDITING.md, P2a): cuốn không có xưởng ghi ý muốn chờ Studio ngay tại đây; cuốn có xưởng sửa ở Studio; cuốn
   // nghe thẳng từ máy khác hay chưa cài Studio: nút vẫn hiện, mờ đi, kèm lý do.
   const lineEdit = editing && !textOnly ? lineEditing(book?.capabilities) : null;
   const wishes = useWishes(id, lineEdit?.mode === "wish");
+  const coarse = useMediaQuery("(pointer: coarse)");
   const [prefs, setPrefs] = useState<ReaderPrefs>(loadPrefs);
   const [selected, setSelected] = useState<number | null>(null);
   const [editingLine, setEditingLine] = useState<number | null>(null);
@@ -85,15 +95,9 @@ export function ReaderScreen({
   const restored = useRef("");
 
   const listeningHere = player.track?.bookId === id && player.track.chapterId === chapterId;
-  const starts = useMemo(() => (script?.timed ? script.segments.map((segment) => segment.start ?? 0) : []), [script]);
-  const playingIndex = useClock((time) => (listeningHere && starts.length ? sentenceIndexAt(starts, time) : -1));
-  // Chữ đang đọc trong câu đang sáng (mốc từng chữ do Studio căn lúc đóng gói, words.ts): chỉ câu này render theo chữ, nên đồng hồ khung hình chỉ
-  // làm render lại MỘT câu, và chỉ khi sang chữ khác. Câu không có mốc (sách chưa căn) thì sáng cả câu như cũ.
-  const litWords = useMemo(() => {
-    const segment = playingIndex >= 0 ? script?.segments[playingIndex] : undefined;
-    return segment ? usableWords(segment.text, segment.words) : null;
-  }, [playingIndex, script]);
-  const wordIndex = useClock((time) => (litWords ? wordIndexAt(litWords, time * 1000) : -1));
+  const playingIndex = usePlayingSentence(script, listeningHere);
+  // Mở đúng một câu được yêu cầu (?at=, từ dấu trang / tìm kiếm): đứng yên ở đó, chưa theo giọng; còn lại thì đi theo giọng ngay.
+  const follow = useFollowVoice(container, playingIndex, { initial: params.get("at") === null, resetKey: `${id}:${chapterId}`, smooth: player.playing });
 
   useEffect(() => {
     try {
@@ -103,7 +107,7 @@ export function ReaderScreen({
     }
   }, [prefs]);
 
-  // Mở chương: tới câu được yêu cầu (?at=), chỗ đọc dở, hoặc câu đang phát - theo thứ tự ấy.
+  // Mở chương: tới câu được yêu cầu (?at=), câu đang nghe, hay chỗ đọc dở - theo thứ tự ấy.
   useEffect(() => {
     if (!script || !book) return;
     const key = `${id}:${chapterId}`;
@@ -118,29 +122,20 @@ export function ReaderScreen({
     } catch {
       /* bỏ qua */
     }
-    const target = requested !== null ? Number(requested) : reading ?? local ?? (playingIndex >= 0 ? playingIndex : 0);
+    const target = requested !== null ? Number(requested) : playingIndex >= 0 ? playingIndex : reading ?? local ?? 0;
     window.requestAnimationFrame(() => {
-      // Đầu chương: về đầu trang, không cuộn tới câu đầu - dòng "Chương này chưa có audio" đứng TRƯỚC câu ấy và từng bị
-      // cuộn khuất ngay lúc mở (soát UX 29-09).
+      // Đầu chương: về đầu trang, không cuộn tới câu đầu - dòng nhắc đứng TRƯỚC câu ấy và từng bị cuộn khuất ngay lúc mở (soát UX 29-09).
       if (target <= 0) container.current?.scrollTo({ top: 0 });
       else container.current?.querySelector<HTMLElement>(`[data-index="${target}"]`)?.scrollIntoView({ block: "start" });
       setCurrent(target);
     });
   }, [book, chapterId, id, params, playingIndex, script]);
 
-  // Chỗ đọc = câu đầu tiên còn thấy ở đỉnh khung; lưu thưa (2 giây sau lần cuộn cuối).
+  // Chỗ đọc = câu đầu tiên còn thấy trong khung; lưu thưa (2 giây sau lần cuộn cuối).
   const onScroll = useCallback(() => {
-    const box = container.current;
-    if (!box || !script) return;
-    const top = box.getBoundingClientRect().top + 72;
-    const spans = box.querySelectorAll<HTMLElement>("[data-index]");
-    let found = 0;
-    for (const span of spans) {
-      if (span.getBoundingClientRect().bottom >= top) {
-        found = Number(span.dataset.index);
-        break;
-      }
-    }
+    follow.onScroll();
+    if (!script) return;
+    const found = visibleSentence(container.current);
     setCurrent(found);
     window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(() => {
@@ -151,7 +146,7 @@ export function ReaderScreen({
       }
       void source.saveReading?.(id, chapterId, found).catch(() => undefined);
     }, 2000);
-  }, [chapterId, id, script, source]);
+  }, [chapterId, follow, id, script, source]);
 
   useEffect(() => () => window.clearTimeout(saveTimer.current), []);
 
@@ -172,82 +167,59 @@ export function ReaderScreen({
     );
   }
 
-  // Giây bắt đầu của một câu: mốc đã có; chương đọc to chưa chạy thì ước (cùng cách ước với bộ máy đọc nên "Nghe từ đây" rơi đúng câu).
-  const startOf = (sentence: number): number | null => {
-    const start = script.segments[sentence]?.start;
-    if (start !== null && start !== undefined) return start;
-    return canSpeak && script.segments[sentence] ? estimatedStarts(script.segments)[sentence] : null;
-  };
-  // Nghe từ một câu, hay từ đúng một chữ của câu (`word` >= 0): sách nói đã căn chữ thì tới mốc của chữ, chưa căn thì đầu câu; chương đọc to
-  // báo cho bộ máy chữ nào (nó tự vào mốc chữ trong clip, hay đọc đoạn ấy trước rồi vào).
-  const listenFrom = (sentence: number, word = -1) => {
-    const segment = script.segments[sentence];
-    const start = startOf(sentence);
-    if (!segment || start === null || (!script.timed && !canSpeak)) return;
-    const spans = word >= 0 ? usableWords(segment.text, segment.words) : null;
-    const at = spans ? spans[word][0] / 1000 : start;
-    const target = canSpeak && word >= 0 ? { segment: sentence, word } : undefined;
-    let offset = 0;
-    if (word >= 0) for (const piece of splitPieces(segment.text)) { if (piece.word === word) break; offset += piece.text.length; }
-    const note = `Nghe từ “${excerpt(segment.text.slice(offset))}”`;
-    if (player.track?.bookId === id) player.jumpTo(chapterId, at, note, target);
-    else void playBook(book, chapterId, at, { word: target });
+  /** Nghe từ một câu / một chữ, rồi để trang đi theo giọng. */
+  const listen = (sentence: number, word = -1) => {
+    if (!listenFrom(sentence, word)) return;
+    follow.follow();
     setSelected(null);
     if (!prefs.tapped) setPrefs({ ...prefs, tapped: true });
   };
-  // Bấm vào câu: có nghe được thì nghe từ đúng chữ vừa bấm (như Đọc to của Edge); sửa được câu thì câu còn được chọn để hiện "Sửa câu này". Một
-  // bộ xử lý duy nhất cho cả câu - chữ không là điểm dừng Tab riêng; bàn phím có nút "Nghe từ đây" ở đầu trang. Đang bôi chữ để chép: không nghe.
-  const tapSentence = (event: React.MouseEvent<HTMLElement>, index: number) => {
-    if (!selectable) return;
-    if (window.getSelection()?.isCollapsed === false) return;
-    if (script.timed || canSpeak) {
-      const word = wordAtPoint(event.currentTarget, script.segments[index].text, event.clientX, event.clientY);
-      listenFrom(index, word);
-      if (lineEdit) setSelected(index);
+  // Bấm vào câu: có nghe được thì nghe từ đúng chữ vừa bấm (như Đọc to của Edge); sửa được câu thì câu còn được chọn để hiện "Sửa câu này".
+  // Bàn phím: mũi tên đi qua các câu, Enter là nghe từ câu ấy.
+  const tapSentence = (sentence: number, word: number) => {
+    if (canListen) {
+      listen(sentence, word);
+      if (lineEdit) setSelected(sentence);
       return;
     }
-    setSelected(index === selected ? null : index);
+    setSelected(sentence === selected ? null : sentence);
   };
-  // "Nghe từ đây" trên thanh đầu: câu đang nghe dở (dừng) vẫn nằm trong màn thì nghe tiếp từ đúng chỗ ấy - trước đây nút
-  // luôn nhảy về câu đầu màn hình (1:11 lùi về 0:41, soát UX 29-09). Câu ấy đã trôi khỏi màn thì nghe từ câu đang đọc.
+  // "Nghe từ đây" trên thanh đầu: câu đang nghe dở (dừng) vẫn nằm trong màn thì nghe tiếp từ đúng chỗ ấy - trước đây nút luôn nhảy về câu đầu
+  // màn hình (1:11 lùi về 0:41, soát UX 29-09). Không thì nghe từ câu đầu tiên còn thấy trên màn.
   const listenHere = () => {
     if (listeningHere && playingIndex >= 0) {
+      const box = container.current?.getBoundingClientRect();
       const rect = container.current?.querySelector<HTMLElement>(`[data-index="${playingIndex}"]`)?.getBoundingClientRect();
-      if (rect && rect.bottom > 0 && rect.top < window.innerHeight) {
+      if (box && rect && rect.bottom > box.top && rect.top < box.bottom) {
+        follow.follow();
         if (!player.playing) player.resume();
         return;
       }
     }
-    listenFrom(current);
+    listen(visibleSentence(container.current));
   };
-  const selectable = script.timed || canSpeak || lineEdit !== null;
+  const selectable = canListen || lineEdit !== null;
   const go = (step: 1 | -1) => {
     const next = chapters[index + step];
     if (next) navigate(`/book/${id}/read/${next.id}`, { replace: true });
   };
-  const paragraphs: { key: number; items: { index: number; text: string; kind: string; speaker: string; stableId?: string }[] }[] = [];
-  script.segments.forEach((segment, position) => {
-    const last = paragraphs[paragraphs.length - 1];
-    const item = { index: position, text: segment.text, kind: segment.kind, speaker: segment.speaker, stableId: segment.stableId };
-    if (last && last.key === segment.paragraph) last.items.push(item);
-    else paragraphs.push({ key: segment.paragraph, items: [item] });
-  });
+  const hint = readerHint({ textOnly, canSpeak, timed: script.timed, tapped: Boolean(prefs.tapped), coarse, wish: lineEdit?.mode === "wish" });
+  const name = chapter.subtitle || chapter.title;
 
   return (
     <div className="flex h-full flex-col">
       <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-line bg-bg/95 px-3 backdrop-blur sm:px-6">
-        <IconButton label="Về trang sách" icon={ArrowLeft} onClick={() => navigate(`/book/${id}`)} />
+        <IconButton label="Về trang sách" icon={ArrowLeft} onClick={() => navigate(`/book/${id}`)} className={TOUCH} />
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-semibold">{chapter.subtitle || chapter.title}</div>
-          <div className="truncate text-xs text-fg-2">
-            {book.title} · {chapter.title}
-          </div>
+          <div className="truncate text-sm font-semibold">{name}</div>
+          {/* Tên chương đã ở dòng trên: dòng dưới chỉ thêm "Chương 3" khi dòng trên là tên riêng của chương. */}
+          <div className="truncate text-xs text-fg-2">{chapter.subtitle ? `${book.title} · ${chapter.title}` : book.title}</div>
         </div>
-        <IconButton label="Chương trước" icon={ChevronLeft} disabled={index <= 0} onClick={() => go(-1)} />
-        <IconButton label="Chương sau" icon={ChevronRight} disabled={index >= chapters.length - 1} onClick={() => go(1)} />
+        <IconButton label="Chương trước" icon={ChevronLeft} disabled={index <= 0} onClick={() => go(-1)} className={TOUCH} />
+        <IconButton label="Chương sau" icon={ChevronRight} disabled={index >= chapters.length - 1} onClick={() => go(1)} className={TOUCH} />
         <Popover.Root>
           <Popover.Trigger asChild>
-            <button type="button" aria-label="Cỡ chữ và giãn dòng" className="grid size-9 place-items-center rounded-lg text-fg-2 hover:bg-hover hover:text-fg">
+            <button type="button" aria-label="Cỡ chữ và giãn dòng" className={cn("grid size-9 place-items-center rounded-lg text-fg-2 hover:bg-hover hover:text-fg", TOUCH)}>
               <Type className="size-[18px]" />
             </button>
           </Popover.Trigger>
@@ -261,7 +233,7 @@ export function ReaderScreen({
                     type="button"
                     aria-pressed={prefs.size === size}
                     onClick={() => setPrefs({ ...prefs, size })}
-                    className={cn("h-9 rounded-lg", prefs.size === size ? "bg-accent-soft font-semibold text-accent-text" : "hover:bg-hover")}
+                    className={cn("h-9 rounded-lg max-sm:h-[44px]", prefs.size === size ? "bg-accent-soft font-semibold text-accent-text" : "hover:bg-hover")}
                     style={{ fontSize: Math.round(size * 0.75) }}
                   >
                     A
@@ -276,7 +248,7 @@ export function ReaderScreen({
                     type="button"
                     aria-pressed={prefs.leading === leading}
                     onClick={() => setPrefs({ ...prefs, leading })}
-                    className={cn("tabular h-9 rounded-lg text-sm", prefs.leading === leading ? "bg-accent-soft font-semibold text-accent-text" : "hover:bg-hover")}
+                    className={cn("tabular h-9 rounded-lg text-sm max-sm:h-[44px]", prefs.leading === leading ? "bg-accent-soft font-semibold text-accent-text" : "hover:bg-hover")}
                   >
                     {leading.toLocaleString("vi-VN")}
                   </button>
@@ -285,82 +257,34 @@ export function ReaderScreen({
             </Popover.Content>
           </Popover.Portal>
         </Popover.Root>
-        {(script.timed || canSpeak) && (
+        {canListen && (
           <>
+            {/* Một nhãn cố định: nút luôn nghe từ chỗ đang thấy trên màn (hay nghe tiếp câu đang nghe dở nếu nó còn trên màn). */}
             <Button size="sm" variant="primary" icon={Headphones} onMouseDown={(event) => event.preventDefault()} onClick={listenHere} className="max-sm:hidden">
-              {script.timed ? "Nghe từ đây" : "Nghe ngay"}
+              Nghe từ đây
             </Button>
             {/* Điện thoại: cùng việc, chỉ còn biểu tượng - trước đây nút ẩn hẳn và chỉ còn cách đoán là chạm vào câu. */}
-            <IconButton label={script.timed ? "Nghe từ đây" : "Nghe ngay"} icon={Headphones} tone="solid" onClick={listenHere} className="sm:hidden" />
+            <IconButton label="Nghe từ đây" icon={Headphones} tone="solid" onClick={listenHere} className={cn("sm:hidden", TOUCH)} />
           </>
         )}
       </header>
 
-      <div ref={container} onScroll={onScroll} className="relative min-h-0 flex-1 overflow-y-auto">
+      <div ref={container} onScroll={onScroll} {...follow.input} className="relative min-h-0 flex-1 overflow-y-auto">
         <article className="mx-auto max-w-[68ch] px-6 pb-40 pt-8" style={{ fontSize: prefs.size, lineHeight: prefs.leading }}>
-          {!script.timed && (
-            <p className="mb-6 rounded-lg bg-hover px-4 py-3 text-sm leading-relaxed text-fg-2">
-              {textOnly
-                ? canSpeak
-                  ? "Chưa có giọng người đọc - bấm “Nghe ngay” để giọng máy đọc, hoặc chạm vào một chữ để nghe từ chữ ấy."
-                  : "Chưa có âm thanh - chương này mới có chữ để đọc."
-                : "Chương này chưa có audio - vẫn đọc được. Khi Studio thu xong, “Nghe từ đây” sẽ hiện ra."}
-            </p>
+          {hint && (
+            <p className={cn("mb-6 text-sm leading-relaxed text-fg-2", (textOnly || !script.timed) && "rounded-lg bg-hover px-4 py-3")}>{hint}</p>
           )}
-          {script.timed && !prefs.tapped && (
-            <p className="mb-6 text-sm text-fg-2">
-              Chạm vào một chữ để nghe từ đúng chữ ấy{lineEdit?.mode === "wish" ? "; “Sửa câu này” để đổi người nói, cách đọc, tên hay thu lại câu" : ""}.
-            </p>
-          )}
-          <div className="space-y-[0.9em]">
-            {paragraphs.map((paragraph) => {
-              const first = paragraph.items[0];
-              if (first.kind === "heading") {
-                return (
-                  <h1 key={paragraph.key} data-index={first.index} className="pb-2 text-[1.5em] font-bold leading-snug tracking-tight">
-                    {first.text}
-                  </h1>
-                );
-              }
-              return (
-                <p key={paragraph.key} className="text-pretty">
-                  {paragraph.items.map((item) => (
-                    <span key={item.index}>
-                      <span
-                        data-index={item.index}
-                        onClick={(event) => tapSentence(event, item.index)}
-                        className={cn(
-                          // scroll-mt: câu được cuộn tới không nằm khuất dưới thanh đầu dính (soát UX 29-09).
-                          "scroll-mt-20 rounded-[4px] [box-decoration-break:clone]",
-                          selectable && "cursor-pointer",
-                          item.kind === "thought" && "italic",
-                          item.index === playingIndex && "read-along-active",
-                          // Câu đang chọn: gạch chân màu nhấn - khung bao từng dòng của câu dài thành nhiều ô rời, và gạch
-                          // chân không lẫn với nền của câu đang phát.
-                          item.index === selected && "underline decoration-accent decoration-2 underline-offset-[0.22em]",
-                        )}
-                      >
-                        {item.index === playingIndex && litWords ? (
-                          splitPieces(item.text).map((piece, at) =>
-                            piece.word >= 0 && piece.word === wordIndex ? (
-                              <span key={at} className="read-along-word">
-                                {piece.text}
-                              </span>
-                            ) : (
-                              piece.text
-                            ),
-                          )
-                        ) : (
-                          item.text
-                        )}
-                        {item.stableId && wishes.data?.lines[item.stableId] && <WaitingMark />}
-                      </span>{" "}
-                    </span>
-                  ))}
-                </p>
-              );
-            })}
-          </div>
+          <ReadAlongText
+            script={script}
+            playingIndex={playingIndex}
+            onTap={selectable ? tapSentence : undefined}
+            focusIndex={playingIndex >= 0 ? playingIndex : current}
+            selected={selected}
+            heading="h1"
+            headingClassName="pb-2 text-[1.5em] font-bold leading-snug tracking-tight"
+            className="space-y-[0.9em]"
+            after={(segment) => (segment.stableId && wishes.data?.lines[segment.stableId] ? <WaitingMark /> : null)}
+          />
           {index < chapters.length - 1 && (
             <button
               type="button"
@@ -378,12 +302,12 @@ export function ReaderScreen({
         {selected !== null && (
           <div className="pointer-events-none sticky bottom-6 flex flex-col items-center gap-2">
             <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-2">
-              {(script.timed || canSpeak) && (
+              {canListen && (
                 <button
                   type="button"
-                  onClick={() => listenFrom(selected)}
+                  onClick={() => listen(selected)}
                   onMouseDown={(event) => event.preventDefault()}
-                  className="inline-flex items-center gap-2 rounded-full bg-fg px-5 py-2.5 text-sm font-semibold text-bg shadow-float"
+                  className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-fg px-5 py-2.5 text-sm font-semibold text-bg shadow-float"
                 >
                   <Play className="size-4" fill="currentColor" strokeWidth={0} /> Nghe từ câu này
                 </button>
@@ -398,7 +322,7 @@ export function ReaderScreen({
                     else if (lineEdit.mode === "studio" && stableId) onOpenStudioScript?.(id, chapterId, stableId);
                   }}
                   onMouseDown={(event) => event.preventDefault()}
-                  className="inline-flex items-center gap-2 rounded-full bg-panel px-4 py-2.5 text-sm font-semibold shadow-float ring-1 ring-line disabled:opacity-60"
+                  className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-panel px-4 py-2.5 text-sm font-semibold shadow-float ring-1 ring-line disabled:opacity-60"
                 >
                   <Pencil className="size-4" /> {lineEdit.mode === "studio" ? "Sửa trong Studio" : "Sửa câu này"}
                 </button>
@@ -411,15 +335,9 @@ export function ReaderScreen({
             )}
           </div>
         )}
-        {selected === null && listeningHere && playingIndex >= 0 && Math.abs(playingIndex - current) > 12 && (
+        {selected === null && follow.showJump && (
           <div className="pointer-events-none sticky bottom-6 flex justify-center">
-            <button
-              type="button"
-              onClick={() => container.current?.querySelector<HTMLElement>(`[data-index="${playingIndex}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" })}
-              className="pointer-events-auto inline-flex items-center gap-2 rounded-full bg-panel px-4 py-2 text-sm font-semibold shadow-float ring-1 ring-line"
-            >
-              <Locate className="size-4" /> Tới câu đang nghe
-            </button>
+            <JumpToPlaying onClick={follow.jump} />
           </div>
         )}
       </div>

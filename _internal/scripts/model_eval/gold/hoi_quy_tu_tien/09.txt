@@ -1,0 +1,211 @@
+# Đáp án KIỂM TRA Hàn đợt 4 (03-10; luật cố định: vị trí 30% của bộ, >30 KB lấy 25 KB đầu); mục đích: tách q35-4B / 9B / v8 trên truyện Hàn chưa học.
+# "Hồi quy tu tiên truyện" file 09 ("Chương 5 - Trưởng Phòng Kim Là Thiên Tài Võ Học (1)"; ~20 KB, lấy trọn). Claude gán (A) 03-10.
+# NGÔI THỨ NHẤT cả chương, "tôi" = THỤY ÂN HIỆN (Kim gọi "Phó quản lý Thụy", 82 "Cảm ơn cậu, Ân Hiện."; cả bộ "Thụy Ân Hiện" 33
+# lần) -> --first-person "Thụy Ân Hiện". "Phó quản lý Thụy" là chức danh - không điểm.
+# Tên: THỤY ÂN HIỆN / ÂN HIỆN (m); KIM VĨNH HUÂN / VĨNH HUÂN (m) - lời kể chương này gần như chỉ gọi "Trưởng phòng Kim" (chức
+# danh + họ, tên thật vẫn dùng ở 87, 189) -> TRƯỞNG PHÒNG KIM nửa điểm (tiền lệ TIỂU THƯ WHATELEY~, Mẹ kế 031); HỨA BẠCH (m,
+# Đường chủ Trảm Yêu Đường - "Đường chủ" là danh hiệu).
+# 63-68 KHÓ - mua bán Hoàng Châu Sâm: 64 "Ôi chao, đại nhân..." = chủ dược đường (65 khom người). 66 "Theo ta thấy... ít nhất
+# cũng đã tám trăm năm tuổi... phải đáng mười thỏi" = THỤY ÂN HIỆN (xưng "ta" của người mặc áo lụa đi bán; chủ quán khúm núm
+# không xưng "ta"), NPC*~. 67 "Đương nhiên! Thực ra... phải đáng tới mười lăm thỏi!" = chủ dược đường nịnh lên giá (69 nhận đúng
+# mười lăm thỏi). 68 "Vậy thì mau mang ra đây." = THỤY ÂN HIỆN.
+# 150-157 hai võ sĩ gác cổng: 151 một người hỏi (152 "hai võ sĩ... cẩn thận hỏi" -> NPC* đủ, quy tắc 6); 154 "Ừm..." và 157 cùng
+# người gác cổng (155 "Ánh mắt người gác cổng chuyển sang Trưởng phòng Kim").
+# 171 "Ừm..." / 172 "Hmm..." sau lời Hứa Bạch, không lời dẫn; 173 Kim cau mày định đứng dậy, 174 "tôi" ngăn -> nhập nhằng thật,
+# cả hai người đủ điểm (Kim đứng trước ở 172, sát lời kể 173).
+# 101 "Trưởng phòng Kim hỏi, vẻ mặt có phần hưng phấn:" lời dẫn đứng TRƯỚC 102. 185 "ông nói với vẻ kiên quyết:" trước 186.
+# Ngôi một, tiếng lòng tức thời -> N,T người kể đủ (quy tắc 4): 30, 35, 86, 89-90, 94, 96, 121, 145, 160-161. Khoá T: 34, 47,
+# 53, 88, 91, 95, 114, 120, 144 = nội tâm THỤY ÂN HIỆN.
+0 H
+1 N
+2 D THỤY ÂN HIỆN,ÂN HIỆN afraid,excited 1-2 fast,normal loud m
+3 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ tired,neutral 0-1 slow soft m
+4 N
+5 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ surprised,afraid,tired 0-1 normal,slow normal,soft m
+6 D THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal,slow normal m
+7 N
+8 N
+9 N
+10 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ tired,sad 0-1 slow,normal soft,normal m
+11 D THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
+12 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ sad,tired 0-1 slow soft,normal m
+13 N NARRATOR neutral,sad 0-1 normal normal u
+14 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ sad,tired 0-1 slow,normal normal,soft m
+15 N
+16 N
+17 N
+18 N
+19 D THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
+20 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ neutral,tired 0-1 normal normal m
+21 N
+22 N
+23 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ neutral,surprised,afraid 0-1 normal normal,soft m
+24 D THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
+25 N
+26 N
+27 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ afraid,neutral 0-1 normal normal m
+28 D THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
+29 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ happy,excited,surprised 1-2 normal,fast normal,loud m
+30 N,T NARRATOR,THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal u
+31 N
+32 N
+33 N
+34 T THỤY ÂN HIỆN,ÂN HIỆN neutral,sad,tired 0-1 normal normal m
+35 N,T NARRATOR,THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal u
+36 D THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
+37 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ neutral,afraid 0-1 normal normal m
+38 N
+39 D THỤY ÂN HIỆN,ÂN HIỆN neutral,happy 0-1 normal normal m
+40 N
+41 N
+42 N
+43 N
+44 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ happy,excited 0-1 normal normal m
+45 D THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
+46 N
+47 T THỤY ÂN HIỆN,ÂN HIỆN angry,sarcastic,neutral 0-1 normal normal,soft m
+48 N,T NARRATOR,THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal u
+49 N
+50 N
+51 N
+52 N
+53 T THỤY ÂN HIỆN,ÂN HIỆN neutral,sad,surprised 0-1 normal normal,soft m
+54 N
+55 N
+56 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ neutral,afraid 0-1 normal normal m
+57 D THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
+58 N
+59 N
+60 N
+61 N
+62 N
+63 N
+64 D NPC*:chủ dược đường,UNKNOWN~ surprised,happy,excited 0-1 normal normal m
+65 N
+66 D THỤY ÂN HIỆN,ÂN HIỆN,NPC*:chủ dược đường~ neutral 0-1 normal normal m
+67 D NPC*:chủ dược đường,UNKNOWN~,THỤY ÂN HIỆN~ excited,happy 0-2 normal,fast normal,loud m
+68 D THỤY ÂN HIỆN,ÂN HIỆN,NPC*:chủ dược đường~ neutral 0-1 normal normal m
+69 N
+70 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ surprised,happy 0-1 normal normal m
+71 D THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
+72 N
+73 N
+74 N
+75 N
+76 N
+77 D THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
+78 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ happy,tender,neutral 0-1 normal normal m
+79 N
+80 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ neutral,tender 0-1 normal normal m
+81 D THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
+82 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ happy,tender 0-1 normal normal m
+83 N
+84 D THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
+85 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ neutral 0-1 normal normal m
+86 N,T NARRATOR,THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal u
+87 N
+88 T THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
+89 N,T NARRATOR,THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal u
+90 N,T NARRATOR,THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal u
+91 T THỤY ÂN HIỆN,ÂN HIỆN neutral,excited 0-1 normal normal m
+92 N
+93 N
+94 N,T NARRATOR,THỤY ÂN HIỆN,ÂN HIỆN neutral,excited 0-1 normal normal u
+95 T THỤY ÂN HIỆN,ÂN HIỆN neutral,excited 0-1 normal normal m
+96 N,T NARRATOR,THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal u
+97 D THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
+98 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ surprised,excited 0-1 normal normal m
+99 D THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
+100 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ neutral 0-1 normal normal m
+101 N NARRATOR neutral,excited 0-1 normal normal u
+102 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ excited,neutral 0-1 normal normal m
+103 N NARRATOR neutral,excited 0-1 normal normal u
+104 D THỤY ÂN HIỆN,ÂN HIỆN neutral,happy 0-1 normal normal m
+105 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ surprised,neutral 0-1 normal normal m
+106 D THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
+107 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ neutral,tired,sad 0-1 normal normal,soft m
+108 N
+109 N NARRATOR neutral,sad 0-1 normal normal u
+110 N
+111 N
+112 N
+113 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ surprised,neutral 0-1 normal normal m
+114 T THỤY ÂN HIỆN,ÂN HIỆN surprised 0-1 normal normal m
+115 N NARRATOR neutral,surprised 0-1 normal normal u
+116 N
+117 N
+118 N
+119 N
+120 T THỤY ÂN HIỆN,ÂN HIỆN surprised,neutral 0-1 normal normal m
+121 N,T NARRATOR,THỤY ÂN HIỆN,ÂN HIỆN neutral,sad 0-1 normal normal u
+122 N NARRATOR neutral,sad 0-1 normal normal u
+123 N,T NARRATOR,THỤY ÂN HIỆN,ÂN HIỆN neutral,sad 0-1 normal normal u
+124 N NARRATOR neutral,sad 0-1 normal normal u
+125 D THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
+126 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ happy,excited 1-2 normal,fast normal,loud m
+127 N
+128 D THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
+129 N
+130 N
+131 N
+132 N
+133 N
+134 N
+135 N
+136 N
+137 N
+138 N
+139 N
+140 D THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
+141 N
+142 N
+143 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ excited,happy 1-2 fast,normal loud,normal m
+144 T THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
+145 N,T NARRATOR,THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal u
+146 N
+147 N
+148 N
+149 N
+150 N
+151 D NPC*,UNKNOWN~ neutral 0-1 normal normal m
+152 N
+153 D THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
+154 D NPC*:võ sĩ gác cổng,UNKNOWN~ neutral 0-1 normal normal m
+155 N
+156 N
+157 D NPC*:võ sĩ gác cổng,UNKNOWN~ neutral 0-1 normal normal m
+158 D THỤY ÂN HIỆN,ÂN HIỆN happy,neutral 0-1 normal normal m
+159 N
+160 N,T NARRATOR,THỤY ÂN HIỆN,ÂN HIỆN neutral,sarcastic 0-1 normal normal u
+161 N,T NARRATOR,THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal u
+162 N
+163 N
+164 D HỨA BẠCH neutral 0-1 normal normal m
+165 D THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
+166 N
+167 N
+168 N
+169 D HỨA BẠCH neutral 0-1 normal normal m
+170 D HỨA BẠCH neutral 0-1 normal normal m
+171 D THỤY ÂN HIỆN,ÂN HIỆN,KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ neutral 0-1 normal,slow normal,soft m
+172 D KIM VĨNH HUÂN,VĨNH HUÂN,THỤY ÂN HIỆN,ÂN HIỆN,TRƯỞNG PHÒNG KIM~ neutral,angry 0-1 normal,slow normal,soft m
+173 N NARRATOR neutral,angry 0-1 normal normal u
+174 N
+175 D THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
+176 D HỨA BẠCH neutral 0-1 normal normal m
+177 N
+178 N
+179 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ surprised,neutral,angry 0-1 normal normal m
+180 D THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
+181 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ neutral 0-1 normal normal m
+182 D THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
+183 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ neutral,sad 0-1 normal,slow normal,soft m
+184 N NARRATOR neutral,sad 0-1 normal normal u
+185 N
+186 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ neutral,happy 0-1 normal normal m
+187 D THỤY ÂN HIỆN,ÂN HIỆN neutral,tender 0-1 normal normal m
+188 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ tender,happy 0-1 normal normal m
+189 N
+190 N
+191 N
+192 N NARRATOR neutral,surprised,excited 0-1 normal normal u

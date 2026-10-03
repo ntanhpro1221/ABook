@@ -505,7 +505,8 @@ def test_the_endpoints_make_a_clip_and_serve_it_with_ranges(tmp_path: Path) -> N
     try:
         status, data, _ = _request(server.port, "GET", "/api/readaloud/voices", headers=headers)
         assert status == 200 and json.loads(data) == [
-            {"id": "fake:ngoc", "name": "Ngọc", "provider": "fake", "online": False, "default": True, "language": "vi-VN", "gain_db": 0.0}]
+            {"id": "fake:ngoc", "name": "Ngọc", "provider": "fake", "online": False, "default": True, "language": "vi-VN", "gender": "",
+             "gain_db": 0.0}]
         body = {"voice": "fake:ngoc", "text": "Xin chào các bạn."}
         status, data, _ = _request(server.port, "POST", "/api/readaloud/clip", headers=headers, body=body)
         clip = json.loads(data)
@@ -520,7 +521,7 @@ def test_the_endpoints_make_a_clip_and_serve_it_with_ranges(tmp_path: Path) -> N
         cached = {**body, "cachedOnly": True}
         assert _request(server.port, "POST", "/api/readaloud/clip", headers=headers, body=cached)[0] == 200
         status, data, _ = _request(server.port, "POST", "/api/readaloud/clip", headers=headers, body={**cached, "text": "Chưa có."})
-        assert status == 404 and json.loads(data)["reason"] == "uncached"
+        assert status == 200 and json.loads(data) == {"cached": False, "reason": "uncached"}
         assert _request(server.port, "GET", "/media/readaloud/" + "0" * 64 + ".mp3", headers=headers)[0] == 404
         assert _request(server.port, "GET", clip["url"])[0] == 401
         status, data, _ = _request(server.port, "POST", "/api/readaloud/clip", headers=headers, body={"voice": "fake:ngoc"})

@@ -34,7 +34,7 @@ $asTask = ([System.WindowsRuntimeSystemExtensions].GetMethods() | Where-Object {
 function Await($op, $type) { $t = $asTask.MakeGenericMethod($type).Invoke($null, @($op)); $null = $t.Wait(-1); $t.Result }
 function Save($obj) { [IO.File]::WriteAllText($Result, (ConvertTo-Json -InputObject $obj -Compress -Depth 5), (New-Object Text.UTF8Encoding($false))) }
 if ($req.mode -eq 'list') {
-  $voices = @([Windows.Media.SpeechSynthesis.SpeechSynthesizer]::AllVoices | ForEach-Object { @{ id = $_.Id; name = $_.DisplayName; language = $_.Language } })
+  $voices = @([Windows.Media.SpeechSynthesis.SpeechSynthesizer]::AllVoices | ForEach-Object { @{ id = $_.Id; name = $_.DisplayName; language = $_.Language; gender = [string]$_.Gender } })
   Save @{ voices = $voices }
   exit 0
 }
@@ -65,6 +65,12 @@ _listed: list[Voice] | None = None
 
 def available() -> bool:
     return os.name == "nt" and shutil.which("powershell.exe") is not None
+
+
+def gender(value: object) -> str:
+    """VoiceInformation.Gender ("Male" / "Female", hay số 0 / 1 của enum) -> "male" / "female" / ""."""
+    text = "" if value is None else str(value).strip().lower()
+    return {"male": "male", "0": "male", "female": "female", "1": "female"}.get(text, "")
 
 
 def _run(folder: Path, request: dict) -> dict:
@@ -112,7 +118,7 @@ def voices(folder: Path, *, language: str = "vi", refresh: bool = False) -> list
             except VoiceError:
                 raw = []
             _listed = [Voice(PREFIX + item["id"], str(item["name"]).removeprefix("Microsoft ").strip(), "device", False, False,
-                             str(item.get("language", "")))
+                             str(item.get("language", "")), gender(item.get("gender")))
                        for item in raw if str(item.get("language", "")).lower().startswith("vi-")]
         return [voice for voice in _listed if voice.language.lower().startswith(language.lower())]
 

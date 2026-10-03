@@ -4,7 +4,6 @@ import { coverStyle } from "@/shared/cover";
 import * as Slider from "@radix-ui/react-slider";
 import { useQueries, useQueryClient } from "@tanstack/react-query";
 import {
-  ArrowDownToLine,
   AudioLines,
   Bookmark as BookmarkIcon,
   BookmarkPlus,
@@ -15,6 +14,7 @@ import {
   Loader2,
   Maximize2,
   Moon,
+  Music2,
   Pause,
   Pencil,
   Play,
@@ -24,6 +24,7 @@ import {
   SkipForward,
   Text,
   Trash2,
+  TriangleAlert,
   Undo2,
   Volume1,
   Volume2,
@@ -42,7 +43,12 @@ import { usePlayListenBook, useNextVolume } from "./LibraryScreen";
 import { canPlay, seriesOf, type Bookmark, type ListenChapter, type Script } from "./model";
 import { EDIT_BOOKMARK_EVENT, SKIP_SECONDS, SPEEDS, useNowPlaying, usePlayer } from "./player";
 import { SLEEP_CHOICES, sleepLabel, sleepLeftMs, sleepSpoken } from "./sleep";
-import { ONLINE_NOTICE, chooseVoice, chosenVoice, resolveVoice } from "./readAloudVoice";
+import { chooseVoice, chosenVoice, onlineNotice, resolveVoice } from "./readAloudVoice";
+import { nextChapterLabel, PREPARING_VOICE, textChapterLine, toggleLabel } from "./labels";
+import { spokenVoiceName } from "./onlineConsent";
+import { PlaylistOptionLabel, playlistNote, usePlaylistChoice } from "./PlaylistChoice";
+import { JumpToPlaying, ReadAlongText, sentenceIndexAt, useFollowVoice, useListenFrom, usePlayingSentence } from "./ReadAlongText";
+import { paragraphsFor, prepareLabel, upcomingTextChapters, type PrepareStatus } from "./prepareAhead";
 import { chapterScriptQuery, useChapterScript, useListenBook, useListenMutations, useReadAloudVoices, useSource } from "./source";
 
 export function speedLabel(rate: number): string {
@@ -61,23 +67,6 @@ function useTicker(active: boolean, every = 1000): number {
     return () => window.clearInterval(timer);
   }, [active, every]);
   return now;
-}
-
-/** Câu đang đọc ở giây `seconds` (tìm nhị phân trên mốc bắt đầu). */
-export function sentenceIndexAt(starts: number[], seconds: number): number {
-  let low = 0;
-  let high = starts.length - 1;
-  let found = -1;
-  while (low <= high) {
-    const middle = (low + high) >> 1;
-    if (starts[middle] <= seconds + 0.05) {
-      found = middle;
-      low = middle + 1;
-    } else {
-      high = middle - 1;
-    }
-  }
-  return found;
 }
 
 export function sentenceAt(script: Script | undefined, seconds: number): string | null {
@@ -179,14 +168,22 @@ function skipIcon(Base: typeof RotateCcw) {
 export const Back15 = skipIcon(RotateCcw);
 export const Forward15 = skipIcon(RotateCw);
 
+/** Chương đang phát là chương chỉ có chữ (giọng máy đọc). */
+function useSpeaking(): boolean {
+  const { track, queue } = usePlayer();
+  return queue.find((chapter) => chapter.id === track?.chapterId)?.state === "text";
+}
+
 function Transport({ large = false }: { large?: boolean }) {
   const { playing, buffering, toggle, skip, next, previous, queue, track } = usePlayer();
+  const speaking = useSpeaking();
   const [hasNext, hasLater] = useMemo(() => {
     const index = queue.findIndex((chapter) => chapter.id === track?.chapterId);
     const later = queue.slice(index + 1);
     return [later.some(canPlay), later.length > 0];
   }, [queue, track?.chapterId]);
   const size = large ? "lg" : "sm";
+  const waiting = buffering && playing;
   return (
     <div className={cn("flex items-center", large ? "gap-4 sm:gap-6" : "gap-1")}>
       <IconButton label="Chương trước (Shift+←)" icon={SkipBack} size={size} onClick={previous} {...keepFocus} />
@@ -195,7 +192,9 @@ function Transport({ large = false }: { large?: boolean }) {
         type="button"
         onClick={toggle}
         {...keepFocus}
-        aria-label={playing ? "Tạm dừng" : "Phát"}
+        // Đang chờ đoạn đầu: nói đang chờ gì, không nói "Tạm dừng" khi chưa có tiếng nào (bấm vẫn là thôi chờ).
+        aria-label={toggleLabel(playing, buffering, speaking)}
+        aria-busy={waiting || undefined}
         aria-keyshortcuts="Space"
         data-player-toggle
         className={cn(
@@ -203,7 +202,7 @@ function Transport({ large = false }: { large?: boolean }) {
           large ? "size-16" : "size-10",
         )}
       >
-        {buffering && playing ? (
+        {waiting ? (
           <Loader2 className={cn("animate-spin", large ? "size-7" : "size-5")} />
         ) : playing ? (
           <span key="pause" className="icon-pop">
@@ -218,7 +217,7 @@ function Transport({ large = false }: { large?: boolean }) {
       <IconButton label={`Tới ${SKIP_SECONDS} giây (→)`} icon={Forward15} size={size} onClick={() => skip(SKIP_SECONDS)} {...keepFocus} />
       {/* Còn chương sau mà chưa có audio: nút vẫn bấm được và nói vì sao (player.step báo + đường đọc chữ); chỉ chương cuối mới mờ. */}
       <IconButton
-        label={hasNext ? "Chương sau (Shift+→)" : "Chương sau chưa có audio"}
+        label={nextChapterLabel(hasNext, hasLater)}
         icon={SkipForward}
         size={size}
         onClick={next}
@@ -251,7 +250,8 @@ function MenuShell({
             aria-label={label}
             {...keepFocus}
             className={cn(
-              "tabular inline-flex h-9 min-w-9 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-lg px-2 text-[13px] font-semibold transition-colors hover:bg-hover",
+              // Điện thoại (màn "Đang nghe"): đủ 44 px để chạm.
+              "tabular inline-flex h-9 min-w-9 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-lg px-2 text-[13px] font-semibold transition-colors hover:bg-hover max-sm:h-[44px] max-sm:min-w-[44px]",
               active ? "text-accent-text" : "text-fg-2",
             )}
           >
@@ -304,6 +304,50 @@ export function SpeedMenu() {
   );
 }
 
+/** Nhạc nền của "Nghe ngay" (chương chỉ-có-chữ đang nghe): một danh sách phát cho cả cuốn, "Nhạc của tôi" hay tắt - cùng lựa chọn với
+ *  menu của sách (PlaylistChoice.tsx), lưu vào phần sửa của sách. Không hiện khi đang nghe chương có audio. */
+export function MusicMenu() {
+  const { track, queue } = usePlayer();
+  const speaking = queue.find((chapter) => chapter.id === track?.chapterId)?.state === "text";
+  if (!track || !speaking) return null;
+  return <MusicMenuFor bookId={track.bookId} />;
+}
+
+function MusicMenuFor({ bookId }: { bookId: string }) {
+  const { options, chosen, error, loading, choose } = usePlaylistChoice(bookId);
+  const current = options.find((option) => option.id === chosen);
+  return (
+    <MenuShell
+      label="Nhạc nền"
+      active={chosen !== null}
+      trigger={<><Music2 className="size-4" /><span className="max-w-24 truncate max-sm:hidden">{chosen ? current?.label : ""}</span></>}
+      width="w-72"
+    >
+      <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Nhạc nền · nhớ riêng cho cuốn này</div>
+      <div className="flex max-h-[60vh] flex-col gap-0.5 overflow-y-auto p-1">
+        {options.map((option) => (
+          <Popover.Close asChild key={option.id ?? "off"}>
+            <button
+              type="button"
+              disabled={option.disabled}
+              aria-pressed={option.id === chosen}
+              onClick={() => choose(option.id)}
+              className={cn(
+                "flex min-h-9 items-center gap-2 rounded-lg px-2 py-1 text-left text-sm hover:bg-hover disabled:opacity-50",
+                option.id === chosen ? "bg-accent-soft font-semibold text-accent-text" : "text-fg",
+              )}
+            >
+              <PlaylistOptionLabel option={option} chosen={option.id === chosen} />
+            </button>
+          </Popover.Close>
+        ))}
+        {loading && <p className="px-2 py-1.5 text-xs text-fg-2">Đang tải các danh sách nhạc…</p>}
+      </div>
+      <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{playlistNote(error)}</p>
+    </MenuShell>
+  );
+}
+
 /** Giọng đọc của "Nghe ngay" (chương chỉ-có-chữ đang nghe): chọn nhớ riêng cho cuốn này và làm giọng chung cho cuốn khác; đổi giữa chừng
  *  có hiệu lực từ đoạn kế. Không hiện khi đang nghe chương có audio. */
 export function VoiceMenu() {
@@ -315,7 +359,12 @@ export function VoiceMenu() {
   if (!track || !speaking || !voices?.length) return null;
   const current = resolveVoice(voices, chosen);
   return (
-    <MenuShell label="Giọng đọc" trigger={<><AudioLines className="size-4" /><span className="max-w-24 truncate max-sm:hidden">{current?.name}</span></>} width="w-64">
+    <MenuShell
+      label="Giọng đọc"
+      // Tên giọng hiện cả trên điện thoại: người nghe thấy ngay giọng nào đang đọc, không chỉ một biểu tượng.
+      trigger={<><AudioLines className="size-4" /><span className="max-w-24 truncate">{current ? spokenVoiceName(current.name) : ""}</span></>}
+      width="w-64"
+    >
       <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Giọng đọc · nhớ riêng cho cuốn này</div>
       <div className="flex flex-col gap-0.5 p-1">
         {voices.map((voice) => (
@@ -338,8 +387,65 @@ export function VoiceMenu() {
           </Popover.Close>
         ))}
       </div>
-      {current?.online && <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{ONLINE_NOTICE}</p>}
+      {current?.online && <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{onlineNotice(current)}</p>}
+      {current?.provider === "vieneu" && <PrepareAhead voice={current.id} bookId={track.bookId} chapterId={track.chapterId} />}
     </MenuShell>
+  );
+}
+
+/** "Làm trước" cho giọng VieNeu (máy tính): máy đọc sẵn các chương tới ở nền - giọng chậm hơn tốc độ nghe vẫn nghe liền mạch. Nói rõ còn bao
+ *  lâu; người nghe bấm mới làm, bấm "Dừng" là thôi. */
+function PrepareAhead({ voice, bookId, chapterId }: { voice: string; bookId: string; chapterId: number }) {
+  const source = useSource();
+  const { queue } = usePlayer();
+  const [status, setStatus] = useState<PrepareStatus | null>(null);
+  const [busy, setBusy] = useState(false);
+  const running = status?.state === "running";
+  useEffect(() => {
+    if (!source.readAloudPrepareStatus) return;
+    let alive = true;
+    const poll = () => void source.readAloudPrepareStatus!().then((next) => alive && setStatus(next)).catch(() => undefined);
+    poll();
+    const timer = setInterval(poll, running ? 2000 : 15000);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+    };
+  }, [source, running]);
+  if (!source.readAloudPrepare) return null;
+  const upcoming = upcomingTextChapters(queue, chapterId);
+  const start = async () => {
+    setBusy(true);
+    try {
+      const texts = await paragraphsFor(upcoming, (id) => source.chapterText(bookId, id));
+      const label = upcoming.length === 1 ? upcoming[0].title : `${upcoming.length} chương tới`;
+      setStatus(await source.readAloudPrepare!(voice, texts, label));
+    } catch (error) {
+      toast.error("Chưa làm trước được", { description: (error as Error).message });
+    } finally {
+      setBusy(false);
+    }
+  };
+  const label = status && status.voice === voice ? prepareLabel(status) : "";
+  return (
+    <div className="border-t border-line px-2 pb-1 pt-2 text-xs text-fg-2">
+      <p className="text-pretty">
+        {label || "Máy đọc chậm? Làm trước các chương tới ở nền để nghe liền mạch, không phải chờ giữa các đoạn."}
+      </p>
+      <div className="mt-1.5 flex gap-2">
+        {running ? (
+          <button type="button" className="rounded-lg px-2 py-1 font-medium text-fg hover:bg-hover" onClick={() => void source.readAloudPrepareCancel?.().then(setStatus)}>
+            Dừng làm trước
+          </button>
+        ) : (
+          upcoming.length > 0 && (
+            <button type="button" disabled={busy} className="rounded-lg px-2 py-1 font-medium text-accent-text hover:bg-hover disabled:opacity-45" onClick={() => void start()}>
+              {upcoming.length === 1 ? "Làm trước chương sau" : `Làm trước ${upcoming.length} chương tới`}
+            </button>
+          )
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -513,7 +619,7 @@ function VolumeControl() {
           <button
             type="button"
             aria-label={`Âm lượng ${Math.round(volume * 100)}%`}
-            className="grid size-8 place-items-center rounded-lg text-fg-2 hover:bg-hover hover:text-fg data-[state=open]:bg-hover"
+            className="grid size-8 place-items-center rounded-lg text-fg-2 hover:bg-hover hover:text-fg data-[state=open]:bg-hover max-sm:size-[44px]"
           >
             <Icon className="size-[18px]" />
           </button>
@@ -581,7 +687,7 @@ export function useAddBookmark() {
 
 function BookmarkButton() {
   const add = useAddBookmark();
-  return <IconButton label="Thêm dấu trang (B)" icon={BookmarkPlus} size="sm" {...keepFocus} onClick={() => void add()} />;
+  return <IconButton label="Thêm dấu trang (B)" icon={BookmarkPlus} size="sm" className="max-sm:size-[44px]" {...keepFocus} onClick={() => void add()} />;
 }
 
 /** Phím B: một chỗ lắng nghe duy nhất (thanh phát luôn có mặt khi đang nghe). */
@@ -699,17 +805,47 @@ function MusicCreditLine() {
   );
 }
 
+/** Dòng dưới tên chương: tên sách - hay đang chờ giọng máy đọc đoạn đầu. Lỗi KHÔNG nằm ở đây (PlayerAlert). */
 function TrackSubtitle() {
-  const { track, error, purpose, atEnd } = usePlayer();
+  const { track, purpose, atEnd, playing, buffering } = usePlayer();
+  const speaking = useSpeaking();
   if (!track) return null;
-  if (error) return <span className="text-danger">{error}</span>;
   return (
     <>
       {purpose === "review" && (
         <span className="mr-1.5 inline-block rounded bg-info-soft px-1.5 text-[11px] font-semibold uppercase tracking-wide text-info">Nghe kiểm</span>
       )}
-      {atEnd === "caughtUp" ? "Đã nghe hết phần đã có" : track.bookTitle}
+      {speaking && playing && buffering ? PREPARING_VOICE : atEnd === "caughtUp" ? "Đã nghe hết phần đã có" : track.bookTitle}
     </>
+  );
+}
+
+/** Không phát được (mất mạng, giọng đọc không phản hồi, file hỏng): một khối riêng đọc màn hình đọc ngay (role="alert") kèm "Thử lại" - không
+ *  thay tên sách bằng chữ đỏ. Lời nhắn đã rơi sang giọng của máy (vẫn đang đọc) là một dòng trạng thái, tự ẩn. */
+function PlayerAlert({ className }: { className?: string }) {
+  const { error, notice, resume } = usePlayer();
+  if (error) {
+    return (
+      <div role="alert" className={cn("flex items-center gap-3 rounded-xl bg-danger-soft px-3 py-2 text-sm text-fg", className)}>
+        <TriangleAlert className="size-4 shrink-0 text-danger" />
+        <span className="min-w-0 flex-1">{error}</span>
+        <button
+          type="button"
+          onClick={resume}
+          {...keepFocus}
+          className="min-h-9 shrink-0 rounded-lg bg-panel px-3 text-xs font-semibold ring-1 ring-line hover:bg-hover max-sm:min-h-[44px]"
+        >
+          Thử lại
+        </button>
+      </div>
+    );
+  }
+  if (!notice) return null;
+  return (
+    <div role="status" className={cn("flex items-center gap-3 rounded-xl bg-hover px-3 py-2 text-sm text-fg-2", className)}>
+      <AudioLines className="size-4 shrink-0" />
+      <span className="min-w-0 flex-1">{notice}</span>
+    </div>
   );
 }
 
@@ -795,8 +931,9 @@ export function PlayerBar({
   notices?: boolean;
   extra?: ReactNode;
 }) {
-  const { track, close, playing, toggle } = usePlayer();
+  const { track, close, playing, buffering, toggle } = usePlayer();
   const { expanded, setExpanded } = useNowPlaying();
+  const speaking = useSpeaking();
   useContinueIntoNextPart();
   if (!track) return null;
   if (compact) {
@@ -811,6 +948,7 @@ export function PlayerBar({
           </>
         )}
         <FadingNotice className="mx-3 mt-2" />
+        <PlayerAlert className="mx-3 mt-2" />
         <div className="flex h-16 items-center gap-3 px-3">
           <button type="button" onClick={() => setExpanded(true)} className="flex min-w-0 flex-1 items-center gap-3 text-left" aria-label="Mở màn hình đang nghe">
             <BookCover title={track.bookTitle} image={track.bookCover} size="sm" className={cn("size-11", !expanded && "cover-morph")} />
@@ -824,10 +962,17 @@ export function PlayerBar({
           <button
             type="button"
             onClick={toggle}
-            aria-label={playing ? "Tạm dừng" : "Phát"}
+            aria-label={toggleLabel(playing, buffering, speaking)}
+            aria-busy={(playing && buffering) || undefined}
             className="grid size-11 shrink-0 place-items-center rounded-full bg-fg text-bg"
           >
-            {playing ? <Pause className="size-5" fill="currentColor" strokeWidth={0} /> : <Play className="size-5 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}
+            {playing && buffering ? (
+              <Loader2 className="size-5 animate-spin" />
+            ) : playing ? (
+              <Pause className="size-5" fill="currentColor" strokeWidth={0} />
+            ) : (
+              <Play className="size-5 translate-x-[1px]" fill="currentColor" strokeWidth={0} />
+            )}
           </button>
         </div>
       </section>
@@ -839,6 +984,7 @@ export function PlayerBar({
       <FurtherElsewhere />
       <FollowRecord />
       <FadingNotice className="mx-4 mt-2" />
+      <PlayerAlert className="mx-4 mt-2" />
       {/* Cột giữa theo bề rộng CỦA THANH (min(40%, 480px)), không theo cửa sổ (40vw): thanh không gồm thanh bên, 40vw từng
           chiếm 512/1044 px ở cửa sổ 1280 - tên chương bị cắt, cụm nút phải (266 px) bị ép vào 238 px (soát UX 29-09). */}
       <div className="grid h-[76px] grid-cols-[minmax(0,1fr)_min(40%,480px)_minmax(0,1fr)] items-center gap-4 px-4">
@@ -862,6 +1008,7 @@ export function PlayerBar({
         </div>
         <div className="flex min-w-0 items-center justify-end gap-0.5">
           {extra}
+          <MusicMenu />
           <VoiceMenu />
           <SpeedMenu />
           <SleepMenu />
@@ -877,19 +1024,20 @@ export function PlayerBar({
 
 // ---- Bảng bên của màn hình đang nghe ---------------------------------------------------------------------
 
+/** Tab "Đọc theo" của trình phát: cùng văn bản với màn đọc (ReadAlongText) - câu và chữ đang đọc sáng lên, bấm một chữ là nghe từ chữ ấy, tự cuộn
+ *  theo giọng; thêm nhãn người nói và câu đã nghe nhạt đi. */
 function ReadAlong() {
-  const { track, seek, playing, queue } = usePlayer();
+  const { track, playing, queue } = usePlayer();
   const source = useSource();
   const client = useQueryClient();
   const current = queue.find((chapter) => chapter.id === track?.chapterId);
+  const { data: book } = useListenBook(track?.bookId);
   const { data: script, isLoading } = useChapterScript(track?.bookId, current);
   const container = useRef<HTMLDivElement | null>(null);
-  const [following, setFollowing] = useState(true);
-  const starts = useMemo(() => (script?.timed ? script.segments.map((segment) => segment.start ?? 0) : []), [script]);
-  const active = useClock((time) => (starts.length ? sentenceIndexAt(starts, time) : -1));
+  const active = usePlayingSentence(script, true);
+  const follow = useFollowVoice(container, active, { resetKey: `${track?.bookId}:${track?.chapterId}`, smooth: playing });
+  const { canListen, listenFrom } = useListenFrom(track?.bookId ?? "", book, current, script);
   const nearEnd = useClock((time, duration) => duration > 0 && duration - time < 30);
-
-  useEffect(() => setFollowing(true), [track?.chapterId]);
 
   // Sắp hết chương: nạp sẵn văn bản chương kế để sang chương không bị chớp "đang mở".
   useEffect(() => {
@@ -899,130 +1047,32 @@ function ReadAlong() {
     if (upcoming) void client.prefetchQuery(chapterScriptQuery(source, track.bookId, upcoming));
   }, [client, nearEnd, queue, source, track]);
 
-  const scrolled = useRef(false);
-  useEffect(() => {
-    scrolled.current = false;
-  }, [track?.chapterId]);
-  const scrollToActive = useCallback((smooth: boolean) => {
-    const element = container.current?.querySelector<HTMLElement>(`[data-index="${active}"]`);
-    if (!element) return;
-    element.scrollIntoView({ block: "center", behavior: smooth && scrolled.current ? "smooth" : "auto" });
-    scrolled.current = true;
-  }, [active]);
-
-  useEffect(() => {
-    if (active < 0 || !following) return;
-    scrollToActive(playing);
-  }, [active, following, playing, scrollToActive]);
-
   if (isLoading) return <div className="animate-[fade-in_0.2s_0.3s_both] p-10 text-fg-2">Đang mở văn bản chương…</div>;
   if (!script) return null;
-  const paragraphs: { key: number; items: { index: number; segment: (typeof script.segments)[number] }[] }[] = [];
-  script.segments.forEach((segment, index) => {
-    const last = paragraphs[paragraphs.length - 1];
-    if (last && last.key === segment.paragraph) last.items.push({ index, segment });
-    else paragraphs.push({ key: segment.paragraph, items: [{ index, segment }] });
-  });
-  const jump = (start: number | null) => {
-    if (script.timed && start !== null) {
-      seek(start);
-      setFollowing(true);
-    }
-  };
-  const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
-    const target = event.target as HTMLElement;
-    const index = Number(target.dataset.index);
-    if (!Number.isFinite(index)) return;
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      event.stopPropagation();
-      jump(script.segments[index].start);
-    } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-      event.preventDefault();
-      event.stopPropagation();
-      const next = container.current?.querySelector<HTMLElement>(`[data-index="${index + (event.key === "ArrowDown" ? 1 : -1)}"]`);
-      next?.focus();
-    }
-  };
   return (
     <div className="relative h-full">
-      <div
-        ref={container}
-        // Chỉ THAO TÁC của người (lăn chuột, vuốt, kéo thanh cuộn, phím trang) mới tắt tự theo câu đang đọc - không suy từ sự
-        // kiện cuộn: cuộn mượt do app kéo dài quá mốc cũ 900ms bị tưởng là người cuộn (soát UX 29-09).
-        onWheel={() => setFollowing(false)}
-        onTouchMove={() => setFollowing(false)}
-        onPointerDown={(event) => {
-          if (event.target === event.currentTarget) setFollowing(false);
-        }}
-        onKeyDown={(event) => {
-          if (["PageUp", "PageDown", "Home", "End"].includes(event.key)) setFollowing(false);
-          onKeyDown(event);
-        }}
-        className="h-full overflow-y-auto px-6 py-8 sm:px-10"
-      >
-        <div className="mx-auto max-w-[62ch] space-y-5 text-[17px] leading-[1.75]">
-          {!script.timed && (
-            <p className="rounded-lg bg-hover px-4 py-3 text-sm text-fg-2">Chương này chưa có audio hoàn chỉnh - đang hiện văn bản, chưa đọc theo được.</p>
+      <div ref={container} onScroll={follow.onScroll} {...follow.input} className="h-full overflow-y-auto px-6 py-8 sm:px-10">
+        <div className="mx-auto max-w-[62ch] text-[17px] leading-[1.75]">
+          {/* Chương giọng máy đọc chưa có mốc chỉ trong lúc chờ đoạn đầu - không phải "chưa có audio". */}
+          {!script.timed && current?.state !== "text" && (
+            <p className="mb-5 rounded-lg bg-hover px-4 py-3 text-sm text-fg-2">Chương này chưa có audio hoàn chỉnh - đang hiện văn bản, chưa đọc theo được.</p>
           )}
-          {paragraphs.map((paragraph) => {
-            const first = paragraph.items[0];
-            if (first.segment.kind === "heading") {
-              return (
-                <h2
-                  key={paragraph.key}
-                  data-index={first.index}
-                  tabIndex={first.index === Math.max(0, active) ? 0 : -1}
-                  onClick={() => jump(first.segment.start)}
-                  className={cn("pb-2 text-2xl font-bold leading-snug tracking-tight", first.index === active && "text-accent-text")}
-                >
-                  {first.segment.text}
-                </h2>
-              );
-            }
-            return (
-              <p key={paragraph.key}>
-                {paragraph.items.map(({ index, segment }) => (
-                  <span key={segment.id}>
-                    {segment.speaker && (segment.kind === "dialogue" || segment.kind === "thought") && (
-                      <span className="mr-1.5 inline-block -translate-y-px rounded bg-accent-soft px-1.5 text-[11px] font-semibold uppercase tracking-wide text-accent-text">
-                        {segment.speaker}
-                      </span>
-                    )}
-                    <span
-                      data-index={index}
-                      role={script.timed ? "button" : undefined}
-                      tabIndex={script.timed ? (index === Math.max(0, active) ? 0 : -1) : undefined}
-                      aria-current={index === active ? "true" : undefined}
-                      onClick={() => jump(segment.start)}
-                      className={cn(
-                        "rounded-[4px] [box-decoration-break:clone] transition-colors duration-300",
-                        script.timed && "cursor-pointer hover:bg-hover",
-                        segment.kind === "thought" && "italic",
-                        index === active && "read-along-active",
-                        active >= 0 && index < active && "text-fg-2",
-                      )}
-                    >
-                      {segment.text}
-                    </span>{" "}
-                  </span>
-                ))}
-              </p>
-            );
-          })}
+          <ReadAlongText
+            script={script}
+            playingIndex={active}
+            onTap={canListen ? (index, word) => listenFrom(index, word) && follow.follow() : undefined}
+            focusIndex={Math.max(0, active)}
+            speakers
+            dimHeard
+            headingClassName="pb-2 text-2xl font-bold leading-snug tracking-tight"
+            className="space-y-5"
+          />
         </div>
       </div>
-      {!following && active >= 0 && (
-        <button
-          type="button"
-          onClick={() => {
-            setFollowing(true);
-            scrollToActive(true);
-          }}
-          className="absolute bottom-5 left-1/2 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-fg px-4 py-2 text-sm font-semibold text-bg shadow-float"
-        >
-          <ArrowDownToLine className="size-4" /> Về câu đang đọc
-        </button>
+      {follow.showJump && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-5 flex justify-center">
+          <JumpToPlaying onClick={follow.jump} />
+        </div>
       )}
     </div>
   );
@@ -1070,7 +1120,11 @@ function ChapterPanel() {
               </span>
               <span className="tabular block truncate text-xs text-fg-2">
                 {chapter.subtitle ? `${chapter.title} · ` : ""}
-                {chapter.available ? formatLength(chapter.duration) : chapter.speech ? "Giọng máy đọc" : chapterStatusLabel(Boolean(book?.producing))}
+                {chapter.available
+                  ? formatLength(chapter.duration)
+                  : chapter.state === "text"
+                    ? textChapterLine(Boolean(chapter.speech))
+                    : chapterStatusLabel(Boolean(book?.producing))}
               </span>
             </span>
           </button>
@@ -1314,7 +1368,7 @@ function useContinueIntoNextPart() {
 }
 
 function CaughtUpNotice() {
-  const { atEnd, track } = usePlayer();
+  const { atEnd, track, restart } = usePlayer();
   const next = useNextVolume(track?.bookId, track?.bookTitle);
   const playBook = usePlayListenBook();
   if (atEnd === "finished" && next) {
@@ -1323,6 +1377,16 @@ function CaughtUpNotice() {
         <div className="text-fg">Đã nghe hết cuốn này.</div>
         <button type="button" onClick={() => void playBook(next)} className="mt-1.5 font-semibold text-accent-text underline underline-offset-2">
           Nghe tiếp {nextLabel(next.title)}
+        </button>
+      </div>
+    );
+  }
+  if (atEnd === "finished") {
+    return (
+      <div className="mt-3 rounded-xl bg-accent-soft px-3 py-2.5 text-center text-sm">
+        <div className="text-fg">Đã nghe hết sách.</div>
+        <button type="button" onClick={restart} className="mt-1.5 min-h-[44px] font-semibold text-accent-text underline underline-offset-2">
+          Nghe lại từ đầu
         </button>
       </div>
     );
@@ -1339,7 +1403,8 @@ function CaughtUpNotice() {
 
 /** `actions`: nút riêng của từng nền ở hàng nút dưới thanh tua (điện thoại: "Phát trên <máy tính>"). */
 export function NowPlaying({ mobile = false, actions }: { mobile?: boolean; actions?: ReactNode }) {
-  const { track, sleep, canGoBack, goBack, playing, toggle } = usePlayer();
+  const { track, sleep, fading, canGoBack, goBack, playing, buffering, toggle } = usePlayer();
+  const speaking = useSpeaking();
   const { expanded, setExpanded } = useNowPlaying();
   const [panel, setPanelState] = useState<Panel>(initialPanel);
   const [showPanel, setShowPanel] = useState(!mobile);
@@ -1456,7 +1521,7 @@ export function NowPlaying({ mobile = false, actions }: { mobile?: boolean; acti
             <button
               type="button"
               onClick={toggle}
-              aria-label={playing ? "Tạm dừng (chạm bìa)" : "Phát (chạm bìa)"}
+              aria-label={`${toggleLabel(playing, buffering, speaking)} (chạm bìa)`}
               className="w-full max-w-[300px] rounded-lg transition-transform active:scale-[0.98]"
             >
               <BookCover title={track.bookTitle} image={track.bookCover} size="xl" className="cover-morph w-full" />
@@ -1477,7 +1542,8 @@ export function NowPlaying({ mobile = false, actions }: { mobile?: boolean; acti
         <div className="mt-3 flex justify-center">
           <Transport large />
         </div>
-        <div className="mt-4 flex items-center justify-center gap-1">
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-1">
+          <MusicMenu />
           <VoiceMenu />
           <SpeedMenu />
           <SleepMenu />
@@ -1485,8 +1551,10 @@ export function NowPlaying({ mobile = false, actions }: { mobile?: boolean; acti
           <VolumeControl />
           {actions}
         </div>
-        {sleep.kind === "chapter" && <p className="mt-2 text-center text-xs text-fg-2">Sẽ dừng khi hết chương này.</p>}
+        {/* Đang nhỏ dần thì "Sắp tắt…" đã nói thay - hai dòng cùng lúc ở chương rất ngắn đọc như mâu thuẫn. */}
+        {sleep.kind === "chapter" && !fading && <p className="mt-2 text-center text-xs text-fg-2">Sẽ dừng khi hết chương này.</p>}
         <FadingNotice className="mt-3" />
+        <PlayerAlert className="mt-3" />
         <CaughtUpNotice />
         {mobile && <div className="mt-4 flex justify-center">{panelTabs}</div>}
       </aside>

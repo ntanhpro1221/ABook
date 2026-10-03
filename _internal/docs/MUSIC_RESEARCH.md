@@ -1720,6 +1720,120 @@ Giới hạn:
 - Đề xuất, chưa làm: hạ ngưỡng `vocals` của chính danh mục (đang 0,5) cũng cần ghi trước riêng, vì nó đổi cả chọn nhạc
   theo cảnh chứ không chỉ "Nghe ngay".
 
+**GHI TRƯỚC - "ĐÚNG CẢM GIÁC" CỦA 12 DANH SÁCH PHÁT (03-10 15:1x, Lead giao; trước mọi lượt chấm):**
+
+Câu hỏi: nghe bằng tai máy thì bài trong danh sách có đúng cảm giác của danh sách không?
+
+Độc lập với luật lọc:
+- Hai giám khảo chỉ nghe âm thanh. Không thấy tên bài, tag, trang gốc, nhãn thầy (chữ) hay số trò (CLAP).
+- Danh mục: **64f4a577f86b** (bản đã siết).
+
+**(M) Music Flamingo 2601** (4-bit, card nhà, qua hàng GPU của Model):
+- Mẫu: 10 bài mỗi danh sách, `random.Random(20261003).sample` theo thứ tự danh sách trong manifest. Bài đã rơi vào mẫu
+  của danh sách trước thì bỏ, bốc bài khác cùng danh sách.
+- Đoạn nghe: 30 giây giữa bài (bắt đầu ở max(0, dài/2 − 15)), mono 16 kHz.
+- Mỗi bài chấm hợp với CẢ 12 mô tả tiếng Anh (viết trong `playlist_feel.py` trước lượt chạy, chỉ tả cảm giác / phong
+  cách, không có tên bài).
+  - Hai cách hỏi a / b.
+  - Điểm = kỳ vọng xác suất chữ số 1–7 ở token đầu, như J-mf.
+  - 120 × 12 × 2 = 2.880 lượt forward.
+- Mỗi bài, mỗi cách hỏi: chuẩn hoá z trên 12 mô tả (bỏ thiên lệch riêng của bài).
+  - **ĐÚNG** nếu z của danh sách mình > z trung bình các danh sách ĐỐI (ghi sẵn dưới đây).
+  - Phán quyết chính dùng z trung bình của a và b.
+- Danh sách đối (theo cảm xúc / năng lượng ngược nhau):
+  - fantasy_adventure ↔ sleep, sad, horror
+  - fantasy_calm ↔ action, horror, comedy
+  - school_light ↔ horror, sad, mystery
+  - romance ↔ horror, action, mystery
+  - comedy ↔ sad, horror, sleep
+  - action ↔ sleep, fantasy_calm, romance
+  - horror ↔ comedy, school_light, romance
+  - mystery ↔ comedy, school_light, romance
+  - sad ↔ comedy, action, school_light
+  - sleep ↔ action, horror, comedy
+  - eastern, scifi (danh sách theo phong cách) ↔ cả 11 danh sách còn lại
+- **Cổng dùng được:** hai phán quyết riêng a và b khớp nhau ≥ 0,75 trên 120 bài, VÀ trung vị khối xác suất chữ số
+  ≥ 0,5. Trượt cổng → M không dùng được, chỉ còn A.
+- Mỗi danh sách:
+  - **ĐẠT** nếu ≥ 8/10 bài ĐÚNG;
+  - **NGHI** nếu ≤ 6/10;
+  - 7/10 là chưa chắc.
+- Ghi lại, không phải thước: ma trận nhầm theo mô tả điểm cao nhất; hạng của danh sách mình trong 12.
+
+**(A) AST AudioSet** (`MIT/ast-finetuned-audioset-10-10-0.4593`, CPU):
+- Chạy trên MỌI bài trong 12 danh sách.
+- Ba cửa sổ 10 giây ở 25 / 50 / 75 % bài; lấy trung bình xác suất sigmoid.
+- Lớp AudioSet mong đợi (ghi sẵn; điểm = trung bình các lớp):
+
+| danh sách | lớp AudioSet |
+|---|---|
+| fantasy_adventure | Exciting music |
+| fantasy_calm | Tender music, New-age music, Ambient music |
+| school_light | Happy music |
+| romance | Tender music |
+| comedy | Funny music, Happy music |
+| action | Exciting music, Angry music |
+| horror | Scary music |
+| mystery | Scary music |
+| eastern | Music of Asia, Traditional music |
+| scifi | Electronic music, Synthesizer |
+| sad | Sad music |
+| sleep | Lullaby, Ambient music, New-age music |
+
+- Mỗi danh sách: AUC của điểm lớp mong đợi, bài trong danh sách so với bài của 11 danh sách kia (bài có mặt cả hai phía thì
+  bỏ khỏi phía kia).
+  - **ĐẠT** nếu AUC ≥ 0,65 VÀ cận dưới KTC 95 % (bootstrap 2.000 lần, hạt giống 7) > 0,5.
+- Ghi lại: xác suất "Singing" (kiểm chéo bộ lọc có lời).
+
+Kết luận mỗi danh sách:
+- **"Đúng cảm giác"**: cả M (nếu qua cổng) và A đều ĐẠT.
+- Một giám khảo ĐẠT: báo riêng từng giám khảo.
+- Không giám khảo nào ĐẠT: **NGHI**. Đề xuất sửa luật lọc danh sách ấy, kèm ghi trước mới, không sửa thẳng.
+
+Giới hạn:
+- Lớp cảm xúc của AudioSet vốn yếu (mAP thấp), nên A trượt một danh sách chưa chắc là danh sách sai.
+- M từng không ổn định khi chấm đoạn truyện khớp clip (J-mf 0,66). Phép này có cổng a / b riêng.
+- Hai giám khảo đều là máy, không phải người nghe.
+
+**GHI TRƯỚC - NGƯỠNG LỜI HÁT CỦA CẢ DANH MỤC (03-10 15:3x; trước khi có số AST nào ngoài 55 bài đầu đã bỏ):**
+
+Câu hỏi: `vocals` (CLAP zero-shot) trong khoảng 0,3–0,5 có thật là có tiếng hát không?
+- Danh mục chỉ loại bài > 0,5 (Incompetech được miễn), còn chọn nhạc theo cảnh vẫn nhận các bài này.
+
+Đo:
+- AST (cùng lượt chạy với phép A ở trên), trên MỌI bài của danh mục 64f4a577f86b.
+- `Singing_max` = xác suất "Singing" cao nhất trong ba cửa sổ 10 giây.
+- Bài **có tiếng hát theo AST** nếu `Singing_max` ≥ 0,3.
+
+Nhóm theo `vocals`, chỉ bài không phải Incompetech: < 0,1 / 0,1–0,3 / 0,3–0,5.
+
+Luật:
+- **ĐỀ XUẤT hạ `VOCALS_MAX` xuống 0,3 cho cả danh mục** nếu tỉ lệ có tiếng hát ở nhóm 0,3–0,5 ≥ 25 % VÀ ≥ 2 × nhóm < 0,1.
+- Kèm số bài mất ở mỗi ô vui/buồn × êm/dồn dập (25 ô).
+- Lead / chủ sách quyết. Không đạt → giữ 0,5; 0,3 chỉ áp cho "Nghe ngay".
+
+Ghi lại, không phải thước:
+- tỉ lệ có tiếng hát của bài Incompetech theo từng nhóm `vocals`, vì nguồn này đang được miễn;
+- `Speech` trung bình mỗi nhóm.
+
+**KẾT QUẢ NGƯỠNG LỜI HÁT (03-10 16:1x, `results/vocals_check.txt`): KHÔNG KẾT LUẬN ĐƯỢC. Giám khảo trượt chứng dương.**
+- Theo đúng luật: 0/2.087 bài có `Singing_max` ≥ 0,3, mọi nhóm (kể cả 345 bài Incompetech > 0,5). Luật cơ học ra "giữ 0,5".
+- **Chứng dương (THÊM SAU KHI THẤY SỐ):** AST trên 30 bài đã bị loại có tên chỉ rõ có hát ("sung by Po Sun Yi" ×5,
+  "feat. …" ×3, …). 0/30 đạt 0,3. Bài hát thật chỉ được 0,03–0,30.
+  - Vậy ngưỡng 0,3 ghi trước quá cao so với thang của AST. Phép này **không** chứng minh được điều gì về ngưỡng 0,5.
+- Thăm dò, NHÌN SAU KHI THẤY SỐ, không phải thước:
+  - Ở `Singing_max` ≥ 0,05, ~6/7 bài có tên chắc chắn có hát vượt.
+  - Bài không phải Incompetech: nhóm < 0,1 có 1 %, nhóm 0,1–0,3 có 7 %, nhóm 0,3–0,5 có 5 %. Incompetech > 0,5: 2 %.
+  - 30 bài CLAP chấm vocals ≈ 1 mà bị loại: nhiều tên rõ là không lời ("Ambient Relaxing Loop", "St. Antoine
+    Shakuhachi", "Inside Union Station-Chinese Harp").
+  - Đọc: `vocals` (CLAP zero-shot) có vẻ báo nhầm nhiều. Bộ lọc 0,5 có thể đang loại cả bài không lời, còn siết
+    "Nghe ngay" theo 0,3 thì loại chủ yếu bài không lời. Danh sách vẫn ≥ 40 phút, chỉ bớt đa dạng.
+- Muốn quyết, cần một phép mới ghi trước:
+  - Tập kiểm có nhãn: bài có hát / không lời theo tên và nguồn, chọn trước khi chấm.
+  - Ngưỡng AST học trên tập ấy.
+  - Rồi đo tỉ lệ báo nhầm của CLAP `vocals` ở ngưỡng 0,5 và 0,3 trên danh mục, cùng số bài lấy lại được.
+  - Chưa đổi gì.
+
 ## Nguồn nhạc: giữ / loại và lý do (02-10, Lead + chủ sách - đọc trước khi hỏi lại)
 
 LUẬT CUỐI (02-10 22:xx, Lead + chủ sách; thay đoạn ba câu hỏi bên dưới ở chỗ nào khác nhau):

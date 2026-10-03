@@ -17,6 +17,8 @@ export interface ReadAloudVoice {
   /** Gửi chữ của sách ra ngoài máy. */
   online: boolean;
   default?: boolean;
+  /** "female" / "male" / "" (không rõ) - gợi ý trong Cài đặt. */
+  gender?: string;
   /** Chỉnh độ to lúc phát (dB, <= 0) cho các giọng khác nhau về độ to - abook/readaloud/loudness.py. */
   gainDb?: number;
 }
@@ -38,7 +40,8 @@ export interface ClipOptions {
 
 export type ClipFetcher = (voice: string, text: string, options?: ClipOptions) => Promise<ReadAloudClip>;
 
-/** Lỗi lấy clip. `reason`: "offline", "timeout", "rejected", "service", "voice", "empty", "uncached" (abook/readaloud/model.py VoiceError). */
+/** Lỗi lấy clip. `reason`: "offline", "timeout", "rejected", "service", "voice", "empty", "uncached", và với giọng dùng khoá riêng "auth" /
+ *  "quota" (abook/readaloud/model.py VoiceError). */
 export class ReadAloudError extends Error {
   reason: string;
   constructor(message: string, reason = "service") {
@@ -80,7 +83,8 @@ export const CHARS_PER_SECOND = 14;
 export const MIN_SEGMENT_SECONDS = 0.6;
 /** Sự kiện cửa sổ: người nghe đổi giọng đọc (readAloudVoice.ts). */
 export const VOICE_CHANGED_EVENT = "abook:readaloud-voice";
-const READ_AHEAD = 2;
+// Máy tính: đọc trước 3 đoạn (rẻ - clip chỉ vài chục KB; đoạn ngắn liên tiếp không còn bắt người nghe chờ). Điện thoại tự đọc trước (ReadAloud.AHEAD).
+const READ_AHEAD = 3;
 const RESTORE_LIMIT = 400;
 
 const SPEAKABLE = /[\p{L}\p{N}]/u;

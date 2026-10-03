@@ -169,12 +169,17 @@ def _libs_external() -> bool:
     return True
 
 
-def _cannot_install_libs() -> str:
-    if os.environ.get(ENV_DOWNLOAD, "1") == "0":
-        return "tải bộ phân tích nhạc đang bị tắt trên máy này"
+def libs_problem() -> str:
+    """Vì sao máy này không tải được thư viện (rỗng = tải được). Dùng chung với mô-đun "Giọng VieNeu" (vieneu_module.py)."""
     if sys.platform != "win32" or sys.version_info[:2] != (3, 14):
         return "thư viện tải sẵn chỉ có cho bản ABook Windows 64-bit - hãy cài numpy và onnxruntime cho Python của máy này"
     return ""
+
+
+def _cannot_install_libs() -> str:
+    if os.environ.get(ENV_DOWNLOAD, "1") == "0":
+        return "tải bộ phân tích nhạc đang bị tắt trên máy này"
+    return libs_problem()
 
 
 def _install_libs(progress: Callable[[int, int], None], cancelled: Callable[[], bool]) -> None:
@@ -198,6 +203,28 @@ def libs_pin() -> str:
     return hashlib.sha256("\n".join(f"{wheel.name} {wheel.sha256}" for wheel in WHEELS).encode()).hexdigest()
 
 
+def libs_part(blocked: str | None = None) -> Component:
+    """Phần "thư viện chạy model" (numpy + onnxruntime): MỘT bản cho cả máy - mô-đun nào tải trước thì mô-đun kia thấy đã có."""
+    return Component("libs", "Thư viện chạy model", libs_pin(), sum(w.size for w in WHEELS), _libs_present(), external=_libs_external(),
+                     blocked=_cannot_install_libs() if blocked is None else blocked, downloads=list(WHEELS))
+
+
+def libs_state() -> str:
+    """`current` / `outdated` / `missing` của phần thư viện, theo dấu của mô-đun nhạc (nơi phần này sống)."""
+    part = libs_part("")
+    return judge_parts([part], _read_stamp())[part.id]
+
+
+def install_libs_part(progress: Callable[[int, int], None]) -> None:
+    """Tải phần thư viện cho mô-đun khác (Giọng VieNeu): giải vào chỗ chung, ghi dấu của mô-đun nhạc, đưa vào sys.path."""
+    with _lock:
+        _install_libs(progress, lambda: False)
+        stamp = _read_stamp()
+        stamp["libs"] = libs_pin()
+        _write_stamp(stamp)
+    activate_libs()
+
+
 # ---- các phần của máy này -----------------------------------------------------------------------------------------------------
 def _components() -> list[Component]:
     backend = music_student.planned_backend()
@@ -206,8 +233,7 @@ def _components() -> list[Component]:
     out.append(Component("ffmpeg", "Công cụ đọc âm thanh", ffmpeg_setup.pin(), ffmpeg_setup.WHEEL.size, ffmpeg_setup.downloaded(),
                          external=external_ffmpeg, blocked=ffmpeg_setup.cannot_download(), downloads=[ffmpeg_setup.WHEEL]))
     if backend == "onnx":
-        out.append(Component("libs", "Thư viện chạy model", libs_pin(), sum(w.size for w in WHEELS), _libs_present(),
-                             external=_libs_external(), blocked=_cannot_install_libs(), downloads=list(WHEELS)))
+        out.append(libs_part())
     files = music_student.model_downloads(backend)
     directory = music_student.package_dir()
     pinned_elsewhere = bool(os.environ.get(music_student.ENV_DIR))
@@ -218,8 +244,12 @@ def _components() -> list[Component]:
 
 
 def _judge(components: list[Component]) -> dict[str, str]:
-    """Từng phần: `current` (dùng được, đúng ghim hoặc máy có sẵn), `outdated` (đã tải nhưng ghim khác bản app này mang), `missing`."""
-    stamp = _read_stamp()
+    return judge_parts(components, _read_stamp())
+
+
+def judge_parts(components: list[Component], stamp: dict[str, str]) -> dict[str, str]:
+    """Từng phần: `current` (dùng được, đúng ghim hoặc máy có sẵn), `outdated` (đã tải nhưng ghim khác bản app này mang), `missing`.
+    `stamp`: phần -> ghim đã tải (dấu của mô-đun). Dùng chung với vieneu_module."""
     judged = {}
     for part in components:
         if part.external:

@@ -1,10 +1,12 @@
 import type { MusicCredit, MusicCue } from "@/listen/musicBed";
+import type { PlaylistQueue } from "@/listen/playlistBed";
 import type { Bookmark, Cast, ListenBook, ListeningRecord, ListeningSession, ListeningState, NightSession, Script } from "@/listen/model";
 import type { ListenSource } from "@/listen/source";
 import type { AddedBook, ImportPreview, TextImport } from "@/listen/textImport";
 import { ReadAloudError, type ReadAloudClip, type ReadAloudVoice } from "@/listen/readAloud";
 import { ApiError, api, mediaUrl } from "@/studio/api";
 import { pickFiles, pickFolder } from "@/studio/data";
+import type { PrepareStatus } from "@/listen/prepareAhead";
 
 function fileName(path: string): string {
   return path.split(/[\\/]/).filter(Boolean).pop() ?? path;
@@ -45,21 +47,31 @@ export const httpSource: ListenSource = {
     return voices.map(({ gain_db, ...voice }) => ({ ...voice, gainDb: gain_db ?? 0 }));
   },
   readAloudClip: async (voice, text, options) => {
+    let clip: { url: string; duration_ms: number; words: [number, number][] } | { cached: false; reason: string };
     try {
-      const clip = await api<{ url: string; duration_ms: number; words: [number, number][] }>("/api/readaloud/clip", {
+      clip = await api<typeof clip>("/api/readaloud/clip", {
         method: "POST",
         body: { voice, text, cachedOnly: options?.cachedOnly },
       });
-      return { url: mediaUrl(clip.url), durationMs: clip.duration_ms, words: clip.words } satisfies ReadAloudClip;
     } catch (error) {
-      // Máy chủ nói đúng lý do (offline / timeout / rejected / service / uncached...); mất kết nối tới chính máy chủ cục bộ là "service".
+      // Máy chủ nói đúng lý do (offline / timeout / rejected / service...); mất kết nối tới chính máy chủ cục bộ là "service".
       if (error instanceof ApiError) throw new ReadAloudError(error.message, String(error.detail.reason ?? "service"));
       throw new ReadAloudError("Không gọi được giọng đọc.", "service");
     }
+    // Chỉ tra bộ đệm mà chưa có: máy chủ trả 200 (không phải lỗi mạng), bộ máy đọc vẫn cần biết là "uncached".
+    if ("cached" in clip) throw new ReadAloudError("Chưa đọc đoạn này.", clip.reason || "uncached");
+    return { url: mediaUrl(clip.url), durationMs: clip.duration_ms, words: clip.words } satisfies ReadAloudClip;
   },
+  readAloudPrepare: (voice, texts, label) => api<PrepareStatus>("/api/readaloud/prepare", { method: "POST", body: { voice, texts, label } }),
+  readAloudPrepareStatus: () => api<PrepareStatus>("/api/readaloud/prepare"),
+  readAloudPrepareCancel: () => api<PrepareStatus>("/api/readaloud/prepare", { method: "DELETE" }),
   musicCues: async (bookId, chapterId) => {
     const result = await api<{ cues: MusicCue[]; levelDb: number; credits?: Record<string, MusicCredit> }>(`/api/books/${bookId}/music/chapters/${chapterId}`);
     return { ...result, cues: result.cues.map((cue) => ({ ...cue, src: mediaUrl(cue.src) })) };
+  },
+  musicPlaylist: async (bookId) => {
+    const result = await api<PlaylistQueue>(`/api/books/${bookId}/music/playlist`);
+    return { ...result, tracks: result.tracks.map((track) => ({ ...track, src: mediaUrl(track.src) })) };
   },
   audioUrl: (bookId, chapterId) => mediaUrl(`/media/books/${bookId}/chapters/${chapterId}`),
   sampleUrl: (bookId, sampleId) => mediaUrl(`/media/books/${bookId}/samples/${sampleId}`),

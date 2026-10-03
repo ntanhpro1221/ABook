@@ -268,6 +268,8 @@ object Playback {
         pending = null
         saveNow()
         lastError = ""
+        // Giọng "Nghe ngay" của cuốn này, nhớ trong lõi: phát tiếp từ widget / xe hơi sau khi khởi động lại vẫn đúng giọng người nghe đã chọn.
+        ReadAloud.useVoiceOf(id)
         bookId = id
         bookTitle = title
         narrator = narratorName
