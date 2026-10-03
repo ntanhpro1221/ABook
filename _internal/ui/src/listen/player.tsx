@@ -27,7 +27,8 @@ import type { ReadAloudVoice, SpeechTrack } from "./readAloud";
 import { chooseVoice, chosenVoice, ONLINE_NOTICE, resolveVoice, speechFetcher, voicesOf } from "./readAloudVoice";
 import { askOnlineConsent, needsOnlineConsent } from "./onlineConsent";
 import { OnlineVoicePrompt } from "./OnlineVoicePrompt";
-import { chapterScriptQuery, useSource } from "./source";
+import { chapterScriptQuery, useListenBook, useSource } from "./source";
+import { withFreshSkips } from "./textScript";
 
 export type { SleepMode, SleepRequest } from "./sleep";
 
@@ -132,6 +133,8 @@ interface PlayerActions {
   prepare: (book: BookRef, chapters: ListenChapter[], chapterId: number, at: number) => void;
   toggle: () => void;
   resume: () => void;
+  /** Bỏ thông báo lỗi đang hiện mà không phát gì (vd. mạng đã về: lời "không có mạng" hết đúng, nhưng đừng tự phát lại giữa chừng). */
+  dismissError: () => void;
   pause: () => void;
   seek: (seconds: number) => void;
   skip: (delta: number) => void;
@@ -286,6 +289,12 @@ export function PlayerProvider({
   refs.current.defaultRate = defaultRate;
   refs.current.atEnd = atEnd;
   refs.current.expanded = expanded;
+  // Dòng ghi công người nghe tích / bỏ tích SAU khi nạp sách (trang sách): hàng đợi theo `skip` mới nhất, để giọng đọc và kịch bản dựng sẵn không còn đọc
+  // theo bản cũ (kịch bản cũ nằm lại trong bộ nhớ đệm, màn đọc mở ra vẫn hiện dòng ấy).
+  const { data: playingBook } = useListenBook(track?.bookId);
+  useEffect(() => {
+    setQueue((current) => withFreshSkips(current, playingBook?.chapters));
+  }, [playingBook]);
 
   const position = useCallback(
     (): NightPosition => ({
@@ -655,6 +664,7 @@ export function PlayerProvider({
   }, [resumeNow, withConsent]);
   const resumeRef = useRef(resume);
   resumeRef.current = resume;
+  const dismissError = useCallback(() => setError(""), []);
 
   const pause = useCallback(() => {
     night.touch("pause", position(), true);
@@ -1370,10 +1380,10 @@ export function PlayerProvider({
   const value = useMemo<PlayerValue>(() => ({
     track, queue, playing, buffering, rate, volume, sleep, fading, sleepStoppedAt, lastSleepMinutes, purpose, atEnd,
     canGoBack, error, notice, options, musicCredit,
-    play, prepare, toggle, resume, pause, seek, skip, next, previous, jumpTo, goBack, restart, setRate, setVolume, setSleep,
+    play, prepare, toggle, resume, dismissError, pause, seek, skip, next, previous, jumpTo, goBack, restart, setRate, setVolume, setSleep,
     extendSleep, addBookmark, close, switchRecord, positionStamp,
   }), [track, queue, playing, buffering, rate, volume, sleep, fading, sleepStoppedAt, lastSleepMinutes, purpose, atEnd,
-    canGoBack, error, notice, options, musicCredit, play, prepare, toggle, resume, pause, seek, skip, next, previous, jumpTo, goBack, restart,
+    canGoBack, error, notice, options, musicCredit, play, prepare, toggle, resume, dismissError, pause, seek, skip, next, previous, jumpTo, goBack, restart,
     setRate, setVolume, setSleep, extendSleep, addBookmark, close, switchRecord, positionStamp]);
 
   // Mở/đóng "Đang nghe" qua View Transitions: bìa ở thanh phát bay lên thành bìa lớn (và bay về), phần còn lại mờ

@@ -27,6 +27,9 @@ export interface ImportPreview {
   suggestions?: ImportSuggestion[];
   /** Đúng bộ chữ này đã có trong thư viện: hỏi ngay ("Mở cuốn đó" / "Thêm bản riêng"). */
   existing?: { id: string; title: string } | null;
+  /** Cuốn đã thêm từ CHÍNH file này (chọn chương khác, tách hay không tách): bộ chữ khác nên không phải `existing`, nhưng người nghe nên biết trước khi thành
+   *  cuốn trùng tên. `chapters`: số chương của cuốn đó. */
+  sameSource?: { id: string; title: string; chapters: number } | null;
   hasCover: boolean;
   totals: { chapters: number; words: number };
   /** File TXT cả truyện (>= 2 dòng "Chương N"): số chương nếu tách theo các dòng ấy. Giao diện đề xuất (ô KHÔNG tích sẵn); không có khoá = không có gì để tách. */

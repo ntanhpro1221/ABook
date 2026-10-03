@@ -1,4 +1,4 @@
-import type { Script, ScriptSegment } from "./model";
+import type { ListenChapter, Script, ScriptSegment } from "./model";
 
 // Chữ của một chương CHỈ-CÓ-CHỮ (sách giai đoạn 0, `texts/<mã>.txt` - docs/LISTEN_ANYTHING.md mục 1) thành hình dạng mà màn đọc
 // (ReaderScreen) đã đọc được: các đoạn như một kịch bản không có mốc thời gian (`timed: false`). Máy tính và điện thoại dùng
@@ -73,4 +73,22 @@ export function textScript(chapterId: number, title: string, text: string, skip?
     status: "text",
   }));
   return { chapterId, title, timed: false, duration: 0, segments };
+}
+
+const sameLines = (a: readonly string[] | undefined, b: readonly string[] | undefined) =>
+  (a?.length ?? 0) === (b?.length ?? 0) && (a ?? []).every((line, i) => line === b![i]);
+
+/** Hàng đợi của trình phát giữ bản chương lúc nạp sách; người nghe tích / bỏ tích một dòng ghi công SAU ĐÓ (trang sách) thì `skip` của hàng đợi cũ đi:
+ *  giọng đọc và kịch bản dựng sẵn cho chương kế vẫn lấy theo nó. Trả hàng đợi với `skip` mới nhất của sách (`fresh`); không có gì đổi thì trả đúng
+ *  hàng đợi cũ (để không dựng lại gì). */
+export function withFreshSkips(queue: ListenChapter[], fresh: readonly ListenChapter[] | undefined): ListenChapter[] {
+  if (!fresh) return queue;
+  const latest = new Map(fresh.map((chapter) => [chapter.id, chapter.skip]));
+  if (queue.every((chapter) => !latest.has(chapter.id) || sameLines(chapter.skip, latest.get(chapter.id)))) return queue;
+  return queue.map((chapter) => {
+    if (!latest.has(chapter.id) || sameLines(chapter.skip, latest.get(chapter.id))) return chapter;
+    const { skip: _old, ...rest } = chapter;
+    const skip = latest.get(chapter.id);
+    return skip?.length ? { ...rest, skip } : rest;
+  });
 }

@@ -177,6 +177,9 @@ export function AddBookDialog({ open, onOpenChange }: { open: boolean; onOpenCha
   const nothingPicked = preview !== null && picked.size === 0;
   // Cuốn "đã có trong thư viện" tính theo các chương MẶC ĐỊNH; tích khác đi là bộ chữ khác, cứ thêm - máy sẽ nói nếu hoá ra đã có.
   const existing = preview && isDefaultPick(preview.chapters, picked) ? preview.existing : null;
+  // Cùng file đã thêm nhưng lần này chọn chương khác (hay tách chương khác): báo như trên, kèm "Vẫn thêm bản mới" - thêm cũng được, nhưng không im lặng.
+  const sameSource = !existing ? (preview?.sameSource ?? null) : null;
+  const known = existing ?? sameSource;
 
   return (
     <Dialog
@@ -349,21 +352,23 @@ export function AddBookDialog({ open, onOpenChange }: { open: boolean; onOpenCha
               </div>
             </div>
           )}
-          {existing && (
+          {known && (
             <p role="status" className="mt-3 rounded-xl border border-line bg-accent-soft p-3 text-sm text-accent-text">
-              Cuốn này đã có trong thư viện: “{existing.title}”.
+              {existing
+                ? `Cuốn này đã có trong thư viện: “${existing.title}”.`
+                : `Bạn đã thêm file này thành “${sameSource!.title}” (${sameSource!.chapters} chương).`}
             </p>
           )}
           <div className="mt-5 flex flex-wrap justify-end gap-2">
             <Button variant="ghost" disabled={busy !== null} onClick={reset}>
               Chọn lại
             </Button>
-            {existing ? (
+            {known ? (
               <>
                 <Button icon={Copy} loading={busy === "adding"} disabled={!title.trim() || nothingPicked || busy !== null} onClick={() => void add(true)}>
-                  Thêm bản riêng
+                  {existing ? "Thêm bản riêng" : "Vẫn thêm bản mới"}
                 </Button>
-                <Button variant="primary" icon={BookOpen} disabled={busy !== null} onClick={() => openExisting(existing.id)}>
+                <Button variant="primary" icon={BookOpen} disabled={busy !== null} onClick={() => openExisting(known.id)}>
                   Mở cuốn đó
                 </Button>
               </>

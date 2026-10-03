@@ -16,7 +16,7 @@ import {
   type BookTemplate,
 } from "@/studio/bookTemplates";
 import { SharedReadingsSettings } from "@/studio/sharedReadings";
-import { VieneuModuleCard } from "@/listen/VieneuModuleCard";
+import { SupertonicModuleCard, VieneuModuleCard } from "@/listen/VieneuModuleCard";
 import { VoiceSettings, type KeyCheck, type OnlineProviderInfo, type VoiceSettingsApi } from "@/listen/VoiceSettings";
 import { httpSource } from "./httpSource";
 import { OtherComputers } from "./OtherComputers";
@@ -437,7 +437,15 @@ export function SettingsScreen() {
             <VoiceSettings
               api={desktopVoices}
               deviceHint="Máy này chưa có giọng tiếng Việt. Cài trong Windows: Cài đặt → Thời gian và ngôn ngữ → Giọng nói → Thêm giọng nói → Tiếng Việt."
-              modules={(reload) => <VieneuModuleCard onChanged={reload} />}
+              modules={(reload) => (
+                <>
+                  {/* Mã để nút "Tải giọng VieNeu" ở khối báo mất mạng của trình phát cuộn tới đúng thẻ này (PlayerViews.PlayerAlert). */}
+                  <div id="vieneu-module" className="scroll-mt-4">
+                    <VieneuModuleCard onChanged={reload} />
+                  </div>
+                  <SupertonicModuleCard onChanged={reload} />
+                </>
+              )}
             />
           </Section>
         )}

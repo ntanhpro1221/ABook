@@ -36,7 +36,7 @@ from ..readaloud import service as readaloud
 from ..readaloud.model import VoiceError
 from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, edits_inbox, ffmpeg_setup, humanize, listen_view,
                music_catalog, music_local, music_module, music_plan, music_playlist, music_select, music_student, packages, project_views,
-               projectfile, reading_preview, remote_config, shared_readings, store, textbook, vieneu_module, volumes, word_timing, workshop)
+               projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, vieneu_module, volumes, word_timing, workshop)
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, clean_book_templates, legacy_ids
 from .listening import RECORD_ID, Listening
@@ -248,9 +248,13 @@ class App:
         # Giọng VieNeu (vieneu_module.py): mô-đun tải khi người dùng bấm; tải rồi thì giọng của nó vào danh sách, tải xong tự đo vài giây.
         self.readaloud = readaloud.ReadAloud(preferences.path.with_name("readaloud-cache"),
                                              keys=readaloud_keys.KeyStore(preferences.path.with_name(readaloud_keys.FILE_NAME)),
-                                             vieneu_locate=vieneu_module.installed, rtf=vieneu_module.rtf)
+                                             vieneu_locate=vieneu_module.installed, supertonic_locate=supertonic_module.installed,
+                                             rtf=lambda voice: supertonic_module.rtf(voice) or vieneu_module.rtf(voice))
         vieneu_module.configure(preferences.path.with_name(vieneu_module.FOLDER), benchmark=self.readaloud.vieneu.benchmark,
                                 after_install=self.readaloud.vieneu.forget)
+        # Giọng Supertonic (supertonic_module.py): cùng khung với VieNeu, mười giọng nam nữ, gỡ được.
+        supertonic_module.configure(preferences.path.with_name(supertonic_module.FOLDER), benchmark=self.readaloud.supertonic.benchmark,
+                                    after_install=self.readaloud.supertonic.forget)
         if not (isinstance(runner, actions.FakeRunner) or os.environ.get("ABOOK_FAKE_RUNNER") == "1"):
             self.readaloud.warm()
         # Mốc từng chữ khi nghe (word_timing.py): app đóng gói không có numpy nên giao việc căn cho Python của Studio.
@@ -374,7 +378,10 @@ class App:
             # Đúng bộ chữ này đã có trong thư viện: hỏi ngay ở đây ("Mở cuốn đó" / "Thêm bản riêng"), đừng để người dùng sửa tên
             # rồi mới biết lúc thêm.
             existing = textbook.find_existing(book, self.library.root)
-            return {**textbook.preview(book), "existing": self._existing_view(existing) if existing else None}
+            # Cũng đúng FILE này đã được thêm (chọn chương khác, tách hay không tách): nói ngay, đừng để thành cuốn trùng tên không ai báo.
+            same = textbook.find_same_source(textbook.source_digest(source), self.library.root)
+            return {**textbook.preview(book), "existing": self._existing_view(existing) if existing else None,
+                    "sameSource": {**self._existing_view(same), "chapters": int(packages.manifest(same).get("chaptersTotal") or 0)} if same else None}
         except importers.ImportFailed as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
         except OSError as error:
@@ -3244,17 +3251,42 @@ class Handler(BaseHTTPRequestHandler):
     def get_readaloud_vieneu(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, vieneu_module.status())
 
-    def post_readaloud_vieneu(self, _query: dict[str, list[str]]) -> None:
+    def _start_voice_module(self, module: Any) -> None:
         # Người dùng bấm tải các lựa chọn đã đánh dấu (`choices`), hay "Cập nhật" (không có `choices`: chỉ các phần đã cũ của những gì đã tải).
+        # Chung cho các mô-đun giọng tải thêm (vieneu_module, supertonic_module).
         self.app._mutating()
         choices = self._body().get("choices")
         if choices is not None and (not isinstance(choices, list) or not all(isinstance(item, str) for item in choices)):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Lựa chọn không hợp lệ")
         try:
-            vieneu_module.start(choices)
+            module.start(choices)
         except ValueError as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
-        self._send_json(HTTPStatus.OK, vieneu_module.status())
+        self._send_json(HTTPStatus.OK, module.status())
+
+    def post_readaloud_vieneu(self, _query: dict[str, list[str]]) -> None:
+        self._start_voice_module(vieneu_module)
+
+    def get_readaloud_supertonic(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, supertonic_module.status())
+
+    def post_readaloud_supertonic(self, _query: dict[str, list[str]]) -> None:
+        self._start_voice_module(supertonic_module)
+
+    def post_readaloud_supertonic_measure(self, _query: dict[str, list[str]]) -> None:
+        self.app._mutating()
+        supertonic_module.measure_again()
+        self._send_json(HTTPStatus.OK, supertonic_module.status())
+
+    def post_readaloud_supertonic_remove(self, _query: dict[str, list[str]]) -> None:
+        # "Gỡ": lấy lại chỗ của giọng đã tải (thư viện dùng chung với mô-đun khác nên ở lại).
+        self.app._mutating()
+        choice = self._body().get("choice")
+        try:
+            supertonic_module.remove(choice if isinstance(choice, str) else supertonic_module.CHOICE)
+        except ValueError as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+        self._send_json(HTTPStatus.OK, supertonic_module.status())
 
     def get_readaloud_prepare(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.readaloud.prepare.status())
@@ -3454,6 +3486,10 @@ ROUTES: list[Route] = [
     ("DELETE", re.compile(r"/api/readaloud/prepare"), Handler.delete_readaloud_prepare),
     ("POST", re.compile(r"/api/readaloud/vieneu"), Handler.post_readaloud_vieneu),
     ("POST", re.compile(r"/api/readaloud/vieneu/measure"), Handler.post_readaloud_vieneu_measure),
+    ("GET", re.compile(r"/api/readaloud/supertonic"), Handler.get_readaloud_supertonic),
+    ("POST", re.compile(r"/api/readaloud/supertonic"), Handler.post_readaloud_supertonic),
+    ("POST", re.compile(r"/api/readaloud/supertonic/measure"), Handler.post_readaloud_supertonic_measure),
+    ("POST", re.compile(r"/api/readaloud/supertonic/remove"), Handler.post_readaloud_supertonic_remove),
     ("GET", re.compile(r"/api/readaloud/online"), Handler.get_readaloud_online),
     ("PUT", re.compile(r"/api/readaloud/online/(azure|google|fpt|viettel)"), Handler.put_readaloud_online),
     ("DELETE", re.compile(r"/api/readaloud/online/(azure|google|fpt|viettel)"), Handler.delete_readaloud_online),

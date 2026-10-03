@@ -1,9 +1,11 @@
-"""Đo độ to (BS.1770, LUFS tích hợp) của từng giọng VieNeu cho abook/readaloud/loudness.py (đích -20 LUFS, chỉnh lúc phát).
+"""Đo độ to (BS.1770, LUFS tích hợp) của từng giọng VieNeu / Supertonic cho abook/readaloud/loudness.py (đích -20 LUFS, chỉnh lúc phát).
 
-Đọc 30 câu cố định bằng mỗi giọng qua đúng đường của "Nghe ngay" (VieneuProvider), nối lại, đo bằng audio_io.integrated_loudness_lufs (pyloudnorm,
-venv dev). Model lấy từ thư mục mô-đun đã tải (--module <dữ liệu app>/vieneu) hay bộ đệm Hugging Face của máy dev (mặc định).
+Đọc 30 câu cố định bằng mỗi giọng qua đúng đường của "Nghe ngay" (VieneuProvider / SupertonicProvider), nối lại, đo bằng
+audio_io.integrated_loudness_lufs (pyloudnorm, venv dev). Model VieNeu lấy từ thư mục mô-đun đã tải (--module <dữ liệu app>/vieneu) hay bộ đệm
+Hugging Face của máy dev (mặc định); giọng Supertonic: --supertonic <thư mục model> (<dữ liệu app>/supertonic/model hay ~/.cache/supertonic3).
 
     runtime/.venv/Scripts/python.exe scripts/measure_vieneu_loudness.py [--module DIR] [--tier turbo|nano] [--out file.json]
+    runtime/.venv/Scripts/python.exe scripts/measure_vieneu_loudness.py --supertonic DIR [--out file.json]
 """
 from __future__ import annotations
 
@@ -73,10 +75,31 @@ def _cache_install():
     return Installed(Path(vieneu.__file__).parent / "assets", (turbo, codec), nano, False)
 
 
+def _measure_supertonic(folder: Path, out: str | None) -> int:
+    import numpy as np
+
+    from abook import audio_io
+    from abook.readaloud.supertonic import NAMES, PREFIX, Installed, SupertonicProvider
+
+    found = Installed(folder)
+    provider = SupertonicProvider(lambda: found)
+    results: dict[str, float] = {}
+    for name in NAMES:
+        began = time.perf_counter()
+        pieces = [provider._speak(found, name, text) for text in SENTENCES]
+        lufs = audio_io.integrated_loudness_lufs(np.concatenate([piece[0] for piece in pieces]), pieces[0][1])
+        results[f"{PREFIX}:{name}"] = round(float(lufs), 1)
+        print(f"{PREFIX}:{name}	{lufs:.1f} LUFS	{time.perf_counter() - began:.0f}s", flush=True)
+    if out:
+        Path(out).write_bytes(json.dumps(results, ensure_ascii=False, indent=1).encode("utf-8"))
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--module", help="thư mục mô-đun đã tải (<dữ liệu app>/vieneu)")
     parser.add_argument("--tier", choices=["turbo", "nano"])
+    parser.add_argument("--supertonic", help="đo giọng Supertonic ở thư mục model này thay vì giọng VieNeu")
     parser.add_argument("--out")
     args = parser.parse_args()
 
@@ -84,6 +107,8 @@ def main() -> int:
     from abook.readaloud.vieneu import VieneuProvider
     from abook.webui import vieneu_module as vm
 
+    if args.supertonic:
+        return _measure_supertonic(Path(args.supertonic), args.out)
     if args.module:
         vm.configure(Path(args.module))
         found = vm.installed()

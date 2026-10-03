@@ -1,10 +1,11 @@
 import * as Switch from "@radix-ui/react-switch";
 import { Download } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Button, Segmented, TimeSelect } from "@/shared/ui";
 import { VieneuModuleCard, type VieneuBackend } from "@/listen/VieneuModuleCard";
 import { VoiceSettings, type VoiceSettingsApi } from "@/listen/VoiceSettings";
 import { androidSource } from "./androidSource";
+import { notificationState, openNotificationSettings, type NotificationState } from "./notifications";
 import { ReadAloud } from "./plugins";
 import { applyTheme, loadSettings, saveSettings, type PlayerSettings } from "./settings";
 import { openRelease } from "./UpdateNotice";
@@ -47,6 +48,26 @@ function Row({ label, hint, children }: { label: string; hint?: string; children
       </div>
       <div className="shrink-0">{children}</div>
     </div>
+  );
+}
+
+/** Chỉ hiện khi ABook chưa được phép hiện thông báo (người nghe từ chối hay bỏ qua lời mời lúc nghe lần đầu): nói thẳng hậu quả và mở đúng trang cài đặt.
+ *  Quay lại từ Cài đặt Android thì hỏi lại - cho phép xong là dòng này biến mất. */
+function NotificationRow() {
+  const [state, setState] = useState<NotificationState>("granted");
+  useEffect(() => {
+    const check = () => void notificationState().then(setState);
+    check();
+    document.addEventListener("visibilitychange", check);
+    return () => document.removeEventListener("visibilitychange", check);
+  }, []);
+  if (state === "granted") return null;
+  return (
+    <Row label="Thông báo" hint="Khay thông báo và màn khoá chưa có nút tạm dừng, tua vì ABook chưa được phép hiện thông báo.">
+      <Button size="sm" onClick={() => void openNotificationSettings().catch(() => undefined)}>
+        Mở cài đặt
+      </Button>
+    </Row>
   );
 }
 
@@ -183,6 +204,7 @@ export function SettingsScreen() {
       </Group>
 
       <Group title="Nghe">
+        <NotificationRow />
         <Row label="Nút tai nghe lùi/tới" hint="Nút Trước/Sau trên tai nghe Bluetooth, đồng hồ, xe hơi: lùi/tới 15 giây thay vì nhảy cả chương.">
           <Switch.Root
             checked={settings.headsetSkips ?? false}
@@ -215,7 +237,12 @@ export function SettingsScreen() {
           <VoiceSettings
             api={phoneVoices}
             deviceHint="Máy chưa có giọng tiếng Việt. Cài trong Cài đặt của điện thoại → Chuyển văn bản thành giọng nói → tải dữ liệu giọng Tiếng Việt."
-            modules={(reload) => <VieneuModuleCard backend={phoneVieneu} onChanged={reload} />}
+            modules={(reload) => (
+              // Mã để nút "Tải giọng VieNeu" ở khối báo mất mạng của trình phát cuộn tới đúng thẻ này (PlayerViews.PlayerAlert).
+              <div id="vieneu-module" className="scroll-mt-4">
+                <VieneuModuleCard backend={phoneVieneu} onChanged={reload} />
+              </div>
+            )}
           />
         </div>
       </Group>

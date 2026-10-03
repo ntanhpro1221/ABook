@@ -117,6 +117,24 @@ class TextImportsTest {
     }
 
     @Test
+    fun the_preview_knows_the_same_file_was_added_before_whatever_chapters_were_picked() {
+        val fresh = stageFile("epub3.epub").ref
+        assertTrue(TextImports.preview(fresh).isNull("sameSource"))
+        val first = TextImports.create(fresh, "", cache, picks = listOf(2 to "", 3 to ""))
+        val preview = TextImports.preview(stageFile("epub3.epub").ref)
+        assertTrue("bộ chương mặc định khác bộ đã thêm", preview.isNull("existing"))
+        val same = preview.getJSONObject("sameSource") // nhưng đúng file ấy đã được thêm
+        assertEquals(first.getString("id"), same.getString("id"))
+        assertEquals("Chuyến phà cuối ngày", same.getString("title"))
+        assertEquals(2, same.getInt("chapters"))
+        val whole = stageFile("whole.txt").ref
+        TextImports.preview(whole)
+        val oneChapter = TextImports.create(whole, "", cache)
+        assertEquals("tách chương hay không vẫn là file ấy", oneChapter.getString("id"), TextImports.preview(stageFile("whole.txt").ref, splitChapters = true).getJSONObject("sameSource").getString("id"))
+        assertTrue("file khác thì không", TextImports.preview(stageFile("plain.docx").ref).isNull("sameSource"))
+    }
+
+    @Test
     fun a_listener_unticks_chapters_renames_one_and_brings_back_a_short_item() {
         val ref = stageFile("epub3.epub").ref
         TextImports.preview(ref)

@@ -95,10 +95,14 @@ function MobileShell({ children }: { children: ReactNode }) {
   usePageEnter(main, pathname, { resetScroll: false });
   return (
     <div className="relative flex h-full flex-col" style={{ paddingTop: "env(safe-area-inset-top)" }}>
-      <main ref={main} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</main>
-      <RemotePlayerBars />
-      <PlayerBar compact />
+      {/* Màn "Đang nghe" phủ kín: mọi thứ nằm dưới nó cũng ra khỏi cây trợ năng và Tab (inert), không chỉ khuất mắt. */}
+      <main ref={main} inert={expanded} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</main>
+      <div className="contents" inert={expanded}>
+        <RemotePlayerBars />
+        <PlayerBar compact />
+      </div>
       <nav
+        inert={expanded}
         className="flex h-16 shrink-0 border-t border-line bg-panel"
         style={{ paddingBottom: "env(safe-area-inset-bottom)", boxSizing: "content-box" }}
         aria-label="Điều hướng"

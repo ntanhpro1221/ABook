@@ -3,6 +3,7 @@ import type { Bookmark } from "@/listen/model";
 import type { MusicCredit } from "@/listen/musicBed";
 import type { SleepMode, SleepRequest } from "@/listen/sleep";
 import { chapterFiles, chapterTextEntry } from "./androidSource";
+import { offerNotificationAccess } from "./notifications";
 import { EbookPlayer, type NativeState } from "./plugins";
 
 // Bộ máy phát của Android: mọi thứ thật sự chạy trong lõi Media3 (Playback.kt), kể cả khi tắt màn hình.
@@ -16,6 +17,7 @@ export class NativeAudioEngine implements NativeEngine {
   private current: NativeState | null = null;
   private receivedAt = 0;
   private handlers = new Map<EngineEvent, Set<() => void>>();
+  private offeredNotifications = false;
 
   constructor() {
     void EbookPlayer.addListener("state", (state) => this.receive(state));
@@ -33,6 +35,11 @@ export class NativeAudioEngine implements NativeEngine {
     // "record": máy khác đổi hồ sơ nghe của cuốn đang nạp, lõi đã nạp lại chỗ của hồ sơ mới - làm mới như đổi chương
     if (!previous || previous.chapterId !== next.chapterId || previous.bookId !== next.bookId || next.kind === "record") this.fire("chapter");
     if (!previous || previous.playing !== next.playing) this.fire(next.playing ? "play" : "pause");
+    // Đã có tiếng rồi mới xin quyền thông báo (một lần duy nhất, có lời giải thích): hộp hệ thống không bao giờ chặn lần nghe đầu.
+    if (next.playing && !this.offeredNotifications) {
+      this.offeredNotifications = true;
+      window.setTimeout(() => void offerNotificationAccess(), 1500);
+    }
     if (!previous || previous.duration !== next.duration) this.fire("duration");
     if (!previous || JSON.stringify(previous.sleep) !== JSON.stringify(next.sleep)) this.fire("sleep");
     if (!previous || previous.buffering !== next.buffering) this.fire(next.buffering ? "waiting" : "playing");
