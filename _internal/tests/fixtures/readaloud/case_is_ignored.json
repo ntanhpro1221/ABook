@@ -1,0 +1,27 @@
+{
+ "note": "không phân biệt hoa thường",
+ "text": "HÀ NỘI",
+ "durationMs": 800,
+ "boundaries": [
+  {
+   "text": "hà",
+   "start": 0,
+   "end": 300
+  },
+  {
+   "text": "nội",
+   "start": 300,
+   "end": 700
+  }
+ ],
+ "words": [
+  [
+   0,
+   300
+  ],
+  [
+   300,
+   700
+  ]
+ ]
+}
