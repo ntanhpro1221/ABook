@@ -1,0 +1,233 @@
+# Đáp án KIỂM TRA Hàn đợt 4 (03-10; luật cố định: vị trí 30% của bộ, >30 KB lấy 25 KB đầu); mục đích: tách q35-4B / 9B / v8 trên truyện Hàn chưa học.
+# "Thế giới sau đoạn kết tồi tệ" file 086 ("Chương 79: Hãy Làm Chủ Phép Thuật của Rồng Cổ Đại"; ~17 KB, lấy trọn). Claude gán (A) 03-10.
+# Hai góc kể: 1-155 NGÔI THỨ NHẤT, "tôi" = HANNON (Hannon Irey: 25 Sharin gọi "Hannon" rồi 26 "tôi nghe thấy một giọng nói";
+# 08x "Tôi là Hannon Irey.") -> --first-person Hannon; 156-212 NGÔI BA (Iris, ngày giỗ mẹ).
+# Tên: HANNON / HANNON IREY (m); SHARIN / SHARIN SAZARIS (f); MIDRA / MIDRA FENIN (m, "Cậu bé này là Midra Fenin", năm nhất, thành
+# viên hội học sinh); IRIS / IRIS HYSIRION (f, "Công chúa thứ ba", "Điện hạ" là danh hiệu); HANIA / HANIA RAPIDEDIA (f, 08x "cô ấy").
+# Nikita, Isabel, Aisha, Sylvester, Zerion, Robliage chỉ được nhắc.
+# 15-22 KHÓ - bản dịch hỏng câu 22 "Tôi—một học viên năm nhất và á quân lớp Võ thuật, Midra Fenin—đáp lại lời than vãn và tiếp
+# tục di chuyển nhanh nhẹn." Đọc hợp lý: "tôi đáp lại lời than vãn của Midra Fenin" (Midra năm nhất gọi Hannon "tiền bối";
+# 23-24 thể lực nhờ tập với Aisha là của "tôi"; đặt "tôi" = Midra thì mâu thuẫn 25-27 Sharin gọi "tôi" là Hannon). Nên: 15
+# "Ôi, chết mất thôi." + 16 thành viên kiệt sức = MIDRA (tên chỉ nêu ở 22 -> tên đủ, NPC*~, quy tắc 5); 19 "Cố gắng thêm một
+# chút nữa thôi." lời động viên của HANNON (NPC*~ - không lời dẫn); 20 "Làm sao mà tiền bối Hannon chịu đựng..." = MIDRA; 21
+# "Thể lực là sức mạnh quốc gia." = HANNON, MIDRA~ (đọc chữ theo nghĩa đen lời dẫn 22 ra Midra - nửa điểm).
+# 85 "Mặc dù, nếu nghĩ kỹ, nó cũng không hoàn toàn là một điều xấu phải không?" trong ngoặc, 86 "Nó không phải là thứ tôi
+# không thể tận dụng" -> HANNON (D,T: có thể là tự nói; 87 Sharin vẫn đáp "Chỉ để cậu biết," nên ưu tiên D).
+# 101 "Bị Đế quốc cấm, phải." = SHARIN (102 "Cô ấy nói đúng"). 123-124, 130-131 một câu thoại bị parser tách hai dòng - cùng Sharin.
+# 172 "Iris, Điện hạ." = HANIA (174-175 "một giọng nói gọi tên cô... Hania đang đứng đó"; tên ngay sau -> HANIA đủ, NPC*~).
+# 198 "Bắt đầu." IRIS ra lệnh, 199 "Vâng." HANIA (200). 207 ‘Gia đình.’ nội tâm IRIS.
+# Ngôi một, tiếng lòng tức thời -> N,T người kể đủ (quy tắc 4): 30, 55-56, 83, 90, 141, 143-144, 151, 155.
+# Lời kể ngôi ba về Iris u sầu, cô đơn -> thêm sad vào tập.
+0 H
+1 N
+2 N
+3 N
+4 N
+5 N
+6 N
+7 N
+8 N
+9 N
+10 N
+11 N
+12 N
+13 N
+14 N
+15 D MIDRA,MIDRA FENIN,NPC*~,UNKNOWN~ tired,sad 0-1 normal,slow normal,soft m
+16 N NARRATOR neutral,tired 0-1 normal normal u
+17 N
+18 N NARRATOR neutral,tired 0-1 normal normal u
+19 D HANNON,NPC*~ neutral,tender 0-1 normal normal m
+20 D MIDRA,MIDRA FENIN,NPC*~ tired,surprised,sad,excited 0-2 normal,fast normal,loud m
+21 D HANNON,MIDRA~,MIDRA FENIN~ neutral,happy,sarcastic 0-1 normal normal m
+22 N
+23 N
+24 N
+25 D SHARIN,SHARIN SAZARIS happy,sarcastic 0-1 normal normal,loud f
+26 N
+27 N
+28 D HANNON,HANNON IREY sarcastic,neutral 0-1 normal normal m
+29 D SHARIN,SHARIN SAZARIS happy,neutral,sarcastic 0-1 normal normal f
+30 N,T NARRATOR,HANNON,HANNON IREY neutral,sarcastic 0-1 normal normal u
+31 D HANNON,HANNON IREY neutral,sarcastic,angry 0-1 normal normal m
+32 D SHARIN,SHARIN SAZARIS sarcastic,happy,neutral 0-1 normal normal f
+33 N
+34 N
+35 D SHARIN,SHARIN SAZARIS neutral 0-1 normal normal f
+36 N
+37 N
+38 N
+39 N
+40 N
+41 N
+42 N NARRATOR neutral,surprised 0-1 normal normal u
+43 N NARRATOR neutral,surprised 0-1 normal normal u
+44 N
+45 D SHARIN,SHARIN SAZARIS neutral,sarcastic 0-1 normal normal f
+46 D HANNON,HANNON IREY angry,afraid,neutral 0-1 normal normal m
+47 D SHARIN,SHARIN SAZARIS happy,neutral,sarcastic 0-1 normal normal f
+48 N NARRATOR neutral,afraid 0-1 normal normal u
+49 D SHARIN,SHARIN SAZARIS neutral 0-1 normal normal f
+50 D HANNON,HANNON IREY neutral 0-1 normal normal m
+51 D SHARIN,SHARIN SAZARIS neutral 0-1 normal normal f
+52 N
+53 D HANNON,HANNON IREY neutral,afraid 0-1 normal normal m
+54 D SHARIN,SHARIN SAZARIS neutral 0-1 normal normal f
+55 N,T NARRATOR,HANNON,HANNON IREY neutral,tender 0-1 normal normal u
+56 N,T NARRATOR,HANNON,HANNON IREY neutral,tender 0-1 normal normal u
+57 D HANNON,HANNON IREY neutral,happy 0-1 normal normal m
+58 D SHARIN,SHARIN SAZARIS neutral,sarcastic 0-1 normal normal f
+59 D HANNON,HANNON IREY surprised,neutral 0-1 normal normal m
+60 N
+61 N
+62 D SHARIN,SHARIN SAZARIS neutral 0-1 normal normal f
+63 N
+64 D SHARIN,SHARIN SAZARIS neutral 0-1 normal normal f
+65 N
+66 N
+67 N
+68 N
+69 N
+70 N
+71 N
+72 N
+73 N
+74 N
+75 N NARRATOR neutral,surprised 0-1 normal normal u
+76 D HANNON,HANNON IREY surprised 0-1 normal,slow normal,soft m
+77 D SHARIN,SHARIN SAZARIS neutral 0-1 normal normal f
+78 N
+79 D SHARIN,SHARIN SAZARIS neutral,sarcastic 0-1 normal normal f
+80 D HANNON,HANNON IREY afraid,neutral 0-1 slow,normal soft,normal m
+81 N
+82 D SHARIN,SHARIN SAZARIS sarcastic,neutral 0-1 normal normal f
+83 N,T NARRATOR,HANNON,HANNON IREY neutral,sarcastic 0-1 normal normal u
+84 N,T NARRATOR,HANNON,HANNON IREY neutral 0-1 normal normal u
+85 D,T HANNON,HANNON IREY neutral 0-1 normal normal m
+86 N,T NARRATOR,HANNON,HANNON IREY neutral 0-1 normal normal u
+87 D SHARIN,SHARIN SAZARIS neutral 0-1 normal normal f
+88 N
+89 D SHARIN,SHARIN SAZARIS neutral 0-1 normal normal f
+90 N,T NARRATOR,HANNON,HANNON IREY neutral,afraid 0-1 normal normal u
+91 N
+92 N NARRATOR neutral,afraid 0-1 normal normal u
+93 D HANNON,HANNON IREY neutral 0-1 normal normal m
+94 D SHARIN,SHARIN SAZARIS happy,neutral 0-1 normal normal f
+95 D HANNON,HANNON IREY surprised,happy,excited 0-1 normal normal m
+96 N
+97 N
+98 D SHARIN,SHARIN SAZARIS happy,neutral 0-1 normal normal f
+99 N
+100 D HANNON,HANNON IREY surprised 0-2 normal,fast normal,loud m
+101 D SHARIN,SHARIN SAZARIS neutral 0-1 normal normal f
+102 N
+103 N
+104 D SHARIN,SHARIN SAZARIS neutral 0-1 normal normal f
+105 N
+106 N
+107 D SHARIN,SHARIN SAZARIS neutral 0-1 normal normal f
+108 N
+109 N
+110 N
+111 N
+112 D SHARIN,SHARIN SAZARIS neutral 0-1 normal normal f
+113 N
+114 N
+115 N
+116 N
+117 N
+118 N
+119 D HANNON,HANNON IREY neutral 0-1 normal normal m
+120 D SHARIN,SHARIN SAZARIS happy,sarcastic,neutral 0-1 normal normal f
+121 N
+122 N
+123 D SHARIN,SHARIN SAZARIS neutral 0-1 normal normal f
+124 D SHARIN,SHARIN SAZARIS neutral 0-1 normal normal f
+125 N
+126 N
+127 D SHARIN,SHARIN SAZARIS neutral 0-1 normal normal f
+128 N
+129 N
+130 D SHARIN,SHARIN SAZARIS neutral,happy 0-1 normal normal f
+131 D SHARIN,SHARIN SAZARIS neutral,happy 0-1 normal normal f
+132 N
+133 N
+134 N
+135 N
+136 D HANNON,HANNON IREY neutral 0-1 normal normal m
+137 N
+138 N
+139 N
+140 D SHARIN,SHARIN SAZARIS neutral 0-1 normal normal f
+141 N,T NARRATOR,HANNON,HANNON IREY neutral,tender 0-1 normal normal u
+142 D SHARIN,SHARIN SAZARIS neutral 0-1 normal normal f
+143 N,T NARRATOR,HANNON,HANNON IREY neutral,sarcastic 0-1 normal normal u
+144 N,T NARRATOR,HANNON,HANNON IREY neutral,sarcastic 0-1 normal normal u
+145 D SHARIN,SHARIN SAZARIS neutral,happy 0-1 normal normal f
+146 N
+147 N
+148 N
+149 D SHARIN,SHARIN SAZARIS happy,sarcastic 0-1 normal normal f
+150 N
+151 N,T NARRATOR,HANNON,HANNON IREY neutral,sarcastic 0-1 normal normal u
+152 N
+153 D HANNON,HANNON IREY neutral,happy 0-1 normal normal m
+154 N
+155 N,T NARRATOR,HANNON,HANNON IREY neutral 0-1 normal normal u
+156 N
+157 N
+158 N
+159 N
+160 N
+161 N NARRATOR neutral,sad 0-1 normal normal u
+162 N NARRATOR neutral,sad 0-1 normal normal u
+163 N NARRATOR neutral,sad 0-1 normal normal u
+164 N NARRATOR neutral,sad 0-1 normal normal u
+165 N
+166 N
+167 N NARRATOR neutral,sad 0-1 normal normal u
+168 N NARRATOR neutral,sad 0-1 normal normal u
+169 N
+170 N NARRATOR neutral,sad 0-1 normal normal u
+171 N NARRATOR neutral,sad 0-1 normal normal u
+172 D HANIA,HANIA RAPIDEDIA,NPC*~ neutral 0-1 normal normal,soft f
+173 N
+174 N
+175 D HANIA,HANIA RAPIDEDIA neutral 0-1 normal normal,soft f
+176 N
+177 N
+178 N
+179 N
+180 N
+181 N
+182 N
+183 N NARRATOR neutral,sad 0-1 normal normal u
+184 N
+185 N
+186 N
+187 N
+188 N
+189 N
+190 N
+191 N
+192 N
+193 N NARRATOR neutral,sad 0-1 normal normal u
+194 N
+195 N
+196 N
+197 N
+198 D IRIS,IRIS HYSIRION neutral 0-1 normal normal f
+199 D HANIA,HANIA RAPIDEDIA neutral 0-1 normal normal,soft f
+200 N
+201 N
+202 N NARRATOR neutral,sad 0-1 normal normal u
+203 N NARRATOR neutral,sad 0-1 normal normal u
+204 N NARRATOR neutral,sad 0-1 normal normal u
+205 N NARRATOR neutral,sad 0-1 normal normal u
+206 N NARRATOR neutral,sad 0-1 normal normal u
+207 T IRIS,IRIS HYSIRION sad,tender,neutral 0-1 slow,normal soft,normal f
+208 N
+209 N
+210 N
+211 N
+212 N NARRATOR neutral,tender,sad 0-1 normal normal u

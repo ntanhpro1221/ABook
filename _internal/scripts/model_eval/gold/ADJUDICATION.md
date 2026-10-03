@@ -782,3 +782,23 @@ Kuma Kuma Kuma Bear 133 + Overlord 25 (đợt 4: nữ chính ngôi một; nhiề
 | Kuma 133:14 | MYLENE, YUNA~ | bỏ YUNA~ | theo B | lời xin phép gửi CHO Yuna |
 | Kuma 133:53, 82; Overlord 25:70 | N | N,T | theo B | tiếng lòng / cuối chuỗi suy luận A đã cho N,T |
 | Overlord 25:9, 44 | giữ | D,T / N,T | giữ A | B tự xếp yếu |
+
+## Vòng Hàn đợt 4 (03-10) - truyện Hàn MỚI để tăng cỡ mẫu "truyện chưa học"
+
+Mục đích (Lead 03-10): bảng model mặc định báo riêng truyện MỚI (tình huống người dùng) - mẫu Hàn mới mới có 8 chương. Bốn bộ
+Hàn chưa từng dùng, luật cố định vị trí 30%: Tôi trở thành hung thần 266 (ngôi ba tới 85, rồi ngôi một "ta" = ASH), Thế giới
+sau đoàn kết tồi tệ 086 (ngôi một "tôi" = HANNON tới 155, rồi ngôi ba), Hồi quy tu tiên truyện 09 ("tôi" = THỤY ÂN HIỆN), Vô
+tận hồi quy giả 25 ("tôi" = NGƯỜI ĐƯA TANG - cả bộ chỉ gọi bằng biệt danh, như tiền lệ "Trịnh lão"). A = Opus, B = Sonnet đối
+kháng: người nói chính sai 0 ở cả bốn; nhập nhằng thật (Đoàn kết 15-22 lời dẫn dịch hỏng; Hồi quy 66-67 mua bán không lời dẫn)
+A đã cho nhiều lựa chọn.
+
+| câu | A | B đề nghị | kết luận | lý do |
+|---|---|---|---|---|
+| Vô tận 25:119 「Oh Dok-seo: ...」 | D,T | T,D | theo B | suy nghĩ người kể NGHE bằng năng lực đọc tâm (23.txt), không phải lời nói - quy tắc 9 |
+| Đoàn kết 086:84, 86; Hồi quy 09:48, 123 | N | N,T + người kể | theo B | tiếng lòng tức thời nối thẳng câu kề A đã cho N,T/T |
+| Hung thần 266:12 | LUNARED, KUILAN~ | bỏ KUILAN~ | theo B | lời dẫn 13-14 đều về Lunared; Kuilan chỉ há hốc mồm |
+| Hung thần 266:137-145 | mô tả riêng từng lính | 141 + 145 cùng "lính truyền tin", còn lại NPC* trơn | theo B | chỉ "Báo cáo dồn dập" làm căn cứ; 141/145 mở - đóng cùng lượt báo |
+| Hồi quy 09:68 | THỤY ÂN HIỆN | thêm NPC*:chủ dược đường~ | theo B | đối xứng với cách A cho hai phía ở 66-67 |
+| Hồi quy 09:151 | NPC*:võ sĩ gác cổng | NPC* trơn | theo B | 152 "hai võ sĩ gác cổng" - không biết người nào |
+| Đoàn kết 086:19 | HANNON, NPC*~ | thêm MIDRA~ | giữ A | khẩu ngữ y hệt của Hannon ở 082.txt:135 (B tự nêu) |
+| Đoàn kết 086:92; Hồi quy 09:146; Vô tận 25:131, 196 | N | N,T | giữ A | B tự xếp yếu |
