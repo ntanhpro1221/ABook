@@ -7,6 +7,8 @@ import { KEYED_PROVIDERS } from "./readAloudVoice";
 // dịch vụ khác. Máy tính và điện thoại dùng chung (trình phát hỏi trước khi bắt đầu phát chương chỉ có chữ - player.tsx).
 
 const KEY = "abook-readaloud-online-ok";
+/** Phát khi người nghe vừa đồng ý cho một nhà cung cấp: lõi Android cần biết để tự sang chương chữ (android/readAloud.ts). */
+export const ONLINE_CONSENT_EVENT = "abook-readaloud-online-ok";
 
 /** Tên công ty của các nhà cung cấp giọng trực tuyến đã biết (nhà cung cấp lạ: nói chung "dịch vụ ngoài"). */
 const COMPANIES: Record<string, string> = { edge: "Microsoft" };
@@ -18,6 +20,11 @@ function agreed(): string[] {
   } catch {
     return [];
   }
+}
+
+/** Các nhà cung cấp người nghe đã đồng ý gửi chữ tới. */
+export function onlineConsents(): string[] {
+  return agreed();
 }
 
 /** Người nghe đã đồng ý gửi chữ cho nhà cung cấp này. */
@@ -33,6 +40,7 @@ export function giveOnlineConsent(provider: string): void {
   } catch {
     /* không nhớ được thì lần sau hỏi lại */
   }
+  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(ONLINE_CONSENT_EVENT));
 }
 
 /** Có phải hỏi trước khi đọc bằng giọng này không. */

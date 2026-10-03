@@ -49,6 +49,18 @@ class VoiceChoicesTest {
     }
 
     @Test
+    fun onlineConsentIsPerProviderAndSurvivesARestart() {
+        val choices = VoiceChoices(file)
+        assertEquals(false, choices.onlineAllowed("edge"))
+        choices.remember("sach-a", "edge:vi-VN-HoaiMyNeural")
+        choices.allowOnline(listOf("edge", "", "edge"))
+        val reopened = VoiceChoices(file)
+        assertEquals(true, reopened.onlineAllowed("edge"))
+        assertEquals(false, reopened.onlineAllowed("fpt"))
+        assertEquals("edge:vi-VN-HoaiMyNeural", reopened.voiceFor("sach-a"))
+    }
+
+    @Test
     fun aBrokenFileIsLikeNoChoice() {
         file.writeText("{không phải json", Charsets.UTF_8)
         val choices = VoiceChoices(file)
