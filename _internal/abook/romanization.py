@@ -17,9 +17,10 @@ from __future__ import annotations
 
 import unicodedata
 
-# Chỗ quy ước ghi "mở" (mục 2 dòng ya/yo đầu từ, mục 3 dòng k/t/p bật hơi, mục 7). Mặc định ở đây là quyết định tạm của app.
+# Chỗ quy ước ghi "mở" (mục 3 dòng k/t/p bật hơi, ya/yo của Hàn, mục 7). Mặc định ở đây là quyết định tạm của app. ya / yo của TIẾNG NHẬT không còn mở:
+# chủ sách 04-10 đã chốt y + nguyên âm -> gi + nguyên âm (Yamato -> Gia-ma-tô, Ayaka -> A-gia-ca).
 OPEN_CHOICES = {
-    "y_initial": "ya / yo (đầu từ, và sau nguyên âm): mặc định ya / i-ô (SGK: Ya-ma-tô, I-ô-cô-ha-ma); chọn lại bằng thu thử -> nghe lại",
+    "y_initial": "ya / yo của tiếng Hàn (đầu từ): mặc định ya / i-ô (chưa có ví dụ tên); chọn lại bằng thu thử -> nghe lại",
     "ko_aspirated": "k / t / p bật hơi của tiếng Hàn: mặc định kh / th / ph theo âm (chưa có ví dụ tên)",
     "ko_rare_vowels": "wo / oe / wi / ui / we / wae của tiếng Hàn: mặc định uơ / uê / uy / ưi / uê / oe theo âm (chưa có ví dụ chính thức)",
 }
@@ -27,14 +28,15 @@ OPEN_CHOICES = {
 # Các điểm quy ước ghi [Chọn] / để ngỏ, và giá trị đang dùng. Giá trị là KẾT QUẢ QUÉT theo bằng chứng (scripts/sweep_romanization_variants.py:
 # thử mọi biến thể, đếm dạng có nguồn khớp, ca "owner" x100, Bộ Ngoại giao x2, SGK x1, cộng đồng x0; hoà thì lấy biến thể có lý do ngữ âm và
 # cho âm tiết hợp lệ). Bản Kotlin chỉ cài các giá trị mặc định này. KHÔNG nằm ở đây vì chủ sách đã chốt, cố định, không quét: u Nhật -> u
-# ở mọi chỗ (fu phu, ku cu, ru ru, su xu, zu du, tsu chu, gu gu), hậu tố nối gạch (Haruto-kun -> Ha-ru-tô-cun), fu -> phu.
+# ở mọi chỗ (fu phu, ku cu, ru ru, su xu, zu du, tsu chu, gu gu), hậu tố nối gạch (Haruto-kun -> Ha-ru-tô-cun), fu -> phu, e Nhật -> e
+# (Hajime -> Ha-gi-me, Kôbe -> Cô-be), y + nguyên âm Nhật -> gi (Yamato -> Gia-ma-tô, Ayaka -> A-gia-ca). "ei" dưới đây cũng đã chốt (Rei -> Rây).
 CHOICES = {
     "s": "x",                 # s Nhật (sa su se so): "x" | "s"
     "sh": "s",                # shi, sha, sho: "s" | "x"
-    "ei": "ay",               # "ê" | "ây" | "ay" (quét: ay hơn ê / ây đúng một dạng SGK cũ, May-gi)
+    "ei": "ây",               # ei Nhật: CHỦ SÁCH 04-10 "Rei -> Rây, sensei -> xen-xây" (không quét); "e" | "ây" | "ay" là các dạng đã loại
     "k": "orth",              # "orth" (c / k theo chính tả) | "k_all" | "k_o" (k trước ô) - hai dạng sau bộ kiểm âm tiết không nhận
     "g": "gi",                # g trước i: "gh" (ghi) | "gi" (gi, như ji: Mô-tê-gi của Bộ Ngoại giao); trước e luôn ghê
-    "y": "ya_io",             # ya, yo: "i_a" (i-a, i-ô) | "ya_yo" | "y_a" (y-a, y-ô) | "ya_io" (ya, i-ô: Ya-ma-tô và I-ô-cô-ha-ma của SGK)
+    "y": "ya_io",             # ya, yo của TIẾNG HÀN (Nhật đã chốt gi, không qua đây): "i_a" (i-a, i-ô) | "ya_yo" | "y_a" (y-a, y-ô) | "ya_io" (ya, i-ô)
     "kya": "ki_a",            # kya: "ki_a" (ki-a, như kyo -> ki-ô) | "kia"
     "ss": "t",                # ss Nhật khép âm tiết trước: "t" | "c"
     "ko_g": "k",              # g đầu từ của Hàn: "k" | "g"
@@ -53,6 +55,8 @@ _LONG_VOWELS = {
     "ā": "a", "ī": "i", "ū": "u", "ē": "e", "ō": "o", "â": "a", "î": "i", "û": "u", "ê": "e", "ô": "o",
     "Ā": "A", "Ī": "I", "Ū": "U", "Ē": "E", "Ō": "O", "Â": "A", "Î": "I", "Û": "U", "Ê": "E", "Ô": "O",
 }
+# Tiếng Nhật giữ ō / ô thành "ô" (nguyên âm dài viết bằng dấu -> ô), để phân biệt với "ou" viết ra hai chữ (-> âu: chủ sách 04-10)
+_JA_LONG_O = {"ō": "ô", "Ō": "Ô", "ô": "ô", "Ô": "Ô"}
 _ACUTE = "́"
 _DIACRITIC_VOWELS = "ăâêôơư"
 _FRONT = ("i", "e", "ê", "y")
@@ -100,7 +104,7 @@ def _render(syllable: _Syl) -> str:
     if onset == "S":
         onset = CHOICES["s"]
     if coda and nucleus == "ê":
-        nucleus = "e"  # xen, không xên: ê chỉ đứng cuối âm tiết mở (doc mục 2, "xen-pai, xen-xê")
+        nucleus = "e"  # ê chỉ đứng cuối âm tiết mở; chỉ còn tiếng Hàn đi qua đây (ye -> ê), e Nhật đã là e
     if onset == "K":
         for glide in ("oai", "oa", "oe", "uy", "uê", "uơ"):
             if nucleus.startswith(glide):
@@ -135,7 +139,8 @@ def _validated(syllables: list[_Syl], capital: bool) -> str | None:
 # ---- tiếng Nhật (mục 2) ----------------------------------------------------------------------------------------------
 
 _JA_VOWELS = "aiueo"
-_JA_VOWEL = {"a": "a", "i": "i", "u": "u", "e": "ê", "o": "ô"}  # a i u e o -> a i u ê ô (u Nhật -> u ở mọi chỗ: chủ sách 04-10; e: xen khi khép)
+_JA_VOWELS_LONG = _JA_VOWELS + "ô"  # ô: o viết bằng dấu (ō), đọc ô
+_JA_VOWEL = {"a": "a", "i": "i", "u": "u", "e": "e", "o": "ô"}  # a i u e o -> a i u e ô (chủ sách 04-10: u -> u và e -> e ở mọi chỗ, không ư / ê)
 # s -> x (luật 1.4), k / g theo chính tả (K, G), z -> d, d -> đ, h -> h, r -> r
 _JA_SIMPLE = {"k": "K", "g": "G", "s": "S", "z": "d", "t": "t", "d": "đ", "n": "n", "h": "h", "b": "b", "p": "p", "m": "m", "r": "r"}
 # Âm nào đi với nguyên âm nào trong Hepburn: không có ti, tu, di, du, si, zi, hu, wo, ye...
@@ -147,21 +152,6 @@ _JA_ALLOWED = {
 }
 _JA_ONSETS = ("sh", "ch", "ts", "ky", "gy", "ny", "hy", "by", "py", "my", "ry")
 _JA_GEMINATE_CODA = {"k": "c", "p": "p", "t": "t", "s": "ss"}  # kk pp tt ss: khép bằng c / p / t (ss: analogy, s không đứng cuối; CHOICES["ss"])
-
-
-def _ja_y(vowel: str, syllables: list[_Syl], flags: list[str]) -> None:
-    """ya, yo (và yu -> iu): mặc định tách i-a / i-ô; quy ước để ngỏ nên có cờ."""
-    if vowel == "u":
-        syllables.append(_Syl("", "iu"))
-        return
-    flags.append("open:y_initial")
-    mode = CHOICES["y"]
-    if mode == "ya_yo" or (mode == "ya_io" and vowel == "a"):
-        syllables.append(_Syl("", "y" + _JA_VOWEL[vowel]))
-    elif mode == "y_a":
-        syllables.extend([_Syl("", "y"), _Syl("", _JA_VOWEL[vowel])])
-    else:
-        syllables.extend([_Syl("", "i"), _Syl("", _JA_VOWEL[vowel])])
 
 
 def _ja_emit(onset: str, vowel: str, syllables: list[_Syl], flags: list[str]) -> bool:
@@ -184,8 +174,10 @@ def _ja_emit(onset: str, vowel: str, syllables: list[_Syl], flags: list[str]) ->
         syllables.append(_Syl("ph", "u"))
     elif onset == "w":
         syllables.append(_Syl("", "oa"))  # wa -> oa (Ca-oa-xa-ki)
-    elif onset == "y":
-        _ja_y(vowel, syllables, flags)
+    elif onset == "y":  # y + nguyên âm -> gi + nguyên âm, đầu từ và giữa từ (chủ sách 04-10: Yamato -> Gia-ma-tô, Ayaka -> A-gia-ca); yu, yo theo ya
+        if vowel != "a":
+            flags.append("analogy:y_gi")
+        syllables.append(_Syl("gi", _JA_VOWEL[vowel]))
     else:  # ky gy ny hy by py my ry: kyu -> kiu, riu; kyo -> ki-ô, ri-ô (mục 2); kya -> ki-a theo hàng kyo
         head = _JA_SIMPLE[onset[0]]
         if vowel == "u":
@@ -219,14 +211,14 @@ def _ja_word(word: str, flags: list[str]) -> list[_Syl] | None:
                 return None
             i += 2
             continue
-        if (c == "n" and after not in tuple(_JA_VOWELS) and not (after == "y" and word[i + 2:i + 3] in ("a", "u", "o"))) or (
+        if (c == "n" and after not in tuple(_JA_VOWELS_LONG) and not (after == "y" and word[i + 2:i + 3] in ("a", "u", "o"))) or (
             c == "m" and after in ("b", "m", "p")
         ):
             if not _close(syllables, "n"):  # ん: n khép âm tiết trước
                 return None
             i += 1
             continue
-        if c in _JA_VOWELS:
+        if c in _JA_VOWELS_LONG:
             onset, j = "", i
         else:
             onset = next((o for o in _JA_ONSETS if word.startswith(o, i)), c)
@@ -234,18 +226,25 @@ def _ja_word(word: str, flags: list[str]) -> list[_Syl] | None:
             if onset not in _JA_ALLOWED:
                 return None
         vowel = word[j:j + 1]
+        long_o = vowel == "ô"
+        if long_o:
+            vowel = "o"
         if vowel == "" or vowel not in _JA_VOWELS or (onset and vowel not in _JA_ALLOWED[onset]):
             return None
         j += 1
         if not _ja_emit(onset, vowel, syllables, flags):
             return None
-        # nguyên âm dài (không kéo dài): ou oo -> ô, uu -> ư, ei -> ê; ai giữ là ai
-        follow = word[j:j + 1]
+        # nguyên âm dài (không kéo dài): oo, ō -> ô, uu -> u, ei -> ây, ou viết ra -> âu (chủ sách 04-10); ai giữ là ai
+        follow = "" if long_o else word[j:j + 1]
         if vowel == "e" and follow == "i":
-            if CHOICES["ei"] != "ê":
-                syllables[-1].nucleus = CHOICES["ei"]
+            syllables[-1].nucleus = CHOICES["ei"]
             j += 1
-        elif (vowel == "o" and follow in ("u", "o")) or (vowel == "u" and follow == "u"):
+        elif vowel == "o" and follow == "u":
+            if onset in ("sh", "ch", "j"):
+                flags.append("analogy:ou_vom")  # shou, chou, jou theo kyou / ryou của chủ sách (đã có âm vòm, không tách i-âu)
+            syllables[-1].nucleus = "âu"
+            j += 1
+        elif (vowel == "o" and follow == "o") or (vowel == "u" and follow == "u"):
             j += 1
         elif vowel == "a" and follow == "i":
             syllables[-1].nucleus += "i"
@@ -370,7 +369,7 @@ def _ko_nucleus(onset: str, vowel: str, closing: str, flags: list[str]) -> list[
     if vowel == "yae":
         return None
     if vowel in ("ya", "yo"):
-        flags.append("open:y_initial")
+        flags.append("open:y_initial")  # chỉ Hàn; Nhật đã chốt gi (analogy:y_gi)
         letter = "a" if vowel == "ya" else "ô"
         mode = CHOICES["y"]
         if onset == "" and (mode == "ya_yo" or (mode == "ya_io" and vowel == "ya")):
@@ -424,8 +423,9 @@ def _part_case(part: str) -> bool | None:
 
 def _read(token: str, origin: str) -> tuple[str, tuple[str, ...]] | None:
     value = unicodedata.normalize("NFC", token.strip())
-    value = "".join(_LONG_VOWELS.get(ch, ch) for ch in value.replace("’", "'"))
-    if not value or not all(ch.isascii() and (ch.isalpha() or ch in "'- ") for ch in value):
+    long_map = {**_LONG_VOWELS, **_JA_LONG_O} if origin == "ja" else _LONG_VOWELS
+    value = "".join(long_map.get(ch, ch) for ch in value.replace("’", "'"))
+    if not value or not all((ch.isascii() or ch in "ôÔ") and (ch.isalpha() or ch in "'- ") for ch in value):
         return None
     flags: list[str] = []
     words: list[str] = []

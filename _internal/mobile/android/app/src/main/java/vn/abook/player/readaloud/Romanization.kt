@@ -19,7 +19,7 @@ object Romanization {
     data class Reading(val text: String, val flags: List<String>)
 
     val OPEN_CHOICES = mapOf(
-        "y_initial" to "ya / yo (đầu từ, và sau nguyên âm): mặc định ya / i-ô (SGK: Ya-ma-tô, I-ô-cô-ha-ma); chọn lại bằng thu thử -> nghe lại",
+        "y_initial" to "ya / yo của tiếng Hàn (đầu từ): mặc định ya / i-ô (chưa có ví dụ tên); chọn lại bằng thu thử -> nghe lại",
         "ko_aspirated" to "k / t / p bật hơi của tiếng Hàn: mặc định kh / th / ph theo âm (chưa có ví dụ tên)",
         "ko_rare_vowels" to "wo / oe / wi / ui / we / wae của tiếng Hàn: mặc định uơ / uê / uy / ưi / uê / oe theo âm (chưa có ví dụ chính thức)",
     )
@@ -28,6 +28,8 @@ object Romanization {
         'ā' to 'a', 'ī' to 'i', 'ū' to 'u', 'ē' to 'e', 'ō' to 'o', 'â' to 'a', 'î' to 'i', 'û' to 'u', 'ê' to 'e', 'ô' to 'o',
         'Ā' to 'A', 'Ī' to 'I', 'Ū' to 'U', 'Ē' to 'E', 'Ō' to 'O', 'Â' to 'A', 'Î' to 'I', 'Û' to 'U', 'Ê' to 'E', 'Ô' to 'O',
     )
+    // Tiếng Nhật giữ ō / ô thành "ô" (dài viết bằng dấu -> ô), để phân biệt với "ou" viết ra hai chữ (-> âu: chủ sách 04-10)
+    private val JA_LONG_O = mapOf('ō' to 'ô', 'Ō' to 'Ô', 'ô' to 'ô', 'Ô' to 'Ô')
     private const val ACUTE = "́"
     private const val DIACRITIC_VOWELS = "ăâêôơư"
     private val FRONT = setOf("i", "e", "ê", "y")
@@ -62,7 +64,7 @@ object Romanization {
         var onset = syllable.onset
         var nucleus = syllable.nucleus
         var coda = syllable.coda
-        if (coda.isNotEmpty() && nucleus == "ê") nucleus = "e" // xen, không xên
+        if (coda.isNotEmpty() && nucleus == "ê") nucleus = "e" // ê chỉ đứng cuối âm tiết mở (chỉ Hàn: ye -> ê)
         if (onset == "K") {
             val glide = listOf("oai", "oa", "oe", "uy", "uê", "uơ").firstOrNull { nucleus.startsWith(it) }
             if (glide != null) {
@@ -97,7 +99,8 @@ object Romanization {
     // ---- tiếng Nhật (mục 2) ------------------------------------------------------------------------------------------
 
     private const val JA_VOWELS = "aiueo"
-    private val JA_VOWEL = mapOf('a' to "a", 'i' to "i", 'u' to "u", 'e' to "ê", 'o' to "ô") // u Nhật -> u ở mọi chỗ (chủ sách 04-10)
+    private const val JA_VOWELS_LONG = "aiueoô" // ô: o viết bằng dấu (ō), đọc ô
+    private val JA_VOWEL = mapOf('a' to "a", 'i' to "i", 'u' to "u", 'e' to "e", 'o' to "ô") // chủ sách 04-10: u -> u và e -> e ở mọi chỗ
     private val JA_SIMPLE = mapOf(
         "k" to "K", "g" to "G", "s" to "x", "z" to "d", "t" to "t", "d" to "đ", "n" to "n", "h" to "h", "b" to "b", "p" to "p", "m" to "m", "r" to "r",
     )
@@ -121,18 +124,9 @@ object Romanization {
             onset == "ts" -> syllables.add(Syl("ch", "u"))
             onset == "f" -> syllables.add(Syl("ph", "u"))
             onset == "w" -> syllables.add(Syl("", "oa"))
-            onset == "y" -> {
-                if (vowel == 'u') {
-                    syllables.add(Syl("", "iu"))
-                } else {
-                    flags.add("open:y_initial")
-                    if (vowel == 'a') {
-                        syllables.add(Syl("", "ya")) // ya, i-ô (quét: Ya-ma-tô, I-ô-cô-ha-ma)
-                    } else {
-                        syllables.add(Syl("", "i"))
-                        syllables.add(Syl("", plain))
-                    }
-                }
+            onset == "y" -> { // y + nguyên âm -> gi + nguyên âm, đầu từ và giữa từ (chủ sách 04-10); yu, yo theo ya
+                if (vowel != 'a') flags.add("analogy:y_gi")
+                syllables.add(Syl("gi", plain))
             }
             else -> {
                 val head = JA_SIMPLE.getValue(onset.substring(0, 1))
@@ -164,7 +158,7 @@ object Romanization {
                 i += 2
                 continue
             }
-            val moraic = (c == "n" && (after.isEmpty() || after[0] !in JA_VOWELS) &&
+            val moraic = (c == "n" && (after.isEmpty() || after[0] !in JA_VOWELS_LONG) &&
                 !(after == "y" && sub(word, i + 2, i + 3) in listOf("a", "u", "o"))) ||
                 (c == "m" && after in listOf("b", "m", "p"))
             if (moraic) {
@@ -174,7 +168,7 @@ object Romanization {
             }
             val onset: String
             var j: Int
-            if (c[0] in JA_VOWELS) {
+            if (c[0] in JA_VOWELS_LONG) {
                 onset = ""
                 j = i
             } else {
@@ -183,16 +177,21 @@ object Romanization {
                 if (onset !in JA_ALLOWED) return null
             }
             val vowelText = sub(word, j, j + 1)
-            if (vowelText.isEmpty() || vowelText[0] !in JA_VOWELS) return null
-            val vowel = vowelText[0]
+            val longO = vowelText == "ô"
+            if (vowelText.isEmpty() || vowelText[0] !in JA_VOWELS_LONG) return null
+            val vowel = if (longO) 'o' else vowelText[0]
             if (onset.isNotEmpty() && vowel !in JA_ALLOWED.getValue(onset)) return null
             j += 1
             jaEmit(onset, vowel, syllables, flags)
-            val follow = sub(word, j, j + 1)
+            val follow = if (longO) "" else sub(word, j, j + 1)
             if (vowel == 'e' && follow == "i") {
-                syllables.last().nucleus = "ay" // ei -> ay (quét: May-gi)
+                syllables.last().nucleus = "ây" // ei -> ây (chủ sách 04-10: Rei -> Rây, sensei -> xen-xây)
                 j += 1
-            } else if ((vowel == 'o' && (follow == "u" || follow == "o")) || (vowel == 'u' && follow == "u")) {
+            } else if (vowel == 'o' && follow == "u") { // ou viết ra -> âu (chủ sách 04-10: Kyouko -> Ki-âu-cô); ō / oo vẫn -> ô
+                if (onset == "sh" || onset == "ch" || onset == "j") flags.add("analogy:ou_vom")
+                syllables.last().nucleus = "âu"
+                j += 1
+            } else if ((vowel == 'o' && follow == "o") || (vowel == 'u' && follow == "u")) {
                 j += 1
             } else if (vowel == 'a' && follow == "i") {
                 syllables.last().nucleus += "i"
@@ -359,20 +358,21 @@ object Romanization {
 
     private val JA_SUFFIXES = setOf("san", "kun", "chan", "sama", "senpai", "sensei")
 
-    private fun isAsciiLetter(ch: Char): Boolean = ch in 'a'..'z' || ch in 'A'..'Z'
+    private fun isAsciiLetter(ch: Char): Boolean = ch in 'a'..'z' || ch in 'A'..'Z' || ch == 'ô' || ch == 'Ô' // ô, Ô: ō của tiếng Nhật sau khi đổi
 
     /** true nếu viết hoa chữ đầu, false nếu toàn chữ thường, null nếu không phải chữ hay viết hoa lạ. */
     private fun partCase(part: String): Boolean? {
         val letters = part.replace("'", "")
         if (letters.isEmpty() || !letters.all { isAsciiLetter(it) } || part.startsWith("'") || part.endsWith("'")) return null
         if (part == part.lowercase(Locale.ROOT)) return false
-        if (part[0] in 'A'..'Z' && part.substring(1) == part.substring(1).lowercase(Locale.ROOT)) return true
+        if ((part[0] in 'A'..'Z' || part[0] == 'Ô') && part.substring(1) == part.substring(1).lowercase(Locale.ROOT)) return true
         return null
     }
 
     private fun read(token: String, origin: String): Reading? {
         var value = Normalizer.normalize(BookEdits.pyStrip(token), Normalizer.Form.NFC).replace('’', '\'')
-        value = value.map { LONG_VOWELS[it] ?: it }.joinToString("")
+        val longMap = if (origin == "ja") LONG_VOWELS + JA_LONG_O else LONG_VOWELS
+        value = value.map { longMap[it] ?: it }.joinToString("")
         if (value.isEmpty() || !value.all { isAsciiLetter(it) || it == '\'' || it == '-' || it == ' ' }) return null
         val flags = ArrayList<String>()
         val words = ArrayList<String>()
