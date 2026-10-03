@@ -59,7 +59,7 @@ tương ứng, để hiểu script làm gì:
    Bộ cài chỉ-nghe KHÔNG mang từ điển phát âm và giọng nghe thử (`webui/studio_setup.py` > `STUDIO_ASSETS`: Studio tải gói
    ghim ở bước đầu tiên). Gói đổi (file trong `abook/assets/voice_previews` hay `cmudict.dict` đổi) thì: `python
    scripts/pack_studio_assets.py`, đăng gói lên nơi chứa, điền URL ghim theo commit + băm + cỡ vào `STUDIO_ASSETS`;
-   `release.py build` từ chối khi URL còn `PIN_REVISION`. Script dựng cũng cắt Python nhúng (Pillow, numpy, onnxruntime,
+   `release.py build` từ chối khi URL còn `PIN_REVISION`. Script dựng cũng cắt Python nhúng (Pillow,
    thư viện chuẩn) rồi chạy `scripts/smoke_embedded_python.py` trên chính bản đã cắt - đừng bỏ qua khi nâng Python hay gói phụ.
 3. `gh release create vX.Y.Z` (dùng `GH_TOKEN="$(gh auth token --user ntanhpro1221)"` cho riêng lệnh ấy) với ghi chú ở mục
    "Tài liệu bắt buộc" và đính kèm bộ cài, `.sig`, `latest.json`, APK, `LICENSE`, `THIRD_PARTY.md`. Các bản đã cài đọc
