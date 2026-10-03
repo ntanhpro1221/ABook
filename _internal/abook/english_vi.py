@@ -19,7 +19,7 @@ Ba tầng (luật thuần trước, thuật toán sau; tầng LLM làm sau):
 không nhận). Cờ trong `vietnamized_english_flags`:
   via:override / via:phonemes / via:spelling / via:face   đường đã đi (face: tên ngắn đọc theo mặt chữ, Mike -> mi-ke)
   open:...      quy ước ghi "mở" (`OPEN_CHOICES`; hiện không còn điểm nào)
-  analogy:...   quy ước không nói, suy theo phán quyết / hàng gần nhất (ey_t: /eɪ/ khép bằng t; ank: /æŋk/ -> anh theo tank -> tanh)
+  analogy:...   quy ước không nói, suy theo phán quyết / hàng gần nhất (ank: /æŋk/ -> anh theo tank -> tanh)
   fit:...       đường âm vị cho âm tiết mà bộ kiểm không nhận, nên đọc theo chữ
 """
 from __future__ import annotations
@@ -34,14 +34,15 @@ from .romanization import _tone_acute
 PHONES_PATH = Path(__file__).resolve().parent / "assets" / "english_phones.txt.gz"
 
 # Phán quyết chủ sách 04-10 (mục 4): cố định, đứng trên mọi nguồn. game -> gêm viết theo chính tả là ghêm; level -> le-vồ (le-vờ cũng được).
-# Ca riêng, không suy rộng: Kate (ca-tê), Pete (pi-tờ), guild (gui), time (tham), Thomas (tho-mát) - t đầu từ vẫn là t (Tom -> tom, Tina
-# -> ti-na); các ca còn lại luật cũng ra được (tests/english_vi_evidence.py). Sau "/" trong ghi chú chủ sách là cách đọc khác cũng được.
+# Ca riêng, không suy rộng: Kate (ca-tê), Pete (pi-tờ), guild (gui), time (tham), Thomas (tho-mát), great (gờ-rít: ea không thành i),
+# Gate (gết, viết ghết như ghêm: từ thường viết hoa, không theo mặt chữ như tên) - t đầu từ vẫn là t (Tom -> tom, Tina -> ti-na); các ca còn lại luật cũng ra được (tests/english_vi_evidence.py). Sau "/" trong ghi chú chủ sách là cách đọc khác cũng được.
 OWNER = {
     "game": "ghêm", "level": "le-vồ", "maple": "máp-pồ", "michael": "mai-cồ", "kate": "ca-tê",
     "mike": "mi-ke", "jake": "gia-ke", "luke": "lu-ke", "pete": "pi-tờ", "skill": "xờ-kiu", "boss": "bót", "slime": "xờ-lam", "quest": "quét",
     "guild": "gui", "thomas": "tho-mát", "boston": "bót-tơn", "rocky": "róc-ki", "time": "tham", "night": "nai", "blake": "bờ-lếch",
     "master": "mát-tơ", "zeke": "de-ke", "gold": "gôn",
     "tom": "tom", "tony": "to-ni", "team": "tim", "tank": "tanh", "tina": "ti-na", "lyle": "lai-ồ", "kyle": "cai-ồ", "doyle": "đoi-ồ",
+    "fireball": "phai-bôn", "rose": "ro-xe", "great": "gờ-rít", "late": "lết", "grace": "gờ-rây", "gate": "ghết", "nate": "na-te",
 }  # Kyle: chủ sách viết kai-ồ; chính tả luật 1.5 viết c trước a (bộ kiểm âm tiết không nhận "kai"), cùng một âm
 # Chữ viết tắt đã đọc thành từ (chủ sách 04-10): khoá là đúng chữ hoa như viết; chữ viết tắt khác là việc của luật mục 5.
 ACRONYMS = {"VIP": "víp", "ID": "ai-đi"}
@@ -78,14 +79,14 @@ CHOICES = {
     "ih": "i",                  # /ɪ/: "i" | "ê"
     "ey_p": "a",                # /eɪ/ khép bằng p: "a" (chủ sách: máp-pồ) | "ê" | "e"
     "ey_k": "ê",                # /eɪ/ khép bằng c: "ê" -> êch (chủ sách: bờ-lếch; Sếch-xơ-pia) | "a" | "e"
-    "ey_t": "ê",                # /eɪ/ khép bằng t (chưa có ca, cờ analogy:ey_t): "ê" (theo c) | "a" (theo p) | "e"
+    "ey_t": "ê",                # /eɪ/ khép bằng t: "ê" (chủ sách: lết, gết) | "a" | "e"
     "ay_m": "am",               # /aɪ/ + m khép: "am" (chủ sách: xờ-lam, tham) | "ai" (bỏ m như ai + phụ âm khác: nai)
     "ey_nasal": "ê",            # /eɪ/ khép bằng m n ng: "ê" (gêm của chủ sách) | "e" | "a"
     "geminate": "primary",      # p t k giữa hai nguyên âm sau nguyên âm nhấn: khép âm tiết trước + đầu âm tiết sau (máp-pồ, Rốc-ki):
                                 # "primary" (nhấn chính) | "stressed" (cả nhấn phụ) | "short" (chỉ nguyên âm ngắn nhấn) | "none"
     "tr": "tr",                 # t + r đầu âm tiết: "tr" (Đi-troi, Xtrây-li-a) | "split" (tơ-r)
-    "short_silent_e": "face",   # tên ngắn MỘT phụ âm đầu + nguyên âm + p t k + e câm: "face" (theo mặt chữ, e cuối -> e: chủ sách mi-ke,
-                                # gia-ke, lu-ke, de-ke) | "phonemes" (Mai, Giác)
+    "short_silent_e": "face",   # tên ngắn MỘT phụ âm đầu + nguyên âm + MỘT phụ âm + e câm: "face" (theo mặt chữ, e cuối -> e: chủ sách
+                                # mi-ke, gia-ke, lu-ke, de-ke, ro-xe, na-te) | "phonemes" (Mai, Giác)
 }
 # Bộ kiểm âm tiết có bật không (quét tắt đi để đếm cả biến thể bộ kiểm không nhận; dùng thật luôn bật).
 _CHECK_SYLLABLES = True
@@ -215,8 +216,9 @@ def _align_letters(phones: list[Phone], word: str) -> list[Phone]:
 
 _LETTER_VOWELS = "aeiouy"
 _LONG = {"a": "EY", "e": "IY", "i": "AY", "o": "OW", "u": "UW", "y": "AY"}
-# Nguyên âm đơn theo mặt chữ (a e i o u): đường này gần như chỉ còn tên tự chế. a -> AA với chữ a (đọc "a"), o -> OW (đọc "ô").
-_FACE = {"a": "AA", "e": "EH", "i": "IH", "o": "OW", "u": "UH", "y": "IH"}
+# Nguyên âm đơn theo mặt chữ (a e i o u): đường này gần như chỉ còn tên tự chế. a, o -> AA (đọc "a", "o": chủ sách tom, to-ni, ro-xe);
+# o cuối từ vẫn "ô" (_FINAL_OPEN).
+_FACE = {"a": "AA", "e": "EH", "i": "IH", "o": "AA", "u": "UH", "y": "IH"}
 _FINAL_OPEN = {"a": "AA", "e": "IY", "i": "IY", "o": "OW", "u": "UW", "y": "IY"}
 _DIGRAPHS = (("eau", "OW"), ("igh", "AY"), ("ee", "IY"), ("ea", "IY"), ("ai", "EY"), ("ay", "EY"), ("ei", "EY"), ("ie", "IY"), ("oa", "OW"),
              ("oo", "UW"), ("ou", "AW"), ("oi", "OY"), ("oy", "OY"), ("au", "AO"), ("aw", "AO"), ("ew", "UW"))
@@ -359,18 +361,20 @@ def _spell_phones(word: str) -> list[Phone] | None:
 
 
 def _face_short(word: str) -> list[Phone]:
-    """Tên ngắn phụ âm tắc + e câm đọc theo MẶT CHỮ (chủ sách 04-10: Mike -> mi-ke, Jake -> gia-ke, Luke -> lu-ke): nguyên âm đọc như chữ,
-    e cuối đọc e. Chỉ gọi khi `_short_silent_e` đúng."""
+    """Tên ngắn + e câm đọc theo MẶT CHỮ (chủ sách 04-10: Mike -> mi-ke, Jake -> gia-ke, Rose -> ro-xe, Nate -> na-te): nguyên âm đọc như
+    chữ, e cuối đọc e. Chỉ gọi khi `_short_silent_e` đúng."""
     phones = _spell_phones(word[:-1]) or []
+    if word[-2] in "cg" and phones:
+        phones[-1] = ("S" if word[-2] == "c" else "JH", -1, "")  # c, g trước e mềm: Lace -> la-xe, Page -> pa-gie
     vowel = word[-3]
     return [(_FACE[vowel], 0, vowel) if phone[1] >= 0 else phone for phone in phones] + [("EH", 0, "e")]
 
 
 def _short_silent_e(word: str) -> bool:
-    """MỘT phụ âm đầu (một chữ, hay ch / sh / th / ph / wh) + một nguyên âm + p / t / k + e câm: Jake, Mike, Luke, Zeke (chủ sách 04-10).
-    Cụm phụ âm đầu (Blake -> bờ-lếch) và từ viết thường (make, like) đi đường âm vị."""
+    """MỘT phụ âm đầu (một chữ, hay ch / sh / th / ph / wh) + một nguyên âm + MỘT phụ âm (trừ h w x y) + e câm: Jake, Mike, Zeke, Rose
+    (chủ sách 04-10). Cụm phụ âm đầu (Blake -> bờ-lếch, Grace -> gờ-rây) và từ viết thường (make, late) đi đường âm vị."""
     onset = word[:-3]
-    if not (word.endswith("e") and word[-2] in "ptk" and word[-3] in "aeiou"):
+    if not (word.endswith("e") and word[-2] in "bcdfgjklmnpqrstvz" and word[-3] in "aeiou"):
         return False
     return (len(onset) == 1 and onset not in "aeiouy") or onset in ("ch", "sh", "th", "ph", "wh")
 
@@ -481,6 +485,9 @@ def _glide_w(nucleus: str) -> str | None:
 
 
 def _syllabify(phones: list[Phone], flags: list[str]) -> list[_Syl] | None:
+    # /aɪər/ (fire, higher): ơ sau ai nuốt vào ai, r bỏ (chủ sách 04-10: fireball -> phai-bôn)
+    phones = [phone for index, phone in enumerate(phones)
+              if not (phone[0] == "ER" and phone[1] == 0 and index > 0 and phones[index - 1][0] == "AY")]
     vowels = [index for index, phone in enumerate(phones) if phone[1] >= 0]
     if not vowels:
         return None
@@ -503,7 +510,7 @@ def _syllabify(phones: list[Phone], flags: list[str]) -> list[_Syl] | None:
             r_colored = True
         can_close = vowel[0] not in _GLIDE_VOWELS or (vowel[0] == "AY" and run[:1] == ["M"] and CHOICES["ay_m"] == "am")
         il_final = False
-        coda = ""
+        coda, coda_phone = "", ""
         tail: list[_Syl] = []
         next_onset, next_glide = "", ""
         if last:
@@ -514,8 +521,11 @@ def _syllabify(phones: list[Phone], flags: list[str]) -> list[_Syl] | None:
                     if CHOICES["final_cluster"] == "syllable":
                         tail.append(_final_syllable(base, flags))
                 run = []
+            if vowel[0] == "EY" and run[:1] == ["S"]:
+                run = []  # /eɪ/ + s cuối: ây, s bỏ (chủ sách 04-10: Grace -> gờ-rây)
             if run:
                 first = run[0]
+                coda_phone = first
                 letter = _coda_letter(first, True) if can_close else ("" if CHOICES["glide_coda"] == "drop" else None)
                 if first == "L" and not can_close:
                     # l sau ai / ao / oi: âm tiết "ồ" KHÔNG phụ âm đầu, l bỏ (chủ sách 04-10: lai-ồ, kai-ồ, đoi-ồ)
@@ -542,12 +552,12 @@ def _syllabify(phones: list[Phone], flags: list[str]) -> list[_Syl] | None:
             if head and can_close:
                 letter = _coda_letter(head[0], False)
                 if letter is not None:
-                    coda = letter
+                    coda, coda_phone = letter, head[0]
                     head = head[1:]
             tail = [_epenthetic(base) for base in head]
-        if vowel[0] == "EY" and coda == "t":
-            flags.append("analogy:ey_t")
         nucleus = _nucleus(vowel, coda, r_colored)
+        if vowel[0] == "AO" and coda_phone == "L" and coda:
+            nucleus = "ô"  # /ɔːl/ -> ôn (chủ sách 04-10: fireball -> phai-bôn, như gôn)
         if vowel[0] == "AE" and coda == "ng" and run[:2] == ["NG", "K"]:
             nucleus, coda = "a", "nh"  # /æŋk/ -> anh (chủ sách 04-10: tank -> tanh; rank, thank theo đó)
             flags.append("analogy:ank")
@@ -583,7 +593,7 @@ def _split_onset(run: list[str]) -> tuple[list[str], str, str]:
 def _emit(out: list[_Syl], onset: str, glide: str, nucleus: str, coda: str, grave: bool) -> None:
     letter = _onset_letter(onset) if onset and onset != "tr" else onset
     if glide == "W":
-        joined = _glide_w(nucleus)
+        joined = "uô" if nucleus == "ô" and coda else _glide_w(nucleus)  # uô chỉ đứng trước phụ âm cuối: Walt -> Uôn
         if joined is not None:
             out.append(_Syl(letter, joined, coda, grave))
             return
@@ -652,6 +662,17 @@ def _part_case(part: str) -> bool | None:
     return None
 
 
+def _compound_parts(key: str, dictionary: Mapping[str, str]) -> tuple[str, str] | None:
+    """Từ ghép không có trong từ điển mà hai nửa có (sandworm = sand + worm): đọc từng phần (chủ sách 04-10: fireball -> phai-bôn).
+    Mỗi nửa ít nhất COMPOUND_NAME_MIN_PART chữ như cách tách tên ghép của Studio; nửa đầu dài nhất trước."""
+    from .analysis import COMPOUND_NAME_MIN_PART
+
+    for cut in range(len(key) - COMPOUND_NAME_MIN_PART, COMPOUND_NAME_MIN_PART - 1, -1):
+        if key[:cut] in dictionary and key[cut:] in dictionary:
+            return key[:cut], key[cut:]
+    return None
+
+
 def _read_word(key: str, capital: bool, dictionary: Mapping[str, str], overrides: bool, flags: list[str]) -> str | None:
     if overrides and key in OVERRIDES:
         flags.append("via:override")
@@ -663,6 +684,15 @@ def _read_word(key: str, capital: bool, dictionary: Mapping[str, str], overrides
         phones, route = _face_short(key), "via:face"
     if phones is None and key in dictionary:
         phones = _parse_phones(dictionary[key], key)
+    if phones is None:
+        parts = _compound_parts(key, dictionary)
+        if parts is not None:
+            inner: list[str] = []
+            readings = [_read_word(part, capital and index == 0, dictionary, overrides, inner) for index, part in enumerate(parts)]
+            if all(readings):
+                flags.append("via:compound")
+                flags.extend(inner)
+                return "-".join(readings)
     if phones is not None:
         trial: list[str] = []
         syllables = _syllabify(phones, trial)

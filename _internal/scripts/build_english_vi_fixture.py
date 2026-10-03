@@ -39,7 +39,9 @@ EDGE: list[str] = [
     # phụ âm cuối hữu thanh / xát -> tắc; cụm cuối giữ một
     "bad", "dog", "love", "bath", "judge", "Ruth", "first", "world", "Edward",
     # tên ngắn một phụ âm đầu + tắc + e câm theo mặt chữ; cụm phụ âm đầu đi đường âm vị
-    "Coke", "Duke", "Zeke", "Nate", "Pike", "Shake", "Blake", "Gate", "gate",
+    "Coke", "Duke", "Zeke", "Nate", "Pike", "Shake", "Blake", "Gate", "gate", "Rose", "rose", "Lace", "Page", "Jane", "Cale", "Dave",
+    # /eɪ/ + t -> êt, + s cuối -> ây; /aɪər/ -> ai; /ɔːl/ -> ôn; từ ghép đọc từng phần
+    "late", "great", "Grace", "days", "fire", "higher", "fireball", "ball", "Paul", "sandworm", "Brightwater", "Shalltear",
     # đường chính tả (tên tự chế / không có trong từ điển)
     "Encrid", "Lancel", "Calian", "Theia", "Arna", "Rudeus", "Sylphy", "Kraken", "Wyvern", "Ainz", "Thorne", "Phoebus", "Knightley",
     "Brightwater", "Xylo", "Quinzel", "Shalltear", "Lucretia", "Ashford", "Whitlock",
