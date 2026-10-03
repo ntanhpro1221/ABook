@@ -1574,6 +1574,65 @@ Giữ ngoài:
   E4 đo lại.
 - **Thang phạt:** các mức phạt đổi sang thang z (chia 0,34), vì z-distance lớn hơn khoảng 3 lần thang Euclid cũ.
 
+## "Nghe ngay": danh sách phát + mức nhạc dưới giọng máy (03-10 14:xx, Lead giao)
+
+Sách chỉ có chữ, không phân tích, nên không có không khí cảnh để chọn bài. Người nghe chọn một danh sách phát
+(docs/LISTEN_ANYTHING.md mục 4).
+
+**Danh sách phát** (`LLM_Train/music/playlists.py`; `build_catalog.py` ghi vào manifest trường `playlists`, có trong
+revision):
+- Mỗi mục: `{id, name, description, tracks: [link theo thứ tự trộn sẵn], minutes}`.
+- Luật là bộ lọc trên nhãn sẵn có của danh mục: phong cách, V/E/T, 13 cường độ của thầy.
+- Nền chung: dài ≥ 60 s và speechBand ≤ 0,75.
+- Trộn sẵn: xáo theo hạt giống = id, không để hai bài liền nhau cùng tác giả khi tránh được.
+- Mỗi danh sách tối đa 150 bài.
+- Số đo trên danh mục bc472d9d9f40:
+
+| id | Tên | Luật chính | Khớp | Giữ | Phút |
+|---|---|---|---|---|---|
+| fantasy_adventure | Kỳ ảo phiêu lưu | epic / folk / orch. nhẹ, wonder hay power ≥ 0,4, E > −0,3 | 169 | 150 | 459 |
+| fantasy_calm | Kỳ ảo êm đềm | orch. nhẹ / folk / ambient, peace hay wonder ≥ 0,4, E < 0,1 | 134 | 134 | 1.161 |
+| school_light | Học đường nhẹ nhàng | piano / acoustic / jazz / pop, V > 0,1, T < 0 | 242 | 150 | 545 |
+| romance | Lãng mạn | tenderness hay moved ≥ 0,45, T < 0,1 | 144 | 144 | 903 |
+| comedy | Hài hước, vui nhộn | playful hay joy ≥ 0,5, V > 0,2 | 271 | 150 | 485 |
+| action | Hành động, chiến đấu | power ≥ 0,5, E > 0,4, T > 0 | 219 | 150 | 496 |
+| horror | Kinh dị | fear ≥ 0,5 hay style dark, T > 0,3, V < 0 | 171 | 150 | 586 |
+| mystery | Trinh thám, bí ẩn | mystery ≥ 0,5, jazz / piano / ambient / dark / điện tử, E < 0,5 | 84 | 84 | 431 |
+| eastern | Tiên hiệp, cổ phong | style eastern_ancient hay family eastern | 132 | 132 | 410 |
+| scifi | Khoa học viễn tưởng | điện tử / ambient, wonder hay mystery ≥ 0,4 | 76 | 76 | 543 |
+| sad | Buồn, sâu lắng | sadness hay nostalgia ≥ 0,45, V < 0,1, E < 0,3 | 190 | 150 | 672 |
+| sleep | Êm - để ngủ | E < −0,4, T < −0,2, peace ≥ 0,4, speechBand ≤ 0,5 | 113 | 113 | 1.081 |
+
+- Không danh sách nào dưới 40 phút; ngắn nhất là `eastern`, 410 phút.
+- **Chưa đo chất lượng:** luật dựa trên nhãn máy. Xem nhanh 6 bài đầu mỗi danh sách thấy vài bài lệch tên. Muốn biết danh sách
+  có đúng "cảm giác" không thì cần người đọc chấm theo ghi trước riêng.
+
+**Mức nhạc dưới giọng máy** (đo, không đoán): LUFS tích hợp BS.1770 (pyloudnorm), 60 câu mỗi giọng (~5 phút), ghép với
+khoảng lặng 0,4 s. Câu của nghiên cứu căn từ `LLM_Train/word_align/data`.
+
+| Giọng | LUFS | sd theo câu | Đỉnh |
+|---|---|---|---|
+| Edge TTS HoaiMy | −18,3 | 0,3 | −2,6 dBFS |
+| Edge TTS NamMinh | −19,7 | 0,5 | −2,2 dBFS |
+| VieNeu Mỹ Duyên | −17,8 | 0,5 | 0,0 dBFS |
+| VieNeu Đức Trí | −18,7 | 0,5 | −2,9 dBFS |
+| (tham chiếu) giọng Studio, Pha 4 | −20,3 | | |
+
+- Edge TTS **không** ở −16: thấp hơn ~2–4 dB so với ước. Hai giọng Edge còn lệch nhau 1,4 dB.
+- Giọng của máy (OneCore vi-VN / Android) **chưa đo**: máy chủ sách không cài giọng Việt OneCore. Giọng này đổi theo từng máy,
+  nên không có một hằng số đúng cho mọi người.
+
+**Đề xuất cho app:**
+- Chuẩn hoá MỖI đoạn giọng "Nghe ngay" về −20 LUFS lúc tạo clip: đo LUFS trên chính PCM đã có, nhân gain. Kẹp ±6 dB và
+  không để đỉnh vượt −1 dBFS.
+- Sau đó giữ nguyên công thức nhạc đã chốt ở Pha 4: LD mặc định 20 LU, bù 8·(speechBand − 0,30) kẹp ±6.
+- Lợi ích:
+  - một công thức cho mọi giọng, kể cả giọng máy không biết trước;
+  - đổi giọng giữa chừng không làm nhạc to / nhỏ đi;
+  - Edge chỉ phải giảm 0,3–1,7 dB nên không có rủi ro vỡ tiếng.
+- Nếu không chuẩn hoá: dùng mức giọng theo bảng trên thay cho −20,3 trong công thức gain nhạc (HoaiMy −18,3, NamMinh
+  −19,7, VieNeu −17,8 / −18,7). Giọng máy khi đó không có số.
+
 ## Nguồn nhạc: giữ / loại và lý do (02-10, Lead + chủ sách - đọc trước khi hỏi lại)
 
 LUẬT CUỐI (02-10 22:xx, Lead + chủ sách; thay đoạn ba câu hỏi bên dưới ở chỗ nào khác nhau):
