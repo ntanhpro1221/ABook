@@ -68,7 +68,11 @@ object ReadAloud {
     fun init(appContext: Context) {
         if (context != null) return
         context = appContext.applicationContext
+        choices = VoiceChoices(File(appContext.applicationContext.filesDir, "readaloud-voices.json"))
     }
+
+    /** Giọng đã chọn của từng cuốn, nhớ trong lõi ([VoiceChoices]). */
+    private var choices: VoiceChoices? = null
 
     private var cache: ClipCache? = null
 
@@ -111,6 +115,18 @@ object ReadAloud {
             JSONObject().put("id", it.id).put("name", it.name).put("provider", it.provider).put("online", it.online)
                 .put("default", it.default).put("gainDb", VoiceGain.db(it.id))
         }
+    }
+
+    /** Giao diện gửi giọng của cuốn `bookId` (lúc nạp, lúc người nghe đổi): nhớ cho cuốn ấy; cuốn ấy đang nạp thì đổi ngay. */
+    fun chooseFor(bookId: String, id: String) {
+        choices?.remember(bookId, id)
+        if (bookId.isEmpty() || bookId == Playback.bookId) setVoice(id)
+    }
+
+    /** Nạp một cuốn - bằng bất cứ đường nào (giao diện, widget, xe hơi, máy tính điều khiển): đọc bằng giọng đã nhớ của cuốn ấy. Chỉ đặt giọng;
+     *  [begin] / [stop] ngay sau đó dựng lại hàng đợi. */
+    fun useVoiceOf(bookId: String) {
+        voiceId = choices?.voiceFor(bookId)?.ifBlank { null } ?: DEFAULT_VOICE
     }
 
     /** Đổi giọng: các đoạn đã đọc sẵn mà chưa tới thì bỏ, đoạn kế đọc bằng giọng mới. */

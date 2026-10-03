@@ -496,6 +496,7 @@ export function Segmented<T extends string>({
   options,
   label,
   wrap = false,
+  itemClassName,
 }: {
   value: T;
   onChange: (value: T) => void;
@@ -503,6 +504,8 @@ export function Segmented<T extends string>({
   label: string;
   /** Nhiều lựa chọn (8 loại việc): xuống hàng thay vì bóp chữ - soát UX 29-09, thanh lọc cần ~1089px. */
   wrap?: boolean;
+  /** Thêm cho từng nút (vd. cỡ chạm trên điện thoại). */
+  itemClassName?: string;
 }) {
   const values = options.map((option) => option.value);
   return (
@@ -523,6 +526,7 @@ export function Segmented<T extends string>({
           className={cn(
             "h-7 whitespace-nowrap rounded-md px-3 text-[13px] font-medium transition-colors",
             value === option.value ? "bg-panel text-fg shadow-card" : "text-fg-2 hover:text-fg",
+            itemClassName,
           )}
         >
           {option.label}

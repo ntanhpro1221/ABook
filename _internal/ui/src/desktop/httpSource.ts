@@ -46,17 +46,20 @@ export const httpSource: ListenSource = {
     return voices.map(({ gain_db, ...voice }) => ({ ...voice, gainDb: gain_db ?? 0 }));
   },
   readAloudClip: async (voice, text, options) => {
+    let clip: { url: string; duration_ms: number; words: [number, number][] } | { cached: false; reason: string };
     try {
-      const clip = await api<{ url: string; duration_ms: number; words: [number, number][] }>("/api/readaloud/clip", {
+      clip = await api<typeof clip>("/api/readaloud/clip", {
         method: "POST",
         body: { voice, text, cachedOnly: options?.cachedOnly },
       });
-      return { url: mediaUrl(clip.url), durationMs: clip.duration_ms, words: clip.words } satisfies ReadAloudClip;
     } catch (error) {
-      // Máy chủ nói đúng lý do (offline / timeout / rejected / service / uncached...); mất kết nối tới chính máy chủ cục bộ là "service".
+      // Máy chủ nói đúng lý do (offline / timeout / rejected / service...); mất kết nối tới chính máy chủ cục bộ là "service".
       if (error instanceof ApiError) throw new ReadAloudError(error.message, String(error.detail.reason ?? "service"));
       throw new ReadAloudError("Không gọi được giọng đọc.", "service");
     }
+    // Chỉ tra bộ đệm mà chưa có: máy chủ trả 200 (không phải lỗi mạng), bộ máy đọc vẫn cần biết là "uncached".
+    if ("cached" in clip) throw new ReadAloudError("Chưa đọc đoạn này.", clip.reason || "uncached");
+    return { url: mediaUrl(clip.url), durationMs: clip.duration_ms, words: clip.words } satisfies ReadAloudClip;
   },
   musicCues: async (bookId, chapterId) => {
     const result = await api<{ cues: MusicCue[]; levelDb: number; credits?: Record<string, MusicCredit> }>(`/api/books/${bookId}/music/chapters/${chapterId}`);

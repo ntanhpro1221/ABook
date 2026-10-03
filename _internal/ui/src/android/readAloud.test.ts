@@ -104,7 +104,7 @@ describe("watchReadAloud", () => {
     expect((client.getQueryData(textScriptKey(BOOK, 1)) as Script | undefined)?.timed).toBe(true);
 
     chooseVoice(BOOK, "device:vi-vn-an");
-    expect(configure).toHaveBeenCalledWith({ readAloudVoice: "device:vi-vn-an" });
+    expect(configure).toHaveBeenCalledWith({ readAloudVoice: "device:vi-vn-an", readAloudBook: BOOK });
     stop();
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(remove).toHaveBeenCalled();

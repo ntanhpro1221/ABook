@@ -3176,8 +3176,13 @@ class Handler(BaseHTTPRequestHandler):
         try:
             clip = self.app.readaloud.clip(voice, text, cached_only=bool(body.get("cachedOnly")))
         except VoiceError as error:
+            if error.reason == "uncached":
+                # Chỉ tra bộ đệm mà chưa có là câu trả lời bình thường (trình phát hỏi hàng loạt lúc nạp chương), không phải lỗi: 200 để
+                # console của trình duyệt không đầy dòng 404 đỏ.
+                self._send_json(HTTPStatus.OK, {"cached": False, "reason": "uncached"})
+                return
             status = {"offline": HTTPStatus.SERVICE_UNAVAILABLE, "timeout": HTTPStatus.GATEWAY_TIMEOUT, "voice": HTTPStatus.BAD_REQUEST,
-                      "empty": HTTPStatus.UNPROCESSABLE_ENTITY, "uncached": HTTPStatus.NOT_FOUND}.get(error.reason, HTTPStatus.BAD_GATEWAY)
+                      "empty": HTTPStatus.UNPROCESSABLE_ENTITY}.get(error.reason, HTTPStatus.BAD_GATEWAY)
             raise ApiError(status, str(error), reason=error.reason) from error
         self._send_json(HTTPStatus.OK, {"url": f"/media/readaloud/{clip['file']}", "duration_ms": clip["duration_ms"], "words": clip["words"]})
 
