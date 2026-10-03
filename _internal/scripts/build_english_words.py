@@ -73,11 +73,23 @@ moore morgan morris murphy murray myers nelson nichols owens palmer parker patte
 roberts robinson rogers ross russell sanders scott shaw simmons simpson smith spencer stevens stewart sullivan taylor thomas thompson torres turner wagner walker
 wallace ward warren washington watson webb wells west white williams wilson wood wright young
 """
+# Tiếng reo / thở than viết hoa chữ đầu ("Hmm", "Haiz", "Hehe") và từ vựng game / giả tưởng tiếng Anh mà light novel Nhật để nguyên ("Goblin", "Elf", "Wizard"):
+# không phải tên, nên không được tính vào tỉ lệ tên romaji của cuốn (làm tỉ lệ thấp giả: Goblin Slayer, Tensei Shitara Ken Deshita...) và để sea-g2p đọc.
+EXTRA_WORDS = """
+hm hmm hmmm hmmmm aah ahh ah eh ehh oh ooh ugh uh uhh um umm yep yeah yes nope nah huh hah haha hahaha hehe hehehe hihi huhu haiz haizz hic oops whoa wow ahem tsk shh psst
+goblin goblins elf elves dwarf dwarves wizard wizards orc orcs ogre ogres golem golems wyvern wyverns slime slimes skeleton skeletons kobold kobolds lizard lizardman lizardmen
+priestess slayer hermit dragon dragons demon demons undead zombie zombies vampire vampires werewolf werebeast werebeasts dhampir siren sirens sylph fairy fairies knight knights
+paladin mage mages archer archers thief rogue guild dungeon dungeons level skill skills status magic spell spells hero heroes lord lords king queen prince princess emperor
+empress baron duke duchess count countess earl marquis viscount sir lady maid butler master mistress sword sword swordsman swordmaster summoner summoners witch witches warlock
+beast beasts monster monsters boss bosses quest quests party adventurer adventurers rank class job item items potion potions tempest horizon hyena falcon crude embryo
+infinite nemesis epsilon edit mode modes gown stats hp mp xp exp
+"""
+
 # Tên vốn là tên Nhật thường gặp trong light novel và trùng hình với tên Anh / Âu: KHÔNG giữ làm tiếng Anh, để gốc của cuốn quyết (cuốn gốc Nhật -> phiên
 # âm theo luật; cuốn không có gốc Nhật thì chẳng có gì đổi). Chủ sách 04-10: Hana, Rika, Mina, Kana, Nana, Sakura... Kate, Mike, Rose, Anne, Emma, Nina, Sara giữ Anh.
 JAPANESE_NAMES = """
 hana rika mina kana nana sakura mika rina miku saki aki mio emi ami mai rin ren rei ryo kai sora yuki aya ayaka asuna mari maki maya mei miyu nao nono rio ria rena
-reina sana sena shiori suzu tama yui yuri hiro kenji ryu shin shu haru riku sho tai tomo yu yuu
+reina sana sena shiori suzu tama yui yuri hiro kenji ryu shin shu haru riku sho tai tomo yu yuu jin chi nee san tan kun chan
 """
 
 
@@ -93,7 +105,7 @@ def words() -> list[str]:
     cmu = {line.split(" ", 1)[0].split("(")[0] for line in CMUDICT.read_text(encoding="utf-8").splitlines() if line.strip()}
     vocab = bert_vocab()
     common = {word for word in vocab[:BERT_MAX_ID + 1] if re.fullmatch("[a-z]{2,}", word) and word in cmu}
-    return sorted((common | set(GIVEN_NAMES.split()) | set(SURNAMES.split())) - set(JAPANESE_NAMES.split()))
+    return sorted((common | set(GIVEN_NAMES.split()) | set(SURNAMES.split()) | set(EXTRA_WORDS.split())) - set(JAPANESE_NAMES.split()))
 
 
 def kotlin_source(listed: list[str]) -> str:

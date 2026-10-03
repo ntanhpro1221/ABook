@@ -48,6 +48,8 @@ def test_the_kotlin_copy_of_the_list_is_the_same_words() -> None:
 @pytest.mark.parametrize("token, reading", [
     ("Haruto", "Ha-ru-tô"), ("Yamato", "Gia-ma-tô"), ("Kyouko", "Ki-âu-cô"), ("Hana", "Ha-na"), ("Rika", "Ri-ca"), ("Sakura", "Xa-cu-ra"),
     ("Haruto-kun", "Ha-ru-tô-cun"), ("Tōkyō", "Tô-ki-ô"),
+    # hậu tố gọi nối gạch vào tên, không tách thành hai chữ
+    ("Jin-dono", "Gin-đô-nô"), ("Yuki-tan", "Giu-ki-tan"), ("Kou-nii", "Câu-ni"), ("Sora-nee", "Xô-ra-ne"), ("Tanaka-senpai", "Ta-na-ca-xen-pai"),
 ])
 def test_a_japanese_name_in_a_japanese_book_is_read_by_the_rules(token: str, reading: str) -> None:
     assert _said(f"Rồi {token}.", "ja")[1] == f"{reading}."
@@ -58,7 +60,7 @@ def test_an_english_name_is_left_to_the_voice_even_in_a_japanese_book(token: str
     assert _said(f"Rồi {token}.", "ja") == ["Rồi", f"{token}."]
 
 
-@pytest.mark.parametrize("token", ["Hoa", "Nam", "Mai", "Tôi", "Ôi", "Anh", "AI", "CV", "A", "Aaaa", "Haaa", "Aa", "McDonald", "Hmm", "Ugh", "Spider-Man", "Haruto's"])
+@pytest.mark.parametrize("token", ["Hm", "Hmm", "Nn", "Eh", "Haiz", "Goblin", "Elf", "Wizard", "Hoa", "Nam", "Mai", "Tôi", "Ôi", "Anh", "AI", "CV", "A", "Aaaa", "Haaa", "Aa", "McDonald", "Hmm", "Ugh", "Spider-Man", "Haruto's"])
 def test_vietnamese_syllables_shouts_capitals_and_odd_words_are_left_alone(token: str) -> None:
     assert _said(f"Rồi {token}.", "ja") == ["Rồi", f"{token}."]
     assert _said(f"Rồi {token}.", "ko") == ["Rồi", f"{token}."]
@@ -71,7 +73,7 @@ def test_nothing_changes_without_an_origin_and_punctuation_around_a_name_is_kept
 
 
 def test_a_korean_book_reads_romanized_korean_names() -> None:
-    assert _said("Seo-yeon gặp Ji-ho và Geun-hye.", "ko") == ["Sơ Yên", "gặp", "Chi Hô", "và", "Cưn Hê."]
+    assert _said("Seo-yeon gặp Ji-ho và Geun-hye.", "ko") == ["Xeo Gie-on", "gặp", "Gi Hô", "và", "Cưn Hê."]
 
 
 def test_the_shown_words_and_their_count_never_change() -> None:
@@ -115,10 +117,23 @@ def test_a_book_with_other_names_has_no_origin(texts: list[str]) -> None:
     assert names.book_origin(texts) is None
 
 
+def test_honorifics_beside_romaji_names_lower_the_share_needed() -> None:
+    mixed = _book(WEST * 2 + JA, 4)
+    assert names.book_origin([mixed]) is None, "tên Âu nhiều: tỉ lệ romaji thấp"
+    honorific = " ".join(f"{name}-san nói." for name in JA[:4]) + " "
+    assert names.book_origin([mixed + " " + honorific * 8]) == "ja"
+    assert names.book_origin([mixed + " " + honorific * 2]) is None, "ít hậu tố"
+    assert names.book_origin([mixed + " " + (" ".join(f"{name}-san nói." for name in WEST[:4]) + " ") * 8]) is None, "hậu tố đi với tên không phải romaji"
+    assert names.book_origin([mixed + " " + (" ".join(f"{name}-dono nói." for name in JA[:2]) + " ") * 8]) is None, "chỉ 2 tên khác nhau"
+    korean = _book(KO, 10) + " ".join(f"{name}-nim nói." for name in KO) * 10
+    assert names.book_origin([korean]) == "ko", "-nim của Hàn không phải dấu hiệu Nhật"
+
+
 def test_only_the_first_chapters_are_used() -> None:
     west, japanese = _book(WEST), _book(JA)
-    assert names.book_origin([west] * 12 + [japanese] * 20) is None
-    assert names.book_origin([west] * 12 + [japanese] * 20, sample=None) == "ja"
+    assert names.SAMPLE_CHAPTERS == 40
+    assert names.book_origin([west] * 40 + [japanese] * 200) is None
+    assert names.book_origin([west] * 40 + [japanese] * 200, sample=None) == "ja"
 
 
 def test_book_origins_remember_the_guess_and_the_users_override(tmp_path: Path) -> None:
@@ -176,12 +191,13 @@ def test_the_clip_key_only_changes_for_text_the_origin_changes(fake_voices, tmp_
 # ---- bộ ví dụ dùng chung với Kotlin (scripts/vieneu_android_fixtures.py) -------------------------------------------------------------
 def test_the_shared_origin_cases_match() -> None:
     cases = json.loads(FIXTURE.read_text(encoding="utf-8"))["origins"]
-    assert len(cases) >= 10 and {case["origin"] for case in cases} == {"ja", "ko", None}
+    assert len(cases) >= 13 and {case["origin"] for case in cases} == {"ja", "ko", None}
     for case in cases:
         texts, sample = case["texts"], case.get("sample") or names.SAMPLE_CHAPTERS
-        shares = names.origin_shares(names.name_counts(texts[:sample]))
+        keys = ("total", "names", "ja_names", "ko_names", "honorific", "honorific_names")
+        shares = names.origin_shares(*names.scan_names(texts[:sample]))
         assert names.book_origin(texts, sample=sample) == case["origin"]
-        assert {key: shares[key] for key in ("total", "names", "ja_names", "ko_names")} == {key: case[key] for key in ("total", "names", "ja_names", "ko_names")}
+        assert {key: shares[key] for key in keys} == {key: case[key] for key in keys}
 
 
 # ---- máy chủ -------------------------------------------------------------------------------------------------------------------------

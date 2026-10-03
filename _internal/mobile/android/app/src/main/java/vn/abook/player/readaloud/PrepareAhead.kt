@@ -208,7 +208,7 @@ object PrepareAhead {
         val cache = ReadAloud.cache()
         val budget = (cache.cap * PreparePlan.SHARE).toLong()
         val texts = ReadAloud.textChapters(mine.bookId, mine.chapters.map { it.id })
-        val origin = ReadAloud.originOf(mine.bookId)
+        val origin = ReadAloud.originNow(mine.bookId) // luồng của WorkManager: chờ đoán xong để cả việc dùng đúng gốc từ đoạn đầu
         val runner = PrepareRunner(
             texts = { chapter -> texts[chapter.id]?.second },
             cached = { cache.contains(mine.voice, it, origin) },

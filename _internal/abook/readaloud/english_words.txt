@@ -1,3 +1,4 @@
+aah
 aaron
 abandoned
 abbey
@@ -108,6 +109,8 @@ advanced
 advances
 advantage
 adventure
+adventurer
+adventurers
 adventures
 advertising
 advice
@@ -151,6 +154,8 @@ agricultural
 agriculture
 ah
 ahead
+ahem
+ahh
 ai
 aid
 aiden
@@ -354,6 +359,7 @@ archaeological
 archbishop
 arched
 archer
+archers
 archie
 architect
 architects
@@ -604,6 +610,7 @@ bear
 bearing
 bears
 beast
+beasts
 beat
 beaten
 beating
@@ -766,6 +773,7 @@ born
 borough
 bosnia
 boss
+bosses
 boston
 both
 bother
@@ -1068,7 +1076,6 @@ champion
 champions
 championship
 championships
-chan
 chance
 chancellor
 chances
@@ -1112,7 +1119,6 @@ cherry
 chess
 chest
 chester
-chi
 chicago
 chicken
 chief
@@ -1519,6 +1525,7 @@ counsel
 count
 counted
 counter
+countess
 counties
 countries
 country
@@ -1582,6 +1589,7 @@ crosses
 crossing
 crowd
 crown
+crude
 cruise
 cruz
 cry
@@ -1826,6 +1834,7 @@ devices
 devil
 devon
 devoted
+dhampir
 di
 dialect
 dialogue
@@ -2015,11 +2024,14 @@ du
 dual
 dubbed
 dublin
+duchess
 duck
 due
 dug
 duke
 duncan
+dungeon
+dungeons
 duo
 duration
 durham
@@ -2029,6 +2041,8 @@ dutch
 duties
 duty
 dvd
+dwarf
+dwarves
 dying
 dylan
 dynamic
@@ -2067,6 +2081,7 @@ edgar
 edge
 edges
 edinburgh
+edit
 edited
 edith
 editing
@@ -2095,6 +2110,8 @@ egg
 eggs
 egypt
 egyptian
+eh
+ehh
 eight
 eighteen
 eighth
@@ -2125,6 +2142,7 @@ elevated
 elevation
 elevator
 eleven
+elf
 elias
 eligible
 elijah
@@ -2143,10 +2161,12 @@ elmo
 elsa
 else
 elsewhere
+elves
 elvis
 em
 embassy
 embrace
+embryo
 emerged
 emergency
 emerging
@@ -2165,6 +2185,7 @@ employed
 employee
 employees
 employment
+empress
 empty
 en
 enable
@@ -2224,6 +2245,7 @@ epic
 episcopal
 episode
 episodes
+epsilon
 equal
 equality
 equally
@@ -2330,6 +2352,7 @@ existence
 existing
 exists
 exit
+exp
 expand
 expanded
 expanding
@@ -2406,10 +2429,12 @@ failing
 failure
 faint
 fair
+fairies
 fairly
 fairy
 faith
 fake
+falcon
 fall
 fallen
 falling
@@ -2819,6 +2844,8 @@ go
 goal
 goalkeeper
 goals
+goblin
+goblins
 god
 goddess
 gods
@@ -2826,6 +2853,8 @@ goes
 going
 gold
 golden
+golem
+golems
 golf
 gone
 gonna
@@ -2845,6 +2874,7 @@ governing
 government
 governments
 governor
+gown
 grab
 grabbed
 grabbing
@@ -2939,7 +2969,12 @@ gym
 ha
 habitat
 had
+hah
+haha
+hahaha
 hair
+haiz
+haizz
 half
 halfway
 hall
@@ -3030,6 +3065,8 @@ hebrew
 hectares
 hector
 heels
+hehe
+hehehe
 heidi
 height
 heights
@@ -3058,6 +3095,7 @@ here
 heritage
 herman
 hermann
+hermit
 hero
 heroes
 hers
@@ -3065,6 +3103,7 @@ herself
 hesitated
 hey
 hi
+hic
 hidden
 hide
 hiding
@@ -3073,6 +3112,7 @@ higher
 highest
 highly
 highway
+hihi
 hilda
 hill
 hills
@@ -3097,6 +3137,10 @@ hitler
 hits
 hitting
 hiv
+hm
+hmm
+hmmm
+hmmmm
 ho
 hockey
 hold
@@ -3174,6 +3218,7 @@ hugh
 hughes
 hugo
 huh
+huhu
 hull
 human
 humanity
@@ -3197,6 +3242,7 @@ hurt
 husband
 hybrid
 hydrogen
+hyena
 ian
 ibm
 ibn
@@ -3298,6 +3344,7 @@ industries
 industry
 infantry
 infection
+infinite
 influence
 influenced
 influences
@@ -3503,7 +3550,6 @@ jews
 jill
 jim
 jimmy
-jin
 jo
 joachim
 joan
@@ -3642,6 +3688,8 @@ knowing
 knowledge
 known
 knows
+kobold
+kobolds
 kong
 konrad
 korea
@@ -3846,6 +3894,9 @@ liverpool
 lives
 living
 liz
+lizard
+lizardman
+lizardmen
 lloyd
 lo
 load
@@ -3946,11 +3997,14 @@ madison
 madrid
 magazine
 magazines
+mage
+mages
 maggie
 magic
 magical
 magnetic
 magnus
+maid
 mail
 main
 maine
@@ -4031,6 +4085,7 @@ market
 marketing
 markets
 marks
+marquis
 marriage
 married
 marry
@@ -4220,6 +4275,7 @@ missions
 mississippi
 missouri
 mistake
+mistress
 mitchell
 mix
 mixed
@@ -4233,6 +4289,7 @@ model
 models
 moderate
 modern
+modes
 modified
 molecular
 molly
@@ -4296,6 +4353,7 @@ moves
 movie
 movies
 moving
+mp
 mph
 mr
 mrs
@@ -4337,6 +4395,7 @@ myself
 mysterious
 mystery
 na
+nah
 naked
 name
 named
@@ -4379,7 +4438,6 @@ nebraska
 necessarily
 necessary
 neck
-nee
 need
 needed
 needs
@@ -4392,6 +4450,7 @@ neil
 neither
 nell
 nelson
+nemesis
 neo
 nepal
 nephew
@@ -4450,6 +4509,7 @@ nominee
 non
 none
 nonetheless
+nope
 nor
 nora
 norfolk
@@ -4533,6 +4593,8 @@ official
 officially
 officials
 often
+ogre
+ogres
 oh
 ohio
 oil
@@ -4559,6 +4621,8 @@ only
 ontario
 onto
 onwards
+ooh
+oops
 op
 open
 opened
@@ -4590,7 +4654,9 @@ or
 oral
 orange
 orbit
+orc
 orchestra
+orcs
 ordained
 order
 ordered
@@ -4672,6 +4738,7 @@ pairs
 pakistan
 pakistani
 palace
+paladin
 pale
 palestine
 palestinian
@@ -4972,6 +5039,8 @@ posts
 pot
 potential
 potentially
+potion
+potions
 pound
 pounding
 pounds
@@ -5038,6 +5107,7 @@ price
 prices
 pride
 priest
+priestess
 priests
 primarily
 primary
@@ -5139,6 +5209,7 @@ provinces
 provincial
 provision
 provisions
+psst
 psychological
 psychology
 pub
@@ -5195,6 +5266,7 @@ quest
 question
 questioned
 questions
+quests
 quick
 quickly
 quiet
@@ -5581,6 +5653,7 @@ rodrigo
 rodriguez
 roger
 rogers
+rogue
 roland
 role
 roles
@@ -5683,7 +5756,6 @@ same
 sample
 samples
 samuel
-san
 sanctuary
 sand
 sanders
@@ -5895,6 +5967,7 @@ shelley
 shelter
 sheriff
 sherry
+shh
 shield
 shift
 shifted
@@ -5985,6 +6058,8 @@ single
 singles
 sink
 sir
+siren
+sirens
 sister
 sisters
 sit
@@ -6001,6 +6076,8 @@ sixth
 sixty
 size
 sized
+skeleton
+skeletons
 ski
 skill
 skills
@@ -6013,6 +6090,7 @@ slammed
 slave
 slavery
 slaves
+slayer
 sleep
 sleeping
 slept
@@ -6021,6 +6099,8 @@ slide
 sliding
 slight
 slightly
+slime
+slimes
 slip
 slipped
 slope
@@ -6132,6 +6212,7 @@ spectrum
 speech
 speed
 spell
+spells
 spencer
 spend
 spending
@@ -6214,6 +6295,7 @@ stationed
 stations
 statistical
 statistics
+stats
 statue
 status
 stay
@@ -6355,6 +6437,8 @@ sultan
 sum
 summer
 summit
+summoner
+summoners
 sun
 sunday
 sung
@@ -6421,8 +6505,11 @@ switch
 switched
 switzerland
 sword
+swordmaster
+swordsman
 swung
 sydney
+sylph
 sylvia
 symbol
 symbols
@@ -6456,7 +6543,6 @@ tamara
 tamil
 tammy
 tampa
-tan
 tang
 tank
 tanks
@@ -6502,6 +6588,7 @@ telling
 tells
 temperature
 temperatures
+tempest
 temple
 temples
 temporarily
@@ -6575,6 +6662,7 @@ these
 thesis
 they
 thick
+thief
 thierry
 thighs
 thin
@@ -6790,6 +6878,7 @@ trustees
 truth
 try
 trying
+tsk
 tube
 tucked
 tucker
@@ -6819,9 +6908,11 @@ type
 types
 typical
 typically
+ugh
 ugly
 ugo
 uh
+uhh
 uk
 ukraine
 ukrainian
@@ -6830,6 +6921,7 @@ ultimate
 ultimately
 ulysses
 um
+umm
 un
 unable
 uncertain
@@ -6837,6 +6929,7 @@ uncle
 uncomfortable
 unconscious
 und
+undead
 under
 undergraduate
 underground
@@ -6984,6 +7077,7 @@ virtual
 virtually
 virus
 visa
+viscount
 visible
 vision
 visit
@@ -7045,6 +7139,7 @@ war
 ward
 warehouse
 warfare
+warlock
 warm
 warmth
 warned
@@ -7101,6 +7196,9 @@ welsh
 wendy
 went
 were
+werebeast
+werebeasts
+werewolf
 wesley
 west
 western
@@ -7123,6 +7221,7 @@ whispered
 white
 whitney
 who
+whoa
 whoever
 whole
 whom
@@ -7175,6 +7274,7 @@ wish
 wished
 wishes
 witch
+witches
 with
 withdrawn
 withdrew
@@ -7183,6 +7283,8 @@ without
 witness
 witnessed
 witnesses
+wizard
+wizards
 woke
 wolf
 wolfgang
@@ -7222,6 +7324,7 @@ would
 wound
 wounded
 wounds
+wow
 wrapped
 wrestling
 wright
@@ -7236,8 +7339,11 @@ written
 wrong
 wrote
 wu
+wyvern
+wyverns
 xavier
 xi
+xp
 ya
 yale
 yang
@@ -7249,6 +7355,7 @@ year
 years
 yelled
 yellow
+yep
 yes
 yesterday
 yet
@@ -7273,5 +7380,7 @@ zelda
 zero
 zhang
 zoe
+zombie
+zombies
 zone
 zoo

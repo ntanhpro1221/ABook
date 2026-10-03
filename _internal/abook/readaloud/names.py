@@ -28,13 +28,16 @@ from ..romanization import romanized_reading
 
 ENGLISH_FILE = Path(__file__).with_name("english_words.txt")
 ORIGINS = ("ja", "ko")
-SAMPLE_CHAPTERS = 12  # đoán gốc từ chừng ấy chương đầu (đủ để tên nhân vật chính xuất hiện hàng trăm lần)
+SAMPLE_CHAPTERS = 40  # đoán gốc từ chừng ấy chương đầu (đo: 12 chương nhận 40 / 68 cuốn Nhật, 40 chương 46 / 68, cả cuốn 50 / 68; chạy một lần ở luồng nền)
 MIN_NAMES = 10  # ít nhất chừng ấy tên khác nhau đọc được theo luật thì mới đủ tin
-MIN_OCCURRENCES = 100  # và tên (kể cả không đọc được) xuất hiện ít nhất chừng ấy lần trong phần mẫu
+MIN_OCCURRENCES = 60  # và tên (kể cả không đọc được) xuất hiện ít nhất chừng ấy lần trong phần mẫu
 JA_SHARE = 0.75  # tỉ lệ lần xuất hiện của tên đọc được bằng romaji trên mọi tên: từ đây là cuốn Nhật (đo: mọi cuốn từ 0,75 lên đều là tên Nhật)
+HON_MIN = 20  # lần xuất hiện của tên romaji đi kèm hậu tố gọi (trong phần mẫu) đủ để tin dấu hiệu Nhật
+HON_NAMES = 3  # và ít nhất chừng ấy tên khác nhau như vậy
+HON_JA_SHARE = 0.3  # khi có dấu hiệu hậu tố, tỉ lệ ja chỉ cần từ đây
 KO_SHARE = 0.85  # như trên cho RR; luật RR dễ tính (Mirabelle, Ruel, Alon của truyện Hàn cũng tách được) nên đòi cao hơn và thêm KO_ONLY_SHARE
 KO_ONLY_SHARE = 0.5  # phần lần xuất hiện của tên đọc được bằng RR mà KHÔNG đọc được bằng romaji (Si-eun, Seo-ram...)
-RULE_VERSION = 1  # đổi khi đổi cách đoán: gốc đã lưu của cuốn được đoán lại
+RULE_VERSION = 2  # đổi khi đổi cách đoán: gốc đã lưu của cuốn được đoán lại
 _ALLOWED_MARKS = "āīūēōâîûêôĀĪŪĒŌÂÎÛÊÔ"
 
 
@@ -71,6 +74,8 @@ def _head(core: str) -> str | None:
         return None  # "Aaaa", "Haaa": tiếng reo, không phải tên
     if not any(ch.isascii() and ch.isalpha() and ch not in "aeiou" for ch in lowered):
         return None  # chỉ nguyên âm ("Aa", "Ooo")
+    if not any(ch in "aeiouy" or not ch.isascii() for ch in lowered):
+        return None  # không nguyên âm ("Hm", "Nn", "Shh"): tiếng reo
     return head
 
 
@@ -108,9 +113,11 @@ def read_names(toks: list[str], out: list[str], origin: str | None) -> None:
 
 # ---- gốc của cuốn ---------------------------------------------------------------------------------------------------------
 
-def name_counts(texts: Iterable[str]) -> collections.Counter[str]:
-    """Mỗi tên (đã bỏ hậu tố gọi) và số lần nó xuất hiện: chữ viết hoa chữ đầu, Latin, không phải từ Anh / âm tiết Việt."""
+def scan_names(texts: Iterable[str]) -> tuple[collections.Counter[str], collections.Counter[str]]:
+    """(mỗi tên đã bỏ hậu tố gọi và số lần nó xuất hiện, riêng những lần nó đi kèm hậu tố gọi kiểu Nhật: Haruto-kun, Aqua-sama). Tên: chữ viết hoa chữ đầu,
+    Latin, không phải từ Anh / âm tiết Việt / tiếng reo."""
     found: collections.Counter[str] = collections.Counter()
+    suffixed: collections.Counter[str] = collections.Counter()
     for text in texts:
         for token in text.split():
             _, core, _ = split_token(token)
@@ -119,12 +126,19 @@ def name_counts(texts: Iterable[str]) -> collections.Counter[str]:
             head = _head(core)
             if head is not None and not _known_word(head):
                 found[head] += 1
-    return found
+                if head != core:
+                    suffixed[head] += 1
+    return found, suffixed
 
 
-def origin_shares(counts: collections.Counter[str]) -> dict[str, float | int]:
+def name_counts(texts: Iterable[str]) -> collections.Counter[str]:
+    return scan_names(texts)[0]
+
+
+def origin_shares(counts: collections.Counter[str], suffixed: collections.Counter[str] | None = None) -> dict[str, float | int]:
     """Số liệu để quyết gốc: `total` lần xuất hiện, `names` tên khác nhau, `ja` / `ko` tỉ lệ lần xuất hiện đọc được, `ko_only` phần chỉ RR đọc được,
-    `ja_names` / `ko_names` số tên khác nhau đọc được."""
+    `ja_names` / `ko_names` số tên khác nhau đọc được; `honorific` / `honorific_names`: lần xuất hiện / số tên khác nhau của tên đọc được bằng romaji
+    mà đi kèm hậu tố gọi (`suffixed`)."""
     total = sum(counts.values())
     ja = ko = ko_only = 0
     ja_names = ko_names = 0
@@ -137,7 +151,9 @@ def origin_shares(counts: collections.Counter[str]) -> dict[str, float | int]:
         ja_names += by_ja
         ko_names += by_ko
     share = (lambda value: value / total) if total else (lambda value: 0.0)
-    return {"total": total, "names": len(counts), "ja": share(ja), "ko": share(ko), "ko_only": share(ko_only), "ja_names": ja_names, "ko_names": ko_names}
+    honorific = {name: times for name, times in (suffixed or {}).items() if romanized_reading(name, "ja") is not None}
+    return {"total": total, "names": len(counts), "ja": share(ja), "ko": share(ko), "ko_only": share(ko_only), "ja_names": ja_names, "ko_names": ko_names,
+            "honorific": sum(honorific.values()), "honorific_names": len(honorific)}
 
 
 def decide(shares: dict[str, float | int]) -> str | None:
@@ -145,6 +161,8 @@ def decide(shares: dict[str, float | int]) -> str | None:
         return None
     if shares["ja_names"] >= MIN_NAMES and shares["ja"] >= JA_SHARE:
         return "ja"
+    if shares["honorific"] >= HON_MIN and shares["honorific_names"] >= HON_NAMES and shares["ja_names"] >= MIN_NAMES and shares["ja"] >= HON_JA_SHARE:
+        return "ja"  # hậu tố gọi (-san, -kun, -sama...) đi cùng tên romaji là dấu hiệu Nhật mạnh: đủ để hạ ngưỡng tỉ lệ (truyện Nhật hay có thêm tên kiểu Âu)
     if shares["ko_names"] >= MIN_NAMES and shares["ko"] >= KO_SHARE and shares["ko_only"] >= KO_ONLY_SHARE:
         return "ko"
     return None
@@ -153,7 +171,7 @@ def decide(shares: dict[str, float | int]) -> str | None:
 def book_origin(texts: Iterable[str], *, sample: int | None = SAMPLE_CHAPTERS) -> str | None:
     """"ja" / "ko" khi tên trong cuốn gần như toàn là romaji Nhật / RR Hàn, None khi không chắc (cuốn Việt, Trung, Âu, hay tên lẫn lộn).
     `texts`: chữ các chương theo thứ tự; chỉ `sample` chương đầu được xét (None = hết)."""
-    return decide(origin_shares(name_counts(texts if sample is None else islice(texts, sample))))
+    return decide(origin_shares(*scan_names(texts if sample is None else islice(texts, sample))))
 
 
 class BookOrigins:

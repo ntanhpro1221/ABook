@@ -11,14 +11,17 @@ import vn.abook.player.VietnameseReading
  */
 object Names {
     val ORIGINS = setOf("ja", "ko")
-    const val SAMPLE_CHAPTERS = 12
+    const val SAMPLE_CHAPTERS = 40
     const val MIN_NAMES = 10
-    const val MIN_OCCURRENCES = 100
+    const val MIN_OCCURRENCES = 60
     const val JA_SHARE = 0.75
+    const val HON_MIN = 20
+    const val HON_NAMES = 3
+    const val HON_JA_SHARE = 0.3
     const val KO_SHARE = 0.85
     const val KO_ONLY_SHARE = 0.5
     /** Đổi khi đổi cách đoán: gốc đã lưu của cuốn được đoán lại. */
-    const val RULE_VERSION = 1
+    const val RULE_VERSION = 2
     private const val ALLOWED_MARKS = "āīūēōâîûêôĀĪŪĒŌÂÎÛÊÔ"
 
     /** (dấu câu đầu, lõi từ chữ cái đầu tới chữ cái cuối, dấu câu cuối). */
@@ -52,6 +55,7 @@ object Names {
         val lowered = lower(head)
         for (i in 0 until lowered.length - 2) if (lowered[i] == lowered[i + 1] && lowered[i] == lowered[i + 2]) return null // "Aaaa", "Haaa": tiếng reo
         if (lowered.none { it in 'a'..'z' && it !in "aeiou" }) return null // chỉ nguyên âm ("Aa", "Ooo")
+        if (lowered.none { it in "aeiouy" || it.code >= 128 }) return null // không nguyên âm ("Hm", "Nn", "Shh"): tiếng reo
         return head
     }
 
@@ -89,23 +93,32 @@ object Names {
 
     // ---- gốc của cuốn ---------------------------------------------------------------------------------------------------------
 
-    /** Mỗi tên (đã bỏ hậu tố gọi) và số lần nó xuất hiện. */
-    fun nameCounts(texts: Sequence<String>): Map<String, Int> {
+    /** (mỗi tên đã bỏ hậu tố gọi và số lần nó xuất hiện, riêng những lần nó đi kèm hậu tố gọi kiểu Nhật). `scan_names` của names.py. */
+    fun scanNames(texts: Sequence<String>): Pair<Map<String, Int>, Map<String, Int>> {
         val found = LinkedHashMap<String, Int>()
+        val suffixed = LinkedHashMap<String, Int>()
         for (text in texts) {
             for (range in WordTokens.tokens(text)) {
                 val (_, core, _) = splitToken(text.substring(range.first, range.last + 1))
                 if (core.length < 2 || !core[0].isUpperCase()) continue
                 val head = head(core)
-                if (head != null && !knownWord(head)) found[head] = (found[head] ?: 0) + 1
+                if (head != null && !knownWord(head)) {
+                    found[head] = (found[head] ?: 0) + 1
+                    if (head != core) suffixed[head] = (suffixed[head] ?: 0) + 1
+                }
             }
         }
-        return found
+        return found to suffixed
     }
 
-    class Shares(val total: Int, val names: Int, val ja: Double, val ko: Double, val koOnly: Double, val jaNames: Int, val koNames: Int)
+    fun nameCounts(texts: Sequence<String>): Map<String, Int> = scanNames(texts).first
 
-    fun originShares(counts: Map<String, Int>): Shares {
+    class Shares(
+        val total: Int, val names: Int, val ja: Double, val ko: Double, val koOnly: Double, val jaNames: Int, val koNames: Int,
+        val honorific: Int = 0, val honorificNames: Int = 0,
+    )
+
+    fun originShares(counts: Map<String, Int>, suffixed: Map<String, Int> = emptyMap()): Shares {
         val total = counts.values.sum()
         var ja = 0
         var ko = 0
@@ -122,17 +135,19 @@ object Names {
             if (byKo) koNames++
         }
         fun share(value: Int) = if (total == 0) 0.0 else value.toDouble() / total
-        return Shares(total, counts.size, share(ja), share(ko), share(koOnly), jaNames, koNames)
+        val honorific = suffixed.filterKeys { Romanization.reading(it, "ja") != null }
+        return Shares(total, counts.size, share(ja), share(ko), share(koOnly), jaNames, koNames, honorific.values.sum(), honorific.size)
     }
 
     fun decide(shares: Shares): String? {
         if (shares.total < MIN_OCCURRENCES) return null
         if (shares.jaNames >= MIN_NAMES && shares.ja >= JA_SHARE) return "ja"
+        if (shares.honorific >= HON_MIN && shares.honorificNames >= HON_NAMES && shares.jaNames >= MIN_NAMES && shares.ja >= HON_JA_SHARE) return "ja"
         if (shares.koNames >= MIN_NAMES && shares.ko >= KO_SHARE && shares.koOnly >= KO_ONLY_SHARE) return "ko"
         return null
     }
 
     /** "ja" / "ko" khi tên trong cuốn gần như toàn là romaji Nhật / RR Hàn, null khi không chắc. Chỉ `sample` chương đầu được xét (null = hết). */
     fun bookOrigin(texts: Sequence<String>, sample: Int? = SAMPLE_CHAPTERS): String? =
-        decide(originShares(nameCounts(if (sample == null) texts else texts.take(sample))))
+        scanNames(if (sample == null) texts else texts.take(sample)).let { (counts, suffixed) -> decide(originShares(counts, suffixed)) }
 }

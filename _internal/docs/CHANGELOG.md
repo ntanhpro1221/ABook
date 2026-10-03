@@ -18,6 +18,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   "<Angel Wings>" đọc trơn, ngắt hai bên, không còn "nhỏ hơn ... lớn hơn"; "Đóng băng / yếu" ngắt ở dấu gạch chéo thay vì "trên". Chữ hiện trên màn hình
   không đổi.
 
+- Chuẩn bị cho giọng chỉ nói được tiếng Việt (chưa dùng khi đọc): app biết đọc từ / tên tiếng Anh bằng âm tiết Việt theo cách chủ sách chọn - "level" thành
+  "le-vồ", "Michael" thành "Mai-cồ", "skill" thành "xờ-kiu", "Mike" thành "Mi-ke"; tên tự đặt không có trong từ điển đọc theo mặt chữ ("Encrid" thành
+  "En-cơ-rít"). Bản máy tính mang theo từ điển phát âm gọn (0,8 MB); điện thoại sẽ tải khi cần.
+
 ## [0.4.24] - 2026-10-04
 
 ### Giọng đọc

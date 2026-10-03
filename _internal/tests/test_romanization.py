@@ -47,9 +47,9 @@ def test_every_sourced_form_matches_or_is_explained_by_a_chosen_rule():
     assert not unexplained, f"không khớp mà chưa có lý do: {unexplained}"
     assert not stale, f"cách đọc đổi mà lý do còn viết cho cách đọc cũ: {stale}"
     assert len(matched) + len(evidence.EXPLAINED) == len(evidence.SOURCED)
-    # 49 / 101: 39 / 91 dạng có nguồn + 10 ca của chủ sách (Yamato của chủ sách thay Ya-ma-tô của SGK); 52 còn lại đều do luật của chủ sách,
-    # điểm đã quét hay nguồn tự lệch (EXPLAINED)
-    assert len(matched) == 49
+    # 66 / 130: 36 / 91 dạng có nguồn + 39 ca của chủ sách (04-10, bốn lần; ca của chủ sách thay dạng SGK cùng chữ: Yamato, Osaka); 64 còn lại đều do luật của
+    # chủ sách, điểm đã quét hay nguồn tự lệch (EXPLAINED)
+    assert len(matched) == 66
 
 
 def test_tally_of_sourced_forms_by_kind():
@@ -59,8 +59,8 @@ def test_tally_of_sourced_forms_by_kind():
         entry[0] += _matches(token, origin, sources)
         entry[1] += 1
     # (khớp, tổng). Dạng "community" (Doraemon cũ) chỉ để xem, không là chuẩn.
-    assert tally == {("owner", "ja"): [10, 10], ("textbook", "ja"): [24, 45], ("official", "ja"): [3, 12], ("community", "ja"): [0, 8],
-                     ("official", "ko"): [12, 26]}
+    assert tally == {("owner", "ja"): [30, 30], ("owner", "ko"): [9, 9], ("textbook", "ja"): [20, 45], ("official", "ja"): [3, 12], ("community", "ja"): [0, 8],
+                     ("official", "ko"): [4, 26]}
 
 
 # ---- từng dòng luật ----------------------------------------------------------------------------------------------------
@@ -75,28 +75,37 @@ def test_tally_of_sourced_forms_by_kind():
     ("Kyouko", "ja", "Ki-âu-cô"), ("Ryouma", "ja", "Ri-âu-ma"), ("Kouki", "ja", "Câu-ki"), ("Satou", "ja", "Xa-tâu"),
     ("Kyôto", "ja", "Ki-ô-tô"), ("Tooru", "ja", "Tô-ru"),
     ("Haruto-kun", "ja", "Ha-ru-tô-cun"), ("Fukushima", "ja", "Phu-cu-si-ma"), ("Suzu", "ja", "Xu-du"), ("Gugu", "ja", "Gu-gu"),
-    ("Tsuru", "ja", "Chu-ru"), ("Kuro", "ja", "Cu-rô"), ("Fumio", "ja", "Phu-mi-ô"), ("Masakazu", "ja", "Ma-xa-ca-du"),
+    ("Tsuru", "ja", "Xu-ru"), ("Kuro", "ja", "Cu-rô"), ("Fumio", "ja", "Phu-mi-o"), ("Masakazu", "ja", "Ma-xa-ca-du"),
     # mục 1.2: thanh ngang; khép p / t / c / ch thì sắc (phụ âm đôi khép âm tiết trước)
     ("Sapporo", "ja", "Xáp-pô-rô"), ("Hokkaido", "ja", "Hốc-cai-đô"), ("Matcha", "ja", "Mát-cha"), ("Kenta", "ja", "Ken-ta"),
     # mục 1.4: s -> x, sh -> s
-    ("Osaka", "ja", "Ô-xa-ca"), ("Hiroshima", "ja", "Hi-rô-si-ma"), ("Shimoda", "ja", "Si-mô-đa"),
+    ("Osaka", "ja", "O-xa-ca"), ("Hiroshima", "ja", "Hi-rô-si-ma"), ("Shimoda", "ja", "Si-mô-đa"),
     # mục 2: iu / u sau âm vòm, chu, tsu -> chu, ji -> gi, wa -> oa
-    ("Kyuushuu", "ja", "Kiu-xiu"), ("Chuubu", "ja", "Chu-bu"), ("Tsubasa", "ja", "Chu-ba-xa"),
+    ("Kyuushuu", "ja", "Ki-u-su"), ("Chuubu", "ja", "Chu-bu"), ("Tsubasa", "ja", "Xu-ba-xa"),
     ("Kawasaki", "ja", "Ca-oa-xa-ki"),
     # nguyên âm dài không kéo dài; ei -> ây (chủ sách); ai giữ; n âm tiết khép
     ("Koutarou", "ja", "Câu-ta-râu"), ("Tōkyō", "ja", "Tô-ki-ô"), ("Reiji", "ja", "Rây-gi"), ("Saitama", "ja", "Xai-ta-ma"),
     ("Sendai", "ja", "Xen-đai"), ("Shinzō", "ja", "Sin-dô"),
     # c / k / g theo chính tả
-    ("Kenji", "ja", "Ken-gi"), ("Ginko", "ja", "Gin-cô"),
+    ("Kenji", "ja", "Ken-gi"), ("Ginko", "ja", "Ghin-cô"),
     # hậu tố: nối gạch vào tên thành một chuỗi (chủ sách 04-10), hậu tố giữ chữ thường
     ("Subaru-kun", "ja", "Xu-ba-ru-cun"), ("Tanaka-senpai", "ja", "Ta-na-ca-xen-pai"), ("Sato-sensei", "ja", "Xa-tô-xen-xây"),
-    ("Aiko-san", "ja", "Ai-cô-xan"), ("Rin-chan", "ja", "Rin-chan"), ("Ojou-sama", "ja", "Ô-giâu-xa-ma"), ("Hiiragi-chan", "ja", "Hi-i-ra-gi-chan"),
+    ("Aiko-san", "ja", "Ai-cô-xan"), ("Rin-chan", "ja", "Rin-chan"), ("Ojou-sama", "ja", "O-giâu-xa-ma"), ("Hiiragi-chan", "ja", "Hi-ra-ghi-chan"),
     ("senpai", "ja", "xen-pai"),
+    # chủ sách 04-10 lần 4 (Nhật): ee -> e, ii -> i, aa -> a; g + i -> ghi, ji -> gi; tsu -> xu; yu sau phụ âm tách; shu -> su; o không phụ âm đầu -> o; ao cuối gộp
+    ("Onee-san", "ja", "O-ne-xan"), ("Onii-chan", "ja", "O-ni-chan"), ("Hiiragi", "ja", "Hi-ra-ghi"), ("Ryuu", "ja", "Ri-u"), ("Kyuuji", "ja", "Ki-u-gi"),
+    ("Aoi", "ja", "A-o-i"), ("Kaori", "ja", "Ca-o-ri"), ("Nao", "ja", "Nao"), ("Naoki", "ja", "Na-o-ki"), ("Okaa-san", "ja", "O-ca-xan"),
+    ("Ojii-san", "ja", "O-gi-xan"), ("Onigiri", "ja", "O-ni-gi-ri"), ("Tomoe", "ja", "Tô-mô-e"), ("Matsuyama", "ja", "Ma-xu-gia-ma"),
+    ("Jin-dono", "ja", "Gin-đô-nô"), ("Natsuki", "ja", "Na-xu-ki"), ("Kyūshū", "ja", "Ki-u-su"),
+    # chủ sách 04-10 lần 4 (Hàn): bật hơi như thường, s -> x, j -> gi, y + nguyên âm -> gi, eo -> eo / e-o + coda, yu / yeo tách i-, wo -> uô, w đầu từ -> gu, oi
+    ("Kang", "ko", "Cang"), ("Taehyun", "ko", "Te-hi-un"), ("Choi", "ko", "Choi"), ("Yoon", "ko", "Giun"), ("Hyung", "ko", "Hi-ung"), ("Seojun", "ko", "Xeo-giun"),
+    ("Jeong", "ko", "Gie-ong"), ("Won", "ko", "Guôn"), ("Suwon", "ko", "Xu-guôn"), ("Busan", "ko", "Pu-xan"), ("Jin", "ko", "Gin"), ("Yuna", "ko", "Giu-na"),
+    ("Kim Jong-un", "ko", "Kim Giông Un"), ("Kwon", "ko", "Quôn"),
     # tiếng Hàn: g / d / b đầu từ vô thanh, giữa hai âm hữu thanh thì hữu thanh; k t p cuối -> c t p + sắc; l cuối -> n
-    ("Geun", "ko", "Cưn"), ("Dae", "ko", "Te"), ("Changdeok", "ko", "Chang-đớc"), ("Park", "ko", "Pắc"), ("Seoul", "ko", "Sơ-un"),
-    ("Hanbit", "ko", "Han-bít"), ("Hallasan", "ko", "Han-la-san"), ("Jeju", "ko", "Chê-chu"), ("Daegu", "ko", "Te-gu"),
+    ("Geun", "ko", "Cưn"), ("Dae", "ko", "Te"), ("Changdeok", "ko", "Chang-đe-óc"), ("Park", "ko", "Pắc"), ("Seoul", "ko", "Xeo-un"),
+    ("Hanbit", "ko", "Han-bít"), ("Hallasan", "ko", "Han-la-xan"), ("Jeju", "ko", "Giê-giu"), ("Daegu", "ko", "Te-gu"),
     # tên người Hàn: mỗi âm tiết RR một bộ phận cách nhau dấu cách khi viết nối gạch
-    ("Park Geun-hye", "ko", "Pắc Cưn Hê"), ("Kim Dae-jung", "ko", "Kim Te Chung"), ("Lee Myung-bak", "ko", "Li Miêng Bắc"),
+    ("Park Geun-hye", "ko", "Pắc Cưn Hê"), ("Kim Dae-jung", "ko", "Kim Te Giung"), ("Lee Myung-bak", "ko", "Li Mi-e-ong Bắc"),
 ])
 def test_reading_follows_the_convention(token, origin, reading):
     assert romanized_reading(token, origin) == reading
@@ -125,15 +134,18 @@ def test_open_choices_are_flagged_not_silent():
     assert romanized_reading_flags("Yokohama", "ja") == ("Giô-cô-ha-ma", ("analogy:y_gi",))
     assert romanized_reading_flags("Yuki", "ja") == ("Giu-ki", ("analogy:y_gi",))
     assert romanized_reading_flags("Kyoko", "ja") == ("Ki-ô-cô", ())
-    # k bật hơi của Hàn có cờ; wo / oe / wi / ui có cờ
-    assert romanized_reading_flags("Taehyung", "ko")[1] == ("open:ko_aspirated",)
-    assert romanized_reading_flags("Kwon", "ko")[1] == ("open:ko_rare_vowels",)
-    assert set(OPEN_CHOICES) == {"y_initial", "ko_aspirated", "ko_rare_vowels"}
+    # k bật hơi và wo của Hàn đã chốt (không cờ); oe / wi / ui / we / wae còn mở
+    assert romanized_reading_flags("Taehyung", "ko")[1] == ()
+    assert romanized_reading_flags("Kwon", "ko")[1] == ()
+    assert romanized_reading_flags("Suwon", "ko")[1] == ("analogy:ko_w_gu",)
+    assert romanized_reading_flags("Hoe", "ko")[1] == ("open:ko_rare_vowels",)
+    assert romanized_reading_flags("Naoki", "ja")[1] == ("analogy:ao_split",)
+    assert set(OPEN_CHOICES) == {"ko_rare_vowels"}
 
 
 def test_a_reading_is_the_same_whatever_the_capitalisation_of_the_input():
-    assert romanized_reading("osaka", "ja") == "ô-xa-ca"
-    assert romanized_reading("Osaka", "ja") == "Ô-xa-ca"
+    assert romanized_reading("osaka", "ja") == "o-xa-ca"
+    assert romanized_reading("Osaka", "ja") == "O-xa-ca"
     assert romanized_reading("OSAKA", "ja") is None  # toàn hoa là chữ viết tắt, việc của luật khác
 
 

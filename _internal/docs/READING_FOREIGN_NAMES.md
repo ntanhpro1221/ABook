@@ -58,22 +58,25 @@ Hệ quả: ABook phải tự chọn một quy ước, neo vào nguồn chính t
 
 | romaji | đọc | mức | bằng chứng |
 |---|---|---|---|
-| a, i, o | a, i, ô | Có nguồn | Ô-xa-ca, Tô-ky-ô, Hi-rô-si-ma |
+| a, i, o | a, i, ô khi có phụ âm đầu; **o đứng một mình (không phụ âm đầu) → o** | Có nguồn; o một mình: **Chủ sách** | Tô-ky-ô, Hi-rô-si-ma; chủ sách 04-10 (lần 4): "Osaka => o-xa-ca (alt ô-xa-ca)", "Aoi => a-o-i", "Okaa-san => o-ca-xan", "Onigiri => o-ni-gi-ri". Âm tiết "ô" tách từ kyo / ryo vẫn là ô (ki-ô, ri-ô) |
+| **ee, ii, aa viết lặp** | **e, i, a** (gộp một, như oo → ô, uu → u) | **Chủ sách** | Chủ sách 04-10 (lần 4): "Onee-san => o-ne-xan", "Onii-chan => o-ni-chan", "Hiiragi => hi-ra-ghi", "Okaa-san => o-ca-xan", "Ojii-san => o-gi-xan" |
+| **ao** | cuối từ: một âm tiết **ao** (Nao); giữa từ: tách **a-o** (Aoi, Kaori; Naoki theo analogy, cờ `analogy:ao_split`) | **Chủ sách** | Chủ sách 04-10 (lần 4): "Nao => nao", "Aoi => a-o-i", "Kaori => ca-o-ri" |
 | e | **e** ở mọi chỗ (Xa-na-e, Cô-be, E-đô; ge → ghe, ke → ke) | **Chủ sách** | Chủ sách 04-10 (lần 2): "Hajime => Ha-gi-me", "Kenji => Ken-gi". Bỏ kiểu "ê" của SGK / Bộ Ngoại giao (Cô-bê, Sa-na-ê, Mô-tê-gi, Ha-kô-ne) |
 | u | **u** ở mọi chỗ (fu → phu, ku → cu, ru → ru) | **Chủ sách** | Chủ sách 04-10: "Fukushima => phu-cu-si-ma", "haruto-kun => ha-ru-tô-cun". Khớp SGK (Phu-cu-ô-ca, Mu-rô-ran, Cu-si-rô, Chu-bu); bỏ kiểu "ư" của Bộ Ngoại giao (Phư-mi-ô, Ê-xư-kê) |
-| yu, kyu, ryu, shu, chu, ju | iu / u sau âm vòm | Có nguồn | Kiu-xiu, Riu-kiu, Chu-bu |
+| kyu, gyu, nyu, hyu, byu, pyu, myu, ryu | **tách ki-u, ri-u** (như kyo → ki-ô; không "kiu") | **Chủ sách** | Chủ sách 04-10 (lần 4): "Ryuu => ri-u". Thay Kiu-xiu, Riu-kiu của SGK |
+| shu, chu, ju | **su**, chu, giu (phụ âm + u) | **Chủ sách** (shu) | Chủ sách 04-10 (lần 4): shu giữ s + u (không xiu). Chu-bu (SGK) giữ |
 | nguyên âm dài viết bằng dấu ō (ô) / oo / ū, uu | ô / u (không kéo dài) | Có nguồn | Tô-ky-ô, Hô-cai-đô, Kiu-xiu |
 | **ou viết ra hai chữ** (o + u) | **âu** ở mọi chỗ (Câu-ta-râu, Câu-ki, Xa-tâu); sau y âm vòm tách i-âu (kyou → ki-âu, ryou → ri-âu); shou → sâu, chou → châu, jou → giâu | **Chủ sách** | Chủ sách 04-10 (lần 3): "Kyouko => Ki-âu-cô", "Ryouma => Ri-âu-ma"; shou / chou / jou theo analogy (cờ `analogy:ou_vom`). ō vẫn là ô (Tô-ky-ô giữ) |
 | ei | **ây** | **Chủ sách** | Chủ sách 04-10 (lần 2): "Rei => Rây", "sensei => xen-xây". Khớp SGK cũ Kô-mây; bỏ ê (Bộ Ngoại giao Ê-xư-kê) và ay |
 | ai | ai (tách "a-i" khi hai âm tiết: Ta-ca-i-chi) | Có nguồn | Sai-ta-ma, Ta-ca-i-chi |
 | k | c / k theo luật 1.5 | Có nguồn | Ca-oa-xa-ki, Ki-si-đa |
-| g | g; trước i đọc "gi", trước e đọc "ghe" | Chọn | Bộ Ngoại giao viết "Mô-tê-gi", nhưng e → e (chủ sách) nên nguồn không còn phân biệt gi / ghi; giữ gi cho đồng bộ với ji → gi. Hệ quả: gi trùng với ji ("Gin" và "Jin" cùng đọc "Gin"), "gi" tiếng Việt đọc /z/ |
+| g | g; trước i đọc **"ghi"**, trước e đọc "ghe" (ji vẫn → gi) | **Chủ sách** | Chủ sách 04-10 (lần 4): "Hiiragi => hi-ra-ghi". "Gin" → Ghin, "Jin" → Gin. Từ quen onigiri là ca ghi đè cố định (o-ni-gi-ri), không đổi luật |
 | s | x | Chọn (luật 1.4) | Ô-xa-ca, Na-ga-xa-ki |
-| shi, sha, sho, shu | si, sa, sô, xiu | Có nguồn | Hi-rô-si-ma, Sô-gun, Kiu-xiu |
+| shi, sha, sho, shu | si, sa, sô, su | Có nguồn (shu: **Chủ sách**) | Hi-rô-si-ma, Sô-gun; shu → su theo chủ sách 04-10 (lần 4) |
 | z, j | d / gi (zu → du, ji → gi) | Có nguồn (ji: **Chủ sách** 04-10, Ha-gi-me, Ken-gi) | Ma-xa-ca-du, Sin-dô |
 | t, d | t, đ | Có nguồn | Ta-ca-i-chi, Hô-cai-đô, E-đô |
 | chi | chi | Có nguồn | Cô-chi, Ta-ca-i-chi |
-| tsu | chu | Chọn | theo quyết định u → u của chủ sách (Bộ Ngoại giao Tô-si-mi-chư → chu); SGK cũ Mát-xu-ya-ma |
+| tsu | **xu** ở mọi chỗ | **Chủ sách** | Chủ sách 04-10 (lần 4): "Tsubasa => xu-ba-xa" (thay chu); Matsuyama → Ma-xu-gia-ma (SGK cũ Mát-xu-ya-ma) |
 | h, b, p, m, n, r | h, b, p, m, n, r | Có nguồn | Ha-kô-ne, Mô-ri |
 | fu | phu | Chủ sách | "Fukushima => phu-cu-si-ma"; SGK Phu-cu-ô-ca |
 | w (wa) | oa | Có nguồn | Ca-oa-xa-ki, Bi-oa, Tô-ku-ga-oa |
@@ -83,7 +86,7 @@ Hệ quả: ABook phải tự chọn một quy ước, neo vào nguồn chính t
 | phụ âm đôi kk, pp, tt, ss | khép âm tiết trước bằng c / p / t + thanh sắc | Có nguồn | Hốc-cai-đô, Xáp-pô-rô |
 | "u" vô thanh (desu, Matsu…) | vẫn đọc ư / u | Có nguồn | dạng viết không bỏ âm nào |
 
-**Hậu tố gọi** (-san, -kun, -chan, -sama, senpai, sensei): không có nguồn đọc tiếng Việt. Đọc theo bảng trên: xan, cun, chan, xa-ma,
+**Hậu tố gọi** (-san, -kun, -chan, -sama, senpai, sensei, -dono, -tan, -nee, -nii): không có nguồn đọc tiếng Việt. Đọc theo bảng trên: xan, cun, chan, xa-ma,
 xen-pai, xen-xây (ei -> ây). Hậu tố nối vào tên bằng GẠCH NỐI thành một chuỗi: "Haruto-kun" → "Ha-ru-tô-cun". [Chủ sách 04-10 cho -kun; các hậu
 tố khác áp cùng cách]
 
@@ -93,6 +96,13 @@ tố khác áp cùng cách]
 - Lần 2: Yamato → Gia-ma-tô, Ayaka → A-gia-ca (y + nguyên âm → gi: ya gia, yu giu, yo giô); Rei → Rây, sensei → xen-xây (ei → ây);
   Hajime → Ha-gi-me, Kenji → Ken-gi (e → e, không ê; ge → ghe, ke → ke). Giữ: s → x, sh → s, ji → gi, u → u, tsu → chu, -kun → cun nối gạch.
   Âm vòm kya / kyo / ryo… giữ như cũ (Ki-ô-cô, Ri-ô-ma).
+- Lần 4 (Nhật): Onee-san → o-ne-xan, Onii-chan → o-ni-chan, Okaa-san → o-ca-xan (alt ô-), Ojii-san → o-gi-xan (alt ô-), Osaka → o-xa-ca (alt ô-xa-ca) (o không phụ âm đầu → o,
+  ee / ii / aa gộp); Hiiragi → hi-ra-ghi (g + i → ghi, ji vẫn gi); Inoue → i-nâu-e; Shouta → sâu-ta; Jouichi → giâu-i-chi; Kouhai → câu-hai; Senpai → xen-pai;
+  Tsubasa → xu-ba-xa (tsu → xu); Ryuu → ri-u (yu sau phụ âm tách); Aoi → a-o-i, Kaori → ca-o-ri, Nao → nao (ao cuối gộp, giữa từ tách); Tomoe → tô-mô-e; Sora → xô-ra
+  (alt xo-ra); Konoha → cô-nô-ha; Onigiri → o-ni-gi-ri (từ quen, ghi đè cố định `_JA_FIXED`, không đổi luật g + i).
+- Lần 4 (Hàn): Kang → cang (bật hơi k / t / p đọc như âm thường, chính tả Việt c / k); Taehyun → te-hi-un; Choi → choi (oi → oi); Yoon → giun (alt dun); Hyung → hi-ung;
+  Seojun → xeo-giun; Park → pắc; Jeong → gie-ong (alt de-ong); Won → guôn (wo → uô, w đầu từ → gu; giữa từ như Suwon → Su-guôn theo analogy, cờ `analogy:ko_w_gu`).
+  Luật: s → x; j → gi; y + nguyên âm → gi (như Nhật); eo → eo khi âm tiết mở, tách e-o + coda khi có phụ âm cuối; yu / yeo sau phụ âm tách i- (hyun → hi-un).
 - Lần 3: Kyouko → Ki-âu-cô, Ryouma → Ri-âu-ma ("ou" viết ra hai chữ → âu; Koutarou → Câu-ta-râu, Satou → Xa-tâu). Nguyên âm dài viết bằng
   dấu (ō) vẫn → ô (Tô-ky-ô); "oo" giữ.
 - Ca sách giáo khoa / Bộ Ngoại giao vênh các phán quyết này (Ya-ma-tô, Cô-bê, Ê-xư-kê…) được ghi lý do ở `EXPLAINED`, không phải lỗi luật.
@@ -104,18 +114,21 @@ Kiơng-chu).
 
 | RR | đọc | mức | bằng chứng |
 |---|---|---|---|
-| eo (ㅓ) | ơ | Có nguồn | Xơ-un, Chơng |
-| yeo (ㅕ) | iê | Chọn | Miêng, Hiêng, Yêng (Bộ Ngoại giao) hơn Kiơng-chu; "iơ" không là vần tiếng Việt, bộ kiểm âm tiết từ chối |
+| eo (ㅓ) | **eo** khi âm tiết mở (Seo → xeo); có phụ âm cuối thì tách **e-o** + coda (Jeong → gie-ong, Seoul → xeo-un) | **Chủ sách** | Chủ sách 04-10 (lần 4): "Seojun => xeo-giun", "Jeong => gie-ong". Thay ơ của Bộ Ngoại giao (Xơ-un, Chơng) |
+| yeo (ㅕ) | đầu từ: gi + eo (gieo, gie-ong); sau phụ âm tách i- (hi-e-on) | **Chủ sách** (suy từ eo, y) | Chủ sách 04-10 (lần 4); cờ `analogy:ko_yeo`. Thay iê của Bộ Ngoại giao (Miêng, Hiêng) |
 | eu (ㅡ) | ư | Có nguồn | Cưn, Sưng |
 | ae (ㅐ) | e | Có nguồn | Te, He-in |
 | e (ㅔ) | ê | Có nguồn | Chê-chu, Hê |
 | o, u, i | ô, u, i | Có nguồn | Hông, Bu-san |
-| wa, wo, oe, wi, ui | oa, uơ, uê, uy, ưi | Chọn | Hoa-sơng; các nguyên âm còn lại theo âm, chưa có ví dụ |
+| wa, oe, wi, ui | oa, uê, uy, ưi | Chọn | Hoa-sơng; các nguyên âm còn lại theo âm, chưa có ví dụ |
+| wo, oi | **uô** (w đầu từ → **gu**: won → guôn); **oi** | **Chủ sách** | Chủ sách 04-10 (lần 4): "Won => guôn", "Choi => choi". Giữa từ (Suwon → Su-guôn) theo analogy |
+| y + nguyên âm | **gi** + nguyên âm (như Nhật); sau phụ âm tách i- (hyung → hi-ung) | **Chủ sách** | Chủ sách 04-10 (lần 4): "Yoon => giun (alt dun)", "Hyung => hi-ung" |
 | g, d, b đầu từ | c / k, t, p | Có nguồn | Cưn, Te, Pắc (âm tắc nhẹ đầu từ của tiếng Hàn là âm vô thanh) |
 | g, d, b giữa hai âm hữu thanh | g, đ, b | Có nguồn | Chang-đớc |
-| k, t, p (bật hơi) | kh, th, ph | Chọn | chưa có ví dụ tên; theo âm |
-| j, ch | ch | Có nguồn | Chê-chu, Chung, Châng |
-| s, ss | s | Chọn (luật 1.4) | Su-uân, Sưng Su, Bu-san (quét: s 17 dạng Bộ Ngoại giao, x 14); Xơ-un là dạng hiếm hơn |
+| k, t, p (bật hơi) | **như âm thường**: c / k theo chính tả Việt, t, p | **Chủ sách** | Chủ sách 04-10 (lần 4): "Kang => cang", "Taehyun => te-hi-un" (không kh, th, ph) |
+| j | **gi** | **Chủ sách** | Chủ sách 04-10 (lần 4): "Seojun => xeo-giun", "Jeong => gie-ong" (thay ch) |
+| ch | ch | Có nguồn | Chê-chu, Chung, Châng |
+| s, ss | **x** | **Chủ sách** | Chủ sách 04-10 (lần 4): "Seojun => xeo-giun" (thay s của Bộ Ngoại giao: Su-uân, Sưng Su) |
 | h, m, n, ng | h, m, n, ng | Có nguồn | Hê, Nam-san |
 | r / l | r giữa từ, l đầu từ; l cuối → n | Chọn | Han-la, Li |
 | âm cuối k, t, p | c, t, p + thanh sắc | Có nguồn | Pắc, Bắc, Sớc |
@@ -136,8 +149,21 @@ game → gêm (viết ghêm), level → le-vờ / le-vồ, maple → máp-pồ, 
 - Thanh HUYỀN chỉ ở âm tiết schwa MỞ sinh ra vì phụ âm cuối không đứng được cuối âm tiết Việt: -əl (l tối) → "ồ", l bỏ (máp-pồ,
   mai-cồ, le-vồ; le-vờ cũng được); phụ âm khác → "ờ" (analogy, chưa có ca chủ sách).
 - Âm tiết khép trước đó giữ sắc theo luật 1 (máp).
-- Kate → ca-tê: chủ sách "dễ nghe hơn là 'kết'" - tránh âm tiết khép tắc mang sắc nghe gắt ở tên ngắn, đọc mở theo mặt chữ. Tên ngắn
-  khác cùng dạng (phụ âm tắc + e câm: Jake, Pete, Luke, Mike) là điểm MỞ, chưa suy rộng.
+- Kate → ca-tê: chủ sách "dễ nghe hơn là 'kết'" - tránh âm tiết khép tắc mang sắc nghe gắt ở tên ngắn, đọc mở theo mặt chữ.
+
+**Lần 2 (04-10):** Mike → mi-ke, Jake → gia-ke, Luke → lu-ke, Pete → pi-tờ, skill → xờ-kiu, boss → bót, slime → xờ-lam, quest → quét;
+chữ viết tắt đã thành từ: VIP → víp, ID → ai-đi.
+- Tên ngắn phụ âm tắc + e câm (a / i / o / u) đọc theo MẶT CHỮ, e cuối đọc **e** (mi-ke, gia-ke, lu-ke). Kate → ca-tê là ngoại lệ cố
+  định; Pete → pi-tờ là ca riêng (âm i dài theo âm), tên cùng dạng với nguyên âm e (Zeke) còn MỞ. Chỉ áp cho tên viết hoa: từ thường
+  (make, like) vẫn đi đường âm vị.
+- l cuối sau i thành **u** (skill → xờ-kiu); l khép sau nguyên âm khác vẫn thành n (Men-bơn, Đan-tơn).
+- Cụm phụ âm đầu **s + phụ âm** → "xờ-" thanh HUYỀN (xờ-kiu, xờ-lam). Cụm đầu khác (bl, cl, br...) chưa có ca chủ sách: giữ "ơ" ngang như
+  sách báo, có cờ `open:epenthesis`.
+- /ɑ/ viết o đọc **o** (boss → bót); khép tắc mang sắc (bót, quét).
+- slime → xờ-lam là ca cố định: KHÔNG suy rộng "ai → a" (time vẫn đọc tai).
+
+Cài đặt: `abook/english_vi.py` (bản Kotlin `readaloud/EnglishVi.kt`), ca có nguồn ở `tests/english_vi_evidence.py`, các điểm [Chọn] quét
+bằng `scripts/sweep_english_vi_variants.py` (chủ sách x100, nhà nước x2, SGK / báo x1, cộng đồng x0).
 
 - Đi qua âm vị (từ điển phát âm CMU / IPA), không đi theo chữ viết.
 - Áp luật chung mục 1 và các dạng đã có trong sách giáo khoa / báo chính thống (Oa-sinh-tơn, Niu Oóc, Ê-đi-xơn, Sếch-xơ-pia,
@@ -174,18 +200,18 @@ dựng đáp án.
 
 ## 7. Còn mở, quyết bằng âm thanh
 
-- ya / yo / yu của **tiếng Hàn** (đầu từ): mặc định ya / i-ô / iu, chưa có ví dụ tên (tiếng Nhật đã chốt gi, xem phán quyết chủ sách).
 - Giọng miền Bắc đọc s và x như nhau. Luật 1.4 chỉ có tác dụng với giọng miền Nam; kiểm lại khi đã có số đo.
-- Các nguyên âm Hàn chưa có ví dụ chính thức (wo, oe, wi, ui) và các âm bật hơi.
+- Các nguyên âm Hàn chưa có ví dụ chính thức (oe, wi, ui, we, wae).
+- Chữ "o" đầu từ của Nhật: chủ sách viết "o" cho Osaka / Onee / Okaa (alt "ô"); luật hiện tại o không phụ âm đầu → o. Kyo / ryo tách vẫn ki-ô / ri-ô.
 
 ## 8. Nối vào "Nghe ngay" (04-10)
 
 Giọng VieNeu của "Nghe ngay" (máy tính `abook/readaloud/names.py` + `vieneu.spoken_tokens`; điện thoại `readaloud/Names.kt` + `VieneuUnits.kt`) đọc tên Nhật / Hàn theo mục 2-3 khi cuốn có gốc ấy; chữ hiện trên màn hình không đổi.
 
 - **Token được đổi**: viết hoa chữ đầu (không toàn HOA), chữ Latin, luật tách được hết thành âm tiết, và KHÔNG phải (a) từ tiếng Anh thật hay tên Anh / Âu (`abook/readaloud/english_words.txt`: từ vựng bert-base-uncased id <= 10000 giao CMUdict, cộng ~900 tên gọi và họ Anh / Âu tự viết, trừ 55 tên vốn là tên Nhật như Hana, Rika, Mina, Kana, Nana, Sakura - tên trùng hai bên thì gốc của cuốn quyết; sinh bằng `scripts/build_english_words.py`, 7277 từ, 55 KB, có cả ở Kotlin), (b) âm tiết tiếng Việt viết sẵn (Hoa, Nam, Mai), (c) tiếng reo (chữ lặp ba lần: Aaaa). Kate, Mike, Rose, Anne, Emma, Nina, Sara, Mario giữ nguyên cho sea-g2p (đo 04-10: VieNeu / ZeroTTS / Edge đọc tên Anh đúng).
-- **Gốc của cuốn** tự đoán (`names.book_origin`): trong 12 chương đầu, tỉ lệ LẦN XUẤT HIỆN của tên đọc được bằng romaji >= 0,75 (và >= 10 tên khác nhau, >= 100 lần) thì "ja"; "ko" đòi RR >= 0,85 và >= 0,5 là tên chỉ RR đọc được (luật RR dễ tính: Mirabelle, Ruel, Alon của truyện Hàn cũng tách được, nên ngưỡng cao và "ko" ít khi bật). Không chắc thì không đổi gì. Người dùng ghi đè được (máy tính `BookOrigins.override`, điện thoại `ReadAloud.setOrigin`); giao diện cho chọn là việc sau.
+- **Gốc của cuốn** tự đoán (`names.book_origin`): trong 40 chương đầu, tỉ lệ LẦN XUẤT HIỆN của tên đọc được bằng romaji >= 0,75 (và >= 10 tên khác nhau, >= 60 lần) thì "ja"; có hậu tố gọi (-san, -kun, -sama...) đi cùng tên romaji (>= 20 lần, >= 3 tên) thì chỉ cần >= 0,3; "ko" đòi RR >= 0,85 và >= 0,5 là tên chỉ RR đọc được (luật RR dễ tính: Mirabelle, Ruel, Alon của truyện Hàn cũng tách được, nên ngưỡng cao và "ko" ít khi bật). Không chắc thì không đổi gì. Người dùng ghi đè được (máy tính `BookOrigins.override`, điện thoại `ReadAloud.setOrigin`); giao diện cho chọn là việc sau.
 - **Khoá bộ đệm clip** thêm "|gốc" chỉ cho đoạn mà gốc làm nghe khác, nên clip cũ của đoạn không có tên vẫn dùng được.
-- **Đo** trên kho truyện thử (161 cuốn): 47 cuốn "ja", 2 "ko"; mọi cuốn dán nhãn Hàn / Trung đều ra không gốc. Chi tiết trong CHANGELOG và báo cáo.
+- **Đo** trên kho truyện thử (161 cuốn, 40 chương đầu): 66 cuốn "ja" (47 / 68 cuốn Nhật đã dán nhãn, 19 cuốn chưa nhãn mà tên là romaji), 2 "ko"; không cuốn dán nhãn Hàn / Trung nào ra "ja". Chi tiết trong CHANGELOG và báo cáo.
 
 ## Nguồn
 
