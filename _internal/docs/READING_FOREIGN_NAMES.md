@@ -124,6 +124,11 @@ Tên người Hàn: mỗi âm tiết RR một âm tiết, không gạch nối (P
 
 ## 4. Tên tiếng Anh và phương Tây
 
+**Mặc định: GIỮ NGUYÊN chữ Anh** cho máy đọc nói được âm vị tiếng Anh. [Đo 04-10] Whisper nghe lại: VieNeu Turbo / Nano (sea-g2p cho
+âm vị Anh), ZeroTTS và Edge đọc "Rose", "Mike", "laptop", "Facebook", "Jennifer", "Fireball", "level", "Boss" để nguyên ra tiếng Anh
+nhận được; viết Việt hoá "Rô-dơ", "Mai-cơ" lại bị nghe thành "Roger", "Michael". Phần dưới đây (Việt hoá qua âm vị) chỉ dành cho máy
+đọc CHỈ nói được âm tiết tiếng Việt.
+
 - Đi qua âm vị (từ điển phát âm CMU / IPA), không đi theo chữ viết.
 - Áp luật chung mục 1 và các dạng đã có trong sách giáo khoa / báo chính thống (Oa-sinh-tơn, Niu Oóc, Ê-đi-xơn, Sếch-xơ-pia,
   Bét-tô-ven, Gioóc-giơ, Ru-dơ-ven).
