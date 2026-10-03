@@ -9,8 +9,17 @@ export interface ImportPreview {
   chapters: { index: number; title: string; firstLine: string; words: number; chars: number }[];
   /** Gợi ý của máy (vd dòng ghi công ở đầu chương): hiện ra, KHÔNG BAO GIỜ tự áp. */
   notes: string[];
+  /** Gợi ý chọn được: dòng ghi công người nghe có thể bỏ khỏi phần đọc (mặc định không bỏ). `chapter`: mã chương trong sách. */
+  suggestions?: ImportSuggestion[];
+  /** Đúng bộ chữ này đã có trong thư viện: hỏi ngay ("Mở cuốn đó" / "Thêm bản riêng"). */
+  existing?: { id: string; title: string } | null;
   hasCover: boolean;
   totals: { chapters: number; words: number };
+}
+
+export interface ImportSuggestion {
+  chapter: number;
+  line: string;
 }
 
 /** Thứ người dùng đã chọn: máy tính - đường dẫn; điện thoại - mã của bản sao tạm do native giữ. */
@@ -35,7 +44,8 @@ export interface TextImport {
   /** Máy tính dán được đường dẫn thay cho hộp thoại. */
   typedPath?: boolean;
   preview(choice: ImportChoice): Promise<ImportPreview>;
-  add(choice: ImportChoice, title: string): Promise<AddedBook>;
+  /** `separate`: "Thêm bản riêng" - cuốn mới dù thư viện đã có đúng bộ chữ này. */
+  add(choice: ImportChoice, title: string, separate?: boolean): Promise<AddedBook>;
   /** Bỏ thứ tạm đã giữ cho lần chọn này (điện thoại: bản sao file); nguồn nào không giữ gì thì không có. */
   discard?(choice: ImportChoice): Promise<void>;
 }

@@ -157,6 +157,8 @@ object LocalStudio {
             "DELETE" to "/cover" -> { dir, _ -> BookEdits.removeCover(dir); JSONObject().put("cover", JSONObject.NULL) }
             "POST" to "/characters/rename" -> ::renameCharacter
             "GET" to "/music" -> { dir, _ -> BookEdits.musicView(BookEdits.rawBook(dir), BookEdits.load(dir)) }
+            "GET" to "/suggestions" -> { dir, _ -> suggestions(dir) }
+            "PUT" to "/skip" -> { dir, body -> skipLine(dir, body) }
             "PUT" to "/music" -> ::music
             "GET" to "/edits" -> { dir, _ ->
                 val edits = BookEdits.load(dir)
@@ -227,6 +229,37 @@ object LocalStudio {
         }
         val (newTitle, newSubtitle) = text(title) to text(subtitle)
         return BookEdits.setChapterTitle(dir, chapter.toLongOrNull() ?: throw BookEdits.EditsError("Không có chương này trong sách"), newTitle, newSubtitle)
+    }
+
+    /**
+     * GET /suggestions: gợi ý của bộ nhập sách cho cuốn chỉ-chữ (dòng ghi công ở đầu chương), kèm đang bỏ khỏi phần đọc hay chưa -
+     * trang sách hiện những gợi ý còn chờ (`server.get_suggestions`).
+     */
+    private fun suggestions(dir: java.io.File): JSONObject {
+        val out = JSONArray()
+        val chapters = BookEdits.applyManifest(BookEdits.rawBook(dir), BookEdits.load(dir)).optJSONArray("chapters") ?: JSONArray()
+        for (index in 0 until chapters.length()) {
+            val chapter = chapters.optJSONObject(index) ?: continue
+            val id = chapter.opt("id") as? Int ?: continue
+            val entry = chapter.optString("text").takeIf { it.startsWith("texts/") } ?: continue
+            val file = java.io.File(dir, entry).takeIf { it.isFile } ?: continue
+            val skipped = chapter.optJSONArray("skip")?.let { array -> (0 until array.length()).map { array.getString(it) }.toSet() } ?: emptySet()
+            for (line in BookImport.creditSuggestions(file.readText(Charsets.UTF_8))) {
+                out.put(JSONObject().put("chapter", id).put("title", listOf(chapter.opt("fullTitle"), chapter.opt("title")).firstOrNull { BookEdits.truthy(it) }?.toString() ?: "")
+                    .put("line", line).put("skipped", line in skipped))
+            }
+        }
+        return JSONObject().put("suggestions", out)
+    }
+
+    /** PUT /skip {line, chapters, skip}: người nghe chấp nhận (hay bỏ chấp nhận) một gợi ý - dòng bị bỏ khỏi phần đọc của các chương ấy,
+     *  chữ không đổi (`server.put_skip_line`). */
+    private fun skipLine(dir: java.io.File, body: JSONObject): JSONObject {
+        val line = body.opt("line") as? String ?: throw BookEdits.EditsError("Dòng cần bỏ phải là chữ.")
+        val chapters = body.opt("chapters") as? JSONArray
+        val ids = chapters?.let { array -> (0 until array.length()).map { array.opt(it) } }
+        if (ids == null || ids.any { it !is Int && it !is Long }) throw BookEdits.EditsError("Không có chương này trong sách")
+        return JSONObject().put("skip", BookEdits.setSkipLine(dir, ids.map { (it as Number).toLong() }, line, body.opt("skip") != false))
     }
 
     /** PUT /music {enabled?, levelDb?, silence?, pins?}: sách đã đóng gói chỉ chỉnh được bốn thứ ấy. */

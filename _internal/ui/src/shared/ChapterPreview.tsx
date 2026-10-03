@@ -11,7 +11,8 @@ export interface PreviewChapter {
   chars: number;
 }
 
-export function ChapterPreview({ chapters, className }: { chapters: PreviewChapter[]; className?: string }) {
+/** `titleFirst`: tên chương làm dòng chính, dòng đầu của chương ở dòng phụ khi khác ("Thêm sách từ file…": tên ấy là tên sẽ lưu). */
+export function ChapterPreview({ chapters, className, titleFirst = false }: { chapters: PreviewChapter[]; className?: string; titleFirst?: boolean }) {
   return (
     <div className={cn("max-h-[340px] overflow-y-auto rounded-xl border border-line bg-panel", className)}>
       {chapters.map((chapter, index) => (
@@ -21,8 +22,10 @@ export function ChapterPreview({ chapters, className }: { chapters: PreviewChapt
         >
           <span className="tabular text-xs text-fg-2">{index + 1}</span>
           <div className="min-w-0">
-            <div className="truncate text-sm font-medium">{chapter.firstLine || chapter.title}</div>
-            {chapter.firstLine && chapter.firstLine !== chapter.title && <div className="truncate text-xs text-fg-2">{chapter.title}</div>}
+            <div className="truncate text-sm font-medium">{titleFirst ? chapter.title : chapter.firstLine || chapter.title}</div>
+            {chapter.firstLine && chapter.firstLine !== chapter.title && (
+              <div className="truncate text-xs text-fg-2">{titleFirst ? chapter.firstLine : chapter.title}</div>
+            )}
           </div>
           <div className="tabular text-right text-xs text-fg-2">
             <div>{formatNumber(chapter.words)} chữ</div>

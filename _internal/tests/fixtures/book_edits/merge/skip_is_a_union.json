@@ -1,0 +1,43 @@
+{
+ "local": {
+  "format": "abook-edits",
+  "version": 1,
+  "skip": {
+   "1": [
+    "Dịch: A"
+   ]
+  }
+ },
+ "incoming": {
+  "format": "abook-edits",
+  "version": 1,
+  "skip": {
+   "1": [
+    "Biên tập: B",
+    "Dịch: A"
+   ],
+   "2": [
+    "Trans: C"
+   ]
+  }
+ },
+ "merged": {
+  "format": "abook-edits",
+  "version": 1,
+  "skip": {
+   "1": [
+    "Biên tập: B",
+    "Dịch: A"
+   ],
+   "2": [
+    "Trans: C"
+   ]
+  }
+ },
+ "report": {
+  "adopted": 2,
+  "kept": 1,
+  "conflicts": 0,
+  "cover": null
+ }
+}

@@ -33,6 +33,6 @@ export const phoneTextImport: TextImport = {
     });
     return EbookLibrary.previewImport({ ref: choice.ref, pages: pages.pages, title: pages.title, author: pages.author });
   },
-  add: (choice, title) => EbookLibrary.createImport({ ref: choice.ref, title }),
+  add: (choice, title, separate) => EbookLibrary.createImport({ ref: choice.ref, title, separate: Boolean(separate) }),
   discard: (choice) => EbookLibrary.discardImport({ ref: choice.ref }),
 };

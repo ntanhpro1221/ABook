@@ -203,13 +203,21 @@ object ReadAloud {
         feedSegment = 0
     }
 
+    /** Dòng người nghe bỏ khỏi phần đọc của một chương (`skip` của book.json đã áp lớp sửa) - màn đọc bỏ đúng các dòng này. */
+    private fun skipOf(manifest: org.json.JSONObject?, chapterId: Int): List<String> {
+        val array = manifest?.optJSONArray("chapters") ?: return emptyList()
+        val skip = (0 until array.length()).mapNotNull { array.optJSONObject(it) }.firstOrNull { it.optInt("id") == chapterId }?.optJSONArray("skip")
+            ?: return emptyList()
+        return (0 until skip.length()).map { skip.getString(it) }
+    }
+
     private fun chapFor(index: Int): Chap? {
         chaps[index]?.let { return it }
         val chapter = chapters().getOrNull(index) ?: return null
         if (!chapter.isText) return null
         return try {
             val text = Store.file(Playback.bookId, chapter.text).readText(Charsets.UTF_8)
-            Chap(index, Paragraphs.of(text)).also { chaps[index] = it }
+            Chap(index, Paragraphs.of(Paragraphs.withoutLines(text, skipOf(Store.manifest(Playback.bookId), chapter.id)))).also { chaps[index] = it }
         } catch (error: Exception) {
             null
         }
@@ -551,10 +559,11 @@ object ReadAloud {
     /** Chương của một cuốn không đang nạp: chữ từ gói sách, mốc từ bộ nhớ đệm (nếu đoạn đã từng được đọc bằng giọng đang chọn). */
     private fun peek(bookId: String, chapterId: Int): Chap? {
         return try {
-            val array = Store.manifest(bookId)?.optJSONArray("chapters") ?: return null
+            val manifest = Store.manifest(bookId)
+            val array = manifest?.optJSONArray("chapters") ?: return null
             val chapter = (0 until array.length()).map { array.getJSONObject(it) }.firstOrNull { it.optInt("id") == chapterId } ?: return null
             val entry = chapter.optString("text").takeIf { it.startsWith("texts/") } ?: return null
-            val chap = Chap(-1, Paragraphs.of(Store.file(bookId, entry).readText(Charsets.UTF_8)))
+            val chap = Chap(-1, Paragraphs.of(Paragraphs.withoutLines(Store.file(bookId, entry).readText(Charsets.UTF_8), skipOf(manifest, chapterId))))
             val cache = cache()
             for (i in chap.paragraphs.indices) cache.get(voiceId, chap.paragraphs[i])?.let {
                 chap.clips[i] = it

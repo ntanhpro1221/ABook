@@ -17,6 +17,8 @@ và độ dài, không ký tự điều khiển - và file sai thì bị từ ch
                                                                  đối tượng = dùng edits/cover.jpg)
      "characters": {"<name trong cast.json>": "<tên hiện>"},
      "chapters": {"<mã chương>": {"title": "Chương 12", "subtitle": "Hồi kết"}},   (mỗi trường tuỳ chọn)
+     "skip": {"<mã chương>": ["Dịch: Nhóm Lục Bình"]},          (dòng người nghe chọn bỏ khỏi phần đọc - gợi ý dòng ghi công của bộ
+                                                                 nhập sách; màn đọc và đọc to bỏ qua, chữ của sách KHÔNG đổi)
      "music": {"enabled": false, "levelDb": -24.0, "silenced": ["<mã chương>:<mili giây đầu mốc>"],
                "pins": {"<mã chương>:<mili giây đầu mốc>": "local:<sha1>"},          (đổi bài một mốc sang bài "Nhạc của tôi")
                "tracks": {"<sha1>": {"ext": "mp3", "title": "...", "creator": "...", "duration": 184.0, "lufs": -14.2}}},
@@ -57,9 +59,11 @@ MAX_CHARACTERS = 2000
 MAX_CHAPTERS = 5000
 MAX_SILENCED = 5000
 MAX_PINS = 5000
+MAX_SKIP_LINES = 20  # dòng bỏ khỏi phần đọc, mỗi chương
+SKIP_LINE_MAX = 300
 TRACK_TEXT_MAX = 200  # tên bài / nghệ sĩ trong thẻ file nhạc (music_local._TAG_MAX)
 LEVEL_RANGE = (-40.0, -6.0)
-_TOP_KEYS = {"format", "version", "title", "cover", "characters", "chapters", "music", "wishes"}
+_TOP_KEYS = {"format", "version", "title", "cover", "characters", "chapters", "skip", "music", "wishes"}
 _COVER_KEYS = {"color", "width", "height", "version"}
 _MUSIC_KEYS = {"enabled", "levelDb", "silenced", "pins", "tracks"}
 _TRACK_KEYS = {"ext", "title", "creator", "duration", "lufs"}
@@ -111,6 +115,7 @@ def count_applied(edits: dict[str, Any]) -> int:
     vào đâu cả."""
     music = edits.get("music") or {}
     return (("title" in edits) + ("cover" in edits) + len(edits.get("characters") or {}) + len(edits.get("chapters") or {})
+            + len({line for lines in (edits.get("skip") or {}).values() for line in lines})  # một dòng bỏ ở trăm chương: một thay đổi
             + ("enabled" in music) + ("levelDb" in music) + len(music.get("silenced") or []) + len(music.get("pins") or {}))
 
 
@@ -168,6 +173,8 @@ def validate(raw: Any) -> dict[str, Any]:
                     raise EditsError("Tên một chương trong phần sửa không hợp lệ.")
             kept[key] = dict(entry)
         out["chapters"] = kept
+    if "skip" in raw:
+        out["skip"] = _validate_skip(raw["skip"])
     if "music" in raw:
         out["music"] = _validate_music(raw["music"])
     if "wishes" in raw:
@@ -192,6 +199,19 @@ def _validate_cover(cover: Any) -> dict[str, Any] | None:
             or width > 20_000 or height > 20_000):
         raise EditsError("Ảnh bìa trong phần sửa không hợp lệ.")
     return {"color": color, "width": width, "height": height, "version": version}
+
+
+def _validate_skip(skip: Any) -> dict[str, list[str]]:
+    if not isinstance(skip, dict) or len(skip) > MAX_CHAPTERS:
+        raise EditsError("Phần bỏ dòng khỏi phần đọc không hợp lệ hay quá dài.")
+    out: dict[str, list[str]] = {}
+    for key, lines in skip.items():
+        if (not isinstance(key, str) or not _CHAPTER_ID.fullmatch(key) or not isinstance(lines, list) or not lines
+                or len(lines) > MAX_SKIP_LINES or len(set(lines)) != len(lines)
+                or any(not isinstance(line, str) or not line or not _is_clean(line, SKIP_LINE_MAX) for line in lines)):
+            raise EditsError("Một dòng bỏ khỏi phần đọc trong phần sửa không hợp lệ.")
+        out[key] = sorted(lines)
+    return out
 
 
 def _validate_music(music: Any) -> dict[str, Any]:
@@ -280,6 +300,8 @@ def _ordered(edits: dict[str, Any]) -> dict[str, Any]:
         out["characters"] = dict(sorted(edits["characters"].items()))
     if edits.get("chapters"):
         out["chapters"] = {key: edits["chapters"][key] for key in sorted(edits["chapters"], key=int)}
+    if edits.get("skip"):
+        out["skip"] = {key: sorted(edits["skip"][key]) for key in sorted(edits["skip"], key=int)}
     if edits.get("music"):
         music = edits["music"]
         out["music"] = {key: music[key] for key in ("enabled", "levelDb", "silenced") if key in music}
@@ -355,6 +377,11 @@ def merge(local: dict[str, Any], incoming: dict[str, Any]) -> tuple[dict[str, An
         chapters[key] = {**theirs, **ours}
     if chapters:
         out["chapters"] = chapters
+    # Dòng bỏ khỏi phần đọc: hợp (không có "đọc lại dòng này" để thắng), như nhạc im lặng.
+    local_skip, incoming_skip = local.get("skip") or {}, incoming.get("skip") or {}
+    skip = {key: sorted({*incoming_skip.get(key, []), *local_skip.get(key, [])}) for key in {*incoming_skip, *local_skip}}
+    if skip:
+        out["skip"] = skip
     music: dict[str, Any] = {}
     local_music, incoming_music = local.get("music") or {}, incoming.get("music") or {}
     for field in ("enabled", "levelDb"):
@@ -419,10 +446,12 @@ def apply_manifest(book: dict[str, Any], edits: dict[str, Any]) -> dict[str, Any
             out["parts"] = [{**part, "title": continuation.continued_title(edits["title"], part["part"])}
                             if isinstance(part, dict) and isinstance(part.get("part"), int) else part
                             for part in book["parts"]]
-    renamed = edits.get("chapters") or {}
-    if renamed and isinstance(book.get("chapters"), list):
-        out["chapters"] = [apply_chapter(chapter, renamed.get(str(chapter.get("id")))) if isinstance(chapter, dict) else chapter
-                           for chapter in book["chapters"]]
+    renamed, skip = edits.get("chapters") or {}, edits.get("skip") or {}
+    if (renamed or skip) and isinstance(book.get("chapters"), list):
+        # `skip` của chương: dòng người nghe bỏ khỏi phần đọc (màn đọc và đọc to - listen/textScript.ts `withoutLines`).
+        out["chapters"] = [{**apply_chapter(chapter, renamed.get(str(chapter.get("id")))),
+                            **({"skip": skip[str(chapter.get("id"))]} if str(chapter.get("id")) in skip else {})}
+                           if isinstance(chapter, dict) else chapter for chapter in book["chapters"]]
     if "cover" in edits:
         cover = edits["cover"]
         out["cover"] = None if cover is None else {"file": EDITS_COVER, **cover}
@@ -721,6 +750,43 @@ def set_character_name(folder: Path, character: str, name: str) -> dict[str, Any
         _write(folder, edits)
     shown = people.get(character, base_shown)
     return {"character": character, "name": shown, "original": original, "renamed": shown != original}
+
+
+def set_skip_line(folder: Path, chapter_ids: Iterable[int], line: str, skip: bool) -> dict[str, list[str]]:
+    """Bỏ (`skip`) hay đọc lại dòng `line` trong phần đọc của các chương `chapter_ids` - gợi ý dòng ghi công mà người nghe chấp nhận
+    (một dòng hay lặp ở đầu cả trăm chương: một lần bấm). Chỉ là biến đổi để đọc: chữ của sách không đổi, bỏ chọn là đọc lại như
+    cũ. Trả {mã chương: các dòng đang bỏ} của các chương ấy."""
+    known = {item.get("id") for item in _base(folder).get("chapters") or [] if isinstance(item, dict)}
+    wanted = sorted({int(chapter_id) for chapter_id in chapter_ids})
+    if not wanted or any(chapter_id not in known for chapter_id in wanted):
+        raise EditsError("Không có chương này trong sách")
+    clean = clean_text(line, SKIP_LINE_MAX)
+    if not clean:
+        raise EditsError("Dòng cần bỏ trống.")
+    out: dict[str, list[str]] = {}
+    with _LOCK:
+        edits = load(folder)
+        skipped = dict(edits.get("skip") or {})
+        for chapter_id in wanted:
+            key = str(chapter_id)
+            lines = set(skipped.get(key) or [])
+            if skip:
+                if clean not in lines and len(lines) >= MAX_SKIP_LINES:
+                    raise EditsError(f"Mỗi chương bỏ được tối đa {MAX_SKIP_LINES} dòng.")
+                lines.add(clean)
+            else:
+                lines.discard(clean)
+            if lines:
+                skipped[key] = sorted(lines)
+            else:
+                skipped.pop(key, None)
+            out[key] = sorted(lines)
+        if skipped:
+            edits["skip"] = skipped
+        else:
+            edits.pop("skip", None)
+        _write(folder, edits)
+    return out
 
 
 def set_chapter_title(folder: Path, chapter_id: int, title: str | None, subtitle: str | None = None) -> dict[str, Any]:

@@ -159,7 +159,7 @@ export function chapterScriptQuery(source: ListenSource, bookId: string, chapter
     queryKey: ["listen", "script", bookId, chapter.id, textOnly ? "text" : "audio"] as const,
     queryFn: async (): Promise<Script> => {
       if (!textOnly) return source.script(bookId, chapter.id);
-      const script = textScript(chapter.id, chapter.title, await source.chapterText(bookId, chapter.id));
+      const script = textScript(chapter.id, chapter.title, await source.chapterText(bookId, chapter.id), chapter.skip);
       // Chương đã được đọc to (lõi native tự đọc): mốc thời gian đã có thì gắn vào, màn đọc sáng đoạn / chữ ngay khi mở.
       const timings = await source.readAloudTimings?.(bookId, chapter.id).catch(() => null);
       return timings ? mergeTimings(script, timings) : script;

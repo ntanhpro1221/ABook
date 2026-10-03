@@ -48,13 +48,26 @@ object TextBook {
         return result
     }
 
+    /** {tên mục: byte chữ} của các chương, đúng như [build] ghi vào gói (`textbook.texts_of`). */
+    fun texts(book: BookImport.Book): LinkedHashMap<String, ByteArray> {
+        val texts = LinkedHashMap<String, ByteArray>()
+        for ((index, chapter) in book.chapters.withIndex()) texts["texts/${index + 1}.txt"] = BookImport.chapterSource(book, chapter).toByteArray(Charsets.UTF_8)
+        return texts
+    }
+
+    /** Cỡ + mã băm chữ từng chương - cách thư viện nhận ra cuốn chỉ-chữ ([Store.findByChapters]), để hỏi ngay ở bước xem trước. */
+    fun prints(book: BookImport.Book): JSONObject {
+        val out = JSONObject()
+        for ((name, data) in texts(book)) out.put(name, JSONObject().put("size", data.size.toLong()).put("sha256", sha256(data)))
+        return out
+    }
+
     /**
      * Ghi cuốn thành file `.abook` chỉ-chữ vào `out` (`textbook.build`). `codec` chuẩn hoá ảnh bìa; ảnh hỏng hay quá nhỏ thì bỏ bìa, sách vẫn
      * nhập được. Trả [BookDocumentWriter.Written].
      */
     fun build(book: BookImport.Book, out: OutputStream, codec: CoverCodec? = null): BookDocumentWriter.Written {
-        val texts = LinkedHashMap<String, ByteArray>()
-        for ((index, chapter) in book.chapters.withIndex()) texts["texts/${index + 1}.txt"] = BookImport.chapterSource(book, chapter).toByteArray(Charsets.UTF_8)
+        val texts = texts(book)
         val files = LinkedHashMap<String, Any>(texts)
         var cover: CoverCodec.Normalized? = null
         val raw = book.cover
@@ -87,6 +100,9 @@ object TextBook {
         }
         return JSONObject().put("title", cleanTitle(book.title, "Sách")).put("author", book.author ?: JSONObject.NULL)
             .put("language", book.language ?: JSONObject.NULL).put("hasCover", book.cover != null).put("chapters", rows)
-            .put("notes", JSONArray(book.notes)).put("totals", JSONObject().put("chapters", rows.length()).put("words", words))
+            .put("notes", JSONArray(book.notes))
+            // Gợi ý chọn được: dòng ghi công người nghe có thể bỏ khỏi phần đọc (mặc định KHÔNG bỏ). `chapter` = mã chương trong sách.
+            .put("suggestions", JSONArray(book.credits.map { (chapter, line) -> JSONObject().put("chapter", chapter).put("line", line) }))
+            .put("totals", JSONObject().put("chapters", rows.length()).put("words", words))
     }
 }

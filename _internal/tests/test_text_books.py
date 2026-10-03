@@ -319,6 +319,59 @@ def test_adding_the_same_book_again_says_it_is_already_there(tmp_path: Path) -> 
     assert (first["how"], again["how"], again["id"]) == ("new", "existing", first["id"])
 
 
+def test_the_preview_already_knows_the_book_is_there_and_a_separate_copy_can_still_be_added(tmp_path: Path) -> None:
+    studio = _app(tmp_path / "studio", tmp_path / "thu_vien")
+    assert studio.preview_text_book(str(IMPORTS / "epub3.epub"))["existing"] is None
+    first = studio.add_text_book(str(IMPORTS / "epub3.epub"))
+    book_edits.set_title(studio._listenable(first["id"]), "Tên tôi đặt")
+    preview = studio.preview_text_book(str(IMPORTS / "epub3.epub"))
+    assert preview["existing"] == {"id": first["id"], "title": "Tên tôi đặt"}, "hỏi ngay ở bước xem trước, với tên đang hiện"
+    copy = studio.add_text_book(str(IMPORTS / "epub3.epub"), "Bản thứ hai", separate=True)
+    assert copy["how"] == "new" and copy["id"] != first["id"]
+    assert studio.listen_book(copy["id"])["title"] == "Bản thứ hai", "tên người dùng sửa không bị bỏ âm thầm"
+    assert studio.add_text_book(str(IMPORTS / "epub3.epub"))["how"] == "existing"
+
+
+def test_the_book_page_shows_the_author_of_the_file(tmp_path: Path) -> None:
+    studio, added = _studio_with_text_book(tmp_path)
+    assert studio.listen_book(added["id"])["author"] == "Lê Thử Nghiệm"
+    assert next(book for book in studio.listen_library() if book["id"] == added["id"])["author"] == "Lê Thử Nghiệm"
+
+
+def test_a_txt_folder_keeps_the_chapter_names_the_preview_showed(tmp_path: Path) -> None:
+    studio = _app(tmp_path / "studio", tmp_path / "thu_vien")
+    preview = studio.preview_text_book(str(IMPORTS / "txt"))
+    added = studio.add_text_book(str(IMPORTS / "txt"))
+    shown = [chapter["fullTitle"] for chapter in studio.listen_book(added["id"])["chapters"]]
+    assert shown == [row["title"] for row in preview["chapters"]] and "Chương hai" in shown, "dòng tiêu đề trong file là tên chương"
+
+
+def test_a_credit_line_suggestion_is_skipped_only_when_the_listener_accepts_it(tmp_path: Path) -> None:
+    studio, added = _studio_with_text_book(tmp_path)
+    preview = studio.preview_text_book(str(IMPORTS / "epub3.epub"))
+    assert preview["suggestions"] == [{"chapter": 2, "line": "Dịch: Nhóm Lục Bình"}]
+    folder = studio._listenable(added["id"])
+    server = Server(studio, port=0).start()
+    try:
+        before = json.loads(_request(server.port, "GET", f"/api/books/{added['id']}/suggestions", headers=TOKEN)[1])
+        status, data, _ = _request(server.port, "PUT", f"/api/books/{added['id']}/skip", headers=TOKEN,
+                                   body={"line": "Dịch: Nhóm Lục Bình", "chapters": [2], "skip": True})
+        after = json.loads(_request(server.port, "GET", f"/api/books/{added['id']}/suggestions", headers=TOKEN)[1])
+        missing = _request(server.port, "PUT", f"/api/books/{added['id']}/skip", headers=TOKEN,
+                           body={"line": "Dịch: A", "chapters": [9], "skip": True})
+    finally:
+        server.stop()
+    assert before["suggestions"] == [{"chapter": 2, "title": "Chương 2: Người khách lạ", "line": "Dịch: Nhóm Lục Bình", "skipped": False}]
+    assert status == 200 and json.loads(data) == {"skip": {"2": ["Dịch: Nhóm Lục Bình"]}} and after["suggestions"][0]["skipped"]
+    assert missing[0] == 400
+    chapters = studio.listen_book(added["id"])["chapters"]
+    assert chapters[1]["skip"] == ["Dịch: Nhóm Lục Bình"] and "skip" not in chapters[0], "màn đọc nhận dòng cần bỏ (textScript.ts)"
+    assert "Dịch: Nhóm Lục Bình" in (folder / "texts" / "2.txt").read_text(encoding="utf-8"), "chữ của sách không đổi"
+    assert studio.listen_book(added["id"])["edits"] == 1
+    book_edits.set_skip_line(folder, [2], "Dịch: Nhóm Lục Bình", False)
+    assert "skip" not in studio.listen_book(added["id"])["chapters"][1] and book_edits.load(folder) == book_edits.empty()
+
+
 def test_a_text_folder_and_a_docx_come_in_like_an_epub(tmp_path: Path) -> None:
     studio = _app(tmp_path / "studio", tmp_path / "thu_vien")
     folder = studio.add_text_book(str(IMPORTS / "txt"))
@@ -331,7 +384,7 @@ def test_unreadable_input_is_refused_in_words_the_user_can_act_on(tmp_path: Path
     from abook.webui.server import ApiError
 
     studio = _app(tmp_path / "studio", tmp_path / "thu_vien")
-    with pytest.raises(ApiError, match="PDF scan, cần OCR"):
+    with pytest.raises(ApiError, match="ảnh chụp"):
         studio.preview_text_book(str(IMPORTS / "scan.pdf"))
     with pytest.raises(ApiError, match="Không thấy file"):
         studio.add_text_book(str(tmp_path / "khong_co.epub"))
