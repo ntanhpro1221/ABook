@@ -1,10 +1,11 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { FileDown, ImagePlus, Loader2, Music2, Pencil, Shuffle, Trash2, Volume2, VolumeX, Wrench } from "lucide-react";
+import { FileDown, Globe, ImagePlus, Loader2, Music2, Pencil, Shuffle, Trash2, Volume2, VolumeX, Wrench } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
+import { CoverSearchDialog } from "@/shared/CoverSearch";
 import { canEditLayer, editBlockedNote, studioNeed, syncsToComputer } from "@/shared/capabilities";
 import { formatClock } from "@/shared/format";
 import { levelOptions } from "@/shared/musicLevels";
@@ -12,7 +13,7 @@ import { Button, Dialog, Segmented } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { MUSIC_CHANGED_EVENT } from "./musicBed";
 import { MyMusicSection, SwapTrack } from "./MyMusic";
-import type { ListenBook, ListenChapter } from "./model";
+import { seriesOf, type ListenBook, type ListenChapter } from "./model";
 import { useSource } from "./source";
 
 // Sửa sách "áp ngay" ngay trên trang nghe (docs/EDITING.md): tên sách, bìa, tên nhân vật, tên chương, nhạc nền. Cùng một bộ
@@ -212,10 +213,12 @@ export function EditBookDialog({
   const [title, setTitle] = useState(book.title);
   const file = useRef<HTMLInputElement | null>(null);
   const [confirmRevert, setConfirmRevert] = useState(false);
+  const [searching, setSearching] = useState(false);
   useEffect(() => {
     if (open) {
       setTitle(book.title);
       setConfirmRevert(false);
+      setSearching(false);
     }
   }, [open, book.title]);
   const workshop = Boolean(book.capabilities?.workshop);
@@ -285,6 +288,9 @@ export function EditBookDialog({
               <Button variant="outline" icon={ImagePlus} disabled={busy} onClick={() => file.current?.click()}>
                 {book.cover ? "Đổi ảnh bìa…" : "Chọn ảnh bìa…"}
               </Button>
+              <Button variant="outline" icon={Globe} disabled={busy} onClick={() => setSearching(true)}>
+                Tìm ảnh bìa trên mạng…
+              </Button>
               {book.cover && (
                 <Button variant="ghost" icon={Trash2} disabled={busy} onClick={() => removeCover.mutate()}>
                   Bỏ ảnh bìa
@@ -309,6 +315,13 @@ export function EditBookDialog({
             />
           </div>
         </Section>
+        <CoverSearchDialog
+          bookId={book.id}
+          defaultQuery={seriesOf(book.title).series || book.title}
+          open={searching}
+          onOpenChange={setSearching}
+          onChosen={() => refreshAfterEdit(client, book.id)}
+        />
         <Section title="Nhạc nền">
           {workshop ? (
             <div className="flex flex-wrap items-center gap-3 text-sm text-fg-2">

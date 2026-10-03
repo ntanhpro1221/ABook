@@ -1362,6 +1362,22 @@ Cách sửa F1, cho bài mang số trò:
   cùng giao thức trên các đoạn mới. Lần ấy trượt thì gỡ F2 khỏi app.
 - Lead gộp vào main 165a3e16 (03-10 06:1x).
 
+**ĐO LẠI F2 TRÊN BỘ 5B (chi tiết chốt 03-10 11:1x, trước mọi lượt chấm):**
+- Đoạn: đáp án 5b (21 đoạn có nhạc). Không khí máy trên đúng ranh giới đáp án, như bộ 3 của E1.
+- Thể loại: Kuma `western_fantasy`, Zenith `xianxia` (võ hiệp; cùng bộ phong cách phía Đông với `chinese_history`).
+- Kho, λ, hạt giống bài nhập như lượt 2. `build_mixed_c.py` với `SET5B=1` → `mixedc5b`.
+- Khác bài 12 / 21 đoạn; ở 8 đoạn bài kho trộn là bài nhập.
+- Lặp 100% như lượt 2: 24 lượt mỗi người, 2 gói. Luật như lượt 2.
+- Chỉ 12 cặp nên KTC sẽ rất rộng. Đây là lần đo lại duy nhất đã hẹn: TRƯỢT (p < 0,45 khi dùng được) thì gỡ F2.
+
+**KẾT QUẢ ĐO LẠI F2 TRÊN 5B (03-10 11:2x, `results/mixedc5b_score.txt`):** **ĐẠT sát mốc → GIỮ F2.**
+- Dùng được: ổn định a/b 11 / 12 cả hai người; kappa 0,83.
+- 12 cặp khác bài. Cả hai chọn kho trộn 5, cả hai chọn kho toàn thầy 6, khác ý 1.
+- **p = 0,458** (KTC 0,22–0,71) ≥ 0,45. Từng người 0,50 / 0,42. Tính cả 21 đoạn: 0,476.
+- Gộp hai lần có người đọc dùng được (lượt 2 E1 + 5b, 46 cặp): 21 / 17 / 8 → p ≈ 0,54. Báo kèm, không phải thước ghi trước.
+- Đọc kết quả: F2 không làm bài chọn tệ hơn rõ rệt, nhưng cũng chưa chứng minh tốt hơn. Đủ để giữ, chưa đủ để nói chắc.
+  Không còn lần đo lại nào đã hẹn.
+
 Vào app (nhánh `dev/music-mixed-f2`), chỉ cho bài nhập:
 - Hiệu chỉnh a + b·trò từng trục.
 - Bỏ sd của trò; bài dùng mặc định 0,2.

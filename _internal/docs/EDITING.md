@@ -304,7 +304,7 @@ books shared by a phone (`LibraryServer.kt`) do not accept pushes; the inbox can
 
 ## Not built (later phases)
 
-Phone cover web search; swapping a cue to a CATALOG track on the phone (only the listener's
+Swapping a cue to a CATALOG track on the phone (nor on the desktop, for a book without a workshop - see P4) (only the listener's
 own tracks can be pinned to a packaged book - there is no catalogue offline and no mood to rank by); edits on
 streamed ("link") books; an in-place "Lưu" that overwrites the original file (desktop "Lưu" writes `Đã xuất/<title>.abook` or `.abookproj`,
 Android asks where with the system "create document" picker).
@@ -370,3 +370,51 @@ Python ones and writes them again (`BookFileImportTest`, `BookDocumentWriterTest
   audio has no listening layer); `content_key` / `fingerprints.shared_chapters` / `Store.findByChapters` identify a book by its chapter AUDIO
   hashes, so text-only books have no identity and would all collide on one folder; `workshop._sources` rebuilds text from `scripts/`; the `.abook`
   writers (`bookfile._seal`, `BookDocumentWriter.write`) still refuse a book without audio; aliases are media-only (text layers are not deduplicated).
+
+# What P4 built (phone: music swap, cover web search - 03-10)
+
+## Music swap / re-pick: nothing to port, and why
+
+The plan said "phone later = TS port of `music_select`". Checked against the code, there is nothing to rank, on either platform:
+
+- `music_select.rank` scores a SCENE (valence / arousal / tension / sd / confidence, from the analysis of the text) against catalogue
+  tracks. A packaged book (`.abook`, `.abookproj` on the phone) carries only the producer's cues (`start`, `end`, `track`, `gainDb`):
+  no scene mood. The desktop therefore does not rank for a book without a workshop either: `server._packaged_alternatives` answers
+  `alternatives: []` and only the "Nhạc của tôi" group. That is exactly what P1 built on the phone (`LocalStudio.alternatives`, contract
+  case `music_pins`), so "Đổi bài" for a book without a workshop is already the same on both platforms: swap a cue to one of the
+  listener's own tracks, stored as an `edits.json` `music.pins` entry (L edit), folded by the producer. "Chọn lại nhạc" (re-pick the whole
+  plan) needs the analysis and the catalogue, i.e. a workshop - it stays in Studio (class T).
+- The phone caches no catalogue (no manifest, no `cells/`; `MusicStore` only holds imported tracks), so there is no candidate set to
+  rank even if cues carried a mood.
+- What a catalogue swap would need is a format change, not a port: the producer would have to write each cue's scene mood into the book
+  layer (`music.chapters[].valence/arousal/tension`, additive) and the phone would need the catalogue cells. Not built: it touches
+  `.abook` v4 (P3's territory), and old files would never have it. If wanted later: add the fields in `music_plan.package`, port
+  `music_select.rank` to Kotlin with goldens from Python (same shape as `tests/cover_search_fixtures.py`), fetch `manifest.json` + the
+  needed `cells/<v>_<a>.json` over HTTPS. No vocal detection or any other gate on imported tracks, ever (owner rule).
+
+## Cover web search
+
+Same three public sources as the desktop (iTunes, Open Library, Google Books), same JSON, on a book without a workshop:
+
+| Request | Response |
+|---|---|
+| `GET /api/books/<id>/cover/search?q=` | `{query, results: [{provider, title, author, thumb, url}], failed: ["itunes" | "open_library" | "google_books"]}` (<= 30 results, one per image URL) |
+| `PUT /api/books/<id>/cover {url}` | `{"cover": {color, width, height, version}}` - the image is downloaded by the phone, written to `edits/cover.jpg` through the same `BookEdits.setCover` as a picked file |
+
+- **Code**: `CoverSearch.kt` (port of `webui/cover_search.py`), `LocalStudio.kt` (`GET /cover/search`, `PUT /cover {url}`, both run OUTSIDE
+  the edit lock so a slow source never blocks other edits), `ui/src/shared/CoverSearch.tsx` (`CoverSearchDialog`, now shared by Studio's
+  `CoverEditor` and by "Sửa sách" in `listen/EditBook.tsx`, which is how the desktop gets it for a package book too - the server already
+  accepted `{url}` for packages). Query-string parameters of a GET travel in `body` over the phone transport
+  (`android/localStudio.ts`; the native core ignores `?...`).
+- **Goldens**: `tests/cover_search_fixtures.py` runs Python's `search()` on canned provider answers (all three sources, duplicates,
+  foreign hosts, missing art, a failing source, the iTunes "ebook" half failing, query cleaning and encoding, the 30 cap) and writes
+  `tests/fixtures/cover_search/cases.json`; `tests/test_cover_search_fixtures.py` fails if the committed file is not what Python answers
+  today; `CoverSearchTest.kt` replays every case against a fake `CoverSearch.Http` and demands the same URLs requested, the same JSON,
+  the same allow-list decisions. The network is never touched by a test.
+- **Limits are Python's**: image hosts only `is<N>-ssl.mzstatic.com`, `covers.openlibrary.org`, `books.google.com`,
+  `books.googleusercontent.com`, HTTPS only; <= 16 MiB (`Covers.MAX_UPLOAD_BYTES`, read +1 byte to see the overflow, "Ảnh quá lớn");
+  min side 64 / max side 1400 / JPEG 88 by the codec (`CoverCodec`); the same Vietnamese refusal sentences. Stricter than Python on
+  purpose: a URL with `user@`, a backslash, whitespace or a non-numeric port is refused (two URL parsers could disagree about the host),
+  and every redirect hop must stay HTTPS (Open Library redirects its images to archive.org, so hops are not host-checked, as in Python).
+- **Not covered**: a book that is streamed from another computer ("link") is not editable, so it has no search; the phone's image
+  thumbnails are loaded by the WebView straight from the sources (there is no CSP), only the chosen image goes through the allow-list.
