@@ -23,6 +23,7 @@ MAX_TEXT = 20_000  # ký tự một clip; đoạn của chương dài hơn nữa
 
 class Provider(Protocol):
     id: str
+    speaks_english: bool  # nói được âm Anh thì chữ Anh để nguyên cho nó đọc; không thì Việt hoá (`names.spoken_names`)
 
     def voices(self) -> list[Voice]: ...
 
@@ -31,6 +32,7 @@ class Provider(Protocol):
 
 class EdgeProvider:
     id = "edge"
+    speaks_english = True  # đo 04-10: Edge đọc "Rose", "Mike", "laptop" để nguyên ra tiếng Anh nhận được
 
     def __init__(self, client: edge.EdgeClient | None = None) -> None:
         self.client = client or edge.EdgeClient()
@@ -46,6 +48,7 @@ class DeviceProvider:
     """Giọng của máy (Windows: windows.py). Máy khác Windows chưa có: danh sách rỗng."""
 
     id = "device"
+    speaks_english = True  # chưa đo (giọng Windows tiếng Việt): giữ cách đọc cũ tới khi đo
 
     def __init__(self, folder: Path) -> None:
         self.folder = folder
@@ -154,13 +157,13 @@ class ReadAloud:
     def clip(self, voice_id: str, text: str, *, cached_only: bool = False, background: bool = False, origin: str | None = None) -> dict[str, Any]:
         """Clip của `text` bằng `voice_id`: `{file, duration_ms, words}` (từ bộ đệm hay đọc mới). `cached_only`: không đọc mới - chưa có thì `VoiceError("uncached")`.
         `background`: việc "Làm trước" (prepare.py) - không tính là người đang nghe chờ. `origin`: gốc của cuốn ("ja" / "ko", `names.BookOrigins`) - giọng đọc
-        trên máy (VieNeu) đọc tên romaji / RR theo luật phiên âm; giọng khác bỏ qua."""
+        trên máy (VieNeu, Supertonic: có `reading_tag`) đọc tên romaji / RR theo luật phiên âm, Supertonic còn Việt hoá từ Anh (`speaks_english` False); giọng khác bỏ qua."""
         if not fold(text):
             raise VoiceError("Đoạn này không có chữ nào để đọc.", "empty")
         if len(text) > MAX_TEXT:
             raise ValueError("Đoạn chữ quá dài để đọc một lượt")
         provider, native = self._resolve(voice_id)
-        reads_names = isinstance(provider, vieneu.VieneuProvider)
+        reads_names = hasattr(provider, "reading_tag")
         key = clip_key(provider.id, native, text, provider.reading_tag(text, origin) if reads_names else "")
         hit = self.cache.get(key)
         if hit is None:

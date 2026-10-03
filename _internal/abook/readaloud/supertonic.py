@@ -23,7 +23,7 @@ from typing import Any, Callable
 from unicodedata import normalize as unicode_normalize
 
 from .model import Synthesis, Voice, VoiceError
-from .vieneu import Unit, seed_of, timed_synthesis, units
+from .vieneu import Unit, reading_tag, seed_of, timed_synthesis, units
 
 PREFIX = "supertonic"
 TIER = "supertonic"  # khoá của kết quả tự đo (cùng hình với các tầng VieNeu)
@@ -193,6 +193,7 @@ class SupertonicProvider:
     của một khúc (bài thử thay)."""
 
     id = PREFIX
+    speaks_english = True  # CHƯA quyết: 1 hạt giống nuốt "Rose", 4 hạt giống thì không (04-10); chờ phép đo 60 từ x 3 hạt giống. Tên Nhật / Hàn vẫn theo gốc cuốn
 
     def __init__(self, locate: Callable[[], Installed | None], *, engines: Callable[[Installed], Any] | None = None,
                  aligner: Callable[[], Any] | None = None, normalize: Callable[[list[str]], str] | None = None) -> None:
@@ -222,14 +223,15 @@ class SupertonicProvider:
         with self._engine_lock:
             self._engine = None
 
-    def _speak(self, installed: Installed, name: str, text: str) -> tuple[Any, int, list[str], list[Unit], list[tuple[int, int]]]:
-        """Đọc cả đoạn: (sóng âm, tần số mẫu, chữ hiện, các khúc, [đầu, cuối) của từng khúc theo mẫu)."""
+    def _speak(self, installed: Installed, name: str, text: str, origin: str | None = None,
+               ) -> tuple[Any, int, list[str], list[Unit], list[tuple[int, int]]]:
+        """Đọc cả đoạn: (sóng âm, tần số mẫu, chữ hiện, các khúc, [đầu, cuối) của từng khúc theo mẫu). `origin`: gốc của cuốn, xem `vieneu.spoken_tokens`."""
         import numpy as np
 
         from . import vieneu_engine as ve
 
         engine = self.engine(installed)
-        toks, parts = units(text, MAX_CHARS)
+        toks, parts = units(text, MAX_CHARS, origin, self.speaks_english)
         waves, pauses = [], []
         for unit in parts:
             spoken = self._normalize(unit.pieces)
@@ -248,9 +250,12 @@ class SupertonicProvider:
             raise VoiceError("Không có giọng Supertonic này.", "voice")
         return installed
 
-    def synthesize(self, text: str, native_voice: str) -> Synthesis:
+    def reading_tag(self, text: str, origin: str | None) -> str:
+        return reading_tag(text, origin, self.speaks_english)
+
+    def synthesize(self, text: str, native_voice: str, origin: str | None = None) -> Synthesis:
         installed = self._installed(native_voice)
-        audio, rate, toks, parts, spans = self._speak(installed, native_voice, text)
+        audio, rate, toks, parts, spans = self._speak(installed, native_voice, text, origin)
         return timed_synthesis(audio, rate, toks, parts, spans, self._aligner() if installed.aligner else None)
 
     def benchmark(self, tier: str = TIER) -> dict[str, Any]:

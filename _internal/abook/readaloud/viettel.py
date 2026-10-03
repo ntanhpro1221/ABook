@@ -34,6 +34,7 @@ def _detail(body: bytes) -> str:
 
 class ViettelProvider(byok.KeyedProvider):
     id = "viettel"
+    speaks_english = True  # chưa đo: giữ cách đọc cũ tới khi đo
     name = NAME
     limits = Limits(max_chars=MAX_CHARS, free="Miễn phí 50.000 ký tự trong tháng đầu", timings="estimated")
 

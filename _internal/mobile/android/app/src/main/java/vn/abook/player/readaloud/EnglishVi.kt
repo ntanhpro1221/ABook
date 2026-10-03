@@ -21,11 +21,16 @@ object EnglishVi {
     /** Cách đọc và các cờ (không trùng, theo thứ tự gặp). */
     data class Reading(val text: String, val flags: List<String>)
 
-    // Phán quyết chủ sách 04-10 (mục 4): cố định. Kate, Pete, slime là ca riêng, không suy rộng.
+    // Phán quyết chủ sách 04-10 (mục 4): cố định. Kate, Pete, guild, time, Thomas là ca riêng, không suy rộng (t đầu từ vẫn là t).
+    // Kyle: chủ sách viết kai-ồ; chính tả luật 1.5 viết c trước a, cùng một âm.
     val OWNER = mapOf(
         "game" to "ghêm", "level" to "le-vồ", "maple" to "máp-pồ", "michael" to "mai-cồ", "kate" to "ca-tê",
         "mike" to "mi-ke", "jake" to "gia-ke", "luke" to "lu-ke", "pete" to "pi-tờ", "skill" to "xờ-kiu", "boss" to "bót", "slime" to "xờ-lam",
         "quest" to "quét",
+        "guild" to "gui", "thomas" to "tho-mát", "boston" to "bót-tơn", "rocky" to "róc-ki", "time" to "tham", "night" to "nai",
+        "blake" to "bờ-lếch", "master" to "mát-tơ", "zeke" to "de-ke", "gold" to "gôn",
+        "tom" to "tom", "tony" to "to-ni", "team" to "tim", "tank" to "tanh", "tina" to "ti-na", "lyle" to "lai-ồ", "kyle" to "cai-ồ",
+        "doyle" to "đoi-ồ",
     )
     // Chữ viết tắt đã đọc thành từ (chủ sách 04-10): khoá là đúng chữ hoa như viết.
     val ACRONYMS = mapOf("VIP" to "víp", "ID" to "ai-đi")
@@ -37,18 +42,13 @@ object EnglishVi {
     )
     val OVERRIDES = LOANWORDS + OWNER
 
-    val OPEN_CHOICES = mapOf(
-        "short_silent_e" to "tên ngắn phụ âm tắc + e câm với nguyên âm e (Zeke, Deke): chủ sách chỉ có Pete -> pi-tờ (ca riêng); mặc định đọc theo âm vị",
-        "er_final" to "-er cuối (Master, Hunter): mặc định ơ thanh ngang như schwa trong từ (Oa-sinh-tơn); huyền chỉ chắc cho -əl",
-        "epenthesis" to "cụm phụ âm đầu từ không bắt đầu bằng s (Blake, clip, Cromwell): mặc định bơ- / cơ- thanh ngang như sách báo (hoà điểm); " +
-            "chủ sách mới chốt huyền cho s + phụ âm (xờ-kiu, xờ-lam)",
-    )
+    // Chỗ quy ước ghi "mở": chủ sách 04-10 (lần 3, 4) đã chốt mọi điểm trước đây.
+    val OPEN_CHOICES = emptyMap<String, String>()
 
     // Giá trị đã quét (scripts/sweep_english_vi_variants.py); ý nghĩa từng điểm ở CHOICES của bản Python.
     private const val SCHWA = "letter"
-    private const val EPENTHESIS_S = "ờ"
-    private const val EPENTHESIS = "ơ"
-    private const val ER_FINAL = "ơ"
+    private const val EPENTHESIS = "ờ"
+    private const val EPENTHESIS_MEDIAL = "ơ"
     private const val L_CODA = "n"
     private const val IL_FINAL = "u"
     private const val S_CODA = "t"
@@ -62,7 +62,10 @@ object EnglishVi {
     private const val AA_O = "o"
     private const val EH = "e"
     private const val IH = "i"
-    private const val EY_STOP = "a"
+    private const val EY_P = "a"
+    private const val EY_K = "ê"
+    private const val EY_T = "ê"
+    private const val AY_M = "am"
     private const val EY_NASAL = "ê"
     private const val GEMINATE = "primary"
     private const val TR = "tr"
@@ -234,7 +237,12 @@ object EnglishVi {
                     i += 2
                     continue
                 }
-                out.add(Phone(if (i == end - 1) FINAL_OPEN.getValue(ch) else FACE.getValue(ch), 0, ch.toString()))
+                val vowel = when {
+                    ch == 'a' && sub(w, i + 1, i + 3) == "nk" -> "AE" // ank -> anh như đường âm vị (tank -> tanh)
+                    i == end - 1 -> FINAL_OPEN.getValue(ch)
+                    else -> FACE.getValue(ch)
+                }
+                out.add(Phone(vowel, 0, ch.toString()))
                 i += 1
                 continue
             }
@@ -301,6 +309,7 @@ object EnglishVi {
                 'h' -> if (i == 0 || isVowelLetter(w, i + 1)) out.add(Phone("HH", -1, "")) // h sau nguyên âm, trước phụ âm / cuối từ câm
                 'w' -> out.add(Phone("W", -1, ""))
                 'j' -> out.add(Phone("JH", -1, ""))
+                'n' -> out.add(Phone(if (following == "k") "NG" else "N", -1, "")) // nk đọc /ŋk/
                 'q' -> out.add(Phone("K", -1, ""))
                 else -> out.add(Phone(SIMPLE_CONSONANT.getValue(ch), -1, ""))
             }
@@ -321,11 +330,11 @@ object EnglishVi {
         return phones.map { if (it.stress >= 0) Phone(FACE.getValue(vowel), 0, vowel.toString()) else it } + Phone("EH", 0, "e")
     }
 
-    /** "face" (a / i / o / u: Jake, Mike, Luke), "e" (Pete: điểm mở) hay "" khi không phải dạng phụ âm + một nguyên âm + p / t / k + e. */
-    private fun shortSilentE(word: String): String {
-        if (!(word.length in 4..5 && word.endsWith("e") && word[word.length - 2] in "ptk" && word[word.length - 3] in "aeiou")) return ""
-        if ((0 until word.length - 3).any { isVowelLetter(word, it) }) return ""
-        return if (word[word.length - 3] == 'e') "e" else "face"
+    /** MỘT phụ âm đầu (một chữ, hay ch / sh / th / ph / wh) + một nguyên âm + p / t / k + e câm: Jake, Mike, Luke, Zeke (chủ sách). */
+    private fun shortSilentE(word: String): Boolean {
+        if (!(word.length >= 4 && word.endsWith("e") && word[word.length - 2] in "ptk" && word[word.length - 3] in "aeiou")) return false
+        val onset = word.substring(0, word.length - 3)
+        return (onset.length == 1 && onset[0] !in "aeiouy") || onset in setOf("ch", "sh", "th", "ph", "wh")
     }
 
     // ---- ARPAbet -> âm tiết Việt -----------------------------------------------------------------------------------------
@@ -336,8 +345,8 @@ object EnglishVi {
         else -> ONSET.getValue(base)
     }
 
-    private fun epenthetic(base: String, initialS: Boolean = false): Syl {
-        val vowel = if (initialS) EPENTHESIS_S else EPENTHESIS
+    private fun epenthetic(base: String, initial: Boolean = false): Syl {
+        val vowel = if (initial) EPENTHESIS else EPENTHESIS_MEDIAL
         if (base == "W") return Syl("", "u")
         if (base == "Y") return Syl("", "i")
         return Syl(onsetLetter(base), "ơ", "", vowel == "ờ")
@@ -387,8 +396,11 @@ object EnglishVi {
             "EY" -> when {
                 coda.isEmpty() -> "ây"
                 coda == "m" || coda == "n" || coda == "ng" -> EY_NASAL
-                else -> EY_STOP
+                coda == "p" -> EY_P
+                coda == "c" || coda == "ch" -> EY_K
+                else -> EY_T
             }
+            "AY" -> if (coda == "m") "a" else "ai" // xờ-lam, tham (chủ sách 04-10)
             else -> mapOf("IY" to "i", "UH" to "u", "UW" to "u", "OW" to "ô", "ER" to "ơ", "AY" to "ai", "AW" to "ao", "OY" to "oi")
                 .getValue(phone.base)
         }
@@ -409,7 +421,7 @@ object EnglishVi {
         val vowels = phones.indices.filter { phones[it].stress >= 0 }
         if (vowels.isEmpty()) return null
         val out = ArrayList<Syl>()
-        var (onset, glide) = onsetRun(phones.subList(0, vowels[0]).map { it.base }, out, flags)
+        var (onset, glide) = onsetRun(phones.subList(0, vowels[0]).map { it.base }, out)
         for ((k, at) in vowels.withIndex()) {
             val vowel = phones[at]
             val last = k == vowels.size - 1
@@ -425,7 +437,7 @@ object EnglishVi {
                 run = run.drop(1) // r sau nguyên âm bỏ
                 rColored = true
             }
-            val canClose = vowel.base !in GLIDE_VOWELS
+            val canClose = vowel.base !in GLIDE_VOWELS || (vowel.base == "AY" && run.firstOrNull() == "M" && AY_M == "am")
             var ilFinal = false
             var coda = ""
             val tail = ArrayList<Syl>()
@@ -439,9 +451,13 @@ object EnglishVi {
                 }
                 if (run.isNotEmpty()) {
                     val first = run[0]
-                    var letter: String? = if (canClose) codaLetter(first, true) else (if (GLIDE_CODA == "drop") "" else null)
-                    if (first == "L" && !canClose) letter = null // Lyle: l sau ai / ao / oi đọc như -əl (lồ)
-                    if (letter == null) tail.add(finalSyllable(first, flags)) else coda = letter
+                    val letter: String? = if (canClose) codaLetter(first, true) else (if (GLIDE_CODA == "drop") "" else null)
+                    when {
+                        // l sau ai / ao / oi: âm tiết "ồ" KHÔNG phụ âm đầu, l bỏ (chủ sách 04-10: lai-ồ, kai-ồ, đoi-ồ)
+                        first == "L" && !canClose -> tail.add(Syl("", "ô", "", true))
+                        letter == null -> tail.add(finalSyllable(first, flags))
+                        else -> coda = letter
+                    }
                     for (base in run.drop(1)) if (FINAL_CLUSTER == "syllable") tail.add(finalSyllable(base, flags))
                 }
             } else {
@@ -470,14 +486,15 @@ object EnglishVi {
                 }
                 head.forEach { tail.add(epenthetic(it)) }
             }
+            if (vowel.base == "EY" && coda == "t") flags.add("analogy:ey_t")
             var core = nucleus(vowel, coda, rColored)
-            if (ilFinal) core += "u"
-            var grave = false
-            if (last && vowel.base == "ER" && vowel.stress == 0 && coda.isEmpty() && tail.isEmpty()) {
-                flags.add("open:er_final")
-                grave = ER_FINAL == "ờ"
+            if (vowel.base == "AE" && coda == "ng" && run.size >= 2 && run[0] == "NG" && run[1] == "K") {
+                core = "a" // /æŋk/ -> anh (chủ sách 04-10: tank -> tanh; rank, thank theo đó)
+                coda = "nh"
+                flags.add("analogy:ank")
             }
-            emit(out, onset, glide, core, coda, grave)
+            if (ilFinal) core += "u"
+            emit(out, onset, glide, core, coda, false) // -er cuối: ơ thanh ngang (chủ sách 04-10: mát-tơ)
             out.addAll(tail)
             onset = nextOnset
             glide = nextGlide
@@ -485,13 +502,9 @@ object EnglishVi {
         return out
     }
 
-    private fun onsetRun(run: List<String>, out: MutableList<Syl>, flags: MutableList<String>): Pair<String, String> {
+    private fun onsetRun(run: List<String>, out: MutableList<Syl>): Pair<String, String> {
         val (head, onset, glide) = splitOnset(run)
-        head.forEachIndexed { index, base ->
-            val initialS = index == 0 && base == "S"
-            if (!initialS) flags.add("open:epenthesis")
-            out.add(epenthetic(base, initialS))
-        }
+        head.forEach { out.add(epenthetic(it, true)) }
         return onset to glide
     }
 
@@ -604,10 +617,7 @@ object EnglishVi {
         }
         var phones: List<Phone>? = null
         var route = "via:phonemes"
-        val shape = if (capital) shortSilentE(key) else ""
-        if (shape == "e") {
-            flags.add("open:short_silent_e")
-        } else if (shape == "face" && SHORT_SILENT_E == "face") {
+        if (capital && shortSilentE(key) && SHORT_SILENT_E == "face") {
             phones = faceShort(key)
             route = "via:face"
         }
