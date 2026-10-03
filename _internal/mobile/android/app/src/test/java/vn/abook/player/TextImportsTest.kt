@@ -55,6 +55,20 @@ class TextImportsTest {
         return TextImports.stageFolder(folder.name, folder.listFiles()!!.map { child -> child.name to { FileInputStream(child) as java.io.InputStream? } })
     }
 
+    @Test
+    fun a_long_chapter_file_name_keeps_its_txt_ending_and_no_two_files_collide() {
+        val long = "[001] " + "Một tên chương light novel rất dài ".repeat(5)
+        val staged = TextImports.stageFolder("Sách dài", listOf(
+            "${long}phần 1.txt" to { "Chương 1\n\nMột.".byteInputStream() as java.io.InputStream? },
+            "${long}phần 2.txt" to { "Chương 2\n\nHai.".byteInputStream() as java.io.InputStream? },
+        ))
+        val preview = TextImports.preview(staged.ref)
+        assertEquals(2, preview.getJSONArray("chapters").length()) // trước đây: cắt còn 120 ký tự -> mất ".txt" -> không còn chương nào
+        assertTrue(TextImports.safeName("x".repeat(200) + ".txt", "c").let { it.length == 120 && it.endsWith(".txt") })
+        val used = HashSet<String>()
+        assertEquals(listOf("a.txt", "a (2).txt", "A (3).txt"), listOf("a.txt", "a.txt", "A.txt").map { TextImports.uniqueName(it, used) })
+    }
+
     private fun pagesOf(name: String): Triple<List<List<String>>, String, String> {
         val raw = StrictJson.parse(File(imports, "pages/$name.pages.json").readText(Charsets.UTF_8)) as JSONObject
         return Triple(TextImports.pagesOf(raw.getJSONArray("pages"))!!, raw.getString("title"), raw.getString("author"))
@@ -80,7 +94,43 @@ class TextImportsTest {
         assertEquals("Lê Thử Nghiệm", preview.getString("author"))
         val notes = (0 until preview.getJSONArray("notes").length()).map { preview.getJSONArray("notes").getString(it) }
         assertTrue(notes.any { it.contains("ghi công") && it.contains("không tự bỏ") })
+        assertTrue(StrictJson.equal(StrictJson.parse("""[{"chapter": 2, "line": "Dịch: Nhóm Lục Bình"}]"""), preview.getJSONArray("suggestions")))
+        assertTrue(preview.isNull("existing"))
         assertEquals("chưa ghi gì vào thư viện", 0, Store.books().size)
+    }
+
+    @Test
+    fun the_preview_already_knows_the_book_is_there_and_a_separate_copy_can_still_be_added() {
+        val first = TextImports.create(stageFile("epub3.epub").ref.also { TextImports.preview(it) }, "", cache)
+        val again = stageFile("epub3.epub")
+        val existing = TextImports.preview(again.ref).getJSONObject("existing")
+        assertEquals(first.getString("id"), existing.getString("id")) // hỏi ngay ở bước xem trước
+        assertEquals("Chuyến phà cuối ngày", existing.getString("title"))
+        val copy = TextImports.create(again.ref, "Bản thứ hai", cache, separate = true)
+        assertEquals("new", copy.getString("how"))
+        assertEquals(first.getString("id") + "-2", copy.getString("id"))
+        assertEquals("Bản thứ hai", Store.manifest(copy.getString("id"))!!.getString("title"))
+    }
+
+    @Test
+    fun a_credit_line_suggestion_is_skipped_only_when_the_listener_accepts_it() {
+        val id = TextImports.create(stageFile("epub3.epub").ref.also { TextImports.preview(it) }, "", cache).getString("id")
+        fun call(method: String, path: String, body: JSONObject? = null) = LocalStudio.handle(method, "/api/books/$id$path", body)
+        val (status, before) = call("GET", "/suggestions")
+        assertEquals(200, status)
+        assertTrue(StrictJson.equal(
+            StrictJson.parse("""{"suggestions": [{"chapter": 2, "title": "Chương 2: Người khách lạ", "line": "Dịch: Nhóm Lục Bình", "skipped": false}]}"""),
+            before,
+        ))
+        val (putStatus, put) = call("PUT", "/skip", JSONObject().put("line", "Dịch: Nhóm Lục Bình").put("chapters", JSONArray().put(2)).put("skip", true))
+        assertEquals(200, putStatus)
+        assertTrue(StrictJson.equal(StrictJson.parse("""{"skip": {"2": ["Dịch: Nhóm Lục Bình"]}}"""), put))
+        assertEquals(400, call("PUT", "/skip", JSONObject().put("line", "Dịch: A").put("chapters", JSONArray().put(9))).first)
+        val chapters = Store.manifest(id)!!.getJSONArray("chapters")
+        assertEquals("""["Dịch: Nhóm Lục Bình"]""", chapters.getJSONObject(1).getJSONArray("skip").toString()) // màn đọc + đọc to bỏ qua
+        assertFalse(chapters.getJSONObject(0).has("skip"))
+        assertTrue("chữ của sách không đổi", Store.file(id, "texts/2.txt").readText().contains("Dịch: Nhóm Lục Bình"))
+        assertTrue((call("GET", "/suggestions").second as JSONObject).getJSONArray("suggestions").getJSONObject(0).getBoolean("skipped"))
     }
 
     @Test
@@ -117,7 +167,7 @@ class TextImportsTest {
             TextImports.preview(staged.ref, listOf(emptyList(), emptyList(), emptyList()))
             fail("PDF scan")
         } catch (error: BookImport.Failed) {
-            assertTrue(error.message!!, error.message!!.startsWith("PDF scan, cần OCR"))
+            assertTrue(error.message!!, error.message!!.startsWith("PDF này là ảnh chụp"))
         }
     }
 

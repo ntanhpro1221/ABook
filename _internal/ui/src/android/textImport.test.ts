@@ -81,8 +81,8 @@ describe("preview", () => {
   it("passes Kotlin's own refusal (e.g. a scanned PDF) through unchanged", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ arrayBuffer: async () => new ArrayBuffer(0) }));
     pdf.readPdfPages.mockResolvedValue({ title: "", author: "", pages: [[], [], []] });
-    library.previewImport.mockRejectedValue(new Error("PDF scan, cần OCR: file chỉ có ảnh của trang"));
-    await expect(phoneTextImport.preview({ ref: "i4", name: "scan.pdf", pdf: "/x/scan.pdf" } as never)).rejects.toThrow("PDF scan, cần OCR");
+    library.previewImport.mockRejectedValue(new Error("PDF này là ảnh chụp, chưa có chữ để đọc."));
+    await expect(phoneTextImport.preview({ ref: "i4", name: "scan.pdf", pdf: "/x/scan.pdf" } as never)).rejects.toThrow("ảnh chụp");
     vi.unstubAllGlobals();
   });
 });
@@ -91,7 +91,9 @@ describe("add and discard", () => {
   it("adds with the title the user typed and drops the temporary copy on request", async () => {
     library.createImport.mockResolvedValue({ id: "f-abc", how: "new", chapters: 3 });
     expect(await phoneTextImport.add({ ref: "i1", name: "x" }, "Tên tôi đặt")).toEqual({ id: "f-abc", how: "new", chapters: 3 });
-    expect(library.createImport).toHaveBeenCalledWith({ ref: "i1", title: "Tên tôi đặt" });
+    expect(library.createImport).toHaveBeenCalledWith({ ref: "i1", title: "Tên tôi đặt", separate: false });
+    await phoneTextImport.add({ ref: "i2", name: "x" }, "Bản riêng", true);
+    expect(library.createImport).toHaveBeenLastCalledWith({ ref: "i2", title: "Bản riêng", separate: true });
     library.discardImport.mockResolvedValue(undefined);
     await phoneTextImport.discard!({ ref: "i1", name: "x" });
     expect(library.discardImport).toHaveBeenCalledWith({ ref: "i1" });

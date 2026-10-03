@@ -1,0 +1,13 @@
+{
+ "format": "abook-edits",
+ "version": 1,
+ "skip": {
+  "1": [
+   "Biên tập: Ai Đó",
+   "Dịch: Nhóm Thử"
+  ],
+  "2": [
+   "Trans: Tôi"
+  ]
+ }
+}

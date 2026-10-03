@@ -1,12 +1,14 @@
 """Bộ ví dụ DÙNG CHUNG cho bộ nhập sách (abook/importers.py, docs/LISTEN_ANYTHING.md mục 2): pytest và test JVM của app Android
 (BookImportTest.kt) cùng đọc `tests/fixtures/import/` - hai bản cài (Python, Kotlin) phải ra ĐÚNG những chương này.
 
-    fixtures/import/epub3.epub, epub2.epub   EPUB3 (nav, bìa properties="cover-image") và EPUB2 (NCX, bìa <meta name="cover">)
-    fixtures/import/headings.docx            DOCX có kiểu Heading 1/2, Title, tab, xuống dòng cứng, chữ đã xoá, bảng
-    fixtures/import/plain.docx               DOCX không có kiểu Heading: tách theo dòng "Chương N"
-    fixtures/import/story.pdf                PDF có lớp chữ: tiêu đề chạy, số trang, đoạn vắt qua trang, gạch nối cuối dòng
+    fixtures/import/epub3.epub, epub2.epub   EPUB3 (nav, bìa properties="cover-image") và EPUB2 (NCX, bìa <meta name="cover">);
+                                             EPUB3 có thực thể HTML (&ocirc; &#147; &copy không chấm phẩy) cả trong mục lục
+    fixtures/import/headings.docx            DOCX có kiểu Heading 1/2, Title, tab, xuống dòng cứng, chữ đã xoá, bảng, mục lục Word
+    fixtures/import/plain.docx               DOCX không có kiểu Heading: tách theo dòng "Chương N"; viết bằng xmlns mặc định (không "w:")
+    fixtures/import/story.pdf                PDF có lớp chữ: tiêu đề chạy (kèm số trang), số trang, đoạn vắt qua trang, gạch nối cuối dòng
     fixtures/import/scan.pdf                 PDF không có lớp chữ (scan) -> lỗi "cần OCR"
-    fixtures/import/txt/                     thư mục TXT: UTF-8 có BOM + CRLF, UTF-16 LE, cp1258, thứ tự tự nhiên (1, 2, 10)
+    fixtures/import/txt/                     thư mục TXT: UTF-8 có BOM + CRLF, UTF-16 LE, cp1258, thứ tự tự nhiên (1, 2, 10), file
+                                             chỉ có khoảng trắng, file ".txt" không tên, "01"/"1" trùng số, chữ số Ả Rập
     fixtures/import/expected/<tên>.json      kết quả mong đợi (ImportedBook.to_dict, hay {"error": ...})
     fixtures/import/pages/story.pages.json   lớp thô của PDF (pypdf VÀ pdf.js phải ra đúng các dòng này)
 
@@ -92,6 +94,7 @@ def _xhtml(body: str, head: str = "") -> bytes:
 
 def build_epub3() -> bytes:
     ch1 = _xhtml(f"<h1>{_esc(CHAPTERS[0][0])}</h1>\n" + "\n".join(f"<p>{_esc(p)}</p>" for p in CHAPTERS[0][1])
+                 + "\n<p>&Ocirc;ng T&aacute;m c&#432;&#7901;i: &#147;Ph&agrave; c&#x169; r&#7891;i.&#148; &copy 1975 &abreve;</p>"
                  + "\n<p>Nước&#160;lớn&nbsp;dần.</p>\n<script>nothing()</script>", "<style>p{margin:0}</style>")
     ch2 = _xhtml(f"<h2>{_esc(CHAPTERS[1][0])}</h2>\n<p>Dịch: Nhóm Lục Bình</p>\n"
                  + "\n".join(f"<p>{_esc(p)}</p>" for p in CHAPTERS[1][1]))
@@ -117,7 +120,7 @@ def build_epub3() -> bytes:
 </package>"""
     nav = ('<?xml version="1.0" encoding="utf-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">'
            '<body><nav epub:type="toc"><ol>\n'
-           f'<li><a href="text/ch1.xhtml">{_esc(CHAPTERS[0][0])}</a></li>\n'
+           f'<li><a href="text/ch1.xhtml">{_esc(CHAPTERS[0][0]).replace(" ", "&nbsp;", 1)}</a></li>\n'
            f'<li><a href="text/ch%202.xhtml#start">{_esc(CHAPTERS[1][0])}</a></li>\n'
            '<li><a href="text/ch3.xhtml">Chương 3</a></li>\n</ol></nav></body></html>')
     entries = [
@@ -173,6 +176,7 @@ STYLES = f"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
   <w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/></w:style>
   <w:style w:type="paragraph" w:styleId="Heading3"><w:name w:val="heading 3"/></w:style>
   <w:style w:type="paragraph" w:styleId="Tieude1"><w:name w:val="heading 1"/></w:style>
+  <w:style w:type="paragraph" w:styleId="TOC1"><w:name w:val="toc 1"/></w:style>
 </w:styles>"""
 
 
@@ -182,8 +186,10 @@ def _para(text: str = "", style: str | None = None, *, runs: str | None = None) 
     return f"<w:p>{props}{body}</w:p>"
 
 
-def _docx(body: str, core: str | None) -> bytes:
+def _docx(body: str, core: str | None, *, default_namespace: bool = False) -> bytes:
     document = f'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:document {W_NS}><w:body>{body}</w:body></w:document>'
+    if default_namespace:  # cùng tài liệu, phần tử không có tiền tố (xmlns mặc định) - hợp lệ, vài bộ ghi DOCX làm vậy
+        document = document.replace(W_NS, W_NS.replace("xmlns:w", "xmlns") + " " + W_NS).replace("<w:", "<").replace("</w:", "</")
     content_types = ('<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
                      '<Default Extension="xml" ContentType="application/xml"/></Types>')
     entries = [("[Content_Types].xml", content_types.encode()), ("word/document.xml", document.encode()),
@@ -198,6 +204,8 @@ def build_docx_headings() -> bytes:
             'xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>' + BOOK_TITLE + '</dc:title><dc:creator>' + AUTHOR
             + '</dc:creator><dc:language>vi-VN</dc:language></cp:coreProperties>')
     body = _para(BOOK_TITLE, "Title") + _para("Một câu đề tặng đứng trước chương đầu tiên.")
+    body += "".join(_para(runs=f'<w:hyperlink w:anchor="_Toc{n}"><w:r><w:t>{_esc(title)}</w:t></w:r><w:r><w:tab/><w:t>{n + 2}</w:t></w:r>'
+                               '</w:hyperlink>', style="TOC1") for n, (title, _p) in enumerate(CHAPTERS, start=1))
     body += _para(CHAPTERS[0][0], "Heading1")
     body += _para(CHAPTERS[0][1][0])
     body += _para(runs='<w:r><w:t>Hai dòng</w:t><w:tab/><w:t>có tab</w:t><w:br/><w:t>và xuống dòng cứng.</w:t></w:r>')
@@ -219,7 +227,7 @@ def build_docx_plain() -> bytes:
         for paragraph in paragraphs[:2]:
             body += _para(paragraph)
     body += _para("Chương trình truyền hình hôm ấy kéo dài đến tận khuya, ai cũng mệt nhoài.")
-    return _docx(body, None)
+    return _docx(body, None, default_namespace=True)
 
 
 # --- PDF (viết tay, chữ qua font Identity-H + ToUnicode nên pypdf và pdf.js đọc ra đúng Unicode) --------------------------
@@ -315,7 +323,7 @@ def story_pdf_pages() -> list[list[str]]:
     per_page = 8
     pages = []
     for number, start in enumerate(range(0, len(lines), per_page), start=1):
-        pages.append(["TRUYỆN THỬ NGHIỆM", *lines[start:start + per_page], f"Trang {number}"])
+        pages.append([f"TRUYỆN THỬ NGHIỆM · {number}", *lines[start:start + per_page], f"Trang {number}"])
     return pages
 
 
@@ -359,6 +367,10 @@ def txt_files() -> dict[str, bytes]:
         "2.txt": b"\xff\xfe" + two.encode("utf-16-le"),
         "10.txt": encode_cp1258(three),
         "9 Ngoại truyện.txt": "Một chương viết bằng UTF-8 thường, không BOM.\n".encode("utf-8"),
+        "3.txt": b" \r\n\t\r\n",  # chỉ có khoảng trắng: không thành chương, có ghi chú
+        "01.txt": "Bản trùng số với 1.txt - xếp theo tên gốc, đứng trước.\n".encode("utf-8"),
+        ".txt": "Không có tên, chỉ có đuôi: không phải file .txt (như Path.suffix).\n".encode("utf-8"),
+        "\u0661\u0661.txt": "Tên bằng chữ số Ả Rập: vẫn là số 11.\n".encode("utf-8"),
         "ghi chu.md": b"Not a chapter: the importer only takes .txt files.\n",
     }
 

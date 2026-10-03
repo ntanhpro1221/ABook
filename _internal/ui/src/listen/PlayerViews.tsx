@@ -2,7 +2,7 @@ import * as Popover from "@radix-ui/react-popover";
 import { Capacitor } from "@capacitor/core";
 import { coverStyle } from "@/shared/cover";
 import * as Slider from "@radix-ui/react-slider";
-import { useQueries, useQueryClient } from "@tanstack/react-query";
+import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AudioLines,
   Bookmark as BookmarkIcon,
@@ -48,7 +48,8 @@ import { nextChapterLabel, PREPARING_VOICE, textChapterLine, toggleLabel } from 
 import { spokenVoiceName } from "./onlineConsent";
 import { PlaylistOptionLabel, playlistNote, usePlaylistChoice } from "./PlaylistChoice";
 import { JumpToPlaying, ReadAlongText, sentenceIndexAt, useFollowVoice, useListenFrom, usePlayingSentence } from "./ReadAlongText";
-import { paragraphsFor, prepareLabel, upcomingTextChapters, type PrepareStatus } from "./prepareAhead";
+import { canPrepare, planLabel, PREPARE_STATUS_KEY, prepareIntro, prepareLabel, readyChapterIds, upcomingTextChapters, type PrepareStatus } from "./prepareAhead";
+import type { ReadAloudVoice } from "./readAloud";
 import { chapterScriptQuery, useChapterScript, useListenBook, useListenMutations, useReadAloudVoices, useSource } from "./source";
 
 export function speedLabel(rate: number): string {
@@ -352,6 +353,7 @@ function MusicMenuFor({ bookId }: { bookId: string }) {
  *  có hiệu lực từ đoạn kế. Không hiện khi đang nghe chương có audio. */
 export function VoiceMenu() {
   const { track, queue } = usePlayer();
+  const source = useSource();
   const { data: voices } = useReadAloudVoices();
   const [chosen, setChosen] = useState("");
   const speaking = queue.find((chapter) => chapter.id === track?.chapterId)?.state === "text";
@@ -388,53 +390,75 @@ export function VoiceMenu() {
         ))}
       </div>
       {current?.online && <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{onlineNotice(current)}</p>}
-      {current?.provider === "vieneu" && <PrepareAhead voice={current.id} bookId={track.bookId} chapterId={track.chapterId} />}
+      {current && canPrepare(current, Boolean(source.readAloudPrepareOnline)) && (
+        <PrepareAhead voice={current} bookId={track.bookId} chapterId={track.chapterId} />
+      )}
     </MenuShell>
   );
 }
 
-/** "Làm trước" cho giọng VieNeu (máy tính): máy đọc sẵn các chương tới ở nền - giọng chậm hơn tốc độ nghe vẫn nghe liền mạch. Nói rõ còn bao
- *  lâu; người nghe bấm mới làm, bấm "Dừng" là thôi. */
-function PrepareAhead({ voice, bookId, chapterId }: { voice: string; bookId: string; chapterId: number }) {
+/** Trạng thái "Làm trước" (một việc cho cả máy): hỏi lại thường xuyên khi đang làm. Điện thoại còn đẩy tiến độ vào cùng khoá (android/readAloud.ts). */
+function usePrepareStatus(enabled = true) {
   const source = useSource();
+  return useQuery({
+    queryKey: PREPARE_STATUS_KEY,
+    queryFn: () => source.readAloudPrepareStatus!(),
+    enabled: enabled && Boolean(source.readAloudPrepareStatus),
+    refetchInterval: (query) => (query.state.data?.state === "running" ? 2000 : 15000),
+  });
+}
+
+/** Các chương của cuốn này đã làm sẵn bằng giọng của cuốn (dấu "Đã làm sẵn" ở danh sách chương). */
+export function usePreparedChapters(bookId: string, enabled: boolean): Set<number> {
+  // Chỉ nguồn báo từng chương (điện thoại); máy tính làm theo đoạn, không có dấu - khỏi hỏi máy chủ.
+  const source = useSource();
+  const { data } = usePrepareStatus(enabled && Boolean(source.readAloudPrepareOnline));
+  return useMemo(() => readyChapterIds(data, bookId, chosenVoice(bookId)), [data, bookId]);
+}
+
+/** "Làm trước": máy đọc sẵn các chương tới ở nền - giọng chậm hơn tốc độ nghe (VieNeu) vẫn nghe liền mạch; trên điện thoại cả giọng trực tuyến,
+ *  để nghe khi không có mạng. Nói rõ còn bao lâu; người nghe bấm mới làm, bấm "Dừng" là thôi. */
+function PrepareAhead({ voice, bookId, chapterId }: { voice: ReadAloudVoice; bookId: string; chapterId: number }) {
+  const source = useSource();
+  const client = useQueryClient();
   const { queue } = usePlayer();
-  const [status, setStatus] = useState<PrepareStatus | null>(null);
+  const { data: status } = usePrepareStatus();
   const [busy, setBusy] = useState(false);
-  const running = status?.state === "running";
-  useEffect(() => {
-    if (!source.readAloudPrepareStatus) return;
-    let alive = true;
-    const poll = () => void source.readAloudPrepareStatus!().then((next) => alive && setStatus(next)).catch(() => undefined);
-    poll();
-    const timer = setInterval(poll, running ? 2000 : 15000);
-    return () => {
-      alive = false;
-      clearInterval(timer);
-    };
-  }, [source, running]);
-  if (!source.readAloudPrepare) return null;
   const upcoming = upcomingTextChapters(queue, chapterId);
+  const request = {
+    voice: voice.id,
+    bookId,
+    chapters: upcoming.map(({ id, title }) => ({ id, title })),
+    label: upcoming.length === 1 ? upcoming[0].title : `${upcoming.length} chương tới`,
+  };
+  const mine = Boolean(status && status.voice === voice.id && (!status.bookId || status.bookId === bookId));
+  const running = status?.state === "running";
+  const { data: plan } = useQuery({
+    queryKey: ["readaloud", "prepare-plan", request.voice, request.bookId, request.chapters.map((chapter) => chapter.id)],
+    queryFn: () => source.readAloudPreparePlan!(request),
+    enabled: Boolean(source.readAloudPreparePlan) && request.chapters.length > 0 && !(mine && running),
+  });
+  if (!source.readAloudPrepare) return null;
+  const chargingOnly = status?.chargingOnly ?? true;
+  const settle = (next: PrepareStatus) => client.setQueryData(PREPARE_STATUS_KEY, next);
   const start = async () => {
     setBusy(true);
     try {
-      const texts = await paragraphsFor(upcoming, (id) => source.chapterText(bookId, id));
-      const label = upcoming.length === 1 ? upcoming[0].title : `${upcoming.length} chương tới`;
-      setStatus(await source.readAloudPrepare!(voice, texts, label));
+      settle(await source.readAloudPrepare!({ ...request, chargingOnly }));
     } catch (error) {
       toast.error("Chưa làm trước được", { description: (error as Error).message });
     } finally {
       setBusy(false);
     }
   };
-  const label = status && status.voice === voice ? prepareLabel(status) : "";
+  const label = mine && status ? prepareLabel(status) : running ? "Đang làm trước cho một cuốn hay giọng khác - làm ở đây thì việc ấy dừng." : "";
   return (
     <div className="border-t border-line px-2 pb-1 pt-2 text-xs text-fg-2">
-      <p className="text-pretty">
-        {label || "Máy đọc chậm? Làm trước các chương tới ở nền để nghe liền mạch, không phải chờ giữa các đoạn."}
-      </p>
-      <div className="mt-1.5 flex gap-2">
-        {running ? (
-          <button type="button" className="rounded-lg px-2 py-1 font-medium text-fg hover:bg-hover" onClick={() => void source.readAloudPrepareCancel?.().then(setStatus)}>
+      <p className="text-pretty">{label || prepareIntro(voice)}</p>
+      {!(mine && running) && plan && <p className="mt-1 text-pretty">{planLabel(plan)}</p>}
+      <div className="mt-1.5 flex flex-wrap items-center gap-2">
+        {mine && running ? (
+          <button type="button" className="rounded-lg px-2 py-1 font-medium text-fg hover:bg-hover" onClick={() => void source.readAloudPrepareCancel?.().then(settle)}>
             Dừng làm trước
           </button>
         ) : (
@@ -443,6 +467,17 @@ function PrepareAhead({ voice, bookId, chapterId }: { voice: string; bookId: str
               {upcoming.length === 1 ? "Làm trước chương sau" : `Làm trước ${upcoming.length} chương tới`}
             </button>
           )
+        )}
+        {source.readAloudPrepareOptions && (
+          <label className="flex min-h-8 cursor-pointer items-center gap-1.5 px-1">
+            <input
+              type="checkbox"
+              className="size-4 accent-[var(--accent)]"
+              checked={chargingOnly}
+              onChange={(event) => void source.readAloudPrepareOptions!({ chargingOnly: event.target.checked }).then(settle)}
+            />
+            Chỉ khi đang sạc
+          </label>
         )}
       </div>
     </div>

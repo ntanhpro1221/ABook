@@ -245,9 +245,18 @@ Decisions from these numbers:
   waits while a listener's own clip is being made (live first). It takes only what fits 60% of the clip cache (WAV: ~52 min of Turbo
   audio, ~104 min of Nano), says how long it will take (measured speed of this run, before that the self-benchmark RTF), and the
   Settings card turns the benchmark into words ("mỗi giờ nghe máy cần làm trước khoảng N phút"). Desktop runs it on the CPU while the
-  app is open (not lowered in priority; the ORT thread pool has no per-call priority). Phone (not built): the same queue in the
-  native core as a WorkManager job with `setRequiresCharging(true)` + `setRequiresBatteryNotLow(true)`, writing into the same clip
-  cache, with a notification showing progress; at RTF ~1.8 one hour of listening needs ~1 h 50 min of charging time.
+  app is open (not lowered in priority; the ORT thread pool has no per-call priority). Phone (built 03-10,
+  `mobile/android/.../readaloud/PrepareAhead.kt` + pure parts in `PreparePlan.kt`, plugin `ReadAloud.prepare*`, adapter
+  `ui/src/android/readAloud.ts` `phonePrepare`): a WorkManager job (charging by default - the listener can untick "Chỉ khi đang
+  sạc" -, unmetered network for online voices, battery not low, idle not required) that reads the chapters itself (`Paragraphs.of`,
+  same keys as playback) and writes into the same clip cache; any voice can be prepared (Edge, keyed voices, VieNeu), so the phone
+  also gets "listen offline later". Whole chapters only, up to 60% of the 300 MB clip cache; prepared clips are pinned (trimmed
+  only after every unpinned clip) until the listener reaches them. The job waits while a live paragraph is being read, saves
+  after every paragraph (resumes after process death, skips cached paragraphs), runs in 9-minute slices, and shows a low-priority
+  progress notification (not a foreground service). Prepared clips use exactly the chosen voice (`readExactly`): an online voice
+  failing mid-way stops the job with a message instead of falling back, so a prepared chapter never mixes voices. The estimate
+  comes from that voice's measured speed (live reading and earlier jobs, `VoiceSpeeds`). At RTF ~1.8 one hour of listening needs
+  ~1 h 50 min of charging time.
 - Clips are 16-bit WAV at the voice's rate (48 kHz Turbo = 5.8 MB per audio-minute in the 500 MB clip cache); MP3 would need ffmpeg.
 - Loudness (BS.1770 over 30 sentences per voice, `scripts/measure_vieneu_loudness.py`): Turbo voices -19.1 to -20.8 LUFS (most within 0.3 dB of the -20 target), Nano voices -17.1 to -19.5 LUFS (louder: gains down to -2.9 dB); gains in `readaloud/loudness.py`.
 
