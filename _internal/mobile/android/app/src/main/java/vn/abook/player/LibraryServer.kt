@@ -53,8 +53,6 @@ object LibraryServer {
     private const val MAX_BODY_BYTES = 2 * 1024 * 1024
     private val PROBE = "ABOOK_DISCOVER".toByteArray()
     private val BOOK_ID = Regex("[A-Za-z0-9_-]+")
-    // Tên file một bài nhạc nền trong sách: `music/<sha1>.<đuôi>` (music_plan.TRACK_FILE) - bài trong file sách lẫn bài người nghe ghim.
-    private val TRACK_FILE = Regex("music/[0-9a-f]{40}\\.(?:${MusicStore.EXTENSIONS.joinToString("|")})")
 
     private lateinit var devicesFile: File
     private var server: ServerSocket? = null
@@ -462,11 +460,10 @@ object LibraryServer {
         return copy
     }
 
-    /** Tên bài (`music/<sha1>.<đuôi>`) mà mốc `cue` dùng, nếu tên hợp lệ và có trong `music.tracks`; không thì null. */
-    private fun cuedTrack(music: JSONObject, cue: JSONObject): String? =
-        cue.optString("track").takeIf { TRACK_FILE.matches(it) && music.optJSONObject("tracks")?.optJSONObject(it) != null }
-
-    /** Mục `music` chỉ giữ mốc có bài còn file trong sách (mốc không có file thì im lặng, như máy tính bỏ mốc); không còn mốc nào -> null. */
+    /**
+     * Mục `music` chỉ giữ mốc có bài còn file trong sách (mốc không có file thì im lặng, như máy tính bỏ mốc); không còn mốc nào -> null.
+     * Mỗi bài kèm `size` (cỡ file thật) để máy kia kiểm lúc tải - như `sync.manifest` của máy tính.
+     */
     private fun playableMusic(id: String, music: JSONObject?): JSONObject? {
         val tracks = music?.optJSONObject("tracks") ?: return null
         val chapters = music.optJSONObject("chapters") ?: return null
@@ -477,10 +474,10 @@ object LibraryServer {
             val kept = JSONArray()
             for (index in 0 until cues.length()) {
                 val cue = cues.optJSONObject(index) ?: continue
-                val track = cuedTrack(music, cue) ?: continue
-                if (!runCatching { Store.file(id, track).isFile }.getOrDefault(false)) continue
+                val track = BookMusic.cuedTrack(music, cue) ?: continue
+                val file = runCatching { Store.file(id, track) }.getOrNull()?.takeIf { it.isFile } ?: continue
                 kept.put(cue)
-                keptTracks.put(track, tracks.getJSONObject(track))
+                keptTracks.put(track, JSONObject(tracks.getJSONObject(track).toString()).put("size", file.length()))
             }
             if (kept.length() > 0) keptChapters.put(chapter, kept)
         }
@@ -504,12 +501,7 @@ object LibraryServer {
         if (manifest.optJSONObject("cover") != null) names += "cover.jpg"
         // Nhạc nền: đúng các bài mà một mốc đang dùng (file sách của người làm, hay bài người nghe ghim) - không bao giờ cả kho
         // "Nhạc của tôi", cũng không bài nằm trong sách mà không mốc nào dùng.
-        val music = manifest.optJSONObject("music")
-        val musicChapters = music?.optJSONObject("chapters")
-        for (chapter in musicChapters?.keys()?.asSequence()?.toList().orEmpty()) {
-            val cues = musicChapters?.optJSONArray(chapter) ?: continue
-            for (index in 0 until cues.length()) cues.optJSONObject(index)?.let { cue -> cuedTrack(music, cue)?.let(names::add) }
-        }
+        BookMusic.tracks(manifest.optJSONObject("music")).forEach { names += it.name }
         return names.filter { !it.contains("..") }.toSet()
     }
 

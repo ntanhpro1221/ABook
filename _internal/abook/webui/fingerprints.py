@@ -15,7 +15,7 @@ import json
 import os
 import threading
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
 
 CHUNK = 1024 * 1024
 
@@ -61,10 +61,10 @@ class Fingerprints:
             self._save()
         return value
 
-    def shares_a_chapter(self, project_root: Path, chapters: dict[str, dict[str, Any]]) -> bool:
-        """Cuốn trên máy này có chung ít nhất một chương audio với `chapters` ({"chapters/x.mp3": {size, sha256}})?
-        Chỉ băm file trùng tên và cỡ - thường là không băm gì cả. So theo TÊN FILE (không kể thư mục): file cả bộ
-        đặt audio ở `chapters/<phần>/x.mp3`, còn dự án mỗi phần giữ `output/chapters/x.mp3`."""
+    def _matching(self, project_root: Path, chapters: dict[str, dict[str, Any]]) -> Iterator[str]:
+        """Tên các chương trong `chapters` ({"chapters/x.mp3": {size, sha256}}) mà cuốn trên máy này có y hệt từng byte. Chỉ băm
+        file trùng tên và cỡ - thường là không băm gì cả. So theo TÊN FILE (không kể thư mục): file cả bộ đặt audio ở
+        `chapters/<phần>/x.mp3`, còn dự án mỗi phần giữ `output/chapters/x.mp3`."""
         folder = Path(project_root) / "output" / "chapters"
         for name, described in chapters.items():
             if not name.startswith("chapters/") or not isinstance(described, dict):
@@ -73,10 +73,18 @@ class Fingerprints:
             try:
                 if (candidate.is_file() and candidate.stat().st_size == int(described.get("size", -1))
                         and self.sha256(candidate) == described.get("sha256")):
-                    return True
+                    yield name
             except (OSError, ValueError, TypeError):
                 continue
-        return False
+
+    def shares_a_chapter(self, project_root: Path, chapters: dict[str, dict[str, Any]]) -> bool:
+        """Cuốn trên máy này có chung ít nhất một chương audio với `chapters`? Dừng ở chương đầu tiên khớp."""
+        return next(self._matching(project_root, chapters), None) is not None
+
+    def shared_chapters(self, project_root: Path, chapters: dict[str, dict[str, Any]]) -> int:
+        """Số chương trong `chapters` mà cuốn trên máy này có y hệt từng byte (file `.abookproj` chỉ là bản sửa của dự án
+        này khi mọi chương của nó đều có ở đây)."""
+        return sum(1 for _ in self._matching(project_root, chapters))
 
     def _save(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)

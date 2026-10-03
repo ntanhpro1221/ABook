@@ -20,8 +20,8 @@ của chính thành phần ấy.
   `abook/vendor/pypdf/` (kèm LICENSE và băm wheel nguồn), không phụ thuộc pyproject/uv.lock hay gói cài sẵn. Nhập EPUB và DOCX chỉ
   dùng thư viện chuẩn của Python (zipfile, xml, html.parser).
 - PySide6 / Qt (LGPLv3) - cửa sổ app máy tính.
-- FFmpeg / imageio-ffmpeg (LGPL hoặc GPL tuỳ bản build). Bản app chỉ-nghe KHÔNG mang ffmpeg trong bộ cài: lần nhập "Nhạc của tôi"
-  đầu tiên tải bánh xe `imageio-ffmpeg` 0.6.0 (PyPI, ghim URL + SHA-256, `webui/ffmpeg_setup.py`) và lấy ra đúng một file, FFmpeg 7.1
+- FFmpeg / imageio-ffmpeg (LGPL hoặc GPL tuỳ bản build). Bản app chỉ-nghe KHÔNG mang ffmpeg trong bộ cài: mô-đun "Phân tích nhạc" (người dùng
+  bấm mới tải, `webui/music_module.py`) tải bánh xe `imageio-ffmpeg` 0.6.0 (PyPI, ghim URL + SHA-256, `webui/ffmpeg_setup.py`) và lấy ra đúng một file, FFmpeg 7.1
   bản "essentials" của gyan.dev (cấu hình GPL-3.0, mã nguồn: https://www.gyan.dev/ffmpeg/builds/); phần bọc imageio-ffmpeg là BSD-2-Clause.
   Tải về thư mục dữ liệu của app (`tools/ffmpeg`), gỡ app là gỡ nó.
 - CMU Pronouncing Dictionary (`cmudict.dict`, dữ liệu từ CMU Sphinx; sử dụng và phân phối không hạn chế, yêu cầu ghi nhận
@@ -37,10 +37,11 @@ Bộ cài mang theo:
 - Python 3.14 embeddable (Python Software Foundation License).
 - Pillow (HPND), psutil (BSD-3-Clause), requests (Apache-2.0), urllib3 (MIT), certifi (MPL-2.0), charset-normalizer
   (MIT), idna (BSD-3-Clause) - đúng các bản trong `shell/python/requirements.txt`.
-- Cho bộ phân tích nhạc nhập chạy không cần torch (`webui/music_student.py`, đường ONNX), cũng trong `requirements.txt`:
-  NumPy (BSD-3-Clause; wheel mang theo OpenBLAS BSD-3-Clause, LAPACK và thư viện chạy GCC GPL-3.0-or-later kèm GCC Runtime
-  Library Exception - giấy phép từng phần nằm trong `numpy-*.dist-info/licenses`), ONNX Runtime CPU (MIT), flatbuffers
-  (Apache-2.0), protobuf (BSD-3-Clause), packaging (Apache-2.0 hoặc BSD-2-Clause).
+- Đọc thẻ + độ dài nhạc nhập mà không cần ffmpeg (`webui/music_local.py`): tinytag 2.3.2 (MIT, thuần Python), chép nguyên vào gói ở `abook/vendor/tinytag` (kèm LICENSE; mọi bản - dev lẫn bản đóng gói - dùng bản này).
+- Mô-đun "Phân tích nhạc" (KHÔNG nằm trong bộ cài; tải khi người dùng bấm, wheel ghim URL + SHA-256 trong `webui/music_module.py`, giải vào
+  `<dữ liệu app>/music/lib`): NumPy (BSD-3-Clause; wheel mang theo OpenBLAS BSD-3-Clause, LAPACK và thư viện chạy GCC GPL-3.0-or-later kèm GCC
+  Runtime Library Exception - giấy phép từng phần nằm trong `numpy-*.dist-info/licenses`), ONNX Runtime CPU (MIT), flatbuffers
+  (Apache-2.0), protobuf (BSD-3-Clause), packaging (Apache-2.0 hoặc BSD-2-Clause); cùng ffmpeg (ở trên) và model (mục "Nhạc nền").
 - Bộ nhập sách (`abook/importers.py`) mang theo pypdf 6.16.2 (BSD-3-Clause) trong mã nguồn (`abook/vendor/pypdf/`), nên bản app chỉ-nghe
   không cần thêm gói nào.
 - Thư viện chạy Microsoft Visual C++ (`msvcp140*.dll`, `vcruntime140*.dll`, `concrt140.dll` từ thư mục
@@ -69,6 +70,10 @@ băm trong `webui/studio_setup.py`):
 - Capacitor (MIT).
 - AndroidX Media3 - ExoPlayer, MediaSession, datasource, cache (Apache-2.0); các thư viện AndroidX khác (Apache-2.0).
 - Kotlin và Guava (Apache-2.0).
+- ONNX Runtime 1.30.0 (Microsoft, MIT): phần Java API (`ai.onnxruntime.*`) chép nguyên từ `onnxruntime-android-1.30.0-sources.jar` vào
+  `app/src/main/java/ai/onnxruntime` (giữ đầu giấy phép MIT của từng file; chỉ `OnnxRuntime.java` sửa chỗ nạp thư viện). Hai thư viện native
+  (`libonnxruntime.so`, `libonnxruntime4j_jni.so`) KHÔNG nằm trong APK: tải cùng "Gói nhạc" khi người dùng bấm, lấy từ AAR chính thức trên
+  Maven Central (`scripts/prepare_ort_runtime.py`).
 - pdf.js / `pdfjs-dist` (Mozilla, Apache-2.0), bản "legacy" - đọc chữ của PDF có lớp chữ khi nhập sách trên điện thoại
   (`ui/src/shared/pdfPages.ts`); tải lười, chỉ chạy khi người dùng mở một file PDF. EPUB và DOCX do `BookImport.kt` tự đọc
   bằng java.util.zip, không thêm thư viện.
