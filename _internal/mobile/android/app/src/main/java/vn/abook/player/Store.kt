@@ -60,16 +60,30 @@ object Store {
     private fun shown(id: String, raw: JSONObject, prints: JSONObject): JSONObject {
         val edits = BookEdits.load(bookDir(id))
         // `edits`: mọi thay đổi (áp ngay + ý muốn); `wishes`: trong số ấy bao nhiêu là ý muốn chờ Studio (chưa áp vào audio).
-        return BookEdits.applyManifest(raw, edits).put("edits", BookEdits.count(edits)).put("wishes", BookEdits.countWishes(edits))
-            .put("capabilities", capabilities(isComputer(raw, prints.optJSONObject(id))))
+        val out = BookEdits.applyManifest(raw, edits).put("edits", BookEdits.count(edits)).put("wishes", BookEdits.countWishes(edits))
+        val computer = isComputer(raw, prints.optJSONObject(id))
+        // Cuốn tải về từ máy tính chính: sửa được ở đây, phần sửa gửi về máy tính (EditsSync) - `sync`. Cuốn của thiết bị ghép khác
+        // (gói mang `source`) sửa ở máy ấy - `link`.
+        out.put("capabilities", capabilities(link = raw.optString("source").isNotEmpty(), sync = computer))
+        if (computer) out.put("editsSync", EditsSync.view(bookDir(id), BookEdits.count(edits)))
+        return out
     }
 
-    /** Điện thoại không có Studio ({toolchain, workshop} luôn false); `link`: cuốn lấy từ máy tính, sửa ở máy ấy. */
-    fun capabilities(link: Boolean): JSONObject =
-        JSONObject().put("toolchain", false).put("workshop", false).put("link", link)
+    /**
+     * Điện thoại không có Studio ({toolchain, workshop} luôn false). `link`: cuốn không sửa được ở đây (nghe thẳng chưa tải, hay của
+     * thiết bị ghép khác) - sửa ở máy giữ nó. `sync`: cuốn đã tải từ máy tính chính - sửa được, và phần sửa gửi về máy tính.
+     */
+    fun capabilities(link: Boolean, sync: Boolean = false): JSONObject =
+        JSONObject().put("toolchain", false).put("workshop", false).put("link", link).put("sync", sync)
 
     /** Gói sách của cuốn chưa tải (nghe thẳng): không có lớp sửa, luôn là cuốn "Trên máy khác". */
     fun linked(manifest: JSONObject): JSONObject = manifest.put("edits", 0).put("wishes", 0).put("capabilities", capabilities(true))
+
+    /** Máy làm được gì với cuốn `id` (EbookLibrary.capabilities): chưa tải hay của thiết bị khác -> `link`; tải từ máy tính -> `sync`. */
+    fun capabilitiesOf(id: String): JSONObject {
+        val raw = rawManifest(id) ?: return capabilities(link = streamManifest(id) != null)
+        return capabilities(link = raw.optString("source").isNotEmpty(), sync = isComputer(raw, printsBook().optJSONObject(id)))
+    }
 
     @Synchronized
     fun books(): List<JSONObject> {
@@ -743,6 +757,10 @@ object Store {
             dir.name.takeIf { isComputer(manifest, prints.optJSONObject(dir.name)) }
         } ?: emptyList()
     }
+
+    /** Cuốn đã TẢI HẲN từ máy tính chính (có `book.json`): nơi phần sửa của người nghe gửi về máy tính (EditsSync). */
+    @Synchronized
+    fun isDownloadedComputerBook(id: String): Boolean = rawManifest(id) != null && isComputerBook(id)
 
     /** Cuốn này lấy từ máy tính chính (không phải mở từ file, không phải của thiết bị ghép khác)? */
     @Synchronized

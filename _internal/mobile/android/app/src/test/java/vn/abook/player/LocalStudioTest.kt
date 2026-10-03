@@ -277,15 +277,14 @@ class LocalStudioTest {
         assertEquals(404, call("GET", "/chapters/9/script").first)
         assertEquals("Không có chương này", (call("GET", "/chapters/9/script").second as JSONObject).getString("error"))
 
-        // cuốn của máy tính (không đăng ký là mở từ file): sửa ở máy ấy
+        // cuốn đã tải từ máy tính (không đăng ký là mở từ file): sửa được ở đây, phần sửa gửi về máy tính (EditsSync)
         val link = "0123456789abcdef01234568"
         BookEditsFixtures.copyBase(Store.bookDir(link))
-        for ((method, suffix) in listOf("GET" to "/edits", "PUT" to "/title", "PUT" to "/music", "GET" to "/cast", "DELETE" to "/cover")) {
-            val (status, reply) = LocalStudio.handle(method, "/api/books/$link$suffix", JSONObject().put("title", "x"))
-            assertEquals("$method $suffix", 409, status)
-            assertEquals("Sách này lấy từ máy tính khác - muốn sửa thì sửa ở máy ấy", (reply as JSONObject).getString("error"))
+        for ((method, suffix) in listOf("GET" to "/edits", "GET" to "/music", "GET" to "/cast")) {
+            assertEquals("$method $suffix", 200, LocalStudio.handle(method, "/api/books/$link$suffix", null).first)
         }
-        assertFalse(File(Store.bookDir(link), "edits.json").exists())
+        assertEquals(200, LocalStudio.handle("PUT", "/api/books/$link/title", JSONObject().put("title", "x")).first)
+        assertTrue(File(Store.bookDir(link), "edits.json").exists())
         // cuốn của thiết bị ghép khác (gói mang `source`): cũng không phải của mình để sửa
         val peer = "p0123456789abcdef_x"
         BookEditsFixtures.copyBase(Store.bookDir(peer))

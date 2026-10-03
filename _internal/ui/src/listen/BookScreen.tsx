@@ -6,6 +6,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
+import { syncsToComputer } from "@/shared/capabilities";
 import { usePageTitle } from "@/shared/title";
 import { formatClock, formatLength, formatNumber } from "@/shared/format";
 import { Button, Dialog, EmptyState, IconButton, Progress, Skeleton, Tabs, TabsContent, TabsList, TabsTrigger, Tooltip, Vu } from "@/shared/ui";
@@ -17,6 +18,7 @@ import { bookStatusText, usePlayListenBook } from "./LibraryScreen";
 import { chapterHeard, chaptersByPart, resumePoint, type CastMember, type ListenBook, type ListenChapter } from "./model";
 import { usePlayer } from "./player";
 import { BookmarkList, chapterStatusLabel } from "./PlayerViews";
+import { EditsSyncBanner, SendEditsItem } from "./SendEdits";
 import { WishesDialog } from "./WishesDialog";
 import { useCast, useListenBook, useListenMutations, useSource } from "./source";
 
@@ -661,6 +663,8 @@ export function BookScreen({
   const chapters = book.chapters ?? [];
   const editable = editing !== false && canEditBook(book);
   const workshop = Boolean(book.capabilities?.workshop);
+  // Cuốn tải từ máy tính (điện thoại): phần sửa gửi về máy tính thay vì lưu thành file.
+  const syncs = syncsToComputer(book.capabilities);
   // Cuốn của máy này không có xưởng (file .abook): việc của Studio (giới tính, gộp người...) ghi lại thành ý muốn chờ Studio.
   const waiting = editable && !workshop;
   const point = resumePoint(book, chapters);
@@ -727,6 +731,7 @@ export function BookScreen({
                 : "Nghe thẳng từ máy tính - tải về để nghe cả khi không có mạng"}
             </p>
           )}
+          {syncs && <EditsSyncBanner book={book} />}
           <div className="mt-4 max-w-md max-sm:mx-auto">
             <Progress value={book.progress.fraction} tone={book.progress.finished ? "success" : "accent"} size="sm" label="Đã nghe" />
             <div className="tabular mt-1.5 flex justify-between text-xs text-fg-2">
@@ -787,7 +792,8 @@ export function BookScreen({
                       <DropdownMenu.Item onSelect={() => setEditOpen(true)} className={MENU_ITEM}>
                         <Pencil className="size-4" /> Sửa tên, bìa, nhạc nền…
                       </DropdownMenu.Item>
-                      {!workshop && saver.available && (
+                      {syncs && <SendEditsItem book={book} />}
+                      {!workshop && !syncs && saver.available && (
                         <>
                           <DropdownMenu.Item
                             disabled={!book.edits || saver.busy}
@@ -799,12 +805,12 @@ export function BookScreen({
                           <DropdownMenu.Item onSelect={() => setSaveAsOpen(true)} className={MENU_ITEM}>
                             <FileDown className="size-4" /> Lưu thành…
                           </DropdownMenu.Item>
-                          {Boolean(book.wishes) && (
-                            <DropdownMenu.Item onSelect={() => setWishesOpen(true)} className={MENU_ITEM}>
-                              <Hourglass className="size-4" /> Việc đang chờ Studio ({book.wishes})
-                            </DropdownMenu.Item>
-                          )}
                         </>
+                      )}
+                      {!workshop && Boolean(book.wishes) && (
+                        <DropdownMenu.Item onSelect={() => setWishesOpen(true)} className={MENU_ITEM}>
+                          <Hourglass className="size-4" /> Việc đang chờ {syncs ? "gửi về máy tính" : "Studio"} ({book.wishes})
+                        </DropdownMenu.Item>
                       )}
                     </>
                   )}
@@ -874,7 +880,7 @@ export function BookScreen({
                 waiting
                 onSaved={() => refreshAfterEdit(client, book.id)}
               />
-              <WishesDialog bookId={book.id} count={book.edits ?? 0} open={wishesOpen} onOpenChange={setWishesOpen} />
+              <WishesDialog bookId={book.id} count={book.edits ?? 0} open={wishesOpen} onOpenChange={setWishesOpen} syncs={syncs} />
             </>
           )}
         </>

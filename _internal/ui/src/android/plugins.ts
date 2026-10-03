@@ -1,6 +1,7 @@
 import { registerPlugin, type PluginListenerHandle } from "@capacitor/core";
 import type { Bookmark, BookPart, ListeningRecord, ListeningState, NightSession } from "@/listen/model";
 import type { Capabilities } from "@/shared/capabilities";
+import type { EditsSyncState } from "@/shared/editsSync";
 import type { ImportResult } from "@/studio/musicLocal";
 
 // Hai plugin native của app Android (mobile/android/app/src/main/java/vn/abook/player):
@@ -188,6 +189,8 @@ export interface LocalBook {
   edits?: number;
   /** Trong số `edits`: ý muốn chờ Studio (BookWishes.kt) - chưa áp vào audio. */
   wishes?: number;
+  /** Cuốn tải từ máy tính: phần sửa chưa gửi về máy tính + kết quả lần gửi gần nhất (EditsSync.kt). */
+  editsSync?: EditsSyncState;
 }
 
 export interface DownloadEvent {
@@ -267,6 +270,11 @@ export interface EbookLibraryPlugin {
   studio(options: { method: string; path: string; body?: unknown }): Promise<{ status: number; body: unknown }>;
   /** Điện thoại làm được gì (BookEdits.kt): luôn không có Studio, không có xưởng; `link` theo cuốn `id` (có là cuốn của máy tính). */
   capabilities(options: { id?: string }): Promise<Capabilities>;
+  /** "Gửi về máy tính": gửi ngay phần sửa của cuốn tải từ máy tính (EditsSync.kt) qua đường TLS đã ghim. Trả trạng thái mới; không
+   *  tới được máy tính hay máy tính không nhận thì từ chối với câu nói lý do - phần sửa vẫn nằm trên máy này. */
+  sendEdits(options: { id: string }): Promise<EditsSyncState>;
+  /** Gửi tự động xong (hay lỗi): trạng thái `editsSync` của cuốn đã đổi - giao diện làm mới. */
+  addListener(event: "editsSync", handler: (event: { bookId: string }) => void): Promise<PluginListenerHandle>;
   /** Lưu cuốn nhập từ file (kèm thay đổi của người nghe) thành file `.abook` mới - hộp thoại "tạo file" của hệ thống hỏi chỗ lưu. */
   saveBook(options: { id: string }): Promise<{ saved: boolean; name?: string; size?: number; edits?: number }>;
   deleteBook(options: { id: string }): Promise<void>;

@@ -34,6 +34,7 @@ import re
 import secrets
 import socket
 import ssl
+import tempfile
 import threading
 import time
 from http import HTTPStatus
@@ -42,7 +43,7 @@ from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import unquote, urlsplit
 
-from . import covers, listen_view, music_plan, remote_studio, store, tls
+from . import covers, edits_inbox, listen_view, music_plan, remote_studio, store, tls
 from .cast import CastError
 from .fingerprints import Fingerprints
 from .library import Library, book_id
@@ -420,7 +421,8 @@ class SyncApp:
                  remote: Remote | None = None, fingerprints: Fingerprints | None = None,
                  studio: StudioGate | None = None, player: Remote | None = None,
                  routes: Callable[[], dict[str, Any]] | None = None, cast: Any = None,
-                 music_track: Callable[[str], Path | None] | None = None) -> None:
+                 music_track: Callable[[str], Path | None] | None = None, my_music: Any = None,
+                 after_edits: Callable[[str, dict[str, Any]], None] | None = None) -> None:
         self.library = library
         self.listening = listening
         self.devices = devices
@@ -437,6 +439,10 @@ class SyncApp:
         # Bài nhạc nền đã có trên máy này (bộ đệm của máy chủ giao diện): điện thoại nhận nhạc của cuốn qua gói. Là
         # music_plan.TrackSource thì bài máy này không lấy được được thay bằng bài thay thế (cả manifest lẫn file phục vụ).
         self.music_track = music_track
+        # Kho "Nhạc của tôi" của máy này (music_local.LocalMusic) và việc làm sau khi nhận phần sửa của điện thoại có đổi nhạc
+        # (dựng lại rãnh nhạc, server.py): điện thoại gửi phần sửa về qua `receive_edits`.
+        self.my_music = my_music
+        self.after_edits = after_edits
         # Số "việc cần duyệt" của mỗi dự án, tính lại chỉ khi sách đổi (studio_view): điện thoại hỏi mỗi 15 phút.
         self._work: dict[str, tuple[tuple[float, ...], int]] = {}  # đường dẫn -> (dấu thời gian, số việc)
         # Vân tay chứng chỉ TLS của cổng phục vụ app này (SyncServer điền lúc dựng): đi trong lời đáp ghép nối.
@@ -535,6 +541,21 @@ class SyncApp:
                 "updatedAt": summary.get("updatedAt"),
             })
         return books
+
+    def receive_edits(self, project: Path, device: dict[str, Any], package: Path) -> dict[str, Any]:
+        """Phần sửa điện thoại gửi về cho một cuốn (edits_inbox.py): sửa "áp ngay" áp liền; ý muốn chờ Studio thành yêu cầu khi
+        thiết bị được điều khiển sản xuất từ xa (công tắc chung VÀ quyền của thiết bị - như Studio từ xa), không thì vào hộp thư
+        chờ chủ máy duyệt. `ValueError` (edits_inbox.InboundError): gói sai, không áp gì."""
+        if not store.is_project(project):
+            raise LookupError("Cuốn này không phải dự án của máy tính")
+        may_produce = self.studio is not None and self.studio.allowed() and bool(device.get("studio"))
+        report = edits_inbox.receive(project, device["id"], device["name"], package, my_music=self.my_music, may_produce=may_produce)
+        if report["music"] and self.after_edits is not None:
+            try:
+                self.after_edits(book_id(project), report)
+            except Exception:  # noqa: BLE001 - dựng lại rãnh nhạc hỏng (mất mạng...) không làm mất phần sửa đã áp
+                pass
+        return report
 
     def match(self, books: Any) -> dict[str, str]:
         """Cuốn điện thoại mở từ file là cuốn nào của máy này (mã máy này), so bằng audio từng chương - sách không mang
@@ -648,6 +669,31 @@ class SyncHandler(BaseHTTPRequestHandler):
             return {}
         return data if isinstance(data, dict) else {}
 
+    def _upload(self, limit: int) -> Path | None:
+        """Thân yêu cầu dạng nhị phân (gói zip phần sửa) ghi ra file tạm; None khi quá `limit` hay thiếu độ dài - kết nối bị đóng
+        (không đọc thân không biết cỡ). Người gọi xoá file."""
+        try:
+            length = int(self.headers.get("Content-Length") or -1)
+        except ValueError:
+            length = -1
+        if length < 0 or length > limit:
+            self.close_connection = True
+            return None
+        handle = tempfile.NamedTemporaryFile(prefix="abook_edits_", suffix=".zip", delete=False)
+        try:
+            with handle:
+                remaining = length
+                while remaining > 0:
+                    chunk = self.rfile.read(min(CHUNK, remaining))
+                    if not chunk:
+                        raise ConnectionResetError("thân yêu cầu bị cắt")
+                    handle.write(chunk)
+                    remaining -= len(chunk)
+        except BaseException:
+            Path(handle.name).unlink(missing_ok=True)
+            raise
+        return Path(handle.name)
+
     def _device(self, *, cookie: bool = False) -> dict[str, Any] | None:
         header = self.headers.get("Authorization") or ""
         if header.startswith("Bearer "):
@@ -693,6 +739,32 @@ class SyncHandler(BaseHTTPRequestHandler):
             remote_studio.send_page(self, HTTPStatus.OK, remote_studio.pairing_page(self.app.name))
         else:
             remote_studio.serve_static(self, studio.static_dir, path)
+
+    def _edits(self, method: str, project: Path, device: dict[str, Any]) -> None:
+        """`POST /sync/v1/books/<mã>/edits`: điện thoại gửi phần sửa của cuốn về (gói zip - edits_inbox.py). `GET`: số mục ý muốn
+        của chính thiết bị này đang chờ chủ máy duyệt, để điện thoại nói đúng "đang chờ chủ máy duyệt"."""
+        if method == "GET":
+            self._json(HTTPStatus.OK, {"waiting": edits_inbox.waiting(project, device["id"])})
+            return
+        if method != "POST":
+            self._json(HTTPStatus.METHOD_NOT_ALLOWED, {"error": "Không hỗ trợ"})
+            return
+        if (self.headers.get("Content-Type") or "").split(";")[0].strip().lower() != "application/zip":
+            self.close_connection = True
+            self._json(HTTPStatus.UNSUPPORTED_MEDIA_TYPE, {"error": "Gói thay đổi phải là file zip"})
+            return
+        package = self._upload(edits_inbox.MAX_PACKAGE_BYTES + 1024 * 1024)
+        if package is None:
+            self._json(HTTPStatus.REQUEST_ENTITY_TOO_LARGE, {"error": "Gói thay đổi quá lớn"})
+            return
+        try:
+            self._json(HTTPStatus.OK, self.app.receive_edits(project, device, package))
+        except edits_inbox.InboundError as error:
+            self._json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
+        except LookupError as error:
+            self._json(HTTPStatus.CONFLICT, {"error": str(error)})
+        finally:
+            package.unlink(missing_ok=True)
 
     def _file(self, path: Path) -> None:
         size = path.stat().st_size
@@ -833,12 +905,17 @@ class SyncHandler(BaseHTTPRequestHandler):
             if method == "POST" and path == "/sync/v1/match":
                 self._json(HTTPStatus.OK, {"matches": self.app.match(self._body().get("books"))})
                 return
-            match = re.fullmatch(r"/sync/v1/books/([A-Za-z0-9_-]+)/(manifest|state|files/(.+))", path)
+            match = re.fullmatch(r"/sync/v1/books/([A-Za-z0-9_-]+)/(manifest|state|edits|files/(.+))", path)
             project = self.app.book(match.group(1)) if match else None
             if not match or project is None:
+                if method == "POST" and match and match.group(2) == "edits":
+                    self.close_connection = True  # thân gói (có thể hàng chục MB) chưa đọc: đừng để nó lệch luồng keep-alive
                 self._json(HTTPStatus.NOT_FOUND, {"error": "Không có sách này"})
                 return
             book = match.group(1)
+            if match.group(2) == "edits":
+                self._edits(method, project, device)
+                return
             # Điện thoại chưa đổi khoá gọi bằng mã kiểu cũ: dữ liệu nghe lưu theo mã hiện hành (`key`), lời đáp nói lại
             # đúng mã nó dùng - không thì nó tưởng hồ sơ đã chuyển sang cuốn khác và gỡ khỏi cuốn đang nghe.
             key = book_id(project)

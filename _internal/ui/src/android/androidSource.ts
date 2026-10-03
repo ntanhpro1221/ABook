@@ -54,6 +54,7 @@ function toListenBook(book: LocalBook, withChapters: boolean): ListenBook {
     capabilities: book.capabilities,
     edits: book.edits ?? 0,
     wishes: book.wishes ?? 0,
+    editsSync: book.editsSync,
   };
 }
 
@@ -107,6 +108,7 @@ export const androidSource: ListenSource = {
     return session?.bookId ? { bookId: session.bookId, night: session } : null;
   },
   dismissNight: () => EbookPlayer.dismissLastNight(),
+  sendEdits: (id) => EbookLibrary.sendEdits({ id }),
   saveBook: async (id) => {
     const reply = await EbookLibrary.saveBook({ id });
     return { saved: reply.saved, file: reply.name, size: reply.size, edits: reply.edits };

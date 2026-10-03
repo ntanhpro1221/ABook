@@ -15,7 +15,7 @@ import { NowPlaying, PlayerBar } from "@/listen/PlayerViews";
 import { PlayerProvider, useNowPlaying, usePlayer } from "@/listen/player";
 import { SourceProvider } from "@/listen/source";
 import { usePageEnter } from "@/shared/motion";
-import { watchDownloads } from "./downloads";
+import { watchDownloads, watchEditsSync } from "./downloads";
 import { pickBookFile, watchImports } from "./imports";
 import { cn } from "@/shared/cn";
 import { Button, Dialog, EmptyState, TooltipProvider } from "@/shared/ui";
@@ -35,6 +35,7 @@ import { applyTheme, loadSettings, pushSettings } from "./settings";
 function DownloadWatcher() {
   const client = useQueryClient();
   useEffect(() => watchDownloads(client), [client]);
+  useEffect(() => watchEditsSync(client), [client]);
   return null;
 }
 

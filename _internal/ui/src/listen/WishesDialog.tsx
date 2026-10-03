@@ -9,7 +9,20 @@ import { refreshAfterEdit } from "./EditBook";
 /** "Việc đang chờ Studio" của cuốn không có xưởng (docs/EDITING.md, P2a): những thay đổi người nghe đã ghi (giọng, giới tính, gộp
  *  người nói, cách đọc, sửa câu, thu lại) nằm trong file sách và chưa áp vào audio nào. Mỗi mục bỏ được; bỏ chỉ có tác dụng trên
  *  máy này. Cùng danh sách và cùng nút "Bỏ" với hộp "Áp dụng thay đổi" của dự án. */
-export function WishesDialog({ bookId, count, open, onOpenChange }: { bookId: string; count: number; open: boolean; onOpenChange: (open: boolean) => void }) {
+export function WishesDialog({
+  bookId,
+  count,
+  open,
+  onOpenChange,
+  syncs = false,
+}: {
+  bookId: string;
+  count: number;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  /** Cuốn tải từ máy tính (điện thoại): các việc này đi về máy tính để chủ máy duyệt, không đi cùng file sách. */
+  syncs?: boolean;
+}) {
   const client = useQueryClient();
   const [dropping, setDropping] = useState<string | null>(null);
   const { data } = useQuery({
@@ -39,7 +52,11 @@ export function WishesDialog({ bookId, count, open, onOpenChange }: { bookId: st
       onOpenChange={onOpenChange}
       width="max-w-xl"
       title="Việc đang chờ Studio"
-      description="Bạn đã ghi những thay đổi này, nhưng chỉ Studio mới đưa được vào giọng đọc. Chúng đi cùng file sách khi bạn lưu; mở file bằng Studio, ABook sẽ hỏi có áp vào dự án không."
+      description={
+        syncs
+          ? "Bạn đã ghi những thay đổi này, nhưng chỉ Studio trên máy tính mới đưa được vào giọng đọc. Chúng được gửi về máy tính (tự động khi tới được máy tính); ở đó bạn xem và chọn Áp dụng hay Bỏ qua từng việc - không việc nào tự áp."
+          : "Bạn đã ghi những thay đổi này, nhưng chỉ Studio mới đưa được vào giọng đọc. Chúng đi cùng file sách khi bạn lưu; mở file bằng Studio, ABook sẽ hỏi có áp vào dự án không."
+      }
     >
       {!data ? (
         <p className="text-sm text-fg-2">Đang xem các thay đổi…</p>

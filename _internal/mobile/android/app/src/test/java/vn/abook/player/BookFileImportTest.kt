@@ -544,6 +544,7 @@ class BookFileImportTest {
         assertEquals(existing, imported.id)
         assertFalse(File(root, "books/$existing/edits.json").exists())
         assertEquals("Truyện Y", Store.manifest(existing)!!.getString("title"))
-        assertTrue(Store.manifest(existing)!!.getJSONObject("capabilities").getBoolean("link"))
+        // sách của máy tính: sửa được ở đây và phần sửa gửi về máy tính (EditsSync) - không phải phần sửa trong file sách
+        assertTrue(Store.manifest(existing)!!.getJSONObject("capabilities").getBoolean("sync"))
     }
 }

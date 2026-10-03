@@ -102,7 +102,8 @@ object LocalStudio {
     private fun editable(id: String): java.io.File {
         // Cuốn nghe thẳng chưa tải chỉ có `stream.json`: vẫn là sách của máy tính khác (409), không phải "không thấy" (404).
         val raw = Store.rawManifest(id) ?: throw if (Store.streamManifest(id) != null) Api(409, LINK_BOOK) else Api(404, "Không tìm thấy sách này trong thư viện")
-        if (Store.isComputerBook(id) || raw.optString("source").isNotEmpty() || raw.optJSONObject("package") == null) {
+        // Cuốn tải từ máy tính chính (không có `package`) sửa được ở đây: phần sửa gửi về máy tính (EditsSync). Của thiết bị ghép khác: 409.
+        if (raw.optString("source").isNotEmpty() || (!Store.isComputerBook(id) && raw.optJSONObject("package") == null)) {
             throw Api(409, LINK_BOOK)
         }
         return Store.bookDir(id)

@@ -548,6 +548,14 @@ def label_retake(text: str, count: int) -> str:
     return f"Thu lại {quote_line(text)}" if count == 1 else f"Thu lại cả chương ({count} câu)"
 
 
+def person_label(project_root: Path, raw: Any) -> str:
+    """Tên người nói như người nghe thấy trong hộp thay đổi: "người kể", tên đã đổi, hay tên gốc đã làm sạch."""
+    from .humanize import person_name
+
+    raw = str(raw or "")
+    return "người kể" if raw.upper() == "NARRATOR" else renames.shown(project_root, raw) or person_name(raw)
+
+
 def pending_details(project_root: Path, since: float) -> dict[str, Any]:
     """Nút "Áp dụng N thay đổi" mở hộp xem trước (soát UX a6 01-10: bấm là chạy ngay, không nói sẽ thu lại gì, hết bao lâu):
     từng thay đổi nói bằng lời, số câu sẽ thu lại, ở những chương nào, và thời gian ước theo TỐC ĐỘ THẬT của chính cuốn này
@@ -581,10 +589,7 @@ def pending_details(project_root: Path, since: float) -> dict[str, Any]:
         return {"section": section, "key": key, "requestedAt": float(entry.get("requested_at") or 0)}
 
     def who(raw: Any) -> str:
-        from .humanize import person_name
-
-        raw = str(raw or "")
-        return "người kể" if raw.upper() == "NARRATOR" else renames.shown(project_root, raw) or person_name(raw)
+        return person_label(project_root, raw)
 
     with closing(connect(project_root)) as connection:
         rows = connection.execute(

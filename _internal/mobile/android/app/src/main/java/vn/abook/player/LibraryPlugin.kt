@@ -59,6 +59,9 @@ class LibraryPlugin : Plugin() {
 
     override fun load() {
         LocalStudio.musicStore = MusicStore(File(context.filesDir, "music/mine"), AndroidMusicTags, AndroidLoudness)
+        // Gửi phần sửa về máy tính xong: tải lại sách từ máy tính (không báo "Đã tải xong") và báo giao diện làm mới.
+        EditsSync.refresh = { id -> downloadBook(id, null, null, announce = false) }
+        EditsSync.changed = { id -> notifyListeners("editsSync", JSObject().put("bookId", id)) }
         Playback.init(context)
         PhoneCast.init(context)
         // Đã bật "Cho máy khác nghe thư viện này" từ lần trước: mở lại máy chủ cùng app (LibraryServer).
@@ -399,6 +402,7 @@ class LibraryPlugin : Plugin() {
             book.put("localCoverVersion", local?.optJSONObject("cover")?.optLong("version") ?: 0L)
         }
         call.resolve(JSObject().put("name", reply.optString("name")).put("books", books))
+        EditsSync.scheduleAllPending(context) // tới được máy tính: gửi nốt phần sửa còn tồn
     }
 
     /**
@@ -465,41 +469,7 @@ class LibraryPlugin : Plugin() {
         call.setKeepAlive(true)
         downloads.execute {
             try {
-                val link = if (source != null) Peers.link(context, source) ?: throw IllegalStateException("Thiết bị này đã thôi ghép")
-                else Peers.Link(base(), prefs.getString("token", "") ?: "")
-                val remote = if (source != null) call.getString("remoteId") ?: throw IllegalArgumentException("thiếu remoteId") else id
-                if (source == null) matchImported() // đã mở cuốn này từ file: audio sẵn trên máy, chỉ tải phần còn thiếu
-                val manifest = JSONObject(SyncLink.request(context, "GET", "/sync/v1/books/$remote/manifest", root = link.base, token = link.token))
-                if (source != null) manifest.put("id", id).put("source", source).put("remoteId", remote)
-                val chapters = manifest.getJSONArray("chapters")
-                val files = mutableListOf<Pair<String, Long>>()
-                for (index in 0 until chapters.length()) {
-                    val chapter = chapters.getJSONObject(index)
-                    // Văn bản của MỌI chương (vài KB) - chế độ đọc đọc được cả chương chưa thu âm; audio chỉ chương đã có.
-                    val script = chapter.optString("script")
-                    if (script.isNotBlank() && script != "null") files += script to 0L
-                    if (!chapter.optBoolean("available")) continue
-                    files += chapter.getString("file") to chapter.optLong("size")
-                }
-                files += "cast.json" to 0L
-                val samples = manifest.optJSONArray("samples") ?: JSONArray()
-                for (index in 0 until samples.length()) files += samples.getString(index) to 0L
-                // Ảnh bìa thật (webui/covers.py): tải lại mỗi lần (vài trăm KB); máy tính đã bỏ bìa thì xoá bản cũ.
-                val cover = manifest.optJSONObject("cover")
-                if (cover != null) files += cover.optString("file", "cover.jpg") to 0L
-                else Store.file(id, "cover.jpg").delete()
-                val total = files.sumOf { it.second }
-                var done = 0L
-                files.forEachIndexed { index, (relative, size) ->
-                    fetchFile(id, relative, size, link, remote)
-                    done += size
-                    notifyListeners("download", JSObject().put("bookId", id).put("done", done).put("total", total)
-                        .put("files", index + 1).put("filesTotal", files.size))
-                }
-                Store.writeAtomic(File(Store.bookDir(id), "book.json"), manifest.toString())
-                File(Store.bookDir(id), "stream.json").delete() // từng nghe thẳng: nay đã tải hẳn
-                pushState(id)
-                notifyListeners("download", JSObject().put("bookId", id).put("finished", true))
+                downloadBook(id, source, call.getString("remoteId"), announce = true)
                 call.resolve(JSObject().put("bookId", id))
             } catch (error: Exception) {
                 notifyListeners("download", JSObject().put("bookId", id).put("error", error.message ?: "lỗi tải"))
@@ -508,6 +478,50 @@ class LibraryPlugin : Plugin() {
                 call.setKeepAlive(false)
             }
         }
+    }
+
+    /**
+     * Phần việc của [download], dùng được ngoài một lời gọi giao diện: gửi phần sửa về máy tính xong thì tải lại sách (EditsSync) mà
+     * không báo "Đã tải xong". `announce`: báo tiến độ cho giao diện qua sự kiện "download".
+     */
+    private fun downloadBook(id: String, source: String?, remoteId: String?, announce: Boolean) {
+        val link = if (source != null) Peers.link(context, source) ?: throw IllegalStateException("Thiết bị này đã thôi ghép")
+        else Peers.Link(base(), prefs.getString("token", "") ?: "")
+        val remote = if (source != null) remoteId ?: throw IllegalArgumentException("thiếu remoteId") else id
+        if (source == null) matchImported() // đã mở cuốn này từ file: audio sẵn trên máy, chỉ tải phần còn thiếu
+        val manifest = JSONObject(SyncLink.request(context, "GET", "/sync/v1/books/$remote/manifest", root = link.base, token = link.token))
+        if (source != null) manifest.put("id", id).put("source", source).put("remoteId", remote)
+        val chapters = manifest.getJSONArray("chapters")
+        val files = mutableListOf<Pair<String, Long>>()
+        for (index in 0 until chapters.length()) {
+            val chapter = chapters.getJSONObject(index)
+            // Văn bản của MỌI chương (vài KB) - chế độ đọc đọc được cả chương chưa thu âm; audio chỉ chương đã có.
+            val script = chapter.optString("script")
+            if (script.isNotBlank() && script != "null") files += script to 0L
+            if (!chapter.optBoolean("available")) continue
+            files += chapter.getString("file") to chapter.optLong("size")
+        }
+        files += "cast.json" to 0L
+        val samples = manifest.optJSONArray("samples") ?: JSONArray()
+        for (index in 0 until samples.length()) files += samples.getString(index) to 0L
+        // Ảnh bìa thật (webui/covers.py): tải lại mỗi lần (vài trăm KB); máy tính đã bỏ bìa thì xoá bản cũ.
+        val cover = manifest.optJSONObject("cover")
+        if (cover != null) files += cover.optString("file", "cover.jpg") to 0L
+        else Store.file(id, "cover.jpg").delete()
+        val total = files.sumOf { it.second }
+        var done = 0L
+        files.forEachIndexed { index, (relative, size) ->
+            fetchFile(id, relative, size, link, remote)
+            done += size
+            if (announce) {
+                notifyListeners("download", JSObject().put("bookId", id).put("done", done).put("total", total)
+                    .put("files", index + 1).put("filesTotal", files.size))
+            }
+        }
+        Store.writeAtomic(File(Store.bookDir(id), "book.json"), manifest.toString())
+        File(Store.bookDir(id), "stream.json").delete() // từng nghe thẳng: nay đã tải hẳn
+        pushState(id)
+        if (announce) notifyListeners("download", JSObject().put("bookId", id).put("finished", true))
     }
 
     // ---- sách trên máy ---------------------------------------------------------------------------------------
@@ -673,18 +687,30 @@ class LibraryPlugin : Plugin() {
         val body = call.getObject("body")?.let { JSONObject(it.toString()) }
         val (status, reply) = LocalStudio.handle(method, path, body)
         if (status == 200 && method.uppercase() != "GET") {
-            Regex("/api/books/([A-Za-z0-9_-]+)").find(path)?.groupValues?.get(1)?.let(MusicBed::invalidate)
+            Regex("/api/books/([A-Za-z0-9_-]+)").find(path)?.groupValues?.get(1)?.let { id ->
+                MusicBed.invalidate(id)
+                EditsSync.schedule(context, id) // cuốn tải từ máy tính: phần sửa gửi về máy tính sau vài giây
+            }
         }
         val answer = JSObject().put("status", status)
         call.resolve(if (reply is JSONObject) answer.put("body", JSObject.fromJSONObject(reply)) else answer.put("body", JSONObject.NULL))
+    }
+
+    /**
+     * "Gửi về máy tính": gửi ngay phần sửa của một cuốn tải từ máy tính (EditsSync). Trả `editsSync` mới của cuốn ({pending, last});
+     * không tới được máy tính hay máy tính không nhận thì từ chối với câu nói lý do - phần sửa vẫn nằm trên máy này.
+     */
+    @PluginMethod
+    fun sendEdits(call: PluginCall) = background(call) {
+        val id = call.getString("id") ?: throw IllegalArgumentException("thiếu id")
+        call.resolve(JSObject.fromJSONObject(EditsSync.pushNow(context, id)))
     }
 
     /** Điện thoại làm được gì (EditingCapabilities, ui/src/shared/capabilities.ts): không có Studio, không có xưởng; `link` theo cuốn. */
     @PluginMethod
     fun capabilities(call: PluginCall) = background(call) {
         val id = call.getString("id")
-        val link = id != null && Store.isComputerBook(id)
-        call.resolve(JSObject.fromJSONObject(Store.capabilities(link)))
+        call.resolve(JSObject.fromJSONObject(if (id != null) Store.capabilitiesOf(id) else Store.capabilities(link = false)))
     }
 
     /**

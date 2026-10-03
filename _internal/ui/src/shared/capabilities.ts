@@ -2,7 +2,9 @@
  *
  * - `toolchain`: Studio dùng được trên máy này (bản dev luôn có; app Windows đóng gói khi đã cài và không cũ; điện thoại không).
  * - `workshop`: cuốn có dự án sản xuất trên máy này (điện thoại không bao giờ có - nó không mở sổ dự án).
- * - `link`: cuốn nghe thẳng từ máy tính khác ("Trên máy khác") - chưa phải của máy này, sửa ở máy ấy.
+ * - `link`: cuốn nghe thẳng từ máy tính khác ("Trên máy khác"), hay của thiết bị ghép khác - chưa phải của máy này, sửa ở máy ấy.
+ * - `sync`: cuốn đã tải từ máy tính chính (chỉ điện thoại): sửa được ngay ở đây, và phần sửa gửi về máy tính (EditsSync.kt,
+ *   docs/EDITING.md P2b). Máy tính không có.
  *
  * Máy tính trả ở `/api/app` và trên từng sách (`ListenBook.capabilities`); Android ở `EbookLibrary.capabilities` và trên từng
  * sách plugin trả về. */
@@ -10,6 +12,7 @@ export interface Capabilities {
   toolchain: boolean;
   workshop: boolean;
   link: boolean;
+  sync?: boolean;
 }
 
 /** Sửa "áp ngay" (tên sách, bìa, tên nhân vật, tên chương, nhạc nền) không cần Studio: làm được trên mọi cuốn của máy này,
@@ -30,6 +33,11 @@ export function studioNeed(caps: Capabilities | null | undefined): string | null
 /** Việc cần Studio có nên hiện (bị mờ) không: mọi cuốn của máy này trừ cuốn đã làm được ngay. */
 export function showsStudioOnly(caps: Capabilities | null | undefined): boolean {
   return studioNeed(caps) !== null;
+}
+
+/** Cuốn tải từ máy tính chính: phần sửa (và ý muốn chờ Studio) gửi về máy tính - nút "Gửi về máy tính", dòng trạng thái. */
+export function syncsToComputer(caps: Capabilities | null | undefined): boolean {
+  return Boolean(caps?.sync) && !caps?.workshop;
 }
 
 /** Lý do không sửa được cuốn nghe thẳng từ máy khác - cùng câu với 409 của LocalStudio.kt (Android) và của máy tính. */

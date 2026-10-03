@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
-import { canEditLayer, editBlockedNote, studioNeed } from "@/shared/capabilities";
+import { canEditLayer, editBlockedNote, studioNeed, syncsToComputer } from "@/shared/capabilities";
 import { formatClock } from "@/shared/format";
 import { levelOptions } from "@/shared/musicLevels";
 import { Button, Dialog, Segmented } from "@/shared/ui";
@@ -520,12 +520,17 @@ export function SaveAsDialog({
 export function StudioOnlyItem({ book }: { book: ListenBook }) {
   const need = studioNeed(book.capabilities);
   if (!need) return null;
+  const syncs = syncsToComputer(book.capabilities);
   return (
     <DropdownMenu.Item disabled className={cn(MENU_ITEM, "h-auto items-start py-1.5 data-[disabled]:opacity-60")}>
       <Wrench className="mt-0.5 size-4 shrink-0" />
       <span className="min-w-0">
         <span className="block">Đổi giọng, sửa lời đọc, thu lại chương</span>
-        <span className="block text-xs text-fg-3">{need} - đổi giới tính, gộp người ghi được ở tab Nhân vật, chờ Studio làm</span>
+        <span className="block text-xs text-fg-3">
+          {syncs
+            ? "Làm ở Studio trên máy tính - đổi giới tính, gộp người, cách đọc ghi được ở đây rồi gửi về máy tính chờ duyệt"
+            : `${need} - đổi giới tính, gộp người ghi được ở tab Nhân vật, chờ Studio làm`}
+        </span>
       </span>
     </DropdownMenu.Item>
   );
