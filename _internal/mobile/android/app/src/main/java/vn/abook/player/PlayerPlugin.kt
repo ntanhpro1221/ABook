@@ -16,6 +16,7 @@ import com.getcapacitor.annotation.Permission
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import org.json.JSONObject
+import vn.abook.player.readaloud.ReadAloud
 
 /**
  * Cầu nối giao diện <-> lõi phát. Giao diện gửi lệnh; lõi phát (Playback) báo trạng thái qua sự kiện "state".
@@ -72,9 +73,12 @@ class PlayerPlugin : Plugin() {
     private fun loadAfterPermission(call: PluginCall) {
         val book = call.getString("bookId") ?: return call.reject("thiếu bookId")
         val chapters = call.getArray("chapters")?.toList<JSONObject>()?.map {
-            Playback.Chapter(it.getInt("id"), it.getString("title"), it.getString("file"), it.optDouble("duration", 0.0))
+            // Chương chỉ có chữ (state "text"): không có file audio, `text` = mục chữ trong gói; giọng máy đọc to (ReadAloud).
+            val text = if (it.optString("state") == "text") it.optString("text").ifEmpty { "texts/${it.getInt("id")}.txt" } else ""
+            Playback.Chapter(it.getInt("id"), it.getString("title"), it.optString("file"), it.optDouble("duration", 0.0), text)
         } ?: return call.reject("thiếu chapters")
         withService {
+            call.getString("readAloudVoice")?.let { ReadAloud.setVoice(it) }
             Playback.load(
                 book, call.getString("bookTitle") ?: "", call.getString("narrator") ?: "", chapters,
                 call.getInt("chapterId") ?: chapters.first().id, call.getDouble("seconds") ?: 0.0, call.getDouble("rate") ?: 1.0,
@@ -94,13 +98,17 @@ class PlayerPlugin : Plugin() {
     @PluginMethod fun toggle(call: PluginCall) = act(call) { Playback.toggle() }
     @PluginMethod fun next(call: PluginCall) = act(call) { Playback.next() }
     @PluginMethod fun previous(call: PluginCall) = act(call) { Playback.previous() }
-    @PluginMethod fun seekTo(call: PluginCall) = act(call) { Playback.seekTo(call.getDouble("seconds") ?: 0.0) }
+    /** `segment` + `word` (chương đọc to): tua tới đúng chữ ấy của đoạn ấy, thắng `seconds` (xem Playback.seekTo). */
+    @PluginMethod
+    fun seekTo(call: PluginCall) = act(call) {
+        Playback.seekTo(call.getDouble("seconds") ?: 0.0, call.getInt("segment") ?: -1, call.getInt("word") ?: -1)
+    }
     @PluginMethod fun skip(call: PluginCall) = act(call) { Playback.skip(call.getDouble("delta") ?: 0.0) }
     @PluginMethod fun setRate(call: PluginCall) = act(call) { Playback.setRate(call.getDouble("rate") ?: 1.0) }
 
     @PluginMethod
     fun jumpTo(call: PluginCall) = act(call) {
-        Playback.jumpTo(call.getInt("chapterId") ?: return@act, call.getDouble("seconds") ?: 0.0)
+        Playback.jumpTo(call.getInt("chapterId") ?: return@act, call.getDouble("seconds") ?: 0.0, call.getInt("segment") ?: -1, call.getInt("word") ?: -1)
     }
 
     /** Trên luồng chính: Playback.state() đọc ExoPlayer, mà ExoPlayer chỉ cho luồng chính. Gọi thẳng từ luồng plugin thì
@@ -133,6 +141,7 @@ class PlayerPlugin : Plugin() {
         call.getBoolean("shakeToExtend")?.let { SleepTimer.shakeEnabled = it }
         call.getString("shakeAction")?.let { SleepTimer.shakeResets = it == "reset" }
         call.getBoolean("headsetSkips")?.let { Playback.headsetSkips = it }
+        call.getString("readAloudVoice")?.let { ReadAloud.setVoice(it) }
         call.getBoolean("flipToPause")?.let {
             Motion.flipEnabled = it
             Motion.refresh()
