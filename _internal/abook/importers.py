@@ -512,6 +512,23 @@ def _docx_text(element: ElementTree.Element) -> list[str]:
     return lines
 
 
+def _join_wrapped(lines: list[str]) -> list[str]:
+    """Xuống dòng cứng giữa câu (chữ dán từ web/PDF: mỗi dòng hiển thị kết thúc bằng Shift+Enter) -> nối lại, kẻo câu bị đọc
+    thành hai đoạn có quãng nghỉ ở giữa. Chỉ nối khi dòng trước chưa hết câu và dòng sau mở đầu bằng chữ thường; thơ, thoại
+    từng dòng ("- ...") hay dòng kết thúc bằng dấu câu giữ nguyên. Chữ không đổi, chỉ chỗ ngắt đoạn."""
+    joined: list[str] = []
+    for line in lines:
+        previous = joined[-1] if joined else ""
+        if previous and line and line[0].islower() and not previous.endswith(_SENTENCE_END + (":", ";")):
+            if previous.endswith(SOFT_HYPHEN):
+                joined[-1] = previous[:-1] + line
+            else:
+                joined[-1] = f"{previous} {line}"
+        else:
+            joined.append(line)
+    return joined
+
+
 def _docx(path: Path) -> ImportedBook:
     with _open_zip(path, "DOCX") as book:
         document = _xml(_read(book, "word/document.xml", "DOCX"), "DOCX")
@@ -536,8 +553,7 @@ def _docx(path: Path) -> ImportedBook:
             # nhận nhầm là tiêu đề chương.
             toc_lines += 1
             continue
-        for line in _docx_text(paragraph):
-            line = _words(line)
+        for line in _join_wrapped([_words(line) for line in _docx_text(paragraph)]):
             if not line:
                 continue
             if style in {"heading 1", "heading 2", "heading1", "heading2"}:

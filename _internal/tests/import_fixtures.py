@@ -262,7 +262,9 @@ def build_docx_headings() -> bytes:
                                '</w:hyperlink>', style="TOC1") for n, (title, _p) in enumerate(CHAPTERS, start=1))
     body += _para(CHAPTERS[0][0], "Heading1")
     body += _para(CHAPTERS[0][1][0])
-    body += _para(runs='<w:r><w:t>Hai dòng</w:t><w:tab/><w:t>có tab</w:t><w:br/><w:t>và xuống dòng cứng.</w:t></w:r>')
+    # Xuống dòng cứng giữa câu (chữ thường ở dòng sau) nối lại; sau dấu hết câu, dòng viết hoa (thơ) hay thoại thì giữ.
+    body += _para(runs='<w:r><w:t>Hai dòng</w:t><w:tab/><w:t>có tab</w:t><w:br/><w:t>và xuống dòng cứng.</w:t><w:br/>'
+                       '<w:t>Dòng thơ viết hoa</w:t><w:br/><w:t>Không nối vào dòng trên</w:t><w:br/><w:t>- câu thoại riêng.</w:t></w:r>')
     body += _para(runs='<w:r><w:t xml:space="preserve">Câu giữ lại </w:t></w:r><w:del w:id="1"><w:r><w:delText>câu đã xoá </w:delText></w:r></w:del>'
                        '<w:ins w:id="2"><w:r><w:t>và câu thêm vào.</w:t></w:r></w:ins>')
     body += _para(CHAPTERS[1][0], "Heading1")
