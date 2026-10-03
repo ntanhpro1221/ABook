@@ -67,6 +67,14 @@ measured yet.
 Read-aloud runs a little ahead of the listener (sentence queue, like video buffering), caches what it read as quick audio
 in the book, and a phone without a voice engine can stream it from a paired computer (existing stream path).
 
+### Read-along view (owner 03-10: "like Edge's read aloud")
+
+Listen now reuses the existing reading mode (`ui/src/listen/ReaderScreen.tsx`: chapter text as an ebook, the playing
+sentence lit and followed, "Nghe từ đây" on a tapped sentence, remembered position). New: the current WORD lit too, as Edge
+does, where the voice gives word timings - Edge TTS (WordBoundary events with offsets), the device voice (Android
+`UtteranceProgressListener.onRangeStart`, Windows SAPI word events). VieNeu gives none: estimate by characters, or align
+with an ASR model later. Studio audiobooks could get word timings from the Whisper pass they already run.
+
 ## 4. Music while listening
 
 No analysis means no scene moods, so the machine does not pick per scene. The user pins tracks to chapters (existing pins),
