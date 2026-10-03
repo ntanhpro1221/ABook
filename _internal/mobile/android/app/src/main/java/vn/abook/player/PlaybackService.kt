@@ -28,6 +28,7 @@ import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import java.io.File
 import java.security.MessageDigest
+import vn.abook.player.readaloud.ReadAloud
 
 /**
  * Dịch vụ phát nền: giữ ExoPlayer sống khi tắt màn hình, hiện điều khiển ở thanh thông báo và màn hình khoá,
@@ -74,7 +75,7 @@ class PlaybackService : MediaLibraryService() {
                 Playback.onPlayingChanged(isPlaying)
             }
 
-            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) = Playback.onChapterChanged()
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) = Playback.onMediaTransition(mediaItem)
 
             override fun onPlaybackStateChanged(state: Int) {
                 if (state == Player.STATE_ENDED) Playback.onEnded()
@@ -134,19 +135,22 @@ class PlaybackService : MediaLibraryService() {
 
         override fun getAvailableCommands(): Player.Commands {
             val base = super.getAvailableCommands()
-            if (!Playback.headsetSkips) return base
+            if (!Playback.headsetSkips && !ReadAloud.active) return base
             val builder = base.buildUpon()
             for (index in 0 until skips.size()) builder.add(skips.get(index))
             return builder.build()
         }
 
         override fun isCommandAvailable(command: Int): Boolean =
-            (Playback.headsetSkips && skips.contains(command)) || super.isCommandAvailable(command)
+            ((Playback.headsetSkips || ReadAloud.active) && skips.contains(command)) || super.isCommandAvailable(command)
 
-        override fun seekToNext() = if (Playback.headsetSkips) seekForward() else super.seekToNext()
-        override fun seekToNextMediaItem() = if (Playback.headsetSkips) seekForward() else super.seekToNextMediaItem()
-        override fun seekToPrevious() = if (Playback.headsetSkips) seekBack() else super.seekToPrevious()
-        override fun seekToPreviousMediaItem() = if (Playback.headsetSkips) seekBack() else super.seekToPreviousMediaItem()
+        // Đọc to: hàng đợi có một mục mỗi đoạn, nên "mục kế" của ExoPlayer là đoạn kế - Trước/Sau và lùi/tới 15 giây phải đi theo chương và đồng hồ ảo của ReadAloud.
+        override fun seekToNext() = if (Playback.headsetSkips) seekForward() else if (ReadAloud.active) Playback.next() else super.seekToNext()
+        override fun seekToNextMediaItem() = if (Playback.headsetSkips) seekForward() else if (ReadAloud.active) Playback.next() else super.seekToNextMediaItem()
+        override fun seekToPrevious() = if (Playback.headsetSkips) seekBack() else if (ReadAloud.active) Playback.previous() else super.seekToPrevious()
+        override fun seekToPreviousMediaItem() = if (Playback.headsetSkips) seekBack() else if (ReadAloud.active) Playback.previous() else super.seekToPreviousMediaItem()
+        override fun seekForward() = if (ReadAloud.inText()) Playback.skip(15.0) else super.seekForward()
+        override fun seekBack() = if (ReadAloud.inText()) Playback.skip(-15.0) else super.seekBack()
     }
 
     private inner class Callback : MediaLibrarySession.Callback {
@@ -331,6 +335,7 @@ class PlaybackService : MediaLibraryService() {
         }
         session = null
         MusicBed.stop()
+        ReadAloud.stop()
         Playback.player = null
         instance = null
         super.onDestroy()
