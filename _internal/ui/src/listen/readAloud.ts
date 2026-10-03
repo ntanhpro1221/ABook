@@ -140,6 +140,9 @@ function muteRequested(): boolean {
   }
 }
 
+/** Đoạn đang chờ mà lấy clip hỏng: thử lại chừng này lần trước khi dừng. */
+export const CLIP_RETRIES = 2;
+
 interface Slot {
   text: string;
   speakable: boolean;
@@ -155,6 +158,8 @@ interface Slot {
   /** Đã đặt currentTime / phát: `time` đọc từ phần tử audio thay vì `offset`. */
   started: boolean;
   fetching: boolean;
+  /** Số lần lấy clip đã hỏng liên tiếp (Edge thỉnh thoảng trả 502 thoáng qua). */
+  failures: number;
 }
 
 interface Target {
@@ -372,6 +377,7 @@ export class ReadAloudEngine implements AudioEngine {
       detach: null,
       started: false,
       fetching: false,
+      failures: 0,
     };
   }
 
@@ -526,12 +532,24 @@ export class ReadAloudEngine implements AudioEngine {
       .then((clip) => {
         if (id !== this.loadId) return;
         slot.fetching = false;
+        slot.failures = 0;
         this.onClip(index, clip);
       })
       .catch((error) => {
         if (id !== this.loadId) return;
         slot.fetching = false;
-        if (index === this.target.index && this.wanted) this.fail(error);
+        slot.failures += 1;
+        if (index !== this.target.index || !this.wanted) return;
+        // Đoạn người nghe đang chờ: lỗi thoáng qua (Edge thỉnh thoảng trả 502) thì thử lại (1 s, 2 s) rồi mới dừng hẳn và báo
+        // lỗi; mất mạng thì thử lại cũng vô ích - báo ngay.
+        const offline = (error as { reason?: string } | null)?.reason === "offline";
+        if (!offline && slot.failures <= CLIP_RETRIES) {
+          setTimeout(() => {
+            if (id === this.loadId && this.wanted && index === this.target.index) this.request(index);
+          }, 1000 * slot.failures);
+          return;
+        }
+        this.fail(error);
       });
   }
 
@@ -670,7 +688,10 @@ export class ReadAloudEngine implements AudioEngine {
     this.lastError = error instanceof Error && error.message ? error.message : "Giọng đọc không phản hồi.";
     const was = this.wanted;
     this.wanted = false;
-    this.slots[this.target.index]?.audio?.pause();
+    const slot = this.slots[this.target.index];
+    // Người nghe bấm phát lại thì được thử lại từ đầu.
+    if (slot) slot.failures = 0;
+    slot?.audio?.pause();
     if (was) this.fire("pause");
     this.fire("error");
   }
