@@ -1015,6 +1015,19 @@ nhãn câu (app).**
   - VRAM: `size_vram` của `/api/ps` trong lúc chạy.
 - THẮNG → đề xuất đưa vào app, kèm chi phí ấy, để Lead / chủ sách quyết. Trượt → giữ nhãn câu, ghi số.
 
+**KẾT QUẢ BỘ 5B (03-10 13:49, `results/set5b_score.txt`):** **KHÔNG THẮNG → giữ nhãn câu.**
+- Hỏng định dạng: 0 (V/E/T 0, BWS 0).
+- `app + llmVT + bwsE` so `app`: r VET TB **+0,070** (0,139 so 0,069), nhưng chỉ thắng **2/3** chương. Luật cần 3/3.
+- Chi phí đo trên lượt này (card 8 GB máy nhà, qwen3.5:9b Q4_K_M):
+  - 36 lượt gọi cho 3 chương (Kuma 112: 4 V/T + 6 BWS; Zenith 049 / 050: 5 + 8 mỗi chương);
+  - 151 giây cho 39,8 phút sách, tức ≈ **227 giây và 54 lượt mỗi giờ sách nói** (lượt đầu 14 giây gồm nạp model);
+  - VRAM `size_vram` 5,50 GB (5,12 GiB), ngữ cảnh 16k.
+- Ghi lại, KHÔNG phải thước (3 chương, nhìn sau khi có số):
+  - `app + llmVT` +0,126, thắng 3/3;
+  - `app + bwsE` riêng E −0,165, thắng 1/3.
+  - Hai bộ đảo chiều nhau: ở bộ 5, bwsE +0,075 E còn llmVT chỉ +0,020; ở 5b ngược lại. Chưa thành phần nào ổn định.
+  - Nếu muốn thử `llmVT` riêng thì phải ghi trước trên bộ mới, không lấy số này làm bằng chứng.
+
 ĐÁP ÁN BỘ 5 (03-10 05:xx, Corpus `scene_set5/`; mô tả, chưa phải phép thử):
 - 9 chương, 86 đoạn sau phân xử (26,6 đoạn/giờ).
 - Hai người chấm mù Sonnet A so B: Pk 0,167, P / R ranh giới 0,73 / 0,86, r V/E/T 0,92 / 0,88 / 0,89. Đó là trần.
@@ -1681,6 +1694,31 @@ Thước:
 Giới hạn:
 - Sau khi siết, % lệch theo CHÍNH ba phép này là 0 theo cách dựng, nên không phải bằng chứng danh sách "đúng cảm giác".
 - Bằng chứng ấy cần lượt người đọc ở trên.
+
+**KẾT QUẢ KIỂM TỰ ĐỘNG (03-10 15:xx, `results/playlist_audit.txt`; trên danh mục bc472d9d9f40, luật gốc):**
+
+| danh sách | bài | lệch | (1) lời | (2) trò | (3) chữ | sau khi siết |
+|---|---|---|---|---|---|---|
+| fantasy_adventure | 150 | 10% | 12 | 3 | 1 | giữ (không > 10%) |
+| fantasy_calm | 134 | 37% | 44 | 0 | 9 | 84 bài / 545 phút |
+| school_light | 150 | 31% | 42 | 0 | 5 | 150 / 539 |
+| romance | 144 | 17% | 21 | 2 | 4 | 119 / 563 |
+| comedy | 150 | 35% | 48 | 0 | 6 | 150 / 483 |
+| action | 150 | 7% | 8 | 2 | 1 | giữ |
+| horror | 150 | 15% | 17 | 1 | 5 | 147 / 570 |
+| mystery | 84 | 27% | 22 | 1 | 1 | 61 / 284 |
+| eastern | 132 | 23% | 29 | – | 2 | 101 / 297 |
+| scifi | 76 | 50% | 35 | 2 | 1 | 38 / 193 |
+| sad | 150 | 14% | 18 | 2 | 1 | 150 / 644 |
+| sleep | 113 | 39% | 39 | 1 | 5 | 69 / 538 |
+
+- Gần như toàn bộ phần lệch là **có lời 0,3–0,5**: danh mục chỉ loại > 0,5. Phép (2) trò chỉ-nghe gần như không bắt gì.
+- **Đã siết** 10 danh sách > 10% (`playlists.TIGHTEN`; `playlists.Audit` dùng chung cho kiểm và dựng). Mọi danh sách
+  vẫn ≥ 40 phút; thấp nhất scifi 193 phút.
+  - school_light / comedy / sad vẫn đủ 150 vì trần `MAX_TRACKS`.
+- Danh mục mới: **64f4a577f86b**.
+- Đề xuất, chưa làm: hạ ngưỡng `vocals` của chính danh mục (đang 0,5) cũng cần ghi trước riêng, vì nó đổi cả chọn nhạc
+  theo cảnh chứ không chỉ "Nghe ngay".
 
 ## Nguồn nhạc: giữ / loại và lý do (02-10, Lead + chủ sách - đọc trước khi hỏi lại)
 
