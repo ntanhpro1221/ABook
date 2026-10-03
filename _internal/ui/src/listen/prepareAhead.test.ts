@@ -25,6 +25,8 @@ describe("Làm trước", () => {
   it("chia đoạn đúng như trình phát", async () => {
     const texts = await paragraphsFor([chapter(2)], async () => "Đoạn một.\n\nĐoạn   hai.");
     expect(texts).toEqual(["Đoạn một.", "Đoạn hai."]);
+    const skipped = await paragraphsFor([{ ...chapter(2), skip: ["Dịch: A"] }], async () => "Dịch: A\n\nĐoạn một.");
+    expect(skipped).toEqual(["Đoạn một."]);
   });
 
   it("nói thời gian bằng lời", () => {

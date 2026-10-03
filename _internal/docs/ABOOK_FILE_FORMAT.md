@@ -91,15 +91,17 @@ rewritten by a listener's app. What a listener changes lives next to it in `edit
 | `cover` | absent: the book's cover; `{color, width, height, version}` and `edits/cover.jpg`: the listener's cover |
 | `characters` | `{canonical name: display name}` |
 | `chapters` | `{chapter id: {title?, subtitle?}}` |
+| `skip` | `{chapter id: [line, ...]}` - lines among the first six of a chapter that a reader leaves out when displaying or reading the chapter aloud (the listener accepted a "credit line" suggestion). The chapter's text in the package is unchanged |
 | `music` | `{enabled?, levelDb?, silenced?: ["<chapter id>:<start in ms>", ...], pins?: {"<chapter id>:<start in ms>": "local:<sha1>"}, tracks?: {"<sha1>": {ext, title?, creator?, duration?, lufs?}}}` - cues the listener silenced; cues the listener switched to one of their own tracks, and the info of exactly those tracks (`ext` mp3, m4a, ogg, opus, flac or wav). The track file is `music/<sha1>.<ext>` in the package, listed in `package.files` but not in `book.json`'s `music.tracks` (a reader that knows `pins` plays it from there) |
 | `wishes` | what the listener asked of a producer's Studio (never applied by the reader): `{pronunciations?, speakers?, lines?, voices?, retakes?, aliases?}` with the entry shapes of the Studio's `overrides.json` (a name's spoken form, who says a line, a line's kind/emotion/spoken text, a character's voice or gender, a line to retake, a name to merge). Lines are named by the `stableId` + `textSha256` of the script segments |
 
 Readers validate it strictly and refuse the whole file when it is malformed: more than 1 MiB, more than 2,000
-characters, 5,000 chapters, 5,000 silenced cues or 5,000 pinned cues, a pin without its track info (or the reverse), a pinned track whose file is not in the package, more than 2,000 wishes of one kind (5,000 for speakers and retakes), a wish entry with a missing or unknown key, text that is not clean (titles longer than 160 code points, names
+characters, 5,000 chapters, 5,000 silenced cues or 5,000 pinned cues, more than 20 skipped lines in one chapter (or a skipped line that
+is empty, repeated or longer than 300 code points), a pin without its track info (or the reverse), a pinned track whose file is not in the package, more than 2,000 wishes of one kind (5,000 for speakers and retakes), a wish entry with a missing or unknown key, text that is not clean (titles longer than 160 code points, names
 longer than 80, control characters, leading or trailing blanks), `levelDb` outside -40..-6, a cover colour that is not
 `#rrggbb`. Edits are only the minimum: a value equal to the book's is not stored. The layer never edits story text.
 
-Opening the same book again keeps the listener's own edits (theirs win on a clash; silenced cues and pins are merged). When the
+Opening the same book again keeps the listener's own edits (theirs win on a clash; silenced cues, skipped lines and pins are merged). When the
 computer that made the book opens a file with edits, it may offer to apply them to its project.
 
 **Privacy.** `edits.json` holds no device name, account, path or time of listening: only the edits themselves (a wish carries the

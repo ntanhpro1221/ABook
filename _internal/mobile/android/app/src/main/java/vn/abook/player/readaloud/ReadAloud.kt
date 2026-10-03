@@ -253,13 +253,21 @@ object ReadAloud {
         feedSegment = 0
     }
 
+    /** Dòng người nghe bỏ khỏi phần đọc của một chương (`skip` của book.json đã áp lớp sửa) - màn đọc bỏ đúng các dòng này. */
+    private fun skipOf(manifest: org.json.JSONObject?, chapterId: Int): List<String> {
+        val array = manifest?.optJSONArray("chapters") ?: return emptyList()
+        val skip = (0 until array.length()).mapNotNull { array.optJSONObject(it) }.firstOrNull { it.optInt("id") == chapterId }?.optJSONArray("skip")
+            ?: return emptyList()
+        return (0 until skip.length()).map { skip.getString(it) }
+    }
+
     private fun chapFor(index: Int): Chap? {
         chaps[index]?.let { return it }
         val chapter = chapters().getOrNull(index) ?: return null
         if (!chapter.isText) return null
         return try {
             val text = Store.file(Playback.bookId, chapter.text).readText(Charsets.UTF_8)
-            Chap(index, Paragraphs.of(text)).also {
+            Chap(index, Paragraphs.of(Paragraphs.withoutLines(text, skipOf(Store.manifest(Playback.bookId), chapter.id)))).also {
                 fromCache(it)
                 chaps[index] = it
             }
@@ -636,14 +644,18 @@ object ReadAloud {
      * thì không có trong kết quả. Không cần cuốn đang nạp ("Làm trước" chạy cả khi app đã đóng).
      */
     fun textChapters(bookId: String, ids: List<Int>): Map<Int, Pair<String, List<String>>> {
-        val array = runCatching { Store.manifest(bookId)?.optJSONArray("chapters") }.getOrNull() ?: return emptyMap()
+        val manifest = runCatching { Store.manifest(bookId) }.getOrNull()
+        val array = manifest?.optJSONArray("chapters") ?: return emptyMap()
         val wanted = ids.toSet()
         val out = HashMap<Int, Pair<String, List<String>>>()
         for (chapter in (0 until array.length()).map { array.getJSONObject(it) }) {
             val id = chapter.optInt("id")
             if (id !in wanted) continue
             val entry = chapter.optString("text").takeIf { it.startsWith("texts/") } ?: continue
-            val paragraphs = runCatching { Paragraphs.of(Store.file(bookId, entry).readText(Charsets.UTF_8)) }.getOrNull() ?: continue
+            // Các dòng người nghe đã bỏ khỏi phần đọc (khoá `skip`) cũng bỏ ở đây: đoạn phải chia đúng như lúc nghe.
+            val paragraphs = runCatching {
+                Paragraphs.of(Paragraphs.withoutLines(Store.file(bookId, entry).readText(Charsets.UTF_8), skipOf(manifest, id)))
+            }.getOrNull() ?: continue
             out[id] = chapter.optString("title") to paragraphs
         }
         return out

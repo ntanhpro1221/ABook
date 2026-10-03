@@ -83,6 +83,8 @@ anything), as `capabilities` on every listen book JSON (`/api/listen/library`, `
 | workshop (project) | `studio_title.json` | `cover.jpg` + `cover.json` | `names.json` | `chapter_titles.json` (new; read by `store.chapter_names`) | `music_overrides.json` |
 | no workshop (imported .abook / phone) | `edits.json` `title` | `edits/cover.jpg` + `cover` | `characters` | `chapters` | `music` |
 
+Reading transform (no workshop only, text-only books): `edits.json` `skip` - lines the listener left out of the reading (below).
+
 A book with a workshop never has `edits.json`. A book without one never has the sidecars. The book layer (`book.json`,
 `cast.json`, `scripts/`, `cover.jpg`, music, audio) is never modified in place.
 
@@ -96,6 +98,7 @@ A book with a workshop never has `edits.json`. A book without one never has the 
                                             object = use edits/cover.jpg (version = cache-buster the writer picks)
  "characters": {"<cast.json name>": "<shown name>"},
  "chapters": {"<chapter id>": {"title": "Chương 12", "subtitle": "Hồi kết"}},      each field optional
+ "skip": {"<chapter id>": ["Dịch: Nhóm Lục Bình"]},  lines left out of the reading (accepted credit-line suggestions)
  "music": {"enabled": false, "levelDb": -24.0, "silenced": ["<chapter id>:<start ms>"],
            "pins": {"<chapter id>:<start ms>": "local:<sha1>"},
            "tracks": {"<sha1>": {"ext": "mp3", "title": "...", "creator": "...", "duration": 184.0, "lufs": -14.2}}}}   each field optional
@@ -108,15 +111,22 @@ from the file itself). No licence or attribution: the file's own name and artist
 book folder as `music/<sha1>.<ext>` - the place a producer's own track would be - and `repack` / `BookDocumentWriter` add it to the
 file next to the book layer (the book layer's `package.files` is never rewritten; the saved file's list covers it).
 
+`skip` = lines of a chapter the reader view and read-aloud leave out - the importer's credit-line suggestions
+(`importers.credit_suggestions`, Studio's `text_processing.credit_lines` rule) that the listener accepted, off by default. Only a reading
+transform: the chapter text (`texts/<n>.txt`) is never changed and unticking reads the line again. Applied to the first 6 non-blank lines of
+the chapter, comparing whitespace-squeezed lines (`textScript.ts` `withoutLines` = `Paragraphs.withoutLines` - the phone's read-aloud core
+must split into exactly the reader's paragraphs; "Làm trước" uses it too). `apply_manifest` copies the chapter's list to `chapters[].skip`.
+
 Strict (untrusted input - it arrives inside someone else's .abook): only these keys (plus `wishes`, below); size <= 1 MiB; <= 2000 characters,
-5000 chapters, 5000 silenced cues, 5000 pins; title/chapter text <= 160 code points, character names <= 80 (the server's
+5000 chapters, 5000 silenced cues, 5000 pins; `skip`: <= 5000 chapters, 1..20 distinct clean lines each, <= 300 code points per line; title/chapter text <= 160 code points, character names <= 80 (the server's
 `TITLE_MAX` / `names.MAX_NAME`); text must already be clean (no control characters, no whitespace other than single ASCII
 spaces, no leading/trailing space) - validation REFUSES, it never repairs; `levelDb` in [-40, -6]; cover color `#rrggbb` or
 "", sizes 0..20000; `edits/cover.jpg` must exist iff `cover` is an object, be a JPEG, <= 8 MiB. Any violation refuses the
 whole file. No device names or paths are stored (the only times are the `requested_at` stamps of wishes, see P2a). Writers store the minimum: a value equal to the book layer's is
 removed (no-op edits never count), `enabled: true` is never stored.
 
-Counting ("N thay đổi"): title + cover + each character + each chapter + enabled + levelDb + each silenced cue + each pin + each wish (P2a).
+Counting ("N thay đổi"): title + cover + each character + each chapter + each distinct skipped line (one line skipped in 200 chapters
+counts once) + enabled + levelDb + each silenced cue + each pin + each wish (P2a).
 
 ## Overlay (what the listener sees)
 
@@ -132,11 +142,16 @@ level in force even when `levelDb` is not edited); `enabled: false` empties `cha
 `"<chapterId>:<round(start * 1000)>"`.
 
 Merge on re-import, `merge(local, incoming)`: the key present on this device wins, the rest is taken from the file; silenced
-cues are a union; pins are a union (this device's pin wins on a cue both pinned) and `tracks` keeps only what the merged pins name.
+cues are a union; skipped lines are a union per chapter; pins are a union (this device's pin wins on a cue both pinned) and `tracks` keeps only what the merged pins name.
 The pinned track FILES follow: an extract keeps this device's files (`BookFile._keep_local_edits`, `BookFileImport.keepLocalEdits`) and
 adopting into a fuller book takes the incoming file's (`book_edits.adopt(..., member)`). Report `{adopted, kept, conflicts, cover: "local" | "incoming" | null}`.
 
 ## Routes (same JSON on the Python server and `LocalStudio.kt` for a book without a workshop)
+
+Reading suggestions (text-only books): `GET /api/books/<id>/suggestions` -> `{suggestions: [{chapter, title, line, skipped}]}` (credit lines
+found in each chapter's text, and whether they are skipped now); `PUT /api/books/<id>/skip {line, chapters: [id...], skip}` ->
+`{skip: {"<chapter id>": [lines]}}` (`book_edits.set_skip_line` / `BookEdits.setSkipLine`). The "Thêm sách từ file…" preview lists the same
+suggestions (`suggestions: [{chapter, line}]`) and applies the ticked ones right after adding.
 
 All under `/api/books/<id>`; the server also accepts them for workshop books (same shapes, existing sidecars).
 
