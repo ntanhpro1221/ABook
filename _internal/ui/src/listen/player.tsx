@@ -1032,7 +1032,20 @@ export function PlayerProvider({
           return;
         }
         if (target) {
-          load({ ...current, chapterId: target.id, chapterTitle: target.fullTitle }, 0, true);
+          // Chương audio hết, chương kế chỉ có chữ, giọng trực tuyến chưa được đồng ý: sang chương ấy nhưng đứng yên ở 0:00 tới khi
+          // người nghe trả lời - không chữ nào rời máy trước "Nghe" (đóng hộp thì cứ đứng đó, bấm Phát là hỏi lại).
+          const next = { ...current, chapterId: target.id, chapterTitle: target.fullTitle };
+          let answered = false;
+          let parked = false;
+          withConsent(current.bookId, target, () => {
+            answered = true;
+            if (!parked) load(next, 0, true);
+            else if (refs.current.track?.bookId === next.bookId && refs.current.track.chapterId === next.chapterId && engine.paused) engine.play();
+          });
+          if (!answered) {
+            parked = true;
+            load(next, 0, false);
+          }
           return;
         }
         const caughtUp = refs.current.book?.complete === false;
@@ -1087,7 +1100,7 @@ export function PlayerProvider({
       }),
     ];
     return () => offs.forEach((off) => off());
-  }, [applySleep, clock, closeSession, engine, finishedToast, load, native, openSession, refreshLists, save, source, stopBySleep]);
+  }, [applySleep, clock, closeSession, engine, finishedToast, load, native, openSession, refreshLists, save, source, stopBySleep, withConsent]);
 
   // Đồng hồ chạy theo khung hình khi đang phát: nhãn giây đổi đúng nhịp 1 giây thay vì theo timeupdate (~4 lần/giây,
   // lệch tới 270 ms). Chỉ component nào chọn giá trị đổi mới render lại.
