@@ -321,6 +321,16 @@ export function chaptersByPart(chapters: ListenChapter[], parts: BookPart[] | un
   return groups.map(({ heading, chapters: items }) => ({ heading, chapters: items }));
 }
 
+/** Cuốn của thẻ "Đang nghe dở" ở Thư viện: cuốn đang nằm trong trình phát (chưa chắc thư viện đã tải đã biết chỗ nghe của nó - chỉ làm mới
+ *  khi dừng), không thì cuốn chưa xong nghe gần nhất. Trước đây chỉ xét chỗ nghe đã lưu nên bấm phát cuốn khác mà thẻ vẫn đứng ở cuốn cũ. */
+export function listeningBook(books: readonly ListenBook[], playingBookId: string | null | undefined): ListenBook | undefined {
+  const playing = playingBookId ? books.find((book) => book.id === playingBookId && !book.progress.finished) : undefined;
+  if (playing) return playing;
+  return books
+    .filter((book) => book.state.last && !book.progress.finished)
+    .sort((a, b) => (b.state.last?.at ?? 0) - (a.state.last?.at ?? 0))[0];
+}
+
 /** Chương nên phát khi bấm "Nghe": chỗ đang nghe dở nếu chương ấy còn nghe được (nghe gần hết thì sang chương
  *  kế), không thì chương đầu tiên chưa nghe xong, cuối cùng là chương đầu. */
 export function resumePoint(book: ListenBook, chapters: ListenChapter[]): { chapter: ListenChapter; at: number } | null {

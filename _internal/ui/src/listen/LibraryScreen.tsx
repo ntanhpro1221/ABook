@@ -7,7 +7,7 @@ import { cn } from "@/shared/cn";
 import { formatLength, formatWhen } from "@/shared/format";
 import { EmptyState, Progress, Segmented, Skeleton } from "@/shared/ui";
 import { resumeWhere } from "./labels";
-import { foldVietnamese, resumePoint, seriesIndex, type ListenBook } from "./model";
+import { foldVietnamese, listeningBook, resumePoint, seriesIndex, type ListenBook } from "./model";
 import { usePlayer, type WordTarget } from "./player";
 import { useListenLibrary, useReadAloudVoices, useSource } from "./source";
 
@@ -80,9 +80,7 @@ export function useRestoreLastListening() {
   useEffect(() => {
     if (tried.current || !books || player.track) return;
     tried.current = true;
-    const recent = books
-      .filter((book) => book.state.last && !book.progress.finished)
-      .sort((a, b) => (b.state.last?.at ?? 0) - (a.state.last?.at ?? 0))[0];
+    const recent = listeningBook(books, null);
     if (!recent?.state.last || Date.now() / 1000 - recent.state.last.at > 30 * 86_400) return;
     void source
       .book(recent.id)
@@ -156,7 +154,8 @@ function ContinueCard({ book }: { book: ListenBook }) {
   const last = book.state.last;
   const chapter = (current ? player.track?.chapterTitle : undefined) || book.lastChapterTitle;
   // Cùng dạng với nút chính của trang sách ("Nghe tiếp · Chương 3 · 12:04").
-  const where = last ? resumeWhere(chapter ?? "", last.seconds) : "";
+  // Cuốn đang nằm trong trình phát: chỗ nghe đã lưu có thể cũ (chỉ làm mới khi dừng) - nói chương đang phát, không nói giờ cũ.
+  const where = current ? (chapter ?? "") : last ? resumeWhere(chapter ?? "", last.seconds) : "";
   return (
     <section className="flex items-center gap-4 rounded-2xl border border-line bg-panel p-4 shadow-card sm:gap-5 sm:p-5">
       <button type="button" onClick={() => navigate(`/book/${book.id}`)} aria-label={`Mở ${book.title}`}>
@@ -167,7 +166,7 @@ function ContinueCard({ book }: { book: ListenBook }) {
         <h2 className="mt-1 line-clamp-2 text-base font-semibold sm:text-lg">{book.title}</h2>
         <p className="tabular mt-0.5 text-sm text-fg-2">
           {where}
-          {last ? ` · nghe lần cuối ${formatWhen(last.at)}` : ""}
+          {current ? (playingHere ? " · đang phát" : " · đang tạm dừng") : last ? ` · nghe lần cuối ${formatWhen(last.at)}` : ""}
         </p>
         <p className="mt-0.5 text-sm text-fg-2">{bookStatusText(book, speaks)}</p>
         <Progress value={book.progress.fraction} size="xs" className="mt-3 max-w-md" label="Đã nghe" />
@@ -305,11 +304,10 @@ export function LibraryScreen({
   const upcoming = useMemo(() => allBooks?.filter((book) => book.chaptersAvailable === 0 && book.stage !== "text") ?? [], [allBooks]);
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
-  const listening = useMemo(
-    () => (books ?? []).filter((book) => book.state.last && !book.progress.finished)
-      .sort((a, b) => (b.state.last?.at ?? 0) - (a.state.last?.at ?? 0))[0],
-    [books],
-  );
+  const player = usePlayer();
+  // Theo cuốn đang phát (không tính nghe kiểm trong Studio), không chỉ theo chỗ nghe đã lưu - chỗ ấy chỉ được làm mới khi dừng.
+  const playingId = player.track && player.purpose !== "review" ? player.track.bookId : null;
+  const listening = useMemo(() => listeningBook(books ?? [], playingId), [books, playingId]);
   const folded = foldVietnamese(query.trim());
   const shown = (books ?? []).filter(
     // Tên sách hoặc giọng kể ("duc tri" tìm ra mọi cuốn Đức Trí đọc - soát UX 29-09).

@@ -194,9 +194,10 @@ export interface PlaylistOption {
 }
 
 function hours(minutes: number): string {
+  // Là độ dài cả danh sách phát, không phải giờ nào trong ngày: nói "dài" để "8 giờ" không đọc như 8 giờ sáng.
   if (minutes <= 0) return "";
-  if (minutes < 90) return `${minutes} phút`;
-  return `${Math.round(minutes / 60)} giờ`;
+  if (minutes < 90) return `dài ${minutes} phút`;
+  return `dài ${Math.round(minutes / 60)} giờ`;
 }
 
 /** Các lựa chọn của menu "Nhạc nền", theo thứ tự hiện: Tắt, các danh sách của danh mục, Nhạc của tôi. */
@@ -208,6 +209,8 @@ export function playlistOptions(menu: PlaylistMenu | undefined): PlaylistOption[
       id: MINE_PLAYLIST,
       label: "Nhạc của tôi",
       hint: menu?.mine ? `${menu.mine} bài` : "chưa có bài nào",
+      // Đường thêm nhạc là nút “Nhập nhạc của tôi…” trong Sửa sách › Nhạc nền của sách nói (và tab Nhạc nền của Studio); sách chỉ có chữ chưa có.
+      description: menu?.mine ? undefined : "Thêm nhạc của bạn ở “Sửa sách › Nhạc nền” của một cuốn sách nói (hay tab Nhạc nền trong Studio). Chưa thêm được ngay từ menu này.",
       disabled: !menu?.mine,
     },
   ];

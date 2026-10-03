@@ -1,4 +1,4 @@
-import { formatClock } from "@/shared/format";
+import { formatClock, formatLength, formatPercent } from "@/shared/format";
 
 // Nhãn của phần Nghe mà nhiều màn phải nói GIỐNG nhau (soát UX "Nghe ngay" 03-10): một chỗ chọn chữ, mỗi màn chỉ gọi. Nói theo cái người
 // nghe nhận ra (chương, giờ, giọng nào đang đọc), không theo trạng thái bên trong (clip đã đọc sẵn chưa, kịch bản đã có mốc chưa).
@@ -9,6 +9,15 @@ export const PREPARING_VOICE = "Đang chuẩn bị giọng đọc…";
 /** Chỗ nghe tiếp: "Chương 3 · 12:04" - cùng một dạng ở thẻ "Đang nghe dở" của Thư viện và nút chính của trang sách. */
 export function resumeWhere(chapterTitle: string, seconds: number): string {
   return chapterTitle ? `${chapterTitle} · ${formatClock(seconds)}` : formatClock(seconds);
+}
+
+/** Dòng tiến độ ở màn "Đang nghe": đã nghe bao nhiêu, còn bao lâu ở tốc độ đang chọn.
+ *  "Đã nghe 10% phần đã có · còn khoảng 27 phút ở tốc độ 1,5×" (tốc độ thường: "còn 41 phút"). `speed`: nhãn tốc độ đã định dạng. */
+export function bookProgressText(state: { whole: boolean; heard: number; total: number; rate: number; speed: string }): string {
+  const left = Math.max(0, state.total - state.heard);
+  const scope = state.whole ? "cả cuốn" : "phần đã có";
+  const remaining = state.rate !== 1 && left > 60 ? `còn khoảng ${formatLength(left / state.rate)} ở tốc độ ${state.speed}` : `còn ${formatLength(left)}`;
+  return `Đã nghe ${formatPercent(state.heard / state.total)} ${scope} · ${remaining}`;
 }
 
 /** Nút chính của trang sách: nói rõ nghe bắt đầu từ đâu. Không đổi theo việc giọng máy đã đọc sẵn tới đâu. */

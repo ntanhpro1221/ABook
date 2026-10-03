@@ -157,9 +157,10 @@ describe("lựa chọn nhạc nền", () => {
       error: "",
     });
     expect(options.map((option) => option.id)).toEqual([null, "calm", "short", MINE_PLAYLIST]);
-    expect(options[1]).toMatchObject({ label: "Kỳ ảo êm đềm", hint: "9 giờ", description: "Cho truyện chậm." });
-    expect(options[2].hint).toBe("40 phút");
+    expect(options[1]).toMatchObject({ label: "Kỳ ảo êm đềm", hint: "dài 9 giờ", description: "Cho truyện chậm." });
+    expect(options[2].hint).toBe("dài 40 phút");
     expect(options[3]).toMatchObject({ label: "Nhạc của tôi", disabled: true });
+    expect(options[3].description).toContain("Sửa sách");
     expect(playlistOptions({ playlists: [], mine: 3, error: "" })[1]).toMatchObject({ id: MINE_PLAYLIST, hint: "3 bài", disabled: false });
     expect(playlistOptions(undefined).map((option) => option.id)).toEqual([null, MINE_PLAYLIST]);
   });

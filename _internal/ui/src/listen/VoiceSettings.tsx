@@ -5,7 +5,6 @@ import { Button, StatusPill } from "@/shared/ui";
 import { cn } from "@/shared/cn";
 import type { ReadAloudVoice } from "./readAloud";
 import {
-  KEYED_PROVIDERS,
   ONLINE_KEYS_CHANGED_EVENT,
   ONLINE_NOTICE,
   SAMPLE_TEXT,
@@ -14,7 +13,7 @@ import {
   onlineNotice,
   resolveVoice,
 } from "./readAloudVoice";
-import { voiceSections } from "./voiceGroups";
+import { genderLabel, VOICE_GROUPS, voiceSections } from "./voiceGroups";
 
 // Cài đặt → "Giọng đọc" (máy tính và điện thoại dùng chung): giọng mặc định của "Nghe ngay", nghe thử từng giọng, gợi ý giọng nam / nữ, câu nói
 // rõ chữ của sách đi đâu với từng nhóm giọng trực tuyến, và mục "Giọng trực tuyến dùng khóa của bạn" (nhập khóa, Kiểm tra, Xóa). Mỗi nền tảng
@@ -59,17 +58,6 @@ const KEY_HELP: Record<string, string> = {
   viettel: "Trên viettelai.vn: đăng nhập, mở Tài khoản › Token, chép token.",
 };
 
-const GROUPS: { provider: string; title: string }[] = [
-  { provider: "edge", title: "Microsoft Edge · trực tuyến, miễn phí" },
-  ...Object.entries(KEYED_PROVIDERS).map(([provider, name]) => ({ provider, title: `${name} · dùng khóa của bạn` })),
-  { provider: "vieneu", title: "VieNeu · trên máy này, không cần mạng" },
-  { provider: "device", title: "Giọng của máy · không cần mạng" },
-];
-
-function genderLabel(gender?: string): string {
-  return gender === "female" ? "Nữ" : gender === "male" ? "Nam" : "";
-}
-
 function muted(): boolean {
   // ?mute=1: kiểm thử tự động không được phát tiếng ra loa của người dùng (như engine.ts, musicBed.ts).
   return typeof window !== "undefined" && new URLSearchParams(window.location.search).get("mute") === "1";
@@ -79,7 +67,8 @@ function errorText(error: unknown): string {
   return (error as Error)?.message || "Không làm được lúc này.";
 }
 
-function useSample(api: VoiceSettingsApi) {
+/** Nghe thử giọng: Cài đặt › Giọng đọc và menu giọng của trình phát dùng chung. `sample`: đọc câu mẫu bằng giọng ấy, trả địa chỉ phát được. */
+export function useVoiceSample(sample: (voiceId: string, text: string) => Promise<string>) {
   const audio = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState("");
   const [loading, setLoading] = useState("");
@@ -95,7 +84,7 @@ function useSample(api: VoiceSettingsApi) {
     setFailed(null);
     setLoading(voice);
     try {
-      const url = await api.sample(voice, SAMPLE_TEXT);
+      const url = await sample(voice, SAMPLE_TEXT);
       const element = new Audio(url);
       element.muted = muted();
       element.onended = () => setPlaying((current) => (current === voice ? "" : current));
@@ -210,7 +199,7 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
   const [providers, setProviders] = useState<OnlineProviderInfo[]>([]);
   const [chosen, setChosen] = useState(defaultVoice);
   const [loadError, setLoadError] = useState("");
-  const sample = useSample(api);
+  const sample = useVoiceSample(api.sample);
   const load = useCallback(async () => {
     try {
       const [listed, online] = await Promise.all([api.voices(), api.online().catch(() => [] as OnlineProviderInfo[])]);
@@ -235,7 +224,7 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
       {loadError && <p className="text-[13px] text-danger">{loadError}</p>}
       {voices === null && <p className="text-[13px] text-fg-2">Đang tìm các giọng…</p>}
       {voices &&
-        GROUPS.map(({ provider, title }) => {
+        VOICE_GROUPS.map(({ provider, title }) => {
           const list = voices.filter((voice) => voice.provider === provider);
           if (!list.length && provider !== "device") return null;
           const notice = provider === "edge" ? ONLINE_NOTICE : list[0] ? onlineNotice(list[0]) : "";

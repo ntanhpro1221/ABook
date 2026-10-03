@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { nextChapterLabel, PREPARING_VOICE, primaryListenLabel, readerHint, resumeWhere, tapVerb, textBookLine, textChapterLine, toggleLabel } from "./labels";
+import { bookProgressText, nextChapterLabel, PREPARING_VOICE, primaryListenLabel, readerHint, resumeWhere, tapVerb, textBookLine, textChapterLine, toggleLabel } from "./labels";
 
 const fresh = { playingHere: false, finished: false, point: { title: "Chương 1", at: 0 }, heard: 0, textOnly: false };
 
@@ -19,6 +19,20 @@ describe("nút chính của trang sách", () => {
   it("đang phát: Tạm dừng; nghe hết sách: Nghe lại từ đầu", () => {
     expect(primaryListenLabel({ ...fresh, playingHere: true, heard: 10 })).toBe("Tạm dừng");
     expect(primaryListenLabel({ ...fresh, finished: true, heard: 9999 })).toBe("Nghe lại từ đầu");
+  });
+});
+
+describe("dòng tiến độ ở màn Đang nghe", () => {
+  const base = { whole: false, heard: 330, total: 3300, rate: 1, speed: "1×" };
+
+  it("tốc độ thường: đã nghe bao nhiêu, còn bao lâu", () => {
+    expect(bookProgressText(base)).toBe("Đã nghe 10% phần đã có · còn 50 phút");
+    expect(bookProgressText({ ...base, whole: true })).toContain("Đã nghe 10% cả cuốn");
+  });
+
+  it("tốc độ khác: chỉ nói thời gian còn lại ở tốc độ đang chọn, không hai con số lẫn nhau", () => {
+    const text = bookProgressText({ ...base, rate: 1.5, speed: "1,5×" });
+    expect(text).toBe("Đã nghe 10% phần đã có · còn khoảng 33 phút ở tốc độ 1,5×");
   });
 });
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chaptersByPart, foldVietnamese, partHeading, resumePoint, seriesIndex, seriesOf, type BookPart, type ListenBook, type ListenChapter } from "./model";
+import { chaptersByPart, foldVietnamese, listeningBook, partHeading, resumePoint, seriesIndex, seriesOf, type BookPart, type ListenBook, type ListenChapter } from "./model";
 
 describe("seriesOf", () => {
   it("reads the volume and the word the book uses for it", () => {
@@ -124,5 +124,27 @@ describe("chaptersByPart", () => {
     expect(chaptersByPart(list, undefined)).toEqual([{ heading: null, chapters: list }]);
     expect(chaptersByPart(list, [])).toEqual([{ heading: null, chapters: list }]);
     expect(chaptersByPart(list, [parts[0]])).toEqual([{ heading: null, chapters: list }]);
+  });
+});
+
+describe("listeningBook", () => {
+  const entry = (id: string, at: number | null, finished = false) =>
+    ({ id, progress: { finished }, state: { last: at === null ? null : { chapterId: 1, seconds: 5, at } } }) as unknown as ListenBook;
+  const shelf = [entry("a", 100), entry("b", 300), entry("c", null), entry("d", 900, true)];
+
+  it("takes the most recently heard unfinished book when nothing is playing", () => {
+    expect(listeningBook(shelf, null)?.id).toBe("b");
+    expect(listeningBook([entry("c", null)], null)).toBeUndefined();
+  });
+
+  it("follows the book in the player even before the library reports its position", () => {
+    // Bắt đầu phát cuốn "c" (chưa có chỗ nghe trong thư viện đã tải) - thẻ phải theo cuốn đang phát, không đứng ở cuốn "b".
+    expect(listeningBook(shelf, "c")?.id).toBe("c");
+    expect(listeningBook(shelf, "a")?.id).toBe("a");
+  });
+
+  it("ignores a playing book that is finished or not on the shelf", () => {
+    expect(listeningBook(shelf, "d")?.id).toBe("b");
+    expect(listeningBook(shelf, "zzz")?.id).toBe("b");
   });
 });

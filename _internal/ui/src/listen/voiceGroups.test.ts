@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ReadAloudVoice } from "./readAloud";
-import { splitVoiceName, voiceSections } from "./voiceGroups";
+import { genderLabel, groupedVoices, splitVoiceName, voiceSections } from "./voiceGroups";
 
 const voice = (id: string, name: string, gender = ""): ReadAloudVoice => ({ id, name, provider: id.split(":")[0], online: false, gender });
 
@@ -33,5 +33,19 @@ describe("danh sách giọng ở Cài đặt", () => {
     const sections = voiceSections([voice("device:1", "Microsoft An (vi-VN)"), voice("device:2", "Microsoft Hoa")]);
     expect(sections).toHaveLength(1);
     expect(sections[0].voices.map((item) => item.shown)).toEqual(["Microsoft An (vi-VN)", "Microsoft Hoa"]);
+  });
+});
+
+describe("nhóm giọng dùng chung với trình phát", () => {
+  it("chia theo nhà cung cấp đúng thứ tự Cài đặt, bỏ nhóm rỗng, nhà cung cấp lạ vào 'Khác'", () => {
+    const groups = groupedVoices([voice("device:an", "An", "female"), voice("edge:a", "Hoài My (Edge)", "female"), voice("lạ:x", "X")]);
+    expect(groups.map((group) => group.provider)).toEqual(["edge", "device", "other"]);
+    expect(groups[2].title).toBe("Khác");
+  });
+
+  it("nam / nữ nói bằng tiếng Việt, không biết thì để trống", () => {
+    expect(genderLabel("female")).toBe("Nữ");
+    expect(genderLabel("male")).toBe("Nam");
+    expect(genderLabel(undefined)).toBe("");
   });
 });

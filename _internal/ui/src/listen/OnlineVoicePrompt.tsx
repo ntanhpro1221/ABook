@@ -1,7 +1,7 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { cn } from "@/shared/cn";
 import { Button, Dialog } from "@/shared/ui";
-import { onlinePromptText, pendingConsent, spokenVoiceName, subscribeConsent } from "./onlineConsent";
+import { chooseVoiceText, onlinePromptText, pendingConsent, spokenVoiceName, subscribeConsent } from "./onlineConsent";
 
 /** Hộp hỏi trước lần đầu đọc bằng giọng trực tuyến (onlineConsent.ts). Gắn một lần trong PlayerProvider - máy tính và điện thoại như nhau. */
 export function OnlineVoicePrompt() {
@@ -15,7 +15,7 @@ export function OnlineVoicePrompt() {
       open
       onOpenChange={(open) => !open && answer(null)}
       title={choosing ? "Chọn giọng đọc" : "Giọng đọc trực tuyến"}
-      description={choosing ? "Giọng của máy đọc ngay trên máy này, không gửi chữ đi đâu." : onlinePromptText(voice)}
+      description={choosing ? chooseVoiceText(voices, voice) : onlinePromptText(voice)}
       width="max-w-md"
     >
       {choosing ? (

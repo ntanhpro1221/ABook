@@ -6,7 +6,7 @@ import { formatClock } from "@/shared/format";
 import { usePlayListenBook } from "./LibraryScreen";
 import type { NightEvent, NightSession, Script } from "./model";
 import { sentenceAt } from "./PlayerViews";
-import { chapterScriptQuery, useListenBook, useSource } from "./source";
+import { chapterScriptQuery, useLastNight, useListenBook, useSource } from "./source";
 
 // "Tối qua bạn nghe tới đâu?" - thẻ buổi sáng, chung cho máy tính và điện thoại.
 //
@@ -83,7 +83,7 @@ export function MorningRecap({ className }: { className?: string }) {
   const client = useQueryClient();
   const playBook = usePlayListenBook();
   const [scrubbing, setScrubbing] = useState(false);
-  const { data } = useQuery({ queryKey: ["listen", "night"], queryFn: () => source.lastNight(), staleTime: 60_000 });
+  const { data } = useLastNight();
   const session = data?.night ?? null;
   const bookId = data?.bookId ?? "";
   const fresh = Boolean(
