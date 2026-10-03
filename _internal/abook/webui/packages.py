@@ -15,7 +15,7 @@ import re
 from pathlib import Path
 from typing import Any, Iterable
 
-from . import book_edits, covers, store
+from . import book_edits, covers, project_views, store
 from .. import continuation
 from .fingerprints import Fingerprints, base_name
 from .listen_view import FORMAT
@@ -23,6 +23,7 @@ from .listening import book_progress
 
 MANIFEST = "book.json"  # = bookfile.MANIFEST (bookfile nhập library, library nhập module này - nên không nhập ở đây)
 IMPORTED_FOLDER = "Sách đã nhập"
+PROJECT_MARKER = "project.json"  # = projectfile.MANIFEST: có trong thư mục một cuốn nhập từ file `.abookproj` (xưởng đang chờ hay đi theo)
 
 _CACHE: dict[str, tuple[tuple[int, int], dict[str, Any]]] = {}
 
@@ -43,6 +44,41 @@ def manifest(path: Path) -> dict[str, Any]:
 
 
 _EDITED: dict[str, tuple[Any, dict[str, Any]]] = {}
+_WORKSHOP: dict[str, tuple[tuple[int, int], str | None]] = {}
+
+
+def workshop_state(path: Path) -> str | None:
+    """Cuốn này đến từ một file `.abookproj` (có `project.json`) thì "present" (xưởng đi theo cuốn: `project/` + `sources/` nằm
+    trong thư mục, để lưu lại) hay "pending" (chỉ có phần nghe, chờ "Dựng xưởng" ở máy có Studio); cuốn từ `.abook`: None. Đệm
+    theo lần ghi - `project.json` của dự án lớn liệt kê hàng chục nghìn file."""
+    file = Path(path) / PROJECT_MARKER
+    try:
+        stat = file.stat()
+    except OSError:
+        return None
+    stamp = (stat.st_mtime_ns, stat.st_size)
+    cached = _WORKSHOP.get(str(file))
+    if cached and cached[0] == stamp:
+        return cached[1]
+    try:
+        value = json.loads(file.read_text(encoding="utf-8")).get("workshop")
+    except (OSError, ValueError, AttributeError):
+        value = None
+    state = value if value in ("present", "pending") else None
+    _WORKSHOP[str(file)] = (stamp, state)
+    return state
+
+
+def project_file(path: Path) -> dict[str, Any] | None:
+    """Giao diện hỏi gì về nguồn gốc `.abookproj` của một cuốn: {"workshop": "present" | "pending", "views": [tên bản chụp]}; cuốn
+    từ file `.abook` thì None. "Lưu" giữ đúng loại file này; "Dựng xưởng" chỉ mời với "pending"."""
+    state = workshop_state(path)
+    return None if state is None else {"workshop": state, "views": project_views.available(path)}
+
+
+def view(path: Path, name: str) -> Any | None:
+    """Bản chụp chỉ đọc của xưởng (`views/<name>.json`, project_views.py) trong cuốn nhập từ `.abookproj`, hay None."""
+    return project_views.load(path, name)
 
 
 def edited_manifest(path: Path) -> dict[str, Any]:
@@ -229,6 +265,7 @@ def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bo
         # số ấy, bao nhiêu là ý muốn chờ Studio (book_wishes.py) - chưa áp vào audio.
         "edits": book_edits.count(edits),
         "wishes": book_edits.count_wishes(edits),
+        "projectFile": project_file(Path(path)),
         "lastChapterTitle": next((chapter["fullTitle"] for chapter in items
                                   if chapter["id"] == (state.get("last") or {}).get("chapterId")), ""),
         # Cả bộ trong một file (bookfile.pack_series): các phần theo thứ tự; sách một phần thì rỗng.
@@ -275,42 +312,54 @@ def _write_cover_meta(target: Path, book: dict[str, Any]) -> None:
 
 def import_file(source: Path, library_root: Path, projects: Iterable[Path],
                 fingerprints: Fingerprints, report: dict[str, Any] | None = None) -> tuple[Path, str]:
-    """Nhập một file `.abook`. Trả (thư mục cuốn trong thư viện, cách): "project" - file do chính máy này xuất, mở
+    """Nhập một file `.abook` (hay `.abookproj` mà máy chỉ nhập như một cuốn sách - xem `import_opened`). File hỏng, bị sửa hay
+    không phải sách: `bookfile.BookFileError` / `projectfile.ProjectFileError`."""
+    from . import bookfile, projectfile
+
+    opened = (projectfile.ProjectFile(Path(source)) if str(source).lower().endswith(projectfile.EXTENSION)
+              else bookfile.BookFile(Path(source)))
+    with opened:
+        return import_opened(opened, library_root, projects, fingerprints, report)
+
+
+def import_opened(opened: Any, library_root: Path, projects: Iterable[Path], fingerprints: Fingerprints,
+                  report: dict[str, Any] | None = None) -> tuple[Path, str]:
+    """Nhập một file đã mở (`bookfile.BookFile` hay `projectfile.ProjectFile`: cùng giao diện - chapter_prints, edits,
+    extract...). Trả (thư mục cuốn trong thư viện, cách): "project" - file do chính máy này xuất, mở
     dự án ấy; "existing" - đã nhập rồi, bản đã có đủ chương bằng hoặc hơn; "updated" - đã nhập rồi, bản mới nhiều
-    chương hơn nên thay tại chỗ; "new" - cuốn mới. File hỏng, bị sửa hay không phải sách: `bookfile.BookFileError`.
+    chương hơn nên thay tại chỗ; "new" - cuốn mới.
 
     File phiên bản 4 mang lớp sửa của người nghe (book_edits.py): cuốn đã nhập thì phần sửa được HỢP với phần sửa trên máy
     (máy này thắng, không bị xoá); cuốn là dự án của chính máy này thì phần sửa được cất chờ người dùng đồng ý áp vào dự án
     (`book_edits.fold`). `report` (nếu có) nhận {"edits": số thay đổi trong file, "merge": báo cáo hợp}."""
-    from . import bookfile
-
     report = report if report is not None else {}
-    with bookfile.BookFile(Path(source)) as opened:
-        prints = opened.chapter_prints
-        report["edits"] = book_edits.count(opened.edits)
-        # File cả bộ chung chương với nhiều dự án (mỗi phần một dự án): mở phần đầu của bộ.
-        mine = [project for project in projects if fingerprints.shares_a_chapter(project, prints)]
-        if mine:
-            project = Path(min(mine, key=continuation.part_number))
-            if report["edits"]:
-                book_edits.stash_incoming(project, opened.edits, opened.edits_cover(), opened.copy_member)
-            return project, "project"
-        imported = Path(library_root).expanduser() / IMPORTED_FOLDER
-        wanted = _prints_by_file(prints)
-        for existing in folders(library_root):
-            theirs = chapter_prints(manifest(existing))
-            if wanted & _prints_by_file(theirs):
-                if len(prints) <= len(theirs):
-                    if report["edits"]:
-                        report["merge"] = book_edits.adopt(existing, opened.edits, opened.edits_cover(), opened.copy_member)
-                    elif not book_edits.is_empty(local := book_edits.load(existing)):
-                        # File không mang thay đổi nào, nhưng cuốn trên máy có: báo "giữ nguyên N thay đổi" cho người dùng.
-                        report["merge"] = book_edits.merge(local, book_edits.empty())[1]
-                    return existing, "existing"
-                target = opened.extract(imported, existing.name)
-                report["merge"] = opened.last_merge
-                _write_cover_meta(target, opened.book)
-                return target.resolve(), "updated"
-        target = opened.extract(imported, _folder_name(str(opened.book.get("title") or ""), opened.content_key))
-        _write_cover_meta(target, opened.book)
-        return target.resolve(), "new"
+    prints = opened.chapter_prints
+    report["edits"] = book_edits.count(opened.edits)
+    # File cả bộ chung chương với nhiều dự án (mỗi phần một dự án): mở phần đầu của bộ.
+    mine = [project for project in projects if fingerprints.shares_a_chapter(project, prints)]
+    if mine:
+        project = Path(min(mine, key=continuation.part_number))
+        if report["edits"]:
+            book_edits.stash_incoming(project, opened.edits, opened.edits_cover(), opened.copy_member)
+        return project, "project"
+    imported = Path(library_root).expanduser() / IMPORTED_FOLDER
+    wanted = _prints_by_file(prints)
+    for existing in folders(library_root):
+        theirs = chapter_prints(manifest(existing))
+        if wanted & _prints_by_file(theirs):
+            # Cuốn đã nhập từ file `.abook`, nay gặp file `.abookproj` của nó: nhập lại để cuốn mang phần xưởng (project.json).
+            gains_workshop = hasattr(opened, "workshop") and not (existing / PROJECT_MARKER).is_file()
+            if len(prints) < len(theirs) or (len(prints) == len(theirs) and not gains_workshop):
+                if report["edits"]:
+                    report["merge"] = book_edits.adopt(existing, opened.edits, opened.edits_cover(), opened.copy_member)
+                elif not book_edits.is_empty(local := book_edits.load(existing)):
+                    # File không mang thay đổi nào, nhưng cuốn trên máy có: báo "giữ nguyên N thay đổi" cho người dùng.
+                    report["merge"] = book_edits.merge(local, book_edits.empty())[1]
+                return existing, "existing"
+            target = opened.extract(imported, existing.name)
+            report["merge"] = opened.last_merge
+            _write_cover_meta(target, opened.book)
+            return target.resolve(), "updated"
+    target = opened.extract(imported, _folder_name(str(opened.book.get("title") or ""), opened.content_key))
+    _write_cover_meta(target, opened.book)
+    return target.resolve(), "new"

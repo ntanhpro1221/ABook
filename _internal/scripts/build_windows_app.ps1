@@ -92,7 +92,7 @@ function Build-Python {
     $pth = @("python$PythonTag.zip", ".", "..\app", "Lib\site-packages") -join "`r`n"
     [System.IO.File]::WriteAllText((Join-Path $python "python$PythonTag._pth"), $pth + "`r`n")
 
-    Step "Gói phụ (Pillow, psutil, requests, numpy, onnxruntime) - chỉ đúng wheel đã ghi băm"
+    Step "Gói phụ (Pillow, psutil, requests) - chỉ đúng wheel đã ghi băm"
     $buildPython = Get-BuildPython
     Invoke-Checked {
         & $buildPython -m pip install --disable-pip-version-check --no-deps --no-compile --require-hashes `

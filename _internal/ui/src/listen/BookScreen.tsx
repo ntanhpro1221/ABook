@@ -19,6 +19,7 @@ import { chapterHeard, chaptersByPart, resumePoint, type CastMember, type Listen
 import { usePlayer } from "./player";
 import { BookmarkList, chapterStatusLabel } from "./PlayerViews";
 import { EditsSyncBanner, SendEditsItem } from "./SendEdits";
+import { ProjectFileItems, ProjectViewsDialog } from "./ProjectFileItems";
 import { WishesDialog } from "./WishesDialog";
 import { useCast, useListenBook, useListenMutations, useSource } from "./source";
 
@@ -635,6 +636,7 @@ export function BookScreen({
   const [genderPerson, setGenderPerson] = useState<CastMember | null>(null);
   const [mergingPerson, setMergingPerson] = useState<CastMember | null>(null);
   const [wishesOpen, setWishesOpen] = useState(false);
+  const [viewsOpen, setViewsOpen] = useState(false);
   const { data: castView } = useCast(id);
   // Hook không được đặt sau `return` sớm: cuốn chưa nạp xong thì dùng một cuốn rỗng (nút lưu chưa hiện lúc ấy).
   const saver = useSaveBook(book ?? ({ id: id ?? "" } as ListenBook));
@@ -816,6 +818,7 @@ export function BookScreen({
                   )}
                   {editing !== false && <EditBlockedItem book={book} />}
                   {editing !== false && <StudioOnlyItem book={book} />}
+                  {editing !== false && <ProjectFileItems book={book} onViews={() => setViewsOpen(true)} />}
                   {extraActions?.(book)}
                 </DropdownMenu.Content>
               </DropdownMenu.Portal>
@@ -869,6 +872,7 @@ export function BookScreen({
           <RenameChapterDialog book={book} chapter={renamingChapter} onClose={() => setRenamingChapter(null)} />
           <RenamePersonDialog bookId={book.id} person={renamingPerson} onClose={() => setRenamingPerson(null)} onSaved={() => refreshAfterEdit(client, book.id)} />
           <SaveAsDialog book={book} open={saveAsOpen} onOpenChange={setSaveAsOpen} pickFolder={editing.pickFolder} />
+          <ProjectViewsDialog book={book} open={viewsOpen} onOpenChange={setViewsOpen} />
           {waiting && (
             <>
               <GenderDialog bookId={book.id} person={genderPerson} onClose={() => setGenderPerson(null)} waiting onSaved={() => refreshAfterEdit(client, book.id)} />

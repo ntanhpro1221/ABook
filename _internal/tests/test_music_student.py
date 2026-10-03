@@ -2,7 +2,6 @@
 ABOOK_MUSIC_STUDENT_DIR hay bản dựng ở LLM_Train) thì thử cả đường nhúng CLAP + âm học + đầu trò; không có thì bỏ qua các bài ấy."""
 from __future__ import annotations
 
-import hashlib
 import json
 import math
 import shutil
@@ -65,15 +64,35 @@ def test_an_incomplete_package_is_not_used(tmp_path: Path, monkeypatch) -> None:
     assert not music_student.available() and music_student.analyze(_tones(tmp_path / "a.wav", 5)) is None
 
 
-def test_the_download_is_pinned_and_never_happens_in_tests(tmp_path: Path, monkeypatch) -> None:
+def test_the_model_download_is_pinned_per_file_and_its_pin_follows_every_hash(monkeypatch) -> None:
     assert music_student.REVISION == "" or len(music_student.REVISION) == 40
-    # conftest đặt ABOOK_MUSIC_STUDENT_DOWNLOAD=0: có ghim commit cũng không tải, gói thiếu thì không cắm
-    music_student.configure(tmp_path / "student")
-    assert music_student._download(tmp_path / "student") is False and not (tmp_path / "student").exists()
-    assert not music_student.available()
-    monkeypatch.setattr(music_student, "REVISION", "")
+    for name in ("onnx", "torch"):
+        items = music_student.model_downloads(name)
+        assert [item.name for item in items] == list(music_student.PACKAGE_FILES[name])
+        for item in items:
+            assert item.url == f"https://huggingface.co/{music_student.REPO_ID}/resolve/{music_student.REVISION}/{item.name}"
+            assert (item.sha256, item.size) == music_student.PACKAGE_HASHES[item.name]
+    before = music_student.model_pin("onnx")
+    assert music_student.model_pin("torch") != before and music_student.model_id() == music_student.model_pin()[:12]
+    # cùng tên file, cùng cỡ, khác nội dung (băm khác) hay khác commit -> ghim khác: gói đã tải thành "cũ"
+    monkeypatch.setitem(music_student.PACKAGE_HASHES, "clap_audio_fp16.onnx", ("f" * 64, music_student.PACKAGE_HASHES["clap_audio_fp16.onnx"][1]))
+    assert music_student.model_pin("onnx") != before
+    monkeypatch.undo()
+    monkeypatch.setattr(music_student, "REVISION", "1" * 40)
+    assert music_student.model_pin("onnx") != before
+
+
+def test_the_module_may_download_only_when_nothing_forbids_or_provides_it(monkeypatch) -> None:
     monkeypatch.setenv(music_student.ENV_DOWNLOAD, "1")
-    assert music_student._download(tmp_path / "student") is False, "chưa ghim commit thì không bao giờ tải"
+    assert music_student.cannot_download() == ""
+    monkeypatch.setenv(music_student.ENV_DOWNLOAD, "0")  # conftest đặt sẵn như vậy cho mọi bài thử
+    assert "tắt" in music_student.cannot_download()
+    monkeypatch.setenv(music_student.ENV_DOWNLOAD, "1")
+    monkeypatch.setenv(music_student.ENV_DIR, "/da/co/goi")
+    assert "chỉ định sẵn" in music_student.cannot_download()
+    monkeypatch.delenv(music_student.ENV_DIR)
+    monkeypatch.setattr(music_student, "REVISION", "")
+    assert "chưa có bản model" in music_student.cannot_download(), "chưa ghim commit thì không bao giờ tải"
 
 
 def test_a_synthetic_track_gets_a_full_entry_that_survives_clean_analysis(tmp_path: Path, package: Path) -> None:
@@ -146,6 +165,16 @@ def _calibrated(raw: np.ndarray, backend: str) -> np.ndarray:
                      for axis, value in zip(("valence", "arousal", "tension"), raw)])
 
 
+def _ffmpeg_duration(path: Path) -> float:
+    """Độ dài ffmpeg ghi trong đầu file - đúng số bản nghiên cứu dùng để nhảy `-ss`. Không dùng `read_tags` (tinytag lệch tới 0,03 giây ở mp3
+    VBR, đủ làm cửa sổ trượt và cos nhúng tụt dưới 0,999 trong phép so tuyệt đối này; với app, 0,03 giây độ dài bài không đáng kể)."""
+    import re
+
+    stderr = subprocess.run([ffmpeg_executable(), "-hide_banner", "-nostdin", "-i", str(path)], capture_output=True, check=False).stderr.decode("utf-8", "replace")
+    hours, minutes, seconds = re.search(r"Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)", stderr).groups()
+    return int(hours) * 3600 + int(minutes) * 60 + float(seconds)
+
+
 def test_the_head_and_the_tower_reproduce_the_research_numbers(package: Path) -> None:
     """Hai nửa của đường chạy, mỗi nửa đối chiếu với bản nghiên cứu ở mức gần như tuyệt đối: (1) đầu trò + âm học cho cùng V/E/T khi
     nhận đúng vector nhúng của bản nghiên cứu; (2) tháp fp16 của gói cho gần như đúng vector nhúng ấy khi nhận đúng ba cửa sổ mà
@@ -158,7 +187,7 @@ def test_the_head_and_the_tower_reproduce_the_research_numbers(package: Path) ->
         got = student.predict(embedding.astype(np.float64), acoustic)
         assert np.abs(_vet(got) - _calibrated(expected, "torch")).max() < 1e-3, track
         path = MUSIC / "audio_incompetech" / (stem(track) + ".mp3")
-        duration = music_local.read_tags(path)["duration"]
+        duration = _ffmpeg_duration(path)
         clips = []
         for fraction in (0.2, 0.5, 0.8):
             raw = subprocess.run([ffmpeg_executable(), "-v", "error", "-ss", f"{max(0.0, duration * fraction - 5):.2f}", "-t", "10",
@@ -316,27 +345,9 @@ def test_onnx_and_torch_agree_with_the_same_head_on_catalog_tracks(monkeypatch, 
         print(f"\nmusic_student onnx vs torch (same head A): max |diff| V/E/T = {worst:.5f} over {len(paths)} tracks")
 
 
-class _Reply:
-    """Thay phản hồi của urllib: trả `body` một lần rồi hết."""
-
-    status = 200
-
-    def __init__(self, body: bytes) -> None:
-        self.body = body
-
-    def __enter__(self) -> "_Reply":
-        return self
-
-    def __exit__(self, *exc: object) -> None:
-        return None
-
-    def read(self, count: int = -1) -> bytes:
-        body, self.body = self.body, b""
-        return body
-
-
 @pytest.mark.parametrize("name", ["onnx", "torch"])
-def test_no_download_happens_when_it_is_switched_off(tmp_path: Path, monkeypatch, name: str) -> None:
+def test_analysis_never_downloads_anything_on_its_own(tmp_path: Path, monkeypatch, name: str) -> None:
+    """Gói model chỉ tải khi người dùng bấm "Phân tích nhạc" (music_module): nạp / phân tích một bài không bao giờ chạm mạng."""
     opened: list[object] = []
 
     def refuse(*args, **kwargs):
@@ -345,36 +356,10 @@ def test_no_download_happens_when_it_is_switched_off(tmp_path: Path, monkeypatch
 
     monkeypatch.setattr(urllib.request, "urlopen", refuse)
     monkeypatch.setenv(music_student.ENV_BACKEND, name)
-    assert music_student.os.environ[music_student.ENV_DOWNLOAD] == "0"
+    monkeypatch.setenv(music_student.ENV_DOWNLOAD, "1")  # kể cả khi được phép tải
     monkeypatch.setattr(music_student.importlib.util, "find_spec", lambda module: object())
     music_student.configure(tmp_path / "student")
-    assert music_student._download(tmp_path / "student") is False and not (tmp_path / "student").exists()
     assert music_student._load() is None and not music_student.available()
     assert music_student.analyze(_tones(tmp_path / "t.wav", 5)) is None
-    assert opened == [], "ABOOK_MUSIC_STUDENT_DOWNLOAD=0 chặn mọi đường tải, kể cả HTTPS thuần"
-
-
-def test_the_plain_https_download_is_pinned_verified_and_atomic(tmp_path: Path, monkeypatch) -> None:
-    monkeypatch.setenv(music_student.ENV_BACKEND, "onnx")
-    monkeypatch.setenv(music_student.ENV_DOWNLOAD, "1")
-    monkeypatch.setattr(music_student.importlib.util, "find_spec", lambda module: object())
-    bodies = {name: f"nội dung {name}".encode() for name in music_student.PACKAGE_FILES["onnx"]}
-    hashes = {name: (hashlib.sha256(body).hexdigest(), len(body)) for name, body in bodies.items()}
-    monkeypatch.setattr(music_student, "PACKAGE_HASHES", {**music_student.PACKAGE_HASHES, **hashes})
-    asked: list[str] = []
-
-    def fake(request, timeout=None):
-        asked.append(request.full_url)
-        return _Reply(bodies[request.full_url.rsplit("/", 1)[1]])
-
-    monkeypatch.setattr(urllib.request, "urlopen", fake)
-    folder = tmp_path / "student"
-    assert music_student._download(folder) is True
-    assert asked == [f"https://huggingface.co/NGDtuanh/abook-music-student/resolve/{music_student.REVISION}/{name}"
-                     for name in music_student.PACKAGE_FILES["onnx"]]
-    assert sorted(path.name for path in folder.iterdir()) == sorted(music_student.PACKAGE_FILES["onnx"]), "không còn file .part"
-    # Sai băm: không bao giờ giữ file.
-    monkeypatch.setattr(music_student, "PACKAGE_HASHES", {**music_student.PACKAGE_HASHES, "clap_audio_fp16.onnx": ("0" * 64, 5)})
-    other = tmp_path / "other"
-    assert music_student._download(other) is False
-    assert not (other / "clap_audio_fp16.onnx").exists() and not list(other.glob("*.part"))
+    assert opened == [] and not (tmp_path / "student").exists()
+    assert music_student.planned_backend() == name

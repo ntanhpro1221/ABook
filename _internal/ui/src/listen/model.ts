@@ -119,6 +119,9 @@ export interface ListenBook {
   wishes?: number;
   /** Cuốn tải từ máy tính (điện thoại): phần sửa chưa gửi về máy tính và kết quả lần gửi gần nhất (EditsSync.kt). */
   editsSync?: EditsSyncState;
+  /** Cuốn nhập từ file dự án `.abookproj` (docs/EDITING.md, P3); cuốn từ file `.abook`: null. `workshop` "present" - xưởng đi theo cuốn
+   *  để lưu lại; "pending" - chỉ có phần nghe, chờ "Dựng xưởng" (`built` = mã dự án đã dựng). `views`: bản chụp chỉ đọc có trong file. */
+  projectFile?: { workshop: "present" | "pending"; views: ("work" | "casting" | "names")[]; built?: string | null } | null;
 }
 
 export interface SeriesPlace {

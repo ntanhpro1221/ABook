@@ -28,12 +28,31 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - **Mở file `.abook` đã sửa của chính dự án**: bài nhạc người nghe ghim vào sách giờ cũng được áp - bài được nhập vào "Nhạc của tôi" của máy này (không trùng bản) rồi ghim đúng đoạn; bài nào thiếu file thì bỏ qua và nói rõ lý do.
 
+- **Nhập nhạc không còn phải đợi tải gì, và bộ cài nhẹ hơn**: nhập “Nhạc của tôi” đọc tên bài, nghệ sĩ, độ dài ngay trên máy, không cần ffmpeg
+  nữa. Phần nghe nhạc để hiểu không khí của bài (ffmpeg, thư viện chạy model, model: ~117 MB) giờ là một mô-đun “Phân tích nhạc” gộp một
+  nút, một thanh tiến độ, một dung lượng; chỉ tải khi bạn bấm, không nằm trong bộ cài (bộ cài không còn mang numpy và onnxruntime, ~25 MB).
+  Chưa tải thì bài nhập vẫn nghe, ghim tay, đi theo sách .abook như thường - chỉ chưa có “Đã phân tích” và chưa đo độ to (nhạc nền dùng mức
+  mặc định). Máy có Studio chỉ tải phần model. Có bản mới thì báo “có bản mới - N MB”, một lần bấm chỉ tải phần đổi, và không tự phân tích
+  lại các bài cũ (nút “Phân tích lại N bài bằng bản mới”).
+
+- **File dự án `.abookproj` nhỏ hơn, mở được và lưu được cả trên điện thoại**: audio chương, câu mẫu và bìa không còn nằm hai lần trong file (bản chép giống hệt chỉ còn là một dòng ghi chú). File thêm ba bản chụp chỉ đọc của "Việc cần duyệt", mục lục kịch bản và "Cách đọc tên", nên điện thoại (hay máy Windows chưa cài Studio) cho xem được mà không mở sổ dự án. Điện thoại mở file dự án để nghe, sửa tên sách / bìa / tên nhân vật / nhạc như mọi cuốn, rồi "Lưu" ra lại đúng file dự án - phần xưởng đi theo nguyên vẹn. Mở file của một dự án đã có trên máy tính thì không tạo dự án thứ hai: các thay đổi trong file chờ bạn bấm "áp vào dự án". Một cuốn sách `.abook` cũng lưu thành `.abookproj` được: file chỉ có phần nghe, và máy có Studio mời "Dựng xưởng" - tạo dự án mới từ chữ, giọng nhân vật, tên bạn đặt và những việc bạn ghi cho Studio (làm lại toàn bộ audio; nguồn chương gốc, lịch sử phân tích, từng câu đã thu không có trong file). File dự án của các bản dev cũ không còn đọc được: mở bằng bản đã gói rồi gói lại.
+
 ### Điện thoại và thiết bị
+
+- **Điện thoại tự nghe nhạc bạn nhập để hiểu không khí của bài**: ở “Nhạc của tôi” có nút “Phân tích nhạc (N MB)” - một nút, một dung
+  lượng, tải một lần, chỉ khi bạn bấm (không bao giờ tự tải, và app nhắc nếu bạn đang dùng dữ liệu di động). Tải xong, các bài đã
+  nhập từ trước được nghe nốt ngay trên điện thoại, bài nhập sau được nghe ngay lúc nhập, không cần mạng và không gửi nhạc đi đâu.
+  Bài chưa nghe được (quá ngắn, file lạ) vẫn hiện “Chưa phân tích”, ghim tay như trước; việc nhập không bao giờ phải chờ việc phân tích.
+  Phần chạy model không nằm trong app (app vẫn ~7 MB, không phải 31 MB): nó là một phần của gói tải ấy.
+- **“Phân tích nhạc” có bản mới thì báo và chỉ tải phần đổi**: khi bản app mới mang model hay thư viện khác, “Nhạc của tôi” hiện “Phân tích
+  nhạc có bản mới - N MB”; bấm một lần chỉ tải phần đổi. Bản cũ vẫn chạy cho tới lúc đó. Các bài đã phân tích giữ kết quả cũ - app KHÔNG
+  tự phân tích lại; có nút “Phân tích lại N bài bằng bản mới” để bạn quyết.
 
 - **Nhạc nền đi theo khi điện thoại chia sẻ thư viện**: máy tính hay điện thoại khác nghe sách từ điện thoại của bạn giờ nghe cả
   nhạc nền dưới giọng đọc, như khi nghe từ máy tính - gồm nhạc người làm sách đã gắn và bài "Nhạc của tôi" bạn đã ghim vào sách,
   theo đúng cách bạn đã chỉnh (tắt nhạc, mức, đoạn im lặng). Chỉ những bài sách đang dùng mới được chia sẻ, không bao giờ cả kho
-  "Nhạc của tôi".
+  "Nhạc của tôi". Sách tải về điện thoại từ máy tính hay điện thoại khác cũng tải luôn nhạc nền (đủ byte mới giữ; bài nào hỏng thì
+  bỏ bài ấy, sách vẫn tải xong), nên nghe được nhạc cả khi không có mạng và chia sẻ tiếp được cho máy khác.
 
 - **Tìm ảnh bìa trên mạng, ngay trên điện thoại**: trong "Sửa sách", cạnh "Chọn ảnh bìa…" có "Tìm ảnh bìa trên mạng…" - hỏi iTunes,
   Open Library và Google Books theo tên bộ truyện (như trên máy tính), bấm một ảnh là đặt làm bìa. Ảnh chỉ lấy từ các nguồn ấy,

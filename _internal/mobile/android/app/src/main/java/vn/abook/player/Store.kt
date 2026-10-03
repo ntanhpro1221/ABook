@@ -65,6 +65,8 @@ object Store {
         // Cuốn tải về từ máy tính chính: sửa được ở đây, phần sửa gửi về máy tính (EditsSync) - `sync`. Cuốn của thiết bị ghép khác
         // (gói mang `source`) sửa ở máy ấy - `link`.
         out.put("capabilities", capabilities(link = raw.optString("source").isNotEmpty(), sync = computer))
+        // Cuốn nhập từ file dự án `.abookproj` (ProjectDocument): giữ xưởng của nó / chờ dựng xưởng, kèm các bản chụp chỉ đọc.
+        out.put("projectFile", ProjectDocument.info(bookDir(id)) ?: JSONObject.NULL)
         if (computer) out.put("editsSync", EditsSync.view(bookDir(id), BookEdits.count(edits)))
         return out
     }
