@@ -139,3 +139,62 @@ for all 57 preset voices above.
 
 Next steps, as Lead work: Supertonic in desktop "Nghe ngay", then Studio casting across several engines (Supertonic and
 ZeroTTS for side roles) on a dev branch.
+
+## 2026-10-03 (late) - Supertonic and ZeroTTS on real Studio lines
+
+Lead asked for numbers to decide the roles in multi-engine casting and whether Studio needs EQ matching.
+
+**Lines and voices.**
+
+- 40 dialogue lines from a book-2 project (lô 18), exactly as the app's segmenter cut them: 36 from one chapter plus the
+  only 4 dialogue lines in the book with digits or abbreviations.
+- Each line was voiced from the string the app hands a voice, `TTSCoordinator.spoken_text`, opened on a copy of the DB.
+- Voices:
+  - VieNeu Turbo: narrator Phạm Tuyên plus 4 other presets as the baseline.
+  - Supertonic @1.54: the owner's liked F1, F3, M4 and M5.
+  - ZeroTTS: the owner's liked baotrang, giahuy, huuduc, kimoanh and quangminh.
+- Story text stays out of this repo.
+
+**Speed and memory** (CPU, 8 threads):
+
+| engine | s per line mean / p90 / max | s per 1000 chars | RTF | peak RAM | longest line (315 chars) |
+|---|---|---|---|---|---|
+| Supertonic @1.54 | 1.5 / 2.8 / 4.3 | 12 | 0.17 | 0.64 GiB | 4.3 s, 0.62 GiB |
+| ZeroTTS | 5.6 / 14.4 / 19.0 | 47 | 0.84 | 5.76 GiB | 19.0 s, 4.2 GiB |
+
+ZeroTTS memory grows with line length, so Studio should cap the line length it hands to ZeroTTS.
+
+**Seams.** The narrator alternated line by line with each other voice (39 switches per voice). Each clip went through
+the app's edge-silence cap and `normalize_segment_level`.
+
+| switch to | spectral tilt difference, mean / max (dB/oct) |
+|---|---|
+| another VieNeu preset (baseline) | 1.6-2.4 / 4.5-6.8 |
+| Supertonic | 1.8-2.7 / 4.4-7.7 |
+| ZeroTTS | 1.8-3.4 / 5.1-8.5 |
+
+- **Supertonic** sits inside the VieNeu-to-VieNeu baseline.
+- **ZeroTTS:** huuduc (darker) and kimoanh (brighter) sit slightly above it.
+- **Loudness** matches exactly after the app's leveling.
+- **Noise floor:** every engine sits at -92 to -100 dBFS, far below audibility.
+- **Supertonic F3** is unusually bright (spectral centroid 1238 Hz against 310-730 Hz for the others) and deserves a
+  listen at the switch.
+- **Verdict:** no general EQ matching is needed.
+
+**Reading the app's text.** Measured with the app's ASR, CER capped at 100 % per line because the ASR invents words on
+very short clips.
+
+| engine | CER mean | CER median | lines above 50 % |
+|---|---|---|---|
+| VieNeu Turbo | 5.9 % | 0.7 % | 3 |
+| ZeroTTS | 7.7 % | 1.4 % | 9 |
+| Supertonic | 8.5 % | 0.9 % | 9 |
+
+- **Supertonic at speed 1.54 swallows very short lines.** Quoted lines of 1-3 syllables come out with 0-0.2 s of
+  speech in about 1 s of audio. At 1.05 the same lines are read in full. Its speed must therefore depend on line length
+  (about 1.05 for short lines), or it needs a duration floor.
+- **"v.v." is left unexpanded by the app.** Supertonic reads it as "vư vư" and ZeroTTS also misreads it; VieNeu
+  normalises it itself. When the voice is not VieNeu, the app's text path should expand abbreviations, and Roman
+  numerals too: "II" reaches every engine as written. The scorer cannot judge Roman numerals, because the ASR writes
+  digits.
+- **"128":** ZeroTTS dropped "một trăm" for 3 of 5 voices; VieNeu and Supertonic read it right.
