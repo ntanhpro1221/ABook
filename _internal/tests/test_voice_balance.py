@@ -27,6 +27,7 @@ from abook.voice_balance import VoiceBalanceError
 from abook.voice_catalog import (
     SPEED_FACTOR_MAX,
     SPEED_FACTOR_MIN,
+    STYLE_NEWS,
     VIENEU_PRESETS,
     base_pitch_for_preset,
     casting_presets,
@@ -83,13 +84,24 @@ def test_every_castable_voice_has_a_record() -> None:
     for gender in ("male", "female"):
         for preset in casting_presets(gender) + narrator_presets(gender):
             voice_balance.constants_for("vieneu", version, preset["name"], 1.0)
-    for preset in VIENEU_PRESETS:
-        voice_balance.constants_for("vieneu", version, preset["name"], 1.0)
+    for name in voice_balance.balanced_preset_names():
+        voice_balance.constants_for("vieneu", version, name, 1.0)
 
 
 def test_the_table_holds_no_stray_voices() -> None:
     expected = set(voice_balance.castable_keys())
     assert set(voice_balance.load_table()["voices"]) == expected
+
+
+def test_the_table_covers_exactly_the_castable_and_narrator_voices() -> None:
+    # Phân vai được ∪ người kể chọn được: giọng miền Trung không phân vai nhưng vẫn kể chuyện được nên phải có số; giọng Tin tức
+    # không ở đâu chọn được nên không có bản ghi (khi casting mở chúng thì đo rồi mới thêm).
+    names = set(voice_balance.balanced_preset_names())
+    assert {"Quang Sơn", "Ngọc Trân"} <= names
+    news = {preset["name"] for preset in VIENEU_PRESETS if preset["style"] == STYLE_NEWS}
+    assert news and not news & names
+    in_table = {key.split("/")[1] for key in voice_balance.load_table()["voices"]}
+    assert in_table == names
 
 
 def test_a_voice_missing_from_the_table_is_an_error_not_a_one() -> None:
@@ -132,25 +144,30 @@ def test_profile_key_comes_from_engine_preset_and_formant() -> None:
 # --- tốc độ ---------------------------------------------------------------------------
 
 
-def test_temporary_table_keeps_the_owner_chosen_speeds() -> None:
+def test_the_measured_table_puts_every_voice_on_one_axis() -> None:
+    # Số đo 04-10 (docs/VOICE_BALANCE.md, "Số đo"): r_v = mốc / tốc độ gốc, mốc = trung vị tốc độ gốc của 19 preset phân vai
+    # ở f100 -> trung vị r của 19 preset ấy là 1. r theo PRESET (bậc formant đổi tốc độ ±0,5 %), x = 1 (chủ sách chốt).
     table = voice_balance.load_table()
-    assert table["x"] == 1.0
-    rates = {
-        key.split("/")[1]: record["r"]
-        for key, record in table["voices"].items()
-        if key.endswith("/f100")
-    }
-    assert rates["Đức Trí"] == 1.10
-    assert rates["Thiền Tâm Đức"] == 1.05
-    assert rates["Kim Thanh"] == 1.10
-    assert all(rate == 1.0 for name, rate in rates.items() if name not in {"Đức Trí", "Thiền Tâm Đức", "Kim Thanh"})
+    assert table["x"] == 1.0 and table["L_lufs"] == -25.0
+    assert 0.9 <= table["pace_floor_scale"] <= 1.0
+    by_preset: dict[str, set[float]] = {}
+    for key, record in table["voices"].items():
+        by_preset.setdefault(key.split("/")[1], set()).add(record["r"])
+    assert all(len(rates) == 1 for rates in by_preset.values()), by_preset
+    castable = [preset["name"] for gender in ("male", "female") for preset in casting_presets(gender)]
+    assert len(castable) == 19
+    middle = sorted(next(iter(by_preset[name])) for name in castable)[len(castable) // 2]
+    assert middle == pytest.approx(1.0, abs=0.005)
+    # Hệ số tay cũ bị THAY: 4 giọng kể chuyện chủ sách chọn 18-09 đọc chậm hơn mốc nên r > 1,1.
+    for name in ("Đức Trí", "Thiền Tâm Đức", "Kim Thanh", "Mỹ Duyên"):
+        assert next(iter(by_preset[name])) > 1.1, name
 
 
 def test_tempo_is_x_times_r(monkeypatch) -> None:
     constants = voice_balance.constants_for_key(OTHER_KEY)
-    assert voice_balance.tempo(constants) == pytest.approx(1.10)
+    assert voice_balance.tempo(constants) == pytest.approx(constants.r)
     _with_table(monkeypatch, x=0.85)
-    assert voice_balance.tempo(constants) == pytest.approx(0.85 * 1.10)
+    assert voice_balance.tempo(constants) == pytest.approx(0.85 * constants.r)
     # Tempo chậm hơn 0,80 giờ được phép (x ~ 0,85 nhân r ~ 0,89).
     assert SPEED_FACTOR_MIN == 0.70 and SPEED_FACTOR_MAX == 1.50
 
@@ -307,13 +324,25 @@ def test_the_pace_floor_follows_the_shared_knob_and_x(monkeypatch) -> None:
     assert metrics["pace_scale"] == pytest.approx(voice_balance.pace_floor_scale() * 0.9)
 
 
+def test_at_x_085_the_finished_floor_drops_and_the_raw_floor_does_not(monkeypatch) -> None:
+    # pace_floor_scale là giá trị ở x = 1 (đo: 0,996). Núm x = 0,85 (nhịp 4 giọng kể chuyện chủ sách chọn 18-09): sàn của bản
+    # đã áp tempo hạ theo x, còn sàn của bản THÔ (trước tempo) giữ nguyên vì x triệt tiêu - giọng đọc chậm hơn là do tempo,
+    # không phải do model đọc chậm.
+    constants = voice_balance.constants_for_key(KEY)
+    raw_at_one = voice_balance.raw_pace_floor_scale(constants)
+    _with_table(monkeypatch, x=0.85)
+    assert voice_balance.pace_gate_scale() == pytest.approx(voice_balance.pace_floor_scale() * 0.85)
+    assert voice_balance.raw_pace_floor_scale(voice_balance.constants_for_key(KEY)) == pytest.approx(raw_at_one)
+    assert voice_balance.tempo(voice_balance.constants_for_key(KEY)) == pytest.approx(0.85 * constants.r)
+
+
 # --- màu giọng ------------------------------------------------------------------------
 
 
 def test_register_keeps_its_old_values() -> None:
     expected = {"Thanh Bình": -4, "Adam bựa": -2, "Mạnh Dũng": -2}
-    for preset in VIENEU_PRESETS:
-        name = preset["name"]
+    # Cao độ đọc từ bảng: chỉ giọng có số (phân vai ∪ người kể) mới có; giọng Tin tức không chọn được nên không có.
+    for name in voice_balance.balanced_preset_names():
         assert base_pitch_for_preset(name) == expected.get(name, 0), name
         assert voice_balance.preset_pitch_st(name) == expected.get(name, 0), name
 
@@ -361,3 +390,11 @@ def test_the_import_script_turns_measurements_into_constants() -> None:
     voice_balance._validate(json.loads(script.render(table).decode("utf-8")))
     with pytest.raises(SystemExit):
         script.merge(table, {"voices": {"vieneu@3.8.1/Giọng mới/f100": {"r": 1.0}}}, {"voices": {}})
+
+
+def test_world_leaves_a_take_too_short_to_hold_speech_alone() -> None:
+    # pyworld.harvest trên 2 mẫu làm hỏng heap native và giết cả tiến trình (đo 04-10, test_voice_profile_lock sập cả lượt
+    # pytest khi giọng có r khác 1). Bản ngắn hơn WORLD_MIN_SECONDS đi qua nguyên vẹn; cổng "audio too short" loại nó sau.
+    tiny = np.asarray([0.1, -0.1], dtype=np.float32)
+    assert np.array_equal(tts.apply_speed_change(tiny, RATE, 0.9), tiny)
+    assert np.array_equal(tts.apply_pitch_variant(tiny, RATE, -2), tiny)

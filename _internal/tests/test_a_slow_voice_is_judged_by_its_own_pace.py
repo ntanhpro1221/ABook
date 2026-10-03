@@ -83,7 +83,7 @@ def test_a_database_row_without_the_field_is_judged_by_the_shared_floor() -> Non
 
 
 def test_a_slow_voice_gets_the_frames_its_raw_take_needs() -> None:
-    # Ngân sách sinh chia sàn cổng cho r_v (x triệt tiêu): giọng r = 1,10 cần nhiều khung hơn giọng r = 1.
+    # Ngân sách sinh chia sàn cổng cho r_v (x triệt tiêu): giọng chậm (r > 1) cần nhiều khung hơn giọng nhanh.
     settings = build_settings("high_quality")
     text = LINE + " " + LINE
     plain = {"pace": "normal", "kind": "narration", "text": text}
@@ -92,5 +92,5 @@ def test_a_slow_voice_gets_the_frames_its_raw_take_needs() -> None:
     assert voice_balance.constants_for_key(SLOW_VOICE_KEY).r > voice_balance.constants_for_key(FAST_VOICE_KEY).r
     assert own.generation_max_frames >= fast.generation_max_frames
     assert own.generation_ceiling_seconds < own.validation_max_seconds
-    ratio = voice_balance.raw_pace_floor_scale(voice_balance.constants_for_key(SLOW_VOICE_KEY))
-    assert ratio == pytest.approx(voice_balance.pace_floor_scale() / 1.10)
+    slow = voice_balance.constants_for_key(SLOW_VOICE_KEY)
+    assert voice_balance.raw_pace_floor_scale(slow) == pytest.approx(voice_balance.pace_floor_scale() / slow.r)
