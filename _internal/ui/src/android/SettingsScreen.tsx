@@ -1,10 +1,10 @@
 import * as Switch from "@radix-ui/react-switch";
 import { Download } from "lucide-react";
 import { useState, type ReactNode } from "react";
-import { Capacitor } from "@capacitor/core";
 import { Button, Segmented, TimeSelect } from "@/shared/ui";
 import { VieneuModuleCard, type VieneuBackend } from "@/listen/VieneuModuleCard";
 import { VoiceSettings, type VoiceSettingsApi } from "@/listen/VoiceSettings";
+import { androidSource } from "./androidSource";
 import { ReadAloud } from "./plugins";
 import { applyTheme, loadSettings, saveSettings, type PlayerSettings } from "./settings";
 import { openRelease } from "./UpdateNotice";
@@ -22,7 +22,7 @@ function Group({ title, id, children }: { title: string; id?: string; children: 
 /** Giọng đọc của "Nghe ngay" trên điện thoại: lõi native đọc (plugin ReadAloud); khóa lưu mã hoá bằng Android Keystore (OnlineKeys.kt). */
 const phoneVoices: VoiceSettingsApi = {
   voices: async () => (await ReadAloud.voices()).voices,
-  sample: async (voice, text) => Capacitor.convertFileSrc((await ReadAloud.sample({ voice, text })).path),
+  sample: (voice, text) => androidSource.readAloudSample!(voice, text),
   online: async () => (await ReadAloud.onlineProviders()).providers,
   saveKey: (provider, key, region) => ReadAloud.setOnlineKey({ provider, key, region }),
   removeKey: (provider) => ReadAloud.removeOnlineKey({ provider }),

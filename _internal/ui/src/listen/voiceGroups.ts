@@ -1,7 +1,30 @@
 import type { ReadAloudVoice } from "./readAloud";
+import { KEYED_PROVIDERS } from "./readAloudVoice";
 
 // Danh sách giọng ở Cài đặt: các giọng của một mô-đun đều ghi tên mô-đun trong ngoặc ("Nhẹ (VieNeu Nano)") - lặp mười một lần trong một danh sách.
 // Gom theo mô-đun: tiêu đề nhóm một lần, mỗi giọng chỉ còn tên của nó. Tên đầy đủ vẫn dùng ở chỗ khác (trình phát, nhãn đọc màn hình).
+
+/** Các nhóm giọng theo nhà cung cấp, đúng thứ tự và tên ở Cài đặt › Giọng đọc (trình phát chọn giọng cũng nhóm như vậy). */
+export const VOICE_GROUPS: { provider: string; title: string }[] = [
+  { provider: "edge", title: "Microsoft Edge · trực tuyến, miễn phí" },
+  ...Object.entries(KEYED_PROVIDERS).map(([provider, name]) => ({ provider, title: `${name} · dùng khóa của bạn` })),
+  { provider: "vieneu", title: "VieNeu · trên máy này, không cần mạng" },
+  { provider: "device", title: "Giọng của máy · không cần mạng" },
+];
+
+/** "Nữ" / "Nam"; không biết thì rỗng. */
+export function genderLabel(gender?: string): string {
+  return gender === "female" ? "Nữ" : gender === "male" ? "Nam" : "";
+}
+
+/** Các giọng có trong danh sách, chia theo nhóm của Cài đặt (nhóm rỗng bỏ qua); giọng của nhà cung cấp lạ gom vào "Khác" ở cuối. */
+export function groupedVoices(voices: ReadAloudVoice[]): { provider: string; title: string; voices: ReadAloudVoice[] }[] {
+  const groups = VOICE_GROUPS.map((group) => ({ ...group, voices: voices.filter((voice) => voice.provider === group.provider) }));
+  const known = new Set(VOICE_GROUPS.map((group) => group.provider));
+  const other = voices.filter((voice) => !known.has(voice.provider));
+  if (other.length) groups.push({ provider: "other", title: "Khác", voices: other });
+  return groups.filter((group) => group.voices.length > 0);
+}
 
 export interface VoiceSection {
   /** Tên mô-đun làm tiêu đề phụ; null khi cả nhóm chung một mô-đun (tiêu đề của nhóm đã nói rồi). */

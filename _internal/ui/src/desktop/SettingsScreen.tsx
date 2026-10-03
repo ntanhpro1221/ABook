@@ -165,7 +165,7 @@ function BookTemplates() {
 /** Giọng đọc của "Nghe ngay" trên máy tính: máy chủ cục bộ (abook/readaloud) đọc, khóa của người dùng gửi trong thân yêu cầu, chỉ nhận lại bản che. */
 const desktopVoices: VoiceSettingsApi = {
   voices: () => httpSource.readAloudVoices!(),
-  sample: async (voice, text) => (await httpSource.readAloudClip!(voice, text)).url,
+  sample: (voice, text) => httpSource.readAloudSample!(voice, text),
   online: () => api<OnlineProviderInfo[]>("/api/readaloud/online"),
   saveKey: (provider, key, region) => api<OnlineProviderInfo>(`/api/readaloud/online/${provider}`, { method: "PUT", body: { key, region } }),
   removeKey: (provider) => api<OnlineProviderInfo>(`/api/readaloud/online/${provider}`, { method: "DELETE" }),

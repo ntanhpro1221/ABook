@@ -276,6 +276,8 @@ export function PlayerProvider({
     lastActivityPosition: null as NightPosition | null,
     scheduleOffFor: "",
     atEnd: "none" as PlayerState["atEnd"],
+    /** Màn "Đang nghe" đang mở: nó đã có khối báo hết sách / hết phần đã có, toast chỉ nói lại. */
+    expanded: false,
   });
   refs.current.track = track;
   refs.current.queue = queue;
@@ -283,6 +285,7 @@ export function PlayerProvider({
   refs.current.rate = rate;
   refs.current.defaultRate = defaultRate;
   refs.current.atEnd = atEnd;
+  refs.current.expanded = expanded;
 
   const position = useCallback(
     (): NightPosition => ({
@@ -615,7 +618,13 @@ export function PlayerProvider({
 
   /** Hết sách mà người nghe bấm phát: nói ra và mời nghe lại từ đầu (soát UX 03-10 - trước đây không có gì xảy ra). */
   const finishedToast = useCallback(() => {
+    // Màn "Đang nghe" đang mở thì khối trong màn đã nói (kèm "Nghe lại từ đầu"): một chỗ báo, không thêm toast (soát UX 03-10).
+    if (refs.current.expanded) return;
     toast("Đã nghe hết sách", { id: "finished", duration: 8000, action: { label: "Nghe lại từ đầu", onClick: () => restartRef.current() } });
+  }, []);
+  const caughtUpToast = useCallback((description?: string) => {
+    if (refs.current.expanded) return;
+    toast("Đã nghe hết phần đã có", description ? { description } : undefined);
   }, []);
 
   const resumeNow = useCallback(() => {
@@ -630,14 +639,14 @@ export function PlayerProvider({
     if (engine.ended) {
       const target = availableAfter(refs.current.queue, current.chapterId, 1);
       if (target) load({ ...current, chapterId: target.id, chapterTitle: target.fullTitle }, 0, true);
-      else if (refs.current.book?.complete === false) toast("Đã nghe hết phần đã có của cuốn này");
+      else if (refs.current.book?.complete === false) caughtUpToast();
       else finishedToast();
       return;
     }
     const back = refs.current.pausedAt ? rewindAfter(Date.now() - refs.current.pausedAt) : 0;
     if (back) engine.seek(Math.max(0, engine.time - back));
     engine.play();
-  }, [engine, finishedToast, load, native, night, position]);
+  }, [caughtUpToast, engine, finishedToast, load, native, night, position]);
 
   const resume = useCallback(() => {
     const current = refs.current.track;
@@ -1067,7 +1076,7 @@ export function PlayerProvider({
         }
         const caughtUp = refs.current.book?.complete === false;
         setAtEnd(caughtUp ? "caughtUp" : "finished");
-        if (caughtUp) toast("Đã nghe hết phần đã có", { description: "Chương tiếp theo sẽ nghe được khi Studio làm xong." });
+        if (caughtUp) caughtUpToast("Chương tiếp theo sẽ nghe được khi Studio làm xong.");
         else finishedToast();
       }),
       engine.on("error", () => {
@@ -1117,7 +1126,7 @@ export function PlayerProvider({
       }),
     ];
     return () => offs.forEach((off) => off());
-  }, [applySleep, clock, closeSession, engine, finishedToast, load, native, openSession, refreshLists, save, source, stopBySleep, withConsent]);
+  }, [applySleep, caughtUpToast, clock, closeSession, engine, finishedToast, load, native, openSession, refreshLists, save, source, stopBySleep, withConsent]);
 
   // Đồng hồ chạy theo khung hình khi đang phát: nhãn giây đổi đúng nhịp 1 giây thay vì theo timeupdate (~4 lần/giây,
   // lệch tới 270 ms). Chỉ component nào chọn giá trị đổi mới render lại.

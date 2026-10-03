@@ -25,7 +25,10 @@ export function usePlaylistChoice(bookId: string, enabled = true) {
   const current = useQuery({ queryKey: key, queryFn: () => api<{ playlist?: string }>(`/api/books/${bookId}/music`), enabled });
   const choose = useMutation({
     mutationFn: (playlist: string | null) => savePlaylistChoice(bookId, playlist),
-    onSuccess: (view) => {
+    onSuccess: (view, playlist) => {
+      // Chọn xong phải thấy đã đổi (menu đóng ngay): nói tên danh sách vừa chọn.
+      const name = playlist === null ? "Tắt" : playlistOptions(menu.data).find((option) => option.id === playlist)?.label;
+      if (name) toast(`Nhạc nền: ${name}`, { id: "playlist-choice", duration: 2500 });
       client.setQueryData(key, view);
       void client.invalidateQueries({ queryKey: ["listen", "book", bookId] }); // số thay đổi của cuốn
       void client.invalidateQueries({ queryKey: ["listen", "library"] });
@@ -48,8 +51,8 @@ export function PlaylistOptionLabel({ option, chosen }: { option: PlaylistOption
     <>
       <Check className={cn("size-4 shrink-0", chosen ? "text-accent-text" : "invisible")} />
       <span className="min-w-0 flex-1">
-        <span className="block truncate">{option.label}</span>
-        {option.description && <span className="block truncate text-xs font-normal text-fg-3">{option.description}</span>}
+        <span className="block text-pretty">{option.label}</span>
+        {option.description && <span className="block text-pretty text-xs font-normal text-fg-3">{option.description}</span>}
       </span>
       {option.hint && <span className="shrink-0 text-xs font-normal text-fg-2">{option.hint}</span>}
     </>
