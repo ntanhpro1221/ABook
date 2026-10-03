@@ -1,5 +1,6 @@
 import type { EngineEvent, NativeEngine, NativeQueue, TrackInfo } from "@/listen/engine";
 import type { Bookmark } from "@/listen/model";
+import type { MusicCredit } from "@/listen/musicBed";
 import type { SleepMode, SleepRequest } from "@/listen/sleep";
 import { chapterFiles, chapterTextEntry } from "./androidSource";
 import { EbookPlayer, type NativeState } from "./plugins";
@@ -46,6 +47,10 @@ export class NativeAudioEngine implements NativeEngine {
 
   get error(): string {
     return this.current?.error ?? "";
+  }
+
+  get musicCredit(): MusicCredit | null {
+    return this.current?.musicCredit ?? null;
   }
 
   loadQueue(queue: NativeQueue): void {

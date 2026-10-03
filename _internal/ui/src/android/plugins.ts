@@ -1,6 +1,7 @@
 import { registerPlugin, type PluginListenerHandle } from "@capacitor/core";
 import type { Bookmark, BookPart, ListeningRecord, ListeningState, NightSession } from "@/listen/model";
 import type { PreparePlan, PrepareStatus } from "@/listen/prepareAhead";
+import type { MusicCredit } from "@/listen/musicBed";
 import type { ReadAloudTimings, ReadAloudVoice } from "@/listen/readAloud";
 import type { KeyCheck, OnlineProviderInfo } from "@/listen/VoiceSettings";
 import type { Capabilities } from "@/shared/capabilities";
@@ -34,6 +35,8 @@ export interface NativeState {
   sleep: NativeSleep;
   /** Lỗi phát gần nhất (Playback.onError): mất kết nối khi nghe thẳng, hay file hỏng. Rỗng khi ổn. */
   error?: string;
+  /** Ghi công bài nhạc nền đang kêu (MusicBed.credit); null khi im lặng. */
+  musicCredit?: MusicCredit | null;
 }
 
 // Nhật ký đêm của lõi native - cùng hình dạng với listen/model.ts (NightSession).

@@ -8,6 +8,7 @@
 
 import type { Bookmark, ListenChapter } from "./model";
 import type { SpeechTrack } from "./readAloud";
+import type { MusicCredit } from "./musicBed";
 import type { SleepMode, SleepRequest } from "./sleep";
 
 export interface TrackInfo {
@@ -86,6 +87,8 @@ export interface NativeEngine extends AudioEngine {
   /** Lỗi gần nhất của lõi native, nói đúng lý do (vd mất kết nối khi nghe thẳng); rỗng khi ổn. */
   readonly error: string;
   readonly rate: number;
+  /** Ghi công bài nhạc nền lõi đang chơi; null khi im lặng. */
+  readonly musicCredit: MusicCredit | null;
 }
 
 export function isNative(engine: AudioEngine): engine is NativeEngine {

@@ -42,6 +42,7 @@ object MusicBed {
     private const val MAX_STEP_SECONDS = 3.0 // đồng hồ nhạc không nhảy xa khi máy ngủ giữa hai nhịp
     private const val SAVE_EVERY_MS = 5000L
     private const val PREFS = "music_bed"
+    private val CREDIT_KEYS = listOf("title", "creator", "attribution", "landing", "license", "licenseUrl")
     private const val RETRY_MS = 5 * 60_000L // bài tải hỏng (mất mạng): chừng ấy sau, tới lúc đổi bài, thử lại
 
     /** `gainDb`: độ khuếch đại máy chủ đã tính cho bài này (music_plan.cue_gain_db, ghi sẵn vào mốc khi đóng gói); null = sách
@@ -91,6 +92,16 @@ object MusicBed {
 
     /** Bài đang kêu (tên trong gói, hay link với danh sách phát) hay null khi im lặng - cho kiểm thử trên máy. */
     val activeTrack: String? get() = current?.track
+
+    /** Ghi công bài đang kêu (CC BY đòi nêu tên ở nơi nhạc phát) - cùng khoá với máy tính (`_music_credits` của webui/server.py):
+     *  title, creator, attribution, landing, license, licenseUrl, chỉ khoá nào có. null khi im lặng hay bài không có thông tin. */
+    fun credit(): JSONObject? {
+        val track = current?.track ?: return null
+        val info = infos[track] ?: music?.optJSONObject("tracks")?.optJSONObject(track) ?: return null
+        val out = JSONObject()
+        for (key in CREDIT_KEYS) info.optString(key).takeIf { it.isNotEmpty() }?.let { out.put(key, it) }
+        return out.takeIf { it.length() > 0 }
+    }
 
     /** Giọng đọc đang ở `seconds` của chương `chapterId` trong cuốn `bookId`; `isPlaying` = giọng đang chạy. */
     fun sync(bookId: String, chapterId: Int?, seconds: Double, isPlaying: Boolean) {

@@ -424,6 +424,23 @@ export function PlayerProvider({
     return () => window.removeEventListener(MUSIC_CHANGED_EVENT, onChanged);
   }, [bedBook]);
   useEffect(() => {
+    if (native) {
+      // Điện thoại: lõi native chơi nhạc nền (MusicBed.kt) và gửi ghi công bài đang kêu trong trạng thái của nó.
+      let last = "";
+      const sync = () => {
+        const credit = native.musicCredit;
+        const key = JSON.stringify(credit);
+        if (key === last) return;
+        last = key;
+        setMusicCredit(credit);
+      };
+      sync();
+      const off = engine.on("time", sync);
+      return () => {
+        off();
+        setMusicCredit(null);
+      };
+    }
     if (!bed) {
       setMusicCredit(null);
       return;
@@ -433,7 +450,7 @@ export function PlayerProvider({
       off();
       setMusicCredit(null);
     };
-  }, [bed]);
+  }, [bed, engine, native]);
   // Danh sách phát người nghe chọn cho cả cuốn (sách chỉ có chữ - playlistBed.ts): có bài thì nhạc chạy theo đồng hồ nhạc của cuốn,
   // không theo mốc của chương; hỏi lại khi đổi cuốn hay khi lựa chọn đổi (bedVersion), không hỏi lại mỗi chương.
   const [playlistBed, setPlaylistBed] = useState<{ key: string; cues: MusicCue[]; levelDb: number } | null>(null);

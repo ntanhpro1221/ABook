@@ -187,6 +187,7 @@ object Playback {
             .put("rate", exo?.playbackParameters?.speed?.toDouble() ?: 1.0)
             .put("sleep", SleepTimer.describe())
             .put("error", lastError)
+            .put("musicCredit", MusicBed.credit() ?: JSONObject.NULL)
     }
 
     /** Lỗi phát gần nhất, cho giao diện - rỗng khi đang ổn. */
