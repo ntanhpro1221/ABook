@@ -33,6 +33,8 @@ object EnglishVi {
         "doyle" to "đoi-ồ",
         "fireball" to "phai-bôn", "rose" to "ro-xe", "great" to "gờ-rít", "late" to "lết", "grace" to "gờ-rây", "gate" to "ghết",
         "nate" to "na-te",
+        "paul" to "pau", "higher" to "hai-gờ", "laplace" to "la-pờ-lết", "jane" to "giên", "cage" to "ca-ghe", "cale" to "ca-le",
+        "walt" to "guốt", "dalton" to "đan-tơn", "days" to "đay", "luce" to "lu-xe", "washington" to "oa-sinh-tơn",
     )
     // Chữ viết tắt đã đọc thành từ (chủ sách 04-10): khoá là đúng chữ hoa như viết.
     val ACRONYMS = mapOf("VIP" to "víp", "ID" to "ai-đi")
@@ -76,6 +78,7 @@ object EnglishVi {
     private val GLIDE_VOWELS = setOf("AY", "AW", "OY")
     private val SHORT_VOWELS = setOf("AE", "EH", "IH", "AA", "AH", "UH")
     private val STOPS = setOf("P", "T", "K")
+    private val ALL_STOPS = setOf("P", "T", "K", "B", "D", "G")
     private val ONSET = mapOf(
         "B" to "b", "CH" to "ch", "D" to "đ", "F" to "ph", "G" to "G", "HH" to "h", "JH" to "gi", "K" to "K", "L" to "l", "M" to "m", "N" to "n",
         "NG" to "NG", "P" to "p", "R" to "r", "S" to "x", "SH" to "s", "T" to "t", "V" to "v", "Z" to "d", "ZH" to "gi", "W" to "u", "Y" to "i",
@@ -329,14 +332,14 @@ object EnglishVi {
     private fun faceShort(word: String): List<Phone> {
         val phones = (spellPhones(word.dropLast(1)) ?: emptyList()).toMutableList()
         val soft = word[word.length - 2]
-        if ((soft == 'c' || soft == 'g') && phones.isNotEmpty()) phones[phones.size - 1] = Phone(if (soft == 'c') "S" else "JH", -1, "") // la-xe
+        if ((soft == 'c' || soft == 'g') && phones.isNotEmpty()) phones[phones.size - 1] = Phone(if (soft == 'c') "S" else "G", -1, "") // lu-xe, ca-ghe
         val vowel = word[word.length - 3]
         return phones.map { if (it.stress >= 0) Phone(FACE.getValue(vowel), 0, vowel.toString()) else it } + Phone("EH", 0, "e")
     }
 
     /** MỘT phụ âm đầu (một chữ, hay ch / sh / th / ph / wh) + một nguyên âm + MỘT phụ âm (trừ h w x y) + e câm: Jake, Zeke, Rose (chủ sách). */
     private fun shortSilentE(word: String): Boolean {
-        if (!(word.length >= 4 && word.endsWith("e") && word[word.length - 2] in "bcdfgjklmnpqrstvz" && word[word.length - 3] in "aeiou")) return false
+        if (!(word.length >= 4 && word.endsWith("e") && word[word.length - 2] in "bcdfgjklpqrstvz" && word[word.length - 3] in "aeiou")) return false
         val onset = word.substring(0, word.length - 3)
         return (onset.length == 1 && onset[0] !in "aeiouy") || onset in setOf("ch", "sh", "th", "ph", "wh")
     }
@@ -421,13 +424,15 @@ object EnglishVi {
         }
     }
 
-    private fun syllabify(input: List<Phone>, flags: MutableList<String>): List<Syl>? {
+    /** `wordStart` false: phần sau của từ ghép (w ở đó không thành gu). */
+    private fun syllabify(input: List<Phone>, flags: MutableList<String>, wordStart: Boolean = true): List<Syl>? {
         // /aɪər/ (fire, higher): ơ sau ai nuốt vào ai, r bỏ (chủ sách 04-10: fireball -> phai-bôn)
         val phones = input.filterIndexed { index, phone -> !(phone.base == "ER" && phone.stress == 0 && index > 0 && input[index - 1].base == "AY") }
         val vowels = phones.indices.filter { phones[it].stress >= 0 }
         if (vowels.isEmpty()) return null
         val out = ArrayList<Syl>()
-        var (onset, glide) = onsetRun(phones.subList(0, vowels[0]).map { it.base }, out)
+        var (onset, glide) = onsetRun(phones.subList(0, vowels[0]).map { it.base }, out, flags, if (wordStart) phones[vowels[0]] else null)
+        val wGu = onset == "G" && vowels[0] == 1 && phones[0].base == "W" // w đầu từ đã thành gu (onsetRun)
         for ((k, at) in vowels.withIndex()) {
             val vowel = phones[at]
             val last = k == vowels.size - 1
@@ -479,7 +484,12 @@ object EnglishVi {
                     nextOnset = ""
                 }
                 if (run.isEmpty() && vowel.base == "ER") nextOnset = "R" // Cô-lô-ra-đô, ca-mê-ra
-                if (head.isEmpty() && nextOnset.isNotEmpty() && run.size == 1 && run[0] in STOPS && canClose && vowel.stress >= 1 && (
+                var liquidStop = ""
+                if ((nextOnset == "L" || nextOnset == "R") && head.isNotEmpty() && head.last() in ALL_STOPS) {
+                    liquidStop = head.last() // tắc + l / r giữa từ: "Cờ" huyền, âm tiết trước mở (chủ sách 04-10: la-pờ-lết)
+                    head = head.dropLast(1)
+                }
+                if (head.isEmpty() && liquidStop.isEmpty() && nextOnset.isNotEmpty() && run.size == 1 && run[0] in STOPS && canClose && vowel.stress >= 1 && (
                         GEMINATE == "stressed" || (GEMINATE == "primary" && vowel.stress == 1) ||
                             (GEMINATE == "short" && vowel.base in SHORT_VOWELS)
                         )
@@ -495,9 +505,16 @@ object EnglishVi {
                     }
                 }
                 head.forEach { tail.add(epenthetic(it)) }
+                if (liquidStop.isNotEmpty()) tail.add(Syl(onsetLetter(liquidStop), "ơ", "", true))
             }
             var core = nucleus(vowel, coda, rColored)
             if (vowel.base == "AO" && codaPhone == "L" && coda.isNotEmpty()) core = "ô" // /ɔːl/ -> ôn (phai-bôn, như gôn)
+            if (k == 0 && wGu && coda.isEmpty()) {
+                onset = "" // guô chỉ đứng trước phụ âm cuối: âm tiết mở giữ w như cũ (Warrior -> Oa-ri-ơ)
+                flags.remove("analogy:w_gu")
+            } else if (k == 0 && wGu && (vowel.base == "AO" || vowel.base == "AA")) {
+                core = "ô" // gu + âm o đọc guô (Walt -> guốt): water -> guốt-tơ
+            }
             if (vowel.base == "AE" && coda == "ng" && run.size >= 2 && run[0] == "NG" && run[1] == "K") {
                 core = "a" // /æŋk/ -> anh (chủ sách 04-10: tank -> tanh; rank, thank theo đó)
                 coda = "nh"
@@ -512,9 +529,15 @@ object EnglishVi {
         return out
     }
 
-    private fun onsetRun(run: List<String>, out: MutableList<Syl>): Pair<String, String> {
+    private fun onsetRun(run: List<String>, out: MutableList<Syl>, flags: MutableList<String>, firstVowel: Phone?): Pair<String, String> {
         val (head, onset, glide) = splitOnset(run)
         head.forEach { out.add(epenthetic(it, true)) }
+        val oSound = firstVowel != null && (firstVowel.base == "AO" || firstVowel.base == "OW" || (firstVowel.base == "AA" && 'o' in firstVowel.letters))
+        if (run == listOf("W") && oSound) {
+            // w đầu từ trước âm o -> gu (chủ sách 04-10: Walt -> guốt); w trước âm khác giữ oa / uy / oe (Oa-sinh-tơn)
+            flags.add("analogy:w_gu")
+            return "G" to glide
+        }
         return onset to glide
     }
 
@@ -629,7 +652,9 @@ object EnglishVi {
         return null
     }
 
-    private fun readWord(key: String, capital: Boolean, dictionary: Map<String, String>, overrides: Boolean, flags: MutableList<String>): String? {
+    private fun readWord(
+        key: String, capital: Boolean, dictionary: Map<String, String>, overrides: Boolean, flags: MutableList<String>, wordStart: Boolean = true,
+    ): String? {
         if (overrides) {
             OVERRIDES[key]?.let { reading ->
                 flags.add("via:override")
@@ -646,7 +671,7 @@ object EnglishVi {
         if (phones == null) {
             compoundParts(key, dictionary)?.let { parts ->
                 val inner = ArrayList<String>()
-                val readings = parts.mapIndexed { index, part -> readWord(part, capital && index == 0, dictionary, overrides, inner) }
+                val readings = parts.mapIndexed { index, part -> readWord(part, capital && index == 0, dictionary, overrides, inner, wordStart && index == 0) }
                 if (readings.all { it != null }) {
                     flags.add("via:compound")
                     flags.addAll(inner)
@@ -656,7 +681,7 @@ object EnglishVi {
         }
         phones?.let { found ->
             val trial = ArrayList<String>()
-            val reading = syllabify(found, trial)?.let { validated(it, capital) }
+            val reading = syllabify(found, trial, wordStart)?.let { validated(it, capital) }
             if (reading != null) {
                 flags.add(route)
                 flags.addAll(trial)
@@ -666,7 +691,7 @@ object EnglishVi {
         }
         val spelled = spellPhones(key) ?: return null
         val trial = ArrayList<String>()
-        val reading = syllabify(spelled, trial)?.let { validated(it, capital) } ?: return null
+        val reading = syllabify(spelled, trial, wordStart)?.let { validated(it, capital) } ?: return null
         flags.add("via:spelling")
         flags.addAll(trial)
         return reading

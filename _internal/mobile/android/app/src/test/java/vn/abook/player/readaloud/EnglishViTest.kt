@@ -60,7 +60,12 @@ class EnglishViTest {
         assertEquals("xờ-kiu", EnglishVi.reading("skill", phones, overrides = false))
         assertEquals("bót", EnglishVi.reading("boss", phones, overrides = false))
         assertEquals("víp", EnglishVi.reading("VIP", phones))
-        assertEquals("Oa-sinh-tơn", EnglishVi.reading("Washington", phones))
+        assertEquals("Oa-sinh-tơn", EnglishVi.reading("Washington", phones, overrides = false))
+        assertEquals("Guôn-tơ", EnglishVi.reading("Walter", phones))
+        assertEquals("Uy-li-am", EnglishVi.reading("William", phones))
+        assertEquals("La-pờ-lây", EnglishVi.reading("Laplace", phones, overrides = false))
+        assertEquals("Ca-ghe", EnglishVi.reading("Cage", phones, overrides = false))
+        assertEquals("Đên", EnglishVi.reading("Dane", phones))
         assertEquals("Bờ-lếch", EnglishVi.reading("Blake", phones, overrides = false))
         assertEquals("Lai-ồ", EnglishVi.reading("Lyle", phones, overrides = false))
         assertEquals("tanh", EnglishVi.reading("tank", emptyMap(), overrides = false))
@@ -69,8 +74,8 @@ class EnglishViTest {
 
     @Test
     fun withoutADictionaryTheSpellingRouteReads() {
-        assertEquals(EnglishVi.Reading("Oa-sinh-ton", listOf("via:spelling")), EnglishVi.readingWithFlags("Washington", emptyMap()))
-        assertEquals("En-cơ-rít", EnglishVi.reading("Encrid", emptyMap()))
+        assertEquals(EnglishVi.Reading("Oa-sinh-ton", listOf("via:spelling")), EnglishVi.readingWithFlags("Washington", emptyMap(), overrides = false))
+        assertEquals("En-cờ-rít", EnglishVi.reading("Encrid", emptyMap()))
     }
 
     @Test
