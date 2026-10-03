@@ -8,6 +8,7 @@ import { formatNumber, formatSize } from "@/shared/format";
 import { Button, Dialog, radioGroupKeys, radioTabIndex } from "@/shared/ui";
 import { api, type BookSummary } from "./api";
 import { pickFolder, useAppInfo, useParts } from "./data";
+import { WordTimingsRow } from "./WordTimings";
 
 // Xuất ngay trong Studio (soát UX a6 01-10, H1-H2: người làm sách phải sang Thư viện nghe mới tìm thấy "Xuất", và bản xuất
 // lặng lẽ thiếu chương / bỏ qua sửa chưa áp). Hộp nói trước bản xuất sẽ có gì, rồi mới hỏi chỗ lưu.
@@ -245,6 +246,7 @@ export function ExportDialog({
         </>
       )}
       {kind === "abook" && bytes > 0 && <p className="mt-2 text-sm text-fg-2">Cỡ ước tính: khoảng {formatSize(bytes)}.</p>}
+      {kind === "abook" && !info?.remote && <WordTimingsRow bookId={book.id} running={Boolean(book.running)} />}
       {wholeSeries && kind === "mp3" && (
         <p className="mt-3 text-sm text-fg-2 text-pretty">Mỗi phần một thư mục con (“Phần 1 - …”, “Phần 2 - …”), cùng nằm trong một thư mục của bộ.</p>
       )}

@@ -236,6 +236,8 @@ export interface ScriptSegment {
   emotion?: string;
   intensity?: number;
   spoken?: string;
+  /** Mốc từng chữ hiện: [bắt đầu_ms, kết thúc_ms] tính từ đầu MP3 chương, một cặp cho mỗi chữ (listen/words.ts); sách chưa căn thì không có. */
+  words?: [number, number][];
 }
 
 export interface Script {
