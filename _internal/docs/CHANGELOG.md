@@ -18,6 +18,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   Cài đặt khung không che nữa. "Thử giọng" gặp lỗi thì lỗi hiện ngay dưới giọng vừa bấm.
 - Thư viện ghi giọng đang đọc từng cuốn ("Đức Trí (VieNeu)", "Hoài My (Edge)") thay cho "Giọng máy đọc". Menu giọng trong trình phát có bóng mờ và dòng
   nhắc khi còn giọng ở dưới. Lúc tải giọng VieNeu, phần trăm không lùi và cỡ mỗi giọng đứng yên (không nhảy từ 313 xuống 297 MB).
+- Điện thoại: gỡ giọng VieNeu (hay xoá khoá giọng) khi cuốn đang nhớ giọng ấy thì bấm nghe đọc luôn bằng giọng đang hiển thị (Hoài My), không còn ra
+  "Giọng VieNeu chưa tải"; tải lại giọng thì cuốn tự về giọng cũ.
+- "Nghe ngay" đọc số La Mã sau danh từ chung thành số ("Trường Phổ thông II" thành "hai", "Chương IV" thành "bốn", "Thế chiến II" thành "hai") thay vì
+  đánh vần "i i"; chữ "I" đầu câu, đề mục "I. Mở đầu" (đọc "một") và các chữ viết tắt (CV, MC, VIP) giữ như cũ. Chữ hiện trên màn hình không đổi.
 
 ### Thư viện
 

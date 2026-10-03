@@ -53,6 +53,58 @@ def test_a_short_unit_joins_its_shorter_neighbour() -> None:
     assert len(parts) == 1
 
 
+# ---- số La Mã sau danh từ chung (biến đổi để đọc: chữ hiện giữ nguyên, chữ đem đọc đổi) ----------------------------------------------
+def _said(text: str) -> str:
+    toks, parts = units(text, 256)
+    assert " ".join(unit.text(toks) for unit in parts) == " ".join(toks), "chữ hiện không đổi"
+    return " ".join(piece for unit in parts for piece in unit.pieces)
+
+
+@pytest.mark.parametrize("text, said", [
+    ("Trường Phổ thông II và Trường Phổ thông III", "Trường Phổ thông hai và Trường Phổ thông ba"),
+    ("Chương IV bắt đầu ở trang 132.", "Chương bốn bắt đầu ở trang 132."),
+    ("Thế chiến II kết thúc năm 1945.", "Thế chiến hai kết thúc năm 1945."),
+    ("Benedict III lên ngôi.", "Benedict ba lên ngôi."),
+    ("Cuối chương XIV.", "Cuối chương mười bốn."),
+    ("Mục XV, XXIV và XXXIX.", "Mục mười lăm, hai mươi bốn và ba mươi chín."),
+    ("Học kỳ \"II\" bắt đầu.", "Học kỳ \"hai\" bắt đầu."),
+    # số MỘT chữ (I, V, X) chỉ đọc thành số sau danh từ đánh số, hay hai tên riêng viết hoa liền nhau
+    ("Chương I, thế kỷ X, thế chiến I và Phần V.", "Chương một, thế kỷ mười, thế chiến một và Phần năm."),
+    ("Lớp V, hạng X, số I, bài V.", "Lớp năm, hạng mười, số một, bài năm."),
+    ("Mục II, V và X.", "Mục hai, năm và X."),
+    ("Vua Louis X lên ngôi.", "Vua Louis mười lên ngôi."),
+])
+def test_a_roman_numeral_after_a_word_is_read_as_a_number(text: str, said: str) -> None:
+    assert _said(text) == said
+
+
+@pytest.mark.parametrize("text, said", [
+    ("I. Mở đầu", "một. Mở đầu"),  # đề mục đầu đoạn
+    ("IX) Phụ lục", "chín) Phụ lục"),
+    ("I am here.", "I am here."),  # chữ "I" đứng đầu câu, không có dấu chấm đề mục
+    ("I.", "I."),
+    ("Xong rồi. I am đây.", "Xong rồi. I am đây."),  # sau dấu câu là câu mới
+    ("Anh ấy là MC của CV VIP, ở DIV.", "Anh ấy là MC của CV VIP, ở DIV."),  # viết tắt
+    ("Mã XL và IIII và VX.", "Mã XL và IIII và VX."),  # không phải số La Mã hợp lệ / ngoài I..XXXIX
+    ("Chương iv và Chương Iv.", "Chương iv và Chương Iv."),  # chỉ chữ HOA
+    ("Khoa CV II", "Khoa CV II"),  # sau viết tắt (không có chữ thường) thì để nguyên
+    # số MỘT chữ sau từ thường khác là chữ cái, không phải số
+    ("Ông X, nhân vật X, tia X, điểm V, loại I.", "Ông X, nhân vật X, tia X, điểm V, loại I."),
+    ("Ông ta nói rằng I", "Ông ta nói rằng I"),
+    ("Hoàng đế Napoleon I và Napoleon I.", "Hoàng đế Napoleon I và Napoleon I."),  # tên riêng đứng sau từ thường / đầu đoạn
+    ("Trường Phổ thông I", "Trường Phổ thông I"),
+])
+def test_other_capitals_and_headings_are_left_alone(text: str, said: str) -> None:
+    assert _said(text) == said
+
+
+def test_roman_numbers_read_as_vietnamese() -> None:
+    assert [vieneu.vietnamese_number(n) for n in (1, 4, 5, 10, 11, 14, 15, 20, 21, 24, 25, 30, 31, 35, 39)] == [
+        "một", "bốn", "năm", "mười", "mười một", "mười bốn", "mười lăm", "hai mươi", "hai mươi mốt", "hai mươi bốn", "hai mươi lăm",
+        "ba mươi", "ba mươi mốt", "ba mươi lăm", "ba mươi chín"]
+    assert [vieneu.roman_value(r) for r in ("I", "IV", "IX", "XIV", "XXXIX", "XL", "IIII", "VX", "")] == [1, 4, 9, 14, 39, None, None, None, None]
+
+
 def test_resample_keeps_length_and_a_low_tone() -> None:
     rate = 48_000
     t = np.arange(rate) / rate

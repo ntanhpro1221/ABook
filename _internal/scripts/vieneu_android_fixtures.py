@@ -268,6 +268,11 @@ PARAGRAPHS = [
     "Cô ấy sinh ngày 12/3/1998 tại Hà Nội, tốt nghiệp ĐH Bách khoa năm 2020, rồi làm kỹ sư cho một công ty ở TP.HCM.",
     "A.",
     "Một câu rất ngắn. Hai.",
+    # Roman numerals after a common noun are read as numbers (vieneu.spoken_tokens); "I am", abbreviations and sentence-initial "I" stay.
+    "Trường Phổ thông I, Trường Phổ thông II và Thế chiến II. Benedict III lên ngôi ở chương XIV.",
+    "I. Mở đầu",
+    "Chương I, thế kỷ X và Phần V; ông X, nhân vật X, tia X, điểm V, loại I. Vua Louis X lên ngôi, Hoàng đế Napoleon I thì không.",
+    "I am here. Xong. I am đây. Anh ấy là MC của CV VIP.",
 ]
 
 # Clips made on the desktop for VieneuOnDeviceTest: a paragraph of two sentences that is two units for Nano (140 chars) and one for Turbo.
