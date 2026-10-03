@@ -5,12 +5,18 @@ Windows của bạn, rồi **nghe** trên máy tính, điện thoại Android ha
 làm xong là một file `.abook` (bìa, văn bản đọc theo, âm thanh, nhân vật) - gửi sang máy khác là nghe được.
 
 Làm sách chạy hoàn toàn trên máy của bạn: văn bản truyện và âm thanh không bị gửi lên dịch vụ nào, không cần tài khoản.
+Chỉ khi bạn chọn một giọng trực tuyến cho "Nghe ngay" thì chữ của đoạn đang đọc mới được gửi tới dịch vụ ấy - app hỏi trước.
 
 ## Tính năng chính
 
 - **Nghe**: thư viện xếp theo bộ truyện, văn bản chạy theo lời đọc, chế độ đọc sách, ảnh bìa (tìm bìa trên mạng khi bạn
   bấm), hẹn giờ ngủ, dấu trang, lịch sử nghe, xuất MP3 có tag. Một cuốn có thể có nhiều hồ sơ nghe: mỗi người trong
   nhà một chỗ nghe riêng, hay nghe lại từ đầu mà vẫn giữ lần trước.
+- **Nghe ngay mọi cuốn sách**: thêm file EPUB, Word, PDF có chữ hay thư mục `.txt` vào Thư viện (máy tính và điện thoại) rồi
+  bấm **"Nghe ngay"** - máy đọc to từng đoạn, chữ đang đọc sáng lên như "Đọc to" của Edge, bấm vào chữ nào là đọc từ chữ ấy, tắt
+  màn hình điện thoại vẫn đọc tiếp. Giọng mặc định là Hoài My của Microsoft Edge (cần mạng; app hỏi trước khi gửi chữ của đoạn
+  đang đọc tới Microsoft), hay giọng của máy, giọng dùng khoá của bạn (Azure, Google, FPT.AI, Viettel), hoặc **Giọng VieNeu** tải
+  về chạy ngay trên máy, không cần mạng ("Làm trước" khi đang sạc cho điện thoại tầm trung). Không bao giờ tự sửa chữ của truyện.
 - **Làm sách nói (Studio)**: đọc cả truyện để nhận ra lời thoại, ai đang nói và cảm xúc từng câu; mỗi nhân vật một giọng
   riêng giữ nguyên suốt cuốn; thu từng câu rồi tự nghe lại bằng nhận dạng giọng nói và thu lại câu lệch. Truyện kể ngôi
   thứ nhất: Studio hỏi "tôi" là ai. Tạm dừng bất cứ lúc nào - kể cả giữa lúc phân tích - rồi làm tiếp đúng chỗ; máy tính
