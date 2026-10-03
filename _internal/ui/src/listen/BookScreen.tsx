@@ -22,6 +22,7 @@ import { BookmarkList, chapterStatusLabel, usePreparedChapters } from "./PlayerV
 import { EditsSyncBanner, SendEditsItem } from "./SendEdits";
 import { PlaylistSubmenu } from "./PlaylistChoice";
 import { ProjectFileItems, ProjectViewsDialog, TextBookItems } from "./ProjectFileItems";
+import { BookSuggestions } from "./ReadingSuggestions";
 import { WishesDialog } from "./WishesDialog";
 import { useCast, useListenBook, useListenMutations, useSource } from "./source";
 
@@ -750,6 +751,7 @@ export function BookScreen({
         <BookCover title={book.title} part={book.series?.part} size="lg" image={book.cover} playing={listening && player.playing} className="w-40 max-sm:mx-auto sm:w-44" />
         <div className="min-w-0 flex-1 max-sm:text-center">
           <h1 className="text-2xl font-bold leading-tight tracking-tight sm:text-[30px]">{book.title}</h1>
+          {book.author && <p className="mt-1.5 text-[15px] text-fg-2">{book.author}</p>}
           <p className="tabular mt-2 text-sm text-fg-2">
             {book.narrator && `Giọng kể ${book.narrator} · `}
             {textOnly
@@ -783,6 +785,7 @@ export function BookScreen({
             </p>
           )}
           {syncs && <EditsSyncBanner book={book} />}
+          {textOnly && editable && <BookSuggestions book={book} />}
           <div className="mt-4 max-w-md max-sm:mx-auto">
             {!textOnly && (
               <>

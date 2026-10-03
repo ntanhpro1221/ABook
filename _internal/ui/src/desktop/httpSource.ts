@@ -29,7 +29,7 @@ export function desktopTextImport(dialogs: boolean): TextImport {
         }
       : undefined,
     preview: (choice) => api<ImportPreview>("/api/listen/import/preview", { method: "POST", body: { path: choice.ref } }),
-    add: (choice, title) => api<AddedBook>("/api/listen/import", { method: "POST", body: { path: choice.ref, title } }),
+    add: (choice, title, separate) => api<AddedBook>("/api/listen/import", { method: "POST", body: { path: choice.ref, title, separate: Boolean(separate) } }),
   };
 }
 

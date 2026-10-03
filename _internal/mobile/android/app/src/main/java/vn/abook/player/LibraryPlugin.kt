@@ -204,7 +204,8 @@ class LibraryPlugin : Plugin() {
     @PluginMethod
     fun createImport(call: PluginCall) = background(call) {
         val ref = call.getString("ref") ?: throw IllegalArgumentException("thiếu ref")
-        call.resolve(JSObject.fromJSONObject(TextImports.create(ref, call.getString("title") ?: "", context.cacheDir)))
+        val separate = call.getBoolean("separate") ?: false
+        call.resolve(JSObject.fromJSONObject(TextImports.create(ref, call.getString("title") ?: "", context.cacheDir, separate)))
     }
 
     @PluginMethod

@@ -9,7 +9,7 @@
     "chapters": [
      {
       "title": "Chương 1: Bến phà lúc bình minh",
-      "text": "Sương còn phủ kín mặt sông khi ông Tám đẩy chiếc phà ra khỏi bến. Tiếng máy nổ trầm đục vang lên giữa buổi sớm yên ắng, và đàn cò giật mình bay tản vào những lùm bần ven bờ.\n\n“Hôm nay nước lớn,” ông nói với cậu bé đứng bên mạn thuyền. “Con giữ chắc cây sào, đừng để phà trôi vào bãi.”\n\nCậu bé gật đầu, siết chặt cây sào tre trong đôi bàn tay nhỏ. Cậu chưa từng thấy dòng sông nào rộng đến thế.\n\nNước lớn dần."
+      "text": "Sương còn phủ kín mặt sông khi ông Tám đẩy chiếc phà ra khỏi bến. Tiếng máy nổ trầm đục vang lên giữa buổi sớm yên ắng, và đàn cò giật mình bay tản vào những lùm bần ven bờ.\n\n“Hôm nay nước lớn,” ông nói với cậu bé đứng bên mạn thuyền. “Con giữ chắc cây sào, đừng để phà trôi vào bãi.”\n\nCậu bé gật đầu, siết chặt cây sào tre trong đôi bàn tay nhỏ. Cậu chưa từng thấy dòng sông nào rộng đến thế.\n\nÔng Tám cười: “Phà cũ rồi.” © 1975 ă\n\nNước lớn dần."
      },
      {
       "title": "Chương 2: Người khách lạ",
@@ -33,7 +33,7 @@
      "chaptersTotal": 3,
      "chaptersAvailable": 0,
      "complete": false,
-     "version": "d2c81099ae61070e",
+     "version": "c3e5fbb23ea31b85",
      "chapters": [
       {
        "id": 1,
@@ -78,8 +78,8 @@
     "version": 5,
     "files": {
      "texts/1.txt": {
-      "size": 595,
-      "sha256": "13a11f05d25f57dc35c39f729bdd5f450ca845fe808951c6d6d9b1680d16505a"
+      "size": 648,
+      "sha256": "6a006f9ffe71de2a8f2c2c08f5206d861e5819e67c743ad06f9249fdcec59f99"
      },
      "texts/2.txt": {
       "size": 469,
@@ -91,11 +91,11 @@
      }
     },
     "texts": {
-     "texts/1.txt": "Chương 1: Bến phà lúc bình minh\n\nSương còn phủ kín mặt sông khi ông Tám đẩy chiếc phà ra khỏi bến. Tiếng máy nổ trầm đục vang lên giữa buổi sớm yên ắng, và đàn cò giật mình bay tản vào những lùm bần ven bờ.\n\n“Hôm nay nước lớn,” ông nói với cậu bé đứng bên mạn thuyền. “Con giữ chắc cây sào, đừng để phà trôi vào bãi.”\n\nCậu bé gật đầu, siết chặt cây sào tre trong đôi bàn tay nhỏ. Cậu chưa từng thấy dòng sông nào rộng đến thế.\n\nNước lớn dần.\n",
+     "texts/1.txt": "Chương 1: Bến phà lúc bình minh\n\nSương còn phủ kín mặt sông khi ông Tám đẩy chiếc phà ra khỏi bến. Tiếng máy nổ trầm đục vang lên giữa buổi sớm yên ắng, và đàn cò giật mình bay tản vào những lùm bần ven bờ.\n\n“Hôm nay nước lớn,” ông nói với cậu bé đứng bên mạn thuyền. “Con giữ chắc cây sào, đừng để phà trôi vào bãi.”\n\nCậu bé gật đầu, siết chặt cây sào tre trong đôi bàn tay nhỏ. Cậu chưa từng thấy dòng sông nào rộng đến thế.\n\nÔng Tám cười: “Phà cũ rồi.” © 1975 ă\n\nNước lớn dần.\n",
      "texts/2.txt": "Chương 2: Người khách lạ\n\nDịch: Nhóm Lục Bình\n\nChuyến đầu tiên chỉ có một hành khách. Người đàn ông mặc chiếc áo mưa cũ, mang theo một cái hộp gỗ buộc dây cẩn thận, ngồi lặng lẽ ở đầu phà suốt quãng đường.\n\n— Ông đi đâu mà sớm vậy? — cậu bé hỏi.\n\n— Về quê thôi, cháu ạ. — Người lạ mỉm cười. — Mát-xcơ-va xa lắm, còn quê ta thì ngay bên kia sông.\n",
      "texts/3.txt": "Chương 3\n\nCơn mưa cuối mùa\n\nMưa kéo đến lúc xế chiều, nặng hạt và lạnh.\n\nÔng Tám cho phà cập bến sớm hơn mọi hôm, buộc dây thật chặt vào cột sắt rồi đứng nhìn những giọt nước nhảy múa trên mặt sông.\n\nCậu bé ngồi co chân trong khoang, nghe tiếng mưa gõ lên mái tôn như một bản nhạc không đầu không cuối.\n"
     },
-    "contentKey": "f-85fa1bce5d0a616d5e9af5fa",
+    "contentKey": "f-d4c60b68cf16ef195fbc0117",
     "preview": {
      "title": "Chuyến phà cuối ngày",
      "author": "Lê Thử Nghiệm",
@@ -106,8 +106,8 @@
        "index": 1,
        "title": "Chương 1: Bến phà lúc bình minh",
        "firstLine": "Chương 1: Bến phà lúc bình minh",
-       "words": 98,
-       "chars": 340
+       "words": 107,
+       "chars": 368
       },
       {
        "index": 2,
@@ -125,9 +125,10 @@
       }
      ],
      "notes": [],
+     "suggestions": [],
      "totals": {
       "chapters": 3,
-      "words": 242
+      "words": 251
      }
     }
    }
@@ -141,10 +142,14 @@
     "chapters": [
      {
       "title": "Chương 1",
+      "text": "Bản trùng số với 1.txt - xếp theo tên gốc, đứng trước."
+     },
+     {
+      "title": "Chương 1",
       "text": "Sương sớm\n\nChuyến phà đầu tiên rời bến lúc năm giờ.\nCậu bé đứng ở mạn thuyền."
      },
      {
-      "title": "Chương 2",
+      "title": "Chương hai",
       "text": "Chương hai\n\nTiếng máy nổ trầm đục."
      },
      {
@@ -152,8 +157,12 @@
       "text": "Một chương viết bằng UTF-8 thường, không BOM."
      },
      {
-      "title": "Chương 10",
+      "title": "Chương ba",
       "text": "Chương ba\n\nDịch: Nhóm Lục Bình\n\nMưa rơi suốt chiều."
+     },
+     {
+      "title": "Chương ١١",
+      "text": "Tên bằng chữ số Ả Rập: vẫn là số 11."
      }
     ],
     "textHasTitle": true
@@ -164,10 +173,10 @@
      "title": "txt",
      "narrator": "",
      "duration": 0,
-     "chaptersTotal": 4,
+     "chaptersTotal": 6,
      "chaptersAvailable": 0,
      "complete": false,
-     "version": "5bfa448f2360b5f9",
+     "version": "deb8f27a55ceb6b0",
      "chapters": [
       {
        "id": 1,
@@ -184,9 +193,9 @@
       {
        "id": 2,
        "index": 2,
-       "title": "Chương 2",
+       "title": "Chương 1",
        "subtitle": "",
-       "fullTitle": "Chương 2",
+       "fullTitle": "Chương 1",
        "duration": 0,
        "available": false,
        "size": 0,
@@ -196,9 +205,9 @@
       {
        "id": 3,
        "index": 3,
-       "title": "9 Ngoại truyện",
+       "title": "Chương hai",
        "subtitle": "",
-       "fullTitle": "9 Ngoại truyện",
+       "fullTitle": "Chương hai",
        "duration": 0,
        "available": false,
        "size": 0,
@@ -208,14 +217,38 @@
       {
        "id": 4,
        "index": 4,
-       "title": "Chương 10",
+       "title": "9 Ngoại truyện",
        "subtitle": "",
-       "fullTitle": "Chương 10",
+       "fullTitle": "9 Ngoại truyện",
        "duration": 0,
        "available": false,
        "size": 0,
        "state": "text",
        "text": "texts/4.txt"
+      },
+      {
+       "id": 5,
+       "index": 5,
+       "title": "Chương ba",
+       "subtitle": "",
+       "fullTitle": "Chương ba",
+       "duration": 0,
+       "available": false,
+       "size": 0,
+       "state": "text",
+       "text": "texts/5.txt"
+      },
+      {
+       "id": 6,
+       "index": 6,
+       "title": "Chương ١١",
+       "subtitle": "",
+       "fullTitle": "Chương ١١",
+       "duration": 0,
+       "available": false,
+       "size": 0,
+       "state": "text",
+       "text": "texts/6.txt"
       }
      ],
      "samples": [],
@@ -224,29 +257,39 @@
     "version": 5,
     "files": {
      "texts/1.txt": {
+      "size": 73,
+      "sha256": "b1faddc884a863c602ce5e9d1bbd435735ed6e685b48686c7f167df1a559512a"
+     },
+     "texts/2.txt": {
       "size": 109,
       "sha256": "50288a21f6a40afd3164b408a55e4db8820aaf33ba55baa0e9aa8011d8e76692"
      },
-     "texts/2.txt": {
+     "texts/3.txt": {
       "size": 47,
       "sha256": "437e328a47e1fad0bfc8a4b5aa7c208a7a4e8624b8e3152070938246c336d551"
      },
-     "texts/3.txt": {
+     "texts/4.txt": {
       "size": 58,
       "sha256": "a80057bbb5b31402064fd123375bbbb5af3927db10bcf220be3d517c020cf6f7"
      },
-     "texts/4.txt": {
+     "texts/5.txt": {
       "size": 66,
       "sha256": "68f1809a964689ce48836d954e3f66da6fe46d4afaa74a6ed9a1104b3cfff24c"
+     },
+     "texts/6.txt": {
+      "size": 53,
+      "sha256": "dc138204a577f6833fa0cecad4f98620cda34730e26c3e6c3be20821c8a7bf42"
      }
     },
     "texts": {
-     "texts/1.txt": "Sương sớm\n\nChuyến phà đầu tiên rời bến lúc năm giờ.\nCậu bé đứng ở mạn thuyền.\n",
-     "texts/2.txt": "Chương hai\n\nTiếng máy nổ trầm đục.\n",
-     "texts/3.txt": "Một chương viết bằng UTF-8 thường, không BOM.\n",
-     "texts/4.txt": "Chương ba\n\nDịch: Nhóm Lục Bình\n\nMưa rơi suốt chiều.\n"
+     "texts/1.txt": "Bản trùng số với 1.txt - xếp theo tên gốc, đứng trước.\n",
+     "texts/2.txt": "Sương sớm\n\nChuyến phà đầu tiên rời bến lúc năm giờ.\nCậu bé đứng ở mạn thuyền.\n",
+     "texts/3.txt": "Chương hai\n\nTiếng máy nổ trầm đục.\n",
+     "texts/4.txt": "Một chương viết bằng UTF-8 thường, không BOM.\n",
+     "texts/5.txt": "Chương ba\n\nDịch: Nhóm Lục Bình\n\nMưa rơi suốt chiều.\n",
+     "texts/6.txt": "Tên bằng chữ số Ả Rập: vẫn là số 11.\n"
     },
-    "contentKey": "f-229676d0237a63560bd635a0",
+    "contentKey": "f-8f58b70a7449a3a7d02b54f0",
     "preview": {
      "title": "txt",
      "author": null,
@@ -256,36 +299,51 @@
       {
        "index": 1,
        "title": "Chương 1",
+       "firstLine": "Bản trùng số với 1.txt - xếp theo tên gốc, đứng trước.",
+       "words": 12,
+       "chars": 43
+      },
+      {
+       "index": 2,
+       "title": "Chương 1",
        "firstLine": "Sương sớm",
        "words": 17,
        "chars": 60
       },
       {
-       "index": 2,
-       "title": "Chương 2",
+       "index": 3,
+       "title": "Chương hai",
        "firstLine": "Chương hai",
        "words": 7,
        "chars": 27
       },
       {
-       "index": 3,
+       "index": 4,
        "title": "9 Ngoại truyện",
        "firstLine": "Một chương viết bằng UTF-8 thường, không BOM.",
        "words": 8,
        "chars": 38
       },
       {
-       "index": 4,
-       "title": "Chương 10",
+       "index": 5,
+       "title": "Chương ba",
        "firstLine": "Chương ba",
        "words": 10,
        "chars": 40
+      },
+      {
+       "index": 6,
+       "title": "Chương ١١",
+       "firstLine": "Tên bằng chữ số Ả Rập: vẫn là số 11.",
+       "words": 10,
+       "chars": 27
       }
      ],
      "notes": [],
+     "suggestions": [],
      "totals": {
-      "chapters": 4,
-      "words": 42
+      "chapters": 6,
+      "words": 64
      }
     }
    }
@@ -414,6 +472,7 @@
       }
      ],
      "notes": [],
+     "suggestions": [],
      "totals": {
       "chapters": 3,
       "words": 235
@@ -516,6 +575,7 @@
       }
      ],
      "notes": [],
+     "suggestions": [],
      "totals": {
       "chapters": 2,
       "words": 10
