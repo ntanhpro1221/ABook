@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { AudioEngine, EngineEvent, TrackInfo } from "./engine";
 import type { Script } from "./model";
 import {
+  CLIP_RETRIES,
   ReadAloudEngine,
   RoutedEngine,
   estimateSeconds,
@@ -382,6 +383,39 @@ describe("nghe dở và lỗi", () => {
     await s.arrive("Ba bốn.");
     audioOf(s, "Một hai.")!.finish();
     expect(audioOf(s, "Ba bốn.")!.plays).toBe(1);
+  });
+
+  it("lỗi thoáng qua ở đoạn đang chờ: tự thử lại, không dừng; hỏng quá số lần thử thì mới dừng", async () => {
+    vi.useFakeTimers();
+    try {
+      const s = setup();
+      s.engine.load(s.trackInfo, 0, true);
+      await vi.advanceTimersByTimeAsync(0);
+      const first = () => s.requests.filter((r) => r.text === TEXTS[0]);
+      first()[0].reject(Object.assign(new Error("Bad Gateway"), { reason: "upstream" }));
+      await vi.advanceTimersByTimeAsync(0);
+      expect(s.events).not.toContain("error");
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(first()).toHaveLength(2);
+      first()[1].resolve();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(audioOf(s, TEXTS[0])!.plays).toBe(1);
+      expect(s.engine.error).toBe("");
+
+      const t = setup();
+      t.engine.load(t.trackInfo, 0, true);
+      await vi.advanceTimersByTimeAsync(0);
+      const firstT = () => t.requests.filter((r) => r.text === TEXTS[0]);
+      for (let attempt = 0; attempt <= CLIP_RETRIES; attempt += 1) {
+        firstT()[attempt].reject(Object.assign(new Error("Bad Gateway"), { reason: "upstream" }));
+        await vi.advanceTimersByTimeAsync(1000 * (attempt + 1));
+      }
+      expect(firstT()).toHaveLength(CLIP_RETRIES + 1);
+      expect(t.events).toContain("error");
+      expect(t.engine.paused).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("lấy clip lỗi: dừng, báo error với lý do; bấm phát lại thì thử lại", async () => {
