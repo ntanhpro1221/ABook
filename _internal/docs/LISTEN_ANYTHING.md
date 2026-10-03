@@ -96,6 +96,11 @@ Text is never auto-edited (owner rule): cleanup proposals (e.g. a credit line) a
   TS extractor (Studio runs the Python importer), though the same module would work in its webview.
 - Wired (03-10, section 1 "What was built"): the phone's "Thêm sách từ file…" runs `BookImport` + `readPdfPages` and creates a stage-0 book. Studio: the new-book
   flow, remote upload and the Tauri file dialog accept `.epub/.docx/.pdf/.txt` and a folder; the chapter list shows title, words and characters.
+- EPUB with several chapters in one XHTML file (03-10): when 2+ table-of-contents entries point at fragments of the same file that the page
+  has (element id or `<a name>`), both importers cut the file's lines at those anchors in reading order, each part named by its entry; text
+  before the first anchor is its own part (short-item rule). One entry or none: unchanged. Fixture `split.epub` is in the shared parity list.
+- Android's ICU regex rejects `(?U)` / `UNICODE_CHARACTER_CLASS` (crashed every phone import until 84d256f8); ICU classes are Unicode anyway,
+  so `BookImport.UNICODE_CLASSES` sets the flag only off Android. JVM tests cannot catch this - import on an emulator.
 
 ## 3. Voices for Listen now
 
@@ -302,10 +307,18 @@ Seeds are the desktop's (`seed_of`), and so are the random streams: `NumpyRandom
   points to "Làm trước" (prepare ahead), the way to use VieNeu on mid-range phones; live reading is for flagship-class big cores.
 - Checks (03-10): JVM parity tests 416 pass / 0 fail (`SeaG2pParityTest` needs the host library: `cargo build --release` in
   `mobile/sea_g2p_jni`); `tests/test_vieneu_android.py` (pins Kotlin vs Python tables, fixtures, script); the pinned library hashes were
-  reproduced from a clean run of `prepare_sea_g2p_android.py`. NOT yet done: `VieneuOnDeviceTest` on the phone (nothing run on the
-  owner's phone), end-to-end audio parity of the ONNX output on a device (Nano clip vs the desktop WAV), Turbo on the phone.
-- Not done: the JNI library is not on Hugging Face yet. Run `scripts/prepare_sea_g2p_android.py --out <dir>`, upload `<dir>/sea-g2p/0.9.1/`
-  to `NGDtuanh/abook-music-student`, then set `VieneuModule.G2P_REVISION` to that commit (empty = the card says it is not published).
+  reproduced from a clean run of `prepare_sea_g2p_android.py`.
+- On devices (03-10 evening): `VieneuOnDeviceTest` passes on the x86_64 emulator and on the owner's OPPO A93 (arm64, run in the foreground -
+  ColorOS freezes an instrumented app in the background). G2P 239/239 identical. Nano: same length and per-sentence loudness as the desktop
+  but not byte-identical - ONNX Runtime picks other kernels on another CPU (emulator: 1.9% of samples off by <= 5/32768, correlation
+  0.9999999986), so the test checks tokens via length + loudness, and still prints IDENTICAL when bytes match. Phone RTF Nano 1.78 /
+  Turbo 1.62; Turbo peaks at ~1.28 GB PSS, so Turbo is not recommended under 5.5 GB RAM (`TURBO_MIN_RAM_GB`).
+- The JNI library is on Hugging Face: `NGDtuanh/abook-music-student` commit a8446407 (`sea-g2p/0.9.1/<abi>/`), `G2P_REVISION` set;
+  downloaded bytes match the packed SHA-256 pins.
+- Upstream 03-10: vieneu 3.8.3 only renames three Turbo presets (aliases kept) and moves the default to "Hải Đăng" - synthesis code unchanged;
+  sea-g2p 0.10.0 gives identical Vietnamese normaliser output, phonemes and units on all fixtures. No upgrade needed for parity.
+- VieNeu is one local provider, not the only one (owner 03-10 on ZeroTTS): any local model goes behind `Voice` + the module frame and is
+  chosen by the same machine measurements (ASR round-trip CER, naturalness score, RTF desktop/phone, RAM, download size, licence).
 
 ### Read-along view (owner 03-10: "like Edge's read aloud")
 
