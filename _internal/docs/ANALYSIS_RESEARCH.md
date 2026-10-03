@@ -24,6 +24,49 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
 7. **Người vô danh xác định được là MỘT người phải ghi `NPC*:<mô tả>` trong đáp án, cả ở chương kiểm tra**; đám đông
    để `NPC*` trơn. Thiếu mô tả thì F1 giọng không biết hai câu vô danh là một người, và xếp model ngược (mục 29-09 tối).
 
+## 03-10 chiều - Vì sao model to không hơn rõ: tín hiệu khó quá ít, lỗi theo loại, và truyện ĐÃ HỌC vs truyện MỚI
+
+Câu chủ sách hỏi: "ít thông tin thì huấn luyện tốt hơn?". Trả lời từ số đo, không dùng GPU:
+
+**Loss huấn luyện không phân biệt được hạt tốt và hạt hỏng.** `trainer_state.json` bước 258 của 9 lượt (4B v8m, q35-4B, 9B,
+mỗi loại 3 hạt; cùng thứ tự dữ liệu `data_seed=3407`): loss cuối q35/9B ~0,007, 4B v8m ~0,019, mọi hạt trong một công thức
+trùng nhau tới phần nghìn, và đã xuống ~0,01 từ 1/4 epoch. 9B hạt 1 (F1 kém nhất mọi bộ) có loss y như hai hạt kia.
+
+**Vì phần khó chỉ là 1-2% câu trả lời.** Trong data v8, tên người nói trên câu thoại/nội tâm chiếm 2,0% ký tự câu trả lời mẫu
+sinh và 1,3% ở mẫu phản biện; phần còn lại là khung JSON, câu người kể và các trường gần như cố định (tuổi luôn unknown, cách
+đọc tên luôn rỗng). Cả bộ có ~2.000 quyết định người nói, từ 10 truyện (một truyện Trung chiếm 1/3; Hàn chỉ YMP 194 + HDST 60
+câu); nửa số mẫu (phản biện) chép nguyên ứng viên. Model thuộc phần dễ rất sớm, còn phần khó quá ít mẫu để học ổn định - nên
+model to hơn không có thêm gì để học, và kết quả lệ thuộc hạt. Không phải "ít thông tin thì học tốt hơn", mà là **ít tín hiệu
+khó**. Hướng data v9: thêm câu khó (đối đáp so le, ngôi thứ nhất), mẫu phản biện sửa sai thật, nhiều truyện hơn (LN Nhật trước).
+
+**Lỗi theo loại** (% câu có người nói, chương chung của ba ứng viên; `Corpus/claude/model_lane/error_types.py`):
+
+| | Nhật: đúng | lệch lượt | nhầm "tôi" (2 chiều) | Hàn: đúng | lệch lượt | nhầm "tôi" |
+|---|---|---|---|---|---|---|
+| 4B v8 | 70,2 | 12,7 | 6,9 | 66,1 | 2,0 | 18,3 |
+| q35-4B | 65,7 | 12,8 | 8,5 | 74,6 | 3,5 | 15,5 |
+| 9B | 66,8 | 10,5 | 9,9 | 71,5 | 2,4 | 11,3 |
+| 9B hạt 1 | 53,3 | 17,7 | 19,6 | 52,4 | 4,1 | 31,3 |
+
+Truyện Nhật hỏng ở **đối đáp so le**: hơn nửa số ca, câu liền trước cũng là thoại và model lặp lại người nói của nó. Truyện Hàn
+(phần lớn kể ngôi thứ nhất) hỏng ở **nhầm "tôi"**. Đọc mẫu ngẫu nhiên (agent, seed 0):
+
+- 9B sửa được các ca tín hiệu yếu: người vô danh, thoại gọi tên người nghe (khoảng 0,3 lần số ca của 4B).
+- 9B không sửa được việc lặp người nói trước, hay việc bỏ qua lời dẫn nêu đúng tên (khoảng 1,0-1,4 lần).
+- Gán nhầm cho người kể: 9B chỉ còn khoảng 0,5 lần số ca của 4B.
+- Ca gán nhầm thường nằm trong đoạn kể ngôi ba chen giữa truyện ngôi một, chứ không phải do chữ "tôi" trong lời người khác.
+- 9B hạt 1 là một chế độ hỏng riêng: dồn câu về người kể theo cả chuỗi, tỉ lệ 22:1 so với khoảng 1,5:1 ở các lượt khác.
+
+**Biến thể chính tả tên người kể là lỗi thật mà app sửa được.** 45/98 ca "lẽ ra là tôi" của 9B ở Nageki là tên người kể viết
+khác ("Krai Andrej" thay vì KRAI ANDREY); hàm gom tên của app (`canonical_speaker_names`) gộp dấu, kính ngữ, bản rơi dấu nhưng
+không gộp biến thể phiên âm khác chữ - người nghe sẽ nghe một giọng lạ. Đề xuất phía app: so khớp mờ nhãn với tên `--first-person`
+(và với tên đã biết) trước khi tạo nhân vật mới.
+
+**Bảng phải tách truyện ĐÃ HỌC và truyện MỚI.** Bộ đo cũ (TCF, Nise, Yamiyo, Nageki, Love Unseen, HDST, YMP) là chương khác của
+chính các truyện có trong dữ liệu học; người dùng app thì gặp truyện mới. Nháp hiện tại (F1 giọng, 4B v8 / q35-4B / 9B): Nhật đã học
+64,8 / 63,4 / 64,4, Nhật MỚI (3 ch) 69,6 / 61,6 / 66,1; Hàn đã học 68,4 / 71,3 / 73,4, Hàn MỚI (2 ch) 63,6 / 58,7 / 76,5 - mẫu
+truyện mới còn quá nhỏ; các lô đang chạy đưa lên ~27 chương Nhật và ~12 chương Hàn mới (Hàn đợt 4: 4 bộ chưa từng dùng).
+
 ## 03-10 - Hai nghi vấn về cách chạy model, đều loại: presence_penalty của Qwen3.5 và bước reconcile sau phân tích
 
 **presence_penalty.** Modelfile của q35-4B và 9B (tạo bằng `ollama create --like` từ qwen3.5 gốc) mang theo tham số mẫu của
