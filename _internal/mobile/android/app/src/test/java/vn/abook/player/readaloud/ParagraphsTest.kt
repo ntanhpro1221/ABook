@@ -19,6 +19,32 @@ class ParagraphsTest {
     }
 
     @Test
+    fun keepsEachLineAParagraphInAFileThatHasOnlyAFewBlankLines() {
+        assertEquals(
+            listOf("Chương 1", "Dòng một.", "Dòng hai!", "“Dòng ba?”", "Dòng bốn"),
+            Paragraphs.of("Chương 1\n\nDòng một.\nDòng hai!\n“Dòng ba?”\nDòng bốn"),
+        )
+        assertEquals(listOf("Tựa", "x".repeat(201), "không dấu"), Paragraphs.of("Tựa\n\n${"x".repeat(201)}\nkhông dấu"))
+    }
+
+    @Test
+    fun stillJoinsLinesATypesetterBrokeMidSentence() {
+        assertEquals(
+            listOf("A", "Một dòng dài bị bẻ, một dòng nữa kết thúc. Rồi câu sau tiếp và hết."),
+            Paragraphs.of("A\n\nMột dòng dài bị bẻ,\nmột dòng nữa kết thúc.\nRồi câu sau tiếp\nvà hết."),
+        )
+    }
+
+    @Test
+    fun skipsOnlyTheChosenLinesAmongTheFirstSixOfTheChapter() {
+        val text = "Chương 2\n\nDịch:  Nhóm A\n\nMở đầu.\n\nDịch: Nhóm A"
+        assertEquals(listOf("Chương 2", "Mở đầu."), Paragraphs.of(Paragraphs.withoutLines(text, listOf("Dịch: Nhóm A"))))
+        assertEquals(text, Paragraphs.withoutLines(text, emptyList()))
+        val late = (1..6).joinToString("\n") { "Dòng $it." } + "\nDịch: Nhóm A"
+        assertEquals(7, Paragraphs.of(Paragraphs.withoutLines(late, listOf("Dịch: Nhóm A"))).size) // ngoài 6 dòng đầu: giữ
+    }
+
+    @Test
     fun givesNothingForAnEmptyChapter() {
         assertEquals(emptyList<String>(), Paragraphs.of("\n \n\n"))
     }

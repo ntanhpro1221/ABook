@@ -4,7 +4,7 @@
 
 import type { ListenChapter } from "./model";
 import type { ReadAloudVoice } from "./readAloud";
-import { paragraphsOf } from "./textScript";
+import { paragraphsOf, withoutLines } from "./textScript";
 
 /** Khoá react-query của trạng thái làm trước (một việc một lúc cho cả máy): menu Giọng đọc và dấu "Đã làm sẵn" ở danh sách chương dùng chung. */
 export const PREPARE_STATUS_KEY = ["readaloud", "prepare"] as const;
@@ -65,10 +65,10 @@ export function upcomingTextChapters(queue: ListenChapter[], currentId: number, 
   return queue.slice(index + 1).filter((chapter) => chapter.state === "text").slice(0, limit);
 }
 
-/** Chữ các đoạn đúng như trình phát chia (cùng khoá bộ đệm với lúc nghe). */
-export async function paragraphsFor(chapters: Pick<ListenChapter, "id">[], text: (chapterId: number) => Promise<string>): Promise<string[]> {
+/** Chữ các đoạn đúng như trình phát chia (cùng khoá bộ đệm với lúc nghe) - kể cả bỏ các dòng người nghe đã bỏ khỏi phần đọc. */
+export async function paragraphsFor(chapters: Pick<ListenChapter, "id" | "skip">[], text: (chapterId: number) => Promise<string>): Promise<string[]> {
   const out: string[] = [];
-  for (const chapter of chapters) out.push(...paragraphsOf(await text(chapter.id)));
+  for (const chapter of chapters) out.push(...paragraphsOf(withoutLines(await text(chapter.id), chapter.skip)));
   return out;
 }
 

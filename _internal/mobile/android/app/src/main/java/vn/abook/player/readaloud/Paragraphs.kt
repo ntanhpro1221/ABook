@@ -29,7 +29,42 @@ object Paragraphs {
      */
     fun of(text: String): List<String> {
         val clean = text.replace(NEWLINES, "\n")
-        val blocks = if (BLANK_LINE.containsMatchIn(clean)) clean.split(BLANK_LINE) else clean.split("\n")
-        return blocks.map(::squeeze).filter { it.isNotEmpty() }
+        if (!BLANK_LINE.containsMatchIn(clean)) return clean.split("\n").map(::squeeze).filter { it.isNotEmpty() }
+        return clean.split(BLANK_LINE).flatMap(::blockParagraphs)
+    }
+
+    /** Số dòng có chữ đầu chương mà luật dòng ghi công xét (text_processing.CREDIT_WINDOW_LINES). */
+    private const val CREDIT_WINDOW = 6
+
+    /**
+     * Chữ của chương trừ các dòng người nghe đã chọn bỏ khỏi phần đọc (lớp sửa `skip` - gợi ý dòng ghi công của bộ nhập sách) - bản Kotlin
+     * của `withoutLines` (textScript.ts): chỉ xét 6 dòng có chữ đầu chương. Chữ của sách không đổi; lõi đọc to và màn đọc cùng bỏ.
+     */
+    fun withoutLines(text: String, skip: List<String>): String {
+        if (skip.isEmpty()) return text
+        var seen = 0
+        return text.replace(NEWLINES, "\n").split("\n").filter { line ->
+            val shown = squeeze(line)
+            if (shown.isEmpty() || seen >= CREDIT_WINDOW) return@filter true
+            seen++
+            shown !in skip
+        }.joinToString("\n")
+    }
+
+    /** Dấu kết câu ở cuối dòng (`SENTENCE_END` của textScript.ts): dòng như vậy là trọn một đoạn, không phải dòng bị bẻ giữa câu. */
+    private const val SENTENCE_END = ".!?…\"”»’)」』】。！？~–—"
+    /** Dài hơn mọi khổ dòng của máy dàn trang: chắc chắn là trọn một đoạn (`WHOLE_LINE`). */
+    private const val WHOLE_LINE = 200
+
+    /**
+     * Các dòng của một khối giữa hai dòng trống (`blockParagraphs` của textScript.ts): bị bẻ giữa câu thì nối thành một đoạn; còn nếu đa số
+     * dòng (trừ dòng cuối) kết thúc bằng dấu kết câu, hay có dòng dài hơn mọi khổ dòng, thì mỗi dòng một đoạn - file mỗi dòng một đoạn
+     * chỉ có vài dòng trống không dồn cả chương thành một đoạn âm thanh khổng lồ.
+     */
+    private fun blockParagraphs(block: String): List<String> {
+        val lines = block.split("\n").map(::squeeze).filter { it.isNotEmpty() }
+        if (lines.size < 2) return lines
+        val ended = lines.dropLast(1).count { it.last() in SENTENCE_END }
+        return if (ended * 2 > lines.size - 1 || lines.any { it.length > WHOLE_LINE }) lines else listOf(lines.joinToString(" "))
     }
 }

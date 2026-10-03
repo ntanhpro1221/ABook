@@ -1,0 +1,1 @@
+Không có tên, chỉ có đuôi: không phải file .txt (như Path.suffix).
