@@ -997,6 +997,23 @@ nhãn câu (app).**
   chấm 0,167), không phải ở chỗ tốt hơn app một chút.
 - Từng chương dao động mạnh, ví dụ Kage 33: app 0,145, (1) 0,756. Chín chương còn ít để thấy nhánh nào ổn định.
 - Bộ 5b (3 chương) không đo lại phép này: luật là đo bộ 5 một lần.
+- Lead: câu "phần hơn đến từ cách đoán không khí, không phải ranh giới" là giả thuyết MỚI, rút ra SAU khi nhìn số bộ 5.
+  Chưa được nhận; phải đo trên bộ mới (ghi trước dưới đây).
+
+**GHI TRƯỚC - BỘ 5B: MỘT ỨNG VIÊN DUY NHẤT `app + llmVT + bwsE` (03-10 10:3x, Lead giao; trước khi có phân tích 5b):**
+- Bộ 5b:
+  - chương: Kuma 112, Zenith 049 + 050 (`scene_set5b.json`, Corpus 8ee1f17);
+  - phân tích 9B-v8: run 03-10-music5-9bv8-kuma / -zenith;
+  - đáp án cảnh: hai người chấm Sonnet A / B + `adjudicate_scenes.py`, như bộ 5 → `gold_scene5b`.
+- **Ứng viên DUY NHẤT:** ranh giới app + llmVT (V, T từ LLM đọc cả đoạn) + bwsE (E từ BWS trong chương). So với `app`
+  (nhãn câu + ranh giới app). Không thêm ứng viên nào khác cho 5b.
+- **Luật** như bộ 5 (`set5_llm.py score`, mốc thắng = ⌈0,7·n⌉): THẮNG nếu r VET TB theo chương hơn app ≥ 0,05 VÀ thắng ≥ 3/3
+  chương (cùng tỉ lệ 7/9).
+- **Chi phí trên máy người dùng** (báo kèm, đo trên chính lượt chạy 5b ở card 8 GB máy nhà, qwen3.5:9b qua Ollama):
+  - số lượt gọi LLM thêm mỗi chương: lượt V/T đoạn + lượt BWS nhóm, chỉ trên đoạn app;
+  - thời gian: tổng giây mỗi chương, quy ra giây trên mỗi giờ sách nói;
+  - VRAM: `size_vram` của `/api/ps` trong lúc chạy.
+- THẮNG → đề xuất đưa vào app, kèm chi phí ấy, để Lead / chủ sách quyết. Trượt → giữ nhãn câu, ghi số.
 
 ĐÁP ÁN BỘ 5 (03-10 05:xx, Corpus `scene_set5/`; mô tả, chưa phải phép thử):
 - 9 chương, 86 đoạn sau phân xử (26,6 đoạn/giờ).
