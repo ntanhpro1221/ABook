@@ -772,7 +772,7 @@ export function BookScreen({
                 ? "Đang thu âm - chương mới tự hiện ra khi xong"
                 : book.imported
                   ? "Chưa hoàn thành - file sách này chỉ có các chương đã làm; mở bản mới hơn để nghe tiếp"
-                  : "Chưa hoàn thành - Studio đang dừng"}
+                  : "Chưa hoàn thành - việc thu đang dừng"}
               {studioLink?.(book)}
             </p>
           )}
