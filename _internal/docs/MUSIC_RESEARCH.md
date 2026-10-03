@@ -967,6 +967,37 @@ Thước trên bộ 5:
     - `tune` không ghi đè tham số đã chốt.
     - `score` từ chối chạy lại khi đã có `split_score.txt`.
 
+**KẾT QUẢ CHIA ĐOẠN (03-10 10:10, `results/split_score.txt`, `results/split_params.json`):** **không nhánh nào thắng → giữ
+nhãn câu (app).**
+- Lần chạy đầu hỏng 09:06 vì Ollama nhà chưa có qwen3-embedding:0.6b. Đã kéo model rồi chạy lại; nhánh 1 / 2 dùng cache, không
+  đo lại gì.
+- Tham số chốt trên bộ 4 (theo Pk TB): nhánh 2 W = 120, θ = 1,5 (Pk 0,382); nhánh 3 k = 8, c = 0,2 (Pk 0,348).
+  Nhánh 1 trên bộ 4: Pk 0,389.
+- Bộ 5 đo MỘT lần (9 chương, 3,01 giờ):
+
+| Cách | V | E | T | r VET | hơn app | thắng |
+|---|---|---|---|---|---|---|
+| app (nhãn câu + ranh giới app) | 0,389 | 0,319 | 0,260 | 0,323 | | |
+| (1) LLM chia trực tiếp | 0,385 | 0,322 | 0,415 | 0,374 | +0,052 | 5/9 |
+| (2) điểm đổi V/E/T | 0,404 | 0,330 | 0,353 | 0,363 | +0,040 | 5/9 |
+| (3) TextTiling | 0,517 | 0,257 | 0,304 | 0,359 | +0,037 | 5/9 |
+| tham chiếu: ranh giới app + llmVT + bwsE | 0,358 | 0,394 | 0,350 | 0,367 | | |
+| tham chiếu: ranh giới đáp án + llmVT + bwsE | 0,671 | 0,562 | 0,589 | 0,607 | | |
+
+- Thước phụ (so ranh giới đáp án): Pk app 0,402; (1) 0,307; (2) 0,330; (3) 0,292.
+  - Số đoạn mỗi giờ: app 21,9; (1) 19,9; (2) 17,6; (3) 15,9. Đáp án 26,6.
+  - Lượt LLM mỗi chương: (1) 18,1; (2) 80,8; (3) 13,2 + 3,6 lô nhúng.
+  - Không chương / đoạn nào hỏng định dạng.
+
+Đọc kết quả:
+- Ba nhánh khớp ranh giới tốt hơn app rõ (Pk 0,29–0,33 so 0,40), nhưng r VET không hơn ranh giới app khi cùng dùng đường LLM
+  (0,36–0,37 so 0,367).
+- Phần hơn app (+0,04–0,05) đến từ đường đoán không khí (llmVT + bwsE), không phải từ ranh giới.
+- Trần khi có ranh giới đáp án là 0,607. Khoảng cách tới đó nằm ở chỗ khớp ranh giới THẬT (Pk 0,29 vẫn xa trần người
+  chấm 0,167), không phải ở chỗ tốt hơn app một chút.
+- Từng chương dao động mạnh, ví dụ Kage 33: app 0,145, (1) 0,756. Chín chương còn ít để thấy nhánh nào ổn định.
+- Bộ 5b (3 chương) không đo lại phép này: luật là đo bộ 5 một lần.
+
 ĐÁP ÁN BỘ 5 (03-10 05:xx, Corpus `scene_set5/`; mô tả, chưa phải phép thử):
 - 9 chương, 86 đoạn sau phân xử (26,6 đoạn/giờ).
 - Hai người chấm mù Sonnet A so B: Pk 0,167, P / R ranh giới 0,73 / 0,86, r V/E/T 0,92 / 0,88 / 0,89. Đó là trần.
