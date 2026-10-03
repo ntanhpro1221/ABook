@@ -319,6 +319,13 @@ Seeds are the desktop's (`seed_of`), and so are the random streams: `NumpyRandom
   sea-g2p 0.10.0 gives identical Vietnamese normaliser output, phonemes and units on all fixtures. No upgrade needed for parity.
 - VieNeu is one local provider, not the only one (owner 03-10 on ZeroTTS): any local model goes behind `Voice` + the module frame and is
   chosen by the same machine measurements (ASR round-trip CER, naturalness score, RTF desktop/phone, RAM, download size, licence).
+- ZeroTTS 0.1.5 (commit c2bfbd67) vs VieNeu, desktop CPU, 8 threads, 20 paragraphs of 180-226 chars + 4 of 370-441: RTF Nano 0.19 /
+  Turbo 0.35 / ZeroTTS 0.75 (its advertised 0.5 did not reproduce); CER 0.026 / 0.022 / 0.018-0.022 (a tie within ASR noise; ZeroTTS
+  reads digits a little better); UTMOS 2.52 / 3.22 / 2.9-3.0; disk 282 MB / ~210 MB / 867 MiB fp32; ZeroTTS peaks at 8-11 GB RSS on long
+  paragraphs and clips at 1.0. It reads a 400-char paragraph completely, has 8 fixed voices and no cloning; its codec decoder is
+  byte-identical to VieNeu's. Not added: slower, bigger and no better. Re-measure if a faster or quantised export appears.
+- VieNeu v4 is closed (API only, README 03-10); v3 Turbo is the latest open release and only "potential v3.x" open updates are promised,
+  so quality gains will come from other open models, not from VieNeu.
 
 ### Read-along view (owner 03-10: "like Edge's read aloud")
 
