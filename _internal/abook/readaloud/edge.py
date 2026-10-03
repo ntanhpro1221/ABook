@@ -16,6 +16,7 @@ import socket
 import ssl
 import time
 import uuid
+from collections.abc import Callable
 from email.utils import parsedate_to_datetime
 from urllib.parse import quote
 from xml.sax.saxutils import escape, unescape
@@ -39,7 +40,7 @@ TOTAL_TIMEOUT = 90.0
 RETRIES = 2  # lượt bị cắt giữa chừng thử lại tối đa chừng này lần (kết nối mới)
 
 DEFAULT_VOICE = "vi-VN-HoaiMyNeural"
-VOICES = [("vi-VN-HoaiMyNeural", "Hoài My"), ("vi-VN-NamMinhNeural", "Nam Minh")]
+VOICES = [("vi-VN-HoaiMyNeural", "Hoài My", "female"), ("vi-VN-NamMinhNeural", "Nam Minh", "male")]
 
 
 class EdgeError(VoiceError):
@@ -59,7 +60,9 @@ class EdgeRejected(EdgeError):
 
 
 class EdgeDropped(EdgeError):
-    """Dịch vụ cắt kết nối giữa lượt (đo 03-10: thỉnh thoảng, vài phần trăm lượt, với đúng cùng chữ vừa đọc được) - thử lại là xong."""
+    """Dịch vụ cắt kết nối giữa lượt (đo 03-10: thỉnh thoảng, vài phần trăm lượt, với đúng cùng chữ vừa đọc được) - thử lại là xong.
+    Cũng dùng cho lỗi thoáng qua lúc bắt tay: HTTP 429 / 5xx, kết nối bị reset (soát 03-10: một lần reset từng làm đoạn ấy rơi về giọng
+    máy như mất mạng)."""
 
 
 _clock_skew = 0.0  # giây: lệch giữa đồng hồ máy và đồng hồ máy chủ, học từ header Date của lần bị từ chối (403)
@@ -81,19 +84,24 @@ def clean(text: str) -> str:
     return _CONTROL.sub(" ", text)
 
 
-def split_text(text: str, limit: int = MAX_CHUNK_BYTES) -> list[str]:
-    """Cắt chữ thành các đoạn mà bản đã escape không quá `limit` byte UTF-8, ưu tiên cắt ở hết câu rồi tới khoảng trắng. Ghép lại đúng chữ gốc (bỏ khoảng trắng đầu / cuối đoạn)."""
+def escaped_bytes(text: str) -> int:
+    return len(escape(text).encode("utf-8"))
+
+
+def split_text(text: str, limit: int = MAX_CHUNK_BYTES, measure: Callable[[str], int] = escaped_bytes) -> list[str]:
+    """Cắt chữ thành các đoạn có `measure` (mặc định: số byte UTF-8 của bản đã escape) không quá `limit`, ưu tiên cắt ở hết câu rồi tới khoảng
+    trắng. Ghép lại đúng chữ gốc (bỏ khoảng trắng đầu / cuối đoạn). Giọng dùng khoá (byok) cắt theo số ký tự: `measure=len`."""
     text = text.strip()
     pieces: list[str] = []
     while text:
-        if len(escape(text).encode("utf-8")) <= limit:
+        if measure(text) <= limit:
             pieces.append(text)
             break
-        # Cửa sổ ký tự lớn nhất còn vừa limit byte.
+        # Cửa sổ ký tự lớn nhất còn vừa limit.
         low, high = 1, len(text)
         while low < high:
             middle = (low + high + 1) // 2
-            if len(escape(text[:middle]).encode("utf-8")) <= limit:
+            if measure(text[:middle]) <= limit:
                 low = middle
             else:
                 high = middle - 1
@@ -152,6 +160,46 @@ def parse_metadata(body: str, compensation_ticks: int) -> list[Boundary]:
     return found
 
 
+def read_turn(connection: websocket.Connection, compensation_ticks: int, deadline: float, *, label: str = "Dịch vụ đọc to",
+              strict: bool = True, on_close: Callable[[websocket.Closed], VoiceError | None] | None = None) -> tuple[bytes, list[Boundary]]:
+    """Nhận một lượt đọc tới `turn.end`: MP3 (khung nhị phân `Path:audio`) + WordBoundary của `audio.metadata` (cộng mốc bù). Dùng chung cho Edge
+    và Azure Speech (cùng giao thức tin, azure.py). `label`: tên dịch vụ trong câu báo lỗi; `strict`: tin lạ là lỗi (Edge) hay bỏ qua (Azure gửi
+    thêm tin khác); `on_close`: đổi khung CLOSE của máy chủ thành lỗi riêng (Azure báo hết hạn mức bằng lý do đóng) - None thì như bị cắt."""
+    audio = bytearray()
+    boundaries: list[Boundary] = []
+    while True:
+        if time.monotonic() > deadline:
+            raise EdgeTimeout(f"{label} trả lời quá chậm.")
+        try:
+            kind, payload = connection.recv()
+        except TimeoutError as error:
+            raise EdgeTimeout(f"{label} không trả lời.") from error
+        except websocket.Closed as error:
+            mapped = on_close(error) if on_close is not None else None
+            if mapped is not None:
+                raise mapped from error
+            raise EdgeDropped(f"{label} đóng kết nối sớm ({error.code}).") from error
+        except websocket.WebSocketError as error:
+            raise EdgeOffline(f"Mất kết nối giữa chừng: {error}") from error
+        if kind == websocket.TEXT:
+            raw, _, body = payload.partition(b"\r\n\r\n")
+            path = parse_headers(raw).get("Path", "")
+            if path == "audio.metadata":
+                boundaries += parse_metadata(body.decode("utf-8"), compensation_ticks)
+            elif path == "turn.end":
+                return bytes(audio), boundaries
+            elif strict and path not in ("turn.start", "response"):
+                raise EdgeError(f"{label} gửi tin lạ: {path!r}")
+        elif len(payload) >= 2:
+            header_length = int.from_bytes(payload[:2], "big")
+            if header_length + 2 > len(payload):
+                raise EdgeError("Khung audio hỏng (độ dài header sai).")
+            headers = parse_headers(payload[2:2 + header_length])
+            data = payload[2 + header_length:]
+            if headers.get("Path") == "audio" and data:
+                audio += data
+
+
 class EdgeClient:
     """`host` / `port` / `secure` đổi được để bài thử nói chuyện với máy chủ giả trên máy này."""
 
@@ -196,8 +244,12 @@ class EdgeClient:
                 _clock_skew = server - time.time()
                 return self._open()
         except websocket.Rejected as rejected:
+            if rejected.status == 429 or rejected.status >= 500:
+                raise EdgeDropped(f"Dịch vụ đọc to đang bận (HTTP {rejected.status}).") from rejected
             raise EdgeRejected(f"Dịch vụ đọc to từ chối kết nối (HTTP {rejected.status}); có thể Microsoft đã đổi giao thức.") from rejected
-        except (socket.gaierror, ConnectionRefusedError, ConnectionResetError, ConnectionAbortedError) as error:
+        except (ConnectionResetError, ConnectionAbortedError) as error:
+            raise EdgeDropped("Dịch vụ đọc to cắt kết nối lúc bắt tay.") from error
+        except (socket.gaierror, ConnectionRefusedError) as error:
             raise EdgeOffline("Không có mạng để dùng giọng trực tuyến.") from error
         except TimeoutError as error:
             raise EdgeOffline("Không kết nối được tới dịch vụ đọc to (quá giờ).") from error
@@ -211,42 +263,12 @@ class EdgeClient:
 
     def _speak_one(self, voice: str, text: str, compensation_ticks: int, deadline: float) -> tuple[bytes, list[Boundary]]:
         connection = self._connect()
-        audio = bytearray()
-        boundaries: list[Boundary] = []
         try:
             connection.send_text(config_message())
             connection.send_text(ssml_message(uuid.uuid4().hex, build_ssml(voice, text)))
-            while True:
-                if time.monotonic() > deadline:
-                    raise EdgeTimeout("Dịch vụ đọc to trả lời quá chậm.")
-                try:
-                    kind, payload = connection.recv()
-                except TimeoutError as error:
-                    raise EdgeTimeout("Dịch vụ đọc to không trả lời.") from error
-                except websocket.Closed as error:
-                    raise EdgeDropped(f"Dịch vụ đọc to đóng kết nối sớm ({error.code}).") from error
-                except websocket.WebSocketError as error:
-                    raise EdgeOffline(f"Mất kết nối giữa chừng: {error}") from error
-                if kind == websocket.TEXT:
-                    raw, _, body = payload.partition(b"\r\n\r\n")
-                    path = parse_headers(raw).get("Path", "")
-                    if path == "audio.metadata":
-                        boundaries += parse_metadata(body.decode("utf-8"), compensation_ticks)
-                    elif path == "turn.end":
-                        break
-                    elif path not in ("turn.start", "response"):
-                        raise EdgeError(f"Dịch vụ đọc to gửi tin lạ: {path!r}")
-                elif len(payload) >= 2:
-                    header_length = int.from_bytes(payload[:2], "big")
-                    if header_length + 2 > len(payload):
-                        raise EdgeError("Khung audio hỏng (độ dài header sai).")
-                    headers = parse_headers(payload[2:2 + header_length])
-                    data = payload[2 + header_length:]
-                    if headers.get("Path") == "audio" and data:
-                        audio += data
+            return read_turn(connection, compensation_ticks, deadline)
         finally:
             connection.close()
-        return bytes(audio), boundaries
 
     def synthesize(self, text: str, voice: str = DEFAULT_VOICE) -> Synthesis:
         """Đọc `text` bằng `voice` (mã đầy đủ, vd "vi-VN-HoaiMyNeural"): MP3 + các WordBoundary (ms từ đầu clip) + độ dài."""

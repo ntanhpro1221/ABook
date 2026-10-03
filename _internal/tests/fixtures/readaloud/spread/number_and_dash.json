@@ -1,0 +1,6 @@
+{
+ "note": "\"2.500\" đọc 4 âm tiết (hai nghìn năm trăm); \"—\" không âm tiết nhưng có ngắt phẩy, mapping nội suy nó vào khoảng ngắt",
+ "text": "Giá 2.500 đồng — rẻ.",
+ "durationMs": 1600,
+ "words": [[0, 200], [200, 1000], [1000, 1200], [1200, 1400], [1400, 1600]]
+}

@@ -155,12 +155,16 @@ describe("ước tính và đồng hồ ảo", () => {
 });
 
 describe("phát, đọc trước và sửa thời gian", () => {
-  it("bấm phát: chờ clip đầu, đọc trước hai đoạn kế, không đọc xa hơn", async () => {
+  it("bấm phát: chờ clip đầu, đọc trước ba đoạn kế (máy tính), không đọc xa hơn", async () => {
     const s = setup();
     s.engine.load(s.trackInfo, 0, true);
     await flush();
     expect(s.events.slice(0, 2)).toEqual(["play", "waiting"]);
-    expect(s.requests.map((r) => r.text)).toEqual(TEXTS.slice(0, 3));
+    expect(s.requests.map((r) => r.text)).toEqual(TEXTS.slice(0, 4));
+    const longer = setup({ chapter: `${CHAPTER}\n\nMười một.\n\nMười hai.` });
+    longer.engine.load(longer.trackInfo, 0, true);
+    await flush();
+    expect(longer.requests.map((r) => r.text)).toEqual(TEXTS);
     await s.arrive(TEXTS[0]);
     const first = audioOf(s, TEXTS[0])!;
     expect(first.plays).toBe(1);

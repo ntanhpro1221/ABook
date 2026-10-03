@@ -169,8 +169,9 @@ def test_the_accept_key_matches_the_rfc_example() -> None:
 class FakeEdge:
     """Máy chủ WebSocket giả nói đúng giao thức Edge, trên cổng tự chọn của máy này (không TLS)."""
 
-    def __init__(self, *, reject_first: bool = False, silent: bool = False, drop: int = 0) -> None:
+    def __init__(self, *, reject_first: bool = False, silent: bool = False, drop: int = 0, busy: int = 0) -> None:
         self.reject_first = reject_first
+        self.busy = busy  # số lần bắt tay đầu bị trả 503 (dịch vụ bận)
         self.drop = drop  # số lượt đầu bị cắt giữa chừng (như dịch vụ thật thỉnh thoảng làm)
         self.silent = silent
         self.requests: list[str] = []
@@ -201,6 +202,10 @@ class FakeEdge:
                     raw += chunk
                 text = raw.decode("latin-1")
                 self.requests.append(text)
+                if self.busy > 0:
+                    self.busy -= 1
+                    conn.sendall(b"HTTP/1.1 503 Service Unavailable\r\nContent-Length: 0\r\n\r\n")
+                    continue
                 if self.reject_first and not rejected:
                     rejected = True
                     conn.sendall(b"HTTP/1.1 403 Forbidden\r\nDate: Fri, 03 Oct 2026 10:00:00 GMT\r\nContent-Length: 0\r\n\r\n")
@@ -305,6 +310,18 @@ def test_a_connection_dropped_mid_turn_is_retried(fake_edge, monkeypatch) -> Non
     with pytest.raises(edge.EdgeError) as caught:
         client.synthesize("Xin chào", edge.DEFAULT_VOICE)
     assert isinstance(caught.value, edge.EdgeDropped) and len(server.requests) == 3
+
+
+def test_a_busy_handshake_is_retried_like_a_dropped_turn(fake_edge, monkeypatch) -> None:
+    # Soát 03-10: HTTP 429 / 5xx lúc bắt tay là lỗi thoáng qua - thử lại, không coi là dịch vụ đổi giao thức.
+    monkeypatch.setattr(edge.time, "sleep", lambda _seconds: None)
+    server, client = fake_edge(busy=2)
+    result = client.synthesize("Xin chào", edge.DEFAULT_VOICE)
+    assert result.audio == b"A" * 12000 and len(server.requests) == 3
+    server, client = fake_edge(busy=3)
+    with pytest.raises(edge.EdgeError) as caught:
+        client.synthesize("Xin chào", edge.DEFAULT_VOICE)
+    assert isinstance(caught.value, edge.EdgeDropped) and "503" in str(caught.value)
 
 
 def test_a_403_teaches_the_clock_skew_and_retries_once(fake_edge) -> None:
@@ -488,7 +505,8 @@ def test_the_endpoints_make_a_clip_and_serve_it_with_ranges(tmp_path: Path) -> N
     try:
         status, data, _ = _request(server.port, "GET", "/api/readaloud/voices", headers=headers)
         assert status == 200 and json.loads(data) == [
-            {"id": "fake:ngoc", "name": "Ngọc", "provider": "fake", "online": False, "default": True, "language": "vi-VN", "gain_db": 0.0}]
+            {"id": "fake:ngoc", "name": "Ngọc", "provider": "fake", "online": False, "default": True, "language": "vi-VN", "gender": "",
+             "gain_db": 0.0}]
         body = {"voice": "fake:ngoc", "text": "Xin chào các bạn."}
         status, data, _ = _request(server.port, "POST", "/api/readaloud/clip", headers=headers, body=body)
         clip = json.loads(data)
@@ -503,7 +521,7 @@ def test_the_endpoints_make_a_clip_and_serve_it_with_ranges(tmp_path: Path) -> N
         cached = {**body, "cachedOnly": True}
         assert _request(server.port, "POST", "/api/readaloud/clip", headers=headers, body=cached)[0] == 200
         status, data, _ = _request(server.port, "POST", "/api/readaloud/clip", headers=headers, body={**cached, "text": "Chưa có."})
-        assert status == 404 and json.loads(data)["reason"] == "uncached"
+        assert status == 200 and json.loads(data) == {"cached": False, "reason": "uncached"}
         assert _request(server.port, "GET", "/media/readaloud/" + "0" * 64 + ".mp3", headers=headers)[0] == 404
         assert _request(server.port, "GET", clip["url"])[0] == 401
         status, data, _ = _request(server.port, "POST", "/api/readaloud/clip", headers=headers, body={"voice": "fake:ngoc"})

@@ -152,7 +152,7 @@ def spoken_syllables(token: str) -> list[str]:
         return read_number(core)
     out: list[str] = []
     for part in re.split(r"[\W_]+", core):
-        if part.isdigit():
+        if part.isdecimal():  # isdigit() nhận cả "²" mà int() không đọc được
             out += read_number(part)
         elif part:
             out.append(part)

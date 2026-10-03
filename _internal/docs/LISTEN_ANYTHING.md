@@ -115,6 +115,12 @@ Online voices (owner 03-10: "đọc ngay, cần mạng" is its own group; Edge T
 - Google Translate's read-aloud is a last resort only: unofficial, ~200 chars per call, robotic.
 - Every provider is a separate adapter behind one interface (`speak(text, voice) -> audio`, `voices()`, `limits`). A failure or an exhausted quota falls back to the device voice without stopping playback.
 - The UI says plainly that an online voice sends the book's text to that provider.
+- Built 03-10 (desktop `abook/readaloud/byok.py` + azure/google/fpt/viettel.py, phone `OnlineVoices.kt` + `*Tts.kt`, settings
+  `ui/src/listen/VoiceSettings.tsx`): Azure speaks the Speech SDK WebSocket protocol (same frames as Edge, exact word timings); Google puts a
+  `<mark>` before every word (exact); FPT.AI / Viettel AI give no timings, so words are spread over syllables with punctuation pauses
+  (`spread.py` / `SyllableSpread.kt`, shared fixtures `tests/fixtures/readaloud/spread/`). Keys: desktop `voice-keys.json` next to the
+  preferences (never in `GET /api/preferences`), phone AES-GCM with an Android Keystore key. Fallback chain per paragraph: keyed voice ->
+  Edge -> device voice, one notice per provider and reason. Google Translate's read-aloud is deliberately not built.
 
 VieNeu 3.8.1 (installed) has CPU modes: `v3nano` (48M-parameter flow model, ONNX, 24 kHz) and `v3turbo` (ONNX on CPU,
 48 kHz). Measured 03-10 on the home laptop CPU (busy with GPU evals): v3nano RTF 0.18, first audio after 0.76 s.
@@ -141,13 +147,33 @@ built module runs on CPU ("VieNeu module - built" below):
 - No GPU: CPU (numbers above).
 - Phone: CPU with ARM-optimised kernels (XNNPACK). Try NNAPI/QNN if they help, but expect to rely on CPU. Measure on a real phone.
 
+Phone, measured 03-10 (owner's OPPO A93 = CPH2121, MediaTek Helio P95 MT6779: 2x Cortex-A75 2.2 GHz + 6x A55 2.0 GHz,
+7.6 GB RAM, Android 12; ONNX Runtime 1.30; run in the background while the owner watched YouTube, so a busy phone;
+Kotlin port `mobile/android/.../vieneu/`, bench `scripts/vieneu_phone_bench.sh`, 3-5 sentences of 21-132 characters):
+- Turbo int8, best = 2 threads for the per-frame graphs + 8 for the codec: RTF 1.75 (desktop 0.315, ~5.5x slower), first
+  audio 1.0 s, load 4.2 s, peak memory 0.7-1.0 GB (the codec on the longest sentence). 1 thread 2.3; 6-8 threads 2.5
+  (more threads than big cores slows the small per-frame graphs). XNNPACK 3.2 at 4-8 threads. Per audio second at the best
+  setting: backbone step 0.41 s, acoustic decoder 0.52, output heads + sampling (Kotlin) 0.53, codec 0.30, prefill 0.23.
+- Nano: RTF 1.8-1.9 at 4-8 threads (2.4 at 6 on a busier minute; 3.7 at 1), desktop 0.18; first audio = the whole
+  sentence (6-7 s for a 45-character one); load 2.2 s; peak 0.5 GB. XNNPACK 3.9-4.3, NNAPI 4.4 (falls back, load 7.6 s).
+- Two minutes of non-stop Turbo: RTF 2.35 first half, 2.16 second half, battery 39.6 -> 41.6 C - no thermal slow-down
+  in that time; the spread (1.6-3.1 per sentence) is the phone's other work.
+- Output sane: Nano is bit-identical to the desktop on all 5 sentences; Turbo's codec is bit-identical on the desktop's
+  codes; Turbo int8 picks different codes from frame 0-1 (int8 kernels differ between ARM and x86) but every sentence
+  keeps the desktop's length (+-7%) and loudness (RMS 0.10-0.11), no NaN.
+- So on a 2020 mid-range phone neither voice keeps up with listening (needs RTF < 1, ideally < 0.8 for headroom).
+  "Khuyên dùng" on phones: never live VieNeu below flagship-class big cores; offer it as "make ahead" (synthesize the next
+  chapters while charging) or stream from a paired computer. A phone ~2.5x faster per big core (A78/X1 and newer) is the
+  estimated break-even for Turbo; the after-download self-benchmark decides. Cheapest speed-ups left: move the 16 output
+  heads into ORT (MLAS GEMV instead of Kotlin loops) and cut the 16 acoustic calls per frame.
+
 ### VieNeu module - built 03-10 (desktop)
 
 What exists: `abook/readaloud/vieneu_engine.py` (the VieNeu 3.8.1 inference path on onnxruntime + numpy only: Turbo prefill/decode/acoustic
 loop + MOSS decoder, Nano flow matching + CFG, the byte-level BPE tokenizer of `tokenizer.json` in pure Python, frame caps, babble retry,
 pause joining), `abook/readaloud/vieneu.py` (provider "vieneu", online false; paragraph -> sentence units packed like vieneu, per-unit
-word timings), `abook/webui/vieneu_module.py` (packaging), `/api/readaloud/vieneu` (+ `/measure`), the "Giọng đọc trên máy" card in desktop
-Settings (`ui/src/listen/VieneuModuleCard.tsx`). The `vieneu` pip package is NOT a dependency of the shipped app.
+word timings), `abook/webui/vieneu_module.py` (packaging), `/api/readaloud/vieneu` (+ `/measure`), the "Giọng VieNeu" card inside the desktop
+Settings "Giọng đọc" section (`ui/src/listen/VieneuModuleCard.tsx` in `VoiceSettings.tsx`). The `vieneu` pip package is NOT a dependency of the shipped app.
 
 Parity with vieneu 3.8.1 (`tests/test_readaloud_vieneu.py`, runs only where vieneu + the HF models are present): same phonemes, same token
 ids, same frames, waveform max abs diff 0.0 for Turbo (seeded `RandomState`, same draw as `np.random.choice`) and Nano (same

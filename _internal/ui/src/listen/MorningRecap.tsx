@@ -6,7 +6,7 @@ import { formatClock } from "@/shared/format";
 import { usePlayListenBook } from "./LibraryScreen";
 import type { NightEvent, NightSession, Script } from "./model";
 import { sentenceAt } from "./PlayerViews";
-import { useSource } from "./source";
+import { chapterScriptQuery, useListenBook, useSource } from "./source";
 
 // "Tối qua bạn nghe tới đâu?" - thẻ buổi sáng, chung cho máy tính và điện thoại.
 //
@@ -95,10 +95,21 @@ export function MorningRecap({ className }: { className?: string }) {
   );
   const markers = useMemo(() => (session && fresh ? markersOf(session) : []), [session, fresh]);
   const chapterIds = [...new Set(markers.map((marker) => marker.chapterId))];
+  const { data: book } = useListenBook(fresh && chapterIds.length > 0 ? bookId : undefined);
   const scripts = useQuery({
     queryKey: ["listen", "night-scripts", bookId, chapterIds.join(",")],
-    enabled: fresh && chapterIds.length > 0,
-    queryFn: async () => Object.fromEntries(await Promise.all(chapterIds.map(async (id) => [id, await source.script(bookId, id)] as const))) as Record<number, Script>,
+    enabled: fresh && chapterIds.length > 0 && Boolean(book),
+    // Cùng truy vấn với màn đọc (chapterScriptQuery): chương chỉ có chữ lấy chữ + mốc giọng máy đã đọc, không hỏi kịch bản sách nói mà
+    // chương ấy không có (404 đỏ trong console).
+    queryFn: async () =>
+      Object.fromEntries(
+        await Promise.all(
+          chapterIds.map(async (id) => {
+            const chapter = book?.chapters?.find((item) => item.id === id);
+            return [id, chapter ? await client.fetchQuery(chapterScriptQuery(source, bookId, chapter)) : await source.script(bookId, id)] as const;
+          }),
+        ),
+      ) as Record<number, Script>,
     staleTime: Infinity,
   });
   if (!fresh || !session || !markers.length) return null;

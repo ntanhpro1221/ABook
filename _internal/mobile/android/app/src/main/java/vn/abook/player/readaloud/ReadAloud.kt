@@ -68,7 +68,11 @@ object ReadAloud {
     fun init(appContext: Context) {
         if (context != null) return
         context = appContext.applicationContext
+        choices = VoiceChoices(File(appContext.applicationContext.filesDir, "readaloud-voices.json"))
     }
+
+    /** Giọng đã chọn của từng cuốn, nhớ trong lõi ([VoiceChoices]). */
+    private var choices: VoiceChoices? = null
 
     private var cache: ClipCache? = null
 
@@ -81,7 +85,8 @@ object ReadAloud {
     @Synchronized
     private fun reader(): ClipReader = reader ?: run {
         val ctx = context ?: throw VoiceException("Chưa khởi động")
-        ClipReader(cache(), ::voiceFor, { fallbackVoice(ctx) }).also { reader = it }
+        // Giọng dùng khoá hỏng (khoá bị từ chối, hết hạn mức, mất mạng): Edge đỡ trước giọng của máy; mỗi chuyện báo người nghe một lần.
+        ClipReader(cache(), ::voiceFor, { fallbackVoice(ctx) }, onlineFallback = { EdgeTts("vi-VN-HoaiMyNeural") }, notice = ::notice).also { reader = it }
     }
 
     private fun voiceFor(id: String): Voice {
@@ -89,7 +94,7 @@ object ReadAloud {
         return when (provider) {
             "edge" -> EdgeTts(name.ifEmpty { "vi-VN-HoaiMyNeural" })
             "device" -> DeviceTts(context ?: throw VoiceException("Chưa khởi động"), name)
-            else -> throw VoiceException("Giọng lạ: $id")
+            else -> OnlineVoices.voiceFor(context ?: throw VoiceException("Chưa khởi động"), id) ?: throw VoiceException("Giọng lạ: $id")
         }
     }
 
@@ -99,18 +104,39 @@ object ReadAloud {
     fun addScriptListener(listener: (String, Int) -> Unit) { scriptListeners += listener }
     fun removeScriptListener(listener: (String, Int) -> Unit) { scriptListeners -= listener }
 
+    private val noticeListeners = mutableSetOf<(String) -> Unit>()
+    fun addNoticeListener(listener: (String) -> Unit) { noticeListeners += listener }
+    fun removeNoticeListener(listener: (String) -> Unit) { noticeListeners -= listener }
+    private fun notice(message: String) = Playback.onMain { noticeListeners.toList().forEach { runCatching { it(message) } } }
+
+    /** "Thử giọng" (Cài đặt): đúng giọng này đọc `text` (qua bộ đệm), trả file âm thanh. Chạy ở luồng nền. */
+    fun sample(id: String, text: String): File = reader().readExactly(text, id).file
+
     // ---- giọng ----------------------------------------------------------------------------------------------
 
     /** Danh sách giọng cho giao diện (chạy ở luồng nền - hỏi bộ đọc của máy có thể chờ). */
     fun voices(ctx: Context): List<JSONObject> {
         val list = ArrayList<VoiceInfo>()
-        list.add(VoiceInfo("edge:vi-VN-HoaiMyNeural", "Hoài My (Edge)", "edge", true, true))
-        list.add(VoiceInfo("edge:vi-VN-NamMinhNeural", "Nam Minh (Edge)", "edge", true, false))
+        list.add(VoiceInfo("edge:vi-VN-HoaiMyNeural", "Hoài My (Edge)", "edge", true, true, "female"))
+        list.add(VoiceInfo("edge:vi-VN-NamMinhNeural", "Nam Minh (Edge)", "edge", true, false, "male"))
+        list.addAll(OnlineVoices.voices(ctx)) // giọng dùng khoá của người dùng: chỉ khi khoá đã kiểm tra được
         list.addAll(DeviceTts.voices(ctx))
         return list.map {
             JSONObject().put("id", it.id).put("name", it.name).put("provider", it.provider).put("online", it.online)
-                .put("default", it.default).put("gainDb", VoiceGain.db(it.id))
+                .put("default", it.default).put("gender", it.gender).put("gainDb", VoiceGain.db(it.id))
         }
+    }
+
+    /** Giao diện gửi giọng của cuốn `bookId` (lúc nạp, lúc người nghe đổi): nhớ cho cuốn ấy; cuốn ấy đang nạp thì đổi ngay. */
+    fun chooseFor(bookId: String, id: String) {
+        choices?.remember(bookId, id)
+        if (bookId.isEmpty() || bookId == Playback.bookId) setVoice(id)
+    }
+
+    /** Nạp một cuốn - bằng bất cứ đường nào (giao diện, widget, xe hơi, máy tính điều khiển): đọc bằng giọng đã nhớ của cuốn ấy. Chỉ đặt giọng;
+     *  [begin] / [stop] ngay sau đó dựng lại hàng đợi. */
+    fun useVoiceOf(bookId: String) {
+        voiceId = choices?.voiceFor(bookId)?.ifBlank { null } ?: DEFAULT_VOICE
     }
 
     /** Đổi giọng: các đoạn đã đọc sẵn mà chưa tới thì bỏ, đoạn kế đọc bằng giọng mới. */
@@ -152,13 +178,19 @@ object ReadAloud {
     fun wantsPlay(): Boolean = waiting?.play ?: (Playback.player?.playWhenReady == true)
 
     /** Vị trí ảo trong chương (ms), null nếu không ở chương chữ. */
-    fun positionMs(): Long? {
+    fun positionMs(): Long? = chapterMs(Playback.player?.currentPosition ?: 0L)
+
+    /**
+     * Mốc `clipMs` của đoạn đang phát, đổi sang đồng hồ ảo của chương (ms); đang chờ đọc đoạn thì là chỗ sẽ bắt đầu. null nếu không ở chương chữ. Cũng dùng cho
+     * mốc đã đệm tới (thanh tiến độ ở thông báo / màn hình khoá - PlaybackService).
+     */
+    fun chapterMs(clipMs: Long): Long? {
         if (!active) return null
         val slot = currentSlot()
         if (slot != null && slot.segment >= 0) {
             val chap = chaps[slot.chapterIndex] ?: return null
             val clip = chap.clips[slot.segment]
-            val inClip = (Playback.player?.currentPosition ?: 0L).coerceIn(0L, clip?.durationMs ?: Long.MAX_VALUE)
+            val inClip = clipMs.coerceIn(0L, clip?.durationMs ?: Long.MAX_VALUE)
             return chap.timeline.startOf(slot.segment) + inClip
         }
         val target = waiting ?: return null
@@ -209,7 +241,10 @@ object ReadAloud {
         if (!chapter.isText) return null
         return try {
             val text = Store.file(Playback.bookId, chapter.text).readText(Charsets.UTF_8)
-            Chap(index, Paragraphs.of(text)).also { chaps[index] = it }
+            Chap(index, Paragraphs.of(text)).also {
+                fromCache(it)
+                chaps[index] = it
+            }
         } catch (error: Exception) {
             null
         }
@@ -370,8 +405,10 @@ object ReadAloud {
         chap.timeline.setDuration(segment, clip.durationMs)
         val item = clipItem(chap, segment, clip)
         val target = waiting
-        deliver(listOf(item), if (target != null) SeekPlan.offsetIn(clip, target.word, target.offsetMs) else 0L)
+        // Dời chỗ nạp TRƯỚC khi đặt vào ExoPlayer: setMediaItems báo đổi mục ngay trong lúc gọi (onMediaTransition -> onClipChanged -> pump), và pump lúc ấy
+        // mà còn thấy đoạn này là "đoạn kế" thì đọc lại nó - hàng đợi có hai lần cùng một đoạn, đồng hồ ảo lùi về đầu đoạn (thấy 03-10 trên máy thật).
         feedSegment = segment + 1
+        deliver(listOf(item), if (target != null) SeekPlan.offsetIn(clip, target.word, target.offsetMs) else 0L)
         notifyScript(chap)
         prune()
         pump()
@@ -548,19 +585,25 @@ object ReadAloud {
         return JSONObject().put("segments", segments)
     }
 
+    /**
+     * Đoạn nào đã đọc bằng giọng đang chọn (còn trong bộ nhớ đệm) thì đồng hồ ảo dùng độ dài thật ngay từ lúc nạp chương: nghe tiếp từ giây đã lưu (widget, xe
+     * hơi, mở lại app) rơi đúng đoạn đã nghe, không lệch theo ước lượng 14 ký tự/giây.
+     */
+    private fun fromCache(chap: Chap) {
+        val cache = runCatching { cache() }.getOrNull() ?: return
+        for (i in chap.paragraphs.indices) cache.get(voiceId, chap.paragraphs[i])?.let {
+            chap.clips[i] = it
+            chap.timeline.setDuration(i, it.durationMs)
+        }
+    }
+
     /** Chương của một cuốn không đang nạp: chữ từ gói sách, mốc từ bộ nhớ đệm (nếu đoạn đã từng được đọc bằng giọng đang chọn). */
     private fun peek(bookId: String, chapterId: Int): Chap? {
         return try {
             val array = Store.manifest(bookId)?.optJSONArray("chapters") ?: return null
             val chapter = (0 until array.length()).map { array.getJSONObject(it) }.firstOrNull { it.optInt("id") == chapterId } ?: return null
             val entry = chapter.optString("text").takeIf { it.startsWith("texts/") } ?: return null
-            val chap = Chap(-1, Paragraphs.of(Store.file(bookId, entry).readText(Charsets.UTF_8)))
-            val cache = cache()
-            for (i in chap.paragraphs.indices) cache.get(voiceId, chap.paragraphs[i])?.let {
-                chap.clips[i] = it
-                chap.timeline.setDuration(i, it.durationMs)
-            }
-            chap
+            Chap(-1, Paragraphs.of(Store.file(bookId, entry).readText(Charsets.UTF_8))).also(::fromCache)
         } catch (error: Exception) {
             null
         }

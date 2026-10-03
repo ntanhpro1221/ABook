@@ -58,4 +58,7 @@ class VieneuBenchTest {
 
     @Test
     fun speed() = bench().let { (bench, manifest) -> bench.speed(manifest) }
+
+    @Test
+    fun sustain() = bench().let { (bench, manifest) -> bench.sustain(manifest) }
 }

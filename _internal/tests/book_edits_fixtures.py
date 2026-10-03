@@ -71,6 +71,7 @@ CASES: dict[str, dict[str, Any]] = {
     "music_pin_level_silence": {"music": {"levelDb": -24.0, "silenced": ["1:60000"], **PINS}},
     "music_pin_two_cues": {"music": {"pins": {"1:0": TRACK_LINK, "1:60000": TRACK_LINK}, "tracks": {TRACK_SHA: TRACK_INFO}}},
     "music_pin_music_off": {"music": {"enabled": False, **PINS}},
+    "music_playlist": {"music": {"playlist": "fantasy_calm"}},
     "cover_removed": {"cover": None},
     "cover_set": {"cover": {"color": "#aa5522", "width": 96, "height": 128, "version": 1759400000}},
     "everything": {
@@ -153,6 +154,9 @@ INVALID: dict[str, Any] = {
     "track_loudness_too_high": {**HEAD, "music": {**PINS, "tracks": {TRACK_SHA: {**TRACK_INFO, "lufs": 21}}}},
     "track_loudness_a_string": {**HEAD, "music": {**PINS, "tracks": {TRACK_SHA: {**TRACK_INFO, "lufs": "-23"}}}},
     "music_empty": {**HEAD, "music": {}},
+    "playlist_bad_id": {**HEAD, "music": {"playlist": "Kỳ ảo"}},
+    "playlist_empty": {**HEAD, "music": {"playlist": ""}},
+    "playlist_not_text": {**HEAD, "music": {"playlist": 3}},
     "silenced_bad_key": {**HEAD, "music": {"silenced": ["abc"]}},
     "silenced_duplicate": {**HEAD, "music": {"silenced": ["1:0", "1:0"]}},
     "cover_bad_color": {**HEAD, "cover": {"color": "red", "width": 1, "height": 1, "version": 1}},
@@ -222,6 +226,10 @@ MERGE_CASES = {
         {**HEAD, "music": {"levelDb": -20.0}},
         {**HEAD, "music": {"silenced": ["1:0"], **PINS}},
     ),
+    "playlist_local_wins": (
+        {**HEAD, "music": {"playlist": "fantasy_calm"}},
+        {**HEAD, "music": {"playlist": "mine", "levelDb": -24.0}},
+    ),
     "cover_follows_the_winner": (
         {**HEAD, "title": "Của tôi"},
         {**HEAD, "cover": {"color": "#112233", "width": 10, "height": 10, "version": 5}},
@@ -287,6 +295,17 @@ CONTRACT: dict[str, list[dict[str, Any]]] = {
         {"method": "PUT", "path": "/music", "body": {"pins": {"1:1": "https://x/y.mp3"}}},
         {"method": "PUT", "path": "/music", "body": {"enabled": False}},
         {"method": "PUT", "path": "/music", "body": {"enabled": True, "levelDb": -20, "silence": {"1:60000": False}}},
+        {"method": "GET", "path": "/edits"},
+    ],
+    # Danh sách nhạc nền của "Nghe ngay" (music_playlist.py): chọn, đổi, chọn sai, tắt.
+    "music_playlist": [
+        {"method": "PUT", "path": "/music", "body": {"playlist": "fantasy_calm"}},
+        {"method": "GET", "path": "/music"},
+        {"method": "PUT", "path": "/music", "body": {"playlist": "mine"}},
+        {"method": "PUT", "path": "/music", "body": {"playlist": "Kỳ ảo"}},
+        {"method": "PUT", "path": "/music", "body": {"playlist": 3}},
+        {"method": "GET", "path": "/edits"},
+        {"method": "PUT", "path": "/music", "body": {"playlist": None}},
         {"method": "GET", "path": "/edits"},
     ],
     # "Nhạc của tôi" trên sách không có xưởng: bước {"import": tên} nhập file mẫu vào kho nhạc của máy (bên Kotlin: MusicStore).

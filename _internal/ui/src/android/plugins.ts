@@ -1,6 +1,7 @@
 import { registerPlugin, type PluginListenerHandle } from "@capacitor/core";
 import type { Bookmark, BookPart, ListeningRecord, ListeningState, NightSession } from "@/listen/model";
 import type { ReadAloudTimings, ReadAloudVoice } from "@/listen/readAloud";
+import type { KeyCheck, OnlineProviderInfo } from "@/listen/VoiceSettings";
 import type { Capabilities } from "@/shared/capabilities";
 import type { EditsSyncState } from "@/shared/editsSync";
 import type { AddedBook, ImportPreview } from "@/listen/textImport";
@@ -77,6 +78,8 @@ export interface EbookPlayerPlugin {
     schedule?: { from: string; to: string; minutes: number } | null;
     /** Giọng đọc của "Nghe ngay" (mã giọng của ReadAloud.voices); "" = giọng mặc định của máy. */
     readAloudVoice?: string;
+    /** Cuốn của `readAloudVoice`: lõi nhớ giọng ấy cho cuốn ấy (ReadAloud.chooseFor); không có thì cuốn đang nạp. */
+    readAloudBook?: string;
   }): Promise<NativeState>;
   lastNight(): Promise<{ session: BedtimeSession | null }>;
   dismissLastNight(): Promise<void>;
@@ -341,6 +344,15 @@ export interface ReadAloudPlugin {
   script(options: { bookId: string; chapterId: number }): Promise<ReadAloudTimings>;
   /** Lõi đã có mốc mới cho chương (một câu vừa đọc xong, hay nạp chương): hỏi lại `script`. */
   addListener(event: "readAloudScript", handler: (event: { bookId: string; chapterId: number }) => void): Promise<PluginListenerHandle>;
+  /** Một đoạn vừa được đọc tạm bằng giọng kế (khoá bị từ chối / hết hạn mức / mất mạng): câu nói một lần cho người nghe. */
+  addListener(event: "readAloudNotice", handler: (event: { message: string }) => void): Promise<PluginListenerHandle>;
+  /** "Thử giọng" (Cài đặt): đọc `text` bằng giọng này, trả đường dẫn file trên máy (phát qua `Capacitor.convertFileSrc`). */
+  sample(options: { voice: string; text: string }): Promise<{ path: string }>;
+  /** Giọng dùng khoá của người dùng (OnlineVoices.kt): mô tả từng nhà cung cấp - khoá chỉ ở dạng che. */
+  onlineProviders(): Promise<{ providers: OnlineProviderInfo[] }>;
+  setOnlineKey(options: { provider: string; key: string; region: string }): Promise<OnlineProviderInfo>;
+  removeOnlineKey(options: { provider: string }): Promise<OnlineProviderInfo>;
+  checkOnlineKey(options: { provider: string }): Promise<KeyCheck>;
 }
 
 export const EbookPlayer = registerPlugin<EbookPlayerPlugin>("EbookPlayer");

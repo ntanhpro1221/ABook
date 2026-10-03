@@ -92,6 +92,10 @@ LISTEN_ROUTES: tuple[tuple[str, re.Pattern[str]], ...] = tuple((method, re.compi
     ("GET", _BOOK + r"/music/chapters/\d+"),
     ("GET", _BOOK + r"/music/files/" + TRACK_NAME),
     ("GET", r"/api/music/track"),
+    # Danh sách phát của sách chỉ có chữ (music_playlist.py): hàng bài của cuốn + các danh sách để chọn. Bài "Nhạc của tôi" vẫn
+    # không ra khỏi máy này (đường /api/music/local/... không có ở đây).
+    ("GET", _BOOK + r"/music/playlist"),
+    ("GET", r"/api/music/playlists"),
 ))
 # Thêm cho thiết bị được điều khiển sản xuất: dự án, bắt đầu/dừng, tạo sách, duyệt phân vai, giọng, bìa.
 ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = LISTEN_ROUTES + tuple((method, re.compile(pattern)) for method, pattern in (

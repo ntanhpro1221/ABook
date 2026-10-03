@@ -74,11 +74,10 @@ class PlayerPlugin : Plugin() {
         val book = call.getString("bookId") ?: return call.reject("thiếu bookId")
         val chapters = call.getArray("chapters")?.toList<JSONObject>()?.map {
             // Chương chỉ có chữ (state "text"): không có file audio, `text` = mục chữ trong gói; giọng máy đọc to (ReadAloud).
-            val text = if (it.optString("state") == "text") it.optString("text").ifEmpty { "texts/${it.getInt("id")}.txt" } else ""
-            Playback.Chapter(it.getInt("id"), it.getString("title"), it.optString("file"), it.optDouble("duration", 0.0), text)
+            Playback.Chapter(it.getInt("id"), it.getString("title"), it.optString("file"), it.optDouble("duration", 0.0), LibraryTree.textEntry(it))
         } ?: return call.reject("thiếu chapters")
         withService {
-            call.getString("readAloudVoice")?.let { ReadAloud.setVoice(it) }
+            call.getString("readAloudVoice")?.let { ReadAloud.chooseFor(book, it) }
             Playback.load(
                 book, call.getString("bookTitle") ?: "", call.getString("narrator") ?: "", chapters,
                 call.getInt("chapterId") ?: chapters.first().id, call.getDouble("seconds") ?: 0.0, call.getDouble("rate") ?: 1.0,
@@ -141,7 +140,8 @@ class PlayerPlugin : Plugin() {
         call.getBoolean("shakeToExtend")?.let { SleepTimer.shakeEnabled = it }
         call.getString("shakeAction")?.let { SleepTimer.shakeResets = it == "reset" }
         call.getBoolean("headsetSkips")?.let { Playback.headsetSkips = it }
-        call.getString("readAloudVoice")?.let { ReadAloud.setVoice(it) }
+        // `readAloudBook`: cuốn mà người nghe vừa đổi giọng (nhớ cho cuốn ấy); không có thì cuốn đang nạp.
+        call.getString("readAloudVoice")?.let { ReadAloud.chooseFor(call.getString("readAloudBook") ?: Playback.bookId, it) }
         call.getBoolean("flipToPause")?.let {
             Motion.flipEnabled = it
             Motion.refresh()

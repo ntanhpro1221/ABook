@@ -1,0 +1,258 @@
+# Đáp án KIỂM TRA Hàn đợt 4 (03-10; luật cố định: vị trí 30% của bộ, >30 KB lấy 25 KB đầu); mục đích: tách q35-4B / 9B / v8 trên truyện Hàn chưa học.
+# "Vô tận hồi quy giả" file 25 ("Chương 26 - Nhà tiên tri (3)"; ~27 KB, dưới 30 KB nên lấy trọn). Claude gán (A) 03-10.
+# NGÔI THỨ NHẤT cả chương, "tôi" = NGƯỜI ĐƯA TANG (hồi quy giả; cả bộ chỉ gọi biệt danh này, vd "Tên tôi là Người Đưa Tang... không
+# hẳn là tên thật" - không có tên khác nên biệt danh là tên, đủ điểm như "Trịnh lão") -> --first-person "Người Đưa Tang".
+# Xưng hô chốt lượt: ông xưng "ta", gọi Dok-seo "nhóc"; Dok-seo xưng "tôi", gọi ông "lão"/"lão già".
+# Tên: NGƯỜI ĐƯA TANG (m); OH DOK-SEO / DOK-SEO (f); GO YURI / YURI (f; "Yuri unnie" là cách gọi - không tính); DANG SEO-RIN (f, đã
+# chết); MƯỜI CHÂN (boss bạch tuộc, nói ở nhiều chương -> tên đủ, NPC*~). Lão Scho, Seo Gyu, Sim Ah-ryeon chỉ được nhắc.
+# 8, 10 tiếng gầm Mười Chân (dòng "- G̵r̵o̵o̵..." chữ zalgo) -> MƯỜI CHÂN, NPC*~, UNKNOWN~, NARRATOR~ (quy tắc 8: tiếng kêu là của kẻ kêu).
+# 45 "Hừm." = GO YURI (47 "Go Yuri bình tĩnh đánh giá cô"), NGƯỜI ĐƯA TANG~. 51 "Cô thực sự…?" = NGƯỜI ĐƯA TANG (Dok-seo gọi Yuri
+# "chị/unnie", ông gọi "cô"), OH DOK-SEO~. 83-85: 85 "Một vài ngày sau... tôi nói." là lời dẫn của 83 qua câu hỏi 84 của Dok-seo.
+# 97 "Ôi không, nguy hiểm…" = OH DOK-SEO (95-96 cô đang dỗ chó), NGƯỜI ĐƯA TANG~; 98 "Chạy thôi." ông.
+# 119 「Oh Dok-seo: Oa. Sảnh chờ Ga Busan...」 = lối trình bày lời lẩm bẩm của Dok-seo (23.txt dùng y cách này, "tôi" nghe được và
+# hỏi lại "Cô đang nói gì vậy?") -> D,T OH DOK-SEO, soft.
+# 181-184 lời cuối của Dang Seo-rin "vang lên trong tai tôi" (dòng "- ...") -> DANG SEO-RIN đủ (hồi ức giọng cô), NARRATOR~.
+# 209-214 chuỗi "bình luận" của Dok-seo qua nhiều vòng lặp (215 "Oh Dok-seo cảm thán và phàn nàn... với tôi") -> OH DOK-SEO.
+# 226-227 hai câu liền của Dok-seo (nguồn có “...” của ông ở giữa, parser bỏ dòng ấy).
+# Parser khoá T sai cho cụm trong nháy đơn giữa câu kể (quy tắc 8/10) -> N,T NARRATOR: 13 ‘khả nghi’, 138 ‘tiểu thuyết’, 141 ‘ra
+# chương’, 153 ‘lần đầu’, 193 ‘tiểu thuyết’, 201 ‘đi nghỉ’, 207 ‘bình luận’ (chữ mỉa của người kể, NGƯỜI ĐƯA TANG~); 160, 162,
+# 164, 166 nghĩa từ nguyên (‘người nghĩ trước’, ‘phần mở đầu’...) chỉ NARRATOR.
+# Ngôi một, tiếng lòng tức thời -> N,T người kể đủ (quy tắc 4): 106, 145, 191, 205, 219-222 (nói thầm với Dok-seo sau 218 khoá T),
+# 232, 234-235. 63-64 nói với độc giả -> N. 236 "== Nhà tiên tri. Kết. ==" -> N.
+0 H
+1 N
+2 N
+3 D NGƯỜI ĐƯA TANG neutral 0-1 normal normal m
+4 D OH DOK-SEO,DOK-SEO surprised,neutral 0-1 normal normal f
+5 D NGƯỜI ĐƯA TANG neutral 0-1 normal normal m
+6 N
+7 N
+8 D MƯỜI CHÂN,NPC*~,UNKNOWN~,NARRATOR~ angry 2-3 normal,slow loud u
+9 N
+10 D MƯỜI CHÂN,NPC*~,UNKNOWN~,NARRATOR~ angry 2-3 normal,slow loud u
+11 N
+12 N
+13 N,T NARRATOR,NGƯỜI ĐƯA TANG~ neutral 0-1 normal normal u
+14 N
+15 D OH DOK-SEO,DOK-SEO afraid,surprised 2-3 fast loud f
+16 N
+17 D OH DOK-SEO,DOK-SEO afraid,angry,surprised 2-3 fast loud f
+18 D NGƯỜI ĐƯA TANG neutral 0-1 normal normal m
+19 N
+20 N
+21 N
+22 N
+23 N
+24 D OH DOK-SEO,DOK-SEO surprised,whispering 0-1 slow,normal soft f
+25 N
+26 D OH DOK-SEO,DOK-SEO surprised 0-2 normal normal f
+27 D NGƯỜI ĐƯA TANG neutral,sarcastic 0-1 normal normal m
+28 D OH DOK-SEO,DOK-SEO surprised,happy,excited 0-1 normal normal f
+29 N NARRATOR neutral,happy 0-1 normal normal u
+30 D OH DOK-SEO,DOK-SEO surprised,neutral,sad 0-1 normal normal f
+31 D NGƯỜI ĐƯA TANG neutral 0-1 normal normal m
+32 D OH DOK-SEO,DOK-SEO surprised,afraid,sad 0-1 normal,slow normal,soft f
+33 N NARRATOR neutral,surprised,afraid 0-1 normal normal u
+34 N
+35 N
+36 D OH DOK-SEO,DOK-SEO neutral 0-1 normal normal f
+37 N
+38 N NARRATOR neutral,sad,sarcastic 0-1 normal normal u
+39 D GO YURI,YURI sad,tender 0-1 normal,slow normal,soft f
+40 D OH DOK-SEO,DOK-SEO neutral,surprised,afraid 0-2 normal,fast normal,loud f
+41 N
+42 N
+43 D OH DOK-SEO,DOK-SEO surprised 0-1 normal normal f
+44 D OH DOK-SEO,DOK-SEO afraid,sad,neutral 1-2 fast,normal normal,loud f
+45 D GO YURI,YURI,NGƯỜI ĐƯA TANG~ neutral 0-1 normal,slow normal,soft f
+46 N
+47 N NARRATOR neutral,afraid 0-1 normal normal u
+48 D GO YURI,YURI neutral,tender 0-1 normal,slow normal f
+49 N
+50 D GO YURI,YURI neutral 0-1 normal normal f
+51 D NGƯỜI ĐƯA TANG,OH DOK-SEO~,DOK-SEO~ surprised,neutral 0-1 normal normal m
+52 D GO YURI,YURI tender,neutral 0-1 normal,slow normal,soft f
+53 N
+54 N
+55 D OH DOK-SEO,DOK-SEO tired,neutral 0-1 slow normal,soft f
+56 N
+57 D OH DOK-SEO,DOK-SEO surprised,afraid,neutral 0-2 normal normal f
+58 D NGƯỜI ĐƯA TANG neutral 0-1 normal normal m
+59 D OH DOK-SEO,DOK-SEO surprised,neutral 0-1 normal normal f
+60 N
+61 N
+62 N NARRATOR neutral,afraid 0-1 normal normal u
+63 N
+64 N
+65 N NARRATOR neutral,sad 0-1 normal normal u
+66 N NARRATOR neutral,sad 0-1 normal normal u
+67 N NARRATOR neutral,sad 0-1 normal normal u
+68 N
+69 N NARRATOR neutral,sad 0-1 normal normal u
+70 D OH DOK-SEO,DOK-SEO neutral 0-1 normal normal f
+71 N
+72 D NGƯỜI ĐƯA TANG surprised,neutral 0-1 normal normal m
+73 D OH DOK-SEO,DOK-SEO neutral 0-1 normal normal f
+74 N
+75 D NGƯỜI ĐƯA TANG neutral 0-1 normal normal m
+76 D OH DOK-SEO,DOK-SEO neutral 0-1 normal normal f
+77 D NGƯỜI ĐƯA TANG neutral 0-1 normal,slow normal m
+78 D OH DOK-SEO,DOK-SEO neutral 0-1 normal normal f
+79 N
+80 D OH DOK-SEO,DOK-SEO neutral 0-1 normal normal f
+81 N
+82 N
+83 D NGƯỜI ĐƯA TANG neutral 0-1 normal normal m
+84 D OH DOK-SEO,DOK-SEO surprised 0-1 normal normal f
+85 N
+86 D NGƯỜI ĐƯA TANG neutral 0-1 normal normal m
+87 D OH DOK-SEO,DOK-SEO neutral,surprised 0-1 normal normal f
+88 D NGƯỜI ĐƯA TANG neutral 0-1 normal normal m
+89 D OH DOK-SEO,DOK-SEO surprised,excited 0-2 normal,fast normal f
+90 D NGƯỜI ĐƯA TANG neutral 0-1 normal normal m
+91 D OH DOK-SEO,DOK-SEO neutral 0-1 normal normal f
+92 D NGƯỜI ĐƯA TANG neutral 0-1 normal normal m
+93 D OH DOK-SEO,DOK-SEO neutral 0-1 normal,slow normal,soft f
+94 N
+95 D OH DOK-SEO,DOK-SEO afraid,whispering 0-2 fast soft,normal f
+96 N
+97 D OH DOK-SEO,DOK-SEO,NGƯỜI ĐƯA TANG~ afraid 1-2 fast soft,normal f
+98 D NGƯỜI ĐƯA TANG neutral 0-1 fast,normal normal,soft m
+99 N
+100 D OH DOK-SEO,DOK-SEO neutral 0-1 normal normal f
+101 N
+102 D NGƯỜI ĐƯA TANG surprised,neutral 0-1 normal normal m
+103 D OH DOK-SEO,DOK-SEO neutral,excited 0-1 normal normal f
+104 D OH DOK-SEO,DOK-SEO neutral 0-1 normal normal f
+105 D NGƯỜI ĐƯA TANG neutral 0-1 normal normal m
+106 N,T NARRATOR,NGƯỜI ĐƯA TANG neutral 0-1 normal normal u
+107 N
+108 D NGƯỜI ĐƯA TANG neutral 0-1 normal normal m
+109 D OH DOK-SEO,DOK-SEO surprised 0-1 normal normal f
+110 D NGƯỜI ĐƯA TANG neutral 0-1 normal normal m
+111 D OH DOK-SEO,DOK-SEO neutral,sarcastic 0-1 normal normal f
+112 N
+113 D OH DOK-SEO,DOK-SEO neutral 0-1 normal normal f
+114 D NGƯỜI ĐƯA TANG neutral 0-1 normal normal m
+115 D OH DOK-SEO,DOK-SEO neutral 0-1 normal normal f
+116 N
+117 N
+118 N
+119 T,D OH DOK-SEO,DOK-SEO excited,surprised 0-2 normal,fast soft,normal f
+120 N
+121 N NARRATOR neutral,surprised 0-1 normal normal u
+122 N
+123 D OH DOK-SEO,DOK-SEO neutral 0-1 normal normal f
+124 D NGƯỜI ĐƯA TANG surprised,neutral 0-1 normal normal m
+125 D OH DOK-SEO,DOK-SEO neutral 0-1 normal normal f
+126 N NARRATOR neutral,surprised 0-1 normal normal u
+127 D NGƯỜI ĐƯA TANG surprised 0-2 normal,fast normal m
+128 D OH DOK-SEO,DOK-SEO surprised,neutral 0-1 normal normal f
+129 N
+130 N
+131 N
+132 T NGƯỜI ĐƯA TANG surprised,neutral 0-1 normal normal m
+133 N
+134 D NGƯỜI ĐƯA TANG neutral 0-1 normal normal m
+135 D OH DOK-SEO,DOK-SEO neutral 0-1 normal normal f
+136 N
+137 N
+138 N,T NARRATOR,NGƯỜI ĐƯA TANG~ neutral 0-1 normal normal u
+139 N
+140 N
+141 N,T NARRATOR,NGƯỜI ĐƯA TANG~ neutral 0-1 normal normal u
+142 N
+143 N
+144 N
+145 N,T NARRATOR,NGƯỜI ĐƯA TANG neutral 0-1 normal normal u
+146 T NGƯỜI ĐƯA TANG neutral,surprised,tender 0-1 normal,slow normal,soft m
+147 N NARRATOR neutral,afraid,surprised 0-1 normal normal u
+148 N
+149 N
+150 N
+151 N
+152 N
+153 N,T NARRATOR,NGƯỜI ĐƯA TANG~ neutral 0-1 normal normal u
+154 N
+155 N
+156 T NGƯỜI ĐƯA TANG neutral 0-1 normal normal m
+157 N
+158 N
+159 N
+160 N,T NARRATOR neutral 0-1 normal normal u
+161 N
+162 N,T NARRATOR neutral 0-1 normal normal u
+163 N
+164 N,T NARRATOR neutral 0-1 normal normal u
+165 N
+166 N,T NARRATOR neutral 0-1 normal normal u
+167 N
+168 N
+169 N
+170 N
+171 N
+172 N
+173 T NGƯỜI ĐƯA TANG neutral,surprised,excited 0-1 normal normal m
+174 N
+175 N
+176 N
+177 N
+178 N NARRATOR neutral,excited,happy 0-1 normal normal u
+179 D OH DOK-SEO,DOK-SEO surprised,neutral 0-1 normal normal f
+180 N
+181 N
+182 D DANG SEO-RIN,NARRATOR~ tender,neutral,sad 0-1 slow,normal soft f
+183 D DANG SEO-RIN,NARRATOR~ tender,neutral,sad 0-1 slow,normal soft f
+184 D DANG SEO-RIN,NARRATOR~ tender,neutral,sad 0-1 slow,normal soft f
+185 N
+186 N NARRATOR neutral,sad,tender 0-1 normal normal u
+187 N NARRATOR neutral,happy 0-1 normal normal u
+188 T NGƯỜI ĐƯA TANG neutral 0-1 normal normal m
+189 N
+190 T NGƯỜI ĐƯA TANG neutral,tender,happy 0-1 normal normal m
+191 N,T NARRATOR,NGƯỜI ĐƯA TANG neutral 0-1 normal normal u
+192 N
+193 N,T NARRATOR,NGƯỜI ĐƯA TANG~ neutral 0-1 normal normal u
+194 N
+195 N NARRATOR neutral,happy 0-1 normal normal u
+196 N
+197 N
+198 N
+199 D OH DOK-SEO,DOK-SEO angry,surprised,excited 1-2 fast,normal loud f
+200 N
+201 N,T NARRATOR,NGƯỜI ĐƯA TANG~ neutral 0-1 normal normal u
+202 N
+203 N
+204 D NGƯỜI ĐƯA TANG sarcastic,happy,neutral 0-1 normal normal m
+205 N,T NARRATOR,NGƯỜI ĐƯA TANG neutral,angry,sarcastic 0-1 normal normal u
+206 N
+207 N,T NARRATOR,NGƯỜI ĐƯA TANG~ neutral 0-1 normal normal u
+208 N
+209 D OH DOK-SEO,DOK-SEO surprised,excited 0-2 normal normal f
+210 D OH DOK-SEO,DOK-SEO surprised,excited 1-2 normal,fast normal,loud f
+211 D OH DOK-SEO,DOK-SEO sarcastic,surprised 0-1 normal normal f
+212 D OH DOK-SEO,DOK-SEO angry,sarcastic 0-1 normal normal f
+213 D OH DOK-SEO,DOK-SEO surprised,excited 0-2 normal normal f
+214 D OH DOK-SEO,DOK-SEO surprised,afraid 0-1 normal normal f
+215 N
+216 N
+217 N
+218 T NGƯỜI ĐƯA TANG tender,neutral 0-1 normal,slow normal,soft m
+219 N,T NARRATOR,NGƯỜI ĐƯA TANG neutral,tender 0-1 normal normal u
+220 N,T NARRATOR,NGƯỜI ĐƯA TANG neutral,tender 0-1 normal normal u
+221 N,T NARRATOR,NGƯỜI ĐƯA TANG neutral,tender 0-1 normal normal u
+222 N,T NARRATOR,NGƯỜI ĐƯA TANG neutral,tender 0-1 normal normal u
+223 N
+224 D OH DOK-SEO,DOK-SEO neutral,sarcastic 0-1 normal normal f
+225 D NGƯỜI ĐƯA TANG neutral 0-1 normal normal m
+226 D OH DOK-SEO,DOK-SEO sarcastic,angry 0-1 normal normal f
+227 D OH DOK-SEO,DOK-SEO sarcastic,angry 0-1 normal normal f
+228 D NGƯỜI ĐƯA TANG neutral 0-1 normal normal m
+229 D OH DOK-SEO,DOK-SEO sarcastic,angry 0-1 normal,fast normal f
+230 N
+231 N
+232 N,T NARRATOR,NGƯỜI ĐƯA TANG neutral,sarcastic 0-1 normal normal u
+233 N NARRATOR neutral,sad,tender 0-1 normal normal u
+234 N,T NARRATOR,NGƯỜI ĐƯA TANG neutral,sarcastic 0-1 normal normal u
+235 N,T NARRATOR,NGƯỜI ĐƯA TANG neutral,sarcastic 0-1 normal normal u
+236 N
