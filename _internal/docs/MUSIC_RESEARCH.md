@@ -1659,6 +1659,29 @@ Thước, mỗi danh sách:
 
 Danh sách TRƯỢT thì siết luật (ghi lại luật mới) rồi chấm lại bằng mẫu MỚI (hạt giống 8), không dùng lại mẫu cũ.
 
+**GHI TRƯỚC - KIỂM TỰ ĐỘNG DANH SÁCH PHÁT (03-10 14:4x, Lead giao; THAY lượt người đọc ở trên, phần ấy để sau nếu cần):**
+
+Không agent; chỉ nhãn + model sẵn có (`audit_playlists.py`).
+
+Mỗi bài trong danh sách bị tính **LỆCH** nếu vướng ít nhất một điều:
+- **(1) Có lời:** `vocals` > 0,3. Danh mục chỉ loại > 0,5.
+- **(2) Cường độ lệch theo TRÒ chỉ-nghe:**
+  - Dùng dự đoán chéo, đọc âm thanh, không đọc chữ trang gốc. Đây là nguồn độc lập với nhãn thầy dùng để lọc.
+  - Luật mỗi danh sách viết trong script: trục / cảm xúc chính ở hẳn phía sai. Ví dụ Kinh dị: trò valence > 0,3, hoặc
+    fear < 0,15 và tension < 0,2.
+  - Bài không có số trò (thiếu đặc trưng) thì bỏ phép này.
+  - `eastern` không có phép này, vì nó lọc theo phong cách.
+- **(3) Tên / tag lệch:** tên bài hay tag / thể loại trang gốc chứa từ trái nghĩa với danh sách, ví dụ Kinh dị có
+  "happy, party, lullaby". Danh sách từ viết trong script.
+
+Thước:
+- % bài lệch mỗi danh sách, kèm số bài vướng từng điều.
+- **> 10% → siết luật:** loại bài vướng (1), (2), (3) khỏi chính danh sách ấy. Báo lại số bài + phút; phải còn ≥ 40 phút.
+
+Giới hạn:
+- Sau khi siết, % lệch theo CHÍNH ba phép này là 0 theo cách dựng, nên không phải bằng chứng danh sách "đúng cảm giác".
+- Bằng chứng ấy cần lượt người đọc ở trên.
+
 ## Nguồn nhạc: giữ / loại và lý do (02-10, Lead + chủ sách - đọc trước khi hỏi lại)
 
 LUẬT CUỐI (02-10 22:xx, Lead + chủ sách; thay đoạn ba câu hỏi bên dưới ở chỗ nào khác nhau):
