@@ -23,7 +23,8 @@ class WebSocket internal constructor(private val socket: java.io.Closeable, priv
     sealed class Message {
         class Text(val text: String) : Message()
         class Binary(val data: ByteArray) : Message()
-        object Closed : Message()
+        /** Máy chủ đóng: mã + lý do của khung CLOSE (1005 / "" khi không có) - Azure báo hết hạn mức bằng lý do đóng. */
+        class Closed(val code: Int = 1005, val reason: String = "") : Message()
     }
 
     class Frame(val fin: Boolean, val opcode: Int, val payload: ByteArray)
@@ -57,6 +58,25 @@ class WebSocket internal constructor(private val socket: java.io.Closeable, priv
                 i += 3
             }
             return out.toString()
+        }
+
+        /** Ngược của [base64] (bỏ qua khoảng trắng / xuống dòng); ký tự lạ -> IllegalArgumentException. Google trả audio dạng base64 (GoogleTts.kt). */
+        fun unbase64(text: String): ByteArray {
+            val out = java.io.ByteArrayOutputStream(text.length * 3 / 4)
+            var buffer = 0
+            var bits = 0
+            for (c in text) {
+                if (c == '=' || c.isWhitespace()) continue
+                val value = B64.indexOf(c)
+                require(value >= 0) { "base64 hỏng" }
+                buffer = (buffer shl 6) or value
+                bits += 6
+                if (bits >= 8) {
+                    bits -= 8
+                    out.write((buffer shr bits) and 0xFF)
+                }
+            }
+            return out.toByteArray()
         }
 
         /** Khung của MÁY KHÁCH: luôn có mặt nạ (RFC 6455 mục 5.3). `mask` 4 byte (kiểm thử đưa số cố định; chạy thật là ngẫu nhiên). */
@@ -189,7 +209,10 @@ class WebSocket internal constructor(private val socket: java.io.Closeable, priv
                 OP_CLOSE -> {
                     runCatching { send(OP_CLOSE, frame.payload.take(2).toByteArray()) }
                     closed = true
-                    return Message.Closed
+                    val payload = frame.payload
+                    val code = if (payload.size >= 2) ((payload[0].toInt() and 0xFF) shl 8) or (payload[1].toInt() and 0xFF) else 1005
+                    val reason = if (payload.size > 2) String(payload, 2, payload.size - 2, Charsets.UTF_8) else ""
+                    return Message.Closed(code, reason)
                 }
                 OP_TEXT, OP_BINARY, OP_CONTINUATION -> {
                     if (frame.opcode != OP_CONTINUATION) {
