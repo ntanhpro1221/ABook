@@ -99,6 +99,15 @@ Căn từng chữ khi đóng gói sách (`webui/word_timing.py`) dùng model nh�
 điển ký tự và cấu hình tiền xử lý của model gốc. Gói đăng ở huggingface.co/NGDtuanh/abook-analyzer (thư mục `word-align`), tải về
 Studio một lần (bước "wordalign"), KHÔNG nằm trong bộ cài chỉ-nghe. Kèm giấy phép Apache-2.0 và ghi chú của model gốc khi phân phối.
 
+## Giọng đọc của "Nghe ngay" (không đóng gói giọng nào)
+
+- Edge TTS: dịch vụ đọc to trực tuyến của Microsoft Edge (giọng neural vi-VN Hoài My, Nam Minh), gọi thẳng qua WebSocket - không
+  thư viện nào được đóng gói. Máy khách viết lại theo giao thức mà dự án mã nguồn mở `edge-tts` (rany2, LGPL-3.0) mô tả; không chép mã
+  của dự án ấy (`abook/readaloud/edge.py`, `websocket.py`; Android `readaloud/EdgeTts.kt`, `WebSocket.kt`). Chữ của đoạn đang
+  đọc được gửi tới Microsoft; app nói rõ điều này lần đầu dùng.
+- Giọng của máy: Windows OneCore (`Windows.Media.SpeechSynthesis`, qua PowerShell) trên máy tính, Android `TextToSpeech` trên điện
+  thoại - dùng giọng người dùng đã cài, không phân phối giọng nào.
+
 ## Model phân tích và dữ liệu nghiên cứu (chưa đóng gói trong bản phát hành)
 
 - LoRA tự huấn luyện trên nền Qwen3-4B-Instruct-2507 (Apache-2.0), dữ liệu huấn luyện là đáp án chuẩn của chính dự án.
