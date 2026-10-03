@@ -5,6 +5,7 @@ import type { AddedBook, ImportPreview, TextImport } from "@/listen/textImport";
 import { ReadAloudError, type ReadAloudClip, type ReadAloudVoice } from "@/listen/readAloud";
 import { ApiError, api, mediaUrl } from "@/studio/api";
 import { pickFiles, pickFolder } from "@/studio/data";
+import type { PrepareStatus } from "@/listen/prepareAhead";
 
 function fileName(path: string): string {
   return path.split(/[\\/]/).filter(Boolean).pop() ?? path;
@@ -57,6 +58,9 @@ export const httpSource: ListenSource = {
       throw new ReadAloudError("Không gọi được giọng đọc.", "service");
     }
   },
+  readAloudPrepare: (voice, texts, label) => api<PrepareStatus>("/api/readaloud/prepare", { method: "POST", body: { voice, texts, label } }),
+  readAloudPrepareStatus: () => api<PrepareStatus>("/api/readaloud/prepare"),
+  readAloudPrepareCancel: () => api<PrepareStatus>("/api/readaloud/prepare", { method: "DELETE" }),
   musicCues: async (bookId, chapterId) => {
     const result = await api<{ cues: MusicCue[]; levelDb: number; credits?: Record<string, MusicCredit> }>(`/api/books/${bookId}/music/chapters/${chapterId}`);
     return { ...result, cues: result.cues.map((cue) => ({ ...cue, src: mediaUrl(cue.src) })) };
