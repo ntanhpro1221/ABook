@@ -1370,6 +1370,14 @@ Cách sửa F1, cho bài mang số trò:
 - Lặp 100% như lượt 2: 24 lượt mỗi người, 2 gói. Luật như lượt 2.
 - Chỉ 12 cặp nên KTC sẽ rất rộng. Đây là lần đo lại duy nhất đã hẹn: TRƯỢT (p < 0,45 khi dùng được) thì gỡ F2.
 
+**KẾT QUẢ ĐO LẠI F2 TRÊN 5B (03-10 11:2x, `results/mixedc5b_score.txt`):** **ĐẠT sát mốc → GIỮ F2.**
+- Dùng được: ổn định a/b 11 / 12 cả hai người; kappa 0,83.
+- 12 cặp khác bài. Cả hai chọn kho trộn 5, cả hai chọn kho toàn thầy 6, khác ý 1.
+- **p = 0,458** (KTC 0,22–0,71) ≥ 0,45. Từng người 0,50 / 0,42. Tính cả 21 đoạn: 0,476.
+- Gộp hai lần có người đọc dùng được (lượt 2 E1 + 5b, 46 cặp): 21 / 17 / 8 → p ≈ 0,54. Báo kèm, không phải thước ghi trước.
+- Đọc kết quả: F2 không làm bài chọn tệ hơn rõ rệt, nhưng cũng chưa chứng minh tốt hơn. Đủ để giữ, chưa đủ để nói chắc.
+  Không còn lần đo lại nào đã hẹn.
+
 Vào app (nhánh `dev/music-mixed-f2`), chỉ cho bài nhập:
 - Hiệu chỉnh a + b·trò từng trục.
 - Bỏ sd của trò; bài dùng mặc định 0,2.
