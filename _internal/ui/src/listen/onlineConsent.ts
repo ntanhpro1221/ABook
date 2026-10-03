@@ -1,4 +1,5 @@
 import type { ReadAloudVoice } from "./readAloud";
+import { KEYED_PROVIDERS } from "./readAloudVoice";
 
 // Giọng trực tuyến gửi chữ của sách ra ngoài máy: hỏi MỘT lần, TRƯỚC khi đoạn đầu tiên được gửi (soát UX 03-10 - trước đây chỉ có một
 // thông báo hiện ra sau khi chữ đã đi). "Nghe" (mặc định) là đồng ý và nhớ cho nhà cung cấp ấy, không hỏi lại; "Chọn giọng khác" mở danh sách
@@ -48,6 +49,8 @@ export function spokenVoiceName(name: string): string {
 export function onlinePromptText(voice: Pick<ReadAloudVoice, "name" | "provider">): string {
   const company = COMPANIES[voice.provider];
   const name = spokenVoiceName(voice.name);
+  const keyed = KEYED_PROVIDERS[voice.provider];
+  if (keyed) return `Giọng ${name} dùng khóa ${keyed} của bạn: chữ của đoạn đang đọc được gửi tới ${keyed} để đọc, và dịch vụ có thể tính tiền vào tài khoản của bạn.`;
   return company
     ? `Giọng ${name} là giọng trực tuyến của ${company}: chữ của đoạn đang đọc được gửi tới ${company} để đọc.`
     : `Giọng ${name} là giọng trực tuyến: chữ của đoạn đang đọc được gửi tới dịch vụ ngoài để đọc.`;
