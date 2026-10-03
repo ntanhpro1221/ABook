@@ -1,6 +1,6 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, FileDown, GitMerge, History, Hourglass, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, Save, SlidersHorizontal, Trash2, UserRound } from "lucide-react";
+import { ArrowLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, CloudDownload, FileDown, GitMerge, History, Hourglass, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, Save, SlidersHorizontal, Trash2, UserRound } from "lucide-react";
 import { useEffect, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
@@ -18,10 +18,11 @@ import { bookStatusText, usePlayListenBook } from "./LibraryScreen";
 import { canPlay, chapterHeard, chaptersByPart, resumePoint, type CastMember, type ListenBook, type ListenChapter } from "./model";
 import { primaryListenLabel, textBookLine, textChapterLine } from "./labels";
 import { usePlayer } from "./player";
-import { BookmarkList, chapterStatusLabel } from "./PlayerViews";
+import { BookmarkList, chapterStatusLabel, usePreparedChapters } from "./PlayerViews";
 import { EditsSyncBanner, SendEditsItem } from "./SendEdits";
 import { PlaylistSubmenu } from "./PlaylistChoice";
 import { ProjectFileItems, ProjectViewsDialog, TextBookItems } from "./ProjectFileItems";
+import { BookSuggestions } from "./ReadingSuggestions";
 import { WishesDialog } from "./WishesDialog";
 import { useCast, useListenBook, useListenMutations, useSource } from "./source";
 
@@ -32,9 +33,12 @@ function ChapterRow({
   chapter,
   onDone,
   onRename,
+  prepared = false,
 }: {
   book: ListenBook;
   chapter: ListenChapter;
+  /** "Làm trước" đã đọc sẵn chương này bằng giọng của cuốn: nghe ngay, không cần mạng hay chờ. */
+  prepared?: boolean;
   onDone: (chapterId: number, done: boolean) => void;
   /** Sách sửa được trên máy này (shared/capabilities.ts): "Đổi tên chương…" - cái tên hiện trên màn hình, không đổi audio. */
   onRename?: (chapter: ListenChapter) => void;
@@ -93,6 +97,12 @@ function ChapterRow({
             : chapter.state === "text"
               ? textChapterLine(Boolean(chapter.speech))
               : chapterStatusLabel(book.producing)}
+          {prepared && (
+            <span className="ml-1.5 inline-flex items-center gap-0.5 rounded bg-accent-soft px-1 align-[1px] text-[11px] font-medium text-accent-text">
+              <CloudDownload className="size-3" aria-hidden />
+              Đã làm sẵn
+            </span>
+          )}
         </div>
         {heard > 0 && heard < 1 && (
           <div className="mt-1.5 h-[3px] w-24 overflow-hidden rounded-full bg-line-strong">
@@ -657,6 +667,8 @@ export function BookScreen({
   const { data: castView } = useCast(id);
   // Hook không được đặt sau `return` sớm: cuốn chưa nạp xong thì dùng một cuốn rỗng (nút lưu chưa hiện lúc ấy).
   const saver = useSaveBook(book ?? ({ id: id ?? "" } as ListenBook));
+  // Chương đã "Làm trước" (điện thoại, PrepareAhead.kt): dấu "Đã làm sẵn" ở danh sách chương.
+  const prepared = usePreparedChapters(id ?? "", Boolean(book?.chapters?.some((chapter) => chapter.state === "text" && chapter.speech)));
   // Điện thoại: mở sách là hỏi máy tính đã ghép bản mới nhất của hồ sơ nghe (chỗ nghe, tên, hồ sơ vừa chọn bên ấy) -
   // không thì chỉ biết khi chính điện thoại phát hay dừng cuốn này.
   useEffect(() => {
@@ -739,6 +751,7 @@ export function BookScreen({
         <BookCover title={book.title} part={book.series?.part} size="lg" image={book.cover} playing={listening && player.playing} className="w-40 max-sm:mx-auto sm:w-44" />
         <div className="min-w-0 flex-1 max-sm:text-center">
           <h1 className="text-2xl font-bold leading-tight tracking-tight sm:text-[30px]">{book.title}</h1>
+          {book.author && <p className="mt-1.5 text-[15px] text-fg-2">{book.author}</p>}
           <p className="tabular mt-2 text-sm text-fg-2">
             {book.narrator && `Giọng kể ${book.narrator} · `}
             {textOnly
@@ -772,6 +785,7 @@ export function BookScreen({
             </p>
           )}
           {syncs && <EditsSyncBanner book={book} />}
+          {textOnly && editable && <BookSuggestions book={book} />}
           <div className="mt-4 max-w-md max-sm:mx-auto">
             {!textOnly && (
               <>
@@ -895,6 +909,7 @@ export function BookScreen({
                   chapter={chapter}
                   onDone={(chapterId, done) => mutations.chapterDone.mutate({ chapterId, done })}
                   onRename={editable ? setRenamingChapter : undefined}
+                  prepared={chapter.state === "text" && prepared.has(chapter.id)}
                 />
               ))}
             </section>

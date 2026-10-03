@@ -4,7 +4,8 @@ import { VOICE_CHANGED_EVENT, mergeTimings, type ReadAloudTimings } from "@/list
 import { chooseVoice } from "@/listen/readAloudVoice";
 import { textScript } from "@/listen/textScript";
 import type { ReadAloudPlugin } from "./plugins";
-import { refreshScript, textScriptKey, watchReadAloud } from "./readAloud";
+import { PREPARE_STATUS_KEY, type PrepareStatus } from "@/listen/prepareAhead";
+import { phonePrepare, refreshScript, textScriptKey, watchReadAloud } from "./readAloud";
 
 const BOOK = "b1";
 const TEXT = "Chương 1\n\nXin chào các bạn.\n\nTạm biệt.";
@@ -107,13 +108,41 @@ describe("watchReadAloud", () => {
     // Lõi đọc tạm một đoạn bằng giọng kế: câu của lõi hiện lên cho người nghe.
     (handlers.get("readAloudNotice") as (event: { message: string }) => void)({ message: "Khóa FPT.AI đã hết hạn mức - tạm đọc bằng giọng Hoài My (Edge)." });
     expect(notify).toHaveBeenCalledWith("Khóa FPT.AI đã hết hạn mức - tạm đọc bằng giọng Hoài My (Edge).");
+    // Tiến độ "Làm trước" do việc nền đẩy lên: vào đúng khoá menu Giọng đọc và danh sách chương đọc.
+    const status: PrepareStatus = { state: "running", bookId: BOOK, voice: "edge:a", chapters: [] };
+    (handlers.get("readAloudPrepare") as (event: PrepareStatus) => void)(status);
+    expect(client.getQueryData(PREPARE_STATUS_KEY)).toEqual(status);
 
     chooseVoice(BOOK, "device:vi-vn-an");
     expect(configure).toHaveBeenCalledWith({ readAloudVoice: "device:vi-vn-an", readAloudBook: BOOK });
     stop();
     await new Promise((resolve) => setTimeout(resolve, 0));
-    expect(remove).toHaveBeenCalledTimes(2);
+    expect(remove).toHaveBeenCalledTimes(3);
     target.dispatchEvent(new CustomEvent(VOICE_CHANGED_EVENT, { detail: BOOK }));
     expect(configure).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("phonePrepare", () => {
+  it("gửi mã chương cho lõi native, không gửi chữ; mọi lệnh đi đúng phương thức của plugin", async () => {
+    const status: PrepareStatus = { state: "running", chargingOnly: true };
+    const api = {
+      preparePlan: vi.fn(async () => ({ chapters: 2, offered: 2, audioSeconds: 600, secondsEstimate: null })),
+      prepareStart: vi.fn(async () => status),
+      prepareStatus: vi.fn(async () => status),
+      prepareCancel: vi.fn(async () => ({ state: "cancelled" as const })),
+      prepareOptions: vi.fn(async () => ({ ...status, chargingOnly: false })),
+    };
+    const prepare = phonePrepare(api);
+    expect(prepare.readAloudPrepareOnline).toBe(true);
+    const request = { voice: "edge:a", bookId: BOOK, chapters: [{ id: 3, title: "Chương 3" }, { id: 4, title: "Chương 4" }], label: "2 chương tới" };
+    expect((await prepare.readAloudPreparePlan(request)).chapters).toBe(2);
+    expect(api.preparePlan).toHaveBeenCalledWith({ bookId: BOOK, voice: "edge:a", chapterIds: [3, 4] });
+    await prepare.readAloudPrepare({ ...request, chargingOnly: false });
+    expect(api.prepareStart).toHaveBeenCalledWith({ bookId: BOOK, voice: "edge:a", chapterIds: [3, 4], label: "2 chương tới", chargingOnly: false });
+    expect(await prepare.readAloudPrepareStatus()).toBe(status);
+    expect((await prepare.readAloudPrepareCancel()).state).toBe("cancelled");
+    expect((await prepare.readAloudPrepareOptions({ chargingOnly: false })).chargingOnly).toBe(false);
+    expect(api.prepareOptions).toHaveBeenCalledWith({ chargingOnly: false });
   });
 });

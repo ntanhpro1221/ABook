@@ -75,7 +75,7 @@ class BookImportTest {
         assertEquals(listOf("Chương 1: Bến phà lúc bình minh", "Chương 2: Người khách lạ", "Chương 3"), titles(book))
         assertTrue(book.chapters[0].text.endsWith("Nước lớn dần."))
         assertFalse(book.chapters.any { it.text.contains("không nằm trong thứ tự đọc chính") })
-        assertEquals("Bỏ qua trang chỉ có ảnh: cover.xhtml", book.notes[0])
+        assertEquals(listOf("Bỏ qua 1 trang chỉ có ảnh.", "Bỏ qua 1 mục rất ngắn (bìa, trang bản quyền?)."), book.notes.take(2)) // đếm, không kể tên file trong gói
         assertEquals("image/jpeg", BookImport.importFile(File(dir, "epub2.epub")).coverType)
     }
 
@@ -84,15 +84,47 @@ class BookImportTest {
         val book = BookImport.importFile(File(dir, "epub3.epub"))
         assertTrue(book.chapters[1].text.startsWith("Dịch: Nhóm Lục Bình"))
         assertEquals(1, book.notes.count { it.contains("ghi công") })
+        assertEquals(listOf(2 to "Dịch: Nhóm Lục Bình"), book.credits) // gợi ý có cấu trúc: bước xem trước cho chọn bỏ khỏi phần đọc
     }
 
     @Test
     fun txt_folder_reads_every_encoding_in_the_studio_order() {
         val book = BookImport.importFile(File(dir, "txt"))
-        assertEquals(listOf("Chương 1", "Chương 2", "9 Ngoại truyện", "Chương 10"), titles(book))
-        assertEquals("Sương sớm\n\nChuyến phà đầu tiên rời bến lúc năm giờ.\nCậu bé đứng ở mạn thuyền.", book.chapters[0].text)
-        assertEquals("Chương hai\n\nTiếng máy nổ trầm đục.", book.chapters[1].text)
-        assertTrue(book.chapters[3].text.contains("Mưa rơi suốt chiều."))
+        // Trùng số thì theo tên (01 trước 1), chữ số Ả Rập cũng là số, file ".txt" không có đuôi (Path.suffix), file trắng có ghi chú;
+        // dòng đầu là tiêu đề chương thì nó là tên chương ("Chương hai"), không thì tên file.
+        assertEquals(listOf("Chương 1", "Chương 1", "Chương hai", "9 Ngoại truyện", "Chương ba", "Chương ١١"), titles(book))
+        assertTrue(book.chapters[0].text.startsWith("Bản trùng số"))
+        assertEquals("Sương sớm\n\nChuyến phà đầu tiên rời bến lúc năm giờ.\nCậu bé đứng ở mạn thuyền.", book.chapters[1].text)
+        assertEquals("Chương hai\n\nTiếng máy nổ trầm đục.", book.chapters[2].text)
+        assertTrue(book.chapters[4].text.contains("Mưa rơi suốt chiều."))
+        assertEquals("Bỏ qua mục không có chữ: Chương 3", book.notes[0])
+    }
+
+    @Test
+    fun file_names_split_like_python_path() {
+        assertEquals("" to ".txt", BookImport.suffixOf(".txt") to BookImport.stemOf(".txt"))
+        assertEquals(".txt" to ".an", BookImport.suffixOf(".an.txt") to BookImport.stemOf(".an.txt"))
+        assertEquals("" to "ten.", BookImport.suffixOf("ten.") to BookImport.stemOf("ten."))
+        assertEquals(".TXT" to "a.b", BookImport.suffixOf("a.b.TXT") to BookImport.stemOf("a.b.TXT"))
+    }
+
+    @Test
+    fun epub_reads_every_html_entity_like_python_even_in_the_table_of_contents() {
+        val book = BookImport.importFile(File(dir, "epub3.epub"))
+        assertTrue(book.chapters[0].text.contains("Ông Tám cười: “Phà cũ rồi.” © 1975 ă"))
+        assertEquals("Chương 1: Bến phà lúc bình minh", book.chapters[0].title)
+        // html.unescape: số ngoài phạm vi -> U+FFFD, ký tự điều khiển bỏ, tên lạ giữ nguyên, &#13; là \r.
+        assertEquals("\uFFFD|\uFFFD|x|&khongco;|\r|&", BookImport.Markup.decode("&#xD800;|&#99999999999;|x&#1;|&khongco;|&#13;|&"))
+        assertEquals("¬it; AT&T €", BookImport.Markup.decode("&notit; AT&T &#128;"))
+    }
+
+    @Test
+    fun docx_reads_any_namespace_prefix_and_skips_the_word_table_of_contents() {
+        val plain = BookImport.importFile(File(dir, "plain.docx")) // xmlns mặc định, không có tiền tố "w:"
+        assertEquals(listOf("Mở đầu", "Chương 1: Bến phà lúc bình minh", "Chương 2: Người khách lạ"), titles(plain))
+        val headings = BookImport.importFile(File(dir, "headings.docx"))
+        assertEquals("Bỏ qua mục lục của tài liệu (3 dòng).", headings.notes[0])
+        assertFalse(headings.chapters[0].text.contains("Người khách lạ"))
     }
 
     @Test
@@ -112,6 +144,9 @@ class BookImportTest {
     fun natural_order_puts_2_before_10() {
         val sorted = listOf("10.txt", "2.txt", "1.txt", "9 b.txt", "Z.txt", "a.txt").sortedWith(BookImport.naturalOrder)
         assertEquals(listOf("1.txt", "2.txt", "9 b.txt", "10.txt", "a.txt", "Z.txt"), sorted)
+        // Trùng số: theo tên gốc, bất kể thứ tự thư mục liệt kê (io_utils.discover_txt_files); chữ số Unicode là số.
+        assertEquals(listOf("001.txt", "01.txt", "1.txt"), listOf("1.txt", "01.txt", "001.txt").sortedWith(BookImport.naturalOrder))
+        assertEquals(listOf("٢.txt", "10.txt"), listOf("10.txt", "٢.txt").sortedWith(BookImport.naturalOrder))
     }
 
     @Test
@@ -132,6 +167,9 @@ class BookImportTest {
         val two = BookImport.fromPdfPages("x", listOf(listOf("Sách thử") + filler + "1", listOf("Sách thử") + filler.reversed() + "2"))
         assertTrue(two.chapters[0].text.contains("Sách thử"))
         assertFalse(two.chapters[0].text.endsWith("2"))
+        // Tiêu đề chạy mang số trang: bỏ ở mọi trang, ghi chú một lần.
+        val numbered = BookImport.fromPdfPages("x", (1..5).map { n -> listOf("Sách thử · $n") + (0 until 5).map { "$body " + "x".repeat(n * 5 + it) } + "$n" })
+        assertEquals(listOf("Bỏ dòng lặp đầu / cuối trang: “Sách thử · 1”"), numbered.notes.filter { it.startsWith("Bỏ dòng lặp") })
     }
 
     @Test

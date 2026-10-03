@@ -51,10 +51,20 @@ def book_json(book: importers.ImportedBook, texts: dict[str, bytes], cover: dict
     return result
 
 
+def texts_of(book: importers.ImportedBook) -> dict[str, bytes]:
+    """{tên mục: byte chữ} của các chương, đúng như `build` ghi vào gói."""
+    return {f"texts/{number}.txt": book.chapter_source(chapter).encode("utf-8") for number, chapter in enumerate(book.chapters, start=1)}
+
+
+def find_existing(book: importers.ImportedBook, library_root: Path) -> Path | None:
+    """Cuốn trong thư viện có đúng bộ chữ này (sẽ là "existing" khi thêm) - để hỏi người dùng ngay ở bước xem trước."""
+    prints = {name: {"size": len(data), "sha256": hashlib.sha256(data).hexdigest()} for name, data in texts_of(book).items()}
+    return packages.find_imported(prints, library_root)
+
+
 def build(book: importers.ImportedBook, out: Path, *, producer: str = "ABook") -> Path:
     """Gói một cuốn vừa đọc từ file sách thành file `.abook` chỉ-chữ ở `out` (cùng `bookfile.seal` với mọi file sách)."""
-    texts = {f"texts/{number}.txt": book.chapter_source(chapter).encode("utf-8")
-             for number, chapter in enumerate(book.chapters, start=1)}
+    texts = texts_of(book)
     files: dict[str, Path | bytes] = dict(texts)
     cover = None
     if book.cover_bytes:
@@ -83,19 +93,22 @@ def preview(book: importers.ImportedBook) -> dict[str, Any]:
     return {
         "title": _title(book.title, "Sách"), "author": book.author, "language": book.language,
         "hasCover": bool(book.cover_bytes), "chapters": rows, "notes": list(book.notes),
+        # Gợi ý chọn được: dòng ghi công người nghe có thể bỏ khỏi phần đọc (mặc định KHÔNG bỏ). `chapter` = mã chương trong sách.
+        "suggestions": [{"chapter": number, "line": line} for number, line in book.credits],
         "totals": {"chapters": len(rows), "words": sum(row["words"] for row in rows)},
     }
 
 
 def add_to_library(source: Path, title: str | None, library_root: Path, projects: Iterable[Path],
-                   fingerprints: Fingerprints) -> tuple[Path, str, importers.ImportedBook]:
+                   fingerprints: Fingerprints, *, separate: bool = False) -> tuple[Path, str, importers.ImportedBook]:
     """Đọc `source` (thư mục TXT / .epub / .docx / .pdf / .txt) và đưa vào thư viện thành sách chỉ-chữ. Trả (thư mục cuốn, cách -
     "new" / "existing" / "updated" như `packages.import_opened`, cuốn đã đọc). `title` (nếu có) thay tên sách của file.
+    `separate`: "Thêm bản riêng" - cuốn mới dù thư viện đã có đúng bộ chữ này.
     `importers.ImportFailed` / `bookfile.BookFileError` khi không nhập được."""
     book = importers.import_text(source)
     if title and store.clean_title(title):
         book.title = title
     with tempfile.TemporaryDirectory(prefix="abook-text-") as scratch:
         packed = build(book, Path(scratch) / bookfile.default_name(book.title))
-        folder, how = packages.import_file(packed, library_root, projects, fingerprints)
+        folder, how = packages.import_file(packed, library_root, projects, fingerprints, separate=separate)
     return folder, how, book

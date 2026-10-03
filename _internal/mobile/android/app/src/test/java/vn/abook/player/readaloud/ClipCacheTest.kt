@@ -101,6 +101,45 @@ class ClipCacheTest {
     }
 
     @Test
+    fun pinnedClipsOutliveNewerUnpinnedOnesUntilTheListenerReachesThem() {
+        val pins = File(dir.parentFile, "${dir.name}-pins.txt")
+        try {
+            val cache = ClipCache(dir, 2500, pins) { now }
+            cache.pin("edge:v", "a")
+            put(cache, "edge:v", "a", 1000) // làm trước
+            put(cache, "edge:v", "b", 1000) // nghe trực tiếp
+            put(cache, "edge:v", "c", 1000)
+            assertTrue("đoạn ghim cũ nhất vẫn còn", cache.contains("edge:v", "a"))
+            assertFalse("đoạn thường cũ nhất đi trước", cache.contains("edge:v", "b"))
+            assertEquals(1000L + File(dir, ClipCache.key("edge", "v", "a") + ".json").length(), cache.pinnedBytes())
+            // Ghim nhớ qua lần mở app sau.
+            val reopened = ClipCache(dir, 2500, pins) { now }
+            assertTrue(reopened.isPinned("edge:v", "a"))
+            reopened.unpin("edge:v", "a")
+            assertFalse(ClipCache(dir, 2500, pins) { now }.isPinned("edge:v", "a"))
+            put(reopened, "edge:v", "d", 1000)
+            assertFalse("bỏ ghim rồi thì lại theo LRU", reopened.contains("edge:v", "a"))
+            reopened.pin("edge:v", "x")
+            reopened.clearPins()
+            assertEquals(0L, reopened.pinnedBytes())
+        } finally {
+            pins.delete()
+        }
+    }
+
+    @Test
+    fun containsDoesNotCountAsAUse() {
+        val cache = cache(2500)
+        put(cache, "edge:v", "a", 1000)
+        put(cache, "edge:v", "b", 1000)
+        now += 1000
+        assertTrue(cache.contains("edge:v", "a"))
+        assertFalse(cache.contains("edge:w", "a"))
+        put(cache, "edge:v", "c", 1000)
+        assertFalse("hỏi có chưa không làm a thành mới dùng", cache.contains("edge:v", "a"))
+    }
+
+    @Test
     fun theDefaultCapIs300Megabytes() {
         assertEquals(300L * 1024 * 1024, ClipCache.CAP_BYTES)
     }

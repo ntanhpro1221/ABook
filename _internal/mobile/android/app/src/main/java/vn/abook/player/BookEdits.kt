@@ -37,11 +37,13 @@ object BookEdits {
     private const val MAX_CHAPTERS = 5000
     private const val MAX_SILENCED = 5000
     private const val MAX_PINS = 5000
+    private const val MAX_SKIP_LINES = 20 // dòng bỏ khỏi phần đọc, mỗi chương (book_edits.MAX_SKIP_LINES)
+    private const val SKIP_LINE_MAX = 300
     private const val TRACK_TEXT_MAX = 200 // tên bài / nghệ sĩ trong thẻ file nhạc (music_local._TAG_MAX)
     private const val LEVEL_MIN = -40.0
     private const val LEVEL_MAX = -6.0
     private const val DEFAULT_LEVEL_DB = -20.0 // music_plan.DEFAULT_LEVEL_DB
-    private val TOP_KEYS = setOf("format", "version", "title", "cover", "characters", "chapters", "music", "wishes")
+    private val TOP_KEYS = setOf("format", "version", "title", "cover", "characters", "chapters", "skip", "music", "wishes")
     const val TOO_BIG = "Quá nhiều thay đổi đang chờ trong cuốn này - hãy lưu, áp bớt vào dự án rồi làm tiếp."
     private val COVER_KEYS = setOf("color", "width", "height", "version")
     private val MUSIC_KEYS = setOf("enabled", "levelDb", "silenced", "pins", "tracks", "playlist")
@@ -141,6 +143,8 @@ object BookEdits {
         val music = edits.optJSONObject("music")
         return (if (edits.has("title")) 1 else 0) + (if (edits.has("cover")) 1 else 0) +
             (edits.optJSONObject("characters")?.length() ?: 0) + (edits.optJSONObject("chapters")?.length() ?: 0) +
+            // Một dòng bỏ ở trăm chương: một thay đổi.
+            (edits.optJSONObject("skip")?.let { skip -> names(skip).flatMap { skipLines(skip, it) }.toSet().size } ?: 0) +
             (if (music?.has("enabled") == true) 1 else 0) + (if (music?.has("levelDb") == true) 1 else 0) +
             (music?.optJSONArray("silenced")?.length() ?: 0) + (music?.optJSONObject("pins")?.length() ?: 0) +
             (if (music?.has("playlist") == true) 1 else 0)
@@ -211,8 +215,26 @@ object BookEdits {
             }
             out.put("chapters", kept)
         }
+        if (raw.has("skip")) out.put("skip", validateSkip(raw.opt("skip")))
         if (raw.has("music")) out.put("music", validateMusic(raw.opt("music")))
         if (raw.has("wishes")) out.put("wishes", BookWishes.validate(raw.opt("wishes")))
+        return out
+    }
+
+    /** `skip`: {mã chương: [dòng người nghe bỏ khỏi phần đọc]} (`book_edits._validate_skip`). */
+    private fun validateSkip(skip: Any?): JSONObject {
+        if (skip !is JSONObject || skip.length() > MAX_CHAPTERS) throw EditsError("Phần bỏ dòng khỏi phần đọc không hợp lệ hay quá dài.")
+        val out = JSONObject()
+        for (key in names(skip)) {
+            val lines = skip.opt(key)
+            val list = (lines as? JSONArray)?.let { array -> (0 until array.length()).map { array.opt(it) } }
+            if (!CHAPTER_ID.matches(key) || list == null || list.isEmpty() || list.size > MAX_SKIP_LINES || list.toSet().size != list.size ||
+                list.any { it !is String || it.isEmpty() || !isClean(it, SKIP_LINE_MAX) }
+            ) {
+                throw EditsError("Một dòng bỏ khỏi phần đọc trong phần sửa không hợp lệ.")
+            }
+            out.put(key, JSONArray(list.map { it as String }.sortedWith { a, b -> byCodePoints(a, b) }))
+        }
         return out
     }
 
@@ -347,6 +369,9 @@ object BookEdits {
                 listOf("title", "subtitle").filter { entry.has(it) }.associateWith { entry.opt(it) }
             }
         }
+        edits.optJSONObject("skip")?.takeIf { it.length() > 0 }?.let { skip ->
+            out["skip"] = names(skip).sortedBy { it.toLong() }.associateWith { key -> skipLines(skip, key) }
+        }
         edits.optJSONObject("music")?.takeIf { it.length() > 0 }?.let { music ->
             val shown = LinkedHashMap<String, Any?>()
             for (key in listOf("enabled", "levelDb", "playlist", "silenced")) if (music.has(key)) shown[key] = music.opt(key)
@@ -362,6 +387,12 @@ object BookEdits {
         }
         edits.optJSONObject("wishes")?.takeIf { it.length() > 0 }?.let { out["wishes"] = BookWishes.ordered(it) }
         return out
+    }
+
+    /** Các dòng đang bỏ khỏi phần đọc của chương `key`, xếp theo điểm mã (như `sorted` của Python). */
+    private fun skipLines(skip: JSONObject?, key: String): List<String> {
+        val array = skip?.optJSONArray(key) ?: return emptyList()
+        return (0 until array.length()).map { array.getString(it) }.sortedWith { a, b -> byCodePoints(a, b) }
     }
 
     private fun orderedCover(cover: Any?): Any? =
@@ -434,6 +465,14 @@ object BookEdits {
             chapters.put(key, entry)
         }
         if (chapters.length() > 0) out.put("chapters", chapters)
+        // Dòng bỏ khỏi phần đọc: hợp (không có "đọc lại dòng này" để thắng), như nhạc im lặng.
+        val ourSkip = local.optJSONObject("skip")
+        val theirSkip = incoming.optJSONObject("skip")
+        val skip = JSONObject()
+        for (key in ((theirSkip?.let(::names) ?: emptyList()) + (ourSkip?.let(::names) ?: emptyList())).distinct()) {
+            skip.put(key, JSONArray((skipLines(theirSkip, key) + skipLines(ourSkip, key)).distinct().sortedWith { a, b -> byCodePoints(a, b) }))
+        }
+        if (skip.length() > 0) out.put("skip", skip)
         val music = JSONObject()
         val ourMusic = local.optJSONObject("music") ?: JSONObject()
         val theirMusic = incoming.optJSONObject("music") ?: JSONObject()
@@ -531,12 +570,20 @@ object BookEdits {
             }
         }
         val renamed = edits.optJSONObject("chapters")
+        val skip = edits.optJSONObject("skip")
         val chapters = book.optJSONArray("chapters")
-        if (renamed != null && renamed.length() > 0 && chapters != null) {
+        if (((renamed?.length() ?: 0) > 0 || (skip?.length() ?: 0) > 0) && chapters != null) {
             val shown = JSONArray()
             for (index in 0 until chapters.length()) {
                 val chapter = chapters.opt(index)
-                shown.put(if (chapter is JSONObject) applyChapter(chapter, renamed.optJSONObject(idText(chapter.opt("id")))) else chapter)
+                if (chapter !is JSONObject) {
+                    shown.put(chapter)
+                    continue
+                }
+                val id = idText(chapter.opt("id"))
+                val named = applyChapter(chapter, renamed?.optJSONObject(id))
+                // `skip` của chương: dòng người nghe bỏ khỏi phần đọc (màn đọc và đọc to - Paragraphs.withoutLines); chữ của sách không đổi.
+                shown.put(if (skip?.has(id) == true) shallowCopy(named).put("skip", JSONArray(skipLines(skip, id))) else named)
             }
             out.put("chapters", shown)
         }
@@ -901,6 +948,40 @@ object BookEdits {
      * Đặt lại tên chương `chapterId`: `title` (nhãn như "Chương 12") và/hoặc `subtitle` (tên phụ, "" là bỏ tên phụ). Cả hai trống
      * (`title` rỗng/null và `subtitle` null) là trở về tên của người làm sách. Trả {chapterId, title, subtitle, fullTitle} đang hiện.
      */
+    /**
+     * Bỏ (`skip`) hay đọc lại dòng `line` trong phần đọc của các chương `chapterIds` - gợi ý dòng ghi công mà người nghe chấp nhận
+     * (`book_edits.set_skip_line`). Chỉ là biến đổi để đọc: chữ của sách không đổi. Trả {mã chương: các dòng đang bỏ} của các chương ấy.
+     */
+    fun setSkipLine(folder: File, chapterIds: List<Long>, line: String, skip: Boolean): JSONObject {
+        val list = rawBook(folder).optJSONArray("chapters")
+        val known = (0 until (list?.length() ?: 0)).mapNotNull { (list?.optJSONObject(it)?.opt("id") as? Number)?.toLong() }.toSet()
+        val wanted = chapterIds.toSortedSet()
+        if (wanted.isEmpty() || wanted.any { it !in known }) throw EditsError("Không có chương này trong sách")
+        val clean = cleanText(line, SKIP_LINE_MAX)
+        if (clean.isEmpty()) throw EditsError("Dòng cần bỏ trống.")
+        val out = JSONObject()
+        synchronized(lock) {
+            val edits = load(folder)
+            val skipped = edits.optJSONObject("skip")?.let { deepCopy(it) as JSONObject } ?: JSONObject()
+            for (chapterId in wanted) {
+                val key = chapterId.toString()
+                val lines = skipLines(skipped, key).toMutableSet()
+                if (skip) {
+                    if (clean !in lines && lines.size >= MAX_SKIP_LINES) throw EditsError("Mỗi chương bỏ được tối đa $MAX_SKIP_LINES dòng.")
+                    lines.add(clean)
+                } else {
+                    lines.remove(clean)
+                }
+                val sorted = lines.sortedWith { a, b -> byCodePoints(a, b) }
+                if (sorted.isNotEmpty()) skipped.put(key, JSONArray(sorted)) else skipped.remove(key)
+                out.put(key, JSONArray(sorted))
+            }
+            if (skipped.length() > 0) edits.put("skip", skipped) else edits.remove("skip")
+            write(folder, edits)
+        }
+        return out
+    }
+
     fun setChapterTitle(folder: File, chapterId: Long, title: String?, subtitle: String? = null): JSONObject {
         val book = rawBook(folder)
         val list = book.optJSONArray("chapters")

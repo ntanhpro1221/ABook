@@ -2,6 +2,8 @@ import { toast } from "sonner";
 import type { Script } from "@/listen/model";
 import { mergeTimings, VOICE_CHANGED_EVENT, type ReadAloudTimings } from "@/listen/readAloud";
 import { chosenVoice } from "@/listen/readAloudVoice";
+import { PREPARE_STATUS_KEY, type PrepareRequest, type PrepareStatus } from "@/listen/prepareAhead";
+import type { ListenSource } from "@/listen/source";
 import { EbookPlayer, ReadAloud, type ReadAloudPlugin } from "./plugins";
 
 // "Nghe ngay" trên điện thoại: LÕI NATIVE (Media3 + TextToSpeech) tự đọc chương chỉ-có-chữ trong hàng đợi như mọi chương - tắt màn hình vẫn đọc
@@ -12,7 +14,24 @@ import { EbookPlayer, ReadAloud, type ReadAloudPlugin } from "./plugins";
 /** Phần của QueryClient mà bộ theo dõi dùng. */
 export interface ScriptCache {
   getQueryData(key: readonly unknown[]): unknown;
-  setQueryData(key: readonly unknown[], value: Script): unknown;
+  setQueryData(key: readonly unknown[], value: Script | PrepareStatus): unknown;
+}
+
+type PreparePlugin = Pick<ReadAloudPlugin, "preparePlan" | "prepareStart" | "prepareStatus" | "prepareCancel" | "prepareOptions">;
+
+/** "Làm trước" của nguồn điện thoại (prepareAhead.ts): lõi native tự đọc chữ các chương (cùng cách chia đoạn với lúc nghe) và làm ở việc nền của
+ *  WorkManager, nên chỉ gửi mã chương. Làm được cả giọng trực tuyến - để nghe khi không có mạng. */
+export function phonePrepare(api: PreparePlugin = ReadAloud) {
+  const ids = (request: PrepareRequest) => request.chapters.map((chapter) => chapter.id);
+  return {
+    readAloudPrepareOnline: true,
+    readAloudPreparePlan: (request: PrepareRequest) => api.preparePlan({ bookId: request.bookId, voice: request.voice, chapterIds: ids(request) }),
+    readAloudPrepare: (request: PrepareRequest) =>
+      api.prepareStart({ bookId: request.bookId, voice: request.voice, chapterIds: ids(request), label: request.label, chargingOnly: request.chargingOnly }),
+    readAloudPrepareStatus: () => api.prepareStatus(),
+    readAloudPrepareCancel: () => api.prepareCancel(),
+    readAloudPrepareOptions: (options: { chargingOnly: boolean }) => api.prepareOptions(options),
+  } satisfies Partial<ListenSource>;
 }
 
 export function textScriptKey(bookId: string, chapterId: number) {
@@ -51,6 +70,8 @@ export function watchReadAloud(
   const handle = api.addListener("readAloudScript", (event) => void refreshScript(client, api, event.bookId, event.chapterId));
   // Lõi vừa đọc tạm một đoạn bằng giọng kế (khóa bị từ chối, hết hạn mức, mất mạng): nói cho người nghe, lõi đã lo chỉ nói một lần.
   const notice = api.addListener("readAloudNotice", (event) => void notify(event.message));
+  // Tiến độ "Làm trước" (việc nền, kể cả khi màn này không mở menu): menu Giọng đọc và dấu ở danh sách chương thấy ngay.
+  const prepare = api.addListener("readAloudPrepare", (status) => void client.setQueryData(PREPARE_STATUS_KEY, status));
   // Người nghe đổi giọng ở menu "Giọng đọc": lõi nhớ cho cuốn ấy (phát tiếp từ widget / xe hơi vẫn đúng giọng) và đọc các đoạn sau bằng giọng mới.
   const onVoice = (event: Event) => {
     const bookId = String((event as CustomEvent).detail ?? "");
@@ -61,5 +82,6 @@ export function watchReadAloud(
     window.removeEventListener(VOICE_CHANGED_EVENT, onVoice);
     void handle.then((listener) => listener.remove());
     void notice.then((listener) => listener.remove());
+    void prepare.then((listener) => listener.remove());
   };
 }

@@ -6,7 +6,7 @@ import type { AddedBook, ImportPreview, TextImport } from "@/listen/textImport";
 import { ReadAloudError, type ReadAloudClip, type ReadAloudVoice } from "@/listen/readAloud";
 import { ApiError, api, mediaUrl } from "@/studio/api";
 import { pickFiles, pickFolder } from "@/studio/data";
-import type { PrepareStatus } from "@/listen/prepareAhead";
+import { paragraphsFor, type PrepareStatus } from "@/listen/prepareAhead";
 
 function fileName(path: string): string {
   return path.split(/[\\/]/).filter(Boolean).pop() ?? path;
@@ -29,7 +29,7 @@ export function desktopTextImport(dialogs: boolean): TextImport {
         }
       : undefined,
     preview: (choice) => api<ImportPreview>("/api/listen/import/preview", { method: "POST", body: { path: choice.ref } }),
-    add: (choice, title) => api<AddedBook>("/api/listen/import", { method: "POST", body: { path: choice.ref, title } }),
+    add: (choice, title, separate) => api<AddedBook>("/api/listen/import", { method: "POST", body: { path: choice.ref, title, separate: Boolean(separate) } }),
   };
 }
 
@@ -62,7 +62,11 @@ export const httpSource: ListenSource = {
     if ("cached" in clip) throw new ReadAloudError("Chưa đọc đoạn này.", clip.reason || "uncached");
     return { url: mediaUrl(clip.url), durationMs: clip.duration_ms, words: clip.words } satisfies ReadAloudClip;
   },
-  readAloudPrepare: (voice, texts, label) => api<PrepareStatus>("/api/readaloud/prepare", { method: "POST", body: { voice, texts, label } }),
+  // Máy chủ nhận chữ từng đoạn, chia đúng như trình phát (cùng khoá bộ đệm với lúc nghe).
+  readAloudPrepare: async ({ voice, bookId, chapters, label }) => {
+    const texts = await paragraphsFor(chapters, (id) => httpSource.chapterText(bookId, id));
+    return api<PrepareStatus>("/api/readaloud/prepare", { method: "POST", body: { voice, texts, label } });
+  },
   readAloudPrepareStatus: () => api<PrepareStatus>("/api/readaloud/prepare"),
   readAloudPrepareCancel: () => api<PrepareStatus>("/api/readaloud/prepare", { method: "DELETE" }),
   musicCues: async (bookId, chapterId) => {

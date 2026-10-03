@@ -8,7 +8,7 @@ import type { TextImport } from "./textImport";
 import { textScript } from "./textScript";
 import { mergeTimings, type ClipOptions, type ReadAloudClip, type ReadAloudTimings, type ReadAloudVoice } from "./readAloud";
 import { voicesOf } from "./readAloudVoice";
-import type { PrepareStatus } from "./prepareAhead";
+import type { PreparePlan, PrepareRequest, PrepareStatus } from "./prepareAhead";
 
 // Nguồn dữ liệu của phía Nghe. Giao diện chỉ nói chuyện với giao diện này:
 // máy tính cài bằng HTTP tới server cục bộ, Android cài bằng file gói sách trên máy.
@@ -37,10 +37,14 @@ export interface ListenSource {
    *  thì chương chỉ-có-chữ chỉ đọc được bằng mắt. Android: lõi native tự đọc (plugin ReadAloud, android/readAloud.ts) nên không có `readAloudClip`. */
   readAloudVoices?(): Promise<ReadAloudVoice[]>;
   readAloudClip?(voice: string, text: string, options?: ClipOptions): Promise<ReadAloudClip>;
-  /** "Làm trước" (prepareAhead.ts): đọc sẵn các đoạn này vào bộ đệm ở nền; nguồn nào chưa có thì giao diện ẩn nút. */
-  readAloudPrepare?(voice: string, texts: string[], label: string): Promise<PrepareStatus>;
+  /** "Làm trước" (prepareAhead.ts): đọc sẵn các chương này vào bộ đệm ở nền; nguồn nào chưa có thì giao diện ẩn nút. */
+  readAloudPrepare?(request: PrepareRequest): Promise<PrepareStatus>;
   readAloudPrepareStatus?(): Promise<PrepareStatus>;
   readAloudPrepareCancel?(): Promise<PrepareStatus>;
+  /** Điện thoại: ước trước khi bấm, "Chỉ khi đang sạc", và làm trước cả giọng trực tuyến (để nghe không cần mạng). */
+  readAloudPreparePlan?(request: PrepareRequest): Promise<PreparePlan>;
+  readAloudPrepareOptions?(options: { chargingOnly: boolean }): Promise<PrepareStatus>;
+  readAloudPrepareOnline?: boolean;
   /** Nơi tự đọc chương (lõi native Android) cho biết mốc thời gian câu / chữ đã có của một chương chỉ-có-chữ; chưa có gì thì null. */
   readAloudTimings?(bookId: string, chapterId: number): Promise<ReadAloudTimings | null>;
   cast(bookId: string): Promise<Cast>;
@@ -168,7 +172,7 @@ export function chapterScriptQuery(source: ListenSource, bookId: string, chapter
     queryKey: ["listen", "script", bookId, chapter.id, textOnly ? "text" : "audio"] as const,
     queryFn: async (): Promise<Script> => {
       if (!textOnly) return source.script(bookId, chapter.id);
-      const script = textScript(chapter.id, chapter.title, await source.chapterText(bookId, chapter.id));
+      const script = textScript(chapter.id, chapter.title, await source.chapterText(bookId, chapter.id), chapter.skip);
       // Chương đã được đọc to (lõi native tự đọc): mốc thời gian đã có thì gắn vào, màn đọc sáng đoạn / chữ ngay khi mở.
       const timings = await source.readAloudTimings?.(bookId, chapter.id).catch(() => null);
       return timings ? mergeTimings(script, timings) : script;

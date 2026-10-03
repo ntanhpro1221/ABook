@@ -15,6 +15,7 @@ EPUB chỉ cần zipfile + ElementTree; PDF cần `pypdf` (BSD-3-Clause, thuần
 from __future__ import annotations
 
 import hashlib
+import html.entities
 import json
 import posixpath
 import re
@@ -40,6 +41,7 @@ PREAMBLE = "Mở đầu"  # chữ đứng trước tiêu đề chương đầu t
 MAX_HEADING = 120  # dòng dài hơn là một câu văn mở đầu bằng "Chương…", không phải tiêu đề
 SOFT_HYPHEN = "\u00ad"  # dấu nối mềm của máy dàn trang
 SIDECAR = "import.json"  # `extract` ghi cạnh các chương: tên sách, tác giả, ghi chú (đọc lại không phải mở lại file gốc)
+CREDIT_HEAD_LINES = 64  # số dòng đầu chương đưa cho `credit_lines` (nó chỉ xem 6 dòng có chữ đầu tiên)
 
 NS = {
     "c": "urn:oasis:names:tc:opendocument:xmlns:container",
@@ -50,6 +52,7 @@ NS = {
 }
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 MC_FALLBACK = "{http://schemas.openxmlformats.org/markup-compatibility/2006}Fallback"
+TOC_STYLE = re.compile(r"toc ?\d|toc ?heading")  # tên kiểu (viết thường) của mục lục Word tự sinh
 BLOCKS = {"p", "div", "h1", "h2", "h3", "h4", "h5", "h6", "li", "blockquote", "section", "article", "tr", "dd", "dt", "pre"}
 HEADINGS = {"h1", "h2", "h3"}
 UNSAFE_NAME = re.compile(r'[<>:"/\\|?*\x00-\x1f]')  # ký tự Windows không nhận trong tên file
@@ -98,6 +101,7 @@ class ImportedBook:
     chapters: list[Chapter] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
     text_has_title: bool = False  # file TXT: tên chương nằm sẵn trong chữ (EPUB / DOCX / PDF: tên chương là trường riêng)
+    credits: list[tuple[int, str]] = field(default_factory=list)  # (số chương, dòng ghi công) - gợi ý, như trong `notes`
 
     def chapter_source(self, chapter: Chapter) -> str:
         """Chữ của chương như FILE NGUỒN mà Studio đọc: TXT nguyên văn (tên chương nằm sẵn trong chữ); EPUB / DOCX / PDF: tên
@@ -134,7 +138,7 @@ def import_text(path: Path | str) -> ImportedBook:
             raise ImportFailed(f"Chưa đọc được file {suffix or 'không có đuôi'} - dùng .epub, .docx, .pdf, .txt hay một thư mục TXT")
         book = reader(path)
     else:
-        raise ImportFailed(f"Không thấy {path}")
+        raise ImportFailed(f"Không thấy {path}.")
     return _finish(book)
 
 
@@ -145,17 +149,28 @@ def _finish(book: ImportedBook) -> ImportedBook:
     for chapter in book.chapters:
         chapter.title, chapter.text = _nfc(chapter.title), _nfc(chapter.text)
     book.notes = [_nfc(note) for note in book.notes]
-    book.chapters = [chapter for chapter in book.chapters if chapter.text.strip()] if len(book.chapters) > 1 else book.chapters
     if not book.chapters or not any(chapter.text.strip() for chapter in book.chapters):
         raise ImportFailed("Không có chương nào có chữ")
-    from .text_processing import credit_lines  # luật nhận ra dòng ghi công của Studio: một nơi
-
+    if len(book.chapters) > 1:
+        # File TXT rỗng (hay chỉ có khoảng trắng) không thành chương - nói ra, để số chương ít hơn số file có lý do.
+        book.notes += [f"Bỏ qua mục không có chữ: {chapter.title}" for chapter in book.chapters if not chapter.text.strip()]
+        book.chapters = [chapter for chapter in book.chapters if chapter.text.strip()]
     for number, chapter in enumerate(book.chapters, start=1):
         # Tên chương tính là một dòng của chương (cửa sổ 6 dòng đầu), như file chương mà Studio đọc.
-        head = chapter.text if book.text_has_title else f"{chapter.title}\n\n{chapter.text}"
-        for line in credit_lines(head):
+        for line in credit_suggestions(book.chapter_source(chapter)):
+            book.credits.append((number, line))
             book.notes.append(f"Gợi ý: chương {number} có dòng ghi công ở đầu - “{line}”. Có thể bỏ khỏi phần đọc, nhưng ABook không tự bỏ.")
     return book
+
+
+def credit_suggestions(source: str) -> list[str]:
+    """Dòng ghi công (người dịch, biên tập…) ở đầu một chương, `source` như file chương (`ImportedBook.chapter_source`): GỢI Ý để
+    người nghe chọn bỏ khỏi phần đọc (lớp sửa `skip`), không bao giờ tự bỏ. Luật là của Studio (`text_processing.credit_lines`);
+    chỉ đưa phần đầu chương - chuẩn hoá cả chương chỉ để xem 6 dòng là phần chậm nhất của cuốn hơn nghìn chương. Kotlin:
+    BookImport.creditSuggestions."""
+    from .text_processing import credit_lines
+
+    return credit_lines("\n".join(source.split("\n", CREDIT_HEAD_LINES)[:CREDIT_HEAD_LINES]))
 
 
 def _nfc(text: str) -> str:
@@ -175,31 +190,50 @@ def _clean_text(text: str) -> str:
     return re.sub(r"\n{3,}", "\n\n", "\n".join(lines)).strip("\n")
 
 
-def _txt_folder(folder: Path) -> ImportedBook:
+def _txt_chapter(path: Path) -> Chapter:
+    """Một file TXT là một chương. Tên chương: dòng đầu nếu nó là dòng tiêu đề ("Chương 1: Buổi sáng" - đúng thứ người nghe thấy ở
+    đầu chương), không thì tên file ("01.txt" -> "Chương 1")."""
     from .webui.humanize import chapter_title
 
+    text = _clean_text(decode_text_bytes(path.read_bytes()))
+    first = next((line.strip() for line in text.split("\n") if line.strip()), "")
+    return Chapter(first if is_heading_line(first) else chapter_title(path.stem), text)
+
+
+def _txt_folder(folder: Path) -> ImportedBook:
     files = discover_txt_files(folder)  # đúng luật của Studio: các .txt nằm ngay trong thư mục, xếp tên tự nhiên
     if not files:
         raise ImportFailed("Thư mục này không có file .txt nào nằm ngay bên trong")
-    chapters = [Chapter(chapter_title(file.stem), _clean_text(decode_text_bytes(file.read_bytes()))) for file in files]
-    return ImportedBook(title=folder.resolve().name, chapters=chapters, text_has_title=True)
+    return ImportedBook(title=folder.resolve().name, chapters=[_txt_chapter(file) for file in files], text_has_title=True)
 
 
 def _txt_file(path: Path) -> ImportedBook:
-    from .webui.humanize import chapter_title
-
-    chapter = Chapter(chapter_title(path.stem), _clean_text(decode_text_bytes(path.read_bytes())))
-    return ImportedBook(title=path.stem, chapters=[chapter], text_has_title=True)
+    return ImportedBook(title=path.stem, chapters=[_txt_chapter(path)], text_has_title=True)
 
 
 # --- XML an toàn -------------------------------------------------------------------------------------------------------
+
+_XML_ENTITIES = {"amp", "lt", "gt", "quot", "apos"}
+_NAMED_ENTITY = re.compile(rb"&([A-Za-z][A-Za-z0-9]{0,31});")
+
+
+def _html_entities_as_numbers(raw: bytes) -> bytes:
+    """Mục lục / NCX hay mang thực thể HTML (`&nbsp;`) mà XML không biết - ElementTree sẽ coi cả cuốn là hỏng. Đổi chúng thành số
+    (`&#160;`) trước khi đọc, như bộ đọc thẻ của bản Kotlin vẫn hiểu chúng. Tên lạ thì để nguyên (vẫn là file hỏng)."""
+    def numeric(match: re.Match[bytes]) -> bytes:
+        name = match.group(1).decode("ascii")
+        value = None if name in _XML_ENTITIES else html.entities.html5.get(f"{name};")
+        return match.group(0) if value is None else "".join(f"&#{ord(char)};" for char in value).encode("ascii")
+
+    return _NAMED_ENTITY.sub(numeric, raw) if b"&" in raw else raw
+
 
 def _xml(raw: bytes, kind: str = "EPUB") -> ElementTree.Element:
     head = raw[:4096].decode("utf-8", errors="replace")
     if "<!ENTITY" in head.upper():
         raise ImportFailed("có nội dung XML lạ (khai báo entity) - không mở để giữ an toàn máy")
     try:
-        return ElementTree.fromstring(raw)
+        return ElementTree.fromstring(_html_entities_as_numbers(raw))
     except ElementTree.ParseError as error:
         raise ImportFailed(BROKEN.format(kind=kind)) from error
 
@@ -354,6 +388,7 @@ def _epub(path: Path) -> ImportedBook:
         cover = _epub_cover(book, opf, manifest)
         if cover:
             result.cover_bytes, result.cover_type = cover
+        images = short = 0  # trang chỉ có ảnh, mục rất ngắn: một ghi chú đếm, không kể tên file trong gói
         for itemref in spine.iterfind("opf:itemref", NS):
             if itemref.get("linear", "yes") == "no":
                 continue
@@ -364,12 +399,12 @@ def _epub(path: Path) -> ImportedBook:
             lines, heading = page.lines, page.heading
             listed = titles.get(href, "")
             if not lines and page.images:
-                result.notes.append(f"Bỏ qua trang chỉ có ảnh: {posixpath.basename(href)}")
+                images += 1
                 continue
             if not lines:
                 continue
             if sum(len(line) for line in lines) < MIN_CHARS and not listed:
-                result.notes.append(f"Bỏ qua mục rất ngắn (bìa, trang bản quyền?): {posixpath.basename(href)}")
+                short += 1
                 continue
             title = listed or heading or lines[0][:80]
             first = lines[0].casefold()
@@ -380,6 +415,10 @@ def _epub(path: Path) -> ImportedBook:
             elif heading and first == heading.casefold() and title.casefold() in first:
                 title, lines = lines[0], lines[1:]
             result.chapters.append(Chapter(title, "\n\n".join(lines)))
+        if images:
+            result.notes.append(f"Bỏ qua {images} trang chỉ có ảnh.")
+        if short:
+            result.notes.append(f"Bỏ qua {short} mục rất ngắn (bìa, trang bản quyền?).")
         return result
 
 
@@ -445,10 +484,16 @@ def _docx(path: Path) -> ImportedBook:
         raise ImportFailed(BROKEN.format(kind="DOCX"))
     sections: list[tuple[str | None, list[str]]] = [(None, [])]  # (tên chương theo kiểu Heading, các đoạn)
     book_title: str | None = None
+    toc_lines = 0
     for paragraph in _docx_paragraphs(body):
         style_node = paragraph.find(f"{W}pPr/{W}pStyle")
         style_id = style_node.get(f"{W}val", "") if style_node is not None else ""
         style = styles.get(style_id, style_id.casefold())
+        if TOC_STYLE.fullmatch(style):
+            # Mục lục Word tự sinh (kiểu "toc 1".."toc 9"): không phải chữ của truyện, và dòng "Chương N … 3" của nó sẽ bị
+            # nhận nhầm là tiêu đề chương.
+            toc_lines += 1
+            continue
         for line in _docx_text(paragraph):
             line = _words(line)
             if not line:
@@ -460,9 +505,12 @@ def _docx(path: Path) -> ImportedBook:
                     book_title = line
                 sections[-1][1].append(line)
     result = ImportedBook(title=meta_title or book_title or path.stem, author=meta_author, language=meta_language)
+    if toc_lines:
+        result.notes.append(f"Bỏ qua mục lục của tài liệu ({toc_lines} dòng).")
     if len(sections) == 1:
         # Không có kiểu Heading: tách theo dòng "Chương N" (như PDF).
-        result.chapters, result.notes = _split_on_headings(sections[0][1], result.title)
+        result.chapters, notes = _split_on_headings(sections[0][1], result.title)
+        result.notes += notes
         return result
     for title, paragraphs in sections:
         if title is None:
@@ -544,6 +592,7 @@ def _strip_running(pages: list[list[str]]) -> tuple[list[list[str]], list[str]]:
             counts[key] = counts.get(key, 0) + 1
     repeated = {key for key, seen in counts.items() if len(pages) >= RUNNING_MIN_PAGES and seen >= 3 and seen * 5 >= len(pages) * 2}
     removed: list[str] = []
+    noted: set[str] = set()  # một ghi chú cho mỗi dòng lặp, dù số trang trong nó đổi theo trang
     result: list[list[str]] = []
     for lines, zone in zip(pages, zones):
         drop = set()
@@ -552,9 +601,11 @@ def _strip_running(pages: list[list[str]]) -> tuple[list[list[str]], list[str]]:
             if is_heading_line(line):
                 continue
             edge = index in (zone[0], zone[-1])
-            if _running_key(line) in repeated or (edge and _PAGE_NUMBER.match(line)):
+            key = _running_key(line)
+            if key in repeated or (edge and _PAGE_NUMBER.match(line)):
                 drop.add(index)
-                if line not in removed and not _PAGE_NUMBER.match(line) and len(removed) < 5:
+                if key not in noted and not _PAGE_NUMBER.match(line) and len(removed) < 5:
+                    noted.add(key)
                     removed.append(line)
         result.append([line for index, line in enumerate(lines) if index not in drop])
     return result, removed
@@ -634,7 +685,7 @@ def import_pdf_pages(pages: list[list[str]], stem: str, title: str = "", author:
         raise ImportFailed(BROKEN.format(kind="PDF"))
     chars = sum(len(line) for lines in pages for line in lines)
     if chars < SCAN_CHARS_PER_PAGE * len(pages):
-        raise ImportFailed("PDF scan, cần OCR: file chỉ có ảnh của trang, không có lớp chữ - ABook chưa đọc được loại này")
+        raise ImportFailed("PDF này là ảnh chụp, chưa có chữ để đọc.")
     result = ImportedBook(title=title or stem, author=author or None)
     empty = sum(1 for lines in pages if not any(lines))
     if empty:

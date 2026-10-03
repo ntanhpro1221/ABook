@@ -77,11 +77,26 @@ object ReadAloud {
 
     private var cache: ClipCache? = null
 
+    /** Bộ đệm đoạn dùng chung cho nghe và "Làm trước" (PrepareAhead.kt); danh sách đoạn ghim nằm ngoài thư mục cache. */
     @Synchronized
-    private fun cache(): ClipCache = cache ?: run {
+    internal fun cache(): ClipCache = cache ?: run {
         val ctx = context ?: throw VoiceException("Chưa khởi động")
-        ClipCache(File(ctx.cacheDir, "readaloud")).also { cache = it }
+        ClipCache(File(ctx.cacheDir, "readaloud"), pinFile = File(ctx.filesDir, "readaloud-pins.txt")).also { cache = it }
     }
+
+    private var speeds: VoiceSpeeds? = null
+
+    /** Tốc độ đo được của từng giọng (ước thời gian "Làm trước"). */
+    @Synchronized
+    internal fun speeds(): VoiceSpeeds = speeds ?: run {
+        val ctx = context ?: throw VoiceException("Chưa khởi động")
+        VoiceSpeeds(File(ctx.filesDir, "readaloud-speeds.json")).also { speeds = it }
+    }
+
+    /** Số đoạn của người đang nghe đang được đọc: "Làm trước" đứng chờ khi khác 0 (nghe trực tiếp đi trước). */
+    private val live = java.util.concurrent.atomic.AtomicInteger()
+
+    fun liveJobs(): Int = live.get()
 
     @Synchronized
     private fun reader(): ClipReader = reader ?: run {
@@ -112,7 +127,10 @@ object ReadAloud {
     private fun notice(message: String) = Playback.onMain { noticeListeners.toList().forEach { runCatching { it(message) } } }
 
     /** "Thử giọng" (Cài đặt): đúng giọng này đọc `text` (qua bộ đệm), trả file âm thanh. Chạy ở luồng nền. */
-    fun sample(id: String, text: String): File = reader().readExactly(text, id).file
+    fun sample(id: String, text: String): File = readExactly(id, text).file
+
+    /** Đúng giọng này, không rơi sang giọng khác ("Thử giọng", "Làm trước"); qua bộ đệm. Chạy ở luồng nền. */
+    fun readExactly(id: String, text: String): Clip = reader().readExactly(text, id)
 
     // ---- giọng ----------------------------------------------------------------------------------------------
 
@@ -238,13 +256,21 @@ object ReadAloud {
         feedSegment = 0
     }
 
+    /** Dòng người nghe bỏ khỏi phần đọc của một chương (`skip` của book.json đã áp lớp sửa) - màn đọc bỏ đúng các dòng này. */
+    private fun skipOf(manifest: org.json.JSONObject?, chapterId: Int): List<String> {
+        val array = manifest?.optJSONArray("chapters") ?: return emptyList()
+        val skip = (0 until array.length()).mapNotNull { array.optJSONObject(it) }.firstOrNull { it.optInt("id") == chapterId }?.optJSONArray("skip")
+            ?: return emptyList()
+        return (0 until skip.length()).map { skip.getString(it) }
+    }
+
     private fun chapFor(index: Int): Chap? {
         chaps[index]?.let { return it }
         val chapter = chapters().getOrNull(index) ?: return null
         if (!chapter.isText) return null
         return try {
             val text = Store.file(Playback.bookId, chapter.text).readText(Charsets.UTF_8)
-            Chap(index, Paragraphs.of(text)).also {
+            Chap(index, Paragraphs.of(Paragraphs.withoutLines(text, skipOf(Store.manifest(Playback.bookId), chapter.id)))).also {
                 fromCache(it)
                 chaps[index] = it
             }
@@ -391,8 +417,20 @@ object ReadAloud {
         val text = chap.paragraphs[segment]
         val voice = voiceId
         inFlight = true
+        live.incrementAndGet()
         worker.execute {
-            val result = runCatching { reader().read(text, voice) }
+            val began = System.nanoTime()
+            val result = try {
+                runCatching { reader().read(text, voice) }
+            } finally {
+                live.decrementAndGet()
+            }
+            result.getOrNull()?.let { clip ->
+                // Người nghe đã tới đoạn này: đoạn làm trước thôi được ghim. Đọc thật (không phải lấy từ bộ đệm) bằng đúng giọng đã chọn thì ghi tốc độ.
+                runCatching { cache().unpin(clip.voice, text) }
+                val seconds = (System.nanoTime() - began) / 1e9
+                if (clip.voice == voice && seconds * 1000 > PrepareRunner.CACHED_MS) runCatching { speeds().record(voice, text.length, seconds) }
+            }
             Playback.onMain { onClipReady(token, chap, segment, result) }
         }
     }
@@ -601,14 +639,28 @@ object ReadAloud {
     }
 
     /** Chương của một cuốn không đang nạp: chữ từ gói sách, mốc từ bộ nhớ đệm (nếu đoạn đã từng được đọc bằng giọng đang chọn). */
-    private fun peek(bookId: String, chapterId: Int): Chap? {
-        return try {
-            val array = Store.manifest(bookId)?.optJSONArray("chapters") ?: return null
-            val chapter = (0 until array.length()).map { array.getJSONObject(it) }.firstOrNull { it.optInt("id") == chapterId } ?: return null
-            val entry = chapter.optString("text").takeIf { it.startsWith("texts/") } ?: return null
-            Chap(-1, Paragraphs.of(Store.file(bookId, entry).readText(Charsets.UTF_8))).also(::fromCache)
-        } catch (error: Exception) {
-            null
+    private fun peek(bookId: String, chapterId: Int): Chap? =
+        textChapters(bookId, listOf(chapterId))[chapterId]?.let { Chap(-1, it.second).also(::fromCache) }
+
+    /**
+     * Các chương chỉ-có-chữ `ids` của một cuốn trên máy: mã -> (tên chương người nghe thấy, các đoạn đúng như lúc nghe). Chương không có chữ hay không đọc được
+     * thì không có trong kết quả. Không cần cuốn đang nạp ("Làm trước" chạy cả khi app đã đóng).
+     */
+    fun textChapters(bookId: String, ids: List<Int>): Map<Int, Pair<String, List<String>>> {
+        val manifest = runCatching { Store.manifest(bookId) }.getOrNull()
+        val array = manifest?.optJSONArray("chapters") ?: return emptyMap()
+        val wanted = ids.toSet()
+        val out = HashMap<Int, Pair<String, List<String>>>()
+        for (chapter in (0 until array.length()).map { array.getJSONObject(it) }) {
+            val id = chapter.optInt("id")
+            if (id !in wanted) continue
+            val entry = chapter.optString("text").takeIf { it.startsWith("texts/") } ?: continue
+            // Các dòng người nghe đã bỏ khỏi phần đọc (khoá `skip`) cũng bỏ ở đây: đoạn phải chia đúng như lúc nghe.
+            val paragraphs = runCatching {
+                Paragraphs.of(Paragraphs.withoutLines(Store.file(bookId, entry).readText(Charsets.UTF_8), skipOf(manifest, id)))
+            }.getOrNull() ?: continue
+            out[id] = chapter.optString("title") to paragraphs
         }
+        return out
     }
 }
