@@ -29,6 +29,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   không còn bị đọc như một chương, file TXT trống được nói ra thay vì lặng lẽ biến mất, PDF chụp từ máy quét báo "PDF này là ảnh chụp, chưa
   có chữ để đọc." Máy tính và điện thoại đọc cùng một file ra cùng một cuốn (kể cả EPUB viết chữ có dấu bằng mã HTML, file Word lưu bằng
   công cụ khác Word, tên chương rất dài trên điện thoại). Nhập cuốn hơn nghìn chương nhanh gấp đôi.
+  EPUB gói nhiều chương trong một file (mục lục trỏ vào từng đoạn của file ấy) giờ tách đúng thành từng chương theo mục lục, thay vì gộp
+  thành một chương dài mang tên chương đầu. Trên điện thoại, bước xem trước không tự bật bàn phím che mất nút "Thêm vào thư viện".
 
 - **Nghe ngay: file TXT mỗi dòng một đoạn không còn dồn cả chương thành một đoạn (máy tính và điện thoại)**: file chỉ có một dòng trống
   (sau tên chương) trước đây bị đọc như một đoạn khổng lồ - chờ rất lâu mới có tiếng, có khi không đọc được. Nay mỗi dòng là một đoạn.
@@ -39,7 +41,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   đứng ở đầu chương ấy chờ bạn bấm phát); mất mạng thì đoạn ấy chuyển sang giọng của máy (Windows hay Android) mà không dừng.
   Màn đọc sáng đoạn và từng chữ đang đọc như "Đọc to" của Edge; bấm vào chữ nào thì đọc từ đúng chữ ấy. Đọc trước vài đoạn nên không
   phải chờ giữa các đoạn, đoạn đã đọc được giữ lại để nghe lại không cần mạng. Tốc độ, hẹn giờ ngủ, nhớ chỗ đang nghe như
-  sách nói; trên điện thoại tắt màn hình vẫn đọc tiếp và tự sang chương sau, điều khiển được ở màn hình khoá và tai nghe.
+  sách nói; trên điện thoại tắt màn hình vẫn đọc tiếp và tự sang chương sau, điều khiển được ở màn hình khoá và tai nghe, thanh tiến
+  độ trong thông báo kéo được theo cả chương. Giọng sang chương sau thì màn đọc đang mở chương ấy cũng sang theo. Đọc hết cuốn rồi bấm
+  Phát ở màn hình khoá là nghe lại từ đầu, như nút "Nghe lại" trong app.
 
 - **Giọng VieNeu: nghe ngay bằng giọng hay mà không cần mạng (máy tính)**: Cài đặt → Giọng đọc có mục "Giọng VieNeu" để tải thêm giọng VieNeu
   đọc ngay trên máy - chữ của sách không rời khỏi máy. Chọn Giọng VieNeu (25 giọng, âm thanh 48 kHz), Giọng VieNeu Nano (11 giọng, nhẹ
