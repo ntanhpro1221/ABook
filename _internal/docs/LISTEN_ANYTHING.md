@@ -112,6 +112,33 @@ does, where the voice gives word timings - Edge TTS (WordBoundary events with of
   `scripts/<n>.json` lines[i].words = [[start_ms, end_ms], ...] per word. Existing books get it by re-packing on a
   Studio machine.
 
+### Word timings - measured 03-10 (research in D:/Novels/LLM_Train/word_align)
+
+Ground truth: Edge TTS word boundaries (HoaiMy + NamMinh, 60 own sentences, 1,696 words; Edge's starts run ~100 ms early
+because of MP3 codec delay - one constant offset learned per method). CPU Ryzen 9 8945HX.
+
+| method | size | s per audio-min (4 thr) | starts within 100 ms |
+|---|---|---|---|
+| spread over syllables, no pause detection | 0 | 0.01 | 56% |
+| spread over syllables + energy pauses | 0 | 0.01 | 93% (Edge), ~70% vs CTC on VieNeu |
+| CTC wav2vec2 base Vietnamese, ONNX int8 | 122 MB | 1.3 (4.2 on 1 thread) | 99% (median 15 ms) |
+| MMS_FA multilingual, ONNX int8 | 355 MB | 2.4 | 99% (no better) |
+
+All base CTC models tie; large/MMS add nothing; int8 loses nothing. On VieNeu audio two different CTC models agree within
+20 ms (p90), CTC adds ~110 ms per 5 s sentence (~13% of synthesis time).
+
+Decision:
+- Aligner: `dragonSwing/wav2vec2-base-vietnamese` (Apache-2.0), ONNX int8, 122 MB. Feed it the TTS's normalised text and
+  map back to the displayed tokens; a word ends where the next starts.
+- Studio books (case B): align each line inside its known span at pack time on the desktop (~13 CPU-minutes per 10-hour
+  book), store word timings in the `.abook`, so every player just reads them. Fallback: spread + energy pauses.
+- Listen now with VieNeu on desktop (case A): show spread + energy pauses at once, swap in CTC timings when ready.
+- Phone: streaming from a computer gets timings from it; local VieNeu uses spread + pauses (~70% within 100 ms), with the
+  122 MB aligner as an optional part of the VieNeu module (estimated 10-17 s per audio-min on a phone, not measured).
+- Edge TTS and the device voice give word timings themselves.
+- Side benefit: the same CTC output gives an 8.6% syllable error rate on VieNeu audio - a free check for skipped or
+  mispronounced words.
+
 ## 4. Music while listening
 
 No analysis means no scene moods, so the machine does not pick per scene. The user pins tracks to chapters (existing pins),
