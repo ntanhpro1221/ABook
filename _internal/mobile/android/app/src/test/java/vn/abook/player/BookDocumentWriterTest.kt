@@ -46,9 +46,9 @@ class BookDocumentWriterTest {
         return dir
     }
 
-    private fun write(dir: File, name: String): Pair<File, BookDocumentWriter.Written> {
+    private fun write(dir: File, name: String, asProject: Boolean = false): Pair<File, BookDocumentWriter.Written> {
         val target = File(work, name)
-        val written = target.outputStream().use { BookDocumentWriter.write(dir, it) }
+        val written = target.outputStream().use { BookDocumentWriter.write(dir, it, asProject) }
         return target to written
     }
 
@@ -124,7 +124,7 @@ class BookDocumentWriterTest {
             BookEditsFixtures.useStoreRoot(library)
             val imported = BookFileImport.importFile(file)
             assertTrue("$name: phần sửa còn nguyên", StrictJson.equal(edits, BookEdits.load(Store.bookDir(imported.id))))
-            val shown = (BookEdits.deepCopy(Store.manifest(imported.id)!!) as JSONObject).also { listOf("id", "edits", "wishes", "capabilities", "package").forEach(it::remove) }
+            val shown = (BookEdits.deepCopy(Store.manifest(imported.id)!!) as JSONObject).also { listOf("id", "edits", "wishes", "capabilities", "projectFile", "package").forEach(it::remove) }
             assertTrue("$name: sách người nghe thấy khớp bản Python", StrictJson.equal(BookEditsFixtures.obj("expected/$name.json").getJSONObject("manifest"), shown))
             assertEquals(imported.title, shown.getString("title"))
         }
@@ -235,7 +235,7 @@ class BookDocumentWriterTest {
         assertArrayEquals(BookEditsFixtures.bytes("edits/everything.cover.jpg"), File(Store.bookDir(imported.id), "edits/cover.jpg").readBytes())
         assertEquals("Sách của tôi", imported.title)
         assertNotNull(Store.coverFile(imported.id))
-        val shown = (BookEdits.deepCopy(Store.manifest(imported.id)!!) as JSONObject).also { listOf("id", "edits", "wishes", "capabilities", "package").forEach(it::remove) }
+        val shown = (BookEdits.deepCopy(Store.manifest(imported.id)!!) as JSONObject).also { listOf("id", "edits", "wishes", "capabilities", "projectFile", "package").forEach(it::remove) }
         assertTrue(StrictJson.equal(BookEditsFixtures.obj("expected/everything.json").getJSONObject("manifest"), shown))
         assertEquals(BookEdits.count(edits), Store.manifest(imported.id)!!.getInt("edits"))
         // và mở lại bản vừa nhập: ghi ra lần nữa vẫn đúng từng mục
@@ -291,7 +291,7 @@ class BookDocumentWriterTest {
         val dir = Store.bookDir(imported.id)
         assertTrue(StrictJson.equal(BookEdits.parse(BookEditsFixtures.bytes("edits/music_pin.json")), BookEdits.load(dir)))
         assertArrayEquals(BookEditsFixtures.bytes("track/tone.wav"), File(dir, "music/$toneSha.wav").readBytes())
-        val shown = (BookEdits.deepCopy(Store.manifest(imported.id)!!) as JSONObject).also { listOf("id", "edits", "wishes", "capabilities", "package").forEach(it::remove) }
+        val shown = (BookEdits.deepCopy(Store.manifest(imported.id)!!) as JSONObject).also { listOf("id", "edits", "wishes", "capabilities", "projectFile", "package").forEach(it::remove) }
         assertTrue(StrictJson.equal(BookEditsFixtures.obj("expected/music_pin.json").getJSONObject("manifest"), shown))
         // ghi lại bản vừa nhập: vẫn mang bài ghim
         ZipFile(write(dir, "again.abook").first).use { zip -> assertNotNull(zip.getEntry("music/$toneSha.wav")) }
@@ -342,5 +342,154 @@ class BookDocumentWriterTest {
         file.copyTo(build, overwrite = true)
         if (System.getProperty("abook.writeFixtures") == "true") file.copyTo(BookEditsFixtures.file("written/kotlin_v4.abook"), overwrite = true)
         assertTrue(build.isFile)
+    }
+
+    // ---- file dự án .abookproj (asProject): projectfile.repack bằng ZipOutputStream ------------------------------------------
+
+    private fun projectRank(name: String) = when {
+        name == "cover.jpg" || name == "book.json" -> 0
+        name == "project/project.sqlite3" -> 1
+        listOf(".mp3", ".wav", ".jpg", ".png", ".flac", ".ogg", ".opus", ".m4a", ".zip").any { name.endsWith(it) } -> 3
+        else -> 2
+    }
+
+    /** Kiểm như `ProjectFile._validate` + `verify()` của Python: hình dạng gói, bí danh, mã băm từng mục thật, phần nghe khớp. Trả project.json. */
+    private fun verifyProject(file: File): JSONObject {
+        ZipFile(file).use { zip ->
+            val entries = zip.entries().toList()
+            assertEquals("mimetype", entries[0].name)
+            assertEquals("mimetype không nén", ZipEntry.STORED, entries[0].method)
+            assertEquals(BookFileImport.PROJECT_MIMETYPE, zip.getInputStream(entries[0]).readBytes().toString(Charsets.US_ASCII))
+            assertEquals("project.json ngay sau mimetype", "project.json", entries[1].name)
+            assertEquals("không có mục trùng", entries.size, entries.map { it.name }.toSet().size)
+            val project = JSONObject(zip.getInputStream(entries[1]).readBytes().toString(Charsets.UTF_8))
+            assertEquals("abookproj", project.getString("format"))
+            assertEquals(3, project.getInt("version"))
+            val files = project.getJSONObject("files")
+            val aliases = project.getJSONObject("aliases")
+            val rest = entries.drop(2)
+            assertEquals("danh sách file = nội dung gói + bí danh", rest.map { it.name }.toSet() + aliases.keys().asSequence().toSet(), files.keys().asSequence().toSet())
+            for (entry in rest) {
+                val bytes = zip.getInputStream(entry).readBytes()
+                assertEquals("${entry.name}: cỡ", files.getJSONObject(entry.name).getLong("size"), bytes.size.toLong())
+                assertEquals("${entry.name}: mã băm", files.getJSONObject(entry.name).getString("sha256"), sha256(bytes))
+                val stored = listOf(".mp3", ".wav", ".jpg", ".png", ".zip").any { entry.name.endsWith(it) }
+                assertEquals("${entry.name}: ${if (stored) "không nén" else "nén"}", if (stored) ZipEntry.STORED else ZipEntry.DEFLATED, entry.method)
+            }
+            assertEquals("thứ tự mục như projectfile._order", rest.map { it.name }.sortedWith(compareBy({ projectRank(it) }, { it })), rest.map { it.name })
+            for (alias in aliases.keys()) {
+                val target = aliases.getString(alias)
+                assertTrue("$alias: đích có thật trong gói", rest.any { it.name == target })
+                assertEquals("$alias: cùng cỡ + mã băm với đích", files.getJSONObject(target).toString(), files.getJSONObject(alias).toString())
+                assertTrue("$alias không nằm trong gói", rest.none { it.name == alias })
+            }
+            // phần nghe: package.files khớp project.json, mọi chương trỏ vào đó
+            val book = JSONObject(zip.getInputStream(zip.getEntry("book.json")).readBytes().toString(Charsets.UTF_8))
+            val listed = book.getJSONObject("package").getJSONObject("files")
+            assertEquals(files.keys().asSequence().filter { ProjectDocument.listeningName(it) }.toSet(), listed.keys().asSequence().toSet())
+            for (name in listed.keys()) assertEquals(files.getJSONObject(name).toString(), listed.getJSONObject(name).toString())
+            val chapters = book.optJSONArray("chapters")
+            for (i in 0 until (chapters?.length() ?: 0)) chapters!!.getJSONObject(i).optString("file").takeIf { it.isNotEmpty() }?.let { assertTrue(it in listed.keys().asSequence().toSet()) }
+            assertFalse("sách không mang mã nào", book.has("id"))
+            return project
+        }
+    }
+
+    private fun importedWorkshop(): Pair<File, String> {
+        BookEditsFixtures.useStoreRoot(BookEditsFixtures.tempDir("abook-project-lib"))
+        val imported = BookFileImport.importFile(BookEditsFixtures.file("written/python_workshop.abookproj"))
+        return Store.bookDir(imported.id) to imported.id
+    }
+
+    @Test
+    fun a_workshop_the_phone_kept_is_saved_back_byte_for_byte_with_the_same_aliases() {
+        val original = BookEditsFixtures.file("written/python_workshop.abookproj")
+        val originalProject = ZipFile(original).use { JSONObject(it.getInputStream(it.getEntry("project.json")).readBytes().toString(Charsets.UTF_8)) }
+        val (dir, _) = importedWorkshop()
+        val (file, written) = write(dir, "workshop.abookproj", asProject = true)
+        val project = verifyProject(file)
+
+        assertEquals(written.size, file.length())
+        assertEquals("present", project.getString("workshop"))
+        assertEquals(originalProject.getString("projectRoot"), project.getString("projectRoot"))
+        assertEquals(originalProject.getJSONArray("sources").toString(), project.getJSONArray("sources").toString())
+        assertEquals("bí danh y như file gốc", StrictJson.dumps(originalProject.getJSONObject("aliases").let { o -> o.keys().asSequence().sorted().associateWith { o.getString(it) } }),
+            StrictJson.dumps(project.getJSONObject("aliases").let { o -> o.keys().asSequence().sorted().associateWith { o.getString(it) } }))
+        // mọi mục (trừ book.json, có giờ đóng gói) giữ cỡ + mã băm như file gốc
+        val before = originalProject.getJSONObject("files")
+        val after = project.getJSONObject("files")
+        assertEquals(before.keys().asSequence().toSet(), after.keys().asSequence().toSet())
+        for (name in before.keys()) if (name != "book.json") assertEquals(name, before.getJSONObject(name).toString(), after.getJSONObject(name).toString())
+        ZipFile(file).use { zip ->
+            assertNotNull(zip.getEntry("views/work.json"))
+            assertNotNull(zip.getEntry("sources/00001_645.txt"))
+            assertNull("không có mục manifest.json của file .abook", zip.getEntry("manifest.json"))
+            assertNull(zip.getEntry("edits.json"))
+        }
+        File("build").mkdirs()
+        file.copyTo(File("build/kotlin_workshop.abookproj"), overwrite = true)
+    }
+
+    @Test
+    fun the_listeners_edits_ride_in_the_project_file_and_the_workshop_stays_untouched() {
+        val (dir, _) = importedWorkshop()
+        BookEdits.setTitle(dir, "Tên mới")
+        val (file, written) = write(dir, "edited.abookproj", asProject = true)
+        val project = verifyProject(file)
+        assertEquals(1, written.edits)
+        assertEquals(4, written.version)
+        val sqlite = ZipFile(BookEditsFixtures.file("written/python_workshop.abookproj")).use { it.getInputStream(it.getEntry("project/project.sqlite3")).readBytes() }
+        ZipFile(file).use { zip ->
+            assertArrayEquals(sqlite, zip.getInputStream(zip.getEntry("project/project.sqlite3")).readBytes())
+            assertNotNull(zip.getEntry("edits.json"))
+        }
+        assertEquals("Tên mới", project.getString("title"))
+        // và Saving as .abook từ cuốn này bỏ xưởng đi
+        val (book, _) = write(dir, "edited.abook")
+        ZipFile(book).use { zip -> assertTrue(zip.entries().toList().none { it.name.startsWith("project/") || it.name.startsWith("sources/") || it.name.startsWith("views/") || it.name == "project.json" }) }
+    }
+
+    @Test
+    fun a_book_from_an_abook_file_is_saved_as_a_project_waiting_for_its_workshop() {
+        val (file, written) = write(bookWith("everything"), "pending.abookproj", asProject = true)
+        val project = verifyProject(file)
+        assertEquals("pending", project.getString("workshop"))
+        assertEquals("", project.getString("projectRoot"))
+        assertEquals(0, project.getJSONArray("sources").length())
+        assertEquals(4, written.version)
+        assertTrue(project.getJSONObject("files").keys().asSequence().none { it.startsWith("project/") || it.startsWith("sources/") || it.startsWith("views/") })
+        assertEquals("Sách của tôi", project.getString("title"))
+        File("build").mkdirs()
+        file.copyTo(File("build/kotlin_pending.abookproj"), overwrite = true)
+        // Python mở được; Kotlin nhập lại ra cuốn "chờ xưởng" với phần sửa còn nguyên
+        BookEditsFixtures.useStoreRoot(BookEditsFixtures.tempDir("abook-pending-lib"))
+        val imported = BookFileImport.importFile(file)
+        assertEquals("pending", Store.manifest(imported.id)!!.getJSONObject("projectFile").getString("workshop"))
+        assertTrue(StrictJson.equal(BookEdits.parse(BookEditsFixtures.bytes("edits/everything.json")), BookEdits.load(Store.bookDir(imported.id))))
+    }
+
+    @Test
+    fun the_python_project_files_are_saved_again_without_losing_anything() {
+        BookEditsFixtures.useStoreRoot(BookEditsFixtures.tempDir("abook-project-again"))
+        val imported = BookFileImport.importFile(BookEditsFixtures.file("written/python_pending.abookproj"))
+        val (file, _) = write(Store.bookDir(imported.id), "again.abookproj", asProject = true)
+        val project = verifyProject(file)
+        assertEquals("pending", project.getString("workshop"))
+        assertEquals(4, ZipFile(file).use { JSONObject(it.getInputStream(it.getEntry("book.json")).readBytes().toString(Charsets.UTF_8)).getJSONObject("package").getInt("version") })
+    }
+
+    @Test
+    fun a_project_file_does_not_need_every_chapter_to_have_audio() {
+        // Chỗ cho các tầng sau của sách (chỉ có chữ, chưa phân vai, chưa có audio): ghi file dự án không đòi chương nào nghe được.
+        val dir = bookWith(null)
+        val book = JSONObject(File(dir, "book.json").readText())
+        val files = book.getJSONObject("package").getJSONObject("files")
+        val chapters = book.getJSONArray("chapters")
+        for (i in 0 until chapters.length()) chapters.getJSONObject(i).put("available", false).put("file", JSONObject.NULL)
+        files.remove("chapters/00001_645.mp3")
+        File(dir, "chapters/00001_645.mp3").delete()
+        File(dir, "book.json").writeText(book.toString())
+        val (file, _) = write(dir, "textonly.abookproj", asProject = true)
+        assertEquals("pending", verifyProject(file).getString("workshop"))
     }
 }

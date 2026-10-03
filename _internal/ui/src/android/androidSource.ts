@@ -109,8 +109,8 @@ export const androidSource: ListenSource = {
   },
   dismissNight: () => EbookPlayer.dismissLastNight(),
   sendEdits: (id) => EbookLibrary.sendEdits({ id }),
-  saveBook: async (id) => {
-    const reply = await EbookLibrary.saveBook({ id });
+  saveBook: async (id, options) => {
+    const reply = await EbookLibrary.saveBook({ id, as: options?.as });
     return { saved: reply.saved, file: reply.name, size: reply.size, edits: reply.edits };
   },
   records: {

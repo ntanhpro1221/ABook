@@ -22,6 +22,7 @@ object LocalStudio {
     private val CHAPTER_TITLE = Regex("/chapters/([0-9]+)/title")
     private val CHAPTER_SCRIPT = Regex("/chapters/([0-9]+)/script")
     private val CHAPTER_RETAKE = Regex("/chapters/([0-9]+)/retake")
+    private val CASTING_CHAPTER = Regex("/casting/([0-9]+)")
     private val SCENE_ALTERNATIVES = Regex("/music/scenes/([^/]+)/alternatives")
     private val MY_MUSIC = Regex("/api/music/local(?:/([0-9a-f]{40})|/(analyze))?")
     private val EDITS_ONLY_KEYS = setOf("enabled", "levelDb", "silence", "pins")
@@ -113,6 +114,9 @@ object LocalStudio {
         CHAPTER_TITLE.matchEntire(path)?.takeIf { method == "PUT" }?.let { match -> return { dir, body -> chapterTitle(dir, match.groupValues[1], body) } }
         CHAPTER_SCRIPT.matchEntire(path)?.takeIf { method == "GET" }?.let { match -> return { dir, _ -> script(dir, match.groupValues[1]) } }
         CHAPTER_RETAKE.matchEntire(path)?.takeIf { method == "POST" }?.let { match -> return { dir, _ -> chapterRetake(dir, match.groupValues[1]) } }
+        CASTING_CHAPTER.matchEntire(path)?.takeIf { method == "GET" }?.let {
+            return { _, _ -> throw Api(404, "File dự án không kèm từng câu của chương - đọc chữ trong sách") }
+        }
         SCENE_ALTERNATIVES.matchEntire(path)?.takeIf { method == "GET" }?.let { match -> return { dir, _ -> alternatives(dir, java.net.URLDecoder.decode(match.groupValues[1], "UTF-8")) } }
         return when (method to path) {
             "PUT" to "/title" -> ::title
@@ -136,6 +140,10 @@ object LocalStudio {
             "POST" to "/review" -> ::review
             "DELETE" to "/edits" -> { dir, _ -> BookEdits.clear(dir); JSONObject().put("applied", 0).put("waiting", 0) }
             "GET" to "/cast" -> { dir, _ -> BookEdits.cast(dir, BookEdits.rawBook(dir)) }
+            // Bản chụp chỉ đọc của xưởng trong file dự án (ProjectDocument.view, project_views.py): cùng JSON với đường của Studio.
+            "GET" to "/work" -> { dir, _ -> projectView(dir, "work") }
+            "GET" to "/casting" -> { dir, _ -> projectView(dir, "casting") }
+            "GET" to "/pronunciations" -> { dir, _ -> projectView(dir, "names") }
             else -> null
         }
     }
@@ -418,6 +426,10 @@ object LocalStudio {
         BookWishes.withdraw(dir, section, mine.keys.toList(), at)
         return JSONObject().put("withdrawn", mine.size)
     }
+
+    /** GET /work, /casting, /pronunciations: bản chụp trong file dự án; 404 khi cuốn không có (cuốn từ file `.abook`, hay file không kèm). */
+    private fun projectView(dir: java.io.File, name: String): Any? =
+        ProjectDocument.view(dir, name) ?: throw Api(404, "File dự án này không kèm bản chụp của màn đó")
 
     /** GET /chapters/<n>/script: chữ đọc theo đã qua lớp sửa. */
     private fun script(dir: java.io.File, chapter: String): Any? =

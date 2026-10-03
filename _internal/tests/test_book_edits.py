@@ -21,6 +21,7 @@ from abook.webui.actions import FakeRunner
 from abook.webui.bookfile import BookFile, BookFileError
 from abook.webui.library import Preferences, book_id
 from abook.webui.listening import Listening
+from abook.webui.projectfile import ProjectFile
 from abook.webui.remote_studio import permitted
 from abook.webui.server import App, Server
 from tests import book_edits_fixtures as shared
@@ -306,7 +307,11 @@ def test_saving_writes_a_version_4_file_another_computer_opens_with_the_edits(tm
     finally:
         server.stop()
     assert status == 200 and saved["edits"] == 4 and Path(saved["file"]).name == "Sách của tôi.abook"
-    assert status_proj == 409 and "dựng xưởng" in json.loads(data_proj)["error"]
+    saved_proj = json.loads(data_proj)
+    assert status_proj == 200 and Path(saved_proj["file"]).name == "Sách của tôi.abookproj" and saved_proj["edits"] == 4
+    with ProjectFile(saved_proj["file"]) as as_project:  # cuốn từ .abook -> dự án "chờ dựng xưởng"
+        as_project.verify()
+        assert as_project.workshop == "pending" and book_edits.count(as_project.edits) == 4
     with zipfile.ZipFile(saved["file"]) as archive:
         first = archive.infolist()[0]
         assert (first.filename, first.compress_type) == ("mimetype", zipfile.ZIP_STORED)

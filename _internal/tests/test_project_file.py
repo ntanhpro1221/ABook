@@ -248,34 +248,51 @@ def test_the_project_file_carries_the_listening_layer_of_the_book(tmp_path: Path
         names = set(archive.namelist())
         book = json.loads(archive.read("book.json"))
         sizes = {info.filename: info.file_size for info in archive.infolist()}
-    assert {"book.json", "cast.json", "cover.jpg", "scripts/1.json", "samples/3.wav"} <= names
+    assert {"book.json", "cast.json", "cover.jpg", "scripts/1.json", "samples/3.wav", "chapters/00001_645.mp3"} <= names
     assert book["package"]["format"] == "abook" and book["package"]["version"] == 1 and "id" not in book
     [chapter] = [item for item in book["chapters"] if item["file"]]
     assert chapter["id"] == 1 and chapter["available"] and chapter["script"] == "scripts/1.json"
-    assert chapter["file"] == "project/output/chapters/00001_645.mp3", "audio ở chỗ nó đã nằm trong gói"
+    assert chapter["file"] == "chapters/00001_645.mp3", "đúng tên mục của file .abook"
     assert [item["available"] for item in book["chapters"]] == [True, False] and book["chaptersAvailable"] == 1
     listed = book["package"]["files"]
-    assert {"project/output/chapters/00001_645.mp3", "cast.json", "scripts/1.json", "scripts/2.json", "samples/3.wav",
+    assert {"chapters/00001_645.mp3", "cast.json", "scripts/1.json", "scripts/2.json", "samples/3.wav",
             "cover.jpg"} == set(listed), "chữ đọc theo của cả chương chưa xong - như file .abook"
-    assert all(listed[name]["size"] == sizes[name] for name in listed)
+    assert all(listed[name]["size"] == sizes.get(name, listed[name]["size"]) for name in listed)
     with ProjectFile(packed) as opened:
         opened.verify()
-        assert opened.listenable
+        assert opened.listenable and opened.workshop == "present"
         assert {name: opened.manifest["files"][name] for name in listed} == listed, "một bảng mã băm, không tính hai lần"
 
 
-def test_a_chapters_audio_is_stored_once(tmp_path: Path) -> None:
-    project = _project(tmp_path)
+def test_no_byte_of_audio_is_stored_twice(tmp_path: Path) -> None:
+    project = _with_cover(_project(tmp_path))
     packed = projectfile.pack(project, tmp_path / "du_an.abookproj")
     audio = (project / "output" / "chapters" / "00001_645.mp3").read_bytes()
     with zipfile.ZipFile(packed) as archive:
-        mp3 = [name for name in archive.namelist() if name.endswith(".mp3")]
-        assert mp3 == ["project/output/chapters/00001_645.mp3"] and not any(
-            name.startswith("chapters/") for name in archive.namelist())
-        assert archive.read(mp3[0]) == audio
-        assert archive.getinfo(mp3[0]).compress_type == zipfile.ZIP_STORED, "phát và tua thẳng trong gói"
-        copies = [name for name in archive.namelist() if archive.read(name) == audio]
-    assert copies == mp3, "không có bản chép thứ hai của audio"
+        names = archive.namelist()
+        assert [name for name in names if name.endswith(".mp3")] == ["chapters/00001_645.mp3"], "chỉ mục của phần nghe nằm thật"
+        assert archive.read("chapters/00001_645.mp3") == audio
+        assert archive.getinfo("chapters/00001_645.mp3").compress_type == zipfile.ZIP_STORED, "phát và tua thẳng trong gói"
+        contents = [archive.read(name) for name in names if name.lower().endswith((".mp3", ".wav", ".jpg"))]
+        assert len(contents) == len(set(contents)), "không có hai mục media cùng byte"
+        assert "samples/3.wav" in names and "project/work/s3.wav" not in names and "project/cover.jpg" not in names
+    with ProjectFile(packed) as opened:
+        assert opened.aliases == {"project/cover.jpg": "cover.jpg", "project/output/chapters/00001_645.mp3":
+                                  "chapters/00001_645.mp3", "project/work/s3.wav": "samples/3.wav"}
+        meta = opened.manifest["files"]
+        assert all(meta[alias] == meta[target] for alias, target in opened.aliases.items()), "bí danh có cỡ + mã băm như mục thật"
+        assert opened.read("project/work/s3.wav") == opened.read("samples/3.wav")
+        opened.verify()
+
+
+def test_opening_as_a_project_puts_every_alias_back_where_the_project_had_it(tmp_path: Path) -> None:
+    project = _with_cover(_project(tmp_path))
+    packed = projectfile.pack(project, tmp_path / "du_an.abookproj")
+    with ProjectFile(packed) as opened:
+        target, _ = opened.open_into(tmp_path / "may_moi")
+    for relative in ("output/chapters/00001_645.mp3", "work/s3.wav", "cover.jpg"):
+        assert (target / relative).read_bytes() == (project / relative).read_bytes()
+    assert not (target / "chapters").exists() and not (target / "samples").exists(), "phần nghe không giải ra khi mở thành dự án"
 
 
 def test_the_project_file_carries_the_background_music(tmp_path: Path) -> None:
