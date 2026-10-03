@@ -47,7 +47,39 @@ class MusicStore(
     private val lock = Any()
     private var index: LinkedHashMap<String, JSONObject>? = null
 
+    /** Mã của model đang cắm ([MusicStudentSetup.modelId]); ghi cạnh mỗi kết quả phân tích để biết bài nào do bản model cũ phân tích. */
+    @Volatile
+    var analyzerId: String? = null
+
     fun analyzerAvailable(): Boolean = analyzer != null
+
+    /** Số bài đã phân tích bằng một bản model khác bản đang cắm (mới tải về): kết quả cũ vẫn dùng được, người dùng tự quyết có phân tích lại không. */
+    fun staleCount(): Int = synchronized(lock) {
+        val current = analyzerId
+        if (analyzer == null || current == null) 0 else tracks().values.count { it.optJSONObject("analysis") != null && it.optString("by") != current }
+    }
+
+    /** Phân tích lại các bài [staleCount] đếm bằng bản model đang cắm. Chỉ gọi khi người dùng bấm - không bao giờ tự chạy sau khi cập nhật. */
+    fun reanalyseStale(): Int {
+        val current = analyzerId ?: return 0
+        val stale = synchronized(lock) {
+            tracks().mapNotNull { (digest, entry) ->
+                path(digest, entry).takeIf { entry.optJSONObject("analysis") != null && entry.optString("by") != current && it.isFile }?.let { digest to it }
+            }
+        }
+        var done = 0
+        for ((digest, file) in stale) {
+            val result = analyze(file) ?: continue // không phân tích được thì giữ kết quả cũ
+            synchronized(lock) {
+                tracks()[digest]?.let { entry ->
+                    entry.put("analysis", result).put("by", current)
+                    save()
+                    done++
+                }
+            }
+        }
+        return done
+    }
 
     // ---- sổ -----------------------------------------------------------------------------------------------------------
 
@@ -190,6 +222,7 @@ class MusicStore(
                     .put("artist", (found.artist ?: "").take(TAG_MAX)).put("album", (found.album ?: "").take(TAG_MAX))
                     .put("genre", (found.genre ?: "").take(TAG_MAX)).put("analysis", analysis ?: JSONObject.NULL)
                     .put("lufs", lufs ?: JSONObject.NULL)
+                if (analysis != null) entry.put("by", analyzerId ?: "")
                 tracks()[sha] = entry
                 save()
                 return info(sha, entry) to false
@@ -223,7 +256,7 @@ class MusicStore(
             val result = analyze(file) ?: continue
             synchronized(lock) {
                 tracks()[digest]?.let { entry -> // bài có thể đã bị xoá trong lúc phân tích
-                    entry.put("analysis", result)
+                    entry.put("analysis", result).put("by", analyzerId ?: "")
                     save()
                     done++
                 }

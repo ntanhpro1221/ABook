@@ -15,10 +15,11 @@ Hai đường chạy, cùng một cách cắt cửa sổ và cùng khoá đầu 
 Chọn tự động: torch nếu đủ torch + transformers + librosa, không thì onnx nếu đủ numpy + onnxruntime, không thì không có bộ phân tích.
 ABOOK_MUSIC_STUDENT_BACKEND=onnx|torch ép một đường (bài thử trên máy có cả hai).
 
-Gói model (~55 MB torch, ~59 MB onnx) nằm trên Hugging Face, ghim theo commit và SHA-256 từng file; tải một lần (HTTPS thuần, qua
-studio_setup.download: .part, kiểm băm, rồi mới đổi tên) vào thư mục dữ liệu của app khi bài đầu tiên cần phân tích. Chưa có gói /
-không có mạng / thiếu thư viện -> `analyze` trả None và bài ở trạng thái "chưa phân tích": KHÔNG BAO GIỜ bịa số. Biến môi trường
-ABOOK_MUSIC_STUDENT_DIR trỏ tới một thư mục gói có sẵn (bài thử, máy không mạng).
+Gói model (~55 MB torch, ~59 MB onnx) nằm trên Hugging Face, ghim theo commit và SHA-256 từng file. Nó là MỘT phần của mô-đun
+"Phân tích nhạc" (music_module.py): người dùng bấm thì mới tải (HTTPS thuần, qua studio_setup.download: .part, kiểm băm, rồi mới đổi
+tên) vào thư mục dữ liệu của app - không bao giờ tự tải, kể cả lúc nhập nhạc. Chưa có gói / thiếu thư viện -> `analyze` trả None và bài
+ở trạng thái "chưa phân tích": KHÔNG BAO GIỜ bịa số. Biến môi trường ABOOK_MUSIC_STUDENT_DIR trỏ tới một thư mục gói có sẵn (bài thử,
+máy không mạng).
 """
 from __future__ import annotations
 
@@ -32,11 +33,11 @@ from typing import Any
 from . import music_plan
 
 REPO_ID = "NGDtuanh/abook-music-student"
-# Đường tải luôn ghim cứng một commit (như studio_setup.py). Trống thì app KHÔNG tải gì, chỉ dùng gói đã có sẵn trong thư mục /
+# Đường tải luôn ghim cứng một commit (như studio_setup.py). Trống thì mô-đun KHÔNG tải gói model, chỉ dùng gói đã có sẵn trong thư mục /
 # ABOOK_MUSIC_STUDENT_DIR. 03-10: gói đầu c6e1485f (tháp âm thanh CLAP fp16 + đầu trò, 97,4% AUC thầy - docs/MUSIC_RESEARCH.md);
-# 60e11bce thêm đường ONNX (tháp .onnx + đầu A). Bốn file của đường torch ở hai commit trùng từng byte (oid git bằng nhau), nên
+# 60e11bce thêm đường ONNX (tháp .onnx + đầu A); aaa54805 thêm thư viện ONNX Runtime của điện thoại (ort/1.30.0/<abi>/*.so.gz). Các file model ở ba commit trùng từng byte (oid git bằng nhau), nên
 # một ghim cho cả hai đường.
-REVISION = "60e11bce3426f52330b744ba74cf1cbc53b1c9a1"
+REVISION = "aaa548055d8f9f2a6093a9680f65fdf94bf8e0ce"
 # Mỗi đường cần những file nào; chung preprocessor_config.json (torch đọc, onnx kiểm music_mel còn đúng cấu hình đã chép).
 PACKAGE_FILES = {
     "torch": ("model.safetensors", "config.json", "preprocessor_config.json", "student_head.npz"),
@@ -55,7 +56,7 @@ ENV_DIR = "ABOOK_MUSIC_STUDENT_DIR"
 ENV_BACKEND = "ABOOK_MUSIC_STUDENT_BACKEND"  # "onnx" | "torch" = ép đường ấy; trống = tự chọn
 ENV_DOWNLOAD = "ABOOK_MUSIC_STUDENT_DOWNLOAD"  # "0" = không bao giờ tải (bộ kiểm đặt sẵn, như ABOOK_CAST_DISCOVERY)
 PACKAGE_FOLDER = "student"
-RETRY_SECONDS = 600  # tải / nạp hỏng thì chừng ấy giây sau mới thử lại (nhập 40 bài không làm 40 lượt gọi mạng)
+RETRY_SECONDS = 600  # nạp hỏng thì chừng ấy giây sau mới thử lại (nhập 40 bài không làm 40 lượt nạp hỏng)
 CLAP_RATE = 48_000
 CLAP_WINDOW = 10  # giây
 CLAP_MIN = 3  # cửa sổ ngắn hơn 3 giây bị bỏ
@@ -89,6 +90,15 @@ def package_dir() -> Path | None:
     return Path(override) if override else _directory
 
 
+def planned_backend() -> str:
+    """Đường chạy mô-đun "Phân tích nhạc" sẽ dùng trên máy này, kể cả khi thư viện của nó CHƯA tải: torch nếu máy có đủ torch + transformers
+    + librosa (Studio), không thì onnx. ABOOK_MUSIC_STUDENT_BACKEND ép một đường."""
+    forced = os.environ.get(ENV_BACKEND, "").strip().lower()
+    if forced in _DEPENDENCIES:
+        return forced
+    return "torch" if all(importlib.util.find_spec(module) is not None for module in _DEPENDENCIES["torch"]) else "onnx"
+
+
 def backend() -> str | None:
     """Đường chạy của máy này ("torch" / "onnx"), None nếu thiếu thư viện cho cả hai. ABOOK_MUSIC_STUDENT_BACKEND ép một đường
     (thiếu thư viện của đường ép thì None, không rơi sang đường kia)."""
@@ -99,8 +109,38 @@ def backend() -> str | None:
     return None
 
 
-def _may_download() -> bool:
-    return bool(REVISION) and not os.environ.get(ENV_DIR) and os.environ.get(ENV_DOWNLOAD, "1") != "0"
+def cannot_download() -> str:
+    """Rỗng nếu mô-đun được phép tải gói model; không thì lý do (tiếng Việt)."""
+    if os.environ.get(ENV_DOWNLOAD, "1") == "0":
+        return "tải bộ phân tích nhạc đang bị tắt trên máy này"
+    if os.environ.get(ENV_DIR):
+        return "thư mục gói model đã được chỉ định sẵn trên máy này"
+    if not REVISION:
+        return "chưa có bản model để tải"
+    return ""
+
+
+def model_downloads(name: str | None = None) -> list[Any]:
+    """Các file của gói model cho đường chạy `name` (mặc định: đường đã định), mỗi file một `studio_setup.Download` ghim cứng."""
+    from . import studio_setup
+
+    name = name or planned_backend()
+    return [studio_setup.Download(file, f"https://huggingface.co/{REPO_ID}/resolve/{REVISION}/{file}", *PACKAGE_HASHES[file])
+            for file in PACKAGE_FILES[name]]
+
+
+def model_pin(name: str | None = None) -> str:
+    """Mã ghim của gói model: đổi khi REVISION hay SHA-256 của bất kỳ file nào của đường chạy đổi. Mô-đun ghi nó lúc tải để biết gói đã tải
+    có còn là bản app này ghim không (cùng tên file, cùng cỡ vẫn có thể là model khác)."""
+    import hashlib
+
+    name = name or planned_backend()
+    return hashlib.sha256("\n".join([REVISION, name, *(f"{file} {PACKAGE_HASHES[file][0]}" for file in PACKAGE_FILES[name])]).encode()).hexdigest()
+
+
+def model_id() -> str:
+    """Mã ngắn của bản model: ghi cạnh mỗi kết quả phân tích để biết bài nào do bản model cũ phân tích (music_local)."""
+    return model_pin()[:12]
 
 
 def _complete(directory: Path | None, name: str | None = None) -> bool:
@@ -109,12 +149,13 @@ def _complete(directory: Path | None, name: str | None = None) -> bool:
 
 
 def available() -> bool:
-    """Có thể phân tích được không: đủ thư viện của một đường VÀ (gói đã có sẵn, hay có chỗ để tải - REVISION đã ghim)."""
+    """Có thể phân tích được ngay không: đủ thư viện của một đường VÀ gói model đã có sẵn trong thư mục. Chưa có thì bài ở "chưa phân
+    tích" cho tới khi người dùng bấm "Phân tích nhạc" (music_module.py) - không bao giờ tự tải."""
     name = backend()
     if name is None:
         return False
     directory = package_dir()
-    return _complete(directory, name) or (directory is not None and _may_download())
+    return _complete(directory, name)
 
 
 def register() -> bool:
@@ -124,29 +165,9 @@ def register() -> bool:
 
     if available():
         music_local.set_analyzer(analyze)
+        music_local.set_analyzer_id(model_id())
         return True
     return False
-
-
-def _download(directory: Path) -> bool:
-    """Tải các file còn thiếu của đường chạy hiện tại về `directory`: HTTPS thuần (bản app chỉ-nghe không có huggingface_hub),
-    qua studio_setup.download (.part, kiểm SHA-256 ghi ở PACKAGE_HASHES, rồi mới đổi tên)."""
-    name = backend()
-    if not _may_download() or name is None:
-        return False
-    try:
-        from . import studio_setup
-
-        directory.mkdir(parents=True, exist_ok=True)
-        for file in PACKAGE_FILES[name]:
-            if not (directory / file).is_file():
-                sha256, size = PACKAGE_HASHES[file]
-                url = f"https://huggingface.co/{REPO_ID}/resolve/{REVISION}/{file}"
-                studio_setup.download(studio_setup.Download(file, url, sha256, size), directory / file,
-                                      lambda done, total: None, lambda: False)
-    except Exception:  # noqa: BLE001 - không mạng, nơi đăng chưa có gói, đĩa đầy, sai băm: bài chưa phân tích, không làm hỏng việc nhập
-        return False
-    return _complete(directory, name)
 
 
 # Hiệu chỉnh số của trò cho kho TRỘN (nhạc nhập lẫn nhạc danh mục có số của thầy): V/E/T của trò bị nén về giữa nên bài nhập được chọn
@@ -293,7 +314,7 @@ def _load() -> _Head | None:
         if directory is None:
             return None
         try:
-            if not _complete(directory, name) and not _download(directory):
+            if not _complete(directory, name):
                 raise FileNotFoundError("chưa có gói model")
             _student = (_Student if name == "torch" else _OnnxStudent)(directory)
         except Exception:  # noqa: BLE001 - thiếu thư viện / gói hỏng / không mạng: chưa phân tích

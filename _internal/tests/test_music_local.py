@@ -199,7 +199,8 @@ def test_the_user_imports_lists_and_removes_music_through_the_api(studio, tmp_pa
     _paths, _app, server, _runner = studio
     status, empty = _call(server, "GET", "/api/music/local")
     assert status == 200 and (empty["tracks"], empty["analyzer"]) == ([], False)
-    assert empty["reader"]["ready"] is True, "máy thử có ffmpeg sẵn: không cần tải bộ đọc nhạc"
+    assert empty["module"]["state"] in ("missing", "ready", "unsupported") and empty["module"]["stale"] == 0, "mô-đun Phân tích nhạc: một thẻ trạng thái duy nhất"
+    assert "reader" not in empty, "không còn luồng tải bộ đọc riêng"
     notes = tmp_path / "x.txt"
     notes.write_text("không", encoding="utf-8")
     first = _import(server, songs["mp3"], songs["ogg"], notes)
