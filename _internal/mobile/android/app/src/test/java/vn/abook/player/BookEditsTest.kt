@@ -74,6 +74,24 @@ class BookEditsTest {
     }
 
     @Test
+    fun the_word_timings_of_a_line_pass_through_a_rename_untouched() {
+        // `words` (mốc từng chữ, webui/word_timing.py) nằm trong từng câu của scripts/<n>.json: đổi tên người nói không được làm rơi hay đổi chúng.
+        val person = cast.getJSONArray("characters").getJSONObject(0)
+        val edits = BookEdits.validate(StrictJson.parse("""{"format": "abook-edits", "version": 1, "characters": {"${person.getString("name")}": "Tên Mới"}}"""))
+        val spoken = JSONArray("[[100, 400], [400, 900]]")
+        val narrated = JSONArray("[[0, 250]]")
+        val script = JSONObject().put("chapterId", 1).put("segments", JSONArray()
+            .put(JSONObject().put("text", "một hai").put("speaker", person.getString("displayName")).put("words", spoken))
+            .put(JSONObject().put("text", "ba").put("speaker", "").put("words", narrated))
+            .put(JSONObject().put("text", "bốn").put("speaker", "")))
+        val shown = BookEdits.applyScript(script, cast, edits, null).getJSONArray("segments")
+        assertEquals("Tên Mới", shown.getJSONObject(0).getString("speaker"))
+        assertJson("words của câu đổi tên", spoken, shown.getJSONObject(0).get("words"))
+        assertJson("words của câu không đổi", narrated, shown.getJSONObject(1).get("words"))
+        assertFalse("câu chưa căn vẫn không có words", shown.getJSONObject(2).has("words"))
+    }
+
+    @Test
     fun a_series_file_renames_its_parts_and_a_chapter_by_its_shared_id() {
         val series = BookEditsFixtures.obj("series/book.json")
         val edits = BookEdits.validate(StrictJson.parse("""{"format": "abook-edits", "version": 1, "title": "Tên khác",

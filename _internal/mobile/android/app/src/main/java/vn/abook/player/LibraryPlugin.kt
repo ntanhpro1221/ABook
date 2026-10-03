@@ -490,6 +490,7 @@ class LibraryPlugin : Plugin() {
             book.put("downloaded", local != null)
             book.put("localChapters", local?.optInt("chaptersAvailable") ?: 0)
             book.put("localCoverVersion", local?.optJSONObject("cover")?.optLong("version") ?: 0L)
+            book.put("localWordsVersion", local?.optString("wordsVersion") ?: "")
         }
         call.resolve(JSObject().put("name", reply.optString("name")).put("books", books))
         EditsSync.scheduleAllPending(context) // tới được máy tính: gửi nốt phần sửa còn tồn

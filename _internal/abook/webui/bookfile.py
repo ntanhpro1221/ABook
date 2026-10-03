@@ -63,7 +63,7 @@ from pathlib import Path
 from typing import Any, Callable, Self, Sequence
 
 from .. import continuation
-from . import book_edits, covers, music_plan, store, sync
+from . import book_edits, covers, music_plan, store, sync, word_timing
 from .fingerprints import content_key, identity_prints
 from .library import book_id
 
@@ -122,9 +122,14 @@ def default_name(title: str) -> str:
 
 def _packaged_book(project_root: Path) -> dict[str, Any]:
     """`book.json` của một dự án như điện thoại tải (`sync.manifest`), bỏ những gì là của máy này: mã (đường dẫn thư
-    mục) và mục `series` (nó mang mã của phần đầu)."""
+    mục), mục `series` (nó mang mã của phần đầu) và `wordsVersion` (dấu bộ nhớ đệm mốc chữ của máy này).
+
+    Mốc từng chữ (`words` trong từng câu, word_timing.py) được căn ở đây - lúc đóng gói, ngoài dây chuyền khoá, TRƯỚC khi hỏi manifest để
+    `version` của gói đã tính cả chúng - và nhớ theo dự án, nên đóng gói lại không căn lại; `store.chapter_script` đọc chúng. Không căn được
+    (máy chưa có Studio...) thì sách vẫn đóng gói, chỉ không có `words`."""
+    word_timing.prepare(project_root)
     book = sync.manifest(project_root, book_id(project_root), _NoListening())
-    for key in ("id", "series"):
+    for key in ("id", "series", "wordsVersion"):
         book.pop(key, None)
     return book
 

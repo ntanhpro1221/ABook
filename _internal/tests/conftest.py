@@ -66,6 +66,8 @@ def _skipping_sleep(seconds: float) -> None:
 
 
 def pytest_configure(config: pytest.Config) -> None:
+    # Đóng gói sách căn từng chữ (webui/word_timing.py) giải mã audio bằng ffmpeg: bài thử đóng gói không cần, bài của word_timing tự bật lại.
+    os.environ.setdefault("ABOOK_WORD_TIMING", "0")
     config.addinivalue_line(
         "markers",
         "real_sleep: test này cần time.sleep nguyên bản, đừng bọc nó",

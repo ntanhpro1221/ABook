@@ -121,6 +121,18 @@ VieNeu 3.8.1 (installed) has CPU modes: `v3nano` (48M-parameter flow model, ONNX
 v3turbo (ONNX on CPU, 48 kHz, 25 voices): RTF 0.36 (~2.8x faster than listening), first streamed audio after 0.21 s; first load downloads the model (~20 min here). ONNX means the same runtime as the music module, so a phone build is plausible; phone speed not
 measured yet.
 
+VieNeu module = user choice with a recommendation (owner 03-10: "sao không cho người dùng chọn tải cùng recommended?"):
+- Choices:
+  - Turbo int8: 158 MB, 48 kHz, 25 voices. Desktop CPU RTF 0.315, first audio 0.20 s.
+  - Nano: ~270 MB cached, 24 kHz, 11 voices. RTF 0.18.
+  - The 122 MB word aligner: ticked by default on desktop, optional on the phone.
+- One or both voices may be installed.
+- "Khuyên dùng" before download comes from device facts (cores, RAM, GPU, chip class).
+- After download, a few-second self-benchmark checks it. If the chosen voice cannot keep up with listening, offer to switch; never switch silently.
+- The size shown is what this device still lacks (shared parts such as ONNX Runtime, the aligner and Studio's VieNeu are not counted twice).
+- The same pattern applies to every module with options.
+- Phone speed of Turbo is NOT measured yet (estimate RTF 0.6-1.5); thresholds get tuned once a real phone is measured.
+
 Device choice (owner 03-10: never force CPU when a GPU is there), picked automatically:
 - Studio installed (NVIDIA): GPU through Studio's torch. Yield to Studio work and fall back to CPU while the card is busy.
 - GPU but no Studio: ONNX Runtime with DirectML (any vendor, about +20 MB in the module). Not measured with VieNeu yet.
@@ -171,6 +183,11 @@ Decision:
 - Edge TTS and the device voice give word timings themselves.
 - Side benefit: the same CTC output gives an 8.6% syllable error rate on VieNeu audio - a free check for skipped or
   mispronounced words.
+
+Status 03-10: the Studio-book part is built (`abook/webui/word_timing.py`, `words` in `scripts/<n>.json`, docs/ABOOK_FILE_FORMAT.md "Word
+timings", the "wordalign" Studio step, "Căn từ cho sách đã làm" in the export box, the lit word in `ui/src/listen/ReaderScreen.tsx`). Measured
+here with the real int8 model on a 13.7-minute chapter: 1.3 s per audio-minute with 8 threads, 2.1 with 4, 4.2 with 1; the numpy Viterbi is
+0.05 s per audio-minute, decoding 0.02. The spread fallback costs 0.03. Listen now (VieNeu / Edge / device voice) is not built yet.
 
 ## 4. Music while listening
 

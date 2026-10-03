@@ -149,10 +149,23 @@ def check_studio_assets_pinned() -> None:
         "điền URL ghim theo commit")
 
 
+def check_word_align_pinned() -> None:
+    """Model căn từng chữ (webui/word_timing.py) là một bước của Studio: các file ghim ở studio_setup.WORD_ALIGN_FILES. Chưa đăng (URL còn
+    PIN_REVISION) thì Studio cài từ bộ cài này hỏng ở bước "wordalign" - không dựng bản phát hành."""
+    sys.path.insert(0, str(ROOT))
+    from abook.webui.studio_setup import WORD_ALIGN_FILES
+
+    assert WORD_ALIGN_FILES and all("PIN_REVISION" not in item.url and item.size > 0 and re.fullmatch(r"[0-9a-f]{64}", item.sha256)
+                                    for item in WORD_ALIGN_FILES), (
+        "WORD_ALIGN_FILES (webui/studio_setup.py) chưa ghim model căn chữ: chạy scripts/pack_word_align_model.py, đăng ba file, "
+        "điền mã commit thay PIN_REVISION")
+
+
 def build(version: str, out: Path) -> None:
     """Bộ cài Windows (NSIS + chữ ký cập nhật + latest.json) và APK ký khoá phát hành, chép vào `out`, kiểm cả hai."""
     assert current_version() == version, f"repo đang là {current_version()}, chưa bump {version}?"
     check_studio_assets_pinned()
+    check_word_align_pinned()
     out.mkdir(parents=True, exist_ok=True)
     _run(["powershell", "-ExecutionPolicy", "Bypass", "-File", str(ROOT / "scripts/build_windows_app.ps1")], ROOT, low=True)
     nsis = ROOT / "shell/src-tauri/target/release/bundle/nsis"

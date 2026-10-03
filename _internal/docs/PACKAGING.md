@@ -88,6 +88,7 @@ không được đụng PATH hay cài gì toàn máy, nên mỗi công cụ là 
 | FFmpeg | bản dựng ghim | ~100 MB |
 | Ollama | `ollama-windows-amd64.zip` ghim ĐÚNG bản dây chuyền đã đo (0.33.2 - bản 0.34.4 cho qwen3 "suy nghĩ" và làm hỏng cuốn thử 28-09) vào `Studio\tools\ollama`, LUÔN bản riêng kể cả khi máy đã có Ollama: chạy ẩn ở cổng 11439 (`OLLAMA_HOST`), model ở `Studio\runtime\models\ollama` (`OLLAMA_MODELS`), `USERPROFILE` = `Studio\ollama-home` nên không ghi `%USERPROFILE%\.ollama`; sách tạo từ app mang `analysis.base_url` = cổng ấy (`StudioSetup.settings_overrides`) | ~1,5 GB |
 | model | LLM phân tích (qua Ollama), VieNeu, Whisper turbo + faster-whisper, UTMOSv2 + wav2vec2 + timm (revision khoá) | ~10 GB |
+| model căn chữ | `wav2vec2-vi-int8.onnx` + `vocab.json` + `preprocessor_config.json` (wav2vec2 tiếng Việt `dragonSwing/wav2vec2-base-vietnamese`, Apache-2.0, ONNX int8; `scripts/pack_word_align_model.py` dựng, ghim ở `studio_setup.WORD_ALIGN_FILES`, URL còn `PIN_REVISION` = chưa đăng, `scripts/release.py` từ chối dựng bản phát hành) vào `Studio\runtime\models\wordalign` - `webui/word_timing.py` căn từng chữ lúc đóng gói sách | 122 MB |
 | kiểm tra | `check_system.py`, dấu `.setup_complete` như bản dev | - |
 
 **Studio cũ hơn app.** Mỗi bước tải (uv, Git, Ollama, model phân tích) ghi lại bản ghim đã cài vào `setup.json`; app lên

@@ -76,6 +76,29 @@ ASSET_PATHS = ("cmudict.dict", "voice_previews")
 STUDIO_ASSETS = Download("studio-assets", "https://huggingface.co/NGDtuanh/abook-analyzer/resolve/234640f0b6fe53abbcaeaa758edb2aaedee39c07/"
                          "studio-assets/studio-assets-1.zip", "3e7d31b536a6fe1765b520758c8fdc5707149ac702368e904c884f47d74ecd32", 14_561_173)
 
+# Model căn từng chữ khi nghe (webui/word_timing.py, docs/LISTEN_ANYTHING.md "Word timings"): wav2vec2 CTC tiếng Việt
+# `dragonSwing/wav2vec2-base-vietnamese` (Apache-2.0) xuất ONNX int8 (122 MB) + từ điển ký tự. Chỉ Studio dùng (căn lúc đóng gói
+# sách), nên nằm trong Studio chứ không trong bộ cài chỉ-nghe. Studio đặt vào `runtime\models\wordalign` (word_timing.model_dir đọc
+# ABOOK_RUNTIME). scripts/pack_word_align_model.py dựng đúng ba file này; băm + cỡ là của file thật. Nâng: dựng lại, đăng lên
+# nơi chứa, đổi PIN_REVISION trong URL (ghim theo commit) + băm + cỡ. QUY ƯỚC như STUDIO_ASSETS: còn chữ PIN_REVISION nghĩa là chưa
+# đăng - scripts/release.py từ chối dựng bản phát hành.
+WORD_ALIGN_FOLDER = "wordalign"
+WORD_ALIGN_MODEL = "wav2vec2-vi-int8.onnx"
+WORD_ALIGN_BASE = "https://huggingface.co/NGDtuanh/abook-analyzer/resolve/95c5e5f04153618e00213dca6459810bd6dd1c72/word-align/"
+WORD_ALIGN_FILES = (
+    Download(WORD_ALIGN_MODEL, WORD_ALIGN_BASE + WORD_ALIGN_MODEL,
+             "ec91b6e298067ee7004388c52db8cc7b0635331dc25e03f32bd3473859c7970d", 121_984_263),
+    Download("vocab.json", WORD_ALIGN_BASE + "vocab.json",
+             "fafcf551cbf1637bfa545efa919d9f8f8a4dbdea917d245417da1448a5aef914", 997),
+    Download("preprocessor_config.json", WORD_ALIGN_BASE + "preprocessor_config.json",
+             "1d6c9dff32fabde9f50b3878d49278ebb94acd1ac2a2dbe0ddd0b69499f5a096", 227),
+)
+
+
+def word_align_pin() -> str:
+    """Mã ghim của model căn chữ: đổi khi bất kỳ băm nào đổi (Studio đã cài thấy bước này "cũ" và tải lại)."""
+    return hashlib.sha256("\n".join(f"{item.name} {item.sha256}" for item in WORD_ALIGN_FILES).encode()).hexdigest()
+
 
 @dataclass(frozen=True)
 class PublishedModel:
@@ -131,6 +154,7 @@ STEPS: tuple[tuple[str, str, str], ...] = (
     ("voice", "Model giọng đọc", "~1 GB"),
     ("asr", "Model nghe lại (Whisper)", "~3 GB"),
     ("qa", "Model chấm chất lượng", "~1 GB"),
+    ("wordalign", "Model căn từng chữ khi nghe", "122 MB"),
     ("verify", "Kiểm tra lần cuối", "thử nạp mọi thứ"),
 )
 
@@ -414,6 +438,7 @@ class StudioSetup:
         self.venv = self.runtime / ".venv"
         self.tools = root / "tools"
         self.assets = root / "assets"
+        self.word_align = self.runtime / "models" / WORD_ALIGN_FOLDER
         self.state_path = root / "setup.json"
         self._lock = threading.Lock()
         self._thread: threading.Thread | None = None
@@ -454,7 +479,7 @@ class StudioSetup:
         """Bản ghim của các bước tải công cụ/model. App lên bản mới đổi ghim (nâng uv, Git, Ollama, đổi model phân tích)
         thì bước ấy phải chạy lại trên Studio đã cài - không thì Studio cứ chạy bản cũ mà app không hề biết."""
         return {"uv": UV.sha256, "git": MINGIT.sha256, "ollama": OLLAMA.sha256, "llm": self.analysis_model,
-                "assets": STUDIO_ASSETS.sha256}
+                "assets": STUDIO_ASSETS.sha256, "wordalign": word_align_pin()}
 
     def outdated(self) -> list[str]:
         """Bước đã xong nhưng bằng bản ghim khác bản app này mang, hay bước app này có mà Studio cài từ bản app cũ hơn chưa
@@ -970,6 +995,23 @@ class StudioSetup:
 
     def _step_qa(self) -> None:
         self._run([str(self.python), "-c", QA_SCRIPT], "Tải model chấm chất lượng")
+
+    def _step_wordalign(self) -> None:
+        """Tải model căn chữ (ghim từng file), đặt vào `runtime\\models\\wordalign` một lần: đủ cả ba file mới đổi tên, nên
+        word_timing không bao giờ thấy một model dở."""
+        staging = self.word_align.with_name(self.word_align.name + ".part")
+        shutil.rmtree(staging, ignore_errors=True)
+        staging.mkdir(parents=True)
+        total = sum(item.size for item in WORD_ALIGN_FILES)
+        before = 0
+        for item in WORD_ALIGN_FILES:
+            self._detail = item.name
+            downloaded = self.fetch(item, self.root / "downloads" / item.name,
+                                    lambda done, _total, base=before: self._set_progress(base + done, total), self._cancelled)
+            shutil.move(str(downloaded), staging / item.name)
+            before += item.size
+        shutil.rmtree(self.word_align, ignore_errors=True)
+        os.replace(staging, self.word_align)
 
     def _step_verify(self) -> None:
         # Hợp đồng runtime đòi dấu cài đặt: ghi thử, kiểm, hỏng thì gỡ dấu (lần sau chạy lại bước này).

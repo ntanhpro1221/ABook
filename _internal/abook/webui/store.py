@@ -21,7 +21,7 @@ from contextlib import closing
 from pathlib import Path
 from typing import Any, Iterable
 
-from . import humanize
+from . import humanize, word_timing
 from .. import names as renames
 
 DB_NAME = "project.sqlite3"
@@ -1008,6 +1008,8 @@ def chapter_script(project_root: Path, chapter_id: int) -> dict[str, Any] | None
             **({"textSha256": str(row["text_sha256"])} if "text_sha256" in identity and row["text_sha256"] else {}),
             **{column: row[column] for column in tags if row[column] is not None},
         })
+    if timed and mp3:  # mốc từng chữ đã căn lúc đóng gói (word_timing.py): thêm `words` cho câu nào còn khớp bộ nhớ đệm
+        word_timing.attach(project_root, int(chapter["id"]), segments, mp3)
     return {
         "chapterId": int(chapter["id"]),
         "title": chapter_name.get("full") or humanize.chapter_title(str(chapter["title"])),
