@@ -24,6 +24,36 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
 7. **Người vô danh xác định được là MỘT người phải ghi `NPC*:<mô tả>` trong đáp án, cả ở chương kiểm tra**; đám đông
    để `NPC*` trơn. Thiếu mô tả thì F1 giọng không biết hai câu vô danh là một người, và xếp model ngược (mục 29-09 tối).
 
+## 03-10 - Hai nghi vấn về cách chạy model, đều loại: presence_penalty của Qwen3.5 và bước reconcile sau phân tích
+
+**presence_penalty.** Modelfile của q35-4B và 9B (tạo bằng `ollama create --like` từ qwen3.5 gốc) mang theo tham số mẫu của
+bản gốc: `presence_penalty 1.5`, `temperature 1`, `top_k 20`, `top_p 0.95`. Lúc huấn luyện không có các tham số này; 4B v8
+(nền Qwen3) không có. Phạt lặp 1,5 có thể đẩy model tránh lặp lại đúng tên người nói vừa dùng, nên đo lại bằng tag `-nopp`
+(cùng GGUF, bỏ hết PARAMETER), hạt 3407, ở nhà, trên đúng 7 chương của bảng hạt giống. F1 giọng:
+
+| | LN Nhật (5 ch, 463 câu) | Hàn (hdst062 + ymp248, 108 câu) | cả 7 |
+|---|---|---|---|
+| q35-4B có penalty, 3 hạt | 58,2 - 60,8 | 77,9 - 80,9 | 62,5 - 64,0 |
+| q35-4B **không** penalty (3407) | 57,2 | 76,6 | 60,8 |
+| 9B có penalty, 3 hạt | 53,7 - 63,2 | 62,3 - 81,9 | 55,4 - 66,7 |
+| 9B **không** penalty (3407) | 62,3 | 75,7 | 64,8 |
+
+Cùng hạt 3407: q35 62,5 -> 60,8, 9B 66,7 -> 64,8. Cả hai **hơi kém đi** và đều nằm trong dải hạt giống, nên không có lý do
+đổi Modelfile của app; hàng đo giữ tag cũ. Lưu ý: tag 9B-v8 (3407) trên Mac được tạo thẳng từ GGUF nên **không có**
+PARAMETER - mọi số 9B-v8 đo ở Mac (hiệu chuẩn 77,9 trên 4 chương Hàn mới, Hàn đợt 3 Mẹ kế/Demon King) là bản không
+penalty; các tag q35/9B khác ở mọi máy đều có penalty 1,5. Với độ lệch đo được ở trên, chênh này nhỏ hơn nhiễu hạt giống.
+
+**reconcile_local_speaker_identities / reconcile_name_pronunciations** chạy sau phân tích, gộp tên vai địa phương
+(`NPC_LOCAL::...`) thành nhân vật có tên. Không cần đo lại bằng GPU: mỗi lô phân tích được lưu nguyên trong
+`analysis_candidates.commit_envelope_json` TRƯỚC khi reconcile chạy, nên dựng lại được người nói trước reconcile cho mọi lượt đo
+đã có (phủ đủ mọi đoạn) và chấm y thước cũ. F1 giọng gộp, sau -> trước reconcile: 4B v8 62,8 -> 62,9; q35-4B 61,7 -> 61,5;
+9B 66,0 -> 65,9; q35 hạt 1/2 62,9 -> 62,7 / 64,0 -> 63,7; 9B hạt 1/2 không đổi; v8m 3 hạt 59,4 -> 58,8 / 64,9 -> 65,5 /
+62,5 -> 62,4; 8B-v5 63,6 -> 63,4. Từng chương lệch tới ~8 điểm theo cả hai chiều. Reconcile gần như trung tính (±0,6) và
+9B không có gì để reconcile vì nó gọi tên thẳng. Bộ chấm: `Corpus/claude/model_lane/prereconcile_table.py`.
+
+Mức lượng tử của bốn model đang so (ghi kèm mọi bảng): 4B v8 Q8_0, q35-4B Q8_0, 9B Q4_K_M, 8B-v5 Q4_K_M (tràn sang CPU
+trên card 8 GB). Phép so Q4_K_M / Q8_0 của 9B trên cùng Mac đang chạy.
+
 ## 02-10 chiều - Bộ LN Nhật thứ hai: thêm 767 câu có người nói để tách q35-4B / 9B / v8
 
 Mục đích: LN Nhật dịch Việt là nhóm trọng số cao nhất của chủ sách, và trên 10 chương LN Nhật cũ bốn model HOÀ (hiệu với
