@@ -767,6 +767,14 @@ Phân xử bất đồng của đoạn trên:
     trượt ở bộ 5B. Mở lại phải ghi trước riêng, Lead / chủ sách quyết.
 - Qwen3-Omni 30B không chạy được trên máy người dùng. Nó chỉ là THƯỚC đo, không phải tính năng.
 
+**QUYẾT ĐỊNH LEAD (03-10 19:2x): Lớp 2 giữ TẮT (`EMOTION_WEIGHT = 0`), KHÔNG mở thí nghiệm.**
+- Lý do (1): Lớp 2 cần 13 cường độ cho từng đoạn, mà cả hai đường LLM đều trượt ở 5B. Thử trọng số trên một nguồn nhãn đã
+  biết là không tin được thì thắng hay thua đều không nói được gì rõ.
+- Lý do (2): M2 chỉ đạt theo thước nghe; R_mới không đạt. Bất đồng giữa nghe và đọc không đủ để đổi mặc định.
+- Mở lại khi có nguồn 13 cường độ qua cổng riêng trước (vd model phân tích 9B hay bộ phân loại chữ chấm theo gold). Khi ấy
+  ghi trước Lớp 2 thành lượt riêng.
+- Đã nhận: Qwen3-Omni-EN là thước nghe chính. Hai bất đồng (vet so app; gems so app theo thước đọc) ghi nguyên như trên.
+
 
 **GHI TRƯỚC - NỚI NGƯỠNG NỀN ÊM (02-10 23:xx, Lead duyệt; từ E1: calm đứng thứ hai, hơn app):**
 - **Giả thuyết:** kéo về nền êm (CALM_TARGET) cho nhiều đoạn hơn làm nhạc hợp hơn. Hiện chỉ kéo khi confidence < WEAK_MOOD
