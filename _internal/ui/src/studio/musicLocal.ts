@@ -31,6 +31,36 @@ export interface LocalMusicView {
   analyzer: boolean;
   /** Máy tính có; điện thoại đọc nhạc ở lõi native nên không có. */
   reader?: MusicReader;
+  /** Chỉ điện thoại: bộ phân tích âm thanh phải tải một lần khi người dùng bấm. */
+  student?: MusicStudentStatus;
+}
+
+/** Gói bộ phân tích âm thanh trên điện thoại (MusicStudentSetup.kt). */
+export interface MusicStudentStatus {
+  state: "missing" | "downloading" | "ready" | "error";
+  done: number;
+  total: number;
+  /** Lý do tải hỏng, tiếng Việt; rỗng nếu không lỗi. */
+  error: string;
+  ready: boolean;
+  /** Đang phân tích nốt các bài đã nhập. */
+  analysing: boolean;
+  /** Máy đang dùng dữ liệu di động (tính phí). */
+  metered: boolean;
+}
+
+export const STUDENT_SIZE_LABEL = "~59 MB";
+
+export function studentPercent(student: Pick<MusicStudentStatus, "done" | "total">): number {
+  return student.total > 0 ? Math.min(100, Math.floor((student.done / student.total) * 100)) : 0;
+}
+
+/** Câu báo về bộ phân tích, nói bằng điều người nghe cần biết (không nói model nào). */
+export function studentLabel(student: MusicStudentStatus): string {
+  if (student.state === "error") return student.error;
+  if (student.state === "downloading") return `Đang tải bộ phân tích nhạc (${STUDENT_SIZE_LABEL}, một lần) ${studentPercent(student)}%`;
+  if (student.analysing) return "Đang nghe các bài bạn đã nhập để hiểu không khí của chúng…";
+  return `Máy chưa nghe được nhạc của bạn để hiểu không khí của nó. Tải bộ phân tích một lần (${STUDENT_SIZE_LABEL}) để các bài nhập vào được phân tích ngay trên điện thoại; sau đó không cần mạng.`;
 }
 
 export interface ImportResult extends LocalMusicView {
