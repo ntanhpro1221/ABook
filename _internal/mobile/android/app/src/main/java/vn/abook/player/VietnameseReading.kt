@@ -83,7 +83,7 @@ object VietnameseReading {
         return Normalizer.normalize(lowered, Normalizer.Form.NFD).filter { Character.getType(it) != Character.NON_SPACING_MARK.toInt() }
     }
 
-    private fun validSpokenForm(surface: String, spokenForm: String): Boolean {
+    internal fun validSpokenForm(surface: String, spokenForm: String): Boolean {
         val value = words(BookEdits.pyStrip(spokenForm)).joinToString(" ")
         if (value.isEmpty() || nameKey(value) == nameKey(surface)) return false
         if (!SPOKEN_FORM.matches(value)) return false

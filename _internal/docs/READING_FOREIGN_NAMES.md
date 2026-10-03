@@ -46,8 +46,9 @@ Hệ quả: ABook phải tự chọn một quy ước, neo vào nguồn chính t
 3. **Phụ âm cuối:** chỉ p, t, c, ch, m, n, ng, nh.
    - r cuối bỏ (Poóc-len, Niu Oóc, Véc-xai). [Có nguồn]
    - l cuối thành n (Bun-kuc ~ Bul-kuc). [Chọn: nguồn có cả hai; "l" cuối không phải âm cuối tiếng Việt]
-4. **s / x.** x cho âm /s/ (Ô-xa-ca, Na-ga-xa-ki, Ma-xa-ca-dư, Xơ-un); s cho âm "sh" (Hi-rô-si-ma, Ki-si-đa, Tô-si-mi-chư).
-   [Chọn: Bộ Ngoại giao và SGK lẫn cả hai. Cách chia theo âm này khớp đa số dạng có nguồn, và giọng miền Nam phân biệt được s / x.]
+4. **s / x.** Tiếng Nhật: x cho âm /s/ (Ô-xa-ca, Na-ga-xa-ki, Ma-xa-ca-du); s cho âm "sh" (Hi-rô-si-ma, Ki-si-đa, Tô-si-mi-chu).
+   Tiếng Hàn: s (Su-uân, Han Sưng Su, Bu-san). [Chọn: Bộ Ngoại giao và SGK lẫn cả hai. Đã quét theo bằng chứng: Nhật x khớp 27 dạng SGK
+   (s: 24), sh -> s khớp hơn sh -> x; Hàn s khớp 17 dạng Bộ Ngoại giao (x: 14). Giọng miền Nam phân biệt được s / x.]
 5. **c / k / q, g / gh, ng / ngh:** theo chính tả tiếng Việt (c trước a, o, ô, ơ, u, ư; k trước i, e, ê, y; gh, ngh trước i, e, ê).
    [Có nguồn: SGK Ca-oa-xa-ki, Cô-bê, Ki-si-đa]
 6. **Hán-Việt:** chỉ khi chính bản dịch đã viết bằng Hán-Việt (Minh Trị, Bình Nhưỡng, Kim Nhật Thành). App không tự chuyển tên
@@ -62,10 +63,10 @@ Hệ quả: ABook phải tự chọn một quy ước, neo vào nguồn chính t
 | u | **u** ở mọi chỗ (fu → phu, ku → cu, ru → ru) | **Chủ sách** | Chủ sách 04-10: "Fukushima => phu-cu-si-ma", "haruto-kun => ha-ru-tô-cun". Khớp SGK (Phu-cu-ô-ca, Mu-rô-ran, Cu-si-rô, Chu-bu); bỏ kiểu "ư" của Bộ Ngoại giao (Phư-mi-ô, Ê-xư-kê) |
 | yu, kyu, ryu, shu, chu, ju | iu / u sau âm vòm | Có nguồn | Kiu-xiu, Riu-kiu, Chu-bu |
 | nguyên âm dài ō, ou, oo / ū, uu | ô / ư (không kéo dài) | Có nguồn | Tô-ky-ô, Hô-cai-đô, Kiu-xiu |
-| ei | ê | Chọn | Bộ Ngoại giao Ê-xư-kê; SGK cũ Kô-mây, May-gi |
+| ei | ay | Chọn | Quét: ay hơn ê / ây đúng một dạng (SGK cũ May-gi); Bộ Ngoại giao viết Ê-xư-kê (ê), SGK cũ Kô-mây (ây). Kém chắc nhất trong các điểm đã quét |
 | ai | ai (tách "a-i" khi hai âm tiết: Ta-ca-i-chi) | Có nguồn | Sai-ta-ma, Ta-ca-i-chi |
 | k | c / k theo luật 1.5 | Có nguồn | Ca-oa-xa-ki, Ki-si-đa |
-| g | g / gh theo luật 1.5 | Chọn | Bộ Ngoại giao viết "Mô-tê-gi" nhưng "gi" tiếng Việt đọc /z/; giữ âm g → "ghi" |
+| g | g; trước i đọc "gi", trước e đọc "ghê" | Chọn | Bộ Ngoại giao viết "Mô-tê-gi" (quét: gi hơn ghi một dạng). Hệ quả: gi trùng với ji ("Gin" và "Jin" cùng đọc "Gin"), "gi" tiếng Việt đọc /z/ |
 | s | x | Chọn (luật 1.4) | Ô-xa-ca, Na-ga-xa-ki |
 | shi, sha, sho, shu | si, sa, sô, xiu | Có nguồn | Hi-rô-si-ma, Sô-gun, Kiu-xiu |
 | z, j | d / gi (zu → dư, ji → gi) | Có nguồn | Ma-xa-ca-dư, Sin-dô |
@@ -75,14 +76,14 @@ Hệ quả: ABook phải tự chọn một quy ước, neo vào nguồn chính t
 | h, b, p, m, n, r | h, b, p, m, n, r | Có nguồn | Ha-kô-ne, Mô-ri |
 | fu | phu | Chủ sách | "Fukushima => phu-cu-si-ma"; SGK Phu-cu-ô-ca |
 | w (wa) | oa | Có nguồn | Ca-oa-xa-ki, Bi-oa, Tô-ku-ga-oa |
-| ya, yo (đầu từ) | **mở** | App | SGK: Ya-ma-tô, I-ô-cô-ha-ma / Y-ô-cô-ha-ma; "ya" không phải âm tiết Việt; chọn bằng âm thanh |
+| ya, yo (đầu từ) | **mở**; mặc định ya / i-ô | App | SGK: Ya-ma-tô, I-ô-cô-ha-ma / Y-ô-cô-ha-ma; mặc định là hai dạng ấy ghép lại (quét); "ya" không phải âm tiết Việt; chọn bằng âm thanh |
 | kyo, ryo, nyo… | ki-ô, ri-ô, ni-ô | Có nguồn | Ki-ô-tô (CTST) |
 | n âm tiết | n khép âm tiết trước | Có nguồn | Hôn-su, Can-tô, Sin-dô |
 | phụ âm đôi kk, pp, tt, ss | khép âm tiết trước bằng c / p / t + thanh sắc | Có nguồn | Hốc-cai-đô, Xáp-pô-rô |
 | "u" vô thanh (desu, Matsu…) | vẫn đọc ư / u | Có nguồn | dạng viết không bỏ âm nào |
 
 **Hậu tố gọi** (-san, -kun, -chan, -sama, senpai, sensei): không có nguồn đọc tiếng Việt. Đọc theo bảng trên: xan, cun, chan, xa-ma,
-xen-pai, xen-xê. Hậu tố nối vào tên bằng GẠCH NỐI thành một chuỗi: "Haruto-kun" → "Ha-ru-tô-cun". [Chủ sách 04-10 cho -kun; các hậu
+xen-pai, xen-xay (ei -> ay). Hậu tố nối vào tên bằng GẠCH NỐI thành một chuỗi: "Haruto-kun" → "Ha-ru-tô-cun". [Chủ sách 04-10 cho -kun; các hậu
 tố khác áp cùng cách]
 
 ## 3. Tiếng Hàn (phiên âm Latinh RR / McCune, như bản dịch viết)
@@ -93,7 +94,7 @@ Kiơng-chu).
 | RR | đọc | mức | bằng chứng |
 |---|---|---|---|
 | eo (ㅓ) | ơ | Có nguồn | Xơ-un, Chơng |
-| yeo (ㅕ) | iơ | Chọn | Kiơng-chu (theo âm) / Miêng, Yêng (Bộ Ngoại giao, không đều) |
+| yeo (ㅕ) | iê | Chọn | Miêng, Hiêng, Yêng (Bộ Ngoại giao) hơn Kiơng-chu; "iơ" không là vần tiếng Việt, bộ kiểm âm tiết từ chối |
 | eu (ㅡ) | ư | Có nguồn | Cưn, Sưng |
 | ae (ㅐ) | e | Có nguồn | Te, He-in |
 | e (ㅔ) | ê | Có nguồn | Chê-chu, Hê |
@@ -103,7 +104,7 @@ Kiơng-chu).
 | g, d, b giữa hai âm hữu thanh | g, đ, b | Có nguồn | Chang-đớc |
 | k, t, p (bật hơi) | kh, th, ph | Chọn | chưa có ví dụ tên; theo âm |
 | j, ch | ch | Có nguồn | Chê-chu, Chung, Châng |
-| s, ss | x | Chọn (luật 1.4) | Xơ-un (Bộ Ngoại giao lẫn Sưng Su) |
+| s, ss | s | Chọn (luật 1.4) | Su-uân, Sưng Su, Bu-san (quét: s 17 dạng Bộ Ngoại giao, x 14); Xơ-un là dạng hiếm hơn |
 | h, m, n, ng | h, m, n, ng | Có nguồn | Hê, Nam-san |
 | r / l | r giữa từ, l đầu từ; l cuối → n | Chọn | Han-la, Li |
 | âm cuối k, t, p | c, t, p + thanh sắc | Có nguồn | Pắc, Bắc, Sớc |
