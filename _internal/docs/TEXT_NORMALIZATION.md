@@ -169,7 +169,9 @@ Luật trước, mơ hồ thì ghi lại để đo.
   - romaji Nhật (Hepburn → âm tiết Việt: Kou-ta-rou → "Cô-ta-rô");
   - phiên âm Hàn chuẩn RR (Chae-yeon → "Che-dơn");
   - hai hệ này đều có luật rõ, đáng làm thành luật xác định có test.
-- *Tên tiếng Anh:* đi CMU như Studio; tên tác giả tự đặt cần LLM hay luật đọc theo chính tả.
+- *Tên tiếng Anh:* [Đo 04-10] GIỮ NGUYÊN chữ Anh cho máy nói được âm vị Anh (VieNeu qua sea-g2p, ZeroTTS, Edge: Whisper nghe lại đúng
+  Rose / Mike / Facebook / Fireball; Việt hoá "Rô-dơ / Mai-cơ" lại bị nghe thành Roger / Michael). Việt hoá qua CMU chỉ cho máy chỉ đọc
+  được âm tiết Việt; tên tác giả tự đặt cần LLM hay luật đọc theo chính tả.
 - *Nghe ngay:* hiện không có tầng tên. Dùng phiên âm theo luật (romaji, Hàn) + từ điển dùng chung + điều ước của người nghe
   (`book_wishes` đã lưu nhưng chưa áp).
 
