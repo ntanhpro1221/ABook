@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { Script } from "@/listen/model";
 import { VOICE_CHANGED_EVENT, mergeTimings, type ReadAloudTimings } from "@/listen/readAloud";
 import { chooseVoice } from "@/listen/readAloudVoice";
+import { ONLINE_CONSENT_EVENT, giveOnlineConsent } from "@/listen/onlineConsent";
 import { textScript } from "@/listen/textScript";
 import type { ReadAloudPlugin } from "./plugins";
 import { PREPARE_STATUS_KEY, type PrepareStatus } from "@/listen/prepareAhead";
@@ -102,6 +103,8 @@ describe("watchReadAloud", () => {
     const configure = vi.fn();
     const notify = vi.fn();
     const stop = watchReadAloud(client, api, configure, notify);
+    // Mở app: lõi biết ngay người nghe đã đồng ý gửi chữ cho nhà cung cấp nào (chưa ai) - nó chỉ tự sang chương chữ với những giọng ấy.
+    expect(configure).toHaveBeenCalledWith({ readAloudOnlineOk: [] });
     (handlers.get("readAloudScript") as (event: { bookId: string; chapterId: number }) => void)({ bookId: BOOK, chapterId: 1 });
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect((client.getQueryData(textScriptKey(BOOK, 1)) as Script | undefined)?.timed).toBe(true);
@@ -115,11 +118,14 @@ describe("watchReadAloud", () => {
 
     chooseVoice(BOOK, "device:vi-vn-an");
     expect(configure).toHaveBeenCalledWith({ readAloudVoice: "device:vi-vn-an", readAloudBook: BOOK });
+    giveOnlineConsent("edge");
+    expect(configure).toHaveBeenCalledWith({ readAloudOnlineOk: ["edge"] });
     stop();
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(remove).toHaveBeenCalledTimes(3);
     target.dispatchEvent(new CustomEvent(VOICE_CHANGED_EVENT, { detail: BOOK }));
-    expect(configure).toHaveBeenCalledTimes(1);
+    target.dispatchEvent(new CustomEvent(ONLINE_CONSENT_EVENT));
+    expect(configure).toHaveBeenCalledTimes(3);
   });
 });
 

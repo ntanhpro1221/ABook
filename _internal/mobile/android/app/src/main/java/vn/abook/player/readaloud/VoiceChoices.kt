@@ -8,7 +8,7 @@ import java.io.File
  * `chosenVoice` / `chooseVoice` của giao diện (listen/readAloudVoice.ts). Giao diện gửi giọng mỗi lần nạp / đổi, nhưng phát tiếp từ widget, xe hơi,
  * tai nghe hay máy tính điều khiển sau khi app khởi động lại thì không qua giao diện - trước đây những đường ấy đọc bằng giọng mặc định.
  *
- * Một file JSON nhỏ `{"global": "...", "books": {"<mã cuốn>": "..."}}`; ghi qua file tạm rồi đổi tên. File hỏng / thiếu: như chưa chọn gì.
+ * Một file JSON nhỏ `{"global": "...", "books": {"<mã cuốn>": "..."}, "onlineOk": ["edge", ...]}`; ghi qua file tạm rồi đổi tên. File hỏng / thiếu: như chưa chọn gì.
  */
 class VoiceChoices(private val file: File) {
     private var data: JSONObject = load()
@@ -31,6 +31,15 @@ class VoiceChoices(private val file: File) {
             books.put(bookId, voice)
         }
         data.put("global", voice)
+        save()
+    }
+
+    /** Nhà cung cấp giọng trực tuyến người nghe đã đồng ý gửi chữ tới (giao diện hỏi - listen/onlineConsent.ts - rồi gửi cả danh sách xuống). */
+    fun onlineAllowed(provider: String): Boolean =
+        data.optJSONArray("onlineOk")?.let { list -> (0 until list.length()).any { list.optString(it) == provider } } == true
+
+    fun allowOnline(providers: List<String>) {
+        data.put("onlineOk", org.json.JSONArray(providers.filter { it.isNotBlank() }.distinct()))
         save()
     }
 

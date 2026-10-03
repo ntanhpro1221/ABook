@@ -63,6 +63,9 @@ object ReadAloud {
     private var feedSegment = 0
     private var waiting: Target? = null
     private var failure: String? = null
+    /** Đứng ở đầu một chương chữ mà giọng trực tuyến chưa được đồng ý (chương trước hết rồi tự sang): không đọc gì tới khi người nghe bấm phát -
+     *  giao diện hỏi đồng ý trước khi gửi lệnh phát (player.tsx withConsent). */
+    private var held = false
     private var artwork: ByteArray? = null
     private val scriptListeners = mutableSetOf<(String, Int) -> Unit>()
 
@@ -160,6 +163,19 @@ object ReadAloud {
         voiceId = choices?.voiceFor(bookId)?.ifBlank { null } ?: DEFAULT_VOICE
     }
 
+    /** Giao diện gửi danh sách nhà cung cấp đã được đồng ý (lúc mở app, mỗi lần người nghe đồng ý): đang dừng nạp ở ranh giới chương vì chưa
+     *  đồng ý thì nạp tiếp. */
+    fun allowOnline(providers: List<String>) {
+        choices?.allowOnline(providers)
+        pump()
+    }
+
+    /** Giọng đang chọn là giọng trực tuyến mà người nghe chưa đồng ý gửi chữ tới (giọng của máy, VieNeu: không gửi gì đi). */
+    private fun needsConsent(): Boolean {
+        val provider = ClipCache.split(voiceId).first
+        return provider != "device" && provider != VieneuVoices.PREFIX && choices?.onlineAllowed(provider) != true
+    }
+
     /** Đổi giọng: các đoạn đã đọc sẵn mà chưa tới thì bỏ, đoạn kế đọc bằng giọng mới. */
     fun setVoice(id: String) {
         val value = id.ifBlank { DEFAULT_VOICE }
@@ -193,7 +209,7 @@ object ReadAloud {
     /** Mã chương đang chờ đọc (ExoPlayer chưa có gì để phát). */
     fun waitingChapterId(): Int? = waiting?.let { chapters().getOrNull(it.chapterIndex)?.id }
 
-    val isWaiting: Boolean get() = waiting != null && failure == null
+    val isWaiting: Boolean get() = waiting != null && failure == null && !held
 
     /** Người nghe muốn đang phát (kể cả lúc chờ đọc đoạn). */
     fun wantsPlay(): Boolean = waiting?.play ?: (Playback.player?.playWhenReady == true)
@@ -251,6 +267,7 @@ object ReadAloud {
         inFlight = false
         waiting = null
         failure = null
+        held = false
         chaps.clear()
         feedChapter = 0
         feedSegment = 0
@@ -283,12 +300,13 @@ object ReadAloud {
      * Phát từ chương `index`: `segment` >= 0 thì từ đoạn ấy (`word` >= 0: từ đúng chữ ấy), không thì từ mốc `offsetMs` của chương. Chương chữ: xoá hàng đợi và đợi đoạn
      * âm thanh đầu tiên (giao diện thấy `buffering`); chương audio: đặt ngay.
      */
-    fun startAt(index: Int, offsetMs: Long, play: Boolean, segment: Int = -1, word: Int = -1, within: Long = 0) {
+    fun startAt(index: Int, offsetMs: Long, play: Boolean, segment: Int = -1, word: Int = -1, within: Long = 0, hold: Boolean = false) {
         val exo = Playback.player ?: return
         val chapter = chapters().getOrNull(index) ?: return
         generation += 1
         inFlight = false
         failure = null
+        held = hold
         feedChapter = index
         feedSegment = 0
         if (!chapter.isText) {
@@ -351,7 +369,7 @@ object ReadAloud {
 
     /** Giữ hàng đợi có đoạn kế: gọi mỗi khi đoạn đổi, đoạn mới sẵn sàng, đổi giọng, hủy hẹn giờ. */
     fun pump() {
-        if (!active || inFlight || failure != null) return
+        if (!active || inFlight || failure != null || held) return
         val exo = Playback.player ?: return
         val all = chapters()
         var guard = 0
@@ -364,6 +382,9 @@ object ReadAloud {
                 appendAudioRun(all)
                 continue
             }
+            // Tự sang một chương chữ (không phải người nghe chọn chỗ bắt đầu) bằng giọng trực tuyến chưa được đồng ý: dừng nạp ở đây, hàng đợi cạn
+            // ở cuối chương trước rồi handleEnded đứng chờ ở đầu chương này.
+            if (waiting == null && feedSegment == 0 && needsConsent()) return
             val chap = chapFor(feedChapter)
             if (chap == null) {
                 fail("Không đọc được chữ của chương “${chapter.title}”")
@@ -503,6 +524,12 @@ object ReadAloud {
         val current = Playback.currentChapter ?: return false
         val index = chapters().indexOfFirst { it.id == current.id }
         if (index in 0 until chapters().size - 1 && feedChapter > index) {
+            if (chapters()[index + 1].isText && needsConsent()) {
+                startAt(index + 1, 0, false, hold = true)
+                Playback.saveNow()
+                Playback.emit("pause")
+                return true
+            }
             startAt(index + 1, 0, true)
             return true
         }
@@ -542,6 +569,10 @@ object ReadAloud {
         if (!active) return false
         if (retryAfterFailure()) return true
         waiting?.play = true
+        if (held) {
+            held = false
+            pump()
+        }
         val exo = Playback.player ?: return false
         if (waiting == null && !inFlight && exo.playbackState == Player.STATE_ENDED && inText()) {
             val index = chapterIndexNow() ?: return false

@@ -82,6 +82,8 @@ export interface EbookPlayerPlugin {
     readAloudVoice?: string;
     /** Cuốn của `readAloudVoice`: lõi nhớ giọng ấy cho cuốn ấy (ReadAloud.chooseFor); không có thì cuốn đang nạp. */
     readAloudBook?: string;
+    /** Nhà cung cấp giọng trực tuyến người nghe đã đồng ý gửi chữ tới (listen/onlineConsent.ts): lõi tự sang chương chữ chỉ với những giọng ấy. */
+    readAloudOnlineOk?: string[];
   }): Promise<NativeState>;
   lastNight(): Promise<{ session: BedtimeSession | null }>;
   dismissLastNight(): Promise<void>;

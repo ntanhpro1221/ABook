@@ -2,6 +2,7 @@ import { toast } from "sonner";
 import type { Script } from "@/listen/model";
 import { mergeTimings, VOICE_CHANGED_EVENT, type ReadAloudTimings } from "@/listen/readAloud";
 import { chosenVoice } from "@/listen/readAloudVoice";
+import { ONLINE_CONSENT_EVENT, onlineConsents } from "@/listen/onlineConsent";
 import { PREPARE_STATUS_KEY, type PrepareRequest, type PrepareStatus } from "@/listen/prepareAhead";
 import type { ListenSource } from "@/listen/source";
 import { EbookPlayer, ReadAloud, type ReadAloudPlugin } from "./plugins";
@@ -64,7 +65,8 @@ export async function refreshScript(
 export function watchReadAloud(
   client: ScriptCache,
   api: Pick<ReadAloudPlugin, "script" | "addListener"> = ReadAloud,
-  configure: (options: { readAloudVoice: string; readAloudBook: string }) => unknown = (options) => EbookPlayer.configure(options).catch(() => undefined),
+  configure: (options: { readAloudVoice?: string; readAloudBook?: string; readAloudOnlineOk?: string[] }) => unknown = (options) =>
+    EbookPlayer.configure(options).catch(() => undefined),
   notify: (message: string) => unknown = (message) => toast(message, { duration: 8000 }),
 ): () => void {
   const handle = api.addListener("readAloudScript", (event) => void refreshScript(client, api, event.bookId, event.chapterId));
@@ -78,8 +80,14 @@ export function watchReadAloud(
     void configure({ readAloudVoice: chosenVoice(bookId), readAloudBook: bookId });
   };
   window.addEventListener(VOICE_CHANGED_EVENT, onVoice);
+  // Đồng ý gửi chữ cho giọng trực tuyến: lõi chỉ tự sang chương chữ (chương trước hết, màn hình có thể đang tắt) khi giọng đang chọn đã được
+  // đồng ý; chưa thì nó đứng ở đầu chương ấy và người nghe bấm phát - giao diện hỏi trước.
+  const onConsent = () => void configure({ readAloudOnlineOk: onlineConsents() });
+  onConsent();
+  window.addEventListener(ONLINE_CONSENT_EVENT, onConsent);
   return () => {
     window.removeEventListener(VOICE_CHANGED_EVENT, onVoice);
+    window.removeEventListener(ONLINE_CONSENT_EVENT, onConsent);
     void handle.then((listener) => listener.remove());
     void notice.then((listener) => listener.remove());
     void prepare.then((listener) => listener.remove());
