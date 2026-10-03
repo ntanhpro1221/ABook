@@ -1,0 +1,4864 @@
+{
+ "sea_g2p": "0.9.1",
+ "sentences": 209,
+ "g2p": [
+  {
+   "sentences": [
+    "Trời hôm nay đẹp quá."
+   ],
+   "phonemes": "tʃˈəː2j hˈom nˈaj ɗˈɛ6p kwˈaːɜ."
+  },
+  {
+   "sentences": [
+    "Cô gái đứng bên cửa sổ, lặng lẽ nhìn mưa rơi."
+   ],
+   "phonemes": "kˈo ɣˈaːɜj ɗˈyɜŋ bˈen kˈyə4 sˈo4, lˈa6ŋ lˈɛ5 ɲˈi2n mˈyə ɹˈəːj."
+  },
+  {
+   "sentences": [
+    "Chiếc thuyền nhỏ trôi chậm giữa dòng sông, mang theo những mùa hè đã xa."
+   ],
+   "phonemes": "tʃˈiɛɜc twˈiɛ2n ɲˈɔ4 tʃˈoj tʃˈə6m zˈyə5 zˈɔ2ŋ sˈoŋ, mˈaːŋ tˈɛw ɲˌy5ŋ mˈuə2 hˈɛ2 ɗˌaː5 sˈaː."
+  },
+  {
+   "sentences": [
+    "Anh ấy mở cuốn sổ cũ, đọc lại từng dòng chữ mà mẹ đã viết cho mình từ nhiều năm trước."
+   ],
+   "phonemes": "ˈe-ɲ ˈəɪɜ mˈəː4 kˈuəɜn sˈo4 kˈu5, ɗˈɔ6k lˈaː6j t̪ˈy2ŋ zˈɔ2ŋ tʃˈy5 mˌaː2 mˈɛ6 ɗˌaː5 vˈiɛɜt̪ tʃˌɔ mˈi2ɲ t̪ˌy2 ɲˈiɛ2w nˈam tʃˈyəɜc."
+  },
+  {
+   "sentences": [
+    "Ừ."
+   ],
+   "phonemes": "ˈy2."
+  },
+  {
+   "sentences": [
+    "Hả?"
+   ],
+   "phonemes": "hˈaː4."
+  },
+  {
+   "sentences": [
+    "Không!"
+   ],
+   "phonemes": "xˌoŋ."
+  },
+  {
+   "sentences": [
+    "Thật sao...?"
+   ],
+   "phonemes": "tˈə6t̪ sˈaːw."
+  },
+  {
+   "sentences": [
+    "“Cậu định đi đâu vậy?” - cô hỏi."
+   ],
+   "phonemes": "kˈə6w ɗˈi6ɲ ɗˈi ɗˈə1w vˈəɪ6? kˈo hˈɔ4j."
+  },
+  {
+   "sentences": [
+    "\"Tớ không biết,\" cậu đáp, \"nhưng tớ sẽ quay lại.\""
+   ],
+   "phonemes": "t̪ˈəːɜ xˌoŋ bˈiɛɜt̪, kˈə6w ɗˈaːɜp, ɲˌyŋ t̪ˈəːɜ sˌɛ5 kwˈaj lˈaː6j."
+  },
+  {
+   "sentences": [
+    "Cậu ta - người mà ai cũng sợ - lại đang mỉm cười."
+   ],
+   "phonemes": "kˈə6w t̪ˈaː, ŋˈyə2j mˌaː2 ˈaːj kˈu5ŋ sˈəː6, lˈaː6j ɗˌaːŋ mˈi4m kˈyə2j."
+  },
+  {
+   "sentences": [
+    "Ầm! Cánh cửa bật tung."
+   ],
+   "phonemes": "ˈə2m! kˈe-ɜɲ kˈyə4 bˈə6t̪ t̪ˈuŋ."
+  },
+  {
+   "sentences": [
+    "Hừm... để tôi nghĩ đã."
+   ],
+   "phonemes": "hˈy2m, ɗˌe4 t̪ˈoj ŋˈi5 ɗˌaː5."
+  },
+  {
+   "sentences": [
+    "Ba ngày sau (đúng như lời hẹn), họ gặp lại nhau."
+   ],
+   "phonemes": "bˈaː ŋˈa2j sˈaw, ɗˈuɜŋ ɲˌy lˈəː2j hˈɛ6n, hˈɔ6 ɣˈa6p lˈaː6j ɲˈaw."
+  },
+  {
+   "sentences": [
+    "Có ba thứ cô cần: nước, lửa và một tấm bản đồ."
+   ],
+   "phonemes": "kˈɔɜ bˈaː tˈyɜ kˈo kˈə2n, nˈyəɜc, lˈyə4 vˌaː2 mˈo6t̪ t̪ˈəɜm bˈaː4n ɗˈo2."
+  },
+  {
+   "sentences": [
+    "Hắn gào lên: \"Chạy đi!!!\""
+   ],
+   "phonemes": "hˈaɜn ɣˈaː2w lˈen, tʃˈa6j ɗˈi!"
+  },
+  {
+   "sentences": [
+    "Cái gì?! Sao lại thế được?"
+   ],
+   "phonemes": "kˌaːɜj zˈi2? sˈaːw lˈaː6j tˈeɜ ɗˌyə6c?"
+  },
+  {
+   "sentences": [
+    "— Em đã ăn cơm chưa?"
+   ],
+   "phonemes": "ˈɛm ɗˌaː5 ˈan kˈəːm tʃˌyə?"
+  },
+  {
+   "sentences": [
+    "— Rồi ạ."
+   ],
+   "phonemes": "ɹˈo2j ˈaː6."
+  },
+  {
+   "sentences": [
+    "Năm 2024, dân số thành phố đạt 9.389.700 người."
+   ],
+   "phonemes": "nˈam hˈaːj ŋˈi2n xˌoŋ tʃˈam hˈaːj mˈyəj bˈoɜn, zˈən sˈoɜ tˈe-2ɲ fˈoɜ ɗˈaː6t̪ tʃˈiɜn tʃˈiɛ6w bˈaː tʃˈam t̪ˈaːɜm mˈyəj tʃˈiɜn ŋˈi2n bˈa4j tʃˈam ŋˈyə2j."
+  },
+  {
+   "sentences": [
+    "Giá vàng hôm nay là 82,5 triệu đồng một lượng."
+   ],
+   "phonemes": "zˈaːɜ vˈaː2ŋ hˈom nˈaj lˌaː2 t̪ˈaːɜm mˈyəj hˈaːj fˈəɪ4 nˈam tʃˈiɛ6w ɗˈo2ŋ mˈo6t̪ lˈyə6ŋ."
+  },
+  {
+   "sentences": [
+    "Cô ấy sinh ngày 12/3/1998 tại Hà Nội."
+   ],
+   "phonemes": "kˈo ˈəɪɜ sˈiɲ ŋˈa2j mˈyə2j hˈaːj tˈaːɜŋ bˈaː nˈam mˈo6t̪ ŋˈi2n tʃˈiɜn tʃˈam tʃˈiɜn mˈyəj t̪ˈaːɜm t̪ˈaː6j hˈaː2 nˈo6j."
+  },
+  {
+   "sentences": [
+    "Cuộc họp bắt đầu lúc 7h30 sáng thứ Hai."
+   ],
+   "phonemes": "kˈuə6c hˈɔ6p bˈaɜt̪ ɗˈə2w lˌuɜc bˈa4j zˈəː2 bˈaː mˈyəj fˈuɜt̪ sˈaːɜŋ tˈyɜ hˈaːj."
+  },
+  {
+   "sentences": [
+    "Chuyến bay cất cánh lúc 19:45 ngày 01-10-2026."
+   ],
+   "phonemes": "tʃwˈiɛɜn bˈaj kˈəɜt̪ kˈe-ɜɲ lˌuɜc mˈyə2j tʃˈiɜn zˈəː2 bˈoɜn mˈyəj lˈam fˈuɜt̪ ŋˈa2j mˈo6t̪ tˈaːɜŋ mˈyə2j nˈam hˈaːj ŋˈi2n xˌoŋ tʃˈam hˈaːj mˈyəj sˈaɜw."
+  },
+  {
+   "sentences": [
+    "Lãi suất tăng 0,5% so với tháng trước."
+   ],
+   "phonemes": "lˈaː5j swˈəɜt̪ t̪ˈaŋ xˌoŋ fˈəɪ4 nˈam fˈə2n tʃˈam sˈɔ vˌəːɜj tˈaːɜŋ tʃˈyəɜc."
+  },
+  {
+   "sentences": [
+    "Nhiệt độ ngoài trời xuống tới -5°C."
+   ],
+   "phonemes": "ɲˈiɛ6t̪ ɗˈo6 ŋwˈaː2j tʃˈəː2j sˈuəɜŋ t̪ˌəːɜj ˈəm nˈam ɗˈo6 sˈe."
+  },
+  {
+   "sentences": [
+    "Quãng đường dài 12,7 km, đi mất khoảng 45 phút."
+   ],
+   "phonemes": "kwˈaː5ŋ ɗˈyə2ŋ zˈaː2j mˈyə2j hˈaːj fˈəɪ4 bˈa4j kˈi lˈo mˈɛɜt̪, ɗˈi mˈəɜt̪ xwˌaː4ŋ bˈoɜn mˈyəj lˈam fˈuɜt̪."
+  },
+  {
+   "sentences": [
+    "Căn phòng rộng 25m2, giá thuê 4.500.000đ/tháng."
+   ],
+   "phonemes": "kˈan fˈɔ2ŋ ɹˈo6ŋ hˈaːj mˈyəj lˈam mˈɛɜt̪ vˈuəŋ, zˈaːɜ twˈe bˈoɜn tʃˈiɛ6w nˈam tʃˈam ŋˈi2n ɗˈo2ŋ tʃˈen tˈaːɜŋ."
+  },
+  {
+   "sentences": [
+    "Gói hàng nặng 2,3kg và có giá $19.99."
+   ],
+   "phonemes": "ɣˈɔɜj hˈaː2ŋ nˈa6ŋ hˈaːj fˈəɪ4 bˈaː kˈi lˈo ɣˈaːm vˌaː2 kˈɔɜ zˈaːɜ mˈyə2j tʃˈiɜn tʃˈəɜm tʃˈiɜn tʃˈiɜn jˈuː ˈɛs dˈiː."
+  },
+  {
+   "sentences": [
+    "Vé vào cửa là 50.000 VND cho người lớn và 20.000 VND cho trẻ em."
+   ],
+   "phonemes": "vˈɛɜ vˈaː2w kˈyə4 lˌaː2 nˈam mˈyəj ŋˈi2n vˈiɛ6t̪ nˈaːm ɗˈo2ŋ tʃˌɔ ŋˈyə2j lˈəːɜn vˌaː2 hˈaːj mˈyəj ŋˈi2n vˈiɛ6t̪ nˈaːm ɗˈo2ŋ tʃˌɔ tʃˈɛ4 ˈɛm."
+  },
+  {
+   "sentences": [
+    "Đội tuyển thắng 3-1 trong trận chung kết."
+   ],
+   "phonemes": "ɗˈo6j t̪wˈiɛ4n tˈaɜŋ bˈaː mˈo6t̪ tʃˈɔŋ tʃˈə6n tʃˈuŋ kˈeɜt̪."
+  },
+  {
+   "sentences": [
+    "Trận đấu diễn ra từ ngày 5 đến ngày 9 tháng 7."
+   ],
+   "phonemes": "tʃˈə6n ɗˈəɜw zˈiɛ5n ɹˈaː t̪ˌy2 ŋˈa2j nˈam ɗˌeɜn ŋˈa2j tʃˈiɜn tˈaːɜŋ bˈa4j."
+  },
+  {
+   "sentences": [
+    "Học kỳ II kéo dài từ tháng 1 đến tháng 5."
+   ],
+   "phonemes": "hˈɔ6k kˈi2 hˈaːj kˈɛɜw zˈaː2j t̪ˌy2 tˈaːɜŋ mˈo6t̪ ɗˌeɜn tˈaːɜŋ nˈam."
+  },
+  {
+   "sentences": [
+    "Thế kỷ XIX là thời kỳ nhiều biến động."
+   ],
+   "phonemes": "tˈeɜ kˈi4 mˈyə2j tʃˈiɜn lˌaː2 tˈəː2j kˈi2 ɲˈiɛ2w bˈiɛɜn ɗˈo6ŋ."
+  },
+  {
+   "sentences": [
+    "Chương IV bắt đầu ở trang 132."
+   ],
+   "phonemes": "tʃˈyəŋ bˈoɜn bˈaɜt̪ ɗˈə2w ˈəː4 tʃˈaːŋ mˈo6t̪ tʃˈam bˈaː mˈyəj hˈaːj."
+  },
+  {
+   "sentences": [
+    "Vua Louis XIV trị vì nước Pháp rất lâu."
+   ],
+   "phonemes": "vˈuə lˈuːi mˈyə2j bˈoɜn tʃˈi6 vˌi2 nˈyəɜc fˈaːɜp ɹˈəɜt̪ lˈə1w."
+  },
+  {
+   "sentences": [
+    "Ông là PGS.TS ngành Vật lý tại ĐH Bách khoa."
+   ],
+   "phonemes": "ˈoŋ lˌaː2 fˈɔɜ zˈaːɜw sˈy t̪ˈiɛɜn sˈi5 ŋˈe-2ɲ vˈə6t̪ lˈiɜ t̪ˈaː6j ɗˈaː6j hˈɔ6k bˈe-ɜc xwˈaː."
+  },
+  {
+   "sentences": [
+    "UBND TP.HCM vừa ban hành quy định mới."
+   ],
+   "phonemes": "wˈi4 bˈaːn ɲˈən zˈən tˈe-2ɲ fˈoɜ hˈo2 tʃˈiɜ mˈiɲ vˈyə2 bˈaːn hˈe-2ɲ kwˈi ɗˈi6ɲ mˈəːɜj."
+  },
+  {
+   "sentences": [
+    "Văn phòng ở số 15 đường Lê Lợi, Q.1, TP.HCM."
+   ],
+   "phonemes": "vˈan fˈɔ2ŋ ˈəː4 sˈoɜ mˈyə2j lˈam ɗˈyə2ŋ lˈe lˈəː6j, kwˈə6n mˈo6t̪, tˈe-2ɲ fˈoɜ hˈo2 tʃˈiɜ mˈiɲ."
+  },
+  {
+   "sentences": [
+    "Bạn mang theo bút, thước, compa, v.v. nhé."
+   ],
+   "phonemes": "bˈaː6n mˈaːŋ tˈɛw bˈuɜt̪, tˈyəɜc, kəmpˈæ, vˈən vˈən. ɲˈɛɜ."
+  },
+  {
+   "sentences": [
+    "CLB bóng đá của trường có 30 thành viên."
+   ],
+   "phonemes": "kˈə1w lˈaː6c bˈo6 bˈɔɜŋ ɗˈaːɜ kˌuə4 tʃˈyə2ŋ kˈɔɜ bˈaː mˈyəj tˈe-2ɲ vˈiɛn."
+  },
+  {
+   "sentences": [
+    "Liên hệ qua số 0912 345 678 hoặc 028.3822.1234."
+   ],
+   "phonemes": "lˈiɛn hˈe6 kwˈaː sˈoɜ xˌoŋ tʃˈiɜn mˈo6t̪ hˈaːj, bˈaː bˈoɜn nˈam, sˈaɜw bˈa4j t̪ˈaːɜm hwˌa6c xˌoŋ hˈaːj t̪ˈaːɜm tʃˈəɜm bˈaː t̪ˈaːɜm hˈaːj hˈaːj tʃˈəɜm mˈo6t̪ hˈaːj bˈaː bˈoɜn."
+  },
+  {
+   "sentences": [
+    "Gửi thư tới hotro@abook.vn trước 17h."
+   ],
+   "phonemes": "ɣˈy4j tˈy t̪ˌəːɜj hˈɔ tʃˈɔ ˈaː kˈɔ2ŋ ɐbˈʊk tʃˈəɜm vˈe nˈəː2 tʃˈyəɜc mˈyə2j bˈa4j zˈəː2."
+  },
+  {
+   "sentences": [
+    "Xem thêm tại https://example.com/tin-tuc/2024."
+   ],
+   "phonemes": "sˈɛm tˈem t̪ˈaː6j hˈaːɜt̪ t̪ˈe t̪ˈe fˈe ˈɛɜt̪ hˈaːj tʃˈəɜm ɣˈe-6c tʃˈɛɜw ɣˈe-6c tʃˈɛɜw ɛɡzˈæmpəl tʃˈəɜm kˈɔm ɣˈe-6c tʃˈɛɜw t̪ˈin ɣˈe-6c nˈoɜj t̪ˈu6c ɣˈe-6c tʃˈɛɜw hˈaːj xˌoŋ hˈaːj bˈoɜn."
+  },
+  {
+   "sentences": [
+    "Tôi vừa mua một chiếc iPhone 15 Pro Max."
+   ],
+   "phonemes": "t̪ˈoj vˈyə2 mˈuə mˈo6t̪ tʃˈiɛɜc ˈaɪ fˈoʊn mˈyə2j lˈam pɹˈoʊ mˈæks."
+  },
+  {
+   "sentences": [
+    "Cô ấy rất thích đọc Harry Potter và xem Netflix."
+   ],
+   "phonemes": "kˈo ˈəɪɜ ɹˈəɜt̪ tˈiɜc ɗˈɔ6k hˈæɹi pˈɑːɾɚ vˌaː2 sˈɛm nˈɛtflɪks."
+  },
+  {
+   "sentences": [
+    "Họ đặt phòng qua Booking.com rồi bay sang Tokyo."
+   ],
+   "phonemes": "hˈɔ6 ɗˈa6t̪ fˈɔ2ŋ kwˈaː bˈʊkɪŋ tʃˈəɜm kˈɔm ɹˈo2j bˈeɪ sˈæŋ tˈoʊkɪˌoʊ."
+  },
+  {
+   "sentences": [
+    "Kirito rút kiếm, còn Asuna thì lùi lại một bước."
+   ],
+   "phonemes": "kɪɹˈiːɾoʊ ɹˈuɜt̪ kˈiɛɜm, kˌɔ2n ɐsˈuːnə tˌi2 lˈu2j lˈaː6j mˈo6t̪ bˈyəɜc."
+  },
+  {
+   "sentences": [
+    "Tanaka-san cúi đầu chào mọi người."
+   ],
+   "phonemes": "tænˈɑːkə sˈaːn kˈuɜj ɗˈə2w tʃˈaː2w mˌɔ6j ŋˈyə2j."
+  },
+  {
+   "sentences": [
+    "Kim Min-jun là học sinh mới chuyển đến."
+   ],
+   "phonemes": "kˈim mˈɪn dʒˈʌn lˌaː2 hˈɔ6k sˈiɲ mˈəːɜj tʃwˈiɛ4n ɗˌeɜn."
+  },
+  {
+   "sentences": [
+    "Tháp Eiffel ở Paris cao khoảng 330 mét."
+   ],
+   "phonemes": "tˈaːɜp ˈaɪfəl ˈəː4 pˈæɹɪs kˈaːw xwˌaː4ŋ bˈaː tʃˈam bˈaː mˈyəj mˈɛɜt̪."
+  },
+  {
+   "sentences": [
+    "Anh ấy làm kỹ sư phần mềm cho Google ở Singapore."
+   ],
+   "phonemes": "ˈe-ɲ ˈəɪɜ lˈaː2m kˈi5 sˈy fˈə2n mˈe2m tʃˌɔ ɡˈuːɡəl ˈəː4 sˈɪŋɡɐpˌɔːɹ."
+  },
+  {
+   "sentences": [
+    "Cô dùng Facebook, Zalo và TikTok mỗi ngày."
+   ],
+   "phonemes": "kˈo zˈu2ŋ fˈeɪsbʊk, zˈɑːloʊ vˌaː2 tˈɪk tˈɑːk mˌo5j ŋˈa2j."
+  },
+  {
+   "sentences": [
+    "Bài toán: 3 + 5 = 8, còn 12 x 4 = 48."
+   ],
+   "phonemes": "bˈaː2j t̪wˈaːɜn, bˈaː kˈo6ŋ nˈam bˈa2ŋ t̪ˈaːɜm, kˌɔ2n mˈyə2j hˈaːj ɲˈən bˈoɜn bˈa2ŋ bˈoɜn mˈyəj t̪ˈaːɜm."
+  },
+  {
+   "sentences": [
+    "Tỷ lệ là 1/3, tức khoảng 33,3%."
+   ],
+   "phonemes": "t̪ˈi4 lˈe6 lˌaː2 mˈo6t̪ tʃˈen bˈaː, t̪ˈyɜc xwˌaː4ŋ bˈaː mˈyəj bˈaː fˈəɪ4 bˈaː fˈə2n tʃˈam."
+  },
+  {
+   "sentences": [
+    "Căn bậc hai của 16 là 4."
+   ],
+   "phonemes": "kˈan bˈə6c hˈaːj kˌuə4 mˈyə2j sˈaɜw lˌaː2 bˈoɜn."
+  },
+  {
+   "sentences": [
+    "Phiên bản 2.0.1 sửa nhiều lỗi nhỏ."
+   ],
+   "phonemes": "fˈiɛn bˈaː4n hˈaːj tʃˈəɜm xˌoŋ tʃˈəɜm mˈo6t̪ sˈyə4 ɲˈiɛ2w lˈo5j ɲˈɔ4."
+  },
+  {
+   "sentences": [
+    "Mã đơn hàng là A12-B345."
+   ],
+   "phonemes": "mˈaː5 ɗˈəːn hˈaː2ŋ lˌaː2 ˈaː mˈyə2j hˈaːj bˈe bˈaː tʃˈam bˈoɜn mˈyəj lˈam."
+  },
+  {
+   "sentences": [
+    "Lớp 10A1 có 45 học sinh."
+   ],
+   "phonemes": "lˈəːɜp mˈyə2j ˈaː mˈo6t̪ kˈɔɜ bˈoɜn mˈyəj lˈam hˈɔ6k sˈiɲ."
+  },
+  {
+   "sentences": [
+    "Xe buýt số 32 chạy từ bến xe Mỹ Đình."
+   ],
+   "phonemes": "sˈɛ bwˈiɜt̪ sˈoɜ bˈaː mˈyəj hˈaːj tʃˈa6j t̪ˌy2 bˈeɜn sˈɛ mˈi5 ɗˈi2ɲ."
+  },
+  {
+   "sentences": [
+    "Quốc lộ 1A dài hơn 2.300 km."
+   ],
+   "phonemes": "kˈuəɜc lˈo6 mˈo6t̪ ˈaː zˈaː2j hˈəːn hˈaːj ŋˈi2n bˈaː tʃˈam kˈi lˈo mˈɛɜt̪."
+  },
+  {
+   "sentences": [
+    "Anh ấy chạy 100m hết 10,5 giây."
+   ],
+   "phonemes": "ˈe-ɲ ˈəɪɜ tʃˈa6j mˈo6t̪ tʃˈam mˈɛɜt̪ hˈeɜt̪ mˈyə2j fˈəɪ4 nˈam zˈəɪ."
+  },
+  {
+   "sentences": [
+    "Chiếc máy bay Boeing 787 chở được khoảng 250 hành khách."
+   ],
+   "phonemes": "tʃˈiɛɜc mˈaɜj bˈeɪ bˈoʊɪŋ bˈa4j tʃˈam t̪ˈaːɜm mˈyəj bˈa4j tʃˈəː4 ɗˌyə6c xwˌaː4ŋ hˈaːj tʃˈam nˈam mˈyəj hˈe-2ɲ xˈe-ɜc."
+  },
+  {
+   "sentences": [
+    "Công ty có doanh thu 1,2 tỷ USD năm ngoái."
+   ],
+   "phonemes": "kˈoŋ t̪ˈi kˈɔɜ zwˈe-ɲ tˈu mˈo6t̪ fˈəɪ4 hˈaːj t̪ˈi4 jˈuː ˈɛs dˈiː nˈam ŋwˈaːɜj."
+  },
+  {
+   "sentences": [
+    "Tốc độ tối đa là 120 km/h."
+   ],
+   "phonemes": "t̪ˈoɜk ɗˈo6 t̪ˈoɜj ɗˈaː lˌaː2 mˈo6t̪ tʃˈam hˈaːj mˈyəj kˈi lˈo mˈɛɜt̪ tʃˈen zˈəː2."
+  },
+  {
+   "sentences": [
+    "Dung lượng ổ cứng là 512GB."
+   ],
+   "phonemes": "zˈuŋ lˈyə6ŋ ˈo4 kˈyɜŋ lˌaː2 nˈam tʃˈam mˈyə2j hˈaːj ɡˈɪɡəbˌaɪt."
+  },
+  {
+   "sentences": [
+    "Màn hình 6,7 inch, pin 5000mAh."
+   ],
+   "phonemes": "mˈaː2n hˈi2ɲ sˈaɜw fˈəɪ4 bˈa4j ˈɪntʃ, pˈɪn nˈam ŋˈi2n mˈi lˈi ˈaːm pˈɛ zˈəː2."
+  },
+  {
+   "sentences": [
+    "Tầng 3, phòng 305, nhà B."
+   ],
+   "phonemes": "t̪ˈə2ŋ bˈaː, fˈɔ2ŋ bˈaː tʃˈam lˈɛ4 nˈam, ɲˈaː2 bˈe."
+  },
+  {
+   "sentences": [
+    "Ngày 30/4/1975 là một mốc lịch sử."
+   ],
+   "phonemes": "ŋˈa2j bˈaː mˈyəj tˈaːɜŋ t̪ˈy nˈam mˈo6t̪ ŋˈi2n tʃˈiɜn tʃˈam bˈa4j mˈyəj lˈam lˌaː2 mˈo6t̪ mˈoɜk lˈi6c sˈy4."
+  },
+  {
+   "sentences": [
+    "Hẹn gặp lại vào 8 giờ tối mai nhé!"
+   ],
+   "phonemes": "hˈɛ6n ɣˈa6p lˈaː6j vˈaː2w t̪ˈaːɜm zˈəː2 t̪ˈoɜj mˈaːj ɲˈɛɜ!"
+  },
+  {
+   "sentences": [
+    "Năm học 2025-2026 sắp bắt đầu."
+   ],
+   "phonemes": "nˈam hˈɔ6k hˈaːj ŋˈi2n xˌoŋ tʃˈam hˈaːj mˈyəj lˈam ɗˌeɜn hˈaːj ŋˈi2n xˌoŋ tʃˈam hˈaːj mˈyəj sˈaɜw sˈaɜp bˈaɜt̪ ɗˈə2w."
+  },
+  {
+   "sentences": [
+    "Trong khoảng 10-15 phút nữa tàu sẽ tới."
+   ],
+   "phonemes": "tʃˈɔŋ xwˌaː4ŋ mˈyə2j ɗˌeɜn mˈyə2j lˈam fˈuɜt̪ nˈyə5 t̪ˈa2w sˌɛ5 t̪ˌəːɜj."
+  },
+  {
+   "sentences": [
+    "Bà cụ đã 102 tuổi mà vẫn còn minh mẫn."
+   ],
+   "phonemes": "bˈaː2 kˈu6 ɗˌaː5 mˈo6t̪ tʃˈam lˈɛ4 hˈaːj t̪ˈuə4j mˌaː2 vˌə5n kˌɔ2n mˈiɲ mˈə5n."
+  },
+  {
+   "sentences": [
+    "Một nghìn lẻ một đêm là câu chuyện nổi tiếng."
+   ],
+   "phonemes": "mˈo6t̪ ŋˈi2n lˈɛ4 mˈo6t̪ ɗˈem lˌaː2 kˈə1w tʃwˈiɛ6n nˈo4j t̪ˈiɛɜŋ."
+  },
+  {
+   "sentences": [
+    "Cô đếm: một, hai, ba, bốn, năm."
+   ],
+   "phonemes": "kˈo ɗˈeɜm, mˈo6t̪, hˈaːj, bˈaː, bˈoɜn, nˈam."
+  },
+  {
+   "sentences": [
+    "OK, chúng ta bắt đầu thôi."
+   ],
+   "phonemes": "ˈo kˈaː, tʃˈuɜŋ t̪ˈaː bˈaɜt̪ ɗˈə2w tˈoj."
+  },
+  {
+   "sentences": [
+    "Wow, thật không thể tin được!"
+   ],
+   "phonemes": "wˈaʊ, tˈə6t̪ xˌoŋ tˈe4 t̪ˈin ɗˌyə6c!"
+  },
+  {
+   "sentences": [
+    "Hôm nay là thứ 6, ngày 13."
+   ],
+   "phonemes": "hˈom nˈaj lˌaː2 tˈyɜ sˈaɜw, ŋˈa2j mˈyə2j bˈaː."
+  },
+  {
+   "sentences": [
+    "Tôi ở lại Đà Lạt 3 ngày 2 đêm."
+   ],
+   "phonemes": "t̪ˈoj ˈəː4 lˈaː6j ɗˈaː2 lˈaː6t̪ bˈaː ŋˈa2j hˈaːj ɗˈem."
+  },
+  {
+   "sentences": [
+    "Anh trai tôi cao 1m75 và nặng 68kg."
+   ],
+   "phonemes": "ˈe-ɲ tʃˈaːj t̪ˈoj kˈaːw mˈo6t̪ mˈɛɜt̪ bˈa4j mˈyəj lˈam vˌaː2 nˈa6ŋ sˈaɜw mˈyəj t̪ˈaːɜm kˈi lˈo ɣˈaːm."
+  },
+  {
+   "sentences": [
+    "Cửa hàng mở cửa từ 8:00 đến 22:00."
+   ],
+   "phonemes": "kˈyə4 hˈaː2ŋ mˈəː4 kˈyə4 t̪ˌy2 t̪ˈaːɜm zˈəː2 xˌoŋ fˈuɜt̪ ɗˌeɜn hˈaːj mˈyəj hˈaːj zˈəː2 xˌoŋ fˈuɜt̪."
+  },
+  {
+   "sentences": [
+    "Mẹ dặn: \"Nhớ mang áo mưa.\""
+   ],
+   "phonemes": "mˈɛ6 zˈa6n, ɲˈəːɜ mˈaːŋ ˈaːɜw mˈyə."
+  },
+  {
+   "sentences": [
+    "Tiếng chuông vang lên... một lần... hai lần..."
+   ],
+   "phonemes": "t̪ˈiɛɜŋ tʃˈuəŋ vˈaːŋ lˈen. mˈo6t̪ lˈə2n, hˈaːj lˈə2n."
+  },
+  {
+   "sentences": [
+    "Gió thổi vù vù, lá rơi lả tả."
+   ],
+   "phonemes": "zˈɔɜ tˈo4j vˈu2 vˈu2, lˈaːɜ ɹˈəːj lˈaː4 t̪ˈaː4."
+  },
+  {
+   "sentences": [
+    "Bầu trời xanh ngắt, không một gợn mây."
+   ],
+   "phonemes": "bˈə2w tʃˈəː2j sˈe-ɲ ŋˈaɜt̪, xˌoŋ mˈo6t̪ ɣˈəː6n mˈəɪ."
+  },
+  {
+   "sentences": [
+    "Họ im lặng hồi lâu; không ai nói gì."
+   ],
+   "phonemes": "hˈɔ6 ˈim lˈa6ŋ hˈo2j lˈə1w, xˌoŋ ˈaːj nˈɔɜj zˈi2."
+  },
+  {
+   "sentences": [
+    "Cậu bé hỏi: “Tại sao bầu trời lại màu xanh?”"
+   ],
+   "phonemes": "kˈə6w bˈɛɜ hˈɔ4j, t̪ˈaː6j sˈaːw bˈə2w tʃˈəː2j lˈaː6j mˈa2w sˈe-ɲ?"
+  },
+  {
+   "sentences": [
+    "“Vì ánh sáng bị tán xạ,” thầy giáo trả lời."
+   ],
+   "phonemes": "vˌi2 ˈe-ɜɲ sˈaːɜŋ bˌi6 t̪ˈaːɜn sˈaː6, tˈəɪ2 zˈaːɜw tʃˈaː4 lˈəː2j."
+  },
+  {
+   "sentences": [
+    "Ông già ngồi bên hiên, tay cầm điếu thuốc lào."
+   ],
+   "phonemes": "ˈoŋ zˈaː2 ŋˈo2j bˈen hˈiɛn, t̪ˈaj kˈə2m ɗˈiɛɜw tˈuəɜc lˈaː2w."
+  },
+  {
+   "sentences": [
+    "Con mèo nhảy lên bàn, làm đổ cốc nước."
+   ],
+   "phonemes": "kˌɔn mˈɛ2w ɲˈa4j lˈen bˈaː2n, lˈaː2m ɗˈo4 kˈoɜk nˈyəɜc."
+  },
+  {
+   "sentences": [
+    "Ngoài kia, tiếng ve kêu inh ỏi."
+   ],
+   "phonemes": "ŋwˈaː2j kˈiə, t̪ˈiɛɜŋ vˈɛ kˈe1w ˈiɲ ˈɔ4j."
+  },
+  {
+   "sentences": [
+    "Đêm ấy trăng sáng vằng vặc."
+   ],
+   "phonemes": "ɗˈem ˈəɪɜ tʃˈaŋ sˈaːɜŋ vˈa2ŋ vˈa6c."
+  },
+  {
+   "sentences": [
+    "Nàng khẽ thở dài, rồi quay mặt đi."
+   ],
+   "phonemes": "nˈaː2ŋ xˈɛ5 tˈəː4 zˈaː2j, ɹˈo2j kwˈaj mˈa6t̪ ɗˈi."
+  },
+  {
+   "sentences": [
+    "Hắn cười khẩy: \"Ngươi nghĩ ngươi là ai?\""
+   ],
+   "phonemes": "hˈaɜn kˈyə2j xˈəɪ4, ŋˈyəj ŋˈi5 ŋˈyəj lˌaː2 ˈaːj?"
+  },
+  {
+   "sentences": [
+    "Thiếu gia, xin người hãy bình tĩnh!"
+   ],
+   "phonemes": "tˈiɛɜw zˈaː, sˈin ŋˈyə2j hˈa5j bˈi2ɲ t̪ˈi5ɲ!"
+  },
+  {
+   "sentences": [
+    "Sư phụ, đệ tử đã hiểu rồi."
+   ],
+   "phonemes": "sˈy fˈu6, ɗˈe6 t̪ˈy4 ɗˌaː5 hˈiɛ4w ɹˈo2j."
+  },
+  {
+   "sentences": [
+    "Bệ hạ vạn tuế, vạn tuế, vạn vạn tuế!"
+   ],
+   "phonemes": "bˈe6 hˈaː6 vˈaː6n t̪wˈeɜ, vˈaː6n t̪wˈeɜ, vˈaː6n vˈaː6n t̪wˈeɜ!"
+  },
+  {
+   "sentences": [
+    "Kiếm khí tung hoành, cả ngọn núi rung chuyển."
+   ],
+   "phonemes": "kˈiɛɜm xˈiɜ t̪ˈuŋ hwˈe-2ɲ, kˈaː4 ŋˈɔ6n nˈuɜj ɹˈuŋ tʃwˈiɛ4n."
+  },
+  {
+   "sentences": [
+    "Cấp độ của cô ấy đã lên tới Lv.99."
+   ],
+   "phonemes": "kˈəɜp ɗˈo6 kˌuə4 kˈo ˈəɪɜ ɗˌaː5 lˈen t̪ˌəːɜj ˌɛlvˈiː. tʃˈiɜn mˈyəj tʃˈiɜn."
+  },
+  {
+   "sentences": [
+    "HP còn 15%, MP chỉ còn 3%."
+   ],
+   "phonemes": "ˈeɪtʃ pˈiː kˌɔ2n mˈyə2j lˈam fˈə2n tʃˈam, mˈəː2 fˈe tʃˈi4 kˌɔ2n bˈaː fˈə2n tʃˈam."
+  },
+  {
+   "sentences": [
+    "Hệ thống thông báo: [Nhiệm vụ hoàn thành]."
+   ],
+   "phonemes": "hˈe6 tˈoɜŋ tˈoŋ bˈaːɜw, ɲˈiɛ6m vˈu6 hwˈaː2n tˈe-2ɲ."
+  },
+  {
+   "sentences": [
+    "Ma pháp sư hạng S hiếm như lá mùa thu."
+   ],
+   "phonemes": "mˈaː fˈaːɜp sˈy hˈaː6ŋ ˈɛɜt̪ hˈiɛɜm ɲˌy lˈaːɜ mˈuə2 tˈu."
+  },
+  {
+   "sentences": [
+    "Nhật ký ngày 3 tháng 9."
+   ],
+   "phonemes": "ɲˈə6t̪ kˈiɜ ŋˈa2j bˈaː tˈaːɜŋ tʃˈiɜn."
+  },
+  {
+   "sentences": [
+    "Tập 1: Khởi đầu."
+   ],
+   "phonemes": "t̪ˈə6p mˈo6t̪, xˈəː4j ɗˈə2w."
+  },
+  {
+   "sentences": [
+    "Phần 2 - Chương 15: Cuộc gặp gỡ định mệnh."
+   ],
+   "phonemes": "fˈə2n hˈaːj, tʃˈyəŋ mˈyə2j lˈam, kˈuə6c ɣˈa6p ɣˈəː5 ɗˈi6ɲ mˈe6ɲ."
+  },
+  {
+   "sentences": [
+    "P/S: Nhớ trả lời tin nhắn nhé."
+   ],
+   "phonemes": "fˈuɜt̪ tʃˈen zˈəɪ, ɲˈəːɜ tʃˈaː4 lˈəː2j t̪ˈin ɲˈaɜn ɲˈɛɜ."
+  },
+  {
+   "sentences": [
+    "Tác giả: Nguyễn Văn A."
+   ],
+   "phonemes": "t̪ˈaːɜc zˈaː4, ŋwˈiɛ5n vˈan ˈaː."
+  },
+  {
+   "sentences": [
+    "Ghi chú (*): số liệu chưa kiểm chứng."
+   ],
+   "phonemes": "ɣˈi tʃˈuɜ, sˈaːw, sˈoɜ lˈiɛ6w tʃˌyə kˈiɛ4m tʃˈyɜŋ."
+  },
+  {
+   "sentences": [
+    "Cô ấy nói tiếng Anh rất giỏi, kiểu \"native speaker\" ấy."
+   ],
+   "phonemes": "kˈo ˈəɪɜ nˈɔɜj t̪ˈiɛɜŋ ˈe-ɲ ɹˈəɜt̪ zˈɔ4j, kˈiɛ4w nˈeɪɾɪv spˈiːkɚ ˈəɪɜ."
+  },
+  {
+   "sentences": [
+    "Đây là một deadline cực kỳ quan trọng."
+   ],
+   "phonemes": "ɗˈəɪ lˌaː2 mˈo6t̪ dˈɛdlaɪn kˈy6c kˈi2 kwˈaːn tʃˈɔ6ŋ."
+  },
+  {
+   "sentences": [
+    "Team mình họp online qua Zoom lúc 9h."
+   ],
+   "phonemes": "tˈiːm mˈi2ɲ hˈɔ6p ˈɑːnlaɪn kwˈaː zˈuːm lˌuɜc tʃˈiɜn zˈəː2."
+  },
+  {
+   "sentences": [
+    "Anh ta là CEO của một startup công nghệ."
+   ],
+   "phonemes": "ˈe-ɲ t̪ˈaː lˌaː2 sˈiː ˈiː ˈoʊ kˌuə4 mˈo6t̪ stˈɑːɹɾʌp kˈoŋ ŋˈe6."
+  },
+  {
+   "sentences": [
+    "Cuốn sách bán được hơn 1 triệu bản."
+   ],
+   "phonemes": "kˈuəɜn sˈe-ɜc bˈaːɜn ɗˌyə6c hˈəːn mˈo6t̪ tʃˈiɛ6w bˈaː4n."
+  },
+  {
+   "sentences": [
+    "Từ năm 1945 đến năm 1954."
+   ],
+   "phonemes": "t̪ˌy2 nˈam mˈo6t̪ ŋˈi2n tʃˈiɜn tʃˈam bˈoɜn mˈyəj lˈam ɗˌeɜn nˈam mˈo6t̪ ŋˈi2n tʃˈiɜn tʃˈam nˈam mˈyəj bˈoɜn."
+  },
+  {
+   "sentences": [
+    "Khoảng 70-80% số người được hỏi đồng ý."
+   ],
+   "phonemes": "xwˌaː4ŋ bˈa4j mˈyəj ɗˌeɜn t̪ˈaːɜm mˈyəj fˈə2n tʃˈam sˈoɜ ŋˈyə2j ɗˌyə6c hˈɔ4j ɗˈo2ŋ ˈiɜ."
+  },
+  {
+   "sentences": [
+    "Mức lương khởi điểm 15 triệu/tháng."
+   ],
+   "phonemes": "mˈyɜc lˈyəŋ xˈəː4j ɗˈiɛ4m mˈyə2j lˈam tʃˈiɛ6w tʃˈen tˈaːɜŋ."
+  },
+  {
+   "sentences": [
+    "Cân nặng giảm từ 80kg xuống 72kg."
+   ],
+   "phonemes": "kˈən nˈa6ŋ zˈaː4m t̪ˌy2 t̪ˈaːɜm mˈyəj kˈi lˈo ɣˈaːm sˈuəɜŋ bˈa4j mˈyəj hˈaːj kˈi lˈo ɣˈaːm."
+  },
+  {
+   "sentences": [
+    "Đã 3 giờ 15 phút sáng mà cô vẫn chưa ngủ."
+   ],
+   "phonemes": "ɗˌaː5 bˈaː zˈəː2 mˈyə2j lˈam fˈuɜt̪ sˈaːɜŋ mˌaː2 kˈo vˌə5n tʃˌyə ŋˈu4."
+  },
+  {
+   "sentences": [
+    "Giải nhất trị giá 100.000.000 đồng."
+   ],
+   "phonemes": "zˈaː4j ɲˈəɜt̪ tʃˈi6 zˈaːɜ mˈo6t̪ tʃˈam tʃˈiɛ6w ɗˈo2ŋ."
+  },
+  {
+   "sentences": [
+    "Tàu SE1 khởi hành từ ga Hà Nội."
+   ],
+   "phonemes": "t̪ˈa2w ˈɛɜt̪ ˈɛ mˈo6t̪ xˈəː4j hˈe-2ɲ t̪ˌy2 ɣˈaː hˈaː2 nˈo6j."
+  },
+  {
+   "sentences": [
+    "Cô ấy đạt điểm 9,75 môn Toán."
+   ],
+   "phonemes": "kˈo ˈəɪɜ ɗˈaː6t̪ ɗˈiɛ4m tʃˈiɜn fˈəɪ4 bˈa4j lˈam mˈon t̪wˈaːɜn."
+  },
+  {
+   "sentences": [
+    "Bài viết có 2.345 lượt thích và 678 bình luận."
+   ],
+   "phonemes": "bˈaː2j vˈiɛɜt̪ kˈɔɜ hˈaːj ŋˈi2n bˈaː tʃˈam bˈoɜn mˈyəj lˈam lˈyə6t̪ tˈiɜc vˌaː2 sˈaɜw tʃˈam bˈa4j mˈyəj t̪ˈaːɜm bˈi2ɲ lwˈə6n."
+  },
+  {
+   "sentences": [
+    "Thời hạn nộp hồ sơ là 15/11."
+   ],
+   "phonemes": "tˈəː2j hˈaː6n nˈo6p hˈo2 sˈəː lˌaː2 mˈyə2j lˈam tʃˈen mˈyə2j mˈo6t̪."
+  },
+  {
+   "sentences": [
+    "Tháng 12 năm ngoái trời rét đậm."
+   ],
+   "phonemes": "tˈaːɜŋ mˈyə2j hˈaːj nˈam ŋwˈaːɜj tʃˈəː2j ɹˈɛɜt̪ ɗˈə6m."
+  },
+  {
+   "sentences": [
+    "Cây cầu dài 1.535 mét bắc qua sông Hồng."
+   ],
+   "phonemes": "kˈəɪ kˈə2w zˈaː2j mˈo6t̪ ŋˈi2n nˈam tʃˈam bˈaː mˈyəj lˈam mˈɛɜt̪ bˈaɜc kwˈaː sˈoŋ hˈo2ŋ."
+  },
+  {
+   "sentences": [
+    "Sáng mai, 6 giờ, tập trung ở cổng trường."
+   ],
+   "phonemes": "sˈaːɜŋ mˈaːj, sˈaɜw zˈəː2, t̪ˈə6p tʃˈuŋ ˈəː4 kˈo4ŋ tʃˈyə2ŋ."
+  },
+  {
+   "sentences": [
+    "Ừm, cũng được."
+   ],
+   "phonemes": "ˈy2m, kˈu5ŋ ɗˌyə6c."
+  },
+  {
+   "sentences": [
+    "À, ra là vậy."
+   ],
+   "phonemes": "ˈaː2, ɹˈaː lˌaː2 vˈəɪ6."
+  },
+  {
+   "sentences": [
+    "Ơ kìa!"
+   ],
+   "phonemes": "ˈəː kˈiə2."
+  },
+  {
+   "sentences": [
+    "Chậc chậc, đáng tiếc thật."
+   ],
+   "phonemes": "tʃˈə6c tʃˈə6c, ɗˈaːɜŋ t̪ˈiɛɜc tˈə6t̪."
+  },
+  {
+   "sentences": [
+    "Hì hì, cảm ơn cậu."
+   ],
+   "phonemes": "hˈi2 hˈi2, kˈaː4m ˈəːn kˈə6w."
+  },
+  {
+   "sentences": [
+    "Ha ha ha!"
+   ],
+   "phonemes": "hˈaː hˈaː hˈaː."
+  },
+  {
+   "sentences": [
+    "Ê, đợi tớ với!"
+   ],
+   "phonemes": "ˈe, ɗˈəː6j t̪ˈəːɜ vˌəːɜj."
+  },
+  {
+   "sentences": [
+    "Vâng ạ."
+   ],
+   "phonemes": "vˈəŋ ˈaː6."
+  },
+  {
+   "sentences": [
+    "Dạ, con biết rồi."
+   ],
+   "phonemes": "zˈaː6, kˌɔn bˈiɛɜt̪ ɹˈo2j."
+  },
+  {
+   "sentences": [
+    "Thôi được rồi, đi thôi."
+   ],
+   "phonemes": "tˈoj ɗˌyə6c ɹˈo2j, ɗˈi tˈoj."
+  },
+  {
+   "sentences": [
+    "Thật là... chẳng biết nói sao nữa."
+   ],
+   "phonemes": "tˈə6t̪ lˌaː2, tʃˌa4ŋ bˈiɛɜt̪ nˈɔɜj sˈaːw nˈyə5."
+  },
+  {
+   "sentences": [
+    "Anh... anh xin lỗi."
+   ],
+   "phonemes": "ˈe-ɲ, ˈe-ɲ sˈin lˈo5j."
+  },
+  {
+   "sentences": [
+    "Không, không, không phải thế!"
+   ],
+   "phonemes": "xˌoŋ, xˌoŋ, xˌoŋ fˌaː4j tˈeɜ!"
+  },
+  {
+   "sentences": [
+    "Hãy nhớ: đừng bao giờ bỏ cuộc."
+   ],
+   "phonemes": "hˈa5j ɲˈəːɜ, ɗˈy2ŋ bˈaːw zˈəː2 bˈɔ4 kˈuə6c."
+  },
+  {
+   "sentences": [
+    "Câu trả lời là... không."
+   ],
+   "phonemes": "kˈə1w tʃˈaː4 lˈəː2j lˌaː2. xˌoŋ."
+  },
+  {
+   "sentences": [
+    "Lần thứ nhất, lần thứ hai, rồi lần thứ ba."
+   ],
+   "phonemes": "lˈə2n tˈyɜ ɲˈəɜt̪, lˈə2n tˈyɜ hˈaːj, ɹˈo2j lˈə2n tˈyɜ bˈaː."
+  },
+  {
+   "sentences": [
+    "Cô đứng thứ 2 trong lớp."
+   ],
+   "phonemes": "kˈo ɗˈyɜŋ tˈyɜ hˈaːj tʃˈɔŋ lˈəːɜp."
+  },
+  {
+   "sentences": [
+    "Anh về đích thứ 3."
+   ],
+   "phonemes": "ˈe-ɲ vˈe2 ɗˈiɜc tˈyɜ bˈaː."
+  },
+  {
+   "sentences": [
+    "Họ sống ở tầng 21 của tòa nhà."
+   ],
+   "phonemes": "hˈɔ6 sˈoɜŋ ˈəː4 t̪ˈə2ŋ hˈaːj mˈyəj mˈoɜt̪ kˌuə4 t̪wˈaː2 ɲˈaː2."
+  },
+  {
+   "sentences": [
+    "Mùa đông năm 2010 lạnh nhất trong 30 năm."
+   ],
+   "phonemes": "mˈuə2 ɗˈoŋ nˈam hˈaːj ŋˈi2n xˌoŋ tʃˈam mˈyə2j lˈe-6ɲ ɲˈəɜt̪ tʃˈɔŋ bˈaː mˈyəj nˈam."
+  },
+  {
+   "sentences": [
+    "Tỉ số 2:1 nghiêng về đội khách."
+   ],
+   "phonemes": "t̪ˈi4 sˈoɜ hˈaːj tʃˈen mˈo6t̪ ŋˈiɛŋ vˈe2 ɗˈo6j xˈe-ɜc."
+  },
+  {
+   "sentences": [
+    "Đây là lần thứ 1000 tôi nói điều này."
+   ],
+   "phonemes": "ɗˈəɪ lˌaː2 lˈə2n tˈyɜ mˈo6t̪ ŋˈi2n t̪ˈoj nˈɔɜj ɗˈiɛ2w nˈa2j."
+  },
+  {
+   "sentences": [
+    "Pin còn 5%, cần sạc ngay."
+   ],
+   "phonemes": "pˈɪn kˌɔ2n nˈam fˈə2n tʃˈam, kˈə2n sˈaː6c ŋˈaj."
+  },
+  {
+   "sentences": [
+    "Tốc độ mạng 100Mbps."
+   ],
+   "phonemes": "t̪ˈoɜk ɗˈo6 mˈaː6ŋ mˈo6t̪ tʃˈam mˈɛɡəbˌɪts pɜː sˈɛkənd."
+  },
+  {
+   "sentences": [
+    "Nhà sách mở cửa 24/7."
+   ],
+   "phonemes": "ɲˈaː2 sˈe-ɜc mˈəː4 kˈyə4 hˈaːj mˈyəj bˈoɜn tʃˈen bˈa4j."
+  },
+  {
+   "sentences": [
+    "Hôm qua là ngày 29/02/2024."
+   ],
+   "phonemes": "hˈom kwˈaː lˌaː2 ŋˈa2j hˈaːj mˈyəj tʃˈiɜn tˈaːɜŋ hˈaːj nˈam hˈaːj ŋˈi2n xˌoŋ tʃˈam hˈaːj mˈyəj bˈoɜn."
+  },
+  {
+   "sentences": [
+    "Cô ấy cao 1,62m."
+   ],
+   "phonemes": "kˈo ˈəɪɜ kˈaːw mˈo6t̪ fˈəɪ4 sˈaɜw hˈaːj mˈɛɜt̪."
+  },
+  {
+   "sentences": [
+    "Bản đồ tỉ lệ 1:50.000."
+   ],
+   "phonemes": "bˈaː4n ɗˈo2 t̪ˈi4 lˈe6 mˈo6t̪, nˈam mˈyəj ŋˈi2n."
+  },
+  {
+   "sentences": [
+    "Thành phố có 12 quận và 5 huyện."
+   ],
+   "phonemes": "tˈe-2ɲ fˈoɜ kˈɔɜ mˈyə2j hˈaːj kwˈə6n vˌaː2 nˈam hwˈiɛ6n."
+  },
+  {
+   "sentences": [
+    "Anh ấy nói: \"Tôi sẽ đến lúc 5 giờ.\" Rồi đi mất."
+   ],
+   "phonemes": "ˈe-ɲ ˈəɪɜ nˈɔɜj, t̪ˈoj sˌɛ5 ɗˌeɜn lˌuɜc nˈam zˈəː2. ɹˈo2j ɗˈi mˈəɜt̪."
+  },
+  {
+   "sentences": [
+    "Ngôi nhà số 7, ngõ 42, phố Huế."
+   ],
+   "phonemes": "ŋˈoj ɲˈaː2 sˈoɜ bˈa4j, ŋˈɔ5 bˈoɜn mˈyəj hˈaːj, fˈoɜ hwˈeɜ."
+  },
+  {
+   "sentences": [
+    "Thư viện có hơn 50.000 đầu sách."
+   ],
+   "phonemes": "tˈy vˈiɛ6n kˈɔɜ hˈəːn nˈam mˈyəj ŋˈi2n ɗˈə2w sˈe-ɜc."
+  },
+  {
+   "sentences": [
+    "Giảm giá 30% cho đơn từ 500k."
+   ],
+   "phonemes": "zˈaː4m zˈaːɜ bˈaː mˈyəj fˈə2n tʃˈam tʃˌɔ ɗˈəːn t̪ˌy2 nˈam tʃˈam kˈaː."
+  },
+  {
+   "sentences": [
+    "Hôm nay mình đi cafe nhé."
+   ],
+   "phonemes": "hˈom nˈaj mˈi2ɲ ɗˈi kˈæfeɪ ɲˈɛɜ."
+  },
+  {
+   "sentences": [
+    "Trà sữa trân châu size L giá 45k."
+   ],
+   "phonemes": "tʃˈaː2 sˈyə5 tʃˈən tʃˈə1w sˈaɪz lˈəː2 zˈaːɜ bˈoɜn mˈyəj lˈam kˈaː."
+  },
+  {
+   "sentences": [
+    "Bạn đã xem phim Avengers: Endgame chưa?"
+   ],
+   "phonemes": "bˈaː6n ɗˌaː5 sˈɛm fˈim ɐvˈɛndʒɚz, ɛndɡˈeɪm tʃˌyə?"
+  },
+  {
+   "sentences": [
+    "Bài hát \"Happy Birthday\" vang lên."
+   ],
+   "phonemes": "bˈaː2j hˈaːɜt̪ hˈæpi bˈɜːθdeɪ vˈaːŋ lˈen."
+  },
+  {
+   "sentences": [
+    "Họ đi du lịch New York vào mùa thu."
+   ],
+   "phonemes": "hˈɔ6 ɗˈi zˈu lˈi6c nˈuː jˈɔːɹk vˈaː2w mˈuə2 tˈu."
+  },
+  {
+   "sentences": [
+    "Ông ấy là giáo sư ở Đại học Harvard."
+   ],
+   "phonemes": "ˈoŋ ˈəɪɜ lˌaː2 zˈaːɜw sˈy ˈəː4 ɗˈaː6j hˈɔ6k hˈɑːɹvɚd."
+  },
+  {
+   "sentences": [
+    "Cô bé tên là Alice, đến từ London."
+   ],
+   "phonemes": "kˈo bˈɛɜ t̪ˈen lˌaː2 ˈælɪs, ɗˌeɜn t̪ˌy2 lˈʌndən."
+  },
+  {
+   "sentences": [
+    "Ryuu no Kiseki là tên một trò chơi cũ."
+   ],
+   "phonemes": "ɹˈaɪuː jˈuː nˈoʊ kˈaɪski lˌaː2 t̪ˈen mˈo6t̪ tʃˈɔ2 tʃˈəːj kˈu5."
+  },
+  {
+   "sentences": [
+    "Yamada Taro luôn đến lớp sớm nhất."
+   ],
+   "phonemes": "jæmˈɑːdə tˈæɹoʊ lˈuən ɗˌeɜn lˈəːɜp sˈəːɜm ɲˈəɜt̪."
+  },
+  {
+   "sentences": [
+    "Seo-yeon và Ji-ho là đôi bạn thân."
+   ],
+   "phonemes": "sˈɛw jˈoʊn vˌaː2 dʒˈaɪ hˈɔ lˌaː2 ɗˈoj bˈaː6n tˈən."
+  },
+  {
+   "sentences": [
+    "Thành phố Seoul về đêm rất đẹp."
+   ],
+   "phonemes": "tˈe-2ɲ fˈoɜ sˈoʊl vˈe2 ɗˈem ɹˈəɜt̪ ɗˈɛ6p."
+  },
+  {
+   "sentences": [
+    "Tôi học tiếng Nhật được 2 năm rồi."
+   ],
+   "phonemes": "t̪ˈoj hˈɔ6k t̪ˈiɛɜŋ ɲˈə6t̪ ɗˌyə6c hˈaːj nˈam ɹˈo2j."
+  },
+  {
+   "sentences": [
+    "Một chiếc xe Honda SH đỗ trước cửa."
+   ],
+   "phonemes": "mˈo6t̪ tʃˈiɛɜc sˈɛ hˈɑːndə ˈɛɜt̪ hˈaːɜt̪ ɗˈo5 tʃˈyəɜc kˈyə4."
+  },
+  {
+   "sentences": [
+    "Anh ấy lái chiếc Toyota Camry màu đen."
+   ],
+   "phonemes": "ˈe-ɲ ˈəɪɜ lˈaːɜj tʃˈiɛɜc tɔɪˈoʊɾə kˈæmɹi mˈa2w ɗˈɛn."
+  },
+  {
+   "sentences": [
+    "Mã PIN gồm 4 chữ số."
+   ],
+   "phonemes": "mˈaː5 fˈe ˈi nˈəː2 ɣˈo2m bˈoɜn tʃˈy5 sˈoɜ."
+  },
+  {
+   "sentences": [
+    "Hãy nhập mật khẩu và nhấn Enter."
+   ],
+   "phonemes": "hˈa5j ɲˈə6p mˈə6t̪ xˈə4w vˌaː2 ɲˈəɜn ˈɛntɚ."
+  },
+  {
+   "sentences": [
+    "Lỗi 404: không tìm thấy trang."
+   ],
+   "phonemes": "lˈo5j bˈoɜn tʃˈam lˈɛ4 bˈoɜn, xˌoŋ t̪ˈi2m tˈəɪɜ tʃˈaːŋ."
+  },
+  {
+   "sentences": [
+    "File báo cáo dạng PDF nặng 3,5MB."
+   ],
+   "phonemes": "fˈaɪl bˈaːɜw kˈaːɜw zˈaː6ŋ fˈe ɗˈe ˈɛɜp nˈa6ŋ bˈaː fˈəɪ4 nˈam mˈɛɡəbˌaɪt."
+  },
+  {
+   "sentences": [
+    "Ảnh chụp bằng máy Canon EOS R5."
+   ],
+   "phonemes": "ˈe-4ɲ tʃˈu6p bˈa2ŋ mˈaɜj kˈænən ˈɛ ˈo ˈɛɜt̪ ɹˈəː2 nˈam."
+  },
+  {
+   "sentences": [
+    "Bóng đèn LED 9W tiết kiệm điện."
+   ],
+   "phonemes": "bˈɔɜŋ ɗˈɛ2n lˈɛd tʃˈiɜn wˈaːɜt̪ t̪ˈiɛɜt̪ kˈiɛ6m ɗˈiɛ6n."
+  },
+  {
+   "sentences": [
+    "Vitamin C rất tốt cho sức khỏe."
+   ],
+   "phonemes": "vˈaɪɾəmɪn sˈe ɹˈəɜt̪ t̪ˈoɜt̪ tʃˌɔ sˈyɜc xwˈɛ4."
+  },
+  {
+   "sentences": [
+    "Nước sôi ở 100°C."
+   ],
+   "phonemes": "nˈyəɜc sˈoj ˈəː4 mˈo6t̪ tʃˈam ɗˈo6 sˈe."
+  },
+  {
+   "sentences": [
+    "Công thức nước là H2O."
+   ],
+   "phonemes": "kˈoŋ tˈyɜc nˈyəɜc lˌaː2 hˈaːɜt̪ hˈaːj ˈo."
+  },
+  {
+   "sentences": [
+    "Tốc độ ánh sáng khoảng 300.000 km/s."
+   ],
+   "phonemes": "t̪ˈoɜk ɗˈo6 ˈe-ɜɲ sˈaːɜŋ xwˌaː4ŋ bˈaː tʃˈam ŋˈi2n kˈi lˈo mˈɛɜt̪ tʃˈen zˈəɪ."
+  },
+  {
+   "sentences": [
+    "Trái Đất cách Mặt Trời khoảng 150 triệu km."
+   ],
+   "phonemes": "tʃˈaːɜj ɗˈəɜt̪ kˈe-ɜc mˈa6t̪ tʃˈəː2j xwˌaː4ŋ mˈo6t̪ tʃˈam nˈam mˈyəj tʃˈiɛ6w kˈi lˈo mˈɛɜt̪."
+  },
+  {
+   "sentences": [
+    "Năm 2050, dân số có thể vượt 10 tỷ người."
+   ],
+   "phonemes": "nˈam hˈaːj ŋˈi2n xˌoŋ tʃˈam nˈam mˈyəj, zˈən sˈoɜ kˈɔɜ tˈe4 vˈyə6t̪ mˈyə2j t̪ˈi4 ŋˈyə2j."
+  },
+  {
+   "sentences": [
+    "Khoảng cách giữa hai cây là 2-3m."
+   ],
+   "phonemes": "xwˌaː4ŋ kˈe-ɜc zˈyə5 hˈaːj kˈəɪ lˌaː2 hˈaːj ɗˌeɜn bˈaːm."
+  },
+  {
+   "sentences": [
+    "Quyển 3, trang 45-47."
+   ],
+   "phonemes": "kwˈiɛ4n bˈaː, tʃˈaːŋ bˈoɜn mˈyəj lˈam ɗˌeɜn bˈoɜn mˈyəj bˈa4j."
+  },
+  {
+   "sentences": [
+    "Điều 5, khoản 2 của luật quy định rõ."
+   ],
+   "phonemes": "ɗˈiɛ2w nˈam, xwˈaː4n hˈaːj kˌuə4 lwˈə6t̪ kwˈi ɗˈi6ɲ ɹˈɔ5."
+  },
+  {
+   "sentences": [
+    "Theo Nghị định 100/2019/NĐ-CP."
+   ],
+   "phonemes": "tˈɛw ŋˈi6 ɗˈi6ɲ mˈo6t̪ tʃˈam tʃˈen hˈaːj ŋˈi2n xˌoŋ tʃˈam mˈyə2j tʃˈiɜn tʃˈen nˈəː2 ɗˈe sˈe fˈe."
+  },
+  {
+   "sentences": [
+    "Số hiệu chuyến bay là VN254."
+   ],
+   "phonemes": "sˈoɜ hˈiɛ6w tʃwˈiɛɜn bˈaj lˌaː2 vˈe nˈəː2 hˈaːj nˈam bˈoɜn."
+  },
+  {
+   "sentences": [
+    "Cô ấy đeo kính cận 2,5 độ."
+   ],
+   "phonemes": "kˈo ˈəɪɜ ɗˈɛw kˈiɜɲ kˈə6n hˈaːj fˈəɪ4 nˈam ɗˈo6."
+  },
+  {
+   "sentences": [
+    "Đôi giày size 39 vừa khít."
+   ],
+   "phonemes": "ɗˈoj zˈa2j sˈaɪz bˈaː mˈyəj tʃˈiɜn vˈyə2 xˈiɜt̪."
+  },
+  {
+   "sentences": [
+    "Áo cỡ XL hơi rộng."
+   ],
+   "phonemes": "ˈaːɜw kˈəː5 ˈiɜc lˈəː2 hˈəːj ɹˈo6ŋ."
+  },
+  {
+   "sentences": [
+    "Từ 1/1/2025, quy định mới có hiệu lực."
+   ],
+   "phonemes": "t̪ˌy2 ŋˈa2j mˈo6t̪ tˈaːɜŋ mˈo6t̪ nˈam hˈaːj ŋˈi2n xˌoŋ tʃˈam hˈaːj mˈyəj lˈam, kwˈi ɗˈi6ɲ mˈəːɜj kˈɔɜ hˈiɛ6w lˈy6c."
+  },
+  {
+   "sentences": [
+    "Kỳ nghỉ Tết kéo dài 9 ngày."
+   ],
+   "phonemes": "kˈi2 ŋˈi4 t̪ˈeɜt̪ kˈɛɜw zˈaː2j tʃˈiɜn ŋˈa2j."
+  },
+  {
+   "sentences": [
+    "Lúc 0h ngày 1/1, pháo hoa rực sáng."
+   ],
+   "phonemes": "lˌuɜc xˌoŋ zˈəː2 ŋˈa2j mˈo6t̪ tˈaːɜŋ mˈo6t̪, fˈaːɜw hwˈaː ɹˈy6c sˈaːɜŋ."
+  },
+  {
+   "sentences": [
+    "Còn 3 ngày nữa là Giáng sinh."
+   ],
+   "phonemes": "kˌɔ2n bˈaː ŋˈa2j nˈyə5 lˌaː2 zˈaːɜŋ sˈiɲ."
+  },
+  {
+   "sentences": [
+    "Ngày mai, 14/2, là lễ Tình nhân."
+   ],
+   "phonemes": "ŋˈa2j mˈaːj, ŋˈa2j mˈyə2j bˈoɜn tˈaːɜŋ hˈaːj, lˌaː2 lˈe5 t̪ˈi2ɲ ɲˈən."
+  },
+  {
+   "sentences": [
+    "Ông nội tôi sinh năm 1930."
+   ],
+   "phonemes": "ˈoŋ nˈo6j t̪ˈoj sˈiɲ nˈam mˈo6t̪ ŋˈi2n tʃˈiɜn tʃˈam bˈaː mˈyəj."
+  },
+  {
+   "sentences": [
+    "Em gái tôi học lớp 5."
+   ],
+   "phonemes": "ˈɛm ɣˈaːɜj t̪ˈoj hˈɔ6k lˈəːɜp nˈam."
+  },
+  {
+   "sentences": [
+    "Cả lớp có 40 bạn, trong đó 22 nữ."
+   ],
+   "phonemes": "kˈaː4 lˈəːɜp kˈɔɜ bˈoɜn mˈyəj bˈaː6n, tʃˈɔŋ ɗˈɔɜ hˈaːj mˈyəj hˈaːj nˈy5."
+  },
+  {
+   "sentences": [
+    "Anh ấy được 8/10 điểm."
+   ],
+   "phonemes": "ˈe-ɲ ˈəɪɜ ɗˌyə6c t̪ˈaːɜm tʃˈen mˈyə2j ɗˈiɛ4m."
+  },
+  {
+   "sentences": [
+    "Trận đấu kết thúc với tỉ số 0-0."
+   ],
+   "phonemes": "tʃˈə6n ɗˈəɜw kˈeɜt̪ tˈuɜc vˌəːɜj t̪ˈi4 sˈoɜ xˌoŋ xˌoŋ."
+  },
+  {
+   "sentences": [
+    "Giải đấu có 32 đội tham gia."
+   ],
+   "phonemes": "zˈaː4j ɗˈəɜw kˈɔɜ bˈaː mˈyəj hˈaːj ɗˈo6j tˈaːm zˈaː."
+  },
+  {
+   "sentences": [
+    "Cô về nhì trong cuộc thi hát."
+   ],
+   "phonemes": "kˈo vˈe2 ɲˈi2 tʃˈɔŋ kˈuə6c tˈi hˈaːɜt̪."
+  },
+  {
+   "sentences": [
+    "Bức tranh được bán với giá 2,5 triệu USD."
+   ],
+   "phonemes": "bˈyɜc tʃˈe-ɲ ɗˌyə6c bˈaːɜn vˌəːɜj zˈaːɜ hˈaːj fˈəɪ4 nˈam tʃˈiɛ6w jˈuː ˈɛs dˈiː."
+  },
+  {
+   "sentences": [
+    "Những năm 90 của thế kỷ trước."
+   ],
+   "phonemes": "ɲˌy5ŋ nˈam tʃˈiɜn mˈyəj kˌuə4 tˈeɜ kˈi4 tʃˈyəɜc."
+  },
+  {
+   "sentences": [
+    "Thập niên 1980 là thời của băng cát-xét."
+   ],
+   "phonemes": "tˈə6p nˈiɛn mˈo6t̪ ŋˈi2n tʃˈiɜn tʃˈam t̪ˈaːɜm mˈyəj lˌaː2 tˈəː2j kˌuə4 bˈaŋ kˈaːɜt̪ sˈɛɜt̪."
+  },
+  {
+   "sentences": [
+    "Anh sinh vào khoảng giữa những năm 70."
+   ],
+   "phonemes": "ˈe-ɲ sˈiɲ vˈaː2w xwˌaː4ŋ zˈyə5 ɲˌy5ŋ nˈam bˈa4j mˈyəj."
+  },
+  {
+   "sentences": [
+    "Trời hôm nay đẹp quá.",
+    "Cô gái đứng bên cửa sổ, lặng lẽ nhìn mưa rơi.",
+    "Anh ấy về nhà rất muộn hôm ấy."
+   ],
+   "phonemes": "tʃˈəː2j hˈom nˈaj ɗˈɛ6p kwˈaːɜ. kˈo ɣˈaːɜj ɗˈyɜŋ bˈen kˈyə4 sˈo4, lˈa6ŋ lˈɛ5 ɲˈi2n mˈyə ɹˈəːj. ˈe-ɲ ˈəɪɜ vˈe2 ɲˈaː2 ɹˈəɜt̪ mˈuə6n hˈom ˈəɪɜ."
+  },
+  {
+   "sentences": [
+    "Trời hôm nay đẹp quá.",
+    "Cô gái đứng bên cửa sổ, lặng lẽ nhìn mưa rơi.",
+    "Anh ấy về nhà rất muộn hôm ấy."
+   ],
+   "phonemes": "tʃˈəː2j hˈom nˈaj ɗˈɛ6p kwˈaːɜ. kˈo ɣˈaːɜj ɗˈyɜŋ bˈen kˈyə4 sˈo4, lˈa6ŋ lˈɛ5 ɲˈi2n mˈyə ɹˈəːj. ˈe-ɲ ˈəɪɜ vˈe2 ɲˈaː2 ɹˈəɜt̪ mˈuə6n hˈom ˈəɪɜ."
+  },
+  {
+   "sentences": [
+    "Ừ.",
+    "Cô gái đứng bên cửa sổ, lặng lẽ nhìn mưa rơi suốt cả buổi chiều hôm ấy."
+   ],
+   "phonemes": "ˈy2, kˈo ɣˈaːɜj ɗˈyɜŋ bˈen kˈyə4 sˈo4, lˈa6ŋ lˈɛ5 ɲˈi2n mˈyə ɹˈəːj sˈuəɜt̪ kˈaː4 bˈuə4j tʃˈiɛ2w hˈom ˈəɪɜ."
+  },
+  {
+   "sentences": [
+    "Ừ.",
+    "Cô gái đứng bên cửa sổ, lặng lẽ nhìn mưa rơi suốt cả buổi chiều hôm ấy."
+   ],
+   "phonemes": "ˈy2, kˈo ɣˈaːɜj ɗˈyɜŋ bˈen kˈyə4 sˈo4, lˈa6ŋ lˈɛ5 ɲˈi2n mˈyə ɹˈəːj sˈuəɜt̪ kˈaː4 bˈuə4j tʃˈiɛ2w hˈom ˈəɪɜ."
+  },
+  {
+   "sentences": [
+    "Ừ.",
+    "Cô gái đứng bên cửa sổ,"
+   ],
+   "phonemes": "ˈy2, kˈo ɣˈaːɜj ɗˈyɜŋ bˈen kˈyə4 sˈo4."
+  },
+  {
+   "sentences": [
+    "lặng lẽ nhìn mưa rơi suốt cả buổi chiều",
+    "hôm ấy."
+   ],
+   "phonemes": "lˈa6ŋ lˈɛ5 ɲˈi2n mˈyə ɹˈəːj sˈuəɜt̪ kˈaː4 bˈuə4j tʃˈiɛ2w hˈom ˈəɪɜ."
+  },
+  {
+   "sentences": [
+    "Khi ánh đèn trong phòng vụt tắt, cả ngôi nhà chìm vào bóng tối, chỉ còn tiếng đồng hồ gõ nhịp đều đặn như một nhịp tim đang chờ đợi.",
+    "Cô ngồi im, không dám thở mạnh, vì sợ rằng chỉ một tiếng động nhỏ thôi cũng đủ để phá vỡ sự yên lặng mong manh ấy.",
+    "Rồi trời sáng."
+   ],
+   "phonemes": "xˌi ˈe-ɜɲ ɗˈɛ2n tʃˈɔŋ fˈɔ2ŋ vˈu6t̪ t̪ˈaɜt̪, kˈaː4 ŋˈoj ɲˈaː2 tʃˈi2m vˈaː2w bˈɔɜŋ t̪ˈoɜj, tʃˈi4 kˌɔ2n t̪ˈiɛɜŋ ɗˈo2ŋ hˈo2 ɣˈɔ5 ɲˈi6p ɗˈe2w ɗˈa6n ɲˌy mˈo6t̪ ɲˈi6p t̪ˈim ɗˌaːŋ tʃˈəː2 ɗˈəː6j. kˈo ŋˈo2j ˈim, xˌoŋ zˈaːɜm tˈəː4 mˈe-6ɲ, vˌi2 sˈəː6 ɹˈa2ŋ tʃˈi4 mˈo6t̪ t̪ˈiɛɜŋ ɗˈo6ŋ ɲˈɔ4 tˈoj kˈu5ŋ ɗˈu4 ɗˌe4 fˈaːɜ vˈəː5 sˈy6 ˈiɛn lˈa6ŋ mˈɔŋ mˈe-ɲ ˈəɪɜ. ɹˈo2j tʃˈəː2j sˈaːɜŋ."
+  },
+  {
+   "sentences": [
+    "Cô ngồi im, không dám thở mạnh, vì sợ rằng chỉ một tiếng động nhỏ thôi cũng đủ để phá vỡ sự yên lặng mong manh ấy.",
+    "Rồi trời sáng."
+   ],
+   "phonemes": "kˈo ŋˈo2j ˈim, xˌoŋ zˈaːɜm tˈəː4 mˈe-6ɲ, vˌi2 sˈəː6 ɹˈa2ŋ tʃˈi4 mˈo6t̪ t̪ˈiɛɜŋ ɗˈo6ŋ ɲˈɔ4 tˈoj kˈu5ŋ ɗˈu4 ɗˌe4 fˈaːɜ vˈəː5 sˈy6 ˈiɛn lˈa6ŋ mˈɔŋ mˈe-ɲ ˈəɪɜ. ɹˈo2j tʃˈəː2j sˈaːɜŋ."
+  },
+  {
+   "sentences": [
+    "cũng đủ để phá vỡ sự yên lặng mong manh",
+    "ấy.",
+    "Rồi trời sáng."
+   ],
+   "phonemes": "kˈu5ŋ ɗˈu4 ɗˌe4 fˈaːɜ vˈəː5 sˈy6 ˈiɛn lˈa6ŋ mˈɔŋ mˈe-ɲ ˈəɪɜ. ɹˈo2j tʃˈəː2j sˈaːɜŋ."
+  },
+  {
+   "sentences": [
+    "“Cậu định đi đâu vậy?”",
+    "- cô hỏi.",
+    "“Đi thật xa,” cậu đáp, “xa đến mức không ai tìm thấy.”",
+    "Cô không nói gì nữa."
+   ],
+   "phonemes": "kˈə6w ɗˈi6ɲ ɗˈi ɗˈə1w vˈəɪ6? kˈo hˈɔ4j. ɗˈi tˈə6t̪ sˈaː, kˈə6w ɗˈaːɜp, sˈaː ɗˌeɜn mˈyɜc xˌoŋ ˈaːj t̪ˈi2m tˈəɪɜ. kˈo xˌoŋ nˈɔɜj zˈi2 nˈyə5."
+  },
+  {
+   "sentences": [
+    "“Cậu định đi đâu vậy?”",
+    "- cô hỏi.",
+    "“Đi thật xa,” cậu đáp, “xa đến mức không ai tìm thấy.”",
+    "Cô không nói gì nữa."
+   ],
+   "phonemes": "kˈə6w ɗˈi6ɲ ɗˈi ɗˈə1w vˈəɪ6? kˈo hˈɔ4j. ɗˈi tˈə6t̪ sˈaː, kˈə6w ɗˈaːɜp, sˈaː ɗˌeɜn mˈyɜc xˌoŋ ˈaːj t̪ˈi2m tˈəɪɜ. kˈo xˌoŋ nˈɔɜj zˈi2 nˈyə5."
+  },
+  {
+   "sentences": [
+    "“Cậu định đi đâu vậy?”",
+    "- cô hỏi."
+   ],
+   "phonemes": "kˈə6w ɗˈi6ɲ ɗˈi ɗˈə1w vˈəɪ6? kˈo hˈɔ4j."
+  },
+  {
+   "sentences": [
+    "Năm 2024, dân số thành phố đạt 9.389.700 người; diện tích 2.095 km2; mật độ khoảng 4.481 người/km2.",
+    "Con số này tăng 2,3% so với năm trước."
+   ],
+   "phonemes": "nˈam hˈaːj ŋˈi2n xˌoŋ tʃˈam hˈaːj mˈyəj bˈoɜn, zˈən sˈoɜ tˈe-2ɲ fˈoɜ ɗˈaː6t̪ tʃˈiɜn tʃˈiɛ6w bˈaː tʃˈam t̪ˈaːɜm mˈyəj tʃˈiɜn ŋˈi2n bˈa4j tʃˈam ŋˈyə2j, zˈiɛ6n t̪ˈiɜc hˈaːj ŋˈi2n xˌoŋ tʃˈam tʃˈiɜn mˈyəj lˈam kˈi lˈo mˈɛɜt̪ vˈuəŋ, mˈə6t̪ ɗˈo6 xwˌaː4ŋ bˈoɜn ŋˈi2n bˈoɜn tʃˈam t̪ˈaːɜm mˈyəj mˈoɜt̪ ŋˈyə2j tʃˈen kˈi lˈo mˈɛɜt̪ hˈaːj. kˌɔn sˈoɜ nˈa2j t̪ˈaŋ hˈaːj fˈəɪ4 bˈaː fˈə2n tʃˈam sˈɔ vˌəːɜj nˈam tʃˈyəɜc."
+  },
+  {
+   "sentences": [
+    "Năm 2024, dân số thành phố đạt 9.389.700 người; diện tích 2.095 km2; mật độ khoảng 4.481 người/km2.",
+    "Con số này tăng 2,3% so với năm trước."
+   ],
+   "phonemes": "nˈam hˈaːj ŋˈi2n xˌoŋ tʃˈam hˈaːj mˈyəj bˈoɜn, zˈən sˈoɜ tˈe-2ɲ fˈoɜ ɗˈaː6t̪ tʃˈiɜn tʃˈiɛ6w bˈaː tʃˈam t̪ˈaːɜm mˈyəj tʃˈiɜn ŋˈi2n bˈa4j tʃˈam ŋˈyə2j, zˈiɛ6n t̪ˈiɜc hˈaːj ŋˈi2n xˌoŋ tʃˈam tʃˈiɜn mˈyəj lˈam kˈi lˈo mˈɛɜt̪ vˈuəŋ, mˈə6t̪ ɗˈo6 xwˌaː4ŋ bˈoɜn ŋˈi2n bˈoɜn tʃˈam t̪ˈaːɜm mˈyəj mˈoɜt̪ ŋˈyə2j tʃˈen kˈi lˈo mˈɛɜt̪ hˈaːj. kˌɔn sˈoɜ nˈa2j t̪ˈaŋ hˈaːj fˈəɪ4 bˈaː fˈə2n tʃˈam sˈɔ vˌəːɜj nˈam tʃˈyəɜc."
+  },
+  {
+   "sentences": [
+    "Năm 2024,",
+    "dân số thành phố đạt 9.389.700 người;"
+   ],
+   "phonemes": "nˈam hˈaːj ŋˈi2n xˌoŋ tʃˈam hˈaːj mˈyəj bˈoɜn zˈən sˈoɜ tˈe-2ɲ fˈoɜ ɗˈaː6t̪ tʃˈiɜn tʃˈiɛ6w bˈaː tʃˈam t̪ˈaːɜm mˈyəj tʃˈiɜn ŋˈi2n bˈa4j tʃˈam ŋˈyə2j."
+  },
+  {
+   "sentences": [
+    "Một hai ba bốn năm,",
+    "sáu bảy tám chín mười,"
+   ],
+   "phonemes": "mˈo6t̪ hˈaːj bˈaː bˈoɜn nˈam sˈaɜw bˈa4j t̪ˈaːɜm tʃˈiɜn mˈyə2j."
+  },
+  {
+   "sentences": [
+    "Ầm!",
+    "Rầm!",
+    "Cánh cửa bật tung.",
+    "Hắn bước vào."
+   ],
+   "phonemes": "ˈə2m! ɹˈə2m! kˈe-ɜɲ kˈyə4 bˈə6t̪ t̪ˈuŋ. hˈaɜn bˈyəɜc vˈaː2w."
+  },
+  {
+   "sentences": [
+    "Ầm!",
+    "Rầm!",
+    "Cánh cửa bật tung.",
+    "Hắn bước vào."
+   ],
+   "phonemes": "ˈə2m! ɹˈə2m! kˈe-ɜɲ kˈyə4 bˈə6t̪ t̪ˈuŋ. hˈaɜn bˈyəɜc vˈaː2w."
+  },
+  {
+   "sentences": [
+    "Ầm!",
+    "Rầm!",
+    "Cánh cửa bật tung.",
+    "Hắn bước vào."
+   ],
+   "phonemes": "ˈə2m! ɹˈə2m! kˈe-ɜɲ kˈyə4 bˈə6t̪ t̪ˈuŋ. hˈaɜn bˈyəɜc vˈaː2w."
+  },
+  {
+   "sentences": [
+    "Hừm...",
+    "Để xem nào...",
+    "À, đây rồi!",
+    "Tìm thấy rồi!"
+   ],
+   "phonemes": "hˈy2m, ɗˌe4 sˈɛm nˈaː2w. ˈaː2, ɗˈəɪ ɹˈo2j! t̪ˈi2m tˈəɪɜ ɹˈo2j!"
+  },
+  {
+   "sentences": [
+    "Hừm...",
+    "Để xem nào...",
+    "À, đây rồi!",
+    "Tìm thấy rồi!"
+   ],
+   "phonemes": "hˈy2m, ɗˌe4 sˈɛm nˈaː2w. ˈaː2, ɗˈəɪ ɹˈo2j! t̪ˈi2m tˈəɪɜ ɹˈo2j!"
+  },
+  {
+   "sentences": [
+    "Hừm...",
+    "Để xem nào...",
+    "À, đây rồi!",
+    "Tìm thấy rồi!"
+   ],
+   "phonemes": "hˈy2m, ɗˌe4 sˈɛm nˈaː2w. ˈaː2, ɗˈəɪ ɹˈo2j! t̪ˈi2m tˈəɪɜ ɹˈo2j!"
+  },
+  {
+   "sentences": [
+    "Sư phụ nói: \"Kiếm pháp không nằm ở tay, mà nằm ở tâm.\"",
+    "Đệ tử cúi đầu, im lặng suy ngẫm hồi lâu, rồi mới chậm rãi đáp: \"Đệ tử đã hiểu.\""
+   ],
+   "phonemes": "sˈy fˈu6 nˈɔɜj, kˈiɛɜm fˈaːɜp xˌoŋ nˈa2m ˈəː4 t̪ˈaj, mˌaː2 nˈa2m ˈəː4 t̪ˈəm. ɗˈe6 t̪ˈy4 kˈuɜj ɗˈə2w, ˈim lˈa6ŋ swˈi ŋˈə5m hˈo2j lˈə1w, ɹˈo2j mˈəːɜj tʃˈə6m ɹˈaː5j ɗˈaːɜp, ɗˈe6 t̪ˈy4 ɗˌaː5 hˈiɛ4w."
+  },
+  {
+   "sentences": [
+    "Sư phụ nói: \"Kiếm pháp không nằm ở tay, mà nằm ở tâm.\"",
+    "Đệ tử cúi đầu, im lặng suy ngẫm hồi lâu, rồi mới chậm rãi đáp: \"Đệ tử đã hiểu.\""
+   ],
+   "phonemes": "sˈy fˈu6 nˈɔɜj, kˈiɛɜm fˈaːɜp xˌoŋ nˈa2m ˈəː4 t̪ˈaj, mˌaː2 nˈa2m ˈəː4 t̪ˈəm. ɗˈe6 t̪ˈy4 kˈuɜj ɗˈə2w, ˈim lˈa6ŋ swˈi ŋˈə5m hˈo2j lˈə1w, ɹˈo2j mˈəːɜj tʃˈə6m ɹˈaː5j ɗˈaːɜp, ɗˈe6 t̪ˈy4 ɗˌaː5 hˈiɛ4w."
+  },
+  {
+   "sentences": [
+    "Sư phụ nói: \"Kiếm pháp không nằm ở tay,",
+    "mà nằm ở tâm.\""
+   ],
+   "phonemes": "sˈy fˈu6 nˈɔɜj, kˈiɛɜm fˈaːɜp xˌoŋ nˈa2m ˈəː4 t̪ˈaj mˌaː2 nˈa2m ˈəː4 t̪ˈəm."
+  },
+  {
+   "sentences": [
+    "Một câu rất ngắn.",
+    "Hai."
+   ],
+   "phonemes": "mˈo6t̪ kˈə1w ɹˈəɜt̪ ŋˈaɜn. hˈaːj."
+  },
+  {
+   "sentences": [
+    "Một câu rất ngắn.",
+    "Hai."
+   ],
+   "phonemes": "mˈo6t̪ kˈə1w ɹˈəɜt̪ ŋˈaɜn. hˈaːj."
+  },
+  {
+   "sentences": [
+    "Một câu rất ngắn.",
+    "Hai."
+   ],
+   "phonemes": "mˈo6t̪ kˈə1w ɹˈəɜt̪ ŋˈaɜn. hˈaːj."
+  },
+  {
+   "sentences": [
+    "Chiếc thuyền nhỏ trôi chậm giữa dòng sông, mang theo những mùa hè đã xa.",
+    "Anh ấy mở cuốn sổ cũ, đọc lại từng dòng chữ mà mẹ đã viết cho mình từ nhiều năm trước."
+   ],
+   "phonemes": "tʃˈiɛɜc twˈiɛ2n ɲˈɔ4 tʃˈoj tʃˈə6m zˈyə5 zˈɔ2ŋ sˈoŋ, mˈaːŋ tˈɛw ɲˌy5ŋ mˈuə2 hˈɛ2 ɗˌaː5 sˈaː. ˈe-ɲ ˈəɪɜ mˈəː4 kˈuəɜn sˈo4 kˈu5, ɗˈɔ6k lˈaː6j t̪ˈy2ŋ zˈɔ2ŋ tʃˈy5 mˌaː2 mˈɛ6 ɗˌaː5 vˈiɛɜt̪ tʃˌɔ mˈi2ɲ t̪ˌy2 ɲˈiɛ2w nˈam tʃˈyəɜc."
+  },
+  {
+   "sentences": [
+    "sông,",
+    "mang theo những mùa hè đã xa."
+   ],
+   "phonemes": "sˈoŋ mˈaːŋ tˈɛw ɲˌy5ŋ mˈuə2 hˈɛ2 ɗˌaː5 sˈaː."
+  }
+ ],
+ "normalize": [
+  {
+   "text": "Trời hôm nay đẹp quá.",
+   "plain": "trời hôm nay đẹp quá.",
+   "punc": "trời hôm nay đẹp quá.",
+   "puncNorm": "Trời hôm nay đẹp quá."
+  },
+  {
+   "text": "Cô gái đứng bên cửa sổ, lặng lẽ nhìn mưa rơi.",
+   "plain": "cô gái đứng bên cửa sổ, lặng lẽ nhìn mưa rơi.",
+   "punc": "cô gái đứng bên cửa sổ, lặng lẽ nhìn mưa rơi.",
+   "puncNorm": "Cô gái đứng bên cửa sổ, lặng lẽ nhìn mưa rơi."
+  },
+  {
+   "text": "Chiếc thuyền nhỏ trôi chậm giữa dòng sông, mang theo những mùa hè đã xa.",
+   "plain": "chiếc thuyền nhỏ trôi chậm giữa dòng sông, mang theo những mùa hè đã xa.",
+   "punc": "chiếc thuyền nhỏ trôi chậm giữa dòng sông, mang theo những mùa hè đã xa.",
+   "puncNorm": "Chiếc thuyền nhỏ trôi chậm giữa dòng sông, mang theo những mùa hè đã xa."
+  },
+  {
+   "text": "Anh ấy mở cuốn sổ cũ, đọc lại từng dòng chữ mà mẹ đã viết cho mình từ nhiều năm trước.",
+   "plain": "anh ấy mở cuốn sổ cũ, đọc lại từng dòng chữ mà mẹ đã viết cho mình từ nhiều năm trước.",
+   "punc": "anh ấy mở cuốn sổ cũ, đọc lại từng dòng chữ mà mẹ đã viết cho mình từ nhiều năm trước.",
+   "puncNorm": "Anh ấy mở cuốn sổ cũ, đọc lại từng dòng chữ mà mẹ đã viết cho mình từ nhiều năm trước."
+  },
+  {
+   "text": "Ừ.",
+   "plain": "ừ.",
+   "punc": "ừ.",
+   "puncNorm": "Ừ."
+  },
+  {
+   "text": "Hả?",
+   "plain": "hả?",
+   "punc": "hả.",
+   "puncNorm": "Hả."
+  },
+  {
+   "text": "Không!",
+   "plain": "không!",
+   "punc": "không.",
+   "puncNorm": "Không."
+  },
+  {
+   "text": "Thật sao...?",
+   "plain": "thật sao?",
+   "punc": "thật sao.",
+   "puncNorm": "Thật sao."
+  },
+  {
+   "text": "“Cậu định đi đâu vậy?” - cô hỏi.",
+   "plain": "cậu định đi đâu vậy? cô hỏi.",
+   "punc": "cậu định đi đâu vậy? cô hỏi.",
+   "puncNorm": "“Cậu định đi đâu vậy?” - cô hỏi."
+  },
+  {
+   "text": "\"Tớ không biết,\" cậu đáp, \"nhưng tớ sẽ quay lại.\"",
+   "plain": "tớ không biết, cậu đáp, nhưng tớ sẽ quay lại.",
+   "punc": "tớ không biết, cậu đáp, nhưng tớ sẽ quay lại.",
+   "puncNorm": "\"Tớ không biết,\" cậu đáp, \"nhưng tớ sẽ quay lại.\"."
+  },
+  {
+   "text": "Cậu ta - người mà ai cũng sợ - lại đang mỉm cười.",
+   "plain": "cậu ta, người mà ai cũng sợ, lại đang mỉm cười.",
+   "punc": "cậu ta, người mà ai cũng sợ, lại đang mỉm cười.",
+   "puncNorm": "Cậu ta - người mà ai cũng sợ - lại đang mỉm cười."
+  },
+  {
+   "text": "Ầm! Cánh cửa bật tung.",
+   "plain": "ầm! cánh cửa bật tung.",
+   "punc": "ầm! cánh cửa bật tung.",
+   "puncNorm": "Ầm! Cánh cửa bật tung."
+  },
+  {
+   "text": "Hừm... để tôi nghĩ đã.",
+   "plain": "hừm. để tôi nghĩ đã.",
+   "punc": "hừm, để tôi nghĩ đã.",
+   "puncNorm": "Hừm.., để tôi nghĩ đã."
+  },
+  {
+   "text": "Ba ngày sau (đúng như lời hẹn), họ gặp lại nhau.",
+   "plain": "ba ngày sau, đúng như lời hẹn, họ gặp lại nhau.",
+   "punc": "ba ngày sau, đúng như lời hẹn, họ gặp lại nhau.",
+   "puncNorm": "Ba ngày sau (đúng như lời hẹn), họ gặp lại nhau."
+  },
+  {
+   "text": "Có ba thứ cô cần: nước, lửa và một tấm bản đồ.",
+   "plain": "có ba thứ cô cần, nước, lửa và một tấm bản đồ.",
+   "punc": "có ba thứ cô cần, nước, lửa và một tấm bản đồ.",
+   "puncNorm": "Có ba thứ cô cần: nước, lửa và một tấm bản đồ."
+  },
+  {
+   "text": "Hắn gào lên: \"Chạy đi!!!\"",
+   "plain": "hắn gào lên, chạy đi!",
+   "punc": "hắn gào lên, chạy đi!",
+   "puncNorm": "Hắn gào lên: \"Chạy đi!!!\"."
+  },
+  {
+   "text": "Cái gì?! Sao lại thế được?",
+   "plain": "cái gì? sao lại thế được?",
+   "punc": "cái gì? sao lại thế được?",
+   "puncNorm": "Cái gì?! Sao lại thế được?"
+  },
+  {
+   "text": "— Em đã ăn cơm chưa?",
+   "plain": "em đã ăn cơm chưa?",
+   "punc": "em đã ăn cơm chưa?",
+   "puncNorm": "— Em đã ăn cơm chưa?"
+  },
+  {
+   "text": "— Rồi ạ.",
+   "plain": "rồi ạ.",
+   "punc": "rồi ạ.",
+   "puncNorm": "— Rồi ạ."
+  },
+  {
+   "text": "Năm 2024, dân số thành phố đạt 9.389.700 người.",
+   "plain": "năm hai nghìn không trăm hai mươi bốn, dân số thành phố đạt chín triệu ba trăm tám mươi chín nghìn bảy trăm người.",
+   "punc": "năm hai nghìn không trăm hai mươi bốn, dân số thành phố đạt chín triệu ba trăm tám mươi chín nghìn bảy trăm người.",
+   "puncNorm": "Năm 2024, dân số thành phố đạt 9.389.700 người."
+  },
+  {
+   "text": "Giá vàng hôm nay là 82,5 triệu đồng một lượng.",
+   "plain": "giá vàng hôm nay là tám mươi hai phẩy năm triệu đồng một lượng.",
+   "punc": "giá vàng hôm nay là tám mươi hai phẩy năm triệu đồng một lượng.",
+   "puncNorm": "Giá vàng hôm nay là 82,5 triệu đồng một lượng."
+  },
+  {
+   "text": "Cô ấy sinh ngày 12/3/1998 tại Hà Nội.",
+   "plain": "cô ấy sinh ngày mười hai tháng ba năm một nghìn chín trăm chín mươi tám tại hà nội.",
+   "punc": "cô ấy sinh ngày mười hai tháng ba năm một nghìn chín trăm chín mươi tám tại hà nội.",
+   "puncNorm": "Cô ấy sinh ngày 12/3/1998 tại Hà Nội."
+  },
+  {
+   "text": "Cuộc họp bắt đầu lúc 7h30 sáng thứ Hai.",
+   "plain": "cuộc họp bắt đầu lúc bảy giờ ba mươi phút sáng thứ hai.",
+   "punc": "cuộc họp bắt đầu lúc bảy giờ ba mươi phút sáng thứ hai.",
+   "puncNorm": "Cuộc họp bắt đầu lúc 7h30 sáng thứ Hai."
+  },
+  {
+   "text": "Chuyến bay cất cánh lúc 19:45 ngày 01-10-2026.",
+   "plain": "chuyến bay cất cánh lúc mười chín giờ bốn mươi lăm phút ngày một tháng mười năm hai nghìn không trăm hai mươi sáu.",
+   "punc": "chuyến bay cất cánh lúc mười chín giờ bốn mươi lăm phút ngày một tháng mười năm hai nghìn không trăm hai mươi sáu.",
+   "puncNorm": "Chuyến bay cất cánh lúc 19:45 ngày 01-10-2026."
+  },
+  {
+   "text": "Lãi suất tăng 0,5% so với tháng trước.",
+   "plain": "lãi suất tăng không phẩy năm phần trăm so với tháng trước.",
+   "punc": "lãi suất tăng không phẩy năm phần trăm so với tháng trước.",
+   "puncNorm": "Lãi suất tăng 0,5% so với tháng trước."
+  },
+  {
+   "text": "Nhiệt độ ngoài trời xuống tới -5°C.",
+   "plain": "nhiệt độ ngoài trời xuống tới âm năm độ xê.",
+   "punc": "nhiệt độ ngoài trời xuống tới âm năm độ xê.",
+   "puncNorm": "Nhiệt độ ngoài trời xuống tới -5°C."
+  },
+  {
+   "text": "Quãng đường dài 12,7 km, đi mất khoảng 45 phút.",
+   "plain": "quãng đường dài mười hai phẩy bảy ki lô mét, đi mất khoảng bốn mươi lăm phút.",
+   "punc": "quãng đường dài mười hai phẩy bảy ki lô mét, đi mất khoảng bốn mươi lăm phút.",
+   "puncNorm": "Quãng đường dài 12,7 km, đi mất khoảng 45 phút."
+  },
+  {
+   "text": "Căn phòng rộng 25m2, giá thuê 4.500.000đ/tháng.",
+   "plain": "căn phòng rộng hai mươi lăm mét vuông, giá thuê bốn triệu năm trăm nghìn đồng trên tháng.",
+   "punc": "căn phòng rộng hai mươi lăm mét vuông, giá thuê bốn triệu năm trăm nghìn đồng trên tháng.",
+   "puncNorm": "Căn phòng rộng 25m2, giá thuê 4.500.000đ/tháng."
+  },
+  {
+   "text": "Gói hàng nặng 2,3kg và có giá $19.99.",
+   "plain": "gói hàng nặng hai phẩy ba ki lô gam và có giá mười chín chấm chín chín <en>u s d</en>.",
+   "punc": "gói hàng nặng hai phẩy ba ki lô gam và có giá mười chín chấm chín chín <en>u s d</en>.",
+   "puncNorm": "Gói hàng nặng 2,3kg và có giá $19.99."
+  },
+  {
+   "text": "Vé vào cửa là 50.000 VND cho người lớn và 20.000 VND cho trẻ em.",
+   "plain": "vé vào cửa là năm mươi nghìn việt nam đồng cho người lớn và hai mươi nghìn việt nam đồng cho trẻ em.",
+   "punc": "vé vào cửa là năm mươi nghìn việt nam đồng cho người lớn và hai mươi nghìn việt nam đồng cho trẻ em.",
+   "puncNorm": "Vé vào cửa là 50.000 VND cho người lớn và 20.000 VND cho trẻ em."
+  },
+  {
+   "text": "Đội tuyển thắng 3-1 trong trận chung kết.",
+   "plain": "đội tuyển thắng ba một trong trận chung kết.",
+   "punc": "đội tuyển thắng ba một trong trận chung kết.",
+   "puncNorm": "Đội tuyển thắng 3-1 trong trận chung kết."
+  },
+  {
+   "text": "Trận đấu diễn ra từ ngày 5 đến ngày 9 tháng 7.",
+   "plain": "trận đấu diễn ra từ ngày năm đến ngày chín tháng bảy.",
+   "punc": "trận đấu diễn ra từ ngày năm đến ngày chín tháng bảy.",
+   "puncNorm": "Trận đấu diễn ra từ ngày 5 đến ngày 9 tháng 7."
+  },
+  {
+   "text": "Học kỳ II kéo dài từ tháng 1 đến tháng 5.",
+   "plain": "học kỳ hai kéo dài từ tháng một đến tháng năm.",
+   "punc": "học kỳ hai kéo dài từ tháng một đến tháng năm.",
+   "puncNorm": "Học kỳ II kéo dài từ tháng 1 đến tháng 5."
+  },
+  {
+   "text": "Thế kỷ XIX là thời kỳ nhiều biến động.",
+   "plain": "thế kỷ mười chín là thời kỳ nhiều biến động.",
+   "punc": "thế kỷ mười chín là thời kỳ nhiều biến động.",
+   "puncNorm": "Thế kỷ XIX là thời kỳ nhiều biến động."
+  },
+  {
+   "text": "Chương IV bắt đầu ở trang 132.",
+   "plain": "chương bốn bắt đầu ở trang một trăm ba mươi hai.",
+   "punc": "chương bốn bắt đầu ở trang một trăm ba mươi hai.",
+   "puncNorm": "Chương IV bắt đầu ở trang 132."
+  },
+  {
+   "text": "Vua Louis XIV trị vì nước Pháp rất lâu.",
+   "plain": "vua louis mười bốn trị vì nước pháp rất lâu.",
+   "punc": "vua louis mười bốn trị vì nước pháp rất lâu.",
+   "puncNorm": "Vua Louis XIV trị vì nước Pháp rất lâu."
+  },
+  {
+   "text": "Ông là PGS.TS ngành Vật lý tại ĐH Bách khoa.",
+   "plain": "ông là phó giáo sư tiến sĩ ngành vật lý tại đại học bách khoa.",
+   "punc": "ông là phó giáo sư tiến sĩ ngành vật lý tại đại học bách khoa.",
+   "puncNorm": "Ông là PGS.TS ngành Vật lý tại ĐH Bách khoa."
+  },
+  {
+   "text": "UBND TP.HCM vừa ban hành quy định mới.",
+   "plain": "uỷ ban nhân dân thành phố hồ chí minh vừa ban hành quy định mới.",
+   "punc": "uỷ ban nhân dân thành phố hồ chí minh vừa ban hành quy định mới.",
+   "puncNorm": "UBND TP.HCM vừa ban hành quy định mới."
+  },
+  {
+   "text": "Văn phòng ở số 15 đường Lê Lợi, Q.1, TP.HCM.",
+   "plain": "văn phòng ở số mười lăm đường lê lợi, quận một, thành phố hồ chí minh.",
+   "punc": "văn phòng ở số mười lăm đường lê lợi, quận một, thành phố hồ chí minh.",
+   "puncNorm": "Văn phòng ở số 15 đường Lê Lợi, Q.1, TP.HCM."
+  },
+  {
+   "text": "Bạn mang theo bút, thước, compa, v.v. nhé.",
+   "plain": "bạn mang theo bút, thước, compa, vân vân. nhé.",
+   "punc": "bạn mang theo bút, thước, compa, vân vân. nhé.",
+   "puncNorm": "Bạn mang theo bút, thước, compa, v.v. nhé."
+  },
+  {
+   "text": "CLB bóng đá của trường có 30 thành viên.",
+   "plain": "câu lạc bộ bóng đá của trường có ba mươi thành viên.",
+   "punc": "câu lạc bộ bóng đá của trường có ba mươi thành viên.",
+   "puncNorm": "CLB bóng đá của trường có 30 thành viên."
+  },
+  {
+   "text": "Liên hệ qua số 0912 345 678 hoặc 028.3822.1234.",
+   "plain": "liên hệ qua số không chín một hai, ba bốn năm, sáu bảy tám hoặc không hai tám chấm ba tám hai hai chấm một hai ba bốn.",
+   "punc": "liên hệ qua số không chín một hai, ba bốn năm, sáu bảy tám hoặc không hai tám chấm ba tám hai hai chấm một hai ba bốn.",
+   "puncNorm": "Liên hệ qua số 0912 345 678 hoặc 028.3822.1234."
+  },
+  {
+   "text": "Gửi thư tới hotro@abook.vn trước 17h.",
+   "plain": "gửi thư tới ho tro a còng abook chấm vê nờ trước mười bảy giờ.",
+   "punc": "gửi thư tới ho tro a còng abook chấm vê nờ trước mười bảy giờ.",
+   "puncNorm": "Gửi thư tới hotro@abook.vn trước 17h."
+  },
+  {
+   "text": "Xem thêm tại https://example.com/tin-tuc/2024.",
+   "plain": "xem thêm tại hát tê tê phê ét hai chấm gạch chéo gạch chéo example chấm com gạch chéo tin gạch nối tuc gạch chéo hai không hai bốn.",
+   "punc": "xem thêm tại hát tê tê phê ét hai chấm gạch chéo gạch chéo example chấm com gạch chéo tin gạch nối tuc gạch chéo hai không hai bốn.",
+   "puncNorm": "Xem thêm tại https://example.com/tin-tuc/2024."
+  },
+  {
+   "text": "Tôi vừa mua một chiếc iPhone 15 Pro Max.",
+   "plain": "tôi vừa mua một chiếc i phone mười lăm pro max.",
+   "punc": "tôi vừa mua một chiếc i phone mười lăm pro max.",
+   "puncNorm": "Tôi vừa mua một chiếc iPhone 15 Pro Max."
+  },
+  {
+   "text": "Cô ấy rất thích đọc Harry Potter và xem Netflix.",
+   "plain": "cô ấy rất thích đọc harry potter và xem netflix.",
+   "punc": "cô ấy rất thích đọc harry potter và xem netflix.",
+   "puncNorm": "Cô ấy rất thích đọc Harry Potter và xem Netflix."
+  },
+  {
+   "text": "Họ đặt phòng qua Booking.com rồi bay sang Tokyo.",
+   "plain": "họ đặt phòng qua booking chấm com rồi bay sang tokyo.",
+   "punc": "họ đặt phòng qua booking chấm com rồi bay sang tokyo.",
+   "puncNorm": "Họ đặt phòng qua Booking.com rồi bay sang Tokyo."
+  },
+  {
+   "text": "Kirito rút kiếm, còn Asuna thì lùi lại một bước.",
+   "plain": "kirito rút kiếm, còn asuna thì lùi lại một bước.",
+   "punc": "kirito rút kiếm, còn asuna thì lùi lại một bước.",
+   "puncNorm": "Kirito rút kiếm, còn Asuna thì lùi lại một bước."
+  },
+  {
+   "text": "Tanaka-san cúi đầu chào mọi người.",
+   "plain": "tanaka san cúi đầu chào mọi người.",
+   "punc": "tanaka san cúi đầu chào mọi người.",
+   "puncNorm": "Tanaka-san cúi đầu chào mọi người."
+  },
+  {
+   "text": "Kim Min-jun là học sinh mới chuyển đến.",
+   "plain": "kim min jun là học sinh mới chuyển đến.",
+   "punc": "kim min jun là học sinh mới chuyển đến.",
+   "puncNorm": "Kim Min-jun là học sinh mới chuyển đến."
+  },
+  {
+   "text": "Tháp Eiffel ở Paris cao khoảng 330 mét.",
+   "plain": "tháp eiffel ở paris cao khoảng ba trăm ba mươi mét.",
+   "punc": "tháp eiffel ở paris cao khoảng ba trăm ba mươi mét.",
+   "puncNorm": "Tháp Eiffel ở Paris cao khoảng 330 mét."
+  },
+  {
+   "text": "Anh ấy làm kỹ sư phần mềm cho Google ở Singapore.",
+   "plain": "anh ấy làm kỹ sư phần mềm cho google ở singapore.",
+   "punc": "anh ấy làm kỹ sư phần mềm cho google ở singapore.",
+   "puncNorm": "Anh ấy làm kỹ sư phần mềm cho Google ở Singapore."
+  },
+  {
+   "text": "Cô dùng Facebook, Zalo và TikTok mỗi ngày.",
+   "plain": "cô dùng facebook, zalo và tik tok mỗi ngày.",
+   "punc": "cô dùng facebook, zalo và tik tok mỗi ngày.",
+   "puncNorm": "Cô dùng Facebook, Zalo và TikTok mỗi ngày."
+  },
+  {
+   "text": "Bài toán: 3 + 5 = 8, còn 12 x 4 = 48.",
+   "plain": "bài toán, ba cộng năm bằng tám, còn mười hai nhân bốn bằng bốn mươi tám.",
+   "punc": "bài toán, ba cộng năm bằng tám, còn mười hai nhân bốn bằng bốn mươi tám.",
+   "puncNorm": "Bài toán: 3 + 5 = 8, còn 12 x 4 = 48."
+  },
+  {
+   "text": "Tỷ lệ là 1/3, tức khoảng 33,3%.",
+   "plain": "tỷ lệ là một trên ba, tức khoảng ba mươi ba phẩy ba phần trăm.",
+   "punc": "tỷ lệ là một trên ba, tức khoảng ba mươi ba phẩy ba phần trăm.",
+   "puncNorm": "Tỷ lệ là 1/3, tức khoảng 33,3%."
+  },
+  {
+   "text": "Căn bậc hai của 16 là 4.",
+   "plain": "căn bậc hai của mười sáu là bốn.",
+   "punc": "căn bậc hai của mười sáu là bốn.",
+   "puncNorm": "Căn bậc hai của 16 là 4."
+  },
+  {
+   "text": "Phiên bản 2.0.1 sửa nhiều lỗi nhỏ.",
+   "plain": "phiên bản hai chấm không chấm một sửa nhiều lỗi nhỏ.",
+   "punc": "phiên bản hai chấm không chấm một sửa nhiều lỗi nhỏ.",
+   "puncNorm": "Phiên bản 2.0.1 sửa nhiều lỗi nhỏ."
+  },
+  {
+   "text": "Mã đơn hàng là A12-B345.",
+   "plain": "mã đơn hàng là a mười hai bê ba trăm bốn mươi lăm.",
+   "punc": "mã đơn hàng là a mười hai bê ba trăm bốn mươi lăm.",
+   "puncNorm": "Mã đơn hàng là A12-B345."
+  },
+  {
+   "text": "Lớp 10A1 có 45 học sinh.",
+   "plain": "lớp mười a một có bốn mươi lăm học sinh.",
+   "punc": "lớp mười a một có bốn mươi lăm học sinh.",
+   "puncNorm": "Lớp 10A1 có 45 học sinh."
+  },
+  {
+   "text": "Xe buýt số 32 chạy từ bến xe Mỹ Đình.",
+   "plain": "xe buýt số ba mươi hai chạy từ bến xe mỹ đình.",
+   "punc": "xe buýt số ba mươi hai chạy từ bến xe mỹ đình.",
+   "puncNorm": "Xe buýt số 32 chạy từ bến xe Mỹ Đình."
+  },
+  {
+   "text": "Quốc lộ 1A dài hơn 2.300 km.",
+   "plain": "quốc lộ một a dài hơn hai nghìn ba trăm ki lô mét.",
+   "punc": "quốc lộ một a dài hơn hai nghìn ba trăm ki lô mét.",
+   "puncNorm": "Quốc lộ 1A dài hơn 2.300 km."
+  },
+  {
+   "text": "Anh ấy chạy 100m hết 10,5 giây.",
+   "plain": "anh ấy chạy một trăm mét hết mười phẩy năm giây.",
+   "punc": "anh ấy chạy một trăm mét hết mười phẩy năm giây.",
+   "puncNorm": "Anh ấy chạy 100m hết 10,5 giây."
+  },
+  {
+   "text": "Chiếc máy bay Boeing 787 chở được khoảng 250 hành khách.",
+   "plain": "chiếc máy bay boeing bảy trăm tám mươi bảy chở được khoảng hai trăm năm mươi hành khách.",
+   "punc": "chiếc máy bay boeing bảy trăm tám mươi bảy chở được khoảng hai trăm năm mươi hành khách.",
+   "puncNorm": "Chiếc máy bay Boeing 787 chở được khoảng 250 hành khách."
+  },
+  {
+   "text": "Công ty có doanh thu 1,2 tỷ USD năm ngoái.",
+   "plain": "công ty có doanh thu một phẩy hai tỷ <en>u s d</en> năm ngoái.",
+   "punc": "công ty có doanh thu một phẩy hai tỷ <en>u s d</en> năm ngoái.",
+   "puncNorm": "Công ty có doanh thu 1,2 tỷ USD năm ngoái."
+  },
+  {
+   "text": "Tốc độ tối đa là 120 km/h.",
+   "plain": "tốc độ tối đa là một trăm hai mươi ki lô mét trên giờ.",
+   "punc": "tốc độ tối đa là một trăm hai mươi ki lô mét trên giờ.",
+   "puncNorm": "Tốc độ tối đa là 120 km/h."
+  },
+  {
+   "text": "Dung lượng ổ cứng là 512GB.",
+   "plain": "dung lượng ổ cứng là năm trăm mười hai gigabyte.",
+   "punc": "dung lượng ổ cứng là năm trăm mười hai gigabyte.",
+   "puncNorm": "Dung lượng ổ cứng là 512GB."
+  },
+  {
+   "text": "Màn hình 6,7 inch, pin 5000mAh.",
+   "plain": "màn hình sáu phẩy bảy inch, pin năm nghìn mi li am pe giờ.",
+   "punc": "màn hình sáu phẩy bảy inch, pin năm nghìn mi li am pe giờ.",
+   "puncNorm": "Màn hình 6,7 inch, pin 5000mAh."
+  },
+  {
+   "text": "Tầng 3, phòng 305, nhà B.",
+   "plain": "tầng ba, phòng ba trăm lẻ năm, nhà bê.",
+   "punc": "tầng ba, phòng ba trăm lẻ năm, nhà bê.",
+   "puncNorm": "Tầng 3, phòng 305, nhà B."
+  },
+  {
+   "text": "Ngày 30/4/1975 là một mốc lịch sử.",
+   "plain": "ngày ba mươi tháng tư năm một nghìn chín trăm bảy mươi lăm là một mốc lịch sử.",
+   "punc": "ngày ba mươi tháng tư năm một nghìn chín trăm bảy mươi lăm là một mốc lịch sử.",
+   "puncNorm": "Ngày 30/4/1975 là một mốc lịch sử."
+  },
+  {
+   "text": "Hẹn gặp lại vào 8 giờ tối mai nhé!",
+   "plain": "hẹn gặp lại vào tám giờ tối mai nhé!",
+   "punc": "hẹn gặp lại vào tám giờ tối mai nhé!",
+   "puncNorm": "Hẹn gặp lại vào 8 giờ tối mai nhé!"
+  },
+  {
+   "text": "Năm học 2025-2026 sắp bắt đầu.",
+   "plain": "năm học hai nghìn không trăm hai mươi lăm đến hai nghìn không trăm hai mươi sáu sắp bắt đầu.",
+   "punc": "năm học hai nghìn không trăm hai mươi lăm đến hai nghìn không trăm hai mươi sáu sắp bắt đầu.",
+   "puncNorm": "Năm học 2025-2026 sắp bắt đầu."
+  },
+  {
+   "text": "Trong khoảng 10-15 phút nữa tàu sẽ tới.",
+   "plain": "trong khoảng mười đến mười lăm phút nữa tàu sẽ tới.",
+   "punc": "trong khoảng mười đến mười lăm phút nữa tàu sẽ tới.",
+   "puncNorm": "Trong khoảng 10-15 phút nữa tàu sẽ tới."
+  },
+  {
+   "text": "Bà cụ đã 102 tuổi mà vẫn còn minh mẫn.",
+   "plain": "bà cụ đã một trăm lẻ hai tuổi mà vẫn còn minh mẫn.",
+   "punc": "bà cụ đã một trăm lẻ hai tuổi mà vẫn còn minh mẫn.",
+   "puncNorm": "Bà cụ đã 102 tuổi mà vẫn còn minh mẫn."
+  },
+  {
+   "text": "Một nghìn lẻ một đêm là câu chuyện nổi tiếng.",
+   "plain": "một nghìn lẻ một đêm là câu chuyện nổi tiếng.",
+   "punc": "một nghìn lẻ một đêm là câu chuyện nổi tiếng.",
+   "puncNorm": "Một nghìn lẻ một đêm là câu chuyện nổi tiếng."
+  },
+  {
+   "text": "Cô đếm: một, hai, ba, bốn, năm.",
+   "plain": "cô đếm, một, hai, ba, bốn, năm.",
+   "punc": "cô đếm, một, hai, ba, bốn, năm.",
+   "puncNorm": "Cô đếm: một, hai, ba, bốn, năm."
+  },
+  {
+   "text": "OK, chúng ta bắt đầu thôi.",
+   "plain": "ô ca, chúng ta bắt đầu thôi.",
+   "punc": "ô ca, chúng ta bắt đầu thôi.",
+   "puncNorm": "OK, chúng ta bắt đầu thôi."
+  },
+  {
+   "text": "Wow, thật không thể tin được!",
+   "plain": "wow, thật không thể tin được!",
+   "punc": "wow, thật không thể tin được!",
+   "puncNorm": "Wow, thật không thể tin được!"
+  },
+  {
+   "text": "Hôm nay là thứ 6, ngày 13.",
+   "plain": "hôm nay là thứ sáu, ngày mười ba.",
+   "punc": "hôm nay là thứ sáu, ngày mười ba.",
+   "puncNorm": "Hôm nay là thứ 6, ngày 13."
+  },
+  {
+   "text": "Tôi ở lại Đà Lạt 3 ngày 2 đêm.",
+   "plain": "tôi ở lại đà lạt ba ngày hai đêm.",
+   "punc": "tôi ở lại đà lạt ba ngày hai đêm.",
+   "puncNorm": "Tôi ở lại Đà Lạt 3 ngày 2 đêm."
+  },
+  {
+   "text": "Anh trai tôi cao 1m75 và nặng 68kg.",
+   "plain": "anh trai tôi cao một mét bảy mươi lăm và nặng sáu mươi tám ki lô gam.",
+   "punc": "anh trai tôi cao một mét bảy mươi lăm và nặng sáu mươi tám ki lô gam.",
+   "puncNorm": "Anh trai tôi cao 1m75 và nặng 68kg."
+  },
+  {
+   "text": "Cửa hàng mở cửa từ 8:00 đến 22:00.",
+   "plain": "cửa hàng mở cửa từ tám giờ không phút đến hai mươi hai giờ không phút.",
+   "punc": "cửa hàng mở cửa từ tám giờ không phút đến hai mươi hai giờ không phút.",
+   "puncNorm": "Cửa hàng mở cửa từ 8:00 đến 22:00."
+  },
+  {
+   "text": "Mẹ dặn: \"Nhớ mang áo mưa.\"",
+   "plain": "mẹ dặn, nhớ mang áo mưa.",
+   "punc": "mẹ dặn, nhớ mang áo mưa.",
+   "puncNorm": "Mẹ dặn: \"Nhớ mang áo mưa.\"."
+  },
+  {
+   "text": "Tiếng chuông vang lên... một lần... hai lần...",
+   "plain": "tiếng chuông vang lên. một lần. hai lần.",
+   "punc": "tiếng chuông vang lên. một lần, hai lần.",
+   "puncNorm": "Tiếng chuông vang lên... một lần.., hai lần..."
+  },
+  {
+   "text": "Gió thổi vù vù, lá rơi lả tả.",
+   "plain": "gió thổi vù vù, lá rơi lả tả.",
+   "punc": "gió thổi vù vù, lá rơi lả tả.",
+   "puncNorm": "Gió thổi vù vù, lá rơi lả tả."
+  },
+  {
+   "text": "Bầu trời xanh ngắt, không một gợn mây.",
+   "plain": "bầu trời xanh ngắt, không một gợn mây.",
+   "punc": "bầu trời xanh ngắt, không một gợn mây.",
+   "puncNorm": "Bầu trời xanh ngắt, không một gợn mây."
+  },
+  {
+   "text": "Họ im lặng hồi lâu; không ai nói gì.",
+   "plain": "họ im lặng hồi lâu, không ai nói gì.",
+   "punc": "họ im lặng hồi lâu, không ai nói gì.",
+   "puncNorm": "Họ im lặng hồi lâu; không ai nói gì."
+  },
+  {
+   "text": "Cậu bé hỏi: “Tại sao bầu trời lại màu xanh?”",
+   "plain": "cậu bé hỏi, tại sao bầu trời lại màu xanh?",
+   "punc": "cậu bé hỏi, tại sao bầu trời lại màu xanh?",
+   "puncNorm": "Cậu bé hỏi: “Tại sao bầu trời lại màu xanh?”."
+  },
+  {
+   "text": "“Vì ánh sáng bị tán xạ,” thầy giáo trả lời.",
+   "plain": "vì ánh sáng bị tán xạ, thầy giáo trả lời.",
+   "punc": "vì ánh sáng bị tán xạ, thầy giáo trả lời.",
+   "puncNorm": "“Vì ánh sáng bị tán xạ,” thầy giáo trả lời."
+  },
+  {
+   "text": "Ông già ngồi bên hiên, tay cầm điếu thuốc lào.",
+   "plain": "ông già ngồi bên hiên, tay cầm điếu thuốc lào.",
+   "punc": "ông già ngồi bên hiên, tay cầm điếu thuốc lào.",
+   "puncNorm": "Ông già ngồi bên hiên, tay cầm điếu thuốc lào."
+  },
+  {
+   "text": "Con mèo nhảy lên bàn, làm đổ cốc nước.",
+   "plain": "con mèo nhảy lên bàn, làm đổ cốc nước.",
+   "punc": "con mèo nhảy lên bàn, làm đổ cốc nước.",
+   "puncNorm": "Con mèo nhảy lên bàn, làm đổ cốc nước."
+  },
+  {
+   "text": "Ngoài kia, tiếng ve kêu inh ỏi.",
+   "plain": "ngoài kia, tiếng ve kêu inh ỏi.",
+   "punc": "ngoài kia, tiếng ve kêu inh ỏi.",
+   "puncNorm": "Ngoài kia, tiếng ve kêu inh ỏi."
+  },
+  {
+   "text": "Đêm ấy trăng sáng vằng vặc.",
+   "plain": "đêm ấy trăng sáng vằng vặc.",
+   "punc": "đêm ấy trăng sáng vằng vặc.",
+   "puncNorm": "Đêm ấy trăng sáng vằng vặc."
+  },
+  {
+   "text": "Nàng khẽ thở dài, rồi quay mặt đi.",
+   "plain": "nàng khẽ thở dài, rồi quay mặt đi.",
+   "punc": "nàng khẽ thở dài, rồi quay mặt đi.",
+   "puncNorm": "Nàng khẽ thở dài, rồi quay mặt đi."
+  },
+  {
+   "text": "Hắn cười khẩy: \"Ngươi nghĩ ngươi là ai?\"",
+   "plain": "hắn cười khẩy, ngươi nghĩ ngươi là ai?",
+   "punc": "hắn cười khẩy, ngươi nghĩ ngươi là ai?",
+   "puncNorm": "Hắn cười khẩy: \"Ngươi nghĩ ngươi là ai?\"."
+  },
+  {
+   "text": "Thiếu gia, xin người hãy bình tĩnh!",
+   "plain": "thiếu gia, xin người hãy bình tĩnh!",
+   "punc": "thiếu gia, xin người hãy bình tĩnh!",
+   "puncNorm": "Thiếu gia, xin người hãy bình tĩnh!"
+  },
+  {
+   "text": "Sư phụ, đệ tử đã hiểu rồi.",
+   "plain": "sư phụ, đệ tử đã hiểu rồi.",
+   "punc": "sư phụ, đệ tử đã hiểu rồi.",
+   "puncNorm": "Sư phụ, đệ tử đã hiểu rồi."
+  },
+  {
+   "text": "Bệ hạ vạn tuế, vạn tuế, vạn vạn tuế!",
+   "plain": "bệ hạ vạn tuế, vạn tuế, vạn vạn tuế!",
+   "punc": "bệ hạ vạn tuế, vạn tuế, vạn vạn tuế!",
+   "puncNorm": "Bệ hạ vạn tuế, vạn tuế, vạn vạn tuế!"
+  },
+  {
+   "text": "Kiếm khí tung hoành, cả ngọn núi rung chuyển.",
+   "plain": "kiếm khí tung hoành, cả ngọn núi rung chuyển.",
+   "punc": "kiếm khí tung hoành, cả ngọn núi rung chuyển.",
+   "puncNorm": "Kiếm khí tung hoành, cả ngọn núi rung chuyển."
+  },
+  {
+   "text": "Cấp độ của cô ấy đã lên tới Lv.99.",
+   "plain": "cấp độ của cô ấy đã lên tới lv. chín mươi chín.",
+   "punc": "cấp độ của cô ấy đã lên tới lv. chín mươi chín.",
+   "puncNorm": "Cấp độ của cô ấy đã lên tới Lv.99."
+  },
+  {
+   "text": "HP còn 15%, MP chỉ còn 3%.",
+   "plain": "<en>h p</en> còn mười lăm phần trăm, mờ phê chỉ còn ba phần trăm.",
+   "punc": "<en>h p</en> còn mười lăm phần trăm, mờ phê chỉ còn ba phần trăm.",
+   "puncNorm": "HP còn 15%, MP chỉ còn 3%."
+  },
+  {
+   "text": "Hệ thống thông báo: [Nhiệm vụ hoàn thành].",
+   "plain": "hệ thống thông báo, nhiệm vụ hoàn thành.",
+   "punc": "hệ thống thông báo, nhiệm vụ hoàn thành.",
+   "puncNorm": "Hệ thống thông báo: [Nhiệm vụ hoàn thành]."
+  },
+  {
+   "text": "Ma pháp sư hạng S hiếm như lá mùa thu.",
+   "plain": "ma pháp sư hạng ét hiếm như lá mùa thu.",
+   "punc": "ma pháp sư hạng ét hiếm như lá mùa thu.",
+   "puncNorm": "Ma pháp sư hạng S hiếm như lá mùa thu."
+  },
+  {
+   "text": "Nhật ký ngày 3 tháng 9.",
+   "plain": "nhật ký ngày ba tháng chín.",
+   "punc": "nhật ký ngày ba tháng chín.",
+   "puncNorm": "Nhật ký ngày 3 tháng 9."
+  },
+  {
+   "text": "Tập 1: Khởi đầu.",
+   "plain": "tập một, khởi đầu.",
+   "punc": "tập một, khởi đầu.",
+   "puncNorm": "Tập 1: Khởi đầu."
+  },
+  {
+   "text": "Phần 2 - Chương 15: Cuộc gặp gỡ định mệnh.",
+   "plain": "phần hai, chương mười lăm, cuộc gặp gỡ định mệnh.",
+   "punc": "phần hai, chương mười lăm, cuộc gặp gỡ định mệnh.",
+   "puncNorm": "Phần 2 - Chương 15: Cuộc gặp gỡ định mệnh."
+  },
+  {
+   "text": "P/S: Nhớ trả lời tin nhắn nhé.",
+   "plain": "phút trên giây, nhớ trả lời tin nhắn nhé.",
+   "punc": "phút trên giây, nhớ trả lời tin nhắn nhé.",
+   "puncNorm": "P/S: Nhớ trả lời tin nhắn nhé."
+  },
+  {
+   "text": "Tác giả: Nguyễn Văn A.",
+   "plain": "tác giả, nguyễn văn a.",
+   "punc": "tác giả, nguyễn văn a.",
+   "puncNorm": "Tác giả: Nguyễn Văn A."
+  },
+  {
+   "text": "Ghi chú (*): số liệu chưa kiểm chứng.",
+   "plain": "ghi chú, sao, số liệu chưa kiểm chứng.",
+   "punc": "ghi chú, sao, số liệu chưa kiểm chứng.",
+   "puncNorm": "Ghi chú (*): số liệu chưa kiểm chứng."
+  },
+  {
+   "text": "Cô ấy nói tiếng Anh rất giỏi, kiểu \"native speaker\" ấy.",
+   "plain": "cô ấy nói tiếng anh rất giỏi, kiểu native speaker ấy.",
+   "punc": "cô ấy nói tiếng anh rất giỏi, kiểu native speaker ấy.",
+   "puncNorm": "Cô ấy nói tiếng Anh rất giỏi, kiểu \"native speaker\" ấy."
+  },
+  {
+   "text": "Đây là một deadline cực kỳ quan trọng.",
+   "plain": "đây là một deadline cực kỳ quan trọng.",
+   "punc": "đây là một deadline cực kỳ quan trọng.",
+   "puncNorm": "Đây là một deadline cực kỳ quan trọng."
+  },
+  {
+   "text": "Team mình họp online qua Zoom lúc 9h.",
+   "plain": "team mình họp online qua zoom lúc chín giờ.",
+   "punc": "team mình họp online qua zoom lúc chín giờ.",
+   "puncNorm": "Team mình họp online qua Zoom lúc 9h."
+  },
+  {
+   "text": "Anh ta là CEO của một startup công nghệ.",
+   "plain": "anh ta là <en>c e o</en> của một startup công nghệ.",
+   "punc": "anh ta là <en>c e o</en> của một startup công nghệ.",
+   "puncNorm": "Anh ta là CEO của một startup công nghệ."
+  },
+  {
+   "text": "Cuốn sách bán được hơn 1 triệu bản.",
+   "plain": "cuốn sách bán được hơn một triệu bản.",
+   "punc": "cuốn sách bán được hơn một triệu bản.",
+   "puncNorm": "Cuốn sách bán được hơn 1 triệu bản."
+  },
+  {
+   "text": "Từ năm 1945 đến năm 1954.",
+   "plain": "từ năm một nghìn chín trăm bốn mươi lăm đến năm một nghìn chín trăm năm mươi bốn.",
+   "punc": "từ năm một nghìn chín trăm bốn mươi lăm đến năm một nghìn chín trăm năm mươi bốn.",
+   "puncNorm": "Từ năm 1945 đến năm 1954."
+  },
+  {
+   "text": "Khoảng 70-80% số người được hỏi đồng ý.",
+   "plain": "khoảng bảy mươi đến tám mươi phần trăm số người được hỏi đồng ý.",
+   "punc": "khoảng bảy mươi đến tám mươi phần trăm số người được hỏi đồng ý.",
+   "puncNorm": "Khoảng 70-80% số người được hỏi đồng ý."
+  },
+  {
+   "text": "Mức lương khởi điểm 15 triệu/tháng.",
+   "plain": "mức lương khởi điểm mười lăm triệu trên tháng.",
+   "punc": "mức lương khởi điểm mười lăm triệu trên tháng.",
+   "puncNorm": "Mức lương khởi điểm 15 triệu/tháng."
+  },
+  {
+   "text": "Cân nặng giảm từ 80kg xuống 72kg.",
+   "plain": "cân nặng giảm từ tám mươi ki lô gam xuống bảy mươi hai ki lô gam.",
+   "punc": "cân nặng giảm từ tám mươi ki lô gam xuống bảy mươi hai ki lô gam.",
+   "puncNorm": "Cân nặng giảm từ 80kg xuống 72kg."
+  },
+  {
+   "text": "Đã 3 giờ 15 phút sáng mà cô vẫn chưa ngủ.",
+   "plain": "đã ba giờ mười lăm phút sáng mà cô vẫn chưa ngủ.",
+   "punc": "đã ba giờ mười lăm phút sáng mà cô vẫn chưa ngủ.",
+   "puncNorm": "Đã 3 giờ 15 phút sáng mà cô vẫn chưa ngủ."
+  },
+  {
+   "text": "Giải nhất trị giá 100.000.000 đồng.",
+   "plain": "giải nhất trị giá một trăm triệu đồng.",
+   "punc": "giải nhất trị giá một trăm triệu đồng.",
+   "puncNorm": "Giải nhất trị giá 100.000.000 đồng."
+  },
+  {
+   "text": "Tàu SE1 khởi hành từ ga Hà Nội.",
+   "plain": "tàu ét e một khởi hành từ ga hà nội.",
+   "punc": "tàu ét e một khởi hành từ ga hà nội.",
+   "puncNorm": "Tàu SE1 khởi hành từ ga Hà Nội."
+  },
+  {
+   "text": "Cô ấy đạt điểm 9,75 môn Toán.",
+   "plain": "cô ấy đạt điểm chín phẩy bảy lăm môn toán.",
+   "punc": "cô ấy đạt điểm chín phẩy bảy lăm môn toán.",
+   "puncNorm": "Cô ấy đạt điểm 9,75 môn Toán."
+  },
+  {
+   "text": "Bài viết có 2.345 lượt thích và 678 bình luận.",
+   "plain": "bài viết có hai nghìn ba trăm bốn mươi lăm lượt thích và sáu trăm bảy mươi tám bình luận.",
+   "punc": "bài viết có hai nghìn ba trăm bốn mươi lăm lượt thích và sáu trăm bảy mươi tám bình luận.",
+   "puncNorm": "Bài viết có 2.345 lượt thích và 678 bình luận."
+  },
+  {
+   "text": "Thời hạn nộp hồ sơ là 15/11.",
+   "plain": "thời hạn nộp hồ sơ là mười lăm trên mười một.",
+   "punc": "thời hạn nộp hồ sơ là mười lăm trên mười một.",
+   "puncNorm": "Thời hạn nộp hồ sơ là 15/11."
+  },
+  {
+   "text": "Tháng 12 năm ngoái trời rét đậm.",
+   "plain": "tháng mười hai năm ngoái trời rét đậm.",
+   "punc": "tháng mười hai năm ngoái trời rét đậm.",
+   "puncNorm": "Tháng 12 năm ngoái trời rét đậm."
+  },
+  {
+   "text": "Cây cầu dài 1.535 mét bắc qua sông Hồng.",
+   "plain": "cây cầu dài một nghìn năm trăm ba mươi lăm mét bắc qua sông hồng.",
+   "punc": "cây cầu dài một nghìn năm trăm ba mươi lăm mét bắc qua sông hồng.",
+   "puncNorm": "Cây cầu dài 1.535 mét bắc qua sông Hồng."
+  },
+  {
+   "text": "Sáng mai, 6 giờ, tập trung ở cổng trường.",
+   "plain": "sáng mai, sáu giờ, tập trung ở cổng trường.",
+   "punc": "sáng mai, sáu giờ, tập trung ở cổng trường.",
+   "puncNorm": "Sáng mai, 6 giờ, tập trung ở cổng trường."
+  },
+  {
+   "text": "Ừm, cũng được.",
+   "plain": "ừm, cũng được.",
+   "punc": "ừm, cũng được.",
+   "puncNorm": "Ừm, cũng được."
+  },
+  {
+   "text": "À, ra là vậy.",
+   "plain": "à, ra là vậy.",
+   "punc": "à, ra là vậy.",
+   "puncNorm": "À, ra là vậy."
+  },
+  {
+   "text": "Ơ kìa!",
+   "plain": "ơ kìa!",
+   "punc": "ơ kìa.",
+   "puncNorm": "Ơ kìa."
+  },
+  {
+   "text": "Chậc chậc, đáng tiếc thật.",
+   "plain": "chậc chậc, đáng tiếc thật.",
+   "punc": "chậc chậc, đáng tiếc thật.",
+   "puncNorm": "Chậc chậc, đáng tiếc thật."
+  },
+  {
+   "text": "Hì hì, cảm ơn cậu.",
+   "plain": "hì hì, cảm ơn cậu.",
+   "punc": "hì hì, cảm ơn cậu.",
+   "puncNorm": "Hì hì, cảm ơn cậu."
+  },
+  {
+   "text": "Ha ha ha!",
+   "plain": "ha ha ha!",
+   "punc": "ha ha ha.",
+   "puncNorm": "Ha ha ha."
+  },
+  {
+   "text": "Ê, đợi tớ với!",
+   "plain": "ê, đợi tớ với!",
+   "punc": "ê, đợi tớ với.",
+   "puncNorm": "Ê, đợi tớ với."
+  },
+  {
+   "text": "Vâng ạ.",
+   "plain": "vâng ạ.",
+   "punc": "vâng ạ.",
+   "puncNorm": "Vâng ạ."
+  },
+  {
+   "text": "Dạ, con biết rồi.",
+   "plain": "dạ, con biết rồi.",
+   "punc": "dạ, con biết rồi.",
+   "puncNorm": "Dạ, con biết rồi."
+  },
+  {
+   "text": "Thôi được rồi, đi thôi.",
+   "plain": "thôi được rồi, đi thôi.",
+   "punc": "thôi được rồi, đi thôi.",
+   "puncNorm": "Thôi được rồi, đi thôi."
+  },
+  {
+   "text": "Thật là... chẳng biết nói sao nữa.",
+   "plain": "thật là. chẳng biết nói sao nữa.",
+   "punc": "thật là, chẳng biết nói sao nữa.",
+   "puncNorm": "Thật là.., chẳng biết nói sao nữa."
+  },
+  {
+   "text": "Anh... anh xin lỗi.",
+   "plain": "anh. anh xin lỗi.",
+   "punc": "anh, anh xin lỗi.",
+   "puncNorm": "Anh.., anh xin lỗi."
+  },
+  {
+   "text": "Không, không, không phải thế!",
+   "plain": "không, không, không phải thế!",
+   "punc": "không, không, không phải thế!",
+   "puncNorm": "Không, không, không phải thế!"
+  },
+  {
+   "text": "Hãy nhớ: đừng bao giờ bỏ cuộc.",
+   "plain": "hãy nhớ, đừng bao giờ bỏ cuộc.",
+   "punc": "hãy nhớ, đừng bao giờ bỏ cuộc.",
+   "puncNorm": "Hãy nhớ: đừng bao giờ bỏ cuộc."
+  },
+  {
+   "text": "Câu trả lời là... không.",
+   "plain": "câu trả lời là. không.",
+   "punc": "câu trả lời là. không.",
+   "puncNorm": "Câu trả lời là... không."
+  },
+  {
+   "text": "Lần thứ nhất, lần thứ hai, rồi lần thứ ba.",
+   "plain": "lần thứ nhất, lần thứ hai, rồi lần thứ ba.",
+   "punc": "lần thứ nhất, lần thứ hai, rồi lần thứ ba.",
+   "puncNorm": "Lần thứ nhất, lần thứ hai, rồi lần thứ ba."
+  },
+  {
+   "text": "Cô đứng thứ 2 trong lớp.",
+   "plain": "cô đứng thứ hai trong lớp.",
+   "punc": "cô đứng thứ hai trong lớp.",
+   "puncNorm": "Cô đứng thứ 2 trong lớp."
+  },
+  {
+   "text": "Anh về đích thứ 3.",
+   "plain": "anh về đích thứ ba.",
+   "punc": "anh về đích thứ ba.",
+   "puncNorm": "Anh về đích thứ 3."
+  },
+  {
+   "text": "Họ sống ở tầng 21 của tòa nhà.",
+   "plain": "họ sống ở tầng hai mươi mốt của tòa nhà.",
+   "punc": "họ sống ở tầng hai mươi mốt của tòa nhà.",
+   "puncNorm": "Họ sống ở tầng 21 của tòa nhà."
+  },
+  {
+   "text": "Mùa đông năm 2010 lạnh nhất trong 30 năm.",
+   "plain": "mùa đông năm hai nghìn không trăm mười lạnh nhất trong ba mươi năm.",
+   "punc": "mùa đông năm hai nghìn không trăm mười lạnh nhất trong ba mươi năm.",
+   "puncNorm": "Mùa đông năm 2010 lạnh nhất trong 30 năm."
+  },
+  {
+   "text": "Tỉ số 2:1 nghiêng về đội khách.",
+   "plain": "tỉ số hai trên một nghiêng về đội khách.",
+   "punc": "tỉ số hai trên một nghiêng về đội khách.",
+   "puncNorm": "Tỉ số 2:1 nghiêng về đội khách."
+  },
+  {
+   "text": "Đây là lần thứ 1000 tôi nói điều này.",
+   "plain": "đây là lần thứ một nghìn tôi nói điều này.",
+   "punc": "đây là lần thứ một nghìn tôi nói điều này.",
+   "puncNorm": "Đây là lần thứ 1000 tôi nói điều này."
+  },
+  {
+   "text": "Pin còn 5%, cần sạc ngay.",
+   "plain": "pin còn năm phần trăm, cần sạc ngay.",
+   "punc": "pin còn năm phần trăm, cần sạc ngay.",
+   "puncNorm": "Pin còn 5%, cần sạc ngay."
+  },
+  {
+   "text": "Tốc độ mạng 100Mbps.",
+   "plain": "tốc độ mạng một trăm megabits per second.",
+   "punc": "tốc độ mạng một trăm megabits per second.",
+   "puncNorm": "Tốc độ mạng 100Mbps."
+  },
+  {
+   "text": "Nhà sách mở cửa 24/7.",
+   "plain": "nhà sách mở cửa hai mươi bốn trên bảy.",
+   "punc": "nhà sách mở cửa hai mươi bốn trên bảy.",
+   "puncNorm": "Nhà sách mở cửa 24/7."
+  },
+  {
+   "text": "Hôm qua là ngày 29/02/2024.",
+   "plain": "hôm qua là ngày hai mươi chín tháng hai năm hai nghìn không trăm hai mươi bốn.",
+   "punc": "hôm qua là ngày hai mươi chín tháng hai năm hai nghìn không trăm hai mươi bốn.",
+   "puncNorm": "Hôm qua là ngày 29/02/2024."
+  },
+  {
+   "text": "Cô ấy cao 1,62m.",
+   "plain": "cô ấy cao một phẩy sáu hai mét.",
+   "punc": "cô ấy cao một phẩy sáu hai mét.",
+   "puncNorm": "Cô ấy cao 1,62m."
+  },
+  {
+   "text": "Bản đồ tỉ lệ 1:50.000.",
+   "plain": "bản đồ tỉ lệ một, năm mươi nghìn.",
+   "punc": "bản đồ tỉ lệ một, năm mươi nghìn.",
+   "puncNorm": "Bản đồ tỉ lệ 1:50.000."
+  },
+  {
+   "text": "Thành phố có 12 quận và 5 huyện.",
+   "plain": "thành phố có mười hai quận và năm huyện.",
+   "punc": "thành phố có mười hai quận và năm huyện.",
+   "puncNorm": "Thành phố có 12 quận và 5 huyện."
+  },
+  {
+   "text": "Anh ấy nói: \"Tôi sẽ đến lúc 5 giờ.\" Rồi đi mất.",
+   "plain": "anh ấy nói, tôi sẽ đến lúc năm giờ. rồi đi mất.",
+   "punc": "anh ấy nói, tôi sẽ đến lúc năm giờ. rồi đi mất.",
+   "puncNorm": "Anh ấy nói: \"Tôi sẽ đến lúc 5 giờ.\" Rồi đi mất."
+  },
+  {
+   "text": "Ngôi nhà số 7, ngõ 42, phố Huế.",
+   "plain": "ngôi nhà số bảy, ngõ bốn mươi hai, phố huế.",
+   "punc": "ngôi nhà số bảy, ngõ bốn mươi hai, phố huế.",
+   "puncNorm": "Ngôi nhà số 7, ngõ 42, phố Huế."
+  },
+  {
+   "text": "Thư viện có hơn 50.000 đầu sách.",
+   "plain": "thư viện có hơn năm mươi nghìn đầu sách.",
+   "punc": "thư viện có hơn năm mươi nghìn đầu sách.",
+   "puncNorm": "Thư viện có hơn 50.000 đầu sách."
+  },
+  {
+   "text": "Giảm giá 30% cho đơn từ 500k.",
+   "plain": "giảm giá ba mươi phần trăm cho đơn từ năm trăm ca.",
+   "punc": "giảm giá ba mươi phần trăm cho đơn từ năm trăm ca.",
+   "puncNorm": "Giảm giá 30% cho đơn từ 500k."
+  },
+  {
+   "text": "Hôm nay mình đi cafe nhé.",
+   "plain": "hôm nay mình đi cafe nhé.",
+   "punc": "hôm nay mình đi cafe nhé.",
+   "puncNorm": "Hôm nay mình đi cafe nhé."
+  },
+  {
+   "text": "Trà sữa trân châu size L giá 45k.",
+   "plain": "trà sữa trân châu size lờ giá bốn mươi lăm ca.",
+   "punc": "trà sữa trân châu size lờ giá bốn mươi lăm ca.",
+   "puncNorm": "Trà sữa trân châu size L giá 45k."
+  },
+  {
+   "text": "Bạn đã xem phim Avengers: Endgame chưa?",
+   "plain": "bạn đã xem phim avengers, endgame chưa?",
+   "punc": "bạn đã xem phim avengers, endgame chưa?",
+   "puncNorm": "Bạn đã xem phim Avengers: Endgame chưa?"
+  },
+  {
+   "text": "Bài hát \"Happy Birthday\" vang lên.",
+   "plain": "bài hát happy birthday vang lên.",
+   "punc": "bài hát happy birthday vang lên.",
+   "puncNorm": "Bài hát \"Happy Birthday\" vang lên."
+  },
+  {
+   "text": "Họ đi du lịch New York vào mùa thu.",
+   "plain": "họ đi du lịch new york vào mùa thu.",
+   "punc": "họ đi du lịch new york vào mùa thu.",
+   "puncNorm": "Họ đi du lịch New York vào mùa thu."
+  },
+  {
+   "text": "Ông ấy là giáo sư ở Đại học Harvard.",
+   "plain": "ông ấy là giáo sư ở đại học harvard.",
+   "punc": "ông ấy là giáo sư ở đại học harvard.",
+   "puncNorm": "Ông ấy là giáo sư ở Đại học Harvard."
+  },
+  {
+   "text": "Cô bé tên là Alice, đến từ London.",
+   "plain": "cô bé tên là alice, đến từ london.",
+   "punc": "cô bé tên là alice, đến từ london.",
+   "puncNorm": "Cô bé tên là Alice, đến từ London."
+  },
+  {
+   "text": "Ryuu no Kiseki là tên một trò chơi cũ.",
+   "plain": "ryuu no kiseki là tên một trò chơi cũ.",
+   "punc": "ryuu no kiseki là tên một trò chơi cũ.",
+   "puncNorm": "Ryuu no Kiseki là tên một trò chơi cũ."
+  },
+  {
+   "text": "Yamada Taro luôn đến lớp sớm nhất.",
+   "plain": "yamada taro luôn đến lớp sớm nhất.",
+   "punc": "yamada taro luôn đến lớp sớm nhất.",
+   "puncNorm": "Yamada Taro luôn đến lớp sớm nhất."
+  },
+  {
+   "text": "Seo-yeon và Ji-ho là đôi bạn thân.",
+   "plain": "seo yeon và ji ho là đôi bạn thân.",
+   "punc": "seo yeon và ji ho là đôi bạn thân.",
+   "puncNorm": "Seo-yeon và Ji-ho là đôi bạn thân."
+  },
+  {
+   "text": "Thành phố Seoul về đêm rất đẹp.",
+   "plain": "thành phố seoul về đêm rất đẹp.",
+   "punc": "thành phố seoul về đêm rất đẹp.",
+   "puncNorm": "Thành phố Seoul về đêm rất đẹp."
+  },
+  {
+   "text": "Tôi học tiếng Nhật được 2 năm rồi.",
+   "plain": "tôi học tiếng nhật được hai năm rồi.",
+   "punc": "tôi học tiếng nhật được hai năm rồi.",
+   "puncNorm": "Tôi học tiếng Nhật được 2 năm rồi."
+  },
+  {
+   "text": "Một chiếc xe Honda SH đỗ trước cửa.",
+   "plain": "một chiếc xe honda ét hát đỗ trước cửa.",
+   "punc": "một chiếc xe honda ét hát đỗ trước cửa.",
+   "puncNorm": "Một chiếc xe Honda SH đỗ trước cửa."
+  },
+  {
+   "text": "Anh ấy lái chiếc Toyota Camry màu đen.",
+   "plain": "anh ấy lái chiếc toyota camry màu đen.",
+   "punc": "anh ấy lái chiếc toyota camry màu đen.",
+   "puncNorm": "Anh ấy lái chiếc Toyota Camry màu đen."
+  },
+  {
+   "text": "Mã PIN gồm 4 chữ số.",
+   "plain": "mã phê i nờ gồm bốn chữ số.",
+   "punc": "mã phê i nờ gồm bốn chữ số.",
+   "puncNorm": "Mã PIN gồm 4 chữ số."
+  },
+  {
+   "text": "Hãy nhập mật khẩu và nhấn Enter.",
+   "plain": "hãy nhập mật khẩu và nhấn enter.",
+   "punc": "hãy nhập mật khẩu và nhấn enter.",
+   "puncNorm": "Hãy nhập mật khẩu và nhấn Enter."
+  },
+  {
+   "text": "Lỗi 404: không tìm thấy trang.",
+   "plain": "lỗi bốn trăm lẻ bốn, không tìm thấy trang.",
+   "punc": "lỗi bốn trăm lẻ bốn, không tìm thấy trang.",
+   "puncNorm": "Lỗi 404: không tìm thấy trang."
+  },
+  {
+   "text": "File báo cáo dạng PDF nặng 3,5MB.",
+   "plain": "file báo cáo dạng phê đê ép nặng ba phẩy năm megabyte.",
+   "punc": "file báo cáo dạng phê đê ép nặng ba phẩy năm megabyte.",
+   "puncNorm": "File báo cáo dạng PDF nặng 3,5MB."
+  },
+  {
+   "text": "Ảnh chụp bằng máy Canon EOS R5.",
+   "plain": "ảnh chụp bằng máy canon e ô ét rờ năm.",
+   "punc": "ảnh chụp bằng máy canon e ô ét rờ năm.",
+   "puncNorm": "Ảnh chụp bằng máy Canon EOS R5."
+  },
+  {
+   "text": "Bóng đèn LED 9W tiết kiệm điện.",
+   "plain": "bóng đèn led chín oát tiết kiệm điện.",
+   "punc": "bóng đèn led chín oát tiết kiệm điện.",
+   "puncNorm": "Bóng đèn LED 9W tiết kiệm điện."
+  },
+  {
+   "text": "Vitamin C rất tốt cho sức khỏe.",
+   "plain": "vitamin xê rất tốt cho sức khỏe.",
+   "punc": "vitamin xê rất tốt cho sức khỏe.",
+   "puncNorm": "Vitamin C rất tốt cho sức khỏe."
+  },
+  {
+   "text": "Nước sôi ở 100°C.",
+   "plain": "nước sôi ở một trăm độ xê.",
+   "punc": "nước sôi ở một trăm độ xê.",
+   "puncNorm": "Nước sôi ở 100°C."
+  },
+  {
+   "text": "Công thức nước là H2O.",
+   "plain": "công thức nước là hát hai ô.",
+   "punc": "công thức nước là hát hai ô.",
+   "puncNorm": "Công thức nước là H2O."
+  },
+  {
+   "text": "Tốc độ ánh sáng khoảng 300.000 km/s.",
+   "plain": "tốc độ ánh sáng khoảng ba trăm nghìn ki lô mét trên giây.",
+   "punc": "tốc độ ánh sáng khoảng ba trăm nghìn ki lô mét trên giây.",
+   "puncNorm": "Tốc độ ánh sáng khoảng 300.000 km/s."
+  },
+  {
+   "text": "Trái Đất cách Mặt Trời khoảng 150 triệu km.",
+   "plain": "trái đất cách mặt trời khoảng một trăm năm mươi triệu ki lô mét.",
+   "punc": "trái đất cách mặt trời khoảng một trăm năm mươi triệu ki lô mét.",
+   "puncNorm": "Trái Đất cách Mặt Trời khoảng 150 triệu km."
+  },
+  {
+   "text": "Năm 2050, dân số có thể vượt 10 tỷ người.",
+   "plain": "năm hai nghìn không trăm năm mươi, dân số có thể vượt mười tỷ người.",
+   "punc": "năm hai nghìn không trăm năm mươi, dân số có thể vượt mười tỷ người.",
+   "puncNorm": "Năm 2050, dân số có thể vượt 10 tỷ người."
+  },
+  {
+   "text": "Khoảng cách giữa hai cây là 2-3m.",
+   "plain": "khoảng cách giữa hai cây là hai đến bam.",
+   "punc": "khoảng cách giữa hai cây là hai đến bam.",
+   "puncNorm": "Khoảng cách giữa hai cây là 2-3m."
+  },
+  {
+   "text": "Quyển 3, trang 45-47.",
+   "plain": "quyển ba, trang bốn mươi lăm đến bốn mươi bảy.",
+   "punc": "quyển ba, trang bốn mươi lăm đến bốn mươi bảy.",
+   "puncNorm": "Quyển 3, trang 45-47."
+  },
+  {
+   "text": "Điều 5, khoản 2 của luật quy định rõ.",
+   "plain": "điều năm, khoản hai của luật quy định rõ.",
+   "punc": "điều năm, khoản hai của luật quy định rõ.",
+   "puncNorm": "Điều 5, khoản 2 của luật quy định rõ."
+  },
+  {
+   "text": "Theo Nghị định 100/2019/NĐ-CP.",
+   "plain": "theo nghị định một trăm trên hai nghìn không trăm mười chín trên nờ đê xê phê.",
+   "punc": "theo nghị định một trăm trên hai nghìn không trăm mười chín trên nờ đê xê phê.",
+   "puncNorm": "Theo Nghị định 100/2019/NĐ-CP."
+  },
+  {
+   "text": "Số hiệu chuyến bay là VN254.",
+   "plain": "số hiệu chuyến bay là vê nờ hai năm bốn.",
+   "punc": "số hiệu chuyến bay là vê nờ hai năm bốn.",
+   "puncNorm": "Số hiệu chuyến bay là VN254."
+  },
+  {
+   "text": "Cô ấy đeo kính cận 2,5 độ.",
+   "plain": "cô ấy đeo kính cận hai phẩy năm độ.",
+   "punc": "cô ấy đeo kính cận hai phẩy năm độ.",
+   "puncNorm": "Cô ấy đeo kính cận 2,5 độ."
+  },
+  {
+   "text": "Đôi giày size 39 vừa khít.",
+   "plain": "đôi giày size ba mươi chín vừa khít.",
+   "punc": "đôi giày size ba mươi chín vừa khít.",
+   "puncNorm": "Đôi giày size 39 vừa khít."
+  },
+  {
+   "text": "Áo cỡ XL hơi rộng.",
+   "plain": "áo cỡ ích lờ hơi rộng.",
+   "punc": "áo cỡ ích lờ hơi rộng.",
+   "puncNorm": "Áo cỡ XL hơi rộng."
+  },
+  {
+   "text": "Từ 1/1/2025, quy định mới có hiệu lực.",
+   "plain": "từ ngày một tháng một năm hai nghìn không trăm hai mươi lăm, quy định mới có hiệu lực.",
+   "punc": "từ ngày một tháng một năm hai nghìn không trăm hai mươi lăm, quy định mới có hiệu lực.",
+   "puncNorm": "Từ 1/1/2025, quy định mới có hiệu lực."
+  },
+  {
+   "text": "Kỳ nghỉ Tết kéo dài 9 ngày.",
+   "plain": "kỳ nghỉ tết kéo dài chín ngày.",
+   "punc": "kỳ nghỉ tết kéo dài chín ngày.",
+   "puncNorm": "Kỳ nghỉ Tết kéo dài 9 ngày."
+  },
+  {
+   "text": "Lúc 0h ngày 1/1, pháo hoa rực sáng.",
+   "plain": "lúc không giờ ngày một tháng một, pháo hoa rực sáng.",
+   "punc": "lúc không giờ ngày một tháng một, pháo hoa rực sáng.",
+   "puncNorm": "Lúc 0h ngày 1/1, pháo hoa rực sáng."
+  },
+  {
+   "text": "Còn 3 ngày nữa là Giáng sinh.",
+   "plain": "còn ba ngày nữa là giáng sinh.",
+   "punc": "còn ba ngày nữa là giáng sinh.",
+   "puncNorm": "Còn 3 ngày nữa là Giáng sinh."
+  },
+  {
+   "text": "Ngày mai, 14/2, là lễ Tình nhân.",
+   "plain": "ngày mai, ngày mười bốn tháng hai, là lễ tình nhân.",
+   "punc": "ngày mai, ngày mười bốn tháng hai, là lễ tình nhân.",
+   "puncNorm": "Ngày mai, 14/2, là lễ Tình nhân."
+  },
+  {
+   "text": "Ông nội tôi sinh năm 1930.",
+   "plain": "ông nội tôi sinh năm một nghìn chín trăm ba mươi.",
+   "punc": "ông nội tôi sinh năm một nghìn chín trăm ba mươi.",
+   "puncNorm": "Ông nội tôi sinh năm 1930."
+  },
+  {
+   "text": "Em gái tôi học lớp 5.",
+   "plain": "em gái tôi học lớp năm.",
+   "punc": "em gái tôi học lớp năm.",
+   "puncNorm": "Em gái tôi học lớp 5."
+  },
+  {
+   "text": "Cả lớp có 40 bạn, trong đó 22 nữ.",
+   "plain": "cả lớp có bốn mươi bạn, trong đó hai mươi hai nữ.",
+   "punc": "cả lớp có bốn mươi bạn, trong đó hai mươi hai nữ.",
+   "puncNorm": "Cả lớp có 40 bạn, trong đó 22 nữ."
+  },
+  {
+   "text": "Anh ấy được 8/10 điểm.",
+   "plain": "anh ấy được tám trên mười điểm.",
+   "punc": "anh ấy được tám trên mười điểm.",
+   "puncNorm": "Anh ấy được 8/10 điểm."
+  },
+  {
+   "text": "Trận đấu kết thúc với tỉ số 0-0.",
+   "plain": "trận đấu kết thúc với tỉ số không không.",
+   "punc": "trận đấu kết thúc với tỉ số không không.",
+   "puncNorm": "Trận đấu kết thúc với tỉ số 0-0."
+  },
+  {
+   "text": "Giải đấu có 32 đội tham gia.",
+   "plain": "giải đấu có ba mươi hai đội tham gia.",
+   "punc": "giải đấu có ba mươi hai đội tham gia.",
+   "puncNorm": "Giải đấu có 32 đội tham gia."
+  },
+  {
+   "text": "Cô về nhì trong cuộc thi hát.",
+   "plain": "cô về nhì trong cuộc thi hát.",
+   "punc": "cô về nhì trong cuộc thi hát.",
+   "puncNorm": "Cô về nhì trong cuộc thi hát."
+  },
+  {
+   "text": "Bức tranh được bán với giá 2,5 triệu USD.",
+   "plain": "bức tranh được bán với giá hai phẩy năm triệu <en>u s d</en>.",
+   "punc": "bức tranh được bán với giá hai phẩy năm triệu <en>u s d</en>.",
+   "puncNorm": "Bức tranh được bán với giá 2,5 triệu USD."
+  },
+  {
+   "text": "Những năm 90 của thế kỷ trước.",
+   "plain": "những năm chín mươi của thế kỷ trước.",
+   "punc": "những năm chín mươi của thế kỷ trước.",
+   "puncNorm": "Những năm 90 của thế kỷ trước."
+  },
+  {
+   "text": "Thập niên 1980 là thời của băng cát-xét.",
+   "plain": "thập niên một nghìn chín trăm tám mươi là thời của băng cát xét.",
+   "punc": "thập niên một nghìn chín trăm tám mươi là thời của băng cát xét.",
+   "puncNorm": "Thập niên 1980 là thời của băng cát-xét."
+  },
+  {
+   "text": "Anh sinh vào khoảng giữa những năm 70.",
+   "plain": "anh sinh vào khoảng giữa những năm bảy mươi.",
+   "punc": "anh sinh vào khoảng giữa những năm bảy mươi.",
+   "puncNorm": "Anh sinh vào khoảng giữa những năm 70."
+  }
+ ],
+ "units": [
+  {
+   "text": "Trời hôm nay đẹp quá. Cô gái đứng bên cửa sổ, lặng lẽ nhìn mưa rơi. Anh ấy về nhà rất muộn hôm ấy.",
+   "max": 256,
+   "tokens": 24,
+   "units": [
+    {
+     "first": 0,
+     "last": 23,
+     "pieces": [
+      "Trời hôm nay đẹp quá.",
+      "Cô gái đứng bên cửa sổ, lặng lẽ nhìn mưa rơi.",
+      "Anh ấy về nhà rất muộn hôm ấy."
+     ],
+     "phonemes": "tʃˈəː2j hˈom nˈaj ɗˈɛ6p kwˈaːɜ. kˈo ɣˈaːɜj ɗˈyɜŋ bˈen kˈyə4 sˈo4, lˈa6ŋ lˈɛ5 ɲˈi2n mˈyə ɹˈəːj. ˈe-ɲ ˈəɪɜ vˈe2 ɲˈaː2 ɹˈəɜt̪ mˈuə6n hˈom ˈəɪɜ."
+    }
+   ]
+  },
+  {
+   "text": "Trời hôm nay đẹp quá. Cô gái đứng bên cửa sổ, lặng lẽ nhìn mưa rơi. Anh ấy về nhà rất muộn hôm ấy.",
+   "max": 140,
+   "tokens": 24,
+   "units": [
+    {
+     "first": 0,
+     "last": 23,
+     "pieces": [
+      "Trời hôm nay đẹp quá.",
+      "Cô gái đứng bên cửa sổ, lặng lẽ nhìn mưa rơi.",
+      "Anh ấy về nhà rất muộn hôm ấy."
+     ],
+     "phonemes": "tʃˈəː2j hˈom nˈaj ɗˈɛ6p kwˈaːɜ. kˈo ɣˈaːɜj ɗˈyɜŋ bˈen kˈyə4 sˈo4, lˈa6ŋ lˈɛ5 ɲˈi2n mˈyə ɹˈəːj. ˈe-ɲ ˈəɪɜ vˈe2 ɲˈaː2 ɹˈəɜt̪ mˈuə6n hˈom ˈəɪɜ."
+    }
+   ]
+  },
+  {
+   "text": "Trời hôm nay đẹp quá. Cô gái đứng bên cửa sổ, lặng lẽ nhìn mưa rơi. Anh ấy về nhà rất muộn hôm ấy.",
+   "max": 40,
+   "tokens": 24,
+   "units": [
+    {
+     "first": 0,
+     "last": 4,
+     "pieces": [
+      "Trời hôm nay đẹp quá."
+     ],
+     "phonemes": "tʃˈəː2j hˈom nˈaj ɗˈɛ6p kwˈaːɜ."
+    },
+    {
+     "first": 5,
+     "last": 10,
+     "pieces": [
+      "Cô gái đứng bên cửa sổ,"
+     ],
+     "phonemes": "kˈo ɣˈaːɜj ɗˈyɜŋ bˈen kˈyə4 sˈo4."
+    },
+    {
+     "first": 11,
+     "last": 15,
+     "pieces": [
+      "lặng lẽ nhìn mưa rơi."
+     ],
+     "phonemes": "lˈa6ŋ lˈɛ5 ɲˈi2n mˈyə ɹˈəːj."
+    },
+    {
+     "first": 16,
+     "last": 23,
+     "pieces": [
+      "Anh ấy về nhà rất muộn hôm ấy."
+     ],
+     "phonemes": "ˈe-ɲ ˈəɪɜ vˈe2 ɲˈaː2 ɹˈəɜt̪ mˈuə6n hˈom ˈəɪɜ."
+    }
+   ]
+  },
+  {
+   "text": "Ừ. Cô gái đứng bên cửa sổ, lặng lẽ nhìn mưa rơi suốt cả buổi chiều hôm ấy.",
+   "max": 256,
+   "tokens": 18,
+   "units": [
+    {
+     "first": 0,
+     "last": 17,
+     "pieces": [
+      "Ừ.",
+      "Cô gái đứng bên cửa sổ, lặng lẽ nhìn mưa rơi suốt cả buổi chiều hôm ấy."
+     ],
+     "phonemes": "ˈy2, kˈo ɣˈaːɜj ɗˈyɜŋ bˈen kˈyə4 sˈo4, lˈa6ŋ lˈɛ5 ɲˈi2n mˈyə ɹˈəːj sˈuəɜt̪ kˈaː4 bˈuə4j tʃˈiɛ2w hˈom ˈəɪɜ."
+    }
+   ]
+  },
+  {
+   "text": "Ừ. Cô gái đứng bên cửa sổ, lặng lẽ nhìn mưa rơi suốt cả buổi chiều hôm ấy.",
+   "max": 140,
+   "tokens": 18,
+   "units": [
+    {
+     "first": 0,
+     "last": 17,
+     "pieces": [
+      "Ừ.",
+      "Cô gái đứng bên cửa sổ, lặng lẽ nhìn mưa rơi suốt cả buổi chiều hôm ấy."
+     ],
+     "phonemes": "ˈy2, kˈo ɣˈaːɜj ɗˈyɜŋ bˈen kˈyə4 sˈo4, lˈa6ŋ lˈɛ5 ɲˈi2n mˈyə ɹˈəːj sˈuəɜt̪ kˈaː4 bˈuə4j tʃˈiɛ2w hˈom ˈəɪɜ."
+    }
+   ]
+  },
+  {
+   "text": "Ừ. Cô gái đứng bên cửa sổ, lặng lẽ nhìn mưa rơi suốt cả buổi chiều hôm ấy.",
+   "max": 40,
+   "tokens": 18,
+   "units": [
+    {
+     "first": 0,
+     "last": 6,
+     "pieces": [
+      "Ừ.",
+      "Cô gái đứng bên cửa sổ,"
+     ],
+     "phonemes": "ˈy2, kˈo ɣˈaːɜj ɗˈyɜŋ bˈen kˈyə4 sˈo4."
+    },
+    {
+     "first": 7,
+     "last": 17,
+     "pieces": [
+      "lặng lẽ nhìn mưa rơi suốt cả buổi chiều",
+      "hôm ấy."
+     ],
+     "phonemes": "lˈa6ŋ lˈɛ5 ɲˈi2n mˈyə ɹˈəːj sˈuəɜt̪ kˈaː4 bˈuə4j tʃˈiɛ2w hˈom ˈəɪɜ."
+    }
+   ]
+  },
+  {
+   "text": "Khi ánh đèn trong phòng vụt tắt, cả ngôi nhà chìm vào bóng tối, chỉ còn tiếng đồng hồ gõ nhịp đều đặn như một nhịp tim đang chờ đợi. Cô ngồi im, không dám thở mạnh, vì sợ rằng chỉ một tiếng động nhỏ thôi cũng đủ để phá vỡ sự yên lặng mong manh ấy. Rồi trời sáng.",
+   "max": 256,
+   "tokens": 60,
+   "units": [
+    {
+     "first": 0,
+     "last": 59,
+     "pieces": [
+      "Khi ánh đèn trong phòng vụt tắt, cả ngôi nhà chìm vào bóng tối, chỉ còn tiếng đồng hồ gõ nhịp đều đặn như một nhịp tim đang chờ đợi.",
+      "Cô ngồi im, không dám thở mạnh, vì sợ rằng chỉ một tiếng động nhỏ thôi cũng đủ để phá vỡ sự yên lặng mong manh ấy.",
+      "Rồi trời sáng."
+     ],
+     "phonemes": "xˌi ˈe-ɜɲ ɗˈɛ2n tʃˈɔŋ fˈɔ2ŋ vˈu6t̪ t̪ˈaɜt̪, kˈaː4 ŋˈoj ɲˈaː2 tʃˈi2m vˈaː2w bˈɔɜŋ t̪ˈoɜj, tʃˈi4 kˌɔ2n t̪ˈiɛɜŋ ɗˈo2ŋ hˈo2 ɣˈɔ5 ɲˈi6p ɗˈe2w ɗˈa6n ɲˌy mˈo6t̪ ɲˈi6p t̪ˈim ɗˌaːŋ tʃˈəː2 ɗˈəː6j. kˈo ŋˈo2j ˈim, xˌoŋ zˈaːɜm tˈəː4 mˈe-6ɲ, vˌi2 sˈəː6 ɹˈa2ŋ tʃˈi4 mˈo6t̪ t̪ˈiɛɜŋ ɗˈo6ŋ ɲˈɔ4 tˈoj kˈu5ŋ ɗˈu4 ɗˌe4 fˈaːɜ vˈəː5 sˈy6 ˈiɛn lˈa6ŋ mˈɔŋ mˈe-ɲ ˈəɪɜ. ɹˈo2j tʃˈəː2j sˈaːɜŋ."
+    }
+   ]
+  },
+  {
+   "text": "Khi ánh đèn trong phòng vụt tắt, cả ngôi nhà chìm vào bóng tối, chỉ còn tiếng đồng hồ gõ nhịp đều đặn như một nhịp tim đang chờ đợi. Cô ngồi im, không dám thở mạnh, vì sợ rằng chỉ một tiếng động nhỏ thôi cũng đủ để phá vỡ sự yên lặng mong manh ấy. Rồi trời sáng.",
+   "max": 140,
+   "tokens": 60,
+   "units": [
+    {
+     "first": 0,
+     "last": 29,
+     "pieces": [
+      "Khi ánh đèn trong phòng vụt tắt, cả ngôi nhà chìm vào bóng tối, chỉ còn tiếng đồng hồ gõ nhịp đều đặn như một nhịp tim đang chờ đợi."
+     ],
+     "phonemes": "xˌi ˈe-ɜɲ ɗˈɛ2n tʃˈɔŋ fˈɔ2ŋ vˈu6t̪ t̪ˈaɜt̪, kˈaː4 ŋˈoj ɲˈaː2 tʃˈi2m vˈaː2w bˈɔɜŋ t̪ˈoɜj, tʃˈi4 kˌɔ2n t̪ˈiɛɜŋ ɗˈo2ŋ hˈo2 ɣˈɔ5 ɲˈi6p ɗˈe2w ɗˈa6n ɲˌy mˈo6t̪ ɲˈi6p t̪ˈim ɗˌaːŋ tʃˈəː2 ɗˈəː6j."
+    },
+    {
+     "first": 30,
+     "last": 59,
+     "pieces": [
+      "Cô ngồi im, không dám thở mạnh, vì sợ rằng chỉ một tiếng động nhỏ thôi cũng đủ để phá vỡ sự yên lặng mong manh ấy.",
+      "Rồi trời sáng."
+     ],
+     "phonemes": "kˈo ŋˈo2j ˈim, xˌoŋ zˈaːɜm tˈəː4 mˈe-6ɲ, vˌi2 sˈəː6 ɹˈa2ŋ tʃˈi4 mˈo6t̪ t̪ˈiɛɜŋ ɗˈo6ŋ ɲˈɔ4 tˈoj kˈu5ŋ ɗˈu4 ɗˌe4 fˈaːɜ vˈəː5 sˈy6 ˈiɛn lˈa6ŋ mˈɔŋ mˈe-ɲ ˈəɪɜ. ɹˈo2j tʃˈəː2j sˈaːɜŋ."
+    }
+   ]
+  },
+  {
+   "text": "Khi ánh đèn trong phòng vụt tắt, cả ngôi nhà chìm vào bóng tối, chỉ còn tiếng đồng hồ gõ nhịp đều đặn như một nhịp tim đang chờ đợi. Cô ngồi im, không dám thở mạnh, vì sợ rằng chỉ một tiếng động nhỏ thôi cũng đủ để phá vỡ sự yên lặng mong manh ấy. Rồi trời sáng.",
+   "max": 40,
+   "tokens": 60,
+   "units": [
+    {
+     "first": 0,
+     "last": 6,
+     "pieces": [
+      "Khi ánh đèn trong phòng vụt tắt,"
+     ],
+     "phonemes": "xˌi ˈe-ɜɲ ɗˈɛ2n tʃˈɔŋ fˈɔ2ŋ vˈu6t̪ t̪ˈaɜt̪."
+    },
+    {
+     "first": 7,
+     "last": 13,
+     "pieces": [
+      "cả ngôi nhà chìm vào bóng tối,"
+     ],
+     "phonemes": "kˈaː4 ŋˈoj ɲˈaː2 tʃˈi2m vˈaː2w bˈɔɜŋ t̪ˈoɜj."
+    },
+    {
+     "first": 14,
+     "last": 22,
+     "pieces": [
+      "chỉ còn tiếng đồng hồ gõ nhịp đều đặn"
+     ],
+     "phonemes": "tʃˈi4 kˌɔ2n t̪ˈiɛɜŋ ɗˈo2ŋ hˈo2 ɣˈɔ5 ɲˈi6p ɗˈe2w ɗˈa6n."
+    },
+    {
+     "first": 23,
+     "last": 29,
+     "pieces": [
+      "như một nhịp tim đang chờ đợi."
+     ],
+     "phonemes": "ɲˌy mˈo6t̪ ɲˈi6p t̪ˈim ɗˌaːŋ tʃˈəː2 ɗˈəː6j."
+    },
+    {
+     "first": 30,
+     "last": 36,
+     "pieces": [
+      "Cô ngồi im, không dám thở mạnh,"
+     ],
+     "phonemes": "kˈo ŋˈo2j ˈim, xˌoŋ zˈaːɜm tˈəː4 mˈe-6ɲ."
+    },
+    {
+     "first": 37,
+     "last": 45,
+     "pieces": [
+      "vì sợ rằng chỉ một tiếng động nhỏ thôi"
+     ],
+     "phonemes": "vˌi2 sˈəː6 ɹˈa2ŋ tʃˈi4 mˈo6t̪ t̪ˈiɛɜŋ ɗˈo6ŋ ɲˈɔ4 tˈoj."
+    },
+    {
+     "first": 46,
+     "last": 59,
+     "pieces": [
+      "cũng đủ để phá vỡ sự yên lặng mong manh",
+      "ấy.",
+      "Rồi trời sáng."
+     ],
+     "phonemes": "kˈu5ŋ ɗˈu4 ɗˌe4 fˈaːɜ vˈəː5 sˈy6 ˈiɛn lˈa6ŋ mˈɔŋ mˈe-ɲ ˈəɪɜ. ɹˈo2j tʃˈəː2j sˈaːɜŋ."
+    }
+   ]
+  },
+  {
+   "text": "“Cậu định đi đâu vậy?” - cô hỏi. “Đi thật xa,” cậu đáp, “xa đến mức không ai tìm thấy.” Cô không nói gì nữa.",
+   "max": 256,
+   "tokens": 25,
+   "units": [
+    {
+     "first": 0,
+     "last": 24,
+     "pieces": [
+      "“Cậu định đi đâu vậy?”",
+      "- cô hỏi.",
+      "“Đi thật xa,” cậu đáp, “xa đến mức không ai tìm thấy.”",
+      "Cô không nói gì nữa."
+     ],
+     "phonemes": "kˈə6w ɗˈi6ɲ ɗˈi ɗˈə1w vˈəɪ6? kˈo hˈɔ4j. ɗˈi tˈə6t̪ sˈaː, kˈə6w ɗˈaːɜp, sˈaː ɗˌeɜn mˈyɜc xˌoŋ ˈaːj t̪ˈi2m tˈəɪɜ. kˈo xˌoŋ nˈɔɜj zˈi2 nˈyə5."
+    }
+   ]
+  },
+  {
+   "text": "“Cậu định đi đâu vậy?” - cô hỏi. “Đi thật xa,” cậu đáp, “xa đến mức không ai tìm thấy.” Cô không nói gì nữa.",
+   "max": 140,
+   "tokens": 25,
+   "units": [
+    {
+     "first": 0,
+     "last": 24,
+     "pieces": [
+      "“Cậu định đi đâu vậy?”",
+      "- cô hỏi.",
+      "“Đi thật xa,” cậu đáp, “xa đến mức không ai tìm thấy.”",
+      "Cô không nói gì nữa."
+     ],
+     "phonemes": "kˈə6w ɗˈi6ɲ ɗˈi ɗˈə1w vˈəɪ6? kˈo hˈɔ4j. ɗˈi tˈə6t̪ sˈaː, kˈə6w ɗˈaːɜp, sˈaː ɗˌeɜn mˈyɜc xˌoŋ ˈaːj t̪ˈi2m tˈəɪɜ. kˈo xˌoŋ nˈɔɜj zˈi2 nˈyə5."
+    }
+   ]
+  },
+  {
+   "text": "“Cậu định đi đâu vậy?” - cô hỏi. “Đi thật xa,” cậu đáp, “xa đến mức không ai tìm thấy.” Cô không nói gì nữa.",
+   "max": 40,
+   "tokens": 25,
+   "units": [
+    {
+     "first": 0,
+     "last": 7,
+     "pieces": [
+      "“Cậu định đi đâu vậy?”",
+      "- cô hỏi."
+     ],
+     "phonemes": "kˈə6w ɗˈi6ɲ ɗˈi ɗˈə1w vˈəɪ6? kˈo hˈɔ4j."
+    },
+    {
+     "first": 8,
+     "last": 12,
+     "pieces": [
+      "“Đi thật xa,” cậu đáp,"
+     ],
+     "phonemes": "ɗˈi tˈə6t̪ sˈaː, kˈə6w ɗˈaːɜp."
+    },
+    {
+     "first": 13,
+     "last": 19,
+     "pieces": [
+      "“xa đến mức không ai tìm thấy.”"
+     ],
+     "phonemes": "sˈaː ɗˌeɜn mˈyɜc xˌoŋ ˈaːj t̪ˈi2m tˈəɪɜ."
+    },
+    {
+     "first": 20,
+     "last": 24,
+     "pieces": [
+      "Cô không nói gì nữa."
+     ],
+     "phonemes": "kˈo xˌoŋ nˈɔɜj zˈi2 nˈyə5."
+    }
+   ]
+  },
+  {
+   "text": "Năm 2024, dân số thành phố đạt 9.389.700 người; diện tích 2.095 km2; mật độ khoảng 4.481 người/km2. Con số này tăng 2,3% so với năm trước.",
+   "max": 256,
+   "tokens": 27,
+   "units": [
+    {
+     "first": 0,
+     "last": 26,
+     "pieces": [
+      "Năm 2024, dân số thành phố đạt 9.389.700 người; diện tích 2.095 km2; mật độ khoảng 4.481 người/km2.",
+      "Con số này tăng 2,3% so với năm trước."
+     ],
+     "phonemes": "nˈam hˈaːj ŋˈi2n xˌoŋ tʃˈam hˈaːj mˈyəj bˈoɜn, zˈən sˈoɜ tˈe-2ɲ fˈoɜ ɗˈaː6t̪ tʃˈiɜn tʃˈiɛ6w bˈaː tʃˈam t̪ˈaːɜm mˈyəj tʃˈiɜn ŋˈi2n bˈa4j tʃˈam ŋˈyə2j, zˈiɛ6n t̪ˈiɜc hˈaːj ŋˈi2n xˌoŋ tʃˈam tʃˈiɜn mˈyəj lˈam kˈi lˈo mˈɛɜt̪ vˈuəŋ, mˈə6t̪ ɗˈo6 xwˌaː4ŋ bˈoɜn ŋˈi2n bˈoɜn tʃˈam t̪ˈaːɜm mˈyəj mˈoɜt̪ ŋˈyə2j tʃˈen kˈi lˈo mˈɛɜt̪ hˈaːj. kˌɔn sˈoɜ nˈa2j t̪ˈaŋ hˈaːj fˈəɪ4 bˈaː fˈə2n tʃˈam sˈɔ vˌəːɜj nˈam tʃˈyəɜc."
+    }
+   ]
+  },
+  {
+   "text": "Năm 2024, dân số thành phố đạt 9.389.700 người; diện tích 2.095 km2; mật độ khoảng 4.481 người/km2. Con số này tăng 2,3% so với năm trước.",
+   "max": 140,
+   "tokens": 27,
+   "units": [
+    {
+     "first": 0,
+     "last": 26,
+     "pieces": [
+      "Năm 2024, dân số thành phố đạt 9.389.700 người; diện tích 2.095 km2; mật độ khoảng 4.481 người/km2.",
+      "Con số này tăng 2,3% so với năm trước."
+     ],
+     "phonemes": "nˈam hˈaːj ŋˈi2n xˌoŋ tʃˈam hˈaːj mˈyəj bˈoɜn, zˈən sˈoɜ tˈe-2ɲ fˈoɜ ɗˈaː6t̪ tʃˈiɜn tʃˈiɛ6w bˈaː tʃˈam t̪ˈaːɜm mˈyəj tʃˈiɜn ŋˈi2n bˈa4j tʃˈam ŋˈyə2j, zˈiɛ6n t̪ˈiɜc hˈaːj ŋˈi2n xˌoŋ tʃˈam tʃˈiɜn mˈyəj lˈam kˈi lˈo mˈɛɜt̪ vˈuəŋ, mˈə6t̪ ɗˈo6 xwˌaː4ŋ bˈoɜn ŋˈi2n bˈoɜn tʃˈam t̪ˈaːɜm mˈyəj mˈoɜt̪ ŋˈyə2j tʃˈen kˈi lˈo mˈɛɜt̪ hˈaːj. kˌɔn sˈoɜ nˈa2j t̪ˈaŋ hˈaːj fˈəɪ4 bˈaː fˈə2n tʃˈam sˈɔ vˌəːɜj nˈam tʃˈyəɜc."
+    }
+   ]
+  },
+  {
+   "text": "Năm 2024, dân số thành phố đạt 9.389.700 người; diện tích 2.095 km2; mật độ khoảng 4.481 người/km2. Con số này tăng 2,3% so với năm trước.",
+   "max": 40,
+   "tokens": 27,
+   "units": [
+    {
+     "first": 0,
+     "last": 8,
+     "pieces": [
+      "Năm 2024,",
+      "dân số thành phố đạt 9.389.700 người;"
+     ],
+     "phonemes": "nˈam hˈaːj ŋˈi2n xˌoŋ tʃˈam hˈaːj mˈyəj bˈoɜn zˈən sˈoɜ tˈe-2ɲ fˈoɜ ɗˈaː6t̪ tʃˈiɜn tʃˈiɛ6w bˈaː tʃˈam t̪ˈaːɜm mˈyəj tʃˈiɜn ŋˈi2n bˈa4j tʃˈam ŋˈyə2j."
+    },
+    {
+     "first": 9,
+     "last": 12,
+     "pieces": [
+      "diện tích 2.095 km2;"
+     ],
+     "phonemes": "zˈiɛ6n t̪ˈiɜc hˈaːj ŋˈi2n xˌoŋ tʃˈam tʃˈiɜn mˈyəj lˈam kˈi lˈo mˈɛɜt̪ vˈuəŋ."
+    },
+    {
+     "first": 13,
+     "last": 17,
+     "pieces": [
+      "mật độ khoảng 4.481 người/km2."
+     ],
+     "phonemes": "mˈə6t̪ ɗˈo6 xwˌaː4ŋ bˈoɜn ŋˈi2n bˈoɜn tʃˈam t̪ˈaːɜm mˈyəj mˈoɜt̪ ŋˈyə2j tʃˈen kˈi lˈo mˈɛɜt̪ hˈaːj."
+    },
+    {
+     "first": 18,
+     "last": 26,
+     "pieces": [
+      "Con số này tăng 2,3% so với năm trước."
+     ],
+     "phonemes": "kˌɔn sˈoɜ nˈa2j t̪ˈaŋ hˈaːj fˈəɪ4 bˈaː fˈə2n tʃˈam sˈɔ vˌəːɜj nˈam tʃˈyəɜc."
+    }
+   ]
+  },
+  {
+   "text": "Một hai ba bốn năm, sáu bảy tám chín mười, mười một mười hai mười ba mười bốn mười lăm mười sáu mười bảy mười tám mười chín hai mươi hai mốt hai hai hai ba hai bốn hai lăm hai sáu hai bảy hai tám hai chín ba mươi ba mốt ba hai ba ba ba bốn ba lăm ba sáu ba bảy ba tám ba chín.",
+   "max": 256,
+   "tokens": 68,
+   "units": [
+    {
+     "first": 0,
+     "last": 9,
+     "pieces": [
+      "Một hai ba bốn năm, sáu bảy tám chín mười,"
+     ],
+     "phonemes": "mˈo6t̪ hˈaːj bˈaː bˈoɜn nˈam, sˈaɜw bˈa4j t̪ˈaːɜm tʃˈiɜn mˈyə2j."
+    },
+    {
+     "first": 10,
+     "last": 67,
+     "pieces": [
+      "mười một mười hai mười ba mười bốn mười lăm mười sáu mười bảy mười tám mười chín hai mươi hai mốt hai hai hai ba hai bốn hai lăm hai sáu hai bảy hai tám hai chín ba mươi ba mốt ba hai ba ba ba bốn ba lăm ba sáu ba bảy ba tám ba chín."
+     ],
+     "phonemes": "mˈyə2j mˈo6t̪ mˈyə2j hˈaːj mˈyə2j bˈaː mˈyə2j bˈoɜn mˈyə2j lˈam mˈyə2j sˈaɜw mˈyə2j bˈa4j mˈyə2j t̪ˈaːɜm mˈyə2j tʃˈiɜn hˈaːj mˈyəj hˈaːj mˈoɜt̪ hˈaːj hˈaːj hˈaːj bˈaː hˈaːj bˈoɜn hˈaːj lˈam hˈaːj sˈaɜw hˈaːj bˈa4j hˈaːj t̪ˈaːɜm hˈaːj tʃˈiɜn bˈaː mˈyəj bˈaː mˈoɜt̪ bˈaː hˈaːj bˈaː bˈaː bˈaː bˈoɜn bˈaː lˈam bˈaː sˈaɜw bˈaː bˈa4j bˈaː t̪ˈaːɜm bˈaː tʃˈiɜn."
+    }
+   ]
+  },
+  {
+   "text": "Một hai ba bốn năm, sáu bảy tám chín mười, mười một mười hai mười ba mười bốn mười lăm mười sáu mười bảy mười tám mười chín hai mươi hai mốt hai hai hai ba hai bốn hai lăm hai sáu hai bảy hai tám hai chín ba mươi ba mốt ba hai ba ba ba bốn ba lăm ba sáu ba bảy ba tám ba chín.",
+   "max": 140,
+   "tokens": 68,
+   "units": [
+    {
+     "first": 0,
+     "last": 9,
+     "pieces": [
+      "Một hai ba bốn năm, sáu bảy tám chín mười,"
+     ],
+     "phonemes": "mˈo6t̪ hˈaːj bˈaː bˈoɜn nˈam, sˈaɜw bˈa4j t̪ˈaːɜm tʃˈiɜn mˈyə2j."
+    },
+    {
+     "first": 10,
+     "last": 42,
+     "pieces": [
+      "mười một mười hai mười ba mười bốn mười lăm mười sáu mười bảy mười tám mười chín hai mươi hai mốt hai hai hai ba hai bốn hai lăm hai sáu hai"
+     ],
+     "phonemes": "mˈyə2j mˈo6t̪ mˈyə2j hˈaːj mˈyə2j bˈaː mˈyə2j bˈoɜn mˈyə2j lˈam mˈyə2j sˈaɜw mˈyə2j bˈa4j mˈyə2j t̪ˈaːɜm mˈyə2j tʃˈiɜn hˈaːj mˈyəj hˈaːj mˈoɜt̪ hˈaːj hˈaːj hˈaːj bˈaː hˈaːj bˈoɜn hˈaːj lˈam hˈaːj sˈaɜw hˈaːj."
+    },
+    {
+     "first": 43,
+     "last": 67,
+     "pieces": [
+      "bảy hai tám hai chín ba mươi ba mốt ba hai ba ba ba bốn ba lăm ba sáu ba bảy ba tám ba chín."
+     ],
+     "phonemes": "bˈa4j hˈaːj t̪ˈaːɜm hˈaːj tʃˈiɜn bˈaː mˈyəj bˈaː mˈoɜt̪ bˈaː hˈaːj bˈaː bˈaː bˈaː bˈoɜn bˈaː lˈam bˈaː sˈaɜw bˈaː bˈa4j bˈaː t̪ˈaːɜm bˈaː tʃˈiɜn."
+    }
+   ]
+  },
+  {
+   "text": "Một hai ba bốn năm, sáu bảy tám chín mười, mười một mười hai mười ba mười bốn mười lăm mười sáu mười bảy mười tám mười chín hai mươi hai mốt hai hai hai ba hai bốn hai lăm hai sáu hai bảy hai tám hai chín ba mươi ba mốt ba hai ba ba ba bốn ba lăm ba sáu ba bảy ba tám ba chín.",
+   "max": 40,
+   "tokens": 68,
+   "units": [
+    {
+     "first": 0,
+     "last": 9,
+     "pieces": [
+      "Một hai ba bốn năm,",
+      "sáu bảy tám chín mười,"
+     ],
+     "phonemes": "mˈo6t̪ hˈaːj bˈaː bˈoɜn nˈam sˈaɜw bˈa4j t̪ˈaːɜm tʃˈiɜn mˈyə2j."
+    },
+    {
+     "first": 10,
+     "last": 18,
+     "pieces": [
+      "mười một mười hai mười ba mười bốn mười"
+     ],
+     "phonemes": "mˈyə2j mˈo6t̪ mˈyə2j hˈaːj mˈyə2j bˈaː mˈyə2j bˈoɜn mˈyə2j."
+    },
+    {
+     "first": 19,
+     "last": 27,
+     "pieces": [
+      "lăm mười sáu mười bảy mười tám mười chín"
+     ],
+     "phonemes": "lˈam mˈyə2j sˈaɜw mˈyə2j bˈa4j mˈyə2j t̪ˈaːɜm mˈyə2j tʃˈiɜn."
+    },
+    {
+     "first": 28,
+     "last": 37,
+     "pieces": [
+      "hai mươi hai mốt hai hai hai ba hai bốn"
+     ],
+     "phonemes": "hˈaːj mˈyəj hˈaːj mˈoɜt̪ hˈaːj hˈaːj hˈaːj bˈaː hˈaːj bˈoɜn."
+    },
+    {
+     "first": 38,
+     "last": 47,
+     "pieces": [
+      "hai lăm hai sáu hai bảy hai tám hai chín"
+     ],
+     "phonemes": "hˈaːj lˈam hˈaːj sˈaɜw hˈaːj bˈa4j hˈaːj t̪ˈaːɜm hˈaːj tʃˈiɜn."
+    },
+    {
+     "first": 48,
+     "last": 58,
+     "pieces": [
+      "ba mươi ba mốt ba hai ba ba ba bốn ba"
+     ],
+     "phonemes": "bˈaː mˈyəj bˈaː mˈoɜt̪ bˈaː hˈaːj bˈaː bˈaː bˈaː bˈoɜn bˈaː."
+    },
+    {
+     "first": 59,
+     "last": 67,
+     "pieces": [
+      "lăm ba sáu ba bảy ba tám ba chín."
+     ],
+     "phonemes": "lˈam bˈaː sˈaɜw bˈaː bˈa4j bˈaː t̪ˈaːɜm bˈaː tʃˈiɜn."
+    }
+   ]
+  },
+  {
+   "text": "Ầm! Rầm! Cánh cửa bật tung. Hắn bước vào.",
+   "max": 256,
+   "tokens": 9,
+   "units": [
+    {
+     "first": 0,
+     "last": 8,
+     "pieces": [
+      "Ầm!",
+      "Rầm!",
+      "Cánh cửa bật tung.",
+      "Hắn bước vào."
+     ],
+     "phonemes": "ˈə2m! ɹˈə2m! kˈe-ɜɲ kˈyə4 bˈə6t̪ t̪ˈuŋ. hˈaɜn bˈyəɜc vˈaː2w."
+    }
+   ]
+  },
+  {
+   "text": "Ầm! Rầm! Cánh cửa bật tung. Hắn bước vào.",
+   "max": 140,
+   "tokens": 9,
+   "units": [
+    {
+     "first": 0,
+     "last": 8,
+     "pieces": [
+      "Ầm!",
+      "Rầm!",
+      "Cánh cửa bật tung.",
+      "Hắn bước vào."
+     ],
+     "phonemes": "ˈə2m! ɹˈə2m! kˈe-ɜɲ kˈyə4 bˈə6t̪ t̪ˈuŋ. hˈaɜn bˈyəɜc vˈaː2w."
+    }
+   ]
+  },
+  {
+   "text": "Ầm! Rầm! Cánh cửa bật tung. Hắn bước vào.",
+   "max": 40,
+   "tokens": 9,
+   "units": [
+    {
+     "first": 0,
+     "last": 8,
+     "pieces": [
+      "Ầm!",
+      "Rầm!",
+      "Cánh cửa bật tung.",
+      "Hắn bước vào."
+     ],
+     "phonemes": "ˈə2m! ɹˈə2m! kˈe-ɜɲ kˈyə4 bˈə6t̪ t̪ˈuŋ. hˈaɜn bˈyəɜc vˈaː2w."
+    }
+   ]
+  },
+  {
+   "text": "Hừm... Để xem nào... À, đây rồi! Tìm thấy rồi!",
+   "max": 256,
+   "tokens": 10,
+   "units": [
+    {
+     "first": 0,
+     "last": 9,
+     "pieces": [
+      "Hừm...",
+      "Để xem nào...",
+      "À, đây rồi!",
+      "Tìm thấy rồi!"
+     ],
+     "phonemes": "hˈy2m, ɗˌe4 sˈɛm nˈaː2w. ˈaː2, ɗˈəɪ ɹˈo2j! t̪ˈi2m tˈəɪɜ ɹˈo2j!"
+    }
+   ]
+  },
+  {
+   "text": "Hừm... Để xem nào... À, đây rồi! Tìm thấy rồi!",
+   "max": 140,
+   "tokens": 10,
+   "units": [
+    {
+     "first": 0,
+     "last": 9,
+     "pieces": [
+      "Hừm...",
+      "Để xem nào...",
+      "À, đây rồi!",
+      "Tìm thấy rồi!"
+     ],
+     "phonemes": "hˈy2m, ɗˌe4 sˈɛm nˈaː2w. ˈaː2, ɗˈəɪ ɹˈo2j! t̪ˈi2m tˈəɪɜ ɹˈo2j!"
+    }
+   ]
+  },
+  {
+   "text": "Hừm... Để xem nào... À, đây rồi! Tìm thấy rồi!",
+   "max": 40,
+   "tokens": 10,
+   "units": [
+    {
+     "first": 0,
+     "last": 9,
+     "pieces": [
+      "Hừm...",
+      "Để xem nào...",
+      "À, đây rồi!",
+      "Tìm thấy rồi!"
+     ],
+     "phonemes": "hˈy2m, ɗˌe4 sˈɛm nˈaː2w. ˈaː2, ɗˈəɪ ɹˈo2j! t̪ˈi2m tˈəɪɜ ɹˈo2j!"
+    }
+   ]
+  },
+  {
+   "text": "Sư phụ nói: \"Kiếm pháp không nằm ở tay, mà nằm ở tâm.\" Đệ tử cúi đầu, im lặng suy ngẫm hồi lâu, rồi mới chậm rãi đáp: \"Đệ tử đã hiểu.\"",
+   "max": 256,
+   "tokens": 32,
+   "units": [
+    {
+     "first": 0,
+     "last": 31,
+     "pieces": [
+      "Sư phụ nói: \"Kiếm pháp không nằm ở tay, mà nằm ở tâm.\"",
+      "Đệ tử cúi đầu, im lặng suy ngẫm hồi lâu, rồi mới chậm rãi đáp: \"Đệ tử đã hiểu.\""
+     ],
+     "phonemes": "sˈy fˈu6 nˈɔɜj, kˈiɛɜm fˈaːɜp xˌoŋ nˈa2m ˈəː4 t̪ˈaj, mˌaː2 nˈa2m ˈəː4 t̪ˈəm. ɗˈe6 t̪ˈy4 kˈuɜj ɗˈə2w, ˈim lˈa6ŋ swˈi ŋˈə5m hˈo2j lˈə1w, ɹˈo2j mˈəːɜj tʃˈə6m ɹˈaː5j ɗˈaːɜp, ɗˈe6 t̪ˈy4 ɗˌaː5 hˈiɛ4w."
+    }
+   ]
+  },
+  {
+   "text": "Sư phụ nói: \"Kiếm pháp không nằm ở tay, mà nằm ở tâm.\" Đệ tử cúi đầu, im lặng suy ngẫm hồi lâu, rồi mới chậm rãi đáp: \"Đệ tử đã hiểu.\"",
+   "max": 140,
+   "tokens": 32,
+   "units": [
+    {
+     "first": 0,
+     "last": 31,
+     "pieces": [
+      "Sư phụ nói: \"Kiếm pháp không nằm ở tay, mà nằm ở tâm.\"",
+      "Đệ tử cúi đầu, im lặng suy ngẫm hồi lâu, rồi mới chậm rãi đáp: \"Đệ tử đã hiểu.\""
+     ],
+     "phonemes": "sˈy fˈu6 nˈɔɜj, kˈiɛɜm fˈaːɜp xˌoŋ nˈa2m ˈəː4 t̪ˈaj, mˌaː2 nˈa2m ˈəː4 t̪ˈəm. ɗˈe6 t̪ˈy4 kˈuɜj ɗˈə2w, ˈim lˈa6ŋ swˈi ŋˈə5m hˈo2j lˈə1w, ɹˈo2j mˈəːɜj tʃˈə6m ɹˈaː5j ɗˈaːɜp, ɗˈe6 t̪ˈy4 ɗˌaː5 hˈiɛ4w."
+    }
+   ]
+  },
+  {
+   "text": "Sư phụ nói: \"Kiếm pháp không nằm ở tay, mà nằm ở tâm.\" Đệ tử cúi đầu, im lặng suy ngẫm hồi lâu, rồi mới chậm rãi đáp: \"Đệ tử đã hiểu.\"",
+   "max": 40,
+   "tokens": 32,
+   "units": [
+    {
+     "first": 0,
+     "last": 12,
+     "pieces": [
+      "Sư phụ nói: \"Kiếm pháp không nằm ở tay,",
+      "mà nằm ở tâm.\""
+     ],
+     "phonemes": "sˈy fˈu6 nˈɔɜj, kˈiɛɜm fˈaːɜp xˌoŋ nˈa2m ˈəː4 t̪ˈaj mˌaː2 nˈa2m ˈəː4 t̪ˈəm."
+    },
+    {
+     "first": 13,
+     "last": 22,
+     "pieces": [
+      "Đệ tử cúi đầu, im lặng suy ngẫm hồi lâu,"
+     ],
+     "phonemes": "ɗˈe6 t̪ˈy4 kˈuɜj ɗˈə2w, ˈim lˈa6ŋ swˈi ŋˈə5m hˈo2j lˈə1w."
+    },
+    {
+     "first": 23,
+     "last": 31,
+     "pieces": [
+      "rồi mới chậm rãi đáp: \"Đệ tử đã hiểu.\""
+     ],
+     "phonemes": "ɹˈo2j mˈəːɜj tʃˈə6m ɹˈaː5j ɗˈaːɜp, ɗˈe6 t̪ˈy4 ɗˌaː5 hˈiɛ4w."
+    }
+   ]
+  },
+  {
+   "text": "Cô ấy sinh ngày 12/3/1998 tại Hà Nội, tốt nghiệp ĐH Bách khoa năm 2020, rồi làm kỹ sư cho một công ty ở TP.HCM.",
+   "max": 256,
+   "tokens": 25,
+   "units": [
+    {
+     "first": 0,
+     "last": 24,
+     "pieces": [
+      "Cô ấy sinh ngày 12/3/1998 tại Hà Nội, tốt nghiệp ĐH Bách khoa năm 2020, rồi làm kỹ sư cho một công ty ở TP.HCM."
+     ],
+     "phonemes": "kˈo ˈəɪɜ sˈiɲ ŋˈa2j mˈyə2j hˈaːj tˈaːɜŋ bˈaː nˈam mˈo6t̪ ŋˈi2n tʃˈiɜn tʃˈam tʃˈiɜn mˈyəj t̪ˈaːɜm t̪ˈaː6j hˈaː2 nˈo6j, t̪ˈoɜt̪ ŋˈiɛ6p ɗˈaː6j hˈɔ6k bˈe-ɜc xwˈaː nˈam hˈaːj ŋˈi2n xˌoŋ tʃˈam hˈaːj mˈyəj, ɹˈo2j lˈaː2m kˈi5 sˈy tʃˌɔ mˈo6t̪ kˈoŋ t̪ˈi ˈəː4 tˈe-2ɲ fˈoɜ hˈo2 tʃˈiɜ mˈiɲ."
+    }
+   ]
+  },
+  {
+   "text": "Cô ấy sinh ngày 12/3/1998 tại Hà Nội, tốt nghiệp ĐH Bách khoa năm 2020, rồi làm kỹ sư cho một công ty ở TP.HCM.",
+   "max": 140,
+   "tokens": 25,
+   "units": [
+    {
+     "first": 0,
+     "last": 24,
+     "pieces": [
+      "Cô ấy sinh ngày 12/3/1998 tại Hà Nội, tốt nghiệp ĐH Bách khoa năm 2020, rồi làm kỹ sư cho một công ty ở TP.HCM."
+     ],
+     "phonemes": "kˈo ˈəɪɜ sˈiɲ ŋˈa2j mˈyə2j hˈaːj tˈaːɜŋ bˈaː nˈam mˈo6t̪ ŋˈi2n tʃˈiɜn tʃˈam tʃˈiɜn mˈyəj t̪ˈaːɜm t̪ˈaː6j hˈaː2 nˈo6j, t̪ˈoɜt̪ ŋˈiɛ6p ɗˈaː6j hˈɔ6k bˈe-ɜc xwˈaː nˈam hˈaːj ŋˈi2n xˌoŋ tʃˈam hˈaːj mˈyəj, ɹˈo2j lˈaː2m kˈi5 sˈy tʃˌɔ mˈo6t̪ kˈoŋ t̪ˈi ˈəː4 tˈe-2ɲ fˈoɜ hˈo2 tʃˈiɜ mˈiɲ."
+    }
+   ]
+  },
+  {
+   "text": "Cô ấy sinh ngày 12/3/1998 tại Hà Nội, tốt nghiệp ĐH Bách khoa năm 2020, rồi làm kỹ sư cho một công ty ở TP.HCM.",
+   "max": 40,
+   "tokens": 25,
+   "units": [
+    {
+     "first": 0,
+     "last": 7,
+     "pieces": [
+      "Cô ấy sinh ngày 12/3/1998 tại Hà Nội,"
+     ],
+     "phonemes": "kˈo ˈəɪɜ sˈiɲ ŋˈa2j mˈyə2j hˈaːj tˈaːɜŋ bˈaː nˈam mˈo6t̪ ŋˈi2n tʃˈiɜn tʃˈam tʃˈiɜn mˈyəj t̪ˈaːɜm t̪ˈaː6j hˈaː2 nˈo6j."
+    },
+    {
+     "first": 8,
+     "last": 14,
+     "pieces": [
+      "tốt nghiệp ĐH Bách khoa năm 2020,"
+     ],
+     "phonemes": "t̪ˈoɜt̪ ŋˈiɛ6p ɗˈaː6j hˈɔ6k bˈe-ɜc xwˈaː nˈam hˈaːj ŋˈi2n xˌoŋ tʃˈam hˈaːj mˈyəj."
+    },
+    {
+     "first": 15,
+     "last": 24,
+     "pieces": [
+      "rồi làm kỹ sư cho một công ty ở TP.HCM."
+     ],
+     "phonemes": "ɹˈo2j lˈaː2m kˈi5 sˈy tʃˌɔ mˈo6t̪ kˈoŋ t̪ˈi ˈəː4 tˈe-2ɲ fˈoɜ hˈo2 tʃˈiɜ mˈiɲ."
+    }
+   ]
+  },
+  {
+   "text": "A.",
+   "max": 256,
+   "tokens": 1,
+   "units": [
+    {
+     "first": 0,
+     "last": 0,
+     "pieces": [
+      "A."
+     ],
+     "phonemes": "ɐ."
+    }
+   ]
+  },
+  {
+   "text": "A.",
+   "max": 140,
+   "tokens": 1,
+   "units": [
+    {
+     "first": 0,
+     "last": 0,
+     "pieces": [
+      "A."
+     ],
+     "phonemes": "ɐ."
+    }
+   ]
+  },
+  {
+   "text": "A.",
+   "max": 40,
+   "tokens": 1,
+   "units": [
+    {
+     "first": 0,
+     "last": 0,
+     "pieces": [
+      "A."
+     ],
+     "phonemes": "ɐ."
+    }
+   ]
+  },
+  {
+   "text": "Một câu rất ngắn. Hai.",
+   "max": 256,
+   "tokens": 5,
+   "units": [
+    {
+     "first": 0,
+     "last": 4,
+     "pieces": [
+      "Một câu rất ngắn.",
+      "Hai."
+     ],
+     "phonemes": "mˈo6t̪ kˈə1w ɹˈəɜt̪ ŋˈaɜn. hˈaːj."
+    }
+   ]
+  },
+  {
+   "text": "Một câu rất ngắn. Hai.",
+   "max": 140,
+   "tokens": 5,
+   "units": [
+    {
+     "first": 0,
+     "last": 4,
+     "pieces": [
+      "Một câu rất ngắn.",
+      "Hai."
+     ],
+     "phonemes": "mˈo6t̪ kˈə1w ɹˈəɜt̪ ŋˈaɜn. hˈaːj."
+    }
+   ]
+  },
+  {
+   "text": "Một câu rất ngắn. Hai.",
+   "max": 40,
+   "tokens": 5,
+   "units": [
+    {
+     "first": 0,
+     "last": 4,
+     "pieces": [
+      "Một câu rất ngắn.",
+      "Hai."
+     ],
+     "phonemes": "mˈo6t̪ kˈə1w ɹˈəɜt̪ ŋˈaɜn. hˈaːj."
+    }
+   ]
+  },
+  {
+   "text": "Chiếc thuyền nhỏ trôi chậm giữa dòng sông, mang theo những mùa hè đã xa. Anh ấy mở cuốn sổ cũ, đọc lại từng dòng chữ mà mẹ đã viết cho mình từ nhiều năm trước.",
+   "max": 256,
+   "tokens": 36,
+   "units": [
+    {
+     "first": 0,
+     "last": 35,
+     "pieces": [
+      "Chiếc thuyền nhỏ trôi chậm giữa dòng sông, mang theo những mùa hè đã xa.",
+      "Anh ấy mở cuốn sổ cũ, đọc lại từng dòng chữ mà mẹ đã viết cho mình từ nhiều năm trước."
+     ],
+     "phonemes": "tʃˈiɛɜc twˈiɛ2n ɲˈɔ4 tʃˈoj tʃˈə6m zˈyə5 zˈɔ2ŋ sˈoŋ, mˈaːŋ tˈɛw ɲˌy5ŋ mˈuə2 hˈɛ2 ɗˌaː5 sˈaː. ˈe-ɲ ˈəɪɜ mˈəː4 kˈuəɜn sˈo4 kˈu5, ɗˈɔ6k lˈaː6j t̪ˈy2ŋ zˈɔ2ŋ tʃˈy5 mˌaː2 mˈɛ6 ɗˌaː5 vˈiɛɜt̪ tʃˌɔ mˈi2ɲ t̪ˌy2 ɲˈiɛ2w nˈam tʃˈyəɜc."
+    }
+   ]
+  },
+  {
+   "text": "Chiếc thuyền nhỏ trôi chậm giữa dòng sông, mang theo những mùa hè đã xa. Anh ấy mở cuốn sổ cũ, đọc lại từng dòng chữ mà mẹ đã viết cho mình từ nhiều năm trước.",
+   "max": 140,
+   "tokens": 36,
+   "units": [
+    {
+     "first": 0,
+     "last": 14,
+     "pieces": [
+      "Chiếc thuyền nhỏ trôi chậm giữa dòng sông, mang theo những mùa hè đã xa."
+     ],
+     "phonemes": "tʃˈiɛɜc twˈiɛ2n ɲˈɔ4 tʃˈoj tʃˈə6m zˈyə5 zˈɔ2ŋ sˈoŋ, mˈaːŋ tˈɛw ɲˌy5ŋ mˈuə2 hˈɛ2 ɗˌaː5 sˈaː."
+    },
+    {
+     "first": 15,
+     "last": 35,
+     "pieces": [
+      "Anh ấy mở cuốn sổ cũ, đọc lại từng dòng chữ mà mẹ đã viết cho mình từ nhiều năm trước."
+     ],
+     "phonemes": "ˈe-ɲ ˈəɪɜ mˈəː4 kˈuəɜn sˈo4 kˈu5, ɗˈɔ6k lˈaː6j t̪ˈy2ŋ zˈɔ2ŋ tʃˈy5 mˌaː2 mˈɛ6 ɗˌaː5 vˈiɛɜt̪ tʃˌɔ mˈi2ɲ t̪ˌy2 ɲˈiɛ2w nˈam tʃˈyəɜc."
+    }
+   ]
+  },
+  {
+   "text": "Chiếc thuyền nhỏ trôi chậm giữa dòng sông, mang theo những mùa hè đã xa. Anh ấy mở cuốn sổ cũ, đọc lại từng dòng chữ mà mẹ đã viết cho mình từ nhiều năm trước.",
+   "max": 40,
+   "tokens": 36,
+   "units": [
+    {
+     "first": 0,
+     "last": 6,
+     "pieces": [
+      "Chiếc thuyền nhỏ trôi chậm giữa dòng"
+     ],
+     "phonemes": "tʃˈiɛɜc twˈiɛ2n ɲˈɔ4 tʃˈoj tʃˈə6m zˈyə5 zˈɔ2ŋ."
+    },
+    {
+     "first": 7,
+     "last": 14,
+     "pieces": [
+      "sông,",
+      "mang theo những mùa hè đã xa."
+     ],
+     "phonemes": "sˈoŋ mˈaːŋ tˈɛw ɲˌy5ŋ mˈuə2 hˈɛ2 ɗˌaː5 sˈaː."
+    },
+    {
+     "first": 15,
+     "last": 20,
+     "pieces": [
+      "Anh ấy mở cuốn sổ cũ,"
+     ],
+     "phonemes": "ˈe-ɲ ˈəɪɜ mˈəː4 kˈuəɜn sˈo4 kˈu5."
+    },
+    {
+     "first": 21,
+     "last": 30,
+     "pieces": [
+      "đọc lại từng dòng chữ mà mẹ đã viết cho"
+     ],
+     "phonemes": "ɗˈɔ6k lˈaː6j t̪ˈy2ŋ zˈɔ2ŋ tʃˈy5 mˌaː2 mˈɛ6 ɗˌaː5 vˈiɛɜt̪ tʃˌɔ."
+    },
+    {
+     "first": 31,
+     "last": 35,
+     "pieces": [
+      "mình từ nhiều năm trước."
+     ],
+     "phonemes": "mˈi2ɲ t̪ˌy2 ɲˈiɛ2w nˈam tʃˈyəɜc."
+    }
+   ]
+  }
+ ],
+ "frames": [
+  {
+   "phonemes": "bˈaː ŋˈa2j sˈaw, ɗˈuɜŋ ɲˌy lˈəː2j hˈɛ6n, hˈɔ6 ɣˈa6p lˈaː6j ɲˈaw.",
+   "syllables": 11,
+   "cap": 152
+  },
+  {
+   "phonemes": "bˈaː2 kˈu6 ɗˌaː5 mˈo6t̪ tʃˈam lˈɛ4 hˈaːj t̪ˈuə4j mˌaː2 vˌə5n kˌɔ2n mˈiɲ mˈə5n.",
+   "syllables": 13,
+   "cap": 180
+  },
+  {
+   "phonemes": "bˈaː2j hˈaːɜt̪ hˈæpi bˈɜːθdeɪ vˈaːŋ lˈen.",
+   "syllables": 8,
+   "cap": 106
+  },
+  {
+   "phonemes": "bˈaː2j t̪wˈaːɜn, bˈaː kˈo6ŋ nˈam bˈa2ŋ t̪ˈaːɜm, kˌɔ2n mˈyə2j hˈaːj ɲˈən bˈoɜn bˈa2ŋ bˈoɜn mˈyəj t̪ˈaːɜm.",
+   "syllables": 16,
+   "cap": 232
+  },
+  {
+   "phonemes": "bˈaː2j vˈiɛɜt̪ kˈɔɜ hˈaːj ŋˈi2n bˈaː tʃˈam bˈoɜn mˈyəj lˈam lˈyə6t̪ tˈiɜc vˌaː2 sˈaɜw tʃˈam bˈa4j mˈyəj t̪ˈaːɜm bˈi2ɲ lwˈə6n.",
+   "syllables": 20,
+   "cap": 274
+  },
+  {
+   "phonemes": "bˈaː4n ɗˈo2 t̪ˈi4 lˈe6 mˈo6t̪, nˈam mˈyəj ŋˈi2n.",
+   "syllables": 8,
+   "cap": 120
+  },
+  {
+   "phonemes": "bˈaː6n mˈaːŋ tˈɛw bˈuɜt̪, tˈyəɜc, kəmpˈæ, vˈən vˈən. ɲˈɛɜ.",
+   "syllables": 10,
+   "cap": 140
+  },
+  {
+   "phonemes": "bˈaː6n ɗˌaː5 sˈɛm fˈim ɐvˈɛndʒɚz, ɛndɡˈeɪm tʃˌyə?",
+   "syllables": 10,
+   "cap": 122
+  },
+  {
+   "phonemes": "bˈe6 hˈaː6 vˈaː6n t̪wˈeɜ, vˈaː6n t̪wˈeɜ, vˈaː6n vˈaː6n t̪wˈeɜ!",
+   "syllables": 9,
+   "cap": 148
+  },
+  {
+   "phonemes": "bˈyɜc tʃˈe-ɲ ɗˌyə6c bˈaːɜn vˌəːɜj zˈaːɜ hˈaːj fˈəɪ4 nˈam tʃˈiɛ6w jˈuː ˈɛs dˈiː.",
+   "syllables": 13,
+   "cap": 182
+  },
+  {
+   "phonemes": "bˈɔɜŋ ɗˈɛ2n lˈɛd tʃˈiɜn wˈaːɜt̪ t̪ˈiɛɜt̪ kˈiɛ6m ɗˈiɛ6n.",
+   "syllables": 8,
+   "cap": 134
+  },
+  {
+   "phonemes": "bˈə2w tʃˈəː2j sˈe-ɲ ŋˈaɜt̪, xˌoŋ mˈo6t̪ ɣˈəː6n mˈəɪ.",
+   "syllables": 8,
+   "cap": 128
+  },
+  {
+   "phonemes": "fˈaɪl bˈaːɜw kˈaːɜw zˈaː6ŋ fˈe ɗˈe ˈɛɜp nˈa6ŋ bˈaː fˈəɪ4 nˈam mˈɛɡəbˌaɪt.",
+   "syllables": 14,
+   "cap": 170
+  },
+  {
+   "phonemes": "fˈiɛn bˈaː4n hˈaːj tʃˈəɜm xˌoŋ tʃˈəɜm mˈo6t̪ sˈyə4 ɲˈiɛ2w lˈo5j ɲˈɔ4.",
+   "syllables": 11,
+   "cap": 162
+  },
+  {
+   "phonemes": "fˈuɜt̪ tʃˈen zˈəɪ, ɲˈəːɜ tʃˈaː4 lˈəː2j t̪ˈin ɲˈaɜn ɲˈɛɜ.",
+   "syllables": 9,
+   "cap": 136
+  },
+  {
+   "phonemes": "fˈə2n hˈaːj, tʃˈyəŋ mˈyə2j lˈam, kˈuə6c ɣˈa6p ɣˈəː5 ɗˈi6ɲ mˈe6ɲ.",
+   "syllables": 10,
+   "cap": 152
+  },
+  {
+   "phonemes": "hˈa5j ɲˈə6p mˈə6t̪ xˈə4w vˌaː2 ɲˈəɜn ˈɛntɚ.",
+   "syllables": 8,
+   "cap": 110
+  },
+  {
+   "phonemes": "hˈa5j ɲˈəːɜ, ɗˈy2ŋ bˈaːw zˈəː2 bˈɔ4 kˈuə6c.",
+   "syllables": 7,
+   "cap": 110
+  },
+  {
+   "phonemes": "hˈaɜn kˈyə2j xˈəɪ4, ŋˈyəj ŋˈi5 ŋˈyəj lˌaː2 ˈaːj?",
+   "syllables": 8,
+   "cap": 120
+  },
+  {
+   "phonemes": "hˈaɜn ɣˈaː2w lˈen, tʃˈa6j ɗˈi!",
+   "syllables": 5,
+   "cap": 84
+  },
+  {
+   "phonemes": "hˈaː hˈaː hˈaː.",
+   "syllables": 3,
+   "cap": 23
+  },
+  {
+   "phonemes": "hˈaː4.",
+   "syllables": 1,
+   "cap": 13
+  },
+  {
+   "phonemes": "hˈe6 tˈoɜŋ tˈoŋ bˈaːɜw, ɲˈiɛ6m vˈu6 hwˈaː2n tˈe-2ɲ.",
+   "syllables": 8,
+   "cap": 126
+  },
+  {
+   "phonemes": "hˈi2 hˈi2, kˈaː4m ˈəːn kˈə6w.",
+   "syllables": 5,
+   "cap": 82
+  },
+  {
+   "phonemes": "hˈom kwˈaː lˌaː2 ŋˈa2j hˈaːj mˈyəj tʃˈiɜn tˈaːɜŋ hˈaːj nˈam hˈaːj ŋˈi2n xˌoŋ tʃˈam hˈaːj mˈyəj bˈoɜn.",
+   "syllables": 17,
+   "cap": 226
+  },
+  {
+   "phonemes": "hˈom nˈaj lˌaː2 tˈyɜ sˈaɜw, ŋˈa2j mˈyə2j bˈaː.",
+   "syllables": 8,
+   "cap": 116
+  },
+  {
+   "phonemes": "hˈom nˈaj mˈi2ɲ ɗˈi kˈæfeɪ ɲˈɛɜ.",
+   "syllables": 7,
+   "cap": 88
+  },
+  {
+   "phonemes": "hˈy2m, ɗˌe4 sˈɛm nˈaː2w. ˈaː2, ɗˈəɪ ɹˈo2j! t̪ˈi2m tˈəɪɜ ɹˈo2j!",
+   "syllables": 10,
+   "cap": 148
+  },
+  {
+   "phonemes": "hˈy2m, ɗˌe4 t̪ˈoj ŋˈi5 ɗˌaː5.",
+   "syllables": 5,
+   "cap": 82
+  },
+  {
+   "phonemes": "hˈɔ6 sˈoɜŋ ˈəː4 t̪ˈə2ŋ hˈaːj mˈyəj mˈoɜt̪ kˌuə4 t̪wˈaː2 ɲˈaː2.",
+   "syllables": 10,
+   "cap": 148
+  },
+  {
+   "phonemes": "hˈɔ6 ɗˈa6t̪ fˈɔ2ŋ kwˈaː bˈʊkɪŋ tʃˈəɜm kˈɔm ɹˈo2j bˈeɪ sˈæŋ tˈoʊkɪˌoʊ.",
+   "syllables": 14,
+   "cap": 162
+  },
+  {
+   "phonemes": "hˈɔ6 ɗˈi zˈu lˈi6c nˈuː jˈɔːɹk vˈaː2w mˈuə2 tˈu.",
+   "syllables": 9,
+   "cap": 120
+  },
+  {
+   "phonemes": "hˈɔ6 ˈim lˈa6ŋ hˈo2j lˈə1w, xˌoŋ ˈaːj nˈɔɜj zˈi2.",
+   "syllables": 9,
+   "cap": 122
+  },
+  {
+   "phonemes": "hˈɔ6k kˈi2 hˈaːj kˈɛɜw zˈaː2j t̪ˌy2 tˈaːɜŋ mˈo6t̪ ɗˌeɜn tˈaːɜŋ nˈam.",
+   "syllables": 11,
+   "cap": 160
+  },
+  {
+   "phonemes": "hˈɛ6n ɣˈa6p lˈaː6j vˈaː2w t̪ˈaːɜm zˈəː2 t̪ˈoɜj mˈaːj ɲˈɛɜ!",
+   "syllables": 9,
+   "cap": 140
+  },
+  {
+   "phonemes": "jæmˈɑːdə tˈæɹoʊ lˈuən ɗˌeɜn lˈəːɜp sˈəːɜm ɲˈəɜt̪.",
+   "syllables": 10,
+   "cap": 122
+  },
+  {
+   "phonemes": "kwˈaː5ŋ ɗˈyə2ŋ zˈaː2j mˈyə2j hˈaːj fˈəɪ4 bˈa4j kˈi lˈo mˈɛɜt̪, ɗˈi mˈəɜt̪ xwˌaː4ŋ bˈoɜn mˈyəj lˈam fˈuɜt̪.",
+   "syllables": 17,
+   "cap": 236
+  },
+  {
+   "phonemes": "kwˈiɛ4n bˈaː, tʃˈaːŋ bˈoɜn mˈyəj lˈam ɗˌeɜn bˈoɜn mˈyəj bˈa4j.",
+   "syllables": 10,
+   "cap": 148
+  },
+  {
+   "phonemes": "kɪɹˈiːɾoʊ ɹˈuɜt̪ kˈiɛɜm, kˌɔ2n ɐsˈuːnə tˌi2 lˈu2j lˈaː6j mˈo6t̪ bˈyəɜc.",
+   "syllables": 14,
+   "cap": 166
+  },
+  {
+   "phonemes": "kˈan bˈə6c hˈaːj kˌuə4 mˈyə2j sˈaɜw lˌaː2 bˈoɜn.",
+   "syllables": 8,
+   "cap": 120
+  },
+  {
+   "phonemes": "kˈan fˈɔ2ŋ ɹˈo6ŋ hˈaːj mˈyəj lˈam mˈɛɜt̪ vˈuəŋ, zˈaːɜ twˈe bˈoɜn tʃˈiɛ6w nˈam tʃˈam ŋˈi2n ɗˈo2ŋ tʃˈen tˈaːɜŋ.",
+   "syllables": 18,
+   "cap": 242
+  },
+  {
+   "phonemes": "kˈaː4 lˈəːɜp kˈɔɜ bˈoɜn mˈyəj bˈaː6n, tʃˈɔŋ ɗˈɔɜ hˈaːj mˈyəj hˈaːj nˈy5.",
+   "syllables": 12,
+   "cap": 168
+  },
+  {
+   "phonemes": "kˈi2 ŋˈi4 t̪ˈeɜt̪ kˈɛɜw zˈaː2j tʃˈiɜn ŋˈa2j.",
+   "syllables": 7,
+   "cap": 112
+  },
+  {
+   "phonemes": "kˈim mˈɪn dʒˈʌn lˌaː2 hˈɔ6k sˈiɲ mˈəːɜj tʃwˈiɛ4n ɗˌeɜn.",
+   "syllables": 9,
+   "cap": 134
+  },
+  {
+   "phonemes": "kˈiɛɜm xˈiɜ t̪ˈuŋ hwˈe-2ɲ, kˈaː4 ŋˈɔ6n nˈuɜj ɹˈuŋ tʃwˈiɛ4n.",
+   "syllables": 9,
+   "cap": 142
+  },
+  {
+   "phonemes": "kˈo bˈɛɜ t̪ˈen lˌaː2 ˈælɪs, ɗˌeɜn t̪ˌy2 lˈʌndən.",
+   "syllables": 10,
+   "cap": 120
+  },
+  {
+   "phonemes": "kˈo vˈe2 ɲˈi2 tʃˈɔŋ kˈuə6c tˈi hˈaːɜt̪.",
+   "syllables": 7,
+   "cap": 102
+  },
+  {
+   "phonemes": "kˈo zˈu2ŋ fˈeɪsbʊk, zˈɑːloʊ vˌaː2 tˈɪk tˈɑːk mˌo5j ŋˈa2j.",
+   "syllables": 11,
+   "cap": 138
+  },
+  {
+   "phonemes": "kˈo ŋˈo2j ˈim, xˌoŋ zˈaːɜm tˈəː4 mˈe-6ɲ, vˌi2 sˈəː6 ɹˈa2ŋ tʃˈi4 mˈo6t̪ t̪ˈiɛɜŋ ɗˈo6ŋ ɲˈɔ4 tˈoj kˈu5ŋ ɗˈu4 ɗˌe4 fˈaːɜ vˈəː5 sˈy6 ˈiɛn lˈa6ŋ mˈɔŋ mˈe-ɲ ˈəɪɜ. ɹˈo2j tʃˈəː2j sˈaːɜŋ.",
+   "syllables": 30,
+   "cap": 378
+  },
+  {
+   "phonemes": "kˈo ɗˈeɜm, mˈo6t̪, hˈaːj, bˈaː, bˈoɜn, nˈam.",
+   "syllables": 7,
+   "cap": 112
+  },
+  {
+   "phonemes": "kˈo ɗˈyɜŋ tˈyɜ hˈaːj tʃˈɔŋ lˈəːɜp.",
+   "syllables": 6,
+   "cap": 92
+  },
+  {
+   "phonemes": "kˈo ɣˈaːɜj ɗˈyɜŋ bˈen kˈyə4 sˈo4, lˈa6ŋ lˈɛ5 ɲˈi2n mˈyə ɹˈəːj.",
+   "syllables": 11,
+   "cap": 148
+  },
+  {
+   "phonemes": "kˈo ˈəɪɜ kˈaːw mˈo6t̪ fˈəɪ4 sˈaɜw hˈaːj mˈɛɜt̪.",
+   "syllables": 8,
+   "cap": 118
+  },
+  {
+   "phonemes": "kˈo ˈəɪɜ nˈɔɜj t̪ˈiɛɜŋ ˈe-ɲ ɹˈəɜt̪ zˈɔ4j, kˈiɛ4w nˈeɪɾɪv spˈiːkɚ ˈəɪɜ.",
+   "syllables": 13,
+   "cap": 164
+  },
+  {
+   "phonemes": "kˈo ˈəɪɜ sˈiɲ ŋˈa2j mˈyə2j hˈaːj tˈaːɜŋ bˈaː nˈam mˈo6t̪ ŋˈi2n tʃˈiɜn tʃˈam tʃˈiɜn mˈyəj t̪ˈaːɜm t̪ˈaː6j hˈaː2 nˈo6j.",
+   "syllables": 19,
+   "cap": 258
+  },
+  {
+   "phonemes": "kˈo ˈəɪɜ ɗˈaː6t̪ ɗˈiɛ4m tʃˈiɜn fˈəɪ4 bˈa4j lˈam mˈon t̪wˈaːɜn.",
+   "syllables": 10,
+   "cap": 148
+  },
+  {
+   "phonemes": "kˈo ˈəɪɜ ɗˈɛw kˈiɜɲ kˈə6n hˈaːj fˈəɪ4 nˈam ɗˈo6.",
+   "syllables": 9,
+   "cap": 120
+  },
+  {
+   "phonemes": "kˈo ˈəɪɜ ɹˈəɜt̪ tˈiɜc ɗˈɔ6k hˈæɹi pˈɑːɾɚ vˌaː2 sˈɛm nˈɛtflɪks.",
+   "syllables": 13,
+   "cap": 148
+  },
+  {
+   "phonemes": "kˈoŋ tˈyɜc nˈyəɜc lˌaː2 hˈaːɜt̪ hˈaːj ˈo.",
+   "syllables": 7,
+   "cap": 106
+  },
+  {
+   "phonemes": "kˈoŋ t̪ˈi kˈɔɜ zwˈe-ɲ tˈu mˈo6t̪ fˈəɪ4 hˈaːj t̪ˈi4 jˈuː ˈɛs dˈiː nˈam ŋwˈaːɜj.",
+   "syllables": 14,
+   "cap": 180
+  },
+  {
+   "phonemes": "kˈu5ŋ ɗˈu4 ɗˌe4 fˈaːɜ vˈəː5 sˈy6 ˈiɛn lˈa6ŋ mˈɔŋ mˈe-ɲ ˈəɪɜ. ɹˈo2j tʃˈəː2j sˈaːɜŋ.",
+   "syllables": 14,
+   "cap": 188
+  },
+  {
+   "phonemes": "kˈuə6c hˈɔ6p bˈaɜt̪ ɗˈə2w lˌuɜc bˈa4j zˈəː2 bˈaː mˈyəj fˈuɜt̪ sˈaːɜŋ tˈyɜ hˈaːj.",
+   "syllables": 13,
+   "cap": 184
+  },
+  {
+   "phonemes": "kˈuəɜc lˈo6 mˈo6t̪ ˈaː zˈaː2j hˈəːn hˈaːj ŋˈi2n bˈaː tʃˈam kˈi lˈo mˈɛɜt̪.",
+   "syllables": 13,
+   "cap": 172
+  },
+  {
+   "phonemes": "kˈuəɜn sˈe-ɜc bˈaːɜn ɗˌyə6c hˈəːn mˈo6t̪ tʃˈiɛ6w bˈaː4n.",
+   "syllables": 9,
+   "cap": 136
+  },
+  {
+   "phonemes": "kˈyə4 hˈaː2ŋ mˈəː4 kˈyə4 t̪ˌy2 t̪ˈaːɜm zˈəː2 xˌoŋ fˈuɜt̪ ɗˌeɜn hˈaːj mˈyəj hˈaːj zˈəː2 xˌoŋ fˈuɜt̪.",
+   "syllables": 16,
+   "cap": 222
+  },
+  {
+   "phonemes": "kˈɔɜ bˈaː tˈyɜ kˈo kˈə2n, nˈyəɜc, lˈyə4 vˌaː2 mˈo6t̪ t̪ˈəɜm bˈaː4n ɗˈo2.",
+   "syllables": 12,
+   "cap": 168
+  },
+  {
+   "phonemes": "kˈə1w lˈaː6c bˈo6 bˈɔɜŋ ɗˈaːɜ kˌuə4 tʃˈyə2ŋ kˈɔɜ bˈaː mˈyəj tˈe-2ɲ vˈiɛn.",
+   "syllables": 12,
+   "cap": 170
+  },
+  {
+   "phonemes": "kˈə1w tʃˈaː4 lˈəː2j lˌaː2. xˌoŋ.",
+   "syllables": 5,
+   "cap": 88
+  },
+  {
+   "phonemes": "kˈə6w bˈɛɜ hˈɔ4j, t̪ˈaː6j sˈaːw bˈə2w tʃˈəː2j lˈaː6j mˈa2w sˈe-ɲ?",
+   "syllables": 10,
+   "cap": 154
+  },
+  {
+   "phonemes": "kˈə6w t̪ˈaː, ŋˈyə2j mˌaː2 ˈaːj kˈu5ŋ sˈəː6, lˈaː6j ɗˌaːŋ mˈi4m kˈyə2j.",
+   "syllables": 11,
+   "cap": 164
+  },
+  {
+   "phonemes": "kˈə6w ɗˈi6ɲ ɗˈi ɗˈə1w vˈəɪ6? kˈo hˈɔ4j.",
+   "syllables": 7,
+   "cap": 102
+  },
+  {
+   "phonemes": "kˈə6w ɗˈi6ɲ ɗˈi ɗˈə1w vˈəɪ6? kˈo hˈɔ4j. ɗˈi tˈə6t̪ sˈaː, kˈə6w ɗˈaːɜp, sˈaː ɗˌeɜn mˈyɜc xˌoŋ ˈaːj t̪ˈi2m tˈəɪɜ. kˈo xˌoŋ nˈɔɜj zˈi2 nˈyə5.",
+   "syllables": 24,
+   "cap": 300
+  },
+  {
+   "phonemes": "kˈən nˈa6ŋ zˈaː4m t̪ˌy2 t̪ˈaːɜm mˈyəj kˈi lˈo ɣˈaːm sˈuəɜŋ bˈa4j mˈyəj hˈaːj kˈi lˈo ɣˈaːm.",
+   "syllables": 16,
+   "cap": 206
+  },
+  {
+   "phonemes": "kˈəɜp ɗˈo6 kˌuə4 kˈo ˈəɪɜ ɗˌaː5 lˈen t̪ˌəːɜj ˌɛlvˈiː. tʃˈiɜn mˈyəj tʃˈiɜn.",
+   "syllables": 13,
+   "cap": 172
+  },
+  {
+   "phonemes": "kˈəɪ kˈə2w zˈaː2j mˈo6t̪ ŋˈi2n nˈam tʃˈam bˈaː mˈyəj lˈam mˈɛɜt̪ bˈaɜc kwˈaː sˈoŋ hˈo2ŋ.",
+   "syllables": 15,
+   "cap": 200
+  },
+  {
+   "phonemes": "kˌaːɜj zˈi2? sˈaːw lˈaː6j tˈeɜ ɗˌyə6c?",
+   "syllables": 6,
+   "cap": 100
+  },
+  {
+   "phonemes": "kˌɔ2n bˈaː ŋˈa2j nˈyə5 lˌaː2 zˈaːɜŋ sˈiɲ.",
+   "syllables": 7,
+   "cap": 106
+  },
+  {
+   "phonemes": "kˌɔn mˈɛ2w ɲˈa4j lˈen bˈaː2n, lˈaː2m ɗˈo4 kˈoɜk nˈyəɜc.",
+   "syllables": 9,
+   "cap": 134
+  },
+  {
+   "phonemes": "lˈa6ŋ lˈɛ5 ɲˈi2n mˈyə ɹˈəːj sˈuəɜt̪ kˈaː4 bˈuə4j tʃˈiɛ2w hˈom ˈəɪɜ.",
+   "syllables": 11,
+   "cap": 158
+  },
+  {
+   "phonemes": "lˈaː5j swˈəɜt̪ t̪ˈaŋ xˌoŋ fˈəɪ4 nˈam fˈə2n tʃˈam sˈɔ vˌəːɜj tˈaːɜŋ tʃˈyəɜc.",
+   "syllables": 12,
+   "cap": 174
+  },
+  {
+   "phonemes": "lˈiɛn hˈe6 kwˈaː sˈoɜ xˌoŋ tʃˈiɜn mˈo6t̪ hˈaːj, bˈaː bˈoɜn nˈam, sˈaɜw bˈa4j t̪ˈaːɜm hwˌa6c xˌoŋ hˈaːj t̪ˈaːɜm tʃˈəɜm bˈaː t̪ˈaːɜm hˈaːj hˈaːj tʃˈəɜm mˈo6t̪ hˈaːj bˈaː bˈoɜn.",
+   "syllables": 28,
+   "cap": 372
+  },
+  {
+   "phonemes": "lˈo5j bˈoɜn tʃˈam lˈɛ4 bˈoɜn, xˌoŋ t̪ˈi2m tˈəɪɜ tʃˈaːŋ.",
+   "syllables": 9,
+   "cap": 134
+  },
+  {
+   "phonemes": "lˈə2n tˈyɜ ɲˈəɜt̪, lˈə2n tˈyɜ hˈaːj, ɹˈo2j lˈə2n tˈyɜ bˈaː.",
+   "syllables": 10,
+   "cap": 142
+  },
+  {
+   "phonemes": "lˈəːɜp mˈyə2j ˈaː mˈo6t̪ kˈɔɜ bˈoɜn mˈyəj lˈam hˈɔ6k sˈiɲ.",
+   "syllables": 10,
+   "cap": 140
+  },
+  {
+   "phonemes": "lˌuɜc xˌoŋ zˈəː2 ŋˈa2j mˈo6t̪ tˈaːɜŋ mˈo6t̪, fˈaːɜw hwˈaː ɹˈy6c sˈaːɜŋ.",
+   "syllables": 11,
+   "cap": 166
+  },
+  {
+   "phonemes": "mˈaː fˈaːɜp sˈy hˈaː6ŋ ˈɛɜt̪ hˈiɛɜm ɲˌy lˈaːɜ mˈuə2 tˈu.",
+   "syllables": 10,
+   "cap": 136
+  },
+  {
+   "phonemes": "mˈaː2n hˈi2ɲ sˈaɜw fˈəɪ4 bˈa4j ˈɪntʃ, pˈɪn nˈam ŋˈi2n mˈi lˈi ˈaːm pˈɛ zˈəː2.",
+   "syllables": 14,
+   "cap": 178
+  },
+  {
+   "phonemes": "mˈaː5 fˈe ˈi nˈəː2 ɣˈo2m bˈoɜn tʃˈy5 sˈoɜ.",
+   "syllables": 8,
+   "cap": 108
+  },
+  {
+   "phonemes": "mˈaː5 ɗˈəːn hˈaː2ŋ lˌaː2 ˈaː mˈyə2j hˈaːj bˈe bˈaː tʃˈam bˈoɜn mˈyəj lˈam.",
+   "syllables": 13,
+   "cap": 172
+  },
+  {
+   "phonemes": "mˈo6t̪ hˈaːj bˈaː bˈoɜn nˈam sˈaɜw bˈa4j t̪ˈaːɜm tʃˈiɜn mˈyə2j.",
+   "syllables": 10,
+   "cap": 150
+  },
+  {
+   "phonemes": "mˈo6t̪ kˈə1w ɹˈəɜt̪ ŋˈaɜn. hˈaːj.",
+   "syllables": 5,
+   "cap": 90
+  },
+  {
+   "phonemes": "mˈo6t̪ tʃˈiɛɜc sˈɛ hˈɑːndə ˈɛɜt̪ hˈaːɜt̪ ɗˈo5 tʃˈyəɜc kˈyə4.",
+   "syllables": 10,
+   "cap": 144
+  },
+  {
+   "phonemes": "mˈo6t̪ ŋˈi2n lˈɛ4 mˈo6t̪ ɗˈem lˌaː2 kˈə1w tʃwˈiɛ6n nˈo4j t̪ˈiɛɜŋ.",
+   "syllables": 10,
+   "cap": 154
+  },
+  {
+   "phonemes": "mˈuə2 ɗˈoŋ nˈam hˈaːj ŋˈi2n xˌoŋ tʃˈam mˈyə2j lˈe-6ɲ ɲˈəɜt̪ tʃˈɔŋ bˈaː mˈyəj nˈam.",
+   "syllables": 14,
+   "cap": 188
+  },
+  {
+   "phonemes": "mˈyɜc lˈyəŋ xˈəː4j ɗˈiɛ4m mˈyə2j lˈam tʃˈiɛ6w tʃˈen tˈaːɜŋ.",
+   "syllables": 9,
+   "cap": 142
+  },
+  {
+   "phonemes": "mˈɛ6 zˈa6n, ɲˈəːɜ mˈaːŋ ˈaːɜw mˈyə.",
+   "syllables": 6,
+   "cap": 94
+  },
+  {
+   "phonemes": "nˈam hˈaːj ŋˈi2n xˌoŋ tʃˈam hˈaːj mˈyəj bˈoɜn zˈən sˈoɜ tˈe-2ɲ fˈoɜ ɗˈaː6t̪ tʃˈiɜn tʃˈiɛ6w bˈaː tʃˈam t̪ˈaːɜm mˈyəj tʃˈiɜn ŋˈi2n bˈa4j tʃˈam ŋˈyə2j.",
+   "syllables": 24,
+   "cap": 320
+  },
+  {
+   "phonemes": "nˈam hˈaːj ŋˈi2n xˌoŋ tʃˈam hˈaːj mˈyəj bˈoɜn, zˈən sˈoɜ tˈe-2ɲ fˈoɜ ɗˈaː6t̪ tʃˈiɜn tʃˈiɛ6w bˈaː tʃˈam t̪ˈaːɜm mˈyəj tʃˈiɜn ŋˈi2n bˈa4j tʃˈam ŋˈyə2j, zˈiɛ6n t̪ˈiɜc hˈaːj ŋˈi2n xˌoŋ tʃˈam tʃˈiɜn mˈyəj lˈam kˈi lˈo mˈɛɜt̪ vˈuəŋ, mˈə6t̪ ɗˈo6 xwˌaː4ŋ bˈoɜn ŋˈi2n bˈoɜn tʃˈam t̪ˈaːɜm mˈyəj mˈoɜt̪ ŋˈyə2j tʃˈen kˈi lˈo mˈɛɜt̪ hˈaːj. kˌɔn sˈoɜ nˈa2j t̪ˈaŋ hˈaːj fˈəɪ4 bˈaː fˈə2n tʃˈam sˈɔ vˌəːɜj nˈam tʃˈyəɜc.",
+   "syllables": 66,
+   "cap": 828
+  },
+  {
+   "phonemes": "nˈam hˈaːj ŋˈi2n xˌoŋ tʃˈam hˈaːj mˈyəj bˈoɜn, zˈən sˈoɜ tˈe-2ɲ fˈoɜ ɗˈaː6t̪ tʃˈiɜn tʃˈiɛ6w bˈaː tʃˈam t̪ˈaːɜm mˈyəj tʃˈiɜn ŋˈi2n bˈa4j tʃˈam ŋˈyə2j.",
+   "syllables": 24,
+   "cap": 322
+  },
+  {
+   "phonemes": "nˈam hˈaːj ŋˈi2n xˌoŋ tʃˈam nˈam mˈyəj, zˈən sˈoɜ kˈɔɜ tˈe4 vˈyə6t̪ mˈyə2j t̪ˈi4 ŋˈyə2j.",
+   "syllables": 15,
+   "cap": 200
+  },
+  {
+   "phonemes": "nˈam hˈɔ6k hˈaːj ŋˈi2n xˌoŋ tʃˈam hˈaːj mˈyəj lˈam ɗˌeɜn hˈaːj ŋˈi2n xˌoŋ tʃˈam hˈaːj mˈyəj sˈaɜw sˈaɜp bˈaɜt̪ ɗˈə2w.",
+   "syllables": 20,
+   "cap": 258
+  },
+  {
+   "phonemes": "nˈaː2ŋ xˈɛ5 tˈəː4 zˈaː2j, ɹˈo2j kwˈaj mˈa6t̪ ɗˈi.",
+   "syllables": 8,
+   "cap": 122
+  },
+  {
+   "phonemes": "nˈyəɜc sˈoj ˈəː4 mˈo6t̪ tʃˈam ɗˈo6 sˈe.",
+   "syllables": 7,
+   "cap": 102
+  },
+  {
+   "phonemes": "pˈɪn kˌɔ2n nˈam fˈə2n tʃˈam, kˈə2n sˈaː6c ŋˈaj.",
+   "syllables": 8,
+   "cap": 118
+  },
+  {
+   "phonemes": "sˈaːɜŋ mˈaːj, sˈaɜw zˈəː2, t̪ˈə6p tʃˈuŋ ˈəː4 kˈo4ŋ tʃˈyə2ŋ.",
+   "syllables": 9,
+   "cap": 142
+  },
+  {
+   "phonemes": "sˈoŋ mˈaːŋ tˈɛw ɲˌy5ŋ mˈuə2 hˈɛ2 ɗˌaː5 sˈaː.",
+   "syllables": 8,
+   "cap": 112
+  },
+  {
+   "phonemes": "sˈoɜ hˈiɛ6w tʃwˈiɛɜn bˈaj lˌaː2 vˈe nˈəː2 hˈaːj nˈam bˈoɜn.",
+   "syllables": 10,
+   "cap": 142
+  },
+  {
+   "phonemes": "sˈy fˈu6 nˈɔɜj, kˈiɛɜm fˈaːɜp xˌoŋ nˈa2m ˈəː4 t̪ˈaj mˌaː2 nˈa2m ˈəː4 t̪ˈəm.",
+   "syllables": 13,
+   "cap": 174
+  },
+  {
+   "phonemes": "sˈy fˈu6 nˈɔɜj, kˈiɛɜm fˈaːɜp xˌoŋ nˈa2m ˈəː4 t̪ˈaj, mˌaː2 nˈa2m ˈəː4 t̪ˈəm. ɗˈe6 t̪ˈy4 kˈuɜj ɗˈə2w, ˈim lˈa6ŋ swˈi ŋˈə5m hˈo2j lˈə1w, ɹˈo2j mˈəːɜj tʃˈə6m ɹˈaː5j ɗˈaːɜp, ɗˈe6 t̪ˈy4 ɗˌaː5 hˈiɛ4w.",
+   "syllables": 32,
+   "cap": 412
+  },
+  {
+   "phonemes": "sˈy fˈu6, ɗˈe6 t̪ˈy4 ɗˌaː5 hˈiɛ4w ɹˈo2j.",
+   "syllables": 7,
+   "cap": 104
+  },
+  {
+   "phonemes": "sˈɛ bwˈiɜt̪ sˈoɜ bˈaː mˈyəj hˈaːj tʃˈa6j t̪ˌy2 bˈeɜn sˈɛ mˈi5 ɗˈi2ɲ.",
+   "syllables": 12,
+   "cap": 160
+  },
+  {
+   "phonemes": "sˈɛm tˈem t̪ˈaː6j hˈaːɜt̪ t̪ˈe t̪ˈe fˈe ˈɛɜt̪ hˈaːj tʃˈəɜm ɣˈe-6c tʃˈɛɜw ɣˈe-6c tʃˈɛɜw ɛɡzˈæmpəl tʃˈəɜm kˈɔm ɣˈe-6c tʃˈɛɜw t̪ˈin ɣˈe-6c nˈoɜj t̪ˈu6c ɣˈe-6c tʃˈɛɜw hˈaːj xˌoŋ hˈaːj bˈoɜn.",
+   "syllables": 31,
+   "cap": 396
+  },
+  {
+   "phonemes": "sˈɛw jˈoʊn vˌaː2 dʒˈaɪ hˈɔ lˌaː2 ɗˈoj bˈaː6n tˈən.",
+   "syllables": 9,
+   "cap": 124
+  },
+  {
+   "phonemes": "tænˈɑːkə sˈaːn kˈuɜj ɗˈə2w tʃˈaː2w mˌɔ6j ŋˈyə2j.",
+   "syllables": 9,
+   "cap": 120
+  },
+  {
+   "phonemes": "tʃwˈiɛɜn bˈaj kˈəɜt̪ kˈe-ɜɲ lˌuɜc mˈyə2j tʃˈiɜn zˈəː2 bˈoɜn mˈyəj lˈam fˈuɜt̪ ŋˈa2j mˈo6t̪ tˈaːɜŋ mˈyə2j nˈam hˈaːj ŋˈi2n xˌoŋ tʃˈam hˈaːj mˈyəj sˈaɜw.",
+   "syllables": 25,
+   "cap": 326
+  },
+  {
+   "phonemes": "tʃˈaː2 sˈyə5 tʃˈən tʃˈə1w sˈaɪz lˈəː2 zˈaːɜ bˈoɜn mˈyəj lˈam kˈaː.",
+   "syllables": 11,
+   "cap": 156
+  },
+  {
+   "phonemes": "tʃˈaːɜj ɗˈəɜt̪ kˈe-ɜc mˈa6t̪ tʃˈəː2j xwˌaː4ŋ mˈo6t̪ tʃˈam nˈam mˈyəj tʃˈiɛ6w kˈi lˈo mˈɛɜt̪.",
+   "syllables": 15,
+   "cap": 208
+  },
+  {
+   "phonemes": "tʃˈiɛɜc mˈaɜj bˈeɪ bˈoʊɪŋ bˈa4j tʃˈam t̪ˈaːɜm mˈyəj bˈa4j tʃˈəː4 ɗˌyə6c xwˌaː4ŋ hˈaːj tʃˈam nˈam mˈyəj hˈe-2ɲ xˈe-ɜc.",
+   "syllables": 19,
+   "cap": 258
+  },
+  {
+   "phonemes": "tʃˈiɛɜc twˈiɛ2n ɲˈɔ4 tʃˈoj tʃˈə6m zˈyə5 zˈɔ2ŋ sˈoŋ, mˈaːŋ tˈɛw ɲˌy5ŋ mˈuə2 hˈɛ2 ɗˌaː5 sˈaː.",
+   "syllables": 15,
+   "cap": 206
+  },
+  {
+   "phonemes": "tʃˈiɛɜc twˈiɛ2n ɲˈɔ4 tʃˈoj tʃˈə6m zˈyə5 zˈɔ2ŋ sˈoŋ, mˈaːŋ tˈɛw ɲˌy5ŋ mˈuə2 hˈɛ2 ɗˌaː5 sˈaː. ˈe-ɲ ˈəɪɜ mˈəː4 kˈuəɜn sˈo4 kˈu5, ɗˈɔ6k lˈaː6j t̪ˈy2ŋ zˈɔ2ŋ tʃˈy5 mˌaː2 mˈɛ6 ɗˌaː5 vˈiɛɜt̪ tʃˌɔ mˈi2ɲ t̪ˌy2 ɲˈiɛ2w nˈam tʃˈyəɜc.",
+   "syllables": 36,
+   "cap": 464
+  },
+  {
+   "phonemes": "tʃˈyəŋ bˈoɜn bˈaɜt̪ ɗˈə2w ˈəː4 tʃˈaːŋ mˈo6t̪ tʃˈam bˈaː mˈyəj hˈaːj.",
+   "syllables": 11,
+   "cap": 160
+  },
+  {
+   "phonemes": "tʃˈɔŋ xwˌaː4ŋ mˈyə2j ɗˌeɜn mˈyə2j lˈam fˈuɜt̪ nˈyə5 t̪ˈa2w sˌɛ5 t̪ˌəːɜj.",
+   "syllables": 11,
+   "cap": 168
+  },
+  {
+   "phonemes": "tʃˈə6c tʃˈə6c, ɗˈaːɜŋ t̪ˈiɛɜc tˈə6t̪.",
+   "syllables": 5,
+   "cap": 98
+  },
+  {
+   "phonemes": "tʃˈə6n ɗˈəɜw kˈeɜt̪ tˈuɜc vˌəːɜj t̪ˈi4 sˈoɜ xˌoŋ xˌoŋ.",
+   "syllables": 9,
+   "cap": 132
+  },
+  {
+   "phonemes": "tʃˈə6n ɗˈəɜw zˈiɛ5n ɹˈaː t̪ˌy2 ŋˈa2j nˈam ɗˌeɜn ŋˈa2j tʃˈiɜn tˈaːɜŋ bˈa4j.",
+   "syllables": 12,
+   "cap": 172
+  },
+  {
+   "phonemes": "tʃˈəː2j hˈom nˈaj ɗˈɛ6p kwˈaːɜ.",
+   "syllables": 5,
+   "cap": 86
+  },
+  {
+   "phonemes": "tʃˈəː2j hˈom nˈaj ɗˈɛ6p kwˈaːɜ. kˈo ɣˈaːɜj ɗˈyɜŋ bˈen kˈyə4 sˈo4, lˈa6ŋ lˈɛ5 ɲˈi2n mˈyə ɹˈəːj. ˈe-ɲ ˈəɪɜ vˈe2 ɲˈaː2 ɹˈəɜt̪ mˈuə6n hˈom ˈəɪɜ.",
+   "syllables": 24,
+   "cap": 304
+  },
+  {
+   "phonemes": "tˈaːɜp ˈaɪfəl ˈəː4 pˈæɹɪs kˈaːw xwˌaː4ŋ bˈaː tʃˈam bˈaː mˈyəj mˈɛɜt̪.",
+   "syllables": 13,
+   "cap": 162
+  },
+  {
+   "phonemes": "tˈaːɜŋ mˈyə2j hˈaːj nˈam ŋwˈaːɜj tʃˈəː2j ɹˈɛɜt̪ ɗˈə6m.",
+   "syllables": 8,
+   "cap": 132
+  },
+  {
+   "phonemes": "tˈe-2ɲ fˈoɜ kˈɔɜ mˈyə2j hˈaːj kwˈə6n vˌaː2 nˈam hwˈiɛ6n.",
+   "syllables": 9,
+   "cap": 136
+  },
+  {
+   "phonemes": "tˈe-2ɲ fˈoɜ sˈoʊl vˈe2 ɗˈem ɹˈəɜt̪ ɗˈɛ6p.",
+   "syllables": 7,
+   "cap": 106
+  },
+  {
+   "phonemes": "tˈeɜ kˈi4 mˈyə2j tʃˈiɜn lˌaː2 tˈəː2j kˈi2 ɲˈiɛ2w bˈiɛɜn ɗˈo6ŋ.",
+   "syllables": 10,
+   "cap": 148
+  },
+  {
+   "phonemes": "tˈiɛɜw zˈaː, sˈin ŋˈyə2j hˈa5j bˈi2ɲ t̪ˈi5ɲ!",
+   "syllables": 7,
+   "cap": 112
+  },
+  {
+   "phonemes": "tˈiːm mˈi2ɲ hˈɔ6p ˈɑːnlaɪn kwˈaː zˈuːm lˌuɜc tʃˈiɜn zˈəː2.",
+   "syllables": 10,
+   "cap": 140
+  },
+  {
+   "phonemes": "tˈoj ɗˌyə6c ɹˈo2j, ɗˈi tˈoj.",
+   "syllables": 5,
+   "cap": 80
+  },
+  {
+   "phonemes": "tˈy vˈiɛ6n kˈɔɜ hˈəːn nˈam mˈyəj ŋˈi2n ɗˈə2w sˈe-ɜc.",
+   "syllables": 10,
+   "cap": 128
+  },
+  {
+   "phonemes": "tˈə6p nˈiɛn mˈo6t̪ ŋˈi2n tʃˈiɜn tʃˈam t̪ˈaːɜm mˈyəj lˌaː2 tˈəː2j kˌuə4 bˈaŋ kˈaːɜt̪ sˈɛɜt̪.",
+   "syllables": 14,
+   "cap": 206
+  },
+  {
+   "phonemes": "tˈə6t̪ lˌaː2, tʃˌa4ŋ bˈiɛɜt̪ nˈɔɜj sˈaːw nˈyə5.",
+   "syllables": 7,
+   "cap": 118
+  },
+  {
+   "phonemes": "tˈə6t̪ sˈaːw.",
+   "syllables": 2,
+   "cap": 18
+  },
+  {
+   "phonemes": "tˈəː2j hˈaː6n nˈo6p hˈo2 sˈəː lˌaː2 mˈyə2j lˈam tʃˈen mˈyə2j mˈo6t̪.",
+   "syllables": 11,
+   "cap": 160
+  },
+  {
+   "phonemes": "tˈɛw ŋˈi6 ɗˈi6ɲ mˈo6t̪ tʃˈam tʃˈen hˈaːj ŋˈi2n xˌoŋ tʃˈam mˈyə2j tʃˈiɜn tʃˈen nˈəː2 ɗˈe sˈe fˈe.",
+   "syllables": 17,
+   "cap": 216
+  },
+  {
+   "phonemes": "t̪ˈa2w ˈɛɜt̪ ˈɛ mˈo6t̪ xˈəː4j hˈe-2ɲ t̪ˌy2 ɣˈaː hˈaː2 nˈo6j.",
+   "syllables": 10,
+   "cap": 144
+  },
+  {
+   "phonemes": "t̪ˈaːɜc zˈaː4, ŋwˈiɛ5n vˈan ˈaː.",
+   "syllables": 5,
+   "cap": 88
+  },
+  {
+   "phonemes": "t̪ˈi4 lˈe6 lˌaː2 mˈo6t̪ tʃˈen bˈaː, t̪ˈyɜc xwˌaː4ŋ bˈaː mˈyəj bˈaː fˈəɪ4 bˈaː fˈə2n tʃˈam.",
+   "syllables": 15,
+   "cap": 204
+  },
+  {
+   "phonemes": "t̪ˈi4 sˈoɜ hˈaːj tʃˈen mˈo6t̪ ŋˈiɛŋ vˈe2 ɗˈo6j xˈe-ɜc.",
+   "syllables": 10,
+   "cap": 132
+  },
+  {
+   "phonemes": "t̪ˈiɛɜŋ tʃˈuəŋ vˈaːŋ lˈen. mˈo6t̪ lˈə2n, hˈaːj lˈə2n.",
+   "syllables": 8,
+   "cap": 130
+  },
+  {
+   "phonemes": "t̪ˈoj hˈɔ6k t̪ˈiɛɜŋ ɲˈə6t̪ ɗˌyə6c hˈaːj nˈam ɹˈo2j.",
+   "syllables": 8,
+   "cap": 126
+  },
+  {
+   "phonemes": "t̪ˈoj vˈyə2 mˈuə mˈo6t̪ tʃˈiɛɜc ˈaɪ fˈoʊn mˈyə2j lˈam pɹˈoʊ mˈæks.",
+   "syllables": 11,
+   "cap": 156
+  },
+  {
+   "phonemes": "t̪ˈoj ˈəː4 lˈaː6j ɗˈaː2 lˈaː6t̪ bˈaː ŋˈa2j hˈaːj ɗˈem.",
+   "syllables": 9,
+   "cap": 132
+  },
+  {
+   "phonemes": "t̪ˈoɜk ɗˈo6 mˈaː6ŋ mˈo6t̪ tʃˈam mˈɛɡəbˌɪts pɜː sˈɛkənd.",
+   "syllables": 11,
+   "cap": 134
+  },
+  {
+   "phonemes": "t̪ˈoɜk ɗˈo6 t̪ˈoɜj ɗˈaː lˌaː2 mˈo6t̪ tʃˈam hˈaːj mˈyəj kˈi lˈo mˈɛɜt̪ tʃˈen zˈəː2.",
+   "syllables": 14,
+   "cap": 188
+  },
+  {
+   "phonemes": "t̪ˈoɜk ɗˈo6 ˈe-ɜɲ sˈaːɜŋ xwˌaː4ŋ bˈaː tʃˈam ŋˈi2n kˈi lˈo mˈɛɜt̪ tʃˈen zˈəɪ.",
+   "syllables": 14,
+   "cap": 176
+  },
+  {
+   "phonemes": "t̪ˈə2ŋ bˈaː, fˈɔ2ŋ bˈaː tʃˈam lˈɛ4 nˈam, ɲˈaː2 bˈe.",
+   "syllables": 9,
+   "cap": 126
+  },
+  {
+   "phonemes": "t̪ˈə6p mˈo6t̪, xˈəː4j ɗˈə2w.",
+   "syllables": 4,
+   "cap": 28
+  },
+  {
+   "phonemes": "t̪ˈəːɜ xˌoŋ bˈiɛɜt̪, kˈə6w ɗˈaːɜp, ɲˌyŋ t̪ˈəːɜ sˌɛ5 kwˈaj lˈaː6j.",
+   "syllables": 10,
+   "cap": 154
+  },
+  {
+   "phonemes": "t̪ˌy2 nˈam mˈo6t̪ ŋˈi2n tʃˈiɜn tʃˈam bˈoɜn mˈyəj lˈam ɗˌeɜn nˈam mˈo6t̪ ŋˈi2n tʃˈiɜn tʃˈam nˈam mˈyəj bˈoɜn.",
+   "syllables": 18,
+   "cap": 240
+  },
+  {
+   "phonemes": "t̪ˌy2 ŋˈa2j mˈo6t̪ tˈaːɜŋ mˈo6t̪ nˈam hˈaːj ŋˈi2n xˌoŋ tʃˈam hˈaːj mˈyəj lˈam, kwˈi ɗˈi6ɲ mˈəːɜj kˈɔɜ hˈiɛ6w lˈy6c.",
+   "syllables": 19,
+   "cap": 254
+  },
+  {
+   "phonemes": "vˈan fˈɔ2ŋ ˈəː4 sˈoɜ mˈyə2j lˈam ɗˈyə2ŋ lˈe lˈəː6j, kwˈə6n mˈo6t̪, tˈe-2ɲ fˈoɜ hˈo2 tʃˈiɜ mˈiɲ.",
+   "syllables": 16,
+   "cap": 214
+  },
+  {
+   "phonemes": "vˈaɪɾəmɪn sˈe ɹˈəɜt̪ t̪ˈoɜt̪ tʃˌɔ sˈyɜc xwˈɛ4.",
+   "syllables": 9,
+   "cap": 116
+  },
+  {
+   "phonemes": "vˈuə lˈuːi mˈyə2j bˈoɜn tʃˈi6 vˌi2 nˈyəɜc fˈaːɜp ɹˈəɜt̪ lˈə1w.",
+   "syllables": 10,
+   "cap": 148
+  },
+  {
+   "phonemes": "vˈəŋ ˈaː6.",
+   "syllables": 2,
+   "cap": 18
+  },
+  {
+   "phonemes": "vˈɛɜ vˈaː2w kˈyə4 lˌaː2 nˈam mˈyəj ŋˈi2n vˈiɛ6t̪ nˈaːm ɗˈo2ŋ tʃˌɔ ŋˈyə2j lˈəːɜn vˌaː2 hˈaːj mˈyəj ŋˈi2n vˈiɛ6t̪ nˈaːm ɗˈo2ŋ tʃˌɔ tʃˈɛ4 ˈɛm.",
+   "syllables": 23,
+   "cap": 302
+  },
+  {
+   "phonemes": "vˌi2 ˈe-ɜɲ sˈaːɜŋ bˌi6 t̪ˈaːɜn sˈaː6, tˈəɪ2 zˈaːɜw tʃˈaː4 lˈəː2j.",
+   "syllables": 11,
+   "cap": 154
+  },
+  {
+   "phonemes": "wˈaʊ, tˈə6t̪ xˌoŋ tˈe4 t̪ˈin ɗˌyə6c!",
+   "syllables": 6,
+   "cap": 96
+  },
+  {
+   "phonemes": "wˈi4 bˈaːn ɲˈən zˈən tˈe-2ɲ fˈoɜ hˈo2 tʃˈiɜ mˈiɲ vˈyə2 bˈaːn hˈe-2ɲ kwˈi ɗˈi6ɲ mˈəːɜj.",
+   "syllables": 15,
+   "cap": 196
+  },
+  {
+   "phonemes": "xwˌaː4ŋ bˈa4j mˈyəj ɗˌeɜn t̪ˈaːɜm mˈyəj fˈə2n tʃˈam sˈoɜ ŋˈyə2j ɗˌyə6c hˈɔ4j ɗˈo2ŋ ˈiɜ.",
+   "syllables": 14,
+   "cap": 198
+  },
+  {
+   "phonemes": "xwˌaː4ŋ kˈe-ɜc zˈyə5 hˈaːj kˈəɪ lˌaː2 hˈaːj ɗˌeɜn bˈaːm.",
+   "syllables": 10,
+   "cap": 136
+  },
+  {
+   "phonemes": "xˌi ˈe-ɜɲ ɗˈɛ2n tʃˈɔŋ fˈɔ2ŋ vˈu6t̪ t̪ˈaɜt̪, kˈaː4 ŋˈoj ɲˈaː2 tʃˈi2m vˈaː2w bˈɔɜŋ t̪ˈoɜj, tʃˈi4 kˌɔ2n t̪ˈiɛɜŋ ɗˈo2ŋ hˈo2 ɣˈɔ5 ɲˈi6p ɗˈe2w ɗˈa6n ɲˌy mˈo6t̪ ɲˈi6p t̪ˈim ɗˌaːŋ tʃˈəː2 ɗˈəː6j. kˈo ŋˈo2j ˈim, xˌoŋ zˈaːɜm tˈəː4 mˈe-6ɲ, vˌi2 sˈəː6 ɹˈa2ŋ tʃˈi4 mˈo6t̪ t̪ˈiɛɜŋ ɗˈo6ŋ ɲˈɔ4 tˈoj kˈu5ŋ ɗˈu4 ɗˌe4 fˈaːɜ vˈəː5 sˈy6 ˈiɛn lˈa6ŋ mˈɔŋ mˈe-ɲ ˈəɪɜ. ɹˈo2j tʃˈəː2j sˈaːɜŋ.",
+   "syllables": 61,
+   "cap": 752
+  },
+  {
+   "phonemes": "xˌoŋ, xˌoŋ, xˌoŋ fˌaː4j tˈeɜ!",
+   "syllables": 5,
+   "cap": 82
+  },
+  {
+   "phonemes": "xˌoŋ.",
+   "syllables": 1,
+   "cap": 13
+  },
+  {
+   "phonemes": "zˈaː4j ɗˈəɜw kˈɔɜ bˈaː mˈyəj hˈaːj ɗˈo6j tˈaːm zˈaː.",
+   "syllables": 9,
+   "cap": 128
+  },
+  {
+   "phonemes": "zˈaː4j ɲˈəɜt̪ tʃˈi6 zˈaːɜ mˈo6t̪ tʃˈam tʃˈiɛ6w ɗˈo2ŋ.",
+   "syllables": 8,
+   "cap": 130
+  },
+  {
+   "phonemes": "zˈaː4m zˈaːɜ bˈaː mˈyəj fˈə2n tʃˈam tʃˌɔ ɗˈəːn t̪ˌy2 nˈam tʃˈam kˈaː.",
+   "syllables": 12,
+   "cap": 162
+  },
+  {
+   "phonemes": "zˈaː6, kˌɔn bˈiɛɜt̪ ɹˈo2j.",
+   "syllables": 4,
+   "cap": 28
+  },
+  {
+   "phonemes": "zˈaːɜ vˈaː2ŋ hˈom nˈaj lˌaː2 t̪ˈaːɜm mˈyəj hˈaːj fˈəɪ4 nˈam tʃˈiɛ6w ɗˈo2ŋ mˈo6t̪ lˈyə6ŋ.",
+   "syllables": 14,
+   "cap": 200
+  },
+  {
+   "phonemes": "zˈuŋ lˈyə6ŋ ˈo4 kˈyɜŋ lˌaː2 nˈam tʃˈam mˈyə2j hˈaːj ɡˈɪɡəbˌaɪt.",
+   "syllables": 12,
+   "cap": 150
+  },
+  {
+   "phonemes": "zˈɔɜ tˈo4j vˈu2 vˈu2, lˈaːɜ ɹˈəːj lˈaː4 t̪ˈaː4.",
+   "syllables": 8,
+   "cap": 118
+  },
+  {
+   "phonemes": "ŋwˈaː2j kˈiə, t̪ˈiɛɜŋ vˈɛ kˈe1w ˈiɲ ˈɔ4j.",
+   "syllables": 7,
+   "cap": 106
+  },
+  {
+   "phonemes": "ŋˈa2j bˈaː mˈyəj tˈaːɜŋ t̪ˈy nˈam mˈo6t̪ ŋˈi2n tʃˈiɜn tʃˈam bˈa4j mˈyəj lˈam lˌaː2 mˈo6t̪ mˈoɜk lˈi6c sˈy4.",
+   "syllables": 18,
+   "cap": 238
+  },
+  {
+   "phonemes": "ŋˈa2j mˈaːj, ŋˈa2j mˈyə2j bˈoɜn tˈaːɜŋ hˈaːj, lˌaː2 lˈe5 t̪ˈi2ɲ ɲˈən.",
+   "syllables": 11,
+   "cap": 162
+  },
+  {
+   "phonemes": "ŋˈoj ɲˈaː2 sˈoɜ bˈa4j, ŋˈɔ5 bˈoɜn mˈyəj hˈaːj, fˈoɜ hwˈeɜ.",
+   "syllables": 10,
+   "cap": 140
+  },
+  {
+   "phonemes": "ɗˈem ˈəɪɜ tʃˈaŋ sˈaːɜŋ vˈa2ŋ vˈa6c.",
+   "syllables": 6,
+   "cap": 94
+  },
+  {
+   "phonemes": "ɗˈiɛ2w nˈam, xwˈaː4n hˈaːj kˌuə4 lwˈə6t̪ kwˈi ɗˈi6ɲ ɹˈɔ5.",
+   "syllables": 9,
+   "cap": 138
+  },
+  {
+   "phonemes": "ɗˈo6j t̪wˈiɛ4n tˈaɜŋ bˈaː mˈo6t̪ tʃˈɔŋ tʃˈə6n tʃˈuŋ kˈeɜt̪.",
+   "syllables": 9,
+   "cap": 142
+  },
+  {
+   "phonemes": "ɗˈoj zˈa2j sˈaɪz bˈaː mˈyəj tʃˈiɜn vˈyə2 xˈiɜt̪.",
+   "syllables": 8,
+   "cap": 120
+  },
+  {
+   "phonemes": "ɗˈəɪ lˌaː2 lˈə2n tˈyɜ mˈo6t̪ ŋˈi2n t̪ˈoj nˈɔɜj ɗˈiɛ2w nˈa2j.",
+   "syllables": 10,
+   "cap": 144
+  },
+  {
+   "phonemes": "ɗˈəɪ lˌaː2 mˈo6t̪ dˈɛdlaɪn kˈy6c kˈi2 kwˈaːn tʃˈɔ6ŋ.",
+   "syllables": 9,
+   "cap": 128
+  },
+  {
+   "phonemes": "ɗˌaː5 bˈaː zˈəː2 mˈyə2j lˈam fˈuɜt̪ sˈaːɜŋ mˌaː2 kˈo vˌə5n tʃˌyə ŋˈu4.",
+   "syllables": 12,
+   "cap": 164
+  },
+  {
+   "phonemes": "ɣˈi tʃˈuɜ, sˈaːw, sˈoɜ lˈiɛ6w tʃˌyə kˈiɛ4m tʃˈyɜŋ.",
+   "syllables": 8,
+   "cap": 124
+  },
+  {
+   "phonemes": "ɣˈy4j tˈy t̪ˌəːɜj hˈɔ tʃˈɔ ˈaː kˈɔ2ŋ ɐbˈʊk tʃˈəɜm vˈe nˈəː2 tʃˈyəɜc mˈyə2j bˈa4j zˈəː2.",
+   "syllables": 16,
+   "cap": 198
+  },
+  {
+   "phonemes": "ɣˈɔɜj hˈaː2ŋ nˈa6ŋ hˈaːj fˈəɪ4 bˈaː kˈi lˈo ɣˈaːm vˌaː2 kˈɔɜ zˈaːɜ mˈyə2j tʃˈiɜn tʃˈəɜm tʃˈiɜn tʃˈiɜn jˈuː ˈɛs dˈiː.",
+   "syllables": 20,
+   "cap": 256
+  },
+  {
+   "phonemes": "ɲˈaː2 sˈe-ɜc mˈəː4 kˈyə4 hˈaːj mˈyəj bˈoɜn tʃˈen bˈa4j.",
+   "syllables": 10,
+   "cap": 134
+  },
+  {
+   "phonemes": "ɲˈiɛ6t̪ ɗˈo6 ŋwˈaː2j tʃˈəː2j sˈuəɜŋ t̪ˌəːɜj ˈəm nˈam ɗˈo6 sˈe.",
+   "syllables": 10,
+   "cap": 148
+  },
+  {
+   "phonemes": "ɲˈə6t̪ kˈiɜ ŋˈa2j bˈaː tˈaːɜŋ tʃˈiɜn.",
+   "syllables": 6,
+   "cap": 98
+  },
+  {
+   "phonemes": "ɲˌy5ŋ nˈam tʃˈiɜn mˈyəj kˌuə4 tˈeɜ kˈi4 tʃˈyəɜc.",
+   "syllables": 8,
+   "cap": 120
+  },
+  {
+   "phonemes": "ɹˈaɪuː jˈuː nˈoʊ kˈaɪski lˌaː2 t̪ˈen mˈo6t̪ tʃˈɔ2 tʃˈəːj kˈu5.",
+   "syllables": 11,
+   "cap": 148
+  },
+  {
+   "phonemes": "ɹˈo2j ˈaː6.",
+   "syllables": 2,
+   "cap": 18
+  },
+  {
+   "phonemes": "ˈaː2, ɹˈaː lˌaː2 vˈəɪ6.",
+   "syllables": 4,
+   "cap": 28
+  },
+  {
+   "phonemes": "ˈaːɜw kˈəː5 ˈiɜc lˈəː2 hˈəːj ɹˈo6ŋ.",
+   "syllables": 6,
+   "cap": 94
+  },
+  {
+   "phonemes": "ˈe, ɗˈəː6j t̪ˈəːɜ vˌəːɜj.",
+   "syllables": 4,
+   "cap": 28
+  },
+  {
+   "phonemes": "ˈe-4ɲ tʃˈu6p bˈa2ŋ mˈaɜj kˈænən ˈɛ ˈo ˈɛɜt̪ ɹˈəː2 nˈam.",
+   "syllables": 11,
+   "cap": 134
+  },
+  {
+   "phonemes": "ˈe-ɲ sˈiɲ vˈaː2w xwˌaː4ŋ zˈyə5 ɲˌy5ŋ nˈam bˈa4j mˈyəj.",
+   "syllables": 9,
+   "cap": 132
+  },
+  {
+   "phonemes": "ˈe-ɲ tʃˈaːj t̪ˈoj kˈaːw mˈo6t̪ mˈɛɜt̪ bˈa4j mˈyəj lˈam vˌaː2 nˈa6ŋ sˈaɜw mˈyəj t̪ˈaːɜm kˈi lˈo ɣˈaːm.",
+   "syllables": 17,
+   "cap": 226
+  },
+  {
+   "phonemes": "ˈe-ɲ t̪ˈaː lˌaː2 sˈiː ˈiː ˈoʊ kˌuə4 mˈo6t̪ stˈɑːɹɾʌp kˈoŋ ŋˈe6.",
+   "syllables": 12,
+   "cap": 150
+  },
+  {
+   "phonemes": "ˈe-ɲ vˈe2 ɗˈiɜc tˈyɜ bˈaː.",
+   "syllables": 5,
+   "cap": 76
+  },
+  {
+   "phonemes": "ˈe-ɲ ˈəɪɜ lˈaː2m kˈi5 sˈy fˈə2n mˈe2m tʃˌɔ ɡˈuːɡəl ˈəː4 sˈɪŋɡɐpˌɔːɹ.",
+   "syllables": 14,
+   "cap": 160
+  },
+  {
+   "phonemes": "ˈe-ɲ ˈəɪɜ lˈaːɜj tʃˈiɛɜc tɔɪˈoʊɾə kˈæmɹi mˈa2w ɗˈɛn.",
+   "syllables": 11,
+   "cap": 128
+  },
+  {
+   "phonemes": "ˈe-ɲ ˈəɪɜ mˈəː4 kˈuəɜn sˈo4 kˈu5, ɗˈɔ6k lˈaː6j t̪ˈy2ŋ zˈɔ2ŋ tʃˈy5 mˌaː2 mˈɛ6 ɗˌaː5 vˈiɛɜt̪ tʃˌɔ mˈi2ɲ t̪ˌy2 ɲˈiɛ2w nˈam tʃˈyəɜc.",
+   "syllables": 21,
+   "cap": 280
+  },
+  {
+   "phonemes": "ˈe-ɲ ˈəɪɜ nˈɔɜj, t̪ˈoj sˌɛ5 ɗˌeɜn lˌuɜc nˈam zˈəː2. ɹˈo2j ɗˈi mˈəɜt̪.",
+   "syllables": 12,
+   "cap": 162
+  },
+  {
+   "phonemes": "ˈe-ɲ ˈəɪɜ tʃˈa6j mˈo6t̪ tʃˈam mˈɛɜt̪ hˈeɜt̪ mˈyə2j fˈəɪ4 nˈam zˈəɪ.",
+   "syllables": 11,
+   "cap": 158
+  },
+  {
+   "phonemes": "ˈe-ɲ ˈəɪɜ ɗˌyə6c t̪ˈaːɜm tʃˈen mˈyə2j ɗˈiɛ4m.",
+   "syllables": 7,
+   "cap": 114
+  },
+  {
+   "phonemes": "ˈe-ɲ, ˈe-ɲ sˈin lˈo5j.",
+   "syllables": 4,
+   "cap": 28
+  },
+  {
+   "phonemes": "ˈeɪtʃ pˈiː kˌɔ2n mˈyə2j lˈam fˈə2n tʃˈam, mˈəː2 fˈe tʃˈi4 kˌɔ2n bˈaː fˈə2n tʃˈam.",
+   "syllables": 14,
+   "cap": 186
+  },
+  {
+   "phonemes": "ˈo kˈaː, tʃˈuɜŋ t̪ˈaː bˈaɜt̪ ɗˈə2w tˈoj.",
+   "syllables": 7,
+   "cap": 104
+  },
+  {
+   "phonemes": "ˈoŋ lˌaː2 fˈɔɜ zˈaːɜw sˈy t̪ˈiɛɜn sˈi5 ŋˈe-2ɲ vˈə6t̪ lˈiɜ t̪ˈaː6j ɗˈaː6j hˈɔ6k bˈe-ɜc xwˈaː.",
+   "syllables": 16,
+   "cap": 208
+  },
+  {
+   "phonemes": "ˈoŋ nˈo6j t̪ˈoj sˈiɲ nˈam mˈo6t̪ ŋˈi2n tʃˈiɜn tʃˈam bˈaː mˈyəj.",
+   "syllables": 11,
+   "cap": 150
+  },
+  {
+   "phonemes": "ˈoŋ zˈaː2 ŋˈo2j bˈen hˈiɛn, t̪ˈaj kˈə2m ɗˈiɛɜw tˈuəɜc lˈaː2w.",
+   "syllables": 10,
+   "cap": 146
+  },
+  {
+   "phonemes": "ˈoŋ ˈəɪɜ lˌaː2 zˈaːɜw sˈy ˈəː4 ɗˈaː6j hˈɔ6k hˈɑːɹvɚd.",
+   "syllables": 10,
+   "cap": 130
+  },
+  {
+   "phonemes": "ˈy2, kˈo ɣˈaːɜj ɗˈyɜŋ bˈen kˈyə4 sˈo4, lˈa6ŋ lˈɛ5 ɲˈi2n mˈyə ɹˈəːj sˈuəɜt̪ kˈaː4 bˈuə4j tʃˈiɛ2w hˈom ˈəɪɜ.",
+   "syllables": 18,
+   "cap": 236
+  },
+  {
+   "phonemes": "ˈy2, kˈo ɣˈaːɜj ɗˈyɜŋ bˈen kˈyə4 sˈo4.",
+   "syllables": 7,
+   "cap": 100
+  },
+  {
+   "phonemes": "ˈy2.",
+   "syllables": 1,
+   "cap": 13
+  },
+  {
+   "phonemes": "ˈy2m, kˈu5ŋ ɗˌyə6c.",
+   "syllables": 3,
+   "cap": 23
+  },
+  {
+   "phonemes": "ˈə2m! kˈe-ɜɲ kˈyə4 bˈə6t̪ t̪ˈuŋ.",
+   "syllables": 6,
+   "cap": 88
+  },
+  {
+   "phonemes": "ˈə2m! ɹˈə2m! kˈe-ɜɲ kˈyə4 bˈə6t̪ t̪ˈuŋ. hˈaɜn bˈyəɜc vˈaː2w.",
+   "syllables": 10,
+   "cap": 144
+  },
+  {
+   "phonemes": "ˈəː kˈiə2.",
+   "syllables": 2,
+   "cap": 18
+  },
+  {
+   "phonemes": "ˈɛm ɗˌaː5 ˈan kˈəːm tʃˌyə?",
+   "syllables": 5,
+   "cap": 76
+  },
+  {
+   "phonemes": "ˈɛm ɣˈaːɜj t̪ˈoj hˈɔ6k lˈəːɜp nˈam.",
+   "syllables": 6,
+   "cap": 94
+  },
+  {
+   "phonemes": "",
+   "syllables": 0,
+   "cap": 13
+  },
+  {
+   "phonemes": "a",
+   "syllables": 1,
+   "cap": 13
+  },
+  {
+   "phonemes": "ʔa1 ʔa1.",
+   "syllables": 2,
+   "cap": 18
+  },
+  {
+   "phonemes": "<|emotion_3|>",
+   "syllables": 0,
+   "cap": 13
+  },
+  {
+   "phonemes": "<|emotion_3|> ʔa1.",
+   "syllables": 1,
+   "cap": 34
+  },
+  {
+   "phonemes": "<en>ˈhɛloʊ</en> ʔa1.",
+   "syllables": 3,
+   "cap": 23
+  }
+ ],
+ "seeds": [
+  {
+   "parts": [
+    "turbo",
+    "Ngọc Huyền",
+    "Trời hôm nay đẹp quá."
+   ],
+   "seed": 1004972812
+  },
+  {
+   "parts": [
+    "nano",
+    "Adam",
+    "Ừ."
+   ],
+   "seed": 2147028509
+  },
+  {
+   "parts": [
+    "nano",
+    "Đức Trí",
+    "Chiếc thuyền nhỏ trôi chậm giữa dòng sông, mang theo những mùa hè đã xa. Anh ấy mở cuốn sổ cũ, đọc lại từng dòng chữ mà mẹ đã viết cho mình từ nhiều năm trước."
+   ],
+   "seed": 2391580348
+  },
+  {
+   "parts": [
+    "turbo",
+    "",
+    ""
+   ],
+   "seed": 167833469
+  }
+ ]
+}

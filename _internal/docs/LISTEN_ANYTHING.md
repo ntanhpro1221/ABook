@@ -264,6 +264,40 @@ chapters like an audiobook; the reading view asks the `ReadAloud` plugin for tim
 Read-aloud runs a little ahead of the listener (sentence queue, like video buffering), caches what it read as quick audio
 in the book, and a phone without a voice engine can stream it from a paired computer (existing stream path).
 
+### VieNeu module - built 03-10 (phone)
+
+The phone runs the desktop's path, piece by piece, behind the same `Voice` interface (`readaloud/ReadAloud.kt` provider "vieneu",
+`vieneu/VieneuVoices.kt`): paragraph -> units (`VieneuUnits.kt` = `vieneu.units`) -> phonemes -> Turbo tokens (`ByteBpe.kt`) / Nano ids ->
+ONNX Runtime (`VieneuTurbo.kt`, `VieneuNano.kt`) -> trim, babble retry, joins with the desktop's pauses (`VieneuAudio.kt`) -> one 16-bit WAV.
+Seeds are the desktop's (`seed_of`), and so are the random streams: `NumpyRandom.kt` is numpy's `RandomState` (MT19937, Turbo sampling) and
+`default_rng` (SeedSequence + PCG64 + the float64 ziggurat, Nano's start noise). Word timings: syllable spread inside each unit's exact span
+(no aligner on the phone).
+
+- Text -> phonemes: route (a) worked. sea-g2p's sdist on PyPI has the full Rust source (Apache-2.0); `scripts/prepare_sea_g2p_android.py`
+  strips only its PyO3 glue and builds `mobile/sea_g2p_jni` (5 JNI functions) with cargo-ndk for arm64-v8a / armeabi-v7a / x86_64 plus the
+  host. Library 3.9 / 3.1 / 4.9 MB (1.7 / 1.5 / 1.8 MB gzipped), libc only. The 63 MB dictionary comes out of the very wheel the desktop
+  pins (27.5 MB download) and is memory-mapped; desktop measure: +36 MB working set after 239 units (20 MB private), 1.3 ms per unit.
+- Parity (JVM tests on the host build, shared fixtures `tests/fixtures/vieneu/android`, `scripts/vieneu_android_fixtures.py`): phonemes of
+  209 sentences + 30 multi-sentence units (numbers, dates, money, units, abbreviations, Roman numerals, foreign names, URLs, punctuation),
+  normaliser output, units, frame caps, seeds, Turbo token ids, both numpy streams, trim/fade/joins/bursts/WAV bytes - all identical.
+  `VieneuOnDeviceTest` repeats the phonemes on the device and checks the Nano clip of a two-sentence paragraph against the desktop's WAV.
+- Module (`VieneuModule.kt`): choices Nano ("Khuyên dùng") and Turbo (recommended only after a measurement: Turbo RTF < 0.8, or Nano < 0.6);
+  parts `ort` (used from "Gói nhạc" when present, not counted), `g2p` (JNI library + dictionary), `voices` (the vieneu wheel, read in place),
+  `turbo` (210 MB), `nano` (282 MB); download / update only changed pins / remove / self-benchmark, the same status shape as the desktop so
+  `VieneuModuleCard` serves both (`backend` prop). A failing VieNeu voice falls back to the device voice, never to an online one.
+- Sizes: APK 10.6 MB debug, nothing of the module inside (no `.so`, no model, no dictionary). Download for Nano on a phone without Studio's
+  runtime: ~282 MB model + 27.5 MB dictionary (63 MB on disk) + 2.6 MB voices + 1.7 MB JNI library (arm64) + ONNX Runtime from "Gói nhạc";
+  Turbo ~210 MB instead of the 282 MB. Models come straight from the upstream Hugging Face pins (same files as the desktop); only the
+  JNI library lives in our own repo.
+- Speed: live synthesis is ~1.8x slower than listening on the Helio P95 (RTF 1.75 Turbo / 1.84 Nano, section above), so the card says so and
+  points to "Làm trước" (prepare ahead), the way to use VieNeu on mid-range phones; live reading is for flagship-class big cores.
+- Checks (03-10): JVM parity tests 416 pass / 0 fail (`SeaG2pParityTest` needs the host library: `cargo build --release` in
+  `mobile/sea_g2p_jni`); `tests/test_vieneu_android.py` (pins Kotlin vs Python tables, fixtures, script); the pinned library hashes were
+  reproduced from a clean run of `prepare_sea_g2p_android.py`. NOT yet done: `VieneuOnDeviceTest` on the phone (nothing run on the
+  owner's phone), end-to-end audio parity of the ONNX output on a device (Nano clip vs the desktop WAV), Turbo on the phone.
+- Not done: the JNI library is not on Hugging Face yet. Run `scripts/prepare_sea_g2p_android.py --out <dir>`, upload `<dir>/sea-g2p/0.9.1/`
+  to `NGDtuanh/abook-music-student`, then set `VieneuModule.G2P_REVISION` to that commit (empty = the card says it is not published).
+
 ### Read-along view (owner 03-10: "like Edge's read aloud")
 
 Listen now reuses the existing reading mode (`ui/src/listen/ReaderScreen.tsx`: chapter text as an ebook, the playing

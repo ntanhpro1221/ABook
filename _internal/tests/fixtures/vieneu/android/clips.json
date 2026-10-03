@@ -1,0 +1,104 @@
+{
+ "text": "Chiếc thuyền nhỏ trôi chậm giữa dòng sông, mang theo những mùa hè đã xa. Anh ấy mở cuốn sổ cũ, đọc lại từng dòng chữ mà mẹ đã viết cho mình từ nhiều năm trước.",
+ "clips": [
+  {
+   "voice": "vieneu:nano/Adam",
+   "tier": "nano",
+   "rate": 24000,
+   "samples": 187200,
+   "durationMs": 7800,
+   "float32Sha256": "f8e823fb2e7b3114acbad967526b09a799bb3ccaf099a93deac8998a03415fdf",
+   "wavSha256": "c038938e70b9d6e4674b8bee914e56721e29773d73393eda720d6a69439f970a",
+   "voiceOrder": [
+    "Adam",
+    "Ái Hân",
+    "Mỹ Duyên",
+    "Đức Trí",
+    "Hữu Quân",
+    "Xuân Tiên",
+    "Mai Anh",
+    "Trúc Ly",
+    "Anh Khôi",
+    "Minh Quân",
+    "Mạnh Dũng"
+   ],
+   "units": [
+    {
+     "pieces": [
+      "Chiếc thuyền nhỏ trôi chậm giữa dòng sông, mang theo những mùa hè đã xa."
+     ],
+     "phonemes": "tʃˈiɛɜc twˈiɛ2n ɲˈɔ4 tʃˈoj tʃˈə6m zˈyə5 zˈɔ2ŋ sˈoŋ, mˈaːŋ tˈɛw ɲˌy5ŋ mˈuə2 hˈɛ2 ɗˌaː5 sˈaː.",
+     "seed": 1098157447,
+     "span": [
+      0,
+      75600
+     ],
+     "rms": 0.11190122099852642
+    },
+    {
+     "pieces": [
+      "Anh ấy mở cuốn sổ cũ, đọc lại từng dòng chữ mà mẹ đã viết cho mình từ nhiều năm trước."
+     ],
+     "phonemes": "ˈe-ɲ ˈəɪɜ mˈəː4 kˈuəɜn sˈo4 kˈu5, ɗˈɔ6k lˈaː6j t̪ˈy2ŋ zˈɔ2ŋ tʃˈy5 mˌaː2 mˈɛ6 ɗˌaː5 vˈiɛɜt̪ tʃˌɔ mˈi2ɲ t̪ˌy2 ɲˈiɛ2w nˈam tʃˈyəɜc.",
+     "seed": 310874602,
+     "span": [
+      86640,
+      187200
+     ],
+     "rms": 0.1158960562854534
+    }
+   ]
+  },
+  {
+   "voice": "vieneu:turbo/Adam bựa",
+   "tier": "turbo",
+   "rate": 48000,
+   "samples": 453120,
+   "durationMs": 9440,
+   "float32Sha256": "f756e86e4e2ad8d57c16868a38a477552efccedc93c5136be980b9a1078f0735",
+   "wavSha256": "35eea4629d3de5de1c765ffe19968df0a22a9c33ff2471c6651e2eb678a21b96",
+   "voiceOrder": [
+    "Adam bựa",
+    "Trúc Ly",
+    "Anh Khôi",
+    "Mai Anh",
+    "Minh Quân Pro",
+    "Thùy Dung",
+    "Thiền Tâm Đức",
+    "Ngọc Huyền",
+    "Quang Sơn",
+    "Ngọc Trân",
+    "Minh Đức",
+    "Phạm Tuyên",
+    "Thái Sơn",
+    "Xuân Vĩnh",
+    "Thanh Bình",
+    "Ngọc Linh",
+    "Đoan Trang",
+    "Thục Đoan",
+    "Minh Triết",
+    "Mỹ Duyên",
+    "Quỳnh Anh",
+    "Đức Trí",
+    "Kim Thanh",
+    "Adam",
+    "Mạnh Dũng"
+   ],
+   "units": [
+    {
+     "pieces": [
+      "Chiếc thuyền nhỏ trôi chậm giữa dòng sông, mang theo những mùa hè đã xa.",
+      "Anh ấy mở cuốn sổ cũ, đọc lại từng dòng chữ mà mẹ đã viết cho mình từ nhiều năm trước."
+     ],
+     "phonemes": "tʃˈiɛɜc twˈiɛ2n ɲˈɔ4 tʃˈoj tʃˈə6m zˈyə5 zˈɔ2ŋ sˈoŋ, mˈaːŋ tˈɛw ɲˌy5ŋ mˈuə2 hˈɛ2 ɗˌaː5 sˈaː. ˈe-ɲ ˈəɪɜ mˈəː4 kˈuəɜn sˈo4 kˈu5, ɗˈɔ6k lˈaː6j t̪ˈy2ŋ zˈɔ2ŋ tʃˈy5 mˌaː2 mˈɛ6 ɗˌaː5 vˈiɛɜt̪ tʃˌɔ mˈi2ɲ t̪ˌy2 ɲˈiɛ2w nˈam tʃˈyəɜc.",
+     "seed": 3738327128,
+     "span": [
+      0,
+      453120
+     ],
+     "rms": 0.10881247951949818
+    }
+   ]
+  }
+ ]
+}

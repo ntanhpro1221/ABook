@@ -6,7 +6,8 @@ import java.util.concurrent.ConcurrentHashMap
  * Đọc MỘT đoạn chữ thành [Clip]: tìm trong [ClipCache] trước, không có thì giọng đã chọn đọc; giọng mạng hỏng - hết mạng, quá hạn, dịch vụ từ chối, khoá của người
  * dùng bị từ chối hay hết hạn mức - thì đoạn ấy rơi sang giọng kế và việc nghe KHÔNG dừng: giọng dùng khoá -> giọng Edge mặc định ([onlineFallback]) -> giọng của máy
  * ([fallback]); Edge -> giọng của máy. Nhà cung cấp vừa hỏng thì nghỉ một lúc mới thử lại ([EDGE_BREAK_MS] khi mất mạng, [KEY_BREAK_MS] khi khoá bị từ chối / hết
- * hạn mức) - không để mỗi đoạn chờ hết hạn nối mạng. Mỗi chuyện nói với người nghe MỘT lần ([notice]). Mọi giọng hỏng thì ném [VoiceException] với câu nói thẳng
+ * hạn mức) - không để mỗi đoạn chờ hết hạn nối mạng. Mỗi chuyện nói với người nghe MỘT lần ([notice]). Giọng VieNeu (đọc trên máy) hỏng thì rơi thẳng sang giọng
+ * của máy, KHÔNG qua giọng mạng: người chọn VieNeu được hứa chữ của sách không rời điện thoại. Mọi giọng hỏng thì ném [VoiceException] với câu nói thẳng
  * cho người nghe. Chạy ở luồng nền.
  */
 class ClipReader(
@@ -23,13 +24,16 @@ class ClipReader(
         const val KEY_BREAK_MS = 600_000L
 
         private fun provider(voice: Voice) = voice.id.substringBefore(':')
-        private fun online(voice: Voice) = !voice.id.startsWith("device:")
+        /** Đọc trên máy nhưng có thể chưa sẵn sàng (mô-đun tải thêm): hỏng thì đỡ bằng giọng của máy. */
+        private fun local(voice: Voice) = provider(voice) == "vieneu"
+        private fun online(voice: Voice) = provider(voice) != "device" && !local(voice)
 
         /** Câu cho người nghe khi đoạn này đọc tạm bằng `next` thay cho `failed` (cùng lời với giao diện máy tính, readAloudVoice.ts). */
         fun noticeFor(failed: Voice, problem: VoiceException, next: Voice): String {
             val keyed = OnlineVoices.NAMES[provider(failed)]
             val instead = if (provider(next) == "edge") "giọng Edge" else "giọng của máy"
             return when {
+                local(failed) -> "Giọng VieNeu chưa đọc được lúc này - tạm đọc bằng $instead."
                 keyed == null -> "Không dùng được giọng trực tuyến - tạm đọc bằng $instead."
                 problem.reason == "auth" -> "Khóa $keyed không dùng được - tạm đọc bằng $instead. Kiểm tra lại khóa trong Cài đặt."
                 problem.reason == "quota" -> "Khóa $keyed đã hết hạn mức - tạm đọc bằng $instead."
@@ -55,6 +59,8 @@ class ClipReader(
             if (online(primary)) {
                 if (provider(primary) != "edge") onlineFallback()?.let { add(it) }
                 fallback()?.let { add(it) }
+            } else if (local(primary)) {
+                fallback()?.let { add(it) }
             }
         }.distinctBy { it.id }
         var first: VoiceException? = null // lỗi của giọng đã chọn: câu chính khi mọi giọng đều hỏng
@@ -65,7 +71,7 @@ class ClipReader(
                 if (failed != null && problem != null) tell(failed!!, problem!!, voice)
                 return clip
             }
-            if (online(voice) && clock() < (downUntil[provider(voice)] ?: 0L)) {
+            if ((online(voice) || local(voice)) && clock() < (downUntil[provider(voice)] ?: 0L)) {
                 // Vừa hỏng: không thử lại ở mỗi đoạn, đi thẳng sang giọng kế.
                 val reason = downBecause[provider(voice)]
                 if (problem == null && reason != null) {
@@ -79,7 +85,7 @@ class ClipReader(
                 return synthesize(voice, text)
             } catch (error: VoiceException) {
                 val earlier = first
-                if (!online(voice) || index == chain.lastIndex) {
+                if (!(online(voice) || local(voice)) || index == chain.lastIndex) {
                     if (earlier == null) throw error
                     throw VoiceException("${earlier.message}; ${error.message}", earlier.offline, error, earlier.reason)
                 }

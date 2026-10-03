@@ -1,0 +1,23 @@
+# JNI wrapper around sea-g2p 0.9.1 (pnnbao97/sea-g2p, Apache-2.0) for the phone's VieNeu voice (docs/LISTEN_ANYTHING.md, section 3).
+# The crate itself is NOT vendored: scripts/prepare_sea_g2p_android.py downloads the pinned PyPI sdist into build/, strips the PyO3
+# bindings (the only change; the normaliser and G2P code are untouched) and builds this library for the phone ABIs and the host.
+[package]
+name = "abook-sea-g2p"
+version = "0.9.1"
+edition = "2021"
+license = "Apache-2.0"
+publish = false
+
+[lib]
+name = "abook_sea_g2p"
+crate-type = ["cdylib"]
+
+[dependencies]
+sea-g2p-rs = { path = "build/sea_g2p-0.9.1" }
+jni = { version = "0.21", default-features = false }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true

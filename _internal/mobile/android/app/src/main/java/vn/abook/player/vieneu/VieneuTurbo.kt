@@ -13,10 +13,10 @@ import kotlin.math.sqrt
  * VieNeu-TTS v3 Turbo (int8 backbone) on ONNX Runtime, a port of `vieneu/_v3_turbo_engine/onnx_runtime_lite.py`: prefill the prompt
  * (style, phoneme ids, then the voice's reference codes), then per frame the acoustic decoder emits the 16 codebook codes one by one
  * (a 1-layer cached transformer + the tied output heads, plain float maths here) and the 12-layer backbone steps with its KV cache;
- * the MOSS codec decodes all codes to 48 kHz audio. Phonemizing and the tokenizer are NOT ported yet: the caller gives the ids.
+ * the MOSS codec decodes all codes to 48 kHz audio. The caller gives the token ids ([ByteBpe] over [SeaG2p] phonemes: [VieneuSpeaker]).
  *
- * [dir] holds `vieneu_{prefill,decode_step,acoustic_cached}.onnx` + `vieneu_backbone_shared.data`, `config.json` and the heads as raw
- * float32 (`text_emb.f32`, `audio_emb.f32`, `xvec_*.f32`, `heads.json`); [codecDir] holds the codec decode graph.
+ * [dir] holds the repo's `onnx_int8` files as pinned: `vieneu_{prefill,decode_step,acoustic_cached}.onnx` + `vieneu_backbone_shared.data`,
+ * `config.json` and the heads in `vieneu_v3_heads.npz` (read in place, [NpzFile]); [codecDir] holds the codec decode graph.
  * [threads] runs the per-frame graphs (small, latency-bound: on a phone more threads than big cores makes them slower), [codecThreads]
  * the codec (one large graph per chunk, gains from every core), [headThreads] the output-head dot products.
  */
@@ -40,7 +40,6 @@ class VieneuTurbo(dir: File, codecDir: File, threads: Int, private val headThrea
 
     private val env = OrtEnvironment.getEnvironment()
     private val cfg = JSONObject(File(dir, "config.json").readText())
-    private val heads = JSONObject(File(dir, "heads.json").readText())
     private val nVq = cfg.getInt("n_vq")
     private val hidden = cfg.getInt("hidden_size")
     private val layers = cfg.getInt("num_hidden_layers")
@@ -54,13 +53,21 @@ class VieneuTurbo(dir: File, codecDir: File, threads: Int, private val headThrea
     private val speechEnd = cfg.getInt("speech_generation_end_token_id")
     private val textVocab = cfg.getInt("text_vocab_size")
 
-    private val textEmb = RawFiles.floats(File(dir, "text_emb.f32"))
-    private val audioEmb = RawFiles.floats(File(dir, "audio_emb.f32"))   // [n_vq][audioVocab][hidden]
-    private val xvecW = RawFiles.floats(File(dir, "xvec_w.f32"))         // [hidden][speaker dim]
-    private val xvecB = RawFiles.floats(File(dir, "xvec_b.f32"))
-    private val xvecLnW = RawFiles.floats(File(dir, "xvec_ln_w.f32"))
-    private val xvecLnB = RawFiles.floats(File(dir, "xvec_ln_b.f32"))
-    private val xvecLnEps = heads.getDouble("xvec_ln_eps").toFloat()
+    private val useSpeaker = cfg.optBoolean("use_speaker_embedding", false)
+    /** Prompt text column ids around the phoneme tokens: style, prompt start ... prompt end. */
+    val styleId = cfg.optInt("default_style_token_id", 16)
+    val promptStart = cfg.getInt("text_prompt_start_token_id")
+    val promptEnd = cfg.getInt("text_prompt_end_token_id")
+    val codebooks get() = nVq
+
+    private val heads = NpzFile(File(dir, "vieneu_v3_heads.npz"))
+    private val textEmb = heads.floats("text_emb").data
+    private val audioEmb = heads.floats("audio_emb").data   // [n_vq][audioVocab][hidden]
+    private val xvecW = heads.floats("xvec_w").data         // [hidden][speaker dim]
+    private val xvecB = heads.floats("xvec_b").data
+    private val xvecLnW = heads.floats("xvec_ln_w").data
+    private val xvecLnB = heads.floats("xvec_ln_b").data
+    private val xvecLnEps = heads.floats("xvec_ln_eps").data[0]
 
     private val options = sessionOptions(threads, backend, spinning)
     private val codecOptions = if (codecThreads == threads) options else sessionOptions(codecThreads, backend, spinning)
@@ -70,8 +77,9 @@ class VieneuTurbo(dir: File, codecDir: File, threads: Int, private val headThrea
     private val codec = env.createSession(File(codecDir, "moss_audio_tokenizer_decode_full.onnx").absolutePath, codecOptions)
     private val pool = if (headThreads > 1) Executors.newFixedThreadPool(headThreads - 1) { task -> Thread(task, "vieneu-heads").apply { isDaemon = true } } else null
 
-    /** 192-d x-vector -> hidden-size anchor added to every prompt/step embedding (xvec_proj: Linear + LayerNorm). */
+    /** 192-d x-vector -> hidden-size anchor added to every prompt/step embedding (xvec_proj: Linear + LayerNorm); zero when the model has none. */
     private fun speakerAnchor(speaker: FloatArray): FloatArray {
+        if (!useSpeaker) return FloatArray(hidden)
         val dim = speaker.size
         val projected = FloatArray(hidden) { row ->
             var sum = xvecB[row]
