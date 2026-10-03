@@ -1,4 +1,4 @@
-import { useQuery, type QueryClient } from "@tanstack/react-query";
+import { skipToken, useQuery, type QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { api, type BookSummary } from "./api";
 
@@ -43,7 +43,7 @@ export const WAITING_STUDIO = "Đang chờ Studio - giọng đọc chưa đổi 
 
 /** Chỉ đọc bản của trang dự án trong bộ nhớ đệm - không thêm một nhịp hỏi máy chủ. */
 export function useApplyWhen(bookId: string): ApplyWhen {
-  return applyWhen(useQuery<{ book: BookSummary }>({ queryKey: ["book", bookId], enabled: false }).data?.book);
+  return applyWhen(useQuery<{ book: BookSummary }>({ queryKey: ["book", bookId], queryFn: skipToken }).data?.book);
 }
 
 export function useWhenApplied(bookId: string): string {
