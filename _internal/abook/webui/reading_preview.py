@@ -103,6 +103,10 @@ def fake_voice(db, settings):
     import numpy as np
 
     names = [str(profile["preset_name"]) for profile in db.list_voice_profiles() if profile["preset_name"]]
+    # Tên giọng giả không có bản ghi đo; bộ chạy giả này (và chỉ nó) cho chúng hằng số trung tính.
+    from abook import voice_balance
+
+    voice_balance.register_neutral_voices(db.list_voice_profiles())
 
     class Runtime:
         sample_rate = int(settings["tts"]["sample_rate"])
