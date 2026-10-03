@@ -15,8 +15,8 @@ import java.security.MessageDigest
  * độ to ([LoudnessMeter]) và - khi đã phân tích - không khí của bài. Điện thoại không chọn nhạc tự động nên không có `near`:
  * bài nhập ở đây chỉ được GHIM tay vào một đoạn nhạc của sách (`BookEdits.setMusic`), file đi theo sách ở lớp sửa.
  *
- * Phân tích: [analyzer] (model chỉ-nghe của phiên Nhạc, chưa có) cắm vào đây; kết quả qua [cleanAnalysis] như bên Python. Chưa có
- * bộ phân tích thì bài là "chưa phân tích": KHÔNG BAO GIỜ bịa số.
+ * Phân tích: [analyzer] (bộ phân tích "trò" chỉ-nghe - [MusicStudent]; cắm khi người dùng đã tải gói model, [MusicStudentSetup]) cắm vào đây;
+ * kết quả qua [cleanAnalysis] như bên Python. Chưa có bộ phân tích thì bài là "chưa phân tích": KHÔNG BAO GIỜ bịa số.
  */
 class MusicStore(
     private val root: File,
@@ -211,18 +211,25 @@ class MusicStore(
     }
 
     /** Phân tích các bài chưa phân tích (khi bộ phân tích có mặt hay vừa cập nhật). Trả số bài vừa được phân tích. */
-    fun analyzePending(): Int = synchronized(lock) {
-        var done = 0
-        for ((digest, entry) in tracks()) {
-            val file = path(digest, entry)
-            if (entry.optJSONObject("analysis") != null || !file.isFile) continue
-            analyze(file)?.let {
-                entry.put("analysis", it)
-                done++
+    fun analyzePending(): Int {
+        // Mỗi bài phân tích mất vài giây: làm NGOÀI khoá (danh sách vẫn mở được, nhập vẫn chạy), ghi sổ từng bài một.
+        val pending = synchronized(lock) {
+            tracks().mapNotNull { (digest, entry) ->
+                path(digest, entry).takeIf { entry.optJSONObject("analysis") == null && it.isFile }?.let { digest to it }
             }
         }
-        if (done > 0) save()
-        done
+        var done = 0
+        for ((digest, file) in pending) {
+            val result = analyze(file) ?: continue
+            synchronized(lock) {
+                tracks()[digest]?.let { entry -> // bài có thể đã bị xoá trong lúc phân tích
+                    entry.put("analysis", result)
+                    save()
+                    done++
+                }
+            }
+        }
+        return done
     }
 
     /** Kết quả đã làm sạch của bộ phân tích cho `file`, hay null khi chưa có bộ phân tích hoặc nó không cho ra gì dùng được. */
@@ -256,7 +263,7 @@ class MusicStore(
 
         /**
          * Kết quả của bộ phân tích -> khoá của một bài danh mục (như `music_local.clean_analysis`): valence / arousal (bắt buộc, kẹp
-         * -1..1), tension, sd, emotions (13 cường độ 0..1), confidence, `fitsUnderNarration` -> `background`, `loudness` (số LUFS hay
+         * -1..1), tension, sd, vetVar, emotions (13 cường độ 0..1), confidence, `fitsUnderNarration` -> `background`, `loudness` (số LUFS hay
          * {lufs, speechBand}) -> lufs / speechBand, family / style nếu có. Thiếu valence hoặc arousal -> null (không điền số nào thay
          * bộ phân tích).
          */
@@ -270,6 +277,11 @@ class MusicStore(
                 val kept = JSONObject()
                 for (axis in sd.keys().asSequence().toList()) finite(sd.opt(axis))?.let { kept.put(axis, maxOf(0.0, it)) }
                 if (kept.length() > 0) out.put("sd", kept)
+            }
+            (result.opt("vetVar") as? JSONObject)?.let { variance -> // phương sai dư của bộ đoán từng trục (>= 0): music_select cộng vào khoảng cách
+                val kept = JSONObject()
+                for (axis in variance.keys().asSequence().toList()) finite(variance.opt(axis))?.let { kept.put(axis, maxOf(0.0, it)) }
+                if (kept.length() > 0) out.put("vetVar", kept)
             }
             (result.opt("emotions") as? JSONObject)?.let { emotions ->
                 val kept = JSONObject()

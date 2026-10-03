@@ -126,9 +126,26 @@ dụ `tests/fixtures/book_edits/` (xem `EDITING.md`).
   (số mong đợi do pyloudnorm tính, `Bs1770Test`) nên `gainDb` của bài nhập trên điện thoại ra cùng con số với máy tính. Chỉ giải mã
   8 phút đầu bài (một bản mix dài cả giờ không bắt người dùng chờ); không đo được thì dùng độ to trung vị của danh mục, như mọi bài
   thiếu `lufs`.
-- **Phân tích**: móc `MusicStore.analyzer` + `cleanAnalysis` (bản Kotlin của `music_local.clean_analysis`) chưa cắm bộ phân tích nào
-  nên mọi bài là "Chưa phân tích": không bịa số, và điện thoại không có chọn nhạc tự động để mà chọn nó. `analyze` trả 409 với đúng
-  câu của máy tính. Không có `near` / `music_select` trên điện thoại.
+- **Phân tích** (`MusicStudent.kt`, bản Kotlin của đường onnx trong `music_student.py`): giải mã bằng `MediaExtractor` + `MediaCodec`
+  (`AndroidAudioDecoder`: PCM float, mono kiểu ffmpeg `-ac 1` - cộng L+R nhân căn 1/2 -, ghi vào file tạm trong `cacheDir`, tối đa 30
+  phút đầu) -> đổi sang 48 kHz bằng sinc cửa sổ Kaiser nhiều pha (`Resampler`, chỉ cho ba cửa sổ 10 giây ở 20 / 50 / 80% bài) ->
+  log-mel (`MusicMel`, chép đúng `music_mel.py`) -> tháp CLAP fp16 bằng ONNX Runtime CPU (`OrtClapTower`, mở khi cần, đóng sau 20 giây
+  không dùng) -> chuẩn hoá L2 / trung bình / chuẩn hoá L2 -> đầu trò A (`StudentHead`, đọc `student_head_A.npz` bằng `Npz`; hiệu chỉnh
+  `CALIBRATION["onnx"]` kèm `vetVar`). Không dò "có lời", không chặn bài nào; bài ngắn hơn 3 giây hay không giải mã được thì "chưa
+  phân tích" (không bịa số). Một lượt một lúc, ở luồng nền ưu tiên thấp, và NGOÀI khoá của kho (`analyzePending` ghi sổ từng bài) nên
+  danh sách vẫn mở và nhập vẫn chạy. Gói model (~59 MB, cùng gói và cùng ghim REVISION + SHA-256 với máy tính) KHÔNG nằm trong APK và
+  KHÔNG tự tải: `MusicStudentSetup` tải khi người dùng bấm "Tải bộ phân tích (~59 MB)" ở "Nhạc của tôi" (giao diện báo dung lượng, nhắc
+  nếu đang dùng dữ liệu di động, hiện tiến độ, "Thử lại" khi hỏng) vào `<filesDir>/music/student/` (`.part`, tải tiếp bằng Range, kiểm
+  cỡ + SHA-256 rồi mới đổi tên; bản hỏng bị xoá). Tải xong thì cắm `MusicStore.analyzer` rồi `analyzePending()` cho các bài đã nhập;
+  bài nhập sau đó được phân tích ngay lúc nhập. Lần mở app sau có đủ file thì cắm luôn, không gọi mạng. `GET /api/music/local` thêm
+  khoá `student` (`state`, `done`, `total`, `error`, `analysing`, `metered`; chỉ điện thoại có), `POST /api/music/local/student` bắt đầu
+  tải. Chưa có gói thì `analyze` vẫn trả 409 với đúng câu của máy tính. Không có `near` / `music_select` trên điện thoại.
+  Kiểm: `MusicStudentTest` / `MusicStudentSetupTest` (JVM, so với `tests/fixtures/music_student/golden.json` do
+  `tests/music_student_goldens.py` sinh từ bản Python), `MusicStudentOnDeviceTest` (máy ảo Android: ONNX Runtime + MediaCodec thật, so
+  với `music_student.analyze` cùng file: lệch V/E/T và 13 cảm xúc < 0,02 - gói model đẩy bằng `adb push` vào `/data/local/tmp/student`),
+  `tests/test_music_student_android.py` (hằng số chép cứng khớp bên Python). Lưu ý: số của trò rất nhạy với dải mel ở sàn -100 dB (nguồn
+  22 kHz hay mp3 cắt dải cao), nên sai khác 1e-5 của bộ đổi tần số so với ffmpeg có thể thành vài phần trăm ở bài như vậy; bài thật có
+  nền ồn thì lệch cỡ 1e-4.
 - **Ghim = một sửa L trong `edits.json`** (`music.pins` + `music.tracks`, xem `EDITING.md`; điều kiện thật của ghim là đoạn nhạc người
   làm sách đã gắn - sách không nhạc thì không có đoạn nào để đổi). File bài chép từ kho vào thư mục sách ở `music/<sha1>.<đuôi>`
   (đúng chỗ bài của người làm sách), "Lưu" / "Lưu thành…" (`BookDocumentWriter`, `bookfile.repack`) mang nó đi trong file `.abook`
