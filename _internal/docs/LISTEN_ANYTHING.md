@@ -72,13 +72,45 @@ Text is never auto-edited (owner rule): cleanup proposals (e.g. a credit line) a
 | Edge TTS | none | yes | Microsoft neural vi-VN voices (HoaiMy, NamMinh) through Edge's read-aloud service; unofficial, may stop working - opt-in, falls back to the device voice |
 | VieNeu module | yes | no | best quality, several voices; a module like "Phân tích nhạc" (versioned pins, download on tap) |
 
+Online voices (owner 03-10: "đọc ngay, cần mạng" is its own group; Edge TTS is what the owner already uses):
+- Edge TTS is the online default (no key).
+- "Bring your own key" providers, the user's key only (we never pay or sign anyone up):
+  - Azure Speech, first in the list: the official home of the same voices as Edge, so it is the natural fallback if Edge's endpoint closes.
+  - Google Cloud TTS: vi-VN Standard/WaveNet/Neural2.
+  - FPT.AI: 100k chars/month free, 7 regional voices.
+  - Viettel AI: 50k chars in the first month.
+- Google Translate's read-aloud is a last resort only: unofficial, ~200 chars per call, robotic.
+- Every provider is a separate adapter behind one interface (`speak(text, voice) -> audio`, `voices()`, `limits`). A failure or an exhausted quota falls back to the device voice without stopping playback.
+- The UI says plainly that an online voice sends the book's text to that provider.
+
 VieNeu 3.8.1 (installed) has CPU modes: `v3nano` (48M-parameter flow model, ONNX, 24 kHz) and `v3turbo` (ONNX on CPU,
 48 kHz). Measured 03-10 on the home laptop CPU (busy with GPU evals): v3nano RTF 0.18, first audio after 0.76 s.
-v3turbo: being measured. ONNX means the same runtime as the music module, so a phone build is plausible; phone speed not
+v3turbo (ONNX on CPU, 48 kHz, 25 voices): RTF 0.36 (~2.8x faster than listening), first streamed audio after 0.21 s; first load downloads the model (~20 min here). ONNX means the same runtime as the music module, so a phone build is plausible; phone speed not
 measured yet.
+
+Device choice (owner 03-10: never force CPU when a GPU is there), picked automatically:
+- Studio installed (NVIDIA): GPU through Studio's torch. Yield to Studio work and fall back to CPU while the card is busy.
+- GPU but no Studio: ONNX Runtime with DirectML (any vendor, about +20 MB in the module). Not measured with VieNeu yet.
+- No GPU: CPU (numbers above).
+- Phone: CPU with ARM-optimised kernels (XNNPACK). Try NNAPI/QNN if they help, but expect to rely on CPU. Measure on a real phone.
 
 Read-aloud runs a little ahead of the listener (sentence queue, like video buffering), caches what it read as quick audio
 in the book, and a phone without a voice engine can stream it from a paired computer (existing stream path).
+
+### Read-along view (owner 03-10: "like Edge's read aloud")
+
+Listen now reuses the existing reading mode (`ui/src/listen/ReaderScreen.tsx`: chapter text as an ebook, the playing
+sentence lit and followed, "Nghe từ đây" on a tapped sentence, remembered position). New: the current WORD lit too, as Edge
+does, where the voice gives word timings - Edge TTS (WordBoundary events with offsets), the device voice (Android
+`UtteranceProgressListener.onRangeStart`, Windows SAPI word events). Owner 03-10: word highlighting is REQUIRED for both Listen now and Studio audiobooks.
+- VieNeu gives no word timings (checked: v3nano's duration predictor returns one total duration per utterance). Two ways:
+  (a) synthesize per phrase (split at punctuation) and spread each phrase's time over its syllables. Vietnamese
+  syllables are fairly even, so this is good enough to look right, though sometimes one beat off.
+  (b) run a small CTC forced aligner (ONNX, CPU) on each synthesized sentence: exact. Measure its speed and pick.
+- Studio audiobooks: a "word timing" step at packing time, OUTSIDE the hash-locked pipeline. It force-aligns each line's
+  known text inside its known time span, with the same aligner as (b). The result is stored additively as
+  `scripts/<n>.json` lines[i].words = [[start_ms, end_ms], ...] per word. Existing books get it by re-packing on a
+  Studio machine.
 
 ## 4. Music while listening
 

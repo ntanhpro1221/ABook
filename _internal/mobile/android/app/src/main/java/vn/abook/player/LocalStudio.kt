@@ -22,8 +22,9 @@ object LocalStudio {
     private val CHAPTER_TITLE = Regex("/chapters/([0-9]+)/title")
     private val CHAPTER_SCRIPT = Regex("/chapters/([0-9]+)/script")
     private val CHAPTER_RETAKE = Regex("/chapters/([0-9]+)/retake")
+    private val CASTING_CHAPTER = Regex("/casting/([0-9]+)")
     private val SCENE_ALTERNATIVES = Regex("/music/scenes/([^/]+)/alternatives")
-    private val MY_MUSIC = Regex("/api/music/local(?:/([0-9a-f]{40})|/(analyze))?")
+    private val MY_MUSIC = Regex("/api/music/local(?:/([0-9a-f]{40})|/(analyze)|/(module)|/(reanalyse))?")
     private val EDITS_ONLY_KEYS = setOf("enabled", "levelDb", "silence", "pins")
     private val lock = Any()
     private const val LINK_BOOK = "Sách này lấy từ máy tính khác - muốn sửa thì sửa ở máy ấy"
@@ -31,6 +32,10 @@ object LocalStudio {
     /** Kho "Nhạc của tôi" của điện thoại này (LibraryPlugin đặt khi nạp; test JVM đặt kho trong thư mục tạm). */
     @Volatile
     var musicStore: MusicStore? = null
+
+    /** Mô-đun "Phân tích nhạc" (model + thư viện ONNX Runtime; điện thoại tải khi người dùng bấm - MusicStudentSetup). Null: không có việc tải (test JVM); view không kèm `module`. */
+    @Volatile
+    var student: MusicStudentSetup? = null
 
     /** Bộ chuẩn hoá ảnh bìa: máy thật dùng [AndroidCoverCodec]; test JVM đặt bản giả. */
     @Volatile
@@ -59,20 +64,34 @@ object LocalStudio {
     /** `my_music_view` của server.py: danh sách bài đã nhập + có bộ phân tích âm thanh chưa. */
     fun musicView(): JSONObject {
         val store = musicStore ?: throw Api(404, "Không có đường dẫn này")
-        return JSONObject().put("tracks", JSONArray(store.entries())).put("analyzer", store.analyzerAvailable())
+        val view = JSONObject().put("tracks", JSONArray(store.entries())).put("analyzer", store.analyzerAvailable())
+        // Mô-đun "Phân tích nhạc" (model + thư viện ONNX Runtime): tải một lần khi người dùng bấm, cùng hình `module` với máy tính.
+        student?.let { view.put("module", it.status()) }
+        return view
     }
 
     /** Lời đáp của một lượt nhập (`my_music_import` của server.py): bài mới, bài đã có, file lỗi kèm lý do, cộng danh sách mới. */
     fun importAnswer(added: List<JSONObject>, existing: List<JSONObject>, failed: List<String>): JSONObject =
         JSONObject().put("added", JSONArray(added)).put("existing", JSONArray(existing)).put("failed", JSONArray(failed)).also { out ->
             val view = musicView()
-            for (key in listOf("tracks", "analyzer")) out.put(key, view.opt(key))
+            for (key in listOf("tracks", "analyzer", "module")) out.put(key, view.opt(key))
         }
 
     /** `/api/music/local...`: kho nhạc của máy, không thuộc cuốn nào. Nhập file đi qua hộp chọn file của hệ thống (LibraryPlugin.pickMusic). */
-    private fun myMusic(method: String, digest: String?, analyze: Boolean): Pair<Int, Any?> {
+    private fun myMusic(method: String, digest: String?, analyze: Boolean, download: Boolean, reanalyse: Boolean): Pair<Int, Any?> {
         val store = musicStore ?: throw Api(404, "Không có đường dẫn này")
         return when {
+            method == "POST" && download -> {
+                // Người dùng bấm "Tải bộ phân tích": chạy ở luồng riêng, giao diện hỏi lại view để thấy tiến độ.
+                (student ?: throw Api(404, "Không có đường dẫn này")).start()
+                200 to musicView()
+            }
+            method == "POST" && reanalyse -> {
+                // Người dùng bấm "Phân tích lại N bài bằng bản mới" sau khi cập nhật Phân tích nhạc: không bao giờ tự chạy.
+                if (!store.analyzerAvailable()) throw Api(409, MusicStore.NO_ANALYZER)
+                (student ?: throw Api(404, "Không có đường dẫn này")).reanalyse()
+                200 to musicView()
+            }
             method == "GET" && digest == null && !analyze -> 200 to musicView()
             method == "DELETE" && digest != null -> {
                 if (!store.remove(digest)) throw Api(404, "Bài này không còn trong Nhạc của tôi")
@@ -89,7 +108,7 @@ object LocalStudio {
 
     private fun run(method: String, rawPath: String, body: JSONObject): Pair<Int, Any?> {
         val path = rawPath.substringBefore('?') // tham số của GET do giao diện gửi trong `body` (android/localStudio.ts)
-        MY_MUSIC.matchEntire(path)?.let { return myMusic(method, it.groups[1]?.value, it.groups[2] != null) }
+        MY_MUSIC.matchEntire(path)?.let { return myMusic(method, it.groups[1]?.value, it.groups[2] != null, it.groups[3] != null, it.groups[4] != null) }
         val match = ROUTE.matchEntire(path) ?: throw Api(404, "Không có đường dẫn này")
         val id = match.groupValues[1]
         val rest = match.groupValues[2]
@@ -128,6 +147,9 @@ object LocalStudio {
         CHAPTER_TITLE.matchEntire(path)?.takeIf { method == "PUT" }?.let { match -> return { dir, body -> chapterTitle(dir, match.groupValues[1], body) } }
         CHAPTER_SCRIPT.matchEntire(path)?.takeIf { method == "GET" }?.let { match -> return { dir, _ -> script(dir, match.groupValues[1]) } }
         CHAPTER_RETAKE.matchEntire(path)?.takeIf { method == "POST" }?.let { match -> return { dir, _ -> chapterRetake(dir, match.groupValues[1]) } }
+        CASTING_CHAPTER.matchEntire(path)?.takeIf { method == "GET" }?.let {
+            return { _, _ -> throw Api(404, "File dự án không kèm từng câu của chương - đọc chữ trong sách") }
+        }
         SCENE_ALTERNATIVES.matchEntire(path)?.takeIf { method == "GET" }?.let { match -> return { dir, _ -> alternatives(dir, java.net.URLDecoder.decode(match.groupValues[1], "UTF-8")) } }
         return when (method to path) {
             "PUT" to "/title" -> ::title
@@ -151,6 +173,10 @@ object LocalStudio {
             "POST" to "/review" -> ::review
             "DELETE" to "/edits" -> { dir, _ -> BookEdits.clear(dir); JSONObject().put("applied", 0).put("waiting", 0) }
             "GET" to "/cast" -> { dir, _ -> BookEdits.cast(dir, BookEdits.rawBook(dir)) }
+            // Bản chụp chỉ đọc của xưởng trong file dự án (ProjectDocument.view, project_views.py): cùng JSON với đường của Studio.
+            "GET" to "/work" -> { dir, _ -> projectView(dir, "work") }
+            "GET" to "/casting" -> { dir, _ -> projectView(dir, "casting") }
+            "GET" to "/pronunciations" -> { dir, _ -> projectView(dir, "names") }
             else -> null
         }
     }
@@ -439,6 +465,10 @@ object LocalStudio {
         BookWishes.withdraw(dir, section, mine.keys.toList(), at)
         return JSONObject().put("withdrawn", mine.size)
     }
+
+    /** GET /work, /casting, /pronunciations: bản chụp trong file dự án; 404 khi cuốn không có (cuốn từ file `.abook`, hay file không kèm). */
+    private fun projectView(dir: java.io.File, name: String): Any? =
+        ProjectDocument.view(dir, name) ?: throw Api(404, "File dự án này không kèm bản chụp của màn đó")
 
     /** GET /chapters/<n>/script: chữ đọc theo đã qua lớp sửa. */
     private fun script(dir: java.io.File, chapter: String): Any? =

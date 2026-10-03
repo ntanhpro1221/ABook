@@ -26,19 +26,18 @@ import java.util.zip.ZipFile
  * nên trước khi chép từ trình quản lý file và trước khi giải nén phải còn đủ chỗ - không thì từ chối rõ ràng thay vì để
  * bộ nhớ đầy giữa chừng.
  *
- * File dự án .abookproj (abook/webui/projectfile.py) mang luôn phần NGHE của sách: `book.json` như của file .abook, audio
- * chương nằm ở project/output/chapters/<tên>.mp3. Điện thoại chỉ nhập phần nghe - book.json, các chương, cast/scripts/
- * samples/music/bìa; sổ dự án (project/project.sqlite3), bản thu từng câu và nguồn chương KHÔNG bao giờ được giải nén. Vào
- * thư viện nó là một cuốn như mọi cuốn nhập từ file: audio chương được đặt về chapters/<tên>.mp3 (book.json và `package`
- * sửa theo), nên mã nhận cuốn, nhập lại, so với cuốn đã có trên máy dùng đúng như file .abook - chỗ trống cũng tính theo
- * phần nghe, không theo cả gói.
+ * File dự án .abookproj (abook/webui/projectfile.py, phiên bản 3; docs/EDITING.md phase P3) mang luôn phần NGHE của sách với
+ * đúng tên mục của file .abook (chapters/<tên>.mp3, book.json, cast, scripts, samples, music, edits...), nên mã nhận cuốn, nhập
+ * lại, so với cuốn đã có trên máy dùng đúng như file .abook. Mục media trùng byte với mục khác chỉ là BÍ DANH (`project.json`
+ * ghi `aliases`, bí danh không nằm trong gói): bộ nhập đọc byte của mục thật. Khác với file sách, điện thoại GIỮ cả xưởng trong
+ * thư mục cuốn - `project.json` nguyên văn, `project/` và `sources/` (chép nguyên byte, KHÔNG BAO GIỜ mở `project/project.sqlite3`),
+ * `views/` (bản chụp chỉ đọc) - để "Lưu" ghi lại được file dự án (BookDocumentWriter). File `workshop: "pending"` không có xưởng:
+ * chỉ phần nghe, chờ "Dựng xưởng" ở máy có Studio. Chỗ trống cần tính theo những gì thật sự được giải ra.
  */
 object BookFileImport {
     const val MIMETYPE = "application/vnd.ngdtuanh.abook+zip"
     const val PROJECT_MIMETYPE = "application/vnd.ngdtuanh.abookproj+zip"
     private const val FORMAT = "abook"
-    private const val PROJECT_FORMAT = "abookproj"
-    private const val PROJECT_FORMAT_VERSION = 2  // 1 = dự án thuần (không có phần nghe); 2 = thêm book.json + cast/scripts/samples/music
     private const val PROJECT_MAX_ENTRIES = 1_000_000
     private const val FORMAT_VERSION = 4  // 2 = có thêm rãnh nhạc nền (music/<sha1>.<mp3|m4a|ogg|opus|flac|wav>; bài người dùng nhập giữ định dạng của file); 3 = cả bộ nhiều phần (chapters/<phần>/...); 4 = lớp sửa của người nghe (edits.json, edits/cover.jpg)
     /** Chỗ trống dư ngoài cỡ giải nén (book.json, thư mục tạm): đủ để không đầy bộ nhớ giữa chừng. */
@@ -50,11 +49,9 @@ object BookFileImport {
     private val CONTENT = Regex("""$COMMON|chapters/[0-9A-Za-z_.\-]+\.mp3""")
     /** Phiên bản 3 thêm thư mục phần: chapters/<phần>/<tên>.mp3 (phiên bản 1-2 không có - gặp thì là mục lạ). */
     private val CONTENT_V3 = Regex("""$COMMON|chapters/(?:\d{1,4}/)?[0-9A-Za-z_.\-]+\.mp3""")
-    /** Phiên bản 4 thêm lớp sửa của người nghe (BookEdits): edits.json và edits/cover.jpg - chỉ file .abook, không phải .abookproj. */
+    /** Phiên bản 4 thêm lớp sửa của người nghe (BookEdits): edits.json và edits/cover.jpg (file .abookproj phiên bản 3 cũng mang chúng). */
     private val CONTENT_V4 = Regex("""$COMMON|chapters/(?:\d{1,4}/)?[0-9A-Za-z_.\-]+\.mp3|edits\.json|edits/cover\.jpg""")
     private val DESCRIPTIONS = setOf("mimetype", "book.json", "manifest.json")
-    /** Audio chương trong file dự án: chỗ nó nằm trong thư mục dự án (webui/store.py chapter_mp3). */
-    private val PROJECT_AUDIO = Regex("""project/output/chapters/([^\x00-\x1f<>:"|?*\\/]+\.mp3)""")
 
     /** Lý do không nhận file - câu chữ để người dùng đọc. */
     class Refused(message: String) : Exception(message)
@@ -146,7 +143,7 @@ object BookFileImport {
                 total += maxOf(0L, entry.size)
             }
             if (!project && total > MAX_TOTAL_BYTES) throw Refused("File sách quá lớn.")
-            if (project) requireSupportedProject(zip)
+            val layout = if (project) projectLayout(zip, names) else null
             val bookEntry = zip.getEntry("book.json") ?: throw Refused(
                 if (project) "Dự án này chưa có chương nào nghe được - hãy mở nó bằng ABook trên máy tính."
                 else "File sách thiếu phần mô tả (book.json).")
@@ -161,27 +158,24 @@ object BookFileImport {
             val version = pack.optInt("version", -1)
             if (version < 1) throw Refused("File sách có phiên bản định dạng không hợp lệ.")
             if (version > FORMAT_VERSION) throw Refused("Sách này được làm bằng bản app mới hơn. Hãy cập nhật app để mở.")
-            // Thư mục phần chỉ có từ phiên bản 3, lớp sửa của người nghe từ phiên bản 4 (và chỉ file .abook - file dự án thì không).
-            val allowed = if (project) (if (version >= 3) CONTENT_V3 else CONTENT) else contentPattern(version)
-            // File dự án: chỉ phần nghe (những gì `package.files` kể) được nhận; mọi mục khác của gói (sổ dự án, bản thu từng
-            // câu, nguồn chương) không bao giờ được giải nén nên không cần xét.
-            val listening = if (project) names.filter { allowed.matches(it) || PROJECT_AUDIO.matches(it) }.toSet() else null
-            if (!project) for (name in names - DESCRIPTIONS) if (!allowed.matches(name)) throw Refused("Gói có mục lạ: $name")
+            // Thư mục phần chỉ có từ phiên bản 3, lớp sửa của người nghe từ phiên bản 4.
+            if (!project) for (name in names - DESCRIPTIONS) if (!contentPattern(version).matches(name)) throw Refused("Gói có mục lạ: $name")
             val files = pack.optJSONObject("files") ?: throw Refused("Danh sách file trong sách không khớp nội dung gói.")
-            val content = listening ?: (names - DESCRIPTIONS)
+            // File dự án: phần nghe là những mục logic mang tên của file .abook (bí danh cũng tính); phần còn lại của gói (sổ dự án,
+            // bản thu từng câu, nguồn chương) chỉ được chép nguyên byte, không bao giờ mở.
+            val content = layout?.listening ?: (names - DESCRIPTIONS)
             if (files.keys().asSequence().toSet() != content) {
                 throw Refused("Danh sách file trong sách không khớp nội dung gói.")
             }
+            if (layout != null) layout.checkListening(book, files)
+            val resolve = layout?.let { it::resolve } ?: { name: String -> name }
             // Lớp sửa của người nghe mà file mang theo (phiên bản 4): sai thì từ chối cả file, TRƯỚC khi chép gì.
-            val incoming = if (project) Edits(BookEdits.empty(), null) else readEdits(zip)
-            // File dự án: audio chương về chapters/<tên>.mp3 như mọi cuốn nhập từ file; book.json và `package` sửa theo.
-            val local ={ name: String -> PROJECT_AUDIO.matchEntire(name)?.let { "chapters/${it.groupValues[1]}" } ?: name }
-            if (project) relocateChapters(book, pack, files, content, local)
+            val incoming = readEdits(zip, resolve)
             // Sách không mang mã nào (chủ sách 27-09): app nhận ra cùng một lần sản xuất bằng audio từng chương.
             val chapters = JSONObject()
-            for (name in content.filter { local(it).startsWith("chapters/") }) {
+            for (name in content.filter { it.startsWith("chapters/") }) {
                 val meta = files.getJSONObject(name)
-                chapters.put(local(name), JSONObject().put("size", meta.optLong("size")).put("sha256", meta.optString("sha256")))
+                chapters.put(name, JSONObject().put("size", meta.optLong("size")).put("sha256", meta.optString("sha256")))
             }
             // Cùng cuốn đã có trên máy (tải qua Wi-Fi, hay mở từ file trước đó): nhập VÀO đúng cuốn ấy, giữ mã của nó để
             // chỗ nghe vẫn nối - không thành hai cuốn. Bản trên máy nhiều chương hơn file thì giữ nguyên bản trên máy.
@@ -194,23 +188,27 @@ object BookFileImport {
             if (current != null && current.optInt("chaptersAvailable") > book.optInt("chaptersAvailable")) {
                 // Giữ bản trên máy, nhưng phần sửa trong file vẫn được hợp vào (bên máy này thắng) - không mất công của ai.
                 if (editable && BookEdits.count(incoming.edits) > 0) {
-                    BookEdits.adopt(Store.bookDir(target), incoming.edits, incoming.cover) { name, destination -> extract(zip, name, destination) }
+                    BookEdits.adopt(Store.bookDir(target), incoming.edits, incoming.cover) { name, destination -> extract(zip, resolve(name), destination) }
                 }
                 return Imported(target, Store.manifest(target)?.optString("title") ?: current.optString("title"), keptEdits)
             }
             val books = File(Store.root, "books").apply { mkdirs() }
-            // File dự án: chỗ cần là cỡ phần nghe sẽ giải nén, không phải cả gói.
-            val needed = if (project) content.sumOf { maxOf(0L, zip.getEntry(it).size) } else total
+            // File dự án: chỗ cần là cỡ những gì sẽ giải ra (phần nghe, bản chụp, xưởng), không phải cả gói.
+            val needed = if (layout != null) layout.neededBytes() else total
             requireRoom(books, needed + ROOM_MARGIN, freeSpace)
             val staging = File(books, ".$target.${System.nanoTime()}.part")
             try {
-                for (name in DESCRIPTIONS.filter { it != "mimetype" && it in names && (!project || it == "book.json") } + content.sorted()) {
-                    val (size, sha256) = extract(zip, name, File(staging, local(name)))
-                    val expected = files.optJSONObject(name) ?: continue
+                val expectedFiles = layout?.files ?: files
+                val wanted = if (layout != null) listOf("book.json") + layout.materialize
+                else DESCRIPTIONS.filter { it != "mimetype" && it in names } + content.sorted()
+                for (name in wanted) {
+                    val (size, sha256) = extract(zip, resolve(name), File(staging, name))
+                    val expected = expectedFiles.optJSONObject(name) ?: continue
                     if (size != expected.optLong("size", -1) || sha256 != expected.optString("sha256")) {
                         throw Refused("File sách bị hỏng hoặc bị sửa ($name). Hãy chép lại file từ nguồn.")
                     }
                 }
+                if (layout != null) File(staging, ProjectDocument.MANIFEST).writeBytes(layout.manifestBytes)
                 if (editable) keepLocalEdits(Store.bookDir(target), staging, incoming.edits)
                 else File(staging, BookEdits.EDITS_FILE).delete().also { File(staging, BookEdits.EDITS_COVER).delete() }
                 // Bản sách của app trên máy mang mã thư mục của app (book.json không nằm trong danh sách mã băm).
@@ -231,9 +229,9 @@ object BookFileImport {
      * `edits.json` đúng giao ước (BookEdits.validate - sai thì từ chối cả file) và bìa sửa đi đôi với nó: có `cover` là đối tượng
      * thì phải có edits/cover.jpg, và ngược lại; là JPEG, không quá cỡ (bookfile.py `_check_edits`).
      */
-    private fun readEdits(zip: ZipFile): Edits {
+    private fun readEdits(zip: ZipFile, resolve: (String) -> String = { it }): Edits {
         var edits = BookEdits.empty()
-        zip.getEntry(BookEdits.EDITS_FILE)?.let { entry ->
+        zip.getEntry(resolve(BookEdits.EDITS_FILE))?.let { entry ->
             val data = readLimited(zip, entry, BookEdits.MAX_EDITS_BYTES) ?: throw Refused("Phần sửa của sách quá lớn.")
             edits = try {
                 BookEdits.parse(data)
@@ -241,8 +239,8 @@ object BookFileImport {
                 throw Refused(error.message.orEmpty())
             }
         }
-        if (BookEdits.pinnedFiles(edits).any { zip.getEntry(it) == null }) throw Refused("File sách thiếu bài nhạc mà người nghe đã chọn.")
-        val entry = zip.getEntry(BookEdits.EDITS_COVER)
+        if (BookEdits.pinnedFiles(edits).any { zip.getEntry(resolve(it)) == null }) throw Refused("File sách thiếu bài nhạc mà người nghe đã chọn.")
+        val entry = zip.getEntry(resolve(BookEdits.EDITS_COVER))
         if ((entry != null) != (edits.opt("cover") is JSONObject)) throw Refused("Ảnh bìa trong phần sửa của sách không khớp.")
         if (entry == null) return Edits(edits, null)
         val cover = readLimited(zip, entry, BookEdits.MAX_COVER_BYTES)
@@ -294,37 +292,110 @@ object BookFileImport {
     /** Tên mục hợp lệ của một file .abook phiên bản `version` (BookDocumentWriter dùng cùng bộ luật với bộ nhập). */
     internal fun contentPattern(version: Int): Regex = if (version >= 4) CONTENT_V4 else if (version >= 3) CONTENT_V3 else CONTENT
 
-    /** File dự án: `project.json` đúng loại và không mới hơn app (không thì nhắc cập nhật, như file sách). */
-    private fun requireSupportedProject(zip: ZipFile) {
-        val entry = zip.getEntry("project.json") ?: throw Refused("File dự án thiếu phần mô tả (project.json).")
-        if (entry.size > MAX_JSON_BYTES) throw Refused("project.json quá lớn.")
-        val manifest = try {
-            JSONObject(zip.getInputStream(entry).use { it.readBytes() }.toString(Charsets.UTF_8))
-        } catch (error: Exception) {
-            throw Refused("project.json hỏng.")
+    /**
+     * Bố cục của một file dự án đã kiểm hình dạng (`ProjectFile._validate` bên Python): `files` - cỡ + mã băm MỌI mục logic (kể cả
+     * bí danh); `aliases` - {bí danh: mục thật}; `listening` - các mục logic mang tên của file .abook; `materialize` - những mục
+     * sẽ giải ra thư mục sách (phần nghe, `views/`, và - khi file có xưởng - `project/` + `sources/` thật sự nằm trong gói).
+     */
+    private class ProjectLayout(
+        val files: JSONObject, val aliases: Map<String, String>, val listening: Set<String>, val materialize: List<String>,
+        val manifestBytes: ByteArray,
+    ) {
+        /** Tên mục thật trong gói chứa byte của `name` (chính nó nếu không phải bí danh). */
+        fun resolve(name: String) = aliases[name] ?: name
+
+        fun neededBytes(): Long = materialize.sumOf { files.getJSONObject(it).optLong("size") } + manifestBytes.size
+
+        /** `book.json` khớp phần còn lại của gói: `package.files` mang đúng cỡ + mã băm ghi ở `project.json`, mọi chương trỏ tới audio có thật. */
+        fun checkListening(book: JSONObject, listed: JSONObject) {
+            for (name in listed.keys()) {
+                val ours = files.optJSONObject(name)
+                val theirs = listed.getJSONObject(name)
+                if (ours == null || ours.optLong("size", -1) != theirs.optLong("size", -2) || ours.optString("sha256") != theirs.optString("sha256")) {
+                    throw Refused("Phần nghe của dự án không khớp nội dung gói.")
+                }
+            }
+            val chapters = book.optJSONArray("chapters")
+            for (index in 0 until (chapters?.length() ?: 0)) {
+                val file = chapters?.optJSONObject(index)?.optString("file").orEmpty()
+                if (file.isNotEmpty() && file !in listening) throw Refused("Phần nghe của dự án thiếu audio của một chương.")
+            }
         }
-        if (manifest.optString("format") != PROJECT_FORMAT) throw Refused("Đây không phải file sách của app.")
-        val version = manifest.optInt("version", -1)
-        if (version < 1) throw Refused("File dự án có phiên bản định dạng không hợp lệ.")
-        if (version > PROJECT_FORMAT_VERSION) throw Refused("Dự án này được gói bằng bản app mới hơn. Hãy cập nhật app để mở.")
     }
 
     /**
-     * Sửa `book.json` của file dự án cho đúng chỗ audio sẽ nằm sau khi nhập: chương trỏ `project/output/chapters/x.mp3` thành
-     * `chapters/x.mp3`, và `package.files` đổi khoá theo. Chương nào trỏ tới audio không có trong phần nghe thì từ chối.
+     * `project.json` đúng loại, đúng phiên bản (cũ hơn hay mới hơn đều nhắc), tên mục đúng định dạng, bí danh hợp lệ (đích có thật
+     * trong gói, cùng cỡ + mã băm), `workshop` khớp nội dung (có xưởng thì có sổ dự án; chờ xưởng thì không có `project/`), các
+     * bản chụp là JSON. Sai thì từ chối cả file TRƯỚC khi chép gì.
      */
-    private fun relocateChapters(book: JSONObject, pack: JSONObject, files: JSONObject, content: Set<String>, local: (String) -> String) {
-        val chapters = book.optJSONArray("chapters")
-        for (index in 0 until (chapters?.length() ?: 0)) {
-            val chapter = chapters?.optJSONObject(index) ?: continue
-            val file = chapter.optString("file")
-            if (file.isEmpty()) continue
-            if (file !in content || !PROJECT_AUDIO.matches(file)) throw Refused("File sách thiếu audio của một chương.")
-            chapter.put("file", local(file))
+    private fun projectLayout(zip: ZipFile, names: Set<String>): ProjectLayout {
+        val entry = zip.getEntry(ProjectDocument.MANIFEST) ?: throw Refused("File dự án thiếu phần mô tả (project.json).")
+        if (entry.size > MAX_JSON_BYTES) throw Refused("project.json quá lớn.")
+        val bytes = zip.getInputStream(entry).use { it.readBytes() }
+        val manifest = try {
+            JSONObject(bytes.toString(Charsets.UTF_8))
+        } catch (error: Exception) {
+            throw Refused("project.json hỏng.")
         }
-        val renamed = JSONObject()
-        for (name in files.keys()) renamed.put(local(name), files.getJSONObject(name))
-        pack.put("files", renamed)
+        if (manifest.optString("format") != ProjectDocument.FORMAT) throw Refused("Đây không phải file sách của app.")
+        val version = manifest.optInt("version", -1)
+        if (version < 1) throw Refused("File dự án có phiên bản định dạng không hợp lệ.")
+        if (version > ProjectDocument.VERSION) throw Refused("Dự án này được gói bằng bản app mới hơn. Hãy cập nhật app để mở.")
+        if (version < ProjectDocument.VERSION) {
+            throw Refused("Dự án này được gói bằng bản app cũ hơn, định dạng không còn được đọc. Hãy mở nó bằng bản app đã gói nó rồi gói lại.")
+        }
+        val workshop = manifest.optString("workshop")
+        if (workshop != ProjectDocument.PRESENT && workshop != ProjectDocument.PENDING) throw Refused("File dự án không nói rõ có xưởng hay chưa.")
+        val files = manifest.optJSONObject("files")
+        val aliasJson = manifest.optJSONObject("aliases")
+        if (files == null || aliasJson == null) throw Refused("Danh sách file trong dự án không khớp nội dung gói.")
+        val content = names - setOf("mimetype", ProjectDocument.MANIFEST)
+        for (name in content) {
+            if (name != "book.json" && !ProjectDocument.listeningName(name) && !ProjectDocument.VIEW.matches(name) && !ProjectDocument.safeEntry(name)) {
+                throw Refused("Gói có mục lạ: $name")
+            }
+        }
+        val aliases = HashMap<String, String>()
+        for (alias in aliasJson.keys().asSequence().toList()) {
+            val target = aliasJson.opt(alias) as? String
+            val sameBytes = target != null && files.optJSONObject(alias) != null && files.optJSONObject(target) != null &&
+                files.getJSONObject(alias).toString() == files.getJSONObject(target).toString()
+            if (target == null || alias in content || target !in content || !ProjectDocument.aliasable(alias) || !ProjectDocument.aliasable(target) ||
+                !(ProjectDocument.safeEntry(alias) || ProjectDocument.listeningName(alias))) {
+                throw Refused("Bí danh $alias trong dự án không hợp lệ.")
+            }
+            if (!sameBytes) throw Refused("Bí danh $alias không khớp mục thật của nó.")
+            aliases[alias] = target
+        }
+        if (files.keys().asSequence().toSet() != content + aliases.keys) throw Refused("Danh sách file trong dự án không khớp nội dung gói.")
+        for (name in files.keys()) {
+            val meta = files.optJSONObject(name)
+            val size = meta?.opt("size")
+            if (meta == null || meta.opt("sha256") !is String || (size !is Int && size !is Long) ||
+                (name in content && zip.getEntry(name).size != meta.getLong("size"))) {
+                throw Refused("Mô tả file $name không khớp gói.")
+            }
+        }
+        when (workshop) {
+            ProjectDocument.PRESENT -> if ("project/project.sqlite3" !in content || "project/book_settings.json" !in content) {
+                throw Refused("File dự án thiếu sổ dự án hay cài đặt sách.")
+            }
+            else -> if (files.keys().asSequence().any { it.startsWith("project/") }) throw Refused("File dự án chưa có xưởng mà lại mang sổ dự án.")
+        }
+        val views = files.keys().asSequence().filter { ProjectDocument.VIEW.matches(it) }.sorted().toList()
+        for (name in views) {
+            val meta = files.getJSONObject(name)
+            val text = if (meta.getLong("size") > ProjectDocument.MAX_VIEW_BYTES) null else readLimited(zip, zip.getEntry(name), ProjectDocument.MAX_VIEW_BYTES.toInt())
+            val valid = text != null && runCatching { StrictJson.parse(text.toString(Charsets.UTF_8)) }.isSuccess
+            if (!valid) throw Refused("Bản chụp $name hỏng.")
+        }
+        val listening = files.keys().asSequence().filter { ProjectDocument.listeningName(it) }.toSet()
+        val workshopFiles = if (workshop == ProjectDocument.PRESENT) {
+            content.filter { (it.startsWith("project/") || it.startsWith("sources/")) && it !in aliases }.sorted()
+        } else {
+            content.filter { it.startsWith("sources/") }.sorted()
+        }
+        return ProjectLayout(files, aliases, listening, listening.sorted() + views + workshopFiles, bytes)
     }
 
     /**

@@ -6,8 +6,8 @@ import { formatClock } from "@/shared/format";
 import { Button } from "@/shared/ui";
 import { api, type AppInfo } from "@/studio/api";
 import { hasNativeMusicImport, importMusic } from "@/studio/musicImport";
-import { importSummary, LOCAL_PREFIX, type LocalMusicView, type LocalTrack, type MusicReader } from "@/studio/musicLocal";
-import { MusicReaderNotice } from "@/studio/MusicReaderNotice";
+import { importSummary, LOCAL_PREFIX, type LocalMusicView, type LocalTrack } from "@/studio/musicLocal";
+import { MusicModuleNotice } from "@/studio/MusicModuleNotice";
 
 // "Nhạc của tôi" trên trang sửa sách (docs/MUSIC_IMPORT.md): nhạc bạn tự có làm nhạc nền. Nhập, xem, xoá ở đây; "Đổi bài" ở từng đoạn
 // nhạc của sách. Cùng JSON ở máy tính (server.py) và điện thoại (LocalStudio.kt, MusicStore.kt).
@@ -87,7 +87,6 @@ export function MyMusicSection() {
   const canImport = useCanImportMusic();
   const { data } = useMyMusic();
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
-  const [reader, setReader] = useState<MusicReader | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
   const refresh = (view: LocalMusicView) => {
     client.setQueryData(MY_MUSIC_KEY, view);
@@ -98,7 +97,7 @@ export function MyMusicSection() {
       const { result, error } = await importMusic((done, total, latest) => {
         setProgress({ done, total });
         if (latest) refresh(latest);
-      }, setReader);
+      });
       if (error) toast.error("Đang nhập nhạc thì dừng", { description: error.message });
       if (!result) return;
       refresh(result);
@@ -130,7 +129,7 @@ export function MyMusicSection() {
           </Button>
         )}
       </div>
-      <MusicReaderNotice reader={reader} />
+      {!!tracks.length && <MusicModuleNotice view={data} queryKey={MY_MUSIC_KEY} />}
       <p className="text-xs text-fg-2 text-pretty">
         Thêm nhạc của riêng bạn (mp3, m4a, ogg, opus, flac, wav) làm nhạc nền. File được chép vào kho nhạc của máy này. Bài nào bạn chọn
         cho một đoạn sẽ đi cùng file sách khi bạn lưu, nên máy khác cũng nghe được. ABook chỉ ghi tên bài và nghệ sĩ có sẵn trong file,

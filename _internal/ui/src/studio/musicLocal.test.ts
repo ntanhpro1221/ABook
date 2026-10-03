@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { analysisLabel, importSummary, isLocal, localDigest, mergeImports, previewPath, type ImportResult, type LocalTrack } from "./musicLocal";
+import {
+  analysisLabel, formatSize, importSummary, isLocal, localDigest, mergeImports, moduleLabel, modulePercent, previewPath,
+  type ImportResult, type LocalTrack, type MusicModuleStatus,
+} from "./musicLocal";
 
 const digest = "0123456789abcdef0123456789abcdef01234567";
 const track = (over: Partial<LocalTrack> = {}): LocalTrack => ({
@@ -54,5 +57,38 @@ describe("import summary", () => {
     expect(merged.failed).toEqual(["lỗi"]);
     expect(merged.tracks).toHaveLength(2);
     expect(mergeImports([]).tracks).toEqual([]);
+  });
+});
+
+describe("mô-đun Phân tích nhạc", () => {
+  const status = (over: Partial<MusicModuleStatus> = {}): MusicModuleStatus => ({
+    state: "missing", done: 0, total: 92_000_000, error: "", ready: false, analysing: false, metered: false, ...over,
+  });
+  it("nói MỘT tổng dung lượng trước khi bấm và phần trăm khi tải", () => {
+    expect(moduleLabel(status())).toContain(formatSize(92_000_000));
+    expect(moduleLabel(status())).toContain("vẫn nhập, nghe và ghim tay được");
+    expect(moduleLabel(status({ state: "downloading", done: 30, total: 60 }))).toContain("50%");
+    expect(modulePercent(status({ done: 5, total: 0 }))).toBe(0);
+    expect(modulePercent(status({ done: 99, total: 60 }))).toBe(100);
+  });
+  it("nói lý do hỏng, việc đang làm và máy không tải được", () => {
+    expect(moduleLabel(status({ state: "error", error: "Không tải được" }))).toBe("Không tải được");
+    expect(moduleLabel(status({ state: "ready", ready: true, analysing: true }))).toContain("Đang nghe");
+    expect(moduleLabel(status({ state: "unsupported", reason: "chỉ có cho Windows 64-bit" }))).toContain("Windows 64-bit");
+  });
+  it("có bản mới thì nói dung lượng phần phải tải, không phải cả mô-đun", () => {
+    const outdated = status({ state: "outdated", ready: true, outdatedParts: ["Model nghe nhạc"], outdatedBytes: 59_000_000 });
+    expect(moduleLabel(outdated)).toContain(`có bản mới - ${formatSize(59_000_000)}`);
+    expect(moduleLabel(outdated)).not.toContain(formatSize(92_000_000));
+  });
+  it("sau khi cập nhật chỉ đề nghị phân tích lại, không tự làm; yên thì không nói gì", () => {
+    expect(moduleLabel(status({ state: "ready", ready: true, stale: 3 }))).toContain("3 bài được phân tích bằng bản cũ");
+    expect(moduleLabel(status({ state: "ready", ready: true }))).toBe("");
+    expect(moduleLabel(status({ state: "ready", ready: true, restart: true }))).toContain("mở lại ABook");
+  });
+  it("dung lượng dễ đọc", () => {
+    expect(formatSize(512)).toBe("1 KB");
+    expect(formatSize(5.5 * 1024 * 1024)).toBe("5,5 MB");
+    expect(formatSize(59_000_000)).toBe("56 MB");
   });
 });
