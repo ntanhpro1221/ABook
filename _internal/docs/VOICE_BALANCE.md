@@ -190,3 +190,101 @@ Giọng cao nhất ở (c): Quang Sơn 6 %, Thanh Bình 6 %, Thục Đoan 4 %.
   - Nghe ngay không qua cổng này; ghi ra để biết nếu sau này Studio dùng Supertonic.
 
 Hash chất lượng nhánh dev: trước `fddc4182` (5813112a) → sau `b1333192` (db537cf5: bỏ 4 giọng Tin tức, tập phủ = phân vai ∪ người kể, thả số, chốt WORLD_MIN_SECONDS trong tts.py). pytest toàn bộ: 4511 qua, 2 bỏ qua, 0 hỏng.
+
+### Kiểm cảm xúc sau hằng số (emo_check)
+
+Mẫu kiểm:
+- 9 giọng: 5 VieNeu ở f100 (Đức Trí, Thanh Bình, Mạnh Dũng, Ngọc Huyền, Trúc Ly), Supertonic F1, M4, ZeroTTS baotrang, giahuy;
+- 6 câu cảm xúc (giận ×2, thì thầm ×2, vui ×2) và 40 câu trung tính; 2 hạt.
+
+Ba cách được so:
+- **thô**: màu giọng + tốc độ tay cũ, chưa chỉnh mức;
+- **hiện tại**: chuẩn hoá từng câu (`normalize_segment_level`);
+- **mới**: r_v, rồi gain_db + offset tương đối (soft/loud, cảm xúc × cường độ), KHÔNG chuẩn hoá từng câu; trần −2 dBFS giữ làm chốt.
+
+**Khoảng cách cảm xúc trong giọng** = câu cảm xúc trừ trung bình câu trung tính của chính giọng ấy, trung bình qua 9 giọng:
+
+| cảm xúc | thước | thô | hiện tại | mới |
+|---|---|---|---|---|
+| giận | dB | +0,63 | +1,20 | +1,94 |
+| giận | tốc độ % | +7,3 | +7,3 | +8,2 |
+| thì thầm | dB | −0,01 | −1,83 | −2,04 |
+| thì thầm | tốc độ % | +11,2 | +11,2 | +12,7 |
+| vui | dB | −0,23 | 0,00 | −0,07 |
+
+- Cách mới giữ khoảng cách cảm xúc. Độ to theo cảm xúc nay = dao động tự nhiên CỘNG offset của app; cách hiện tại thì chỉ còn offset.
+- Lệch theo từng giọng (±6–9 % tốc độ) chủ yếu ở Supertonic. Supertonic được tổng hợp LẠI ở speed mới nên ra bản thu khác, không phải sai số của phép đo.
+
+**Giữa giọng trên CÙNG câu** (SD qua 9 giọng):
+
+| câu | thô | hiện tại | mới |
+|---|---|---|---|
+| trung tính, độ to dB | 2,60 | 0,00 | 0,79 |
+| trung tính, tốc độ % | 18,2 | 18,2 | 11,2 |
+| giận, độ to / tốc độ | 2,73 / 15,4 | 0,00 / 15,4 | 1,27 / 5,6 |
+| thì thầm, độ to / tốc độ | 2,41 / 10,4 | 0,00 / 10,4 | 0,62 / 7,4 |
+
+- Tốc độ giữa giọng gần lại rõ. Phần còn lại phần lớn do Supertonic chưa đạt tốc độ, xem trên.
+- Độ to: cách hiện tại ép mọi câu về một mức (SD 0). Cách mới để lại dao động thật của câu.
+
+**Dao động độ to câu–câu TRONG giọng** (câu trung tính, SD dB):
+- thô 0,37–1,63;
+- hiện tại 0;
+- mới 0,57–1,84. Cách mới giữ lại dao động tự nhiên; Thanh Bình 0,66 → 1,46 do WORLD (r 0,895) cộng cao độ −4.
+- Câu chạm trần −2 dBFS với cách mới: 0/92 ở VieNeu và Supertonic; 1 câu ở mỗi giọng ZeroTTS (1/92, 1/91).
+
+### Tự nhiên sau khi kéo tốc độ (UTMOSv2, 40 câu trung tính, cùng màu giọng, cùng −25 LUFS)
+
+| giọng | hệ số cũ → r_v | gốc (không kéo) | hiện tại | mới (WORLD r_v) | mới − hiện tại | mới − gốc |
+|---|---|---|---|---|---|---|
+| Kim Thanh | 1,10 → 1,322 | 2,90 | 2,45 | 2,41 | −0,05 ±0,07 | −0,50 ±0,08 |
+| Mỹ Duyên | 1,00 → 1,306 | 3,12 | 3,17 | 2,10 | **−1,07 ±0,10** | −1,02 ±0,10 |
+| Đức Trí | 1,10 → 1,264 | 2,90 | 2,64 | 2,64 | +0,00 ±0,06 | −0,25 ±0,08 |
+| Thiền Tâm Đức | 1,05 → 1,215 | 2,48 | 2,12 | 2,16 | +0,04 ±0,06 | −0,31 ±0,08 |
+| Trúc Ly | 1,00 → 0,890 | 2,63 | 2,67 | 2,05 | **−0,62 ±0,09** | −0,58 ±0,09 |
+| Thanh Bình | 1,00 → 0,895 | 2,70 | 2,68 | 2,45 | −0,23 ±0,09 | −0,25 ±0,10 |
+
+- WORLD kéo tốc độ làm GIẢM độ tự nhiên theo máy, kể cả ở hệ số tay cũ: Kim Thanh ×1,10 đã mất 0,45.
+- Giọng mới bị kéo (Mỹ Duyên, Trúc Ly) mất nhiều nhất.
+- VieNeu Turbo không có tham số tốc độ gốc (chỉ Nano có), nên đã thử cách co giãn khác, xem mục kế.
+
+Đang đo (bổ sung sau): PSOLA (Praat) và WSOLA so với WORLD, UTMOS theo r = 0,85…1,3, để chọn cách co giãn và trần |log r|.
+
+### Trục thứ ba: cao độ nền = độ hưng phấn mặc định? (CHỈ ĐO)
+
+Cách đo:
+- Model cảm xúc dạng chiều audeering/wav2vec2-large-robust-12-ft-emotion-msp-dim. Học trên tiếng ANH (MSP-Podcast), nên có thể lẫn với thanh điệu tiếng Việt.
+- 40 câu trung tính × 2 hạt; tốc độ gốc; chỉ đổi cao độ (`apply_voice_variant`).
+- Arousal ×100, lệch so với trung bình cùng câu qua 19 preset ở cao độ 0; trung vị 19 preset = +0,2.
+
+**Ở cao độ 0, xếp theo arousal:**
+- Thanh Bình +17,4 (hạng 1);
+- Adam bựa +10,6 (2);
+- Minh Quân Pro +9,6, Trúc Ly +9,4, Quỳnh Anh +7,5;
+- Mạnh Dũng +7,4 (6);
+- … Thiền Tâm Đức −9,4, Xuân Vĩnh −19,7, Đức Trí −21,1 (thấp nhất).
+- CI ±0,6–1,5.
+- F0 không giải thích thứ hạng: Kim Thanh F0 +6,3 st, arousal +0,2; Trúc Ly F0 +8,3 st, arousal +9,4.
+
+**Theo bán cung:**
+
+| giọng | 0 | −2 | −4 | −6 | độ dốc / bán cung |
+|---|---|---|---|---|---|
+| Thanh Bình | +17,4 | +15,9 | **+12,7** | +9,8 | 1,29 (R² 0,98) |
+| Adam bựa | +10,6 | **+10,4** | +7,6 | | 0,74 (R² 0,80) |
+| Mạnh Dũng | +7,4 | **+5,9** | +3,0 | | 1,09 (R² 0,97) |
+
+Hạ cao độ cũng làm valence tăng 2–4 điểm, tức "dễ chịu" hơn.
+
+**Trả lời ba câu hỏi:**
+- (1) ĐÚNG: ở cao độ 0, 3 giọng chủ sách đã hạ đứng hạng 1, 2, 6 về arousal.
+- (2) SAI theo máy: mức chủ sách chọn KHÔNG đưa chúng về gần trung vị. Thanh Bình −4 còn +12,7; Adam bựa −2 còn +10,4; Mạnh Dũng −2 còn +5,9.
+- (3) ĐÚNG: giảm gần thẳng, ~1,1 điểm mỗi bán cung.
+
+**Kết luận:**
+- Vì (2) sai, KHÔNG đề xuất số bán cung cho giọng khác.
+- Muốn về trung vị bằng cao độ thì cần −6 tới −9 (giọng cao) và +7 tới +20 (Đức Trí, Xuân Vĩnh). Như vậy là quá xa vùng an toàn của WORLD và màu giọng.
+- Bán cung của 3 giọng GIỮ NGUYÊN: Thanh Bình −4, Adam bựa −2, Mạnh Dũng −2, chủ sách đã chốt bằng tai.
+- *Ghi chú, giả thuyết chưa kiểm:* theo máy, hạ cao độ chỉ làm giảm hưng phấn một phần. Còn cảm giác "bình tĩnh, truyền cảm hơn" mà tai chủ sách nghe ra có thể đến từ valence tăng (+2–4) và giọng trầm hơn, thứ model dạng chiều này không gọi là arousal.
+
+Số và mã: Corpus/claude/model_lane/voice_balance (emo_check.*, utmos_check.*, tempo_alt.*, arousal.*).
