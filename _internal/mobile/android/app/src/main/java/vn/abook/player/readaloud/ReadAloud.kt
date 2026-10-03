@@ -76,7 +76,7 @@ object ReadAloud {
     }
 
     /** Giọng đã chọn của từng cuốn, nhớ trong lõi ([VoiceChoices]). */
-    private var choices: VoiceChoices? = null
+    internal var choices: VoiceChoices? = null
 
     private var cache: ClipCache? = null
 
@@ -160,7 +160,27 @@ object ReadAloud {
     /** Nạp một cuốn - bằng bất cứ đường nào (giao diện, widget, xe hơi, máy tính điều khiển): đọc bằng giọng đã nhớ của cuốn ấy. Chỉ đặt giọng;
      *  [begin] / [stop] ngay sau đó dựng lại hàng đợi. */
     fun useVoiceOf(bookId: String) {
-        voiceId = choices?.voiceFor(bookId)?.ifBlank { null } ?: DEFAULT_VOICE
+        voiceId = usableOrDefault(choices?.voiceFor(bookId).orEmpty())
+    }
+
+    /** Giọng này còn trên máy không? Giọng tải thêm (VieNeu, giọng dùng khoá) chỉ khi còn trong danh sách của máy; Edge và giọng của máy luôn có. */
+    internal var stillOffered: (String) -> Boolean = { id ->
+        val ctx = context
+        when {
+            ctx == null -> true
+            id.substringBefore(':') == VieneuVoices.PREFIX -> VieneuVoices.voices(ctx).any { it.id == id }
+            id.substringBefore(':') in OnlineVoices.NAMES -> OnlineVoices.voices(ctx).any { it.id == id }
+            else -> true
+        }
+    }
+
+    /** Giọng đã nhớ mà giọng ấy đã gỡ khỏi máy (gỡ VieNeu, xoá khoá) thì đọc bằng đúng giọng giao diện sẽ tự quay về (resolveVoice: giọng mặc định
+     *  của danh sách). Lựa chọn đã nhớ của cuốn (`choices`) giữ nguyên: tải lại giọng thì cuốn tự về giọng cũ ở lần nạp kế. */
+    private fun usableOrDefault(id: String): String = id.takeIf { it.isNotBlank() && stillOffered(it) } ?: DEFAULT_VOICE
+
+    /** Một giọng tải thêm vừa mất (gỡ mô-đun VieNeu, xoá khoá): đang đọc bằng nó thì đổi ngay sang giọng mặc định như [setVoice]. Gọi ở luồng chính. */
+    fun voicesChanged() {
+        if (!stillOffered(voiceId)) setVoice(DEFAULT_VOICE)
     }
 
     /** Giao diện gửi danh sách nhà cung cấp đã được đồng ý (lúc mở app, mỗi lần người nghe đồng ý): đang dừng nạp ở ranh giới chương vì chưa
@@ -178,7 +198,7 @@ object ReadAloud {
 
     /** Đổi giọng: các đoạn đã đọc sẵn mà chưa tới thì bỏ, đoạn kế đọc bằng giọng mới. */
     fun setVoice(id: String) {
-        val value = id.ifBlank { DEFAULT_VOICE }
+        val value = usableOrDefault(id)
         if (value == voiceId) return
         voiceId = value
         if (!active) return
