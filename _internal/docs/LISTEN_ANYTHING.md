@@ -139,6 +139,11 @@ Decision:
 - Side benefit: the same CTC output gives an 8.6% syllable error rate on VieNeu audio - a free check for skipped or
   mispronounced words.
 
+Status 03-10: the Studio-book part is built (`abook/webui/word_timing.py`, `words` in `scripts/<n>.json`, docs/ABOOK_FILE_FORMAT.md "Word
+timings", the "wordalign" Studio step, "Căn từ cho sách đã làm" in the export box, the lit word in `ui/src/listen/ReaderScreen.tsx`). Measured
+here with the real int8 model on a 13.7-minute chapter: 1.3 s per audio-minute with 8 threads, 2.1 with 4, 4.2 with 1; the numpy Viterbi is
+0.05 s per audio-minute, decoding 0.02. The spread fallback costs 0.03. Listen now (VieNeu / Edge / device voice) is not built yet.
+
 ## 4. Music while listening
 
 No analysis means no scene moods, so the machine does not pick per scene. The user pins tracks to chapters (existing pins),

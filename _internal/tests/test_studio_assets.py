@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 from abook import analysis, quality_policy
-from abook.webui import studio_setup, voice_picker
+from abook.webui import studio_setup, voice_picker, word_timing
 from abook.webui.actions import FakeRunner
 from abook.webui.library import Preferences
 from abook.webui.server import App
@@ -173,3 +173,37 @@ def test_without_the_studio_data_a_voice_has_no_preview_button_and_no_error(tmp_
     name, filename = next(iter(VOICE_PREVIEW_FILENAMES.items()))
     (empty / filename).write_bytes(b"RIFF")
     assert app.voice_file(name) == empty / filename and voice_picker.preview_file(name) == empty / filename
+
+
+def test_a_studio_installed_before_the_word_model_asks_for_it_and_fetches_only_its_three_files(tmp_path: Path, ollama: str,
+                                                                                               monkeypatch: pytest.MonkeyPatch) -> None:
+    """Model căn từng chữ (webui/word_timing.py) là một bước của Studio: Studio cài từ bản app cũ thấy mình "cũ", cập nhật chỉ tải ba file ấy."""
+    setup = _installed(tmp_path, ollama, monkeypatch)
+    state = json.loads(setup.state_path.read_text(encoding="utf-8"))
+    state["done"] = [step for step in state["done"] if step != "wordalign"]
+    state["pins"].pop("wordalign", None)
+    setup.state_path.write_text(json.dumps(state), encoding="utf-8")
+    shutil.rmtree(setup.word_align)
+
+    assert setup.outdated() == ["wordalign"] and setup.status()["outdated"] == ["Model căn từng chữ khi nghe"]
+    setup.fetched.clear()  # type: ignore[attr-defined]
+    setup.start()
+    setup.wait(30)
+    assert setup.fetched == [item.name for item in studio_setup.WORD_ALIGN_FILES] and setup.outdated() == []  # type: ignore[attr-defined]
+    assert {path.name for path in setup.word_align.iterdir()} == {item.name for item in studio_setup.WORD_ALIGN_FILES}
+    assert setup.word_align == setup.runtime / "models" / studio_setup.WORD_ALIGN_FOLDER, "word_timing.model_dir đọc đúng chỗ này qua ABOOK_RUNTIME"
+
+
+def test_the_pinned_word_model_matches_the_files_the_pack_script_makes_and_a_release_needs_the_pin(monkeypatch: pytest.MonkeyPatch) -> None:
+    spec = importlib.util.spec_from_file_location("release_script_words", INTERNAL / "scripts" / "release.py")
+    release = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(release)
+    files = studio_setup.WORD_ALIGN_FILES
+    assert [item.name for item in files] == list(word_timing.MODEL_FILES)
+    assert all(re.fullmatch(r"[0-9a-f]{64}", item.sha256) and item.size > 0 for item in files), "băm + cỡ là của file thật"
+    assert all("/resolve/95c5e5f04153618e00213dca6459810bd6dd1c72/word-align/" in item.url for item in files), "ghim theo commit đã đăng"
+    release.check_word_align_pinned()
+    monkeypatch.setattr(studio_setup, "WORD_ALIGN_FILES", tuple(Download(item.name, item.url.replace("95c5e5f04153618e00213dca6459810bd6dd1c72", "PIN_REVISION"),
+                                                                         item.sha256, item.size) for item in files))
+    with pytest.raises(AssertionError, match="chưa ghim"):  # chưa đăng: URL còn PIN_REVISION thì không dựng bản phát hành
+        release.check_word_align_pinned()

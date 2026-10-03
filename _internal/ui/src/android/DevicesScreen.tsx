@@ -9,6 +9,7 @@ import { formatFingerprint, formatLength } from "@/shared/format";
 import { Button, EmptyState, Progress } from "@/shared/ui";
 import { useDownloadProgress } from "./downloads";
 import { pickBookFile } from "./imports";
+import { hasNewWords } from "./bookUpdates";
 import { EbookLibrary, type DownloadEvent, type RemoteBook, type ShareStatus } from "./plugins";
 
 // "Tải sách": lấy sách từ máy tính qua Wi-Fi. Ghép nối một lần bằng mã 6 số hiện trong Cài đặt của máy tính;
@@ -190,6 +191,7 @@ function PairPanel() {
 function RemoteRow({ book, progress, onDownload }: { book: RemoteBook; progress?: DownloadEvent; onDownload: () => void }) {
   const newChapters = book.downloaded ? book.chaptersAvailable - book.localChapters : 0;
   const newCover = book.downloaded && (book.cover?.version ?? 0) !== (book.localCoverVersion ?? 0);
+  const newWords = hasNewWords(book);
   const downloading = progress && !progress.finished && !progress.error;
   const fraction = progress?.total ? (progress.done ?? 0) / progress.total : (progress?.files ?? 0) / Math.max(1, progress?.filesTotal ?? 1);
   return (
@@ -205,13 +207,13 @@ function RemoteRow({ book, progress, onDownload }: { book: RemoteBook; progress?
       </div>
       {downloading ? (
         <span className="tabular w-12 text-right text-xs font-semibold text-accent-text">{Math.round(fraction * 100)}%</span>
-      ) : book.downloaded && newChapters <= 0 && !newCover ? (
+      ) : book.downloaded && newChapters <= 0 && !newCover && !newWords ? (
         <span className="flex items-center gap-1 text-xs text-success">
           <CheckCircle2 className="size-4" /> Đã tải
         </span>
       ) : (
         <Button size="sm" variant={book.downloaded ? "secondary" : "primary"} icon={Download} onClick={onDownload}>
-          {!book.downloaded ? "Tải" : newChapters > 0 ? `+${newChapters} chương` : "Cập nhật bìa"}
+          {!book.downloaded ? "Tải" : newChapters > 0 ? `+${newChapters} chương` : newCover ? "Cập nhật bìa" : "Cập nhật chữ"}
         </Button>
       )}
     </div>
