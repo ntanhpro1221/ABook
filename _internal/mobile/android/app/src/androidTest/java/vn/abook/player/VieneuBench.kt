@@ -5,6 +5,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import vn.abook.player.vieneu.RawFiles
 import vn.abook.player.vieneu.UniformSource
+import vn.abook.player.vieneu.VieneuBackend
 import vn.abook.player.vieneu.VieneuNano
 import vn.abook.player.vieneu.VieneuTurbo
 import java.io.File
@@ -22,7 +23,8 @@ import kotlin.math.sqrt
  * [pack] holds `models/`, `bundle/` and `ort/` (`scripts/vieneu_phone_bench_export.py`, `scripts/vieneu_phone_bench.sh push`); ONNX Runtime's
  * libraries are loaded from `<pack>/ort` like the real app does ([OrtRuntime.load]). Arguments ([args]): threads (1,2,4,0 - 0 = every core),
  * models (turbo,nano), passes (2 timed passes over the sentences after one warm-up run), cooldown (60 s between configurations), sentences
- * (0,1,2,3,4), headThreads (default = threads), turbo / bundle (folder names; turbo_fp32 + bundle_fp32 is the fp32 reference check).
+ * (0,1,2,3,4), ep (cpu,xnnpack,nnapi - see [VieneuBackend]), headThreads / codecThreads (default = threads), spin (0/1), seconds (sustain,
+ * 120), turbo / bundle (folder names; turbo_fp32 + bundle_fp32 is the fp32 reference check).
  * Results are one JSON per line in [results] and echoed to [echo]; the audio the phone made goes to [audioDir] as raw float32.
  */
 class VieneuBench(private val args: Map<String, String>, private val pack: File, private val results: File, private val audioDir: File,
@@ -105,15 +107,19 @@ class VieneuBench(private val args: Map<String, String>, private val pack: File,
         return JSONObject().put("model", Build.MODEL).put("manufacturer", Build.MANUFACTURER).put("soc", if (Build.VERSION.SDK_INT >= 31) Build.SOC_MODEL else "")
             .put("android", Build.VERSION.RELEASE).put("abi", Build.SUPPORTED_ABIS[0]).put("ramMB", ram).put("cores", cores())
             .put("coresAtMaxFreq", max.count { it == (max.maxOrNull() ?: 0L) }).put("maxMHz", (max.maxOrNull() ?: 0L) / 1000)
+            .put("maxMHzPerCore", JSONArray(max.map { it / 1000 })).put("cpuset", read("/proc/self/cpuset"))
+            .put("cpusAllowed", runCatching { File("/proc/self/status").readLines().first { it.startsWith("Cpus_allowed_list:") }.substringAfter(':').trim() }.getOrDefault(""))
+            .put("providers", JSONArray(runCatching { ai.onnxruntime.OrtEnvironment.getAvailableProviders().map { it.name } }.getOrDefault(emptyList<String>())))
     }
 
     // ---- sessions ----------------------------------------------------------------------------------------------------
 
     private fun resolveThreads(n: Int) = if (n <= 0) cores() else n
 
-    private fun openTurbo(threads: Int, headThreads: Int = threads) = VieneuTurbo(File(pack, "models/$turboFolder"), File(pack, "models/codec"), threads, headThreads)
+    private fun openTurbo(threads: Int, headThreads: Int = threads, codecThreads: Int = threads, backend: VieneuBackend = VieneuBackend.CPU, spinning: Boolean = false) =
+        VieneuTurbo(File(pack, "models/$turboFolder"), File(pack, "models/codec"), threads, headThreads, codecThreads, backend, spinning)
 
-    private fun openNano(threads: Int) = VieneuNano(File(pack, "models/nano"), threads)
+    private fun openNano(threads: Int, backend: VieneuBackend = VieneuBackend.CPU, spinning: Boolean = false) = VieneuNano(File(pack, "models/nano"), threads, backend, spinning)
 
     private class TurboCase(val textIds: IntArray, val maxFrames: Int, val uniforms: DoubleArray, val desktopCodes: IntArray, val desktopAudio: FloatArray, val desktopFrames: Int)
 
@@ -192,61 +198,121 @@ class VieneuBench(private val args: Map<String, String>, private val pack: File,
 
     // ---- speed -------------------------------------------------------------------------------------------------------
 
+    private fun rms(audio: FloatArray): Double {
+        var sum = 0.0
+        for (x in audio) sum += x.toDouble() * x
+        return if (audio.isEmpty()) 0.0 else sqrt(sum / audio.size)
+    }
+
+    /** One engine configuration, opened: [run] synthesizes one bench sentence and returns its row (timings, length, loudness, memory). */
+    private inner class Runner(private val manifest: JSONObject, val model: String, val threads: Int, val backend: VieneuBackend) : AutoCloseable {
+        val headThreads = args["headThreads"]?.toInt() ?: threads
+        val codecThreads = args["codecThreads"]?.toInt()?.let(::resolveThreads) ?: threads
+        private val spinning = arg("spin", "0") == "1"
+        private val sentences = manifest.getJSONArray("sentences")
+        private val nanoSentences = manifest.optJSONArray("nano_sentences")
+        private val turboSpeaker by lazy { RawFiles.floats(bundle("turbo_speaker_emb.f32")) }
+        private val turboRef by lazy { RawFiles.ints(bundle("turbo_ref_codes.i32")) }
+        private val turboCase = HashMap<Int, TurboCase>()
+        private val nanoSpeaker by lazy { RawFiles.floats(bundle("nano_speaker_emb.f32")) }
+        private val nanoStyle by lazy { RawFiles.floats(bundle("nano_style.f32")) }
+        private val loadStart = System.nanoTime()
+        private val turbo = if (model == "turbo") openTurbo(threads, headThreads, codecThreads, backend, spinning) else null
+        private val nano = if (model == "nano") openNano(threads, backend, spinning) else null
+        val loadMs = (System.nanoTime() - loadStart) / 1e6
+
+        fun describe(): JSONObject = JSONObject().put("model", model).put("threads", threads).put("ep", backend.name.lowercase()).put("spin", spinning)
+            .put("headThreads", if (turbo != null) headThreads else JSONObject.NULL).put("codecThreads", if (turbo != null) codecThreads else JSONObject.NULL)
+
+        fun run(i: Int): JSONObject {
+            val chars = sentences.getString(i).length
+            val row = JSONObject().put("sentence", i).put("chars", chars)
+            if (turbo != null) {
+                val case = turboCase.getOrPut(i) { turboCases(manifest, listOf(i)).single() }
+                val r = turbo.synthesize(case.textIds, turboSpeaker, turboRef, case.maxFrames, VieneuTurbo.Sampling(), UniformSource.recorded(case.uniforms))
+                val audioS = r.audio.size / VieneuTurbo.SAMPLE_RATE.toDouble()
+                val t = r.timings
+                row.put("frames", r.frames).put("audioS", audioS).put("computeS", t.total / 1e9).put("rtf", t.total / 1e9 / audioS).put("firstAudioS", t.firstAudio / 1e9)
+                    .put("prefillS", t.prefill / 1e9).put("decodeStepS", t.decodeStep / 1e9).put("acousticS", t.acoustic / 1e9)
+                    .put("headsAndSamplingS", t.headsAndSampling / 1e9).put("codecS", t.codec / 1e9).put("rms", rms(r.audio)).put("desktopAudioS", case.desktopAudio.size / VieneuTurbo.SAMPLE_RATE.toDouble())
+            } else {
+                val meta = nanoSentences!!.getJSONObject(i)
+                val r = nano!!.synthesize(meta.getString("ph"), nanoSpeaker, nanoStyle, RawFiles.floats(bundle("nano_noise_$i.f32")), 0)
+                val audioS = r.audio.size / VieneuNano.SAMPLE_RATE.toDouble()
+                val t = r.timings
+                row.put("frames", r.flowFrames).put("audioS", audioS).put("computeS", t.total / 1e9).put("rtf", t.total / 1e9 / audioS).put("firstAudioS", t.total / 1e9)
+                    .put("textDurationS", t.textAndDuration / 1e9).put("vectorEstimatorS", t.vectorEstimator / 1e9).put("decoderS", t.decoder / 1e9)
+                    .put("rms", rms(r.audio)).put("desktopAudioS", meta.getInt("audio_samples") / VieneuNano.SAMPLE_RATE.toDouble())
+            }
+            return row.put("rssMB", kb("VmRSS") / 1024)
+        }
+
+        override fun close() {
+            turbo?.close()
+            nano?.close()
+        }
+    }
+
+    /**
+     * Every configuration of models x threads x ep (cpu, xnnpack, nnapi): open it (load time), one cold run of the first sentence, then
+     * [passes] timed passes over the sentences; [cooldown] seconds between configurations. Other arguments: codecThreads (Turbo's codec;
+     * default = threads), headThreads, spin (1 = let ORT's pool spin between ops).
+     */
     fun speed(manifest: JSONObject) {
-        val models = arg("models", "turbo,nano").split(',')
         val which = ints("sentences", "0,1,2,3,4")
         val passes = arg("passes", "2").toInt()
         val cooldown = arg("cooldown", "60").toLong()
         log(JSONObject().put("bench", "start").put("device", device()).put("thermal", thermal()).put("passes", passes).toString())
-        val configs = models.flatMap { model -> ints("threads", "1,2,4,0").map { model to resolveThreads(it) } }.distinct()
+        val configs = arg("models", "turbo,nano").split(',').flatMap { model ->
+            arg("ep", "cpu").split(',').flatMap { ep -> ints("threads", "1,2,4,0").map { Triple(model, resolveThreads(it), VieneuBackend.parse(ep)) } }
+        }.distinct()
         for ((n, config) in configs.withIndex()) {
             if (n > 0 && cooldown > 0) Thread.sleep(cooldown * 1000)
-            val (model, threads) = config
-            val headThreads = args["headThreads"]?.toInt() ?: threads
+            val (model, threads, backend) = config
             val baseline = kb("VmRSS")
             val peakResettable = resetPeak()
             val before = thermal()
             val rows = JSONArray()
-            val loadStart = System.nanoTime()
-            if (model == "turbo") {
-                val speaker = RawFiles.floats(bundle("turbo_speaker_emb.f32"))
-                val ref = RawFiles.ints(bundle("turbo_ref_codes.i32"))
-                val cases = turboCases(manifest, which)
-                openTurbo(threads, headThreads).use { engine ->
-                    val loadMs = (System.nanoTime() - loadStart) / 1e6
-                    val cold = cases[0].let { engine.synthesize(it.textIds, speaker, ref, it.maxFrames, VieneuTurbo.Sampling(), UniformSource.recorded(it.uniforms)) }
-                    for (pass in 1..passes) for ((k, case) in cases.withIndex()) {
-                        val r = engine.synthesize(case.textIds, speaker, ref, case.maxFrames, VieneuTurbo.Sampling(), UniformSource.recorded(case.uniforms))
-                        val audioS = r.audio.size / VieneuTurbo.SAMPLE_RATE.toDouble()
-                        val t = r.timings
-                        rows.put(JSONObject().put("pass", pass).put("sentence", which[k]).put("frames", r.frames).put("audioS", audioS).put("computeS", t.total / 1e9)
-                            .put("rtf", t.total / 1e9 / audioS).put("firstAudioS", t.firstAudio / 1e9).put("prefillS", t.prefill / 1e9).put("decodeStepS", t.decodeStep / 1e9)
-                            .put("acousticS", t.acoustic / 1e9).put("headsAndSamplingS", t.headsAndSampling / 1e9).put("codecS", t.codec / 1e9).put("rssMB", kb("VmRSS") / 1024))
-                    }
-                    log(JSONObject().put("model", "turbo").put("threads", threads).put("headThreads", headThreads).put("loadMs", loadMs).put("coldFirstRunS", cold.timings.total / 1e9).toString())
+            val described = try {
+                Runner(manifest, model, threads, backend).use { runner ->
+                    val coldStart = System.nanoTime()
+                    runner.run(which[0])
+                    log(runner.describe().put("loadMs", runner.loadMs).put("coldFirstRunS", (System.nanoTime() - coldStart) / 1e9).toString())
+                    for (pass in 1..passes) for (i in which) rows.put(runner.run(i).put("pass", pass))
+                    runner.describe()
                 }
-            } else {
-                val speaker = RawFiles.floats(bundle("nano_speaker_emb.f32"))
-                val style = RawFiles.floats(bundle("nano_style.f32"))
-                openNano(threads).use { engine ->
-                    val loadMs = (System.nanoTime() - loadStart) / 1e6
-                    fun run(i: Int) = engine.synthesize(manifest.getJSONArray("nano_sentences").getJSONObject(i).getString("ph"), speaker, style, RawFiles.floats(bundle("nano_noise_$i.f32")), 0)
-                    val cold = run(which[0])
-                    for (pass in 1..passes) for (i in which) {
-                        val r = run(i)
-                        val audioS = r.audio.size / VieneuNano.SAMPLE_RATE.toDouble()
-                        val t = r.timings
-                        rows.put(JSONObject().put("pass", pass).put("sentence", i).put("frames", r.flowFrames).put("audioS", audioS).put("computeS", t.total / 1e9)
-                            .put("rtf", t.total / 1e9 / audioS).put("firstAudioS", t.total / 1e9).put("textDurationS", t.textAndDuration / 1e9)
-                            .put("vectorEstimatorS", t.vectorEstimator / 1e9).put("decoderS", t.decoder / 1e9).put("rssMB", kb("VmRSS") / 1024))
-                    }
-                    log(JSONObject().put("model", "nano").put("threads", threads).put("loadMs", loadMs).put("coldFirstRunS", cold.timings.total / 1e9).toString())
-                }
+            } catch (failure: Exception) { // an EP that cannot take the graph is a result, not the end of the run
+                log(JSONObject().put("model", model).put("threads", threads).put("ep", backend.name.lowercase()).put("error", failure.toString()).toString())
+                continue
             }
-            log(JSONObject().put("model", model).put("threads", threads).put("headThreads", if (model == "turbo") headThreads else JSONObject.NULL)
-                .put("sentences", which.size).put("baselineRssMB", baseline / 1024).put("peakRssMB", kb("VmHWM") / 1024).put("peakResettable", peakResettable)
+            log(described.put("sentences", which.size).put("baselineRssMB", baseline / 1024).put("peakRssMB", kb("VmHWM") / 1024).put("peakResettable", peakResettable)
                 .put("thermalBefore", before).put("thermalAfter", thermal()).put("rows", rows).toString())
         }
         log(JSONObject().put("bench", "done").toString())
+    }
+
+    /**
+     * Continuous synthesis for [seconds] (default 120) with ONE configuration (models/threads/ep: the first of each list), cycling over the
+     * sentences: does the phone slow down as it heats? One row per sentence with its start time and the CPU clocks / battery temperature.
+     */
+    fun sustain(manifest: JSONObject) {
+        val which = ints("sentences", "0,1,2,3,4")
+        val seconds = arg("seconds", "120").toDouble()
+        val model = arg("models", "turbo").split(',').first()
+        val threads = resolveThreads(ints("threads", "2").first())
+        val backend = VieneuBackend.parse(arg("ep", "cpu").split(',').first())
+        log(JSONObject().put("bench", "sustain-start").put("device", device()).put("thermal", thermal()).put("seconds", seconds).toString())
+        resetPeak()
+        Runner(manifest, model, threads, backend).use { runner ->
+            runner.run(which[0])
+            val started = System.nanoTime()
+            var k = 0
+            while ((System.nanoTime() - started) / 1e9 < seconds) {
+                val at = (System.nanoTime() - started) / 1e9
+                val row = runner.run(which[k++ % which.size]).put("atS", at).put("thermal", thermal())
+                log(runner.describe().put("sustainRow", row).toString())
+            }
+            log(runner.describe().put("bench", "sustain-done").put("peakRssMB", kb("VmHWM") / 1024).put("thermal", thermal()).toString())
+        }
     }
 }

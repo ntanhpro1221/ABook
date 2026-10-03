@@ -13,7 +13,7 @@ import kotlin.math.exp
  * classifier-free guidance [cfg]) turn noise into a 144-channel latent that the codec decoder turns into 24 kHz audio. Not
  * autoregressive, so the whole chunk is ready at once. [dir] holds the four graphs, `config.json` and `null_spk.f32` / `null_style.f32`.
  */
-class VieneuNano(dir: File, threads: Int) : AutoCloseable {
+class VieneuNano(dir: File, threads: Int, backend: VieneuBackend = VieneuBackend.CPU, spinning: Boolean = false) : AutoCloseable {
     class Timings {
         var textAndDuration = 0L
         var vectorEstimator = 0L
@@ -37,7 +37,7 @@ class VieneuNano(dir: File, threads: Int) : AutoCloseable {
     private val nullSpeaker = RawFiles.floats(File(dir, "null_spk.f32"))
     private val nullStyle = RawFiles.floats(File(dir, "null_style.f32"))
 
-    private val options = sessionOptions(threads)
+    private val options = sessionOptions(threads, backend, spinning)
     private val textEncoder = env.createSession(File(dir, "text_encoder.onnx").absolutePath, options)
     private val duration = env.createSession(File(dir, "duration_predictor.onnx").absolutePath, options)
     private val estimator = env.createSession(File(dir, "vector_estimator.onnx").absolutePath, options)
