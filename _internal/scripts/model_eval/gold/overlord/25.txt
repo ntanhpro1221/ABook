@@ -1,0 +1,109 @@
+# Đáp án KIỂM TRA LN Nhật đợt 4 (03-10; luật cố định: vị trí 30% của bộ); mục đích: văn phong nhiều điểm nhìn, xưng hô trang trọng.
+# "Overlord" (bản dịch fan, nhiều nhóm dịch) file 25 ("Giao đoạn" cuối tập 4, sau 24 = Chương 2 của trận người thằn lằn). Chương
+# mốc 30% là 23 nhưng nằm sát chương nhạc 22 nên luật dời sang file kế không kề (25). Agent A gán 03-10; B soát + phân xử 03-10 (gold_jp4/B/kuma_overlord_review.md).
+# NGÔI BA, điểm nhìn của ĐỘI TRƯỞNG Black Scripture (giáo quốc Slane) - "hắn"; KHÔNG truyền --first-person. Chương KHÔNG có
+# Ainz/Momonga hay người Nazarik: chỉ hai người nói, đội trưởng (m) và cô gái tóc hai màu bạc/đen, mắt hai màu, cầm lưỡi hái,
+# "con lai", người mạnh nhất Black Scripture canh 5 trang bị của chúa (f; gọi đội trưởng là "anh", xưng "tôi"; hắn gọi "cô").
+# Cả bộ (00-78) KHÔNG đặt tên cho hai người này (grep: không "Zesshi"/"Antilene"/"Tuyệt Tử"; "lưỡi hái", "hai màu", "Rubik" chỉ
+# ở chương này khi tả cô) -> NPC* đủ (không có tên nào để nối; quy tắc 5), kèm mô tả riêng cho hai người: NPC*:đội trưởng Black
+# Scripture, NPC*:cô gái tóc hai màu. Tên thật của cô gái (Zesshi Zetsumei / Antilene Heran Fouche) chỉ có ở tập sau ngoài bộ
+# này -> không điểm (quy tắc 12). "ĐỘI TRƯỞNG" / "ĐỘI TRƯỞNG BLACK SCRIPTURE" là chức danh, chỉ nửa điểm: lời kể gọi "hắn", chức
+# danh chỉ hiện trong câu tả (3, 15); nhãn "ĐỘI TRƯỞNG" còn là cách gọi Remedios (76) và đội trưởng khác trong bộ - thành một
+# giọng chung cho nhiều người. Kaire, Cedan, Beaumarchais, "Nhà chiêm tinh ngàn dặm", Chúa rồng chỉ được NHẮC.
+# Đối đáp không lời dẫn (30-39, 72-85) theo mạch hỏi/đáp: cô hỏi cộc lốc, hắn báo cáo; "anh" trong câu = cô gái nói. 24, 25 cùng
+# là đội trưởng (25 "Hẳn là cô cũng có một bản đúng chứ?" nối câu hỏi 24; 26 "Không đọc." + 27 "Cô gái trả lời cộc lốc").
+# 50 "…Hai con rồng đã bị tiêu diệt?" = đội trưởng (51 "Câu hỏi của hắn"). 9 "Mình đã hi vọng..." trong “” = hắn lẩm bẩm thành tiếng.
+# Parser: 28 lời cô gái “Hỏi người khác là nhanh nhất... “Nhà chiêm tinh ngàn dặm”...” ngoặc lồng làm khoá N -> N NARRATOR, cô
+# gái ~ (quy tắc 10). 6 “God-kin” và 47 “một Undead bí ấn.” là chữ trích giữa câu kể bị khoá D -> N,D NARRATOR (quy tắc 8; 47
+# gốc là lời đội trưởng gọi nó -> đội trưởng ~). 82 đuôi ghi chú người dịch "(TL: Mỗi gia đình hai con vợ...)" -> N.
+# Tiếng lòng ngôi ba: 65 "Không thể nào! (TL: Có chứ)", 67, 87 trọn đoạn là câu tự hỏi/tự bác của hắn -> N,T NARRATOR + đội
+# trưởng đủ; 61, 64, 68 đoạn kể có câu hỏi/suy đoán -> đội trưởng ~ (quy tắc 4). 69 "(Không, tại sao mình...)" khoá T = hắn nghĩ.
+0 H
+1 N
+2 N
+3 N
+4 N
+5 N
+6 N,D NARRATOR neutral 0-1 normal normal u
+7 N
+8 N NARRATOR neutral,tired 0-1 normal normal u
+9 D NPC*:đội trưởng Black Scripture,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~ tired,sad,neutral 0-1 normal,slow soft,normal m
+10 N
+11 N
+12 N
+13 N
+14 N
+15 N
+16 N
+17 N
+18 N
+19 N
+20 N
+21 D NPC*:cô gái tóc hai màu neutral,tired 0-1 normal normal f
+22 N
+23 D NPC*:cô gái tóc hai màu neutral 0-1 normal normal f
+24 D NPC*:đội trưởng Black Scripture,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~ neutral 0-1 normal normal m
+25 D NPC*:đội trưởng Black Scripture,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~ neutral,sarcastic 0-1 normal normal m
+26 D NPC*:cô gái tóc hai màu neutral,tired 0-1 normal,fast normal f
+27 N
+28 N NARRATOR,NPC*:cô gái tóc hai màu~ neutral 0-1 normal normal u
+29 N
+30 D NPC*:đội trưởng Black Scripture,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~ neutral,sad 0-1 normal,slow normal m
+31 D NPC*:cô gái tóc hai màu neutral 0-1 normal normal f
+32 N NARRATOR neutral,sad 0-1 normal normal u
+33 D NPC*:đội trưởng Black Scripture,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~ neutral,sad 0-1 normal normal m
+34 D NPC*:cô gái tóc hai màu neutral,tired 0-1 normal normal f
+35 D NPC*:đội trưởng Black Scripture,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~ neutral,sad 0-1 normal normal m
+36 D NPC*:cô gái tóc hai màu neutral,surprised 0-1 normal normal f
+37 D NPC*:đội trưởng Black Scripture,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~ neutral 0-1 normal normal m
+38 D NPC*:cô gái tóc hai màu neutral,sarcastic,surprised 0-1 normal normal f
+39 D NPC*:đội trưởng Black Scripture,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~ neutral,tired 0-1 normal,slow normal m
+40 N
+41 N
+42 N
+43 N
+44 N
+45 D NPC*:cô gái tóc hai màu neutral,sarcastic 0-1 normal normal f
+46 N
+47 N,D NARRATOR,NPC*:đội trưởng Black Scripture~,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~ neutral 0-1 normal normal u
+48 D NPC*:cô gái tóc hai màu neutral,excited 0-1 normal normal f
+49 N NARRATOR neutral,happy,excited 0-1 normal normal u
+50 D NPC*:đội trưởng Black Scripture,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~ afraid,neutral,surprised 0-1 normal,slow normal,soft m
+51 N NARRATOR neutral,afraid 0-1 normal normal u
+52 D NPC*:cô gái tóc hai màu neutral 0-1 normal normal f
+53 N NARRATOR neutral,excited 0-1 normal normal u
+54 D NPC*:cô gái tóc hai màu excited,happy 1-2 normal normal f
+55 N
+56 D NPC*:đội trưởng Black Scripture,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~ neutral 0-1 normal normal m
+57 D NPC*:cô gái tóc hai màu neutral,sad,tired 0-1 normal,slow soft,normal f
+58 N
+59 N
+60 D NPC*:cô gái tóc hai màu sad,tired,neutral,sarcastic,whispering 0-1 normal,slow soft,normal f
+61 N,T NARRATOR,NPC*:đội trưởng Black Scripture~,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~ neutral 0-1 normal normal u
+62 N
+63 N
+64 N,T NARRATOR,NPC*:đội trưởng Black Scripture~,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~ neutral 0-1 normal normal u
+65 N,T NARRATOR,NPC*:đội trưởng Black Scripture,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~ surprised,neutral,angry 0-2 normal,fast normal u
+66 N
+67 N,T NARRATOR,NPC*:đội trưởng Black Scripture,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~ neutral,afraid 0-1 normal normal u
+68 N,T NARRATOR,NPC*:đội trưởng Black Scripture~,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~ neutral,afraid,sad 0-1 normal,slow normal u
+69 T NPC*:đội trưởng Black Scripture,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~ neutral,surprised 0-1 normal normal,soft m
+70 N,T NARRATOR,NPC*:đội trưởng Black Scripture~,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~ neutral 0-1 normal normal u
+71 N NARRATOR neutral,surprised 0-1 normal normal u
+72 D NPC*:cô gái tóc hai màu happy,sarcastic,neutral 0-1 normal normal f
+73 N
+74 D NPC*:đội trưởng Black Scripture,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~ surprised,angry,neutral 1-2 fast,normal normal,loud m
+75 D NPC*:cô gái tóc hai màu sarcastic,happy,neutral 0-1 normal normal f
+76 N
+77 N
+78 D NPC*:cô gái tóc hai màu neutral,sarcastic 0-1 normal normal f
+79 D NPC*:đội trưởng Black Scripture,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~ neutral,tired 0-1 normal normal m
+80 D NPC*:cô gái tóc hai màu neutral,sarcastic 0-1 normal normal f
+81 N
+82 N
+83 D NPC*:đội trưởng Black Scripture,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~ neutral,sarcastic 0-1 normal normal m
+84 N
+85 D NPC*:cô gái tóc hai màu happy,excited,neutral 0-2 normal normal f
+86 N NARRATOR neutral,happy 0-1 normal normal u
+87 N,T NARRATOR,NPC*:đội trưởng Black Scripture,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~ neutral,afraid 0-1 normal normal u
+88 N NARRATOR neutral,afraid 0-1 normal normal u
