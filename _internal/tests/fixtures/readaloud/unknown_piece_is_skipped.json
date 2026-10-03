@@ -1,0 +1,32 @@
+{
+ "note": "mảnh không có trong chữ bị bỏ qua",
+ "text": "Xin chào",
+ "durationMs": 1000,
+ "boundaries": [
+  {
+   "text": "Xin",
+   "start": 0,
+   "end": 300
+  },
+  {
+   "text": "xyz",
+   "start": 300,
+   "end": 500
+  },
+  {
+   "text": "chào",
+   "start": 500,
+   "end": 900
+  }
+ ],
+ "words": [
+  [
+   0,
+   300
+  ],
+  [
+   500,
+   900
+  ]
+ ]
+}

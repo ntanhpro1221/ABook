@@ -1,0 +1,31 @@
+{
+ "note": "một mảnh phủ hai chữ: chia theo số ký tự (2 và 3 trên 5)",
+ "text": "Hà Nội đẹp",
+ "durationMs": 1000,
+ "boundaries": [
+  {
+   "text": "Hà Nội",
+   "start": 0,
+   "end": 500
+  },
+  {
+   "text": "đẹp",
+   "start": 600,
+   "end": 900
+  }
+ ],
+ "words": [
+  [
+   0,
+   200
+  ],
+  [
+   200,
+   500
+  ],
+  [
+   600,
+   900
+  ]
+ ]
+}

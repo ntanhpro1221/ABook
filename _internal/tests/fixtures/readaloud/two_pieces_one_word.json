@@ -1,0 +1,41 @@
+{
+ "note": "chữ được hai mảnh phủ trải từ đầu mảnh đầu tới cuối mảnh cuối",
+ "text": "tiếng-Việt rất hay",
+ "durationMs": 1300,
+ "boundaries": [
+  {
+   "text": "tiếng",
+   "start": 0,
+   "end": 300
+  },
+  {
+   "text": "Việt",
+   "start": 300,
+   "end": 600
+  },
+  {
+   "text": "rất",
+   "start": 700,
+   "end": 900
+  },
+  {
+   "text": "hay",
+   "start": 900,
+   "end": 1200
+  }
+ ],
+ "words": [
+  [
+   0,
+   600
+  ],
+  [
+   700,
+   900
+  ],
+  [
+   900,
+   1200
+  ]
+ ]
+}

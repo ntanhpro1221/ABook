@@ -1,0 +1,27 @@
+{
+ "note": "vị trí ký tự 4 nằm trong chữ thứ hai: mảnh đầu khớp chữ ấy chứ không phải chữ đầu",
+ "text": "và và và",
+ "durationMs": 2000,
+ "boundaries": [
+  {
+   "text": "và",
+   "start": 1000,
+   "end": 1300,
+   "char": 4
+  }
+ ],
+ "words": [
+  [
+   0,
+   1000
+  ],
+  [
+   1000,
+   1300
+  ],
+  [
+   1300,
+   2000
+  ]
+ ]
+}
