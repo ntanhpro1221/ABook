@@ -44,13 +44,13 @@ export async function refreshScript(
 export function watchReadAloud(
   client: ScriptCache,
   api: Pick<ReadAloudPlugin, "script" | "addListener"> = ReadAloud,
-  configure: (options: { readAloudVoice: string }) => unknown = (options) => EbookPlayer.configure(options).catch(() => undefined),
+  configure: (options: { readAloudVoice: string; readAloudBook: string }) => unknown = (options) => EbookPlayer.configure(options).catch(() => undefined),
 ): () => void {
   const handle = api.addListener("readAloudScript", (event) => void refreshScript(client, api, event.bookId, event.chapterId));
-  // Người nghe đổi giọng ở menu "Giọng đọc": lõi đọc các đoạn sau bằng giọng mới.
+  // Người nghe đổi giọng ở menu "Giọng đọc": lõi nhớ cho cuốn ấy (phát tiếp từ widget / xe hơi vẫn đúng giọng) và đọc các đoạn sau bằng giọng mới.
   const onVoice = (event: Event) => {
     const bookId = String((event as CustomEvent).detail ?? "");
-    void configure({ readAloudVoice: chosenVoice(bookId) });
+    void configure({ readAloudVoice: chosenVoice(bookId), readAloudBook: bookId });
   };
   window.addEventListener(VOICE_CHANGED_EVENT, onVoice);
   return () => {
