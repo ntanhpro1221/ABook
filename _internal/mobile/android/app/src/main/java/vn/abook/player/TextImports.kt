@@ -43,9 +43,24 @@ object TextImports {
         root().deleteRecursively()
     }
 
-    private fun safeName(name: String, fallback: String): String {
-        val cleaned = UNSAFE.replace(name.substringAfterLast('/').substringAfterLast('\\'), " ").trim(' ', '.')
-        return cleaned.ifEmpty { fallback }.take(120)
+    /** Tên an toàn cho hệ thống tệp, tối đa 120 ký tự - cắt phần tên chứ không cắt đuôi (tên chương light novel hay dài: cắt mất ".txt"
+     *  là file bị bỏ qua không một lời). */
+    internal fun safeName(name: String, fallback: String): String {
+        val cleaned = UNSAFE.replace(name.substringAfterLast('/').substringAfterLast('\\'), " ").trim(' ', '.').ifEmpty { fallback }
+        if (cleaned.length <= 120) return cleaned
+        val suffix = BookImport.suffixOf(cleaned).takeIf { it.length <= 10 }.orEmpty()
+        return cleaned.substring(0, 120 - suffix.length).trimEnd(' ', '.') + suffix
+    }
+
+    /** Hai tên khác nhau thành cùng một tên sau [safeName] (cắt bớt, ký tự lạ): thêm " (2)"… thay vì chép đè mất một chương. */
+    internal fun uniqueName(name: String, used: MutableSet<String>): String {
+        var candidate = name
+        var number = 2
+        while (!used.add(candidate.lowercase())) {
+            val suffix = BookImport.suffixOf(name)
+            candidate = "${name.removeSuffix(suffix)} (${number++})$suffix"
+        }
+        return candidate
     }
 
     private fun newRef() = "i" + java.lang.Long.toHexString(System.nanoTime()) + java.lang.Long.toHexString(System.currentTimeMillis())
@@ -92,9 +107,10 @@ object TextImports {
         val folder = File(dir(ref), safeName(name, "Sách"))
         try {
             var budget = MAX_SOURCE_BYTES
+            val used = HashSet<String>()
             for ((fileName, open) in texts) {
                 val input = open() ?: continue
-                budget -= input.use { copy(it, File(folder, safeName(fileName, "chuong.txt")), budget) }
+                budget -= input.use { copy(it, File(folder, uniqueName(safeName(fileName, "chuong.txt"), used)), budget) }
             }
         } catch (error: Exception) {
             dir(ref).deleteRecursively()
@@ -118,21 +134,27 @@ object TextImports {
             BookImport.importFile(source)
         }
         kept[ref] = book
-        return TextBook.preview(book)
+        // Đúng bộ chữ này đã có trong thư viện: hỏi ngay ở bước xem trước ("Mở cuốn đó" / "Thêm bản riêng") - như máy tính
+        // (`server.preview_text_book`).
+        val existing = Store.findByChapters(TextBook.prints(book))
+        return TextBook.preview(book).put("existing", existing?.let { id ->
+            JSONObject().put("id", id).put("title", Store.manifest(id)?.optString("title").orEmpty())
+        } ?: JSONObject.NULL)
     }
 
     /**
      * Nhập thành sách chỉ-có-chữ trong thư viện (`textbook.add_to_library`): ghi file `.abook` tạm trong `cacheDir` rồi [BookFileImport.importFile].
-     * `title` trống thì giữ tên của file sách. Trả {id, how, chapters}; `how` "existing" khi đúng cuốn này đã có (nhập lại không nhân đôi).
+     * `title` trống thì giữ tên của file sách. Trả {id, how, chapters}; `how` "existing" khi đúng cuốn này đã có (nhập lại không nhân đôi),
+     * trừ khi người dùng chọn "Thêm bản riêng" (`separate`).
      */
-    fun create(ref: String, title: String, cacheDir: File): JSONObject {
+    fun create(ref: String, title: String, cacheDir: File, separate: Boolean = false): JSONObject {
         val book = kept[ref] ?: throw BookImport.Failed("Lần chọn này đã hết hạn - chọn lại file.")
         if (BookEdits.cleanText(title, 160, normalize = false).isNotEmpty()) book.title = title
         val packed = File.createTempFile("text-book-", ".abook", cacheDir)
         try {
             packed.outputStream().use { TextBook.build(book, it, codec) }
             val before = Store.books().map { it.optString("id") }.toSet()
-            val imported = BookFileImport.importFile(packed)
+            val imported = BookFileImport.importFile(packed, separate = separate)
             discard(ref)
             return JSONObject().put("id", imported.id).put("how", if (imported.id in before) "existing" else "new").put("chapters", book.chapters.size)
         } finally {

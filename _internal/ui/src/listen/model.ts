@@ -19,6 +19,8 @@ export interface ListenChapter {
   state?: "text" | null;
   /** Chương chỉ-có-chữ mà máy này có giọng đọc cho (source.tsx `withReadAloud`): nghe ngay được, dù chưa có audio. */
   speech?: boolean;
+  /** Dòng người nghe đã bỏ khỏi phần đọc (lớp sửa `skip`, gợi ý dòng ghi công): màn đọc và đọc to bỏ qua - textScript.ts `withoutLines`. */
+  skip?: string[];
 }
 
 /** Bấm nghe được: chương có audio, hay chương chỉ-có-chữ mà máy có giọng đọc. */
@@ -91,6 +93,8 @@ export interface ListeningRecord {
 export interface ListenBook {
   id: string;
   title: string;
+  /** Tác giả ghi trong file sách (EPUB / DOCX / PDF); trống khi không có. */
+  author?: string;
   narrator: string;
   duration: number;
   chaptersTotal: number;

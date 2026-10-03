@@ -17,6 +17,22 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   PDF phải có chữ (PDF chụp từ máy quét thì nói rõ là chưa đọc được). Trên máy tính có Studio, "Làm sách nói từ cuốn này" ở menu của sách tạo một
   dự án Studio từ đúng chữ các chương ấy.
 
+- **Bỏ dòng ghi công khỏi phần đọc - chỉ khi bạn chọn (máy tính và điện thoại)**: dòng ghi công của người dịch, biên tập ở đầu chương
+  ("Trans: …", "Dịch: …") hiện ở bước xem trước kèm ô "Bỏ dòng này khỏi phần đọc", mặc định không chọn. Một dòng lặp ở đầu cả trăm chương
+  chỉ cần chọn một lần. Chọn rồi thì màn đọc và giọng đọc bỏ qua dòng ấy; chữ trong sách vẫn còn nguyên, đổi ý lúc nào cũng được ở mục
+  "Gợi ý cho phần đọc" trên trang sách.
+
+- **Thêm sách từ file: biết ngay cuốn đã có, tên chương và tác giả đúng như lúc xem trước (máy tính và điện thoại)**: cuốn đã có trong thư
+  viện thì bước xem trước nói luôn, kèm "Mở cuốn đó" hay "Thêm bản riêng" (bản riêng giữ tên bạn vừa đặt). Thư mục TXT: tên chương lấy từ
+  dòng tiêu đề đầu chương ("Chương 1: Buổi sáng") thay vì tên file, và trang sách, trình phát, màn đọc thấy đúng tên đã xem trước. Tác giả
+  trong file EPUB / Word / PDF hiện trên trang sách. Bước xem trước gọn hơn: mỗi chương một con số (số chữ), mục lục tự sinh của file Word
+  không còn bị đọc như một chương, file TXT trống được nói ra thay vì lặng lẽ biến mất, PDF chụp từ máy quét báo "PDF này là ảnh chụp, chưa
+  có chữ để đọc." Máy tính và điện thoại đọc cùng một file ra cùng một cuốn (kể cả EPUB viết chữ có dấu bằng mã HTML, file Word lưu bằng
+  công cụ khác Word, tên chương rất dài trên điện thoại). Nhập cuốn hơn nghìn chương nhanh gấp đôi.
+
+- **Nghe ngay: file TXT mỗi dòng một đoạn không còn dồn cả chương thành một đoạn (máy tính và điện thoại)**: file chỉ có một dòng trống
+  (sau tên chương) trước đây bị đọc như một đoạn khổng lồ - chờ rất lâu mới có tiếng, có khi không đọc được. Nay mỗi dòng là một đoạn.
+
 - **Nghe ngay: máy đọc to sách chỉ có chữ, chữ đang đọc sáng lên (máy tính và điện thoại)**: sách vừa thêm từ file có nút "Nghe ngay" -
   không cần phân tích hay cài thêm gì. Giọng mặc định là Hoài My của Microsoft Edge (cần mạng; có thêm giọng Nam Minh), lần đầu dùng app
   nói rõ chữ của đoạn đang đọc được gửi tới Microsoft; mất mạng thì đoạn ấy chuyển sang giọng của máy (Windows hay Android) mà không dừng.
@@ -31,7 +47,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   tích nhạc hay Studio) không tải lại. Tải xong máy tự thử vài giây và nói giọng có kịp tốc độ nghe không; không kịp thì đề nghị đổi
   sang giọng nhẹ hơn - chỉ đổi khi bạn bấm. Giọng mới hiện ngay trong nút Giọng đọc lúc nghe. Có bản mới thì một lần bấm chỉ tải
   phần đổi. Máy không kịp đọc trực tiếp vẫn nghe được giọng VieNeu: nút Giọng đọc có "Làm trước các chương tới" - máy đọc sẵn ở nền
-  (việc đang nghe luôn được ưu tiên), nói rõ còn bao lâu, bấm "Dừng làm trước" là thôi.
+  (việc đang nghe luôn được ưu tiên), nói rõ còn bao lâu, bấm "Dừng làm trước" là thôi. Trên điện thoại "Làm trước" có cho cả giọng
+  trực tuyến (Edge, giọng dùng khóa của bạn): làm sẵn ở nhà rồi nghe trên tàu điện, máy bay mà không cần mạng. Điện thoại làm cả khi app
+  đã đóng, mặc định chỉ khi đang cắm sạc (tắt được ở ô "Chỉ khi đang sạc"), giọng trực tuyến chỉ làm khi có Wi-Fi, pin yếu thì chờ; báo
+  "Đã sẵn sàng 3/5 chương · còn khoảng 12 phút" ở nút Giọng đọc và ở thông báo, nói đang chờ gì (cắm sạc, Wi-Fi), và trước khi bấm cho
+  biết máy cần bao lâu. Chương đã làm xong có dấu "Đã làm sẵn" trong danh sách chương; nghe trực tiếp không đẩy chúng ra khỏi bộ nhớ
+  trước khi bạn nghe tới. Tắt app hay khởi động lại máy thì làm tiếp đúng chỗ. Mất mạng giữa chừng thì dừng và nói rõ - phần đã xong vẫn
+  giữ; chương làm trước luôn đọc bằng đúng giọng bạn chọn, không bao giờ xen giọng khác.
 
 - **Giọng VieNeu trên điện thoại**: Cài đặt → Giọng đọc có cùng mục "Giọng VieNeu" để tải giọng đọc ngay trên điện thoại, không cần mạng.
   Điện thoại được khuyên Giọng VieNeu Nano (nhẹ hơn); Giọng VieNeu chỉ được khuyên khi lần tự thử sau khi tải cho thấy máy đủ nhanh. Dung

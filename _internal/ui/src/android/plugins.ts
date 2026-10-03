@@ -1,5 +1,6 @@
 import { registerPlugin, type PluginListenerHandle } from "@capacitor/core";
 import type { Bookmark, BookPart, ListeningRecord, ListeningState, NightSession } from "@/listen/model";
+import type { PreparePlan, PrepareStatus } from "@/listen/prepareAhead";
 import type { ReadAloudTimings, ReadAloudVoice } from "@/listen/readAloud";
 import type { KeyCheck, OnlineProviderInfo } from "@/listen/VoiceSettings";
 import type { Capabilities } from "@/shared/capabilities";
@@ -174,12 +175,16 @@ export interface ManifestChapter {
   /** Chương chỉ có chữ (.abook phiên bản 5): `state` "text" và tên mục chữ `texts/<mã>.txt` (không `file`, không `script`). */
   state?: "text" | null;
   text?: string;
+  /** Dòng người nghe bỏ khỏi phần đọc (lớp sửa `skip`, đã áp vào book.json - BookEdits.applyManifest). */
+  skip?: string[];
 }
 
 export interface LocalBook {
   format: string;
   id: string;
   title: string;
+  /** Tác giả ghi trong file sách (book.json của sách chỉ-chữ). */
+  author?: string;
   narrator: string;
   duration: number;
   chaptersTotal: number;
@@ -324,7 +329,7 @@ export interface EbookLibraryPlugin {
    *  với câu cho người dùng. */
   previewImport(options: { ref: string; pages?: string[][]; title?: string; author?: string }): Promise<ImportPreview>;
   /** Nhập thành sách chỉ-chữ (TextBook.kt → BookFileImport): `title` rỗng thì giữ tên của file sách. */
-  createImport(options: { ref: string; title: string }): Promise<AddedBook>;
+  createImport(options: { ref: string; title: string; separate?: boolean }): Promise<AddedBook>;
   discardImport(options: { ref: string }): Promise<void>;
 }
 
@@ -359,6 +364,14 @@ export interface ReadAloudPlugin {
   vieneuStart(options: { choices?: VieneuChoiceId[] }): Promise<VieneuStatus>;
   vieneuMeasure(): Promise<VieneuStatus>;
   vieneuRemove(options: { choice: VieneuChoiceId }): Promise<VieneuStatus>;
+  /** "Làm trước" (PrepareAhead.kt): việc nền của WorkManager đọc sẵn các chương này bằng đúng giọng ấy vào bộ đệm - chạy cả khi app đã đóng. */
+  preparePlan(options: { bookId: string; voice: string; chapterIds: number[] }): Promise<PreparePlan>;
+  prepareStart(options: { bookId: string; voice: string; chapterIds: number[]; label: string; chargingOnly?: boolean }): Promise<PrepareStatus>;
+  prepareStatus(): Promise<PrepareStatus>;
+  prepareCancel(): Promise<PrepareStatus>;
+  prepareOptions(options: { chargingOnly: boolean }): Promise<PrepareStatus>;
+  /** Tiến độ làm trước (sau mỗi đoạn, mỗi lần đổi). */
+  addListener(event: "readAloudPrepare", handler: (status: PrepareStatus) => void): Promise<PluginListenerHandle>;
 }
 
 export const EbookPlayer = registerPlugin<EbookPlayerPlugin>("EbookPlayer");

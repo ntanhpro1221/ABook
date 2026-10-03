@@ -256,6 +256,8 @@ def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bo
             "part": chapter.get("part") if isinstance(chapter.get("part"), int) else None,
             # Chương chỉ có chữ: đọc được, chưa nghe được ("state" của book.json; chương cũ không có trường này).
             "state": TEXT_STATE if chapter.get("text") and not available else None,
+            # Dòng người nghe bỏ khỏi phần đọc (lớp sửa `skip`): màn đọc và đọc to bỏ qua chúng; chữ của sách không đổi.
+            **({"skip": list(chapter["skip"])} if chapter.get("skip") else {}),
         })
     available = [chapter for chapter in items if chapter["available"]]
     complete = bool(book.get("complete")) and len(available) == len(items)
@@ -264,6 +266,7 @@ def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bo
         "format": FORMAT,
         "id": book_id,
         "title": str(book.get("title") or Path(path).name),
+        "author": str(book.get("author") or ""),  # tác giả trong file sách (EPUB / DOCX / PDF) - sách chỉ-chữ có, sách nói thường không
         "narrator": str(book.get("narrator") or ""),
         "duration": round(sum(chapter["duration"] for chapter in available), 1),
         "chaptersTotal": max(int(book.get("chaptersTotal") or 0), len(items)),
@@ -328,8 +331,29 @@ def _write_cover_meta(target: Path, book: dict[str, Any]) -> None:
         (target / covers.META_FILE).write_text(json.dumps(meta), encoding="utf-8")
 
 
+def same_book(prints: dict[str, dict[str, Any]], theirs: dict[str, dict[str, Any]]) -> bool:
+    """Hai bộ mã băm là cùng một cuốn? Audio: chung một chương là cùng một lần sản xuất. Chữ: hai cuốn có thể chung một chương
+    ngắn ("Lời nói đầu") mà là hai cuốn khác nhau, nên cuốn chỉ-chữ phải trùng cả bộ chữ."""
+    wanted = _prints_by_file(prints)
+    return wanted == _prints_by_file(theirs) if is_text_identity(prints) else bool(wanted & _prints_by_file(theirs))
+
+
+def find_imported(prints: dict[str, dict[str, Any]], library_root: Path) -> Path | None:
+    """Cuốn trong thư viện cùng nội dung với `prints` (như `import_opened` sẽ thấy), không có thì None - "Thêm sách từ file…" hỏi
+    người dùng ngay ở bước xem trước."""
+    return next((folder for folder in folders(library_root) if same_book(prints, chapter_prints(manifest(folder)))), None)
+
+
+def _free_folder(parent: Path, name: str) -> str:
+    """`name`, hay "name 2", "name 3"… - tên chưa có trong `parent` (bản riêng của một cuốn đã có)."""
+    candidate, number = name, 2
+    while (parent / candidate).exists():
+        candidate, number = f"{name} {number}", number + 1
+    return candidate
+
+
 def import_file(source: Path, library_root: Path, projects: Iterable[Path],
-                fingerprints: Fingerprints, report: dict[str, Any] | None = None) -> tuple[Path, str]:
+                fingerprints: Fingerprints, report: dict[str, Any] | None = None, *, separate: bool = False) -> tuple[Path, str]:
     """Nhập một file `.abook` (hay `.abookproj` mà máy chỉ nhập như một cuốn sách - xem `import_opened`). File hỏng, bị sửa hay
     không phải sách: `bookfile.BookFileError` / `projectfile.ProjectFileError`."""
     from . import bookfile, projectfile
@@ -337,11 +361,11 @@ def import_file(source: Path, library_root: Path, projects: Iterable[Path],
     opened = (projectfile.ProjectFile(Path(source)) if str(source).lower().endswith(projectfile.EXTENSION)
               else bookfile.BookFile(Path(source)))
     with opened:
-        return import_opened(opened, library_root, projects, fingerprints, report)
+        return import_opened(opened, library_root, projects, fingerprints, report, separate=separate)
 
 
 def import_opened(opened: Any, library_root: Path, projects: Iterable[Path], fingerprints: Fingerprints,
-                  report: dict[str, Any] | None = None) -> tuple[Path, str]:
+                  report: dict[str, Any] | None = None, *, separate: bool = False) -> tuple[Path, str]:
     """Nhập một file đã mở (`bookfile.BookFile` hay `projectfile.ProjectFile`: cùng giao diện - chapter_prints, edits,
     extract...). Trả (thư mục cuốn trong thư viện, cách): "project" - file do chính máy này xuất, mở
     dự án ấy; "existing" - đã nhập rồi, bản đã có đủ chương bằng hoặc hơn; "updated" - đã nhập rồi, bản mới nhiều
@@ -349,24 +373,22 @@ def import_opened(opened: Any, library_root: Path, projects: Iterable[Path], fin
 
     File phiên bản 4 mang lớp sửa của người nghe (book_edits.py): cuốn đã nhập thì phần sửa được HỢP với phần sửa trên máy
     (máy này thắng, không bị xoá); cuốn là dự án của chính máy này thì phần sửa được cất chờ người dùng đồng ý áp vào dự án
-    (`book_edits.fold`). `report` (nếu có) nhận {"edits": số thay đổi trong file, "merge": báo cáo hợp}."""
+    (`book_edits.fold`). `report` (nếu có) nhận {"edits": số thay đổi trong file, "merge": báo cáo hợp}. `separate`: người dùng
+    chọn "Thêm bản riêng" dù cuốn đã có - không tìm cuốn trùng, luôn là cuốn mới ở thư mục riêng."""
     report = report if report is not None else {}
     prints = opened.chapter_prints
     report["edits"] = book_edits.count(opened.edits)
     # File cả bộ chung chương với nhiều dự án (mỗi phần một dự án): mở phần đầu của bộ.
-    mine = [project for project in projects if fingerprints.shares_a_chapter(project, prints)]
+    mine = [] if separate else [project for project in projects if fingerprints.shares_a_chapter(project, prints)]
     if mine:
         project = Path(min(mine, key=continuation.part_number))
         if report["edits"]:
             book_edits.stash_incoming(project, opened.edits, opened.edits_cover(), opened.copy_member)
         return project, "project"
     imported = Path(library_root).expanduser() / IMPORTED_FOLDER
-    wanted = _prints_by_file(prints)
-    for existing in folders(library_root):
+    for existing in [] if separate else folders(library_root):
         theirs = chapter_prints(manifest(existing))
-        # Audio: chung một chương là cùng một lần sản xuất. Chữ: hai cuốn có thể chung một chương ngắn ("Lời nói đầu") mà là hai
-        # cuốn khác nhau, nên cuốn chỉ-chữ phải trùng cả bộ chữ.
-        if (wanted == _prints_by_file(theirs)) if is_text_identity(prints) else (wanted & _prints_by_file(theirs)):
+        if same_book(prints, theirs):
             # Cuốn đã nhập từ file `.abook`, nay gặp file `.abookproj` của nó: nhập lại để cuốn mang phần xưởng (project.json).
             gains_workshop = hasattr(opened, "workshop") and not (existing / PROJECT_MARKER).is_file()
             if len(prints) < len(theirs) or (len(prints) == len(theirs) and not gains_workshop):
@@ -380,6 +402,7 @@ def import_opened(opened: Any, library_root: Path, projects: Iterable[Path], fin
             report["merge"] = opened.last_merge
             _write_cover_meta(target, opened.book)
             return target.resolve(), "updated"
-    target = opened.extract(imported, _folder_name(str(opened.book.get("title") or ""), opened.content_key))
+    name = _folder_name(str(opened.book.get("title") or ""), opened.content_key)
+    target = opened.extract(imported, _free_folder(imported, name) if separate else name)
     _write_cover_meta(target, opened.book)
     return target.resolve(), "new"
