@@ -121,18 +121,19 @@ function EmptyLibrary() {
       className="mt-10"
       action={
         <div className="flex flex-col items-center gap-2">
-          <Button variant="primary" size="lg" icon={Download} onClick={() => navigate("/devices")}>
+          {/* Người mới thường có sẵn một file truyện mà chưa có ABook trên máy tính: nghe ngay là việc chính (soát UX a7, như máy tính). */}
+          <AddBookButton variant="primary" size="lg" />
+          <Button variant="secondary" icon={Download} onClick={() => navigate("/devices")}>
             Tải sách từ máy tính
           </Button>
-          <AddBookButton variant="ghost" />
           <Button variant="ghost" icon={FileAudio} onClick={() => void pickBookFile()}>
             Mở file sách (.abook)
           </Button>
         </div>
       }
     >
-      Kết nối với ABook trên máy tính qua Wi-Fi rồi tải sách về - nghe được cả khi không có mạng. Có file EPUB, Word, PDF hay
-      thư mục TXT thì thêm thẳng để đọc; có file sách .abook (bạn bè gửi, tải về)? Mở nó bằng app là sách vào Thư viện.
+      Có file EPUB, Word, PDF hay TXT thì thêm thẳng - nghe ngay bằng giọng đọc. Có ABook trên máy tính thì kết nối qua Wi-Fi rồi tải
+      sách nói về, nghe được cả khi không có mạng; có file sách .abook (bạn bè gửi, tải về) thì mở nó bằng app.
     </EmptyState>
   );
 }
