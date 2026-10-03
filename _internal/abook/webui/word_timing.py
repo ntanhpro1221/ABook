@@ -243,12 +243,20 @@ def finish(found: Sequence[Sequence[float] | None], line_end: float | None = Non
 _studio: Callable[[], Any] | None = None
 _lock = threading.RLock()
 _aligner: tuple[str, Any] | None = None
+_more: list[Path] = []  # thư mục model khác (mô-đun "Giọng VieNeu" của app chỉ-nghe tải bộ căn chữ về chỗ riêng)
 
 
 def configure(studio: Callable[[], Any] | None) -> None:
     """server.py: `lambda: app.studio` (StudioSetup hay None). App đóng gói không có numpy nên giao việc cho Python của Studio."""
     global _studio
     _studio = studio
+
+
+def add_model_dir(folder: Path | str) -> None:
+    """Thêm một chỗ có thể chứa model căn chữ (sau các chỗ của Studio, trước bản cạnh mã nguồn)."""
+    path = Path(folder)
+    if path not in _more:
+        _more.append(path)
 
 
 def enabled() -> bool:
@@ -269,6 +277,7 @@ def model_dir() -> Path | None:
     studio = _studio() if _studio is not None else None
     if studio is not None and getattr(studio, "word_align", None) is not None:
         candidates.append(Path(studio.word_align))
+    candidates += _more
     candidates.append(Path(__file__).resolve().parents[2] / "runtime" / "models" / "wordalign")
     return next((folder for folder in candidates if _complete(folder)), None)
 

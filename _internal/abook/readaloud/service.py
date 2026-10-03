@@ -7,12 +7,14 @@ from __future__ import annotations
 
 import threading
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any, Callable, Protocol
 
-from . import edge, loudness, windows
+from . import edge, loudness, vieneu, windows
 from .cache import ClipCache, clip_key
 from .mapping import fold, map_boundaries
 from .model import Synthesis, Voice, VoiceError
+from .prepare import SHARE as PREPARE_SHARE
+from .prepare import Prepare
 
 MAX_TEXT = 20_000  # ký tự một clip; đoạn của chương dài hơn nữa là hiếm, và Edge cũng phải cắt thành nhiều lượt
 
@@ -54,14 +56,24 @@ class DeviceProvider:
 
 
 class ReadAloud:
-    def __init__(self, folder: Path | str, providers: list[Provider] | None = None, *, limit: int | None = None) -> None:
+    """`vieneu_locate`: nơi mô-đun "Giọng VieNeu" đặt các phần (webui/vieneu_module.installed) - có thì thêm giọng VieNeu vào danh sách."""
+
+    def __init__(self, folder: Path | str, providers: list[Provider] | None = None, *, limit: int | None = None,
+                 vieneu_locate: Callable[[], vieneu.Installed | None] | None = None,
+                 rtf: Callable[[str], float | None] = lambda _voice: None) -> None:
         self.folder = Path(folder)
         kwargs = {} if limit is None else {"limit": limit}
         self.cache = ClipCache(self.folder, **kwargs)
         self.providers: dict[str, Provider] = {provider.id: provider for provider in (
             providers if providers is not None else [EdgeProvider(), DeviceProvider(self.folder / "tools")])}
+        self.vieneu = vieneu.VieneuProvider(vieneu_locate) if vieneu_locate is not None else None
+        if self.vieneu is not None:
+            self.providers[self.vieneu.id] = self.vieneu
         self._locks: dict[str, threading.Lock] = {}
         self._locks_guard = threading.Lock()
+        self._live = 0  # clip của người đang nghe đang được đọc: "Làm trước" nhường
+        self.prepare = Prepare(lambda voice, text: self.clip(voice, text, background=True), lambda: self._live,
+                               int(self.cache.limit * PREPARE_SHARE), rtf)
 
     def warm(self) -> None:
         """Liệt kê giọng của máy ở luồng nền (hỏi PowerShell mất ~1 giây): lúc người nghe mở một cuốn chỉ-có-chữ, danh sách đã sẵn."""
@@ -89,8 +101,9 @@ class ReadAloud:
             raise VoiceError("Giọng này không có trên máy.", "voice")
         return provider, native
 
-    def clip(self, voice_id: str, text: str, *, cached_only: bool = False) -> dict[str, Any]:
-        """Clip của `text` bằng `voice_id`: `{file, duration_ms, words}` (từ bộ đệm hay đọc mới). `cached_only`: không đọc mới - chưa có thì `VoiceError("uncached")`."""
+    def clip(self, voice_id: str, text: str, *, cached_only: bool = False, background: bool = False) -> dict[str, Any]:
+        """Clip của `text` bằng `voice_id`: `{file, duration_ms, words}` (từ bộ đệm hay đọc mới). `cached_only`: không đọc mới - chưa có thì `VoiceError("uncached")`.
+        `background`: việc "Làm trước" (prepare.py) - không tính là người đang nghe chờ."""
         if not fold(text):
             raise VoiceError("Đoạn này không có chữ nào để đọc.", "empty")
         if len(text) > MAX_TEXT:
@@ -103,12 +116,16 @@ class ReadAloud:
                 raise VoiceError("Chưa đọc đoạn này.", "uncached")
             with self._locks_guard:
                 lock = self._locks.setdefault(key, threading.Lock())
-            with lock:  # hai yêu cầu cùng đoạn (đọc trước + bấm nghe) chỉ đọc một lần
-                hit = self.cache.get(key)
-                if hit is None:
-                    made = provider.synthesize(text, native)
-                    words = map_boundaries(text, made.boundaries, made.duration_ms)
-                    hit = self.cache.put(key, made.audio, made.ext, made.duration_ms, words)
-            with self._locks_guard:
-                self._locks.pop(key, None)
+                self._live += 0 if background else 1
+            try:
+                with lock:  # hai yêu cầu cùng đoạn (đọc trước + bấm nghe) chỉ đọc một lần
+                    hit = self.cache.get(key)
+                    if hit is None:
+                        made = provider.synthesize(text, native)
+                        words = made.words if made.words is not None else map_boundaries(text, made.boundaries, made.duration_ms)
+                        hit = self.cache.put(key, made.audio, made.ext, made.duration_ms, words)
+            finally:
+                with self._locks_guard:
+                    self._locks.pop(key, None)
+                    self._live -= 0 if background else 1
         return {"file": hit.file, "duration_ms": hit.duration_ms, "words": hit.words}

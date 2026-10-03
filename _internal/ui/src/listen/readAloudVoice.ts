@@ -40,6 +40,21 @@ export function chooseVoice(bookId: string, voice: string): void {
   if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(VOICE_CHANGED_EVENT, { detail: bookId }));
 }
 
+/** Người dùng bấm đổi giọng (giọng VieNeu không kịp nghe trên máy này): mọi cuốn đang chọn giọng có mã bắt đầu bằng `fromPrefix`, và lựa chọn
+ *  chung, chuyển sang `voice`. Chỉ khi người dùng bấm - không bao giờ tự đổi. */
+export function switchVoices(fromPrefix: string, voice: string): void {
+  try {
+    for (let index = localStorage.length - 1; index >= 0; index--) {
+      const key = localStorage.key(index) ?? "";
+      if (key.startsWith("abook-readaloud-voice-") && (localStorage.getItem(key) ?? "").startsWith(fromPrefix)) localStorage.setItem(key, voice);
+    }
+  } catch {
+    /* không đọc được bộ nhớ: vẫn đổi lựa chọn chung */
+  }
+  write(GLOBAL_KEY, voice);
+  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(VOICE_CHANGED_EVENT, { detail: "" }));
+}
+
 /** Giọng dùng thật: giọng đã chọn nếu còn trong danh sách, không thì giọng mặc định, không thì giọng đầu tiên. */
 export function resolveVoice(voices: ReadAloudVoice[], chosen: string): ReadAloudVoice | undefined {
   return voices.find((voice) => voice.id === chosen) ?? voices.find((voice) => voice.default) ?? voices[0];
@@ -47,7 +62,12 @@ export function resolveVoice(voices: ReadAloudVoice[], chosen: string): ReadAlou
 
 let fellBack = false; // lời nhắn rơi sang giọng máy: một lần cho cả phiên, không mỗi chương một lần
 
-const known = new WeakMap<ListenSource, Promise<ReadAloudVoice[]>>();
+let known = new WeakMap<ListenSource, Promise<ReadAloudVoice[]>>();
+
+/** Danh sách giọng của máy vừa đổi (tải xong giọng VieNeu): hỏi lại ở lần sau. */
+export function forgetVoices(): void {
+  known = new WeakMap();
+}
 
 /** Danh sách giọng của nguồn (nhớ cho cả phiên; lần hỏi hỏng thì hỏi lại lần sau). */
 export function voicesOf(source: ListenSource): Promise<ReadAloudVoice[]> {
