@@ -61,8 +61,8 @@ object SleepTimer {
     }
 
     private fun remainingInChapter(): Double {
-        val exo = Playback.player ?: return 0.0
-        return ((exo.duration - exo.currentPosition) / 1000.0).coerceAtLeast(0.0)
+        if (Playback.player == null) return 0.0
+        return Playback.remainingInChapterMs() / 1000.0
     }
 
     private fun leftMs(now: Long = System.currentTimeMillis()): Long =
@@ -99,7 +99,7 @@ object SleepTimer {
     fun setEndOfChapter() {
         mode = Mode.CHAPTER
         stoppedAtMs = 0
-        Playback.player?.pauseAtEndOfMediaItems = true
+        Playback.holdAtItemEnd(true)
         restoreVolume()
         Bedtime.timerSet(-1)
         Motion.refresh()
@@ -188,7 +188,7 @@ object SleepTimer {
                 }
                 val remaining = when (mode) {
                     Mode.MINUTES -> leftMs()
-                    Mode.CHAPTER -> exo.duration - exo.currentPosition
+                    Mode.CHAPTER -> Playback.remainingInChapterMs()
                     Mode.OFF -> 0L
                 }
                 if (mode == Mode.MINUTES && remaining <= 0) {
@@ -199,9 +199,9 @@ object SleepTimer {
                 if (exo.isPlaying && remaining in 0 until fadeMs) {
                     // Tuyến tính theo dB: 0 dB xuống -40 dB trong đoạn nhỏ dần.
                     val progress = 1.0 - remaining.toDouble() / fadeMs
-                    exo.volume = 10.0.pow(-40.0 * progress / 20.0).toFloat().coerceIn(0.01f, 1f)
-                } else if (exo.volume < 1f && remaining >= fadeMs) {
-                    exo.volume = 1f
+                    Playback.applyVolume(10.0.pow(-40.0 * progress / 20.0).toFloat().coerceIn(0.01f, 1f))
+                } else if (Playback.fadeLevel < 1f && remaining >= fadeMs) {
+                    Playback.applyVolume(1f)
                 }
                 main.postDelayed(this, 250)
             }
@@ -237,7 +237,7 @@ object SleepTimer {
     }
 
     private fun restoreVolume() {
-        Playback.player?.volume = 1f
+        Playback.applyVolume(1f)
     }
 
     private fun buzz(pattern: LongArray) {

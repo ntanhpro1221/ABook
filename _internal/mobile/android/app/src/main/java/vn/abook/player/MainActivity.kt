@@ -5,11 +5,13 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import com.getcapacitor.BridgeActivity
+import vn.abook.player.readaloud.ReadAloudPlugin
 
 class MainActivity : BridgeActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         registerPlugin(PlayerPlugin::class.java)
         registerPlugin(LibraryPlugin::class.java)
+        registerPlugin(ReadAloudPlugin::class.java)
         super.onCreate(savedInstanceState)
         if (savedInstanceState == null) open(intent)
     }
