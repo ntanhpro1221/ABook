@@ -308,8 +308,12 @@ ORIGIN_CASES = [
     ([_name_text(JA_NAMES[:12], 1)], None),
     ([_name_text(WEST_NAMES, 2) + " " + _name_text(JA_NAMES[:6], 2)], None),
     (["Hoa và Nam đi chợ. Mai nói với Ba rằng Tôi không đi. " * 60], None),
-    ([_name_text(WEST_NAMES, 5)] * 12 + [_name_text(JA_NAMES, 40)] * 5, None),
-    ([_name_text(WEST_NAMES, 5)] * 12 + [_name_text(JA_NAMES, 40)] * 5, 17),
+    ([_name_text(WEST_NAMES, 1)] * 40 + [_name_text(JA_NAMES, 40)] * 5, None),
+    ([_name_text(WEST_NAMES, 1)] * 40 + [_name_text(JA_NAMES, 40)] * 5, 45),
+    # honorifics beside romaji names lower the share needed: a Japanese book with many Western-style names
+    ([_name_text(WEST_NAMES * 2 + JA_NAMES, 4) + " " + (" ".join(f"{name}-san nói." for name in JA_NAMES[:4]) + " ") * 8], None),
+    ([_name_text(WEST_NAMES * 2 + JA_NAMES, 4) + " " + (" ".join(f"{name}-san nói." for name in WEST_NAMES[:4]) + " ") * 8], None),
+    ([_name_text(WEST_NAMES * 2 + JA_NAMES, 4) + " " + (" ".join(f"{name}-dono nói." for name in JA_NAMES[:2]) + " ") * 8], None),
 ]
 
 # Clips made on the desktop for VieneuOnDeviceTest: a paragraph of two sentences that is two units for Nano (140 chars) and one for Turbo.
@@ -353,9 +357,9 @@ def text_fixture() -> dict:
              [["turbo", "Ngọc Huyền", "Trời hôm nay đẹp quá."], ["nano", "Adam", "Ừ."], ["nano", "Đức Trí", CLIP_TEXT], ["turbo", "", ""]]]
     origins = []
     for texts, sample in ORIGIN_CASES:
-        shares = names.origin_shares(names.name_counts(texts[:sample or names.SAMPLE_CHAPTERS]))
+        shares = names.origin_shares(*names.scan_names(texts[:sample or names.SAMPLE_CHAPTERS]))
         origins.append({"texts": texts, **({"sample": sample} if sample else {}), "origin": names.book_origin(texts, **({"sample": sample} if sample else {})),
-                        **{key: shares[key] for key in ("total", "names", "ja_names", "ko_names")}})
+                        **{key: shares[key] for key in ("total", "names", "ja_names", "ko_names", "honorific", "honorific_names")}})
     return {"sea_g2p": "0.9.1", "sentences": len(SENTENCES), "g2p": g2p, "normalize": normalize, "units": units, "frames": frames, "seeds": seeds,
             "origins": origins}
 

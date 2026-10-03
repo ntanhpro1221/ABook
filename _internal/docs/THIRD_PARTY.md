@@ -25,7 +25,9 @@ của chính thành phần ấy.
   bản "essentials" của gyan.dev (cấu hình GPL-3.0, mã nguồn: https://www.gyan.dev/ffmpeg/builds/); phần bọc imageio-ffmpeg là BSD-2-Clause.
   Tải về thư mục dữ liệu của app (`tools/ffmpeg`), gỡ app là gỡ nó.
 - CMU Pronouncing Dictionary (`cmudict.dict`, dữ liệu từ CMU Sphinx; sử dụng và phân phối không hạn chế, yêu cầu ghi nhận
-  nguồn). Source đi kèm giữ nguyên `_internal/abook/assets/CMUDICT_LICENSE.txt`.
+  nguồn). Source đi kèm giữ nguyên `_internal/abook/assets/CMUDICT_LICENSE.txt`. `abook/assets/english_phones.txt.gz` (Việt hoá từ tiếng Anh,
+  `scripts/build_english_phones.py`) là bản gọn của chính từ điển này - cách đọc đầu tiên của mỗi từ a-z, gzip - cùng giấy phép; bộ cài máy tính
+  mang nó, điện thoại tải khi cần.
 - `abook/readaloud/english_words.txt` (danh sách từ tiếng Anh cho "Nghe ngay", `scripts/build_english_words.py`): các từ nguyên vẹn trong từ vựng `bert-base-uncased` (Apache-2.0, Google) cũng có trong CMU Pronouncing Dictionary (ở trên), cộng danh sách tên gọi và họ Anh / Âu do ABook tự viết. Chỉ là danh sách từ viết thường, không kèm trọng số hay model.
 
 ## App Windows đóng gói (bộ cài NSIS, `docs/PACKAGING.md`)
