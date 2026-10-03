@@ -1828,6 +1828,57 @@ Giới hạn:
     guqin, 和風 / 古风) so với bài phương Tây cùng nhịp.
   - Giám khảo nào nhận ra được thì dùng nó chấm lại toàn danh sách eastern; luật mới chỉ giữ bài được nhận ra, còn ≥ 40 phút.
 
+**GHI TRƯỚC - (1) LỌC LẠI EASTERN + (2) NHÃN LỜI HÁT BẰNG MF (03-10 16:4x, Lead giao, thứ tự 1 rồi 2):**
+
+Chung:
+- Mọi lượt MF gộp vào MỘT job GPU (`eastern_vocals_check.py mf`). Chấm (1) và áp xong mới chấm (2).
+- Đoạn nghe 30 giây, mono 16 kHz. MF 2601 4-bit như phép trước.
+
+**(1) Eastern.**
+- Tập kiểm: `eastern_testset.json` (02-10).
+  - Dương: 155 bài nêu đích danh nhạc cụ Đông Á trong tên / tag.
+  - Âm: 300 bài không có yếu tố Đông Á.
+  - Chỉ bài có file. Bốc 40 bài dương (`random.Random(20261003)`); mỗi bài ghép bài âm chưa dùng gần nhất theo
+    `arousal_raw` của CLAP (cùng cường độ) → 40 cặp.
+  - Đoạn nghe: giữa bài.
+- Giám khảo:
+  - **M:** điểm MF với mô tả eastern của phép trước (`DESC["eastern"]`), cách hỏi a / b, điểm = trung bình a / b.
+  - **A:** AST, trung bình xác suất "Music of Asia" + "Traditional music", ba cửa sổ như phép trước.
+- **Đạt năng lực:** AUC dương so âm ≥ 0,80 VÀ cận dưới KTC 95 % (bootstrap 2.000, hạt 7) ≥ 0,65. Với M thêm điều kiện
+  Spearman a so b ≥ 0,70.
+- Cả hai đạt thì lấy giám khảo AUC cao hơn.
+- Ngưỡng: điểm nhỏ nhất mà trên tập kiểm, trong các bài có điểm ≥ ngưỡng, ≥ 90 % là dương.
+- **Lọc lại:**
+  - Kho = mọi bài danh mục qua `_base` và luật eastern hiện tại (luật gốc, chưa siết; 132 bài). M chấm cả kho.
+  - Eastern mới = bài trong kho có điểm ≥ ngưỡng, rồi siết như cũ trừ điều "lời" (chờ (2)).
+  - Phải còn ≥ 40 phút.
+- **Không giám khảo nào đạt, hoặc còn < 40 phút:** eastern = style `eastern_ancient` VÀ tên / tag có tên nhạc cụ / chữ Đông Á
+  (danh sách từ trong script). Vẫn < 40 phút thì báo Lead, không độn.
+
+**(2) Lời hát.**
+- Mẫu phân tầng theo `vocals` của CLAP, 30 bài mỗi tầng (hạt 20261003):
+  - S1 < 0,1; S2 0,1–0,3; S3 0,3–0,5 (bài danh mục, mọi nguồn);
+  - S4 > 0,5 trong danh mục (Incompetech, được miễn);
+  - S5 > 0,5 đã bị loại (không phải Incompetech, có file).
+- Đối chứng:
+  - 8 bài có tên chỉ rõ có hát ("sung by", "feat."): bài có hát.
+  - 8 bài có "instrumental" trong tên: bài không lời.
+- Mỗi bài hai đoạn (bắt đầu ở 25 % và 60 % độ dài). MF hỏi hai cách:
+  - a: "Does this audio contain a human voice singing or rapping? Answer yes or no."
+  - b: "Is this purely instrumental music with no singing voice at all? Answer yes or no."
+  - p_hát của đoạn = trung bình (P_a(yes), 1 − P_b(yes)). P(yes) = xác suất "yes" chia (yes + no) ở token đầu, gộp hoa / thường.
+  - Bài **có hát** nếu đoạn nào có p_hát ≥ 0,5.
+- **Cổng dùng được:**
+  - phán quyết nhị phân của a và của b (đảo) khớp ≥ 0,85 trên mọi đoạn;
+  - đối chứng: ≥ 6/8 bài có hát được nhận có hát, ≥ 7/8 bài không lời được nhận không lời.
+- **Ngưỡng:**
+  - Với t ∈ {0,3; 0,5; 0,7; 0,9; 1,01}: ước tỉ lệ bài có hát trong số bài danh mục có `vocals` ≤ t, trọng số theo cỡ tầng
+    S1–S4.
+  - Chọn t LỚN NHẤT có tỉ lệ ấy ≤ 5 %.
+  - Điều "lời" của siết "Nghe ngay" đổi từ vocals > 0,3 thành vocals > t.
+  - Dựng lại danh sách và danh mục; Lead deploy.
+- Ghi lại, không quyết: tỉ lệ có hát của S5. Nếu thấp thì bộ lọc danh mục 0,5 đang loại nhầm nhiều bài; đó là đề xuất riêng.
+
 **GHI TRƯỚC - NGƯỠNG LỜI HÁT CỦA CẢ DANH MỤC (03-10 15:3x; trước khi có số AST nào ngoài 55 bài đầu đã bỏ):**
 
 Câu hỏi: `vocals` (CLAP zero-shot) trong khoảng 0,3–0,5 có thật là có tiếng hát không?
