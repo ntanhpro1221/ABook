@@ -501,9 +501,10 @@ def test_world_pitch_variant_strict_mode_rejects_zero_padding(monkeypatch) -> No
     monkeypatch.setattr(
         tts_module.pyworld,
         "synthesize",
-        lambda *_args, **_kwargs: np.ones(7, dtype=np.float64),
+        lambda *_args, **_kwargs: np.ones(399, dtype=np.float64),
     )
-    audio = np.ones(8, dtype=np.float32)
+    # 400 mẫu = 25 ms: trên WORLD_MIN_SECONDS (bản ngắn hơn đi qua nguyên vẹn, không vào WORLD).
+    audio = np.ones(400, dtype=np.float32)
 
     with pytest.raises(ValueError, match="no-padding"):
         apply_pitch_variant(audio, 16_000, 1, allow_padding=False)

@@ -88,7 +88,7 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
     So bằng tai: PARCOR tệ rõ rệt, WORLD không phân biệt được với Praat. UTMOSv2 xếp ngược lại nhưng nó đã
     ba lần mâu thuẫn với người nghe ở đúng vùng này, nên không dùng nó để chọn.
   - *Cách thể hiện* ← F0 và sampling, theo từng câu, do đạo diễn quyết.
-  - *Chất giọng nền của preset* ← `PRESET_BASE_PITCH_SEMITONES`, hiệu chỉnh một lần bằng tai cho mỗi preset.
+  - *Chất giọng nền của preset* ← `pitch_st` trong `abook/assets/voice_balance.json` (xem `docs/VOICE_BALANCE.md`), hiệu chỉnh một lần bằng tai cho mỗi preset.
     Giá trị này **không** bị chặn bởi `PRESET_MIN_PITCH_SEMITONES` — giới hạn đó suy từ baseline UTMOSv2,
     mà UTMOSv2 đã hai lần mâu thuẫn với tai người nghe ở đúng vùng này.
 - Biến đổi giọng là lớp trang trí **sau inference và sau toàn bộ thẩm định**: áp ở bước ghép chương, không

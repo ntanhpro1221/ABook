@@ -2,7 +2,7 @@
 
 Vì sao có: bốn giọng kiểu đọc truyện của VieNeu 3.8.1 đọc 10,9-12,7 kt/s, dưới sàn 12,5 của cổng
 nhịp - Đức Trí, người dẫn chuyện chủ sách chọn, ngoài băng 23/25 câu. Cao độ gốc không chữa được vì
-`apply_pitch_variant` giữ nguyên độ dài câu. Xem `PRESET_SPEED_FACTOR`.
+`apply_pitch_variant` giữ nguyên độ dài câu. Hệ số nằm trong bảng `voice_balance` (tempo = x * r_v).
 """
 from __future__ import annotations
 
@@ -11,12 +11,8 @@ import pytest
 import pyworld
 
 from abook.tts import apply_speed_change
-from abook.voice_catalog import (
-    PRESET_SPEED_FACTOR,
-    SPEED_FACTOR_MAX,
-    SPEED_FACTOR_MIN,
-    speed_factor_for_preset,
-)
+from abook import voice_balance
+from abook.voice_catalog import SPEED_FACTOR_MAX, SPEED_FACTOR_MIN
 
 RATE = 24_000
 
@@ -49,7 +45,6 @@ def test_a_speed_factor_keeps_the_pitch() -> None:
 def test_no_factor_means_no_change_at_all() -> None:
     audio = voiced()
     assert np.array_equal(apply_speed_change(audio, RATE, 1.0), audio)
-    assert speed_factor_for_preset("a preset nobody tuned") == 1.0
 
 
 def test_a_factor_outside_the_range_is_refused() -> None:
@@ -59,9 +54,16 @@ def test_a_factor_outside_the_range_is_refused() -> None:
         apply_speed_change(voiced(), RATE, SPEED_FACTOR_MIN - 0.1)
 
 
-def test_every_catalogued_factor_is_inside_the_range() -> None:
-    for name, factor in PRESET_SPEED_FACTOR.items():
-        assert SPEED_FACTOR_MIN <= factor <= SPEED_FACTOR_MAX, name
+def test_the_range_now_reaches_the_slow_tempi_the_shared_knob_asks_for() -> None:
+    # x ~ 0,85 nhân r ~ 0,89 là 0,76: sàn cũ 0,80 từ chối nó.
+    assert SPEED_FACTOR_MIN == 0.70
+    assert apply_speed_change(voiced(), RATE, 0.76).size > voiced().size
+
+
+def test_every_tabulated_tempo_is_inside_the_range() -> None:
+    table = voice_balance.load_table()
+    for key, record in table["voices"].items():
+        assert SPEED_FACTOR_MIN <= table["x"] * record["r"] <= SPEED_FACTOR_MAX, key
 
 
 def test_the_speed_step_runs_after_pitch_and_skips_the_laugh() -> None:
