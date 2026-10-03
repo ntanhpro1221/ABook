@@ -24,10 +24,10 @@ async function fresh() {
 }
 
 /** Nguồn giả: `fail[mã giọng]` = lý do lỗi của giọng ấy; ghi lại mọi lần gọi. */
-function source(fail: Record<string, string> = {}) {
+function source(fail: Record<string, string> = {}, voices: ReadAloudVoice[] = VOICES) {
   const calls: string[] = [];
   const value: ListenSource = {
-    readAloudVoices: async () => VOICES,
+    readAloudVoices: async () => voices,
     readAloudClip: async (voice: string): Promise<ReadAloudClip> => {
       calls.push(voice);
       if (fail[voice]) throw new ReadAloudError(`hỏng ${voice}`, fail[voice]);
@@ -71,6 +71,19 @@ describe("giọng dự phòng của Nghe ngay", () => {
       "Khóa Azure Speech không dùng được - tạm đọc bằng giọng Hoài My. Kiểm tra lại khóa trong Cài đặt.",
       module.FALLBACK_NOTICE,
     ]);
+  });
+
+  it("mất mạng mà máy không có giọng tiếng Việt: nói thật và chỉ cách, không hứa giọng của máy", async () => {
+    const { module } = await fresh();
+    const online = VOICES.filter((voice) => voice.online);
+    const { value } = source({ "edge:vi-VN-HoaiMyNeural": "offline" }, online);
+    const error = await module.speechFetcher(value, "b1", vi.fn())("edge:vi-VN-HoaiMyNeural", "Một.").catch((caught: unknown) => caught);
+    expect((error as Error).message).toBe(module.NO_OFFLINE_VOICE);
+    expect((error as { reason?: string }).reason).toBe("offline"); // bộ đọc to không thử lại vô ích khi mất mạng
+    // Lỗi dịch vụ (có mạng): vẫn là lời của dịch vụ.
+    const busy = source({ "edge:vi-VN-HoaiMyNeural": "service" }, online);
+    const other = await module.speechFetcher(busy.value, "b1", vi.fn())("edge:vi-VN-HoaiMyNeural", "Hai.").catch((caught: unknown) => caught);
+    expect((other as Error).message).toBe("hỏng edge:vi-VN-HoaiMyNeural");
   });
 
   it("đổi khóa trong Cài đặt: giọng dùng khóa được thử lại", async () => {
