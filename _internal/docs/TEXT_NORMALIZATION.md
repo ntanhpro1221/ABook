@@ -203,7 +203,10 @@ word và cho ra dạng normalized của word").
   2. *Model phiên âm (tải thêm, không đóng vào APK):*
      - chạy MỘT lần cho mỗi từ khác nhau của cuốn, lúc thêm sách hay chạy nền, rồi lưu đệm;
      - cỡ một cuốn: vài trăm đến nghìn từ × vài chục ms trên máy yếu = vài chục giây;
-     - ONNX Runtime hay viết thẳng bằng Kotlin: quyết bằng số đo ms/từ.
+     - Chạy bằng ONNX Runtime dùng chung. Điện thoại đã tải ORT 1.30.0 theo yêu cầu (`OrtRuntime.kt`, ~12 MB nén) cho Gói nhạc và
+       VieNeu; VieNeu dùng lại bản của Gói nhạc.
+     - Khi thêm module thứ ba, gom ORT thành một thành phần dùng chung thật: tải một lần, đếm module đang cần, gỡ khi không còn ai
+       cần. Thay cho cách VieNeu "ngó" thư mục Gói nhạc như hiện nay.
   3. *Luật thuần* (không tải gì, chạy mọi máy, cũng là lưới an toàn khi model ra dạng không hợp lệ):
      - romaji / Hàn theo quy ước đã nghiên cứu;
      - từ điển từ mượn và viết tắt;
