@@ -25,7 +25,7 @@ FIXTURES = ROOT / "tests" / "fixtures" / "romanization"
 # (token, origin): mỗi ca một dòng luật; ca nào luật không nhận thì reading là null.
 EDGE: list[tuple[str, str | None]] = [
     # hậu tố gọi (mục 2): đọc theo chính bảng romaji
-    ("Koutarou-san", "ja"), ("Subaru-kun", "ja"), ("Yuki-chan", "ja"), ("Sakura-sama", "ja"), ("Tanaka-senpai", "ja"), ("Sato-sensei", "ja"),
+    ("Koutarou-san", "ja"), ("Subaru-kun", "ja"), ("Yuki-chan", "ja"), ("Sakura-sama", "ja"), ("Tanaka-senpai", "ja"), ("Sato-sensei", "ja"), ("Onee-san", "ja"), ("Okaa-san", "ja"), ("Ojii-san", "ja"), ("Jin-dono", "ja"), ("Yuki-tan", "ja"), ("Kou-nii", "ja"), ("Sora-nee", "ja"),
     ("senpai", "ja"), ("sensei", "ja"), ("Charlotte-san", "ja"),
     # u -> u, e -> e (chủ sách), iu / u sau âm vòm, s -> x, sh -> s, tsu, fu, z / j, k / g theo chính tả
     ("Kuro", "ja"), ("Yuzuru", "ja"), ("Ryuu", "ja"), ("Shuuichi", "ja"), ("Chuuya", "ja"), ("Jun", "ja"), ("Tsubasa", "ja"),
@@ -41,6 +41,15 @@ EDGE: list[tuple[str, str | None]] = [
     ("Yokohama", "ja"), ("Mayu", "ja"), ("Yoshida", "ja"), ("Megumi", "ja"), ("Keita", "ja"), ("Seiya", "ja"), ("Kyouko", "ja"), ("Ryouma", "ja"),
     ("Kouki", "ja"), ("Satou", "ja"), ("Shouta", "ja"), ("Chouji", "ja"), ("Jouji", "ja"), ("Ouji", "ja"), ("Kyōto", "ja"), ("Kyôto", "ja"), ("Ōno", "ja"),
     ("Kaoru", "ja"), ("Tooru", "ja"), ("Hokkaidō", "ja"), ("Nōto", "ja"),
+    # chủ sách lần 4: ee / ii / aa gộp, g + i -> ghi, tsu -> xu, yu tách, shu -> su, o không phụ âm đầu -> o, ao cuối gộp / giữa từ tách, từ quen onigiri
+    ("Hiiragi", "ja"), ("Inoue", "ja"), ("Jouichi", "ja"), ("Kouhai", "ja"), ("Senpai", "ja"), ("Tsubasa", "ja"), ("Matsuyama", "ja"), ("Natsuki", "ja"),
+    ("Ryuu", "ja"), ("Kyuuji", "ja"), ("Nyuu", "ja"), ("Shuuichi", "ja"), ("Kyūshū", "ja"), ("Osaka", "ja"), ("Ōsaka", "ja"), ("Aoi", "ja"), ("Kaori", "ja"),
+    ("Nao", "ja"), ("Naoki", "ja"), ("Ao", "ja"), ("Onigiri", "ja"), ("Onigiri-kun", "ja"), ("Tomoe", "ja"), ("Sora", "ja"), ("Konoha", "ja"), ("Ozu", "ja"),
+    ("Maaya", "ja"), ("Gin", "ja"), ("Ginko", "ja"), ("Jin", "ja"),
+    # Hàn lần 4: bật hơi như thường, s -> x, j -> gi, y + nguyên âm -> gi, eo, yu / yeo tách i-, wo -> uô, w đầu từ -> gu (giữa từ: analogy), oi
+    ("Kang", "ko"), ("Taehyun", "ko"), ("Choi", "ko"), ("Yoon", "ko"), ("Hyung", "ko"), ("Seojun", "ko"), ("Jeong", "ko"), ("Won", "ko"), ("Suwon", "ko"),
+    ("Busan", "ko"), ("Jin", "ko"), ("Kim Jong-un", "ko"), ("Yeji", "ko"), ("Yeo", "ko"), ("Ye", "ko"), ("Hyeon", "ko"), ("Gyeongju", "ko"), ("Seoul", "ko"),
+    ("Hoe", "ko"), ("Jeju", "ko"), ("Seok", "ko"),
     # Hepburn không có: ti, tu, hu, si, dài hoặc chữ không phải romaji
     ("Tuka", "ja"), ("Hiro", "ja"), ("Cale", "ja"), ("Lily", "ja"), ("Ah", "ja"), ("IZUMO", "ja"), ("iPhone", "ja"), ("Ko1", "ja"),
     ("kk", "ja"), ("'ka", "ja"), ("Ka-", "ja"), ("", "ja"), ("Kaz", "ja"), ("Sō", "ja"),

@@ -133,18 +133,30 @@ object ReadAloud {
     /** "Thử giọng" (Cài đặt): đúng giọng này đọc `text` (qua bộ đệm), trả file âm thanh. Chạy ở luồng nền. */
     fun sample(id: String, text: String): File = readExactly(id, text).file
 
-    /** Đúng giọng này, không rơi sang giọng khác ("Thử giọng", "Làm trước"); qua bộ đệm. `origin`: gốc của cuốn ([originOf]). Chạy ở luồng nền. */
+    /** Đúng giọng này, không rơi sang giọng khác ("Thử giọng", "Làm trước"); qua bộ đệm. `origin`: gốc của cuốn ([originOf] / [originNow]). Chạy ở luồng nền. */
     fun readExactly(id: String, text: String, origin: String? = null): Clip = reader().readExactly(text, id, origin)
 
     private val origins = ConcurrentHashMap<String, String>()
 
+    private val guesser = Executors.newSingleThreadExecutor { Thread(it, "read-aloud-origin").apply { isDaemon = true } }
+    private val guessing = ConcurrentHashMap.newKeySet<String>()
+
     /**
      * Gốc Nhật / Hàn của cuốn ("ja" / "ko", null = không) để giọng VieNeu đọc tên theo luật phiên âm ([Names]): người dùng ghi đè thì theo đó, không thì máy đoán từ các
-     * chương đầu rồi nhớ ([VoiceChoices.originFor]). Đọc file nên gọi ở luồng nền.
+     * chương đầu rồi nhớ ([VoiceChoices.originFor]). KHÔNG chờ: đoán đọc file nên chạy ở luồng nền riêng, một lần cho mỗi cuốn; trong lúc chưa có thì trả null (đọc như không
+     * có gốc), có rồi mới dùng. An toàn ở luồng chính.
      */
     fun originOf(bookId: String): String? {
         if (bookId.isBlank()) return null
-        val found = origins[bookId] ?: (choices?.originFor(bookId) { sampleTexts(bookId) } ?: "").also { origins[bookId] = it }
+        origins[bookId]?.let { return it.ifEmpty { null } }
+        if (guessing.add(bookId)) guesser.execute { try { originNow(bookId) } finally { guessing.remove(bookId) } }
+        return null
+    }
+
+    /** Như [originOf] nhưng chờ lần đoán xong - chỉ cho luồng nền ("Làm trước" phải dùng đúng gốc ngay từ đoạn đầu). */
+    fun originNow(bookId: String): String? {
+        if (bookId.isBlank()) return null
+        val found = origins[bookId] ?: (runCatching { choices?.originFor(bookId) { sampleTexts(bookId) } }.getOrNull() ?: "").also { origins[bookId] = it }
         return found.ifEmpty { null }
     }
 
@@ -499,7 +511,7 @@ object ReadAloud {
         val bookId = Playback.bookId
         worker.execute {
             val began = System.nanoTime()
-            val origin = runCatching { originOf(bookId) }.getOrNull()
+            val origin = originOf(bookId)
             val result = try {
                 runCatching { reader().read(text, voice, origin) }
             } finally {
