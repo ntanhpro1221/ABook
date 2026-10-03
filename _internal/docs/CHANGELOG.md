@@ -26,7 +26,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - **Nhạc nền đi theo khi điện thoại chia sẻ thư viện**: máy tính hay điện thoại khác nghe sách từ điện thoại của bạn giờ nghe cả
   nhạc nền dưới giọng đọc, như khi nghe từ máy tính - gồm nhạc người làm sách đã gắn và bài "Nhạc của tôi" bạn đã ghim vào sách,
   theo đúng cách bạn đã chỉnh (tắt nhạc, mức, đoạn im lặng). Chỉ những bài sách đang dùng mới được chia sẻ, không bao giờ cả kho
-  "Nhạc của tôi".
+  "Nhạc của tôi". Sách tải về điện thoại từ máy tính hay điện thoại khác cũng tải luôn nhạc nền (đủ byte mới giữ; bài nào hỏng thì
+  bỏ bài ấy, sách vẫn tải xong), nên nghe được nhạc cả khi không có mạng và chia sẻ tiếp được cho máy khác.
 
 - **Tìm ảnh bìa trên mạng, ngay trên điện thoại**: trong "Sửa sách", cạnh "Chọn ảnh bìa…" có "Tìm ảnh bìa trên mạng…" - hỏi iTunes,
   Open Library và Google Books theo tên bộ truyện (như trên máy tính), bấm một ảnh là đặt làm bìa. Ảnh chỉ lấy từ các nguồn ấy,

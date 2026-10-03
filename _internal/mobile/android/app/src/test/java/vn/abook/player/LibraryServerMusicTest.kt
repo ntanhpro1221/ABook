@@ -86,6 +86,10 @@ class LibraryServerMusicTest {
         assertEquals(-18.0, music.getDouble("levelDb"), 0.0)
         assertEquals(listOf(calm, battle), cuedTracks(shown))
         assertEquals(setOf(calm, battle), music.getJSONObject("tracks").keys().asSequence().toSet())
+        // Cỡ file thật đi kèm từng bài để máy kia kiểm lúc tải (BookMusic.problem).
+        for (name in listOf(calm, battle)) {
+            assertEquals(BookEditsFixtures.bytes("base/$name").size.toLong(), music.getJSONObject("tracks").getJSONObject(name).getLong("size"))
+        }
         val cue = music.getJSONObject("chapters").getJSONArray("1").getJSONObject(0)
         assertEquals(-7.39, cue.getDouble("gainDb"), 0.0)
         for (name in listOf(calm, battle)) {
