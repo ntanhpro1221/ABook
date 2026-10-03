@@ -9,6 +9,7 @@ import type { ListenBook } from "@/listen/model";
 import { EbookLibrary } from "./plugins";
 import { BookScreen } from "@/listen/BookScreen";
 import { ClipProvider } from "@/listen/clip";
+import { AddBookButton } from "@/listen/AddBook";
 import { LibraryScreen, useRestoreLastListening } from "@/listen/LibraryScreen";
 import { ReaderScreen } from "@/listen/ReaderScreen";
 import { NowPlaying, PlayerBar } from "@/listen/PlayerViews";
@@ -120,20 +121,21 @@ function EmptyLibrary() {
           <Button variant="primary" size="lg" icon={Download} onClick={() => navigate("/devices")}>
             Tải sách từ máy tính
           </Button>
+          <AddBookButton variant="ghost" />
           <Button variant="ghost" icon={FileAudio} onClick={() => void pickBookFile()}>
             Mở file sách (.abook)
           </Button>
         </div>
       }
     >
-      Kết nối với ABook trên máy tính qua Wi-Fi rồi tải sách về - nghe được cả khi không có mạng. Có file sách
-      .abook (bạn bè gửi, tải về)? Mở nó bằng app là sách vào Thư viện.
+      Kết nối với ABook trên máy tính qua Wi-Fi rồi tải sách về - nghe được cả khi không có mạng. Có file EPUB, Word, PDF hay
+      thư mục TXT thì thêm thẳng để đọc; có file sách .abook (bạn bè gửi, tải về)? Mở nó bằng app là sách vào Thư viện.
     </EmptyState>
   );
 }
 
 function LibraryPage() {
-  return <LibraryScreen empty={<EmptyLibrary />} recap={<MorningRecap className="mt-5" />} />;
+  return <LibraryScreen empty={<EmptyLibrary />} header={<AddBookButton />} recap={<MorningRecap className="mt-5" />} />;
 }
 
 /** Sách đang nghe thẳng từ máy tính: tải hẳn về để nghe cả khi không có mạng (tiến độ hiện ở tab Tải sách). */

@@ -20,22 +20,21 @@ export const WORKSHOP_COST =
   "Studio sẽ tạo một dự án mới từ chữ và giọng của cuốn này, mang theo tên bạn đặt và những việc bạn ghi cho Studio. " +
   "Không còn nguồn chương gốc, lịch sử phân tích, từng câu đã thu - toàn bộ audio sẽ được làm lại khi chạy. Cuốn đang nghe vẫn giữ nguyên.";
 
-/** Mục menu của cuốn từ file dự án: mở bản chụp xưởng, “Dựng xưởng” (cuốn chờ xưởng, máy có Studio) hay mở xưởng đã dựng. */
-export function ProjectFileItems({ book, onViews }: { book: ListenBook; onViews: () => void }) {
-  const info = book.projectFile;
+/** “Dựng xưởng” / “Làm sách nói từ cuốn này”: một dự án Studio mới từ cuốn đang nghe / đọc (`POST /api/books/<mã>/workshop`, workshop.py).
+ *  `done` nói điều đã mang sang, theo loại cuốn. */
+function useBuildProject(book: ListenBook, done: (made: { chapters: number; voices: number }) => { title: string; description: string }) {
   const navigate = useNavigate();
   const client = useQueryClient();
   const [building, setBuilding] = useState(false);
-  if (!info) return null;
-  const pending = info.workshop === "pending";
   const build = async () => {
     setBuilding(true);
     try {
       const made = await api<{ id: string; chapters: number; voices: number }>(`/api/books/${book.id}/workshop`, { method: "POST", body: {} });
       void client.invalidateQueries({ queryKey: ["library"] });
       void client.invalidateQueries({ queryKey: ["listen"] });
-      toast.success("Đã dựng xưởng", {
-        description: `${made.chapters} chương, ${made.voices} giọng nhân vật đã gieo. Chưa chạy gì - mở dự án để bắt đầu.`,
+      const said = done(made);
+      toast.success(said.title, {
+        description: said.description,
         action: { label: "Mở dự án", onClick: () => navigate(`/studio/${made.id}`) },
       });
     } catch (error) {
@@ -44,6 +43,54 @@ export function ProjectFileItems({ book, onViews }: { book: ListenBook; onViews:
       setBuilding(false);
     }
   };
+  return { build, building };
+}
+
+/** Chữ nói rõ “Làm sách nói từ cuốn này” mang gì sang Studio. */
+export const TEXT_BOOK_COST =
+  "Studio sẽ tạo một dự án mới từ chữ các chương của cuốn này, mang theo tên sách và bìa bạn đặt. Chưa chạy gì - chọn giọng kể rồi bắt đầu làm audio ở Studio. Cuốn đang đọc vẫn giữ nguyên.";
+
+/** Mục menu của sách chỉ có chữ (nhập từ EPUB / DOCX / PDF / TXT): “Làm sách nói từ cuốn này” (máy có Studio) hay mở dự án đã làm. */
+export function TextBookItems({ book }: { book: ListenBook }) {
+  const navigate = useNavigate();
+  const { build, building } = useBuildProject(book, (made) => ({
+    title: "Đã tạo dự án Studio",
+    description: `${made.chapters} chương. Chưa chạy gì - mở dự án để chọn giọng và bắt đầu.`,
+  }));
+  if (book.stage !== "text") return null;
+  const toolchain = Boolean(book.capabilities?.toolchain);
+  if (book.studioProject) {
+    return (
+      <DropdownMenu.Item onSelect={() => navigate(`/studio/${book.studioProject}`)} className={MENU_ITEM}>
+        <Hammer className="size-4" /> Mở dự án đã làm từ cuốn này
+      </DropdownMenu.Item>
+    );
+  }
+  return (
+    <DropdownMenu.Item
+      disabled={!toolchain || building}
+      onSelect={() => void build()}
+      className={cn(MENU_ITEM, "h-auto items-start py-1.5 data-[disabled]:opacity-60")}
+    >
+      {toolchain ? <Hammer className="mt-0.5 size-4 shrink-0" /> : <Wrench className="mt-0.5 size-4 shrink-0" />}
+      <span className="min-w-0">
+        <span className="block">Làm sách nói từ cuốn này</span>
+        <span className="block text-xs text-fg-3">{toolchain ? TEXT_BOOK_COST : "Cần cài Studio trên máy tính - ở đây cuốn này chỉ để đọc"}</span>
+      </span>
+    </DropdownMenu.Item>
+  );
+}
+
+/** Mục menu của cuốn từ file dự án: mở bản chụp xưởng, “Dựng xưởng” (cuốn chờ xưởng, máy có Studio) hay mở xưởng đã dựng. */
+export function ProjectFileItems({ book, onViews }: { book: ListenBook; onViews: () => void }) {
+  const info = book.projectFile;
+  const navigate = useNavigate();
+  const { build, building } = useBuildProject(book, (made) => ({
+    title: "Đã dựng xưởng",
+    description: `${made.chapters} chương, ${made.voices} giọng nhân vật đã gieo. Chưa chạy gì - mở dự án để bắt đầu.`,
+  }));
+  if (!info) return null;
+  const pending = info.workshop === "pending";
   const toolchain = Boolean(book.capabilities?.toolchain);
   return (
     <>

@@ -71,6 +71,8 @@ class LibraryPlugin : Plugin() {
         EditsSync.changed = { id -> notifyListeners("editsSync", JSObject().put("bookId", id)) }
         Playback.init(context)
         PhoneCast.init(context)
+        TextImports.codec = AndroidCoverCodec
+        TextImports.sweep() // thư mục tạm của lần "Thêm sách từ file…" bị bỏ dở lần trước
         // Đã bật "Cho máy khác nghe thư viện này" từ lần trước: mở lại máy chủ cùng app (LibraryServer).
         if (prefs.getBoolean(SHARE_KEY, false)) io.execute { runCatching { LibraryServer.start(context) } }
     }
@@ -127,6 +129,87 @@ class LibraryPlugin : Plugin() {
         }
         importFrom(uri)
         call?.resolve(JSObject().put("picked", true))
+    }
+
+    // ---- "Thêm sách từ file…": EPUB / DOCX / PDF / thư mục TXT thành sách chỉ có chữ (TextImports, docs/LISTEN_ANYTHING.md) -----------------
+
+    /** Bộ chọn file (hay thư mục TXT) của hệ thống; thứ chọn được chép vào thư mục tạm của app, trả `ref` để xem trước và thêm. */
+    @PluginMethod
+    fun pickSource(call: PluginCall) {
+        val intent = if (call.getString("kind") == "folder") Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+        else Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*")
+        startActivityForResult(call, intent, "pickedSource")
+    }
+
+    @ActivityCallback
+    private fun pickedSource(call: PluginCall?, result: ActivityResult) {
+        if (call == null) return
+        val uri = result.data?.data
+        if (uri == null) {
+            call.resolve(JSObject().put("picked", false))
+            return
+        }
+        io.execute {
+            try {
+                val staged = if (call.getString("kind") == "folder") stageTree(uri) else stageDocument(uri)
+                val reply = JSObject().put("picked", true).put("ref", staged.ref).put("name", staged.name)
+                staged.pdf?.let { reply.put("pdf", it.absolutePath) }
+                call.resolve(reply)
+            } catch (error: Exception) {
+                fail(call, error, "không đọc được thứ đã chọn")
+            }
+        }
+    }
+
+    private fun displayName(uri: Uri): String? = runCatching {
+        context.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
+            if (cursor.moveToFirst()) cursor.getString(0) else null
+        }
+    }.getOrNull()
+
+    private fun stageDocument(uri: Uri): TextImports.Staged =
+        TextImports.stageFile(displayName(uri) ?: uri.lastPathSegment ?: "sach") { context.contentResolver.openInputStream(uri) }
+
+    /** Thư mục TXT: chỉ các file nằm ngay trong thư mục (như Studio), không quét thư mục con. */
+    private fun stageTree(tree: Uri): TextImports.Staged {
+        val treeId = android.provider.DocumentsContract.getTreeDocumentId(tree)
+        val folderName = displayName(android.provider.DocumentsContract.buildDocumentUriUsingTree(tree, treeId)) ?: "Sách"
+        val children = android.provider.DocumentsContract.buildChildDocumentsUriUsingTree(tree, treeId)
+        val files = ArrayList<Pair<String, () -> java.io.InputStream?>>()
+        context.contentResolver.query(
+            children,
+            arrayOf(android.provider.DocumentsContract.Document.COLUMN_DOCUMENT_ID, android.provider.DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                android.provider.DocumentsContract.Document.COLUMN_MIME_TYPE),
+            null, null, null,
+        )?.use { cursor ->
+            while (cursor.moveToNext()) {
+                if (cursor.getString(2) == android.provider.DocumentsContract.Document.MIME_TYPE_DIR) continue
+                val document = android.provider.DocumentsContract.buildDocumentUriUsingTree(tree, cursor.getString(0))
+                files.add(cursor.getString(1) to { context.contentResolver.openInputStream(document) })
+            }
+        }
+        return TextImports.stageFolder(folderName, files)
+    }
+
+    /** Đọc thứ đã chọn bằng luật nhập sách (BookImport.kt) và trả danh sách chương; PDF kèm `pages` (các dòng từng trang) do pdf.js lấy trong WebView. */
+    @PluginMethod
+    fun previewImport(call: PluginCall) = background(call) {
+        val ref = call.getString("ref") ?: throw IllegalArgumentException("thiếu ref")
+        val pages = TextImports.pagesOf(call.getArray("pages"))
+        call.resolve(JSObject.fromJSONObject(TextImports.preview(ref, pages, call.getString("title") ?: "", call.getString("author") ?: "")))
+    }
+
+    /** Nhập thành sách chỉ có chữ trong thư viện; trả {id, how, chapters}. */
+    @PluginMethod
+    fun createImport(call: PluginCall) = background(call) {
+        val ref = call.getString("ref") ?: throw IllegalArgumentException("thiếu ref")
+        call.resolve(JSObject.fromJSONObject(TextImports.create(ref, call.getString("title") ?: "", context.cacheDir)))
+    }
+
+    @PluginMethod
+    fun discardImport(call: PluginCall) = background(call) {
+        TextImports.discard(call.getString("ref") ?: "")
+        call.resolve()
     }
 
     // ---- "Nhạc của tôi" (MusicStore, docs/MUSIC_IMPORT.md) -------------------------------------------------------------

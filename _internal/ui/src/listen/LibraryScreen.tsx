@@ -1,4 +1,4 @@
-import { Headphones, Laptop, Pause, Play, Search, X } from "lucide-react";
+import { BookOpen, Headphones, Laptop, Pause, Play, Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode, type CSSProperties } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -31,6 +31,8 @@ export function remotePlace(book: ListenBook): string {
 }
 
 function progressText(book: ListenBook): string {
+  // Sách mới nhập từ EPUB / DOCX / PDF / TXT: có chữ để đọc, chưa có âm thanh (docs/LISTEN_ANYTHING.md mục 1).
+  if (book.stage === "text") return `Chỉ có chữ · ${book.chaptersTotal} chương`;
   const chapters = `${book.chaptersAvailable}/${book.chaptersTotal} chương`;
   if (book.progress.finished) return "Đã nghe xong";
   if (book.progress.caughtUp) return `Đã nghe hết phần đã có · ${chapters}`;
@@ -96,6 +98,7 @@ function BookTile({ book }: { book: ListenBook }) {
   const player = usePlayer();
   const current = player.track?.bookId === book.id;
   const playingHere = current && player.playing;
+  const textOnly = book.stage === "text";
   return (
     <div className="group">
       <div className="relative">
@@ -104,14 +107,16 @@ function BookTile({ book }: { book: ListenBook }) {
         </button>
         <button
           type="button"
-          aria-label={playingHere ? `Tạm dừng ${book.title}` : `Nghe ${book.title}`}
-          onClick={() => (current ? player.toggle() : void playBook(book))}
+          aria-label={textOnly ? `Đọc ${book.title}` : playingHere ? `Tạm dừng ${book.title}` : `Nghe ${book.title}`}
+          onClick={() => (textOnly ? navigate(`/book/${book.id}/read`) : current ? player.toggle() : void playBook(book))}
           className={cn(
             "absolute bottom-2.5 right-2.5 grid size-10 place-items-center rounded-full bg-accent text-accent-ink shadow-float transition-opacity duration-150 group-hover:opacity-100 focus-visible:opacity-100 max-md:opacity-100",
             current ? "opacity-100" : "opacity-0",
           )}
         >
-          {playingHere ? (
+          {textOnly ? (
+            <BookOpen className="size-4" />
+          ) : playingHere ? (
             <Pause className="size-4" fill="currentColor" strokeWidth={0} />
           ) : (
             <Play className="size-4 translate-x-[1px]" fill="currentColor" strokeWidth={0} />
@@ -288,8 +293,9 @@ export function LibraryScreen({
   onOpenUpcoming?: (book: ListenBook) => void;
 }) {
   const { data: allBooks, isLoading } = useListenLibrary();
-  const books = useMemo(() => allBooks?.filter((book) => book.chaptersAvailable > 0), [allBooks]);
-  const upcoming = useMemo(() => allBooks?.filter((book) => book.chaptersAvailable === 0) ?? [], [allBooks]);
+  // Sách chỉ có chữ chưa có chương nghe được nhưng đã ở trong thư viện (đọc được ngay): không phải sách "sắp có".
+  const books = useMemo(() => allBooks?.filter((book) => book.chaptersAvailable > 0 || book.stage === "text"), [allBooks]);
+  const upcoming = useMemo(() => allBooks?.filter((book) => book.chaptersAvailable === 0 && book.stage !== "text") ?? [], [allBooks]);
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const listening = useMemo(

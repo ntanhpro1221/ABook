@@ -39,7 +39,7 @@ object BookFileImport {
     const val PROJECT_MIMETYPE = "application/vnd.ngdtuanh.abookproj+zip"
     private const val FORMAT = "abook"
     private const val PROJECT_MAX_ENTRIES = 1_000_000
-    private const val FORMAT_VERSION = 4  // 2 = có thêm rãnh nhạc nền (music/<sha1>.<mp3|m4a|ogg|opus|flac|wav>; bài người dùng nhập giữ định dạng của file); 3 = cả bộ nhiều phần (chapters/<phần>/...); 4 = lớp sửa của người nghe (edits.json, edits/cover.jpg)
+    private const val FORMAT_VERSION = 5  // 2 = có thêm rãnh nhạc nền (music/<sha1>.<mp3|m4a|ogg|opus|flac|wav>; bài người dùng nhập giữ định dạng của file); 3 = cả bộ nhiều phần (chapters/<phần>/...); 4 = lớp sửa của người nghe (edits.json, edits/cover.jpg); 5 = chương chỉ có chữ (texts/<n>.txt, không audio)
     /** Chỗ trống dư ngoài cỡ giải nén (book.json, thư mục tạm): đủ để không đầy bộ nhớ giữa chừng. */
     private const val ROOM_MARGIN = 64L shl 20
     private const val MAX_ENTRIES = 20_000
@@ -51,6 +51,8 @@ object BookFileImport {
     private val CONTENT_V3 = Regex("""$COMMON|chapters/(?:\d{1,4}/)?[0-9A-Za-z_.\-]+\.mp3""")
     /** Phiên bản 4 thêm lớp sửa của người nghe (BookEdits): edits.json và edits/cover.jpg (file .abookproj phiên bản 3 cũng mang chúng). */
     private val CONTENT_V4 = Regex("""$COMMON|chapters/(?:\d{1,4}/)?[0-9A-Za-z_.\-]+\.mp3|edits\.json|edits/cover\.jpg""")
+    /** Phiên bản 5 thêm chữ của chương: texts/<mã chương>.txt (sách chỉ có chữ - docs/LISTEN_ANYTHING.md mục 1). */
+    private val CONTENT_V5 = Regex("""$COMMON|chapters/(?:\d{1,4}/)?[0-9A-Za-z_.\-]+\.mp3|edits\.json|edits/cover\.jpg|texts/\d{1,9}\.txt""")
     private val DESCRIPTIONS = setOf("mimetype", "book.json", "manifest.json")
 
     /** Lý do không nhận file - câu chữ để người dùng đọc. */
@@ -171,12 +173,17 @@ object BookFileImport {
             val resolve = layout?.let { it::resolve } ?: { name: String -> name }
             // Lớp sửa của người nghe mà file mang theo (phiên bản 4): sai thì từ chối cả file, TRƯỚC khi chép gì.
             val incoming = readEdits(zip, resolve)
-            // Sách không mang mã nào (chủ sách 27-09): app nhận ra cùng một lần sản xuất bằng audio từng chương.
-            val chapters = JSONObject()
-            for (name in content.filter { it.startsWith("chapters/") }) {
-                val meta = files.getJSONObject(name)
-                chapters.put(name, JSONObject().put("size", meta.optLong("size")).put("sha256", meta.optString("sha256")))
+            // Chương nào trỏ tới chữ cũng phải có chữ ấy trong gói (file dự án: `checkListening` lo).
+            val listed = if (layout == null) book.optJSONArray("chapters") else null
+            for (index in 0 until (listed?.length() ?: 0)) {
+                val written = listed?.optJSONObject(index)?.opt("text")
+                if (written != null && written != JSONObject.NULL && (written !is String || written.isNotEmpty() && written !in content)) {
+                    throw Refused("File sách thiếu chữ của một chương.")
+                }
             }
+            // Sách không mang mã nào (chủ sách 27-09): app nhận ra cùng một lần sản xuất bằng audio từng chương (cuốn chưa có audio
+            // nào: bằng chữ từng chương).
+            val chapters = identityPrints(content, files)
             // Cùng cuốn đã có trên máy (tải qua Wi-Fi, hay mở từ file trước đó): nhập VÀO đúng cuốn ấy, giữ mã của nó để
             // chỗ nghe vẫn nối - không thành hai cuốn. Bản trên máy nhiều chương hơn file thì giữ nguyên bản trên máy.
             val existing = Store.findByChapters(chapters)
@@ -185,7 +192,9 @@ object BookFileImport {
             // Chỉ cuốn mở từ file mới nhận phần sửa của người nghe; cuốn của máy tính thì sửa ở máy ấy.
             val editable = existing == null || Store.isImported(existing)
             val keptEdits = if (existing != null && editable) BookEdits.count(BookEdits.load(Store.bookDir(target))) else 0
-            if (current != null && current.optInt("chaptersAvailable") > book.optInt("chaptersAvailable")) {
+            // Cuốn chỉ có chữ: tìm thấy nghĩa là CÙNG bộ chữ (Store.findByChapters) - không có bản "nhiều chương hơn" để thay, giữ bản trên máy.
+            val sameText = chapters.length() > 0 && chapters.keys().asSequence().all { it.startsWith("texts/") }
+            if (current != null && (sameText || current.optInt("chaptersAvailable") > book.optInt("chaptersAvailable"))) {
                 // Giữ bản trên máy, nhưng phần sửa trong file vẫn được hợp vào (bên máy này thắng) - không mất công của ai.
                 if (editable && BookEdits.count(incoming.edits) > 0) {
                     BookEdits.adopt(Store.bookDir(target), incoming.edits, incoming.cover) { name, destination -> extract(zip, resolve(name), destination) }
@@ -290,7 +299,24 @@ object BookFileImport {
     }
 
     /** Tên mục hợp lệ của một file .abook phiên bản `version` (BookDocumentWriter dùng cùng bộ luật với bộ nhập). */
-    internal fun contentPattern(version: Int): Regex = if (version >= 4) CONTENT_V4 else if (version >= 3) CONTENT_V3 else CONTENT
+    internal fun contentPattern(version: Int): Regex =
+        if (version >= 5) CONTENT_V5 else if (version >= 4) CONTENT_V4 else if (version >= 3) CONTENT_V3 else CONTENT
+
+    /**
+     * Cỡ + mã băm các mục DÙNG ĐỂ nhận ra một cuốn (`fingerprints.identity_prints` bên Python): audio từng chương (`chapters/...`);
+     * cuốn chưa có audio nào thì chữ từng chương (`texts/<n>.txt`) - không thì mọi cuốn chỉ có chữ cùng một khoá.
+     */
+    internal fun identityPrints(content: Collection<String>, files: JSONObject): JSONObject {
+        fun pick(prefix: String): JSONObject {
+            val out = JSONObject()
+            for (name in content.filter { it.startsWith(prefix) }.sorted()) {
+                val meta = files.getJSONObject(name)
+                out.put(name, JSONObject().put("size", meta.optLong("size")).put("sha256", meta.optString("sha256")))
+            }
+            return out
+        }
+        return pick("chapters/").takeIf { it.length() > 0 } ?: pick("texts/")
+    }
 
     /**
      * Bố cục của một file dự án đã kiểm hình dạng (`ProjectFile._validate` bên Python): `files` - cỡ + mã băm MỌI mục logic (kể cả
@@ -306,7 +332,7 @@ object BookFileImport {
 
         fun neededBytes(): Long = materialize.sumOf { files.getJSONObject(it).optLong("size") } + manifestBytes.size
 
-        /** `book.json` khớp phần còn lại của gói: `package.files` mang đúng cỡ + mã băm ghi ở `project.json`, mọi chương trỏ tới audio có thật. */
+        /** `book.json` khớp phần còn lại của gói: `package.files` mang đúng cỡ + mã băm ghi ở `project.json`, mọi chương trỏ tới audio hay chữ có thật. */
         fun checkListening(book: JSONObject, listed: JSONObject) {
             for (name in listed.keys()) {
                 val ours = files.optJSONObject(name)
@@ -319,6 +345,10 @@ object BookFileImport {
             for (index in 0 until (chapters?.length() ?: 0)) {
                 val file = chapters?.optJSONObject(index)?.optString("file").orEmpty()
                 if (file.isNotEmpty() && file !in listening) throw Refused("Phần nghe của dự án thiếu audio của một chương.")
+                val written = chapters?.optJSONObject(index)?.opt("text")
+                if (written != null && written != JSONObject.NULL && (written !is String || written.isNotEmpty() && written !in listening)) {
+                    throw Refused("Phần nghe của dự án thiếu chữ của một chương.")
+                }
             }
         }
     }

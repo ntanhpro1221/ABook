@@ -12,7 +12,7 @@ import { LineWishDialog, useWishes, WaitingMark } from "./LineWishes";
 import { usePlayListenBook } from "./LibraryScreen";
 import { usePlayer } from "./player";
 import { sentenceIndexAt } from "./PlayerViews";
-import { useListenBook, useScript, useSource } from "./source";
+import { useChapterScript, useListenBook, useSource } from "./source";
 
 // Chế độ ĐỌC: văn bản chương như một cuốn ebook, đi cùng chỗ đang nghe.
 //
@@ -64,10 +64,12 @@ export function ReaderScreen({
   const chapter = chapters.find((item) => item.id === chapterId);
   const index = chapters.findIndex((item) => item.id === chapterId);
   usePageTitle(book && chapter ? `${chapter.subtitle || chapter.title} · ${book.title}` : book?.title);
-  const { data: script, isLoading } = useScript(id, chapterId || undefined);
+  const { data: script, isLoading } = useChapterScript(id, chapter);
+  // Chương chỉ có chữ (sách nhập từ EPUB / DOCX / PDF / TXT, chưa có audio): đọc được, không nghe được, không sửa từng câu.
+  const textOnly = chapter?.state === "text";
   // Sửa một câu (docs/EDITING.md, P2a): cuốn không có xưởng ghi ý muốn chờ Studio ngay tại đây; cuốn có xưởng sửa ở Studio; cuốn
   // nghe thẳng từ máy khác hay chưa cài Studio: nút vẫn hiện, mờ đi, kèm lý do.
-  const lineEdit = editing ? lineEditing(book?.capabilities) : null;
+  const lineEdit = editing && !textOnly ? lineEditing(book?.capabilities) : null;
   const wishes = useWishes(id, lineEdit?.mode === "wish");
   const [prefs, setPrefs] = useState<ReaderPrefs>(loadPrefs);
   const [selected, setSelected] = useState<number | null>(null);
@@ -258,7 +260,9 @@ export function ReaderScreen({
         <article className="mx-auto max-w-[68ch] px-6 pb-40 pt-8" style={{ fontSize: prefs.size, lineHeight: prefs.leading }}>
           {!script.timed && (
             <p className="mb-6 rounded-lg bg-hover px-4 py-3 text-sm leading-relaxed text-fg-2">
-              Chương này chưa có audio - vẫn đọc được. Khi Studio thu xong, “Nghe từ đây” sẽ hiện ra.
+              {textOnly
+                ? "Chưa có âm thanh - chương này mới có chữ để đọc."
+                : "Chương này chưa có audio - vẫn đọc được. Khi Studio thu xong, “Nghe từ đây” sẽ hiện ra."}
             </p>
           )}
           {script.timed && !prefs.tapped && (

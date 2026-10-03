@@ -34,7 +34,7 @@ object ProjectDocument {
     fun aliasable(name: String) = MEDIA.any { name.lowercase(Locale.ROOT).endsWith(it) }
 
     /** Tên mục của phần nghe: đúng tên mục của một file `.abook` mới nhất (kể cả lớp sửa). */
-    fun listeningName(name: String) = BookFileImport.contentPattern(4).matches(name)
+    fun listeningName(name: String) = BookFileImport.contentPattern(5).matches(name)
 
     /** `project/<đường dẫn>` hay `sources/<n>_<tên>` an toàn (không `..`, không ký tự cấm của Windows) - `_safe_entry` bên Python. */
     fun safeEntry(name: String): Boolean {

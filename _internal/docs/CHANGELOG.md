@@ -7,6 +7,16 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Thư viện
+
+- **Thêm sách từ file EPUB, Word, PDF hay thư mục TXT để đọc ngay (máy tính và điện thoại)**: ở Thư viện bấm "Thêm sách từ file…", chọn
+  file (hay thư mục mà mỗi file TXT là một chương), xem danh sách chương - tên, số chữ, số ký tự - rồi "Thêm vào thư viện". Sách vào Thư viện với nhãn "Chỉ có chữ": mở ra
+  đọc được từng chương như một cuốn ebook, mỗi chương ghi "Chưa có âm thanh", chưa có nút nghe (giọng đọc máy sẽ đến sau). Đặt lại tên sách,
+  bìa, tên chương như mọi cuốn, và "Lưu thành .abook" ghi ra file sách chỉ có chữ để chép sang máy khác. Thêm lại đúng file đã thêm thì về
+  cuốn cũ, không nhân đôi. Máy không bao giờ tự sửa chữ của truyện: dòng ghi công người dịch chỉ hiện ở bước xem trước như một gợi ý.
+  PDF phải có chữ (PDF chụp từ máy quét thì nói rõ là chưa đọc được). Trên máy tính có Studio, "Làm sách nói từ cuốn này" ở menu của sách tạo một
+  dự án Studio từ đúng chữ các chương ấy.
+
 ### Cài đặt
 
 - **Bộ cài ABook trên Windows chỉ còn mang phần nghe (bớt khoảng 16 MB)**: từ điển phát âm tiếng Anh và 21 bản nghe thử giọng

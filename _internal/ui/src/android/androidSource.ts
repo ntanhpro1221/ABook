@@ -3,6 +3,7 @@ import type { Cast, ListenBook, ListeningSession, ListeningState, Script } from 
 import { bookProgress } from "./progress";
 import type { ListenSource } from "@/listen/source";
 import { EbookLibrary, EbookPlayer, type LocalBook } from "./plugins";
+import { phoneTextImport } from "./textImport";
 
 // Phía Nghe trên Android: đọc sách đã tải về máy, và sách trên máy tính nghe thẳng qua mạng (EbookLibrary). Audio chương do lõi phát native mở thẳng từ
 // file, nên audioUrl không dùng tới; câu mẫu nhân vật phát trong WebView qua đường dẫn file đã chuyển đổi.
@@ -26,6 +27,7 @@ function toListenBook(book: LocalBook, withChapters: boolean): ListenBook {
     duration: chapter.duration,
     available: chapter.available && Boolean(chapter.file),
     part: chapter.part ?? null,
+    state: chapter.text && !chapter.file ? ("text" as const) : null,
   }));
   const state: ListeningState = { ...book.state, chapters: book.state?.chapters ?? {}, bookmarks: book.state?.bookmarks ?? [] };
   return {
@@ -36,6 +38,8 @@ function toListenBook(book: LocalBook, withChapters: boolean): ListenBook {
     chaptersTotal: book.chaptersTotal,
     chaptersAvailable: chapters.filter((chapter) => chapter.available).length,
     complete: book.complete,
+    // Cuốn chỉ có chữ (.abook phiên bản 5): chương nào cũng chưa có audio mà có chữ.
+    stage: chapters.length > 0 && chapters.every((chapter) => chapter.state === "text") ? ("text" as const) : null,
     // Trên điện thoại không biết máy tính còn đang làm hay không: chỉ biết cuốn này chưa đủ chương.
     producing: false,
     paused: !book.complete,
@@ -60,6 +64,8 @@ function toListenBook(book: LocalBook, withChapters: boolean): ListenBook {
 
 /** Tên file của chương trong gói - lõi phát native cần nó. */
 export const chapterFiles = new Map<string, Map<number, string>>();
+/** Tên mục chữ của chương chỉ-có-chữ (`texts/<mã>.txt`). */
+const chapterTexts = new Map<string, Map<number, string>>();
 
 export const androidSource: ListenSource = {
   kind: "android",
@@ -73,15 +79,22 @@ export const androidSource: ListenSource = {
   async book(id) {
     const book = await EbookLibrary.book({ id });
     chapterFiles.set(id, new Map(book.chapters.filter((chapter) => chapter.file).map((chapter) => [chapter.id, chapter.file!])));
+    chapterTexts.set(id, new Map(book.chapters.filter((chapter) => chapter.text).map((chapter) => [chapter.id, chapter.text!])));
     return toListenBook(book, true);
   },
+  async chapterText(bookId, chapterId) {
+    const path = chapterTexts.get(bookId)?.get(chapterId) ?? `texts/${chapterId}.txt`;
+    return (await EbookLibrary.readText({ id: bookId, path })).text;
+  },
+  textImport: phoneTextImport,
   async script(bookId, chapterId) {
     const { text } = await EbookLibrary.readText({ id: bookId, path: `scripts/${chapterId}.json` });
     return JSON.parse(text) as Script;
   },
   async cast(bookId) {
     const { text } = await EbookLibrary.readText({ id: bookId, path: "cast.json" });
-    return JSON.parse(text) as Cast;
+    // Sách chỉ-có-chữ không có cast.json (chưa phân vai): dàn nhân vật rỗng.
+    return (text ? JSON.parse(text) : { narrator: { voice: "", lines: 0, seconds: 0 }, characters: [], extras: [] }) as Cast;
   },
   audioUrl: (bookId, chapterId) => fileUrl(bookId, chapterFiles.get(bookId)?.get(chapterId) ?? ""),
   sampleUrl: (bookId, sampleId) => fileUrl(bookId, `samples/${sampleId}.wav`),
