@@ -98,6 +98,63 @@ def test_other_capitals_and_headings_are_left_alone(text: str, said: str) -> Non
     assert _said(text) == said
 
 
+# ---- dấu sea-g2p đọc sai thành lời (vieneu.reading_marks): "~", nghìn kiểu Anh, <ngoặc nhọn>, " / " ---------------------------------------
+@pytest.mark.parametrize("text, said", [
+    ("Hmm~ Har~kun? EMMMMM~!", "Hmm Har kun? EMMMMM!"),  # kéo giọng: bỏ; có chữ ngay sau thì thành khoảng trắng
+    ("Ưm~~~, xong. Ô ~, vậy sao. Ồ~”.", "Ưm, xong. Ô, vậy sao. Ồ”."),
+    ("Từ 10,000 ~ 15,000 đồng và 3~5 người.", "Từ 10000 đến 15000 đồng và 3 đến 5 người."),  # giữa hai số: đến
+    ("Khoảng ~50 người, “~50” nữa.", "Khoảng ~50 người, “~50” nữa."),  # trước số: để sea-g2p đọc "khoảng"
+    ("~", ""),
+])
+def test_a_tilde_is_dropped_or_read_as_range(text: str, said: str) -> None:
+    assert _said(text) == said
+
+
+@pytest.mark.parametrize("text, said", [
+    ("Có 500,000 đồng, 100,000 yen và 1,419 / 3,419.", "Có 500000 đồng, 100000 yen và 1419 / 3419."),
+    ("Trả 2,000,000, xong.", "Trả 2000000, xong."),
+    # "1,500" (đúng 3 chữ số sau phẩy) được coi là nghìn: truyện dịch dùng kiểu Anh, thập phân Việt có 1-2 chữ số
+    ("Giá 1,500 và 1,5 và 3,25 và 12,3456.", "Giá 1500 và 1,5 và 3,25 và 12,3456."),
+    ("Số 1.234,567 và 9.389.700 và 1,234.5 và 1,234,5.", "Số 1.234,567 và 9.389.700 và 1,234.5 và 1,234,5."),
+])
+def test_english_thousands_lose_their_commas(text: str, said: str) -> None:
+    assert _said(text) == said
+
+
+@pytest.mark.parametrize("text, said", [
+    ("Tên là <Angel Wings> đó.", "Tên là, Angel Wings, đó."),  # tên nhiều chữ: ngắt hai bên
+    ("Dùng <khiên> đi và <Gấu?> kìa.", "Dùng khiên đi và Gấu? kìa."),  # một chữ: chỉ bỏ ngoặc
+    ("<Tiêu chuẩn đánh giá>", "Tiêu chuẩn đánh giá"),
+    ("Phần IV <Hạ> thôi.", "Phần bốn Hạ thôi."),
+    ("Kỹ năng 《Xiềng Xích》 và 〈Ánh〉 cùng 《lẻ.", "Kỹ năng, Xiềng Xích, và Ánh cùng lẻ."),
+    ("< Thật Tuyệt vời>, xong.", "Thật Tuyệt vời, xong."),
+    ("Rồi 〈Wish Upon〉[Cầu ước] nữa.", "Rồi, Wish Upon,[Cầu ước] nữa."),  # dấu phẩy ngay sau ngoặc đóng, không dồn xuống cuối chữ dính liền
+    # không phải ngoặc: so sánh, trái tim, mặt cười, không có ngoặc đóng
+    ("3 < 5 và 8 > 2, <3 và >:) và <50/50>.", "3 < 5 và 8 > 2, <3 và >:) và <50/50>."),
+    ("a <b c d e f g h i j k l m n o p", "a <b c d e f g h i j k l m n o p"),
+])
+def test_angle_brackets_around_words_are_not_comparisons(text: str, said: str) -> None:
+    assert _said(text) == said
+
+
+@pytest.mark.parametrize("text, said", [
+    ("Bị 【Đóng băng / yếu】 rồi.", "Bị 【Đóng băng, yếu】 rồi."),
+    ("Chạy / bay.", "Chạy, bay."),
+    ("HP: 5813 / 5813 và 3/5, 15/8, 3 / 5.", "HP: 5813 / 5813 và 3/5, 15/8, 3 / 5."),  # giữa hai số: sea-g2p đọc "trên"
+    ("Mở/đóng và km/h.", "Mở/đóng và km/h."),  # dính liền: có thể là đơn vị (triệu/tháng), để nguyên
+])
+def test_a_slash_between_two_words_is_a_pause(text: str, said: str) -> None:
+    assert _said(text) == said
+
+
+def test_reading_marks_keep_the_word_count() -> None:
+    text = "Hmm~ ~ 10,000 ~ 15,000 <Angel Wings> Chạy / bay 《x》"
+    toks, parts = units(text, 256)
+    out = vieneu.spoken_tokens(toks)
+    assert len(out) == len(toks)
+    assert " ".join(unit.text(toks) for unit in parts) == text
+
+
 def test_roman_numbers_read_as_vietnamese() -> None:
     assert [vieneu.vietnamese_number(n) for n in (1, 4, 5, 10, 11, 14, 15, 20, 21, 24, 25, 30, 31, 35, 39)] == [
         "một", "bốn", "năm", "mười", "mười một", "mười bốn", "mười lăm", "hai mươi", "hai mươi mốt", "hai mươi bốn", "hai mươi lăm",

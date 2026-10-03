@@ -273,6 +273,11 @@ PARAGRAPHS = [
     "I. Mở đầu",
     "Chương I, thế kỷ X và Phần V; ông X, nhân vật X, tia X, điểm V, loại I. Vua Louis X lên ngôi, Hoàng đế Napoleon I thì không.",
     "I am here. Xong. I am đây. Anh ấy là MC của CV VIP.",
+    # Marks sea-g2p reads as words (vieneu.reading_marks): "~" , English thousands, <angle brackets>, a lone slash between two words.
+    "Hmm~ Har~kun, ưm~~~ được rồi~! Ô ~, vậy sao. Từ 10,000 ~ 15,000 đồng, khoảng 3~5 người, ~50 người nữa, *Kà-ran*~ ừ.",
+    "Cô có 500,000 đồng và 100,000 yen. Trên bảng ghi 1,419 / 3,419 rồi 1,5 và 3,25 và 1,500 và 1.234,567 và 12,3456.",
+    "Mặt dây này tên là <Angel Wings> đó. Dùng <khiên> đi, phần IV <Hạ> thôi. Cô thấy 3 < 5 và <3 và >:) và <50/50>. Kỹ năng 《Xiềng Xích》 và 〈Ánh Sao〉.",
+    "Bị 【Đóng băng / yếu】 rồi. HP: 5813 / 5813, tỉ lệ 3/5 và 15/8, còn mở/đóng thì để nguyên.",
 ]
 
 # Clips made on the desktop for VieneuOnDeviceTest: a paragraph of two sentences that is two units for Nano (140 chars) and one for Turbo.

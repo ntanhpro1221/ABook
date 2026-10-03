@@ -16,6 +16,14 @@ object VieneuUnits {
     private const val PHRASE_END = ",;:"
     private const val CLOSERS = "\"'”’)]»"
     private const val OPENERS = "\"'“‘([«"
+    private const val ANGLE_OPEN = "<《〈"
+    private const val ANGLE_CLOSE = ">》〉"
+    /** The opening and the closing angle bracket are at most this many shown words apart. */
+    private const val ANGLE_REACH = 12
+    private const val PUNCT_MARKS = ".,;:!?…"
+    private val TILDES = Regex("~+")
+    /** English thousands: 1,500 is "một nghìn năm trăm"; Vietnamese decimals ("1,5") do not match. */
+    private val THOUSANDS = Regex("(?<![0-9.,])[0-9]{1,3}(?:,[0-9]{3})+(?![0-9]|[.,][0-9])")
     /** I..XXXIX (the empty string matches too and is rejected apart). */
     private val ROMAN = Regex("X{0,3}(?:IX|IV|V?I{0,3})")
     private val ROMAN_VALUE = mapOf('I' to 1, 'V' to 5, 'X' to 10)
@@ -65,11 +73,114 @@ object VieneuUnits {
         return capitalised(before) && capitalised(earlier)
     }
 
+    private fun digit(char: Char?): Boolean = char != null && char in '0'..'9'
+
+    private fun tilde(token: String): String = TILDES.replace(token) { match ->
+        val left = token.getOrNull(match.range.first - 1)
+        val right = token.getOrNull(match.range.last + 1)
+        when {
+            digit(left) && digit(right) -> " đến "
+            digit(right) && !(left != null && left.isLetterOrDigit()) -> match.value // "~50 người": sea-g2p reads "khoảng"
+            left != null && left.isLetter() && right != null && right.isLetter() -> " " // "Har~kun"
+            else -> "" // "Hmm~"
+        }
+    }
+
+    /** "~" stretching a voice ("Hmm~") goes, between numbers ("3~5", "10,000 ~ 15,000") it is "đến", before a number ("~50") sea-g2p reads "khoảng" - `_tildes` of vieneu.py. */
+    private fun tildes(out: MutableList<String>) {
+        for (index in out.indices) {
+            val token = out[index]
+            if ('~' !in token) continue
+            if (token.trim { it in OPENERS || it in CLOSERS || it in PUNCT_MARKS }.trim('~').isNotEmpty()) { // other text in the word: look inside it
+                out[index] = tilde(token)
+                continue
+            }
+            val before = if (index > 0) out[index - 1].trimEnd { it in CLOSERS } else ""
+            val after = if (index + 1 < out.size) out[index + 1].trimStart { it in OPENERS } else "" // a lone "~": look at the neighbours
+            val numberAfter = digit(after.firstOrNull())
+            var said = TILDES.replace(token, if (numberAfter && digit(before.lastOrNull())) "đến" else if (numberAfter) "~" else "")
+            if (index > 0 && said.trim { it in CLOSERS || it in PUNCT_MARKS }.isEmpty()) { // "Ô ~," -> "Ô,"
+                out[index - 1] = out[index - 1] + said
+                said = ""
+            }
+            out[index] = said
+        }
+    }
+
+    /**
+     * <Skill name> -> Skill name (sea-g2p reads "nhỏ hơn ... lớn hơn"): the angle brackets around words go; a name of two or more words gets a comma
+     * on both sides for the pause. "<" is a bracket only right before a letter and with a ">" within [ANGLE_REACH] words; "3 < 5", "<3", ">:)" stay - `_angle`.
+     */
+    private fun angle(out: MutableList<String>) {
+        var index = 0
+        while (index < out.size) {
+            val body = out[index].trimStart { it in OPENERS }
+            val start = out[index].length - body.length
+            val next = if (index + 1 < out.size) out[index + 1].trimStart { it in OPENERS } else ""
+            if (body.isEmpty() || body[0] !in ANGLE_OPEN ||
+                (body[0] == '<' && !(body.getOrNull(1)?.isLetter() == true || (body == "<" && next.firstOrNull()?.isLetter() == true)))) {
+                index++
+                continue
+            }
+            val run = body.length - body.trimStart { it in ANGLE_OPEN }.length
+            var endToken = -1
+            var endAt = -1
+            var last = index
+            while (last < minOf(out.size, index + ANGLE_REACH) && endToken < 0) {
+                val text = out[last]
+                for (at in (if (last == index) start + run else 0) until text.length) {
+                    if (text[at] in ANGLE_CLOSE && !(text[at] == '>' && at > 0 && text[at - 1] in "-=")) {
+                        endToken = last
+                        endAt = at
+                        break
+                    }
+                }
+                last++
+            }
+            if (endToken < 0) {
+                index++
+                continue
+            }
+            val tail = out[endToken].substring(endAt)
+            val size = tail.length - tail.trimStart { it in ANGLE_CLOSE }.length
+            out[endToken] = out[endToken].substring(0, endAt) + out[endToken].substring(endAt + size)
+            out[index] = out[index].substring(0, start) + out[index].substring(start + run)
+            if (endToken > index) { // a name of several words: commas before and after
+                val rest = out[endToken].substring(endAt) // what is left of the word after the closing bracket ("Star〉[Cầu" -> "[Cầu")
+                if (endAt > 0 && out[endToken][endAt - 1].isLetterOrDigit() && rest.firstOrNull()?.let { it !in PUNCT_MARKS } != false &&
+                    (rest.trimStart { it in CLOSERS }.isNotEmpty() || endToken + 1 < out.size)) out[endToken] = out[endToken].substring(0, endAt) + "," + rest
+                val core = if (index > 0) out[index - 1].trimEnd { it in CLOSERS } else ""
+                if (core.isNotEmpty() && core.last().isLetterOrDigit()) out[index - 1] = core + "," + out[index - 1].substring(core.length)
+            }
+            index = endToken + 1
+        }
+    }
+
+    /** "Đóng băng / yếu": a lone slash between two words is a comma on the word before (sea-g2p reads "trên"); between numbers it stays - `_slashes`. */
+    private fun slashes(out: MutableList<String>) {
+        for (index in 1 until out.size - 1) {
+            val after = out[index + 1].trimStart { it in OPENERS }
+            if (out[index] == "/" && out[index - 1].lastOrNull()?.isLetter() == true && after.firstOrNull()?.isLetter() == true) {
+                out[index - 1] = out[index - 1] + ","
+                out[index] = ""
+            }
+        }
+    }
+
+    /** Marks sea-g2p reads wrongly as words ("~" is "khoảng", "500,000" is "năm trăm"), fixed in place without changing the word count - `reading_marks`. */
+    fun readingMarks(out: MutableList<String>) {
+        tildes(out)
+        for (index in out.indices) out[index] = THOUSANDS.replace(out[index]) { it.value.replace(",", "") }
+        angle(out)
+        slashes(out)
+        for (index in out.indices) out[index] = out[index].filterNot { it in ANGLE_OPEN.drop(1) || it in ANGLE_CLOSE.drop(1) } // leftover 《》〈〉 without a pair are only a frame
+    }
+
     /**
      * Shown words -> words to read (a reading-only change, the shown text stays): an upper-case Roman numeral I..XXXIX standing alone after a word
      * with a lower-case letter ("Phổ thông II", "Chương IV"), after a numeral just read ("Mục II, III"), or as a heading at the start of the
      * paragraph ("I. Mở đầu") is read as a Vietnamese number - sea-g2p only knows "Benedict III" and reads "thông II" as "i i". "I am" at the
-     * start, an "I" after punctuation and abbreviations (CV, MC, VIP) stay. `spoken_tokens` of vieneu.py.
+     * start, an "I" after punctuation and abbreviations (CV, MC, VIP) stay. Last `readingMarks` fixes "~", English thousands, <angle brackets> and " / ". `spoken_tokens` of vieneu.py.
      */
     fun spokenTokens(toks: List<String>): List<String> {
         val out = toks.toMutableList()
@@ -85,6 +196,7 @@ object VieneuUnits {
             }
             out[index] = token.replaceFirst(core, vietnameseNumber(value))
         }
+        readingMarks(out)
         return out
     }
 
@@ -136,7 +248,7 @@ object VieneuUnits {
         }
         val result = ArrayList<Unit>()
         for (piece in pieces) { // sentences into units, like vieneu's pack_sentences_into_chunks
-            val words = said.subList(piece[0], piece[1] + 1).joinToString(" ")
+            val words = said.subList(piece[0], piece[1] + 1).filter { it.isNotEmpty() }.joinToString(" ")
             if (result.isNotEmpty() && length(toks, result.last().first, piece[1]) <= maxChars) {
                 result.last().last = piece[1]
                 result.last().pieces.add(words)
