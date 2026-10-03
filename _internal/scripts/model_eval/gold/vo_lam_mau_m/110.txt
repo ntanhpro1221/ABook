@@ -1,0 +1,157 @@
+# Đáp án KIỂM TRA truyện Hàn đợt 3 (03-10; luật cố định: vị trí 30% của bộ); mục đích: tăng gold Hàn (nhóm mỏng nhất).
+# "Võ lâm mâu m" (Vo Lam Mau M) file 110 ("Chương 109 - Điểm Huyệt (3)"). Claude gán (A) 03-10; B soát + phân xử 03-10 (gold_kr3/B/kr3b_review.md).
+# Hai góc kể: 1-95 NGÔI THỨ NHẤT, "tôi" = HÀN THỤY TRẤN / THỤY TRẤN (m, thợ da; bản dịch viết cả "Thuỵ" ~280 lần -> HÀN THUỴ
+# TRẤN / THUỴ TRẤN cũng đủ) -> --first-person "Hàn Thụy Trấn". "Hàn thiếu hiệp", "công tử" là cách gọi - không điểm.
+# 96-138 NGÔI BA: Thương Ba (m, Môn Chủ Hồn Diễm Môn; chỉ có ở chương này, được gọi tên trước khi nói) tỉnh dậy giữa bãi thảm sát
+# của Thanh Nguyệt; "tôi" không có mặt.
+# Tên: PHƯƠNG PHI NHIÊN / PHI NHIÊN (m, "ông ấy", "lão" - chủ Thương Hoa Thương Đoàn); ĐƯỜNG TỐ LAN / TỐ LAN (f); THƯƠNG BA (m).
+# THANH NGUYỆT, NAM CUNG NHIÊN, chú QUÁCH ĐẦU không nói. Nhân viên Tiêu Cục vô danh (76, 88) -> NPC*:nhân viên tiêu cục.
+# Lời thoại NHỚ LẠI (cuộc nói chuyện với Phương Phi Nhiên lúc trước, chép trong ‘...’) bị parser KHOÁ T: 11, 21, 48-49, 51-52
+# Phương Phi Nhiên (10 "Phương Phi Nhiên liền hỏi:"; 48 gọi "Hàn thiếu hiệp"; 52 "Ta dám lấy danh dự ra đảm bảo"), 12 và 50
+# "tôi" đáp ("Khụ, đừng nói bậy..."). Loại thật là thoại -> D,T (quy tắc 9: loại thật trước), người nói đủ điểm, NARRATOR~
+# (tiền lệ Shimotsuki 029:7, 11 lời "hôm qua" chép lại).
+# Ngoặc kép nhấn mạnh trong lời kể ("cùng một giuộc" 13, "chơi một lần" 60, "ké" 84, "Thiên Niên Hoa" 123, "mỹ lệ" 131) -> N
+# như parser khoá. 77 và 78 là câu lặp của nguồn - đều N.
+# Tiếng lòng tức thời của "tôi" -> N,T NARRATOR,HÀN THỤY TRẤN (quy tắc 4 ngôi một): 7, 32, 36-37, 40, 42-43, 61-65 (chuỗi càu
+# nhàu về Đường Tố Lan), 68, 74, 84. Câu giải thích cho người đọc (13-19 về SM, 24-25 phòng gym) giữ N.
+# Ngôi ba: 99 "Chuyện gì... đã xảy ra?", 129-130 "Đó không phải là con người. Đó là hiện thân của Ma La.", 137 "...Ở kia, chính
+# là vị Thần thực sự của chúng ta." (136 "Hắn chỉ kịp có một suy nghĩ duy nhất") - trọn đoạn là ý nghĩ -> N,T, THƯƠNG BA đủ.
+0 H
+1 N
+2 N
+3 N
+4 N
+5 N
+6 N NARRATOR neutral,excited,happy 0-1 normal normal u
+7 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral,happy,excited 0-1 normal normal u
+8 N
+9 N
+10 N
+11 D,T PHƯƠNG PHI NHIÊN,PHI NHIÊN,NARRATOR~ neutral,surprised,happy 0-1 normal normal m
+12 D,T HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN,NARRATOR~ neutral,sarcastic 0-1 normal normal,soft m
+13 N
+14 N
+15 N
+16 N
+17 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral 0-1 normal normal u
+18 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral 0-1 normal normal u
+19 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral 0-1 normal normal u
+20 N
+21 D,T PHƯƠNG PHI NHIÊN,PHI NHIÊN,NARRATOR~ neutral,happy 0-1 normal normal m
+22 N
+23 N
+24 N
+25 N
+26 N
+27 N
+28 N
+29 N NARRATOR neutral,excited,surprised 0-1 normal normal u
+30 N
+31 N
+32 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN surprised,neutral 0-1 normal normal u
+33 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral 0-1 normal normal u
+34 N
+35 N
+36 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral,sarcastic 0-1 normal normal u
+37 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral,surprised 0-1 normal normal u
+38 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral 0-1 normal normal u
+39 N NARRATOR neutral,happy 0-1 normal normal u
+40 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN happy,excited 0-2 normal normal u
+41 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral,happy 0-1 normal normal u
+42 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN happy,neutral 0-1 normal normal u
+43 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN happy,neutral,excited 0-1 normal normal u
+44 N NARRATOR neutral,happy 0-1 normal normal u
+45 N
+46 N
+47 N
+48 D,T PHƯƠNG PHI NHIÊN,PHI NHIÊN,NARRATOR~ happy,sarcastic 0-1 normal normal m
+49 D,T PHƯƠNG PHI NHIÊN,PHI NHIÊN,NARRATOR~ happy,sarcastic 0-1 normal normal m
+50 D,T HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN,NARRATOR~ surprised,afraid,neutral 0-1 normal,fast normal m
+51 D,T PHƯƠNG PHI NHIÊN,PHI NHIÊN,NARRATOR~ happy,neutral 0-1 normal normal m
+52 D,T PHƯƠNG PHI NHIÊN,PHI NHIÊN,NARRATOR~ happy,neutral 0-1 normal normal m
+53 N
+54 D HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral,happy,tired 0-1 normal,slow soft,normal m
+55 N NARRATOR neutral,happy 0-1 normal normal u
+56 N NARRATOR neutral,happy 0-1 normal normal u
+57 N
+58 N
+59 N NARRATOR neutral,angry 0-1 normal normal u
+60 N
+61 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN angry,sarcastic,neutral 0-1 normal normal u
+62 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN angry,neutral 0-1 normal normal u
+63 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN angry,neutral 0-1 normal normal u
+64 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral,angry 0-1 normal normal u
+65 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral,angry,sarcastic 0-1 normal normal u
+66 N
+67 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral 0-1 normal normal u
+68 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral,sarcastic 0-1 normal normal u
+69 N
+70 N
+71 D ĐƯỜNG TỐ LAN,TỐ LAN neutral 0-1 normal normal f
+72 N
+73 N
+74 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral,sarcastic 0-1 normal normal u
+75 N
+76 D NPC*:nhân viên tiêu cục,UNKNOWN~ neutral,happy 0-1 normal normal u
+77 N
+78 N
+79 N NARRATOR neutral,sad 0-1 normal normal u
+80 D HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral 0-1 normal normal m
+81 N
+82 N
+83 N
+84 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN happy,neutral 0-1 normal normal u
+85 N
+86 D HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral 0-1 normal normal m
+87 D HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral 0-1 normal normal m
+88 D NPC*:nhân viên tiêu cục,UNKNOWN~ neutral 0-1 normal normal u
+89 N
+90 N
+91 N
+92 N
+93 D ĐƯỜNG TỐ LAN,TỐ LAN neutral 0-1 normal normal f
+94 N
+95 D HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral 0-1 normal normal m
+96 N NARRATOR neutral,afraid,sad 0-1 normal normal u
+97 D THƯƠNG BA sad,afraid 1-2 slow,normal soft m
+98 N NARRATOR neutral,sad,afraid 0-1 normal normal u
+99 N,T NARRATOR,THƯƠNG BA surprised,afraid,neutral 0-1 normal,slow normal,soft u
+100 N NARRATOR neutral,afraid,sad 0-1 normal normal u
+101 N NARRATOR neutral,afraid,sad 0-1 normal normal u
+102 N
+103 N
+104 N
+105 D THƯƠNG BA afraid,surprised,sad 1-2 normal soft,normal m
+106 N NARRATOR neutral,afraid,surprised 0-1 normal normal u
+107 N NARRATOR neutral,afraid 0-1 normal normal u
+108 N
+109 N NARRATOR neutral,afraid 0-1 normal normal u
+110 N
+111 N
+112 N
+113 N NARRATOR neutral,afraid 0-1 normal normal u
+114 N
+115 N
+116 N
+117 N
+118 N
+119 N
+120 N
+121 N
+122 N NARRATOR neutral,afraid 0-1 normal normal u
+123 N
+124 N
+125 N
+126 N NARRATOR neutral,afraid 0-1 normal normal u
+127 N
+128 N NARRATOR neutral,afraid 0-1 normal normal u
+129 N,T NARRATOR,THƯƠNG BA neutral,afraid 0-1 normal normal u
+130 N,T NARRATOR,THƯƠNG BA neutral,afraid 0-1 normal normal u
+131 N
+132 D THƯƠNG BA afraid,surprised,neutral 0-1 slow,normal soft m
+133 N
+134 N
+135 N
+136 N
+137 N,T NARRATOR,THƯƠNG BA excited,neutral,afraid 0-1 normal,slow normal,soft u
+138 N

@@ -1,0 +1,145 @@
+# Đáp án KIỂM TRA truyện Hàn đợt 3 (03-10; luật cố định: vị trí 30% của bộ); mục đích: tăng gold Hàn (nhóm mỏng nhất).
+# "Kẻ yếu nhất học viện" file 26 ("Chương 27 - Giao Đấu (1)"). Claude gán (A) 03-10; B soát + phân xử 03-10 (gold_kr3/B/kr3b_review.md).
+# Hai góc kể: 1-77 NGÔI THỨ NHẤT, "tôi" = ISAAC (m; người chơi xuyên vào nhân vật lớp D - 54 "Xin mời Isaac của lớp D..." rồi
+# 55 "Đến lượt của tôi rồi"; "Isaac" ~800 lần cả bộ, không có họ) -> --first-person Isaac. 78-127 NGÔI BA (sân thượng: ác quỷ
+# Leafa và Giáo sư Fernando), "tôi" không có mặt.
+# Tên: FERNANDO / FERNANDO FROST (m, giáo sư; "Giáo sư Fernando" là danh xưng - không tính); PHILIP / PHILIP MELTRON (m, giáo sư
+# lớp A); MATEO / MATEO JORDANA (m); LEAFA / LEAFA HÃO HUYỀN (m - "hắn", ác quỷ trùm cuối). MARCO (trợ lý), TRISTAN, IAN, LUCE
+# không nói. Người vô danh: 1 người tuyên bố mở đầu, 35 trọng tài, 54 "vị giáo sư còn lại" gọi tên (11) -> NPC*:<mô tả>, UNKNOWN~.
+# 7 và 9 cùng một bài giảng luật: 8 "Giáo sư Fernando cùng với... Marco, và một vị giáo sư khác đang giải thích", 10 "Giáo sư
+# Fernando kết thúc phần giải thích" -> FERNANDO đủ; 7 thêm MARCO~/NPC*~ (lời dẫn nêu ba người, 10 chốt Fernando).
+# Leafa nói bằng dòng ≪...≫ (84, 87, 97, 98, 103, 108, 115, 121, 124) - parser KHOÁ N -> NARRATOR, LEAFA~ (quy tắc 10, tiền lệ
+# Zenith 058 "[...]"). 88 "Ta sẽ nhốt bọn chúng bằng ma thuật..." trọn đoạn là ý nghĩ của Leafa (không ngoặc) -> N,T, LEAFA
+# đủ; 120 trọn đoạn tự hỏi của Fernando -> FERNANDO đủ, 119 nửa kể nửa tự hỏi -> FERNANDO~ (quy tắc 4 ngôi ba).
+# 111 T ‘Dù gì ngươi sẽ phải nằm xuống ở đây thôi.’ nối 109-110 "Hắn [Leafa] biết mình chẳng cần đáp lại làm gì. Câu trả lời đã rõ
+# ngay trước mắt." -> LEAFA đủ; FERNANDO~ (ngay sau là Fernando giơ tay tấn công, nhập nhằng).
+# Bảng trạng thái hệ thống (13-18, 43-48, 62, 68-73) và tiếng động (63, 91) -> N. Tiếng lòng tức thời của "tôi" -> N,T NARRATOR,
+# ISAAC (quy tắc 4 ngôi một): 20, 26, 28, 33-34, 40, 55-56, 74, 77.
+0 H
+1 D NPC*:người tuyên bố,UNKNOWN~ neutral 0-1 normal normal,loud u
+2 N,T NARRATOR,ISAAC neutral,excited 0-1 normal normal u
+3 N
+4 N
+5 N
+6 N
+7 D FERNANDO,FERNANDO FROST neutral 0-1 normal normal m
+8 N
+9 D FERNANDO,FERNANDO FROST neutral 0-1 normal normal m
+10 N
+11 N
+12 N
+13 N
+14 N
+15 N
+16 N
+17 N
+18 N
+19 N
+20 N,T NARRATOR,ISAAC neutral,surprised 0-1 normal normal u
+21 T ISAAC neutral,afraid 0-1 normal normal,soft m
+22 N
+23 N
+24 N
+25 N
+26 N,T NARRATOR,ISAAC neutral,afraid 0-1 normal normal u
+27 N,T NARRATOR,ISAAC neutral 0-1 normal normal u
+28 N,T NARRATOR,ISAAC surprised,neutral 0-1 normal normal,soft u
+29 N NARRATOR neutral,surprised 0-1 normal normal u
+30 N NARRATOR neutral,surprised,afraid 0-1 normal normal u
+31 T ISAAC neutral,afraid 0-1 normal normal,soft m
+32 N
+33 N,T NARRATOR,ISAAC neutral 0-1 normal normal u
+34 N,T NARRATOR,ISAAC neutral,sarcastic 0-1 normal normal u
+35 D NPC*:trọng tài,UNKNOWN~ neutral,excited 0-1 normal loud,normal u
+36 N
+37 N
+38 N
+39 D PHILIP,PHILIP MELTRON sarcastic,angry 1-2 normal normal m
+40 N,T NARRATOR,ISAAC surprised,neutral 0-1 normal normal u
+41 N
+42 N
+43 N
+44 N
+45 N
+46 N
+47 N
+48 N
+49 N
+50 N NARRATOR neutral,angry 0-1 normal normal u
+51 D MATEO,MATEO JORDANA neutral 0-1 normal normal,soft m
+52 N
+53 N
+54 D NPC*:giáo sư gọi tên,UNKNOWN~ neutral 0-1 normal loud,normal u
+55 N,T NARRATOR,ISAAC neutral,afraid 0-1 normal normal u
+56 N,T NARRATOR,ISAAC neutral,afraid 0-1 normal,slow soft,normal u
+57 N
+58 N,T NARRATOR,ISAAC neutral,afraid 0-1 normal normal u
+59 N
+60 N
+61 N
+62 N
+63 N
+64 N NARRATOR neutral,afraid 0-1 normal normal u
+65 N
+66 N NARRATOR neutral,afraid 0-1 normal normal u
+67 N
+68 N
+69 N
+70 N
+71 N
+72 N
+73 N
+74 N,T NARRATOR,ISAAC surprised,afraid 0-2 normal normal u
+75 T ISAAC surprised,afraid 1-2 normal normal,soft m
+76 N
+77 N,T NARRATOR,ISAAC surprised,afraid 0-2 normal normal u
+78 N
+79 N
+80 N
+81 N
+82 N
+83 N
+84 N NARRATOR,LEAFA~,LEAFA HÃO HUYỀN~ tired,neutral,sarcastic 0-1 normal normal u
+85 N
+86 N
+87 N NARRATOR,LEAFA~,LEAFA HÃO HUYỀN~ happy,excited,neutral 0-1 normal normal,soft u
+88 N,T NARRATOR,LEAFA,LEAFA HÃO HUYỀN happy,excited,neutral 0-2 normal normal u
+89 N NARRATOR neutral,happy,excited 0-1 normal normal u
+90 N
+91 N
+92 N
+93 N
+94 D FERNANDO,FERNANDO FROST surprised,neutral 0-1 normal normal,soft m
+95 N
+96 N
+97 N NARRATOR,LEAFA~,LEAFA HÃO HUYỀN~ sarcastic,happy,excited 0-2 normal normal u
+98 N NARRATOR,LEAFA~,LEAFA HÃO HUYỀN~ sarcastic,happy 0-2 normal normal u
+99 N
+100 D FERNANDO,FERNANDO FROST surprised,neutral 0-1 normal normal,soft m
+101 N NARRATOR neutral,surprised 0-1 normal normal u
+102 N
+103 N NARRATOR,LEAFA~,LEAFA HÃO HUYỀN~ sarcastic,happy 0-1 normal normal u
+104 D FERNANDO,FERNANDO FROST neutral,angry 0-1 normal normal,soft m
+105 N
+106 N
+107 D FERNANDO,FERNANDO FROST neutral,angry 0-1 normal normal m
+108 N NARRATOR,LEAFA~,LEAFA HÃO HUYỀN~ happy,sarcastic 0-1 normal normal,soft u
+109 N
+110 N
+111 T LEAFA,LEAFA HÃO HUYỀN,FERNANDO~,FERNANDO FROST~ neutral,sarcastic,happy 0-1 normal normal,soft m
+112 D FERNANDO,FERNANDO FROST neutral,angry 0-1 normal normal m
+113 N
+114 N
+115 N NARRATOR,LEAFA~,LEAFA HÃO HUYỀN~ sarcastic,happy 0-1 normal normal u
+116 D FERNANDO,FERNANDO FROST angry,neutral,sarcastic 0-2 normal normal m
+117 N
+118 N
+119 N,T NARRATOR,FERNANDO~,FERNANDO FROST~ neutral,surprised 0-1 normal normal u
+120 N,T NARRATOR,FERNANDO,FERNANDO FROST neutral,surprised,afraid 0-1 normal normal u
+121 N NARRATOR,LEAFA~,LEAFA HÃO HUYỀN~ sarcastic,happy,excited 0-2 normal normal u
+122 N
+123 N
+124 N NARRATOR,LEAFA~,LEAFA HÃO HUYỀN~ sarcastic,happy 0-1 normal normal u
+125 N
+126 N
+127 N
