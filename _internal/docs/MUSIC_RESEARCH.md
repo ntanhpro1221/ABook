@@ -1632,6 +1632,32 @@ khoảng lặng 0,4 s. Câu của nghiên cứu căn từ `LLM_Train/word_align/
   - Edge chỉ phải giảm 0,3–1,7 dB nên không có rủi ro vỡ tiếng.
 - Nếu không chuẩn hoá: dùng mức giọng theo bảng trên thay cho −20,3 trong công thức gain nhạc (HoaiMy −18,3, NamMinh
   −19,7, VieNeu −17,8 / −18,7). Giọng máy khi đó không có số.
+- **Lead chốt (03-10 14:xx):** chuẩn hoá mỗi clip về −20 LUFS (kẹp ±6 dB, đỉnh ≤ −1 dBFS) + công thức Pha 4. Danh mục
+  bc472d9d9f40 đã triển khai.
+
+**GHI TRƯỚC - CHẤM CHẤT LƯỢNG DANH SÁCH PHÁT (03-10 14:xx; máy chấm, chủ sách không chấm; chạy khi có chỗ):**
+
+Mẫu:
+- Mỗi danh sách lấy 10 bài TRONG danh sách (hạt giống 7 trên thứ tự đã trộn).
+- Thêm 10 bài MỒI, lấy ngẫu nhiên từ những bài qua nền chung nhưng KHÔNG thuộc danh sách ấy (cùng hạt giống).
+
+Mô tả bài:
+- Không CLAP: tên, tác giả, nguồn, tag / mô tả trang gốc + âm học cả bài thành lời (cùng cách `describe_noclap.py`, bỏ phần
+  đo trên clip 30 s).
+- Không ghi bài thuộc danh sách nào.
+
+Người chấm:
+- Hai người đọc Sonnet r1 / r2, mỗi danh sách một gói, mỗi gói một agent.
+- Đề: tên + mô tả danh sách, rồi 20 bài xáo lẫn. Mỗi bài trả "hợp / không hợp" làm nhạc nền cho sách loại ấy + độ chắc 1–5.
+- 10% bài lặp ở gói khác.
+
+Thước, mỗi danh sách:
+- **Độ đúng** = tỉ lệ bài trong danh sách được cả hai chấm "hợp" (khác ý tính nửa).
+- **Báo nhầm mồi** = tỉ lệ mồi được chấm "hợp".
+- **ĐẠT** nếu độ đúng ≥ 0,70 VÀ hơn báo nhầm mồi ≥ 0,25.
+- Dùng được chỉ khi ổn định a/b ≥ 0,75 và kappa r1-r2 ≥ 0,20.
+
+Danh sách TRƯỢT thì siết luật (ghi lại luật mới) rồi chấm lại bằng mẫu MỚI (hạt giống 8), không dùng lại mẫu cũ.
 
 ## Nguồn nhạc: giữ / loại và lý do (02-10, Lead + chủ sách - đọc trước khi hỏi lại)
 
