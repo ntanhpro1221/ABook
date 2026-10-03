@@ -76,7 +76,10 @@ class PlayerWidget : AppWidgetProvider() {
             val recent = Playback.lastListened() ?: return View("ABook", "Chưa nghe sách nào", 0.0, false, "", false)
             val (manifest, last) = recent
             val chapter = chapterOf(manifest, last.optInt("chapterId"))
-            val duration = chapter?.optDouble("duration") ?: 0.0
+            // Chương chữ (đọc to) không có thời lượng trong gói: lấy độ dài ảo đã lưu cùng chỗ nghe (Store.progress).
+            val duration = chapter?.optDouble("duration")?.takeIf { it > 0 }
+                ?: Store.state(manifest.optString("id")).optJSONObject("chapters")?.optJSONObject(last.optInt("chapterId").toString())?.optDouble("duration")
+                ?: 0.0
             return View(
                 manifest.optString("title"), chapter?.optString("fullTitle") ?: "",
                 if (duration > 0) last.optDouble("seconds") / duration else 0.0, false, "", false,

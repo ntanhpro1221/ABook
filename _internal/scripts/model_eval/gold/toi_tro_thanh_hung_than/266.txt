@@ -1,0 +1,229 @@
+# Đáp án KIỂM TRA Hàn đợt 4 (03-10; luật cố định: vị trí 30% của bộ, >30 KB lấy 25 KB đầu); mục đích: tách q35-4B / 9B / v8 trên truyện Hàn chưa học.
+# "Tôi trở thành hung thần" file 266 (tiêu đề trong file: "Chương 265 - Kureha vs Lunared"; file ~10 KB, lấy trọn). Claude gán (A) 03-10.
+# Hai góc kể: 1-85 NGÔI BA (trận Kureha - Lunared, Kuilan đứng xem); 86-211 NGÔI THỨ NHẤT, người kể xưng "ta" (chương khác xưng
+# "tôi"), "ta" = ASH (Ash "BornHater" Everblack, 000.txt; lời kể 25x-26x gọi "Ash", vd 26x "Người phán quyết là tôi — Ash.";
+# Evangeline gọi "tiền bối", lính gọi "Điện hạ", Godhand gọi "Bệ hạ" - danh hiệu, không điểm) -> --first-person Ash.
+# Tên: ASH / ASH EVERBLACK (m); KUREHA (m, "hắn", Tông Chủ đời 43 Diệp Tộc, đang ở dạng sói); LUNARED (m, Vua Sói, tổ tiên -
+# "Vua Sói" là danh hiệu, không điểm); KUILAN (m, em Kureha, không nói trong đoạn này); EVANGELINE (f); GODHAND (m, 260.txt "Anh cười").
+# 12 "Cái quái gì thế này? Với cái bộ dạng đó..." -> LUNARED (13 "Lunared cười khoái chí", 14 hắn vui vì hậu duệ dùng võ của
+# hắn), KUILAN~ (11 Kuilan há hốc mồm đứng ngay trước). 33 "Hãy nhìn cho kỹ…" sau "Như thể nói," = lời không thành tiếng của
+# Kureha qua cái gật đầu (parser khoá D) -> KUREHA đủ, NARRATOR~. 58, 67 nội tâm Lunared (59, 64 hắn phản ứng).
+# 137-145 tiếng báo cáo dồn dập (136) của lính vô danh -> mỗi câu một NPC* (quy tắc 6); 141-145 cùng một người truyền tin gọi
+# "Điện hạ" (141 "Báo cáo!" mở, 145 "xin chỉ thị!" đóng) - không chữ nào nêu tên. 156 "Bệ hạ." = Godhand (155).
+# 175 "…Cũng có lý." -> ASH (176 "Nhưng—", 177 + 178 "Ta nói"). 207 "Đúng." ASH (208 "Ta trả lời ngay").
+# Ngôi một, tiếng lòng tức thời -> N,T người kể đủ (quy tắc 4): 128-135 chuỗi suy nghĩ sau 126 "vừa đi... vừa suy nghĩ"
+# (127 khoá T); 176 "Nhưng—"; 187-188 "Ta đã hiểu. Luật sinh ra để bị lợi dụng."; 192-195 lời tự quyết. 86 "Đây chính là kế
+# hoạch của ta." là câu kể giải thích (nói với người đọc) -> N.
+# Tiếng động trong lời kể (1, 5, 7, 9, 34, 43, 54, 94, 117) không ngoặc, parser khoá N -> N.
+0 H
+1 N
+2 N
+3 N
+4 N
+5 N
+6 N
+7 N
+8 N
+9 N
+10 N
+11 N NARRATOR neutral,surprised 0-1 normal normal u
+12 D LUNARED happy,sarcastic,surprised 0-2 normal normal,loud m
+13 N NARRATOR neutral,happy 0-1 normal normal u
+14 N NARRATOR neutral,happy 0-1 normal normal u
+15 N
+16 D KUREHA neutral 0-1 normal,slow normal,soft m
+17 D LUNARED surprised 0-1 normal normal m
+18 D KUREHA neutral 0-1 normal,slow normal m
+19 N
+20 D KUREHA neutral,sarcastic 0-1 normal,slow normal m
+21 N
+22 D LUNARED angry,sarcastic,happy 1-2 normal,fast loud,normal m
+23 N
+24 N
+25 N
+26 N
+27 N
+28 N
+29 N
+30 N
+31 N
+32 N
+33 D KUREHA,NARRATOR~ neutral,tender 0-1 normal,slow soft,normal m
+34 N
+35 N
+36 N
+37 N
+38 N
+39 N
+40 N
+41 N
+42 N
+43 N
+44 N
+45 N
+46 N
+47 N NARRATOR neutral,sad 0-1 normal normal u
+48 N
+49 D LUNARED sarcastic,happy,angry,excited 1-2 normal,fast loud,normal m
+50 D LUNARED sarcastic,happy,angry,excited 1-2 normal,fast loud,normal m
+51 N
+52 N
+53 D KUREHA neutral 0-1 normal,slow soft,normal m
+54 N
+55 N
+56 N
+57 N
+58 T LUNARED surprised,angry,afraid 1-2 normal,fast normal m
+59 N NARRATOR neutral,angry 0-1 normal normal u
+60 N NARRATOR neutral,angry 0-1 normal normal u
+61 N
+62 N
+63 N
+64 N NARRATOR neutral,afraid 0-1 normal normal u
+65 N
+66 N
+67 T LUNARED surprised,afraid 1-2 normal,fast normal m
+68 D KUREHA neutral,happy,sarcastic 0-1 normal normal m
+69 N
+70 D KUREHA neutral 0-1 normal normal m
+71 D KUREHA neutral 0-1 normal normal m
+72 N
+73 D KUREHA neutral 0-1 normal normal m
+74 D LUNARED surprised,afraid 0-2 normal normal,soft m
+75 D KUREHA neutral 0-1 normal normal m
+76 N
+77 N
+78 D LUNARED angry,afraid,surprised 1-3 fast loud m
+79 D KUREHA neutral,sarcastic 0-1 normal normal m
+80 N
+81 D KUREHA neutral,sarcastic 0-1 normal normal m
+82 D LUNARED surprised,angry,afraid 1-2 fast loud,normal m
+83 D KUREHA neutral 0-1 normal,slow normal,soft m
+84 N
+85 D KUREHA neutral,tender 0-1 normal,slow normal,soft m
+86 N
+87 N
+88 N
+89 N
+90 N
+91 N
+92 N
+93 N
+94 N
+95 N
+96 N
+97 N
+98 N
+99 N
+100 N
+101 N
+102 N
+103 D LUNARED angry,afraid 2-3 fast loud m
+104 N
+105 N
+106 N
+107 N
+108 N
+109 D LUNARED afraid,sad,surprised 1-2 slow,normal soft,normal m
+110 N
+111 N
+112 N
+113 N
+114 N
+115 D LUNARED angry,afraid 2-3 fast loud m
+116 N
+117 N
+118 N
+119 N
+120 D LUNARED afraid,sad 1-2 slow,normal soft,normal m
+121 N
+122 N
+123 D LUNARED afraid,sad,tired 1-2 slow soft m
+124 N
+125 N
+126 N
+127 T ASH neutral 0-1 normal normal m
+128 N,T NARRATOR,ASH neutral 0-1 normal normal u
+129 N,T NARRATOR,ASH neutral 0-1 normal normal u
+130 N,T NARRATOR,ASH neutral 0-1 normal normal u
+131 N,T NARRATOR,ASH neutral 0-1 normal normal u
+132 N,T NARRATOR,ASH neutral 0-1 normal normal u
+133 N,T NARRATOR,ASH neutral 0-1 normal normal u
+134 N,T NARRATOR,ASH neutral 0-1 normal normal u
+135 N,T NARRATOR,ASH neutral 0-1 normal normal u
+136 N
+137 D NPC*,UNKNOWN~ excited,neutral 1-2 fast loud,normal m
+138 D NPC*,UNKNOWN~ excited,neutral 1-2 fast loud,normal m
+139 D NPC*,UNKNOWN~ neutral,excited 1-2 fast loud,normal m
+140 D NPC*,UNKNOWN~ neutral,excited 1-2 fast loud,normal m
+141 D NPC*:lính truyền tin,UNKNOWN~ excited,neutral 1-2 fast loud,normal m
+142 D NPC*,UNKNOWN~ excited,neutral 1-2 fast loud,normal m
+143 D NPC*,UNKNOWN~ excited,neutral 1-2 fast loud,normal m
+144 D NPC*,UNKNOWN~ excited,neutral 1-2 fast loud,normal m
+145 D NPC*:lính truyền tin,UNKNOWN~ neutral,excited 1-2 fast,normal loud,normal m
+146 N
+147 N
+148 N
+149 D EVANGELINE tired,neutral,sad 0-1 slow,normal soft,normal f
+150 N
+151 D EVANGELINE tired,neutral 0-1 slow,normal soft,normal f
+152 N
+153 D EVANGELINE tired,neutral,sad 0-1 slow,normal soft,normal f
+154 N
+155 N
+156 D GODHAND neutral 0-1 normal normal,soft m
+157 D ASH neutral 0-1 normal normal m
+158 N
+159 N
+160 N
+161 D ASH neutral,sarcastic 0-1 normal normal m
+162 N
+163 D ASH sarcastic 0-1 normal normal m
+164 D LUNARED afraid,sad 0-1 slow,normal soft,normal m
+165 N
+166 D ASH surprised,sarcastic 0-1 normal normal m
+167 D LUNARED angry,afraid 0-2 normal normal,loud m
+168 N
+169 D LUNARED angry,excited 1-3 fast,normal loud m
+170 N
+171 D LUNARED angry,excited 1-2 normal,fast loud m
+172 D LUNARED angry,excited 1-3 fast,normal loud m
+173 N
+174 D LUNARED angry,excited 1-3 fast,normal loud m
+175 D ASH neutral,sarcastic 0-1 normal,slow normal m
+176 N,T NARRATOR,ASH neutral 0-1 normal normal u
+177 D ASH neutral,sarcastic 0-1 normal,slow normal m
+178 N
+179 D ASH neutral,sarcastic 0-1 normal,slow normal m
+180 D LUNARED angry,surprised 1-3 fast loud m
+181 N
+182 D LUNARED angry 1-3 fast loud m
+183 D ASH neutral 0-1 normal normal m
+184 N
+185 D ASH neutral 0-1 normal,slow normal m
+186 D ASH neutral 0-1 normal,slow normal m
+187 N,T NARRATOR,ASH neutral 0-1 normal normal u
+188 N,T NARRATOR,ASH neutral 0-1 normal normal u
+189 D ASH neutral 0-1 normal,slow normal m
+190 D LUNARED surprised,afraid 0-2 normal normal,soft m
+191 D ASH neutral 0-1 normal,slow normal,loud m
+192 N,T NARRATOR,ASH neutral 0-1 normal normal u
+193 N,T NARRATOR,ASH neutral 0-1 normal normal u
+194 N,T NARRATOR,ASH neutral 0-1 normal normal u
+195 N,T NARRATOR,ASH neutral 0-1 normal normal u
+196 D ASH neutral 0-1 normal,slow normal m
+197 N
+198 D ASH neutral 0-1 normal,slow normal m
+199 D ASH neutral 0-1 normal,slow normal m
+200 N
+201 D LUNARED sarcastic,happy,angry 1-2 normal,fast loud,normal m
+202 N
+203 D LUNARED sarcastic,angry 1-2 normal loud,normal m
+204 D LUNARED sarcastic,angry 1-2 normal,fast loud m
+205 D LUNARED angry,sarcastic 1-2 normal,fast loud m
+206 D LUNARED sarcastic,angry 1-2 normal normal,loud m
+207 D ASH neutral 0-1 normal normal m
+208 N
+209 D ASH neutral 0-1 normal,slow normal m
+210 N
+211 D ASH neutral 0-1 normal,slow normal,soft m

@@ -19,7 +19,11 @@ và độ dài, không ký tự điều khiển - và file sai thì bị từ ch
      "chapters": {"<mã chương>": {"title": "Chương 12", "subtitle": "Hồi kết"}},   (mỗi trường tuỳ chọn)
      "music": {"enabled": false, "levelDb": -24.0, "silenced": ["<mã chương>:<mili giây đầu mốc>"],
                "pins": {"<mã chương>:<mili giây đầu mốc>": "local:<sha1>"},          (đổi bài một mốc sang bài "Nhạc của tôi")
-               "tracks": {"<sha1>": {"ext": "mp3", "title": "...", "creator": "...", "duration": 184.0, "lufs": -14.2}}},
+               "tracks": {"<sha1>": {"ext": "mp3", "title": "...", "creator": "...", "duration": 184.0, "lufs": -14.2}},
+               "playlist": "fantasy_calm" | "mine"},                    (nhạc nền của sách KHÔNG có nhạc của người làm sách -
+                                                                 sách chỉ có chữ nghe bằng "Nghe ngay": một danh sách phát
+                                                                 của danh mục, hay "mine" = "Nhạc của tôi" của máy đang phát;
+                                                                 không có khoá = tắt - music_playlist.py)
                                                                 (thông tin các bài được ghim, đúng những sha1 mà `pins` nhắc tới;
                                                                  file nằm ở music/<sha1>.<đuôi> như bài của người làm sách)
      "wishes": {...}}                                           (ý muốn chờ Studio - book_wishes.py: cách đọc tên, người nói,
@@ -61,9 +65,10 @@ TRACK_TEXT_MAX = 200  # tên bài / nghệ sĩ trong thẻ file nhạc (music_lo
 LEVEL_RANGE = (-40.0, -6.0)
 _TOP_KEYS = {"format", "version", "title", "cover", "characters", "chapters", "music", "wishes"}
 _COVER_KEYS = {"color", "width", "height", "version"}
-_MUSIC_KEYS = {"enabled", "levelDb", "silenced", "pins", "tracks"}
+_MUSIC_KEYS = {"enabled", "levelDb", "silenced", "pins", "tracks", "playlist"}
 _TRACK_KEYS = {"ext", "title", "creator", "duration", "lufs"}
 _LOCAL_LINK = re.compile(r"local:[0-9a-f]{40}")
+_PLAYLIST = re.compile(r"[a-z0-9_]{1,40}")  # mã danh sách phát của danh mục (music_playlist.MINE = "Nhạc của tôi")
 _SHA1 = re.compile(r"[0-9a-f]{40}")
 _CHAPTER_KEYS = {"title", "subtitle"}
 _CHAPTER_ID = re.compile(r"\d{1,9}")
@@ -107,11 +112,12 @@ def is_empty(edits: dict[str, Any]) -> bool:
 
 def count_applied(edits: dict[str, Any]) -> int:
     """Số thay đổi "áp ngay" người nghe đã làm: tên sách, bìa, mỗi tên nhân vật, mỗi chương đổi tên, bật/tắt nhạc, mức nhạc,
-    mỗi đoạn nhạc im lặng, mỗi đoạn nhạc đổi sang bài của người nghe. Không kể ý muốn chờ Studio (`wishes`) - chúng chưa áp
+    mỗi đoạn nhạc im lặng, mỗi đoạn nhạc đổi sang bài của người nghe, danh sách phát đã chọn. Không kể ý muốn chờ Studio (`wishes`) - chúng chưa áp
     vào đâu cả."""
     music = edits.get("music") or {}
     return (("title" in edits) + ("cover" in edits) + len(edits.get("characters") or {}) + len(edits.get("chapters") or {})
-            + ("enabled" in music) + ("levelDb" in music) + len(music.get("silenced") or []) + len(music.get("pins") or {}))
+            + ("enabled" in music) + ("levelDb" in music) + len(music.get("silenced") or []) + len(music.get("pins") or {})
+            + ("playlist" in music))
 
 
 def count_wishes(edits: dict[str, Any]) -> int:
@@ -207,6 +213,11 @@ def _validate_music(music: Any) -> dict[str, Any]:
         if not _number(level) or not LEVEL_RANGE[0] <= level <= LEVEL_RANGE[1]:
             raise EditsError("Mức nhạc nền trong phần sửa nằm ngoài khoảng cho phép.")
         out["levelDb"] = float(level)
+    if "playlist" in music:
+        playlist = music["playlist"]
+        if not isinstance(playlist, str) or not _PLAYLIST.fullmatch(playlist):
+            raise EditsError("Danh sách nhạc nền trong phần sửa không hợp lệ.")
+        out["playlist"] = playlist
     if "silenced" in music:
         silenced = music["silenced"]
         if (not isinstance(silenced, list) or len(silenced) > MAX_SILENCED or len(set(silenced)) != len(silenced)
@@ -282,7 +293,7 @@ def _ordered(edits: dict[str, Any]) -> dict[str, Any]:
         out["chapters"] = {key: edits["chapters"][key] for key in sorted(edits["chapters"], key=int)}
     if edits.get("music"):
         music = edits["music"]
-        out["music"] = {key: music[key] for key in ("enabled", "levelDb", "silenced") if key in music}
+        out["music"] = {key: music[key] for key in ("enabled", "levelDb", "playlist", "silenced") if key in music}
         if music.get("pins"):
             out["music"]["pins"] = {key: music["pins"][key] for key in sorted(music["pins"])}
             out["music"]["tracks"] = {sha: {key: music["tracks"][sha][key] for key in ("ext", "title", "creator", "duration", "lufs")
@@ -357,7 +368,7 @@ def merge(local: dict[str, Any], incoming: dict[str, Any]) -> tuple[dict[str, An
         out["chapters"] = chapters
     music: dict[str, Any] = {}
     local_music, incoming_music = local.get("music") or {}, incoming.get("music") or {}
-    for field in ("enabled", "levelDb"):
+    for field in ("enabled", "levelDb", "playlist"):
         if field in local_music:
             music[field] = local_music[field]
             conflicts += field in incoming_music and incoming_music[field] != local_music[field]
@@ -574,7 +585,7 @@ def apply_music(music: dict[str, Any] | None, edits: dict[str, Any]) -> dict[str
 
 def music_view(book: dict[str, Any], edits: dict[str, Any]) -> dict[str, Any]:
     """Màn "Nhạc nền" của sách đóng gói: bật/tắt, mức, và từng mốc (đã im lặng hay chưa) - kể cả mốc đã im lặng, để bật lại.
-    `book`: book.json GỐC. Sách không có nhạc: `hasMusic` false."""
+    `book`: book.json GỐC. Sách không có nhạc: `hasMusic` false. `playlist`: danh sách phát người nghe đã chọn (khi có)."""
     music = book.get("music") if isinstance(book.get("music"), dict) else None
     changes = edits.get("music") or {}
     base_level = float(music["levelDb"]) if music and _number(music.get("levelDb")) else music_plan.DEFAULT_LEVEL_DB
@@ -598,7 +609,8 @@ def music_view(book: dict[str, Any], edits: dict[str, Any]) -> dict[str, Any]:
                          "title": str(info.get("title") or ""), "creator": str(info.get("creator") or ""),
                          "silenced": key in silenced, **({"pinned": True} if pinned is not None else {})})
     return {"package": True, "hasMusic": bool(cues), "enabled": changes.get("enabled", True),
-            "levelDb": changes.get("levelDb", base_level), "defaultLevelDb": base_level, "cues": cues}
+            "levelDb": changes.get("levelDb", base_level), "defaultLevelDb": base_level, "cues": cues,
+            **({"playlist": changes["playlist"]} if "playlist" in changes else {})}
 
 
 # ---- bìa --------------------------------------------------------------------------------------------------------
@@ -815,7 +827,8 @@ def set_music(folder: Path, body: dict[str, Any],
               track: Callable[[str], tuple[dict[str, Any], Path] | None] | None = None) -> dict[str, Any]:
     """Sửa nhạc nền của sách đóng gói: `enabled`, `levelDb` (kẹp -40..-6 như `music_plan.write_overrides`), `silence`
     {khoá mốc: True/False}, `pins` {khoá mốc: "local:<sha1>" | null} (đổi bài một mốc sang bài trong "Nhạc của tôi", null = về
-    bài người làm sách gắn). `track(link)` -> (thông tin, file) của bài trong kho của máy này; file được chép vào thư mục sách
+    bài người làm sách gắn), `playlist` (mã danh sách phát, "mine" hay null = tắt - sách không có nhạc của người làm sách).
+    `track(link)` -> (thông tin, file) của bài trong kho của máy này; file được chép vào thư mục sách
     (music/<sha1>.<đuôi>) để `repack` mang đi. Khoá lạ: `EditsError`. Trả `music_view`."""
     book = _base(folder)
     with _LOCK:
@@ -836,6 +849,14 @@ def set_music(folder: Path, body: dict[str, Any],
                 music.pop("levelDb", None)
             else:
                 music["levelDb"] = level
+        if "playlist" in body:
+            playlist = body["playlist"]
+            if not playlist:
+                music.pop("playlist", None)
+            elif isinstance(playlist, str) and _PLAYLIST.fullmatch(playlist):
+                music["playlist"] = playlist
+            else:
+                raise EditsError("Không có danh sách nhạc nền này")
         if body.get("silence"):
             if not isinstance(body["silence"], dict):
                 raise EditsError("Danh sách đoạn im lặng không hợp lệ")

@@ -47,6 +47,14 @@ class PlaybackService : MediaLibraryService() {
         val SLEEP_PLUS = SessionCommand("vn.abook.SLEEP_PLUS", Bundle.EMPTY)
         var instance: PlaybackService? = null
             private set
+
+        /** Mục giả trả cho phiên media khi lõi đã tự nạp một cuốn có chương chữ (đọc to): [HeadsetSkips] bỏ qua nó thay vì đặt vào ExoPlayer. */
+        private val READ_ALOUD = MediaItem.Builder().setMediaId("abook:read-aloud").build()
+
+        private fun isReadAloud(items: List<MediaItem>) = items.singleOrNull()?.mediaId == READ_ALOUD.mediaId
+
+        private fun readAloudQueue(): ListenableFuture<MediaSession.MediaItemsWithStartPosition> =
+            Futures.immediateFuture(MediaSession.MediaItemsWithStartPosition(listOf(READ_ALOUD), 0, 0))
     }
 
     override fun onCreate() {
@@ -151,7 +159,36 @@ class PlaybackService : MediaLibraryService() {
         override fun seekToPreviousMediaItem() = if (Playback.headsetSkips) seekBack() else if (ReadAloud.active) Playback.previous() else super.seekToPreviousMediaItem()
         override fun seekForward() = if (ReadAloud.inText()) Playback.skip(15.0) else super.seekForward()
         override fun seekBack() = if (ReadAloud.inText()) Playback.skip(-15.0) else super.seekBack()
+
+        // Đọc to: thanh tiến độ ở thông báo / màn hình khoá / xe hơi và lệnh tua của chúng đi theo đồng hồ ảo của CẢ chương (ReadAloud), không theo đoạn âm
+        // thanh đang phát (mỗi đoạn chỉ vài giây). Chương audio: như ExoPlayer.
+        override fun getCurrentPosition(): Long = ReadAloud.positionMs() ?: super.getCurrentPosition()
+        override fun getContentPosition(): Long = ReadAloud.positionMs() ?: super.getContentPosition()
+        override fun getDuration(): Long = ReadAloud.durationMs() ?: super.getDuration()
+        override fun getContentDuration(): Long = ReadAloud.durationMs() ?: super.getContentDuration()
+        override fun getBufferedPosition(): Long = ReadAloud.chapterMs(super.getBufferedPosition()) ?: super.getBufferedPosition()
+        override fun getContentBufferedPosition(): Long = ReadAloud.chapterMs(super.getContentBufferedPosition()) ?: super.getContentBufferedPosition()
+        override fun seekTo(positionMs: Long) = if (ReadAloud.inText()) Playback.seekTo(positionMs / 1000.0) else super.seekTo(positionMs)
+        override fun seekTo(mediaItemIndex: Int, positionMs: Long) =
+            if (ReadAloud.inText() && mediaItemIndex == currentMediaItemIndex) Playback.seekTo(positionMs / 1000.0) else super.seekTo(mediaItemIndex, positionMs)
+
+        // Phát/dừng từ thông báo, màn hình khoá, tai nghe khi đang đọc to đi qua lõi (ReadAloud.onPlay/onPause): lúc chờ đọc đoạn đầu hàng đợi còn rỗng,
+        // sau lỗi đọc thì bấm phát là thử lại đúng đoạn hỏng.
+        override fun play() = if (ReadAloud.active) Playback.play() else super.play()
+        override fun pause() = if (ReadAloud.active) Playback.pause() else super.pause()
+        override fun setPlayWhenReady(playWhenReady: Boolean) =
+            if (ReadAloud.active) { if (playWhenReady) Playback.play() else Playback.pause() } else super.setPlayWhenReady(playWhenReady)
+
+        // Cuốn có chương chữ do lõi tự nạp (Playback.load) rồi trả [READ_ALOUD] cho phiên media: hàng đợi ấy không bao giờ vào ExoPlayer.
+        override fun setMediaItems(mediaItems: MutableList<MediaItem>) { if (!isReadAloud(mediaItems)) super.setMediaItems(mediaItems) }
+        override fun setMediaItems(mediaItems: MutableList<MediaItem>, resetPosition: Boolean) {
+            if (!isReadAloud(mediaItems)) super.setMediaItems(mediaItems, resetPosition)
+        }
+        override fun setMediaItems(mediaItems: MutableList<MediaItem>, startIndex: Int, startPositionMs: Long) {
+            if (!isReadAloud(mediaItems)) super.setMediaItems(mediaItems, startIndex, startPositionMs)
+        }
     }
+
 
     private inner class Callback : MediaLibrarySession.Callback {
         override fun onConnect(session: MediaSession, controller: MediaSession.ControllerInfo): MediaSession.ConnectionResult {
@@ -171,11 +208,15 @@ class PlaybackService : MediaLibraryService() {
             controller: MediaSession.ControllerInfo,
             isForPlayback: Boolean,
         ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> {
+            // Cuốn đọc to đã nạp, hàng đợi rỗng vì đang chờ đọc đoạn đầu: không nạp lại gì, lệnh phát đi tiếp qua HeadsetSkips.play.
+            if (isForPlayback && ReadAloud.active) return readAloudQueue()
             val recent = Playback.lastListened()
                 ?: return Futures.immediateFailedFuture(UnsupportedOperationException("chưa nghe sách nào"))
             val (manifest, last) = recent
             val chapters = Playback.chaptersOf(manifest)
-            Playback.onMain { Playback.resumeLast() }
+            // Hệ thống chỉ hỏi để vẽ thẻ "nghe tiếp" (isForPlayback false): đừng nạp, đừng phát.
+            if (isForPlayback) Playback.onMain { Playback.resumeLast() }
+            if (isForPlayback && chapters.any { it.isText }) return readAloudQueue()
             val index = chapters.indexOfFirst { it.id == last.optInt("chapterId") }.coerceAtLeast(0)
             val items = Playback.mediaItems(manifest.getString("id"), manifest.optString("title"), manifest.optString("narrator"), chapters)
             return Futures.immediateFuture(
@@ -243,6 +284,11 @@ class PlaybackService : MediaLibraryService() {
             val title = manifest.optString("title")
             val narrator = manifest.optString("narrator")
             val rate = state.optDouble("rate", 1.0).takeIf { !it.isNaN() && it > 0 } ?: 1.0
+            if (chapters.any { it.isText }) {
+                // Có chương chữ: lõi tự nạp và đọc (ReadAloud) - hàng đợi mỗi đoạn một mục, không phải mỗi chương một file.
+                Playback.load(id, title, narrator, chapters, start.chapterId, start.seconds, rate)
+                return readAloudQueue()
+            }
             Playback.adopt(id, title, narrator, chapters, start.chapterId, start.seconds, rate)
             return Futures.immediateFuture(
                 MediaSession.MediaItemsWithStartPosition(

@@ -210,7 +210,7 @@ class LocalStudioTest {
         assertEquals("Chỉ đổi được sang bài trong Nhạc của tôi", refused(JSONObject().put("pins", JSONObject().put("1:0", "https://x/y.mp3"))))
         assertEquals("Không có đoạn nhạc này trong sách", refused(JSONObject().put("pins", JSONObject().put("7:7", toneLink))))
         assertEquals("Phần sửa nhạc nền không hợp lệ.", refused(JSONObject().put("pins", "tone")))
-        assertEquals("Sách đã đóng gói chỉ chỉnh được bật/tắt nhạc, mức nhạc, im lặng từng đoạn và đổi bài", refused(JSONObject().put("volume", 3)))
+        assertEquals("Sách đã đóng gói chỉ chỉnh được bật/tắt nhạc, mức nhạc, im lặng từng đoạn, đổi bài và danh sách nhạc nền", refused(JSONObject().put("volume", 3)))
         assertFalse(File(dir, "edits.json").exists())
         assertFalse(File(dir, "music/${toneLink.removePrefix("local:")}.wav").exists())
     }

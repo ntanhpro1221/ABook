@@ -58,8 +58,9 @@ class LibraryPlugin : Plugin() {
     private val prefs by lazy { SyncLink.prefs(context) }
 
     override fun load() {
-        val musicStore = MusicStore(File(context.filesDir, "music/mine"), AndroidMusicTags, AndroidLoudness)
+        val musicStore = DeviceMusic.store(context)
         LocalStudio.musicStore = musicStore
+        LocalStudio.catalog = DeviceMusic.catalog(context)
         // Bộ phân tích nhạc: "Gói nhạc" (model + thư viện ONNX Runtime) tải khi người dùng bấm (không bao giờ tự tải); đã có từ lần trước thì cắm luôn, ở luồng nền.
         val abi = OrtRuntime.deviceAbi()
         val student = MusicStudentSetup(File(context.filesDir, "music/student"), musicStore, { AndroidMusicStudent.open(it, context.cacheDir) },

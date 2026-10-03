@@ -15,6 +15,7 @@ import {
   Loader2,
   Maximize2,
   Moon,
+  Music2,
   Pause,
   Pencil,
   Play,
@@ -43,6 +44,7 @@ import { canPlay, seriesOf, type Bookmark, type ListenChapter, type Script } fro
 import { EDIT_BOOKMARK_EVENT, SKIP_SECONDS, SPEEDS, useNowPlaying, usePlayer } from "./player";
 import { SLEEP_CHOICES, sleepLabel, sleepLeftMs, sleepSpoken } from "./sleep";
 import { ONLINE_NOTICE, chooseVoice, chosenVoice, resolveVoice } from "./readAloudVoice";
+import { PlaylistOptionLabel, playlistNote, usePlaylistChoice } from "./PlaylistChoice";
 import { chapterScriptQuery, useChapterScript, useListenBook, useListenMutations, useReadAloudVoices, useSource } from "./source";
 
 export function speedLabel(rate: number): string {
@@ -300,6 +302,50 @@ export function SpeedMenu() {
           Phím <kbd className="font-semibold">[</kbd> và <kbd className="font-semibold">]</kbd> để giảm, tăng.
         </p>
       )}
+    </MenuShell>
+  );
+}
+
+/** Nhạc nền của "Nghe ngay" (chương chỉ-có-chữ đang nghe): một danh sách phát cho cả cuốn, "Nhạc của tôi" hay tắt - cùng lựa chọn với
+ *  menu của sách (PlaylistChoice.tsx), lưu vào phần sửa của sách. Không hiện khi đang nghe chương có audio. */
+export function MusicMenu() {
+  const { track, queue } = usePlayer();
+  const speaking = queue.find((chapter) => chapter.id === track?.chapterId)?.state === "text";
+  if (!track || !speaking) return null;
+  return <MusicMenuFor bookId={track.bookId} />;
+}
+
+function MusicMenuFor({ bookId }: { bookId: string }) {
+  const { options, chosen, error, loading, choose } = usePlaylistChoice(bookId);
+  const current = options.find((option) => option.id === chosen);
+  return (
+    <MenuShell
+      label="Nhạc nền"
+      active={chosen !== null}
+      trigger={<><Music2 className="size-4" /><span className="max-w-24 truncate max-sm:hidden">{chosen ? current?.label : ""}</span></>}
+      width="w-72"
+    >
+      <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Nhạc nền · nhớ riêng cho cuốn này</div>
+      <div className="flex max-h-[60vh] flex-col gap-0.5 overflow-y-auto p-1">
+        {options.map((option) => (
+          <Popover.Close asChild key={option.id ?? "off"}>
+            <button
+              type="button"
+              disabled={option.disabled}
+              aria-pressed={option.id === chosen}
+              onClick={() => choose(option.id)}
+              className={cn(
+                "flex min-h-9 items-center gap-2 rounded-lg px-2 py-1 text-left text-sm hover:bg-hover disabled:opacity-50",
+                option.id === chosen ? "bg-accent-soft font-semibold text-accent-text" : "text-fg",
+              )}
+            >
+              <PlaylistOptionLabel option={option} chosen={option.id === chosen} />
+            </button>
+          </Popover.Close>
+        ))}
+        {loading && <p className="px-2 py-1.5 text-xs text-fg-2">Đang tải các danh sách nhạc…</p>}
+      </div>
+      <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{playlistNote(error)}</p>
     </MenuShell>
   );
 }
@@ -862,6 +908,7 @@ export function PlayerBar({
         </div>
         <div className="flex min-w-0 items-center justify-end gap-0.5">
           {extra}
+          <MusicMenu />
           <VoiceMenu />
           <SpeedMenu />
           <SleepMenu />
@@ -1478,6 +1525,7 @@ export function NowPlaying({ mobile = false, actions }: { mobile?: boolean; acti
           <Transport large />
         </div>
         <div className="mt-4 flex items-center justify-center gap-1">
+          <MusicMenu />
           <VoiceMenu />
           <SpeedMenu />
           <SleepMenu />
