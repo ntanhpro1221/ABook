@@ -1,0 +1,169 @@
+"""Luật Việt hoá từ / tên tiếng Anh (abook/english_vi.py, docs/READING_FOREIGN_NAMES.md mục 1 và 4).
+
+Bốn lớp kiểm:
+  - phán quyết chủ sách (cố định): đầu ra phải khớp; luật (tắt bảng ghi đè) cũng phải ra trừ ca riêng Kate / Pete / slime;
+  - mọi dạng CÓ NGUỒN (tests/english_vi_evidence.py): khớp, hoặc không khớp kèm lý do;
+  - từng dòng luật, bằng ca nhỏ tự dựng; chạy thử trên ~300 từ tiếng Anh thật;
+  - bộ ví dụ dùng chung với Kotlin (tests/fixtures/english_vi/cases.json) và từ điển gọn (assets/english_phones.txt.gz) là bản sinh mới nhất.
+"""
+from __future__ import annotations
+
+import gzip
+import importlib.util
+import json
+from pathlib import Path
+
+import pytest
+
+from abook.english_vi import (
+    OPEN_CHOICES,
+    PHONES_PATH,
+    load_phones,
+    vietnamized_english,
+    vietnamized_english_flags,
+)
+from tests import english_vi_evidence as evidence
+
+ROOT = Path(__file__).resolve().parents[1]
+FIXTURE = ROOT / "tests" / "fixtures" / "english_vi" / "cases.json"
+OWNER = [
+    ("game", "ghêm"), ("level", "le-vồ"), ("maple", "máp-pồ"), ("Michael", "Mai-cồ"), ("Kate", "Ca-tê"),
+    ("Mike", "Mi-ke"), ("Jake", "Gia-ke"), ("Luke", "Lu-ke"), ("Pete", "Pi-tờ"), ("skill", "xờ-kiu"), ("boss", "bót"), ("slime", "xờ-lam"),
+    ("quest", "quét"), ("VIP", "víp"), ("ID", "ai-đi"),
+]
+FIXED_ONLY = {"Kate", "Pete", "slime", "VIP", "ID"}  # ca riêng: chỉ bảng ghi đè ra được, luật không suy rộng
+
+
+def _load_script(name: str):
+    spec = importlib.util.spec_from_file_location(name, ROOT / "scripts" / f"{name}.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _matches(token: str, sources: tuple[str, ...]) -> bool:
+    found = vietnamized_english(token, overrides=False)
+    return found is not None and found.casefold() in {source.casefold() for source in sources}
+
+
+# ---- chủ sách ----------------------------------------------------------------------------------------------------------
+
+@pytest.mark.parametrize("token,reading", OWNER)
+def test_owner_rulings_hold(token, reading):
+    assert vietnamized_english(token) == reading
+
+
+@pytest.mark.parametrize("token,reading", [(token, reading) for token, reading in OWNER if token not in FIXED_ONLY])
+def test_the_rules_alone_reach_the_owner_forms(token, reading):
+    assert vietnamized_english(token, overrides=False) == reading
+
+
+# ---- dạng có nguồn -----------------------------------------------------------------------------------------------------
+
+def test_every_sourced_form_matches_or_is_explained():
+    matched, unexplained, stale = [], [], []
+    for token, sources, _kind in evidence.SOURCED:
+        reading = vietnamized_english(token, overrides=False)
+        if _matches(token, sources):
+            matched.append(token)
+            assert token not in evidence.EXPLAINED, f"{token} khớp nhưng vẫn ghi là không khớp"
+        elif token not in evidence.EXPLAINED:
+            unexplained.append((token, reading, sources))
+        elif evidence.EXPLAINED[token][0] != (reading or ""):
+            stale.append((token, reading, evidence.EXPLAINED[token][0]))
+    assert not unexplained, f"không khớp mà chưa có lý do: {unexplained}"
+    assert not stale, f"cách đọc đổi mà lý do còn viết cho cách đọc cũ: {stale}"
+    assert len(matched) + len(evidence.EXPLAINED) == len(evidence.SOURCED)
+
+
+def test_tally_of_sourced_forms_by_kind():
+    tally: dict[str, list[int]] = {}
+    for token, sources, kind in evidence.SOURCED:
+        entry = tally.setdefault(kind, [0, 0])
+        entry[0] += _matches(token, sources)
+        entry[1] += 1
+    # (khớp đủ thanh, tổng). Chủ sách: 10 / 13, ba ca còn lại là ca riêng (bảng ghi đè). Cộng đồng chỉ để xem.
+    assert tally == {"owner": [10, 13], "official": [2, 5], "textbook": [9, 39], "press": [0, 2], "community": [5, 19]}
+
+
+# ---- từng dòng luật ----------------------------------------------------------------------------------------------------
+
+@pytest.mark.parametrize("token,reading", [
+    # -əl cuối -> ồ, thanh huyền (chủ sách); l sau ai -> lồ (analogy); l cuối sau i -> u (chủ sách); l khép khác -> n (Men-bơn, Đan-tơn)
+    ("table", "tây-bồ"), ("Daniel", "Đa-ni-ồ"), ("Lyle", "Lai-lồ"), ("bill", "biu"), ("guild", "ghiu"), ("Melbourne", "Men-bơn"),
+    # schwa + n / m giữ phụ âm cuối, thanh ngang (chủ sách: Oa-sinh-tơn, Ê-đi-xơn đúng); schwa theo chữ viết
+    ("Washington", "Oa-sinh-tơn"), ("Philadelphia", "Phi-la-đen-phi-a"), ("Dallas", "Đa-lát"),
+    # s + phụ âm đầu -> xờ (chủ sách); cụm khác -> ơ (mở); t + r giữ tr
+    ("spell", "xờ-pen"), ("star", "xờ-ta"), ("Brian", "Bơ-rai-an"), ("trust", "trắt"), ("Detroit", "Đi-troi"),
+    # phụ âm tắc nhân đôi sau nguyên âm nhấn chính (máp-pồ)
+    ("happy", "háp-pi"), ("ticket", "tích-két"),
+    # /eɪ/: mở ây, khép tắc a, khép mũi ê; ai / ao / oi không khép
+    ("day", "đây"), ("name", "nêm"), ("time", "tai"), ("town", "tao"), ("Yorktown", "I-oóc-tao"),
+    # w / y bán âm, qu, ng không mở âm tiết, r của ơ trước nguyên âm
+    ("William", "Uy-li-am"), ("queen", "quyn"), ("you", "iu"), ("Hemingway", "He-minh-uây"), ("Colorado", "Co-lơ-ra-đô"),
+    # phụ âm cuối hữu thanh / xát -> tắc + sắc (Bớt, Tô-mát); r cuối bỏ; cụm cuối giữ một
+    ("Bird", "Bớt"), ("bad", "bát"), ("love", "lắp"), ("York", "I-oóc"), ("first", "phớt"),
+    # tên ngắn tắc + e câm theo mặt chữ, chỉ với tên viết hoa
+    ("Coke", "Cô-ke"), ("Nate", "Na-te"), ("make", "mác"),
+    # đường chính tả (không có trong từ điển)
+    ("Encrid", "En-cơ-rít"), ("Lancel", "Lan-xen"), ("Calian", "Ca-li-an"), ("Litana", "Li-ta-na"),
+    # nối gạch
+    ("Jean-Paul", "Gin Pan"),
+])
+def test_reading_follows_the_convention(token, reading):
+    assert vietnamized_english(token) == reading
+
+
+@pytest.mark.parametrize("token", ["MARY", "iPhone", "McDonald", "O'Brien", "Ko1", "", "Jean Paul", "Vĩnh"])
+def test_unsure_is_none(token):
+    assert vietnamized_english(token) is None
+
+
+def test_without_a_dictionary_the_spelling_route_reads():
+    assert vietnamized_english_flags("Washington", {}) == ("Oa-sinh-tôn", ("via:spelling",))
+    assert vietnamized_english_flags("Washington") == ("Oa-sinh-tơn", ("via:phonemes",))
+    assert vietnamized_english("Encrid", {}) == vietnamized_english("Encrid")
+
+
+def test_open_and_analogy_points_are_flagged_not_silent():
+    assert "open:short_silent_e" in vietnamized_english_flags("Zeke")[1]  # nguyên âm e: chủ sách chỉ có Pete (ca riêng)
+    assert "open:er_final" in vietnamized_english_flags("Master")[1]
+    assert "open:epenthesis" in vietnamized_english_flags("Blake")[1]
+    assert "open:epenthesis" not in vietnamized_english_flags("star")[1]  # s + phụ âm: chủ sách đã chốt
+    assert "analogy:l_syllable" in vietnamized_english_flags("Lyle")[1]
+    assert vietnamized_english_flags("Mike") == ("Mi-ke", ("via:override",))
+    assert vietnamized_english_flags("Mike", overrides=False) == ("Mi-ke", ("via:face",))
+    assert set(OPEN_CHOICES) == {"short_silent_e", "er_final", "epenthesis"}
+
+
+def test_the_trial_words_all_read_with_and_without_a_dictionary():
+    cases = [case for case in json.loads(FIXTURE.read_text(encoding="utf-8"))["cases"] if case["group"] == "trial"]
+    assert len(cases) == 300
+    assert all(case["reading"] is not None and case["reading_nodict"] is not None for case in cases)
+
+
+# ---- dữ liệu sinh ra ---------------------------------------------------------------------------------------------------
+
+def test_shared_fixture_matches_python():
+    wrong = []
+    for case in json.loads(FIXTURE.read_text(encoding="utf-8"))["cases"]:
+        for options, reading_key, flags_key in (({}, "reading", "flags"), ({"dictionary": {}}, "reading_nodict", "flags_nodict")):
+            found = vietnamized_english_flags(case["token"], **options)
+            got = (None, []) if found is None else (found[0], list(found[1]))
+            if got != (case[reading_key], case[flags_key]):
+                wrong.append((case["token"], reading_key, got, case[reading_key]))
+    assert not wrong, wrong[:10]
+
+
+def test_shared_fixture_is_the_latest_build():
+    assert FIXTURE.read_bytes() == _load_script("build_english_vi_fixture").cases_bytes(), \
+        "chạy lại scripts/build_english_vi_fixture.py"
+
+
+def test_compact_dictionary_is_the_latest_build():
+    built = _load_script("build_english_phones").phones_bytes()
+    assert PHONES_PATH.read_bytes() == built, "chạy lại scripts/build_english_phones.py"
+    entries = load_phones(PHONES_PATH)
+    assert entries["maple"] == "M EY1 P AH0 L"
+    assert len(entries) > 100_000
+    assert len(gzip.decompress(built)) > 2 * len(built)
