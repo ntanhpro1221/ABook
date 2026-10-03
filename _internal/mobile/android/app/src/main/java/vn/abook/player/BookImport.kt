@@ -202,8 +202,10 @@ object BookImport {
         return lines.joinToString("\n").replace(Regex("\n{3,}"), "\n\n").trim('\n')
     }
 
-    // (?U): `\d` và `\s` theo Unicode như `re` của Python ("١٥.txt" cũng là số).
-    private val NUMERIC_TITLE = Regex("(?U)^\\s*0*(\\d+)\\s*$")
+    /** `\d`, `\s`, `\w` theo Unicode như `re` của Python ("١٥.txt" cũng là số). Android (ICU) đã theo Unicode sẵn và KHÔNG nhận cờ
+     *  UNICODE_CHARACTER_CLASS / `(?U)` - dùng là văng (03-10 trên OPPO: mọi lần thêm sách từ file); JVM của kiểm thử thì cần cờ. */
+    private val UNICODE_CLASSES = if (System.getProperty("java.vm.name") == "Dalvik") 0 else Pattern.UNICODE_CHARACTER_CLASS
+    private val NUMERIC_TITLE = Pattern.compile("^\\s*0*(\\d+)\\s*$", UNICODE_CLASSES).toRegex()
 
     /** Tên file chương là số ("645") thì đọc thành "Chương 645"; còn lại giữ nguyên (webui/humanize.chapter_title). */
     internal fun chapterTitle(stem: String): String =
@@ -232,7 +234,7 @@ object BookImport {
 
     private fun naturalKey(value: String): List<Any> {
         val parts = mutableListOf<Any>()
-        val digits = Regex("(?U)\\d+")
+        val digits = DIGITS.toRegex()
         var last = 0
         for (match in digits.findAll(value)) {
             parts.add(casefold(value.substring(last, match.range.first)))
@@ -874,7 +876,7 @@ object BookImport {
     private val HEADING: Pattern = Pattern.compile(
         "^\\s*(?:(?:chương|chuong|hồi|hoi|chapter|tiết|quyển|quyen)\\s+(?:thứ\\s+)?(?:\\d+|[ivxlcdm]+|(?:(?:$NUMBER_WORDS)\\s*)+)(?![\\w])" +
             "|第\\s*[\\d一二三四五六七八九十百千零〇两]+\\s*[章回])",
-        Pattern.CASE_INSENSITIVE or Pattern.UNICODE_CASE or Pattern.UNICODE_CHARACTER_CLASS,
+        Pattern.CASE_INSENSITIVE or Pattern.UNICODE_CASE or UNICODE_CLASSES,
     )
 
     internal fun isHeadingLine(line: String): Boolean = cpLen(pyStrip(line)) <= MAX_HEADING && HEADING.matcher(line).lookingAt()
@@ -913,7 +915,7 @@ object BookImport {
 
     private val PAGE_NUMBER: Pattern = Pattern.compile(
         "^[\\s\\-–—·|]*(?:trang|page|tr\\.?|p\\.?)?\\s*\\d{1,5}(?:\\s*(?:/|of|trên)\\s*\\d{1,5})?[\\s\\-–—·|]*$",
-        Pattern.CASE_INSENSITIVE or Pattern.UNICODE_CASE or Pattern.UNICODE_CHARACTER_CLASS,
+        Pattern.CASE_INSENSITIVE or Pattern.UNICODE_CASE or UNICODE_CLASSES,
     )
     private const val SENTENCE_END = ".!?…”\"»’)。"
     private const val DIALOGUE_START = "-–—“\"«‘"
@@ -921,7 +923,7 @@ object BookImport {
     private const val RUNNING_ZONE = 2
     private const val RUNNING_MIN_PAGES = 3
     private const val SCAN_CHARS_PER_PAGE = 30
-    private val DIGITS = Pattern.compile("\\d+", Pattern.UNICODE_CHARACTER_CLASS)
+    private val DIGITS = Pattern.compile("\\d+", UNICODE_CLASSES)
 
     private fun isPageNumber(line: String) = PAGE_NUMBER.matcher(line).matches()
 
@@ -1006,7 +1008,7 @@ object BookImport {
     private val CREDIT_LINE: Pattern = Pattern.compile(
         "^[*_~#>\\-–—\\s]*(?:edit(?:or|ed by)?|tl|t/l|trans(?:lator|lated by)?|dịch(?: giả)?|người dịch|biên tập(?: viên)?|" +
             "beta(?:[- ]?reader)?|converter|cvt|proof ?read(?:er)?|typesetter)\\s*[:：]\\s*[^\\s.!?…\"“”][^.!?…\"“”]{0,39}$",
-        Pattern.CASE_INSENSITIVE or Pattern.UNICODE_CASE or Pattern.UNICODE_CHARACTER_CLASS,
+        Pattern.CASE_INSENSITIVE or Pattern.UNICODE_CASE or UNICODE_CLASSES,
     )
     private const val CREDIT_WINDOW_LINES = 6
     private val NOTE_MARKER = Regex("\\[\\s*note\\d+\\s*\\]", RegexOption.IGNORE_CASE)
