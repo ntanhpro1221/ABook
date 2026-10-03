@@ -18,6 +18,7 @@ import {
   Pause,
   Pencil,
   Play,
+  Plus,
   RotateCcw,
   RotateCw,
   SkipBack,
@@ -42,19 +43,20 @@ import { excerpt, formatClock, formatLength, formatWhen, licenseLabel, spokenClo
 import { IconButton, Tooltip, Vu } from "@/shared/ui";
 import { useClock, useClockReader, useDuration, usePlaybackSecond } from "./clock";
 import { usePlayListenBook, useNextVolume } from "./LibraryScreen";
-import { canPlay, seriesOf, type Bookmark, type ListenChapter, type Script } from "./model";
+import { canPlay, otherBooksToHear, seriesOf, type Bookmark, type ListenChapter, type Script } from "./model";
 import { EDIT_BOOKMARK_EVENT, SKIP_SECONDS, SPEEDS, useNowPlaying, usePlayer } from "./player";
 import { SLEEP_CHOICES, sleepLabel, sleepLeftMs, sleepSpoken } from "./sleep";
 import { useVoiceSample } from "./VoiceSettings";
 import { genderLabel, groupedVoices, voiceSections } from "./voiceGroups";
 import { chooseVoice, chosenVoice, isNoOfflineVoice, localVoiceFor, noOfflineMessage, onlineNotice, resolveVoice, voiceCaption } from "./readAloudVoice";
-import { bookProgressText, nextChapterLabel, PREPARING_VOICE, textChapterLine, toggleLabel } from "./labels";
+import { bookProgressText, nextChapterLabel, otherBookLine, PREPARING_VOICE, textChapterLine, toggleLabel } from "./labels";
 import { spokenVoiceName } from "./onlineConsent";
 import { PlaylistOptionLabel, playlistNote, usePlaylistChoice } from "./PlaylistChoice";
+import { ADD_MUSIC_LABEL } from "./playlistBed";
 import { JumpToPlaying, ReadAlongText, sentenceIndexAt, useFollowVoice, useListenFrom, usePlayingSentence } from "./ReadAlongText";
 import { canPrepare, planLabel, PREPARE_STATUS_KEY, prepareIntro, prepareLabel, readyChapterIds, upcomingTextChapters, type PrepareStatus } from "./prepareAhead";
 import type { ReadAloudVoice } from "./readAloud";
-import { chapterScriptQuery, useChapterScript, useListenBook, useLastNight, useListenMutations, useReadAloudVoices, useSource } from "./source";
+import { chapterScriptQuery, useChapterScript, useListenBook, useListenLibrary, useLastNight, useListenMutations, useReadAloudVoices, useSource } from "./source";
 
 export function speedLabel(rate: number): string {
   return `${rate.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}×`;
@@ -319,7 +321,7 @@ export function MusicMenu() {
 }
 
 function MusicMenuFor({ bookId }: { bookId: string }) {
-  const { options, chosen, error, loading, choose } = usePlaylistChoice(bookId);
+  const { options, chosen, error, loading, choose, canImport, addMusic } = usePlaylistChoice(bookId);
   const current = options.find((option) => option.id === chosen);
   return (
     <MenuShell
@@ -346,6 +348,14 @@ function MusicMenuFor({ bookId }: { bookId: string }) {
             </button>
           </Popover.Close>
         ))}
+        {canImport && (
+          <Popover.Close asChild>
+            <button type="button" onClick={() => void addMusic()} className="flex min-h-9 shrink-0 items-center gap-2 rounded-lg px-2 py-1 text-left text-sm text-fg hover:bg-hover">
+              <Plus className="size-4 shrink-0" />
+              {ADD_MUSIC_LABEL}
+            </button>
+          </Popover.Close>
+        )}
         {loading && <p className="px-2 py-1.5 text-xs text-fg-2">Đang tải các danh sách nhạc…</p>}
       </div>
       <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{playlistNote(error)}</p>
@@ -1529,6 +1539,55 @@ function useContinueIntoNextPart() {
   }, [atEnd, track, next, playBook]);
 }
 
+/** Cuối màn "Đã nghe hết sách": mời nghe cuốn khác (tối đa 3, mỗi cuốn một nút nghe tiếp từ chỗ đã dừng) và đường về thư viện. */
+function AfterTheEnd() {
+  const { track } = usePlayer();
+  const { data: books } = useListenLibrary();
+  const speaks = (useReadAloudVoices().data?.length ?? 0) > 0;
+  const playBook = usePlayListenBook();
+  const navigate = useNavigate();
+  const { setExpanded } = useNowPlaying();
+  const others = useMemo(() => otherBooksToHear(books ?? [], track?.bookId, speaks), [books, track?.bookId, speaks]);
+  return (
+    <div className="mt-3 border-t border-accent/20 pt-2.5 text-left">
+      {others.length > 0 && (
+        <>
+          <div className="px-1 pb-1 text-xs font-medium text-fg-2">Nghe cuốn khác</div>
+          <ul className="space-y-1">
+            {others.map((book) => (
+              <li key={book.id}>
+                <button
+                  type="button"
+                  onClick={() => void playBook(book)}
+                  aria-label={`Nghe ${book.title}`}
+                  className="flex min-h-[48px] w-full items-center gap-3 rounded-lg px-1 py-1 text-left hover:bg-hover"
+                >
+                  <BookCover title={book.title} part={book.series?.part} size="xs" image={book.cover} className="size-10" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-semibold text-fg">{book.title}</span>
+                    <span className="tabular block truncate text-xs text-fg-2">{otherBookLine(book)}</span>
+                  </span>
+                  <Play className="size-4 shrink-0 text-accent-text" fill="currentColor" strokeWidth={0} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      <button
+        type="button"
+        onClick={() => {
+          setExpanded(false);
+          navigate("/");
+        }}
+        className="mt-1 min-h-[44px] w-full text-center font-semibold text-accent-text underline underline-offset-2"
+      >
+        Về thư viện
+      </button>
+    </div>
+  );
+}
+
 function CaughtUpNotice() {
   const { atEnd, track, restart } = usePlayer();
   const next = useNextVolume(track?.bookId, track?.bookTitle);
@@ -1540,6 +1599,7 @@ function CaughtUpNotice() {
         <button type="button" onClick={() => void playBook(next)} className="mt-1.5 font-semibold text-accent-text underline underline-offset-2">
           Nghe tiếp {nextLabel(next.title)}
         </button>
+        <AfterTheEnd />
       </div>
     );
   }
@@ -1550,6 +1610,7 @@ function CaughtUpNotice() {
         <button type="button" onClick={restart} className="mt-1.5 min-h-[44px] font-semibold text-accent-text underline underline-offset-2">
           Nghe lại từ đầu
         </button>
+        <AfterTheEnd />
       </div>
     );
   }

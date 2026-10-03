@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bookProgressText, nextChapterLabel, PREPARING_VOICE, primaryListenLabel, readerHint, resumeWhere, tapVerb, textBookLine, textChapterLine, toggleLabel } from "./labels";
+import { bookProgressText, nextChapterLabel, otherBookLine, PREPARING_VOICE, primaryListenLabel, readerHint, resumeWhere, tapVerb, textBookLine, textChapterLine, toggleLabel } from "./labels";
 
 const fresh = { playingHere: false, finished: false, point: { title: "Chương 1", at: 0 }, heard: 0, textOnly: false };
 
@@ -80,5 +80,15 @@ describe("lời nhắc màn đọc", () => {
     expect(readerHint(audio)).toBe("Bấm vào một chữ để nghe từ đúng chữ ấy.");
     expect(readerHint({ ...audio, tapped: true })).toBeNull();
     expect(readerHint({ ...audio, timed: false })).toContain("chưa thu thành sách nói");
+  });
+});
+
+describe("dòng dưới tên cuốn trong 'Nghe cuốn khác'", () => {
+  const book = (heardSeconds: number) => ({ duration: 7200, chaptersTotal: 12, complete: true, progress: { heardSeconds, totalSeconds: 7200 } });
+
+  it("nghe dở thì nói tiến độ, chưa nghe thì nói độ dài", () => {
+    expect(otherBookLine(book(720))).toBe("Đã nghe 10% cả cuốn · còn 1 giờ 48 phút");
+    expect(otherBookLine(book(0))).toBe("Chưa nghe · 2 giờ");
+    expect(otherBookLine({ ...book(0), duration: 0 })).toBe("Chưa nghe · 12 chương");
   });
 });

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { setApiTransport } from "@/studio/api";
 import type { MusicCue } from "./musicBed";
 import {
+  addMusicOutcome,
   FALLBACK_SECONDS,
   MINE_PLAYLIST,
   OVERLAP_SECONDS,
@@ -160,9 +161,20 @@ describe("lựa chọn nhạc nền", () => {
     expect(options[1]).toMatchObject({ label: "Kỳ ảo êm đềm", hint: "dài 9 giờ", description: "Cho truyện chậm." });
     expect(options[2].hint).toBe("dài 40 phút");
     expect(options[3]).toMatchObject({ label: "Nhạc của tôi", disabled: true });
-    expect(options[3].description).toContain("Sửa sách");
+    // Máy không nhập được nhạc: chỉ đường sang máy tính; máy nhập được: mục "Thêm nhạc của bạn…" ngay dưới đã là đường đi.
+    expect(options[3].description).toContain("trên máy tính");
+    expect(options[3].description).not.toContain("Sửa sách");
+    expect(playlistOptions({ playlists: [], mine: 0, error: "" }, true)[1].description).toBeUndefined();
     expect(playlistOptions({ playlists: [], mine: 3, error: "" })[1]).toMatchObject({ id: MINE_PLAYLIST, hint: "3 bài", disabled: false });
     expect(playlistOptions(undefined).map((option) => option.id)).toEqual([null, MINE_PLAYLIST]);
+  });
+
+  it("thêm nhạc từ menu: có bài vào thì chọn Nhạc của tôi, không bài nào vào thì không đổi gì", () => {
+    const track = { link: "local:x", title: "A", creator: "", analysed: false } as never;
+    expect(addMusicOutcome({ added: [track, track], existing: [], failed: [] })).toEqual({ select: true, kind: "success", title: "Đã thêm 2 bài", description: undefined });
+    expect(addMusicOutcome({ added: [track], existing: [], failed: ["b.mp3: hỏng"] })).toMatchObject({ select: true, kind: "warning", description: "b.mp3: hỏng" });
+    expect(addMusicOutcome({ added: [], existing: [track], failed: [] })).toMatchObject({ select: true, kind: "success", title: "Những bài này đã có trong Nhạc của tôi" });
+    expect(addMusicOutcome({ added: [], existing: [], failed: ["b.mp3: hỏng"] })).toMatchObject({ select: false, kind: "error", title: "Không thêm được file này" });
   });
 
   it("lưu vào phần sửa của cuốn qua cùng đường trên máy tính và điện thoại", async () => {

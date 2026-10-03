@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chaptersByPart, foldVietnamese, listeningBook, partHeading, resumePoint, seriesIndex, seriesOf, type BookPart, type ListenBook, type ListenChapter } from "./model";
+import { chaptersByPart, foldVietnamese, listeningBook, otherBooksToHear, partHeading, resumePoint, seriesIndex, seriesOf, type BookPart, type ListenBook, type ListenChapter } from "./model";
 
 describe("seriesOf", () => {
   it("reads the volume and the word the book uses for it", () => {
@@ -146,5 +146,35 @@ describe("listeningBook", () => {
   it("ignores a playing book that is finished or not on the shelf", () => {
     expect(listeningBook(shelf, "d")?.id).toBe("b");
     expect(listeningBook(shelf, "zzz")?.id).toBe("b");
+  });
+});
+
+describe("otherBooksToHear", () => {
+  const book = (id: string, over: Partial<{ at: number | null; finished: boolean; caughtUp: boolean; available: number; stage: "text" | null }> = {}) =>
+    ({
+      id,
+      stage: over.stage ?? null,
+      chaptersAvailable: over.available ?? (over.stage === "text" ? 0 : 5),
+      chaptersTotal: 5,
+      progress: { finished: over.finished ?? false, caughtUp: over.caughtUp ?? false },
+      state: { last: over.at == null ? null : { chapterId: 1, seconds: 5, at: over.at } },
+    }) as unknown as ListenBook;
+
+  it("đang nghe dở trước (gần nhất trước), rồi cuốn chưa nghe, tối đa 3", () => {
+    const shelf = [book("new1"), book("old", { at: 100 }), book("recent", { at: 900 }), book("new2"), book("mid", { at: 500 })];
+    expect(otherBooksToHear(shelf, "cur", true).map((item) => item.id)).toEqual(["recent", "mid", "old"]);
+    expect(otherBooksToHear(shelf.filter((item) => item.id !== "old" && item.id !== "mid"), "cur", true).map((item) => item.id)).toEqual(["recent", "new1", "new2"]);
+  });
+
+  it("bỏ cuốn vừa nghe, cuốn đã xong, đã nghe hết phần có, chưa có chương nghe được", () => {
+    const shelf = [book("cur", { at: 900 }), book("done", { at: 800, finished: true }), book("caught", { at: 700, caughtUp: true }), book("empty", { available: 0 }), book("ok")];
+    expect(otherBooksToHear(shelf, "cur", true).map((item) => item.id)).toEqual(["ok"]);
+    expect(otherBooksToHear([book("cur")], "cur", true)).toEqual([]);
+  });
+
+  it("sách chỉ có chữ chỉ mời khi máy có giọng đọc", () => {
+    const shelf = [book("text", { stage: "text" }), book("audio")];
+    expect(otherBooksToHear(shelf, "cur", false).map((item) => item.id)).toEqual(["audio"]);
+    expect(otherBooksToHear(shelf, "cur", true).map((item) => item.id)).toEqual(["text", "audio"]);
   });
 });
