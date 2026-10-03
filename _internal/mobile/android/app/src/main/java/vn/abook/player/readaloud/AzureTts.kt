@@ -117,7 +117,7 @@ class AzureTts(
                     socket.sendText(message("synthesis.context", request, "application/json", synthesisContext()))
                     socket.sendText(message("ssml", request, "application/ssml+xml", ssml(voice, EdgeProtocol.escape(part))))
                     bytes += EdgeProtocol.readTurn(socket, sink, EdgeProtocol.durationMs(bytes) + EdgeProtocol.BOUNDARY_SHIFT_MS, boundaries, "Giọng $name",
-                        EdgeTts.TOTAL_MS) { closed(it, name) }
+                        EdgeTts.TOTAL_MS, onClose = { closed(it, name) })
                 } finally {
                     socket.close()
                 }

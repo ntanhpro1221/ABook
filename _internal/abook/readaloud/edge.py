@@ -60,7 +60,9 @@ class EdgeRejected(EdgeError):
 
 
 class EdgeDropped(EdgeError):
-    """Dịch vụ cắt kết nối giữa lượt (đo 03-10: thỉnh thoảng, vài phần trăm lượt, với đúng cùng chữ vừa đọc được) - thử lại là xong."""
+    """Dịch vụ cắt kết nối giữa lượt (đo 03-10: thỉnh thoảng, vài phần trăm lượt, với đúng cùng chữ vừa đọc được) - thử lại là xong.
+    Cũng dùng cho lỗi thoáng qua lúc bắt tay: HTTP 429 / 5xx, kết nối bị reset (soát 03-10: một lần reset từng làm đoạn ấy rơi về giọng
+    máy như mất mạng)."""
 
 
 _clock_skew = 0.0  # giây: lệch giữa đồng hồ máy và đồng hồ máy chủ, học từ header Date của lần bị từ chối (403)
@@ -242,8 +244,12 @@ class EdgeClient:
                 _clock_skew = server - time.time()
                 return self._open()
         except websocket.Rejected as rejected:
+            if rejected.status == 429 or rejected.status >= 500:
+                raise EdgeDropped(f"Dịch vụ đọc to đang bận (HTTP {rejected.status}).") from rejected
             raise EdgeRejected(f"Dịch vụ đọc to từ chối kết nối (HTTP {rejected.status}); có thể Microsoft đã đổi giao thức.") from rejected
-        except (socket.gaierror, ConnectionRefusedError, ConnectionResetError, ConnectionAbortedError) as error:
+        except (ConnectionResetError, ConnectionAbortedError) as error:
+            raise EdgeDropped("Dịch vụ đọc to cắt kết nối lúc bắt tay.") from error
+        except (socket.gaierror, ConnectionRefusedError) as error:
             raise EdgeOffline("Không có mạng để dùng giọng trực tuyến.") from error
         except TimeoutError as error:
             raise EdgeOffline("Không kết nối được tới dịch vụ đọc to (quá giờ).") from error

@@ -33,6 +33,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   tiền vào tài khoản của bạn khi vượt phần miễn phí - app nói rõ điều này; khóa chỉ lưu trên máy (trên điện thoại được mã hoá), chỉ hiện 4
   ký tự cuối. Khóa hết hạn mức hay bị từ chối thì đoạn ấy tạm đọc bằng giọng Edge, rồi giọng của máy, không dừng, và app báo một lần.
 
+- **Nghe ngay có nhạc nền: chọn một danh sách nhạc cho cả cuốn (máy tính và điện thoại)**: sách chỉ có chữ có mục "Nhạc nền" ở menu
+  của sách và ở trình phát lúc đang nghe: Tắt (mặc định), một trong 12 danh sách nhạc theo kiểu truyện - kỳ ảo phiêu lưu, kỳ ảo êm
+  đềm, học đường, lãng mạn, hài hước, hành động, kinh dị, trinh thám, tiên hiệp - cổ phong, khoa học viễn tưởng, buồn, êm để ngủ -
+  hay "Nhạc của tôi". Các bài nối nhau, chuyển êm, nằm dưới giọng đọc như nhạc của sách nói, và chơi tiếp qua các chương thay vì
+  bắt đầu lại mỗi chương; mở lại sách là nghe tiếp đúng bài. Lựa chọn nằm trong phần sửa của cuốn nên đi theo khi "Lưu thành .abook"
+  hay gửi sang máy kia. Lần đầu cần mạng để tải danh sách và bài; bài đã tải thì nghe lại không cần mạng.
+
 ### Cài đặt
 
 - **Bộ cài ABook trên Windows chỉ còn mang phần nghe (bớt khoảng 16 MB)**: từ điển phát âm tiếng Anh và 21 bản nghe thử giọng
