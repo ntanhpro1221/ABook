@@ -324,6 +324,12 @@ Seeds are the desktop's (`seed_of`), and so are the random streams: `NumpyRandom
   reads digits a little better); UTMOS 2.52 / 3.22 / 2.9-3.0; disk 282 MB / ~210 MB / 867 MiB fp32; ZeroTTS peaks at 8-11 GB RSS on long
   paragraphs and clips at 1.0. It reads a 400-char paragraph completely, has 8 fixed voices and no cloning; its codec decoder is
   byte-identical to VieNeu's. Not added: slower, bigger and no better. Re-measure if a faster or quantised export appears.
+- Supertonic 3 (Supertone, 99M ONNX, 31 languages incl. Vietnamese, model OpenRAIL-M, sample code MIT; examples for py, nodejs,
+  web, java, cpp, csharp, go, swift, ios, rust, flutter): desktop CPU RTF 0.19 (Model lane, 03-10), level with VieNeu Nano; CER and
+  naturalness come from the shared GPU scoring run. Supertone Inc. resolved to dissolve on 2026-07-15, its services shut on
+  2026-08-31 and the GitHub repo was archived on 2026-09-09: the weights are final, nobody will fix Vietnamese errors. If it wins,
+  pin a commit and mirror the files to our own Hugging Face repo (as with the sea-g2p JNI), and keep its licence's
+  use restrictions (no impersonation; disclose machine-generated speech - ABook already names every voice as a machine voice).
 - VieNeu v4 is closed (API only, README 03-10); v3 Turbo is the latest open release and only "potential v3.x" open updates are promised,
   so quality gains will come from other open models, not from VieNeu.
 
