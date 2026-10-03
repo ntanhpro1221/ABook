@@ -43,7 +43,7 @@ class BookImportTest {
     @Test
     fun every_file_format_gives_exactly_what_python_gives() {
         for ((file, expected) in listOf(
-            "epub3.epub" to "epub3", "epub2.epub" to "epub2", "headings.docx" to "headings", "plain.docx" to "plain", "txt" to "txt",
+            "epub3.epub" to "epub3", "epub2.epub" to "epub2", "split.epub" to "split", "headings.docx" to "headings", "plain.docx" to "plain", "txt" to "txt",
         )) {
             assertEquals("$file", expectedText(expected), dump(BookImport.importFile(File(dir, file))))
         }
@@ -77,6 +77,24 @@ class BookImportTest {
         assertFalse(book.chapters.any { it.text.contains("không nằm trong thứ tự đọc chính") })
         assertEquals(listOf("Bỏ qua 1 trang chỉ có ảnh.", "Bỏ qua 1 mục rất ngắn (bìa, trang bản quyền?)."), book.notes.take(2)) // đếm, không kể tên file trong gói
         assertEquals("image/jpeg", BookImport.importFile(File(dir, "epub2.epub")).coverType)
+    }
+
+    @Test
+    fun an_epub_with_several_chapters_in_one_xhtml_splits_at_the_table_of_contents_fragments() {
+        val book = BookImport.importFile(File(dir, "split.epub"))
+        assertEquals(
+            listOf(
+                "Chương 1: Bến sông", "Chương 2: Chợ nổi", "Chương 3: Gặp gỡ",
+                "Lời dẫn dài của người ghi chép, đứng trước phần đầu và không có mục nào trong mụ",
+                "Phần một", "Phần hai", "Mục thứ nhất", "Mục thứ hai", "Một mục lẻ",
+            ),
+            titles(book),
+        )
+        val (first, second, third) = book.chapters.take(3).map { it.text }
+        assertTrue(first.startsWith("Buổi sáng ở bến sông") && first.endsWith("ra chợ sớm.")) // mục không mảnh lấy từ đầu file tới mảnh kế
+        assertTrue(second.startsWith("Ghe xuồng chen nhau") && !second.contains("Chương 2")) // tiêu đề trùng tên mục lục không đọc hai lần
+        assertTrue(third.startsWith("Chương ba mở ra") && third.endsWith("cùng một bến.")) // <a name> cũng là mảnh
+        assertEquals(listOf("Bỏ qua 1 mục rất ngắn (bìa, trang bản quyền?)."), book.notes) // chữ dẫn ngắn trước mảnh đầu theo luật mục ngắn như cũ
     }
 
     @Test
