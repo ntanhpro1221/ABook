@@ -197,6 +197,17 @@ word và cho ra dạng normalized của word").
   - token thật từ Corpus/_full (52k tên + từ mượn), chia train / dev / test THEO CUỐN;
   - đáp án do LLM lớn đề xuất + luật CMU sẵn có + luật romaji / Hàn;
   - lọc qua kiểm âm tiết và vòng ASR.
+- **Điện thoại yếu** (chủ sách hỏi 04-10). Ba lớp, máy nào cũng có lớp dưới cùng:
+  1. *Bảng cách đọc đóng trong file `.abook`:* sách làm hay nhập trên máy tính mang sẵn cách đọc mọi từ nước ngoài; điện thoại
+     chỉ tra bảng.
+  2. *Model phiên âm (tải thêm, không đóng vào APK):*
+     - chạy MỘT lần cho mỗi từ khác nhau của cuốn, lúc thêm sách hay chạy nền, rồi lưu đệm;
+     - cỡ một cuốn: vài trăm đến nghìn từ × vài chục ms trên máy yếu = vài chục giây;
+     - ONNX Runtime hay viết thẳng bằng Kotlin: quyết bằng số đo ms/từ.
+  3. *Luật thuần* (không tải gì, chạy mọi máy, cũng là lưới an toàn khi model ra dạng không hợp lệ):
+     - romaji / Hàn theo quy ước đã nghiên cứu;
+     - từ điển từ mượn và viết tắt;
+     - đánh vần làm đường lùi cuối.
 - **Thay thế:** Studio dùng nó thay bước LLM đề xuất cách đọc tên (bảng khoá và người nghe sửa vẫn giữ). Nghe ngay dùng nó cho mọi
   token nước ngoài chưa có trong từ điển.
 
