@@ -15,8 +15,13 @@ describe("đường truyền sửa sách trên điện thoại", () => {
       const reply = await api<{ title: string }>("/api/books/abc/title", { method: "PUT", body: { title: "Tên mới" } });
       expect(reply).toEqual({ title: "Tên mới" });
       expect(calls).toEqual([{ method: "PUT", path: "/api/books/abc/title", body: { title: "Tên mới" } }]);
-      await api("/api/books/abc/music?x=1");
+      await api("/api/books/abc/music");
       expect(calls[1]).toEqual({ method: "GET", path: "/api/books/abc/music", body: undefined });
+      // Lõi native không đọc `?...`: tham số của lệnh GET đi trong body (tìm bìa trên mạng), đã giải mã.
+      await api("/api/books/abc/cover/search?q=" + encodeURIComponent("Tắt đèn & Co"));
+      expect(calls[2]).toEqual({ method: "GET", path: "/api/books/abc/cover/search", body: { q: "Tắt đèn & Co" } });
+      await api("/api/books/abc/music?x=1", { method: "PUT", body: { enabled: false } });
+      expect(calls[3]).toEqual({ method: "PUT", path: "/api/books/abc/music", body: { enabled: false } });
     } finally {
       setApiTransport(null);
     }

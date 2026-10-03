@@ -32,6 +32,12 @@ class LocalStudioTest {
         }
     }
 
+    /** Test JVM không được ra mạng thật: mặc định mọi lần hỏi là lỗi. */
+    private object NoWeb : CoverSearch.Http {
+        override fun getText(url: String): String = throw AssertionError("test không được ra mạng thật: $url")
+        override fun getBytes(url: String, limit: Int, timeoutSeconds: Int): ByteArray = throw AssertionError("test không được ra mạng thật: $url")
+    }
+
     @Before
     fun setUp() {
         root = BookEditsFixtures.tempDir("abook-studio")
@@ -39,6 +45,7 @@ class LocalStudioTest {
         BookEditsFixtures.copyBase(dir)
         Store.rememberChapters(id, JSONObject(), imported = true)
         LocalStudio.coverCodec = FakeCodec()
+        CoverSearch.http = NoWeb
         LocalStudio.musicStore = MusicStore(File(root, "music"), FakeTags)
         LocalStudio.clock = { 1_790_950_256L }
         // đồng hồ của ý muốn chạy từng bước: mỗi yêu cầu một dấu giờ riêng (rút đúng lần bấm theo `requestedAt`)
@@ -48,6 +55,7 @@ class LocalStudioTest {
 
     @After
     fun tearDown() {
+        CoverSearch.http = NoWeb
         LocalStudio.coverCodec = null
         LocalStudio.musicStore = null
         LocalStudio.now = { System.currentTimeMillis() / 1000.0 }
@@ -249,8 +257,79 @@ class LocalStudioTest {
         val big = "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(ByteArray(Covers.MAX_UPLOAD_BYTES + 1) { 1 })
         assertEquals("Ảnh quá lớn (tối đa 16 MB)", refused(big))
         assertFalse("không có gì được ghi", File(dir, "edits.json").exists())
-        // ảnh tải từ địa chỉ mạng chỉ có trên máy tính
-        assertEquals(400, call("PUT", "/cover", JSONObject().put("url", "https://x/y.jpg")).first)
+        // địa chỉ ảnh không thuộc nguồn nào của "Tìm bìa trên mạng" bị từ chối như trên máy tính
+        val (status, reply) = call("PUT", "/cover", JSONObject().put("url", "https://x/y.jpg"))
+        assertEquals(400, status)
+        assertEquals(CoverSearch.REFUSAL, (reply as JSONObject).getString("error"))
+        assertFalse(File(dir, "edits.json").exists())
+    }
+
+    /** Mạng giả của "Tìm bìa trên mạng": trả `image` cho mọi địa chỉ ảnh, `text` cho mọi lần hỏi nguồn; ghi địa chỉ đã gọi. */
+    private class WebStub(val image: ByteArray, val text: String = "{}", val failWith: java.io.IOException? = null) : CoverSearch.Http {
+        val asked = java.util.Collections.synchronizedList(ArrayList<String>())
+
+        override fun getText(url: String): String {
+            asked += url
+            failWith?.let { throw it }
+            return text
+        }
+
+        override fun getBytes(url: String, limit: Int, timeoutSeconds: Int): ByteArray {
+            asked += url
+            failWith?.let { throw it }
+            return image.copyOf(minOf(image.size, limit))
+        }
+    }
+
+    @Test
+    fun a_cover_picked_from_the_web_lands_in_the_edit_layer_like_a_chosen_file() {
+        val jpeg = BookEditsFixtures.bytes("edits/cover_set.cover.jpg")
+        val web = WebStub(jpeg)
+        CoverSearch.http = web
+        val (status, reply) = call("PUT", "/cover", JSONObject().put("url", "https://covers.openlibrary.org/b/id/42-L.jpg"))
+        assertEquals(200, status)
+        val cover = (reply as JSONObject).getJSONObject("cover")
+        assertEquals("#aa5522", cover.getString("color"))
+        assertEquals(1_790_950_256L, cover.getLong("version"))
+        assertEquals(listOf("https://covers.openlibrary.org/b/id/42-L.jpg"), web.asked)
+        assertArrayEquals("ảnh đã chuẩn hoá nằm ở edits/cover.jpg, bìa của sách giữ nguyên", jpeg, File(dir, "edits/cover.jpg").readBytes())
+        assertEquals("edits/cover.jpg", Store.manifest(id)!!.getJSONObject("cover").getString("file"))
+        assertEquals(1, BookEdits.countApplied(BookEdits.load(dir)))
+    }
+
+    @Test
+    fun a_cover_from_the_web_is_refused_with_the_server_words_and_writes_nothing() {
+        fun refused(web: WebStub, url: String): String {
+            CoverSearch.http = web
+            val (status, reply) = call("PUT", "/cover", JSONObject().put("url", url))
+            assertEquals(400, status)
+            return (reply as JSONObject).getString("error")
+        }
+        val allowed = "https://covers.openlibrary.org/b/id/42-L.jpg"
+        assertEquals(CoverSearch.REFUSAL, refused(WebStub(ByteArray(0)), "http://192.168.1.1/admin.png"))
+        assertEquals(CoverSearch.REFUSAL, refused(WebStub(ByteArray(0)), "https://evil.example/x.jpg"))
+        assertEquals("Ảnh quá lớn", refused(WebStub(ByteArray(Covers.MAX_UPLOAD_BYTES + 9) { 1 }), allowed))
+        assertEquals("Không tải được ảnh: HTTP 503", refused(WebStub(ByteArray(0), failWith = java.io.IOException("HTTP 503")), allowed))
+        assertEquals("Không đọc được ảnh này", refused(WebStub(ByteArray(40) { 1 }), allowed))
+        assertFalse("không có gì được ghi", File(dir, "edits.json").exists())
+        assertFalse(File(dir, "edits/cover.jpg").exists())
+    }
+
+    @Test
+    fun cover_search_answers_with_the_search_json_and_ignores_a_query_string_in_the_path() {
+        val web = WebStub(ByteArray(0), text = "{\"docs\": [{\"title\": \"Open\", \"cover_i\": 7}]}")
+        CoverSearch.http = web
+        val (status, reply) = call("GET", "/cover/search", JSONObject().put("q", "  Tắt   đèn "))
+        assertEquals(200, status)
+        val answer = reply as JSONObject
+        assertEquals("Tắt đèn", answer.getString("query"))
+        assertEquals("nguồn không có mục nào thì không phải nguồn hỏng", 0, answer.getJSONArray("failed").length())
+        assertEquals(1, answer.getJSONArray("results").length())
+        assertEquals("https://covers.openlibrary.org/b/id/7-L.jpg", answer.getJSONArray("results").getJSONObject(0).getString("url"))
+        assertTrue(web.asked.any { it.startsWith("https://openlibrary.org/search.json?q=T%E1%BA%AFt+%C4%91%C3%A8n&") })
+        assertEquals(200, LocalStudio.handle("GET", "/api/books/$id/cover/search?q=x", JSONObject().put("q", "Ab")).first)
+        assertEquals("tìm bìa không ghi gì vào sách", false, File(dir, "edits.json").exists())
+        assertEquals(404, call("POST", "/cover/search").first)
     }
 
     @Test
@@ -398,5 +477,21 @@ class LocalStudioTest {
         assertTrue(Store.capabilities(true).getBoolean("link"))
         assertTrue(Store.linked(JSONObject()).getJSONObject("capabilities").getBoolean("link"))
         assertEquals(0, Store.linked(JSONObject()).getInt("edits"))
+    }
+
+    @Test
+    fun the_workshop_views_of_a_project_file_are_answered_read_only_and_a_plain_book_says_there_are_none() {
+        // cuốn từ file .abook (base): không có bản chụp nào
+        for (path in listOf("/work", "/casting", "/pronunciations", "/casting/1")) assertEquals(path, 404, call("GET", path).first)
+        // cuốn từ file dự án: bản chụp trong file, cùng JSON với Studio (tests/book_edits_fixtures.py WORKSHOP_VIEWS)
+        val imported = BookFileImport.importFile(BookEditsFixtures.file("written/python_workshop.abookproj"))
+        fun view(path: String) = LocalStudio.handle("GET", "/api/books/${imported.id}$path", null)
+        val work = view("/work")
+        assertEquals(200, work.first)
+        assertEquals("name:Hailkes", ((work.second as JSONObject).getJSONArray("items")).getJSONObject(0).getString("id"))
+        assertEquals(1, ((view("/casting").second as JSONObject).getJSONArray("chapters")).length())
+        assertEquals("Hên-khơ", ((view("/pronunciations").second as JSONObject).getJSONArray("items")).getJSONObject(0).getString("spoken"))
+        assertEquals("từng câu của chương không có trong file", 404, view("/casting/1").first)
+        assertEquals("chỉ đọc: không ghi được", 404, LocalStudio.handle("POST", "/api/books/${imported.id}/work", JSONObject()).first)
     }
 }

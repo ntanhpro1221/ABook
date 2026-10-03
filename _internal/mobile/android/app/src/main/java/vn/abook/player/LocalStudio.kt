@@ -10,7 +10,7 @@ import org.json.JSONObject
  * nhân vật, tên chương, nhạc nền, xem/bỏ thay đổi; và phần W (ý muốn chờ Studio - [BookWishes]): cách đọc tên, ai nói câu này,
  * gộp tên, cách đọc câu, giọng/giới, thu lại, danh sách chờ và rút. Cộng "Nhạc của tôi" ([MusicStore], docs/MUSIC_IMPORT.md): danh
  * sách bài đã nhập, xoá, và - cho từng cuốn - nhóm bài của tôi trong "Đổi bài" + ghim một bài vào một đoạn nhạc (`PUT /music {pins}`).
- * Mọi thứ khác: 404. Cuốn lấy từ máy tính khác thì sửa ở máy ấy: 409.
+ * Cộng "Tìm bìa trên mạng" ([CoverSearch]): `GET /cover/search?q=` và `PUT /cover {url}`. Mọi thứ khác: 404. Cuốn lấy từ máy tính khác thì sửa ở máy ấy: 409.
  *
  * Lời đáp phải y hệt bản Python (tests/fixtures/book_edits/contract/ - LocalStudioTest phát lại từng bước), nên câu báo lỗi
  * và mã trạng thái theo đúng server.py: sửa sai (ValueError bên Python) là 400.
@@ -22,6 +22,7 @@ object LocalStudio {
     private val CHAPTER_TITLE = Regex("/chapters/([0-9]+)/title")
     private val CHAPTER_SCRIPT = Regex("/chapters/([0-9]+)/script")
     private val CHAPTER_RETAKE = Regex("/chapters/([0-9]+)/retake")
+    private val CASTING_CHAPTER = Regex("/casting/([0-9]+)")
     private val SCENE_ALTERNATIVES = Regex("/music/scenes/([^/]+)/alternatives")
     private val MY_MUSIC = Regex("/api/music/local(?:/([0-9a-f]{40})|/(analyze)|/(module)|/(reanalyse))?")
     private val EDITS_ONLY_KEYS = setOf("enabled", "levelDb", "silence", "pins")
@@ -105,11 +106,26 @@ object LocalStudio {
         }
     }
 
-    private fun run(method: String, path: String, body: JSONObject): Pair<Int, Any?> {
+    private fun run(method: String, rawPath: String, body: JSONObject): Pair<Int, Any?> {
+        val path = rawPath.substringBefore('?') // tham số của GET do giao diện gửi trong `body` (android/localStudio.ts)
         MY_MUSIC.matchEntire(path)?.let { return myMusic(method, it.groups[1]?.value, it.groups[2] != null, it.groups[3] != null, it.groups[4] != null) }
         val match = ROUTE.matchEntire(path) ?: throw Api(404, "Không có đường dẫn này")
         val id = match.groupValues[1]
         val rest = match.groupValues[2]
+        // Hai đường cần MẠNG (tìm bìa, tải bìa đã chọn) chạy ngoài khoá: vài giây chờ nguồn ảnh không được chặn các lần sửa khác.
+        if (method == "GET" && rest == "/cover/search") {
+            editable(id)
+            return 200 to CoverSearch.search(BookEdits.pyText(body.opt("q")))
+        }
+        if (method == "PUT" && rest == "/cover" && BookEdits.truthy(body.opt("url"))) {
+            val dir = editable(id)
+            val raw = try {
+                CoverSearch.downloadImage(BookEdits.pyStr(body.opt("url")))
+            } catch (error: CoverCodec.CoverError) {
+                throw BookEdits.EditsError(error.message.orEmpty())
+            }
+            return synchronized(lock) { 200 to setCover(dir, raw) }
+        }
         val handler = route(method, rest) ?: throw Api(404, "Không có đường dẫn này")
         val dir = editable(id)
         // Mỗi cuốn một lần sửa một lúc: đọc-sửa-ghi của hai yêu cầu không được chen nhau.
@@ -131,6 +147,9 @@ object LocalStudio {
         CHAPTER_TITLE.matchEntire(path)?.takeIf { method == "PUT" }?.let { match -> return { dir, body -> chapterTitle(dir, match.groupValues[1], body) } }
         CHAPTER_SCRIPT.matchEntire(path)?.takeIf { method == "GET" }?.let { match -> return { dir, _ -> script(dir, match.groupValues[1]) } }
         CHAPTER_RETAKE.matchEntire(path)?.takeIf { method == "POST" }?.let { match -> return { dir, _ -> chapterRetake(dir, match.groupValues[1]) } }
+        CASTING_CHAPTER.matchEntire(path)?.takeIf { method == "GET" }?.let {
+            return { _, _ -> throw Api(404, "File dự án không kèm từng câu của chương - đọc chữ trong sách") }
+        }
         SCENE_ALTERNATIVES.matchEntire(path)?.takeIf { method == "GET" }?.let { match -> return { dir, _ -> alternatives(dir, java.net.URLDecoder.decode(match.groupValues[1], "UTF-8")) } }
         return when (method to path) {
             "PUT" to "/title" -> ::title
@@ -154,6 +173,10 @@ object LocalStudio {
             "POST" to "/review" -> ::review
             "DELETE" to "/edits" -> { dir, _ -> BookEdits.clear(dir); JSONObject().put("applied", 0).put("waiting", 0) }
             "GET" to "/cast" -> { dir, _ -> BookEdits.cast(dir, BookEdits.rawBook(dir)) }
+            // Bản chụp chỉ đọc của xưởng trong file dự án (ProjectDocument.view, project_views.py): cùng JSON với đường của Studio.
+            "GET" to "/work" -> { dir, _ -> projectView(dir, "work") }
+            "GET" to "/casting" -> { dir, _ -> projectView(dir, "casting") }
+            "GET" to "/pronunciations" -> { dir, _ -> projectView(dir, "names") }
             else -> null
         }
     }
@@ -165,14 +188,20 @@ object LocalStudio {
         return JSONObject().put("title", BookEdits.setTitle(dir, cleaned))
     }
 
-    /** PUT /cover {image: data URL}: bìa người nghe đặt nằm ở edits/cover.jpg, bìa của sách giữ nguyên. */
+    /**
+     * PUT /cover {image: data URL} (hay {url} - ảnh chọn từ "Tìm bìa trên mạng", tải ở [run] qua [CoverSearch]): bìa người nghe đặt
+     * nằm ở edits/cover.jpg, bìa của sách giữ nguyên.
+     */
     private fun cover(dir: java.io.File, body: JSONObject): Any? {
-        if (BookEdits.truthy(body.opt("url"))) throw BookEdits.EditsError("Điện thoại chưa tải bìa từ địa chỉ mạng - hãy chọn ảnh có sẵn trong máy")
         val raw = try {
             Covers.decodeDataUrl(BookEdits.pyText(body.opt("image")))
         } catch (error: CoverCodec.CoverError) {
             throw BookEdits.EditsError(error.message.orEmpty())
         }
+        return setCover(dir, raw)
+    }
+
+    private fun setCover(dir: java.io.File, raw: ByteArray): JSONObject {
         val codec = coverCodec ?: AndroidCoverCodec
         return JSONObject().put("cover", BookEdits.setCover(dir, raw, clock(), codec))
     }
@@ -436,6 +465,10 @@ object LocalStudio {
         BookWishes.withdraw(dir, section, mine.keys.toList(), at)
         return JSONObject().put("withdrawn", mine.size)
     }
+
+    /** GET /work, /casting, /pronunciations: bản chụp trong file dự án; 404 khi cuốn không có (cuốn từ file `.abook`, hay file không kèm). */
+    private fun projectView(dir: java.io.File, name: String): Any? =
+        ProjectDocument.view(dir, name) ?: throw Api(404, "File dự án này không kèm bản chụp của màn đó")
 
     /** GET /chapters/<n>/script: chữ đọc theo đã qua lớp sửa. */
     private fun script(dir: java.io.File, chapter: String): Any? =

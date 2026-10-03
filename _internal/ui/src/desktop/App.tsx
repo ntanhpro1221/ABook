@@ -257,6 +257,7 @@ function useOpenedBook() {
       if (result.how === "studio") {
         void client.invalidateQueries({ queryKey: ["library"] });
         navigate(`/studio/${result.id}`);
+        if (result.edits) offerFold(client, result.id, result.edits); // file dự án đã được sửa ở máy khác (điện thoại)
         const lost = result.missingSources ?? 0;
         toast.success(OPENED_SAID.studio[0], {
           description: lost

@@ -1,0 +1,1009 @@
+{
+ "search": [
+  {
+   "name": "mixed",
+   "query": "Kuma Kuma Kuma Bear",
+   "responses": {
+    "https://itunes.apple.com/search?term=Kuma+Kuma+Kuma+Bear&media=audiobook&limit=8": {
+     "results": [
+      {
+       "collectionName": "Kuma Kuma Kuma Bear",
+       "artistName": "Kumanano",
+       "artworkUrl100": "https://is5-ssl.mzstatic.com/image/thumb/Publication/v4/ab/100x100bb.jpg"
+      },
+      {
+       "trackName": "Chỉ có tên bài",
+       "artworkUrl100": "https://is2-ssl.mzstatic.com/image/thumb/x/60x60bb.jpg"
+      },
+      {
+       "collectionName": "Không có ảnh",
+       "artistName": "Ai đó"
+      },
+      {
+       "collectionName": "Ảnh trống",
+       "artworkUrl100": ""
+      },
+      {
+       "collectionName": "Host lạ",
+       "artworkUrl100": "https://evil.example/100x100bb.jpg"
+      }
+     ]
+    },
+    "https://itunes.apple.com/search?term=Kuma+Kuma+Kuma+Bear&media=ebook&limit=8": {
+     "results": [
+      {
+       "collectionName": "Kuma Kuma Kuma Bear",
+       "artistName": "Kumanano",
+       "artworkUrl100": "https://is5-ssl.mzstatic.com/image/thumb/Publication/v4/ab/100x100bb.jpg"
+      },
+      {
+       "collectionName": "Quyển 2",
+       "artistName": "Kumanano",
+       "artworkUrl100": "https://is3-ssl.mzstatic.com/image/thumb/Publication/v4/cd/200x300bb.jpg"
+      }
+     ]
+    },
+    "https://openlibrary.org/search.json?q=Kuma+Kuma+Kuma+Bear&limit=10&fields=title%2Cauthor_name%2Ccover_i": {
+     "docs": [
+      {
+       "title": "Kuma Kuma Kuma Bear, Vol. 1",
+       "author_name": [
+        "Kumanano",
+        "Non"
+       ],
+       "cover_i": 8675309
+      },
+      {
+       "title": "Không bìa",
+       "author_name": [
+        "Ai đó"
+       ]
+      },
+      {
+       "title": "Bìa số 0",
+       "cover_i": 0
+      },
+      {
+       "title": "Nhiều tác giả",
+       "cover_i": 42,
+       "author_name": [
+        "Nguyễn Nhật Ánh",
+        "Trần Đăng Khoa",
+        "Nguyễn Huy Thiệp",
+        "Xuân Quỳnh",
+        "Hoàng Phủ Ngọc Tường"
+       ]
+      },
+      {
+       "title": "Không tên tác giả",
+       "cover_i": 43
+      }
+     ]
+    },
+    "https://www.googleapis.com/books/v1/volumes?q=Kuma+Kuma+Kuma+Bear&maxResults=10&printType=books": {
+     "items": [
+      {
+       "volumeInfo": {
+        "title": "Kuma Bear",
+        "authors": [
+         "Kumanano"
+        ],
+        "imageLinks": {
+         "thumbnail": "http://books.google.com/books/content?id=AAA&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+         "smallThumbnail": "http://books.google.com/books/content?id=AAA&zoom=5"
+        }
+       }
+      },
+      {
+       "volumeInfo": {
+        "title": "Chỉ ảnh nhỏ",
+        "imageLinks": {
+         "smallThumbnail": "https://books.google.com/books/content?id=BBB&img=1&zoom=5"
+        }
+       }
+      },
+      {
+       "volumeInfo": {
+        "title": "Không ảnh",
+        "authors": [
+         "Ai đó"
+        ]
+       }
+      },
+      {
+       "volumeInfo": {
+        "title": "Host lạ",
+        "imageLinks": {
+         "thumbnail": "https://evil.example/x.jpg"
+        }
+       }
+      },
+      {
+       "volumeInfo": {
+        "title": "Cùng ảnh với iTunes",
+        "imageLinks": {
+         "thumbnail": "https://books.googleusercontent.com/books/content?id=CCC&zoom=3"
+        }
+       }
+      },
+      {}
+     ]
+    }
+   },
+   "requested": [
+    "https://itunes.apple.com/search?term=Kuma+Kuma+Kuma+Bear&media=audiobook&limit=8",
+    "https://itunes.apple.com/search?term=Kuma+Kuma+Kuma+Bear&media=ebook&limit=8",
+    "https://openlibrary.org/search.json?q=Kuma+Kuma+Kuma+Bear&limit=10&fields=title%2Cauthor_name%2Ccover_i",
+    "https://www.googleapis.com/books/v1/volumes?q=Kuma+Kuma+Kuma+Bear&maxResults=10&printType=books"
+   ],
+   "expected": {
+    "query": "Kuma Kuma Kuma Bear",
+    "results": [
+     {
+      "provider": "iTunes",
+      "title": "Kuma Kuma Kuma Bear",
+      "author": "Kumanano",
+      "thumb": "https://is5-ssl.mzstatic.com/image/thumb/Publication/v4/ab/100x100bb.jpg",
+      "url": "https://is5-ssl.mzstatic.com/image/thumb/Publication/v4/ab/1000x1000bb.jpg"
+     },
+     {
+      "provider": "iTunes",
+      "title": "Chỉ có tên bài",
+      "author": "",
+      "thumb": "https://is2-ssl.mzstatic.com/image/thumb/x/60x60bb.jpg",
+      "url": "https://is2-ssl.mzstatic.com/image/thumb/x/1000x1000bb.jpg"
+     },
+     {
+      "provider": "iTunes",
+      "title": "Quyển 2",
+      "author": "Kumanano",
+      "thumb": "https://is3-ssl.mzstatic.com/image/thumb/Publication/v4/cd/200x300bb.jpg",
+      "url": "https://is3-ssl.mzstatic.com/image/thumb/Publication/v4/cd/1000x1000bb.jpg"
+     },
+     {
+      "provider": "Open Library",
+      "title": "Kuma Kuma Kuma Bear, Vol. 1",
+      "author": "Kumanano, Non",
+      "thumb": "https://covers.openlibrary.org/b/id/8675309-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/8675309-L.jpg"
+     },
+     {
+      "provider": "Open Library",
+      "title": "Nhiều tác giả",
+      "author": "Nguyễn Nhật Ánh, Trần Đăng Khoa, Nguyễn Huy Thiệp, Xuân Quỳnh, Hoàng Phủ Ngọc Tư",
+      "thumb": "https://covers.openlibrary.org/b/id/42-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/42-L.jpg"
+     },
+     {
+      "provider": "Open Library",
+      "title": "Không tên tác giả",
+      "author": "",
+      "thumb": "https://covers.openlibrary.org/b/id/43-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/43-L.jpg"
+     },
+     {
+      "provider": "Google Books",
+      "title": "Kuma Bear",
+      "author": "Kumanano",
+      "thumb": "https://books.google.com/books/content?id=AAA&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "url": "https://books.google.com/books/content?id=AAA&printsec=frontcover&img=1&zoom=0&source=gbs_api"
+     },
+     {
+      "provider": "Google Books",
+      "title": "Chỉ ảnh nhỏ",
+      "author": "",
+      "thumb": "https://books.google.com/books/content?id=BBB&img=1&zoom=5",
+      "url": "https://books.google.com/books/content?id=BBB&img=1&zoom=0"
+     },
+     {
+      "provider": "Google Books",
+      "title": "Cùng ảnh với iTunes",
+      "author": "",
+      "thumb": "https://books.googleusercontent.com/books/content?id=CCC&zoom=3",
+      "url": "https://books.googleusercontent.com/books/content?id=CCC&zoom=0"
+     }
+    ],
+    "failed": []
+   }
+  },
+  {
+   "name": "google_down",
+   "query": "Overlord",
+   "responses": {
+    "https://itunes.apple.com/search?term=Overlord&media=audiobook&limit=8": {
+     "results": [
+      {
+       "collectionName": "Sách 0",
+       "artistName": "Tác giả 0",
+       "artworkUrl100": "https://is1-ssl.mzstatic.com/image/thumb/Features/v4/0/100x100bb.jpg"
+      }
+     ]
+    },
+    "https://itunes.apple.com/search?term=Overlord&media=ebook&limit=8": {
+     "results": [
+      {
+       "collectionName": "Sách 0",
+       "artistName": "Tác giả 0",
+       "artworkUrl100": "https://is1-ssl.mzstatic.com/image/thumb/Features/v4/0/100x100bb.jpg"
+      }
+     ]
+    },
+    "https://openlibrary.org/search.json?q=Overlord&limit=10&fields=title%2Cauthor_name%2Ccover_i": {
+     "docs": []
+    },
+    "https://www.googleapis.com/books/v1/volumes?q=Overlord&maxResults=10&printType=books": {
+     "$error": "quota"
+    }
+   },
+   "requested": [
+    "https://itunes.apple.com/search?term=Overlord&media=audiobook&limit=8",
+    "https://itunes.apple.com/search?term=Overlord&media=ebook&limit=8",
+    "https://openlibrary.org/search.json?q=Overlord&limit=10&fields=title%2Cauthor_name%2Ccover_i",
+    "https://www.googleapis.com/books/v1/volumes?q=Overlord&maxResults=10&printType=books"
+   ],
+   "expected": {
+    "query": "Overlord",
+    "results": [
+     {
+      "provider": "iTunes",
+      "title": "Sách 0",
+      "author": "Tác giả 0",
+      "thumb": "https://is1-ssl.mzstatic.com/image/thumb/Features/v4/0/100x100bb.jpg",
+      "url": "https://is1-ssl.mzstatic.com/image/thumb/Features/v4/0/1000x1000bb.jpg"
+     }
+    ],
+    "failed": [
+     "google_books"
+    ]
+   }
+  },
+  {
+   "name": "itunes_ebook_down",
+   "query": "Re:Zero",
+   "responses": {
+    "https://itunes.apple.com/search?term=Re%3AZero&media=audiobook&limit=8": {
+     "results": []
+    },
+    "https://itunes.apple.com/search?term=Re%3AZero&media=ebook&limit=8": {
+     "$error": "429"
+    },
+    "https://openlibrary.org/search.json?q=Re%3AZero&limit=10&fields=title%2Cauthor_name%2Ccover_i": {
+     "docs": []
+    },
+    "https://www.googleapis.com/books/v1/volumes?q=Re%3AZero&maxResults=10&printType=books": {
+     "items": []
+    }
+   },
+   "requested": [
+    "https://itunes.apple.com/search?term=Re%3AZero&media=audiobook&limit=8",
+    "https://itunes.apple.com/search?term=Re%3AZero&media=ebook&limit=8",
+    "https://openlibrary.org/search.json?q=Re%3AZero&limit=10&fields=title%2Cauthor_name%2Ccover_i",
+    "https://www.googleapis.com/books/v1/volumes?q=Re%3AZero&maxResults=10&printType=books"
+   ],
+   "expected": {
+    "query": "Re:Zero",
+    "results": [],
+    "failed": [
+     "itunes"
+    ]
+   }
+  },
+  {
+   "name": "all_down",
+   "query": "Tắt đèn",
+   "responses": {
+    "https://itunes.apple.com/search?term=T%E1%BA%AFt+%C4%91%C3%A8n&media=audiobook&limit=8": {
+     "results": []
+    },
+    "https://itunes.apple.com/search?term=T%E1%BA%AFt+%C4%91%C3%A8n&media=ebook&limit=8": {
+     "$error": "429"
+    },
+    "https://openlibrary.org/search.json?q=T%E1%BA%AFt+%C4%91%C3%A8n&limit=10&fields=title%2Cauthor_name%2Ccover_i": {
+     "$error": "timeout"
+    },
+    "https://www.googleapis.com/books/v1/volumes?q=T%E1%BA%AFt+%C4%91%C3%A8n&maxResults=10&printType=books": {
+     "$error": "quota"
+    }
+   },
+   "requested": [
+    "https://itunes.apple.com/search?term=T%E1%BA%AFt+%C4%91%C3%A8n&media=audiobook&limit=8",
+    "https://itunes.apple.com/search?term=T%E1%BA%AFt+%C4%91%C3%A8n&media=ebook&limit=8",
+    "https://openlibrary.org/search.json?q=T%E1%BA%AFt+%C4%91%C3%A8n&limit=10&fields=title%2Cauthor_name%2Ccover_i",
+    "https://www.googleapis.com/books/v1/volumes?q=T%E1%BA%AFt+%C4%91%C3%A8n&maxResults=10&printType=books"
+   ],
+   "expected": {
+    "query": "Tắt đèn",
+    "results": [],
+    "failed": [
+     "itunes",
+     "open_library",
+     "google_books"
+    ]
+   }
+  },
+  {
+   "name": "vietnamese_query",
+   "query": "  Đắc   nhân\ttâm  ~a*b?c&d=e+f/g ",
+   "responses": {
+    "https://itunes.apple.com/search?term=%C4%90%E1%BA%AFc+nh%C3%A2n+t%C3%A2m+~a%2Ab%3Fc%26d%3De%2Bf%2Fg&media=audiobook&limit=8": {
+     "results": []
+    },
+    "https://itunes.apple.com/search?term=%C4%90%E1%BA%AFc+nh%C3%A2n+t%C3%A2m+~a%2Ab%3Fc%26d%3De%2Bf%2Fg&media=ebook&limit=8": {
+     "results": []
+    },
+    "https://openlibrary.org/search.json?q=%C4%90%E1%BA%AFc+nh%C3%A2n+t%C3%A2m+~a%2Ab%3Fc%26d%3De%2Bf%2Fg&limit=10&fields=title%2Cauthor_name%2Ccover_i": {
+     "docs": []
+    },
+    "https://www.googleapis.com/books/v1/volumes?q=%C4%90%E1%BA%AFc+nh%C3%A2n+t%C3%A2m+~a%2Ab%3Fc%26d%3De%2Bf%2Fg&maxResults=10&printType=books": {
+     "items": []
+    }
+   },
+   "requested": [
+    "https://itunes.apple.com/search?term=%C4%90%E1%BA%AFc+nh%C3%A2n+t%C3%A2m+~a%2Ab%3Fc%26d%3De%2Bf%2Fg&media=audiobook&limit=8",
+    "https://itunes.apple.com/search?term=%C4%90%E1%BA%AFc+nh%C3%A2n+t%C3%A2m+~a%2Ab%3Fc%26d%3De%2Bf%2Fg&media=ebook&limit=8",
+    "https://openlibrary.org/search.json?q=%C4%90%E1%BA%AFc+nh%C3%A2n+t%C3%A2m+~a%2Ab%3Fc%26d%3De%2Bf%2Fg&limit=10&fields=title%2Cauthor_name%2Ccover_i",
+    "https://www.googleapis.com/books/v1/volumes?q=%C4%90%E1%BA%AFc+nh%C3%A2n+t%C3%A2m+~a%2Ab%3Fc%26d%3De%2Bf%2Fg&maxResults=10&printType=books"
+   ],
+   "expected": {
+    "query": "Đắc nhân tâm ~a*b?c&d=e+f/g",
+    "results": [],
+    "failed": []
+   }
+  },
+  {
+   "name": "long_query",
+   "query": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀ệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệ",
+   "responses": {
+    "https://itunes.apple.com/search?term=%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87&media=audiobook&limit=8": {
+     "results": []
+    },
+    "https://itunes.apple.com/search?term=%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87&media=ebook&limit=8": {
+     "results": []
+    },
+    "https://openlibrary.org/search.json?q=%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87&limit=10&fields=title%2Cauthor_name%2Ccover_i": {
+     "docs": []
+    },
+    "https://www.googleapis.com/books/v1/volumes?q=%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87&maxResults=10&printType=books": {
+     "items": []
+    }
+   },
+   "requested": [
+    "https://itunes.apple.com/search?term=%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87&media=audiobook&limit=8",
+    "https://itunes.apple.com/search?term=%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87&media=ebook&limit=8",
+    "https://openlibrary.org/search.json?q=%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87&limit=10&fields=title%2Cauthor_name%2Ccover_i",
+    "https://www.googleapis.com/books/v1/volumes?q=%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%F0%9F%98%80%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87%E1%BB%87&maxResults=10&printType=books"
+   ],
+   "expected": {
+    "query": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀ệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệệ",
+    "results": [],
+    "failed": []
+   }
+  },
+  {
+   "name": "thirty_cap",
+   "query": "Cap",
+   "responses": {
+    "https://itunes.apple.com/search?term=Cap&media=audiobook&limit=8": {
+     "results": []
+    },
+    "https://itunes.apple.com/search?term=Cap&media=ebook&limit=8": {
+     "results": []
+    },
+    "https://openlibrary.org/search.json?q=Cap&limit=10&fields=title%2Cauthor_name%2Ccover_i": {
+     "docs": [
+      {
+       "title": "Open 0",
+       "author_name": [
+        "Người 0"
+       ],
+       "cover_i": 1000
+      },
+      {
+       "title": "Open 1",
+       "author_name": [
+        "Người 1"
+       ],
+       "cover_i": 1001
+      },
+      {
+       "title": "Open 2",
+       "author_name": [
+        "Người 2"
+       ],
+       "cover_i": 1002
+      },
+      {
+       "title": "Open 3",
+       "author_name": [
+        "Người 3"
+       ],
+       "cover_i": 1003
+      },
+      {
+       "title": "Open 4",
+       "author_name": [
+        "Người 4"
+       ],
+       "cover_i": 1004
+      },
+      {
+       "title": "Open 5",
+       "author_name": [
+        "Người 5"
+       ],
+       "cover_i": 1005
+      },
+      {
+       "title": "Open 6",
+       "author_name": [
+        "Người 6"
+       ],
+       "cover_i": 1006
+      },
+      {
+       "title": "Open 7",
+       "author_name": [
+        "Người 7"
+       ],
+       "cover_i": 1007
+      },
+      {
+       "title": "Open 8",
+       "author_name": [
+        "Người 8"
+       ],
+       "cover_i": 1008
+      },
+      {
+       "title": "Open 9",
+       "author_name": [
+        "Người 9"
+       ],
+       "cover_i": 1009
+      },
+      {
+       "title": "Open 10",
+       "author_name": [
+        "Người 10"
+       ],
+       "cover_i": 1010
+      },
+      {
+       "title": "Open 11",
+       "author_name": [
+        "Người 11"
+       ],
+       "cover_i": 1011
+      },
+      {
+       "title": "Open 12",
+       "author_name": [
+        "Người 12"
+       ],
+       "cover_i": 1012
+      },
+      {
+       "title": "Open 13",
+       "author_name": [
+        "Người 13"
+       ],
+       "cover_i": 1013
+      },
+      {
+       "title": "Open 14",
+       "author_name": [
+        "Người 14"
+       ],
+       "cover_i": 1014
+      },
+      {
+       "title": "Open 15",
+       "author_name": [
+        "Người 15"
+       ],
+       "cover_i": 1015
+      },
+      {
+       "title": "Open 16",
+       "author_name": [
+        "Người 16"
+       ],
+       "cover_i": 1016
+      },
+      {
+       "title": "Open 17",
+       "author_name": [
+        "Người 17"
+       ],
+       "cover_i": 1017
+      },
+      {
+       "title": "Open 18",
+       "author_name": [
+        "Người 18"
+       ],
+       "cover_i": 1018
+      },
+      {
+       "title": "Open 19",
+       "author_name": [
+        "Người 19"
+       ],
+       "cover_i": 1019
+      },
+      {
+       "title": "Open 20",
+       "author_name": [
+        "Người 20"
+       ],
+       "cover_i": 1020
+      },
+      {
+       "title": "Open 21",
+       "author_name": [
+        "Người 21"
+       ],
+       "cover_i": 1021
+      },
+      {
+       "title": "Open 22",
+       "author_name": [
+        "Người 22"
+       ],
+       "cover_i": 1022
+      },
+      {
+       "title": "Open 23",
+       "author_name": [
+        "Người 23"
+       ],
+       "cover_i": 1023
+      },
+      {
+       "title": "Open 24",
+       "author_name": [
+        "Người 24"
+       ],
+       "cover_i": 1024
+      },
+      {
+       "title": "Open 25",
+       "author_name": [
+        "Người 25"
+       ],
+       "cover_i": 1025
+      },
+      {
+       "title": "Open 26",
+       "author_name": [
+        "Người 26"
+       ],
+       "cover_i": 1026
+      },
+      {
+       "title": "Open 27",
+       "author_name": [
+        "Người 27"
+       ],
+       "cover_i": 1027
+      },
+      {
+       "title": "Open 28",
+       "author_name": [
+        "Người 28"
+       ],
+       "cover_i": 1028
+      },
+      {
+       "title": "Open 29",
+       "author_name": [
+        "Người 29"
+       ],
+       "cover_i": 1029
+      },
+      {
+       "title": "Open 30",
+       "author_name": [
+        "Người 30"
+       ],
+       "cover_i": 1030
+      },
+      {
+       "title": "Open 31",
+       "author_name": [
+        "Người 31"
+       ],
+       "cover_i": 1031
+      },
+      {
+       "title": "Open 32",
+       "author_name": [
+        "Người 32"
+       ],
+       "cover_i": 1032
+      },
+      {
+       "title": "Open 33",
+       "author_name": [
+        "Người 33"
+       ],
+       "cover_i": 1033
+      },
+      {
+       "title": "Open 34",
+       "author_name": [
+        "Người 34"
+       ],
+       "cover_i": 1034
+      },
+      {
+       "title": "Open 35",
+       "author_name": [
+        "Người 35"
+       ],
+       "cover_i": 1035
+      },
+      {
+       "title": "Open 36",
+       "author_name": [
+        "Người 36"
+       ],
+       "cover_i": 1036
+      },
+      {
+       "title": "Open 37",
+       "author_name": [
+        "Người 37"
+       ],
+       "cover_i": 1037
+      },
+      {
+       "title": "Open 38",
+       "author_name": [
+        "Người 38"
+       ],
+       "cover_i": 1038
+      },
+      {
+       "title": "Open 39",
+       "author_name": [
+        "Người 39"
+       ],
+       "cover_i": 1039
+      }
+     ]
+    },
+    "https://www.googleapis.com/books/v1/volumes?q=Cap&maxResults=10&printType=books": {
+     "items": []
+    }
+   },
+   "requested": [
+    "https://itunes.apple.com/search?term=Cap&media=audiobook&limit=8",
+    "https://itunes.apple.com/search?term=Cap&media=ebook&limit=8",
+    "https://openlibrary.org/search.json?q=Cap&limit=10&fields=title%2Cauthor_name%2Ccover_i",
+    "https://www.googleapis.com/books/v1/volumes?q=Cap&maxResults=10&printType=books"
+   ],
+   "expected": {
+    "query": "Cap",
+    "results": [
+     {
+      "provider": "Open Library",
+      "title": "Open 0",
+      "author": "Người 0",
+      "thumb": "https://covers.openlibrary.org/b/id/1000-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/1000-L.jpg"
+     },
+     {
+      "provider": "Open Library",
+      "title": "Open 1",
+      "author": "Người 1",
+      "thumb": "https://covers.openlibrary.org/b/id/1001-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/1001-L.jpg"
+     },
+     {
+      "provider": "Open Library",
+      "title": "Open 2",
+      "author": "Người 2",
+      "thumb": "https://covers.openlibrary.org/b/id/1002-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/1002-L.jpg"
+     },
+     {
+      "provider": "Open Library",
+      "title": "Open 3",
+      "author": "Người 3",
+      "thumb": "https://covers.openlibrary.org/b/id/1003-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/1003-L.jpg"
+     },
+     {
+      "provider": "Open Library",
+      "title": "Open 4",
+      "author": "Người 4",
+      "thumb": "https://covers.openlibrary.org/b/id/1004-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/1004-L.jpg"
+     },
+     {
+      "provider": "Open Library",
+      "title": "Open 5",
+      "author": "Người 5",
+      "thumb": "https://covers.openlibrary.org/b/id/1005-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/1005-L.jpg"
+     },
+     {
+      "provider": "Open Library",
+      "title": "Open 6",
+      "author": "Người 6",
+      "thumb": "https://covers.openlibrary.org/b/id/1006-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/1006-L.jpg"
+     },
+     {
+      "provider": "Open Library",
+      "title": "Open 7",
+      "author": "Người 7",
+      "thumb": "https://covers.openlibrary.org/b/id/1007-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/1007-L.jpg"
+     },
+     {
+      "provider": "Open Library",
+      "title": "Open 8",
+      "author": "Người 8",
+      "thumb": "https://covers.openlibrary.org/b/id/1008-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/1008-L.jpg"
+     },
+     {
+      "provider": "Open Library",
+      "title": "Open 9",
+      "author": "Người 9",
+      "thumb": "https://covers.openlibrary.org/b/id/1009-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/1009-L.jpg"
+     },
+     {
+      "provider": "Open Library",
+      "title": "Open 10",
+      "author": "Người 10",
+      "thumb": "https://covers.openlibrary.org/b/id/1010-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/1010-L.jpg"
+     },
+     {
+      "provider": "Open Library",
+      "title": "Open 11",
+      "author": "Người 11",
+      "thumb": "https://covers.openlibrary.org/b/id/1011-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/1011-L.jpg"
+     },
+     {
+      "provider": "Open Library",
+      "title": "Open 12",
+      "author": "Người 12",
+      "thumb": "https://covers.openlibrary.org/b/id/1012-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/1012-L.jpg"
+     },
+     {
+      "provider": "Open Library",
+      "title": "Open 13",
+      "author": "Người 13",
+      "thumb": "https://covers.openlibrary.org/b/id/1013-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/1013-L.jpg"
+     },
+     {
+      "provider": "Open Library",
+      "title": "Open 14",
+      "author": "Người 14",
+      "thumb": "https://covers.openlibrary.org/b/id/1014-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/1014-L.jpg"
+     },
+     {
+      "provider": "Open Library",
+      "title": "Open 15",
+      "author": "Người 15",
+      "thumb": "https://covers.openlibrary.org/b/id/1015-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/1015-L.jpg"
+     },
+     {
+      "provider": "Open Library",
+      "title": "Open 16",
+      "author": "Người 16",
+      "thumb": "https://covers.openlibrary.org/b/id/1016-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/1016-L.jpg"
+     },
+     {
+      "provider": "Open Library",
+      "title": "Open 17",
+      "author": "Người 17",
+      "thumb": "https://covers.openlibrary.org/b/id/1017-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/1017-L.jpg"
+     },
+     {
+      "provider": "Open Library",
+      "title": "Open 18",
+      "author": "Người 18",
+      "thumb": "https://covers.openlibrary.org/b/id/1018-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/1018-L.jpg"
+     },
+     {
+      "provider": "Open Library",
+      "title": "Open 19",
+      "author": "Người 19",
+      "thumb": "https://covers.openlibrary.org/b/id/1019-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/1019-L.jpg"
+     },
+     {
+      "provider": "Open Library",
+      "title": "Open 20",
+      "author": "Người 20",
+      "thumb": "https://covers.openlibrary.org/b/id/1020-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/1020-L.jpg"
+     },
+     {
+      "provider": "Open Library",
+      "title": "Open 21",
+      "author": "Người 21",
+      "thumb": "https://covers.openlibrary.org/b/id/1021-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/1021-L.jpg"
+     },
+     {
+      "provider": "Open Library",
+      "title": "Open 22",
+      "author": "Người 22",
+      "thumb": "https://covers.openlibrary.org/b/id/1022-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/1022-L.jpg"
+     },
+     {
+      "provider": "Open Library",
+      "title": "Open 23",
+      "author": "Người 23",
+      "thumb": "https://covers.openlibrary.org/b/id/1023-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/1023-L.jpg"
+     },
+     {
+      "provider": "Open Library",
+      "title": "Open 24",
+      "author": "Người 24",
+      "thumb": "https://covers.openlibrary.org/b/id/1024-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/1024-L.jpg"
+     },
+     {
+      "provider": "Open Library",
+      "title": "Open 25",
+      "author": "Người 25",
+      "thumb": "https://covers.openlibrary.org/b/id/1025-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/1025-L.jpg"
+     },
+     {
+      "provider": "Open Library",
+      "title": "Open 26",
+      "author": "Người 26",
+      "thumb": "https://covers.openlibrary.org/b/id/1026-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/1026-L.jpg"
+     },
+     {
+      "provider": "Open Library",
+      "title": "Open 27",
+      "author": "Người 27",
+      "thumb": "https://covers.openlibrary.org/b/id/1027-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/1027-L.jpg"
+     },
+     {
+      "provider": "Open Library",
+      "title": "Open 28",
+      "author": "Người 28",
+      "thumb": "https://covers.openlibrary.org/b/id/1028-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/1028-L.jpg"
+     },
+     {
+      "provider": "Open Library",
+      "title": "Open 29",
+      "author": "Người 29",
+      "thumb": "https://covers.openlibrary.org/b/id/1029-M.jpg",
+      "url": "https://covers.openlibrary.org/b/id/1029-L.jpg"
+     }
+    ],
+    "failed": []
+   }
+  },
+  {
+   "name": "too_short",
+   "query": " x ",
+   "responses": {},
+   "requested": [],
+   "expected": {
+    "query": "x",
+    "results": [],
+    "failed": []
+   }
+  },
+  {
+   "name": "empty",
+   "query": "",
+   "responses": {},
+   "requested": [],
+   "expected": {
+    "query": "",
+    "results": [],
+    "failed": []
+   }
+  }
+ ],
+ "allowed": [
+  {
+   "url": "https://is1-ssl.mzstatic.com/image/thumb/x/1000x1000bb.jpg",
+   "allowed": true
+  },
+  {
+   "url": "https://is12-ssl.mzstatic.com/image/thumb/x/1000x1000bb.jpg",
+   "allowed": true
+  },
+  {
+   "url": "https://is-ssl.mzstatic.com/x.jpg",
+   "allowed": false
+  },
+  {
+   "url": "https://covers.openlibrary.org/b/id/42-L.jpg",
+   "allowed": true
+  },
+  {
+   "url": "https://covers.openlibrary.org:443/b/id/42-L.jpg",
+   "allowed": true
+  },
+  {
+   "url": "HTTPS://COVERS.OPENLIBRARY.ORG/b/id/42-L.jpg",
+   "allowed": true
+  },
+  {
+   "url": "https://books.google.com/books/content?id=1&zoom=0",
+   "allowed": true
+  },
+  {
+   "url": "https://books.googleusercontent.com/books/content?id=1",
+   "allowed": true
+  },
+  {
+   "url": "https://www.google.com/x.jpg",
+   "allowed": false
+  },
+  {
+   "url": "http://covers.openlibrary.org/b/id/42-L.jpg",
+   "allowed": false
+  },
+  {
+   "url": "https://127.0.0.1/x.jpg",
+   "allowed": false
+  },
+  {
+   "url": "https://evil.example/x.jpg",
+   "allowed": false
+  },
+  {
+   "url": "https://covers.openlibrary.org.evil.example/x.jpg",
+   "allowed": false
+  },
+  {
+   "url": "https://evil.example/https://covers.openlibrary.org/x.jpg",
+   "allowed": false
+  },
+  {
+   "url": "https://covers.openlibrary.org@evil.example/x.jpg",
+   "allowed": false
+  },
+  {
+   "url": "file:///C:/Windows/win.ini",
+   "allowed": false
+  },
+  {
+   "url": "ftp://covers.openlibrary.org/x.jpg",
+   "allowed": false
+  },
+  {
+   "url": "//covers.openlibrary.org/x.jpg",
+   "allowed": false
+  },
+  {
+   "url": "covers.openlibrary.org/x.jpg",
+   "allowed": false
+  },
+  {
+   "url": "",
+   "allowed": false
+  }
+ ],
+ "refusal": "Chỉ lấy ảnh từ iTunes, Open Library hoặc Google Books"
+}
