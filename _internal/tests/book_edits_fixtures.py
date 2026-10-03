@@ -72,6 +72,7 @@ CASES: dict[str, dict[str, Any]] = {
     "music_pin_two_cues": {"music": {"pins": {"1:0": TRACK_LINK, "1:60000": TRACK_LINK}, "tracks": {TRACK_SHA: TRACK_INFO}}},
     "music_pin_music_off": {"music": {"enabled": False, **PINS}},
     "cover_removed": {"cover": None},
+    "skip_lines": {"skip": {"1": ["Dịch: Nhóm Thử", "Biên tập: Ai Đó"], "2": ["Trans: Tôi"]}},
     "cover_set": {"cover": {"color": "#aa5522", "width": 96, "height": 128, "version": 1759400000}},
     "everything": {
         "title": "Sách của tôi",
@@ -198,6 +199,13 @@ INVALID: dict[str, Any] = {
     "wish_alias_duplicate": _wish("aliases", [{"alias": "A", "at": 1.5, "person": "B"}, {"alias": "A", "at": 2.5, "person": "C"}]),
     "wish_alias_missing_field": _wish("aliases", [{"alias": "A", "person": "B"}]),
     "wish_alias_not_a_list": _wish("aliases", {"A": "B"}),
+    "skip_not_a_list": {**HEAD, "skip": {"1": "Dịch: A"}},
+    "skip_empty_list": {**HEAD, "skip": {"1": []}},
+    "skip_line_empty": {**HEAD, "skip": {"1": [""]}},
+    "skip_line_padded": {**HEAD, "skip": {"1": [" Dịch: A"]}},
+    "skip_line_twice": {**HEAD, "skip": {"1": ["Dịch: A", "Dịch: A"]}},
+    "skip_line_too_long": {**HEAD, "skip": {"1": ["a" * 301]}},
+    "skip_bad_chapter": {**HEAD, "skip": {"một": ["Dịch: A"]}},
 }
 INVALID_RAW = {  # văn bản thô: không phải JSON hợp lệ hay chứa hằng số JSON không chuẩn
     "not_json": "{",
@@ -221,6 +229,10 @@ MERGE_CASES = {
     "pins_next_to_the_levels": (
         {**HEAD, "music": {"levelDb": -20.0}},
         {**HEAD, "music": {"silenced": ["1:0"], **PINS}},
+    ),
+    "skip_is_a_union": (
+        {**HEAD, "skip": {"1": ["Dịch: A"]}},
+        {**HEAD, "skip": {"1": ["Biên tập: B", "Dịch: A"], "2": ["Trans: C"]}},
     ),
     "cover_follows_the_winner": (
         {**HEAD, "title": "Của tôi"},

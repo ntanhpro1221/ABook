@@ -28,11 +28,13 @@ function toListenBook(book: LocalBook, withChapters: boolean): ListenBook {
     available: chapter.available && Boolean(chapter.file),
     part: chapter.part ?? null,
     state: chapter.text && !chapter.file ? ("text" as const) : null,
+    ...(chapter.skip?.length ? { skip: chapter.skip } : {}),
   }));
   const state: ListeningState = { ...book.state, chapters: book.state?.chapters ?? {}, bookmarks: book.state?.bookmarks ?? [] };
   return {
     id: book.id,
     title: book.title,
+    author: book.author ?? "",
     narrator: book.narrator,
     duration: chapters.filter((chapter) => chapter.available).reduce((sum, chapter) => sum + chapter.duration, 0),
     chaptersTotal: book.chaptersTotal,

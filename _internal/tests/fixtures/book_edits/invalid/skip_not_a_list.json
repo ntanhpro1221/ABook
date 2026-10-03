@@ -1,0 +1,7 @@
+{
+ "format": "abook-edits",
+ "version": 1,
+ "skip": {
+  "1": "Dịch: A"
+ }
+}

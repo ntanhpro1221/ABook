@@ -27,9 +27,11 @@ def discover_txt_files(directory: Path) -> list[Path]:
         raise FileNotFoundError(directory)
     if not directory.is_dir():
         raise NotADirectoryError(directory)
+    # Tên bằng nhau theo thứ tự tự nhiên ("1.txt" và "01.txt") xếp theo tên gốc - không theo thứ tự hệ thống tệp liệt kê, vốn
+    # khác nhau giữa các máy (app điện thoại cũng xếp như vậy: BookImport.naturalOrder).
     return sorted(
         (path.resolve() for path in directory.iterdir() if path.is_file() and path.suffix.casefold() == ".txt"),
-        key=lambda path: natural_key(path.name),
+        key=lambda path: (natural_key(path.name), path.name),
     )
 
 

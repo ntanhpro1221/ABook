@@ -6,10 +6,14 @@
  "chapters": [
   {
    "title": "Chương 1",
+   "text": "Bản trùng số với 1.txt - xếp theo tên gốc, đứng trước."
+  },
+  {
+   "title": "Chương 1",
    "text": "Sương sớm\n\nChuyến phà đầu tiên rời bến lúc năm giờ.\nCậu bé đứng ở mạn thuyền."
   },
   {
-   "title": "Chương 2",
+   "title": "Chương hai",
    "text": "Chương hai\n\nTiếng máy nổ trầm đục."
   },
   {
@@ -17,11 +21,16 @@
    "text": "Một chương viết bằng UTF-8 thường, không BOM."
   },
   {
-   "title": "Chương 10",
+   "title": "Chương ba",
    "text": "Chương ba\n\nDịch: Nhóm Lục Bình\n\nMưa rơi suốt chiều."
+  },
+  {
+   "title": "Chương ١١",
+   "text": "Tên bằng chữ số Ả Rập: vẫn là số 11."
   }
  ],
  "notes": [
-  "Gợi ý: chương 4 có dòng ghi công ở đầu - “Dịch: Nhóm Lục Bình”. Có thể bỏ khỏi phần đọc, nhưng ABook không tự bỏ."
+  "Bỏ qua mục không có chữ: Chương 3",
+  "Gợi ý: chương 5 có dòng ghi công ở đầu - “Dịch: Nhóm Lục Bình”. Có thể bỏ khỏi phần đọc, nhưng ABook không tự bỏ."
  ]
 }
