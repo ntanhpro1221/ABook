@@ -4,6 +4,8 @@ import math
 
 from typing import Any
 
+from .voice_balance import preset_pitch_st
+
 
 GENDER_MALE = "male"
 GENDER_FEMALE = "female"
@@ -38,50 +40,26 @@ CHARACTER_PITCH_VARIANTS = (0, -1, 1, -2, 2)
 # F0 from 106 Hz to 206 Hz, and heard the same person throughout. Both limits were set by
 # ear - 0.82 sounds muffled, 1.30 starts to strain - and 1.00 comes first so a preset's
 # first casting needs no transform at all, and therefore pays no vocoder cost.
-# Base register per preset, applied to every casting of that voice. This is not a
-# diversity mechanism - it is calibration. Shifting F0 reads as the same person in a
-# different state (calm, hurried), not as a different person, so it belongs here rather
-# than in the variant ladder. A Vietnamese listener went through every preset and found
-# only Thanh Bình wanted correcting: at -4 semitones it reads calmer and more suited to
-# storytelling. The other presets are already right at their natural register.
+# Base register, reading speed and level of every voice are no longer written here: they live in
+# one measured table per voice (`abook/assets/voice_balance.json`, read through `voice_balance`).
+# The history that used to sit on these constants, kept because the numbers still came from it:
 #
-# Two of the VieNeu 3.8.1 voices wanted the same correction (2026-09-18): the listener heard
-# Adam bựa and Mạnh Dũng at -1..-4 and chose -2 for both.
-PRESET_BASE_PITCH_SEMITONES = {
-    "Thanh Bình": -4,
-    "Adam bựa": -2,
-    "Mạnh Dũng": -2,
-}
-# Reading speed per preset, as a factor on the tempo: 1.25 says a line in 80% of the time, with
-# the same pitch and the same spectrum. Register (above) cannot do this - WORLD resynthesises on
-# the same time axis and `apply_pitch_variant` trims or pads back to the original length - so a
-# slow preset needs its own knob. Measured 2026-09-18 with the pipeline's own pace gate: the
-# storytelling presets of VieNeu 3.8.1 read at 10.9-12.7 chars/s against a normal band that
-# starts at 12.5, which put 21-24 of 25 lines out of band. The owner chose each value by ear.
-PRESET_SPEED_FACTOR: dict[str, float] = {
-    # Heard at x1.00..x1.20 in steps of 0.05; Mỹ Duyên was kept at its own speed.
-    "Đức Trí": 1.10,
-    "Thiền Tâm Đức": 1.05,
-    "Kim Thanh": 1.10,
-}
-SPEED_FACTOR_MIN = 0.80
+# - Register (`pitch_st`): shifting F0 reads as the same person in a different state (calm,
+#   hurried), not as a different person, so it is calibration rather than a diversity mechanism.
+#   A Vietnamese listener went through every preset and found only Thanh Bình wanted correcting:
+#   at -4 semitones it reads calmer and more suited to storytelling. Two of the VieNeu 3.8.1
+#   voices wanted the same correction (2026-09-18): the listener heard Adam bựa and Mạnh Dũng at
+#   -1..-4 and chose -2 for both.
+# - Speed (`r`): WORLD resynthesises on the same time axis and `apply_pitch_variant` trims or pads
+#   back to the original length, so register cannot change speed and a slow preset needs its own
+#   knob. Measured 2026-09-18, the storytelling presets of VieNeu 3.8.1 read at 10.9-12.7 chars/s
+#   against a normal band that starts at 12.5. The owner chose Đức Trí 1.10, Thiền Tâm Đức 1.05,
+#   Kim Thanh 1.10 by ear, in steps of 0.05; Mỹ Duyên was kept at its own speed.
+#
+# The tempo actually applied is `x * r` (x is the book-wide knob), so it may fall below 1.0:
+# x ~ 0.85 times r ~ 0.89 is 0.76.
+SPEED_FACTOR_MIN = 0.70
 SPEED_FACTOR_MAX = 1.50
-# How fast this preset reads at its calibrated speed, relative to the voices the pace band was
-# fitted on (the median of the seven presets in use on book 2, measured on the same 25 test
-# lines with the pipeline's own gate). The pace gate multiplies its FLOOR - characters and
-# syllables - by this, so a storytelling voice is called slow when it is slow for itself, at
-# the same percentile as every other voice. One-directional: at most 1.0, and the ceiling and
-# the hard bounds do not move. Measured 2026-09-18 after the owner chose each speed by ear.
-PRESET_PACE_SCALE: dict[str, float] = {
-    # Median chars/s at the chosen speed over 15.64, the median of the seven presets in use.
-    # Those seven sit at 0.94-1.16 and need no entry.
-    "Đức Trí": 0.807,
-    "Thiền Tâm Đức": 0.788,
-    "Kim Thanh": 0.770,
-    "Mỹ Duyên": 0.810,
-}
-PACE_SCALE_MIN = 0.65
-PACE_SCALE_MAX = 1.0
 # Vocal tract length per preset, in centimetres, estimated from the third formant of its
 # own preview clip with the odd-quarter-wavelength tube model L = 5c / (4*F3). Measured
 # with Praat: the male presets cluster tightly at 16.4-16.9 cm and the female ones at
@@ -362,18 +340,8 @@ def casting_preset_priority(preset: dict[str, Any]) -> tuple[int, int, int, str]
 
 
 def base_pitch_for_preset(preset_name: str) -> int:
-    """The calibrated reading register for this preset, in semitones."""
-    return int(PRESET_BASE_PITCH_SEMITONES.get(preset_name, 0))
-
-
-def speed_factor_for_preset(preset_name: str) -> float:
-    """The calibrated reading speed for this preset; 1.0 when none was set."""
-    return float(PRESET_SPEED_FACTOR.get(str(preset_name), 1.0))
-
-
-def pace_scale_for_preset(preset_name: str) -> float:
-    """This preset's own tempo as a fraction of the pace band's; 1.0 when none was measured."""
-    return float(PRESET_PACE_SCALE.get(str(preset_name), 1.0))
+    """The calibrated reading register for this preset, in semitones (from the balance table)."""
+    return preset_pitch_st(preset_name)
 
 
 # F0 and formants both feed the impression of a large speaker, so a preset whose register
