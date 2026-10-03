@@ -7,7 +7,7 @@ import { lineEditing } from "@/shared/capabilities";
 import { useMediaQuery } from "@/shared/media";
 import { usePageTitle } from "@/shared/title";
 import { Button, EmptyState, IconButton, Skeleton } from "@/shared/ui";
-import { firstVisibleIndex } from "./follow";
+import { chapterToFollow, firstVisibleIndex } from "./follow";
 import { readerHint } from "./labels";
 import { LineWishDialog, useWishes, WaitingMark } from "./LineWishes";
 import { usePlayer } from "./player";
@@ -98,6 +98,17 @@ export function ReaderScreen({
   const playingIndex = usePlayingSentence(script, listeningHere);
   // Mở đúng một câu được yêu cầu (?at=, từ dấu trang / tìm kiếm): đứng yên ở đó, chưa theo giọng; còn lại thì đi theo giọng ngay.
   const follow = useFollowVoice(container, playingIndex, { initial: params.get("at") === null, resetKey: `${id}:${chapterId}`, smooth: player.playing });
+
+  // Giọng tự sang chương kế (hay người bấm "Chương sau" ở trình phát) khi màn đọc đang mở đúng chương đang nghe: màn đọc đi theo sang
+  // chương mới, như đã tự cuộn theo câu. Người đã tự mở một chương khác chương đang nghe thì để yên, không kéo đi (soát máy thật 03-10).
+  const playingChapter = player.track?.bookId === id ? player.track.chapterId : null;
+  const lastPlayingChapter = useRef(playingChapter);
+  useEffect(() => {
+    const before = lastPlayingChapter.current;
+    lastPlayingChapter.current = playingChapter;
+    const next = chapterToFollow(before, playingChapter, chapterId);
+    if (next !== null) navigate(`/book/${id}/read/${next}`, { replace: true });
+  }, [chapterId, id, navigate, playingChapter]);
 
   useEffect(() => {
     try {

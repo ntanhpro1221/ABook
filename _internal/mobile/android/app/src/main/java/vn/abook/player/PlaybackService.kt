@@ -163,6 +163,9 @@ class PlaybackService : MediaLibraryService() {
         // Đọc to: thanh tiến độ ở thông báo / màn hình khoá / xe hơi và lệnh tua của chúng đi theo đồng hồ ảo của CẢ chương (ReadAloud), không theo đoạn âm
         // thanh đang phát (mỗi đoạn chỉ vài giây). Chương audio: như ExoPlayer.
         override fun getCurrentPosition(): Long = ReadAloud.positionMs() ?: super.getCurrentPosition()
+        // Chờ đoạn đọc to kế (ReadAloud.starved): "đang tải", không phải "đã dừng" - thông báo giữ nút Tạm dừng và thanh tiến độ.
+        override fun getPlaybackState(): Int = if (ReadAloud.starved()) Player.STATE_BUFFERING else super.getPlaybackState()
+        override fun getPlayWhenReady(): Boolean = ReadAloud.starved() || super.getPlayWhenReady()
         override fun getContentPosition(): Long = ReadAloud.positionMs() ?: super.getContentPosition()
         override fun getDuration(): Long = ReadAloud.durationMs() ?: super.getDuration()
         override fun getContentDuration(): Long = ReadAloud.durationMs() ?: super.getContentDuration()

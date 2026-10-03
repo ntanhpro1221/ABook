@@ -211,6 +211,15 @@ object ReadAloud {
 
     val isWaiting: Boolean get() = waiting != null && failure == null && !held
 
+    /** Người nghe muốn phát mà chưa có âm thanh để phát: chờ đoạn đầu, hay hàng đợi cạn vì đọc chậm hơn nghe (đoạn kế đang đọc). Với phiên media
+     *  (thông báo, màn hình khoá, xe hơi) đó là "đang tải" - trước đây ExoPlayer hết hàng đợi nên phiên báo "đã dừng" vài giây: nút Phát hiện ra và
+     *  thanh tiến độ biến mất (thấy 03-10 trên máy ảo, giọng Edge). */
+    fun starved(): Boolean {
+        if (!active || failure != null || held) return false
+        val exo = Playback.player ?: return false
+        return waiting?.play == true || (inFlight && exo.playbackState == Player.STATE_ENDED && exo.playWhenReady)
+    }
+
     /** Người nghe muốn đang phát (kể cả lúc chờ đọc đoạn). */
     fun wantsPlay(): Boolean = waiting?.play ?: (Playback.player?.playWhenReady == true)
 
@@ -577,7 +586,10 @@ object ReadAloud {
         if (waiting == null && !inFlight && exo.playbackState == Player.STATE_ENDED && inText()) {
             val index = chapterIndexNow() ?: return false
             val ms = positionMs() ?: return false
-            startAt(index, ms, true)
+            // Hết cuốn: nghe lại từ đầu như nút "Nghe lại" trong app (EndPlan); báo "chapter" để giao diện bỏ trạng thái "đã nghe hết" và theo sang chương đầu.
+            val spot = EndPlan.restartSpot(index, chapters().size, ms, durationMs() ?: ms)
+            startAt(spot.chapterIndex, spot.offsetMs, true)
+            Playback.emit("chapter")
             return true
         }
         return false
