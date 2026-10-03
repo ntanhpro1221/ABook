@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterable
 
 from ..config import DEFAULT_SETTINGS
-from ..io_utils import atomic_write_json, atomic_write_text, ffmpeg_executable, run_hidden
+from ..io_utils import atomic_write_json, atomic_write_text, ffmpeg_available, ffmpeg_executable, run_hidden
 from . import music_scenes, music_select, store
 
 PLAN_FILE = "music_plan.json"
@@ -224,7 +224,7 @@ def measured_lufs(path: Path, *, measure: bool = True) -> float | None:
         cached = _number(float(sidecar.read_text(encoding="utf-8").strip()))
     except (OSError, ValueError):
         cached = None
-    if cached is not None or not measure:
+    if cached is not None or not measure or not ffmpeg_available():  # chưa có ffmpeg (mô-đun "Phân tích nhạc"): chưa đo, dùng mức mặc định
         return cached
     wav = Path(path).with_suffix(f".{os.getpid()}.measure.wav")
     try:

@@ -23,7 +23,7 @@ object LocalStudio {
     private val CHAPTER_SCRIPT = Regex("/chapters/([0-9]+)/script")
     private val CHAPTER_RETAKE = Regex("/chapters/([0-9]+)/retake")
     private val SCENE_ALTERNATIVES = Regex("/music/scenes/([^/]+)/alternatives")
-    private val MY_MUSIC = Regex("/api/music/local(?:/([0-9a-f]{40})|/(analyze)|/(student))?")
+    private val MY_MUSIC = Regex("/api/music/local(?:/([0-9a-f]{40})|/(analyze)|/(module)|/(reanalyse))?")
     private val EDITS_ONLY_KEYS = setOf("enabled", "levelDb", "silence", "pins")
     private val lock = Any()
     private const val LINK_BOOK = "Sách này lấy từ máy tính khác - muốn sửa thì sửa ở máy ấy"
@@ -32,7 +32,7 @@ object LocalStudio {
     @Volatile
     var musicStore: MusicStore? = null
 
-    /** Gói model của bộ phân tích nhạc (điện thoại tải khi người dùng bấm - MusicStudentSetup). Null: không có việc tải (test JVM); view không kèm `student`. */
+    /** Mô-đun "Phân tích nhạc" (model + thư viện ONNX Runtime; điện thoại tải khi người dùng bấm - MusicStudentSetup). Null: không có việc tải (test JVM); view không kèm `module`. */
     @Volatile
     var student: MusicStudentSetup? = null
 
@@ -64,8 +64,8 @@ object LocalStudio {
     fun musicView(): JSONObject {
         val store = musicStore ?: throw Api(404, "Không có đường dẫn này")
         val view = JSONObject().put("tracks", JSONArray(store.entries())).put("analyzer", store.analyzerAvailable())
-        // Chỉ điện thoại: bộ phân tích phải tải một lần (~59 MB) khi người dùng bấm; máy tính tự lo (không có khoá này).
-        student?.let { view.put("student", it.status()) }
+        // Mô-đun "Phân tích nhạc" (model + thư viện ONNX Runtime): tải một lần khi người dùng bấm, cùng hình `module` với máy tính.
+        student?.let { view.put("module", it.status()) }
         return view
     }
 
@@ -73,16 +73,22 @@ object LocalStudio {
     fun importAnswer(added: List<JSONObject>, existing: List<JSONObject>, failed: List<String>): JSONObject =
         JSONObject().put("added", JSONArray(added)).put("existing", JSONArray(existing)).put("failed", JSONArray(failed)).also { out ->
             val view = musicView()
-            for (key in listOf("tracks", "analyzer", "student")) out.put(key, view.opt(key)) // student: chỉ điện thoại có
+            for (key in listOf("tracks", "analyzer", "module")) out.put(key, view.opt(key))
         }
 
     /** `/api/music/local...`: kho nhạc của máy, không thuộc cuốn nào. Nhập file đi qua hộp chọn file của hệ thống (LibraryPlugin.pickMusic). */
-    private fun myMusic(method: String, digest: String?, analyze: Boolean, download: Boolean): Pair<Int, Any?> {
+    private fun myMusic(method: String, digest: String?, analyze: Boolean, download: Boolean, reanalyse: Boolean): Pair<Int, Any?> {
         val store = musicStore ?: throw Api(404, "Không có đường dẫn này")
         return when {
             method == "POST" && download -> {
                 // Người dùng bấm "Tải bộ phân tích": chạy ở luồng riêng, giao diện hỏi lại view để thấy tiến độ.
                 (student ?: throw Api(404, "Không có đường dẫn này")).start()
+                200 to musicView()
+            }
+            method == "POST" && reanalyse -> {
+                // Người dùng bấm "Phân tích lại N bài bằng bản mới" sau khi cập nhật Phân tích nhạc: không bao giờ tự chạy.
+                if (!store.analyzerAvailable()) throw Api(409, MusicStore.NO_ANALYZER)
+                (student ?: throw Api(404, "Không có đường dẫn này")).reanalyse()
                 200 to musicView()
             }
             method == "GET" && digest == null && !analyze -> 200 to musicView()
@@ -100,7 +106,7 @@ object LocalStudio {
     }
 
     private fun run(method: String, path: String, body: JSONObject): Pair<Int, Any?> {
-        MY_MUSIC.matchEntire(path)?.let { return myMusic(method, it.groups[1]?.value, it.groups[2] != null, it.groups[3] != null) }
+        MY_MUSIC.matchEntire(path)?.let { return myMusic(method, it.groups[1]?.value, it.groups[2] != null, it.groups[3] != null, it.groups[4] != null) }
         val match = ROUTE.matchEntire(path) ?: throw Api(404, "Không có đường dẫn này")
         val id = match.groupValues[1]
         val rest = match.groupValues[2]

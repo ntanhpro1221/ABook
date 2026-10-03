@@ -56,3 +56,26 @@ def test_the_shared_goldens_are_what_the_current_python_student_gives():
     for name, entry in golden["head"].items():
         again = head.predict(np.array(entry["embedding"], dtype=np.float64))
         assert again == entry["result"], name
+
+
+def test_the_phone_downloads_the_onnx_runtime_that_the_vendored_java_api_matches():
+    """APK không mang ONNX Runtime: phần Java chép nguyên vào app/src/main/java/ai/onnxruntime, hai file .so của đúng ABI tải cùng "Gói nhạc".
+    Hằng số của OrtRuntime.kt phải khớp script sinh file đặt trên máy chủ (scripts/prepare_ort_runtime.py) - lệch là tải về file không ai ghim."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("prepare_ort_runtime", Path(__file__).resolve().parents[1] / "scripts" / "prepare_ort_runtime.py")
+    prepare = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(prepare)
+    source = _kotlin("OrtRuntime.kt")
+    assert f'VERSION = "{prepare.VERSION}"' in source
+    gradle = (ANDROID.parents[5] / "build.gradle").read_text(encoding="utf-8")
+    assert 'implementation "com.microsoft.onnxruntime' not in gradle, "APK không được mang ONNX Runtime"
+    for abi in prepare.ABIS:
+        assert f'"{abi}" to listOf(' in source
+    rows = re.findall(r'part\("([\w-]+)", (CORE|JNI), "([0-9a-f]{64})", ([\d_]+), "([0-9a-f]{64})", ([\d_]+)\)', source)
+    assert len(rows) == 2 * len(prepare.ABIS) and {abi for abi, *_ in rows} == set(prepare.ABIS)
+    java = ANDROID.parents[2] / "ai" / "onnxruntime" / "OnnxRuntime.java"
+    text = java.read_text(encoding="utf-8")
+    loader = text.split("private static void load")[1].split("// 1)")[0]
+    assert prepare.VERSION in text and "onnxruntime.native.path" in text
+    assert "System.loadLibrary" not in loader and "System.load(" in loader, "chỉ nạp bằng đường tuyệt đối từ thư mục đã tải"

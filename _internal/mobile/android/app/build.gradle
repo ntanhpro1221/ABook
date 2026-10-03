@@ -43,18 +43,10 @@ android {
             }
         }
     }
-    // Thư viện native (chủ yếu ONNX Runtime ~28 MB/ABI) nén trong APK thay vì để trần: APK tải về nhỏ hơn hẳn (64 -> ~30 MB),
-    // đổi lại máy giải nén một lần lúc cài.
-    packaging {
-        jniLibs { useLegacyPackaging true }
-    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            // ONNX Runtime mang thư viện native cho 4 ABI; bản phát hành chỉ giữ ABI của điện thoại thật (x86/x86_64 chỉ máy ảo cần,
-            // bản debug vẫn có đủ) - bớt ~25 MB cho APK một-file.
-            ndk { abiFilters 'arm64-v8a', 'armeabi-v7a' }
             if (releaseSigning.getProperty("storeFile")) {
                 signingConfig signingConfigs.release
             }
@@ -83,8 +75,9 @@ dependencies {
     implementation "androidx.media3:media3-session:1.11.1"
     // Thông báo Studio (StudioAlerts.kt): hỏi máy tính mỗi 15 phút cả khi app đã đóng.
     implementation "androidx.work:work-runtime-ktx:2.10.1"
-    // Bộ phân tích nhạc chạy trên máy (MusicStudent.kt, OrtClapTower.kt): ONNX Runtime CPU; model tải về khi người dùng bấm, không đóng trong APK.
-    implementation "com.microsoft.onnxruntime:onnxruntime-android:1.30.0"
+    // Bộ phân tích nhạc chạy trên máy (MusicStudent.kt, OrtClapTower.kt) dùng ONNX Runtime CPU, nhưng APK KHÔNG mang nó: phần Java chép
+    // nguyên vào src/main/java/ai/onnxruntime (MIT, onnxruntime-android 1.30.0), còn thư viện native + model tải về khi người dùng bấm
+    // "Gói nhạc" (OrtRuntime.kt, MusicStudentSetup.kt) - APK không có file .so nào.
     testImplementation "junit:junit:$junitVersion"
     // org.json thật cho test JVM (android.jar chỉ có vỏ rỗng): StoreRekeyTest đọc/ghi records.json, book.json.
     testImplementation "org.json:json:20240303"
