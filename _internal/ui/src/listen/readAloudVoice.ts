@@ -13,6 +13,11 @@ export const FALLBACK_NOTICE = "Không dùng được giọng trực tuyến - t
 export const ONLINE_KEYS_CHANGED_EVENT = "abook:readaloud-online-keys";
 /** Lý do mà giọng kế đỡ được: dịch vụ trực tuyến không với tới / không chạy, hay khoá của người dùng bị từ chối / hết hạn mức. Chữ không đọc
  *  được (`empty`) hay giọng không có (`voice`) thì không. */
+/** Mất mạng mà máy không có giọng nào đọc được khi không có mạng: nói thật và chỉ cách (cùng ý với ClipReader.NO_OFFLINE_VOICE của điện thoại). */
+export const NO_OFFLINE_VOICE =
+  "Không có mạng, và máy chưa có giọng tiếng Việt đọc được khi không có mạng. Đoạn đã đọc sẵn vẫn nghe được; để nghe không cần mạng, " +
+  "thêm giọng tiếng Việt cho Windows (Cài đặt › Thời gian và ngôn ngữ › Giọng nói) hoặc tải Giọng VieNeu";
+
 const FALLBACK_REASONS = new Set(["offline", "timeout", "rejected", "service", "auth", "quota"]);
 /** Tên nhà cung cấp của giọng dùng khoá riêng (abook/readaloud/byok.py, điện thoại OnlineVoices.kt). */
 export const KEYED_PROVIDERS: Record<string, string> = { azure: "Azure Speech", google: "Google Cloud", fpt: "FPT.AI", viettel: "Viettel AI" };
@@ -173,6 +178,9 @@ export function speechFetcher(source: ListenSource, bookId: string, notify: (mes
         return await fetchWith(candidate, text, options);
       } catch (error) {
         const why = (error as { reason?: string }).reason ?? "";
+        if (last && why === "offline" && !options?.cachedOnly && chain.every((item) => item.online)) {
+          throw Object.assign(new Error(NO_OFFLINE_VOICE), { reason: "offline" });
+        }
         if (!candidate.online || !FALLBACK_REASONS.has(why) || last) throw error;
         if (KEYED_PROVIDERS[candidate.provider] && (why === "auth" || why === "quota")) {
           benched.set(candidate.provider, why);
