@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.22] - 2026-10-03
+
 ### Thư viện
 
 - **Thêm sách từ file EPUB, Word, PDF hay thư mục TXT để đọc ngay (máy tính và điện thoại)**: ở Thư viện bấm "Thêm sách từ file…", chọn
