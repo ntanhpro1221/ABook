@@ -300,5 +300,5 @@ class EdgeTts(
                 (cause.message.orEmpty().contains("reset", ignoreCase = true) || cause.message.orEmpty().contains("abort", ignoreCase = true))
         }
 
-    private fun offline(cause: Throwable) = VoiceException("Không có mạng để dùng giọng Edge - đọc bằng giọng của máy", offline = true, cause = cause)
+    private fun offline(cause: Throwable) = VoiceException("Không có mạng để dùng giọng Edge", offline = true, cause = cause)
 }
