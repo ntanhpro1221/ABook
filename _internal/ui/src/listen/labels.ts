@@ -86,7 +86,7 @@ export function readerHint(state: {
     if (!state.canSpeak) return `${textBookLine(false)}.`;
     return state.tapped ? `${textBookLine(true)}.` : `${textBookLine(true)}. ${verb} vào một chữ để nghe từ chữ ấy.`;
   }
-  if (!state.timed) return "Chương này chưa có audio - vẫn đọc được. Khi Studio thu xong, “Nghe từ đây” sẽ hiện ra.";
+  if (!state.timed) return "Chương này chưa thu thành sách nói - chữ vẫn đọc được. Thu xong thì “Nghe từ đây” hiện ra.";
   if (state.tapped) return null;
   return `${verb} vào một chữ để nghe từ đúng chữ ấy${state.wish ? "; “Sửa câu này” để đổi người nói, cách đọc, tên hay thu lại câu" : ""}.`;
 }
