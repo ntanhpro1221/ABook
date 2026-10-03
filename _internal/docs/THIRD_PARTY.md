@@ -16,6 +16,9 @@ của chính thành phần ấy.
 - PyTorch và torchaudio (BSD).
 - PyWORLD và WORLD vocoder; Praat qua parselmouth.
 - pyloudnorm; NumPy, SciPy, SoundFile, psutil, requests, huggingface-hub.
+- pypdf 6.16.2 (BSD-3-Clause, thuần Python) - đọc chữ của PDF có lớp chữ khi nhập sách (`abook/importers.py`). Chép nguyên vào
+  `abook/vendor/pypdf/` (kèm LICENSE và băm wheel nguồn), không phụ thuộc pyproject/uv.lock hay gói cài sẵn. Nhập EPUB và DOCX chỉ
+  dùng thư viện chuẩn của Python (zipfile, xml, html.parser).
 - PySide6 / Qt (LGPLv3) - cửa sổ app máy tính.
 - FFmpeg / imageio-ffmpeg (LGPL hoặc GPL tuỳ bản build). Bản app chỉ-nghe KHÔNG mang ffmpeg trong bộ cài: lần nhập "Nhạc của tôi"
   đầu tiên tải bánh xe `imageio-ffmpeg` 0.6.0 (PyPI, ghim URL + SHA-256, `webui/ffmpeg_setup.py`) và lấy ra đúng một file, FFmpeg 7.1
@@ -38,6 +41,8 @@ Bộ cài mang theo:
   NumPy (BSD-3-Clause; wheel mang theo OpenBLAS BSD-3-Clause, LAPACK và thư viện chạy GCC GPL-3.0-or-later kèm GCC Runtime
   Library Exception - giấy phép từng phần nằm trong `numpy-*.dist-info/licenses`), ONNX Runtime CPU (MIT), flatbuffers
   (Apache-2.0), protobuf (BSD-3-Clause), packaging (Apache-2.0 hoặc BSD-2-Clause).
+- Bộ nhập sách (`abook/importers.py`) mang theo pypdf 6.16.2 (BSD-3-Clause) trong mã nguồn (`abook/vendor/pypdf/`), nên bản app chỉ-nghe
+  không cần thêm gói nào.
 - Thư viện chạy Microsoft Visual C++ (`msvcp140*.dll`, `vcruntime140*.dll`, `concrt140.dll` từ thư mục
   `Microsoft.VC145.CRT` của Visual Studio) - thuộc "Distributable Code" của giấy phép Visual Studio, được phép phát hành
   kèm ứng dụng; bộ cài chỉ mang để chép vào Python của Studio (máy chưa cài gói VC++ Redistributable vẫn chạy được).
@@ -64,6 +69,9 @@ băm trong `webui/studio_setup.py`):
 - Capacitor (MIT).
 - AndroidX Media3 - ExoPlayer, MediaSession, datasource, cache (Apache-2.0); các thư viện AndroidX khác (Apache-2.0).
 - Kotlin và Guava (Apache-2.0).
+- pdf.js / `pdfjs-dist` (Mozilla, Apache-2.0), bản "legacy" - đọc chữ của PDF có lớp chữ khi nhập sách trên điện thoại
+  (`ui/src/shared/pdfPages.ts`); tải lười, chỉ chạy khi người dùng mở một file PDF. EPUB và DOCX do `BookImport.kt` tự đọc
+  bằng java.util.zip, không thêm thư viện.
 
 ## Nhạc nền (không đóng gói trong bộ cài)
 

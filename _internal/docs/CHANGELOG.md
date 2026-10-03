@@ -9,6 +9,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Studio
 
+- **Tạo sách từ file Word (DOCX) và PDF, không chỉ TXT và EPUB**: chọn một file `.docx` hay `.pdf` (hay cả thư mục chứa chúng) ở bước chọn
+  chương, máy tách thành các chương rồi bạn xem danh sách - tên chương, số chữ và số ký tự - trước khi tạo. Word: chia theo tiêu đề
+  "Heading 1/2" (không có thì theo các dòng "Chương N"). PDF: bỏ tiêu đề chạy và số trang lặp ở đầu / cuối mỗi trang, nối các dòng
+  bị ngắt thành đoạn văn, chia chương theo các dòng "Chương N". PDF chụp từ máy quét (chỉ có ảnh, không có chữ) thì nói rõ là cần OCR,
+  chưa đọc được. EPUB giờ cũng lấy tên tác giả, ngôn ngữ và bìa, và nói trang nào chỉ có ảnh nên bị bỏ. Máy không bao giờ tự sửa chữ của
+  truyện: dòng ghi công người dịch ở đầu chương chỉ được GỢI Ý bỏ, bạn bấm đồng ý mới bỏ. Đọc file TXT cũng nhận thêm UTF-16.
+
 - **Thay đổi từ điện thoại gửi về, và hộp thư chờ duyệt**: điện thoại đã ghép giờ gửi được phần sửa của một cuốn về máy tính.
   Tên sách, bìa, tên nhân vật, tên chương và nhạc nền (kể cả bài "Nhạc của tôi" điện thoại đã ghim - ABook chép bài vào kho nhạc
   của máy này) được áp NGAY, bằng đúng các hàm Studio dùng. Còn những việc cần Studio - cách đọc tên, ai nói câu nào, giọng,
