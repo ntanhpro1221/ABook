@@ -773,6 +773,57 @@ Phân xử bất đồng của đoạn trên:
 - Lý do (2): M2 chỉ đạt theo thước nghe; R_mới không đạt. Bất đồng giữa nghe và đọc không đủ để đổi mặc định.
 - Mở lại khi có nguồn 13 cường độ qua cổng riêng trước (vd model phân tích 9B hay bộ phân loại chữ chấm theo gold). Khi ấy
   ghi trước Lớp 2 thành lượt riêng.
+
+**GHI TRƯỚC - BỘ CẢNH 6: 20 CHƯƠNG ĐA THỂ LOẠI (03-10 23:xx, Lead duyệt; trước khi chọn chương và trước mọi số):**
+
+Mục đích: trả lời dứt điểm hai câu mà bộ 5 (9 chương) và 5B (3 chương) để ngỏ vì ít chương, kết quả đảo chiều.
+
+**Chọn chương** (`select_set6.py`; chỉ đọc tên file, cỡ, dòng đầu; không đọc nội dung chương được chọn):
+- Kho: `Corpus/_full`, 161 cuốn.
+  - Loại trọn cuốn có thư mục đáp án phân tích ở gốc Corpus (tránh chương đã vào huấn luyện / đáp án của 9B-v8).
+  - Loại cuốn đã dùng ở bộ 4 / 5 / 5B. Bản "(du)" gộp với bản gốc.
+  - Còn 124 cuốn.
+- Tầng (nguồn gốc, thể loại) xếp trước bằng một agent Sonnet đọc tên, url và ~2.500 ký tự đầu chương mở đầu (KHÔNG đọc
+  chương được chọn). Bảng đóng băng ở `scene_set6/strata.json` trước khi bốc.
+- Hạn ngạch 20 chương, mỗi cuốn 1 chương; trọng số LN Nhật > Hàn > còn lại:
+  - JP school_romcom 4; JP isekai_fantasy 4;
+  - dark_horror (mọi nguồn) 2;
+  - KR regression_academy_hunter 4; KR thể loại khác 1;
+  - murim_wuxia 1; xianxia_cultivation 1; urban_rebirth 2; còn lại (CN / VN / WEST / other) 1.
+  - Tầng thiếu cuốn thì bù theo thứ tự: JP isekai_fantasy, rồi KR regression_academy_hunter.
+- Bốc cuốn: `random.Random(20261004)`, xáo danh sách tên đã sắp của từng tầng, lấy theo hạn ngạch.
+- Chương: luật bộ 5. Chương đầu tiên sau mốc 25 % số file, cỡ 15–60 KB, dòng đầu không phải phụ (lời bạt, minh hoạ,
+  mục lục, …).
+
+**Đáp án** (như bộ 5):
+- 9B-v8 phân tích chương; Model xếp sau ưu tiên 1.
+- Xuất `seq kind speaker emotion text`.
+- Hai người chấm Sonnet A / B độc lập theo `SCENE_GOLD_GUIDE.md`, mỗi đoạn kèm 13 cường độ độc lập 0–1, rồi
+  `adjudicate_scenes.py`.
+- Đồng thuận A / B ghi làm trần.
+
+**Câu (1) - không khí đoạn lấy từ đâu (`set5_llm.py` trên bộ 6).**
+- MỘT ứng viên chính: `app + llmVT` (ranh giới app; V, T từ LLM đọc cả đoạn; E từ nhãn câu), so `app`.
+  - Chọn vì bộ 5B ghi lại +0,126, 3/3, và nó không dùng bwsE, phần đã đảo chiều.
+  - Ghi rõ: ứng viên này chọn SAU khi thấy số 5B, nên bộ 6 là phép thử độc lập đầu tiên của nó.
+- THẮNG nếu r VET TB theo chương hơn `app` ≥ 0,05 VÀ thắng ≥ 14/20 chương (⌈0,7·n⌉).
+- Ghi lại, không thước: `app + llmVT + bwsE`, `app + bwsE`, oracle.
+- Chi phí trên máy người dùng: lượt gọi, giây mỗi giờ sách, VRAM.
+- THẮNG → đề xuất đưa vào app kèm chi phí, Lead / chủ sách quyết.
+
+**Câu (2) - cổng nguồn 13 cường độ (KHÔNG bật Lớp 2).**
+- Nguồn:
+  - (a) nhãn câu của app quy ra 13 cường độ đoạn (`LINE_EMOTIONS`, như app hiện nay);
+  - (b) LLM đọc cả đoạn trên ranh giới đáp án (lượt `emo` của `set5_llm.py`), có hiệu chỉnh γ như (b) của bộ 5, học chéo
+    2 phần theo truyện.
+- Thước: cosine 13 chiều nguồn – đáp án, trung bình mỗi đoạn, trên phần đo; trần = cosine người chấm A – B.
+- **QUA CỔNG** nếu cosine ≥ 0,90 × trần VÀ số nhãn ≥ 0,5 mỗi đoạn lệch người ≤ 30 %.
+- Nguồn qua cổng là điều kiện để Lead / chủ sách xét ghi trước thí nghiệm Lớp 2 riêng. Không nguồn nào qua → Lớp 2 vẫn tắt.
+
+**Giới hạn:**
+- Người chấm là Sonnet, không phải người.
+- 1 chương / cuốn nên phương sai theo cuốn lớn.
+- Tầng do agent xếp có thể sai vài cuốn; sai tầng chỉ ảnh hưởng độ đa dạng, không ảnh hưởng luật thắng.
 - Đã nhận: Qwen3-Omni-EN là thước nghe chính. Hai bất đồng (vet so app; gems so app theo thước đọc) ghi nguyên như trên.
 
 
