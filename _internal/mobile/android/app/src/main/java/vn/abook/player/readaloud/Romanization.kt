@@ -356,7 +356,7 @@ object Romanization {
 
     // ---- cửa vào -----------------------------------------------------------------------------------------------------
 
-    private val JA_SUFFIXES = setOf("san", "kun", "chan", "sama", "senpai", "sensei")
+    internal val JA_SUFFIXES = setOf("san", "kun", "chan", "sama", "senpai", "sensei")
 
     private fun isAsciiLetter(ch: Char): Boolean = ch in 'a'..'z' || ch in 'A'..'Z' || ch == 'ô' || ch == 'Ô' // ô, Ô: ō của tiếng Nhật sau khi đổi
 

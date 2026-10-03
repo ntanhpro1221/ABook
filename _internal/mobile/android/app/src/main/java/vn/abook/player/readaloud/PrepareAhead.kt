@@ -164,9 +164,10 @@ object PrepareAhead {
     private fun recheck(done: PrepareJob) {
         val cache = runCatching { ReadAloud.cache() }.getOrNull() ?: return
         val texts = ReadAloud.textChapters(done.bookId, done.chapters.map { it.id })
+        val origin = ReadAloud.originOf(done.bookId)
         for (chapter in done.chapters) {
             val paragraphs = texts[chapter.id]?.second ?: continue
-            chapter.done = paragraphs.count { cache.contains(done.voice, it) }.coerceAtMost(chapter.paragraphs - chapter.failed)
+            chapter.done = paragraphs.count { cache.contains(done.voice, it, origin) }.coerceAtMost(chapter.paragraphs - chapter.failed)
         }
     }
 
@@ -207,11 +208,12 @@ object PrepareAhead {
         val cache = ReadAloud.cache()
         val budget = (cache.cap * PreparePlan.SHARE).toLong()
         val texts = ReadAloud.textChapters(mine.bookId, mine.chapters.map { it.id })
+        val origin = ReadAloud.originOf(mine.bookId)
         val runner = PrepareRunner(
             texts = { chapter -> texts[chapter.id]?.second },
-            cached = { cache.contains(mine.voice, it) },
-            make = { ReadAloud.readExactly(mine.voice, it) },
-            pin = { cache.pin(mine.voice, it) },
+            cached = { cache.contains(mine.voice, it, origin) },
+            make = { ReadAloud.readExactly(mine.voice, it, origin) },
+            pin = { cache.pin(mine.voice, it, origin) },
             live = { ReadAloud.liveJobs() > 0 },
             stopped = { stopped() || synchronized(lock) { job?.id != mine.id } },
             save = { save(context, it); notify(context, it) },

@@ -36,6 +36,8 @@ export interface ReadAloudClip {
 export interface ClipOptions {
   /** Chỉ tra bộ đệm, không đọc mới: chưa có thì lỗi `reason` "uncached". */
   cachedOnly?: boolean;
+  /** Cuốn đang nghe: máy tính dùng nó để biết cuốn gốc Nhật / Hàn (đọc tên theo luật phiên âm, abook/readaloud/names.py). */
+  bookId?: string;
 }
 
 export type ClipFetcher = (voice: string, text: string, options?: ClipOptions) => Promise<ReadAloudClip>;

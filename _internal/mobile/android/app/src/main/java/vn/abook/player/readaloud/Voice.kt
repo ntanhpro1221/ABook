@@ -23,6 +23,8 @@ interface Voice {
     val extension: String
     /** Ghi âm thanh của `text` vào `out`, trả độ dài + mốc từng chữ (`words` theo `text`). */
     fun synthesize(text: String, out: File): Clip
+    /** Như trên cho cuốn có gốc Nhật / Hàn ([Names]): giọng đọc trên máy (VieNeu) đọc tên theo luật phiên âm, giọng khác bỏ qua `origin`. */
+    fun synthesize(text: String, out: File, origin: String?): Clip = synthesize(text, out)
 }
 
 /** Một giọng cho người dùng chọn (plugin `voices()`). `gender`: "female" / "male" / "" - gợi ý trong Cài đặt. */

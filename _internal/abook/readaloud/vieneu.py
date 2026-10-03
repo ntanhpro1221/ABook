@@ -24,6 +24,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable
 
+from . import names
 from .model import Synthesis, Voice, VoiceError
 
 PREFIX = "vieneu"
@@ -207,11 +208,13 @@ def reading_marks(out: list[str]) -> None:
         out[index] = token.translate({ord(c): None for c in ANGLE_OPEN[1:] + ANGLE_CLOSE[1:]})
 
 
-def spoken_tokens(toks: list[str]) -> list[str]:
+def spoken_tokens(toks: list[str], origin: str | None = None) -> list[str]:
     """Chữ hiện -> chữ đem đọc (biến đổi để đọc, chữ hiện không đổi): số La Mã HOA hợp lệ (I..XXXIX) đứng riêng sau một từ ("Phổ thông II",
     "Chương IV", "Thế chiến II") hay làm đề mục đầu đoạn ("I. Mở đầu") thì đọc thành số tiếng Việt - bộ chuẩn hoá của sea-g2p chỉ biết
     "Benedict III", còn "thông II" nó đọc "i i". Số MỘT chữ (I, V, X) chỉ khi từ trước đánh số được (`numbered_by`): "ông X", "tia X", "điểm V" là chữ cái.
-    Giữ nguyên "I am" đầu câu, chữ "I" sau dấu câu và các viết tắt (CV, MC, VIP). Sau cùng `reading_marks` sửa "~", nghìn kiểu Anh, <ngoặc nhọn>, " / "."""
+    Giữ nguyên "I am" đầu câu, chữ "I" sau dấu câu và các viết tắt (CV, MC, VIP). Cuốn có gốc Nhật / Hàn (`origin` "ja" / "ko", `names.book_origin`) thì tên
+    romaji / RR đọc theo luật phiên âm ("Haruto" -> "Ha-ru-tô"; `names.read_names`), từ tiếng Anh thật vẫn để sea-g2p đọc. Sau cùng `reading_marks`
+    sửa "~", nghìn kiểu Anh, <ngoặc nhọn>, " / "."""
     out = list(toks)
     for index, token in enumerate(toks):
         core = token.lstrip(OPENERS).rstrip(CLOSERS + ".,;:!?…")
@@ -227,6 +230,7 @@ def spoken_tokens(toks: list[str]) -> list[str]:
                 if not (before.isalpha() and any(c.islower() for c in before)) or (len(core) == 1 and not numbered_by(toks, index)):
                     continue
         out[index] = token.replace(core, vietnamese_number(value), 1)
+    names.read_names(toks, out, origin)
     reading_marks(out)
     return out
 
@@ -260,14 +264,14 @@ def _pack(toks: list[str], spans: list[tuple[int, int]], max_chars: int) -> list
     return out
 
 
-def units(text: str, max_chars: int) -> tuple[list[str], list[Unit]]:
-    """Chữ hiện của đoạn + các khúc đem đọc (mọi chữ hiện thuộc đúng một khúc, theo thứ tự)."""
+def units(text: str, max_chars: int, origin: str | None = None) -> tuple[list[str], list[Unit]]:
+    """Chữ hiện của đoạn + các khúc đem đọc (mọi chữ hiện thuộc đúng một khúc, theo thứ tự). `origin`: gốc của cuốn ("ja" / "ko"), xem `spoken_tokens`."""
     from ..webui.word_timing import tokens
 
     toks = tokens(text)
     if not toks:
         return toks, []
-    said = spoken_tokens(toks)
+    said = spoken_tokens(toks, origin)
     pieces: list[tuple[int, int]] = []
     for first, last in _groups(toks, 0, len(toks) - 1, SENTENCE_END):
         if _length(toks, first, last) <= max_chars:
@@ -436,15 +440,15 @@ class VieneuProvider:
             raise VoiceError("Không có giọng VieNeu này.", "voice")
         return tier, name, installed, preset
 
-    def _speak(self, tier: str, name: str, installed: Installed, preset: dict[str, Any],
-               text: str) -> tuple[Any, int, list[str], list[Unit], list[tuple[int, int]]]:
-        """Đọc cả đoạn: (sóng âm, tần số mẫu, chữ hiện, các khúc, [đầu, cuối) của từng khúc theo mẫu)."""
+    def _speak(self, tier: str, name: str, installed: Installed, preset: dict[str, Any], text: str,
+               origin: str | None = None) -> tuple[Any, int, list[str], list[Unit], list[tuple[int, int]]]:
+        """Đọc cả đoạn: (sóng âm, tần số mẫu, chữ hiện, các khúc, [đầu, cuối) của từng khúc theo mẫu). `origin`: gốc của cuốn, xem `spoken_tokens`."""
         import numpy as np
 
         from . import vieneu_engine as ve
 
         engine = self.engine(tier, installed)
-        toks, parts = units(text, MAX_CHARS[tier])
+        toks, parts = units(text, MAX_CHARS[tier], origin)
         speaker = np.asarray(preset["speaker_emb"], dtype=np.float32)
         waves, pauses = [], []
         for unit in parts:
@@ -464,9 +468,19 @@ class VieneuProvider:
             raise VoiceError("Đoạn này không có chữ nào đọc được.", "empty")
         return joined, engine.SAMPLE_RATE, toks, parts, spans
 
-    def synthesize(self, text: str, native_voice: str) -> Synthesis:
+    def reading_tag(self, text: str, origin: str | None) -> str:
+        """Khác "" khi gốc của cuốn làm đoạn này nghe khác (có tên đọc theo luật phiên âm): khoá bộ đệm clip phải có nó, không thì clip cũ (đọc tên bằng âm Anh)
+        bị dùng lại sau khi cuốn đổi gốc. Đoạn không có tên nào đổi thì "" - clip cũ vẫn dùng được."""
+        if origin not in names.ORIGINS:
+            return ""
+        from ..webui.word_timing import tokens
+
+        toks = tokens(text)
+        return origin if spoken_tokens(toks, origin) != spoken_tokens(toks) else ""
+
+    def synthesize(self, text: str, native_voice: str, origin: str | None = None) -> Synthesis:
         tier, name, installed, preset = self._voice(native_voice)
-        audio, rate, toks, parts, spans = self._speak(tier, name, installed, preset, text)
+        audio, rate, toks, parts, spans = self._speak(tier, name, installed, preset, text, origin)
         return timed_synthesis(audio, rate, toks, parts, spans, self._aligner() if installed.aligner else None)
 
     def benchmark(self, tier: str) -> dict[str, Any]:

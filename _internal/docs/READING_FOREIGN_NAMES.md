@@ -178,6 +178,15 @@ dựng đáp án.
 - Giọng miền Bắc đọc s và x như nhau. Luật 1.4 chỉ có tác dụng với giọng miền Nam; kiểm lại khi đã có số đo.
 - Các nguyên âm Hàn chưa có ví dụ chính thức (wo, oe, wi, ui) và các âm bật hơi.
 
+## 8. Nối vào "Nghe ngay" (04-10)
+
+Giọng VieNeu của "Nghe ngay" (máy tính `abook/readaloud/names.py` + `vieneu.spoken_tokens`; điện thoại `readaloud/Names.kt` + `VieneuUnits.kt`) đọc tên Nhật / Hàn theo mục 2-3 khi cuốn có gốc ấy; chữ hiện trên màn hình không đổi.
+
+- **Token được đổi**: viết hoa chữ đầu (không toàn HOA), chữ Latin, luật tách được hết thành âm tiết, và KHÔNG phải (a) từ tiếng Anh thật hay tên Anh / Âu (`abook/readaloud/english_words.txt`: từ vựng bert-base-uncased id <= 10000 giao CMUdict, cộng ~900 tên gọi và họ Anh / Âu tự viết, trừ 55 tên vốn là tên Nhật như Hana, Rika, Mina, Kana, Nana, Sakura - tên trùng hai bên thì gốc của cuốn quyết; sinh bằng `scripts/build_english_words.py`, 7277 từ, 55 KB, có cả ở Kotlin), (b) âm tiết tiếng Việt viết sẵn (Hoa, Nam, Mai), (c) tiếng reo (chữ lặp ba lần: Aaaa). Kate, Mike, Rose, Anne, Emma, Nina, Sara, Mario giữ nguyên cho sea-g2p (đo 04-10: VieNeu / ZeroTTS / Edge đọc tên Anh đúng).
+- **Gốc của cuốn** tự đoán (`names.book_origin`): trong 12 chương đầu, tỉ lệ LẦN XUẤT HIỆN của tên đọc được bằng romaji >= 0,75 (và >= 10 tên khác nhau, >= 100 lần) thì "ja"; "ko" đòi RR >= 0,85 và >= 0,5 là tên chỉ RR đọc được (luật RR dễ tính: Mirabelle, Ruel, Alon của truyện Hàn cũng tách được, nên ngưỡng cao và "ko" ít khi bật). Không chắc thì không đổi gì. Người dùng ghi đè được (máy tính `BookOrigins.override`, điện thoại `ReadAloud.setOrigin`); giao diện cho chọn là việc sau.
+- **Khoá bộ đệm clip** thêm "|gốc" chỉ cho đoạn mà gốc làm nghe khác, nên clip cũ của đoạn không có tên vẫn dùng được.
+- **Đo** trên kho truyện thử (161 cuốn): 47 cuốn "ja", 2 "ko"; mọi cuốn dán nhãn Hàn / Trung đều ra không gốc. Chi tiết trong CHANGELOG và báo cáo.
+
 ## Nguồn
 
 Toàn bộ URL kèm loại và mức kiểm ở `Corpus/research/tn/reading_evidence.md` (repo riêng tư). Các nguồn chính:

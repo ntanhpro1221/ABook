@@ -167,7 +167,7 @@ function fallbackNotice(failed: ReadAloudVoice, reason: string, next: ReadAloudV
  *  giọng kế, không gọi lại vô ích. `notify`: chỗ hiện lời nhắn (mặc định toast). */
 export function speechFetcher(source: ListenSource, bookId: string, notify: (message: string) => void = (message) => void toast(message, { duration: 8000 })): ClipFetcher {
   const fetchWith = async (voice: ReadAloudVoice, text: string, options?: ClipOptions): Promise<ReadAloudClip> => {
-    const clip = await source.readAloudClip!(voice.id, text, options);
+    const clip = await source.readAloudClip!(voice.id, text, { ...options, bookId });
     return { ...clip, gainDb: voice.gainDb ?? clip.gainDb };
   };
   const tell = (failed: ReadAloudVoice, reason: string, next: ReadAloudVoice) => {

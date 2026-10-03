@@ -63,7 +63,7 @@ export const httpSource: ListenSource = {
     try {
       clip = await api<typeof clip>("/api/readaloud/clip", {
         method: "POST",
-        body: { voice, text, cachedOnly: options?.cachedOnly },
+        body: { voice, text, cachedOnly: options?.cachedOnly, bookId: options?.bookId },
       });
     } catch (error) {
       // Máy chủ nói đúng lý do (offline / timeout / rejected / service...); mất kết nối tới chính máy chủ cục bộ là "service".
@@ -78,7 +78,7 @@ export const httpSource: ListenSource = {
   // Máy chủ nhận chữ từng đoạn, chia đúng như trình phát (cùng khoá bộ đệm với lúc nghe).
   readAloudPrepare: async ({ voice, bookId, chapters, label }) => {
     const texts = await paragraphsFor(chapters, (id) => httpSource.chapterText(bookId, id));
-    return api<PrepareStatus>("/api/readaloud/prepare", { method: "POST", body: { voice, texts, label } });
+    return api<PrepareStatus>("/api/readaloud/prepare", { method: "POST", body: { voice, texts, label, bookId } });
   },
   readAloudPrepareStatus: () => api<PrepareStatus>("/api/readaloud/prepare"),
   // Máy tính xách tay cũng mất mạng (tàu, máy bay): giọng trực tuyến làm trước vào bộ đệm clip như VieNeu (readaloud/prepare.py chung mọi giọng).
