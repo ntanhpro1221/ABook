@@ -88,6 +88,18 @@ VieNeu 3.8.1 (installed) has CPU modes: `v3nano` (48M-parameter flow model, ONNX
 v3turbo (ONNX on CPU, 48 kHz, 25 voices): RTF 0.36 (~2.8x faster than listening), first streamed audio after 0.21 s; first load downloads the model (~20 min here). ONNX means the same runtime as the music module, so a phone build is plausible; phone speed not
 measured yet.
 
+VieNeu module = user choice with a recommendation (owner 03-10: "sao không cho người dùng chọn tải cùng recommended?"):
+- Choices:
+  - Turbo int8: 158 MB, 48 kHz, 25 voices. Desktop CPU RTF 0.315, first audio 0.20 s.
+  - Nano: ~270 MB cached, 24 kHz, 11 voices. RTF 0.18.
+  - The 122 MB word aligner: ticked by default on desktop, optional on the phone.
+- One or both voices may be installed.
+- "Khuyên dùng" before download comes from device facts (cores, RAM, GPU, chip class).
+- After download, a few-second self-benchmark checks it. If the chosen voice cannot keep up with listening, offer to switch; never switch silently.
+- The size shown is what this device still lacks (shared parts such as ONNX Runtime, the aligner and Studio's VieNeu are not counted twice).
+- The same pattern applies to every module with options.
+- Phone speed of Turbo is NOT measured yet (estimate RTF 0.6-1.5); thresholds get tuned once a real phone is measured.
+
 Device choice (owner 03-10: never force CPU when a GPU is there), picked automatically:
 - Studio installed (NVIDIA): GPU through Studio's torch. Yield to Studio work and fall back to CPU while the card is busy.
 - GPU but no Studio: ONNX Runtime with DirectML (any vendor, about +20 MB in the module). Not measured with VieNeu yet.
