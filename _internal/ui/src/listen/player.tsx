@@ -6,7 +6,8 @@ import { coverArtwork, type CoverImage } from "@/shared/cover";
 import { formatClock } from "@/shared/format";
 import { Clock, ClockContext } from "./clock";
 import { isNative, type AudioEngine } from "./engine";
-import { MUSIC_CHANGED_EVENT, MusicBed, type MusicCredit } from "./musicBed";
+import { MUSIC_CHANGED_EVENT, MusicBed, type MusicCredit, type MusicCue } from "./musicBed";
+import { PlaylistClock, PlaylistDriver, playlistCues } from "./playlistBed";
 import { canPlay, resumePoint, type Bookmark, type ListenBook, type ListenChapter, type NightPosition } from "./model";
 import { NightRecorder } from "./night";
 import {
@@ -385,20 +386,55 @@ export function PlayerProvider({
       setMusicCredit(null);
     };
   }, [bed]);
+  // Danh sách phát người nghe chọn cho cả cuốn (sách chỉ có chữ - playlistBed.ts): có bài thì nhạc chạy theo đồng hồ nhạc của cuốn,
+  // không theo mốc của chương; hỏi lại khi đổi cuốn hay khi lựa chọn đổi (bedVersion), không hỏi lại mỗi chương.
+  const [playlistBed, setPlaylistBed] = useState<{ key: string; cues: MusicCue[]; levelDb: number } | null>(null);
+  const playlistAsked = useRef<{ key: string; queue: ReturnType<NonNullable<typeof source.musicPlaylist>> | null } | null>(null);
   useEffect(() => {
     if (!bed || !track || !source.musicCues) return;
     let cancelled = false;
-    source.musicCues(track.bookId, track.chapterId)
-      .then((result) => {
-        if (cancelled) return;
-        bedCredits.current = result.credits ?? {};
-        bed.setCues(result.cues, result.levelDb);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        bedCredits.current = {};
-        bed.setCues([], -20);
-      });
+    const book = track.bookId;
+    const asked = `${book}#${bedVersion}`;
+    if (playlistAsked.current?.key !== asked) {
+      playlistAsked.current = { key: asked, queue: source.musicPlaylist?.(book) ?? null };
+    }
+    const chapterCues = () =>
+      source.musicCues!(book, track.chapterId)
+        .then((result) => {
+          if (cancelled) return;
+          bedCredits.current = result.credits ?? {};
+          bed.setCues(result.cues, result.levelDb);
+        })
+        .catch(() => {
+          if (cancelled) return;
+          bedCredits.current = {};
+          bed.setCues([], -20);
+        });
+    const queue = playlistAsked.current.queue;
+    if (!queue) {
+      setPlaylistBed(null);
+      void chapterCues();
+    } else {
+      void queue.then(
+        (result) => {
+          if (cancelled) return;
+          if (!result.playlist || !result.tracks.length) {
+            setPlaylistBed(null);
+            void chapterCues();
+            return;
+          }
+          bedCredits.current = result.credits ?? {};
+          const key = `${book}:${result.playlist}`;
+          setPlaylistBed((previous) =>
+            previous?.key === key && previous.cues.length === result.tracks.length ? previous : { key, cues: playlistCues(result.tracks), levelDb: result.levelDb });
+        },
+        () => {
+          if (cancelled) return;
+          setPlaylistBed(null);
+          void chapterCues();
+        },
+      );
+    }
     return () => {
       cancelled = true;
     };
@@ -406,6 +442,19 @@ export function PlayerProvider({
   }, [bed, source, bedChapter, bedVersion]);
   useEffect(() => {
     if (!bed) return;
+    if (playlistBed) {
+      // Đồng hồ nhạc của cuốn chạy khi giọng chạy: sang chương, tua, đổi tốc độ không làm nhạc bắt đầu lại.
+      bed.setCues(playlistBed.cues, playlistBed.levelDb);
+      const driver = new PlaylistDriver(bed, new PlaylistClock(playlistBed.key), playlistBed.cues);
+      const update = () => driver.update(!engine.paused);
+      const offs = [engine.on("time", update), engine.on("play", update), engine.on("pause", update), engine.on("ended", update)];
+      update();
+      return () => {
+        offs.forEach((off) => off());
+        driver.stop();
+        bed.stop();
+      };
+    }
     let last = engine.time;
     const sync = () => {
       const now = engine.time;
@@ -417,7 +466,7 @@ export function PlayerProvider({
       offs.forEach((off) => off());
       bed.stop();
     };
-  }, [bed, engine]);
+  }, [bed, engine, playlistBed]);
   useEffect(() => bed?.setVolume(volume), [bed, volume]);
 
   const applyRate = useCallback((value: number) => {
