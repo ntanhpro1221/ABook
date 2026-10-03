@@ -1,10 +1,11 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { FileDown, ImagePlus, Loader2, Music2, Pencil, Shuffle, Trash2, Volume2, VolumeX, Wrench } from "lucide-react";
+import { FileDown, Globe, ImagePlus, Loader2, Music2, Pencil, Shuffle, Trash2, Volume2, VolumeX, Wrench } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
+import { CoverSearchDialog } from "@/shared/CoverSearch";
 import { canEditLayer, editBlockedNote, studioNeed, syncsToComputer } from "@/shared/capabilities";
 import { formatClock } from "@/shared/format";
 import { levelOptions } from "@/shared/musicLevels";
@@ -12,7 +13,7 @@ import { Button, Dialog, Segmented } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { MUSIC_CHANGED_EVENT } from "./musicBed";
 import { MyMusicSection, SwapTrack } from "./MyMusic";
-import type { ListenBook, ListenChapter } from "./model";
+import { seriesOf, type ListenBook, type ListenChapter } from "./model";
 import { useSource } from "./source";
 
 // Sửa sách "áp ngay" ngay trên trang nghe (docs/EDITING.md): tên sách, bìa, tên nhân vật, tên chương, nhạc nền. Cùng một bộ
@@ -212,10 +213,12 @@ export function EditBookDialog({
   const [title, setTitle] = useState(book.title);
   const file = useRef<HTMLInputElement | null>(null);
   const [confirmRevert, setConfirmRevert] = useState(false);
+  const [searching, setSearching] = useState(false);
   useEffect(() => {
     if (open) {
       setTitle(book.title);
       setConfirmRevert(false);
+      setSearching(false);
     }
   }, [open, book.title]);
   const workshop = Boolean(book.capabilities?.workshop);
@@ -285,6 +288,9 @@ export function EditBookDialog({
               <Button variant="outline" icon={ImagePlus} disabled={busy} onClick={() => file.current?.click()}>
                 {book.cover ? "Đổi ảnh bìa…" : "Chọn ảnh bìa…"}
               </Button>
+              <Button variant="outline" icon={Globe} disabled={busy} onClick={() => setSearching(true)}>
+                Tìm ảnh bìa trên mạng…
+              </Button>
               {book.cover && (
                 <Button variant="ghost" icon={Trash2} disabled={busy} onClick={() => removeCover.mutate()}>
                   Bỏ ảnh bìa
@@ -309,6 +315,13 @@ export function EditBookDialog({
             />
           </div>
         </Section>
+        <CoverSearchDialog
+          bookId={book.id}
+          defaultQuery={seriesOf(book.title).series || book.title}
+          open={searching}
+          onOpenChange={setSearching}
+          onChosen={() => refreshAfterEdit(client, book.id)}
+        />
         <Section title="Nhạc nền">
           {workshop ? (
             <div className="flex flex-wrap items-center gap-3 text-sm text-fg-2">
@@ -416,12 +429,12 @@ export function RenameChapterDialog({ book, chapter, onClose }: { book: ListenBo
   );
 }
 
-/** "Lưu": đóng cuốn (kèm thay đổi của người nghe) thành file `.abook` mới. Máy tính ghi vào thư mục xuất (hay thư mục đã
- *  chọn), điện thoại hỏi chỗ lưu. Trả hàm lưu và trạng thái bận. */
+/** "Lưu": đóng cuốn (kèm thay đổi của người nghe) thành file mới, GIỮ loại file cuốn đã đến (`.abookproj` mang theo xưởng của nó,
+ *  `.abook` thì không). Máy tính ghi vào thư mục xuất (hay thư mục đã chọn), điện thoại hỏi chỗ lưu. Trả hàm lưu và trạng thái bận. */
 export function useSaveBook(book: ListenBook) {
   const source = useSource();
   const [busy, setBusy] = useState(false);
-  const save = async (options?: { folder?: string }) => {
+  const save = async (options?: { folder?: string; as?: "abook" | "abookproj" }) => {
     if (!source.saveBook) return;
     setBusy(true);
     try {
@@ -447,7 +460,8 @@ export function useSaveBook(book: ListenBook) {
 
 type SaveKind = "abook" | "abookproj";
 
-/** "Lưu thành…": chọn loại file. `.abookproj` (dự án, cần xưởng) chưa dựng được từ cuốn nhập từ file - hiện rõ là sắp có. */
+/** "Lưu thành…": chọn loại file. `.abookproj` mang cả xưởng nếu cuốn đến từ một file dự án; không thì là file "chờ dựng xưởng"
+ *  (chỉ phần nghe + thay đổi của bạn, máy có Studio mời dựng xưởng khi mở). */
 export function SaveAsDialog({
   book,
   open,
@@ -461,7 +475,7 @@ export function SaveAsDialog({
   pickFolder?: () => Promise<string | null>;
 }) {
   const { save, busy } = useSaveBook(book);
-  const [kind, setKind] = useState<SaveKind>("abook");
+  const [kind, setKind] = useState<SaveKind>(book.projectFile ? "abookproj" : "abook");
   const [folder, setFolder] = useState<string | null>(null);
   return (
     <Dialog
@@ -482,7 +496,9 @@ export function SaveAsDialog({
       />
       {kind === "abookproj" ? (
         <p className="mt-3 text-sm text-fg-2">
-          Dự án (.abookproj) mang cả xưởng làm sách - cần máy có Studio để dựng xưởng từ file sách. Tính năng này sắp có; lúc này lưu thành sách nghe (.abook).
+          {book.projectFile?.workshop === "present"
+            ? "Dự án (.abookproj) giữ nguyên cả xưởng làm sách của cuốn này, kèm những thay đổi của bạn. Mở bằng Studio, ABook hỏi có áp thay đổi vào dự án không."
+            : "Cuốn này chưa có xưởng: file chỉ mang phần nghe và thay đổi của bạn. Máy có Studio mở file sẽ mời “Dựng xưởng” - tạo dự án mới từ chữ và giọng trong sách, làm lại toàn bộ audio."}
         </p>
       ) : (
         <p className="mt-3 text-sm text-fg-2">
@@ -490,7 +506,7 @@ export function SaveAsDialog({
           {book.wishes ? `, cùng ${book.wishes} việc đang chờ Studio (chưa làm gì trong giọng đọc)` : ""}.
         </p>
       )}
-      {pickFolder && kind === "abook" && (
+      {pickFolder && (
         <div className="mt-3 flex items-center gap-2 text-sm">
           <Button variant="outline" size="sm" onClick={() => void pickFolder().then((picked) => picked && setFolder(picked))}>
             Chọn thư mục…
@@ -506,8 +522,7 @@ export function SaveAsDialog({
           variant="primary"
           icon={FileDown}
           loading={busy}
-          disabled={kind !== "abook"}
-          onClick={() => void save(folder ? { folder } : undefined).then(() => onOpenChange(false))}
+          onClick={() => void save({ ...(folder ? { folder } : {}), as: kind }).then(() => onOpenChange(false))}
         >
           Lưu
         </Button>

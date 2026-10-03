@@ -443,18 +443,24 @@ class LibraryPlugin : Plugin() {
 
     // ---- tải sách --------------------------------------------------------------------------------------------
 
-    private fun fetchFile(id: String, relative: String, expectedSize: Long, link: Peers.Link, remote: String): Long {
-        val target = Store.file(id, relative)
-        if (expectedSize > 0 && target.isFile && target.length() == expectedSize) return 0
-        target.parentFile?.mkdirs()
-        val partial = File(target.path + ".part")
+    /** Kết nối tới một file của sách bên máy kia (đã ghim chứng chỉ, mang mã thiết bị); `resumeFrom` > 0 thì xin tiếp từ byte ấy. */
+    private fun connect(link: Peers.Link, remote: String, relative: String, resumeFrom: Long): HttpURLConnection {
         Pin.install(context)
         val connection = URL("${link.base}/sync/v1/books/$remote/files/$relative").openConnection() as HttpURLConnection
         connection.connectTimeout = 5000
         connection.readTimeout = 30000
         connection.setRequestProperty("Authorization", "Bearer ${link.token}")
-        val resumeFrom = if (partial.isFile) partial.length() else 0L
         if (resumeFrom > 0) connection.setRequestProperty("Range", "bytes=$resumeFrom-")
+        return connection
+    }
+
+    private fun fetchFile(id: String, relative: String, expectedSize: Long, link: Peers.Link, remote: String): Long {
+        val target = Store.file(id, relative)
+        if (expectedSize > 0 && target.isFile && target.length() == expectedSize) return 0
+        target.parentFile?.mkdirs()
+        val partial = File(target.path + ".part")
+        val resumeFrom = if (partial.isFile) partial.length() else 0L
+        val connection = connect(link, remote, relative, resumeFrom)
         val code = Pin.guard { connection.responseCode }
         if (code >= 400) throw IllegalStateException("Không tải được $relative (mã $code)")
         val append = code == 206
@@ -515,14 +521,34 @@ class LibraryPlugin : Plugin() {
         val cover = manifest.optJSONObject("cover")
         if (cover != null) files += cover.optString("file", "cover.jpg") to 0L
         else Store.file(id, "cover.jpg").delete()
-        val total = files.sumOf { it.second }
+        // Nhạc nền: đúng các bài mà một mốc đang dùng (BookMusic.tracks) - nghe được cả khi không có mạng, và chuyển tiếp được cho máy khác.
+        val tracks = BookMusic.tracks(manifest.optJSONObject("music"))
+        val total = files.sumOf { it.second } + tracks.sumOf { it.size }
+        val filesTotal = files.size + tracks.size
         var done = 0L
         files.forEachIndexed { index, (relative, size) ->
             fetchFile(id, relative, size, link, remote)
             done += size
             if (announce) {
                 notifyListeners("download", JSObject().put("bookId", id).put("done", done).put("total", total)
-                    .put("files", index + 1).put("filesTotal", files.size))
+                    .put("files", index + 1).put("filesTotal", filesTotal))
+            }
+        }
+        tracks.forEachIndexed { index, track ->
+            // Một bài không tải được (sai cỡ / mã băm, máy kia ngắt) thì bỏ bài ấy: sách vẫn lưu, chỗ đó nghe thẳng từ máy kia khi có mạng.
+            BookMusic.fetch(Store.bookDir(id), track) { name ->
+                val connection = connect(link, remote, name, 0)
+                if (Pin.guard { connection.responseCode } != 200) {
+                    connection.disconnect()
+                    null
+                } else {
+                    BookMusic.Source(connection.inputStream, connection.contentLengthLong, connection::disconnect)
+                }
+            }
+            done += track.size
+            if (announce) {
+                notifyListeners("download", JSObject().put("bookId", id).put("done", done).put("total", total)
+                    .put("files", files.size + index + 1).put("filesTotal", filesTotal))
             }
         }
         Store.writeAtomic(File(Store.bookDir(id), "book.json"), manifest.toString())
@@ -722,7 +748,9 @@ class LibraryPlugin : Plugin() {
 
     /**
      * "Lưu thành…": hộp thoại "tạo file" của hệ thống (người dùng chọn chỗ và tên), rồi ghi cuốn - kèm thay đổi của người nghe
-     * nếu có (file phiên bản 4) - bằng BookDocumentWriter. Trả {saved: true, name, size, edits}, hay {saved: false} khi huỷ.
+     * nếu có (file phiên bản 4) - bằng BookDocumentWriter. `as` "abook" hay "abookproj" (cuốn nhập từ file dự án giữ xưởng của nó; cuốn
+     * từ file `.abook` thành file chờ dựng xưởng); không nói thì giữ đúng loại file cuốn đã đến. Trả {saved: true, name, size, edits},
+     * hay {saved: false} khi huỷ.
      */
     @PluginMethod
     fun saveBook(call: PluginCall) {
@@ -732,10 +760,16 @@ class LibraryPlugin : Plugin() {
             return call.reject("Sách này lấy từ máy tính khác - muốn lưu thành file thì lưu ở máy ấy")
         }
         val title = Store.manifest(id)?.optString("title").orEmpty()
-        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType(BookFileImport.MIMETYPE)
-            .putExtra(Intent.EXTRA_TITLE, BookDocumentWriter.defaultName(title))
+        val project = savesAsProject(call, id)
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
+            .setType(if (project) BookFileImport.PROJECT_MIMETYPE else BookFileImport.MIMETYPE)
+            .putExtra(Intent.EXTRA_TITLE, BookDocumentWriter.defaultName(title, project))
         startActivityForResult(call, intent, "savedBook")
     }
+
+    /** "Lưu" giữ loại file cuốn đã đến (có `project.json` = file dự án); "Lưu thành…" chọn `as`. */
+    private fun savesAsProject(call: PluginCall, id: String): Boolean =
+        (call.getString("as") ?: if (ProjectDocument.kept(Store.bookDir(id)) != null) "abookproj" else "abook") == "abookproj"
 
     @ActivityCallback
     private fun savedBook(call: PluginCall?, result: ActivityResult) {
@@ -749,7 +783,7 @@ class LibraryPlugin : Plugin() {
             try {
                 val id = call.getString("id") ?: throw IllegalArgumentException("thiếu id")
                 val out = context.contentResolver.openOutputStream(uri, "wt") ?: throw IllegalStateException("Không ghi được vào chỗ đã chọn")
-                val written = out.use { BookDocumentWriter.write(Store.bookDir(id), it) }
+                val written = out.use { BookDocumentWriter.write(Store.bookDir(id), it, savesAsProject(call, id)) }
                 val name = runCatching {
                     context.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
                         if (cursor.moveToFirst()) cursor.getString(0) else null

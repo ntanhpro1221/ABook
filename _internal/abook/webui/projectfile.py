@@ -5,22 +5,36 @@ nguồn chương, bìa. Mở file là có lại đúng dự án ấy trong thư 
 
 `.abook` về mặt logic là TẬP CON của `.abookproj` (chủ sách 02-10): file dự án mang luôn phần NGHE của sách - các chương đã
 xong, chữ có tag, dàn nhân vật, câu mẫu, bìa, nhạc nền - nên chỗ nào đọc được `.abook` (điện thoại) thì đọc được phần nghe
-của `.abookproj`, không phải xuất thêm một file. Phần nghe là `book.json` đúng như của file `.abook`
-(bookfile.listening_layer dựng), chỉ khác: audio chương KHÔNG chép hai lần - `book.json` trỏ thẳng tới mục
-`project/output/chapters/<tên>.mp3` đã có trong gói. Máy tính mở file dự án luôn là mở dự án (mở ra là nghe, sửa ở một chỗ).
+của `.abookproj`, không phải xuất thêm một file. Phần nghe có đúng tên mục và `book.json` của file `.abook` (bookfile.
+listening_layer dựng). Máy tính có Studio mở file dự án luôn là mở dự án (mở ra là nghe, sửa ở một chỗ).
+
+Phiên bản 3 (03-10, docs/EDITING.md phase P3):
+
+- Không byte nào nằm hai lần. Mục media (`.mp3`, `.wav`, `.jpg`...) trùng cỡ + mã băm với mục khác chỉ là BÍ DANH: `project.json`
+  ghi `aliases: {bí danh: mục thật}`, bí danh không có trong gói, người đọc lấy byte của mục thật. Mục thật là mục của phần
+  nghe (`chapters/x.mp3` chứ không phải `project/output/chapters/x.mp3`) nên người chỉ nghe không cần biết bí danh là gì.
+- `views/work.json`, `casting.json`, `names.json`: bản chụp chỉ đọc của vài màn Studio (project_views.py), để điện thoại hay máy
+  chưa cài Studio cho người ta xem mà không mở `project/project.sqlite3`.
+- `project.json` có `workshop`: "present" (có `project/`) hay "pending" - cuốn chỉ có phần nghe, được lưu thành `.abookproj` từ
+  một `.abook` (hay từ một dự án mà máy không có xưởng); máy có Studio mời "Dựng xưởng" (workshop.py). File pending không có
+  `project/`, `sources/` thì tuỳ chọn.
+- Phần nghe mang cả lớp sửa của người nghe (`edits.json`, `edits/cover.jpg`, bài nhạc đã ghim - book_edits.py) khi điện thoại hay
+  máy không có xưởng sửa rồi lưu. Studio không bao giờ ghi chúng; mở file có chúng ở máy có dự án ấy thì phần sửa được cất chờ
+  người dùng đồng ý áp vào dự án ("N thay đổi - áp vào dự án?"), không tạo dự án trùng.
 
 Hình dạng - một gói ZIP:
 
     mimetype                 MIMETYPE, mục ĐẦU TIÊN, không nén (như .abook, EPUB)
-    project.json             mô tả: phiên bản định dạng, ai làm ra, tên sách, thư mục gốc cũ, nguồn chương, cỡ + mã băm
-                             từng file (kể cả phần nghe)
+    project.json             mô tả: phiên bản định dạng, ai làm ra, tên sách, workshop, thư mục gốc cũ, nguồn chương, bí danh,
+                             cỡ + mã băm từng mục (kể cả bí danh)
     cover.jpg                bìa, nếu có (bản sao để Explorer hiện thumbnail mà không phải đọc cả dự án)
     project/<đường dẫn>      mọi file của thư mục dự án; `project.sqlite3` là bản chụp nhất quán (SQLite backup), không
                              kèm `-wal`/`-shm`, nhật ký, khoá worker, file `.part` dở hay file `.abook` đã xuất
     sources/<n>_<tên>        nguồn chương nằm NGOÀI thư mục dự án
-    book.json                phần nghe (phiên bản 2): như `book.json` của file `.abook`; mục `package.files` liệt kê cỡ + mã
-                             băm các file nghe được. Chỉ có khi dự án đã có chương xong lúc đóng gói
-    cast.json, scripts/<chương>.json, samples/<câu>.wav, music/<sha1>.mp3
+    views/<tên>.json         bản chụp chỉ đọc (project_views.py)
+    book.json                phần nghe: như `book.json` của file `.abook`; mục `package.files` liệt kê cỡ + mã băm các mục
+                             nghe được. Chỉ có khi dự án đã có chương xong lúc đóng gói
+    cast.json, chapters/<tên>.mp3, scripts/<chương>.json, samples/<câu>.wav, music/<sha1>.mp3, edits.json, edits/cover.jpg
                              như trong file `.abook`; nhạc nền lấy từ bộ đệm của máy (tải khi cần)
 
 Sổ dự án ghi đường dẫn tuyệt đối (chương nguồn, MP3, WAV). Mở ở chỗ mới thì các cột đường dẫn THƯỜNG được viết lại:
@@ -32,6 +46,7 @@ sai; nghe, xem kịch bản, xuất sách vẫn được.
 Đóng gói chỉ khi dự án không chạy: worker đang ghi thì không có bản chụp nào vừa đúng sổ vừa đúng file.
 
     python -m abook.webui.projectfile pack <thư mục dự án> [-o file]
+    python -m abook.webui.projectfile repack <thư mục sách đã nhập> -o file
     python -m abook.webui.projectfile verify <file>
     python -m abook.webui.projectfile open <file> <thư viện>
 """
@@ -53,13 +68,17 @@ from datetime import UTC, datetime
 from pathlib import Path, PureWindowsPath
 from typing import Any, Callable, Self
 
-from . import bookfile, covers, store
+from . import book_edits, bookfile, covers, project_views, store
+from .fingerprints import content_key
 
 EXTENSION = ".abookproj"
 MIMETYPE = "application/vnd.ngdtuanh.abookproj+zip"
 FORMAT = "abookproj"
-# 1 = dự án thuần; 2 = thêm phần nghe (`book.json` + cast/scripts/samples/music). Đọc được cả hai, mới hơn thì từ chối.
-FORMAT_VERSION = 2
+# 3 = bí danh (không lưu hai lần), views/, `workshop`, lớp sửa của người nghe. Chỉ đọc đúng phiên bản này: app chưa phát hành
+# cho ai nên không giữ đường đọc cho định dạng cũ (chủ sách 03-10); mới hơn thì nhắc cập nhật app.
+FORMAT_VERSION = 3
+PRESENT = "present"
+PENDING = "pending"
 MANIFEST = "project.json"
 MAX_ENTRIES = 1_000_000
 MAX_JSON_BYTES = 64 * 1024 * 1024
@@ -70,8 +89,7 @@ _SKIP_SUFFIXES = (".part", ".tmp", ".abook", EXTENSION)
 _STORED = (".mp3", ".wav", ".jpg", ".png", ".flac", ".ogg", ".opus", ".m4a", ".zip")
 _PATH_COLUMNS = {"project_root", "input_path", "output_mp3", "path"}
 _PART = re.compile(r"[^\x00-\x1f<>:\"|?*\\/]+")
-# Audio chương trong gói: chỗ nó nằm trong thư mục dự án (store.chapter_mp3) - `book.json` của phần nghe trỏ tới đây.
-_CHAPTER_AUDIO = re.compile(r"project/output/chapters/[^\x00-\x1f<>:\"|?*\\/]+\.mp3")
+_VIEW = re.compile(r"views/(?:" + "|".join(project_views.VIEWS) + r")\.json")
 _CHUNK = 1024 * 1024
 
 
@@ -118,20 +136,37 @@ def _sources(database: Path, project_root: Path) -> dict[str, str]:
 def _listening_book(project_root: Path, files: dict[str, Path | bytes],
                     music_track: Callable[[str], Path | None] | None) -> dict[str, Any] | None:
     """Phần nghe của dự án (`book.json` chưa có `package`; các file đi cùng vào `files`), hay None nếu chưa có chương nào
-    xong - dự án mới bắt đầu vẫn sao lưu được, chỉ chưa có gì để nghe. Audio chương không chép lại: `book.json` trỏ tới mục
-    `project/output/chapters/...` đã có trong `files`."""
-    audio = {path.resolve(): name for name, path in files.items()
-             if isinstance(path, Path) and _CHAPTER_AUDIO.fullmatch(name)}
-    book, layer = bookfile.listening_layer(project_root, music_track, audio_entry=lambda path: audio.get(path.resolve()))
+    xong - dự án mới bắt đầu vẫn sao lưu được, chỉ chưa có gì để nghe."""
+    book, layer = bookfile.listening_layer(project_root, music_track)
     if not any(chapter.get("file") for chapter in book["chapters"]):
         return None
     files.update(layer)
     return book
 
 
-def _listening_name(name: str) -> bool:
-    """Mục của gói thuộc phần nghe: file như trong `.abook`, hay audio chương nằm trong thư mục dự án."""
-    return bookfile.LISTENING_ENTRY.fullmatch(name) is not None or _CHAPTER_AUDIO.fullmatch(name) is not None
+def listening_name(name: str) -> bool:
+    """Mục của gói thuộc phần nghe: đúng tên mục của một file `.abook` (phiên bản mới nhất)."""
+    return bookfile.LISTENING_ENTRY.fullmatch(name) is not None
+
+
+def aliasable(name: str) -> bool:
+    return name.lower().endswith(_STORED)
+
+
+def aliases_for(described: dict[str, dict[str, Any]]) -> dict[str, str]:
+    """{bí danh: mục thật}: mục media trùng cỡ + mã băm với mục khác thì chỉ MỘT mục (mục thật) nằm trong gói. Mục thật là mục
+    của phần nghe nếu có (không thì mục đứng đầu theo tên) - để người chỉ nghe không phải lần theo bí danh. Cùng luật ở
+    BookDocumentWriter.kt."""
+    groups: dict[tuple[int, str], list[str]] = {}
+    for name, meta in described.items():
+        if aliasable(name) and meta["size"] > 0:
+            groups.setdefault((meta["size"], meta["sha256"]), []).append(name)
+    aliases: dict[str, str] = {}
+    for names in groups.values():
+        if len(names) > 1:
+            keeper = min(names, key=lambda name: (not listening_name(name), name))
+            aliases.update({name: keeper for name in names if name != keeper})
+    return aliases
 
 
 def _snapshot(database: Path, target: Path) -> None:
@@ -161,8 +196,6 @@ def pack(project_root: Path, out: Path | None = None, *, running: bool = False, 
         raise ProjectFileError("Dự án đang chạy. Đóng gói khi nó đã chạy xong hoặc đã dừng.")
     title = store.summarize(project_root, running=False).get("title") or project_root.name
     out = Path(out) if out is not None else project_root.parent / default_name(title)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    temporary = out.with_name(f".{out.name}.{secrets.token_hex(4)}.part")
     with tempfile.TemporaryDirectory(prefix="abookproj-") as scratch:
         database = Path(scratch) / store.DB_NAME
         _snapshot(project_root / store.DB_NAME, database)
@@ -178,47 +211,151 @@ def pack(project_root: Path, out: Path | None = None, *, running: bool = False, 
         if cover is not None:
             files[covers.COVER_FILE] = cover
         book = _listening_book(project_root, files, music_track)
-        described = {name: bookfile.describe(source) for name, source in sorted(files.items())}
-        if book is not None:
-            book["package"] = {
-                "format": bookfile.FORMAT,
-                "version": bookfile.package_version(book),
-                "createdAt": datetime.now(UTC).isoformat(timespec="seconds"),
-                "producer": producer,
-                "files": {name: meta for name, meta in described.items() if _listening_name(name)},
-            }
-            files[bookfile.MANIFEST] = bookfile.json_bytes(book)
-            described[bookfile.MANIFEST] = bookfile.describe(files[bookfile.MANIFEST])
-        manifest = {
-            "format": FORMAT,
-            "version": FORMAT_VERSION,
-            "createdAt": datetime.now(UTC).isoformat(timespec="seconds"),
-            "producer": producer,
-            "title": title,
-            "projectRoot": str(project_root),
-            "sources": [{"path": old, "entry": entry} for old, entry in sources.items()],
-            "missingSources": missing,
-            "files": dict(sorted(described.items())),
-        }
-        try:
-            with zipfile.ZipFile(temporary, "w", allowZip64=True) as archive:
-                archive.writestr(_entry("mimetype", stored=True), MIMETYPE)
-                archive.writestr(_entry(MANIFEST), json.dumps(manifest, ensure_ascii=False, indent=1).encode("utf-8"))
-                bookfile.write_entries(archive, files, order=_order, stored_suffixes=_STORED)
-            with temporary.open("rb+") as handle:
-                os.fsync(handle.fileno())
-            os.replace(temporary, out)
-        except BaseException:
-            temporary.unlink(missing_ok=True)
-            raise
+        files.update(project_views.snapshot(project_root))
+        return _seal(out, files, book, producer=producer, title=title, workshop=PRESENT, project_root=str(project_root),
+                     sources=[{"path": old, "entry": entry} for old, entry in sources.items()], missing=missing,
+                     version=bookfile.package_version(book) if book is not None else 1)
+
+
+def repack(folder: Path, out: Path, *, producer: str = "ABook") -> Path:
+    """Đóng lại một cuốn ĐÃ NHẬP (thư mục trong thư viện: giải nén từ `.abook`, hay từ `.abookproj` mà máy không mở thành dự án)
+    thành file `.abookproj`: lớp sách y nguyên cộng lớp sửa của người nghe (bookfile.book_layer - cùng hàm với `bookfile.repack`),
+    `views/`, và phần xưởng nếu cuốn vốn đến từ một dự án (`project.json` + `project/` + `sources/` copy NGUYÊN BYTE, không mở
+    sổ dự án). Cuốn không có xưởng (từ `.abook`) ra file `workshop: "pending"`: máy có Studio mời "Dựng xưởng"."""
+    folder = Path(folder)
+    try:
+        book, files, known, edits = bookfile.book_layer(folder)
+    except bookfile.BookFileError as exc:
+        raise ProjectFileError(str(exc)) from exc
+    kept = _kept_manifest(folder)
+    sources: list[Any] = []
+    missing: list[str] = []
+    project_root = ""
+    workshop = PENDING
+    if kept is not None:
+        workshop, project_root, sources, missing = kept["workshop"], kept["projectRoot"], kept["sources"], kept["missingSources"]
+        for name, meta in kept["files"].items():
+            if not name.startswith(("project/", "sources/")):
+                continue
+            path = folder.joinpath(*name.split("/"))
+            if not path.is_file() and name in kept["aliases"]:
+                path = folder.joinpath(*kept["aliases"][name].split("/"))  # bí danh: byte của mục thật, ở đâu đó trong thư mục
+            if not path.is_file():
+                raise ProjectFileError(f"Thư mục sách thiếu file {name}.")
+            files[name], known[name] = path, meta
+    for view in project_views.available(folder):
+        files[project_views.entry(view)] = folder / project_views.entry(view)
+    title = str(book_edits.apply_manifest(book, edits).get("title") or folder.name)
+    return _seal(Path(out), files, book, producer=producer, title=title, workshop=workshop, project_root=project_root,
+                 sources=sources, missing=missing, version=bookfile.layer_version(book, files, edits), known=known)
+
+
+def _kept_manifest(folder: Path) -> dict[str, Any] | None:
+    """`project.json` mà `ProjectFile.extract` để lại trong thư mục một cuốn nhập từ `.abookproj` (None: cuốn từ file `.abook`)."""
+    try:
+        manifest = json.loads((folder / MANIFEST).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if not isinstance(manifest, dict) or manifest.get("workshop") not in (PRESENT, PENDING):
+        return None
+    files, aliases, sources = manifest.get("files"), manifest.get("aliases"), manifest.get("sources")
+    missing = manifest.get("missingSources")
+    if (not isinstance(files, dict) or not isinstance(aliases, dict) or not isinstance(sources, list)
+            or not isinstance(missing, list) or not isinstance(manifest.get("projectRoot"), str)):
+        return None
+    return {"workshop": manifest["workshop"], "projectRoot": manifest["projectRoot"], "sources": sources,
+            "missingSources": missing, "files": files, "aliases": aliases}
+
+
+def _described(files: dict[str, Path | bytes], known: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    """Cỡ + mã băm từng mục. Cùng một file trên đĩa (audio chương nằm ở `chapters/` lẫn `project/output/chapters/`) chỉ băm một lần."""
+    by_path: dict[str, dict[str, Any]] = {}
+    out: dict[str, dict[str, Any]] = {}
+    for name, source in sorted(files.items()):
+        if not isinstance(source, Path):
+            out[name] = bookfile.describe(source)
+            continue
+        key = os.path.normcase(str(source.resolve()))
+        if key not in by_path:
+            by_path[key] = bookfile.described(name, source, known)
+        out[name] = by_path[key]
     return out
 
 
+def _seal(out: Path, files: dict[str, Path | bytes], book: dict[str, Any] | None, *, producer: str, title: str, workshop: str,
+          project_root: str, sources: list[Any], missing: list[str], version: int,
+          known: dict[str, dict[str, Any]] | None = None) -> Path:
+    """Ghi `book.package` và `project.json` rồi gói ZIP: file tạm cạnh đích, thay nguyên tử. Mục trùng byte thành bí danh."""
+    described = _described(files, known or {})
+    aliases = aliases_for(described)
+    created = datetime.now(UTC).isoformat(timespec="seconds")
+    if book is not None:
+        book["package"] = {
+            "format": bookfile.FORMAT,
+            "version": version,
+            "createdAt": created,
+            "producer": producer,
+            "files": {name: meta for name, meta in described.items() if listening_name(name)},
+        }
+        files[bookfile.MANIFEST] = bookfile.json_bytes(book)
+        described[bookfile.MANIFEST] = bookfile.describe(files[bookfile.MANIFEST])
+    elif workshop == PENDING:
+        raise ProjectFileError("Sách chưa có chương nào nghe được để lưu thành dự án.")
+    manifest = {
+        "format": FORMAT,
+        "version": FORMAT_VERSION,
+        "createdAt": created,
+        "producer": producer,
+        "title": title,
+        "workshop": workshop,
+        "projectRoot": project_root,
+        "sources": sources,
+        "missingSources": missing,
+        "aliases": dict(sorted(aliases.items())),
+        "files": dict(sorted(described.items())),
+    }
+    out.parent.mkdir(parents=True, exist_ok=True)
+    temporary = out.with_name(f".{out.name}.{secrets.token_hex(4)}.part")
+    try:
+        with zipfile.ZipFile(temporary, "w", allowZip64=True) as archive:
+            archive.writestr(_entry("mimetype", stored=True), MIMETYPE)
+            archive.writestr(_entry(MANIFEST), json.dumps(manifest, ensure_ascii=False, indent=1).encode("utf-8"))
+            bookfile.write_entries(archive, {name: source for name, source in files.items() if name not in aliases},
+                                   order=_order, stored_suffixes=_STORED)
+        with temporary.open("rb+") as handle:
+            os.fsync(handle.fileno())
+        os.replace(temporary, out)
+    except BaseException:
+        temporary.unlink(missing_ok=True)
+        raise
+    return out
+
+
+class _Resolved:
+    """Gói như `zipfile.ZipFile` cho `book_edits.read_layer`: mục là bí danh thì đọc byte của mục thật."""
+
+    def __init__(self, archive: zipfile.ZipFile, aliases: dict[str, str]) -> None:
+        self._archive, self._aliases = archive, aliases
+
+    def getinfo(self, name: str) -> zipfile.ZipInfo:
+        return self._archive.getinfo(self._aliases.get(name, name))
+
+    def read(self, name: str) -> bytes:
+        return self._archive.read(self._aliases.get(name, name))
+
+    def open(self, member: str | zipfile.ZipInfo) -> Any:
+        return self._archive.open(member)
+
+
 class ProjectFile:
-    """Một file dự án đã mở và đã kiểm hình dạng (mã băm: `verify()`; `open_into()` tự kiểm)."""
+    """Một file dự án đã mở và đã kiểm hình dạng (mã băm: `verify()`; `open_into()` / `extract()` tự kiểm)."""
 
     def __init__(self, path: Path) -> None:
         self.path = Path(path)
+        self.last_merge: dict[str, Any] | None = None
+        self.book: dict[str, Any] | None = None
+        self._edits: dict[str, Any] = book_edits.empty()
+        self._cover: bytes | None = None
         try:
             self._zip = zipfile.ZipFile(self.path)
         except (zipfile.BadZipFile, OSError) as exc:
@@ -243,6 +380,11 @@ class ProjectFile:
         return str(self.manifest.get("title") or "Dự án sách nói")
 
     @property
+    def workshop(self) -> str:
+        """`PRESENT` (có `project/`: mở được thành dự án) hay `PENDING` (chỉ có phần nghe: chờ "Dựng xưởng")."""
+        return str(self.manifest["workshop"])
+
+    @property
     def missing_sources(self) -> list[str]:
         value = self.manifest.get("missingSources")
         return [str(item) for item in value] if isinstance(value, list) else []
@@ -256,9 +398,64 @@ class ProjectFile:
     def size(self) -> int:
         return sum(meta["size"] for meta in self.manifest["files"].values())
 
+    @property
+    def aliases(self) -> dict[str, str]:
+        return self.manifest["aliases"]
+
+    @property
+    def views(self) -> list[str]:
+        return [name for name in project_views.VIEWS if project_views.entry(name) in self.manifest["files"]]
+
+    @property
+    def chapter_prints(self) -> dict[str, dict[str, Any]]:
+        """Cỡ + mã băm audio từng chương - app so với sách đã có để nhận ra cùng một lần sản xuất (như `BookFile.chapter_prints`)."""
+        if self.book is None:
+            return {}
+        return {name: {"size": meta["size"], "sha256": meta["sha256"]}
+                for name, meta in self.book["package"]["files"].items() if name.startswith("chapters/")}
+
+    @property
+    def content_key(self) -> str:
+        """Tên thư mục app đặt cho cuốn này khi nhập thành sách - cùng công thức với `BookFile.content_key`, nên một cuốn mở
+        từ `.abook` rồi từ `.abookproj` của chính nó là một cuốn."""
+        return content_key({name: meta["sha256"] for name, meta in self.chapter_prints.items()})
+
+    @property
+    def edits(self) -> dict[str, Any]:
+        """Lớp sửa của người nghe mà file mang theo (đã kiểm); rỗng khi file không có."""
+        return self._edits
+
+    def edits_cover(self) -> bytes | None:
+        return self._cover
+
+    def read(self, name: str) -> bytes:
+        """Byte của một mục (bí danh thì của mục thật)."""
+        if name not in self.manifest["files"] and name != MANIFEST:
+            raise KeyError(name)
+        return self._zip.read(self.aliases.get(name, name))
+
+    def view(self, name: str) -> Any | None:
+        """Một bản chụp (`views/<name>.json`) đã đọc, hay None khi file không có."""
+        entry = project_views.entry(name)
+        return json.loads(self.read(entry).decode("utf-8")) if entry in self.manifest["files"] else None
+
+    def copy_member(self, name: str, target: Path) -> None:
+        """Chép một mục của gói ra `target` (nguyên tử): bài nhạc người nghe đã ghim, khi nhập lại vào cuốn đã có."""
+        target = Path(target)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        part = target.with_name(f".{target.name}.{secrets.token_hex(4)}.part")
+        try:
+            with self._zip.open(self.aliases.get(name, name)) as source, part.open("wb") as sink:
+                shutil.copyfileobj(source, sink, _CHUNK)
+            os.replace(part, target)
+        finally:
+            part.unlink(missing_ok=True)
+
     def verify(self) -> None:
-        """Mọi file đúng cỡ và mã băm ghi trong `project.json`."""
+        """Mọi mục thật đúng cỡ và mã băm ghi trong `project.json` (bí danh có cỡ + mã băm của mục thật - `_validate` đã kiểm)."""
         for name, expected in self.manifest["files"].items():
+            if name in self.aliases:
+                continue
             digest = hashlib.sha256()
             size = 0
             with self._zip.open(name) as handle:
@@ -268,9 +465,25 @@ class ProjectFile:
             if size != expected["size"] or digest.hexdigest() != expected["sha256"]:
                 raise ProjectFileError(f"File dự án bị hỏng hoặc bị sửa ({name}). Hãy chép lại file từ nguồn.")
 
+    def _copy_checked(self, name: str, destination: Path) -> None:
+        """Chép mục `name` (qua bí danh nếu cần) ra `destination`, kiểm cỡ + mã băm TRONG LÚC chép - một lần đọc."""
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        digest = hashlib.sha256()
+        size = 0
+        with self._zip.open(self.aliases.get(name, name)) as source, destination.open("wb") as sink:
+            while chunk := source.read(_CHUNK):
+                digest.update(chunk)
+                sink.write(chunk)
+                size += len(chunk)
+        expected = self.manifest["files"][name]
+        if size != expected["size"] or digest.hexdigest() != expected["sha256"]:
+            raise ProjectFileError(f"File dự án bị hỏng hoặc bị sửa ({name}). Hãy chép lại file từ nguồn.")
+
     def open_into(self, library: Path) -> tuple[Path, dict[str, Any]]:
         """Kiểm, giải nén vào một thư mục MỚI trong `library` (không bao giờ đè dự án đang có), viết lại đường dẫn
         trong sổ dự án. Thư mục tạm rồi đổi tên: hỏng giữa chừng không để lại nửa dự án. Trả (thư mục, báo cáo)."""
+        if self.workshop != PRESENT:
+            raise ProjectFileError("File này chưa có xưởng - chỉ có phần nghe của sách. Hãy “Dựng xưởng” từ sách đã mở.")
         library = Path(library)
         library.mkdir(parents=True, exist_ok=True)
         if shutil.disk_usage(library).free < self.size * 1.05 + 64 * 1024**2:
@@ -286,9 +499,7 @@ class ProjectFile:
                     destination = staging.joinpath(*name.split("/"))
                 else:
                     continue
-                destination.parent.mkdir(parents=True, exist_ok=True)
-                with self._zip.open(name) as source, destination.open("wb") as sink:
-                    shutil.copyfileobj(source, sink, _CHUNK)
+                self._copy_checked(name, destination)
             sources = {item["path"]: str(target.joinpath(*item["entry"].split("/")))
                        for item in self.manifest["sources"]}
             report = relocate(staging / store.DB_NAME, str(self.manifest["projectRoot"]), str(target), sources)
@@ -297,6 +508,42 @@ class ProjectFile:
             shutil.rmtree(staging, ignore_errors=True)
             raise
         return target, report
+
+    def extract(self, library: Path, folder: str | None = None) -> Path:
+        """Nhập file như MỘT CUỐN SÁCH (không mở thành dự án) vào `library/<folder>/`: phần nghe giải ra y như `BookFile.extract`
+        (bí danh thành file thật), kèm `views/`, `project.json`, và - khi file có xưởng - `project/` + `sources/` NGUYÊN BYTE
+        để lưu lại được (không mở sổ dự án). Dùng khi file chỉ chờ dựng xưởng (`workshop: "pending"`) hay máy không có Studio.
+        Kiểm cỡ + mã băm trong lúc chép; thư mục tạm rồi đổi tên; thư mục đã có thì được thay nhưng phần sửa của người nghe
+        trên máy này được hợp vào (bookfile.keep_local_edits). Báo cáo hợp ở `last_merge`."""
+        library = Path(library)
+        library.mkdir(parents=True, exist_ok=True)
+        files = self.manifest["files"]
+        names = [bookfile.MANIFEST, *sorted(name for name in files if name != bookfile.MANIFEST and (
+            listening_name(name) or _VIEW.fullmatch(name)
+            or (self.workshop == PRESENT and name.startswith(("project/", "sources/")) and name not in self.aliases)))]
+        try:
+            bookfile.ensure_room(library, sum(files[name]["size"] for name in names) + self._zip.getinfo(MANIFEST).file_size)
+        except bookfile.BookFileError as exc:
+            raise ProjectFileError(str(exc)) from exc
+        name = folder or self.content_key
+        target = library / name
+        staging = library / f".{name}.{secrets.token_hex(4)}.part"
+        try:
+            for entry in names:
+                self._copy_checked(entry, staging.joinpath(*entry.split("/")))
+            (staging / MANIFEST).write_bytes(self._zip.read(MANIFEST))
+            self.last_merge = bookfile.keep_local_edits(target, staging, self.edits) if target.exists() else None
+            if target.exists():
+                retired = library / f".{name}.{secrets.token_hex(4)}.old"
+                os.replace(target, retired)
+                os.replace(staging, target)
+                shutil.rmtree(retired, ignore_errors=True)
+            else:
+                os.replace(staging, target)
+        except BaseException:
+            shutil.rmtree(staging, ignore_errors=True)
+            raise
+        return target
 
     def copy_music(self, into: Path) -> int:
         """Chép các bài nhạc nền của gói vào bộ đệm nhạc của máy (`into/<sha1>.mp3`, bài đã có thì giữ): dự án mở ra phát
@@ -308,14 +555,7 @@ class ProjectFile:
             target = Path(into) / name.split("/", 1)[1]
             if target.is_file():
                 continue
-            target.parent.mkdir(parents=True, exist_ok=True)
-            staging = target.with_name(f".{target.name}.{secrets.token_hex(4)}.part")
-            try:
-                with self._zip.open(name) as source, staging.open("wb") as sink:
-                    shutil.copyfileobj(source, sink, _CHUNK)
-                os.replace(staging, target)
-            finally:
-                staging.unlink(missing_ok=True)
+            self.copy_member(name, target)
             copied += 1
         return copied
 
@@ -334,7 +574,7 @@ class ProjectFile:
             if name in names or info.is_dir():
                 raise ProjectFileError(f"Gói có mục trùng hay thư mục lạ: {name!r}.")
             if name not in ("mimetype", MANIFEST, bookfile.MANIFEST) and not (
-                    _listening_name(name) or _safe_entry(name)):
+                    listening_name(name) or _VIEW.fullmatch(name) or _safe_entry(name)):
                 raise ProjectFileError(f"Gói có mục lạ: {name!r}.")
             names.add(name)
             total += info.file_size
@@ -351,33 +591,70 @@ class ProjectFile:
         if not isinstance(manifest, dict) or manifest.get("format") != FORMAT:
             raise ProjectFileError("Đây không phải file dự án ABook.")
         version = manifest.get("version")
-        if not isinstance(version, int) or version < 1:
+        if not isinstance(version, int) or isinstance(version, bool) or version < 1:
             raise ProjectFileError("File dự án có phiên bản định dạng không hợp lệ.")
         if version > FORMAT_VERSION:
             raise ProjectFileError("Dự án này được gói bằng bản app mới hơn. Hãy cập nhật app để mở.")
-        files = manifest.get("files")
+        if version < FORMAT_VERSION:
+            raise ProjectFileError("Dự án này được gói bằng bản app cũ hơn, định dạng không còn được đọc. "
+                                   "Hãy mở nó bằng bản app đã gói nó rồi gói lại.")
         content = names - {"mimetype", MANIFEST}
-        if not isinstance(files, dict) or set(files) != content:
+        aliases = manifest.get("aliases")
+        files = manifest.get("files")
+        if not isinstance(files, dict) or not isinstance(aliases, dict):
+            raise ProjectFileError("Danh sách file trong dự án không khớp nội dung gói.")
+        if manifest.get("workshop") not in (PRESENT, PENDING):
+            raise ProjectFileError("File dự án không nói rõ có xưởng hay chưa.")
+        self._check_aliases(files, aliases, content)
+        if set(files) != content | set(aliases):
             raise ProjectFileError("Danh sách file trong dự án không khớp nội dung gói.")
         for name, meta in files.items():
-            if (not isinstance(meta, dict) or self._zip.getinfo(name).file_size != meta.get("size")
-                    or not isinstance(meta.get("sha256"), str)):
+            if (not isinstance(meta, dict) or not isinstance(meta.get("sha256"), str) or not isinstance(meta.get("size"), int)
+                    or (name in content and self._zip.getinfo(name).file_size != meta["size"])):
                 raise ProjectFileError(f"Mô tả file {name!r} không khớp gói.")
-        if f"project/{store.DB_NAME}" not in content or f"project/{store.SETTINGS_NAME}" not in content:
-            raise ProjectFileError("File dự án thiếu sổ dự án hay cài đặt sách.")
         sources = manifest.get("sources")
         if not isinstance(sources, list) or not isinstance(manifest.get("projectRoot"), str) or any(
                 not isinstance(item, dict) or not isinstance(item.get("path"), str)
-                or item.get("entry") not in content or not str(item.get("entry")).startswith("sources/")
+                or item.get("entry") not in files or not str(item.get("entry")).startswith("sources/")
                 for item in sources):
             raise ProjectFileError("Mô tả nguồn chương trong dự án không hợp lệ.")
+        if manifest["workshop"] == PRESENT:
+            if f"project/{store.DB_NAME}" not in content or f"project/{store.SETTINGS_NAME}" not in content:
+                raise ProjectFileError("File dự án thiếu sổ dự án hay cài đặt sách.")
+        elif any(name.startswith("project/") for name in files):
+            raise ProjectFileError("File dự án chưa có xưởng mà lại mang sổ dự án.")
+        elif bookfile.MANIFEST not in content:
+            raise ProjectFileError("File dự án chưa có xưởng mà cũng không có phần nghe nào.")
+        self.manifest = manifest
+        for name in files:
+            if _VIEW.fullmatch(name) and self._view_problem(name):
+                raise ProjectFileError(f"Bản chụp {name} hỏng.")
         if bookfile.MANIFEST in content:
             self._check_listening(manifest, content)
         return manifest
 
+    def _check_aliases(self, files: dict[str, Any], aliases: dict[str, Any], content: set[str]) -> None:
+        for alias, target in aliases.items():
+            if (not isinstance(alias, str) or not isinstance(target, str) or alias in content or target not in content
+                    or not aliasable(alias) or not aliasable(target) or not (_safe_entry(alias) or listening_name(alias))):
+                raise ProjectFileError(f"Bí danh {alias!r} trong dự án không hợp lệ.")
+            if not isinstance(files.get(alias), dict) or files.get(alias) != files.get(target):
+                raise ProjectFileError(f"Bí danh {alias!r} không khớp mục thật của nó.")
+
+    def _view_problem(self, name: str) -> bool:
+        """Bản chụp quá lớn hay không phải JSON."""
+        if self.manifest["files"][name]["size"] > project_views.MAX_BYTES:
+            return True
+        try:
+            json.loads(self._zip.read(name).decode("utf-8"))
+        except (UnicodeDecodeError, ValueError):
+            return True
+        return False
+
     def _check_listening(self, manifest: dict[str, Any], content: set[str]) -> None:
-        """Phần nghe (`book.json`) khớp phần còn lại của gói: mọi file nó kể có trong gói với đúng cỡ + mã băm ghi ở
-        `project.json`, mọi file nghe được trong gói đều được kể, và chương nào cũng trỏ tới audio có thật."""
+        """Phần nghe (`book.json`) khớp phần còn lại của gói: mọi file nó kể có trong gói (kể cả bí danh) với đúng cỡ + mã băm
+        ghi ở `project.json`, mọi file nghe được trong gói đều được kể, chương nào cũng trỏ tới audio có thật, và lớp sửa của
+        người nghe (nếu có) qua cùng cổng kiểm với file `.abook`."""
         if self._zip.getinfo(bookfile.MANIFEST).file_size > MAX_JSON_BYTES:
             raise ProjectFileError("book.json quá lớn.")
         try:
@@ -388,7 +665,7 @@ class ProjectFile:
         listed = package.get("files") if isinstance(package, dict) else None
         if not isinstance(listed, dict) or package.get("format") != bookfile.FORMAT:
             raise ProjectFileError("Phần nghe của dự án (book.json) không hợp lệ.")
-        listening = {name for name in content if _listening_name(name)}
+        listening = {name for name in manifest["files"] if listening_name(name)}
         if set(listed) != listening or any(
                 not isinstance(meta, dict) or meta != manifest["files"][name] for name, meta in listed.items()):
             raise ProjectFileError("Phần nghe của dự án không khớp nội dung gói.")
@@ -396,6 +673,11 @@ class ProjectFile:
             reference = chapter.get("file") if isinstance(chapter, dict) else None
             if reference and reference not in listed:
                 raise ProjectFileError("Phần nghe của dự án thiếu audio của một chương.")
+        self.book = book
+        try:
+            self._edits, self._cover = book_edits.read_layer(_Resolved(self._zip, manifest["aliases"]), listening)
+        except book_edits.EditsError as exc:
+            raise ProjectFileError(str(exc)) from exc
 
 
 def relocate(database: Path, old_root: str, new_root: str, sources: dict[str, str]) -> dict[str, Any]:
@@ -492,11 +774,17 @@ def _entry(name: str, *, stored: bool = False) -> zipfile.ZipInfo:
 
 
 def main(argv: list[str] | None = None) -> int:
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     commands = parser.add_subparsers(dest="command", required=True)
     pack_command = commands.add_parser("pack", help="gói một dự án thành một file")
     pack_command.add_argument("project", type=Path)
     pack_command.add_argument("-o", "--out", type=Path, default=None)
+    repack_command = commands.add_parser("repack", help="đóng lại một cuốn đã nhập thành file dự án")
+    repack_command.add_argument("folder", type=Path)
+    repack_command.add_argument("-o", "--out", type=Path, required=True)
     commands.add_parser("verify").add_argument("file", type=Path)
     open_command = commands.add_parser("open", help="mở một file dự án vào thư viện")
     open_command.add_argument("file", type=Path)
@@ -510,16 +798,20 @@ def main(argv: list[str] | None = None) -> int:
                     print(f"thiếu nguồn (không gói): {missing}", file=sys.stderr)
             print(packed)
             return 0
+        if args.command == "repack":
+            print(repack(args.folder, args.out))
+            return 0
         with ProjectFile(args.file) as project:
             if args.command == "verify":
                 project.verify()
-                print(f"{project.title} · {len(project.manifest['files'])} file · {project.size} byte · mã băm khớp"
+                print(f"{project.title} · {len(project.manifest['files'])} file ({len(project.aliases)} bí danh) · "
+                      f"{project.size} byte · mã băm khớp"
                       f"{f' · thiếu {len(project.missing_sources)} nguồn' if project.missing_sources else ''}")
             else:
                 target, report = project.open_into(args.library)
                 print(f"{target} · đổi {report['changed']} đường dẫn · {report['outside']} đường dẫn trỏ ra ngoài")
         return 0
-    except ProjectFileError as exc:
+    except (ProjectFileError, bookfile.BookFileError) as exc:
         print(exc, file=sys.stderr)
         return 1
 
