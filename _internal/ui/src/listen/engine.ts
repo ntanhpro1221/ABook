@@ -73,7 +73,8 @@ export interface NativeEngine extends AudioEngine {
   skipBy(delta: number): void;
   next(): void;
   previous(): void;
-  jumpTo(chapterId: number, seconds: number): void;
+  /** `word`: chữ bấm trong chương đọc to (đoạn + thứ tự chữ) - lõi native tự vào đúng mốc chữ. */
+  jumpTo(chapterId: number, seconds: number, word?: { segment: number; word: number }): void;
   setSleep(request: SleepRequest): void;
   extendSleep(minutes?: number): void;
   addBookmark(note: string): Promise<Bookmark>;

@@ -57,7 +57,8 @@ export interface EbookPlayerPlugin {
   seekTo(options: { seconds: number }): Promise<NativeState>;
   skip(options: { delta: number }): Promise<NativeState>;
   setRate(options: { rate: number }): Promise<NativeState>;
-  jumpTo(options: { chapterId: number; seconds: number }): Promise<NativeState>;
+  /** `segment` + `word` (chương đọc to): native vào đúng mốc chữ ấy, kể cả đoạn chưa tạo tiếng - thắng `seconds`. */
+  jumpTo(options: { chapterId: number; seconds: number; segment?: number; word?: number }): Promise<NativeState>;
   getState(): Promise<NativeState>;
   addBookmark(options: { note: string }): Promise<Bookmark>;
   setSleep(options: { mode: "off" | "minutes" | "chapter"; minutes?: number }): Promise<NativeState>;
