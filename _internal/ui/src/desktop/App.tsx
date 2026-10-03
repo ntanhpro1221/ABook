@@ -7,6 +7,7 @@ import { Toaster, toast } from "sonner";
 import { BookScreen } from "@/listen/BookScreen";
 import { ClipProvider } from "@/listen/clip";
 import { WebAudioEngine } from "@/listen/engine";
+import { RoutedEngine } from "@/listen/readAloud";
 import { AddBookButton } from "@/listen/AddBook";
 import { LibraryScreen } from "@/listen/LibraryScreen";
 import { MorningRecap } from "@/listen/MorningRecap";
@@ -455,7 +456,8 @@ export function App() {
   const { data: info } = useAppInfo();
   const { data: preferences } = usePreferences();
   useTheme(preferences?.theme ?? info?.theme);
-  const engine = useMemo(() => new WebAudioEngine(), []);
+  // Chương có audio phát bằng <audio>; chương chỉ-có-chữ ("Nghe ngay") đi qua bộ máy đọc to (listen/readAloud.ts).
+  const engine = useMemo(() => new RoutedEngine(new WebAudioEngine()), []);
   // Màn hẹp (Studio từ xa trên điện thoại): thông báo ở đầu màn như app Android - ở đáy nó đè trình phát nhỏ và thanh
   // điều hướng suốt 8 giây của nút "Hoàn tác" (soát UX 30-09).
   const narrow = useMediaQuery("(max-width: 639px)");

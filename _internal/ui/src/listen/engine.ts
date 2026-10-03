@@ -7,6 +7,7 @@
 // phải chạy khi người nghe đã ngủ không được nằm ở JavaScript.
 
 import type { Bookmark, ListenChapter } from "./model";
+import type { SpeechTrack } from "./readAloud";
 import type { SleepMode, SleepRequest } from "./sleep";
 
 export interface TrackInfo {
@@ -15,6 +16,8 @@ export interface TrackInfo {
   album: string;
   artist: string;
   artwork?: string;
+  /** Chương chỉ-có-chữ (nghe ngay): bộ máy đọc to dựng chương từ các đoạn chữ; `url` bỏ trống (readAloud.ts). */
+  speech?: SpeechTrack;
 }
 
 export type EngineEvent =
@@ -43,6 +46,10 @@ export interface AudioEngine {
   readonly duration: number;
   readonly paused: boolean;
   readonly ended: boolean;
+  /** Lý do lỗi gần nhất, nói bằng lời người nghe hiểu (bộ máy đọc to); không có thì trình phát dùng câu chung. */
+  readonly error?: string;
+  /** Bấm vào một chữ: nghe từ đúng chữ thứ `word` của đoạn `segment` (bộ máy đọc to; chương có audio đi bằng `seek`). */
+  seekWord?(segment: number, word: number): void;
   on(event: EngineEvent, handler: () => void): () => void;
 }
 
@@ -55,6 +62,8 @@ export interface NativeQueue {
   at: number;
   rate: number;
   autoplay: boolean;
+  /** Giọng đọc đã chọn cho cuốn chỉ-có-chữ (mã giọng của plugin ReadAloud); lõi native tự đọc chương chữ bằng giọng này. */
+  readAloudVoice?: string;
 }
 
 export interface NativeEngine extends AudioEngine {

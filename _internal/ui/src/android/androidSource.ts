@@ -2,7 +2,7 @@ import { Capacitor } from "@capacitor/core";
 import type { Cast, ListenBook, ListeningSession, ListeningState, Script } from "@/listen/model";
 import { bookProgress } from "./progress";
 import type { ListenSource } from "@/listen/source";
-import { EbookLibrary, EbookPlayer, type LocalBook } from "./plugins";
+import { EbookLibrary, EbookPlayer, ReadAloud, type LocalBook } from "./plugins";
 import { phoneTextImport } from "./textImport";
 
 // Phía Nghe trên Android: đọc sách đã tải về máy, và sách trên máy tính nghe thẳng qua mạng (EbookLibrary). Audio chương do lõi phát native mở thẳng từ
@@ -67,6 +67,11 @@ export const chapterFiles = new Map<string, Map<number, string>>();
 /** Tên mục chữ của chương chỉ-có-chữ (`texts/<mã>.txt`). */
 const chapterTexts = new Map<string, Map<number, string>>();
 
+/** Tên mục chữ của một chương chỉ-có-chữ - lõi native đọc to chương ấy từ mục này. */
+export function chapterTextEntry(bookId: string, chapterId: number): string {
+  return chapterTexts.get(bookId)?.get(chapterId) ?? `texts/${chapterId}.txt`;
+}
+
 export const androidSource: ListenSource = {
   kind: "android",
   async library() {
@@ -83,9 +88,11 @@ export const androidSource: ListenSource = {
     return toListenBook(book, true);
   },
   async chapterText(bookId, chapterId) {
-    const path = chapterTexts.get(bookId)?.get(chapterId) ?? `texts/${chapterId}.txt`;
-    return (await EbookLibrary.readText({ id: bookId, path })).text;
+    return (await EbookLibrary.readText({ id: bookId, path: chapterTextEntry(bookId, chapterId) })).text;
   },
+  // "Nghe ngay": lõi native tự đọc chương chữ bằng giọng của máy (TextToSpeech); JS chỉ hỏi giọng và mốc (android/readAloud.ts).
+  readAloudVoices: async () => (await ReadAloud.voices()).voices,
+  readAloudTimings: (bookId, chapterId) => ReadAloud.script({ bookId, chapterId }),
   textImport: phoneTextImport,
   async script(bookId, chapterId) {
     const { text } = await EbookLibrary.readText({ id: bookId, path: `scripts/${chapterId}.json` });

@@ -7,7 +7,7 @@ import { formatClock } from "@/shared/format";
 import { Clock, ClockContext } from "./clock";
 import { isNative, type AudioEngine } from "./engine";
 import { MUSIC_CHANGED_EVENT, MusicBed, type MusicCredit } from "./musicBed";
-import { resumePoint, type Bookmark, type ListenBook, type ListenChapter, type NightPosition } from "./model";
+import { canPlay, resumePoint, type Bookmark, type ListenBook, type ListenChapter, type NightPosition } from "./model";
 import { NightRecorder } from "./night";
 import {
   DEFAULT_EXTEND_MINUTES,
@@ -22,7 +22,9 @@ import {
   type SleepMode,
   type SleepRequest,
 } from "./sleep";
-import { useSource } from "./source";
+import type { SpeechTrack } from "./readAloud";
+import { chosenVoice, speechFetcher } from "./readAloudVoice";
+import { chapterScriptQuery, useSource } from "./source";
 
 export type { SleepMode, SleepRequest } from "./sleep";
 
@@ -44,6 +46,13 @@ export interface Track {
   chapterTitle: string;
   /** Hồ sơ nghe đang phát (bộ máy web): mọi lần lưu vào đúng hồ sơ này, kể cả khi máy khác vừa đổi hồ sơ đang dùng. */
   recordId?: string;
+}
+
+/** Chữ thứ `word` của câu thứ `segment` trong chương: bấm vào một chữ ở màn đọc là nghe từ đúng chữ ấy. Chương có audio đi bằng giây (`at`);
+ *  chương đọc to chưa biết chỗ chữ trong clip thì bộ máy đọc đoạn ấy rồi bắt đầu ở chữ (readAloud.ts `seekWord`). */
+export interface WordTarget {
+  segment: number;
+  word: number;
 }
 
 /** "review": nghe kiểm trong Studio - không ghi đè chỗ đang nghe dở của người nghe. */
@@ -83,7 +92,7 @@ export function scheduleWindow(schedule: SleepSchedule | null, now = new Date())
   return start.toDateString();
 }
 
-type BookRef = Pick<ListenBook, "id" | "title" | "narrator" | "state" | "cover" | "records"> & { complete?: boolean };
+type BookRef = Pick<ListenBook, "id" | "title" | "narrator" | "state" | "cover" | "records"> & { complete?: boolean; stage?: ListenBook["stage"] };
 
 function activeRecord(book: BookRef): string | undefined {
   return book.records?.find((record) => record.active)?.id;
@@ -113,7 +122,7 @@ interface PlayerState {
 }
 
 interface PlayerActions {
-  play: (book: BookRef, chapters: ListenChapter[], chapterId: number, at?: number, extra?: { purpose?: Purpose }) => void;
+  play: (book: BookRef, chapters: ListenChapter[], chapterId: number, at?: number, extra?: { purpose?: Purpose; word?: WordTarget }) => void;
   /** Nạp sẵn ở trạng thái dừng (mở lại app: thanh phát có ngay cuốn đang nghe dở, bấm Space là nghe tiếp). */
   prepare: (book: BookRef, chapters: ListenChapter[], chapterId: number, at: number) => void;
   toggle: () => void;
@@ -125,7 +134,7 @@ interface PlayerActions {
   previous: () => void;
   /** `note`: chỗ tới nói bằng lời ("Nghe từ “…”") thay cho giờ trong toast "Đã tới 0:41" - người vừa bấm một câu nhận ra câu,
    *  không nhận ra con số (soát UX 29-09). */
-  jumpTo: (chapterId: number, at?: number, note?: string) => void;
+  jumpTo: (chapterId: number, at?: number, note?: string, word?: WordTarget) => void;
   goBack: () => void;
   setRate: (rate: number) => void;
   setVolume: (volume: number) => void;
@@ -170,7 +179,7 @@ export const EDIT_BOOKMARK_EVENT = "abook:edit-bookmark";
 function availableAfter(queue: ListenChapter[], chapterId: number, step: 1 | -1): ListenChapter | undefined {
   const index = queue.findIndex((chapter) => chapter.id === chapterId);
   for (let cursor = index + step; cursor >= 0 && cursor < queue.length; cursor += step) {
-    if (queue[cursor].available) return queue[cursor];
+    if (canPlay(queue[cursor])) return queue[cursor];
   }
   return undefined;
 }
@@ -293,6 +302,17 @@ export function PlayerProvider({
     if (force) refreshLists(current.bookId);
   }, [engine, native, source, refreshLists]);
 
+  /** Cái bộ máy đọc to cần để đọc một chương chỉ-có-chữ: kịch bản chữ, giọng, nơi lấy clip, nơi ghi mốc thời gian (khoá đúng của màn đọc). */
+  const speechOf = useCallback((bookId: string, chapter: ListenChapter): SpeechTrack => {
+    const query = chapterScriptQuery(source, bookId, chapter);
+    return {
+      script: () => client.fetchQuery(query),
+      voice: () => chosenVoice(bookId),
+      fetchClip: speechFetcher(source, bookId),
+      onScript: (script) => client.setQueryData(query.queryKey, script),
+    };
+  }, [client, source]);
+
   const load = useCallback((next: Track, at: number, autoplay: boolean) => {
     save(true);
     setError("");
@@ -302,9 +322,12 @@ export function PlayerProvider({
     refs.current.savedSpot = { chapterId: next.chapterId, seconds: at };
     clock.set(at, 0);
     refs.current.stamp = Date.now();
+    const chapter = refs.current.queue.find((item) => item.id === next.chapterId);
     engine.load(
       {
-        url: source.audioUrl(next.bookId, next.chapterId),
+        // Chương chỉ-có-chữ: không có file, bộ máy đọc to tự dựng chương từ các đoạn chữ (readAloud.ts).
+        url: chapter?.state === "text" ? "" : source.audioUrl(next.bookId, next.chapterId),
+        speech: chapter?.state === "text" && !native ? speechOf(next.bookId, chapter) : undefined,
         title: next.chapterTitle,
         album: next.bookTitle,
         artist: next.narrator,
@@ -314,7 +337,7 @@ export function PlayerProvider({
       at,
       autoplay,
     );
-  }, [clock, engine, source, save]);
+  }, [clock, engine, native, source, save, speechOf]);
 
   const remember = useCallback((from: { chapterId: number; seconds: number }, to: { chapterId: number; seconds: number }, note?: string) => {
     // Nhảy xa là một đoạn nghe khác: phiên cũ kết thúc ở chỗ trước khi nhảy.
@@ -406,7 +429,8 @@ export function PlayerProvider({
   const adoptBook = useCallback((book: BookRef, chapters: ListenChapter[], purposeValue: Purpose) => {
     setQueue(chapters);
     refs.current.queue = chapters;
-    refs.current.book = { id: book.id, title: book.title, complete: book.complete ?? true };
+    // Sách chỉ-có-chữ không "đang làm": hết chương cuối là hết cuốn, không phải "chờ Studio làm tiếp".
+    refs.current.book = { id: book.id, title: book.title, complete: book.stage === "text" || (book.complete ?? true) };
     refs.current.purpose = purposeValue;
     setPurpose(purposeValue);
     const bookRate = book.state?.rate ?? refs.current.defaultRate;
@@ -426,7 +450,8 @@ export function PlayerProvider({
       setTrack(next);
       refs.current.track = next;
       if (sameSpot) native.play();
-      else native.loadQueue({ bookId: book.id, bookTitle: book.title, narrator: book.narrator, chapters, chapterId, at: at ?? 0, rate: bookRate, autoplay: true });
+      else native.loadQueue({ bookId: book.id, bookTitle: book.title, narrator: book.narrator, chapters, chapterId, at: at ?? 0, rate: bookRate, autoplay: true,
+        readAloudVoice: chosenVoice(book.id) });
       return;
     }
     if (sameSpot) {
@@ -440,11 +465,12 @@ export function PlayerProvider({
       start = Math.max(0, at - rewindAfter(Date.now() - last.at * 1000));
     }
     load(next, start, true);
-  }, [adoptBook, load, native]);
+    if (extra?.word) engine.seekWord?.(extra.word.segment, extra.word.word);
+  }, [adoptBook, engine, load, native]);
 
   const prepare = useCallback<PlayerActions["prepare"]>((book, chapters, chapterId, at) => {
     if (refs.current.track) return;
-    const chapter = chapters.find((item) => item.id === chapterId && item.available);
+    const chapter = chapters.find((item) => item.id === chapterId && canPlay(item));
     if (!chapter) return;
     const bookRate = adoptBook(book, chapters, "listen");
     const next: Track = { bookId: book.id, bookTitle: book.title, bookCover: book.cover ?? null, narrator: book.narrator, chapterId, chapterTitle: chapter.fullTitle,
@@ -453,7 +479,8 @@ export function PlayerProvider({
       setTrack(next);
       refs.current.track = next;
       if (!native.bookId) {
-        native.loadQueue({ bookId: book.id, bookTitle: book.title, narrator: book.narrator, chapters, chapterId, at, rate: bookRate, autoplay: false });
+        native.loadQueue({ bookId: book.id, bookTitle: book.title, narrator: book.narrator, chapters, chapterId, at, rate: bookRate, autoplay: false,
+          readAloudVoice: chosenVoice(book.id) });
       }
       return;
     }
@@ -523,10 +550,10 @@ export function PlayerProvider({
     clock.set(target, engine.duration);
   }, [clock, engine, native, night, position]);
 
-  const jumpTo = useCallback((chapterId: number, at = 0, note?: string) => {
+  const jumpTo = useCallback((chapterId: number, at = 0, note?: string, word?: WordTarget) => {
     const current = refs.current.track;
     const chapter = refs.current.queue.find((item) => item.id === chapterId);
-    if (!current || !chapter || !chapter.available) return;
+    if (!current || !chapter || !canPlay(chapter)) return;
     setAtEnd("none");
     night.touch("chapter", position(), true);
     const from = { chapterId: current.chapterId, seconds: engine.time };
@@ -536,12 +563,15 @@ export function PlayerProvider({
       return;
     }
     if (chapterId === current.chapterId) {
-      engine.seek(at);
-      clock.set(at, engine.duration);
+      // Bấm vào một chữ của chương đọc to: bộ máy tự vào đúng mốc chữ (đã biết thì ngay, chưa thì sau khi đọc xong đoạn ấy).
+      if (word && chapter.state === "text" && engine.seekWord) engine.seekWord(word.segment, word.word);
+      else engine.seek(at);
+      clock.set(engine.time, engine.duration);
       engine.play();
       return;
     }
     load({ ...current, chapterId, chapterTitle: chapter.fullTitle }, at, true);
+    if (word && chapter.state === "text") engine.seekWord?.(word.segment, word.word);
   }, [clock, engine, load, native, night, position, remember]);
 
   const goBack = useCallback(() => {
@@ -584,7 +614,7 @@ export function PlayerProvider({
       // Chương sau có mà chưa có audio: nói ra, kèm đường đọc chữ - trước đây nút mờ và Shift+→ im lặng (soát UX 29-09).
       const queue = refs.current.queue;
       const waiting = direction === 1 ? queue[queue.findIndex((chapter) => chapter.id === current.chapterId) + 1] : undefined;
-      if (waiting && !waiting.available) {
+      if (waiting && !canPlay(waiting)) {
         toast("Chương sau chưa có audio", {
           description: waiting.fullTitle,
           duration: 8000,
@@ -779,7 +809,7 @@ export function PlayerProvider({
     const book = await source.book(bookId);
     const chapters = book.chapters ?? [];
     if (startOver) {
-      const first = chapters.find((chapter) => chapter.available);
+      const first = chapters.find(canPlay);
       if (first) play(book, chapters, first.id, 0);
       return;
     }
@@ -875,7 +905,7 @@ export function PlayerProvider({
       }),
       engine.on("error", () => {
         // Lõi Android nói đúng lý do (nghe thẳng mà mất kết nối với máy tính khác hẳn file hỏng).
-        setError(native?.error || "Không phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại.");
+        setError(native?.error || engine.error || "Không phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại.");
         setBuffering(false);
       }),
       engine.on("chapter", () => {

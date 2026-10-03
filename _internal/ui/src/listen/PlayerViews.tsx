@@ -5,6 +5,7 @@ import * as Slider from "@radix-ui/react-slider";
 import { useQueries, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowDownToLine,
+  AudioLines,
   Bookmark as BookmarkIcon,
   BookmarkPlus,
   Check,
@@ -38,10 +39,11 @@ import { excerpt, formatClock, formatLength, formatPercent, formatWhen, licenseL
 import { IconButton, Tooltip, Vu } from "@/shared/ui";
 import { useClock, useClockReader, useDuration, usePlaybackSecond } from "./clock";
 import { usePlayListenBook, useNextVolume } from "./LibraryScreen";
-import { seriesOf, type Bookmark, type ListenChapter, type Script } from "./model";
+import { canPlay, seriesOf, type Bookmark, type ListenChapter, type Script } from "./model";
 import { EDIT_BOOKMARK_EVENT, SKIP_SECONDS, SPEEDS, useNowPlaying, usePlayer } from "./player";
 import { SLEEP_CHOICES, sleepLabel, sleepLeftMs, sleepSpoken } from "./sleep";
-import { useListenBook, useListenMutations, useScript, useSource } from "./source";
+import { ONLINE_NOTICE, chooseVoice, chosenVoice, resolveVoice } from "./readAloudVoice";
+import { chapterScriptQuery, useChapterScript, useListenBook, useListenMutations, useReadAloudVoices, useSource } from "./source";
 
 export function speedLabel(rate: number): string {
   return `${rate.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}×`;
@@ -182,7 +184,7 @@ function Transport({ large = false }: { large?: boolean }) {
   const [hasNext, hasLater] = useMemo(() => {
     const index = queue.findIndex((chapter) => chapter.id === track?.chapterId);
     const later = queue.slice(index + 1);
-    return [later.some((chapter) => chapter.available), later.length > 0];
+    return [later.some(canPlay), later.length > 0];
   }, [queue, track?.chapterId]);
   const size = large ? "lg" : "sm";
   return (
@@ -298,6 +300,45 @@ export function SpeedMenu() {
           Phím <kbd className="font-semibold">[</kbd> và <kbd className="font-semibold">]</kbd> để giảm, tăng.
         </p>
       )}
+    </MenuShell>
+  );
+}
+
+/** Giọng đọc của "Nghe ngay" (chương chỉ-có-chữ đang nghe): chọn nhớ riêng cho cuốn này và làm giọng chung cho cuốn khác; đổi giữa chừng
+ *  có hiệu lực từ đoạn kế. Không hiện khi đang nghe chương có audio. */
+export function VoiceMenu() {
+  const { track, queue } = usePlayer();
+  const { data: voices } = useReadAloudVoices();
+  const [chosen, setChosen] = useState("");
+  const speaking = queue.find((chapter) => chapter.id === track?.chapterId)?.state === "text";
+  useEffect(() => setChosen(track ? chosenVoice(track.bookId) : ""), [track]);
+  if (!track || !speaking || !voices?.length) return null;
+  const current = resolveVoice(voices, chosen);
+  return (
+    <MenuShell label="Giọng đọc" trigger={<><AudioLines className="size-4" /><span className="max-w-24 truncate max-sm:hidden">{current?.name}</span></>} width="w-64">
+      <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Giọng đọc · nhớ riêng cho cuốn này</div>
+      <div className="flex flex-col gap-0.5 p-1">
+        {voices.map((voice) => (
+          <Popover.Close asChild key={voice.id}>
+            <button
+              type="button"
+              aria-pressed={voice.id === current?.id}
+              onClick={() => {
+                chooseVoice(track.bookId, voice.id);
+                setChosen(voice.id);
+              }}
+              className={cn(
+                "flex h-9 items-center justify-between gap-2 rounded-lg px-2 text-left text-sm hover:bg-hover",
+                voice.id === current?.id ? "bg-accent-soft font-semibold text-accent-text" : "text-fg",
+              )}
+            >
+              <span className="truncate">{voice.name}</span>
+              <span className="shrink-0 text-xs font-normal text-fg-2">{voice.online ? "trực tuyến" : "của máy"}</span>
+            </button>
+          </Popover.Close>
+        ))}
+      </div>
+      {current?.online && <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{ONLINE_NOTICE}</p>}
     </MenuShell>
   );
 }
@@ -700,7 +741,7 @@ function FurtherElsewhere() {
     if (last.chapterId === track.chapterId && Math.abs(last.seconds - here) < 30) return;
     asked.current = key;
     const chapter = queue.find((item) => item.id === last.chapterId);
-    if (!chapter?.available) return;
+    if (!chapter || !canPlay(chapter)) return;
     toast("Thiết bị khác đã nghe tới chỗ khác", {
       id: "further-elsewhere",
       duration: 20_000,
@@ -821,6 +862,7 @@ export function PlayerBar({
         </div>
         <div className="flex min-w-0 items-center justify-end gap-0.5">
           {extra}
+          <VoiceMenu />
           <SpeedMenu />
           <SleepMenu />
           <BookmarkButton />
@@ -839,7 +881,8 @@ function ReadAlong() {
   const { track, seek, playing, queue } = usePlayer();
   const source = useSource();
   const client = useQueryClient();
-  const { data: script, isLoading } = useScript(track?.bookId, track?.chapterId);
+  const current = queue.find((chapter) => chapter.id === track?.chapterId);
+  const { data: script, isLoading } = useChapterScript(track?.bookId, current);
   const container = useRef<HTMLDivElement | null>(null);
   const [following, setFollowing] = useState(true);
   const starts = useMemo(() => (script?.timed ? script.segments.map((segment) => segment.start ?? 0) : []), [script]);
@@ -852,14 +895,8 @@ function ReadAlong() {
   useEffect(() => {
     if (!nearEnd || !track) return;
     const index = queue.findIndex((chapter) => chapter.id === track.chapterId);
-    const upcoming = queue.slice(index + 1).find((chapter) => chapter.available);
-    if (upcoming) {
-      void client.prefetchQuery({
-        queryKey: ["listen", "script", track.bookId, upcoming.id],
-        queryFn: () => source.script(track.bookId, upcoming.id),
-        staleTime: Infinity,
-      });
-    }
+    const upcoming = queue.slice(index + 1).find(canPlay);
+    if (upcoming) void client.prefetchQuery(chapterScriptQuery(source, track.bookId, upcoming));
   }, [client, nearEnd, queue, source, track]);
 
   const scrolled = useRef(false);
@@ -1012,12 +1049,12 @@ function ChapterPanel() {
             key={chapter.id}
             type="button"
             data-current={current}
-            disabled={!chapter.available}
+            disabled={!canPlay(chapter)}
             aria-current={current ? "true" : undefined}
             onClick={() => jumpTo(chapter.id)}
             className={cn(
               "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left",
-              current ? "bg-accent-soft" : chapter.available && "hover:bg-hover",
+              current ? "bg-accent-soft" : canPlay(chapter) && "hover:bg-hover",
             )}
           >
             <span className="grid w-5 shrink-0 place-items-center">
@@ -1028,12 +1065,12 @@ function ChapterPanel() {
               ) : null}
             </span>
             <span className="min-w-0 flex-1">
-              <span className={cn("block truncate text-sm font-medium", current && "text-accent-text", !chapter.available && "text-fg-2")}>
+              <span className={cn("block truncate text-sm font-medium", current && "text-accent-text", !canPlay(chapter) && "text-fg-2")}>
                 {chapter.subtitle || chapter.title}
               </span>
               <span className="tabular block truncate text-xs text-fg-2">
                 {chapter.subtitle ? `${chapter.title} · ` : ""}
-                {chapter.available ? formatLength(chapter.duration) : chapterStatusLabel(Boolean(book?.producing))}
+                {chapter.available ? formatLength(chapter.duration) : chapter.speech ? "Giọng máy đọc" : chapterStatusLabel(Boolean(book?.producing))}
               </span>
             </span>
           </button>
@@ -1441,6 +1478,7 @@ export function NowPlaying({ mobile = false, actions }: { mobile?: boolean; acti
           <Transport large />
         </div>
         <div className="mt-4 flex items-center justify-center gap-1">
+          <VoiceMenu />
           <SpeedMenu />
           <SleepMenu />
           <BookmarkButton />
