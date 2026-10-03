@@ -113,8 +113,8 @@ export class NativeAudioEngine implements NativeEngine {
     void EbookPlayer.previous().then((state) => this.receive(state));
   }
 
-  jumpTo(chapterId: number, seconds: number): void {
-    void EbookPlayer.jumpTo({ chapterId, seconds }).then((state) => this.receive(state));
+  jumpTo(chapterId: number, seconds: number, word?: { segment: number; word: number }): void {
+    void EbookPlayer.jumpTo({ chapterId, seconds, ...(word ?? {}) }).then((state) => this.receive(state));
   }
 
   setSleep(request: SleepRequest): void {

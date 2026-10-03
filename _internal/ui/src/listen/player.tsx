@@ -452,6 +452,8 @@ export function PlayerProvider({
       if (sameSpot) native.play();
       else native.loadQueue({ bookId: book.id, bookTitle: book.title, narrator: book.narrator, chapters, chapterId, at: at ?? 0, rate: bookRate, autoplay: true,
         readAloudVoice: chosenVoice(book.id) });
+      // Bấm một chữ của chương đọc to khi cuốn chưa phát: hàng đợi vừa nạp, rồi lõi vào đúng chữ ấy.
+      if (!sameSpot && extra?.word && chapter.state === "text") native.jumpTo(chapterId, at ?? 0, extra.word);
       return;
     }
     if (sameSpot) {
@@ -559,7 +561,7 @@ export function PlayerProvider({
     const from = { chapterId: current.chapterId, seconds: engine.time };
     if (chapterId !== current.chapterId || Math.abs(at - from.seconds) > JUMP_SECONDS) remember(from, { chapterId, seconds: at }, note);
     if (native) {
-      native.jumpTo(chapterId, at);
+      native.jumpTo(chapterId, at, word && chapter.state === "text" ? word : undefined);
       return;
     }
     if (chapterId === current.chapterId) {
