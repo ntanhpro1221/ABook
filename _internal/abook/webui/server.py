@@ -32,7 +32,7 @@ from .. import aliases, bracket_rule, continuation, importers, listener_override
 from ..io_utils import atomic_write_json
 from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, edits_inbox, ffmpeg_setup, humanize, listen_view,
                music_catalog, music_local, music_module, music_plan, music_select, music_student, packages, project_views,
-               projectfile, reading_preview, remote_config, shared_readings, store, textbook, volumes, workshop)
+               projectfile, reading_preview, remote_config, shared_readings, store, textbook, volumes, word_timing, workshop)
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, clean_book_templates, legacy_ids
 from .listening import RECORD_ID, Listening
@@ -239,6 +239,9 @@ class App:
         self.update: dict[str, Any] | None = None
         self.shell: Callable[[dict[str, Any]], None] | None = None
         self.studio: Any = None
+        # Mốc từng chữ khi nghe (word_timing.py): app đóng gói không có numpy nên giao việc căn cho Python của Studio.
+        word_timing.configure(lambda: self.studio)
+        self.word_jobs = word_timing.Job()
         # "Nghe thử" một cách đọc tên trước khi lưu (reading_preview.py): một tiến trình giọng dùng chung, tắt trước khi cuốn nào chạy.
         self.previews = reading_preview.ReadingPreviews(
             preferences.path.with_name("reading-previews"), studio=lambda: self.studio, fake=self._fake_engine,
@@ -2376,6 +2379,24 @@ class Handler(BaseHTTPRequestHandler):
         self.app.exports.add(result["folder"])
         self._send_json(HTTPStatus.OK, result)
 
+    def get_word_timings(self, _query: dict[str, list[str]], value: str) -> None:
+        # "Căn từ cho sách đã làm": tiến độ + số câu đã có mốc chữ (word_timing.Job.status).
+        self._send_json(HTTPStatus.OK, self.app.word_jobs.status(self.app._book(value)))
+
+    def post_word_timings(self, _query: dict[str, list[str]], value: str) -> None:
+        # Căn mọi chương của sách đã làm rồi đóng lại file sách trong `output/` kèm mốc chữ (việc nền; hỏi tiến độ bằng GET).
+        project = self.app._book(value)
+        if self.app.runner.running(project) or self.app.jobs.starting(project):
+            raise ApiError(HTTPStatus.CONFLICT, "Sách đang chạy - căn từng chữ khi nó đã chạy xong hoặc đã dừng.")
+        if not word_timing.enabled():
+            raise ApiError(HTTPStatus.CONFLICT, "Căn từng chữ đang bị tắt trên máy này.")
+
+        def repack() -> Path:
+            return bookfile.pack(project, project / "output" / bookfile.default_name(store.summarize(project)["title"] or project.name),
+                                 music_track=self.app.music_export_source())
+
+        self._send_json(HTTPStatus.ACCEPTED, self.app.word_jobs.start(project, repack))
+
     def get_export_size(self, query: dict[str, list[str]], value: str) -> None:
         # Cỡ ước lượng của bản xuất `.abook` (audio các chương nghe được; `series=1`: cả bộ) - hộp Xuất báo trước và cảnh
         # báo khi quá 4 GiB (thẻ nhớ / USB FAT32 không chứa nổi một file lớn hơn).
@@ -3293,6 +3314,8 @@ ROUTES: list[Route] = [
     ("POST", re.compile(r"/api/readings"), Handler.post_shared_readings),
     ("POST", re.compile(BOOK + r"/bookfile"), Handler.post_bookfile),
     ("GET", re.compile(BOOK + r"/export-size"), Handler.get_export_size),
+    ("GET", re.compile(BOOK + r"/word-timings"), Handler.get_word_timings),
+    ("POST", re.compile(BOOK + r"/word-timings"), Handler.post_word_timings),
     ("POST", re.compile(BOOK + r"/projectfile"), Handler.post_projectfile),
     ("POST", re.compile(BOOK + r"/speaker"), Handler.post_speaker),
     ("POST", re.compile(BOOK + r"/voice"), Handler.post_voice),

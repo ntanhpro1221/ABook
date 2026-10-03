@@ -43,7 +43,7 @@ from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import unquote, urlsplit
 
-from . import covers, edits_inbox, listen_view, music_plan, remote_studio, store, tls
+from . import covers, edits_inbox, listen_view, music_plan, remote_studio, store, tls, word_timing
 from .cast import CastError
 from .fingerprints import Fingerprints
 from .library import Library, book_id
@@ -395,9 +395,12 @@ def manifest(project_root: Path, book: str, listening: Listening,
         # Cỡ từng file bài để bên tải kiểm (đủ byte mới đổi tên) và tính tiến độ; file `.abook` không cần (có băm trong gói).
         for name, file in (packed[1].items() if packed else ()):
             music["tracks"][name]["size"] = file.stat().st_size
+    # Mốc chữ đã căn (word_timing.py) nằm trong chữ đọc theo `scripts/<n>.json`: căn xong là một phiên bản mới, điện thoại đã tải sách thấy
+    # "có cập nhật" và lấy lại chữ. Chưa căn thì không vào băm (phiên bản như trước).
+    words = word_timing.stamp(project_root)
     # Đổi ảnh bìa hay nhạc nền cũng là một phiên bản mới của gói: điện thoại thấy "có cập nhật" và tải lại.
     version = hashlib.sha256(json.dumps([[(c["id"], c["size"]) for c in chapters],
-                                         cover["version"] if cover else 0] + ([music] if music else []),
+                                         cover["version"] if cover else 0] + ([music] if music else []) + ([{"words": words}] if words else []),
                                         sort_keys=True).encode()).hexdigest()[:16]
     return {
         "format": listen_view.FORMAT,
@@ -416,6 +419,7 @@ def manifest(project_root: Path, book: str, listening: Listening,
         "samples": [f"samples/{sample}.wav" for sample in samples],
         "cover": {**cover, "file": covers.COVER_FILE} if cover else None,
         **({"music": music} if music else {}),
+        **({"wordsVersion": words} if words else {}),
     }
 
 
@@ -600,6 +604,8 @@ class SyncApp:
                                                  "chaptersAvailable", "complete", "updatedAt", "series")}
             meta = covers.cover_meta(path)
             entry["cover"] = {"color": meta["color"], "version": meta["version"]} if meta else None
+            if words := word_timing.stamp(path):  # điện thoại đã tải sách thấy chữ sáng theo giọng đọc là bản mới (cùng dấu với manifest)
+                entry["wordsVersion"] = words
             out.append(entry)
         return out
 
