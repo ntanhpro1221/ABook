@@ -79,8 +79,10 @@ class TextImportsTest {
         return (0 until all.length()).map { all.getJSONObject(it) }.first { it.getString("name") == name }.getJSONObject("expected").getJSONObject("preview")
     }
 
-    private fun titles(preview: JSONObject): List<String> =
-        preview.getJSONArray("chapters").let { rows -> (0 until rows.length()).map { rows.getJSONObject(it).getString("title") } }
+    private fun titles(preview: JSONObject, ticked: Boolean = false): List<String> =
+        preview.getJSONArray("chapters").let { rows ->
+            (0 until rows.length()).map { rows.getJSONObject(it) }.filter { !ticked || it.getBoolean("included") }.map { it.getString("title") }
+        }
 
     @Test
     fun an_epub_previews_the_chapter_list_python_shows_and_suggests_without_applying() {
@@ -88,13 +90,15 @@ class TextImportsTest {
         assertNull("chỉ PDF mới cần WebView", staged.pdf)
         val preview = TextImports.preview(staged.ref)
         val expected = sharedPreview("epub3")
-        assertEquals(titles(expected), titles(preview))
+        assertEquals(titles(expected), titles(preview, ticked = true))
+        assertEquals(listOf(false, true, true, true), preview.getJSONArray("chapters").let { rows -> (0 until rows.length()).map { rows.getJSONObject(it).getBoolean("included") } })
+        assertTrue("trang đề tựa rất ngắn: hiện ra, chưa tích", preview.getJSONArray("chapters").getJSONObject(0).getBoolean("short"))
         assertEquals(expected.getJSONObject("totals").toString(), preview.getJSONObject("totals").toString())
         assertEquals("Chuyến phà cuối ngày", preview.getString("title"))
         assertEquals("Lê Thử Nghiệm", preview.getString("author"))
         val notes = (0 until preview.getJSONArray("notes").length()).map { preview.getJSONArray("notes").getString(it) }
         assertTrue(notes.any { it.contains("ghi công") && it.contains("không tự bỏ") })
-        assertTrue(StrictJson.equal(StrictJson.parse("""[{"chapter": 2, "line": "Dịch: Nhóm Lục Bình"}]"""), preview.getJSONArray("suggestions")))
+        assertTrue(StrictJson.equal(StrictJson.parse("""[{"chapter": 3, "line": "Dịch: Nhóm Lục Bình"}]"""), preview.getJSONArray("suggestions"))) // số hàng của bước xem trước
         assertTrue(preview.isNull("existing"))
         assertEquals("chưa ghi gì vào thư viện", 0, Store.books().size)
     }
@@ -110,6 +114,67 @@ class TextImportsTest {
         assertEquals("new", copy.getString("how"))
         assertEquals(first.getString("id") + "-2", copy.getString("id"))
         assertEquals("Bản thứ hai", Store.manifest(copy.getString("id"))!!.getString("title"))
+    }
+
+    @Test
+    fun a_listener_unticks_chapters_renames_one_and_brings_back_a_short_item() {
+        val ref = stageFile("epub3.epub").ref
+        TextImports.preview(ref)
+        val picks = TextImports.picksOf(
+            JSONArray().put(JSONObject().put("index", 1).put("title", "Trang đề tựa")).put(JSONObject().put("index", 3).put("title", "  Người   khách  ")).put(JSONObject().put("index", 4)),
+        )
+        val added = TextImports.create(ref, "", cache, picks = picks)
+        assertEquals("new", added.getString("how"))
+        assertEquals(3, added.getInt("chapters"))
+        val id = added.getString("id")
+        val chapters = Store.manifest(id)!!.getJSONArray("chapters")
+        assertEquals(listOf("Trang đề tựa", "Người khách", "Chương 3"), (0 until 3).map { chapters.getJSONObject(it).getString("title") }) // đúng thứ tự trong file
+        assertEquals("Chuyến phà cuối ngày", Store.readText(id, "texts/1.txt")!!.trim()) // mục ngắn vào sách với chữ của nó
+        assertTrue("đổi tên chỉ đổi tên - chữ của chương giữ nguyên", Store.readText(id, "texts/2.txt")!!.startsWith("Chương 2: Người khách lạ\n\nDịch: Nhóm Lục Bình"))
+        // Bộ chương mặc định khác bộ này: một cuốn khác. Tên khác thì không (tên không nằm trong chữ).
+        val other = stageFile("epub3.epub").ref
+        assertTrue(TextImports.preview(other).isNull("existing"))
+        assertEquals("new", TextImports.create(other, "", cache).getString("how"))
+        val third = stageFile("epub3.epub").ref
+        assertEquals(2, Store.books().size)
+        TextImports.preview(third)
+        assertEquals("existing", TextImports.create(third, "", cache, picks = listOf(2 to "Tên khác", 3 to "", 4 to "")).getString("how"))
+    }
+
+    @Test
+    fun a_txt_keeps_its_own_heading_line_when_the_listener_renames_the_chapter() {
+        val ref = stageFile("whole.txt").ref
+        TextImports.preview(ref, splitChapters = true)
+        val added = TextImports.create(ref, "", cache, picks = listOf(1 to "Lời mở", 3 to "Khách lạ"))
+        val id = added.getString("id")
+        val chapters = Store.manifest(id)!!.getJSONArray("chapters")
+        assertEquals(listOf("Lời mở", "Khách lạ"), (0 until chapters.length()).map { chapters.getJSONObject(it).getString("title") })
+        assertTrue(Store.readText(id, "texts/2.txt")!!.startsWith("Chương 2: Người khách lạ\nDịch: Nhóm Lục Bình"))
+    }
+
+    @Test
+    fun a_choice_with_no_chapters_or_a_wrong_list_is_refused_and_adds_nothing() {
+        val ref = stageFile("epub3.epub").ref
+        TextImports.preview(ref)
+        for (picks in listOf(emptyList(), listOf(9 to ""), listOf(2 to "", 2 to "Lặp"))) {
+            try {
+                TextImports.create(ref, "", cache, picks = picks)
+                fail("lẽ ra phải từ chối: $picks")
+            } catch (error: BookImport.Failed) {
+                assertTrue(error.message!!, error.message!!.isNotEmpty())
+            }
+        }
+        assertEquals(0, Store.books().size)
+        for (bad in listOf(JSONArray().put(JSONObject().put("index", "2")), JSONArray().put(JSONObject().put("title", "x")), JSONArray().put(JSONObject().put("index", 2).put("title", 5)), JSONArray().put("2"))) {
+            try {
+                TextImports.picksOf(bad)
+                fail("lẽ ra phải từ chối: $bad")
+            } catch (error: BookImport.Failed) {
+                assertEquals("Danh sách chương đã chọn không hợp lệ", error.message)
+            }
+        }
+        assertNull(TextImports.picksOf(null))
+        assertEquals(listOf(3 to "A", 1 to ""), TextImports.picksOf(JSONArray().put(JSONObject().put("index", 3).put("title", "A")).put(JSONObject().put("index", 1))))
     }
 
     @Test

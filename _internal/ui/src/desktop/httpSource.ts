@@ -33,7 +33,14 @@ export function desktopTextImport(dialogs: boolean): TextImport {
     add: (choice, title, separate, options) =>
       api<AddedBook>("/api/listen/import", {
         method: "POST",
-        body: { path: choice.ref, title, separate: Boolean(separate), splitChapters: Boolean(options?.splitChapters) },
+        body: {
+          path: choice.ref,
+          title,
+          separate: Boolean(separate),
+          splitChapters: Boolean(options?.splitChapters),
+          // Chương người dùng giữ + tên mới; không đổi gì thì không gửi (máy chủ lấy các chương mặc định).
+          ...(options?.chapters ? { chapters: options.chapters } : {}),
+        },
       }),
   };
 }

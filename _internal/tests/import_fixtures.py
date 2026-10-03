@@ -14,6 +14,8 @@
     fixtures/import/whole.txt                MỘT file TXT cả truyện: chữ dẫn trước chương đầu, ba dòng "Chương N", một dòng ghi công,
                                              câu văn mở đầu bằng "Chương trình" (không phải tiêu đề). expected/whole.json = KHÔNG tách
                                              (mặc định), expected/whole.split.json = người dùng tích "Tách thành N chương"
+    fixtures/import/expected/keep_short.json epub3 và split đọc với keep_short=True: mục rất ngắn đứng đúng chỗ trong danh sách, short=true,
+                                             `defaults` = các chương tích sẵn (không có mục ngắn), ghi chú "N mục rất ngắn chưa chọn"
     fixtures/import/expected/<tên>.json      kết quả mong đợi (ImportedBook.to_dict, hay {"error": ...})
     fixtures/import/pages/story.pages.json   lớp thô của PDF (pypdf VÀ pdf.js phải ra đúng các dòng này)
 
@@ -482,6 +484,13 @@ def expected_files(root: Path) -> dict[str, bytes]:
     # Một file TXT cả truyện: không tách (mặc định) và có tách (người dùng tích ô gợi ý).
     out["expected/whole.json"] = dumps(importers.import_text(root / "whole.txt").to_dict())
     out["expected/whole.split.json"] = dumps(importers.import_text(root / "whole.txt", split_chapters=True).to_dict())
+    # Bước xem trước giữ cả mục rất ngắn (bìa, trang bản quyền) làm chương CHƯA CHỌN, đúng chỗ của chúng trong file (`keep_short`).
+    kept = {}
+    for name in ("epub3.epub", "split.epub"):
+        book = importers.import_text(root / name, keep_short=True)
+        kept[name] = {"chapters": [{"title": chapter.title, "short": chapter.short, "text": chapter.text} for chapter in book.chapters],
+                      "defaults": [number for number, _name in importers.default_picks(book)], "notes": book.notes}
+    out["expected/keep_short.json"] = dumps(kept)
     pages, title, author = importers.pdf_pages(root / "story.pdf")
     out["pages/story.pages.json"] = dumps({"title": title, "author": author, "pages": pages})
     return out

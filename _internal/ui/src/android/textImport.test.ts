@@ -101,6 +101,14 @@ describe("add and discard", () => {
     expect(library.createImport).toHaveBeenCalledWith({ ref: "i1", title: "Tên tôi đặt", separate: false });
     await phoneTextImport.add({ ref: "i2", name: "x" }, "Bản riêng", true);
     expect(library.createImport).toHaveBeenLastCalledWith({ ref: "i2", title: "Bản riêng", separate: true });
+    library.createImport.mockResolvedValue({ id: "f-abc", how: "new", chapters: 2 });
+    await phoneTextImport.add({ ref: "i3", name: "x" }, "Sách", false, { splitChapters: true, chapters: [{ index: 1, title: "Trang đề tựa" }, { index: 3 }] });
+    expect(library.createImport).toHaveBeenLastCalledWith({
+      ref: "i3",
+      title: "Sách",
+      separate: false,
+      chapters: [{ index: 1, title: "Trang đề tựa" }, { index: 3 }],
+    }); // chương đã chọn + tên mới đi sang Kotlin; việc tách chương thì Kotlin đã giữ từ lần xem trước
     library.discardImport.mockResolvedValue(undefined);
     await phoneTextImport.discard!({ ref: "i1", name: "x" });
     expect(library.discardImport).toHaveBeenCalledWith({ ref: "i1" });
