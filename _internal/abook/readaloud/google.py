@@ -65,6 +65,7 @@ def build_ssml(group: list[tuple[int, str]]) -> str:
 
 class GoogleProvider(byok.KeyedProvider):
     id = "google"
+    speaks_english = True
     name = NAME
     limits = Limits(max_chars=4000, free="Miễn phí mỗi tháng: 4 triệu ký tự giọng Standard, 1 triệu WaveNet / Neural2", timings="exact")
 

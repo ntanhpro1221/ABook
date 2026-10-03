@@ -16,6 +16,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+from abook import english_vi
 from abook.readaloud import prepare, supertonic
 from abook.readaloud.service import ReadAloud
 from abook.readaloud.supertonic import Installed, SupertonicEngine, SupertonicProvider
@@ -93,6 +94,7 @@ def test_voices_list_the_four_good_ones_first_with_gender(fake_voices) -> None:
 
 def test_a_clip_is_a_wav_with_one_timing_per_word(fake_voices, tmp_path: Path) -> None:
     provider, engine = fake_voices
+    provider.speaks_english = False
     service = ReadAloud(tmp_path / "cache", [provider])
     text = "Khi ánh đèn vụt tắt, cả nhà chìm vào bóng tối. Chỉ còn tiếng đồng hồ - đều đặn!"
     clip = service.clip("supertonic:M4", text)
@@ -367,3 +369,31 @@ def test_short_lines_are_read_slower_so_they_are_not_swallowed() -> None:
     assert supertonic.speed_for(long_line) == supertonic.SPEED
     middle = supertonic.speed_for("cậu định đứng đó nhìn tớ mãi à")
     assert supertonic.SHORT_SPEED < middle < supertonic.SPEED
+
+
+# ---- tên và từ nước ngoài (names.spoken_names): Supertonic không nói được âm Anh --------------------------------------------------------------
+def test_english_and_japanese_names_reach_the_model_as_syllables(fake_voices) -> None:
+    provider, engine = fake_voices
+    provider.speaks_english = False  # đường Việt hoá (Supertonic chưa quyết, mặc định giữ chữ Anh)
+    provider.synthesize("Tôi gặp Rose và Mike.", "F1")
+    provider.synthesize("Kyouko và Haruto đi học.", "F1", "ja")
+    provider.synthesize("Kyouko và Haruto đi học.", "F1")
+    rose = english_vi.vietnamized_english("Rose").lower()
+    assert [text for _, text in engine.calls] == [f"tôi gặp {rose} và mi-ke.", "ki-âu-cô và ha-ru-tô đi học.",
+                                                  f"{english_vi.vietnamized_english('Kyouko').lower()} và {english_vi.vietnamized_english('Haruto').lower()} đi học."]
+
+
+def test_the_clip_key_follows_the_reading(fake_voices, tmp_path: Path) -> None:
+    provider, engine = fake_voices
+    provider.speaks_english = False
+    service = ReadAloud(tmp_path / "cache", [provider])
+    plain = service.clip("supertonic:F1", "Tôi về nhà.", origin="ja")
+    assert service.clip("supertonic:F1", "Tôi về nhà.") == plain, "không từ nước ngoài nào: chung clip, có hay không có gốc"
+    english = service.clip("supertonic:F1", "Tôi gặp Rose.")
+    count = len(engine.calls)
+    assert service.clip("supertonic:F1", "Tôi gặp Rose.", origin="ja") == english and len(engine.calls) == count, "gốc không làm đoạn này nghe khác"
+    named = service.clip("supertonic:F1", "Kyouko gặp Rose.", origin="ja")
+    assert named["file"] != service.clip("supertonic:F1", "Kyouko gặp Rose.")["file"], "gốc làm tên đổi: clip riêng"
+    assert service.clip("supertonic:F1", "Kyouko gặp Rose.", origin="ja", cached_only=True) == named
+    provider.speaks_english = True  # cùng đoạn, giọng khác cách đọc: khoá phải khác
+    assert service.clip("supertonic:F1", "Tôi gặp Rose.")["file"] != english["file"]

@@ -61,6 +61,10 @@ class EnglishViTest {
         assertEquals("bót", EnglishVi.reading("boss", phones, overrides = false))
         assertEquals("víp", EnglishVi.reading("VIP", phones))
         assertEquals("Oa-sinh-tơn", EnglishVi.reading("Washington", phones))
+        assertEquals("Bờ-lếch", EnglishVi.reading("Blake", phones, overrides = false))
+        assertEquals("Lai-ồ", EnglishVi.reading("Lyle", phones, overrides = false))
+        assertEquals("tanh", EnglishVi.reading("tank", emptyMap(), overrides = false))
+        assertEquals(EnglishVi.Reading("ranh", listOf("via:phonemes", "analogy:ank")), EnglishVi.readingWithFlags("rank", phones))
     }
 
     @Test
@@ -75,6 +79,6 @@ class EnglishViTest {
         assertNull(EnglishVi.reading("iPhone", phones))
         assertNull(EnglishVi.reading("O'Brien", phones))
         assertNull(EnglishVi.reading("", phones))
-        assertEquals(setOf("short_silent_e", "er_final", "epenthesis"), EnglishVi.OPEN_CHOICES.keys)
+        assertTrue(EnglishVi.OPEN_CHOICES.isEmpty())
     }
 }

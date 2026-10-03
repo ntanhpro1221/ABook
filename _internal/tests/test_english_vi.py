@@ -26,12 +26,9 @@ from tests import english_vi_evidence as evidence
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests" / "fixtures" / "english_vi" / "cases.json"
-OWNER = [
-    ("game", "ghêm"), ("level", "le-vồ"), ("maple", "máp-pồ"), ("Michael", "Mai-cồ"), ("Kate", "Ca-tê"),
-    ("Mike", "Mi-ke"), ("Jake", "Gia-ke"), ("Luke", "Lu-ke"), ("Pete", "Pi-tờ"), ("skill", "xờ-kiu"), ("boss", "bót"), ("slime", "xờ-lam"),
-    ("quest", "quét"), ("VIP", "víp"), ("ID", "ai-đi"),
-]
-FIXED_ONLY = {"Kate", "Pete", "slime", "VIP", "ID"}  # ca riêng: chỉ bảng ghi đè ra được, luật không suy rộng
+# Mọi phán quyết chủ sách (04-10, bốn lần): (chữ, các dạng chủ sách cho là đúng; dạng thứ hai là cách đọc khác cũng được)
+OWNER = [(token, sources) for token, sources, kind in evidence.SOURCED if kind == "owner"] + [("VIP", ("víp",)), ("ID", ("ai-đi",))]
+FIXED_ONLY = {"Kate", "Pete", "guild", "time", "Thomas", "VIP", "ID"}  # ca riêng: chỉ bảng ghi đè ra được, luật không suy rộng
 
 
 def _load_script(name: str):
@@ -48,14 +45,14 @@ def _matches(token: str, sources: tuple[str, ...]) -> bool:
 
 # ---- chủ sách ----------------------------------------------------------------------------------------------------------
 
-@pytest.mark.parametrize("token,reading", OWNER)
-def test_owner_rulings_hold(token, reading):
-    assert vietnamized_english(token) == reading
+@pytest.mark.parametrize("token,forms", OWNER)
+def test_owner_rulings_hold(token, forms):
+    assert vietnamized_english(token) in forms
 
 
-@pytest.mark.parametrize("token,reading", [(token, reading) for token, reading in OWNER if token not in FIXED_ONLY])
-def test_the_rules_alone_reach_the_owner_forms(token, reading):
-    assert vietnamized_english(token, overrides=False) == reading
+@pytest.mark.parametrize("token,forms", [(token, forms) for token, forms in OWNER if token not in FIXED_ONLY])
+def test_the_rules_alone_reach_the_owner_forms(token, forms):
+    assert vietnamized_english(token, overrides=False) in forms
 
 
 # ---- dạng có nguồn -----------------------------------------------------------------------------------------------------
@@ -82,29 +79,31 @@ def test_tally_of_sourced_forms_by_kind():
         entry = tally.setdefault(kind, [0, 0])
         entry[0] += _matches(token, sources)
         entry[1] += 1
-    # (khớp đủ thanh, tổng). Chủ sách: 10 / 13, ba ca còn lại là ca riêng (bảng ghi đè). Cộng đồng chỉ để xem.
-    assert tally == {"owner": [10, 13], "official": [2, 5], "textbook": [9, 39], "press": [0, 2], "community": [5, 19]}
+    # (khớp đủ thanh, tổng). Chủ sách: 26 / 31, năm ca còn lại là ca riêng (bảng ghi đè: Kate, Pete, guild, time, Thomas); Tô-mát,
+    # Bốt-tơn, Rốc-ki của nguồn đã thay bằng dạng chủ sách. Cộng đồng chỉ để xem.
+    assert tally == {"owner": [26, 31], "official": [2, 4], "textbook": [9, 37], "press": [0, 2], "community": [6, 19]}
 
 
 # ---- từng dòng luật ----------------------------------------------------------------------------------------------------
 
 @pytest.mark.parametrize("token,reading", [
-    # -əl cuối -> ồ, thanh huyền (chủ sách); l sau ai -> lồ (analogy); l cuối sau i -> u (chủ sách); l khép khác -> n (Men-bơn, Đan-tơn)
-    ("table", "tây-bồ"), ("Daniel", "Đa-ni-ồ"), ("Lyle", "Lai-lồ"), ("bill", "biu"), ("guild", "ghiu"), ("Melbourne", "Men-bơn"),
+    # -əl cuối -> ồ, thanh huyền; l sau ai / ao / oi -> "ồ" không phụ âm đầu; l cuối sau i -> u (chủ sách); l khép khác -> n (Men-bơn)
+    ("table", "tây-bồ"), ("Daniel", "Đa-ni-ồ"), ("smile", "xờ-mai-ồ"), ("oil", "oi-ồ"), ("bill", "biu"), ("Melbourne", "Men-bơn"),
     # schwa + n / m giữ phụ âm cuối, thanh ngang (chủ sách: Oa-sinh-tơn, Ê-đi-xơn đúng); schwa theo chữ viết
     ("Washington", "Oa-sinh-tơn"), ("Philadelphia", "Phi-la-đen-phi-a"), ("Dallas", "Đa-lát"),
-    # s + phụ âm đầu -> xờ (chủ sách); cụm khác -> ơ (mở); t + r giữ tr
-    ("spell", "xờ-pen"), ("star", "xờ-ta"), ("Brian", "Bơ-rai-an"), ("trust", "trắt"), ("Detroit", "Đi-troi"),
+    # cụm phụ âm đầu -> Cờ- thanh huyền (chủ sách: xờ-kiu, bờ-lếch); giữa từ ơ ngang; t + r giữ tr; t đầu từ giữ t
+    ("spell", "xờ-pen"), ("star", "xờ-ta"), ("Brian", "Bờ-rai-an"), ("trust", "trắt"), ("Detroit", "Đi-troi"), ("Tyler", "Tai-lơ"),
     # phụ âm tắc nhân đôi sau nguyên âm nhấn chính (máp-pồ)
     ("happy", "háp-pi"), ("ticket", "tích-két"),
-    # /eɪ/: mở ây, khép tắc a, khép mũi ê; ai / ao / oi không khép
-    ("day", "đây"), ("name", "nêm"), ("time", "tai"), ("town", "tao"), ("Yorktown", "I-oóc-tao"),
+    # /eɪ/: mở ây, khép p -> a, khép c -> êch, khép mũi ê; ai + m -> am; ai / ao / oi + phụ âm khác không khép; /æŋk/ -> anh
+    ("day", "đây"), ("name", "nêm"), ("make", "mếch"), ("crime", "cờ-ram"), ("five", "phai"), ("town", "tao"), ("Yorktown", "I-oóc-tao"),
+    ("rank", "ranh"), ("thank", "thanh"),
     # w / y bán âm, qu, ng không mở âm tiết, r của ơ trước nguyên âm
     ("William", "Uy-li-am"), ("queen", "quyn"), ("you", "iu"), ("Hemingway", "He-minh-uây"), ("Colorado", "Co-lơ-ra-đô"),
     # phụ âm cuối hữu thanh / xát -> tắc + sắc (Bớt, Tô-mát); r cuối bỏ; cụm cuối giữ một
     ("Bird", "Bớt"), ("bad", "bát"), ("love", "lắp"), ("York", "I-oóc"), ("first", "phớt"),
-    # tên ngắn tắc + e câm theo mặt chữ, chỉ với tên viết hoa
-    ("Coke", "Cô-ke"), ("Nate", "Na-te"), ("make", "mác"),
+    # tên ngắn một phụ âm đầu + tắc + e câm theo mặt chữ, chỉ với tên viết hoa
+    ("Coke", "Cô-ke"), ("Nate", "Na-te"), ("Shake", "Sa-ke"),
     # đường chính tả (không có trong từ điển)
     ("Encrid", "En-cơ-rít"), ("Lancel", "Lan-xen"), ("Calian", "Ca-li-an"), ("Litana", "Li-ta-na"),
     # nối gạch
@@ -123,17 +122,17 @@ def test_without_a_dictionary_the_spelling_route_reads():
     assert vietnamized_english_flags("Washington", {}) == ("Oa-sinh-tôn", ("via:spelling",))
     assert vietnamized_english_flags("Washington") == ("Oa-sinh-tơn", ("via:phonemes",))
     assert vietnamized_english("Encrid", {}) == vietnamized_english("Encrid")
+    assert vietnamized_english("tank", {}, overrides=False) == "tanh"
 
 
-def test_open_and_analogy_points_are_flagged_not_silent():
-    assert "open:short_silent_e" in vietnamized_english_flags("Zeke")[1]  # nguyên âm e: chủ sách chỉ có Pete (ca riêng)
-    assert "open:er_final" in vietnamized_english_flags("Master")[1]
-    assert "open:epenthesis" in vietnamized_english_flags("Blake")[1]
-    assert "open:epenthesis" not in vietnamized_english_flags("star")[1]  # s + phụ âm: chủ sách đã chốt
-    assert "analogy:l_syllable" in vietnamized_english_flags("Lyle")[1]
+def test_analogy_points_are_flagged_and_settled_points_are_not():
+    assert vietnamized_english_flags("rank") == ("ranh", ("via:phonemes", "analogy:ank"))  # theo tank -> tanh
+    assert "analogy:ey_t" in vietnamized_english_flags("late")[1]  # /eɪ/ khép bằng t: chưa có ca
+    for word in ("Master", "Blake", "Lyle", "Tom", "Tyler", "Zeke"):  # chủ sách đã chốt: không cờ
+        assert not [flag for flag in vietnamized_english_flags(word, overrides=False)[1] if not flag.startswith("via:")], word
     assert vietnamized_english_flags("Mike") == ("Mi-ke", ("via:override",))
     assert vietnamized_english_flags("Mike", overrides=False) == ("Mi-ke", ("via:face",))
-    assert set(OPEN_CHOICES) == {"short_silent_e", "er_final", "epenthesis"}
+    assert OPEN_CHOICES == {}
 
 
 def test_the_trial_words_all_read_with_and_without_a_dictionary():

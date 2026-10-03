@@ -208,12 +208,13 @@ def reading_marks(out: list[str]) -> None:
         out[index] = token.translate({ord(c): None for c in ANGLE_OPEN[1:] + ANGLE_CLOSE[1:]})
 
 
-def spoken_tokens(toks: list[str], origin: str | None = None) -> list[str]:
+def spoken_tokens(toks: list[str], origin: str | None = None, speaks_english: bool = True) -> list[str]:
     """Chữ hiện -> chữ đem đọc (biến đổi để đọc, chữ hiện không đổi): số La Mã HOA hợp lệ (I..XXXIX) đứng riêng sau một từ ("Phổ thông II",
     "Chương IV", "Thế chiến II") hay làm đề mục đầu đoạn ("I. Mở đầu") thì đọc thành số tiếng Việt - bộ chuẩn hoá của sea-g2p chỉ biết
     "Benedict III", còn "thông II" nó đọc "i i". Số MỘT chữ (I, V, X) chỉ khi từ trước đánh số được (`numbered_by`): "ông X", "tia X", "điểm V" là chữ cái.
     Giữ nguyên "I am" đầu câu, chữ "I" sau dấu câu và các viết tắt (CV, MC, VIP). Cuốn có gốc Nhật / Hàn (`origin` "ja" / "ko", `names.book_origin`) thì tên
-    romaji / RR đọc theo luật phiên âm ("Haruto" -> "Ha-ru-tô"; `names.read_names`), từ tiếng Anh thật vẫn để sea-g2p đọc. Sau cùng `reading_marks`
+    romaji / RR đọc theo luật phiên âm ("Haruto" -> "Ha-ru-tô"; `names.spoken_names`), từ tiếng Anh thật vẫn để sea-g2p đọc - trừ giọng không nói được âm Anh (`speaks_english` False: Supertonic) thì
+    từ / tên Anh được Việt hoá thành âm tiết ("Rose" -> "Râu-dơ"). Sau cùng `reading_marks`
     sửa "~", nghìn kiểu Anh, <ngoặc nhọn>, " / "."""
     out = list(toks)
     for index, token in enumerate(toks):
@@ -230,7 +231,7 @@ def spoken_tokens(toks: list[str], origin: str | None = None) -> list[str]:
                 if not (before.isalpha() and any(c.islower() for c in before)) or (len(core) == 1 and not numbered_by(toks, index)):
                     continue
         out[index] = token.replace(core, vietnamese_number(value), 1)
-    names.read_names(toks, out, origin)
+    names.spoken_names(toks, origin, speaks_english, out)
     reading_marks(out)
     return out
 
@@ -264,14 +265,15 @@ def _pack(toks: list[str], spans: list[tuple[int, int]], max_chars: int) -> list
     return out
 
 
-def units(text: str, max_chars: int, origin: str | None = None) -> tuple[list[str], list[Unit]]:
-    """Chữ hiện của đoạn + các khúc đem đọc (mọi chữ hiện thuộc đúng một khúc, theo thứ tự). `origin`: gốc của cuốn ("ja" / "ko"), xem `spoken_tokens`."""
+def units(text: str, max_chars: int, origin: str | None = None, speaks_english: bool = True) -> tuple[list[str], list[Unit]]:
+    """Chữ hiện của đoạn + các khúc đem đọc (mọi chữ hiện thuộc đúng một khúc, theo thứ tự). `origin`: gốc của cuốn ("ja" / "ko"), `speaks_english`:
+    giọng nói được âm Anh không - xem `spoken_tokens`."""
     from ..webui.word_timing import tokens
 
     toks = tokens(text)
     if not toks:
         return toks, []
-    said = spoken_tokens(toks, origin)
+    said = spoken_tokens(toks, origin, speaks_english)
     pieces: list[tuple[int, int]] = []
     for first, last in _groups(toks, 0, len(toks) - 1, SENTENCE_END):
         if _length(toks, first, last) <= max_chars:
@@ -352,6 +354,21 @@ def timed_synthesis(audio: Any, rate: int, toks: list[str], parts: list[Unit], s
     return Synthesis(wav_bytes(audio, rate), [], duration, "wav", "audio/wav", words=words)
 
 
+def reading_tag(text: str, origin: str | None, speaks_english: bool = True) -> str:
+    """Khác "" khi cách đọc tên / từ Anh làm đoạn này nghe khác `spoken_tokens(toks)` trần: khoá bộ đệm clip phải có nó, không thì clip cũ (đọc tên bằng âm Anh)
+    bị dùng lại sau khi cuốn đổi gốc hay giọng đổi cách đọc. "ja" / "ko" = tên đọc theo luật phiên âm; "en<số>" = từ Anh được Việt hoá (`names.ENGLISH_READING`),
+    nối bằng "+". Đoạn không có gì đổi thì "" - clip cũ vẫn dùng được. Dùng chung cho mọi giọng đọc tên (VieNeu, Supertonic)."""
+    from ..webui.word_timing import tokens
+
+    toks = tokens(text)
+    plain = spoken_tokens(toks)
+    named = spoken_tokens(toks, origin) if origin in names.ORIGINS else plain
+    tags = [origin] if named != plain else []
+    if not speaks_english and spoken_tokens(toks, origin, False) != named:
+        tags.append(f"en{names.ENGLISH_READING}")
+    return "+".join(tags)
+
+
 def seed_of(*parts: str) -> int:
     """Hạt giống cố định theo giọng + chữ: cùng đoạn cùng giọng luôn ra cùng audio (bộ đệm, đọc lại)."""
     return int(hashlib.sha256("|".join(parts).encode("utf-8")).hexdigest()[:8], 16)
@@ -361,6 +378,7 @@ class VieneuProvider:
     """`locate()`: nơi mô-đun đặt các phần (None = chưa tải gì). `engines`: bộ dựng engine theo tầng (bài thử thay bằng engine giả)."""
 
     id = PREFIX
+    speaks_english = True  # sea-g2p cho âm vị Anh: chữ Anh để nguyên (đo 04-10)
 
     def __init__(self, locate: Callable[[], Installed | None], *, engines: Callable[[str, Installed], Any] | None = None,
                  aligner: Callable[[], Any] | None = None) -> None:
@@ -448,7 +466,7 @@ class VieneuProvider:
         from . import vieneu_engine as ve
 
         engine = self.engine(tier, installed)
-        toks, parts = units(text, MAX_CHARS[tier], origin)
+        toks, parts = units(text, MAX_CHARS[tier], origin, self.speaks_english)
         speaker = np.asarray(preset["speaker_emb"], dtype=np.float32)
         waves, pauses = [], []
         for unit in parts:
@@ -469,14 +487,7 @@ class VieneuProvider:
         return joined, engine.SAMPLE_RATE, toks, parts, spans
 
     def reading_tag(self, text: str, origin: str | None) -> str:
-        """Khác "" khi gốc của cuốn làm đoạn này nghe khác (có tên đọc theo luật phiên âm): khoá bộ đệm clip phải có nó, không thì clip cũ (đọc tên bằng âm Anh)
-        bị dùng lại sau khi cuốn đổi gốc. Đoạn không có tên nào đổi thì "" - clip cũ vẫn dùng được."""
-        if origin not in names.ORIGINS:
-            return ""
-        from ..webui.word_timing import tokens
-
-        toks = tokens(text)
-        return origin if spoken_tokens(toks, origin) != spoken_tokens(toks) else ""
+        return reading_tag(text, origin, self.speaks_english)
 
     def synthesize(self, text: str, native_voice: str, origin: str | None = None) -> Synthesis:
         tier, name, installed, preset = self._voice(native_voice)

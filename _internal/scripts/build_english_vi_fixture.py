@@ -26,20 +26,20 @@ FIXTURES = ROOT / "tests" / "fixtures" / "english_vi"
 
 # Mỗi ca một dòng luật; ca nào luật không nhận thì reading là null.
 EDGE: list[str] = [
-    # -əl cuối -> ồ; l sau ai -> lồ; l cuối sau i -> u; l khép khác -> n
-    "table", "little", "Daniel", "Lyle", "mile", "bill", "feel", "guild", "Melbourne", "Dalton",
-    # s + phụ âm đầu -> xờ (chủ sách); cụm khác -> ơ (mở); t + r giữ tr
-    "spell", "star", "smile", "Blake", "Brian", "Grace", "trust", "strong", "Francis",
+    # -əl cuối -> ồ; l sau ai / ao / oi -> "ồ" không phụ âm đầu; l cuối sau i -> u; l khép khác -> n
+    "table", "little", "Daniel", "Lyle", "mile", "owl", "oil", "bill", "feel", "guild", "Melbourne", "Dalton",
+    # cụm phụ âm đầu -> Cờ- thanh huyền; giữa từ ơ ngang; t + r giữ tr; t đầu từ giữ t
+    "spell", "star", "smile", "Blake", "Brian", "Grace", "trust", "strong", "Francis", "Excalibur", "Tom", "Tyler", "Tony",
     # phụ âm tắc nhân đôi sau nguyên âm nhấn chính; không nhân đôi sau nhấn phụ
     "happy", "Rocky", "copper", "cookie", "ticket", "Appalachian",
-    # /eɪ/ mở ây, khép tắc a, khép mũi ê; ai / ao / oi không khép (bỏ phụ âm cuối)
-    "day", "name", "make", "Grey", "time", "night", "five", "town", "Lloyd",
+    # /eɪ/ mở ây, khép p a, khép c êch, khép t ê (analogy), khép mũi ê; ai + m -> am; ai / ao / oi + phụ âm khác bỏ; /æŋk/ -> anh
+    "day", "name", "make", "late", "Grey", "time", "crime", "night", "five", "town", "Lloyd", "tank", "rank", "Frankie", "sang",
     # w, y bán âm; qu; ng không mở âm tiết; /ɚ/ trước nguyên âm mở r
     "William", "Wendy", "queen", "quick", "you", "music", "Hemingway", "singer", "camera", "Colorado",
     # phụ âm cuối hữu thanh / xát -> tắc; cụm cuối giữ một
     "bad", "dog", "love", "bath", "judge", "Ruth", "first", "world", "Edward",
-    # tên ngắn tắc + e câm theo mặt chữ; nguyên âm e là điểm mở
-    "Coke", "Duke", "Zeke", "Nate", "Pike",
+    # tên ngắn một phụ âm đầu + tắc + e câm theo mặt chữ; cụm phụ âm đầu đi đường âm vị
+    "Coke", "Duke", "Zeke", "Nate", "Pike", "Shake", "Blake", "Gate", "gate",
     # đường chính tả (tên tự chế / không có trong từ điển)
     "Encrid", "Lancel", "Calian", "Theia", "Arna", "Rudeus", "Sylphy", "Kraken", "Wyvern", "Ainz", "Thorne", "Phoebus", "Knightley",
     "Brightwater", "Xylo", "Quinzel", "Shalltear", "Lucretia", "Ashford", "Whitlock",

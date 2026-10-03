@@ -20,6 +20,7 @@ import unicodedata
 # Chỗ quy ước còn "mở" (mục 3 dòng oe / wi / ui / we / wae, mục 7). Mặc định ở đây là quyết định tạm của app. Chủ sách 04-10 đã chốt (không còn mở): y + nguyên
 # âm của cả Nhật lẫn Hàn -> gi + nguyên âm (Yamato -> Gia-ma-tô, Yoon -> Giun); k / t / p bật hơi của Hàn đọc như âm thường (Kang -> Cang, không kh); wo -> uô.
 OPEN_CHOICES = {
+    "y_after_vowel_pair": "hai nguyên âm rồi ya / yu / yo cuối từ mà luật y cuối từ không áp (Kouya, Raiya: âu / ai + y không thành vần): hiện y -> gi (Câu-gia)",
     "ko_rare_vowels": "oe / wi / ui / we / wae của tiếng Hàn: mặc định uê / uy / ưi / uê / oe theo âm (chưa có ví dụ chính thức)",
 }
 
@@ -40,7 +41,7 @@ CHOICES = {
     "ss": "t",                # ss Nhật khép âm tiết trước: "t" | "c"
     "ko_g": "k",              # g đầu từ của Hàn: "k" | "g"
     "ko_d": "t",              # d đầu từ: "t" | "đ"
-    "ko_b": "p",              # b đầu từ: "p" | "b"
+    "ko_b": "b",              # b đầu từ: CHỦ SÁCH 04-10 "Busan -> bu-xan" (không quét; Park vẫn pắc vì chữ P là p): "p" | "b"
     "ko_s": "x",              # s của Hàn: CHỦ SÁCH 04-10 "Seojun -> xeo-giun" (không quét); "x" | "s"
     "ko_ye": "ê",             # ye sau phụ âm: "ê" | "iê"
     "ko_tense": "plain",      # kk tt pp jj ss: "plain" (c t p ch x) | "aspirated" (kh th ph ch x)
@@ -159,8 +160,11 @@ _JA_FIXED: dict[str, tuple[tuple[str, str], ...]] = {
 
 
 def _ja_emit(onset: str, vowel: str, syllables: list[_Syl], flags: list[str]) -> bool:
-    if onset == "":  # chỉ là nguyên âm: o -> o (chủ sách 04-10: Osaka -> O-xa-ca, Aoi -> A-o-i); có phụ âm đầu thì o -> ô
-        syllables.append(_Syl("", "o" if vowel == "o" else _JA_VOWEL[vowel]))
+    if onset == "":
+        # chỉ là nguyên âm: o -> o khi đầu từ hay sau a / e (chủ sách 04-10: Osaka -> O-xa-ca, Aoi -> A-o-i, Naoki -> Na-o-ki), ô khi sau i / u như vần iô / uô
+        # (Fumio -> Phu-mi-ô, Fukuoka -> Phu-cu-ô-ca); có phụ âm đầu thì o -> ô
+        after_iu = bool(syllables) and not syllables[-1].coda and syllables[-1].nucleus[-1:] in ("i", "u")
+        syllables.append(_Syl("", "o" if vowel == "o" and not after_iu else _JA_VOWEL[vowel]))
     elif onset in _JA_SIMPLE:
         syllables.append(_Syl(_JA_SIMPLE[onset], _JA_VOWEL[vowel]))
     elif onset == "sh":  # shi shu sha sho -> si su sa sô (luật 1.4; chủ sách 04-10: shu giữ s + u, không xiu)
@@ -233,6 +237,18 @@ def _ja_word(word: str, flags: list[str]) -> list[_Syl] | None:
         if vowel == "" or vowel not in _JA_VOWELS or (onset and vowel not in _JA_ALLOWED[onset]):
             return None
         j += 1
+        if onset == "y" and j == len(word) and syllables and not syllables[-1].coda and syllables[-1].nucleus in ("a", "ây"):
+            # ya CUỐI từ sau nguyên âm: y thành bán âm cuối của âm tiết trước (ay, ây) + nguyên âm riêng (chủ sách 04-10: Maya -> May-a, Kaya -> Cay-a, Seiya -> Xây-a);
+            # yu / yo cuối từ theo cùng cách là analogy (Mayu -> May-u, Sayo -> Say-ô); ya giữa / đầu từ vẫn gia (Ayaka -> A-gia-ca)
+            if syllables[-1].nucleus == "a":
+                syllables[-1].nucleus = "ay"
+            if vowel != "a":
+                flags.append("analogy:y_final")
+            syllables.append(_Syl("", _JA_VOWEL[vowel]))
+            i = j
+            continue
+        if onset == "y" and i >= 2 and word[i - 2] in _JA_VOWELS_LONG and word[i - 1] in _JA_VOWELS_LONG:
+            flags.append("open:y_after_vowel_pair")  # Kouya, Raiya: hai nguyên âm rồi ya mà luật ya cuối từ không áp (âu / ai + y không thành vần): hiện y -> gi
         if not _ja_emit(onset, vowel, syllables, flags):
             return None
         # nguyên âm dài (không kéo dài): oo, ō -> ô, uu -> u, ee -> e, ii -> i, ei -> ây, ou viết ra -> âu (chủ sách 04-10); ai giữ là ai
@@ -272,9 +288,10 @@ _KO_VOWEL = {
     "oe": "uê", "oi": "oi", "wi": "uy", "ui": "ưi", "wa": "oa", "wo": "uô", "we": "uê", "wae": "oe",
 }
 _KO_RARE = ("oe", "wi", "ui", "we", "wae")
+# Myung -> mung là ca CỐ ĐỊNH của chủ sách 04-10 (Lee Myung-bak -> li mung-bắc; y sau m mất), không suy rộng: hyun / hyung vẫn hi-un / hi-ung.
 # Cách viết Latinh quen dùng của tên Hàn, lệch khỏi RR (phần lớn là cách ghi của Bộ Ngoại giao / báo): đổi về RR trước khi tách.
 _KO_SPELLINGS = {
-    "kim": "gim", "park": "bak", "lee": "ri", "young": "yeong", "myung": "myeong", "hyong": "hyeong", "hee": "hui",
+    "kim": "gim", "park": "pak", "lee": "ri", "young": "yeong", "myung": "mung", "hyong": "hyeong", "hee": "hui",
     "soo": "su", "yoo": "yu", "yoon": "yun", "shin": "sin", "moon": "mun", "kwon": "gwon", "cho": "jo",
 }
 
@@ -339,9 +356,11 @@ def _ko_words(segments: list[str], flags: list[str]) -> list[list[_Syl]] | None:
         if parse is None:
             return None
         syllables: list[_Syl] = []
-        for onset, vowel, coda in parse:
+        for position, (onset, vowel, coda) in enumerate(parse):
             viet_onset = _ko_onset(onset, previous, flags)
-            part = _ko_nucleus(viet_onset, vowel, _KO_CODA_VIET[coda], flags, initial=previous is None)
+            after = parse[position + 1] if position + 1 < len(parse) else None
+            part = _ko_nucleus(viet_onset, vowel, _KO_CODA_VIET[coda], flags, initial=previous is None,
+                               before_u=after is not None and after[0] == "" and after[1] == "u")
             if part is None:
                 return None
             syllables.extend(part)
@@ -375,8 +394,8 @@ def _ko_eo(onset: str, closing: str) -> list[_Syl]:
     return [_Syl(onset, "e"), _Syl("", "o", closing)]
 
 
-def _ko_nucleus(onset: str, vowel: str, closing: str, flags: list[str], initial: bool = True) -> list[_Syl] | None:
-    """Âm tiết (hay hai âm tiết) cho một vần RR, đã khép bằng `closing` (đã đổi sang chữ Việt). `initial`: đầu từ."""
+def _ko_nucleus(onset: str, vowel: str, closing: str, flags: list[str], initial: bool = True, before_u: bool = False) -> list[_Syl] | None:
+    """Âm tiết (hay hai âm tiết) cho một vần RR, đã khép bằng `closing` (đã đổi sang chữ Việt). `initial`: đầu từ; `before_u`: âm tiết kế chỉ là "u"."""
     if vowel in _KO_RARE:
         flags.append("open:ko_rare_vowels")
     if vowel == "yae":
@@ -386,16 +405,24 @@ def _ko_nucleus(onset: str, vowel: str, closing: str, flags: list[str], initial:
         letter = {"ya": "a", "yo": "ô", "yu": "u"}[vowel]
         pieces = [_Syl("gi", letter)] if onset == "" else [_Syl(onset, "i"), _Syl("", letter)]
     elif vowel == "yeo":
+        # yeo: đầu từ gi + eo (Yeon -> Gie-on); sau phụ âm y MẤT, eo như bình thường (chủ sách 04-10: Gyeong -> Ghe-ong, Pyeong -> Pe-ong); g + y đọc g (ghe), không c / k
         flags.append("analogy:ko_yeo")
-        pieces = _ko_eo("gi", closing) if onset == "" else [_Syl(onset, "i"), *_ko_eo("", closing)]
+        pieces = _ko_eo("gi", closing) if onset == "" else _ko_eo("G" if onset == "K" else onset, closing)
         closing = ""
+    elif vowel == "eo" and not closing and before_u:
+        # eo mở đứng trước âm tiết u gộp thành e (chủ sách 04-10: Seoul -> Xe-un, không Xeo-un); analogy cho tên khác cùng dạng
+        flags.append("analogy:ko_eo_u")
+        pieces = [_Syl(onset, "e")]
     elif vowel == "eo":
         pieces = _ko_eo(onset, closing)
         closing = ""
     elif vowel == "ye":
         # ㅖ đọc như ㅔ sau phụ âm (Hê): ê; đầu từ thì gi + ê (y + nguyên âm -> gi)
         flags.append("analogy:ko_ye")
-        pieces = [_Syl(onset, "ê" if CHOICES["ko_ye"] == "ê" else "iê") if onset else _Syl("gi", "ê")]
+        if onset in ("K", "G"):
+            pieces = [_Syl("G", "i")]  # gye -> ghi (chủ sách 04-10: Cheonggyecheon -> Che-ong-ghi-che-on)
+        else:
+            pieces = [_Syl(onset, "ê" if CHOICES["ko_ye"] == "ê" else "iê") if onset else _Syl("gi", "ê")]
     elif vowel == "wo" and onset == "":
         # w đầu từ -> gu (chủ sách 04-10: Won -> Guôn); giữa từ (Suwon) theo analogy cùng cách
         if not initial:
@@ -463,7 +490,8 @@ def _read(token: str, origin: str) -> tuple[str, tuple[str, ...]] | None:
         for index, syllables in enumerate(readings):
             # tên viết hoa thì mọi đoạn nối gạch viết hoa (Geun-hye -> Cưn Hê); hậu tố gọi (-san) giữ chữ thường và NỐI GẠCH vào tên thành một
             # chuỗi (chủ sách 04-10: Haruto-kun -> Ha-ru-tô-cun)
-            suffix = index > 0 and origin == "ja" and lowered[index] in _JA_SUFFIXES
+            # tên Hàn nối gạch cũng thành một chuỗi (chủ sách 04-10: Kim Jong-un -> Kim Giông-un, Lee Myung-bak -> Li Mung-bắc)
+            suffix = index > 0 and (origin == "ko" or (origin == "ja" and lowered[index] in _JA_SUFFIXES))
             capital = False if suffix else cases[0]
             reading = _validated(syllables, bool(capital))
             if reading is None:

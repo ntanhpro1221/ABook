@@ -82,6 +82,7 @@ def _closed(error: websocket.Closed) -> VoiceError | None:
 
 class AzureProvider(byok.KeyedProvider):
     id = "azure"
+    speaks_english = True  # cùng giọng Neural với Edge (đo 04-10)
     name = NAME
     limits = Limits(max_chars=3000, free="Bậc miễn phí F0: 500.000 ký tự mỗi tháng", timings="exact", region=True)
 

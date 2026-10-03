@@ -33,13 +33,15 @@ VALUES: dict[str, list] = {
     "aa_o": ["ô", "o"],
     "eh": ["e", "ê"],
     "ih": ["i", "ê"],
-    "ey_stop": ["ê", "e", "a"],
+    "ey_p": ["ê", "e", "a"],
+    "ey_k": ["ê", "e", "a"],
+    "ey_t": ["ê", "e", "a"],
     "ey_nasal": ["ê", "e", "a"],
+    "ay_m": ["ai", "am"],
     "geminate": ["none", "short", "primary", "stressed"],
     "short_silent_e": ["phonemes", "face"],
-    "epenthesis_s": ["ơ", "ờ"],
     "epenthesis": ["ơ", "ờ"],
-    "er_final": ["ơ", "ờ"],
+    "epenthesis_medial": ["ơ", "ờ"],
     "l_coda": ["n", "drop"],
     "il_final": ["coda", "u"],
     "s_coda": ["t", "syllable"],
@@ -52,9 +54,10 @@ VALUES: dict[str, list] = {
     "tr": ["tr", "split"],
 }
 GROUPS = [
-    ["schwa", "ae", "aa_o", "eh", "ih", "ey_stop", "ey_nasal", "geminate", "short_silent_e"],
-    ["epenthesis_s", "epenthesis", "er_final", "l_coda", "il_final", "s_coda", "fric_final", "voiced_final", "final_cluster", "glide_coda",
-     "th", "dh", "tr"],
+    ["schwa", "ae", "aa_o", "eh", "ih", "geminate", "short_silent_e"],
+    ["ey_p", "ey_k", "ey_t", "ey_nasal", "ay_m"],
+    ["epenthesis", "epenthesis_medial", "l_coda", "il_final", "s_coda", "fric_final", "voiced_final", "final_cluster", "glide_coda", "th",
+     "dh", "tr"],
 ]
 TRIAL = json.loads((ROOT / "tests" / "fixtures" / "english_vi" / "trial.json").read_text(encoding="utf-8"))["tokens"]
 

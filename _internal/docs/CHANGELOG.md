@@ -13,6 +13,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   được app tự nhận ra, và các tên ấy đọc thành "Ha-ru-tô-cun", "Ki-âu-cô", "Gia-ma-tô". Tên Anh / Âu (Kate, Mike, Rose, Anne, Emma), từ tiếng Anh và tiếng Việt vẫn đọc như cũ; cuốn
   không rõ gốc thì không đổi gì. Chữ hiện trên màn hình không đổi.
 
+- "Nghe ngay" bằng giọng Supertonic (máy tính) không còn nuốt tên và từ nước ngoài: giọng này không nói được âm tiếng Anh, nên "Rose", "laptop", "Facebook", "skill" được đọc thành
+  âm tiết Việt ("xờ-kiu", "le-vồ", "láp-tóp"), tên Nhật / Hàn của cuốn có gốc đọc như giọng VieNeu ("Ki-âu-cô", "Ha-ru-tô"); chữ viết tắt toàn hoa (VIP, NPC) và số kèm đơn vị
+  vẫn như cũ. Giọng VieNeu giữ nguyên chữ Anh như trước. Chữ hiện trên màn hình không đổi.
+
 - "Nghe ngay" (máy tính và điện thoại) không còn đọc sai bốn kiểu ký hiệu: "Hmm~" không còn thành "hmm khoảng" ("~" kéo giọng thì bỏ, "3~5" và
   "10,000 ~ 15,000" đọc "đến", "~50" vẫn là "khoảng"); "500,000" và "100,000 yen" đọc đủ "năm trăm nghìn" thay vì "năm trăm"; tên kỹ năng trong
   "<Angel Wings>" đọc trơn, ngắt hai bên, không còn "nhỏ hơn ... lớn hơn"; "Đóng băng / yếu" ngắt ở dấu gạch chéo thay vì "trên". Chữ hiện trên màn hình
