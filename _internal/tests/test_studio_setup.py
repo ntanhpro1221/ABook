@@ -26,6 +26,11 @@ def _zip_with(path: Path, files: dict[str, bytes]) -> Path:
     return path
 
 
+# Gói dữ liệu của Studio (từ điển phát âm + giọng nghe thử) - nội dung giả, đúng bố cục của scripts/pack_studio_assets.py.
+ASSET_FILES = {"cmudict.dict": b"hello HH AH0 L OW1\n", "voice_previews/adam.wav": b"RIFF-adam",
+               "voice_previews/ly.wav": b"RIFF-ly"}
+
+
 class FakeOllama(BaseHTTPRequestHandler):
     pulled: list[str] = []
     blobs: dict[str, int] = {}  # digest -> số byte đã nhận (chỉ khi đúng băm, như Ollama thật)
@@ -88,6 +93,8 @@ def _setup(tmp_path: Path, ollama: str, commands: list[str], *, fail_on: str = "
     def fetch(item: Download, target: Path, progress, cancelled) -> Path:
         fetched.append(item.name)
         progress(item.size, item.size)
+        if item.name == "studio-assets":
+            return _zip_with(target, ASSET_FILES)
         inner = {"uv": "uv.exe", "git": "cmd/git.exe", "ollama": "ollama.exe"}[item.name]
         return _zip_with(target, {inner: b"exe"})
 
@@ -127,7 +134,7 @@ def test_the_studio_installs_step_by_step_and_resumes_where_it_stopped(tmp_path:
     status = setup.status()
     assert status["installed"] is False and "Tải Whisper hỏng" in status["error"], "dừng ở bước hỏng, nói rõ"
     done = [step["id"] for step in status["steps"] if step["done"]]
-    assert done == ["check", "uv", "git", "python", "vcruntime", "packages", "ollama", "llm", "voice"]
+    assert done == ["check", "assets", "uv", "git", "python", "vcruntime", "packages", "ollama", "llm", "voice"]
     assert FakeOllama.pulled == ["qwen3:8b"], "model phân tích kéo qua API của Ollama"
     assert (setup.tools / "ollama" / "ollama.exe").is_file() and not list((setup.root / "downloads").glob("*.zip"))
 
@@ -139,7 +146,7 @@ def test_the_studio_installs_step_by_step_and_resumes_where_it_stopped(tmp_path:
     status = setup.status()
     assert status["error"] is None and status["installed"] is True
     assert commands == ["Tải Whisper", "Tải model chấm chất lượng", "Kiểm tra lần cuối"]
-    assert setup.fetched == ["uv", "git", "ollama"], "không tải lại công cụ đã có"  # type: ignore[attr-defined]
+    assert setup.fetched == ["studio-assets", "uv", "git", "ollama"], "không tải lại công cụ đã có"  # type: ignore[attr-defined]
     marker = json.loads((setup.runtime / ".setup_complete").read_text(encoding="utf-8"))
     assert marker["schema_version"] == 2, "đúng dấu cài đặt runtime_contract đòi"
 

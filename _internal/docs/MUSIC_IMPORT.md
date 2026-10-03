@@ -9,12 +9,11 @@ bộ. Giai đoạn B (cuối file): nhập nhạc ngay trên điện thoại, gh
 
 - Thư mục `<dữ liệu app>/music/mine/` (cạnh bộ đệm danh mục, KHÔNG nằm trong sách): `files/<sha1 nội dung>.<đuôi>` và sổ
   `library.json`. Nhập mp3, m4a, ogg, opus, flac, wav; nhập hai lần cùng nội dung (dù tên khác) chỉ giữ một bản.
-- Đọc thẻ (tên bài, nghệ sĩ, album, thể loại) và độ dài bằng ffmpeg - không thêm thư viện nào. Máy chạy từ mã nguồn / máy có Studio
-  đã có sẵn ffmpeg; bản app chỉ-nghe thì KHÔNG: **lần nhập đầu tiên tải "bộ đọc nhạc"** (~30 MB, một lần; `webui/ffmpeg_setup.py`, ghim URL +
-  SHA-256, `THIRD_PARTY.md`). Lúc ấy `POST /api/music/local/import` chưa nhập gì và trả `needsReader`; giao diện hiện "Đang tải bộ
-  đọc nhạc" kèm phần trăm (hỏi `GET /api/music/local` -> `reader` mỗi giây), xong thì tự gửi lại đúng các file ấy; tải hỏng thì nói lý
-  do + "Thử lại" (`POST /api/music/local/reader`). `ABOOK_FFMPEG_DOWNLOAD=0` chặn mọi lần tải. Nền tảng không phải Windows 64-bit: tự cài
-  ffmpeg vào PATH. Thẻ Ogg / Opus nằm ở luồng âm thanh, `read_tags` đọc cả hai chỗ. Không có thẻ thì tên bài là tên file.
+- Đọc thẻ (tên bài, nghệ sĩ, album, thể loại) và độ dài bằng **tinytag** (thuần Python, MIT, ~40 KB; bản 2.3.2 chép nguyên vào gói ở `abook/vendor/tinytag` nên không phụ thuộc pyproject / uv.lock; `read_tags`):
+  nhập nhạc KHÔNG cần ffmpeg và KHÔNG cần mô-đun "Phân tích nhạc" - cả sáu đuôi mp3, m4a, ogg, opus, flac, wav đều đọc được, phát nguyên file
+  và đóng vào .abook nguyên file (không bao giờ chuyển mã). Chưa có mô-đun thì bài ở "chưa phân tích" và chưa có số đo độ to (`lufs` vắng:
+  `cue_gain_db` dùng mức mặc định của danh mục, giao diện không báo gì đáng ngại); có mô-đun rồi thì `measure_missing()` đo bù cùng lúc
+  `analyze_pending()` phân tích nốt. Thẻ Ogg / Opus nằm ở luồng âm thanh, tinytag đọc cả hai chỗ. Không có thẻ thì tên bài là tên file.
 - Độ to đo bằng đúng mã của bài danh mục (`music_plan.measured_lufs`, hai kênh, ghi `<sha1>.lufs2` cạnh file), nên `gainDb` của
   mốc nhạc tính bằng cùng một công thức (`cue_gain_db`) - bài nhập to hay nhỏ đều nằm đúng `levelDb` dưới giọng.
 - File không phải nhạc / đuôi lạ / không thấy / quá 1 GB: bị từ chối kèm lý do bằng tiếng Việt, các file khác trong lượt vẫn vào.
@@ -53,17 +52,30 @@ Nhạc huấn luyện) cắm vào bằng `music_local.set_analyzer(hàm)`; kết
   CLAP, không âm học) - cùng cửa sổ, cùng phép tính đầu, nên khoá đầu ra như nhau TRỪ `loudness.speechBand` (cần âm học; độ to
   đã do app đo). Lệch V/E/T so với torch cùng đầu A < 0,001. Cả hai đủ thì torch thắng; ép bằng `ABOOK_MUSIC_STUDENT_BACKEND=onnx|torch`
   (bài thử trên máy có cả hai). Thiếu thư viện của cả hai -> không bộ phân tích.
-- **Gói model** ở `huggingface.co/NGDtuanh/abook-music-student`, ghim một commit (`music_student.REVISION`; còn trống thì app không
-  tải gì) và SHA-256 từng file (`PACKAGE_HASHES`); mỗi đường chỉ tải file của mình, một lần vào `<dữ liệu app>/music/student/`
-  khi bài đầu tiên cần phân tích, bằng HTTPS thuần (`studio_setup.download`: `.part`, kiểm băm, rồi mới đổi tên; không cần
-  huggingface_hub). torch ~55 MB: `model.safetensors` fp16, `config.json`, `preprocessor_config.json`, `student_head.npz`. onnx
-  ~59 MB: `clap_audio_fp16.onnx`, `student_head_A.npz`, `preprocessor_config.json`. Chưa có gói, không mạng, hay thiếu thư viện
-  của cả hai đường -> `analyze` trả `None` và `register()` không cắm gì: bài ở "chưa phân tích", giao diện nói chưa có bộ phân tích.
+- **Gói model** ở `huggingface.co/NGDtuanh/abook-music-student`, ghim một commit (`music_student.REVISION`; còn trống thì mô-đun không
+  tải model) và SHA-256 từng file (`PACKAGE_HASHES`); mỗi đường chỉ cần file của mình, đặt vào `<dữ liệu app>/music/student/`, bằng HTTPS thuần
+  (`studio_setup.download`: `.part`, kiểm băm, rồi mới đổi tên; không cần huggingface_hub). torch ~55 MB: `model.safetensors` fp16,
+  `config.json`, `preprocessor_config.json`, `student_head.npz`. onnx ~59 MB: `clap_audio_fp16.onnx`, `student_head_A.npz`,
+  `preprocessor_config.json`. Chưa có gói, hay thiếu thư viện của cả hai đường -> `analyze` trả `None` và `register()` không cắm gì: bài ở
+  "chưa phân tích". Gói chỉ tải khi người dùng bấm "Phân tích nhạc" (mục dưới) - không bao giờ tự tải, kể cả lúc nhập.
   `ABOOK_MUSIC_STUDENT_DIR` trỏ tới một thư mục gói có sẵn (bài thử, máy không mạng); `ABOOK_MUSIC_STUDENT_DOWNLOAD=0` chặn mọi lần tải.
-- **Đường onnx - chi phí**: bộ cài +~80 MB cài xong (numpy, onnxruntime và ba gói đi kèm; ~17 MB trong bộ cài nén), gói model 59 MB
-  tải riêng; một bài ~3 phút ~0,4 giây trên CPU 32 luồng (ffmpeg giải mã 0,2 + mel 0,03 + tháp 0,16), nạp phiên ~0,7 giây. Bản
-  đóng gói không mang ffmpeg (`imageio-ffmpeg` không nằm trong `requirements.txt`): ffmpeg tải ở lần nhập đầu (xem "Kho của máy"),
-  nên bài nhập được rồi mới phân tích được.
+- **Mô-đun "Phân tích nhạc"** (`abook/webui/music_module.py`, quản lý như Studio): một nút, một thanh tiến độ, một tổng dung lượng cho mọi thứ
+  bộ phân tích cần mà bộ cài không mang. Máy tính chỉ-nghe: **ffmpeg** (~31 MB, `ffmpeg_setup.py`) + **thư viện** (numpy 2.4.6, onnxruntime 1.28.0,
+  flatbuffers, packaging, protobuf: ~27 MB wheel cp314 win_amd64, ghim URL + SHA-256, giải vào `<dữ liệu app>/music/lib` rồi thêm vào `sys.path`
+  trước khi import) + **model** (~59 MB); máy Studio (đã có torch + ffmpeg) chỉ tải model. Giao diện: MỘT thẻ (`MusicModuleNotice`) ở "Nhạc của
+  tôi" khi đã có bài, hiện tổng dung lượng và nút "Phân tích nhạc (N MB)"; không còn thẻ "bộ đọc nhạc" riêng, không còn đợi tải lúc nhập.
+  `GET /api/music/local` -> khoá `module` (`state` missing / downloading / ready / outdated / error / unsupported, `done`, `total`, `error`,
+  `parts`, `outdatedParts`, `outdatedBytes`, `stale`, `analysing`, `restart`); `POST /api/music/local/module` bắt đầu tải hay cập nhật;
+  `POST /api/music/local/reanalyse` phân tích lại bài cũ. Cả hai chỉ máy chủ gọi được (không mở cho Studio từ xa).
+  **Bản cũ / mới**: mỗi phần có một mã ghim (ffmpeg: SHA-256 wheel; thư viện: băm các wheel; model: REVISION + SHA-256 từng file). Lúc tải ghi
+  `<dữ liệu app>/music/module.json` (phần -> ghim đã tải); `status()` so với ghim của bản app này, KHÔNG băm lại 59 MB mỗi lần mở. App lên bản
+  mới đổi ghim của phần nào thì phần ấy `outdated` (cùng tên file, cùng cỡ vẫn bị bắt - lỗi cũ: model cũ nằm mãi), giao diện hiện "Phân tích nhạc có
+  bản mới - N MB" và một lần bấm chỉ tải phần đổi, phần còn lại giữ nguyên. Bản cũ vẫn chạy cho tới khi cập nhật xong. Thư viện đã nạp vào
+  tiến trình không thay tại chỗ được: bản mới giải vào `lib.next`, đổi chỗ ở lần mở app sau (`restart`). **Cập nhật không tự phân tích lại**: mỗi
+  kết quả ghi kèm `by` (mã bản model, `music_student.model_id`); `stale` đếm bài do bản cũ phân tích, người dùng bấm "Phân tích lại N bài bằng bản mới"
+  mới chạy (`LocalMusic.reanalyse`). Giấy phép / nguồn: `THIRD_PARTY.md`.
+- **Đường onnx - chi phí**: bộ cài KHÔNG mang gì của đường này (numpy, onnxruntime, ffmpeg, model đều trong mô-đun, tải khi bấm: ~117 MB tổng); một bài ~3 phút ~0,4 giây trên CPU 32 luồng (ffmpeg giải mã 0,2 + mel 0,03 + tháp 0,16), nạp phiên ~0,7 giây. Bản
+  đóng gói không mang ffmpeg: nó nằm trong mô-đun "Phân tích nhạc" (nhập nhạc thì không cần), nên bài nhập được rồi mới phân tích được.
 - **Chi phí** của đường torch (CPU máy chủ sách, 16 luồng): nạp gói ~5 giây một lần; một bài ~3 phút ~1,2 giây (lần đầu ~3,8 giây vì numba biên dịch).
   Khớp bản nghiên cứu: đầu trò + âm học trùng V/E/T tới 1e-3 khi nhận đúng vector nhúng của bản nghiên cứu; cả đường chạy của app
   lệch tối đa ~0,05 trên V/E/T vì bản nghiên cứu cắt cửa sổ bằng `ffmpeg -ss` theo độ dài ghi trong đầu file mp3.
@@ -126,9 +138,37 @@ dụ `tests/fixtures/book_edits/` (xem `EDITING.md`).
   (số mong đợi do pyloudnorm tính, `Bs1770Test`) nên `gainDb` của bài nhập trên điện thoại ra cùng con số với máy tính. Chỉ giải mã
   8 phút đầu bài (một bản mix dài cả giờ không bắt người dùng chờ); không đo được thì dùng độ to trung vị của danh mục, như mọi bài
   thiếu `lufs`.
-- **Phân tích**: móc `MusicStore.analyzer` + `cleanAnalysis` (bản Kotlin của `music_local.clean_analysis`) chưa cắm bộ phân tích nào
-  nên mọi bài là "Chưa phân tích": không bịa số, và điện thoại không có chọn nhạc tự động để mà chọn nó. `analyze` trả 409 với đúng
-  câu của máy tính. Không có `near` / `music_select` trên điện thoại.
+- **Phân tích** (`MusicStudent.kt`, bản Kotlin của đường onnx trong `music_student.py`): giải mã bằng `MediaExtractor` + `MediaCodec`
+  (`AndroidAudioDecoder`: PCM float, mono kiểu ffmpeg `-ac 1` - cộng L+R nhân căn 1/2 -, ghi vào file tạm trong `cacheDir`, tối đa 30
+  phút đầu) -> đổi sang 48 kHz bằng sinc cửa sổ Kaiser nhiều pha (`Resampler`, chỉ cho ba cửa sổ 10 giây ở 20 / 50 / 80% bài) ->
+  log-mel (`MusicMel`, chép đúng `music_mel.py`) -> tháp CLAP fp16 bằng ONNX Runtime CPU (`OrtClapTower`, mở khi cần, đóng sau 20 giây
+  không dùng) -> chuẩn hoá L2 / trung bình / chuẩn hoá L2 -> đầu trò A (`StudentHead`, đọc `student_head_A.npz` bằng `Npz`; hiệu chỉnh
+  `CALIBRATION["onnx"]` kèm `vetVar`). Không dò "có lời", không chặn bài nào; bài ngắn hơn 3 giây hay không giải mã được thì "chưa
+  phân tích" (không bịa số). Một lượt một lúc, ở luồng nền ưu tiên thấp, và NGOÀI khoá của kho (`analyzePending` ghi sổ từng bài) nên
+  danh sách vẫn mở và nhập vẫn chạy. "Gói nhạc" của điện thoại = model (~59 MB, cùng gói và cùng ghim REVISION + SHA-256 với máy tính) + thư viện ONNX Runtime của đúng ABI
+  (~12 MB nén arm64 / ~11 MB armeabi-v7a). APK KHÔNG mang ONNX Runtime (7,2 MB thay vì 31 MB): phần Java chép nguyên vào
+  `app/src/main/java/ai/onnxruntime` (onnxruntime-android 1.30.0, MIT; chỉ `OnnxRuntime.java` khác bản gốc - nạp `.so` bằng đường
+  tuyệt đối từ `onnxruntime.native.path`, thư viện lõi trước rồi JNI), hai file `.so` do `MusicStudentSetup` tải vào
+  `<filesDir>/music/student/ort/` (ABI của tiến trình: `OrtRuntime.deviceAbi`; x86 32-bit chưa hỗ trợ -> `supported=false`). KHÔNG tự tải:
+  người dùng bấm "Phân tích nhạc (N MB)" ở "Nhạc của tôi" - MỘT nút, MỘT tổng dung lượng (nén), nhắc nếu đang dùng dữ liệu di động, tiến độ,
+  "Thử lại" khi hỏng. Mỗi file: `.part`, tải tiếp bằng Range, kiểm cỡ + SHA-256 rồi mới đổi tên; `.so` đặt trên máy chủ dưới dạng gzip
+  (`ort/<phiên bản>/<abi>/<tên>.so.gz`; máy kiểm bản nén, giải nén, kiểm tiếp file thật, đặt chỉ-đọc). Dựng file để đăng:
+  `python scripts/prepare_ort_runtime.py --out <thư mục>` (tải AAR Maven Central đã ghim SHA-256, in các dòng `Part(...)` cho `OrtRuntime.kt`; không
+  tự đăng gì). Nâng ONNX Runtime = đổi `VERSION` + chép lại Java của đúng bản + dựng lại file + đổi bảng ghim.
+  **Bản cũ / mới**: `files/music/student/bundle.json` ghi SHA-256 từng phần đã tải; ghim của app đổi (cùng tên, cùng cỡ cũng bắt được) thì
+  trạng thái `outdated` kèm `outdatedParts`/`outdatedBytes`, một lần bấm chỉ tải phần đổi. Model cũ vẫn chạy cho tới lúc cập nhật; thư viện
+  (`blocking`) phải khớp phần Java trong APK nên bản cũ của nó không được nạp. Kết quả phân tích ghi `by` (mã model): cập nhật không tự phân tích
+  lại, `stale` đếm bài cũ và "Phân tích lại N bài" (`POST /api/music/local/reanalyse`) chạy khi người dùng bấm.
+  Tải xong thì cắm `MusicStore.analyzer` rồi `analyzePending()` cho các bài đã nhập; bài nhập sau đó được phân tích ngay lúc nhập. Lần mở
+  app sau có đủ file thì cắm luôn, không gọi mạng. `GET /api/music/local` thêm khoá `module` (cùng hình với máy tính: `state`, `done`, `total`,
+  `error`, `analysing`, `metered`, `supported`, `outdatedParts`, `outdatedBytes`, `stale`), `POST /api/music/local/module` bắt đầu tải.
+  Chưa có gói thì `analyze` vẫn trả 409 với đúng câu của máy tính. Không có `near` / `music_select` trên điện thoại.
+  Kiểm: `MusicStudentTest` / `MusicStudentSetupTest` (JVM, so với `tests/fixtures/music_student/golden.json` do
+  `tests/music_student_goldens.py` sinh từ bản Python), `MusicStudentOnDeviceTest` (máy ảo Android: ONNX Runtime + MediaCodec thật, so
+  với `music_student.analyze` cùng file: lệch V/E/T và 13 cảm xúc < 0,02 - gói model đẩy bằng `adb push` vào `/data/local/tmp/student`, hai `.so` của ABI máy ảo vào `.../student/ort/`; bài thử chép vào `files/` rồi nạp bằng đường tuyệt đối như bản thật),
+  `tests/test_music_student_android.py` (hằng số chép cứng khớp bên Python). Lưu ý: số của trò rất nhạy với dải mel ở sàn -100 dB (nguồn
+  22 kHz hay mp3 cắt dải cao), nên sai khác 1e-5 của bộ đổi tần số so với ffmpeg có thể thành vài phần trăm ở bài như vậy; bài thật có
+  nền ồn thì lệch cỡ 1e-4.
 - **Ghim = một sửa L trong `edits.json`** (`music.pins` + `music.tracks`, xem `EDITING.md`; điều kiện thật của ghim là đoạn nhạc người
   làm sách đã gắn - sách không nhạc thì không có đoạn nào để đổi). File bài chép từ kho vào thư mục sách ở `music/<sha1>.<đuôi>`
   (đúng chỗ bài của người làm sách), "Lưu" / "Lưu thành…" (`BookDocumentWriter`, `bookfile.repack`) mang nó đi trong file `.abook`

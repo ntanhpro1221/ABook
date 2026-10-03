@@ -1,0 +1,2 @@
+# Byte-exact on purpose: 1.txt is CRLF with a BOM, 2.txt is UTF-16, 10.txt is cp1258 (the encodings the importer must read).
+* -text

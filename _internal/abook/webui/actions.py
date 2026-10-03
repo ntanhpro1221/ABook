@@ -17,6 +17,7 @@ import time
 from pathlib import Path
 from typing import Any, Callable, Protocol
 
+from .. import importers
 from ..io_utils import discover_txt_files, natural_key, sha256_file
 from . import humanize
 
@@ -57,8 +58,8 @@ def upload_source(library_root: Path, folder: str, name: str, data: bytes) -> Pa
         raise ValueError("File quá lớn - tối đa 8 MB một chương")
     folder_name = " ".join(_UNSAFE_NAME.sub(" ", folder).split()).strip(" .")[:80] or "Tải lên"
     file_name = " ".join(_UNSAFE_NAME.sub(" ", name.replace("\\", "/").rsplit("/", 1)[-1]).split()).strip(" .")[:120]
-    if not file_name.lower().endswith((".txt", ".epub")):
-        raise ValueError("Chỉ nhận file .txt (mỗi file là một chương) hay một file .epub")
+    if not file_name.lower().endswith((".txt", *importers.IMPORT_SUFFIXES)):
+        raise ValueError("Chỉ nhận file .txt (mỗi file là một chương) hay một file .epub / .docx / .pdf")
     if _DEVICE_NAME.match(folder_name) or _DEVICE_NAME.match(file_name):
         raise ValueError("Tên này là tên thiết bị của Windows - đổi tên file rồi gửi lại")
     target_dir = library_root / UPLOAD_FOLDER / folder_name
@@ -184,18 +185,18 @@ class FakeRunner:
         return str(project_root) in self._running
 
 
-def _count_words(path: Path) -> int:
+def _decode_head(path: Path) -> str:
     try:
         with path.open("rb") as handle:
             raw = handle.read(SCAN_WORD_LIMIT_BYTES)
     except OSError:
-        return 0
+        return ""
     for encoding in ("utf-8-sig", "cp1258"):
         try:
-            return len(raw.decode(encoding).split())
+            return raw.decode(encoding)
         except UnicodeDecodeError:
             continue
-    return len(raw.decode("utf-8", errors="replace").split())
+    return raw.decode("utf-8", errors="replace")
 
 
 def _first_line(path: Path) -> str:
@@ -246,9 +247,10 @@ def _shared_folder_name(files: list[Path]) -> str:
 
 
 def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, Any]:
-    """Những gì người dùng sắp đưa vào sách: file TXT (thư mục chỉ quét một tầng, như app cũ), xếp tự nhiên. File EPUB được
-    tách thành thư mục chương TXT trong `epub_root` (thư viện; không có thì cạnh file EPUB) rồi quét như một thư mục."""
-    from . import epub_import, txt_split, volumes
+    """Những gì người dùng sắp đưa vào sách: file TXT (thư mục chỉ quét một tầng, như app cũ), xếp tự nhiên. File EPUB / DOCX /
+    PDF (importers.py) được tách thành thư mục chương TXT trong `epub_root` (thư viện; không có thì cạnh file) rồi quét như một
+    thư mục."""
+    from . import txt_split, volumes
 
     files: list[Path] = []
     seen: set[str] = set()
@@ -257,21 +259,22 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, An
     subfolders: list[str] = []
     errors: list[str] = []
     notes: list[str] = []
-    epub_title = ""
+    book_title = ""
     # Chương tách từ EPUB giữ thứ tự của TỪNG file (hai tập trong một thư mục: hết tập 1 rồi mới tới tập 2) - xếp theo tên
-    # file thì "0001 …" của tập 1 và tập 2 xen nhau (soát UX 01-10). TXT là nhóm 0, mỗi EPUB một nhóm theo thứ tự gặp.
+    # file thì "0001 …" của tập 1 và tập 2 xen nhau (soát UX 01-10). TXT là nhóm 0, mỗi file sách một nhóm theo thứ tự gặp.
     group_of: dict[str, int] = {}
     groups = 0
 
     def unpack(book: Path, root: Path) -> list[Path]:
-        nonlocal epub_title, groups
+        nonlocal book_title, groups
         try:
-            title = epub_import.title_of(book)
-            chapter_files = discover_txt_files(epub_import.extract(book, root))
-        except (epub_import.EpubError, OSError) as error:
+            folder, info = importers.extract(book, root)
+            chapter_files = discover_txt_files(folder)
+        except (importers.ImportFailed, OSError) as error:
             errors.append(f"{book.name}: {error}")
             return []
-        epub_title = epub_title or title
+        book_title = book_title or str(info.get("title") or "")
+        notes.extend(f"{book.name}: {note}" for note in info.get("notes") or [])
         groups += 1
         for chapter in chapter_files:
             group_of[os.path.normcase(str(chapter.resolve()))] = groups
@@ -284,19 +287,19 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, An
         if not path.exists():
             missing.append(cleaned)
             continue
-        if path.is_file() and path.suffix.casefold() == ".epub":
+        if path.is_file() and path.suffix.casefold() in importers.IMPORT_SUFFIXES:
             candidates = unpack(path, epub_root or path.parent)
         else:
             candidates = discover_txt_files(path) if path.is_dir() else [path]
-        books = sorted((child for child in path.iterdir() if child.suffix.casefold() == ".epub"),
+        books = sorted((child for child in path.iterdir() if child.suffix.casefold() in importers.IMPORT_SUFFIXES),
                        key=lambda child: natural_key(child.name)) if path.is_dir() else []
         if path.is_dir() and not candidates:
-            # Thư mục chỉ có EPUB (gửi từ điện thoại, hay chọn thư mục chứa file EPUB): tách từng file như khi chọn nó.
+            # Thư mục chỉ có file sách (gửi từ điện thoại, hay chọn thư mục chứa file EPUB): tách từng file như khi chọn nó.
             for book in books:
                 candidates += unpack(book, epub_root or path)
         elif books:
             names = ", ".join(book.name for book in books[:2]) + (" …" if len(books) > 2 else "")
-            notes.append(f"Thư mục có cả file EPUB ({names}) - chỉ lấy các file TXT; muốn dùng EPUB thì chọn riêng file ấy.")
+            notes.append(f"Thư mục có cả file sách ({names}) - chỉ lấy các file TXT; muốn dùng file sách thì chọn riêng file ấy.")
         if path.is_dir() and not candidates:
             # Chọn nhầm thư mục cha: gợi ý các thư mục con có TXT ngay bên trong.
             try:
@@ -318,7 +321,8 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, An
     rows = []
     total_words = 0
     for path in files:
-        words = _count_words(path)
+        text = _decode_head(path)
+        words = len(text.split())
         total_words += words
         rows.append({
             "path": str(path),
@@ -328,6 +332,8 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, An
             # Dòng ghi công ở đầu chương: trình tạo sách ĐỀ XUẤT bỏ chúng khỏi phần đọc (đếm trên đúng các chương còn chọn).
             "credits": _credits_at_top(path),
             "words": words,
+            # Số ký tự có chữ (không tính khoảng trắng): hiện cạnh tên chương để thấy chương nào rỗng / quá dài trước khi tạo.
+            "chars": sum(not ch.isspace() for ch in text),
             "bytes": path.stat().st_size,
             # Như chapters.input_sha256 của dây chuyền: nhận ra truyện đã có dự án (App.existing_projects).
             "sha256": sha256_file(path),
@@ -335,7 +341,7 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, An
             # cả nghìn file chương của một thư mục bình thường.
             "split": txt_split.plan(path) if len(files) <= 3 else None,
         })
-    title = epub_title
+    title = book_title
     if files and not title:
         from ..project import infer_book_title
 
@@ -344,9 +350,9 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, An
         "files": rows,
         "skipped": skipped,
         "missing": missing,
-        # EPUB không tách được (hỏng, không có chương nào có chữ...): nói lý do thay vì "không có chương nào".
+        # EPUB / DOCX / PDF không tách được (hỏng, PDF scan, không có chương nào có chữ...): nói lý do thay vì "không có chương nào".
         "errors": errors,
-        # Không phải lỗi nhưng người dùng nên biết (thư mục có cả TXT lẫn EPUB: chỉ lấy TXT).
+        # Không phải lỗi nhưng người dùng nên biết (thư mục có cả TXT lẫn EPUB: chỉ lấy TXT; trang chỉ có ảnh bị bỏ; gợi ý bỏ dòng ghi công).
         "notes": notes,
         # Tối đa MAX_VOLUMES: giao diện hiện vài thư mục đầu, và "dùng cả các thư mục này, mỗi thư mục một tập" cần đủ bộ.
         "subfolders": subfolders[:volumes.MAX_VOLUMES],
