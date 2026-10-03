@@ -79,6 +79,8 @@ def heading_pattern(words: str) -> re.Pattern[str]:
 
 # DOCX / PDF không có tiêu đề thật thì tách theo dòng "Chương N" / "Chapter N" / "Hồi N" / "Quyển N".
 HEADING = heading_pattern(CHAPTER_WORDS + "|quyển|quyen")
+# File TXT cả truyện tách theo "Chương N" thôi (như trình tạo sách, webui/txt_split.py): "Quyển N" là tên tập, không phải chương.
+TXT_HEADING = heading_pattern(CHAPTER_WORDS)
 
 
 class ImportFailed(ValueError):
@@ -102,6 +104,7 @@ class ImportedBook:
     notes: list[str] = field(default_factory=list)
     text_has_title: bool = False  # file TXT: tên chương nằm sẵn trong chữ (EPUB / DOCX / PDF: tên chương là trường riêng)
     credits: list[tuple[int, str]] = field(default_factory=list)  # (số chương, dòng ghi công) - gợi ý, như trong `notes`
+    split_offer: int = 0  # file TXT cả truyện: số chương nếu tách theo các dòng "Chương N" (0 = không có gì để tách); người dùng tích mới tách
 
     def chapter_source(self, chapter: Chapter) -> str:
         """Chữ của chương như FILE NGUỒN mà Studio đọc: TXT nguyên văn (tên chương nằm sẵn trong chữ); EPUB / DOCX / PDF: tên
@@ -120,11 +123,13 @@ class ImportedBook:
             "title": self.title, "author": self.author, "language": self.language, "cover": cover,
             "chapters": [{"title": chapter.title, "text": chapter.text} for chapter in self.chapters],
             "notes": list(self.notes),
+            **({"splitOffer": self.split_offer} if self.split_offer else {}),
         }
 
 
-def import_text(path: Path | str) -> ImportedBook:
-    """Mở một thư mục TXT, hay file .epub / .docx / .pdf. Lỗi dự đoán được là `ImportFailed`."""
+def import_text(path: Path | str, *, split_chapters: bool = False) -> ImportedBook:
+    """Mở một thư mục TXT, hay file .epub / .docx / .pdf / .txt. Lỗi dự đoán được là `ImportFailed`. `split_chapters`: file .txt cả
+    truyện thì tách thành các chương theo dòng "Chương N" (người dùng tích gợi ý `split_offer`; mặc định cả file là một chương)."""
     path = Path(path)
     if path.is_dir():
         book = _txt_folder(path)
@@ -133,7 +138,7 @@ def import_text(path: Path | str) -> ImportedBook:
         if suffix == ".pdf":
             pages, title, author = pdf_pages(path)
             return import_pdf_pages(pages, path.stem, title, author)
-        reader = {".epub": _epub, ".docx": _docx, ".txt": _txt_file}.get(suffix)
+        reader = {".epub": _epub, ".docx": _docx, ".txt": lambda file: _txt_file(file, split_chapters)}.get(suffix)
         if reader is None:
             raise ImportFailed(f"Chưa đọc được file {suffix or 'không có đuôi'} - dùng .epub, .docx, .pdf, .txt hay một thư mục TXT")
         book = reader(path)
@@ -153,7 +158,7 @@ def _finish(book: ImportedBook) -> ImportedBook:
         raise ImportFailed("Không có chương nào có chữ")
     if len(book.chapters) > 1:
         # File TXT rỗng (hay chỉ có khoảng trắng) không thành chương - nói ra, để số chương ít hơn số file có lý do.
-        book.notes += [f"Bỏ qua mục không có chữ: {chapter.title}" for chapter in book.chapters if not chapter.text.strip()]
+        book.notes += [f"Bỏ qua mục trống: {chapter.title}" for chapter in book.chapters if not chapter.text.strip()]
         book.chapters = [chapter for chapter in book.chapters if chapter.text.strip()]
     for number, chapter in enumerate(book.chapters, start=1):
         # Tên chương tính là một dòng của chương (cửa sổ 6 dòng đầu), như file chương mà Studio đọc.
@@ -207,8 +212,30 @@ def _txt_folder(folder: Path) -> ImportedBook:
     return ImportedBook(title=folder.resolve().name, chapters=[_txt_chapter(file) for file in files], text_has_title=True)
 
 
-def _txt_file(path: Path) -> ImportedBook:
-    return ImportedBook(title=path.stem, chapters=[_txt_chapter(path)], text_has_title=True)
+def _txt_file(path: Path, split: bool = False) -> ImportedBook:
+    """Một file TXT là một chương - trừ khi nó là CẢ truyện (>= 2 dòng "Chương N") và người dùng tích tách: `split_txt_chapters`."""
+    chapter = _txt_chapter(path)
+    book = ImportedBook(title=path.stem, chapters=[chapter], text_has_title=True)
+    parts = split_txt_chapters(chapter.text)
+    book.split_offer = len(parts)
+    if split and parts:
+        book.chapters = parts
+    return book
+
+
+def split_txt_chapters(text: str) -> list[Chapter]:
+    """Chữ (đã `_clean_text`) của một file TXT cả truyện -> các chương cắt ở đầu mỗi dòng tiêu đề "Chương N" (cùng luật nhận tiêu đề
+    với trình tạo sách, `txt_split`: "Quyển N" không phải tiêu đề). Chữ giữ nguyên từng dòng, tiêu đề nằm trong chữ của chương; chữ
+    đứng trước tiêu đề đầu tiên thành chương "Mở đầu" (không bỏ). Dưới hai tiêu đề: [] (không có gì để tách). Kotlin: splitTxtChapters."""
+    lines = text.split("\n")
+    cuts = [index for index, line in enumerate(lines) if is_heading_line(line, TXT_HEADING)]
+    if len(cuts) < 2:
+        return []
+    chapters = [Chapter(PREAMBLE, "\n".join(lines[: cuts[0]]).strip("\n"))] if any(line.strip() for line in lines[: cuts[0]]) else []
+    for position, start in enumerate(cuts):
+        end = cuts[position + 1] if position + 1 < len(cuts) else len(lines)
+        chapters.append(Chapter(lines[start].strip(), "\n".join(lines[start:end]).strip("\n")))
+    return chapters
 
 
 # --- XML an toàn -------------------------------------------------------------------------------------------------------
@@ -577,14 +604,14 @@ def _docx(path: Path) -> ImportedBook:
         elif paragraphs:
             result.chapters.append(Chapter(title, "\n\n".join(paragraphs)))
         else:
-            result.notes.append(f"Bỏ qua mục không có chữ: {title}")
+            result.notes.append(f"Bỏ qua mục trống: {title}")
     return result
 
 
 # --- Chia chương theo dòng tiêu đề (DOCX không có Heading, PDF) -------------------------------------------------------
 
-def is_heading_line(line: str) -> bool:
-    return len(line.strip()) <= MAX_HEADING and HEADING.match(line) is not None
+def is_heading_line(line: str, pattern: re.Pattern[str] = HEADING) -> bool:
+    return len(line.strip()) <= MAX_HEADING and pattern.match(line) is not None
 
 
 def _split_on_headings(paragraphs: list[str], book_title: str) -> tuple[list[Chapter], list[str]]:
@@ -601,7 +628,7 @@ def _split_on_headings(paragraphs: list[str], book_title: str) -> tuple[list[Cha
         elif body:
             chapters.append(Chapter(title, "\n\n".join(body)))
         else:
-            notes.append(f"Bỏ qua mục không có chữ: {title}")
+            notes.append(f"Bỏ qua mục trống: {title}")
 
     any_heading = any(is_heading_line(paragraph) for paragraph in paragraphs)
     for paragraph in paragraphs:

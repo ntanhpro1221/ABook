@@ -32,6 +32,7 @@ import {
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
+import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
@@ -43,7 +44,7 @@ import { usePlayListenBook, useNextVolume } from "./LibraryScreen";
 import { canPlay, seriesOf, type Bookmark, type ListenChapter, type Script } from "./model";
 import { EDIT_BOOKMARK_EVENT, SKIP_SECONDS, SPEEDS, useNowPlaying, usePlayer } from "./player";
 import { SLEEP_CHOICES, sleepLabel, sleepLeftMs, sleepSpoken } from "./sleep";
-import { chooseVoice, chosenVoice, onlineNotice, resolveVoice } from "./readAloudVoice";
+import { chooseVoice, chosenVoice, isNoOfflineVoice, onlineNotice, resolveVoice } from "./readAloudVoice";
 import { nextChapterLabel, PREPARING_VOICE, textChapterLine, toggleLabel } from "./labels";
 import { spokenVoiceName } from "./onlineConsent";
 import { PlaylistOptionLabel, playlistNote, usePlaylistChoice } from "./PlaylistChoice";
@@ -859,11 +860,33 @@ function TrackSubtitle() {
  *  thay tên sách bằng chữ đỏ. Lời nhắn đã rơi sang giọng của máy (vẫn đang đọc) là một dòng trạng thái, tự ẩn. */
 function PlayerAlert({ className }: { className?: string }) {
   const { error, notice, resume } = usePlayer();
+  const navigate = useNavigate();
   if (error) {
+    // Mất mạng mà máy chưa có giọng đọc không cần mạng: chỉ cách xong thì đưa người nghe tới đúng chỗ tải giọng (Cài đặt › Giọng đọc).
+    const noVoice = isNoOfflineVoice(error);
     return (
-      <div role="alert" className={cn("flex items-center gap-3 rounded-xl bg-danger-soft px-3 py-2 text-sm text-fg", className)}>
+      <div role="alert" className={cn("flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl bg-danger-soft px-3 py-2 text-sm text-fg", className)}>
         <TriangleAlert className="size-4 shrink-0 text-danger" />
-        <span className="min-w-0 flex-1">{error}</span>
+        <span className="min-w-[14rem] flex-1">{error}</span>
+        {noVoice && (
+          <button
+            type="button"
+            onClick={() => {
+              navigate("/settings");
+              let tries = 0;
+              const reveal = () => {
+                const target = document.getElementById("voices");
+                if (target) target.scrollIntoView({ block: "start" });
+                else if (tries++ < 20) setTimeout(reveal, 50);
+              };
+              setTimeout(reveal, 0);
+            }}
+            {...keepFocus}
+            className="min-h-9 shrink-0 rounded-lg bg-panel px-3 text-xs font-semibold ring-1 ring-line hover:bg-hover max-sm:min-h-[44px]"
+          >
+            Mở Cài đặt › Giọng đọc
+          </button>
+        )}
         <button
           type="button"
           onClick={resume}

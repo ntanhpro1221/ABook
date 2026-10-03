@@ -3,7 +3,7 @@ nhạc" (music_module.py): bộ cài không mang gì, người dùng bấm mới
 
 Người dùng chọn (`CHOICES`, có "Khuyên dùng" theo máy - `recommend`):
 - `turbo`: VieNeu-TTS v3 Turbo int8 + bộ giải mã MOSS - 25 giọng, 48 kHz.
-- `nano`: VieNeu-TTS v3 Nano - 11 giọng, 24 kHz, cho máy yếu.
+- `nano`: VieNeu-TTS v3 Nano - 11 giọng, 24 kHz; đọc tốn ít RAM và hợp máy ít lõi hơn Turbo, nhưng file tải nặng hơn.
 - `aligner`: bộ căn chữ wav2vec2 (122 MB, cùng file Studio dùng) - mốc từng chữ chính xác; mặc định có trên máy tính.
 Mỗi lựa chọn kéo theo các phần (`NEEDS`); phần dùng chung chỉ tính một lần và phần máy đã có (thư viện của "Phân tích nhạc", bộ căn chữ của
 Studio, gói cài sẵn trên máy dev) không tính: dung lượng hiện là cái máy này còn thiếu.
@@ -93,8 +93,8 @@ CHOICES = ("turbo", "nano", "aligner")
 NEEDS = {"turbo": ("libs", "g2p", "voices", "turbo"), "nano": ("libs", "g2p", "voices", "nano"), "aligner": ("libs", "aligner")}
 CHOICE_TEXT = {
     "turbo": ("Giọng VieNeu", "25 giọng, âm thanh 48 kHz - hay nhất"),
-    "nano": ("Giọng VieNeu Nano", "11 giọng, âm thanh 24 kHz - nhẹ, cho máy yếu"),
-    "aligner": ("Sáng đúng từng chữ", "Biết chính xác chữ nào đang được đọc. Không tải thì máy ước theo âm tiết, đôi khi lệch một nhịp"),
+    "nano": ("Giọng VieNeu Nano", "11 giọng, âm thanh 24 kHz - lúc đọc tốn ít bộ nhớ và hợp máy ít lõi hơn Giọng VieNeu; file tải nặng hơn"),
+    "aligner": ("Tô đúng từng chữ đang đọc", "Biết chính xác chữ nào đang được đọc. Không tải thì máy ước theo âm tiết, đôi khi lệch một nhịp"),
 }
 PART_LABEL = {"g2p": "Bộ đọc chữ tiếng Việt", "voices": "Danh sách giọng", "turbo": "Giọng VieNeu", "nano": "Giọng VieNeu Nano",
               "aligner": "Bộ căn chữ"}

@@ -1,0 +1,28 @@
+{
+ "title": "whole",
+ "author": null,
+ "language": null,
+ "cover": null,
+ "chapters": [
+  {
+   "title": "Mở đầu",
+   "text": "Chuyến phà cuối ngày\nMột truyện ngắn thử nghiệm."
+  },
+  {
+   "title": "Chương 1: Bến phà lúc bình minh",
+   "text": "Chương 1: Bến phà lúc bình minh\n\nSương còn phủ kín mặt sông.\nÔng Tám đẩy chiếc phà ra khỏi bến."
+  },
+  {
+   "title": "Chương 2: Người khách lạ",
+   "text": "Chương 2: Người khách lạ\nDịch: Nhóm Lục Bình\n\nChuyến đầu tiên chỉ có một hành khách.\nChương trình của ngày hôm ấy rất đơn giản: đưa người qua sông."
+  },
+  {
+   "title": "Chương 3",
+   "text": "Chương 3\nMưa kéo đến lúc xế chiều."
+  }
+ ],
+ "notes": [
+  "Gợi ý: chương 3 có dòng ghi công ở đầu - “Dịch: Nhóm Lục Bình”. Có thể bỏ khỏi phần đọc, nhưng ABook không tự bỏ."
+ ],
+ "splitOffer": 4
+}

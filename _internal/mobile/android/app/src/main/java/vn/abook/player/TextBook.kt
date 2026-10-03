@@ -104,5 +104,7 @@ object TextBook {
             // Gợi ý chọn được: dòng ghi công người nghe có thể bỏ khỏi phần đọc (mặc định KHÔNG bỏ). `chapter` = mã chương trong sách.
             .put("suggestions", JSONArray(book.credits.map { (chapter, line) -> JSONObject().put("chapter", chapter).put("line", line) }))
             .put("totals", JSONObject().put("chapters", rows.length()).put("words", words))
+            // File TXT cả truyện: số chương nếu tách theo "Chương N" - giao diện đề xuất (ô KHÔNG tích sẵn). Không có gì để tách thì không có khoá.
+            .also { if (book.splitOffer > 0) it.put("splitOffer", book.splitOffer) }
     }
 }

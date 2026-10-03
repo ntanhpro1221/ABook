@@ -10,9 +10,9 @@ import { applyTheme, loadSettings, saveSettings, type PlayerSettings } from "./s
 import { openRelease } from "./UpdateNotice";
 import { useAppUpdate } from "./updates";
 
-function Group({ title, children }: { title: string; children: ReactNode }) {
+function Group({ title, id, children }: { title: string; id?: string; children: ReactNode }) {
   return (
-    <section className="mt-7">
+    <section id={id} className="mt-7">
       <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-fg-3">{title}</h2>
       <div className="divide-y divide-line rounded-2xl border border-line bg-panel">{children}</div>
     </section>
@@ -207,7 +207,7 @@ export function SettingsScreen() {
         </Row>
       </Group>
 
-      <Group title="Giọng đọc">
+      <Group title="Giọng đọc" id="voices">
         <div className="px-4 py-3.5">
           <p className="mb-3 text-xs leading-snug text-fg-2">
             Giọng mặc định khi nghe sách chưa có audio (“Nghe ngay”). Mỗi cuốn vẫn đổi được giọng riêng ở nút “Giọng đọc” trong trình phát.

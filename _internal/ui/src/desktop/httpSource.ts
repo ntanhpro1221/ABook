@@ -28,8 +28,13 @@ export function desktopTextImport(dialogs: boolean): TextImport {
           return paths[0] ? { ref: paths[0], name: fileName(paths[0]) } : null;
         }
       : undefined,
-    preview: (choice) => api<ImportPreview>("/api/listen/import/preview", { method: "POST", body: { path: choice.ref } }),
-    add: (choice, title, separate) => api<AddedBook>("/api/listen/import", { method: "POST", body: { path: choice.ref, title, separate: Boolean(separate) } }),
+    preview: (choice, options) =>
+      api<ImportPreview>("/api/listen/import/preview", { method: "POST", body: { path: choice.ref, splitChapters: Boolean(options?.splitChapters) } }),
+    add: (choice, title, separate, options) =>
+      api<AddedBook>("/api/listen/import", {
+        method: "POST",
+        body: { path: choice.ref, title, separate: Boolean(separate), splitChapters: Boolean(options?.splitChapters) },
+      }),
   };
 }
 

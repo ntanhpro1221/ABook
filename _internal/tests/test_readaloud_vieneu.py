@@ -114,7 +114,8 @@ class FakeEngine:
 
 def _voices(folder: Path) -> Path:
     folder.mkdir(parents=True, exist_ok=True)
-    turbo = {"presets": {"Thường": {"speaker_emb": [0.1] * 4, "codes": [[1] * 16]}, "Chọn": {"featured": 1, "speaker_emb": [0.2] * 4}}}
+    turbo = {"presets": {"Thường": {"speaker_emb": [0.1] * 4, "codes": [[1] * 16], "gender": "male"},
+                         "Chọn": {"featured": 1, "speaker_emb": [0.2] * 4, "gender": "female"}}}
     nano = {"presets": {"Nhẹ": {"speaker_emb": [0.1] * 4, "style": [[0.0] * 4]}}}
     (folder / "voices_v3_turbo.json").write_bytes(json.dumps(turbo).encode())
     (folder / "voices_v3_nano.json").write_bytes(json.dumps(nano).encode())
@@ -136,6 +137,7 @@ def test_voices_list_both_tiers_featured_first(fake_voices) -> None:
     assert [voice.id for voice in voices] == ["vieneu:turbo/Chọn", "vieneu:turbo/Thường", "vieneu:nano/Nhẹ"]
     assert all(not voice.online and not voice.default for voice in voices)
     assert voices[2].name == "Nhẹ (VieNeu Nano)"
+    assert [voice.gender for voice in voices] == ["female", "male", ""], "nam / nữ lấy từ danh sách giọng; không ghi thì để trống"
 
 
 def test_a_clip_has_one_timing_per_word_inside_its_unit(fake_voices, tmp_path: Path) -> None:

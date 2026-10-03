@@ -9,11 +9,11 @@ import re
 from pathlib import Path
 from typing import Any
 
-from ..importers import CHAPTER_WORDS, MAX_HEADING, PREAMBLE, heading_pattern
+from ..importers import MAX_HEADING, PREAMBLE, TXT_HEADING
 from ..io_utils import decode_text_bytes
 from .volumes import is_volume_heading
 
-HEADING = heading_pattern(CHAPTER_WORDS)
+HEADING = TXT_HEADING  # một luật tiêu đề với "Thêm sách từ file…" (importers.split_txt_chapters)
 _UNSAFE_NAME = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 
 

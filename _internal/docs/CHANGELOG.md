@@ -7,6 +7,22 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Thư viện
+
+- **File TXT cả truyện tách được thành từng chương khi thêm sách (máy tính và điện thoại)**: "Thêm sách từ file…" với một file TXT có từ hai
+  dòng "Chương N" trở lên hiện ô "Tách thành N chương theo các dòng “Chương N”", không tích sẵn. Tích thì danh sách chương xem trước đổi theo
+  và sách vào Thư viện có N chương (chữ trước chương đầu thành chương "Mở đầu"); không tích thì cả file vẫn là một chương như trước. Chữ của
+  truyện không đổi, chỉ chỗ cắt.
+- **Thư viện trống mời thêm sách trước**: nút chính là "Thêm sách từ file…" (nghe ngay), "Tạo sách nói" là nút phụ. Menu "…" của trang sách
+  không còn rộng cả màn hình, mô tả tự xuống dòng. Sách chỉ có chữ ghi "Chỉ có chữ · nghe bằng giọng đọc" thay cho dòng nghe như lỗi.
+
+### Giọng đọc
+
+- Khi mất mạng mà máy chưa có giọng đọc không cần mạng, thông báo nói rõ cài giọng ở đâu (Cài đặt của Windows) và có nút "Mở Cài đặt › Giọng
+  đọc" để tải Giọng VieNeu. Danh sách giọng trong Cài đặt gom theo mô-đun (không lặp "(VieNeu Nano)" ở từng giọng); giọng VieNeu ghi nam / nữ.
+  Giọng VieNeu Nano được mô tả đúng: đọc tốn ít bộ nhớ hơn nhưng file tải nặng hơn. "Sáng đúng từng chữ" đổi thành "Tô đúng từng chữ đang
+  đọc"; hướng dẫn lấy khoá giọng trực tuyến giữ tên nút của hãng kèm giải nghĩa tiếng Việt.
+
 ### Sửa lỗi
 
 - **File Word có câu bị xuống dòng giữa chừng không còn đọc thành hai đoạn (máy tính và điện thoại)**: chữ dán từ web hay PDF vào Word

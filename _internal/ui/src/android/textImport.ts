@@ -25,14 +25,15 @@ export const phoneTextImport: TextImport = {
     if (picked.pdf) choice.pdf = picked.pdf;
     return choice;
   },
-  async preview(choice) {
+  async preview(choice, options) {
     const pdf = (choice as PickedPdf).pdf;
-    if (!pdf) return EbookLibrary.previewImport({ ref: choice.ref });
+    if (!pdf) return EbookLibrary.previewImport({ ref: choice.ref, ...(options?.splitChapters ? { splitChapters: true } : {}) });
     const pages = await readPdf(Capacitor.convertFileSrc(pdf)).catch((error: Error) => {
       throw new Error(`Không đọc được PDF này: ${error.message}`);
     });
     return EbookLibrary.previewImport({ ref: choice.ref, pages: pages.pages, title: pages.title, author: pages.author });
   },
+  // Native giữ cuốn của lần xem trước cuối (đã tách hay chưa), nên `options` không cần đi tiếp.
   add: (choice, title, separate) => EbookLibrary.createImport({ ref: choice.ref, title, separate: Boolean(separate) }),
   discard: (choice) => EbookLibrary.discardImport({ ref: choice.ref }),
 };

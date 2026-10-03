@@ -121,8 +121,8 @@ export function suggestionText(suggestion: VieneuSuggestion): { message: string;
   const lead = `${slow} không theo kịp người nghe trên máy này (${seconds(suggestion.rtf)} giây cho mỗi giây nghe) - nghe trực tiếp có thể phải chờ giữa các đoạn. Giữ giọng này thì dùng “Làm trước”.`;
   if (suggestion.switchTo === "nano") {
     return suggestion.installed
-      ? { message: `${lead} Giọng VieNeu Nano nhẹ hơn và đã có trên máy.`, action: "Dùng giọng VieNeu Nano" }
-      : { message: `${lead} Giọng VieNeu Nano nhẹ hơn, hợp với máy này hơn.`, action: "Tải giọng VieNeu Nano" };
+      ? { message: `${lead} Giọng VieNeu Nano đọc nhẹ máy hơn và đã có trên máy.`, action: "Dùng giọng VieNeu Nano" }
+      : { message: `${lead} Giọng VieNeu Nano đọc nhẹ máy hơn, hợp với máy này hơn.`, action: "Tải giọng VieNeu Nano" };
   }
   return { message: `${lead} Giọng trực tuyến không bắt máy làm việc này (cần mạng).`, action: "Dùng giọng trực tuyến" };
 }

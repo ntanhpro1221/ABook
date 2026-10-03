@@ -320,7 +320,7 @@ class VieneuModule(
         val CHOICES = listOf("nano", "turbo")
         val NEEDS = mapOf("turbo" to listOf("ort", "g2p", "voices", "turbo"), "nano" to listOf("ort", "g2p", "voices", "nano"))
         val CHOICE_TEXT = mapOf(
-            "nano" to ("Giọng VieNeu Nano" to "11 giọng, âm thanh 24 kHz - nhẹ hơn, hợp với điện thoại"),
+            "nano" to ("Giọng VieNeu Nano" to "11 giọng, âm thanh 24 kHz - lúc đọc tốn ít bộ nhớ hơn, hợp điện thoại yếu; file tải nặng hơn Giọng VieNeu"),
             "turbo" to ("Giọng VieNeu" to "25 giọng, âm thanh 48 kHz - hay nhất, cần điện thoại mạnh"),
         )
         val PART_LABEL = mapOf("ort" to "Thư viện chạy model", "g2p" to "Bộ đọc chữ tiếng Việt", "voices" to "Danh sách giọng",

@@ -64,6 +64,9 @@ class ClipReaderTest {
                 fail("không có giọng nào đọc được")
             } catch (error: VoiceException) {
                 assertEquals(ClipReader.NO_OFFLINE_VOICE, error.message)
+                // Giao diện nhận ra thông báo này nhờ mở đầu chung với bản máy tính (readAloudVoice.ts NO_OFFLINE_LEAD) để thêm nút mở Cài đặt › Giọng đọc.
+                assertTrue(error.message!!.startsWith("Không có mạng, và máy chưa có giọng tiếng Việt đọc được khi không có mạng."))
+                assertTrue(error.message!!.endsWith("."))
                 assertTrue(error.offline)
             }
         }

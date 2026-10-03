@@ -365,12 +365,12 @@ class App:
             raise ApiError(HTTPStatus.NOT_FOUND, "Không thấy file hay thư mục này - có thể nó đã bị chuyển hay xoá.")
         return source
 
-    def preview_text_book(self, path: str) -> dict[str, Any]:
+    def preview_text_book(self, path: str, split_chapters: bool = False) -> dict[str, Any]:
         """"Thêm sách từ file…", bước xem trước: đọc file sách bằng `importers.import_text` và trả danh sách chương + gợi ý. Chưa
-        ghi gì vào thư viện."""
+        ghi gì vào thư viện. `split_chapters`: người dùng tích "Tách thành N chương" cho file TXT cả truyện."""
         source = self._book_source(path)
         try:
-            book = importers.import_text(source)
+            book = importers.import_text(source, split_chapters=split_chapters)
             # Đúng bộ chữ này đã có trong thư viện: hỏi ngay ở đây ("Mở cuốn đó" / "Thêm bản riêng"), đừng để người dùng sửa tên
             # rồi mới biết lúc thêm.
             existing = textbook.find_existing(book, self.library.root)
@@ -385,14 +385,14 @@ class App:
         title = book_edits.load(folder).get("title") or packages.manifest(folder).get("title") or folder.name
         return {"id": book_id(folder), "title": str(title)}
 
-    def add_text_book(self, path: str, title: str = "", separate: bool = False) -> dict[str, Any]:
+    def add_text_book(self, path: str, title: str = "", separate: bool = False, split_chapters: bool = False) -> dict[str, Any]:
         """"Thêm sách từ file…": nhập thành sách CHỈ-CÓ-CHỮ trong thư viện (textbook.py) - đọc được ngay, chưa có audio. Nhập lại
-        đúng file ấy thì về cuốn đã có (`how`: "new" / "existing"), trừ khi người dùng chọn "Thêm bản riêng" (`separate`)."""
+        đúng file ấy thì về cuốn đã có (`how`: "new" / "existing"), trừ khi người dùng chọn "Thêm bản riêng" (`separate`). `split_chapters`: như bước xem trước."""
         self._mutating()
         source = self._book_source(path)
         try:
             folder, how, book = textbook.add_to_library(source, title, self.library.root, self.library.projects(), self.fingerprints,
-                                                        separate=separate)
+                                                        separate=separate, split_chapters=split_chapters)
         except (importers.ImportFailed, bookfile.BookFileError) as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
         except OSError as error:
@@ -2979,12 +2979,13 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.OK, self.app.open_book_file(str(self._body().get("path") or "")))
 
     def post_import_preview(self, _query: dict[str, list[str]]) -> None:
-        self._send_json(HTTPStatus.OK, self.app.preview_text_book(str(self._body().get("path") or "")))
+        body = self._body()
+        self._send_json(HTTPStatus.OK, self.app.preview_text_book(str(body.get("path") or ""), body.get("splitChapters") is True))
 
     def post_import_book(self, _query: dict[str, list[str]]) -> None:
         body = self._body()
         self._send_json(HTTPStatus.OK, self.app.add_text_book(str(body.get("path") or ""), str(body.get("title") or ""),
-                                                              body.get("separate") is True))
+                                                              body.get("separate") is True, body.get("splitChapters") is True))
 
     def get_chapter_text(self, _query: dict[str, list[str]], value: str, chapter: str) -> None:
         # Chữ của chương trong sách CHỈ-CÓ-CHỮ (texts/<mã>.txt): trang đọc dựng các đoạn từ đây (listen/textScript.ts).

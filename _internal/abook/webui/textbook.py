@@ -93,6 +93,8 @@ def preview(book: importers.ImportedBook) -> dict[str, Any]:
     return {
         "title": _title(book.title, "Sách"), "author": book.author, "language": book.language,
         "hasCover": bool(book.cover_bytes), "chapters": rows, "notes": list(book.notes),
+        # File TXT cả truyện: số chương nếu tách theo các dòng "Chương N" - giao diện đề xuất (ô KHÔNG tích sẵn). Không có gì để tách thì không có khoá.
+        **({"splitOffer": book.split_offer} if book.split_offer else {}),
         # Gợi ý chọn được: dòng ghi công người nghe có thể bỏ khỏi phần đọc (mặc định KHÔNG bỏ). `chapter` = mã chương trong sách.
         "suggestions": [{"chapter": number, "line": line} for number, line in book.credits],
         "totals": {"chapters": len(rows), "words": sum(row["words"] for row in rows)},
@@ -100,12 +102,13 @@ def preview(book: importers.ImportedBook) -> dict[str, Any]:
 
 
 def add_to_library(source: Path, title: str | None, library_root: Path, projects: Iterable[Path],
-                   fingerprints: Fingerprints, *, separate: bool = False) -> tuple[Path, str, importers.ImportedBook]:
+                   fingerprints: Fingerprints, *, separate: bool = False,
+                   split_chapters: bool = False) -> tuple[Path, str, importers.ImportedBook]:
     """Đọc `source` (thư mục TXT / .epub / .docx / .pdf / .txt) và đưa vào thư viện thành sách chỉ-chữ. Trả (thư mục cuốn, cách -
     "new" / "existing" / "updated" như `packages.import_opened`, cuốn đã đọc). `title` (nếu có) thay tên sách của file.
-    `separate`: "Thêm bản riêng" - cuốn mới dù thư viện đã có đúng bộ chữ này.
+    `separate`: "Thêm bản riêng" - cuốn mới dù thư viện đã có đúng bộ chữ này. `split_chapters`: file .txt cả truyện tách theo "Chương N".
     `importers.ImportFailed` / `bookfile.BookFileError` khi không nhập được."""
-    book = importers.import_text(source)
+    book = importers.import_text(source, split_chapters=split_chapters)
     if title and store.clean_title(title):
         book.title = title
     with tempfile.TemporaryDirectory(prefix="abook-text-") as scratch:

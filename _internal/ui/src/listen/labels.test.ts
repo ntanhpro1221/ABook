@@ -39,7 +39,7 @@ describe("nút phát", () => {
 
 describe("sách chỉ có chữ", () => {
   it("một dòng nhất quán, không 'chưa có âm thanh' cạnh nút Nghe ngay", () => {
-    expect(textBookLine(true)).toBe("Giọng máy đọc · chưa có sách nói");
+    expect(textBookLine(true)).toBe("Chỉ có chữ · nghe bằng giọng đọc");
     expect(textBookLine(false)).toBe("Chỉ có chữ · máy này chưa có giọng đọc");
     expect(textChapterLine(true)).toBe("Giọng máy đọc");
     expect(textChapterLine(false)).toBe("Chỉ có chữ");
@@ -58,7 +58,7 @@ describe("lời nhắc màn đọc", () => {
 
   it("không đổi khi giọng máy đã đọc xong đoạn đầu (kịch bản có mốc)", () => {
     expect(readerHint({ ...base, timed: true })).toBe(readerHint(base));
-    expect(readerHint({ ...base, tapped: true })).toBe("Giọng máy đọc · chưa có sách nói.");
+    expect(readerHint({ ...base, tapped: true })).toBe("Chỉ có chữ · nghe bằng giọng đọc.");
   });
 
   it("sách nói của Studio", () => {

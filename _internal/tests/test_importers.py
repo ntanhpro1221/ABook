@@ -112,7 +112,7 @@ def test_docx_splits_on_heading_1_and_2_and_falls_back_to_chapter_lines() -> Non
         "sau dấu hết câu, dòng viết hoa (thơ) hay thoại thì xuống dòng cứng vẫn là ranh giới đoạn"
     assert "Câu giữ lại và câu thêm vào." in text and "đã xoá" not in text, "chữ bị xoá khi theo dõi thay đổi không đọc"
     assert "Ô bảng thứ nhất.\n\nÔ bảng thứ hai." in book.chapters[2].text
-    assert book.notes == ["Bỏ qua mục lục của tài liệu (3 dòng).", "Bỏ qua mục không có chữ: Một mục không có chữ"], \
+    assert book.notes == ["Bỏ qua mục lục của tài liệu (3 dòng).", "Bỏ qua mục trống: Một mục không có chữ"], \
         "mục lục Word (kiểu toc 1) không thành chữ của chương Mở đầu"
     assert "Người khách lạ\t" not in book.chapters[0].text and "Người khách lạ" not in book.chapters[0].text
     plain = importers.import_text(FIXTURES / "plain.docx")  # viết bằng xmlns mặc định, không có tiền tố "w:"
@@ -130,8 +130,33 @@ def test_txt_folder_keeps_the_studio_order_and_reads_every_encoding() -> None:
     assert book.chapters[1].text == "Sương sớm\n\nChuyến phà đầu tiên rời bến lúc năm giờ.\nCậu bé đứng ở mạn thuyền.", "UTF-8 BOM + CRLF"
     assert book.chapters[2].text == "Chương hai\n\nTiếng máy nổ trầm đục.", "UTF-16"
     assert "Mưa rơi suốt chiều." in book.chapters[4].text, "cp1258 (dấu rời) về NFC"
-    assert book.notes[0] == "Bỏ qua mục không có chữ: Chương 3", "file chỉ có khoảng trắng không thành chương, nhưng có nói ra"
+    assert book.notes[0] == "Bỏ qua mục trống: Chương 3", "file chỉ có khoảng trắng không thành chương, nhưng có nói ra"
     assert [chapter.text for chapter in book.chapters] == [chapter.text for chapter in importers.import_text(FIXTURES / "txt").chapters]
+
+
+def test_a_whole_story_txt_is_one_chapter_unless_the_listener_asks_to_split_it() -> None:
+    whole = importers.import_text(FIXTURES / "whole.txt")
+    assert len(whole.chapters) == 1 and whole.split_offer == 4, "mặc định KHÔNG tách; nhưng biết sẽ ra 4 chương để đề xuất"
+    assert whole.chapters[0].text.startswith("Chuyến phà cuối ngày\nMột truyện ngắn thử nghiệm.\n\nChương 1: Bến phà lúc bình minh")
+    split = importers.import_text(FIXTURES / "whole.txt", split_chapters=True)
+    assert titles(split) == ["Mở đầu", "Chương 1: Bến phà lúc bình minh", "Chương 2: Người khách lạ", "Chương 3"]
+    assert split.split_offer == 4
+    assert split.chapters[0].text == "Chuyến phà cuối ngày\nMột truyện ngắn thử nghiệm.", "chữ trước tiêu đề đầu tiên không bị bỏ"
+    assert split.chapters[1].text.startswith("Chương 1: Bến phà lúc bình minh\n\nSương"), "tiêu đề nằm trong chữ của chương (file TXT)"
+    assert "Chương trình của ngày hôm ấy" in split.chapters[2].text, "câu mở đầu bằng 'Chương trình' không phải tiêu đề"
+    assert "\n\n".join(chapter.text for chapter in split.chapters) == whole.chapters[0].text, "tách chỉ cắt ở dòng trống, không sửa chữ"
+    assert split.credits == [(3, "Dịch: Nhóm Lục Bình")], "gợi ý ghi công đi theo chương mới (chương 3 = 'Chương 2' vì có 'Mở đầu')"
+
+
+def test_a_txt_with_fewer_than_two_chapter_headings_offers_no_split(tmp_path: Path) -> None:
+    one = tmp_path / "mot.txt"
+    one.write_text("Chương 1\nChỉ một chương thôi.\n", encoding="utf-8")
+    book = importers.import_text(one, split_chapters=True)
+    assert book.split_offer == 0 and len(book.chapters) == 1, "không đủ hai tiêu đề: không có gì để tách, đừng đòi"
+    folder = tmp_path / "thu_muc"
+    folder.mkdir()
+    (folder / "1.txt").write_text("Chương 1\nA\n\nChương 2\nB\n", encoding="utf-8")
+    assert importers.import_text(folder, split_chapters=True).split_offer == 0, "thư mục TXT: mỗi file đã là một chương"
 
 
 def test_pdf_removes_running_lines_joins_lines_and_splits_chapters() -> None:
