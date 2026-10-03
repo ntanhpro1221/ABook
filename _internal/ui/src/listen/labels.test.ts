@@ -79,6 +79,6 @@ describe("lời nhắc màn đọc", () => {
     const audio = { ...base, textOnly: false, canSpeak: false, timed: true };
     expect(readerHint(audio)).toBe("Bấm vào một chữ để nghe từ đúng chữ ấy.");
     expect(readerHint({ ...audio, tapped: true })).toBeNull();
-    expect(readerHint({ ...audio, timed: false })).toContain("chưa có audio");
+    expect(readerHint({ ...audio, timed: false })).toContain("chưa thu thành sách nói");
   });
 });
