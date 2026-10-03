@@ -16,6 +16,7 @@ import {
   type BookTemplate,
 } from "@/studio/bookTemplates";
 import { SharedReadingsSettings } from "@/studio/sharedReadings";
+import { VieneuModuleCard } from "@/listen/VieneuModuleCard";
 import { OtherComputers } from "./OtherComputers";
 import { PhoneSync, Switch } from "./PhoneSync";
 
@@ -415,6 +416,15 @@ export function SettingsScreen() {
             </Field>
           </div>
         </Section>
+        {!remote && (
+          <Section
+            id="vieneu"
+            title="Giọng đọc trên máy"
+            description="Cho sách chỉ có chữ: giọng VieNeu đọc ngay trên máy này, không cần mạng. Tải thêm khi cần, chọn giọng ở nút Giọng đọc lúc nghe."
+          >
+            <VieneuModuleCard />
+          </Section>
+        )}
         <Section
           id="phone"
           title="Điện thoại và thiết bị"

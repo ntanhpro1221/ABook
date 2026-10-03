@@ -123,7 +123,7 @@ measured yet.
 
 VieNeu module = user choice with a recommendation (owner 03-10: "sao không cho người dùng chọn tải cùng recommended?"):
 - Choices:
-  - Turbo int8: 158 MB, 48 kHz, 25 voices. Desktop CPU RTF 0.315, first audio 0.20 s.
+  - Turbo int8: 210 MB (graphs + MOSS decoder; see below), 48 kHz, 25 voices. Desktop CPU RTF 0.315, first audio 0.20 s.
   - Nano: ~270 MB cached, 24 kHz, 11 voices. RTF 0.18.
   - The 122 MB word aligner: ticked by default on desktop, optional on the phone.
 - One or both voices may be installed.
@@ -131,13 +131,99 @@ VieNeu module = user choice with a recommendation (owner 03-10: "sao không cho 
 - After download, a few-second self-benchmark checks it. If the chosen voice cannot keep up with listening, offer to switch; never switch silently.
 - The size shown is what this device still lacks (shared parts such as ONNX Runtime, the aligner and Studio's VieNeu are not counted twice).
 - The same pattern applies to every module with options.
-- Phone speed of Turbo is NOT measured yet (estimate RTF 0.6-1.5); thresholds get tuned once a real phone is measured.
+- Phone speed measured 03-10 ("Phone, measured 03-10", Helio P95): Turbo int8 RTF 1.75, Nano 1.84 - neither keeps up live on a
+  mid-range phone. So live VieNeu is "Khuyên dùng" only where the self-benchmark gives RTF < 0.8; slower machines use "Làm trước".
 
-Device choice (owner 03-10: never force CPU when a GPU is there), picked automatically:
+Device choice (owner 03-10: never force CPU when a GPU is there), picked automatically - plan; measured 03-10 the GPU paths lose, so the
+built module runs on CPU ("VieNeu module - built" below):
 - Studio installed (NVIDIA): GPU through Studio's torch. Yield to Studio work and fall back to CPU while the card is busy.
 - GPU but no Studio: ONNX Runtime with DirectML (any vendor, about +20 MB in the module). Not measured with VieNeu yet.
 - No GPU: CPU (numbers above).
 - Phone: CPU with ARM-optimised kernels (XNNPACK). Try NNAPI/QNN if they help, but expect to rely on CPU. Measure on a real phone.
+
+### VieNeu module - built 03-10 (desktop)
+
+What exists: `abook/readaloud/vieneu_engine.py` (the VieNeu 3.8.1 inference path on onnxruntime + numpy only: Turbo prefill/decode/acoustic
+loop + MOSS decoder, Nano flow matching + CFG, the byte-level BPE tokenizer of `tokenizer.json` in pure Python, frame caps, babble retry,
+pause joining), `abook/readaloud/vieneu.py` (provider "vieneu", online false; paragraph -> sentence units packed like vieneu, per-unit
+word timings), `abook/webui/vieneu_module.py` (packaging), `/api/readaloud/vieneu` (+ `/measure`), the "Giọng đọc trên máy" card in desktop
+Settings (`ui/src/listen/VieneuModuleCard.tsx`). The `vieneu` pip package is NOT a dependency of the shipped app.
+
+Parity with vieneu 3.8.1 (`tests/test_readaloud_vieneu.py`, runs only where vieneu + the HF models are present): same phonemes, same token
+ids, same frames, waveform max abs diff 0.0 for Turbo (seeded `RandomState`, same draw as `np.random.choice`) and Nano (same
+`default_rng` noise); tolerance in the test 1e-5. The embedded Python 3.14.7 of the Windows app with the pinned wheels gives byte-identical
+clips to the dev venv (3.11).
+
+The one part not reimplemented: text normalisation + G2P. vieneu calls `sea-g2p` (Rust core + 63 MB binary dictionary, 17 normalisation
+stages); rewriting it with parity is not realistic. Smallest vendorable subset = the `sea-g2p` 0.9.1 wheel itself (abi3 win_amd64,
+Apache-2.0, no Python dependencies), downloaded as a pinned module part. For the phone this is the open problem: sea-g2p would need its Rust
+crate built for Android (JNI), or the phone gets phonemes from a paired computer.
+
+Module parts (pinned URL + SHA-256; "size shown" = what this machine lacks, shared parts once):
+
+| part | source | bytes | shared with |
+|---|---|---|---|
+| libs (numpy 2.4.6 + onnxruntime 1.28.0 + 3 deps) | PyPI wheels | 27.1 MB | music module (same folder, same stamp) |
+| g2p (sea-g2p 0.9.1) | PyPI wheel | 27.5 MB (69 MB unpacked) | - |
+| voices (2 JSON files from the vieneu 3.8.1 wheel) | PyPI wheel | 2.6 MB | - |
+| turbo (onnx_int8 + MOSS decode_full) | HF pnnbao-ump/VieNeu-TTS-v3-Turbo@61b85e3d, OpenMOSS-Team/MOSS-Audio-Tokenizer-Nano-ONNX@ceff0d07 | 210.4 MB | - |
+| nano (6 files) | HF pnnbao-ump/VieNeu-TTS-v3-Nano@aba295eb | 281.8 MB | - |
+| aligner | HF NGDtuanh/abook-analyzer@95c5e5f0 word-align/ | 122.0 MB | Studio's "wordalign" step |
+
+Earlier note "Turbo int8: 158 MB" was wrong: the int8 graphs + heads are 165.5 MB and Turbo also needs the 44.9 MB MOSS decoder.
+
+Measured 03-10 on the dev laptop (Ryzen 9 8945HX 16C/32T, 31 GB; RTX 5060 Laptop busy ~80% with the Model session's eval queue, not
+stopped). RTF = synthesis seconds / audio seconds over 5 fixed sentences (17.8 s Turbo / 19.0 s Nano of audio), warm engine:
+
+| engine | device | threads | RTF | engine load |
+|---|---|---|---|---|
+| Turbo int8 | CPU (ORT 1.28.0) | 1 / 2 / 4 / 8 | 0.64 / 0.57 / 0.49 / **0.31** | 1.7-3.8 s |
+| Nano | CPU (ORT 1.28.0) | 1 / 2 / 4 / 8 | 0.71 / 0.49 / 0.36 / **0.30** | 1.0-1.5 s |
+| Turbo int8 | DirectML (ORT-DirectML 1.24.4) | 8 | 2.83 | 3.4 s |
+| Nano | DirectML (ORT-DirectML 1.24.4) | 8 | 0.77 | 2.4 s |
+
+Paragraph clips (warm engine, default 8 threads; "clip" = time until the whole paragraph clip exists = when that paragraph can start):
+
+| voice | paragraph | audio | clip ready, CTC timings | clip ready, spread timings | RTF (CTC) |
+|---|---|---|---|---|---|
+| Turbo | 48 chars | 2.5 s | 1.27 s | 1.11 s | 0.51 |
+| Turbo | 191 chars | 9.8 s | 5.85 s | 5.33 s | 0.60 |
+| Turbo | 374 chars | 19.2 s | 11.27 s | 10.15 s | 0.59 |
+| Nano | 48 chars | 2.6 s | 1.01 s | 0.95 s | 0.39 |
+| Nano | 191 chars | 10.5 s | 3.21 s | 2.84 s | 0.31 |
+| Nano | 374 chars | 20.0 s | 5.43 s | 4.98 s | 0.27 |
+
+This run had the GPU at 93% and the CPU shared with the Model session's eval queue: Turbo came out at RTF ~0.55 instead of the quiet
+0.31 above (Turbo, being single-core bound, suffers most). CTC alignment adds ~10% (0.4-1.1 s per paragraph). Engine load on first use:
+Turbo ~2.9 s, Nano ~1.1 s. The first paragraph of a chapter plays after its whole clip is made (clip contract), so a long first paragraph
+waits ~0.5x its own length on Turbo here; later paragraphs are read ahead.
+
+Decisions from these numbers:
+- Device: always CPU. DirectML loses on this GPU (9x slower for Turbo: hundreds of tiny graph calls per second, per-call overhead dominates;
+  Nano 2.6x slower while the card is loaded). An idle-GPU re-measure could change the Nano verdict, but shipping it would also mean replacing
+  the shared onnxruntime CPU wheel (1.28.0, the music module's verified pin) with onnxruntime-directml (latest 1.24.4, +25 MB) for the whole
+  app. Studio's torch lives in another Python process (the runtime venv), so "GPU via Studio's torch" is not trivial: not done.
+- Recommendation: Turbo is nearly single-threaded (RTF 0.64 -> 0.31 from 1 to 8 threads) while Nano scales with cores. Before download:
+  >= 8 logical CPUs and >= 8 GB RAM (or RAM unknown) -> Turbo "Khuyên dùng", otherwise Nano; the aligner is ticked by default. After
+  download a self-benchmark (a ~5 s paragraph after one warm-up call) is shown in Settings; RTF >= 0.8 -> not live: the card points to
+  "Làm trước" and offers to switch (Turbo ->
+  Nano, Nano -> the online voice) and only switches when the user taps.
+- No per-phrase synthesis: sea-g2p's normaliser drops a phrase-final comma and punc_norm then ends the phrase with "." ("Cô gái đứng bên cửa
+  sổ," -> "...sˈo4."), so synthesising each comma phrase alone would put a sentence-final fall at every comma. Units are sentences packed to
+  256 chars (Nano 140) like vieneu; word timings come per unit from `word_timing.line_words`: CTC when the aligner is present, otherwise the
+  syllable spread anchored to energy pauses at punctuation (the 93%-within-100-ms method), each unit inside its exact span in the clip.
+- "Làm trước" (prepare ahead, Lead 03-10 after the phone numbers): `abook/readaloud/prepare.py` + `/api/readaloud/prepare`
+  (POST voice + paragraph texts, GET status, DELETE stop) and a block in the player's voice menu (`PlayerViews.tsx` `PrepareAhead`,
+  pure helpers `ui/src/listen/prepareAhead.ts`). The UI sends the paragraphs of the next text chapters exactly as `paragraphsOf`
+  splits them (same cache keys as playback); the server makes them one by one through `ReadAloud.clip` in a background thread and
+  waits while a listener's own clip is being made (live first). It takes only what fits 60% of the clip cache (WAV: ~52 min of Turbo
+  audio, ~104 min of Nano), says how long it will take (measured speed of this run, before that the self-benchmark RTF), and the
+  Settings card turns the benchmark into words ("mỗi giờ nghe máy cần làm trước khoảng N phút"). Desktop runs it on the CPU while the
+  app is open (not lowered in priority; the ORT thread pool has no per-call priority). Phone (not built): the same queue in the
+  native core as a WorkManager job with `setRequiresCharging(true)` + `setRequiresBatteryNotLow(true)`, writing into the same clip
+  cache, with a notification showing progress; at RTF ~1.8 one hour of listening needs ~1 h 50 min of charging time.
+- Clips are 16-bit WAV at the voice's rate (48 kHz Turbo = 5.8 MB per audio-minute in the 500 MB clip cache); MP3 would need ffmpeg.
+- Loudness (BS.1770 over 30 sentences per voice, `scripts/measure_vieneu_loudness.py`): Turbo voices -19.1 to -20.8 LUFS (most within 0.3 dB of the -20 target), Nano voices -17.1 to -19.5 LUFS (louder: gains down to -2.9 dB); gains in `readaloud/loudness.py`.
 
 How it is built (Lead 03-10): every voice does one thing - turn ONE paragraph of the text script (`textScript.ts`
 `paragraphsOf`) into one audio clip at speed 1.0 plus `words` (one [start_ms, end_ms] per whitespace token, the

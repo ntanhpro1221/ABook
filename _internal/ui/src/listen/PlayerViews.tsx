@@ -43,6 +43,7 @@ import { canPlay, seriesOf, type Bookmark, type ListenChapter, type Script } fro
 import { EDIT_BOOKMARK_EVENT, SKIP_SECONDS, SPEEDS, useNowPlaying, usePlayer } from "./player";
 import { SLEEP_CHOICES, sleepLabel, sleepLeftMs, sleepSpoken } from "./sleep";
 import { ONLINE_NOTICE, chooseVoice, chosenVoice, resolveVoice } from "./readAloudVoice";
+import { paragraphsFor, prepareLabel, upcomingTextChapters, type PrepareStatus } from "./prepareAhead";
 import { chapterScriptQuery, useChapterScript, useListenBook, useListenMutations, useReadAloudVoices, useSource } from "./source";
 
 export function speedLabel(rate: number): string {
@@ -339,7 +340,64 @@ export function VoiceMenu() {
         ))}
       </div>
       {current?.online && <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{ONLINE_NOTICE}</p>}
+      {current?.provider === "vieneu" && <PrepareAhead voice={current.id} bookId={track.bookId} chapterId={track.chapterId} />}
     </MenuShell>
+  );
+}
+
+/** "Làm trước" cho giọng VieNeu (máy tính): máy đọc sẵn các chương tới ở nền - giọng chậm hơn tốc độ nghe vẫn nghe liền mạch. Nói rõ còn bao
+ *  lâu; người nghe bấm mới làm, bấm "Dừng" là thôi. */
+function PrepareAhead({ voice, bookId, chapterId }: { voice: string; bookId: string; chapterId: number }) {
+  const source = useSource();
+  const { queue } = usePlayer();
+  const [status, setStatus] = useState<PrepareStatus | null>(null);
+  const [busy, setBusy] = useState(false);
+  const running = status?.state === "running";
+  useEffect(() => {
+    if (!source.readAloudPrepareStatus) return;
+    let alive = true;
+    const poll = () => void source.readAloudPrepareStatus!().then((next) => alive && setStatus(next)).catch(() => undefined);
+    poll();
+    const timer = setInterval(poll, running ? 2000 : 15000);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+    };
+  }, [source, running]);
+  if (!source.readAloudPrepare) return null;
+  const upcoming = upcomingTextChapters(queue, chapterId);
+  const start = async () => {
+    setBusy(true);
+    try {
+      const texts = await paragraphsFor(upcoming, (id) => source.chapterText(bookId, id));
+      const label = upcoming.length === 1 ? upcoming[0].title : `${upcoming.length} chương tới`;
+      setStatus(await source.readAloudPrepare!(voice, texts, label));
+    } catch (error) {
+      toast.error("Chưa làm trước được", { description: (error as Error).message });
+    } finally {
+      setBusy(false);
+    }
+  };
+  const label = status && status.voice === voice ? prepareLabel(status) : "";
+  return (
+    <div className="border-t border-line px-2 pb-1 pt-2 text-xs text-fg-2">
+      <p className="text-pretty">
+        {label || "Máy đọc chậm? Làm trước các chương tới ở nền để nghe liền mạch, không phải chờ giữa các đoạn."}
+      </p>
+      <div className="mt-1.5 flex gap-2">
+        {running ? (
+          <button type="button" className="rounded-lg px-2 py-1 font-medium text-fg hover:bg-hover" onClick={() => void source.readAloudPrepareCancel?.().then(setStatus)}>
+            Dừng làm trước
+          </button>
+        ) : (
+          upcoming.length > 0 && (
+            <button type="button" disabled={busy} className="rounded-lg px-2 py-1 font-medium text-accent-text hover:bg-hover disabled:opacity-45" onClick={() => void start()}>
+              {upcoming.length === 1 ? "Làm trước chương sau" : `Làm trước ${upcoming.length} chương tới`}
+            </button>
+          )
+        )}
+      </div>
+    </div>
   );
 }
 

@@ -24,6 +24,15 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   phải chờ giữa các đoạn, đoạn đã đọc được giữ lại để nghe lại không cần mạng. Tốc độ, hẹn giờ ngủ, nhớ chỗ đang nghe như
   sách nói; trên điện thoại tắt màn hình vẫn đọc tiếp và tự sang chương sau, điều khiển được ở màn hình khoá và tai nghe.
 
+- **Giọng VieNeu: nghe ngay bằng giọng hay mà không cần mạng (máy tính)**: Cài đặt > "Giọng đọc trên máy" cho tải thêm giọng VieNeu
+  đọc ngay trên máy - chữ của sách không rời khỏi máy. Chọn Giọng VieNeu (25 giọng, âm thanh 48 kHz), Giọng VieNeu Nano (11 giọng, nhẹ
+  hơn cho máy yếu) hay cả hai; app ghi "Khuyên dùng" cho loại hợp với máy của bạn. "Sáng đúng từng chữ" (đánh dấu sẵn) tải thêm bộ căn
+  chữ để chữ đang đọc sáng đúng lúc; không tải thì máy ước theo âm tiết. Dung lượng ghi là phần máy còn thiếu - phần đã có (của Phân
+  tích nhạc hay Studio) không tải lại. Tải xong máy tự thử vài giây và nói giọng có kịp tốc độ nghe không; không kịp thì đề nghị đổi
+  sang giọng nhẹ hơn - chỉ đổi khi bạn bấm. Giọng mới hiện ngay trong nút Giọng đọc lúc nghe. Có bản mới thì một lần bấm chỉ tải
+  phần đổi. Máy không kịp đọc trực tiếp vẫn nghe được giọng VieNeu: nút Giọng đọc có "Làm trước các chương tới" - máy đọc sẵn ở nền
+  (việc đang nghe luôn được ưu tiên), nói rõ còn bao lâu, bấm "Dừng làm trước" là thôi.
+
 ### Cài đặt
 
 - **Bộ cài ABook trên Windows chỉ còn mang phần nghe (bớt khoảng 16 MB)**: từ điển phát âm tiếng Anh và 21 bản nghe thử giọng
