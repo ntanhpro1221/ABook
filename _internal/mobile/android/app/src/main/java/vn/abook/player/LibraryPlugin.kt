@@ -58,7 +58,13 @@ class LibraryPlugin : Plugin() {
     private val prefs by lazy { SyncLink.prefs(context) }
 
     override fun load() {
-        LocalStudio.musicStore = MusicStore(File(context.filesDir, "music/mine"), AndroidMusicTags, AndroidLoudness)
+        val musicStore = MusicStore(File(context.filesDir, "music/mine"), AndroidMusicTags, AndroidLoudness)
+        LocalStudio.musicStore = musicStore
+        // Bộ phân tích nhạc: gói model tải khi người dùng bấm (không bao giờ tự tải); đã có từ lần trước thì cắm luôn, ở luồng nền.
+        val student = MusicStudentSetup(File(context.filesDir, "music/student"), musicStore, { AndroidMusicStudent.open(it, context.cacheDir) },
+            metered = { AndroidMusicStudent.metered(context) })
+        LocalStudio.student = student
+        musicImports.execute { runCatching { student.attachIfPresent() } }
         // Gửi phần sửa về máy tính xong: tải lại sách từ máy tính (không báo "Đã tải xong") và báo giao diện làm mới.
         EditsSync.refresh = { id -> downloadBook(id, null, null, announce = false) }
         EditsSync.changed = { id -> notifyListeners("editsSync", JSObject().put("bookId", id)) }

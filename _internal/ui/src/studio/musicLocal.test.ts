@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { analysisLabel, importSummary, isLocal, localDigest, mergeImports, previewPath, type ImportResult, type LocalTrack } from "./musicLocal";
+import {
+  analysisLabel, importSummary, isLocal, localDigest, mergeImports, previewPath, studentLabel, studentPercent,
+  type ImportResult, type LocalTrack, type MusicStudentStatus,
+} from "./musicLocal";
 
 const digest = "0123456789abcdef0123456789abcdef01234567";
 const track = (over: Partial<LocalTrack> = {}): LocalTrack => ({
@@ -54,5 +57,21 @@ describe("import summary", () => {
     expect(merged.failed).toEqual(["lỗi"]);
     expect(merged.tracks).toHaveLength(2);
     expect(mergeImports([]).tracks).toEqual([]);
+  });
+});
+
+describe("student status (phone)", () => {
+  const status = (over: Partial<MusicStudentStatus> = {}): MusicStudentStatus => ({
+    state: "missing", done: 0, total: 0, error: "", ready: false, analysing: false, metered: false, ...over,
+  });
+  it("tells the size before the user taps and the percent while it downloads", () => {
+    expect(studentLabel(status())).toContain("~59 MB");
+    expect(studentLabel(status({ state: "downloading", done: 30, total: 60 }))).toContain("50%");
+    expect(studentPercent(status({ done: 5, total: 0 }))).toBe(0);
+    expect(studentPercent(status({ done: 99, total: 60 }))).toBe(100);
+  });
+  it("says why it failed and what is happening afterwards", () => {
+    expect(studentLabel(status({ state: "error", error: "Không tải được" }))).toBe("Không tải được");
+    expect(studentLabel(status({ state: "ready", analysing: true }))).toContain("Đang nghe");
   });
 });

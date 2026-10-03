@@ -21,6 +21,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - **Mở file `.abook` đã sửa của chính dự án**: bài nhạc người nghe ghim vào sách giờ cũng được áp - bài được nhập vào "Nhạc của tôi" của máy này (không trùng bản) rồi ghim đúng đoạn; bài nào thiếu file thì bỏ qua và nói rõ lý do.
 
+### Điện thoại và thiết bị
+
+- **Điện thoại tự nghe nhạc bạn nhập để hiểu không khí của bài**: ở “Nhạc của tôi” có nút “Tải bộ phân tích (~59 MB)” - tải một
+  lần, chỉ khi bạn bấm (không bao giờ tự tải, và app nhắc nếu bạn đang dùng dữ liệu di động). Tải xong, các bài đã nhập từ trước
+  được nghe nốt ngay trên điện thoại, bài nhập sau được nghe ngay lúc nhập, không cần mạng và không gửi nhạc đi đâu. Bài chưa
+  nghe được (quá ngắn, file lạ) vẫn hiện “Chưa phân tích”, ghim tay như trước; việc nhập không bao giờ phải chờ việc phân tích.
+
 ## [0.4.21] - 2026-10-03
 
 ### Studio
