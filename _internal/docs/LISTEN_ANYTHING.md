@@ -48,6 +48,17 @@ Text is never auto-edited (owner rule): cleanup proposals (e.g. a credit line) a
 | Edge TTS | none | yes | Microsoft neural vi-VN voices (HoaiMy, NamMinh) through Edge's read-aloud service; unofficial, may stop working - opt-in, falls back to the device voice |
 | VieNeu module | yes | no | best quality, several voices; a module like "Phân tích nhạc" (versioned pins, download on tap) |
 
+Online voices (owner 03-10: "đọc ngay, cần mạng" is its own group; Edge TTS is what the owner already uses):
+- Edge TTS is the online default (no key).
+- "Bring your own key" providers, the user's key only (we never pay or sign anyone up):
+  - Azure Speech, first in the list: the official home of the same voices as Edge, so it is the natural fallback if Edge's endpoint closes.
+  - Google Cloud TTS: vi-VN Standard/WaveNet/Neural2.
+  - FPT.AI: 100k chars/month free, 7 regional voices.
+  - Viettel AI: 50k chars in the first month.
+- Google Translate's read-aloud is a last resort only: unofficial, ~200 chars per call, robotic.
+- Every provider is a separate adapter behind one interface (`speak(text, voice) -> audio`, `voices()`, `limits`). A failure or an exhausted quota falls back to the device voice without stopping playback.
+- The UI says plainly that an online voice sends the book's text to that provider.
+
 VieNeu 3.8.1 (installed) has CPU modes: `v3nano` (48M-parameter flow model, ONNX, 24 kHz) and `v3turbo` (ONNX on CPU,
 48 kHz). Measured 03-10 on the home laptop CPU (busy with GPU evals): v3nano RTF 0.18, first audio after 0.76 s.
 v3turbo: being measured. ONNX means the same runtime as the music module, so a phone build is plausible; phone speed not
