@@ -1816,6 +1816,24 @@ Ghi lại, không phải thước:
 - tỉ lệ có tiếng hát của bài Incompetech theo từng nhóm `vocals`, vì nguồn này đang được miễn;
 - `Speech` trung bình mỗi nhóm.
 
+**KẾT QUẢ NGƯỠNG LỜI HÁT (03-10 16:1x, `results/vocals_check.txt`): KHÔNG KẾT LUẬN ĐƯỢC. Giám khảo trượt chứng dương.**
+- Theo đúng luật: 0/2.087 bài có `Singing_max` ≥ 0,3, mọi nhóm (kể cả 345 bài Incompetech > 0,5). Luật cơ học ra "giữ 0,5".
+- **Chứng dương (THÊM SAU KHI THẤY SỐ):** AST trên 30 bài đã bị loại có tên chỉ rõ có hát ("sung by Po Sun Yi" ×5,
+  "feat. …" ×3, …). 0/30 đạt 0,3. Bài hát thật chỉ được 0,03–0,30.
+  - Vậy ngưỡng 0,3 ghi trước quá cao so với thang của AST. Phép này **không** chứng minh được điều gì về ngưỡng 0,5.
+- Thăm dò, NHÌN SAU KHI THẤY SỐ, không phải thước:
+  - Ở `Singing_max` ≥ 0,05, ~6/7 bài có tên chắc chắn có hát vượt.
+  - Bài không phải Incompetech: nhóm < 0,1 có 1 %, nhóm 0,1–0,3 có 7 %, nhóm 0,3–0,5 có 5 %. Incompetech > 0,5: 2 %.
+  - 30 bài CLAP chấm vocals ≈ 1 mà bị loại: nhiều tên rõ là không lời ("Ambient Relaxing Loop", "St. Antoine
+    Shakuhachi", "Inside Union Station-Chinese Harp").
+  - Đọc: `vocals` (CLAP zero-shot) có vẻ báo nhầm nhiều. Bộ lọc 0,5 có thể đang loại cả bài không lời, còn siết
+    "Nghe ngay" theo 0,3 thì loại chủ yếu bài không lời. Danh sách vẫn ≥ 40 phút, chỉ bớt đa dạng.
+- Muốn quyết, cần một phép mới ghi trước:
+  - Tập kiểm có nhãn: bài có hát / không lời theo tên và nguồn, chọn trước khi chấm.
+  - Ngưỡng AST học trên tập ấy.
+  - Rồi đo tỉ lệ báo nhầm của CLAP `vocals` ở ngưỡng 0,5 và 0,3 trên danh mục, cùng số bài lấy lại được.
+  - Chưa đổi gì.
+
 ## Nguồn nhạc: giữ / loại và lý do (02-10, Lead + chủ sách - đọc trước khi hỏi lại)
 
 LUẬT CUỐI (02-10 22:xx, Lead + chủ sách; thay đoạn ba câu hỏi bên dưới ở chỗ nào khác nhau):
