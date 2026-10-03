@@ -14,6 +14,9 @@ những file này.
                                           yêu cầu, chuỗi "$requestedAt#N" là `requestedAt` của lời đáp bước N (để rút đúng lần bấm)
     fixtures/book_edits/written/python_v4.abook, kotlin_v4.abook   file phiên bản 4 do từng bên ghi, bên kia phải mở được
                                           (python_v4_pins.abook / kotlin_v4_pins.abook: thêm bài nhạc người nghe đã ghim)
+    fixtures/book_edits/written/python_workshop.abookproj, python_pending.abookproj   file dự án phiên bản 3 do Python ghi: một
+                                          dự án có xưởng (bí danh, views/, sources/) và một cuốn "chờ dựng xưởng" mang lớp sửa;
+                                          kotlin_workshop.abookproj / kotlin_pending.abookproj là bản Kotlin ghi lại từ chúng
     fixtures/book_edits/track/tone.wav    một bài nhạc nhỏ ("Nhạc của tôi") cho các ca ghim bài: nhập vào kho nhạc của máy rồi ghim
 
 Sinh lại (chỉ khi cố ý đổi hành vi hay giao ước):  runtime/.venv/Scripts/python.exe -m tests.book_edits_fixtures
@@ -628,6 +631,10 @@ def generate(*, rebuild_base: bool = False) -> None:
     pins_file = FIXTURES / "written" / "python_v4_pins.abook"
     if rebuild_base or not pins_file.exists():
         write_python_v4(pins_file, pinned=True)
+    workshop_file = FIXTURES / "written" / "python_workshop.abookproj"
+    pending_file = FIXTURES / "written" / "python_pending.abookproj"
+    if rebuild_base or not workshop_file.exists() or not pending_file.exists():
+        write_python_projects(workshop_file, pending_file)
 
 
 def write_python_v4(target: Path, *, pinned: bool = False) -> None:
@@ -647,6 +654,86 @@ def write_python_v4(target: Path, *, pinned: bool = False) -> None:
             shutil.copy2(FIXTURES / "edits" / "everything.cover.jpg", copy / "edits" / "cover.jpg")
         target.parent.mkdir(parents=True, exist_ok=True)
         bookfile.repack(copy, target)
+
+
+NEUTRAL_ROOT = "D:\\Studio\\sach_thu"
+NEUTRAL_SOURCES = {"645.txt": "D:\\Studio\\nguon\\645.txt", "646.txt": "D:\\Studio\\nguon\\646.txt"}
+WORKSHOP_VIEWS = {
+    "work": {"castReady": True, "items": [{"id": "name:Hailkes", "kind": "name", "title": "Hailkes"}]},
+    "casting": {"castReady": True, "chapters": [{"chapterId": 1, "index": 1, "title": "Chương 646", "lines": 4, "speech": 2, "hints": 0, "decided": 0}]},
+    "names": {"items": [{"surface": "Hailkes", "spoken": "Hên-khơ"}], "unseen": 0},
+}
+
+
+def write_python_projects(workshop: Path, pending: Path) -> None:
+    """Hai file dự án phiên bản 3 do `projectfile` ghi cho Kotlin đối chiếu. `workshop`: dự án nguồn của `base` đóng gói thật (bí danh
+    cho audio chương / câu mẫu / bìa, `views/` cố định, `sources/` hai chương) - đường dẫn của máy sinh được viết lại thành đường
+    dẫn trung tính (không để tên người dùng nằm trong kho mã). `pending`: `base` + phần sửa `everything` lưu thành dự án không xưởng."""
+    from abook.webui import covers, project_views, projectfile
+
+    with tempfile.TemporaryDirectory() as raw:
+        work = Path(raw)
+        project = make_base_project(work / "may_cu")
+        covers.save_cover_bytes(project, tiny_cover())
+        sources = work / "nguon"
+        sources.mkdir()
+        for name, text in (("645.txt", "Chương 646 - Trở về (1)\n\nTrời đã sáng.\n"), ("646.txt", "Chương 647 - Trở về (2)\n\nChưa thu.\n")):
+            (sources / name).write_bytes(text.encode("utf-8"))
+        db = sqlite3.connect(project / "project.sqlite3")
+        try:
+            with db:
+                db.execute("ALTER TABLE book ADD COLUMN project_root TEXT")
+                db.execute("UPDATE book SET project_root = ?", (str(project.resolve()),))
+                db.execute("UPDATE chapters SET input_path = ? WHERE id = 1", (str(sources / "645.txt"),))
+                db.execute("UPDATE chapters SET input_path = ? WHERE id = 2", (str(sources / "646.txt"),))
+        finally:
+            db.close()
+        saved = dict(project_views.VIEWS)
+        try:
+            for name, data in WORKSHOP_VIEWS.items():
+                project_views.VIEWS[name] = lambda _root, data=data: data
+            projectfile.pack(project, work / "workshop.abookproj")
+        finally:
+            project_views.VIEWS.clear()
+            project_views.VIEWS.update(saved)
+        old = {str(sources / name): neutral for name, neutral in NEUTRAL_SOURCES.items()}
+        _neutralize(work / "workshop.abookproj", workshop, str(project.resolve()), old)
+        copy = work / "base"
+        shutil.copytree(BASE, copy)
+        shutil.copy2(FIXTURES / "edits" / "everything.json", copy / "edits.json")
+        (copy / "edits").mkdir()
+        shutil.copy2(FIXTURES / "edits" / "everything.cover.jpg", copy / "edits" / "cover.jpg")
+        projectfile.repack(copy, pending)
+
+
+def _neutralize(packed: Path, target: Path, old_root: str, old_sources: dict[str, str]) -> None:
+    """Viết lại đường dẫn của máy sinh (trong project.json và sổ dự án) thành đường dẫn trung tính, rồi ghi lại mô tả."""
+    import zipfile
+
+    from abook.webui import bookfile, projectfile
+
+    with zipfile.ZipFile(packed) as source:
+        manifest = json.loads(source.read("project.json"))
+        entries = {info.filename: (info, source.read(info.filename)) for info in source.infolist()}
+    with tempfile.TemporaryDirectory() as raw:
+        database = Path(raw) / "project.sqlite3"
+        database.write_bytes(entries["project/project.sqlite3"][1])
+        projectfile.relocate(database, old_root, NEUTRAL_ROOT, old_sources)
+        vacuum = sqlite3.connect(database)  # trang cũ vẫn giữ chữ cũ trong chỗ trống của file: dồn lại cho sạch
+        try:
+            vacuum.execute("VACUUM")
+        finally:
+            vacuum.close()
+        entries["project/project.sqlite3"] = (entries["project/project.sqlite3"][0], database.read_bytes())
+    manifest["files"]["project/project.sqlite3"] = bookfile.describe(entries["project/project.sqlite3"][1])
+    manifest["projectRoot"] = NEUTRAL_ROOT
+    manifest["sources"] = [{**item, "path": old_sources[item["path"]]} for item in manifest["sources"]]
+    manifest["missingSources"] = []
+    entries["project.json"] = (entries["project.json"][0], (json.dumps(manifest, ensure_ascii=False, indent=1)).encode("utf-8"))
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(target, "w", allowZip64=True) as sink:
+        for name, (info, data) in entries.items():
+            sink.writestr(info, data)
 
 
 if __name__ == "__main__":

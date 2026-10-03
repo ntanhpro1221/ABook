@@ -967,6 +967,54 @@ Thước trên bộ 5:
     - `tune` không ghi đè tham số đã chốt.
     - `score` từ chối chạy lại khi đã có `split_score.txt`.
 
+**KẾT QUẢ CHIA ĐOẠN (03-10 10:10, `results/split_score.txt`, `results/split_params.json`):** **không nhánh nào thắng → giữ
+nhãn câu (app).**
+- Lần chạy đầu hỏng 09:06 vì Ollama nhà chưa có qwen3-embedding:0.6b. Đã kéo model rồi chạy lại; nhánh 1 / 2 dùng cache, không
+  đo lại gì.
+- Tham số chốt trên bộ 4 (theo Pk TB): nhánh 2 W = 120, θ = 1,5 (Pk 0,382); nhánh 3 k = 8, c = 0,2 (Pk 0,348).
+  Nhánh 1 trên bộ 4: Pk 0,389.
+- Bộ 5 đo MỘT lần (9 chương, 3,01 giờ):
+
+| Cách | V | E | T | r VET | hơn app | thắng |
+|---|---|---|---|---|---|---|
+| app (nhãn câu + ranh giới app) | 0,389 | 0,319 | 0,260 | 0,323 | | |
+| (1) LLM chia trực tiếp | 0,385 | 0,322 | 0,415 | 0,374 | +0,052 | 5/9 |
+| (2) điểm đổi V/E/T | 0,404 | 0,330 | 0,353 | 0,363 | +0,040 | 5/9 |
+| (3) TextTiling | 0,517 | 0,257 | 0,304 | 0,359 | +0,037 | 5/9 |
+| tham chiếu: ranh giới app + llmVT + bwsE | 0,358 | 0,394 | 0,350 | 0,367 | | |
+| tham chiếu: ranh giới đáp án + llmVT + bwsE | 0,671 | 0,562 | 0,589 | 0,607 | | |
+
+- Thước phụ (so ranh giới đáp án): Pk app 0,402; (1) 0,307; (2) 0,330; (3) 0,292.
+  - Số đoạn mỗi giờ: app 21,9; (1) 19,9; (2) 17,6; (3) 15,9. Đáp án 26,6.
+  - Lượt LLM mỗi chương: (1) 18,1; (2) 80,8; (3) 13,2 + 3,6 lô nhúng.
+  - Không chương / đoạn nào hỏng định dạng.
+
+Đọc kết quả:
+- Ba nhánh khớp ranh giới tốt hơn app rõ (Pk 0,29–0,33 so 0,40), nhưng r VET không hơn ranh giới app khi cùng dùng đường LLM
+  (0,36–0,37 so 0,367).
+- Phần hơn app (+0,04–0,05) đến từ đường đoán không khí (llmVT + bwsE), không phải từ ranh giới.
+- Trần khi có ranh giới đáp án là 0,607. Khoảng cách tới đó nằm ở chỗ khớp ranh giới THẬT (Pk 0,29 vẫn xa trần người
+  chấm 0,167), không phải ở chỗ tốt hơn app một chút.
+- Từng chương dao động mạnh, ví dụ Kage 33: app 0,145, (1) 0,756. Chín chương còn ít để thấy nhánh nào ổn định.
+- Bộ 5b (3 chương) không đo lại phép này: luật là đo bộ 5 một lần.
+- Lead: câu "phần hơn đến từ cách đoán không khí, không phải ranh giới" là giả thuyết MỚI, rút ra SAU khi nhìn số bộ 5.
+  Chưa được nhận; phải đo trên bộ mới (ghi trước dưới đây).
+
+**GHI TRƯỚC - BỘ 5B: MỘT ỨNG VIÊN DUY NHẤT `app + llmVT + bwsE` (03-10 10:3x, Lead giao; trước khi có phân tích 5b):**
+- Bộ 5b:
+  - chương: Kuma 112, Zenith 049 + 050 (`scene_set5b.json`, Corpus 8ee1f17);
+  - phân tích 9B-v8: run 03-10-music5-9bv8-kuma / -zenith;
+  - đáp án cảnh: hai người chấm Sonnet A / B + `adjudicate_scenes.py`, như bộ 5 → `gold_scene5b`.
+- **Ứng viên DUY NHẤT:** ranh giới app + llmVT (V, T từ LLM đọc cả đoạn) + bwsE (E từ BWS trong chương). So với `app`
+  (nhãn câu + ranh giới app). Không thêm ứng viên nào khác cho 5b.
+- **Luật** như bộ 5 (`set5_llm.py score`, mốc thắng = ⌈0,7·n⌉): THẮNG nếu r VET TB theo chương hơn app ≥ 0,05 VÀ thắng ≥ 3/3
+  chương (cùng tỉ lệ 7/9).
+- **Chi phí trên máy người dùng** (báo kèm, đo trên chính lượt chạy 5b ở card 8 GB máy nhà, qwen3.5:9b qua Ollama):
+  - số lượt gọi LLM thêm mỗi chương: lượt V/T đoạn + lượt BWS nhóm, chỉ trên đoạn app;
+  - thời gian: tổng giây mỗi chương, quy ra giây trên mỗi giờ sách nói;
+  - VRAM: `size_vram` của `/api/ps` trong lúc chạy.
+- THẮNG → đề xuất đưa vào app, kèm chi phí ấy, để Lead / chủ sách quyết. Trượt → giữ nhãn câu, ghi số.
+
 ĐÁP ÁN BỘ 5 (03-10 05:xx, Corpus `scene_set5/`; mô tả, chưa phải phép thử):
 - 9 chương, 86 đoạn sau phân xử (26,6 đoạn/giờ).
 - Hai người chấm mù Sonnet A so B: Pk 0,167, P / R ranh giới 0,73 / 0,86, r V/E/T 0,92 / 0,88 / 0,89. Đó là trần.
@@ -1313,6 +1361,22 @@ Cách sửa F1, cho bài mang số trò:
 - **Chưa chắc chắn:** ĐẠT theo luật điểm ước lượng, nhưng cận dưới KTC 0,41 < 0,45 (chỉ 34 cặp). Khi có bộ 5b, đo lại MỘT lần
   cùng giao thức trên các đoạn mới. Lần ấy trượt thì gỡ F2 khỏi app.
 - Lead gộp vào main 165a3e16 (03-10 06:1x).
+
+**ĐO LẠI F2 TRÊN BỘ 5B (chi tiết chốt 03-10 11:1x, trước mọi lượt chấm):**
+- Đoạn: đáp án 5b (21 đoạn có nhạc). Không khí máy trên đúng ranh giới đáp án, như bộ 3 của E1.
+- Thể loại: Kuma `western_fantasy`, Zenith `xianxia` (võ hiệp; cùng bộ phong cách phía Đông với `chinese_history`).
+- Kho, λ, hạt giống bài nhập như lượt 2. `build_mixed_c.py` với `SET5B=1` → `mixedc5b`.
+- Khác bài 12 / 21 đoạn; ở 8 đoạn bài kho trộn là bài nhập.
+- Lặp 100% như lượt 2: 24 lượt mỗi người, 2 gói. Luật như lượt 2.
+- Chỉ 12 cặp nên KTC sẽ rất rộng. Đây là lần đo lại duy nhất đã hẹn: TRƯỢT (p < 0,45 khi dùng được) thì gỡ F2.
+
+**KẾT QUẢ ĐO LẠI F2 TRÊN 5B (03-10 11:2x, `results/mixedc5b_score.txt`):** **ĐẠT sát mốc → GIỮ F2.**
+- Dùng được: ổn định a/b 11 / 12 cả hai người; kappa 0,83.
+- 12 cặp khác bài. Cả hai chọn kho trộn 5, cả hai chọn kho toàn thầy 6, khác ý 1.
+- **p = 0,458** (KTC 0,22–0,71) ≥ 0,45. Từng người 0,50 / 0,42. Tính cả 21 đoạn: 0,476.
+- Gộp hai lần có người đọc dùng được (lượt 2 E1 + 5b, 46 cặp): 21 / 17 / 8 → p ≈ 0,54. Báo kèm, không phải thước ghi trước.
+- Đọc kết quả: F2 không làm bài chọn tệ hơn rõ rệt, nhưng cũng chưa chứng minh tốt hơn. Đủ để giữ, chưa đủ để nói chắc.
+  Không còn lần đo lại nào đã hẹn.
 
 Vào app (nhánh `dev/music-mixed-f2`), chỉ cho bài nhập:
 - Hiệu chỉnh a + b·trò từng trục.
