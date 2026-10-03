@@ -44,9 +44,10 @@ object BookEdits {
     private val TOP_KEYS = setOf("format", "version", "title", "cover", "characters", "chapters", "music", "wishes")
     const val TOO_BIG = "Quá nhiều thay đổi đang chờ trong cuốn này - hãy lưu, áp bớt vào dự án rồi làm tiếp."
     private val COVER_KEYS = setOf("color", "width", "height", "version")
-    private val MUSIC_KEYS = setOf("enabled", "levelDb", "silenced", "pins", "tracks")
+    private val MUSIC_KEYS = setOf("enabled", "levelDb", "silenced", "pins", "tracks", "playlist")
     private val TRACK_KEYS = setOf("ext", "title", "creator", "duration", "lufs")
     private val LOCAL_LINK = Regex("local:[0-9a-f]{40}")
+    private val PLAYLIST = Regex("[a-z0-9_]{1,40}") // mã danh sách phát của danh mục, hay [Playlists.MINE] = "Nhạc của tôi"
     private val CHAPTER_KEYS = setOf("title", "subtitle")
     private val CHAPTER_ID = Regex("[0-9]{1,9}")
     private val CUE_KEY = Regex("[0-9]{1,9}:[0-9]{1,12}")
@@ -133,7 +134,7 @@ object BookEdits {
 
     /**
      * Số thay đổi "áp ngay" người nghe đã làm: tên sách, bìa, mỗi tên nhân vật, mỗi chương đổi tên, bật/tắt nhạc, mức nhạc, mỗi
-     * đoạn nhạc im lặng, mỗi đoạn nhạc đổi sang bài của người nghe. Không kể ý muốn chờ Studio ([BookWishes]) - chúng chưa áp vào
+     * đoạn nhạc im lặng, mỗi đoạn nhạc đổi sang bài của người nghe, danh sách phát đã chọn. Không kể ý muốn chờ Studio ([BookWishes]) - chúng chưa áp vào
      * đâu cả.
      */
     fun countApplied(edits: JSONObject): Int {
@@ -141,7 +142,8 @@ object BookEdits {
         return (if (edits.has("title")) 1 else 0) + (if (edits.has("cover")) 1 else 0) +
             (edits.optJSONObject("characters")?.length() ?: 0) + (edits.optJSONObject("chapters")?.length() ?: 0) +
             (if (music?.has("enabled") == true) 1 else 0) + (if (music?.has("levelDb") == true) 1 else 0) +
-            (music?.optJSONArray("silenced")?.length() ?: 0) + (music?.optJSONObject("pins")?.length() ?: 0)
+            (music?.optJSONArray("silenced")?.length() ?: 0) + (music?.optJSONObject("pins")?.length() ?: 0) +
+            (if (music?.has("playlist") == true) 1 else 0)
     }
 
     /** Số ý muốn chờ Studio ([BookWishes.count]). */
@@ -244,6 +246,11 @@ object BookEdits {
             }
             out.put("levelDb", level.toDouble())
         }
+        if (music.has("playlist")) {
+            val playlist = music.opt("playlist")
+            if (playlist !is String || !PLAYLIST.matches(playlist)) throw EditsError("Danh sách nhạc nền trong phần sửa không hợp lệ.")
+            out.put("playlist", playlist)
+        }
         if (music.has("silenced")) {
             val silenced = music.opt("silenced")
             val bad = EditsError("Danh sách đoạn nhạc im lặng trong phần sửa không hợp lệ.")
@@ -342,7 +349,7 @@ object BookEdits {
         }
         edits.optJSONObject("music")?.takeIf { it.length() > 0 }?.let { music ->
             val shown = LinkedHashMap<String, Any?>()
-            for (key in listOf("enabled", "levelDb", "silenced")) if (music.has(key)) shown[key] = music.opt(key)
+            for (key in listOf("enabled", "levelDb", "playlist", "silenced")) if (music.has(key)) shown[key] = music.opt(key)
             music.optJSONObject("pins")?.takeIf { it.length() > 0 }?.let { pins ->
                 shown["pins"] = names(pins).sorted().associateWith { pins.opt(it) }
                 val tracks = music.getJSONObject("tracks")
@@ -430,7 +437,7 @@ object BookEdits {
         val music = JSONObject()
         val ourMusic = local.optJSONObject("music") ?: JSONObject()
         val theirMusic = incoming.optJSONObject("music") ?: JSONObject()
-        for (field in listOf("enabled", "levelDb")) {
+        for (field in listOf("enabled", "levelDb", "playlist")) {
             if (ourMusic.has(field)) {
                 music.put(field, ourMusic.opt(field))
                 if (theirMusic.has(field) && !StrictJson.equal(theirMusic.opt(field), ourMusic.opt(field))) conflicts++
@@ -742,6 +749,7 @@ object BookEdits {
             .put("enabled", if (changes.has("enabled")) changes.opt("enabled") else true)
             .put("levelDb", if (changes.has("levelDb")) changes.opt("levelDb") else baseLevel)
             .put("defaultLevelDb", baseLevel).put("cues", cues)
+            .apply { if (changes.has("playlist")) put("playlist", changes.opt("playlist")) }
     }
 
     // ---- bìa ----------------------------------------------------------------------------------------------------
@@ -997,6 +1005,14 @@ object BookEdits {
                 if (!isNumber(value) || value is Boolean) throw EditsError("Mức nhạc nền không hợp lệ")
                 val level = Math.max(LEVEL_MIN, Math.min(LEVEL_MAX, (value as Number).toDouble()))
                 if (level == base.getDouble("levelDb")) music.remove("levelDb") else music.put("levelDb", level)
+            }
+            if (body.has("playlist")) {
+                val playlist = body.opt("playlist")
+                when {
+                    !truthy(playlist) -> music.remove("playlist")
+                    playlist is String && PLAYLIST.matches(playlist) -> music.put("playlist", playlist)
+                    else -> throw EditsError("Không có danh sách nhạc nền này")
+                }
             }
             if (truthy(body.opt("silence"))) {
                 val wanted = body.opt("silence") as? JSONObject ?: throw EditsError("Phần sửa nhạc nền không hợp lệ.")
