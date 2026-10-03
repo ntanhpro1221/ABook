@@ -7,6 +7,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Giọng đọc
+
+- "Nghe ngay" (máy tính và điện thoại) không còn đọc sai bốn kiểu ký hiệu: "Hmm~" không còn thành "hmm khoảng" ("~" kéo giọng thì bỏ, "3~5" và
+  "10,000 ~ 15,000" đọc "đến", "~50" vẫn là "khoảng"); "500,000" và "100,000 yen" đọc đủ "năm trăm nghìn" thay vì "năm trăm"; tên kỹ năng trong
+  "<Angel Wings>" đọc trơn, ngắt hai bên, không còn "nhỏ hơn ... lớn hơn"; "Đóng băng / yếu" ngắt ở dấu gạch chéo thay vì "trên". Chữ hiện trên màn hình
+  không đổi.
+
 ## [0.4.24] - 2026-10-04
 
 ### Giọng đọc
