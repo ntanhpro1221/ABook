@@ -860,6 +860,21 @@ object BookImport {
         return lines
     }
 
+    /** Xuống dòng cứng giữa câu (chữ dán từ web/PDF) -> nối lại, kẻo câu bị đọc thành hai đoạn. Chỉ nối khi dòng trước chưa hết
+     *  câu và dòng sau mở đầu bằng chữ thường; thơ, thoại từng dòng giữ nguyên. Giống `_join_wrapped` của máy tính. */
+    private fun joinWrapped(lines: List<String>): List<String> {
+        val joined = mutableListOf<String>()
+        for (line in lines) {
+            val previous = joined.lastOrNull() ?: ""
+            if (previous.isNotEmpty() && line.isNotEmpty() && line[0].isLowerCase() && previous.last() !in SENTENCE_END && previous.last() !in ":;") {
+                joined[joined.size - 1] = if (previous.last() == SOFT_HYPHEN) previous.dropLast(1) + line else "$previous $line"
+            } else {
+                joined.add(line)
+            }
+        }
+        return joined
+    }
+
     private fun docx(file: File): Book = openZip(file, "DOCX").use { zip ->
         val document = xml(zip, "word/document.xml", "DOCX")
         val styles = docxStyles(zip)
@@ -886,8 +901,7 @@ object BookImport {
                 tocLines++
                 continue
             }
-            for (raw in docxText(paragraph)) {
-                val line = words(raw)
+            for (line in joinWrapped(docxText(paragraph).map { words(it) })) {
                 if (line.isEmpty()) continue
                 if (style in setOf("heading 1", "heading 2", "heading1", "heading2")) {
                     sections.add(line to mutableListOf())

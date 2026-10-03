@@ -107,7 +107,9 @@ def test_docx_splits_on_heading_1_and_2_and_falls_back_to_chapter_lines() -> Non
     assert titles(book) == [importers.PREAMBLE, "Chương 1: Bến phà lúc bình minh", "Chương 2: Người khách lạ",
                             "Phần phụ trong chương hai", "Chương 3: Cơn mưa cuối mùa"]
     text = book.chapters[1].text
-    assert "Hai dòng có tab\n\nvà xuống dòng cứng." in text, "xuống dòng cứng là ranh giới đoạn, tab là khoảng trắng"
+    assert "Hai dòng có tab và xuống dòng cứng." in text, "xuống dòng cứng giữa câu nối lại, tab là khoảng trắng"
+    assert "\n\nDòng thơ viết hoa\n\nKhông nối vào dòng trên\n\n- câu thoại riêng.\n\n" in text, \
+        "sau dấu hết câu, dòng viết hoa (thơ) hay thoại thì xuống dòng cứng vẫn là ranh giới đoạn"
     assert "Câu giữ lại và câu thêm vào." in text and "đã xoá" not in text, "chữ bị xoá khi theo dõi thay đổi không đọc"
     assert "Ô bảng thứ nhất.\n\nÔ bảng thứ hai." in book.chapters[2].text
     assert book.notes == ["Bỏ qua mục lục của tài liệu (3 dòng).", "Bỏ qua mục không có chữ: Một mục không có chữ"], \
