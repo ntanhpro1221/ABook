@@ -181,6 +181,15 @@ word và cho ra dạng normalized của word").
   - Vào: một token nước ngoài, kèm gợi ý lớp (tên / từ / viết tắt) và gợi ý gốc (Nhật / Hàn / Anh / không rõ) nếu tầng 1 biết.
   - Ra: âm tiết Việt nối gạch theo quy ước của app (`ENGLISH_TO_VIETNAMESE.md`), qua cửa kiểm âm tiết Việt hợp lệ.
   - Không ngữ cảnh câu: cùng từ thì cùng cách đọc, lưu đệm theo cuốn.
+  - Chủ sách 04-10: "bài toán này cực kỳ cụ thể đầu vào là một từ tiếng anh, nhật, hàn, từ trong tên,... và đầu ra là normalized
+    của nó để máy đọc".
+    - Gợi ý gốc lấy theo CUỐN (light novel Nhật / truyện Hàn), không theo câu.
+    - Từ nối gạch tách trước ("Tanaka-san" → "Tanaka" + "san").
+  - Cụm từ KHÔNG giao cho model, mà là luật tầng 2:
+    - số La Mã sau danh từ;
+    - số đi với chữ ("Lv.5", "x2", "1,500 vàng", "3/5 chai");
+    - ký hiệu dính từ ("Hmm~").
+  - Ràng buộc cấp cuốn duy nhất: viết tắt cùng loại (HP / MP / SP) đọc cùng một hệ chữ cái.
 - **Cỡ:** nhỏ để chạy cả trên điện thoại (ONNX, cỡ vài MB). So hai phương án bằng số đo:
   - transformer ký tự tự huấn luyện;
   - LLM nhỏ tinh chỉnh.
