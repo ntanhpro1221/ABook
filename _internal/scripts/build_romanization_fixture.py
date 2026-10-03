@@ -46,6 +46,12 @@ EDGE: list[tuple[str, str | None]] = [
     ("Ryuu", "ja"), ("Kyuuji", "ja"), ("Nyuu", "ja"), ("Shuuichi", "ja"), ("Kyūshū", "ja"), ("Osaka", "ja"), ("Ōsaka", "ja"), ("Aoi", "ja"), ("Kaori", "ja"),
     ("Nao", "ja"), ("Naoki", "ja"), ("Ao", "ja"), ("Onigiri", "ja"), ("Onigiri-kun", "ja"), ("Tomoe", "ja"), ("Sora", "ja"), ("Konoha", "ja"), ("Ozu", "ja"),
     ("Maaya", "ja"), ("Gin", "ja"), ("Ginko", "ja"), ("Jin", "ja"),
+    # lần 5: o sau i / u -> ô, sau a / e hay đầu từ -> o; ya cuối từ sau nguyên âm -> may-a; Kouya-kiểu có cờ mở; Hàn yu / yeo sau phụ âm
+    ("Fumio", "ja"), ("Fukuoka", "ja"), ("Suneo", "ja"), ("Maaya", "ja"), ("Seiya", "ja"), ("Kouya", "ja"), ("Maya", "ja"), ("Kaya", "ja"), ("Mayu", "ja"), ("Sayo", "ja"), ("Raiya", "ja"), ("Kyung", "ko"), ("Byung", "ko"), ("Gyeong", "ko"), ("Pyeong", "ko"), ("Kyeong", "ko"), ("Ayaka", "ja"), ("Akio", "ja"), ("Mio", "ja"),
+    ("Taeko", "ja"), ("Reo", "ja"), ("Kouichi", "ja"),
+    # Hàn lần 5: b đầu từ -> b, gye -> ghi, eo + u -> e-un, Myung -> mung, tên nối gạch thành một chuỗi
+    ("Bak", "ko"), ("Daebak", "ko"), ("Myung", "ko"), ("Hyun", "ko"), ("Cheonggyecheon", "ko"), ("Kim Jong-un", "ko"), ("Lee Myung-bak", "ko"), ("Park", "ko"),
+    ("Geun-hye", "ko"), ("Gye", "ko"), ("Seou", "ko"), ("Jeou", "ko"), ("Bulguksa", "ko"),
     # Hàn lần 4: bật hơi như thường, s -> x, j -> gi, y + nguyên âm -> gi, eo, yu / yeo tách i-, wo -> uô, w đầu từ -> gu (giữa từ: analogy), oi
     ("Kang", "ko"), ("Taehyun", "ko"), ("Choi", "ko"), ("Yoon", "ko"), ("Hyung", "ko"), ("Seojun", "ko"), ("Jeong", "ko"), ("Won", "ko"), ("Suwon", "ko"),
     ("Busan", "ko"), ("Jin", "ko"), ("Kim Jong-un", "ko"), ("Yeji", "ko"), ("Yeo", "ko"), ("Ye", "ko"), ("Hyeon", "ko"), ("Gyeongju", "ko"), ("Seoul", "ko"),

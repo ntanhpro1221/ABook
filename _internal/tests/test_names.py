@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+from abook import english_vi
 from abook.readaloud import names, vieneu
 from abook.readaloud.cache import clip_key
 from abook.readaloud.service import ReadAloud
@@ -73,7 +74,7 @@ def test_nothing_changes_without_an_origin_and_punctuation_around_a_name_is_kept
 
 
 def test_a_korean_book_reads_romanized_korean_names() -> None:
-    assert _said("Seo-yeon gặp Ji-ho và Geun-hye.", "ko") == ["Xeo Gie-on", "gặp", "Gi Hô", "và", "Cưn Hê."]
+    assert _said("Seo-yeon gặp Ji-ho và Geun-hye.", "ko") == ["Xeo-gie-on", "gặp", "Gi-hô", "và", "Cưn-hê."]
 
 
 def test_the_shown_words_and_their_count_never_change() -> None:
@@ -224,3 +225,74 @@ def test_the_server_takes_the_origin_from_the_request_or_from_the_book(tmp_path:
     assert origin({"bookId": "known"}) == "ja"
     handler.app.readaloud.origins.override("known", "ko")
     assert origin({"bookId": "known"}) == "ko" and origin({"bookId": "known", "origin": "ja"}) == "ja"
+
+
+# ---- giọng không nói được âm Anh (Supertonic): từ Anh Việt hoá, tên Nhật / Hàn theo gốc cuốn ----------------------------------------------------
+def _said_en(text: str, origin: str | None = None, speaks_english: bool = False) -> list[str]:
+    return vieneu.spoken_tokens(word_timing.tokens(text), origin, speaks_english)
+
+
+def test_a_voice_that_speaks_english_keeps_english_words_exactly_as_before() -> None:
+    text = "Tôi gặp Rose và Mike. Anh ấy mở laptop, dùng skill Fireball cho Haruto-kun, Kyouko."
+    toks = word_timing.tokens(text)
+    for origin in (None, "ja", "ko"):
+        assert vieneu.spoken_tokens(toks, origin, True) == vieneu.spoken_tokens(toks, origin) == names.spoken_names(toks, origin, True)
+        assert vieneu.spoken_tokens(toks, origin) == vieneu.spoken_tokens(toks, origin, True)
+    assert names.spoken_names(toks, None, True) == toks, "không gốc, nói được Anh: không đổi gì"
+
+
+def test_english_words_and_names_become_syllables_for_a_voice_that_cannot_say_them() -> None:
+    words = ["laptop", "Facebook", "email", "Jennifer", "Rose"]
+    said = _said_en("Anh ấy mở laptop, vào Facebook rồi gửi email cho Jennifer và Rose.")
+    assert said[3] == english_vi.vietnamized_english("laptop") + "," and said[5] == english_vi.vietnamized_english("Facebook")
+    assert said[8] == english_vi.vietnamized_english("email") and said[10] == english_vi.vietnamized_english("Jennifer")
+    assert said[12] == english_vi.vietnamized_english("Rose") + "." and not set(words) & set(said), "chữ Anh không còn trong chữ đem đọc"
+    assert [said[i] for i in (0, 1, 2, 4, 6, 7, 9, 11)] == ["Anh", "ấy", "mở", "vào", "rồi", "gửi", "cho", "và"], "chữ Việt không đổi"
+    # ca chủ sách chốt (english_vi.OWNER): đứng trên mọi luật
+    assert _said_en("Mike, Kate và Pete đến.") == ["Mi-ke,", "Ca-tê", "và", "Pi-tờ", "đến."]
+    assert _said_en("Dùng skill, level và Boss.") == ["Dùng", "xờ-kiu,", "le-vồ", "và", "Bót."]
+
+
+@pytest.mark.parametrize("token", ["VIP", "ID", "CV", "NPC", "AI", "Hoa", "Nam", "ba", "con", "may", "Tôi", "Hà-Nội", "10kg", "x", "A"])
+def test_acronyms_vietnamese_syllables_and_odd_words_are_left_to_the_voice(token: str) -> None:
+    assert _said_en(f"Rồi {token} đến.") == ["Rồi", token, "đến."]
+
+
+def test_a_unit_after_a_number_is_left_to_the_text_normalizer() -> None:
+    assert _said_en("Nặng 10 kg, cao 5 m.") == ["Nặng", "10", "kg,", "cao", "5", "m."]
+
+
+def test_punctuation_is_kept_and_the_shown_words_and_their_count_never_change() -> None:
+    assert _said_en("“Rose,” Mike! (laptop)") == [f"“{english_vi.vietnamized_english('Rose')},”", "Mi-ke!", f"({english_vi.vietnamized_english('laptop')})"]
+    text = "Rose gặp Mike ở quán. Haruto-kun, Kyouko-san đến. Anh mở laptop rồi gửi email cho Jennifer!"
+    for origin in (None, "ja", "ko"):
+        toks, parts = vieneu.units(text, 256, origin, False)
+        assert " ".join(unit.text(toks) for unit in parts) == text
+        assert [i for unit in parts for i in range(unit.first, unit.last + 1)] == list(range(len(toks)))
+
+
+def test_japanese_names_follow_the_book_origin_and_the_english_rule_takes_the_rest() -> None:
+    assert _said_en("Kyouko và Haruto gặp Rose.", "ja") == ["Ki-âu-cô", "và", "Ha-ru-tô", "gặp", english_vi.vietnamized_english("Rose") + "."]
+    assert _said_en("Kyouko và Haruto gặp Rose.", None)[0] != "Ki-âu-cô", "không gốc: đi đường chữ Anh, không phải luật romaji"
+    assert vieneu.spoken_tokens(word_timing.tokens("Kyouko gặp Rose."), "ja") == ["Ki-âu-cô", "gặp", "Rose."], "giọng nói được Anh: tên Anh để nguyên"
+
+
+def test_the_reading_tag_changes_only_when_the_reading_does() -> None:
+    text = "Rose gặp Haruto."
+    assert vieneu.reading_tag(text, "ja") == "ja" and vieneu.reading_tag(text, None) == "", "VieNeu: y như trước"
+    assert vieneu.reading_tag("Rose gặp Mike.", "ja") == "" and vieneu.reading_tag("Rose gặp Mike.", None) == ""
+    assert vieneu.reading_tag(text, "ja", False) == f"ja+en{names.ENGLISH_READING}"
+    assert vieneu.reading_tag("Rose gặp Mike.", "ja", False) == vieneu.reading_tag("Rose gặp Mike.", None, False) == f"en{names.ENGLISH_READING}"
+    assert vieneu.reading_tag("Tôi về nhà.", "ja", False) == "", "không từ nước ngoài nào: dùng chung clip cũ"
+    assert vieneu.reading_tag("Haruto đến.", "ja", False) == "ja"
+
+
+def test_every_provider_says_whether_its_voice_speaks_english() -> None:
+    from abook.readaloud import azure, fpt, google, supertonic, viettel
+    from abook.readaloud.service import DeviceProvider, EdgeProvider
+
+    assert vieneu.VieneuProvider.speaks_english and EdgeProvider.speaks_english, "đo 04-10: đọc chữ Anh để nguyên tốt"
+    assert azure.AzureProvider.speaks_english and google.GoogleProvider.speaks_english
+    # chưa đo / chưa quyết: giữ cách đọc cũ (chữ Anh để nguyên) tới khi phép đo nói khác
+    assert supertonic.SupertonicProvider.speaks_english and fpt.FptProvider.speaks_english
+    assert viettel.ViettelProvider.speaks_english and DeviceProvider.speaks_english

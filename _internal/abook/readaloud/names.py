@@ -38,6 +38,7 @@ HON_JA_SHARE = 0.3  # khi có dấu hiệu hậu tố, tỉ lệ ja chỉ cần 
 KO_SHARE = 0.85  # như trên cho RR; luật RR dễ tính (Mirabelle, Ruel, Alon của truyện Hàn cũng tách được) nên đòi cao hơn và thêm KO_ONLY_SHARE
 KO_ONLY_SHARE = 0.5  # phần lần xuất hiện của tên đọc được bằng RR mà KHÔNG đọc được bằng romaji (Si-eun, Seo-ram...)
 RULE_VERSION = 2  # đổi khi đổi cách đoán: gốc đã lưu của cuốn được đoán lại
+ENGLISH_READING = 1  # đổi khi đổi cách Việt hoá từ Anh (`english_vi`, `english_reading`): clip đã đệm của giọng Việt hoá được đọc lại (dấu "en<số>" của khoá clip)
 _ALLOWED_MARKS = "āīūēōâîûêôĀĪŪĒŌÂÎÛÊÔ"
 
 
@@ -109,6 +110,47 @@ def read_names(toks: list[str], out: list[str], origin: str | None) -> None:
         reading = name_reading(core, origin) if core else None
         if reading:
             out[index] = before + reading + after
+
+
+@lru_cache(maxsize=8192)
+def english_reading(core: str) -> str | None:
+    """Cách đọc nối gạch của một từ / tên tiếng Anh bằng âm tiết Việt (`english_vi.vietnamized_english`), None khi để nguyên: viết tắt TOÀN HOA, âm tiết
+    tiếng Việt viết sẵn ("ba", "con"), chữ một ký tự, chữ lạ hay luật không chắc."""
+    from ..analysis import is_vietnamese_syllable
+    from ..english_vi import vietnamized_english
+
+    parts = core.split("-")
+    if any(len(part) < 2 or not part.isascii() or not part.isalpha() or part.isupper() for part in parts):
+        return None
+    if all(is_vietnamese_syllable(part.lower()) for part in parts):
+        return None
+    return vietnamized_english(core)
+
+
+def read_english(toks: list[str], out: list[str]) -> None:
+    """Thay tại chỗ, trong `out`, token (chưa bị đổi) là từ / tên tiếng Anh bằng cách đọc Việt hoá của nó, giữ dấu câu quanh; số chữ không đổi. Chữ dính
+    số ("10kg", "5 m") để bộ chuẩn hoá của sea-g2p đọc đơn vị."""
+    for index, token in enumerate(toks):
+        if out[index] != token:
+            continue
+        before, core, after = split_token(token)
+        if not core or before[-1:].isdigit() or after[:1].isdigit() or (index and toks[index - 1][-1:].isdigit()):
+            continue
+        reading = english_reading(core)
+        if reading:
+            out[index] = before + reading + after
+
+
+def spoken_names(toks: list[str], origin: str | None, speaks_english: bool, out: list[str] | None = None) -> list[str]:
+    """Chữ hiện -> chữ đem đọc cho tên và từ nước ngoài, dùng chung cho mọi giọng; thay tại chỗ trong `out` (mặc định bản sao của `toks`) và trả nó.
+    Tên Nhật / Hàn của cuốn có gốc (`origin`) đọc theo luật phiên âm với MỌI giọng. Từ / tên tiếng Anh: giọng nói được âm Anh (`speaks_english`, VieNeu, Edge...)
+    giữ nguyên chữ cho nó đọc; giọng chỉ nói được âm tiết Việt (Supertonic nuốt "Rose", "Haruto") thì Việt hoá thành âm tiết (`english_reading`)."""
+    if out is None:
+        out = list(toks)
+    read_names(toks, out, origin)
+    if not speaks_english:
+        read_english(toks, out)
+    return out
 
 
 # ---- gốc của cuốn ---------------------------------------------------------------------------------------------------------

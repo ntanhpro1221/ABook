@@ -19,6 +19,7 @@ object Romanization {
     data class Reading(val text: String, val flags: List<String>)
 
     val OPEN_CHOICES = mapOf(
+        "y_after_vowel_pair" to "hai nguyên âm rồi ya / yu / yo cuối từ mà luật y cuối từ không áp (Kouya, Raiya: âu / ai + y không thành vần): hiện y -> gi (Câu-gia)",
         "ko_rare_vowels" to "oe / wi / ui / we / wae của tiếng Hàn: mặc định uê / uy / ưi / uê / oe theo âm (chưa có ví dụ chính thức)",
     )
 
@@ -114,7 +115,10 @@ object Romanization {
     private fun jaEmit(onset: String, vowel: Char, syllables: MutableList<Syl>, flags: MutableList<String>) {
         val plain = JA_VOWEL.getValue(vowel)
         when {
-            onset == "" -> syllables.add(Syl("", if (vowel == 'o') "o" else plain)) // chỉ là nguyên âm: o -> o (chủ sách 04-10: Osaka -> O-xa-ca)
+            onset == "" -> { // chỉ là nguyên âm: o đầu từ hay sau a / e -> o (Osaka -> O-xa-ca, Aoi -> A-o-i), sau i / u -> ô (Fumio -> Phu-mi-ô, Fukuoka -> Phu-cu-ô-ca)
+                val afterIu = syllables.isNotEmpty() && syllables.last().coda.isEmpty() && syllables.last().nucleus.takeLast(1) in listOf("i", "u")
+                syllables.add(Syl("", if (vowel == 'o' && !afterIu) "o" else plain))
+            }
             onset in JA_SIMPLE -> syllables.add(Syl(JA_SIMPLE.getValue(onset), plain))
             onset == "sh" -> syllables.add(Syl("s", plain)) // shi shu sha sho -> si su sa sô (chủ sách 04-10: shu giữ s + u)
             onset == "ch" -> syllables.add(Syl("ch", if (vowel == 'u') "u" else plain))
@@ -136,7 +140,9 @@ object Romanization {
     }
 
     /** Từ đã quen ở Việt Nam, chủ sách ghi đè cố định (04-10): onigiri (cơm nắm) -> o-ni-gi-ri, trong khi g + i -> ghi (Hiiragi) vẫn đứng. */
-    private val JA_FIXED = mapOf("onigiri" to listOf("" to "o", "n" to "i", "gi" to "i", "r" to "i"))
+    private val JA_FIXED = mapOf(
+        "onigiri" to listOf("" to "o", "n" to "i", "gi" to "i", "r" to "i"),
+    )
 
     private fun jaWord(word: String, flags: MutableList<String>): List<Syl>? {
         JA_FIXED[word]?.let { fixed -> return fixed.map { (onset, nucleus) -> Syl(onset, nucleus) } }
@@ -180,6 +186,18 @@ object Romanization {
             val vowel = if (longO) 'o' else vowelText[0]
             if (onset.isNotEmpty() && vowel !in JA_ALLOWED.getValue(onset)) return null
             j += 1
+            if (onset == "y" && j == word.length && syllables.isNotEmpty() && syllables.last().coda.isEmpty() && syllables.last().nucleus in listOf("a", "ây")) {
+                // ya CUỐI từ sau nguyên âm: y thành bán âm cuối của âm tiết trước (ay, ây) + nguyên âm riêng (chủ sách 04-10: Maya -> May-a, Kaya -> Cay-a, Seiya -> Xây-a);
+                // yu / yo cuối từ theo cùng cách là analogy (Mayu -> May-u, Sayo -> Say-ô); ya giữa / đầu từ vẫn gia (Ayaka -> A-gia-ca)
+                if (syllables.last().nucleus == "a") syllables.last().nucleus = "ay"
+                if (vowel != 'a') flags.add("analogy:y_final")
+                syllables.add(Syl("", JA_VOWEL.getValue(vowel)))
+                i = j
+                continue
+            }
+            if (onset == "y" && i >= 2 && word[i - 2] in JA_VOWELS_LONG && word[i - 1] in JA_VOWELS_LONG) {
+                flags.add("open:y_after_vowel_pair") // Kouya, Raiya: hai nguyên âm rồi ya mà luật ya cuối từ không áp (âu / ai + y không thành vần): hiện y -> gi
+            }
             jaEmit(onset, vowel, syllables, flags)
             val follow = if (longO) "" else sub(word, j, j + 1)
             if (vowel == 'e' && follow == "i") {
@@ -221,7 +239,7 @@ object Romanization {
     )
     private val KO_RARE = setOf("oe", "wi", "ui", "we", "wae")
     private val KO_SPELLINGS = mapOf(
-        "kim" to "gim", "park" to "bak", "lee" to "ri", "young" to "yeong", "myung" to "myeong", "hyong" to "hyeong", "hee" to "hui",
+        "kim" to "gim", "park" to "pak", "lee" to "ri", "young" to "yeong", "myung" to "mung", "hyong" to "hyeong", "hee" to "hui",
         "soo" to "su", "yoo" to "yu", "yoon" to "yun", "shin" to "sin", "moon" to "mun", "kwon" to "gwon", "cho" to "jo",
     )
 
@@ -279,7 +297,7 @@ object Romanization {
             return when (onset) {
                 "g" -> if (voiced) "G" else "K"
                 "d" -> if (voiced) "đ" else "t"
-                else -> if (voiced) "b" else "p"
+                else -> "b" // b đầu từ -> b (chủ sách 04-10: Busan -> Bu-xan; Park vẫn Pắc vì chữ P)
             }
         }
         if (onset == "k" || onset == "t" || onset == "p") { // bật hơi đọc như âm thường (chủ sách 04-10: Kang -> Cang)
@@ -306,7 +324,7 @@ object Romanization {
     private fun koEo(onset: String, closing: String): MutableList<Syl> =
         if (closing.isEmpty()) mutableListOf(Syl(onset, "eo")) else mutableListOf(Syl(onset, "e"), Syl("", "o", closing))
 
-    private fun koNucleus(onset: String, vowel: String, closing: String, flags: MutableList<String>, initial: Boolean): List<Syl>? {
+    private fun koNucleus(onset: String, vowel: String, closing: String, flags: MutableList<String>, initial: Boolean, beforeU: Boolean): List<Syl>? {
         if (vowel in KO_RARE) flags.add("open:ko_rare_vowels")
         if (vowel == "yae") return null
         var pieces: MutableList<Syl>
@@ -318,8 +336,13 @@ object Romanization {
             }
             vowel == "yeo" -> {
                 flags.add("analogy:ko_yeo")
-                pieces = if (onset.isEmpty()) koEo("gi", closing) else (mutableListOf(Syl(onset, "i")) + koEo("", closing)).toMutableList()
+                // đầu từ gi + eo (Yeon -> Gie-on); sau phụ âm y MẤT, eo như thường (chủ sách 04-10: Gyeong -> Ghe-ong, Pyeong -> Pe-ong); g + y đọc g (ghe)
+                pieces = if (onset.isEmpty()) koEo("gi", closing) else koEo(if (onset == "K") "G" else onset, closing)
                 closing = ""
+            }
+            vowel == "eo" && closing.isEmpty() && beforeU -> { // eo mở trước âm tiết u gộp thành e (chủ sách 04-10: Seoul -> Xe-un)
+                flags.add("analogy:ko_eo_u")
+                pieces = mutableListOf(Syl(onset, "e"))
             }
             vowel == "eo" -> {
                 pieces = koEo(onset, closing)
@@ -327,7 +350,13 @@ object Romanization {
             }
             vowel == "ye" -> {
                 flags.add("analogy:ko_ye")
-                pieces = mutableListOf(if (onset.isNotEmpty()) Syl(onset, "ê") else Syl("gi", "ê"))
+                pieces = mutableListOf(
+                    when {
+                        onset == "K" || onset == "G" -> Syl("G", "i") // gye -> ghi (chủ sách 04-10: Cheonggyecheon -> Che-ong-ghi-che-on)
+                        onset.isNotEmpty() -> Syl(onset, "ê")
+                        else -> Syl("gi", "ê")
+                    },
+                )
             }
             vowel == "wo" && onset.isEmpty() -> { // w đầu từ -> gu (Won -> Guôn); giữa từ (Suwon) theo analogy
                 if (!initial) flags.add("analogy:ko_w_gu")
@@ -357,9 +386,11 @@ object Romanization {
         for (segment in segments) {
             val parse = koBest(segment) ?: return null
             val syllables = ArrayList<Syl>()
-            for ((onset, vowel, coda) in parse) {
+            for ((position, entry) in parse.withIndex()) {
+                val (onset, vowel, coda) = entry
+                val next = parse.getOrNull(position + 1)
                 val vietOnset = koOnset(onset, previous, flags)
-                val part = koNucleus(vietOnset, vowel, KO_CODA_VIET.getValue(coda), flags, previous == null) ?: return null
+                val part = koNucleus(vietOnset, vowel, KO_CODA_VIET.getValue(coda), flags, previous == null, next != null && next.first.isEmpty() && next.second == "u") ?: return null
                 syllables.addAll(part)
                 previous = coda
             }
@@ -410,7 +441,8 @@ object Romanization {
             }
             readings.forEachIndexed { index, syllables ->
                 // hậu tố gọi (-kun) giữ chữ thường và nối gạch vào tên thành một chuỗi (chủ sách 04-10: Haruto-kun -> Ha-ru-tô-cun)
-                val suffix = index > 0 && origin == "ja" && lowered[index] in JA_SUFFIXES
+                // tên Hàn nối gạch cũng thành một chuỗi (chủ sách 04-10: Kim Jong-un -> Kim Giông-un)
+                val suffix = index > 0 && (origin == "ko" || (origin == "ja" && lowered[index] in JA_SUFFIXES))
                 val reading = validated(syllables, !suffix && cases[0] == true) ?: return null
                 if (suffix) words[words.size - 1] = words.last() + "-" + reading else words.add(reading)
             }

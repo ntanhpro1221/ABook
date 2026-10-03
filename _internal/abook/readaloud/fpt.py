@@ -32,6 +32,7 @@ _QUOTA_WORDS = ("quota", "limit", "exceed", "credit", "balance", "hết", "vư�
 
 class FptProvider(byok.KeyedProvider):
     id = "fpt"
+    speaks_english = True  # chưa đo: giữ cách đọc cũ tới khi đo
     name = NAME
     limits = Limits(max_chars=MAX_CHARS, free="Miễn phí 100.000 ký tự mỗi tháng", timings="estimated")
 

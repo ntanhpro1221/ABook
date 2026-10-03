@@ -116,6 +116,7 @@ class KeyedProvider:
     name = ""
     limits = Limits(0, "", "estimated")
     keyed = True
+    speaks_english = True  # chưa đo (FPT / Viettel): giữ cách đọc cũ tới khi đo; Azure và Google khai báo True ở lớp con (cùng giọng với Edge)
 
     def __init__(self, keys: KeyStore) -> None:
         self.keys = keys
