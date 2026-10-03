@@ -47,8 +47,9 @@ def test_every_sourced_form_matches_or_is_explained_by_a_chosen_rule():
     assert not unexplained, f"không khớp mà chưa có lý do: {unexplained}"
     assert not stale, f"cách đọc đổi mà lý do còn viết cho cách đọc cũ: {stale}"
     assert len(matched) + len(evidence.EXPLAINED) == len(evidence.SOURCED)
-    # 46 / 94: 44 / 92 dạng có nguồn + 2 ca của chủ sách; 48 còn lại đều do luật của chủ sách, điểm đã quét hay nguồn tự lệch (EXPLAINED)
-    assert len(matched) == 46
+    # 49 / 101: 39 / 91 dạng có nguồn + 10 ca của chủ sách (Yamato của chủ sách thay Ya-ma-tô của SGK); 52 còn lại đều do luật của chủ sách,
+    # điểm đã quét hay nguồn tự lệch (EXPLAINED)
+    assert len(matched) == 49
 
 
 def test_tally_of_sourced_forms_by_kind():
@@ -58,7 +59,7 @@ def test_tally_of_sourced_forms_by_kind():
         entry[0] += _matches(token, origin, sources)
         entry[1] += 1
     # (khớp, tổng). Dạng "community" (Doraemon cũ) chỉ để xem, không là chuẩn.
-    assert tally == {("owner", "ja"): [2, 2], ("textbook", "ja"): [27, 46], ("official", "ja"): [5, 12], ("community", "ja"): [0, 8],
+    assert tally == {("owner", "ja"): [10, 10], ("textbook", "ja"): [24, 45], ("official", "ja"): [3, 12], ("community", "ja"): [0, 8],
                      ("official", "ko"): [12, 26]}
 
 
@@ -66,6 +67,13 @@ def test_tally_of_sourced_forms_by_kind():
 
 @pytest.mark.parametrize("token,origin,reading", [
     # chủ sách 04-10 (đứng trên mọi nguồn): u Nhật -> u ở mọi chỗ, hậu tố nối gạch thành một chuỗi
+    # lần 2: y + nguyên âm -> gi (đầu và giữa từ), ei -> ây, e Nhật -> e (ge -> ghe, ke -> ke)
+    ("Yamato", "ja", "Gia-ma-tô"), ("Ayaka", "ja", "A-gia-ca"), ("Yuki", "ja", "Giu-ki"), ("Mayu", "ja", "Ma-giu"), ("Yoshida", "ja", "Giô-si-đa"),
+    ("Rei", "ja", "Rây"), ("Hajime", "ja", "Ha-gi-me"), ("Sanae", "ja", "Xa-na-e"), ("Kōbe", "ja", "Cô-be"), ("Edo", "ja", "E-đô"),
+    ("Ge", "ja", "Ghe"), ("Keita", "ja", "Cây-ta"), ("Seiya", "ja", "Xây-gia"),
+    # ou viết ra -> âu (kyou / ryou tách i-âu; shou chou jou giữ âm vòm, có cờ analogy); ō, ô, oo vẫn -> ô
+    ("Kyouko", "ja", "Ki-âu-cô"), ("Ryouma", "ja", "Ri-âu-ma"), ("Kouki", "ja", "Câu-ki"), ("Satou", "ja", "Xa-tâu"),
+    ("Kyôto", "ja", "Ki-ô-tô"), ("Tooru", "ja", "Tô-ru"),
     ("Haruto-kun", "ja", "Ha-ru-tô-cun"), ("Fukushima", "ja", "Phu-cu-si-ma"), ("Suzu", "ja", "Xu-du"), ("Gugu", "ja", "Gu-gu"),
     ("Tsuru", "ja", "Chu-ru"), ("Kuro", "ja", "Cu-rô"), ("Fumio", "ja", "Phu-mi-ô"), ("Masakazu", "ja", "Ma-xa-ca-du"),
     # mục 1.2: thanh ngang; khép p / t / c / ch thì sắc (phụ âm đôi khép âm tiết trước)
@@ -74,15 +82,15 @@ def test_tally_of_sourced_forms_by_kind():
     ("Osaka", "ja", "Ô-xa-ca"), ("Hiroshima", "ja", "Hi-rô-si-ma"), ("Shimoda", "ja", "Si-mô-đa"),
     # mục 2: iu / u sau âm vòm, chu, tsu -> chu, ji -> gi, wa -> oa
     ("Kyuushuu", "ja", "Kiu-xiu"), ("Chuubu", "ja", "Chu-bu"), ("Tsubasa", "ja", "Chu-ba-xa"),
-    ("Hajime", "ja", "Ha-gi-mê"), ("Kawasaki", "ja", "Ca-oa-xa-ki"),
-    # nguyên âm dài không kéo dài; ei -> ay (quét); ai giữ; n âm tiết khép; e khép là e
-    ("Koutarou", "ja", "Cô-ta-rô"), ("Tōkyō", "ja", "Tô-ki-ô"), ("Reiji", "ja", "Ray-gi"), ("Saitama", "ja", "Xai-ta-ma"),
+    ("Kawasaki", "ja", "Ca-oa-xa-ki"),
+    # nguyên âm dài không kéo dài; ei -> ây (chủ sách); ai giữ; n âm tiết khép
+    ("Koutarou", "ja", "Câu-ta-râu"), ("Tōkyō", "ja", "Tô-ki-ô"), ("Reiji", "ja", "Rây-gi"), ("Saitama", "ja", "Xai-ta-ma"),
     ("Sendai", "ja", "Xen-đai"), ("Shinzō", "ja", "Sin-dô"),
     # c / k / g theo chính tả
     ("Kenji", "ja", "Ken-gi"), ("Ginko", "ja", "Gin-cô"),
     # hậu tố: nối gạch vào tên thành một chuỗi (chủ sách 04-10), hậu tố giữ chữ thường
-    ("Subaru-kun", "ja", "Xu-ba-ru-cun"), ("Tanaka-senpai", "ja", "Ta-na-ca-xen-pai"), ("Sato-sensei", "ja", "Xa-tô-xen-xay"),
-    ("Aiko-san", "ja", "Ai-cô-xan"), ("Rin-chan", "ja", "Rin-chan"), ("Ojou-sama", "ja", "Ô-giô-xa-ma"), ("Hiiragi-chan", "ja", "Hi-i-ra-gi-chan"),
+    ("Subaru-kun", "ja", "Xu-ba-ru-cun"), ("Tanaka-senpai", "ja", "Ta-na-ca-xen-pai"), ("Sato-sensei", "ja", "Xa-tô-xen-xây"),
+    ("Aiko-san", "ja", "Ai-cô-xan"), ("Rin-chan", "ja", "Rin-chan"), ("Ojou-sama", "ja", "Ô-giâu-xa-ma"), ("Hiiragi-chan", "ja", "Hi-i-ra-gi-chan"),
     ("senpai", "ja", "xen-pai"),
     # tiếng Hàn: g / d / b đầu từ vô thanh, giữa hai âm hữu thanh thì hữu thanh; k t p cuối -> c t p + sắc; l cuối -> n
     ("Geun", "ko", "Cưn"), ("Dae", "ko", "Te"), ("Changdeok", "ko", "Chang-đớc"), ("Park", "ko", "Pắc"), ("Seoul", "ko", "Sơ-un"),
@@ -104,11 +112,20 @@ def test_unsure_is_none(token, origin):
     assert romanized_reading(token, origin) is None
 
 
+def test_ou_before_a_palatal_is_flagged_as_an_analogy():
+    assert romanized_reading_flags("Shouta", "ja") == ("Sâu-ta", ("analogy:ou_vom",))
+    assert romanized_reading_flags("Chouji", "ja") == ("Châu-gi", ("analogy:ou_vom",))
+    assert romanized_reading_flags("Jouji", "ja") == ("Giâu-gi", ("analogy:ou_vom",))
+    assert romanized_reading_flags("Kyouko", "ja") == ("Ki-âu-cô", ())  # kyou / ryou do chính chủ sách chốt
+
+
 def test_open_choices_are_flagged_not_silent():
-    # ya / yo: mặc định ya / i-ô (quét), có cờ; k bật hơi của Hàn có cờ; wo / oe / wi / ui có cờ
-    assert romanized_reading_flags("Yamato", "ja") == ("Ya-ma-tô", ("open:y_initial",))
-    assert romanized_reading_flags("Yokohama", "ja") == ("I-ô-cô-ha-ma", ("open:y_initial",))
-    assert romanized_reading_flags("Kyoko", "ja") == ("Ki-ô-cô", ())  # kyo đã có nguồn (Ki-ô-tô): không mở
+    # ya Nhật đã chốt gi (chủ sách, không cờ); yo / yu theo ya có cờ analogy; kyo đã có nguồn (Ki-ô-tô): không mở
+    assert romanized_reading_flags("Yamato", "ja") == ("Gia-ma-tô", ())
+    assert romanized_reading_flags("Yokohama", "ja") == ("Giô-cô-ha-ma", ("analogy:y_gi",))
+    assert romanized_reading_flags("Yuki", "ja") == ("Giu-ki", ("analogy:y_gi",))
+    assert romanized_reading_flags("Kyoko", "ja") == ("Ki-ô-cô", ())
+    # k bật hơi của Hàn có cờ; wo / oe / wi / ui có cờ
     assert romanized_reading_flags("Taehyung", "ko")[1] == ("open:ko_aspirated",)
     assert romanized_reading_flags("Kwon", "ko")[1] == ("open:ko_rare_vowels",)
     assert set(OPEN_CHOICES) == {"y_initial", "ko_aspirated", "ko_rare_vowels"}

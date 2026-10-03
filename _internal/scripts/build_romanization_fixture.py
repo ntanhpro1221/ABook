@@ -27,17 +27,20 @@ EDGE: list[tuple[str, str | None]] = [
     # hậu tố gọi (mục 2): đọc theo chính bảng romaji
     ("Koutarou-san", "ja"), ("Subaru-kun", "ja"), ("Yuki-chan", "ja"), ("Sakura-sama", "ja"), ("Tanaka-senpai", "ja"), ("Sato-sensei", "ja"),
     ("senpai", "ja"), ("sensei", "ja"), ("Charlotte-san", "ja"),
-    # u -> u (chủ sách), iu / u sau âm vòm, s -> x, sh -> s, tsu, fu, z / j, k / g theo chính tả
+    # u -> u, e -> e (chủ sách), iu / u sau âm vòm, s -> x, sh -> s, tsu, fu, z / j, k / g theo chính tả
     ("Kuro", "ja"), ("Yuzuru", "ja"), ("Ryuu", "ja"), ("Shuuichi", "ja"), ("Chuuya", "ja"), ("Jun", "ja"), ("Tsubasa", "ja"),
     ("Fuji", "ja"), ("Zenzo", "ja"), ("Kenji", "ja"), ("Gin", "ja"), ("Kei", "ja"), ("Kiyoshi", "ja"), ("Sakura", "ja"),
-    # nguyên âm dài, ei, ai tách khi khép
-    ("Koutarou", "ja"), ("Ōsaka", "ja"), ("Osaka", "ja"), ("Tokyo", "ja"), ("Reiji", "ja"), ("Kain", "ja"), ("Kaito", "ja"), ("Maaya", "ja"),
+    # nguyên âm dài, ei -> ây (chủ sách), ai tách khi khép
+    ("Koutarou", "ja"), ("Ōsaka", "ja"), ("Osaka", "ja"), ("Tokyo", "ja"), ("Reiji", "ja"), ("Rei", "ja"), ("Kain", "ja"), ("Kaito", "ja"), ("Maaya", "ja"),
     ("Shiina", "ja"),
     # phụ âm đôi khép âm tiết trước, n âm tiết, nn, n' , m trước b / p
     ("Hokkaido", "ja"), ("Nippon", "ja"), ("Matcha", "ja"), ("Isshiki", "ja"), ("Otto", "ja"), ("Kanna", "ja"), ("Shin'ichi", "ja"),
     ("Shinichi", "ja"), ("Shimbun", "ja"), ("Hyakkimaru", "ja"),
-    # ya / yo (mở), kya / kyo, wa
+    # y + nguyên âm -> gi (chủ sách), kya / kyo, wa
     ("Yamato", "ja"), ("Ayaka", "ja"), ("Kyoko", "ja"), ("Ryoma", "ja"), ("Hyouka", "ja"), ("Wakana", "ja"), ("Yuki", "ja"),
+    ("Yokohama", "ja"), ("Mayu", "ja"), ("Yoshida", "ja"), ("Megumi", "ja"), ("Keita", "ja"), ("Seiya", "ja"), ("Kyouko", "ja"), ("Ryouma", "ja"),
+    ("Kouki", "ja"), ("Satou", "ja"), ("Shouta", "ja"), ("Chouji", "ja"), ("Jouji", "ja"), ("Ouji", "ja"), ("Kyōto", "ja"), ("Kyôto", "ja"), ("Ōno", "ja"),
+    ("Kaoru", "ja"), ("Tooru", "ja"), ("Hokkaidō", "ja"), ("Nōto", "ja"),
     # Hepburn không có: ti, tu, hu, si, dài hoặc chữ không phải romaji
     ("Tuka", "ja"), ("Hiro", "ja"), ("Cale", "ja"), ("Lily", "ja"), ("Ah", "ja"), ("IZUMO", "ja"), ("iPhone", "ja"), ("Ko1", "ja"),
     ("kk", "ja"), ("'ka", "ja"), ("Ka-", "ja"), ("", "ja"), ("Kaz", "ja"), ("Sō", "ja"),

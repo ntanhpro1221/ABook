@@ -4,7 +4,7 @@ Mỗi ca: (chữ Latinh, gốc, các dạng Việt có trong nguồn, loại ngu
 (sách giáo khoa vênh nhau, nên nguồn có thể có hai dạng). Ca không khớp phải có lý do trong `EXPLAINED`: một dòng của quy ước đã [Chọn]
 khác nguồn ấy, hay một chỗ quy ước không tách được; không được vì luật sai.
 
-Loại: owner (chủ sách chốt bằng tai, 04-10), official (Bộ Ngoại giao, văn bản nhà nước), textbook (SGK), community (Wikipedia, diễn đàn - chỉ để xem, không là chuẩn).
+Loại: owner (chủ sách chốt bằng tai, 04-10; thay dạng SGK cùng chữ nếu có: Yamato), official (Bộ Ngoại giao, văn bản nhà nước), textbook (SGK), community (Wikipedia, diễn đàn - chỉ để xem, không là chuẩn).
 Không đưa vào đây: dạng Hán-Việt (Minh Trị, Bình Nhưỡng, Kim Nhật Thành...), dạng giữ Latinh (Ainu, Shintō, Kang Chang Hi), và dạng
 nguồn tự mâu thuẫn không xác định được (Xa-xa-cô / Xa-da-cô).
 """
@@ -15,6 +15,16 @@ SOURCED: list[tuple[str, str, tuple[str, ...], str]] = [
     # --- chủ sách (04-10): đứng trên mọi nguồn, cố định, không quét; trọng số cao nhất ---
     ("Haruto-kun", "ja", ("Ha-ru-tô-cun",), "owner"),
     ("Fukushima", "ja", ("Phu-cu-si-ma",), "owner"),
+    # phán quyết lần 2 (04-10): y + nguyên âm -> gi (SGK viết Ya-ma-tô: chủ sách thay), ei -> ây, e Nhật -> e
+    ("Yamato", "ja", ("Gia-ma-tô",), "owner"),
+    ("Ayaka", "ja", ("A-gia-ca",), "owner"),
+    ("Rei", "ja", ("Rây",), "owner"),
+    ("sensei", "ja", ("xen-xây",), "owner"),
+    ("Hajime", "ja", ("Ha-gi-me",), "owner"),
+    ("Kenji", "ja", ("Ken-gi",), "owner"),
+    # ou viết ra hai chữ -> âu (ō vẫn -> ô)
+    ("Kyouko", "ja", ("Ki-âu-cô",), "owner"),
+    ("Ryouma", "ja", ("Ri-âu-ma",), "owner"),
     # --- Nhật: địa danh (SGK Địa lí / Lịch sử 11) ---
     ("Hokkaidō", "ja", ("Hô-cai-đô", "Hốc-cai-đô"), "textbook"),
     ("Honshū", "ja", ("Hôn-su",), "textbook"),
@@ -49,7 +59,6 @@ SOURCED: list[tuple[str, str, tuple[str, ...], str]] = [
     ("Hakone", "ja", ("Ha-kô-ne",), "textbook"),
     ("Kasumi", "ja", ("Ca-xu-mi",), "textbook"),
     ("Kamuiwakka", "ja", ("Ka-mui-oa-ka",), "textbook"),
-    ("Yamato", "ja", ("Ya-ma-tô",), "textbook"),
     ("Ryūkyū", "ja", ("Riu-kiu",), "textbook"),
     ("sumō", "ja", ("Su-mô",), "textbook"),
     ("kimono", "ja", ("Ki-mô-nô",), "textbook"),
@@ -119,6 +128,9 @@ _U = "u Nhật -> u ở mọi chỗ (chủ sách 04-10); nguồn viết ư"
 _S = "s -> x (quét: x 27 dạng SGK, s 24); nguồn lẫn s / x"
 _TSU = "tsu -> chu (chủ sách 04-10); nguồn tách t khép âm tiết trước rồi xu / xô"
 _K = "k -> c trước a, o, ô, ơ, u, ư (luật 1.5; quét: k_o làm bộ kiểm âm tiết từ chối 17 tên); nguồn giữ k"
+_E = "e Nhật -> e (chủ sách 04-10: Hajime -> Ha-gi-me, Kenji -> Ken-gi); nguồn viết ê"
+_EI = "ei -> ây (chủ sách 04-10: Rei -> Rây, sensei -> xen-xây)"
+_Y = "y + nguyên âm -> gi (chủ sách 04-10: Yamato -> Gia-ma-tô, Ayaka -> A-gia-ca)"
 _COMMUNITY = "dạng cộng đồng (tên cũ ở Việt Nam), không phải chuẩn"
 EXPLAINED: dict[str, tuple[str, str]] = {
     "Honshū": ("Hôn-xiu", "shu -> xiu theo dòng shu của bảng (Kiu-xiu); SGK tự lệch: Hôn-su và Kiu-xiu cùng một bộ"),
@@ -127,33 +139,37 @@ EXPLAINED: dict[str, tuple[str, str]] = {
     "Chūgoku": ("Chu-gô-cu", _U),
     "Kansai": ("Can-xai", _S),
     "Tōkyō": ("Tô-ki-ô", "kyo -> ki-ô (mục 2, dòng kyo, theo Ki-ô-tô); SGK còn viết ky"),
-    "Nagoya": ("Na-gô-ya", "ya giữa từ còn MỞ (mục 7): mặc định ya (quét: ya_io khớp Ya-ma-tô và I-ô-cô-ha-ma); nguồn viết gôi-a"),
-    "Matsuyama": ("Ma-chu-ya-ma", _TSU),
+    "Yokohama": ("Giô-cô-ha-ma", _Y + "; nguồn viết I-ô / Y-ô"),
+    "Nagoya": ("Na-gô-gia", _Y + "; nguồn viết gôi-a"),
+    "Kōbe": ("Cô-be", _E),
+    "Matsuyama": ("Ma-chu-gia-ma", _TSU + "; " + _Y),
     "Saitama": ("Xai-ta-ma", _S),
     "Fukuroda": ("Phu-cu-rô-đa", "Cánh Diều giữ Latinh Fu-ku, không phiên âm"),
-    "Hakone": ("Ha-cô-nê", _K + "; e -> ê (mục 2, 'đa số')"),
+    "Hakone": ("Ha-cô-ne", _K + "; " + _E),
     "Kamuiwakka": ("Ca-mu-i-oác-ca", _K + "; ui tách u-i (như Ô-i-ta); kk khép âm tiết trước (mục 2)"),
     "sumō": ("xu-mô", _S),
     "Tokugawa": ("Tô-cu-ga-oa", _K),
     "Mutsuhito": ("Mu-chu-hi-tô", _TSU),
-    "Kōmei": ("Cô-may", "ei -> ay (quét: May-gi, một dạng SGK cũ, hơn ê / ây đúng một dạng); " + _K),
+    "Kōmei": ("Cô-mây", _K),
     "Satsuma": ("Xa-chu-ma", _TSU),
-    "Edo": ("Ê-đô", "e -> ê (mục 2, 'đa số'); nguồn viết E-đô"),
-    "Hakodate": ("Ha-cô-đa-tê", _K),
+    "Hakodate": ("Ha-cô-đa-te", _K + "; " + _E),
+    "Meiji": ("Mây-gi", "ei -> ây (chủ sách 04-10); nguồn SGK cũ viết May-gi"),
     "Fumio": ("Phu-mi-ô", "fu -> phu (chủ sách 04-10); Bộ Ngoại giao viết Phư"),
     "Takaichi": ("Ta-cai-chi", "ai tách a-i khi là hai âm tiết (Ta-ca-i-chi), nhưng ranh giới hình vị không có trong romaji; luật giữ ai (Hô-cai-đô, Sai-ta-ma)"),
-    "Sanae": ("Xa-na-ê", _S),
-    "Eisuke": ("Ay-xu-kê", "ei -> ay (quét: May-gi, hơn ê đúng một dạng; Bộ Ngoại giao viết Ê-); " + _U),
-    "Sekiguchi": ("Xê-ki-gu-chi", _U),
+    "Abe": ("A-be", _E),
+    "Sanae": ("Xa-na-e", _S + "; " + _E),
+    "Eisuke": ("Ây-xu-ke", _EI + "; Bộ Ngoại giao viết Ê-; " + _U + "; " + _E),
+    "Sekiguchi": ("Xe-ki-gu-chi", _U + "; " + _E),
+    "Motegi": ("Mô-te-gi", _E),
     "Masakazu": ("Ma-xa-ca-du", "zu -> du (chủ sách 04-10); nguồn viết dư"),
     "Toshimitsu": ("Tô-si-mi-chu", "tsu -> chu (chủ sách 04-10); Bộ Ngoại giao viết chư"),
     "Koizumi": ("Cô-i-du-mi", _COMMUNITY + "; zu -> du (chủ sách 04-10)"),
-    "Doraemon": ("Đô-ra-ê-môn", _COMMUNITY),
+    "Doraemon": ("Đô-ra-e-môn", _COMMUNITY),
     "Nobita": ("Nô-bi-ta", _COMMUNITY),
     "Shizuka": ("Si-du-ca", _COMMUNITY),
     "Jaian": ("Giai-an", _COMMUNITY),
-    "Suneo": ("Xu-nê-ô", _COMMUNITY),
-    "Dekisugi": ("Đê-ki-xu-gi", _COMMUNITY),
+    "Suneo": ("Xu-ne-ô", _COMMUNITY),
+    "Dekisugi": ("Đe-ki-xu-gi", _COMMUNITY),
     "Dorami": ("Đô-ra-mi", _COMMUNITY),
     "Seoul": ("Sơ-un", "s Hàn -> s (quét: s khớp 17 dạng Bộ Ngoại giao, x 14: Su-uân, Sưng Su, Bu-san); Xơ-un là dạng hiếm hơn"),
     "Suwon": ("Su-uơn", "wo -> uơ (mục 3, [Chọn]), nguồn viết uân"),
