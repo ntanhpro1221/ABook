@@ -1,0 +1,240 @@
+# Đáp án KIỂM TRA truyện Hàn đợt 3 (03-10; luật cố định: vị trí 30% của bộ); mục đích: tăng gold Hàn (nhóm mỏng nhất).
+# "Nhân viên văn phòng Cục quái vật" file 170 ("Chương 171: Tiến vào giấc mơ"). Claude gán (A) 03-10; B soát + phân xử 03-10 (gold_kr3/B/kr3a_review.md).
+# Hai góc kể: 1-110 và 144-219 NGÔI THỨ NHẤT, "tôi" = KIM JAEHUN / JAEHUN (m; "cậu Kim Jaehun" 160-167, "anh Jaehun").
+# 111-143 NGÔI BA theo Song Ahrin ("Cô thực sự lo lắng", "người đàn ông" = Jaehun); "tôi" không xuất hiện.
+# Tên: SONG AHRIN / AHRIN (f, xưng "tôi", gọi "anh"; Jaehun gọi "cô Ahrin"); PARK YEEUN / YEEUN (f, bé hơn ~10 tuổi, gọi
+# "anh trai", "ạ"); JANG CHAEYEON / CHAEYEON (f), YU DAON / DAON (f) - "Tóc Đen", "Tóc Trắng" là biệt danh Song Ahrin đặt
+# (102, không ai nói bằng tên ấy ở đây). Ông già ở Chi nhánh Gangdong (208-217, Song Ahrin gọi "Ông già!"): chương này
+# không gọi tên, nhưng đã xưng danh/hiện bảng tên "Choi Soocheol" ở 126.txt (gặp lần đầu) và lại ở 171.txt -> nhân vật
+# nhiều chương: CHOI SOOCHEOL đủ, NPC*~ (quy tắc 5, tiền lệ Thần Hơi Nước).
+# Đối đáp Jaehun - Song Ahrin không lời dẫn (1-110): theo lời dẫn kề và xưng hô ("anh" = Ahrin nói). 53 "Vui thật đấy" /
+# 55 "Phải ha": 54 Ahrin nhìn tôi ngậm ống hút rồi 56 hỏi "Không phải là nó chẳng thú vị gì với anh à?" - hỏi lại câu đáp
+# nhạt của anh -> 53 AHRIN, 55 JAEHUN (đảo nửa điểm). 99 "Dù sao thì" Ahrin (100 "Cô ấy nhấc tay ra").
+# 148/149 hai câu liên tiếp, 150 "Jang Chaeyeon ngó đầu vào từ bên cạnh tôi, và Yu Daon cũng ngó đầu vào..." -> theo thứ
+# tự lời kể: 148 JANG CHAEYEON, 149 YU DAON, đảo nửa điểm (quy tắc 6). 151 "Có vẻ là nó còn dỗi hơn" = Jaehun (152 "Dù tôi
+# đã xin lỗi vậy mà"). 153 Ahrin (154). 164 "Anh ấy hả?" Jaehun đáp Yeeun. 183-189, 199: Jaehun xin lỗi Sổ hướng dẫn.
+# 191, 201 "-Lật phật!" tiếng sổ mở, khoá D -> NARRATOR, UNKNOWN~ (quy tắc 8). 146, 193-194, 203-206 chữ trong Sổ hướng
+# dẫn (văn bản nhìn thấy, khoá N; sổ không có tên) -> NARRATOR.
+# Tiếng lòng tức thời của "tôi" -> N,T, người kể đủ (quy tắc 4 ngôi một): 74, 78-84, 97, 106, 147, 152, 184, 195-196, 207.
+# Ngôi ba: câu tự hỏi gián tiếp có "cô" (115-116, 118, 120, 122-123) -> N,T, AHRIN ~; 121 "Không được, nhỡ anh ấy nổi giận
+# thì sao?" và 142 "Gần đây đầu mình bị gì ấy nhỉ?" (xưng "mình") là ý nghĩ trực tiếp -> AHRIN đủ.
+0 H
+1 D SONG AHRIN,AHRIN neutral,whispering 0-1 normal soft,normal f
+2 N
+3 D KIM JAEHUN,JAEHUN neutral,surprised 0-1 normal normal,soft m
+4 D SONG AHRIN,AHRIN sarcastic,neutral,angry 0-1 normal soft,normal f
+5 N
+6 N NARRATOR neutral,afraid 0-1 normal normal u
+7 N
+8 N
+9 N
+10 N
+11 D KIM JAEHUN,JAEHUN neutral,sarcastic 0-1 normal normal m
+12 N
+13 D SONG AHRIN,AHRIN neutral,sarcastic 0-1 normal normal f
+14 D KIM JAEHUN,JAEHUN neutral 0-1 normal normal m
+15 D SONG AHRIN,AHRIN sad,tired,neutral 0-1 normal normal f
+16 N
+17 D SONG AHRIN,AHRIN neutral,happy 0-1 normal,fast normal f
+18 D KIM JAEHUN,JAEHUN neutral 0-1 normal normal m
+19 N
+20 N
+21 N
+22 N
+23 D SONG AHRIN,AHRIN happy,excited 0-1 normal normal f
+24 N
+25 D SONG AHRIN,AHRIN happy,excited,neutral 0-1 normal normal f
+26 D KIM JAEHUN,JAEHUN neutral 0-1 normal normal m
+27 N
+28 D SONG AHRIN,AHRIN neutral,sad 0-1 normal normal f
+29 D KIM JAEHUN,JAEHUN surprised,neutral 0-1 normal normal m
+30 D SONG AHRIN,AHRIN neutral 0-1 normal normal f
+31 D KIM JAEHUN,JAEHUN neutral 0-1 normal normal m
+32 D SONG AHRIN,AHRIN neutral,happy 0-1 normal normal f
+33 N
+34 N
+35 D SONG AHRIN,AHRIN neutral,sad 0-1 normal normal,soft f
+36 D KIM JAEHUN,JAEHUN neutral 0-1 normal normal m
+37 D SONG AHRIN,AHRIN sarcastic,happy,neutral 0-1 normal normal,soft f
+38 N NARRATOR neutral,happy 0-1 normal normal u
+39 D SONG AHRIN,AHRIN happy,neutral 0-1 normal normal f
+40 N NARRATOR neutral,happy 0-1 normal normal u
+41 D SONG AHRIN,AHRIN happy,excited 0-1 normal normal f
+42 D KIM JAEHUN,JAEHUN neutral 0-1 normal normal m
+43 N
+44 D SONG AHRIN,AHRIN excited,happy 1-2 normal normal f
+45 D KIM JAEHUN,JAEHUN surprised,neutral 0-1 normal normal m
+46 D SONG AHRIN,AHRIN surprised,happy,excited 0-1 normal normal f
+47 N NARRATOR neutral,happy 0-1 normal normal u
+48 N
+49 D SONG AHRIN,AHRIN surprised,excited,happy 0-1 normal normal f
+50 D SONG AHRIN,AHRIN afraid,sad,neutral,whispering 0-1 normal soft f
+51 N
+52 N
+53 D SONG AHRIN,AHRIN,KIM JAEHUN,JAEHUN~ happy 0-1 normal normal f
+54 N
+55 D KIM JAEHUN,JAEHUN,SONG AHRIN,AHRIN~ neutral,happy 0-1 normal normal m
+56 D SONG AHRIN,AHRIN neutral,sad 0-1 normal normal,soft f
+57 N
+58 N NARRATOR neutral,happy 0-1 normal normal u
+59 D SONG AHRIN,AHRIN surprised,angry,neutral 0-1 normal normal f
+60 D KIM JAEHUN,JAEHUN happy,neutral 0-1 normal normal m
+61 N
+62 N
+63 D SONG AHRIN,AHRIN angry,sarcastic,neutral 0-1 normal,fast normal f
+64 D KIM JAEHUN,JAEHUN neutral,happy 0-1 normal normal m
+65 N
+66 N
+67 N
+68 D KIM JAEHUN,JAEHUN happy,neutral,tender 0-1 normal normal m
+69 N NARRATOR neutral,surprised 0-1 normal normal u
+70 N
+71 D KIM JAEHUN,JAEHUN neutral 0-1 normal normal m
+72 D SONG AHRIN,AHRIN surprised,neutral,afraid 0-1 normal,fast normal f
+73 N
+74 N,T NARRATOR,KIM JAEHUN,JAEHUN neutral,surprised 0-1 normal normal u
+75 N,T NARRATOR,KIM JAEHUN,JAEHUN neutral 0-1 normal normal u
+76 N
+77 N
+78 N,T NARRATOR,KIM JAEHUN,JAEHUN neutral,sad 0-1 normal normal u
+79 N,T NARRATOR,KIM JAEHUN,JAEHUN neutral,sad 0-1 normal normal u
+80 N,T NARRATOR,KIM JAEHUN,JAEHUN neutral,sad 0-1 normal normal u
+81 N,T NARRATOR,KIM JAEHUN,JAEHUN neutral,sad 0-1 normal normal u
+82 N,T NARRATOR,KIM JAEHUN,JAEHUN neutral,sad 0-1 normal normal u
+83 N,T NARRATOR,KIM JAEHUN,JAEHUN neutral,sad 0-1 normal normal u
+84 N,T NARRATOR,KIM JAEHUN,JAEHUN neutral 0-1 normal normal u
+85 D SONG AHRIN,AHRIN neutral 0-1 normal normal,soft f
+86 N
+87 D KIM JAEHUN,JAEHUN surprised,neutral 0-1 normal normal m
+88 N
+89 N
+90 D SONG AHRIN,AHRIN neutral,sarcastic 0-1 normal normal f
+91 D KIM JAEHUN,JAEHUN surprised,neutral 0-1 normal normal m
+92 D SONG AHRIN,AHRIN neutral 0-1 normal normal,soft f
+93 N
+94 D SONG AHRIN,AHRIN neutral 0-1 normal normal f
+95 D KIM JAEHUN,JAEHUN neutral,surprised 0-1 normal normal m
+96 N
+97 N,T NARRATOR,KIM JAEHUN,JAEHUN surprised,neutral 0-1 normal normal u
+98 N
+99 D SONG AHRIN,AHRIN neutral 0-1 normal normal f
+100 N
+101 D SONG AHRIN,AHRIN neutral,tender 0-1 normal normal f
+102 D SONG AHRIN,AHRIN neutral,sad,tender 0-1 normal normal,soft f
+103 N
+104 D SONG AHRIN,AHRIN tender,neutral 0-1 normal normal,soft f
+105 D KIM JAEHUN,JAEHUN tender,neutral,happy 0-1 normal normal,soft m
+106 N,T NARRATOR,KIM JAEHUN,JAEHUN neutral,sad 0-1 normal normal u
+107 D SONG AHRIN,AHRIN neutral 0-1 normal normal f
+108 D KIM JAEHUN,JAEHUN neutral,happy 0-1 normal normal m
+109 D SONG AHRIN,AHRIN angry,sarcastic 0-1 normal normal f
+110 N
+111 N NARRATOR neutral,afraid 0-1 normal normal u
+112 N
+113 N
+114 N
+115 N,T NARRATOR,SONG AHRIN~,AHRIN~ neutral,afraid,sad 0-1 normal normal u
+116 N,T NARRATOR,SONG AHRIN~,AHRIN~ neutral,afraid,sad 0-1 normal normal u
+117 N NARRATOR neutral,sad 0-1 normal normal u
+118 N,T NARRATOR,SONG AHRIN~,AHRIN~ neutral 0-1 normal normal u
+119 N
+120 N,T NARRATOR,SONG AHRIN~,AHRIN~ neutral,afraid 0-1 normal normal u
+121 N,T NARRATOR,SONG AHRIN,AHRIN afraid,neutral 0-1 normal normal u
+122 N,T NARRATOR,SONG AHRIN~,AHRIN~ neutral 0-1 normal normal u
+123 N,T NARRATOR,SONG AHRIN~,AHRIN~ afraid,sad,neutral 0-1 normal normal u
+124 N
+125 D KIM JAEHUN,JAEHUN neutral 0-1 normal normal m
+126 D SONG AHRIN,AHRIN surprised,neutral 0-1 normal,fast normal f
+127 N
+128 N
+129 D KIM JAEHUN,JAEHUN neutral 0-1 normal normal m
+130 D SONG AHRIN,AHRIN neutral,sad 0-1 normal normal f
+131 N NARRATOR neutral,sad 0-1 normal normal u
+132 N
+133 N NARRATOR neutral,angry,sad 0-1 normal normal u
+134 D SONG AHRIN,AHRIN neutral,sad 0-1 normal normal f
+135 D KIM JAEHUN,JAEHUN neutral 0-1 normal normal m
+136 N NARRATOR neutral,sad 0-1 normal normal u
+137 D SONG AHRIN,AHRIN angry,neutral 0-1 normal,fast normal f
+138 D KIM JAEHUN,JAEHUN neutral 0-1 normal normal m
+139 N
+140 N
+141 N
+142 N,T NARRATOR,SONG AHRIN,AHRIN neutral,surprised 0-1 normal normal u
+143 N
+144 N
+145 N
+146 N
+147 N,T NARRATOR,KIM JAEHUN,JAEHUN neutral,sad 0-1 normal normal u
+148 D JANG CHAEYEON,CHAEYEON,YU DAON,DAON~ neutral 0-1 normal normal f
+149 D YU DAON,DAON,JANG CHAEYEON,CHAEYEON~ surprised,neutral 0-1 normal normal f
+150 N
+151 D KIM JAEHUN,JAEHUN sad,neutral,tired 0-1 normal normal m
+152 N,T NARRATOR,KIM JAEHUN,JAEHUN sad,neutral 0-1 normal normal u
+153 D SONG AHRIN,AHRIN sarcastic,neutral 0-1 normal normal f
+154 N
+155 D PARK YEEUN,YEEUN surprised,neutral 0-1 normal normal f
+156 N
+157 N
+158 D KIM JAEHUN,JAEHUN neutral 0-1 normal normal m
+159 N
+160 N
+161 D PARK YEEUN,YEEUN neutral,sarcastic,tired 0-1 normal normal,soft f
+162 N
+163 D PARK YEEUN,YEEUN neutral,sarcastic 0-1 normal normal f
+164 D KIM JAEHUN,JAEHUN surprised,neutral 0-1 normal normal m
+165 D PARK YEEUN,YEEUN neutral,sarcastic 0-1 normal normal f
+166 D KIM JAEHUN,JAEHUN neutral,sad 0-1 normal normal m
+167 D PARK YEEUN,YEEUN neutral 0-1 normal normal f
+168 N
+169 D PARK YEEUN,YEEUN neutral 0-1 normal normal f
+170 D KIM JAEHUN,JAEHUN neutral 0-1 normal normal m
+171 D PARK YEEUN,YEEUN neutral,happy 0-1 normal normal f
+172 N
+173 D KIM JAEHUN,JAEHUN neutral 0-1 normal normal m
+174 D PARK YEEUN,YEEUN neutral 0-1 normal normal f
+175 N
+176 D PARK YEEUN,YEEUN neutral 0-1 normal normal f
+177 D KIM JAEHUN,JAEHUN neutral 0-1 normal normal,soft m
+178 N
+179 D PARK YEEUN,YEEUN angry,sarcastic 1-2 normal,fast normal,loud f
+180 D KIM JAEHUN,JAEHUN neutral 0-1 normal normal m
+181 N
+182 N
+183 D KIM JAEHUN,JAEHUN sad,neutral,tender 0-1 normal,slow soft,normal m
+184 N,T NARRATOR,KIM JAEHUN,JAEHUN neutral 0-1 normal normal u
+185 D KIM JAEHUN,JAEHUN sad,tender,neutral 0-1 normal,slow soft,normal m
+186 N
+187 D KIM JAEHUN,JAEHUN tender,neutral 0-1 normal soft,normal m
+188 N
+189 D KIM JAEHUN,JAEHUN tender,neutral 0-1 normal soft,normal m
+190 N
+191 D NARRATOR,UNKNOWN~ neutral 0-1 normal normal u
+192 N
+193 N
+194 N
+195 N,T NARRATOR,KIM JAEHUN,JAEHUN sarcastic,neutral 0-1 normal normal u
+196 N,T NARRATOR,KIM JAEHUN,JAEHUN sarcastic,neutral 0-1 normal normal u
+197 N
+198 N,T NARRATOR,KIM JAEHUN,JAEHUN neutral 0-1 normal normal u
+199 D KIM JAEHUN,JAEHUN tender,neutral 0-1 normal soft,normal m
+200 N
+201 D NARRATOR,UNKNOWN~ neutral 0-1 normal normal u
+202 N
+203 N
+204 N
+205 N
+206 N
+207 N,T NARRATOR,KIM JAEHUN,JAEHUN surprised,neutral 0-1 normal normal u
+208 D CHOI SOOCHEOL,NPC*:ông già chi nhánh Gangdong~ neutral 0-1 normal normal m
+209 N
+210 D CHOI SOOCHEOL,NPC*:ông già chi nhánh Gangdong~ sarcastic,neutral 0-1 normal normal m
+211 D SONG AHRIN,AHRIN angry 1-2 normal,fast loud f
+212 N
+213 D KIM JAEHUN,JAEHUN neutral,sarcastic 0-1 normal normal m
+214 N
+215 D CHOI SOOCHEOL,NPC*:ông già chi nhánh Gangdong~ neutral 0-1 normal normal m
+216 D KIM JAEHUN,JAEHUN neutral 0-1 normal normal m
+217 D CHOI SOOCHEOL,NPC*:ông già chi nhánh Gangdong~ neutral 0-1 normal normal m
+218 D KIM JAEHUN,JAEHUN surprised 0-1 normal normal m
+219 N NARRATOR neutral,surprised 0-1 normal normal u

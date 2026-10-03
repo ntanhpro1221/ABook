@@ -743,3 +743,16 @@ câu thật): "tôi" = HIKIGAYA HACHIMAN. B: người nói chính sai 0/95; câu
 | câu | A | B đề nghị | kết luận | lý do |
 |---|---|---|---|---|
 | Oregairu 039:85, 94, 91 | N | N,T + HACHIMAN | theo B | 85 liền 83-84 (A cho N,T); 94 câu tự nhủ chốt chương sau 92; 91 than thở tức thời (tiền lệ Evil Lord 02:128) |
+
+## 03-10 - truyện Hàn đợt 3, nhóm 1 (Zenith 058, Nhân viên văn phòng 170, The Villain 22, Mẹ kế 031)
+
+Luật cố định (30% của bộ). B: người nói chính sai 0 chắc chắn ở cả bốn chương; nhập nhằng thật ở Villain 68-74, 187.
+
+| câu | A | B đề nghị | kết luận | lý do |
+|---|---|---|---|---|
+| Villain 22:68-74 (hai tài xế) | xen kẽ JEFF / tài xế Louina, đảo nửa điểm | cả hai đủ | theo B | 72 và 74 cùng người nhưng không chữ nào nói người ấy là Jeff |
+| Villain 22:187 "Chúa ơi, ai đã làm điều này?!" | LUCIA, EPHERENE~ | cả hai đủ | theo B | chữ khớp cả hai cách đọc |
+| Villain 22:97; Nhân viên 170:75, 198; Zenith 058:132 | N | N,T + người kể | theo B | suy luận / tiếng lòng tức thời nối thẳng câu kề A đã cho N,T |
+| Mẹ kế 031:83-84 | 83 N,T ABIGAIL~; 84 N | N,T, ABIGAIL đủ | theo B | đoạn ngôi một nên người nghĩ đủ điểm |
+| Mẹ kế 031:12, 16 | TIỂU THƯ WHATELEY đủ | nửa điểm | theo B | danh xưng kèm họ (quy tắc 11), WHATELEY trơn vẫn đủ |
+| Villain 22:95, 178, 200-208 (BECK~, JUPERN~) | giữ | nới | giữ A | B tự xếp yếu |

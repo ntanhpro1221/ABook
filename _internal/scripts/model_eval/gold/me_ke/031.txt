@@ -1,0 +1,113 @@
+# Đáp án KIỂM TRA truyện Hàn đợt 3 (03-10; luật cố định: vị trí 30% của bộ); mục đích: tăng gold Hàn (nhóm mỏng nhất).
+# "Mẹ kế" file 031 ("Chương 31"; tiểu mục "4. Tiệc trà cùng với sự ghen ghét."). Claude gán (A) 03-10; B soát + phân xử 03-10 (gold_kr3/B/kr3a_review.md).
+# Hai góc kể: 2-78 NGÔI BA (tiệc trà của các tiểu thư, theo Karin ở cuối); 79-95 NGÔI THỨ NHẤT, "tôi" = ABIGAIL (Vương Phi,
+# mẹ kế của Blanche) -> --first-person Abigail. "Vương Phi", "Công chúa", "Quốc Vương bệ hạ" là danh hiệu - không điểm.
+# Tên: ABIGAIL / ABIGAIL FRIEDKIN / ABIGAIL CRONENBERG (f, họ gốc); BLANCHE / BLANCHE FRIEDKIN (f, bé); KARIN (f, tiểu thư nhà
+# Công Tước; "Karin-nim" là cách gọi - không tính); CLARA (f, thị nữ của Vương Phi); tiểu thư nhà Bá tước Whateley không có
+# tên riêng, lời kể cả cuốn gọi "tiểu thư Whateley" (025, 042) -> WHATELEY / TIỂU THƯ WHATELEY đều là tên (quy tắc 11, như
+# "Trịnh lão"). Sablian (Quốc vương) không xuất hiện.
+# Các tiểu thư vô danh -> NPC*:<mô tả> (UNKNOWN~): 26 và 30 cùng người mời caviar; 33 "tiểu thư trẻ tuổi nhất" (34); 41 và
+# 73 tiểu thư phe Karin (42 "Tiểu thư theo cùng Karin tiếp lời"; 73 cả nhóm đáp - quy tắc 6). 12, 16 Whateley (11, 15); 18
+# "Vâng. Quả đúng là một điệu nhảy đáng yêu..." không lời dẫn, tiếp lời câu hỏi 17 -> NPC*, WHATELEY~. 19 người bị huých
+# (20). 45 "Tôi xin lỗi vì tới muộn!" trước khi gọi tên (47 "Là Clara") -> CLARA đủ, NPC*~ (quy tắc 5). 49 "......xin chào"
+# = Karin đáp lời chào của Clara (48 "Chào Karin-nim"). 51 "...tiểu thư Clara? Tôi cứ tưởng là cô ở trong cung chứ" -> một
+# tiểu thư, KARIN~ (Karin vừa chào gượng, câu tò mò thân thiện không hợp giọng cô).
+# Ngôi ba, câu tự hỏi/chửi thầm giữa lời kể -> N,T, người nghĩ ~ (quy tắc 4): 30 (người mời caviar), 50 và 75-76 (Karin -
+# 75 "Abigail chết tiệt. Karin thầm chửi rủa trong lòng"). Ngôi một: 80, 90 tiếng lòng tức thời của Abigail -> N,T người kể
+# đủ; 83 phần lớn tả Blanche, chỉ "Hiuu..." là tiếng lòng -> ABIGAIL~. 1 dòng dịch giả, 2 tiêu đề tiểu mục -> N.
+0 H
+1 N
+2 N
+3 N
+4 N
+5 D NPC*:tiểu thư 1,UNKNOWN~ happy,neutral 0-1 normal normal f
+6 D NPC*:tiểu thư 2,UNKNOWN~ happy,neutral 0-1 normal normal f
+7 N
+8 N
+9 N
+10 D NPC*:tiểu thư 3,UNKNOWN~ happy,excited 0-1 normal normal f
+11 N NARRATOR neutral,happy 0-1 normal normal u
+12 D WHATELEY,TIỂU THƯ WHATELEY~ happy,excited 0-1 normal normal f
+13 N NARRATOR neutral,happy 0-1 normal normal u
+14 D NPC*:tiểu thư 4,UNKNOWN~ surprised,happy,excited 0-1 normal normal f
+15 N NARRATOR neutral,excited,happy 0-1 normal normal u
+16 D WHATELEY,TIỂU THƯ WHATELEY~ excited,happy 0-1 normal,fast normal f
+17 D NPC*:tiểu thư 5,UNKNOWN~ happy,excited,neutral 0-1 normal normal f
+18 D NPC*:tiểu thư 6,WHATELEY,TIỂU THƯ WHATELEY~,UNKNOWN~ happy,excited 0-1 normal normal f
+19 D NPC*:tiểu thư 7,UNKNOWN~ surprised,neutral 0-1 normal normal,soft f
+20 N
+21 N
+22 N
+23 D NPC*:tiểu thư 8,UNKNOWN~ neutral,happy 0-1 normal normal f
+24 D KARIN neutral 0-1 normal normal f
+25 N
+26 D NPC*:tiểu thư mời caviar,UNKNOWN~ neutral,happy 0-1 normal normal f
+27 D KARIN afraid,angry,surprised 1-2 fast normal,loud f
+28 N NARRATOR neutral,surprised 0-1 normal normal u
+29 D KARIN angry,afraid 1-2 fast loud,normal f
+30 N,T NARRATOR,NPC*:tiểu thư mời caviar~ neutral,surprised 0-1 normal normal u
+31 N NARRATOR neutral,angry 0-1 normal normal u
+32 D KARIN sarcastic,angry 0-1 normal normal f
+33 D NPC*:tiểu thư trẻ tuổi nhất,UNKNOWN~ neutral,happy 0-1 normal normal f
+34 N NARRATOR neutral,angry 0-1 normal normal u
+35 D KARIN sarcastic,angry 0-1 normal normal f
+36 N
+37 D KARIN sarcastic 0-1 normal normal f
+38 N NARRATOR neutral,angry,afraid 0-1 normal normal u
+39 N
+40 D KARIN sarcastic,neutral 0-1 normal normal f
+41 D NPC*:tiểu thư phe Karin,UNKNOWN~ happy,neutral 0-1 normal normal f
+42 N
+43 N
+44 D KARIN sarcastic,neutral 0-1 normal normal f
+45 D CLARA,NPC*~ happy,excited 0-2 normal,fast loud,normal f
+46 N
+47 N
+48 D CLARA happy,excited 0-1 normal normal f
+49 D KARIN neutral,angry,sarcastic 0-1 normal soft,normal f
+50 N,T NARRATOR,KARIN~ neutral,sarcastic,angry 0-1 normal normal u
+51 D NPC*:tiểu thư 9,KARIN~,UNKNOWN~ surprised,neutral 0-1 normal normal f
+52 D CLARA happy,excited 1-2 normal,fast normal f
+53 N
+54 N
+55 D NPC*:các tiểu thư,UNKNOWN~ surprised,neutral 0-1 normal normal f
+56 D CLARA happy,excited 1-2 normal normal f
+57 N
+58 N
+59 D NPC*:tiểu thư 10,UNKNOWN~ excited,happy,surprised 1-2 normal,fast normal f
+60 D NPC*:tiểu thư 11,UNKNOWN~ happy,neutral 0-1 normal normal f
+61 D CLARA excited,happy 1-2 fast,normal normal f
+62 N
+63 N
+64 N NARRATOR neutral,happy,excited 0-1 normal normal u
+65 D NPC*:tiểu thư 12,UNKNOWN~ excited,surprised,happy 1-2 normal,fast normal,loud f
+66 D NPC*:tiểu thư 13,UNKNOWN~ excited,happy 1-2 normal,fast normal,loud f
+67 N NARRATOR neutral,angry 0-1 normal normal u
+68 N NARRATOR neutral,angry 0-1 normal normal u
+69 N NARRATOR neutral,angry 0-1 normal normal u
+70 N NARRATOR neutral,angry 0-1 normal normal u
+71 N NARRATOR neutral,angry 0-1 normal normal u
+72 D KARIN angry,neutral 0-1 normal normal f
+73 D NPC*:tiểu thư phe Karin,UNKNOWN~ afraid,surprised,neutral 0-1 fast,normal normal f
+74 N NARRATOR neutral,angry 0-1 normal normal u
+75 N,T NARRATOR,KARIN~ angry 0-1 normal normal u
+76 N,T NARRATOR,KARIN~ angry,neutral 0-1 normal normal u
+77 N NARRATOR neutral,angry 0-1 normal normal u
+78 N NARRATOR neutral,angry 0-1 normal normal u
+79 N
+80 N,T NARRATOR,ABIGAIL,ABIGAIL FRIEDKIN,ABIGAIL CRONENBERG happy,excited 0-1 normal normal u
+81 D ABIGAIL,ABIGAIL FRIEDKIN,ABIGAIL CRONENBERG tender,happy,neutral 0-1 normal normal f
+82 D BLANCHE,BLANCHE FRIEDKIN happy,excited 0-1 normal normal f
+83 N,T NARRATOR,ABIGAIL,ABIGAIL FRIEDKIN,ABIGAIL CRONENBERG happy,tender,neutral 0-1 normal normal u
+84 N,T NARRATOR,ABIGAIL,ABIGAIL FRIEDKIN,ABIGAIL CRONENBERG neutral,happy,sad 0-1 normal normal u
+85 D BLANCHE,BLANCHE FRIEDKIN sad 0-1 normal,slow soft,normal f
+86 N NARRATOR neutral,sad 0-1 normal normal u
+87 N
+88 N
+89 D ABIGAIL,ABIGAIL FRIEDKIN,ABIGAIL CRONENBERG tender,neutral 0-1 normal normal f
+90 N,T NARRATOR,ABIGAIL,ABIGAIL FRIEDKIN,ABIGAIL CRONENBERG neutral,sarcastic,sad 0-1 normal normal u
+91 N
+92 D ABIGAIL,ABIGAIL FRIEDKIN,ABIGAIL CRONENBERG tender,neutral 0-1 normal normal f
+93 D BLANCHE,BLANCHE FRIEDKIN surprised,neutral 0-1 normal normal f
+94 D ABIGAIL,ABIGAIL FRIEDKIN,ABIGAIL CRONENBERG happy,tender 0-1 normal normal f
+95 N NARRATOR neutral,afraid 0-1 normal normal u
