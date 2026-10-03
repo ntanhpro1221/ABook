@@ -245,9 +245,66 @@ Code: Python `abook/webui/book_wishes.py` (validate/merge/count, the writers, `p
   "Sửa trong Studio" (desktop: the same line in the script tab). `shared/capabilities.ts`: `lineEditing(caps)` decides which.
   `POST /pending-changes/withdraw` is not propagated through re-import (see above).
 
+## P2b - the sync edits inbox (phone -> computer)
+
+A book the phone DOWNLOADED from its paired computer (`Store.computerBooks` with a `book.json`) is now editable on the phone like an
+imported `.abook`: `LocalStudio` accepts it (`editable`), `edits.json` + `edits/cover.jpg` + pinned `music/<sha1>.<ext>` are written next
+to the downloaded files, the overlay shows. Capabilities gain `sync` (`{toolchain, workshop, link, sync}`): `sync` = downloaded from the
+main computer (editable, edits go home; no "Lưu"/"Lưu thành" - the book belongs to the computer), `link` = not editable here (streamed
+and not downloaded, or a book of another paired device - `source`). Streamed ("link") books are still read-only.
+
+**Wire format.** `POST /sync/v1/books/<id>/edits`, `Content-Type: application/zip`, body = a zip holding exactly `edits.json`, `edits/cover.jpg`
+(iff `cover` is an object) and `music/<sha1>.<ext>` (iff pinned). Same TLS-pinned link and device token as every `/sync/v1` route; <= 150 MiB
+(`edits_inbox.MAX_PACKAGE_BYTES`, `Content-Length` required, 413 before reading). Reply `{applied, skipped, music, requests, waiting,
+skippedWishes, conflicts: [{kind, key, label}], reasons?}`. `GET .../edits` -> `{waiting}` (this device's inbox items). 400 = package refused,
+nothing applied (message is the Vietnamese sentence), 404 unknown book, 409 not a project, 415 not a zip, 401 not paired.
+
+**Untrusted input.** `edits_inbox.read_package` allows only those member names (no duplicates, no encryption, total size and per-track caps) and
+runs `book_edits.read_layer` - the very gate `BookFile` uses for a stranger's `.abook` v4 (`edits.json` strict `validate`, pinned files present
+and nothing else under `music/`, cover iff object, JPEG, <= 8 MiB). One violation refuses the whole package. Only a book in the library that is
+a project (`store.is_project`) is accepted.
+
+**Computer side (`webui/edits_inbox.py`).**
+- L edits fold at once through `book_edits.fold_edits` - the producer fold of P1 refactored so both callers share it (`fold` = stash -> `fold_edits`;
+  the sync path passes the cover bytes and the temp dir of the pinned tracks). Pins are imported into "Nhạc của tôi" (`SyncApp.my_music`) and the
+  music plan is rebuilt (`after_edits` -> `App._music_after_change`). Nothing touches the open-a-file stash (`edits_incoming.json`).
+- Wishes: `may_produce` = the global `remoteStudio` switch AND the device's `studio` permission (the same two conditions as remote Studio
+  production). True -> `book_wishes.fold` (real requests in `overrides.json`, `requested_at` re-stamped). False -> the APPROVAL INBOX
+  `edits_inbox.json` next to the project: `{devices: {<device id>: {name, at, wishes}}, recent: [...]}`, `wishes` in the `edits.json` shape,
+  merged per key with the newer push winning (`book_wishes.merge`). Never auto-applied. An inbox "item" = one click (`speakers`/`retakes` with
+  equal `requested_at` are one; each pronunciation / line / voice / alias is one); id `"<section>:<first key>"`.
+- Decisions (desktop only; not in `remote_studio.ALLOWED`): `GET /api/books/<id>/edits-inbox` -> `{devices: [{id, name, at, items: [{id, kind,
+  label, chapter?, lines, section, keys, requestedAt}]}], waiting, recent}` (labels reuse `store.label_*`, people via `store.person_label`);
+  `POST .../edits-inbox/apply {device, items?}` -> `book_wishes.fold` on exactly those entries -> `{requests, skipped, left}` (a wish the project
+  no longer fits is skipped and counted); `POST .../edits-inbox/skip {device, items?}` -> `{removed, left}`. `items` absent = the whole device.
+- Conflicts (last-writer-wins per key): the computer remembers, per device, the values it last folded from it (`edits_synced.json`). A key is
+  a CONFLICT only if the computer already has its own value for it (title override, own cover, renamed character, chapter title, non-default
+  music on/off or level) that differs from the incoming value AND from what this device sent last time - i.e. somebody else changed it since.
+  The phone's value still wins; the labels come back in `conflicts` and are kept in `recent` (last 10 pushes). Silenced cues are a union and
+  pins just overwrite: they never conflict.
+- UI: `studio/PhoneEdits.tsx` at the top of the project's "Việc cần duyệt" tab (and added to its count): per device "Áp dụng tất cả" / "Bỏ qua
+  tất cả", per item Áp dụng / Bỏ qua, and "Điện thoại đã gửi gần đây" with conflicts. Hidden on remote Studio.
+
+**Phone side (`EditsSync.kt`).** `snapshot` (edits + cover bytes; a missing cover / pinned file is an explained error, never silently dropped) ->
+`writePackage` (zip in `Store.root/edits_out_<id>.zip`, streamed from disk by `SyncLink.request(upload = file)`) -> reply -> refresh the book from
+the computer (`LibraryPlugin.downloadBook`, no "Đã tải xong" toast) -> `BookEdits.subtract(sent, sentCover)` removes exactly what was sent (a key
+the listener changed meanwhile - different value, different cover bytes - stays; sent pinned tracks' files are dropped; wishes are removed too: they
+now live on the computer as requests or inbox items) -> state. State file `sync_edits.json` in the book folder (NOT in `edits.json`, which stays
+free of device info): `{state: "sent"|"error", at, applied, skipped, requests, waiting, skippedWishes, conflicts[], error?}`; `Store.shown` adds
+`editsSync: {pending, last}` to every downloaded computer book (`pending` = `BookEdits.count`). Triggers: `LibraryPlugin.studio` after any
+successful non-GET edit -> `EditsSync.schedule` (4 s debounce, single-thread executor, retries after 60 s and 300 s then waits for the next
+trigger); `remoteLibrary` -> `scheduleAllPending`; the menu item "Gửi về máy tính" -> `EbookLibrary.sendEdits` (rejects with the reason; edits
+stay). Background results fire the `editsSync` listener event (`android/downloads.ts` `watchEditsSync`).
+UI: `listen/SendEdits.tsx` - `EditsSyncBanner` under the title (`shared/editsSync.ts` `editsSyncNote`: pending / error with reason / sent with
+what the computer did, waiting items "chưa làm gì cho tới khi chủ máy đồng ý", conflicts) and `SendEditsItem` in the book menu (greyed with the
+reason when nothing is pending).
+
+**Not covered.** The desktop as a CLIENT (a book streamed from another computer - `remote_books` - stays read-only on the desktop; no push);
+books shared by a phone (`LibraryServer.kt`) do not accept pushes; the inbox cannot be decided from remote Studio.
+
 ## Not built (later phases)
 
-The sync edits inbox, `.abookproj` v2, phone cover web search; swapping a cue to a CATALOG track on the phone (only the listener's
+`.abookproj` v2, phone cover web search; swapping a cue to a CATALOG track on the phone (only the listener's
 own tracks can be pinned to a packaged book - there is no catalogue offline and no mood to rank by); edits on
 streamed ("link") books; an in-place "Lưu" that overwrites the original file (desktop "Lưu" writes `Đã xuất/<title>.abook`,
 Android asks where with the system "create document" picker).

@@ -2,6 +2,7 @@ import type { MusicCredit, MusicCue } from "./musicBed";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, useContext, type ReactNode } from "react";
 import type { Bookmark, Cast, ListenBook, ListeningRecord, ListeningSession, ListeningState, NightSession, Script } from "./model";
+import type { EditsSyncState } from "@/shared/editsSync";
 
 // Nguồn dữ liệu của phía Nghe. Giao diện chỉ nói chuyện với giao diện này:
 // máy tính cài bằng HTTP tới server cục bộ, Android cài bằng file gói sách trên máy.
@@ -56,6 +57,8 @@ export interface ListenSource {
   /** Lưu cuốn nhập từ file (kèm thay đổi của người nghe) thành file `.abook` mới: máy tính ghi vào thư mục xuất (hay
    *  `folder`), điện thoại hỏi chỗ lưu bằng hộp thoại của hệ thống. `saved: false` khi người dùng bỏ qua. */
   saveBook?(bookId: string, options?: { folder?: string }): Promise<SavedBook>;
+  /** Điện thoại: gửi ngay phần sửa của cuốn tải từ máy tính về máy tính (EditsSync.kt); trả trạng thái mới, lỗi thì nói lý do. */
+  sendEdits?(bookId: string): Promise<EditsSyncState>;
   /** Hồ sơ nghe (nguồn nào chưa có thì giao diện ẩn đi); mỗi lệnh trả danh sách hồ sơ mới của cuốn. */
   records?: {
     create(bookId: string, name: string): Promise<ListeningRecord[]>;

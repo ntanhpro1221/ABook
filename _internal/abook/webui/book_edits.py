@@ -908,6 +908,38 @@ def clear(folder: Path) -> None:
             _drop_unused(folder, _base(folder), pinned)
 
 
+# ---- lớp sửa đóng trong một file zip (file `.abook` v4, hay gói điện thoại gửi về - edits_inbox.py) ----------------------
+
+JPEG_MAGIC = bytes([0xFF, 0xD8, 0xFF])  # ảnh bìa trong lớp sửa phải là JPEG (render_cover luôn ghi JPEG)
+
+
+def read_layer(archive: Any, names: set[str]) -> tuple[dict[str, Any], bytes | None]:
+    """Đọc và KIỂM lớp sửa trong một file zip đã mở (`archive`: zipfile.ZipFile; `names`: tên các mục của nó): `edits.json` đúng
+    giao ước (`parse` - sai thì từ chối cả file), mọi bài nhạc đã ghim có đủ file, và bìa sửa đi đôi với `cover` (có `cover` là
+    đối tượng thì phải có edits/cover.jpg, và ngược lại), là JPEG, không quá cỡ. Trả (phần sửa, byte bìa hay None); sai: `EditsError`.
+    Dùng chung cho file sách của người lạ (bookfile.py) và gói điện thoại gửi về - cùng một cổng kiểm."""
+    edits = empty()
+    if EDITS_FILE in names:
+        if archive.getinfo(EDITS_FILE).file_size > MAX_EDITS_BYTES:
+            raise EditsError("Phần sửa của sách quá lớn.")
+        edits = parse(archive.read(EDITS_FILE))
+    if any(name not in names for name in pinned_files(edits)):
+        raise EditsError("File sách thiếu bài nhạc mà người nghe đã chọn.")
+    has_cover = EDITS_COVER in names
+    if has_cover != isinstance(edits.get("cover"), dict):
+        raise EditsError("Ảnh bìa trong phần sửa của sách không khớp.")
+    cover = None
+    if has_cover:
+        info = archive.getinfo(EDITS_COVER)
+        if info.file_size > MAX_COVER_BYTES:
+            raise EditsError("Ảnh bìa trong phần sửa của sách không dùng được.")
+        with archive.open(info) as handle:
+            cover = handle.read(MAX_COVER_BYTES + 1)
+        if len(cover) > MAX_COVER_BYTES or cover[:3] != JPEG_MAGIC:
+            raise EditsError("Ảnh bìa trong phần sửa của sách không dùng được.")
+    return edits, cover
+
+
 # ---- file `.abook` mang phần sửa theo ----------------------------------------------------------------------------
 
 
@@ -984,31 +1016,61 @@ def _cue_scenes(plan: dict[str, Any] | None, chapter: int | None, millis: str) -
             and float(scene["start"]) >= cue["start"] - 0.001 and float(scene["end"]) <= cue["end"] + 0.001]
 
 
+def chapter_resolver(project: Path) -> Callable[[str], int | None]:
+    """Mã chương trong phần sửa (số của sách đã đóng gói: `phần * PART_SPAN + chương`, phần 0 hay phần của dự án này) -> mã chương
+    trong dự án; chương không còn trong dự án (hay thuộc phần khác): None."""
+    from .. import continuation
+
+    part = continuation.part_number(project)
+    have = {chapter["id"] for chapter in store.chapters(project)}
+
+    def local(key: str) -> int | None:
+        number = int(key)
+        return number % PART_SPAN if number // PART_SPAN in (0, part) and number % PART_SPAN in have else None
+
+    return local
+
+
 def fold(project: Path, my_music: Any = None) -> dict[str, Any]:
-    """Áp phần sửa đang chờ (`incoming`) vào dự án bằng ĐÚNG những hàm Studio dùng: tên sách (store.set_display_title), bìa
+    """Áp phần sửa đang chờ (`incoming`, cất bởi `stash_incoming`) vào dự án rồi xoá phần chờ - `fold_edits` làm việc áp."""
+    project = Path(project)
+    cover_file = project / INCOMING_COVER
+    try:
+        cover = cover_file.read_bytes() if cover_file.is_file() else None
+    except OSError:
+        cover = None
+    report = fold_edits(project, incoming(project), cover=cover, music_dir=project / INCOMING_MUSIC, my_music=my_music)
+    dismiss_incoming(project)
+    return report
+
+
+def fold_edits(project: Path, edits: dict[str, Any], *, cover: bytes | None = None, music_dir: Path | None = None,
+               my_music: Any = None) -> dict[str, Any]:
+    """Áp phần sửa `edits` (đã `validate`) vào dự án bằng ĐÚNG những hàm Studio dùng: tên sách (store.set_display_title), bìa
     (covers), tên nhân vật (names.set_name), tên chương (store.set_chapter_title), nhạc nền (music_plan.write_overrides).
     Thay đổi nào không còn chỗ (nhân vật / chương không có trong dự án, nhạc chưa dựng) thì bỏ qua và đếm. Ý muốn chờ Studio
-    (`wishes`) thành yêu cầu của dự án qua `book_wishes.fold`, không áp. Xong thì xoá phần chờ. Trả {"applied", "skipped",
+    (`wishes`) thành yêu cầu của dự án qua `book_wishes.fold`, không áp. Trả {"applied", "skipped",
     "music": có đổi lựa chọn nhạc không (người gọi dựng lại rãnh nhạc), "requests": số ý muốn đã thành yêu cầu, "reasons":
-    lý do từng bài ghim bị bỏ qua (chỉ có khi có)}. Bài nhạc người nghe ghim (`music.pins`) được nhập vào kho "Nhạc của tôi"
-    của máy này (`my_music`: music_local.LocalMusic) rồi ghim vào đoạn tương ứng; thiếu file / không có kho / file hỏng thì bỏ qua."""
-    from .. import continuation
+    lý do từng bài ghim bị bỏ qua (chỉ có khi có)}. `cover`: byte ảnh bìa mới (khi `edits["cover"]` là đối tượng). Bài nhạc
+    người nghe ghim (`music.pins`) nằm ở `music_dir/<sha1>.<đuôi>`, được nhập vào kho "Nhạc của tôi" của máy này (`my_music`:
+    music_local.LocalMusic) rồi ghim vào đoạn tương ứng; thiếu file / không có kho / file hỏng thì bỏ qua. Hai nơi gọi: người
+    dùng đồng ý áp phần sửa trong file `.abook` (`fold`) và điện thoại gửi phần sửa về (edits_inbox.py)."""
     from .music_local import MusicImportError
 
     project = Path(project)
-    edits = incoming(project)
     applied = skipped = 0
     if "title" in edits:
         store.set_display_title(project, edits["title"])
         applied += 1
     if "cover" in edits:
-        cover = edits["cover"]
         try:
-            if cover is None:
+            if edits["cover"] is None:
                 covers.remove_cover(project)
                 applied += 1
+            elif cover is None:
+                skipped += 1  # bìa mới không đi kèm
             else:
-                covers.save_cover_bytes(project, (project / INCOMING_COVER).read_bytes())
+                covers.save_cover_bytes(project, cover)
                 applied += 1
         except (OSError, covers.CoverError):
             skipped += 1
@@ -1019,13 +1081,7 @@ def fold(project: Path, my_music: Any = None) -> dict[str, Any]:
             continue
         renames.set_name(project, name, shown, original)
         applied += 1
-    part = continuation.part_number(project)
-    have = {chapter["id"] for chapter in store.chapters(project)}
-
-    def local(key: str) -> int | None:
-        number = int(key)
-        return number % PART_SPAN if number // PART_SPAN in (0, part) and number % PART_SPAN in have else None
-
+    local = chapter_resolver(project)
     for key, entry in (edits.get("chapters") or {}).items():
         target = local(key)
         if target is None:
@@ -1047,7 +1103,7 @@ def fold(project: Path, my_music: Any = None) -> dict[str, Any]:
         chapter, _, millis = key.partition(":")
         scenes = _cue_scenes(plan, local(chapter), millis)
         sha = music_plan.local_hash(link)
-        source = project / INCOMING_MUSIC / f"{sha}.{music['tracks'][sha]['ext']}"
+        source = (music_dir or project / INCOMING_MUSIC) / f"{sha}.{music['tracks'][sha]['ext']}"
         if not scenes:
             reason = "mốc nhạc này không còn trong dự án"
         elif my_music is None:
@@ -1091,6 +1147,5 @@ def fold(project: Path, my_music: Any = None) -> dict[str, Any]:
         # N thay đổi" như mọi yêu cầu - dây chuyền áp ở ranh giới chương kế tiếp hay lần chạy tới.
         folded = book_wishes.fold(project, edits["wishes"], now=time.time())
         requests, skipped = folded["requests"], skipped + folded["skipped"]
-    dismiss_incoming(project)
     return {"applied": applied, "skipped": skipped, "music": bool(music_changes), "requests": requests,
             **({"reasons": reasons} if reasons else {})}
