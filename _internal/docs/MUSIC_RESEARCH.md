@@ -1891,6 +1891,45 @@ Chung:
 - Lỗi khâu cắt (không đổi phương pháp): một đoạn 30,004 giây làm MF lỗi chỉ số ngoài biên ở lượt 526. Từ nay đoạn được cắt
   đúng 30,0 giây (resample trước khi trim). Phần (2) chạy lại từ lượt ấy.
 
+**KẾT QUẢ (2) LỜI HÁT (03-10 17:0x, `results/evc_vocals.txt`): MF DÙNG ĐƯỢC; ngưỡng t = 1,01 → bỏ điều "lời".**
+- Cổng:
+  - khớp a/b 0,98;
+  - đối chứng: bài có hát nhận 7/8, bài không lời nhận 8/8.
+
+| tầng `vocals` (CLAP) | có hát / 30 | cỡ tầng |
+|---|---|---|
+| S1 < 0,1 | 0 (0 %) | 1.445 |
+| S2 0,1–0,3 | 1 (3 %) | 182 |
+| S3 0,3–0,5 | 0 (0 %) | 115 |
+| S4 > 0,5 trong danh mục (Incompetech) | 2 (7 %) | 345 |
+| S5 > 0,5 đã bị loại | 3 (10 %) | 1.395 |
+
+- Ước tỉ lệ có hát trong bài danh mục có vocals ≤ t:
+  - 0,4 % ở t 0,3; 0,3 % ở 0,5 / 0,7 / 0,9; 1,4 % khi không lọc.
+  - Theo luật (t lớn nhất mà ≤ 5 %) → t = 1,01. `playlists.LIST_VOCALS_MAX = 1,01`.
+- Danh mục **85fbdcd414d4** (Lead đã deploy):
+  - 12 danh sách nới lại, ví dụ fantasy_calm 125 bài / 1.091 phút, sleep 107 / 1.018, scifi 73 / 530, mystery 83 / 428;
+  - eastern 36 / 108.
+- Đọc: điểm `vocals` zero-shot của CLAP gần như không tách được bài có hát ở danh mục này. 90 % bài nó đẩy lên > 0,5 là
+  bài không lời.
+
+**GHI TRƯỚC - NHÃN LỜI HÁT MF THAY BỘ LỌC VOCALS CỦA DANH MỤC (03-10 17:3x, Lead giao; trước lượt chạy):**
+- Kho gán nhãn, mỗi bài một nhãn MF:
+  - (R) 1.254 bài bị loại CHỈ vì CLAP vocals > 0,5: không phải Incompetech, có giấy phép, không field / noise, có file.
+  - (I) 345 bài Incompetech có vocals > 0,5, đang được miễn.
+- Cách gán: đúng quy trình (2) đã qua cổng. Hai đoạn 30 giây (25 % / 60 %), hai cách hỏi a / b; bài có hát nếu đoạn nào
+  có p_hát ≥ 0,5. Không đổi prompt, không đổi ngưỡng.
+- Áp vào `build_catalog.py`, nhãn ở `mf_vocals.jsonl`:
+  - bài vocals > 0,5 (mọi nguồn) mà MF nói KHÔNG LỜI → giữ;
+  - MF nói CÓ HÁT → loại, kể cả Incompetech;
+  - bài chưa có nhãn MF → luật cũ (CLAP 0,5, Incompetech miễn).
+- Báo:
+  - số bài trả lại, số bài Incompetech bị loại;
+  - cỡ danh mục và 25 ô;
+  - danh sách phát sau dựng lại (≥ 40 phút);
+  - revision mới cho Lead deploy.
+- Kiểm chéo, ghi lại không quyết: 30 bài S5 của (2) có trong (R) thì nhãn mới phải trùng nhãn cũ (cùng đoạn, cùng prompt).
+
 **GHI TRƯỚC - NGƯỠNG LỜI HÁT CỦA CẢ DANH MỤC (03-10 15:3x; trước khi có số AST nào ngoài 55 bài đầu đã bỏ):**
 
 Câu hỏi: `vocals` (CLAP zero-shot) trong khoảng 0,3–0,5 có thật là có tiếng hát không?
