@@ -15,6 +15,14 @@ export interface ImportPreview {
   existing?: { id: string; title: string } | null;
   hasCover: boolean;
   totals: { chapters: number; words: number };
+  /** File TXT cả truyện (>= 2 dòng "Chương N"): số chương nếu tách theo các dòng ấy. Giao diện đề xuất (ô KHÔNG tích sẵn); không có khoá = không có gì để tách. */
+  splitOffer?: number;
+}
+
+/** Lựa chọn của người dùng ở bước xem trước, gửi kèm cả lúc xem trước lẫn lúc thêm. */
+export interface ImportOptions {
+  /** Tích "Tách thành N chương theo các dòng “Chương N”". */
+  splitChapters?: boolean;
 }
 
 export interface ImportSuggestion {
@@ -43,9 +51,10 @@ export interface TextImport {
   choose?(kind: ImportKind): Promise<ImportChoice | null>;
   /** Máy tính dán được đường dẫn thay cho hộp thoại. */
   typedPath?: boolean;
-  preview(choice: ImportChoice): Promise<ImportPreview>;
-  /** `separate`: "Thêm bản riêng" - cuốn mới dù thư viện đã có đúng bộ chữ này. */
-  add(choice: ImportChoice, title: string, separate?: boolean): Promise<AddedBook>;
+  preview(choice: ImportChoice, options?: ImportOptions): Promise<ImportPreview>;
+  /** `separate`: "Thêm bản riêng" - cuốn mới dù thư viện đã có đúng bộ chữ này. `options`: như lúc xem trước (điện thoại giữ cuốn của lần xem
+   *  trước cuối, nên thêm đúng thứ người dùng đã thấy). */
+  add(choice: ImportChoice, title: string, separate?: boolean, options?: ImportOptions): Promise<AddedBook>;
   /** Bỏ thứ tạm đã giữ cho lần chọn này (điện thoại: bản sao file); nguồn nào không giữ gì thì không có. */
   discard?(choice: ImportChoice): Promise<void>;
 }

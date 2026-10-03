@@ -101,7 +101,7 @@ export function BookSuggestions({ book }: { book: ListenBook }) {
         Gợi ý cho phần đọc{pending ? ` · ${pending} chưa áp` : ""}
       </h2>
       <p className="mt-0.5 text-xs text-fg-2 text-pretty">
-        Dòng ghi công của người dịch, biên tập ở đầu chương. Bỏ một dòng chỉ là màn đọc và giọng đọc bỏ qua nó - chữ trong sách vẫn còn
+        Dòng ghi công của người dịch, biên tập ở đầu chương. Bỏ dòng này chỉ khiến màn đọc và giọng đọc bỏ qua nó - chữ của sách vẫn giữ
         nguyên, bỏ chọn là đọc lại.
       </p>
       <div className="mt-2">

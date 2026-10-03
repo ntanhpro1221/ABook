@@ -14,7 +14,7 @@ function status(over: Partial<VieneuStatus> = {}): VieneuStatus {
     choices: [
       { id: "turbo", label: "Giọng VieNeu", detail: "", needs: ["libs", "g2p", "voices", "turbo"], bytes: 0, installed: false, recommended: true, default: true },
       { id: "nano", label: "Giọng VieNeu Nano", detail: "", needs: ["libs", "g2p", "voices", "nano"], bytes: 0, installed: false, recommended: false, default: false },
-      { id: "aligner", label: "Sáng đúng từng chữ", detail: "", needs: ["libs", "aligner"], bytes: 0, installed: false, recommended: true, default: true },
+      { id: "aligner", label: "Tô đúng từng chữ đang đọc", detail: "", needs: ["libs", "aligner"], bytes: 0, installed: false, recommended: true, default: true },
     ],
     parts: [
       { id: "libs", label: "", bytes: 27 * MB, state: "missing" },

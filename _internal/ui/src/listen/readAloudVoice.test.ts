@@ -79,6 +79,10 @@ describe("giọng dự phòng của Nghe ngay", () => {
     const { value } = source({ "edge:vi-VN-HoaiMyNeural": "offline" }, online);
     const error = await module.speechFetcher(value, "b1", vi.fn())("edge:vi-VN-HoaiMyNeural", "Một.").catch((caught: unknown) => caught);
     expect((error as Error).message).toBe(module.NO_OFFLINE_VOICE);
+    expect(module.NO_OFFLINE_VOICE.endsWith(".")).toBe(true);
+    expect(module.NO_OFFLINE_VOICE).toContain("Cài đặt của Windows");
+    expect(module.isNoOfflineVoice(module.NO_OFFLINE_VOICE)).toBe(true); // giao diện nhận ra nó để thêm nút “Mở Cài đặt › Giọng đọc”
+    expect(module.isNoOfflineVoice(module.FALLBACK_NOTICE)).toBe(false);
     expect((error as { reason?: string }).reason).toBe("offline"); // bộ đọc to không thử lại vô ích khi mất mạng
     // Lỗi dịch vụ (có mạng): vẫn là lời của dịch vụ.
     const busy = source({ "edge:vi-VN-HoaiMyNeural": "service" }, online);

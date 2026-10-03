@@ -204,8 +204,10 @@ class VieneuProvider:
         out: list[Voice] = []
         for tier in self._tiers(installed):
             assert installed is not None
-            for name in self.presets(tier, installed):
-                out.append(Voice(f"{PREFIX}:{tier}/{name}", f"{name} ({TIER_LABEL[tier]})", PREFIX, False))
+            for name, preset in self.presets(tier, installed).items():
+                gender = str(preset.get("gender") or "")  # danh sách giọng ghi sẵn nam / nữ (bản Kotlin: VieneuPreset.gender)
+                out.append(Voice(f"{PREFIX}:{tier}/{name}", f"{name} ({TIER_LABEL[tier]})", PREFIX, False,
+                                 gender=gender if gender in ("female", "male") else ""))
         return out
 
     # ---- engine -----------------------------------------------------------------------------------------------------------------

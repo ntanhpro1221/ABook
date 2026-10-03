@@ -46,7 +46,7 @@ export function nextChapterLabel(hasNext: boolean, hasLater: boolean): string {
 /** Sách chỉ có chữ: MỘT dòng nói nghe được bằng gì, dùng ở mọi chỗ (thư viện, trang sách, màn đọc) - không còn "chưa có âm thanh" ngay cạnh
  *  nút "Nghe ngay". `speaks`: máy này có giọng đọc. */
 export function textBookLine(speaks: boolean): string {
-  return speaks ? "Giọng máy đọc · chưa có sách nói" : "Chỉ có chữ · máy này chưa có giọng đọc";
+  return speaks ? "Chỉ có chữ · nghe bằng giọng đọc" : "Chỉ có chữ · máy này chưa có giọng đọc";
 }
 
 /** Dòng phụ của một chương chỉ có chữ trong danh sách chương. Cố định: không đổi sang độ dài khi giọng máy đã đọc một phần - độ dài ấy là

@@ -19,13 +19,13 @@ function cleanPath(value: string): string {
 }
 
 /** Nút mở hộp "Thêm sách từ file…"; không hiện khi nguồn này không nhập được (`source.textImport` trống). */
-export function AddBookButton({ variant = "secondary" }: { variant?: "secondary" | "ghost" | "primary" }) {
+export function AddBookButton({ variant = "secondary", size }: { variant?: "secondary" | "ghost" | "primary"; size?: "sm" | "md" | "lg" }) {
   const source = useSource();
   const [open, setOpen] = useState(false);
   if (!source.textImport) return null;
   return (
     <>
-      <Button variant={variant} icon={BookPlus} onClick={() => setOpen(true)}>
+      <Button variant={variant} size={size} icon={BookPlus} onClick={() => setOpen(true)}>
         Thêm sách từ file…
       </Button>
       <AddBookDialog open={open} onOpenChange={setOpen} />
@@ -46,14 +46,17 @@ export function AddBookDialog({ open, onOpenChange }: { open: boolean; onOpenCha
   const [problem, setProblem] = useState("");
   // Gợi ý dòng ghi công người nghe chọn bỏ khỏi phần đọc (theo dòng); mặc định không bỏ dòng nào.
   const [skipped, setSkipped] = useState<ReadonlySet<string>>(new Set());
+  // File TXT cả truyện: người dùng tích "Tách thành N chương" (mặc định không - máy chỉ đề xuất, không tự cắt file của người dùng).
+  const [split, setSplit] = useState(false);
   const titleField = useRef<HTMLInputElement>(null);
   // Đọc xong file: con trỏ sang ô "Tên sách" (lúc mở hộp, `data-autofocus` của ô đường dẫn nhận con trỏ). Màn cảm ứng thì KHÔNG: bàn phím
   // ảo bật lên che mất nút "Thêm vào thư viện", mà tên đã điền sẵn và hiếm khi cần sửa (soát máy thật 03-10).
+  const hasPreview = preview !== null; // tích / bỏ tích tách chương đọc lại bản xem trước: con trỏ không nhảy về ô tên
   useEffect(() => {
-    if (!preview || window.matchMedia?.("(pointer: coarse)").matches) return;
+    if (!hasPreview || window.matchMedia?.("(pointer: coarse)").matches) return;
     titleField.current?.focus();
     titleField.current?.select();
-  }, [preview]);
+  }, [hasPreview]);
   if (!importer) return null;
 
   const clear = () => {
@@ -63,6 +66,7 @@ export function AddBookDialog({ open, onOpenChange }: { open: boolean; onOpenCha
     setTyped("");
     setProblem("");
     setSkipped(new Set());
+    setSplit(false);
   };
   const reset = () => {
     if (choice) void importer.discard?.(choice).catch(() => undefined);
@@ -89,6 +93,21 @@ export function AddBookDialog({ open, onOpenChange }: { open: boolean; onOpenCha
       setBusy(null);
     }
   };
+  // Tích / bỏ tích "Tách thành N chương": đọc lại file với lựa chọn mới, danh sách chương xem trước đổi theo. Tên người dùng đã sửa giữ nguyên;
+  // gợi ý ghi công chọn dở bỏ đi vì số chương đã đổi.
+  const changeSplit = async (on: boolean) => {
+    if (!choice) return;
+    setBusy("reading");
+    try {
+      setPreview(await importer.preview(choice, { splitChapters: on }));
+      setSplit(on);
+      setSkipped(new Set());
+    } catch (error) {
+      toast.error("Chưa đọc lại được file", { description: (error as Error).message });
+    } finally {
+      setBusy(null);
+    }
+  };
   const choose = async (kind: ImportKind) => {
     if (!importer.choose) return;
     try {
@@ -107,7 +126,7 @@ export function AddBookDialog({ open, onOpenChange }: { open: boolean; onOpenCha
     if (!choice || !preview) return;
     setBusy("adding");
     try {
-      const added = await importer.add(choice, title.trim(), separate);
+      const added = await importer.add(choice, title.trim(), separate, { splitChapters: split });
       // Gợi ý người nghe đã chọn: bỏ dòng ấy khỏi phần đọc của cuốn mới (chữ trong sách không đổi). Hỏng thì sách vẫn đã vào thư
       // viện - gợi ý còn chờ ở trang sách.
       if (added.how === "new") {
@@ -206,6 +225,27 @@ export function AddBookDialog({ open, onOpenChange }: { open: boolean; onOpenCha
           <div className="tabular mt-4 text-sm text-fg-2">
             <span className="font-semibold text-fg">{preview.totals.chapters} chương</span> · {formatNumber(preview.totals.words)} chữ
           </div>
+          {preview.splitOffer ? (
+            <label className="mt-3 flex items-start gap-2.5 rounded-xl border border-line bg-hover p-3 text-sm">
+              <input
+                type="checkbox"
+                checked={split}
+                disabled={busy !== null}
+                onChange={(event) => void changeSplit(event.target.checked)}
+                className="mt-0.5 size-4 shrink-0 accent-[var(--accent)]"
+              />
+              <span className="min-w-0">
+                <span className="block font-medium">
+                  Tách thành {formatNumber(preview.splitOffer)} chương theo các dòng “Chương N”
+                </span>
+                <span className="block text-xs text-fg-2">
+                  {split
+                    ? "Mỗi dòng “Chương N” mở một chương mới; chữ của truyện giữ nguyên."
+                    : "Cả truyện đang nằm trong một chương. Tích để có từng chương riêng - ABook chỉ cắt ở đầu các dòng ấy, không sửa chữ."}
+                </span>
+              </span>
+            </label>
+          ) : null}
           {/* Tên chương đúng như sẽ lưu (trang sách, trình phát, màn đọc cùng thấy tên này); dòng đầu của chương ở dòng phụ. Một
               thước đo cho mỗi chương: số chữ. */}
           <ChapterPreview chapters={preview.chapters.map((chapter) => ({ ...chapter, chars: 0 }))} titleFirst className="mt-2" />
@@ -223,7 +263,7 @@ export function AddBookDialog({ open, onOpenChange }: { open: boolean; onOpenCha
           {groups.length > 0 && (
             <div className="mt-3 rounded-xl border border-line bg-hover p-3">
               <p className="text-xs font-medium">Gợi ý cho phần đọc - ABook không tự sửa chữ của truyện</p>
-              <p className="mt-0.5 text-xs text-fg-2">Bỏ một dòng chỉ là màn đọc và giọng đọc bỏ qua nó; đổi ý được ở trang sách.</p>
+              <p className="mt-0.5 text-xs text-fg-2">Bỏ dòng này chỉ khiến màn đọc và giọng đọc bỏ qua nó - chữ của sách vẫn giữ nguyên. Đổi ý được ở trang sách.</p>
               <div className="mt-2 max-h-40 overflow-y-auto">
                 <SuggestionChoices
                   groups={groups}
@@ -260,7 +300,7 @@ export function AddBookDialog({ open, onOpenChange }: { open: boolean; onOpenCha
                 </Button>
               </>
             ) : (
-              <Button variant="primary" icon={BookPlus} loading={busy === "adding"} disabled={!title.trim()} onClick={() => void add()}>
+              <Button variant="primary" icon={BookPlus} loading={busy === "adding"} disabled={!title.trim() || busy === "reading"} onClick={() => void add()}>
                 Thêm vào thư viện
               </Button>
             )}

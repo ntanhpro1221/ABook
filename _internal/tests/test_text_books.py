@@ -312,6 +312,25 @@ def test_the_import_flow_previews_the_chapters_then_adds_the_book(tmp_path: Path
     assert "Dịch: Nhóm Lục Bình" in text.read_text(encoding="utf-8"), "dòng ghi công vẫn nằm trong chữ - không bao giờ tự bỏ"
 
 
+def test_a_whole_story_txt_is_split_into_chapters_only_when_the_listener_ticks_it(tmp_path: Path) -> None:
+    studio = _app(tmp_path / "studio", tmp_path / "thu_vien")
+    server = Server(studio, port=0).start()
+    whole = str(IMPORTS / "whole.txt")
+    try:
+        plain = json.loads(_request(server.port, "POST", "/api/listen/import/preview", headers=TOKEN, body={"path": whole})[1])
+        split = json.loads(_request(server.port, "POST", "/api/listen/import/preview", headers=TOKEN,
+                                    body={"path": whole, "splitChapters": True})[1])
+        added = json.loads(_request(server.port, "POST", "/api/listen/import", headers=TOKEN,
+                                    body={"path": whole, "splitChapters": True})[1])
+    finally:
+        server.stop()
+    assert plain["totals"]["chapters"] == 1 and plain["splitOffer"] == 4, "mặc định một chương, và cho biết tách sẽ ra bao nhiêu"
+    assert split["totals"]["chapters"] == 4 and split["splitOffer"] == 4
+    assert [row["title"] for row in split["chapters"]][:2] == ["Mở đầu", "Chương 1: Bến phà lúc bình minh"]
+    assert added["chapters"] == 4 and len(studio.listen_book(added["id"])["chapters"]) == 4
+    assert "splitOffer" not in studio.preview_text_book(str(IMPORTS / "epub3.epub")), "sách không có gì để tách thì không có gợi ý"
+
+
 def test_adding_the_same_book_again_says_it_is_already_there(tmp_path: Path) -> None:
     studio = _app(tmp_path / "studio", tmp_path / "thu_vien")
     first = studio.add_text_book(str(IMPORTS / "epub3.epub"))

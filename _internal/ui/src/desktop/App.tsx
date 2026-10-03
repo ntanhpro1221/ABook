@@ -1,6 +1,6 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { BookPlus, Clapperboard, Compass, FileAudio, FolderDown, Headphones, Trash2 } from "lucide-react";
+import { Clapperboard, Compass, FileAudio, FolderDown, Headphones, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { HashRouter, Route, Routes, useNavigate } from "react-router";
 import { Toaster, toast } from "sonner";
@@ -13,7 +13,7 @@ import { LibraryScreen } from "@/listen/LibraryScreen";
 import { MorningRecap } from "@/listen/MorningRecap";
 import { ReaderScreen } from "@/listen/ReaderScreen";
 import { PlayerProvider, usePlayer } from "@/listen/player";
-import { SourceProvider } from "@/listen/source";
+import { SourceProvider, useSource } from "@/listen/source";
 import { Button, Dialog, EmptyState, TooltipProvider } from "@/shared/ui";
 import { useMediaQuery, useModalOpen } from "@/shared/media";
 import type { ListenBook } from "@/listen/model";
@@ -48,6 +48,9 @@ function ClipBridge({ children }: { children: ReactNode }) {
 
 function EmptyLibrary() {
   const navigate = useNavigate();
+  // Người mới mở app thường có sẵn một file truyện: nghe ngay là việc chính, làm sách nói (Studio) là việc kế. Máy điều khiển từ xa không
+  // thêm file được thì Studio vẫn là nút chính.
+  const canAdd = Boolean(useSource().textImport);
   return (
     <EmptyState
       icon={Headphones}
@@ -55,16 +58,17 @@ function EmptyLibrary() {
       className="mt-12 rounded-2xl border border-dashed border-line"
       action={
         <div className="flex flex-wrap justify-center gap-2">
-          <Button variant="primary" size="lg" icon={BookPlus} onClick={() => navigate("/studio/new")}>
-            Tạo sách nói đầu tiên
+          <AddBookButton variant="primary" size="lg" />
+          <Button variant={canAdd ? "secondary" : "primary"} size={canAdd ? "md" : "lg"} icon={Clapperboard} onClick={() => navigate("/studio/new")}>
+            Tạo sách nói
           </Button>
-          <AddBookButton variant="ghost" />
           <OpenBookFileButton variant="ghost" />
         </div>
       }
     >
-      Sách xuất hiện ở đây ngay khi chương đầu tiên thu xong - không cần chờ cả cuốn. Có file EPUB, Word, PDF hay thư mục TXT
-      thì thêm thẳng để đọc; có file sách (.abook) từ máy khác thì mở.
+      Có file EPUB, Word, PDF hay thư mục TXT thì thêm thẳng - nghe ngay bằng giọng đọc của máy; có file sách (.abook) từ máy khác thì
+      mở. Muốn truyện thành sách nói có giọng riêng cho từng nhân vật thì tạo sách nói: sách hiện ở đây ngay khi chương đầu tiên
+      thu xong, không cần chờ cả cuốn.
     </EmptyState>
   );
 }

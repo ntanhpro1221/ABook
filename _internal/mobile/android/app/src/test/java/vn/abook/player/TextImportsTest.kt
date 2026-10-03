@@ -113,6 +113,20 @@ class TextImportsTest {
     }
 
     @Test
+    fun a_whole_story_txt_previews_as_one_chapter_offers_the_split_and_adds_what_the_last_preview_showed() {
+        val ref = stageFile("whole.txt").ref
+        val plain = TextImports.preview(ref)
+        assertEquals(1, plain.getJSONArray("chapters").length())
+        assertEquals(4, plain.getInt("splitOffer")) // mặc định KHÔNG tách, nhưng cho biết tách sẽ ra bao nhiêu chương
+        val split = TextImports.preview(ref, splitChapters = true)
+        assertEquals(listOf("Mở đầu", "Chương 1: Bến phà lúc bình minh", "Chương 2: Người khách lạ", "Chương 3"), titles(split))
+        assertEquals(4, split.getInt("splitOffer"))
+        val added = TextImports.create(ref, "", cache)
+        assertEquals(4, added.getInt("chapters"))
+        assertFalse(TextImports.preview(stageFile("epub3.epub").ref).has("splitOffer")) // không có gì để tách thì không có khoá
+    }
+
+    @Test
     fun a_credit_line_suggestion_is_skipped_only_when_the_listener_accepts_it() {
         val id = TextImports.create(stageFile("epub3.epub").ref.also { TextImports.preview(it) }, "", cache).getString("id")
         fun call(method: String, path: String, body: JSONObject? = null) = LocalStudio.handle(method, "/api/books/$id$path", body)

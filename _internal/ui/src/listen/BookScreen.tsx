@@ -839,7 +839,7 @@ export function BookScreen({
                 <IconButton label="Tuỳ chọn khác" icon={MoreHorizontal} size="lg" />
               </DropdownMenu.Trigger>
               <DropdownMenu.Portal>
-                <DropdownMenu.Content align="start" sideOffset={6} collisionPadding={12} className="z-50 min-w-56 rounded-xl border border-line bg-panel p-1.5 shadow-float">
+                <DropdownMenu.Content align="start" sideOffset={6} collisionPadding={12} className="z-50 min-w-56 max-w-[min(20rem,calc(100vw-24px))] rounded-xl border border-line bg-panel p-1.5 shadow-float">
                   {source.records && book.records?.length === 1 && (
                     <DropdownMenu.Item onSelect={() => setRecordDialog(newRecordDialog(book))} className={MENU_ITEM}>
                       <Plus className="size-4" /> Nghe lại từ đầu (hồ sơ mới)…

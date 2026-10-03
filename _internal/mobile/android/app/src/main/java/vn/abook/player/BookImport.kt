@@ -43,6 +43,8 @@ object BookImport {
         val textHasTitle: Boolean = false,
         /** (số chương, dòng ghi công) - gợi ý, như trong `notes` (`ImportedBook.credits`). */
         val credits: MutableList<Pair<Int, String>> = mutableListOf(),
+        /** File TXT cả truyện: số chương nếu tách theo các dòng "Chương N" (0 = không có gì để tách); người dùng tích mới tách (`ImportedBook.split_offer`). */
+        var splitOffer: Int = 0,
     )
 
     val IMPORT_SUFFIXES = listOf("epub", "docx", "pdf")
@@ -60,14 +62,15 @@ object BookImport {
 
     // ---- vào ----------------------------------------------------------------------------------------------------------
 
-    /** Một thư mục TXT, hay file .epub / .docx / .txt. (PDF đi qua `fromPdfPages`: lấy chữ ra là việc của pdf.js.) */
-    fun importFile(path: File): Book {
+    /** Một thư mục TXT, hay file .epub / .docx / .txt. (PDF đi qua `fromPdfPages`: lấy chữ ra là việc của pdf.js.) `splitChapters`: file .txt cả
+     *  truyện thì tách thành các chương theo dòng "Chương N" (người dùng tích gợi ý `splitOffer`). */
+    fun importFile(path: File, splitChapters: Boolean = false): Book {
         val book = when {
             path.isDirectory -> txtFolder(path)
             path.isFile -> when (val suffix = path.extension.lowercase()) {
                 "epub" -> epub(path)
                 "docx" -> docx(path)
-                "txt" -> txtFile(path)
+                "txt" -> txtFile(path, splitChapters)
                 "pdf" -> throw Failed("PDF cần lấy chữ bằng pdf.js trước (fromPdfPages)")
                 else -> throw Failed("Chưa đọc được file ${if (suffix.isEmpty()) "không có đuôi" else ".$suffix"} - dùng .epub, .docx, .pdf, .txt hay một thư mục TXT")
             }
@@ -106,7 +109,7 @@ object BookImport {
             "cover" to cover,
             "chapters" to book.chapters.map { linkedMapOf<String, Any?>("title" to it.title, "text" to it.text) },
             "notes" to book.notes.toList(),
-        )
+        ).also { if (book.splitOffer > 0) it["splitOffer"] = book.splitOffer }
     }
 
     private fun sha256(bytes: ByteArray) = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
@@ -122,7 +125,7 @@ object BookImport {
         book.chapters.clear()
         if (chapters.size > 1) {
             // File TXT rỗng (hay chỉ có khoảng trắng) không thành chương - nói ra, để số chương ít hơn số file có lý do.
-            for (chapter in chapters) if (pyStrip(chapter.text).isEmpty()) book.notes.add("Bỏ qua mục không có chữ: ${chapter.title}")
+            for (chapter in chapters) if (pyStrip(chapter.text).isEmpty()) book.notes.add("Bỏ qua mục trống: ${chapter.title}")
             book.chapters.addAll(chapters.filter { pyStrip(it.text).isNotEmpty() })
         } else {
             book.chapters.addAll(chapters)
@@ -253,7 +256,33 @@ object BookImport {
         return Book(folder.canonicalFile.name, chapters = files.map(::txtChapter).toMutableList(), textHasTitle = true)
     }
 
-    private fun txtFile(file: File): Book = Book(stemOf(file.name), chapters = mutableListOf(txtChapter(file)), textHasTitle = true)
+    /** Một file TXT là một chương - trừ khi nó là CẢ truyện (>= 2 dòng "Chương N") và người dùng tích tách (`importers._txt_file`). */
+    private fun txtFile(file: File, split: Boolean): Book {
+        val chapter = txtChapter(file)
+        val book = Book(stemOf(file.name), chapters = mutableListOf(chapter), textHasTitle = true)
+        val parts = splitTxtChapters(chapter.text)
+        book.splitOffer = parts.size
+        if (split && parts.isNotEmpty()) {
+            book.chapters.clear()
+            book.chapters.addAll(parts)
+        }
+        return book
+    }
+
+    /** `importers.split_txt_chapters`: chữ (đã `cleanText`) của file TXT cả truyện -> các chương cắt ở đầu mỗi dòng "Chương N" (không tính "Quyển N"),
+     *  tiêu đề nằm trong chữ của chương, chữ trước tiêu đề đầu tiên thành "Mở đầu". Dưới hai tiêu đề: rỗng. */
+    internal fun splitTxtChapters(text: String): List<Chapter> {
+        val lines = text.split("\n")
+        val cuts = lines.indices.filter { isHeadingLine(lines[it], TXT_HEADING) }
+        if (cuts.size < 2) return emptyList()
+        val chapters = mutableListOf<Chapter>()
+        if (lines.subList(0, cuts[0]).any { pyStrip(it).isNotEmpty() }) chapters.add(Chapter(PREAMBLE, lines.subList(0, cuts[0]).joinToString("\n").trim('\n')))
+        for ((position, start) in cuts.withIndex()) {
+            val end = if (position + 1 < cuts.size) cuts[position + 1] else lines.size
+            chapters.add(Chapter(pyStrip(lines[start]), lines.subList(start, end).joinToString("\n").trim('\n')))
+        }
+        return chapters
+    }
 
     /** Một file TXT là một chương (`importers._txt_chapter`). Tên chương: dòng đầu nếu nó là dòng tiêu đề ("Chương 1: Buổi sáng" - đúng
      *  thứ người nghe thấy ở đầu chương), không thì tên file ("01.txt" -> "Chương 1"). */
@@ -924,7 +953,7 @@ object BookImport {
             when {
                 title == null -> if (paragraphs.isNotEmpty()) result.chapters.add(Chapter(PREAMBLE, paragraphs.joinToString("\n\n")))
                 paragraphs.isNotEmpty() -> result.chapters.add(Chapter(title, paragraphs.joinToString("\n\n")))
-                else -> result.notes.add("Bỏ qua mục không có chữ: $title")
+                else -> result.notes.add("Bỏ qua mục trống: $title")
             }
         }
         result
@@ -942,7 +971,14 @@ object BookImport {
         Pattern.CASE_INSENSITIVE or Pattern.UNICODE_CASE or UNICODE_CLASSES,
     )
 
-    internal fun isHeadingLine(line: String): Boolean = cpLen(pyStrip(line)) <= MAX_HEADING && HEADING.matcher(line).lookingAt()
+    /** Tiêu đề chương của file TXT cả truyện: "Chương N" thôi, như trình tạo sách (importers.TXT_HEADING) - "Quyển N" là tên tập. */
+    private val TXT_HEADING: Pattern = Pattern.compile(
+        "^\\s*(?:(?:chương|chuong|hồi|hoi|chapter|tiết)\\s+(?:thứ\\s+)?(?:\\d+|[ivxlcdm]+|(?:(?:$NUMBER_WORDS)\\s*)+)(?![\\w])" +
+            "|第\\s*[\\d一二三四五六七八九十百千零〇两]+\\s*[章回])",
+        Pattern.CASE_INSENSITIVE or Pattern.UNICODE_CASE or UNICODE_CLASSES,
+    )
+
+    internal fun isHeadingLine(line: String, pattern: Pattern = HEADING): Boolean = cpLen(pyStrip(line)) <= MAX_HEADING && pattern.matcher(line).lookingAt()
 
     private fun splitOnHeadings(paragraphs: List<String>, bookTitle: String): Pair<List<Chapter>, List<String>> {
         val chapters = mutableListOf<Chapter>()
@@ -956,7 +992,7 @@ object BookImport {
             when {
                 current == null -> if (body.isNotEmpty()) chapters.add(Chapter(if (anyHeading) PREAMBLE else bookTitle, body.joinToString("\n\n")))
                 body.isNotEmpty() -> chapters.add(Chapter(current, body.joinToString("\n\n")))
-                else -> notes.add("Bỏ qua mục không có chữ: $current")
+                else -> notes.add("Bỏ qua mục trống: $current")
             }
         }
 
