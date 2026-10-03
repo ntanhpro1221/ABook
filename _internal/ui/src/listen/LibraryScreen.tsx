@@ -7,8 +7,8 @@ import { cn } from "@/shared/cn";
 import { formatClock, formatLength, formatWhen } from "@/shared/format";
 import { EmptyState, Progress, Segmented, Skeleton } from "@/shared/ui";
 import { foldVietnamese, resumePoint, seriesIndex, type ListenBook } from "./model";
-import { usePlayer } from "./player";
-import { useListenLibrary, useSource } from "./source";
+import { usePlayer, type WordTarget } from "./player";
+import { useListenLibrary, useReadAloudVoices, useSource } from "./source";
 
 type Filter = "all" | "listening" | "new" | "finished";
 
@@ -48,7 +48,7 @@ function progressText(book: ListenBook): string {
 export function usePlayListenBook() {
   const source = useSource();
   const player = usePlayer();
-  return async (book: ListenBook, chapterId?: number, at?: number) => {
+  return async (book: ListenBook, chapterId?: number, at?: number, extra?: { word?: WordTarget }) => {
     // Cuốn đang ở trình phát: tiếp tục đúng chỗ đang phát, không nạp lại (nạp lại là lùi về điểm lưu gần nhất).
     if (chapterId === undefined && player.track?.bookId === book.id) {
       player.resume();
@@ -57,7 +57,7 @@ export function usePlayListenBook() {
     const full = book.chapters ? book : await source.book(book.id);
     const chapters = full.chapters ?? [];
     if (chapterId !== undefined) {
-      player.play(full, chapters, chapterId, at ?? 0);
+      player.play(full, chapters, chapterId, at ?? 0, extra);
       return;
     }
     if (full.progress.caughtUp) {
@@ -98,7 +98,9 @@ function BookTile({ book }: { book: ListenBook }) {
   const player = usePlayer();
   const current = player.track?.bookId === book.id;
   const playingHere = current && player.playing;
-  const textOnly = book.stage === "text";
+  // Sách chỉ có chữ: có giọng đọc trên máy thì nút trên bìa là "Nghe ngay" (giọng máy đọc), không thì vẫn là "Đọc".
+  const voices = useReadAloudVoices();
+  const textOnly = book.stage === "text" && !((voices.data?.length ?? 0) > 0);
   return (
     <div className="group">
       <div className="relative">
@@ -107,7 +109,7 @@ function BookTile({ book }: { book: ListenBook }) {
         </button>
         <button
           type="button"
-          aria-label={textOnly ? `Đọc ${book.title}` : playingHere ? `Tạm dừng ${book.title}` : `Nghe ${book.title}`}
+          aria-label={textOnly ? `Đọc ${book.title}` : playingHere ? `Tạm dừng ${book.title}` : book.stage === "text" ? `Nghe ngay ${book.title}` : `Nghe ${book.title}`}
           onClick={() => (textOnly ? navigate(`/book/${book.id}/read`) : current ? player.toggle() : void playBook(book))}
           className={cn(
             "absolute bottom-2.5 right-2.5 grid size-10 place-items-center rounded-full bg-accent text-accent-ink shadow-float transition-opacity duration-150 group-hover:opacity-100 focus-visible:opacity-100 max-md:opacity-100",

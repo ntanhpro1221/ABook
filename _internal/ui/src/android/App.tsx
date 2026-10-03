@@ -17,6 +17,7 @@ import { PlayerProvider, useNowPlaying, usePlayer } from "@/listen/player";
 import { SourceProvider } from "@/listen/source";
 import { usePageEnter } from "@/shared/motion";
 import { watchDownloads, watchEditsSync } from "./downloads";
+import { watchReadAloud } from "./readAloud";
 import { pickBookFile, watchImports } from "./imports";
 import { cn } from "@/shared/cn";
 import { Button, Dialog, EmptyState, TooltipProvider } from "@/shared/ui";
@@ -37,6 +38,8 @@ function DownloadWatcher() {
   const client = useQueryClient();
   useEffect(() => watchDownloads(client), [client]);
   useEffect(() => watchEditsSync(client), [client]);
+  // Chương chỉ-có-chữ đang được lõi đọc to: mốc câu / chữ lõi báo đi vào kịch bản chữ của màn đọc (android/readAloud.ts).
+  useEffect(() => watchReadAloud(client), [client]);
   return null;
 }
 

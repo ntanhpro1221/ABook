@@ -1,0 +1,49 @@
+{
+ "note": "gạch ngang không có mảnh: nằm giữa chữ trước và chữ sau",
+ "text": "Xin chào — các bạn.",
+ "durationMs": 2000,
+ "boundaries": [
+  {
+   "text": "Xin",
+   "start": 0,
+   "end": 400
+  },
+  {
+   "text": "chào",
+   "start": 400,
+   "end": 900
+  },
+  {
+   "text": "các",
+   "start": 1000,
+   "end": 1300
+  },
+  {
+   "text": "bạn",
+   "start": 1300,
+   "end": 1900
+  }
+ ],
+ "words": [
+  [
+   0,
+   400
+  ],
+  [
+   400,
+   900
+  ],
+  [
+   900,
+   1000
+  ],
+  [
+   1000,
+   1300
+  ],
+  [
+   1300,
+   1900
+  ]
+ ]
+}

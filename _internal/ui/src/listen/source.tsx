@@ -1,10 +1,12 @@
 import type { MusicCredit, MusicCue } from "./musicBed";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useMemo, type ReactNode } from "react";
 import type { Bookmark, Cast, ListenBook, ListenChapter, ListeningRecord, ListeningSession, ListeningState, NightSession, Script } from "./model";
 import type { EditsSyncState } from "@/shared/editsSync";
 import type { TextImport } from "./textImport";
 import { textScript } from "./textScript";
+import { mergeTimings, type ClipOptions, type ReadAloudClip, type ReadAloudTimings, type ReadAloudVoice } from "./readAloud";
+import { voicesOf } from "./readAloudVoice";
 
 // Nguồn dữ liệu của phía Nghe. Giao diện chỉ nói chuyện với giao diện này:
 // máy tính cài bằng HTTP tới server cục bộ, Android cài bằng file gói sách trên máy.
@@ -29,6 +31,12 @@ export interface ListenSource {
   chapterText(bookId: string, chapterId: number): Promise<string>;
   /** "Thêm sách từ file…" (textImport.ts); nguồn nào chưa có thì giao diện ẩn nút. */
   textImport?: TextImport;
+  /** "Nghe ngay" (readAloud.ts): các giọng đọc có trên máy này và việc đọc một đoạn chữ thành clip (audio + mốc từng chữ). Nguồn nào chưa có
+   *  thì chương chỉ-có-chữ chỉ đọc được bằng mắt. Android: lõi native tự đọc (plugin ReadAloud, android/readAloud.ts) nên không có `readAloudClip`. */
+  readAloudVoices?(): Promise<ReadAloudVoice[]>;
+  readAloudClip?(voice: string, text: string, options?: ClipOptions): Promise<ReadAloudClip>;
+  /** Nơi tự đọc chương (lõi native Android) cho biết mốc thời gian câu / chữ đã có của một chương chỉ-có-chữ; chưa có gì thì null. */
+  readAloudTimings?(bookId: string, chapterId: number): Promise<ReadAloudTimings | null>;
   cast(bookId: string): Promise<Cast>;
   /** Nhạc nền của một chương (rãnh nhạc của cuốn - webui/music_plan.py): mốc thời gian + đường lấy file. Nguồn nào
    *  chưa có thì trình phát không chơi nhạc nền. */
@@ -76,8 +84,30 @@ export interface ListenSource {
 
 const SourceContext = createContext<ListenSource | null>(null);
 
+function markSpeech(book: ListenBook, can: boolean): ListenBook {
+  if (!can || !book.chapters?.some((chapter) => chapter.state === "text")) return book;
+  return { ...book, chapters: book.chapters.map((chapter) => (chapter.state === "text" ? { ...chapter, speech: true } : chapter)) };
+}
+
+/** Nguồn có giọng đọc thì chương chỉ-có-chữ nghe được ngay: gắn `speech` vào chương ở MỌI nơi sách đi qua (thư viện, trang sách, trình phát) -
+ *  chỗ nào cũng hỏi `canPlay(chapter)` thay vì tự biết giọng. Không giọng nào (offline mà máy cũng không có giọng): chương vẫn chỉ đọc. */
+export function withReadAloud(source: ListenSource): ListenSource {
+  if (!source.readAloudVoices) return source;
+  const speaks = async () => (await voicesOf(source)).length > 0;
+  return {
+    ...source,
+    readAloudVoices: () => voicesOf(source),
+    book: async (id) => markSpeech(await source.book(id), await speaks()),
+    library: async () => {
+      const [books, can] = await Promise.all([source.library(), speaks()]);
+      return books.map((book) => markSpeech(book, can));
+    },
+  };
+}
+
 export function SourceProvider({ source, children }: { source: ListenSource; children: ReactNode }) {
-  return <SourceContext.Provider value={source}>{children}</SourceContext.Provider>;
+  const wrapped = useMemo(() => withReadAloud(source), [source]);
+  return <SourceContext.Provider value={wrapped}>{children}</SourceContext.Provider>;
 }
 
 export function useSource(): ListenSource {
@@ -121,16 +151,40 @@ export function useScript(bookId: string | undefined, chapterId: number | undefi
   });
 }
 
-/** Kịch bản của chương để ĐỌC: chương nghe được thì kịch bản có mốc thời gian, chương chỉ-có-chữ thì các đoạn dựng từ chữ. */
+/** Truy vấn kịch bản để ĐỌC của một chương: chương nghe được thì kịch bản có mốc thời gian, chương chỉ-có-chữ thì các đoạn dựng từ chữ. Dùng chung với
+ *  trình phát (nó đọc to chương chữ và ghi mốc thời gian vào đúng khoá này - readAloud.ts). */
+export function chapterScriptQuery(source: ListenSource, bookId: string, chapter: ListenChapter) {
+  const textOnly = chapter.state === "text";
+  return {
+    queryKey: ["listen", "script", bookId, chapter.id, textOnly ? "text" : "audio"] as const,
+    queryFn: async (): Promise<Script> => {
+      if (!textOnly) return source.script(bookId, chapter.id);
+      const script = textScript(chapter.id, chapter.title, await source.chapterText(bookId, chapter.id));
+      // Chương đã được đọc to (lõi native tự đọc): mốc thời gian đã có thì gắn vào, màn đọc sáng đoạn / chữ ngay khi mở.
+      const timings = await source.readAloudTimings?.(bookId, chapter.id).catch(() => null);
+      return timings ? mergeTimings(script, timings) : script;
+    },
+    staleTime: Infinity,
+  };
+}
+
 export function useChapterScript(bookId: string | undefined, chapter: ListenChapter | undefined) {
   const source = useSource();
-  const textOnly = chapter?.state === "text";
   return useQuery({
-    queryKey: ["listen", "script", bookId, chapter?.id, textOnly ? "text" : "audio"],
+    queryKey: ["listen", "script", bookId, chapter?.id, chapter?.state === "text" ? "text" : "audio"] as const,
     enabled: Boolean(bookId && chapter),
-    queryFn: async () =>
-      textOnly ? textScript(chapter!.id, chapter!.title, await source.chapterText(bookId!, chapter!.id)) : source.script(bookId!, chapter!.id),
+    queryFn: () => chapterScriptQuery(source, bookId!, chapter!).queryFn(),
     staleTime: Infinity,
+  });
+}
+
+/** Các giọng đọc của máy này (rỗng khi nguồn không có). */
+export function useReadAloudVoices() {
+  const source = useSource();
+  return useQuery({
+    queryKey: ["readaloud", "voices"],
+    queryFn: () => voicesOf(source),
+    staleTime: 60_000,
   });
 }
 
