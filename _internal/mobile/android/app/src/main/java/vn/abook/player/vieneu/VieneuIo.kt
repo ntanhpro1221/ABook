@@ -54,13 +54,32 @@ internal object Tensors {
     }
 }
 
-/** ONNX Runtime session options the VieNeu graphs are run with (same as the desktop engine: no spinning, one inter-op thread). */
-internal fun sessionOptions(threads: Int): OrtSession.SessionOptions = OrtSession.SessionOptions().apply {
-    setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT)
-    setInterOpNumThreads(1)
-    setIntraOpNumThreads(threads)
-    addConfigEntry("session.intra_op.allow_spinning", "0")
+/**
+ * Which kernels run the graphs. [CPU] is ORT's own (what the desktop uses); [XNNPACK] takes the float ops it supports and runs them on its
+ * own pool of `threads` (the session's pool is then one thread, as ORT advises, so the two pools do not fight; ops it does not take, e.g.
+ * the dynamically quantised MatMuls of Turbo int8, then run single-threaded); [NNAPI] hands what it can to the phone's driver.
+ */
+enum class VieneuBackend {
+    CPU, XNNPACK, NNAPI;
+
+    companion object {
+        fun parse(name: String): VieneuBackend = valueOf(name.trim().uppercase())
+    }
 }
+
+/** ONNX Runtime session options the VieNeu graphs are run with (same as the desktop engine: no spinning, one inter-op thread). */
+internal fun sessionOptions(threads: Int, backend: VieneuBackend = VieneuBackend.CPU, spinning: Boolean = false): OrtSession.SessionOptions =
+    OrtSession.SessionOptions().apply {
+        setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT)
+        setInterOpNumThreads(1)
+        setIntraOpNumThreads(if (backend == VieneuBackend.XNNPACK) 1 else threads)
+        addConfigEntry("session.intra_op.allow_spinning", if (spinning) "1" else "0")
+        when (backend) {
+            VieneuBackend.CPU -> Unit
+            VieneuBackend.XNNPACK -> addXnnpack(mapOf("intra_op_num_threads" to threads.toString()))
+            VieneuBackend.NNAPI -> addNnapi()
+        }
+    }
 
 /** Run [block] and add its wall time to [clock]. */
 internal inline fun <T> timed(clock: LongArray, slot: Int, block: () -> T): T {
