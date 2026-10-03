@@ -47,9 +47,10 @@ export function AddBookDialog({ open, onOpenChange }: { open: boolean; onOpenCha
   // Gợi ý dòng ghi công người nghe chọn bỏ khỏi phần đọc (theo dòng); mặc định không bỏ dòng nào.
   const [skipped, setSkipped] = useState<ReadonlySet<string>>(new Set());
   const titleField = useRef<HTMLInputElement>(null);
-  // Đọc xong file: con trỏ sang ô "Tên sách" (lúc mở hộp, `data-autofocus` của ô đường dẫn nhận con trỏ).
+  // Đọc xong file: con trỏ sang ô "Tên sách" (lúc mở hộp, `data-autofocus` của ô đường dẫn nhận con trỏ). Màn cảm ứng thì KHÔNG: bàn phím
+  // ảo bật lên che mất nút "Thêm vào thư viện", mà tên đã điền sẵn và hiếm khi cần sửa (soát máy thật 03-10).
   useEffect(() => {
-    if (!preview) return;
+    if (!preview || window.matchMedia?.("(pointer: coarse)").matches) return;
     titleField.current?.focus();
     titleField.current?.select();
   }, [preview]);

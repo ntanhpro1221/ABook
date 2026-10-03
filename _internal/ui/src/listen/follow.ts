@@ -64,3 +64,8 @@ export function firstVisibleIndex(items: readonly ({ index: number } & Box)[], v
 
 /** Phím mà người dùng cuộn trang bằng nó - bấm là thôi theo. (Space là phát / tạm dừng của trình phát, không cuộn.) */
 export const SCROLL_KEYS = new Set(["PageUp", "PageDown", "Home", "End", "ArrowUp", "ArrowDown"]);
+
+/** Giọng vừa sang chương `after` (đang nghe `before` trước đó): màn đọc đang mở đúng chương `before` thì đi theo sang `after`; đang mở chương khác thì để yên. */
+export function chapterToFollow(before: number | null, after: number | null, shown: number): number | null {
+  return before !== null && after !== null && before !== after && before === shown ? after : null;
+}
