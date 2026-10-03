@@ -1795,6 +1795,39 @@ Giới hạn:
 - M từng không ổn định khi chấm đoạn truyện khớp clip (J-mf 0,66). Phép này có cổng a / b riêng.
 - Hai giám khảo đều là máy, không phải người nghe.
 
+**KẾT QUẢ "ĐÚNG CẢM GIÁC" (03-10 16:2x, `results/feel_score.txt`): 11/12 ĐÚNG CẢM GIÁC; eastern chỉ một giám khảo đạt.**
+- (M) MF **dùng được:** khớp a/b 0,97, trung vị khối 1,00, 1,04 giây / lượt (VRAM 6,1 GiB).
+- (A) AST: đủ 2.087 bài.
+
+| danh sách | M (ĐÚNG / 10) | A AUC [KTC 95 %] | kết luận |
+|---|---|---|---|
+| fantasy_adventure | 9 | 0,720 [0,682-0,757] | đúng cảm giác |
+| fantasy_calm | 10 | 0,791 [0,735-0,843] | đúng cảm giác |
+| school_light | 10 | 0,784 [0,747-0,820] | đúng cảm giác |
+| romance | 9 | 0,863 [0,833-0,890] | đúng cảm giác |
+| comedy | 8 | 0,890 [0,864-0,914] | đúng cảm giác |
+| action | 9 | 0,885 [0,860-0,909] | đúng cảm giác |
+| horror | 10 | 0,894 [0,869-0,917] | đúng cảm giác |
+| mystery | 10 | 0,679 [0,630-0,728] | đúng cảm giác |
+| **eastern** | **0 (NGHI)** | 0,802 [0,752-0,849] | **một giám khảo** |
+| scifi | 10 | 0,798 [0,736-0,856] | đúng cảm giác |
+| sad | 10 | 0,843 [0,812-0,873] | đúng cảm giác |
+| sleep | 10 | 0,825 [0,779-0,869] | đúng cảm giác |
+
+- MF thiên lệch theo mô tả: điểm thô TB cao nhất là fantasy_calm 5,67, thấp nhất eastern 2,84. Mô tả cao nhất của phần lớn
+  bài là fantasy_calm. Phép "so với danh sách đối" khử được thiên lệch này; hạng tuyệt đối thì không.
+- Thăm dò eastern, NHÌN SAU KHI THẤY SỐ:
+  - Trên chính mô tả eastern, MF không phân biệt bài eastern với bài khác (AUC 0,455).
+  - 10 bài mẫu: AST "Music of Asia" ≤ 0,005 cả 10 bài. Tên bài: "Holiday Weasel", "Goblin Tinker Soldier Spy", "nuage",
+    "Blithe", … Chỉ 3/10 có style eastern_ancient.
+  - Vậy hai giám khảo cùng nghe thấy MẪU không phương Đông. AUC 0,80 của A đến từ các bài khác của danh sách.
+  - Nhánh `family == "eastern"` (54/101 bài) KHÔNG phải nguồn lỗi: AST Asia AUC 0,848, còn nhánh style là 0,750.
+  - Xác suất "Music of Asia" của AST nhỏ trên toàn danh mục (p95 0,0017), không đủ chắc để làm bộ lọc.
+- Đề xuất, chưa làm (cần ghi trước riêng):
+  - Kiểm năng lực nghe phương Đông của MF và AST bằng chứng dương: bài có tên nhạc cụ rõ (guzheng, erhu, koto, shakuhachi,
+    guqin, 和風 / 古风) so với bài phương Tây cùng nhịp.
+  - Giám khảo nào nhận ra được thì dùng nó chấm lại toàn danh sách eastern; luật mới chỉ giữ bài được nhận ra, còn ≥ 40 phút.
+
 **GHI TRƯỚC - NGƯỠNG LỜI HÁT CỦA CẢ DANH MỤC (03-10 15:3x; trước khi có số AST nào ngoài 55 bài đầu đã bỏ):**
 
 Câu hỏi: `vocals` (CLAP zero-shot) trong khoảng 0,3–0,5 có thật là có tiếng hát không?
