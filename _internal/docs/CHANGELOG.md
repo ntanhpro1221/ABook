@@ -11,11 +11,18 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - **Thêm sách từ file EPUB, Word, PDF hay thư mục TXT để đọc ngay (máy tính và điện thoại)**: ở Thư viện bấm "Thêm sách từ file…", chọn
   file (hay thư mục mà mỗi file TXT là một chương), xem danh sách chương - tên, số chữ, số ký tự - rồi "Thêm vào thư viện". Sách vào Thư viện với nhãn "Chỉ có chữ": mở ra
-  đọc được từng chương như một cuốn ebook, mỗi chương ghi "Chưa có âm thanh", chưa có nút nghe (giọng đọc máy sẽ đến sau). Đặt lại tên sách,
+  đọc được từng chương như một cuốn ebook và nghe ngay bằng giọng máy (mục dưới). Đặt lại tên sách,
   bìa, tên chương như mọi cuốn, và "Lưu thành .abook" ghi ra file sách chỉ có chữ để chép sang máy khác. Thêm lại đúng file đã thêm thì về
   cuốn cũ, không nhân đôi. Máy không bao giờ tự sửa chữ của truyện: dòng ghi công người dịch chỉ hiện ở bước xem trước như một gợi ý.
   PDF phải có chữ (PDF chụp từ máy quét thì nói rõ là chưa đọc được). Trên máy tính có Studio, "Làm sách nói từ cuốn này" ở menu của sách tạo một
   dự án Studio từ đúng chữ các chương ấy.
+
+- **Nghe ngay: máy đọc to sách chỉ có chữ, chữ đang đọc sáng lên (máy tính và điện thoại)**: sách vừa thêm từ file có nút "Nghe ngay" -
+  không cần phân tích hay cài thêm gì. Giọng mặc định là Hoài My của Microsoft Edge (cần mạng; có thêm giọng Nam Minh), lần đầu dùng app
+  nói rõ chữ của đoạn đang đọc được gửi tới Microsoft; mất mạng thì đoạn ấy chuyển sang giọng của máy (Windows hay Android) mà không dừng.
+  Màn đọc sáng đoạn và từng chữ đang đọc như "Đọc to" của Edge; bấm vào chữ nào thì đọc từ đúng chữ ấy. Đọc trước vài đoạn nên không
+  phải chờ giữa các đoạn, đoạn đã đọc được giữ lại để nghe lại không cần mạng. Tốc độ, hẹn giờ ngủ, nhớ chỗ đang nghe như
+  sách nói; trên điện thoại tắt màn hình vẫn đọc tiếp và tự sang chương sau, điều khiển được ở màn hình khoá và tai nghe.
 
 ### Cài đặt
 
