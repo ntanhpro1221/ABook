@@ -189,4 +189,4 @@ Giọng cao nhất ở (c): Quang Sơn 6 %, Thanh Bình 6 %, Thục Đoan 4 %.
 - **Supertonic theo cổng chữ/giây của Studio:** vẫn ~46 % câu bị gọi chậm. Nó chèn lặng dài hơn ngân sách dấu câu của cổng.
   - Nghe ngay không qua cổng này; ghi ra để biết nếu sau này Studio dùng Supertonic.
 
-Hash chất lượng nhánh dev: trước `fddc4182` (5813112a) → sau khi bỏ 4 giọng Tin tức, đổi tập phủ và thả số: xem commit.
+Hash chất lượng nhánh dev: trước `fddc4182` (5813112a) → sau `b1333192` (db537cf5: bỏ 4 giọng Tin tức, tập phủ = phân vai ∪ người kể, thả số, chốt WORLD_MIN_SECONDS trong tts.py). pytest toàn bộ: 4511 qua, 2 bỏ qua, 0 hỏng.
