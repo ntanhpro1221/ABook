@@ -1,5 +1,6 @@
 package vn.abook.player.vieneu
 
+import vn.abook.player.readaloud.Names
 import vn.abook.player.readaloud.WordTokens
 import java.text.Normalizer
 
@@ -180,9 +181,11 @@ object VieneuUnits {
      * Shown words -> words to read (a reading-only change, the shown text stays): an upper-case Roman numeral I..XXXIX standing alone after a word
      * with a lower-case letter ("Phổ thông II", "Chương IV"), after a numeral just read ("Mục II, III"), or as a heading at the start of the
      * paragraph ("I. Mở đầu") is read as a Vietnamese number - sea-g2p only knows "Benedict III" and reads "thông II" as "i i". "I am" at the
-     * start, an "I" after punctuation and abbreviations (CV, MC, VIP) stay. Last `readingMarks` fixes "~", English thousands, <angle brackets> and " / ". `spoken_tokens` of vieneu.py.
+     * start, an "I" after punctuation and abbreviations (CV, MC, VIP) stay. In a book with a Japanese / Korean [origin] ("ja" / "ko") romaji / RR names are read by the
+     * romanization rules ("Haruto" -> "Ha-ru-tô", [Names.readNames]); real English words are left to sea-g2p. Last `readingMarks` fixes "~", English thousands,
+     * <angle brackets> and " / ". `spoken_tokens` of vieneu.py.
      */
-    fun spokenTokens(toks: List<String>): List<String> {
+    fun spokenTokens(toks: List<String>, origin: String? = null): List<String> {
         val out = toks.toMutableList()
         for ((index, token) in toks.withIndex()) {
             val core = token.trimStart { it in OPENERS }.trimEnd { it in CLOSERS || it in ".,;:!?…" }
@@ -196,8 +199,16 @@ object VieneuUnits {
             }
             out[index] = token.replaceFirst(core, vietnameseNumber(value))
         }
+        Names.readNames(toks, out, origin)
         readingMarks(out)
         return out
+    }
+
+    /** `VieneuProvider.reading_tag`: the [origin] when it makes this paragraph sound different (some name read by the rules), else "" - part of the clip cache key. */
+    fun readingTag(text: String, origin: String?): String {
+        if (origin == null || origin !in Names.ORIGINS) return ""
+        val toks = tokens(text)
+        return if (spokenTokens(toks, origin) != spokenTokens(toks)) origin else ""
     }
 
     private fun ends(token: String, marks: String): Boolean {
@@ -230,11 +241,11 @@ object VieneuUnits {
         return out
     }
 
-    /** The paragraph's shown words and its units (every shown word in exactly one unit, in order). */
-    fun units(text: String, maxChars: Int): Pair<List<String>, List<Unit>> {
+    /** The paragraph's shown words and its units (every shown word in exactly one unit, in order). [origin]: the book's origin, see [spokenTokens]. */
+    fun units(text: String, maxChars: Int, origin: String? = null): Pair<List<String>, List<Unit>> {
         val toks = tokens(text)
         if (toks.isEmpty()) return toks to emptyList()
-        val said = spokenTokens(toks)
+        val said = spokenTokens(toks, origin)
         val pieces = ArrayList<IntArray>()
         for (sentence in groups(toks, 0, toks.size - 1, SENTENCE_END)) {
             if (length(toks, sentence[0], sentence[1]) <= maxChars) {

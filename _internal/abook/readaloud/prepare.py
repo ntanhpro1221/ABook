@@ -42,10 +42,10 @@ def accept(voice: str, texts: list[str], budget: int) -> list[str]:
 
 
 class Prepare:
-    """`clip(voice, text)`: ReadAloud.clip (đánh dấu là việc nền); `live()`: số clip của người đang nghe đang làm; `budget`: byte bộ đệm dành
+    """`clip(voice, text, origin)`: ReadAloud.clip (đánh dấu là việc nền; `origin` là gốc của cuốn, xem `start`); `live()`: số clip của người đang nghe đang làm; `budget`: byte bộ đệm dành
     cho việc làm trước; `rtf(voice)`: tốc độ đo được của giọng (ước thời gian lúc chưa làm đoạn nào), None nếu chưa đo."""
 
-    def __init__(self, clip: Callable[[str, str], Any], live: Callable[[], int], budget: int,
+    def __init__(self, clip: Callable[[str, str, str | None], Any], live: Callable[[], int], budget: int,
                  rtf: Callable[[str], float | None] = lambda _voice: None) -> None:
         self._clip, self._live, self.budget, self._rtf = clip, live, budget, rtf
         self._lock = threading.Lock()
@@ -53,7 +53,8 @@ class Prepare:
         self._stop = threading.Event()
         self._job: dict[str, Any] = {"state": "idle"}
 
-    def start(self, voice: str, texts: list[str], label: str = "") -> dict[str, Any]:
+    def start(self, voice: str, texts: list[str], label: str = "", origin: str | None = None) -> dict[str, Any]:
+        """`origin`: gốc của cuốn ("ja" / "ko") - cùng gốc người nghe sẽ dùng, nên cùng khoá bộ đệm với lúc nghe."""
         texts = [text for text in texts if isinstance(text, str) and text.strip()]
         taken = accept(voice, texts, self.budget)
         self.cancel()
@@ -63,7 +64,7 @@ class Prepare:
                          "done": 0, "failed": 0, "chars": sum(len(text) for text in taken), "charsDone": 0, "charsTimed": 0, "seconds": 0.0,
                          "audioSeconds": round(sum(len(text) for text in taken) / CHARS_PER_SECOND), "error": "", "started": time.time()}
             if taken:
-                self._thread = threading.Thread(target=self._run, args=(voice, taken, self._stop), name="readaloud-prepare", daemon=True)
+                self._thread = threading.Thread(target=self._run, args=(voice, taken, self._stop, origin), name="readaloud-prepare", daemon=True)
                 self._thread.start()
         return self.status()
 
@@ -93,7 +94,7 @@ class Prepare:
                 job["secondsLeft"] = round(left / CHARS_PER_SECOND * rtf) if rtf else None
         return job
 
-    def _run(self, voice: str, texts: list[str], stop: threading.Event) -> None:
+    def _run(self, voice: str, texts: list[str], stop: threading.Event, origin: str | None) -> None:
         for text in texts:
             while self._live() > 0 and not stop.is_set():  # người đang nghe đi trước
                 time.sleep(0.2)
@@ -101,7 +102,7 @@ class Prepare:
                 return
             began = time.perf_counter()
             try:
-                self._clip(voice, text)
+                self._clip(voice, text, origin)
                 ok = True
             except VoiceError as error:
                 ok = False

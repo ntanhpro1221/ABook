@@ -9,7 +9,7 @@ import threading
 from pathlib import Path
 from typing import Any, Callable, Protocol
 
-from . import azure, edge, fpt, google, loudness, supertonic, vieneu, viettel, windows
+from . import azure, edge, fpt, google, loudness, names, supertonic, vieneu, viettel, windows
 from .byok import KeyedProvider
 from .cache import ClipCache, clip_key
 from .keys import KeyStore
@@ -87,7 +87,9 @@ class ReadAloud:
         self._locks: dict[str, threading.Lock] = {}
         self._locks_guard = threading.Lock()
         self._live = 0  # clip của người đang nghe đang được đọc: "Làm trước" nhường
-        self.prepare = Prepare(lambda voice, text: self.clip(voice, text, background=True), lambda: self._live,
+        # Gốc Nhật / Hàn của từng cuốn (máy đoán + người dùng ghi đè); cạnh thư mục bộ đệm, không nằm trong đó (bộ đệm dọn mọi file .json lâu không dùng).
+        self.origins = names.BookOrigins(self.folder.with_name(self.folder.name + "-book-origins.json"))
+        self.prepare = Prepare(lambda voice, text, origin: self.clip(voice, text, background=True, origin=origin), lambda: self._live,
                                int(self.cache.limit * PREPARE_SHARE), rtf)
 
     def warm(self) -> None:
@@ -149,15 +151,17 @@ class ReadAloud:
         provider = self.keyed(provider_id)
         return {**provider.check(), "provider": provider.describe()}
 
-    def clip(self, voice_id: str, text: str, *, cached_only: bool = False, background: bool = False) -> dict[str, Any]:
+    def clip(self, voice_id: str, text: str, *, cached_only: bool = False, background: bool = False, origin: str | None = None) -> dict[str, Any]:
         """Clip của `text` bằng `voice_id`: `{file, duration_ms, words}` (từ bộ đệm hay đọc mới). `cached_only`: không đọc mới - chưa có thì `VoiceError("uncached")`.
-        `background`: việc "Làm trước" (prepare.py) - không tính là người đang nghe chờ."""
+        `background`: việc "Làm trước" (prepare.py) - không tính là người đang nghe chờ. `origin`: gốc của cuốn ("ja" / "ko", `names.BookOrigins`) - giọng đọc
+        trên máy (VieNeu) đọc tên romaji / RR theo luật phiên âm; giọng khác bỏ qua."""
         if not fold(text):
             raise VoiceError("Đoạn này không có chữ nào để đọc.", "empty")
         if len(text) > MAX_TEXT:
             raise ValueError("Đoạn chữ quá dài để đọc một lượt")
         provider, native = self._resolve(voice_id)
-        key = clip_key(provider.id, native, text)
+        reads_names = isinstance(provider, vieneu.VieneuProvider)
+        key = clip_key(provider.id, native, text, provider.reading_tag(text, origin) if reads_names else "")
         hit = self.cache.get(key)
         if hit is None:
             if cached_only:
@@ -169,7 +173,7 @@ class ReadAloud:
                 with lock:  # hai yêu cầu cùng đoạn (đọc trước + bấm nghe) chỉ đọc một lần
                     hit = self.cache.get(key)
                     if hit is None:
-                        made = provider.synthesize(text, native)
+                        made = provider.synthesize(text, native, origin) if reads_names else provider.synthesize(text, native)
                         words = made.words if made.words is not None else map_boundaries(text, made.boundaries, made.duration_ms)
                         hit = self.cache.put(key, made.audio, made.ext, made.duration_ms, words)
             finally:

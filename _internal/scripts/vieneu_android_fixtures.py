@@ -27,7 +27,7 @@ sys.path.insert(0, str(ROOT))
 
 import numpy as np
 
-from abook.readaloud import vieneu
+from abook.readaloud import names, vieneu
 from abook.readaloud import vieneu_engine as ve
 
 OUT = ROOT / "tests" / "fixtures" / "vieneu" / "android"
@@ -280,6 +280,38 @@ PARAGRAPHS = [
     "Bị 【Đóng băng / yếu】 rồi. HP: 5813 / 5813, tỉ lệ 3/5 và 15/8, còn mở/đóng thì để nguyên.",
 ]
 
+# Paragraphs read with a book origin (abook/readaloud/names.py): Japanese / Korean names read by the romanization rules, English names and Vietnamese
+# words left to sea-g2p, shouts and capitals untouched. Names are written for these fixtures (no book text).
+NAME_PARAGRAPHS = [
+    ("Haruto-kun, Kyouko-san đã đến. “Yamato!” Kate hỏi Mike, còn Rose và Hana thì cười. Anne, Emma và Rika cũng ở đó.", "ja"),
+    ("Hoa nói: Tôi là AI. Level 5, Dungeon. Aaaa! Fukushima và Tōkyō, Kôbe, Shin'ichi, Hajime~ rồi (Sakura).", "ja"),
+    ("Seo-yeon và Ji-ho là đôi bạn. Kim Min-jun đến Seoul cùng Park, Geun-hye và Chang-dok.", "ko"),
+    ("Haruto-kun, Kyouko-san đã đến. Kate hỏi Mike, còn Rose và Hana thì cười.", "ko"),
+    ("Haruto-kun, Kyouko-san đã đến. Kate hỏi Mike, còn Rose và Hana thì cười.", None),
+]
+JA_NAMES = "Haruto Yuki Sakura Kyouko Takeshi Hiroshi Akira Kenji Yamato Naoki Satoshi Ayaka Reiji Tsubasa Shinji Kaori".split()
+KO_NAMES = "Si-eun So-hye Hwi-min Seo-ram Deok-gu Kang-ho Ha-jin Joo-seon Min-jun Seo-yeon Ji-ho Geun-hye".split()
+WEST_NAMES = "Alberu Eruhaben Henituse Harol Witira Cale Mirabelle Ruel Alon Gideon Damien Aurora Nora Stella".split()
+
+
+def _name_text(names: list[str], rounds: int) -> str:
+    return " ".join(f"{name} nói với {names[(i + 1) % len(names)]}." for _ in range(rounds) for i, name in enumerate(names))
+
+
+# Cases for `names.book_origin`: (list of chapter texts, sample or None = the default of twelve chapters). Only the first chapters count; a book of Vietnamese words or too few names says nothing.
+ORIGIN_CASES = [
+    ([_name_text(JA_NAMES, 4)], None),
+    ([_name_text(JA_NAMES, 4)] * 3, None),
+    ([_name_text(KO_NAMES, 6)], None),
+    ([_name_text(WEST_NAMES, 5)], None),
+    ([_name_text(JA_NAMES[:4], 3)], None),
+    ([_name_text(JA_NAMES[:12], 1)], None),
+    ([_name_text(WEST_NAMES, 2) + " " + _name_text(JA_NAMES[:6], 2)], None),
+    (["Hoa và Nam đi chợ. Mai nói với Ba rằng Tôi không đi. " * 60], None),
+    ([_name_text(WEST_NAMES, 5)] * 12 + [_name_text(JA_NAMES, 40)] * 5, None),
+    ([_name_text(WEST_NAMES, 5)] * 12 + [_name_text(JA_NAMES, 40)] * 5, 17),
+]
+
 # Clips made on the desktop for VieneuOnDeviceTest: a paragraph of two sentences that is two units for Nano (140 chars) and one for Turbo.
 CLIP_TEXT = ("Chiếc thuyền nhỏ trôi chậm giữa dòng sông, mang theo những mùa hè đã xa. "
              "Anh ấy mở cuốn sổ cũ, đọc lại từng dòng chữ mà mẹ đã viết cho mình từ nhiều năm trước.")
@@ -307,11 +339,11 @@ def text_fixture() -> dict:
     normalize = [{"text": text, "plain": normalizer.normalize(text, punc_norm=False), "punc": normalizer.normalize(text, punc_norm=True),
                   "puncNorm": punc_norm(text)} for text in SENTENCES]
     units = []
-    for text in PARAGRAPHS + [CLIP_TEXT]:
+    for text, origin in [(text, None) for text in PARAGRAPHS + [CLIP_TEXT]] + NAME_PARAGRAPHS:
         for limit in (256, 140, 40):
-            toks, parts = vieneu.units(text, limit)
+            toks, parts = vieneu.units(text, limit, origin)
             rows = [{"first": unit.first, "last": unit.last, "pieces": unit.pieces, "phonemes": ve.phonemize(unit.pieces)} for unit in parts]
-            units.append({"text": text, "max": limit, "tokens": len(toks), "units": rows})
+            units.append({"text": text, "max": limit, "tokens": len(toks), "units": rows, **({"origin": origin} if origin else {})})
             g2p += [{"sentences": row["pieces"], "phonemes": row["phonemes"]} for row in rows if len(row["pieces"]) > 1]
     phonemes = sorted({case["phonemes"] for case in g2p if case["phonemes"]})
     frames = [{"phonemes": ph, "syllables": ve.phoneme_syllables(ph), "cap": ve.max_expected_frames(ph)} for ph in phonemes]
@@ -319,7 +351,13 @@ def text_fixture() -> dict:
                for ph in ["", "a", "ʔa1 ʔa1.", "<|emotion_3|>", "<|emotion_3|> ʔa1.", "<en>ˈhɛloʊ</en> ʔa1."]]
     seeds = [{"parts": parts, "seed": vieneu.seed_of(*parts)} for parts in
              [["turbo", "Ngọc Huyền", "Trời hôm nay đẹp quá."], ["nano", "Adam", "Ừ."], ["nano", "Đức Trí", CLIP_TEXT], ["turbo", "", ""]]]
-    return {"sea_g2p": "0.9.1", "sentences": len(SENTENCES), "g2p": g2p, "normalize": normalize, "units": units, "frames": frames, "seeds": seeds}
+    origins = []
+    for texts, sample in ORIGIN_CASES:
+        shares = names.origin_shares(names.name_counts(texts[:sample or names.SAMPLE_CHAPTERS]))
+        origins.append({"texts": texts, **({"sample": sample} if sample else {}), "origin": names.book_origin(texts, **({"sample": sample} if sample else {})),
+                        **{key: shares[key] for key in ("total", "names", "ja_names", "ko_names")}})
+    return {"sea_g2p": "0.9.1", "sentences": len(SENTENCES), "g2p": g2p, "normalize": normalize, "units": units, "frames": frames, "seeds": seeds,
+            "origins": origins}
 
 
 def tokenizer_fixture(text: dict) -> dict:

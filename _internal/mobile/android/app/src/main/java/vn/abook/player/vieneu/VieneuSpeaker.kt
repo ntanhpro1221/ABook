@@ -112,8 +112,8 @@ class VieneuSpeaker(
 ) {
     class Spoken(val samples: FloatArray, val rate: Int, val durationMs: Long, val words: List<Span>, val spans: List<IntArray>)
 
-    fun speak(tier: String, tierEngine: VieneuTier, name: String, preset: VieneuPreset, text: String): Spoken {
-        val (tokens, units) = VieneuUnits.units(text, MAX_CHARS.getValue(tier))
+    fun speak(tier: String, tierEngine: VieneuTier, name: String, preset: VieneuPreset, text: String, origin: String? = null): Spoken {
+        val (tokens, units) = VieneuUnits.units(text, MAX_CHARS.getValue(tier), origin)
         val waves = ArrayList<FloatArray>()
         val pauses = ArrayList<Double>()
         for (unit in units) {

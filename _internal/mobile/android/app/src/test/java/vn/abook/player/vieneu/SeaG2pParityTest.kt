@@ -91,7 +91,7 @@ class SeaG2pParityTest {
         val cases = fixture.getJSONArray("units")
         for (n in 0 until cases.length()) {
             val case = cases.getJSONObject(n)
-            val (_, units) = VieneuUnits.units(case.getString("text"), case.getInt("max"))
+            val (_, units) = VieneuUnits.units(case.getString("text"), case.getInt("max"), case.optString("origin").ifEmpty { null })
             val want = case.getJSONArray("units")
             for (i in units.indices) assertEquals(want.getJSONObject(i).getString("phonemes"), g2p.phonemize(units[i].pieces))
         }

@@ -37,7 +37,7 @@ class VieneuParityTest {
         assertTrue(cases.length() >= 30)
         for (n in 0 until cases.length()) {
             val case = cases.getJSONObject(n)
-            val (tokens, units) = VieneuUnits.units(case.getString("text"), case.getInt("max"))
+            val (tokens, units) = VieneuUnits.units(case.getString("text"), case.getInt("max"), case.optString("origin").ifEmpty { null })
             val label = "${case.getString("text").take(40)} / ${case.getInt("max")}"
             assertEquals(label, case.getInt("tokens"), tokens.size)
             val want = case.getJSONArray("units")

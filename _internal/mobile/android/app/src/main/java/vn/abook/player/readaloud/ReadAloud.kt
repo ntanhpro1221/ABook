@@ -13,6 +13,7 @@ import vn.abook.player.SleepTimer
 import vn.abook.player.Store
 import vn.abook.player.vieneu.VieneuVoices
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 
 /**
@@ -132,8 +133,35 @@ object ReadAloud {
     /** "Thử giọng" (Cài đặt): đúng giọng này đọc `text` (qua bộ đệm), trả file âm thanh. Chạy ở luồng nền. */
     fun sample(id: String, text: String): File = readExactly(id, text).file
 
-    /** Đúng giọng này, không rơi sang giọng khác ("Thử giọng", "Làm trước"); qua bộ đệm. Chạy ở luồng nền. */
-    fun readExactly(id: String, text: String): Clip = reader().readExactly(text, id)
+    /** Đúng giọng này, không rơi sang giọng khác ("Thử giọng", "Làm trước"); qua bộ đệm. `origin`: gốc của cuốn ([originOf]). Chạy ở luồng nền. */
+    fun readExactly(id: String, text: String, origin: String? = null): Clip = reader().readExactly(text, id, origin)
+
+    private val origins = ConcurrentHashMap<String, String>()
+
+    /**
+     * Gốc Nhật / Hàn của cuốn ("ja" / "ko", null = không) để giọng VieNeu đọc tên theo luật phiên âm ([Names]): người dùng ghi đè thì theo đó, không thì máy đoán từ các
+     * chương đầu rồi nhớ ([VoiceChoices.originFor]). Đọc file nên gọi ở luồng nền.
+     */
+    fun originOf(bookId: String): String? {
+        if (bookId.isBlank()) return null
+        val found = origins[bookId] ?: (choices?.originFor(bookId) { sampleTexts(bookId) } ?: "").also { origins[bookId] = it }
+        return found.ifEmpty { null }
+    }
+
+    /** Người dùng chọn gốc của cuốn: "ja" / "ko" / "none" (không phiên âm); null = theo máy đoán. (Giao diện cho chọn là việc sau.) */
+    fun setOrigin(bookId: String, value: String?) {
+        choices?.setOriginOverride(bookId, value)
+        origins.remove(bookId)
+    }
+
+    /** Chữ của các chương chữ đầu tiên (đủ để đoán gốc). */
+    private fun sampleTexts(bookId: String): Sequence<String> {
+        val array = runCatching { Store.manifest(bookId) }.getOrNull()?.optJSONArray("chapters") ?: return emptySequence()
+        val ids = (0 until array.length()).mapNotNull { array.optJSONObject(it) }.filter { it.optString("text").startsWith("texts/") }
+            .map { it.optInt("id") }.take(Names.SAMPLE_CHAPTERS)
+        val texts = textChapters(bookId, ids)
+        return ids.asSequence().mapNotNull { texts[it]?.second?.joinToString("\n") }.filter { it.isNotEmpty() }
+    }
 
     // ---- giọng ----------------------------------------------------------------------------------------------
 
@@ -317,7 +345,7 @@ object ReadAloud {
         return try {
             val text = Store.file(Playback.bookId, chapter.text).readText(Charsets.UTF_8)
             Chap(index, Paragraphs.of(Paragraphs.withoutLines(text, skipOf(Store.manifest(Playback.bookId), chapter.id)))).also {
-                fromCache(it)
+                fromCache(it, originOf(Playback.bookId))
                 chaps[index] = it
             }
         } catch (error: Exception) {
@@ -468,16 +496,18 @@ object ReadAloud {
         val voice = voiceId
         inFlight = true
         live.incrementAndGet()
+        val bookId = Playback.bookId
         worker.execute {
             val began = System.nanoTime()
+            val origin = runCatching { originOf(bookId) }.getOrNull()
             val result = try {
-                runCatching { reader().read(text, voice) }
+                runCatching { reader().read(text, voice, origin) }
             } finally {
                 live.decrementAndGet()
             }
             result.getOrNull()?.let { clip ->
                 // Người nghe đã tới đoạn này: đoạn làm trước thôi được ghim. Đọc thật (không phải lấy từ bộ đệm) bằng đúng giọng đã chọn thì ghi tốc độ.
-                runCatching { cache().unpin(clip.voice, text) }
+                runCatching { cache().unpin(clip.voice, text, origin) }
                 val seconds = (System.nanoTime() - began) / 1e9
                 if (clip.voice == voice && seconds * 1000 > PrepareRunner.CACHED_MS) runCatching { speeds().record(voice, text.length, seconds) }
             }
@@ -693,9 +723,9 @@ object ReadAloud {
      * Đoạn nào đã đọc bằng giọng đang chọn (còn trong bộ nhớ đệm) thì đồng hồ ảo dùng độ dài thật ngay từ lúc nạp chương: nghe tiếp từ giây đã lưu (widget, xe
      * hơi, mở lại app) rơi đúng đoạn đã nghe, không lệch theo ước lượng 14 ký tự/giây.
      */
-    private fun fromCache(chap: Chap) {
+    private fun fromCache(chap: Chap, origin: String?) {
         val cache = runCatching { cache() }.getOrNull() ?: return
-        for (i in chap.paragraphs.indices) cache.get(voiceId, chap.paragraphs[i])?.let {
+        for (i in chap.paragraphs.indices) cache.get(voiceId, chap.paragraphs[i], origin)?.let {
             chap.clips[i] = it
             chap.timeline.setDuration(i, it.durationMs)
         }
@@ -703,7 +733,7 @@ object ReadAloud {
 
     /** Chương của một cuốn không đang nạp: chữ từ gói sách, mốc từ bộ nhớ đệm (nếu đoạn đã từng được đọc bằng giọng đang chọn). */
     private fun peek(bookId: String, chapterId: Int): Chap? =
-        textChapters(bookId, listOf(chapterId))[chapterId]?.let { Chap(-1, it.second).also(::fromCache) }
+        textChapters(bookId, listOf(chapterId))[chapterId]?.let { Chap(-1, it.second).also { chap -> fromCache(chap, originOf(bookId)) } }
 
     /**
      * Các chương chỉ-có-chữ `ids` của một cuốn trên máy: mã -> (tên chương người nghe thấy, các đoạn đúng như lúc nghe). Chương không có chữ hay không đọc được
