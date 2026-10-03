@@ -1,0 +1,3 @@
+# Third-party code copied unchanged: not linted by this project’s rules.
+[lint]
+select = []

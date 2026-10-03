@@ -1,13 +1,13 @@
 import { api } from "@/studio/api";
 
 /**
- * Studio từ xa: gửi các chương TXT từ máy đang xem (điện thoại, máy tính bảng) vào thư viện của máy tính
+ * Studio từ xa: gửi các chương TXT (hay một file EPUB / DOCX / PDF) từ máy đang xem (điện thoại, máy tính bảng) vào thư viện của máy tính
  * (`POST /api/sources/upload`, webui/actions.upload_source), từng file một, rồi trả thư mục trên máy tính để trình tạo
  * sách đi tiếp như khi chọn thư mục. Gửi byte nguyên vẹn (base64): bảng mã do dây chuyền nhận, như với file trên máy.
  */
 export async function uploadChapters(files: File[], onProgress: (done: number, total: number) => void): Promise<string> {
-  const chapters = files.filter((file) => file.name.toLowerCase().endsWith(".txt"));
-  if (!chapters.length) throw new Error("Chọn các file .txt - mỗi file là một chương");
+  const chapters = files.filter((file) => /\.(txt|epub|docx|pdf)$/i.test(file.name));
+  if (!chapters.length) throw new Error("Chọn các file .txt (mỗi file là một chương) hay một file .epub / .docx / .pdf");
   const now = new Date();
   const two = (value: number) => String(value).padStart(2, "0");
   // Mỗi lần gửi một thư mục riêng (thêm mã ngẫu nhiên): hai lần gửi trong cùng phút không trộn chương vào nhau.

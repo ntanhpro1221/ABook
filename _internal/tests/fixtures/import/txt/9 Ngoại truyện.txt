@@ -1,0 +1,1 @@
+Một chương viết bằng UTF-8 thường, không BOM.

@@ -34,7 +34,7 @@ _NUMBER = (r"(?:(?P<digits>\d{1,3})|(?P<word>" + "|".join(sorted(_WORDS, key=len
 VOLUME = re.compile(_LEAD + _NAMES + r"\b\.?\s*(?:thứ\s+)?[:.\-–—]?\s*" + _NUMBER + r"(?![\w])", re.IGNORECASE)
 # 第二卷 (Hán), 第2巻 (Nhật): `卷`/`巻` là "tập"; 册/冊/集 cũng gặp ở truyện Trung.
 VOLUME_CJK = re.compile(_LEAD + r"第\s*(?P<number>[\d零〇一二两三四五六七八九十百]+)\s*[卷巻册冊集]")
-# Thư mục chương tách từ EPUB: "<tên file> - <8 ký tự băm>" (epub_import.extract).
+# Thư mục chương tách từ EPUB: "<tên file> - <8 ký tự băm>" (importers.extract).
 _EPUB_FOLDER = re.compile(r"\s+-\s+[0-9a-f]{8}$")
 
 

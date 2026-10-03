@@ -40,6 +40,30 @@ One function `import_text(path) -> {title, author?, cover?, chapters: [{title, t
 
 Text is never auto-edited (owner rule): cleanup proposals (e.g. a credit line) are suggestions the user accepts.
 
+### What was built (Importers, 03-10)
+
+- `abook/importers.py`: `import_text(path) -> ImportedBook{title, author, language, cover_bytes, chapters[{title, text}], notes}` for a
+  folder of `.txt` (Studio's order and `decode_text_bytes`: UTF-8 with/without BOM, UTF-16, cp1258, cp1252), EPUB (spine order, nav/NCX titles,
+  cover from the manifest, image-only pages noted), DOCX (Heading 1/2, fallback `Chương|Chapter|Hồi|Quyển N` lines) and text-layer PDF.
+  EPUB/DOCX use only `zipfile` + `xml.etree`/`html.parser`; PDF uses `pypdf` 6.16.2 (BSD-3, pure Python), vendored unchanged in
+  `abook/vendor/pypdf/` (LICENSE + wheel SHA-256 in its README; `pyproject.toml` is hash-locked so nothing is declared there). A PDF with no text
+  layer fails with "PDF scan, cần OCR". `epub_import.py` moved into it; `extract()` writes the Studio chapter folder (+ `import.json`, cover).
+- One spec, three places: the **rules** (heading regex, running header/footer removal = lines in the first/last 2 of a page whose digits-normalised
+  text repeats on >= 40% of >= 3 pages or that are a bare page number; paragraph joining = a sentence-final line shorter than 75% of the
+  90th-percentile line length, or a next line opening with a dash/quote, ends a paragraph; `xyz-` + lowercase joins without a space and keeps
+  the hyphen because Vietnamese hyphens belong to the word ("Mát-xcơ-va"), only U+00AD is dropped; split on heading lines, text before the first
+  one is "Mở đầu") live in Python (`importers.py`) and Kotlin (`BookImport.kt`) and are replayed on `tests/fixtures/import/` (made by
+  `tests/import_fixtures.py`: EPUB 2/3, DOCX with/without headings, PDF, scanned PDF, TXT folder in four encodings, own text only).
+  Golden JSON is byte-identical in both languages. Credit lines are never removed: they appear in `notes` as suggestions.
+- Phone PDF: **pdf.js** (`pdfjs-dist` legacy build, Apache-2.0) in the WebView, lazy-loaded. It only extracts lines per page
+  (`ui/src/shared/pdfPages.ts`, same `pages/story.pages.json` as pypdf on the fixture); the rules above run in Kotlin (`BookImport.fromPdfPages`).
+  Measured: debug APK 9,480,805 -> 10,216,254 bytes (+735 KB, +7.8%; the chunk is 488 KB + worker 1,317 KB raw, ~540 KB gzip), the main
+  JS bundle is unchanged. PdfBox-Android was the alternative (Apache-2.0, 3.25 MB aar, JVM-heavy); not chosen. The desktop UI does not need the
+  TS extractor (Studio runs the Python importer), though the same module would work in its webview.
+- Not wired yet: the phone has no text-book library until section 1 (stages) lands, so `BookImport` + `readPdfPages` are libraries with tests,
+  not a screen. Studio: the new-book flow, remote upload and the Tauri file dialog accept `.epub/.docx/.pdf/.txt` and a folder; the chapter
+  list shows title, words and characters.
+
 ## 3. Voices for Listen now
 
 | Voice | Download | Network | Notes |

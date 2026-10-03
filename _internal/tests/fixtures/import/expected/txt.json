@@ -1,0 +1,27 @@
+{
+ "title": "txt",
+ "author": null,
+ "language": null,
+ "cover": null,
+ "chapters": [
+  {
+   "title": "Chương 1",
+   "text": "Sương sớm\n\nChuyến phà đầu tiên rời bến lúc năm giờ.\nCậu bé đứng ở mạn thuyền."
+  },
+  {
+   "title": "Chương 2",
+   "text": "Chương hai\n\nTiếng máy nổ trầm đục."
+  },
+  {
+   "title": "9 Ngoại truyện",
+   "text": "Một chương viết bằng UTF-8 thường, không BOM."
+  },
+  {
+   "title": "Chương 10",
+   "text": "Chương ba\n\nDịch: Nhóm Lục Bình\n\nMưa rơi suốt chiều."
+  }
+ ],
+ "notes": [
+  "Gợi ý: chương 4 có dòng ghi công ở đầu - “Dịch: Nhóm Lục Bình”. Có thể bỏ khỏi phần đọc, nhưng ABook không tự bỏ."
+ ]
+}
