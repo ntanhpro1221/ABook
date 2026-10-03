@@ -32,7 +32,7 @@ def test_the_committed_fixtures_are_what_python_produces_today() -> None:
         assert (FIXTURES / relative).read_bytes() == data, f"{relative} lỗi thời - chạy lại: python -m tests.import_fixtures"
 
 
-@pytest.mark.parametrize("name", ["epub3.epub", "epub2.epub", "headings.docx", "plain.docx", "story.pdf", "txt"])
+@pytest.mark.parametrize("name", ["epub3.epub", "epub2.epub", "split.epub", "headings.docx", "plain.docx", "story.pdf", "txt"])
 def test_every_format_gives_the_expected_book(name: str) -> None:
     assert importers.import_text(FIXTURES / name).to_dict() == expected(name.rsplit(".", 1)[0])
 
@@ -50,6 +50,18 @@ def test_epub_follows_the_spine_names_chapters_from_the_nav_and_takes_the_cover(
     second = importers.import_text(FIXTURES / "epub2.epub")
     assert second.cover_type == "image/jpeg" and second.language == "vi-VN", "bìa EPUB2 theo <meta name=cover>, tên chương theo NCX"
     assert titles(second) == titles(book)[:2] + ["Chương 3: Cơn mưa cuối mùa"]
+
+
+def test_epub_with_several_chapters_in_one_xhtml_splits_at_the_table_of_contents_fragments() -> None:
+    book = importers.import_text(FIXTURES / "split.epub")
+    assert titles(book) == ["Chương 1: Bến sông", "Chương 2: Chợ nổi", "Chương 3: Gặp gỡ",
+                            "Lời dẫn dài của người ghi chép, đứng trước phần đầu và không có mục nào trong mụ",
+                            "Phần một", "Phần hai", "Mục thứ nhất", "Mục thứ hai", "Một mục lẻ"]
+    first, second, third = (chapter.text for chapter in book.chapters[:3])
+    assert first.startswith("Buổi sáng ở bến sông") and first.endswith("ra chợ sớm."), "mục không mảnh lấy từ đầu file tới mảnh kế"
+    assert second.startswith("Ghe xuồng chen nhau") and "Chương 2" not in second, "tiêu đề trùng tên mục lục không đọc hai lần"
+    assert third.startswith("Chương ba mở ra") and third.endswith("cùng một bến."), "<a name> cũng là mảnh; 'Gặp gỡ' đã nằm trong tên"
+    assert book.notes == ["Bỏ qua 1 mục rất ngắn (bìa, trang bản quyền?)."], "chữ dẫn ngắn trước mảnh đầu theo luật mục ngắn như cũ"
 
 
 def test_epub_reads_every_html_entity_like_a_browser_even_in_the_table_of_contents() -> None:

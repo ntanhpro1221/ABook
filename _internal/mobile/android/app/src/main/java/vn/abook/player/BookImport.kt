@@ -605,6 +605,8 @@ object BookImport {
     private class PageText {
         val lines = mutableListOf<String>()
         var heading = ""
+        val headings = mutableListOf<Pair<Int, String>>() // (dòng của tiêu đề, chữ): mọi tiêu đề h1-h3 có chữ, theo thứ tự
+        val anchors = hashMapOf<String, Int>() // id / <a name> -> chỉ số dòng bắt đầu từ chỗ ấy (mục lục trỏ #mảnh vào đây)
         var images = 0
         private val current = StringBuilder()
         private var skip = 0
@@ -634,10 +636,21 @@ object BookImport {
                 tag in TEXT_BLOCKS -> {
                     if (tag in TEXT_HEADINGS && inHeading > 0) {
                         inHeading--
-                        if (heading.isEmpty()) heading = words(current.toString())
+                        val text = words(current.toString())
+                        if (text.isNotEmpty()) headings.add(lines.size to text)
+                        if (heading.isEmpty()) heading = text
                     }
                     flush()
                 }
+            }
+        }
+
+        /** Mảnh của thẻ: `id` của mọi phần tử, `name` của `<a>`; mảnh trùng thì lấy cái đầu. */
+        private fun anchor(tag: String, attrs: Map<String, String>) {
+            if (skip > 0) return
+            for ((key, value) in attrs) {
+                val name = key.lowercase()
+                if (value.isNotEmpty() && (name == "id" || (tag == "a" && name == "name"))) anchors.putIfAbsent(value, lines.size)
             }
         }
 
@@ -646,6 +659,7 @@ object BookImport {
                 when (token) {
                     is Markup.Start -> {
                         start(token.name.lowercase())
+                        anchor(token.name.lowercase(), token.attrs)
                         if (token.selfClosing) end(token.name.lowercase())
                     }
                     is Markup.End -> end(token.name.lowercase())
@@ -660,8 +674,15 @@ object BookImport {
 
     private fun tokens(props: String) = props.split(Regex("\\s+")).filter { it.isNotEmpty() }
 
-    private fun toc(zip: ZipFile, manifest: Map<String, ManifestItem>, spineToc: String): Map<String, String> {
-        val titles = linkedMapOf<String, String>()
+    /** Một dòng của mục lục: file (không #), mảnh sau # (rỗng nếu không có), tên. */
+    private class TocEntry(val href: String, val fragment: String, val label: String)
+
+    /** Mục lục theo thứ tự (`importers._toc`): EPUB3 nav trước, EPUB2 NCX sau. */
+    private fun toc(zip: ZipFile, manifest: Map<String, ManifestItem>, spineToc: String): List<TocEntry> {
+        val entries = mutableListOf<TocEntry>()
+        fun add(base: String, target: String, label: String) {
+            entries.add(TocEntry(normpath(join(base, unquote(target.substringBefore('#')))), unquote(target.substringAfter('#', "")), label))
+        }
         val nav = manifest.values.firstOrNull { "nav" in tokens(it.props) }?.href ?: ""
         if (nav.isNotEmpty()) {
             val root = xml(zip, nav, "EPUB")
@@ -669,27 +690,38 @@ object BookImport {
             for (anchor in root.descendants().filter { it.local == "a" }) {
                 val href = anchor.attr("href") ?: ""
                 val label = words(anchor.allText())
-                if (href.isNotEmpty() && label.isNotEmpty()) {
-                    titles.putIfAbsent(normpath(join(navDir, unquote(href.substringBefore('#')))), label)
-                }
+                if (href.isNotEmpty() && label.isNotEmpty()) add(navDir, href, label)
             }
         }
         val ncx = manifest[spineToc]?.href?.takeIf { it.isNotEmpty() }
             ?: manifest.values.firstOrNull { it.media == "application/x-dtbncx+xml" }?.href ?: ""
-        if (ncx.isNotEmpty() && titles.isEmpty()) {
+        if (ncx.isNotEmpty() && entries.isEmpty()) {
             val root = xml(zip, ncx, "EPUB")
             val ncxDir = dirname(ncx)
             for (point in root.descendants().filter { it.local == "navPoint" }) {
                 val label = point.child("navLabel")?.child("text")
                 val content = point.child("content")
-                if (label != null && content != null && pyStrip(label.text).isNotEmpty()) {
-                    val src = normpath(join(ncxDir, unquote((content.attr("src") ?: "").substringBefore('#'))))
-                    titles.putIfAbsent(src, words(label.text))
-                }
+                if (label != null && content != null && pyStrip(label.text).isNotEmpty()) add(ncxDir, content.attr("src") ?: "", words(label.text))
             }
         }
-        return titles
+        return entries
     }
+
+    /**
+     * Một file chứa nhiều chương (`importers._split_points`): các mục lục (mảnh, tên) trỏ vào file này -> (dòng bắt đầu, tên) theo thứ tự đọc.
+     * Chỉ tính mục không mảnh (đầu file) và mục có mảnh mà trang thật sự có; dưới hai điểm thì không tách (danh sách rỗng).
+     */
+    private fun splitPoints(page: PageText, entries: List<TocEntry>): List<Pair<Int, String>> {
+        val points = mutableListOf<Pair<Int, String>>()
+        val seen = hashSetOf<String>()
+        for (entry in entries) {
+            if (!seen.add(entry.fragment)) continue
+            if (entry.fragment.isEmpty()) points.add(0 to entry.label) else page.anchors[entry.fragment]?.let { points.add(it to entry.label) }
+        }
+        return if (points.size >= 2 && page.lines.isNotEmpty()) points.sortedBy { it.first } else emptyList()
+    }
+
+    private class Part(val lines: List<String>, val heading: String, val listed: String)
 
     private fun epubCover(zip: ZipFile, opf: Markup.Node, manifest: Map<String, ManifestItem>): Pair<ByteArray, String>? {
         var href = manifest.values.firstOrNull { "cover-image" in tokens(it.props) }?.href ?: ""
@@ -717,7 +749,10 @@ object BookImport {
             )
         }
         val spine = opf.child("spine") ?: throw broken("EPUB")
-        val titles = toc(zip, manifest, spine.attr("toc") ?: "")
+        val tocEntries = toc(zip, manifest, spine.attr("toc") ?: "")
+        val titles = linkedMapOf<String, String>() // file -> tên đầu tiên trỏ tới nó
+        for (entry in tocEntries) titles.putIfAbsent(entry.href, entry.label)
+        val listedIn = tocEntries.groupBy { it.href }
         val result = Book(metaText(opf, "title") ?: stemOf(file.name), author = metaText(opf, "creator"), language = metaText(opf, "language"))
         epubCover(zip, opf, manifest)?.let { (bytes, media) ->
             result.cover = bytes
@@ -730,29 +765,43 @@ object BookImport {
             val item = manifest[itemref.attr("idref") ?: ""] ?: ManifestItem("", "", "")
             if (item.href.isEmpty() || "nav" in tokens(item.props) || !item.media.contains("html")) continue
             val page = PageText().also { it.feed(String(read(zip, item.href, "EPUB"), Charsets.UTF_8)) }
-            var lines: List<String> = page.lines
-            val heading = page.heading
-            val listed = titles[item.href] ?: ""
-            if (lines.isEmpty() && page.images > 0) {
-                images++
-                continue
+            // Nhiều chương trong MỘT file: mục lục trỏ vào các mảnh (#id) của file này thì cắt chữ tại các mảnh ấy, theo thứ tự đọc,
+            // mỗi phần mang tên của mục lục. Chữ trước mảnh đầu là phần riêng (không tên) nếu không mục nào trỏ về đầu file.
+            val points = splitPoints(page, listedIn[item.href].orEmpty()).toMutableList()
+            val parts = if (points.isNotEmpty()) {
+                if (points[0].first > 0) points.add(0, 0 to "")
+                points.mapIndexed { index, (start, label) ->
+                    val end = if (index + 1 < points.size) points[index + 1].first else page.lines.size
+                    Part(page.lines.subList(start, end), page.headings.firstOrNull { it.first in start until end }?.second ?: "", label)
+                }
+            } else {
+                listOf(Part(page.lines, page.heading, titles[item.href] ?: ""))
             }
-            if (lines.isEmpty()) continue
-            if (lines.sumOf { cpLen(it) } < MIN_CHARS && listed.isEmpty()) {
-                short++
-                continue
+            for (part in parts) {
+                var lines: List<String> = part.lines
+                val heading = part.heading
+                val listed = part.listed
+                if (lines.isEmpty() && page.images > 0 && points.isEmpty()) {
+                    images++
+                    continue
+                }
+                if (lines.isEmpty()) continue
+                if (lines.sumOf { cpLen(it) } < MIN_CHARS && listed.isEmpty()) {
+                    short++
+                    continue
+                }
+                var title = listed.ifEmpty { heading.ifEmpty { cpTake(lines[0], 80) } }
+                val first = casefold(lines[0])
+                // Dòng đầu là tiêu đề của chính chương: bỏ khi nó đã nằm trong tên chương ("Gặp gỡ" trong "Chương 2: Gặp gỡ"),
+                // hay lấy nó làm tên khi nó đầy đủ hơn tên mục lục - không để người nghe nghe tên chương hai lần.
+                if (first == casefold(title) || (heading.isNotEmpty() && first == casefold(heading) && casefold(title).contains(first))) {
+                    lines = lines.drop(1)
+                } else if (heading.isNotEmpty() && first == casefold(heading) && first.contains(casefold(title))) {
+                    title = lines[0]
+                    lines = lines.drop(1)
+                }
+                result.chapters.add(Chapter(title, lines.joinToString("\n\n")))
             }
-            var title = listed.ifEmpty { heading.ifEmpty { cpTake(lines[0], 80) } }
-            val first = casefold(lines[0])
-            // Dòng đầu là tiêu đề của chính chương: bỏ khi nó đã nằm trong tên chương ("Gặp gỡ" trong "Chương 2: Gặp gỡ"),
-            // hay lấy nó làm tên khi nó đầy đủ hơn tên mục lục - không để người nghe nghe tên chương hai lần.
-            if (first == casefold(title) || (heading.isNotEmpty() && first == casefold(heading) && casefold(title).contains(first))) {
-                lines = lines.drop(1)
-            } else if (heading.isNotEmpty() && first == casefold(heading) && first.contains(casefold(title))) {
-                title = lines[0]
-                lines = lines.drop(1)
-            }
-            result.chapters.add(Chapter(title, lines.joinToString("\n\n")))
         }
         if (images > 0) result.notes.add("Bỏ qua $images trang chỉ có ảnh.")
         if (short > 0) result.notes.add("Bỏ qua $short mục rất ngắn (bìa, trang bản quyền?).")
