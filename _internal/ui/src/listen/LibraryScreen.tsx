@@ -9,6 +9,8 @@ import { EmptyState, Progress, Segmented, Skeleton } from "@/shared/ui";
 import { resumeWhere } from "./labels";
 import { foldVietnamese, listeningBook, resumePoint, seriesIndex, type ListenBook } from "./model";
 import { usePlayer, type WordTarget } from "./player";
+import type { ReadAloudVoice } from "./readAloud";
+import { chosenVoice, resolveVoice, voiceCaption } from "./readAloudVoice";
 import { useListenLibrary, useReadAloudVoices, useSource } from "./source";
 
 type Filter = "all" | "listening" | "new" | "finished";
@@ -19,9 +21,14 @@ function stateOf(book: ListenBook): Filter {
   return "new";
 }
 
+/** Giọng đang đọc cuốn này ("Đức Trí (VieNeu)"): giọng đã chọn cho cuốn, không thì giọng mặc định của máy. */
+function bookVoice(voices: ReadAloudVoice[] | undefined, bookId: string): string {
+  return voices?.length ? voiceCaption(resolveVoice(voices, chosenVoice(bookId))) : "";
+}
+
 /** Dòng trạng thái của một cuốn, cùng một bộ từ ở Thư viện, trang sách và thẻ nghe dở. `speaks`: máy này có giọng đọc (sách chỉ có chữ). */
-export function bookStatusText(book: ListenBook, speaks = false): string {
-  const status = progressText(book, speaks);
+export function bookStatusText(book: ListenBook, speaks = false, voice = ""): string {
+  const status = progressText(book, speaks, voice);
   // Cuốn nằm ở máy khác, nghe thẳng qua mạng - người nghe cần biết mất mạng hay máy kia tắt thì chương chưa tải không nghe được.
   return book.remote ? `${remotePlace(book)} · ${status}` : status;
 }
@@ -31,10 +38,10 @@ export function remotePlace(book: ListenBook): string {
   return typeof book.remote === "object" && book.remote ? `Trên ${book.remote.computer || "máy khác"}` : "Trên máy tính";
 }
 
-function progressText(book: ListenBook, speaks: boolean): string {
+function progressText(book: ListenBook, speaks: boolean, voice: string): string {
   // Sách mới nhập từ EPUB / DOCX / PDF / TXT: có chữ, máy có giọng thì giọng máy đọc (docs/LISTEN_ANYTHING.md mục 1) - cùng lời với trang
   // sách (labels.textBookLine), không ghi "Chỉ có chữ" ngay dưới nút "Nghe ngay".
-  if (book.stage === "text") return `${speaks ? "Giọng máy đọc" : "Chỉ có chữ"} · ${book.chaptersTotal} chương`;
+  if (book.stage === "text") return `${speaks ? voice || "Giọng máy đọc" : "Chỉ có chữ"} · ${book.chaptersTotal} chương`;
   const chapters = `${book.chaptersAvailable}/${book.chaptersTotal} chương`;
   if (book.progress.finished) return "Đã nghe xong";
   if (book.progress.caughtUp) return `Đã nghe hết phần đã có · ${chapters}`;
@@ -101,6 +108,7 @@ function BookTile({ book }: { book: ListenBook }) {
   // Sách chỉ có chữ: có giọng đọc trên máy thì nút trên bìa là "Nghe ngay" (giọng máy đọc), không thì vẫn là "Đọc".
   const voices = useReadAloudVoices();
   const speaks = (voices.data?.length ?? 0) > 0;
+  const voice = bookVoice(voices.data, book.id);
   const textOnly = book.stage === "text" && !speaks;
   return (
     <div className="group">
@@ -138,7 +146,7 @@ function BookTile({ book }: { book: ListenBook }) {
       </div>
       <button type="button" onClick={() => navigate(`/book/${book.id}`)} className="mt-2.5 block w-full text-left">
         <div className={cn("line-clamp-2 text-sm font-semibold leading-snug", current && "text-accent-text")}>{book.title}</div>
-        <div className="mt-1 text-xs text-fg-2">{bookStatusText(book, speaks)}</div>
+        <div className="mt-1 text-xs text-fg-2">{bookStatusText(book, speaks, voice)}</div>
       </button>
     </div>
   );
@@ -150,7 +158,9 @@ function ContinueCard({ book }: { book: ListenBook }) {
   const player = usePlayer();
   const current = player.track?.bookId === book.id;
   const playingHere = current && player.playing;
-  const speaks = (useReadAloudVoices().data?.length ?? 0) > 0;
+  const voices = useReadAloudVoices().data;
+  const speaks = (voices?.length ?? 0) > 0;
+  const voice = bookVoice(voices, book.id);
   const last = book.state.last;
   const chapter = (current ? player.track?.chapterTitle : undefined) || book.lastChapterTitle;
   // Cùng dạng với nút chính của trang sách ("Nghe tiếp · Chương 3 · 12:04").
@@ -168,7 +178,7 @@ function ContinueCard({ book }: { book: ListenBook }) {
           {where}
           {current ? (playingHere ? " · đang phát" : " · đang tạm dừng") : last ? ` · nghe lần cuối ${formatWhen(last.at)}` : ""}
         </p>
-        <p className="mt-0.5 text-sm text-fg-2">{bookStatusText(book, speaks)}</p>
+        <p className="mt-0.5 text-sm text-fg-2">{bookStatusText(book, speaks, voice)}</p>
         <Progress value={book.progress.fraction} size="xs" className="mt-3 max-w-md" label="Đã nghe" />
       </div>
       {book.progress.caughtUp && !current ? (

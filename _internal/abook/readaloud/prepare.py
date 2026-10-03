@@ -12,11 +12,13 @@ import threading
 import time
 from typing import Any, Callable
 
+from . import supertonic
 from .model import VoiceError
 
 CHARS_PER_SECOND = 14  # như trình phát ước đoạn chưa đọc (readAloud.ts)
 SHARE = 0.6
-BYTES_PER_SECOND = {"vieneu:turbo/": 96_000, "vieneu:nano/": 48_000}  # WAV 16-bit đơn kênh; giọng khác là MP3 ~6 KB/giây
+# WAV 16-bit đơn kênh, theo tần số mẫu thật của từng giọng; giọng khác là MP3 ~6 KB/giây
+BYTES_PER_SECOND = {"vieneu:turbo/": 96_000, "vieneu:nano/": 48_000, supertonic.PREFIX + ":": 2 * supertonic.SAMPLE_RATE}
 OTHER_BYTES_PER_SECOND = 6_000
 CACHED_SECONDS = 0.05
 

@@ -78,10 +78,10 @@ describe("giọng dự phòng của Nghe ngay", () => {
     const online = VOICES.filter((voice) => voice.online);
     const { value } = source({ "edge:vi-VN-HoaiMyNeural": "offline" }, online);
     const error = await module.speechFetcher(value, "b1", vi.fn())("edge:vi-VN-HoaiMyNeural", "Một.").catch((caught: unknown) => caught);
-    expect((error as Error).message).toBe(module.NO_OFFLINE_VOICE);
-    expect(module.NO_OFFLINE_VOICE.endsWith(".")).toBe(true);
-    expect(module.NO_OFFLINE_VOICE).toContain("Cài đặt của Windows");
-    expect(module.isNoOfflineVoice(module.NO_OFFLINE_VOICE)).toBe(true); // giao diện nhận ra nó để thêm nút “Mở Cài đặt › Giọng đọc”
+    expect((error as Error).message).toBe("Không có mạng - giọng Hoài My cần mạng."); // ngắn, nói tên giọng đang chọn
+    expect(module.noOfflineMessage("Ban Mai")).toBe("Không có mạng - giọng Ban Mai cần mạng.");
+    expect(module.isNoOfflineVoice((error as Error).message)).toBe(true); // giao diện nhận ra nó để đưa nút "Đọc bằng …" / "Tải giọng VieNeu"
+    expect(module.isNoOfflineVoice(module.NO_OFFLINE_VOICE)).toBe(true); // bản của lõi điện thoại (ClipReader.NO_OFFLINE_VOICE), chưa kèm tên giọng
     expect(module.isNoOfflineVoice(module.FALLBACK_NOTICE)).toBe(false);
     expect((error as { reason?: string }).reason).toBe("offline"); // bộ đọc to không thử lại vô ích khi mất mạng
     // Lỗi dịch vụ (có mạng): vẫn là lời của dịch vụ.
@@ -121,3 +121,20 @@ describe("giọng dự phòng của Nghe ngay", () => {
     expect(module.onlineNotice(VOICES[4])).toBe("");
   });
 });
+
+describe("giọng chạy trên máy để đỡ khi mất mạng", () => {
+  const edge = { id: "edge:vi-VN-HoaiMyNeural", name: "Hoài My", provider: "edge", online: true, gender: "female" } as ReadAloudVoice;
+  const nano = [
+    { id: "vieneu:nano/adam", name: "Adam (VieNeu Nano)", provider: "vieneu", online: false, gender: "male" },
+    { id: "vieneu:nano/aihan", name: "Ái Hân (VieNeu Nano)", provider: "vieneu", online: false, gender: "female" },
+  ] as ReadAloudVoice[];
+
+  it("picks an installed on-device voice of the same gender, none when only online voices are there", async () => {
+    const { module } = await fresh();
+    expect(module.localVoiceFor([edge, ...nano], edge)?.id).toBe("vieneu:nano/aihan");
+    expect(module.localVoiceFor([edge, ...nano], undefined)?.id).toBe("vieneu:nano/adam");
+    expect(module.localVoiceFor([edge], edge)).toBeUndefined();
+    expect(module.localVoiceFor([edge, { id: "device:an", name: "An", provider: "device", online: false }], edge)).toBeUndefined();
+  });
+});
+

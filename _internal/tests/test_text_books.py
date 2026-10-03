@@ -591,3 +591,20 @@ def test_the_file_the_phone_writes_for_a_text_book_opens_here_and_is_the_same_bo
             name: computer.read(name) for name in computer.content if name.startswith("texts/")}
         assert {key: value for key, value in phone.book.items() if key != "package"} == {
             key: value for key, value in computer.book.items() if key != "package"}, "lớp sách y nguyên, chỉ thêm lớp sửa"
+
+
+def test_the_preview_knows_the_same_file_was_added_before_whatever_chapters_were_picked(tmp_path: Path) -> None:
+    studio = _app(tmp_path / "studio", tmp_path / "thu_vien")
+    source = str(IMPORTS / "epub3.epub")
+    assert studio.preview_text_book(source)["sameSource"] is None
+    first = studio.add_text_book(source, chapters=[{"index": 2}, {"index": 3}])
+    preview = studio.preview_text_book(source)
+    assert preview["existing"] is None, "bộ chương mặc định khác bộ đã thêm"
+    assert preview["sameSource"] == {"id": first["id"], "title": "Chuyến phà cuối ngày", "chapters": 2}, "nhưng đúng file ấy đã được thêm"
+    whole = str(IMPORTS / "whole.txt")
+    one_chapter = studio.add_text_book(whole)
+    assert studio.preview_text_book(whole, split_chapters=True)["sameSource"]["id"] == one_chapter["id"], "tách chương hay không vẫn là file ấy"
+    assert studio.preview_text_book(str(IMPORTS / "plain.docx"))["sameSource"] is None, "file khác thì không"
+    # "Thêm bản riêng" cũng nhớ nguồn; đổi tên sách thì tên hiện ra là tên người nghe đặt
+    book_edits.set_title(studio._listenable(first["id"]), "Tên tôi đặt")
+    assert studio.preview_text_book(source)["sameSource"]["title"] == "Tên tôi đặt"

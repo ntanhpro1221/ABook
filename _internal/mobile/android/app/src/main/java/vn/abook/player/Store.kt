@@ -660,6 +660,21 @@ object Store {
         writeAtomic(printsFile, all.toString())
     }
 
+    /** Cuốn `id` do file nguồn có mã băm `sha256` thêm vào (`TextImports`): lần xem trước sau nhận ra cùng một file, chọn chương nào cũng vậy. */
+    @Synchronized
+    fun rememberSource(id: String, sha256: String) {
+        val all = printsBook()
+        all.put(id, (all.optJSONObject(id) ?: JSONObject()).put("source", sha256))
+        writeAtomic(printsFile, all.toString())
+    }
+
+    /** Cuốn còn trên máy được thêm từ file có mã băm `sha256`, không có thì null. */
+    @Synchronized
+    fun findBySource(sha256: String): String? {
+        val all = printsBook()
+        return all.keys().asSequence().firstOrNull { all.optJSONObject(it)?.optString("source") == sha256 && rawManifest(it) != null }
+    }
+
     @Synchronized
     fun isImported(id: String) = printsBook().optJSONObject(id)?.optBoolean("imported") == true
 

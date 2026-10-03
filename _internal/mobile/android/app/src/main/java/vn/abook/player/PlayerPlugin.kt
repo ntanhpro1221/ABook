@@ -63,14 +63,12 @@ class PlayerPlugin : Plugin() {
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
             android.content.pm.PackageManager.PERMISSION_GRANTED
 
+    /**
+     * KHÔNG chờ quyền thông báo: hộp hệ thống ở đây chặn tiếng cho tới khi người nghe trả lời (soát điện thoại 03-10 - lần nghe đầu im lặng). Phát trước;
+     * giao diện (android/notifications.ts) giải thích rồi mới xin, sau khi đã có tiếng ([requestNotificationAccess]).
+     */
     @PluginMethod
     fun load(call: PluginCall) {
-        if (needsNotificationPermission()) requestPermissionForAlias("notifications", call, "loadAfterPermission")
-        else loadAfterPermission(call)
-    }
-
-    @com.getcapacitor.annotation.PermissionCallback
-    private fun loadAfterPermission(call: PluginCall) {
         val book = call.getString("bookId") ?: return call.reject("thiếu bookId")
         val chapters = call.getArray("chapters")?.toList<JSONObject>()?.map {
             // Chương chỉ có chữ (state "text"): không có file audio, `text` = mục chữ trong gói; giọng máy đọc to (ReadAloud).
@@ -84,6 +82,35 @@ class PlayerPlugin : Plugin() {
                 call.getBoolean("autoplay") ?: true,
             )
             call.resolve(JSObject.fromJSONObject(Playback.state()))
+        }
+    }
+
+    /** Quyền hiện thông báo (Android 13+): "granted" (hay máy cũ không cần), "off" (chưa cho: khay thông báo / màn khoá không có nút tạm dừng, tua). */
+    @PluginMethod
+    fun notificationAccess(call: PluginCall) {
+        call.resolve(JSObject().put("state", if (needsNotificationPermission()) "off" else "granted"))
+    }
+
+    /** Hiện hộp xin quyền của hệ thống; trả như [notificationAccess] sau khi người nghe trả lời. Giao diện chỉ gọi sau khi đã nói vì sao và đã có tiếng. */
+    @PluginMethod
+    fun requestNotificationAccess(call: PluginCall) {
+        if (needsNotificationPermission()) requestPermissionForAlias("notifications", call, "notificationAccessAnswered") else notificationAccess(call)
+    }
+
+    @com.getcapacitor.annotation.PermissionCallback
+    private fun notificationAccessAnswered(call: PluginCall) = notificationAccess(call)
+
+    /** Mở trang cài đặt thông báo của ABook trong Cài đặt Android (sau khi từ chối, hộp xin quyền không hiện lại được). */
+    @PluginMethod
+    fun openNotificationSettings(call: PluginCall) {
+        val intent = android.content.Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+            .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, context.packageName)
+            .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+        try {
+            context.startActivity(intent)
+            call.resolve()
+        } catch (error: Exception) {
+            call.reject("Không mở được cài đặt thông báo")
         }
     }
 
