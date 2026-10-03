@@ -33,7 +33,8 @@ export const phoneTextImport: TextImport = {
     });
     return EbookLibrary.previewImport({ ref: choice.ref, pages: pages.pages, title: pages.title, author: pages.author });
   },
-  // Native giữ cuốn của lần xem trước cuối (đã tách hay chưa), nên `options` không cần đi tiếp.
-  add: (choice, title, separate) => EbookLibrary.createImport({ ref: choice.ref, title, separate: Boolean(separate) }),
+  // Native giữ cuốn của lần xem trước cuối (đã tách hay chưa, kèm cả mục rất ngắn chưa tích), nên chỉ phần chọn chương + đổi tên đi tiếp.
+  add: (choice, title, separate, options) =>
+    EbookLibrary.createImport({ ref: choice.ref, title, separate: Boolean(separate), ...(options?.chapters ? { chapters: options.chapters } : {}) }),
   discard: (choice) => EbookLibrary.discardImport({ ref: choice.ref }),
 };

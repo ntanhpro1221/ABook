@@ -333,8 +333,9 @@ export interface EbookLibraryPlugin {
   /** Đọc thứ đã chọn bằng luật nhập sách của Kotlin; PDF thì kèm `pages` (các dòng từng trang) pdf.js đã lấy ra. Lỗi đọc được: từ chối
    *  với câu cho người dùng. */
   previewImport(options: { ref: string; pages?: string[][]; title?: string; author?: string; splitChapters?: boolean }): Promise<ImportPreview>;
-  /** Nhập thành sách chỉ-chữ (TextBook.kt → BookFileImport): `title` rỗng thì giữ tên của file sách. */
-  createImport(options: { ref: string; title: string; separate?: boolean }): Promise<AddedBook>;
+  /** Nhập thành sách chỉ-chữ (TextBook.kt → BookFileImport): `title` rỗng thì giữ tên của file sách. `chapters`: các hàng của bước xem trước
+   *  người dùng giữ lại + tên mới của chúng (chỉ đổi tên); không có thì các chương mặc định (mục rất ngắn chưa tích). */
+  createImport(options: { ref: string; title: string; separate?: boolean; chapters?: { index: number; title?: string }[] }): Promise<AddedBook>;
   discardImport(options: { ref: string }): Promise<void>;
 }
 

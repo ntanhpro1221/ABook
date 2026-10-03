@@ -8,7 +8,18 @@ import { formatNumber } from "@/shared/format";
 import { Button, Dialog } from "@/shared/ui";
 import { groupSuggestions, setSkipLine, SuggestionChoices } from "./ReadingSuggestions";
 import { useSource } from "./source";
-import type { ImportChoice, ImportKind, ImportPreview } from "./textImport";
+import {
+  chapterPicks,
+  defaultPicked,
+  isDefaultPick,
+  pickedSuggestions,
+  pickedTotals,
+  renameChapter,
+  type ChapterNames,
+  type ImportChoice,
+  type ImportKind,
+  type ImportPreview,
+} from "./textImport";
 
 // "Thêm sách từ file…": EPUB / DOCX / PDF / thư mục TXT thành sách chỉ-có-chữ trong thư viện (docs/LISTEN_ANYTHING.md mục 1 và 2).
 // Ba bước trong một hộp: chọn → xem danh sách chương (và gợi ý của máy) → thêm. Máy tính và điện thoại dùng chung; chỗ khác nhau
@@ -48,6 +59,9 @@ export function AddBookDialog({ open, onOpenChange }: { open: boolean; onOpenCha
   const [skipped, setSkipped] = useState<ReadonlySet<string>>(new Set());
   // File TXT cả truyện: người dùng tích "Tách thành N chương" (mặc định không - máy chỉ đề xuất, không tự cắt file của người dùng).
   const [split, setSplit] = useState(false);
+  // Chương nào vào sách (số thứ tự hàng của bước xem trước) và tên người dùng đã đổi. Mặc định như máy đề xuất: mọi chương trừ mục rất ngắn.
+  const [picked, setPicked] = useState<ReadonlySet<number>>(new Set());
+  const [names, setNames] = useState<ChapterNames>({});
   const titleField = useRef<HTMLInputElement>(null);
   // Đọc xong file: con trỏ sang ô "Tên sách" (lúc mở hộp, `data-autofocus` của ô đường dẫn nhận con trỏ). Màn cảm ứng thì KHÔNG: bàn phím
   // ảo bật lên che mất nút "Thêm vào thư viện", mà tên đã điền sẵn và hiếm khi cần sửa (soát máy thật 03-10).
@@ -67,6 +81,8 @@ export function AddBookDialog({ open, onOpenChange }: { open: boolean; onOpenCha
     setProblem("");
     setSkipped(new Set());
     setSplit(false);
+    setPicked(new Set());
+    setNames({});
   };
   const reset = () => {
     if (choice) void importer.discard?.(choice).catch(() => undefined);
@@ -84,6 +100,7 @@ export function AddBookDialog({ open, onOpenChange }: { open: boolean; onOpenCha
     try {
       const result = await importer.preview(picked);
       setPreview(result);
+      setPicked(defaultPicked(result.chapters));
       setTitle(result.title);
     } catch (error) {
       setProblem((error as Error).message);
@@ -93,13 +110,16 @@ export function AddBookDialog({ open, onOpenChange }: { open: boolean; onOpenCha
       setBusy(null);
     }
   };
-  // Tích / bỏ tích "Tách thành N chương": đọc lại file với lựa chọn mới, danh sách chương xem trước đổi theo. Tên người dùng đã sửa giữ nguyên;
-  // gợi ý ghi công chọn dở bỏ đi vì số chương đã đổi.
+  // Tích / bỏ tích "Tách thành N chương": đọc lại file với lựa chọn mới, danh sách chương xem trước đổi theo. Tên sách người dùng đã sửa giữ
+  // nguyên; gợi ý ghi công, chương đã bỏ tích và tên chương đã đổi đặt lại vì danh sách chương đã khác.
   const changeSplit = async (on: boolean) => {
     if (!choice) return;
     setBusy("reading");
     try {
-      setPreview(await importer.preview(choice, { splitChapters: on }));
+      const result = await importer.preview(choice, { splitChapters: on });
+      setPreview(result);
+      setPicked(defaultPicked(result.chapters));
+      setNames({});
       setSplit(on);
       setSkipped(new Set());
     } catch (error) {
@@ -126,11 +146,11 @@ export function AddBookDialog({ open, onOpenChange }: { open: boolean; onOpenCha
     if (!choice || !preview) return;
     setBusy("adding");
     try {
-      const added = await importer.add(choice, title.trim(), separate, { splitChapters: split });
+      const added = await importer.add(choice, title.trim(), separate, { splitChapters: split, chapters: chapterPicks(preview.chapters, picked, names) });
       // Gợi ý người nghe đã chọn: bỏ dòng ấy khỏi phần đọc của cuốn mới (chữ trong sách không đổi). Hỏng thì sách vẫn đã vào thư
       // viện - gợi ý còn chờ ở trang sách.
       if (added.how === "new") {
-        for (const group of groupSuggestions(preview.suggestions ?? []).filter((group) => skipped.has(group.line))) {
+        for (const group of groups.filter((group) => skipped.has(group.line))) {
           await setSkipLine(added.id, group.line, group.chapters, true).catch(() => undefined);
         }
       }
@@ -151,7 +171,12 @@ export function AddBookDialog({ open, onOpenChange }: { open: boolean; onOpenCha
 
   // Ghi chú đổi định dạng; gợi ý dòng ghi công (luôn ở cuối `notes`, mỗi gợi ý một ghi chú) đã thành các ô chọn ở dưới.
   const notes = preview ? preview.notes.slice(0, preview.notes.length - (preview.suggestions?.length ?? 0)) : [];
-  const groups = groupSuggestions(preview?.suggestions ?? []);
+  // Gợi ý của những chương đang tích, đánh số theo mã chương trong sách sẽ thêm.
+  const groups = groupSuggestions(preview ? pickedSuggestions(preview.suggestions ?? [], preview.chapters, picked) : []);
+  const totals = preview ? pickedTotals(preview.chapters, picked) : { chapters: 0, words: 0 };
+  const nothingPicked = preview !== null && picked.size === 0;
+  // Cuốn "đã có trong thư viện" tính theo các chương MẶC ĐỊNH; tích khác đi là bộ chữ khác, cứ thêm - máy sẽ nói nếu hoá ra đã có.
+  const existing = preview && isDefaultPick(preview.chapters, picked) ? preview.existing : null;
 
   return (
     <Dialog
@@ -222,8 +247,29 @@ export function AddBookDialog({ open, onOpenChange }: { open: boolean; onOpenCha
             />
           </label>
           {preview.author && <p className="mt-1.5 text-sm text-fg-2">Tác giả: {preview.author}</p>}
-          <div className="tabular mt-4 text-sm text-fg-2">
-            <span className="font-semibold text-fg">{preview.totals.chapters} chương</span> · {formatNumber(preview.totals.words)} chữ
+          <div className="tabular mt-4 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-sm text-fg-2">
+            <span>
+              <span className="font-semibold text-fg">
+                {totals.chapters}
+                {totals.chapters !== preview.chapters.length ? ` / ${preview.chapters.length}` : ""} chương
+              </span>{" "}
+              · {formatNumber(totals.words)} chữ
+            </span>
+            {preview.chapters.length > 1 && (
+              <span className="flex gap-3 text-xs">
+                <button
+                  type="button"
+                  disabled={busy !== null}
+                  className="text-accent-text hover:underline disabled:opacity-50"
+                  onClick={() => setPicked(new Set(preview.chapters.map((chapter) => chapter.index)))}
+                >
+                  Chọn hết
+                </button>
+                <button type="button" disabled={busy !== null} className="text-accent-text hover:underline disabled:opacity-50" onClick={() => setPicked(new Set())}>
+                  Bỏ chọn hết
+                </button>
+              </span>
+            )}
           </div>
           {preview.splitOffer ? (
             <label className="mt-3 flex items-start gap-2.5 rounded-xl border border-line bg-hover p-3 text-sm">
@@ -248,7 +294,29 @@ export function AddBookDialog({ open, onOpenChange }: { open: boolean; onOpenCha
           ) : null}
           {/* Tên chương đúng như sẽ lưu (trang sách, trình phát, màn đọc cùng thấy tên này); dòng đầu của chương ở dòng phụ. Một
               thước đo cho mỗi chương: số chữ. */}
-          <ChapterPreview chapters={preview.chapters.map((chapter) => ({ ...chapter, chars: 0 }))} titleFirst className="mt-2" />
+          <ChapterPreview
+            chapters={preview.chapters.map((chapter) => ({ ...chapter, chars: 0 }))}
+            titleFirst
+            className="mt-2"
+            choice={{
+              picked,
+              names,
+              disabled: busy !== null,
+              onPick: (index, on) =>
+                setPicked((current) => {
+                  const next = new Set(current);
+                  if (on) next.add(index);
+                  else next.delete(index);
+                  return next;
+                }),
+              onRename: (chapter, value) => setNames((current) => renameChapter(current, chapter, value)),
+            }}
+          />
+          {nothingPicked && (
+            <p role="status" className="mt-2 text-sm text-danger">
+              Chưa chọn chương nào - tích ít nhất một chương để thêm vào thư viện.
+            </p>
+          )}
           {notes.length > 0 && (
             <div className="mt-3 rounded-xl border border-line bg-hover p-3 text-xs text-fg-2">
               <p className="font-medium text-fg">Máy đã đổi định dạng - chữ của truyện giữ nguyên</p>
@@ -281,26 +349,26 @@ export function AddBookDialog({ open, onOpenChange }: { open: boolean; onOpenCha
               </div>
             </div>
           )}
-          {preview.existing && (
+          {existing && (
             <p role="status" className="mt-3 rounded-xl border border-line bg-accent-soft p-3 text-sm text-accent-text">
-              Cuốn này đã có trong thư viện: “{preview.existing.title}”.
+              Cuốn này đã có trong thư viện: “{existing.title}”.
             </p>
           )}
           <div className="mt-5 flex flex-wrap justify-end gap-2">
             <Button variant="ghost" disabled={busy !== null} onClick={reset}>
               Chọn lại
             </Button>
-            {preview.existing ? (
+            {existing ? (
               <>
-                <Button icon={Copy} loading={busy === "adding"} disabled={!title.trim() || busy !== null} onClick={() => void add(true)}>
+                <Button icon={Copy} loading={busy === "adding"} disabled={!title.trim() || nothingPicked || busy !== null} onClick={() => void add(true)}>
                   Thêm bản riêng
                 </Button>
-                <Button variant="primary" icon={BookOpen} disabled={busy !== null} onClick={() => openExisting(preview.existing!.id)}>
+                <Button variant="primary" icon={BookOpen} disabled={busy !== null} onClick={() => openExisting(existing.id)}>
                   Mở cuốn đó
                 </Button>
               </>
             ) : (
-              <Button variant="primary" icon={BookPlus} loading={busy === "adding"} disabled={!title.trim() || busy === "reading"} onClick={() => void add()}>
+              <Button variant="primary" icon={BookPlus} loading={busy === "adding"} disabled={!title.trim() || nothingPicked || busy === "reading"} onClick={() => void add()}>
                 Thêm vào thư viện
               </Button>
             )}
