@@ -329,7 +329,7 @@ def test_part_folders_exist_only_from_version_3(tmp_path: Path) -> None:
 
 
 def test_a_newer_version_is_refused_with_the_update_hint_and_3_is_accepted(tmp_path: Path) -> None:
-    assert bookfile.FORMAT_VERSION == 4, "4 = lớp sửa của người nghe (test_book_edits.py)"
+    assert bookfile.FORMAT_VERSION == 5, "5 = chương chỉ-chữ (test_text_books.py)"
     _library, projects = _series(tmp_path)
     path = bookfile.pack_series(projects, tmp_path / f"bo{bookfile.EXTENSION}")
 

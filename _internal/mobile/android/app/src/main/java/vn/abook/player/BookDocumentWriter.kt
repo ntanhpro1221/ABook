@@ -34,7 +34,8 @@ object BookDocumentWriter {
     private const val FORMAT = "abook"
     private val STORED = listOf(".mp3", ".jpg", ".wav", ".m4a", ".ogg", ".opus", ".flac")
     private val PROJECT_STORED = STORED + listOf(".png", ".zip")
-    private val RANK = listOf("edits", "cover.jpg", "cast.json", "scripts/", "samples/", "chapters/", "music/")
+    private val RANK = listOf("edits", "cover.jpg", "cast.json", "scripts/", "texts/", "samples/", "chapters/", "music/")
+    private val TEXT_ENTRY = Regex("""texts/[0-9]+\.txt""")
     private val PART_AUDIO = Regex("chapters/[0-9]+/.+")
 
     /** Không đóng được - câu chữ để người dùng đọc. */
@@ -84,14 +85,26 @@ object BookDocumentWriter {
             }
         }
         val version = when {
+            files.keys.any { TEXT_ENTRY.matches(it) } -> 5
             changes > 0 -> 4
             files.keys.any { PART_AUDIO.matches(it) } -> 3
             book.has("music") -> 2
             else -> 1
         }
-        // File dự án không đòi chương nào có audio (phần nghe có thể còn thiếu); file .abook thì đòi.
+        // File dự án không đòi chương nào có audio (phần nghe có thể còn thiếu); file .abook đòi audio hay chữ.
         if (asProject) return writeProject(bookDir, out, book, files, known, edits, version)
-        if (files.keys.none { it.startsWith("chapters/") }) throw Refused("Sách chưa có chương nào nghe được để xuất.")
+        return seal(book, files, known, edits, version, out)
+    }
+
+    /**
+     * `bookfile.seal` bên Python: ghi `book.package` (cỡ + mã băm từng mục; mục đã biết cỡ + mã băm thì không băm lại) rồi gói ZIP.
+     * Dùng chung cho `write` (cuốn đã nhập) và [TextBook] (cuốn chỉ có chữ vừa đọc từ file sách). Sách phải có gì để nghe hay để đọc:
+     * audio chương, hay (phiên bản 5) chữ chương.
+     */
+    internal fun seal(book: JSONObject, files: Map<String, Any>, known: Map<String, JSONObject>, edits: JSONObject, version: Int, out: OutputStream): Written {
+        if (files.keys.none { it.startsWith("chapters/") || it.startsWith("texts/") }) {
+            throw Refused("Sách chưa có chương nào nghe được hay đọc được để xuất.")
+        }
         val sorted = files.keys.sorted()
         val described = LinkedHashMap<String, Any>()
         for (name in sorted) described[name] = describe(name, files.getValue(name), known[name])
@@ -119,7 +132,7 @@ object BookDocumentWriter {
                 }
             }
         }
-        return Written(counting.written, changes, version)
+        return Written(counting.written, BookEdits.count(edits), version)
     }
 
     private fun rank(name: String) = RANK.indexOfFirst { name.startsWith(it) }

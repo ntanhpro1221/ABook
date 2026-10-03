@@ -27,6 +27,22 @@ def content_key(chapters: dict[str, str]) -> str:
     return "f-" + hashlib.sha256(text.encode("utf-8")).hexdigest()[:24]
 
 
+def identity_prints(files: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Cỡ + mã băm các mục DÙNG ĐỂ nhận ra một cuốn, từ `package.files`: audio từng chương (`chapters/...`); cuốn chưa có audio
+    nào (chỉ có chữ, docs/LISTEN_ANYTHING.md mục 1) thì chữ từng chương (`texts/<n>.txt`) - không thì mọi cuốn chỉ-chữ cùng
+    một khoá. Kotlin: BookFileImport.identityPrints."""
+    def pick(prefix: str) -> dict[str, dict[str, Any]]:
+        return {name: {"size": meta.get("size"), "sha256": meta.get("sha256")}
+                for name, meta in files.items() if name.startswith(prefix) and isinstance(meta, dict)}
+
+    return pick("chapters/") or pick("texts/")
+
+
+def is_text_identity(prints: dict[str, Any]) -> bool:
+    """`prints` là mã băm chữ (cuốn chỉ-chữ), không phải audio."""
+    return bool(prints) and all(name.startswith("texts/") for name in prints)
+
+
 def base_name(name: str) -> str:
     """Tên file của một mục `chapters/...` (bỏ thư mục phần của file cả bộ): `chapters/2/x.mp3` -> `x.mp3`."""
     return name.rsplit("/", 1)[-1]

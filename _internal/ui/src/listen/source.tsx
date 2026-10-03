@@ -1,8 +1,10 @@
 import type { MusicCredit, MusicCue } from "./musicBed";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, useContext, type ReactNode } from "react";
-import type { Bookmark, Cast, ListenBook, ListeningRecord, ListeningSession, ListeningState, NightSession, Script } from "./model";
+import type { Bookmark, Cast, ListenBook, ListenChapter, ListeningRecord, ListeningSession, ListeningState, NightSession, Script } from "./model";
 import type { EditsSyncState } from "@/shared/editsSync";
+import type { TextImport } from "./textImport";
+import { textScript } from "./textScript";
 
 // Nguồn dữ liệu của phía Nghe. Giao diện chỉ nói chuyện với giao diện này:
 // máy tính cài bằng HTTP tới server cục bộ, Android cài bằng file gói sách trên máy.
@@ -23,6 +25,10 @@ export interface ListenSource {
   library(): Promise<ListenBook[]>;
   book(id: string): Promise<ListenBook>;
   script(bookId: string, chapterId: number): Promise<Script>;
+  /** Chữ của chương chỉ-có-chữ (`ListenChapter.state` "text"): màn đọc dựng các đoạn từ đây (textScript.ts). */
+  chapterText(bookId: string, chapterId: number): Promise<string>;
+  /** "Thêm sách từ file…" (textImport.ts); nguồn nào chưa có thì giao diện ẩn nút. */
+  textImport?: TextImport;
   cast(bookId: string): Promise<Cast>;
   /** Nhạc nền của một chương (rãnh nhạc của cuốn - webui/music_plan.py): mốc thời gian + đường lấy file. Nguồn nào
    *  chưa có thì trình phát không chơi nhạc nền. */
@@ -111,6 +117,19 @@ export function useScript(bookId: string | undefined, chapterId: number | undefi
     queryKey: ["listen", "script", bookId, chapterId],
     enabled: Boolean(bookId && chapterId),
     queryFn: () => source.script(bookId!, chapterId!),
+    staleTime: Infinity,
+  });
+}
+
+/** Kịch bản của chương để ĐỌC: chương nghe được thì kịch bản có mốc thời gian, chương chỉ-có-chữ thì các đoạn dựng từ chữ. */
+export function useChapterScript(bookId: string | undefined, chapter: ListenChapter | undefined) {
+  const source = useSource();
+  const textOnly = chapter?.state === "text";
+  return useQuery({
+    queryKey: ["listen", "script", bookId, chapter?.id, textOnly ? "text" : "audio"],
+    enabled: Boolean(bookId && chapter),
+    queryFn: async () =>
+      textOnly ? textScript(chapter!.id, chapter!.title, await source.chapterText(bookId!, chapter!.id)) : source.script(bookId!, chapter!.id),
     staleTime: Infinity,
   });
 }

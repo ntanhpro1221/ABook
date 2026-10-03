@@ -2,6 +2,7 @@ import { registerPlugin, type PluginListenerHandle } from "@capacitor/core";
 import type { Bookmark, BookPart, ListeningRecord, ListeningState, NightSession } from "@/listen/model";
 import type { Capabilities } from "@/shared/capabilities";
 import type { EditsSyncState } from "@/shared/editsSync";
+import type { AddedBook, ImportPreview } from "@/listen/textImport";
 import type { ImportResult } from "@/studio/musicLocal";
 
 // Hai plugin native của app Android (mobile/android/app/src/main/java/vn/abook/player):
@@ -157,6 +158,9 @@ export interface ManifestChapter {
   script: string | null;
   /** File cả bộ (.abook phiên bản 3): số phần chứa chương. */
   part?: number;
+  /** Chương chỉ có chữ (.abook phiên bản 5): `state` "text" và tên mục chữ `texts/<mã>.txt` (không `file`, không `script`). */
+  state?: "text" | null;
+  text?: string;
 }
 
 export interface LocalBook {
@@ -300,6 +304,15 @@ export interface EbookLibraryPlugin {
    *  trả khi nhập xong - cùng JSON như `/api/music/local/import` của máy tính - hay `{picked: false}` khi không chọn gì. */
   pickMusic(): Promise<{ picked: boolean } & Partial<ImportResult>>;
   addListener(event: "musicImport", handler: (event: { done: number; total: number }) => void): Promise<PluginListenerHandle>;
+  /** "Thêm sách từ file…" (BookImport.kt + TextBook.kt): bộ chọn file / thư mục của hệ thống; chép thứ đã chọn vào thư mục tạm của app
+   *  (`ref`). `pdf`: đường dẫn bản sao PDF - WebView lấy chữ bằng pdf.js (shared/pdfPages.ts) rồi đưa sang `previewImport`. */
+  pickSource(options: { kind: "file" | "folder" }): Promise<{ picked: boolean; ref?: string; name?: string; pdf?: string }>;
+  /** Đọc thứ đã chọn bằng luật nhập sách của Kotlin; PDF thì kèm `pages` (các dòng từng trang) pdf.js đã lấy ra. Lỗi đọc được: từ chối
+   *  với câu cho người dùng. */
+  previewImport(options: { ref: string; pages?: string[][]; title?: string; author?: string }): Promise<ImportPreview>;
+  /** Nhập thành sách chỉ-chữ (TextBook.kt → BookFileImport): `title` rỗng thì giữ tên của file sách. */
+  createImport(options: { ref: string; title: string }): Promise<AddedBook>;
+  discardImport(options: { ref: string }): Promise<void>;
 }
 
 /** Kết quả mở một file sách (.abook): mã sách vừa vào Thư viện, hay lý do không nhận. */

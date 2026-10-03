@@ -99,6 +99,13 @@ class ImportedBook:
     notes: list[str] = field(default_factory=list)
     text_has_title: bool = False  # file TXT: tên chương nằm sẵn trong chữ (EPUB / DOCX / PDF: tên chương là trường riêng)
 
+    def chapter_source(self, chapter: Chapter) -> str:
+        """Chữ của chương như FILE NGUỒN mà Studio đọc: TXT nguyên văn (tên chương nằm sẵn trong chữ); EPUB / DOCX / PDF: tên
+        chương, một dòng trống, rồi chữ. Kết thúc bằng một dòng mới. Dùng cho thư mục chương của Studio (`extract`) và cho chữ của
+        sách chỉ-chữ (webui/textbook.py) - một nơi. Kotlin: BookImport.chapterSource."""
+        body = chapter.text if self.text_has_title else f"{chapter.title}\n\n{chapter.text}"
+        return body + "\n"
+
     def to_dict(self) -> dict[str, Any]:
         """Dạng JSON của bộ ví dụ dùng chung với Kotlin (bìa chỉ ghi cỡ + sha256)."""
         cover = None
@@ -655,7 +662,7 @@ def extract(path: Path, folder_root: Path) -> tuple[Path, dict[str, Any]]:
     folder.mkdir(parents=True, exist_ok=True)
     width = max(4, len(str(len(book.chapters))))
     for index, chapter in enumerate(book.chapters, start=1):
-        body = f"{chapter.title}\n\n{chapter.text}\n"
+        body = book.chapter_source(chapter)
         label = _words(UNSAFE_NAME.sub(" ", chapter.title))[:50].strip(" .")
         (folder / f"{index:0{width}d}{' ' + label if label else ''}.txt").write_bytes(body.encode("utf-8"))
     cover = ""

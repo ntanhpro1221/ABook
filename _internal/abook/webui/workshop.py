@@ -5,7 +5,8 @@ phần nghe + lớp sửa của người nghe. Máy có Studio mở file ấy đ
 mới rồi gieo vào đó những gì file biết (docs/EDITING.md):
 
 - chữ các chương: `sources/` của file nếu file mang theo (nguyên văn), không thì dựng lại từ `scripts/<chương>.json` (mỗi đoạn
-  văn một đoạn, tiêu đề chương là đoạn đầu) - gần nguyên văn, mất chỗ ngắt dòng chưa phải đoạn;
+  văn một đoạn, tiêu đề chương là đoạn đầu) - gần nguyên văn, mất chỗ ngắt dòng chưa phải đoạn. Sách CHỈ-CHỮ (textbook.py) thì
+  chép nguyên văn `texts/<n>.txt` - chính là file nguồn Studio sẽ đọc, nên "Làm sách nói từ cuốn này" không mất gì;
 - giọng từng nhân vật và người kể: khoá `voice.key` trong `cast.json` thành hồ sơ giọng + ghim giọng của dự án (cùng hàm
   `voice_profile_spec` mà bộ cấp giọng dùng, nên giọng ra đúng như cũ) - bộ cấp giọng không đổi giọng người đã ghim;
 - tên hiển thị người nghe đã đặt (“Đổi tên”) và tên sách, bìa;
@@ -58,9 +59,15 @@ def chapter_text(script: dict[str, Any]) -> str:
     return "\n\n".join(" ".join(parts) for _, parts in sorted(paragraphs.items())) + "\n"
 
 
+def buildable(folder: Path) -> bool:
+    """Cuốn này có thể thành dự án Studio: chờ xưởng (file `.abookproj` không xưởng), hay sách chỉ-chữ (chưa có audio nào)."""
+    return packages.workshop_state(folder) == "pending" or packages.text_book(packages.manifest(folder))
+
+
 def _sources(folder: Path, library_root: Path, title: str) -> tuple[list[str], int]:
     """Viết chữ các chương ra `library_root/Nguồn dựng xưởng/<tên sách>/` (dự án giữ đường dẫn tới chúng). Trả (đường dẫn các file,
-    số chương không có chữ). Có `sources/` trong thư mục cuốn thì dùng nguyên văn; không thì dựng từ kịch bản."""
+    số chương không có chữ). Sách chỉ-chữ: chép `texts/<n>.txt`. Có `sources/` trong thư mục cuốn thì dùng nguyên văn; không thì
+    dựng từ kịch bản."""
     clean = re.sub(r'[<>:"/\\|?*\x00-\x1f]+', " ", title).strip(" .") or "Sách"
     target = Path(library_root) / SOURCE_FOLDER / f"{' '.join(clean.split())[:80]}"
     n = 2
@@ -68,6 +75,17 @@ def _sources(folder: Path, library_root: Path, title: str) -> tuple[list[str], i
         target = target.with_name(f"{target.name} ({n})")
         n += 1
     target.mkdir(parents=True)
+    book = packages.manifest(folder)
+    if packages.text_book(book):
+        paths = []
+        for chapter in sorted(book["chapters"], key=lambda item: (item.get("index") or 0, item.get("id") or 0)):
+            text = packages.chapter_text(folder, chapter["id"])
+            if text is None:
+                continue
+            copy = target / f"{int(chapter.get('index') or chapter['id']):05d}.txt"
+            copy.write_bytes(text.encode("utf-8"))
+            paths.append(str(copy))
+        return paths, len(book["chapters"]) - len(paths)
     kept = sorted((folder / "sources").glob("*")) if (folder / "sources").is_dir() else []
     if kept:
         paths = []
@@ -76,7 +94,6 @@ def _sources(folder: Path, library_root: Path, title: str) -> tuple[list[str], i
             copy.write_bytes(source.read_bytes())
             paths.append(str(copy))
         return paths, 0
-    book = packages.manifest(folder)
     paths, without = [], 0
     for chapter in sorted(book.get("chapters") or [], key=lambda item: (item.get("index") or 0, item.get("id") or 0)):
         script = packages.script(folder, chapter.get("id")) if isinstance(chapter.get("id"), int) else None
@@ -125,7 +142,7 @@ def build(folder: Path, library_root: Path, create: Callable[[list[str], str, st
     dự án của app (server.App._create_book - đúng thiết lập mặc định của trình tạo sách). Không chạy gì: dự án vừa tạo, chưa bắt đầu.
     Trả {"project": thư mục, "chapters", "chaptersWithoutText", "voices", "names", "requests", "skipped"}."""
     folder = Path(folder)
-    if packages.workshop_state(folder) != "pending":
+    if not buildable(folder):
         raise WorkshopError("Cuốn này không chờ dựng xưởng.")
     if built(folder):
         raise WorkshopError("Xưởng của cuốn này đã dựng rồi.")

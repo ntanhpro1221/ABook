@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import sqlite3
 import zipfile
 from pathlib import Path
@@ -326,10 +327,12 @@ def test_a_music_track_that_cannot_be_fetched_is_left_out(tmp_path: Path) -> Non
         opened.verify()
 
 
-def test_a_project_without_a_finished_chapter_has_nothing_to_listen_to(tmp_path: Path) -> None:
+def test_a_project_without_a_finished_chapter_or_a_readable_source_has_nothing_to_listen_to(tmp_path: Path) -> None:
+    """Có chữ nguồn thì là sách chỉ-chữ (tests/test_text_books.py); không audio cũng không chữ thì không có gì để nghe hay đọc."""
     project = _project(tmp_path)
     with sqlite3.connect(project / store.DB_NAME) as db:
         db.execute("UPDATE chapters SET status = 'synthesizing'")
+    shutil.rmtree(tmp_path / "nguon")
     packed = projectfile.pack(project, tmp_path / "du_an.abookproj")
     with zipfile.ZipFile(packed) as archive:
         assert "book.json" not in archive.namelist() and not any(

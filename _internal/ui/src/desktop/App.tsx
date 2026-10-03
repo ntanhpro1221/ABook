@@ -7,6 +7,7 @@ import { Toaster, toast } from "sonner";
 import { BookScreen } from "@/listen/BookScreen";
 import { ClipProvider } from "@/listen/clip";
 import { WebAudioEngine } from "@/listen/engine";
+import { AddBookButton } from "@/listen/AddBook";
 import { LibraryScreen } from "@/listen/LibraryScreen";
 import { MorningRecap } from "@/listen/MorningRecap";
 import { ReaderScreen } from "@/listen/ReaderScreen";
@@ -22,7 +23,7 @@ import { pickFolder, useAppInfo, usePreferences } from "@/studio/data";
 import { NewProjectScreen } from "@/studio/NewProjectScreen";
 import { ProjectScreen } from "@/studio/ProjectScreen";
 import { ProjectsScreen } from "@/studio/ProjectsScreen";
-import { httpSource } from "./httpSource";
+import { desktopTextImport, httpSource } from "./httpSource";
 import { SettingsScreen } from "./SettingsScreen";
 import { Shell } from "./Shell";
 
@@ -56,12 +57,13 @@ function EmptyLibrary() {
           <Button variant="primary" size="lg" icon={BookPlus} onClick={() => navigate("/studio/new")}>
             Tạo sách nói đầu tiên
           </Button>
+          <AddBookButton variant="ghost" />
           <OpenBookFileButton variant="ghost" />
         </div>
       }
     >
-      Sách xuất hiện ở đây ngay khi chương đầu tiên thu xong - không cần chờ cả cuốn. Có file sách (.abook) từ máy khác
-      thì mở thẳng.
+      Sách xuất hiện ở đây ngay khi chương đầu tiên thu xong - không cần chờ cả cuốn. Có file EPUB, Word, PDF hay thư mục TXT
+      thì thêm thẳng để đọc; có file sách (.abook) từ máy khác thì mở.
     </EmptyState>
   );
 }
@@ -405,7 +407,12 @@ function LibraryRoute() {
   return (
     <LibraryScreen
       empty={<EmptyLibrary />}
-      header={<OpenBookFileButton />}
+      header={
+        <div className="flex flex-wrap justify-end gap-2">
+          <AddBookButton />
+          <OpenBookFileButton />
+        </div>
+      }
       recap={<MorningRecap className="mt-6" />}
       onOpenUpcoming={info?.listenOnly ? undefined : (book) => navigate(`/studio/${book.id}`)}
     />
@@ -455,10 +462,12 @@ export function App() {
   // Hộp thoại đang mở: thông báo (nhất là cái có nút "Ở lại đây") lên đầu màn, khỏi đè nút chính của hộp ở góc dưới
   // (soát UX 02-10: "Thiết bị khác đã nghe tới chỗ khác" che "Xuất" và "Chọn").
   const modalOpen = useModalOpen();
+  // "Thêm sách từ file…" đọc file bằng đường dẫn trên máy này: thiết bị điều khiển từ xa (Studio từ xa) không có.
+  const source = useMemo(() => (info?.remote ? httpSource : { ...httpSource, textImport: desktopTextImport(Boolean(info?.dialogs)) }), [info?.remote, info?.dialogs]);
   if (!info) return <div className="grid h-full place-items-center text-fg-3">Đang mở ABook…</div>;
   return (
     <TooltipProvider delayDuration={350} skipDelayDuration={150}>
-      <SourceProvider source={httpSource}>
+      <SourceProvider source={source}>
         <PlayerProvider
           engine={engine}
           defaultRate={info.playbackRate}

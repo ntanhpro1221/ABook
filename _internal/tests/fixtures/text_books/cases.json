@@ -1,0 +1,527 @@
+{
+ "cases": [
+  {
+   "name": "epub3",
+   "input": {
+    "title": "Chuyến phà cuối ngày",
+    "author": "Lê Thử Nghiệm",
+    "language": "vi",
+    "chapters": [
+     {
+      "title": "Chương 1: Bến phà lúc bình minh",
+      "text": "Sương còn phủ kín mặt sông khi ông Tám đẩy chiếc phà ra khỏi bến. Tiếng máy nổ trầm đục vang lên giữa buổi sớm yên ắng, và đàn cò giật mình bay tản vào những lùm bần ven bờ.\n\n“Hôm nay nước lớn,” ông nói với cậu bé đứng bên mạn thuyền. “Con giữ chắc cây sào, đừng để phà trôi vào bãi.”\n\nCậu bé gật đầu, siết chặt cây sào tre trong đôi bàn tay nhỏ. Cậu chưa từng thấy dòng sông nào rộng đến thế.\n\nNước lớn dần."
+     },
+     {
+      "title": "Chương 2: Người khách lạ",
+      "text": "Dịch: Nhóm Lục Bình\n\nChuyến đầu tiên chỉ có một hành khách. Người đàn ông mặc chiếc áo mưa cũ, mang theo một cái hộp gỗ buộc dây cẩn thận, ngồi lặng lẽ ở đầu phà suốt quãng đường.\n\n— Ông đi đâu mà sớm vậy? — cậu bé hỏi.\n\n— Về quê thôi, cháu ạ. — Người lạ mỉm cười. — Mát-xcơ-va xa lắm, còn quê ta thì ngay bên kia sông."
+     },
+     {
+      "title": "Chương 3",
+      "text": "Cơn mưa cuối mùa\n\nMưa kéo đến lúc xế chiều, nặng hạt và lạnh.\n\nÔng Tám cho phà cập bến sớm hơn mọi hôm, buộc dây thật chặt vào cột sắt rồi đứng nhìn những giọt nước nhảy múa trên mặt sông.\n\nCậu bé ngồi co chân trong khoang, nghe tiếng mưa gõ lên mái tôn như một bản nhạc không đầu không cuối."
+     }
+    ],
+    "textHasTitle": false
+   },
+   "expected": {
+    "book": {
+     "format": "abook-book/1",
+     "title": "Chuyến phà cuối ngày",
+     "author": "Lê Thử Nghiệm",
+     "language": "vi",
+     "narrator": "",
+     "duration": 0,
+     "chaptersTotal": 3,
+     "chaptersAvailable": 0,
+     "complete": false,
+     "version": "d2c81099ae61070e",
+     "chapters": [
+      {
+       "id": 1,
+       "index": 1,
+       "title": "Chương 1: Bến phà lúc bình minh",
+       "subtitle": "",
+       "fullTitle": "Chương 1: Bến phà lúc bình minh",
+       "duration": 0,
+       "available": false,
+       "size": 0,
+       "state": "text",
+       "text": "texts/1.txt"
+      },
+      {
+       "id": 2,
+       "index": 2,
+       "title": "Chương 2: Người khách lạ",
+       "subtitle": "",
+       "fullTitle": "Chương 2: Người khách lạ",
+       "duration": 0,
+       "available": false,
+       "size": 0,
+       "state": "text",
+       "text": "texts/2.txt"
+      },
+      {
+       "id": 3,
+       "index": 3,
+       "title": "Chương 3",
+       "subtitle": "",
+       "fullTitle": "Chương 3",
+       "duration": 0,
+       "available": false,
+       "size": 0,
+       "state": "text",
+       "text": "texts/3.txt"
+      }
+     ],
+     "samples": [],
+     "cover": null
+    },
+    "version": 5,
+    "files": {
+     "texts/1.txt": {
+      "size": 595,
+      "sha256": "13a11f05d25f57dc35c39f729bdd5f450ca845fe808951c6d6d9b1680d16505a"
+     },
+     "texts/2.txt": {
+      "size": 469,
+      "sha256": "a3fcf2d6f14660c223091ce355c187084f267340164570fe002d83cf31950eb5"
+     },
+     "texts/3.txt": {
+      "size": 399,
+      "sha256": "ada70c4266337e08a42c215d91ae18be1ea77d2720436a79f0abb701447904da"
+     }
+    },
+    "texts": {
+     "texts/1.txt": "Chương 1: Bến phà lúc bình minh\n\nSương còn phủ kín mặt sông khi ông Tám đẩy chiếc phà ra khỏi bến. Tiếng máy nổ trầm đục vang lên giữa buổi sớm yên ắng, và đàn cò giật mình bay tản vào những lùm bần ven bờ.\n\n“Hôm nay nước lớn,” ông nói với cậu bé đứng bên mạn thuyền. “Con giữ chắc cây sào, đừng để phà trôi vào bãi.”\n\nCậu bé gật đầu, siết chặt cây sào tre trong đôi bàn tay nhỏ. Cậu chưa từng thấy dòng sông nào rộng đến thế.\n\nNước lớn dần.\n",
+     "texts/2.txt": "Chương 2: Người khách lạ\n\nDịch: Nhóm Lục Bình\n\nChuyến đầu tiên chỉ có một hành khách. Người đàn ông mặc chiếc áo mưa cũ, mang theo một cái hộp gỗ buộc dây cẩn thận, ngồi lặng lẽ ở đầu phà suốt quãng đường.\n\n— Ông đi đâu mà sớm vậy? — cậu bé hỏi.\n\n— Về quê thôi, cháu ạ. — Người lạ mỉm cười. — Mát-xcơ-va xa lắm, còn quê ta thì ngay bên kia sông.\n",
+     "texts/3.txt": "Chương 3\n\nCơn mưa cuối mùa\n\nMưa kéo đến lúc xế chiều, nặng hạt và lạnh.\n\nÔng Tám cho phà cập bến sớm hơn mọi hôm, buộc dây thật chặt vào cột sắt rồi đứng nhìn những giọt nước nhảy múa trên mặt sông.\n\nCậu bé ngồi co chân trong khoang, nghe tiếng mưa gõ lên mái tôn như một bản nhạc không đầu không cuối.\n"
+    },
+    "contentKey": "f-85fa1bce5d0a616d5e9af5fa",
+    "preview": {
+     "title": "Chuyến phà cuối ngày",
+     "author": "Lê Thử Nghiệm",
+     "language": "vi",
+     "hasCover": false,
+     "chapters": [
+      {
+       "index": 1,
+       "title": "Chương 1: Bến phà lúc bình minh",
+       "firstLine": "Chương 1: Bến phà lúc bình minh",
+       "words": 98,
+       "chars": 340
+      },
+      {
+       "index": 2,
+       "title": "Chương 2: Người khách lạ",
+       "firstLine": "Chương 2: Người khách lạ",
+       "words": 78,
+       "chars": 264
+      },
+      {
+       "index": 3,
+       "title": "Chương 3",
+       "firstLine": "Chương 3",
+       "words": 66,
+       "chars": 233
+      }
+     ],
+     "notes": [],
+     "totals": {
+      "chapters": 3,
+      "words": 242
+     }
+    }
+   }
+  },
+  {
+   "name": "txt",
+   "input": {
+    "title": "txt",
+    "author": null,
+    "language": null,
+    "chapters": [
+     {
+      "title": "Chương 1",
+      "text": "Sương sớm\n\nChuyến phà đầu tiên rời bến lúc năm giờ.\nCậu bé đứng ở mạn thuyền."
+     },
+     {
+      "title": "Chương 2",
+      "text": "Chương hai\n\nTiếng máy nổ trầm đục."
+     },
+     {
+      "title": "9 Ngoại truyện",
+      "text": "Một chương viết bằng UTF-8 thường, không BOM."
+     },
+     {
+      "title": "Chương 10",
+      "text": "Chương ba\n\nDịch: Nhóm Lục Bình\n\nMưa rơi suốt chiều."
+     }
+    ],
+    "textHasTitle": true
+   },
+   "expected": {
+    "book": {
+     "format": "abook-book/1",
+     "title": "txt",
+     "narrator": "",
+     "duration": 0,
+     "chaptersTotal": 4,
+     "chaptersAvailable": 0,
+     "complete": false,
+     "version": "5bfa448f2360b5f9",
+     "chapters": [
+      {
+       "id": 1,
+       "index": 1,
+       "title": "Chương 1",
+       "subtitle": "",
+       "fullTitle": "Chương 1",
+       "duration": 0,
+       "available": false,
+       "size": 0,
+       "state": "text",
+       "text": "texts/1.txt"
+      },
+      {
+       "id": 2,
+       "index": 2,
+       "title": "Chương 2",
+       "subtitle": "",
+       "fullTitle": "Chương 2",
+       "duration": 0,
+       "available": false,
+       "size": 0,
+       "state": "text",
+       "text": "texts/2.txt"
+      },
+      {
+       "id": 3,
+       "index": 3,
+       "title": "9 Ngoại truyện",
+       "subtitle": "",
+       "fullTitle": "9 Ngoại truyện",
+       "duration": 0,
+       "available": false,
+       "size": 0,
+       "state": "text",
+       "text": "texts/3.txt"
+      },
+      {
+       "id": 4,
+       "index": 4,
+       "title": "Chương 10",
+       "subtitle": "",
+       "fullTitle": "Chương 10",
+       "duration": 0,
+       "available": false,
+       "size": 0,
+       "state": "text",
+       "text": "texts/4.txt"
+      }
+     ],
+     "samples": [],
+     "cover": null
+    },
+    "version": 5,
+    "files": {
+     "texts/1.txt": {
+      "size": 109,
+      "sha256": "50288a21f6a40afd3164b408a55e4db8820aaf33ba55baa0e9aa8011d8e76692"
+     },
+     "texts/2.txt": {
+      "size": 47,
+      "sha256": "437e328a47e1fad0bfc8a4b5aa7c208a7a4e8624b8e3152070938246c336d551"
+     },
+     "texts/3.txt": {
+      "size": 58,
+      "sha256": "a80057bbb5b31402064fd123375bbbb5af3927db10bcf220be3d517c020cf6f7"
+     },
+     "texts/4.txt": {
+      "size": 66,
+      "sha256": "68f1809a964689ce48836d954e3f66da6fe46d4afaa74a6ed9a1104b3cfff24c"
+     }
+    },
+    "texts": {
+     "texts/1.txt": "Sương sớm\n\nChuyến phà đầu tiên rời bến lúc năm giờ.\nCậu bé đứng ở mạn thuyền.\n",
+     "texts/2.txt": "Chương hai\n\nTiếng máy nổ trầm đục.\n",
+     "texts/3.txt": "Một chương viết bằng UTF-8 thường, không BOM.\n",
+     "texts/4.txt": "Chương ba\n\nDịch: Nhóm Lục Bình\n\nMưa rơi suốt chiều.\n"
+    },
+    "contentKey": "f-229676d0237a63560bd635a0",
+    "preview": {
+     "title": "txt",
+     "author": null,
+     "language": null,
+     "hasCover": false,
+     "chapters": [
+      {
+       "index": 1,
+       "title": "Chương 1",
+       "firstLine": "Sương sớm",
+       "words": 17,
+       "chars": 60
+      },
+      {
+       "index": 2,
+       "title": "Chương 2",
+       "firstLine": "Chương hai",
+       "words": 7,
+       "chars": 27
+      },
+      {
+       "index": 3,
+       "title": "9 Ngoại truyện",
+       "firstLine": "Một chương viết bằng UTF-8 thường, không BOM.",
+       "words": 8,
+       "chars": 38
+      },
+      {
+       "index": 4,
+       "title": "Chương 10",
+       "firstLine": "Chương ba",
+       "words": 10,
+       "chars": 40
+      }
+     ],
+     "notes": [],
+     "totals": {
+      "chapters": 4,
+      "words": 42
+     }
+    }
+   }
+  },
+  {
+   "name": "story",
+   "input": {
+    "title": "Chuyến phà cuối ngày",
+    "author": "Lê Thử Nghiệm",
+    "language": null,
+    "chapters": [
+     {
+      "title": "Chương 1: Bến phà lúc bình minh",
+      "text": "Sương còn phủ kín mặt sông khi ông Tám đẩy chiếc phà ra khỏi bến. Tiếng máy nổ trầm đục vang lên giữa buổi sớm yên ắng, và đàn cò giật mình bay tản vào những lùm bần ven bờ.\n\n“Hôm nay nước lớn,” ông nói với cậu bé đứng bên mạn thuyền. “Con giữ chắc cây sào, đừng để phà trôi vào bãi.”\n\nCậu bé gật đầu, siết chặt cây sào tre trong đôi bàn tay nhỏ. Cậu chưa từng thấy dòng sông nào rộng đến thế."
+     },
+     {
+      "title": "Chương 2: Người khách lạ",
+      "text": "Chuyến đầu tiên chỉ có một hành khách. Người đàn ông mặc chiếc áo mưa cũ, mang theo một cái hộp gỗ buộc dây cẩn thận, ngồi lặng lẽ ở đầu phà suốt quãng đường.\n\n— Ông đi đâu mà sớm vậy? — cậu bé hỏi.\n\n— Về quê thôi, cháu ạ. — Người lạ mỉm cười. — Mát-xcơ-va xa lắm, còn quê ta thì ngay bên kia sông."
+     },
+     {
+      "title": "Chương 3: Cơn mưa cuối mùa",
+      "text": "Mưa kéo đến lúc xế chiều, nặng hạt và lạnh. Ông Tám cho phà cập bến sớm hơn mọi hôm, buộc dây thật chặt vào cột sắt rồi đứng nhìn những giọt nước nhảy múa trên mặt sông.\n\nCậu bé ngồi co chân trong khoang, nghe tiếng mưa gõ lên mái tôn như một bản nhạc không đầu không cuối."
+     }
+    ],
+    "textHasTitle": false
+   },
+   "expected": {
+    "book": {
+     "format": "abook-book/1",
+     "title": "Chuyến phà cuối ngày",
+     "author": "Lê Thử Nghiệm",
+     "narrator": "",
+     "duration": 0,
+     "chaptersTotal": 3,
+     "chaptersAvailable": 0,
+     "complete": false,
+     "version": "f857c9e4b65299f3",
+     "chapters": [
+      {
+       "id": 1,
+       "index": 1,
+       "title": "Chương 1: Bến phà lúc bình minh",
+       "subtitle": "",
+       "fullTitle": "Chương 1: Bến phà lúc bình minh",
+       "duration": 0,
+       "available": false,
+       "size": 0,
+       "state": "text",
+       "text": "texts/1.txt"
+      },
+      {
+       "id": 2,
+       "index": 2,
+       "title": "Chương 2: Người khách lạ",
+       "subtitle": "",
+       "fullTitle": "Chương 2: Người khách lạ",
+       "duration": 0,
+       "available": false,
+       "size": 0,
+       "state": "text",
+       "text": "texts/2.txt"
+      },
+      {
+       "id": 3,
+       "index": 3,
+       "title": "Chương 3: Cơn mưa cuối mùa",
+       "subtitle": "",
+       "fullTitle": "Chương 3: Cơn mưa cuối mùa",
+       "duration": 0,
+       "available": false,
+       "size": 0,
+       "state": "text",
+       "text": "texts/3.txt"
+      }
+     ],
+     "samples": [],
+     "cover": null
+    },
+    "version": 5,
+    "files": {
+     "texts/1.txt": {
+      "size": 573,
+      "sha256": "aa3075b8adebf45711f290735173f70a97d9c6486a2d92077cdfc4d13c3086ca"
+     },
+     "texts/2.txt": {
+      "size": 442,
+      "sha256": "caecc3877fd9239ac26a833212496e8945cfcf502052c458af8e463ddcba45e9"
+     },
+     "texts/3.txt": {
+      "size": 398,
+      "sha256": "b27bc58c23d02ff51cff69a928e3643d8b2f0eba262c328af27cf55348cbbfec"
+     }
+    },
+    "texts": {
+     "texts/1.txt": "Chương 1: Bến phà lúc bình minh\n\nSương còn phủ kín mặt sông khi ông Tám đẩy chiếc phà ra khỏi bến. Tiếng máy nổ trầm đục vang lên giữa buổi sớm yên ắng, và đàn cò giật mình bay tản vào những lùm bần ven bờ.\n\n“Hôm nay nước lớn,” ông nói với cậu bé đứng bên mạn thuyền. “Con giữ chắc cây sào, đừng để phà trôi vào bãi.”\n\nCậu bé gật đầu, siết chặt cây sào tre trong đôi bàn tay nhỏ. Cậu chưa từng thấy dòng sông nào rộng đến thế.\n",
+     "texts/2.txt": "Chương 2: Người khách lạ\n\nChuyến đầu tiên chỉ có một hành khách. Người đàn ông mặc chiếc áo mưa cũ, mang theo một cái hộp gỗ buộc dây cẩn thận, ngồi lặng lẽ ở đầu phà suốt quãng đường.\n\n— Ông đi đâu mà sớm vậy? — cậu bé hỏi.\n\n— Về quê thôi, cháu ạ. — Người lạ mỉm cười. — Mát-xcơ-va xa lắm, còn quê ta thì ngay bên kia sông.\n",
+     "texts/3.txt": "Chương 3: Cơn mưa cuối mùa\n\nMưa kéo đến lúc xế chiều, nặng hạt và lạnh. Ông Tám cho phà cập bến sớm hơn mọi hôm, buộc dây thật chặt vào cột sắt rồi đứng nhìn những giọt nước nhảy múa trên mặt sông.\n\nCậu bé ngồi co chân trong khoang, nghe tiếng mưa gõ lên mái tôn như một bản nhạc không đầu không cuối.\n"
+    },
+    "contentKey": "f-037f645f27cc15703aa5bcc6",
+    "preview": {
+     "title": "Chuyến phà cuối ngày",
+     "author": "Lê Thử Nghiệm",
+     "language": null,
+     "hasCover": false,
+     "chapters": [
+      {
+       "index": 1,
+       "title": "Chương 1: Bến phà lúc bình minh",
+       "firstLine": "Chương 1: Bến phà lúc bình minh",
+       "words": 95,
+       "chars": 329
+      },
+      {
+       "index": 2,
+       "title": "Chương 2: Người khách lạ",
+       "firstLine": "Chương 2: Người khách lạ",
+       "words": 74,
+       "chars": 248
+      },
+      {
+       "index": 3,
+       "title": "Chương 3: Cơn mưa cuối mùa",
+       "firstLine": "Chương 3: Cơn mưa cuối mùa",
+       "words": 66,
+       "chars": 234
+      }
+     ],
+     "notes": [],
+     "totals": {
+      "chapters": 3,
+      "words": 235
+     }
+    }
+   }
+  },
+  {
+   "name": "messy",
+   "input": {
+    "title": "  Sách   thử\u0007 nghiệm  ",
+    "author": null,
+    "language": null,
+    "chapters": [
+     {
+      "title": "Mở đầu",
+      "text": "Đoạn một.\n\nĐoạn hai."
+     },
+     {
+      "title": "",
+      "text": "Chỉ có một dòng."
+     }
+    ],
+    "textHasTitle": false
+   },
+   "expected": {
+    "book": {
+     "format": "abook-book/1",
+     "title": "Sách thử nghiệm",
+     "narrator": "",
+     "duration": 0,
+     "chaptersTotal": 2,
+     "chaptersAvailable": 0,
+     "complete": false,
+     "version": "fb47b759eaa779b7",
+     "chapters": [
+      {
+       "id": 1,
+       "index": 1,
+       "title": "Mở đầu",
+       "subtitle": "",
+       "fullTitle": "Mở đầu",
+       "duration": 0,
+       "available": false,
+       "size": 0,
+       "state": "text",
+       "text": "texts/1.txt"
+      },
+      {
+       "id": 2,
+       "index": 2,
+       "title": "Chương 2",
+       "subtitle": "",
+       "fullTitle": "Chương 2",
+       "duration": 0,
+       "available": false,
+       "size": 0,
+       "state": "text",
+       "text": "texts/2.txt"
+      }
+     ],
+     "samples": [],
+     "cover": null
+    },
+    "version": 5,
+    "files": {
+     "texts/1.txt": {
+      "size": 42,
+      "sha256": "68fcd8c14267ca66bf463cdac0dbcc8bbcd2ca78121d792d5a225cf55e57e390"
+     },
+     "texts/2.txt": {
+      "size": 25,
+      "sha256": "f65101e49a4934d0d30422b20dcefe755ba410645bfdec1576fd72d32bf6dd30"
+     }
+    },
+    "texts": {
+     "texts/1.txt": "Mở đầu\n\nĐoạn một.\n\nĐoạn hai.\n",
+     "texts/2.txt": "\n\nChỉ có một dòng.\n"
+    },
+    "contentKey": "f-a2dbad364458135a355c44f3",
+    "preview": {
+     "title": "Sách thử nghiệm",
+     "author": null,
+     "language": null,
+     "hasCover": false,
+     "chapters": [
+      {
+       "index": 1,
+       "title": "Mở đầu",
+       "firstLine": "Mở đầu",
+       "words": 6,
+       "chars": 21
+      },
+      {
+       "index": 2,
+       "title": "Chương 2",
+       "firstLine": "Chỉ có một dòng.",
+       "words": 4,
+       "chars": 13
+      }
+     ],
+     "notes": [],
+     "totals": {
+      "chapters": 2,
+      "words": 10
+     }
+    }
+   }
+  }
+ ]
+}

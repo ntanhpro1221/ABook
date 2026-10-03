@@ -26,6 +26,40 @@ Studio product). Background music can play along.
 - `.abookproj` stays "book + workshop" (P3); a stage-0 book can become a project ("Dựng xưởng") like any `.abook`.
 - New format version; no backward compatibility needed (owner rule).
 
+### What was built (layered book, stage 0 "text" + the import entry, 03-10)
+
+- **Format version 5** (`ABOOK_FILE_FORMAT.md`): `texts/<id>.txt` entries; `chapters[i].state` = `"text"` and `chapters[i].text`; a chapter without audio has no
+  `file`, `script` or duration (`duration 0`, `available false`); a file may have no audio chapter at all (`complete` false, Readium `readingOrder` empty,
+  no `cast.json`). Only stage 0 is written; `analysed` / `cast` / `quick` / `produced` and the `quick/` folder are still design. Python `bookfile.py`
+  (`seal` - formerly `_seal` - accepts texts instead of audio; `listening_layer` adds the chapters' source texts when a Studio project has no audio yet;
+  `package_version` / `layer_version` give 5 for texts), Kotlin `BookFileImport.kt` / `BookDocumentWriter.kt` (`seal` shared by "Lưu thành .abook" and
+  `TextBook`). Entry order: `texts/` after `scripts/`.
+- **P3 blockers fixed** (docs/EDITING.md "Limits"): a book with no audio is identified by the SHA-256 of its chapter texts
+  (`fingerprints.identity_prints` / `BookFileImport.identityPrints`, feeding the same `content_key` formula; `Store.findByChapters` and
+  `packages.import_opened` match text books by the WHOLE set of texts, not by one shared chapter); `bookfile.seal` and `BookDocumentWriter.seal` accept
+  no-audio books; `bookfile.listening_layer` / `projectfile._listening_book` produce a `book.json` for a Studio project that has sources but no audio
+  yet. `workshop._sources` now copies `texts/<n>.txt` for a text book (nothing is rebuilt from scripts).
+- **One text per chapter = the file Studio would read** (`ImportedBook.chapter_source` / `BookImport.chapterSource`): title + blank line + text for
+  EPUB / DOCX / PDF, the file verbatim for TXT. The Studio chapter folder (`importers.extract`) and the text book use the same function, so
+  "Làm sách nói từ cuốn này" (`POST /api/books/<id>/workshop`, `workshop.build`, desktop with Studio only) writes exactly the chapters Studio would have got from
+  the original file.
+- **Import into the library**: desktop `textbook.py` (`preview`, `build`, `add_to_library` = build a stage-0 `.abook` in a temp folder, then the normal
+  `packages.import_file`, so verification, dedupe and edits are the ones of every book file) behind `POST /api/listen/import/preview` and
+  `POST /api/listen/import`; reading text is `GET /api/listen/books/<id>/chapters/<n>/text` (also open to paired listen-only devices). Phone:
+  `TextBook.kt` + `TextImports.kt` behind `EbookLibrary.pickSource / previewImport / createImport / discardImport` (system picker → copy into
+  `library/imports/<ref>/` → `BookImport` rules → `BookDocumentWriter.seal` → `BookFileImport`). Both write the SAME `book.json` and hashes on
+  `tests/fixtures/text_books/` (`tests/text_book_fixtures.py`, `TextBookTest.kt`; `python_text.abook` is read by Kotlin, `kotlin_text.abook` by Python).
+- **PDF on the phone, the bridge**: Kotlin copies the PDF to the app folder, the WebView reads that copy with pdf.js (`ui/src/shared/pdfPages.ts` via
+  `android/textImport.ts`) and hands the pages' lines to `previewImport({ref, pages, title, author})`, which runs `BookImport.fromPdfPages`. Pages travel
+  over the Capacitor bridge as JSON (a 500-page text PDF is about 1-2 MB).
+- **UI**: `listen/AddBook.tsx` ("Thêm sách từ file…": choose → chapter list (`shared/ChapterPreview.tsx`, the Studio list's row layout) + suggestions never applied →
+  add; shared by desktop and phone through `ListenSource.textImport`); the library card says "Chỉ có chữ" and opens the reader; the book page and
+  `ReaderScreen` show "Chưa có âm thanh" and no playback controls for a text chapter, and no per-line editing; the reader builds paragraphs from the text
+  (`listen/textScript.ts`, one implementation for both platforms - no fake script on the server). Characters, music and "đánh dấu đã nghe" are hidden for a
+  text-only book; title, cover and chapter names are editable and saved like any imported book.
+- **Not built**: dropping a file onto the window (only the "Thêm sách từ file…" button and the pasted path); a Studio-style per-chapter delete before adding;
+  accepting a suggestion (credit line) - suggestions are only shown; reading-position bar for text books on the library card; OCR for scanned PDFs.
+
 ## 2. Importers (shared by Studio and Listen now)
 
 One function `import_text(path) -> {title, author?, cover?, chapters: [{title, text}]}`, Python + Kotlin with shared fixtures:
@@ -60,9 +94,8 @@ Text is never auto-edited (owner rule): cleanup proposals (e.g. a credit line) a
   Measured: debug APK 9,480,805 -> 10,216,254 bytes (+735 KB, +7.8%; the chunk is 488 KB + worker 1,317 KB raw, ~540 KB gzip), the main
   JS bundle is unchanged. PdfBox-Android was the alternative (Apache-2.0, 3.25 MB aar, JVM-heavy); not chosen. The desktop UI does not need the
   TS extractor (Studio runs the Python importer), though the same module would work in its webview.
-- Not wired yet: the phone has no text-book library until section 1 (stages) lands, so `BookImport` + `readPdfPages` are libraries with tests,
-  not a screen. Studio: the new-book flow, remote upload and the Tauri file dialog accept `.epub/.docx/.pdf/.txt` and a folder; the chapter
-  list shows title, words and characters.
+- Wired (03-10, section 1 "What was built"): the phone's "Thêm sách từ file…" runs `BookImport` + `readPdfPages` and creates a stage-0 book. Studio: the new-book
+  flow, remote upload and the Tauri file dialog accept `.epub/.docx/.pdf/.txt` and a folder; the chapter list shows title, words and characters.
 
 ## 3. Voices for Listen now
 

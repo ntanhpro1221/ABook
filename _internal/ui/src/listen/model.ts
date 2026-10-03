@@ -15,7 +15,12 @@ export interface ListenChapter {
   available: boolean;
   /** Cả bộ trong một file .abook (phiên bản 3): số phần chứa chương này; sách một phần: không có. */
   part?: number | null;
+  /** "text": chương chỉ có chữ - đọc được, chưa có âm thanh (phiên bản 5, docs/LISTEN_ANYTHING.md mục 1); chương nghe được: không có. */
+  state?: "text" | null;
 }
+
+/** Giai đoạn của cả cuốn: "text" = chỉ có chữ (chưa chương nào có audio, thư viện ghi "Chỉ có chữ"); không có = sách nghe được như mọi sách. */
+export type BookStage = "text";
 
 /** Một phần của sách mở từ file cả bộ (`parts` của book.json, webui/bookfile.pack_series). `chapters`: mã chương đầu và cuối. */
 export interface BookPart {
@@ -91,6 +96,10 @@ export interface ListenBook {
   pauseReason?: "battery" | "listener" | null;
   /** Máy tính: cuốn mở từ file `.abook` (webui/packages.py) - nghe được, không có dự án trong Studio. */
   imported?: boolean;
+  /** Giai đoạn của cuốn; `null` / không có: sách nghe được như mọi sách. */
+  stage?: BookStage | null;
+  /** Máy tính, sách chỉ-chữ: mã dự án Studio đã làm từ cuốn này ("Làm sách nói từ cuốn này"), nếu còn trong thư viện. */
+  studioProject?: string | null;
   updatedAt: number | null;
   state: ListeningState;
   progress: BookProgress;

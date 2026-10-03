@@ -83,6 +83,7 @@ LISTEN_ROUTES: tuple[tuple[str, re.Pattern[str]], ...] = tuple((method, re.compi
     ("GET", _MEDIA + r"/cover"),
     ("GET", _BOOK + r"/cast"),
     ("GET", _BOOK + r"/chapters/\d+/script"),
+    ("GET", _LISTEN + r"/chapters/\d+/text"),  # chữ của chương trong sách chỉ-chữ (textbook.py)
     ("GET", r"/media/voices/[^/]+"),
     ("GET", _MEDIA + r"/samples/\d+"),
     # Nhạc nền của trình phát (httpSource.ts, musicBed.ts): mốc nhạc từng chương, bài đóng trong sách (và bài "Nhạc của tôi"
