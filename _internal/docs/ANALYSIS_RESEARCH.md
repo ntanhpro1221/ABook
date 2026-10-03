@@ -39,13 +39,14 @@ câu); nửa số mẫu (phản biện) chép nguyên ứng viên. Model thuộc
 model to hơn không có thêm gì để học, và kết quả lệ thuộc hạt. Không phải "ít thông tin thì học tốt hơn", mà là **ít tín hiệu
 khó**. Hướng data v9: thêm câu khó (đối đáp so le, ngôi thứ nhất), mẫu phản biện sửa sai thật, nhiều truyện hơn (LN Nhật trước).
 
-**Lỗi theo loại** (% câu có người nói, chương chung của ba ứng viên; `Corpus/claude/model_lane/error_types.py`):
+**Lỗi theo loại** (% câu có người nói, chương chung của ba ứng viên, nhãn đi QUA bước gom tên của app như F1 giọng;
+`Corpus/claude/model_lane/error_types.py`):
 
 | | Nhật: đúng | lệch lượt | nhầm "tôi" (2 chiều) | Hàn: đúng | lệch lượt | nhầm "tôi" |
 |---|---|---|---|---|---|---|
 | 4B v8 | 70,2 | 12,7 | 6,9 | 66,1 | 2,0 | 18,3 |
-| q35-4B | 65,7 | 12,8 | 8,5 | 74,6 | 3,5 | 15,5 |
-| 9B | 66,8 | 10,5 | 9,9 | 71,5 | 2,4 | 11,3 |
+| q35-4B | 66,5 | 12,8 | 9,2 | 74,6 | 3,5 | 15,5 |
+| 9B | 71,0 | 10,5 | 6,3 | 77,4 | 2,4 | 11,3 |
 | 9B hạt 1 | 53,3 | 17,7 | 19,6 | 52,4 | 4,1 | 31,3 |
 
 Truyện Nhật hỏng ở **đối đáp so le**: hơn nửa số ca, câu liền trước cũng là thoại và model lặp lại người nói của nó. Truyện Hàn
@@ -57,10 +58,13 @@ Truyện Nhật hỏng ở **đối đáp so le**: hơn nửa số ca, câu li�
 - Ca gán nhầm thường nằm trong đoạn kể ngôi ba chen giữa truyện ngôi một, chứ không phải do chữ "tôi" trong lời người khác.
 - 9B hạt 1 là một chế độ hỏng riêng: dồn câu về người kể theo cả chuỗi, tỉ lệ 22:1 so với khoảng 1,5:1 ở các lượt khác.
 
-**Biến thể chính tả tên người kể là lỗi thật mà app sửa được.** 45/98 ca "lẽ ra là tôi" của 9B ở Nageki là tên người kể viết
-khác ("Krai Andrej" thay vì KRAI ANDREY); hàm gom tên của app (`canonical_speaker_names`) gộp dấu, kính ngữ, bản rơi dấu nhưng
-không gộp biến thể phiên âm khác chữ - người nghe sẽ nghe một giọng lạ. Đề xuất phía app: so khớp mờ nhãn với tên `--first-person`
-(và với tên đã biết) trước khi tạo nhân vật mới.
+**So khớp mờ tên: KHÔNG đáng sửa file khoá.** Bản đầu của mục này (cùng ngày) cho rằng 45/98 lỗi "lẽ ra là tôi" của 9B ở
+Nageki là tên người kể viết khác ("Krai Andrej") và app không gộp - SAI: script lỗi khi ấy so nhãn thô, còn
+`canonical_speaker_names` (lượt đánh vần theo nguồn) đã gộp "Krai Andrej"/"Krai Andrei" về KRAI ANDREY. Mô phỏng offline đúng
+cách chấm (`fuzzy_sim.py`, ngưỡng ghi trước: cùng số từ, thứ tự xuôi/ngược, nhiều nhất một từ khác đúng 1 ký tự và dài >= 5)
+trên mọi chương đã đo của 10 nhãn: luật neo tên người kể gộp 0 lần; luật neo tên đã biết gộp 3 lần, đều là đảo thứ tự họ tên
+(Yamiyo 225), 0 gộp sai, F1 Yamiyo +0,3..+1,7, mọi truyện khác không đổi. Lỗi tên còn lại thật sự là BIỆT DANH (Nageki: biệt
+hiệu của người kể thành một giọng riêng) - so khớp chữ không bắt được.
 
 **Bảng phải tách truyện ĐÃ HỌC và truyện MỚI.** Bộ đo cũ (TCF, Nise, Yamiyo, Nageki, Love Unseen, HDST, YMP) là chương khác của
 chính các truyện có trong dữ liệu học; người dùng app thì gặp truyện mới. Nháp hiện tại (F1 giọng, 4B v8 / q35-4B / 9B): Nhật đã học
