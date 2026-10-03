@@ -16,6 +16,9 @@ import {
   type BookTemplate,
 } from "@/studio/bookTemplates";
 import { SharedReadingsSettings } from "@/studio/sharedReadings";
+import { VieneuModuleCard } from "@/listen/VieneuModuleCard";
+import { VoiceSettings, type KeyCheck, type OnlineProviderInfo, type VoiceSettingsApi } from "@/listen/VoiceSettings";
+import { httpSource } from "./httpSource";
 import { OtherComputers } from "./OtherComputers";
 import { PhoneSync, Switch } from "./PhoneSync";
 
@@ -158,6 +161,16 @@ function BookTemplates() {
     </div>
   );
 }
+
+/** Giọng đọc của "Nghe ngay" trên máy tính: máy chủ cục bộ (abook/readaloud) đọc, khóa của người dùng gửi trong thân yêu cầu, chỉ nhận lại bản che. */
+const desktopVoices: VoiceSettingsApi = {
+  voices: () => httpSource.readAloudVoices!(),
+  sample: async (voice, text) => (await httpSource.readAloudClip!(voice, text)).url,
+  online: () => api<OnlineProviderInfo[]>("/api/readaloud/online"),
+  saveKey: (provider, key, region) => api<OnlineProviderInfo>(`/api/readaloud/online/${provider}`, { method: "PUT", body: { key, region } }),
+  removeKey: (provider) => api<OnlineProviderInfo>(`/api/readaloud/online/${provider}`, { method: "DELETE" }),
+  checkKey: (provider) => api<KeyCheck>(`/api/readaloud/online/${provider}/check`, { method: "POST", body: {} }),
+};
 
 function Section({ id, title, description, children }: { id?: string; title: string; description?: string; children: ReactNode }) {
   return (
@@ -415,6 +428,19 @@ export function SettingsScreen() {
             </Field>
           </div>
         </Section>
+        {!remote && (
+          <Section
+            id="voices"
+            title="Giọng đọc"
+            description="Giọng mặc định khi nghe sách chưa có audio (“Nghe ngay”). Mỗi cuốn vẫn đổi được giọng riêng ở nút “Giọng đọc” trong trình phát."
+          >
+            <VoiceSettings
+              api={desktopVoices}
+              deviceHint="Máy này chưa có giọng tiếng Việt. Cài trong Windows: Cài đặt → Thời gian và ngôn ngữ → Giọng nói → Thêm giọng nói → Tiếng Việt."
+              modules={(reload) => <VieneuModuleCard onChanged={reload} />}
+            />
+          </Section>
+        )}
         <Section
           id="phone"
           title="Điện thoại và thiết bị"

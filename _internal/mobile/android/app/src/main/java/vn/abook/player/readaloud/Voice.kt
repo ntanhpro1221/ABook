@@ -8,8 +8,12 @@ import java.io.File
  */
 class Clip(val file: File, val durationMs: Long, val words: List<Span>, val voice: String)
 
-/** Giọng đọc không dùng được lúc này (hết mạng, thiếu giọng tiếng Việt, quá hạn...). `message` là câu nói thẳng cho người nghe. */
-class VoiceException(message: String, val offline: Boolean = false, cause: Throwable? = null) : Exception(message, cause)
+/**
+ * Giọng đọc không dùng được lúc này (hết mạng, thiếu giọng tiếng Việt, quá hạn...). `message` là câu nói thẳng cho người nghe. `reason` như bên máy tính
+ * (abook/readaloud/model.py): "offline", "auth" (khoá của người dùng sai / bị khoá), "quota" (hết hạn mức), "service"... - [ClipReader] dựa vào đó để chọn giọng đỡ.
+ */
+class VoiceException(message: String, val offline: Boolean = false, cause: Throwable? = null, val reason: String = if (offline) "offline" else "service") :
+    Exception(message, cause)
 
 /** Một giọng: đổi MỘT đoạn chữ thành file âm thanh (chặn tới khi xong hay hỏng; chạy ở luồng nền). */
 interface Voice {
@@ -21,8 +25,8 @@ interface Voice {
     fun synthesize(text: String, out: File): Clip
 }
 
-/** Một giọng cho người dùng chọn (plugin `voices()`). */
-data class VoiceInfo(val id: String, val name: String, val provider: String, val online: Boolean, val default: Boolean)
+/** Một giọng cho người dùng chọn (plugin `voices()`). `gender`: "female" / "male" / "" - gợi ý trong Cài đặt. */
+data class VoiceInfo(val id: String, val name: String, val provider: String, val online: Boolean, val default: Boolean, val gender: String = "")
 
 /** Cắt một đoạn quá dài thành các mảnh mà giọng nhận được (Edge 4096 byte một lần, Android `getMaxSpeechInputLength`). */
 object TextChunks {

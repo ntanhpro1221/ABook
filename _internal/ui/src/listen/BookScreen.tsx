@@ -1,7 +1,7 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, FileDown, GitMerge, History, Hourglass, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, Save, SlidersHorizontal, Trash2, UserRound } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
@@ -15,10 +15,12 @@ import { MergeDialog } from "@/studio/MergePeople";
 import { useClip } from "./clip";
 import { canEditBook, EditBlockedItem, EditBookDialog, refreshAfterEdit, RenameChapterDialog, SaveAsDialog, StudioOnlyItem, useSaveBook } from "./EditBook";
 import { bookStatusText, usePlayListenBook } from "./LibraryScreen";
-import { canPlay, chapterHeard, chaptersByPart, knownDuration, resumePoint, type CastMember, type ListenBook, type ListenChapter } from "./model";
+import { canPlay, chapterHeard, chaptersByPart, resumePoint, type CastMember, type ListenBook, type ListenChapter } from "./model";
+import { primaryListenLabel, textBookLine, textChapterLine } from "./labels";
 import { usePlayer } from "./player";
 import { BookmarkList, chapterStatusLabel } from "./PlayerViews";
 import { EditsSyncBanner, SendEditsItem } from "./SendEdits";
+import { PlaylistSubmenu } from "./PlaylistChoice";
 import { ProjectFileItems, ProjectViewsDialog, TextBookItems } from "./ProjectFileItems";
 import { BookSuggestions } from "./ReadingSuggestions";
 import { WishesDialog } from "./WishesDialog";
@@ -90,9 +92,7 @@ function ChapterRow({
           {chapter.available
             ? formatLength(chapter.duration)
             : chapter.state === "text"
-              ? chapter.speech
-                ? knownDuration(book.state, chapter) > 0 ? formatLength(knownDuration(book.state, chapter)) : "Giọng máy đọc"
-                : "Chưa có âm thanh"
+              ? textChapterLine(Boolean(chapter.speech))
               : chapterStatusLabel(book.producing)}
         </div>
         {heard > 0 && heard < 1 && (
@@ -101,14 +101,14 @@ function ChapterRow({
           </div>
         )}
       </button>
-      <div className="size-8 shrink-0">
+      <div className="size-8 shrink-0 max-sm:size-[44px]">
         {(
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
               <button
                 type="button"
                 aria-label={`Tuỳ chọn ${chapter.fullTitle}`}
-                className="grid size-8 place-items-center rounded-md text-fg-2 opacity-0 hover:bg-panel hover:text-fg group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 max-md:opacity-100"
+                className="grid size-8 place-items-center rounded-md text-fg-2 opacity-0 hover:bg-panel hover:text-fg group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 max-md:opacity-100 max-sm:size-[44px]"
               >
                 <MoreHorizontal className="size-4" />
               </button>
@@ -481,15 +481,23 @@ function HistoryTab({ book }: { book: ListenBook }) {
   );
 }
 
+type RecordDialog = { kind: "create" | "rename" | "delete"; name: string } | null;
+
+/** Hộp "Nghe lại từ đầu (hồ sơ mới)" mở sẵn tên gợi ý. */
+function newRecordDialog(book: ListenBook): RecordDialog {
+  return { kind: "create", name: `Lần nghe ${(book.records?.length ?? 0) + 1}` };
+}
+
 /**
  * Hồ sơ nghe của cuốn: dữ liệu nghe độc lập với sách, app giữ liên kết - một cuốn nhiều hồ sơ (nghe lại từ đầu mà giữ
  * lần trước, mỗi người trong nhà một hồ sơ). Cuốn đang nạp trong trình phát thì trình phát theo sang hồ sơ mới.
+ * Chỉ có một hồ sơ (gần như mọi người): không hiện nút "Hồ sơ nghe: Mặc định"; "Nghe lại từ đầu (hồ sơ mới)…" nằm trong menu "Tuỳ chọn khác"
+ * (soát UX 03-10) - vì thế trang sách giữ `dialog`, menu ấy mở được cùng hộp.
  */
-function RecordPicker({ book }: { book: ListenBook }) {
+function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: RecordDialog; setDialog: Dispatch<SetStateAction<RecordDialog>> }) {
   const source = useSource();
   const player = usePlayer();
   const mutations = useListenMutations(book.id);
-  const [dialog, setDialog] = useState<{ kind: "create" | "rename" | "delete"; name: string } | null>(null);
   const records = book.records ?? [];
   const active = records.find((record) => record.active);
   if (!source.records || !active) return null;
@@ -507,6 +515,7 @@ function RecordPicker({ book }: { book: ListenBook }) {
   };
   return (
     <>
+      {records.length > 1 && (
       <DropdownMenu.Root>
         <DropdownMenu.Trigger asChild>
           <button
@@ -545,7 +554,7 @@ function RecordPicker({ book }: { book: ListenBook }) {
               </DropdownMenu.Item>
             ))}
             <DropdownMenu.Separator className="my-1 h-px bg-line" />
-            <DropdownMenu.Item onSelect={() => setDialog({ kind: "create", name: `Lần nghe ${records.length + 1}` })} className={MENU_ITEM}>
+            <DropdownMenu.Item onSelect={() => setDialog(newRecordDialog(book))} className={MENU_ITEM}>
               <Plus className="size-4" /> Nghe lại từ đầu (hồ sơ mới)…
             </DropdownMenu.Item>
             <DropdownMenu.Item onSelect={() => setDialog({ kind: "rename", name: active.name })} className={MENU_ITEM}>
@@ -557,6 +566,7 @@ function RecordPicker({ book }: { book: ListenBook }) {
           </DropdownMenu.Content>
         </DropdownMenu.Portal>
       </DropdownMenu.Root>
+      )}
       <Dialog
         open={dialog !== null}
         onOpenChange={(open) => !open && setDialog(null)}
@@ -644,6 +654,7 @@ export function BookScreen({
   const [mergingPerson, setMergingPerson] = useState<CastMember | null>(null);
   const [wishesOpen, setWishesOpen] = useState(false);
   const [viewsOpen, setViewsOpen] = useState(false);
+  const [recordDialog, setRecordDialog] = useState<RecordDialog>(null);
   const { data: castView } = useCast(id);
   // Hook không được đặt sau `return` sớm: cuốn chưa nạp xong thì dùng một cuốn rỗng (nút lưu chưa hiện lúc ấy).
   const saver = useSaveBook(book ?? ({ id: id ?? "" } as ListenBook));
@@ -683,10 +694,22 @@ export function BookScreen({
   const heard = book.progress.heardSeconds;
   const left = Math.max(0, book.duration - heard);
   const caughtUp = Boolean(book.progress.caughtUp) && !listening;
-  const primaryLabel = listening
-    ? player.playing ? "Tạm dừng" : "Tiếp tục"
-    // Nói rõ nghe tiếp từ ĐÂU, như thẻ ở Thư viện (soát UX 29-09).
-    : point && point.at > 0 ? `Nghe tiếp · ${point.chapter.title} · ${formatClock(point.at)}` : heard > 0 ? "Nghe tiếp" : textOnly ? "Nghe ngay" : "Bắt đầu nghe";
+  // Máy này có giọng đọc cho các chương chỉ có chữ (source.withReadAloud gắn `speech`).
+  const speaks = chapters.some((chapter) => chapter.speech === true);
+  // Đã nghe tới đâu. Sách chỉ có chữ: máy chủ chưa tính tiến độ cả cuốn (chưa có độ dài thật) - suy từ chỗ nghe và từng chương đã nghe xong.
+  const started = heard > 0 || Boolean(book.state.last);
+  const playable = chapters.filter(canPlay);
+  const heardAll = Boolean(book.progress.finished) || (textOnly && playable.length > 0 && playable.every((chapter) => chapterHeard(book.state, chapter) >= 1));
+  // Hết cả cuốn (cuốn đang nạp mà đang phát thì vẫn là "Tạm dừng").
+  const finished = heardAll && !(listening && player.playing);
+  // Nói rõ nghe tiếp từ ĐÂU, cùng dạng với thẻ "Đang nghe dở" ở Thư viện (soát UX 29-09, 03-10).
+  const primaryLabel = primaryListenLabel({
+    playingHere: listening && player.playing,
+    finished,
+    point: point ? { title: point.chapter.title, at: point.at } : null,
+    heard: started ? Math.max(heard, 1) : 0,
+    textOnly,
+  });
   const restart = () => {
     const first = chapters.find(canPlay);
     if (!first) return;
@@ -721,14 +744,14 @@ export function BookScreen({
           <p className="tabular mt-2 text-sm text-fg-2">
             {book.narrator && `Giọng kể ${book.narrator} · `}
             {textOnly
-              ? `${book.chaptersTotal} chương · Chỉ có chữ`
+              ? `${book.chaptersTotal} chương`
               : book.complete
                 ? `${book.chaptersTotal} chương · ${formatLength(book.duration)}`
                 : `${book.chaptersAvailable}/${book.chaptersTotal} chương có audio · ${formatLength(book.duration)} phần đã có`}
           </p>
           {textOnly && (
             <p className="mt-2 inline-flex flex-wrap items-center gap-2 rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent-text">
-              Chưa có âm thanh - đọc được ngay
+              {textBookLine(speaks)}
             </p>
           )}
           {!book.complete && !textOnly && (
@@ -764,15 +787,15 @@ export function BookScreen({
                 </div>
               </>
             )}
-            <RecordPicker book={book} />
+            <RecordPicker book={book} dialog={recordDialog} setDialog={setRecordDialog} />
           </div>
           <div className="mt-5 flex flex-wrap items-center gap-2 max-sm:justify-center">
             {point && !caughtUp && (
               <Button
                 variant="primary"
                 size="lg"
-                icon={listening && player.playing ? Pause : Play}
-                onClick={() => (listening ? player.toggle() : void playBook(book))}
+                icon={listening && player.playing ? Pause : finished ? RotateCcw : Play}
+                onClick={() => (finished ? restart() : listening ? player.toggle() : void playBook(book))}
                 // Điện thoại: nút chính một hàng riêng, các nút phụ luôn ở hàng dưới theo cùng thứ tự - nhãn đổi độ dài khi
                 // phát/dừng từng làm hàng xuống dòng khác đi, "Từ đầu" nhảy sang chỗ nút khác (soát UX 29-09).
                 className="max-sm:w-full"
@@ -793,7 +816,7 @@ export function BookScreen({
                 {book.state.reading ? "Đọc tiếp" : "Đọc"}
               </Button>
             </Tooltip>
-            {heard > 0 && point && (
+            {started && point && !finished && (
               <Tooltip label="Nghe lại từ chương đầu tiên">
                 <Button variant="ghost" size="lg" icon={RotateCcw} onClick={restart}>
                   Từ đầu
@@ -806,6 +829,11 @@ export function BookScreen({
               </DropdownMenu.Trigger>
               <DropdownMenu.Portal>
                 <DropdownMenu.Content align="start" sideOffset={6} collisionPadding={12} className="z-50 min-w-56 rounded-xl border border-line bg-panel p-1.5 shadow-float">
+                  {source.records && book.records?.length === 1 && (
+                    <DropdownMenu.Item onSelect={() => setRecordDialog(newRecordDialog(book))} className={MENU_ITEM}>
+                      <Plus className="size-4" /> Nghe lại từ đầu (hồ sơ mới)…
+                    </DropdownMenu.Item>
+                  )}
                   {!textOnly && (
                     <DropdownMenu.Item onSelect={() => mutations.finished.mutate(!book.progress.finished)} className={MENU_ITEM}>
                       <CheckCheck className="size-4" />
@@ -818,6 +846,7 @@ export function BookScreen({
                       <DropdownMenu.Item onSelect={() => setEditOpen(true)} className={MENU_ITEM}>
                         <Pencil className="size-4" /> {textOnly ? "Sửa tên, bìa…" : "Sửa tên, bìa, nhạc nền…"}
                       </DropdownMenu.Item>
+                      {textOnly && <PlaylistSubmenu bookId={book.id} />}
                       {syncs && <SendEditsItem book={book} />}
                       {!workshop && !syncs && saver.available && (
                         <>

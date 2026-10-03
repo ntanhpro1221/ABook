@@ -1,45 +1,106 @@
 package vn.abook.player.readaloud
 
+import java.util.concurrent.ConcurrentHashMap
+
 /**
- * Đọc MỘT đoạn chữ thành [Clip]: tìm trong [ClipCache] trước, không có thì giọng đã chọn đọc; giọng mạng (Edge) hỏng - hết mạng, quá hạn, dịch vụ từ chối - thì
- * đoạn ấy rơi về giọng của máy và việc nghe KHÔNG dừng. Edge vừa hỏng thì nghỉ [EDGE_BREAK_MS] mới thử lại (không để mỗi đoạn chờ hết hạn nối mạng). Cả hai giọng hỏng
- * thì ném [VoiceException] với câu nói thẳng cho người nghe. Chạy ở luồng nền.
+ * Đọc MỘT đoạn chữ thành [Clip]: tìm trong [ClipCache] trước, không có thì giọng đã chọn đọc; giọng mạng hỏng - hết mạng, quá hạn, dịch vụ từ chối, khoá của người
+ * dùng bị từ chối hay hết hạn mức - thì đoạn ấy rơi sang giọng kế và việc nghe KHÔNG dừng: giọng dùng khoá -> giọng Edge mặc định ([onlineFallback]) -> giọng của máy
+ * ([fallback]); Edge -> giọng của máy. Nhà cung cấp vừa hỏng thì nghỉ một lúc mới thử lại ([EDGE_BREAK_MS] khi mất mạng, [KEY_BREAK_MS] khi khoá bị từ chối / hết
+ * hạn mức) - không để mỗi đoạn chờ hết hạn nối mạng. Mỗi chuyện nói với người nghe MỘT lần ([notice]). Mọi giọng hỏng thì ném [VoiceException] với câu nói thẳng
+ * cho người nghe. Chạy ở luồng nền.
  */
 class ClipReader(
     private val cache: ClipCache,
     private val voiceFor: (String) -> Voice,
     private val fallback: () -> Voice?,
     private val clock: () -> Long = System::currentTimeMillis,
+    private val onlineFallback: () -> Voice? = { null },
+    private val notice: (String) -> Unit = {},
 ) {
     companion object {
         const val EDGE_BREAK_MS = 120_000L
         const val ONLINE_ERROR_BREAK_MS = 30_000L
+        const val KEY_BREAK_MS = 600_000L
+
+        private fun provider(voice: Voice) = voice.id.substringBefore(':')
+        private fun online(voice: Voice) = !voice.id.startsWith("device:")
+
+        /** Câu cho người nghe khi đoạn này đọc tạm bằng `next` thay cho `failed` (cùng lời với giao diện máy tính, readAloudVoice.ts). */
+        fun noticeFor(failed: Voice, problem: VoiceException, next: Voice): String {
+            val keyed = OnlineVoices.NAMES[provider(failed)]
+            val instead = if (provider(next) == "edge") "giọng Edge" else "giọng của máy"
+            return when {
+                keyed == null -> "Không dùng được giọng trực tuyến - tạm đọc bằng $instead."
+                problem.reason == "auth" -> "Khóa $keyed không dùng được - tạm đọc bằng $instead. Kiểm tra lại khóa trong Cài đặt."
+                problem.reason == "quota" -> "Khóa $keyed đã hết hạn mức - tạm đọc bằng $instead."
+                else -> "Không dùng được giọng $keyed lúc này - tạm đọc bằng $instead."
+            }
+        }
     }
 
-    @Volatile private var onlineDownUntil = 0L
+    private val downUntil = ConcurrentHashMap<String, Long>()
+    private val downBecause = ConcurrentHashMap<String, VoiceException>()
+    private val told = ConcurrentHashMap.newKeySet<String>()
+
+    private fun tell(failed: Voice, problem: VoiceException, next: Voice) {
+        val kind = if (problem.reason == "auth" || problem.reason == "quota") problem.reason else "network"
+        if (told.add("${provider(failed)}:$kind")) runCatching { notice(noticeFor(failed, problem, next)) }
+    }
 
     fun read(text: String, voiceId: String): Clip {
         val primary = voiceFor(voiceId)
         cache.get(primary.id, text)?.let { return it }
+        val chain = ArrayList<Voice>().apply {
+            add(primary)
+            if (online(primary)) {
+                if (provider(primary) != "edge") onlineFallback()?.let { add(it) }
+                fallback()?.let { add(it) }
+            }
+        }.distinctBy { it.id }
+        var first: VoiceException? = null // lỗi của giọng đã chọn: câu chính khi mọi giọng đều hỏng
+        var failed: Voice? = null
         var problem: VoiceException? = null
-        val online = !primary.id.startsWith("device:")
-        if (!online || clock() >= onlineDownUntil) {
+        for ((index, voice) in chain.withIndex()) {
+            if (index > 0) cache.get(voice.id, text)?.let { clip ->
+                if (failed != null && problem != null) tell(failed!!, problem!!, voice)
+                return clip
+            }
+            if (online(voice) && clock() < (downUntil[provider(voice)] ?: 0L)) {
+                // Vừa hỏng: không thử lại ở mỗi đoạn, đi thẳng sang giọng kế.
+                val reason = downBecause[provider(voice)]
+                if (problem == null && reason != null) {
+                    failed = voice
+                    problem = reason
+                }
+                continue
+            }
+            if (failed != null && problem != null) tell(failed!!, problem!!, voice)
             try {
-                return synthesize(primary, text)
+                return synthesize(voice, text)
             } catch (error: VoiceException) {
+                val earlier = first
+                if (!online(voice) || index == chain.lastIndex) {
+                    if (earlier == null) throw error
+                    throw VoiceException("${earlier.message}; ${error.message}", earlier.offline, error, earlier.reason)
+                }
+                downUntil[provider(voice)] = clock() + when {
+                    error.reason == "auth" || error.reason == "quota" -> KEY_BREAK_MS
+                    error.offline -> EDGE_BREAK_MS
+                    else -> ONLINE_ERROR_BREAK_MS
+                }
+                downBecause[provider(voice)] = error
+                if (first == null) first = error
+                failed = voice
                 problem = error
-                if (!online) throw error
-                onlineDownUntil = clock() + if (error.offline) EDGE_BREAK_MS else ONLINE_ERROR_BREAK_MS
             }
         }
-        val backup = fallback() ?: throw problem ?: VoiceException("Không có giọng nào đọc được - kiểm tra mạng hoặc cài giọng tiếng Việt cho máy")
-        if (backup.id == primary.id) throw problem ?: VoiceException("Giọng của máy không đọc được đoạn này")
-        cache.get(backup.id, text)?.let { return it }
-        try {
-            return synthesize(backup, text)
-        } catch (error: VoiceException) {
-            throw VoiceException("${problem?.message ?: "Giọng mạng không dùng được"}; ${error.message}", problem?.offline ?: false, error)
-        }
+        throw first ?: problem ?: VoiceException("Không có giọng nào đọc được - kiểm tra mạng hoặc cài giọng tiếng Việt cho máy")
+    }
+
+    /** Đúng giọng này, không rơi sang giọng khác ("Thử giọng" trong Cài đặt: người nghe muốn nghe chính giọng ấy, hỏng thì phải thấy lỗi). */
+    fun readExactly(text: String, voiceId: String): Clip {
+        val voice = voiceFor(voiceId)
+        return cache.get(voice.id, text) ?: synthesize(voice, text)
     }
 
     private fun synthesize(voice: Voice, text: String): Clip {

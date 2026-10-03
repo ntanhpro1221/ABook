@@ -17,12 +17,53 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   PDF phải có chữ (PDF chụp từ máy quét thì nói rõ là chưa đọc được). Trên máy tính có Studio, "Làm sách nói từ cuốn này" ở menu của sách tạo một
   dự án Studio từ đúng chữ các chương ấy.
 
+- **Bỏ dòng ghi công khỏi phần đọc - chỉ khi bạn chọn (máy tính và điện thoại)**: dòng ghi công của người dịch, biên tập ở đầu chương
+  ("Trans: …", "Dịch: …") hiện ở bước xem trước kèm ô "Bỏ dòng này khỏi phần đọc", mặc định không chọn. Một dòng lặp ở đầu cả trăm chương
+  chỉ cần chọn một lần. Chọn rồi thì màn đọc và giọng đọc bỏ qua dòng ấy; chữ trong sách vẫn còn nguyên, đổi ý lúc nào cũng được ở mục
+  "Gợi ý cho phần đọc" trên trang sách.
+
+- **Thêm sách từ file: biết ngay cuốn đã có, tên chương và tác giả đúng như lúc xem trước (máy tính và điện thoại)**: cuốn đã có trong thư
+  viện thì bước xem trước nói luôn, kèm "Mở cuốn đó" hay "Thêm bản riêng" (bản riêng giữ tên bạn vừa đặt). Thư mục TXT: tên chương lấy từ
+  dòng tiêu đề đầu chương ("Chương 1: Buổi sáng") thay vì tên file, và trang sách, trình phát, màn đọc thấy đúng tên đã xem trước. Tác giả
+  trong file EPUB / Word / PDF hiện trên trang sách. Bước xem trước gọn hơn: mỗi chương một con số (số chữ), mục lục tự sinh của file Word
+  không còn bị đọc như một chương, file TXT trống được nói ra thay vì lặng lẽ biến mất, PDF chụp từ máy quét báo "PDF này là ảnh chụp, chưa
+  có chữ để đọc." Máy tính và điện thoại đọc cùng một file ra cùng một cuốn (kể cả EPUB viết chữ có dấu bằng mã HTML, file Word lưu bằng
+  công cụ khác Word, tên chương rất dài trên điện thoại). Nhập cuốn hơn nghìn chương nhanh gấp đôi.
+
+- **Nghe ngay: file TXT mỗi dòng một đoạn không còn dồn cả chương thành một đoạn (máy tính và điện thoại)**: file chỉ có một dòng trống
+  (sau tên chương) trước đây bị đọc như một đoạn khổng lồ - chờ rất lâu mới có tiếng, có khi không đọc được. Nay mỗi dòng là một đoạn.
+
 - **Nghe ngay: máy đọc to sách chỉ có chữ, chữ đang đọc sáng lên (máy tính và điện thoại)**: sách vừa thêm từ file có nút "Nghe ngay" -
   không cần phân tích hay cài thêm gì. Giọng mặc định là Hoài My của Microsoft Edge (cần mạng; có thêm giọng Nam Minh), lần đầu dùng app
   nói rõ chữ của đoạn đang đọc được gửi tới Microsoft; mất mạng thì đoạn ấy chuyển sang giọng của máy (Windows hay Android) mà không dừng.
   Màn đọc sáng đoạn và từng chữ đang đọc như "Đọc to" của Edge; bấm vào chữ nào thì đọc từ đúng chữ ấy. Đọc trước vài đoạn nên không
   phải chờ giữa các đoạn, đoạn đã đọc được giữ lại để nghe lại không cần mạng. Tốc độ, hẹn giờ ngủ, nhớ chỗ đang nghe như
   sách nói; trên điện thoại tắt màn hình vẫn đọc tiếp và tự sang chương sau, điều khiển được ở màn hình khoá và tai nghe.
+
+- **Giọng VieNeu: nghe ngay bằng giọng hay mà không cần mạng (máy tính)**: Cài đặt → Giọng đọc có mục "Giọng VieNeu" để tải thêm giọng VieNeu
+  đọc ngay trên máy - chữ của sách không rời khỏi máy. Chọn Giọng VieNeu (25 giọng, âm thanh 48 kHz), Giọng VieNeu Nano (11 giọng, nhẹ
+  hơn cho máy yếu) hay cả hai; app ghi "Khuyên dùng" cho loại hợp với máy của bạn. "Sáng đúng từng chữ" (đánh dấu sẵn) tải thêm bộ căn
+  chữ để chữ đang đọc sáng đúng lúc; không tải thì máy ước theo âm tiết. Dung lượng ghi là phần máy còn thiếu - phần đã có (của Phân
+  tích nhạc hay Studio) không tải lại. Tải xong máy tự thử vài giây và nói giọng có kịp tốc độ nghe không; không kịp thì đề nghị đổi
+  sang giọng nhẹ hơn - chỉ đổi khi bạn bấm. Giọng mới hiện ngay trong nút Giọng đọc lúc nghe. Có bản mới thì một lần bấm chỉ tải
+  phần đổi. Máy không kịp đọc trực tiếp vẫn nghe được giọng VieNeu: nút Giọng đọc có "Làm trước các chương tới" - máy đọc sẵn ở nền
+  (việc đang nghe luôn được ưu tiên), nói rõ còn bao lâu, bấm "Dừng làm trước" là thôi.
+
+- **Cài đặt → Giọng đọc: chọn giọng mặc định, nghe thử, và dùng giọng trực tuyến bằng khóa của bạn (máy tính và điện thoại)**: mục mới
+  liệt kê mọi giọng đọc được cho "Nghe ngay" - Edge, giọng của máy, và giọng của các dịch vụ bạn có tài khoản - kèm gợi ý giọng nam / nữ,
+  nút "Thử giọng" đọc một câu mẫu, và chọn một giọng làm mặc định cho các cuốn chưa chọn giọng riêng (giọng riêng của từng cuốn vẫn đổi ở
+  nút "Giọng đọc" trong trình phát). Ở "Giọng trực tuyến dùng khóa của bạn", dán khóa của Azure Speech (kèm vùng), Google Cloud, FPT.AI hay
+  Viettel AI rồi bấm "Kiểm tra": khóa dùng được thì giọng tiếng Việt của dịch vụ ấy hiện trong danh sách giọng. Azure và Google sáng đúng
+  từng chữ khi đọc; FPT.AI và Viettel AI sáng từng chữ theo ước lượng. Khi đọc, chữ của sách được gửi tới dịch vụ đó và dịch vụ có thể tính
+  tiền vào tài khoản của bạn khi vượt phần miễn phí - app nói rõ điều này; khóa chỉ lưu trên máy (trên điện thoại được mã hoá), chỉ hiện 4
+  ký tự cuối. Khóa hết hạn mức hay bị từ chối thì đoạn ấy tạm đọc bằng giọng Edge, rồi giọng của máy, không dừng, và app báo một lần.
+
+- **Nghe ngay có nhạc nền: chọn một danh sách nhạc cho cả cuốn (máy tính và điện thoại)**: sách chỉ có chữ có mục "Nhạc nền" ở menu
+  của sách và ở trình phát lúc đang nghe: Tắt (mặc định), một trong 12 danh sách nhạc theo kiểu truyện - kỳ ảo phiêu lưu, kỳ ảo êm
+  đềm, học đường, lãng mạn, hài hước, hành động, kinh dị, trinh thám, tiên hiệp - cổ phong, khoa học viễn tưởng, buồn, êm để ngủ -
+  hay "Nhạc của tôi". Các bài nối nhau, chuyển êm, nằm dưới giọng đọc như nhạc của sách nói, và chơi tiếp qua các chương thay vì
+  bắt đầu lại mỗi chương; mở lại sách là nghe tiếp đúng bài. Lựa chọn nằm trong phần sửa của cuốn nên đi theo khi "Lưu thành .abook"
+  hay gửi sang máy kia. Lần đầu cần mạng để tải danh sách và bài; bài đã tải thì nghe lại không cần mạng.
 
 ### Cài đặt
 

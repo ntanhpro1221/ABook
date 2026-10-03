@@ -25,13 +25,17 @@ object LocalStudio {
     private val CASTING_CHAPTER = Regex("/casting/([0-9]+)")
     private val SCENE_ALTERNATIVES = Regex("/music/scenes/([^/]+)/alternatives")
     private val MY_MUSIC = Regex("/api/music/local(?:/([0-9a-f]{40})|/(analyze)|/(module)|/(reanalyse))?")
-    private val EDITS_ONLY_KEYS = setOf("enabled", "levelDb", "silence", "pins")
+    private val EDITS_ONLY_KEYS = setOf("enabled", "levelDb", "silence", "pins", "playlist")
     private val lock = Any()
     private const val LINK_BOOK = "Sách này lấy từ máy tính khác - muốn sửa thì sửa ở máy ấy"
 
     /** Kho "Nhạc của tôi" của điện thoại này (LibraryPlugin đặt khi nạp; test JVM đặt kho trong thư mục tạm). */
     @Volatile
     var musicStore: MusicStore? = null
+
+    /** Danh mục nhạc nền (danh sách phát cho "Nghe ngay" - [Playlists]); LibraryPlugin đặt khi nạp, test JVM đặt danh mục trong thư mục tạm. */
+    @Volatile
+    var catalog: MusicCatalog? = null
 
     /** Mô-đun "Phân tích nhạc" (model + thư viện ONNX Runtime; điện thoại tải khi người dùng bấm - MusicStudentSetup). Null: không có việc tải (test JVM); view không kèm `module`. */
     @Volatile
@@ -68,6 +72,19 @@ object LocalStudio {
         // Mô-đun "Phân tích nhạc" (model + thư viện ONNX Runtime): tải một lần khi người dùng bấm, cùng hình `module` với máy tính.
         student?.let { view.put("module", it.status()) }
         return view
+    }
+
+    /** `music_playlists` của server.py: menu "Nhạc nền" của sách chỉ có chữ - các danh sách phát của danh mục + số bài trong "Nhạc của
+     *  tôi". Chưa tải được danh mục (mất mạng lần đầu) thì không danh sách nào, kèm lý do. Cần mạng: chạy ngoài khoá. */
+    fun playlistsView(): JSONObject {
+        var error = ""
+        val playlists = try {
+            Playlists.summaries(catalog?.playlists() ?: emptyList())
+        } catch (problem: MusicCatalog.CatalogError) {
+            error = problem.message.orEmpty()
+            JSONArray()
+        }
+        return JSONObject().put("playlists", playlists).put("mine", musicStore?.entries()?.size ?: 0).put("error", error)
     }
 
     /** Lời đáp của một lượt nhập (`my_music_import` của server.py): bài mới, bài đã có, file lỗi kèm lý do, cộng danh sách mới. */
@@ -108,6 +125,7 @@ object LocalStudio {
 
     private fun run(method: String, rawPath: String, body: JSONObject): Pair<Int, Any?> {
         val path = rawPath.substringBefore('?') // tham số của GET do giao diện gửi trong `body` (android/localStudio.ts)
+        if (method == "GET" && path == "/api/music/playlists") return 200 to playlistsView()
         MY_MUSIC.matchEntire(path)?.let { return myMusic(method, it.groups[1]?.value, it.groups[2] != null, it.groups[3] != null, it.groups[4] != null) }
         val match = ROUTE.matchEntire(path) ?: throw Api(404, "Không có đường dẫn này")
         val id = match.groupValues[1]
@@ -262,10 +280,10 @@ object LocalStudio {
         return JSONObject().put("skip", BookEdits.setSkipLine(dir, ids.map { (it as Number).toLong() }, line, body.opt("skip") != false))
     }
 
-    /** PUT /music {enabled?, levelDb?, silence?, pins?}: sách đã đóng gói chỉ chỉnh được bốn thứ ấy. */
+    /** PUT /music {enabled?, levelDb?, silence?, pins?, playlist?}: sách đã đóng gói chỉ chỉnh được năm thứ ấy. */
     private fun music(dir: java.io.File, body: JSONObject): Any? {
         if (body.keys().asSequence().any { it !in EDITS_ONLY_KEYS }) {
-            throw BookEdits.EditsError("Sách đã đóng gói chỉ chỉnh được bật/tắt nhạc, mức nhạc, im lặng từng đoạn và đổi bài")
+            throw BookEdits.EditsError("Sách đã đóng gói chỉ chỉnh được bật/tắt nhạc, mức nhạc, im lặng từng đoạn, đổi bài và danh sách nhạc nền")
         }
         return BookEdits.setMusic(dir, body, musicStore?.let { store -> { link: String -> store.track(link) } })
     }

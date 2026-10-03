@@ -1,4 +1,5 @@
 import type { MusicCredit, MusicCue } from "./musicBed";
+import type { PlaylistQueue } from "./playlistBed";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, useContext, useMemo, type ReactNode } from "react";
 import type { Bookmark, Cast, ListenBook, ListenChapter, ListeningRecord, ListeningSession, ListeningState, NightSession, Script } from "./model";
@@ -7,6 +8,7 @@ import type { TextImport } from "./textImport";
 import { textScript } from "./textScript";
 import { mergeTimings, type ClipOptions, type ReadAloudClip, type ReadAloudTimings, type ReadAloudVoice } from "./readAloud";
 import { voicesOf } from "./readAloudVoice";
+import type { PrepareStatus } from "./prepareAhead";
 
 // Nguồn dữ liệu của phía Nghe. Giao diện chỉ nói chuyện với giao diện này:
 // máy tính cài bằng HTTP tới server cục bộ, Android cài bằng file gói sách trên máy.
@@ -35,12 +37,19 @@ export interface ListenSource {
    *  thì chương chỉ-có-chữ chỉ đọc được bằng mắt. Android: lõi native tự đọc (plugin ReadAloud, android/readAloud.ts) nên không có `readAloudClip`. */
   readAloudVoices?(): Promise<ReadAloudVoice[]>;
   readAloudClip?(voice: string, text: string, options?: ClipOptions): Promise<ReadAloudClip>;
+  /** "Làm trước" (prepareAhead.ts): đọc sẵn các đoạn này vào bộ đệm ở nền; nguồn nào chưa có thì giao diện ẩn nút. */
+  readAloudPrepare?(voice: string, texts: string[], label: string): Promise<PrepareStatus>;
+  readAloudPrepareStatus?(): Promise<PrepareStatus>;
+  readAloudPrepareCancel?(): Promise<PrepareStatus>;
   /** Nơi tự đọc chương (lõi native Android) cho biết mốc thời gian câu / chữ đã có của một chương chỉ-có-chữ; chưa có gì thì null. */
   readAloudTimings?(bookId: string, chapterId: number): Promise<ReadAloudTimings | null>;
   cast(bookId: string): Promise<Cast>;
   /** Nhạc nền của một chương (rãnh nhạc của cuốn - webui/music_plan.py): mốc thời gian + đường lấy file. Nguồn nào
    *  chưa có thì trình phát không chơi nhạc nền. */
   musicCues?(bookId: string, chapterId: number): Promise<{ cues: MusicCue[]; levelDb: number; credits?: Record<string, MusicCredit> }>;
+  /** Danh sách phát người nghe đã chọn cho cả cuốn (sách chỉ có chữ - playlistBed.ts): hàng bài theo thứ tự phát; không bài nào
+   *  thì trình phát dùng mốc nhạc của chương như thường. Android: lõi native tự phát (MusicBed.kt). */
+  musicPlaylist?(bookId: string): Promise<PlaylistQueue>;
   audioUrl(bookId: string, chapterId: number): string;
   sampleUrl(bookId: string, sampleId: number): string;
   voiceUrl(name: string): string;

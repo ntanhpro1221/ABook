@@ -1,0 +1,31 @@
+{
+ "local": {
+  "format": "abook-edits",
+  "version": 1,
+  "music": {
+   "playlist": "fantasy_calm"
+  }
+ },
+ "incoming": {
+  "format": "abook-edits",
+  "version": 1,
+  "music": {
+   "levelDb": -24.0,
+   "playlist": "mine"
+  }
+ },
+ "merged": {
+  "format": "abook-edits",
+  "version": 1,
+  "music": {
+   "levelDb": -24.0,
+   "playlist": "fantasy_calm"
+  }
+ },
+ "report": {
+  "adopted": 1,
+  "kept": 1,
+  "conflicts": 1,
+  "cover": null
+ }
+}
