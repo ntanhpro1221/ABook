@@ -4,7 +4,7 @@ import org.json.JSONObject
 
 /**
  * Cây duyệt của trình phát cho Android Auto và mọi trình duyệt media của hệ thống (PlaybackService là MediaLibraryService):
- * gốc -> các cuốn phát được trên máy (tải hẳn hay nghe thẳng), cuốn nghe gần nhất đứng đầu -> các chương có audio.
+ * gốc -> các cuốn phát được trên máy (tải hẳn hay nghe thẳng), cuốn nghe gần nhất đứng đầu -> các chương có audio hay chỉ có chữ (giọng máy đọc).
  * Bấm một cuốn là nghe tiếp đúng chỗ đang dở; bấm một chương là nghe chương ấy (chương đang dở thì từ chỗ dở).
  *
  * Hàm thuần trên gói sách (book.json / stream.json) và trạng thái nghe của hồ sơ đang dùng (Store.state) - không đụng
@@ -28,12 +28,34 @@ object LibraryTree {
     /** Chỗ bắt đầu phát khi trình điều khiển chọn một mục. */
     data class Start(val bookId: String, val chapterId: Int, val seconds: Double)
 
-    /** Các chương nghe được của một gói sách - chương chưa có audio thì không có trong cây (bấm vào không phát được). */
+    /**
+     * Mục chữ của một chương CHỈ CÓ CHỮ (giọng máy đọc to - ReadAloud), "" với mọi chương khác. Chương chữ = `state` "text", hay có
+     * `text` mà không có `file` (như packages.py và androidSource.ts) - lệnh `load` của giao diện chỉ gửi `text`. Chung cho gói sách
+     * (book.json) và `load` (PlayerPlugin), để hai đường thấy cùng một chương chữ.
+     */
+    fun textEntry(chapter: JSONObject): String {
+        val text = chapter.optString("text").takeIf { it != "null" }.orEmpty()
+        val file = chapter.optString("file").takeIf { it != "null" }.orEmpty()
+        return when {
+            chapter.optString("state") == "text" -> text.ifEmpty { "texts/${chapter.optInt("id")}.txt" }
+            text.isNotEmpty() && file.isBlank() -> text
+            else -> ""
+        }
+    }
+
+    /** Các chương nghe được của một gói sách: chương có audio, và chương chỉ có chữ (giọng máy đọc to). Chương chưa có audio
+     *  cũng chưa có chữ thì không có trong cây (bấm vào không phát được). */
     fun chapters(manifest: JSONObject): List<Playback.Chapter> {
         val array = manifest.optJSONArray("chapters") ?: return emptyList()
-        return (0 until array.length()).map { array.getJSONObject(it) }
-            .filter { it.optBoolean("available") && it.optString("file").isNotBlank() && it.optString("file") != "null" }
-            .map { Playback.Chapter(it.getInt("id"), it.optString("fullTitle"), it.getString("file"), it.optDouble("duration", 0.0)) }
+        return (0 until array.length()).map { array.getJSONObject(it) }.mapNotNull {
+            val text = textEntry(it)
+            val file = it.optString("file").takeIf { file -> file.isNotBlank() && file != "null" }
+            when {
+                text.isNotEmpty() -> Playback.Chapter(it.getInt("id"), it.optString("fullTitle"), "", 0.0, text)
+                it.optBoolean("available") && file != null -> Playback.Chapter(it.getInt("id"), it.optString("fullTitle"), file, it.optDouble("duration", 0.0))
+                else -> null
+            }
+        }
     }
 
     /** Các cuốn (gói sách, trạng thái nghe): cuốn nghe gần nhất đứng đầu, cuốn chưa nghe theo tên. */
@@ -63,6 +85,7 @@ object LibraryTree {
             val subtitle = when {
                 chapter.id == current -> "Đang nghe dở"
                 heard?.optJSONObject(chapter.id.toString())?.optBoolean("done") == true -> "Đã nghe"
+                chapter.isText -> "Giọng máy đọc"
                 else -> minutes(chapter.duration)
             }
             // Cả bộ nhiều phần trong một file (bookfile.pack_series): màn Android Auto không có tiêu đề nhóm nên mỗi dòng

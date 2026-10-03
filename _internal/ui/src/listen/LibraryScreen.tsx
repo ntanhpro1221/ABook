@@ -4,8 +4,9 @@ import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
-import { formatClock, formatLength, formatWhen } from "@/shared/format";
+import { formatLength, formatWhen } from "@/shared/format";
 import { EmptyState, Progress, Segmented, Skeleton } from "@/shared/ui";
+import { resumeWhere } from "./labels";
 import { foldVietnamese, resumePoint, seriesIndex, type ListenBook } from "./model";
 import { usePlayer, type WordTarget } from "./player";
 import { useListenLibrary, useReadAloudVoices, useSource } from "./source";
@@ -18,9 +19,9 @@ function stateOf(book: ListenBook): Filter {
   return "new";
 }
 
-/** Dòng trạng thái của một cuốn, cùng một bộ từ ở Thư viện, trang sách và thẻ nghe dở. */
-export function bookStatusText(book: ListenBook): string {
-  const status = progressText(book);
+/** Dòng trạng thái của một cuốn, cùng một bộ từ ở Thư viện, trang sách và thẻ nghe dở. `speaks`: máy này có giọng đọc (sách chỉ có chữ). */
+export function bookStatusText(book: ListenBook, speaks = false): string {
+  const status = progressText(book, speaks);
   // Cuốn nằm ở máy khác, nghe thẳng qua mạng - người nghe cần biết mất mạng hay máy kia tắt thì chương chưa tải không nghe được.
   return book.remote ? `${remotePlace(book)} · ${status}` : status;
 }
@@ -30,9 +31,10 @@ export function remotePlace(book: ListenBook): string {
   return typeof book.remote === "object" && book.remote ? `Trên ${book.remote.computer || "máy khác"}` : "Trên máy tính";
 }
 
-function progressText(book: ListenBook): string {
-  // Sách mới nhập từ EPUB / DOCX / PDF / TXT: có chữ để đọc, chưa có âm thanh (docs/LISTEN_ANYTHING.md mục 1).
-  if (book.stage === "text") return `Chỉ có chữ · ${book.chaptersTotal} chương`;
+function progressText(book: ListenBook, speaks: boolean): string {
+  // Sách mới nhập từ EPUB / DOCX / PDF / TXT: có chữ, máy có giọng thì giọng máy đọc (docs/LISTEN_ANYTHING.md mục 1) - cùng lời với trang
+  // sách (labels.textBookLine), không ghi "Chỉ có chữ" ngay dưới nút "Nghe ngay".
+  if (book.stage === "text") return `${speaks ? "Giọng máy đọc" : "Chỉ có chữ"} · ${book.chaptersTotal} chương`;
   const chapters = `${book.chaptersAvailable}/${book.chaptersTotal} chương`;
   if (book.progress.finished) return "Đã nghe xong";
   if (book.progress.caughtUp) return `Đã nghe hết phần đã có · ${chapters}`;
@@ -100,7 +102,8 @@ function BookTile({ book }: { book: ListenBook }) {
   const playingHere = current && player.playing;
   // Sách chỉ có chữ: có giọng đọc trên máy thì nút trên bìa là "Nghe ngay" (giọng máy đọc), không thì vẫn là "Đọc".
   const voices = useReadAloudVoices();
-  const textOnly = book.stage === "text" && !((voices.data?.length ?? 0) > 0);
+  const speaks = (voices.data?.length ?? 0) > 0;
+  const textOnly = book.stage === "text" && !speaks;
   return (
     <div className="group">
       <div className="relative">
@@ -137,7 +140,7 @@ function BookTile({ book }: { book: ListenBook }) {
       </div>
       <button type="button" onClick={() => navigate(`/book/${book.id}`)} className="mt-2.5 block w-full text-left">
         <div className={cn("line-clamp-2 text-sm font-semibold leading-snug", current && "text-accent-text")}>{book.title}</div>
-        <div className="mt-1 text-xs text-fg-2">{bookStatusText(book)}</div>
+        <div className="mt-1 text-xs text-fg-2">{bookStatusText(book, speaks)}</div>
       </button>
     </div>
   );
@@ -149,9 +152,11 @@ function ContinueCard({ book }: { book: ListenBook }) {
   const player = usePlayer();
   const current = player.track?.bookId === book.id;
   const playingHere = current && player.playing;
+  const speaks = (useReadAloudVoices().data?.length ?? 0) > 0;
   const last = book.state.last;
   const chapter = (current ? player.track?.chapterTitle : undefined) || book.lastChapterTitle;
-  const where = last ? `${chapter ? `${chapter} · ` : ""}${formatClock(last.seconds)}` : "";
+  // Cùng dạng với nút chính của trang sách ("Nghe tiếp · Chương 3 · 12:04").
+  const where = last ? resumeWhere(chapter ?? "", last.seconds) : "";
   return (
     <section className="flex items-center gap-4 rounded-2xl border border-line bg-panel p-4 shadow-card sm:gap-5 sm:p-5">
       <button type="button" onClick={() => navigate(`/book/${book.id}`)} aria-label={`Mở ${book.title}`}>
@@ -164,7 +169,7 @@ function ContinueCard({ book }: { book: ListenBook }) {
           {where}
           {last ? ` · nghe lần cuối ${formatWhen(last.at)}` : ""}
         </p>
-        <p className="mt-0.5 text-sm text-fg-2">{bookStatusText(book)}</p>
+        <p className="mt-0.5 text-sm text-fg-2">{bookStatusText(book, speaks)}</p>
         <Progress value={book.progress.fraction} size="xs" className="mt-3 max-w-md" label="Đã nghe" />
       </div>
       {book.progress.caughtUp && !current ? (
@@ -353,6 +358,8 @@ export function LibraryScreen({
           <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
             <Segmented<Filter>
               label="Lọc sách"
+              // Điện thoại: mỗi nút lọc đủ 44 px để chạm.
+              itemClassName="max-sm:h-[44px]"
               value={filter}
               onChange={setFilter}
               options={[

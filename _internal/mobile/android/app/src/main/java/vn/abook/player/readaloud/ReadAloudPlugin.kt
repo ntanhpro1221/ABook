@@ -16,6 +16,10 @@ import vn.abook.player.Playback
  * - `script({bookId, chapterId})` -> `{segments: [{index, start, end, words, timed}]}`: `start`/`end` giây từ đầu chương, `words` là [bắt đầu_ms, kết thúc_ms] từ
  *   đầu chương (cùng đồng hồ với kịch bản audio của Studio, ui/src/listen/words.ts); đoạn chưa đọc thì `timed` false, `words` rỗng, giây là ước lượng.
  * - Sự kiện `readAloudScript` {bookId, chapterId}: có thêm mốc mới - hỏi lại `script()`.
+ * - Sự kiện `readAloudNotice` {message}: một đoạn vừa đọc tạm bằng giọng kế (khoá bị từ chối, hết hạn mức, mất mạng) - nói cho người nghe.
+ * - `sample({voice, text})` -> `{path}`: "Thử giọng" trong Cài đặt (đúng giọng ấy, không rơi sang giọng khác).
+ * - Giọng dùng khoá của người dùng (OnlineVoices.kt): `onlineProviders()` -> `{providers: [...]}` (khoá chỉ ở dạng che), `setOnlineKey({provider, key, region})`,
+ *   `removeOnlineKey({provider})`, `checkOnlineKey({provider})` -> `{ok, reason?, message?, voices?, provider}`. Khoá đi vào qua lệnh plugin, không bao giờ ra lại.
  */
 @CapacitorPlugin(name = "ReadAloud")
 class ReadAloudPlugin : Plugin() {
@@ -23,12 +27,16 @@ class ReadAloudPlugin : Plugin() {
         notifyListeners("readAloudScript", JSObject().put("bookId", book).put("chapterId", chapter))
     }
 
+    private val noticeListener: (String) -> Unit = { message -> notifyListeners("readAloudNotice", JSObject().put("message", message)) }
+
     override fun load() {
         Playback.init(context)
         ReadAloud.addScriptListener(listener)
+        ReadAloud.addNoticeListener(noticeListener)
     }
 
     override fun handleOnDestroy() {
+        ReadAloud.removeNoticeListener(noticeListener)
         ReadAloud.removeScriptListener(listener)
         super.handleOnDestroy()
     }
@@ -48,5 +56,59 @@ class ReadAloudPlugin : Plugin() {
         // Cuốn đang nạp: đồng hồ ảo chỉ đọc được ở luồng chính.
         if (book == Playback.bookId) Playback.onMain { call.resolve(JSObject.fromJSONObject(ReadAloud.script(book, chapter))) }
         else call.resolve(JSObject.fromJSONObject(ReadAloud.script(book, chapter)))
+    }
+
+    @PluginMethod
+    fun sample(call: PluginCall) {
+        val voice = call.getString("voice") ?: return call.reject("thiếu voice")
+        val text = call.getString("text") ?: return call.reject("thiếu text")
+        try {
+            call.resolve(JSObject().put("path", ReadAloud.sample(voice, text).absolutePath))
+        } catch (error: VoiceException) {
+            call.reject(error.message ?: "Không đọc thử được", error.reason)
+        }
+    }
+
+    @PluginMethod
+    fun onlineProviders(call: PluginCall) {
+        call.resolve(JSObject().apply { put("providers", OnlineVoices.describe(context)) })
+    }
+
+    @PluginMethod
+    fun setOnlineKey(call: PluginCall) {
+        val provider = call.getString("provider") ?: return call.reject("thiếu provider")
+        val region = call.getString("region", "")!!.trim().lowercase()
+        if (provider == "azure" && !AzureTts.validRegion(region)) return call.reject("Vùng Azure chưa đúng (ví dụ: southeastasia)")
+        try {
+            val keyed = OnlineVoices.provider(context, provider)
+            keyed.keys.put(provider, call.getString("key", "")!!, if (provider == "azure") region else "")
+            call.resolve(JSObject.fromJSONObject(keyed.describe()))
+        } catch (error: IllegalArgumentException) {
+            call.reject(error.message ?: "Thiếu khóa")
+        }
+    }
+
+    @PluginMethod
+    fun removeOnlineKey(call: PluginCall) {
+        val provider = call.getString("provider") ?: return call.reject("thiếu provider")
+        try {
+            val keyed = OnlineVoices.provider(context, provider)
+            keyed.keys.remove(provider)
+            call.resolve(JSObject.fromJSONObject(keyed.describe()))
+        } catch (error: IllegalArgumentException) {
+            call.reject(error.message ?: "Nhà cung cấp lạ")
+        }
+    }
+
+    @PluginMethod
+    fun checkOnlineKey(call: PluginCall) {
+        val provider = call.getString("provider") ?: return call.reject("thiếu provider")
+        try {
+            val keyed = OnlineVoices.provider(context, provider)
+            val result = keyed.check(java.io.File(context.cacheDir, "readaloud-check.mp3"))
+            call.resolve(JSObject.fromJSONObject(result.put("provider", keyed.describe())))
+        } catch (error: IllegalArgumentException) {
+            call.reject(error.message ?: "Nhà cung cấp lạ")
+        }
     }
 }

@@ -1,0 +1,106 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ReadAloudError, type ReadAloudClip, type ReadAloudVoice } from "./readAloud";
+import type { ListenSource } from "./source";
+
+const VOICES: ReadAloudVoice[] = [
+  { id: "edge:vi-VN-HoaiMyNeural", name: "Hoài My", provider: "edge", online: true, default: true, gender: "female" },
+  { id: "edge:vi-VN-NamMinhNeural", name: "Nam Minh", provider: "edge", online: true, gender: "male" },
+  { id: "fpt:banmai", name: "Ban Mai - miền Bắc (FPT.AI)", provider: "fpt", online: true, gender: "female" },
+  { id: "azure:vi-VN-HoaiMyNeural", name: "Hoài My (Azure Speech)", provider: "azure", online: true, gender: "female" },
+  { id: "device:an", name: "An", provider: "device", online: false },
+];
+
+/** Mỗi bài một bản module mới: lời nhắn "một lần cho cả phiên" không rò sang bài khác. */
+async function fresh() {
+  vi.resetModules();
+  const target = new EventTarget();
+  (globalThis as unknown as { window: EventTarget }).window = target;
+  const store = new Map<string, string>();
+  (globalThis as unknown as { localStorage: Storage }).localStorage = {
+    getItem: (k: string) => store.get(k) ?? null,
+    setItem: (k: string, v: string) => void store.set(k, v),
+  } as Storage;
+  return { module: await import("./readAloudVoice"), target, store };
+}
+
+/** Nguồn giả: `fail[mã giọng]` = lý do lỗi của giọng ấy; ghi lại mọi lần gọi. */
+function source(fail: Record<string, string> = {}) {
+  const calls: string[] = [];
+  const value: ListenSource = {
+    readAloudVoices: async () => VOICES,
+    readAloudClip: async (voice: string): Promise<ReadAloudClip> => {
+      calls.push(voice);
+      if (fail[voice]) throw new ReadAloudError(`hỏng ${voice}`, fail[voice]);
+      return { url: `/clip/${voice}`, durationMs: 1000, words: [] };
+    },
+  } as unknown as ListenSource;
+  return { value, calls };
+}
+
+describe("giọng dự phòng của Nghe ngay", () => {
+  beforeEach(() => vi.restoreAllMocks());
+
+  it("thứ tự đỡ: giọng dùng khóa -> Edge mặc định -> giọng của máy; Edge -> giọng của máy; giọng của máy thì không ai đỡ", async () => {
+    const { module } = await fresh();
+    expect(module.fallbackChain(VOICES, VOICES[2]).map((v) => v.id)).toEqual(["edge:vi-VN-HoaiMyNeural", "device:an"]);
+    expect(module.fallbackChain(VOICES, VOICES[1]).map((v) => v.id)).toEqual(["device:an"]);
+    expect(module.fallbackChain(VOICES, VOICES[4])).toEqual([]);
+  });
+
+  it("khóa hết hạn mức: đoạn ấy đọc bằng Edge, nói một lần, các đoạn sau đi thẳng sang Edge", async () => {
+    const { module } = await fresh();
+    const { value, calls } = source({ "fpt:banmai": "quota" });
+    const notify = vi.fn();
+    const fetch = module.speechFetcher(value, "b1", notify);
+    expect((await fetch("fpt:banmai", "Một.")).url).toBe("/clip/edge:vi-VN-HoaiMyNeural");
+    expect((await fetch("fpt:banmai", "Hai.")).url).toBe("/clip/edge:vi-VN-HoaiMyNeural");
+    expect(calls).toEqual(["fpt:banmai", "edge:vi-VN-HoaiMyNeural", "edge:vi-VN-HoaiMyNeural"]);
+    const messages = notify.mock.calls.map((call) => call[0]);
+    // Chữ đi đâu đã được hỏi TRƯỚC lần đọc đầu (onlineConsent.ts) - ở đây chỉ còn lời báo rơi giọng, mỗi chuyện một lần.
+    expect(messages).toEqual(["Khóa FPT.AI đã hết hạn mức - tạm đọc bằng giọng Hoài My."]);
+  });
+
+  it("khóa bị từ chối và Edge mất mạng: rơi tiếp xuống giọng của máy, mỗi chuyện một câu", async () => {
+    const { module } = await fresh();
+    const { value, calls } = source({ "azure:vi-VN-HoaiMyNeural": "auth", "edge:vi-VN-HoaiMyNeural": "offline" });
+    const notify = vi.fn();
+    const clip = await module.speechFetcher(value, "b1", notify)("azure:vi-VN-HoaiMyNeural", "Một.");
+    expect(clip.url).toBe("/clip/device:an");
+    expect(calls).toEqual(["azure:vi-VN-HoaiMyNeural", "edge:vi-VN-HoaiMyNeural", "device:an"]);
+    expect(notify.mock.calls.map((call) => call[0])).toEqual([
+      "Khóa Azure Speech không dùng được - tạm đọc bằng giọng Hoài My. Kiểm tra lại khóa trong Cài đặt.",
+      module.FALLBACK_NOTICE,
+    ]);
+  });
+
+  it("đổi khóa trong Cài đặt: giọng dùng khóa được thử lại", async () => {
+    const { module, target } = await fresh();
+    const fail: Record<string, string> = { "fpt:banmai": "quota" };
+    const { value, calls } = source(fail);
+    const fetch = module.speechFetcher(value, "b1", vi.fn());
+    await fetch("fpt:banmai", "Một.");
+    delete fail["fpt:banmai"];
+    target.dispatchEvent(new CustomEvent(module.ONLINE_KEYS_CHANGED_EVENT));
+    expect((await fetch("fpt:banmai", "Hai.")).url).toBe("/clip/fpt:banmai");
+    expect(calls.filter((voice) => voice === "fpt:banmai")).toHaveLength(2);
+  });
+
+  it("chữ không đọc được thì không đổi giọng; chỉ tra bộ đệm thì không rơi", async () => {
+    const { module } = await fresh();
+    const { value } = source({ "fpt:banmai": "empty", "edge:vi-VN-NamMinhNeural": "uncached" });
+    const fetch = module.speechFetcher(value, "b1", vi.fn());
+    await expect(fetch("fpt:banmai", "—")).rejects.toMatchObject({ reason: "empty" });
+    await expect(fetch("edge:vi-VN-NamMinhNeural", "Một.", { cachedOnly: true })).rejects.toMatchObject({ reason: "uncached" });
+  });
+
+  it("giọng mặc định trong Cài đặt là giọng chung, cuốn đã chọn giọng riêng giữ nguyên", async () => {
+    const { module } = await fresh();
+    module.chooseVoice("b1", "edge:vi-VN-NamMinhNeural");
+    module.chooseDefaultVoice("fpt:banmai");
+    expect(module.defaultVoice()).toBe("fpt:banmai");
+    expect(module.chosenVoice("b1")).toBe("edge:vi-VN-NamMinhNeural");
+    expect(module.chosenVoice("b2")).toBe("fpt:banmai");
+    expect(module.onlineNotice(VOICES[0])).toBe(module.ONLINE_NOTICE);
+    expect(module.onlineNotice(VOICES[4])).toBe("");
+  });
+});

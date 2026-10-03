@@ -3,6 +3,7 @@ import type { Script } from "@/listen/model";
 import { VOICE_CHANGED_EVENT, mergeTimings, type ReadAloudTimings } from "@/listen/readAloud";
 import { chooseVoice } from "@/listen/readAloudVoice";
 import { textScript } from "@/listen/textScript";
+import type { ReadAloudPlugin } from "./plugins";
 import { refreshScript, textScriptKey, watchReadAloud } from "./readAloud";
 
 const BOOK = "b1";
@@ -88,26 +89,30 @@ describe("watchReadAloud", () => {
       setItem: (k: string, v: string) => void store.set(k, v),
     } as Storage;
     const client = memory(textScript(1, "Chương 1", TEXT));
-    let fire: (event: { bookId: string; chapterId: number }) => void = () => undefined;
+    const handlers = new Map<string, (event: never) => void>();
     const remove = vi.fn();
     const api = {
       script: vi.fn(async () => TIMINGS),
-      addListener: vi.fn(async (_event: "readAloudScript", handler: typeof fire) => {
-        fire = handler;
+      addListener: vi.fn(async (event: string, handler: (event: never) => void) => {
+        handlers.set(event, handler);
         return { remove };
       }),
-    };
+    } as unknown as Pick<ReadAloudPlugin, "script" | "addListener">;
     const configure = vi.fn();
-    const stop = watchReadAloud(client, api, configure);
-    fire({ bookId: BOOK, chapterId: 1 });
+    const notify = vi.fn();
+    const stop = watchReadAloud(client, api, configure, notify);
+    (handlers.get("readAloudScript") as (event: { bookId: string; chapterId: number }) => void)({ bookId: BOOK, chapterId: 1 });
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect((client.getQueryData(textScriptKey(BOOK, 1)) as Script | undefined)?.timed).toBe(true);
+    // Lõi đọc tạm một đoạn bằng giọng kế: câu của lõi hiện lên cho người nghe.
+    (handlers.get("readAloudNotice") as (event: { message: string }) => void)({ message: "Khóa FPT.AI đã hết hạn mức - tạm đọc bằng giọng Hoài My (Edge)." });
+    expect(notify).toHaveBeenCalledWith("Khóa FPT.AI đã hết hạn mức - tạm đọc bằng giọng Hoài My (Edge).");
 
     chooseVoice(BOOK, "device:vi-vn-an");
-    expect(configure).toHaveBeenCalledWith({ readAloudVoice: "device:vi-vn-an" });
+    expect(configure).toHaveBeenCalledWith({ readAloudVoice: "device:vi-vn-an", readAloudBook: BOOK });
     stop();
     await new Promise((resolve) => setTimeout(resolve, 0));
-    expect(remove).toHaveBeenCalled();
+    expect(remove).toHaveBeenCalledTimes(2);
     target.dispatchEvent(new CustomEvent(VOICE_CHANGED_EVENT, { detail: BOOK }));
     expect(configure).toHaveBeenCalledTimes(1);
   });

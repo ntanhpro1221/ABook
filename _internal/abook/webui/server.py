@@ -30,11 +30,13 @@ from urllib.parse import parse_qs, quote, unquote, urlsplit
 
 from .. import aliases, bracket_rule, continuation, importers, listener_overrides
 from ..io_utils import atomic_write_json
+from ..readaloud import azure as readaloud_azure
+from ..readaloud import keys as readaloud_keys
 from ..readaloud import service as readaloud
 from ..readaloud.model import VoiceError
 from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, edits_inbox, ffmpeg_setup, humanize, listen_view,
-               music_catalog, music_local, music_module, music_plan, music_select, music_student, packages, project_views,
-               projectfile, reading_preview, remote_config, shared_readings, store, textbook, volumes, word_timing, workshop)
+               music_catalog, music_local, music_module, music_plan, music_playlist, music_select, music_student, packages, project_views,
+               projectfile, reading_preview, remote_config, shared_readings, store, textbook, vieneu_module, volumes, word_timing, workshop)
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, clean_book_templates, legacy_ids
 from .listening import RECORD_ID, Listening
@@ -242,7 +244,13 @@ class App:
         self.shell: Callable[[dict[str, Any]], None] | None = None
         self.studio: Any = None
         # "Nghe ngay" (abook/readaloud): giọng máy đọc chương chỉ-có-chữ; clip đã đọc nằm trong bộ đệm dưới thư mục dữ liệu của app.
-        self.readaloud = readaloud.ReadAloud(preferences.path.with_name("readaloud-cache"))
+        # Giọng trực tuyến dùng khoá của người dùng (readaloud/byok.py): khoá nằm trong file riêng cạnh file tuỳ chọn, giao diện chỉ thấy bản che.
+        # Giọng VieNeu (vieneu_module.py): mô-đun tải khi người dùng bấm; tải rồi thì giọng của nó vào danh sách, tải xong tự đo vài giây.
+        self.readaloud = readaloud.ReadAloud(preferences.path.with_name("readaloud-cache"),
+                                             keys=readaloud_keys.KeyStore(preferences.path.with_name(readaloud_keys.FILE_NAME)),
+                                             vieneu_locate=vieneu_module.installed, rtf=vieneu_module.rtf)
+        vieneu_module.configure(preferences.path.with_name(vieneu_module.FOLDER), benchmark=self.readaloud.vieneu.benchmark,
+                                after_install=self.readaloud.vieneu.forget)
         if not (isinstance(runner, actions.FakeRunner) or os.environ.get("ABOOK_FAKE_RUNNER") == "1"):
             self.readaloud.warm()
         # Mốc từng chữ khi nghe (word_timing.py): app đóng gói không có numpy nên giao việc căn cho Python của Studio.
@@ -1054,9 +1062,9 @@ class App:
         self._mutating()
         path = self._editable(value)
         if packages.is_package(path):
-            extra = set(body) - {"enabled", "levelDb", "silence", "pins"}
+            extra = set(body) - {"enabled", "levelDb", "silence", "pins", "playlist"}
             if extra:
-                raise ApiError(HTTPStatus.BAD_REQUEST, "Sách đã đóng gói chỉ chỉnh được bật/tắt nhạc, mức nhạc, im lặng từng đoạn và đổi bài")
+                raise ApiError(HTTPStatus.BAD_REQUEST, "Sách đã đóng gói chỉ chỉnh được bật/tắt nhạc, mức nhạc, im lặng từng đoạn, đổi bài và danh sách nhạc nền")
             return book_edits.set_music(path, body, self._my_track)
         music_plan.write_overrides(path, body)
         if music_plan.read_plan(path) is None:
@@ -1219,6 +1227,49 @@ class App:
         level = plan.get("levelDb", music_plan.DEFAULT_LEVEL_DB)
         music_plan.apply_gain(cues, level, tracks, self.music_track_cached)
         return {"cues": cues, "levelDb": level, "credits": self._music_credits(cues, tracks)}
+
+    # ---- danh sách phát cho sách nghe bằng "Nghe ngay" (music_playlist.py) ---------------------------------------------
+    def music_playlists(self) -> dict[str, Any]:
+        """Menu "Nhạc nền" của sách chỉ có chữ: các danh sách phát của danh mục + số bài trong "Nhạc của tôi". Chưa tải được
+        danh mục (mất mạng lần đầu) thì không có danh sách nào, kèm lý do."""
+        error = ""
+        try:
+            playlists = music_playlist.summaries(self.music_catalog().playlists())
+        except music_catalog.CatalogError as exc:
+            playlists, error = [], str(exc)
+        return {"playlists": playlists, "mine": len(self.my_music.entries()), "error": error}
+
+    def music_playlist_queue(self, value: str) -> dict[str, Any]:
+        """Hàng bài của danh sách phát người nghe đã chọn cho cuốn này (`music.playlist` của lớp sửa): [{link, src, duration,
+        gainDb}] theo thứ tự phát, kèm ghi công. Cuốn có nhạc của người làm sách (nhạc theo cảnh thắng), chưa chọn, hay danh
+        mục không còn danh sách ấy: không bài nào. Bài máy này không dùng được (offline chưa có trong bộ đệm, nguồn hỏng) bị bỏ."""
+        path = self._listenable(value)
+        result: dict[str, Any] = {"playlist": None, "tracks": [], "levelDb": music_plan.DEFAULT_LEVEL_DB, "credits": {}, "error": ""}
+        if not packages.is_package(path) or packages.manifest(path).get("music"):
+            return result
+        changes = book_edits.load(path).get("music") or {}
+        choice = changes.get("playlist")
+        if not choice:
+            return result
+        level = float(changes.get("levelDb", music_plan.DEFAULT_LEVEL_DB))
+        result.update(playlist=choice, levelDb=level)
+        if choice == music_playlist.MINE:
+            info = {entry["link"]: entry for entry in reversed(self.my_music.entries())}  # cũ trước: bài mới nhập nối vào cuối
+            links = list(info)
+        else:
+            try:
+                catalog = self.music_catalog()
+                links = music_playlist.links_of(catalog.playlists(), choice)
+                info = catalog.lookup(links) if links else {}
+            except music_catalog.CatalogError as exc:
+                return {**result, "error": str(exc)}
+        tracks = music_playlist.queue(links, info, self.music_track_available)
+        music_plan.apply_gain(tracks, level, info, self.music_track_cached)
+        for track in tracks:
+            digest = music_plan.local_hash(track["link"])
+            track["src"] = (f"/api/music/local/{digest}/file" if digest is not None
+                            else "/api/music/track?link=" + quote(track["link"], safe=""))
+        return {**result, "tracks": tracks, "credits": self._music_credits(tracks, info)}
 
     def _music_src(self, value: str, link: str) -> str:
         """Đường lấy file bài qua máy này. Bài danh mục: `/api/music/track?link=` (máy chủ chỉ tải bài CÓ trong danh mục); bài
@@ -2480,6 +2531,12 @@ class Handler(BaseHTTPRequestHandler):
     def get_music_cues(self, _query: dict[str, list[str]], value: str, chapter: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.music_cues(value, int(chapter)))
 
+    def get_music_playlist(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.music_playlist_queue(value))
+
+    def get_music_playlists(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.music_playlists())
+
     def get_music_packaged(self, _query: dict[str, list[str]], value: str, name: str) -> None:
         path = self.app._listenable(value)
         # Sách mở từ file: bài trong gói. Dự án: bài "Nhạc của tôi" mà đoạn của chính cuốn này dùng (music_plan.track_file_named).
@@ -3169,10 +3226,79 @@ class Handler(BaseHTTPRequestHandler):
         try:
             clip = self.app.readaloud.clip(voice, text, cached_only=bool(body.get("cachedOnly")))
         except VoiceError as error:
+            if error.reason == "uncached":
+                # Chỉ tra bộ đệm mà chưa có là câu trả lời bình thường (trình phát hỏi hàng loạt lúc nạp chương), không phải lỗi: 200 để
+                # console của trình duyệt không đầy dòng 404 đỏ.
+                self._send_json(HTTPStatus.OK, {"cached": False, "reason": "uncached"})
+                return
             status = {"offline": HTTPStatus.SERVICE_UNAVAILABLE, "timeout": HTTPStatus.GATEWAY_TIMEOUT, "voice": HTTPStatus.BAD_REQUEST,
-                      "empty": HTTPStatus.UNPROCESSABLE_ENTITY, "uncached": HTTPStatus.NOT_FOUND}.get(error.reason, HTTPStatus.BAD_GATEWAY)
+                      "empty": HTTPStatus.UNPROCESSABLE_ENTITY}.get(error.reason, HTTPStatus.BAD_GATEWAY)
             raise ApiError(status, str(error), reason=error.reason) from error
         self._send_json(HTTPStatus.OK, {"url": f"/media/readaloud/{clip['file']}", "duration_ms": clip["duration_ms"], "words": clip["words"]})
+
+    def get_readaloud_vieneu(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, vieneu_module.status())
+
+    def post_readaloud_vieneu(self, _query: dict[str, list[str]]) -> None:
+        # Người dùng bấm tải các lựa chọn đã đánh dấu (`choices`), hay "Cập nhật" (không có `choices`: chỉ các phần đã cũ của những gì đã tải).
+        self.app._mutating()
+        choices = self._body().get("choices")
+        if choices is not None and (not isinstance(choices, list) or not all(isinstance(item, str) for item in choices)):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Lựa chọn không hợp lệ")
+        try:
+            vieneu_module.start(choices)
+        except ValueError as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+        self._send_json(HTTPStatus.OK, vieneu_module.status())
+
+    def get_readaloud_prepare(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.readaloud.prepare.status())
+
+    def post_readaloud_prepare(self, _query: dict[str, list[str]]) -> None:
+        # "Làm trước": chữ các đoạn của những chương sắp nghe (đúng như trình phát chia) -> đọc sẵn vào bộ đệm ở luồng nền.
+        self.app._mutating()
+        body = self._body(limit=8 * 1024 * 1024)
+        voice, texts = body.get("voice"), body.get("texts")
+        if not isinstance(voice, str) or not isinstance(texts, list) or not all(isinstance(text, str) for text in texts):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu giọng hay chữ")
+        try:
+            self.app.readaloud._resolve(voice)
+        except VoiceError as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(error), reason=error.reason) from error
+        texts = [text for text in texts if len(text) <= readaloud.MAX_TEXT]
+        self._send_json(HTTPStatus.OK, self.app.readaloud.prepare.start(voice, texts, str(body.get("label") or "")[:200]))
+
+    def delete_readaloud_prepare(self, _query: dict[str, list[str]]) -> None:
+        self.app._mutating()
+        self.app.readaloud.prepare.cancel()
+        self._send_json(HTTPStatus.OK, self.app.readaloud.prepare.status())
+
+    def post_readaloud_vieneu_measure(self, _query: dict[str, list[str]]) -> None:
+        self.app._mutating()
+        vieneu_module.measure_again()
+        self._send_json(HTTPStatus.OK, vieneu_module.status())
+
+    def get_readaloud_online(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.readaloud.online_providers())
+
+    def put_readaloud_online(self, _query: dict[str, list[str]], provider: str) -> None:
+        # Khoá đi trong THÂN yêu cầu (không bao giờ trong địa chỉ); trả về chỉ bản che.
+        body = self._body()
+        key, region = body.get("key"), body.get("region", "")
+        if not isinstance(key, str) or len(key) > 512 or not isinstance(region, str):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu khoá")
+        if provider == "azure" and not readaloud_azure.valid_region(region.strip().lower()):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Vùng Azure chưa đúng (ví dụ: southeastasia)")
+        try:  # khoá rỗng = giữ khoá đã lưu, chỉ đổi vùng
+            self._send_json(HTTPStatus.OK, self.app.readaloud.set_key(provider, key, region if provider == "azure" else ""))
+        except ValueError as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+
+    def delete_readaloud_online(self, _query: dict[str, list[str]], provider: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.readaloud.remove_key(provider))
+
+    def post_readaloud_online_check(self, _query: dict[str, list[str]], provider: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.readaloud.check_key(provider))
 
     def media_readaloud(self, _query: dict[str, list[str]], name: str) -> None:
         path = self.app.readaloud.cache.path(name)
@@ -3317,6 +3443,16 @@ ROUTES: list[Route] = [
     ("GET", re.compile(r"/api/voices"), Handler.get_voices),
     ("GET", re.compile(r"/api/readaloud/voices"), Handler.get_readaloud_voices),
     ("POST", re.compile(r"/api/readaloud/clip"), Handler.post_readaloud_clip),
+    ("GET", re.compile(r"/api/readaloud/vieneu"), Handler.get_readaloud_vieneu),
+    ("GET", re.compile(r"/api/readaloud/prepare"), Handler.get_readaloud_prepare),
+    ("POST", re.compile(r"/api/readaloud/prepare"), Handler.post_readaloud_prepare),
+    ("DELETE", re.compile(r"/api/readaloud/prepare"), Handler.delete_readaloud_prepare),
+    ("POST", re.compile(r"/api/readaloud/vieneu"), Handler.post_readaloud_vieneu),
+    ("POST", re.compile(r"/api/readaloud/vieneu/measure"), Handler.post_readaloud_vieneu_measure),
+    ("GET", re.compile(r"/api/readaloud/online"), Handler.get_readaloud_online),
+    ("PUT", re.compile(r"/api/readaloud/online/(azure|google|fpt|viettel)"), Handler.put_readaloud_online),
+    ("DELETE", re.compile(r"/api/readaloud/online/(azure|google|fpt|viettel)"), Handler.delete_readaloud_online),
+    ("POST", re.compile(r"/api/readaloud/online/(azure|google|fpt|viettel)/check"), Handler.post_readaloud_online_check),
     ("GET", re.compile(r"/api/preferences"), Handler.get_preferences),
     ("PUT", re.compile(r"/api/preferences"), Handler.put_preferences),
     ("POST", re.compile(r"/api/scan"), Handler.post_scan),
@@ -3366,6 +3502,8 @@ ROUTES: list[Route] = [
     ("POST", re.compile(BOOK + r"/music/rebuild"), Handler.post_music_rebuild),
     ("GET", re.compile(BOOK + r"/music/scenes/([^/]+)/alternatives"), Handler.get_music_alternatives),
     ("GET", re.compile(BOOK + r"/music/chapters/(\d+)"), Handler.get_music_cues),
+    ("GET", re.compile(BOOK + r"/music/playlist"), Handler.get_music_playlist),
+    ("GET", re.compile(r"/api/music/playlists"), Handler.get_music_playlists),
     ("GET", re.compile(BOOK + r"/music/files/(" + music_plan.TRACK_NAME + ")"), Handler.get_music_packaged),
     ("GET", re.compile(r"/api/music/track"), Handler.get_music_track),
     # "Nhạc của tôi": chỉ trên máy này (Studio từ xa không có các đường này - nhạc của người dùng không ra khỏi máy trừ qua sách).

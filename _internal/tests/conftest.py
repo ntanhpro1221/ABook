@@ -135,6 +135,20 @@ def _no_ffmpeg_download() -> Iterator[None]:
             os.environ["ABOOK_FFMPEG_DOWNLOAD"] = previous
 
 
+@pytest.fixture(autouse=True, scope="session")
+def _no_vieneu_download() -> Iterator[None]:
+    """Mô-đun "Giọng VieNeu" (webui/vieneu_module.py) không tải gì trong bài thử; bài cần đường tải thì thay studio_setup.download bằng bản giả."""
+    previous = os.environ.get("ABOOK_VIENEU_DOWNLOAD")
+    os.environ["ABOOK_VIENEU_DOWNLOAD"] = "0"
+    try:
+        yield
+    finally:
+        if previous is None:
+            os.environ.pop("ABOOK_VIENEU_DOWNLOAD", None)
+        else:
+            os.environ["ABOOK_VIENEU_DOWNLOAD"] = previous
+
+
 @pytest.fixture(autouse=True)
 def _count_sleeping(request: pytest.FixtureRequest) -> Iterator[None]:
     """Bọc `time.sleep` để đếm. Vẫn ngủ thật, trừ khi có người bật công tắc đo.

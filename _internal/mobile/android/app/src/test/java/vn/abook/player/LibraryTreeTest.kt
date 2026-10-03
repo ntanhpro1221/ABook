@@ -47,6 +47,33 @@ class LibraryTreeTest {
     }
 
     @Test
+    fun text_chapters_are_heard_too_and_resume_from_the_saved_virtual_seconds() {
+        // Sách chỉ-có-chữ (TextBook.kt / textbook.py): `state` "text", `text` = mục chữ, không file, không thời lượng - giọng máy đọc to (ReadAloud).
+        val manifest = JSONObject().put("id", "t1").put("title", "Chữ").put("chapters", JSONArray()
+            .put(JSONObject().put("id", 1).put("fullTitle", "Một").put("available", false).put("state", "text").put("text", "texts/1.txt").put("duration", 0))
+            .put(JSONObject().put("id", 2).put("fullTitle", "Hai").put("available", false).put("state", "text").put("text", "texts/2.txt").put("duration", 0))
+            .put(JSONObject().put("id", 3).put("fullTitle", "Ba").put("available", true).put("file", "chapters/3.mp3").put("duration", 600.0))
+            .put(JSONObject().put("id", 4).put("fullTitle", "Bốn").put("available", false).put("file", JSONObject.NULL)))
+        val chapters = LibraryTree.chapters(manifest)
+        assertEquals(listOf(1, 2, 3), chapters.map { it.id })
+        assertEquals(listOf("texts/1.txt", "texts/2.txt", ""), chapters.map { it.text })
+        assertEquals(listOf(true, true, false), chapters.map { it.isText })
+        val listening = state(2, 42.5, at = 10.0)
+        assertEquals(listOf("book/t1"), LibraryTree.books(listOf(manifest to listening)).map { it.id })
+        assertEquals(LibraryTree.Start("t1", 2, 42.5), LibraryTree.start("book/t1", manifest, listening))
+        assertEquals(listOf("Giọng máy đọc", "Đang nghe dở", "10 phút"), LibraryTree.chapterNodes(manifest, listening).map { it.subtitle })
+    }
+
+    @Test
+    fun the_player_load_call_and_the_book_agree_on_what_a_text_chapter_is() {
+        // Lệnh `load` của giao diện (nativeEngine.ts) chỉ gửi `text` + `file` rỗng; gói sách gửi `state` "text".
+        assertEquals("texts/5.txt", LibraryTree.textEntry(JSONObject().put("id", 5).put("file", "").put("text", "texts/5.txt")))
+        assertEquals("texts/7.txt", LibraryTree.textEntry(JSONObject().put("id", 7).put("state", "text")))
+        assertEquals("", LibraryTree.textEntry(JSONObject().put("id", 8).put("file", "chapters/8.mp3").put("text", "texts/8.txt")))
+        assertEquals("", LibraryTree.textEntry(JSONObject().put("id", 9).put("file", "chapters/9.mp3")))
+    }
+
+    @Test
     fun choosing_a_book_resumes_and_choosing_a_chapter_starts_it() {
         val manifest = book("b1", "Sách", 1 to true, 2 to true, 3 to true)
         val listening = state(2, 61.5)

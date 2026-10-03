@@ -10,7 +10,6 @@ import java.net.UnknownHostException
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.Locale
-import javax.net.ssl.SSLException
 
 /**
  * Phần giao thức của dịch vụ đọc to của Edge (không đụng mạng, kiểm thử được): theo dự án mã mở edge-tts (rany2/edge-tts, `constants.py`, `drm.py`,
@@ -121,6 +120,48 @@ object EdgeProtocol {
         return list
     }
 
+    /**
+     * Nhận một lượt đọc tới `turn.end`: ghi mp3 (tin nhị phân `Path:audio`) vào `sink`, thêm mốc của `audio.metadata` (cộng `shiftMs`), trả số byte âm thanh. Dùng
+     * chung cho Edge và Azure Speech (cùng khung tin - AzureTts.kt). `label`: tên giọng trong câu báo lỗi; `onClose`: đổi khung CLOSE của máy chủ thành lỗi riêng
+     * (Azure báo hết hạn mức bằng lý do đóng) - null thì là "đóng trước khi đọc xong". Quá `totalMs` hay mất kết nối: [VoiceException] (offline).
+     */
+    fun readTurn(
+        socket: WebSocket, sink: OutputStream, shiftMs: Long, boundaries: MutableList<Boundary>, label: String, totalMs: Long,
+        onClose: (WebSocket.Message.Closed) -> VoiceException? = { null },
+        /** Lượt bị cắt giữa chừng (mất kết nối / đóng sớm): Edge biến nó thành lỗi thử lại được; mặc định là "không có mạng". */
+        onDrop: (String, Throwable?) -> Exception = { message, cause -> VoiceException(message, offline = true, cause = cause) },
+    ): Long {
+        val deadline = System.nanoTime() + totalMs * 1_000_000
+        var audio = 0L
+        while (true) {
+            if (System.nanoTime() > deadline) throw VoiceException("$label trả lời quá chậm", offline = true)
+            val message = try {
+                socket.receive()
+            } catch (error: java.net.SocketTimeoutException) {
+                throw VoiceException("$label trả lời quá chậm", offline = true, cause = error)
+            } catch (error: java.io.IOException) {
+                throw onDrop("Mất kết nối với ${label.replaceFirstChar { it.lowercase() }} giữa chừng", error)
+            }
+            when (message) {
+                is WebSocket.Message.Closed -> throw onClose(message) ?: onDrop("$label đóng kết nối trước khi đọc xong", null)
+                is WebSocket.Message.Text -> {
+                    val head = message.text.substringBefore("\r\n\r\n")
+                    when (headers(head)["Path"]) {
+                        "audio.metadata" -> boundaries.addAll(parseMetadata(message.text.substringAfter("\r\n\r\n"), shiftMs))
+                        "turn.end" -> return audio
+                    }
+                }
+                is WebSocket.Message.Binary -> {
+                    val (headers, data) = parseBinary(message.data) ?: throw VoiceException("$label gửi tin hỏng")
+                    if (headers["Path"] == "audio" && data.isNotEmpty()) {
+                        sink.write(data)
+                        audio += data.size
+                    }
+                }
+            }
+        }
+    }
+
     /** Độ dài tính từ số byte mp3 (48 kbps không đổi). */
     fun durationMs(bytes: Long): Long = bytes * 1000 / BYTES_PER_SECOND
 }
@@ -130,7 +171,11 @@ object EdgeProtocol {
  * đoạn dài hơn 4000 byte cắt ở dấu cách, mỗi mảnh một kết nối, mốc ghép lại theo số byte mp3 đã nhận. Mọi chặn đều có hạn: nối 8 giây, mỗi lần chờ tin 15
  * giây, cả đoạn 45 giây - quá hạn hay không có mạng là [VoiceException] (người gọi rơi về giọng của máy), không bao giờ chờ mãi.
  */
-class EdgeTts(private val voiceName: String, private val connect: Connector = Connector.Real) : Voice {
+class EdgeTts(
+    private val voiceName: String,
+    private val connect: Connector = Connector.Real,
+    private val pause: (Long) -> Unit = { Thread.sleep(it) },
+) : Voice {
     override val id = "edge:$voiceName"
     override val extension = "mp3"
 
@@ -147,6 +192,8 @@ class EdgeTts(private val voiceName: String, private val connect: Connector = Co
         const val CONNECT_MS = 8_000
         const val READ_MS = 15_000
         const val TOTAL_MS = 45_000L
+        /** Lỗi thoáng qua ([Dropped]) thử lại tối đa chừng này lần, mỗi lần một kết nối mới, nghỉ 0,3 s × số lần đã thử (như `edge.py` RETRIES). */
+        const val RETRIES = 2
         /** Lệch giữa đồng hồ máy và máy chủ (giây), học từ header `Date` của lần bị từ chối 403; dùng chung cho mọi lần gọi. */
         @Volatile var clockSkewSeconds = 0.0
         private val random = SecureRandom()
@@ -165,8 +212,22 @@ class EdgeTts(private val voiceName: String, private val connect: Connector = Co
         var bytes = 0L
         out.outputStream().use { sink ->
             for ((_, part) in TextChunks.split(text, EdgeProtocol.MAX_TEXT_BYTES, EdgeProtocol::escapedBytes)) {
-                val before = bytes
-                bytes += readPart(part, sink, EdgeProtocol.durationMs(before) + EdgeProtocol.BOUNDARY_SHIFT_MS, boundaries)
+                val shift = EdgeProtocol.durationMs(bytes) + EdgeProtocol.BOUNDARY_SHIFT_MS
+                var attempt = 0
+                while (true) {
+                    try {
+                        val (audio, found) = readPart(part, shift)
+                        sink.write(audio)
+                        boundaries.addAll(found)
+                        bytes += audio.size
+                        break
+                    } catch (error: Dropped) {
+                        // Dịch vụ cắt lượt giữa chừng hay bận lúc bắt tay: thử lại mảnh ấy bằng kết nối mới, không rơi ngay về giọng của máy.
+                        if (attempt == RETRIES) throw VoiceException(error.message ?: "Giọng Edge cắt kết nối giữa chừng", cause = error)
+                        attempt += 1
+                        pause(300L * attempt)
+                    }
+                }
             }
         }
         if (bytes == 0L) throw VoiceException("Giọng Edge không trả về âm thanh")
@@ -174,42 +235,23 @@ class EdgeTts(private val voiceName: String, private val connect: Connector = Co
         return Clip(out, duration, WordTokens.map(text, boundaries, duration), id)
     }
 
-    /** Một mảnh chữ: ghi mp3 vào `sink`, thêm mốc (đã cộng `shiftMs`) vào `boundaries`, trả số byte âm thanh. */
-    private fun readPart(part: String, sink: OutputStream, shiftMs: Long, boundaries: MutableList<Boundary>): Long {
+    /**
+     * Lỗi thoáng qua của MỘT lượt (thử lại được): dịch vụ cắt kết nối giữa lượt, hay lúc bắt tay trả HTTP 429 / 5xx hoặc reset kết nối. Khác "không có mạng"
+     * (không tìm thấy máy chủ, bị từ chối nối) và khác "bị từ chối / đổi giao thức" - hai thứ ấy ném [VoiceException] ngay.
+     */
+    private class Dropped(message: String, cause: Throwable? = null) : Exception(message, cause)
+
+    /** Một mảnh chữ: (mp3, mốc đã cộng `shiftMs`). Chỉ trả khi đọc trọn lượt, nên lượt hỏng thử lại không để sót mảnh âm thanh dở. */
+    private fun readPart(part: String, shiftMs: Long): Pair<ByteArray, List<Boundary>> {
         val socket = open()
         try {
             val stamp = EdgeProtocol.dateString(System.currentTimeMillis())
             socket.sendText(EdgeProtocol.speechConfig(stamp))
             socket.sendText(EdgeProtocol.ssml(voiceName, EdgeProtocol.escape(part), EdgeProtocol.connectionId(random), stamp))
-            val deadline = System.nanoTime() + TOTAL_MS * 1_000_000
-            var audio = 0L
-            while (true) {
-                if (System.nanoTime() > deadline) throw VoiceException("Giọng Edge trả lời quá chậm", offline = true)
-                val message = try {
-                    socket.receive()
-                } catch (error: SocketTimeoutException) {
-                    throw VoiceException("Giọng Edge trả lời quá chậm", offline = true, cause = error)
-                } catch (error: IOException) {
-                    throw VoiceException("Mất kết nối với giọng Edge giữa chừng", offline = true, cause = error)
-                }
-                when (message) {
-                    is WebSocket.Message.Closed -> throw VoiceException("Giọng Edge đóng kết nối trước khi đọc xong", offline = true)
-                    is WebSocket.Message.Text -> {
-                        val head = message.text.substringBefore("\r\n\r\n")
-                        when (EdgeProtocol.headers(head)["Path"]) {
-                            "audio.metadata" -> boundaries.addAll(EdgeProtocol.parseMetadata(message.text.substringAfter("\r\n\r\n"), shiftMs))
-                            "turn.end" -> return audio
-                        }
-                    }
-                    is WebSocket.Message.Binary -> {
-                        val (headers, data) = EdgeProtocol.parseBinary(message.data) ?: throw VoiceException("Giọng Edge gửi tin hỏng")
-                        if (headers["Path"] == "audio" && data.isNotEmpty()) {
-                            sink.write(data)
-                            audio += data.size
-                        }
-                    }
-                }
-            }
+            val audio = java.io.ByteArrayOutputStream()
+            val boundaries = ArrayList<Boundary>()
+            EdgeProtocol.readTurn(socket, audio, shiftMs, boundaries, "Giọng Edge", TOTAL_MS, onDrop = { message, cause -> Dropped(message, cause) })
+            return audio.toByteArray() to boundaries
         } finally {
             socket.close()
         }
@@ -236,6 +278,7 @@ class EdgeTts(private val voiceName: String, private val connect: Connector = Co
                     retried = true
                     continue
                 }
+                if (error.status == 429 || error.status >= 500) throw Dropped("Giọng Edge đang bận (HTTP ${error.status})", error)
                 throw VoiceException("Dịch vụ giọng Edge từ chối (${error.status}) - có thể đã đổi cách dùng", cause = error)
             } catch (error: UnknownHostException) {
                 throw offline(error)
@@ -243,13 +286,19 @@ class EdgeTts(private val voiceName: String, private val connect: Connector = Co
                 throw offline(error)
             } catch (error: SocketTimeoutException) {
                 throw offline(error)
-            } catch (error: SSLException) {
-                throw offline(error)
             } catch (error: IOException) {
+                if (isReset(error)) throw Dropped("Giọng Edge cắt kết nối lúc bắt tay", error)
                 throw offline(error)
             }
         }
     }
+
+    /** Kết nối bị reset / huỷ giữa lúc bắt tay (kể cả bọc trong lỗi TLS): máy chủ cắt ngang, không phải mất mạng. */
+    private fun isReset(error: Throwable): Boolean =
+        generateSequence(error) { it.cause }.take(4).any { cause ->
+            cause is java.net.SocketException && cause !is ConnectException &&
+                (cause.message.orEmpty().contains("reset", ignoreCase = true) || cause.message.orEmpty().contains("abort", ignoreCase = true))
+        }
 
     private fun offline(cause: Throwable) = VoiceException("Không có mạng để dùng giọng Edge - đọc bằng giọng của máy", offline = true, cause = cause)
 }
