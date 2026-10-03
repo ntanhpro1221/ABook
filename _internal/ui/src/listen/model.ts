@@ -1,4 +1,5 @@
 import type { Capabilities } from "@/shared/capabilities";
+import type { EditsSyncState } from "@/shared/editsSync";
 import type { CoverImage } from "@/shared/cover";
 // Hợp đồng dữ liệu của phía NGHE - chung cho máy tính và Android.
 // Máy tính: server cục bộ dựng từ project (abook/webui/listen_view.py).
@@ -116,6 +117,8 @@ export interface ListenBook {
   edits?: number;
   /** Trong số `edits`: bao nhiêu là ý muốn chờ Studio (đổi giọng, giới, gộp người, cách đọc...) - chưa áp vào audio. */
   wishes?: number;
+  /** Cuốn tải từ máy tính (điện thoại): phần sửa chưa gửi về máy tính và kết quả lần gửi gần nhất (EditsSync.kt). */
+  editsSync?: EditsSyncState;
 }
 
 export interface SeriesPlace {

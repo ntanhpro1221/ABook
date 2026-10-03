@@ -438,6 +438,7 @@ object LibraryServer {
         copy.remove("edits") // của điện thoại này: máy kia không cần, và không phải sách
         copy.remove("wishes")
         copy.remove("capabilities")
+        copy.remove("editsSync") // trạng thái gửi về máy tính của điện thoại này
         copy.put("id", id)
         // Bìa người nghe đặt (edits/cover.jpg) đi ra dưới tên bìa thường - máy kia chỉ biết một cover.jpg.
         copy.optJSONObject("cover")?.put("file", "cover.jpg")

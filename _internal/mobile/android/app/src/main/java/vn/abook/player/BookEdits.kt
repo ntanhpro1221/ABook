@@ -1066,6 +1066,83 @@ object BookEdits {
         if (pinned.isNotEmpty()) dropUnused(folder, rawBook(folder), pinned)
     }
 
+    // ---- phần sửa đã gửi về máy tính (EditsSync) ---------------------------------------------------------------------
+
+    /**
+     * Gỡ khỏi lớp sửa của máy này đúng những gì đã gửi cho máy tính (`sent`: ảnh chụp lớp sửa lúc đóng gói; `sentCover`: byte bìa
+     * lúc ấy). Khoá nào người nghe đã đổi tiếp trong lúc gửi (giá trị khác giá trị đã gửi) thì GIỮ - lần sau gửi nốt. Nhạc im
+     * lặng đã gửi thì bỏ; bài đã ghim và gửi xong thì file của nó trong sách cũng bỏ (máy tính đã nhập vào kho của nó). Trả số
+     * thay đổi còn lại (chưa gửi).
+     */
+    fun subtract(folder: File, sent: JSONObject, sentCover: ByteArray?): Int = synchronized(lock) {
+        val edits = load(folder)
+        val book = File(folder, "book.json").takeIf { it.isFile }?.let { rawBook(folder) }
+        val before = pinnedFiles(edits)
+        for (key in listOf("title", "cover")) {
+            if (!sent.has(key) || !edits.has(key) || !StrictJson.equal(edits.opt(key), sent.opt(key))) continue
+            if (key == "cover" && sent.opt(key) is JSONObject && !File(folder, EDITS_COVER).let { it.isFile && sentCover != null && it.readBytes().contentEquals(sentCover) }) continue
+            edits.remove(key)
+        }
+        removeEqual(edits.optJSONObject("characters"), sent.optJSONObject("characters"))
+        edits.optJSONObject("chapters")?.let { chapters ->
+            val gone = sent.optJSONObject("chapters") ?: JSONObject()
+            for (id in names(chapters)) {
+                val entry = chapters.getJSONObject(id)
+                removeEqual(entry, gone.optJSONObject(id))
+                if (entry.length() == 0) chapters.remove(id)
+            }
+        }
+        val music = edits.optJSONObject("music")
+        val sentMusic = sent.optJSONObject("music")
+        if (music != null && sentMusic != null) {
+            for (field in listOf("enabled", "levelDb")) {
+                if (sentMusic.has(field) && music.has(field) && StrictJson.equal(music.opt(field), sentMusic.opt(field))) music.remove(field)
+            }
+            val gone = strings(sentMusic.optJSONArray("silenced")).toSet()
+            val kept = strings(music.optJSONArray("silenced")).filter { it !in gone }
+            if (kept.isEmpty()) music.remove("silenced") else music.put("silenced", JSONArray(kept))
+            removeEqual(music.optJSONObject("pins"), sentMusic.optJSONObject("pins"))
+            val pins = music.optJSONObject("pins")
+            if (pins == null || pins.length() == 0) {
+                music.remove("pins")
+                music.remove("tracks")
+            } else {
+                val tracks = music.optJSONObject("tracks") ?: JSONObject()
+                val wanted = names(pins).map { pins.getString(it).removePrefix(MusicStore.LOCAL_PREFIX) }.toSet()
+                for (sha in names(tracks)) if (sha !in wanted) tracks.remove(sha)
+            }
+            if (music.length() == 0) edits.remove("music")
+        }
+        edits.optJSONObject("wishes")?.let { wishes ->
+            val sentWishes = sent.optJSONObject("wishes") ?: JSONObject()
+            for (section in BookWishes.SECTIONS) removeEqual(wishes.optJSONObject(section), sentWishes.optJSONObject(section))
+            for (section in BookWishes.SECTIONS) if (wishes.optJSONObject(section)?.length() == 0) wishes.remove(section)
+            val aliases = wishes.optJSONArray(BookWishes.ALIASES)
+            if (aliases != null) {
+                val gone = sentWishes.optJSONArray(BookWishes.ALIASES)
+                val kept = JSONArray()
+                for (index in 0 until aliases.length()) {
+                    val item = aliases.get(index)
+                    if (gone == null || (0 until gone.length()).none { StrictJson.equal(gone.get(it), item) }) kept.put(item)
+                }
+                if (kept.length() == 0) wishes.remove(BookWishes.ALIASES) else wishes.put(BookWishes.ALIASES, kept)
+            }
+            if (wishes.length() == 0) edits.remove("wishes")
+        }
+        if (edits.opt("cover") !is JSONObject) File(folder, EDITS_COVER).delete()
+        save(folder, edits)
+        val after = pinnedFiles(edits).toSet()
+        val dropped = before.filter { it !in after }
+        if (dropped.isNotEmpty() && book != null) dropUnused(folder, book, dropped)
+        count(edits)
+    }
+
+    /** Bỏ khỏi `mine` mọi khoá mà `sent` cũng có với đúng giá trị ấy. */
+    private fun removeEqual(mine: JSONObject?, sent: JSONObject?) {
+        if (mine == null || sent == null) return
+        for (key in names(mine)) if (sent.has(key) && StrictJson.equal(mine.opt(key), sent.opt(key))) mine.remove(key)
+    }
+
     // ---- file `.abook` mang phần sửa theo ---------------------------------------------------------------------------
 
     /**

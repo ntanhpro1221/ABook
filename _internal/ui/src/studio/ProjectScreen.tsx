@@ -70,6 +70,7 @@ import { CastList } from "@/listen/BookScreen";
 import { ApplyChangesDialog } from "./ApplyChanges";
 import { CoverEditor } from "./CoverEditor";
 import { ReviewQueue, useReviewCount } from "./ReviewQueue";
+import { PhoneEdits, useInboxCount } from "./PhoneEdits";
 import { WorkInbox, useWorkCount } from "./WorkInbox";
 import { ScriptTab } from "./ScriptTab";
 import { MusicTab } from "./MusicTab";
@@ -882,7 +883,9 @@ export function ProjectScreen() {
   const [params, setParams] = useSearchParams();
   const tab = ["chapters", "work", "script", "review", "cast", "music", "activity"].includes(params.get("tab") ?? "") ? params.get("tab")! : "chapters";
   const reviewCount = useReviewCount(id ?? "");
-  const workCount = useWorkCount(id ?? "");
+  const remoteStudio = Boolean(useAppInfo().data?.remote);
+  // Việc từ điện thoại chờ duyệt (webui/edits_inbox.py) cộng vào số của tab: chỉ trên chính máy tính (Studio từ xa không có đường này).
+  const workCount = useWorkCount(id ?? "") + useInboxCount(id ?? "", !remoteStudio);
   const { data, isLoading, error } = useBook(id);
   const [picking, setPicking] = useState<{ name: string; displayName: string } | null>(null);
   const [merging, setMerging] = useState<CastMember | null>(null);
@@ -1010,6 +1013,7 @@ export function ProjectScreen() {
           <ChapterList book={book} chapters={chapters} />
         </TabsContent>
         <TabsContent value="work">
+          {!remoteStudio && <PhoneEdits bookId={book.id} />}
           <WorkInbox
             book={book}
             kind={params.get("kind")}

@@ -92,7 +92,6 @@ _CONTENT_V4 = re.compile(_COMMON + r"|chapters/(?:\d{1,4}/)?[0-9A-Za-z_.\-]+\.mp
 LISTENING_ENTRY = re.compile(_COMMON)
 # Chỗ trống dư ngoài cỡ giải nén (thư mục tạm, book.json): không cần sát từng byte, chỉ cần không để ổ đĩa đầy giữa chừng.
 _ROOM_MARGIN = 64 * 1024 * 1024
-JPEG_MAGIC = bytes([0xFF, 0xD8, 0xFF])  #ảnh bìa trong lớp sửa phải là JPEG (book_edits.render_cover luôn ghi JPEG)
 _STORED = (".mp3", ".jpg", ".wav", ".m4a", ".ogg", ".opus", ".flac")  # đã nén sẵn hay cần đọc thẳng: nén thêm chỉ tốn công khi phát
 _CHUNK = 1024 * 1024
 
@@ -602,27 +601,11 @@ class BookFile:
         return book
 
     def _check_edits(self, content: set[str]) -> None:
-        """Lớp sửa (phiên bản 4): `edits.json` đúng giao ước (book_edits.validate - file sai thì từ chối cả file) và bìa sửa
-        đi đôi với nó (có `cover` là đối tượng thì phải có edits/cover.jpg, và ngược lại), là JPEG, không quá cỡ."""
-        self._edits = book_edits.empty()
-        if book_edits.EDITS_FILE in content:
-            if self._zip.getinfo(book_edits.EDITS_FILE).file_size > book_edits.MAX_EDITS_BYTES:
-                raise BookFileError("Phần sửa của sách quá lớn.")
-            try:
-                self._edits = book_edits.parse(self._zip.read(book_edits.EDITS_FILE))
-            except book_edits.EditsError as exc:
-                raise BookFileError(str(exc)) from exc
-        if any(name not in content for name in book_edits.pinned_files(self._edits)):
-            raise BookFileError("File sách thiếu bài nhạc mà người nghe đã chọn.")
-        has_cover = book_edits.EDITS_COVER in content
-        if has_cover != isinstance(self._edits.get("cover"), dict):
-            raise BookFileError("Ảnh bìa trong phần sửa của sách không khớp.")
-        if has_cover:
-            info = self._zip.getinfo(book_edits.EDITS_COVER)
-            with self._zip.open(info) as handle:
-                magic = handle.read(3)
-            if info.file_size > book_edits.MAX_COVER_BYTES or magic != JPEG_MAGIC:
-                raise BookFileError("Ảnh bìa trong phần sửa của sách không dùng được.")
+        """Lớp sửa (phiên bản 4): kiểm bằng `book_edits.read_layer` - cùng cổng với gói điện thoại gửi về."""
+        try:
+            self._edits, _ = book_edits.read_layer(self._zip, content)
+        except book_edits.EditsError as exc:
+            raise BookFileError(str(exc)) from exc
 
     @property
     def edits(self) -> dict[str, Any]:

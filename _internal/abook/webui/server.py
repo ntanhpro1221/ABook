@@ -30,7 +30,7 @@ from urllib.parse import parse_qs, quote, unquote, urlsplit
 
 from .. import aliases, bracket_rule, continuation, listener_overrides
 from ..io_utils import atomic_write_json
-from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, humanize, listen_view, music_catalog, music_local,
+from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, edits_inbox, humanize, listen_view, music_catalog, music_local,
                music_plan, music_select, packages, projectfile, reading_preview, remote_config, shared_readings, store, volumes)
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, clean_book_templates, legacy_ids
@@ -1383,7 +1383,8 @@ class App:
                                     port=lambda: self.local_port, token=self.token, static_dir=self.static_dir)
                 app = SyncApp(self.library, self.listening, self.devices, socket_name(), self.remote, studio=studio,
                               routes=self.routes,
-                              player=self.player, cast=self.cast, music_track=self.music_sync_source())
+                              player=self.player, cast=self.cast, music_track=self.music_sync_source(), my_music=self.my_music,
+                              after_edits=lambda value, _report: self._music_after_change(value))
                 # Danh tính TLS sinh một lần, nằm cạnh tuỳ chọn: đổi nó là mọi thiết bị đã ghép phải ghép lại.
                 identity = tls.load_or_create(self.preferences.path.with_name(tls.FILE_NAME))
                 self.sync_server = SyncServer(app, host=self.sync_host, port=self.sync_port, identity=identity).start()
@@ -2129,6 +2130,33 @@ class Handler(BaseHTTPRequestHandler):
             except (music_catalog.CatalogError, OSError):
                 pass  # mất mạng: lựa chọn đã lưu, rãnh nhạc dựng lại lần sau
         self._send_json(HTTPStatus.OK, report)
+
+    def get_edits_inbox(self, _query: dict[str, list[str]], value: str) -> None:
+        # Hộp thư thay đổi từ điện thoại (edits_inbox.py): ý muốn chờ Studio của thiết bị chưa được điều khiển sản xuất - chờ chủ
+        # máy "Áp dụng" hay "Bỏ qua" từng mục / từng thiết bị. Dự án của máy này mới có.
+        path = self.app._book(value)
+        self._send_json(HTTPStatus.OK, edits_inbox.view(path))
+
+    def _inbox_target(self, value: str) -> tuple[Path, str, list[str] | None]:
+        self.app._mutating()
+        path = self.app._book(value)
+        body = self._body()
+        device = str(body.get("device") or "")
+        items = body.get("items")
+        if not device:
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu thiết bị")
+        if items is not None and not (isinstance(items, list) and all(isinstance(item, str) for item in items)):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Danh sách mục không hợp lệ")
+        return path, device, items
+
+    def post_edits_inbox_apply(self, _query: dict[str, list[str]], value: str) -> None:
+        # "Áp dụng" một mục (`items`) hay mọi mục của một thiết bị: thành yêu cầu của dự án, vào "Áp dụng N thay đổi" - chưa chạy gì.
+        path, device, items = self._inbox_target(value)
+        self._send_json(HTTPStatus.OK, edits_inbox.apply(path, device, items))
+
+    def post_edits_inbox_skip(self, _query: dict[str, list[str]], value: str) -> None:
+        path, device, items = self._inbox_target(value)
+        self._send_json(HTTPStatus.OK, edits_inbox.skip(path, device, items))
 
     def post_save(self, _query: dict[str, list[str]], value: str) -> None:
         # "Lưu" / "Lưu thành…" một cuốn nhập từ file: đóng lại thành file `.abook` mới kèm thay đổi của người nghe (phiên bản
@@ -3060,6 +3088,9 @@ ROUTES: list[Route] = [
     ("GET", re.compile(BOOK + r"/edits"), Handler.get_edits),
     ("DELETE", re.compile(BOOK + r"/edits"), Handler.delete_edits),
     ("POST", re.compile(BOOK + r"/edits/fold"), Handler.post_edits_fold),
+    ("GET", re.compile(BOOK + r"/edits-inbox"), Handler.get_edits_inbox),
+    ("POST", re.compile(BOOK + r"/edits-inbox/apply"), Handler.post_edits_inbox_apply),
+    ("POST", re.compile(BOOK + r"/edits-inbox/skip"), Handler.post_edits_inbox_skip),
     ("POST", re.compile(BOOK + r"/save"), Handler.post_save),
     ("DELETE", re.compile(BOOK), Handler.delete_book),
     ("POST", re.compile(BOOK + r"/export"), Handler.post_export),

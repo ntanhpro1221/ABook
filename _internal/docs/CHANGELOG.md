@@ -9,6 +9,16 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Studio
 
+- **Thay đổi từ điện thoại gửi về, và hộp thư chờ duyệt**: điện thoại đã ghép giờ gửi được phần sửa của một cuốn về máy tính.
+  Tên sách, bìa, tên nhân vật, tên chương và nhạc nền (kể cả bài "Nhạc của tôi" điện thoại đã ghim - ABook chép bài vào kho nhạc
+  của máy này) được áp NGAY, bằng đúng các hàm Studio dùng. Còn những việc cần Studio - cách đọc tên, ai nói câu nào, giọng,
+  thu lại một câu - thì tuỳ điện thoại: nếu bạn đã cho nó điều khiển sản xuất từ xa (Cài đặt) chúng thành yêu cầu thật trong
+  "Áp dụng thay đổi"; nếu không, chúng nằm trong khung "Thay đổi từ điện thoại" ở tab "Việc cần duyệt" của cuốn, mỗi việc có
+  nút Áp dụng / Bỏ qua (và "Áp dụng tất cả" / "Bỏ qua tất cả" cho từng điện thoại). Không việc nào tự áp; "Áp dụng" cũng chỉ
+  biến việc thành yêu cầu - chưa thu lại gì. Hai nơi cùng sửa một mục thì bản đến sau thắng, nhưng nếu bạn đã đổi mục ấy kể từ
+  lần điện thoại gửi trước thì khung ghi rõ "máy tính đã có bản riêng, đã thay bằng bản từ điện thoại". Chỉ điện thoại đã ghép,
+  chỉ sách có trong thư viện, và gói gửi bị kiểm như một file sách của người lạ (sai một chỗ là từ chối cả gói, không áp gì).
+
 - **Mở file `.abook` đã sửa của chính dự án**: bài nhạc người nghe ghim vào sách giờ cũng được áp - bài được nhập vào "Nhạc của tôi" của máy này (không trùng bản) rồi ghim đúng đoạn; bài nào thiếu file thì bỏ qua và nói rõ lý do.
 
 ## [0.4.21] - 2026-10-03
@@ -35,6 +45,16 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   nhiêu thay vì chép dở. File `.abook` không còn mang mã nội bộ của máy xuất ra nó.
 
 ### Điện thoại và thiết bị
+
+- **Sửa cuốn tải từ máy tính, và "Gửi về máy tính"**: cuốn đã tải về từ máy tính giờ sửa được ngay trên điện thoại như cuốn mở
+  từ file - đổi tên sách, bìa, tên nhân vật, tên chương, nhạc nền, ghi việc cần Studio (cách đọc, người nói, giọng, thu lại).
+  Phần sửa tự gửi về máy tính vài giây sau khi sửa, và mỗi lần điện thoại tới được máy tính; hoặc bấm "Gửi về máy tính" trong
+  menu của sách. Dưới tên sách có dòng tình trạng: "N thay đổi đang chờ gửi về máy tính" (và vì sao chưa gửi được nếu lần trước
+  hỏng), hay "Đã gửi về máy tính lúc …" kèm máy tính đã làm gì: bao nhiêu thay đổi đã áp, bao nhiêu việc đang chờ chủ máy
+  duyệt (không việc nào tự áp), bao nhiêu mục máy tính đã đổi khác. Máy tính nhận xong thì điện thoại tải lại sách từ máy tính
+  (bản ấy đã mang các sửa) rồi gỡ phần đã gửi; sửa nào bạn làm trong lúc đang gửi thì ở lại, gửi ở lần sau. Mất kết nối thì
+  phần sửa vẫn nằm trên máy, thử lại sau 1 phút, 5 phút, và mỗi lần mở thư viện. Cuốn tải từ máy tính không có "Lưu thành file"
+  (sách là của máy tính). Cuốn nghe thẳng chưa tải và cuốn của thiết bị ghép khác vẫn sửa ở máy giữ chúng.
 
 - **Nhập nhạc của tôi ngay trên điện thoại, và đổi nhạc nền của một cuốn sách đã mở**: trong "Sửa sách" của một cuốn nhập từ file
   (cả điện thoại lẫn máy tính) có mục "Nhạc của tôi" - bấm "Nhập nhạc của tôi…", chọn một hay nhiều bản (mp3, m4a, ogg, opus,

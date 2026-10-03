@@ -39,3 +39,12 @@ export function watchDownloads(client: QueryClient): () => void {
   });
   return () => void handle.then((listener) => listener.remove());
 }
+
+/** Phần sửa gửi về máy tính xong (hay hỏng) ở nền: làm mới sách để dòng tình trạng và tên / bìa mới của máy tính hiện ra. */
+export function watchEditsSync(client: QueryClient): () => void {
+  const handle = EbookLibrary.addListener("editsSync", () => {
+    void client.invalidateQueries({ queryKey: ["listen"] });
+    void client.invalidateQueries({ queryKey: ["library"] });
+  });
+  return () => void handle.then((listener) => listener.remove());
+}

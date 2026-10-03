@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
@@ -106,9 +107,10 @@ object SyncLink {
         readTimeoutMs: Int = 20_000,
         connectTimeoutMs: Int = 5000,
         token: String? = null,
+        upload: File? = null,
     ): String {
         try {
-            return send(context, method, path, body, auth, root, readTimeoutMs, connectTimeoutMs, token)
+            return send(context, method, path, body, auth, root, readTimeoutMs, connectTimeoutMs, token, upload = upload)
         } catch (error: IOException) {
             // Nối LAN của máy tính chính hỏng (ra khỏi Wi-Fi nhà): đánh dấu hỏng và thử lại ngay một lần qua Bluetooth.
             val (lan, bluetooth) = routes(prefs(context))
@@ -116,7 +118,7 @@ object SyncLink {
             if (target == null || bluetooth == null) throw error
             Route.markDown(target)
             return send(context, method, path, body, auth, BluetoothLink.base(context, bluetooth), readTimeoutMs,
-                connectTimeoutMs, token)
+                connectTimeoutMs, token, upload = upload)
         }
     }
 
@@ -148,10 +150,11 @@ object SyncLink {
         connectTimeoutMs: Int,
         token: String?,
         firstUse: Array<String?>? = null,
+        upload: File? = null,
     ): String {
         Pin.install(context)
         return Pin.guard {
-            exchange(context, method, path, body, auth, root, readTimeoutMs, connectTimeoutMs, token, firstUse)
+            exchange(context, method, path, body, auth, root, readTimeoutMs, connectTimeoutMs, token, firstUse, upload)
         }
     }
 
@@ -166,6 +169,7 @@ object SyncLink {
         connectTimeoutMs: Int,
         token: String?,
         firstUse: Array<String?>?,
+        upload: File? = null,
     ): String {
         val connection = URL(root + path).openConnection() as HttpURLConnection
         // `firstUse` != null: yêu cầu ghép - nhận chứng chỉ lạ một lần và đọc vân tay ra mảng này.
@@ -175,7 +179,13 @@ object SyncLink {
         connection.readTimeout = readTimeoutMs
         if (token != null) connection.setRequestProperty("Authorization", "Bearer $token")
         else if (auth) connection.setRequestProperty("Authorization", "Bearer ${prefs(context).getString("token", "")}")
-        if (body != null) {
+        if (upload != null) {
+            // Gói nhị phân lớn (phần sửa + bài nhạc ghim): đẩy thẳng từ file, không giữ cả gói trong bộ nhớ.
+            connection.doOutput = true
+            connection.setRequestProperty("Content-Type", "application/zip")
+            connection.setFixedLengthStreamingMode(upload.length())
+            upload.inputStream().use { input -> connection.outputStream.use { input.copyTo(it, 256 * 1024) } }
+        } else if (body != null) {
             connection.doOutput = true
             connection.setRequestProperty("Content-Type", "application/json; charset=utf-8")
             connection.outputStream.use { it.write(body.toString().toByteArray()) }

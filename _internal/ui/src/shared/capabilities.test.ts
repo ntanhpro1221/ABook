@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canEditLayer, editBlockedNote, lineEditing, showsStudioOnly, studioNeed, type Capabilities } from "./capabilities";
+import { canEditLayer, editBlockedNote, lineEditing, showsStudioOnly, studioNeed, syncsToComputer, type Capabilities } from "./capabilities";
 
 const caps = (over: Partial<Capabilities>): Capabilities => ({ toolchain: false, workshop: false, link: false, ...over });
 
@@ -68,5 +68,20 @@ describe("sửa một câu từ trang đọc", () => {
     expect(blocked).toMatchObject({ mode: "blocked" });
     expect(blocked && "note" in blocked && blocked.note).toContain("sửa ở máy ấy");
     expect(lineEditing(undefined)).toBeNull();
+  });
+});
+
+describe("cuốn tải từ máy tính chính (điện thoại)", () => {
+  it("sửa được, và phần sửa gửi về máy tính", () => {
+    expect(canEditLayer(caps({ sync: true }))).toBe(true);
+    expect(syncsToComputer(caps({ sync: true }))).toBe(true);
+    expect(editBlockedNote(caps({ sync: true }))).toBeNull();
+  });
+
+  it("cuốn nghe thẳng, cuốn của máy tính (workshop) và cuốn nhập từ file không gửi về đâu cả", () => {
+    expect(syncsToComputer(caps({ link: true }))).toBe(false);
+    expect(syncsToComputer(caps({ workshop: true, sync: true }))).toBe(false);
+    expect(syncsToComputer(caps({}))).toBe(false);
+    expect(syncsToComputer(undefined)).toBe(false);
   });
 });
