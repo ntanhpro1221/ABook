@@ -185,6 +185,7 @@ class ReadAloudPlugin : Plugin() {
         val choice = call.getString("choice") ?: return call.reject("thiếu choice")
         try {
             VieneuVoices.module(context).remove(choice)
+            Playback.onMain { ReadAloud.voicesChanged() } // cuốn đang đọc bằng giọng vừa gỡ thì đọc tiếp bằng giọng mặc định, không chờ lần nạp kế
             resolveVieneu(call)
         } catch (error: IllegalArgumentException) {
             call.reject(error.message ?: "Lựa chọn lạ")
