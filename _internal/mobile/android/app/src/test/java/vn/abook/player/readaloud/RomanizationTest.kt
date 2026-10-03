@@ -46,7 +46,10 @@ class RomanizationTest {
         assertEquals("Xu-ba-ru-cun", Romanization.reading("Subaru-kun", "ja"))
         assertEquals("Ha-ru-tô-cun", Romanization.reading("Haruto-kun", "ja"))
         assertEquals("Phu-cu-si-ma", Romanization.reading("Fukushima", "ja"))
-        assertEquals("Xa-tô-xen-xay", Romanization.reading("Sato-sensei", "ja"))
+        assertEquals("Xa-tô-xen-xây", Romanization.reading("Sato-sensei", "ja"))
+        assertEquals("Gia-ma-tô", Romanization.reading("Yamato", "ja"))
+        assertEquals("Ha-gi-me", Romanization.reading("Hajime", "ja"))
+        assertEquals("Rây", Romanization.reading("Rei", "ja"))
         assertEquals("Pắc Cưn Hê", Romanization.reading("Park Geun-hye", "ko"))
         assertEquals("Li Miêng Bắc", Romanization.reading("Lee Myung-bak", "ko"))
         assertEquals("Sơ-un", Romanization.reading("Seoul", "ko"))
@@ -62,7 +65,8 @@ class RomanizationTest {
 
     @Test
     fun openChoicesAreFlagged() {
-        assertEquals(listOf("open:y_initial"), Romanization.readingWithFlags("Yamato", "ja")?.flags)
+        assertEquals(emptyList<String>(), Romanization.readingWithFlags("Yamato", "ja")?.flags) // ya Nhật đã chốt gi (chủ sách 04-10)
+        assertEquals(listOf("analogy:y_gi"), Romanization.readingWithFlags("Yuki", "ja")?.flags)
         assertEquals(setOf("y_initial", "ko_aspirated", "ko_rare_vowels"), Romanization.OPEN_CHOICES.keys)
     }
 }

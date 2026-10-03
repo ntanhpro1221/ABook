@@ -47,10 +47,10 @@ Hệ quả: ABook phải tự chọn một quy ước, neo vào nguồn chính t
    - r cuối bỏ (Poóc-len, Niu Oóc, Véc-xai). [Có nguồn]
    - l cuối thành n (Bun-kuc ~ Bul-kuc). [Chọn: nguồn có cả hai; "l" cuối không phải âm cuối tiếng Việt]
 4. **s / x.** Tiếng Nhật: x cho âm /s/ (Ô-xa-ca, Na-ga-xa-ki, Ma-xa-ca-du); s cho âm "sh" (Hi-rô-si-ma, Ki-si-đa, Tô-si-mi-chu).
-   Tiếng Hàn: s (Su-uân, Han Sưng Su, Bu-san). [Chọn: Bộ Ngoại giao và SGK lẫn cả hai. Đã quét theo bằng chứng: Nhật x khớp 27 dạng SGK
-   (s: 24), sh -> s khớp hơn sh -> x; Hàn s khớp 17 dạng Bộ Ngoại giao (x: 14). Giọng miền Nam phân biệt được s / x.]
+   Tiếng Hàn: s (Su-uân, Han Sưng Su, Bu-san). [Chọn: Bộ Ngoại giao và SGK lẫn cả hai. Đã quét theo bằng chứng: Nhật x khớp 24 dạng SGK
+   (s: 21), sh -> s khớp hơn sh -> x; Hàn s khớp 17 dạng Bộ Ngoại giao (x: 14). Giọng miền Nam phân biệt được s / x.]
 5. **c / k / q, g / gh, ng / ngh:** theo chính tả tiếng Việt (c trước a, o, ô, ơ, u, ư; k trước i, e, ê, y; gh, ngh trước i, e, ê).
-   [Có nguồn: SGK Ca-oa-xa-ki, Cô-bê, Ki-si-đa]
+   [Có nguồn: SGK Ca-oa-xa-ki, Cô-chi, Ki-si-đa]
 6. **Hán-Việt:** chỉ khi chính bản dịch đã viết bằng Hán-Việt (Minh Trị, Bình Nhưỡng, Kim Nhật Thành). App không tự chuyển tên
    Latinh sang Hán-Việt. [Có nguồn: QĐ 07/2003, NĐ 30/2020]
 
@@ -59,32 +59,43 @@ Hệ quả: ABook phải tự chọn một quy ước, neo vào nguồn chính t
 | romaji | đọc | mức | bằng chứng |
 |---|---|---|---|
 | a, i, o | a, i, ô | Có nguồn | Ô-xa-ca, Tô-ky-ô, Hi-rô-si-ma |
-| e | ê | Có nguồn | Sa-na-ê, Mô-tê-gi, Cô-bê (đa số) |
+| e | **e** ở mọi chỗ (Xa-na-e, Cô-be, E-đô; ge → ghe, ke → ke) | **Chủ sách** | Chủ sách 04-10 (lần 2): "Hajime => Ha-gi-me", "Kenji => Ken-gi". Bỏ kiểu "ê" của SGK / Bộ Ngoại giao (Cô-bê, Sa-na-ê, Mô-tê-gi, Ha-kô-ne) |
 | u | **u** ở mọi chỗ (fu → phu, ku → cu, ru → ru) | **Chủ sách** | Chủ sách 04-10: "Fukushima => phu-cu-si-ma", "haruto-kun => ha-ru-tô-cun". Khớp SGK (Phu-cu-ô-ca, Mu-rô-ran, Cu-si-rô, Chu-bu); bỏ kiểu "ư" của Bộ Ngoại giao (Phư-mi-ô, Ê-xư-kê) |
 | yu, kyu, ryu, shu, chu, ju | iu / u sau âm vòm | Có nguồn | Kiu-xiu, Riu-kiu, Chu-bu |
-| nguyên âm dài ō, ou, oo / ū, uu | ô / ư (không kéo dài) | Có nguồn | Tô-ky-ô, Hô-cai-đô, Kiu-xiu |
-| ei | ay | Chọn | Quét: ay hơn ê / ây đúng một dạng (SGK cũ May-gi); Bộ Ngoại giao viết Ê-xư-kê (ê), SGK cũ Kô-mây (ây). Kém chắc nhất trong các điểm đã quét |
+| nguyên âm dài viết bằng dấu ō (ô) / oo / ū, uu | ô / u (không kéo dài) | Có nguồn | Tô-ky-ô, Hô-cai-đô, Kiu-xiu |
+| **ou viết ra hai chữ** (o + u) | **âu** ở mọi chỗ (Câu-ta-râu, Câu-ki, Xa-tâu); sau y âm vòm tách i-âu (kyou → ki-âu, ryou → ri-âu); shou → sâu, chou → châu, jou → giâu | **Chủ sách** | Chủ sách 04-10 (lần 3): "Kyouko => Ki-âu-cô", "Ryouma => Ri-âu-ma"; shou / chou / jou theo analogy (cờ `analogy:ou_vom`). ō vẫn là ô (Tô-ky-ô giữ) |
+| ei | **ây** | **Chủ sách** | Chủ sách 04-10 (lần 2): "Rei => Rây", "sensei => xen-xây". Khớp SGK cũ Kô-mây; bỏ ê (Bộ Ngoại giao Ê-xư-kê) và ay |
 | ai | ai (tách "a-i" khi hai âm tiết: Ta-ca-i-chi) | Có nguồn | Sai-ta-ma, Ta-ca-i-chi |
 | k | c / k theo luật 1.5 | Có nguồn | Ca-oa-xa-ki, Ki-si-đa |
-| g | g; trước i đọc "gi", trước e đọc "ghê" | Chọn | Bộ Ngoại giao viết "Mô-tê-gi" (quét: gi hơn ghi một dạng). Hệ quả: gi trùng với ji ("Gin" và "Jin" cùng đọc "Gin"), "gi" tiếng Việt đọc /z/ |
+| g | g; trước i đọc "gi", trước e đọc "ghe" | Chọn | Bộ Ngoại giao viết "Mô-tê-gi", nhưng e → e (chủ sách) nên nguồn không còn phân biệt gi / ghi; giữ gi cho đồng bộ với ji → gi. Hệ quả: gi trùng với ji ("Gin" và "Jin" cùng đọc "Gin"), "gi" tiếng Việt đọc /z/ |
 | s | x | Chọn (luật 1.4) | Ô-xa-ca, Na-ga-xa-ki |
 | shi, sha, sho, shu | si, sa, sô, xiu | Có nguồn | Hi-rô-si-ma, Sô-gun, Kiu-xiu |
-| z, j | d / gi (zu → dư, ji → gi) | Có nguồn | Ma-xa-ca-dư, Sin-dô |
+| z, j | d / gi (zu → du, ji → gi) | Có nguồn (ji: **Chủ sách** 04-10, Ha-gi-me, Ken-gi) | Ma-xa-ca-du, Sin-dô |
 | t, d | t, đ | Có nguồn | Ta-ca-i-chi, Hô-cai-đô, E-đô |
 | chi | chi | Có nguồn | Cô-chi, Ta-ca-i-chi |
 | tsu | chu | Chọn | theo quyết định u → u của chủ sách (Bộ Ngoại giao Tô-si-mi-chư → chu); SGK cũ Mát-xu-ya-ma |
 | h, b, p, m, n, r | h, b, p, m, n, r | Có nguồn | Ha-kô-ne, Mô-ri |
 | fu | phu | Chủ sách | "Fukushima => phu-cu-si-ma"; SGK Phu-cu-ô-ca |
 | w (wa) | oa | Có nguồn | Ca-oa-xa-ki, Bi-oa, Tô-ku-ga-oa |
-| ya, yo (đầu từ) | **mở**; mặc định ya / i-ô | App | SGK: Ya-ma-tô, I-ô-cô-ha-ma / Y-ô-cô-ha-ma; mặc định là hai dạng ấy ghép lại (quét); "ya" không phải âm tiết Việt; chọn bằng âm thanh |
-| kyo, ryo, nyo… | ki-ô, ri-ô, ni-ô | Có nguồn | Ki-ô-tô (CTST) |
+| ya, yu, yo (đầu từ và giữa từ) | **gia, giu, giô** | **Chủ sách** | Chủ sách 04-10 (lần 2): "Yamato => Gia-ma-tô", "Ayaka => A-gia-ca". yu, yo theo ya (cờ `analogy:y_gi`). Thay dạng SGK Ya-ma-tô, I-ô-cô-ha-ma |
+| kyo, ryo, nyo… | ki-ô, ri-ô, ni-ô (kyou, ryou → ki-âu, ri-âu: xem dòng ou) | Có nguồn | Ki-ô-tô (CTST) |
 | n âm tiết | n khép âm tiết trước | Có nguồn | Hôn-su, Can-tô, Sin-dô |
 | phụ âm đôi kk, pp, tt, ss | khép âm tiết trước bằng c / p / t + thanh sắc | Có nguồn | Hốc-cai-đô, Xáp-pô-rô |
 | "u" vô thanh (desu, Matsu…) | vẫn đọc ư / u | Có nguồn | dạng viết không bỏ âm nào |
 
 **Hậu tố gọi** (-san, -kun, -chan, -sama, senpai, sensei): không có nguồn đọc tiếng Việt. Đọc theo bảng trên: xan, cun, chan, xa-ma,
-xen-pai, xen-xay (ei -> ay). Hậu tố nối vào tên bằng GẠCH NỐI thành một chuỗi: "Haruto-kun" → "Ha-ru-tô-cun". [Chủ sách 04-10 cho -kun; các hậu
+xen-pai, xen-xây (ei -> ây). Hậu tố nối vào tên bằng GẠCH NỐI thành một chuỗi: "Haruto-kun" → "Ha-ru-tô-cun". [Chủ sách 04-10 cho -kun; các hậu
 tố khác áp cùng cách]
+
+**Phán quyết của chủ sách (04-10)** — đứng trên mọi nguồn, cố định, không quét; mỗi cái là một ca kind `owner` trong
+`tests/romanization_evidence.py` và test phải khớp:
+- Lần 1: Fukushima → Phu-cu-si-ma; Haruto-kun → Ha-ru-tô-cun (u → u ở mọi chỗ, fu → phu, tsu → chu, hậu tố nối gạch).
+- Lần 2: Yamato → Gia-ma-tô, Ayaka → A-gia-ca (y + nguyên âm → gi: ya gia, yu giu, yo giô); Rei → Rây, sensei → xen-xây (ei → ây);
+  Hajime → Ha-gi-me, Kenji → Ken-gi (e → e, không ê; ge → ghe, ke → ke). Giữ: s → x, sh → s, ji → gi, u → u, tsu → chu, -kun → cun nối gạch.
+  Âm vòm kya / kyo / ryo… giữ như cũ (Ki-ô-cô, Ri-ô-ma).
+- Lần 3: Kyouko → Ki-âu-cô, Ryouma → Ri-âu-ma ("ou" viết ra hai chữ → âu; Koutarou → Câu-ta-râu, Satou → Xa-tâu). Nguyên âm dài viết bằng
+  dấu (ō) vẫn → ô (Tô-ky-ô); "oo" giữ.
+- Ca sách giáo khoa / Bộ Ngoại giao vênh các phán quyết này (Ya-ma-tô, Cô-bê, Ê-xư-kê…) được ghi lý do ở `EXPLAINED`, không phải lỗi luật.
 
 ## 3. Tiếng Hàn (phiên âm Latinh RR / McCune, như bản dịch viết)
 
@@ -148,8 +159,7 @@ dựng đáp án.
 
 ## 7. Còn mở, quyết bằng âm thanh
 
-- "ya", "yo" đầu từ (Yamato, Yokohama): "Ya-ma-tô" hay "Gia-ma-tô" / "I-a-ma-tô". Chọn dạng mà giọng đọc phát ra gần âm gốc nhất
-  (thu thử → nghe lại).
+- ya / yo / yu của **tiếng Hàn** (đầu từ): mặc định ya / i-ô / iu, chưa có ví dụ tên (tiếng Nhật đã chốt gi, xem phán quyết chủ sách).
 - Giọng miền Bắc đọc s và x như nhau. Luật 1.4 chỉ có tác dụng với giọng miền Nam; kiểm lại khi đã có số đo.
 - Các nguyên âm Hàn chưa có ví dụ chính thức (wo, oe, wi, ui) và các âm bật hơi.
 

@@ -6,7 +6,8 @@ dùng chung giá trị nào). Hoà điểm thì lấy tổ hợp mà các biến
 tiết (`_valid_vietnamese_spoken_form`) từ chối thêm tên so với biến thể ít bị từ chối nhất của cùng điểm (kể cả tên ngoài nguồn: ca edge và tên thật) thì
 không bao giờ được chọn, chỉ đếm để biết.
 
-Không quét (chủ sách 04-10 đã chốt, cố định): u Nhật -> u ở mọi chỗ, tsu -> chu, fu -> phu, hậu tố nối gạch. Cuối bảng kiểm các luật ấy còn đứng.
+Không quét (chủ sách 04-10 đã chốt, cố định): u Nhật -> u ở mọi chỗ, e Nhật -> e, ei -> ây, ou viết ra -> âu, y + nguyên âm Nhật -> gi, tsu -> chu, fu -> phu, hậu tố nối
+gạch. Cuối bảng kiểm các luật ấy còn đứng. (ya / yo của tiếng Hàn dùng CHOICES["y"] nhưng không có ca nguồn nào, nên cũng không quét.)
 
     runtime/.venv/Scripts/python.exe scripts/sweep_romanization_variants.py
 
@@ -32,10 +33,8 @@ WEIGHT = {"owner": 100, "official": 2, "textbook": 1, "community": 0}
 VALUES: dict[str, list] = {
     "s": ["x", "s"],
     "sh": ["s", "x"],
-    "ei": ["ê", "ây", "ay"],
     "k": ["orth", "k_o", "k_all"],
-    "g": ["gh", "gi"],
-    "y": ["i_a", "ya_io", "y_a", "ya_yo"],
+    "g": ["gi", "gh"],  # hoà điểm từ khi e -> e (Mô-te-gi không còn khớp): giữ gi, như ji -> gi
     "kya": ["ki_a", "kia"],
     "ss": ["t", "c"],
     "ko_g": ["k", "g"],
@@ -48,13 +47,15 @@ VALUES: dict[str, list] = {
     "ko_a_short": [True, False],
 }
 GROUPS = [
-    ["s", "sh", "ei", "k", "g", "y", "kya", "ss"],
+    ["s", "sh", "k", "g", "kya", "ss"],
     ["ko_g", "ko_d", "ko_b", "ko_s", "ko_yeo", "ko_ye", "ko_tense", "ko_a_short"],
 ]
 # Luật cố định của chủ sách (không quét): (chữ, gốc, cách đọc phải ra). Kiểm ở cuối để biết kết quả quét không phá chúng.
 OWNER_RULES = [
     ("Haruto-kun", "ja", "Ha-ru-tô-cun"), ("Fukushima", "ja", "Phu-cu-si-ma"), ("Suzu", "ja", "Xu-du"), ("Gugu", "ja", "Gu-gu"),
     ("Tsuru", "ja", "Chu-ru"), ("Kuro", "ja", "Cu-rô"),
+    ("Yamato", "ja", "Gia-ma-tô"), ("Ayaka", "ja", "A-gia-ca"), ("Rei", "ja", "Rây"), ("sensei", "ja", "xen-xây"), ("Hajime", "ja", "Ha-gi-me"),
+    ("Kenji", "ja", "Ken-gi"), ("Yuki", "ja", "Giu-ki"), ("Kyoko", "ja", "Ki-ô-cô"), ("Kyouko", "ja", "Ki-âu-cô"), ("Ryouma", "ja", "Ri-âu-ma"),
 ]
 
 
