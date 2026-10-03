@@ -732,6 +732,41 @@ Hai thước:
   - "Nút thắt là đoán không khí đoạn" có thêm bằng chứng từ thước nghe (vet thắng app), cộng bộ 4 / bộ 5 (oracle + LLM 0,607).
   - "Nền êm hợp" chỉ vững ở mức "hơn far / mid".
 
+**KẾT QUẢ (ii) QWEN3-OMNI-30B-A3B-EN (03-10 19:xx, Kaggle 2×T4, `results/qwen3omni_score.txt`): DÙNG ĐƯỢC → thước nghe
+chính.**
+- Cách chạy:
+  - 4-bit AWQ, giải nén mỗi lượt (vá OOM của compressed-tensors 0.11), lô 4, 133 phút cho 1.200 lượt.
+  - Kiểm lô trên hai mục khác độ dài: lệch 0,059 (ngưỡng 0,15).
+- Số:
+  - ổn định a/b **0,906** (287 lượt);
+  - kappa với R_mới **0,345** (251 lượt; đồng ý 0,67);
+  - với R_cũ 0,511; với L_min 0,418.
+  - Mạnh hơn L_min trên cả hai điều kiện (0,809 / 0,258).
+- Theo luật: thay L_min làm thước nghe chính. Cả hai dùng được → phán quyết nghe chung = lượt hai model cùng ý (196 lượt).
+
+| Thước | 1 | 2 | 3 | 4 | 5 | 6 |
+|---|---|---|---|---|---|---|
+| R_mới (đọc) | gems | calm | app | vet | mid | far |
+| Qwen3-Omni (nghe) | calm | vet | gems | mid | app | far |
+| nghe chung (Qwen3-Omni = L_min) | vet | gems | calm | app | mid | far |
+
+Từng cặp, Qwen3-Omni (nghe chung trong ngoặc):
+- vet thắng far 17/20 = 0,85 [0,64-0,95] (13/14);
+- **gems thắng app 41/59 = 0,69 [0,57-0,80]** (24/33 = 0,73 [0,56-0,85]);
+- app thắng vet 16/56 = 0,29 [0,18-0,41] (7/28);
+- calm thắng far 33/34 = 0,97; calm thắng mid 25/37 = 0,68 [0,51-0,80]; mid thắng far 24/29 = 0,83.
+
+Phân xử bất đồng của đoạn trên:
+- `calm`: Qwen3-Omni xếp 1, đứng về phía thước đọc (2). Bằng chứng "nền êm hợp" mạnh hơn.
+- `vet` thắng `app`: Qwen3-Omni đứng về phía L_min (app thắng chỉ 0,29). Thước đọc vẫn 0,48 → còn bất đồng giữa nghe và
+  đọc, nhưng hai thước nghe nay cùng ý.
+- **Mục 2 (gems so app):**
+  - Theo thước nghe chính, gems thắng app 0,69 với cận dưới 0,57. Đạt đúng tiêu chí M2: ≥ 0,60 và cận dưới > 0,5.
+  - Theo R_mới thì không (0,61 [0,46-0,74]). Ghi BẤT ĐỒNG, không chọn bên.
+  - Đây là ứng viên mạnh nhất cho thí nghiệm "bật lại Lớp 2". Nhắc lại: Lớp 2 cần 13 cường độ của đoạn từ LLM, mà đường LLM
+    trượt ở bộ 5B. Mở lại phải ghi trước riêng, Lead / chủ sách quyết.
+- Qwen3-Omni 30B không chạy được trên máy người dùng. Nó chỉ là THƯỚC đo, không phải tính năng.
+
 
 **GHI TRƯỚC - NỚI NGƯỠNG NỀN ÊM (02-10 23:xx, Lead duyệt; từ E1: calm đứng thứ hai, hơn app):**
 - **Giả thuyết:** kéo về nền êm (CALM_TARGET) cho nhiều đoạn hơn làm nhạc hợp hơn. Hiện chỉ kéo khi confidence < WEAK_MOOD
