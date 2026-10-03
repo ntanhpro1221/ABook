@@ -28,7 +28,7 @@ ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests" / "fixtures" / "english_vi" / "cases.json"
 # Mọi phán quyết chủ sách (04-10, bốn lần): (chữ, các dạng chủ sách cho là đúng; dạng thứ hai là cách đọc khác cũng được)
 OWNER = [(token, sources) for token, sources, kind in evidence.SOURCED if kind == "owner"] + [("VIP", ("víp",)), ("ID", ("ai-đi",))]
-FIXED_ONLY = {"Kate", "Pete", "guild", "time", "Thomas", "great", "Gate", "VIP", "ID"}  # ca riêng: chỉ bảng ghi đè ra được, luật không suy rộng
+FIXED_ONLY = {"Kate", "Pete", "guild", "time", "Thomas", "great", "Gate", "Paul", "higher", "Laplace", "Walt", "Dalton", "days", "VIP", "ID"}  # ca riêng: chỉ bảng ghi đè ra được, luật không suy rộng
 
 
 def _load_script(name: str):
@@ -79,9 +79,9 @@ def test_tally_of_sourced_forms_by_kind():
         entry = tally.setdefault(kind, [0, 0])
         entry[0] += _matches(token, sources)
         entry[1] += 1
-    # (khớp đủ thanh, tổng). Chủ sách: 31 / 38, bảy ca còn lại là ca riêng (bảng ghi đè: Kate, Pete, guild, time, Thomas, great, Gate);
-    # Tô-mát, Bốt-tơn, Rốc-ki của nguồn đã thay bằng dạng chủ sách; Đan-tơn thua /ɔːl/ -> ôn. Cộng đồng chỉ để xem.
-    assert tally == {"owner": [31, 38], "official": [2, 4], "textbook": [8, 37], "press": [0, 2], "community": [6, 19]}
+    # (khớp đủ thanh, tổng). Chủ sách: 36 / 49, 13 ca còn lại là ca riêng (bảng ghi đè: Kate, Pete, guild, time, Thomas, great, Gate, Paul,
+    # higher, Laplace, Walt, Dalton, days); Tô-mát, Bốt-tơn, Rốc-ki, Đan-tơn, Oa-sinh-tơn của nguồn đã thành ca chủ sách. Cộng đồng chỉ để xem.
+    assert tally == {"owner": [36, 49], "official": [2, 4], "textbook": [7, 35], "press": [0, 2], "community": [5, 19]}
 
 
 # ---- từng dòng luật ----------------------------------------------------------------------------------------------------
@@ -105,11 +105,13 @@ def test_tally_of_sourced_forms_by_kind():
     # tên ngắn một phụ âm đầu + tắc + e câm theo mặt chữ, chỉ với tên viết hoa
     ("Coke", "Co-ke"), ("Nate", "Na-te"), ("Shake", "Sa-ke"), ("Lace", "La-xe"), ("Cale", "Ca-le"),
     # /eɪ/ + t -> êt, /eɪ/ + s cuối -> ây; /aɪər/ -> ai; /ɔːl/ -> ôn; từ ghép không có trong từ điển đọc từng phần
-    ("gate", "ghết"), ("higher", "hai"), ("Paul", "Pôn"), ("sandworm", "xan-uơm"),
+    ("gate", "ghết"), ("fire", "phai"), ("call", "côn"), ("sandworm", "xan-uơm"), ("water", "guốt-tơ"), ("Walter", "Guôn-tơ"), ("Warrior", "Oa-ri-ơ"),
+    # tên ngắn e câm: âm mũi theo âm vị (Dane), g + e cứng (Page); tắc + l / r giữa từ -> Cờ huyền; w đầu từ -> gu
+    ("Dane", "Đên"), ("Page", "Pa-ghe"), ("tablet", "ta-bờ-lét"), ("Andrew", "An-đờ-ru"),
     # đường chính tả (không có trong từ điển)
-    ("Encrid", "En-cơ-rít"), ("Lancel", "Lan-xen"), ("Calian", "Ca-li-an"), ("Litana", "Li-ta-na"),
+    ("Encrid", "En-cờ-rít"), ("Lancel", "Lan-xen"), ("Calian", "Ca-li-an"), ("Litana", "Li-ta-na"),
     # nối gạch
-    ("Jean-Paul", "Gin Pôn"),
+    ("Jean-Paul", "Gin Pau"),
 ])
 def test_reading_follows_the_convention(token, reading):
     assert vietnamized_english(token) == reading
@@ -121,15 +123,18 @@ def test_unsure_is_none(token):
 
 
 def test_without_a_dictionary_the_spelling_route_reads():
-    assert vietnamized_english_flags("Washington", {}) == ("Oa-sinh-ton", ("via:spelling",))
-    assert vietnamized_english_flags("Washington") == ("Oa-sinh-tơn", ("via:phonemes",))
+    assert vietnamized_english_flags("Washington", {}, overrides=False) == ("Oa-sinh-ton", ("via:spelling",))
+    assert vietnamized_english_flags("Washington", overrides=False) == ("Oa-sinh-tơn", ("via:phonemes",))
     assert vietnamized_english("Encrid", {}) == vietnamized_english("Encrid")
     assert vietnamized_english("tank", {}, overrides=False) == "tanh"
 
 
 def test_analogy_points_are_flagged_and_settled_points_are_not():
     assert vietnamized_english_flags("rank") == ("ranh", ("via:phonemes", "analogy:ank"))  # theo tank -> tanh
-    for word in ("Master", "Blake", "Lyle", "Tom", "Tyler", "Zeke", "late", "Grace", "Rose", "fireball"):  # chủ sách đã chốt: không cờ
+    assert "analogy:w_gu" in vietnamized_english_flags("Walter")[1]  # w trước âm o: chỉ có Walt của chủ sách
+    for word in ("William", "Wendy", "Weiss", "Washington", "sandworm"):  # w trước âm khác o, hay ở nửa sau từ ghép: không gu
+        assert "analogy:w_gu" not in vietnamized_english_flags(word, overrides=False)[1], word
+    for word in ("Master", "Blake", "Lyle", "Tom", "Tyler", "Zeke", "late", "Grace", "Rose", "fireball", "Cage", "Luce", "Jane", "Laplace"):  # chủ sách đã chốt: không cờ
         assert not [flag for flag in vietnamized_english_flags(word, overrides=False)[1] if not flag.startswith("via:")], word
     assert vietnamized_english_flags("Mike") == ("Mi-ke", ("via:override",))
     assert vietnamized_english_flags("Mike", overrides=False) == ("Mi-ke", ("via:face",))

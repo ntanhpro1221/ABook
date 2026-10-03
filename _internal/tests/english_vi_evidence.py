@@ -60,13 +60,25 @@ SOURCED: list[tuple[str, tuple[str, ...], str]] = [
     ("Grace", ("Gờ-rây",), "owner"),
     ("Gate", ("Ghết", "Gết"), "owner"),  # chủ sách viết gết; chính tả gh trước ê như ghêm
     ("Nate", ("Na-te", "Nết"), "owner"),
+    # lần 6: tên ngắn e câm theo mặt chữ trừ âm mũi (Jane giên); g + e cứng, c + e mềm; w đầu từ -> gu; tắc + l / r giữa từ -> Cờ huyền.
+    # Paul, higher, Dalton (thay Đan-tơn của SGK, cùng dạng), days, Laplace, Walt là ca riêng
+    ("Paul", ("Pau",), "owner"),
+    ("higher", ("hai-gờ",), "owner"),
+    ("Laplace", ("La-pờ-lết",), "owner"),
+    ("Jane", ("Giên", "Dên"), "owner"),
+    ("Cage", ("Ca-ghe",), "owner"),
+    ("Cale", ("Ca-le",), "owner"),
+    ("Walt", ("Guốt",), "owner"),
+    ("Dalton", ("Đan-tơn",), "owner"),
+    ("days", ("đay",), "owner"),
+    ("Luce", ("Lu-xe",), "owner"),
     # --- văn bản nhà nước / Bộ Ngoại giao ---
     ("Edison", ("Ê-đi-xơn",), "official"),
     ("Melbourne", ("Men-bơn",), "official"),
     ("Gillian", ("Ghi-li-ừn",), "official"),
     ("Bird", ("Bớt",), "official"),
     # --- sách giáo khoa (Địa lí, Lịch sử, Ngữ văn, Tiếng Việt, KHTN) ---
-    ("Washington", ("Oa-sinh-tơn",), "textbook"),
+    ("Washington", ("Oa-sinh-tơn",), "owner"),  # chủ sách 04-10 xác nhận dạng SGK (lần 6: w trước âm khác o không thành gu)
     ("George", ("Gioóc-giơ",), "textbook"),
     ("Virginia", ("Viếc-gi-ni-a",), "textbook"),
     ("Scotland", ("Xcốt-len",), "textbook"),
@@ -96,7 +108,6 @@ SOURCED: list[tuple[str, tuple[str, ...], str]] = [
     ("Shakespeare", ("Sếch-xơ-pia", "Sếch-xư-pia"), "textbook"),
     ("Ernest", ("Ơ-ni-xơ-tơ",), "textbook"),
     ("Hemingway", ("Hê-minh-uây",), "textbook"),
-    ("Dalton", ("Đan-tơn",), "textbook"),
     ("Rutherford", ("Rơ-dơ-pho",), "textbook"),
     ("Matthew", ("Mét-thiu",), "textbook"),
     ("Roosevelt", ("Ru-dơ-ven", "Rô-sơ-ven"), "textbook"),
@@ -135,6 +146,7 @@ _OWNER_FIXED = "ca riêng của chủ sách 04-10 (bảng ghi đè OWNER), luậ
 _AA_O = "/ɑ/ viết o -> o (chủ sách 04-10: boss -> bót; quét: ô khớp thêm 3 dạng nguồn nhưng thua ca chủ sách)"
 _EH = "/ɛ/ -> e (chủ sách 04-10: level -> le-vồ); nguồn viết ê"
 _CLUSTER = "cụm phụ âm luôn tách bằng ơ, ở đầu từ thanh huyền (mục 1.1; chủ sách 04-10: xờ-kiu, bờ-lếch); nguồn giữ cụm"
+_STOP_LIQUID = "tắc + l / r giữa từ tách thành Cờ thanh huyền, âm tiết trước mở (chủ sách 04-10: Laplace -> la-pờ-lết)"
 _GEM = "p t k sau nguyên âm nhấn chính vừa khép vừa mở âm tiết (chủ sách 04-10: máp-pồ); nguồn không nhân đôi"
 _EL = "-əl cuối -> ồ (chủ sách 04-10: máp-pồ, mai-cồ); nguồn viết -tơn"
 _FRENCH = "nguồn đọc kiểu Pháp / theo chữ, không theo âm Anh"
@@ -151,16 +163,21 @@ EXPLAINED: dict[str, tuple[str, str]] = {
     "Gillian": ("Gi-li-an", "CMU đọc g mềm /dʒ/ (gi), schwa theo chữ a; Bộ Ngoại giao ghi Ghi- và -ừn (âm tiết khép mang huyền, khác luật 1.2)"),
     "George": ("Giót", _FRENCH + "; r sau nguyên âm bỏ, /dʒ/ cuối -> t (quét: fric_final)"),
     "Virginia": ("Vơ-gi-ni-a", "CMU /ɚ/ -> ơ; nguồn đọc theo chữ (Viếc-)"),
-    "Scotland": ("Xờ-cót-lan", _CLUSTER + "; " + _AA_O + "; schwa theo chữ a (-lan), nguồn -len"),
+    "Scotland": ("Xờ-co-tờ-lan", _CLUSTER + "; " + _STOP_LIQUID + "; schwa theo chữ a (-lan), nguồn -len"),
     "Ireland": ("Ai-lan", "/aɪər/ -> ai (chủ sách: phai-bôn); schwa theo chữ a (-lan), nguồn -len"),
-    "Dalton": ("Đôn-tơn", "/ɔːl/ -> ôn (chủ sách 04-10: fireball -> phai-bôn); nguồn đọc theo chữ a (Đan-)"),
+    "Dalton": ("Đôn-tơn", _OWNER_FIXED + ": /ɔːl/ -> ôn vẫn là luật (fireball -> phai-bôn)"),
+    "Paul": ("Pôn", _OWNER_FIXED + ": /ɔːl/ -> ôn vẫn là luật (fireball -> phai-bôn)"),
+    "higher": ("hai", _OWNER_FIXED + ": /aɪər/ -> ai vẫn là luật (fireball -> phai-bôn)"),
+    "Laplace": ("La-pờ-lây", _OWNER_FIXED + " phần -lết (/eɪ/ + s cuối -> ây là luật: Grace -> gờ-rây); phần la-pờ- là luật"),
+    "Walt": ("Guôn", _OWNER_FIXED + " phần l bỏ trước t (/ɔːl/ -> ôn là luật); w đầu từ -> gu là luật"),
+    "days": ("đết", _OWNER_FIXED + ": /eɪ/ + z chưa thành luật (chỉ /eɪ/ + s -> ây)"),
     "Charles": ("Chan", _FRENCH + " (ch -> s, r -> c); luật theo âm Anh: ch, r bỏ, l -> n"),
     "New": ("Nu", "CMU (Mỹ) /nuː/ -> nu; nguồn theo âm Anh-Anh /njuː/"),
     "Francisco": ("Phờ-ran-xít-cô", _CLUSTER),
     "Angeles": ("An-gie-lít", "schwa theo chữ e, /ɪ/ -> i (quét); nguồn giơ, lét"),
     "Chicago": ("Si-ca-gô", "/ʃ/ -> s (sh -> s, như Oa-sinh-tơn); nguồn đọc theo chữ ch"),
     "Colorado": ("Co-lơ-ra-đô", _AA_O + "; CMU /ɚ/ -> ơ, nguồn theo chữ lô"),
-    "Portland": ("Pót-lan", _FRENCH + " (r -> c: Poóc); luật bỏ r sau nguyên âm (luật 1.3), t khép"),
+    "Portland": ("Po-tờ-lan", _FRENCH + " (r -> c: Poóc); luật bỏ r sau nguyên âm (luật 1.3); " + _STOP_LIQUID),
     "Seattle": ("Xi-át-tồ", _EL),
     "Mississippi": ("Mi-xi-xíp-pi", _GEM),
     "Appalachian": ("A-pa-lây-chan", "nguồn rút gọn (A-pa-lat, bỏ -chian)"),
@@ -182,6 +199,7 @@ EXPLAINED: dict[str, tuple[str, str]] = {
     "Edinburgh": ("E-đơn-bơ-rô", "nguồn 1918 (Phạm Quỳnh) đọc theo chữ"),
     "London": ("Lăn-đơn", _COMMUNITY),
     "Wayne": ("Uên", _COMMUNITY),
+    "tablet": ("ta-bờ-lét", _COMMUNITY),
     "Marilyn": ("Me-ri-lin", _COMMUNITY),
     "Monroe": ("Mơn-rô", _COMMUNITY),
     "Mark": ("Mác", _COMMUNITY),
