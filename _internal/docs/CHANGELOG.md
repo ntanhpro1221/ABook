@@ -17,6 +17,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Studio
 
+- **Nghe sách, chữ đang đọc sáng lên**: ở chế độ đọc theo (máy tính và điện thoại), trong câu đang đọc chữ nào đang vang lên thì sáng riêng
+  chữ ấy, đi theo giọng đọc từng chữ một. Studio căn từng chữ vào audio lúc đóng gói sách (model nhận dạng tiếng Việt chạy ngay trên máy,
+  khoảng 1-2 giây cho mỗi phút audio; máy chưa có model thì chia theo âm tiết và tự dò chỗ ngắt hơi), nhớ kết quả nên đóng gói lại không
+  căn lại. Sách đã làm từ trước: hộp Xuất > File .abook có nút "Căn từ cho sách đã làm". Sách chưa căn vẫn sáng cả câu như cũ. Model nằm
+  trong Studio (thêm một bước 122 MB), không nằm trong bộ cài chỉ-nghe.
+
 - **Tạo sách từ file Word (DOCX) và PDF, không chỉ TXT và EPUB**: chọn một file `.docx` hay `.pdf` (hay cả thư mục chứa chúng) ở bước chọn
   chương, máy tách thành các chương rồi bạn xem danh sách - tên chương, số chữ và số ký tự - trước khi tạo. Word: chia theo tiêu đề
   "Heading 1/2" (không có thì theo các dòng "Chương N"). PDF: bỏ tiêu đề chạy và số trang lặp ở đầu / cuối mỗi trang, nối các dòng

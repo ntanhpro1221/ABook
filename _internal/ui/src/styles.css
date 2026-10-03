@@ -71,6 +71,7 @@
   --nav-active: #ffffff;
   --nav-active-ring: rgb(20 24 29 / 0.08);
   --read-along: color-mix(in oklab, var(--accent) 26%, transparent);
+  --read-along-word: color-mix(in oklab, var(--accent) 62%, transparent);
   --avatar-bg-l: 0.93;
   --avatar-fg-l: 0.43;
   --shadow: 0 1px 2px rgb(20 24 29 / 0.06), 0 8px 24px -12px rgb(20 24 29 / 0.16);
@@ -107,6 +108,7 @@
   --nav-active: #1f262f;
   --nav-active-ring: transparent;
   --read-along: color-mix(in oklab, var(--accent) 22%, transparent);
+  --read-along-word: color-mix(in oklab, var(--accent) 50%, transparent);
   --avatar-bg-l: 0.33;
   --avatar-fg-l: 0.84;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 30px -14px rgb(0 0 0 / 0.7);
@@ -214,6 +216,19 @@
 .read-along-active {
   background: var(--read-along);
   color: var(--text);
+}
+
+/* Chữ đang đọc trong câu đang sáng (mốc từng chữ, listen/words.ts): chỉ đổi nền - không đệm, không đổi độ đậm - nên đổi chữ không làm dòng xuống hàng lại. */
+.read-along-word {
+  background: var(--read-along-word);
+  color: var(--text);
+  border-radius: 3px;
+  transition: background-color 90ms linear;
+}
+@media (prefers-reduced-motion: reduce) {
+  .read-along-word {
+    transition: none;
+  }
 }
 
 /* Chữ cái đầu của nhân vật: cùng độ sáng cho mọi màu (OKLCH), chỉ đổi sắc - đủ tương phản ở cả hai giao diện. */

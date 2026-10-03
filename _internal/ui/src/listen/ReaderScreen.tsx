@@ -13,6 +13,7 @@ import { usePlayListenBook } from "./LibraryScreen";
 import { usePlayer } from "./player";
 import { sentenceIndexAt } from "./PlayerViews";
 import { useListenBook, useScript, useSource } from "./source";
+import { splitPieces, usableWords, wordIndexAt } from "./words";
 
 // Chế độ ĐỌC: văn bản chương như một cuốn ebook, đi cùng chỗ đang nghe.
 //
@@ -80,6 +81,13 @@ export function ReaderScreen({
   const listeningHere = player.track?.bookId === id && player.track.chapterId === chapterId;
   const starts = useMemo(() => (script?.timed ? script.segments.map((segment) => segment.start ?? 0) : []), [script]);
   const playingIndex = useClock((time) => (listeningHere && starts.length ? sentenceIndexAt(starts, time) : -1));
+  // Chữ đang đọc trong câu đang sáng (mốc từng chữ do Studio căn lúc đóng gói, words.ts): chỉ câu này render theo chữ, nên đồng hồ khung hình chỉ
+  // làm render lại MỘT câu, và chỉ khi sang chữ khác. Câu không có mốc (sách chưa căn) thì sáng cả câu như cũ.
+  const litWords = useMemo(() => {
+    const segment = playingIndex >= 0 ? script?.segments[playingIndex] : undefined;
+    return segment ? usableWords(segment.text, segment.words) : null;
+  }, [playingIndex, script]);
+  const wordIndex = useClock((time) => (litWords ? wordIndexAt(litWords, time * 1000) : -1));
 
   useEffect(() => {
     try {
@@ -294,7 +302,19 @@ export function ReaderScreen({
                           item.index === selected && "underline decoration-accent decoration-2 underline-offset-[0.22em]",
                         )}
                       >
-                        {item.text}
+                        {item.index === playingIndex && litWords ? (
+                          splitPieces(item.text).map((piece, at) =>
+                            piece.word >= 0 && piece.word === wordIndex ? (
+                              <span key={at} className="read-along-word">
+                                {piece.text}
+                              </span>
+                            ) : (
+                              piece.text
+                            ),
+                          )
+                        ) : (
+                          item.text
+                        )}
                         {item.stableId && wishes.data?.lines[item.stableId] && <WaitingMark />}
                       </span>{" "}
                     </span>
