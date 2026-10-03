@@ -166,17 +166,24 @@ Master → mát-tơ, Zeke → de-ke, gold → gôn.
 **Lần 4 (04-10):** Tom → tom / tôm, Tony → to-ni / tô-ni, team → tim, tank → tanh, Tina → ti-na, Lyle → lai-ồ, Kyle → kai-ồ (viết
 cai-ồ theo luật 1.5, cùng âm), Doyle → đoi-ồ.
 
-Luật rút ra (chung ba lần):
-- Tên ngắn MỘT phụ âm đầu + nguyên âm + phụ âm tắc + e câm đọc theo MẶT CHỮ, e cuối đọc **e** (mi-ke, gia-ke, lu-ke, de-ke; z → d).
-  Cụm phụ âm đầu thì đi đường âm vị (Blake → bờ-lếch). Chỉ áp cho tên viết hoa: từ thường (make, like) đi đường âm vị.
-- Ca riêng, không suy rộng: Kate → ca-tê, Pete → pi-tờ, guild → gui, time → tham, Thomas → tho-mát. t đầu từ vẫn là **t** (Tom, Tony,
+**Lần 5 (04-10):** fireball → phai-bôn, Rose → ro-xe, great → gờ-rít, late → lết, Grace → gờ-rây, Gate → gết (viết ghết như ghêm),
+Nate → na-te / nết.
+
+Luật rút ra (chung các lần):
+- Tên ngắn MỘT phụ âm đầu + nguyên âm + MỘT phụ âm (mọi phụ âm, trừ h w x y) + e câm đọc theo MẶT CHỮ, e cuối đọc **e** (mi-ke,
+  gia-ke, de-ke, ro-xe, na-te; o → o, s → x, z → d; c / g trước e mềm: la-xe). Cụm phụ âm đầu thì đi đường âm vị (Blake → bờ-lếch,
+  Grace → gờ-rây). Chỉ áp cho chữ viết hoa: từ thường (make, late) đi đường âm vị.
+- Ca riêng, không suy rộng: Kate → ca-tê, Pete → pi-tờ, guild → gui, time → tham, Thomas → tho-mát, great → gờ-rít (ea không thành i),
+  Gate → gết (từ thường viết hoa: luật theo mặt chữ không phân được tên với từ thường). t đầu từ vẫn là **t** (Tom, Tony,
   Tina, team): tham / tho-mát không phải luật bật hơi.
 - Cụm phụ âm ĐẦU từ → "Cờ-" thanh HUYỀN (xờ-kiu, xờ-lam, bờ-lếch). Phụ âm thừa giữa từ vẫn "ơ" ngang như sách báo (Sếch-xơ-pia).
 - l cuối sau i thành **u** (skill → xờ-kiu). l cuối sau nguyên âm đôi ai / ao / oi thành âm tiết **"ồ" không phụ âm đầu**, l bỏ
   (lai-ồ, kai-ồ, đoi-ồ); sau phụ âm vẫn như cũ (mai-cồ, máp-pồ). l khép sau nguyên âm khác thành n (Men-bơn, Đan-tơn).
 - /ɑ/ viết o đọc **o** (bót, bót-tơn, róc-ki, tom); Tô-mát, Bốt-tơn, Rốc-ki của nguồn thua. Khép tắc mang sắc.
-- /eɪ/ khép bằng p → a (máp), khép bằng c → êch (lếch), khép bằng m n ng → ê (gêm); khép bằng t chưa có ca (mặc định ê, cờ
-  `analogy:ey_t`).
+- /eɪ/ khép bằng p → a (máp), khép bằng c → êch (lếch), khép bằng t → êt (lết, gết), khép bằng m n ng → ê (gêm); /eɪ/ + s cuối →
+  ây, s bỏ (gờ-rây).
+- /aɪər/ (fire) → ai, r bỏ (phai). /ɔːl/ → ôn (bôn, như gôn): l sau nguyên âm đầy đủ thành n, chỉ sau schwa / nguyên âm đôi mới thành ồ.
+- Từ ghép không có trong từ điển phát âm mà hai nửa có (sandworm) đọc từng phần.
 - /aɪ/ + m → **am** (xờ-lam, tham); /aɪ/ + phụ âm khác bỏ phụ âm (nai, phai).
 - /æŋk/ → **anh** (tanh; rank → ranh, thank → thanh theo đó, cờ `analogy:ank`). /iː/ → i (tim).
 - -er cuối → ơ thanh NGANG (mát-tơ).

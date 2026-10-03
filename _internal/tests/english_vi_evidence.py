@@ -52,6 +52,14 @@ SOURCED: list[tuple[str, tuple[str, ...], str]] = [
     ("Lyle", ("Lai-ồ",), "owner"),
     ("Kyle", ("Kai-ồ", "Cai-ồ"), "owner"),  # chủ sách viết kai; chính tả 1.5 viết c trước a, cùng âm
     ("Doyle", ("Đoi-ồ",), "owner"),
+    # lần 5: tên ngắn + e câm theo mặt chữ với mọi phụ âm; /eɪ/ + t -> êt, + s -> ây; /aɪər/ -> ai; /ɔːl/ -> ôn; great, Gate là ca riêng
+    ("fireball", ("phai-bôn",), "owner"),
+    ("Rose", ("Ro-xe",), "owner"),
+    ("great", ("gờ-rít",), "owner"),
+    ("late", ("lết",), "owner"),
+    ("Grace", ("Gờ-rây",), "owner"),
+    ("Gate", ("Ghết", "Gết"), "owner"),  # chủ sách viết gết; chính tả gh trước ê như ghêm
+    ("Nate", ("Na-te", "Nết"), "owner"),
     # --- văn bản nhà nước / Bộ Ngoại giao ---
     ("Edison", ("Ê-đi-xơn",), "official"),
     ("Melbourne", ("Men-bơn",), "official"),
@@ -135,6 +143,8 @@ EXPLAINED: dict[str, tuple[str, str]] = {
     "Kate": ("Ca-te", _OWNER_FIXED),
     "Pete": ("Pe-te", _OWNER_FIXED + "; tên ngắn khác cùng dạng đọc theo mặt chữ (Zeke -> de-ke)"),
     "guild": ("ghiu", _OWNER_FIXED + "; l cuối sau i -> u (skill -> xờ-kiu) vẫn là luật"),
+    "great": ("gờ-rết", _OWNER_FIXED + ": ea không thành i (late -> lết, /eɪ/ + t -> êt là luật)"),
+    "Gate": ("Ga-te", _OWNER_FIXED + ": từ thường viết hoa; tên ngắn + e câm vẫn theo mặt chữ (Nate -> na-te, Rose -> ro-xe)"),
     "time": ("tam", _OWNER_FIXED + ": t đầu từ giữ t (Tom -> tom, Tina -> ti-na); /aɪ/ + m -> am là luật"),
     "Thomas": ("To-mát", _OWNER_FIXED + ": t đầu từ giữ t (Tom -> tom), th ở đây chỉ của tên này"),
     "Edison": ("E-đi-xơn", _EH),
@@ -142,7 +152,8 @@ EXPLAINED: dict[str, tuple[str, str]] = {
     "George": ("Giót", _FRENCH + "; r sau nguyên âm bỏ, /dʒ/ cuối -> t (quét: fric_final)"),
     "Virginia": ("Vơ-gi-ni-a", "CMU /ɚ/ -> ơ; nguồn đọc theo chữ (Viếc-)"),
     "Scotland": ("Xờ-cót-lan", _CLUSTER + "; " + _AA_O + "; schwa theo chữ a (-lan), nguồn -len"),
-    "Ireland": ("Ai-ơ-lan", "CMU tách /aɪ.ɚ/ thành ai-ơ; nguồn gộp Ai-len"),
+    "Ireland": ("Ai-lan", "/aɪər/ -> ai (chủ sách: phai-bôn); schwa theo chữ a (-lan), nguồn -len"),
+    "Dalton": ("Đôn-tơn", "/ɔːl/ -> ôn (chủ sách 04-10: fireball -> phai-bôn); nguồn đọc theo chữ a (Đan-)"),
     "Charles": ("Chan", _FRENCH + " (ch -> s, r -> c); luật theo âm Anh: ch, r bỏ, l -> n"),
     "New": ("Nu", "CMU (Mỹ) /nuː/ -> nu; nguồn theo âm Anh-Anh /njuː/"),
     "Francisco": ("Phờ-ran-xít-cô", _CLUSTER),

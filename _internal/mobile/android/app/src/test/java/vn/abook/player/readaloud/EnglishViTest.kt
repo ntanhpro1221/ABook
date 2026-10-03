@@ -69,7 +69,7 @@ class EnglishViTest {
 
     @Test
     fun withoutADictionaryTheSpellingRouteReads() {
-        assertEquals(EnglishVi.Reading("Oa-sinh-tôn", listOf("via:spelling")), EnglishVi.readingWithFlags("Washington", emptyMap()))
+        assertEquals(EnglishVi.Reading("Oa-sinh-ton", listOf("via:spelling")), EnglishVi.readingWithFlags("Washington", emptyMap()))
         assertEquals("En-cơ-rít", EnglishVi.reading("Encrid", emptyMap()))
     }
 
