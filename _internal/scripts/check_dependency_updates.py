@@ -367,6 +367,60 @@ def newer_llm_families(*, offline: bool, prefixes: tuple[str, ...] = ("qwen", "g
     return rows
 
 
+VI_TTS_MIN_LIKES = 5
+VI_TTS_MIN_DOWNLOADS = 200
+VI_TTS_MIN_STARS = 20
+
+
+def vietnamese_tts_landscape(*, offline: bool, seen_path: Path) -> list[dict[str, Any]]:
+    """Model / repo TTS có tiếng Việt CHƯA TỪNG THẤY (Hugging Face + GitHub), đủ người dùng để đáng đo.
+
+    Chủ sách 03-10 phải tự nhắc ZeroTTS: bộ kiểm này chỉ soát bản mới của thứ app ĐANG dùng, không soát đối thủ mới. Mỗi lần chạy:
+    hỏi Hugging Face (text-to-speech, nhãn vi, và tìm "vietnamese") và GitHub (repo "vietnamese tts" có sao), bỏ cái đã ghi trong
+    `seen_path`, trả cái mới rồi ghi thêm vào. Ứng viên mới -> đo bằng cùng bộ đo (docs/LISTEN_ANYTHING.md, mục 3), không tự thay gì.
+    """
+    if offline:
+        return []
+    try:
+        seen = set(json.loads(seen_path.read_text(encoding="utf-8")))
+    except (OSError, ValueError):
+        seen = set()
+    found: dict[str, dict[str, Any]] = {}
+    queries = [
+        "https://huggingface.co/api/models?pipeline_tag=text-to-speech&language=vi&sort=likes&direction=-1&limit=100",
+        "https://huggingface.co/api/models?pipeline_tag=text-to-speech&language=vi&sort=createdAt&direction=-1&limit=100",
+        "https://huggingface.co/api/models?search=vietnamese&pipeline_tag=text-to-speech&sort=likes&direction=-1&limit=100",
+        "https://huggingface.co/api/models?search=viet&pipeline_tag=text-to-speech&sort=createdAt&direction=-1&limit=100",
+    ]
+    for url in queries:
+        try:
+            for model in _get_json(url):
+                likes, downloads = int(model.get("likes") or 0), int(model.get("downloads") or 0)
+                if likes >= VI_TTS_MIN_LIKES or downloads >= VI_TTS_MIN_DOWNLOADS:
+                    key = f"hf:{model['id']}"
+                    found[key] = {"key": key, "name": model["id"], "where": f"https://huggingface.co/{model['id']}",
+                                  "created": str(model.get("createdAt", ""))[:10], "likes": likes, "downloads": downloads}
+        except (OSError, ValueError, KeyError) as exc:
+            print(f"(khong hoi duoc Hugging Face: {exc})")
+    try:
+        result = _get_json("https://api.github.com/search/repositories?q=vietnamese+tts&sort=updated&order=desc&per_page=50", github=True)
+        for repo in result.get("items", []):
+            if int(repo.get("stargazers_count") or 0) >= VI_TTS_MIN_STARS:
+                key = f"gh:{repo['full_name']}"
+                found[key] = {"key": key, "name": repo["full_name"], "where": repo["html_url"],
+                              "created": str(repo.get("created_at", ""))[:10], "likes": int(repo["stargazers_count"]), "downloads": 0}
+    except (OSError, ValueError, KeyError) as exc:
+        print(f"(khong hoi duoc GitHub: {exc})")
+    new = sorted((row for key, row in found.items() if key not in seen), key=lambda row: row["created"], reverse=True)
+    if found:
+        try:
+            seen_path.parent.mkdir(parents=True, exist_ok=True)
+            seen_path.write_text(json.dumps(sorted(seen | set(found)), ensure_ascii=False, indent=0), encoding="utf-8")
+        except OSError as exc:
+            print(f"(khong ghi duoc {seen_path}: {exc})")
+    return new
+
+
 def main() -> int:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description=__doc__)
@@ -384,6 +438,7 @@ def main() -> int:
     vieneu_sdk = check_vieneu_sdk_tag(offline=args.offline)
     ollama_models = check_ollama_models(offline=args.offline)
     llm_families = newer_llm_families(offline=args.offline)
+    vi_tts = vietnamese_tts_landscape(offline=args.offline, seen_path=PYPROJECT.parent / "runtime" / "vi_tts_seen.json")
 
     running = f"{sys.version_info.major}.{sys.version_info.minor}"
     print(
@@ -442,6 +497,11 @@ def main() -> int:
         for row in llm_families:
             print(f"    {row['family']:22s} {', '.join(row['fits_vram'])}")
 
+    if vi_tts:
+        print(f"\nTTS co tieng Viet CHUA TUNG THAY ({len(vi_tts)}; ung vien de DO - docs/LISTEN_ANYTHING.md muc 3):")
+        for row in vi_tts[:40]:
+            print(f"  {row['created']:10s} {row['name']:50s} thich/sao {row['likes']:5d} tai {row['downloads']:7d}  {row['where']}")
+
     outdated = [row["name"] for row in pypi if row["outdated"]]
     drifted = [
         row["name"]
@@ -471,6 +531,7 @@ def main() -> int:
                         "hf_models_behind_main": [r["repo"] for r in hf_models if r["changed_files"]],
                         "git_pins_behind": [r["name"] for r in git_pins if r.get("ahead_by")],
                         "llm_candidates": [r["family"] for r in llm_families],
+                        "new_vietnamese_tts": [r["name"] for r in vi_tts],
                     },
                     ensure_ascii=False,
                     indent=2,
