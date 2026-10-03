@@ -41,6 +41,8 @@ object BookImport {
         val notes: MutableList<String> = mutableListOf(),
         /** File TXT: tên chương nằm sẵn trong chữ (EPUB / DOCX / PDF: tên chương là trường riêng). */
         val textHasTitle: Boolean = false,
+        /** (số chương, dòng ghi công) - gợi ý, như trong `notes` (`ImportedBook.credits`). */
+        val credits: MutableList<Pair<Int, String>> = mutableListOf(),
     )
 
     val IMPORT_SUFFIXES = listOf("epub", "docx", "pdf")
@@ -51,6 +53,7 @@ object BookImport {
     private const val MIN_CHARS = 80
     private const val PREAMBLE = "Mở đầu"
     private const val MAX_HEADING = 120
+    private const val CREDIT_HEAD_LINES = 64
     private const val BROKEN = "không phải file %s thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
 
     private fun broken(kind: String) = Failed(BROKEN.format(kind))
@@ -68,7 +71,7 @@ object BookImport {
                 "pdf" -> throw Failed("PDF cần lấy chữ bằng pdf.js trước (fromPdfPages)")
                 else -> throw Failed("Chưa đọc được file ${if (suffix.isEmpty()) "không có đuôi" else ".$suffix"} - dùng .epub, .docx, .pdf, .txt hay một thư mục TXT")
             }
-            else -> throw Failed("Không thấy ${path.path}")
+            else -> throw Failed("Không thấy ${path.path}.")
         }
         return finish(book)
     }
@@ -78,7 +81,7 @@ object BookImport {
         if (pages.isEmpty()) throw broken("PDF")
         val chars = pages.sumOf { page -> page.sumOf { cpLen(it) } }
         if (chars < SCAN_CHARS_PER_PAGE * pages.size) {
-            throw Failed("PDF scan, cần OCR: file chỉ có ảnh của trang, không có lớp chữ - ABook chưa đọc được loại này")
+            throw Failed("PDF này là ảnh chụp, chưa có chữ để đọc.")
         }
         val result = Book(title.ifEmpty { stem }, author = author.ifEmpty { null })
         val empty = pages.count { it.isEmpty() }
@@ -112,16 +115,22 @@ object BookImport {
         book.title = nfc(book.title)
         book.author = book.author?.takeIf { it.isNotEmpty() }?.let(::nfc)
         val chapters = book.chapters.map { Chapter(nfc(it.title), nfc(it.text)) }
-        book.chapters.clear()
-        book.chapters.addAll(if (chapters.size > 1) chapters.filter { pyStrip(it.text).isNotEmpty() } else chapters)
         val notes = book.notes.map(::nfc)
         book.notes.clear()
         book.notes.addAll(notes)
-        if (book.chapters.isEmpty() || book.chapters.none { pyStrip(it.text).isNotEmpty() }) throw Failed("Không có chương nào có chữ")
+        if (chapters.none { pyStrip(it.text).isNotEmpty() }) throw Failed("Không có chương nào có chữ")
+        book.chapters.clear()
+        if (chapters.size > 1) {
+            // File TXT rỗng (hay chỉ có khoảng trắng) không thành chương - nói ra, để số chương ít hơn số file có lý do.
+            for (chapter in chapters) if (pyStrip(chapter.text).isEmpty()) book.notes.add("Bỏ qua mục không có chữ: ${chapter.title}")
+            book.chapters.addAll(chapters.filter { pyStrip(it.text).isNotEmpty() })
+        } else {
+            book.chapters.addAll(chapters)
+        }
         for ((index, chapter) in book.chapters.withIndex()) {
             // Tên chương tính là một dòng của chương (cửa sổ 6 dòng đầu), như file chương mà Studio đọc.
-            val head = if (book.textHasTitle) chapter.text else "${chapter.title}\n\n${chapter.text}"
-            for (line in creditLines(head)) {
+            for (line in creditSuggestions(chapterSource(book, chapter))) {
+                book.credits.add(index + 1 to line)
                 book.notes.add("Gợi ý: chương ${index + 1} có dòng ghi công ở đầu - “$line”. Có thể bỏ khỏi phần đọc, nhưng ABook không tự bỏ.")
             }
         }
@@ -193,13 +202,19 @@ object BookImport {
         return lines.joinToString("\n").replace(Regex("\n{3,}"), "\n\n").trim('\n')
     }
 
-    private val NUMERIC_TITLE = Regex("^\\s*0*(\\d+)\\s*$")
+    // (?U): `\d` và `\s` theo Unicode như `re` của Python ("١٥.txt" cũng là số).
+    private val NUMERIC_TITLE = Regex("(?U)^\\s*0*(\\d+)\\s*$")
 
     /** Tên file chương là số ("645") thì đọc thành "Chương 645"; còn lại giữ nguyên (webui/humanize.chapter_title). */
     internal fun chapterTitle(stem: String): String =
         NUMERIC_TITLE.find(stem)?.let { "Chương ${it.groupValues[1]}" } ?: pyStrip(stem)
 
-    private fun stemOf(name: String) = if (name.contains('.') && !name.startsWith(".")) name.substringBeforeLast('.') else name
+    /** `Path.suffix` / `Path.stem` của Python: ".txt" là tên không đuôi, "a.b.txt" có đuôi ".txt", "ten." không có đuôi. */
+    private fun suffixAt(name: String): Int = name.lastIndexOf('.').takeIf { it > 0 && it < name.length - 1 } ?: -1
+
+    internal fun suffixOf(name: String) = suffixAt(name).let { if (it < 0) "" else name.substring(it) }
+
+    internal fun stemOf(name: String) = suffixAt(name).let { if (it < 0) name else name.substring(0, it) }
 
     /** `io_utils.natural_key`: số trong tên so theo giá trị ("2" trước "10"), chữ so không phân biệt hoa thường. */
     internal val naturalOrder = Comparator<String> { first, second ->
@@ -211,12 +226,13 @@ object BookImport {
             val compared = if (x is BigInteger && y is BigInteger) x.compareTo(y) else (x as String).compareTo(y as String)
             if (compared != 0) return@Comparator compared
         }
-        a.size.compareTo(b.size)
+        // Bằng nhau theo thứ tự tự nhiên ("1.txt", "01.txt"): theo tên gốc, không theo thứ tự hệ thống tệp liệt kê (io_utils).
+        a.size.compareTo(b.size).takeIf { it != 0 } ?: first.compareTo(second)
     }
 
     private fun naturalKey(value: String): List<Any> {
         val parts = mutableListOf<Any>()
-        val digits = Regex("\\d+")
+        val digits = Regex("(?U)\\d+")
         var last = 0
         for (match in digits.findAll(value)) {
             parts.add(casefold(value.substring(last, match.range.first)))
@@ -229,16 +245,20 @@ object BookImport {
 
     private fun txtFolder(folder: File): Book {
         val files = (folder.listFiles() ?: emptyArray())
-            .filter { it.isFile && it.extension.lowercase() == "txt" }
+            .filter { it.isFile && suffixOf(it.name).lowercase() == ".txt" }
             .sortedWith { x, y -> naturalOrder.compare(x.name, y.name) }
         if (files.isEmpty()) throw Failed("Thư mục này không có file .txt nào nằm ngay bên trong")
-        val chapters = files.map { Chapter(chapterTitle(stemOf(it.name)), cleanText(decodeTextBytes(it.readBytes()))) }
-        return Book(folder.canonicalFile.name, chapters = chapters.toMutableList(), textHasTitle = true)
+        return Book(folder.canonicalFile.name, chapters = files.map(::txtChapter).toMutableList(), textHasTitle = true)
     }
 
-    private fun txtFile(file: File): Book {
-        val chapter = Chapter(chapterTitle(stemOf(file.name)), cleanText(decodeTextBytes(file.readBytes())))
-        return Book(stemOf(file.name), chapters = mutableListOf(chapter), textHasTitle = true)
+    private fun txtFile(file: File): Book = Book(stemOf(file.name), chapters = mutableListOf(txtChapter(file)), textHasTitle = true)
+
+    /** Một file TXT là một chương (`importers._txt_chapter`). Tên chương: dòng đầu nếu nó là dòng tiêu đề ("Chương 1: Buổi sáng" - đúng
+     *  thứ người nghe thấy ở đầu chương), không thì tên file ("01.txt" -> "Chương 1"). */
+    private fun txtChapter(file: File): Chapter {
+        val text = cleanText(decodeTextBytes(file.readBytes()))
+        val first = text.split("\n").map(::pyStrip).firstOrNull { it.isNotEmpty() }.orEmpty()
+        return Chapter(if (isHeadingLine(first)) first else chapterTitle(stemOf(file.name)), text)
     }
 
     /** `io_utils.decode_text_bytes`: UTF-16 (có BOM, hay nhiều byte 0), UTF-8 (có / không BOM), rồi cp1258, cp1252; NFC. */
@@ -280,31 +300,50 @@ object BookImport {
 
     internal object Markup {
         sealed class Tok
-        class Start(val name: String, val attrs: Map<String, String>, val selfClosing: Boolean) : Tok()
+        class Start(val name: String, val attrs: Map<String, String>, val selfClosing: Boolean, val declared: Map<String, String> = emptyMap()) : Tok()
         class End(val name: String) : Tok()
         class Text(val text: String) : Tok()
 
-        private val NAMED = mapOf(
-            "amp" to "&", "lt" to "<", "gt" to ">", "quot" to "\"", "apos" to "'", "nbsp" to " ", "ndash" to "–",
-            "mdash" to "—", "hellip" to "…", "laquo" to "«", "raquo" to "»", "ldquo" to "“", "rdquo" to "”", "lsquo" to "‘",
-            "rsquo" to "’", "copy" to "©", "shy" to "­", "middot" to "·", "bull" to "•", "times" to "×", "deg" to "°",
-        )
-        private val ENTITY = Regex("&(#[xX][0-9a-fA-F]+|#[0-9]+|[A-Za-z][A-Za-z0-9]*);")
+        /** `_charref` của `html.unescape` (Python): số thập phân / thập lục, hay tên tới 32 ký tự; dấu chấm phẩy không bắt buộc. */
+        private val ENTITY = Regex("&(#[0-9]+;?|#[xX][0-9a-fA-F]+;?|[^\\t\\n\\u000C <&#;]{1,32};?)")
 
+        /** `_invalid_charrefs` của Python: &#0; và &#13;, và 0x80-0x9F đọc như bảng mã Windows-1252 (trang web cũ viết &#147;…&#148;). */
+        private val INVALID_CHARREFS: Map<Int, String> = mapOf(0x00 to "�", 0x0D to "\r") +
+            "€\u0081‚ƒ„…†‡ˆ‰Š‹Œ\u008DŽ\u008F\u0090‘’“”•–—˜™š›œ\u009DžŸ"
+                .mapIndexed { index, char -> (0x80 + index) to char.toString() }
+
+        /** `_invalid_codepoints` của Python: ký tự điều khiển và phi ký tự - bỏ đi. */
+        private fun invalidCodePoint(value: Int) = value in 0x1..0x8 || value == 0xB || value in 0xE..0x1F || value in 0x7F..0x9F ||
+            value in 0xFDD0..0xFDEF || (value and 0xFFFE) == 0xFFFE
+
+        /** Bản chép của `html.unescape` (Python), cùng bảng tên [HtmlEntities]: bộ nhập máy tính đọc EPUB bằng `html.parser`. */
         fun decode(text: String): String {
             if (text.indexOf('&') < 0) return text
             return ENTITY.replace(text) { match ->
                 val body = match.groupValues[1]
-                when {
-                    body.startsWith("#x") || body.startsWith("#X") -> codePoint(body.substring(2).toLongOrNull(16), match.value)
-                    body.startsWith("#") -> codePoint(body.substring(1).toLongOrNull(), match.value)
-                    else -> NAMED[body] ?: match.value
-                }
+                if (body[0] == '#') charRef(body) else HtmlEntities.byName[body] ?: legacyName(body)
             }
         }
 
-        private fun codePoint(value: Long?, original: String): String =
-            if (value == null || value <= 0 || value > 0x10FFFF || value in 0xD800..0xDFFF) original else String(Character.toChars(value.toInt()))
+        private fun charRef(body: String): String {
+            val hex = body.length > 1 && (body[1] == 'x' || body[1] == 'X')
+            val number = java.math.BigInteger(body.substring(if (hex) 2 else 1).trimEnd(';'), if (hex) 16 else 10)
+            val value = if (number.bitLength() > 31) Int.MAX_VALUE else number.toInt()
+            return when {
+                value in INVALID_CHARREFS -> INVALID_CHARREFS.getValue(value)
+                value in 0xD800..0xDFFF || value > 0x10FFFF -> "�"
+                invalidCodePoint(value) -> ""
+                else -> String(Character.toChars(value))
+            }
+        }
+
+        /** Tên cũ không cần dấu chấm phẩy ("&copy 2020"): tên dài nhất khớp ở đầu, phần còn lại giữ nguyên; không khớp thì để nguyên. */
+        private fun legacyName(body: String): String {
+            for (cut in body.length - 1 downTo 2) {
+                HtmlEntities.byName[body.substring(0, cut)]?.let { return it + body.substring(cut) }
+            }
+            return "&$body"
+        }
 
         fun tokenize(src: String): List<Tok> {
             val out = mutableListOf<Tok>()
@@ -362,6 +401,7 @@ object BookImport {
             while (i < n && !src[i].isWhitespace() && src[i] != '/' && src[i] != '>') i++
             val name = src.substring(nameStart, i)
             val attrs = linkedMapOf<String, String>()
+            val declared = HashMap<String, String>() // xmlns / xmlns:tiền-tố khai báo ở thẻ này
             var selfClosing = false
             while (i < n) {
                 while (i < n && src[i].isWhitespace()) i++
@@ -398,9 +438,10 @@ object BookImport {
                         value = src.substring(valueStart, i)
                     }
                 }
+                if (key == "xmlns") declared[""] = decode(value) else if (key.startsWith("xmlns:")) declared[key.substring(6)] = decode(value)
                 if (key.isNotEmpty()) attrs.putIfAbsent(key.substringAfter(':'), decode(value))
             }
-            out.add(Start(name, attrs, selfClosing))
+            out.add(Start(name, attrs, selfClosing, declared))
             val lower = name.lowercase()
             if (!selfClosing && (lower == "script" || lower == "style")) {
                 // Chữ trong script / style là mã, không phải chữ của truyện: bỏ tới thẻ đóng.
@@ -415,8 +456,19 @@ object BookImport {
             return i
         }
 
-        /** Một phần tử XML: `parts` là chữ và phần tử con theo thứ tự (như text / tail của ElementTree). */
-        class Node(val name: String, val attrs: Map<String, String>) {
+        /** Không gian tên quen thuộc -> tiền tố chuẩn: `name` của [Node] dùng tiền tố này bất kể file viết tiền tố gì (hay không
+         *  viết, xmlns mặc định) - như ElementTree so theo không gian tên chứ không theo chữ trước dấu hai chấm. */
+        private val PREFIXES = mapOf(
+            "http://schemas.openxmlformats.org/wordprocessingml/2006/main" to "w",
+            "http://schemas.openxmlformats.org/markup-compatibility/2006" to "mc",
+            "http://purl.org/dc/elements/1.1/" to "dc",
+        )
+
+        /**
+         * Một phần tử XML: `parts` là chữ và phần tử con theo thứ tự (như text / tail của ElementTree). `name` có tiền tố chuẩn
+         * ([PREFIXES]) khi không gian tên của nó quen thuộc; `raw` là tên như viết trong file (để khớp thẻ đóng).
+         */
+        class Node(val name: String, val attrs: Map<String, String>, val raw: String = name, val scope: Map<String, String> = emptyMap()) {
             val parts = mutableListOf<Any>()
             val local: String get() = name.substringAfter(':')
             val children: List<Node> get() = parts.filterIsInstance<Node>()
@@ -448,7 +500,10 @@ object BookImport {
             for (token in tokenize(String(raw, Charsets.UTF_8))) {
                 when (token) {
                     is Start -> {
-                        val node = Node(token.name, token.attrs)
+                        val scope = (stack.lastOrNull()?.scope ?: emptyMap()).let { if (token.declared.isEmpty()) it else it + token.declared }
+                        val prefix = if (':' in token.name) token.name.substringBefore(':') else ""
+                        val canonical = scope[prefix]?.let(PREFIXES::get)?.let { "$it:${token.name.substringAfter(':')}" } ?: token.name
+                        val node = Node(canonical, token.attrs, token.name, scope)
                         if (stack.isEmpty()) {
                             if (root == null) root = node
                         } else {
@@ -457,7 +512,7 @@ object BookImport {
                         if (!token.selfClosing) stack.add(node)
                     }
                     is End -> {
-                        val index = stack.indexOfLast { it.name == token.name }
+                        val index = stack.indexOfLast { it.raw == token.name }
                         if (index >= 0) while (stack.size > index) stack.removeAt(stack.size - 1)
                     }
                     is Text -> stack.lastOrNull()?.parts?.add(token.text)
@@ -500,8 +555,6 @@ object BookImport {
     // ---- posix ---------------------------------------------------------------------------------------------------------
 
     private fun dirname(path: String) = if (path.contains('/')) path.substringBeforeLast('/') else ""
-
-    private fun basename(path: String) = path.substringAfterLast('/')
 
     private fun join(base: String, relative: String): String =
         if (relative.startsWith("/")) relative else if (base.isEmpty()) relative else "$base/$relative"
@@ -668,6 +721,8 @@ object BookImport {
             result.cover = bytes
             result.coverType = media
         }
+        var images = 0 // trang chỉ có ảnh, mục rất ngắn: một ghi chú đếm, không kể tên file trong gói
+        var short = 0
         for (itemref in spine.children.filter { it.local == "itemref" }) {
             if ((itemref.attr("linear") ?: "yes") == "no") continue
             val item = manifest[itemref.attr("idref") ?: ""] ?: ManifestItem("", "", "")
@@ -677,12 +732,12 @@ object BookImport {
             val heading = page.heading
             val listed = titles[item.href] ?: ""
             if (lines.isEmpty() && page.images > 0) {
-                result.notes.add("Bỏ qua trang chỉ có ảnh: ${basename(item.href)}")
+                images++
                 continue
             }
             if (lines.isEmpty()) continue
             if (lines.sumOf { cpLen(it) } < MIN_CHARS && listed.isEmpty()) {
-                result.notes.add("Bỏ qua mục rất ngắn (bìa, trang bản quyền?): ${basename(item.href)}")
+                short++
                 continue
             }
             var title = listed.ifEmpty { heading.ifEmpty { cpTake(lines[0], 80) } }
@@ -697,10 +752,15 @@ object BookImport {
             }
             result.chapters.add(Chapter(title, lines.joinToString("\n\n")))
         }
+        if (images > 0) result.notes.add("Bỏ qua $images trang chỉ có ảnh.")
+        if (short > 0) result.notes.add("Bỏ qua $short mục rất ngắn (bìa, trang bản quyền?).")
         result
     }
 
     // ---- DOCX ----------------------------------------------------------------------------------------------------------
+
+    /** Tên kiểu (viết thường) của mục lục Word tự sinh (`importers.TOC_STYLE`). */
+    private val TOC_STYLE = Regex("toc ?\\d|toc ?heading")
 
     private fun docxStyles(zip: ZipFile): Map<String, String> {
         val root = try {
@@ -764,10 +824,17 @@ object BookImport {
         val body = document.children.firstOrNull { it.name == "w:body" } ?: throw broken("DOCX")
         val sections = mutableListOf<Pair<String?, MutableList<String>>>(null to mutableListOf())
         var bookTitle: String? = null
+        var tocLines = 0
         for (paragraph in docxParagraphs(body)) {
             val styleNode = paragraph.children.firstOrNull { it.name == "w:pPr" }?.children?.firstOrNull { it.name == "w:pStyle" }
             val styleId = styleNode?.attr("val") ?: ""
             val style = styles[styleId] ?: casefold(styleId)
+            if (TOC_STYLE.matches(style)) {
+                // Mục lục Word tự sinh (kiểu "toc 1".."toc 9"): không phải chữ của truyện, và dòng "Chương N … 3" của nó sẽ bị nhận
+                // nhầm là tiêu đề chương.
+                tocLines++
+                continue
+            }
             for (raw in docxText(paragraph)) {
                 val line = words(raw)
                 if (line.isEmpty()) continue
@@ -780,6 +847,7 @@ object BookImport {
             }
         }
         val result = Book(metaTitle ?: bookTitle ?: stemOf(file.name), author = metaAuthor, language = metaLanguage)
+        if (tocLines > 0) result.notes.add("Bỏ qua mục lục của tài liệu ($tocLines dòng).")
         if (sections.size == 1) {
             // Không có kiểu Heading: tách theo dòng "Chương N" (như PDF).
             val (chapters, notes) = splitOnHeadings(sections[0].second, result.title)
@@ -873,6 +941,7 @@ object BookImport {
         }
         val repeated = counts.filter { (_, seen) -> pages.size >= RUNNING_MIN_PAGES && seen >= 3 && seen * 5 >= pages.size * 2 }.keys
         val removed = mutableListOf<String>()
+        val noted = HashSet<String>() // một ghi chú cho mỗi dòng lặp, dù số trang trong nó đổi theo trang
         val result = mutableListOf<List<String>>()
         for ((lines, zone) in pages.zip(zones)) {
             val drop = HashSet<Int>()
@@ -880,9 +949,13 @@ object BookImport {
                 val line = lines[index]
                 if (isHeadingLine(line)) continue
                 val edge = index == zone[0] || index == zone[zone.size - 1]
-                if (runningKey(line) in repeated || (edge && isPageNumber(line))) {
+                val key = runningKey(line)
+                if (key in repeated || (edge && isPageNumber(line))) {
                     drop.add(index)
-                    if (line !in removed && !isPageNumber(line) && removed.size < 5) removed.add(line)
+                    if (key !in noted && !isPageNumber(line) && removed.size < 5) {
+                        noted.add(key)
+                        removed.add(line)
+                    }
                 }
             }
             result.add(lines.filterIndexed { index, _ -> index !in drop })
@@ -947,6 +1020,14 @@ object BookImport {
         text = text.replace(Regex("[ \t]+"), " ").replace(Regex("\n[ \t]+"), "\n").replace(Regex("\n{3,}"), "\n\n")
         return pyStrip(text)
     }
+
+    /**
+     * Dòng ghi công ở đầu một chương, `source` như file chương ([chapterSource]): GỢI Ý để người nghe chọn bỏ khỏi phần đọc (lớp sửa
+     * `skip`), không bao giờ tự bỏ (`importers.credit_suggestions`). Chỉ đưa phần đầu chương (`CREDIT_HEAD_LINES`): chuẩn hoá cả chương
+     * chỉ để xem 6 dòng là phần chậm nhất của cuốn hơn nghìn chương.
+     */
+    fun creditSuggestions(source: String): List<String> =
+        creditLines(source.split("\n", limit = CREDIT_HEAD_LINES + 1).take(CREDIT_HEAD_LINES).joinToString("\n"))
 
     /** Đúng những dòng `drop_credit_lines` của Studio sẽ bỏ: dòng ghi công trong 6 dòng có chữ đầu tiên của chương. */
     internal fun creditLines(text: String): List<String> {

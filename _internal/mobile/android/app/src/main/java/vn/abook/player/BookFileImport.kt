@@ -123,7 +123,8 @@ object BookFileImport {
 
     private fun gigabytes(bytes: Long) = "%.1f GB".format(java.util.Locale.ROOT, bytes / (1L shl 30).toDouble()).replace('.', ',')
 
-    fun importFile(file: File, freeSpace: (File) -> Long = { it.usableSpace }): Imported {
+    /** `separate`: người dùng chọn "Thêm bản riêng" dù cuốn đã có - không tìm cuốn trùng, luôn là cuốn mới với mã riêng. */
+    fun importFile(file: File, separate: Boolean = false, freeSpace: (File) -> Long = { it.usableSpace }): Imported {
         val zip = try {
             ZipFile(file)
         } catch (error: Exception) {
@@ -186,8 +187,14 @@ object BookFileImport {
             val chapters = identityPrints(content, files)
             // Cùng cuốn đã có trên máy (tải qua Wi-Fi, hay mở từ file trước đó): nhập VÀO đúng cuốn ấy, giữ mã của nó để
             // chỗ nghe vẫn nối - không thành hai cuốn. Bản trên máy nhiều chương hơn file thì giữ nguyên bản trên máy.
-            val existing = Store.findByChapters(chapters)
-            val target = existing ?: contentKey(chapters)
+            val existing = if (separate) null else Store.findByChapters(chapters)
+            val key = contentKey(chapters)
+            // Bản riêng của cuốn đã có: mã "<khoá>-2", "<khoá>-3"… (cùng chữ thì cùng khoá nội dung).
+            val target = existing ?: if (separate && Store.bookDir(key).exists()) {
+                generateSequence(2) { it + 1 }.map { "$key-$it" }.first { !Store.bookDir(it).exists() }
+            } else {
+                key
+            }
             val current = existing?.let { Store.rawManifest(it) }
             // Chỉ cuốn mở từ file mới nhận phần sửa của người nghe; cuốn của máy tính thì sửa ở máy ấy.
             val editable = existing == null || Store.isImported(existing)

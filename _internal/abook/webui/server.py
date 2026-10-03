@@ -354,7 +354,7 @@ class App:
         cleaned = str(path).strip().strip('"').strip("'").strip()
         source = Path(cleaned).expanduser()
         if not cleaned or not source.exists():
-            raise ApiError(HTTPStatus.NOT_FOUND, "Không thấy file hay thư mục này - có thể nó đã bị chuyển hay xoá")
+            raise ApiError(HTTPStatus.NOT_FOUND, "Không thấy file hay thư mục này - có thể nó đã bị chuyển hay xoá.")
         return source
 
     def preview_text_book(self, path: str) -> dict[str, Any]:
@@ -362,19 +362,29 @@ class App:
         ghi gì vào thư viện."""
         source = self._book_source(path)
         try:
-            return textbook.preview(importers.import_text(source))
+            book = importers.import_text(source)
+            # Đúng bộ chữ này đã có trong thư viện: hỏi ngay ở đây ("Mở cuốn đó" / "Thêm bản riêng"), đừng để người dùng sửa tên
+            # rồi mới biết lúc thêm.
+            existing = textbook.find_existing(book, self.library.root)
+            return {**textbook.preview(book), "existing": self._existing_view(existing) if existing else None}
         except importers.ImportFailed as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
         except OSError as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, f"Không đọc được file này ({error.strerror or error}).") from error
 
-    def add_text_book(self, path: str, title: str = "") -> dict[str, Any]:
+    def _existing_view(self, folder: Path) -> dict[str, Any]:
+        """Cuốn đã có trong thư viện, như bước xem trước cần: mã và tên đang hiện (kể cả tên người nghe đã đặt)."""
+        title = book_edits.load(folder).get("title") or packages.manifest(folder).get("title") or folder.name
+        return {"id": book_id(folder), "title": str(title)}
+
+    def add_text_book(self, path: str, title: str = "", separate: bool = False) -> dict[str, Any]:
         """"Thêm sách từ file…": nhập thành sách CHỈ-CÓ-CHỮ trong thư viện (textbook.py) - đọc được ngay, chưa có audio. Nhập lại
-        đúng file ấy thì về cuốn đã có (`how`: "new" / "existing")."""
+        đúng file ấy thì về cuốn đã có (`how`: "new" / "existing"), trừ khi người dùng chọn "Thêm bản riêng" (`separate`)."""
         self._mutating()
         source = self._book_source(path)
         try:
-            folder, how, book = textbook.add_to_library(source, title, self.library.root, self.library.projects(), self.fingerprints)
+            folder, how, book = textbook.add_to_library(source, title, self.library.root, self.library.projects(), self.fingerprints,
+                                                        separate=separate)
         except (importers.ImportFailed, bookfile.BookFileError) as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
         except OSError as error:
@@ -2916,7 +2926,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def post_import_book(self, _query: dict[str, list[str]]) -> None:
         body = self._body()
-        self._send_json(HTTPStatus.OK, self.app.add_text_book(str(body.get("path") or ""), str(body.get("title") or "")))
+        self._send_json(HTTPStatus.OK, self.app.add_text_book(str(body.get("path") or ""), str(body.get("title") or ""),
+                                                              body.get("separate") is True))
 
     def get_chapter_text(self, _query: dict[str, list[str]], value: str, chapter: str) -> None:
         # Chữ của chương trong sách CHỈ-CÓ-CHỮ (texts/<mã>.txt): trang đọc dựng các đoạn từ đây (listen/textScript.ts).
@@ -2925,6 +2936,37 @@ class Handler(BaseHTTPRequestHandler):
         if text is None:
             raise ApiError(HTTPStatus.NOT_FOUND, "Chương này không có chữ riêng")
         self._send_json(HTTPStatus.OK, {"chapterId": int(chapter), "text": text})
+
+    def get_suggestions(self, _query: dict[str, list[str]], value: str) -> None:
+        # Gợi ý của bộ nhập sách cho một cuốn chỉ-chữ (dòng ghi công ở đầu chương), kèm chúng đang bỏ khỏi phần đọc hay chưa -
+        # trang sách hiện những gợi ý còn chờ để người nghe chấp nhận bất cứ lúc nào.
+        path = self.app._listenable(value)
+        out: list[dict[str, Any]] = []
+        if packages.is_package(path):
+            for chapter in packages.edited_manifest(path).get("chapters") or []:
+                if not isinstance(chapter, dict) or not isinstance(chapter.get("id"), int):
+                    continue
+                text = packages.chapter_text(path, chapter["id"])
+                skipped = set(chapter.get("skip") or [])
+                for line in importers.credit_suggestions(text) if text else []:
+                    out.append({"chapter": chapter["id"], "title": chapter.get("fullTitle") or chapter.get("title") or "",
+                                "line": line, "skipped": line in skipped})
+        self._send_json(HTTPStatus.OK, {"suggestions": out})
+
+    def put_skip_line(self, _query: dict[str, list[str]], value: str) -> None:
+        # Người nghe chấp nhận (hay bỏ chấp nhận) một gợi ý: dòng `line` của các chương `chapters` bị bỏ khỏi phần đọc - biến đổi để
+        # đọc trong lớp sửa, chữ của sách không đổi.
+        self.app._mutating()
+        path = self.app._editable(value)
+        body = self._body()
+        if not packages.is_package(path):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Chỉ sách nhập từ file mới bỏ được dòng khỏi phần đọc.")
+        chapters = body.get("chapters")
+        if not isinstance(body.get("line"), str):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Dòng cần bỏ phải là chữ.")
+        if not isinstance(chapters, list) or any(not isinstance(item, int) or isinstance(item, bool) for item in chapters):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Không có chương này trong sách")
+        self._send_json(HTTPStatus.OK, {"skip": book_edits.set_skip_line(path, chapters, body["line"], body.get("skip") is not False)})
 
     def get_listen_book(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.listen_book(value))
@@ -3302,6 +3344,8 @@ ROUTES: list[Route] = [
     # Chỉ trên máy này: Studio từ xa (remote_studio.ALLOWED) không có hai đường này.
     ("PUT", re.compile(BOOK + r"/title"), Handler.put_title),
     ("PUT", re.compile(BOOK + r"/chapters/(\d+)/title"), Handler.put_chapter_title),
+    ("GET", re.compile(BOOK + r"/suggestions"), Handler.get_suggestions),
+    ("PUT", re.compile(BOOK + r"/skip"), Handler.put_skip_line),
     ("GET", re.compile(BOOK + r"/edits"), Handler.get_edits),
     ("DELETE", re.compile(BOOK + r"/edits"), Handler.delete_edits),
     ("POST", re.compile(BOOK + r"/edits/fold"), Handler.post_edits_fold),
@@ -3378,6 +3422,7 @@ ROUTES: list[Route] = [
     ("POST", re.compile(r"/api/listen/import/preview"), Handler.post_import_preview),
     ("POST", re.compile(r"/api/listen/import"), Handler.post_import_book),
     ("GET", re.compile(LISTEN + r"/chapters/(\d+)/text"), Handler.get_chapter_text),
+
     ("GET", re.compile(LISTEN), Handler.get_listen_book),
     # Chỉ trên máy này (remote_studio không có): bỏ một cuốn nhập từ file .abook khỏi thư viện.
     ("DELETE", re.compile(LISTEN), Handler.delete_listen_book),
