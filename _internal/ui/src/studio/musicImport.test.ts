@@ -1,7 +1,16 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { setApiTransport } from "./api";
-import { hasNativeMusicImport, importMusic, setNativeMusicImport } from "./musicImport";
-import type { ImportResult, LocalTrack } from "./musicLocal";
+import {
+  cancelMusicReader,
+  hasNativeMusicImport,
+  importMusic,
+  readerLabel,
+  readerPercent,
+  retryMusicReader,
+  setNativeMusicImport,
+  setReaderPollInterval,
+} from "./musicImport";
+import type { ImportResult, LocalMusicView, LocalTrack, MusicReader } from "./musicLocal";
 
 const track = (name: string): LocalTrack => ({
   link: `local:${"0123456789abcdef0123456789abcdef01234567".slice(0, 39)}${name.length % 10}`,
@@ -92,5 +101,77 @@ describe("nhập nhạc của tôi trên điện thoại", () => {
     const { result, error } = await importMusic(() => undefined);
     expect(result).toBeNull();
     expect(error?.message).toBe("không nhập được nhạc");
+  });
+});
+
+const reader = (patch: Partial<MusicReader> = {}): MusicReader => ({ state: "downloading", done: 0, total: 100, error: "", ready: false, ...patch });
+const waiting = (value: MusicReader): ImportResult => ({ ...answer([]), needsReader: true, reader: value });
+const view = (value: MusicReader): LocalMusicView => ({ tracks: [], analyzer: false, reader: value });
+const tick = () => new Promise((resolve) => setTimeout(resolve, 5));
+
+describe("bộ đọc nhạc tải ở lần nhập đầu", () => {
+  beforeEach(() => setReaderPollInterval(1));
+  afterEach(() => setReaderPollInterval(1000));
+
+  it("đợi tải xong rồi gửi lại đúng file ấy, báo phần trăm", async () => {
+    const calls: string[] = [];
+    const imports: string[] = [];
+    let polls = 0;
+    setApiTransport(async (path, init) => {
+      calls.push(`${init?.method ?? "GET"} ${path}`);
+      if (path === "/api/dialog/files") return { paths: ["C:/a.mp3"] };
+      if (path === "/api/music/local") return view(++polls < 2 ? reader({ done: 40 }) : reader({ state: "ready", done: 100, ready: true }));
+      imports.push((init?.body as { paths: string[] }).paths[0]);
+      return imports.length === 1 ? waiting(reader({ done: 10 })) : answer([track("a.mp3")]);
+    });
+    const seen: (number | null)[] = [];
+    const { result, error } = await importMusic(() => undefined, (value) => seen.push(value ? readerPercent(value) : null));
+    expect(error).toBeUndefined();
+    expect(imports).toEqual(["C:/a.mp3", "C:/a.mp3"]);
+    expect(calls.filter((call) => call === "GET /api/music/local")).toHaveLength(2);
+    expect(seen).toEqual([10, 40, null]);
+    expect(result?.added).toHaveLength(1);
+  });
+
+  it("tải hỏng thì nói lý do; Thử lại gọi POST .../reader rồi đợi tiếp và nhập", async () => {
+    const calls: string[] = [];
+    let imports = 0;
+    setApiTransport(async (path, init) => {
+      calls.push(`${init?.method ?? "GET"} ${path}`);
+      if (path === "/api/dialog/files") return { paths: ["a.mp3"] };
+      if (path === "/api/music/local/reader") return view(reader({ done: 5 }));
+      if (path === "/api/music/local") return view(reader({ state: "ready", done: 100, ready: true }));
+      return ++imports === 1 ? waiting(reader({ state: "error", error: "không tải được - kiểm tra kết nối mạng" })) : answer([track("a.mp3")]);
+    });
+    const notices: (MusicReader | null)[] = [];
+    const done = importMusic(() => undefined, (value) => notices.push(value));
+    await tick();
+    expect(readerLabel(notices[0]!)).toBe("Không tải được bộ đọc nhạc: không tải được - kiểm tra kết nối mạng");
+    expect(calls).not.toContain("POST /api/music/local/reader");
+    retryMusicReader();
+    const { result, error } = await done;
+    expect(error).toBeUndefined();
+    expect(calls).toContain("POST /api/music/local/reader");
+    expect(result?.added).toHaveLength(1);
+    expect(notices.at(-1)).toBeNull();
+  });
+
+  it("Bỏ qua khi tải hỏng thì dừng, giữ phần đã nhập và nói lý do", async () => {
+    let imports = 0;
+    setApiTransport(async (path) => {
+      if (path === "/api/dialog/files") return { paths: ["a.mp3", "b.mp3"] };
+      return ++imports === 1 ? answer([track("a.mp3")]) : waiting(reader({ state: "error", error: "không ghi được vào ổ đĩa" }));
+    });
+    const done = importMusic(() => undefined);
+    await tick();
+    cancelMusicReader();
+    const { result, error } = await done;
+    expect(error?.message).toBe("Không tải được bộ đọc nhạc: không ghi được vào ổ đĩa");
+    expect(result?.added).toHaveLength(1);
+  });
+
+  it("câu báo nói điều người nghe thấy", () => {
+    expect(readerLabel(reader({ done: 31_246_824 / 2, total: 31_246_824 }))).toBe("Đang tải bộ đọc nhạc (~30 MB, một lần) 50%");
+    expect(readerPercent(reader({ done: 5, total: 0 }))).toBe(0);
   });
 });

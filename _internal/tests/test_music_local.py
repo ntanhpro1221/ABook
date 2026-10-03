@@ -165,6 +165,14 @@ def test_analysis_that_is_not_usable_leaves_the_track_unanalysed(tmp_path: Path,
     assert clipped == {"valence": 1.0, "arousal": -1.0, "lufs": -18.5}
 
 
+def test_clean_analysis_keeps_the_residual_variance_and_drops_bad_numbers() -> None:
+    cleaned = music_local.clean_analysis({"valence": 0.1, "arousal": 0.2, "tension": 0.3,
+                                          "vetVar": {"valence": 0.04, "arousal": float("nan"), "tension": -1.0, "x": "no"}})
+    assert cleaned["vetVar"] == {"valence": 0.04, "tension": 0.0}, "số hữu hạn, >= 0; NaN và chữ bị bỏ"
+    assert "vetVar" not in music_local.clean_analysis({"valence": 0.1, "arousal": 0.2, "vetVar": "xin chào"})
+    assert "vetVar" not in music_local.clean_analysis({"valence": 0.1, "arousal": 0.2, "vetVar": {"valence": float("inf")}})
+
+
 def test_tracks_imported_before_the_analyzer_existed_are_analysed_later(tmp_path: Path, songs) -> None:
     store = LocalMusic(tmp_path / "mine")
     track, _ = store.import_file(songs["mp3"])
@@ -190,7 +198,8 @@ def _pin(server, book: str, key: str, link: str) -> dict:
 def test_the_user_imports_lists_and_removes_music_through_the_api(studio, tmp_path: Path, songs) -> None:  # noqa: F811
     _paths, _app, server, _runner = studio
     status, empty = _call(server, "GET", "/api/music/local")
-    assert status == 200 and empty == {"tracks": [], "analyzer": False}
+    assert status == 200 and (empty["tracks"], empty["analyzer"]) == ([], False)
+    assert empty["reader"]["ready"] is True, "máy thử có ffmpeg sẵn: không cần tải bộ đọc nhạc"
     notes = tmp_path / "x.txt"
     notes.write_text("không", encoding="utf-8")
     first = _import(server, songs["mp3"], songs["ogg"], notes)
