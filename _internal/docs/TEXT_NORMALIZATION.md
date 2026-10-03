@@ -173,6 +173,24 @@ Luật trước, mơ hồ thì ghi lại để đo.
 - *Nghe ngay:* hiện không có tầng tên. Dùng phiên âm theo luật (romaji, Hàn) + từ điển dùng chung + điều ước của người nghe
   (`book_wishes` đã lưu nhưng chưa áp).
 
+**Tầng 4b – model phiên âm từ riêng** (chủ sách 04-10: "tách ra một lớp train khác ... llm này sẽ chỉ làm việc theo kiểu nhận
+word và cho ra dạng normalized của word").
+- **Vì sao tách khỏi model phân tích:** mỗi model một mục đích, đo riêng, phát hành riêng. Tên không có quy tắc và từ điển không
+  bao giờ đủ, nên phần đuôi dài cần một model học cách phiên âm kiểu Việt.
+- **Vào / ra:**
+  - Vào: một token nước ngoài, kèm gợi ý lớp (tên / từ / viết tắt) và gợi ý gốc (Nhật / Hàn / Anh / không rõ) nếu tầng 1 biết.
+  - Ra: âm tiết Việt nối gạch theo quy ước của app (`ENGLISH_TO_VIETNAMESE.md`), qua cửa kiểm âm tiết Việt hợp lệ.
+  - Không ngữ cảnh câu: cùng từ thì cùng cách đọc, lưu đệm theo cuốn.
+- **Cỡ:** nhỏ để chạy cả trên điện thoại (ONNX, cỡ vài MB). So hai phương án bằng số đo:
+  - transformer ký tự tự huấn luyện;
+  - LLM nhỏ tinh chỉnh.
+- **Dữ liệu:**
+  - token thật từ Corpus/_full (52k tên + từ mượn), chia train / dev / test THEO CUỐN;
+  - đáp án do LLM lớn đề xuất + luật CMU sẵn có + luật romaji / Hàn;
+  - lọc qua kiểm âm tiết và vòng ASR.
+- **Thay thế:** Studio dùng nó thay bước LLM đề xuất cách đọc tên (bảng khoá và người nghe sửa vẫn giữ). Nghe ngay dùng nó cho mọi
+  token nước ngoài chưa có trong từ điển.
+
 **Tầng 5 – nhịp và ngắt.** Đưa thành dấu câu ngắt mà engine hiểu:
 - "…", "—" (gạch nối dài), "!?";
 - thán từ kéo dài (Aaaa → "A… a", đã có ở Studio, chuyển sang dùng chung);
@@ -193,7 +211,8 @@ Luật trước, mơ hồ thì ghi lại để đo.
 1. Bộ thử + đo đường cơ sở hiện tại (sea-g2p) theo lớp.
 2. Tầng 5 (… — ~ !?) và tầng 2 vá (nghìn kiểu Anh, x2, Lv, La Mã cho Studio): nhỏ, chắc thắng.
 3. Tầng 3 từ điển viết tắt + từ mượn + kính ngữ: dựng bằng LLM ngoại tuyến, kiểm âm tiết + ASR, vào cả Studio lẫn Nghe ngay.
-4. Tầng 4 phiên âm romaji / Hàn theo luật cho Nghe ngay (máy tính + điện thoại); Studio dùng làm bước trước LLM.
+4. Tầng 4 phiên âm romaji / Hàn theo luật cho Nghe ngay (máy tính + điện thoại), và tầng 4b model phiên âm từ riêng (Model
+   train, sau cân bằng giọng; kế hoạch 1 trang trước khi train).
 5. So các bộ VietNormalizer / donglao-g2p trên cùng bộ thử; lớp nào chúng thắng thì mượn luật (MIT / Apache-2.0).
 
 Ràng buộc:
