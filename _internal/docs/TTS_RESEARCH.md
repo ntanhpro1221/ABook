@@ -40,6 +40,9 @@ Measured and dropped (no preset voices, or worse):
 - **VoxCPM2:** 16-28 % of lines drift away from the designed voice; 6.1 GiB VRAM; 122 s per 1000 chars.
 - **Gwen-TTS 0.6B:** clone only; CER 18.5 %, numbers unusable; 175 s per 1000 chars.
 - **F5-TTS-ViVoice:** clone only; the fork crashes when given a seed (`infer(seed=…)` never sets `self.seed`); not re-run.
+- **Viterbox (excluded by the owner, 03-10 22:2x):** measured below with its 3 shipped voices, then dropped. The owner
+  marked none of them on the review page; the licence is CC-BY-NC; the voice files' provenance is unknown; it is ~11×
+  slower than Turbo and needs 3.85 GiB VRAM. No further runs.
 - **Chatterbox Multilingual:** has no Vietnamese; Viterbox is its Vietnamese fine-tune.
 - **dangvansam/viet-tts:** Linux-only, torch 2.0.1, abandoned.
 
@@ -126,7 +129,13 @@ Findings:
 The owner's review page uses 3 lines per voice (narration, dialogue, names + numbers), leveled and trimmed like the app,
 for all 57 preset voices above.
 
-### Not decided here
+### Review page result (owner, 03-10 22:2x)
 
-Whether Studio should cast across more than one engine, and which voices to add, is the owner's call after the review
-page.
+- **Supertonic 3:** liked F1, F3, M4, M5.
+- **ZeroTTS:** liked baotrang, giahuy, huuduc, kimoanh, quangminh.
+- **Viterbox:** none liked, so the engine is excluded (see above).
+- **Unmarked voices** are "tạm" (acceptable), not rejected.
+- **VieNeu** was not re-rated; the 18-09 verdicts stand.
+
+Next steps, as Lead work: Supertonic in desktop "Nghe ngay", then Studio casting across several engines (Supertonic and
+ZeroTTS for side roles) on a dev branch.
