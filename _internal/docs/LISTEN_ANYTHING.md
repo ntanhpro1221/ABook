@@ -72,8 +72,15 @@ in the book, and a phone without a voice engine can stream it from a paired comp
 Listen now reuses the existing reading mode (`ui/src/listen/ReaderScreen.tsx`: chapter text as an ebook, the playing
 sentence lit and followed, "Nghe từ đây" on a tapped sentence, remembered position). New: the current WORD lit too, as Edge
 does, where the voice gives word timings - Edge TTS (WordBoundary events with offsets), the device voice (Android
-`UtteranceProgressListener.onRangeStart`, Windows SAPI word events). VieNeu gives none: estimate by characters, or align
-with an ASR model later. Studio audiobooks could get word timings from the Whisper pass they already run.
+`UtteranceProgressListener.onRangeStart`, Windows SAPI word events). Owner 03-10: word highlighting is REQUIRED for both Listen now and Studio audiobooks.
+- VieNeu gives no word timings (checked: v3nano's duration predictor returns one total duration per utterance). Two ways:
+  (a) synthesize per phrase (split at punctuation) and spread each phrase's time over its syllables. Vietnamese
+  syllables are fairly even, so this is good enough to look right, though sometimes one beat off.
+  (b) run a small CTC forced aligner (ONNX, CPU) on each synthesized sentence: exact. Measure its speed and pick.
+- Studio audiobooks: a "word timing" step at packing time, OUTSIDE the hash-locked pipeline. It force-aligns each line's
+  known text inside its known time span, with the same aligner as (b). The result is stored additively as
+  `scripts/<n>.json` lines[i].words = [[start_ms, end_ms], ...] per word. Existing books get it by re-packing on a
+  Studio machine.
 
 ## 4. Music while listening
 
