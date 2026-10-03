@@ -27,6 +27,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Trình phát
 
+- **"Làm trước" giọng trực tuyến trên máy tính**: như trên điện thoại, chọn giọng Edge hay giọng dùng khoá riêng rồi bấm "Làm trước N
+  chương tới" trong menu giọng - máy đọc sẵn vào bộ đệm, lên tàu hay máy bay không có mạng vẫn nghe tiếp được (đến khoảng 14 giờ nghe).
+
 - Thẻ "Đang nghe dở" ở Thư viện theo đúng cuốn đang phát. Đang mở màn nghe thì không còn hiện thêm thông báo "Đã nghe hết sách". Dòng
   tiến độ nói rõ: "Đã nghe 10% phần đã có · còn khoảng 33 phút ở tốc độ 1,5×".
 - Menu nhạc nền: mô tả không bị cắt, độ dài danh sách phát ghi "dài 8 giờ", chọn xong có xác nhận. Hẹn giờ ngủ: "Dừng khi hết chương
