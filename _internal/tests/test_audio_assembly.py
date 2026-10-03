@@ -9,7 +9,9 @@ import numpy as np
 import pytest
 
 import abook.audio_io as audio_io
+from abook import voice_balance
 from abook.audio_io import (
+    VOICE_BALANCE_FIELD,
     AudioQualityError,
     ChapterQualityError,
     VIENEU_V3_CODEC_SAMPLES_PER_FRAME,
@@ -19,6 +21,7 @@ from abook.audio_io import (
     integrated_loudness_lufs,
     normalize_segment_level,
     segment_duration_policy,
+    segment_gain_db,
     tempo_stretch_wav_atomic,
     vieneu_generation_reached_frame_ceiling,
     verify_mp3,
@@ -367,7 +370,10 @@ def test_segment_leveling_does_not_hide_stereo_or_clipped_model_output(tmp_path:
         atomic_write_wav(tmp_path / "clipped.wav", clipped, 48_000, "Một câu kiểm tra.", settings, segment)
 
 
-def test_segment_leveling_matches_neutral_voices_and_preserves_loud_intent() -> None:
+def test_segment_leveling_applies_one_constant_gain_and_preserves_loud_intent() -> None:
+    # Lý do sửa: trước đây câu được ĐO LUFS rồi kéo về đích, nên câu nhỏ và câu to ra cùng mức. Giờ gain là
+    # hằng số của giọng (L + o_v - ref_lufs_v) cộng offset tương đối; câu nhỏ vẫn nhỏ hơn câu to, khoảng
+    # cách giữa chúng còn nguyên, và các offset volume/người kể/cảm xúc vẫn phân tầng đúng.
     settings = build_settings()
     sample_rate = 48_000
     timeline = np.arange(sample_rate, dtype=np.float32) / sample_rate
@@ -379,6 +385,7 @@ def test_segment_leveling_matches_neutral_voices_and_preserves_loud_intent() -> 
         "volume": "normal",
         "emotion": "neutral",
         "intensity": 1,
+        VOICE_BALANCE_FIELD: "vieneu@3.8.1/Phạm Tuyên/f100",
     }
     narrator = {**neutral, "kind": "narration", "speaker": "NARRATOR"}
     loud = {**neutral, "volume": "loud", "emotion": "angry", "intensity": 3}
@@ -391,53 +398,56 @@ def test_segment_leveling_matches_neutral_voices_and_preserves_loud_intent() -> 
     strong_lufs = integrated_loudness_lufs(strong_normalized, sample_rate)
     narrator_lufs = integrated_loudness_lufs(narrator_normalized, sample_rate)
     loud_lufs = integrated_loudness_lufs(loud_normalized, sample_rate)
+    source_lufs = integrated_loudness_lufs(quiet, sample_rate)
+    strong_source_lufs = integrated_loudness_lufs(strong, sample_rate)
 
-    # Read the anchors from settings rather than repeating them: what matters is that
-    # levelling reaches each anchor exactly and preserves the intended ordering, not
-    # the absolute numbers, which move whenever the peak-ceiling headroom is retuned.
     targets = settings["audio"]["segment_target_lufs"]
     narrator_offset = float(settings["audio"]["segment_narrator_offset_db"])
+    neutral_gain = segment_gain_db(neutral, settings)
 
-    assert quiet_lufs == pytest.approx(strong_lufs, abs=0.15)
-    assert quiet_lufs == pytest.approx(float(targets["normal"]), abs=0.15)
-    assert narrator_lufs == pytest.approx(
-        float(targets["normal"]) + narrator_offset, abs=0.15
+    # Cùng một gain cho hai câu cùng giọng: chênh lệch giữa chúng không bị xoá.
+    assert quiet_lufs - source_lufs == pytest.approx(neutral_gain, abs=0.05)
+    assert strong_lufs - strong_source_lufs == pytest.approx(neutral_gain, abs=0.05)
+    assert strong_lufs - quiet_lufs == pytest.approx(strong_source_lufs - source_lufs, abs=0.05)
+    assert narrator_lufs - quiet_lufs == pytest.approx(narrator_offset, abs=0.05)
+    assert loud_lufs - quiet_lufs == pytest.approx(
+        float(targets["loud"]) - float(targets["normal"]) , abs=0.05
     )
-    assert loud_lufs == pytest.approx(float(targets["loud"]), abs=0.15)
     # The whole point of the anchors: the director's intent has to survive levelling.
     assert loud_lufs > narrator_lufs > quiet_lufs
 
 
-def test_lufs_leveling_matches_low_and_bright_voice_spectra() -> None:
+def test_lufs_leveling_gives_voices_with_different_raw_levels_one_output_level() -> None:
+    # Lý do sửa: hai giọng thô cùng một mức đo (ref_lufs) ra cùng mức đích nhờ gain riêng của giọng, thay vì
+    # nhờ đo từng câu. Phổ khác nhau (100 Hz và 260 Hz) không còn là thứ quyết định gain.
     settings = build_settings()
     sample_rate = 48_000
     timeline = np.arange(sample_rate, dtype=np.float32) / sample_rate
-    low_voice = 0.03 * np.sin(2 * np.pi * 100 * timeline)
-    bright_voice = 0.03 * np.sin(2 * np.pi * 260 * timeline)
     segment = {
         "kind": "dialogue",
         "speaker": "Nhân vật",
         "volume": "normal",
         "emotion": "neutral",
         "intensity": 1,
+        VOICE_BALANCE_FIELD: "vieneu@3.8.1/Phạm Tuyên/f100",
     }
+    ref_lufs = voice_balance.constants_for_key(segment[VOICE_BALANCE_FIELD]).ref_lufs
+    low_voice = 0.03 * np.sin(2 * np.pi * 100 * timeline)
+    bright_voice = 0.03 * np.sin(2 * np.pi * 260 * timeline)
 
     low_normalized = normalize_segment_level(low_voice, sample_rate, segment, settings)
     bright_normalized = normalize_segment_level(bright_voice, sample_rate, segment, settings)
 
-    normal_target = float(settings["audio"]["segment_target_lufs"]["normal"])
-    assert integrated_loudness_lufs(low_normalized, sample_rate) == pytest.approx(
-        normal_target, abs=0.15
-    )
-    assert integrated_loudness_lufs(bright_normalized, sample_rate) == pytest.approx(
-        normal_target, abs=0.15
-    )
+    for source, normalized in ((low_voice, low_normalized), (bright_voice, bright_normalized)):
+        gained = integrated_loudness_lufs(normalized, sample_rate) - integrated_loudness_lufs(source, sample_rate)
+        assert gained == pytest.approx(voice_balance.level_lufs() - ref_lufs, abs=0.05)
 
 
 def test_segment_rate_validation_warns_for_mild_outlier_and_rejects_extreme() -> None:
     settings = build_settings(overrides={"tts": {"min_seconds_per_100_chars": 0.2}})
     text = "a" * 60
-    mildly_slow = np.sin(np.linspace(0, 200, 48_000 * 6, dtype=np.float32)) * 0.12
+    # Sàn chung của cổng nhịp là 12,5 · pace_floor_scale · x = 10 kt/s: 7 giây cho 60 ký tự là 8,6 kt/s.
+    mildly_slow = np.sin(np.linspace(0, 200, 48_000 * 7, dtype=np.float32)) * 0.12
     extremely_slow = np.sin(np.linspace(0, 200, 48_000 * 12, dtype=np.float32)) * 0.12
 
     _, metrics = validate_audio_array(

@@ -11,7 +11,7 @@ import numpy as np
 import pyworld
 
 from .audio_io import (
-    VOICE_PRESET_FIELD,
+    VOICE_BALANCE_FIELD,
     AudioQualityError,
     SegmentDurationPolicy,
     atomic_write_wav,
@@ -39,12 +39,12 @@ from .text_processing import (
     normalize_vocalizations_for_tts,
     spoken_symbols_to_words,
 )
+from . import voice_balance
 from .voice_catalog import (
     FORMANT_RATIO_MAX,
     FORMANT_RATIO_MIN,
     SPEED_FACTOR_MAX,
     SPEED_FACTOR_MIN,
-    speed_factor_for_preset,
 )
 from .tts_contract import (
     HA_VOCALIZATION_DELIVERY_PROFILE,
@@ -134,6 +134,9 @@ WORLD_FRAME_PERIOD_MS = 5.0
 WORLD_F0_FLOOR_HZ = 55.0
 WORLD_F0_CEIL_HZ = 600.0
 WORLD_MIN_VOICED_FRAMES = 3
+# pyworld.harvest trên vài mẫu làm hỏng heap native và GIẾT cả tiến trình (Windows 0xc0000374), không ném lỗi: đo 04-10, 2 mẫu
+# sập, 50 mẫu chạy. Không câu nói thật nào ngắn hơn 10 ms; bản ngắn thế để nguyên cho cổng "audio too short" loại.
+WORLD_MIN_SECONDS = 0.010
 VOICE_VARIANT_PITCH_FLOOR_HZ = 60.0
 VOICE_VARIANT_PITCH_CEILING_HZ = 600.0
 VOICE_VARIANT_PEAK_CEILING = 0.98
@@ -222,7 +225,7 @@ def apply_pitch_variant(
     array = np.asarray(audio, dtype=np.float32).reshape(-1)
     steps = int(pitch_semitones)
     ratio = float(formant_ratio)
-    if (steps == 0 and abs(ratio - 1.0) <= 1e-6) or array.size == 0:
+    if (steps == 0 and abs(ratio - 1.0) <= 1e-6) or array.size < WORLD_MIN_SECONDS * sample_rate:
         return array
     if not FORMANT_RATIO_MIN <= ratio <= FORMANT_RATIO_MAX:
         raise ValueError(
@@ -286,11 +289,11 @@ def apply_speed_change(audio: Any, sample_rate: int, speed: float) -> np.ndarray
     WORLD analysis with the same constants as `apply_pitch_variant`, then synthesis with a frame
     period `speed` times shorter: every frame keeps its F0 and envelope, it is only played
     faster. Unlike `apply_pitch_variant` the length changes on purpose, so nothing is trimmed or
-    padded. See `PRESET_SPEED_FACTOR` for why a slow preset needs this.
+    padded. See `voice_balance.tempo` for where the factor comes from.
     """
     array = np.asarray(audio, dtype=np.float32).reshape(-1)
     speed = float(speed)
-    if abs(speed - 1.0) <= 1e-6 or array.size == 0:
+    if abs(speed - 1.0) <= 1e-6 or array.size < WORLD_MIN_SECONDS * sample_rate:
         return array
     if not SPEED_FACTOR_MIN <= speed <= SPEED_FACTOR_MAX:
         raise ValueError(f"speed factor {speed} is outside [{SPEED_FACTOR_MIN}, {SPEED_FACTOR_MAX}]")
@@ -1017,8 +1020,10 @@ class TTSCoordinator:
                 row,
                 pronunciation_delivery_variant=normalized_pronunciation_variant,
             )
-            # Trước ngân sách sinh và trước cổng: cả hai đo một giọng chậm theo nhịp của nó.
-            spoken_row[VOICE_PRESET_FIELD] = str(_row_value(profile, "preset_name", "") or "")
+            # Trước ngân sách sinh và trước độ to: cả hai cần biết giọng nào (bản ghi trong bảng
+            # cân bằng giọng). Giọng chưa đo thì LỖI ở đây, không thu bằng 1,0.
+            voice_constants = voice_balance.constants_for_profile(profile)
+            spoken_row[VOICE_BALANCE_FIELD] = voice_constants.key
             vocalization_delivery_profile = (
                 HA_VOCALIZATION_DELIVERY_PROFILE
                 if is_standalone_ha_gasp(str(row["text"]))
@@ -1091,9 +1096,10 @@ class TTSCoordinator:
                     f"Bỏ biến thể cao độ {pitch_steps:+d} cho segment {row['stable_id']} "
                     f"vì xử lý pitch lỗi: {exc}"
                 )
-            # Tốc độ riêng của giọng (PRESET_SPEED_FACTOR), sau cao độ vì hàm cao độ giữ nguyên
-            # độ dài. Bỏ qua tiếng cười "ha": đường ấy có bất biến số mẫu thô.
-            speed_factor = speed_factor_for_preset(str(_row_value(profile, "preset_name", "")))
+            # Tempo = x * r_v (bảng cân bằng giọng), sau cao độ vì hàm cao độ giữ nguyên độ dài, và
+            # trước độ to (WORLD kéo tốc độ làm đổi độ to, nên o_v đo sau bước này). Bỏ qua tiếng
+            # cười "ha": đường ấy có bất biến số mẫu thô.
+            speed_factor = voice_balance.tempo(voice_constants)
             speed_change_skipped = False
             if (
                 abs(speed_factor - 1.0) > 1e-6

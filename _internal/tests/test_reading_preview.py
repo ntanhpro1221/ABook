@@ -16,6 +16,7 @@ from typing import Any
 import pytest
 
 import abook.tts as tts_module
+from abook import voice_balance
 from abook.config import build_settings
 from abook.database import LISTENER_PRONUNCIATION_SOURCE
 from abook.listener_overrides import request_pronunciation
@@ -62,6 +63,12 @@ def _script() -> dict[str, Any]:
 
 def _voices(runtime: FakeVieNeuRuntime, monkeypatch) -> None:
     runtime.list_preset_voices = lambda: [(name, name) for name in ("narrator", "v_lucien", "v_natasha", "v_anon_m")]
+    # Tên giọng của sách mẫu là giả, không có bản ghi đo trong bảng cân bằng: cho chúng hằng số trung tính.
+    monkeypatch.setattr(voice_balance, "_NEUTRAL", {})
+    voice_balance.register_neutral_voices(
+        {"engine": "vieneu", "preset_name": name, "formant_ratio": 1.0}
+        for name in ("narrator", "v_lucien", "v_natasha", "v_anon_m")
+    )
     module = ModuleType("vieneu")
     module.Vieneu = lambda **_kwargs: runtime
     monkeypatch.setitem(sys.modules, "vieneu", module)
