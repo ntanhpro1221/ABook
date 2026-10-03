@@ -30,6 +30,8 @@ from urllib.parse import parse_qs, quote, unquote, urlsplit
 
 from .. import aliases, bracket_rule, continuation, importers, listener_overrides
 from ..io_utils import atomic_write_json
+from ..readaloud import azure as readaloud_azure
+from ..readaloud import keys as readaloud_keys
 from ..readaloud import service as readaloud
 from ..readaloud.model import VoiceError
 from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, edits_inbox, ffmpeg_setup, humanize, listen_view,
@@ -242,7 +244,9 @@ class App:
         self.shell: Callable[[dict[str, Any]], None] | None = None
         self.studio: Any = None
         # "Nghe ngay" (abook/readaloud): giọng máy đọc chương chỉ-có-chữ; clip đã đọc nằm trong bộ đệm dưới thư mục dữ liệu của app.
-        self.readaloud = readaloud.ReadAloud(preferences.path.with_name("readaloud-cache"))
+        # Giọng trực tuyến dùng khoá của người dùng (readaloud/byok.py): khoá nằm trong file riêng cạnh file tuỳ chọn, giao diện chỉ thấy bản che.
+        self.readaloud = readaloud.ReadAloud(preferences.path.with_name("readaloud-cache"),
+                                             keys=readaloud_keys.KeyStore(preferences.path.with_name(readaloud_keys.FILE_NAME)))
         if not (isinstance(runner, actions.FakeRunner) or os.environ.get("ABOOK_FAKE_RUNNER") == "1"):
             self.readaloud.warm()
         # Mốc từng chữ khi nghe (word_timing.py): app đóng gói không có numpy nên giao việc căn cho Python của Studio.
@@ -3186,6 +3190,28 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(status, str(error), reason=error.reason) from error
         self._send_json(HTTPStatus.OK, {"url": f"/media/readaloud/{clip['file']}", "duration_ms": clip["duration_ms"], "words": clip["words"]})
 
+    def get_readaloud_online(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.readaloud.online_providers())
+
+    def put_readaloud_online(self, _query: dict[str, list[str]], provider: str) -> None:
+        # Khoá đi trong THÂN yêu cầu (không bao giờ trong địa chỉ); trả về chỉ bản che.
+        body = self._body()
+        key, region = body.get("key"), body.get("region", "")
+        if not isinstance(key, str) or len(key) > 512 or not isinstance(region, str):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu khoá")
+        if provider == "azure" and not readaloud_azure.valid_region(region.strip().lower()):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Vùng Azure chưa đúng (ví dụ: southeastasia)")
+        try:  # khoá rỗng = giữ khoá đã lưu, chỉ đổi vùng
+            self._send_json(HTTPStatus.OK, self.app.readaloud.set_key(provider, key, region if provider == "azure" else ""))
+        except ValueError as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+
+    def delete_readaloud_online(self, _query: dict[str, list[str]], provider: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.readaloud.remove_key(provider))
+
+    def post_readaloud_online_check(self, _query: dict[str, list[str]], provider: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.readaloud.check_key(provider))
+
     def media_readaloud(self, _query: dict[str, list[str]], name: str) -> None:
         path = self.app.readaloud.cache.path(name)
         if path is None:
@@ -3329,6 +3355,10 @@ ROUTES: list[Route] = [
     ("GET", re.compile(r"/api/voices"), Handler.get_voices),
     ("GET", re.compile(r"/api/readaloud/voices"), Handler.get_readaloud_voices),
     ("POST", re.compile(r"/api/readaloud/clip"), Handler.post_readaloud_clip),
+    ("GET", re.compile(r"/api/readaloud/online"), Handler.get_readaloud_online),
+    ("PUT", re.compile(r"/api/readaloud/online/(azure|google|fpt|viettel)"), Handler.put_readaloud_online),
+    ("DELETE", re.compile(r"/api/readaloud/online/(azure|google|fpt|viettel)"), Handler.delete_readaloud_online),
+    ("POST", re.compile(r"/api/readaloud/online/(azure|google|fpt|viettel)/check"), Handler.post_readaloud_online_check),
     ("GET", re.compile(r"/api/preferences"), Handler.get_preferences),
     ("PUT", re.compile(r"/api/preferences"), Handler.put_preferences),
     ("POST", re.compile(r"/api/scan"), Handler.post_scan),

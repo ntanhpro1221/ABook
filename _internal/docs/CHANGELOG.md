@@ -24,6 +24,15 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   phải chờ giữa các đoạn, đoạn đã đọc được giữ lại để nghe lại không cần mạng. Tốc độ, hẹn giờ ngủ, nhớ chỗ đang nghe như
   sách nói; trên điện thoại tắt màn hình vẫn đọc tiếp và tự sang chương sau, điều khiển được ở màn hình khoá và tai nghe.
 
+- **Cài đặt → Giọng đọc: chọn giọng mặc định, nghe thử, và dùng giọng trực tuyến bằng khóa của bạn (máy tính và điện thoại)**: mục mới
+  liệt kê mọi giọng đọc được cho "Nghe ngay" - Edge, giọng của máy, và giọng của các dịch vụ bạn có tài khoản - kèm gợi ý giọng nam / nữ,
+  nút "Thử giọng" đọc một câu mẫu, và chọn một giọng làm mặc định cho các cuốn chưa chọn giọng riêng (giọng riêng của từng cuốn vẫn đổi ở
+  nút "Giọng đọc" trong trình phát). Ở "Giọng trực tuyến dùng khóa của bạn", dán khóa của Azure Speech (kèm vùng), Google Cloud, FPT.AI hay
+  Viettel AI rồi bấm "Kiểm tra": khóa dùng được thì giọng tiếng Việt của dịch vụ ấy hiện trong danh sách giọng. Azure và Google sáng đúng
+  từng chữ khi đọc; FPT.AI và Viettel AI sáng từng chữ theo ước lượng. Khi đọc, chữ của sách được gửi tới dịch vụ đó và dịch vụ có thể tính
+  tiền vào tài khoản của bạn khi vượt phần miễn phí - app nói rõ điều này; khóa chỉ lưu trên máy (trên điện thoại được mã hoá), chỉ hiện 4
+  ký tự cuối. Khóa hết hạn mức hay bị từ chối thì đoạn ấy tạm đọc bằng giọng Edge, rồi giọng của máy, không dừng, và app báo một lần.
+
 - **Nghe ngay có nhạc nền: chọn một danh sách nhạc cho cả cuốn (máy tính và điện thoại)**: sách chỉ có chữ có mục "Nhạc nền" ở menu
   của sách và ở trình phát lúc đang nghe: Tắt (mặc định), một trong 12 danh sách nhạc theo kiểu truyện - kỳ ảo phiêu lưu, kỳ ảo êm
   đềm, học đường, lãng mạn, hài hước, hành động, kinh dị, trinh thám, tiên hiệp - cổ phong, khoa học viễn tưởng, buồn, êm để ngủ -

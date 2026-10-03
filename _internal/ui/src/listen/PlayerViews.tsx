@@ -43,7 +43,7 @@ import { usePlayListenBook, useNextVolume } from "./LibraryScreen";
 import { canPlay, seriesOf, type Bookmark, type ListenChapter, type Script } from "./model";
 import { EDIT_BOOKMARK_EVENT, SKIP_SECONDS, SPEEDS, useNowPlaying, usePlayer } from "./player";
 import { SLEEP_CHOICES, sleepLabel, sleepLeftMs, sleepSpoken } from "./sleep";
-import { ONLINE_NOTICE, chooseVoice, chosenVoice, resolveVoice } from "./readAloudVoice";
+import { chooseVoice, chosenVoice, onlineNotice, resolveVoice } from "./readAloudVoice";
 import { nextChapterLabel, PREPARING_VOICE, textChapterLine, toggleLabel } from "./labels";
 import { spokenVoiceName } from "./onlineConsent";
 import { PlaylistOptionLabel, playlistNote, usePlaylistChoice } from "./PlaylistChoice";
@@ -386,7 +386,7 @@ export function VoiceMenu() {
           </Popover.Close>
         ))}
       </div>
-      {current?.online && <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{ONLINE_NOTICE}</p>}
+      {current?.online && <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{onlineNotice(current)}</p>}
     </MenuShell>
   );
 }

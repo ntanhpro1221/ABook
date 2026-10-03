@@ -85,7 +85,8 @@ object ReadAloud {
     @Synchronized
     private fun reader(): ClipReader = reader ?: run {
         val ctx = context ?: throw VoiceException("Chưa khởi động")
-        ClipReader(cache(), ::voiceFor, { fallbackVoice(ctx) }).also { reader = it }
+        // Giọng dùng khoá hỏng (khoá bị từ chối, hết hạn mức, mất mạng): Edge đỡ trước giọng của máy; mỗi chuyện báo người nghe một lần.
+        ClipReader(cache(), ::voiceFor, { fallbackVoice(ctx) }, onlineFallback = { EdgeTts("vi-VN-HoaiMyNeural") }, notice = ::notice).also { reader = it }
     }
 
     private fun voiceFor(id: String): Voice {
@@ -93,7 +94,7 @@ object ReadAloud {
         return when (provider) {
             "edge" -> EdgeTts(name.ifEmpty { "vi-VN-HoaiMyNeural" })
             "device" -> DeviceTts(context ?: throw VoiceException("Chưa khởi động"), name)
-            else -> throw VoiceException("Giọng lạ: $id")
+            else -> OnlineVoices.voiceFor(context ?: throw VoiceException("Chưa khởi động"), id) ?: throw VoiceException("Giọng lạ: $id")
         }
     }
 
@@ -103,17 +104,26 @@ object ReadAloud {
     fun addScriptListener(listener: (String, Int) -> Unit) { scriptListeners += listener }
     fun removeScriptListener(listener: (String, Int) -> Unit) { scriptListeners -= listener }
 
+    private val noticeListeners = mutableSetOf<(String) -> Unit>()
+    fun addNoticeListener(listener: (String) -> Unit) { noticeListeners += listener }
+    fun removeNoticeListener(listener: (String) -> Unit) { noticeListeners -= listener }
+    private fun notice(message: String) = Playback.onMain { noticeListeners.toList().forEach { runCatching { it(message) } } }
+
+    /** "Thử giọng" (Cài đặt): đúng giọng này đọc `text` (qua bộ đệm), trả file âm thanh. Chạy ở luồng nền. */
+    fun sample(id: String, text: String): File = reader().readExactly(text, id).file
+
     // ---- giọng ----------------------------------------------------------------------------------------------
 
     /** Danh sách giọng cho giao diện (chạy ở luồng nền - hỏi bộ đọc của máy có thể chờ). */
     fun voices(ctx: Context): List<JSONObject> {
         val list = ArrayList<VoiceInfo>()
-        list.add(VoiceInfo("edge:vi-VN-HoaiMyNeural", "Hoài My (Edge)", "edge", true, true))
-        list.add(VoiceInfo("edge:vi-VN-NamMinhNeural", "Nam Minh (Edge)", "edge", true, false))
+        list.add(VoiceInfo("edge:vi-VN-HoaiMyNeural", "Hoài My (Edge)", "edge", true, true, "female"))
+        list.add(VoiceInfo("edge:vi-VN-NamMinhNeural", "Nam Minh (Edge)", "edge", true, false, "male"))
+        list.addAll(OnlineVoices.voices(ctx)) // giọng dùng khoá của người dùng: chỉ khi khoá đã kiểm tra được
         list.addAll(DeviceTts.voices(ctx))
         return list.map {
             JSONObject().put("id", it.id).put("name", it.name).put("provider", it.provider).put("online", it.online)
-                .put("default", it.default).put("gainDb", VoiceGain.db(it.id))
+                .put("default", it.default).put("gender", it.gender).put("gainDb", VoiceGain.db(it.id))
         }
     }
 
