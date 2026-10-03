@@ -1,0 +1,75 @@
+{
+ "note": "số được đọc thành 7 mảnh không có trong chữ: bị bỏ, chữ số ôm khoảng thời gian ấy",
+ "text": "Năm 1945 là năm",
+ "durationMs": 2400,
+ "boundaries": [
+  {
+   "text": "Năm",
+   "start": 0,
+   "end": 300
+  },
+  {
+   "text": "một",
+   "start": 300,
+   "end": 500
+  },
+  {
+   "text": "nghìn",
+   "start": 500,
+   "end": 700
+  },
+  {
+   "text": "chín",
+   "start": 700,
+   "end": 900
+  },
+  {
+   "text": "trăm",
+   "start": 900,
+   "end": 1100
+  },
+  {
+   "text": "bốn",
+   "start": 1100,
+   "end": 1300
+  },
+  {
+   "text": "mươi",
+   "start": 1300,
+   "end": 1500
+  },
+  {
+   "text": "lăm",
+   "start": 1500,
+   "end": 1700
+  },
+  {
+   "text": "là",
+   "start": 1800,
+   "end": 2000
+  },
+  {
+   "text": "năm",
+   "start": 2000,
+   "end": 2300
+  }
+ ],
+ "words": [
+  [
+   0,
+   300
+  ],
+  [
+   300,
+   1800
+  ],
+  [
+   1800,
+   2000
+  ],
+  [
+   2000,
+   2300
+  ]
+ ]
+}

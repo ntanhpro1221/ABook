@@ -30,6 +30,8 @@ from urllib.parse import parse_qs, quote, unquote, urlsplit
 
 from .. import aliases, bracket_rule, continuation, importers, listener_overrides
 from ..io_utils import atomic_write_json
+from ..readaloud import service as readaloud
+from ..readaloud.model import VoiceError
 from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, edits_inbox, ffmpeg_setup, humanize, listen_view,
                music_catalog, music_local, music_module, music_plan, music_select, music_student, packages, project_views,
                projectfile, reading_preview, remote_config, shared_readings, store, textbook, volumes, word_timing, workshop)
@@ -239,6 +241,10 @@ class App:
         self.update: dict[str, Any] | None = None
         self.shell: Callable[[dict[str, Any]], None] | None = None
         self.studio: Any = None
+        # "Nghe ngay" (abook/readaloud): giọng máy đọc chương chỉ-có-chữ; clip đã đọc nằm trong bộ đệm dưới thư mục dữ liệu của app.
+        self.readaloud = readaloud.ReadAloud(preferences.path.with_name("readaloud-cache"))
+        if not (isinstance(runner, actions.FakeRunner) or os.environ.get("ABOOK_FAKE_RUNNER") == "1"):
+            self.readaloud.warm()
         # Mốc từng chữ khi nghe (word_timing.py): app đóng gói không có numpy nên giao việc căn cho Python của Studio.
         word_timing.configure(lambda: self.studio)
         self.word_jobs = word_timing.Job()
@@ -3109,6 +3115,29 @@ class Handler(BaseHTTPRequestHandler):
     def get_preferences(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.preferences.get())
 
+    def get_readaloud_voices(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.readaloud.voices())
+
+    def post_readaloud_clip(self, _query: dict[str, list[str]]) -> None:
+        # Một đoạn chữ -> một clip (audio tốc độ 1,0 + mốc từng chữ). Lỗi nói đúng lý do (`reason`) để trình phát đổi sang giọng máy hay báo người nghe.
+        body = self._body()
+        text, voice = body.get("text"), body.get("voice")
+        if not isinstance(text, str) or not isinstance(voice, str):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu giọng hay chữ")
+        try:
+            clip = self.app.readaloud.clip(voice, text, cached_only=bool(body.get("cachedOnly")))
+        except VoiceError as error:
+            status = {"offline": HTTPStatus.SERVICE_UNAVAILABLE, "timeout": HTTPStatus.GATEWAY_TIMEOUT, "voice": HTTPStatus.BAD_REQUEST,
+                      "empty": HTTPStatus.UNPROCESSABLE_ENTITY, "uncached": HTTPStatus.NOT_FOUND}.get(error.reason, HTTPStatus.BAD_GATEWAY)
+            raise ApiError(status, str(error), reason=error.reason) from error
+        self._send_json(HTTPStatus.OK, {"url": f"/media/readaloud/{clip['file']}", "duration_ms": clip["duration_ms"], "words": clip["words"]})
+
+    def media_readaloud(self, _query: dict[str, list[str]], name: str) -> None:
+        path = self.app.readaloud.cache.path(name)
+        if path is None:
+            raise ApiError(HTTPStatus.NOT_FOUND, "Không có clip này")
+        self._send_file(path, cache=True)  # tên file là băm của giọng + chữ: nội dung không bao giờ đổi
+
     def get_analysis_models(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.analysis_models())
 
@@ -3244,6 +3273,8 @@ ROUTES: list[Route] = [
     ("DELETE", re.compile(r"/api/studio/setup"), Handler.delete_studio_setup),
     ("GET", re.compile(r"/api/library"), Handler.get_library),
     ("GET", re.compile(r"/api/voices"), Handler.get_voices),
+    ("GET", re.compile(r"/api/readaloud/voices"), Handler.get_readaloud_voices),
+    ("POST", re.compile(r"/api/readaloud/clip"), Handler.post_readaloud_clip),
     ("GET", re.compile(r"/api/preferences"), Handler.get_preferences),
     ("PUT", re.compile(r"/api/preferences"), Handler.put_preferences),
     ("POST", re.compile(r"/api/scan"), Handler.post_scan),
@@ -3371,6 +3402,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(r"/api/listen/night"), Handler.get_night),
     ("POST", re.compile(r"/api/listen/night/dismiss"), Handler.post_night_dismiss),
     ("GET", re.compile(r"/media/voices/([^/]+)"), Handler.media_voice),
+    ("GET", re.compile(r"/media/readaloud/([0-9a-f]{64}\.(?:mp3|wav))"), Handler.media_readaloud),
     ("GET", re.compile(r"/media/books/([A-Za-z0-9_-]+)/chapters/(\d+)"), Handler.media_chapter),
     ("GET", re.compile(r"/media/books/([A-Za-z0-9_-]+)/samples/(\d+)"), Handler.media_sample),
     ("GET", re.compile(r"/media/books/([A-Za-z0-9_-]+)/cover"), Handler.media_cover),

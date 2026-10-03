@@ -1,7 +1,7 @@
 import type { EngineEvent, NativeEngine, NativeQueue, TrackInfo } from "@/listen/engine";
 import type { Bookmark } from "@/listen/model";
 import type { SleepMode, SleepRequest } from "@/listen/sleep";
-import { chapterFiles } from "./androidSource";
+import { chapterFiles, chapterTextEntry } from "./androidSource";
 import { EbookPlayer, type NativeState } from "./plugins";
 
 // Bộ máy phát của Android: mọi thứ thật sự chạy trong lõi Media3 (Playback.kt), kể cả khi tắt màn hình.
@@ -55,12 +55,17 @@ export class NativeAudioEngine implements NativeEngine {
       bookTitle: queue.bookTitle,
       narrator: queue.narrator,
       chapters: queue.chapters
-        .filter((chapter) => files?.get(chapter.id))
-        .map((chapter) => ({ id: chapter.id, title: chapter.fullTitle, file: files!.get(chapter.id)!, duration: chapter.duration })),
+        .filter((chapter) => files?.get(chapter.id) || (chapter.state === "text" && chapter.speech))
+        .map((chapter) =>
+          chapter.state === "text"
+            ? { id: chapter.id, title: chapter.fullTitle, file: "", duration: 0, text: chapterTextEntry(queue.bookId, chapter.id) }
+            : { id: chapter.id, title: chapter.fullTitle, file: files!.get(chapter.id)!, duration: chapter.duration },
+        ),
       chapterId: queue.chapterId,
       seconds: queue.at,
       rate: queue.rate,
       autoplay: queue.autoplay,
+      readAloudVoice: queue.readAloudVoice,
     }).then((state) => this.receive(state));
   }
 

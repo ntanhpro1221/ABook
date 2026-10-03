@@ -17,6 +17,13 @@ export interface ListenChapter {
   part?: number | null;
   /** "text": chương chỉ có chữ - đọc được, chưa có âm thanh (phiên bản 5, docs/LISTEN_ANYTHING.md mục 1); chương nghe được: không có. */
   state?: "text" | null;
+  /** Chương chỉ-có-chữ mà máy này có giọng đọc cho (source.tsx `withReadAloud`): nghe ngay được, dù chưa có audio. */
+  speech?: boolean;
+}
+
+/** Bấm nghe được: chương có audio, hay chương chỉ-có-chữ mà máy có giọng đọc. */
+export function canPlay(chapter: Pick<ListenChapter, "available" | "speech">): boolean {
+  return chapter.available || chapter.speech === true;
 }
 
 /** Giai đoạn của cả cuốn: "text" = chỉ có chữ (chưa chương nào có audio, thư viện ghi "Chỉ có chữ"); không có = sách nghe được như mọi sách. */
@@ -313,14 +320,15 @@ export function chaptersByPart(chapters: ListenChapter[], parts: BookPart[] | un
 /** Chương nên phát khi bấm "Nghe": chỗ đang nghe dở nếu chương ấy còn nghe được (nghe gần hết thì sang chương
  *  kế), không thì chương đầu tiên chưa nghe xong, cuối cùng là chương đầu. */
 export function resumePoint(book: ListenBook, chapters: ListenChapter[]): { chapter: ListenChapter; at: number } | null {
-  const playable = chapters.filter((chapter) => chapter.available);
+  const playable = chapters.filter(canPlay);
   if (!playable.length) return null;
   const last = book.state.last;
   if (last) {
     const index = playable.findIndex((chapter) => chapter.id === last.chapterId);
     if (index >= 0) {
       const chapter = playable[index];
-      const nearEnd = chapter.duration > 0 && chapter.duration - last.seconds < 15;
+      const length = knownDuration(book.state, chapter);
+      const nearEnd = length > 0 && length - last.seconds < 15;
       if (!nearEnd) return { chapter, at: last.seconds };
       if (playable[index + 1]) return { chapter: playable[index + 1], at: 0 };
       // Nghe tới cuối chương cuối ĐÃ CÓ của một cuốn còn đang làm: đứng yên ở đó, đừng quay về chương đầu.
@@ -331,11 +339,17 @@ export function resumePoint(book: ListenBook, chapters: ListenChapter[]): { chap
   return { chapter: unheard ?? playable[0], at: 0 };
 }
 
+/** Độ dài chương: của gói sách, hay - chương đọc to chưa có audio - độ dài trình phát đã ghi lúc nghe (giây ảo của bộ máy đọc to). */
+export function knownDuration(state: ListeningState, chapter: ListenChapter): number {
+  return chapter.duration > 0 ? chapter.duration : (state.chapters[String(chapter.id)]?.duration ?? 0);
+}
+
 export function chapterHeard(state: ListeningState, chapter: ListenChapter): number {
   const record = state.chapters[String(chapter.id)];
   if (!record) return 0;
   if (record.done) return 1;
-  return chapter.duration > 0 ? Math.min(1, record.heard / chapter.duration) : 0;
+  const length = knownDuration(state, chapter);
+  return length > 0 ? Math.min(1, record.heard / length) : 0;
 }
 
 /** Tìm không dấu: "tap 16" khớp "Tập 16", "duc tri" khớp "Đức Trí". */

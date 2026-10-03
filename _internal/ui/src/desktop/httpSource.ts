@@ -2,7 +2,8 @@ import type { MusicCredit, MusicCue } from "@/listen/musicBed";
 import type { Bookmark, Cast, ListenBook, ListeningRecord, ListeningSession, ListeningState, NightSession, Script } from "@/listen/model";
 import type { ListenSource } from "@/listen/source";
 import type { AddedBook, ImportPreview, TextImport } from "@/listen/textImport";
-import { api, mediaUrl } from "@/studio/api";
+import { ReadAloudError, type ReadAloudClip, type ReadAloudVoice } from "@/listen/readAloud";
+import { ApiError, api, mediaUrl } from "@/studio/api";
 import { pickFiles, pickFolder } from "@/studio/data";
 
 function fileName(path: string): string {
@@ -39,6 +40,23 @@ export const httpSource: ListenSource = {
   chapterText: async (bookId, chapterId) =>
     (await api<{ text: string }>(`/api/listen/books/${bookId}/chapters/${chapterId}/text`)).text,
   cast: (bookId) => api<Cast>(`/api/books/${bookId}/cast`),
+  readAloudVoices: async () => {
+    const voices = await api<(Omit<ReadAloudVoice, "gainDb"> & { gain_db?: number })[]>("/api/readaloud/voices");
+    return voices.map(({ gain_db, ...voice }) => ({ ...voice, gainDb: gain_db ?? 0 }));
+  },
+  readAloudClip: async (voice, text, options) => {
+    try {
+      const clip = await api<{ url: string; duration_ms: number; words: [number, number][] }>("/api/readaloud/clip", {
+        method: "POST",
+        body: { voice, text, cachedOnly: options?.cachedOnly },
+      });
+      return { url: mediaUrl(clip.url), durationMs: clip.duration_ms, words: clip.words } satisfies ReadAloudClip;
+    } catch (error) {
+      // Máy chủ nói đúng lý do (offline / timeout / rejected / service / uncached...); mất kết nối tới chính máy chủ cục bộ là "service".
+      if (error instanceof ApiError) throw new ReadAloudError(error.message, String(error.detail.reason ?? "service"));
+      throw new ReadAloudError("Không gọi được giọng đọc.", "service");
+    }
+  },
   musicCues: async (bookId, chapterId) => {
     const result = await api<{ cues: MusicCue[]; levelDb: number; credits?: Record<string, MusicCredit> }>(`/api/books/${bookId}/music/chapters/${chapterId}`);
     return { ...result, cues: result.cues.map((cue) => ({ ...cue, src: mediaUrl(cue.src) })) };

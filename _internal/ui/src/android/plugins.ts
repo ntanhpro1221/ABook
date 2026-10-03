@@ -1,5 +1,6 @@
 import { registerPlugin, type PluginListenerHandle } from "@capacitor/core";
 import type { Bookmark, BookPart, ListeningRecord, ListeningState, NightSession } from "@/listen/model";
+import type { ReadAloudTimings, ReadAloudVoice } from "@/listen/readAloud";
 import type { Capabilities } from "@/shared/capabilities";
 import type { EditsSyncState } from "@/shared/editsSync";
 import type { AddedBook, ImportPreview } from "@/listen/textImport";
@@ -40,11 +41,13 @@ export interface EbookPlayerPlugin {
     bookId: string;
     bookTitle: string;
     narrator: string;
-    chapters: { id: number; title: string; file: string; duration: number }[];
+    /** Chương chỉ-có-chữ: `file` rỗng, `text` là tên mục chữ (`texts/<mã>.txt`) - lõi tự đọc chương ấy bằng `readAloudVoice`. */
+    chapters: { id: number; title: string; file: string; duration: number; text?: string }[];
     chapterId: number;
     seconds: number;
     rate: number;
     autoplay?: boolean;
+    readAloudVoice?: string;
   }): Promise<NativeState>;
   play(): Promise<NativeState>;
   pause(): Promise<NativeState>;
@@ -71,6 +74,8 @@ export interface EbookPlayerPlugin {
     rewindSeconds?: number;
     safetyStopHours?: number;
     schedule?: { from: string; to: string; minutes: number } | null;
+    /** Giọng đọc của "Nghe ngay" (mã giọng của ReadAloud.voices); "" = giọng mặc định của máy. */
+    readAloudVoice?: string;
   }): Promise<NativeState>;
   lastNight(): Promise<{ session: BedtimeSession | null }>;
   dismissLastNight(): Promise<void>;
@@ -327,5 +332,16 @@ export interface ImportEvent {
   error?: string;
 }
 
+/** "Nghe ngay" trên điện thoại (docs/LISTEN_ANYTHING.md mục 3): giọng của máy (Android TextToSpeech) và mốc thời gian câu / chữ mà LÕI NATIVE đọc ra.
+ *  Chương chỉ-có-chữ vào hàng đợi `EbookPlayer.load` như chương thường (kèm `readAloudVoice`); JS chỉ hỏi giọng và mốc, không tự đọc. */
+export interface ReadAloudPlugin {
+  voices(): Promise<{ voices: ReadAloudVoice[] }>;
+  /** Mốc hiện có của chương (mọi câu theo thứ tự; câu chưa đọc có mốc ước, không có `words`). */
+  script(options: { bookId: string; chapterId: number }): Promise<ReadAloudTimings>;
+  /** Lõi đã có mốc mới cho chương (một câu vừa đọc xong, hay nạp chương): hỏi lại `script`. */
+  addListener(event: "readAloudScript", handler: (event: { bookId: string; chapterId: number }) => void): Promise<PluginListenerHandle>;
+}
+
 export const EbookPlayer = registerPlugin<EbookPlayerPlugin>("EbookPlayer");
+export const ReadAloud = registerPlugin<ReadAloudPlugin>("ReadAloud");
 export const EbookLibrary = registerPlugin<EbookLibraryPlugin>("EbookLibrary");

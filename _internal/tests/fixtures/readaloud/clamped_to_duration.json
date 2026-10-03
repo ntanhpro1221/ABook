@@ -1,0 +1,27 @@
+{
+ "note": "chữ cuối không quá thời lượng clip",
+ "text": "ab cd",
+ "durationMs": 1200,
+ "boundaries": [
+  {
+   "text": "ab",
+   "start": 0,
+   "end": 500
+  },
+  {
+   "text": "cd",
+   "start": 500,
+   "end": 1500
+  }
+ ],
+ "words": [
+  [
+   0,
+   500
+  ],
+  [
+   500,
+   1200
+  ]
+ ]
+}

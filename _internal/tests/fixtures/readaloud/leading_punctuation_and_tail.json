@@ -1,0 +1,36 @@
+{
+ "note": "dấu câu dính chữ không làm lệch; khoảng trắng cuối không tạo chữ",
+ "text": "“Ừ,” anh nói... ",
+ "durationMs": 1500,
+ "boundaries": [
+  {
+   "text": "Ừ",
+   "start": 100,
+   "end": 300
+  },
+  {
+   "text": "anh",
+   "start": 400,
+   "end": 600
+  },
+  {
+   "text": "nói",
+   "start": 600,
+   "end": 900
+  }
+ ],
+ "words": [
+  [
+   100,
+   300
+  ],
+  [
+   400,
+   600
+  ],
+  [
+   600,
+   900
+  ]
+ ]
+}

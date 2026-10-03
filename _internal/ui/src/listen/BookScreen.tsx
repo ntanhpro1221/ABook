@@ -15,7 +15,7 @@ import { MergeDialog } from "@/studio/MergePeople";
 import { useClip } from "./clip";
 import { canEditBook, EditBlockedItem, EditBookDialog, refreshAfterEdit, RenameChapterDialog, SaveAsDialog, StudioOnlyItem, useSaveBook } from "./EditBook";
 import { bookStatusText, usePlayListenBook } from "./LibraryScreen";
-import { chapterHeard, chaptersByPart, resumePoint, type CastMember, type ListenBook, type ListenChapter } from "./model";
+import { canPlay, chapterHeard, chaptersByPart, knownDuration, resumePoint, type CastMember, type ListenBook, type ListenChapter } from "./model";
 import { usePlayer } from "./player";
 import { BookmarkList, chapterStatusLabel } from "./PlayerViews";
 import { EditsSyncBanner, SendEditsItem } from "./SendEdits";
@@ -44,7 +44,7 @@ function ChapterRow({
   const heard = chapterHeard(book.state, chapter);
   const done = heard >= 1;
   const onPlay = () => {
-    if (!chapter.available) return;
+    if (!canPlay(chapter)) return;
     if (current) player.toggle();
     else void playBook(book, chapter.id, heard > 0 && heard < 1 ? (book.state.chapters[String(chapter.id)]?.heard ?? 0) : 0);
   };
@@ -53,13 +53,13 @@ function ChapterRow({
     <div
       className={cn(
         "group flex items-center gap-3 rounded-xl px-2 py-2.5 sm:px-3",
-        current ? "bg-accent-soft" : chapter.available && "hover:bg-hover",
+        current ? "bg-accent-soft" : canPlay(chapter) && "hover:bg-hover",
       )}
     >
       <button
         type="button"
         onClick={onPlay}
-        disabled={!chapter.available}
+        disabled={!canPlay(chapter)}
         aria-label={current && player.playing ? `Tạm dừng ${chapter.fullTitle}` : `Nghe ${chapter.fullTitle}`}
         className="grid size-9 shrink-0 place-items-center rounded-full text-fg-2 hover:bg-panel hover:text-fg disabled:text-fg-3 disabled:hover:bg-transparent"
       >
@@ -67,7 +67,7 @@ function ChapterRow({
           <Vu className="h-3 text-accent" />
         ) : done ? (
           <Check className="size-4 text-success" strokeWidth={3} aria-label="Đã nghe" />
-        ) : chapter.available ? (
+        ) : canPlay(chapter) ? (
           <Play className="size-4 translate-x-[1px]" fill="currentColor" strokeWidth={0} />
         ) : (
           <CircleDashed className="size-4" />
@@ -77,16 +77,22 @@ function ChapterRow({
           nút "…" hiện khi rê chuột mới có "Đọc chương này"). */}
       <button
         type="button"
-        onClick={chapter.available ? onPlay : () => navigate(`/book/${book.id}/read/${chapter.id}`)}
-        aria-label={chapter.available ? undefined : `Đọc ${chapter.fullTitle} (chưa có audio)`}
+        onClick={canPlay(chapter) ? onPlay : () => navigate(`/book/${book.id}/read/${chapter.id}`)}
+        aria-label={canPlay(chapter) ? undefined : `Đọc ${chapter.fullTitle} (chưa có audio)`}
         className="min-w-0 flex-1 text-left"
       >
-        <div className={cn("truncate text-sm font-medium", current && "text-accent-text", (done || !chapter.available) && !current && "text-fg-2")}>
+        <div className={cn("truncate text-sm font-medium", current && "text-accent-text", (done || !canPlay(chapter)) && !current && "text-fg-2")}>
           {name}
         </div>
         <div className="tabular truncate text-xs text-fg-2">
           {chapter.subtitle ? `${chapter.title} · ` : ""}
-          {chapter.available ? formatLength(chapter.duration) : chapter.state === "text" ? "Chưa có âm thanh" : chapterStatusLabel(book.producing)}
+          {chapter.available
+            ? formatLength(chapter.duration)
+            : chapter.state === "text"
+              ? chapter.speech
+                ? knownDuration(book.state, chapter) > 0 ? formatLength(knownDuration(book.state, chapter)) : "Giọng máy đọc"
+                : "Chưa có âm thanh"
+              : chapterStatusLabel(book.producing)}
         </div>
         {heard > 0 && heard < 1 && (
           <div className="mt-1.5 h-[3px] w-24 overflow-hidden rounded-full bg-line-strong">
@@ -108,7 +114,7 @@ function ChapterRow({
             </DropdownMenu.Trigger>
             <DropdownMenu.Portal>
               <DropdownMenu.Content align="end" sideOffset={4} className="z-50 min-w-52 rounded-xl border border-line bg-panel p-1.5 shadow-float">
-                {chapter.available && (
+                {canPlay(chapter) && (
                   <DropdownMenu.Item onSelect={() => void playBook(book, chapter.id, 0)} className={MENU_ITEM}>
                     <Play className="size-4" /> Nghe từ đầu chương
                   </DropdownMenu.Item>
@@ -116,7 +122,7 @@ function ChapterRow({
                 <DropdownMenu.Item onSelect={() => navigate(`/book/${book.id}/read/${chapter.id}`)} className={MENU_ITEM}>
                   <BookOpen className="size-4" /> Đọc chương này
                 </DropdownMenu.Item>
-                {chapter.available && (
+                {canPlay(chapter) && (
                   <DropdownMenu.Item onSelect={() => onDone(chapter.id, !done)} className={MENU_ITEM}>
                     {done ? <CircleDashed className="size-4" /> : <CheckCheck className="size-4" />}
                     {done ? "Đánh dấu chưa nghe" : "Đánh dấu đã nghe xong"}
@@ -679,9 +685,9 @@ export function BookScreen({
   const primaryLabel = listening
     ? player.playing ? "Tạm dừng" : "Tiếp tục"
     // Nói rõ nghe tiếp từ ĐÂU, như thẻ ở Thư viện (soát UX 29-09).
-    : point && point.at > 0 ? `Nghe tiếp · ${point.chapter.title} · ${formatClock(point.at)}` : heard > 0 ? "Nghe tiếp" : "Bắt đầu nghe";
+    : point && point.at > 0 ? `Nghe tiếp · ${point.chapter.title} · ${formatClock(point.at)}` : heard > 0 ? "Nghe tiếp" : textOnly ? "Nghe ngay" : "Bắt đầu nghe";
   const restart = () => {
-    const first = chapters.find((chapter) => chapter.available);
+    const first = chapters.find(canPlay);
     if (!first) return;
     if (listening) {
       // Cuốn đang nạp trong trình phát: nhảy như mọi cú nhảy khác - trình phát nhớ chỗ cũ (nút ↺ "Quay lại chỗ vừa nghe"
@@ -776,7 +782,7 @@ export function BookScreen({
             )}
             <Tooltip label="Đọc bằng mắt - đọc được cả chương chưa thu âm; “Nghe từ đây” chuyển sang nghe đúng câu đang đọc">
               <Button
-                variant={textOnly ? "primary" : "outline"}
+                variant={textOnly && !point ? "primary" : "outline"}
                 size="lg"
                 icon={BookOpen}
                 onClick={() => navigate(`/book/${book.id}/read/${book.state.reading?.chapterId ?? point?.chapter.id ?? chapters[0]?.id ?? ""}`)}
