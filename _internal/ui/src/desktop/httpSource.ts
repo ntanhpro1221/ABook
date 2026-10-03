@@ -74,6 +74,8 @@ export const httpSource: ListenSource = {
     return api<PrepareStatus>("/api/readaloud/prepare", { method: "POST", body: { voice, texts, label } });
   },
   readAloudPrepareStatus: () => api<PrepareStatus>("/api/readaloud/prepare"),
+  // Máy tính xách tay cũng mất mạng (tàu, máy bay): giọng trực tuyến làm trước vào bộ đệm clip như VieNeu (readaloud/prepare.py chung mọi giọng).
+  readAloudPrepareOnline: true,
   readAloudPrepareCancel: () => api<PrepareStatus>("/api/readaloud/prepare", { method: "DELETE" }),
   musicCues: async (bookId, chapterId) => {
     const result = await api<{ cues: MusicCue[]; levelDb: number; credits?: Record<string, MusicCredit> }>(`/api/books/${bookId}/music/chapters/${chapterId}`);

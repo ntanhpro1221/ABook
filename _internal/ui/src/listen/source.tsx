@@ -43,9 +43,10 @@ export interface ListenSource {
   readAloudPrepare?(request: PrepareRequest): Promise<PrepareStatus>;
   readAloudPrepareStatus?(): Promise<PrepareStatus>;
   readAloudPrepareCancel?(): Promise<PrepareStatus>;
-  /** Điện thoại: ước trước khi bấm, "Chỉ khi đang sạc", và làm trước cả giọng trực tuyến (để nghe không cần mạng). */
+  /** Điện thoại: ước trước khi bấm, "Chỉ khi đang sạc", dấu "Đã làm sẵn" từng chương. */
   readAloudPreparePlan?(request: PrepareRequest): Promise<PreparePlan>;
   readAloudPrepareOptions?(options: { chargingOnly: boolean }): Promise<PrepareStatus>;
+  /** Làm trước được cả giọng trực tuyến - để nghe khi không có mạng (điện thoại, và máy tính xách tay lúc đi tàu / máy bay). */
   readAloudPrepareOnline?: boolean;
   /** Nơi tự đọc chương (lõi native Android) cho biết mốc thời gian câu / chữ đã có của một chương chỉ-có-chữ; chưa có gì thì null. */
   readAloudTimings?(bookId: string, chapterId: number): Promise<ReadAloudTimings | null>;
