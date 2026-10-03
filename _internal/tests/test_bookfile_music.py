@@ -159,6 +159,10 @@ def test_the_phone_package_carries_the_music_already_on_this_machine(tmp_path: P
     assert "music" not in before and [cue["track"] for cue in book["music"]["chapters"]["1"]] == [
         music_plan.track_name(CALM)], "chỉ bài đã có trên máy: lượt hỏi gói không tải gì"
     assert book["version"] != before["version"], "điện thoại thấy có cập nhật khi nhạc đổi"
+    calm_file = track(CALM)
+    assert calm_file is not None
+    assert book["music"]["tracks"][music_plan.track_name(CALM)]["size"] == calm_file.stat().st_size, \
+        "cỡ file bài đi trong gói để điện thoại kiểm lúc tải"
     library = Library(Preferences(tmp_path / "prefs.json"))
     app = SyncApp(library, listening, Devices(tmp_path / "devices.json"), "may", music_track=track)
     found = app.resolve_file(project, music_plan.track_name(CALM))

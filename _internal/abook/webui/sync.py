@@ -392,6 +392,9 @@ def manifest(project_root: Path, book: str, listening: Listening,
     if music_track is not None:
         packed = music_plan.package(project_root, [c["id"] for c in chapters if c["available"]], music_track)
         music = packed[0] if packed else None
+        # Cỡ từng file bài để bên tải kiểm (đủ byte mới đổi tên) và tính tiến độ; file `.abook` không cần (có băm trong gói).
+        for name, file in (packed[1].items() if packed else ()):
+            music["tracks"][name]["size"] = file.stat().st_size
     # Đổi ảnh bìa hay nhạc nền cũng là một phiên bản mới của gói: điện thoại thấy "có cập nhật" và tải lại.
     version = hashlib.sha256(json.dumps([[(c["id"], c["size"]) for c in chapters],
                                          cover["version"] if cover else 0] + ([music] if music else []),
