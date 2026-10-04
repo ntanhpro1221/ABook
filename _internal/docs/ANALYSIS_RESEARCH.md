@@ -120,6 +120,13 @@ hook tắt mặc định, prompt y hệt khi tắt).
 - **E2 - độ dài ngữ cảnh/lô.** batch_segments / batch_chars / previous_text-next_text quét về ~256 / 512 / 1.024 token so
   với hiện tại (~3k token người dùng). Một mức ngắn hơn cho F1 >= hiện tại + 2 và không tụt ở Hàn -> đổi mặc định.
 
+**Kết quả E1 (i) (04-10 21:2x, thước 04-10).** Cùng lora29v8, cùng digest (= cùng hạt) nên so CẶP với v8 gốc trên 767 câu thoại
+Nhật MỚI: lỗi "lặp người câu trước" 69 -> 25 (giảm 64 %, qua ngưỡng 40 % về phía SINH), đúng chặt 71,8 -> 73,9 %, lỗi "tôi"
+24 -> 27, nhưng F1 giọng 59,5 -> 59,6 (họ v8 dải 57,7-59,7). 44 lỗi lặp bớt đi chỉ thành 16 câu đúng thêm - phần còn lại đổi sang
+lỗi khác. Kết luận: lan lỗi giữa các lô là THẬT (đúng loại lỗi lặp) nhưng gần như không đóng góp vào khoảng cách 53 vs 93 với thầy;
+chấm ứng viên / quyết định độc lập KHÔNG phải hướng chính. Gốc còn lại là HIỂU (model không đọc được cấu trúc lượt) -> A2 chưng cất,
+B8 con trỏ, B8 tách việc. E1 (ii) (ép gold trong lô, HF) xếp sau.
+
 ## 03-10 chiều - Vì sao model to không hơn rõ: tín hiệu khó quá ít, lỗi theo loại, và truyện ĐÃ HỌC vs truyện MỚI
 
 Câu chủ sách hỏi: "ít thông tin thì huấn luyện tốt hơn?". Trả lời từ số đo, không dùng GPU:
