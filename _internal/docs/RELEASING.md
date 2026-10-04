@@ -54,7 +54,12 @@ tương ứng, để hiểu script làm gì:
    `%USERPROFILE%\.abook-keys`, không bao giờ commit) và `latest.json` (ghi chú lấy từ mục `[X.Y.Z]` của CHANGELOG -
    đổi tên mục trước khi dựng). App điện thoại: `npm run build:android` trong `ui\`, `npx cap sync android`, rồi
    `gradlew assembleRelease` trong `mobile\android\` - Gradle ký bằng `%USERPROFILE%\.abook-keys\android-release.properties`
-   (thiếu file ấy thì APK không ký, không phát hành được). Mất khoá APK là người dùng phải gỡ app rồi cài lại: bản sao lưu
+   (thiếu file ấy thì APK không ký, không phát hành được). Bản release chạy R8 (thu nhỏ mã + tài nguyên, luật ở
+   `mobile\android\app\proguard-rules.pro`): ngay sau khi dựng, CẤT `mobile\android\app\build\outputs\mapping\release\mapping.txt`
+   vào `D:\Novels\ABook\Corpus\releases\android\X.Y.Z\mapping.txt` (Corpus là repo riêng tư; không bao giờ đưa vào repo công
+   khai hay GitHub Release). Không có nó thì stack trace của người dùng (logcat, báo lỗi) không dịch ngược được về tên hàm; mỗi
+   bản dựng ra một mapping khác nhau, nên mapping phải đúng với APK đã đăng. Thêm mã dùng JNI, phản chiếu hay nạp lớp theo tên
+   thì thêm luật giữ vào file ấy (kèm lý do) và thử trên máy ảo trước khi phát hành. Mất khoá APK là người dùng phải gỡ app rồi cài lại: bản sao lưu
    của cả hai khoá nằm ở `keys/` trong repo riêng tư `ntanhpro1221/ABook-Private` (README ở đó chỉ cách khôi phục).
    Bộ cài chỉ-nghe KHÔNG mang từ điển phát âm và giọng nghe thử (`webui/studio_setup.py` > `STUDIO_ASSETS`: Studio tải gói
    ghim ở bước đầu tiên). Gói đổi (file trong `abook/assets/voice_previews` hay `cmudict.dict` đổi) thì: `python
