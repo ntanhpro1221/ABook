@@ -29,7 +29,9 @@ from abook.voice_catalog import (
     SPEED_FACTOR_MIN,
     STYLE_NEWS,
     VIENEU_PRESETS,
+    ENGINE_VOICES,
     base_pitch_for_preset,
+    castable_engine_voices,
     casting_presets,
     narrator_presets,
     preset_by_name,
@@ -89,7 +91,9 @@ def test_every_castable_voice_has_a_record() -> None:
 
 
 def test_the_table_holds_no_stray_voices() -> None:
-    expected = set(voice_balance.castable_keys())
+    # Ngoài các khoá phân vai / chọn tay được: giọng máy khác đã đo mà chủ sách chưa chọn (vẫn trong danh mục, castable=False).
+    measured = {f"{voice['engine']}@{voice_balance.engine_version(voice['engine'])}/{voice['name']}/f100" for voice in ENGINE_VOICES}
+    expected = set(voice_balance.castable_keys()) | measured
     assert set(voice_balance.load_table()["voices"]) == expected
 
 
@@ -100,8 +104,15 @@ def test_the_table_covers_exactly_the_castable_and_narrator_voices() -> None:
     assert {"Quang Sơn", "Ngọc Trân"} <= names
     news = {preset["name"] for preset in VIENEU_PRESETS if preset["style"] == STYLE_NEWS}
     assert news and not news & names
-    in_table = {key.split("/")[1] for key in voice_balance.load_table()["voices"]}
+    in_table = {key.split("/")[1] for key in voice_balance.load_table()["voices"] if key.startswith("vieneu@")}
     assert in_table == names
+    # Máy đọc khác: đúng các giọng trong danh mục (chọn tay được hay chưa), mỗi giọng một bậc gốc.
+    others = {key for key in voice_balance.load_table()["voices"] if not key.startswith("vieneu@")}
+    assert others == {
+        f"{voice['engine']}@{voice_balance.engine_version(voice['engine'])}/{voice['name']}/f100" for voice in ENGINE_VOICES
+    }
+    assert set(voice_balance.castable_keys()) <= set(voice_balance.load_table()["voices"])
+    assert any(voice["castable"] for voice in castable_engine_voices())
 
 
 def test_a_voice_missing_from_the_table_is_an_error_not_a_one() -> None:
@@ -178,11 +189,12 @@ def test_synthesis_applies_the_table_in_the_documented_order() -> None:
     # Giọng được đặt tên TRƯỚC ngân sách sinh và trước độ to; pitch -> tempo -> gain.
     assert named < source.index("vieneu_sampling_for_segment(")
     assert named < source.index("segment_duration_policy(")
+    # Tempo được TÍNH trước khi sinh (máy tự đọc theo tempo nhận nó ở đó), nhưng ÁP sau cao độ.
     pitch = source.index("apply_pitch_variant(")
     tempo = source.index("voice_balance.tempo(voice_constants)")
     speed = source.index("apply_speed_change(")
     gain = source.index("atomic_write_wav(")
-    assert named < pitch < tempo < speed < gain
+    assert named < tempo < pitch < speed < gain
 
 
 # --- độ to ----------------------------------------------------------------------------

@@ -1,8 +1,11 @@
 """Tạo clip nghe thử (preview) cho những giọng dựng sẵn chưa có, vào một thư mục CHỜ - không vào thẳng assets.
 
     python scripts/make_voice_previews.py --presets "Mạnh Dũng,Anh Khôi" [--out scripts/pending_patches/assets/voice_previews]
+    python scripts/make_voice_previews.py --engine zerotts --presets "baotrang,giahuy" [--out ...]
 
-Chạy bằng interpreter mang đúng bản VieNeu sẽ dùng (17-09: `runtime/venv-vieneu381`). Cần GPU rảnh.
+Chạy bằng interpreter mang đúng bản VieNeu sẽ dùng (17-09: `runtime/venv-vieneu381`). Cần GPU rảnh. Máy đọc khác (`--engine`, adapter
+của `tts.ENGINE_ADAPTERS`) chạy CPU, từ mô-đun tải thêm của nó (ZeroTTS: webui/zerotts_module.py, Supertonic: webui/supertonic_module.py);
+tên file theo `VOICE_PREVIEW_FILENAMES`; Supertonic đọc ở `engine_speed` của bảng cân bằng.
 
 ## Vì sao cần preview cho mỗi giọng trong pool
 
@@ -42,9 +45,11 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from abook import voice_balance  # noqa: E402
 from abook.config import build_settings  # noqa: E402
 from abook.io_utils import slugify  # noqa: E402
-from abook.tts import VieNeuEngine  # noqa: E402
+from abook.tts import ENGINE_ADAPTERS  # noqa: E402
+from abook.voice_catalog import VOICE_PREVIEW_FILENAMES  # noqa: E402
 from scripts.compare_voice_regions import PROBE_SENTENCES, SEED  # noqa: E402
 
 DEFAULT_OUT = Path(__file__).resolve().parent / "pending_patches" / "assets" / "voice_previews"
@@ -55,6 +60,7 @@ def main() -> int:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--presets", required=True)
+    parser.add_argument("--engine", default="vieneu", choices=sorted(ENGINE_ADAPTERS))
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
     args = parser.parse_args()
     import soundfile as sf
@@ -62,7 +68,7 @@ def main() -> int:
     names = [name.strip() for name in args.presets.split(",") if name.strip()]
     args.out.mkdir(parents=True, exist_ok=True)
     settings = build_settings("high_quality")
-    engine = VieNeuEngine(settings, lambda message: print(f"  {message}", flush=True))
+    engine = ENGINE_ADAPTERS[args.engine](settings, lambda message: print(f"  {message}", flush=True))
     try:
         engine.load()
         row = {"kind": "narration", "speaker": "NARRATOR", "text": PREVIEW_TEXT, "emotion": "neutral",
@@ -71,8 +77,11 @@ def main() -> int:
             if name not in engine.voices:
                 print(f"  bo qua {name}: SDK nay khong co")
                 continue
-            audio = engine.generate_one(row, {"engine": "vieneu", "preset_name": name, "voice_key": "preview", "id": 0}, SEED)
-            path = args.out / f"{slugify(name)}.wav"
+            profile = {"engine": args.engine, "preset_name": name, "voice_key": "preview", "id": 0}
+            # Máy tự đọc theo tốc độ (Supertonic): nghe thử ở tốc độ của giọng trong bảng cân bằng, như lúc thu.
+            speed = voice_balance.engine_speed(voice_balance.constants_for_profile(profile)) if engine.native_tempo else None
+            audio = engine.generate_one(row, profile, SEED, **({"speed": speed} if engine.native_tempo else {}))
+            path = args.out / VOICE_PREVIEW_FILENAMES.get(name, f"{slugify(name)}.wav")
             sf.write(str(path), np.asarray(audio, dtype=np.float32), int(engine.sample_rate), subtype="PCM_16")
             print(f"  {name} -> {path.name} ({len(audio) / engine.sample_rate:.2f} s)", flush=True)
     finally:

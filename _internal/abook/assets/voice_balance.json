@@ -1,10 +1,21 @@
 {
   "version": 1,
-  "engine_versions": {"vieneu": "3.8.1"},
+  "engine_versions": {"vieneu": "3.8.1", "zerotts": "0.1.5", "supertonic": "3-724fb5ab"},
   "x": 1.0,
   "L_lufs": -25.0,
   "pace_floor_scale": 0.99,
+  "engine_pace_floor": {"supertonic": 0.9},
   "voices": {
+    "supertonic@3-724fb5ab/F1/f100": {"r": 1.0, "o_db": 0.0, "ref_lufs": -25.11, "pitch_st": 0, "engine_speed": 1.82},
+    "supertonic@3-724fb5ab/F2/f100": {"r": 1.0, "o_db": 0.0, "ref_lufs": -25.42, "pitch_st": 0, "engine_speed": 1.669},
+    "supertonic@3-724fb5ab/F3/f100": {"r": 1.0, "o_db": 0.0, "ref_lufs": -26.03, "pitch_st": 0, "engine_speed": 1.938},
+    "supertonic@3-724fb5ab/F4/f100": {"r": 1.0, "o_db": 0.0, "ref_lufs": -24.6, "pitch_st": 0, "engine_speed": 1.552},
+    "supertonic@3-724fb5ab/F5/f100": {"r": 1.0, "o_db": 0.0, "ref_lufs": -24.93, "pitch_st": 0, "engine_speed": 1.752},
+    "supertonic@3-724fb5ab/M1/f100": {"r": 1.0, "o_db": 0.0, "ref_lufs": -25.52, "pitch_st": 0, "engine_speed": 1.806},
+    "supertonic@3-724fb5ab/M2/f100": {"r": 1.0, "o_db": 0.0, "ref_lufs": -24.13, "pitch_st": 0, "engine_speed": 1.719},
+    "supertonic@3-724fb5ab/M3/f100": {"r": 1.0, "o_db": 0.0, "ref_lufs": -24.65, "pitch_st": 0, "engine_speed": 1.468},
+    "supertonic@3-724fb5ab/M4/f100": {"r": 1.0, "o_db": 0.0, "ref_lufs": -25.29, "pitch_st": 0, "engine_speed": 1.7},
+    "supertonic@3-724fb5ab/M5/f100": {"r": 1.0, "o_db": 0.0, "ref_lufs": -24.88, "pitch_st": 0, "engine_speed": 1.794},
     "vieneu@3.8.1/Adam bựa/f087": {"r": 1.0527, "o_db": 0.0, "ref_lufs": -19.42, "pitch_st": -2},
     "vieneu@3.8.1/Adam bựa/f093": {"r": 1.0527, "o_db": 0.0, "ref_lufs": -19.24, "pitch_st": -2},
     "vieneu@3.8.1/Adam bựa/f097": {"r": 1.0527, "o_db": 0.0, "ref_lufs": -19.02, "pitch_st": -2},
@@ -227,6 +238,11 @@
     "vieneu@3.8.1/Đức Trí/f111": {"r": 1.2643, "o_db": 0.0, "ref_lufs": -21.36, "pitch_st": 0},
     "vieneu@3.8.1/Đức Trí/f114": {"r": 1.2643, "o_db": 0.0, "ref_lufs": -21.52, "pitch_st": 0},
     "vieneu@3.8.1/Đức Trí/f116": {"r": 1.2643, "o_db": 0.0, "ref_lufs": -21.62, "pitch_st": 0},
-    "vieneu@3.8.1/Đức Trí/f120": {"r": 1.2643, "o_db": 0.0, "ref_lufs": -21.79, "pitch_st": 0}
+    "vieneu@3.8.1/Đức Trí/f120": {"r": 1.2643, "o_db": 0.0, "ref_lufs": -21.79, "pitch_st": 0},
+    "zerotts@0.1.5/baotrang/f100": {"r": 1.0427, "o_db": 0.0, "ref_lufs": -22.56, "pitch_st": 0},
+    "zerotts@0.1.5/giahuy/f100": {"r": 1.0933, "o_db": 0.0, "ref_lufs": -20.39, "pitch_st": 0},
+    "zerotts@0.1.5/huuduc/f100": {"r": 1.0975, "o_db": 0.0, "ref_lufs": -17.32, "pitch_st": 0},
+    "zerotts@0.1.5/kimoanh/f100": {"r": 1.1712, "o_db": 0.0, "ref_lufs": -22.1, "pitch_st": 0},
+    "zerotts@0.1.5/quangminh/f100": {"r": 0.911, "o_db": 0.0, "ref_lufs": -18.7, "pitch_st": 0}
   }
 }

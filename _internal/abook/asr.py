@@ -12,7 +12,6 @@ import numpy as np
 
 from .io_utils import strip_lone_surrogates
 import soundfile as sf
-from scipy.signal import resample_poly
 
 from .asr_contract import (
     ASR_MIN_VERIFIABLE_CHARS,
@@ -21,8 +20,10 @@ from .asr_contract import (
     LOCKED_NAME_ANCHOR_METRICS_VERSION,
     SHORT_CONTEXT_REPEAT_COUNT,
 )
+from .audio_io import resample_audio
 from .resource_manager import trim_process_working_set
 from .text_processing import is_vocalization_only, vietnamese_number_words
+from .vietnamese_syllable import valid_syllable
 
 
 ASR_REPAIR_MIN_WORDS = 1
@@ -1490,6 +1491,50 @@ def _edit_distance(left: list[str], right: list[str]) -> int:
     return previous[-1]
 
 
+# Chữ Anh để nguyên thì Whisper (nghe tiếng Việt) hay viết lại theo âm nó nghe: "Kate" -> "Kết" / "Kat", "Shadow" -> "Sado", "Portal" -> "Porto"
+# (đo 04-10, VieNeu Studio trên CPU). Ở câu ngắn một chữ như thế đủ đánh trượt cả câu ("Kate gật đầu.": WER 0,33), nên khâu so của ASR coi
+# chữ nghe được là khớp khi khung phụ âm của nó gần khung của chữ Anh ở câu mong đợi. Bảng gộp phụ âm cùng âm (c / k / q, s / x / z / sh, ph / f...).
+_SKELETON_DIGRAPHS = (("sh", "s"), ("ch", "c"), ("ph", "f"), ("th", "t"), ("ck", "k"), ("gh", "g"), ("ng", "n"), ("nh", "n"))
+_SKELETON_LETTERS = str.maketrans({"c": "k", "q": "k", "x": "s", "z": "s", "j": "g", "v": "f", "đ": "d"})
+
+
+def _skeleton(word: str) -> str:
+    """Khung phụ âm: bỏ dấu, gộp phụ âm cùng âm, bỏ nguyên âm và h / w / y (bán âm, âm câm), gộp phụ âm lặp."""
+    plain = "".join(ch for ch in unicodedata.normalize("NFD", word.casefold()) if unicodedata.category(ch) != "Mn")
+    for digraph, single in _SKELETON_DIGRAPHS:
+        plain = plain.replace(digraph, single)
+    consonants = [ch for ch in plain.translate(_SKELETON_LETTERS) if ch.isalpha() and ch not in "aeiouhwy"]
+    return "".join(ch for index, ch in enumerate(consonants) if not index or consonants[index - 1] != ch)
+
+
+def heard_as_english(expected: str, heard: str) -> bool:
+    """`heard` (một chữ Whisper viết) có phải là chữ Anh `expected` (để nguyên trong câu) đọc ra không: khung phụ âm trùng, hay lệch một phụ âm khi
+    khung có từ ba phụ âm ("Portal" / "Porto"), và cùng phụ âm đầu."""
+    want, got = _skeleton(expected), _skeleton(heard)
+    if not want or not got or want[0] != got[0]:
+        return False
+    if want == got:
+        return True
+    return len(want) >= 3 and _edit_distance(list(want), list(got)) <= 1
+
+
+def soften_english_words(expected: str, actual: str) -> str:
+    """Bản nghe (`actual`, đã chuẩn hoá như `normalize_transcript`) với mỗi chữ nghe được của một chữ Anh trong câu mong đợi thay bằng chính chữ
+    Anh ấy; chữ khác giữ nguyên. Chữ Anh: chữ Latin không dấu mà không là âm tiết tiếng Việt."""
+    english = [word for word in expected.split() if word.isascii() and word.isalpha() and not valid_syllable(word)]
+    if not english:
+        return actual
+    present = set(expected.split())
+    words = actual.split()
+    for index, word in enumerate(words):
+        if word in present:
+            continue
+        match = next((candidate for candidate in english if heard_as_english(candidate, word)), None)
+        if match is not None:
+            words[index] = match
+    return " ".join(words)
+
+
 # Whisper's Vietnamese tone output is not reliable evidence about the audio. Measured
 # over a whole book, tone-only differences appear across the segments that pass as well
 # as the ones that fail - median 0.000 but p99 0.362 among verified segments, against a
@@ -1597,6 +1642,13 @@ def transcript_metrics(expected: str, actual: str) -> tuple[float, float]:
         )
         similarity = max(similarity, spoken_similarity)
         wer = min(wer, spoken_wer)
+    # Same rule for an English word left as written: Whisper spells it the way it heard it ("Kate" -> "Kết").
+    expected_words, actual_words = normalize_transcript(expected), normalize_transcript(actual)
+    softened = soften_english_words(expected_words, actual_words)
+    if softened != actual_words:
+        english_similarity, english_wer = _transcript_metrics_once(expected_words, softened)
+        similarity = max(similarity, english_similarity)
+        wer = min(wer, english_wer)
     return float(similarity), float(wer)
 
 
@@ -1671,14 +1723,7 @@ def load_audio_for_whisper(path: Path) -> np.ndarray:
     array = np.asarray(audio, dtype=np.float32)
     if array.ndim != 1:
         raise RuntimeError(f"Whisper input must be mono, got shape {array.shape}")
-    if int(sample_rate) != WHISPER_SAMPLE_RATE:
-        divisor = math.gcd(int(sample_rate), WHISPER_SAMPLE_RATE)
-        array = resample_poly(
-            array,
-            WHISPER_SAMPLE_RATE // divisor,
-            int(sample_rate) // divisor,
-        ).astype(np.float32, copy=False)
-    return array
+    return resample_audio(array, int(sample_rate), WHISPER_SAMPLE_RATE)
 
 
 class WhisperVerifier:
