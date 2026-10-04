@@ -2293,3 +2293,21 @@ Mỗi pha xong: ghi số vào đây, đổi tham số trong app theo kết quả
   - B không thắng mà tỉ lệ < 0,5 với cận trên < 0,5 (A thắng rõ) → báo Lead / chủ sách xét TẮT llmVT mặc định.
   - Còn lại → "không phân biệt được bằng tai", llmVT giữ vì thước đọc thắng; ghi rõ.
 - **Chi phí:** khoảng 230 clip-đoạn × 2 prompt ≈ 460 lượt, khoảng 1 giờ Kaggle (Model đẩy, trừ sổ tuần).
+
+**KẾT QUẢ (04-10 19:xx; Kaggle 460/460 lượt, 57 phút; `results/llmvt_listen_score.txt`):** **KHÔNG PHÂN BIỆT ĐƯỢC bằng tai.**
+- 115 cặp; 5 hoà (< 0,02); 110 có phán quyết.
+- llmVT thắng **56/110 = 0,509 [Wilson 95% 0,417–0,601]**. Luật cần ≥ 0,60 và cận dưới > 0,5; cũng không thua rõ (cận trên
+  0,601 > 0,5).
+- Thước ổn định: a/b cùng chiều 88/105 = 0,838; xác suất rơi vào 7 chữ số trung bình 0,999.
+- Chênh điểm trung bình (llmVT − nhãn câu) +0,114 trên thang 1–7: llmVT nhỉnh hơn về độ lớn nhưng không về số lần thắng.
+- Theo gốc: JP 27/53, KR 15/29, khác 14/28. Không nhóm nào lệch.
+- **Theo luật ghi trước: llmVT GIỮ** (thước đọc thắng ở bộ 6, thước nghe trung lập). Nó vẫn là tuỳ chọn tải khi bấm, nên ai không
+  bật thì không tốn gì.
+- **Đọc (giả thuyết, CHƯA kiểm):**
+  - Đoán không khí đoạn tốt hơn (thước đọc +0,098) chưa thành nhạc hợp hơn khi nghe.
+  - Hướng giải thích: nút thắt chuyển sang PHÍA BÀI. V/E/T của bài trong danh mục là nhãn máy (thầy CLAP / MF), nên khớp đoạn
+    với bài theo V/T chính xác hơn vẫn ra bài "ngang ngửa".
+  - Ghép với E1: `vet` (V/E/T đáp án người) thắng `app` theo thước nghe (app chỉ 0,29). Khác biệt: E1 dùng V/E/T NGƯỜI và cả
+    trục E; llmVT chỉ đổi V/T, và đổi bằng ước lượng của 4b.
+  - Muốn biết nút thắt ở đâu cần ghi trước riêng, ví dụ so `oracle VET` (đáp án người) với llmVT trên cùng đoạn bộ 6 bằng thước
+    nghe. Kaggle tuần này đã hết (29,1/30 giờ), nên sớm nhất là thứ Bảy.
