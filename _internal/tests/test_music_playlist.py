@@ -1,6 +1,7 @@
 """Nhạc nền cho sách nghe bằng "Nghe ngay" (webui/music_playlist.py, docs/LISTEN_ANYTHING.md mục 4): người nghe chọn một danh sách
 phát của danh mục hay "Nhạc của tôi" cho cả cuốn; lựa chọn nằm ở lớp sửa (`music.playlist`), trình phát nhận hàng bài theo đúng
-thứ tự trộn sẵn, mỗi bài một độ khuếch đại theo công thức Pha 4."""
+thứ tự trộn sẵn, mỗi bài một độ khuếch đại theo công thức Pha 4. Chưa chọn gì thì máy tự chọn danh sách hợp với cuốn bằng luật từ khoá
+(`pick`), trùng khớp với bản Kotlin trên bộ ví dụ dùng chung tests/fixtures/playlist_picker/cases.json."""
 from __future__ import annotations
 
 import json
@@ -20,6 +21,10 @@ from tests.test_project_file import _app
 from tests.test_webui_listen_and_sync import _request
 
 TOKEN = {"X-Ebook-Token": "t"}
+PICKER_CASES = json.loads((Path(__file__).parent / "fixtures" / "playlist_picker" / "cases.json").read_text(encoding="utf-8"))
+# Luật chọn của mục lục thử: mặc định "calm", không từ khoá nào - cuốn thử nào cũng được chọn "calm" (hàng bài thật của danh mục thử).
+CATALOGUE_PICKER = {"version": 1, "cap": 5, "title_weight": 12.0, "min_score": 4.0, "default": "calm", "order": ["calm", "battle"],
+                    "playlists": {"calm": {"title": [], "text": {}}, "battle": {"title": [], "text": {"trận chiến": 1}}}}
 CALM = ["https://x/calm2.mp3", "https://x/calm.mp3", "https://x/sad.mp3"]  # thứ tự trộn sẵn, không theo chữ cái
 PLAYLISTS = [
     {"id": "calm", "name": "Êm  đềm", "description": "Cho truyện chậm.", "minutes": 10, "tracks": CALM},
@@ -32,10 +37,12 @@ PLAYLISTS = [
 ]
 
 
-def _cloud(root: Path) -> Path:
+def _cloud(root: Path, picker: dict | None = None) -> Path:
     cloud = _catalog_dir(root)
     manifest = json.loads((cloud / "manifest.json").read_text(encoding="utf-8"))
     manifest["playlists"] = PLAYLISTS
+    if picker is not None:
+        manifest["playlistPicker"] = picker
     (cloud / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
     return cloud
 
@@ -46,6 +53,7 @@ def _cloud(root: Path) -> Path:
 def test_only_well_formed_playlists_of_the_catalogue_are_offered() -> None:
     kept = music_playlist.catalogue_playlists({"playlists": PLAYLISTS})
     assert [item["id"] for item in kept] == ["calm", "battle"]
+    assert music_playlist.catalogue_playlists({"playlists": [{"id": "off", "name": "Tắt", "tracks": CALM}]}) == [], '"off" là tắt, không phải mã'
     assert kept[0] == {"id": "calm", "name": "Êm đềm", "description": "Cho truyện chậm.", "minutes": 10, "tracks": CALM}
     assert music_playlist.summaries(kept)[1] == {"id": "battle", "name": "Hành động", "description": "", "minutes": 3, "count": 1}
     assert music_playlist.catalogue_playlists({}) == [], "mục lục cũ chưa có danh sách phát"
@@ -64,6 +72,46 @@ def test_the_queue_keeps_the_shuffled_order_and_skips_what_this_machine_cannot_p
 def test_looking_up_a_whole_playlist_fetches_every_shard_it_touches(tmp_path: Path) -> None:
     catalog = MusicCatalog(tmp_path / "cache", str(_cloud(tmp_path / "cloud")))
     assert set(catalog.lookup(list(TRACKS))) == set(TRACKS)
+
+
+# ---- máy tự chọn danh sách ---------------------------------------------------------------------------------------------------
+
+
+def test_the_bundled_picker_is_the_reference_lexicon() -> None:
+    assert music_playlist.bundled_picker() == PICKER_CASES["picker"]
+    assert music_playlist.valid_picker(PICKER_CASES["picker"])
+
+
+@pytest.mark.parametrize("case", PICKER_CASES["cases"], ids=lambda case: case["name"])
+def test_pick_matches_the_shared_fixture(case: dict) -> None:
+    picker = case["picker"] if "picker" in case else PICKER_CASES["picker"]
+    assert music_playlist.pick(picker, case["title"], iter(case["chapters"])) == case["expect"]
+    scores = music_playlist.pick_scores(picker, case["title"], case["chapters"])
+    if case["scores"] is None:
+        assert scores is None
+    else:
+        assert scores is not None and scores.keys() == case["scores"].keys()
+        assert all(scores[code] == pytest.approx(value, abs=1e-9) for code, value in case["scores"].items())
+
+
+@pytest.mark.parametrize("case", PICKER_CASES["selection"], ids=lambda case: case["name"])
+def test_the_manifest_picker_is_used_only_when_valid_else_the_bundled_one(case: dict) -> None:
+    picker, source = music_playlist.usable_picker(case["manifest"])
+    assert source == case["source"]
+    assert picker == (case["manifest"]["playlistPicker"] if source == "manifest" else music_playlist.bundled_picker())
+    assert music_playlist.pick(picker, case["title"], case["chapters"]) == case["expect"]
+
+
+def test_the_picker_reads_chapters_lazily_and_stops_once_it_has_enough_text() -> None:
+    read: list[int] = []
+
+    def chapters():
+        for number in range(10):
+            read.append(number)
+            yield "Một câu tự đặt, chẳng có từ khoá nào cả. " * 60
+
+    music_playlist.pick(music_playlist.bundled_picker(), "Sách thử", chapters())
+    assert len(read) < 10
 
 
 # ---- lớp sửa -------------------------------------------------------------------------------------------------------------
@@ -87,9 +135,9 @@ def test_the_choice_is_a_listener_edit_that_counts_dumps_and_merges() -> None:
 # ---- máy chủ -------------------------------------------------------------------------------------------------------------
 
 
-def _text_book_server(tmp_path: Path):
+def _text_book_server(tmp_path: Path, picker: dict | None = CATALOGUE_PICKER):
     app = _app(tmp_path / "studio", tmp_path / "thu_vien")
-    app._music_catalog = MusicCatalog(tmp_path / "music_cache", str(_cloud(tmp_path / "cloud")))
+    app._music_catalog = MusicCatalog(tmp_path / "music_cache", str(_cloud(tmp_path / "cloud", picker)))
     added = app.add_text_book(str(IMPORTS / "epub3.epub"))
     return app, added["id"], Server(app, port=0).start()
 
@@ -105,15 +153,13 @@ def test_a_text_book_plays_the_chosen_playlist_in_order_under_the_voice(tmp_path
         status, menu = _call(server, "GET", "/api/music/playlists")
         assert status == 200 and menu["error"] == "" and menu["mine"] == 0
         assert [item["id"] for item in menu["playlists"]] == ["calm", "battle"] and "tracks" not in menu["playlists"][0]
-        _status, off = _call(server, "GET", f"/api/books/{book}/music/playlist")
-        assert off["playlist"] is None and off["tracks"] == [], "sách chỉ có chữ mặc định tắt nhạc"
         status, view = _call(server, "PUT", f"/api/books/{book}/music", {"playlist": "calm"})
         assert status == 200 and view["playlist"] == "calm" and view["hasMusic"] is False
         assert book_edits.load(app._listenable(book))["music"] == {"playlist": "calm"}
         _status, again = _call(server, "GET", f"/api/books/{book}/music")
-        assert again["playlist"] == "calm"
+        assert again["playlist"] == "calm" and "playlistAuto" not in again
         status, queue = _call(server, "GET", f"/api/books/{book}/music/playlist")
-        assert status == 200 and queue["playlist"] == "calm" and queue["error"] == ""
+        assert status == 200 and queue["playlist"] == "calm" and queue["error"] == "" and "playlistAuto" not in queue
         assert [track["link"] for track in queue["tracks"]] == CALM
         first = queue["tracks"][0]
         assert first["src"] == "/api/music/track?link=" + quote(first["link"], safe="") and first["duration"] == 200.0
@@ -122,8 +168,73 @@ def test_a_text_book_plays_the_chosen_playlist_in_order_under_the_voice(tmp_path
         status, bad = _call(server, "PUT", f"/api/books/{book}/music", {"playlist": "Không có"})
         assert status == 400 and bad["error"]
         _status, view = _call(server, "PUT", f"/api/books/{book}/music", {"playlist": None})
-        assert "playlist" not in view
-        assert _call(server, "GET", f"/api/books/{book}/music/playlist")[1]["tracks"] == []
+        assert view["playlistAuto"] is True and "playlist" not in (book_edits.load(app._listenable(book)).get("music") or {})
+    finally:
+        server.stop()
+
+
+def test_a_text_book_with_no_choice_gets_the_machines_pick_until_the_listener_chooses_or_turns_it_off(tmp_path: Path) -> None:
+    app, book, server = _text_book_server(tmp_path)
+    try:
+        # chưa chọn gì: máy chọn (luật của mục lục thử có mặc định "calm"), hàng bài và màn nhạc nói rõ là máy chọn
+        status, queue = _call(server, "GET", f"/api/books/{book}/music/playlist")
+        assert status == 200 and queue["playlist"] == "calm" and queue["playlistAuto"] is True
+        assert [track["link"] for track in queue["tracks"]] == CALM
+        _status, view = _call(server, "GET", f"/api/books/{book}/music")
+        assert view["playlist"] == "calm" and view["playlistAuto"] is True
+        # kết quả đệm theo (mã sách, nguồn luật, version): lần sau không chọn lại
+        calls: list[str] = []
+        real = music_playlist.pick
+        music_playlist.pick = lambda *args: calls.append("pick") or real(*args)  # type: ignore[assignment]
+        try:
+            _call(server, "GET", f"/api/books/{book}/music/playlist")
+            _call(server, "GET", f"/api/books/{book}/music")
+        finally:
+            music_playlist.pick = real  # type: ignore[assignment]
+        assert calls == []
+        # "Tắt" (off) là một lựa chọn, không phải mã danh sách: không nhạc, không máy chọn
+        status, view = _call(server, "PUT", f"/api/books/{book}/music", {"playlist": "off"})
+        assert status == 200 and view["playlist"] == "off" and "playlistAuto" not in view
+        assert book_edits.load(app._listenable(book))["music"] == {"playlist": "off"}
+        _status, queue = _call(server, "GET", f"/api/books/{book}/music/playlist")
+        assert queue["playlist"] is None and queue["tracks"] == [] and "playlistAuto" not in queue
+        _status, view = _call(server, "GET", f"/api/books/{book}/music")
+        assert view["playlist"] == "off" and "playlistAuto" not in view
+        # null xoá khoá: máy chọn lại
+        _status, view = _call(server, "PUT", f"/api/books/{book}/music", {"playlist": None})
+        assert "playlist" not in (book_edits.load(app._listenable(book)).get("music") or {})
+        assert view["playlist"] == "calm" and view["playlistAuto"] is True, "lời đáp của lần bỏ lựa chọn đã là màn của máy chọn"
+        assert _call(server, "GET", f"/api/books/{book}/music/playlist")[1]["playlistAuto"] is True
+    finally:
+        server.stop()
+
+
+def test_without_a_downloaded_catalogue_the_machine_picks_with_the_bundled_rules(tmp_path: Path) -> None:
+    app = _app(tmp_path / "studio", tmp_path / "thu_vien")
+    app._music_catalog = MusicCatalog(tmp_path / "music_cache", str(tmp_path / "chua_co_danh_muc"))  # máy mới, chưa có mạng
+    added = app.add_text_book(str(IMPORTS / "epub3.epub"))
+    view = app.music_view(added["id"])
+    assert view["playlistAuto"] is True and view["playlist"] in music_playlist.bundled_picker()["order"]
+    queue = app.music_playlist_queue(added["id"])
+    assert queue["playlist"] == view["playlist"] and queue["tracks"] == [] and queue["error"] != "", "tên danh sách có, bài chưa tải được"
+
+
+def test_a_picker_the_catalogue_ships_broken_falls_back_to_the_bundled_one(tmp_path: Path) -> None:
+    app, book, server = _text_book_server(tmp_path, {**CATALOGUE_PICKER, "default": "khong_co_trong_danh_muc"})
+    try:
+        _status, view = _call(server, "GET", f"/api/books/{book}/music")
+        assert view["playlistAuto"] is True and view["playlist"] in music_playlist.bundled_picker()["order"]
+    finally:
+        server.stop()
+
+
+def test_a_book_without_a_usable_picker_plays_nothing_until_chosen(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(music_playlist, "bundled_picker", lambda: None)
+    app, book, server = _text_book_server(tmp_path, None)
+    try:
+        _status, queue = _call(server, "GET", f"/api/books/{book}/music/playlist")
+        assert queue["playlist"] is None and queue["tracks"] == [] and "playlistAuto" not in queue
+        assert "playlist" not in _call(server, "GET", f"/api/books/{book}/music")[1]
     finally:
         server.stop()
 

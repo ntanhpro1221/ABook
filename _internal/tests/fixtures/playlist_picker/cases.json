@@ -1,0 +1,2095 @@
+{
+ "picker": {
+  "version": 1,
+  "cap": 5,
+  "title_weight": 12.0,
+  "min_score": 4.0,
+  "default": "fantasy_adventure",
+  "order": [
+   "fantasy_adventure",
+   "school_light",
+   "eastern",
+   "action",
+   "romance",
+   "horror",
+   "mystery",
+   "scifi",
+   "comedy",
+   "fantasy_calm",
+   "sad"
+  ],
+  "playlists": {
+   "eastern": {
+    "title": [
+     "tien",
+     "tu tien",
+     "kiem",
+     "vo lam",
+     "giang ho",
+     "dao",
+     "thien",
+     "de ton",
+     "tong mon"
+    ],
+    "text": {
+     "tu luyện": 2,
+     "tu tiên": 2,
+     "đan điền": 3,
+     "linh khí": 2,
+     "chân khí": 2,
+     "nội công": 2,
+     "kiếm khí": 2,
+     "võ lâm": 3,
+     "giang hồ": 3,
+     "môn phái": 2,
+     "tông môn": 3,
+     "trưởng lão": 1,
+     "đạo hữu": 3,
+     "cảnh giới": 1,
+     "trúc cơ": 3,
+     "kim đan": 3,
+     "nguyên anh": 3,
+     "đan dược": 2,
+     "linh thạch": 3,
+     "tại hạ": 2,
+     "lão phu": 2,
+     "bổn tọa": 3,
+     "huynh đài": 2,
+     "cô nương": 1,
+     "đại hiệp": 2,
+     "sư huynh": 2,
+     "sư tỷ": 2,
+     "sư phụ": 1,
+     "công tử": 1,
+     "võ công": 2,
+     "kiếm pháp": 2
+    }
+   },
+   "fantasy_adventure": {
+    "title": [
+     "isekai",
+     "maou",
+     "yuusha",
+     "hero",
+     "dungeon",
+     "slayer",
+     "sword",
+     "magic",
+     "demon lord",
+     "tensei",
+     "kenja",
+     "knight",
+     "dragon",
+     "adventurer",
+     "summon",
+     "reincarnat",
+     "goblin",
+     "skeleton",
+     "level",
+     "necromancer",
+     "brave",
+     "shoukan",
+     "guild",
+     "mage",
+     "wizard",
+     "sorcer",
+     "elf",
+     "monster",
+     "quest",
+     "sekai"
+    ],
+    "text": {
+     "mạo hiểm giả": 3,
+     "hội mạo hiểm": 3,
+     "ma vương": 3,
+     "dũng giả": 3,
+     "ma pháp": 2,
+     "ma thuật": 2,
+     "pháp sư": 1,
+     "kiếm sĩ": 1,
+     "hầm ngục": 2,
+     "quái vật": 1,
+     "goblin": 2,
+     "rồng": 1,
+     "elf": 2,
+     "tiên tộc": 2,
+     "triệu hồi": 1,
+     "dị giới": 3,
+     "thế giới khác": 2,
+     "chuyển sinh": 2,
+     "kỹ năng": 1,
+     "cấp độ": 1,
+     "level": 1,
+     "skill": 1,
+     "hiệp sĩ": 1,
+     "vương quốc": 1,
+     "lãnh chúa": 1
+    },
+    "prior": 4.0
+   },
+   "action": {
+    "title": [
+     "hunter",
+     "regress",
+     "return",
+     "player",
+     "war",
+     "battle",
+     "solo",
+     "kill"
+    ],
+    "text": {
+     "chiến đấu": 1,
+     "trận chiến": 1,
+     "tấn công": 1,
+     "thợ săn": 2,
+     "hồi quy": 3,
+     "thức tỉnh": 0.5,
+     "người chơi": 1,
+     "cổng": 1,
+     "chiến tranh": 1,
+     "binh lính": 1,
+     "quân đội": 1,
+     "súng": 1,
+     "đạn": 1,
+     "chém": 1,
+     "giết": 1
+    }
+   },
+   "school_light": {
+    "title": [
+     "school",
+     "classmate",
+     "gakuen",
+     "koukou",
+     "student",
+     "club",
+     "senpai",
+     "kouhai",
+     "hoc duong",
+     "lop"
+    ],
+    "text": {
+     "học sinh": 2,
+     "lớp học": 2,
+     "cao trung": 2,
+     "sơ trung": 2,
+     "câu lạc bộ": 2,
+     "lớp trưởng": 2,
+     "hội học sinh": 3,
+     "giờ học": 2,
+     "bài kiểm tra": 2,
+     "giáo viên": 1,
+     "senpai": 2,
+     "kouhai": 2,
+     "tan học": 2,
+     "nghỉ trưa": 2,
+     "giờ ra chơi": 2,
+     "bạn cùng lớp": 2,
+     "đồng phục": 1,
+     "tiết học": 2
+    }
+   },
+   "romance": {
+    "title": [
+     "love",
+     "tenshi",
+     "girlfriend",
+     "bride",
+     "wife",
+     "kanojo",
+     "romance",
+     "ngon tinh",
+     "yeu",
+     "omiai",
+     "fiance",
+     "ban gai",
+     "nguoi yeu",
+     "vo",
+     "co dau",
+     "childhood friend",
+     "osananajimi",
+     "hanayome",
+     "date",
+     "kiss",
+     "tinh"
+    ],
+    "text": {
+     "bạn gái": 1,
+     "bạn trai": 1,
+     "hẹn hò": 2,
+     "tỏ tình": 3,
+     "người yêu": 2,
+     "nụ hôn": 2,
+     "đỏ mặt": 1,
+     "ngượng ngùng": 1,
+     "vị hôn thê": 2,
+     "hôn ước": 2,
+     "kết hôn": 1,
+     "rung động": 2
+    }
+   },
+   "horror": {
+    "title": [
+     "creepypasta",
+     "horror",
+     "kinh di",
+     "ghost",
+     "zombie",
+     "ma"
+    ],
+    "text": {
+     "oán linh": 3,
+     "hồn ma": 1,
+     "xác chết": 2,
+     "xác sống": 3,
+     "zombie": 3,
+     "rùng mình": 1,
+     "kinh hoàng": 1,
+     "tiếng thét": 2,
+     "nguyền rủa": 2,
+     "quái dị": 1,
+     "ác quỷ": 1,
+     "máu me": 2
+    }
+   },
+   "mystery": {
+    "title": [
+     "detective",
+     "tham tu",
+     "mystery",
+     "case",
+     "murder"
+    ],
+    "text": {
+     "thám tử": 3,
+     "vụ án": 3,
+     "hung thủ": 3,
+     "nạn nhân": 2,
+     "điều tra": 2,
+     "manh mối": 1,
+     "bằng chứng": 0.5,
+     "nghi phạm": 3,
+     "án mạng": 3,
+     "cảnh sát": 1
+    }
+   },
+   "scifi": {
+    "title": [
+     "robot",
+     "cyber",
+     "space",
+     "online",
+     "vrmmo",
+     "android",
+     "mech"
+    ],
+    "text": {
+     "robot": 2,
+     "phi thuyền": 3,
+     "vũ trụ": 2,
+     "hành tinh": 2,
+     "trí tuệ nhân tạo": 3,
+     "thực tế ảo": 3,
+     "game online": 2,
+     "máy chủ": 1,
+     "công nghệ": 1,
+     "tàu vũ trụ": 3
+    }
+   },
+   "comedy": {
+    "title": [
+     "comedy",
+     "baka",
+     "konosuba"
+    ],
+    "text": {
+     "đồ ngốc": 1,
+     "phì cười": 2,
+     "tsukkomi": 3
+    }
+   },
+   "fantasy_calm": {
+    "title": [
+     "slow life",
+     "farm",
+     "cafe",
+     "cooking",
+     "inn"
+    ],
+    "text": {
+     "nông trại": 3,
+     "làm ruộng": 3,
+     "nấu ăn": 1,
+     "quán trọ": 2,
+     "thảnh thơi": 2,
+     "nghỉ hưu": 2
+    }
+   },
+   "sad": {
+    "title": [
+     "tears",
+     "goodbye"
+    ],
+    "text": {
+     "tang lễ": 2,
+     "nước mắt": 1,
+     "mất mát": 1
+    }
+   }
+  }
+ },
+ "cases": [
+  {
+   "name": "eastern_from_the_text",
+   "title": "Bên dòng sông cũ",
+   "chapters": [
+    "Hắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nKhông ai nói thêm điều gì nữa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nKhông ai nói thêm điều gì nữa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ."
+   ],
+   "expect": "eastern",
+   "scores": {
+    "eastern": 90.0,
+    "fantasy_adventure": 4.0,
+    "action": 0.0,
+    "school_light": 0.0,
+    "romance": 0.0,
+    "horror": 0.0,
+    "mystery": 0.0,
+    "scifi": 0.0,
+    "comedy": 0.0,
+    "fantasy_calm": 0.0,
+    "sad": 0.0
+   }
+  },
+  {
+   "name": "fantasy_adventure_from_the_text",
+   "title": "Chuyện ở thị trấn nhỏ",
+   "chapters": [
+    "Cô là mạo hiểm giả hạng thấp, vừa nhận nhiệm vụ ở hội mạo hiểm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nMa vương ở thế giới khác này chưa từng xuất hiện.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nKỹ năng mới của cậu mở ra khi xuống hầm ngục.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nCô là mạo hiểm giả hạng thấp, vừa nhận nhiệm vụ ở hội mạo hiểm.\nKhông ai nói thêm điều gì nữa.\nMa vương ở thế giới khác này chưa từng xuất hiện.\nTrời đã về chiều, gió thổi qua bậu cửa.\nKỹ năng mới của cậu mở ra khi xuống hầm ngục.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nCô là mạo hiểm giả hạng thấp, vừa nhận nhiệm vụ ở hội mạo hiểm.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nMa vương ở thế giới khác này chưa từng xuất hiện.\nKhông ai nói thêm điều gì nữa.\nKỹ năng mới của cậu mở ra khi xuống hầm ngục.\nTrời đã về chiều, gió thổi qua bậu cửa.\nCô là mạo hiểm giả hạng thấp, vừa nhận nhiệm vụ ở hội mạo hiểm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nMa vương ở thế giới khác này chưa từng xuất hiện.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nKỹ năng mới của cậu mở ra khi xuống hầm ngục.\nKhông ai nói thêm điều gì nữa.\nCô là mạo hiểm giả hạng thấp, vừa nhận nhiệm vụ ở hội mạo hiểm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nMa vương ở thế giới khác này chưa từng xuất hiện.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nKỹ năng mới của cậu mở ra khi xuống hầm ngục.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nCô là mạo hiểm giả hạng thấp, vừa nhận nhiệm vụ ở hội mạo hiểm.\nKhông ai nói thêm điều gì nữa.\nMa vương ở thế giới khác này chưa từng xuất hiện.\nTrời đã về chiều, gió thổi qua bậu cửa.\nKỹ năng mới của cậu mở ra khi xuống hầm ngục."
+   ],
+   "expect": "fantasy_adventure",
+   "scores": {
+    "eastern": 0.0,
+    "fantasy_adventure": 74.0,
+    "action": 0.0,
+    "school_light": 0.0,
+    "romance": 0.0,
+    "horror": 0.0,
+    "mystery": 0.0,
+    "scifi": 0.0,
+    "comedy": 0.0,
+    "fantasy_calm": 0.0,
+    "sad": 0.0
+   }
+  },
+  {
+   "name": "action_from_the_text",
+   "title": "Những ngày cuối mùa",
+   "chapters": [
+    "Trận chiến nổ ra ngay khi binh lính vượt qua cổng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nAnh là thợ săn hồi quy, tấn công liên tục không nghỉ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTiếng súng và đạn xé ngang quân đội địch.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTrận chiến nổ ra ngay khi binh lính vượt qua cổng.\nKhông ai nói thêm điều gì nữa.\nAnh là thợ săn hồi quy, tấn công liên tục không nghỉ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTiếng súng và đạn xé ngang quân đội địch.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrận chiến nổ ra ngay khi binh lính vượt qua cổng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nAnh là thợ săn hồi quy, tấn công liên tục không nghỉ.\nKhông ai nói thêm điều gì nữa.\nTiếng súng và đạn xé ngang quân đội địch.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrận chiến nổ ra ngay khi binh lính vượt qua cổng.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nAnh là thợ săn hồi quy, tấn công liên tục không nghỉ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTiếng súng và đạn xé ngang quân đội địch.\nKhông ai nói thêm điều gì nữa.\nTrận chiến nổ ra ngay khi binh lính vượt qua cổng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nAnh là thợ săn hồi quy, tấn công liên tục không nghỉ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTiếng súng và đạn xé ngang quân đội địch.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTrận chiến nổ ra ngay khi binh lính vượt qua cổng.\nKhông ai nói thêm điều gì nữa.\nAnh là thợ săn hồi quy, tấn công liên tục không nghỉ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTiếng súng và đạn xé ngang quân đội địch.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrận chiến nổ ra ngay khi binh lính vượt qua cổng."
+   ],
+   "expect": "action",
+   "scores": {
+    "eastern": 0.0,
+    "fantasy_adventure": 4.0,
+    "action": 60.0,
+    "school_light": 0.0,
+    "romance": 0.0,
+    "horror": 0.0,
+    "mystery": 0.0,
+    "scifi": 0.0,
+    "comedy": 0.0,
+    "fantasy_calm": 0.0,
+    "sad": 0.0
+   }
+  },
+  {
+   "name": "school_light_from_the_text",
+   "title": "Một năm ở trường",
+   "chapters": [
+    "Giờ ra chơi, học sinh lớp trưởng chạy vào lớp học tìm bài kiểm tra.\nTrời đã về chiều, gió thổi qua bậu cửa.\nCâu lạc bộ họp sau giờ tan học.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nBạn cùng lớp mặc đồng phục mới đến sớm.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nGiờ ra chơi, học sinh lớp trưởng chạy vào lớp học tìm bài kiểm tra.\nKhông ai nói thêm điều gì nữa.\nCâu lạc bộ họp sau giờ tan học.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBạn cùng lớp mặc đồng phục mới đến sớm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nGiờ ra chơi, học sinh lớp trưởng chạy vào lớp học tìm bài kiểm tra.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nCâu lạc bộ họp sau giờ tan học.\nKhông ai nói thêm điều gì nữa.\nBạn cùng lớp mặc đồng phục mới đến sớm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nGiờ ra chơi, học sinh lớp trưởng chạy vào lớp học tìm bài kiểm tra.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nCâu lạc bộ họp sau giờ tan học.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBạn cùng lớp mặc đồng phục mới đến sớm.\nKhông ai nói thêm điều gì nữa.\nGiờ ra chơi, học sinh lớp trưởng chạy vào lớp học tìm bài kiểm tra.\nTrời đã về chiều, gió thổi qua bậu cửa.\nCâu lạc bộ họp sau giờ tan học.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nBạn cùng lớp mặc đồng phục mới đến sớm.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nGiờ ra chơi, học sinh lớp trưởng chạy vào lớp học tìm bài kiểm tra.\nKhông ai nói thêm điều gì nữa.\nCâu lạc bộ họp sau giờ tan học.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBạn cùng lớp mặc đồng phục mới đến sớm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nGiờ ra chơi, học sinh lớp trưởng chạy vào lớp học tìm bài kiểm tra."
+   ],
+   "expect": "school_light",
+   "scores": {
+    "eastern": 0.0,
+    "fantasy_adventure": 4.0,
+    "action": 0.0,
+    "school_light": 85.0,
+    "romance": 0.0,
+    "horror": 0.0,
+    "mystery": 0.0,
+    "scifi": 0.0,
+    "comedy": 0.0,
+    "fantasy_calm": 0.0,
+    "sad": 0.0
+   }
+  },
+  {
+   "name": "romance_from_the_text",
+   "title": "Mùa gió chướng",
+   "chapters": [
+    "Cậu tỏ tình ngay sau buổi hẹn hò đầu tiên.\nTrời đã về chiều, gió thổi qua bậu cửa.\nCô đỏ mặt, cả hai ngượng ngùng không dám nhìn nhau.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nNgười yêu cũ gửi lời chúc, còn hôn ước thì đã hủy.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nCậu tỏ tình ngay sau buổi hẹn hò đầu tiên.\nKhông ai nói thêm điều gì nữa.\nCô đỏ mặt, cả hai ngượng ngùng không dám nhìn nhau.\nTrời đã về chiều, gió thổi qua bậu cửa.\nNgười yêu cũ gửi lời chúc, còn hôn ước thì đã hủy.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nCậu tỏ tình ngay sau buổi hẹn hò đầu tiên.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nCô đỏ mặt, cả hai ngượng ngùng không dám nhìn nhau.\nKhông ai nói thêm điều gì nữa.\nNgười yêu cũ gửi lời chúc, còn hôn ước thì đã hủy.\nTrời đã về chiều, gió thổi qua bậu cửa.\nCậu tỏ tình ngay sau buổi hẹn hò đầu tiên.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nCô đỏ mặt, cả hai ngượng ngùng không dám nhìn nhau.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nNgười yêu cũ gửi lời chúc, còn hôn ước thì đã hủy.\nKhông ai nói thêm điều gì nữa.\nCậu tỏ tình ngay sau buổi hẹn hò đầu tiên.\nTrời đã về chiều, gió thổi qua bậu cửa.\nCô đỏ mặt, cả hai ngượng ngùng không dám nhìn nhau.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nNgười yêu cũ gửi lời chúc, còn hôn ước thì đã hủy.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nCậu tỏ tình ngay sau buổi hẹn hò đầu tiên.\nKhông ai nói thêm điều gì nữa.\nCô đỏ mặt, cả hai ngượng ngùng không dám nhìn nhau.\nTrời đã về chiều, gió thổi qua bậu cửa.\nNgười yêu cũ gửi lời chúc, còn hôn ước thì đã hủy.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nCậu tỏ tình ngay sau buổi hẹn hò đầu tiên."
+   ],
+   "expect": "romance",
+   "scores": {
+    "eastern": 0.0,
+    "fantasy_adventure": 4.0,
+    "action": 0.0,
+    "school_light": 0.0,
+    "romance": 55.0,
+    "horror": 0.0,
+    "mystery": 0.0,
+    "scifi": 0.0,
+    "comedy": 0.0,
+    "fantasy_calm": 0.0,
+    "sad": 0.0
+   }
+  },
+  {
+   "name": "horror_from_the_text",
+   "title": "Đêm không ngủ",
+   "chapters": [
+    "Xác sống lảo đảo bước ra từ con ngõ tối.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTiếng thét vang lên, ai cũng rùng mình trước oán linh.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nHồn ma ấy bị nguyền rủa từ lâu.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nXác sống lảo đảo bước ra từ con ngõ tối.\nKhông ai nói thêm điều gì nữa.\nTiếng thét vang lên, ai cũng rùng mình trước oán linh.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHồn ma ấy bị nguyền rủa từ lâu.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nXác sống lảo đảo bước ra từ con ngõ tối.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTiếng thét vang lên, ai cũng rùng mình trước oán linh.\nKhông ai nói thêm điều gì nữa.\nHồn ma ấy bị nguyền rủa từ lâu.\nTrời đã về chiều, gió thổi qua bậu cửa.\nXác sống lảo đảo bước ra từ con ngõ tối.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTiếng thét vang lên, ai cũng rùng mình trước oán linh.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHồn ma ấy bị nguyền rủa từ lâu.\nKhông ai nói thêm điều gì nữa.\nXác sống lảo đảo bước ra từ con ngõ tối.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTiếng thét vang lên, ai cũng rùng mình trước oán linh.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nHồn ma ấy bị nguyền rủa từ lâu.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nXác sống lảo đảo bước ra từ con ngõ tối.\nKhông ai nói thêm điều gì nữa.\nTiếng thét vang lên, ai cũng rùng mình trước oán linh.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHồn ma ấy bị nguyền rủa từ lâu.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nXác sống lảo đảo bước ra từ con ngõ tối.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTiếng thét vang lên, ai cũng rùng mình trước oán linh."
+   ],
+   "expect": "horror",
+   "scores": {
+    "eastern": 0.0,
+    "fantasy_adventure": 4.0,
+    "action": 0.0,
+    "school_light": 0.0,
+    "romance": 0.0,
+    "horror": 60.0,
+    "mystery": 0.0,
+    "scifi": 0.0,
+    "comedy": 0.0,
+    "fantasy_calm": 0.0,
+    "sad": 0.0
+   }
+  },
+  {
+   "name": "mystery_from_the_text",
+   "title": "Căn nhà cuối phố",
+   "chapters": [
+    "Thám tử đến hiện trường vụ án từ sớm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHung thủ để lại manh mối, nhưng nghi phạm nào cũng có bằng chứng ngoại phạm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nCảnh sát phong tỏa nơi xảy ra án mạng để điều tra.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nThám tử đến hiện trường vụ án từ sớm.\nKhông ai nói thêm điều gì nữa.\nHung thủ để lại manh mối, nhưng nghi phạm nào cũng có bằng chứng ngoại phạm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nCảnh sát phong tỏa nơi xảy ra án mạng để điều tra.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nThám tử đến hiện trường vụ án từ sớm.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHung thủ để lại manh mối, nhưng nghi phạm nào cũng có bằng chứng ngoại phạm.\nKhông ai nói thêm điều gì nữa.\nCảnh sát phong tỏa nơi xảy ra án mạng để điều tra.\nTrời đã về chiều, gió thổi qua bậu cửa.\nThám tử đến hiện trường vụ án từ sớm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nHung thủ để lại manh mối, nhưng nghi phạm nào cũng có bằng chứng ngoại phạm.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nCảnh sát phong tỏa nơi xảy ra án mạng để điều tra.\nKhông ai nói thêm điều gì nữa.\nThám tử đến hiện trường vụ án từ sớm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHung thủ để lại manh mối, nhưng nghi phạm nào cũng có bằng chứng ngoại phạm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nCảnh sát phong tỏa nơi xảy ra án mạng để điều tra.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nThám tử đến hiện trường vụ án từ sớm.\nKhông ai nói thêm điều gì nữa.\nHung thủ để lại manh mối, nhưng nghi phạm nào cũng có bằng chứng ngoại phạm.\nTrời đã về chiều, gió thổi qua bậu cửa."
+   ],
+   "expect": "mystery",
+   "scores": {
+    "eastern": 0.0,
+    "fantasy_adventure": 4.0,
+    "action": 0.0,
+    "school_light": 0.0,
+    "romance": 0.0,
+    "horror": 0.0,
+    "mystery": 97.5,
+    "scifi": 0.0,
+    "comedy": 0.0,
+    "fantasy_calm": 0.0,
+    "sad": 0.0
+   }
+  },
+  {
+   "name": "scifi_from_the_text",
+   "title": "Chuyến đi dài",
+   "chapters": [
+    "Phi thuyền rời hành tinh khi trí tuệ nhân tạo báo động.\nTrời đã về chiều, gió thổi qua bậu cửa.\nRobot kiểm tra máy chủ của tàu vũ trụ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nCông nghệ thực tế ảo vận hành suốt chuyến đi trong vũ trụ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nPhi thuyền rời hành tinh khi trí tuệ nhân tạo báo động.\nKhông ai nói thêm điều gì nữa.\nRobot kiểm tra máy chủ của tàu vũ trụ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nCông nghệ thực tế ảo vận hành suốt chuyến đi trong vũ trụ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nPhi thuyền rời hành tinh khi trí tuệ nhân tạo báo động.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nRobot kiểm tra máy chủ của tàu vũ trụ.\nKhông ai nói thêm điều gì nữa.\nCông nghệ thực tế ảo vận hành suốt chuyến đi trong vũ trụ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nPhi thuyền rời hành tinh khi trí tuệ nhân tạo báo động.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nRobot kiểm tra máy chủ của tàu vũ trụ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nCông nghệ thực tế ảo vận hành suốt chuyến đi trong vũ trụ.\nKhông ai nói thêm điều gì nữa.\nPhi thuyền rời hành tinh khi trí tuệ nhân tạo báo động.\nTrời đã về chiều, gió thổi qua bậu cửa.\nRobot kiểm tra máy chủ của tàu vũ trụ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nCông nghệ thực tế ảo vận hành suốt chuyến đi trong vũ trụ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nPhi thuyền rời hành tinh khi trí tuệ nhân tạo báo động.\nKhông ai nói thêm điều gì nữa.\nRobot kiểm tra máy chủ của tàu vũ trụ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nCông nghệ thực tế ảo vận hành suốt chuyến đi trong vũ trụ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân."
+   ],
+   "expect": "scifi",
+   "scores": {
+    "eastern": 0.0,
+    "fantasy_adventure": 4.0,
+    "action": 0.0,
+    "school_light": 0.0,
+    "romance": 0.0,
+    "horror": 0.0,
+    "mystery": 0.0,
+    "scifi": 100.0,
+    "comedy": 0.0,
+    "fantasy_calm": 0.0,
+    "sad": 0.0
+   }
+  },
+  {
+   "name": "comedy_from_the_text",
+   "title": "Hàng xóm kỳ lạ",
+   "chapters": [
+    "Cô phì cười vì cậu bạn đúng là đồ ngốc.\nTrời đã về chiều, gió thổi qua bậu cửa.\nCậu ấy tsukkomi đúng lúc, cả phòng phì cười.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nĐồ ngốc, cậu lại quên mang ví rồi.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nCô phì cười vì cậu bạn đúng là đồ ngốc.\nKhông ai nói thêm điều gì nữa.\nCậu ấy tsukkomi đúng lúc, cả phòng phì cười.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐồ ngốc, cậu lại quên mang ví rồi.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nCô phì cười vì cậu bạn đúng là đồ ngốc.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nCậu ấy tsukkomi đúng lúc, cả phòng phì cười.\nKhông ai nói thêm điều gì nữa.\nĐồ ngốc, cậu lại quên mang ví rồi.\nTrời đã về chiều, gió thổi qua bậu cửa.\nCô phì cười vì cậu bạn đúng là đồ ngốc.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nCậu ấy tsukkomi đúng lúc, cả phòng phì cười.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nĐồ ngốc, cậu lại quên mang ví rồi.\nKhông ai nói thêm điều gì nữa.\nCô phì cười vì cậu bạn đúng là đồ ngốc.\nTrời đã về chiều, gió thổi qua bậu cửa.\nCậu ấy tsukkomi đúng lúc, cả phòng phì cười.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nĐồ ngốc, cậu lại quên mang ví rồi.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nCô phì cười vì cậu bạn đúng là đồ ngốc.\nKhông ai nói thêm điều gì nữa.\nCậu ấy tsukkomi đúng lúc, cả phòng phì cười.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐồ ngốc, cậu lại quên mang ví rồi.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nCô phì cười vì cậu bạn đúng là đồ ngốc.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nCậu ấy tsukkomi đúng lúc, cả phòng phì cười.\nKhông ai nói thêm điều gì nữa."
+   ],
+   "expect": "comedy",
+   "scores": {
+    "eastern": 0.0,
+    "fantasy_adventure": 4.0,
+    "action": 0.0,
+    "school_light": 0.0,
+    "romance": 0.0,
+    "horror": 0.0,
+    "mystery": 0.0,
+    "scifi": 0.0,
+    "comedy": 30.0,
+    "fantasy_calm": 0.0,
+    "sad": 0.0
+   }
+  },
+  {
+   "name": "fantasy_calm_from_the_text",
+   "title": "Buổi sáng yên ả",
+   "chapters": [
+    "Ông làm ruộng cả ngày ở nông trại nhỏ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nQuán trọ cuối làng thảnh thơi như một buổi nghỉ hưu.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nBà nấu ăn cho khách trọ rồi ngồi hiên nhà.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nÔng làm ruộng cả ngày ở nông trại nhỏ.\nKhông ai nói thêm điều gì nữa.\nQuán trọ cuối làng thảnh thơi như một buổi nghỉ hưu.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà nấu ăn cho khách trọ rồi ngồi hiên nhà.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nÔng làm ruộng cả ngày ở nông trại nhỏ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nQuán trọ cuối làng thảnh thơi như một buổi nghỉ hưu.\nKhông ai nói thêm điều gì nữa.\nBà nấu ăn cho khách trọ rồi ngồi hiên nhà.\nTrời đã về chiều, gió thổi qua bậu cửa.\nÔng làm ruộng cả ngày ở nông trại nhỏ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nQuán trọ cuối làng thảnh thơi như một buổi nghỉ hưu.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà nấu ăn cho khách trọ rồi ngồi hiên nhà.\nKhông ai nói thêm điều gì nữa.\nÔng làm ruộng cả ngày ở nông trại nhỏ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nQuán trọ cuối làng thảnh thơi như một buổi nghỉ hưu.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nBà nấu ăn cho khách trọ rồi ngồi hiên nhà.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nÔng làm ruộng cả ngày ở nông trại nhỏ.\nKhông ai nói thêm điều gì nữa.\nQuán trọ cuối làng thảnh thơi như một buổi nghỉ hưu.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà nấu ăn cho khách trọ rồi ngồi hiên nhà.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nÔng làm ruộng cả ngày ở nông trại nhỏ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi."
+   ],
+   "expect": "fantasy_calm",
+   "scores": {
+    "eastern": 0.0,
+    "fantasy_adventure": 4.0,
+    "action": 0.0,
+    "school_light": 0.0,
+    "romance": 0.0,
+    "horror": 0.0,
+    "mystery": 0.0,
+    "scifi": 0.0,
+    "comedy": 0.0,
+    "fantasy_calm": 65.0,
+    "sad": 0.0
+   }
+  },
+  {
+   "name": "sad_from_the_text",
+   "title": "Lá thư chưa gửi",
+   "chapters": [
+    "Tang lễ diễn ra trong im lặng, nước mắt rơi không ngừng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nNỗi mất mát đè nặng lên cả gia đình.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nNước mắt cô cứ rơi mãi sau tang lễ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTang lễ diễn ra trong im lặng, nước mắt rơi không ngừng.\nKhông ai nói thêm điều gì nữa.\nNỗi mất mát đè nặng lên cả gia đình.\nTrời đã về chiều, gió thổi qua bậu cửa.\nNước mắt cô cứ rơi mãi sau tang lễ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTang lễ diễn ra trong im lặng, nước mắt rơi không ngừng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nNỗi mất mát đè nặng lên cả gia đình.\nKhông ai nói thêm điều gì nữa.\nNước mắt cô cứ rơi mãi sau tang lễ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTang lễ diễn ra trong im lặng, nước mắt rơi không ngừng.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nNỗi mất mát đè nặng lên cả gia đình.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nNước mắt cô cứ rơi mãi sau tang lễ.\nKhông ai nói thêm điều gì nữa.\nTang lễ diễn ra trong im lặng, nước mắt rơi không ngừng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nNỗi mất mát đè nặng lên cả gia đình.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nNước mắt cô cứ rơi mãi sau tang lễ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTang lễ diễn ra trong im lặng, nước mắt rơi không ngừng.\nKhông ai nói thêm điều gì nữa.\nNỗi mất mát đè nặng lên cả gia đình.\nTrời đã về chiều, gió thổi qua bậu cửa.\nNước mắt cô cứ rơi mãi sau tang lễ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTang lễ diễn ra trong im lặng, nước mắt rơi không ngừng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi."
+   ],
+   "expect": "sad",
+   "scores": {
+    "eastern": 0.0,
+    "fantasy_adventure": 4.0,
+    "action": 0.0,
+    "school_light": 0.0,
+    "romance": 0.0,
+    "horror": 0.0,
+    "mystery": 0.0,
+    "scifi": 0.0,
+    "comedy": 0.0,
+    "fantasy_calm": 0.0,
+    "sad": 20.0
+   }
+  },
+  {
+   "name": "title_without_marks",
+   "title": "Tu Tien Ky",
+   "chapters": [
+    "Chiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ."
+   ],
+   "expect": "eastern",
+   "scores": {
+    "eastern": 24.0,
+    "fantasy_adventure": 4.0,
+    "action": 0.0,
+    "school_light": 0.0,
+    "romance": 0.0,
+    "horror": 0.0,
+    "mystery": 0.0,
+    "scifi": 0.0,
+    "comedy": 0.0,
+    "fantasy_calm": 0.0,
+    "sad": 0.0
+   }
+  },
+  {
+   "name": "title_with_marks_and_capitals",
+   "title": "Đạo Thiên Lộ",
+   "chapters": [
+    "Chiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ."
+   ],
+   "expect": "eastern",
+   "scores": {
+    "eastern": 24.0,
+    "fantasy_adventure": 4.0,
+    "action": 0.0,
+    "school_light": 0.0,
+    "romance": 0.0,
+    "horror": 0.0,
+    "mystery": 0.0,
+    "scifi": 0.0,
+    "comedy": 0.0,
+    "fantasy_calm": 0.0,
+    "sad": 0.0
+   }
+  },
+  {
+   "name": "title_beats_a_light_body",
+   "title": "Kiếm Và Hoa",
+   "chapters": [
+    "Cậu tỏ tình ngay sau buổi hẹn hò đầu tiên.\nTrời đã về chiều, gió thổi qua bậu cửa.\nCậu tỏ tình ngay sau buổi hẹn hò đầu tiên.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nCậu tỏ tình ngay sau buổi hẹn hò đầu tiên.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nCậu tỏ tình ngay sau buổi hẹn hò đầu tiên.\nKhông ai nói thêm điều gì nữa.\nCậu tỏ tình ngay sau buổi hẹn hò đầu tiên.\nTrời đã về chiều, gió thổi qua bậu cửa.\nCậu tỏ tình ngay sau buổi hẹn hò đầu tiên.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nCậu tỏ tình ngay sau buổi hẹn hò đầu tiên.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nCậu tỏ tình ngay sau buổi hẹn hò đầu tiên.\nKhông ai nói thêm điều gì nữa.\nCậu tỏ tình ngay sau buổi hẹn hò đầu tiên.\nTrời đã về chiều, gió thổi qua bậu cửa.\nCậu tỏ tình ngay sau buổi hẹn hò đầu tiên.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nCậu tỏ tình ngay sau buổi hẹn hò đầu tiên.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nCậu tỏ tình ngay sau buổi hẹn hò đầu tiên.\nKhông ai nói thêm điều gì nữa.\nCậu tỏ tình ngay sau buổi hẹn hò đầu tiên.\nTrời đã về chiều, gió thổi qua bậu cửa.\nCậu tỏ tình ngay sau buổi hẹn hò đầu tiên.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nCậu tỏ tình ngay sau buổi hẹn hò đầu tiên.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nCậu tỏ tình ngay sau buổi hẹn hò đầu tiên.\nKhông ai nói thêm điều gì nữa.\nCậu tỏ tình ngay sau buổi hẹn hò đầu tiên.\nTrời đã về chiều, gió thổi qua bậu cửa.\nCậu tỏ tình ngay sau buổi hẹn hò đầu tiên.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nCậu tỏ tình ngay sau buổi hẹn hò đầu tiên.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nCậu tỏ tình ngay sau buổi hẹn hò đầu tiên."
+   ],
+   "expect": "romance",
+   "scores": {
+    "eastern": 12.0,
+    "fantasy_adventure": 4.0,
+    "action": 0.0,
+    "school_light": 0.0,
+    "romance": 25.0,
+    "horror": 0.0,
+    "mystery": 0.0,
+    "scifi": 0.0,
+    "comedy": 0.0,
+    "fantasy_calm": 0.0,
+    "sad": 0.0
+   }
+  },
+  {
+   "name": "short_and_front_chapters_are_skipped",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "Minh họa\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nKhông ai nói thêm điều gì nữa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nKhông ai nói thêm điều gì nữa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.",
+    "Phi thuyền rời hành tinh khi trí tuệ nhân tạo báo động.\nTrời đã về chiều, gió thổi qua bậu cửa.\nRobot kiểm tra máy chủ của tàu vũ trụ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nCông nghệ thực tế ảo vận hành suốt chuyến đi trong vũ trụ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nPhi thuyền rời hành tinh khi trí tuệ nhân tạo báo động.\nKhông ai nói thêm điều gì nữa.\nRobot kiểm tra máy chủ của tàu vũ trụ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nCông nghệ thực tế ảo vận hành suốt chuyến đi trong vũ trụ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nPhi thuyền rời hành tinh khi trí tuệ nhân tạo báo động.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nRobot kiểm tra máy chủ của tàu vũ trụ.\nKhông ai nói thêm điều gì nữa.\nCông nghệ thực tế ảo vận hành suốt chuyến đi trong vũ trụ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nPhi thuyền rời hành tinh khi trí tuệ nhân tạo báo động.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nRobot kiểm tra máy chủ của tàu vũ trụ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nCông nghệ thực tế ảo vận hành suốt chuyến đi trong vũ trụ.\nKhông ai nói thêm điều gì nữa.\nPhi thuyền rời hành tinh khi trí tuệ nhân tạo báo động.",
+    "Mục lục\nThám tử đến hiện trường vụ án từ sớm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHung thủ để lại manh mối, nhưng nghi phạm nào cũng có bằng chứng ngoại phạm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nCảnh sát phong tỏa nơi xảy ra án mạng để điều tra.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nThám tử đến hiện trường vụ án từ sớm.\nKhông ai nói thêm điều gì nữa.\nHung thủ để lại manh mối, nhưng nghi phạm nào cũng có bằng chứng ngoại phạm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nCảnh sát phong tỏa nơi xảy ra án mạng để điều tra.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nThám tử đến hiện trường vụ án từ sớm.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHung thủ để lại manh mối, nhưng nghi phạm nào cũng có bằng chứng ngoại phạm.\nKhông ai nói thêm điều gì nữa.\nCảnh sát phong tỏa nơi xảy ra án mạng để điều tra.\nTrời đã về chiều, gió thổi qua bậu cửa.\nThám tử đến hiện trường vụ án từ sớm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nHung thủ để lại manh mối, nhưng nghi phạm nào cũng có bằng chứng ngoại phạm.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nCảnh sát phong tỏa nơi xảy ra án mạng để điều tra.\nKhông ai nói thêm điều gì nữa.\nThám tử đến hiện trường vụ án từ sớm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHung thủ để lại manh mối, nhưng nghi phạm nào cũng có bằng chứng ngoại phạm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nCảnh sát phong tỏa nơi xảy ra án mạng để điều tra.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nThám tử đến hiện trường vụ án từ sớm.\nKhông ai nói thêm điều gì nữa.\nHung thủ để lại manh mối, nhưng nghi phạm nào cũng có bằng chứng ngoại phạm.\nTrời đã về chiều, gió thổi qua bậu cửa.",
+    "  \nXác sống lảo đảo bước ra từ con ngõ tối.\n\nTrời đã về chiều, gió thổi qua bậu cửa.\n\nTiếng thét vang lên, ai cũng rùng mình trước oán linh.\n\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\n\nHồn ma ấy bị nguyền rủa từ lâu.\n\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\n\nXác sống lảo đảo bước ra từ con ngõ tối.\n\nKhông ai nói thêm điều gì nữa.\n\nTiếng thét vang lên, ai cũng rùng mình trước oán linh.\n\nTrời đã về chiều, gió thổi qua bậu cửa.\n\nHồn ma ấy bị nguyền rủa từ lâu.\n\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\n\nXác sống lảo đảo bước ra từ con ngõ tối.\n\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\n\nTiếng thét vang lên, ai cũng rùng mình trước oán linh.\n\nKhông ai nói thêm điều gì nữa.\n\nHồn ma ấy bị nguyền rủa từ lâu.\n\nTrời đã về chiều, gió thổi qua bậu cửa.\n\nXác sống lảo đảo bước ra từ con ngõ tối.\n\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\n\nTiếng thét vang lên, ai cũng rùng mình trước oán linh.\n\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\n\nHồn ma ấy bị nguyền rủa từ lâu.\n\nKhông ai nói thêm điều gì nữa.\n\nXác sống lảo đảo bước ra từ con ngõ tối.\n\nTrời đã về chiều, gió thổi qua bậu cửa.\n\nTiếng thét vang lên, ai cũng rùng mình trước oán linh.\n\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\n\nHồn ma ấy bị nguyền rủa từ lâu.\n\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\n\nXác sống lảo đảo bước ra từ con ngõ tối.\n\nKhông ai nói thêm điều gì nữa.\n\nTiếng thét vang lên, ai cũng rùng mình trước oán linh.\n\nTrời đã về chiều, gió thổi qua bậu cửa.\n\nHồn ma ấy bị nguyền rủa từ lâu.\n\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\n\nXác sống lảo đảo bước ra từ con ngõ tối.\n\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\n\nTiếng thét vang lên, ai cũng rùng mình trước oán linh."
+   ],
+   "expect": "eastern",
+   "scores": {
+    "eastern": 90.0,
+    "fantasy_adventure": 4.0,
+    "action": 0.0,
+    "school_light": 0.0,
+    "romance": 0.0,
+    "horror": 60.0,
+    "mystery": 0.0,
+    "scifi": 0.0,
+    "comedy": 0.0,
+    "fantasy_calm": 0.0,
+    "sad": 0.0
+   }
+  },
+  {
+   "name": "only_front_chapters_means_no_body",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "Lời bạt\nCậu tỏ tình ngay sau buổi hẹn hò đầu tiên.\nTrời đã về chiều, gió thổi qua bậu cửa.\nCô đỏ mặt, cả hai ngượng ngùng không dám nhìn nhau.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nNgười yêu cũ gửi lời chúc, còn hôn ước thì đã hủy.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nCậu tỏ tình ngay sau buổi hẹn hò đầu tiên.\nKhông ai nói thêm điều gì nữa.\nCô đỏ mặt, cả hai ngượng ngùng không dám nhìn nhau.\nTrời đã về chiều, gió thổi qua bậu cửa.\nNgười yêu cũ gửi lời chúc, còn hôn ước thì đã hủy.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nCậu tỏ tình ngay sau buổi hẹn hò đầu tiên.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nCô đỏ mặt, cả hai ngượng ngùng không dám nhìn nhau.\nKhông ai nói thêm điều gì nữa.\nNgười yêu cũ gửi lời chúc, còn hôn ước thì đã hủy.\nTrời đã về chiều, gió thổi qua bậu cửa.\nCậu tỏ tình ngay sau buổi hẹn hò đầu tiên.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nCô đỏ mặt, cả hai ngượng ngùng không dám nhìn nhau.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nNgười yêu cũ gửi lời chúc, còn hôn ước thì đã hủy.\nKhông ai nói thêm điều gì nữa.\nCậu tỏ tình ngay sau buổi hẹn hò đầu tiên.\nTrời đã về chiều, gió thổi qua bậu cửa.\nCô đỏ mặt, cả hai ngượng ngùng không dám nhìn nhau.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nNgười yêu cũ gửi lời chúc, còn hôn ước thì đã hủy.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nCậu tỏ tình ngay sau buổi hẹn hò đầu tiên.\nKhông ai nói thêm điều gì nữa.\nCô đỏ mặt, cả hai ngượng ngùng không dám nhìn nhau.\nTrời đã về chiều, gió thổi qua bậu cửa.\nNgười yêu cũ gửi lời chúc, còn hôn ước thì đã hủy.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nCậu tỏ tình ngay sau buổi hẹn hò đầu tiên.",
+    "Tang lễ diễn ra trong im lặng, nước mắt rơi không ngừng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nNỗi mất mát đè nặng lên cả gia đình.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nNước mắt cô cứ rơi mãi sau tang lễ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTang lễ diễn ra trong im lặng, nước mắt rơi không ngừng.\nKhông ai nói thêm điều gì nữa.\nNỗi mất mát đè nặng lên cả gia đình.\nTrời đã về chiều, gió thổi qua bậu cửa.\nNước mắt cô cứ rơi mãi sau tang lễ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTang lễ diễn ra trong im lặng, nước mắt rơi không ngừng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nNỗi mất mát đè nặng lên cả gia đình.\nKhông ai nói thêm điều gì nữa.\nNước mắt cô cứ rơi mãi sau tang lễ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTang lễ diễn ra trong im lặng, nước mắt rơi không ngừng.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nNỗi mất mát đè nặng lên cả gia đình.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nNước mắt cô cứ rơi mãi sau tang lễ.\nKhông ai nói thêm điều gì nữa.\nTang lễ diễn ra trong im lặng, nước mắt rơi không ngừng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nNỗi mất mát đè nặng lên cả gia đình.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nNước mắt cô cứ rơi mãi sau tang lễ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTang lễ diễn ra trong im lặng, nước mắt rơi không ngừng.\nKhông ai"
+   ],
+   "expect": "fantasy_adventure",
+   "scores": {
+    "eastern": 0.0,
+    "fantasy_adventure": 4.0,
+    "action": 0.0,
+    "school_light": 0.0,
+    "romance": 0.0,
+    "horror": 0.0,
+    "mystery": 0.0,
+    "scifi": 0.0,
+    "comedy": 0.0,
+    "fantasy_calm": 0.0,
+    "sad": 0.0
+   }
+  },
+  {
+   "name": "keywords_after_the_6000_mark_do_not_count",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "Chiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTang lễ diễn ra trong im lặng, nước mắt rơi không ngừng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nNỗi mất mát đè nặng lên cả gia đình.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nNước mắt cô cứ rơi mãi sau tang lễ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTang lễ diễn ra trong im lặng, nước mắt rơi không ngừng.\nKhông ai nói thêm điều gì nữa.\nNỗi mất mát đè nặng lên cả gia đình.\nTrời đã về chiều, gió thổi qua bậu cửa.\nNước mắt cô cứ rơi mãi sau tang lễ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTang lễ diễn ra trong im lặng, nước mắt rơi không ngừng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nNỗi mất mát đè nặng lên cả gia đình.\nKhông ai nói thêm điều gì nữa.\nNước mắt cô cứ rơi mãi sau tang lễ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTang lễ diễn ra trong im lặng, nước mắt rơi không ngừng.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nNỗi mất mát đè nặng lên cả gia đình.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nNước mắt cô cứ rơi mãi sau tang lễ.\nKhông ai nói thêm điều gì nữa.\nTang lễ diễn ra trong im lặng, nước mắt rơi không ngừng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nNỗi mất mát đè nặng lên cả gia đình.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nNước mắt cô cứ rơi mãi sau tang lễ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTang lễ diễn ra trong im lặng, nước mắt rơi không ngừng.\nKhông ai nói thêm điều gì nữa.\nNỗi mất mát đè nặng lên cả gia đình.\nTrời đã về chiều, gió thổi qua bậu cửa.\nNước mắt cô cứ rơi mãi sau tang lễ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTang lễ diễn ra trong im lặng, nước mắt rơi không ngừng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nNỗi mất mát đè nặng lên cả gia đình.\nKhông ai nói thêm điều gì nữa.\nNước mắt cô cứ rơi mãi sau tang lễ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTang lễ diễn ra trong im lặng, nước mắt rơi không ngừng.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nNỗi mất mát đè nặng lên cả gia đình.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nNước mắt cô cứ rơi mãi sau tang lễ.\nKhông ai nói thêm điều gì nữa.\nTang lễ diễn ra trong im lặng, nước mắt rơi không ngừng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nNỗi mất mát đè nặng lên cả gia đình.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nNước mắt cô cứ rơi mãi sau tang lễ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTang lễ diễn ra trong im lặng, nước mắt rơi không ngừng.\nKhông ai nói thêm điều gì nữa.\nNỗi mất mát đè nặng lên cả gia đình.\nTrời đã về chiều, gió thổi qua bậu cửa.\nNước mắt cô cứ rơi mãi sau tang lễ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTang lễ diễn ra trong im lặng, nước mắt rơi không ngừng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nNỗi mất mát đè nặng lên cả gia đình.\nKhông ai nói thêm điều gì nữa.\nNước mắt cô cứ rơi mãi sau tang lễ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTang lễ diễn ra trong im lặng, nước mắt rơi không ngừng.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân."
+   ],
+   "expect": "fantasy_adventure",
+   "scores": {
+    "eastern": 0.0,
+    "fantasy_adventure": 4.0,
+    "action": 0.0,
+    "school_light": 0.0,
+    "romance": 0.0,
+    "horror": 0.0,
+    "mystery": 0.0,
+    "scifi": 0.0,
+    "comedy": 0.0,
+    "fantasy_calm": 0.0,
+    "sad": 0.0
+   }
+  },
+  {
+   "name": "keywords_inside_the_6000_mark_count",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "Chiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nTang lễ diễn ra trong im lặng, nước mắt rơi không ngừng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nNỗi mất mát đè nặng lên cả gia đình.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nNước mắt cô cứ rơi mãi sau tang lễ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTang lễ diễn ra trong im lặng, nước mắt rơi không ngừng.\nKhông ai nói thêm điều gì nữa.\nNỗi mất mát đè nặng lên cả gia đình.\nTrời đã về chiều, gió thổi qua bậu cửa.\nNước mắt cô cứ rơi mãi sau tang lễ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTang lễ diễn ra trong im lặng, nước mắt rơi không ngừng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nNỗi mất mát đè nặng lên cả gia đình.\nKhông ai nói thêm điều gì nữa.\nNước mắt cô cứ rơi mãi sau tang lễ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTang lễ diễn ra trong im lặng, nước mắt rơi không ngừng.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nNỗi mất mát đè nặng lên cả gia đình.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nNước mắt cô cứ rơi mãi sau tang lễ.\nKhông ai nói thêm điều gì nữa.\nTang lễ diễn ra trong im lặng, nước mắt rơi không ngừng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nNỗi mất mát đè nặng lên cả gia đình.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nNước mắt cô cứ rơi mãi sau tang lễ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTang lễ diễn ra trong im lặng, nước mắt rơi không ngừng.\nKhông ai nói thêm điều gì nữa.\nNỗi mất mát đè nặng lên cả gia đình.\nTrời đã về chiều, gió thổi qua bậu cửa.\nNước mắt cô cứ rơi mãi sau tang lễ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTang lễ diễn ra trong im lặng, nước mắt rơi không ngừng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi."
+   ],
+   "expect": "sad",
+   "scores": {
+    "eastern": 0.0,
+    "fantasy_adventure": 4.0,
+    "action": 0.0,
+    "school_light": 0.0,
+    "romance": 0.0,
+    "horror": 0.0,
+    "mystery": 0.0,
+    "scifi": 0.0,
+    "comedy": 0.0,
+    "fantasy_calm": 0.0,
+    "sad": 19.0
+   }
+  },
+  {
+   "name": "body_stops_at_6000_across_chapters",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "Chiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.",
+    "Chiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.",
+    "Xác sống lảo đảo bước ra từ con ngõ tối.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTiếng thét vang lên, ai cũng rùng mình trước oán linh.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nHồn ma ấy bị nguyền rủa từ lâu.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nXác sống lảo đảo bước ra từ con ngõ tối.\nKhông ai nói thêm điều gì nữa.\nTiếng thét vang lên, ai cũng rùng mình trước oán linh.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHồn ma ấy bị nguyền rủa từ lâu.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nXác sống lảo đảo bước ra từ con ngõ tối.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTiếng thét vang lên, ai cũng rùng mình trước oán linh.\nKhông ai nói thêm điều gì nữa.\nHồn ma ấy bị nguyền rủa từ lâu.\nTrời đã về chiều, gió thổi qua bậu cửa.\nXác sống lảo đảo bước ra từ con ngõ tối.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTiếng thét vang lên, ai cũng rùng mình trước oán linh.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHồn ma ấy bị nguyền rủa từ lâu.\nKhông ai nói thêm điều gì nữa.\nXác sống lảo đảo bước ra từ con ngõ tối.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTiếng thét vang lên, ai cũng rùng mình trước oán linh.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nHồn ma ấy bị nguyền rủa từ lâu.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nXác sống lảo đảo bước ra từ con ngõ tối.\nKhông ai nói thêm điều gì nữa.\nTiếng thét vang lên, ai cũng rùng mình trước oán linh.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHồn ma ấy bị nguyền rủa từ lâu.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nXác sống lảo đảo bước ra từ con ngõ tối.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTiếng thét vang lên, ai cũng rùng mình trước oán linh.\nKhông ai nói thêm điều gì nữa.\nHồn ma ấy bị nguyền rủa từ lâu.\nTrời đã về chiều, gió thổi qua bậu cửa.\nXác sống lảo đảo bước ra từ con ngõ tối.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTiếng thét vang lên, ai cũng rùng mình trước oán linh.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi."
+   ],
+   "expect": "fantasy_adventure",
+   "scores": {
+    "eastern": 0.0,
+    "fantasy_adventure": 4.0,
+    "action": 0.0,
+    "school_light": 0.0,
+    "romance": 0.0,
+    "horror": 0.0,
+    "mystery": 0.0,
+    "scifi": 0.0,
+    "comedy": 0.0,
+    "fantasy_calm": 0.0,
+    "sad": 0.0
+   }
+  },
+  {
+   "name": "tie_follows_order_not_alphabet",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "Chiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nPhi thuyền đến. Phi thuyền đi. Tsukkomi một. Tsukkomi hai.\n"
+   ],
+   "expect": "scifi",
+   "scores": {
+    "eastern": 0.0,
+    "fantasy_adventure": 4.0,
+    "action": 0.0,
+    "school_light": 0.0,
+    "romance": 0.0,
+    "horror": 0.0,
+    "mystery": 0.0,
+    "scifi": 6.0,
+    "comedy": 6.0,
+    "fantasy_calm": 0.0,
+    "sad": 0.0
+   }
+  },
+  {
+   "name": "repeated_keyword_is_capped",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. \nTrời đã về chiều, gió thổi qua bậu cửa.\nCậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. \nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nCậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. \nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nCậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. Cậu tỏ tình. "
+   ],
+   "expect": "romance",
+   "scores": {
+    "eastern": 0.0,
+    "fantasy_adventure": 4.0,
+    "action": 0.0,
+    "school_light": 0.0,
+    "romance": 15.0,
+    "horror": 0.0,
+    "mystery": 0.0,
+    "scifi": 0.0,
+    "comedy": 0.0,
+    "fantasy_calm": 0.0,
+    "sad": 0.0
+   }
+  },
+  {
+   "name": "overlapping_keyword_counts_like_str_count",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "Chiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nelf elf elf elf elf elf elf\n"
+   ],
+   "expect": "fantasy_adventure",
+   "scores": {
+    "eastern": 0.0,
+    "fantasy_adventure": 12.0,
+    "action": 0.0,
+    "school_light": 0.0,
+    "romance": 0.0,
+    "horror": 0.0,
+    "mystery": 0.0,
+    "scifi": 0.0,
+    "comedy": 0.0,
+    "fantasy_calm": 0.0,
+    "sad": 0.0
+   }
+  },
+  {
+   "name": "empty_book_uses_the_title_only",
+   "title": "Sword Art",
+   "chapters": [],
+   "expect": "fantasy_adventure",
+   "scores": {
+    "eastern": 0.0,
+    "fantasy_adventure": 16.0,
+    "action": 0.0,
+    "school_light": 0.0,
+    "romance": 0.0,
+    "horror": 0.0,
+    "mystery": 0.0,
+    "scifi": 0.0,
+    "comedy": 0.0,
+    "fantasy_calm": 0.0,
+    "sad": 0.0
+   }
+  },
+  {
+   "name": "nothing_matches",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "Chiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ."
+   ],
+   "expect": "fantasy_adventure",
+   "scores": {
+    "eastern": 0.0,
+    "fantasy_adventure": 4.0,
+    "action": 0.0,
+    "school_light": 0.0,
+    "romance": 0.0,
+    "horror": 0.0,
+    "mystery": 0.0,
+    "scifi": 0.0,
+    "comedy": 0.0,
+    "fantasy_calm": 0.0,
+    "sad": 0.0
+   }
+  },
+  {
+   "name": "decomposed_marks_and_capitals",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "HẮN NGỒI TU LUYỆN SUỐT ĐÊM, LINH KHÍ QUANH ĐAN ĐIỀN DẦN ĐẶC LẠI.\nTRỜI ĐÃ VỀ CHIỀU, GIÓ THỔI QUA BẬU CỬA.\nĐẠO HỮU Ở TÔNG MÔN BÊN KIA VỪA ĐẾN THĂM.\nANH NGỒI YÊN MỘT LÚC RỒI ĐỨNG DẬY ĐI RA PHÍA SÂN.\nTRƯỞNG LÃO NÓI CẢNH GIỚI CỦA HẮN ĐÃ CHẠM TỚI TRÚC CƠ.\nCON ĐƯỜNG TRƯỚC MẶT DÀI VÀ VẮNG, CHỈ CÓ VÀI CHIẾC LÁ RƠI.\nHẮN NGỒI TU LUYỆN SUỐT ĐÊM, LINH KHÍ QUANH ĐAN ĐIỀN DẦN ĐẶC LẠI.\nKHÔNG AI NÓI THÊM ĐIỀU GÌ NỮA.\nĐẠO HỮU Ở TÔNG MÔN BÊN KIA VỪA ĐẾN THĂM.\nTRỜI ĐÃ VỀ CHIỀU, GIÓ THỔI QUA BẬU CỬA.\nTRƯỞNG LÃO NÓI CẢNH GIỚI CỦA HẮN ĐÃ CHẠM TỚI TRÚC CƠ.\nANH NGỒI YÊN MỘT LÚC RỒI ĐỨNG DẬY ĐI RA PHÍA SÂN.\nHẮN NGỒI TU LUYỆN SUỐT ĐÊM, LINH KHÍ QUANH ĐAN ĐIỀN DẦN ĐẶC LẠI.\nCON ĐƯỜNG TRƯỚC MẶT DÀI VÀ VẮNG, CHỈ CÓ VÀI CHIẾC LÁ RƠI.\nĐẠO HỮU Ở TÔNG MÔN BÊN KIA VỪA ĐẾN THĂM.\nKHÔNG AI NÓI THÊM ĐIỀU GÌ NỮA.\nTRƯỞNG LÃO NÓI CẢNH GIỚI CỦA HẮN ĐÃ CHẠM TỚI TRÚC CƠ.\nTRỜI ĐÃ VỀ CHIỀU, GIÓ THỔI QUA BẬU CỬA.\nHẮN NGỒI TU LUYỆN SUỐT ĐÊM, LINH KHÍ QUANH ĐAN ĐIỀN DẦN ĐẶC LẠI.\nANH NGỒI YÊN MỘT LÚC RỒI ĐỨNG DẬY ĐI RA PHÍA SÂN.\nĐẠO HỮU Ở TÔNG MÔN BÊN KIA VỪA ĐẾN THĂM.\nCON ĐƯỜNG TRƯỚC MẶT DÀI VÀ VẮNG, CHỈ CÓ VÀI CHIẾC LÁ RƠI.\nTRƯỞNG LÃO NÓI CẢNH GIỚI CỦA HẮN ĐÃ CHẠM TỚI TRÚC CƠ.\nKHÔNG AI NÓI THÊM ĐIỀU GÌ NỮA.\nHẮN NGỒI TU LUYỆN SUỐT ĐÊM, LINH KHÍ QUANH ĐAN ĐIỀN DẦN ĐẶC LẠI.\nTRỜI ĐÃ VỀ CHIỀU, GIÓ THỔI QUA BẬU CỬA.\nĐẠO HỮU Ở TÔNG MÔN BÊN KIA VỪA ĐẾN THĂM.\nANH NGỒI YÊN MỘT LÚC RỒI ĐỨNG DẬY ĐI RA PHÍA SÂN.\nTRƯỞNG LÃO NÓI CẢNH GIỚI CỦA HẮN ĐÃ CHẠM TỚI TRÚC CƠ.\nCON ĐƯỜNG TRƯỚC MẶT DÀI VÀ VẮNG, CHỈ CÓ VÀI CHIẾC LÁ RƠI.\nHẮN NGỒI TU LUYỆN SUỐT ĐÊM, LINH KHÍ QUANH ĐAN ĐIỀN DẦN ĐẶC LẠI.\nKHÔNG AI NÓI THÊM ĐIỀU GÌ NỮA.\nĐẠO HỮU Ở TÔNG MÔN BÊN KIA VỪA ĐẾN THĂM.\nTRỜI ĐÃ VỀ CHIỀU, GIÓ THỔI QUA BẬU CỬA.\nTRƯỞNG LÃO NÓI CẢNH GIỚI CỦA HẮN ĐÃ CHẠM TỚI TRÚC CƠ."
+   ],
+   "expect": "eastern",
+   "scores": {
+    "eastern": 90.0,
+    "fantasy_adventure": 4.0,
+    "action": 0.0,
+    "school_light": 0.0,
+    "romance": 0.0,
+    "horror": 0.0,
+    "mystery": 0.0,
+    "scifi": 0.0,
+    "comedy": 0.0,
+    "fantasy_calm": 0.0,
+    "sad": 0.0
+   }
+  },
+  {
+   "name": "punctuation_and_odd_spaces",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "(Tu luyện), linh khí; đan\tđiền...tông môn!\nTrời đã về chiều, gió thổi qua bậu cửa.\n“Đạo hữu”—trúc cơ?\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\n(Tu luyện), linh khí; đan\tđiền...tông môn!\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\n“Đạo hữu”—trúc cơ?\nKhông ai nói thêm điều gì nữa.\n(Tu luyện), linh khí; đan\tđiền...tông môn!\nTrời đã về chiều, gió thổi qua bậu cửa.\n“Đạo hữu”—trúc cơ?\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\n(Tu luyện), linh khí; đan\tđiền...tông môn!\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\n“Đạo hữu”—trúc cơ?\nKhông ai nói thêm điều gì nữa.\n(Tu luyện), linh khí; đan\tđiền...tông môn!\nTrời đã về chiều, gió thổi qua bậu cửa.\n“Đạo hữu”—trúc cơ?\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\n(Tu luyện), linh khí; đan\tđiền...tông môn!\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\n“Đạo hữu”—trúc cơ?\nKhông ai nói thêm điều gì nữa.\n(Tu luyện), linh khí; đan\tđiền...tông môn!\nTrời đã về chiều, gió thổi qua bậu cửa.\n“Đạo hữu”—trúc cơ?\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\n(Tu luyện), linh khí; đan\tđiền...tông môn!\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\n“Đạo hữu”—trúc cơ?\nKhông ai nói thêm điều gì nữa.\n(Tu luyện), linh khí; đan\tđiền...tông môn!\nTrời đã về chiều, gió thổi qua bậu cửa.\n“Đạo hữu”—trúc cơ?\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\n(Tu luyện), linh khí; đan\tđiền...tông môn!\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\n“Đạo hữu”—trúc cơ?\nKhông ai nói thêm điều gì nữa.\n(Tu luyện), linh khí; đan\tđiền...tông môn!\nTrời đã về chiều, gió thổi qua bậu cửa.\n“Đạo hữu”—trúc cơ?\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\n(Tu luyện), linh khí; đan\tđiền...tông môn!"
+   ],
+   "expect": "eastern",
+   "scores": {
+    "eastern": 80.0,
+    "fantasy_adventure": 4.0,
+    "action": 0.0,
+    "school_light": 0.0,
+    "romance": 0.0,
+    "horror": 0.0,
+    "mystery": 0.0,
+    "scifi": 0.0,
+    "comedy": 0.0,
+    "fantasy_calm": 0.0,
+    "sad": 0.0
+   }
+  },
+  {
+   "name": "keywords_must_be_whole_words",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "Anh ấy tu luyện hơn, tu luyệnnn thì không tính, tuluyện cũng không.\nTrời đã về chiều, gió thổi qua bậu cửa.\nAnh ấy tu luyện hơn, tu luyệnnn thì không tính, tuluyện cũng không.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nAnh ấy tu luyện hơn, tu luyệnnn thì không tính, tuluyện cũng không.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nAnh ấy tu luyện hơn, tu luyệnnn thì không tính, tuluyện cũng không.\nKhông ai nói thêm điều gì nữa.\nAnh ấy tu luyện hơn, tu luyệnnn thì không tính, tuluyện cũng không.\nTrời đã về chiều, gió thổi qua bậu cửa.\nAnh ấy tu luyện hơn, tu luyệnnn thì không tính, tuluyện cũng không.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nAnh ấy tu luyện hơn, tu luyệnnn thì không tính, tuluyện cũng không.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nAnh ấy tu luyện hơn, tu luyệnnn thì không tính, tuluyện cũng không.\nKhông ai nói thêm điều gì nữa.\nAnh ấy tu luyện hơn, tu luyệnnn thì không tính, tuluyện cũng không.\nTrời đã về chiều, gió thổi qua bậu cửa.\nAnh ấy tu luyện hơn, tu luyệnnn thì không tính, tuluyện cũng không.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nAnh ấy tu luyện hơn, tu luyệnnn thì không tính, tuluyện cũng không.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nAnh ấy tu luyện hơn, tu luyệnnn thì không tính, tuluyện cũng không.\nKhông ai nói thêm điều gì nữa.\nAnh ấy tu luyện hơn, tu luyệnnn thì không tính, tuluyện cũng không.\nTrời đã về chiều, gió thổi qua bậu cửa.\nAnh ấy tu luyện hơn, tu luyệnnn thì không tính, tuluyện cũng không.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nAnh ấy tu luyện hơn, tu luyệnnn thì không tính, tuluyện cũng không.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi."
+   ],
+   "expect": "eastern",
+   "scores": {
+    "eastern": 10.0,
+    "fantasy_adventure": 4.0,
+    "action": 0.0,
+    "school_light": 0.0,
+    "romance": 0.0,
+    "horror": 0.0,
+    "mystery": 0.0,
+    "scifi": 0.0,
+    "comedy": 0.0,
+    "fantasy_calm": 0.0,
+    "sad": 0.0
+   }
+  },
+  {
+   "name": "below_min_score_falls_back_to_the_default",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "Gió nhẹ thổi qua. Một tiếng sấm xa.\nTrời đã về chiều, gió thổi qua bậu cửa.\nGió nhẹ thổi qua. Một tiếng sấm xa.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nGió nhẹ thổi qua. Một tiếng sấm xa.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nGió nhẹ thổi qua. Một tiếng sấm xa.\nKhông ai nói thêm điều gì nữa.\nGió nhẹ thổi qua. Một tiếng sấm xa.\nTrời đã về chiều, gió thổi qua bậu cửa.\nGió nhẹ thổi qua. Một tiếng sấm xa.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nGió nhẹ thổi qua. Một tiếng sấm xa.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nGió nhẹ thổi qua. Một tiếng sấm xa.\nKhông ai nói thêm điều gì nữa.\nGió nhẹ thổi qua. Một tiếng sấm xa.\nTrời đã về chiều, gió thổi qua bậu cửa.\nGió nhẹ thổi qua. Một tiếng sấm xa.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nGió nhẹ thổi qua. Một tiếng sấm xa.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nGió nhẹ thổi qua. Một tiếng sấm xa.\nKhông ai nói thêm điều gì nữa.\nGió nhẹ thổi qua. Một tiếng sấm xa.\nTrời đã về chiều, gió thổi qua bậu cửa.\nGió nhẹ thổi qua. Một tiếng sấm xa.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nGió nhẹ thổi qua. Một tiếng sấm xa.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nGió nhẹ thổi qua. Một tiếng sấm xa.\nKhông ai nói thêm điều gì nữa.\nGió nhẹ thổi qua. Một tiếng sấm xa.\nTrời đã về chiều, gió thổi qua bậu cửa.\nGió nhẹ thổi qua. Một tiếng sấm xa.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nGió nhẹ thổi qua. Một tiếng sấm xa.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nGió nhẹ thổi qua. Một tiếng sấm xa.\nKhông ai nói thêm điều gì nữa.\nGió nhẹ thổi qua. Một tiếng sấm xa.\nTrời đã về chiều, gió thổi qua bậu cửa.\nGió nhẹ thổi qua. Một tiếng sấm xa."
+   ],
+   "picker": {
+    "version": 7,
+    "cap": 3,
+    "title_weight": 5.0,
+    "min_score": 4.0,
+    "default": "dusk",
+    "order": [
+     "calm",
+     "storm",
+     "dusk"
+    ],
+    "playlists": {
+     "calm": {
+      "title": [
+       "yen"
+      ],
+      "text": {
+       "gió nhẹ": 1
+      }
+     },
+     "storm": {
+      "title": [
+       "bao"
+      ],
+      "text": {
+       "giông bão": 2,
+       "sấm": 1
+      }
+     },
+     "dusk": {
+      "title": [],
+      "text": {
+       "hoàng hôn": 2.5
+      },
+      "prior": 0.5
+     }
+    }
+   },
+   "expect": "dusk",
+   "scores": {
+    "calm": 3.0,
+    "storm": 3.0,
+    "dusk": 0.5
+   }
+  },
+  {
+   "name": "score_at_min_score_wins",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "Giông bão kéo đến. Giông bão chưa dứt.\nTrời đã về chiều, gió thổi qua bậu cửa.\nGiông bão kéo đến. Giông bão chưa dứt.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nGiông bão kéo đến. Giông bão chưa dứt.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nGiông bão kéo đến. Giông bão chưa dứt.\nKhông ai nói thêm điều gì nữa.\nGiông bão kéo đến. Giông bão chưa dứt.\nTrời đã về chiều, gió thổi qua bậu cửa.\nGiông bão kéo đến. Giông bão chưa dứt.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nGiông bão kéo đến. Giông bão chưa dứt.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nGiông bão kéo đến. Giông bão chưa dứt.\nKhông ai nói thêm điều gì nữa.\nGiông bão kéo đến. Giông bão chưa dứt.\nTrời đã về chiều, gió thổi qua bậu cửa.\nGiông bão kéo đến. Giông bão chưa dứt.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nGiông bão kéo đến. Giông bão chưa dứt.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nGiông bão kéo đến. Giông bão chưa dứt.\nKhông ai nói thêm điều gì nữa.\nGiông bão kéo đến. Giông bão chưa dứt.\nTrời đã về chiều, gió thổi qua bậu cửa.\nGiông bão kéo đến. Giông bão chưa dứt.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nGiông bão kéo đến. Giông bão chưa dứt.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nGiông bão kéo đến. Giông bão chưa dứt.\nKhông ai nói thêm điều gì nữa.\nGiông bão kéo đến. Giông bão chưa dứt.\nTrời đã về chiều, gió thổi qua bậu cửa.\nGiông bão kéo đến. Giông bão chưa dứt.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nGiông bão kéo đến. Giông bão chưa dứt.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nGiông bão kéo đến. Giông bão chưa dứt.\nKhông ai nói thêm điều gì nữa.\nGiông bão kéo đến. Giông bão chưa dứt."
+   ],
+   "picker": {
+    "version": 7,
+    "cap": 3,
+    "title_weight": 5.0,
+    "min_score": 4.0,
+    "default": "calm",
+    "order": [
+     "calm",
+     "storm",
+     "dusk"
+    ],
+    "playlists": {
+     "calm": {
+      "title": [
+       "yen"
+      ],
+      "text": {
+       "gió nhẹ": 1
+      }
+     },
+     "storm": {
+      "title": [
+       "bao"
+      ],
+      "text": {
+       "giông bão": 2,
+       "sấm": 1
+      }
+     },
+     "dusk": {
+      "title": [],
+      "text": {
+       "hoàng hôn": 2.5
+      },
+      "prior": 0.5
+     }
+    }
+   },
+   "expect": "storm",
+   "scores": {
+    "calm": 0.0,
+    "storm": 6.0,
+    "dusk": 0.5
+   }
+  },
+  {
+   "name": "prior_and_fractions_add_up",
+   "title": "Bão Yên",
+   "chapters": [
+    "Hoàng hôn buông. Hoàng hôn đỏ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHoàng hôn buông. Hoàng hôn đỏ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nHoàng hôn buông. Hoàng hôn đỏ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHoàng hôn buông. Hoàng hôn đỏ.\nKhông ai nói thêm điều gì nữa.\nHoàng hôn buông. Hoàng hôn đỏ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHoàng hôn buông. Hoàng hôn đỏ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nHoàng hôn buông. Hoàng hôn đỏ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHoàng hôn buông. Hoàng hôn đỏ.\nKhông ai nói thêm điều gì nữa.\nHoàng hôn buông. Hoàng hôn đỏ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHoàng hôn buông. Hoàng hôn đỏ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nHoàng hôn buông. Hoàng hôn đỏ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHoàng hôn buông. Hoàng hôn đỏ.\nKhông ai nói thêm điều gì nữa.\nHoàng hôn buông. Hoàng hôn đỏ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHoàng hôn buông. Hoàng hôn đỏ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nHoàng hôn buông. Hoàng hôn đỏ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHoàng hôn buông. Hoàng hôn đỏ.\nKhông ai nói thêm điều gì nữa.\nHoàng hôn buông. Hoàng hôn đỏ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHoàng hôn buông. Hoàng hôn đỏ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nHoàng hôn buông. Hoàng hôn đỏ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHoàng hôn buông. Hoàng hôn đỏ.\nKhông ai nói thêm điều gì nữa.\nHoàng hôn buông. Hoàng hôn đỏ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHoàng hôn buông. Hoàng hôn đỏ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nHoàng hôn buông. Hoàng hôn đỏ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi."
+   ],
+   "picker": {
+    "version": 7,
+    "cap": 3,
+    "title_weight": 5.0,
+    "min_score": 4.0,
+    "default": "calm",
+    "order": [
+     "calm",
+     "storm",
+     "dusk"
+    ],
+    "playlists": {
+     "calm": {
+      "title": [
+       "yen"
+      ],
+      "text": {
+       "gió nhẹ": 1
+      }
+     },
+     "storm": {
+      "title": [
+       "bao"
+      ],
+      "text": {
+       "giông bão": 2,
+       "sấm": 1
+      }
+     },
+     "dusk": {
+      "title": [],
+      "text": {
+       "hoàng hôn": 2.5
+      },
+      "prior": 0.5
+     }
+    }
+   },
+   "expect": "dusk",
+   "scores": {
+    "calm": 5.0,
+    "storm": 5.0,
+    "dusk": 8.0
+   }
+  },
+  {
+   "name": "order_names_a_list_without_text",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "Chiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ."
+   ],
+   "picker": {
+    "version": 7,
+    "cap": 3,
+    "title_weight": 5.0,
+    "min_score": 0.0,
+    "default": "calm",
+    "order": [
+     "ghost",
+     "calm"
+    ],
+    "playlists": {
+     "calm": {
+      "title": [
+       "yen"
+      ],
+      "text": {
+       "gió nhẹ": 1
+      }
+     },
+     "storm": {
+      "title": [
+       "bao"
+      ],
+      "text": {
+       "giông bão": 2,
+       "sấm": 1
+      }
+     },
+     "dusk": {
+      "title": [],
+      "text": {
+       "hoàng hôn": 2.5
+      },
+      "prior": 0.5
+     }
+    }
+   },
+   "expect": "ghost",
+   "scores": {
+    "calm": 0.0,
+    "storm": 0.0,
+    "dusk": 0.5
+   }
+  },
+  {
+   "name": "no_picker_means_no_pick",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "Hắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nKhông ai nói thêm điều gì nữa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nKhông ai nói thêm điều gì nữa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ."
+   ],
+   "picker": null,
+   "expect": null,
+   "scores": null
+  },
+  {
+   "name": "malformed_picker_means_no_pick",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "Hắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nKhông ai nói thêm điều gì nữa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nKhông ai nói thêm điều gì nữa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ."
+   ],
+   "picker": {
+    "version": 1,
+    "order": "calm"
+   },
+   "expect": null,
+   "scores": null
+  }
+ ],
+ "selection": [
+  {
+   "name": "valid_picker_in_the_manifest",
+   "manifest": {
+    "format": "abook-music-catalog",
+    "version": 1,
+    "revision": "r1",
+    "playlists": [
+     {
+      "id": "a",
+      "name": "a",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/a.mp3"
+      ]
+     },
+     {
+      "id": "b",
+      "name": "b",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/b.mp3"
+      ]
+     }
+    ],
+    "playlistPicker": {
+     "version": 3,
+     "cap": 5,
+     "title_weight": 12.0,
+     "min_score": 4.0,
+     "default": "b",
+     "order": [
+      "a",
+      "b"
+     ],
+     "playlists": {
+      "a": {
+       "title": [
+        "alpha"
+       ],
+       "text": {
+        "bão tố": 2
+       }
+      },
+      "b": {
+       "title": [
+        "beta"
+       ],
+       "text": {
+        "nắng": 1
+       }
+      }
+     }
+    }
+   },
+   "source": "manifest",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "Bão tố đổ xuống. Bão tố chưa dứt.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBão tố đổ xuống. Bão tố chưa dứt.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nBão tố đổ xuống. Bão tố chưa dứt.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBão tố đổ xuống. Bão tố chưa dứt.\nKhông ai nói thêm điều gì nữa.\nBão tố đổ xuống. Bão tố chưa dứt.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBão tố đổ xuống. Bão tố chưa dứt.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nBão tố đổ xuống. Bão tố chưa dứt.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBão tố đổ xuống. Bão tố chưa dứt.\nKhông ai nói thêm điều gì nữa.\nBão tố đổ xuống. Bão tố chưa dứt.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBão tố đổ xuống. Bão tố chưa dứt.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nBão tố đổ xuống. Bão tố chưa dứt.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBão tố đổ xuống. Bão tố chưa dứt.\nKhông ai nói thêm điều gì nữa.\nBão tố đổ xuống. Bão tố chưa dứt.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBão tố đổ xuống. Bão tố chưa dứt.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nBão tố đổ xuống. Bão tố chưa dứt.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBão tố đổ xuống. Bão tố chưa dứt.\nKhông ai nói thêm điều gì nữa.\nBão tố đổ xuống. Bão tố chưa dứt.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBão tố đổ xuống. Bão tố chưa dứt.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nBão tố đổ xuống. Bão tố chưa dứt.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBão tố đổ xuống. Bão tố chưa dứt.\nKhông ai nói thêm điều gì nữa.\nBão tố đổ xuống. Bão tố chưa dứt.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBão tố đổ xuống. Bão tố chưa dứt.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân."
+   ],
+   "expect": "a"
+  },
+  {
+   "name": "manifest_picker_may_name_fewer_lists",
+   "manifest": {
+    "format": "abook-music-catalog",
+    "version": 1,
+    "revision": "r1",
+    "playlists": [
+     {
+      "id": "a",
+      "name": "a",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/a.mp3"
+      ]
+     },
+     {
+      "id": "b",
+      "name": "b",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/b.mp3"
+      ]
+     },
+     {
+      "id": "c",
+      "name": "c",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/c.mp3"
+      ]
+     }
+    ],
+    "playlistPicker": {
+     "version": 3,
+     "cap": 5,
+     "title_weight": 12.0,
+     "min_score": 4.0,
+     "default": "b",
+     "order": [
+      "a",
+      "b"
+     ],
+     "playlists": {
+      "a": {
+       "title": [
+        "alpha"
+       ],
+       "text": {
+        "bão tố": 2
+       }
+      },
+      "b": {
+       "title": [
+        "beta"
+       ],
+       "text": {
+        "nắng": 1
+       }
+      }
+     }
+    }
+   },
+   "source": "manifest",
+   "title": "Alpha",
+   "chapters": [
+    "Chiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nChiếc đèn trên bàn vẫn sáng.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ.\nKhông ai nói thêm điều gì nữa.\nChiếc đèn trên bàn vẫn sáng.\nTrời đã về chiều, gió thổi qua bậu cửa.\nBà đặt tách trà xuống rồi nhìn ra cửa sổ."
+   ],
+   "expect": "a"
+  },
+  {
+   "name": "no_picker_in_the_manifest",
+   "manifest": {
+    "format": "abook-music-catalog",
+    "version": 1,
+    "revision": "r1",
+    "playlists": [
+     {
+      "id": "a",
+      "name": "a",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/a.mp3"
+      ]
+     },
+     {
+      "id": "b",
+      "name": "b",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/b.mp3"
+      ]
+     }
+    ]
+   },
+   "source": "bundled",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "Hắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nKhông ai nói thêm điều gì nữa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nKhông ai nói thêm điều gì nữa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ."
+   ],
+   "expect": "eastern"
+  },
+  {
+   "name": "no_manifest_yet",
+   "manifest": null,
+   "source": "bundled",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "Hắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nKhông ai nói thêm điều gì nữa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nKhông ai nói thêm điều gì nữa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ."
+   ],
+   "expect": "eastern"
+  },
+  {
+   "name": "empty_manifest",
+   "manifest": {},
+   "source": "bundled",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "Hắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nKhông ai nói thêm điều gì nữa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nKhông ai nói thêm điều gì nữa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ."
+   ],
+   "expect": "eastern"
+  },
+  {
+   "name": "invalid_default_not_in_the_catalogue_falls_back_to_the_bundled_one",
+   "manifest": {
+    "format": "abook-music-catalog",
+    "version": 1,
+    "revision": "r1",
+    "playlists": [
+     {
+      "id": "a",
+      "name": "a",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/a.mp3"
+      ]
+     },
+     {
+      "id": "b",
+      "name": "b",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/b.mp3"
+      ]
+     }
+    ],
+    "playlistPicker": {
+     "version": 3,
+     "cap": 5,
+     "title_weight": 12.0,
+     "min_score": 4.0,
+     "default": "z",
+     "order": [
+      "a",
+      "b"
+     ],
+     "playlists": {
+      "a": {
+       "title": [
+        "alpha"
+       ],
+       "text": {
+        "bão tố": 2
+       }
+      },
+      "b": {
+       "title": [
+        "beta"
+       ],
+       "text": {
+        "nắng": 1
+       }
+      }
+     }
+    }
+   },
+   "source": "bundled",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "Hắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nKhông ai nói thêm điều gì nữa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nKhông ai nói thêm điều gì nữa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ."
+   ],
+   "expect": "eastern"
+  },
+  {
+   "name": "invalid_order_names_a_list_the_catalogue_lacks_falls_back_to_the_bundled_one",
+   "manifest": {
+    "format": "abook-music-catalog",
+    "version": 1,
+    "revision": "r1",
+    "playlists": [
+     {
+      "id": "a",
+      "name": "a",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/a.mp3"
+      ]
+     },
+     {
+      "id": "b",
+      "name": "b",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/b.mp3"
+      ]
+     }
+    ],
+    "playlistPicker": {
+     "version": 3,
+     "cap": 5,
+     "title_weight": 12.0,
+     "min_score": 4.0,
+     "default": "b",
+     "order": [
+      "a",
+      "z"
+     ],
+     "playlists": {
+      "a": {
+       "title": [
+        "alpha"
+       ],
+       "text": {
+        "bão tố": 2
+       }
+      },
+      "b": {
+       "title": [
+        "beta"
+       ],
+       "text": {
+        "nắng": 1
+       }
+      }
+     }
+    }
+   },
+   "source": "bundled",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "Hắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nKhông ai nói thêm điều gì nữa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nKhông ai nói thêm điều gì nữa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ."
+   ],
+   "expect": "eastern"
+  },
+  {
+   "name": "invalid_playlists_name_a_list_the_catalogue_lacks_falls_back_to_the_bundled_one",
+   "manifest": {
+    "format": "abook-music-catalog",
+    "version": 1,
+    "revision": "r1",
+    "playlists": [
+     {
+      "id": "a",
+      "name": "a",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/a.mp3"
+      ]
+     },
+     {
+      "id": "b",
+      "name": "b",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/b.mp3"
+      ]
+     }
+    ],
+    "playlistPicker": {
+     "version": 3,
+     "cap": 5,
+     "title_weight": 12.0,
+     "min_score": 4.0,
+     "default": "b",
+     "order": [
+      "a",
+      "b"
+     ],
+     "playlists": {
+      "a": {
+       "title": [],
+       "text": {}
+      },
+      "z": {
+       "title": [],
+       "text": {}
+      }
+     }
+    }
+   },
+   "source": "bundled",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "Hắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nKhông ai nói thêm điều gì nữa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nKhông ai nói thêm điều gì nữa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ."
+   ],
+   "expect": "eastern"
+  },
+  {
+   "name": "invalid_version_is_not_an_integer_falls_back_to_the_bundled_one",
+   "manifest": {
+    "format": "abook-music-catalog",
+    "version": 1,
+    "revision": "r1",
+    "playlists": [
+     {
+      "id": "a",
+      "name": "a",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/a.mp3"
+      ]
+     },
+     {
+      "id": "b",
+      "name": "b",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/b.mp3"
+      ]
+     }
+    ],
+    "playlistPicker": {
+     "version": "3",
+     "cap": 5,
+     "title_weight": 12.0,
+     "min_score": 4.0,
+     "default": "b",
+     "order": [
+      "a",
+      "b"
+     ],
+     "playlists": {
+      "a": {
+       "title": [
+        "alpha"
+       ],
+       "text": {
+        "bão tố": 2
+       }
+      },
+      "b": {
+       "title": [
+        "beta"
+       ],
+       "text": {
+        "nắng": 1
+       }
+      }
+     }
+    }
+   },
+   "source": "bundled",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "Hắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nKhông ai nói thêm điều gì nữa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nKhông ai nói thêm điều gì nữa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ."
+   ],
+   "expect": "eastern"
+  },
+  {
+   "name": "invalid_version_is_a_boolean_falls_back_to_the_bundled_one",
+   "manifest": {
+    "format": "abook-music-catalog",
+    "version": 1,
+    "revision": "r1",
+    "playlists": [
+     {
+      "id": "a",
+      "name": "a",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/a.mp3"
+      ]
+     },
+     {
+      "id": "b",
+      "name": "b",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/b.mp3"
+      ]
+     }
+    ],
+    "playlistPicker": {
+     "version": true,
+     "cap": 5,
+     "title_weight": 12.0,
+     "min_score": 4.0,
+     "default": "b",
+     "order": [
+      "a",
+      "b"
+     ],
+     "playlists": {
+      "a": {
+       "title": [
+        "alpha"
+       ],
+       "text": {
+        "bão tố": 2
+       }
+      },
+      "b": {
+       "title": [
+        "beta"
+       ],
+       "text": {
+        "nắng": 1
+       }
+      }
+     }
+    }
+   },
+   "source": "bundled",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "Hắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nKhông ai nói thêm điều gì nữa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nKhông ai nói thêm điều gì nữa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ."
+   ],
+   "expect": "eastern"
+  },
+  {
+   "name": "invalid_cap_is_text_falls_back_to_the_bundled_one",
+   "manifest": {
+    "format": "abook-music-catalog",
+    "version": 1,
+    "revision": "r1",
+    "playlists": [
+     {
+      "id": "a",
+      "name": "a",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/a.mp3"
+      ]
+     },
+     {
+      "id": "b",
+      "name": "b",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/b.mp3"
+      ]
+     }
+    ],
+    "playlistPicker": {
+     "version": 3,
+     "cap": "5",
+     "title_weight": 12.0,
+     "min_score": 4.0,
+     "default": "b",
+     "order": [
+      "a",
+      "b"
+     ],
+     "playlists": {
+      "a": {
+       "title": [
+        "alpha"
+       ],
+       "text": {
+        "bão tố": 2
+       }
+      },
+      "b": {
+       "title": [
+        "beta"
+       ],
+       "text": {
+        "nắng": 1
+       }
+      }
+     }
+    }
+   },
+   "source": "bundled",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "Hắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nKhông ai nói thêm điều gì nữa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nKhông ai nói thêm điều gì nữa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ."
+   ],
+   "expect": "eastern"
+  },
+  {
+   "name": "invalid_title_weight_is_missing_falls_back_to_the_bundled_one",
+   "manifest": {
+    "format": "abook-music-catalog",
+    "version": 1,
+    "revision": "r1",
+    "playlists": [
+     {
+      "id": "a",
+      "name": "a",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/a.mp3"
+      ]
+     },
+     {
+      "id": "b",
+      "name": "b",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/b.mp3"
+      ]
+     }
+    ],
+    "playlistPicker": {
+     "version": 3,
+     "cap": 5,
+     "min_score": 4.0,
+     "default": "b",
+     "order": [
+      "a",
+      "b"
+     ],
+     "playlists": {
+      "a": {
+       "title": [
+        "alpha"
+       ],
+       "text": {
+        "bão tố": 2
+       }
+      },
+      "b": {
+       "title": [
+        "beta"
+       ],
+       "text": {
+        "nắng": 1
+       }
+      }
+     }
+    }
+   },
+   "source": "bundled",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "Hắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nKhông ai nói thêm điều gì nữa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nKhông ai nói thêm điều gì nữa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ."
+   ],
+   "expect": "eastern"
+  },
+  {
+   "name": "invalid_min_score_is_a_boolean_falls_back_to_the_bundled_one",
+   "manifest": {
+    "format": "abook-music-catalog",
+    "version": 1,
+    "revision": "r1",
+    "playlists": [
+     {
+      "id": "a",
+      "name": "a",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/a.mp3"
+      ]
+     },
+     {
+      "id": "b",
+      "name": "b",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/b.mp3"
+      ]
+     }
+    ],
+    "playlistPicker": {
+     "version": 3,
+     "cap": 5,
+     "title_weight": 12.0,
+     "min_score": false,
+     "default": "b",
+     "order": [
+      "a",
+      "b"
+     ],
+     "playlists": {
+      "a": {
+       "title": [
+        "alpha"
+       ],
+       "text": {
+        "bão tố": 2
+       }
+      },
+      "b": {
+       "title": [
+        "beta"
+       ],
+       "text": {
+        "nắng": 1
+       }
+      }
+     }
+    }
+   },
+   "source": "bundled",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "Hắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nKhông ai nói thêm điều gì nữa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nKhông ai nói thêm điều gì nữa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ."
+   ],
+   "expect": "eastern"
+  },
+  {
+   "name": "invalid_a_text_weight_is_text_falls_back_to_the_bundled_one",
+   "manifest": {
+    "format": "abook-music-catalog",
+    "version": 1,
+    "revision": "r1",
+    "playlists": [
+     {
+      "id": "a",
+      "name": "a",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/a.mp3"
+      ]
+     },
+     {
+      "id": "b",
+      "name": "b",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/b.mp3"
+      ]
+     }
+    ],
+    "playlistPicker": {
+     "version": 3,
+     "cap": 5,
+     "title_weight": 12.0,
+     "min_score": 4.0,
+     "default": "b",
+     "order": [
+      "a",
+      "b"
+     ],
+     "playlists": {
+      "a": {
+       "title": [],
+       "text": {
+        "bão tố": "2"
+       }
+      },
+      "b": {
+       "title": [],
+       "text": {}
+      }
+     }
+    }
+   },
+   "source": "bundled",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "Hắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nKhông ai nói thêm điều gì nữa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nKhông ai nói thêm điều gì nữa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ."
+   ],
+   "expect": "eastern"
+  },
+  {
+   "name": "invalid_a_title_entry_is_a_number_falls_back_to_the_bundled_one",
+   "manifest": {
+    "format": "abook-music-catalog",
+    "version": 1,
+    "revision": "r1",
+    "playlists": [
+     {
+      "id": "a",
+      "name": "a",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/a.mp3"
+      ]
+     },
+     {
+      "id": "b",
+      "name": "b",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/b.mp3"
+      ]
+     }
+    ],
+    "playlistPicker": {
+     "version": 3,
+     "cap": 5,
+     "title_weight": 12.0,
+     "min_score": 4.0,
+     "default": "b",
+     "order": [
+      "a",
+      "b"
+     ],
+     "playlists": {
+      "a": {
+       "title": [
+        7
+       ],
+       "text": {}
+      },
+      "b": {
+       "title": [],
+       "text": {}
+      }
+     }
+    }
+   },
+   "source": "bundled",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "Hắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nKhông ai nói thêm điều gì nữa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nKhông ai nói thêm điều gì nữa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ."
+   ],
+   "expect": "eastern"
+  },
+  {
+   "name": "invalid_prior_is_text_falls_back_to_the_bundled_one",
+   "manifest": {
+    "format": "abook-music-catalog",
+    "version": 1,
+    "revision": "r1",
+    "playlists": [
+     {
+      "id": "a",
+      "name": "a",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/a.mp3"
+      ]
+     },
+     {
+      "id": "b",
+      "name": "b",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/b.mp3"
+      ]
+     }
+    ],
+    "playlistPicker": {
+     "version": 3,
+     "cap": 5,
+     "title_weight": 12.0,
+     "min_score": 4.0,
+     "default": "b",
+     "order": [
+      "a",
+      "b"
+     ],
+     "playlists": {
+      "a": {
+       "title": [],
+       "text": {},
+       "prior": "x"
+      },
+      "b": {
+       "title": [],
+       "text": {}
+      }
+     }
+    }
+   },
+   "source": "bundled",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "Hắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nKhông ai nói thêm điều gì nữa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nKhông ai nói thêm điều gì nữa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ."
+   ],
+   "expect": "eastern"
+  },
+  {
+   "name": "invalid_order_is_empty_falls_back_to_the_bundled_one",
+   "manifest": {
+    "format": "abook-music-catalog",
+    "version": 1,
+    "revision": "r1",
+    "playlists": [
+     {
+      "id": "a",
+      "name": "a",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/a.mp3"
+      ]
+     },
+     {
+      "id": "b",
+      "name": "b",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/b.mp3"
+      ]
+     }
+    ],
+    "playlistPicker": {
+     "version": 3,
+     "cap": 5,
+     "title_weight": 12.0,
+     "min_score": 4.0,
+     "default": "b",
+     "order": [],
+     "playlists": {
+      "a": {
+       "title": [
+        "alpha"
+       ],
+       "text": {
+        "bão tố": 2
+       }
+      },
+      "b": {
+       "title": [
+        "beta"
+       ],
+       "text": {
+        "nắng": 1
+       }
+      }
+     }
+    }
+   },
+   "source": "bundled",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "Hắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nKhông ai nói thêm điều gì nữa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nKhông ai nói thêm điều gì nữa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ."
+   ],
+   "expect": "eastern"
+  },
+  {
+   "name": "invalid_picker_is_not_an_object_falls_back_to_the_bundled_one",
+   "manifest": {
+    "format": "abook-music-catalog",
+    "version": 1,
+    "revision": "r1",
+    "playlists": [
+     {
+      "id": "a",
+      "name": "a",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/a.mp3"
+      ]
+     },
+     {
+      "id": "b",
+      "name": "b",
+      "description": "",
+      "minutes": 5,
+      "tracks": [
+       "https://x/b.mp3"
+      ]
+     }
+    ],
+    "playlistPicker": [
+     "a",
+     "b"
+    ]
+   },
+   "source": "bundled",
+   "title": "Một cuốn sách",
+   "chapters": [
+    "Hắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nKhông ai nói thêm điều gì nữa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nTrời đã về chiều, gió thổi qua bậu cửa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nKhông ai nói thêm điều gì nữa.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nTrời đã về chiều, gió thổi qua bậu cửa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nAnh ngồi yên một lúc rồi đứng dậy đi ra phía sân.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ.\nCon đường trước mặt dài và vắng, chỉ có vài chiếc lá rơi.\nHắn ngồi tu luyện suốt đêm, linh khí quanh đan điền dần đặc lại.\nKhông ai nói thêm điều gì nữa.\nĐạo hữu ở tông môn bên kia vừa đến thăm.\nTrời đã về chiều, gió thổi qua bậu cửa.\nTrưởng lão nói cảnh giới của hắn đã chạm tới trúc cơ."
+   ],
+   "expect": "eastern"
+  }
+ ]
+}
