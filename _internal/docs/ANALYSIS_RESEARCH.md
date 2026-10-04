@@ -7,12 +7,20 @@ Model phân tích quyết định mỗi câu do AI đọc: người nói (-> gi�
 nhịp, âm lượng, giới tính. Sai người nói là lỗi người nghe nhận ra ngay (giọng sai người). Tài liệu này là bản đồ: mục
 tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM với trạng thái. Chi tiết số đo từng lượt ở `LLM_EVAL.md`.
 
-## Luật chọn model: CHÍNH XÁC >> tốc độ (chủ sách, 04-10)
+## Luật chọn model: CHÍNH XÁC trước, nhưng ĐONG ĐẾM giá (chủ sách, 04-10)
 
-Mọi lựa chọn model phân tích xếp theo độ chính xác, không theo tốc độ hay hiệu năng. Mặc định được chọn vì đúng hơn, không vì
-nhanh hơn. Chấp nhận: tách hai lượt (người nói rồi cảm xúc, +20-30 % thời gian), cửa sổ rộng hơn (vd 9 đoạn), model to hơn nếu
-chính xác hơn (9B Q4 vừa card 8 GB). Giới hạn DUY NHẤT: phải CHẠY được trên máy người dùng (card 8 GB / Mac 16 GB) - chạy được,
-không phải chạy nhanh.
+- **Đích số một là card 8 GB của chủ sách**: model, lượng tử, ngữ cảnh phải nằm 100 % trên GPU ở đó, đo thật trên máy nhà.
+  Mac 16 GB chỉ là thứ yếu - model chỉ chạy được nhờ Mac không làm mặc định.
+- Xếp theo độ chính xác, không theo tốc độ: tách hai lượt, cửa sổ rộng hơn, model to hơn đều được nếu đúng hơn RÕ.
+- Nhưng "chậm hơn, RAM to hơn nhiều mà chính xác thêm chút xíu thì phải xem xét". Mọi phương án (B8/B9/B10/E2, model mặc
+  định) báo CẢ lợi (F1 giọng TB hạt, hạt tệ nhất, CI) LẪN giá đo thật trên card nhà (thời gian phân tích/chương so với v8,
+  VRAM đỉnh, RAM). Quyết:
+  - lợi trong nhiễu hạt (~2 điểm) mà giá >= 1,5x thời gian hoặc VRAM sát trần 8 GB -> KHÔNG lấy;
+  - lợi vượt nhiễu rõ -> lấy dù chậm;
+  - giáp ranh -> đưa bảng lợi/giá cho chủ sách quyết.
+- Giá đo bằng `LLM_Train/runs/cost_logger.py` (mỗi 10 s: VRAM card, % GPU, size_vram model Ollama, RAM) đối chiếu khung giờ
+  từng lượt trong sổ hàng GPU; thời gian/chương lấy từ eval_models.json. Mốc 04-10: 4B v8 Q8_0 = 5.248 MiB VRAM (card dùng
+  ~5,9/8,15 GB khi chạy).
 
 ## Luật làm việc (rút từ sai lầm)
 
