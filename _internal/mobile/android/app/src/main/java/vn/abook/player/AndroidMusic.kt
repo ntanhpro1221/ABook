@@ -143,14 +143,21 @@ object AndroidLoudness : MusicStore.LoudnessMeter {
 object DeviceMusic {
     private var store: MusicStore? = null
     private var catalog: MusicCatalog? = null
+    private var remote: RemoteConfig? = null
 
     @Synchronized
     fun store(context: Context): MusicStore = store
         ?: MusicStore(File(context.applicationContext.filesDir, "music/mine"), AndroidMusicTags, AndroidLoudness).also { store = it }
 
+    /** Cấu hình từ xa có chữ ký (địa chỉ danh mục nhạc lấy ở đây, không ghi cứng): bản tốt cất ở `filesDir` - mốc `issued` không được mất khi hệ thống dọn bộ đệm. */
+    @Synchronized
+    fun remoteConfig(context: Context): RemoteConfig = remote
+        ?: RemoteConfig(File(context.applicationContext.filesDir, "remote-config")).also { remote = it }
+
+    /** Không gọi mạng ở đây (có thể chạy ở luồng giao diện): địa chỉ danh mục hỏi cấu hình từ xa ở lần cần mạng đầu tiên, trên luồng nền của người gọi. */
     @Synchronized
     fun catalog(context: Context): MusicCatalog = catalog
-        ?: MusicCatalog(File(context.applicationContext.cacheDir, "music-catalog")).also { catalog = it }
+        ?: MusicCatalog(File(context.applicationContext.cacheDir, "music-catalog"), { remoteConfig(context).musicCatalogs().first() }).also { catalog = it }
 
     private var picker: JSONObject? = null
     private var pickerRead = false

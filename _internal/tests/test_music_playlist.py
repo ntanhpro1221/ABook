@@ -16,6 +16,7 @@ from abook.webui import book_edits, music_plan, music_playlist
 from abook.webui.music_catalog import MusicCatalog
 from abook.webui.server import Server
 from tests.test_music_catalog_and_select import TRACKS, _catalog_dir
+from tests.catalog_signing import TEST_PUBLIC_KEY
 from tests.test_text_books import IMPORTS
 from tests.test_project_file import _app
 from tests.test_webui_listen_and_sync import _request
@@ -38,13 +39,7 @@ PLAYLISTS = [
 
 
 def _cloud(root: Path, picker: dict | None = None) -> Path:
-    cloud = _catalog_dir(root)
-    manifest = json.loads((cloud / "manifest.json").read_text(encoding="utf-8"))
-    manifest["playlists"] = PLAYLISTS
-    if picker is not None:
-        manifest["playlistPicker"] = picker
-    (cloud / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
-    return cloud
+    return _catalog_dir(root, playlists=PLAYLISTS, **({"playlistPicker": picker} if picker is not None else {}))
 
 
 # ---- danh mục ----------------------------------------------------------------------------------------------------------
@@ -60,7 +55,7 @@ def test_only_well_formed_playlists_of_the_catalogue_are_offered() -> None:
 
 
 def test_the_queue_keeps_the_shuffled_order_and_skips_what_this_machine_cannot_play(tmp_path: Path) -> None:
-    catalog = MusicCatalog(tmp_path / "cache", str(_cloud(tmp_path / "cloud")))
+    catalog = MusicCatalog(tmp_path / "cache", str(_cloud(tmp_path / "cloud")), public_key=TEST_PUBLIC_KEY)
     links = music_playlist.links_of(catalog.playlists(), "calm")
     assert links == CALM and music_playlist.links_of(catalog.playlists(), "gone") == []
     info = catalog.lookup(links)
@@ -70,7 +65,7 @@ def test_the_queue_keeps_the_shuffled_order_and_skips_what_this_machine_cannot_p
 
 
 def test_looking_up_a_whole_playlist_fetches_every_shard_it_touches(tmp_path: Path) -> None:
-    catalog = MusicCatalog(tmp_path / "cache", str(_cloud(tmp_path / "cloud")))
+    catalog = MusicCatalog(tmp_path / "cache", str(_cloud(tmp_path / "cloud")), public_key=TEST_PUBLIC_KEY)
     assert set(catalog.lookup(list(TRACKS))) == set(TRACKS)
 
 
@@ -137,7 +132,7 @@ def test_the_choice_is_a_listener_edit_that_counts_dumps_and_merges() -> None:
 
 def _text_book_server(tmp_path: Path, picker: dict | None = CATALOGUE_PICKER):
     app = _app(tmp_path / "studio", tmp_path / "thu_vien")
-    app._music_catalog = MusicCatalog(tmp_path / "music_cache", str(_cloud(tmp_path / "cloud", picker)))
+    app._music_catalog = MusicCatalog(tmp_path / "music_cache", str(_cloud(tmp_path / "cloud", picker)), public_key=TEST_PUBLIC_KEY)
     added = app.add_text_book(str(IMPORTS / "epub3.epub"))
     return app, added["id"], Server(app, port=0).start()
 
@@ -274,7 +269,7 @@ def test_a_book_with_its_makers_music_keeps_the_scene_music(tmp_path: Path) -> N
     from tests.book_edits_fixtures import BASE
 
     app = _app(tmp_path / "studio", tmp_path / "thu_vien")
-    app._music_catalog = MusicCatalog(tmp_path / "music_cache", str(_cloud(tmp_path / "cloud")))
+    app._music_catalog = MusicCatalog(tmp_path / "music_cache", str(_cloud(tmp_path / "cloud")), public_key=TEST_PUBLIC_KEY)
     folder = tmp_path / "sach"
     import shutil
 

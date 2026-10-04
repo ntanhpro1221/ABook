@@ -32,6 +32,15 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   nhạc (tu tiên thì nhạc phương Đông, kinh dị thì nhạc rùng rợn, dị giới thì nhạc phiêu lưu...); trên nửa số sách đo thử, danh sách máy chọn hợp tai hơn danh sách cố định khoảng 24 điểm phần
   trăm (đúng 84% so với 60%). Menu "Nhạc nền" hiện "Máy chọn: <tên danh sách>"; muốn khác thì chọn một danh sách cụ thể, "Tắt" để không nhạc, hoặc "Để máy chọn" để máy chọn lại. Máy mới
   chưa tải danh mục nhạc vẫn chọn được ngay (tên danh sách có ngay, bài nhạc tải khi có mạng). Sách đã chọn nhạc từ trước giữ nguyên lựa chọn; sách nhạc do người làm sách gắn không đổi.
+- Danh mục nhạc nền giờ có chữ ký (máy tính và điện thoại): app chỉ dùng danh mục và các mảnh danh sách nhạc đúng bản của ABook, nên không ai tráo được bài hay link nhạc giữa đường tải về.
+  Danh mục đổi giữa chừng, bị sửa, hay là bản cũ dựng lại thì app giữ danh mục đã tải trước đó và không bao giờ mở link lạ; lần đầu mà chưa có bản hợp lệ thì "Nghe ngay" vẫn chọn được danh sách
+  nhạc, bài nhạc chỉ tải khi có danh mục hợp lệ. Điện thoại cũng đọc nơi đặt danh mục từ cấu hình từ xa có chữ ký như máy tính (làm mới mỗi 6 giờ), nên đổi chỗ đặt danh mục không cần cập nhật app.
+  Bản APK nặng thêm khoảng 1 MB.
+
+### Điện thoại
+
+- App điện thoại nhẹ hơn nhiều khi tải về: file cài đặt giảm từ khoảng 9,5 MB xuống khoảng 4 MB (bỏ phần mã và hình ảnh không dùng tới). Mọi việc app làm
+  vẫn như cũ: thêm sách từ file, mở .abook, nghe ngay bằng giọng Edge hay VieNeu, nhạc nền, phát nền và tai nghe.
 
 ## [0.4.25] - 2026-10-04
 
