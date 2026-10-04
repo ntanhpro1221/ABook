@@ -12,7 +12,6 @@ import numpy as np
 
 from .io_utils import strip_lone_surrogates
 import soundfile as sf
-from scipy.signal import resample_poly
 
 from .asr_contract import (
     ASR_MIN_VERIFIABLE_CHARS,
@@ -21,6 +20,7 @@ from .asr_contract import (
     LOCKED_NAME_ANCHOR_METRICS_VERSION,
     SHORT_CONTEXT_REPEAT_COUNT,
 )
+from .audio_io import resample_audio
 from .resource_manager import trim_process_working_set
 from .text_processing import is_vocalization_only, vietnamese_number_words
 
@@ -1671,14 +1671,7 @@ def load_audio_for_whisper(path: Path) -> np.ndarray:
     array = np.asarray(audio, dtype=np.float32)
     if array.ndim != 1:
         raise RuntimeError(f"Whisper input must be mono, got shape {array.shape}")
-    if int(sample_rate) != WHISPER_SAMPLE_RATE:
-        divisor = math.gcd(int(sample_rate), WHISPER_SAMPLE_RATE)
-        array = resample_poly(
-            array,
-            WHISPER_SAMPLE_RATE // divisor,
-            int(sample_rate) // divisor,
-        ).astype(np.float32, copy=False)
-    return array
+    return resample_audio(array, int(sample_rate), WHISPER_SAMPLE_RATE)
 
 
 class WhisperVerifier:

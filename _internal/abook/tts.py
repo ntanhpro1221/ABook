@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import gc
 import hashlib
+import math
+import os
 import random
 import re
 from pathlib import Path
@@ -11,11 +13,13 @@ import numpy as np
 import pyworld
 
 from .audio_io import (
+    VIENEU_V3_FRAME_SECONDS,
     VOICE_BALANCE_FIELD,
     AudioQualityError,
     SegmentDurationPolicy,
     atomic_write_wav,
     is_short_utterance,
+    resample_audio,
     segment_duration_policy,
     vieneu_generation_reached_frame_ceiling,
 )
@@ -79,8 +83,11 @@ FATAL_TTS_MARKERS = (
     "cudnn",
     "no module named",
     "thiếu vieneu",
+    "thiếu máy đọc",
     "locked vieneu preset",
-    "only vieneu profiles",
+    "locked zerotts preset",
+    "locked supertonic preset",
+    "unknown tts engine",
 )
 # Somebody else's memory pressure, which ends when they end. Release what this process
 # holds, wait, and try the attempt again.
@@ -536,13 +543,104 @@ def vieneu_sampling_for_segment(
     }
 
 
-class VieNeuEngine:
+class EngineAdapter:
+    """Một máy đọc của Studio: nạp / bỏ, tần số mẫu của chính nó, danh sách giọng, đọc MỘT câu.
+
+    Điều phối viên (`TTSCoordinator`) giữ mỗi máy một adapter theo `voice_profiles.engine`, nạp LƯỜI khi cuốn có
+    giọng của máy ấy, rồi đổi bản thu về tần số dự án trước mọi bước sau (cao độ, tempo, độ to). Hạt giống theo
+    câu như VieNeu (`generation_seed`): cùng câu cùng giọng ra cùng audio.
+
+    `native_tempo`: máy tự đọc nhanh/chậm theo tham số của nó (`engine_speed` của bảng cân bằng) thay vì kéo giãn
+    bản thu bằng WSOLA - `generate_one` nhận `speed` và điều phối viên không kéo giãn nữa.
+
+    `MAX_CHUNK_CHARS`: câu dài hơn thì đọc thành nhiều lần gọi (`chunks`) rồi nối (`join_chunks`); None = một lần cho cả câu.
+    """
+
+    name = ""
+    label = ""
+    native_tempo = False
+    MAX_CHUNK_CHARS: int | None = None
+
     def __init__(self, settings: dict[str, Any], log: Callable[[str], None]) -> None:
         self.settings = settings
         self.log = log
-        self.tts = None
+        self.tts: Any = None
         self.sample_rate = int(settings["tts"]["sample_rate"])
         self.voices: list[str] = []
+
+    def load(self) -> None:
+        raise NotImplementedError
+
+    def unload(self) -> None:
+        had_model = self.tts is not None
+        self.tts = None
+        self.voices = []
+        if not had_model:
+            return
+        self.release_inference_cache()
+        trim_process_working_set()
+
+    @staticmethod
+    def release_inference_cache() -> None:
+        gc.collect()
+
+    def voice_for_profile(self, profile: Any) -> str:
+        self.load()
+        if str(profile["engine"]) != self.name:
+            raise AudioQualityError(
+                f"Unknown TTS engine pairing: {self.label} cannot read a {profile['engine']!r} profile ({profile['voice_key']})"
+            )
+        preset = str(profile["preset_name"] or "").strip()
+        if not preset or preset not in self.voices:
+            raise AudioQualityError(
+                f"Locked {self.label} preset {preset!r} is unavailable; refusing to change voice silently"
+            )
+        return preset
+
+    def generate_one(
+        self,
+        row: Any,
+        profile: Any,
+        seed: int,
+        *,
+        sampling: dict[str, float | int] | None = None,
+        speed: float | None = None,
+    ) -> np.ndarray:
+        """Đọc `row["text"]` bằng giọng của `profile`: float32 một kênh ở `self.sample_rate`."""
+        raise NotImplementedError
+
+    @classmethod
+    def chunks(cls, text: str) -> list[str]:
+        """Các lần gọi của một câu: nguyên câu nếu không quá `MAX_CHUNK_CHARS`, không thì cắt như "Nghe ngay" cắt cho VieNeu
+        (`readaloud.vieneu.units`: gộp câu liền kề tới ngưỡng, câu dài hơn cắt ở dấu phẩy rồi ở từ). Chỉ lấy chỗ cắt - chữ
+        đem đọc vẫn là chữ Studio đã chuẩn bị, không qua các phép đọc riêng của "Nghe ngay"."""
+        if cls.MAX_CHUNK_CHARS is None or len(text) <= cls.MAX_CHUNK_CHARS:
+            return [text]
+        from .readaloud.vieneu import units
+
+        toks, pieces = units(text, cls.MAX_CHUNK_CHARS)
+        return [piece.text(toks) for piece in pieces] or [text]
+
+
+# Mối nối giữa các lần gọi của một câu dài: lặng cứng, tạm thời (Model đang thử cách nối tốt hơn - đo 04-10: UTMOS thấp hơn
+# 0,15-0,4 so với gọi một lần). Thay cách nối ở `join_chunks`, không ở chỗ gọi.
+CHUNK_JOIN_SILENCE_SECONDS = 0.2
+
+
+def join_chunks(waves: list[np.ndarray], sample_rate: int) -> np.ndarray:
+    """Nối bản thu các lần gọi của một câu, theo thứ tự, cách nhau `CHUNK_JOIN_SILENCE_SECONDS` lặng."""
+    gap = np.zeros(int(round(CHUNK_JOIN_SILENCE_SECONDS * sample_rate)), dtype=np.float32)
+    parts: list[np.ndarray] = []
+    for index, wave in enumerate(waves):
+        if index:
+            parts.append(gap)
+        parts.append(np.asarray(wave, dtype=np.float32).reshape(-1))
+    return np.concatenate(parts) if parts else np.zeros(0, dtype=np.float32)
+
+
+class VieNeuEngine(EngineAdapter):
+    name = "vieneu"
+    label = "VieNeu"
 
     def load(self) -> None:
         if self.tts is not None:
@@ -566,15 +664,6 @@ class VieNeuEngine:
             raise RuntimeError("VieNeu không cung cấp preset voice nào")
         self.sample_rate = int(getattr(self.tts, "sample_rate", self.sample_rate))
 
-    def unload(self) -> None:
-        had_model = self.tts is not None
-        self.tts = None
-        self.voices = []
-        if not had_model:
-            return
-        self.release_inference_cache()
-        trim_process_working_set()
-
     @staticmethod
     def release_inference_cache() -> None:
         """Release temporary Python/CUDA allocations after a completed inference unit."""
@@ -587,19 +676,6 @@ class VieNeuEngine:
         except Exception:
             pass
 
-    def voice_for_profile(self, profile: Any) -> str:
-        self.load()
-        if str(profile["engine"]) != "vieneu":
-            raise AudioQualityError(
-                f"Only VieNeu profiles are supported; found {profile['engine']!r} for {profile['voice_key']}"
-            )
-        preset = str(profile["preset_name"] or "").strip()
-        if not preset or preset not in self.voices:
-            raise AudioQualityError(
-                f"Locked VieNeu preset {preset!r} is unavailable; refusing to change voice silently"
-            )
-        return preset
-
     def generate_one(
         self,
         row: Any,
@@ -607,6 +683,7 @@ class VieNeuEngine:
         seed: int,
         *,
         sampling: dict[str, float | int] | None = None,
+        speed: float | None = None,
     ) -> np.ndarray:
         self.load()
         _set_generation_seed(seed)
@@ -631,12 +708,162 @@ class VieNeuEngine:
             raise AudioQualityError(str(exc)) from exc
 
 
+# Đo 04-10 (ZeroTTS, câu 4 giây, máy dev đang bận ~50 % CPU): 4 luồng RTF 1,2-1,9; 8 luồng 1,4-2,0; 16 luồng 3,6-3,8 -
+# thêm luồng quá vài cái là giành nhau. Bản thu không đổi theo số luồng (cùng hạt giống ra cùng byte ở 4, 8, 16).
+ENGINE_THREADS_MAX = 4
+
+
+def _engine_threads() -> int:
+    """Số luồng CPU cho máy đọc ONNX: như worker của bể thu (`ABOOK_WORKER_THREADS`), không thì tối đa `ENGINE_THREADS_MAX`."""
+    configured = int(os.environ.get("ABOOK_WORKER_THREADS", "0") or 0)
+    return configured if configured > 0 else max(1, min(ENGINE_THREADS_MAX, (os.cpu_count() or 2) // 2))
+
+
+class ZeroTTSEngine(EngineAdapter):
+    """ZeroTTS (ZeroWeight AI, ONNX, CPU) từ mô-đun tải thêm `webui/zerotts_module.py`.
+
+    Lấy mẫu nằm trong đồ thị ONNX, nhưng số ngẫu nhiên do runtime bốc từ `np.random` - đặt hạt giống numpy là cùng câu
+    cùng giọng ra cùng audio. Tham số lấy mẫu giữ mặc định của gói (bộ đo cân bằng giọng dùng đúng mặc định ấy);
+    trần khung sinh lấy từ ngân sách thời lượng của câu (`max_new_frames` của `vieneu_sampling_for_segment`, tính bằng
+    khung VieNeu), đổi sang giây rồi sang khung 12,5 Hz của máy này.
+
+    RAM đỉnh tăng theo bình phương độ dài một lần gọi (docs/VOICE_BALANCE.md: 200 ký tự 2,0 GB, 400 ký tự 4,5 GB, 800 ký tự
+    14,5 GB và ASR sai 50 %), nên mỗi lần gọi tối đa 170 ký tự (~9 giây tiếng); câu dài hơn đọc thành nhiều lần gọi với cùng
+    chuỗi hạt giống rồi nối (`chunks`, `join_chunks`).
+    """
+
+    name = "zerotts"
+    label = "ZeroTTS"
+    MAX_CHUNK_CHARS = 170
+
+    def __init__(self, settings: dict[str, Any], log: Callable[[str], None]) -> None:
+        super().__init__(settings, log)
+        self._normalize: Callable[[str], str] = str
+
+    def load(self) -> None:
+        if self.tts is not None:
+            return
+        from .webui import zerotts_module
+
+        found = zerotts_module.locate()
+        if found is None:
+            raise RuntimeError("Thiếu máy đọc ZeroTTS: tải giọng ZeroTTS ở Đổi giọng của Studio rồi chạy tiếp")
+        engine_class = zerotts_module.import_engine(found)
+        from zerotts.text_norm import normalize_vi_text
+
+        self.log("Nạp ZeroTTS.")
+        self.tts = engine_class(found.model, intra_op_num_threads=_engine_threads(), warmup=True)
+        self._normalize = normalize_vi_text
+        self.voices = list(self.tts.list_voices())
+        self.sample_rate = int(self.tts.sample_rate)
+
+    def generate_one(
+        self,
+        row: Any,
+        profile: Any,
+        seed: int,
+        *,
+        sampling: dict[str, float | int] | None = None,
+        speed: float | None = None,
+    ) -> np.ndarray:
+        self.load()
+        voice = self.voice_for_profile(profile)
+        _set_generation_seed(seed)
+        frames = int((sampling or {}).get("max_new_frames") or _max_new_frames(row, self.settings))
+        max_frames = max(1, math.ceil(frames * VIENEU_V3_FRAME_SECONDS * float(self.tts.frame_rate)))
+        try:
+            waves = [
+                np.asarray(self.tts.synthesize(self._normalize(chunk), voice=voice, max_frames=max_frames), dtype=np.float32).reshape(-1)
+                for chunk in self.chunks(str(row["text"]))
+            ]
+        except Exception as exc:  # noqa: BLE001
+            raise AudioQualityError(str(exc)) from exc
+        return waves[0] if len(waves) == 1 else join_chunks(waves, self.sample_rate)
+
+
+# Câu ngắn ở tốc độ của cả giọng bị nuốt (53-79 % câu ngắn, CER ASR 53 %): tốc độ tăng dần theo số tiếng, gặp tốc độ của giọng
+# thì dừng - `min(engine_speed, 1,28 + 0,06·max(0, n − 2))`, n = số tiếng (docs/VOICE_BALANCE.md "Câu ngắn": 1,7 % nuốt, CER 9,7 %).
+SUPERTONIC_SHORT_SPEED = 1.28
+SUPERTONIC_SPEED_PER_SYLLABLE = 0.06
+
+
+def supertonic_speed(text: str, engine_speed: float) -> float:
+    """Tham số `speed` cho một lần gọi Supertonic: tốc độ của giọng, trừ câu ngắn (xem SUPERTONIC_SHORT_SPEED)."""
+    syllables = len(re.findall(r"\w+", text))
+    return min(float(engine_speed), SUPERTONIC_SHORT_SPEED + SUPERTONIC_SPEED_PER_SYLLABLE * max(0, syllables - 2))
+
+
+class SupertonicEngine(EngineAdapter):
+    """Supertonic 3 (ONNX, CPU) từ mô-đun "Giọng Supertonic" của Nghe ngay (một bản tải cho cả hai nơi), đọc qua đúng engine
+    của Nghe ngay (`readaloud/supertonic.py`). Tốc độ là tham số `speed` của máy: bảng cân bằng ghi `engine_speed` của từng
+    giọng (chỉnh lặp tới mốc) và `r` = 1, nên điều phối viên không kéo giãn bản thu; câu ngắn đọc chậm hơn (`supertonic_speed`).
+    Mỗi lần gọi tối đa 300 ký tự như hãng (`readaloud.supertonic.MAX_CHARS`).
+    """
+
+    name = "supertonic"
+    label = "Supertonic"
+    native_tempo = True
+    MAX_CHUNK_CHARS = 300
+
+    def load(self) -> None:
+        if self.tts is not None:
+            return
+        from .readaloud import supertonic
+        from .webui import supertonic_module
+
+        found = supertonic_module.locate()
+        if found is None:
+            raise RuntimeError("Thiếu máy đọc Supertonic: tải giọng Supertonic ở Đổi giọng của Studio rồi chạy tiếp")
+        self.log("Nạp Supertonic.")
+        self.tts = supertonic.SupertonicEngine(found.folder, _engine_threads())
+        self.voices = list(supertonic.NAMES)
+        self.sample_rate = int(self.tts.SAMPLE_RATE)
+
+    def generate_one(
+        self,
+        row: Any,
+        profile: Any,
+        seed: int,
+        *,
+        sampling: dict[str, float | int] | None = None,
+        speed: float | None = None,
+    ) -> np.ndarray:
+        from .readaloud import supertonic
+
+        self.load()
+        voice = self.voice_for_profile(profile)
+        if speed is None:
+            raise AudioQualityError(f"Unknown TTS engine speed for {profile['voice_key']}: Supertonic needs engine_speed")
+        rng = np.random.RandomState(seed % (2**32))
+        try:
+            waves = []
+            for chunk in self.chunks(str(row["text"])):
+                text = supertonic.normalize_pieces([chunk])
+                waves.append(np.asarray(self.tts.infer(text, voice, rng, speed=supertonic_speed(text, speed)), dtype=np.float32).reshape(-1))
+        except Exception as exc:  # noqa: BLE001
+            raise AudioQualityError(str(exc)) from exc
+        return waves[0] if len(waves) == 1 else join_chunks(waves, self.sample_rate)
+
+
+ENGINE_ADAPTERS: dict[str, type[EngineAdapter]] = {
+    VieNeuEngine.name: VieNeuEngine,
+    ZeroTTSEngine.name: ZeroTTSEngine,
+    SupertonicEngine.name: SupertonicEngine,
+}
+# `keep_engine` của dây chuyền (`_resource_gate`, `unload_idle_models`): đang thu thì giữ MỌI máy đọc đã nạp - một cuốn
+# có thể dùng giọng của nhiều máy trong cùng một chương.
+KEEP_TTS_ENGINES = "tts"
+
+
 class TTSCoordinator:
     def __init__(self, settings: dict[str, Any], db: ProjectDB, log: Callable[[str], None]) -> None:
         self.settings = settings
         self.db = db
         self.log = log
-        self.vieneu = VieNeuEngine(settings, log)
+        # Mỗi máy đọc một adapter, tạo khi cuốn cần tới giọng của máy ấy (`engine`). VieNeu luôn có: người kể là VieNeu.
+        self.engines: dict[str, EngineAdapter] = {VieNeuEngine.name: VieNeuEngine(settings, log)}
+        # Tần số của mọi WAV câu trong dự án: bản thu của máy nào cũng được đổi về đây trước cao độ / tempo / độ to.
+        self.sample_rate = int(settings["tts"]["sample_rate"])
         self._pronunciation_pattern: re.Pattern[str] | None = None
         self._pronunciation_map: dict[str, str] = {}
         self._pronunciation_metadata: dict[str, Any] = {}
@@ -644,15 +871,45 @@ class TTSCoordinator:
         self._exact_pronunciation_map: dict[str, str] = {}
         self._exact_pronunciation_metadata: dict[str, Any] = {}
 
+    @property
+    def vieneu(self) -> EngineAdapter:
+        return self.engines[VieNeuEngine.name]
+
+    @vieneu.setter
+    def vieneu(self, engine: EngineAdapter) -> None:
+        # Bản xem thử (webui/reading_preview.py) đưa lại VieNeu đã nạp từ lần trước.
+        self.engines[VieNeuEngine.name] = engine
+
+    def engine(self, name: str) -> EngineAdapter:
+        """Adapter của máy đọc `name` (chưa nạp model - `load` khi đọc câu đầu)."""
+        adapter = self.engines.get(name)
+        if adapter is None:
+            adapter_class = ENGINE_ADAPTERS.get(name)
+            if adapter_class is None:
+                raise AudioQualityError(f"Unknown TTS engine {name!r}; refusing to change voice silently")
+            adapter = self.engines[name] = adapter_class(self.settings, self.log)
+        return adapter
+
+    def engine_for_profile(self, profile: Any) -> EngineAdapter:
+        return self.engine(str(_row_value(profile, "engine", VieNeuEngine.name)))
+
+    def load_engines_for_book(self) -> None:
+        """Nạp mọi máy đọc mà các giọng của cuốn cần (worker của bể thu nạp trước khi nhận câu)."""
+        for name in sorted({str(_row_value(profile, "engine", VieNeuEngine.name)) for profile in self.db.list_voice_profiles()}
+                           | {VieNeuEngine.name}):
+            self.engine(name).load()
+
     def unload_all(self) -> None:
-        self.vieneu.unload()
+        for adapter in self.engines.values():
+            adapter.unload()
 
     def release_inference_cache(self) -> None:
+        # gc.collect của VieNeu dọn cả rác Python của máy khác; máy ONNX không giữ bộ nhớ đệm nào khác.
         self.vieneu.release_inference_cache()
 
     def unload_idle_models(self, keep_engine: str | None = None) -> None:
-        if keep_engine != "vieneu":
-            self.vieneu.unload()
+        if keep_engine not in (KEEP_TTS_ENGINES, VieNeuEngine.name):
+            self.unload_all()
 
     def generation_seed(self, row: Any, seed_salt: str = "") -> int:
         profile = self._voice_profile_for_row(row)
@@ -1009,8 +1266,9 @@ class TTSCoordinator:
         self.vieneu.load()
         profiles = self.db.list_voice_profiles()
         for profile in profiles:
-            self.vieneu.voice_for_profile(profile)
-        self.log(f"Đã xác minh {len(profiles)} voice profile VieNeu đã khóa.")
+            self.engine_for_profile(profile).voice_for_profile(profile)
+        engines = sorted({adapter.label for adapter in self.engines.values() if adapter.tts is not None})
+        self.log(f"Đã xác minh {len(profiles)} voice profile đã khóa ({', '.join(engines)}).")
 
     def synthesize_atomic(
         self,
@@ -1050,12 +1308,18 @@ class TTSCoordinator:
                 delivery_mode=delivery_mode,
                 vocalization_delivery_profile=vocalization_delivery_profile,
             )
-            audio = self.vieneu.generate_one(
+            engine = self.engine_for_profile(profile)
+            # Máy tự đọc theo tốc độ (`native_tempo`) nhận tham số tốc độ của nó (`engine_speed` của bảng, nhân `x`) ở đây; bản
+            # ghi của nó có r = 1 nên WSOLA bên dưới không kéo thêm.
+            speed_factor = voice_balance.tempo(voice_constants)
+            audio = engine.generate_one(
                 spoken_row,
                 profile,
                 seed,
                 sampling=sampling,
+                **({"speed": voice_balance.engine_speed(voice_constants)} if engine.native_tempo else {}),
             )
+            audio = resample_audio(audio, engine.sample_rate, self.sample_rate)
             raw_vocalization_samples = (
                 int(np.asarray(audio).reshape(-1).size)
                 if vocalization_delivery_profile
@@ -1072,7 +1336,8 @@ class TTSCoordinator:
                 validation_max_seconds=duration_policy.validation_max_seconds,
             )
             generation_ceiling_hit = (
-                is_short_utterance(str(spoken_row["text"]))
+                engine.name == VieNeuEngine.name
+                and is_short_utterance(str(spoken_row["text"]))
                 and vieneu_generation_reached_frame_ceiling(audio, effective_generation_policy)
             )
             pitch_steps = int(_row_value(profile, "pitch_semitones", 0))
@@ -1084,7 +1349,7 @@ class TTSCoordinator:
                 ):
                     pitched_audio = apply_pitch_variant(
                         audio,
-                        self.vieneu.sample_rate,
+                        self.sample_rate,
                         pitch_steps,
                         allow_padding=False,
                     )
@@ -1098,7 +1363,7 @@ class TTSCoordinator:
                 else:
                     pitched_audio = apply_pitch_variant(
                         audio,
-                        self.vieneu.sample_rate,
+                        self.sample_rate,
                         pitch_steps,
                     )
                 audio = pitched_audio
@@ -1113,14 +1378,14 @@ class TTSCoordinator:
             # Tempo = x * r_v (bảng cân bằng giọng), sau cao độ vì hàm cao độ giữ nguyên độ dài, và
             # trước độ to (WSOLA chồng cửa sổ nâng độ to vài phần mười dB, nên o_v đo sau bước này). Bỏ qua tiếng
             # cười "ha": đường ấy có bất biến số mẫu thô.
-            speed_factor = voice_balance.tempo(voice_constants)
             speed_change_skipped = False
             if (
                 abs(speed_factor - 1.0) > 1e-6
+                and not engine.native_tempo
                 and vocalization_delivery_profile != HA_VOCALIZATION_DELIVERY_PROFILE
             ):
                 try:
-                    audio = apply_speed_change(audio, self.vieneu.sample_rate, speed_factor)
+                    audio = apply_speed_change(audio, self.sample_rate, speed_factor)
                 except Exception as exc:  # noqa: BLE001
                     speed_change_skipped = True
                     self.log(
@@ -1131,7 +1396,7 @@ class TTSCoordinator:
             if vocalization_delivery_profile == HA_VOCALIZATION_DELIVERY_PROFILE:
                 audio_array = np.asarray(audio, dtype=np.float32).reshape(-1)
                 audio = audio_array
-                sample_rate = int(self.vieneu.sample_rate)
+                sample_rate = int(self.sample_rate)
                 original_samples = int(raw_vocalization_samples or 0)
                 final_samples = int(audio_array.size)
                 if original_samples <= 0 or final_samples != original_samples:
@@ -1158,7 +1423,7 @@ class TTSCoordinator:
             checksum, metrics = atomic_write_wav(
                 output,
                 audio,
-                self.vieneu.sample_rate,
+                self.sample_rate,
                 str(spoken_row["text"]),
                 self.settings,
                 segment=spoken_row,

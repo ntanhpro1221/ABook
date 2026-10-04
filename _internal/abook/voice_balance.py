@@ -1,7 +1,7 @@
 """Bộ hằng số cân bằng giọng: mỗi giọng một bản ghi đo trước, lúc thu máy tự áp.
 
 Một giọng = (engine, phiên bản engine, preset, bậc formant), khoá bằng chuỗi ổn định
-`vieneu@3.8.1/<preset>/f100` (xem `voice_key`). Bảng nằm ở `assets/voice_balance.json`; cả hai file
+`vieneu@3.8.1/<preset>/f100` (xem `voice_key`); máy đọc khác cùng dạng, chỉ bậc gốc: `zerotts@0.1.5/baotrang/f100`. Bảng nằm ở `assets/voice_balance.json`; cả hai file
 này quyết định âm thanh nên đều nằm trong `QUALITY_IMPLEMENTATION_FILES`.
 
 Ba đại lượng, mỗi cái một thang và một cách ghép (docs/VOICE_BALANCE.md):
@@ -34,6 +34,10 @@ LEVEL_RANGE_LUFS = (-40.0, -10.0)
 O_DB_RANGE = (-12.0, 12.0)
 REF_LUFS_RANGE = (-40.0, -5.0)
 PITCH_ST_RANGE = (-12, 12)
+# Máy đọc tự đọc nhanh/chậm theo tham số của chính nó (Supertonic `speed`): bản ghi mang `engine_speed` (tham số ấy) và
+# `r` = 1 (WSOLA không kéo thêm). Biên theo từng máy - tham số của máy không cùng thang với tempo WSOLA, nên không nới
+# R_RANGE chung. Supertonic: hãng cho 0,7 - 2,0.
+ENGINE_SPEED_RANGE = {"supertonic": (0.7, 2.0)}
 
 
 class VoiceBalanceError(ValueError):
@@ -47,6 +51,7 @@ class VoiceConstants:
     o_db: float  # lệch độ to (dB), đo ở x = 1, sau khi áp cao độ và tempo
     ref_lufs: float  # LUFS trung bình của bản thô (sau cao độ + tempo) của giọng
     pitch_st: int  # màu giọng, bán cung
+    engine_speed: float | None = None  # tham số tốc độ của chính máy đọc (ENGINE_SPEED_RANGE), None = máy kéo bằng WSOLA
 
 
 def formant_key(formant_ratio: float) -> str:
@@ -83,6 +88,13 @@ def _validate(table: Any) -> dict[str, Any]:
     x = number(table, "x", X_RANGE, "")
     number(table, "L_lufs", LEVEL_RANGE_LUFS, "")
     number(table, "pace_floor_scale", PACE_FLOOR_SCALE_RANGE, "")
+    floors = table.get("engine_pace_floor", {})
+    if not isinstance(floors, dict):
+        raise VoiceBalanceError("voice_balance.json: engine_pace_floor phải là object")
+    for engine in floors:
+        if engine not in versions:
+            raise VoiceBalanceError(f"voice_balance.json: engine_pace_floor.{engine} không có trong engine_versions")
+        number(floors, engine, PACE_FLOOR_SCALE_RANGE, "engine_pace_floor")
     voices = table.get("voices")
     if not isinstance(voices, dict) or not voices:
         raise VoiceBalanceError("voice_balance.json: thiếu voices")
@@ -102,6 +114,10 @@ def _validate(table: Any) -> dict[str, Any]:
             )
         engine, _, rest = key.partition("@")
         version = rest.partition("/")[0]
+        if "engine_speed" in record:
+            if engine not in ENGINE_SPEED_RANGE:
+                raise VoiceBalanceError(f"voice_balance.json: {key} có engine_speed nhưng {engine} không tự đọc theo tốc độ")
+            number(record, "engine_speed", ENGINE_SPEED_RANGE[engine], key)
         if versions.get(engine) != version:
             raise VoiceBalanceError(
                 f"voice_balance.json: {key} thuộc {engine}@{version} nhưng engine_versions ghi "
@@ -147,9 +163,11 @@ def pace_floor_scale() -> float:
     return float(load_table()["pace_floor_scale"])
 
 
-def pace_gate_scale() -> float:
-    """Nhân số của sàn cổng nhịp: `pace_floor_scale * x`. Tempo chung đổi thì sàn đổi theo."""
-    return pace_floor_scale() * x()
+def pace_gate_scale(key: str = "") -> float:
+    """Nhân số của sàn cổng nhịp: `pace_floor_scale * x`, nhân thêm sàn riêng của máy đọc của giọng `key` nếu bảng có
+    (`engine_pace_floor`; Supertonic 0,9: nó chèn lặng giữa câu dài hơn ngân sách dấu câu của cổng). Tempo chung đổi thì sàn đổi theo."""
+    engine = str(key).partition("@")[0]
+    return pace_floor_scale() * x() * float(load_table().get("engine_pace_floor", {}).get(engine, 1.0))
 
 
 # Giọng GIẢ của các bộ chạy giả (`webui/reading_preview.fake_voice`, test): tên preset không có thật nên không
@@ -177,6 +195,7 @@ def constants_for_key(key: str) -> VoiceConstants:
         o_db=float(record["o_db"]),
         ref_lufs=float(record["ref_lufs"]),
         pitch_st=int(record["pitch_st"]),
+        engine_speed=float(record["engine_speed"]) if "engine_speed" in record else None,
     )
 
 
@@ -208,6 +227,11 @@ def tempo(constants: VoiceConstants) -> float:
     return x() * constants.r
 
 
+def engine_speed(constants: VoiceConstants) -> float | None:
+    """Tham số tốc độ đưa cho máy đọc tự đọc theo tốc độ: `x * engine_speed`; None với máy kéo bằng WSOLA."""
+    return None if constants.engine_speed is None else x() * constants.engine_speed
+
+
 def raw_pace_floor_scale(constants: VoiceConstants) -> float:
     """Sàn nhịp của BẢN THÔ (trước khi tăng tốc): sàn cổng chia cho tempo. `x` triệt tiêu."""
     return pace_floor_scale() / constants.r
@@ -235,7 +259,8 @@ def balanced_preset_names() -> list[str]:
 
 
 def castable_keys() -> Iterator[str]:
-    """Mọi khoá mà phân vai hay người kể có thể tạo ra cho engine VieNeu: thang formant + formant theo tuổi.
+    """Mọi khoá mà phân vai hay người kể có thể tạo ra cho engine VieNeu (thang formant + formant theo tuổi), cùng bậc gốc
+    của mọi giọng máy khác mà người nghe chọn tay được.
 
     Dùng chung cho test độ phủ và cho người nhập số: bảng phải có bản ghi cho từng khoá này, và chỉ những khoá này.
     """
@@ -260,3 +285,9 @@ def castable_keys() -> Iterator[str]:
             if key not in seen:
                 seen.add(key)
                 yield key
+    # Giọng máy khác người nghe chọn tay được: chỉ bậc gốc (không có thang formant, không đổi theo tuổi).
+    from .voice_catalog import castable_engine_voices
+
+    for voice in castable_engine_voices():
+        engine = str(voice["engine"])
+        yield voice_key(engine, engine_version(engine), str(voice["name"]), 1.0)
