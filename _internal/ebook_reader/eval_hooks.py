@@ -101,8 +101,8 @@ def _score_models() -> Any:
     return _cache["score_models"]
 
 
-def _gold() -> dict[tuple[str, int], Any] | None:
-    directory = os.environ.get("ABOOK_GOLD_PREVIOUS", "").strip()
+def _gold(directory: str = "") -> dict[tuple[str, int], Any] | None:
+    directory = directory or os.environ.get("ABOOK_GOLD_PREVIOUS", "").strip()
     if not directory:
         return None
     key = "gold:" + directory
@@ -111,9 +111,11 @@ def _gold() -> dict[tuple[str, int], Any] | None:
     return _cache[key]
 
 
-def gold_turn(chapter: str, seq: int, model_kind: str, model_speaker: str) -> tuple[str, str]:
-    """(kind, speaker) của một đoạn trước lô: theo gold nếu gold có câu ấy, không thì giữ nhãn của model."""
-    gold = _gold()
+def gold_turn(chapter: str, seq: int, model_kind: str, model_speaker: str, *, directory: str = "") -> tuple[str, str]:
+    """(kind, speaker) của một đoạn trước lô: theo gold nếu gold có câu ấy, không thì giữ nhãn của model.
+
+    `directory` (B8, ABOOK_POINTER_GOLD_NAMES) thay cho ABOOK_GOLD_PREVIOUS khi đặt."""
+    gold = _gold(directory)
     entry = gold.get((chapter, seq)) if gold else None
     if entry is None:
         return model_kind, model_speaker

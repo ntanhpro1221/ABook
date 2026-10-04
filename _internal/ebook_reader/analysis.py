@@ -1,6 +1,8 @@
 # B-EVAL HOOKS (nhánh dev/breakthrough-eval, chỉ để đo, không bao giờ gộp): bốn hook đọc biến môi trường ABOOK_PROMPT_DUMP /
 # ABOOK_GOLD_PREVIOUS / ABOOK_ORACLE_DIR (+_GOLD_DIR, _KIND) / ABOOK_EVAL_SETTINGS; chi tiết ở ebook_reader/eval_hooks.py.
 # Không đặt biến nào thì prompt và hành vi y hệt từng byte.
+# B8 (ABOOK_POINTER_MODE=1, + ABOOK_POINTER_GOLD_NAMES): người nói là CON TRỎ, host đổi thành tên - ebook_reader/pointer_mode.py.
+# B8 (ABOOK_SPEAKER_ONLY=1 / ABOOK_EMOTION_ONLY=1 + ABOOK_EMOTION_GOLD): model chỉ trả một phần trường - ebook_reader/field_mode.py.
 from __future__ import annotations
 
 import copy
@@ -23,6 +25,8 @@ import requests
 from .config import ANALYSIS_RETRY_POLICY_VERSION
 from . import database as _database
 from . import eval_hooks as _eval_hooks
+from . import pointer_mode as _pointer_mode
+from . import field_mode as _field_mode
 from .database import (
     INAUDIBLE_DELIVERY_FIELDS,
     critic_delta_fields,
@@ -2680,6 +2684,8 @@ def _host_affect_adjudication(
     """Apply only source-scoped affect rules whose false-positive surface is narrow."""
     if policy_version != HOST_AFFECT_POLICY_VERSION:
         raise ValueError("Unsupported host affect policy")
+    if _field_mode.mode() == _field_mode.SPEAKER:  # B8: cảm xúc do host điền mặc định, không phải việc của model
+        return HostAffectAdjudication(policy_version, len(group), (), ())
     issues: list[HostAffectIssue] = []
     evidence: list[HostAffectEvidence] = []
     issue_ids: set[str] = set()
@@ -2920,6 +2926,8 @@ def _semantic_delivery_issues(
     validated: dict[str, dict[str, Any]],
 ) -> tuple[dict[str, str], bool]:
     """Reject schema-valid delivery metadata that clearly contradicts strong text cues."""
+    if _field_mode.mode() == _field_mode.SPEAKER:  # B8: cảm xúc do host điền mặc định, không phải việc của model
+        return {}, False
     rows_by_id = {str(row["stable_id"]): row for row in group}
     issues: dict[str, str] = {}
     happy_contradictions: set[str] = set()
@@ -5433,6 +5441,10 @@ def _analysis_policy_fingerprint(
             settings.get("low_confidence_threshold", 0.58)
         ),
     }
+    if _pointer_mode.enabled():  # B8: prompt hệ thống và nghĩa của speaker khác - không dùng lại ứng viên chế độ tên
+        material["pointer_mode"] = sha256_text(_pointer_mode.SYSTEM_RULE)
+    if _field_mode.mode():  # B8: model chỉ trả một phần trường
+        material["field_mode"] = _field_mode.mode()
     if first_person_identity:
         # The batch prompt names the narrator (``_narrator_line``), so a candidate generated
         # under one identity must never be reused under another. Only added when set, so the
@@ -7126,6 +7138,52 @@ class OllamaBookAnalyzer:
             + "\n\n"
         )
 
+    def _emotion_given(
+        self, group: list[Any], original_context: dict[str, dict[str, Any]] | None
+    ) -> dict[str, dict[str, str]]:
+        """B8 nhánh d: kind + speaker (+ gender) cho sẵn của từng đoạn lô, theo ID lô (S001...), từ gold ABOOK_EMOTION_GOLD.
+
+        kind phải nằm trong tập host cho phép của đoạn (_allowed_kinds_by_id; không có thì theo ranh giới hint), như
+        gold_replay chọn theo enum của schema - để _validate không bỏ đoạn vì vượt ranh giới thoại."""
+        gold = _eval_hooks._gold(_field_mode.emotion_gold_dir()) or {}
+        allowed = _allowed_kinds_by_id(group, original_context)
+        given: dict[str, dict[str, str]] = {}
+        for index, row in enumerate(group):
+            chapter = self._chapter_titles.get(int(row["chapter_id"]), "")
+            entry = gold.get((chapter, int(row["seq"])))
+            given[_batch_id(index + 1)] = _field_mode.given_from_gold(
+                entry, str(row["kind_hint"] or ""), allowed.get(str(row["stable_id"]))
+            )
+        return given
+
+    def _pointer_context(self, group: list[Any], rows: list[dict[str, Any]]) -> _pointer_mode.PointerContext:
+        """B8: cửa sổ POINTER_WINDOW đoạn trước lô (cùng chương) + các dòng request của lô -> danh sách @q/@n.
+
+        Người nói của các câu trong cửa sổ là quyết định đã lưu (như _previous_turns); ABOOK_POINTER_GOLD_NAMES thì kind +
+        tên lấy từ gold (eval_hooks.gold_turn) để đo riêng phần dây chuyền lỗi. Đoạn còn pending chỉ góp chữ cho việc tìm
+        tên, không thành @q."""
+        window: list[tuple[str, str, str]] = []
+        chapter_rows: list[Any] = []
+        chapter_id = first_seq = 0
+        try:
+            chapter_id, first_seq = int(group[0]["chapter_id"]), int(group[0]["seq"])
+            chapter_rows = list(self.db.list_segments(chapter_id=chapter_id))
+        except (AttributeError, KeyError, IndexError, TypeError, ValueError):
+            chapter_rows = []
+        before = [row for row in chapter_rows if int(row["seq"]) < first_seq][-_pointer_mode.POINTER_WINDOW:]
+        chapter_name = self._chapter_titles.get(chapter_id, "")
+        gold_dir = _pointer_mode.gold_names_dir()
+        for row in before:
+            kind, speaker = str(row["kind"] or "narration"), str(row["speaker"] or "")
+            if str(row["status"]) == SegmentStatus.PENDING.value:
+                kind = "narration"
+            elif gold_dir:
+                kind, speaker = _eval_hooks.gold_turn(chapter_name, int(row["seq"]), kind, speaker, directory=gold_dir)
+                speaker = "NPC_LOCAL:người lạ" if speaker == "NPC_LOCAL" else speaker
+            window.append((kind, speaker, str(row["text"] or "")))
+        known = [name for name, _count in self._speaker_counts.most_common(80)]
+        return _pointer_mode.build_context(window, rows, known, self.first_person_identity)
+
     def _known_summary(self) -> str:
         if not self._speaker_counts:
             return "(Chưa có nhân vật đã biết)"
@@ -7318,12 +7376,16 @@ class OllamaBookAnalyzer:
             if allowed_emotions:
                 request_row["allowed_emotions"] = list(allowed_emotions)
             rows.append(request_row)
+        pointer_context = self._pointer_context(group, rows) if _pointer_mode.enabled() else None  # B8
+        field_mode = _field_mode.mode()  # B8: "" = mọi trường như cũ
+        given = self._emotion_given(group, original_context) if field_mode == _field_mode.EMOTION else None
         prompt = (
             f"Các chương hiện tại: {', '.join(chapter_titles)}\n\n"
             f"{self._narrator_line()}"
             f"Nhân vật đã biết từ các phần trước:\n{self._known_summary()}\n\n"
             f"{_eval_hooks.oracle_block(group, self._chapter_titles)}"
             f"{self._previous_turns(group)}"
+            f"{_pointer_mode.block(pointer_context) if pointer_context is not None else ''}"
             f"Các đoạn liên tiếp:\n{json.dumps(rows, ensure_ascii=False, indent=2)}"
         )
         required_hq_confidence_floor = (
@@ -7336,7 +7398,7 @@ class OllamaBookAnalyzer:
             )
             else 0.0
         )
-        if required_hq_confidence_floor > 0.0:
+        if required_hq_confidence_floor > 0.0 and not field_mode:  # B8: confidence do host điền
             prompt += (
                 "\n\nRàng buộc confidence của profile high_quality bắt buộc: mọi đoạn nội "
                 "dung không phải tiêu đề chương cấu trúc phải trả confidence tối thiểu "
@@ -7403,16 +7465,24 @@ class OllamaBookAnalyzer:
         if request_contract is not None and request_contract != expected_contract:
             raise RuntimeError("Generator request contract does not match the locked retry policy")
         request_contract = expected_contract
+        output_schema = _output_schema_for_batch(
+            list(batch_to_stable),
+            confidence_floor=schema_confidence_floor,
+            hard_emotions_by_id=hard_emotions_by_id,
+            hard_kinds_by_id=hard_kinds_by_id,
+        )
+        system_prompt = SYSTEM_PROMPT
+        if field_mode:  # B8: thân chung + dòng việc ở cuối; schema chỉ còn các trường của việc ấy
+            system_prompt = _field_mode.generator_system(SYSTEM_PROMPT, field_mode)
+            prompt += _field_mode.task_tail(field_mode, list(batch_to_stable), given)
+            output_schema = _field_mode.output_schema(output_schema, field_mode)
+        if pointer_context is not None:
+            system_prompt += _pointer_mode.SYSTEM_RULE
         request = {
             "model": self.model,
-            "system": SYSTEM_PROMPT,
+            "system": system_prompt,
             "prompt": prompt,
-            "format": _output_schema_for_batch(
-                list(batch_to_stable),
-                confidence_floor=schema_confidence_floor,
-                hard_emotions_by_id=hard_emotions_by_id,
-                hard_kinds_by_id=hard_kinds_by_id,
-            ),
+            "format": output_schema,
             "keep_alive": "30m",
             "options": {
                 "temperature": request_contract["temperature"],
@@ -7436,6 +7506,10 @@ class OllamaBookAnalyzer:
         finally:
             self._eval_dump("generator", group, request, batch_to_stable, int(request_contract["attempt"]))
         self._verify_locked_model_digest("after generator request")
+        if pointer_context is not None:  # B8: con trỏ -> tên trước mọi kiểm tra; con trỏ hỏng = PointerError, thử lại
+            _pointer_mode.resolve_payload(payload, pointer_context, list(batch_to_stable))
+        if field_mode:  # B8: host điền các trường không thuộc việc của model
+            _field_mode.fill_generator(payload, field_mode, given)
         segments = payload.get("segments", [])
         if isinstance(segments, list):
             for item in segments:
@@ -7623,9 +7697,30 @@ class OllamaBookAnalyzer:
             if raw_rejected_emotions
             else ""
         )
+        field_mode = _field_mode.mode()  # B8: critic chỉ thấy/trả các trường model còn lo
+        if field_mode == _field_mode.SPEAKER:
+            rejected_emotion_instruction = ""
+        speaker_policy_line = (
+            ""
+            if field_mode == _field_mode.EMOTION
+            else "speaker_policy=candidate_bound_enum_v1; allowed_speakers="
+            + json.dumps(
+                list(allowed_speakers),
+                ensure_ascii=False,
+                separators=(",", ":"),
+            )
+            + ".\n"
+        )
+        shown_candidate_rows = (
+            _field_mode.critic_rows(candidate_rows, field_mode) if field_mode else candidate_rows
+        )
         request = {
             "model": self.model,
-            "system": DIRECTOR_CRITIC_SYSTEM_PROMPT,
+            "system": (
+                _field_mode.critic_system(DIRECTOR_CRITIC_SYSTEM_PROMPT, field_mode)
+                if field_mode
+                else DIRECTOR_CRITIC_SYSTEM_PROMPT
+            ),
             "prompt": (
                 f"candidate_hash={candidate_hash}\n\n"
                 "Hợp đồng confidence bền vững: "
@@ -7637,17 +7732,11 @@ class OllamaBookAnalyzer:
                 f"evidence_policy={evidence_policy}.\n"
                 f"{evidence_quote_instruction}\n"
                 f"{rejected_emotion_instruction}\n"
-                "speaker_policy=candidate_bound_enum_v1; allowed_speakers="
-                + json.dumps(
-                    list(allowed_speakers),
-                    ensure_ascii=False,
-                    separators=(",", ":"),
-                )
-                + ".\n"
-                "Hãy phản biện từng candidate sau mà không suy đoán notes/confidence của lượt trước:\n"
-                + json.dumps(candidate_rows, ensure_ascii=False, indent=2)
+                + speaker_policy_line
+                + "Hãy phản biện từng candidate sau mà không suy đoán notes/confidence của lượt trước:\n"
+                + json.dumps(shown_candidate_rows, ensure_ascii=False, indent=2)
             ),
-            "format": _director_critic_schema(
+            "format": (lambda schema: _field_mode.critic_schema(schema, field_mode) if field_mode else schema)(_director_critic_schema(
                 batch_ids,
                 candidate_hash,
                 confidence_floor=confidence_floor,
@@ -7655,7 +7744,7 @@ class OllamaBookAnalyzer:
                 per_id_source_anchor_map=per_id_source_anchor_map,
                 rejected_emotions_by_id=rejected_emotions_by_id,
                 allowed_speakers=allowed_speakers,
-            ),
+            )),
             "keep_alive": "30m",
             "options": {
                 "temperature": request_contract["temperature"],
@@ -7682,6 +7771,8 @@ class OllamaBookAnalyzer:
                 "critic", group, request, {batch_id: batch_id for batch_id in batch_ids}, int(request_contract["attempt"])
             )
         self._verify_locked_model_digest("after director critic request")
+        if field_mode and isinstance(payload, dict):  # B8: các trường critic không trả = đồng ý với ứng viên
+            _field_mode.fill_critic(payload, candidate_rows, field_mode)
         return payload, candidate_hash
 
     def _validated_pronunciations(
