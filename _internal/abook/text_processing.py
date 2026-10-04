@@ -19,6 +19,33 @@ QUOTE_CLOSING_MARKS = {"”", "’", '"'}
 # đạo), tiếng qua loa/điện thoại (Two Childhood Friends). Cụm 『…』 nằm GIỮA câu kể là thuật ngữ - để yên, vì đổi giọng
 # giữa một câu kể là sai. 『 cố ý KHÔNG vào CURLY_QUOTE_SPECS: theo lối Nhật nó là ngoặc lồng trong 「…」 (nay là “”).
 WHITE_CORNER_QUOTE_LINE_PATTERN = re.compile(r"『[^』]{1,1600}』")
+# Cũng vậy với [ … ] và 【 … 】 nguyên dòng: bản dịch LN dùng [ ] cho lời thoại, nội tâm, bảng thông báo game/hệ thống, tiếng
+# quái vật, tiếng qua điện thoại (đếm Corpus 05-10: Hige wo Soru 6.765 dòng [..] trên 867 “; Hero Summoning 8.873 trên 881);
+# 【 】 chủ yếu là bảng hệ thống ("【Bạn đã lên cấp.】", 6.249 dòng, Tensei dragon-egg 2.496). Để chúng là lời kể thì cả cuốn gần
+# như một giọng. Ai nói (kể cả người kể / "Hệ thống") là việc của model phân tích - parser chỉ khoá ranh giới "đây là một
+# giọng", giống 『…』. Ngoặc GIỮA câu kể (thuật ngữ, chú thích) và dòng không có chữ cái ("[...]", "[12]", "[________!]")
+# ở yên như cũ.
+LETTERED_VOICE_LINE_PATTERNS = (
+    re.compile(r"\[[^\]]{1,1600}\]"),
+    re.compile(r"【[^】]{1,1600}】"),
+)
+# GHI CHÚ của người dịch / nhóm dịch nguyên dòng trong ngoặc ("[Note: Tui tiểu đường mất!!!]", "[TL note: ...]", "[Từ chương này
+# mình sẽ bắt đầu dịch từ bản Jap...]") không phải giọng nào: ở yên là lời kể như cũ. Nhận bằng NHÃN MỞ ĐẦU (sau ngoặc, bỏ khoảng
+# trắng và * _ ~) kết bằng dấu hai chấm / gạch / hết dòng - "[Ghi chú? Cậu đang nói gì vậy?]" là lời thoại thật, không có nhãn -
+# và câu xưng "mình ... dịch" trong một câu; "đại dịch / dịch chuyển / dịch vụ / dịch bệnh" là từ thường, không tính.
+# "Ghi chú" / "Chú thích" đứng một mình KHÔNG phải nhãn: game dùng chúng cho bảng hệ thống ("【Chú thích: Cây sáo của thần Pan…】"),
+# và loại nhầm giọng hệ thống thì mất vai, còn để lọt một ghi chú thật chỉ đổi giọng đọc. Chỉ "Ghi chú của dịch giả" mới tính.
+TRANSLATOR_NOTE_LABEL_PATTERN = re.compile(
+    r"^[\s*_~]*(?:lời\s+)?(?:t/n|n/t|n/a|tl[\s-]*note|tl|translator(?:'s)?[\s-]*note|trans(?:lator)?|editor|edit|note|nd|n\.d|"
+    r"người dịch|dịch giả|(?:ghi chú|chú thích)(?=\s+của\s+(?:dịch giả|người dịch|nhóm dịch))|nhóm dịch|raw|eng|"
+    r"bản\s+(?:jap|eng))"
+    r"(?:\s+của\s+(?:dịch giả|người dịch|nhóm dịch|editor))?(?:\s*\d+)?\s*(?:[:：]|[-–—](?=\s)|$)",
+    re.IGNORECASE,
+)
+TRANSLATOR_SELF_REFERENCE_PATTERN = re.compile(
+    r"\b(?:bọn mình|tụi mình|nhóm mình|mình)\b[^.!?]{0,80}?(?<!đại )(?<!ôn )\bd[ịi]ch\b(?!\s+(?:chuyển|vụ|bệnh|hạch|tễ))",
+    re.IGNORECASE,
+)
 INLINE_REFERENCE_MARKER_PATTERN = re.compile(r"\[\s*note\d+\s*\]", re.IGNORECASE)
 # Dòng ghi công người dịch / biên tập ở đầu chương ("*Edit: Lắc", "TL : NicK", "Translator: NicK", "Editor: Deemo"): TTS
 # từng đọc to như một câu kể - 17 chương Throne, 172 chương Nise (quét kho 29-09). Chỉ trong vài dòng đầu chương, nhãn ghi
@@ -567,6 +594,52 @@ def has_spoken_content(text: str) -> bool:
     return any(char.isalnum() for char in text)
 
 
+FRAMED_NAME_MAX_WORDS = 4
+FRAMED_NAME_PUNCTUATION = ".!?…~,;"
+# Một chữ duy nhất trong khung là TIẾNG KÊU / THÁN TỪ thì vẫn là giọng, không phải tên: một chữ cái lặp từ 3 lần liền ("Kkkkk",
+# "Hmmm", "Aaaa") hoặc nằm trong danh sách này. Có dấu hay không đều tính. "ban" cố ý KHÔNG có: "[Ban]" là tiêu đề.
+FRAMED_INTERJECTIONS = frozenset(
+    "hmm hm hừm khụ ừ ừm ờ à á ồ ơ ê hả hử hừ hứ hì hehe haha hihi ối ui úi ây chậc chẹp xì phù hự oa wow "
+    "vâng dạ hế haiz haizz hây nhưng phải không được thôi".split()
+)
+_REPEATED_LETTER_PATTERN = re.compile(r"([^\W\d_])\1{2,}", re.IGNORECASE)
+
+
+def _is_framed_name_or_title(inner: str) -> bool:
+    """Tên / tiêu đề trong khung ("[Lớp A]", "[Mateo Jordana]", "[Sổ Hướng Dẫn]"): tối đa 4 chữ, không dấu kết / cảm / phẩy, mọi chữ
+    mở đầu bằng chữ HOA hoặc số. Một tên không phải ai đang nói. Tiếng hét toàn hoa có "!!" ("[GDESAAAAA!!]") vẫn là giọng."""
+    if any(mark in inner for mark in FRAMED_NAME_PUNCTUATION):
+        return False
+    words = [word for word in inner.split() if any(char.isalnum() for char in word)]
+    if not words or len(words) > FRAMED_NAME_MAX_WORDS:
+        return False
+    if len(words) == 1:
+        sound = "".join(char for char in words[0] if char.isalnum()).casefold()
+        if sound in FRAMED_INTERJECTIONS or _REPEATED_LETTER_PATTERN.search(sound):
+            return False
+    for word in words:
+        first = next(char for char in word if char.isalnum())
+        if not (first.isdigit() or first.isupper()):
+            return False
+    return True
+
+
+def is_whole_line_voice(line: str) -> bool:
+    """Dòng nguyên vẹn trong 『…』, [ … ] hay 【…】 là MỘT GIỌNG (lời thoại), không phải lời kể. 『』 cần có chữ hoặc số (như
+    trước); [ ] và 【】 cần ít nhất một chữ cái - "[12]" và "[...]" không phải giọng nào - và không phải ghi chú của người dịch."""
+    stripped = line.strip()
+    if WHITE_CORNER_QUOTE_LINE_PATTERN.fullmatch(stripped):
+        return has_spoken_content(stripped)
+    if not any(pattern.fullmatch(stripped) for pattern in LETTERED_VOICE_LINE_PATTERNS) or _HAS_LETTER.search(stripped) is None:
+        return False
+    inner = stripped[1:-1]
+    return not (
+        TRANSLATOR_NOTE_LABEL_PATTERN.match(inner)
+        or TRANSLATOR_SELF_REFERENCE_PATTERN.search(inner)
+        or _is_framed_name_or_title(inner)
+    )
+
+
 def _speakable_tokens(text: str) -> list[str]:
     return SPEAKABLE_TOKEN_PATTERN.findall(text)
 
@@ -677,8 +750,7 @@ def _join_fragments(left: str, right: str) -> str:
 def _line_pieces(line: str) -> list[tuple[str, str]]:
     if re.match(r"^[—–-]\s*\S", line):
         return [(line, "dialogue")]
-    stripped = line.strip()
-    if WHITE_CORNER_QUOTE_LINE_PATTERN.fullmatch(stripped) and has_spoken_content(stripped):
+    if is_whole_line_voice(line):
         return [(line, "dialogue")]
     matches = [
         (match, "dialogue" if _quoted_span_is_dialogue(line, match) else "narration")
@@ -812,6 +884,9 @@ def _line_pieces_with_quote_state(
         tail, next_state = _line_pieces_with_quote_state(remainder, None)
         return pieces + tail, next_state
 
+    # Một giọng nguyên dòng tự đóng: dấu “ lẻ bên trong ("[Hắn gầm: “Chết đi!]") không được mở một lời thoại treo qua đoạn sau.
+    if is_whole_line_voice(line):
+        return [(line, "dialogue")], None
     unmatched_openings = _unmatched_curly_quote_openings(line)
     ascii_quote_positions = [index for index, char in enumerate(line) if char == '"']
     if len(ascii_quote_positions) % 2:

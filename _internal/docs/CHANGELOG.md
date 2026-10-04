@@ -9,7 +9,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Giọng đọc
 
-- "Nghe ngay" (máy tính và điện thoại, mọi giọng) đọc ký hiệu theo chỗ nó đứng thay vì một kiểu cố định: "7/9" là ngày, "10 người/ngày" là "mỗi ngày", "x4" là "nhân bốn", "3x" là "gấp ba", "-20" sau "Độ thiện cảm:" là "âm hai mươi" còn "-50% Nhanh nhẹn" là "trừ", "Q&A" là "hỏi đáp", "★★★☆☆" là "ba sao", "Aki × Rin" là "Aki và Rin", đường dẫn gọn thành "đường dẫn"; dấu chấm giữa, "^", "#", "@", mặt cười và dấu "===" trang trí không còn bị đọc ra thành tiếng nữa, chỉ ngắt nhịp.
+- "Nghe ngay" (máy tính và điện thoại, mọi giọng) đọc ký hiệu theo chỗ nó đứng thay vì một kiểu cố định: "sinh nhật 7/9" là ngày, "10 người/ngày" là "mỗi ngày", "x4" là "nhân bốn", "3x" là "gấp ba", "-20" sau "Độ thiện cảm:" là "âm hai mươi" còn "-50% Nhanh nhẹn" là "trừ", "Q&A" là "hỏi đáp", "★★★☆☆" là "ba sao", "Aki × Rin" là "Aki và Rin", đường dẫn gọn thành "đường dẫn"; dấu chấm giữa, "^", "#", "@", mặt cười và dấu "===" trang trí không còn bị đọc ra thành tiếng nữa, chỉ ngắt nhịp.
+
+### Studio
+
+- Truyện dịch dùng ngoặc vuông cho lời nói - "[Về thôi.]", câu nghĩ thầm, bảng thông báo game "[Bạn nhận được 30 điểm kinh nghiệm]", tiếng quái vật "[GDESAAAAA!!]" -
+  nay mỗi dòng như thế là một giọng riêng thay vì bị người kể đọc hết (có cuốn gần như cả quyển bị đọc bằng một giọng); ai nói thì máy phân tích đoán như với lời thoại
+  thường. Dòng bảng hệ thống trong 【…】 cũng vậy. Dấu ngoặc ấy không được đọc thành tiếng. Ngoặc nằm giữa câu kể ("kỹ năng [Hỏa Cầu]") vẫn là lời người kể.
 
 ## [0.4.27] - 2026-10-04
 
