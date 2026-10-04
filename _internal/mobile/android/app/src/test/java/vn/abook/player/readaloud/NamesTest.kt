@@ -52,7 +52,7 @@ class NamesTest {
         assertEquals(listOf("Kate", "và", "Mike", "Rose,", "Anne", "Emma", "Hoa", "Tôi", "a i", "a… a", "Level"), said("Kate và Mike Rose, Anne Emma Hoa Tôi AI Aaaa Level", "ja"))
         assertEquals(VieneuUnits.tokens("Haruto đến"), said("Haruto đến", null))
         assertEquals(listOf("Xeo-gion", "gặp", "Gi-hô"), said("Seo-yeon gặp Ji-ho", "ko"))
-        assertEquals(listOf("Gin-đô-nô", "Giu-ki-tan", "Câu-ni", "Hm", "Goblin", "Elf"), said("Jin-dono Yuki-tan Kou-nii Hm Goblin Elf", "ja"))
+        assertEquals(listOf("Gin-đô-nô", "Giu-ki-tan", "Câu-ni", "hừm", "Goblin", "Elf"), said("Jin-dono Yuki-tan Kou-nii Hm Goblin Elf", "ja"))
     }
 
     @Test

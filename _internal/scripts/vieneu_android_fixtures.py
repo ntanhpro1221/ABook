@@ -278,6 +278,13 @@ PARAGRAPHS = [
     "Cô có 500,000 đồng và 100,000 yen. Trên bảng ghi 1,419 / 3,419 rồi 1,5 và 3,25 và 1,500 và 1.234,567 và 12,3456.",
     "Mặt dây này tên là <Angel Wings> đó. Dùng <khiên> đi, phần IV <Hạ> thôi. Cô thấy 3 < 5 và <3 và >:) và <50/50>. Kỹ năng 《Xiềng Xích》 và 〈Ánh Sao〉.",
     "Bị 【Đóng băng / yếu】 rồi. HP: 5813 / 5813, tỉ lệ 3/5 và 15/8, còn mở/đóng thì để nguyên.",
+    # TN lượt 3 (04-10): số (phân số bé, khoảng, số liền, x2, đô la), mặt cười, dấu *, gạch ngang dính chữ, khung hệ thống, dấu câu CJK, ngoặc nhọn dài / số / không đóng.
+    "Lớp 1-1 và 1-3-1, dài 3-4000 từ, nặng 3/5 chai, thanh 180/300, sự kiện x2, giá ($1 USD) hay $5, cả 9-5, 01-10-2026, 090-123-4567, 3-1.",
+    "*từ* (*) đ* b*** orz :3 nào >:)! <3 vl -_- ;) xong.",
+    "Babi—người đã. Nên— Cảm ơn. Làm—” rồi nha-- ừ. Tên là【Song Kiếm Thuật】!” Bất lợi  【Đóng băng】. Của 【Kho】rất gọn. Tiến hóa: [Bậc 1] xong [1] và kỹ năng [Hỏa] nữa.",
+    "Đi，nhà ta. 734：Chúng ta nên làm gì？ Xong！ Thế。",
+    "Tên <game> <50/50>. Nghĩ <mình vẫn ổn mà, chỉ hơi mệt sau một ngày dài…thôi kệ> hết. < Thật Tuyệt vời. Còn x < y.",
+    "Ý tôi chỉ có vậy.”(GM) xong. “Ahhhh…Em hiểu rồi…Senpai.” Thế chiến II—thời kỳ. Bất lợi III】, DP?”…Tốn 20 DP.",
 ]
 
 # Paragraphs read with a book origin (abook/readaloud/names.py): Japanese / Korean names read by the romanization rules, English names and Vietnamese
@@ -302,6 +309,14 @@ SOUND_PARAGRAPHS = [
     ("Ariel-sama, Mary-san, Zeros-sensei, Sora-sama, Haruto-kun, onee-chan, ojou-sama, Tsukinoki-senpai.", "ja"),
     ("Oppa, unnie! hyung noona. Hyung-nim, Soleum-ssi, Minho-oppa, Seo-yeon-ssi, Mary-san.", "ko"),
     ("Oppa, unnie! hyung noona. Hyung-nim, Soleum-ssi, Minho-oppa, san, sama, tan, nee, nii.", None),
+    # TN lượt 3: nói lắp, tiếng cười, thán từ mới, kéo nhiều chỗ, Lv, từ mượn quen, đơn vị tiền, tên có chữ O đầu
+    ("T-tôi không biết. C-Chuyện đó... Ng-ngài có chắc. [Kh- Không phải thế. “T-Tsukinoki-senpai cho tôi quá giang. E-em muốn. Hà-Hà đến. “……T-, tức là sao???", None),
+    ("T-Tsukinoki-senpai và A-anime. K-Kenji, Đ-Điều này.", "ja"),
+    ("Haha, Hahaha, Hehe, Fufu~, Hihi, Hm, Huh, Hic, Ooh, Urgh. HAHA. Cccchhhhàaaaaaoooo sssssáaaannnngggg BAAAAAMMMMM.", None),
+    ("Lv 5, Lv.15] Lvl.1 LV5, Lv ơi, LVL. Level 7, lv 40.", None),
+    ("Sofa, anime, Ninja, manga, Samurai (bento) kimono sake miso dango takoyaki okonomiyaki senpai Ara ara, Umu eroge tsukkomi. Video, logic, piano, violin, sandal, vali, robot, gorilla.", None),
+    ("Sofa, anime, Ninja, manga. 3 triệu won, 100 yen, 5 kwan, won rồi.", "ko"),
+    ("Otsuki-san, Okayama, Onii-sama, Ojou-sama, Otaku-kun.", "ja"),
 ]
 JA_NAMES = "Haruto Yuki Sakura Kyouko Takeshi Hiroshi Akira Kenji Yamato Naoki Satoshi Ayaka Reiji Tsubasa Shinji Kaori".split()
 KO_NAMES = "Si-eun So-hye Hwi-min Seo-ram Deok-gu Kang-ho Ha-jin Joo-seon Min-jun Seo-yeon Ji-ho Geun-hye".split()
