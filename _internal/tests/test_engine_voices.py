@@ -337,8 +337,9 @@ def test_a_long_zerotts_line_is_read_in_chunks_and_joined_with_a_pause() -> None
     profile = {"engine": "zerotts", "preset_name": "baotrang", "voice_key": "k"}
     audio = engine.generate_one({"text": long, "speaker": "A", "pace": "normal"}, profile, 7, sampling={"max_new_frames": 300})
     assert engine.tts.texts == chunks
-    silent = int(np.count_nonzero(audio == 0.0))
-    assert audio.size == 4_800 * len(chunks) + silent and silent == int(0.2 * 48_000) * (len(chunks) - 1)
+    # Mảnh nào cũng kết thúc bằng dấu chấm: lặng chèn = tổng theo dấu - phần mép chừa (tests/test_chunk_join.py).
+    gap = round((tts_module.chunk_gap_seconds(".") - 2 * tts_module.CHUNK_TRIM_KEEP_SECONDS) * 48_000)
+    assert audio.size == 4_800 * len(chunks) + gap * (len(chunks) - 1)
 
 
 # --- máy thật (CPU) ---------------------------------------------------------------------------
@@ -398,3 +399,22 @@ def test_three_real_lines_in_a_listener_picked_voice(tmp_path: Path, monkeypatch
     )
     assert again == checksums[0]
     assert coordinator.vieneu.tts is None
+
+
+@pytest.mark.skipif(not _engine_on_this_machine("zerotts"), reason="máy này chưa tải giọng ZeroTTS")
+def test_zerotts_reads_the_same_bytes_after_its_session_is_rebuilt(monkeypatch) -> None:
+    from abook.webui import zerotts_module
+
+    monkeypatch.setattr(zerotts_module._core, "folder", zerotts_module._core.folder)  # adapter gọi locate(): trả lại sau bài
+    monkeypatch.setattr(ZeroTTSEngine, "RECYCLE_AFTER_CALLS", 1)  # nạp lại trước MỌI câu sau câu đầu
+    engine = ZeroTTSEngine(build_settings(), lambda _message: None)
+    profile = {"engine": "zerotts", "preset_name": "huuduc", "voice_key": "zerotts_huuduc_f100_p+00"}
+    row = {"text": "Con cứ coi như không nghe thấy gì là được.", "speaker": "A", "pace": "normal"}
+    try:
+        first = engine.generate_one(row, profile, 7, sampling={"max_new_frames": 300})
+        session = engine.tts
+        again = engine.generate_one(row, profile, 7, sampling={"max_new_frames": 300})
+        assert engine.tts is not session, "phiên ONNX đã được nạp lại giữa hai lần gọi"
+        assert first.tobytes() == again.tobytes(), "cùng câu, giọng, hạt giống: cùng byte trước và sau khi nạp lại"
+    finally:
+        engine.unload()
