@@ -198,10 +198,14 @@ def publish(version: str, commit: str, out: Path) -> None:
     notes = out / "notes.md"
     notes.write_bytes(release_notes(version).encode("utf-8"))
     _run(["git", "fetch", "-q", "origin"], REPO)
-    # main chỉ tua nhanh: commit phát hành phải nằm trên origin/main hiện tại.
-    _run(["git", "merge-base", "--is-ancestor", "origin/main", commit], REPO)
+    # main chỉ tua nhanh: commit phát hành phải nằm trên origin/main hiện tại - hoặc đã nằm TRONG origin/main (main đi tiếp sau commit
+    # phát hành, vd các phiên khác đẩy docs trong lúc dựng): khi ấy không đẩy main, chỉ gắn tag.
+    already_in_main = subprocess.run(["git", "merge-base", "--is-ancestor", commit, "origin/main"], cwd=REPO).returncode == 0
+    if not already_in_main:
+        _run(["git", "merge-base", "--is-ancestor", "origin/main", commit], REPO)
     _run(["git", "tag", "-a", f"v{version}", commit, "-m", f"ABook {version}"], REPO)
-    _run(["git", "push", "-q", "origin", f"{commit}:main"], REPO)
+    if not already_in_main:
+        _run(["git", "push", "-q", "origin", f"{commit}:main"], REPO)
     _run(["git", "push", "-q", "origin", f"v{version}"], REPO)
     token = subprocess.run(["gh", "auth", "token", "--user", GITHUB_USER], capture_output=True, text=True, check=True).stdout.strip()
     env = dict(os.environ, GH_TOKEN=token)  # đúng tài khoản cho từng lệnh, không đổi tài khoản đang dùng của gh
