@@ -216,6 +216,35 @@ word và cho ra dạng normalized của word").
 - **Thay thế:** Studio dùng nó thay bước LLM đề xuất cách đọc tên (bảng khoá và người nghe sửa vẫn giữ). Nghe ngay dùng nó cho mọi
   token nước ngoài chưa có trong từ điển.
 
+**Tầng 4b – kết quả đo (phiên Model, 04-10) và vì sao HẠ ƯU TIÊN.**
+- **Nhãn:** 7.000 token của 161 cuốn, do agent Claude làm theo `READING_FOREIGN_NAMES.md` + ca chủ sách (Sonnet viết, Opus
+  phân xử TOÀN BỘ tập test). 5.000 token hay gặp nhất (train, 25 lô) + 2.000 token bốc phân tầng của 24 cuốn test (10 lô).
+  - 5.093 nhãn chắc, 1.907 còn treo chờ chủ sách; nhóm treo lớn nhất: schwa, yu/yo Nhật, tên bịa âm vị hay mặt chữ.
+  - Bộ nhãn + script chấm luật ở Corpus `research/tn/translit_bench/` (073aef12 → 62865d5e).
+- **Model A:** transformer ký tự 4M tham số, đầu vào = token + gốc cuốn + loại + GỢI Ý của luật (romanization / english_vi);
+  nhãn vẫn là của Claude. Ra không phải âm tiết Việt hợp lệ thì lùi về `_local_name_fallback` (M0). ONNX int8 4,9 MB,
+  khoảng 5 ms/từ trên 1 luồng CPU x86.
+- **Số (3 hạt, accept = khớp đáp án hay một cách đọc chấp nhận được, không phân biệt hoa/thường):**
+
+  | hệ | dev (323) | test ok (749) | test đủ, gồm mục treo (1.314) |
+  |---|---|---|---|
+  | M0 `_local_name_fallback` | 38,7 % | 25,6 % | 24,7 % |
+  | A chỉ token (1 hạt, lô 1-15) | 69,1 % | 44,0 % | 37,1 % |
+  | A + gợi ý luật + lưới M0 | 85,8-87,0 % | 69,6-70,8 % | 63,0-65,4 % |
+  | luật trước, model chỉ khi luật trả None | 87,9 % | 72,0-72,7 % | - |
+
+- **Ranh giới luật / model (test ok):** khi luật ra cách đọc không cờ, luật đúng 90,6 % (model 82,7-85,6 %) - giữ luật. Khi
+  luật trả None (356 token), model đúng 57-59 % - nhưng 289 trong số đó là token tiếng Anh, mà ở máy nói được tiếng Anh thì
+  giữ nguyên chữ, không qua model. Phần model thật sự gánh - tên Nhật / Hàn luật trả None - chỉ có 45 token, model đúng
+  22-24 %.
+- **Vì sao hạ ưu tiên:** 45 token ấy gần hết là lỗi TIỀN XỬ LÝ của luật (chữ in hoa toàn bộ "KANATA", gạch nối / hậu tố
+  "Seol-Ah", "PD-nim", viết dính "OkabeRintarou", luật Hàn từ chối "sh"), model làm tệ đúng ở đó ("KANATA" → "A"). Sửa luật
+  rẻ và chắc hơn (Lead giao). Model chỉ còn giá trị khi có máy KHÔNG nói được tiếng Anh cần đích "vi" (04-10: chưa có).
+  Giữ hạ tầng (nhãn, khung huấn luyện, ONNX); KHÔNG đo phương án B (Qwen3-0.6B) và M1 cho tới khi có máy cần "vi" hay luật
+  None Nhật / Hàn còn nhiều sau khi sửa luật.
+- **Số của chính các luật** trên bộ nhãn (luật main 04-10): Nhật 95,3 % (không cờ 99,3 %), Hàn 82,1 % (không cờ 98,9 %),
+  Anh 87,8 %. Thiên lệch cần biết: agent làm nhãn có nhìn gợi ý của luật, nên số "không cờ" có thể được nâng nhẹ.
+
 **Tầng 5 – nhịp và ngắt.** Đưa thành dấu câu ngắt mà engine hiểu:
 - "…", "—" (gạch nối dài), "!?";
 - thán từ kéo dài (Aaaa → "A… a", đã có ở Studio, chuyển sang dùng chung);
