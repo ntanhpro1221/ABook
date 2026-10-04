@@ -126,6 +126,7 @@ def read_shouted_honorifics(toks: list[str], out: list[str], origin: str | None)
 
 
 TITLES = {"mr": "mister", "mrs": "missus", "ms": "miss", "dr": "doctor", "st": "saint"}  # danh xưng viết tắt trước tên: đọc đủ chữ Anh (gold_spec: "mr." là "mister")
+VIETNAMISED_TITLES = {"mr": "mít-tơ", "mrs": "mít-xịt", "ms": "mít"}  # giọng KHÔNG nói được tiếng Anh (chủ sách 04-10: Mrs. "mít-xịt", Ms. "mít"; "mít-tơ" theo cùng kiểu, chưa có ca chủ sách); Dr. / St. qua `names.english_reading` ("doctor" là ca chủ sách "đóc-tờ")
 TITLE_NEEDS_NAME = frozenset(("dr", "st"))  # "Dr." / "St." chỉ là danh xưng khi liền trước một tên viết hoa ("Dr. Stone", "St. Louis"); "Mr." / "Ms." / "Mrs." thì luôn
 TITLE_GLUED = re.compile(r"(mrs|mr|ms|dr|st)\.(?=[^\W\d_])", re.IGNORECASE)  # "mr.lyle": dấu chấm dính liền tên
 TITLE_OPENERS = "\"'“‘([«"
@@ -133,7 +134,7 @@ TITLE_OPENERS = "\"'“‘([«"
 
 def read_titles(toks: list[str], out: list[str], speaks_english: bool = True) -> None:
     """"Mr." / "Mrs." / "Ms." / "Dr." / "St." trước tên đọc đủ chữ Anh ("mister", "missus", "miss", "doctor", "saint"): sea-g2p đọc "mờ rờ" hay để nguyên "mr." làm cả câu bị ngắt ở dấu chấm.
-    Dấu chấm bỏ theo ("mr.lyle" -> "mister lyle"). Giọng không nói được âm Anh thì Việt hoá chữ ấy như từ Anh khác. Thay tại chỗ; số chữ không đổi."""
+    Dấu chấm bỏ theo ("mr.lyle" -> "mister lyle"). Giọng không nói được âm Anh thì Việt hoá ("mít-xịt", `VIETNAMISED_TITLES`). Thay tại chỗ; số chữ không đổi."""
     for index, token in enumerate(toks):
         if out[index] != token:
             continue
@@ -156,5 +157,6 @@ def read_titles(toks: list[str], out: list[str], speaks_english: bool = True) ->
                 continue
             tail = after[1:] if dotted else after
         word = TITLES[key]
-        word = (names.english_reading(word) or word) if not speaks_english else word
+        if not speaks_english:
+            word = VIETNAMISED_TITLES.get(key) or names.english_reading(word) or word
         out[index] = before + word + tail

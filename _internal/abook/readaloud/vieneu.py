@@ -60,6 +60,10 @@ DOLLARS = re.compile(r"\$\s?([0-9]+(?:[.,][0-9]+)*)")  # $5: năm đô la (sea-g
 EMOTICON = re.compile(r"(?:[:;=]['\-^o]?[()dDpP3vV/\|*]+|>[:;=]['\-^o]?[()]+|<3+|-_-|\^_*\^|[Tt]_[Tt]|>_<|orz|OTZ)")
 ARROW_FORWARD = re.compile(r"(?<![<=-])(?:-+|=+)>|[→⇒➜➡➔⟶⟹]")  # "->", "-->", "=>", "→": sea-g2p đọc "sang" / "đến" / "suy ra"; "<->" (hai chiều) để nguyên
 ARROW_BACK = re.compile(r"<(?:-+|={2,})(?!>)|[←⇐⟵⟸]")  # "<-", "<--", "←": không có cách đọc thành lời (sea-g2p đọc "nhỏ hơn"): bỏ; "<=" là so sánh, để nguyên
+ARROW_STATS = frozenset("hp mp sp exp xp lv lvl level cấp hạng rank điểm giá str agi vit int dex luk atk def máu mana tiền vàng tuổi".split())  # nhãn chỉ số: mũi tên cạnh nó là đổi giá trị
+ARROW_COUNTED = frozenset("trang chương tập bước phần mục tầng ngày tháng năm hồi bài page step chapter từ tuyến đường bay".split())  # đánh số / chỉ đường: mũi tên là "đến"
+ARROW_TIME = re.compile(r"[0-9]{1,2}(?:[hHgG][0-9]{0,2}|:[0-9]{2})")  # 8h, 8h30, 10g, 8:00
+ARROW_TIME_WORDS = frozenset("giờ sáng trưa chiều tối khuya".split())
 GLUED = re.compile(r"((?:\.{2,}|[…—–])+)")  # chỗ dính liền hai từ trong một chữ hiện (tách để đọc từng từ, mảnh dấu giữ nguyên)
 STUTTER_ONSETS = ("ngh", "ng", "nh", "kh", "ch", "gh", "gi", "th", "tr", "ph", "qu")  # phụ âm đầu ghép của tiếng Việt: nói lắp "C-Chuyện" là "chờ… chuyện"
 STUTTER_SOUND = {"k": "c", "w": "v", "z": "d", "j": "gi", "f": "ph"}
@@ -168,27 +172,72 @@ def _tildes(out: list[str]) -> None:
         out[index] = said
 
 
-def _arrow(token: str, at_start: bool) -> str:
+def _core(token: str) -> str:
+    """Chữ của `token` bỏ dấu câu và ngoặc hai đầu ("[Cường" -> "Cường", "1940." -> "1940")."""
+    first, last = 0, len(token)
+    while first < last and not token[first].isalnum():
+        first += 1
+    while last > first and not token[last - 1].isalnum():
+        last -= 1
+    return token[first:last]
+
+
+def _arrow_says(plain: list[str], index: int, token: str, match: re.Match) -> str:
+    """Mũi tên đổi giá trị / trạng thái ("HP: 1780 --> 1940", "Lv 5 -> Lv 6", "Cân lực : 100 ⇒ 200") đọc "thành"; chỉ hướng đi / khoảng / trình tự ("Tokyo -> Osaka", "8h -> 10h",
+    "Bước 1 -> Bước 2", "trang 3 -> 5") đọc "đến" (chủ sách 04-10: "tùy ngữ cảnh"). Xét hai vế (phần cùng chữ hay chữ liền trước / sau) và tối đa 3 chữ đứng trước vế trái (trong cùng câu):
+    nhãn chỉ số ("HP", "Lv", "cấp", "điểm", "giá"...) hay vế trái / phải là chỉ số -> thành; giờ giấc ("8h", "8:00", "giờ"), danh từ đánh số / chỉ đường ("trang", "bước", "từ", "tuyến"...) -> đến; dấu ":"
+    trong cùng câu (ô trạng thái đang đổi: "Nghề: A -> B") -> thành; hai tên riêng viết hoa một chữ ("Tokyo -> Osaka") -> đến; còn lại (không rõ) -> thành."""
+    left = _core(token[:match.start()])
+    left_at = index if left else index - 1
+    if not left and left_at >= 0:
+        left = _core(plain[left_at])
+    right = _core(token[match.end():])
+    right_at = index
+    if not right and index + 1 < len(plain):
+        right, right_at = _core(plain[index + 1]), index + 1
+    labels: list[str] = []
+    colon = False
+    for back in range(left_at - 1, max(left_at - 4, -1), -1):
+        word = plain[back].rstrip(CLOSERS)
+        if word and word[-1] in SENTENCE_END:
+            break
+        colon = colon or word.endswith(":")
+        labels.append(_core(word).lower())
+    stat = lambda word: word.lower() in ARROW_STATS or word.lower().rstrip("0123456789") in ARROW_STATS  # "Lv5" -> "lv"
+    if any(stat(word) for word in labels) or stat(left) or stat(right):
+        return "thành"
+    when = lambda word: bool(ARROW_TIME.fullmatch(word)) or word.lower() in ARROW_TIME_WORDS
+    if any(word in ARROW_COUNTED for word in labels) or when(left) or when(right):
+        return "đến"
+    if colon:
+        return "thành"
+    named = lambda word: len(word) >= 3 and word.isalpha() and word[0].isupper() and word[1:].islower()
+    beside = [plain[at] if 0 <= at < len(plain) else "" for at in (left_at - 1, right_at + 1)]  # tên nhiều chữ ("Tân Thủ -> Pháp Sư") không chắc là nơi chốn
+    return "đến" if named(left) and named(right) and not any(named(_core(word)) for word in beside) else "thành"
+
+
+def _arrow(token: str, at_start: bool, says: Callable[[re.Match], str]) -> str:
     def replace(match: re.Match, word: str) -> str:
         left = token[match.start() - 1] if match.start() else ""
         right = token[match.end()] if match.end() < len(token) else ""
         if not left and at_start:
             word = ""  # "-> Bước tiếp": mũi tên đầu dòng chỉ là dấu đầu mục
         if word:
-            return (" " if left.isalnum() else "") + word + (" " if right.isalnum() else "")
+            return (" " if left and (left.isalnum() or left in "%)]”’") else "") + word + (" " if right and (right.isalnum() or right in "$([“‘") else "")
         return " " if left.isalnum() and right.isalnum() else ""
-    token = ARROW_FORWARD.sub(lambda match: replace(match, "thành"), token)
+    token = ARROW_FORWARD.sub(lambda match: replace(match, says(match)), token)
     return ARROW_BACK.sub(lambda match: replace(match, ""), token)
 
 
-def _arrows(out: list[str]) -> None:
-    """Mũi tên chữ: "1780 --> 1940", "A -> B", "=>", "→" là "thành" (sea-g2p đọc "sang" / "đến" / "suy ra"); mũi tên ngược "<-", "←" không có lời để đọc thì bỏ; mũi tên đứng đầu đoạn
-    hay đầu câu là dấu đầu mục, cũng bỏ."""
+def _arrows(out: list[str], toks: list[str] | None = None) -> None:
+    """Mũi tên chữ: "1780 --> 1940", "A -> B", "=>", "→" là "thành" hay "đến" tuỳ chỗ (`_arrow_says`; sea-g2p đọc "sang" / "đến" / "suy ra"); mũi tên ngược "<-", "←" không có lời để đọc thì bỏ;
+    mũi tên đứng đầu đoạn hay đầu câu là dấu đầu mục, cũng bỏ. Chữ xung quanh lấy từ `toks` (chữ hiện, chưa đổi sang cách đọc: "HP" chứ không phải "hát pê") khi có."""
+    plain = toks if toks is not None and len(toks) == len(out) else out
     for index, token in enumerate(out):
         if not any(char in token for char in "<>=→⇒➜➡➔⟶⟹←⇐⟵⟸"):
             continue
         before = out[index - 1].rstrip(CLOSERS) if index else ""
-        out[index] = _arrow(token, not before or before[-1] in SENTENCE_END)
+        out[index] = _arrow(token, not before or before[-1] in SENTENCE_END, lambda match: _arrow_says(plain, index, token, match))
 
 
 def _angle(out: list[str]) -> None:
@@ -383,11 +432,11 @@ def _frames(out: list[str]) -> None:
         out[index] = token
 
 
-def reading_marks(out: list[str]) -> None:
-    """Dấu câu / ký hiệu mà sea-g2p đọc sai thành lời (nó đọc "~" là "khoảng", "500,000" là "năm trăm"): sửa tại chỗ, số chữ không đổi."""
+def reading_marks(out: list[str], toks: list[str] | None = None) -> None:
+    """Dấu câu / ký hiệu mà sea-g2p đọc sai thành lời (nó đọc "~" là "khoảng", "500,000" là "năm trăm"): sửa tại chỗ, số chữ không đổi. `toks` là chữ hiện tương ứng với `out` (cho `_arrows` xét ngữ cảnh)."""
     _fullwidth(out)
     _emoticons(out)
-    _arrows(out)
+    _arrows(out, toks)
     _tildes(out)
     for index, token in enumerate(out):
         out[index] = THOUSANDS.sub(lambda match: match.group().replace(",", ""), token)
@@ -414,7 +463,7 @@ def spoken_tokens(toks: list[str], origin: str | None = None, speaks_english: bo
     _stutters(toks, out, origin, speaks_english)
     shouts.read_shouts(toks, out)
     _read_words(toks, out, origin, speaks_english)
-    reading_marks(out)
+    reading_marks(out, toks)
     return out
 
 
