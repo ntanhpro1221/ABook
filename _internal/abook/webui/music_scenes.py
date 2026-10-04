@@ -191,8 +191,9 @@ class _Accumulator:
                 for name in EMOTION_CLASSES}
 
 
-def chapter_scenes(script: dict[str, Any]) -> list[dict[str, Any]]:
-    """Các đoạn của một chương (`store.chapter_script` / `scripts/<n>.json` của `.abook`)."""
+def chapter_scenes(script: dict[str, Any], moods: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
+    """Các đoạn của một chương (`store.chapter_script` / `scripts/<n>.json` của `.abook`). `moods`: kết quả LLM đọc cả
+    đoạn (`music_moods.load()["scenes"]`) - chỉ đổi valence / tension của đoạn, KHÔNG bao giờ đổi ranh giới đoạn."""
     segments = [segment for segment in script.get("segments") or [] if isinstance(segment, dict)]
     if not segments:
         return []
@@ -254,7 +255,25 @@ def chapter_scenes(script: dict[str, Any]) -> list[dict[str, Any]]:
         current["last"] = index
     scenes.append(current)
     scenes = _split_long(_merge_short(scenes), segments, seconds)
-    return [_view(scene, segments, timeline, seconds, script) for scene in scenes]
+    spans = _mood_spans(moods, script.get("chapterId"), segments)
+    return [_view(scene, segments, timeline, seconds, script, spans) for scene in scenes]
+
+
+def _mood_spans(moods: list[dict[str, Any]] | None, chapter_id: Any,
+                segments: list[dict[str, Any]]) -> list[tuple[int, int, float, float]]:
+    """Kết quả LLM của chương này đổi sang (vị trí câu đầu, vị trí câu cuối, V, T). So theo VỊ TRÍ trong chương, không theo
+    id (id câu không chắc liên tục); mục có id không còn trong chương (sách đã đổi) bị bỏ."""
+    position = {segment.get("id"): index for index, segment in enumerate(segments)}
+    spans = []
+    for mood in moods or []:
+        first, last = position.get(mood.get("firstSegment")), position.get(mood.get("lastSegment"))
+        if mood.get("chapterId") != chapter_id or first is None or last is None or first > last:
+            continue
+        try:
+            spans.append((first, last, float(mood["V"]), float(mood["T"])))
+        except (KeyError, TypeError, ValueError):
+            continue
+    return spans
 
 
 def _split_long(scenes: list[dict[str, Any]], segments: list[dict[str, Any]], seconds: list[float]) -> list[dict[str, Any]]:
@@ -312,14 +331,23 @@ def _merge_short(scenes: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def _view(scene: dict[str, Any], segments: list[dict[str, Any]], timeline: list[float], seconds: list[float],
-          script: dict[str, Any]) -> dict[str, Any]:
+          script: dict[str, Any], spans: list[tuple[int, int, float, float]] = ()) -> dict[str, Any]:
     """Một đoạn cho bên ngoài. `valence`/`arousal`/`tension` là trung bình, `sd` là độ lệch chuẩn của các câu trong đoạn
-    (đoạn càng lẫn lộn càng khoan dung với bài lệch), `emotions` là 13 cường độ độc lập; ở đường nhãn câu chúng suy từ nhãn,
-    đường LLM (đang đo) sẽ ghi thẳng."""
+    (đoạn càng lẫn lộn càng khoan dung với bài lệch), `emotions` là 13 cường độ độc lập; ở đường nhãn câu chúng suy từ nhãn.
+    `spans` (`_mood_spans`): LLM đã đọc đoạn này thì `valence` / `tension` lấy từ LLM (V, T trên [-2, 2] -> [-1, 1], trung
+    bình theo giây của phần chồng lên đoạn), `moodSource` = "llm"; còn lại ("labels") giữ đường nhãn."""
     first, last = scene["first"], scene["last"]
     acc = scene["acc"]
     valence, arousal = acc.point()
+    tension = acc.mean_tension()
     weight = acc.weight
+    mood_source = "labels"
+    overlaps = [(sum(seconds[max(first, a):min(last, b) + 1]), v, t) for a, b, v, t in spans if a <= last and b >= first]
+    total = sum(w for w, _v, _t in overlaps)
+    if total > 0:
+        valence = sum(w * v / 2 for w, v, _t in overlaps) / total
+        tension = sum(w * t / 2 for w, _v, t in overlaps) / total
+        mood_source = "llm"
     return {
         "chapterId": script.get("chapterId"),
         "firstSegment": segments[first].get("id"),
@@ -328,15 +356,16 @@ def _view(scene: dict[str, Any], segments: list[dict[str, Any]], timeline: list[
         "end": round(timeline[last] + seconds[last], 3),
         "valence": round(valence, 3),
         "arousal": round(arousal, 3),
-        "tension": round(acc.mean_tension(), 3),
+        "tension": round(tension, 3),
         "sd": {axis: round(value, 3) for axis, value in acc.sd().items()},
         "emotions": acc.emotion_intensities(),
         "confidence": round(acc.affective / weight, 3) if weight else 0.0,
         "reason": scene["reason"],
         "lines": last - first + 1,
+        "moodSource": mood_source,
     }
 
 
-def book_scenes(scripts: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Các đoạn của cả cuốn, theo thứ tự chương."""
-    return [scene for script in scripts for scene in chapter_scenes(script)]
+def book_scenes(scripts: Iterable[dict[str, Any]], moods: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
+    """Các đoạn của cả cuốn, theo thứ tự chương. `moods`: xem `chapter_scenes`."""
+    return [scene for script in scripts for scene in chapter_scenes(script, moods)]
