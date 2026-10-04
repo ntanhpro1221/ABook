@@ -48,6 +48,21 @@ Người duyệt đúng những câu ấy là cách rẻ nhất để đạt 100
   đúc lại đang có), chỉ các câu ấy, rồi dựng lại MP3 của chương.
 - Việc được tính lại sau mỗi stage (phân tích, phân vai, thu chương); việc đã xử lý không hiện lại trừ khi bằng chứng đổi.
 
+## Duyệt trước khi thu (04-10)
+
+Lối vào ĐÚNG LÚC cho mọi thứ ở trên: phân vai vừa khoá (không còn câu `pending`, `casting_finalized`) mà chưa thu xong
+chương nào - sửa lúc này không phải thu lại gì. Studio có người gác (`webui/precast.py`, `App._precast_tick`, 10 giây một
+vòng khi có cuốn đang chạy) báo mốc ấy MỘT lần mỗi cuốn: thông báo Windows, dải mời trên trang dự án và lời mời trong mọi
+trang Studio (cả Studio từ xa trên điện thoại, cùng giao diện). Tab "Duyệt trước khi thu" dẫn qua ba bước, mỗi bước là thẻ /
+dòng sẵn có, bỏ qua được: (a) sáu người nói nhiều nhất (đổi giọng, giới, gộp) + thẻ giới / bí danh / chung giọng, (b) cách
+đọc tên máy tự đoán, kém chắc trước, (c) thẻ "ai nói câu này" có câu ở ba chương sắp thu (`work_items` ghi `chapters` cho
+mỗi thẻ). Tuỳ chọn "Chờ tôi duyệt trước khi thu" (mặc định TẮT; đặt lúc tạo sách hay ở trang dự án trước mốc, sổ
+`studio_precast.json` cạnh dự án): bật thì SUPERVISOR của lượt chạy (`background_runner._hold_for_review`, cùng nhịp kiểm
+nguồn điện, sống cả khi app đóng) TẠM DỪNG cuốn đúng một lần ở mốc như nút "Tạm dừng" (không bao giờ dừng - AGENTS.md)
+và ghi `studio_precast_held.json`; nút "Thu âm" là "Tiếp tục", và đã giữ một lần thì không giữ lại. Studio chỉ BÁO, không
+quyết giữ - hai tiến trình ghi hai file riêng. Tắt thì dây chuyền thu luôn; màn duyệt nói đã thu tới chương nào - sửa ở
+chương sau đó vẫn miễn phí. Lời báo cần app mở: app đóng đúng lúc mốc thì không báo, nhưng sách vẫn đứng chờ nếu bật chờ.
+
 ## Thứ tự làm
 
 1. **Hộp việc chỉ đọc**: dựng danh mục việc 1-2-3-6-8 từ SQLite đang có (độ tin cậy, sổ nhân vật, bí danh, phiên âm, hàng

@@ -52,6 +52,30 @@ export interface BookSummary {
   broken?: string;
   /** Ảnh bìa thật (webui/covers.py), hoặc null khi dùng bìa vẽ từ tên. */
   cover?: CoverImage | null;
+  /** Phân vai đã khoá: dàn nhân vật, giọng, cách đọc tên đã có để duyệt. */
+  castLocked?: boolean;
+  /** "Duyệt trước khi thu" (webui/precast.py). */
+  precast?: PrecastFlags;
+}
+
+export interface PrecastFlags {
+  /** Phân tích xong và phân vai đã khoá. */
+  ready: boolean;
+  /** "Chờ tôi duyệt trước khi thu" của cuốn này. */
+  wait: boolean;
+  /** Lúc Studio báo mốc phân tích xong (một lần mỗi cuốn), hoặc null. */
+  announcedAt: number | null;
+  /** Studio đang giữ cuốn này lại chờ duyệt (tạm dừng, chờ nút "Thu âm"). */
+  held: boolean;
+}
+
+export interface PrecastView extends PrecastFlags {
+  chapters: number;
+  recordedChapters: number;
+  /** Chương xa nhất đã thu xong: sửa ở chương sau nó không phải thu lại. */
+  recordedThrough: { id: number; title: string } | null;
+  /** Vài chương sắp thu, theo thứ tự đọc. */
+  upcoming: { id: number; title: string }[];
 }
 
 export interface Chapter {

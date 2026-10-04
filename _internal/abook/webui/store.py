@@ -774,6 +774,8 @@ def summarize(project_root: Path, *, running: bool = False, now: float | None = 
         total = int(segments["total"] or 0)
         analyzed = int(segments["analyzed"] or 0)
         finished = int(segments["finished"] or 0)
+        # Phân vai đã khoá: dàn nhân vật, giọng, cách đọc tên đã có - mốc "Duyệt trước khi thu" (precast.py).
+        cast_locked = bool(int(book["casting_finalized"] or 0)) if "casting_finalized" in book.keys() else False
         if status == "paused":
             # Tạm dừng (power_source): dây chuyền ghi status/stage "paused" và nhớ pha cũ trong bộ nhớ. Đoán lại pha từ tiến
             # độ - "Đã dừng" là sai khi tiến trình vẫn sống; tiến trình chết lúc đang tạm dừng thì là "Tạm ngưng lúc ...".
@@ -818,6 +820,7 @@ def summarize(project_root: Path, *, running: bool = False, now: float | None = 
         "createdAt": float(book["created_at"] or 0) or None,
         "updatedAt": max(float(book["updated_at"] or 0), touched(project_root)) or None,
         "lastError": str(book["last_error"] or ""),
+        "castLocked": cast_locked,
         "pendingChanges": pending_changes(project_root, changes_since(project_root, float(book["updated_at"] or 0)))
         if phase == "done" else 0,
         "settings": {

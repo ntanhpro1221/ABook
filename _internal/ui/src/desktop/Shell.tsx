@@ -12,6 +12,7 @@ import { APP_TITLE } from "@/shared/title";
 import { formatPercent } from "@/shared/format";
 import { Progress, Vu } from "@/shared/ui";
 import { useAppInfo, useLibrary } from "@/studio/data";
+import { usePrecastInvites } from "@/studio/PrecastReview";
 import { HandOffButton, RemoteBars, ThisPlayerReporter } from "./RemotePhone";
 
 // Máy tính = phía Nghe (giống hệt trình phát Android) + Studio sản xuất. Thanh bên tách hai khu rõ ràng.
@@ -88,6 +89,7 @@ function Producing() {
   const { pathname } = useLocation();
   const { data } = useLibrary({ live: pathname.startsWith("/studio") });
   const navigate = useNavigate();
+  usePrecastInvites(data?.books);
   const live = (data?.books ?? []).filter((book) => book.running || book.starting);
   if (!live.length) return null;
   return (

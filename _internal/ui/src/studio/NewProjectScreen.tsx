@@ -122,6 +122,8 @@ interface Draft {
   povOff?: number[];
   profile: Profile;
   startNow: boolean;
+  /** "Chờ tôi duyệt trước khi thu" (webui/precast.py): phân tích xong thì sách tạm dừng chờ người duyệt. Mặc định tắt. */
+  precastWait?: boolean;
   /** "Làm tiếp cuốn này": phần trước để gieo từ (continuation.py), hay không có khi là sách mới. */
   seed?: Seed;
   /** Chip "Đợt này làm N chương đầu": N chương đầu trong số chương CHƯA bị bỏ tay (null/không có = tất cả). Tách khỏi
@@ -1188,6 +1190,8 @@ function ConfirmStep({
   volumes,
   startNow,
   setStartNow,
+  precastWait,
+  setPrecastWait,
   dropCredits,
   analysisModel,
 }: {
@@ -1202,6 +1206,8 @@ function ConfirmStep({
   seed?: Seed;
   startNow: boolean;
   setStartNow: (value: boolean) => void;
+  precastWait: boolean;
+  setPrecastWait: (value: boolean) => void;
   /** Người dùng đã đồng ý bỏ dòng ghi công khỏi phần đọc. */
   dropCredits: boolean;
   analysisModel: string;
@@ -1284,6 +1290,17 @@ function ConfirmStep({
             {startNow
               ? "Sách chạy nền: đóng cửa sổ vẫn tiếp tục, Windows báo khi xong. Chương nào xong là nghe được chương đó, không phải chờ cả cuốn."
               : "Sách được tạo nhưng chưa chạy - bấm “Bắt đầu tạo sách nói” ở trang dự án khi sẵn sàng (vd sửa trước cách đọc tên)."}
+          </span>
+        </span>
+      </label>
+      <label className="mt-3 flex items-start gap-3 rounded-xl border border-line bg-panel p-4" htmlFor="precast-wait">
+        <Switch id="precast-wait" checked={precastWait} onCheckedChange={setPrecastWait} />
+        <span>
+          <span className="block text-sm font-medium">Chờ tôi duyệt trước khi thu</span>
+          <span className="mt-0.5 block text-[13px] leading-relaxed text-fg-2">
+            {precastWait
+              ? "Phân tích xong, sách tạm dừng để bạn xem giọng, cách đọc tên và người nói - bấm “Thu âm” để thu tiếp."
+              : "Phân tích xong thì thu luôn. Vẫn duyệt được bất cứ lúc nào; sửa ở chương chưa thu thì không phải thu lại."}
           </span>
         </span>
       </label>
@@ -1499,6 +1516,7 @@ export function NewProjectScreen() {
         // Chỉ khi người dùng đã đồng ý đề xuất - không gửi gì thì sách giữ nguyên nội dung.
         ...(draft.dropCredits && creditSummary(scan.files).lines ? { dropCreditLines: true } : {}),
         start: draft.startNow,
+        ...(draft.precastWait ? { precastWait: true } : {}),
       },
       {
         onSuccess: (result) => {
@@ -1677,6 +1695,8 @@ export function NewProjectScreen() {
               volumes={volumeStarts.length > 1 ? ranges(volumeStarts, scan.files.length) : undefined}
               startNow={draft.startNow}
               setStartNow={(startNow) => update({ startNow })}
+              precastWait={Boolean(draft.precastWait)}
+              setPrecastWait={(precastWait) => update({ precastWait })}
               dropCredits={Boolean(draft.dropCredits)}
               analysisModel={draft.analysisModel ?? ""}
             />
