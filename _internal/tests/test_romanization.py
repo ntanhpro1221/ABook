@@ -50,7 +50,7 @@ def test_every_sourced_form_matches_or_is_explained_by_a_chosen_rule():
     assert len(matched) + len(evidence.EXPLAINED) == len(evidence.SOURCED)
     # 138 / 195: 36 / 91 dạng có nguồn + 114 ca của chủ sách (04-10, chín lần; ca của chủ sách thay dạng SGK cùng chữ: Yamato, Osaka; Gangwon viết cang theo chính tả: EXPLAINED);
     # 57 còn lại đều do luật của chủ sách, điểm đã quét hay nguồn tự lệch (EXPLAINED)
-    assert len(matched) == 138
+    assert len(matched) == 139
 
 
 def test_tally_of_sourced_forms_by_kind():
@@ -60,7 +60,7 @@ def test_tally_of_sourced_forms_by_kind():
         entry[0] += _matches(token, origin, sources)
         entry[1] += 1
     # (khớp, tổng). Dạng "community" (Doraemon cũ) chỉ để xem, không là chuẩn.
-    assert tally == {("owner", "ja"): [75, 75], ("owner", "ko"): [38, 39], ("textbook", "ja"): [19, 43], ("official", "ja"): [3, 11], ("community", "ja"): [0, 7],
+    assert tally == {("owner", "ja"): [75, 75], ("owner", "ko"): [39, 40], ("textbook", "ja"): [19, 43], ("official", "ja"): [3, 11], ("community", "ja"): [0, 7],
                      ("official", "ko"): [3, 20]}
 
 

@@ -376,6 +376,8 @@ object Romanization {
         "jeongeun" to listOf(Triple("ch", "â", "ng"), Triple("g", "ư", "n")),
         // Oppa -> óp-pa (chủ sách lần 9, cố định): o ngắn, KHÔNG ô như Jong -> Giông; pp tách p khép + p mở
         "oppa" to listOf(Triple("", "o", "p"), Triple("p", "a", "")),
+        // Ryu (họ Hàn, Ryu Hyun-jin) -> ri-u (chủ sách 04-10 chiều, cố định): KHÔNG l đầu từ, KHÔNG gộp yu như Gyu -> ghiu
+        "ryu" to listOf(Triple("r", "i", ""), Triple("", "u", "")),
     )
 
     private fun koBest(raw: String, flags: MutableList<String>): List<Triple<String, String, String>>? {

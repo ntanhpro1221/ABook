@@ -422,6 +422,8 @@ _KO_FIXED_SYLS: dict[str, tuple[tuple[str, str, str], ...]] = {
     "jeongeun": (("ch", "â", "ng"), ("g", "ư", "n")),
     # Oppa -> óp-pa (chủ sách lần 9, cố định): o ngắn, KHÔNG ô như Jong -> Giông; pp tách p khép + p mở
     "oppa": (("", "o", "p"), ("p", "a", "")),
+    # Ryu (họ Hàn, Ryu Hyun-jin) -> ri-u (chủ sách 04-10 chiều, cố định): KHÔNG l đầu từ, KHÔNG gộp yu như Gyu -> ghiu
+    "ryu": (("r", "i", ""), ("", "u", "")),
 }
 
 
