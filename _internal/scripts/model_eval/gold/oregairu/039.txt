@@ -56,12 +56,12 @@
 27 N
 28 N
 29 N NARRATOR neutral,sarcastic,sad 0-1 normal normal u
-30 N,T NARRATOR,HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN sarcastic,happy,neutral 0-1 normal normal u
-31 N,T NARRATOR,HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN sarcastic,happy,excited,neutral 1-2 normal,fast normal,loud u
+30 N,T HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN,NARRATOR sarcastic,happy,neutral 0-1 normal normal u
+31 N,T HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN,NARRATOR sarcastic,happy,excited,neutral 1-2 normal,fast normal,loud u
 32 N NARRATOR neutral,sarcastic 0-1 normal normal u
 33 N NARRATOR neutral,sarcastic 0-1 normal normal u
-34 N,T NARRATOR,HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN sarcastic,neutral,surprised 0-1 normal normal u
-35 N,T NARRATOR,HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN sarcastic,neutral,surprised 0-1 normal normal u
+34 N,T HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN,NARRATOR sarcastic,neutral,surprised 0-1 normal normal u
+35 N,T HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN,NARRATOR sarcastic,neutral,surprised 0-1 normal normal u
 36 N NARRATOR neutral,sarcastic 0-1 normal normal u
 37 N
 38 N
@@ -84,8 +84,8 @@
 55 D YUKINOSHITA YUKINO,YUKINOSHITA,YUKINO neutral,sad 0-1 normal,slow normal,soft f
 56 N
 57 D HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN neutral 0-1 normal normal,soft m
-58 N,T NARRATOR,HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN neutral,afraid,sad 0-1 normal normal,soft u
-59 N,T NARRATOR,HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN neutral,afraid,sad 0-1 normal normal,soft u
+58 N,T HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN,NARRATOR neutral,afraid,sad 0-1 normal normal,soft u
+59 N,T HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN,NARRATOR neutral,afraid,sad 0-1 normal normal,soft u
 60 N
 61 N
 62 N
@@ -109,15 +109,15 @@
 80 N
 81 N
 82 N NARRATOR neutral,happy 0-1 normal normal u
-83 N,T NARRATOR,HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN neutral,happy,sarcastic 0-1 normal normal,soft u
-84 N,T NARRATOR,HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN neutral,sarcastic,happy 0-1 normal normal u
-85 N,T NARRATOR,HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN neutral,sarcastic,tender 0-1 normal normal u
+83 N,T HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN,NARRATOR neutral,happy,sarcastic 0-1 normal normal,soft u
+84 N,T HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN,NARRATOR neutral,sarcastic,happy 0-1 normal normal u
+85 N,T HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN,NARRATOR neutral,sarcastic,tender 0-1 normal normal u
 86 N NARRATOR neutral,sarcastic 0-1 normal normal u
 87 N NARRATOR neutral,sarcastic 0-1 normal normal u
 88 N NARRATOR neutral,sad 0-1 normal,slow normal u
 89 N NARRATOR neutral,sad,angry 0-2 normal,slow normal u
 90 N NARRATOR neutral,sad 0-1 normal,slow normal u
-91 N,T NARRATOR,HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN neutral,sad 0-1 normal,slow normal u
+91 N,T HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN,NARRATOR neutral,sad 0-1 normal,slow normal u
 92 T,D HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN,NARRATOR sad,neutral 0-2 slow,normal normal,soft m
 93 N NARRATOR neutral,sad 0-1 normal,slow normal u
-94 N,T NARRATOR,HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN sad,neutral 0-2 slow,normal normal,soft u
+94 N,T HIKIGAYA HACHIMAN,HIKIGAYA,HACHIMAN,NARRATOR sad,neutral 0-2 slow,normal normal,soft u

@@ -33,7 +33,7 @@
 13 D TOMOBE afraid,surprised,neutral 0-1 slow,normal soft,normal m
 14 N
 15 N
-16 N,T NARRATOR,TOMOBE afraid,neutral 0-1 normal normal u
+16 N,T TOMOBE,NARRATOR afraid,neutral 0-1 normal normal u
 17 D SHIRO afraid,surprised,excited 2-3 fast loud f
 18 N NARRATOR,AZUMA HIBARI~,AZUMA~,HIBARI AZUMA~ neutral 0-1 normal normal u
 19 D AZUMA HIBARI,AZUMA,HIBARI AZUMA neutral,sarcastic 0-1 normal normal f
@@ -77,7 +77,7 @@
 57 N
 58 T TOMOBE neutral,afraid 0-1 normal normal,soft m
 59 N
-60 N,T NARRATOR,TOMOBE neutral,tired,sarcastic 0-1 normal normal u
+60 N,T TOMOBE,NARRATOR neutral,tired,sarcastic 0-1 normal normal u
 61 D TOMOBE surprised,neutral 0-1 normal normal m
 62 D GENSEI,KIRIKUSA GENSEI,NPC*~ neutral,sarcastic 0-1 normal normal m
 63 N
@@ -100,13 +100,13 @@
 80 D TOMOBE surprised,neutral 0-1 normal normal m
 81 D GENSEI,KIRIKUSA GENSEI neutral 0-1 normal normal m
 82 N
-83 N,T NARRATOR,TOMOBE neutral 0-1 normal normal u
+83 N,T TOMOBE,NARRATOR neutral 0-1 normal normal u
 84 D TOMOBE neutral,afraid,sad 0-1 normal soft,normal m
 85 D AZUMA HIBARI,AZUMA,HIBARI AZUMA neutral,tender 0-1 normal normal f
 86 N
 87 D GENSEI,KIRIKUSA GENSEI neutral 0-1 normal normal m
 88 D TOMOBE surprised,afraid 1-2 normal normal m
-89 N,T NARRATOR,TOMOBE neutral,afraid 0-1 normal normal u
+89 N,T TOMOBE,NARRATOR neutral,afraid 0-1 normal normal u
 90 D AZUMA HIBARI,AZUMA,HIBARI AZUMA neutral,tired,sarcastic 0-1 normal normal f
 91 N
 92 D AZUMA HIBARI,AZUMA,HIBARI AZUMA neutral,tender 0-1 normal normal f
@@ -116,7 +116,7 @@
 96 N
 97 D GENSEI,KIRIKUSA GENSEI neutral 0-1 normal normal m
 98 D TOMOBE surprised,neutral 0-1 normal normal m
-99 N,T NARRATOR,TOMOBE neutral 0-1 normal normal u
+99 N,T TOMOBE,NARRATOR neutral 0-1 normal normal u
 100 D AZUMA HIBARI,AZUMA,HIBARI AZUMA neutral 0-1 normal normal f
 101 D TOMOBE tired,sarcastic,neutral 0-1 normal soft,normal m
 102 N NARRATOR neutral,happy 0-1 normal normal u
@@ -127,22 +127,22 @@
 107 N
 108 D AZUMA HIBARI,AZUMA,HIBARI AZUMA tender,neutral 0-1 normal normal f
 109 D TOMOBE neutral,tender 0-1 normal normal m
-110 N,T NARRATOR,TOMOBE neutral 0-1 normal normal u
+110 N,T TOMOBE,NARRATOR neutral 0-1 normal normal u
 111 D AZUMA HIBARI,AZUMA,HIBARI AZUMA happy,neutral 0-1 normal normal f
 112 N
 113 D TOMOBE neutral,surprised 0-1 normal normal m
 114 D AZUMA HIBARI,AZUMA,HIBARI AZUMA neutral 0-1 normal normal f
 115 D TOMOBE surprised,neutral 0-1 normal soft,normal m
-116 N,T NARRATOR,TOMOBE surprised,neutral 0-1 normal normal u
+116 N,T TOMOBE,NARRATOR surprised,neutral 0-1 normal normal u
 117 D TOMOBE surprised 1-2 normal normal m
 118 D AZUMA HIBARI,AZUMA,HIBARI AZUMA neutral 0-1 normal normal f
 119 D TOMOBE,NARRATOR~ surprised,tired 0-1 normal soft,normal m
-120 N,T NARRATOR,TOMOBE surprised,neutral 0-1 normal normal u
+120 N,T TOMOBE,NARRATOR surprised,neutral 0-1 normal normal u
 121 D AZUMA HIBARI,AZUMA,HIBARI AZUMA neutral,sarcastic 0-1 normal normal f
 122 D TOMOBE neutral 0-1 normal normal m
 123 D AZUMA HIBARI,AZUMA,HIBARI AZUMA neutral,happy 0-1 normal normal f
 124 D TOMOBE tired,sarcastic,neutral 0-1 normal normal m
-125 N,T NARRATOR,TOMOBE neutral,afraid 0-1 normal normal u
+125 N,T TOMOBE,NARRATOR neutral,afraid 0-1 normal normal u
 126 D AZUMA HIBARI,AZUMA,HIBARI AZUMA sarcastic,happy 0-1 normal normal f
 127 D TOMOBE surprised,angry,sad 1-2 normal normal m
 128 D TOMOBE angry,surprised 2-3 fast loud m
@@ -150,12 +150,12 @@
 130 D GENSEI,KIRIKUSA GENSEI neutral 0-1 normal normal m
 131 D AZUMA HIBARI,AZUMA,HIBARI AZUMA happy,sarcastic,neutral 0-1 normal normal f
 132 D TOMOBE,NARRATOR~ surprised 1-2 normal normal m
-133 N,T NARRATOR,TOMOBE surprised,afraid,neutral 0-1 normal normal u
+133 N,T TOMOBE,NARRATOR surprised,afraid,neutral 0-1 normal normal u
 134 D AZUMA HIBARI,AZUMA,HIBARI AZUMA sarcastic,happy,neutral 0-1 normal normal f
 135 D TOMOBE neutral,afraid,happy 0-1 normal soft,normal m
 136 N
 137 D AZUMA HIBARI,AZUMA,HIBARI AZUMA tender,happy,neutral 0-1 normal normal f
-138 N,T NARRATOR,TOMOBE neutral 0-1 normal normal u
+138 N,T TOMOBE,NARRATOR neutral 0-1 normal normal u
 139 D GENSEI,KIRIKUSA GENSEI surprised,neutral 0-1 normal normal m
 140 D AZUMA HIBARI,AZUMA,HIBARI AZUMA happy,tender 0-1 normal normal f
 141 N

@@ -17,7 +17,7 @@
 0 H
 1 N
 2 N NARRATOR,GLOCKT~ neutral 0-1 normal normal u
-3 N,T NARRATOR,GLOCKT~ neutral 0-1 normal normal u
+3 N,T GLOCKT~,NARRATOR neutral 0-1 normal normal u
 4 N NARRATOR,GLOCKT~ neutral 0-1 normal normal u
 5 N NARRATOR,GLOCKT~ neutral,sad 0-1 normal normal u
 6 N NARRATOR,GLOCKT~ neutral 0-1 normal normal u
@@ -52,7 +52,7 @@
 35 D AYLA,AYLA TRIST afraid,angry,surprised 1-2 normal,fast normal,loud f
 36 N
 37 N NARRATOR neutral,afraid 0-1 normal normal u
-38 N,T NARRATOR,ED,ED ROSTAILER neutral,sarcastic 0-1 normal normal u
+38 N,T ED,ED ROSTAILER,NARRATOR neutral,sarcastic 0-1 normal normal u
 39 N
 40 N
 41 N
@@ -61,7 +61,7 @@
 44 N
 45 N
 46 N
-47 N,T NARRATOR,ED,ED ROSTAILER neutral 0-1 normal normal u
+47 N,T ED,ED ROSTAILER,NARRATOR neutral 0-1 normal normal u
 48 N
 49 N
 50 N
@@ -102,7 +102,7 @@
 85 D AYLA,AYLA TRIST afraid,sad 1-2 normal,slow soft,normal f
 86 N NARRATOR neutral,afraid,sad 0-1 normal normal u
 87 N,T NARRATOR neutral 0-1 normal normal u
-88 N,T NARRATOR,ED,ED ROSTAILER neutral,sarcastic 0-1 normal normal u
+88 N,T ED,ED ROSTAILER,NARRATOR neutral,sarcastic 0-1 normal normal u
 89 N
 90 N
 91 N
@@ -153,7 +153,7 @@
 136 N
 137 D GLAST neutral,surprised,sarcastic 0-1 normal normal m
 138 N
-139 N,T NARRATOR,ED,ED ROSTAILER neutral,sarcastic 0-1 normal normal u
+139 N,T ED,ED ROSTAILER,NARRATOR neutral,sarcastic 0-1 normal normal u
 140 N
 141 D GLAST neutral,surprised 0-1 normal normal m
 142 D ED,ED ROSTAILER neutral 0-1 normal normal m
@@ -170,25 +170,25 @@
 153 N
 154 D ED,ED ROSTAILER neutral 0-1 normal normal m
 155 D GLAST neutral 0-1 normal normal m
-156 N,T NARRATOR,ED,ED ROSTAILER neutral,surprised 0-1 normal normal u
+156 N,T ED,ED ROSTAILER,NARRATOR neutral,surprised 0-1 normal normal u
 157 N,T NARRATOR neutral 0-1 normal normal u
 158 D GLAST neutral 0-1 normal normal,soft m
-159 N,T NARRATOR,ED,ED ROSTAILER neutral,sarcastic,angry 0-1 normal normal u
+159 N,T ED,ED ROSTAILER,NARRATOR neutral,sarcastic,angry 0-1 normal normal u
 160 N
 161 N
 162 N
 163 N
 164 N
-165 N,T NARRATOR,ED,ED ROSTAILER neutral,surprised 0-1 normal normal u
+165 N,T ED,ED ROSTAILER,NARRATOR neutral,surprised 0-1 normal normal u
 166 N
 167 N,T NARRATOR neutral 0-1 normal normal u
 168 N
 169 N
-170 N,T NARRATOR,ED,ED ROSTAILER neutral,sarcastic,happy 0-1 normal normal u
-171 N,T NARRATOR,ED,ED ROSTAILER neutral 0-1 normal normal u
+170 N,T ED,ED ROSTAILER,NARRATOR neutral,sarcastic,happy 0-1 normal normal u
+171 N,T ED,ED ROSTAILER,NARRATOR neutral 0-1 normal normal u
 172 N,T NARRATOR neutral 0-1 normal normal u
 173 N
-174 N,T NARRATOR,ED,ED ROSTAILER neutral,surprised 0-1 normal normal u
+174 N,T ED,ED ROSTAILER,NARRATOR neutral,surprised 0-1 normal normal u
 175 D ED,ED ROSTAILER neutral 0-1 slow,normal soft,normal m
 176 N
 177 N

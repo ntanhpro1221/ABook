@@ -27,7 +27,7 @@
 10 N
 11 N
 12 N
-13 N,T NARRATOR,KIRAKO~,KUROMITSU KIRAKO~ neutral,surprised 0-1 normal normal u
+13 N,T KIRAKO~,KUROMITSU KIRAKO~,NARRATOR neutral,surprised 0-1 normal normal u
 14 N
 15 D YOSHIHITO,KUCHINASHI YOSHIHITO surprised,afraid,excited 2-3 fast loud m
 16 D LINLIN,NARRATOR~ surprised 1-2 fast normal,loud f
@@ -48,7 +48,7 @@
 31 D YOSHIHITO,KUCHINASHI YOSHIHITO neutral,tired 0-1 normal normal,soft m
 32 N
 33 N
-34 N,T NARRATOR,KIRAKO,KUROMITSU KIRAKO neutral,happy 0-1 normal normal u
+34 N,T KIRAKO,KUROMITSU KIRAKO,NARRATOR neutral,happy 0-1 normal normal u
 35 N NARRATOR neutral,happy 0-1 normal normal u
 36 N
 37 N
@@ -57,14 +57,14 @@
 40 N NARRATOR neutral,angry 0-1 normal normal u
 41 N NARRATOR neutral,afraid 0-1 normal normal u
 42 N
-43 N,T NARRATOR,LINLIN surprised,neutral 0-1 normal normal u
-44 N,T NARRATOR,LINLIN neutral 0-1 normal normal u
-45 N,T NARRATOR,LINLIN neutral,surprised 0-1 normal normal u
+43 N,T LINLIN,NARRATOR surprised,neutral 0-1 normal normal u
+44 N,T LINLIN,NARRATOR neutral 0-1 normal normal u
+45 N,T LINLIN,NARRATOR neutral,surprised 0-1 normal normal u
 46 D LINLIN angry,excited 1-2 fast,normal loud,normal f
 47 N
-48 N,T NARRATOR,LINLIN neutral 0-1 normal normal u
-49 N,T NARRATOR,LINLIN neutral,angry 0-1 normal normal u
-50 N,T NARRATOR,LINLIN neutral,angry 0-1 normal normal u
+48 N,T LINLIN,NARRATOR neutral 0-1 normal normal u
+49 N,T LINLIN,NARRATOR neutral,angry 0-1 normal normal u
+50 N,T LINLIN,NARRATOR neutral,angry 0-1 normal normal u
 51 T,D YOSHIHITO,KUCHINASHI YOSHIHITO afraid,surprised 2-3 fast normal,loud m
 52 D KÝ SINH TRÙNG,CON KÝ SINH TRÙNG,NPC*~,UNKNOWN~,NARRATOR~ neutral 0-1 normal normal m
 53 T,D YOSHIHITO,KUCHINASHI YOSHIHITO angry,afraid 1-2 fast normal,loud m
@@ -82,19 +82,19 @@
 65 D YOSHIHITO,KUCHINASHI YOSHIHITO surprised,neutral 0-1 normal normal m
 66 D KÝ SINH TRÙNG,CON KÝ SINH TRÙNG,NPC*~,UNKNOWN~,NARRATOR~ neutral 0-1 normal normal m
 67 D YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR~ neutral,surprised 0-1 normal normal,soft m
-68 N,T NARRATOR,YOSHIHITO~,KUCHINASHI YOSHIHITO~ neutral,surprised 0-1 normal normal u
-69 N,T NARRATOR,YOSHIHITO~,KUCHINASHI YOSHIHITO~ neutral,happy 0-1 normal normal u
-70 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO happy,neutral 0-1 normal normal u
+68 N,T YOSHIHITO~,KUCHINASHI YOSHIHITO~,NARRATOR neutral,surprised 0-1 normal normal u
+69 N,T YOSHIHITO~,KUCHINASHI YOSHIHITO~,NARRATOR neutral,happy 0-1 normal normal u
+70 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR happy,neutral 0-1 normal normal u
 71 N NARRATOR neutral,happy 0-1 normal normal u
-72 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO sarcastic,angry 0-1 normal normal u
+72 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR sarcastic,angry 0-1 normal normal u
 73 D YOSHIHITO,KUCHINASHI YOSHIHITO happy,sarcastic 0-1 normal normal m
 74 D KIRAKO,KUROMITSU KIRAKO sarcastic 0-1 normal normal f
 75 N NARRATOR neutral,sarcastic 0-1 normal normal u
-76 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO neutral,angry 0-1 normal normal u
-77 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO angry,neutral 0-1 normal normal u
-78 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO angry,neutral 0-1 normal normal u
-79 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO neutral,angry 0-1 normal normal u
-80 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO angry,sarcastic 0-1 normal normal u
+76 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR neutral,angry 0-1 normal normal u
+77 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR angry,neutral 0-1 normal normal u
+78 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR angry,neutral 0-1 normal normal u
+79 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR neutral,angry 0-1 normal normal u
+80 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR angry,sarcastic 0-1 normal normal u
 81 D YOSHIHITO,KUCHINASHI YOSHIHITO sad,tired,neutral 0-1 normal normal,soft m
 82 D KIRAKO,KUROMITSU KIRAKO neutral,sarcastic,happy 0-1 normal normal f
 83 N
@@ -102,98 +102,98 @@
 85 N NARRATOR neutral,happy 0-1 normal normal u
 86 D KÝ SINH TRÙNG,CON KÝ SINH TRÙNG,NPC*~,UNKNOWN~,NARRATOR~ tired,sarcastic 0-1 normal normal m
 87 N NARRATOR neutral,tired 0-1 normal normal u
-88 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO angry 1-2 fast,normal normal,loud u
-89 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO angry 1-2 normal,fast normal u
-90 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO angry,sarcastic 0-1 normal normal u
+88 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR angry 1-2 fast,normal normal,loud u
+89 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR angry 1-2 normal,fast normal u
+90 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR angry,sarcastic 0-1 normal normal u
 91 N
 92 D YOSHIHITO,KUCHINASHI YOSHIHITO neutral,happy 0-1 normal normal,soft m
 93 N NARRATOR neutral,surprised,afraid 0-1 normal normal u
-94 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO neutral,happy 0-1 normal normal u
-95 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO neutral,happy 0-1 normal normal u
-96 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO neutral,happy 0-1 normal normal u
-97 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO happy,excited 1-2 normal normal u
+94 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR neutral,happy 0-1 normal normal u
+95 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR neutral,happy 0-1 normal normal u
+96 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR neutral,happy 0-1 normal normal u
+97 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR happy,excited 1-2 normal normal u
 98 D YOSHIHITO,KUCHINASHI YOSHIHITO happy,sarcastic 0-1 normal normal m
 99 D KIRAKO,KUROMITSU KIRAKO angry,sad 1-2 normal,fast normal,loud f
 100 D KÝ SINH TRÙNG,CON KÝ SINH TRÙNG,NPC*~,UNKNOWN~,NARRATOR~ sarcastic,tired 0-1 normal normal m
 101 N NARRATOR neutral,happy 0-1 normal normal u
-102 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO happy,excited 1-2 normal normal,loud u
-103 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO happy,excited 1-2 normal normal u
-104 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO happy,sarcastic 0-1 normal normal u
-105 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO neutral,happy 0-1 normal normal u
-106 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO neutral,angry 0-1 normal normal u
-107 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO angry,sarcastic 0-1 normal normal u
-108 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO neutral,angry 0-1 normal normal u
+102 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR happy,excited 1-2 normal normal,loud u
+103 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR happy,excited 1-2 normal normal u
+104 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR happy,sarcastic 0-1 normal normal u
+105 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR neutral,happy 0-1 normal normal u
+106 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR neutral,angry 0-1 normal normal u
+107 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR angry,sarcastic 0-1 normal normal u
+108 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR neutral,angry 0-1 normal normal u
 109 N
 110 D LINLIN,NPC*~,NARRATOR~ excited,happy 0-1 normal normal,loud f
 111 N
 112 N
-113 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO afraid,surprised 1-3 fast,normal normal,loud u
+113 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR afraid,surprised 1-3 fast,normal normal,loud u
 114 D LINLIN surprised,happy,neutral 0-1 normal normal f
 115 N
-116 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO angry 0-1 normal normal u
-117 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO surprised,afraid 0-1 normal normal u
-118 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO afraid,sarcastic 0-1 normal normal u
+116 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR angry 0-1 normal normal u
+117 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR surprised,afraid 0-1 normal normal u
+118 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR afraid,sarcastic 0-1 normal normal u
 119 D LINLIN neutral,angry 0-1 normal normal f
 120 D YOSHIHITO,KUCHINASHI YOSHIHITO sad,angry,tired 0-1 normal normal m
-121 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO neutral,sad 0-1 normal normal u
-122 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO angry,sad 0-1 normal normal u
+121 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR neutral,sad 0-1 normal normal u
+122 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR angry,sad 0-1 normal normal u
 123 D LINLIN neutral,surprised 0-1 normal normal f
 124 N
-125 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO angry 1-2 normal,fast normal u
+125 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR angry 1-2 normal,fast normal u
 126 D KÝ SINH TRÙNG,CON KÝ SINH TRÙNG,NPC*~,UNKNOWN~,NARRATOR~ sarcastic 0-1 normal normal m
 127 N
-128 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO afraid 0-1 normal normal,soft u
+128 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR afraid 0-1 normal normal,soft u
 129 N
 130 N
 131 N
 132 D LINLIN neutral,surprised,whispering 0-1 normal soft,normal f
 133 D YOSHIHITO,KUCHINASHI YOSHIHITO surprised 0-1 normal normal m
 134 N
-135 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO angry,sarcastic 0-1 normal normal u
+135 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR angry,sarcastic 0-1 normal normal u
 136 D LINLIN neutral 0-1 normal normal f
 137 D YOSHIHITO,KUCHINASHI YOSHIHITO surprised 0-1 normal normal m
 138 N NARRATOR neutral,surprised 0-1 normal normal u
-139 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO angry,surprised 0-1 normal normal u
-140 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO angry,sarcastic 0-1 normal normal u
-141 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO neutral 0-1 normal normal u
-142 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO neutral,surprised 0-1 normal normal u
-143 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO afraid 0-1 normal normal u
-144 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO angry,afraid 1-2 normal,fast normal u
-145 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO angry 1-2 normal normal u
+139 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR angry,surprised 0-1 normal normal u
+140 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR angry,sarcastic 0-1 normal normal u
+141 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR neutral 0-1 normal normal u
+142 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR neutral,surprised 0-1 normal normal u
+143 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR afraid 0-1 normal normal u
+144 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR angry,afraid 1-2 normal,fast normal u
+145 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR angry 1-2 normal normal u
 146 D KÝ SINH TRÙNG,CON KÝ SINH TRÙNG,NPC*~,UNKNOWN~,NARRATOR~ neutral 0-1 normal normal m
-147 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO angry 1-2 normal,fast normal,loud u
-148 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO angry 1-2 normal normal u
-149 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO angry,sarcastic 1-2 normal normal u
+147 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR angry 1-2 normal,fast normal,loud u
+148 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR angry 1-2 normal normal u
+149 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR angry,sarcastic 1-2 normal normal u
 150 D KÝ SINH TRÙNG,CON KÝ SINH TRÙNG,NPC*~,UNKNOWN~,NARRATOR~ sarcastic,happy 0-1 normal normal m
-151 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO sarcastic,neutral 0-1 normal normal u
-152 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO neutral,sarcastic,angry 0-1 normal normal u
+151 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR sarcastic,neutral 0-1 normal normal u
+152 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR neutral,sarcastic,angry 0-1 normal normal u
 153 D KÝ SINH TRÙNG,CON KÝ SINH TRÙNG,NPC*~,UNKNOWN~,NARRATOR~ sarcastic,surprised 0-1 normal normal m
 154 D LINLIN neutral 0-1 normal normal f
 155 N NARRATOR neutral,happy 0-1 normal normal u
 156 D LINLIN happy,excited 0-1 normal normal,loud f
 157 D YOSHIHITO,KUCHINASHI YOSHIHITO neutral,sarcastic 0-1 normal normal m
-158 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO sarcastic 0-1 normal normal u
-159 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO sarcastic 0-1 normal normal u
+158 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR sarcastic 0-1 normal normal u
+159 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR sarcastic 0-1 normal normal u
 160 D LINLIN happy,surprised,sarcastic 0-1 normal normal f
 161 N
-162 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO angry,sarcastic 0-1 normal normal u
+162 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR angry,sarcastic 0-1 normal normal u
 163 D KÝ SINH TRÙNG,CON KÝ SINH TRÙNG,NPC*~,UNKNOWN~,NARRATOR~ surprised,sarcastic 0-1 normal normal m
 164 N
 165 N
-166 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO sarcastic,neutral 0-1 normal normal u
+166 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR sarcastic,neutral 0-1 normal normal u
 167 D LINLIN happy,neutral 0-1 normal normal f
 168 N
-169 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO angry 2-3 fast,normal normal,loud u
-170 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO angry 2-3 fast,normal normal,loud u
-171 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO angry 2-3 fast,normal normal,loud u
+169 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR angry 2-3 fast,normal normal,loud u
+170 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR angry 2-3 fast,normal normal,loud u
+171 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR angry 2-3 fast,normal normal,loud u
 172 D LINLIN happy 0-1 normal normal,loud f
 173 N
 174 N
 175 N
-176 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO angry 1-2 fast,normal normal,loud u
-177 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO angry 1-2 fast,normal normal,loud u
-178 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO angry 1-2 fast,normal normal,loud u
+176 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR angry 1-2 fast,normal normal,loud u
+177 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR angry 1-2 fast,normal normal,loud u
+178 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR angry 1-2 fast,normal normal,loud u
 179 N NARRATOR neutral,angry 0-1 normal normal u
-180 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO angry,sarcastic 0-1 normal normal u
+180 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR angry,sarcastic 0-1 normal normal u
 181 D KIRAKO,KUROMITSU KIRAKO happy,sarcastic 0-1 normal normal f
 182 D YOSHIHITO,KUCHINASHI YOSHIHITO angry 1-2 normal normal m

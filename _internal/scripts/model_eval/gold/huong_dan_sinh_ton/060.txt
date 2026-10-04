@@ -26,7 +26,7 @@
 20 D NARRATOR,NPC*,UNKNOWN~ afraid,surprised,angry,excited 1-3 fast,normal loud u
 21 N NARRATOR neutral,afraid,surprised 0-1 normal normal u
 22 N
-23 N,T NARRATOR,ED ROSTAILER~,ED~ neutral 0-1 normal normal u
+23 N,T ED ROSTAILER~,ED~,NARRATOR neutral 0-1 normal normal u
 24 N
 25 N
 26 N
@@ -69,7 +69,7 @@
 63 D LUCY,LUCY MEIRIL neutral 0-1 normal normal,soft f
 64 D ED ROSTAILER,ED neutral,tired 0-1 normal normal m
 65 N
-66 N,T NARRATOR,LUCY~,LUCY MEIRIL~ neutral 0-1 normal normal u
+66 N,T LUCY~,LUCY MEIRIL~,NARRATOR neutral 0-1 normal normal u
 67 N
 68 D LUCY,LUCY MEIRIL neutral 0-1 normal normal,soft f
 69 D ED ROSTAILER,ED tired,neutral,sarcastic 0-1 normal normal m
@@ -128,9 +128,9 @@
 122 N
 123 N
 124 D LUCY,LUCY MEIRIL neutral 0-1 normal soft,normal f
-125 N,T NARRATOR,ED ROSTAILER,ED neutral,sarcastic,tired 0-1 normal normal u
+125 N,T ED ROSTAILER,ED,NARRATOR neutral,sarcastic,tired 0-1 normal normal u
 126 D LUCY,LUCY MEIRIL tender,sad,neutral 0-1 slow,normal soft,normal f
-127 N,T NARRATOR,ED ROSTAILER,ED neutral,tender,surprised 0-1 normal normal u
+127 N,T ED ROSTAILER,ED,NARRATOR neutral,tender,surprised 0-1 normal normal u
 128 N NARRATOR neutral,tender 0-1 normal normal u
 129 N NARRATOR neutral,sad 0-1 normal normal u
 130 N NARRATOR neutral,sad 0-1 normal normal u

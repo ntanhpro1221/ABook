@@ -19,7 +19,7 @@
 10 D DOUGLAS neutral 0-1 normal normal m
 11 D DOUGLAS neutral 0-1 normal normal m
 12 N NARRATOR neutral,tired,sarcastic 0-1 normal normal u
-13 T NARRATOR,LUCIEN~,FERNANDO~ neutral,sarcastic,happy 0-1 normal normal u
+13 T LUCIEN~,FERNANDO~,NARRATOR~ neutral,sarcastic,happy 0-1 normal normal u
 14 N
 15 D NARRATOR,FERNANDO~ neutral,sarcastic 0-1 normal normal u
 16 N

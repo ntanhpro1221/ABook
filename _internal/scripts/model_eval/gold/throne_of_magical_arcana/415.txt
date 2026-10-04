@@ -2,7 +2,7 @@
 # Claude soát đối kháng (A), không đổi dòng nào - ADJUDICATION.md. Lucien đội lốt Beaulac: câu nói LUCIEN, BEAULAC~ (quy tắc 13).
 0 H
 1 N
-2 N,T NARRATOR,LUCIEN~ neutral,happy,afraid 0-1 normal normal u
+2 N,T LUCIEN~,NARRATOR neutral,happy,afraid 0-1 normal normal u
 3 N NARRATOR neutral,tender 0-1 normal normal u
 4 T LUCIEN neutral,surprised 0-1 normal normal,soft m
 5 N
@@ -70,12 +70,12 @@
 67 D ALFERRIS neutral 0-1 normal normal m
 68 N
 69 D LUCIEN surprised 0-1 normal normal m
-70 N,T NARRATOR,LUCIEN~ surprised,neutral 0-1 normal normal u
+70 N,T LUCIEN~,NARRATOR surprised,neutral 0-1 normal normal u
 71 N
 72 D ALFERRIS neutral 0-1 normal normal m
 73 N NARRATOR neutral,excited 0-1 normal normal u
 74 T LUCIEN sarcastic,neutral 0-1 normal normal,soft m
-75 N,T NARRATOR,LUCIEN~ sarcastic,happy 0-1 normal normal u
+75 N,T LUCIEN~,NARRATOR sarcastic,happy 0-1 normal normal u
 76 D ALFERRIS happy,sarcastic 0-1 normal normal m
 77 N
 78 D LUCIEN surprised,neutral 0-1 normal normal m
