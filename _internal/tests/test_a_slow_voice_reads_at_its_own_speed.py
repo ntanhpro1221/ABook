@@ -10,7 +10,8 @@ import numpy as np
 import pytest
 import pyworld
 
-from abook.tts import apply_speed_change
+from abook.audio_io import integrated_loudness_lufs
+from abook.tts import WORLD_MIN_SECONDS, WSOLA_FRAME_SECONDS, apply_speed_change
 from abook import voice_balance
 from abook.voice_catalog import SPEED_FACTOR_MAX, SPEED_FACTOR_MIN
 
@@ -29,17 +30,57 @@ def median_f0(audio: np.ndarray) -> float:
     return float(np.median(f0[f0 > 0]))
 
 
-@pytest.mark.parametrize("speed", [1.20, 1.27, 1.35])
-def test_a_speed_factor_shortens_the_line_by_that_factor(speed: float) -> None:
+@pytest.mark.parametrize("speed", [0.76, 0.89, 1.20, 1.27, 1.35])
+def test_a_speed_factor_sets_the_length_to_exactly_one_over_it(speed: float) -> None:
     audio = voiced()
     faster = apply_speed_change(audio, RATE, speed)
-    assert faster.size / audio.size == pytest.approx(1.0 / speed, rel=0.03)
+    assert faster.size == round(audio.size / speed)
 
 
-def test_a_speed_factor_keeps_the_pitch() -> None:
+@pytest.mark.parametrize("speed", [0.89, 1.30])
+def test_a_speed_factor_keeps_the_pitch(speed: float) -> None:
     audio = voiced(f0=150.0)
+    faster = apply_speed_change(audio, RATE, speed)
+    assert median_f0(faster) == pytest.approx(median_f0(audio), rel=0.01)
+
+
+@pytest.mark.parametrize("speed", [0.89, 1.30])
+def test_stretching_moves_the_loudness_by_well_under_a_decibel(speed: float) -> None:
+    # Đo trên giọng thật 04-10: +0,34..+0,53 dB. Bảng cân bằng đo độ to SAU bước này nên độ lệch ấy
+    # đã nằm trong gain; test chỉ chặn một bản sửa làm nó lớn tới mức nghe ra giữa hai câu liền nhau.
+    audio = voiced(seconds=3.0)
+    before = integrated_loudness_lufs(audio, RATE)
+    after = integrated_loudness_lufs(apply_speed_change(audio, RATE, speed), RATE)
+    assert abs(after - before) < 1.0
+
+
+def test_a_take_shorter_than_one_frame_still_gets_its_length() -> None:
+    # Giữa WORLD_MIN_SECONDS (đi qua nguyên vẹn) và một khung WSOLA: vẫn co giãn, không văng.
+    audio = voiced(seconds=WSOLA_FRAME_SECONDS / 2)
+    assert audio.size >= WORLD_MIN_SECONDS * RATE
     faster = apply_speed_change(audio, RATE, 1.30)
-    assert median_f0(faster) == pytest.approx(median_f0(audio), rel=0.03)
+    assert faster.size == round(audio.size / 1.30)
+    assert np.all(np.isfinite(faster))
+
+
+@pytest.mark.parametrize("speed", [0.89, 1.30])
+def test_it_matches_the_reference_wsola_it_was_written_after(speed: float) -> None:
+    # audiotsm là phụ thuộc DEV, không đóng vào app: chỉ dùng để đối chiếu bản viết tay. Dạng sóng
+    # lệch pha nên không so từng mẫu; độ dài cũng không - audiotsm bỏ phần đuôi chưa đủ khung (ngắn hơn
+    # 1/r chừng 2 %), bản của app cắt đúng 1/r. So cao độ và độ to.
+    audiotsm = pytest.importorskip("audiotsm")
+    from audiotsm.io.array import ArrayReader, ArrayWriter
+
+    audio = voiced(seconds=3.0)
+    writer = ArrayWriter(channels=1)
+    frame = int(WSOLA_FRAME_SECONDS * RATE)
+    audiotsm.wsola(channels=1, speed=speed, frame_length=frame, synthesis_hop=frame // 2).run(
+        ArrayReader(audio.reshape(1, -1)), writer
+    )
+    reference = writer.data.reshape(-1).astype(np.float32)
+    ours = apply_speed_change(audio, RATE, speed)
+    assert median_f0(ours) == pytest.approx(median_f0(reference), rel=0.01)
+    assert integrated_loudness_lufs(ours, RATE) == pytest.approx(integrated_loudness_lufs(reference, RATE), abs=0.5)
 
 
 def test_no_factor_means_no_change_at_all() -> None:
