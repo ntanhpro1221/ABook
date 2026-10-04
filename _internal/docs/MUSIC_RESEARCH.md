@@ -2381,3 +2381,36 @@ Mỗi pha xong: ghi số vào đây, đổi tham số trong app theo kết quả
     - (a) model nghe có hiểu ngữ nghĩa (Music Flamingo / Omni-7B chấm V) cho bài ít chữ, trên Mac;
     - (b) cho chọn bài dựa vào E / T nhiều hơn và V ít hơn khi bài thiếu chữ (trọng số theo độ tin cậy V của bài).
 - Kết quả oracle thứ Bảy 10-10 vẫn quyết thứ tự ưu tiên (đoạn hay bài).
+
+**SỬA KẾT LUẬN Ở TRÊN + BỎ HƯỚNG (b) "BỚT V" (04-10 21:3x, trước khi đo gì thêm):**
+- Câu "vui/buồn của bài trong danh mục đáng tin chủ yếu nhờ phần CHỮ" ở trên NÓI QUÁ. Ridge chéo bộ không phải cách app tính V.
+  - Với bài `basis: clap`, app dùng V **zero-shot** của CLAP: so âm thanh với hai nhóm mô tả chữ (`analyze_clap.py`), rồi lấy hạng.
+  - Zero-shot ấy trên 470 trích đoạn nhạc phim (nhãn người) đã đo từ trước: V r = 0,589, E 0,714, T 0,600
+    (`results_soundtracks_clap.log`).
+  - Trong danh mục, trên 1.493 bài có tag cảm giác (Incompetech 1.425), V zero-shot so V suy từ tag: r = 0,580; E: 0,656.
+- Nghĩa là V của bài chỉ có âm thanh yếu ngang E, không hỏng. Bớt trọng số V riêng cho các bài ấy là không có cơ sở → **bỏ (b)**.
+  - Thêm nữa: nới `sd` của bài làm khoảng cách z NHỎ đi, tức là ưu ái chính các bài kém chắc. Muốn làm thì phải là phạt,
+    không phải nới.
+
+**GHI TRƯỚC - ZERO-SHOT V/E: MuQ-MuLan so CLAP (04-10 21:3x, Lead duyệt hướng "nhúng mạnh hơn"; trước khi chạy):**
+- **Câu hỏi:** model nhạc-chữ chuyên nhạc có cho V / E zero-shot khớp người hơn CLAP không? Nếu có, nó thay phần âm của danh mục.
+  - Ứng viên: `OpenMuQ/MuQ-MuLan-large`, CC-BY-NC, CPU, venv riêng `LLM_Train/music/.venv_muq`.
+  - Gốc: CLAP `laion/clap-htsat-unfused`, đúng model của danh mục.
+- **Cách tính, giống hệt cho hai model:**
+  - Ba cửa sổ 10 giây ở 20 / 50 / 80 % bài.
+  - Nhúng chuẩn hoá, trung bình, chuẩn hoá lại.
+  - Điểm V = trung bình độ giống với 4 mô tả dương − trung bình với 4 mô tả âm. Lấy đúng `VALENCE` / `AROUSAL` của `analyze_clap.py`,
+    không sửa chữ nào.
+  - Tốc độ lấy mẫu: CLAP 48 kHz, MuQ 24 kHz.
+  - Không học gì: không ridge, không chọn tham số.
+- **Thước:**
+  - Pearson với nhãn người trên nhạc phim (470; V, E) và DEAM (1.802; V, E). Cùng id với `external_features.py`.
+  - Ghi lại, KHÔNG phải thước: Incompetech so V / E suy từ tag (`FEEL_VA`), bài có cửa sổ trong `windows/`.
+- **Luật:** MuQ THẮNG nếu
+  - V ≥ CLAP + 0,05 trên CẢ nhạc phim lẫn DEAM,
+  - VÀ E không thua quá 0,02 trên bộ nào.
+- **Kế tiếp:**
+  - THẮNG → đề xuất Lead: tính V / E bằng MuQ cho bài `basis: clap` (998 bài). Đổi danh mục, không đổi code app.
+  - KHÔNG THẮNG → giữ CLAP, khép hướng nhúng.
+  - Mac thứ Hai (Model nhường từ 07:00) chỉ dùng nếu CPU nhà quá chậm.
+- `zeroshot_valence.py` → `results/zeroshot_valence.txt`.
