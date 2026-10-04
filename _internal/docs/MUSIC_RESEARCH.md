@@ -2460,3 +2460,42 @@ Mỗi pha xong: ghi số vào đây, đổi tham số trong app theo kết quả
   - Chỉ đề xuất vào danh mục nếu THẮNG; lợi phải vượt nhiễu, cận dưới bootstrap là phép thử cho điều đó.
 - Lệnh: `zeroshot_valence.py muq` (thêm `pmemo` vào SETS, chạy tiếp), `zeroshot_valence.py clap` và `zeroshot_valence.py pmemo`
   → `results/zeroshot_pmemo.txt`.
+
+**KẾT QUẢ AST Music_by_Emotion (05-10 05:03; `results/zeroshot_valence.txt`):** **KHÔNG THẮNG, thua rõ.**
+- V: nhạc phim −0,021 (CLAP 0,594), DEAM 0,391 (0,271), Incompetech 0,437 (0,599).
+- E: 0,595 / 0,579 / 0,584 (CLAP 0,714 / 0,644 / 0,676).
+- Không đưa vào hợp.
+
+**KẾT QUẢ HỢP z TRÊN PMEmo (đo một lần, `results/zeroshot_pmemo.txt`, n = 767):** **KHÔNG THẮNG.**
+
+| | CLAP | MuQ | hợp | hợp − CLAP [bootstrap 95 %] |
+|---|---|---|---|---|
+| V | 0,199 | 0,576 | 0,488 | **+0,289** [+0,248..+0,334] |
+| E | 0,601 | 0,205 | 0,475 | **−0,126** [−0,161..−0,092] |
+
+- **Giá đo được (CPU, kể cả giải mã):**
+  - CLAP: 0,34 s/bài, RAM đỉnh 1,4 GiB.
+  - MuQ-MuLan-large: ~3,5 s/bài (ba cửa sổ), RAM đỉnh 5,6 GiB.
+- **Quy luật lặp lại trên CẢ BỐN bộ:**
+  - MuQ giỏi V: hơn CLAP ở DEAM, Incompetech, PMEmo; kém ở nhạc phim.
+  - CLAP giỏi E: hơn MuQ ở cả bốn bộ.
+  - Hợp thua chỉ vì phần E.
+
+**GHI TRƯỚC - "V hợp, E giữ CLAP" TRÊN MTG-Jamendo (05-10 05:2x; ý này có SAU PMEmo, nên thử trên bộ chưa dùng):**
+- **Bộ thử:** MTG-Jamendo moodtheme, các bài đã giữ trên máy nhà (`C:/abook_data/mtg_jamendo/keep`, 4.665 bài không lời).
+  Cùng nguồn Jamendo với danh mục, gần miền đích nhất. Chưa từng tính MuQ hay hợp trên bộ này.
+- **Nhãn V theo tag, chốt trước:**
+  - DƯƠNG: happy, uplifting, positive, fun, funny, upbeat, hopeful.
+  - ÂM: sad, dark, melancholic, horror.
+  - Bài có tag cả hai phía thì bỏ. Nhãn ±1.
+- **Điểm:**
+  - CLAP: zero-shot từ nhúng sẵn trong `clap/<gói>.npz`. Cùng cách ba cửa sổ của `analyze_clap`.
+  - MuQ: như 6d71de93.
+  - Hợp V = 0,5·z(CLAP) + 0,5·z(MuQ), z tính trong bộ này. E không đổi, vẫn CLAP.
+- **Thước:** r điểm-hai-hạng giữa điểm V và nhãn ±1. Ghi kèm AUC.
+- **Luật (một lần):** THẮNG nếu r(hợp) − r(CLAP) ≥ +0,05 VÀ cận dưới bootstrap 95 % > 0 (2.000 lần, hạt giống 0).
+- **Nếu THẮNG:** đề xuất Lead tính lại V của danh mục bằng hợp.
+  - Một lần, máy nhà, ~2,3 giờ CPU cho 2.415 bài.
+  - Bài người dùng nhập vẫn CLAP: không bắt máy người dùng tải MuQ, 5,6 GiB RAM.
+  - Hai thang V khác nhau giữa danh mục và bài nhập là cái giá phải ghi rõ.
+- `zeroshot_valence.py mtg` → `results/zeroshot_mtg.txt`.
