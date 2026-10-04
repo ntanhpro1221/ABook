@@ -870,6 +870,15 @@ Mục đích: trả lời dứt điểm hai câu mà bộ 5 (9 chương) và 5B 
   Hướng giải thích (chưa kiểm): tinh chỉnh cho việc gán nhãn câu làm model mất phán đoán toàn đoạn.
 - Theo luật ghi trước: không model phân tích nào được dùng cho llmVT. Muốn có llmVT thì phải nạp `qwen3.5:9b` riêng →
   Lead / chủ sách quyết lại. App vẫn dùng nhãn câu như hiện nay.
+
+**GHI TRƯỚC - llmVT VỚI qwen3.5:4b GỐC (04-10 08:5x, Lead duyệt hướng C; trước lượt chạy):**
+- Câu hỏi: model gốc nhỏ hơn (3,2 GB tải) có giữ mức thắng của `qwen3.5:9b` gốc không?
+- Cách làm: y như ghi trước ở trên (`SET5_ONLY=vet`, đáp án bộ 6, run `04-10-music6-9bv8`, prompt không đổi). Model
+  `qwen3.5:4b`.
+- Luật thắng giữ nguyên: +0,05 r VET TB theo chương VÀ thắng ≥ 14/20 chương.
+- Quyết định (Lead):
+  - THẮNG → làm B với `qwen3.5:4b`: runtime tuỳ chọn tải khi bấm; nạp sau khi model phân tích đã dỡ; không tự nạp lúc resume.
+  - THUA → A, giữ nhãn câu. Chỉ xét B với 9b nếu có lý do khác.
 - **Câu (2): KHÔNG nguồn nào qua cổng → Lớp 2 vẫn TẮT.**
   - Trần cosine A–B 0,904, ngưỡng 0,813. Số nhãn ≥ 0,5 mỗi đoạn: A 1,62, B 1,64, người (TB A/B) 1,47.
   - (a) Nhãn câu app: cosine 0,370 (41% trần); 0,08 nhãn so 1,47 (lệch 95%) → không qua.
