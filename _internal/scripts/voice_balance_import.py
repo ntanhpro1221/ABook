@@ -23,7 +23,8 @@ gains.json - độ to đo trên bản thô SAU cao độ và tempo (WORLD kéo t
 
 Khoá là `voice_balance.voice_key(...)`. Một khoá chưa có trong bảng là LỖI, trừ khi có `--create`
 (giọng mới: khi đó `pitch_st` lấy 0 cho tới khi ai đó đặt). `pitch_st` không bao giờ được đo hay đề xuất
-ở đây. Các núm chung `x`, `L_lufs`, `pace_floor_scale` sửa tay trong file json.
+ở đây. Các núm chung `x`, `L_lufs`, `pace_floor_scale`, `engine_pace_floor` và trường `engine_speed` của máy tự đọc theo tốc độ
+(Supertonic) sửa tay trong file json; script giữ nguyên chúng.
 
 Sau khi ghi, bảng được nạp lại và kiểm (`voice_balance.load_table`) - số hỏng thì file không bị đổi. Hash
 chất lượng (`quality_implementation_hash`) đổi: chỉ thả số khi không có lượt sản xuất nào đang chạy.
@@ -99,6 +100,8 @@ def render(table: dict[str, Any]) -> bytes:
         f'  "L_lufs": {json.dumps(table["L_lufs"])}',
         f'  "pace_floor_scale": {json.dumps(table["pace_floor_scale"])}',
     ]
+    if "engine_pace_floor" in table:
+        head.append(f'  "engine_pace_floor": {json.dumps(table["engine_pace_floor"], ensure_ascii=False)}')
     lines = [
         f"    {json.dumps(key, ensure_ascii=False)}: "
         + json.dumps(table["voices"][key], ensure_ascii=False)

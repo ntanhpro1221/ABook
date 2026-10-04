@@ -206,6 +206,17 @@ VOICE_PREVIEW_FILENAMES = {
     "Ngọc Huyền": "ngoc_huyen.wav",
     "Quỳnh Anh": "quynh_anh.wav",
     "Thiền Tâm Đức": "thien_tam_duc.wav",
+    # Máy đọc ZeroTTS: cùng hai câu dò, cùng hạt giống, qua đúng adapter của Studio (scripts/make_voice_previews.py --engine zerotts).
+    "baotrang": "zerotts_baotrang.wav",
+    "giahuy": "zerotts_giahuy.wav",
+    "huuduc": "zerotts_huuduc.wav",
+    "kimoanh": "zerotts_kimoanh.wav",
+    "quangminh": "zerotts_quangminh.wav",
+    # Supertonic: cùng câu, cùng hạt giống, ở tốc độ của máy trong bảng cân bằng (`engine_speed`).
+    "F1": "supertonic_f1.wav",
+    "F3": "supertonic_f3.wav",
+    "M4": "supertonic_m4.wav",
+    "M5": "supertonic_m5.wav",
 }
 
 VIENEU_PRESETS: tuple[dict[str, str], ...] = (
@@ -313,11 +324,112 @@ VIENEU_PRESETS: tuple[dict[str, str], ...] = (
 )
 
 
+ENGINE_VIENEU = "vieneu"
+ENGINE_ZEROTTS = "zerotts"
+ENGINE_SUPERTONIC = "supertonic"
+# Tên máy đọc như người nghe thấy trong Studio (nhóm giọng ở "Đổi giọng").
+ENGINE_LABELS = {ENGINE_VIENEU: "VieNeu", ENGINE_ZEROTTS: "ZeroTTS", ENGINE_SUPERTONIC: "Supertonic"}
+
+# Giọng của các máy đọc khác VieNeu. `name` là tên giọng của chính máy ấy (khoá trong DB, trong bảng cân bằng
+# `<engine>@<phiên bản>/<name>/f100`), `label` là tên người nghe thấy. Chỉ bậc formant 1,00, không cao độ riêng:
+# thang formant và màu giọng là của VieNeu, chưa ai nghe thử chúng trên máy khác.
+#
+# Phân vai TỰ ĐỘNG không chạm tới những giọng này (casting_presets chỉ đọc VIENEU_PRESETS): chúng chỉ đến tay một
+# nhân vật khi người nghe chọn trong "Đổi giọng". `castable` = chọn tay được: cần chủ sách nghe đạt VÀ có số cân bằng
+# trong voice_balance.json.
+#
+# ZeroTTS: năm giọng chủ sách chấm "có" ở trang chấm giọng (03-10). Giới, tuổi, chất giọng theo voices/index.json của
+# model; miền chưa ai ghi nên để trống.
+# Supertonic F1, F3, M4, M5: chủ sách chấm "có"; tốc độ là tham số `speed` của máy, chỉnh lặp tới mốc (docs/VOICE_BALANCE.md
+# "Supertonic chỉnh lặp"), ghi ở `engine_speed` của bảng cân bằng. Sáu giọng còn lại có số nhưng chủ sách chưa chọn: đóng.
+ENGINE_VOICES: tuple[dict[str, Any], ...] = (
+    {
+        "engine": ENGINE_ZEROTTS, "name": "baotrang", "label": "Bảo Trang", "gender": GENDER_FEMALE, "region": "",
+        "style": STYLE_NEWS, "description": "Nữ · Trưởng thành · Rõ ràng", "castable": True,
+    },
+    {
+        "engine": ENGINE_ZEROTTS, "name": "kimoanh", "label": "Kim Oanh", "gender": GENDER_FEMALE, "region": "",
+        "style": STYLE_STORY, "description": "Nữ · Trung niên · Ấm, truyền cảm", "castable": True,
+    },
+    {
+        "engine": ENGINE_ZEROTTS, "name": "giahuy", "label": "Gia Huy", "gender": GENDER_MALE, "region": "",
+        "style": STYLE_STORY, "description": "Nam · Trẻ · Trầm ấm", "castable": True,
+    },
+    {
+        "engine": ENGINE_ZEROTTS, "name": "huuduc", "label": "Hữu Đức", "gender": GENDER_MALE, "region": "",
+        "style": STYLE_STORY, "description": "Nam · Lớn tuổi · Trầm, điềm đạm", "castable": True,
+    },
+    {
+        "engine": ENGINE_ZEROTTS, "name": "quangminh", "label": "Quang Minh", "gender": GENDER_MALE, "region": "",
+        "style": STYLE_NEWS, "description": "Nam · Trẻ · Rõ ràng, dứt khoát", "castable": True,
+    },
+    {
+        "engine": ENGINE_SUPERTONIC, "name": "F1", "label": "Supertonic F1", "gender": GENDER_FEMALE, "region": "",
+        "style": STYLE_NATURAL, "description": "Nữ", "castable": True,
+    },
+    {
+        "engine": ENGINE_SUPERTONIC, "name": "F3", "label": "Supertonic F3", "gender": GENDER_FEMALE, "region": "",
+        "style": STYLE_NATURAL, "description": "Nữ", "castable": True,
+    },
+    {
+        "engine": ENGINE_SUPERTONIC, "name": "M4", "label": "Supertonic M4", "gender": GENDER_MALE, "region": "",
+        "style": STYLE_NATURAL, "description": "Nam", "castable": True,
+    },
+    {
+        "engine": ENGINE_SUPERTONIC, "name": "M5", "label": "Supertonic M5", "gender": GENDER_MALE, "region": "",
+        "style": STYLE_NATURAL, "description": "Nam", "castable": True,
+    },
+    {
+        "engine": ENGINE_SUPERTONIC, "name": "F2", "label": "Supertonic F2", "gender": GENDER_FEMALE, "region": "",
+        "style": STYLE_NATURAL, "description": "Nữ", "castable": False,
+    },
+    {
+        "engine": ENGINE_SUPERTONIC, "name": "F4", "label": "Supertonic F4", "gender": GENDER_FEMALE, "region": "",
+        "style": STYLE_NATURAL, "description": "Nữ", "castable": False,
+    },
+    {
+        "engine": ENGINE_SUPERTONIC, "name": "F5", "label": "Supertonic F5", "gender": GENDER_FEMALE, "region": "",
+        "style": STYLE_NATURAL, "description": "Nữ", "castable": False,
+    },
+    {
+        "engine": ENGINE_SUPERTONIC, "name": "M1", "label": "Supertonic M1", "gender": GENDER_MALE, "region": "",
+        "style": STYLE_NATURAL, "description": "Nam", "castable": False,
+    },
+    {
+        "engine": ENGINE_SUPERTONIC, "name": "M2", "label": "Supertonic M2", "gender": GENDER_MALE, "region": "",
+        "style": STYLE_NATURAL, "description": "Nam", "castable": False,
+    },
+    {
+        "engine": ENGINE_SUPERTONIC, "name": "M3", "label": "Supertonic M3", "gender": GENDER_MALE, "region": "",
+        "style": STYLE_NATURAL, "description": "Nam", "castable": False,
+    },
+)
+
+
 def preset_by_name(name: str) -> dict[str, str]:
     for preset in VIENEU_PRESETS:
         if preset["name"] == name:
             return preset
     raise ValueError(f"Unknown VieNeu preset: {name!r}")
+
+
+def engine_voice(name: str, engine: str | None = None) -> dict[str, Any] | None:
+    """Giọng của máy đọc khác VieNeu mang tên `name` (của `engine` nếu nói rõ), hay None."""
+    for voice in ENGINE_VOICES:
+        if voice["name"] == name and (engine is None or voice["engine"] == engine):
+            return voice
+    return None
+
+
+def engine_of_voice(name: str) -> str:
+    """Máy đọc của một tên giọng: VieNeu cho preset VieNeu, máy của giọng ấy cho giọng máy khác."""
+    voice = engine_voice(name)
+    return str(voice["engine"]) if voice is not None else ENGINE_VIENEU
+
+
+def castable_engine_voices(gender: str | None = None) -> list[dict[str, Any]]:
+    """Giọng máy khác người nghe chọn tay được (không bao giờ vào phân vai tự động), theo thứ tự danh mục."""
+    return [voice for voice in ENGINE_VOICES if voice["castable"] and (not gender or voice["gender"] == gender)]
 
 
 def preset_priority(preset: dict[str, Any]) -> tuple[int, int, str]:
@@ -339,9 +451,9 @@ def casting_preset_priority(preset: dict[str, Any]) -> tuple[int, int, int, str]
     )
 
 
-def base_pitch_for_preset(preset_name: str) -> int:
+def base_pitch_for_preset(preset_name: str, engine: str = ENGINE_VIENEU) -> int:
     """The calibrated reading register for this preset, in semitones (from the balance table)."""
-    return preset_pitch_st(preset_name)
+    return preset_pitch_st(preset_name, engine)
 
 
 # F0 and formants both feed the impression of a large speaker, so a preset whose register

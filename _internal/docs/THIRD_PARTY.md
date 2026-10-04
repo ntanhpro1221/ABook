@@ -130,7 +130,14 @@ Studio một lần (bước "wordalign"), KHÔNG nằm trong bộ cài chỉ-ngh
   vào bối cảnh nào mà không nói rõ đó là máy tạo, không quấy rối / phân biệt đối xử, không đưa lời khuyên y tế... (đọc đủ ở file LICENSE).
   ABook luôn gọi đây là giọng đọc của máy và không có tính năng nhân bản giọng. Phần suy luận (`abook/readaloud/supertonic.py`) viết lại theo
   mã mẫu chính thức của hãng (gói pip `supertonic` 1.3.1, giấy phép **MIT**, Copyright (c) 2025 Supertone Inc.) - ghi nguồn ở đầu file; không
-  cài gói đó. Chữ -> chữ đã đọc số: `sea-g2p` dùng chung với mô-đun VieNeu (mục trên).
+  cài gói đó. Chữ -> chữ đã đọc số: `sea-g2p` dùng chung với mô-đun VieNeu (mục trên). Studio dùng lại đúng bản tải này cho giọng
+  Supertonic người nghe chọn trong "Đổi giọng" (`tts.SupertonicEngine`); các hạn chế dùng ở trên áp như nhau.
+- Giọng ZeroTTS cho Studio (mô-đun tải khi người dùng bấm ở "Đổi giọng", `webui/zerotts_module.py`; không nằm trong bộ cài): gói pip `zerotts`
+  0.1.5 (ZeroWeight AI, thuần Python, giấy phép **MIT**) - wheel ghim SHA-256, giải vào thư mục của mô-đun; trọng số `zeroweight-ai/ZeroTTS` trên
+  Hugging Face (giấy phép **MIT** theo thẻ model, ghim commit `c2bfbd67` + SHA-256 từng file, chỉ năm giọng chủ sách chọn). Bộ giải mã âm thanh đi
+  kèm model (`onnx/codec`, MOSS Audio Tokenizer của OpenMOSS) giấy phép **Apache-2.0**, file giấy phép tải cùng và đặt cạnh. Thư viện chạy
+  (onnxruntime, tokenizers, numpy, scipy) là của Studio, đã ghi ở các mục trên. Khi phân phối: kèm giấy phép MIT của ZeroWeight AI và Apache-2.0
+  của bộ giải mã.
 
 ## Model phân tích và dữ liệu nghiên cứu (chưa đóng gói trong bản phát hành)
 

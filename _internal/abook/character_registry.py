@@ -39,6 +39,9 @@ from .voice_catalog import (
     age_pitch_semitones,
     preset_reaches_age_pitch,
     preset_age_reach,
+    ENGINE_VIENEU,
+    ENGINE_VOICES,
+    engine_voice,
 )
 
 
@@ -1134,16 +1137,27 @@ def _majority(rows: list[Any], column: str, default: str = "unknown") -> str:
 def preset_gender_of_voice_key(voice_key: str) -> str | None:
     """Phái của preset đứng sau một `voice_key`, hoặc None nếu không tra được.
 
-    `voice_key` là `preset_<slug>_f<formant>_p<pitch>`. So tiền tố DÀI trước, để một preset có
-    tên là tiền tố của preset khác không nhận nhầm. Cùng phép tra với
-    `scripts/voice_matches_the_person.py` - công cụ ấy báo đúng thứ luật này cấm.
+    `voice_key` là `preset_<slug>_f<formant>_p<pitch>` (VieNeu) hay `<máy đọc>_<slug>_f100_p+00` (máy khác,
+    `voice_profile_spec`). So tiền tố DÀI trước, để một preset có tên là tiền tố của preset khác không nhận
+    nhầm. Cùng phép tra với `scripts/voice_matches_the_person.py` - công cụ ấy báo đúng thứ luật này cấm.
     """
     key = str(voice_key)
-    key = key[len("preset_") :] if key.startswith("preset_") else key
+    prefixes = [(f"preset_{_preset_slug(str(preset['name']))}", str(preset["gender"])) for preset in VIENEU_PRESETS]
+    prefixes += [(_voice_key_stem(voice), str(voice["gender"])) for voice in ENGINE_VOICES]
+    for prefix, gender in sorted(prefixes, key=lambda item: -len(item[0])):
+        if key.startswith(prefix):
+            return gender
+    # Khoá cũ ghi thiếu tiền tố "preset_" vẫn tra theo VieNeu.
     for preset in sorted(VIENEU_PRESETS, key=lambda p: -len(_preset_slug(str(p["name"])))):
         if key.startswith(_preset_slug(str(preset["name"]))):
             return str(preset["gender"])
     return None
+
+
+def _voice_key_stem(preset: dict[str, Any]) -> str:
+    """Đầu khoá `voice_key` của một giọng: `preset_<slug>` cho VieNeu, `<máy đọc>_<slug>` cho máy khác."""
+    engine = str(preset.get("engine", ENGINE_VIENEU))
+    return f"{'preset' if engine == ENGINE_VIENEU else engine}_{slugify(str(preset['name']))}"
 
 
 def _preset_slug(name: str) -> str:
@@ -1543,10 +1557,14 @@ def voice_profile_spec(preset: dict[str, str], formant_ratio: float, *, age_pitc
     inside that apply's own transaction.
     """
     name = preset["name"]
+    engine = str(preset.get("engine", ENGINE_VIENEU))
+    if engine != ENGINE_VIENEU and (abs(float(formant_ratio) - 1.0) > 1e-6 or int(age_pitch)):
+        # Thang formant và cao độ theo tuổi là của VieNeu; giọng máy khác chỉ có bậc gốc (voice_catalog.ENGINE_VOICES).
+        raise ValueError(f"{engine} voice {name!r} has no formant or age-pitch variants")
     # The preset's calibrated reading register, plus whatever the character's age asks
     # for: children speak about three semitones above an adult, and ageing moves men up
     # while it moves women down.
-    base_pitch = base_pitch_for_preset(name) + int(age_pitch)
+    base_pitch = base_pitch_for_preset(name, engine) + int(age_pitch)
     formant_key = balance_formant_key(formant_ratio)
     pitch_key = f"p{int(base_pitch):+03d}"
     if abs(float(formant_ratio) - 1.0) <= 1e-6:
@@ -1556,11 +1574,11 @@ def voice_profile_spec(preset: dict[str, str], formant_ratio: float, *, age_pitc
     else:
         description = f"âm sắc sáng hơn ({formant_ratio:.2f})"
     return {
-        "voice_key": f"preset_{slugify(name)}_{formant_key}_{pitch_key}",
-        "engine": "vieneu",
+        "voice_key": f"{_voice_key_stem(preset)}_{formant_key}_{pitch_key}",
+        "engine": engine,
         "preset_name": name,
         "description": f"{preset['description']} · {description}",
-        "seed": stable_int(f"voice::vieneu::{name}::{formant_key}::{pitch_key}"),
+        "seed": stable_int(f"voice::{engine}::{name}::{formant_key}::{pitch_key}"),
         "pitch_semitones": base_pitch,
         "formant_ratio": float(formant_ratio),
         "status": "ready",
@@ -2512,6 +2530,10 @@ def listener_voice_choice(
     allocator = book_allocator(conn, voices, leave_out=character)
     if chapters:
         allocator.note_chapters(character, set(chapters))
+    other_engine = engine_voice(preset_name) if preset_name else None
+    if other_engine is not None:
+        # Giọng máy khác: một bậc duy nhất, không kéo theo tuổi (voice_profile_spec).
+        return voice_profile_spec(other_engine, 1.0)
     if preset_name:
         preset = preset_by_name(preset_name)
         ratio = formant_ratio_for_age(preset_name, age, gender)

@@ -53,6 +53,15 @@ class ModuleCore:
             self._bench, self._after = benchmark, after_install
             self.state.update(downloading=False, benchmarking=False, done=0, total=0, error="")
 
+    def ensure_folder(self, name: str) -> None:
+        """Cho Studio (tiến trình dây chuyền không gọi `configure`): chưa ai cấu hình thì dùng chỗ server đặt mô-đun - cạnh
+        preferences.json (`library.preferences_path`), thư mục `name`."""
+        with self.lock:
+            if self.folder is None:
+                from .library import preferences_path
+
+                self.folder = preferences_path().with_name(name)
+
     def read_stamp(self) -> dict[str, Any]:
         import json
 

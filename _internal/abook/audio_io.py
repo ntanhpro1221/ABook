@@ -885,7 +885,7 @@ def validate_audio_array(
         metrics["chars_per_second"] = float(rate)
         metrics["chars_per_second_heard"] = float(heard_rate)
         metrics["syllables_per_second"] = float(syllable_rate)
-        pace_scale = voice_balance.pace_gate_scale()
+        pace_scale = voice_balance.pace_gate_scale(_voice_balance_key(segment))
         metrics["pace_scale"] = float(pace_scale)
         metrics["pace_outlier"] = float(
             pace_is_outlier(
@@ -967,6 +967,17 @@ def repeated_utterance_score(audio: Any, sample_rate: int) -> float | None:
 
     left, right = standardize(resample(left)), standardize(resample(right))
     return float(np.mean(np.sum(left * right, axis=1) / width))
+
+
+def resample_audio(audio: Any, sample_rate: int, target_rate: int) -> np.ndarray:
+    """Đổi tần số mẫu bằng lọc đa pha (scipy `resample_poly`, tỉ số nguyên rút gọn). Cùng tần số thì trả nguyên mảng."""
+    from scipy.signal import resample_poly
+
+    array = np.asarray(audio, dtype=np.float32).reshape(-1)
+    if int(sample_rate) == int(target_rate) or array.size == 0:
+        return array
+    divisor = math.gcd(int(sample_rate), int(target_rate))
+    return resample_poly(array, int(target_rate) // divisor, int(sample_rate) // divisor).astype(np.float32, copy=False)
 
 
 def inspect_wav(

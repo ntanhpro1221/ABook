@@ -9,6 +9,8 @@ from __future__ import annotations
 import ast
 import re
 
+from ..voice_catalog import ENGINE_VOICES
+
 WORKING_PHASES = frozenset({"analysis", "casting", "synthesis"})
 
 PROFILE_LABELS = {
@@ -33,11 +35,13 @@ GENDER_LABELS = {"male": "Nam", "female": "Nữ"}
 # diện (`voice_label`), đổi ngược khi nhận về (`voice_key`). Chỉ áp ở trường TÊN GIỌNG: nhân vật trong truyện có thể trùng
 # tên người ("Anh Khôi", "Quốc Tuấn").
 VOICE_LABELS = {"Anh Khôi": "Thiện Minh", "Minh Quân Pro": "Hải Đăng", "Mạnh Dũng": "Quốc Tuấn"}
-_VOICE_KEYS = {label: key for key, label in VOICE_LABELS.items()}
+# Giọng của máy đọc khác (voice_catalog.ENGINE_VOICES): khoá là tên giọng của máy ("baotrang"), người nghe thấy "Bảo Trang".
+_ENGINE_VOICE_LABELS = {str(voice["name"]): str(voice["label"]) for voice in ENGINE_VOICES}
+_VOICE_KEYS = {label: key for key, label in {**VOICE_LABELS, **_ENGINE_VOICE_LABELS}.items()}
 
 
 def voice_label(name: str) -> str:
-    return VOICE_LABELS.get(name, name)
+    return VOICE_LABELS.get(name) or _ENGINE_VOICE_LABELS.get(name, name)
 
 
 def voice_key(name: str) -> str:

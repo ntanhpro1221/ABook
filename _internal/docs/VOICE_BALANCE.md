@@ -22,6 +22,8 @@ Bảng nằm ở `abook/assets/voice_balance.json`:
 | `voices[khoá].o_db` | lệch độ to riêng của giọng, dB (cộng), đo ở x = 1 |
 | `voices[khoá].ref_lufs` | LUFS trung bình đã đo của bản thô của giọng (sau cao độ và tempo) |
 | `voices[khoá].pitch_st` | màu giọng nền, bán cung (cộng); không đo, không đề xuất |
+| `voices[khoá].engine_speed` | chỉ máy tự đọc theo tốc độ (Supertonic): tham số `speed` của máy, biên riêng `ENGINE_SPEED_RANGE`; khi có thì `r` = 1 |
+| `engine_pace_floor` | sàn cổng nhịp riêng theo máy đọc, nhân thêm vào `pace_floor_scale · x` (Supertonic 0,9) |
 
 Đổi phiên bản engine thì khoá đổi theo, nên bảng cũ không áp nhầm cho bản mới: giọng thiếu trong bảng là
 LỖI (`VoiceBalanceError`) ngay lúc phân vai hoặc lúc thu, không bao giờ lặng lẽ dùng 1,0. Test
@@ -185,6 +187,12 @@ Giọng cao nhất ở (c): Quang Sơn 6 %, Thanh Bình 6 %, Thục Đoan 4 %.
 | zerotts:tiendat | 0.980 | 0.980 (WORLD) | -0.3 ±1.9 | -0.91 | -3.68 |
 
 - **ZeroTTS:** đạt; nhịp sau r_v trong mốc.
+  - 04-10, Studio bước A: năm giọng chủ sách chọn (baotrang, giahuy, huuduc, kimoanh, quangminh) vào bảng, khoá `zerotts@0.1.5/<giọng>/f100`,
+    chỉ bậc gốc, `o_db` = 0 như mọi bản ghi VieNeu. Số trong bảng là số đo lại sau WSOLA chuẩn hoá (mục "ZeroTTS với WSOLA chuẩn hoá" bên
+    dưới, r 4 chữ số từ `zerotts_constants.json`), không phải bảng WORLD này.
+  - Phiên bản: bộ đo ghi "zerotts 0.1.2" là chuỗi `__version__` cũ nằm TRONG gói 0.1.5 (dist-info 0.1.5). Mã gói bộ đo dùng
+    (LLM_Train/tts_bench/venv_cpu) và wheel 0.1.5 PyPI mà mô-đun ghim giống nhau từng byte (so 04-10), model cùng commit c2bfbd67 - nên số ấy
+    là số của khoá `zerotts@0.1.5`.
 - **Supertonic TRƯỢT tốc độ:** tham số `speed` không tỉ lệ thuận với nhịp. Sau một lần chỉnh vẫn chậm, M1 −17 %.
   - Cần chỉnh lặp (r mới = r cũ × lệch đo được) trước khi dùng.
   - M5 cần speed 1,58, F1 1,49: chạm vùng ≥1,54 từng làm câu ngắn bị nuốt.
@@ -275,6 +283,12 @@ thì cắt ở dấu phẩy, rồi ở từ. Giá: UTMOS thấp hơn 0,15–0,4 
 Số máy đọc: scratchpad phiên Model `balance/multi_engine/` (`import_rates_multi.json`, `import_gains_multi.json`,
 `b_rules.json`, `gate_eval.json`, `ram_*.jsonl`). Khoá: `supertonic@3-724fb5ab/<giọng>/f100`,
 `zerotts@0.1.2-c2bfbd67/<giọng>/f100`.
+
+Đã áp trong app (nhánh dev/multi-engine, 04-10):
+- Supertonic: cả 10 giọng vào bảng, khoá `supertonic@3-724fb5ab/<giọng>/f100`, `engine_speed` = speed_v, `r` = 1, `ref_lufs` theo bảng,
+  `o_db` = 0; F1/F3/M4/M5 chọn tay được, sáu giọng còn lại đóng. Câu ngắn: `tts.supertonic_speed`. Sàn cổng: `engine_pace_floor` 0,9.
+- ZeroTTS: khoá giữ `zerotts@0.1.5/<giọng>/f100` (cùng mã với "0.1.2", xem trên). Mỗi lần gọi ≤ 170 ký tự (`ZeroTTSEngine.MAX_CHUNK_CHARS`),
+  nối bằng 0,2 s lặng (`tts.join_chunks`, một chỗ để thay khi có mối nối tốt hơn).
 
 ### Kiểm cảm xúc sau hằng số (emo_check)
 
