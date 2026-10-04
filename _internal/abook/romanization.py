@@ -5,7 +5,7 @@ Quy ước ở tài liệu ấy là NGUỒN DUY NHẤT; mỗi lựa chọn dư�
 `tests/fixtures/romanization/cases.json` (sinh bằng `scripts/build_romanization_fixture.py`), nên đổi một bên là phải đổi cả hai.
 
 `romanized_reading(token, origin)` trả cách đọc nối gạch (các bộ phận của tên cách nhau dấu cách; hậu tố gọi -kun... nối gạch vào tên), hay None khi không chắc: chữ không
-tách hết thành âm tiết của hệ ấy, viết hoa lạ, hay có âm tiết đầu ra mà `_valid_vietnamese_spoken_form` không nhận. CHƯA nối vào
+tách hết thành âm tiết của hệ ấy, viết hoa lạ, hay có âm tiết đầu ra mà `vietnamese_syllable.valid_spoken_form` không nhận. CHƯA nối vào
 đường đọc.
 
 Ba loại cờ trong `romanized_reading_flags` (để người duyệt biết cách đọc dựa vào đâu):
@@ -126,10 +126,10 @@ def _render(syllable: _Syl) -> str:
 
 
 def _validated(syllables: list[_Syl], capital: bool) -> str | None:
-    from .analysis import _valid_vietnamese_spoken_form  # chỉ để kiểm, không sửa
+    from .vietnamese_syllable import valid_spoken_form
 
     pieces = [_render(syllable) for syllable in syllables]
-    if not pieces or (_CHECK_SYLLABLES and any(not _valid_vietnamese_spoken_form("", piece) for piece in pieces)):
+    if not pieces or (_CHECK_SYLLABLES and any(not valid_spoken_form(piece) for piece in pieces)):
         return None
     word = "-".join(pieces)
     return word[:1].upper() + word[1:] if capital else word

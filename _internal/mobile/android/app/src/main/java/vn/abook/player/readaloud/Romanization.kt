@@ -3,12 +3,12 @@ package vn.abook.player.readaloud
 import java.text.Normalizer
 import java.util.Locale
 import vn.abook.player.BookEdits
-import vn.abook.player.VietnameseReading
+import vn.abook.player.VietnameseSyllable
 
 /**
  * Đọc romaji Nhật (Hepburn) và phiên âm Latinh Hàn (RR) thành âm tiết tiếng Việt, theo docs/READING_FOREIGN_NAMES.md mục 1-3 - bản Kotlin
  * y hệt `abook/romanization.py` (cùng đọc tests/fixtures/romanization/cases.json, sinh bằng scripts/build_romanization_fixture.py: đổi một
- * bên là phải đổi cả hai). Mỗi âm tiết đầu ra phải qua phép kiểm âm tiết của `VietnameseReading` (bản `_valid_vietnamese_spoken_form`).
+ * bên là phải đổi cả hai). Mỗi âm tiết đầu ra phải qua phép kiểm âm tiết `VietnameseSyllable` (bản `vietnamese_syllable.py`).
  * CHƯA nối vào đường đọc.
  *
  * Ba loại cờ: `open:` quy ước ghi "mở", đây là mặc định chờ kiểm bằng âm thanh (OPEN_CHOICES); `analogy:` quy ước không nói, suy theo hàng
@@ -88,7 +88,7 @@ object Romanization {
 
     private fun validated(syllables: List<Syl>, capital: Boolean): String? {
         val pieces = syllables.map { render(it) }
-        if (pieces.isEmpty() || pieces.any { !VietnameseReading.validSpokenForm("", it) }) return null
+        if (pieces.isEmpty() || pieces.any { !VietnameseSyllable.validSpokenForm(it) }) return null
         val word = pieces.joinToString("-")
         return if (capital) word.substring(0, 1).uppercase(Locale.ROOT) + word.substring(1) else word
     }

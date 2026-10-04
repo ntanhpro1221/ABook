@@ -30,6 +30,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   "le-vồ", "Michael" thành "Mai-cồ", "skill" thành "xờ-kiu", "Mike" thành "Mi-ke"; tên tự đặt không có trong từ điển đọc theo mặt chữ ("Encrid" thành
   "En-cơ-rít"). Bản máy tính mang theo từ điển phát âm gọn (0,8 MB); điện thoại sẽ tải khi cần.
 
+- Cách đọc tên và từ nước ngoài bằng âm tiết Việt (máy tính và điện thoại) chỉ ra những âm tiết viết đúng chính tả tiếng Việt: "queen" thành "quin" thay vì
+  "quyn", "Wayne" thành "Oen" thay vì "Uên", "quick" thành "quích"; tên nào máy không viết nổi cho đúng thì giữ chữ gốc thay vì đọc một âm tiết không có trong tiếng Việt.
+
 ## [0.4.24] - 2026-10-04
 
 ### Giọng đọc
