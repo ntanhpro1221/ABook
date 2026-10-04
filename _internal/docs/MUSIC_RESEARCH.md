@@ -2414,3 +2414,31 @@ Mỗi pha xong: ghi số vào đây, đổi tham số trong app theo kết quả
   - KHÔNG THẮNG → giữ CLAP, khép hướng nhúng.
   - Mac thứ Hai (Model nhường từ 07:00) chỉ dùng nếu CPU nhà quá chậm.
 - `zeroshot_valence.py` → `results/zeroshot_valence.txt`.
+
+**KẾT QUẢ MuQ (05-10 00:46 xong, chấm 02:1x; `results/zeroshot_valence.txt`):** **MuQ KHÔNG THẮNG.**
+
+| Bộ (thước) | V: CLAP → MuQ | E: CLAP → MuQ |
+|---|---|---|
+| nhạc phim 470 (người) | 0,594 → 0,548 | 0,714 → 0,584 |
+| DEAM 1.802 (người) | 0,271 → **0,475** | 0,644 → 0,527 |
+| Incompetech 1.425 (tag, ghi lại) | 0,599 → **0,748** | 0,676 → 0,721 |
+
+- Đã lỡ xem r của 22 bài nhạc phim đầu khi kiểm chạy (−0,02, n quá nhỏ, không ảnh hưởng luật).
+- **Ghi lại SAU khi thấy số, KHÔNG phải ứng viên:** lấy trung bình z-score (theo từng bộ) của CLAP và MuQ.
+  - V: nhạc phim 0,677, DEAM 0,444, Incompetech 0,737. Hơn CLAP ở cả ba bộ (+0,08 / +0,17 / +0,14).
+  - E: 0,682 / 0,645 / 0,734, tức −0,03 / 0,00 / +0,06.
+  - Hai model sai khác chỗ nhau. Ý tưởng "V = trung bình CLAP + MuQ, E giữ CLAP" chỉ được tin khi qua một bộ nhãn người MỚI,
+    chưa dùng ở đây (ứng viên: PMEmo). Phải ghi trước riêng.
+
+**GHI TRƯỚC - AST Music_by_Emotion (05-10 02:2x, Lead thêm; trước khi chạy):**
+- Model: `LaurenGurgiolo/Music_by_Emotion`, AST tinh chỉnh trên 1.000 clip SoundCloud, 11 lớp.
+  - Thẻ model tự ghi 99 % trên tập tăng cường → không tin số ấy.
+  - Giả định: `LABEL_i` = lớp thứ i của dataset, theo thứ tự Angry, Contempt, Disgust, Fear, Happy, Neutral, Sad, Sleepy,
+    Surprised, Bad, Boring.
+- Điểm V / E = Σ p_i × toạ độ lớp i. Toạ độ chốt trước (vòng tròn cảm xúc Russell), ghi nguyên trong `AST_VA` của `zeroshot_valence.py`:
+  - Angry (−0,6; 0,8), Contempt (−0,5; 0,2), Disgust (−0,6; 0,3), Fear (−0,6; 0,7)
+  - Happy (0,8; 0,5), Neutral (0; 0), Sad (−0,7; −0,4), Sleepy (0,1; −0,8)
+  - Surprised (0,4; 0,8), Bad (−0,5; 0), Boring (−0,2; −0,6)
+- p = softmax trung bình trên ba cửa sổ 10 giây, 16 kHz, cùng vị trí với MuQ.
+- Cùng thước, cùng luật như MuQ: V ≥ CLAP + 0,05 trên cả nhạc phim lẫn DEAM, VÀ E không thua quá 0,02.
+- CPU, venv `.venv_muq`.
