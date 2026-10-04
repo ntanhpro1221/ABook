@@ -7109,7 +7109,7 @@ class OllamaBookAnalyzer:
             chapter_rows = list_segments(chapter_id=chapter_id)
         except TypeError:  # sổ giả tối thiểu (test) không lọc theo chương: không nêu gì, prompt như cũ
             return ""
-        before = [row for row in chapter_rows if int(row["seq"]) < first_seq][-PREVIOUS_TURNS:]
+        before = [row for row in chapter_rows if int(row["seq"]) < first_seq][-_eval_hooks.previous_turns(PREVIOUS_TURNS):]  # B-EVAL
         if not before or any(str(row["status"]) == SegmentStatus.PENDING.value for row in before):
             return ""
         # B-EVAL (ABOOK_GOLD_PREVIOUS): kind và người nói theo gold; không đặt biến thì đúng nhãn của model như cũ.
