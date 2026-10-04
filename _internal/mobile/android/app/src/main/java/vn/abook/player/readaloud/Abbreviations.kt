@@ -17,6 +17,10 @@ object Abbreviations {
     private val SHOUT_WORDS = "no oh ah eh uh um ha ho yo hi he we me my up so to of or on ya ye go do if in is an by at".split(" ").toSet()
     private val LAUGH = Regex("(?:ha|he|hi|ho)+")
     private val ROMAN_LETTERS = "ivx".toSet()
+    /** "đó.”(GM)": viết tắt trong ngoặc dính vào chữ trước. */
+    private val PAREN_ABBREVIATION = Regex("""(?<=.)\(([A-Z]{2,5})\)""")
+    /** Chủ sách 04-10: Lv không chắc là cấp độ thì đọc tên chữ cái, l = lờ, v = vê. */
+    private val LEVEL_NAMES = mapOf("lv" to "lờ vê", "lvl" to "lờ vê lờ")
     private const val MIN_LETTERS = 2
     private const val MAX_LETTERS = 5
     private const val ROMAJI_FROM = 4
@@ -44,6 +48,26 @@ object Abbreviations {
         return letterNames(lower)
     }
 
+    /**
+     * "Lv" / "Lvl" / "LV" liền trước một số ("Lv 5", "Lv.5", "Lv5", "Lvl.10") là cấp độ: để chữ "level". Không đi với số thì không chắc nghĩa gì: đọc tên chữ cái ("lờ vê").
+     * Thay tại chỗ, giữ dấu câu quanh; số chữ không đổi - `read_levels`.
+     */
+    fun readLevels(toks: List<String>, out: MutableList<String>) {
+        for ((index, token) in toks.withIndex()) {
+            if (out[index] != token) continue
+            val (before, core, after) = Names.splitToken(token)
+            val word = core.lowercase()
+            val name = LEVEL_NAMES[word] ?: continue
+            val glued = after.trimStart { it == '.' || it == ':' }
+            val following = if (index + 1 < toks.size) toks[index + 1].trimStart { it in "([“\"'" } else ""
+            out[index] = if (glued.firstOrNull()?.isDigit() == true || (after in listOf("", ".", ":") && following.firstOrNull()?.isDigit() == true)) {
+                before + "level" + (if (glued.firstOrNull()?.isDigit() == true) " $glued" else "")
+            } else {
+                before + name + Names.closing(after, name)
+            }
+        }
+    }
+
     /** Thay tại chỗ, trong [out], token (chưa bị đổi so với [toks]) là viết tắt TOÀN HOA bằng tên chữ cái, giữ dấu câu quanh; số chữ không đổi. */
     fun spellAbbreviations(toks: List<String>, out: MutableList<String>) {
         val parts = toks.map { Names.splitToken(it) }
@@ -51,6 +75,10 @@ object Abbreviations {
         for ((index, token) in toks.withIndex()) {
             if (out[index] != token) continue
             val (before, core, after) = parts[index]
+            if ('(' in token) {
+                out[index] = PAREN_ABBREVIATION.replace(token) { m -> "(" + (spelled(m.groupValues[1]) ?: m.groupValues[1]) + ")" }
+                if (out[index] != token) continue
+            }
             if (core.isEmpty() || before.lastOrNull()?.isDigit() == true || after.firstOrNull()?.isDigit() == true) continue
             val reading = spelled(core) ?: continue
             var first = index // đang gào: trong dãy chữ hoa cả có chữ có dấu / nối gạch (không phải một dãy viết tắt như "HP MP SP")

@@ -41,9 +41,17 @@ RULE_VERSION = 2  # đổi khi đổi cách đoán: gốc đã lưu của cuốn
 ENGLISH_READING = 1  # đổi khi đổi cách Việt hoá từ Anh (`english_vi`, `english_reading`): clip đã đệm của giọng Việt hoá được đọc lại (dấu "en<số>" của khoá clip)
 _ALLOWED_MARKS = "āīūēōâîûêôĀĪŪĒŌÂÎÛÊÔ"
 HONORIFICS = ("san", "kun", "chan", "sama", "senpai", "sensei", "dono")  # hậu tố gọi Nhật nối gạch (JA_SUFFIXES còn "tan", "nee", "nii": dễ lẫn với chữ thường nên chỉ đi theo tên đã nhận)
-KOREAN_TERMS = {"oppa": "ốp-pa", "unnie": "un-ni", "noona": "nu-na", "hyung": "hi-ung", "ssi": "si", "nim": "nim"}  # tiếng gọi Hàn cố định (bộ thử TN); luật RR chưa khớp quy ước ở "ssi", "unnie", "oppa"
+KOREAN_TERMS = {"oppa": "óp-pa", "unnie": "un-ni", "noona": "nu-na", "hyung": "hi-ung", "ssi": "xi", "nim": "nim"}  # tiếng gọi Hàn cố định (bộ thử TN, chủ sách 04-10: Oppa o ngắn); luật RR chưa khớp quy ước ở "ssi", "unnie"
 KOREAN_ALONE = ("oppa", "unnie", "noona", "hyung")  # đứng riêng cũng đọc (không cần tên đi trước)
 _SUFFIXES = frozenset(HONORIFICS) | frozenset(KOREAN_TERMS)
+# Từ đã vào từ điển tiếng Việt (gold_spec: "từ điển thắng"): đọc như từ Việt với MỌI cuốn và giọng, không để sea-g2p đọc âm Anh.
+DICTIONARY_WORDS = {"sofa": "xô-pha", "logic": "lô-gích", "video": "vi-đê-ô", "violin": "vi-ô-lông", "piano": "pi-a-nô", "sandal": "xăng-đan",
+                    "vali": "va-li", "robot": "rô-bốt", "gorilla": "gô-ri-la"}
+# Từ Nhật rất quen trong truyện dịch: đọc theo luật phiên âm với MỌI cuốn (cuốn không rõ gốc cũng vậy), dù có trong danh sách từ Anh (anime, manga, sake).
+JAPANESE_COMMON = frozenset(("anime", "manga", "ninja", "samurai", "bento", "kimono", "sake", "miso", "dango", "takoyaki", "okonomiyaki", "senpai", "sensei",
+                             "onii", "onee", "otaku", "eroge", "tsukkomi", "ara", "umu"))
+CURRENCY = {"won": "guôn", "yen": "yên", "kwan": "quan"}  # đơn vị tiền / cân của truyện Hàn - Nhật, chỉ khi liền sau một số (cuốn không rõ gốc)
+NUMBER_WORDS = frozenset(("nghìn", "ngàn", "triệu", "tỷ", "tỉ", "trăm", "vạn", "chục", "mươi", "mười", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín"))
 
 
 @lru_cache(maxsize=1)
@@ -92,6 +100,13 @@ def _known_word(head: str) -> bool:
     return plain in english_words() or ("-" not in head and is_vietnamese_syllable(plain))
 
 
+def lone_syllable(reading: str | None) -> str | None:
+    """"O-xu-ki-xan" -> "o-xu-ki-xan": một chữ HOA đứng riêng đầu âm tiết của tên nối gạch là âm tiết, không phải viết tắt - sea-g2p đánh vần nó ("O" thành "ô")."""
+    if reading and reading[1:2] == "-" and reading[0].isupper():
+        return reading[0].lower() + reading[1:]
+    return reading
+
+
 @lru_cache(maxsize=8192)
 def name_reading(core: str, origin: str | None) -> str | None:
     """Cách đọc nối gạch của `core` (đã bỏ dấu câu quanh) khi nó là tên theo luật của `origin`, None khi để nguyên."""
@@ -100,7 +115,7 @@ def name_reading(core: str, origin: str | None) -> str | None:
     head = _head(core)
     if head is None or _known_word(head):
         return None
-    return romanized_reading(core, origin)
+    return lone_syllable(romanized_reading(core, origin))
 
 
 def read_names(toks: list[str], out: list[str], origin: str | None) -> None:
@@ -148,14 +163,14 @@ def honorific_reading(core: str, origin: str | None) -> str | None:
     terms = "-".join(_term(segment) for segment in popped)
     head = "-".join(segments)
     if not head:
-        return terms
+        return lone_syllable(terms)
     if origin != "ko" and all(segment.lower() in HONORIFICS for segment in popped):
         if head[:1].isupper():
             whole = name_reading(core, "ja")
         else:
             whole = romanized_reading(core, "ja") if head.isascii() and head == head.lower() and not _known_word(head) else None
         if whole:
-            return whole
+            return lone_syllable(whole)
     return f"{head}-{terms}"
 
 
@@ -199,6 +214,35 @@ def read_english(toks: list[str], out: list[str]) -> None:
             out[index] = before + reading + after
 
 
+def loanword_reading(core: str) -> str | None:
+    """Cách đọc của từ đã vào từ điển tiếng Việt (`DICTIONARY_WORDS`) hay từ Nhật rất quen (`JAPANESE_COMMON`, theo luật phiên âm), None khi không phải."""
+    lowered = core.lower()
+    if lowered in DICTIONARY_WORDS:
+        return DICTIONARY_WORDS[lowered]
+    return romanized_reading(lowered, "ja") if lowered in JAPANESE_COMMON else None
+
+
+def _after_number(toks: list[str], index: int) -> bool:
+    before = toks[index - 1].strip(".,;:!?…\"'“”‘’()[]") if index else ""
+    return bool(before) and (before[-1].isdigit() or before.lower() in NUMBER_WORDS)
+
+
+def read_loanwords(toks: list[str], out: list[str]) -> None:
+    """Thay tại chỗ, trong `out`, token (chưa bị đổi) là từ mượn quen (sofa, anime, ninja...) bằng cách đọc của nó, và "won" / "yen" / "kwan" liền sau một số bằng tên đơn vị
+    đọc Việt; giữ dấu câu quanh, số chữ không đổi."""
+    for index, token in enumerate(toks):
+        if out[index] != token:
+            continue
+        before, core, after = split_token(token)
+        if not core:
+            continue
+        reading = loanword_reading(core)
+        if reading is None and core.lower() in CURRENCY and core.isalpha() and _after_number(toks, index):
+            reading = CURRENCY[core.lower()]
+        if reading:
+            out[index] = before + reading + after
+
+
 def spoken_names(toks: list[str], origin: str | None, speaks_english: bool, out: list[str] | None = None) -> list[str]:
     """Chữ hiện -> chữ đem đọc cho tên và từ nước ngoài, dùng chung cho mọi giọng; thay tại chỗ trong `out` (mặc định bản sao của `toks`) và trả nó.
     Tên Nhật / Hàn của cuốn có gốc (`origin`) đọc theo luật phiên âm với MỌI giọng. Từ / tên tiếng Anh: giọng nói được âm Anh (`speaks_english`, VieNeu, Edge...)
@@ -207,6 +251,7 @@ def spoken_names(toks: list[str], origin: str | None, speaks_english: bool, out:
         out = list(toks)
     read_names(toks, out, origin)
     read_honorifics(toks, out, origin)
+    read_loanwords(toks, out)
     if not speaks_english:
         read_english(toks, out)
     return out

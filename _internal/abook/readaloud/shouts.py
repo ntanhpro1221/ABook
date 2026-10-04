@@ -19,7 +19,10 @@ from ..romanization import romanized_reading
 from . import names
 from .names import split_token
 
-INTERJECTIONS = {"umm": "ừm", "ugh": "ức", "boom": "bùm", "oh": "ô", "hmm": "hừm", "shh": "suỵt", "ah": "a", "eh": "ê"}
+INTERJECTIONS = {"umm": "ừm", "ugh": "ức", "boom": "bùm", "oh": "ô", "hmm": "hừm", "shh": "suỵt", "ah": "a", "eh": "ê", "hm": "hừm", "huh": "hả", "ooh": "ô",
+                 "hic": "hích", "urgh": "ức"}
+LAUGH_SYLLABLES = {"ha": "ha", "he": "hê", "hi": "hi", "ho": "hô", "fu": "phu"}  # tiếng cười lặp ("Haha" -> "ha ha", "Hehe" -> "hê hê", "fufu" -> "phu phu")
+LAUGH = re.compile(r"(?:ha|he|hi|ho|fu){2,}", re.IGNORECASE)
 TONE_MARKS = "\u0300\u0301\u0303\u0309\u0323"  # huyền, sắc, ngã, hỏi, nặng (còn lại là dấu mũ / móc / trăng: thuộc về chữ)
 STANDALONE = frozenset("aeêioôơuư")  # nguyên âm đứng riêng được thành một âm tiết: chữ kéo là chữ này thì nhắc lại nó sau "…"
 VOWELS = frozenset("aăâeêioôơuưy")
@@ -88,9 +91,11 @@ def stretch_reading(core: str) -> str | None:
     word = "".join(chars)
     if word in INTERJECTIONS:
         return INTERJECTIONS[word]
+    if LAUGH.fullmatch(word) and all(word[i:i + 2] == word[:2] for i in range(0, len(word), 2)):
+        return " ".join(LAUGH_SYLLABLES[word[i:i + 2]] for i in range(0, len(word), 2))
     runs = _runs(chars)
     if len(runs) != 1:
-        return None
+        return _collapsed(chars, runs)
     start, end = runs[0]
     letter = _plain(chars[start])
     one = "".join(chars[:start] + [chars[start]] + chars[end:])  # chuỗi kéo gộp thành một chữ
@@ -113,6 +118,23 @@ def stretch_reading(core: str) -> str | None:
         if letter in STANDALONE:
             append = unicodedata.normalize("NFC", unicodedata.normalize("NFD", letter) + _tone(base))
     return f"{base}…" + (f" {append}" if append and letter in STANDALONE else "")
+
+
+def _collapsed(chars: list[str], runs: list[tuple[int, int]]) -> str | None:
+    """Chữ có NHIỀU chỗ kéo ("Cccchhhhàaaaaaoooo" -> "chào… ò"): gộp mỗi chỗ kéo thành một chữ (giữ dấu thanh ở chữ đầu của chỗ ấy); chỉ đọc khi gộp ra đúng một âm tiết tiếng Việt.
+    Chỗ kéo cuối là nguyên âm đứng riêng thì nhắc lại nó một lần sau "…", mang thanh của âm tiết."""
+    if len(runs) < 2:
+        return None
+    keep = [True] * len(chars)
+    for start, end in runs:
+        for index in range(start + 1, end):
+            keep[index] = False
+    base = "".join(char for char, kept in zip(chars, keep) if kept)
+    if not is_vietnamese_syllable(base):
+        return None
+    letter = _plain(chars[runs[-1][0]])
+    append = unicodedata.normalize("NFC", unicodedata.normalize("NFD", letter) + _tone(base)) if runs[-1][1] == len(chars) and letter in STANDALONE else ""
+    return f"{base}…" + (f" {append}" if append else "")
 
 
 def read_shouts(toks: list[str], out: list[str]) -> None:

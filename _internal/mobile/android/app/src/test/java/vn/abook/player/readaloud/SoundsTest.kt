@@ -31,13 +31,13 @@ class SoundsTest {
     @Test
     fun fourAbbreviationsAreReadAsWordsAndCapitalWordsAreLowered() {
         for ((token, reading) in listOf("VIP" to "víp", "ID" to "ai-đi", "OK" to "ô kê", "TV" to "ti vi", "LINE" to "line", "MAX" to "max", "YES" to "yes", "TIP" to "tip",
-            "BAKA" to "baka", "HAHA" to "haha", "NO" to "no", "WARNING" to "warning")) assertEquals(token, listOf("Rồi", "$reading."), said("Rồi $token."))
+            "BAKA" to "baka", "NO" to "no", "WARNING" to "warning")) assertEquals(token, listOf("Rồi", "$reading."), said("Rồi $token."))
     }
 
     @Test
     fun otherTokensAreLeftAlone() {
         for (token in listOf("Hp", "hp", "NPCs", "A", "H", "10KG", "A12-B", "TP.HCM", "PGS.TS", "KIRITO", "X-RAY", "SS2", "ĐH", "CÁC")) assertEquals(token, listOf("Rồi", token, "đến."), said("Rồi $token đến."))
-        assertEquals(listOf("“hát pê,”", "(em pê)", "en pê xê!", "3MP", "LV5", "5HP"), said("“HP,” (MP) NPC! 3MP LV5 5HP"))
+        assertEquals(listOf("“hát pê,”", "(em pê)", "en pê xê!", "3MP", "level 5", "5HP"), said("“HP,” (MP) NPC! 3MP LV5 5HP"))
         assertEquals(listOf("CÚT", "ĐI,", "AI", "ĐÓ"), said("CÚT ĐI, AI ĐÓ"))
         assertEquals(listOf("ONII-CHAN", "LO", "LẮNG", "CHO", "CON", "KÌA"), said("ONII-CHAN LO LẮNG CHO CON KÌA"))
         assertEquals(listOf("hát pê", "em pê", "ét pê"), said("HP MP SP"))
@@ -73,14 +73,14 @@ class SoundsTest {
 
     @Test
     fun whatCannotBeTracedToASoundIsLeftAlone() {
-        for (core in listOf("Weisss", "wwww", "zzz", "kkkkk", "Cccchhhhàaaaaaoooo", "Onii-channnn", "XXX", "III", "Hmm,Aa", "Hm", "Aa", "Haiz")) assertNull(core, Shouts.stretchReading(core))
+        for (core in listOf("Weisss", "wwww", "zzz", "kkkkk", "Onii-channnn", "XXX", "III", "Hmm,Aa", "Aa", "Haiz")) assertNull(core, Shouts.stretchReading(core))
     }
 
     @Test
     fun stretchesInQuotesGluedToTheNextWordAndRanks() {
         assertEquals(listOf("“a… a…", "u… u!”", "‘nha… a”", "(hừm…)"), said("“Aaaa… Uuu!” ‘nhaaa’ (Hmmm)"))
-        assertEquals(listOf("ừm…Ý", "bạn;", "ha… a…..cuối;", "mà… à—nếu;", "oáp....Hầy;", "-ê....nhìn"), said("Ummm…Ý bạn; Haaa…..cuối; màaaa—nếu; Oáppp~....Hầy; -EH....nhìn"))
-        assertEquals(listOf("xoạt…", "*vi… i*"), said("Xoạttt- *Viiiii*-"))
+        assertEquals(listOf("ừm…Ý", "bạn;", "ha… a…..cuối;", "mà… à, nếu;", "oáp....Hầy;", "-ê....nhìn"), said("Ummm…Ý bạn; Haaa…..cuối; màaaa—nếu; Oáppp~....Hầy; -EH....nhìn"))
+        assertEquals(listOf("xoạt…", "vi… i"), said("Xoạttt- *Viiiii*-"))
         assertEquals(listOf("hạng", "a a a", "và", "a a a+++,", "rồi", "ét ét ét"), said("hạng AAA và AAA+++, rồi SSS"))
         assertEquals(listOf("Chương", "ba,", "ba mươi."), said("Chương III, XXX."))
     }
@@ -96,8 +96,65 @@ class SoundsTest {
 
     @Test
     fun koreanTermsAreReadAloneAndAfterAName() {
-        assertEquals(listOf("“ốp-pa,", "un-ni!", "hi-ung", "nu-na”"), said("“Oppa, unnie! hyung noona”"))
-        assertEquals(listOf("hi-ung-nim,", "Soleum-si,", "Minho-ốp-pa"), said("Hyung-nim, Soleum-ssi, Minho-oppa"))
+        assertEquals(listOf("“óp-pa,", "un-ni!", "hi-ung", "nu-na”"), said("“Oppa, unnie! hyung noona”"))
+        assertEquals(listOf("hi-ung-nim,", "Soleum-xi,", "Minho-óp-pa"), said("Hyung-nim, Soleum-ssi, Minho-oppa"))
         for (token in listOf("san", "sama", "nim", "ssi", "tan", "nee", "nii", "Kun", "con-sans", "Ra-TAN", "DOT-SAMA")) assertEquals(token, token, said("Rồi $token đến.")[1])
+    }
+
+    // ---- TN "Nghe ngay" lượt 3 (cùng các ca với tests/test_readaloud_sounds.py) ----
+    @Test
+    fun aLaughOrAnInterjectionIsReadAsSounds() {
+        val cases = listOf("Haha" to "ha ha", "hahaha" to "ha ha ha", "HAHA" to "ha ha", "Hehe" to "hê hê", "Hihi" to "hi hi", "fufu" to "phu phu", "Hm" to "hừm", "Huh" to "hả",
+            "Hic" to "hích", "Ooh" to "ô", "Urgh" to "ức")
+        for ((token, reading) in cases) assertEquals(token, listOf("Rồi", "$reading,", "đến."), said("Rồi $token, đến."))
+    }
+
+    @Test
+    fun aWordStretchedInSeveralPlacesIsCollectedWhenItMakesOneSyllable() {
+        assertEquals("chào… ò", Shouts.stretchReading("Cccchhhhàaaaaaoooo"))
+        assertEquals("sáng…", Shouts.stretchReading("sssssáaaannnngggg"))
+        assertNull(Shouts.stretchReading("Bbbbbuuuuuôooiiii"))
+    }
+
+    @Test
+    fun aStutterIsReadAsTheSoundItStarts() {
+        val cases = listOf("T-tôi không biết." to "tờ… tôi không biết.", "“C-Chuyện đó" to "“chờ… Chuyện đó", "Ng-ngài và K-Không và Đ-Điều" to "ngờ… ngài và khờ… Không và đờ… Điều",
+            "E-em muốn A-anh" to "e… em muốn a… anh", "[Kh- Không phải" to "[khờ… Không phải", "“……T-, tức là" to "“……tờ, tức là",
+            "Hà-Hà đến, X-quang, E-mail" to "Hà-Hà đến, X-quang, E-mail")
+        for ((text, expected) in cases) assertEquals(text, expected, said(text).joinToString(" "))
+        assertEquals("“tờ… Xu-ki-nô-ki-xen-pai cho", said("“T-Tsukinoki-senpai cho", "ja").joinToString(" "))
+        assertEquals("a… a-ni-me", said("A-anime").joinToString(" "))
+    }
+
+    @Test
+    fun lvIsALevelOnlyRightBeforeANumber() {
+        assertEquals("level 5, level 15], level 1 level 5 và level 40.", said("Lv 5, Lv.15] Lvl.1 LV5 và lv 40.").joinToString(" "))
+        assertEquals("lờ vê ơi, lờ vê lờ. lờ vê", said("Lv ơi, LVL. LV").joinToString(" "))
+    }
+
+    @Test
+    fun aCommonLoanwordIsReadWithAnyBookOrigin() {
+        val cases = listOf("sofa" to "xô-pha", "Logic" to "lô-gích", "video" to "vi-đê-ô", "violin" to "vi-ô-lông", "piano" to "pi-a-nô", "sandal" to "xăng-đan", "vali" to "va-li",
+            "robot" to "rô-bốt", "gorilla" to "gô-ri-la", "anime" to "a-ni-me", "Ninja" to "nin-gia", "manga" to "man-ga", "bento" to "ben-tô", "kimono" to "ki-mô-nô", "sake" to "xa-ke",
+            "takoyaki" to "ta-cô-gia-ki", "senpai" to "xen-pai", "Umu" to "u-mu", "tsukkomi" to "xúc-cô-mi")
+        for ((token, reading) in cases) for (origin in listOf(null, "ja", "ko")) assertEquals("$token $origin", "$reading.", said("Rồi $token.", origin)[1].lowercase())
+    }
+
+    @Test
+    fun wonYenAndKwanAreUnitsOnlyAfterANumber() {
+        assertEquals(listOf("3", "triệu", "guôn,", "100", "yên,", "5", "quan,", "mười", "guôn"), said("3 triệu won, 100 yen, 5 kwan, mười won"))
+        assertEquals(listOf("Anh", "won,", "rồi", "yen."), said("Anh won, rồi yen."))
+    }
+
+    @Test
+    fun aCapitalOStartingAHyphenatedNameIsASyllableNotALetter() {
+        assertEquals(listOf("o-xu-ki-xan,", "o-ca-gia-ma,", "o-ni-xa-ma"), said("Otsuki-san, Okayama, Onii-sama", "ja"))
+    }
+
+    @Test
+    fun aParenthesisedAbbreviationAndWordsGluedByAnEllipsisOrADash() {
+        assertEquals(listOf("đó.”(giê em)", "xong"), said("đó.”(GM) xong"))
+        assertEquals(listOf("rồi…xen-pai.”", "Babi, người"), said("rồi…Senpai.” Babi—người"))
+        assertEquals(listOf("Thế", "chiến", "hai, thời", "kỳ"), said("Thế chiến II—thời kỳ"))
     }
 }
