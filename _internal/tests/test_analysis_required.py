@@ -3240,6 +3240,9 @@ def test_cmu_arpabet_is_converted_locally(
 
 
 def test_required_cmu_names_are_checkpointed_without_qwen(monkeypatch) -> None:
+    # English names (Gary, Michael, Wolf...) reach the CMU / Qwen route only for an engine that cannot speak English;
+    # one that can keeps them as written (studio_names.keeps_english).
+    monkeypatch.setattr("abook.studio_names.STUDIO_ENGINE_SPEAKS_ENGLISH", False)
     db = FakeDB()
     db.rows = [
         {
@@ -3376,6 +3379,9 @@ def test_name_pronunciation_rejects_invalid_confidence_without_locking(
     monkeypatch,
     invalid,
 ) -> None:
+    # English names (Gary, Michael, Wolf...) reach the CMU / Qwen route only for an engine that cannot speak English;
+    # one that can keeps them as written (studio_names.keeps_english).
+    monkeypatch.setattr("abook.studio_names.STUDIO_ENGINE_SPEAKS_ENGLISH", False)
     db = FakeDB()
     db.rows = [
         {
@@ -3500,6 +3506,9 @@ def test_an_english_word_shaped_like_a_vietnamese_one_never_reaches_the_model() 
 def test_fantasy_name_uses_logged_local_fallback_after_targeted_retries(
     monkeypatch,
 ) -> None:
+    # English names (Gary, Michael, Wolf...) reach the CMU / Qwen route only for an engine that cannot speak English;
+    # one that can keeps them as written (studio_names.keeps_english).
+    monkeypatch.setattr("abook.studio_names.STUDIO_ENGINE_SPEAKS_ENGLISH", False)
     db = FakeDB()
     db.rows = [
         {
@@ -3591,6 +3600,9 @@ def test_multiple_fantasy_names_recover_when_every_qwen_request_fails(monkeypatc
 def test_uncertain_short_names_are_left_verbatim_when_reconciliation_fails(
     monkeypatch,
 ) -> None:
+    # English names (Gary, Michael, Wolf...) reach the CMU / Qwen route only for an engine that cannot speak English;
+    # one that can keeps them as written (studio_names.keeps_english).
+    monkeypatch.setattr("abook.studio_names.STUDIO_ENGINE_SPEAKS_ENGLISH", False)
     db = FakeDB()
     db.rows = [
         {
@@ -3696,6 +3708,9 @@ def test_high_quality_records_an_unresolved_short_name_and_carries_on(monkeypatc
 
 
 def test_high_confidence_contextual_short_name_can_be_locked(monkeypatch) -> None:
+    # English names (Gary, Michael, Wolf...) reach the CMU / Qwen route only for an engine that cannot speak English;
+    # one that can keeps them as written (studio_names.keeps_english).
+    monkeypatch.setattr("abook.studio_names.STUDIO_ENGINE_SPEAKS_ENGLISH", False)
     db = FakeDB()
     db.rows = [
         {

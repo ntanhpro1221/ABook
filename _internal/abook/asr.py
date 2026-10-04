@@ -1597,6 +1597,15 @@ def transcript_metrics(expected: str, actual: str) -> tuple[float, float]:
         )
         similarity = max(similarity, spoken_similarity)
         wer = min(wer, spoken_wer)
+    # Same rule for an English word left as written: Whisper spells it the way it heard it ("Kate" -> "Kết").
+    from .studio_names import soften_english_words
+
+    expected_words, actual_words = normalize_transcript(expected), normalize_transcript(actual)
+    softened = soften_english_words(expected_words, actual_words)
+    if softened != actual_words:
+        english_similarity, english_wer = _transcript_metrics_once(expected_words, softened)
+        similarity = max(similarity, english_similarity)
+        wer = min(wer, english_wer)
     return float(similarity), float(wer)
 
 
