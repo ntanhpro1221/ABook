@@ -189,13 +189,13 @@ nhận được; viết Việt hoá "Rô-dơ", "Mai-cơ" lại bị nghe thành 
 đọc CHỈ nói được âm tiết tiếng Việt.
 
 **Phán quyết của chủ sách (04-10) cho dạng Việt hoá** — đứng trên các nguồn viết bên dưới, cố định:
-game → gêm (viết ghêm), level → le-vờ / le-vồ, maple → máp-pồ, Michael → mai-cồ, Kate → ca-tê.
+game → gêm (viết ghêm), level → le-vờ / le-vồ, maple → máp-pồ, Michael → mai-cồ, Kate → kết (04-10 chiều đổi từ ca-tê).
 - Chủ sách xác nhận dạng sách báo Ê-đi-xơn và Oa-xinh-tơn (lần 9 sửa: s → x như mọi s khác) là ĐÚNG: schwa + phụ âm cuối hợp lệ (n, m, ng) giữ phụ âm cuối, thanh ngang
   (tơn, xơn; game → gêm).
 - Thanh HUYỀN chỉ ở âm tiết schwa MỞ sinh ra vì phụ âm cuối không đứng được cuối âm tiết Việt: -əl (l tối) → "ồ", l bỏ (máp-pồ,
   mai-cồ, le-vồ; le-vờ cũng được); phụ âm khác → "ờ" (analogy, chưa có ca chủ sách).
 - Âm tiết khép trước đó giữ sắc theo luật 1 (máp).
-- Kate → ca-tê: chủ sách "dễ nghe hơn là 'kết'" - tránh âm tiết khép tắc mang sắc nghe gắt ở tên ngắn, đọc mở theo mặt chữ.
+- Kate: ban đầu ca-tê ("dễ nghe hơn là 'kết'"); 04-10 chiều chủ sách chốt lại "chọn phiên âm là 'kết' luôn" - cùng âm máy nói tiếng Anh đọc.
 
 **Lần 2 (04-10):** Mike → mi-ke, Jake → gia-ke, Luke → lu-ke, Pete → pi-tờ, skill → xờ-kiu, boss → bót, slime → xờ-lam, quest → quét;
 chữ viết tắt đã thành từ: VIP → víp, ID → ai-đi.
@@ -232,7 +232,7 @@ Luật rút ra (chung các lần):
 - Tên ngắn MỘT phụ âm đầu + nguyên âm + MỘT phụ âm + e câm đọc theo MẶT CHỮ, e cuối đọc **e** (mi-ke, gia-ke, de-ke, ro-xe, na-te,
   ca-le; o → o, s → x, z → d; c + e mềm: lu-xe; g + e cứng: ca-ghe). Phụ âm mũi (m, n) thì đi đường âm vị (Jane → giên, game → ghêm),
   cụm phụ âm đầu cũng vậy (Blake → bờ-lếch, Grace → gờ-rây). Chỉ áp cho chữ viết hoa: từ thường (make, late) đi đường âm vị.
-- Ca riêng, không suy rộng: Kate → ca-tê, Pete → pi-tờ, guild → gui, time → tham, Thomas → tho-mát, great → gờ-rít (ea không thành i),
+- Ca riêng, không suy rộng: Kate → kết, Pete → pi-tờ, guild → gui, time → tham, Thomas → tho-mát, great → gờ-rít (ea không thành i),
   Paul → pau, higher → hai-gờ, Dalton → đan-tơn, days → đay, Laplace → (la-pờ-)lết, Walt → guốt (l bỏ trước t),
   Gate → gết (từ thường viết hoa: luật theo mặt chữ không phân được tên với từ thường). t đầu từ vẫn là **t** (Tom, Tony,
   Tina, team): tham / tho-mát không phải luật bật hơi.

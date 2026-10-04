@@ -24,7 +24,7 @@ object EnglishVi {
     // Phán quyết chủ sách 04-10 (mục 4): cố định. Kate, Pete, guild, time, Thomas, great, Gate là ca riêng, không suy rộng (t đầu từ vẫn là t).
     // Kyle: chủ sách viết kai-ồ; chính tả luật 1.5 viết c trước a, cùng một âm.
     val OWNER = mapOf(
-        "game" to "ghêm", "level" to "le-vồ", "maple" to "máp-pồ", "michael" to "mai-cồ", "kate" to "ca-tê",
+        "game" to "ghêm", "level" to "le-vồ", "maple" to "máp-pồ", "michael" to "mai-cồ", "kate" to "kết",
         "mike" to "mi-ke", "jake" to "gia-ke", "luke" to "lu-ke", "pete" to "pi-tờ", "skill" to "xờ-kiu", "boss" to "bót", "slime" to "xờ-lam",
         "quest" to "quét",
         "guild" to "gui", "thomas" to "tho-mát", "boston" to "bót-tơn", "rocky" to "róc-ki", "time" to "tham", "night" to "nai",

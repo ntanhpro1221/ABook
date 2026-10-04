@@ -22,7 +22,7 @@ SOURCED: list[tuple[str, tuple[str, ...], str]] = [
     ("level", ("le-vồ", "le-vờ"), "owner"),
     ("maple", ("máp-pồ",), "owner"),
     ("Michael", ("Mai-cồ",), "owner"),
-    ("Kate", ("Ca-tê",), "owner"),
+    ("Kate", ("Kết",), "owner"),
     # lần 2: tên ngắn tắc + e câm theo mặt chữ (Pete pi-tờ là ca riêng), -ill -> iu, s + phụ âm đầu -> xờ, slime -> xờ-lam là ca riêng
     ("Mike", ("Mi-ke",), "owner"),
     ("Jake", ("Gia-ke",), "owner"),

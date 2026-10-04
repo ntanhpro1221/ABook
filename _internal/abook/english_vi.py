@@ -35,12 +35,12 @@ from .vietnamese_syllable import valid_spoken_form, valid_syllable
 PHONES_PATH = Path(__file__).resolve().parent / "assets" / "english_phones.txt.gz"
 
 # Phán quyết chủ sách 04-10 (mục 4): cố định, đứng trên mọi nguồn. game -> gêm viết theo chính tả là ghêm; level -> le-vồ (le-vờ cũng được).
-# Ca riêng, không suy rộng: Kate (ca-tê), Pete (pi-tờ), guild (gui), time (tham), Thomas (tho-mát), great (gờ-rít: ea không thành i),
+# Ca riêng, không suy rộng: Kate (kết), Pete (pi-tờ), guild (gui), time (tham), Thomas (tho-mát), great (gờ-rít: ea không thành i),
 # Gate (gết, viết ghết như ghêm: từ thường viết hoa, không theo mặt chữ như tên), Paul (pau), higher (hai-gờ), Dalton (đan-tơn), days
 # (đay), Laplace (la-pờ-lết), Walt (guốt: l bỏ trước t) - t đầu từ vẫn là t (Tom -> tom, Tina -> ti-na); các ca còn lại luật cũng ra được
 # (tests/english_vi_evidence.py). Sau "/" trong ghi chú chủ sách là cách đọc khác cũng được.
 OWNER = {
-    "game": "ghêm", "level": "le-vồ", "maple": "máp-pồ", "michael": "mai-cồ", "kate": "ca-tê",
+    "game": "ghêm", "level": "le-vồ", "maple": "máp-pồ", "michael": "mai-cồ", "kate": "kết",
     "mike": "mi-ke", "jake": "gia-ke", "luke": "lu-ke", "pete": "pi-tờ", "skill": "xờ-kiu", "boss": "bót", "slime": "xờ-lam", "quest": "quét",
     "guild": "gui", "thomas": "tho-mát", "boston": "bót-tơn", "rocky": "róc-ki", "time": "tham", "night": "nai", "blake": "bờ-lếch",
     "master": "mát-tơ", "zeke": "de-ke", "gold": "gôn",
