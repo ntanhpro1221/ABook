@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.25] - 2026-10-04
+
 ### Giọng đọc
 
 - "Nghe ngay" bằng giọng VieNeu (máy tính và điện thoại) đọc tên Nhật / Hàn theo cách người Việt quen thay vì âm tiếng Anh: cuốn mà tên nhân vật là romaji ("Haruto-kun", "Kyouko", "Yamato")
