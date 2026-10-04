@@ -1,5 +1,7 @@
 # Đáp án KIỂM TRA truyện Hàn đợt 3 (03-10; luật cố định: vị trí 30% của bộ); mục đích: tăng gold Hàn (nhóm mỏng nhất).
 # "Nhân viên văn phòng Cục quái vật" file 170 ("Chương 171: Tiến vào giấc mơ"). Claude gán (A) 03-10; B soát + phân xử 03-10 (gold_kr3/B/kr3a_review.md).
+# BẢN GOLD 2 (05-10, cho lượt đo trên main >= e926ed12 - dòng nguyên vẹn [..] là đơn vị giọng): 146 "[Sổ hướng dẫn cho nhân
+# viên văn phòng]" đổi N -> D NARRATOR. Cây ghim cũ giữ bản 1.
 # Hai góc kể: 1-110 và 144-219 NGÔI THỨ NHẤT, "tôi" = KIM JAEHUN / JAEHUN (m; "cậu Kim Jaehun" 160-167, "anh Jaehun").
 # 111-143 NGÔI BA theo Song Ahrin ("Cô thực sự lo lắng", "người đàn ông" = Jaehun); "tôi" không xuất hiện.
 # Tên: SONG AHRIN / AHRIN (f, xưng "tôi", gọi "anh"; Jaehun gọi "cô Ahrin"); PARK YEEUN / YEEUN (f, bé hơn ~10 tuổi, gọi
@@ -164,7 +166,7 @@
 143 N
 144 N
 145 N
-146 N
+146 D NARRATOR neutral 0-1 normal normal u
 147 N,T KIM JAEHUN,JAEHUN,NARRATOR neutral,sad 0-1 normal normal u
 148 D JANG CHAEYEON,CHAEYEON,YU DAON,DAON~ neutral 0-1 normal normal f
 149 D YU DAON,DAON,JANG CHAEYEON,CHAEYEON~ surprised,neutral 0-1 normal normal f
