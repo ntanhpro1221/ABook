@@ -230,11 +230,11 @@ def test_a_title_is_vietnamised_for_a_voice_that_cannot_say_english() -> None:
     assert _said("Mr. Lyle", None, False)[0] == (names.english_reading("mister") or "mister")
 
 
-@pytest.mark.parametrize("title, said", [("Mrs.", "mít-xịt"), ("Ms.", "mít"), ("Mr.", "mít-tơ")])  # Mrs. / Ms.: chủ sách 04-10; Mr.: đề xuất theo cùng kiểu, chưa có ca chủ sách
+@pytest.mark.parametrize("title, said", [("Mrs.", "mít-xịt"), ("Ms.", "mít"), ("Mr.", "mít-tơ"), ("Dr.", "đốc-tơ")])  # chủ sách 04-10
 def test_a_title_has_a_fixed_vietnamised_form_for_a_voice_that_cannot_say_english(title: str, said: str) -> None:
     assert _said(f"{title} Lyle", None, False)[0] == said
     assert _said(f"{title} Lyle", "ja", False)[0] == said
-    assert _said(f"{title} Lyle")[0] == {"Mrs.": "missus", "Ms.": "miss", "Mr.": "mister"}[title]  # giọng nói được tiếng Anh giữ âm Anh
+    assert _said(f"{title} Lyle")[0] == {"Mrs.": "missus", "Ms.": "miss", "Mr.": "mister", "Dr.": "doctor"}[title]  # giọng nói được tiếng Anh giữ âm Anh
 
 
 @pytest.mark.parametrize("text, said", [
