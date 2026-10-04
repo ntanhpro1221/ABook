@@ -212,7 +212,7 @@ bằng `scripts/sweep_english_vi_variants.py` (chủ sách x100, nhà nước x2
 | /dʒ/ | gi | Gioóc-giơ, Gia-cô-banh |
 | schwa | ơ | Ê-đi-xơn, Oa-sinh-tơn |
 | r cuối, sau nguyên âm | bỏ | Poóc-len, Niu Oóc |
-| /θ/, /ð/ | x / đ | [Chọn] |
+| /θ/, /ð/ | th / đ (code quét chọn th: Arthur a-thơ; sửa 04-10 từ "x", doc cũ vênh code) | [Chọn] |
 
 Các luật cụ thể của `ENGLISH_TO_VIETNAMESE.md` chỉ được giữ khi chúng cho ra đúng dạng đã có nguồn. Phần đối chiếu từng luật làm khi
 dựng đáp án.
