@@ -54,6 +54,16 @@ def batch_segments_overridden() -> bool:
     return "batch_segments" in eval_settings()
 
 
+def think_mode() -> bool:
+    """E8 (ABOOK_EVAL_SETTINGS {"think": true}): lượt SINH gửi think=true (model gốc qwen3 nghĩ trước khi trả JSON)."""
+    return eval_settings().get("think") is True
+
+
+def think_extra_tokens() -> int:
+    """Ngân sách token nghĩ cộng thêm vào num_predict của lượt sinh (mặc định 1024); nghĩ quá thì đáp án bị cắt -> thử lại."""
+    return int(eval_settings().get("think_extra_tokens", 1024))
+
+
 # --- dump -------------------------------------------------------------------------------------------------------
 
 
@@ -70,11 +80,15 @@ def dump_call(
     request: dict[str, Any],
     raw: str,
     attempt: int,
+    thinking: str = "",
+    eval_count: int | None = None,
 ) -> None:
     path = os.environ.get("ABOOK_PROMPT_DUMP", "").strip()
     if not path:
         return
     record = {
+        "thinking": thinking,
+        "eval_count": eval_count,
         "role": role,
         "chapter": chapter,
         "seqs": seqs,

@@ -7088,6 +7088,8 @@ class OllamaBookAnalyzer:
             batch_ids=batch_ids,
             request=request,
             raw=getattr(self, "_last_raw_response", ""),
+            thinking=getattr(self, "_last_thinking", ""),
+            eval_count=getattr(self, "_last_eval_count", None),
             attempt=attempt,
         )
 
@@ -7221,6 +7223,7 @@ class OllamaBookAnalyzer:
         # replay and the transport fault is reported to the caller.
         for connect_attempt in range(OLLAMA_TRANSPORT_RECONNECT_ATTEMPTS + 1):
             parts = []
+            thinking_parts: list[str] = []  # E8: think=true thì Ollama gửi phần nghĩ ở khoá "thinking"
             completed = False
             completion_reason = ""
             evaluation_count = None
@@ -7258,6 +7261,7 @@ class OllamaBookAnalyzer:
                         if envelope.get("error"):
                             raise RuntimeError(str(envelope["error"]))
                         parts.append(str(envelope.get("response", "")))
+                        thinking_parts.append(str(envelope.get("thinking", "") or ""))
                         completed = bool(envelope.get("done", False))
                         if completed:
                             completion_reason = str(
@@ -7299,6 +7303,7 @@ class OllamaBookAnalyzer:
                     response.close()
         response_text = "".join(parts) or "{}"
         self._last_raw_response = response_text  # B-EVAL: ABOOK_PROMPT_DUMP
+        self._last_thinking, self._last_eval_count = "".join(thinking_parts), evaluation_count  # E8
         if usage is not None:
             options = request.get("options", {})
             request_num_ctx = int(options.get("num_ctx", 0))
@@ -7494,6 +7499,9 @@ class OllamaBookAnalyzer:
                 ),
             },
         }
+        if _eval_hooks.think_mode():  # E8: model gốc nghĩ trước khi trả JSON; ngân sách nghĩ cộng vào num_predict
+            request["think"] = True
+            request["options"]["num_predict"] += _eval_hooks.think_extra_tokens()
         self._verify_locked_model_digest("before generator request")
         self._last_raw_response = ""
         try:
