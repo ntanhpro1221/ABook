@@ -146,8 +146,11 @@ class PlayerWidget : AppWidgetProvider() {
         Playback.init(context)
         val pending = goAsync()
         // Kết nối tới dịch vụ phát (khởi động nó nếu chưa chạy) rồi mới ra lệnh.
+        // Context của BroadcastReceiver không được bind service (ReceiverCallNotAllowedException - app văng khi bấm nút widget):
+        // dựng MediaController / SessionToken bằng applicationContext.
+        val app = context.applicationContext
         val future = MediaController.Builder(
-            context, SessionToken(context, ComponentName(context, PlaybackService::class.java)),
+            app, SessionToken(app, ComponentName(app, PlaybackService::class.java)),
         ).buildAsync()
         future.addListener({
             Playback.onMain {
