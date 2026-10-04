@@ -513,3 +513,37 @@ def test_starting_a_book_runs_its_supervisor_from_the_code_it_is_pinned_to(tmp_p
     StudioRunner(setup).start(book)
     assert started["code_root"] == setup.root / "code" / ("a" * 16), "app đổi file khoá: cuốn dở chạy bản ghim"
 
+
+
+def _mark_installed(setup: StudioSetup) -> None:
+    (setup.runtime / ".setup_complete").parent.mkdir(parents=True, exist_ok=True)
+    (setup.runtime / ".setup_complete").write_text("{}", encoding="utf-8")
+    (setup.venv / "Scripts").mkdir(parents=True, exist_ok=True)
+    (setup.venv / "Scripts" / "pythonw.exe").write_bytes(b"")
+
+
+def test_an_optional_model_downloads_only_when_asked_and_shows_progress(tmp_path: Path, ollama: str) -> None:
+    """Model tuỳ chọn (qwen3.5:4b đọc không khí cả đoạn, 3,2 GB) không nằm trong các bước cài: chỉ tải khi bấm, ở luồng nền,
+    có tiến độ; Studio chưa cài thì từ chối."""
+    setup = StudioSetup(tmp_path / "Studio", tmp_path, gpu=lambda: None, ollama_address=ollama)
+    with pytest.raises(SetupError, match="Chưa cài Studio"):
+        setup.pull_optional("qwen3.5:4b")
+    _mark_installed(setup)
+    assert "qwen3.5:4b" not in [step for step, _label, _hint in studio_setup.STEPS]
+    assert setup.optional_status("qwen3.5:4b") == {"installed": False, "downloading": False, "progress": None, "error": None}
+    assert FakeOllama.pulled == [], "chưa bấm thì chưa kéo gì"
+    setup.pull_optional("qwen3.5:4b")
+    setup.wait(10)
+    assert FakeOllama.pulled == ["qwen3.5:4b"]
+    assert setup._optional_progress == (100, 100)
+    FakeOllama.created.append({"model": "qwen3.5:4b"})  # Ollama thật: kéo xong là model có trong /api/tags
+    assert setup.optional_status("qwen3.5:4b")["installed"] is True
+
+
+def test_an_optional_model_download_that_fails_says_why(tmp_path: Path) -> None:
+    setup = StudioSetup(tmp_path / "Studio", tmp_path, gpu=lambda: None, ollama_address="http://127.0.0.1:9")
+    _mark_installed(setup)
+    setup.pull_optional("qwen3.5:4b")  # Ollama của Studio không chạy và không có file chạy: lỗi hiện ở trạng thái
+    setup.wait(10)
+    status = setup.optional_status("qwen3.5:4b")
+    assert status["installed"] is False and status["downloading"] is False and "Ollama" in (status["error"] or "")

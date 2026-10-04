@@ -292,11 +292,12 @@ def apply_speed_change(audio: Any, sample_rate: int, speed: float) -> np.ndarray
     best continues the previous frame. Pitch and timbre are the input's own samples; only the
     spacing changes, so the line comes out exactly `1 / speed` as long.
 
-    It replaced a WORLD resynthesis (04-10): over 40 neutral lines at each voice's balance tempo,
-    UTMOSv2 fell by 0.48-1.03 with WORLD and by 0.14-0.32 with WSOLA (Mỹ Duyên x1.306, Kim Thanh
-    x1.322, Trúc Ly x0.890; docs/VOICE_BALANCE.md). Overlap-adding raises the integrated loudness by
-    a few tenths of a dB, so the balance table's reference loudness is measured after this step.
-    See `voice_balance.tempo` for where the factor comes from.
+    "Best continues" is the NORMALISED cross-correlation (divided by the candidate's energy). The raw
+    correlation of the first version leaned towards loud stretches instead of matching ones: it cost
+    0.16-0.32 UTMOSv2 at every tempo, even x1.025, and raised loudness by 0.4-0.6 dB; normalised, x1.05
+    costs nothing measurable and loudness stays within 0.2 dB (docs/VOICE_BALANCE.md). Either way it
+    beats the WORLD resynthesis it replaced (0.48-1.03 lost at the balance tempi). The balance table's
+    reference loudness is measured after this step. See `voice_balance.tempo` for the factor.
     """
     array = np.asarray(audio, dtype=np.float32).reshape(-1)
     speed = float(speed)
@@ -309,7 +310,7 @@ def apply_speed_change(audio: Any, sample_rate: int, speed: float) -> np.ndarray
     waveform = np.asarray(array, dtype=np.float64)
     frame = int(WSOLA_FRAME_SECONDS * sample_rate)
     synthesis_hop = frame // 2
-    analysis_hop = int(synthesis_hop * speed)
+    analysis_hop = int(round(synthesis_hop * speed))
     tolerance = frame // 2
     window = 0.5 - 0.5 * np.cos(2.0 * np.pi * np.arange(frame) / frame)
     frames = int(np.ceil(waveform.size / analysis_hop)) + 1
@@ -325,7 +326,9 @@ def apply_speed_change(audio: Any, sample_rate: int, speed: float) -> np.ndarray
         if natural is None:
             shift = tolerance
         else:
-            shift = int(np.argmax(np.correlate(region, natural, mode="valid")[: 2 * tolerance + 1]))
+            match = np.correlate(region, natural, mode="valid")[: 2 * tolerance + 1]
+            energy = np.convolve(region * region, np.ones(frame), mode="valid")[: 2 * tolerance + 1]
+            shift = int(np.argmax(match / (np.sqrt(energy) + 1e-9)))
         out[index * synthesis_hop:index * synthesis_hop + frame] += window * region[shift:shift + frame]
         weight[index * synthesis_hop:index * synthesis_hop + frame] += window
         natural = padded[start + shift + synthesis_hop:start + shift + synthesis_hop + frame]

@@ -447,6 +447,9 @@ class StudioSetup:
         self._step: str | None = None
         self._progress: tuple[int, int] | None = None
         self._detail = ""
+        self._optional_thread: threading.Thread | None = None  # model tuỳ chọn đang tải (`pull_optional`)
+        self._optional_progress: tuple[int, int] | None = None
+        self._optional_error: str | None = None
 
     # ---- trạng thái -------------------------------------------------------------------------------------------
 
@@ -566,9 +569,9 @@ class StudioSetup:
         return stopped
 
     def wait(self, timeout: float | None = None) -> None:
-        thread = self._thread
-        if thread is not None:
-            thread.join(timeout)
+        for thread in (self._thread, self._optional_thread):
+            if thread is not None:
+                thread.join(timeout)
 
     def code_for(self, project_root: Path) -> Path:
         """Thư mục mã chạy cuốn này. Đổi một file khoá chất lượng là cuốn đang làm dở không làm tiếp được (AGENTS.md), mà
@@ -859,8 +862,16 @@ class StudioSetup:
         if published is not None:
             self._install_published(published)
             return
+        self._pull(self.analysis_model, self._set_progress, self._set_detail)
+
+    def _set_detail(self, text: str) -> None:
+        self._detail = text
+
+    def _pull(self, model: str, progress: Callable[[int, int], None], detail: Callable[[str], None]) -> None:
+        """Kéo một model từ kho Ollama qua `/api/pull` (theo dõi tiến độ từng dòng). Dùng chung cho model phân tích (bước cài
+        bắt buộc) và model tuỳ chọn (`pull_optional`)."""
         request = urllib.request.Request(f"{self.ollama_address}/api/pull", method="POST",
-                                         data=json.dumps({"model": self.analysis_model, "stream": True}).encode("utf-8"),
+                                         data=json.dumps({"model": model, "stream": True}).encode("utf-8"),
                                          headers={"Content-Type": "application/json"})
         try:
             with urllib.request.urlopen(request, timeout=120) as response:
@@ -869,12 +880,57 @@ class StudioSetup:
                         raise Cancelled()
                     event = json.loads(raw.decode("utf-8"))
                     if event.get("error"):
-                        raise SetupError(f"Ollama không tải được {self.analysis_model}: {event['error']}")
+                        raise SetupError(f"Ollama không tải được {model}: {event['error']}")
                     if event.get("total"):
-                        self._set_progress(int(event.get("completed") or 0), int(event["total"]))
-                    self._detail = str(event.get("status") or "")
+                        progress(int(event.get("completed") or 0), int(event["total"]))
+                    detail(str(event.get("status") or ""))
         except urllib.error.URLError as error:
             raise SetupError(f"Không nói chuyện được với Ollama ({error}) - bấm Cài tiếp để thử lại.") from error
+
+    # ---- model tuỳ chọn: chỉ tải khi người dùng bấm (không nằm trong các bước cài bắt buộc) ------------------------------
+
+    def optional_status(self, model: str) -> dict[str, Any]:
+        """{installed, downloading, progress, error} của một model tuỳ chọn. Ollama của Studio chưa chạy thì khởi động nó
+        (rẻ: không nạp model nào) để biết model đã có chưa; Studio chưa cài thì chưa có."""
+        downloading = self._optional_thread is not None and self._optional_thread.is_alive()
+        installed = False
+        if not downloading and self.installed():
+            try:
+                self.ensure_ollama()
+                installed = self._ollama_has(model) or self._ollama_has(f"{model}:latest")
+            except (SetupError, OSError):
+                pass
+        progress = self._optional_progress if downloading else None
+        return {"installed": installed, "downloading": downloading,
+                "progress": {"done": progress[0], "total": progress[1]} if progress else None,
+                "error": None if downloading else self._optional_error}
+
+    def pull_optional(self, model: str) -> dict[str, Any]:
+        """Bắt đầu tải một model tuỳ chọn ở luồng nền (như các bước cài, có tiến độ); đang tải thì không làm gì. Cài Studio
+        đang chạy hay Studio chưa cài thì từ chối - bước cài bắt buộc đi trước."""
+        with self._lock:
+            if self._thread is not None and self._thread.is_alive():
+                raise SetupError("Studio đang được cài - chờ cài xong rồi tải tiếp.")
+            if not self.installed():
+                raise SetupError("Chưa cài Studio - cài Studio trước rồi mới tải được model này.")
+            if self._optional_thread is None or not self._optional_thread.is_alive():
+                self._cancel.clear()
+                self._optional_progress, self._optional_error = None, None
+                self._optional_thread = threading.Thread(target=self._run_optional, args=(model,),
+                                                         name="studio-optional-model", daemon=True)
+                self._optional_thread.start()
+        return self.optional_status(model)
+
+    def _run_optional(self, model: str) -> None:
+        try:
+            self.ensure_ollama()
+            self._pull(model, lambda done, total: setattr(self, "_optional_progress", (done, total)), lambda _text: None)
+        except Cancelled:
+            self._optional_error = "Đã dừng - bấm Tải để tải tiếp."
+        except SetupError as error:
+            self._optional_error = str(error)
+        except Exception as error:  # noqa: BLE001 - lỗi lạ không được làm sập host
+            self._optional_error = f"Lỗi khi tải {model}: {type(error).__name__}: {error}"
 
     def _install_published(self, model: PublishedModel) -> None:
         """Tải từng phần (kiểm băm từng phần, tải tiếp được), đẩy CẢ file vào Ollama bằng /api/blobs - ghép ngay trên
