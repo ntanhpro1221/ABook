@@ -1,5 +1,7 @@
 # Đáp án KIỂM TRA truyện Hàn đợt 3 (03-10; luật cố định: vị trí 30% của bộ); mục đích: tăng gold Hàn (nhóm mỏng nhất).
 # "Kẻ yếu nhất học viện" file 26 ("Chương 27 - Giao Đấu (1)"). Claude gán (A) 03-10; B soát + phân xử 03-10 (gold_kr3/B/kr3b_review.md).
+# BẢN GOLD 2 (05-10, cho lượt đo trên main >= e926ed12 - dòng nguyên vẹn [..] là đơn vị giọng): 62 "[Phát hiện một ác quỷ ở gần
+# đây.]" đổi N -> D NARRATOR (giọng hệ thống). 13/43/68 tên khung ngắn giữ N. Cây ghim cũ giữ bản 1.
 # Hai góc kể: 1-77 NGÔI THỨ NHẤT, "tôi" = ISAAC (m; người chơi xuyên vào nhân vật lớp D - 54 "Xin mời Isaac của lớp D..." rồi
 # 55 "Đến lượt của tôi rồi"; "Isaac" ~800 lần cả bộ, không có họ) -> --first-person Isaac. 78-127 NGÔI BA (sân thượng: ác quỷ
 # Leafa và Giáo sư Fernando), "tôi" không có mặt.
@@ -77,7 +79,7 @@
 59 N
 60 N
 61 N
-62 N
+62 D NARRATOR neutral 0-1 normal normal u
 63 N
 64 N NARRATOR neutral,afraid 0-1 normal normal u
 65 N
