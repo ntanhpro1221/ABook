@@ -2203,3 +2203,42 @@ hẳn vì lý do này. App tải `link` trước, bản sao archive.org (`mirror
 3. Ghép, 4. trộn - sau khi 1 và 2 có kết quả.
 
 Mỗi pha xong: ghi số vào đây, đổi tham số trong app theo kết quả, nói rõ cái gì đã đo và cái gì còn là đường cơ sở.
+
+## "Nghe ngay": máy tự chọn danh sách phát (04-10 12:5x, Lead duyệt)
+
+**GHI TRƯỚC (trước mọi lượt chấm / đo):**
+- **Vấn đề:** sách chỉ có chữ để nhạc nền TẮT, người nghe phải tự chọn 1 trong 12 danh sách (`music_playlist.py`).
+  Điều này trái luật chủ sách 01-10 "mặc định bật, máy tự làm".
+- **Câu hỏi:** chỉ đọc tên cuốn + vài nghìn chữ đầu, một bộ chọn không model (chạy được trên điện thoại) có chọn được danh
+  sách phát hợp với cuốn không?
+- **Sách:** mọi cuốn trong `Corpus/_full`; bản "(du)" gộp với bản gốc.
+  - Chia đôi theo `random.Random(20261005)` trên danh sách tên đã sắp: nửa PHÁT TRIỂN (viết luật) và nửa ĐO.
+  - Tôi không xem đáp án nửa đo trước khi khoá luật.
+- **Đáp án:** hai giám khảo Sonnet độc lập. Mỗi người đọc tên cuốn + 4.000 ký tự đầu phần truyện + 2.000 ký tự ở chương giữa
+  sách, rồi ghi cho mỗi cuốn:
+  - `best`: 1 trong 11 danh sách thể loại (không tính `sleep`, vì đó là tâm trạng người nghe, không phải thể loại cuốn);
+  - `ok`: mọi danh sách chấp nhận được làm nền cho CẢ cuốn;
+  - `origin`: JP / KR / CN / VN / WEST / khác.
+- **Đáp án gộp:**
+  - tập chấp nhận = `ok_A ∩ ok_B`; tập rỗng thì cuốn ra khỏi phần đo (đếm và báo);
+  - nhóm gốc khác nhau giữa hai người thì lấy của A và ghi lại.
+  - Đồng thuận ghi làm trần: `best_A ∈ ok_B` và `best_B ∈ ok_A`.
+- **Bộ chọn:**
+  - Đầu vào: tên cuốn + 6.000 ký tự đầu phần truyện. Bỏ chương phụ ngắn (< 1.500 ký tự) và chương có dòng đầu là minh hoạ /
+    lời bạt / mục lục.
+  - Luật từ khoá theo danh sách, chuẩn hoá chữ thường, có / không dấu; trọng số trong MỘT file JSON dùng chung cho Python và
+    Kotlin.
+  - Chọn danh sách điểm cao nhất; hoà hay không đủ điểm thì lùi về một danh sách mặc định, chọn trên nửa phát triển.
+- **Thước chính:** tỉ lệ cuốn ở nửa đo có danh sách được chọn nằm trong tập chấp nhận.
+  - Báo theo nhóm gốc: JP > KR > khác (trọng số analysis-diversity).
+  - Đối chứng: danh sách hằng tốt nhất, chọn trên nửa phát triển.
+- **Luật thắng:** tỉ lệ ≥ 0,75 VÀ hơn danh sách hằng ≥ 0,20, cả hai trên nửa đo.
+- **Chi phí:** thời gian chạy trên máy ảo Android `emulator-5554` (không dùng điện thoại chủ sách) và trên máy tính; cỡ file luật.
+- **Quyết định:**
+  - THẮNG → app tự chọn danh sách khi sách chỉ có chữ chưa có lựa chọn (máy tính + điện thoại), ghi rõ "máy chọn", đổi / tắt
+    được. Code ở worktree riêng; Lead duyệt diff.
+  - THUA → giữ chọn tay, báo số.
+- **Giới hạn:**
+  - Giám khảo là Sonnet.
+  - Tên thư mục Corpus là tên ASCII hoá, có thể khác tên trong file sách.
+  - Danh sách `eastern` hiện chỉ 103 phút.
