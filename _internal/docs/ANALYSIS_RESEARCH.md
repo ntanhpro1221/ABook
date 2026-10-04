@@ -120,6 +120,11 @@ Chấm lại bằng gold mới + thước mới:
 - Bảng mặc định (TB mọi hạt / hạt tệ nhất / gốc): Nhật MỚI 11 ch - 4B v8 58,7 / 57,7 / 59,5; q35 57,7 / 55,5 / 57,7;
   9B 56,1 / 50,6 / 60,8. Hàn MỚI 8 ch - 4B v8 67,6 / 64,9 / 68,8; q35 70,3 / 69,3 / 69,3; 9B 66,0 / 57,2 / 71,7.
 
+**Thầy Sonnet vs Opus (04-10 tối, cùng harness, 7 ch A1, thước 04-10):** F1 giọng Sonnet 89,9 vs Opus #1 92,9 (-3,0; Nhật
+91,8 vs 94,1, Hàn 87,5 vs 91,3); người nói chặt 89,8 vs 94,5 (-4,7). Lỗi chính của Sonnet: đặt tên cho người lạ vô danh, nhầm người
+nói trong nhóm đông (villain22); lệch lượt chỉ 0,8 %. Ngưỡng ghi trước "Sonnet >= Opus - 3": F1 đúng mép, người nói chặt trượt
+-> theo luật chính xác trước, thầy cho MỌI đợt bạc là OPUS.
+
 ### Bước 1 của Lead (04-10, tài liệu breakthrough_lit.md): chẩn đoán và trần, chỉ tốn suy luận (ghi trước)
 
 Cùng 11 ch Nhật MỚI (rồi 8 ch Hàn MỚI), cùng 4B v8 (lora29v8), qua bộ phân tích thật (nhánh đo dev/breakthrough-eval: các
