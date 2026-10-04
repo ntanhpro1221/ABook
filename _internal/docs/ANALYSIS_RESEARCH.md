@@ -147,6 +147,16 @@ lỗi khác. Kết luận: lan lỗi giữa các lô là THẬT (đúng loại l
 chấm ứng viên / quyết định độc lập KHÔNG phải hướng chính. Gốc còn lại là HIỂU (model không đọc được cấu trúc lượt) -> A2 chưng cất,
 B8 con trỏ, B8 tách việc. E1 (ii) (ép gold trong lô, HF) xếp sau.
 
+**Kết quả E2 (05-10 02:xx, thước 04-10, so CẶP với v8 gốc cùng digest, Nhật MỚI 11 ch).** Hai biến thể:
+- HẸP (lô 3 đoạn, kề 250 ký tự, e2sv8): TỆ hơn - đúng chặt 71,8 -> 66,6 %, lỗi lặp 35. Bỏ. Rokujouma 122a hỏng hẳn (lỗi
+  "Narration-before-next-paragraph-thought context hash is not source-ledger-bound" ở lô ngắn - bug đường kiểm ngữ cảnh khi lô nhỏ;
+  biến thể rộng chạy đủ 11 chương nên không dính).
+- RỘNG (9 đoạn "ngay trước" thay 4, e2wv8; hook ABOOK_EVAL_SETTINGS previous_turns): F1 giọng 59,5 -> **61,8 (+2,3)**, đúng
+  chặt 71,8 -> 73,7 %, lỗi lặp 69 -> **22 (-68 %, cùng hướng E1)**. Giá ~1,0x: 500 s/chương (E1 cùng ngày 497), VRAM không đổi
+  (model 5.248 MiB, đỉnh card 5.932 MiB), RAM đỉnh 18,8 GB.
+- Lead 05-10: RỘNG = ứng viên mặc định, chốt nếu Hàn (e2wkr, 8 ch) không tụt quá 1 điểm F1. Từ nay B8/B9 đo ở cửa sổ rộng
+  (cây ghim ABook_pin_wide a40231f3), mốc a_rộng = e2wv8; dữ liệu huấn luyện giữ hẹp (đã kiểm: v8 train hẹp, đo rộng tốt hơn).
+
 ### Ghi trước 04-10 tối: B9 (chưng cất đáp án), B8 bốn nhánh (tách việc), B10 (trạng thái cảnh)
 
 **Bạc A2.** Thầy Opus trả lời prompt THẬT của app qua harness (Ollama giả). So chéo 5 chương trùng: bạc harness MỘT thầy khớp bạc
