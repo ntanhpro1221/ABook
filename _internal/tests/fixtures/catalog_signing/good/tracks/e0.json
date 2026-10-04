@@ -1,0 +1,1 @@
+{"https://x/sad.mp3": {"valence": -0.7, "arousal": -0.4, "family": "piano", "duration": 240, "source": "incompetech", "emotions": {"sadness": 0.8, "nostalgia": 0.4}, "sd": {"arousal": 0.3}}}

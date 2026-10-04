@@ -4,6 +4,7 @@ Chậm (vài chục ms) nhưng chỉ chạy cho một file nhỏ mỗi lần t�
 """
 from __future__ import annotations
 
+import base64
 import hashlib
 
 _P = 2**255 - 19
@@ -88,3 +89,12 @@ def verify(public_key: bytes, message: bytes, signature: bytes) -> bool:
         return False
     h = int.from_bytes(hashlib.sha512(signature[:32] + public_key + message).digest(), "little") % _L
     return _equal(_mul(s, _G), _add(r, _mul(h, a)))
+
+
+def verify_base64(public_key: bytes, message: bytes, signature_text: bytes) -> bool:
+    """Như `verify`, nhưng chữ ký ở dạng file `.sig` (base64, có thể kèm xuống dòng cuối). Sai định dạng base64 thì False."""
+    try:
+        signature = base64.b64decode(signature_text.strip(), validate=True)
+    except ValueError:
+        return False
+    return verify(public_key, message, signature)
