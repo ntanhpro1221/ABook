@@ -127,6 +127,29 @@ lỗi khác. Kết luận: lan lỗi giữa các lô là THẬT (đúng loại l
 chấm ứng viên / quyết định độc lập KHÔNG phải hướng chính. Gốc còn lại là HIỂU (model không đọc được cấu trúc lượt) -> A2 chưng cất,
 B8 con trỏ, B8 tách việc. E1 (ii) (ép gold trong lô, HF) xếp sau.
 
+### Ghi trước 04-10 tối: B9 (chưng cất đáp án), B8 bốn nhánh (tách việc), B10 (trạng thái cảnh)
+
+**Bạc A2.** Thầy Opus trả lời prompt THẬT của app qua harness (Ollama giả). So chéo 5 chương trùng: bạc harness MỘT thầy khớp bạc
+đồng thuận HAI thầy gold-format của Lead 459/465 = 98,7 % người nói chặt -> một thầy là đủ. Đợt 1: 150 chương (94 Nhật / 56 Hàn,
+71 truyện, chương khó nhất mỗi truyện trước; luật PICK_RULES của Lead, mọi truyện đủ điều kiện, tối đa 3 chương/truyện, ngoài bộ đo).
+Ghi chú lý do của thầy chỉ để NGƯỜI soát nhãn, KHÔNG vào dữ liệu học. Không xin agent Claude viết quá trình/lập luận để làm dữ liệu
+huấn luyện (bộ lọc an toàn API đã chặn một yêu cầu như thế - không lách).
+
+**B9 = 4B học data_v8 + bạc** (cùng công thức lora29v8, hạt 1234 và 1). Mốc họ v8 (thước 04-10): Nhật MỚI TB 58,7, Hàn MỚI 67,6.
+THẮNG: TB 2 hạt >= mốc + 2,0 ở Nhật MỚI, không truyện nào tụt > 5, Hàn không tụt > 2. THUA (< mốc - 2): soát bạc trước khi kết luận.
+Dấu liều-đáp cho quy mô A2: lỗi lặp lượt giảm >= 15 %.
+
+**B8 bốn nhánh trên cùng data_v8 (gold mới), 2 hạt mỗi nhánh** - câu chủ sách "tách phân vai và cảm xúc có hơn không":
+(a) v8 đa nhiệm; (b) chỉ id/kind/speaker; (c) như (b) nhưng người nói là CON TRỎ (cửa sổ 9 đoạn); (d) chỉ cảm xúc/cường độ/nhịp/âm
+lượng, người nói gold đưa sẵn trong prompt. Ngưỡng: b-a >= +2,0 F1 giọng (tách có lợi cho phía người nói); c-b >= +3,0 và lỗi lặp
+-25 % (con trỏ có lợi); d vs a trên độ đúng cảm xúc cùng chương (phía cảm xúc). Cảm xúc hiện KHÔNG phải nút thắt: họ v8 Nhật MỚI cảm
+xúc 91,6-93,5 %, người nói chặt 68,6-72,6 %. Nếu tách thắng, triển khai là MỘT adapter đa nhiệm + thẻ nhiệm vụ ở cuối prompt (dùng
+lại KV tiền tố, ước +3-5 % thời gian); hai adapter không chia được KV (LoRA đổi luồng dư từ lớp đầu) -> ước +20-30 % (đo token 306 lô
+E1: prefill 2.139, đáp đủ 349, chỉ người nói 125, phần cảm xúc 265).
+
+**B10 - trạng thái cảnh trước quyết định** (GPU sau B9): trò sinh {present, pair, last_speakers, narrator} rồi mới gán người nói;
+trạng thái DỰNG BẰNG MÃ từ nhãn (người nói các câu trước, tên có nhãn trong cửa sổ cảnh, first_person), không từ lập luận của thầy.
+
 ## 03-10 chiều - Vì sao model to không hơn rõ: tín hiệu khó quá ít, lỗi theo loại, và truyện ĐÃ HỌC vs truyện MỚI
 
 Câu chủ sách hỏi: "ít thông tin thì huấn luyện tốt hơn?". Trả lời từ số đo, không dùng GPU:
