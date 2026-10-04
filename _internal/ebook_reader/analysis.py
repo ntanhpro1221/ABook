@@ -7478,6 +7478,8 @@ class OllamaBookAnalyzer:
             output_schema = _field_mode.output_schema(output_schema, field_mode)
         if pointer_context is not None:
             system_prompt += _pointer_mode.SYSTEM_RULE
+        if _eval_hooks.scene_first():  # B10: trạng thái cảnh trước "segments"
+            output_schema = _eval_hooks.scene_schema(output_schema)
         request = {
             "model": self.model,
             "system": system_prompt,
@@ -7506,6 +7508,8 @@ class OllamaBookAnalyzer:
         finally:
             self._eval_dump("generator", group, request, batch_to_stable, int(request_contract["attempt"]))
         self._verify_locked_model_digest("after generator request")
+        if _eval_hooks.scene_first() and isinstance(payload, dict):  # B10: trạng thái cảnh chỉ là bước đệm của model
+            payload.pop("scene", None)
         if pointer_context is not None:  # B8: con trỏ -> tên trước mọi kiểm tra; con trỏ hỏng = PointerError, thử lại
             _pointer_mode.resolve_payload(payload, pointer_context, list(batch_to_stable))
         if field_mode:  # B8: host điền các trường không thuộc việc của model
