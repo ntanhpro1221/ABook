@@ -3,7 +3,7 @@ VieneuOnDeviceTest): what the DESKTOP path (abook/readaloud/vieneu.py + vieneu_e
 checked piece by piece - text -> phonemes (sea-g2p), paragraph -> units, phonemes -> Turbo token ids, frame caps, the numpy random streams,
 the edge trimming / joining of audio, the WAV bytes, and two whole paragraph clips (Nano bit-exact, Turbo length + loudness).
 
-Runs on the dev machine (runtime venv with sea-g2p + the VieNeu models in the Hugging Face cache; vieneu 3.8.1 only for its voice files):
+Runs on the dev machine (runtime venv with sea-g2p + the VieNeu models in the Hugging Face cache; vieneu 3.8.3 only for its voice files):
 
     runtime/.venv/Scripts/python.exe scripts/vieneu_android_fixtures.py            # rewrite everything
     runtime/.venv/Scripts/python.exe scripts/vieneu_android_fixtures.py --no-clips # skip the two clips (no models needed)
@@ -488,7 +488,7 @@ def clip_fixture() -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--no-clips", action="store_true", help="skip the two desktop clips (needs the VieNeu models + vieneu 3.8.1)")
+    parser.add_argument("--no-clips", action="store_true", help="skip the two desktop clips (needs the VieNeu models + vieneu 3.8.3)")
     args = parser.parse_args()
     text = text_fixture()
     _write("text.json", text)

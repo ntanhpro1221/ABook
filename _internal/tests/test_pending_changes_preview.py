@@ -82,12 +82,12 @@ def test_one_change_can_be_dropped_from_the_box_and_the_older_wish_comes_back(tm
     try:
         since = time.time() - 5
         listener_overrides.request_voice(project, "LUCIEN", preset="Thanh Bình", now=since + 1)
-        listener_overrides.request_voice(project, "LUCIEN", preset="Mạnh Dũng", now=since + 2)
+        listener_overrides.request_voice(project, "LUCIEN", preset="Quốc Tuấn", now=since + 2)
         listener_overrides.request_retake(project, "s3", "x", now=since + 3)
         items = store.pending_details(project, since)["items"]
         voice = next(item for item in items if item["kind"] == "voice")
         retake = next(item for item in items if item["kind"] == "retake")
-        assert voice["label"] == "Giọng của Lucien: Mạnh Dũng"
+        assert voice["label"] == "Giọng của Lucien: Quốc Tuấn"
         path = f"/api/books/{book_id(project)}/pending-changes/withdraw"
         headers = {"X-Ebook-Token": "phien"}
         for item in (voice, retake):

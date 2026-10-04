@@ -850,7 +850,7 @@ class App:
         """Tạo một dự án từ các lựa chọn của trình tạo sách - dùng chung cho sách thường và từng tập của "Tạo nhiều tập"."""
         root = actions.create_book(
             self.library.root, paths, title, str(body.get("profile", "high_quality")),
-            humanize.voice_key(str(body.get("narrator", ""))), str(body.get("firstPerson", "")),
+            str(body.get("narrator", "")), str(body.get("firstPerson", "")),
             settings_overrides=self._analysis_overrides(str(body.get("analysisModel", "") or "")),
             first_person_chapters=first_person_chapters,
             drop_credit_lines=body["dropCreditLines"] if isinstance(body.get("dropCreditLines"), bool) else None,
@@ -2068,7 +2068,7 @@ class App:
         defaults = set(DEFAULT_NARRATOR_BY_GENDER.values())
         return [
             {
-                "name": humanize.voice_label(preset["name"]),
+                "name": preset["name"],
                 "gender": {"male": "Nam", "female": "Nữ"}.get(preset["gender"], ""),
                 "region": preset["region"],
                 "style": {"tu_nhien": "Tự nhiên", "doc_truyen": "Kể chuyện"}.get(preset["style"], preset["style"]),
@@ -3039,7 +3039,7 @@ class Handler(BaseHTTPRequestHandler):
         if body.get("withdraw"):
             self._withdraw(path, "voices", [listener_overrides.character_key(character)] if character else [], body)
             return
-        preset = humanize.voice_key(str(body.get("preset", "") or "").strip()[:120])
+        preset = str(body.get("preset", "") or "").strip()[:120]
         gender = str(body.get("gender", "") or "").strip()[:10]
         avoid = str(body.get("avoid", "") or "").strip()[:200]
         if not character:
@@ -3056,7 +3056,7 @@ class Handler(BaseHTTPRequestHandler):
         now = time.time()
         write = book_wishes.request_voice if package else listener_overrides.request_voice
         write(path, character, preset=preset, gender=gender, avoid=avoid, now=now)
-        self._send_json(HTTPStatus.OK, {"character": character, "preset": humanize.voice_label(preset), "gender": gender,
+        self._send_json(HTTPStatus.OK, {"character": character, "preset": preset, "gender": gender,
                                         "avoid": avoid, "requestedAt": now})
 
     def post_review(self, _query: dict[str, list[str]], value: str) -> None:
@@ -3711,7 +3711,7 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.OK, {"paths": paths})
 
     def media_voice(self, _query: dict[str, list[str]], name: str) -> None:
-        path = self.app.voice_file(humanize.voice_key(name))
+        path = self.app.voice_file(name)
         if path is None:
             raise ApiError(HTTPStatus.NOT_FOUND, "Giọng này chưa có bản nghe thử trên máy này (bản nghe thử đi kèm Studio)")
         self._send_file(path, cache=True)
