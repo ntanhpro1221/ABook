@@ -2,7 +2,7 @@
 
 Lays the files out exactly as VieneuModule.kt downloads them (`ort/`, `g2p/`, `voices/`, `nano/`, `turbo/`), from what this machine already
 has: the VieNeu models in the Hugging Face cache (the pinned commits of abook/webui/vieneu_module.py, SHA-256 checked), sea-g2p's dictionary
-from the runtime venv, the JNI library built by scripts/prepare_sea_g2p_android.py, and - fetched once over HTTPS - the pinned vieneu 3.8.1
+from the runtime venv, the JNI library built by scripts/prepare_sea_g2p_android.py, and - fetched once over HTTPS - the pinned vieneu 3.8.3
 wheel and the pinned ONNX Runtime libraries of "Gói nhạc". The phone checks every file against its own pins again before using it.
 
     runtime/.venv/Scripts/python.exe scripts/vieneu_phone_module_stage.py --abi arm64-v8a --out D:/tmp/vieneu_module [--tiers nano,turbo]
@@ -75,7 +75,7 @@ def main() -> int:
     import sea_g2p
 
     place(Path(sea_g2p.__file__).parent / "sea_g2p.bin", out / "g2p" / "sea_g2p.bin")
-    wheel = out / "voices" / "vieneu-3.8.1-py3-none-any.whl"
+    wheel = out / "voices" / "vieneu-3.8.3-py3-none-any.whl"
     wheel.parent.mkdir(parents=True, exist_ok=True)
     wheel.write_bytes(urllib.request.urlopen(vieneu_module.VOICES.url, timeout=300).read())
     if sha256(wheel) != vieneu_module.VOICES.sha256:

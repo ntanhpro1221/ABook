@@ -385,7 +385,7 @@ def test_segment_leveling_applies_one_constant_gain_and_preserves_loud_intent() 
         "volume": "normal",
         "emotion": "neutral",
         "intensity": 1,
-        VOICE_BALANCE_FIELD: "vieneu@3.8.1/Phạm Tuyên/f100",
+        VOICE_BALANCE_FIELD: "vieneu@3.8.3/Phạm Tuyên/f100",
     }
     narrator = {**neutral, "kind": "narration", "speaker": "NARRATOR"}
     loud = {**neutral, "volume": "loud", "emotion": "angry", "intensity": 3}
@@ -429,7 +429,7 @@ def test_lufs_leveling_gives_voices_with_different_raw_levels_one_output_level()
         "volume": "normal",
         "emotion": "neutral",
         "intensity": 1,
-        VOICE_BALANCE_FIELD: "vieneu@3.8.1/Phạm Tuyên/f100",
+        VOICE_BALANCE_FIELD: "vieneu@3.8.3/Phạm Tuyên/f100",
     }
     ref_lufs = voice_balance.constants_for_key(segment[VOICE_BALANCE_FIELD]).ref_lufs
     low_voice = 0.03 * np.sin(2 * np.pi * 100 * timeline)

@@ -374,7 +374,7 @@ def continuation_plan(project_root: Path) -> dict[str, Any]:
         "folder": str(last_input.parent) if last_input else "",
         "lastChapter": last_input.name if last_input else "",
         "profile": str(settings.get("quality_profile") or "high_quality"),
-        "narrator": humanize.voice_label(str(voices.get("narrator_voice") or "")),
+        "narrator": str(voices.get("narrator_voice") or ""),
         "firstPerson": str(voices.get("first_person_identity") or ""),
         # Model đọc hiểu của phần trước (soát UX a6 01-10, B3): phần sau đọc bằng đúng model ấy - đổi model giữa hai phần
         # là đổi cách gán người nói giữa cuốn. Máy chủ bỏ đi nếu Ollama không còn model ấy.
@@ -417,7 +417,7 @@ def redo_plan(project_root: Path) -> dict[str, Any]:
         "paths": [str(path) for path in continuation._input_paths(project_root)],
         "title": display_title(project_root, str(book["title"]) if book is not None else project_root.name),
         "profile": str(settings.get("quality_profile") or "high_quality"),
-        "narrator": humanize.voice_label(str(voices.get("narrator_voice") or "")),
+        "narrator": str(voices.get("narrator_voice") or ""),
         "firstPerson": str(voices.get("first_person_identity") or ""),
         "firstPersonChapters": {str(key): str(value) for key, value in chapters.items()} if isinstance(chapters, dict) else {},
         "analysisModel": str((settings.get("analysis") or {}).get("model") or ""),
@@ -826,7 +826,7 @@ def summarize(project_root: Path, *, running: bool = False, now: float | None = 
         "settings": {
             "profile": profile,
             "profileLabel": humanize.PROFILE_LABELS.get(profile, profile),
-            "narrator": humanize.voice_label(str(voices.get("narrator_voice") or "")),
+            "narrator": str(voices.get("narrator_voice") or ""),
             # Model đã phân tích cuốn này (book_settings.json lúc tạo sách) - đổi model mặc định thì biết cuốn nào làm bằng
             # model cũ.
             "analyzer": str((settings.get("analysis") or {}).get("model") or "")
@@ -1039,7 +1039,7 @@ def _voice_view(profile: sqlite3.Row | None) -> dict[str, Any] | None:
     pitch = float(profile["pitch_semitones"] or 0.0)
     return {
         "key": str(profile["voice_key"]),
-        "preset": humanize.voice_label(str(profile["preset_name"])),
+        "preset": str(profile["preset_name"]),
         "tone": humanize.voice_tone(formant, pitch),
     }
 
@@ -1059,7 +1059,7 @@ def pending_voices(project_root: Path, since: float) -> dict[str, dict[str, str]
             continue
         preset, gender = str(entry.get("preset") or ""), str(entry.get("gender") or "")
         if waiting and (preset or gender):
-            pending[speaker_key(str(key))] = {"preset": humanize.voice_label(preset),
+            pending[speaker_key(str(key))] = {"preset": preset,
                                               "gender": humanize.GENDER_LABELS.get(gender, "")}
     return pending
 
@@ -1122,7 +1122,7 @@ def cast(project_root: Path) -> dict[str, Any]:
         return _voice_view(profiles.get(votes.most_common(1)[0][0]))
 
     narrator = {
-        "voice": humanize.voice_label(str(voices.get("narrator_voice") or "")),
+        "voice": str(voices.get("narrator_voice") or ""),
         "lines": lines.get("NARRATOR", 0),
         "seconds": round(seconds.get("NARRATOR", 0.0), 1),
         "profile": voice_of("NARRATOR"),

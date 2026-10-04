@@ -16,8 +16,8 @@ from abook.config import build_settings
 
 NORMAL = (12.5, 24.5)
 RATE = 48_000
-SLOW_VOICE_KEY = "vieneu@3.8.1/Đức Trí/f100"
-FAST_VOICE_KEY = "vieneu@3.8.1/Phạm Tuyên/f100"
+SLOW_VOICE_KEY = "vieneu@3.8.3/Đức Trí/f100"
+FAST_VOICE_KEY = "vieneu@3.8.3/Phạm Tuyên/f100"
 # Không dấu câu nên không có ngân sách nghỉ: nhịp = ký tự đọc được / thời lượng.
 LINE = "Người kể chuyện đọc thật chậm rãi từng chữ một trong đêm dài"
 

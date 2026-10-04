@@ -249,7 +249,7 @@ def pending_voices(wishes: dict[str, Any] | None) -> dict[str, dict[str, str]]:
     out: dict[str, dict[str, str]] = {}
     for key, entry in ((wishes or {}).get("voices") or {}).items():
         if entry.get("preset") or entry.get("gender"):
-            out[key] = {"preset": humanize.voice_label(entry.get("preset", "")),
+            out[key] = {"preset": entry.get("preset", ""),
                         "gender": humanize.GENDER_LABELS.get(entry.get("gender", ""), "")}
     return out
 

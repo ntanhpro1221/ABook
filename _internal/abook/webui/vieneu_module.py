@@ -9,7 +9,7 @@ Mỗi lựa chọn kéo theo các phần (`NEEDS`); phần dùng chung chỉ tí
 Studio, gói cài sẵn trên máy dev) không tính: dung lượng hiện là cái máy này còn thiếu.
 - `libs` numpy + onnxruntime: CHÍNH phần của mô-đun nhạc (music_module.libs_part, cùng chỗ, cùng dấu).
 - `g2p` sea-g2p (chữ -> phoneme, Rust + từ điển, Apache-2.0): wheel abi3 ghim, giải vào <dữ liệu app>/vieneu/lib.
-- `voices` các giọng có sẵn: hai file JSON trong wheel vieneu 3.8.1 ghim (chỉ lấy hai file ấy, không cài gói vieneu).
+- `voices` các giọng có sẵn: hai file JSON trong wheel vieneu 3.8.3 ghim (chỉ lấy hai file ấy, không cài gói vieneu).
 - `turbo`, `nano`, `aligner`: file model trên Hugging Face, ghim commit + SHA-256.
 
 Thiết bị: luôn CPU. Đo 03-10 trên máy dev (Ryzen 9 8945HX, RTX 5060 Laptop đang bận việc khác ~80%): DirectML chậm hơn CPU nhiều (Turbo RTF 2,83
@@ -46,10 +46,10 @@ SLOW_RTF = 0.8  # trên mức này giọng khó theo kịp người nghe ở t�
 
 # Nâng: đổi URL + SHA-256 + cỡ (PyPI: https://pypi.org/pypi/<tên>/<số>/json; Hugging Face: /api/models/<repo>/tree/<commit>), chạy lại bài so
 # với gói vieneu (tests/test_readaloud_vieneu.py) và đo lại độ to (loudness.py).
-G2P = Download("sea-g2p", "https://files.pythonhosted.org/packages/98/2d/4553efd8f340f332eb5976118e441b09ec95cf60d27fd1ad04240d885905/"
-               "sea_g2p-0.9.1-cp310-abi3-win_amd64.whl", "b6d7c09afb83750abe61735ad2e60f5c20b4cdfac30b1b9b1904de9f64f10c32", 27_531_798)
-VOICES = Download("vieneu", "https://files.pythonhosted.org/packages/35/03/83c6564f834b90b9fe200c4381a8d8fc506c0697233b1a5b2c3d06d9899f/"
-                  "vieneu-3.8.1-py3-none-any.whl", "bf24f88ec95f96459756d897b04a118e923536d36bcfcdccd13ba6f8f7d580ba", 2_642_947)
+G2P = Download("sea-g2p", "https://files.pythonhosted.org/packages/73/57/58916050fe1218c106f89d4fa3b8f18f4ef5d264e6ec5906020f2f1dfcf2/"
+               "sea_g2p-0.10.0-cp310-abi3-win_amd64.whl", "118d471796ff4fafe5cdcf1f75431a63e76ec5c0e7786cb7b3ff876d6d5292ea", 27_530_792)
+VOICES = Download("vieneu", "https://files.pythonhosted.org/packages/fc/9c/e7b624412b8a734d6b1cd8ca6209f88a309464b05393c40f2e316ec90885/"
+                  "vieneu-3.8.3-py3-none-any.whl", "7388d166e65746f5bb075bf8094d324f8131a82393680b712260d6f2f983ef06", 2_643_059)
 VOICE_MEMBERS = {"vieneu/assets/voices_v3_turbo.json": "voices_v3_turbo.json", "vieneu/assets/voices_v3_nano.json": "voices_v3_nano.json"}
 _TURBO = "https://huggingface.co/pnnbao-ump/VieNeu-TTS-v3-Turbo/resolve/61b85e3d937fbbacb387714180e8182823512523/onnx_int8/"
 _CODEC = "https://huggingface.co/OpenMOSS-Team/MOSS-Audio-Tokenizer-Nano-ONNX/resolve/ceff0d0749bfb3fa2d61149794ec6feef0d1e1ae/"

@@ -180,7 +180,5 @@ class BookWishesTest {
         assertEquals("école ss", VietnameseReading.surfaceKey("  ÉCOLE  SS "))
         assertEquals("HEIDI MAI SS", BookWishes.characterKey(" heidi  Mai ß"))
         assertEquals("hây đi", BookWishes.aliasKey(" Hây_Đi "))
-        assertEquals("Thiện Minh", BookWishes.voiceLabel("Anh Khôi"))
-        assertEquals("Anh Khôi", BookWishes.voiceKey("Thiện Minh"))
     }
 }
