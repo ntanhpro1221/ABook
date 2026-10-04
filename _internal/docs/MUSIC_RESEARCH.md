@@ -2499,3 +2499,23 @@ Mỗi pha xong: ghi số vào đây, đổi tham số trong app theo kết quả
   - Bài người dùng nhập vẫn CLAP: không bắt máy người dùng tải MuQ, 5,6 GiB RAM.
   - Hai thang V khác nhau giữa danh mục và bài nhập là cái giá phải ghi rõ.
 - `zeroshot_valence.py mtg` → `results/zeroshot_mtg.txt`.
+
+**KẾT QUẢ "V hợp, E giữ CLAP" TRÊN MTG-Jamendo (05-10 06:19, đo một lần; `results/zeroshot_mtg.txt`):** **THẮNG.**
+- n = 1.185 (dương 600, âm 585).
+- r: CLAP 0,511, MuQ 0,718, hợp 0,672.
+  - hợp − CLAP = **+0,162** [bootstrap 95 % +0,142..+0,182].
+- AUC: CLAP 0,804, MuQ 0,919, hợp 0,898.
+- Ghi lại: MuQ một mình còn cao hơn hợp trên bộ này. Ta không đổi sang "chỉ MuQ", vì công thức đã chốt là hợp và MuQ thua CLAP ở nhạc phim.
+  Đây là lần cuối của nhánh này: không tìm thêm biến thể.
+
+**Đưa vào danh mục (Lead 05-10, MỘT thang V, không chấp nhận hai thang):**
+- **Danh mục:**
+  - V thô = 0,5·z(V thô CLAP) + 0,5·z(V thô MuQ), z tính trên toàn bộ 4.763 ứng viên đã phân tích.
+  - Rồi lấy hạng như cũ (`ranks`) → thay `cv` trong `build_catalog.py`.
+  - Phần tag + CLAP giữ công thức 0,6 tag + 0,4 phần âm.
+  - E, T không đổi.
+  - MuQ cho 4.763 bài: `run_muq_catalog.sh` → `zeroshot_muq_catalog.jsonl`, 05-10 06:3x – ~11:00, ngoài giờ êm quạt.
+- **Bài người dùng nhập:**
+  - (a) Máy ≥ 12 GB RAM: chạy MuQ ở nền lúc nhập, ~3,5 s/bài. Model tải theo yêu cầu, không đóng vào bộ cài.
+  - (b) Máy yếu: V CLAP hiệu chỉnh tuyến tính sang thang hợp. Hệ số khớp trên danh mục; báo r của phép hiệu chỉnh; bài gắn cờ `ước lượng`.
+  - Phần app do Lead xếp lịch.
