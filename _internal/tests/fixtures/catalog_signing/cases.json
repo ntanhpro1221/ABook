@@ -1,0 +1,27 @@
+{
+ "good": {
+  "revision": "r1",
+  "issued": "2026-10-04T00:00:00Z"
+ },
+ "newer": {
+  "revision": "r2",
+  "issued": "2026-10-05T00:00:00Z"
+ },
+ "older": {
+  "revision": "r0",
+  "issued": "2026-10-01T00:00:00Z"
+ },
+ "tampered_part": {
+  "file": "tracks/c4.json",
+  "lostLinks": [
+   "https://x/calm.mp3"
+  ]
+ },
+ "unlisted_part": {
+  "revision": "r3",
+  "unlisted": "tracks/c4.json",
+  "lostLinks": [
+   "https://x/calm.mp3"
+  ]
+ }
+}

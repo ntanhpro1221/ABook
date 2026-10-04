@@ -1,5 +1,6 @@
 package vn.abook.player
 
+import org.json.JSONException
 import org.json.JSONObject
 import java.io.File
 import java.io.IOException
@@ -11,72 +12,144 @@ import java.util.concurrent.Executors
 
 /**
  * Danh mục nhạc nền trên mây cho điện thoại - bản Kotlin của phần abook/webui/music_catalog.py mà "Nghe ngay" cần: mục lục
- * (`manifest.json`, giữ 24 giờ, mất mạng thì dùng bản đã cất), mảnh dữ liệu bài (`tracks/<xx>.json`, cất theo `revision`), và file bài
- * (tải một lần từ link gốc, hỏng thì bản sao `mirrors` phải khớp `sha1` + `bytes` như `server.music_track_file`). Không khoá, không
- * đăng nhập: chỉ là file tĩnh. Mọi lời gọi chặn - chạy ở luồng nền.
+ * (`manifest.json` + chữ ký `manifest.json.sig`, giữ 24 giờ, mất mạng thì dùng bản đã cất), mảnh dữ liệu bài (`tracks/<xx>.json`, cất theo
+ * `revision`), và file bài (tải một lần từ link gốc, hỏng thì bản sao `mirrors` phải khớp `sha1` + `bytes` như `server.music_track_file`).
+ * Không khoá, không đăng nhập: chỉ là file tĩnh. Mọi lời gọi chặn - chạy ở luồng nền.
  *
- * `open(url)` mở một địa chỉ (http(s) hay đường dẫn thư mục cho test JVM) - chỉ đọc, không gửi gì ngoài User-Agent.
+ * Có chữ ký (cùng luật với máy tính): mục lục phải đúng chữ ký Ed25519 của [publicKey], `issued` không lùi so với bản đang giữ, và mọi mảnh
+ * phải khớp sha256 trong `files` của mục lục. Sai thì giữ danh mục đã cất, không bao giờ dùng link của bản lạ; mảnh lệch / không được
+ * liệt kê coi như không có (ghi qua [log]). Cất cả byte gốc lẫn `.sig`, đọc lại bản cất cũng kiểm lại.
+ *
+ * `open(url)` mở một địa chỉ (http(s) hay đường dẫn thư mục cho test JVM) - chỉ đọc, không gửi gì ngoài User-Agent. Địa chỉ danh mục lấy
+ * qua `sourceOf` MỘT lần, ở lần cần mạng đầu tiên (luồng nền): nó đọc cấu hình từ xa ([RemoteConfig.musicCatalogs]) nên có thể chặn mạng.
  */
 class MusicCatalog(
     private val dir: File,
-    source: String = DEFAULT_SOURCE,
+    sourceOf: () -> String,
     private val open: (String) -> InputStream = ::openUrl,
     private val clock: () -> Long = System::currentTimeMillis,
+    private val publicKey: ByteArray = RemoteConfig.PUBLIC_KEY,
+    private val log: (String) -> Unit = ::logWarning,
 ) {
+    constructor(
+        dir: File,
+        source: String = DEFAULT_SOURCE,
+        open: (String) -> InputStream = ::openUrl,
+        clock: () -> Long = System::currentTimeMillis,
+        publicKey: ByteArray = RemoteConfig.PUBLIC_KEY,
+        log: (String) -> Unit = ::logWarning,
+    ) : this(dir, { source }, open, clock, publicKey, log)
+
     /** Danh mục không đọc được (mất mạng lần đầu, định dạng mới hơn app). Câu chữ để người dùng đọc - như `CatalogError` bên Python. */
     class CatalogError(message: String) : Exception(message)
 
-    private val source = source.trimEnd('/') + "/"
-    private val remote = this.source.startsWith("http://") || this.source.startsWith("https://")
+    private val source by lazy { sourceOf().trimEnd('/') + "/" }
+    private val remote get() = source.startsWith("http://") || source.startsWith("https://")
     private val lock = Any()
     private var manifest: JSONObject? = null
     private val parts = HashMap<String, JSONObject>()
 
     private fun fetch(relative: String): ByteArray = open(source + relative).use { it.readBytes() }
 
-    /** Mục lục danh mục (cất ở `dir/manifest.json`, làm mới sau [MANIFEST_MAX_AGE_MS]); mất mạng thì bản đã cất. */
+    /** Mục lục đã kiểm: chữ ký đúng khoá, JSON đúng hình dạng, có `issued` và `files`. Không thì null (không ném lỗi). */
+    private fun accept(raw: ByteArray, signature: ByteArray): JSONObject? {
+        if (!Signatures.verifyBase64(publicKey, raw, signature)) return null
+        val data = try {
+            JSONObject(String(raw, Charsets.UTF_8))
+        } catch (_: JSONException) {
+            return null
+        }
+        if (data.optString("format") != FORMAT || data.opt("version") !is Int) return null
+        if (data.opt("issued") !is String || data.optJSONObject("files") == null) return null
+        return data
+    }
+
+    /** Mục lục đã cất trên đĩa, kiểm lại chữ ký (file đĩa bị sửa hay ghi dở thì coi như không có). */
+    private fun cached(): JSONObject? = try {
+        accept(File(dir, "manifest.json").readBytes(), File(dir, "manifest.json.sig").readBytes())
+    } catch (_: IOException) {
+        null
+    }
+
+    private fun checkVersion(data: JSONObject) {
+        if (data.getInt("version") > FORMAT_VERSION) throw CatalogError("Danh mục nhạc nền mới hơn app - hãy cập nhật app.")
+    }
+
+    /** Mục lục danh mục (cất ở `dir/manifest.json` + `.sig`, làm mới sau [MANIFEST_MAX_AGE_MS]); mất mạng hay bản tải về bị bỏ thì bản đã cất. */
     fun manifest(): JSONObject = synchronized(lock) {
         val path = File(dir, "manifest.json")
         val fresh = path.isFile && clock() - path.lastModified() < MANIFEST_MAX_AGE_MS
         manifest?.takeIf { fresh }?.let { return it }
-        var data: JSONObject? = null
-        if (!fresh) {
-            data = try {
-                val raw = fetch("manifest.json")
-                JSONObject(String(raw, Charsets.UTF_8)).also { Store.writeAtomic(path, raw) }
+        var current = manifest ?: cached() // bản đang giữ: mốc `issued` để không quay về bản cũ
+        var rejected = false
+        if (!fresh || current == null) {
+            val fetched = try {
+                fetch("manifest.json") to fetch("manifest.json.sig")
             } catch (_: Exception) {
                 null // mất mạng: dùng bản đã cất nếu có
             }
-        }
-        if (data == null) {
-            data = try {
-                JSONObject(path.readText(Charsets.UTF_8))
-            } catch (_: Exception) {
-                throw CatalogError("Chưa tải được danh mục nhạc nền - cần mạng ở lần đầu.")
+            if (fetched != null) {
+                val (raw, signature) = fetched
+                val data = accept(raw, signature)
+                if (data == null) {
+                    log("danh mục nhạc: mục lục tải về sai chữ ký hay sai định dạng - giữ bản đã cất")
+                } else if (current != null && data.getString("issued") < current.getString("issued")) {
+                    log("danh mục nhạc: mục lục tải về cũ hơn bản đang giữ (${data.getString("issued")} < ${current.getString("issued")}) - bỏ")
+                } else {
+                    checkVersion(data)
+                    Store.writeAtomic(path, raw)
+                    Store.writeAtomic(File(dir, "manifest.json.sig"), signature)
+                    current = data
+                }
+                rejected = current == null
             }
         }
-        if (data.optString("format") != FORMAT || data.opt("version") !is Int) throw CatalogError("Danh mục nhạc nền không đúng định dạng.")
-        if (data.getInt("version") > FORMAT_VERSION) throw CatalogError("Danh mục nhạc nền mới hơn app - hãy cập nhật app.")
-        if (manifest?.optString("revision") != data.optString("revision")) parts.clear()
-        manifest = data
-        data
+        if (current == null) {
+            throw CatalogError(if (rejected) "Danh mục nhạc nền tải về không có chữ ký hợp lệ - app không dùng." else "Chưa tải được danh mục nhạc nền - cần mạng ở lần đầu.")
+        }
+        checkVersion(current)
+        if (manifest?.optString("revision") != current.optString("revision")) parts.clear()
+        manifest = current
+        current
     }
 
     fun playlists(): List<JSONObject> = Playlists.catalogue(manifest())
 
-    private fun part(relative: String): JSONObject {
-        val revision = manifest().getString("revision")
+    /**
+     * Một mảnh của danh mục. Phải khớp sha256 trong `files` của mục lục đã ký - không có trong `files` hay lệch thì null (coi như mảnh vắng,
+     * các bài trong đó như không có), có ghi nhật ký. Mảnh đã cất cũng kiểm; lệch thì tải lại.
+     */
+    private fun part(relative: String): JSONObject? {
+        val manifest = manifest()
+        val revision = manifest.getString("revision")
         val key = "$revision/$relative"
         synchronized(lock) { parts[key]?.let { return it } }
+        val expected = manifest.getJSONObject("files").optString(relative).takeIf { it.isNotEmpty() }
+        if (expected == null) {
+            log("danh mục nhạc: mảnh $relative không có trong mục lục đã ký - bỏ")
+            return null
+        }
         val path = Store.contained(File(dir, revision), relative)
-        val value = runCatching { JSONObject(path.readText(Charsets.UTF_8)) }.getOrNull() ?: run {
+        var raw = runCatching { path.readBytes() }.getOrNull()?.takeIf { sha256(it) == expected }
+        if (raw == null) {
             // Mã phiên bản trong đường dẫn: CDN đệm mảnh 1 giờ - danh mục mới là đường dẫn mới, không lẫn mảnh cũ.
-            val raw = try {
+            val fetched = try {
                 fetch(if (remote) "$relative?v=$revision" else relative)
             } catch (error: IOException) {
                 throw CatalogError("Không tải được danh mục nhạc nền - kiểm tra mạng.")
             }
-            JSONObject(String(raw, Charsets.UTF_8)).also { runCatching { Store.writeAtomic(path, raw) } }
+            if (sha256(fetched) != expected) {
+                log("danh mục nhạc: mảnh $relative lệch sha256 của mục lục đã ký - bỏ")
+                return null
+            }
+            runCatching { Store.writeAtomic(path, fetched) }
+            raw = fetched
+        }
+        val value = try {
+            JSONObject(String(raw, Charsets.UTF_8))
+        } catch (_: JSONException) {
+            log("danh mục nhạc: mảnh $relative không phải JSON - bỏ")
+            return null
         }
         synchronized(lock) { parts[key] = value }
         return value
@@ -88,7 +161,7 @@ class MusicCatalog(
         val wanted = links.groupBy(::shardOf).filterKeys { it in existing }
         val pool = Executors.newFixedThreadPool(SHARD_WORKERS)
         val loaded = try {
-            wanted.keys.map { shard -> shard to pool.submit<JSONObject> { part("tracks/$shard.json") } }.associate { (shard, job) ->
+            wanted.keys.map { shard -> shard to pool.submit<JSONObject?> { part("tracks/$shard.json") } }.associate { (shard, job) ->
                 shard to try {
                     job.get()
                 } catch (error: java.util.concurrent.ExecutionException) {
@@ -149,6 +222,13 @@ class MusicCatalog(
         private val SHA1 = Regex("[0-9a-f]{40}")
 
         private fun sha1(bytes: ByteArray): String = MessageDigest.getInstance("SHA-1").digest(bytes).joinToString("") { "%02x".format(it) }
+
+        private fun sha256(bytes: ByteArray): String = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
+
+        /** Nhật ký mặc định; `android.util.Log` không chạy trong bài thử JVM nên nuốt lỗi (test truyền bộ ghi riêng). */
+        private fun logWarning(message: String) {
+            runCatching { android.util.Log.w("MusicCatalog", message) }
+        }
 
         /** `music_catalog.shard_of`: hai ký tự đầu sha1 của link. */
         fun shardOf(link: String): String = sha1(link.toByteArray(Charsets.UTF_8)).take(2)

@@ -10,6 +10,7 @@ import pytest
 
 from abook.webui.music_catalog import CatalogError, MusicCatalog, cell_of, shard_of
 from abook.webui.music_select import choose, scene_key
+from tests.catalog_signing import TEST_PUBLIC_KEY, write_catalog, write_signed_manifest
 
 TRACKS = {
     "https://x/calm.mp3": {"valence": 0.3, "arousal": -0.7, "family": "piano", "duration": 180, "source": "incompetech"},
@@ -23,28 +24,13 @@ TRACKS = {
 }
 
 
-def _catalog_dir(root: Path, revision: str = "r1") -> Path:
-    root.mkdir(parents=True, exist_ok=True)
-    (root / "tracks").mkdir(exist_ok=True)
-    (root / "cells").mkdir(exist_ok=True)
-    shards: dict[str, dict] = {}
-    cells: dict[str, list] = {}
-    for link, track in TRACKS.items():
-        shards.setdefault(shard_of(link), {})[link] = track
-        v, a = cell_of(track["valence"], track["arousal"])
-        cells.setdefault(f"{v}_{a}", []).append({"link": link, **track})
-    for shard, data in shards.items():
-        (root / "tracks" / f"{shard}.json").write_text(json.dumps(data), encoding="utf-8")
-    for cell, items in cells.items():
-        (root / "cells" / f"{cell}.json").write_text(json.dumps(items), encoding="utf-8")
-    (root / "manifest.json").write_text(json.dumps({
-        "format": "abook-music-catalog", "version": 1, "revision": revision, "grid": 5, "shards": sorted(shards),
-        "cells": {cell: len(items) for cell, items in cells.items()}}), encoding="utf-8")
-    return root
+def _catalog_dir(root: Path, revision: str = "r1", **extra) -> Path:
+    """Danh mục thử có chữ ký bằng khoá TEST (tests/catalog_signing.py): MusicCatalog phải nhận `public_key=TEST_PUBLIC_KEY`."""
+    return write_catalog(root, TRACKS, revision=revision, **extra)
 
 
 def test_a_list_of_links_brings_back_exactly_their_data(tmp_path: Path) -> None:
-    catalog = MusicCatalog(tmp_path / "cache", str(_catalog_dir(tmp_path / "cloud")))
+    catalog = MusicCatalog(tmp_path / "cache", str(_catalog_dir(tmp_path / "cloud")), public_key=TEST_PUBLIC_KEY)
     found = catalog.lookup(["https://x/battle.mp3", "https://x/sad.mp3", "https://khong/co.mp3"])
     assert set(found) == {"https://x/battle.mp3", "https://x/sad.mp3"}
     assert found["https://x/sad.mp3"]["valence"] == -0.7
@@ -52,9 +38,9 @@ def test_a_list_of_links_brings_back_exactly_their_data(tmp_path: Path) -> None:
 
 def test_the_catalog_keeps_working_offline_from_its_cache(tmp_path: Path) -> None:
     cloud = _catalog_dir(tmp_path / "cloud")
-    MusicCatalog(tmp_path / "cache", str(cloud)).lookup(["https://x/calm.mp3"])
+    MusicCatalog(tmp_path / "cache", str(cloud), public_key=TEST_PUBLIC_KEY).lookup(["https://x/calm.mp3"])
     shutil.rmtree(cloud)  # mất mạng / nguồn biến mất
-    offline = MusicCatalog(tmp_path / "cache", str(cloud))
+    offline = MusicCatalog(tmp_path / "cache", str(cloud), public_key=TEST_PUBLIC_KEY)
     assert "https://x/calm.mp3" in offline.lookup(["https://x/calm.mp3"])
 
 
@@ -65,13 +51,13 @@ def test_a_first_start_without_network_says_so(tmp_path: Path) -> None:
 
 def test_a_new_catalog_revision_replaces_the_cached_data(tmp_path: Path) -> None:
     cloud = _catalog_dir(tmp_path / "cloud", "r1")
-    catalog = MusicCatalog(tmp_path / "cache", str(cloud))
+    catalog = MusicCatalog(tmp_path / "cache", str(cloud), public_key=TEST_PUBLIC_KEY)
     catalog.lookup(["https://x/calm.mp3"])
     data = json.loads((cloud / "tracks" / f"{shard_of('https://x/calm.mp3')}.json").read_text(encoding="utf-8"))
     data["https://x/calm.mp3"]["valence"] = 0.9
     (cloud / "tracks" / f"{shard_of('https://x/calm.mp3')}.json").write_text(json.dumps(data), encoding="utf-8")
     manifest = json.loads((cloud / "manifest.json").read_text(encoding="utf-8"))
-    (cloud / "manifest.json").write_text(json.dumps({**manifest, "revision": "r2"}), encoding="utf-8")
+    write_signed_manifest(cloud, {**manifest, "revision": "r2", "issued": "2026-10-05T00:00:00Z"})  # mục lục mới: ký lại, `files` mới
     catalog.manifest(refresh=True)
     assert catalog.lookup(["https://x/calm.mp3"])["https://x/calm.mp3"]["valence"] == 0.9
 
@@ -82,7 +68,7 @@ def _scene(first: int, valence: float, arousal: float, confidence: float = 0.8) 
 
 @pytest.fixture
 def near(tmp_path: Path):
-    catalog = MusicCatalog(tmp_path / "cache", str(_catalog_dir(tmp_path / "cloud")))
+    catalog = MusicCatalog(tmp_path / "cache", str(_catalog_dir(tmp_path / "cloud")), public_key=TEST_PUBLIC_KEY)
     return lambda v, a: catalog.near(v, a, radius=1)
 
 
@@ -320,7 +306,7 @@ def test_emotion_cosine_never_rescues_a_track_beyond_the_silence_ceiling(monkeyp
 def test_the_catalog_hands_emotions_and_sd_through_to_the_ranking(tmp_path: Path) -> None:
     from abook.webui.music_select import rank
 
-    catalog = MusicCatalog(tmp_path / "cache", str(_catalog_dir(tmp_path / "cloud")))
+    catalog = MusicCatalog(tmp_path / "cache", str(_catalog_dir(tmp_path / "cloud")), public_key=TEST_PUBLIC_KEY)
     near_sad = catalog.near(-0.7, -0.4, radius=0)
     sad = next(t for t in near_sad if t["link"] == "https://x/sad.mp3")
     assert sad["emotions"]["sadness"] == 0.8 and sad["sd"]["arousal"] == 0.3

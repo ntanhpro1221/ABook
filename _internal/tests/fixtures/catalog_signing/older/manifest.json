@@ -1,0 +1,31 @@
+{
+ "format": "abook-music-catalog",
+ "version": 1,
+ "revision": "r0",
+ "issued": "2026-10-01T00:00:00Z",
+ "grid": 5,
+ "shards": [
+  "02",
+  "65",
+  "bf",
+  "c4",
+  "e0"
+ ],
+ "cells": {
+  "3_0": 2,
+  "3_1": 1,
+  "1_4": 1,
+  "0_1": 1
+ },
+ "files": {
+  "tracks/02.json": "b9723eeb502d089d444204e0d582f05ebd7df0e2708a1aaf7c50ff6252639160",
+  "tracks/65.json": "c18e9b2eef62467af8c02eee5b926c88c6af23b62f747b122015eea4544fb2f6",
+  "tracks/bf.json": "908b7dc2994994af5d2a76271f81ebf29a8ae34c4b66e5caec3d06e3acb69647",
+  "tracks/c4.json": "73a4ea7a342261546603ec041fbe2bc145be27575bfcabc62ce1566fec83c4df",
+  "tracks/e0.json": "e0bd3eb2f64819ed4463c31f730a5003d8a724524ba7c2710ad64c2226757eb4",
+  "cells/0_1.json": "5faee7e67fb350b471deae8ffdc8046fc733cf64008c0ded949b0b117032714e",
+  "cells/1_4.json": "a2d34201bcae5dcb2654f3de63c55e2497726053591ee924aeea75fb10a8307a",
+  "cells/3_0.json": "7b89ed0dc3ccd097444683ad3b49ac8437feca180144c1cbc923f5a94c53fdac",
+  "cells/3_1.json": "100d1c6eb146876190f1bcff112554a691c52af1d3dd61abb2d4ea015f137a1e"
+ }
+}

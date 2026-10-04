@@ -84,6 +84,9 @@ dependencies {
     // Bộ phân tích nhạc chạy trên máy (MusicStudent.kt, OrtClapTower.kt) dùng ONNX Runtime CPU, nhưng APK KHÔNG mang nó: phần Java chép
     // nguyên vào src/main/java/ai/onnxruntime (MIT, onnxruntime-android 1.30.0), còn thư viện native + model tải về khi người dùng bấm
     // "Gói nhạc" (OrtRuntime.kt, MusicStudentSetup.kt) - APK không có file .so nào.
+    // Kiểm chữ ký Ed25519 (Signatures.kt - danh mục nhạc, cấu hình từ xa): minSdk 24 chưa có Ed25519 trong java.security. Tink: APK release +1,0 MB
+    // (eddsa 0.3.0 chỉ +24 KB); luật đã duyệt: Tink khi tăng không quá 3 MB.
+    implementation "com.google.crypto.tink:tink-android:1.23.0"
     testImplementation "junit:junit:$junitVersion"
     // org.json thật cho test JVM (android.jar chỉ có vỏ rỗng): StoreRekeyTest đọc/ghi records.json, book.json.
     testImplementation "org.json:json:20240303"
