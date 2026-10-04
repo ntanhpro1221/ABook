@@ -35,7 +35,7 @@ from ..readaloud import keys as readaloud_keys
 from ..readaloud import service as readaloud
 from ..readaloud.model import VoiceError
 from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, edits_inbox, ffmpeg_setup, humanize, listen_view,
-               music_catalog, music_local, music_module, music_plan, music_playlist, music_select, music_student, packages, project_views,
+               music_catalog, music_local, music_module, music_moods, music_plan, music_playlist, music_select, music_student, packages, project_views,
                projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, vieneu_module, volumes, word_timing, workshop)
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, clean_book_templates, legacy_ids
@@ -209,6 +209,9 @@ class App:
         music_student.register()
         self._music_catalog: music_catalog.MusicCatalog | None = None
         self._music_lock = threading.Lock()
+        # "Tính lại cảm xúc nhạc" (music_moods.py): việc nền theo từng cuốn {đường dẫn: {running, error}}.
+        self._moods_jobs: dict[str, dict[str, Any]] = {}
+        self._moods_lock = threading.Lock()
         self._music_fetching: dict[str, threading.Lock] = {}  # mỗi bài một khoá: luồng tải sẵn và trình phát không ghi đè nhau
         # Bài nào dùng được là chuyện của TỪNG MÁY (bộ đệm + mạng của máy này): sổ bài tải hỏng và cửa sổ "đang offline".
         self._music_clock: Callable[[], float] = time.time
@@ -696,6 +699,14 @@ class App:
             ) from error
         return {"ok": True}
 
+    def _ollama_base(self) -> str:
+        """Địa chỉ Ollama mà dây chuyền gọi: Ollama riêng của Studio (app đóng gói) hay Ollama của máy (chạy từ mã nguồn)."""
+        from ..config import build_settings
+
+        if self.studio is not None:
+            return str((self.studio.settings_overrides().get("analysis") or {}).get("base_url"))
+        return str(build_settings()["analysis"].get("base_url", ""))
+
     def analysis_models(self) -> dict[str, Any]:
         """Model đọc hiểu truyện chọn được cho MỘT cuốn (trình tạo sách): các model có trong Ollama mà dây chuyền sẽ gọi -
         Ollama riêng của Studio trong app đóng gói, Ollama của máy khi chạy từ mã nguồn - cùng model mặc định của app. Hỏi
@@ -706,8 +717,7 @@ class App:
 
         analysis = build_settings()["analysis"]
         default = str(analysis.get("model", ""))
-        base = str((self.studio.settings_overrides().get("analysis") or {}).get("base_url") if self.studio is not None
-                   else analysis.get("base_url", ""))
+        base = self._ollama_base()
         models: list[dict[str, Any]] = []
         reachable = True
         try:
@@ -927,8 +937,10 @@ class App:
 
     def _music_payload(self, path: Path, plan: dict[str, Any] | None, error: str) -> dict[str, Any]:
         overrides = music_plan.read_overrides(path)
+        with self._moods_lock:
+            moods = dict(self._moods_jobs.get(str(path)) or {"running": False, "error": ""})
         return {"plan": plan, "overrides": overrides, "error": error, "taxonomy": self._music_taxonomy(),
-                "bannedTracks": self._banned_tracks(overrides["banned"], plan)}
+                "bannedTracks": self._banned_tracks(overrides["banned"], plan), "moods": moods}
 
     def _banned_tracks(self, banned: list[str], plan: dict[str, Any] | None) -> dict[str, dict[str, str]]:
         """Tên các bài đã bỏ ("Bài đã bỏ"): {link: {title, creator}} lấy từ danh mục; mất mạng / bài không còn thì bỏ qua
@@ -1093,6 +1105,59 @@ class App:
         except music_catalog.CatalogError as exc:
             error = str(exc)
         return self._music_payload(path, music_plan.read_plan(path), error)
+
+    # ---- đọc không khí cả đoạn bằng AI (music_moods.py): model tuỳ chọn, người dùng bấm mới tải ----------------------------
+    def music_moods_model(self) -> dict[str, Any]:
+        """Model đọc không khí đã tải chưa. App đóng gói: Ollama riêng của Studio (tải được từ đây). Chạy từ mã nguồn: Ollama
+        của máy - chỉ xem có chưa, người dùng tự kéo model (`downloadable` false)."""
+        if self.studio is not None:
+            return {**self.studio.optional_status(music_moods.MODEL), "downloadable": True}
+        return {"installed": music_moods.model_digest(self._ollama_base()) is not None, "downloading": False,
+                "progress": None, "error": None, "downloadable": False}
+
+    def music_moods_model_download(self) -> dict[str, Any]:
+        self._mutating()
+        if self.studio is None:
+            raise ApiError(HTTPStatus.CONFLICT, f"Bản chạy từ mã nguồn dùng Ollama của máy: kéo model {music_moods.MODEL} ở đó")
+        try:
+            return {**self.studio.pull_optional(music_moods.MODEL), "downloadable": True}
+        except Exception as exc:  # noqa: BLE001 - SetupError: Studio chưa cài / đang cài
+            raise ApiError(HTTPStatus.CONFLICT, str(exc)) from exc
+
+    def music_moods_compute(self, value: str) -> dict[str, Any]:
+        """Người dùng bấm "Tính lại cảm xúc nhạc": chạy `music_moods.compute` rồi dựng lại rãnh nhạc (chia lại đoạn) ở luồng nền.
+        Không chạy khi cuốn đang có dây chuyền (hai việc giành GPU) hay model chưa tải."""
+        self._mutating()
+        path = self._editable(value)
+        if packages.is_package(path):
+            raise ApiError(HTTPStatus.CONFLICT, "Sách mở từ file đã mang sẵn nhạc của người làm sách - không tính lại ở đây")
+        if self.runner.running(path) or self.jobs.starting(path):
+            raise ApiError(HTTPStatus.CONFLICT, "Cuốn này đang được làm - đợi xong rồi hãy tính lại cảm xúc nhạc")
+        base = self._ollama_base()
+        if self.studio is not None:
+            try:
+                self.studio.ensure_ollama()  # Ollama riêng của Studio tự bật nếu đang tắt
+            except Exception as exc:  # noqa: BLE001 - SetupError / OSError
+                raise ApiError(HTTPStatus.CONFLICT, f"Không bật được Ollama của Studio: {exc}") from exc
+        if music_moods.model_digest(base) is None:
+            raise ApiError(HTTPStatus.CONFLICT, "Chưa tải model đọc không khí - bấm Tải trước")
+        with self._moods_lock:
+            if not (self._moods_jobs.get(str(path)) or {}).get("running"):
+                self._moods_jobs[str(path)] = {"running": True, "error": ""}
+                threading.Thread(target=self._moods_run, args=(value, path, base), name="music-moods", daemon=True).start()
+        return self._music_payload(path, music_plan.read_plan(path), "")
+
+    def _moods_run(self, value: str, path: Path, base: str) -> None:
+        error = ""
+        try:
+            music_moods.compute(path, base)
+            self.music_rebuild(value)
+        except Exception as exc:  # noqa: BLE001 - việc nền: lỗi hiện ở tab Nhạc, không làm sập máy chủ
+            error = str(getattr(exc, "message", None) or exc)
+        finally:
+            music_moods.release(base)
+            with self._moods_lock:
+                self._moods_jobs[str(path)] = {"running": False, "error": error}
 
     def _music_ranked(self, path: Path, scene_key: str, *, limit: int, exclude: Iterable[str] = (),
                       available: Callable[[str], bool] | None = None,
@@ -2532,6 +2597,15 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.SERVICE_UNAVAILABLE, str(error)) from error
         self._send_json(HTTPStatus.OK, self.app.music_view(value))
 
+    def post_music_moods(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.music_moods_compute(value))
+
+    def get_music_moods_model(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.music_moods_model())
+
+    def post_music_moods_model(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.music_moods_model_download())
+
     def get_music_alternatives(self, _query: dict[str, list[str]], value: str, key: str) -> None:
         try:
             self._send_json(HTTPStatus.OK, self.app.music_alternatives(value, key))
@@ -3562,6 +3636,9 @@ ROUTES: list[Route] = [
     ("GET", re.compile(BOOK + r"/music"), Handler.get_music),
     ("PUT", re.compile(BOOK + r"/music"), Handler.put_music),
     ("POST", re.compile(BOOK + r"/music/rebuild"), Handler.post_music_rebuild),
+    ("POST", re.compile(BOOK + r"/music/moods"), Handler.post_music_moods),
+    ("GET", re.compile(r"/api/music/moods-model"), Handler.get_music_moods_model),
+    ("POST", re.compile(r"/api/music/moods-model"), Handler.post_music_moods_model),
     ("GET", re.compile(BOOK + r"/music/scenes/([^/]+)/alternatives"), Handler.get_music_alternatives),
     ("GET", re.compile(BOOK + r"/music/chapters/(\d+)"), Handler.get_music_cues),
     ("GET", re.compile(BOOK + r"/music/playlist"), Handler.get_music_playlist),

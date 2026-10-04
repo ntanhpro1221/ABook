@@ -149,6 +149,9 @@ ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = LISTEN_ROUTES + tuple((method
     ("GET", _BOOK + r"/music"),
     ("PUT", _BOOK + r"/music"),
     ("POST", _BOOK + r"/music/rebuild"),
+    # "Đọc không khí cả đoạn bằng AI": xem model đã tải chưa và tính lại; TẢI model (3,2 GB về máy chủ sách) chỉ làm trên chính máy ấy.
+    ("POST", _BOOK + r"/music/moods"),
+    ("GET", r"/api/music/moods-model"),
     ("GET", _BOOK + r"/music/scenes/[^/]+/alternatives"),
 ))
 TYPES = {
