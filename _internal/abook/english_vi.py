@@ -47,7 +47,12 @@ OWNER = {
     "tom": "tom", "tony": "to-ni", "team": "tim", "tank": "tanh", "tina": "ti-na", "lyle": "lai-ồ", "kyle": "cai-ồ", "doyle": "đoi-ồ",
     "fireball": "phai-bôn", "rose": "ro-xe", "great": "gờ-rít", "late": "lết", "grace": "gờ-rây", "gate": "ghết", "nate": "na-te",
     "paul": "pau", "higher": "hai-gờ", "laplace": "la-pờ-lết", "jane": "giên", "cage": "ca-ghe", "cale": "ca-le", "walt": "guốt",
-    "dalton": "đan-tơn", "days": "đay", "luce": "lu-xe", "washington": "oa-sinh-tơn",
+    "dalton": "đan-tơn", "days": "đay", "luce": "lu-xe", "washington": "oa-xinh-tơn",
+    # vòng 9 (04-10 trưa): tên và từ luật không giải thích được; phần luật suy ra được nằm trong code, test_english_vi.FIXED_ONLY liệt kê
+    "damien": "đa-men", "darius": "đa-ri-ớt", "violet": "vai-ô-lét", "forthorthe": "pho-tho-thơ", "judge": "dắc-dồ", "max": "mắc",
+    "mikhail": "mi-kha-in", "blanche": "bờ-lan-che", "reine": "ren", "wolf": "gốp", "walker": "goắc-cơ", "undead": "ăn-đét",
+    "hilde": "hiu-đơ", "oldest": "ôn-đít", "wind": "guyn", "world": "gua", "monster": "mon-tơ", "brother": "bờ-ro-dờ", "charlie": "chác-li",
+    "anne": "an-ne", "louise": "lui", "april": "ây-rồ",  # chủ sách 04-10 chiều: ca lạ, luật không suy rộng
 }  # Kyle: chủ sách viết kai-ồ; chính tả luật 1.5 viết c trước a (bộ kiểm âm tiết không nhận "kai"), cùng một âm
 # Chữ viết tắt đã đọc thành từ (chủ sách 04-10): khoá là đúng chữ hoa như viết; chữ viết tắt khác là việc của luật mục 5.
 ACRONYMS = {"VIP": "víp", "ID": "ai-đi"}
@@ -55,7 +60,7 @@ ACRONYMS = {"VIP": "víp", "ID": "ai-đi"}
 # và trùng nghĩa với từ mượn; các âm tiết nối gạch như mọi đầu ra khác (từ điển viết "cao bồi", "mít tinh").
 LOANWORDS = {
     "radio": "ra-đi-ô", "radar": "ra-đa", "tennis": "ten-nít", "acid": "a-xít", "piano": "pi-a-nô", "chocolate": "sô-cô-la",
-    "vitamin": "vi-ta-min", "cowboy": "cao-bồi", "meeting": "mít-tinh", "dollar": "đô-la", "cafe": "cà-phê", "golf": "gôn", "card": "cạc",
+    "vitamin": "vi-ta-min", "cowboy": "cao-bồi", "meeting": "mít-tinh", "dollar": "đô-la", "cafe": "cà-phê", "golf": "gôn", "card": "cạc", "taxi": "tắc-xi",
 }
 OVERRIDES = {**LOANWORDS, **OWNER}
 
@@ -77,7 +82,7 @@ CHOICES = {
     "final_cluster": "drop",    # phụ âm thứ hai trở đi của cụm cuối: "drop" | "syllable"
     "glide_coda": "drop",       # phụ âm cuối sau ai / ao / oi (không khép được): "drop" (I-oóc-tao) | "syllable"
     "th": "th",                 # /θ/: "th" (Mét-thiu) | "x"
-    "dh": "đ",                  # /ð/: "đ" (mục 4: x / đ) | "d" (Rơ-dơ-pho)
+    "dh": "d",                  # /ð/: "d" (chủ sách 04-10: father pha-dờ, mother ma-dờ; Rơ-dơ-pho) | "đ" (mục 4: x / đ)
     "ae": "a",                  # /æ/: "a" (Đa-lát) | "e" (Mét-thiu)
     "aa_o": "o",                # /ɑ/ viết o: "o" (chủ sách: boss bót) | "ô" (Rốc-ki, Bốt-tơn)
     "eh": "e",                  # /ɛ/: "e" (le-vồ của chủ sách) | "ê" (Ê-đi-xơn)
@@ -103,9 +108,9 @@ _STOPS = frozenset({"P", "T", "K"})
 _ALL_STOPS = frozenset({"P", "T", "K", "B", "D", "G"})
 _ONSET = {
     "B": "b", "CH": "ch", "D": "đ", "F": "ph", "G": "G", "HH": "h", "JH": "gi", "K": "K", "L": "l", "M": "m", "N": "n", "NG": "NG",
-    "P": "p", "R": "r", "S": "x", "SH": "s", "T": "t", "V": "v", "Z": "d", "ZH": "gi", "W": "u", "Y": "i",
+    "P": "p", "R": "r", "S": "x", "SH": "s", "T": "t", "V": "v", "Z": "d", "ZH": "s", "W": "u", "Y": "i", "NY": "nh",  # ZH như SH (chủ sách: vision vi-sừn)
 }
-_PLAIN_CODA = {"P": "p", "T": "t", "K": "c", "M": "m", "N": "n", "NG": "ng"}
+_PLAIN_CODA = {"P": "p", "T": "t", "K": "c", "M": "m", "N": "n", "NG": "ng", "NY": "nh"}
 _VOICED_STOP_CODA = {"B": "p", "D": "t", "G": "c"}
 _FRICATIVE_CODA = {"S": "t", "Z": "t", "SH": "t", "ZH": "t", "TH": "t", "DH": "t", "CH": "t", "JH": "t", "F": "p", "V": "p"}
 _FRONT = ("i", "e", "ê", "y")
@@ -167,7 +172,7 @@ def _vowel_groups(word: str, drop_final_e: bool) -> list[str]:
     groups: list[str] = []
     current = ""
     for index, ch in enumerate(letters):
-        vowel = ch in "aeiou" or (ch == "y" and not (index == 0 and letters[1:2] in tuple("aeiou")))
+        vowel = ch in "aeiou" or (ch == "y" and letters[index + 1:index + 2] not in tuple("aeiou"))  # y trước nguyên âm là phụ âm (Maya)
         if vowel:
             current += ch
         elif current:
@@ -233,14 +238,14 @@ _DIGRAPHS = (("eau", "OW"), ("igh", "AY"), ("ee", "IY"), ("ea", "IY"), ("ai", "E
 def _is_vowel_letter(word: str, index: int) -> bool:
     ch = word[index:index + 1]
     if ch == "y":
-        return not (word[index + 1:index + 2] in tuple("aeiou") and (index == 0 or word[index - 1] not in _LETTER_VOWELS))
+        return word[index + 1:index + 2] not in tuple("aeiou")  # y trước nguyên âm là phụ âm: Yuri, Ryan, Alunaya (na-gia)
     return ch != "" and ch in "aeiou"
 
 
 def _spell_phones(word: str) -> list[Phone] | None:
     w = word
     size = len(w)
-    if size == 0 or not w.isascii() or not w.isalpha():
+    if size == 0 or not w.replace("ñ", "n").isascii() or not w.isalpha():
         return None
     silent_e = size >= 3 and w[-1] == "e" and not _is_vowel_letter(w, size - 2) and any(_is_vowel_letter(w, i) for i in range(size - 2))
     syllabic_le = silent_e and w[-2] == "l" and size >= 4 and not _is_vowel_letter(w, size - 3)  # -ble, -ple, -tle: phụ âm + əl
@@ -268,6 +273,8 @@ def _spell_phones(word: str) -> list[Phone] | None:
                 digraph = ("ow", "OW" if rest == "ow" else "AW")
             if rest == "ue":
                 digraph = ("ue", "UW")
+            if digraph is not None and digraph[0].endswith("y") and not _is_vowel_letter(w, i + len(digraph[0]) - 1):
+                digraph = None  # ay / ey / oy trước nguyên âm: y là phụ âm (Alunaya -> na-gia)
             if digraph is not None:
                 letters, phone = digraph
                 out.append((phone, 0, letters))
@@ -288,11 +295,17 @@ def _spell_phones(word: str) -> list[Phone] | None:
                 out.append(("AE", 0, ch))  # ank -> anh như đường âm vị (tank -> tanh)
             elif i == end - 1:
                 out.append((_FINAL_OPEN[ch], 0, ch))
+            elif ch == "o" and not _is_vowel_letter(w, i + 1) and _is_vowel_letter(w, i + 2) and w[i + 1] not in "wy":
+                out.append(("OW", 0, ch))  # o mở âm tiết (o + một phụ âm + nguyên âm) đọc ô: chủ sách 04-10 Novem -> nô-vem
             else:
                 out.append((_FACE[ch], 0, ch))
             i += 1
             continue
         # phụ âm
+        if ch == "ñ":
+            out.append(("NY", -1, ""))  # ñ -> nh (chủ sách 04-10: España -> ét-pa-nha)
+            i += 1
+            continue
         if rest.startswith(("tion", "sion")):
             out.extend([("SH" if ch == "t" else "ZH", -1, ""), ("AH", 0, "io"), ("N", -1, "")])
             i += 4
@@ -342,7 +355,7 @@ def _spell_phones(word: str) -> list[Phone] | None:
         elif ch == "x":
             out.extend([("Z", -1, "")] if i == 0 else [("K", -1, ""), ("S", -1, "")])
         elif ch == "y":
-            out.append(("Y", -1, ""))
+            out.append(("JH" if i > 0 and _is_vowel_letter(w, i - 1) else "Y", -1, ""))  # y giữa hai nguyên âm -> gi (chủ sách: Alunaya)
         elif ch == "h":
             if i == 0 or _is_vowel_letter(w, i + 1):
                 out.append(("HH", -1, ""))  # h sau nguyên âm, trước phụ âm hay cuối từ thì câm (Sarah, Ahrin)
@@ -378,12 +391,12 @@ def _face_short(word: str) -> list[Phone]:
 
 def _short_silent_e(word: str) -> bool:
     """MỘT phụ âm đầu (một chữ, hay ch / sh / th / ph / wh) + một nguyên âm + MỘT phụ âm (trừ âm mũi m n và h w x y) + e câm: Jake,
-    Zeke, Rose, Cale, Luce, Cage (chủ sách 04-10). Âm mũi đi đường âm vị (Jane -> giên, game -> ghêm), cũng như cụm phụ âm đầu
+    Zeke, Rose, Cale, Luce, Cage, Eve (chủ sách 04-10). Âm mũi đi đường âm vị (Jane -> giên, game -> ghêm), cũng như cụm phụ âm đầu
     (Blake -> bờ-lếch, Grace -> gờ-rây) và từ viết thường (make, late)."""
     onset = word[:-3]
-    if not (word.endswith("e") and word[-2] in "bcdfgjklpqrstvz" and word[-3] in "aeiou"):
+    if not (len(word) >= 3 and word.endswith("e") and word[-2] in "bcdfgjklpqrstvz" and word[-3] in "aeiou"):
         return False
-    return (len(onset) == 1 and onset not in "aeiouy") or onset in ("ch", "sh", "th", "ph", "wh")
+    return (len(onset) == 1 and onset not in "aeiouy") or onset in ("ch", "sh", "th", "ph", "wh") or onset == ""  # onset rỗng: Eve -> e-ve
 
 
 # ---- ARPAbet -> âm tiết Việt -------------------------------------------------------------------------------------------
@@ -447,9 +460,13 @@ def _is_schwa(phone: Phone) -> bool:
 
 def _nucleus(phone: Phone, coda: str, r_colored: bool) -> str:
     base, stress, letters = phone
+    if base in ("IH", "IY") and r_colored:
+        return "ia"  # i + r bỏ r: ia (chủ sách 04-10: Pierce pia, Shakespeare xếch-xơ-pia)
     if base == "AA":
         return CHOICES["aa_o"] if "o" in letters else "a"
     if base == "AO":
+        if letters == "au":
+            return "au"  # au đọc au (chủ sách 04-10: Claudia cờ-lau-đi-a, Audin au-đin, Paul pau); không khép được
         if "a" in letters and "o" not in letters:
             return "a"
         return "oo" if r_colored and coda in ("c", "ng") else "o"  # Niu Oóc, Poóc-len: o dài trước c / ng viết oo
@@ -462,17 +479,23 @@ def _nucleus(phone: Phone, coda: str, r_colored: bool) -> str:
             return "ơ"
         return "ă" if coda else "a"
     if base == "EH":
-        return CHOICES["eh"]
+        if letters == "a":
+            return "a"  # a đọc a dù CMU cho /ɛ/ (chủ sách 04-10: Karen ca-ren, Mary ma-ri)
+        return "ê" if coda == "c" else CHOICES["eh"]  # e + c không viết: êch (chủ sách: text tếch, next nếch)
     if base == "IH":
         return CHOICES["ih"]
     if base == "EY":
         if not coda:
-            return "ây"
+            return "ê" if stress == 0 and letters == "e" else "ây"  # /eɪ/ không nhấn, mở, viết e cuối: ê (chủ sách 04-10: Dante đan-tê)
         if coda in ("m", "n", "ng"):
             return CHOICES["ey_nasal"]
         return CHOICES["ey_p" if coda == "p" else "ey_k" if coda in ("c", "ch") else "ey_t"]
     if base == "AY" and coda == "m":
         return "a"  # xờ-lam, tham (chủ sách 04-10; CHOICES["ay_m"])
+    if base == "ER" and stress == 0 and letters == "a":
+        return "a"  # a trước r đọc a (chủ sách 04-10: Maria ma-ri-a)
+    if base == "ER" and letters == "y":
+        return "i"  # yr: y đọc i (chủ sách 04-10: Hyrkan hi-can)
     return {"IY": "i", "UH": "u", "UW": "u", "OW": "ô", "ER": "ơ", "AY": "ai", "AW": "ao", "OY": "oi"}[base]
 
 
@@ -486,8 +509,8 @@ def _glide_w(nucleus: str) -> str | None:
         return "o" + nucleus
     if nucleus[:1] in ("ê", "ơ", "â"):
         return "u" + nucleus
-    if nucleus == "i":
-        return "uy"
+    if nucleus in ("i", "iu"):
+        return "uy" + nucleus[1:]  # guy, guyu (Will: l cuối sau i thành u)
     return None
 
 
@@ -500,14 +523,15 @@ def _syllabify(phones: list[Phone], flags: list[str], word_start: bool = True) -
     if not vowels:
         return None
     out: list[_Syl] = []
-    onset, glide = _onset_run([phone[0] for phone in phones[:vowels[0]]], out, flags, phones[vowels[0]] if word_start else None)
-    w_gu = onset == "G" and vowels[0] == 1 and phones[0][0] == "W"  # w đầu từ đã thành gu (_onset_run)
+    onset, glide = _onset_run([phone[0] for phone in phones[:vowels[0]]], out, phones[vowels[0]] if word_start else None)
+    w_gu = onset == "G" and vowels[0] == 1 and phones[0][0] == "W"  # w đầu từ đã thành g + âm đệm (_onset_run)
     for k, at in enumerate(vowels):
         vowel = phones[at]
         last = k == len(vowels) - 1
         run = [phone[0] for phone in (phones[at + 1:] if last else phones[at + 1:vowels[k + 1]])]
-        # -əl cuối từ: schwa + l thành "ồ" (l bỏ), thanh huyền - chủ sách 04-10 (máp-pồ, mai-cồ, le-vồ)
-        if last and _is_schwa(vowel) and run[:1] == ["L"]:
+        before = [phone[0] for phone in phones[max(0, at - 2):at]]
+        # -əl cuối từ: schwa + l thành "ồ" (l bỏ), thanh huyền - chủ sách 04-10 (máp-pồ, mai-cồ, le-vồ, Lancel lan-xồ)
+        if last and (_is_schwa(vowel) or (vowel[0] == "EH" and vowel[1] == 0)) and run[:1] == ["L"]:
             _emit(out, onset, glide, "ô", "", True)
             for base in run[1:]:
                 if CHOICES["final_cluster"] == "syllable":
@@ -517,14 +541,19 @@ def _syllabify(phones: list[Phone], flags: list[str], word_start: bool = True) -
         if run[:1] == ["R"] and (last or len(run) >= 2):
             run = run[1:]  # r sau nguyên âm bỏ (Poóc-len, Niu Oóc)
             r_colored = True
-        can_close = vowel[0] not in _GLIDE_VOWELS or (vowel[0] == "AY" and run[:1] == ["M"] and CHOICES["ay_m"] == "am")
+        can_close = (vowel[0] not in _GLIDE_VOWELS or (vowel[0] == "AY" and run[:1] == ["M"] and CHOICES["ay_m"] == "am")) and not (
+            r_colored and vowel[0] in ("IH", "IY")  # i + r bỏ r là "ia", không khép
+        ) and not (vowel[0] == "AO" and vowel[2] == "au")  # au không khép (Paul pau)
         il_final = False
         coda, coda_phone = "", ""
         tail: list[_Syl] = []
         next_onset, next_glide = "", ""
         if last:
-            if run[:1] == ["L"] and vowel[0] in ("IH", "IY") and CHOICES["il_final"] == "u":
-                il_final = True  # skill -> xờ-kiu (chủ sách 04-10): l cuối sau i thành u
+            if run[:1] == ["L"] and vowel[0] == "IY" and "ie" in vowel[2]:
+                tail.append(_Syl("", "eo"))  # -iel: i + "eo" (chủ sách 04-10: Ciel xi-eo, Garfiel ga-phi-eo)
+                run = []
+            elif run[:1] == ["L"] and vowel[0] in ("IH", "IY") and CHOICES["il_final"] == "u":
+                il_final = True  # skill -> xờ-kiu, Will -> guyu, Hilde -> hiu (chủ sách 04-10): l sau i thành u
                 run = run[1:]
                 for base in run:
                     if CHOICES["final_cluster"] == "syllable":
@@ -532,11 +561,18 @@ def _syllabify(phones: list[Phone], flags: list[str], word_start: bool = True) -
                 run = []
             if vowel[0] == "EY" and run[:1] == ["S"]:
                 run = []  # /eɪ/ + s cuối: ây, s bỏ (chủ sách 04-10: Grace -> gờ-rây)
+            elif run[:1] == ["S"] and run[1:2] and run[1] in ("P", "T", "K"):
+                run = run[1:]  # s trước tắc cuối từ rơi, tắc giữ làm phụ âm cuối (chủ sách 04-10: Dusk -> đắc)
             if run:
                 first = run[0]
                 coda_phone = first
                 letter = _coda_letter(first, True) if can_close else ("" if CHOICES["glide_coda"] == "drop" else None)
-                if first == "L" and not can_close:
+                if first == "G" and vowel[0] == "ER":
+                    letter = ""  # g cuối sau ơ rơi (chủ sách 04-10: Hamburg -> ham-bơ)
+                au = vowel[0] == "AO" and vowel[2] == "au"
+                if au and first == "L":
+                    letter = ""  # l sau au rơi hẳn (chủ sách 04-10: Paul -> pau)
+                if first == "L" and not can_close and not au:
                     # l sau ai / ao / oi: âm tiết "ồ" KHÔNG phụ âm đầu, l bỏ (chủ sách 04-10: lai-ồ, kai-ồ, đoi-ồ)
                     tail.append(_Syl("", "ô", "", True))
                 elif letter is None:
@@ -547,17 +583,31 @@ def _syllabify(phones: list[Phone], flags: list[str], word_start: bool = True) -
                     if CHOICES["final_cluster"] == "syllable":
                         tail.append(_final_syllable(base, flags))
         else:
-            head, next_onset, next_glide = _split_onset(run)
+            head, next_onset, next_glide = _split_onset(run, medial=phones[vowels[k + 1]][0] == "UW")
             if next_onset == "NG":
                 head, next_onset = head + ["NG"], ""  # ng tiếng Anh không mở âm tiết: Hê-minh-uây
             if not run and vowel[0] == "ER":
                 next_onset = "R"  # r của ơ trước nguyên âm mở âm tiết sau: Cô-lô-ra-đô, ca-mê-ra
+            if head == ["L"] and vowel[0] in ("IH", "IY") and next_onset in ("B", "D", "G") and CHOICES["il_final"] == "u":
+                il_final, head = True, []  # l trước tắc hữu thanh sau i thành u (chủ sách 04-10: Gilbert -> ghiu-bớt)
+            austin = vowel[0] == "AO" and run == ["S", "T"]
+            if austin:
+                head = []  # AO + s + t: s rơi, âm tiết mở ô (chủ sách 04-10: Austin -> ô-tin)
             liquid_stop = ""
             if next_onset in ("L", "R") and head and head[-1] in _ALL_STOPS:
-                # tắc + l / r giữa từ: tách thành "Cờ" thanh huyền, âm tiết trước không khép bằng nó (chủ sách 04-10: Laplace -> la-pờ-lết)
-                liquid_stop, head = head[-1], head[:-1]
+                if (next_onset == "L" or (next_onset == "R" and len(head) == 1 and can_close)) and vowel[1] >= 1:
+                    # tắc + l sau nguyên âm nhấn (tắc + r khi tắc đứng một mình): tắc khép âm tiết nhấn, l / r mở âm tiết sau (chủ sách 04-10:
+                    # táp-lét, góp-lin, xờ-cót-lừn, cobra cốp-ra); nk + l: k rơi (Franklin -> phờ-ranh-lin)
+                    if head[-2:] == ["NG", "K"]:
+                        head = head[:-1]
+                else:
+                    # tắc + l / r sau nguyên âm không nhấn (hay + r): tách thành "Cờ" thanh huyền, âm tiết trước không khép bằng nó
+                    # (chủ sách 04-10: Laplace -> la-pờ-lết)
+                    liquid_stop, head = head[-1], head[:-1]
             geminate = CHOICES["geminate"]
             if not head and not liquid_stop and next_onset and len(run) == 1 and run[0] in _STOPS and can_close and vowel[1] >= 1 and (
+                vowel[0] not in ("UW", "IY")  # nguyên âm dài cao không nhân đôi (chủ sách 04-10: Lucas -> lu-cát)
+            ) and (
                 geminate == "stressed" or (geminate == "primary" and vowel[1] == 1)
                 or (geminate == "short" and vowel[0] in _SHORT_VOWELS)
             ):
@@ -571,38 +621,55 @@ def _syllabify(phones: list[Phone], flags: list[str], word_start: bool = True) -
             if liquid_stop:
                 tail.append(_Syl(_onset_letter(liquid_stop), "ơ", "", True))
         nucleus = _nucleus(vowel, coda, r_colored)
+        grave = False
         if vowel[0] == "AO" and coda_phone == "L" and coda:
             nucleus = "ô"  # /ɔːl/ -> ôn (chủ sách 04-10: fireball -> phai-bôn, như gôn)
-        if k == 0 and w_gu and not coda:
-            onset = ""  # guô chỉ đứng trước phụ âm cuối: âm tiết mở giữ w như cũ (Warrior -> Oa-ri-ơ)
-            flags.remove("analogy:w_gu")
-        elif k == 0 and w_gu and vowel[0] in ("AO", "AA"):
-            nucleus = "ô"  # gu + âm o đọc guô (chủ sách 04-10: Walt -> guốt): water -> guốt-tơ
+        if vowel[0] == "EH" and coda_phone == "L" and coda == "n" and last and (len(run) == 1 or run[1] not in ("T", "D")):
+            nucleus, coda = "eo", ""  # l cuối sau e (hay trước phụ âm cuối không phải t d) thành o: eo (chủ sách 04-10: Elf, bell beo, spell xờ-peo); l trước t d giữ n (Roosevelt)
+        if not last and vowel[0] == "AO" and run == ["S", "T"]:
+            nucleus = "ô"  # au / o + s + t -> ô (chủ sách 04-10: Austin ô-tin)
+        if vowel[0] == "ER" and coda in ("c", "ch"):
+            nucleus = "â"  # ơc / ơch không có vần: ɜːr + c -> âc (chủ sách 04-10: Kirk cấc, Burke bấc)
+        if last and vowel[0] == "AO" and r_colored and coda_phone == "JH":
+            nucleus, coda = "o", "c"  # o + ch cuối -> óc (chủ sách 04-10: George gióc)
+        if k == 0 and w_gu and coda and (vowel[0] in ("AO", "UH") or (vowel[0] == "AA" and "o" in vowel[2])):
+            nucleus = "ô"  # g + u + ô chỉ đứng trước phụ âm cuối (chủ sách 04-10: Walt guốt, water guốt-tờ, Wood guốt)
+        if k == 0 and w_gu and vowel[0] == "AY":
+            nucleus = "ây"  # w + ai: guây (chủ sách 04-10: Weiss)
+        if vowel[0] == "AW" and run[:1] in (["S"], ["Z"]):
+            nucleus = "au"  # ao trước s: au (chủ sách 04-10: house hau, mouse mau; town tao, sound sao)
+        if vowel[0] == "AE" and coda == "c":
+            coda = "ch"  # ac viết ach (chủ sách 04-10: Jack dách, action ách-sừn)
         if vowel[0] == "AE" and coda == "ng" and run[:2] == ["NG", "K"]:
             nucleus, coda = "a", "nh"  # /æŋk/ -> anh (chủ sách 04-10: tank -> tanh; rank, thank theo đó)
             flags.append("analogy:ank")
+        if last and _is_schwa(vowel) and ((before[-1:] in (["SH"], ["ZH"]) and run == ["N"]) or (before[-1:] == ["L"] and run == ["N", "D"])):
+            nucleus, grave = "ư", True  # -tion, -sion, -land: ừn thanh huyền dù khép (chủ sách 04-10: station xờ-tây-sừn, Scotland lừn);
+            # -land mọi chỗ (chủ sách 04-10 sau: Roland rô-lừn)
+        if last and vowel[0] == "UW" and vowel[1] == 0 and vowel[2] == "e" and not run:
+            nucleus = "iu"  # -ew cuối: iu (chủ sách 04-10: Andrew an-riu)
+        if last and vowel[0] == "ER" and vowel[1] == 0 and nucleus == "ơ" and not run and onset and before != ["S", "T"]:
+            grave = True  # -er cuối mở: ơ thanh huyền (chủ sách 04-10: guốt-tờ, hăn-tờ), trừ sau st (mát-tơ)
         if il_final:
             nucleus += "u"
-        _emit(out, onset, glide, nucleus, coda, False)  # -er cuối: ơ thanh ngang (chủ sách 04-10: mát-tơ)
+        use = "Z" if onset == "JH" and vowel[1] >= 1 and vowel[0] in ("AE", "AH", "UH") else onset  # j trước a ă u đọc d (chủ sách 04-10: Jack dách, Jud dút)
+        _emit(out, use, glide, nucleus, coda, grave)
         out.extend(tail)
         onset, glide = next_onset, next_glide
     return out
 
 
-def _onset_run(run: list[str], out: list[_Syl], flags: list[str], first_vowel: Phone | None) -> tuple[str, str]:
+def _onset_run(run: list[str], out: list[_Syl], first_vowel: Phone | None) -> tuple[str, str]:
     head, onset, glide = _split_onset(run)
     out.extend(_epenthetic(base, True) for base in head)
-    if run == ["W"] and first_vowel is not None and (
-        first_vowel[0] in ("AO", "OW") or (first_vowel[0] == "AA" and "o" in first_vowel[2])
-    ):
-        # w đầu từ trước âm o -> gu (chủ sách 04-10: Walt -> guốt; như won -> guôn của tiếng Hàn); w trước âm khác giữ oa / uy / oe
-        # (Oa-sinh-tơn). Các từ ngoài Walt suy theo, có cờ
-        flags.append("analogy:w_gu")
+    if run == ["W"] and first_vowel is not None:
+        # w đầu từ -> g + âm đệm gần như mọi nguyên âm: guy, goen / goét, guây (chủ sách 04-10: Will, William, Wendy, west, Weiss); w ở
+        # nửa sau của từ ghép (first_vowel None) giữ oa / uy / oe
         onset = "G"
     return onset, glide
 
 
-def _split_onset(run: list[str]) -> tuple[list[str], str, str]:
+def _split_onset(run: list[str], medial: bool = False) -> tuple[list[str], str, str]:
     """Tách dãy phụ âm trước một nguyên âm thành (phần đầu, phụ âm đầu của âm tiết, bán âm w / y)."""
     if not run:
         return [], "", ""
@@ -614,6 +681,8 @@ def _split_onset(run: list[str]) -> tuple[list[str], str, str]:
             return [], "", glide
     if len(run) >= 2 and run[-2:] == ["T", "R"] and CHOICES["tr"] == "tr":
         return run[:-2], "tr", glide
+    if medial and len(run) >= 2 and run[-2:] == ["D", "R"]:
+        return run[:-2], "R", glide  # dr giữa từ trước u -> r (chủ sách 04-10: Andrew -> an-riu); Cassandra, Pendragon giữ đờ-ra
     return run[:-1], run[-1], glide
 
 
@@ -688,7 +757,7 @@ def _validated(syllables: list[_Syl], capital: bool) -> str | None:
 
 def _part_case(part: str) -> bool | None:
     """True nếu viết hoa chữ đầu, False nếu toàn chữ thường, None nếu không phải chữ ASCII hay viết hoa lạ (toàn hoa, hoa giữa chữ)."""
-    if not part or not part.isascii() or not part.isalpha():
+    if not part or not part.replace("ñ", "n").replace("Ñ", "N").isascii() or not part.isalpha():
         return None
     if part == part.lower():
         return False

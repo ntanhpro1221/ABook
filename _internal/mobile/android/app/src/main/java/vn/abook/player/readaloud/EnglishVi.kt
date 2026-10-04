@@ -34,7 +34,13 @@ object EnglishVi {
         "fireball" to "phai-bôn", "rose" to "ro-xe", "great" to "gờ-rít", "late" to "lết", "grace" to "gờ-rây", "gate" to "ghết",
         "nate" to "na-te",
         "paul" to "pau", "higher" to "hai-gờ", "laplace" to "la-pờ-lết", "jane" to "giên", "cage" to "ca-ghe", "cale" to "ca-le",
-        "walt" to "guốt", "dalton" to "đan-tơn", "days" to "đay", "luce" to "lu-xe", "washington" to "oa-sinh-tơn",
+        "walt" to "guốt", "dalton" to "đan-tơn", "days" to "đay", "luce" to "lu-xe", "washington" to "oa-xinh-tơn",
+        // vòng 9 (04-10 trưa): tên và từ luật không giải thích được; phần luật suy ra được nằm trong code
+        "damien" to "đa-men", "darius" to "đa-ri-ớt", "violet" to "vai-ô-lét", "forthorthe" to "pho-tho-thơ", "judge" to "dắc-dồ",
+        "max" to "mắc", "mikhail" to "mi-kha-in", "blanche" to "bờ-lan-che", "reine" to "ren", "wolf" to "gốp", "walker" to "goắc-cơ",
+        "undead" to "ăn-đét", "hilde" to "hiu-đơ", "oldest" to "ôn-đít", "wind" to "guyn", "world" to "gua", "monster" to "mon-tơ",
+        "brother" to "bờ-ro-dờ", "charlie" to "chác-li",
+        "anne" to "an-ne", "louise" to "lui", "april" to "ây-rồ", // chủ sách 04-10 chiều: ca lạ, luật không suy rộng
     )
     // Chữ viết tắt đã đọc thành từ (chủ sách 04-10): khoá là đúng chữ hoa như viết.
     val ACRONYMS = mapOf("VIP" to "víp", "ID" to "ai-đi")
@@ -42,7 +48,7 @@ object EnglishVi {
     val LOANWORDS = mapOf(
         "radio" to "ra-đi-ô", "radar" to "ra-đa", "tennis" to "ten-nít", "acid" to "a-xít", "piano" to "pi-a-nô", "chocolate" to "sô-cô-la",
         "vitamin" to "vi-ta-min", "cowboy" to "cao-bồi", "meeting" to "mít-tinh", "dollar" to "đô-la", "cafe" to "cà-phê", "golf" to "gôn",
-        "card" to "cạc",
+        "card" to "cạc", "taxi" to "tắc-xi",
     )
     val OVERRIDES = LOANWORDS + OWNER
 
@@ -61,7 +67,7 @@ object EnglishVi {
     private const val FINAL_CLUSTER = "drop"
     private const val GLIDE_CODA = "drop"
     private const val TH = "th"
-    private const val DH = "đ"
+    private const val DH = "d"
     private const val AE = "a"
     private const val AA_O = "o"
     private const val EH = "e"
@@ -81,9 +87,9 @@ object EnglishVi {
     private val ALL_STOPS = setOf("P", "T", "K", "B", "D", "G")
     private val ONSET = mapOf(
         "B" to "b", "CH" to "ch", "D" to "đ", "F" to "ph", "G" to "G", "HH" to "h", "JH" to "gi", "K" to "K", "L" to "l", "M" to "m", "N" to "n",
-        "NG" to "NG", "P" to "p", "R" to "r", "S" to "x", "SH" to "s", "T" to "t", "V" to "v", "Z" to "d", "ZH" to "gi", "W" to "u", "Y" to "i",
+        "NG" to "NG", "P" to "p", "R" to "r", "S" to "x", "SH" to "s", "T" to "t", "V" to "v", "Z" to "d", "ZH" to "s", "W" to "u", "Y" to "i", "NY" to "nh",
     )
-    private val PLAIN_CODA = mapOf("P" to "p", "T" to "t", "K" to "c", "M" to "m", "N" to "n", "NG" to "ng")
+    private val PLAIN_CODA = mapOf("P" to "p", "T" to "t", "K" to "c", "M" to "m", "N" to "n", "NG" to "ng", "NY" to "nh")
     private val VOICED_STOP_CODA = mapOf("B" to "p", "D" to "t", "G" to "c")
     private val FRICATIVE_CODA = mapOf(
         "S" to "t", "Z" to "t", "SH" to "t", "ZH" to "t", "TH" to "t", "DH" to "t", "CH" to "t", "JH" to "t", "F" to "p", "V" to "p",
@@ -131,7 +137,7 @@ object EnglishVi {
         val groups = ArrayList<String>()
         val current = StringBuilder()
         letters.forEachIndexed { index, ch ->
-            val vowel = ch in "aeiou" || (ch == 'y' && !(index == 0 && sub(letters, 1, 2).let { it.isNotEmpty() && it[0] in "aeiou" }))
+            val vowel = ch in "aeiou" || (ch == 'y' && !sub(letters, index + 1, index + 2).let { it.isNotEmpty() && it[0] in "aeiou" }) // y trước nguyên âm là phụ âm (Maya)
             if (vowel) {
                 current.append(ch)
             } else if (current.isNotEmpty()) {
@@ -196,7 +202,7 @@ object EnglishVi {
         val ch = word[index]
         if (ch == 'y') {
             val next = sub(word, index + 1, index + 2)
-            return !(next.isNotEmpty() && next[0] in "aeiou" && (index == 0 || word[index - 1] !in LETTER_VOWELS))
+            return !(next.isNotEmpty() && next[0] in "aeiou") // y trước nguyên âm là phụ âm: Yuri, Ryan, Alunaya (na-gia)
         }
         return ch in "aeiou"
     }
@@ -204,7 +210,7 @@ object EnglishVi {
     private fun spellPhones(word: String): List<Phone>? {
         val w = word
         val size = w.length
-        if (size == 0 || !w.all { it in 'a'..'z' || it in 'A'..'Z' }) return null
+        if (size == 0 || !w.all { it in 'a'..'z' || it in 'A'..'Z' || it == 'ñ' }) return null
         var silentE = size >= 3 && w[size - 1] == 'e' && !isVowelLetter(w, size - 2) && (0 until size - 2).any { isVowelLetter(w, it) }
         val syllabicLe = silentE && w[size - 2] == 'l' && size >= 4 && !isVowelLetter(w, size - 3)
         if (syllabicLe) silentE = false
@@ -226,6 +232,9 @@ object EnglishVi {
                 if (rest == "ey" || rest == "ay" || (rest == "ie" && size <= 4)) digraph = rest to (if (rest != "ay") "IY" else "EY")
                 if (rest.startsWith("ow")) digraph = "ow" to (if (rest == "ow") "OW" else "AW")
                 if (rest == "ue") digraph = "ue" to "UW"
+                if (digraph != null && digraph.first.endsWith("y") && !isVowelLetter(w, i + digraph.first.length - 1)) {
+                    digraph = null // ay / ey / oy trước nguyên âm: y là phụ âm (Alunaya -> na-gia)
+                }
                 if (digraph != null) {
                     out.add(Phone(digraph.second, 0, digraph.first))
                     i += digraph.first.length
@@ -245,6 +254,8 @@ object EnglishVi {
                 val vowel = when {
                     ch == 'a' && sub(w, i + 1, i + 3) == "nk" -> "AE" // ank -> anh như đường âm vị (tank -> tanh)
                     i == end - 1 -> FINAL_OPEN.getValue(ch)
+                    // o mở âm tiết (o + một phụ âm + nguyên âm) đọc ô: Novem -> nô-vem
+                    ch == 'o' && !isVowelLetter(w, i + 1) && isVowelLetter(w, i + 2) && w[i + 1] !in "wy" -> "OW"
                     else -> FACE.getValue(ch)
                 }
                 out.add(Phone(vowel, 0, ch.toString()))
@@ -252,6 +263,11 @@ object EnglishVi {
                 continue
             }
             // phụ âm
+            if (ch == 'ñ') {
+                out.add(Phone("NY", -1, "")) // ñ -> nh (España -> ét-pa-nha)
+                i += 1
+                continue
+            }
             if (rest.startsWith("tion") || rest.startsWith("sion")) {
                 out.add(Phone(if (ch == 't') "SH" else "ZH", -1, ""))
                 out.add(Phone("AH", 0, "io"))
@@ -310,7 +326,7 @@ object EnglishVi {
                 }
                 'g' -> out.add(Phone(if (following == "e" || following == "i" || following == "y") "JH" else "G", -1, ""))
                 'x' -> if (i == 0) out.add(Phone("Z", -1, "")) else { out.add(Phone("K", -1, "")); out.add(Phone("S", -1, "")) }
-                'y' -> out.add(Phone("Y", -1, ""))
+                'y' -> out.add(Phone(if (i > 0 && isVowelLetter(w, i - 1)) "JH" else "Y", -1, "")) // y giữa hai nguyên âm -> gi (Alunaya)
                 'h' -> if (i == 0 || isVowelLetter(w, i + 1)) out.add(Phone("HH", -1, "")) // h sau nguyên âm, trước phụ âm / cuối từ câm
                 'w' -> out.add(Phone("W", -1, ""))
                 'j' -> out.add(Phone("JH", -1, ""))
@@ -339,9 +355,9 @@ object EnglishVi {
 
     /** MỘT phụ âm đầu (một chữ, hay ch / sh / th / ph / wh) + một nguyên âm + MỘT phụ âm (trừ h w x y) + e câm: Jake, Zeke, Rose (chủ sách). */
     private fun shortSilentE(word: String): Boolean {
-        if (!(word.length >= 4 && word.endsWith("e") && word[word.length - 2] in "bcdfgjklpqrstvz" && word[word.length - 3] in "aeiou")) return false
+        if (!(word.length >= 3 && word.endsWith("e") && word[word.length - 2] in "bcdfgjklpqrstvz" && word[word.length - 3] in "aeiou")) return false
         val onset = word.substring(0, word.length - 3)
-        return (onset.length == 1 && onset[0] !in "aeiouy") || onset in setOf("ch", "sh", "th", "ph", "wh")
+        return (onset.length == 1 && onset[0] !in "aeiouy") || onset in setOf("ch", "sh", "th", "ph", "wh") || onset.isEmpty() // Eve -> e-ve
     }
 
     // ---- ARPAbet -> âm tiết Việt -----------------------------------------------------------------------------------------
@@ -385,9 +401,11 @@ object EnglishVi {
 
     private fun nucleus(phone: Phone, coda: String, rColored: Boolean): String {
         val letters = phone.letters
+        if ((phone.base == "IH" || phone.base == "IY") && rColored) return "ia" // i + r bỏ r: ia (Pierce pia, Shakespeare xếch-xơ-pia)
         return when (phone.base) {
             "AA" -> if ('o' in letters) AA_O else "a"
             "AO" -> when {
+                letters == "au" -> "au" // au đọc au, không khép được (Claudia cờ-lau-đi-a, Paul pau)
                 'a' in letters && 'o' !in letters -> "a"
                 rColored && (coda == "c" || coda == "ng") -> "oo" // Niu Oóc, Poóc-len
                 else -> "o"
@@ -398,10 +416,19 @@ object EnglishVi {
             } else {
                 if (coda.isNotEmpty()) "ă" else "a"
             }
-            "EH" -> EH
+            "EH" -> when {
+                letters == "a" -> "a" // a đọc a dù CMU cho /ɛ/ (Karen ca-ren, Mary ma-ri)
+                coda == "c" -> "ê" // e + c không viết: êch (text tếch, next nếch)
+                else -> EH
+            }
             "IH" -> IH
+            "ER" -> when {
+                phone.stress == 0 && letters == "a" -> "a" // a trước r đọc a (Maria ma-ri-a)
+                letters == "y" -> "i" // yr: y đọc i (Hyrkan hi-can)
+                else -> "ơ"
+            }
             "EY" -> when {
-                coda.isEmpty() -> "ây"
+                coda.isEmpty() -> if (phone.stress == 0 && letters == "e") "ê" else "ây" // Dante đan-tê
                 coda == "m" || coda == "n" || coda == "ng" -> EY_NASAL
                 coda == "p" -> EY_P
                 coda == "c" || coda == "ch" -> EY_K
@@ -419,7 +446,7 @@ object EnglishVi {
             nucleus.startsWith("ây") -> "u$nucleus"
             first == "a" || first == "ă" || first == "e" -> "o$nucleus"
             first == "ê" || first == "ơ" || first == "â" -> "u$nucleus"
-            nucleus == "i" -> "uy"
+            nucleus == "i" || nucleus == "iu" -> "uy" + nucleus.drop(1) // guy, guyu
             else -> null
         }
     }
@@ -431,14 +458,15 @@ object EnglishVi {
         val vowels = phones.indices.filter { phones[it].stress >= 0 }
         if (vowels.isEmpty()) return null
         val out = ArrayList<Syl>()
-        var (onset, glide) = onsetRun(phones.subList(0, vowels[0]).map { it.base }, out, flags, if (wordStart) phones[vowels[0]] else null)
-        val wGu = onset == "G" && vowels[0] == 1 && phones[0].base == "W" // w đầu từ đã thành gu (onsetRun)
+        var (onset, glide) = onsetRun(phones.subList(0, vowels[0]).map { it.base }, out, if (wordStart) phones[vowels[0]] else null)
+        val wGu = onset == "G" && vowels[0] == 1 && phones[0].base == "W" // w đầu từ đã thành g + âm đệm (onsetRun)
         for ((k, at) in vowels.withIndex()) {
             val vowel = phones[at]
             val last = k == vowels.size - 1
             var run = (if (last) phones.subList(at + 1, phones.size) else phones.subList(at + 1, vowels[k + 1])).map { it.base }
-            // -əl cuối từ: schwa + l thành "ồ" (l bỏ), thanh huyền - chủ sách 04-10 (máp-pồ, mai-cồ, le-vồ)
-            if (last && isSchwa(vowel) && run.firstOrNull() == "L") {
+            val before = phones.subList(maxOf(0, at - 2), at).map { it.base }
+            // -əl cuối từ: schwa + l thành "ồ" (l bỏ), thanh huyền - chủ sách 04-10 (máp-pồ, mai-cồ, le-vồ, Lancel lan-xồ)
+            if (last && (isSchwa(vowel) || (vowel.base == "EH" && vowel.stress == 0)) && run.firstOrNull() == "L") {
                 emit(out, onset, glide, "ô", "", true)
                 for (base in run.drop(1)) if (FINAL_CLUSTER == "syllable") out.add(finalSyllable(base, flags))
                 return out
@@ -448,7 +476,9 @@ object EnglishVi {
                 run = run.drop(1) // r sau nguyên âm bỏ
                 rColored = true
             }
-            val canClose = vowel.base !in GLIDE_VOWELS || (vowel.base == "AY" && run.firstOrNull() == "M" && AY_M == "am")
+            val au = vowel.base == "AO" && vowel.letters == "au"
+            val canClose = (vowel.base !in GLIDE_VOWELS || (vowel.base == "AY" && run.firstOrNull() == "M" && AY_M == "am")) &&
+                !(rColored && (vowel.base == "IH" || vowel.base == "IY")) && !au // i + r bỏ r là "ia", au không khép
             var ilFinal = false
             var coda = ""
             var codaPhone = ""
@@ -456,26 +486,35 @@ object EnglishVi {
             var nextOnset = ""
             var nextGlide = ""
             if (last) {
-                if (run.firstOrNull() == "L" && (vowel.base == "IH" || vowel.base == "IY") && IL_FINAL == "u") {
-                    ilFinal = true // skill -> xờ-kiu (chủ sách 04-10): l cuối sau i thành u
+                if (run.firstOrNull() == "L" && vowel.base == "IY" && "ie" in vowel.letters) {
+                    tail.add(Syl("", "eo")) // -iel: i + "eo" (Ciel xi-eo, Garfiel ga-phi-eo)
+                    run = emptyList()
+                } else if (run.firstOrNull() == "L" && (vowel.base == "IH" || vowel.base == "IY") && IL_FINAL == "u") {
+                    ilFinal = true // skill -> xờ-kiu, Will -> guyu, Hilde -> hiu (chủ sách 04-10): l sau i thành u
                     for (base in run.drop(1)) if (FINAL_CLUSTER == "syllable") tail.add(finalSyllable(base, flags))
                     run = emptyList()
                 }
-                if (vowel.base == "EY" && run.firstOrNull() == "S") run = emptyList() // /eɪ/ + s cuối: ây, s bỏ (gờ-rây)
+                if (vowel.base == "EY" && run.firstOrNull() == "S") {
+                    run = emptyList() // /eɪ/ + s cuối: ây, s bỏ (gờ-rây)
+                } else if (run.firstOrNull() == "S" && run.size >= 2 && run[1] in STOPS) {
+                    run = run.drop(1) // s trước tắc cuối từ rơi, tắc giữ làm phụ âm cuối (Dusk -> đắc)
+                }
                 if (run.isNotEmpty()) {
                     val first = run[0]
                     codaPhone = first
-                    val letter: String? = if (canClose) codaLetter(first, true) else (if (GLIDE_CODA == "drop") "" else null)
+                    var letter: String? = if (canClose) codaLetter(first, true) else (if (GLIDE_CODA == "drop") "" else null)
+                    if (first == "G" && vowel.base == "ER") letter = "" // g cuối sau ơ rơi (Hamburg -> ham-bơ)
+                    if (au && first == "L") letter = "" // l sau au rơi hẳn (Paul -> pau)
                     when {
                         // l sau ai / ao / oi: âm tiết "ồ" KHÔNG phụ âm đầu, l bỏ (chủ sách 04-10: lai-ồ, kai-ồ, đoi-ồ)
-                        first == "L" && !canClose -> tail.add(Syl("", "ô", "", true))
+                        first == "L" && !canClose && !au -> tail.add(Syl("", "ô", "", true))
                         letter == null -> tail.add(finalSyllable(first, flags))
                         else -> coda = letter
                     }
                     for (base in run.drop(1)) if (FINAL_CLUSTER == "syllable") tail.add(finalSyllable(base, flags))
                 }
             } else {
-                val split = splitOnset(run)
+                val split = splitOnset(run, phones[vowels[k + 1]].base == "UW")
                 var head = split.first
                 nextOnset = split.second
                 nextGlide = split.third
@@ -484,12 +523,24 @@ object EnglishVi {
                     nextOnset = ""
                 }
                 if (run.isEmpty() && vowel.base == "ER") nextOnset = "R" // Cô-lô-ra-đô, ca-mê-ra
+                if (head == listOf("L") && (vowel.base == "IH" || vowel.base == "IY") && nextOnset in setOf("B", "D", "G") && IL_FINAL == "u") {
+                    ilFinal = true // l trước tắc hữu thanh sau i thành u (Gilbert -> ghiu-bớt)
+                    head = emptyList()
+                }
+                if (vowel.base == "AO" && run == listOf("S", "T")) head = emptyList() // AO + s + t: s rơi, âm tiết mở ô (Austin -> ô-tin)
                 var liquidStop = ""
                 if ((nextOnset == "L" || nextOnset == "R") && head.isNotEmpty() && head.last() in ALL_STOPS) {
-                    liquidStop = head.last() // tắc + l / r giữa từ: "Cờ" huyền, âm tiết trước mở (chủ sách 04-10: la-pờ-lết)
-                    head = head.dropLast(1)
+                    if ((nextOnset == "L" || (nextOnset == "R" && head.size == 1 && canClose)) && vowel.stress >= 1) {
+                        // tắc + l sau nguyên âm nhấn (tắc + r khi tắc đứng một mình): tắc khép âm tiết nhấn (táp-lét, góp-lin, xờ-cót-lừn, cobra cốp-ra); nk + l: k rơi
+                        if (head.size >= 2 && head[head.size - 2] == "NG" && head.last() == "K") head = head.dropLast(1)
+                    } else {
+                        // tắc + l / r sau nguyên âm không nhấn (hay + r): "Cờ" huyền, âm tiết trước mở (chủ sách 04-10: la-pờ-lết)
+                        liquidStop = head.last()
+                        head = head.dropLast(1)
+                    }
                 }
-                if (head.isEmpty() && liquidStop.isEmpty() && nextOnset.isNotEmpty() && run.size == 1 && run[0] in STOPS && canClose && vowel.stress >= 1 && (
+                if (head.isEmpty() && liquidStop.isEmpty() && nextOnset.isNotEmpty() && run.size == 1 && run[0] in STOPS && canClose && vowel.stress >= 1 &&
+                    vowel.base != "UW" && vowel.base != "IY" && ( // nguyên âm dài cao không nhân đôi (Lucas -> lu-cát)
                         GEMINATE == "stressed" || (GEMINATE == "primary" && vowel.stress == 1) ||
                             (GEMINATE == "short" && vowel.base in SHORT_VOWELS)
                         )
@@ -508,20 +559,42 @@ object EnglishVi {
                 if (liquidStop.isNotEmpty()) tail.add(Syl(onsetLetter(liquidStop), "ơ", "", true))
             }
             var core = nucleus(vowel, coda, rColored)
+            var grave = false
             if (vowel.base == "AO" && codaPhone == "L" && coda.isNotEmpty()) core = "ô" // /ɔːl/ -> ôn (phai-bôn, như gôn)
-            if (k == 0 && wGu && coda.isEmpty()) {
-                onset = "" // guô chỉ đứng trước phụ âm cuối: âm tiết mở giữ w như cũ (Warrior -> Oa-ri-ơ)
-                flags.remove("analogy:w_gu")
-            } else if (k == 0 && wGu && (vowel.base == "AO" || vowel.base == "AA")) {
-                core = "ô" // gu + âm o đọc guô (Walt -> guốt): water -> guốt-tơ
+            if (vowel.base == "EH" && codaPhone == "L" && coda == "n" && last && (run.size == 1 || (run[1] != "T" && run[1] != "D"))) {
+                core = "eo" // l cuối sau e (hay trước phụ âm cuối không phải t d) thành o: eo (Elf, bell beo, spell xờ-peo); l trước t d giữ n (Roosevelt)
+                coda = ""
             }
+            if (!last && vowel.base == "AO" && run == listOf("S", "T")) core = "ô" // au / o + s + t -> ô (Austin ô-tin)
+            if (vowel.base == "ER" && (coda == "c" || coda == "ch")) core = "â" // ơc / ơch không có vần: ɜːr + c -> âc (Kirk cấc, Burke bấc)
+            if (last && vowel.base == "AO" && rColored && codaPhone == "JH") {
+                core = "o" // o + ch cuối -> óc (George gióc)
+                coda = "c"
+            }
+            if (k == 0 && wGu && coda.isNotEmpty() && (vowel.base == "AO" || vowel.base == "UH" || (vowel.base == "AA" && 'o' in vowel.letters))) {
+                core = "ô" // g + u + ô chỉ đứng trước phụ âm cuối (Walt guốt, water guốt-tờ, Wood guốt)
+            }
+            if (k == 0 && wGu && vowel.base == "AY") core = "ây" // w + ai: guây (Weiss)
+            if (vowel.base == "AW" && (run.firstOrNull() == "S" || run.firstOrNull() == "Z")) core = "au" // house hau, mouse mau; town tao, sound sao
+            if (vowel.base == "AE" && coda == "c") coda = "ch" // ac viết ach (Jack dách, action ách-sừn)
             if (vowel.base == "AE" && coda == "ng" && run.size >= 2 && run[0] == "NG" && run[1] == "K") {
                 core = "a" // /æŋk/ -> anh (chủ sách 04-10: tank -> tanh; rank, thank theo đó)
                 coda = "nh"
                 flags.add("analogy:ank")
             }
+            val prev = before.lastOrNull()
+            if (last && isSchwa(vowel) && (((prev == "SH" || prev == "ZH") && run == listOf("N")) || (prev == "L" && run == listOf("N", "D")))) {
+                // -tion, -sion, -land: ừn thanh huyền dù khép (station xờ-tây-sừn, Scotland lừn, Roland rô-lừn)
+                core = "ư"
+                grave = true
+            }
+            if (last && vowel.base == "UW" && vowel.stress == 0 && vowel.letters == "e" && run.isEmpty()) core = "iu" // -ew cuối: iu (Andrew an-riu)
+            if (last && vowel.base == "ER" && vowel.stress == 0 && core == "ơ" && run.isEmpty() && onset.isNotEmpty() && before != listOf("S", "T")) {
+                grave = true // -er cuối mở: ơ thanh huyền (guốt-tờ, hăn-tờ), trừ sau st (mát-tơ)
+            }
             if (ilFinal) core += "u"
-            emit(out, onset, glide, core, coda, false) // -er cuối: ơ thanh ngang (chủ sách 04-10: mát-tơ)
+            val use = if (onset == "JH" && vowel.stress >= 1 && (vowel.base == "AE" || vowel.base == "AH" || vowel.base == "UH")) "Z" else onset // j trước a ă u đọc d (Jack dách, Jud dút)
+            emit(out, use, glide, core, coda, grave)
             out.addAll(tail)
             onset = nextOnset
             glide = nextGlide
@@ -529,19 +602,18 @@ object EnglishVi {
         return out
     }
 
-    private fun onsetRun(run: List<String>, out: MutableList<Syl>, flags: MutableList<String>, firstVowel: Phone?): Pair<String, String> {
-        val (head, onset, glide) = splitOnset(run)
+    private fun onsetRun(run: List<String>, out: MutableList<Syl>, firstVowel: Phone?): Pair<String, String> {
+        val (head, onset, glide) = splitOnset(run, false)
         head.forEach { out.add(epenthetic(it, true)) }
-        val oSound = firstVowel != null && (firstVowel.base == "AO" || firstVowel.base == "OW" || (firstVowel.base == "AA" && 'o' in firstVowel.letters))
-        if (run == listOf("W") && oSound) {
-            // w đầu từ trước âm o -> gu (chủ sách 04-10: Walt -> guốt); w trước âm khác giữ oa / uy / oe (Oa-sinh-tơn)
-            flags.add("analogy:w_gu")
+        if (run == listOf("W") && firstVowel != null) {
+            // w đầu từ -> g + âm đệm gần như mọi nguyên âm: guy, goen / goét, guây (Will, William, Wendy, west, Weiss); w ở nửa sau của từ ghép giữ oa / uy / oe
             return "G" to glide
         }
         return onset to glide
     }
 
-    private fun splitOnset(input: List<String>): Triple<List<String>, String, String> {
+    /** `medial`: giữa từ và trước u, dr -> r (Andrew -> an-riu); Cassandra, Pendragon giữ đờ-ra. */
+    private fun splitOnset(input: List<String>, medial: Boolean): Triple<List<String>, String, String> {
         if (input.isEmpty()) return Triple(emptyList(), "", "")
         var run = input
         var glide = ""
@@ -551,6 +623,7 @@ object EnglishVi {
             if (run.isEmpty()) return Triple(emptyList(), "", glide)
         }
         if (run.size >= 2 && run[run.size - 2] == "T" && run[run.size - 1] == "R" && TR == "tr") return Triple(run.dropLast(2), "tr", glide)
+        if (medial && run.size >= 2 && run[run.size - 2] == "D" && run[run.size - 1] == "R") return Triple(run.dropLast(2), "R", glide)
         return Triple(run.dropLast(1), run.last(), glide)
     }
 
@@ -645,7 +718,7 @@ object EnglishVi {
 
     /** true nếu viết hoa chữ đầu, false nếu toàn chữ thường, null nếu không phải chữ ASCII hay viết hoa lạ. */
     private fun partCase(part: String): Boolean? {
-        if (part.isEmpty() || !part.all { it in 'a'..'z' || it in 'A'..'Z' }) return null
+        if (part.isEmpty() || !part.all { it in 'a'..'z' || it in 'A'..'Z' || it == 'ñ' || it == 'Ñ' }) return null
         if (part == part.lowercase(Locale.ROOT)) return false
         if (part[0] in 'A'..'Z' && part.substring(1) == part.substring(1).lowercase(Locale.ROOT)) return true
         return null

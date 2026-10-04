@@ -70,7 +70,7 @@ class RomanizationTest {
         assertEquals("May-a", Romanization.reading("Maya", "ja"))
         assertEquals("Cay-a", Romanization.reading("Kaya", "ja"))
         assertEquals("Xây-a", Romanization.reading("Seiya", "ja"))
-        assertEquals("May-u", Romanization.reading("Mayu", "ja"))
+        assertEquals("Ma-giu", Romanization.reading("Mayu", "ja"))
         assertEquals("Ki-ung", Romanization.reading("Kyung", "ko"))
         assertEquals("Bi-ung", Romanization.reading("Byung", "ko"))
         assertEquals("Ghe-ong", Romanization.reading("Gyeong", "ko"))
@@ -116,6 +116,24 @@ class RomanizationTest {
     }
 
     @Test
+    fun theNinthRoundOwnerRulings() {
+        for ((token, origin, want) in listOf(
+            Triple("Izayoi", "ja", "I-da-gioi"), Triple("Futayo", "ja", "Phu-ta-giô"), Triple("Shinomiya", "ja", "Si-nô-mi-a"), Triple("Renya", "ja", "Re-ni-a"),
+            Triple("Sakuya", "ja", "Xa-cu-gia"), Triple("Direkuresu", "ja", "Đi-re-cu-re-xu"), Triple("Hamsuke", "ja", "Ham-xu-ke"), Triple("ecchi", "ja", "ét-chi"),
+            Triple("Haffu", "ja", "Ha-phu"), Triple("Reidi", "ja", "Rây-đi"), Triple("Kiyoshi", "ja", "Ki-ô-si"), Triple("Sayo", "ja", "Xa-giô"),
+            Triple("unnie", "ko", "un-ni"), Triple("Yeeun", "ko", "Gie-ưn"), Triple("Muyoung", "ko", "Mu-giong"), Triple("Chaeyeon", "ko", "Che-gion"),
+            Triple("Hatta", "ja", "Ha-ta"), Triple("Koichi", "ja", "Co-i-chi"), Triple("Koizumi", "ja", "Coi-du-mi"), Triple("Nissan", "ja", "Nít-xan"), Triple("Yejin", "ko", "Gie-gin"), Triple("Seoyeon", "ko", "Xeo-gion"),
+            Triple("Young", "ko", "Giong"), Triple("Jeongeun", "ko", "Châng-gưn"), Triple("Luda", "ko", "Lu-đa"), Triple("Oppa", "ko", "Óp-pa"),
+            Triple("Jeong", "ko", "Gie-ong"), Triple("Yeo", "ko", "Gieo"),
+        )) {
+            assertEquals(token, want, Romanization.reading(token, origin))
+        }
+        assertNull(Romanization.reading("Leon", "ko"))
+        assertEquals(listOf("analogy:ja_cch"), Romanization.readingWithFlags("ecchi", "ja")?.flags)
+        assertEquals(listOf("analogy:y_after_i"), Romanization.readingWithFlags("Miyuki", "ja")?.flags)
+    }
+
+    @Test
     fun openChoicesAreFlagged() {
         assertEquals(emptyList<String>(), Romanization.readingWithFlags("Yamato", "ja")?.flags) // ya Nhật đã chốt gi (chủ sách 04-10)
         assertEquals(listOf("analogy:y_gi"), Romanization.readingWithFlags("Yuki", "ja")?.flags)
@@ -123,7 +141,7 @@ class RomanizationTest {
         assertEquals(listOf("analogy:ko_w_gu"), Romanization.readingWithFlags("Suwon", "ko")?.flags)
         assertEquals(emptyList<String>(), Romanization.readingWithFlags("Kwon", "ko")?.flags)
         assertEquals(emptyList<String>(), Romanization.readingWithFlags("Seiya", "ja")?.flags)
-        assertEquals(listOf("analogy:y_final"), Romanization.readingWithFlags("Mayu", "ja")?.flags)
+        assertEquals(listOf("analogy:y_gi"), Romanization.readingWithFlags("Mayu", "ja")?.flags) // yu / yo cuối từ không còn bán âm (lần 9); chỉ ya
         assertEquals(listOf("open:y_after_vowel_pair"), Romanization.readingWithFlags("Kouya", "ja")?.flags)
         assertEquals(listOf("analogy:ko_yeo"), Romanization.readingWithFlags("Gyeong", "ko")?.flags)
         assertEquals(listOf("analogy:ko_eo_u"), Romanization.readingWithFlags("Seoul", "ko")?.flags)
