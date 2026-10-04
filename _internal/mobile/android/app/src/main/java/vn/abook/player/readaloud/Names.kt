@@ -14,14 +14,14 @@ object Names {
     const val SAMPLE_CHAPTERS = 40
     const val MIN_NAMES = 10
     const val MIN_OCCURRENCES = 60
-    const val JA_SHARE = 0.75
+    const val JA_SHARE = 0.70
     const val HON_MIN = 20
     const val HON_NAMES = 3
     const val HON_JA_SHARE = 0.3
-    const val KO_SHARE = 0.85
+    const val KO_SHARE = 0.70
     const val KO_ONLY_SHARE = 0.5
     /** Đổi khi đổi cách đoán: gốc đã lưu của cuốn được đoán lại. */
-    const val RULE_VERSION = 2
+    const val RULE_VERSION = 3
     private const val ALLOWED_MARKS = "āīūēōâîûêôĀĪŪĒŌÂÎÛÊÔ"
 
     /** (dấu câu đầu, lõi từ chữ cái đầu tới chữ cái cuối, dấu câu cuối). */
