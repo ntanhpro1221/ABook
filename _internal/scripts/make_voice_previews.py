@@ -1,6 +1,6 @@
 """Tạo clip nghe thử (preview) cho những giọng dựng sẵn chưa có, vào một thư mục CHỜ - không vào thẳng assets.
 
-    python scripts/make_voice_previews.py --presets "Mạnh Dũng,Anh Khôi" [--out scripts/pending_patches/assets/voice_previews]
+    python scripts/make_voice_previews.py --presets "Quốc Tuấn,Thiện Minh" [--out scripts/pending_patches/assets/voice_previews]
     python scripts/make_voice_previews.py --engine zerotts --presets "baotrang,giahuy" [--out ...]
 
 Chạy bằng interpreter mang đúng bản VieNeu sẽ dùng (17-09: `runtime/venv-vieneu381`). Cần GPU rảnh. Máy đọc khác (`--engine`, adapter

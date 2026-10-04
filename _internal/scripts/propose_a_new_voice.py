@@ -2,7 +2,7 @@
 
     runtime/.venv/Scripts/python.exe scripts/propose_a_new_voice.py --verify
     runtime/.venv/Scripts/python.exe scripts/propose_a_new_voice.py --report <audition.json> \
-        --names "Mạnh Dũng,Adam bựa" [--previews <thư mục>] [--out <đường dẫn bản vá>]
+        --names "Quốc Tuấn,Adam bựa" [--previews <thư mục>] [--out <đường dẫn bản vá>]
 
 `--verify` đo lại preview của các giọng ĐANG dùng và so với số đang ghi trong `voice_catalog`: nếu
 cách đo này không tái lập được số cũ thì số mới không so được với số cũ, và mọi thứ sau đó là rác.
