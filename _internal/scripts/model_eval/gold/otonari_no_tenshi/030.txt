@@ -32,10 +32,10 @@
 9 D MAHIRU,SHIINA MAHIRU,SHIINA happy,tender,neutral 0-1 normal normal f
 10 D AMANE,FUJIMIYA AMANE,FUJIMIYA tired,neutral 0-1 normal,slow normal,soft m
 11 N
-12 N,T NARRATOR,MAHIRU~,SHIINA MAHIRU~,SHIINA~,AMANE~,FUJIMIYA AMANE~,FUJIMIYA~ neutral,sarcastic 0-1 normal normal u
+12 N,T MAHIRU~,SHIINA MAHIRU~,SHIINA~,AMANE~,FUJIMIYA AMANE~,FUJIMIYA~,NARRATOR neutral,sarcastic 0-1 normal normal u
 13 N NARRATOR neutral,tender 0-1 normal normal u
 14 N NARRATOR neutral,happy 0-1 normal normal u
-15 N,T NARRATOR,AMANE~,FUJIMIYA AMANE~,FUJIMIYA~ neutral,sarcastic 0-1 normal normal u
+15 N,T AMANE~,FUJIMIYA AMANE~,FUJIMIYA~,NARRATOR neutral,sarcastic 0-1 normal normal u
 16 N
 17 N
 18 N
@@ -71,11 +71,11 @@
 48 N NARRATOR neutral,tired 0-1 normal normal u
 49 N NARRATOR neutral,surprised 0-1 normal normal u
 50 N NARRATOR neutral,surprised 0-1 normal normal u
-51 N,T NARRATOR,AMANE~,FUJIMIYA AMANE~,FUJIMIYA~ neutral,tired 0-1 normal normal u
+51 N,T AMANE~,FUJIMIYA AMANE~,FUJIMIYA~,NARRATOR neutral,tired 0-1 normal normal u
 52 N NARRATOR neutral,tender,sad 0-1 normal normal u
 53 T AMANE,FUJIMIYA AMANE,FUJIMIYA surprised,neutral,sad 0-2 normal soft,normal m
 54 N NARRATOR neutral,sad 0-1 normal normal u
-55 N,T NARRATOR,AMANE~,FUJIMIYA AMANE~,FUJIMIYA~ neutral,tired 0-1 normal normal u
+55 N,T AMANE~,FUJIMIYA AMANE~,FUJIMIYA~,NARRATOR neutral,tired 0-1 normal normal u
 56 D MAHIRU,SHIINA MAHIRU,SHIINA neutral,surprised,tender 0-1 normal normal,soft f
 57 D AMANE,FUJIMIYA AMANE,FUJIMIYA neutral,sad,tired 0-1 slow,normal soft,normal m
 58 N NARRATOR neutral,sad 0-1 normal normal u

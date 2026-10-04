@@ -29,8 +29,8 @@
 18 N
 19 T SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI tender,happy,neutral 0-1 normal,slow normal,soft f
 20 N
-21 N,T NARRATOR,SHIMOTSUKI SHIHO~,SHIHO~,SHIMOTSUKI~ neutral,tender 0-1 normal normal u
-22 N,T NARRATOR,SHIMOTSUKI SHIHO~,SHIHO~,SHIMOTSUKI~ neutral 0-1 normal normal u
+21 N,T SHIMOTSUKI SHIHO~,SHIHO~,SHIMOTSUKI~,NARRATOR neutral,tender 0-1 normal normal u
+22 N,T SHIMOTSUKI SHIHO~,SHIHO~,SHIMOTSUKI~,NARRATOR neutral 0-1 normal normal u
 23 T SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI neutral,angry,afraid 0-1 normal normal f
 24 N
 25 N
@@ -56,13 +56,13 @@
 45 N NARRATOR neutral,surprised 0-1 normal normal u
 46 T SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI neutral,surprised 0-1 normal normal f
 47 N
-48 N,T NARRATOR,SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI neutral,surprised 0-1 normal normal u
+48 N,T SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI,NARRATOR neutral,surprised 0-1 normal normal u
 49 T SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI neutral,surprised 0-1 normal normal f
-50 N,T NARRATOR,SHIMOTSUKI SHIHO~,SHIHO~,SHIMOTSUKI~ neutral 0-1 normal normal u
-51 N,T NARRATOR,SHIMOTSUKI SHIHO~,SHIHO~,SHIMOTSUKI~ neutral 0-1 normal normal u
+50 N,T SHIMOTSUKI SHIHO~,SHIHO~,SHIMOTSUKI~,NARRATOR neutral 0-1 normal normal u
+51 N,T SHIMOTSUKI SHIHO~,SHIHO~,SHIMOTSUKI~,NARRATOR neutral 0-1 normal normal u
 52 N
 53 T SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI angry,sad,neutral 0-1 normal normal f
 54 N NARRATOR neutral,angry 0-1 normal normal u
 55 T SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI neutral,afraid 0-1 normal normal f
-56 N,T NARRATOR,SHIMOTSUKI SHIHO~,SHIHO~,SHIMOTSUKI~ neutral 0-1 normal normal u
+56 N,T SHIMOTSUKI SHIHO~,SHIHO~,SHIMOTSUKI~,NARRATOR neutral 0-1 normal normal u
 57 N

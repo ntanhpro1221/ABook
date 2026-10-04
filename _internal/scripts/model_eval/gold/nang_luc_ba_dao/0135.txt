@@ -120,5 +120,5 @@
 115 N
 116 D TRỊNH LÃO,NPC*~ happy,excited 1-2 normal loud,normal m
 117 N NARRATOR neutral,surprised,sarcastic 0-1 normal normal u
-118 N,T NARRATOR,TRỊNH VĨNH MONG surprised 0-1 normal normal u
-119 N,T NARRATOR,TRỊNH VĨNH MONG surprised,sarcastic 0-1 normal normal u
+118 N,T TRỊNH VĨNH MONG,NARRATOR surprised 0-1 normal normal u
+119 N,T TRỊNH VĨNH MONG,NARRATOR surprised,sarcastic 0-1 normal normal u

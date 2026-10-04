@@ -68,7 +68,7 @@
 52 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU neutral,afraid 0-1 normal normal f
 53 D RUTH,RUTHKANIA,RUTHKHANIA,RUTHKANIA NYE PARDOMSHIHA neutral,happy 0-1 normal normal f
 54 N NARRATOR neutral,afraid 0-1 normal normal u
-55 N,T NARRATOR,SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU happy,neutral 0-1 normal normal u
+55 N,T SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU,NARRATOR happy,neutral 0-1 normal normal u
 56 N NARRATOR neutral,happy 0-1 normal normal u
 57 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU neutral,happy 0-1 normal normal f
 58 N
@@ -118,14 +118,14 @@
 102 D RUTH,RUTHKANIA,RUTHKHANIA,RUTHKANIA NYE PARDOMSHIHA,NARRATOR~ angry,excited 1-2 fast loud f
 103 N NARRATOR neutral,angry 0-1 normal normal u
 104 N NARRATOR neutral,angry 0-1 normal normal u
-105 N,T NARRATOR,RUTH,RUTHKANIA,RUTHKHANIA,RUTHKANIA NYE PARDOMSHIHA angry,neutral 0-2 normal,fast normal u
+105 N,T RUTH,RUTHKANIA,RUTHKHANIA,RUTHKANIA NYE PARDOMSHIHA,NARRATOR angry,neutral 0-2 normal,fast normal u
 106 N
 107 N
 108 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral,excited 0-1 normal normal,loud m
 109 N
 110 D RUTH,RUTHKANIA,RUTHKHANIA,RUTHKANIA NYE PARDOMSHIHA,NARRATOR~ angry,excited 1-2 fast loud f
 111 N
-112 N,T NARRATOR,KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU surprised,neutral,sad 0-1 normal normal u
+112 N,T KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU,NARRATOR surprised,neutral,sad 0-1 normal normal u
 113 N NARRATOR neutral,sad,happy 0-1 normal normal u
 114 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU neutral 0-1 normal normal m
 115 D RUTH,RUTHKANIA,RUTHKHANIA,RUTHKANIA NYE PARDOMSHIHA neutral,excited 0-1 normal normal,loud f
@@ -173,6 +173,6 @@
 157 N NARRATOR neutral,afraid 0-1 normal normal u
 158 D KIRIHA,KURANO KIRIHA,KURANO,KII~ neutral 0-1 normal normal f
 159 N
-160 N,T NARRATOR,KIRIHA,KURANO KIRIHA,KURANO,KII~ neutral 0-1 normal normal u
+160 N,T KIRIHA,KURANO KIRIHA,KURANO,KII~,NARRATOR neutral 0-1 normal normal u
 161 N
 162 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU surprised,afraid,angry 1-2 fast loud,normal f

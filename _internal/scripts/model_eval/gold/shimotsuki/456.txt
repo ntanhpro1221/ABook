@@ -25,7 +25,7 @@
 11 D NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral,surprised 0-1 normal normal m
 12 D SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI surprised,afraid 1-2 fast loud,normal f
 13 D NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral,tender 0-1 normal normal,soft m
-14 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral,surprised 0-1 normal normal u
+14 N,T NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA,NARRATOR neutral,surprised 0-1 normal normal u
 15 N NARRATOR neutral,surprised 0-1 normal normal u
 16 D NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral 0-1 normal normal m
 17 N
@@ -55,12 +55,12 @@
 41 D NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA tender,happy 0-1 normal normal,soft m
 42 D SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI sad,angry,surprised,tender 0-2 normal normal,soft f
 43 N NARRATOR neutral,sad 0-1 normal normal u
-44 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral,tender,happy 0-1 normal normal u
+44 N,T NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA,NARRATOR neutral,tender,happy 0-1 normal normal u
 45 D NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral,surprised 0-1 normal normal m
 46 D SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI neutral,sad,sarcastic 0-1 normal normal f
-47 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral 0-1 normal normal u
-48 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral 0-1 normal normal u
-49 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral 0-1 normal normal u
+47 N,T NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA,NARRATOR neutral 0-1 normal normal u
+48 N,T NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA,NARRATOR neutral 0-1 normal normal u
+49 N,T NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA,NARRATOR neutral 0-1 normal normal u
 50 D NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral,tender,sad 0-1 normal normal,soft m
 51 D SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI tender,happy 0-2 normal,slow soft,normal f
 52 N NARRATOR neutral,happy 0-1 normal normal u

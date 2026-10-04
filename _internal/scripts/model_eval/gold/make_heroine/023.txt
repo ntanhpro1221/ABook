@@ -40,7 +40,7 @@
 27 D YANAMI,ANNA YANAMI,YANAMI ANNA,ANNA happy,neutral 0-1 normal normal f
 28 N NARRATOR neutral,surprised 0-1 normal normal u
 29 N
-30 N,T NARRATOR,YANAMI~,ANNA YANAMI~,YANAMI ANNA~,ANNA~ neutral,sarcastic 0-1 normal normal u
+30 N,T YANAMI~,ANNA YANAMI~,YANAMI ANNA~,ANNA~,NARRATOR neutral,sarcastic 0-1 normal normal u
 31 D YANAMI,ANNA YANAMI,YANAMI ANNA,ANNA neutral,surprised,sarcastic 0-1 normal,slow normal,soft f
 32 D YAKISHIO,REMON,YAKISHIO REMON,REMON YAKISHIO surprised,neutral 0-1 normal normal f
 33 D YANAMI,ANNA YANAMI,YANAMI ANNA,ANNA neutral 0-1 normal normal f

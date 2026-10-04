@@ -11,8 +11,8 @@
 7 N
 8 D HẠ TỬ CƯỜNG,TỬ CƯỜNG neutral,happy 0-1 normal normal m
 9 D HẠ TỬ CƯỜNG,TỬ CƯỜNG excited,happy 1 normal normal,loud m
-10 N,T NARRATOR,CHU MẶC~ surprised,neutral 0-1 normal normal u
-11 N,T NARRATOR,CHU MẶC surprised,sarcastic,neutral 0-1 normal normal u
+10 N,T CHU MẶC~,NARRATOR surprised,neutral 0-1 normal normal u
+11 N,T CHU MẶC,NARRATOR surprised,sarcastic,neutral 0-1 normal normal u
 12 D HẠ TỬ CƯỜNG,TỬ CƯỜNG sad,neutral 0-1 normal normal m
 13 D HẠ TỬ CƯỜNG,TỬ CƯỜNG sad,excited,angry 1-2 normal normal,loud m
 14 N
@@ -24,7 +24,7 @@
 20 D HẠ TỬ CƯỜNG,TỬ CƯỜNG tender,happy,sad 0-1 normal normal m
 21 D HẠ TỬ CƯỜNG,TỬ CƯỜNG excited,happy 1 normal normal m
 22 D HẠ TỬ CƯỜNG,TỬ CƯỜNG excited,happy 1-2 normal normal,loud m
-23 N,T NARRATOR,CHU MẶC~ neutral,happy 0-1 normal normal u
+23 N,T CHU MẶC~,NARRATOR neutral,happy 0-1 normal normal u
 24 D CHU MẶC surprised,happy 0-1 normal normal m
 25 N
 26 D HẠ TỬ CƯỜNG,TỬ CƯỜNG happy,tender 0-1 normal normal m
@@ -32,7 +32,7 @@
 28 N
 29 D HẠ TỬ CƯỜNG,TỬ CƯỜNG tender,happy 1 normal normal m
 30 N NARRATOR neutral,surprised 0-1 normal normal u
-31 N,T NARRATOR,CHU MẶC surprised 1 normal normal u
+31 N,T CHU MẶC,NARRATOR surprised 1 normal normal u
 32 N
 33 D HẠ TỬ CƯỜNG,TỬ CƯỜNG neutral,whispering,tender 0-1 slow,normal soft m
 34 N
@@ -43,7 +43,7 @@
 39 D HẠ TỬ CƯỜNG,TỬ CƯỜNG excited,angry 1-2 normal,fast normal,loud m
 40 D HẠ TỬ CƯỜNG,TỬ CƯỜNG excited,tender 1 normal normal m
 41 D HẠ TỬ CƯỜNG,TỬ CƯỜNG tender,excited 1 normal normal m
-42 N,T NARRATOR,CHU MẶC~ surprised 0-1 normal normal u
+42 N,T CHU MẶC~,NARRATOR surprised 0-1 normal normal u
 43 D HẠ TỬ CƯỜNG,TỬ CƯỜNG happy,sarcastic 0-1 normal normal m
 44 N
 45 D CHU MẶC surprised 0-1 normal normal m
@@ -51,8 +51,8 @@
 47 D HẠ TỬ CƯỜNG,TỬ CƯỜNG excited,happy 1-2 normal normal,loud m
 48 D HẠ TỬ CƯỜNG,TỬ CƯỜNG excited,happy 1 normal normal m
 49 N NARRATOR neutral,happy 0-1 normal normal u
-50 N,T NARRATOR,CHU MẶC excited,sarcastic 1 normal normal u
-51 N,T NARRATOR,CHU MẶC excited,happy 1 normal normal u
+50 N,T CHU MẶC,NARRATOR excited,sarcastic 1 normal normal u
+51 N,T CHU MẶC,NARRATOR excited,happy 1 normal normal u
 52 D HẠ TỬ CƯỜNG,TỬ CƯỜNG tender,happy 0-1 normal normal m
 53 D HẠ TỬ CƯỜNG,TỬ CƯỜNG happy,excited 1 normal normal m
 54 D HẠ TỬ CƯỜNG,TỬ CƯỜNG sad,neutral 0-1 normal normal m

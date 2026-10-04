@@ -36,7 +36,7 @@
 4 N
 5 N NARRATOR neutral,excited 0-1 normal normal u
 6 N NARRATOR neutral,excited 0-1 normal normal u
-7 N,T NARRATOR,TORAHIDE,KAKEI TORAHIDE excited,angry,neutral 0-2 normal,fast normal u
+7 N,T TORAHIDE,KAKEI TORAHIDE,NARRATOR excited,angry,neutral 0-2 normal,fast normal u
 8 N
 9 N NARRATOR neutral,angry,excited 0-1 normal normal u
 10 D TORAHIDE,KAKEI TORAHIDE excited,happy 1-2 normal normal,loud m
@@ -63,9 +63,9 @@
 31 D TORAHIDE,KAKEI TORAHIDE,NARRATOR~ angry,surprised 1-2 normal normal,loud m
 32 N
 33 N NARRATOR neutral,angry 0-1 normal normal u
-34 N,T NARRATOR,TORAHIDE~,KAKEI TORAHIDE~ angry,neutral 0-1 normal normal u
+34 N,T TORAHIDE~,KAKEI TORAHIDE~,NARRATOR angry,neutral 0-1 normal normal u
 35 N NARRATOR neutral,surprised 0-1 normal normal u
-36 N,T NARRATOR,TORAHIDE,KAKEI TORAHIDE surprised 0-2 normal normal u
+36 N,T TORAHIDE,KAKEI TORAHIDE,NARRATOR surprised 0-2 normal normal u
 37 D TORAHIDE,KAKEI TORAHIDE surprised,angry 1-2 fast,normal loud m
 38 D MUNESHIGE,TACHIBANA MUNESHIGE neutral 0-1 normal normal m
 39 N
@@ -74,11 +74,11 @@
 42 N
 43 N NARRATOR neutral,surprised,happy 0-1 normal normal u
 44 N
-45 N,T NARRATOR,MUNESHIGE~,TACHIBANA MUNESHIGE~ neutral 0-1 normal normal u
+45 N,T MUNESHIGE~,TACHIBANA MUNESHIGE~,NARRATOR neutral 0-1 normal normal u
 46 N
 47 N
 48 N
-49 N,T NARRATOR,MUNESHIGE~,TACHIBANA MUNESHIGE~ neutral 0-1 normal normal u
+49 N,T MUNESHIGE~,TACHIBANA MUNESHIGE~,NARRATOR neutral 0-1 normal normal u
 50 N
 51 N
 52 N
@@ -140,7 +140,7 @@
 108 D SATOMI YOSHIYASU,YOSHIYASU,CHÍNH NGHĨA~ afraid,excited 1-2 fast normal,loud f
 109 N
 110 N
-111 N,T NARRATOR,TORAHIDE~,KAKEI TORAHIDE~ happy,neutral 0-1 normal normal u
+111 N,T TORAHIDE~,KAKEI TORAHIDE~,NARRATOR happy,neutral 0-1 normal normal u
 112 N
 113 N
 114 N
@@ -190,15 +190,15 @@
 158 N
 159 D YOSHINAO neutral,happy 0-1 normal normal m
 160 N NARRATOR neutral,afraid 0-1 normal normal u
-161 N,T NARRATOR,ADELE,ADELE BALFETTE surprised,afraid 0-1 normal normal u
+161 N,T ADELE,ADELE BALFETTE,NARRATOR surprised,afraid 0-1 normal normal u
 162 N
 163 N NARRATOR neutral,surprised 0-1 normal normal u
 164 N
-165 N,T NARRATOR,ADELE,ADELE BALFETTE afraid 1-2 normal normal u
+165 N,T ADELE,ADELE BALFETTE,NARRATOR afraid 1-2 normal normal u
 166 N
 167 N
 168 N NARRATOR neutral,afraid 0-1 normal normal u
-169 N,T NARRATOR,ADELE~,ADELE BALFETTE~ afraid,neutral 0-1 normal normal u
+169 N,T ADELE~,ADELE BALFETTE~,NARRATOR afraid,neutral 0-1 normal normal u
 170 D ADELE,ADELE BALFETTE afraid,angry 1-2 normal soft,normal f
 171 N NARRATOR neutral,afraid 0-1 normal normal u
 172 N
@@ -210,7 +210,7 @@
 178 D ADELE,ADELE BALFETTE surprised,afraid 0-1 slow,normal soft f
 179 N
 180 N
-181 N,T NARRATOR,ADELE,ADELE BALFETTE surprised,afraid 0-1 normal normal u
+181 N,T ADELE,ADELE BALFETTE,NARRATOR surprised,afraid 0-1 normal normal u
 182 N
 183 N
 184 N
@@ -235,7 +235,7 @@
 203 N
 204 N
 205 N
-206 N,T NARRATOR,MITOTSUDAIRA,NATE MITOTSUDAIRA,NATE,MITOTSUDAIRA NATE neutral 0-1 normal normal u
+206 N,T MITOTSUDAIRA,NATE MITOTSUDAIRA,NATE,MITOTSUDAIRA NATE,NARRATOR neutral 0-1 normal normal u
 207 N
 208 N
 209 N
@@ -264,19 +264,19 @@
 232 N
 233 D MITOTSUDAIRA,NATE MITOTSUDAIRA,NATE,MITOTSUDAIRA NATE tender,neutral 0-1 normal normal f
 234 N
-235 N,T NARRATOR,MITOTSUDAIRA,NATE MITOTSUDAIRA,NATE,MITOTSUDAIRA NATE tender,happy,neutral 0-1 normal normal u
+235 N,T MITOTSUDAIRA,NATE MITOTSUDAIRA,NATE,MITOTSUDAIRA NATE,NARRATOR tender,happy,neutral 0-1 normal normal u
 236 N
 237 N
 238 D REINE DES GAROUS,NỮ HOÀNG NGƯỜI SÓI,NPC*~ happy,tender,sarcastic 0-1 normal soft,normal f
 239 D REINE DES GAROUS,NỮ HOÀNG NGƯỜI SÓI,NPC*~ happy,tender,sarcastic 0-1 normal soft,normal f
 240 N
 241 N
-242 N,T NARRATOR,MITOTSUDAIRA,NATE MITOTSUDAIRA,NATE,MITOTSUDAIRA NATE happy,neutral 0-1 normal normal u
+242 N,T MITOTSUDAIRA,NATE MITOTSUDAIRA,NATE,MITOTSUDAIRA NATE,NARRATOR happy,neutral 0-1 normal normal u
 243 N
 244 N
 245 N NARRATOR neutral,happy 0-1 normal normal u
 246 N NARRATOR neutral,surprised,afraid 0-1 normal normal u
-247 N,T NARRATOR,MITOTSUDAIRA,NATE MITOTSUDAIRA,NATE,MITOTSUDAIRA NATE surprised,happy 0-1 normal normal u
+247 N,T MITOTSUDAIRA,NATE MITOTSUDAIRA,NATE,MITOTSUDAIRA NATE,NARRATOR surprised,happy 0-1 normal normal u
 248 N
 249 N
 250 N

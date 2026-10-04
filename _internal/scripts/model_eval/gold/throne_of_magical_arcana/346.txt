@@ -38,7 +38,7 @@
 35 N
 36 N NARRATOR neutral,afraid 0-1 normal normal u
 37 N NARRATOR neutral,afraid 0-1 normal normal u
-38 N,T NARRATOR,LUCIEN neutral,happy,surprised 0-1 normal normal u
+38 N,T LUCIEN,NARRATOR neutral,happy,surprised 0-1 normal normal u
 39 N NARRATOR neutral,excited 0-1 normal normal u
 40 N
 41 N

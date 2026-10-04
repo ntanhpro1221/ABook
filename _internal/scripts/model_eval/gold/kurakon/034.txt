@@ -15,7 +15,7 @@
 2 N
 3 N NARRATOR neutral,sad 0-1 normal,slow normal u
 4 N
-5 N,T NARRATOR,HIMARI~,ISHIKURA HIMARI~,HIMARI ISHIKURA~,ISHIKURA~ neutral 0-1 normal normal u
+5 N,T HIMARI~,ISHIKURA HIMARI~,HIMARI ISHIKURA~,ISHIKURA~,NARRATOR neutral 0-1 normal normal u
 6 D HIMARI,ISHIKURA HIMARI,HIMARI ISHIKURA,ISHIKURA neutral,tender,happy 0-1 normal normal,soft f
 7 D SAITO,HOUJOU SAITO,SAITO HOUJOU,HOUJOU surprised,neutral,tired 0-1 normal,slow normal,soft m
 8 N
@@ -30,7 +30,7 @@
 17 D HIMARI,ISHIKURA HIMARI,HIMARI ISHIKURA,ISHIKURA surprised,sad 0-1 normal,slow soft,normal f
 18 N
 19 N
-20 N,T NARRATOR,HIMARI~,ISHIKURA HIMARI~,HIMARI ISHIKURA~,ISHIKURA~ neutral,sad 0-1 normal normal u
+20 N,T HIMARI~,ISHIKURA HIMARI~,HIMARI ISHIKURA~,ISHIKURA~,NARRATOR neutral,sad 0-1 normal normal u
 21 D HIMARI,ISHIKURA HIMARI,HIMARI ISHIKURA,ISHIKURA happy,excited 1-2 normal,fast normal,loud f
 22 N NARRATOR neutral,happy 0-1 normal normal u
 23 D SAITO,HOUJOU SAITO,SAITO HOUJOU,HOUJOU neutral,surprised,sarcastic 0-1 normal normal m
@@ -49,6 +49,6 @@
 36 D SAITO,HOUJOU SAITO,SAITO HOUJOU,HOUJOU sarcastic,happy 0-1 normal normal m
 37 D HIMARI,ISHIKURA HIMARI,HIMARI ISHIKURA,ISHIKURA excited,angry,happy 1-2 normal,fast loud,normal f
 38 N NARRATOR neutral,sad 0-1 normal normal u
-39 N,T NARRATOR,HIMARI~,ISHIKURA HIMARI~,HIMARI ISHIKURA~,ISHIKURA~ neutral,sad 0-1 normal,slow normal u
+39 N,T HIMARI~,ISHIKURA HIMARI~,HIMARI ISHIKURA~,ISHIKURA~,NARRATOR neutral,sad 0-1 normal,slow normal u
 40 T,D HIMARI,ISHIKURA HIMARI,HIMARI ISHIKURA,ISHIKURA tender,sad,neutral 0-1 slow,normal soft,normal f
 41 N

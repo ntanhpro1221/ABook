@@ -145,15 +145,15 @@
 118 N NARRATOR neutral,tender 0-1 normal normal u
 119 N
 120 N
-121 N,T NARRATOR,LIAM,LIAM SERA BANFIELD sad,neutral,tired 0-1 normal normal u
+121 N,T LIAM,LIAM SERA BANFIELD,NARRATOR sad,neutral,tired 0-1 normal normal u
 122 N NARRATOR neutral,surprised 0-1 normal normal u
 123 D LIAM,LIAM SERA BANFIELD angry,surprised 1-2 fast,normal loud,normal m
 124 N
 125 N NARRATOR neutral,sad 0-1 normal normal u
 126 N
 127 N
-128 N,T NARRATOR,LIAM,LIAM SERA BANFIELD neutral 0-1 normal normal u
-129 N,T NARRATOR,LIAM,LIAM SERA BANFIELD angry,neutral,surprised 0-1 normal normal u
+128 N,T LIAM,LIAM SERA BANFIELD,NARRATOR neutral 0-1 normal normal u
+129 N,T LIAM,LIAM SERA BANFIELD,NARRATOR angry,neutral,surprised 0-1 normal normal u
 130 D LIAM,LIAM SERA BANFIELD angry,neutral 0-1 normal normal m
 131 N
 132 D AMAGI neutral 0-1 normal normal f
@@ -162,11 +162,11 @@
 135 N NARRATOR neutral,angry 0-1 normal normal u
 136 N
 137 N
-138 N,T NARRATOR,LIAM,LIAM SERA BANFIELD sad,neutral,angry 0-1 normal normal u
-139 N,T NARRATOR,LIAM,LIAM SERA BANFIELD afraid,sad,neutral 0-2 normal normal u
+138 N,T LIAM,LIAM SERA BANFIELD,NARRATOR sad,neutral,angry 0-1 normal normal u
+139 N,T LIAM,LIAM SERA BANFIELD,NARRATOR afraid,sad,neutral 0-2 normal normal u
 140 D LIAM,LIAM SERA BANFIELD sad,surprised,angry 0-1 slow,normal soft,normal m
-141 N,T NARRATOR,LIAM,LIAM SERA BANFIELD afraid,angry,neutral 0-1 normal normal u
-142 N,T NARRATOR,LIAM~,LIAM SERA BANFIELD~ neutral,afraid 0-1 normal normal u
+141 N,T LIAM,LIAM SERA BANFIELD,NARRATOR afraid,angry,neutral 0-1 normal normal u
+142 N,T LIAM~,LIAM SERA BANFIELD~,NARRATOR neutral,afraid 0-1 normal normal u
 143 D AMAGI tender,neutral 0-1 normal soft,normal f
 144 N
 145 N

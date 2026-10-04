@@ -67,13 +67,13 @@
 60 D LUCIEN neutral,surprised 0-1 normal normal m
 61 N
 62 D NARRATOR,UNKNOWN~ neutral,surprised 0-1 normal normal u
-63 N,T NARRATOR,SOPHIA~ neutral,happy,tired 0-1 normal normal u
+63 N,T SOPHIA~,NARRATOR neutral,happy,tired 0-1 normal normal u
 64 N
 65 N
 66 N
 67 N NARRATOR neutral,afraid 0-1 normal normal u
 68 D LUCIEN neutral 0-1 normal normal m
-69 N,T NARRATOR,SOPHIA~ angry,neutral 0-2 normal normal u
+69 N,T SOPHIA~,NARRATOR angry,neutral 0-2 normal normal u
 70 N NARRATOR neutral,afraid,angry 0-1 normal normal u
 71 T SOPHIA angry 1-2 normal,fast normal f
 72 N

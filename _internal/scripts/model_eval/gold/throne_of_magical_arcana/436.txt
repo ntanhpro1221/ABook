@@ -9,7 +9,7 @@
 4 D LUCIEN sarcastic,happy 0-1 normal normal m
 5 D LEVSKI happy 0-1 normal normal m
 6 N NARRATOR neutral,happy 0-1 normal normal u
-7 N,T NARRATOR,HEIDI~,LAZAR~ neutral,happy,sarcastic 0-1 normal normal u
+7 N,T HEIDI~,LAZAR~,NARRATOR neutral,happy,sarcastic 0-1 normal normal u
 8 D NARRATOR,LUCIEN~ neutral,sarcastic 0-1 normal normal u
 9 N
 10 N
@@ -18,7 +18,7 @@
 13 N
 14 N
 15 N NARRATOR neutral,sarcastic 0-1 normal normal u
-16 N,T NARRATOR,LUCIEN~ neutral,sarcastic 0-1 normal normal u
+16 N,T LUCIEN~,NARRATOR neutral,sarcastic 0-1 normal normal u
 17 N
 18 N
 19 D LEVSKI neutral 0-1 normal normal m
@@ -74,9 +74,9 @@
 69 N
 70 N
 71 D FLORENCIA neutral,whispering 0-1 normal,slow soft f
-72 N,T NARRATOR,LUCIEN neutral,surprised,angry 0-1 normal normal u
-73 N,T NARRATOR,LUCIEN neutral,surprised 0-1 normal normal u
-74 N,T NARRATOR,LUCIEN neutral,surprised 0-1 normal normal u
+72 N,T LUCIEN,NARRATOR neutral,surprised,angry 0-1 normal normal u
+73 N,T LUCIEN,NARRATOR neutral,surprised 0-1 normal normal u
+74 N,T LUCIEN,NARRATOR neutral,surprised 0-1 normal normal u
 75 N
 76 N
 77 D ANNONIS sad,neutral,tender 0-1 normal,slow normal m

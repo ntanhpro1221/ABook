@@ -46,12 +46,12 @@
 27 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ afraid,neutral 0-1 normal normal m
 28 D THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
 29 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ happy,excited,surprised 1-2 normal,fast normal,loud m
-30 N,T NARRATOR,THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal u
+30 N,T THỤY ÂN HIỆN,ÂN HIỆN,NARRATOR neutral 0-1 normal normal u
 31 N
 32 N
 33 N
 34 T THỤY ÂN HIỆN,ÂN HIỆN neutral,sad,tired 0-1 normal normal m
-35 N,T NARRATOR,THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal u
+35 N,T THỤY ÂN HIỆN,ÂN HIỆN,NARRATOR neutral 0-1 normal normal u
 36 D THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
 37 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ neutral,afraid 0-1 normal normal m
 38 N
@@ -64,7 +64,7 @@
 45 D THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
 46 N
 47 T THỤY ÂN HIỆN,ÂN HIỆN angry,sarcastic,neutral 0-1 normal normal,soft m
-48 N,T NARRATOR,THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal u
+48 N,T THỤY ÂN HIỆN,ÂN HIỆN,NARRATOR neutral 0-1 normal normal u
 49 N
 50 N
 51 N
@@ -102,17 +102,17 @@
 83 N
 84 D THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
 85 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ neutral 0-1 normal normal m
-86 N,T NARRATOR,THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal u
+86 N,T THỤY ÂN HIỆN,ÂN HIỆN,NARRATOR neutral 0-1 normal normal u
 87 N
 88 T THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
-89 N,T NARRATOR,THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal u
-90 N,T NARRATOR,THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal u
+89 N,T THỤY ÂN HIỆN,ÂN HIỆN,NARRATOR neutral 0-1 normal normal u
+90 N,T THỤY ÂN HIỆN,ÂN HIỆN,NARRATOR neutral 0-1 normal normal u
 91 T THỤY ÂN HIỆN,ÂN HIỆN neutral,excited 0-1 normal normal m
 92 N
 93 N
-94 N,T NARRATOR,THỤY ÂN HIỆN,ÂN HIỆN neutral,excited 0-1 normal normal u
+94 N,T THỤY ÂN HIỆN,ÂN HIỆN,NARRATOR neutral,excited 0-1 normal normal u
 95 T THỤY ÂN HIỆN,ÂN HIỆN neutral,excited 0-1 normal normal m
-96 N,T NARRATOR,THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal u
+96 N,T THỤY ÂN HIỆN,ÂN HIỆN,NARRATOR neutral 0-1 normal normal u
 97 D THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
 98 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ surprised,excited 0-1 normal normal m
 99 D THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
@@ -137,9 +137,9 @@
 118 N
 119 N
 120 T THỤY ÂN HIỆN,ÂN HIỆN surprised,neutral 0-1 normal normal m
-121 N,T NARRATOR,THỤY ÂN HIỆN,ÂN HIỆN neutral,sad 0-1 normal normal u
+121 N,T THỤY ÂN HIỆN,ÂN HIỆN,NARRATOR neutral,sad 0-1 normal normal u
 122 N NARRATOR neutral,sad 0-1 normal normal u
-123 N,T NARRATOR,THỤY ÂN HIỆN,ÂN HIỆN neutral,sad 0-1 normal normal u
+123 N,T THỤY ÂN HIỆN,ÂN HIỆN,NARRATOR neutral,sad 0-1 normal normal u
 124 N NARRATOR neutral,sad 0-1 normal normal u
 125 D THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
 126 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ happy,excited 1-2 normal,fast normal,loud m
@@ -161,7 +161,7 @@
 142 N
 143 D KIM VĨNH HUÂN,VĨNH HUÂN,TRƯỞNG PHÒNG KIM~ excited,happy 1-2 fast,normal loud,normal m
 144 T THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal m
-145 N,T NARRATOR,THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal u
+145 N,T THỤY ÂN HIỆN,ÂN HIỆN,NARRATOR neutral 0-1 normal normal u
 146 N
 147 N
 148 N
@@ -176,8 +176,8 @@
 157 D NPC*:võ sĩ gác cổng,UNKNOWN~ neutral 0-1 normal normal m
 158 D THỤY ÂN HIỆN,ÂN HIỆN happy,neutral 0-1 normal normal m
 159 N
-160 N,T NARRATOR,THỤY ÂN HIỆN,ÂN HIỆN neutral,sarcastic 0-1 normal normal u
-161 N,T NARRATOR,THỤY ÂN HIỆN,ÂN HIỆN neutral 0-1 normal normal u
+160 N,T THỤY ÂN HIỆN,ÂN HIỆN,NARRATOR neutral,sarcastic 0-1 normal normal u
+161 N,T THỤY ÂN HIỆN,ÂN HIỆN,NARRATOR neutral 0-1 normal normal u
 162 N
 163 N
 164 D HỨA BẠCH neutral 0-1 normal normal m

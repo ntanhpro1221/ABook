@@ -21,8 +21,8 @@
 3 D FRAN neutral 0-1 normal soft,normal f
 4 D MASTER sad,neutral,surprised 0-1 normal normal m
 5 N
-6 N,T NARRATOR,MASTER neutral,sarcastic,angry 0-1 normal normal u
-7 N,T NARRATOR,MASTER neutral,sad,tired 0-1 normal normal u
+6 N,T MASTER,NARRATOR neutral,sarcastic,angry 0-1 normal normal u
+7 N,T MASTER,NARRATOR neutral,sad,tired 0-1 normal normal u
 8 D MASTER neutral,happy 0-1 normal normal m
 9 N
 10 D MASTER happy,tender,excited 0-1 normal normal m
@@ -36,20 +36,20 @@
 18 D FRAN happy,excited,neutral 0-1 normal normal f
 19 D MASTER happy,tender 0-1 normal normal m
 20 N NARRATOR neutral,happy 0-1 normal normal u
-21 N,T NARRATOR,MASTER neutral 0-1 normal normal u
+21 N,T MASTER,NARRATOR neutral 0-1 normal normal u
 22 N
-23 N,T NARRATOR,MASTER neutral 0-1 normal normal u
-24 N,T NARRATOR,MASTER neutral 0-1 normal normal u
+23 N,T MASTER,NARRATOR neutral 0-1 normal normal u
+24 N,T MASTER,NARRATOR neutral 0-1 normal normal u
 25 N
 26 N
-27 N,T NARRATOR,MASTER neutral 0-1 normal normal u
-28 N,T NARRATOR,MASTER neutral 0-1 normal normal u
+27 N,T MASTER,NARRATOR neutral 0-1 normal normal u
+28 N,T MASTER,NARRATOR neutral 0-1 normal normal u
 29 D GARRUS,NPC*~ neutral,happy 0-1 normal normal m
 30 D FRAN surprised,neutral 0-1 normal normal f
 31 D GARRUS,NPC*~ neutral,happy 0-1 normal normal m
 32 T,D MASTER angry,surprised 1-2 fast,normal normal,loud m
 33 N
-34 T NARRATOR,MASTER~ neutral,sarcastic 0-1 normal normal u
+34 T MASTER~,NARRATOR~ neutral,sarcastic 0-1 normal normal u
 35 N
 36 D GARRUS,NPC*~ happy,neutral 0-1 normal normal m
 37 D FRAN surprised,neutral 0-1 normal normal f
@@ -57,7 +57,7 @@
 39 N
 40 D GARRUS,NPC*~ neutral,happy,tender 0-1 normal normal m
 41 D GARRUS,NPC*~ neutral,happy 0-1 normal normal m
-42 N,T NARRATOR,MASTER surprised,excited 0-2 normal normal u
+42 N,T MASTER,NARRATOR surprised,excited 0-2 normal normal u
 43 N
 44 N
 45 N
@@ -68,32 +68,32 @@
 50 N
 51 N
 52 N
-53 N,T NARRATOR,MASTER surprised,excited,happy 0-1 normal normal u
+53 N,T MASTER,NARRATOR surprised,excited,happy 0-1 normal normal u
 54 D FRAN surprised,excited 0-1 normal normal f
 55 D GARRUS happy 0-1 normal normal m
 56 D FRAN neutral,happy 0-1 normal normal f
 57 D GARRUS happy,neutral 0-1 normal normal m
 58 N NARRATOR neutral,afraid 0-1 normal normal u
-59 N,T NARRATOR,MASTER neutral,afraid,surprised 0-1 normal normal u
+59 N,T MASTER,NARRATOR neutral,afraid,surprised 0-1 normal normal u
 60 D FRAN neutral,afraid 0-1 normal soft,normal f
 61 D MASTER neutral,afraid 0-1 normal normal m
-62 N,T NARRATOR,MASTER neutral,surprised,angry 0-1 normal normal u
+62 N,T MASTER,NARRATOR neutral,surprised,angry 0-1 normal normal u
 63 D GARRUS happy,neutral,sarcastic 0-1 normal normal m
-64 N,T NARRATOR,MASTER neutral,afraid 0-1 normal normal u
+64 N,T MASTER,NARRATOR neutral,afraid 0-1 normal normal u
 65 D GARRUS neutral,happy 0-1 normal normal m
-66 N,T NARRATOR,MASTER neutral,excited 0-1 normal normal u
+66 N,T MASTER,NARRATOR neutral,excited 0-1 normal normal u
 67 D FRAN surprised,neutral 0-1 normal normal f
 68 D GARRUS happy,neutral 0-1 normal normal m
 69 N
 70 D MASTER neutral 0-1 normal normal m
 71 D FRAN neutral 0-1 normal normal f
 72 D GARRUS surprised,excited,happy 1-2 normal,fast normal,loud m
-73 N,T NARRATOR,MASTER surprised,afraid 1-2 normal,fast normal u
+73 N,T MASTER,NARRATOR surprised,afraid 1-2 normal,fast normal u
 74 D FRAN neutral,surprised 0-1 normal,slow normal,soft f
 75 N
-76 N,T NARRATOR,MASTER excited,happy 0-1 normal normal u
+76 N,T MASTER,NARRATOR excited,happy 0-1 normal normal u
 77 D GARRUS neutral,tender,happy 0-1 normal normal m
-78 N,T NARRATOR,MASTER surprised,neutral 0-1 normal normal u
+78 N,T MASTER,NARRATOR surprised,neutral 0-1 normal normal u
 79 D GARRUS neutral,happy 0-1 normal normal m
 80 D MASTER neutral 0-1 normal normal m
 81 D GARRUS excited,surprised,happy 2-3 fast,normal loud m
@@ -101,22 +101,22 @@
 83 D FRAN neutral 0-1 normal normal f
 84 D MASTER surprised 0-1 normal normal m
 85 D FRAN neutral 0-1 normal normal f
-86 N,T NARRATOR,MASTER neutral,sarcastic 0-1 normal normal u
+86 N,T MASTER,NARRATOR neutral,sarcastic 0-1 normal normal u
 87 D MASTER neutral,tired 0-1 normal,slow normal,soft m
 88 N
 89 D GARRUS excited,happy 1-2 fast,normal loud,normal m
-90 N,T NARRATOR,MASTER neutral,surprised,sad 0-1 normal normal u
-91 N,T NARRATOR,MASTER neutral,sarcastic 0-1 normal normal u
+90 N,T MASTER,NARRATOR neutral,surprised,sad 0-1 normal normal u
+91 N,T MASTER,NARRATOR neutral,sarcastic 0-1 normal normal u
 92 D GARRUS neutral,happy 0-1 normal normal m
 93 D MASTER surprised,neutral 0-1 normal normal m
 94 N
-95 N,T NARRATOR,MASTER sad,neutral,sarcastic 0-1 normal normal u
+95 N,T MASTER,NARRATOR sad,neutral,sarcastic 0-1 normal normal u
 96 D GARRUS neutral,surprised 0-1 normal normal m
 97 D MASTER neutral,surprised 0-1 normal normal m
 98 D GARRUS sarcastic,tired,neutral 0-1 normal normal m
 99 D MASTER neutral,surprised 0-1 normal normal m
 100 D GARRUS excited,surprised 1-2 normal,fast loud,normal m
-101 N,T NARRATOR,MASTER surprised 0-2 normal normal u
+101 N,T MASTER,NARRATOR surprised 0-2 normal normal u
 102 D FRAN surprised,neutral 0-1 normal normal f
 103 D MASTER neutral 0-1 normal normal m
 104 D GARRUS neutral 0-1 normal normal m
@@ -125,20 +125,20 @@
 107 N
 108 D GARRUS neutral 0-1 normal normal m
 109 N
-110 N,T NARRATOR,MASTER neutral,surprised 0-1 normal normal u
+110 N,T MASTER,NARRATOR neutral,surprised 0-1 normal normal u
 111 D GARRUS neutral 0-1 normal normal m
 112 D MASTER neutral 0-1 normal normal m
 113 D GARRUS excited,neutral 0-1 normal normal m
 114 D FRAN happy,neutral,excited 0-1 normal normal f
 115 D GARRUS excited,happy,neutral 0-1 normal normal m
-116 N,T NARRATOR,MASTER surprised,excited 0-1 normal normal u
-117 N,T NARRATOR,MASTER excited,happy 1-2 normal,fast normal u
+116 N,T MASTER,NARRATOR surprised,excited 0-1 normal normal u
+117 N,T MASTER,NARRATOR excited,happy 1-2 normal,fast normal u
 118 D MASTER neutral 0-1 normal normal m
 119 D GARRUS neutral 0-1 normal normal m
 120 N
 121 D GARRUS neutral,happy 0-1 normal normal m
 122 N NARRATOR neutral,surprised 0-1 normal normal u
-123 N,T NARRATOR,MASTER surprised,neutral 0-1 normal normal u
+123 N,T MASTER,NARRATOR surprised,neutral 0-1 normal normal u
 124 N
 125 D GARRUS neutral 0-1 normal normal m
 126 D MASTER neutral 0-1 normal normal m
@@ -149,7 +149,7 @@
 131 D MASTER neutral,sad 0-1 normal normal m
 132 D GARRUS sarcastic,surprised,happy 0-1 normal normal m
 133 D MASTER happy,excited 1-2 normal normal,loud m
-134 N,T NARRATOR,MASTER neutral,happy 0-1 normal normal u
+134 N,T MASTER,NARRATOR neutral,happy 0-1 normal normal u
 135 D GARRUS neutral,happy 0-1 normal normal m
 136 D FRAN surprised,neutral 0-1 normal normal f
 137 D GARRUS neutral 0-1 normal normal m

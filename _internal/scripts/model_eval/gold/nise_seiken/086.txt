@@ -21,8 +21,8 @@
 2 N
 3 D RUBON,RUBON STREAM sarcastic,happy 0-1 normal normal m
 4 N
-5 N,T NARRATOR,RUBON~,RUBON STREAM~ neutral,happy,sarcastic 0-1 normal normal u
-6 N,T NARRATOR,RUBON~,RUBON STREAM~ neutral,happy 0-1 normal normal u
+5 N,T RUBON~,RUBON STREAM~,NARRATOR neutral,happy,sarcastic 0-1 normal normal u
+6 N,T RUBON~,RUBON STREAM~,NARRATOR neutral,happy 0-1 normal normal u
 7 T MAGALI angry 1-2 fast,normal normal,loud f
 8 T ALISTAR neutral,sarcastic 0-1 normal normal m
 9 T MAGALI angry,surprised 0-1 normal normal f
@@ -76,7 +76,7 @@
 57 N NARRATOR,THÁNH KIẾM~,NGUYỀN KIẾM~ neutral 0-1 normal normal u
 58 D ALISTAR neutral,surprised 0-1 normal soft,normal m
 59 N
-60 N,T NARRATOR,ALISTAR~ neutral,sarcastic 0-1 normal normal u
+60 N,T ALISTAR~,NARRATOR neutral,sarcastic 0-1 normal normal u
 61 N
 62 T ALISTAR afraid,angry 1-2 fast,normal normal,loud m
 63 N NARRATOR neutral,sad,afraid 0-1 normal normal u

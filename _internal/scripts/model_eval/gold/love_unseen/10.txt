@@ -23,10 +23,10 @@
 9 D NPC*:sếp của Hayase,UNKNOWN~ neutral,tender 0-1 normal normal m
 10 N
 11 D NPC*:sếp của Hayase,UNKNOWN~ tender,neutral 0-1 normal normal,soft m
-12 N,T NARRATOR,HAYASE,YUUKO HAYASE,YUUKO surprised,angry,neutral 0-1 normal normal u
-13 N,T NARRATOR,HAYASE,YUUKO HAYASE,YUUKO neutral,angry 0-1 normal normal u
-14 N,T NARRATOR,HAYASE,YUUKO HAYASE,YUUKO angry,sarcastic,neutral 0-1 normal normal u
-15 N,T NARRATOR,HAYASE,YUUKO HAYASE,YUUKO angry,neutral 0-1 normal normal u
+12 N,T HAYASE,YUUKO HAYASE,YUUKO,NARRATOR surprised,angry,neutral 0-1 normal normal u
+13 N,T HAYASE,YUUKO HAYASE,YUUKO,NARRATOR neutral,angry 0-1 normal normal u
+14 N,T HAYASE,YUUKO HAYASE,YUUKO,NARRATOR angry,sarcastic,neutral 0-1 normal normal u
+15 N,T HAYASE,YUUKO HAYASE,YUUKO,NARRATOR angry,neutral 0-1 normal normal u
 16 D HAYASE,YUUKO HAYASE,YUUKO neutral,angry 0-1 normal normal f
 17 D NPC*:sếp của Hayase,UNKNOWN~ sarcastic,neutral,angry 0-1 normal normal m
 18 N NARRATOR neutral,sad 0-1 normal normal u
@@ -56,9 +56,9 @@
 42 N NARRATOR neutral,sad 0-1 normal normal u
 43 N
 44 N NARRATOR neutral,sad 0-1 normal normal u
-45 N,T NARRATOR,HAYASE,YUUKO HAYASE,YUUKO sad,neutral 0-1 normal normal u
+45 N,T HAYASE,YUUKO HAYASE,YUUKO,NARRATOR sad,neutral 0-1 normal normal u
 46 D HAYASE,YUUKO HAYASE,YUUKO tired,sad,whispering 0-1 slow,normal soft,normal f
-47 N,T NARRATOR,HAYASE,YUUKO HAYASE,YUUKO neutral,tired 0-1 normal normal u
+47 N,T HAYASE,YUUKO HAYASE,YUUKO,NARRATOR neutral,tired 0-1 normal normal u
 48 N NARRATOR neutral,tired 0-1 normal normal u
 49 N
 50 N NARRATOR neutral,surprised 0-1 normal normal u
@@ -101,7 +101,7 @@
 87 N
 88 N
 89 N
-90 N,T NARRATOR,HAYASE,YUUKO HAYASE,YUUKO neutral 0-1 normal normal u
+90 N,T HAYASE,YUUKO HAYASE,YUUKO,NARRATOR neutral 0-1 normal normal u
 91 N
 92 N
 93 N
@@ -109,9 +109,9 @@
 95 D HAYASE,YUUKO HAYASE,YUUKO sarcastic,sad,happy 0-1 normal soft,normal f
 96 N NARRATOR neutral,happy 0-1 normal normal u
 97 D HAYASE,YUUKO HAYASE,YUUKO sarcastic,neutral,happy 0-1 normal soft,normal f
-98 N,T NARRATOR,HAYASE,YUUKO HAYASE,YUUKO neutral,happy 0-1 normal normal u
-99 N,T NARRATOR,HAYASE,YUUKO HAYASE,YUUKO neutral 0-1 normal normal u
-100 N,T NARRATOR,HAYASE,YUUKO HAYASE,YUUKO neutral,sad 0-1 normal normal u
+98 N,T HAYASE,YUUKO HAYASE,YUUKO,NARRATOR neutral,happy 0-1 normal normal u
+99 N,T HAYASE,YUUKO HAYASE,YUUKO,NARRATOR neutral 0-1 normal normal u
+100 N,T HAYASE,YUUKO HAYASE,YUUKO,NARRATOR neutral,sad 0-1 normal normal u
 101 N
 102 N
 103 D HAYASE,YUUKO HAYASE,YUUKO neutral 0-1 normal normal,soft f
@@ -135,8 +135,8 @@
 121 D HAYASE,YUUKO HAYASE,YUUKO neutral,happy 0-1 normal normal f
 122 N
 123 N NARRATOR neutral,happy 0-1 normal normal u
-124 N,T NARRATOR,HAYASE,YUUKO HAYASE,YUUKO happy,excited 0-1 normal normal u
-125 N,T NARRATOR,HAYASE,YUUKO HAYASE,YUUKO neutral,happy 0-1 normal normal u
+124 N,T HAYASE,YUUKO HAYASE,YUUKO,NARRATOR happy,excited 0-1 normal normal u
+125 N,T HAYASE,YUUKO HAYASE,YUUKO,NARRATOR neutral,happy 0-1 normal normal u
 126 N NARRATOR neutral,excited,happy 0-1 normal normal u
 127 D HAYASE,YUUKO HAYASE,YUUKO happy,excited 0-2 normal normal f
 128 N NARRATOR neutral,happy 0-1 normal normal u
