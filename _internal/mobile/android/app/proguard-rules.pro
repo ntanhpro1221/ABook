@@ -16,6 +16,11 @@
     @com.getcapacitor.PluginMethod public <methods>;
 }
 -keep public class * extends com.getcapacitor.Plugin { *; }
+# Chính lớp chú thích @CapacitorPlugin cũng phải giữ: không có luật này R8 làm PluginHandle.getPluginAnnotation() trả null (kể cả với
+# lớp plugin đã giữ), nên mọi chỗ Capacitor đọc `permissions` - xin quyền thông báo / Bluetooth (setStudioAlerts, bluetoothDevices,
+# thông báo của trình phát) - im lặng không làm gì: không hộp xin quyền, cũng không báo lỗi, lời gọi treo mãi. Thử trên máy ảo:
+# checkPermissions() trả rỗng thay vì {notifications, bluetooth}.
+-keep class com.getcapacitor.annotation.CapacitorPlugin { *; }
 
 # Cầu JS <-> Java của WebView gọi theo tên qua @JavascriptInterface (Capacitor MessageHandler và nếu app thêm sau này).
 -keepclassmembers class * {
