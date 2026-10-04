@@ -85,7 +85,9 @@
                 android:src="@drawable/ic_widget_forward"
                 android:contentDescription="@string/widget_forward" />
 
-            <View
+            <!-- Khoảng đệm: RemoteViews chỉ cho thổi các lớp được phép - <View> trần bị launcher từ chối ("Class not allowed
+                 to be inflated android.view.View") và cả widget không thêm được; FrameLayout rỗng thì được. -->
+            <FrameLayout
                 android:layout_width="0dp"
                 android:layout_height="1dp"
                 android:layout_weight="1" />
