@@ -6,6 +6,7 @@ import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.media.MediaMetadataRetriever
+import org.json.JSONObject
 import java.io.File
 import java.nio.ByteOrder
 
@@ -150,4 +151,18 @@ object DeviceMusic {
     @Synchronized
     fun catalog(context: Context): MusicCatalog = catalog
         ?: MusicCatalog(File(context.applicationContext.cacheDir, "music-catalog")).also { catalog = it }
+
+    private var picker: JSONObject? = null
+    private var pickerRead = false
+
+    /** Luật chọn danh sách phát đóng kèm app (asset `playlist_picker.json`, cùng file `abook/webui/assets/` của máy tính): dùng khi chưa có
+     *  danh mục trên mây (máy mới, chưa có mạng) hay danh mục mang luật hỏng. Không đọc được thì null (máy không tự chọn). */
+    @Synchronized
+    fun bundledPicker(context: Context): JSONObject? {
+        if (!pickerRead) {
+            picker = runCatching { JSONObject(context.applicationContext.assets.open("playlist_picker.json").use { String(it.readBytes(), Charsets.UTF_8) }) }.getOrNull()
+            pickerRead = true
+        }
+        return picker
+    }
 }

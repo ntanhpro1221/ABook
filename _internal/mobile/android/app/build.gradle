@@ -30,6 +30,10 @@ android {
     sourceSets {
         test.java.srcDirs += "src/sharedTest/java"
         androidTest.java.srcDirs += "src/sharedTest/java"
+        // Luật chọn danh sách phát đóng kèm app (playlist_picker.json): MỘT file của máy tính (abook/webui/assets), điện thoại đọc đúng file ấy
+        // như asset (DeviceMusic.bundledPicker); test JVM / máy Android so với bộ ví dụ tests/fixtures/playlist_picker.
+        main.assets.srcDirs += "../../../abook/webui/assets"
+        androidTest.assets.srcDirs += "../../../tests/fixtures/playlist_picker"
         // Mp3 + số vàng của bộ phân tích nhạc (tests/music_student_goldens.py) dùng chung với pytest; bài thử trên máy Android đọc từ assets.
         androidTest.assets.srcDirs += "../../../tests/fixtures/music_student"
         // Số của máy tính cho giọng VieNeu (scripts/vieneu_android_fixtures.py): VieneuOnDeviceTest so phoneme + clip trên máy thật.

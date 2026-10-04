@@ -7,7 +7,20 @@ import { api } from "@/studio/api";
 import { importMusic } from "@/studio/musicImport";
 import { MY_MUSIC_KEY, useCanImportMusic } from "./MyMusic";
 import { MUSIC_CHANGED_EVENT } from "./musicBed";
-import { ADD_MUSIC_LABEL, addMusicOutcome, MINE_PLAYLIST, playlistOptions, savePlaylistChoice, type PlaylistMenu, type PlaylistOption } from "./playlistBed";
+import {
+  ADD_MUSIC_LABEL,
+  addMusicOutcome,
+  autoPlaylistName,
+  chosenId,
+  MINE_PLAYLIST,
+  playlistLabel,
+  playlistOptions,
+  playlistPlaying,
+  savePlaylistChoice,
+  type PlaylistMenu,
+  type PlaylistOption,
+  type PlaylistView,
+} from "./playlistBed";
 
 // "Nhạc nền" của sách chỉ có chữ (playlistBed.ts): chọn ở menu của sách và ở trình phát - cùng một lựa chọn, lưu vào phần sửa của
 // sách nên đi theo sách. Máy tính hỏi máy chủ, điện thoại hỏi lõi native qua cùng đường (android/localStudio.ts).
@@ -19,7 +32,8 @@ const ADD_TOAST = "music-add";
  *  (hook gỡ ra) mà lượt thêm vẫn chạy tiếp. */
 let adding = false;
 
-/** Danh sách phát người nghe đã chọn cho cuốn `bookId` + các lựa chọn + cách đổi. `enabled` false: chưa hỏi gì (menu chưa mở).
+/** Danh sách phát cho cuốn `bookId` (người nghe đã chọn, hay máy chọn khi chưa chọn gì) + các lựa chọn + cách đổi. `chosen`: mã dòng được đánh dấu
+ *  (null = "Để máy chọn"); `label`: chữ trên nút ("Máy chọn: <tên>" khi máy đang chọn); `playing`: có nhạc cho cuốn này. `enabled` false: chưa hỏi gì (menu chưa mở).
  *  `canImport`/`addMusic`: thêm nhạc của mình ngay từ menu (máy nhập được nhạc), xong thì chọn "Nhạc của tôi" cho cuốn này. */
 export function usePlaylistChoice(bookId: string, enabled = true) {
   const client = useQueryClient();
@@ -31,8 +45,8 @@ export function usePlaylistChoice(bookId: string, enabled = true) {
     staleTime: 10 * 60_000,
     enabled,
   });
-  const current = useQuery({ queryKey: key, queryFn: () => api<{ playlist?: string }>(`/api/books/${bookId}/music`), enabled });
-  const chosen = current.data?.playlist ?? null;
+  const current = useQuery({ queryKey: key, queryFn: () => api<PlaylistView>(`/api/books/${bookId}/music`), enabled });
+  const chosen = chosenId(current.data);
   const choose = useMutation({
     mutationFn: ({ playlist }: { playlist: string | null; notice?: AddNotice }) => savePlaylistChoice(bookId, playlist),
     onSuccess: (view, { playlist, notice }) => {
@@ -40,8 +54,13 @@ export function usePlaylistChoice(bookId: string, enabled = true) {
       if (notice) {
         toast[notice.kind](notice.title, { id: ADD_TOAST, description: [notice.description, "Đang dùng làm nhạc nền của cuốn này."].filter(Boolean).join("\n") });
       } else {
-        const name = playlist === null ? "Tắt" : playlistOptions(menu.data).find((option) => option.id === playlist)?.label;
-        if (name) toast(`Nhạc nền: ${name}`, { id: "playlist-choice", duration: 2500 });
+        // Để máy chọn: lời đáp của server đã là màn của máy chọn - nói máy chọn danh sách nào.
+        const auto = autoPlaylistName(view, menu.data);
+        toast(playlist === null ? "Nhạc nền: để máy chọn" : `Nhạc nền: ${playlistLabel(view, menu.data)}`, {
+          id: "playlist-choice",
+          duration: 2500,
+          description: auto ? `Máy chọn: ${auto}` : undefined,
+        });
       }
       client.setQueryData(key, view);
       void client.invalidateQueries({ queryKey: ["listen", "book", bookId] }); // số thay đổi của cuốn
@@ -76,8 +95,10 @@ export function usePlaylistChoice(bookId: string, enabled = true) {
     }
   };
   return {
-    options: playlistOptions(menu.data, canImport),
+    options: playlistOptions(menu.data, canImport, current.data),
     chosen,
+    label: playlistLabel(current.data, menu.data),
+    playing: playlistPlaying(current.data),
     error: menu.data?.error ?? "",
     loading: menu.isLoading,
     choose: (id: string | null) => choose.mutate({ playlist: id }),
@@ -109,14 +130,13 @@ export function playlistNote(error: string): string {
 
 /** Mục "Nhạc nền" trong menu của sách chỉ có chữ: menu con với các lựa chọn. */
 export function PlaylistSubmenu({ bookId }: { bookId: string }) {
-  const { options, chosen, error, loading, choose, canImport, addMusic } = usePlaylistChoice(bookId);
-  const current = options.find((option) => option.id === chosen);
+  const { options, chosen, label, error, loading, choose, canImport, addMusic } = usePlaylistChoice(bookId);
   return (
     <DropdownMenu.Sub>
       <DropdownMenu.SubTrigger className={MENU_ITEM}>
         <Music2 className="size-4" />
         <span className="flex-1">Nhạc nền</span>
-        <span className="max-w-28 truncate text-xs text-fg-2">{current?.label ?? "Tắt"}</span>
+        <span className="max-w-40 truncate text-xs text-fg-2">{label}</span>
         <ChevronRight className="size-4 text-fg-2" />
       </DropdownMenu.SubTrigger>
       <DropdownMenu.Portal>
