@@ -94,7 +94,7 @@ def test_every_machine_made_reading_passes():
     wrong = [(case["token"], case[key]) for case in shared for key in ("reading", "reading_nodict") if case.get(key) and not valid_spoken_form(case[key])]
     assert not wrong, wrong
     wrong = [(case["token"], case["reading"]) for case in json.loads((FIXTURES / "romanization" / "cases.json").read_text(encoding="utf-8"))["cases"]
-             if case.get("reading") and not valid_spoken_form(case["reading"])]
+             if case.get("reading") and not any(flag.startswith("keep:") for flag in case["flags"]) and not valid_spoken_form(case["reading"])]
     assert not wrong, wrong
 
 

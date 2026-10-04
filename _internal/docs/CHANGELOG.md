@@ -13,6 +13,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   được app tự nhận ra, và các tên ấy đọc thành "Ha-ru-tô-cun", "Ki-âu-cô", "Gia-ma-tô". Tên Anh / Âu (Kate, Mike, Rose, Anne, Emma), từ tiếng Anh và tiếng Việt vẫn đọc như cũ; cuốn
   không rõ gốc thì không đổi gì. Chữ hiện trên màn hình không đổi.
 
+- "Nghe ngay" (máy tính và điện thoại) đọc thêm những tên Nhật / Hàn viết không theo mẫu: tên viết hoa hết ("KANATA" thành "Ca-na-ta", "NEE-SAN" thành "Ne-xan"), dính liền kiểu CamelCase ("OkabeRintarou" thành "O-ca-be Rin-ta-râu"), có gạch nối và hậu tố ("Seol-Ah", "Tenshi-chwan", "Vương-sama" thành "Vương-xa-ma"; phần chữ Việt, chữ Anh hay viết tắt như "PD-nim" giữ nguyên), và các cách viết quen của tên Hàn ("Shinhyun", "Joo", "Jaemoon", "Ahn"). Tên nào không chắc cách đọc thì vẫn để nguyên. Chữ hiện trên màn hình không đổi.
+
 - "Nghe ngay" bằng giọng Supertonic (máy tính) không còn nuốt tên và từ nước ngoài: giọng này không nói được âm tiếng Anh, nên "Rose", "laptop", "Facebook", "skill" được đọc thành
   âm tiết Việt ("xờ-kiu", "le-vồ", "láp-tóp"), tên Nhật / Hàn của cuốn có gốc đọc như giọng VieNeu ("Ki-âu-cô", "Ha-ru-tô"); chữ viết tắt toàn hoa (VIP, NPC) và số kèm đơn vị
   vẫn như cũ. Giọng VieNeu giữ nguyên chữ Anh như trước. Chữ hiện trên màn hình không đổi.
