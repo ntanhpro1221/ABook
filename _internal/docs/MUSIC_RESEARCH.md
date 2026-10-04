@@ -2442,3 +2442,21 @@ Mỗi pha xong: ghi số vào đây, đổi tham số trong app theo kết quả
 - p = softmax trung bình trên ba cửa sổ 10 giây, 16 kHz, cùng vị trí với MuQ.
 - Cùng thước, cùng luật như MuQ: V ≥ CLAP + 0,05 trên cả nhạc phim lẫn DEAM, VÀ E không thua quá 0,02.
 - CPU, venv `.venv_muq`.
+
+**GHI TRƯỚC - HỢP z TRÊN PMEmo (05-10 02:1x, Lead duyệt công thức; trước khi tính bất cứ gì trên PMEmo):**
+- **Bộ thử mới, chưa dùng ở đâu:** PMEmo 2019, 794 đoạn điệp khúc pop, nhãn tĩnh V / A trung bình người chấm (`static_annotations.csv`).
+  - Tải về `LLM_Train/music/datasets/pmemo`. Chỉ tải, chưa tính gì.
+  - Khác miền với cả nhạc phim lẫn danh mục: pop CÓ lời. Đây là phép thử độ bền, không phải miền đích.
+- **Công thức cố định, không tinh chỉnh:**
+  - Mỗi chiều (V, E): z-score điểm zero-shot của từng model trong PMEmo, rồi trung bình với trọng số bằng nhau (0,5 / 0,5).
+  - Cách tính zero-shot của mỗi model y hệt ghi trước 6d71de93.
+  - Nếu AST THẮNG riêng theo luật ghi trước a34f5b17, hợp gồm ba model, mỗi model 1/3. Không thắng thì hợp chỉ CLAP + MuQ.
+- **Luật (đo MỘT lần):** hợp THẮNG nếu
+  - V hợp − V CLAP ≥ +0,05 VÀ cận dưới bootstrap 95 % của hiệu ấy > 0 (2.000 lần lấy lại bài, hạt giống 0),
+  - VÀ E hợp − E CLAP ≥ −0,02.
+- **Giá phải báo cùng kết quả:**
+  - Gắn nhãn thư viện thêm một model: số giây / bài trên CPU và RAM đỉnh, đo trong lượt này.
+  - Thêm cỡ tải model cho máy người dùng nếu bài nhập cũng dùng hợp.
+  - Chỉ đề xuất vào danh mục nếu THẮNG; lợi phải vượt nhiễu, cận dưới bootstrap là phép thử cho điều đó.
+- Lệnh: `zeroshot_valence.py muq` (thêm `pmemo` vào SETS, chạy tiếp), `zeroshot_valence.py clap` và `zeroshot_valence.py pmemo`
+  → `results/zeroshot_pmemo.txt`.
