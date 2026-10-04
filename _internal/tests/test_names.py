@@ -250,7 +250,7 @@ def test_english_words_and_names_become_syllables_for_a_voice_that_cannot_say_th
     assert said[12] == english_vi.vietnamized_english("Rose") + "." and not set(words) & set(said), "chữ Anh không còn trong chữ đem đọc"
     assert [said[i] for i in (0, 1, 2, 4, 6, 7, 9, 11)] == ["Anh", "ấy", "mở", "vào", "rồi", "gửi", "cho", "và"], "chữ Việt không đổi"
     # ca chủ sách chốt (english_vi.OWNER): đứng trên mọi luật
-    assert _said_en("Mike, Kate và Pete đến.") == ["Mi-ke,", "Ca-tê", "và", "Pi-tờ", "đến."]
+    assert _said_en("Mike, Kate và Pete đến.") == ["Mi-ke,", "Kết", "và", "Pi-tờ", "đến."]
     assert _said_en("Dùng skill, level và Boss.") == ["Dùng", "xờ-kiu,", "le-vồ", "và", "Bót."]
 
 
