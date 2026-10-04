@@ -2311,3 +2311,21 @@ Mỗi pha xong: ghi số vào đây, đổi tham số trong app theo kết quả
     trục E; llmVT chỉ đổi V/T, và đổi bằng ước lượng của 4b.
   - Muốn biết nút thắt ở đâu cần ghi trước riêng, ví dụ so `oracle VET` (đáp án người) với llmVT trên cùng đoạn bộ 6 bằng thước
     nghe. Kaggle tuần này đã hết (29,1/30 giờ), nên sớm nhất là thứ Bảy.
+
+**GHI TRƯỚC - ORACLE V/E/T so llmVT bằng thước nghe (04-10 19:xx, Lead duyệt; chạy khi Kaggle đặt lại thứ Bảy 10-10):**
+- **Câu hỏi:** không khí đoạn ĐÚNG như người chấm (oracle) có cho nhạc hợp tai hơn llmVT không? Phép này tách nút thắt:
+  - oracle thắng → đoán không khí đoạn vẫn là nút thắt, llmVT chưa đủ tốt;
+  - oracle ngang llmVT → nút thắt nằm ở phía bài (nhãn V/E/T của bài) hay ở hàm chọn.
+- **Đoạn:** đúng 115 đoạn của phép trên (ranh giới app bộ 6, đã có tóm tắt tiếng Anh).
+  - C = nhạc chọn khi `valence` / `arousal` / `tension` của đoạn lấy từ ĐÁP ÁN (gold_scene6, V/E/T ÷ 2, trung bình theo giây phần
+    chồng). `sd`, `emotions`, `confidence` giữ như nhãn câu, để chỉ giá trị không khí khác nhau.
+  - Cùng `music_select.choose` của main, danh mục 8ad5cd60adfb, `book_key` = chương.
+- **Cặp chính:** C so B (llmVT) trên các đoạn C ≠ B, cả hai không im lặng.
+  - Ghi lại: C so A (nhãn câu) trên các đoạn C ≠ A.
+- **Thước:** đúng giao thức phép trên (Qwen3-Omni-EN, tóm tắt đã chốt, clip cắt như E1, điểm = trung bình prompt a / b, hoà
+  < 0,02).
+  - Điểm của clip A / B đã chấm được dùng lại (cùng đoạn, cùng tóm tắt, cùng giao thức, cùng model); chỉ clip mới của C cần chấm.
+- **Luật (M2):** oracle thắng nếu tỉ lệ thắng ≥ 0,60 VÀ cận dưới Wilson > 0,5. Không đạt → ghi "oracle không hơn llmVT bằng tai".
+- **Hệ quả:**
+  - oracle thắng → ưu tiên đoán không khí đoạn tốt hơn (dữ liệu dạy cho 4b / analyzer, đề xuất D).
+  - không → ưu tiên nhãn V/E/T của BÀI.
