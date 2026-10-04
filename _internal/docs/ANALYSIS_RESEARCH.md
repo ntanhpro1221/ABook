@@ -7,6 +7,13 @@ Model phân tích quyết định mỗi câu do AI đọc: người nói (-> gi�
 nhịp, âm lượng, giới tính. Sai người nói là lỗi người nghe nhận ra ngay (giọng sai người). Tài liệu này là bản đồ: mục
 tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM với trạng thái. Chi tiết số đo từng lượt ở `LLM_EVAL.md`.
 
+## Luật chọn model: CHÍNH XÁC >> tốc độ (chủ sách, 04-10)
+
+Mọi lựa chọn model phân tích xếp theo độ chính xác, không theo tốc độ hay hiệu năng. Mặc định được chọn vì đúng hơn, không vì
+nhanh hơn. Chấp nhận: tách hai lượt (người nói rồi cảm xúc, +20-30 % thời gian), cửa sổ rộng hơn (vd 9 đoạn), model to hơn nếu
+chính xác hơn (9B Q4 vừa card 8 GB). Giới hạn DUY NHẤT: phải CHẠY được trên máy người dùng (card 8 GB / Mac 16 GB) - chạy được,
+không phải chạy nhanh.
+
 ## Luật làm việc (rút từ sai lầm)
 
 1. **Đọc tài liệu trước khi thiết kế.** 26-09 tôi chọn QLoRA sinh tên mà không tra "quotation attribution" - hướng tốt
