@@ -48,9 +48,9 @@ def test_every_sourced_form_matches_or_is_explained_by_a_chosen_rule():
     assert not unexplained, f"không khớp mà chưa có lý do: {unexplained}"
     assert not stale, f"cách đọc đổi mà lý do còn viết cho cách đọc cũ: {stale}"
     assert len(matched) + len(evidence.EXPLAINED) == len(evidence.SOURCED)
-    # 91 / 149: 36 / 91 dạng có nguồn + 66 ca của chủ sách (04-10, tám lần; ca của chủ sách thay dạng SGK cùng chữ: Yamato, Osaka; Gangwon viết cang theo chính tả: EXPLAINED);
-    # 58 còn lại đều do luật của chủ sách, điểm đã quét hay nguồn tự lệch (EXPLAINED)
-    assert len(matched) == 91
+    # 134 / 191: 36 / 91 dạng có nguồn + 110 ca của chủ sách (04-10, chín lần; ca của chủ sách thay dạng SGK cùng chữ: Yamato, Osaka; Gangwon viết cang theo chính tả: EXPLAINED);
+    # 57 còn lại đều do luật của chủ sách, điểm đã quét hay nguồn tự lệch (EXPLAINED)
+    assert len(matched) == 134
 
 
 def test_tally_of_sourced_forms_by_kind():
@@ -60,7 +60,7 @@ def test_tally_of_sourced_forms_by_kind():
         entry[0] += _matches(token, origin, sources)
         entry[1] += 1
     # (khớp, tổng). Dạng "community" (Doraemon cũ) chỉ để xem, không là chuẩn.
-    assert tally == {("owner", "ja"): [45, 45], ("owner", "ko"): [20, 21], ("textbook", "ja"): [20, 44], ("official", "ja"): [3, 11], ("community", "ja"): [0, 8],
+    assert tally == {("owner", "ja"): [73, 73], ("owner", "ko"): [36, 37], ("textbook", "ja"): [19, 43], ("official", "ja"): [3, 11], ("community", "ja"): [0, 7],
                      ("official", "ko"): [3, 20]}
 
 
@@ -69,7 +69,7 @@ def test_tally_of_sourced_forms_by_kind():
 @pytest.mark.parametrize("token,origin,reading", [
     # chủ sách 04-10 (đứng trên mọi nguồn): u Nhật -> u ở mọi chỗ, hậu tố nối gạch thành một chuỗi
     # lần 2: y + nguyên âm -> gi (đầu và giữa từ), ei -> ây, e Nhật -> e (ge -> ghe, ke -> ke)
-    ("Yamato", "ja", "Gia-ma-tô"), ("Ayaka", "ja", "A-gia-ca"), ("Yuki", "ja", "Giu-ki"), ("Mayu", "ja", "May-u"), ("Yoshida", "ja", "Giô-si-đa"),
+    ("Yamato", "ja", "Gia-ma-tô"), ("Ayaka", "ja", "A-gia-ca"), ("Yuki", "ja", "Giu-ki"), ("Mayu", "ja", "Ma-giu"), ("Yoshida", "ja", "Giô-si-đa"),
     ("Rei", "ja", "Rây"), ("Hajime", "ja", "Ha-gi-me"), ("Sanae", "ja", "Xa-na-e"), ("Kōbe", "ja", "Cô-be"), ("Edo", "ja", "E-đô"),
     ("Ge", "ja", "Ghe"), ("Keita", "ja", "Cây-ta"), ("Seiya", "ja", "Xây-a"),
     # ou viết ra -> âu (kyou / ryou tách i-âu; shou chou jou giữ âm vòm, có cờ analogy); ō, ô, oo vẫn -> ô
@@ -147,7 +147,7 @@ def test_open_choices_are_flagged_not_silent():
     assert romanized_reading_flags("Hoe", "ko")[1] == ("open:ko_rare_vowels",)
     assert romanized_reading_flags("Naoki", "ja")[1] == ("analogy:ao_split",)
     assert romanized_reading_flags("Seiya", "ja")[1] == ()
-    assert romanized_reading_flags("Mayu", "ja")[1] == ("analogy:y_final",)
+    assert romanized_reading_flags("Mayu", "ja")[1] == ("analogy:y_gi",)  # yu / yo cuối từ không còn bán âm (lần 9); chỉ ya (Maya)
     assert romanized_reading_flags("Kouya", "ja")[1] == ("open:y_after_vowel_pair",)
     assert romanized_reading_flags("Gyeong", "ko")[1] == ("analogy:ko_yeo",)
     assert romanized_reading_flags("Seoul", "ko")[1] == ("analogy:ko_eo_u",)
@@ -239,7 +239,7 @@ def test_a_hyphen_joins_what_the_part_says_and_a_camel_pair_of_single_syllables_
     ("Ohto", "ja", "Ô-tô"), ("Ohka", "ja", "Ô-ca"), ("Poh-chan", "ja", "Pô-chan"), ("Sanjyo", "ja", "Xan-giô"), ("Kanjyaka", "ja", "Can-gia-ca"),
     ("Hiiraghi", "ja", "Hi-ra-ghi"), ("Gesunoh", "ja", "Ghét-xu-nô"), ("Theia", "ja", "Thi-a"), ("Fina", "ja", "Phi-na"), ("Tio", "ja", "Ti-ô"), ("Tio-san", "ja", "Ti-ô-xan"),
     ("tokki", "ko", "tô-ki"), ("Gangwon", "ko", "Cang-guôn"),
-    # không đổi: ō đầu từ vẫn o, oh trước nguyên âm là o + h của ha / hi, ge không thành ghét ngoài Gesunoh, Oppa vẫn không đoán (chỉ kk được ưu tiên)
+    # không đổi: ō đầu từ vẫn o, oh trước nguyên âm là o + h của ha / hi, ge không thành ghét ngoài Gesunoh, Oppa đã tách ở lần 9
     ("Ōsaka", "ja", "O-xa-ca"), ("Ohayou", "ja", "O-ha-giâu"), ("Gesu", "ja", "Ghe-xu"), ("Gen", "ja", "Ghen"),
 ])
 def test_owner_ruling_of_the_eighth_round_and_what_it_leaves_alone(token, origin, reading):
@@ -252,4 +252,33 @@ def test_the_eighth_round_flags_what_it_infers():
     assert romanized_reading_flags("Hiiraghi", "ja")[1] == ("analogy:ja_gh",)
     assert romanized_reading_flags("Gesunoh", "ja")[1] == () and romanized_reading_flags("Theia", "ja")[1] == ()
     assert romanized_reading_flags("tokki", "ko")[1] == ("analogy:ko_tense",)
-    assert romanized_reading("Oppa", "ko") is None
+    assert romanized_reading("Oppa", "ko") == "Óp-pa"  # lần 9: ca cố định của chủ sách (o ngắn)
+
+
+@pytest.mark.parametrize("token,origin,reading", [
+    # chủ sách 04-10 lần 9, Nhật (chữ viết đúng chính tả của app: ka / ku của chủ sách -> ca / cu; "doi" -> gioi, d = gi ở giọng Bắc)
+    ("Yurika", "ja", "Giu-ri-ca"), ("Yukinoshita", "ja", "Giu-ki-nô-si-ta"), ("Yume", "ja", "Giu-me"), ("Yue", "ja", "Giu-e"), ("Izayoi", "ja", "I-da-gioi"),
+    ("Futayo", "ja", "Phu-ta-giô"), ("Renya", "ja", "Re-ni-a"), ("Shinomiya", "ja", "Si-nô-mi-a"), ("Sakuya", "ja", "Xa-cu-gia"), ("Kasuya", "ja", "Ca-xu-gia"),
+    ("Kouya", "ja", "Câu-gia"), ("Raiya", "ja", "Rai-gia"), ("Direkuresu", "ja", "Đi-re-cu-re-xu"), ("Hamsuke", "ja", "Ham-xu-ke"), ("ecchi", "ja", "ét-chi"),
+    ("Haffu", "ja", "Ha-phu"), ("Reidi", "ja", "Rây-đi"), ("Poh-chan", "ja", "Pô-chan"),
+    # Hàn: pp / nn tách âm tiết, yeo đầu từ + coda -> gi + o + coda (young -> yeong), eun -> ưn, ye đầu từ -> gie (Yeeun, Yejin), ca cố định Jeongeun / Luda
+    ("Oppa", "ko", "Óp-pa"), ("unnie", "ko", "un-ni"), ("noona", "ko", "nu-na"), ("Ahn", "ko", "An"), ("Yeeun", "ko", "Gie-ưn"), ("Muyoung", "ko", "Mu-giong"), ("Namgung", "ko", "Nam-gung"),
+    ("Chaeyeon", "ko", "Che-gion"), ("Young", "ko", "Giong"), ("Hye", "ko", "Hê"), ("Jeongeun", "ko", "Châng-gưn"), ("Luda", "ko", "Lu-đa"), ("won", "ko", "guôn"),
+    # điều suy rộng ra: y sau i rơi (yu / yo theo ya), yo / yu cuối từ là gi, Ham + s; yeo mở vẫn gi + eo, Jeong vẫn Gie-ong, Leon không thành tên Hàn
+    ("Kiyoshi", "ja", "Ki-ô-si"), ("Miyuki", "ja", "Mi-u-ki"), ("Sayo", "ja", "Xa-giô"), ("Koichi", "ja", "Co-i-chi"), ("Koizumi", "ja", "Coi-du-mi"), ("Hatta", "ja", "Ha-ta"), ("Nissan", "ja", "Nít-xan"), ("Aoi", "ja", "A-o-i"), ("Shimbun", "ja", "Sim-bun"),
+    ("Yeo", "ko", "Gieo"), ("Jeong", "ko", "Gie-ong"), ("Kim Young-sam", "ko", "Kim Giong-xam"), ("Hakkyo", "ko", "Ha-ki-ô"), ("Hatta", "ko", "Hắt-ta"),
+])
+def test_owner_ruling_of_the_ninth_round_and_what_it_leaves_alone(token, origin, reading):
+    assert romanized_reading(token, origin) == reading
+
+
+def test_the_ninth_round_flags_what_it_infers():
+    assert romanized_reading_flags("ecchi", "ja")[1] == ("analogy:ja_cch",)
+    assert romanized_reading_flags("Haffu", "ja")[1] == ("analogy:ja_ff",)
+    assert romanized_reading_flags("Hamsuke", "ja")[1] == ("analogy:ja_m_s",)
+    assert romanized_reading_flags("Izayoi", "ja")[1] == ("analogy:y_gi",)
+    assert romanized_reading_flags("Miyuki", "ja")[1] == ("analogy:y_after_i",)
+    assert romanized_reading_flags("Shinomiya", "ja")[1] == ()  # ya sau i là ca của chủ sách, không phải suy
+    assert romanized_reading_flags("unnie", "ko")[1] == ("analogy:ko_ie",)
+    assert romanized_reading_flags("Jeongeun", "ko")[1] == () and romanized_reading_flags("Luda", "ko")[1] == ()
+    assert romanized_reading("Leon", "ko") is None and romanized_reading("Lena", "ko") is None

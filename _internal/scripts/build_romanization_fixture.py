@@ -82,6 +82,11 @@ EDGE: list[tuple[str, str | None]] = [
     # chủ sách lần 8: oh -> ô dài, jy -> j, gh -> g, tên cố định (Gesunoh, Theia, Fina, Tio); Hàn kk -> k (tie-break), Gangwon
     ("Ohto", "ja"), ("Ohka", "ja"), ("Poh-chan", "ja"), ("Sanjyo", "ja"), ("Kanjyaka", "ja"), ("Hiiraghi", "ja"), ("Gesunoh", "ja"), ("Gesu", "ja"), ("Theia", "ja"),
     ("Fina", "ja"), ("Tio", "ja"), ("Tio-san", "ja"), ("Ohayou", "ja"), ("Johan", "ja"), ("Ōsaka", "ja"), ("tokki", "ko"), ("Hakkyo", "ko"), ("Gangwon", "ko"), ("Oppa", "ko"),
+    # chủ sách lần 9: y sau i rơi, yo / yu cuối từ là gi, yoi, cch, ff, m trước s, di; Hàn pp tách, ie cuối, young, yeo + coda, eun, tên cố định
+    ("Shinomiya", "ja"), ("Renya", "ja"), ("Kiyoshi", "ja"), ("Miyuki", "ja"), ("Futayo", "ja"), ("Sayo", "ja"), ("Izayoi", "ja"), ("Koichi", "ja"), ("ecchi", "ja"), ("Haffu", "ja"),
+    ("Hamsuke", "ja"), ("Shimbun", "ja"), ("Reidi", "ja"), ("Direkuresu", "ja"), ("Kasuya", "ja"), ("Yukinoshita", "ja"),
+    ("unnie", "ko"), ("Muyoung", "ko"), ("Young", "ko"), ("Chaeyeon", "ko"), ("Yeeun", "ko"), ("Jeongeun", "ko"), ("Luda", "ko"), ("Leon", "ko"), ("Lena", "ko"), ("Hatta", "ko"), ("Hatta", "ja"), ("Yejin", "ko"), ("Yerin", "ko"), ("Seoyeon", "ko"), ("Sapporo", "ja"),
+    ("Aoi", "ja"), ("Tomoe", "ja"), ("Fumio", "ja"), ("Koizumi", "ja"), ("Nissan", "ja"),
 ]
 
 

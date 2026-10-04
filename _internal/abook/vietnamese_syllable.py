@@ -117,6 +117,8 @@ def valid_syllable(syllable: str) -> bool:
     text, tone = stripped
     if not text.isalpha():
         return False
+    if text.startswith("guy") and _rhyme_ok("g", "i" + text[3:], tone, gi_absorbed=True):
+        return True  # g + âm đệm u trước y: guy, guyu, guyn (chủ sách 04-10: Will, wind); "guy" vào vần như i, nên chỉ nhận những vần i nhận
     for onset in ONSETS:
         if not text.startswith(onset):
             continue

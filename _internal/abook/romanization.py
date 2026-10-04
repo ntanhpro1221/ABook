@@ -153,12 +153,12 @@ _JA_SIMPLE = {"k": "K", "g": "G", "s": "S", "z": "d", "t": "t", "d": "đ", "n": 
 # Âm nào đi với nguyên âm nào trong Hepburn: không có ti, tu, di, du, si, zi, hu, wo, ye...
 _JA_ALLOWED = {
     "k": "aiueo", "g": "aiueo", "n": "aiueo", "b": "aiueo", "p": "aiueo", "m": "aiueo", "r": "aiueo",
-    "s": "aueo", "z": "aueo", "t": "aeo", "d": "aeo", "h": "aieo",
+    "s": "aueo", "z": "aueo", "t": "aeo", "d": "aieo", "h": "aieo",  # di: tên kiểu Latin trong truyện Nhật (Reidi, Direkuresu; chủ sách 04-10 lần 9), Hepburn không có
     "sh": "aiueo", "ch": "aiueo", "j": "aiueo", "ts": "u", "f": "u", "w": "a", "y": "auo",
     "ky": "auo", "gy": "auo", "ny": "auo", "hy": "auo", "by": "auo", "py": "auo", "my": "auo", "ry": "auo",
 }
 _JA_ONSETS = ("sh", "ch", "ts", "ky", "gy", "ny", "hy", "by", "py", "my", "ry")
-_JA_GEMINATE_CODA = {"k": "c", "p": "p", "t": "t", "s": "ss"}  # kk pp tt ss: khép bằng c / p / t (ss: analogy, s không đứng cuối; CHOICES["ss"])
+_JA_GEMINATE_CODA = {"k": "c", "p": "p", "t": "t", "s": "ss"}  # kk pp tt ss: khép bằng c / p / t (ss: analogy, s không đứng cuối; CHOICES["ss"]); chủ sách lần 9: Sapporo, Hokkaido, Nissan, Matcha
 
 
 # Từ đã quen ở Việt Nam, chủ sách ghi đè cố định (04-10; không đổi luật): onigiri (cơm nắm) -> o-ni-gi-ri, trong khi g + i -> ghi (Hiiragi) vẫn đứng.
@@ -172,16 +172,21 @@ _JA_FIXED: dict[str, tuple[tuple[str, ...], ...]] = {
     "theia": (("th", "i"), ("", "a")),
     "fina": (("ph", "i"), ("n", "a")),
     "tio": (("t", "i"), ("", "ô")),
+    # chủ sách lần 9, ngoại lệ không có luật: Hatta -> ha-ta (tt KHÔNG khép, khác Sapporo, Nissan, Matcha); Koichi -> co-i-chi (ghép kou + ichi, khác Koizumi -> coi-du-mi)
+    "hatta": (("h", "a"), ("t", "a")),
+    "koichi": (("K", "o"), ("", "i"), ("ch", "i")),
 }
 
 _JA_GH = re.compile(r"gh(?=[aiueo])")
 _JA_JY = re.compile(r"jy(?=[aiueo])")
 _JA_OH = re.compile(r"oh(?![aiueo])")
+_JA_CCH = re.compile(r"cch")
 
 
 def _ja_spelling(word: str, flags: list[str]) -> str:
     """Cách viết quen của romaji lệch Hepburn (chủ sách 04-10 lần 8, suy từ ca cố định): gh + nguyên âm -> g (Hiiraghi -> Hi-ra-ghi), jy + nguyên âm -> j (Sanjyo -> Xan-giô),
-    oh trước phụ âm / cuối từ -> ô dài, kể cả đầu từ (Ohto -> Ô-tô, Ohka -> Ô-ca, Poh -> Pô; "oh" trước nguyên âm là o + h của ha, hi: Ohayou, Johan giữ nguyên)."""
+    oh trước phụ âm / cuối từ -> ô dài, kể cả đầu từ (Ohto -> Ô-tô, Ohka -> Ô-ca, Poh -> Pô; "oh" trước nguyên âm là o + h của ha, hi: Ohayou, Johan giữ nguyên);
+    lần 9: cch -> tch (ecchi -> Ét-chi: cách viết khác của tch, Hepburn viết matcha)."""
     if _JA_GH.search(word):
         flags.append("analogy:ja_gh")
         word = _JA_GH.sub("g", word)
@@ -191,6 +196,9 @@ def _ja_spelling(word: str, flags: list[str]) -> str:
     if _JA_OH.search(word):
         flags.append("analogy:ja_oh")
         word = _JA_OH.sub("ŏ", word)
+    if _JA_CCH.search(word):
+        flags.append("analogy:ja_cch")
+        word = _JA_CCH.sub("tch", word)
     return word
 
 
@@ -239,12 +247,16 @@ def _ja_word(word: str, flags: list[str]) -> list[_Syl] | None:
     while i < size:
         c = word[i]
         after = word[i + 1:i + 2]
-        # nn / kk / pp / tt / ss, tch, ssh: phụ âm đôi khép âm tiết trước (mục 2)
+        # kk / pp / tt / ss, tch, ssh: phụ âm đôi khép âm tiết trước (mục 2; chủ sách lần 9: Sapporo -> Xáp-pô-rô, Nissan -> Nít-xan, Matcha -> Mát-cha; Hatta là ngoại lệ, `_JA_FIXED`)
         if c in _JA_GEMINATE_CODA and (after == c or (c == "t" and word[i + 1:i + 3] == "ch")):
             if c == "s":
                 flags.append("analogy:ss_t")
             if not _close(syllables, CHOICES["ss"] if c == "s" else _JA_GEMINATE_CODA[c]):
                 return None
+            i += 1
+            continue
+        if c == "f" and after == "f":
+            flags.append("analogy:ja_ff")  # ff: f đôi chỉ là một f, không khép âm tiết trước (Haffu -> Ha-phu; chủ sách 04-10 lần 9)
             i += 1
             continue
         if c == "n" and word[i + 1:i + 2] == "'":
@@ -253,9 +265,11 @@ def _ja_word(word: str, flags: list[str]) -> list[_Syl] | None:
             i += 2
             continue
         if (c == "n" and after not in tuple(_JA_VOWELS_LONG) and not (after == "y" and word[i + 2:i + 3] in ("a", "u", "o"))) or (
-            c == "m" and after in ("b", "m", "p")
+            c == "m" and after in ("b", "m", "p", "s")
         ):
-            if not _close(syllables, "n"):  # ん: n khép âm tiết trước
+            if c == "m" and after == "s":
+                flags.append("analogy:ja_m_s")  # m trước s cũng là ん (Hamsuke -> Ham-xu-ke, chủ sách 04-10 lần 9); Hepburn chỉ viết m trước b / m / p
+            if not _close(syllables, "m" if c == "m" else "n"):  # ん: n khép âm tiết trước; viết m thì khép m (Hamsuke -> ham; chủ sách lần 9)
                 return None
             i += 1
             continue
@@ -274,14 +288,19 @@ def _ja_word(word: str, flags: list[str]) -> list[_Syl] | None:
         if vowel == "" or vowel not in _JA_VOWELS or (onset and vowel not in _JA_ALLOWED[onset]):
             return None
         j += 1
-        if onset == "y" and j == len(word) and syllables and not syllables[-1].coda and syllables[-1].nucleus in ("a", "ây"):
+        if onset == "y" and syllables and not syllables[-1].coda and syllables[-1].nucleus == "i":
+            # y sau i rơi (chủ sách 04-10 lần 9: Shinomiya -> Si-nô-mi-a); yu / yo theo ya (analogy, chưa có ca): Miyuki -> Mi-u-ki
+            if vowel != "a":
+                flags.append("analogy:y_after_i")
+            syllables.append(_Syl("", _JA_VOWEL[vowel]))
+            i = j
+            continue
+        if onset == "y" and vowel == "a" and j == len(word) and syllables and not syllables[-1].coda and syllables[-1].nucleus in ("a", "ây"):
             # ya CUỐI từ sau nguyên âm: y thành bán âm cuối của âm tiết trước (ay, ây) + nguyên âm riêng (chủ sách 04-10: Maya -> May-a, Kaya -> Cay-a, Seiya -> Xây-a);
-            # yu / yo cuối từ theo cùng cách là analogy (Mayu -> May-u, Sayo -> Say-ô); ya giữa / đầu từ vẫn gia (Ayaka -> A-gia-ca)
+            # CHỈ ya: yu / yo cuối từ vẫn gi (chủ sách lần 9: Futayo -> Phu-ta-giô; Mayu -> Ma-giu, Sayo -> Xa-giô theo đó); ya giữa / đầu từ vẫn gia (Ayaka -> A-gia-ca)
             if syllables[-1].nucleus == "a":
                 syllables[-1].nucleus = "ay"
-            if vowel != "a":
-                flags.append("analogy:y_final")
-            syllables.append(_Syl("", _JA_VOWEL[vowel]))
+            syllables.append(_Syl("", "a"))
             i = j
             continue
         if onset == "y" and i >= 2 and word[i - 2] in _JA_VOWELS_LONG and word[i - 1] in _JA_VOWELS_LONG:
@@ -310,6 +329,9 @@ def _ja_word(word: str, flags: list[str]) -> list[_Syl] | None:
                 flags.append("analogy:ao_split")  # ao giữa từ tách a-o (Aoi, Kaori: chủ sách; Naoki theo analogy): o tiếp theo tự đứng một âm tiết, đọc "o"
         elif vowel == "a" and follow == "i":
             syllables[-1].nucleus += "i"
+            j += 1
+        elif vowel == "o" and follow == "i" and onset and not forced_o:
+            syllables[-1].nucleus = "oi"  # oi sau phụ âm là MỘT âm tiết (chủ sách lần 9: Koizumi -> Coi-du-mi, Izayoi -> I-da-gioi); không phụ âm đầu thì tách (Aoi -> A-o-i); Koichi là ngoại lệ
             j += 1
         i = j
     return syllables
@@ -360,15 +382,19 @@ def _ko_parses(word: str, start: int, previous_coda: str | None, out: list[list[
 
 
 _KO_SILENT_H = re.compile(r"ah(?![aeiouy])")
+_KO_FINAL_IE = re.compile(r"(?<=[bcdfghjklmnpqrstvwxz])ie$")
 
 
 def _ko_spelling(word: str, flags: list[str]) -> str:
     """Đổi cách viết Latinh quen dùng của tên Hàn về RR trước khi tách: nguyên cả đoạn (`_KO_SPELLINGS`), rồi từng chỗ (sh -> s, oo -> u, woo -> u, yoo -> yu: Shin,
-    Joo, Hoon, Ji-woo; weo -> wo: Weol; ah -> a khi h không đứng trước nguyên âm: Ahn, Ahri, Seol-Ah, h câm của tiếng gọi -a). sh và oo là quyết định của lead (04-10, bộ đo
-    luật); weo và ah là analogy (quy ước không nói)."""
+    Joo, Hoon, Ji-woo; weo -> wo: Weol; ah -> a khi h không đứng trước nguyên âm: Ahn, Ahri, Seol-Ah, h câm của tiếng gọi -a; young -> yeong; ie cuối từ -> i: unnie). sh và oo
+    là quyết định của lead (04-10, bộ đo luật); weo và ah là analogy (quy ước không nói)."""
     if word in _KO_SPELLINGS:
         return _KO_SPELLINGS[word]
-    word = word.replace("sh", "s").replace("woo", "u").replace("yoo", "yu").replace("oo", "u")
+    word = word.replace("sh", "s").replace("woo", "u").replace("yoo", "yu").replace("oo", "u").replace("young", "yeong")  # young: Muyoung -> Mu-gi-ong (chủ sách 04-10 lần 9)
+    if _KO_FINAL_IE.search(word):
+        flags.append("analogy:ko_ie")
+        word = _KO_FINAL_IE.sub("i", word)  # unnie -> un-ni (chủ sách lần 9): ie cuối từ sau phụ âm là i dài, như ee -> i
     if "weo" in word:
         flags.append("analogy:ko_weo")
         word = word.replace("weo", "wo")
@@ -378,9 +404,20 @@ def _ko_spelling(word: str, flags: list[str]) -> str:
     return word
 
 
-# Tên cố định mà RR viết giống hai cách tách (gang-won / gan-gwon): chủ sách 04-10 lần 8, Gangwon -> kang-guôn (viết cang theo chính tả: bộ kiểm âm tiết không nhận kang)
+# Tên cố định mà luật không tách được: RR viết giống hai cách tách (gang-won / gan-gwon: chủ sách 04-10 lần 8, Gangwon -> kang-guôn, viết cang theo chính tả: bộ kiểm âm tiết không nhận kang)
 _KO_FIXED_PARSES: dict[str, list[tuple[str, str, str]]] = {
     "gangwon": [("g", "a", "ng"), ("", "wo", "n")],
+    # chủ sách lần 9: Luda -> lu-đa. l đầu từ không có trong RR (r); mở cho mọi chữ l đầu từ thì tên Tây trong truyện Hàn (Leon, Lena) thành "tên Hàn đọc được", nên chỉ đúng tên này
+    "luda": [("l", "u", ""), ("d", "a", "")],
+}
+
+
+# Tên cố định mà luật không giải thích được cách đọc (chủ sách 04-10 lần 9): trả thẳng âm tiết ĐÃ viết chữ Việt (phụ âm đầu, vần, phụ âm cuối), không đi qua _ko_onset / _ko_nucleus.
+# Jeongeun -> châng-gưn (Jeong riêng vẫn Gie-ong theo ca cũ của chủ sách; RR viết giống Jeon-geun); Oppa -> óp-pa (chủ sách lần 9, cố định).
+_KO_FIXED_SYLS: dict[str, tuple[tuple[str, str, str], ...]] = {
+    "jeongeun": (("ch", "â", "ng"), ("g", "ư", "n")),
+    # Oppa -> óp-pa (chủ sách lần 9, cố định): o ngắn, KHÔNG ô như Jong -> Giông; pp tách p khép + p mở
+    "oppa": (("", "o", "p"), ("p", "a", "")),
 }
 
 
@@ -389,8 +426,8 @@ def _ko_best(word: str, flags: list[str]) -> list[tuple[str, str, str]] | None:
     word = _ko_spelling(word, flags)
     if word in _KO_FIXED_PARSES:
         return list(_KO_FIXED_PARSES[word])
-    if not word or len(word) > 24 or any(doubled in word for doubled in ("aa", "ee", "ii", "oo", "uu")):
-        return None  # RR không có nguyên âm đôi lặp (Yoo, Lee, Woo là cách viết quen, không phải RR)
+    if not word or len(word) > 24 or any(doubled in word.replace("yeeu", "yeu") for doubled in ("aa", "ee", "ii", "oo", "uu")):
+        return None  # RR không có nguyên âm đôi lặp (Yoo, Lee, Woo là cách viết quen, không phải RR); trừ ye + eu (Yeeun -> Gie-ưn: ee là hai âm tiết)
     parses: list[list[tuple[str, str, str]]] = []
     _ko_parses(word, 0, None, parses, [])
     if not parses:
@@ -405,7 +442,11 @@ def _ko_best(word: str, flags: list[str]) -> list[tuple[str, str, str]] | None:
         # kk là phụ âm đầu căng (ㄲ), không phải c khép + k mở: tokki -> to-kki -> tô-ki (chủ sách 04-10 lần 8). Chỉ kk; pp, tt, ss, jj còn để không đoán (Oppa)
         tense = [parse for parse in best if any(entry[0] == "kk" for entry in parse)]
         if len(tense) != 1:
-            return None
+            # pp, tt thì ngược lại: p / t khép âm tiết trước rồi p / t mở đầu âm tiết sau (analogy theo Oppa -> óp-pa của chủ sách lần 9, Oppa là tên cố định; Hatta -> hắt-ta chưa có ca); jj, ss không có phụ âm cuối nên không vướng
+            split = [parse for parse in best if not any(entry[0] in ("pp", "tt") for entry in parse)]
+            if len(split) != 1 or not any(doubled in word for doubled in ("pp", "tt")):
+                return None
+            tense = split
         best = tense
     chosen = best[0]
     # ng hay n + g: RR viết giống nhau (Yong-in / Yon-gin, Han-gang / Hang-ang) - còn cách tách khác cùng số âm tiết thì không đoán
@@ -429,6 +470,10 @@ def _ko_words(segments: list[str | None], flags: list[str]) -> list[list[_Syl]] 
         if segment is None:
             out.append([])
             previous = None
+            continue
+        if segment in _KO_FIXED_SYLS:
+            out.append([_Syl(*entry) for entry in _KO_FIXED_SYLS[segment]])
+            previous = {"c": "k"}.get(_KO_FIXED_SYLS[segment][-1][2], _KO_FIXED_SYLS[segment][-1][2])
             continue
         parse = _ko_best(segment, flags)
         if parse is None:
@@ -485,8 +530,15 @@ def _ko_nucleus(onset: str, vowel: str, closing: str, flags: list[str], initial:
     elif vowel == "yeo":
         # yeo: đầu từ gi + eo (Yeon -> Gie-on); sau phụ âm y MẤT, eo như bình thường (chủ sách 04-10: Gyeong -> Ghe-ong, Pyeong -> Pe-ong); g + y đọc g (ghe), không c / k
         flags.append("analogy:ko_yeo")
-        pieces = _ko_eo("gi", closing) if onset == "" else _ko_eo("G" if onset == "K" else onset, closing)
-        closing = ""
+        if onset == "":
+            # yeo + phụ âm cuối: gi + o (Young -> Giong, Chaeyeon -> Che-gion; chủ sách 04-10 lần 9); yeo mở vẫn gi + eo (Yeo -> Gieo)
+            pieces = [_Syl("gi", "o")] if closing else [_Syl("gi", "eo")]
+        else:
+            pieces = _ko_eo("G" if onset == "K" else onset, closing)
+            closing = ""
+        if onset == "" and closing:
+            pieces[0].coda = closing
+            closing = ""
     elif vowel == "eo" and not closing and before_u:
         # eo mở đứng trước âm tiết u gộp thành e (chủ sách 04-10: Seoul -> Xe-un, không Xeo-un); analogy cho tên khác cùng dạng
         flags.append("analogy:ko_eo_u")
@@ -500,7 +552,7 @@ def _ko_nucleus(onset: str, vowel: str, closing: str, flags: list[str], initial:
         if onset in ("K", "G"):
             pieces = [_Syl("G", "i")]  # gye -> ghi (chủ sách 04-10: Cheonggyecheon -> Che-ong-ghi-che-on)
         else:
-            pieces = [_Syl(onset, "ê" if CHOICES["ko_ye"] == "ê" else "iê") if onset else _Syl("gi", "ê")]
+            pieces = [_Syl(onset, "ê" if CHOICES["ko_ye"] == "ê" else "iê") if onset else _Syl("gi", "e")]  # ye đầu từ: gi + e mở (chủ sách 04-10 lần 9: Yejin -> Gie-gin), không ê
     elif vowel == "wo" and onset == "":
         # w đầu từ -> gu (chủ sách 04-10: Won -> Guôn); giữa từ (Suwon) theo analogy cùng cách
         if not initial:
