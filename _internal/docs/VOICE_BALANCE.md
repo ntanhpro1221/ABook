@@ -40,7 +40,7 @@ sửa bảng đổi hash chất lượng, nên chỉ sửa ở nhánh dev khi kh
 
 Không bao giờ nhân giá trị dB hay bán cung với nhau.
 
-- **Tốc độ.** `tempo` áp bằng WORLD (`tts.apply_speed_change`), khoảng cho phép
+- **Tốc độ.** `tempo` áp bằng WSOLA tương quan chuẩn hoá (`tts.apply_speed_change`, từ 04-10; trước đó WORLD), khoảng cho phép
   `SPEED_FACTOR_MIN = 0,70` đến `SPEED_FACTOR_MAX = 1,50` (bảng bị từ chối nếu `x · r` ra ngoài). Mặc định
   `x = 1`.
 - **Độ to.** `audio_io.segment_gain_db` cho gain hằng số áp lên bản thô; không đo LUFS của câu.
@@ -57,7 +57,8 @@ Không bao giờ nhân giá trị dB hay bán cung với nhau.
 
 ### Thứ tự áp
 
-cao độ → tempo → gain. `o_v` phải đo SAU khi áp `r_v`, vì WORLD kéo tốc độ làm đổi độ to. Trong `tts.py`
+cao độ → tempo → gain. `o_v` phải đo SAU khi áp `r_v` (WORLD làm đổi độ to tới 2 dB tuỳ giọng; WSOLA chuẩn hoá ≤ 0,2 dB, vẫn đo
+sau cho chắc). Trong `tts.py`
 cao độ và tempo chạy trước `atomic_write_wav`, nơi gain được áp; formant nhân vật áp sau cùng, lúc ghép chương.
 
 ### Hai núm chung
@@ -97,7 +98,8 @@ ghi lại bằng LF. Sau khi thả: chạy `tests/test_voice_balance.py`, ghi ha
   - Độ lệch của giọng = trung bình theo câu của log tốc độ, trừ trung bình CÙNG câu qua mốc. Cách này bỏ được hiệu ứng câu.
   - CI 95 % tính theo câu.
 - **Độ to:** LUFS tích hợp của app (`integrated_loudness_lufs`), đo trên bản thô SAU cao độ (`pitch_st`) và SAU `r_v`.
-  - WORLD kéo tốc độ làm đổi độ to, không đều giữa giọng: Thanh Bình ở tempo 0,76 lệch −3,7 dB so với dự kiến.
+  - WORLD kéo tốc độ làm đổi độ to, không đều giữa giọng: Thanh Bình ở tempo 0,76 lệch −3,7 dB so với dự kiến. Bảng hiện tại đo
+    với WSOLA chuẩn hoá (mục "Cách kéo tốc độ" dưới).
 - **Mốc tốc độ:** trung vị tốc độ GỐC (không hệ số tay) của 19 preset phân vai, bậc f100 = **4.56 âm tiết/giây**.
   - 2 người kể miền Trung và các model khác so với cùng mốc, không kéo mốc đi.
 - **Núm x = 1,00** (chủ sách chốt 04-10). Để so: 4 giọng kể chuyện chủ sách chọn tốc độ bằng tai ngày 18-09 đọc ở 3.87 âm tiết/giây.
@@ -248,7 +250,58 @@ Ba cách được so:
 - Giọng mới bị kéo (Mỹ Duyên, Trúc Ly) mất nhiều nhất.
 - VieNeu Turbo không có tham số tốc độ gốc (chỉ Nano có), nên đã thử cách co giãn khác, xem mục kế.
 
-Đang đo (bổ sung sau): PSOLA (Praat) và WSOLA so với WORLD, UTMOS theo r = 0,85…1,3, để chọn cách co giãn và trần |log r|.
+### Cách kéo tốc độ: WORLD → WSOLA → WSOLA tương quan chuẩn hoá (04-10, main a84e30b4, hash 598d3c84)
+
+UTMOSv2 như trên; chênh so với "không kéo" theo cặp câu, ±CI 95 %. Mã đo: scratchpad phiên Model `balance/tempo_alt.py`,
+`tempo_sweep.py`, `tempo_near.py`, `wsola_var.py`, `tempo_ncc.py`, `tempo_options.py` (bản sao trong Corpus `claude/model_lane/voice_balance`).
+
+**Ở chính r_v của giọng (40 câu trung tính):**
+
+| giọng | r_v | gốc | WORLD | PSOLA (Praat) | WSOLA audiotsm | WSOLA tay, tương quan thô |
+|---|---|---|---|---|---|---|
+| Mỹ Duyên | 1,306 | 3,14 | −1,03 ±0,10 | −0,46 ±0,08 | −0,32 ±0,08 | −0,30 ±0,07 |
+| Kim Thanh | 1,322 | 2,92 | −0,48 ±0,09 | −0,39 ±0,09 | −0,14 ±0,08 | −0,19 ±0,08 |
+| Trúc Ly | 0,890 | 2,65 | −0,63 ±0,09 | −0,34 ±0,09 | −0,32 ±0,08 | −0,33 ±0,08 |
+
+**Theo r (Mỹ Duyên, Trúc Ly, Phạm Tuyên × 22 câu hiệu chỉnh, gộp):**
+
+| r | WORLD | PSOLA | WSOLA audiotsm | WSOLA tương quan thô | **WSOLA tương quan chuẩn hoá (app)** |
+|---|---|---|---|---|---|
+| 0,85 | −0,71 | −0,30 | −0,34 | −0,32 | **−0,15** |
+| 0,9 | −0,67 | −0,30 | −0,28 | −0,27 | **−0,10** |
+| 0,95 | | | | −0,23 | **−0,04** |
+| 0,975 / 1,025 | | | | −0,19 / −0,16 | |
+| 1,05 | | | | −0,16 | **−0,04** |
+| 1,1 | −0,63 | −0,29 | −0,19 | −0,16 | **−0,10** |
+| 1,2 | −0,62 | −0,41 | −0,20 | −0,26 | **−0,22** |
+| 1,3 | −0,70 | −0,49 | −0,29 | −0,27 | **−0,36** |
+
+CI gộp ±0,05–0,07. Theo giọng ở 1,3 (bản chuẩn hoá): Mỹ Duyên −0,31, Phạm Tuyên −0,19, Trúc Ly −0,59. Trúc Ly có r_v 0,89 nên
+không bao giờ bị kéo nhanh.
+
+- **WSOLA tương quan thô có PHÍ CỐ ĐỊNH:** kéo 2,5 % mất gần bằng kéo 30 %. Lý do: tương quan thô chọn điểm nối nghiêng về
+  đoạn TO thay vì đoạn khớp dạng sóng; nó cũng nâng độ to +0,4..0,6 dB.
+- **Chia cho năng lượng vùng ứng viên** (tương quan chuẩn hoá) xoá phí ấy:
+  - ở r 1,05 (2 giọng × 22 câu): thô −0,17, chồng khung 75 % −0,18, chuẩn hoá −0,00 ±0,05;
+  - chồng 75 % + chuẩn hoá −0,04; khung 60 ms −0,05;
+  - độ to lệch ≤ 0,2 dB, độ dài đúng 1/r, cao độ lệch ≤ 0,05 bán cung, RTF 0,05–0,07.
+  - Ở r ≥ 1,2 bản chuẩn hoá không hơn bản thô; mất mát ở đó là của chính việc nói nhanh hơn 20–30 %.
+- **WORLD** tổng hợp lại toàn bộ nên đổi độ to TUỲ GIỌNG kể cả khi r gần 1: Xuân Vĩnh ×0,913 −2,03 dB, Thái Sơn ×1,049
+  −1,88 dB, Thục Đoan ×1,006 +0,06 dB. Gain trong bảng WORLD cũ vì thế bù sai cho các giọng ấy. Bảng nay đo lại với WSOLA
+  chuẩn hoá.
+
+**Trần |log r|: KHÔNG đặt** (chọn (a), Lead 04-10, theo lệnh chủ sách "tốc độ chung lấy từ trung bình"). Mất UTMOS nội suy
+từ đường trên cho 21 preset:
+
+| phương án | mất TB / giọng | mất lớn nhất | lệch tốc độ còn lại |
+|---|---|---|---|
+| **(a) kéo như bảng** | −0,101 | −0,36 | 0 % |
+| (b) bỏ kéo khi lệch < 5 % (10 giọng) | −0,090 | −0,36 | ≤ 4,6 % |
+| (c) trần ±20 % | −0,081 | −0,22 | Kim Thanh −9,2 %, Mỹ Duyên −8,1 %, Đức Trí −5,1 % |
+| (c) trần ±10 % | −0,058 | −0,10 | 4 giọng chậm 9–17 % |
+
+Mất dồn vào 4 giọng có r_v > 1,2 (Thiền Tâm Đức, Đức Trí, Mỹ Duyên, Kim Thanh): −0,2 tới −0,36. Trần thì đổi lấy đúng cái lỗi
+chủ sách gọi tên ("cùng câu mà giọng nhanh / chậm khác nhau"). Dự phòng nếu chủ sách nghe thấy 4 giọng ấy méo: (c) ±20 %.
 
 ### Trục thứ ba: cao độ nền = độ hưng phấn mặc định? (CHỈ ĐO)
 
