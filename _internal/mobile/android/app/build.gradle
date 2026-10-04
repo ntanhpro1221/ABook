@@ -51,8 +51,11 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // R8: thu nhỏ mã + tài nguyên (APK nhỏ hơn). Luật giữ ở proguard-rules.pro; mapping.txt phải cất lại sau mỗi bản
+            // phát hành (docs/RELEASING.md), không có nó thì stack trace của bản thu nhỏ không đọc được.
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             if (releaseSigning.getProperty("storeFile")) {
                 signingConfig signingConfigs.release
             }
