@@ -55,7 +55,7 @@ class EnglishViTest {
         assertEquals("le-vồ", EnglishVi.reading("level", phones))
         assertEquals("máp-pồ", EnglishVi.reading("maple", phones))
         assertEquals("Mai-cồ", EnglishVi.reading("Michael", phones))
-        assertEquals("Ca-tê", EnglishVi.reading("Kate", phones))
+        assertEquals("Kết", EnglishVi.reading("Kate", phones))
         assertEquals("Mi-ke", EnglishVi.reading("Mike", phones, overrides = false))
         assertEquals("xờ-kiu", EnglishVi.reading("skill", phones, overrides = false))
         assertEquals("bót", EnglishVi.reading("boss", phones, overrides = false))
