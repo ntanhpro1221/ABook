@@ -89,4 +89,57 @@ object Abbreviations {
             out[index] = before + reading + Names.closing(after, reading)
         }
     }
+
+    /**
+     * Gọi viết hoa cả ("ONII-CHAN", "NEE-SAN", "OPPA") đọc như dạng thường của nó ([Names.honorificReading]: "o-ni-i-chan", "ne-e-xan") - luật hậu tố của Names chỉ nhận chữ thường / viết hoa đầu,
+     * còn chữ hoa cả sẽ bị [spellAbbreviations] bỏ qua ở câu đang gào và sea-g2p đọc nguyên "onii chan". Thay tại chỗ, giữ dấu câu quanh; số chữ không đổi - `read_shouted_honorifics`.
+     */
+    fun readShoutedHonorifics(toks: List<String>, out: MutableList<String>, origin: String?) {
+        for ((index, token) in toks.withIndex()) {
+            if (out[index] != token) continue
+            val (before, core, after) = Names.splitToken(token)
+            val letters = core.replace("-", "")
+            if (letters.length < 3 || !letters.all { it in 'A'..'Z' } || !core.all { it in 'A'..'Z' || it == '-' }) continue
+            val reading = Names.honorificReading(core.lowercase(), origin) ?: continue
+            out[index] = before + reading + after
+        }
+    }
+
+    /** Danh xưng viết tắt trước tên: đọc đủ chữ Anh (gold_spec: "mr." là "mister"). */
+    private val TITLES = mapOf("mr" to "mister", "mrs" to "missus", "ms" to "miss", "dr" to "doctor", "st" to "saint")
+    /** "Dr." / "St." chỉ là danh xưng khi liền trước một tên viết hoa ("Dr. Stone", "St. Louis"); "Mr." / "Ms." / "Mrs." thì luôn. */
+    private val TITLE_NEEDS_NAME = setOf("dr", "st")
+    /** "mr.lyle": dấu chấm dính liền tên. */
+    private val TITLE_GLUED = Regex("""(?i)^(mrs|mr|ms|dr|st)\.(?=\p{L})""")
+    private const val TITLE_OPENERS = "\"'“‘([«"
+
+    /**
+     * "Mr." / "Mrs." / "Ms." / "Dr." / "St." trước tên đọc đủ chữ Anh ("mister", "missus", "miss", "doctor", "saint"): sea-g2p đọc "mờ rờ" hay để nguyên "mr." làm cả câu bị ngắt ở dấu chấm. Dấu chấm bỏ theo
+     * ("mr.lyle" -> "mister lyle"). Thay tại chỗ; số chữ không đổi - `read_titles`.
+     */
+    fun readTitles(toks: List<String>, out: MutableList<String>) {
+        for ((index, token) in toks.withIndex()) {
+            if (out[index] != token) continue
+            val (before, core, after) = Names.splitToken(token)
+            if (core.isEmpty() || before.lastOrNull()?.isDigit() == true) continue
+            val following = if (index + 1 < toks.size) toks[index + 1].trimStart { it in TITLE_OPENERS } else ""
+            val glued = TITLE_GLUED.find(core)
+            val key: String
+            val tail: String
+            if (glued != null) { // "mr.lyle"
+                key = glued.groupValues[1].lowercase()
+                val rest = core.substring(glued.range.last + 1)
+                if (key in TITLE_NEEDS_NAME && !rest[0].isUpperCase()) continue
+                tail = " $rest$after"
+            } else {
+                key = core.lowercase()
+                if (key !in TITLES || core.substring(1) != core.substring(1).lowercase()) continue
+                val dotted = after.startsWith(".")
+                val next = following.firstOrNull()
+                if (next == null || !next.isLetter() || (key in TITLE_NEEDS_NAME && !next.isUpperCase()) || (!dotted && (key == "st" || core[0].isLowerCase()))) continue
+                tail = if (dotted) after.substring(1) else after
+            }
+            out[index] = before + TITLES.getValue(key) + tail
+        }
+    }
 }

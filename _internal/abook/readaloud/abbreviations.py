@@ -108,3 +108,53 @@ def spell_abbreviations(toks: list[str], out: list[str]) -> None:
         if last > first and any(shouting[first:last + 1]):
             continue
         out[index] = before + reading + names.closing(after, reading)
+
+
+def read_shouted_honorifics(toks: list[str], out: list[str], origin: str | None) -> None:
+    """Gọi viết hoa cả ("ONII-CHAN", "NEE-SAN", "OPPA") đọc như dạng thường của nó (`names.honorific_reading`: "o-ni-i-chan", "ne-e-xan") - luật hậu tố của `names` chỉ nhận chữ thường / viết hoa đầu,
+    còn chữ hoa cả sẽ bị `spell_abbreviations` bỏ qua ở câu đang gào và sea-g2p đọc nguyên "onii chan". Thay tại chỗ, giữ dấu câu quanh; số chữ không đổi."""
+    for index, token in enumerate(toks):
+        if out[index] != token:
+            continue
+        before, core, after = split_token(token)
+        letters = core.replace("-", "")
+        if len(letters) < 3 or not (core.isascii() and letters.isalpha() and letters.isupper()):
+            continue
+        reading = names.honorific_reading(core.lower(), origin)
+        if reading:
+            out[index] = before + reading + after
+
+
+TITLES = {"mr": "mister", "mrs": "missus", "ms": "miss", "dr": "doctor", "st": "saint"}  # danh xưng viết tắt trước tên: đọc đủ chữ Anh (gold_spec: "mr." là "mister")
+TITLE_NEEDS_NAME = frozenset(("dr", "st"))  # "Dr." / "St." chỉ là danh xưng khi liền trước một tên viết hoa ("Dr. Stone", "St. Louis"); "Mr." / "Ms." / "Mrs." thì luôn
+TITLE_GLUED = re.compile(r"(mrs|mr|ms|dr|st)\.(?=[^\W\d_])", re.IGNORECASE)  # "mr.lyle": dấu chấm dính liền tên
+TITLE_OPENERS = "\"'“‘([«"
+
+
+def read_titles(toks: list[str], out: list[str], speaks_english: bool = True) -> None:
+    """"Mr." / "Mrs." / "Ms." / "Dr." / "St." trước tên đọc đủ chữ Anh ("mister", "missus", "miss", "doctor", "saint"): sea-g2p đọc "mờ rờ" hay để nguyên "mr." làm cả câu bị ngắt ở dấu chấm.
+    Dấu chấm bỏ theo ("mr.lyle" -> "mister lyle"). Giọng không nói được âm Anh thì Việt hoá chữ ấy như từ Anh khác. Thay tại chỗ; số chữ không đổi."""
+    for index, token in enumerate(toks):
+        if out[index] != token:
+            continue
+        before, core, after = split_token(token)
+        if not core or before[-1:].isdigit():
+            continue
+        following = toks[index + 1].lstrip(TITLE_OPENERS) if index + 1 < len(toks) else ""
+        glued = TITLE_GLUED.match(core)
+        if glued:  # "mr.lyle"
+            key, rest = glued.group(1).lower(), core[glued.end():]
+            if key in TITLE_NEEDS_NAME and not rest[:1].isupper():
+                continue
+            tail = " " + rest + after
+        else:
+            key = core.lower()
+            if key not in TITLES or core[1:] != core[1:].lower():
+                continue
+            dotted = after.startswith(".")
+            if not following[:1].isalpha() or (key in TITLE_NEEDS_NAME and not following[:1].isupper()) or (not dotted and (key == "st" or core[:1].islower())):
+                continue
+            tail = after[1:] if dotted else after
+        word = TITLES[key]
+        word = (names.english_reading(word) or word) if not speaks_english else word
+        out[index] = before + word + tail

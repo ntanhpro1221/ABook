@@ -58,6 +58,8 @@ RANGE = re.compile(r"(?<![\w/.,-])([0-9]{1,4})((?:-[0-9]{1,4})+)(?![\w/-]|[.,][0
 TIMES = re.compile(r"(?<![\w])[x×]([0-9]+)(?![\w])")  # x2: nhân hai
 DOLLARS = re.compile(r"\$\s?([0-9]+(?:[.,][0-9]+)*)")  # $5: năm đô la (sea-g2p đọc "u s d" rời)
 EMOTICON = re.compile(r"(?:[:;=]['\-^o]?[()dDpP3vV/\|*]+|>[:;=]['\-^o]?[()]+|<3+|-_-|\^_*\^|[Tt]_[Tt]|>_<|orz|OTZ)")
+ARROW_FORWARD = re.compile(r"(?<![<=-])(?:-+|=+)>|[→⇒➜➡➔⟶⟹]")  # "->", "-->", "=>", "→": sea-g2p đọc "sang" / "đến" / "suy ra"; "<->" (hai chiều) để nguyên
+ARROW_BACK = re.compile(r"<(?:-+|={2,})(?!>)|[←⇐⟵⟸]")  # "<-", "<--", "←": không có cách đọc thành lời (sea-g2p đọc "nhỏ hơn"): bỏ; "<=" là so sánh, để nguyên
 GLUED = re.compile(r"((?:\.{2,}|[…—–])+)")  # chỗ dính liền hai từ trong một chữ hiện (tách để đọc từng từ, mảnh dấu giữ nguyên)
 STUTTER_ONSETS = ("ngh", "ng", "nh", "kh", "ch", "gh", "gi", "th", "tr", "ph", "qu")  # phụ âm đầu ghép của tiếng Việt: nói lắp "C-Chuyện" là "chờ… chuyện"
 STUTTER_SOUND = {"k": "c", "w": "v", "z": "d", "j": "gi", "f": "ph"}
@@ -164,6 +166,29 @@ def _tildes(out: list[str]) -> None:
             out[index - 1] += said
             said = ""
         out[index] = said
+
+
+def _arrow(token: str, at_start: bool) -> str:
+    def replace(match: re.Match, word: str) -> str:
+        left = token[match.start() - 1] if match.start() else ""
+        right = token[match.end()] if match.end() < len(token) else ""
+        if not left and at_start:
+            word = ""  # "-> Bước tiếp": mũi tên đầu dòng chỉ là dấu đầu mục
+        if word:
+            return (" " if left.isalnum() else "") + word + (" " if right.isalnum() else "")
+        return " " if left.isalnum() and right.isalnum() else ""
+    token = ARROW_FORWARD.sub(lambda match: replace(match, "thành"), token)
+    return ARROW_BACK.sub(lambda match: replace(match, ""), token)
+
+
+def _arrows(out: list[str]) -> None:
+    """Mũi tên chữ: "1780 --> 1940", "A -> B", "=>", "→" là "thành" (sea-g2p đọc "sang" / "đến" / "suy ra"); mũi tên ngược "<-", "←" không có lời để đọc thì bỏ; mũi tên đứng đầu đoạn
+    hay đầu câu là dấu đầu mục, cũng bỏ."""
+    for index, token in enumerate(out):
+        if not any(char in token for char in "<>=→⇒➜➡➔⟶⟹←⇐⟵⟸"):
+            continue
+        before = out[index - 1].rstrip(CLOSERS) if index else ""
+        out[index] = _arrow(token, not before or before[-1] in SENTENCE_END)
 
 
 def _angle(out: list[str]) -> None:
@@ -362,6 +387,7 @@ def reading_marks(out: list[str]) -> None:
     """Dấu câu / ký hiệu mà sea-g2p đọc sai thành lời (nó đọc "~" là "khoảng", "500,000" là "năm trăm"): sửa tại chỗ, số chữ không đổi."""
     _fullwidth(out)
     _emoticons(out)
+    _arrows(out)
     _tildes(out)
     for index, token in enumerate(out):
         out[index] = THOUSANDS.sub(lambda match: match.group().replace(",", ""), token)
@@ -426,6 +452,8 @@ def _read_words(toks: list[str], out: list[str], origin: str | None, speaks_engl
                 break
     _roman_numbers(pieces, said)
     abbreviations.read_levels(pieces, said, speaks_english)
+    abbreviations.read_titles(pieces, said, speaks_english)
+    abbreviations.read_shouted_honorifics(pieces, said, origin)
     abbreviations.spell_abbreviations(pieces, said)
     names.spoken_names(pieces, origin, speaks_english, said)
     rebuilt = [""] * len(toks)

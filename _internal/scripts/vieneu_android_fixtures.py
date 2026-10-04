@@ -317,6 +317,11 @@ SOUND_PARAGRAPHS = [
     ("Sofa, anime, Ninja, manga, Samurai (bento) kimono sake miso dango takoyaki okonomiyaki senpai Ara ara, Umu eroge tsukkomi. Video, logic, piano, violin, sandal, vali, robot, gorilla.", None),
     ("Sofa, anime, Ninja, manga. 3 triệu won, 100 yen, 5 kwan, won rồi.", "ko"),
     ("Otsuki-san, Okayama, Onii-sama, Ojou-sama, Otaku-kun.", "ja"),
+    # TN lượt 4: gọi viết hoa cả, danh xưng viết tắt, mũi tên chữ
+    ("ONII-CHAN, ONII-CHAN LO LẮNG! “NEE-SAN!” và OPPA, ARIEL-SAMA. Kiểm tra SAN và SENPAI.", None),
+    ("ONII-CHAN, ONII-CHAN LO LẮNG! “NEE-SAN!” và OPPA, ARIEL-SAMA.", "ja"),
+    ("Mr. Lyle đến, Mrs. Smith, Ms. Lee và Dr. Stone. Mục tiêu của mr.lyle thôi, “Mr.Lyle” và (dr.Stone). St. Louis và Dr Stone. Main St. dài, Dr. nào.", None),
+    ("HP: 1780 --> 1940. A -> B, C => D, E → F. 1780->1940 và A-->B. A <- B và C ← D, E<-F. -> Bước tiếp. A <-> B, x <= 5, a -> b <- c.", None),
 ]
 JA_NAMES = "Haruto Yuki Sakura Kyouko Takeshi Hiroshi Akira Kenji Yamato Naoki Satoshi Ayaka Reiji Tsubasa Shinji Kaori".split()
 KO_NAMES = "Si-eun So-hye Hwi-min Seo-ram Deok-gu Kang-ho Ha-jin Joo-seon Min-jun Seo-yeon Ji-ho Geun-hye".split()
