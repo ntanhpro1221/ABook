@@ -1,7 +1,7 @@
 """Bộ hằng số cân bằng giọng: mỗi giọng một bản ghi đo trước, lúc thu máy tự áp.
 
 Một giọng = (engine, phiên bản engine, preset, bậc formant), khoá bằng chuỗi ổn định
-`vieneu@3.8.1/<preset>/f100` (xem `voice_key`); máy đọc khác cùng dạng, chỉ bậc gốc: `zerotts@0.1.5/baotrang/f100`. Bảng nằm ở `assets/voice_balance.json`; cả hai file
+`vieneu@3.8.3/<preset>/f100` (xem `voice_key`); máy đọc khác cùng dạng, chỉ bậc gốc: `zerotts@0.1.5/baotrang/f100`. Bảng nằm ở `assets/voice_balance.json`; cả hai file
 này quyết định âm thanh nên đều nằm trong `QUALITY_IMPLEMENTATION_FILES`.
 
 Ba đại lượng, mỗi cái một thang và một cách ghép (docs/VOICE_BALANCE.md):
