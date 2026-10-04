@@ -399,6 +399,7 @@ class BookPipeline:
         stop_requested: Callable[[], bool],
         emit: Callable[[str, dict[str, Any]], None],
         resource_updates: Callable[[], dict[str, Any] | None] | None = None,
+        after_analysis: Callable[[str], None] | None = None,
     ) -> None:
         self.paths = paths
         self.db = db
@@ -407,6 +408,9 @@ class BookPipeline:
         self.stop_requested = stop_requested
         self.emit = emit
         self.resource_updates = resource_updates
+        # Việc phụ sau khi pha phân tích XONG (không phải resume vào cuốn đã phân tích): nhận base_url của Ollama, chạy khi model
+        # phân tích đã dỡ khỏi VRAM nhưng Ollama còn sống (nhạc nền: webui/music_moods.py). Lỗi chỉ ghi nhật ký.
+        self.after_analysis = after_analysis
         self.resources = AdaptiveResourceManager(settings, paths.root)
         self.notifier = WindowsNotifier()
         self.tts = TTSCoordinator(settings, db, self.log)
@@ -1034,6 +1038,8 @@ class BookPipeline:
             self.log,
             quality_policy_hash=self.quality_policy_hash,
         )
+        analysis_completed = False
+        had_pending = any(row["status"] == "pending" for row in self.db.list_segments())
         try:
             analyzer.analyze_all(
                 self.stop_requested,
@@ -1070,9 +1076,17 @@ class BookPipeline:
                 build_registry_and_cast(self.db, self.settings, self.log)
                 self.db.finalize_casting()
             self.db.update_book(status=BookStatus.CASTING.value, stage="voice_cast_locked")
+            analysis_completed = True
         except AnalysisRequestStopped as exc:
             raise PipelineStopped("Stop requested during Ollama analysis") from exc
         finally:
+            if analysis_completed and had_pending and self.after_analysis is not None:
+                analyzer.release_model()  # dỡ model phân tích trước; Ollama vẫn sống vì unload() chưa chạy
+                try:
+                    self.after_analysis(analyzer.base_url)
+                except Exception as exc:  # không bao giờ làm hỏng pha phân tích
+                    self.log(f"Bỏ qua cảm xúc nhạc bằng LLM: {exc}")
+                    self.emit("music_moods_skipped", {"reason": str(exc)})
             analyzer.unload()
             self._safe_export_reports(incremental=True)
 

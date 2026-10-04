@@ -620,6 +620,14 @@ def run_worker(
             settings["resources"] = updated["resources"]
             return dict(settings["resources"])
 
+        def music_moods_after_analysis(base_url: str) -> None:
+            # Sau pha phân tích: nhạc nền đọc không khí cả đoạn bằng model nhỏ nếu người dùng đã tải (import muộn: worker
+            # không nạp webui khi không cần).
+            from .webui import music_moods
+
+            music_moods.run_after_analysis(paths.root, base_url, stop_event.is_set, pipeline.log, emit,
+                                           pause_requested=pause_event.is_set)
+
         pipeline = BookPipeline(
             paths=paths,
             db=db,
@@ -628,6 +636,7 @@ def run_worker(
             stop_requested=stop_event.is_set,
             emit=emit,
             resource_updates=poll_resource_updates,
+            after_analysis=music_moods_after_analysis,
         )
         _emit(
             message_queue,
