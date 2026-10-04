@@ -209,6 +209,73 @@ Cùng 40 câu trung tính, kéo bằng `tts.apply_speed_change` của main a84e3
 
 Số máy đọc: scratchpad phiên Model `balance/zerotts_constants.json`.
 
+#### Supertonic chỉnh lặp + luật câu ngắn + ZeroTTS chia đoạn (04-10, đề xuất cho casting nhiều máy)
+
+**Tốc độ Supertonic.** `r` của Supertonic là tham số `speed` của engine (tổng hợp lại), KHÔNG phải hệ số WSOLA, nên
+không chung trần với VieNeu. Chỉnh lặp (r mới = r cũ × nhịp đo / mốc) chỉ trên câu ≥ 8 âm tiết (34/40 câu; câu ngắn bị
+nuốt nên kéo nhịp lên giả). Dừng khi lệch mốc trong ±3 % ở cả nửa hiệu chỉnh lẫn nửa kiểm:
+
+| giọng | speed_v | lệch hiệu chỉnh / kiểm % | ref_lufs | gain ở L = −25 |
+|---|---|---|---|---|
+| F1 | 1,820 | −2,6 / +2,3 | −25,11 | +0,11 |
+| F2 | 1,669 | −2,6 / −1,0 | −25,42 | +0,42 |
+| F3 | 1,938 | −0,8 / +0,1 | −26,03 | +1,03 |
+| F4 | 1,552 | −2,3 / +2,0 | −24,60 | −0,40 |
+| F5 | 1,752 | −2,7 / +1,1 | −24,93 | −0,07 |
+| M1 | 1,806 | −1,5 / +2,9 | −25,52 | +0,52 |
+| M2 | 1,719 | −1,2 / +2,0 | −24,13 | −0,87 |
+| M3 | 1,468 | −1,2 / −0,2 | −24,65 | −0,35 |
+| M4 | 1,700 | −2,6 / +1,4 | −25,29 | +0,29 |
+| M5 | 1,794 | −2,5 / −0,5 | −24,88 | −0,12 |
+
+- Bảng "Ngoài bảng" phía trên (r 1,23–1,67) là lần chỉnh một bước, còn chậm tới 17 %; dùng bảng này.
+- 8/10 giọng vượt `R_RANGE = (0,5; 1,6)` của `voice_balance._validate`: nới biên theo engine hoặc tách trường
+  `engine_speed` riêng (WSOLA dư = 1). Kiểm chéo độ to: lệch ≤ 0,35 dB.
+- Hạt thứ hai trên F1/F3/M4/M5 vẫn trong ±5,1 %. Mốc ±3 % sát giới hạn đo (19 câu mỗi nửa).
+
+**Câu ngắn.** speed_v phẳng làm 53–79 % câu ngắn bị nuốt (< 0,12 s có tiếng mỗi âm tiết; bình thường 0,22), CER ASR 53 %.
+Đề xuất `speed = min(speed_v, 1,28 + 0,06·max(0, n − 2))`, n = số âm tiết:
+
+| luật | % nuốt | CER ASR (72 clip) |
+|---|---|---|
+| speed_v phẳng | 53–79 % | 53,0 % |
+| luật Nghe ngay hiện có (1,05 → trần 1,54) | 0 % | 7,7 % |
+| luật đề xuất | 1,7 % (2,5 % trên 30 câu giữ ngoài) | 9,7 % |
+
+Chênh CER 7,7 / 9,7 % nằm trong nhiễu 72 clip. Luật cũ có trần 1,54 cố định nên câu dài chậm hơn mốc 13–25 %; luật mới
+nối liền vào speed_v từng giọng. Đo trên F1/F3/M4/M5, 80 câu mỗi giọng.
+
+**Cổng nhịp chữ/giây của Studio.** Supertonic bị gọi chậm vì speed thấp, không phải vì lặng:
+
+| | % câu bị gọi chậm (TB 10 giọng) |
+|---|---|
+| speed cũ | 51,5 % |
+| speed_v | 9,1 % |
+| speed_v + rút lặng giữa câu còn 0,3 s | 8,8 % |
+| speed_v + sàn cổng riêng ×0,9 | 2,9 % |
+| VieNeu (so) | 2,0 % |
+
+Đề xuất: không rút lặng; sàn cổng riêng cho Supertonic ≈ 0,9. Câu còn trượt (2–4 câu mỗi giọng) là tên Nhật, năm viết
+thành chữ, từ tiếng Anh.
+
+**ZeroTTS: RAM theo độ dài một lần gọi.** Model nạp xong 1,06 GB; phần thêm tăng theo bình phương độ dài.
+
+| một lần gọi | RAM đỉnh |
+|---|---|
+| 100 ký tự | 1,3 GB |
+| 200 ký tự | 2,0 GB (đoạn 197 ký tự chạm 2,52 GB) |
+| 400 ký tự | 4,5 GB |
+| 800 ký tự | 14,5 GB, ASR sai 50 %; lần thứ hai ONNX Runtime hết bộ nhớ |
+| chia ≤ 160 ký tự | 1,6–1,8 GB, CER 1–3 % không đổi, 800 ký tự tổng hợp nhanh gấp đôi |
+
+Đề xuất cho Studio: mỗi lần gọi tối đa **170 ký tự** (≈ 9 s tiếng). Cắt ở hết câu, gộp câu liền kề tới 170; câu dài hơn
+thì cắt ở dấu phẩy, rồi ở từ. Giá: UTMOS thấp hơn 0,15–0,4 so với gọi một lần (3 đoạn, nhiễu ±0,15), do mối nối hiện là
+0,2 s lặng cứng.
+
+Số máy đọc: scratchpad phiên Model `balance/multi_engine/` (`import_rates_multi.json`, `import_gains_multi.json`,
+`b_rules.json`, `gate_eval.json`, `ram_*.jsonl`). Khoá: `supertonic@3-724fb5ab/<giọng>/f100`,
+`zerotts@0.1.2-c2bfbd67/<giọng>/f100`.
+
 ### Kiểm cảm xúc sau hằng số (emo_check)
 
 Mẫu kiểm:
