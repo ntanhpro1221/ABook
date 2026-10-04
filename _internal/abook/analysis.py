@@ -79,6 +79,7 @@ from .models import (
     ENGLISH_NAME_PRONUNCIATION_SOURCE,
 )
 from .process_utils import terminate_process_tree
+from . import studio_names
 from .text_processing import (
     ROMAN_NUMERAL_TOKEN_PATTERN,
     is_vocalization_only,
@@ -9468,6 +9469,7 @@ class OllamaBookAnalyzer:
             confidence: float,
             *,
             repaired_from: str = "",
+            source: str = "",
         ) -> None:
             nonlocal converted_count
             surface = str(candidate["surface"])
@@ -9504,8 +9506,12 @@ class OllamaBookAnalyzer:
             # broke the syllable rule - clusters like "xb" and "lđ" that no Vietnamese
             # syllable has - and stayed broken across every run because a locked row cannot
             # be rewritten. A name kept in English is a decision, not a reading, so it is
-            # not judged here.
-            if _name_candidate_key(spoken_form) != _name_candidate_key(
+            # not judged here. A reading the rules made gets the strict syllable check.
+            if source and not studio_names.lockable(surface, spoken_form):
+                raise ValueError(
+                    f"refusing to lock a rule reading for {surface!r}: {spoken_form!r}"
+                )
+            if not source and _name_candidate_key(spoken_form) != _name_candidate_key(
                 surface
             ) and not _valid_vietnamese_spoken_form(surface, spoken_form):
                 raise ValueError(
@@ -9517,7 +9523,7 @@ class OllamaBookAnalyzer:
                 normalized_surface=_name_candidate_key(surface),
                 spoken_form=spoken_form,
                 confidence=confidence,
-                source=(
+                source=source or (
                     CONTEXTUAL_ENGLISH_NAME_PRONUNCIATION_SOURCE
                     if _name_candidate_key(surface) in CMUDICT_CONTEXT_ONLY
                     else ENGLISH_NAME_PRONUNCIATION_SOURCE
@@ -9528,9 +9534,16 @@ class OllamaBookAnalyzer:
 
         qwen_candidates: list[dict[str, Any]] = []
         cmu_count = 0
+        origin = studio_names.book_origin_for_project(self.db)
         for candidate in candidates:
             pronunciation = str(candidate.get("cmu_pronunciation", ""))
             surface = str(candidate["surface"])
+            planned = studio_names.planned_reading(surface, origin)
+            if planned is not None:
+                checkpoint_pronunciation(
+                    candidate, planned[0], studio_names.RULE_READING_CONFIDENCE, source=planned[1]
+                )
+                continue
             phrase_reading = (
                 None if pronunciation else _cmu_phrase_to_vietnamese(surface)
             )
@@ -9558,6 +9571,7 @@ class OllamaBookAnalyzer:
                 f"Đã khóa cách đọc thuần Việt cho {converted_count}/{len(candidates)} "
                 "tên tiếng Anh hoặc fantasy cần xem xét."
             )
+            self._reconcile_name_components()
             return converted_count
         if not self.ensure_available():
             message = "Ollama không còn sẵn sàng để chuẩn hóa cách đọc tên fantasy"
@@ -9601,7 +9615,8 @@ class OllamaBookAnalyzer:
                     "Michael→Mai-cồ, Benjamin→Ben-gia-min, Gary→Ga-ri, Corella→Cô-ren-la, "
                     "Aderon→A-đe-ron. Mỗi phần ngăn bằng gạch nối phải là một âm tiết người Việt đọc được; "
                     "không để lại âm tiết kiểu Anh như rel, der, th, sh. Với tên thuần Việt hoặc từ phổ thông, "
-                    "convert=false và lặp nguyên surface vào spoken_form. Phải trả đúng một kết quả cho từng ID."
+                    "convert=false và lặp nguyên surface vào spoken_form. Phải trả đúng một kết quả cho từng ID. "
+                    + studio_names.prompt_context(origin)
                 )
                 if feedback:
                     rejected = [
@@ -9873,6 +9888,12 @@ class OllamaBookAnalyzer:
         `upsert_pronunciation`. That method refuses `listener_choice`, so the one thing this
         cannot do is overrule the person it is imitating.
         """
+        for surface, corrected in studio_names.rule_word_corrections(self.db.list_pronunciations()).items():
+            self.db.relock_machine_pronunciation(
+                normalized_surface=_name_candidate_key(surface),
+                spoken_form=corrected,
+                source=NAME_COMPONENT_CONSISTENCY_SOURCE,
+            )
         readings = {
             str(row["surface"]): str(row["spoken_form"])
             for row in self.db.list_pronunciations()

@@ -7,6 +7,10 @@ from pathlib import Path
 
 ENGLISH_NAME_PRONUNCIATION_SOURCE = "english_name_transliteration"
 CONTEXTUAL_ENGLISH_NAME_PRONUNCIATION_SOURCE = "english_name_transliteration_case_sensitive"
+# Studio name readings decided by rule, before CMU / LLM (`studio_names`): a Japanese / Korean name read by the romanization rules
+# of a book of that origin, and an English name kept as written for an engine that speaks English.
+RULE_ROMANIZATION_PRONUNCIATION_SOURCE = "rule_romanization"
+KEEP_ENGLISH_PRONUNCIATION_SOURCE = "keep_english"
 
 
 class BookStatus(StrEnum):
