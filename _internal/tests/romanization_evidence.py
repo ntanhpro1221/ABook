@@ -147,6 +147,7 @@ SOURCED: list[tuple[str, str, tuple[str, ...], str]] = [
     ("Gyu", "ko", ("ghiu",), "owner"),
     ("Taruー", "ja", ("ta-ru",), "owner"),
     ("Fii", "ja", ("phi",), "owner"),
+    ("Ryu", "ko", ("ri-u",), "owner"),
     # --- Nhật: địa danh (SGK Địa lí / Lịch sử 11) ---
     ("Hokkaidō", "ja", ("Hô-cai-đô", "Hốc-cai-đô"), "textbook"),
     ("Honshū", "ja", ("Hôn-su",), "textbook"),
