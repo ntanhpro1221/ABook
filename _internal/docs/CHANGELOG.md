@@ -15,9 +15,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - "Nghe ngay" (máy tính và điện thoại) đọc thêm những tên Nhật / Hàn viết không theo mẫu: tên viết hoa hết ("KANATA" thành "Ca-na-ta", "NEE-SAN" thành "Ne-xan"), dính liền kiểu CamelCase ("OkabeRintarou" thành "O-ca-be Rin-ta-râu"), có gạch nối và hậu tố ("Seol-Ah", "Tenshi-chwan", "Vương-sama" thành "Vương-xa-ma"; phần chữ Việt, chữ Anh hay viết tắt như "PD-nim" giữ nguyên), và các cách viết quen của tên Hàn ("Shinhyun", "Joo", "Jaemoon", "Ahn"). Tên nào không chắc cách đọc thì vẫn để nguyên. Chữ hiện trên màn hình không đổi.
 
-- "Nghe ngay" bằng giọng Supertonic (máy tính) không còn nuốt tên và từ nước ngoài: giọng này không nói được âm tiếng Anh, nên "Rose", "laptop", "Facebook", "skill" được đọc thành
-  âm tiết Việt ("xờ-kiu", "le-vồ", "láp-tóp"), tên Nhật / Hàn của cuốn có gốc đọc như giọng VieNeu ("Ki-âu-cô", "Ha-ru-tô"); chữ viết tắt toàn hoa (VIP, NPC) và số kèm đơn vị
-  vẫn như cũ. Giọng VieNeu giữ nguyên chữ Anh như trước. Chữ hiện trên màn hình không đổi.
+- Mỗi giọng của "Nghe ngay" giờ ghi rõ nó có nói được âm tiếng Anh hay không. Đo trên 2.040 đoạn (60 từ và tên tiếng Anh, 7 giọng): VieNeu, ZeroTTS,
+  Edge và Supertonic đều đọc chữ Anh để nguyên rõ ngang dạng Việt hoá, nên mọi giọng vẫn giữ nguyên chữ Anh như trước. Giọng nào sau này cần thì app chuyển
+  sang đọc âm tiết Việt cho riêng giọng đó.
 
 - "Nghe ngay" (máy tính và điện thoại) không còn đọc sai bốn kiểu ký hiệu: "Hmm~" không còn thành "hmm khoảng" ("~" kéo giọng thì bỏ, "3~5" và
   "10,000 ~ 15,000" đọc "đến", "~50" vẫn là "khoảng"); "500,000" và "100,000 yen" đọc đủ "năm trăm nghìn" thay vì "năm trăm"; tên kỹ năng trong
@@ -34,6 +34,18 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Cách đọc tên và từ nước ngoài bằng âm tiết Việt (máy tính và điện thoại) chỉ ra những âm tiết viết đúng chính tả tiếng Việt: "queen" thành "quin" thay vì
   "quyn", "Wayne" thành "Oen" thay vì "Uên", "quick" thành "quích"; tên nào máy không viết nổi cho đúng thì giữ chữ gốc thay vì đọc một âm tiết không có trong tiếng Việt.
+
+### Studio: cân bằng giọng
+
+- Các giọng trong cùng một cuốn nghe đều nhau hơn: mỗi giọng VieNeu có sẵn một bộ hằng số đo trước (tốc độ so với điểm giữa của các giọng, độ to về một
+  mức chung, màu giọng giữ như đã chọn) và Studio tự áp khi thu âm, thay vì cân từng câu. Câu giận vẫn to hơn, câu thì thầm vẫn nhỏ hơn, câu gấp vẫn nhanh
+  hơn - cảm xúc trong một giọng được giữ nguyên.
+- Kéo tốc độ giọng bằng một cách mới (WSOLA) giữ giọng tự nhiên: đo trên 3 giọng, kéo 5% không còn mất gì, kéo 10-15% mất rất ít; cách cũ (WORLD) làm giọng
+  kém tự nhiên rõ (Mỹ Duyên tụt từ 3,17 xuống 2,10 điểm) và làm nhỏ tiếng một số giọng không đều.
+- Sửa lỗi: một bản thu quá ngắn (vài mẫu âm thanh) có thể làm tắt hẳn tiến trình thu âm; nay nó được để nguyên cho bước kiểm loại bỏ.
+
+**Lưu ý khi nâng cấp:** bản này đổi mã khoá chất lượng, nên một cuốn đang làm dở ở bản cũ không tiếp tục được ở bản này - làm lại từ đầu (sách đã xong
+không ảnh hưởng).
 
 ### Nhạc nền
 
