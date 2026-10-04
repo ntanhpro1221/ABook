@@ -1090,7 +1090,7 @@ class BookPipeline:
             analyzer.unload()
             self._safe_export_reports(incremental=True)
 
-        self._state("running", "Đang xác minh các giọng VieNeu đã khóa.")
+        self._state("running", "Đang xác minh các giọng đã khóa.")
         self._resource_gate("xác minh preset VieNeu", keep_engine="vieneu")
         self.tts.prepare_voice_presets()
         self.tts.unload_idle_models()

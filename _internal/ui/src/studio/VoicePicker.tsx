@@ -5,19 +5,21 @@ import { toast } from "sonner";
 import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
-import { Button, Dialog, Segmented, Skeleton, Vu } from "@/shared/ui";
+import { Button, Dialog, Progress, Segmented, Skeleton, Vu } from "@/shared/ui";
 import { api, urls } from "./api";
 import { refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied } from "./decisions";
+import { modulePercent } from "./musicLocal";
+import { groupByEngine, moduleNote, sharedText, type EngineModuleStatus, type EngineVoice } from "./voiceEngines";
 
 // "Đổi giọng" một nhân vật (webui/voice_picker.py): mọi giọng dùng được cho nhân vật, nghe thử từng giọng, giọng đang dùng,
 // giọng máy gợi ý cho từng giới, và ai đang dùng giọng ấy cùng mấy chương. Chọn xong đi đúng đường của thẻ "Nam hay nữ"
 // (POST /voice): dây chuyền áp ở ranh giới chương kế tiếp, bậc âm sắc do bộ cấp giọng của bước phân vai quyết (không trùng
-// người cùng chương), câu đã thu của người ấy được thu lại. Không phải dừng sách.
+// người cùng chương), câu đã thu của người ấy được thu lại. Không phải dừng sách. Giọng nhóm theo máy đọc: VieNeu (mọi giọng phân vai
+// tự động) rồi máy khác chỉ chọn tay (ZeroTTS, Supertonic - tải thêm một lần, nút tải ngay trong hộp).
 
 type Gender = "male" | "female";
 
-interface VoiceOption {
-  name: string;
+interface VoiceOption extends EngineVoice {
   gender: Gender;
   genderLabel: string;
   region: string;
@@ -27,10 +29,8 @@ interface VoiceOption {
   /** Giọng người nghe đã chọn mà chưa vào sách. */
   pending: boolean;
   suggested: boolean;
-  /** Người CÙNG CHƯƠNG với nhân vật đang dùng giọng gốc này (máy sẽ lấy bậc âm sắc khác họ). */
-  sharedWith: { label: string; chapters: number }[];
-  /** Số người khác dùng giọng gốc này mà không cùng chương. */
-  otherUsers: number;
+  /** Chất giọng của giọng máy khác ("Nữ · Trưởng thành · Rõ ràng"); rỗng với VieNeu (đã có miền + phong cách). */
+  description: string;
 }
 
 interface VoiceChoices {
@@ -39,13 +39,49 @@ interface VoiceChoices {
   /** Lựa chọn chưa vào sách (tên giọng nó sẽ thành; "" khi chưa biết) - bỏ được bằng `requestedAt` như "Hoàn tác". */
   pending: { name: string; requestedAt: number } | null;
   voices: VoiceOption[];
+  /** Mô-đun tải thêm của máy đọc khác, theo tên máy. */
+  modules?: Record<string, EngineModuleStatus>;
 }
 
-function sharedText(voice: VoiceOption): string {
-  const others = voice.otherUsers ? `${voice.otherUsers} người khác dùng, không cùng chương` : "";
-  if (!voice.sharedWith.length) return others || "Chưa ai dùng";
-  const people = voice.sharedWith.map((person) => `${person.label} (${person.chapters} chương)`).join(", ");
-  return `Cùng chương với ${people} - máy lấy bậc âm sắc khác${others ? ` · ${others}` : ""}`;
+function voiceMeta(voice: VoiceOption): string {
+  const about = voice.description || [voice.region ? `Miền ${voice.region}` : "", voice.style].filter(Boolean).join(" · ");
+  return `${about} · ${sharedText(voice)}`;
+}
+
+/** Tên nhóm của một máy đọc, và - khi máy chưa có giọng ấy - lời nhắn + nút tải (tiến độ hỏi lại mỗi giây). */
+function EngineHeader({ engine, label, status, onReady }: { engine: string; label: string; status?: EngineModuleStatus; onReady: () => void }) {
+  const client = useQueryClient();
+  const { data } = useQuery({
+    queryKey: ["engine-module", engine],
+    queryFn: () => api<EngineModuleStatus>(`/api/studio/${engine}`),
+    initialData: status,
+    enabled: status !== undefined,
+    refetchInterval: (query) => (query.state.data?.state === "downloading" ? 1000 : false),
+  });
+  const current = data ?? status;
+  useEffect(() => {
+    if (status && status.state !== "ready" && current?.state === "ready") onReady();
+  }, [current?.state, status, onReady]);
+  const start = useMutation({
+    mutationFn: () => api<EngineModuleStatus>(`/api/studio/${engine}`, { method: "POST", body: {} }),
+    onSuccess: (next) => client.setQueryData(["engine-module", engine], next),
+    onError: (failure: Error) => toast.error("Chưa tải được giọng", { description: failure.message }),
+  });
+  const note = moduleNote(current);
+  return (
+    <div className="sticky top-0 z-10 bg-panel pb-1 pt-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-xs font-semibold uppercase tracking-wide text-fg-3">{label}</span>
+        {current && ["missing", "error", "outdated"].includes(current.state) && (
+          <Button size="sm" variant="secondary" loading={start.isPending} onClick={() => start.mutate()}>
+            {current.state === "error" ? "Tải lại" : "Tải giọng"}
+          </Button>
+        )}
+      </div>
+      {note && <p className={cn("mt-0.5 text-xs", current?.state === "error" ? "text-danger" : "text-fg-2")}>{note}</p>}
+      {current?.state === "downloading" && <Progress className="mt-1" size="xs" running value={modulePercent(current) / 100} label={note ?? ""} />}
+    </div>
+  );
 }
 
 function PreviewButton({ voice }: { voice: VoiceOption }) {
@@ -136,6 +172,8 @@ export function VoicePicker({
     onError: (failure: Error) => toast.error("Chưa bỏ được lựa chọn", { description: failure.message }),
   });
   const voices = (data?.voices ?? []).filter((voice) => voice.gender === shown);
+  const groups = groupByEngine(voices);
+  const reload = () => client.invalidateQueries({ queryKey: ["voice-choices", bookId, person?.name] });
   return (
     <Dialog
       open={person !== null}
@@ -179,8 +217,14 @@ export function VoicePicker({
               { value: "female", label: "Giọng nữ" },
             ]}
           />
-          <ul className="mt-3 max-h-[min(60vh,460px)] space-y-1 overflow-y-auto pr-1">
-            {voices.map((voice) => (
+          <div className="mt-3 max-h-[min(60vh,460px)] overflow-y-auto pr-1">
+            {groups.map((group) => (
+              <section key={group.engine} aria-label={`Giọng ${group.label}`}>
+                {groups.length > 1 || group.engine !== "vieneu" ? (
+                  <EngineHeader engine={group.engine} label={group.label} status={data.modules?.[group.engine]} onReady={reload} />
+                ) : null}
+                <ul className="space-y-1">
+            {group.voices.map((voice) => (
               <li key={voice.name} className={cn("flex items-center gap-3 rounded-xl px-2 py-2", voice.current ? "bg-accent-soft" : "hover:bg-hover")}>
                 <PreviewButton voice={voice} />
                 <div className="min-w-0 flex-1">
@@ -194,9 +238,7 @@ export function VoicePicker({
                       <span className="rounded-full bg-info-soft px-2 py-px text-[11px] font-medium text-info">Máy gợi ý</span>
                     )}
                   </div>
-                  <div className={cn("mt-0.5 text-xs", voice.sharedWith.length ? "text-warning" : "text-fg-2")}>
-                    Miền {voice.region} · {voice.style} · {sharedText(voice)}
-                  </div>
+                  <div className={cn("mt-0.5 text-xs", voice.sharedWith.length ? "text-warning" : "text-fg-2")}>{voiceMeta(voice)}</div>
                 </div>
                 {voice.current && data.pending ? (
                   // Đã chọn giọng khác mà chưa vào sách: giọng đang dùng chọn lại được - là bỏ lựa chọn kia.
@@ -207,7 +249,7 @@ export function VoicePicker({
                   <Button
                     size="sm"
                     variant={voice.suggested && !voice.current && !voice.pending ? "primary" : "secondary"}
-                    disabled={voice.current || voice.pending || save.isPending || keep.isPending}
+                    disabled={voice.current || voice.pending || !voice.installed || save.isPending || keep.isPending}
                     onClick={() => save.mutate(voice)}
                   >
                     {voice.current ? "Đang dùng" : voice.pending ? "Đã chọn" : "Chọn"}
@@ -215,10 +257,14 @@ export function VoicePicker({
                 )}
               </li>
             ))}
-          </ul>
+                </ul>
+              </section>
+            ))}
+          </div>
           <p className="mt-3 text-xs leading-relaxed text-fg-3">
             Giọng đang có người dùng vẫn chọn được: máy lấy bậc âm sắc khác để hai người không nghe giống nhau trong cùng
-            chương. Chọn giọng khác giới là đổi luôn giới của nhân vật.
+            chương. Chọn giọng khác giới là đổi luôn giới của nhân vật. Giọng ZeroTTS và Supertonic chỉ có một âm sắc: hai người
+            cùng chương chung giọng ấy sẽ nghe giống hệt nhau.
           </p>
         </>
       )}

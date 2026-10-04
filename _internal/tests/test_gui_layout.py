@@ -234,7 +234,8 @@ def test_selecting_narrator_autoplays_preview_and_button_replays(tmp_path: Path)
 
 
 def test_every_selectable_narrator_has_a_packaged_preview() -> None:
-    assert len(VOICE_PREVIEW_FILENAMES) == 21
+    # 21 preset VieNeu + 5 giọng ZeroTTS + 4 giọng Supertonic chọn tay được (voice_catalog.ENGINE_VOICES).
+    assert len(VOICE_PREVIEW_FILENAMES) == 30
     assert all((VOICE_PREVIEW_DIR / filename).is_file() for filename in VOICE_PREVIEW_FILENAMES.values())
 
 

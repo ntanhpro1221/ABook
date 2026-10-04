@@ -315,6 +315,20 @@ Giọng VieNeu của "Nghe ngay" (máy tính `abook/readaloud/names.py` + `viene
 - **Gốc của cuốn** tự đoán (`names.book_origin`): trong 40 chương đầu, tỉ lệ LẦN XUẤT HIỆN của tên đọc được bằng romaji >= 0,75 (và >= 10 tên khác nhau, >= 60 lần) thì "ja"; có hậu tố gọi (-san, -kun, -sama...) đi cùng tên romaji (>= 20 lần, >= 3 tên) thì chỉ cần >= 0,3; "ko" đòi RR >= 0,85 và >= 0,5 là tên chỉ RR đọc được (luật RR dễ tính: Mirabelle, Ruel, Alon của truyện Hàn cũng tách được, nên ngưỡng cao và "ko" ít khi bật). Không chắc thì không đổi gì. Người dùng ghi đè được (máy tính `BookOrigins.override`, điện thoại `ReadAloud.setOrigin`); giao diện cho chọn là việc sau.
 - **Khoá bộ đệm clip** thêm "|gốc" chỉ cho đoạn mà gốc làm nghe khác, nên clip cũ của đoạn không có tên vẫn dùng được.
 - **Theo năng lực của máy đọc** (`speaks_english` của provider; `names.spoken_names(toks, origin, speaks_english)` dùng chung): giọng nói được âm Anh (VieNeu, Edge, Azure, Google) giữ chữ Anh như trên; giọng chỉ nói được âm tiết Việt (Supertonic nuốt "Rose", "Haruto"; FPT / Viettel / giọng Windows chưa đo nên khai False, chưa nối) thì từ / tên Anh được Việt hoá bằng `english_vi.vietnamized_english` (bỏ qua chữ TOÀN HOA, âm tiết Việt viết sẵn, chữ dính số). Tên Nhật / Hàn theo gốc cuốn áp cho mọi giọng nối. Khoá clip thêm "en<số>" (`names.ENGLISH_READING`) cho đoạn có từ Anh được đổi, nối với "ja" / "ko" bằng "+".
+- **Studio** (`abook/studio_names.py`, gọi từ pha đọc tên `analysis.reconcile_name_pronunciations`): gốc cuốn đoán bằng chính `names.book_origin` trên chữ các chương của dự án
+  (chưa có ghi đè). Trước CMU / LLM, mỗi tên chưa khoá: (a) cuốn "ja" / "ko" và luật đọc được mọi chữ (`names.name_reading`, cả hậu tố gọi) -> khoá cách đọc ấy, nguồn
+  `rule_romanization`, qua bộ kiểm chặt `vietnamese_syllable.valid_spoken_form`; (b) mọi chữ là từ / tên Anh của `english_words.txt` -> khoá đúng mặt chữ, nguồn `keep_english`
+  (bảng ghi như cho máy nói được tiếng Anh; thử 04-10: VieNeu của Studio đi qua cùng sea-g2p, Whisper nghe "Kate", "Michael", "Washington" để nguyên ra "Kết", "Michael",
+  "Washington"); tên nhiều chữ quyết từng chữ (âm tiết Việt viết sẵn giữ nguyên), một chữ không quyết được thì cả tên đi đường cũ. Còn lại như trước: CMU, rồi LLM (prompt có
+  thêm gốc cuốn và vài cách đọc chủ sách đúng gốc, do luật tính), rồi bộ dự phòng - hai đường này vẫn kiểm lỏng như cũ. Tên đầy đủ đi LLM mà có chữ đã quyết bằng luật
+  ("Michael Godswill" khi "Michael" giữ tiếng Anh) được sửa lại cho chữ ấy đọc như khi đứng riêng. Tên đã khoá (cả cách đọc người nghe chọn) không đổi.
+  Khâu so ASR (`asr.transcript_metrics`) so mềm chữ Anh để nguyên: Whisper viết lại theo âm nó nghe ("Kate" -> "Kết" / "Kat", "Shadow" -> "Sado", "Portal" -> "Porto"),
+  câu ngắn vì thế từng trượt (WER 0,33); chữ nghe được có cùng khung phụ âm (lệch một khi khung >= 3) được tính là khớp (`asr.heard_as_english`, nằm trong file khoá nên đổi cách chấm là đổi
+  dấu vân tay), chỉ thêm cơ hội khớp như phép nở số dính đơn vị. Cờ nói tiếng Anh ở adapter máy đọc (`tts.EngineAdapter.speaks_english`, hiện mọi máy đều có - Supertonic
+  đo 2040 bản thu 04-10 không thấy khác, như "Nghe ngay"): đoạn của máy không nói được thì mục `keep_english` được Việt hoá lúc đúc (`tts.vietnamized_kept_english`,
+  tức `names.english_reading`), và khâu chấm ASR so với đúng dạng Việt hoá ấy (cùng `spoken_text`). Thử 04-10 (Supertonic F1, CPU, một hạt giống, khâu chấm Studio):
+  "Kate..." / "Michael..." để nguyên đều qua; dạng Việt hoá "Ca-tê..." qua, "Mai-cồ, anh có thấy..." trượt vì Whisper viết lại "Michael". Các file quyết chữ đem đọc
+  và đem chấm (`romanization.py`, `english_vi.py`, `vietnamese_syllable.py`, `studio_names.py`, `readaloud/names.py`) nằm trong dấu vân tay chất lượng.
 - **Đo** trên kho truyện thử (161 cuốn, 40 chương đầu): 66 cuốn "ja" (47 / 68 cuốn Nhật đã dán nhãn, 19 cuốn chưa nhãn mà tên là romaji), 2 "ko"; không cuốn dán nhãn Hàn / Trung nào ra "ja". Chi tiết trong CHANGELOG và báo cáo.
 
 ## Nguồn

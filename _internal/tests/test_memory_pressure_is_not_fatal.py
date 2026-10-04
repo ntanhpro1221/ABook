@@ -28,7 +28,9 @@ FATAL = (
     "cuBLAS error: CUBLAS_STATUS_NOT_INITIALIZED",
     "Thiếu VieNeu preset",
     "locked VieNeu preset missing",
-    "only VieNeu profiles are supported",
+    "Unknown TTS engine 'x'; refusing to change voice silently",
+    "Thiếu máy đọc ZeroTTS: tải giọng ZeroTTS ở Đổi giọng của Studio rồi chạy tiếp",
+    "Locked ZeroTTS preset 'baotrang' is unavailable; refusing to change voice silently",
 )
 
 

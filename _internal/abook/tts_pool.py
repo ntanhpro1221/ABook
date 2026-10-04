@@ -213,15 +213,17 @@ def _worker_init(settings: dict[str, Any], database_path: str) -> None:
 
     from .tts import TTSCoordinator
 
-    torch.set_num_threads(
-        max(1, int(os.environ.get("ABOOK_WORKER_THREADS", TTS_POOL_WORKER_THREADS)))
-    )
+    threads = max(1, int(os.environ.get("ABOOK_WORKER_THREADS", TTS_POOL_WORKER_THREADS)))
+    torch.set_num_threads(threads)
+    # Máy đọc ONNX (ZeroTTS, Supertonic) đọc cùng biến này cho số luồng của chúng: cùng một giới hạn mỗi worker.
+    os.environ["ABOOK_WORKER_THREADS"] = str(threads)
     coordinator = TTSCoordinator(
         settings,
         ReadOnlyVoiceDB(Path(database_path)),
         lambda _message: None,
     )
-    coordinator.vieneu.load()
+    # Mọi máy đọc mà giọng của cuốn cần, không chỉ VieNeu: người nghe có thể đã chọn giọng máy khác cho một nhân vật.
+    coordinator.load_engines_for_book()
     _COORDINATOR.append(coordinator)
 
 

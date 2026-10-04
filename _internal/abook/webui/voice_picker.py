@@ -22,7 +22,7 @@ from .reviews import speaker_label
 # giọng vẫn liệt kê được nhưng không có nút nghe thử (giao diện ẩn nút khi `preview` là False).
 VOICE_PREVIEW_DIR = Path(__file__).resolve().parents[1] / "assets" / "voice_previews"
 GENDER_LABELS = {"male": "Nam", "female": "Nữ"}
-STYLE_LABELS = {"tu_nhien": "Tự nhiên", "doc_truyen": "Kể chuyện"}
+STYLE_LABELS = {"tu_nhien": "Tự nhiên", "doc_truyen": "Kể chuyện", "tin_tuc": "Tin tức"}
 
 
 def preview_file(preset_name: str) -> Path | None:
@@ -34,6 +34,48 @@ def preview_file(preset_name: str) -> Path | None:
     return path if path is not None and path.is_file() else None
 
 
+def engine_module_status(engine: str) -> dict[str, Any]:
+    """Mô-đun tải thêm của một máy đọc khác, cùng một hình cho hộp "Đổi giọng": state / done / total / error / bytes còn thiếu.
+
+    ZeroTTS là mô-đun của Studio (zerotts_module). Supertonic dùng lại đúng mô-đun "Giọng Supertonic" của Nghe ngay
+    (supertonic_module) - một bản tải cho cả hai nơi; trạng thái của nó có thêm phần lựa chọn, ở đây chỉ lấy cái hộp cần."""
+    from . import supertonic_module, zerotts_module
+
+    if engine == "zerotts":
+        return zerotts_module.status()
+    if engine == "supertonic":
+        full = supertonic_module.status()
+        state = full["state"] if full["state"] != "unsupported" or not full["reason"] else "unsupported"
+        return {"state": state, "done": full["done"], "total": full["total"],
+                "error": full["error"] or (full["reason"] if state == "unsupported" else ""),
+                "bytes": sum(int(choice["bytes"]) for choice in full["choices"])}
+    raise ValueError(f"Không có máy đọc {engine!r}")
+
+
+def engine_installed(engine: str) -> bool:
+    """Giọng của máy đọc này đã dùng được trên máy (VieNeu: luôn - Studio mang sẵn)."""
+    from . import supertonic_module, zerotts_module
+
+    if engine == "zerotts":
+        return zerotts_module.installed() is not None
+    if engine == "supertonic":
+        return supertonic_module.installed() is not None
+    return True
+
+
+def start_engine_module(engine: str) -> dict[str, Any]:
+    """Người nghe bấm "Tải giọng" ở hộp "Đổi giọng": tải phần còn thiếu / đã cũ ở luồng nền."""
+    from . import supertonic_module, zerotts_module
+
+    if engine == "zerotts":
+        zerotts_module.start()
+    elif engine == "supertonic":
+        supertonic_module.start([supertonic_module.CHOICE])
+    else:
+        raise ValueError(f"Không có máy đọc {engine!r}")
+    return engine_module_status(engine)
+
+
 def _key(name: str) -> str:
     return " ".join(str(name).strip().casefold().split()).upper()
 
@@ -41,7 +83,7 @@ def _key(name: str) -> str:
 def voice_choices(project_root: Path, character: str) -> dict[str, Any] | None:
     from ..character_registry import listener_voice_choice
     from ..config import build_settings
-    from ..voice_catalog import casting_presets
+    from ..voice_catalog import ENGINE_LABELS, ENGINE_VIENEU, castable_engine_voices, casting_presets
 
     stored = store.read_settings(project_root).get("voices")
     voices = {**build_settings()["voices"], **(stored if isinstance(stored, dict) else {})}
@@ -89,12 +131,16 @@ def voice_choices(project_root: Path, character: str) -> dict[str, Any] | None:
     pending = _pending_request(project_root, key, suggested,
                                float(book_row["updated_at"] or 0) if book_row is not None else 0.0)
     mine = chapters.get(key, set())
+    # Máy đọc khác chỉ chọn được khi máy này đã tải giọng của nó (mô-đun tải thêm); chưa tải thì hộp mời tải.
+    engines = sorted({str(voice["engine"]) for voice in castable_engine_voices()})
+    installed = {ENGINE_VIENEU: True, **{engine: engine_installed(engine) for engine in engines}}
     entries = []
     for gender in ("male", "female"):
-        for preset in casting_presets(gender):
+        for preset in [*casting_presets(gender), *castable_engine_voices(gender)]:
             name = str(preset["name"])
             if name in not_for_characters:
                 continue
+            engine = str(preset.get("engine", ENGINE_VIENEU))
             # Sách dài thì giọng gốc nào cũng nhiều người dùng, ở các bậc âm sắc khác nhau - điều người nghe cần biết chỉ là
             # ai CÙNG CHƯƠNG với nhân vật này (máy sẽ lấy bậc khác họ); những người còn lại gộp thành một con số.
             others = [who for who in presets_of.get(name, set()) if who != key]
@@ -107,6 +153,12 @@ def voice_choices(project_root: Path, character: str) -> dict[str, Any] | None:
             )
             entries.append({
                 "name": voice_label(name),
+                "engine": engine,
+                "engineLabel": ENGINE_LABELS.get(engine, engine),
+                "installed": bool(installed.get(engine)),
+                # Giọng máy khác chỉ có một bậc âm sắc: hai người chung giọng ấy nghe như một.
+                "oneStep": engine != ENGINE_VIENEU,
+                "description": str(preset["description"]) if engine != ENGINE_VIENEU else "",
                 "gender": gender,
                 "genderLabel": GENDER_LABELS[gender],
                 "region": str(preset["region"]),
@@ -136,6 +188,8 @@ def voice_choices(project_root: Path, character: str) -> dict[str, Any] | None:
             "requestedAt": pending["requestedAt"],
         },
         "voices": entries,
+        # Mô-đun tải thêm của máy đọc khác (engine_module_status): hộp hiện nút tải và tiến độ.
+        "modules": {engine: engine_module_status(engine) for engine in engines},
     }
 
 
