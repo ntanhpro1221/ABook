@@ -24,6 +24,55 @@ tiêu, cách đo, tài liệu đã/phải đọc, và MA TRẬN THÍ NGHIỆM v�
 7. **Người vô danh xác định được là MỘT người phải ghi `NPC*:<mô tả>` trong đáp án, cả ở chương kiểm tra**; đám đông
    để `NPC*` trơn. Thiếu mô tả thì F1 giọng không biết hai câu vô danh là một người, và xếp model ngược (mục 29-09 tối).
 
+## 04-10 Đột phá - đánh vào gốc: đáp án chuẩn và thuật toán học
+
+Chủ sách 04-10: model phân tích là tính năng chính, nguồn gốc ý tưởng của app; bỏ phiếu nhiều hạt "không giải quyết gốc";
+không tối ưu vặt. Hai gốc: (A) đáp án chuẩn, (B) thuật toán huấn luyện. Mọi thí nghiệm ghi giả thuyết + ngưỡng TRƯỚC,
+đo F1 giọng theo truyện trên truyện MỚI (Nhật trước, Hàn sau), >= 2 hạt mỗi bên, ghi cả kết quả âm.
+
+### Đặt lại bài toán
+
+Từ 26-09 bài toán được đặt là: một LLM nhỏ SINH ra tên người nói cho từng câu, học từ ~2.000 quyết định người nói (data
+v8: 10 truyện; tên người nói chỉ 1,3-2 % ký tự đáp án, đo 40 mẫu: 0,74 % token). Ba số đo 03-04/10 cho thấy cách đặt ấy
+đã chạm trần của chính nó:
+- Ba công thức (4B Qwen3, 4B Qwen3.5, 9B) cách nhau ít hơn dao động giữa các hạt của cùng công thức (bảng mặc định 04-10:
+  Nhật MỚI 60,5 / 59,6 / 57,4 trung bình hạt). Model to hơn không mua thêm điểm.
+- Loss phẳng ~0,007 từ 1/4 epoch: phần lớn gradient đi vào định dạng và trường cố định, không vào quyết định người nói.
+- Một hạt có thể rơi vào CHẾ ĐỘ thiên lệch: 9B s1 gán "tôi" cho 42,8 % câu không phải "tôi" (gốc 10,2 %). Bỏ phiếu hạt chỉ
+  bảo hiểm trước hạt xấu (hơn trung bình hạt +1,2…+4,2), không hơn hạt tốt nhất (mọi CI chứa 0) - nhiễu hạt không phải trần.
+
+Các cách đặt lại, mỗi cách là một thí nghiệm có ngưỡng ghi trước:
+- **Kênh nhiễu (B6).** Không dạy model đoán tên. Chấm mỗi ứng viên c bằng log P(câu thoại | ngữ cảnh trước + "c nói:") của
+  một LM NỀN không huấn luyện, trừ log P(câu thoại | ngữ cảnh, không tên) (PMI), chọn c cao nhất. LM đã học từ hàng tỉ câu
+  cách người ta nói - xưng hô, vai vế, giọng; hướng cũ bắt model nhỏ học lại điều đó từ 2.000 nhãn.
+- **Gom câu theo người nói rồi mới đặt tên (B7).** Thứ người nghe nghe là "câu nào cùng một giọng". Học quan hệ cùng/khác
+  người nói từ câu có thẻ dẫn tường minh trong 161 cuốn Corpus (bỏ thẻ khỏi câu để không lộ đáp án) - dữ liệu tự giám sát
+  gần như vô hạn; tên đặt một lần cho cả cụm, cho cả cuốn.
+- **Chấm ứng viên với tập đáp án chấp nhận (B3).** 652/1.827 câu gold có nhiều đáp án chấp nhận; huấn luyện ép MỘT đáp án
+  là nhiễu nhãn. Encoder chấm cặp (câu, ứng viên), loss biên trên cả tập chấp nhận.
+- **Đáp án chuẩn (A).** Hai thầy Opus độc lập gán lại 7 chương gold (không nhìn gold): đồng thuận thầy-thầy, thầy-gold, phân
+  loại câu bất đồng -> tỉ lệ lỗi gold + trần thầy. Thầy >= ~85 % trên truyện mới thì dựng nhãn bạc x10-x50 (Lead).
+- **Chẩn đoán "tín hiệu bị pha loãng" (B1a).** Giữ cách đặt cũ, chỉ nhân x10 loss token giá trị "speaker" của đoạn thoại.
+  Không phải hướng, là phép thử giả thuyết: nếu thắng thì cách đặt cũ còn chỗ; nếu hoà thì trần nằm ở cách đặt bài toán.
+
+### B1a - chẩn đoán pha loãng (ghi trước, 04-10 20:xx)
+
+train_lora.py + `--speaker-weight 10` (token giá trị "speaker" của đoạn không phải narration; ~0,74 % token đáp án -> ~7 %
+loss) + `--seed`; còn lại y lora29v8. Hạt 1234 (so CẶP với lora29v8) và hạt 1. Đo Nhật MỚI 11 ch (mh/rk/sm), Hàn MỚI sau.
+Mốc họ v8 trên 11 ch: gốc 61,5, TB 4 lượt 60,5. THẮNG: TB 2 hạt >= 62,5 và không truyện nào tụt > 5 so với TB họ v8; HOÀ:
+trong ±2,0; THUA: < 58,5. Báo kèm adj1/share (chữ ký chế độ "gán cho tôi"). Script: LLM_Train/b1/.
+
+### B6 - kênh nhiễu zero-shot (ghi trước, 04-10 20:xx)
+
+LM nền Qwen3-4B-Instruct-2507 (4-bit, không huấn luyện). Mỗi câu thoại gold của 11 ch Nhật MỚI (rồi 8 ch Hàn MỚI): ngữ cảnh
+= chữ chương trước câu (cắt theo ngân sách token), ứng viên = (a) người nói có trong gold của chương + người kể (trần với
+dàn nhân vật biết trước), (b) dàn nhân vật do 4B v8 xuất cho chương ấy (thực tế). Điểm = log P(câu | ngữ cảnh + "c nói:")
+- log P(câu | ngữ cảnh). Đo trên CÙNG câu với 4B v8: độ đúng người nói (credit như bộ chấm), lỗi theo loại (lệch lượt /
+"tôi" / người lạ), và độ BỔ SUNG = % câu 4B v8 sai mà kênh đúng.
+- ĐỘT PHÁ: (b) đúng >= 4B v8 + 3 điểm trên cùng câu.
+- HỨA HẸN: (b) trong ±3 của 4B v8 và bổ sung >= 30 % lỗi của v8 -> thử ghép (kênh làm đặc trưng / người phân xử).
+- ÂM: (b) < 4B v8 - 3 và bổ sung < 30 %.
+
 ## 03-10 chiều - Vì sao model to không hơn rõ: tín hiệu khó quá ít, lỗi theo loại, và truyện ĐÃ HỌC vs truyện MỚI
 
 Câu chủ sách hỏi: "ít thông tin thì huấn luyện tốt hơn?". Trả lời từ số đo, không dùng GPU:
