@@ -146,7 +146,7 @@ def _validated(syllables: list[_Syl], capital: bool) -> str | None:
 # ---- tiếng Nhật (mục 2) ----------------------------------------------------------------------------------------------
 
 _JA_VOWELS = "aiueo"
-_JA_VOWELS_LONG = _JA_VOWELS + "ô"  # ô: o viết bằng dấu (ō), đọc ô
+_JA_VOWELS_LONG = _JA_VOWELS + "ôŏ"  # ô: o viết bằng dấu (ō), đọc ô; ŏ: "oh" trước phụ âm / cuối từ (nội bộ, `_ja_spelling`), luôn đọc ô kể cả đầu từ
 _JA_VOWEL = {"a": "a", "i": "i", "u": "u", "e": "e", "o": "ô"}  # a i u e o -> a i u e ô (chủ sách 04-10: u -> u và e -> e ở mọi chỗ, không ư / ê)
 # s -> x (luật 1.4), k / g theo chính tả (K, G), z -> d, d -> đ, h -> h, r -> r
 _JA_SIMPLE = {"k": "K", "g": "G", "s": "S", "z": "d", "t": "t", "d": "đ", "n": "n", "h": "h", "b": "b", "p": "p", "m": "m", "r": "r"}
@@ -166,7 +166,32 @@ _JA_FIXED: dict[str, tuple[tuple[str, ...], ...]] = {
     "onigiri": (("", "o"), ("n", "i"), ("gi", "i"), ("r", "i")),
     # chwan: cách viết nũng của -chan (Tenshi-chwan); w giữa ch và a là bán âm oa (analogy theo wa -> oa), khép n
     "chwan": (("ch", "oa", "n"),),
+    # chủ sách 04-10 (lần 8), tên cố định: Gesunoh -> ghét-xu-nô (KHÔNG suy rộng ge -> ghét); Theia -> thi-a, Fina -> phi-na, Tio -> ti-ô là tên kiểu Âu trong truyện Nhật
+    # (Hepburn không có ti / fi, nên không đi qua luật: chỉ đúng các tên này)
+    "gesunoh": (("G", "e", "t"), ("x", "u"), ("n", "ô")),
+    "theia": (("th", "i"), ("", "a")),
+    "fina": (("ph", "i"), ("n", "a")),
+    "tio": (("t", "i"), ("", "ô")),
 }
+
+_JA_GH = re.compile(r"gh(?=[aiueo])")
+_JA_JY = re.compile(r"jy(?=[aiueo])")
+_JA_OH = re.compile(r"oh(?![aiueo])")
+
+
+def _ja_spelling(word: str, flags: list[str]) -> str:
+    """Cách viết quen của romaji lệch Hepburn (chủ sách 04-10 lần 8, suy từ ca cố định): gh + nguyên âm -> g (Hiiraghi -> Hi-ra-ghi), jy + nguyên âm -> j (Sanjyo -> Xan-giô),
+    oh trước phụ âm / cuối từ -> ô dài, kể cả đầu từ (Ohto -> Ô-tô, Ohka -> Ô-ca, Poh -> Pô; "oh" trước nguyên âm là o + h của ha, hi: Ohayou, Johan giữ nguyên)."""
+    if _JA_GH.search(word):
+        flags.append("analogy:ja_gh")
+        word = _JA_GH.sub("g", word)
+    if _JA_JY.search(word):
+        flags.append("analogy:ja_jy")
+        word = _JA_JY.sub("j", word)
+    if _JA_OH.search(word):
+        flags.append("analogy:ja_oh")
+        word = _JA_OH.sub("ŏ", word)
+    return word
 
 
 def _ja_emit(onset: str, vowel: str, syllables: list[_Syl], flags: list[str]) -> bool:
@@ -208,6 +233,7 @@ def _ja_word(word: str, flags: list[str]) -> list[_Syl] | None:
     fixed = _JA_FIXED.get(word)
     if fixed is not None:
         return [_Syl(*entry) for entry in fixed]
+    word = _ja_spelling(word, flags)
     syllables: list[_Syl] = []
     i, size = 0, len(word)
     while i < size:
@@ -241,7 +267,8 @@ def _ja_word(word: str, flags: list[str]) -> list[_Syl] | None:
             if onset not in _JA_ALLOWED:
                 return None
         vowel = word[j:j + 1]
-        long_o = vowel == "ô"
+        long_o = vowel in ("ô", "ŏ")
+        forced_o = vowel == "ŏ"
         if long_o:
             vowel = "o"
         if vowel == "" or vowel not in _JA_VOWELS or (onset and vowel not in _JA_ALLOWED[onset]):
@@ -261,6 +288,8 @@ def _ja_word(word: str, flags: list[str]) -> list[_Syl] | None:
             flags.append("open:y_after_vowel_pair")  # Kouya, Raiya: hai nguyên âm rồi ya mà luật ya cuối từ không áp (âu / ai + y không thành vần): hiện y -> gi
         if not _ja_emit(onset, vowel, syllables, flags):
             return None
+        if forced_o:
+            syllables[-1].nucleus = "ô"  # oh: ô dài, kể cả đầu từ (Ohto -> Ô-tô; ō đầu từ vẫn o: Ōsaka -> O-xa-ca)
         # nguyên âm dài (không kéo dài): oo, ō -> ô, uu -> u, ee -> e, ii -> i, ei -> ây, ou viết ra -> âu (chủ sách 04-10); ai giữ là ai
         follow = "" if long_o else word[j:j + 1]
         if vowel == "e" and follow == "i":
@@ -349,9 +378,17 @@ def _ko_spelling(word: str, flags: list[str]) -> str:
     return word
 
 
+# Tên cố định mà RR viết giống hai cách tách (gang-won / gan-gwon): chủ sách 04-10 lần 8, Gangwon -> kang-guôn (viết cang theo chính tả: bộ kiểm âm tiết không nhận kang)
+_KO_FIXED_PARSES: dict[str, list[tuple[str, str, str]]] = {
+    "gangwon": [("g", "a", "ng"), ("", "wo", "n")],
+}
+
+
 def _ko_best(word: str, flags: list[str]) -> list[tuple[str, str, str]] | None:
     """Cách tách duy nhất của một đoạn RR thành (phụ âm đầu, vần, phụ âm cuối), hay None khi không tách được / không chắc."""
     word = _ko_spelling(word, flags)
+    if word in _KO_FIXED_PARSES:
+        return list(_KO_FIXED_PARSES[word])
     if not word or len(word) > 24 or any(doubled in word for doubled in ("aa", "ee", "ii", "oo", "uu")):
         return None  # RR không có nguyên âm đôi lặp (Yoo, Lee, Woo là cách viết quen, không phải RR)
     parses: list[list[tuple[str, str, str]]] = []
@@ -365,7 +402,11 @@ def _ko_best(word: str, flags: list[str]) -> list[tuple[str, str, str]] | None:
     top = min(rank(parse) for parse in parses)
     best = [parse for parse in parses if rank(parse) == top]
     if any(parse != best[0] for parse in best):
-        return None
+        # kk là phụ âm đầu căng (ㄲ), không phải c khép + k mở: tokki -> to-kki -> tô-ki (chủ sách 04-10 lần 8). Chỉ kk; pp, tt, ss, jj còn để không đoán (Oppa)
+        tense = [parse for parse in best if any(entry[0] == "kk" for entry in parse)]
+        if len(tense) != 1:
+            return None
+        best = tense
     chosen = best[0]
     # ng hay n + g: RR viết giống nhau (Yong-in / Yon-gin, Han-gang / Hang-ang) - còn cách tách khác cùng số âm tiết thì không đoán
     for parse in parses:
