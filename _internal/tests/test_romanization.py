@@ -17,6 +17,7 @@ import pytest
 from abook.analysis import _valid_vietnamese_spoken_form
 from abook.romanization import OPEN_CHOICES, romanized_reading, romanized_reading_flags
 from tests import romanization_evidence as evidence
+from tests import romanization_preprocessing_cases as preprocessing
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests" / "fixtures" / "romanization" / "cases.json"
@@ -117,10 +118,10 @@ def test_reading_follows_the_convention(token, origin, reading):
 
 
 @pytest.mark.parametrize("token,origin", [
-    ("Cale", "ja"), ("Lily", "ja"), ("Ah", "ja"), ("IZUMO", "ja"), ("iPhone", "ja"), ("Ko1", "ja"), ("Tuka", "ja"), ("Kaz", "ja"), ("", "ja"),
-    ("Ka-", "ja"), ("Cale", "ko"), ("Hmm", "ko"), ("PARK", "ko"),
+    ("Cale", "ja"), ("Lily", "ja"), ("Ah", "ja"), ("iPhone", "ja"), ("Ko1", "ja"), ("Tuka", "ja"), ("Kaz", "ja"), ("", "ja"),
+    ("Ka-", "ja"), ("Cale", "ko"), ("Hmm", "ko"),
     ("Hajime", None), ("Seoul", None),                # không biết gốc thì không đoán
-    ("Yongin", "ko"), ("Hangang", "ko"), ("Jiwoo", "ko"),  # yong-in / yon-gin không phân được; Jiwoo không là RR
+    ("Yongin", "ko"), ("Hangang", "ko"),              # yong-in / yon-gin không phân được
 ])
 def test_unsure_is_none(token, origin):
     assert romanized_reading(token, origin) is None
@@ -156,7 +157,9 @@ def test_open_choices_are_flagged_not_silent():
 def test_a_reading_is_the_same_whatever_the_capitalisation_of_the_input():
     assert romanized_reading("osaka", "ja") == "o-xa-ca"
     assert romanized_reading("Osaka", "ja") == "O-xa-ca"
-    assert romanized_reading("OSAKA", "ja") is None  # toàn hoa là chữ viết tắt, việc của luật khác
+    assert romanized_reading("OSAKA", "ja") == "O-xa-ca"  # toàn hoa: casefold rồi đọc, viết hoa chữ đầu như thường
+    assert romanized_reading("NEE-SAN", "ja") == "Ne-xan" and romanized_reading("PARK", "ko") == "Pắc"
+    assert romanized_reading("oSAKA", "ja") == "o-xa-ca" and romanized_reading("HImeno", "ja") == "Hi-me-nô"  # hoa lạ: như viết hoa chữ đầu của chính token
 
 
 # ---- bộ ví dụ dùng chung với Kotlin ------------------------------------------------------------------------------------
@@ -185,9 +188,47 @@ def test_the_shared_fixture_is_the_latest_generated_one():
 def test_every_syllable_of_every_reading_is_a_valid_vietnamese_syllable():
     checked = 0
     for case in _cases():
-        if case["reading"] is None:
-            continue
+        if case["reading"] is None or any(flag.startswith("keep:") for flag in case["flags"]):
+            continue  # phần giữ nguyên (chữ Anh / viết tắt / chữ Việt) không là âm tiết do luật sinh
         for syllable in re.split(r"[ -]", case["reading"]):
             assert _valid_vietnamese_spoken_form("", syllable), (case["token"], case["reading"], syllable)
             checked += 1
     assert checked > 800
+
+
+# ---- tiền xử lý: TOÀN HOA, gạch nối / hậu tố, CamelCase, cách viết quen của tên Hàn -----------------------------------------------------
+
+@pytest.mark.parametrize("token,origin,reading", [(t, "ja", r) for t, _, r in preprocessing.BENCH_JA] + [(t, "ko", r) for t, _, r in preprocessing.BENCH_KO])
+def test_the_preprocessing_reads_the_unusual_spellings_of_the_bench(token, origin, reading):
+    assert romanized_reading(token, origin) == reading
+
+
+@pytest.mark.parametrize("token,origin,reading,flag", preprocessing.KEPT)
+def test_english_and_abbreviation_parts_are_kept_not_read(token, origin, reading, flag):
+    found = romanized_reading_flags(token, origin)
+    assert found is not None and found[0] == reading and flag in found[1], found
+
+
+@pytest.mark.parametrize("token,origin", preprocessing.STILL_NONE)
+def test_what_the_preprocessing_cannot_decide_stays_none(token, origin):
+    assert romanized_reading(token, origin) is None
+
+
+def test_the_preprocessing_flags_what_the_convention_does_not_say():
+    # sh -> s và oo -> u là quyết định của lead (không cờ); weo -> wo, ah -> a, tách CamelCase, hoa lạ là analogy; phần giữ nguyên có cờ keep:
+    assert romanized_reading_flags("Shinhyun", "ko")[1] == () and romanized_reading_flags("Joo", "ko")[1] == ()
+    assert romanized_reading_flags("Weol-hyun", "ko")[1] == ("analogy:ko_weo",)
+    assert romanized_reading_flags("Seol-Ah", "ko")[1] == ("analogy:ko_ah",)
+    assert romanized_reading_flags("OkabeRintarou", "ja")[1] == ("analogy:camel_split",)
+    assert romanized_reading_flags("HImeno", "ja")[1] == ("analogy:case_fold",)
+    assert romanized_reading_flags("KANATA", "ja")[1] == () and romanized_reading_flags("Tenshi-chwan", "ja")[1] == ()
+    assert romanized_reading_flags("Gấu-san", "ja")[1] == ("keep:viet",)
+
+
+def test_a_hyphen_joins_what_the_part_says_and_a_camel_pair_of_single_syllables_is_one_name():
+    # đoạn thường hay hậu tố sau gạch nối vào tên; đoạn viết hoa là từ mới; CamelCase cách nhau dấu cách, trừ hai nửa đều MỘT âm tiết (JoJo, ChuChu)
+    assert romanized_reading("Kanata-cả", "ja") == "Ca-na-ta-cả"
+    assert romanized_reading("Waseda-Keio", "ja") == "Oa-xe-đa Cây-o"
+    assert romanized_reading("Rin-san", "ja") == "Rin-xan"
+    assert romanized_reading("YuNa", "ja") == "Giu-na" and romanized_reading("KouIchi", "ja") == "Câu I-chi"
+    assert romanized_reading("Seol-Ah", "ko") == "Xe-on-a" and romanized_reading("Park Seol-Ah", "ko") == "Pắc Xe-on-a"

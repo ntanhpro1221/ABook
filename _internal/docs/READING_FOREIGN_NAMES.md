@@ -141,6 +141,28 @@ Kiơng-chu).
 
 Tên người Hàn: mỗi âm tiết RR một âm tiết, không gạch nối (Pắc Cưn Hê). [Có nguồn: Bộ Ngoại giao]
 
+### 3b. Cách viết lạ: tiền xử lý token (05-10, bộ đo luật `translit_bench`)
+
+Token đi qua bước tiền xử lý trước khi áp bảng mục 2-3 (`romanization._read`). Các bước này là [App]: quy ước không nói, mỗi cờ ghi dấu lúc nào chúng áp.
+
+| kiểu | cách đọc | cờ |
+|---|---|---|
+| TOÀN HOA (KANATA, REI, NEE-SAN) | casefold rồi đọc, viết hoa chữ đầu như thường (Ca-na-ta, Rây, Ne-xan) | không |
+| CamelCase (OkabeRintarou) | tách ở chữ hoa giữa từ, mỗi nửa một bộ phận cách nhau dấu cách (O-ca-be Rin-ta-râu); hai nửa đều MỘT âm tiết (JoJo, ChuChu) là một tên lặp, nối gạch (Giô-giô); mỗi nửa phải dài từ hai chữ | `analogy:camel_split` |
+| hoa lạ không tách được (HImeno) | đọc như viết hoa chữ đầu của chính token (Hi-me-nô) | `analogy:case_fold` |
+| gạch nối + hậu tố (Tenshi-chwan, Haruto-kun, PD-nim) | mỗi đoạn một bộ phận; hậu tố gọi và đoạn thường sau gạch nối gạch vào tên thành một chuỗi, đoạn viết hoa là từ mới (Waseda-Keio). `chwan` là cách viết nũng của `chan` (ch + oa + n: choan) | không |
+| đoạn là chữ Việt có dấu (Vương-sama, Kanata-cả) | GIỮ NGUYÊN chữ ấy, phần còn lại đọc | `keep:viet` |
+| đoạn là viết tắt TOÀN HOA 2-4 chữ (PD-nim) hay chữ Anh từ 4 chữ trở lên (Ikemen-style, Mary-san) | GIỮ NGUYÊN; đọc đoạn ấy là việc của luật chữ viết tắt / `english_vi`. Chữ Anh mà hệ kia (RR khi gốc Nhật, romaji khi gốc Hàn) đọc được thì KHÔNG giữ (Ji-Young, Sophia: là tên Hàn); chữ Anh cạnh một đoạn cũng là chữ Anh (Spider-Man) là tên Tây | `keep:abbr`, `keep:english` |
+| Hàn: sh, oo, woo, yoo | sh -> s (Shinhyun -> Xin-hi-un), oo -> u (Joo -> Giu, Hoon -> hun), woo -> u (Ji-woo -> Gi-u) | không |
+| Hàn: weo | -> wo (Weol -> Guôn) | `analogy:ko_weo` |
+| Hàn: ah khi h không đứng trước nguyên âm | -> a, h câm của tiếng gọi (Seol-Ah, Ahn, Ahri, Min-ah) | `analogy:ko_ah` |
+
+Giữ nguyên cần ít nhất một đoạn còn lại đọc theo luật; không thì None. Chữ Việt không dấu (Khoan, Seo) không được giữ vì nhiều tên romaji / RR cũng là âm tiết Việt.
+Cố ý để None: Jinyoon (Jin-yun hay Ji-nyun), Spider-Man, iPhone, YouTube, PD đứng riêng.
+Chưa quyết (liệt kê để chủ sách phán, hiện vẫn None hay sai): Nhật oh -> ô (Ohka, Ohto, Poh-chan, Gesunoh), jy -> j (Sanjyo, Kanjyaka), gh -> g (Hiiraghi), ff (Haffu), ー cuối (Taruー), uya cuối từ
+(Kasuya -> Ca-xuy-a, Kazuya, Himemuya), m trước p (Pimpon), ti / fi / di của tên phương Tây (Tio, Fina, Fii); Hàn nn cuối (Hyunn), Gyu (Ghi-u), Gangwon, Jeongeun, tokki, Oppa (o-pa hay op-pa),
+Luda (l đầu từ).
+
 ## 4. Tên tiếng Anh và phương Tây
 
 **Mặc định: GIỮ NGUYÊN chữ Anh** cho máy đọc nói được âm vị tiếng Anh. [Đo 04-10] Whisper nghe lại: VieNeu Turbo / Nano (sea-g2p cho

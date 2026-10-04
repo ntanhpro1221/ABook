@@ -7008,7 +7008,7 @@
    "total": 128,
    "names": 16,
    "ja_names": 16,
-   "ko_names": 11,
+   "ko_names": 15,
    "honorific": 0,
    "honorific_names": 0
   },
@@ -7022,7 +7022,7 @@
    "total": 384,
    "names": 16,
    "ja_names": 16,
-   "ko_names": 11,
+   "ko_names": 15,
    "honorific": 0,
    "honorific_names": 0
   },
@@ -7034,7 +7034,7 @@
    "total": 144,
    "names": 12,
    "ja_names": 4,
-   "ko_names": 11,
+   "ko_names": 12,
    "honorific": 0,
    "honorific_names": 0
   },
@@ -7070,7 +7070,7 @@
    "total": 24,
    "names": 12,
    "ja_names": 12,
-   "ko_names": 9,
+   "ko_names": 12,
    "honorific": 0,
    "honorific_names": 0
   },
@@ -7082,7 +7082,7 @@
    "total": 64,
    "names": 16,
    "ja_names": 9,
-   "ko_names": 13,
+   "ko_names": 15,
    "honorific": 0,
    "honorific_names": 0
   },
@@ -7207,7 +7207,7 @@
    "total": 7200,
    "names": 26,
    "ja_names": 19,
-   "ko_names": 20,
+   "ko_names": 24,
    "honorific": 0,
    "honorific_names": 0
   },
@@ -7219,7 +7219,7 @@
    "total": 320,
    "names": 26,
    "ja_names": 19,
-   "ko_names": 20,
+   "ko_names": 24,
    "honorific": 32,
    "honorific_names": 4
   },
@@ -7231,7 +7231,7 @@
    "total": 320,
    "names": 26,
    "ja_names": 19,
-   "ko_names": 20,
+   "ko_names": 24,
    "honorific": 8,
    "honorific_names": 1
   },
@@ -7243,7 +7243,7 @@
    "total": 304,
    "names": 26,
    "ja_names": 19,
-   "ko_names": 20,
+   "ko_names": 24,
    "honorific": 16,
    "honorific_names": 2
   }

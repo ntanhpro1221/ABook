@@ -12,7 +12,8 @@ import vn.abook.player.VietnameseSyllable
  * CHƯA nối vào đường đọc.
  *
  * Ba loại cờ: `open:` quy ước ghi "mở", đây là mặc định chờ kiểm bằng âm thanh (OPEN_CHOICES); `analogy:` quy ước không nói, suy theo hàng
- * gần nhất; `fit:` quy ước chọn dạng mà bộ kiểm âm tiết không nhận, nên dùng dạng khác cũng có nguồn.
+ * gần nhất; `fit:` quy ước chọn dạng mà bộ kiểm âm tiết không nhận, nên dùng dạng khác cũng có nguồn. Thêm `keep:` cho đoạn giữ nguyên chữ (viet / abbr / english) trong token nối
+ * gạch (Gấu-san, PD-nim, Ikemen-style); tiền xử lý (TOÀN HOA, CamelCase, gạch nối, cách viết quen của tên Hàn) mô tả ở đầu `abook/romanization.py`.
  */
 object Romanization {
     /** Cách đọc và các cờ (không trùng, theo thứ tự gặp). */
@@ -141,11 +142,13 @@ object Romanization {
 
     /** Từ đã quen ở Việt Nam, chủ sách ghi đè cố định (04-10): onigiri (cơm nắm) -> o-ni-gi-ri, trong khi g + i -> ghi (Hiiragi) vẫn đứng. */
     private val JA_FIXED = mapOf(
-        "onigiri" to listOf("" to "o", "n" to "i", "gi" to "i", "r" to "i"),
+        "onigiri" to listOf(Triple("", "o", ""), Triple("n", "i", ""), Triple("gi", "i", ""), Triple("r", "i", "")),
+        // chwan: cách viết nũng của -chan (Tenshi-chwan); w giữa ch và a là bán âm oa (analogy theo wa -> oa), khép n
+        "chwan" to listOf(Triple("ch", "oa", "n")),
     )
 
     private fun jaWord(word: String, flags: MutableList<String>): List<Syl>? {
-        JA_FIXED[word]?.let { fixed -> return fixed.map { (onset, nucleus) -> Syl(onset, nucleus) } }
+        JA_FIXED[word]?.let { fixed -> return fixed.map { (onset, nucleus, coda) -> Syl(onset, nucleus, coda) } }
         val syllables = ArrayList<Syl>()
         var i = 0
         while (i < word.length) {
@@ -269,8 +272,28 @@ object Romanization {
         }
     }
 
-    private fun koBest(raw: String): List<Triple<String, String, String>>? {
-        val word = KO_SPELLINGS[raw] ?: raw
+    private val KO_SILENT_H = Regex("ah(?![aeiouy])")
+
+    /**
+     * Đổi cách viết Latinh quen dùng của tên Hàn về RR trước khi tách: nguyên cả đoạn (KO_SPELLINGS), rồi từng chỗ (sh -> s, oo -> u, woo -> u, yoo -> yu: Shin, Joo, Hoon, Ji-woo;
+     * weo -> wo: Weol; ah -> a khi h không đứng trước nguyên âm: Ahn, Ahri, Seol-Ah). sh và oo là quyết định của lead (04-10, bộ đo luật); weo và ah là analogy.
+     */
+    private fun koSpelling(raw: String, flags: MutableList<String>): String {
+        KO_SPELLINGS[raw]?.let { return it }
+        var word = raw.replace("sh", "s").replace("woo", "u").replace("yoo", "yu").replace("oo", "u")
+        if ("weo" in word) {
+            flags.add("analogy:ko_weo")
+            word = word.replace("weo", "wo")
+        }
+        if (KO_SILENT_H.containsMatchIn(word)) {
+            flags.add("analogy:ko_ah")
+            word = KO_SILENT_H.replace(word, "a")
+        }
+        return word
+    }
+
+    private fun koBest(raw: String, flags: MutableList<String>): List<Triple<String, String, String>>? {
+        val word = koSpelling(raw, flags)
         if (word.isEmpty() || word.length > 24 || listOf("aa", "ee", "ii", "oo", "uu").any { it in word }) return null
         val parses = ArrayList<List<Triple<String, String, String>>>()
         koParses(word, 0, null, parses, ArrayList())
@@ -285,6 +308,8 @@ object Romanization {
             if (parse != chosen && parse.size == chosen.size) {
                 for (k in 0 until chosen.size - 1) {
                     if (chosen[k].third == "n" && chosen[k + 1].first == "g" && parse[k].third == "ng") return null
+                    // n + y: Jin-yun / Ji-nyun cũng viết giống nhau (Jinyoon), RR chỉ phân bằng dấu gạch
+                    if (chosen[k].third == "" && chosen[k + 1].first == "n" && chosen[k + 1].second.startsWith("y") && parse[k].third == "n") return null
                 }
             }
         }
@@ -380,11 +405,20 @@ object Romanization {
         return pieces
     }
 
-    private fun koWords(segments: List<String>, flags: MutableList<String>): List<List<Syl>>? {
+    /**
+     * Các đoạn nối gạch của một tên Hàn (Geun-hye): cùng một từ về âm (g, d, b hữu thanh sau n, m, ng ngay cả qua dấu gạch), nhưng mỗi đoạn một bộ phận.
+     * Đoạn null là chữ giữ nguyên (PD, Hoẵng): cho bộ phận rỗng và cắt mạch âm (đoạn sau lại là đầu từ).
+     */
+    private fun koWords(segments: List<String?>, flags: MutableList<String>): List<List<Syl>>? {
         val out = ArrayList<List<Syl>>()
         var previous: String? = null
         for (segment in segments) {
-            val parse = koBest(segment) ?: return null
+            if (segment == null) {
+                out.add(emptyList())
+                previous = null
+                continue
+            }
+            val parse = koBest(segment, flags) ?: return null
             val syllables = ArrayList<Syl>()
             for ((position, entry) in parse.withIndex()) {
                 val (onset, vowel, coda) = entry
@@ -401,53 +435,136 @@ object Romanization {
 
     // ---- cửa vào -----------------------------------------------------------------------------------------------------
 
-    internal val JA_SUFFIXES = setOf("san", "kun", "chan", "sama", "senpai", "sensei", "dono", "tan", "nee", "nii")
+    internal val JA_SUFFIXES = setOf("san", "kun", "chan", "chwan", "sama", "senpai", "sensei", "dono", "tan", "nee", "nii")
+    private const val ABBREVIATION_MAX = 4 // chữ TOÀN HOA dài nhất mà còn coi là viết tắt (PD, NPC) khi giữ nguyên
+    private const val ENGLISH_MIN = 4 // chữ Anh ngắn hơn thế (Si, Man, ram) dễ là âm tiết của tên Nhật / Hàn: không giữ
 
     private fun isAsciiLetter(ch: Char): Boolean = ch in 'a'..'z' || ch in 'A'..'Z' || ch == 'ô' || ch == 'Ô' // ô, Ô: ō của tiếng Nhật sau khi đổi
 
-    /** true nếu viết hoa chữ đầu, false nếu toàn chữ thường, null nếu không phải chữ hay viết hoa lạ. */
-    private fun partCase(part: String): Boolean? {
-        val letters = part.replace("'", "")
-        if (letters.isEmpty() || !letters.all { isAsciiLetter(it) } || part.startsWith("'") || part.endsWith("'")) return null
-        if (part == part.lowercase(Locale.ROOT)) return false
-        if ((part[0] in 'A'..'Z' || part[0] == 'Ô') && part.substring(1) == part.substring(1).lowercase(Locale.ROOT)) return true
+    /** Một đoạn của token (giữa hai dấu gạch, hay một nửa của CamelCase): đọc theo luật (kind "read") hay giữ nguyên chữ ("keep:..."). */
+    private class Piece(val text: String, val norm: String, val case: Boolean, val kind: String) {
+        var join = "new" // "new" tách bằng dấu cách; "hyphen" sau dấu gạch; "camel" sau chỗ tách CamelCase
+        var syllables: List<Syl> = emptyList()
+    }
+
+    /** lower (không chữ hoa), title (chỉ chữ đầu hoa), upper (toàn hoa, từ hai chữ), mixed (CamelCase hay hoa lạ). */
+    private fun shape(letters: String): String {
+        if (letters == letters.lowercase(Locale.ROOT)) return "lower"
+        if (letters[0].isUpperCase() && letters.substring(1) == letters.substring(1).lowercase(Locale.ROOT)) return "title"
+        if (letters.length >= 2 && letters == letters.uppercase(Locale.ROOT)) return "upper"
+        return "mixed"
+    }
+
+    /** Tách ở chữ hoa đứng sau chữ thường (OkabeRintarou -> Okabe, Rintarou) hay chữ hoa cuối chuỗi hoa mà liền sau là chữ thường (HImeno -> H, Imeno). */
+    private fun splitCamel(segment: String): List<String> {
+        val parts = ArrayList<String>()
+        var start = 0
+        for (i in 1 until segment.length) {
+            val after = if (i + 1 < segment.length) segment[i + 1] else null
+            if (segment[i].isUpperCase() && (segment[i - 1].isLowerCase() || (segment[i - 1].isUpperCase() && after != null && after.isLowerCase()))) {
+                parts.add(segment.substring(start, i))
+                start = i
+            }
+        }
+        parts.add(segment.substring(start))
+        return parts
+    }
+
+    private fun isLatinLetter(ch: Char): Boolean = ch.isLetter() && Character.UnicodeScript.of(ch.code) == Character.UnicodeScript.LATIN
+
+    /**
+     * Chữ Việt giữ nguyên chữ (Vương-sama, Gấu-san): có chữ Latin mang dấu mà KHÔNG là dấu nguyên âm dài của romaji (â ê ô û...: "Công", "Tây" cũng là chữ Việt, nhưng đường quét tên cho
+     * qua chúng như tên có dấu dài). Âm tiết Việt viết không dấu (Khoan, Seo) cũng KHÔNG tính: nhiều tên romaji / RR (Si-eun, Seo-ram) là âm tiết Việt hợp lệ.
+     */
+    private fun isVietnamese(text: String): Boolean =
+        text.all { it == '\'' || isLatinLetter(it) } && text.any { it.code > 127 && it !in LONG_VOWELS && it !in JA_LONG_O }
+
+    /** Đoạn (đã thường hoá, đã đổi nguyên âm dài) tách hết được thành âm tiết của hệ `origin` không; chỉ để thử, bỏ cờ. */
+    private fun reads(norm: String, origin: String): Boolean =
+        if (origin == "ja") !jaWord(norm, ArrayList()).isNullOrEmpty() else "'" !in norm && koWords(listOf(norm), ArrayList()) != null
+
+    private fun makePiece(text: String, case: Boolean, origin: String, allowEnglish: Boolean): Piece? {
+        val longMap = if (origin == "ja") LONG_VOWELS + JA_LONG_O else LONG_VOWELS
+        val mapped = text.map { longMap[it] ?: it }.joinToString("")
+        if (mapped.all { isAsciiLetter(it) || it == '\'' } && reads(mapped.lowercase(Locale.ROOT), origin)) return Piece(text, mapped.lowercase(Locale.ROOT), case, "read")
+        if (isVietnamese(text)) return Piece(text, "", case, "keep:viet")
+        if (allowEnglish && text.all { it in 'a'..'z' || it in 'A'..'Z' }) {
+            if (text.all { it.isUpperCase() } && text.length in 2..ABBREVIATION_MAX) return Piece(text, "", case, "keep:abbr") // PD: viết tắt, việc của luật chữ viết tắt
+            // style, Stable: việc của đường đọc từ Anh. Chữ ngắn (Si, ram) và chữ mà hệ kia đọc được (Young, Soon) không tính là chữ Anh: giữ nguyên chúng sẽ làm tên Hàn / Nhật
+            // nối gạch thành "tên đọc được" của hệ sai khi quét gốc cuốn
+            val lowered = text.lowercase(Locale.ROOT)
+            if (text.length >= ENGLISH_MIN && lowered in EnglishWords.ALL && !reads(lowered, if (origin == "ja") "ko" else "ja")) return Piece(text, "", case, "keep:english")
+        }
         return null
     }
 
-    private fun read(token: String, origin: String): Reading? {
-        var value = Normalizer.normalize(BookEdits.pyStrip(token), Normalizer.Form.NFC).replace('’', '\'')
-        val longMap = if (origin == "ja") LONG_VOWELS + JA_LONG_O else LONG_VOWELS
-        value = value.map { longMap[it] ?: it }.joinToString("")
-        if (value.isEmpty() || !value.all { isAsciiLetter(it) || it == '\'' || it == '-' || it == ' ' }) return null
-        val flags = ArrayList<String>()
-        val words = ArrayList<String>()
-        for (word in value.split(' ').filter { it.isNotEmpty() }) {
-            val segments = word.split('-')
-            val cases = segments.map { partCase(it) }
-            if (cases.any { it == null }) return null
-            val lowered = segments.map { it.lowercase(Locale.ROOT) }
-            val readings: List<List<Syl>>
-            if (origin == "ja") {
-                val list = ArrayList<List<Syl>>()
-                for (segment in lowered) {
-                    val syllables = jaWord(segment, flags)
-                    if (syllables.isNullOrEmpty()) return null
-                    list.add(syllables)
-                }
-                readings = list
-            } else {
-                if (lowered.any { "'" in it }) return null
-                readings = koWords(lowered, flags) ?: return null
-            }
-            readings.forEachIndexed { index, syllables ->
-                // hậu tố gọi (-kun) giữ chữ thường và nối gạch vào tên thành một chuỗi (chủ sách 04-10: Haruto-kun -> Ha-ru-tô-cun)
-                // tên Hàn nối gạch cũng thành một chuỗi (chủ sách 04-10: Kim Jong-un -> Kim Giông-un)
-                val suffix = index > 0 && (origin == "ko" || (origin == "ja" && lowered[index] in JA_SUFFIXES))
-                val reading = validated(syllables, !suffix && cases[0] == true) ?: return null
-                if (suffix) words[words.size - 1] = words.last() + "-" + reading else words.add(reading)
+    /** Một đoạn giữa hai dấu gạch -> các đoạn nhỏ: một (thường, Hoa đầu, TOÀN HOA casefold), hay nhiều khi là CamelCase. */
+    private fun segmentPieces(segment: String, origin: String, allowEnglish: Boolean, flags: MutableList<String>): List<Piece>? {
+        val letters = segment.replace("'", "")
+        if (letters.isEmpty() || !letters.all { it.isLetter() } || segment.startsWith("'") || segment.endsWith("'")) return null
+        if (shape(letters) != "mixed") return makePiece(segment, segment[0].isUpperCase(), origin, allowEnglish)?.let { listOf(it) }
+        val parts = splitCamel(segment)
+        if (parts.size >= 2 && parts.all { it.replace("'", "").length >= 2 }) {
+            val pieces = parts.map { makePiece(it, it[0].isUpperCase(), origin, false) }
+            if (pieces.all { it != null }) {
+                flags.add("analogy:camel_split")
+                return pieces.filterNotNull()
             }
         }
-        if (words.isEmpty()) return null
+        // hoa lạ không tách được (HImeno): đọc như viết hoa chữ đầu
+        val piece = makePiece(segment.lowercase(Locale.ROOT), segment[0].isUpperCase(), origin, false)
+        if (piece == null || piece.kind != "read") return null
+        flags.add("analogy:case_fold")
+        return listOf(piece)
+    }
+
+    private fun wordPieces(word: String, origin: String, flags: MutableList<String>): List<Piece>? {
+        val segments = word.split('-')
+        val pieces = ArrayList<Piece>()
+        for ((index, segment) in segments.withIndex()) {
+            val found = segmentPieces(segment, origin, segments.size > 1, flags) ?: return null
+            for ((sub, piece) in found.withIndex()) piece.join = if (sub > 0) "camel" else if (index == 0) "new" else "hyphen"
+            pieces.addAll(found)
+        }
+        if (pieces.any { it.kind == "keep:english" }) {
+            // chữ Anh đứng cạnh một đoạn mà chính nó cũng là chữ Anh (Spider-Man) là tên Tây, không phải tên romaji kèm chữ Anh (Ikemen-style)
+            for (piece in pieces) if (piece.kind == "read" && piece.norm !in JA_SUFFIXES && piece.norm in EnglishWords.ALL) return null
+        }
+        return pieces
+    }
+
+    private fun read(token: String, origin: String): Reading? {
+        val value = Normalizer.normalize(BookEdits.pyStrip(token), Normalizer.Form.NFC).replace('’', '\'')
+        val flags = ArrayList<String>()
+        val words = ArrayList<String>()
+        var readAny = false // có ít nhất một đoạn đọc theo luật (toàn đoạn giữ nguyên thì không phải việc của luật này)
+        for (word in value.split(' ').filter { it.isNotEmpty() }) {
+            val pieces = wordPieces(word, origin, flags) ?: return null
+            if (origin == "ja") {
+                for (piece in pieces) if (piece.kind == "read") piece.syllables = jaWord(piece.norm, flags) ?: emptyList()
+            } else {
+                val readings = koWords(pieces.map { if (it.kind == "read") it.norm else null }, flags) ?: return null
+                pieces.forEachIndexed { index, piece -> piece.syllables = readings[index] }
+            }
+            for ((index, piece) in pieces.withIndex()) {
+                if (piece.kind != "read") flags.add(piece.kind)
+                // nối vào từ trước bằng gạch (chain) hay mở từ mới. Hậu tố gọi (-san) nối gạch vào tên thành một chuỗi, chữ thường (chủ sách 04-10: Haruto-kun -> Ha-ru-tô-cun); tên Hàn
+                // nối gạch cũng thành một chuỗi (Kim Jong-un -> Kim Giông-un); đoạn thường sau gạch (Kanata-cả, Ikemen-style) cũng nối; đoạn viết hoa sau gạch (Waseda-Keio) là từ mới.
+                // CamelCase: hai nửa đều MỘT âm tiết (JoJo, ChuChu) là một tên lặp, nối gạch; còn lại cách nhau dấu cách
+                val chain = when {
+                    index == 0 || piece.join == "new" -> false
+                    piece.join == "hyphen" -> origin == "ko" || !piece.case || (piece.kind == "read" && piece.norm in JA_SUFFIXES)
+                    else -> piece.kind == "read" && piece.syllables.size == 1 && pieces[index - 1].kind == "read" && pieces[index - 1].syllables.size == 1
+                }
+                val reading = if (piece.kind == "read") {
+                    (validated(piece.syllables, piece.case && !chain) ?: return null).also { readAny = true }
+                } else {
+                    piece.text
+                }
+                if (chain) words[words.size - 1] = words.last() + "-" + reading else words.add(reading)
+            }
+        }
+        if (words.isEmpty() || !readAny) return null
         return Reading(words.joinToString(" "), flags.distinct())
     }
 
