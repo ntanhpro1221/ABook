@@ -244,6 +244,37 @@ def test_an_engine_with_its_own_tempo_is_not_stretched_twice(tmp_path: Path, mon
     assert metrics["speed_factor"] == metrics["effective_speed_factor"] == pytest.approx(0.9)
 
 
+def test_a_kept_english_name_is_vietnamized_only_for_an_engine_that_cannot_speak_english(tmp_path: Path) -> None:
+    """Mọi máy đọc hiện có nói được tiếng Anh (Supertonic: đo 2040 bản thu 04-10). Một máy không nói được (adapter giả, cờ False) nhận dạng
+    Việt hoá của tên Anh để nguyên, cho riêng đoạn của nó."""
+    from abook.english_vi import vietnamized_english
+    from abook.models import KEEP_ENGLISH_PRONUNCIATION_SOURCE
+
+    class NoEnglish(ZeroTTSEngine):
+        speaks_english = False
+
+    db = ProjectDB(tmp_path / "p.sqlite3")
+    db.upsert_pronunciation(surface="Kate", normalized_surface="kate", spoken_form="Kate", confidence=0.95,
+                            source=KEEP_ENGLISH_PRONUNCIATION_SOURCE, locked=True)
+    settings = build_settings()
+    coordinator = TTSCoordinator(settings, db, lambda _message: None)
+    said = vietnamized_english("Kate")
+    assert said and said != "Kate"
+    assert VieNeuEngine.speaks_english and ZeroTTSEngine.speaks_english and SupertonicEngine.speaks_english
+
+    vieneu_row = _row(db, voice_profile_spec(VIENEU_PRESETS[0], 1.0), "Kate gật đầu.")
+    zerotts_row = _row(db, voice_profile_spec(ZEROTTS, 1.0), "Kate gật đầu.")
+    supertonic_row = _row(db, voice_profile_spec(SUPERTONIC, 1.0), "Kate gật đầu.")
+    for row in (vieneu_row, zerotts_row, supertonic_row):
+        assert coordinator.spoken_text(row) == "Kate gật đầu."
+
+    coordinator.engines[ZeroTTSEngine.name] = NoEnglish(settings, lambda _message: None)
+    assert coordinator.spoken_text(vieneu_row) == "Kate gật đầu."
+    assert coordinator.spoken_text(supertonic_row) == "Kate gật đầu."
+    # Cùng chữ ấy là chữ khâu chấm ASR so (pipeline lấy `spoken_text`), nên đoạn của máy ấy được chấm theo dạng Việt hoá.
+    assert coordinator.spoken_text(zerotts_row) == f"{said} gật đầu."
+
+
 def test_short_supertonic_lines_slow_down_until_they_meet_the_voice_speed() -> None:
     assert tts_module.supertonic_speed("Về rồi?", 1.82) == pytest.approx(1.28)
     assert tts_module.supertonic_speed("Sao cô biết điều đó?", 1.82) == pytest.approx(1.28 + 0.06 * 3)

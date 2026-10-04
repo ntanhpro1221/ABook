@@ -242,11 +242,11 @@ def test_sync_remembers_what_the_user_chose_not_what_happened(library) -> None:
 
 
 def _request(port: int, method: str, path: str, token: str = "", body: dict | None = None, headers: dict | None = None,
-             *, secure: bool = False):
+             *, secure: bool = False, timeout: float = 10):
     """Một yêu cầu HTTP thường tới máy chủ giao diện cục bộ (127.0.0.1). `secure=True`: cổng đồng bộ - chỉ nói TLS, ghi nhận
-    chứng chỉ nào cũng được (bài thử chức năng, không phải bài thử ghim: xem test_sync_tls_pinning.py)."""
-    connection = (tls.PinnedHTTPSConnection("127.0.0.1", port, expected=None, timeout=10) if secure
-                  else http.client.HTTPConnection("127.0.0.1", port, timeout=10))
+    chứng chỉ nào cũng được (bài thử chức năng, không phải bài thử ghim: xem test_sync_tls_pinning.py). `timeout`: giây chờ trả lời."""
+    connection = (tls.PinnedHTTPSConnection("127.0.0.1", port, expected=None, timeout=timeout) if secure
+                  else http.client.HTTPConnection("127.0.0.1", port, timeout=timeout))
     all_headers = {"Authorization": f"Bearer {token}"} if token else {}
     all_headers.update(headers or {})
     payload = json.dumps(body).encode() if body is not None else None
