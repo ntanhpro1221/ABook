@@ -41,7 +41,7 @@ from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers,
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, clean_book_templates, legacy_ids
 from .listening import RECORD_ID, Listening
-from . import bluetooth, remote_books, spelling, tls
+from . import bluetooth, precast, remote_books, spelling, tls
 from .. import names as renames
 from .remote_studio import REMOTE_HEADER, StudioGate
 from .reviews import Reviews, review_view
@@ -129,6 +129,19 @@ SPEAKER_PROBLEMS = {
     listener_overrides.NOT_SPEECH: "Câu này là lời kể, không có người nói để đổi.",
     listener_overrides.NO_VOICE: "Người này chưa có giọng trong sách (chưa nói câu nào) - chưa gán được.",
 }
+
+
+# Người gác mốc "Duyệt trước khi thu" (App._precast_tick): từ mốc phân tích xong tới lúc thu xong chương đầu là vài phút.
+PRECAST_POLL_SECONDS = 10.0
+# Cuốn bật "Chờ tôi duyệt": supervisor giữ trong nhịp kiểm nguồn điện (5 giây) - chờ ngần này trước khi báo dù chưa thấy giữ.
+PRECAST_HOLD_GRACE_SECONDS = 30.0
+
+
+def _desktop_toast(title: str, message: str) -> None:
+    """Thông báo Windows (notifier.py, như lúc dây chuyền tự dừng) trên luồng riêng: hiện toast mất tới vài giây."""
+    from ..notifier import WindowsNotifier
+
+    threading.Thread(target=lambda: WindowsNotifier().notify(title, message), name="precast-toast", daemon=True).start()
 
 
 class ApiError(Exception):
@@ -272,6 +285,13 @@ class App:
         self.previews = reading_preview.ReadingPreviews(
             preferences.path.with_name("reading-previews"), studio=lambda: self.studio, fake=self._fake_engine,
             busy=lambda: self._busy_elsewhere() is not None)
+        # "Duyệt trước khi thu" (precast.py): người gác mốc phân tích xong sống khi có cuốn đang chạy; báo ra màn hình Windows
+        # (giọng giả / bài thử: không báo gì).
+        self._precast_lock = threading.RLock()
+        self._precast_thread: threading.Thread | None = None
+        self._precast_seen: dict[str, float] = {}  # lúc người gác thấy mốc lần đầu, theo cuốn (chờ supervisor giữ)
+        self.notify_desktop: Callable[[str, str], None] = (
+            (lambda _title, _message: None) if self._fake_engine() or read_only else _desktop_toast)
 
     def _fake_engine(self) -> bool:
         """Dựng giao diện / bài thử: runner giả thì "nghe thử" cũng dùng giọng giả (không đòi Studio hay card đồ hoạ)."""
@@ -471,6 +491,9 @@ class App:
         # tới đó sổ vẫn ghi pha đang làm, nên "đang tạm dừng" khác "đã tạm dừng".
         result["paused"] = self.runner.pause_reason(path) if running else None
         result["canPause"] = bool(running and self.runner.can_pause(path))
+        result["precast"] = precast.flags(path, result)
+        if running:
+            self._watch_precast()
         # Phần nối tiếp của "Làm tiếp cuốn này": danh sách Dự án gom theo chuỗi, không theo tên (soát UX 29-09, N10).
         place = continuation.series_of(path)
         result["series"] = {"root": book_id(place[0]), "part": place[1]} if place else None
@@ -581,6 +604,7 @@ class App:
         self.jobs.start(path)
         store.mark_run_started(path, started_at)
         self._queue_successors(path)
+        self._watch_precast()
 
     def pause(self, value: str, paused: bool) -> dict[str, Any]:
         """"Tạm dừng" / "Tiếp tục" cuốn đang chạy: tiến trình vẫn sống, dây chuyền đứng ở checkpoint kế rồi làm tiếp đúng
@@ -594,6 +618,8 @@ class App:
             self.runner.pause(path, paused)
         except RuntimeError as error:
             raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
+        if not paused:
+            precast.release(path)  # "Thu âm" ở màn duyệt cũng đi đường này: supervisor đã giữ một lần thì thôi
         # Supervisor đọc yêu cầu ở vòng kế (tới 0,25 giây): trả trạng thái SẼ có, không phải trạng thái vừa đọc.
         result = self.summary(path)
         result["paused"] = "listener" if paused else None
@@ -601,6 +627,70 @@ class App:
             result["statusLabel"] = humanize.pause_label("listener", reached=result.get("status") == "paused")
             result["eta"] = None
         return result
+
+    # ---- Duyệt trước khi thu (precast.py) ----
+
+    def precast_view(self, value: str) -> dict[str, Any]:
+        path = self._book(value)
+        return precast.view(path, self.summary(path))
+
+    def set_precast_wait(self, value: str, wait: bool) -> dict[str, Any]:
+        """Công tắc "Chờ tôi duyệt trước khi thu" của một cuốn. Bật sau khi đã qua mốc thì không tạm dừng gì - mốc chỉ
+        báo một lần; muốn đứng lại lúc ấy thì bấm "Tạm dừng"."""
+        self._mutating()
+        precast.set_wait(self._book(value), wait)
+        return self.precast_view(value)
+
+    def _watch_precast(self) -> None:
+        # ABOOK_PRECAST_WATCH=0: bài thử (tests/conftest.py) gọi từng vòng `_precast_tick` - không luồng nền ngủ thay chúng.
+        with self._precast_lock:
+            if self.read_only or self._precast_thread is not None or os.environ.get("ABOOK_PRECAST_WATCH") == "0":
+                return
+            self._precast_thread = threading.Thread(target=self._precast_loop, name="precast-watch", daemon=True)
+            self._precast_thread.start()
+
+    def _precast_loop(self) -> None:
+        while True:
+            time.sleep(PRECAST_POLL_SECONDS)
+            try:
+                running = self._precast_tick()
+            except Exception:  # noqa: BLE001 - người gác không bao giờ được làm hỏng app; vòng sau thử lại
+                running = 1
+            if not running:
+                with self._precast_lock:
+                    self._precast_thread = None
+                return
+
+    def _precast_tick(self, now: float | None = None) -> int:
+        """Một vòng của người gác: cuốn đang chạy vừa qua mốc phân tích xong (precast.due) thì BÁO một lần. Giữ lại chờ duyệt
+        không phải việc ở đây - supervisor của lượt chạy quyết (background_runner._hold_for_review), sống cả khi app đóng;
+        cuốn bật "Chờ tôi duyệt" thì chờ nó giữ (tới PRECAST_HOLD_GRACE_SECONDS) để lời báo nói đúng sách đang chờ hay đang
+        thu. Trả về số cuốn đang chạy (0: người gác nghỉ)."""
+        now = time.monotonic() if now is None else now
+        running = 0
+        for path in self.library.projects():
+            if not self.runner.running(path):
+                continue
+            running += 1
+            try:
+                summary = self.summary(path)
+            except Exception:  # noqa: BLE001 - sổ đang ghi dở / sách hỏng: vòng sau
+                continue
+            with self._precast_lock:
+                if not precast.due(path, summary):
+                    continue
+                record = precast.read(path)
+                first = self._precast_seen.setdefault(str(path), now)
+                if record["wait"] and record["heldAt"] is None and summary.get("canPause")                         and now - first < PRECAST_HOLD_GRACE_SECONDS:
+                    continue
+                precast.announce(path)
+            held = record["heldAt"] is not None
+            self.notify_desktop(
+                f"“{summary.get('title') or path.name}” đã phân tích xong",
+                "Sách đang chờ duyệt: xem giọng, cách đọc tên và người nói rồi bấm “Thu âm”." if held else
+                "Duyệt giọng, cách đọc tên và người nói trước khi thu - sửa bây giờ không phải thu lại.",
+            )
+        return running
 
     def stop(self, value: str) -> dict[str, Any]:
         self._mutating()
@@ -765,6 +855,8 @@ class App:
             first_person_chapters=first_person_chapters,
             drop_credit_lines=body["dropCreditLines"] if isinstance(body.get("dropCreditLines"), bool) else None,
         )
+        if body.get("precastWait") is True:
+            precast.set_wait(root, True)  # "Chờ tôi duyệt trước khi thu" chọn ngay lúc tạo (mỗi tập của "Tạo nhiều tập")
         self.preferences.add_recent(root)
         return root
 
@@ -2386,6 +2478,12 @@ class Handler(BaseHTTPRequestHandler):
     def post_pause(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.ACCEPTED, self.app.pause(value, self._body().get("paused") is not False))
 
+    def get_precast(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.precast_view(value))
+
+    def put_precast(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.set_precast_wait(value, self._body().get("wait") is True))
+
     def delete_listen_book(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.remove_imported(value))
 
@@ -3689,6 +3787,8 @@ ROUTES: list[Route] = [
     ("POST", re.compile(BOOK + r"/start"), Handler.post_start),
     ("POST", re.compile(BOOK + r"/stop"), Handler.post_stop),
     ("POST", re.compile(BOOK + r"/pause"), Handler.post_pause),
+    ("GET", re.compile(BOOK + r"/precast"), Handler.get_precast),
+    ("PUT", re.compile(BOOK + r"/precast"), Handler.put_precast),
     ("POST", re.compile(BOOK + r"/reveal"), Handler.post_reveal),
     # Chỉ trên máy này: Studio từ xa (remote_studio.ALLOWED) không có hai đường này.
     ("PUT", re.compile(BOOK + r"/title"), Handler.put_title),

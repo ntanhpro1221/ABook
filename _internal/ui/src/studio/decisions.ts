@@ -8,11 +8,14 @@ import { api, type BookSummary } from "./api";
  *  tự chạy lại. Sách bấm "Tạm dừng" vẫn `running` (tiến trình sống) nhưng không tới ranh giới chương nào tới khi làm tiếp. */
 type ApplyWhen = "start" | "cast" | "running" | "done" | "paused";
 
-export function applyWhen(book: Pick<BookSummary, "phase" | "running" | "starting" | "paused"> | undefined): ApplyWhen {
+export function applyWhen(
+  book: Pick<BookSummary, "phase" | "running" | "starting" | "paused" | "castLocked"> | undefined,
+): ApplyWhen {
   if (!book) return "paused";
   // Sách chưa bắt đầu: chưa có câu nào để thu lại, cũng chưa có gì để "làm tiếp" (soát UX 01-10).
   if (book.phase === "idle" && !book.running && !book.starting) return "start";
-  if (book.phase === "analysis" || book.phase === "casting") return "cast";
+  // Phân vai đã khoá (lúc "Duyệt trước khi thu"): yêu cầu áp ở ranh giới chương đầu, không còn "chờ phân vai xong".
+  if (book.phase === "analysis" || (book.phase === "casting" && !book.castLocked)) return "cast";
   if (book.paused) return "paused";
   if (book.running || book.starting) return "running";
   return book.phase === "done" ? "done" : "paused";

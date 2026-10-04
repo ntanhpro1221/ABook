@@ -7,6 +7,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Studio
+
+- "Duyệt trước khi thu": phân tích xong là Studio báo (thông báo Windows, và ngay trong Studio trên máy tính lẫn điện thoại) và mở một màn
+  duyệt ba bước - giọng của những người nói nhiều nhất, cách đọc tên lạ, rồi câu "ai nói" máy chưa chắc ở các chương sắp thu - lúc sửa chưa phải
+  thu lại gì. Bật "Chờ tôi duyệt trước khi thu" (lúc tạo sách hay ở trang dự án) thì sách tạm dừng ở đó tới khi bấm "Thu âm"; mặc định không chờ.
+
 ### Giọng đọc
 
 - "Nghe ngay" (máy tính và điện thoại, mọi giọng) đọc đúng thêm vài chỗ hay gặp: tiếng gọi viết hoa cả ("ONII-CHAN" thành "o-ni-chan", "OPPA" thành "óp-pa"), "Mr. Lyle" / "Dr. Stone" thành "mister Lyle" / "doctor Stone", mũi tên chữ "1780 --> 1940" hay "A -> B" thành "thành" (mũi tên ngược "<-" thì bỏ).

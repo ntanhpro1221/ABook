@@ -82,6 +82,8 @@ import type { CastMember } from "@/listen/model";
 import { GenderDialog, RenamePersonDialog } from "@/studio/CastEdits";
 import { MergeDialog } from "@/studio/MergePeople";
 import { ExportDialog } from "@/studio/ExportBook";
+import { PrecastBanner, PrecastReview, PrecastWaitSwitch } from "./PrecastReview";
+import { canReview } from "./precast";
 
 /** Phát một chương ngay trong Studio (nghe kiểm tra) bằng chính trình phát của phía Nghe - ở chế độ "nghe kiểm":
  *  không ghi đè chỗ đang nghe dở, tốc độ hay nhật ký đêm của người nghe. */
@@ -194,6 +196,8 @@ function ProductionPanel({ book }: { book: BookSummary }) {
           progress={book.progress.synthesis}
         />
       </div>
+      {/* Trước mốc phân tích xong: đặt sẵn "Chờ tôi duyệt trước khi thu" cho cuốn này (webui/precast.py). */}
+      {!book.castLocked && book.precast && <PrecastWaitSwitch book={book} className="mt-3" />}
       {book.startError && (
         <div className="mt-3 flex gap-2 rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">
           <CircleAlert className="mt-0.5 size-4 shrink-0" />
@@ -875,13 +879,13 @@ function ActivityView({ book }: { book: BookSummary }) {
 // ---- Trang -----------------------------------------------------------------------------------------------------------
 
 /** Tab mở lối nhảy sang tab khác ("Đọc cả N câu trong Kịch bản") - nhãn nút "Về …" ở tab đích. */
-const FROM_LABEL: Record<string, string> = { work: "Việc cần duyệt", review: "Cần nghe lại" };
+const FROM_LABEL: Record<string, string> = { work: "Việc cần duyệt", review: "Cần nghe lại", precast: "Duyệt trước khi thu" };
 
 export function ProjectScreen() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const tab = ["chapters", "work", "script", "review", "cast", "music", "activity"].includes(params.get("tab") ?? "") ? params.get("tab")! : "chapters";
+  const tab = ["chapters", "precast", "work", "script", "review", "cast", "music", "activity"].includes(params.get("tab") ?? "") ? params.get("tab")! : "chapters";
   const reviewCount = useReviewCount(id ?? "");
   const remoteStudio = Boolean(useAppInfo().data?.remote);
   // Việc từ điện thoại chờ duyệt (webui/edits_inbox.py) cộng vào số của tab: chỉ trên chính máy tính (Studio từ xa không có đường này).
@@ -987,12 +991,17 @@ export function ProjectScreen() {
       </header>
 
       {book.phase !== "done" && <ProductionPanel book={book} />}
+      {/* Phân tích xong mà chưa thu bao nhiêu: lối vào "Duyệt trước khi thu" đúng lúc sửa còn miễn phí. */}
+      {canReview(book) && tab !== "precast" && (book.precast?.held || book.chapters.completed === 0) && (
+        <PrecastBanner book={book} onOpen={() => setParams({ tab: "precast" })} />
+      )}
 
       <Tabs value={tab} onValueChange={(value) => setParams({ tab: value }, { replace: true })} className="mt-9">
         <TabsList>
           <TabsTrigger value="chapters" count={chapters.length}>
             Chương
           </TabsTrigger>
+          {canReview(book) && <TabsTrigger value="precast">Duyệt trước khi thu</TabsTrigger>}
           <TabsTrigger value="work" count={workCount || undefined}>
             Việc cần duyệt
           </TabsTrigger>
@@ -1011,6 +1020,37 @@ export function ProjectScreen() {
         )}
         <TabsContent value="chapters">
           <ChapterList book={book} chapters={chapters} />
+        </TabsContent>
+        <TabsContent value="precast">
+          {canReview(book) ? (
+            <PrecastReview
+              book={book}
+              onPickVoice={(person) => setPicking({ name: person.name, displayName: person.displayName })}
+              onMerge={setMerging}
+              onRename={setRenaming}
+              onGender={setGendering}
+              onOpenReview={(card) => jump({ tab: "review" }, "precast", card)}
+              onOpenScript={(chapterId, stableId, pick = true, card) =>
+                jump({ tab: "script", chapter: String(chapterId), line: stableId, ...(pick ? {} : { pick: "0" }) }, "precast", card)
+              }
+              onOpenNames={(name, card) => jump({ tab: "cast", focus: "names", ...(name ? { name } : {}) }, "precast", card)}
+              onClose={() => setParams({ tab: "chapters" }, { replace: true })}
+              step={params.get("step")}
+              onStep={(value) =>
+                setParams(
+                  (previous) => {
+                    const here = new URLSearchParams(previous);
+                    here.set("step", value);
+                    here.delete("card");
+                    return here;
+                  },
+                  { replace: true },
+                )
+              }
+            />
+          ) : (
+            <p className="mt-6 text-sm text-fg-2">Màn duyệt mở được khi máy đã phân tích xong và phân vai.</p>
+          )}
         </TabsContent>
         <TabsContent value="work">
           {!remoteStudio && <PhoneEdits bookId={book.id} />}
@@ -1054,15 +1094,6 @@ export function ProjectScreen() {
             onRename={setRenaming}
             onGender={setGendering}
           />
-          <RenamePersonDialog bookId={book.id} person={renaming} onClose={() => setRenaming(null)} />
-          <GenderDialog bookId={book.id} person={gendering} onClose={() => setGendering(null)} />
-          <MergeDialog
-            bookId={book.id}
-            person={merging}
-            people={[...(cast?.characters ?? []), ...(cast?.extras ?? [])]}
-            onClose={() => setMerging(null)}
-          />
-          <VoicePicker bookId={book.id} person={picking} onClose={() => setPicking(null)} />
           <NameReadings bookId={book.id} focus={params.get("focus") === "names"} name={params.get("name") ?? ""} />
         </TabsContent>
         <TabsContent value="music">
@@ -1072,6 +1103,16 @@ export function ProjectScreen() {
           <ActivityView book={book} />
         </TabsContent>
       </Tabs>
+      {/* Hộp đổi giọng / tên / giới / gộp người: mở từ tab Nhân vật và từ màn "Duyệt trước khi thu". */}
+      <RenamePersonDialog bookId={book.id} person={renaming} onClose={() => setRenaming(null)} />
+      <GenderDialog bookId={book.id} person={gendering} onClose={() => setGendering(null)} />
+      <MergeDialog
+        bookId={book.id}
+        person={merging}
+        people={[...(cast?.characters ?? []), ...(cast?.extras ?? [])]}
+        onClose={() => setMerging(null)}
+      />
+      <VoicePicker bookId={book.id} person={picking} onClose={() => setPicking(null)} />
     </div>
   );
 }

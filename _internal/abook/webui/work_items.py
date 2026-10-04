@@ -830,7 +830,13 @@ def work_items(project_root: Path) -> dict[str, Any]:
             "examples": [],
         })
 
+    # Chương của các câu mỗi thẻ sẽ đổi (hay của câu ví dụ, với thẻ không đổi câu nào cụ thể): "Duyệt trước khi thu"
+    # (precast.py) hỏi trước những thẻ ở các chương sắp thu.
+    chapter_of = {str(row["stable_id"]): int(row["chapter_id"]) for row in spoken}
     for item in items:
+        item["chapters"] = sorted({chapter_of[line["stableId"]] for line in item.get("lines") or ()
+                                   if line["stableId"] in chapter_of}
+                                  or {int(example["chapterId"]) for example in item["examples"]})
         item["score"] = round(item["affected"] * item["doubt"] * SEVERITY[item["kind"]], 3)
     items.sort(key=lambda item: -item["score"])
     counts: dict[str, int] = defaultdict(int)

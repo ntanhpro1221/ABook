@@ -721,6 +721,13 @@ def request_pause(project_root: Path | str, paused: bool) -> BackgroundStatus:
         raise BackgroundIdentityError(f"Từ chối tạm dừng: {detail}")
     if "pause_reason" not in state:
         raise BackgroundIdentityError("Lượt chạy này bắt đầu bằng bản cũ của app, chưa tạm dừng được")
+    _write_pause_request(paths, state, paused)
+    return get_status(paths.project_root)
+
+
+def _write_pause_request(paths: BackgroundPaths, state: Mapping[str, Any], paused: bool) -> None:
+    """Yêu cầu tạm dừng / làm tiếp gắn với lượt chạy `state`: nút "Tạm dừng" (request_pause) và lần giữ chờ duyệt của chính
+    supervisor ("Chờ tôi duyệt trước khi thu", `_hold_for_review`) đi chung đường - "Thu âm" / "Tiếp tục" gỡ được cả hai."""
     atomic_write_json(
         paths.pause_request,
         {
@@ -735,7 +742,22 @@ def request_pause(project_root: Path | str, paused: bool) -> BackgroundStatus:
             "overrides": None if paused else state.get("pause_reason"),
         },
     )
-    return get_status(paths.project_root)
+
+
+def _hold_for_review(paths: BackgroundPaths, state: Mapping[str, Any]) -> bool:
+    """"Chờ tôi duyệt trước khi thu" (webui/precast.py): phân vai vừa khoá mà chưa thu chương nào thì tạm dừng lượt này -
+    đúng một lần mỗi cuốn (sổ `heldAt`), kể cả khi app đóng. Không bao giờ làm chết supervisor: lỗi nào cũng = không giữ."""
+    try:
+        from .webui import precast
+
+        if not precast.hold_due(paths.project_root):
+            return False
+        precast.mark_held(paths.project_root)  # ghi trước: nếu yêu cầu dưới hỏng thì lượt sau cũng không giữ lần hai
+        _write_pause_request(paths, state, True)
+        return True
+    except Exception as exc:  # noqa: BLE001
+        _append_log(paths, f"PRECAST_HOLD skipped: {exc}")
+        return False
 
 
 def _pause_request(paths: BackgroundPaths, instance_id: str) -> dict[str, Any] | None:
@@ -971,6 +993,8 @@ def run_supervisor(
                 battery_pause = battery.update(
                     power_source.on_battery(), time.monotonic(), time.time()
                 ) and power_source.pause_on_battery_enabled()
+                if not stop_requested and _hold_for_review(paths, state):
+                    _append_log(paths, "PRECAST_HOLD analysis done, waiting for review")
             wanted = None if stop_requested else _pause_reason(
                 _pause_request(paths, instance_id), battery_pause, battery.last_plugged_wall
             )

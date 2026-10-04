@@ -15,7 +15,7 @@ import { applyWhen, PENDING_NOTE, refreshAfterDecision, UNDO_MS, undoAction, use
 // quyết và dây chuyền KHÔNG chờ ai - đây là nơi người sửa ít nhất mà được nhiều nhất. Cách đọc tên sửa được ngay trên thẻ
 // (bước 2): mong muốn ghi vào overrides.json, dây chuyền áp ở ranh giới chương và thu lại những câu có tên ấy.
 
-type WorkKind = "speaker" | "turn" | "gender" | "vocative" | "alias" | "bracket" | "shared-voice" | "pronunciation" | "unnamed" | "audio";
+export type WorkKind = "speaker" | "turn" | "gender" | "vocative" | "alias" | "bracket" | "shared-voice" | "pronunciation" | "unnamed" | "audio";
 
 interface WorkExample {
   segmentId: number;
@@ -30,7 +30,7 @@ interface WorkExample {
   changes?: boolean;
 }
 
-interface WorkItem {
+export interface WorkItem {
   kind: WorkKind;
   key: string;
   title: string;
@@ -63,6 +63,8 @@ interface WorkItem {
    *  ghi yêu cầu rỗng cho từng người trong `keepCharacters` (thẻ thôi hỏi). */
   voiceChoices?: VoiceChoice[];
   keepCharacters?: string[];
+  /** Chương của các câu thẻ sẽ đổi (hay của câu ví dụ) - "Duyệt trước khi thu" hỏi trước thẻ ở chương sắp thu. */
+  chapters?: number[];
 }
 
 interface VoiceChoice {
@@ -79,7 +81,7 @@ interface VoiceChoice {
   recommended?: boolean;
 }
 
-interface WorkView {
+export interface WorkView {
   items: WorkItem[];
   counts: Partial<Record<WorkKind, number>>;
 }
@@ -99,13 +101,17 @@ const KIND_LABEL: Record<WorkKind, string> = {
 
 const PAGE = 40;
 
-export function useWorkCount(bookId: string) {
-  const { data } = useQuery({
+export function useWork(bookId: string) {
+  return useQuery({
     queryKey: ["work", bookId],
     queryFn: () => api<WorkView>(`/api/books/${bookId}/work`),
     enabled: Boolean(bookId),
     staleTime: 60_000,
   });
+}
+
+export function useWorkCount(bookId: string) {
+  const { data } = useWork(bookId);
   // Việc đã quyết (đang chờ áp dụng) không còn là việc cần làm - soát UX 29-09: số không giảm sau khi quyết.
   return data?.items.filter((item) => !item.requested).length ?? 0;
 }
@@ -704,6 +710,25 @@ interface InboxProps {
   kind?: string | null;
   focus?: string | null;
   onKind?: (kind: WorkKind | "all") => void;
+}
+
+/** Một nhóm thẻ việc chọn sẵn (màn "Duyệt trước khi thu"): đúng thẻ của hộp việc, sửa ngay trên thẻ như ở đó. */
+export function WorkCards({ book, items, onOpenReview, onOpenScript, onOpenNames }: {
+  book: BookSummary;
+  items: WorkItem[];
+  onOpenReview: OpenReview;
+  onOpenScript?: OpenScript;
+  onOpenNames?: OpenNames;
+}) {
+  return (
+    <PendingHint.Provider value={PENDING_NOTE[applyWhen(book)]}>
+      <ol className="mt-3 space-y-3">
+        {items.map((item) => (
+          <Card key={item.key} bookId={book.id} item={item} onOpenReview={onOpenReview} onOpenScript={onOpenScript} onOpenNames={onOpenNames} />
+        ))}
+      </ol>
+    </PendingHint.Provider>
+  );
 }
 
 export function WorkInbox(props: InboxProps) {

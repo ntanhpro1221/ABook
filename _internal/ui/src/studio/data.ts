@@ -238,6 +238,8 @@ export function useCreateBook() {
        *  nối tiếp xếp hàng sau nó (App._create_volumes). */
       volumeStarts?: number[];
       start: boolean;
+      /** "Chờ tôi duyệt trước khi thu" (webui/precast.py): phân tích xong thì tạm dừng chờ người duyệt. */
+      precastWait?: boolean;
     }) =>
       // `sharedReadings`: các từ của cách đọc chung có trong truyện - sách mới nhận luôn (webui/shared_readings.py).
       // `parts`: các tập đã tạo theo thứ tự (chỉ khi chia nhiều tập), `queued` là chỗ của từng tập trong hàng chờ.
