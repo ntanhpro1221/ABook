@@ -129,6 +129,12 @@ def installed() -> Installed | None:
     return Installed(model, word_timing.model_dir() is not None) if model is not None and _complete(model) else None
 
 
+def locate() -> Installed | None:
+    """Cho Studio (tiến trình dây chuyền không gọi `configure`): mô-đun ở chỗ mặc định cạnh preferences.json, như server đặt."""
+    _core.ensure_folder(FOLDER)
+    return installed()
+
+
 def rtf(voice: str) -> float | None:
     """Tốc độ tự đo của giọng Supertonic `voice` ("supertonic:F1") trên máy này - để "Làm trước" ước thời gian; None nếu chưa đo / giọng khác."""
     if not voice.startswith(PREFIX + ":"):
