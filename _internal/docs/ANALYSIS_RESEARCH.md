@@ -82,6 +82,29 @@ dàn nhân vật biết trước), (b) dàn nhân vật do 4B v8 xuất cho chư
   người nói từ văn phong câu thoại bản dịch Việt; quyết định nằm ở cấu trúc đối đáp và lời dẫn, không ở "cách người ấy nói".
   Số: LLM_Train/b6/result_{jp,kr}_pmi.txt.
 
+### A1 - trần thầy và chất lượng gold (04-10 tối) + ĐỔI GOLD và ĐỔI THƯỚC
+
+Hai thầy Opus độc lập gán lại 7 chương (mh009, rk014, kurakon034, nise086, zenith058, villain22, hdst052a) bằng harness
+chạy NGUYÊN bộ phân tích của app với Ollama giả - prompt khớp từng ký tự với prompt 4B nhận; không nhìn gold.
+- Đồng thuận (người nói chặt, 554 câu): thầy #1 đúng 94,6 %, thầy #2 96,2 %; chỉ 8 câu (1,4 %) hai thầy cùng chọn mà khác
+  gold -> lỗi gold ước ~1,4 %. Gốc không phải chất lượng gold mà là SỐ LƯỢNG tín hiệu + năng lực model nhỏ.
+- Lỗi theo loại (gold cũ): Nhật - thầy lệch lượt 1,1 % / v8 28,5 %; Hàn - thầy nhầm "tôi" 0,4 % / v8 18,9 %. Cùng thông tin,
+  thầy không mắc hai lỗi chính của 4B -> thông tin ĐỦ trong prompt; 4B không dùng được nó. => A2 chưng cất (cặp prompt
+  thật / câu trả lời thầy, kèm lý do) là hướng chính; B9 = 4B học v8 + bạc, B8 = con trỏ học v8 + bạc.
+
+**ĐỔI GOLD (04-10):** luật chủ sách 20-09 "nội tâm = giọng chính người đang nghĩ" áp lên MỌI gold - dòng kind T có
+NARRATOR đứng đầu mà có tên người nghĩ: tên lên đầu, NARRATOR giữ đủ điểm nếu dòng còn chấp nhận N (N,T), không thì NARRATOR~.
+1.015 dòng (1.006 N,T + 9 T) / 94 file; 35 dòng T chỉ có NARRATOR (tên phép, dòng hệ thống trong nháy đơn) giữ nguyên.
+**ĐỔI THƯỚC (04-10, Lead):** dòng có nhiều đáp án ĐỦ điểm thì cụm đáp án là phía nhãn TRÚNG (NARRATOR hay người nghĩ - các tên
+đủ điểm trong một dòng là bí danh của một người); trượt hết thì phương án đầu. N,T là lời gián tiếp tự do: cả hai cách đọc
+đúng với người nghe; dòng thuần T vẫn đòi người nghĩ. Mọi bảng TRƯỚC mục này chấm bằng gold cũ + phương án đầu - KHÔNG so thẳng.
+(ln_table.matched_person; dữ liệu huấn luyện mới dựng từ gold MỚI.)
+
+Chấm lại bằng gold mới + thước mới:
+- A1 (7 ch): thầy 92,9 (Nhật 94,1 / Hàn 91,3); v8 53,3 (6 ch: Nhật 44,7 / Hàn 62,8).
+- Bảng mặc định (TB mọi hạt / hạt tệ nhất / gốc): Nhật MỚI 11 ch - 4B v8 58,7 / 57,7 / 59,5; q35 57,7 / 55,5 / 57,7;
+  9B 56,1 / 50,6 / 60,8. Hàn MỚI 8 ch - 4B v8 67,6 / 64,9 / 68,8; q35 70,3 / 69,3 / 69,3; 9B 66,0 / 57,2 / 71,7.
+
 ### Bước 1 của Lead (04-10, tài liệu breakthrough_lit.md): chẩn đoán và trần, chỉ tốn suy luận (ghi trước)
 
 Cùng 11 ch Nhật MỚI (rồi 8 ch Hàn MỚI), cùng 4B v8 (lora29v8), qua bộ phân tích thật (nhánh đo dev/breakthrough-eval: các
