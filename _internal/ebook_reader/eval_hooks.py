@@ -41,6 +41,11 @@ def apply_settings_override(analysis_settings: dict[str, Any]) -> dict[str, Any]
     return {**analysis_settings, **override} if override else analysis_settings
 
 
+def previous_turns(default: int) -> int:
+    """Số đoạn "ngay trước" đưa vào prompt (E2 rộng: ABOOK_EVAL_SETTINGS {"previous_turns": 9}); không đặt thì mặc định."""
+    return int(eval_settings().get("previous_turns", default))
+
+
 def neighbor_chars() -> int:
     return int(eval_settings().get("neighbor_chars", NEIGHBOR_CHARS_DEFAULT))
 

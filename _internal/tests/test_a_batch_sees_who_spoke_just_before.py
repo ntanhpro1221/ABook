@@ -64,3 +64,12 @@ def test_long_turns_are_shortened() -> None:
     rows = [_row(1, "dialogue", "LUCIEN", "“" + "a" * 300 + "”"), _row(2, "dialogue", "", "“Ừ.”", status="pending")]
     line = _analyzer(rows)._previous_turns([rows[1]]).strip().splitlines()[1]
     assert line.endswith("...") and len(line) < 200
+
+
+def test_the_wide_eval_window_shows_more_turns(monkeypatch) -> None:
+    rows = [_row(i, "dialogue" if i % 2 else "narration", "LUCIEN" if i % 2 else "NARRATOR", f"“Câu {i}.”") for i in range(1, 12)]
+    rows.append(_row(12, "dialogue", "", "“Ừ.”", status="pending"))
+    assert len(_analyzer(rows)._previous_turns([rows[-1]]).strip().splitlines()) == 1 + PREVIOUS_TURNS, "không đặt biến: như cũ"
+    monkeypatch.setenv("ABOOK_EVAL_SETTINGS", '{"previous_turns": 9}')
+    lines = _analyzer(rows)._previous_turns([rows[-1]]).strip().splitlines()[1:]
+    assert len(lines) == 9 and lines[0] == "- [thoại · LUCIEN] “Câu 3.”"
