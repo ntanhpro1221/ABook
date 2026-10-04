@@ -30,18 +30,15 @@ CHAPTER_STATUS_LABELS = {
 
 GENDER_LABELS = {"male": "Nam", "female": "Nữ"}
 
-# Tên giọng hiển thị như VieNeu hiện hành (3.8.3, vieneu/assets/voices_v3_turbo.json - "aliases" giữ tên cũ): ba giọng đổi
-# tên. Dữ liệu sách và bảng giọng (voice_catalog.py, file khoá) vẫn dùng tên cũ làm khoá - đổi sang tên mới khi đưa ra giao
-# diện (`voice_label`), đổi ngược khi nhận về (`voice_key`). Chỉ áp ở trường TÊN GIỌNG: nhân vật trong truyện có thể trùng
-# tên người ("Anh Khôi", "Quốc Tuấn").
-VOICE_LABELS = {"Anh Khôi": "Thiện Minh", "Minh Quân Pro": "Hải Đăng", "Mạnh Dũng": "Quốc Tuấn"}
-# Giọng của máy đọc khác (voice_catalog.ENGINE_VOICES): khoá là tên giọng của máy ("baotrang"), người nghe thấy "Bảo Trang".
+# Tên giọng VieNeu là tên hiện hành của VieNeu (3.8.3) và cũng là khoá - không đổi qua lại. Chỉ giọng của máy đọc khác
+# (voice_catalog.ENGINE_VOICES) có nhãn riêng: khoá là tên giọng của máy ("baotrang"), người nghe thấy "Bảo Trang" -
+# đổi sang nhãn khi đưa ra giao diện (`voice_label`), đổi ngược khi nhận về (`voice_key`).
 _ENGINE_VOICE_LABELS = {str(voice["name"]): str(voice["label"]) for voice in ENGINE_VOICES}
-_VOICE_KEYS = {label: key for key, label in {**VOICE_LABELS, **_ENGINE_VOICE_LABELS}.items()}
+_VOICE_KEYS = {label: key for key, label in _ENGINE_VOICE_LABELS.items()}
 
 
 def voice_label(name: str) -> str:
-    return VOICE_LABELS.get(name) or _ENGINE_VOICE_LABELS.get(name, name)
+    return _ENGINE_VOICE_LABELS.get(name, name)
 
 
 def voice_key(name: str) -> str:

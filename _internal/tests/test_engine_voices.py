@@ -18,7 +18,7 @@ import numpy as np
 import pytest
 
 import abook.tts as tts_module
-from abook import voice_balance
+from abook import voice_balance, voice_catalog
 from abook.audio_io import VOICE_BALANCE_FIELD, AudioQualityError
 from abook.character_registry import (
     PresetAllocator,
@@ -112,8 +112,11 @@ def test_engine_voices_have_balance_keys_and_a_missing_one_is_an_error() -> None
 
 # --- phân vai tự động không đổi -----------------------------------------------------------------
 
-# sha256 của kịch bản dưới đây chạy trên main 14b4f06a (trước khung nhiều máy đọc).
-ALLOCATOR_ON_MAIN = "fe9c6cbd4189b73cded4eb2f79cbd9559b15b04d6182821d5272e2820ff70fb9"
+# sha256 của kịch bản dưới đây chạy trên main 14b4f06a (trước khung nhiều máy đọc), sau khi đổi tên ba giọng Turbo theo
+# VieNeu 3.8.2 (dev/upgrades-1004): tên là chỗ phân xử cuối của thứ tự bể giọng (`casting_preset_priority`), nên "Thiện Minh"
+# (trước là "Anh Khôi") nay đứng sau "Thiền Tâm Đức" - 2 nhân vật đổi chỗ hai giọng ấy, 1 nhân vật đổi bậc cao độ (2 -> 3).
+# Bản trên main 14b4f06a: fe9c6cbd4189b73cded4eb2f79cbd9559b15b04d6182821d5272e2820ff70fb9.
+ALLOCATOR_ON_MAIN = "2bffd9a02889d1cb634048d7236bdb6f470b872a43c3dac8441a706cd7339339"
 
 
 def test_automatic_casting_is_exactly_what_it_was() -> None:
@@ -132,6 +135,33 @@ def test_automatic_casting_is_exactly_what_it_was() -> None:
     assert hashlib.sha256(data.encode()).hexdigest() == ALLOCATOR_ON_MAIN
     engine_names = {voice["name"] for voice in ENGINE_VOICES}
     assert not engine_names & {name for name, _ratio, _pitch in picks}
+
+
+def test_every_vieneu_voice_has_one_fixed_cast_rank() -> None:
+    names = [str(preset["name"]) for preset in voice_catalog.VIENEU_PRESETS]
+    assert sorted(names) == sorted(voice_catalog.CAST_ORDER)
+    assert len(set(voice_catalog.CAST_ORDER)) == len(voice_catalog.CAST_ORDER)
+
+
+@pytest.mark.parametrize("old", ["Thiện Minh", "Adam", "Đức Trí"])
+def test_renaming_a_voice_keeps_its_place_in_casting(old: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    # VieNeu đổi tên giọng thì tên được sửa tại chỗ trong VIENEU_PRESETS và CAST_ORDER: thứ tự bể giọng và người kể giữ nguyên
+    # dù tên mới đứng chỗ khác trong bảng chữ cái.
+    def order() -> list[list[str]]:
+        return [[str(p["name"]) for p in casting_presets(g)] for g in ("male", "female")] + [
+            [str(p["name"]) for p in narrator_presets()]
+        ]
+
+    before = order()
+    for new in ("Aaa thử", "Zzz thử"):
+        with monkeypatch.context() as patch:
+            presets = tuple({**p, "name": new} if p["name"] == old else p for p in voice_catalog.VIENEU_PRESETS)
+            cast = tuple(new if name == old else name for name in voice_catalog.CAST_ORDER)
+            patch.setattr(voice_catalog, "VIENEU_PRESETS", presets)
+            patch.setattr(voice_catalog, "CAST_ORDER", cast)
+            patch.setattr(voice_catalog, "_CAST_RANK", {name: rank for rank, name in enumerate(cast)})
+            after = [[old if name == new else name for name in names] for names in order()]
+        assert after == before, new
 
 
 # --- người nghe chọn tay ------------------------------------------------------------------------
@@ -307,8 +337,9 @@ def test_a_long_zerotts_line_is_read_in_chunks_and_joined_with_a_pause() -> None
     profile = {"engine": "zerotts", "preset_name": "baotrang", "voice_key": "k"}
     audio = engine.generate_one({"text": long, "speaker": "A", "pace": "normal"}, profile, 7, sampling={"max_new_frames": 300})
     assert engine.tts.texts == chunks
-    silent = int(np.count_nonzero(audio == 0.0))
-    assert audio.size == 4_800 * len(chunks) + silent and silent == int(0.2 * 48_000) * (len(chunks) - 1)
+    # Mảnh nào cũng kết thúc bằng dấu chấm: lặng chèn = tổng theo dấu - phần mép chừa (tests/test_chunk_join.py).
+    gap = round((tts_module.chunk_gap_seconds(".") - 2 * tts_module.CHUNK_TRIM_KEEP_SECONDS) * 48_000)
+    assert audio.size == 4_800 * len(chunks) + gap * (len(chunks) - 1)
 
 
 # --- máy thật (CPU) ---------------------------------------------------------------------------
@@ -368,3 +399,22 @@ def test_three_real_lines_in_a_listener_picked_voice(tmp_path: Path, monkeypatch
     )
     assert again == checksums[0]
     assert coordinator.vieneu.tts is None
+
+
+@pytest.mark.skipif(not _engine_on_this_machine("zerotts"), reason="máy này chưa tải giọng ZeroTTS")
+def test_zerotts_reads_the_same_bytes_after_its_session_is_rebuilt(monkeypatch) -> None:
+    from abook.webui import zerotts_module
+
+    monkeypatch.setattr(zerotts_module._core, "folder", zerotts_module._core.folder)  # adapter gọi locate(): trả lại sau bài
+    monkeypatch.setattr(ZeroTTSEngine, "RECYCLE_AFTER_CALLS", 1)  # nạp lại trước MỌI câu sau câu đầu
+    engine = ZeroTTSEngine(build_settings(), lambda _message: None)
+    profile = {"engine": "zerotts", "preset_name": "huuduc", "voice_key": "zerotts_huuduc_f100_p+00"}
+    row = {"text": "Con cứ coi như không nghe thấy gì là được.", "speaker": "A", "pace": "normal"}
+    try:
+        first = engine.generate_one(row, profile, 7, sampling={"max_new_frames": 300})
+        session = engine.tts
+        again = engine.generate_one(row, profile, 7, sampling={"max_new_frames": 300})
+        assert engine.tts is not session, "phiên ONNX đã được nạp lại giữa hai lần gọi"
+        assert first.tobytes() == again.tobytes(), "cùng câu, giọng, hạt giống: cùng byte trước và sau khi nạp lại"
+    finally:
+        engine.unload()

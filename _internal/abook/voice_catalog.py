@@ -48,7 +48,7 @@ CHARACTER_PITCH_VARIANTS = (0, -1, 1, -2, 2)
 #   hurried), not as a different person, so it is calibration rather than a diversity mechanism.
 #   A Vietnamese listener went through every preset and found only Thanh Bình wanted correcting:
 #   at -4 semitones it reads calmer and more suited to storytelling. Two of the VieNeu 3.8.1
-#   voices wanted the same correction (2026-09-18): the listener heard Adam bựa and Mạnh Dũng at
+#   voices wanted the same correction (2026-09-18): the listener heard Adam bựa and Quốc Tuấn (then Mạnh Dũng) at
 #   -1..-4 and chose -2 for both.
 # - Speed (`r`): WORLD resynthesises on the same time axis and `apply_pitch_variant` trims or pads
 #   back to the original length, so register cannot change speed and a slow preset needs its own
@@ -82,11 +82,11 @@ PRESET_VOCAL_TRACT_CM = {
     "Ngọc Trân": 15.5,
     "Adam": 16.7,
     "Adam bựa": 16.4,
-    "Anh Khôi": 16.5,
+    "Thiện Minh": 16.5,
     "Đức Trí": 16.6,
     "Kim Thanh": 13.6,
-    "Mạnh Dũng": 16.6,
-    "Minh Quân Pro": 16.6,
+    "Quốc Tuấn": 16.6,
+    "Hải Đăng": 16.6,
     "Mỹ Duyên": 14.8,
     "Ngọc Huyền": 14.2,
     "Quỳnh Anh": 14.1,
@@ -145,11 +145,11 @@ PRESET_PREVIEW_MEDIAN_PITCH_HZ = {
     "Thục Đoan": 246.2,
     "Adam": 87.1,
     "Adam bựa": 146.9,
-    "Anh Khôi": 109.6,
+    "Thiện Minh": 109.6,
     "Đức Trí": 98.2,
     "Kim Thanh": 230.6,
-    "Mạnh Dũng": 145.6,
-    "Minh Quân Pro": 151.7,
+    "Quốc Tuấn": 145.6,
+    "Hải Đăng": 151.7,
     "Mỹ Duyên": 232.4,
     "Ngọc Huyền": 207.7,
     "Quỳnh Anh": 212.9,
@@ -174,11 +174,11 @@ PRESET_MIN_PITCH_SEMITONES = {
     # voice within 3.5 semitones of it -1, everything else -2.
     "Adam": 0,
     "Adam bựa": -2,
-    "Anh Khôi": -2,
+    "Thiện Minh": -2,
     "Đức Trí": -1,
     "Kim Thanh": -2,
-    "Mạnh Dũng": -2,
-    "Minh Quân Pro": -2,
+    "Quốc Tuấn": -2,
+    "Hải Đăng": -2,
     "Mỹ Duyên": -2,
     "Ngọc Huyền": -2,
     "Quỳnh Anh": -2,
@@ -197,11 +197,11 @@ VOICE_PREVIEW_FILENAMES = {
     "Ngọc Trân": "ngoc_tran.wav",
     "Adam": "adam.wav",
     "Adam bựa": "adam_bua.wav",
-    "Anh Khôi": "anh_khoi.wav",
+    "Thiện Minh": "anh_khoi.wav",
     "Đức Trí": "duc_tri.wav",
     "Kim Thanh": "kim_thanh.wav",
-    "Mạnh Dũng": "manh_dung.wav",
-    "Minh Quân Pro": "minh_quan_pro.wav",
+    "Quốc Tuấn": "manh_dung.wav",
+    "Hải Đăng": "minh_quan_pro.wav",
     "Mỹ Duyên": "my_duyen.wav",
     "Ngọc Huyền": "ngoc_huyen.wav",
     "Quỳnh Anh": "quynh_anh.wav",
@@ -286,7 +286,7 @@ VIENEU_PRESETS: tuple[dict[str, str], ...] = (
         "style": STYLE_NATURAL, "description": "Nam · Bắc · Tự nhiên",
     },
     {
-        "name": "Anh Khôi", "gender": GENDER_MALE, "region": REGION_NORTH,
+        "name": "Thiện Minh", "gender": GENDER_MALE, "region": REGION_NORTH,
         "style": STYLE_STORY, "description": "Nam · Bắc · Kể chuyện",
     },
     {
@@ -298,11 +298,11 @@ VIENEU_PRESETS: tuple[dict[str, str], ...] = (
         "style": STYLE_STORY, "description": "Nữ · Nam · Kể chuyện",
     },
     {
-        "name": "Mạnh Dũng", "gender": GENDER_MALE, "region": REGION_NORTH,
+        "name": "Quốc Tuấn", "gender": GENDER_MALE, "region": REGION_NORTH,
         "style": STYLE_NATURAL, "description": "Nam · Bắc · Tự nhiên",
     },
     {
-        "name": "Minh Quân Pro", "gender": GENDER_MALE, "region": REGION_NORTH,
+        "name": "Hải Đăng", "gender": GENDER_MALE, "region": REGION_NORTH,
         "style": STYLE_NATURAL, "description": "Nam · Bắc · Tự nhiên",
     },
     {
@@ -322,6 +322,21 @@ VIENEU_PRESETS: tuple[dict[str, str], ...] = (
         "style": STYLE_STORY, "description": "Nam · Bắc · Kể chuyện",
     },
 )
+
+# Chỗ phân xử cuối của thứ tự giọng (`preset_priority`, `casting_preset_priority`): một thứ tự CỐ ĐỊNH, không theo tên hiển
+# thị - VieNeu đổi tên giọng (3.8.2: Anh Khôi -> Thiện Minh...) thì sửa tên tại chỗ, giữ vị trí, phân vai không đổi. Đặt
+# 04-10 bằng đúng thứ tự tên (casefold) sau lần đổi tên 3.8.2. Giọng mới thêm vào cuối.
+CAST_ORDER: tuple[str, ...] = (
+    "Adam", "Adam bựa", "Hải Đăng", "Kim Thanh", "Mai Anh", "Minh Triết", "Minh Đức", "Mỹ Duyên", "Ngọc Huyền", "Ngọc Linh",
+    "Ngọc Trân", "Phạm Tuyên", "Quang Sơn", "Quốc Tuấn", "Quỳnh Anh", "Thanh Bình", "Thiền Tâm Đức", "Thiện Minh", "Thái Sơn",
+    "Thùy Dung", "Thục Đoan", "Trúc Ly", "Xuân Vĩnh", "Đoan Trang", "Đức Trí",
+)
+_CAST_RANK = {name: rank for rank, name in enumerate(CAST_ORDER)}
+
+
+def cast_rank(name: str) -> int:
+    """Vị trí cố định của giọng trong `CAST_ORDER`; giọng không có trong đó xếp sau mọi giọng có."""
+    return _CAST_RANK.get(name, len(CAST_ORDER))
 
 
 ENGINE_VIENEU = "vieneu"
@@ -432,22 +447,26 @@ def castable_engine_voices(gender: str | None = None) -> list[dict[str, Any]]:
     return [voice for voice in ENGINE_VOICES if voice["castable"] and (not gender or voice["gender"] == gender)]
 
 
-def preset_priority(preset: dict[str, Any]) -> tuple[int, int, str]:
+def preset_priority(preset: dict[str, Any]) -> tuple[int, int, int, str]:
+    name = str(preset.get("name", ""))
     return (
         REGION_PRIORITY.get(str(preset.get("region", "")), len(REGION_PRIORITY)),
         STYLE_PRIORITY.get(str(preset.get("style", "")), len(STYLE_PRIORITY)),
-        str(preset.get("name", "")).casefold(),
+        cast_rank(name),
+        name.casefold(),
     )
 
 
-def casting_preset_priority(preset: dict[str, Any]) -> tuple[int, int, int, str]:
+def casting_preset_priority(preset: dict[str, Any]) -> tuple[int, int, int, int, str]:
     region = str(preset.get("region", ""))
     style = str(preset.get("style", ""))
+    name = str(preset.get("name", ""))
     return (
         0 if style == STYLE_NATURAL else 1,
         REGION_PRIORITY.get(region, len(REGION_PRIORITY)),
         STYLE_PRIORITY.get(style, len(STYLE_PRIORITY)),
-        str(preset.get("name", "")).casefold(),
+        cast_rank(name),
+        name.casefold(),
     )
 
 
