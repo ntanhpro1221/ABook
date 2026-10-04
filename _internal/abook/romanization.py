@@ -12,9 +12,17 @@ Ba loại cờ trong `romanized_reading_flags` (để người duyệt biết c�
   open:...    quy ước ghi "mở"; ở đây là một mặc định, chờ kiểm bằng âm thanh (`OPEN_CHOICES`)
   analogy:... quy ước không nói, suy theo hàng gần nhất của bảng
   fit:...     quy ước chọn một dạng mà bộ kiểm âm tiết không nhận, nên dùng dạng khác cũng có nguồn
+và một loại cho phần KHÔNG đọc:
+  keep:...    đoạn giữ nguyên chữ (viet: chữ Việt có dấu, abbr: viết tắt TOÀN HOA, english: chữ Anh) trong token nối gạch (Gấu-san, PD-nim, Ikemen-style); cần ít nhất một đoạn
+              còn lại đọc theo luật, không thì None. Việc đọc đoạn ấy là của luật chữ viết tắt / `english_vi`.
+
+Tiền xử lý token (docs/READING_FOREIGN_NAMES.md mục 2-3): TOÀN HOA casefold rồi đọc, viết hoa đầu như thường (KANATA -> Ca-na-ta); CamelCase tách ở chữ hoa giữa từ, đọc từng nửa
+cách nhau dấu cách (OkabeRintarou -> O-ca-be Rin-ta-râu; hai nửa đều MỘT âm tiết thì nối gạch: JoJo -> Giô-giô; cờ analogy:camel_split), hoa lạ không tách được đọc như viết hoa
+chữ đầu (HImeno; analogy:case_fold); gạch nối: đoạn thường hay hậu tố nối gạch vào tên, đoạn viết hoa là từ mới; tên Hàn viết quen (sh, oo, woo, weo, ah) đổi về RR (`_ko_spelling`).
 """
 from __future__ import annotations
 
+import re
 import unicodedata
 
 # Chỗ quy ước còn "mở" (mục 3 dòng oe / wi / ui / we / wae, mục 7). Mặc định ở đây là quyết định tạm của app. Chủ sách 04-10 đã chốt (không còn mở): y + nguyên
@@ -154,8 +162,10 @@ _JA_GEMINATE_CODA = {"k": "c", "p": "p", "t": "t", "s": "ss"}  # kk pp tt ss: kh
 
 
 # Từ đã quen ở Việt Nam, chủ sách ghi đè cố định (04-10; không đổi luật): onigiri (cơm nắm) -> o-ni-gi-ri, trong khi g + i -> ghi (Hiiragi) vẫn đứng.
-_JA_FIXED: dict[str, tuple[tuple[str, str], ...]] = {
+_JA_FIXED: dict[str, tuple[tuple[str, ...], ...]] = {
     "onigiri": (("", "o"), ("n", "i"), ("gi", "i"), ("r", "i")),
+    # chwan: cách viết nũng của -chan (Tenshi-chwan); w giữa ch và a là bán âm oa (analogy theo wa -> oa), khép n
+    "chwan": (("ch", "oa", "n"),),
 }
 
 
@@ -197,7 +207,7 @@ def _ja_emit(onset: str, vowel: str, syllables: list[_Syl], flags: list[str]) ->
 def _ja_word(word: str, flags: list[str]) -> list[_Syl] | None:
     fixed = _JA_FIXED.get(word)
     if fixed is not None:
-        return [_Syl(onset, nucleus) for onset, nucleus in fixed]
+        return [_Syl(*entry) for entry in fixed]
     syllables: list[_Syl] = []
     i, size = 0, len(word)
     while i < size:
@@ -320,9 +330,28 @@ def _ko_parses(word: str, start: int, previous_coda: str | None, out: list[list[
                 current.pop()
 
 
-def _ko_best(word: str) -> list[tuple[str, str, str]] | None:
+_KO_SILENT_H = re.compile(r"ah(?![aeiouy])")
+
+
+def _ko_spelling(word: str, flags: list[str]) -> str:
+    """Đổi cách viết Latinh quen dùng của tên Hàn về RR trước khi tách: nguyên cả đoạn (`_KO_SPELLINGS`), rồi từng chỗ (sh -> s, oo -> u, woo -> u, yoo -> yu: Shin,
+    Joo, Hoon, Ji-woo; weo -> wo: Weol; ah -> a khi h không đứng trước nguyên âm: Ahn, Ahri, Seol-Ah, h câm của tiếng gọi -a). sh và oo là quyết định của lead (04-10, bộ đo
+    luật); weo và ah là analogy (quy ước không nói)."""
+    if word in _KO_SPELLINGS:
+        return _KO_SPELLINGS[word]
+    word = word.replace("sh", "s").replace("woo", "u").replace("yoo", "yu").replace("oo", "u")
+    if "weo" in word:
+        flags.append("analogy:ko_weo")
+        word = word.replace("weo", "wo")
+    if _KO_SILENT_H.search(word):
+        flags.append("analogy:ko_ah")
+        word = _KO_SILENT_H.sub("a", word)
+    return word
+
+
+def _ko_best(word: str, flags: list[str]) -> list[tuple[str, str, str]] | None:
     """Cách tách duy nhất của một đoạn RR thành (phụ âm đầu, vần, phụ âm cuối), hay None khi không tách được / không chắc."""
-    word = _KO_SPELLINGS.get(word, word)
+    word = _ko_spelling(word, flags)
     if not word or len(word) > 24 or any(doubled in word for doubled in ("aa", "ee", "ii", "oo", "uu")):
         return None  # RR không có nguyên âm đôi lặp (Yoo, Lee, Woo là cách viết quen, không phải RR)
     parses: list[list[tuple[str, str, str]]] = []
@@ -344,15 +373,23 @@ def _ko_best(word: str) -> list[tuple[str, str, str]] | None:
             for left, right, other in zip(chosen, chosen[1:], parse):
                 if left[2] == "n" and right[0] == "g" and other[2] == "ng":
                     return None
+                # n + y: Jin-yun / Ji-nyun cũng viết giống nhau (Jinyoon), RR chỉ phân bằng dấu gạch
+                if left[2] == "" and right[0] == "n" and right[1].startswith("y") and other[2] == "n":
+                    return None
     return chosen
 
 
-def _ko_words(segments: list[str], flags: list[str]) -> list[list[_Syl]] | None:
-    """Các đoạn nối gạch của một tên Hàn (Geun-hye): cùng một từ về âm (g, d, b hữu thanh sau n, m, ng ngay cả qua dấu gạch), nhưng mỗi đoạn một bộ phận."""
+def _ko_words(segments: list[str | None], flags: list[str]) -> list[list[_Syl]] | None:
+    """Các đoạn nối gạch của một tên Hàn (Geun-hye): cùng một từ về âm (g, d, b hữu thanh sau n, m, ng ngay cả qua dấu gạch), nhưng mỗi đoạn một bộ phận.
+    Đoạn None là chữ giữ nguyên (PD, Hoẵng): cho bộ phận rỗng và cắt mạch âm (đoạn sau lại là đầu từ)."""
     out: list[list[_Syl]] = []
     previous: str | None = None  # phụ âm cuối RR của âm tiết trước; None = đầu từ
     for segment in segments:
-        parse = _ko_best(segment)
+        if segment is None:
+            out.append([])
+            previous = None
+            continue
+        parse = _ko_best(segment, flags)
         if parse is None:
             return None
         syllables: list[_Syl] = []
@@ -446,61 +483,173 @@ def _ko_nucleus(onset: str, vowel: str, closing: str, flags: list[str], initial:
 
 # ---- cửa vào ---------------------------------------------------------------------------------------------------------
 
-_JA_SUFFIXES = ("san", "kun", "chan", "sama", "senpai", "sensei", "dono", "tan", "nee", "nii")  # hậu tố gọi (mục 2): đọc theo chính bảng romaji, không có luật riêng
+_JA_SUFFIXES = ("san", "kun", "chan", "chwan", "sama", "senpai", "sensei", "dono", "tan", "nee", "nii")  # hậu tố gọi (mục 2): đọc theo chính bảng romaji, không có luật riêng
+_ABBREVIATION_MAX = 4  # chữ TOÀN HOA dài nhất mà còn coi là viết tắt (PD, NPC) khi giữ nguyên
+_ENGLISH_MIN = 4  # chữ Anh ngắn hơn thế (Si, Man, ram) dễ là âm tiết của tên Nhật / Hàn: không giữ
 
 
-def _part_case(part: str) -> bool | None:
-    """True nếu viết hoa chữ đầu, False nếu toàn chữ thường, None nếu không phải chữ hay viết hoa lạ (toàn hoa, hoa giữa chữ)."""
-    if not part.replace("'", "").isalpha() or part.startswith("'") or part.endswith("'"):
-        return None
-    if part == part.lower():
-        return False
-    if part[0].isupper() and part[1:] == part[1:].lower():
-        return True
+class _Unit:
+    """Một đoạn của token (giữa hai dấu gạch, hay một nửa của CamelCase): đọc theo luật (`read`) hay giữ nguyên chữ (`keep:...`)."""
+
+    __slots__ = ("text", "norm", "case", "kind", "join", "syllables")
+
+    def __init__(self, text: str, norm: str, case: bool, kind: str) -> None:
+        self.text = text  # chữ như đã viết (đoạn giữ nguyên in ra đúng chữ này)
+        self.norm = norm  # chữ thường đã đổi nguyên âm dài, đem đi tách âm tiết
+        self.case = case  # viết hoa chữ đầu
+        self.kind = kind  # "read" | "keep:viet" | "keep:abbr" | "keep:english"
+        self.join = "new"  # "new" tách bằng dấu cách; "hyphen" sau dấu gạch; "camel" sau chỗ tách CamelCase
+        self.syllables: list[_Syl] = []
+
+
+def _shape(letters: str) -> str:
+    """lower (không chữ hoa), title (chỉ chữ đầu hoa), upper (toàn hoa, từ hai chữ), mixed (CamelCase hay hoa lạ)."""
+    if letters == letters.lower():
+        return "lower"
+    if letters[0].isupper() and letters[1:] == letters[1:].lower():
+        return "title"
+    if len(letters) >= 2 and letters == letters.upper():
+        return "upper"
+    return "mixed"
+
+
+def _split_camel(segment: str) -> list[str]:
+    """Tách ở chữ hoa đứng sau chữ thường (OkabeRintarou -> Okabe, Rintarou) hay chữ hoa cuối chuỗi hoa mà liền sau là chữ thường (HImeno -> H, Imeno)."""
+    parts, start = [], 0
+    for i in range(1, len(segment)):
+        after = segment[i + 1] if i + 1 < len(segment) else ""
+        if segment[i].isupper() and (segment[i - 1].islower() or (segment[i - 1].isupper() and after.islower())):
+            parts.append(segment[start:i])
+            start = i
+    parts.append(segment[start:])
+    return parts
+
+
+def _latin_letter(ch: str) -> bool:
+    return ch.isalpha() and unicodedata.name(ch, "").startswith("LATIN")
+
+
+def _vietnamese(text: str) -> bool:
+    """Chữ Việt giữ nguyên chữ (Vương-sama, Gấu-san): có chữ Latin mang dấu mà KHÔNG là dấu nguyên âm dài của romaji (â ê ô û...: "Công", "Tây" cũng là chữ Việt, nhưng
+    đường quét tên cho qua chúng như tên có dấu dài; giữ nguyên thì "Công-tôn" thành "tên Nhật đọc được"). Âm tiết Việt viết không dấu (Khoan, Seo) cũng KHÔNG tính: nhiều tên
+    romaji / RR (Si-eun, Seo-ram) là âm tiết Việt hợp lệ."""
+    return all(ch == "'" or _latin_letter(ch) for ch in text) and any(not ch.isascii() and ch not in _LONG_VOWELS and ch not in _JA_LONG_O for ch in text)
+
+
+def _english(lowered: str) -> bool:
+    # cùng bảng từ Anh với đường đọc tên (names._known_word): nhập muộn vì names nhập romanization
+    from .readaloud.names import english_words
+
+    return lowered in english_words()
+
+
+def _reads(norm: str, origin: str) -> bool:
+    """Đoạn (đã thường hoá, đã đổi nguyên âm dài) tách hết được thành âm tiết của hệ `origin` không; chỉ để thử, bỏ cờ."""
+    if origin == "ja":
+        return bool(_ja_word(norm, []))
+    return "'" not in norm and _ko_words([norm], []) is not None
+
+
+def _unit(text: str, case: bool, origin: str, allow_english: bool) -> _Unit | None:
+    long_map = {**_LONG_VOWELS, **_JA_LONG_O} if origin == "ja" else _LONG_VOWELS
+    mapped = "".join(long_map.get(ch, ch) for ch in text)
+    if all((ch.isascii() or ch in "ôÔ") and (ch.isalpha() or ch == "'") for ch in mapped) and _reads(mapped.lower(), origin):
+        return _Unit(text, mapped.lower(), case, "read")
+    if _vietnamese(text):
+        return _Unit(text, "", case, "keep:viet")
+    if allow_english and text.isascii() and text.isalpha():
+        if text.isupper() and 2 <= len(text) <= _ABBREVIATION_MAX:
+            return _Unit(text, "", case, "keep:abbr")  # PD: viết tắt, việc của luật chữ viết tắt
+        # style, Stable: việc của đường đọc từ Anh. Chữ ngắn (Si, ram) và chữ mà hệ kia đọc được (Young, Soon: tên Hàn trong cuốn Nhật, hay ngược lại) không tính là chữ Anh:
+        # giữ nguyên chúng sẽ làm tên Hàn / Nhật nối gạch thành "tên đọc được" của hệ sai khi quét gốc cuốn
+        if len(text) >= _ENGLISH_MIN and _english(text.lower()) and not _reads(text.lower(), "ko" if origin == "ja" else "ja"):
+            return _Unit(text, "", case, "keep:english")
     return None
 
 
-def _read(token: str, origin: str) -> tuple[str, tuple[str, ...]] | None:
-    value = unicodedata.normalize("NFC", token.strip())
-    long_map = {**_LONG_VOWELS, **_JA_LONG_O} if origin == "ja" else _LONG_VOWELS
-    value = "".join(long_map.get(ch, ch) for ch in value.replace("’", "'"))
-    if not value or not all((ch.isascii() or ch in "ôÔ") and (ch.isalpha() or ch in "'- ") for ch in value):
+def _segment_units(segment: str, origin: str, allow_english: bool, flags: list[str]) -> list[_Unit] | None:
+    """Một đoạn giữa hai dấu gạch -> các đoạn nhỏ: một (thường, Hoa đầu, TOÀN HOA casefold), hay nhiều khi là CamelCase."""
+    letters = segment.replace("'", "")
+    if not letters or not letters.isalpha() or segment.startswith("'") or segment.endswith("'"):
         return None
+    if _shape(letters) != "mixed":
+        unit = _unit(segment, segment[0].isupper(), origin, allow_english)
+        return None if unit is None else [unit]
+    parts = _split_camel(segment)
+    if len(parts) >= 2 and all(len(part.replace("'", "")) >= 2 for part in parts):
+        units = [_unit(part, part[0].isupper(), origin, False) for part in parts]
+        if all(unit is not None for unit in units):
+            flags.append("analogy:camel_split")
+            return units  # type: ignore[return-value]
+    # hoa lạ không tách được (HImeno): đọc như viết hoa chữ đầu
+    unit = _unit(segment.lower(), segment[0].isupper(), origin, False)
+    if unit is None or unit.kind != "read":
+        return None
+    flags.append("analogy:case_fold")
+    return [unit]
+
+
+def _word_units(word: str, origin: str, flags: list[str]) -> list[_Unit] | None:
+    segments = word.split("-")
+    units: list[_Unit] = []
+    for index, segment in enumerate(segments):
+        found = _segment_units(segment, origin, len(segments) > 1, flags)
+        if found is None:
+            return None
+        for sub, unit in enumerate(found):
+            unit.join = "camel" if sub else ("new" if index == 0 else "hyphen")
+        units.extend(found)
+    if any(unit.kind == "keep:english" for unit in units):
+        # chữ Anh đứng cạnh một đoạn mà chính nó cũng là chữ Anh (Spider-Man) là tên Tây, không phải tên romaji kèm chữ Anh (Ikemen-style)
+        for unit in units:
+            if unit.kind == "read" and unit.norm not in _JA_SUFFIXES and _english(unit.norm):
+                return None
+    return units
+
+
+def _read(token: str, origin: str) -> tuple[str, tuple[str, ...]] | None:
+    value = unicodedata.normalize("NFC", token.strip()).replace("’", "'")
     flags: list[str] = []
     words: list[str] = []
+    read_any = False  # có ít nhất một đoạn đọc theo luật (toàn đoạn giữ nguyên thì không phải việc của luật này)
     for word in value.split():
-        segments = word.split("-")
-        cases = [_part_case(segment) for segment in segments]
-        if any(case is None for case in cases):
+        units = _word_units(word, origin, flags)
+        if units is None:
             return None
-        lowered = [segment.lower() for segment in segments]
         if origin == "ja":
-            readings = []
-            for segment in lowered:
-                syllables = _ja_word(segment, flags)
-                if not syllables:
-                    return None
-                readings.append(syllables)
+            for unit in units:
+                if unit.kind == "read":
+                    unit.syllables = _ja_word(unit.norm, flags) or []
         else:
-            if any("'" in segment for segment in lowered):
-                return None
-            readings = _ko_words(lowered, flags)
+            readings = _ko_words([unit.norm if unit.kind == "read" else None for unit in units], flags)
             if readings is None:
                 return None
-        for index, syllables in enumerate(readings):
-            # tên viết hoa thì mọi đoạn nối gạch viết hoa (Geun-hye -> Cưn Hê); hậu tố gọi (-san) giữ chữ thường và NỐI GẠCH vào tên thành một
-            # chuỗi (chủ sách 04-10: Haruto-kun -> Ha-ru-tô-cun)
-            # tên Hàn nối gạch cũng thành một chuỗi (chủ sách 04-10: Kim Jong-un -> Kim Giông-un, Lee Myung-bak -> Li Mung-bắc)
-            suffix = index > 0 and (origin == "ko" or (origin == "ja" and lowered[index] in _JA_SUFFIXES))
-            capital = False if suffix else cases[0]
-            reading = _validated(syllables, bool(capital))
-            if reading is None:
-                return None
-            if suffix:
+            for unit, syllables in zip(units, readings):
+                unit.syllables = syllables
+        for index, unit in enumerate(units):
+            if unit.kind != "read":
+                flags.append(unit.kind)
+            # nối vào từ trước bằng gạch (chain) hay mở từ mới (new). Hậu tố gọi (-san) nối gạch vào tên thành một chuỗi, chữ thường (chủ sách 04-10: Haruto-kun ->
+            # Ha-ru-tô-cun); tên Hàn nối gạch cũng thành một chuỗi (Kim Jong-un -> Kim Giông-un); đoạn thường sau gạch (Kanata-cả, Ikemen-style) cũng nối; đoạn viết hoa
+            # sau gạch (Waseda-Keio, Nagaya-Stable) là từ mới. CamelCase: hai nửa đều MỘT âm tiết (JoJo, ChuChu) là một tên lặp, nối gạch; còn lại cách nhau dấu cách
+            if index == 0 or unit.join == "new":
+                chain = False
+            elif unit.join == "hyphen":
+                chain = origin == "ko" or not unit.case or (unit.kind == "read" and unit.norm in _JA_SUFFIXES)
+            else:
+                chain = unit.kind == "read" and len(unit.syllables) == 1 and units[index - 1].kind == "read" and len(units[index - 1].syllables) == 1
+            if unit.kind == "read":
+                reading = _validated(unit.syllables, unit.case and not chain)
+                if reading is None:
+                    return None
+                read_any = True
+            else:
+                reading = unit.text
+            if chain:
                 words[-1] += "-" + reading
             else:
                 words.append(reading)
-    if not words:
+    if not words or not read_any:
         return None
     return " ".join(words), tuple(dict.fromkeys(flags))
 

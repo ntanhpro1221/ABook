@@ -69,6 +69,16 @@ EDGE: list[tuple[str, str | None]] = [
     ("Hmm", "ko"), ("PARK", "ko"), ("park", "ko"),
     # không biết gốc thì không đoán
     ("Hajime", None), ("Seoul", None),
+    # tiền xử lý (token tên của bộ đo luật): TOÀN HOA casefold, hoa lạ, CamelCase (hai nửa một âm tiết nối gạch), đoạn thường / hậu tố / chữ Việt / chữ Anh / viết tắt sau gạch
+    ("KANATA", "ja"), ("REI", "ja"), ("NEE-SAN", "ja"), ("KAEDE", "ja"), ("IZUMO", "ja"), ("PARK", "ko"), ("OSAKA", "ja"), ("HImeno", "ja"), ("oSAKA", "ja"),
+    ("OkabeRintarou", "ja"), ("DereDere", "ja"), ("ChuChu", "ja"), ("YuNa", "ja"), ("KouIchi", "ja"), ("NhạcJoJo", "ja"), ("iPhone", "ja"), ("YouTube", "ja"),
+    ("Tenshi-chwan", "ja"), ("Rin-chwan", "ja"), ("Waseda-Keio", "ja"), ("Waseda-Keio-Sophia", "ja"), ("Ikemen-style", "ja"), ("Nagaya-Stable", "ja"), ("Mary-san", "ja"),
+    ("Mary-Ann", "ja"), ("Spider-Man", "ja"), ("Clan-sama", "ja"), ("Gấu-san", "ja"), ("Vương-sama", "ja"), ("Thủ-chan", "ja"), ("thơm-sensei", "ja"), ("Kanata-cả", "ja"),
+    ("à-degozaru", "ja"), ("xám-onechan", "ja"), ("Khoan-san", "ja"), ("Nhạc", "ja"), ("PD", "ja"),
+    ("Seol-Ah", "ko"), ("Ahn-Seon", "ko"), ("Ahn", "ko"), ("Ahri", "ko"), ("Ahrin", "ko"), ("Min-ah", "ko"), ("Ah-ryeon", "ko"), ("Bi-Ah", "ko"), ("Hanah", "ko"),
+    ("Shi", "ko"), ("Shinhyun", "ko"), ("Shincheol", "ko"), ("shinkal", "ko"), ("Joo", "ko"), ("Jooseon", "ko"), ("Joo-chul", "ko"), ("Ji-woo", "ko"), ("Jiwoo", "ko"),
+    ("Soohyuk", "ko"), ("Jaemoon", "ko"), ("Jahoon", "ko"), ("Tae-hoon", "ko"), ("Ryoon", "ko"), ("Jinyoon", "ko"), ("Jiyoon", "ko"), ("Noona", "ko"), ("Weol-hyun", "ko"),
+    ("PD-nim", "ko"), ("Hoẵng-nim", "ko"), ("Gyeong-nim", "ko"), ("Spider-Man", "ko"), ("Takeshi", "ko"),
 ]
 
 

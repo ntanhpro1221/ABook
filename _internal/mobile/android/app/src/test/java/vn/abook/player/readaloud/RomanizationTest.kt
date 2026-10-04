@@ -81,9 +81,36 @@ class RomanizationTest {
     }
 
     @Test
+    fun theUnusualSpellingsAreReadAfterPreprocessing() {
+        // TOÀN HOA casefold, CamelCase, hoa lạ, gạch nối / hậu tố / chữ Việt / chữ Anh / viết tắt (token tên của bộ đo luật)
+        assertEquals("Ca-na-ta", Romanization.reading("KANATA", "ja"))
+        assertEquals("Ne-xan", Romanization.reading("NEE-SAN", "ja"))
+        assertEquals("O-ca-be Rin-ta-râu", Romanization.reading("OkabeRintarou", "ja"))
+        assertEquals("Chu-chu", Romanization.reading("ChuChu", "ja"))
+        assertEquals("Nhạc Giô-giô", Romanization.reading("NhạcJoJo", "ja"))
+        assertEquals("Hi-me-nô", Romanization.reading("HImeno", "ja"))
+        assertEquals("Ten-si-choan", Romanization.reading("Tenshi-chwan", "ja"))
+        assertEquals("Gấu-xan", Romanization.reading("Gấu-san", "ja"))
+        assertEquals("Ca-na-ta-cả", Romanization.reading("Kanata-cả", "ja"))
+        assertEquals("I-ke-men-style", Romanization.reading("Ikemen-style", "ja"))
+        assertEquals("PD-nim", Romanization.reading("PD-nim", "ko"))
+        assertEquals("Xe-on-a", Romanization.reading("Seol-Ah", "ko"))
+        assertEquals("An-xe-on", Romanization.reading("Ahn-Seon", "ko"))
+        assertEquals("Giu-xe-on", Romanization.reading("Joo-seon", "ko"))
+        assertEquals("Xin-hi-un", Romanization.reading("Shinhyun", "ko"))
+        assertEquals("Guôn-hi-un", Romanization.reading("Weol-hyun", "ko"))
+        assertEquals(listOf("keep:abbr"), Romanization.readingWithFlags("PD-nim", "ko")?.flags)
+        assertEquals(listOf("analogy:camel_split"), Romanization.readingWithFlags("OkabeRintarou", "ja")?.flags)
+        assertEquals(listOf("analogy:ko_ah"), Romanization.readingWithFlags("Seol-Ah", "ko")?.flags)
+    }
+
+    @Test
     fun whatItIsNotSureOfItDoesNotRead() {
         assertNull(Romanization.reading("Cale", "ja"))
-        assertNull(Romanization.reading("IZUMO", "ja"))
+        assertNull(Romanization.reading("iPhone", "ja"))
+        assertNull(Romanization.reading("Spider-Man", "ja"))
+        assertNull(Romanization.reading("Jinyoon", "ko"))
+        assertNull(Romanization.reading("PD", "ko"))
         assertNull(Romanization.reading("Yongin", "ko"))
         assertNull(Romanization.reading("Hajime", null))
     }
