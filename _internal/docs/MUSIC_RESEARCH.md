@@ -2329,3 +2329,31 @@ Mỗi pha xong: ghi số vào đây, đổi tham số trong app theo kết quả
 - **Hệ quả:**
   - oracle thắng → ưu tiên đoán không khí đoạn tốt hơn (dữ liệu dạy cho 4b / analyzer, đề xuất D).
   - không → ưu tiên nhãn V/E/T của BÀI.
+
+## Nhãn V/E/T của BÀI: nhúng nhạc mạnh hơn CLAP? (04-10 20:xx, Lead duyệt hướng)
+
+**GHI TRƯỚC (trước mọi số của ứng viên):**
+- **Vì sao:**
+  - llmVT không phân biệt được bằng tai. Một giả thuyết là nút thắt nằm ở phía bài.
+  - Phần ÂM của thầy và trò đều đứng trên CLAP 512 + 42 âm học. Trục vui/buồn yếu nhất: nhạc phim 0,65, DEAM 0,35; trong khi
+    năng lượng 0,74 / 0,69 và căng thẳng 0,77.
+  - Bài ít chữ (OGA / FreePD / Scott Buckley) và nhạc người dùng tự nhập chỉ có phần âm này.
+- **Ứng viên nhúng** (đều chạy CPU; giấy phép NC dùng được theo chủ sách 02-10):
+  - (i) MERT-v1-95M, trung bình theo thời gian, ghép các lớp;
+  - (ii) MuQ (Tencent), nếu cài được;
+  - đối chứng: CLAP htsat-unfused 512, đúng cách thầy / trò đang dùng.
+  - Cùng 30 giây đầu sau 30% bài như clip E1. Riêng DEAM / nhạc phim dùng đúng trích đoạn của bộ.
+- **Giao thức CHÉO BỘ** (bài học 02-10: kiểm chéo trong một bộ đánh giá quá cao):
+  - đầu ridge, alpha chọn bằng CV lồng TRONG bộ học;
+  - học nhạc phim → đo DEAM (V, E);
+  - học DEAM → đo nhạc phim (V, E);
+  - T: chỉ nhạc phim có, nên báo CV 5 phần theo trích đoạn và ghi rõ là trong-miền.
+- **Thước chính:** r Pearson V và E ở hai hướng chéo bộ.
+- **Luật:**
+  - Ứng viên THẮNG nếu hơn CLAP ở trục V cả hai hướng ≥ +0,05, VÀ không thua ở E hướng nào quá 0,02.
+  - Nhiều ứng viên cùng thắng thì chọn cái có V trung bình cao hơn.
+- **Thắng thì:**
+  - Ghi trước bước 2: thay phần âm của thầy + trò; đo lại AUC feel Incompetech và đường cong.
+  - Bài danh mục được gán nhãn lại, rồi mới đến thước nghe (sau kết quả oracle thứ Bảy).
+  - Chưa đổi gì trong app ở bước này.
+- **Chi phí ghi lại:** giây/bài trên CPU, cỡ model.
