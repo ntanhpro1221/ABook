@@ -3,14 +3,19 @@ import { setApiTransport } from "@/studio/api";
 import type { MusicCue } from "./musicBed";
 import {
   addMusicOutcome,
+  autoPlaylistName,
+  chosenId,
   FALLBACK_SECONDS,
   MINE_PLAYLIST,
+  OFF_PLAYLIST,
   OVERLAP_SECONDS,
   PAUSE_GRACE_MS,
   PlaylistClock,
   PlaylistDriver,
   playlistCues,
+  playlistLabel,
   playlistOptions,
+  playlistPlaying,
   savePlaylistChoice,
   wrapSeconds,
   type PlaylistTrack,
@@ -148,7 +153,7 @@ describe("danh sách phát trên đồng hồ nhạc của cuốn", () => {
 describe("lựa chọn nhạc nền", () => {
   afterEach(() => setApiTransport(null));
 
-  it("menu: Tắt, các danh sách của danh mục, rồi Nhạc của tôi (tắt được khi chưa có bài)", () => {
+  it("menu: Để máy chọn, Tắt, các danh sách của danh mục, rồi Nhạc của tôi (tắt được khi chưa có bài)", () => {
     const options = playlistOptions({
       playlists: [
         { id: "calm", name: "Kỳ ảo êm đềm", description: "Cho truyện chậm.", minutes: 545, count: 84 },
@@ -157,16 +162,45 @@ describe("lựa chọn nhạc nền", () => {
       mine: 0,
       error: "",
     });
-    expect(options.map((option) => option.id)).toEqual([null, "calm", "short", MINE_PLAYLIST]);
-    expect(options[1]).toMatchObject({ label: "Kỳ ảo êm đềm", hint: "dài 9 giờ", description: "Cho truyện chậm." });
-    expect(options[2].hint).toBe("dài 40 phút");
-    expect(options[3]).toMatchObject({ label: "Nhạc của tôi", disabled: true });
+    expect(options.map((option) => option.id)).toEqual([null, OFF_PLAYLIST, "calm", "short", MINE_PLAYLIST]);
+    expect(options[0]).toMatchObject({ label: "Để máy chọn", hint: "" });
+    expect(options[1]).toMatchObject({ label: "Tắt" });
+    expect(options[2]).toMatchObject({ label: "Kỳ ảo êm đềm", hint: "dài 9 giờ", description: "Cho truyện chậm." });
+    expect(options[3].hint).toBe("dài 40 phút");
+    expect(options[4]).toMatchObject({ label: "Nhạc của tôi", disabled: true });
     // Máy không nhập được nhạc: chỉ đường sang máy tính; máy nhập được: mục "Thêm nhạc của bạn…" ngay dưới đã là đường đi.
-    expect(options[3].description).toContain("trên máy tính");
-    expect(options[3].description).not.toContain("Sửa sách");
-    expect(playlistOptions({ playlists: [], mine: 0, error: "" }, true)[1].description).toBeUndefined();
-    expect(playlistOptions({ playlists: [], mine: 3, error: "" })[1]).toMatchObject({ id: MINE_PLAYLIST, hint: "3 bài", disabled: false });
-    expect(playlistOptions(undefined).map((option) => option.id)).toEqual([null, MINE_PLAYLIST]);
+    expect(options[4].description).toContain("trên máy tính");
+    expect(options[4].description).not.toContain("Sửa sách");
+    expect(playlistOptions({ playlists: [], mine: 0, error: "" }, true)[2].description).toBeUndefined();
+    expect(playlistOptions({ playlists: [], mine: 3, error: "" })[2]).toMatchObject({ id: MINE_PLAYLIST, hint: "3 bài", disabled: false });
+    expect(playlistOptions(undefined).map((option) => option.id)).toEqual([null, OFF_PLAYLIST, MINE_PLAYLIST]);
+  });
+
+  const menu = { playlists: [{ id: "calm", name: "Kỳ ảo êm đềm", description: "", minutes: 60, count: 9 }], mine: 0, error: "" };
+
+  it("đang để máy chọn: nút nói 'Máy chọn: <tên>', dòng 'Để máy chọn' được đánh dấu và nói máy chọn gì", () => {
+    const view = { playlist: "calm", playlistAuto: true };
+    expect(chosenId(view)).toBeNull();
+    expect(playlistLabel(view, menu)).toBe("Máy chọn: Kỳ ảo êm đềm");
+    expect(autoPlaylistName(view, menu)).toBe("Kỳ ảo êm đềm");
+    expect(playlistOptions(menu, false, view)[0]).toMatchObject({ id: null, hint: "Kỳ ảo êm đềm" });
+    expect(playlistPlaying(view)).toBe(true);
+    // menu chưa tải: không nói mã trần cho người nghe
+    expect(playlistLabel(view, undefined)).toBe("Máy chọn");
+  });
+
+  it("đã chọn: danh sách cụ thể, Nhạc của tôi, hay Tắt (không còn máy chọn)", () => {
+    expect(chosenId({ playlist: "calm" })).toBe("calm");
+    expect(playlistLabel({ playlist: "calm" }, menu)).toBe("Kỳ ảo êm đềm");
+    expect(playlistLabel({ playlist: MINE_PLAYLIST }, menu)).toBe("Nhạc của tôi");
+    expect(chosenId({ playlist: OFF_PLAYLIST })).toBe(OFF_PLAYLIST);
+    expect(playlistLabel({ playlist: OFF_PLAYLIST }, menu)).toBe("Tắt");
+    expect(playlistPlaying({ playlist: OFF_PLAYLIST })).toBe(false);
+    expect(autoPlaylistName({ playlist: "calm" }, menu)).toBe("");
+    // chưa chọn gì mà máy cũng chưa chọn được: vẫn là "Để máy chọn", không có nhạc
+    expect(chosenId({})).toBeNull();
+    expect(playlistPlaying({})).toBe(false);
+    expect(playlistPlaying(undefined)).toBe(false);
   });
 
   it("thêm nhạc từ menu: có bài vào thì chọn Nhạc của tôi, không bài nào vào thì không đổi gì", () => {
@@ -184,10 +218,12 @@ describe("lựa chọn nhạc nền", () => {
       return { playlist: (init?.body as { playlist: string | null }).playlist ?? undefined };
     });
     expect(await savePlaylistChoice("abc", "calm")).toEqual({ playlist: "calm" });
-    await savePlaylistChoice("abc", null);
+    await savePlaylistChoice("abc", null); // để máy chọn: server xoá khoá
+    await savePlaylistChoice("abc", OFF_PLAYLIST); // tắt: server lưu "off"
     expect(calls).toEqual([
       { path: "/api/books/abc/music", method: "PUT", body: { playlist: "calm" } },
       { path: "/api/books/abc/music", method: "PUT", body: { playlist: null } },
+      { path: "/api/books/abc/music", method: "PUT", body: { playlist: "off" } },
     ]);
   });
 });
