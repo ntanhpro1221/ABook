@@ -27,7 +27,7 @@
 21 N
 22 D IVAN afraid,sad 1 normal,fast normal,soft m
 23 N NARRATOR neutral,sad 0-1 normal normal u
-24 N,T NARRATOR,SAMAEL surprised,afraid,sarcastic 0-1 normal normal u
+24 N,T SAMAEL,NARRATOR surprised,afraid,sarcastic 0-1 normal normal u
 25 N NARRATOR neutral,sarcastic 0-1 normal normal u
 26 D SAMAEL tender,neutral 0-1 normal soft,normal m
 27 N
@@ -55,12 +55,12 @@
 49 N NARRATOR neutral,sarcastic 0-1 normal normal u
 50 N NARRATOR neutral,sarcastic 0-1 normal normal u
 51 N NARRATOR neutral,sarcastic 0-1 normal normal u
-52 N,T NARRATOR,SAMAEL sarcastic,neutral 0-1 normal normal u
+52 N,T SAMAEL,NARRATOR sarcastic,neutral 0-1 normal normal u
 53 N
 54 D SAMAEL tired,tender 0-1 normal normal m
 55 N
 56 D IVAN sad 2 slow soft,normal m
-57 N,T NARRATOR,SAMAEL surprised,neutral 0-1 normal normal u
+57 N,T SAMAEL,NARRATOR surprised,neutral 0-1 normal normal u
 58 N
 59 N NARRATOR neutral,sarcastic 0-1 normal normal u
 60 N

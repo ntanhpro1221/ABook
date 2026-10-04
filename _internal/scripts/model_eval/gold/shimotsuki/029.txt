@@ -24,14 +24,14 @@
 9 N
 10 N
 11 D SHIMOTSUKI SHIHO,SHIHO,SHIMOTSUKI,NARRATOR~ neutral,happy 0-1 normal normal,soft f
-12 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral 0-1 normal normal u
+12 N,T NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA,NARRATOR neutral 0-1 normal normal u
 13 N
 14 N NARRATOR neutral,afraid 0-1 normal normal u
 15 N NARRATOR neutral,afraid 0-1 normal normal u
 16 N
 17 D SUZUKI,SUZUKI-SENSEI~ happy,neutral,sarcastic 0-1 normal normal f
 18 N
-19 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral 0-1 normal normal u
+19 N,T NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA,NARRATOR neutral 0-1 normal normal u
 20 N NARRATOR neutral,afraid 0-1 normal normal u
 21 N
 22 N
@@ -52,25 +52,25 @@
 37 D RYUUZAKI RYOUMA,RYUUZAKI,RYOUMA happy,neutral 0-1 normal normal m
 38 N NARRATOR,SUZUKI~,SUZUKI-SENSEI~ neutral,happy,sarcastic 0-1 normal normal u
 39 N NARRATOR neutral,surprised 0-1 normal normal u
-40 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA surprised,neutral,sad 0-1 normal,slow normal u
+40 N,T NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA,NARRATOR surprised,neutral,sad 0-1 normal,slow normal u
 41 N NARRATOR neutral,surprised 0-1 normal normal u
 42 T NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA afraid,surprised,neutral 0-1 normal normal,soft m
-43 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral,afraid 0-1 normal normal u
-44 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral 0-1 normal normal u
-45 N,T NARRATOR,NAKAYAMA KOUTAROU~,KOUTAROU~,NAKAYAMA~ neutral 0-1 normal normal u
+43 N,T NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA,NARRATOR neutral,afraid 0-1 normal normal u
+44 N,T NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA,NARRATOR neutral 0-1 normal normal u
+45 N,T NAKAYAMA KOUTAROU~,KOUTAROU~,NAKAYAMA~,NARRATOR neutral 0-1 normal normal u
 46 D SUZUKI,SUZUKI-SENSEI~ neutral,surprised 0-1 normal normal f
 47 N
 48 N
 49 T NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA afraid,surprised 0-1 normal,fast normal,soft m
 50 N
-51 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral,happy 0-1 normal normal u
+51 N,T NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA,NARRATOR neutral,happy 0-1 normal normal u
 52 D SUZUKI,SUZUKI-SENSEI~ happy,sarcastic,neutral 0-1 normal normal f
-53 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral,tired,sarcastic 0-1 normal normal u
+53 N,T NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA,NARRATOR neutral,tired,sarcastic 0-1 normal normal u
 54 D NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral,tired 0-1 normal normal,soft m
 55 N
 56 N
 57 N NARRATOR neutral,afraid 0-1 normal normal u
-58 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA neutral,afraid 0-1 normal normal u
+58 N,T NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA,NARRATOR neutral,afraid 0-1 normal normal u
 59 D SUZUKI,SUZUKI-SENSEI~ neutral,happy 0-1 normal normal f
 60 N
 61 N NARRATOR neutral,happy,excited 0-1 normal normal u
@@ -81,6 +81,6 @@
 66 N NARRATOR neutral,surprised 0-1 normal normal u
 67 D RYUUZAKI RYOUMA,RYUUZAKI,RYOUMA surprised,afraid,sad 1-2 fast,normal normal,loud m
 68 N NARRATOR neutral,happy 0-1 normal normal u
-69 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA happy,neutral,sarcastic 0-1 normal normal u
-70 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA sarcastic,happy,neutral,angry 0-1 normal normal u
-71 N,T NARRATOR,NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA sarcastic,happy,neutral 0-1 normal normal u
+69 N,T NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA,NARRATOR happy,neutral,sarcastic 0-1 normal normal u
+70 N,T NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA,NARRATOR sarcastic,happy,neutral,angry 0-1 normal normal u
+71 N,T NAKAYAMA KOUTAROU,KOUTAROU,NAKAYAMA,NARRATOR sarcastic,happy,neutral 0-1 normal normal u

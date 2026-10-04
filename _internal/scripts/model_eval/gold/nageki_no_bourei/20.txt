@@ -48,13 +48,13 @@
 41 N
 42 D SITRI,SITRI SMART neutral,surprised,happy 0-1 normal normal f
 43 D KRAI,KRAI ANDREY surprised,afraid 1-2 fast,normal normal,loud m
-44 N,T NARRATOR,KRAI,KRAI ANDREY surprised,afraid 1-2 normal,fast normal u
+44 N,T KRAI,KRAI ANDREY,NARRATOR surprised,afraid 1-2 normal,fast normal u
 45 D SITRI,SITRI SMART neutral,whispering,sad 0-1 normal,slow soft,normal f
 46 N
 47 D KRAI,KRAI ANDREY surprised,neutral,afraid 1-2 normal,fast normal,loud m
 48 N
 49 D SITRI,SITRI SMART neutral,happy 0-1 normal normal f
-50 N,T NARRATOR,KRAI,KRAI ANDREY surprised,sarcastic 0-1 normal normal u
+50 N,T KRAI,KRAI ANDREY,NARRATOR surprised,sarcastic 0-1 normal normal u
 51 N
 52 D SITRI,SITRI SMART neutral,excited 0-1 normal normal f
 53 D KRAI,KRAI ANDREY surprised,afraid 2-3 fast loud m
@@ -63,7 +63,7 @@
 56 N NARRATOR neutral,surprised,afraid 0-1 normal normal u
 57 N
 58 D KRAI,KRAI ANDREY tender,neutral 0-1 normal,slow normal,soft m
-59 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sarcastic 0-1 normal normal u
+59 N,T KRAI,KRAI ANDREY,NARRATOR neutral,sarcastic 0-1 normal normal u
 60 N
 61 N
 62 D SITRI,SITRI SMART excited,happy 1-2 fast,normal normal,loud f
@@ -74,7 +74,7 @@
 67 N
 68 N
 69 N NARRATOR neutral,sarcastic 0-1 normal normal u
-70 N,T NARRATOR,KRAI,KRAI ANDREY neutral,surprised,sarcastic 0-1 normal,fast normal u
+70 N,T KRAI,KRAI ANDREY,NARRATOR neutral,surprised,sarcastic 0-1 normal,fast normal u
 71 D SITRI,SITRI SMART sad 1-3 normal,fast normal,loud f
 72 N NARRATOR neutral,sad 0-1 normal normal u
 73 D KRAI,KRAI ANDREY neutral,tender,tired 0-1 normal normal,soft m
@@ -86,7 +86,7 @@
 79 D SITRI,SITRI SMART sad,afraid 1-2 slow,normal soft f
 80 D KRAI,KRAI ANDREY tender,neutral 0-1 normal normal m
 81 N
-82 N,T NARRATOR,KRAI,KRAI ANDREY neutral,tired,sad 0-1 normal normal u
+82 N,T KRAI,KRAI ANDREY,NARRATOR neutral,tired,sad 0-1 normal normal u
 83 N NARRATOR neutral,afraid 0-1 normal normal u
 84 N
 85 D KRAI,KRAI ANDREY neutral,tender 0-1 normal normal m
@@ -195,14 +195,14 @@
 188 D SITRI,SITRI SMART excited,happy 1-2 fast,normal normal,loud f
 189 N NARRATOR neutral,sarcastic 0-1 normal normal u
 190 N NARRATOR neutral,afraid 0-1 normal normal u
-191 N,T NARRATOR,KRAI,KRAI ANDREY angry,surprised,afraid 1-2 normal,fast normal,loud u
+191 N,T KRAI,KRAI ANDREY,NARRATOR angry,surprised,afraid 1-2 normal,fast normal,loud u
 192 N
-193 N,T NARRATOR,KRAI,KRAI ANDREY angry,surprised,afraid 1-2 normal,fast normal,loud u
-194 N,T NARRATOR,KRAI,KRAI ANDREY angry,surprised,afraid 1-2 normal,fast normal,loud u
+193 N,T KRAI,KRAI ANDREY,NARRATOR angry,surprised,afraid 1-2 normal,fast normal,loud u
+194 N,T KRAI,KRAI ANDREY,NARRATOR angry,surprised,afraid 1-2 normal,fast normal,loud u
 195 N NARRATOR neutral,afraid 0-1 normal normal u
 196 N
 197 D SITRI,SITRI SMART tender,neutral,afraid 0-1 normal,slow soft,normal f
 198 N NARRATOR neutral,afraid 0-1 normal normal u
 199 D KRAI,KRAI ANDREY neutral,afraid 0-1 normal normal m
 200 D SITRI,SITRI SMART surprised 0-1 normal normal f
-201 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sarcastic 0-1 normal normal u
+201 N,T KRAI,KRAI ANDREY,NARRATOR neutral,sarcastic 0-1 normal normal u

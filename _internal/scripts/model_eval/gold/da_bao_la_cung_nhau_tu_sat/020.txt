@@ -15,7 +15,7 @@
 10 N
 11 N
 12 N NARRATOR neutral,tender 0-1 normal normal u
-13 N,T NARRATOR,DIỆP CẨN HUYÊN,CẨN HUYÊN neutral,tender,sad 0-1 normal,slow normal,soft u
+13 N,T DIỆP CẨN HUYÊN,CẨN HUYÊN,NARRATOR neutral,tender,sad 0-1 normal,slow normal,soft u
 14 D CHU MẶC excited,happy 1-2 normal,fast loud,normal m
 15 N NARRATOR neutral,tender 0-1 normal,slow normal u
 16 N NARRATOR neutral,tender 0-1 normal normal u
@@ -30,8 +30,8 @@
 25 D CHU MẶC happy,sarcastic,neutral,excited 0-2 normal normal m
 26 D CHU MẶC happy,neutral,excited 0-2 normal normal m
 27 N NARRATOR neutral,happy 0-1 normal normal u
-28 N,T NARRATOR,DIỆP CẨN HUYÊN,CẨN HUYÊN surprised,happy 1-2 normal,fast normal u
-29 N,T NARRATOR,DIỆP CẨN HUYÊN,CẨN HUYÊN surprised,happy 1-2 normal normal u
+28 N,T DIỆP CẨN HUYÊN,CẨN HUYÊN,NARRATOR surprised,happy 1-2 normal,fast normal u
+29 N,T DIỆP CẨN HUYÊN,CẨN HUYÊN,NARRATOR surprised,happy 1-2 normal normal u
 30 N NARRATOR neutral,happy,tender 0-1 normal normal u
 31 N NARRATOR neutral 0-1 normal normal u
 32 D CHU MẶC excited,happy 1-2 normal,fast loud,normal m
@@ -43,11 +43,11 @@
 38 D DIỆP CẨN HUYÊN,CẨN HUYÊN neutral,excited 0-1 normal normal,soft f
 39 N
 40 N
-41 N,T NARRATOR,DIỆP CẨN HUYÊN,CẨN HUYÊN neutral,tender 0-1 normal normal u
-42 N,T NARRATOR,DIỆP CẨN HUYÊN,CẨN HUYÊN neutral,sad,tender 0-1 normal normal u
-43 N,T NARRATOR,DIỆP CẨN HUYÊN,CẨN HUYÊN neutral,tender,happy 0-1 normal,slow normal u
+41 N,T DIỆP CẨN HUYÊN,CẨN HUYÊN,NARRATOR neutral,tender 0-1 normal normal u
+42 N,T DIỆP CẨN HUYÊN,CẨN HUYÊN,NARRATOR neutral,sad,tender 0-1 normal normal u
+43 N,T DIỆP CẨN HUYÊN,CẨN HUYÊN,NARRATOR neutral,tender,happy 0-1 normal,slow normal u
 44 N NARRATOR neutral,happy 0-1 normal normal u
-45 N,T NARRATOR,DIỆP CẨN HUYÊN,CẨN HUYÊN surprised,happy 1-2 normal normal u
+45 N,T DIỆP CẨN HUYÊN,CẨN HUYÊN,NARRATOR surprised,happy 1-2 normal normal u
 46 D CHU MẶC happy,neutral 0-1 normal normal m
 47 N
 48 D DIỆP CẨN HUYÊN,CẨN HUYÊN tender,happy 0-2 normal,slow soft,normal f

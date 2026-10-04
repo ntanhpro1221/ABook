@@ -27,19 +27,19 @@
 12 D MAKI,MAEHARA MAKI,MAEHARA neutral,afraid 0-1 normal,slow normal,soft m
 13 D MASAKI,MAEHARA MASAKI,NPC*~ neutral 0-1 normal normal f
 14 N
-15 N,T NARRATOR,MAKI,MAEHARA MAKI,MAEHARA neutral,afraid,sad 0-1 normal normal u
-16 N,T NARRATOR,MAKI,MAEHARA MAKI,MAEHARA neutral,afraid,sad 0-1 normal normal u
-17 N,T NARRATOR,MAKI,MAEHARA MAKI,MAEHARA neutral,sad,angry 0-1 normal normal u
-18 N,T NARRATOR,MAKI,MAEHARA MAKI,MAEHARA neutral,sad,afraid 0-1 normal normal u
+15 N,T MAKI,MAEHARA MAKI,MAEHARA,NARRATOR neutral,afraid,sad 0-1 normal normal u
+16 N,T MAKI,MAEHARA MAKI,MAEHARA,NARRATOR neutral,afraid,sad 0-1 normal normal u
+17 N,T MAKI,MAEHARA MAKI,MAEHARA,NARRATOR neutral,sad,angry 0-1 normal normal u
+18 N,T MAKI,MAEHARA MAKI,MAEHARA,NARRATOR neutral,sad,afraid 0-1 normal normal u
 19 D MASAKI,MAEHARA MASAKI,NPC*~ surprised,neutral,tender 0-1 normal normal f
 20 D MAKI,MAEHARA MAKI,MAEHARA surprised,afraid 0-1 normal,fast normal m
 21 D MASAKI,MAEHARA MASAKI,NPC*~ tender,neutral,surprised 0-1 normal normal f
 22 D MAKI,MAEHARA MAKI,MAEHARA afraid,tired,neutral 0-1 normal,fast normal,soft m
 23 D MASAKI,MAEHARA MASAKI,NPC*~ neutral,tender 0-1 normal normal f
 24 D MAKI,MAEHARA MAKI,MAEHARA neutral,tired,afraid 0-1 normal normal m
-25 N,T NARRATOR,MAKI,MAEHARA MAKI,MAEHARA neutral 0-1 normal normal u
+25 N,T MAKI,MAEHARA MAKI,MAEHARA,NARRATOR neutral 0-1 normal normal u
 26 N
-27 N,T NARRATOR,MAKI,MAEHARA MAKI,MAEHARA neutral,sad 0-1 normal normal u
+27 N,T MAKI,MAEHARA MAKI,MAEHARA,NARRATOR neutral,sad 0-1 normal normal u
 28 D MASAKI,MAEHARA MASAKI,NPC*~ tired,neutral 0-1 normal,slow normal,soft f
 29 D MAKI,MAEHARA MAKI,MAEHARA neutral,tender 0-1 normal normal m
 30 D MASAKI,MAEHARA MASAKI,NPC*~ neutral 0-1 normal normal f
@@ -59,13 +59,13 @@
 44 D MAKI,MAEHARA MAKI,MAEHARA neutral,happy,tender 0-1 normal normal,soft m
 45 D MASAKI,MAEHARA MASAKI,NPC*~ happy,tender 0-1 normal normal f
 46 N
-47 N,T NARRATOR,MAKI,MAEHARA MAKI,MAEHARA neutral 0-1 normal normal u
-48 N,T NARRATOR,MAKI,MAEHARA MAKI,MAEHARA neutral,sarcastic 0-1 normal normal u
+47 N,T MAKI,MAEHARA MAKI,MAEHARA,NARRATOR neutral 0-1 normal normal u
+48 N,T MAKI,MAEHARA MAKI,MAEHARA,NARRATOR neutral,sarcastic 0-1 normal normal u
 49 D MAKI,MAEHARA MAKI,MAEHARA neutral 0-1 normal normal m
 50 D MASAKI,MAEHARA MASAKI,NPC*~ neutral,happy,tender 0-1 normal normal f
 51 D MAKI,MAEHARA MAKI,MAEHARA neutral,afraid 0-1 normal,slow soft,normal m
-52 N,T NARRATOR,MAKI,MAEHARA MAKI,MAEHARA neutral 0-1 normal normal u
-53 N,T NARRATOR,MAKI,MAEHARA MAKI,MAEHARA neutral,afraid 0-1 normal normal u
+52 N,T MAKI,MAEHARA MAKI,MAEHARA,NARRATOR neutral 0-1 normal normal u
+53 N,T MAKI,MAEHARA MAKI,MAEHARA,NARRATOR neutral,afraid 0-1 normal normal u
 54 D MASAKI,MAEHARA MASAKI,NPC*~ tender,tired,neutral 0-1 normal,slow normal,soft f
 55 D MAKI,MAEHARA MAKI,MAEHARA neutral,tender 0-1 normal normal m
 56 D MASAKI,MAEHARA MASAKI,NPC*~ tender,neutral 0-1 normal,slow soft,normal f
@@ -73,5 +73,5 @@
 58 D MAKI,MAEHARA MAKI,MAEHARA sad,whispering,tired 0-1 slow,normal soft m
 59 N NARRATOR neutral,sad 0-1 normal,slow normal u
 60 N
-61 N,T NARRATOR,MAKI,MAEHARA MAKI,MAEHARA neutral,sad 0-1 normal normal u
+61 N,T MAKI,MAEHARA MAKI,MAEHARA,NARRATOR neutral,sad 0-1 normal normal u
 62 N

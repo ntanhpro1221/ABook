@@ -34,7 +34,7 @@
 27 D ALISTAR neutral,sarcastic,happy 0-1 normal normal m
 28 D ALISTAR,NPC*~ neutral,happy 0-1 normal normal m
 29 N
-30 N,T NARRATOR,NPC* neutral,surprised 0-1 normal normal u
+30 N,T NPC*,NARRATOR neutral,surprised 0-1 normal normal u
 31 N
 32 D NPC*:ông chú trong làng,UNKNOWN~ surprised,neutral 0-1 normal normal m
 33 N
@@ -97,7 +97,7 @@
 90 D MAGALI surprised,afraid 1-2 fast normal,loud f
 91 N
 92 D ALISTAR neutral,angry 0-1 normal normal m
-93 N,T NARRATOR,ALISTAR~ neutral,surprised 0-1 normal normal u
+93 N,T ALISTAR~,NARRATOR neutral,surprised 0-1 normal normal u
 94 N
 95 D MAGALI afraid,sad,neutral 0-1 normal soft,normal f
 96 D ALISTAR happy,excited,neutral 0-1 normal normal m

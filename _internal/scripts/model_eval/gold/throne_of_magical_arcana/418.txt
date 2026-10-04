@@ -34,7 +34,7 @@
 29 N
 30 D JAMES happy,excited,neutral 0-1 normal normal m
 31 N
-32 N,T NARRATOR,LUCIEN sarcastic,happy,neutral 0-1 normal normal u
+32 N,T LUCIEN,NARRATOR sarcastic,happy,neutral 0-1 normal normal u
 33 N
 34 D JAMES neutral,happy 0-1 normal normal m
 35 N
@@ -70,7 +70,7 @@
 65 N
 66 D BAREK,BAREK PAPHOS neutral,excited 0-1 normal normal m
 67 N
-68 N,T NARRATOR,LUCIEN~ surprised,afraid,neutral 0-1 normal normal u
+68 N,T LUCIEN~,NARRATOR surprised,afraid,neutral 0-1 normal normal u
 69 N
 70 N
 71 N

@@ -68,7 +68,7 @@
 59 N
 60 D XALDRETH neutral,sarcastic 0-1 normal normal m
 61 N
-62 N,T NARRATOR,SAMAEL neutral,surprised 0-1 normal normal u
+62 N,T SAMAEL,NARRATOR neutral,surprised 0-1 normal normal u
 63 N
 64 D XALDRETH neutral,sarcastic 0-1 slow,normal normal m
 65 N NARRATOR neutral,afraid 0-1 normal normal u

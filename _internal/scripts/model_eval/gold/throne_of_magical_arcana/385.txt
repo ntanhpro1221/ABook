@@ -8,7 +8,7 @@
 3 N NARRATOR neutral,afraid 0-1 normal normal u
 4 D NPC*:nhân sư ra lệnh,UNKNOWN~ angry 2 normal,fast loud u
 5 N NARRATOR neutral,sarcastic 0-1 normal normal u
-6 N,T NARRATOR,LUCIEN~ neutral,surprised 0-1 normal normal u
+6 N,T LUCIEN~,NARRATOR neutral,surprised 0-1 normal normal u
 7 N
 8 D LUCIEN,FIL~ afraid,neutral 0-1 normal,fast normal m
 9 N NARRATOR neutral,sarcastic 0-1 normal normal u
@@ -25,7 +25,7 @@
 20 D SANA sarcastic,surprised 0-1 normal soft,normal f
 21 N
 22 D SANA sarcastic,surprised 0-1 normal soft,normal f
-23 N,T NARRATOR,LUCIEN~ angry,sarcastic,neutral 0-1 normal normal u
+23 N,T LUCIEN~,NARRATOR angry,sarcastic,neutral 0-1 normal normal u
 24 D NARRATOR,LUCIEN~ sarcastic,neutral 0-1 normal normal u
 25 D LUCIEN,FIL~ neutral,sad,sarcastic 0-1 normal soft,normal m
 26 N NARRATOR neutral,sarcastic 0-1 normal normal u
@@ -34,7 +34,7 @@
 29 N NARRATOR neutral,sarcastic 0-1 normal normal u
 30 N
 31 D NPC*:nhân sư hàng sau,UNKNOWN~ angry,sarcastic 1-2 normal loud m
-32 N,T NARRATOR,LUCIEN~ happy,sarcastic,neutral 0-1 normal normal u
+32 N,T LUCIEN~,NARRATOR happy,sarcastic,neutral 0-1 normal normal u
 33 N
 34 N NARRATOR neutral,tired 0-1 normal normal u
 35 D HELGES,NPC*~ neutral,angry 0-1 normal normal m
@@ -122,7 +122,7 @@
 117 D NARRATOR,UNKNOWN~ surprised,neutral 1-2 fast normal,loud u
 118 N NARRATOR neutral,surprised 0-1 normal,fast normal u
 119 N NARRATOR neutral,surprised 0-1 normal normal u
-120 N,T NARRATOR,INKE~ neutral,sarcastic 0-1 normal normal u
+120 N,T INKE~,NARRATOR neutral,sarcastic 0-1 normal normal u
 121 N
 122 D INKE neutral,surprised 0-1 normal normal u
 123 D LUCIEN,ASKA~ happy,sarcastic 1-2 normal normal,loud m

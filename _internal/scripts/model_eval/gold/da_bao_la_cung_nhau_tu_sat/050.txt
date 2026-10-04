@@ -32,11 +32,11 @@
 27 N NARRATOR neutral,sad 0-1 normal normal u
 28 N NARRATOR neutral,sad 0-1 normal normal u
 29 D CHU MẶC neutral,sad,tired,whispering 0-1 slow,normal soft,normal m
-30 N,T NARRATOR,CHU MẶC neutral,sarcastic,tired 0-1 normal normal,soft u
+30 N,T CHU MẶC,NARRATOR neutral,sarcastic,tired 0-1 normal normal,soft u
 31 N NARRATOR neutral,sarcastic,angry 0-1 normal normal u
 32 D LƯU ĐẠT,NPC*~,NARRATOR~ neutral,sad 0-2 normal normal m
 33 N NARRATOR neutral,sad 0-1 normal normal u
-34 N,T NARRATOR,CHU MẶC neutral,angry,sarcastic,sad 0-1 normal normal u
+34 N,T CHU MẶC,NARRATOR neutral,angry,sarcastic,sad 0-1 normal normal u
 35 N NARRATOR neutral,sad 0-1 normal normal u
 36 N
 37 N NARRATOR neutral,sad,tender 0-1 normal normal u
@@ -46,19 +46,19 @@
 41 D,T CHU MẶC sad,surprised,neutral 0-1 slow,normal soft,normal m
 42 N
 43 N NARRATOR neutral,sad 0-1 normal normal u
-44 N,T NARRATOR,CHU MẶC neutral,sarcastic 0-1 normal normal u
-45 N,T NARRATOR,CHU MẶC neutral,sarcastic 0-1 normal normal u
-46 N,T NARRATOR,CHU MẶC neutral,sarcastic 0-1 normal normal u
-47 N,T NARRATOR,CHU MẶC neutral,sarcastic 0-1 normal normal u
+44 N,T CHU MẶC,NARRATOR neutral,sarcastic 0-1 normal normal u
+45 N,T CHU MẶC,NARRATOR neutral,sarcastic 0-1 normal normal u
+46 N,T CHU MẶC,NARRATOR neutral,sarcastic 0-1 normal normal u
+47 N,T CHU MẶC,NARRATOR neutral,sarcastic 0-1 normal normal u
 48 N NARRATOR neutral,sad 0-1 normal normal u
 49 N NARRATOR neutral,sad,afraid 0-1 normal normal u
-50 N,T NARRATOR,CHU MẶC neutral,afraid,surprised 0-1 normal normal u
+50 N,T CHU MẶC,NARRATOR neutral,afraid,surprised 0-1 normal normal u
 51 N NARRATOR neutral,sarcastic 0-1 normal normal u
-52 N,T NARRATOR,CHU MẶC neutral,sarcastic 0-1 normal normal u
-53 N,T NARRATOR,CHU MẶC neutral,afraid,sarcastic 0-1 normal normal u
+52 N,T CHU MẶC,NARRATOR neutral,sarcastic 0-1 normal normal u
+53 N,T CHU MẶC,NARRATOR neutral,afraid,sarcastic 0-1 normal normal u
 54 N NARRATOR neutral,tender 0-1 slow,normal soft,normal u
-55 N,T NARRATOR,CHU MẶC neutral 0-1 normal normal u
-56 N,T NARRATOR,CHU MẶC neutral 0-1 normal normal u
+55 N,T CHU MẶC,NARRATOR neutral 0-1 normal normal u
+56 N,T CHU MẶC,NARRATOR neutral 0-1 normal normal u
 57 N NARRATOR neutral 0-1 normal normal u
 58 N
 59 N
@@ -89,6 +89,6 @@
 84 D DIỆP CẨN HUYÊN,CẨN HUYÊN tender,happy 0-2 normal normal f
 85 N NARRATOR neutral,happy 0-1 normal normal u
 86 N NARRATOR neutral,sarcastic,happy 0-1 normal normal u
-87 N,T NARRATOR,CHU MẶC happy,tender 0-1 normal normal u
+87 N,T CHU MẶC,NARRATOR happy,tender 0-1 normal normal u
 88 N
 89 D CHU MẶC tired,angry,surprised 1-2 normal normal m

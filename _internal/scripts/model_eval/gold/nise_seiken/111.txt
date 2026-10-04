@@ -24,11 +24,11 @@
 20 D MARLA,MARLA BALDINI surprised,angry 2 fast loud f
 21 D NPC*:nữ hầu cận của Marla,UNKNOWN~ happy,sarcastic 0-1 normal normal f
 22 D MARLA,MARLA BALDINI surprised,angry 2 fast loud f
-23 N,T NARRATOR,MARLA,MARLA BALDINI tender,surprised,angry 0-1 normal,fast normal u
-24 N,T NARRATOR,MARLA,MARLA BALDINI angry,sarcastic 0-1 normal normal u
+23 N,T MARLA,MARLA BALDINI,NARRATOR tender,surprised,angry 0-1 normal,fast normal u
+24 N,T MARLA,MARLA BALDINI,NARRATOR angry,sarcastic 0-1 normal normal u
 25 D NPC*:nữ hầu cận của Marla,UNKNOWN~ happy,tender 0-1 normal normal f
 26 N
-27 N,T NARRATOR,MARLA~,MARLA BALDINI~ neutral,tender 0-1 normal normal u
+27 N,T MARLA~,MARLA BALDINI~,NARRATOR neutral,tender 0-1 normal normal u
 28 N
 29 D MARLA,MARLA BALDINI sad,neutral 0-1 normal,slow normal,soft f
 30 N NARRATOR neutral,sad 0-1 normal normal u
@@ -42,7 +42,7 @@
 38 N
 39 D MARLA,MARLA BALDINI neutral,tired 0-1 normal normal f
 40 N
-41 N,T NARRATOR,MARLA,MARLA BALDINI neutral,tired 0-1 normal normal u
+41 N,T MARLA,MARLA BALDINI,NARRATOR neutral,tired 0-1 normal normal u
 42 N
 43 D ALISTAR happy,tender 0-1 normal normal m
 44 D MARLA,MARLA BALDINI surprised 2 fast normal,loud f
@@ -52,7 +52,7 @@
 48 D ALISTAR tender,happy 0-1 normal normal m
 49 D MARLA,MARLA BALDINI surprised 1-2 normal normal,loud f
 50 N NARRATOR neutral,tender,sad 0-1 normal normal u
-51 N,T NARRATOR,MARLA,MARLA BALDINI tender,surprised 0-1 normal normal u
+51 N,T MARLA,MARLA BALDINI,NARRATOR tender,surprised 0-1 normal normal u
 52 D MARLA,MARLA BALDINI surprised,neutral 0-1 normal normal f
 53 D ALISTAR tender 0-1 normal normal m
 54 D MARLA,MARLA BALDINI happy,surprised 0-1 normal normal f
@@ -76,14 +76,14 @@
 72 D MARLA,MARLA BALDINI sad 1 normal,slow normal,soft f
 73 D MARLA,MARLA BALDINI sad 1 normal,slow normal,soft f
 74 D ALISTAR neutral,surprised 0-1 normal normal m
-75 N,T NARRATOR,ALISTAR sarcastic,neutral 0-1 normal normal u
+75 N,T ALISTAR,NARRATOR sarcastic,neutral 0-1 normal normal u
 76 N
 77 D MARLA,MARLA BALDINI sad,afraid 1 slow,normal soft,normal f
-78 N,T NARRATOR,MARLA,MARLA BALDINI afraid,sad 1 normal normal u
-79 N,T NARRATOR,MARLA,MARLA BALDINI sad,afraid 1 normal normal u
+78 N,T MARLA,MARLA BALDINI,NARRATOR afraid,sad 1 normal normal u
+79 N,T MARLA,MARLA BALDINI,NARRATOR sad,afraid 1 normal normal u
 80 N NARRATOR neutral,tender 0-1 normal normal u
 81 N NARRATOR neutral,sad 0-1 normal normal u
-82 N,T NARRATOR,MARLA,MARLA BALDINI sad 1 normal normal u
+82 N,T MARLA,MARLA BALDINI,NARRATOR sad 1 normal normal u
 83 N NARRATOR neutral,sad 0-1 normal normal u
 84 N NARRATOR neutral,sarcastic 0-1 normal normal u
 85 N NARRATOR neutral,sad 0-1 normal normal u

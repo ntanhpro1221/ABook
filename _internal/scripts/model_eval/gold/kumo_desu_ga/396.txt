@@ -27,11 +27,11 @@
 4 N
 5 N
 6 N
-7 N,T NARRATOR,SHIRO,SHIRAORI neutral,happy,sarcastic 0-1 normal normal u
-8 N,T NARRATOR,SHIRO,SHIRAORI neutral,sarcastic 0-1 normal normal u
-9 N,T NARRATOR,SHIRO,SHIRAORI sarcastic,neutral 0-1 normal normal u
-10 N,T NARRATOR,SHIRO,SHIRAORI sarcastic,neutral,tired 0-1 normal normal u
-11 N,T NARRATOR,SHIRO,SHIRAORI sarcastic,neutral,tired 0-1 normal normal u
+7 N,T SHIRO,SHIRAORI,NARRATOR neutral,happy,sarcastic 0-1 normal normal u
+8 N,T SHIRO,SHIRAORI,NARRATOR neutral,sarcastic 0-1 normal normal u
+9 N,T SHIRO,SHIRAORI,NARRATOR sarcastic,neutral 0-1 normal normal u
+10 N,T SHIRO,SHIRAORI,NARRATOR sarcastic,neutral,tired 0-1 normal normal u
+11 N,T SHIRO,SHIRAORI,NARRATOR sarcastic,neutral,tired 0-1 normal normal u
 12 N
 13 N
 14 N
@@ -40,26 +40,26 @@
 17 N
 18 N NARRATOR neutral,angry,excited 0-2 normal,fast normal,loud u
 19 N NARRATOR neutral,angry,excited 0-2 normal,fast normal,loud u
-20 N,T NARRATOR,SHIRO,SHIRAORI neutral 0-1 normal normal u
+20 N,T SHIRO,SHIRAORI,NARRATOR neutral 0-1 normal normal u
 21 N
 22 N
-23 N,T NARRATOR,SHIRO,SHIRAORI neutral,surprised 0-1 normal normal u
+23 N,T SHIRO,SHIRAORI,NARRATOR neutral,surprised 0-1 normal normal u
 24 N
 25 N
-26 N,T NARRATOR,SHIRO,SHIRAORI tired,neutral,sad 0-1 normal,slow normal u
-27 N,T NARRATOR,SHIRO,SHIRAORI neutral,sad 0-1 normal normal u
-28 N,T NARRATOR,SHIRO,SHIRAORI neutral,sad 0-1 normal normal u
-29 N,T NARRATOR,SOPHIA~,SOPHIA KEREN~ neutral,sad 0-1 normal,slow normal u
-30 N,T NARRATOR,SOPHIA~,SOPHIA KEREN~ neutral,sad 0-1 normal,slow normal u
-31 N,T NARRATOR,SOPHIA~,SOPHIA KEREN~ neutral,sad 0-1 normal,slow normal u
-32 N,T NARRATOR,SOPHIA~,SOPHIA KEREN~ neutral,sad 0-1 normal,slow normal u
+26 N,T SHIRO,SHIRAORI,NARRATOR tired,neutral,sad 0-1 normal,slow normal u
+27 N,T SHIRO,SHIRAORI,NARRATOR neutral,sad 0-1 normal normal u
+28 N,T SHIRO,SHIRAORI,NARRATOR neutral,sad 0-1 normal normal u
+29 N,T SOPHIA~,SOPHIA KEREN~,NARRATOR neutral,sad 0-1 normal,slow normal u
+30 N,T SOPHIA~,SOPHIA KEREN~,NARRATOR neutral,sad 0-1 normal,slow normal u
+31 N,T SOPHIA~,SOPHIA KEREN~,NARRATOR neutral,sad 0-1 normal,slow normal u
+32 N,T SOPHIA~,SOPHIA KEREN~,NARRATOR neutral,sad 0-1 normal,slow normal u
 33 N
 34 N NARRATOR neutral,sad 0-1 normal normal u
 35 N NARRATOR neutral,sad 0-1 normal normal u
 36 N
 37 D MERA,MERAZOFIS,NARRATOR~ neutral,sad,tender 0-1 normal,slow normal m
 38 N
-39 N,T NARRATOR,SHIRO,SHIRAORI neutral 0-1 normal normal u
+39 N,T SHIRO,SHIRAORI,NARRATOR neutral 0-1 normal normal u
 40 N NARRATOR neutral,afraid 0-1 normal normal u
 41 N
 42 N
@@ -69,32 +69,32 @@
 46 N NARRATOR,SOPHIA~,SOPHIA KEREN~ neutral,angry,sarcastic 0-2 normal,fast normal u
 47 D SOPHIA,SOPHIA KEREN,BÉ VAMPIRE~ sarcastic,angry 1-2 normal,fast normal,loud f
 48 N NARRATOR,SOPHIA~,SOPHIA KEREN~ neutral,angry,sarcastic 0-2 normal,fast normal u
-49 N,T NARRATOR,SHIRO,SHIRAORI angry,neutral,sarcastic 0-2 normal normal,loud u
+49 N,T SHIRO,SHIRAORI,NARRATOR angry,neutral,sarcastic 0-2 normal normal,loud u
 50 N
-51 N,T NARRATOR,SHIRO,SHIRAORI neutral,sarcastic 0-1 normal normal u
+51 N,T SHIRO,SHIRAORI,NARRATOR neutral,sarcastic 0-1 normal normal u
 52 N
 53 N
 54 N
 55 N
 56 N
-57 N,T NARRATOR,SHIRO,SHIRAORI happy,excited,sarcastic 1-2 normal normal u
-58 N,T NARRATOR,SHIRO,SHIRAORI excited,happy,sarcastic 1-2 normal,fast normal,loud u
-59 N,T NARRATOR,SHIRO,SHIRAORI excited,happy,sarcastic 1-2 normal,fast normal,loud u
-60 N,T NARRATOR,SHIRO,SHIRAORI excited,happy,sarcastic 1-2 normal,fast normal,loud u
-61 N,T NARRATOR,SHIRO,SHIRAORI surprised,neutral 0-1 normal,slow normal,soft u
-62 N,T NARRATOR,SHIRO,SHIRAORI surprised,afraid,neutral 0-1 normal,slow normal,soft u
-63 N,T NARRATOR,SHIRO,SHIRAORI neutral,tired 0-1 normal normal u
-64 N,T NARRATOR,SHIRO,SHIRAORI neutral 0-1 normal normal u
-65 N,T NARRATOR,SHIRO,SHIRAORI neutral,sarcastic 0-1 normal normal u
-66 N,T NARRATOR,SHIRO,SHIRAORI neutral 0-1 normal normal u
-67 N,T NARRATOR,SHIRO,SHIRAORI neutral 0-1 normal normal u
-68 N,T NARRATOR,SHIRO,SHIRAORI neutral,tired 0-1 normal normal u
+57 N,T SHIRO,SHIRAORI,NARRATOR happy,excited,sarcastic 1-2 normal normal u
+58 N,T SHIRO,SHIRAORI,NARRATOR excited,happy,sarcastic 1-2 normal,fast normal,loud u
+59 N,T SHIRO,SHIRAORI,NARRATOR excited,happy,sarcastic 1-2 normal,fast normal,loud u
+60 N,T SHIRO,SHIRAORI,NARRATOR excited,happy,sarcastic 1-2 normal,fast normal,loud u
+61 N,T SHIRO,SHIRAORI,NARRATOR surprised,neutral 0-1 normal,slow normal,soft u
+62 N,T SHIRO,SHIRAORI,NARRATOR surprised,afraid,neutral 0-1 normal,slow normal,soft u
+63 N,T SHIRO,SHIRAORI,NARRATOR neutral,tired 0-1 normal normal u
+64 N,T SHIRO,SHIRAORI,NARRATOR neutral 0-1 normal normal u
+65 N,T SHIRO,SHIRAORI,NARRATOR neutral,sarcastic 0-1 normal normal u
+66 N,T SHIRO,SHIRAORI,NARRATOR neutral 0-1 normal normal u
+67 N,T SHIRO,SHIRAORI,NARRATOR neutral 0-1 normal normal u
+68 N,T SHIRO,SHIRAORI,NARRATOR neutral,tired 0-1 normal normal u
 69 N
 70 N
 71 N
 72 N
 73 N
-74 N,T NARRATOR,SHIRO,SHIRAORI neutral 0-1 normal normal u
+74 N,T SHIRO,SHIRAORI,NARRATOR neutral 0-1 normal normal u
 75 D WRATH,KYOUYA,SASAJIMA KYOUYA,KYOUYA SASAJIMA,SASAJIMA,ONI-KUN~ happy,tender,neutral 0-1 normal normal m
 76 N NARRATOR neutral,happy 0-1 normal normal u
 77 N
@@ -102,15 +102,15 @@
 79 D WRATH,KYOUYA,SASAJIMA KYOUYA,KYOUYA SASAJIMA,SASAJIMA,ONI-KUN~ neutral,happy 0-1 normal normal m
 80 D SHIRO,SHIRAORI neutral 0-1 normal normal f
 81 D WRATH,KYOUYA,SASAJIMA KYOUYA,KYOUYA SASAJIMA,SASAJIMA,ONI-KUN~ neutral,happy 0-1 normal normal m
-82 N,T NARRATOR,SHIRO,SHIRAORI neutral,happy 0-1 normal normal u
-83 N,T NARRATOR,SHIRO,SHIRAORI happy,neutral 0-1 normal normal u
+82 N,T SHIRO,SHIRAORI,NARRATOR neutral,happy 0-1 normal normal u
+83 N,T SHIRO,SHIRAORI,NARRATOR happy,neutral 0-1 normal normal u
 84 N NARRATOR neutral,happy 0-1 normal normal u
 85 N
-86 N,T NARRATOR,SHIRO,SHIRAORI happy,excited 0-1 normal normal u
+86 N,T SHIRO,SHIRAORI,NARRATOR happy,excited 0-1 normal normal u
 87 D SHIRO,SHIRAORI neutral 0-1 normal normal f
 88 D WRATH,KYOUYA,SASAJIMA KYOUYA,KYOUYA SASAJIMA,SASAJIMA,ONI-KUN~ surprised,neutral,afraid 1-2 normal,fast normal m
 89 N
-90 N,T NARRATOR,SHIRO,SHIRAORI sad,tired 0-1 normal normal,soft u
+90 N,T SHIRO,SHIRAORI,NARRATOR sad,tired 0-1 normal normal,soft u
 91 N
 92 N
 93 N
@@ -138,7 +138,7 @@
 115 N
 116 N
 117 N
-118 N,T NARRATOR,SHIRO,SHIRAORI neutral 0-1 normal,slow normal u
-119 N,T NARRATOR,SHIRO,SHIRAORI neutral 0-1 normal,slow normal u
-120 N,T NARRATOR,SHIRO,SHIRAORI neutral,angry 0-2 normal,slow normal u
-121 N,T NARRATOR,SHIRO,SHIRAORI neutral,angry 0-2 normal,slow normal u
+118 N,T SHIRO,SHIRAORI,NARRATOR neutral 0-1 normal,slow normal u
+119 N,T SHIRO,SHIRAORI,NARRATOR neutral 0-1 normal,slow normal u
+120 N,T SHIRO,SHIRAORI,NARRATOR neutral,angry 0-2 normal,slow normal u
+121 N,T SHIRO,SHIRAORI,NARRATOR neutral,angry 0-2 normal,slow normal u

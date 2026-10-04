@@ -17,7 +17,7 @@
 # ISAAC (quy tắc 4 ngôi một): 20, 26, 28, 33-34, 40, 55-56, 74, 77.
 0 H
 1 D NPC*:người tuyên bố,UNKNOWN~ neutral 0-1 normal normal,loud u
-2 N,T NARRATOR,ISAAC neutral,excited 0-1 normal normal u
+2 N,T ISAAC,NARRATOR neutral,excited 0-1 normal normal u
 3 N
 4 N
 5 N
@@ -35,27 +35,27 @@
 17 N
 18 N
 19 N
-20 N,T NARRATOR,ISAAC neutral,surprised 0-1 normal normal u
+20 N,T ISAAC,NARRATOR neutral,surprised 0-1 normal normal u
 21 T ISAAC neutral,afraid 0-1 normal normal,soft m
 22 N
 23 N
 24 N
 25 N
-26 N,T NARRATOR,ISAAC neutral,afraid 0-1 normal normal u
-27 N,T NARRATOR,ISAAC neutral 0-1 normal normal u
-28 N,T NARRATOR,ISAAC surprised,neutral 0-1 normal normal,soft u
+26 N,T ISAAC,NARRATOR neutral,afraid 0-1 normal normal u
+27 N,T ISAAC,NARRATOR neutral 0-1 normal normal u
+28 N,T ISAAC,NARRATOR surprised,neutral 0-1 normal normal,soft u
 29 N NARRATOR neutral,surprised 0-1 normal normal u
 30 N NARRATOR neutral,surprised,afraid 0-1 normal normal u
 31 T ISAAC neutral,afraid 0-1 normal normal,soft m
 32 N
-33 N,T NARRATOR,ISAAC neutral 0-1 normal normal u
-34 N,T NARRATOR,ISAAC neutral,sarcastic 0-1 normal normal u
+33 N,T ISAAC,NARRATOR neutral 0-1 normal normal u
+34 N,T ISAAC,NARRATOR neutral,sarcastic 0-1 normal normal u
 35 D NPC*:trọng tài,UNKNOWN~ neutral,excited 0-1 normal loud,normal u
 36 N
 37 N
 38 N
 39 D PHILIP,PHILIP MELTRON sarcastic,angry 1-2 normal normal m
-40 N,T NARRATOR,ISAAC surprised,neutral 0-1 normal normal u
+40 N,T ISAAC,NARRATOR surprised,neutral 0-1 normal normal u
 41 N
 42 N
 43 N
@@ -70,10 +70,10 @@
 52 N
 53 N
 54 D NPC*:giáo sư gọi tên,UNKNOWN~ neutral 0-1 normal loud,normal u
-55 N,T NARRATOR,ISAAC neutral,afraid 0-1 normal normal u
-56 N,T NARRATOR,ISAAC neutral,afraid 0-1 normal,slow soft,normal u
+55 N,T ISAAC,NARRATOR neutral,afraid 0-1 normal normal u
+56 N,T ISAAC,NARRATOR neutral,afraid 0-1 normal,slow soft,normal u
 57 N
-58 N,T NARRATOR,ISAAC neutral,afraid 0-1 normal normal u
+58 N,T ISAAC,NARRATOR neutral,afraid 0-1 normal normal u
 59 N
 60 N
 61 N
@@ -89,10 +89,10 @@
 71 N
 72 N
 73 N
-74 N,T NARRATOR,ISAAC surprised,afraid 0-2 normal normal u
+74 N,T ISAAC,NARRATOR surprised,afraid 0-2 normal normal u
 75 T ISAAC surprised,afraid 1-2 normal normal,soft m
 76 N
-77 N,T NARRATOR,ISAAC surprised,afraid 0-2 normal normal u
+77 N,T ISAAC,NARRATOR surprised,afraid 0-2 normal normal u
 78 N
 79 N
 80 N
@@ -103,7 +103,7 @@
 85 N
 86 N
 87 N NARRATOR,LEAFA~,LEAFA HÃO HUYỀN~ happy,excited,neutral 0-1 normal normal,soft u
-88 N,T NARRATOR,LEAFA,LEAFA HÃO HUYỀN happy,excited,neutral 0-2 normal normal u
+88 N,T LEAFA,LEAFA HÃO HUYỀN,NARRATOR happy,excited,neutral 0-2 normal normal u
 89 N NARRATOR neutral,happy,excited 0-1 normal normal u
 90 N
 91 N
@@ -134,8 +134,8 @@
 116 D FERNANDO,FERNANDO FROST angry,neutral,sarcastic 0-2 normal normal m
 117 N
 118 N
-119 N,T NARRATOR,FERNANDO~,FERNANDO FROST~ neutral,surprised 0-1 normal normal u
-120 N,T NARRATOR,FERNANDO,FERNANDO FROST neutral,surprised,afraid 0-1 normal normal u
+119 N,T FERNANDO~,FERNANDO FROST~,NARRATOR neutral,surprised 0-1 normal normal u
+120 N,T FERNANDO,FERNANDO FROST,NARRATOR neutral,surprised,afraid 0-1 normal normal u
 121 N NARRATOR,LEAFA~,LEAFA HÃO HUYỀN~ sarcastic,happy,excited 0-2 normal normal u
 122 N
 123 N

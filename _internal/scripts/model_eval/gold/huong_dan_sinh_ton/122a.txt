@@ -53,7 +53,7 @@
 38 N
 39 N
 40 N NARRATOR neutral,happy 0-1 normal normal u
-41 N,T NARRATOR,ADEL,ADEL SERIS neutral,sad,tender 0-1 normal normal u
+41 N,T ADEL,ADEL SERIS,NARRATOR neutral,sad,tender 0-1 normal normal u
 42 N NARRATOR neutral,sad 0-1 normal normal u
 43 D LORTEL,LORTEL KEHELN sarcastic,happy,neutral 0-1 normal normal f
 44 N

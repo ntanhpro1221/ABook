@@ -32,7 +32,7 @@
 10 D MƯỜI CHÂN,NPC*~,UNKNOWN~,NARRATOR~ angry 2-3 normal,slow loud u
 11 N
 12 N
-13 N,T NARRATOR,NGƯỜI ĐƯA TANG~ neutral 0-1 normal normal u
+13 N,T NGƯỜI ĐƯA TANG~,NARRATOR neutral 0-1 normal normal u
 14 N
 15 D OH DOK-SEO,DOK-SEO afraid,surprised 2-3 fast loud f
 16 N
@@ -125,7 +125,7 @@
 103 D OH DOK-SEO,DOK-SEO neutral,excited 0-1 normal normal f
 104 D OH DOK-SEO,DOK-SEO neutral 0-1 normal normal f
 105 D NGƯỜI ĐƯA TANG neutral 0-1 normal normal m
-106 N,T NARRATOR,NGƯỜI ĐƯA TANG neutral 0-1 normal normal u
+106 N,T NGƯỜI ĐƯA TANG,NARRATOR neutral 0-1 normal normal u
 107 N
 108 D NGƯỜI ĐƯA TANG neutral 0-1 normal normal m
 109 D OH DOK-SEO,DOK-SEO surprised 0-1 normal normal f
@@ -157,14 +157,14 @@
 135 D OH DOK-SEO,DOK-SEO neutral 0-1 normal normal f
 136 N
 137 N
-138 N,T NARRATOR,NGƯỜI ĐƯA TANG~ neutral 0-1 normal normal u
+138 N,T NGƯỜI ĐƯA TANG~,NARRATOR neutral 0-1 normal normal u
 139 N
 140 N
-141 N,T NARRATOR,NGƯỜI ĐƯA TANG~ neutral 0-1 normal normal u
+141 N,T NGƯỜI ĐƯA TANG~,NARRATOR neutral 0-1 normal normal u
 142 N
 143 N
 144 N
-145 N,T NARRATOR,NGƯỜI ĐƯA TANG neutral 0-1 normal normal u
+145 N,T NGƯỜI ĐƯA TANG,NARRATOR neutral 0-1 normal normal u
 146 T NGƯỜI ĐƯA TANG neutral,surprised,tender 0-1 normal,slow normal,soft m
 147 N NARRATOR neutral,afraid,surprised 0-1 normal normal u
 148 N
@@ -172,7 +172,7 @@
 150 N
 151 N
 152 N
-153 N,T NARRATOR,NGƯỜI ĐƯA TANG~ neutral 0-1 normal normal u
+153 N,T NGƯỜI ĐƯA TANG~,NARRATOR neutral 0-1 normal normal u
 154 N
 155 N
 156 T NGƯỜI ĐƯA TANG neutral 0-1 normal normal m
@@ -210,9 +210,9 @@
 188 T NGƯỜI ĐƯA TANG neutral 0-1 normal normal m
 189 N
 190 T NGƯỜI ĐƯA TANG neutral,tender,happy 0-1 normal normal m
-191 N,T NARRATOR,NGƯỜI ĐƯA TANG neutral 0-1 normal normal u
+191 N,T NGƯỜI ĐƯA TANG,NARRATOR neutral 0-1 normal normal u
 192 N
-193 N,T NARRATOR,NGƯỜI ĐƯA TANG~ neutral 0-1 normal normal u
+193 N,T NGƯỜI ĐƯA TANG~,NARRATOR neutral 0-1 normal normal u
 194 N
 195 N NARRATOR neutral,happy 0-1 normal normal u
 196 N
@@ -220,13 +220,13 @@
 198 N
 199 D OH DOK-SEO,DOK-SEO angry,surprised,excited 1-2 fast,normal loud f
 200 N
-201 N,T NARRATOR,NGƯỜI ĐƯA TANG~ neutral 0-1 normal normal u
+201 N,T NGƯỜI ĐƯA TANG~,NARRATOR neutral 0-1 normal normal u
 202 N
 203 N
 204 D NGƯỜI ĐƯA TANG sarcastic,happy,neutral 0-1 normal normal m
-205 N,T NARRATOR,NGƯỜI ĐƯA TANG neutral,angry,sarcastic 0-1 normal normal u
+205 N,T NGƯỜI ĐƯA TANG,NARRATOR neutral,angry,sarcastic 0-1 normal normal u
 206 N
-207 N,T NARRATOR,NGƯỜI ĐƯA TANG~ neutral 0-1 normal normal u
+207 N,T NGƯỜI ĐƯA TANG~,NARRATOR neutral 0-1 normal normal u
 208 N
 209 D OH DOK-SEO,DOK-SEO surprised,excited 0-2 normal normal f
 210 D OH DOK-SEO,DOK-SEO surprised,excited 1-2 normal,fast normal,loud f
@@ -238,10 +238,10 @@
 216 N
 217 N
 218 T NGƯỜI ĐƯA TANG tender,neutral 0-1 normal,slow normal,soft m
-219 N,T NARRATOR,NGƯỜI ĐƯA TANG neutral,tender 0-1 normal normal u
-220 N,T NARRATOR,NGƯỜI ĐƯA TANG neutral,tender 0-1 normal normal u
-221 N,T NARRATOR,NGƯỜI ĐƯA TANG neutral,tender 0-1 normal normal u
-222 N,T NARRATOR,NGƯỜI ĐƯA TANG neutral,tender 0-1 normal normal u
+219 N,T NGƯỜI ĐƯA TANG,NARRATOR neutral,tender 0-1 normal normal u
+220 N,T NGƯỜI ĐƯA TANG,NARRATOR neutral,tender 0-1 normal normal u
+221 N,T NGƯỜI ĐƯA TANG,NARRATOR neutral,tender 0-1 normal normal u
+222 N,T NGƯỜI ĐƯA TANG,NARRATOR neutral,tender 0-1 normal normal u
 223 N
 224 D OH DOK-SEO,DOK-SEO neutral,sarcastic 0-1 normal normal f
 225 D NGƯỜI ĐƯA TANG neutral 0-1 normal normal m
@@ -251,8 +251,8 @@
 229 D OH DOK-SEO,DOK-SEO sarcastic,angry 0-1 normal,fast normal f
 230 N
 231 N
-232 N,T NARRATOR,NGƯỜI ĐƯA TANG neutral,sarcastic 0-1 normal normal u
+232 N,T NGƯỜI ĐƯA TANG,NARRATOR neutral,sarcastic 0-1 normal normal u
 233 N NARRATOR neutral,sad,tender 0-1 normal normal u
-234 N,T NARRATOR,NGƯỜI ĐƯA TANG neutral,sarcastic 0-1 normal normal u
-235 N,T NARRATOR,NGƯỜI ĐƯA TANG neutral,sarcastic 0-1 normal normal u
+234 N,T NGƯỜI ĐƯA TANG,NARRATOR neutral,sarcastic 0-1 normal normal u
+235 N,T NGƯỜI ĐƯA TANG,NARRATOR neutral,sarcastic 0-1 normal normal u
 236 N

@@ -34,12 +34,12 @@
 14 N NARRATOR neutral,afraid 0-1 normal normal u
 15 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI afraid,neutral,tender 0-1 normal normal m
 16 D SHIINA,MAI,SHIINA MAI,MAI SHIINA afraid,neutral,tender 0-1 normal normal,soft f
-17 N,T NARRATOR,GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral,afraid 0-1 normal normal u
-18 N,T NARRATOR,GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral,afraid,sad 0-1 normal normal u
+17 N,T GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI,NARRATOR neutral,afraid 0-1 normal normal u
+18 N,T GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI,NARRATOR neutral,afraid,sad 0-1 normal normal u
 19 N
-20 N,T NARRATOR,GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI sarcastic,neutral 0-1 normal normal u
-21 N,T NARRATOR,GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI sarcastic,angry,neutral 0-1 normal normal u
-22 N,T NARRATOR,GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI sarcastic,neutral 0-1 normal normal u
+20 N,T GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI,NARRATOR sarcastic,neutral 0-1 normal normal u
+21 N,T GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI,NARRATOR sarcastic,angry,neutral 0-1 normal normal u
+22 N,T GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI,NARRATOR sarcastic,neutral 0-1 normal normal u
 23 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral 0-1 normal normal m
 24 D SHIINA,MAI,SHIINA MAI,MAI SHIINA happy,sarcastic,neutral 0-1 normal normal f
 25 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI angry,sarcastic 0-1 normal,fast normal,loud m
@@ -62,11 +62,11 @@
 42 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI happy,excited,neutral 0-1 normal normal m
 43 D SHIINA,MAI,SHIINA MAI,MAI SHIINA neutral 0-1 normal normal f
 44 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI sarcastic,neutral,angry 0-1 normal normal m
-45 N,T NARRATOR,GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral,tired 0-1 normal normal u
+45 N,T GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI,NARRATOR neutral,tired 0-1 normal normal u
 46 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral,tender 0-1 normal normal m
-47 N,T NARRATOR,GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral,afraid 0-1 normal normal u
+47 N,T GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI,NARRATOR neutral,afraid 0-1 normal normal u
 48 N
-49 N,T NARRATOR,GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral 0-1 normal normal u
+49 N,T GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI,NARRATOR neutral 0-1 normal normal u
 50 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI tender,neutral 0-1 normal normal m
 51 N
 52 N
@@ -102,8 +102,8 @@
 82 D HINA,KIRISHIMA,KIRISHIMA HINA,HINA KIRISHIMA happy,neutral 0-1 normal normal f
 83 D SHIINA,MAI,SHIINA MAI,MAI SHIINA afraid,neutral 0-1 normal,slow soft,normal f
 84 N
-85 N,T NARRATOR,GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral 0-1 normal normal u
-86 N,T NARRATOR,GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral,sad 0-1 normal normal u
+85 N,T GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI,NARRATOR neutral 0-1 normal normal u
+86 N,T GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI,NARRATOR neutral,sad 0-1 normal normal u
 87 N NARRATOR neutral,happy 0-1 normal normal u
 88 D HINA,KIRISHIMA,KIRISHIMA HINA,HINA KIRISHIMA excited,happy 0-2 normal normal,loud f
 89 N
@@ -168,19 +168,19 @@
 148 N
 149 N NARRATOR neutral,happy 0-1 normal normal u
 150 T,N,D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI,NARRATOR,SHIINA~,MAI~,SHIINA MAI~,MAI SHIINA~ neutral,sad,sarcastic 0-1 normal,slow normal,soft m
-151 N,T NARRATOR,GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral,sarcastic 0-1 normal normal u
+151 N,T GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI,NARRATOR neutral,sarcastic 0-1 normal normal u
 152 N NARRATOR neutral,happy 0-1 normal normal u
 153 D SHIINA,MAI,SHIINA MAI,MAI SHIINA,GODOU~,SHIRAISHI GODOU~,GODOU SHIRAISHI~ happy,neutral 0-1 normal normal,soft f
 154 D HINA,KIRISHIMA,KIRISHIMA HINA,HINA KIRISHIMA,YUUKA,SHINDOU,SHINDOU YUUKA,YUUKA SHINDOU happy,excited 0-1 normal normal,loud f
 155 N
-156 N,T NARRATOR,GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral,tired 0-1 normal normal u
+156 N,T GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI,NARRATOR neutral,tired 0-1 normal normal u
 157 D SHIINA,MAI,SHIINA MAI,MAI SHIINA afraid,neutral 0-1 normal normal,soft f
 158 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral,sarcastic 0-1 normal normal m
 159 D SHIINA,MAI,SHIINA MAI,MAI SHIINA surprised,sad,angry 0-1 normal,fast normal f
 160 D GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI tired,neutral 0-1 normal normal m
 161 N NARRATOR neutral,sad 0-1 normal normal u
 162 N
-163 N,T NARRATOR,GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI neutral 0-1 normal normal u
+163 N,T GODOU,SHIRAISHI GODOU,GODOU SHIRAISHI,NARRATOR neutral 0-1 normal normal u
 164 N
 165 N NARRATOR neutral,happy 0-1 normal normal u
 166 N NARRATOR neutral,happy 0-1 normal normal u

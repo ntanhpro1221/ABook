@@ -34,7 +34,7 @@
 29 N
 30 D LILLIAN happy,tender 0-1 normal normal f
 31 D LILLIAN happy,tender 0-1 normal normal f
-32 N,T NARRATOR,LUCIEN~ happy,sarcastic,neutral 0-1 normal normal u
+32 N,T LUCIEN~,NARRATOR happy,sarcastic,neutral 0-1 normal normal u
 33 N
 34 N NARRATOR neutral,sarcastic 0-1 normal normal u
 35 D JULIE,NPC*~ happy,excited 0-1 normal normal f

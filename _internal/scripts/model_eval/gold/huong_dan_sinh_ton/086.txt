@@ -48,8 +48,8 @@
 28 N
 29 N
 30 N
-31 N,T NARRATOR,CLAVIUS~,CLAVIUS NORTONDALE~ neutral 0-1 normal normal u
-32 N,T NARRATOR,CLAVIUS,CLAVIUS NORTONDALE neutral,sad 0-1 normal normal u
+31 N,T CLAVIUS~,CLAVIUS NORTONDALE~,NARRATOR neutral 0-1 normal normal u
+32 N,T CLAVIUS,CLAVIUS NORTONDALE,NARRATOR neutral,sad 0-1 normal normal u
 33 N
 34 N
 35 N
@@ -61,7 +61,7 @@
 41 D CLAVIUS,CLAVIUS NORTONDALE sad,angry,tired 1-2 normal,slow soft,normal m
 42 N
 43 N
-44 N,T NARRATOR,CLAVIUS,CLAVIUS NORTONDALE sad,sarcastic,neutral 0-1 normal normal u
+44 N,T CLAVIUS,CLAVIUS NORTONDALE,NARRATOR sad,sarcastic,neutral 0-1 normal normal u
 45 N
 46 D NARRATOR neutral,sarcastic 0-1 normal normal u
 47 N
@@ -102,7 +102,7 @@
 82 D ED ROSTAILER,ED sarcastic,neutral 0-1 normal normal m
 83 D LORTEL,LORTEL KEHELN happy,sarcastic 0-1 normal normal f
 84 N
-85 N,T NARRATOR,LORTEL~,LORTEL KEHELN~ happy,neutral 0-1 normal normal u
+85 N,T LORTEL~,LORTEL KEHELN~,NARRATOR happy,neutral 0-1 normal normal u
 86 N
 87 D LORTEL,LORTEL KEHELN neutral,sarcastic 0-1 normal normal f
 88 D ED ROSTAILER,ED surprised,neutral 0-1 normal normal m
@@ -177,7 +177,7 @@
 157 D LORTEL,LORTEL KEHELN sarcastic,happy 0-1 normal normal f
 158 D LORTEL,LORTEL KEHELN sarcastic,happy,tender 0-1 normal normal f
 159 N
-160 N,T NARRATOR,LORTEL~,LORTEL KEHELN~ surprised,neutral 0-1 normal normal u
+160 N,T LORTEL~,LORTEL KEHELN~,NARRATOR surprised,neutral 0-1 normal normal u
 161 N
 162 D LORTEL,LORTEL KEHELN sarcastic,sad,happy 0-1 normal normal f
 163 D ED ROSTAILER,ED neutral,tired 0-1 normal normal m
@@ -227,7 +227,7 @@
 207 N
 208 N
 209 N NARRATOR neutral,afraid,surprised 0-1 normal normal u
-210 N,T NARRATOR,ED ROSTAILER~,ED~ neutral,sarcastic,surprised 0-1 normal normal u
+210 N,T ED ROSTAILER~,ED~,NARRATOR neutral,sarcastic,surprised 0-1 normal normal u
 211 D LORTEL,LORTEL KEHELN afraid,sad,surprised 1-2 slow,normal soft,normal f
 212 N
 213 D ZIX,ZIX EFFELSTEIN,NPC*~ neutral,happy 0-1 normal normal m
@@ -253,7 +253,7 @@
 233 D ZIX,ZIX EFFELSTEIN neutral 0-1 normal normal m
 234 D ED ROSTAILER,ED neutral,tender 0-1 normal normal m
 235 D ZIX,ZIX EFFELSTEIN neutral,happy 0-1 normal normal m
-236 N,T NARRATOR,ED ROSTAILER~,ED~ neutral,sarcastic,tired 0-1 normal normal u
+236 N,T ED ROSTAILER~,ED~,NARRATOR neutral,sarcastic,tired 0-1 normal normal u
 237 D ED ROSTAILER,ED neutral 0-1 normal normal m
 238 D ZIX,ZIX EFFELSTEIN surprised,neutral 0-1 normal normal m
 239 D ED ROSTAILER,ED neutral,happy 0-1 normal normal m
@@ -267,9 +267,9 @@
 247 N
 248 N
 249 D ZIX,ZIX EFFELSTEIN,NPC*~ neutral,tired,whispering 0-1 normal,slow soft,normal m
-250 N,T NARRATOR,ZIX,ZIX EFFELSTEIN neutral,tired 0-1 normal normal u
+250 N,T ZIX,ZIX EFFELSTEIN,NARRATOR neutral,tired 0-1 normal normal u
 251 N
-252 N,T NARRATOR,ZIX,ZIX EFFELSTEIN neutral 0-1 normal normal u
+252 N,T ZIX,ZIX EFFELSTEIN,NARRATOR neutral 0-1 normal normal u
 253 N
 254 N
 255 N
