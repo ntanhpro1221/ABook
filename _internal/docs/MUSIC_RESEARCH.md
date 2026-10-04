@@ -826,6 +826,26 @@ Mục đích: trả lời dứt điểm hai câu mà bộ 5 (9 chương) và 5B 
 - Tầng do agent xếp có thể sai vài cuốn; sai tầng chỉ ảnh hưởng độ đa dạng, không ảnh hưởng luật thắng.
 - Đã nhận: Qwen3-Omni-EN là thước nghe chính. Hai bất đồng (vet so app; gems so app theo thước đọc) ghi nguyên như trên.
 
+**KẾT QUẢ BỘ CẢNH 6 (04-10 08:xx; Corpus 81971442; `results/set6_score.txt`, `results/set6_gate.txt`):**
+- Đáp án: 20 chương, 150 đoạn, 5,54 giờ sách. LLM qwen3.5:9b, 0 lượt hỏng định dạng.
+- **Câu (1): `app + llmVT` THẮNG.** r VET TB theo chương +0,256 so `app` +0,155 (+0,101), thắng 16/20 chương; luật là
+  +0,05 và ≥ 14/20.
+  - Ghi lại: `app + llm` +0,084, 12/20. `oracle + llmVT` so `oracle` +0,130, 16/20.
+  - Ghi lại: `app + bwsE` so `app` (E) +0,191 nhưng chỉ thắng 13/20. `app + llmVT + bwsE` so `app` +0,165, 15/20.
+    bwsE lần này cùng chiều; nó đã đảo chiều ở 5B nên vẫn không phải ứng viên.
+  - Chi phí trên máy chủ sách (RTX 8 GB, Ollama):
+    - 123 lượt gọi cho 20 chương, tức khoảng 22 lượt mỗi giờ sách; 3,6 giây mỗi lượt;
+    - 441 giây GPU, khoảng 80 giây mỗi giờ sách;
+    - VRAM đỉnh 5,50 GB (`/api/ps`), cùng model với bước phân tích nên không cần tải thêm model.
+  - → Đề xuất đưa `llmVT` vào app (V, T của đoạn lấy từ LLM đọc cả đoạn; E giữ nhãn câu). Lead / chủ sách quyết.
+- **Câu (2): KHÔNG nguồn nào qua cổng → Lớp 2 vẫn TẮT.**
+  - Trần cosine A–B 0,904, ngưỡng 0,813. Số nhãn ≥ 0,5 mỗi đoạn: A 1,62, B 1,64, người (TB A/B) 1,47.
+  - (a) Nhãn câu app: cosine 0,370 (41% trần); 0,08 nhãn so 1,47 (lệch 95%) → không qua.
+  - (b) LLM thô: cosine 0,729 (81% trần); 3,95 nhãn (lệch 170%) → không qua.
+  - (b) LLM hiệu chỉnh γ, học chéo theo truyện: cosine 0,759 (84% trần); 1,67 nhãn (lệch 14%) → không qua.
+    Nó đạt điều kiện số nhãn nhưng thiếu khoảng 6 điểm phần trăm trần ở cosine.
+  - Lượt `emo`: 150 lượt, 7,6 giây mỗi lượt.
+
 
 **GHI TRƯỚC - NỚI NGƯỠNG NỀN ÊM (02-10 23:xx, Lead duyệt; từ E1: calm đứng thứ hai, hơn app):**
 - **Giả thuyết:** kéo về nền êm (CALM_TARGET) cho nhiều đoạn hơn làm nhạc hợp hơn. Hiện chỉ kéo khi confidence < WEAK_MOOD
