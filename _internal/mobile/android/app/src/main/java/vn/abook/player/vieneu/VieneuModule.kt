@@ -12,7 +12,7 @@ import java.io.IOException
 /**
  * "Giọng VieNeu" on the phone (docs/LISTEN_ANYTHING.md section 3): the same voices the desktop module (`abook/webui/vieneu_module.py`) offers,
  * downloaded only when the listener taps, never shipped in the APK. The same pinned upstream files as the desktop (Hugging Face commits, the
- * PyPI wheels of sea-g2p and vieneu 3.8.1, SHA-256 + size each), plus what only the phone needs: ONNX Runtime's native libraries (shared with
+ * PyPI wheels of sea-g2p and vieneu 3.8.3, SHA-256 + size each), plus what only the phone needs: ONNX Runtime's native libraries (shared with
  * "Gói nhạc": when that is on the phone it is used and not counted) and sea-g2p built as a JNI library (scripts/prepare_sea_g2p_android.py).
  *
  * Choices: Nano ("Khuyên dùng" on phones: measured 03-10 neither tier keeps up live on a mid-range phone, Nano is lighter) and Turbo (only
@@ -348,12 +348,12 @@ class VieneuModule(
 
         /** The 63 MB dictionary, taken out of the very wheel the desktop downloads (vieneu_module.G2P). */
         val DICTIONARY = Part("g2p/sea_g2p.bin", "4346e690d0711ebc5231e7a42c5c88aaf6e40377e894b4617c018fd81c6f4096", 62_829_820,
-            "https://files.pythonhosted.org/packages/98/2d/4553efd8f340f332eb5976118e441b09ec95cf60d27fd1ad04240d885905/sea_g2p-0.9.1-cp310-abi3-win_amd64.whl",
-            Packed("b6d7c09afb83750abe61735ad2e60f5c20b4cdfac30b1b9b1904de9f64f10c32", 27_531_798, "sea_g2p/sea_g2p.bin"), label = "Bộ đọc chữ tiếng Việt")
+            "https://files.pythonhosted.org/packages/73/57/58916050fe1218c106f89d4fa3b8f18f4ef5d264e6ec5906020f2f1dfcf2/sea_g2p-0.10.0-cp310-abi3-win_amd64.whl",
+            Packed("118d471796ff4fafe5cdcf1f75431a63e76ec5c0e7786cb7b3ff876d6d5292ea", 27_530_792, "sea_g2p/sea_g2p.bin"), label = "Bộ đọc chữ tiếng Việt")
 
-        /** The vieneu 3.8.1 wheel (vieneu_module.VOICES), kept whole: the two voice lists are read out of it. */
-        val VOICES = Part("voices/vieneu-3.8.1-py3-none-any.whl", "bf24f88ec95f96459756d897b04a118e923536d36bcfcdccd13ba6f8f7d580ba", 2_642_947,
-            "https://files.pythonhosted.org/packages/35/03/83c6564f834b90b9fe200c4381a8d8fc506c0697233b1a5b2c3d06d9899f/vieneu-3.8.1-py3-none-any.whl",
+        /** The vieneu 3.8.3 wheel (vieneu_module.VOICES), kept whole: the two voice lists are read out of it. */
+        val VOICES = Part("voices/vieneu-3.8.3-py3-none-any.whl", "7388d166e65746f5bb075bf8094d324f8131a82393680b712260d6f2f983ef06", 2_643_059,
+            "https://files.pythonhosted.org/packages/fc/9c/e7b624412b8a734d6b1cd8ca6209f88a309464b05393c40f2e316ec90885/vieneu-3.8.3-py3-none-any.whl",
             label = "Danh sách giọng")
         val VOICE_MEMBERS = mapOf("turbo" to "vieneu/assets/voices_v3_turbo.json", "nano" to "vieneu/assets/voices_v3_nano.json")
 
