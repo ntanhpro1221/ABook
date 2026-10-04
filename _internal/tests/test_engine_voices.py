@@ -18,7 +18,7 @@ import numpy as np
 import pytest
 
 import abook.tts as tts_module
-from abook import voice_balance
+from abook import voice_balance, voice_catalog
 from abook.audio_io import VOICE_BALANCE_FIELD, AudioQualityError
 from abook.character_registry import (
     PresetAllocator,
@@ -135,6 +135,33 @@ def test_automatic_casting_is_exactly_what_it_was() -> None:
     assert hashlib.sha256(data.encode()).hexdigest() == ALLOCATOR_ON_MAIN
     engine_names = {voice["name"] for voice in ENGINE_VOICES}
     assert not engine_names & {name for name, _ratio, _pitch in picks}
+
+
+def test_every_vieneu_voice_has_one_fixed_cast_rank() -> None:
+    names = [str(preset["name"]) for preset in voice_catalog.VIENEU_PRESETS]
+    assert sorted(names) == sorted(voice_catalog.CAST_ORDER)
+    assert len(set(voice_catalog.CAST_ORDER)) == len(voice_catalog.CAST_ORDER)
+
+
+@pytest.mark.parametrize("old", ["Thiện Minh", "Adam", "Đức Trí"])
+def test_renaming_a_voice_keeps_its_place_in_casting(old: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    # VieNeu đổi tên giọng thì tên được sửa tại chỗ trong VIENEU_PRESETS và CAST_ORDER: thứ tự bể giọng và người kể giữ nguyên
+    # dù tên mới đứng chỗ khác trong bảng chữ cái.
+    def order() -> list[list[str]]:
+        return [[str(p["name"]) for p in casting_presets(g)] for g in ("male", "female")] + [
+            [str(p["name"]) for p in narrator_presets()]
+        ]
+
+    before = order()
+    for new in ("Aaa thử", "Zzz thử"):
+        with monkeypatch.context() as patch:
+            presets = tuple({**p, "name": new} if p["name"] == old else p for p in voice_catalog.VIENEU_PRESETS)
+            cast = tuple(new if name == old else name for name in voice_catalog.CAST_ORDER)
+            patch.setattr(voice_catalog, "VIENEU_PRESETS", presets)
+            patch.setattr(voice_catalog, "CAST_ORDER", cast)
+            patch.setattr(voice_catalog, "_CAST_RANK", {name: rank for rank, name in enumerate(cast)})
+            after = [[old if name == new else name for name in names] for names in order()]
+        assert after == before, new
 
 
 # --- người nghe chọn tay ------------------------------------------------------------------------

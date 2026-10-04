@@ -323,6 +323,21 @@ VIENEU_PRESETS: tuple[dict[str, str], ...] = (
     },
 )
 
+# Chỗ phân xử cuối của thứ tự giọng (`preset_priority`, `casting_preset_priority`): một thứ tự CỐ ĐỊNH, không theo tên hiển
+# thị - VieNeu đổi tên giọng (3.8.2: Anh Khôi -> Thiện Minh...) thì sửa tên tại chỗ, giữ vị trí, phân vai không đổi. Đặt
+# 04-10 bằng đúng thứ tự tên (casefold) sau lần đổi tên 3.8.2. Giọng mới thêm vào cuối.
+CAST_ORDER: tuple[str, ...] = (
+    "Adam", "Adam bựa", "Hải Đăng", "Kim Thanh", "Mai Anh", "Minh Triết", "Minh Đức", "Mỹ Duyên", "Ngọc Huyền", "Ngọc Linh",
+    "Ngọc Trân", "Phạm Tuyên", "Quang Sơn", "Quốc Tuấn", "Quỳnh Anh", "Thanh Bình", "Thiền Tâm Đức", "Thiện Minh", "Thái Sơn",
+    "Thùy Dung", "Thục Đoan", "Trúc Ly", "Xuân Vĩnh", "Đoan Trang", "Đức Trí",
+)
+_CAST_RANK = {name: rank for rank, name in enumerate(CAST_ORDER)}
+
+
+def cast_rank(name: str) -> int:
+    """Vị trí cố định của giọng trong `CAST_ORDER`; giọng không có trong đó xếp sau mọi giọng có."""
+    return _CAST_RANK.get(name, len(CAST_ORDER))
+
 
 ENGINE_VIENEU = "vieneu"
 ENGINE_ZEROTTS = "zerotts"
@@ -432,22 +447,26 @@ def castable_engine_voices(gender: str | None = None) -> list[dict[str, Any]]:
     return [voice for voice in ENGINE_VOICES if voice["castable"] and (not gender or voice["gender"] == gender)]
 
 
-def preset_priority(preset: dict[str, Any]) -> tuple[int, int, str]:
+def preset_priority(preset: dict[str, Any]) -> tuple[int, int, int, str]:
+    name = str(preset.get("name", ""))
     return (
         REGION_PRIORITY.get(str(preset.get("region", "")), len(REGION_PRIORITY)),
         STYLE_PRIORITY.get(str(preset.get("style", "")), len(STYLE_PRIORITY)),
-        str(preset.get("name", "")).casefold(),
+        cast_rank(name),
+        name.casefold(),
     )
 
 
-def casting_preset_priority(preset: dict[str, Any]) -> tuple[int, int, int, str]:
+def casting_preset_priority(preset: dict[str, Any]) -> tuple[int, int, int, int, str]:
     region = str(preset.get("region", ""))
     style = str(preset.get("style", ""))
+    name = str(preset.get("name", ""))
     return (
         0 if style == STYLE_NATURAL else 1,
         REGION_PRIORITY.get(region, len(REGION_PRIORITY)),
         STYLE_PRIORITY.get(style, len(STYLE_PRIORITY)),
-        str(preset.get("name", "")).casefold(),
+        cast_rank(name),
+        name.casefold(),
     )
 
 
