@@ -193,7 +193,8 @@ Luật rút ra (chung các lần):
 - w đầu từ → **gu** CHỈ khi nguyên âm sau là âm o (/ɔ/, /ɔː/, /oʊ/; /ɑ/ viết o): Walt → guốt, như won → guôn của tiếng Hàn; các từ
   khác cùng dạng có cờ `analogy:w_gu` (Walter → Guôn-tơ). w trước âm khác giữ oa / uy / oe (Oa-sinh-tơn - chủ sách xác nhận, Uy-li-am,
   Oen-đi). "guô" chỉ đứng trước phụ âm cuối nên âm tiết mở giữ w như cũ (Warrior → Oa-ri-ơ). Nửa sau của từ ghép không
-  áp (sandworm → xan-uơm).
+  áp (sandworm → xan-u-ơm). Vần ghép w + nguyên âm mà tiếng Việt không có (uên, oáp, oép, uơm) thì uê → oe (Wayne → Oen, như Oen-đi), còn lại
+  w thành âm tiết u riêng (web → u-ép); qu + i (không phải y) khi vần khép bằng phụ âm khác t / nh (queen → quin, quick → quích; quýt, quỳnh giữ y).
 - /aɪ/ + m → **am** (xờ-lam, tham); /aɪ/ + phụ âm khác bỏ phụ âm (nai, phai).
 - /æŋk/ → **anh** (tanh; rank → ranh, thank → thanh theo đó, cờ `analogy:ank`). /iː/ → i (tim).
 - -er cuối → ơ thanh NGANG (mát-tơ).

@@ -3,7 +3,7 @@
 Với mỗi điểm thử mọi biến thể hợp lý, đếm số dạng có nguồn (tests/romanization_evidence.py) mà cách đọc trùng một dạng nguồn. Trọng số: ca của chủ sách
 x100, Bộ Ngoại giao x2, sách giáo khoa x1, cộng đồng x0. Các điểm ràng buộc nhau nên quét VÉT CẠN chung theo nhóm (nhóm Nhật và nhóm Hàn, hai nhóm không
 dùng chung giá trị nào). Hoà điểm thì lấy tổ hợp mà các biến thể đứng đầu danh sách VALUES nhiều nhất (xếp theo lý do ngữ âm). Biến thể làm bộ kiểm âm
-tiết (`_valid_vietnamese_spoken_form`) từ chối thêm tên so với biến thể ít bị từ chối nhất của cùng điểm (kể cả tên ngoài nguồn: ca edge và tên thật) thì
+tiết (`vietnamese_syllable.valid_spoken_form`) từ chối thêm tên so với biến thể ít bị từ chối nhất của cùng điểm (kể cả tên ngoài nguồn: ca edge và tên thật) thì
 không bao giờ được chọn, chỉ đếm để biết.
 
 Không quét (chủ sách 04-10 đã chốt, cố định): u Nhật -> u ở mọi chỗ, e Nhật -> e, ei -> ây, ou viết ra -> âu, y + nguyên âm -> gi, tsu -> xu, fu -> phu, g + i -> ghi, ee / ii / aa -> e / i / a, o không phụ âm đầu -> o, bật hơi Hàn -> thường, s Hàn -> x, j Hàn -> gi, eo, wo, hậu tố nối

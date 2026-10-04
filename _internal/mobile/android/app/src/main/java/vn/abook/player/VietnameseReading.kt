@@ -40,7 +40,7 @@ object VietnameseReading {
             "(" + CODAS.sortedByDescending { it.length }.joinToString("|") + ")?",
     )
 
-    private fun words(text: String): List<String> = text.split(Regex("[\\p{Z}\\s\\u001c-\\u001f\\u0085]+")).filter { it.isNotEmpty() }
+    internal fun words(text: String): List<String> = text.split(Regex("[\\p{Z}\\s\\u001c-\\u001f\\u0085]+")).filter { it.isNotEmpty() }
 
     /** `str.casefold()` cho chữ Latin: hạ -> hoa -> hạ (ß thành ss, như Python). */
     fun casefold(text: String): String = text.lowercase(Locale.ROOT).uppercase(Locale.ROOT).lowercase(Locale.ROOT)
