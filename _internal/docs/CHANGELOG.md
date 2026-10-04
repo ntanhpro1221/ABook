@@ -15,6 +15,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   phân vai tự động vẫn y như trước. Tốc độ và độ to của các giọng này được đưa về cùng mức với giọng VieNeu; câu ngắn của Supertonic đọc chậm lại
   cho khỏi nuốt chữ, câu dài của ZeroTTS đọc từng đoạn cho đỡ tốn bộ nhớ.
 
+- Sách làm trong Studio đọc tên theo cùng cách với "Nghe ngay": cuốn gốc Nhật / Hàn đọc tên theo phiên âm chủ sách đã chốt ("Haruto-kun" thành "Ha-ru-tô-cun", "Kyouko" thành
+  "Ki-âu-cô"), còn tên tiếng Anh như "Kate", "Michael", "Washington" được đọc nguyên tiếng Anh thay vì Việt hoá thành "Mai-cồ". Cách đọc bạn đã chọn cho một tên không đổi.
 - "Nghe ngay" (máy tính và điện thoại) đọc thêm vài kiểu viết tên Nhật / Hàn theo ý chủ sách: "Ohto" thành "Ô-tô", "Ohka" thành "Ô-ca", "Sanjyo" thành "Xan-giô", "Hiiraghi" thành "Hi-ra-ghi", "tokki" thành "tô-ki", "Gangwon" thành "Cang-guôn"; tên "Gesunoh", "Theia", "Fina", "Tio" đọc cố định ("Ghét-xu-nô", "Thi-a", "Phi-na", "Ti-ô"). Chữ hiện trên màn hình không đổi.
 - Thêm một lượt tên Nhật / Hàn theo tai chủ sách: "Shinomiya" thành "Si-nô-mi-a", "Futayo" thành "Phu-ta-giô", "Koizumi" thành "Coi-du-mi", "Yejin" thành "Gie-gin",
   "Chaeyeon" thành "Che-gion", "oppa" thành "óp-pa", "unnie" thành "un-ni".
