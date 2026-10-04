@@ -5,12 +5,12 @@ import java.text.Normalizer
 import java.util.Locale
 import java.util.zip.GZIPInputStream
 import vn.abook.player.BookEdits
-import vn.abook.player.VietnameseReading
+import vn.abook.player.VietnameseSyllable
 
 /**
  * Việt hoá một từ / tên tiếng Anh thành âm tiết tiếng Việt cho máy đọc CHỈ nói được âm tiết Việt, theo docs/READING_FOREIGN_NAMES.md
  * mục 1 và 4 - bản Kotlin y hệt `abook/english_vi.py` (cùng đọc tests/fixtures/english_vi/cases.json, sinh bằng
- * scripts/build_english_vi_fixture.py: đổi một bên là phải đổi cả hai). Mỗi âm tiết đầu ra phải qua `VietnameseReading.validSpokenForm`.
+ * scripts/build_english_vi_fixture.py: đổi một bên là phải đổi cả hai). Mỗi âm tiết đầu ra phải qua `VietnameseSyllable.validSpokenForm`.
  * CHƯA nối vào đường đọc.
  *
  * Ba tầng: bảng ghi đè (chủ sách + từ mượn đã vào từ điển); đường âm vị khi có từ điển phát âm (english_phones.txt.gz - điện thoại tải
@@ -554,10 +554,19 @@ object EnglishVi {
         return Triple(run.dropLast(1), run.last(), glide)
     }
 
+    /** Âm tiết ghép ra có là âm tiết tiếng Việt không. */
+    private fun fits(letter: String, nucleus: String, coda: String, grave: Boolean): Boolean =
+        VietnameseSyllable.validSyllable(render(Syl(letter, nucleus, coda, grave)))
+
     private fun emit(out: MutableList<Syl>, onset: String, glide: String, nucleus: String, coda: String, grave: Boolean) {
         var letter = if (onset.isNotEmpty() && onset != "tr") onsetLetter(onset) else onset
         if (glide == "W") {
-            val joined = if (nucleus == "ô" && coda.isNotEmpty()) "uô" else glideW(nucleus) // uô chỉ trước phụ âm cuối: Walt -> Uôn
+            var joined = if (nucleus == "ô" && coda.isNotEmpty()) "uô" else glideW(nucleus) // uô chỉ trước phụ âm cuối: Walt -> Uôn
+            if (joined != null && !fits(letter, joined, coda, grave)) {
+                // vần ghép không có trong tiếng Việt (uên, oáp, oép): uê -> oe (Wayne -> Oen), còn lại w thành âm tiết u riêng (Dwarf -> Đu-óp)
+                val oe = "oe" + nucleus.substring(1)
+                joined = if (joined == "uê" && fits(letter, oe, coda, grave)) oe else null
+            }
             if (joined != null) {
                 out.add(Syl(letter, joined, coda, grave))
                 return
@@ -604,6 +613,7 @@ object EnglishVi {
                 if (glide != null) {
                     onset = "qu"
                     nucleus = nucleus.substring(1)
+                    if (nucleus == "y" && coda != "" && coda != "t" && coda != "nh") nucleus = "i" // quy, quýt, quỳnh nhưng quin, quích
                 } else {
                     onset = if (nucleus.take(1) in FRONT) "k" else "c"
                 }
@@ -626,7 +636,7 @@ object EnglishVi {
 
     private fun validated(syllables: List<Syl>, capital: Boolean): String? {
         val pieces = syllables.map { render(it) }
-        if (pieces.isEmpty() || pieces.any { !VietnameseReading.validSpokenForm("", it) }) return null
+        if (pieces.isEmpty() || pieces.any { !VietnameseSyllable.validSpokenForm(it) }) return null
         val word = pieces.joinToString("-")
         return if (capital) word.substring(0, 1).uppercase(Locale.ROOT) + word.substring(1) else word
     }

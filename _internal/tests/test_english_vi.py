@@ -99,13 +99,13 @@ def test_tally_of_sourced_forms_by_kind():
     ("day", "đây"), ("name", "nêm"), ("make", "mếch"), ("crime", "cờ-ram"), ("five", "phai"), ("town", "tao"), ("Yorktown", "I-oóc-tao"),
     ("rank", "ranh"), ("thank", "thanh"),
     # w / y bán âm, qu, ng không mở âm tiết, r của ơ trước nguyên âm
-    ("William", "Uy-li-am"), ("queen", "quyn"), ("you", "iu"), ("Hemingway", "He-minh-uây"), ("Colorado", "Co-lơ-ra-đô"),
+    ("William", "Uy-li-am"), ("queen", "quin"), ("you", "iu"), ("Hemingway", "He-minh-uây"), ("Colorado", "Co-lơ-ra-đô"),
     # phụ âm cuối hữu thanh / xát -> tắc + sắc (Bớt, Tô-mát); r cuối bỏ; cụm cuối giữ một
     ("Bird", "Bớt"), ("bad", "bát"), ("love", "lắp"), ("York", "I-oóc"), ("first", "phớt"),
     # tên ngắn một phụ âm đầu + tắc + e câm theo mặt chữ, chỉ với tên viết hoa
     ("Coke", "Co-ke"), ("Nate", "Na-te"), ("Shake", "Sa-ke"), ("Lace", "La-xe"), ("Cale", "Ca-le"),
     # /eɪ/ + t -> êt, /eɪ/ + s cuối -> ây; /aɪər/ -> ai; /ɔːl/ -> ôn; từ ghép không có trong từ điển đọc từng phần
-    ("gate", "ghết"), ("fire", "phai"), ("call", "côn"), ("sandworm", "xan-uơm"), ("water", "guốt-tơ"), ("Walter", "Guôn-tơ"), ("Warrior", "Oa-ri-ơ"),
+    ("gate", "ghết"), ("fire", "phai"), ("call", "côn"), ("sandworm", "xan-u-ơm"), ("water", "guốt-tơ"), ("Walter", "Guôn-tơ"), ("Warrior", "Oa-ri-ơ"),
     # tên ngắn e câm: âm mũi theo âm vị (Dane), g + e cứng (Page); tắc + l / r giữa từ -> Cờ huyền; w đầu từ -> gu
     ("Dane", "Đên"), ("Page", "Pa-ghe"), ("tablet", "ta-bờ-lét"), ("Andrew", "An-đờ-ru"),
     # đường chính tả (không có trong từ điển)

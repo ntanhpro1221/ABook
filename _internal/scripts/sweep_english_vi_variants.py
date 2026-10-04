@@ -3,7 +3,7 @@
 Với mỗi điểm thử mọi biến thể, đếm số dạng có nguồn (tests/english_vi_evidence.py) mà cách đọc của LUẬT (bảng ghi đè tắt đi) trùng một dạng
 nguồn, đủ thanh. Trọng số: chủ sách x100, văn bản nhà nước x2, SGK / báo x1, cộng đồng x0. Các điểm ràng buộc nhau nên quét VÉT CẠN chung
 theo nhóm (nguyên âm, phụ âm). Hoà điểm thì lấy tổ hợp mà các biến thể đứng đầu danh sách VALUES nhiều nhất (xếp theo lý do ngữ âm / theo
-quy ước). Biến thể làm bộ kiểm âm tiết (`_valid_vietnamese_spoken_form`) từ chối thêm từ so với biến thể ít bị từ chối nhất của cùng điểm
+quy ước). Biến thể làm bộ kiểm âm tiết (`vietnamese_syllable.valid_spoken_form`) từ chối thêm từ so với biến thể ít bị từ chối nhất của cùng điểm
 (trên dạng nguồn và ~300 từ chạy thử) thì không được chọn, chỉ đếm để biết.
 
     runtime/.venv/Scripts/python.exe scripts/sweep_english_vi_variants.py

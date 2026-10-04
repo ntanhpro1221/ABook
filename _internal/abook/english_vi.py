@@ -15,7 +15,7 @@ Ba tầng (luật thuần trước, thuật toán sau; tầng LLM làm sau):
              cuối, oo, ee, ea, ay, y cuối...) ra cùng dạng ARPAbet rồi đi chung đường trên. Nguyên âm đơn đọc theo mặt chữ (a e i o u),
              vì gần như mọi từ đi đường này là tên tự chế.
 
-`vietnamized_english(word)` trả cách đọc nối gạch hay None (chữ lạ, viết hoa lạ / toàn hoa, hay có âm tiết mà `_valid_vietnamese_spoken_form`
+`vietnamized_english(word)` trả cách đọc nối gạch hay None (chữ lạ, viết hoa lạ / toàn hoa, hay có âm tiết mà `vietnamese_syllable.valid_spoken_form`
 không nhận). Cờ trong `vietnamized_english_flags`:
   via:override / via:phonemes / via:spelling / via:face   đường đã đi (face: tên ngắn đọc theo mặt chữ, Mike -> mi-ke)
   open:...      quy ước ghi "mở" (`OPEN_CHOICES`; hiện không còn điểm nào)
@@ -30,6 +30,7 @@ from collections.abc import Mapping
 from pathlib import Path
 
 from .romanization import _tone_acute
+from .vietnamese_syllable import valid_spoken_form, valid_syllable
 
 PHONES_PATH = Path(__file__).resolve().parent / "assets" / "english_phones.txt.gz"
 
@@ -616,10 +617,18 @@ def _split_onset(run: list[str]) -> tuple[list[str], str, str]:
     return run[:-1], run[-1], glide
 
 
+def _fits(letter: str, nucleus: str, coda: str, grave: bool) -> bool:
+    """Âm tiết ghép ra có là âm tiết tiếng Việt không (bộ kiểm tắt thì luôn có)."""
+    return not _CHECK_SYLLABLES or valid_syllable(_render(_Syl(letter, nucleus, coda, grave)))
+
+
 def _emit(out: list[_Syl], onset: str, glide: str, nucleus: str, coda: str, grave: bool) -> None:
     letter = _onset_letter(onset) if onset and onset != "tr" else onset
     if glide == "W":
         joined = "uô" if nucleus == "ô" and coda else _glide_w(nucleus)  # uô chỉ đứng trước phụ âm cuối: Walt -> Uôn
+        if joined is not None and not _fits(letter, joined, coda, grave):
+            # vần ghép không có trong tiếng Việt (uên, oáp, oép): uê -> oe (Wayne -> Oen), còn lại w thành âm tiết u riêng (Dwarf -> Đu-óp)
+            joined = "oe" + nucleus[1:] if joined == "uê" and _fits(letter, "oe" + nucleus[1:], coda, grave) else None
         if joined is not None:
             out.append(_Syl(letter, joined, coda, grave))
             return
@@ -647,6 +656,8 @@ def _render(syllable: _Syl) -> str:
         for glide in ("oai", "oa", "oă", "oe", "uy", "uê", "uơ", "uâ"):
             if nucleus.startswith(glide):
                 onset, nucleus = "qu", nucleus[1:]
+                if nucleus == "y" and coda not in ("", "t", "nh"):
+                    nucleus = "i"  # quy, quýt, quỳnh nhưng quin, quích (y chỉ khép bằng t / nh)
                 break
         else:
             onset = "k" if nucleus[:1] in _FRONT else "c"
@@ -666,10 +677,8 @@ def _render(syllable: _Syl) -> str:
 
 
 def _validated(syllables: list[_Syl], capital: bool) -> str | None:
-    from .analysis import _valid_vietnamese_spoken_form  # chỉ để kiểm, không sửa
-
     pieces = [_render(syllable) for syllable in syllables]
-    if not pieces or (_CHECK_SYLLABLES and any(not _valid_vietnamese_spoken_form("", piece) for piece in pieces)):
+    if not pieces or (_CHECK_SYLLABLES and any(not valid_spoken_form(piece) for piece in pieces)):
         return None
     word = "-".join(pieces)
     return word[:1].upper() + word[1:] if capital else word

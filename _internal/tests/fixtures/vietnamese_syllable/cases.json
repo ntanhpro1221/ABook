@@ -1,0 +1,42 @@
+{
+ "note": "Bộ ví dụ DÙNG CHUNG cho abook/vietnamese_syllable.py và VietnameseSyllable.kt (test_vietnamese_syllable.py, VietnameseSyllableTest.kt). valid: âm tiết tiếng Việt viết đúng; invalid: sai chính tả, sai vần hay thiếu thanh; spoken: cả cách đọc nối gạch / cách nhau dấu cách. passage.txt: lời Truyện Kiều (Nguyễn Du, hết bản quyền) cộng vài câu ca dao, mọi âm tiết phải qua.",
+ "valid": [
+  "a", "ba", "ca", "ma", "gà", "ghe", "ghi", "ghen", "ghét", "nghe", "nghi", "nghĩ", "nghệ", "nghiêng", "nghiệp", "ngà", "ngu", "ngủ", "ke", "ki", "kế", "kỳ", "ký", "kẻ", "kinh", "kiêng", "cơ", "cư", "cô", "cu", "cá",
+  "quê", "quý", "quy", "qua", "quả", "quơ", "quá", "quốc", "quyết", "quyền", "quân", "quanh", "quạnh", "quên", "quen", "quýt", "quỳnh", "quích", "quin", "quít",
+  "khuya", "khuyên", "khuỷu", "thuở", "huơ", "huế", "huy", "hoa", "hoà", "hoạ", "khoẻ", "xoè", "toà", "loè",
+  "tôi", "tối", "tơ", "tờ", "tư", "tự", "tử", "tu", "tủ", "bia", "chia", "mua", "múa", "mưa", "mựa", "nghĩa",
+  "ai", "ao", "au", "ay", "âu", "ây", "eo", "êu", "iu", "oi", "ôi", "ơi", "ui", "ưi", "ưu", "gửi", "ngửi", "cưu",
+  "yêu", "yên", "ý", "y", "kỹ", "lý", "hiểu", "kiều", "thuyền", "chuyện", "nguyễn", "nguyệt", "người", "nước", "ngược", "được", "ước", "ướt", "uốn", "buồn", "muốn", "muộn", "tuổi", "cuối", "chuối", "ruồi", "cười", "lười", "rượu", "hươu", "bưởi",
+  "khuôn", "khuấy", "ngoáo", "khuâng", "uất", "khuất", "luân", "huân", "nguyên", "quyên", "khoen", "khoăn", "toan",
+  "hoặc", "ngoặc", "ngoằn", "ngoặt", "khoắn", "thoắt", "oanh", "loanh", "xoành", "xoạch", "khoách", "huỵch", "huỳnh", "khuỳnh", "huênh", "nguệch", "xoong", "boong", "soóc", "moóc", "toét", "xoét",
+  "các", "bắc", "bấc", "bóc", "bốc", "bục", "bức", "việc", "tiếc", "thuốc", "ách", "ếch", "lệch", "nghịch", "tích", "bích", "hạch",
+  "cam", "cắm", "câm", "em", "êm", "im", "ôm", "ơm", "um", "ưm", "tiêm", "yếm", "ngoạm",
+  "an", "ăn", "ân", "en", "ên", "in", "ôn", "ơn", "un", "tiên", "yên", "luôn", "ươn", "mươn",
+  "ang", "ăng", "âng", "eng", "ong", "ông", "ung", "ưng", "iêng", "uông", "ương", "oang", "oăng", "uâng", "keng",
+  "anh", "ênh", "inh", "oanh", "uênh",
+  "ắp", "ấp", "ép", "ếp", "ịp", "óp", "ốp", "ớp", "úp", "tiếp", "cướp", "mạp", "bập",
+  "át", "ắt", "ất", "ét", "ết", "ít", "ót", "ốt", "ớt", "út", "ứt", "mứt", "tiết", "uyết", "yết", "tuốt", "ướt", "oát", "oắt", "uất", "quất", "huýt", "xuỵt", "buýt",
+  "séc", "đa", "đi", "đê", "đô", "đủ", "gi", "gì", "gin", "gìn", "giêng", "giếng", "giết", "gia", "giá", "giu", "gieo", "giữ", "giường", "giông",
+  "pin", "pa", "xin", "xếp", "sa", "rô", "vi", "vâng", "lăn", "nhầm", "chữ", "thương", "trường", "phương", "khác",
+  "Nam", "Việt", "Nguyễn", "Ghen", "Ghi", "Quyên", "Đức", "ĐÔNG", "NGUYỄN",
+  "cưn", "ưn"
+ ],
+ "invalid": [
+  "gen", "Gen", "got", "Got", "ain", "Ain", "mêch", "Mêch", "Mech", "mech", "gii", "giin", "ghu", "gha", "ghô", "ghơ", "ngha", "nghu", "nghô", "ka", "ko", "ku", "kơ", "ci", "ce", "cê", "cy", "cin", "cen",
+  "ngi", "nge", "ngê", "ngy", "ge", "gê", "qu", "quo", "quu", "quuy", "quoc", "q", "qa",
+  "ơc", "ớc", "ơng", "ưp", "ứp", "oáp", "oép", "oạp", "uơn", "uơm", "uyn", "uyng", "uýc", "uýp", "quyn", "quýc", "quýp", "tuyn", "uên", "tuên", "uêm", "uếp", "uết",
+  "king", "ring", "ing", "ic", "ich", "ik", "êng", "êc", "ênc", "inc", "ac", "ap", "at", "ach", "ăc", "âp", "ôt", "ơt", "ut", "ut", "bac", "tap", "mat", "lop", "cop", "bat", "xit", "tic", "tec", "sec", "ich",
+  "ă", "â", "ăy", "tiê", "yê", "uô", "ươ", "iê", "uâ", "oă", "oo", "boo", "tya", "tyêu", "hyêu", "kyên", "nyê", "iac", "uac", "ưac", "aiu", "aing", "aon", "iuc", "êuc", "oicc",
+  "ng", "ngh", "nh", "ch", "gh", "kh", "ph", "th", "tr", "ngg", "nn", "bb", "tt", "cc", "kk", "ss", "dd", "đđ", "dđ",
+  "Boom", "Ahh", "km", "kg", "HP", "MP", "EXP", "Level", "Kuro", "Tokyo", "Zero", "Wow", "OK", "cool", "X", "B", "Dvořák", "Eugénie", "ñ", "mañ", "ø", "ð", "ðăng",
+  "z", "za", "ze", "zi", "zo", "zu", "f", "fa", "fi", "w", "wa", "wi", "j", "ja", "ji", "jo", "ju", "toy", "a_", "123", "a1", "-", "'", "", " ", "ab-c", "dài-", "Kanji",
+  "nghiêngg", "nguyễnnn", "ngoằngngoèo", "chuyệnnn", "quyềnnn", "khuyênnn", "thuyềnnnn"
+ ],
+ "spoken_valid": [
+  "Ghen", "Mếch", "Ca-ma-tô", "Xờ-lam", "Hi-ra-ghi", "Ghin", "Gin", "Cơ-rít", "Uy-li-am", "Oen-đi", "A-o-i", "O-xa-ca", "Phu-cu-ô-ca", "Xe-óc", "Cưn-hê", "Pắc Cưn-hê", "Quin", "Quích", "Giê-su", "Ghêm", "Le-vồ", "Xan-u-ơm",
+  "Bờ-lếch", "Xờ-kiu", "Guốt", "Ghết", "Mác-xơ-cơ-va", "Phai", "Đoái"
+ ],
+ "spoken_invalid": [
+  "Gen", "Mêch", "Got", "Ain", "Gen-ghi", "Ghen-ain", "Ca--ma", "-Ca", "Ca-", "Ca ma-", "", " ", "-", "Gêm", "Quyn", "Uên", "Xớc", "Kin-g", "Cờ-líc", "Đao-lôt", "Goép-sai", "Ca-ma-tô2", "Ca_ma", "Ca.ma"
+ ]
+}
