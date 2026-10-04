@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Ban, Music2, Pin, Play, RefreshCw, Shuffle, Square, Trash2, Upload, VolumeX, Volume2 } from "lucide-react";
+import { Ban, Download, Music2, Pin, Play, RefreshCw, Shuffle, Square, Trash2, Upload, VolumeX, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import { MUSIC_CHANGED_EVENT } from "@/listen/musicBed";
 import { formatClock } from "@/shared/format";
@@ -31,6 +31,17 @@ interface Scene {
   silenced?: boolean;
   /** Bài đã ghim không còn dùng được trên máy này (vd. đã xoá khỏi "Nhạc của tôi"): lần dựng này đoạn dùng bài khác. */
   pinUnavailable?: boolean;
+  /** "llm": vui/buồn và căng thẳng của đoạn do AI đọc cả đoạn; "labels": cộng từ cảm xúc từng câu. */
+  moodSource?: "llm" | "labels";
+}
+
+/** Model AI đọc không khí cả đoạn (tuỳ chọn, tải khi bấm): `downloadable` false = Ollama của máy, người dùng tự kéo model. */
+interface MoodsModel {
+  installed: boolean;
+  downloading: boolean;
+  progress: { done: number; total: number } | null;
+  error: string | null;
+  downloadable: boolean;
 }
 
 interface TrackInfo {
@@ -47,6 +58,8 @@ interface MusicView {
   error: string;
   /** Tên các bài đã bỏ (từ danh mục; thiếu thì hiện tên file). */
   bannedTracks?: Record<string, TrackInfo>;
+  /** Việc nền "Tính lại cảm xúc nhạc" của cuốn này. */
+  moods?: { running: boolean; error: string };
   taxonomy: {
     genres?: Record<string, { vi: string }>;
     /** Tên tiếng Việt của 13 cảm xúc (danh mục gửi, đổi được không cần cập nhật app). */
@@ -379,12 +392,83 @@ function MyMusic({ bookId, previewing, onPreview }: { bookId: string; previewing
   );
 }
 
+/** "Đọc không khí cả đoạn bằng AI": model nhỏ (tuỳ chọn, tải khi bấm) đọc nguyên đoạn để chọn nhạc sát không khí hơn. Chưa tải:
+ *  nút "Tải"; đang tải: tiến độ; đã tải: "Tính lại cảm xúc nhạc" cho cuốn này. */
+function MoodsPanel({ bookId, moods, onCompute }: { bookId: string; moods?: { running: boolean; error: string }; onCompute: (view: MusicView) => void }) {
+  const client = useQueryClient();
+  const { data: info } = useAppInfo();
+  const key = ["music-moods-model"];
+  const { data } = useQuery({
+    queryKey: key,
+    queryFn: () => api<MoodsModel>("/api/music/moods-model"),
+    refetchInterval: (query) => (query.state.data?.downloading ? 2000 : false),
+  });
+  const download = useMutation({
+    mutationFn: () => api<MoodsModel>("/api/music/moods-model", { method: "POST" }),
+    onSuccess: (result) => client.setQueryData(key, result),
+    onError: (error: Error) => toast.error("Không tải được model", { description: error.message }),
+  });
+  const compute = useMutation({
+    mutationFn: () => api<MusicView>(`/api/books/${bookId}/music/moods`, { method: "POST" }),
+    onSuccess: onCompute,
+    onError: (error: Error) => toast.error("Không tính lại được cảm xúc nhạc", { description: error.message }),
+  });
+  if (!data) return null;
+  const running = Boolean(moods?.running) || compute.isPending;
+  const percent = data.progress && data.progress.total > 0 ? Math.round((data.progress.done * 100) / data.progress.total) : null;
+  return (
+    <section className="space-y-2 rounded-xl border border-line bg-panel p-4">
+      <h3 className="text-sm font-semibold">Đọc không khí cả đoạn bằng AI</h3>
+      <p className="text-sm text-fg-2 text-pretty">
+        Chọn nhạc sát không khí của đoạn hơn: AI đọc nguyên đoạn thay vì cộng từng câu. Chạy sau phân tích, khoảng 1 phút card đồ hoạ mỗi
+        giờ sách.
+      </p>
+      {data.installed ? (
+        <div className="flex flex-wrap items-center gap-3">
+          <Button size="sm" variant="secondary" icon={RefreshCw} loading={running} onClick={() => compute.mutate()}>
+            {running ? "Đang đọc không khí…" : "Tính lại cảm xúc nhạc"}
+          </Button>
+          {moods?.error && <span className="text-sm text-warning">{moods.error}</span>}
+        </div>
+      ) : data.downloading ? (
+        <p className="text-sm">Đang tải model{percent !== null ? ` - ${percent}%` : "…"}</p>
+      ) : data.downloadable && !info?.remote ? (
+        <div className="flex flex-wrap items-center gap-3">
+          <Button size="sm" variant="secondary" icon={Download} loading={download.isPending} onClick={() => download.mutate()}>
+            Tải (3,2 GB)
+          </Button>
+          {data.error && <span className="text-sm text-warning">{data.error}</span>}
+        </div>
+      ) : (
+        <p className="text-sm text-fg-2">
+          {data.downloadable ? "Tải model trên máy tính chủ sách." : "Model chưa có trong Ollama của máy này."}
+        </p>
+      )}
+    </section>
+  );
+}
+
 export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitle: (id: number) => string }) {
   const client = useQueryClient();
   const [swapping, setSwapping] = useState<string | null>(null); // khoá đoạn đang mở "Đổi bài"
   const preview = usePreview();
   const key = ["music", bookId];
-  const { data, isLoading } = useQuery({ queryKey: key, queryFn: () => api<MusicView>(`/api/books/${bookId}/music`) });
+  const { data, isLoading } = useQuery({
+    queryKey: key,
+    queryFn: () => api<MusicView>(`/api/books/${bookId}/music`),
+    refetchInterval: (query) => (query.state.data?.moods?.running ? 3000 : false), // đang đọc không khí: hỏi lại tới khi xong
+  });
+  // Việc "Tính lại cảm xúc nhạc" vừa xong: nhạc đã dựng lại, báo trình phát nạp lại mốc nhạc.
+  const moodsRunning = useRef(false);
+  useEffect(() => {
+    const running = Boolean(data?.moods?.running);
+    if (moodsRunning.current && !running) {
+      announceChange(bookId);
+      if (data?.moods?.error) toast.error("Không đọc xong không khí các đoạn", { description: data.moods.error });
+      else toast("Đã đọc xong không khí các đoạn - nhạc đã chọn lại");
+    }
+    moodsRunning.current = running;
+  }, [bookId, data?.moods?.running, data?.moods?.error]);
   const change = useMutation({
     mutationFn: (body: Record<string, unknown>) => api<MusicView>(`/api/books/${bookId}/music`, { method: "PUT", body }),
     onSuccess: (result) => {
@@ -495,6 +579,8 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
         )}
       </section>
 
+      <MoodsPanel bookId={bookId} moods={data.moods} onCompute={(view) => client.setQueryData(key, view)} />
+
       <MyMusic bookId={bookId} previewing={preview.playing} onPreview={preview.toggle} />
 
       {data.error && <p className="text-sm text-warning">{data.error}</p>}
@@ -516,7 +602,14 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                       {/* Các đoạn nối liền: đoạn này hết ở đúng chỗ đoạn sau bắt đầu (cùng cách làm tròn). */}
                       {formatClock(scene.start)}–{formatClock(scenes[index + 1]?.start ?? scene.end)}
                     </span>
-                    <span className="w-32 shrink-0">{moodOf(scene, taxonomy.emotions)}</span>
+                    <span className="w-32 shrink-0">
+                      {moodOf(scene, taxonomy.emotions)}
+                      {scene.moodSource === "llm" && (
+                        <span className="ml-1.5 rounded bg-sunken px-1 py-0.5 text-xs text-fg-2" title="AI đã đọc cả đoạn này để chấm không khí">
+                          AI
+                        </span>
+                      )}
+                    </span>
                     <span className="min-w-0 basis-full break-words sm:flex-1 sm:basis-0">
                       {scene.link ? (
                         <>

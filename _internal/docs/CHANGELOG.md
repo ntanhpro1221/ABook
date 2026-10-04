@@ -33,6 +33,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Cách đọc tên và từ nước ngoài bằng âm tiết Việt (máy tính và điện thoại) chỉ ra những âm tiết viết đúng chính tả tiếng Việt: "queen" thành "quin" thay vì
   "quyn", "Wayne" thành "Oen" thay vì "Uên", "quick" thành "quích"; tên nào máy không viết nổi cho đúng thì giữ chữ gốc thay vì đọc một âm tiết không có trong tiếng Việt.
 
+### Nhạc nền
+
+- Studio (máy tính) chọn nhạc nền sát không khí hơn nếu bạn bật "Đọc không khí cả đoạn bằng AI" ở tab Nhạc (tải thêm một model 3,2 GB, chỉ khi bấm).
+  - Một model nhỏ đọc trọn mỗi đoạn để chấm vui / buồn và căng thẳng, thay vì cộng cảm xúc từng câu. Trên 20 chương thử, độ khớp với người chấm tăng ở 15 chương.
+  - Việc này chạy ngay sau bước phân tích, khoảng 1 phút GPU cho mỗi giờ sách, và dừng / tạm dừng cùng cuốn sách.
+  - Nút "Tính lại cảm xúc nhạc" làm lại cho cuốn đã làm xong. Các đoạn chấm bằng AI có nhãn "AI".
+  - Chưa tải model, hoặc trên điện thoại, thì nhạc nền chọn như cũ.
+
 ## [0.4.24] - 2026-10-04
 
 ### Giọng đọc

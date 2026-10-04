@@ -631,3 +631,51 @@ def test_change_track_does_not_offer_tracks_this_machine_cannot_get(studio, tmp_
     _cache(app, CALM2)  # đã có trong bộ đệm thì dùng được dù có dấu hỏng
     _status, data = _call(server, "GET", url)
     assert CALM2 in [item["link"] for item in data["alternatives"]]
+
+
+def test_the_moods_model_and_recompute_endpoints(studio, tmp_path: Path, monkeypatch) -> None:  # noqa: F811
+    """"Đọc không khí cả đoạn bằng AI": hỏi model đã tải chưa, bấm tính lại (luồng nền: compute rồi dựng lại nhạc); từ chối khi
+    chưa có model hay khi cuốn đang chạy; bản chạy từ mã nguồn không tải model từ đây."""
+    import time
+
+    from abook.webui import music_moods
+    from abook.webui.remote_studio import permitted
+    from abook.webui.server import App
+
+    paths, app, server, runner = studio
+    _with_catalog(app, tmp_path)
+    book = book_id(paths.root)
+    digest: list[str | None] = [None]
+    monkeypatch.setattr(music_moods, "model_digest", lambda _base: digest[0])
+    monkeypatch.setattr(music_moods, "release", lambda _base: None)
+    done: list[str] = []
+    monkeypatch.setattr(music_moods, "compute", lambda root, base, **_kw: done.append("compute") or 3)
+    real_rebuild = App.music_rebuild
+    monkeypatch.setattr(App, "music_rebuild", lambda self, value, **kw: done.append("rebuild") or real_rebuild(self, value, **kw))
+
+    status, model = _call(server, "GET", "/api/music/moods-model")
+    assert status == 200 and model["installed"] is False and model["downloadable"] is False
+    status, refused = _call(server, "POST", "/api/music/moods-model", {})
+    assert status == 409 and "Ollama" in refused["error"], "bản chạy từ mã nguồn dùng Ollama của máy"
+    status, refused = _call(server, "POST", f"/api/books/{book}/music/moods", {})
+    assert status == 409 and "Chưa tải model" in refused["error"] and not done
+
+    digest[0] = "d1"
+    assert _call(server, "GET", "/api/music/moods-model")[1]["installed"] is True
+    runner._running.add(str(paths.root))
+    status, refused = _call(server, "POST", f"/api/books/{book}/music/moods", {})
+    assert status == 409 and "đang được làm" in refused["error"] and not done
+    runner._running.clear()
+
+    _call(server, "GET", f"/api/books/{book}/music")  # tab Nhạc đã mở: rãnh nhạc đã dựng (việc nền không dựng song song với lần xem đầu)
+    done.clear()
+    status, view = _call(server, "POST", f"/api/books/{book}/music/moods", {})
+    assert status == 200 and view["moods"]["running"] is True
+    for _ in range(100):
+        if not _call(server, "GET", f"/api/books/{book}/music")[1]["moods"]["running"]:
+            break
+        time.sleep(0.05)
+    view = _call(server, "GET", f"/api/books/{book}/music")[1]
+    assert done == ["compute", "rebuild"] and view["moods"] == {"running": False, "error": ""}
+    assert permitted("POST", f"/api/books/{book}/music/moods") and permitted("GET", "/api/music/moods-model")
+    assert not permitted("POST", "/api/music/moods-model"), "tải 3,2 GB về máy chủ sách chỉ làm trên chính máy ấy"
