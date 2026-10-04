@@ -321,13 +321,12 @@ export function MusicMenu() {
 }
 
 function MusicMenuFor({ bookId }: { bookId: string }) {
-  const { options, chosen, error, loading, choose, canImport, addMusic } = usePlaylistChoice(bookId);
-  const current = options.find((option) => option.id === chosen);
+  const { options, chosen, label, playing, error, loading, choose, canImport, addMusic } = usePlaylistChoice(bookId);
   return (
     <MenuShell
       label="Nhạc nền"
-      active={chosen !== null}
-      trigger={<><Music2 className="size-4" /><span className="max-w-24 truncate max-sm:hidden">{chosen ? current?.label : ""}</span></>}
+      active={playing}
+      trigger={<><Music2 className="size-4" /><span className="max-w-32 truncate max-sm:hidden">{playing ? label : ""}</span></>}
       width="w-72"
     >
       <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Nhạc nền · nhớ riêng cho cuốn này</div>
