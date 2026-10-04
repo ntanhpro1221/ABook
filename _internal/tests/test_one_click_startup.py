@@ -135,13 +135,13 @@ def test_one_click_startup_contract() -> None:
         "torch==2.11.0",
         "torchaudio==2.11.0",
         "torchvision==0.26.0",
-        "huggingface-hub==1.29.0",
+        "huggingface-hub==1.33.0",
         "librosa==0.11.0",
-        "timm==1.0.29",
-        "transformers==5.16.1",
+        "timm==1.0.30",
+        "transformers==5.18.0",
         "utmosv2 @ git+https://github.com/sarulab-speech/UTMOSv2.git@cc2700db57bb83ee13dc31ebe1b868c254e15d09",
-        "vieneu==3.8.1",
-        "sea-g2p==0.9.1",
+        "vieneu==3.8.3",
+        "sea-g2p==0.10.0",
         "praat-parselmouth==0.4.7",
     ]
     assert 'VieNeuEngine' in setup

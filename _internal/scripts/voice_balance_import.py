@@ -7,8 +7,8 @@ Chạy từ thư mục `_internal`. Định dạng vào (GIẢ ĐỊNH - đổi 
 rates.json - tốc độ đo ở tốc độ gốc của giọng (chưa áp tempo), trên câu trung tính:
 
     {"median_syll_per_s": 4.56,
-     "voices": {"vieneu@3.8.1/Đức Trí/f100": {"syll_per_s": 4.15},
-                "vieneu@3.8.1/Mỹ Duyên/f100": {"r": 1.0}}}
+     "voices": {"vieneu@3.8.3/Đức Trí/f100": {"syll_per_s": 4.15},
+                "vieneu@3.8.3/Mỹ Duyên/f100": {"r": 1.0}}}
 
   `r = median_syll_per_s / syll_per_s`. Giọng có sẵn `r` thì dùng thẳng `r` (để ghim hằng số chủ sách
   đã chọn bằng tai, không cho số đo ghi đè). `median_syll_per_s` là trung vị của các giọng trên một
@@ -16,7 +16,7 @@ rates.json - tốc độ đo ở tốc độ gốc của giọng (chưa áp temp
 
 gains.json - độ to đo trên bản thô SAU cao độ và tempo (WORLD kéo tốc độ làm đổi độ to):
 
-    {"voices": {"vieneu@3.8.1/Đức Trí/f100": {"lufs": -19.4, "o_db": 0.0}}}
+    {"voices": {"vieneu@3.8.3/Đức Trí/f100": {"lufs": -19.4, "o_db": 0.0}}}
 
   `lufs` -> `ref_lufs` (LUFS trung bình của bản thô, bắt buộc); `o_db` là độ lệch riêng thêm vào, tuỳ
   chọn (không ghi thì giữ giá trị hiện có).

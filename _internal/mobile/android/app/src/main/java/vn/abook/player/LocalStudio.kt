@@ -460,7 +460,7 @@ object LocalStudio {
         if (BookEdits.truthy(body.opt("withdraw"))) {
             return withdraw(dir, "voices", if (character.isNotEmpty()) listOf(BookWishes.characterKey(character)) else emptyList(), body)
         }
-        val preset = BookWishes.voiceKey(clip(orText(body, "preset"), 120))
+        val preset = clip(orText(body, "preset"), 120)
         val gender = clip(orText(body, "gender"), 10)
         val avoid = clip(orText(body, "avoid"), 200)
         if (character.isEmpty()) throw Api(400, "Thiếu nhân vật")
@@ -470,7 +470,7 @@ object LocalStudio {
         if (problem != null) throw Api(400, VOICE_PROBLEMS[problem] ?: "Không đổi được giọng nhân vật này")
         val at = now()
         BookWishes.requestVoice(dir, character, preset, gender, avoid, at)
-        return JSONObject().put("character", character).put("preset", BookWishes.voiceLabel(preset)).put("gender", gender)
+        return JSONObject().put("character", character).put("preset", preset).put("gender", gender)
             .put("avoid", avoid).put("requestedAt", at)
     }
 

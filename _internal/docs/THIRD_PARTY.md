@@ -118,9 +118,9 @@ Studio một lần (bước "wordalign"), KHÔNG nằm trong bộ cài chỉ-ngh
   thoại - dùng giọng người dùng đã cài, không phân phối giọng nào.
 - Giọng VieNeu (mô-đun tải khi người dùng bấm, `webui/vieneu_module.py`; không nằm trong bộ cài): model VieNeu-TTS v3 Turbo int8 và
   v3 Nano (pnnbao-ump, Apache-2.0) và bộ giải mã MOSS-Audio-Tokenizer-Nano ONNX (OpenMOSS, Apache-2.0) tải thẳng từ Hugging Face (ghim
-  commit + SHA-256); hai file giọng có sẵn lấy từ wheel `vieneu` 3.8.1 (Apache-2.0) - chỉ hai file JSON ấy, không cài gói. Phần suy
+  commit + SHA-256); hai file giọng có sẵn lấy từ wheel `vieneu` 3.8.3 (Apache-2.0) - chỉ hai file JSON ấy, không cài gói. Phần suy
   luận (`abook/readaloud/vieneu_engine.py`) viết lại theo mã của `vieneu` 3.8.1 (Phạm Nguyễn Ngọc Bảo, Apache-2.0) - ghi nguồn ở đầu
-  file. Chữ -> phoneme: wheel `sea-g2p` 0.9.1 (pnnbao97, Apache-2.0) tải cùng mô-đun. Mốc từng chữ dùng lại model căn chữ của Studio
+  file. Chữ -> phoneme: wheel `sea-g2p` 0.10.0 (pnnbao97, Apache-2.0) tải cùng mô-đun. Mốc từng chữ dùng lại model căn chữ của Studio
   (mục trên). Khi phân phối: kèm giấy phép Apache-2.0 và ghi chú của các dự án này.
 - Giọng Supertonic 3 (mô-đun tải khi người dùng bấm, `webui/supertonic_module.py`; không nằm trong bộ cài): model Supertonic 3 (Supertone Inc.,
   99 triệu tham số, ONNX) giấy phép **BigScience OpenRAIL-M** - trọng số và mười file giọng tải thẳng từ Hugging Face `Supertone/supertonic-3`

@@ -8,7 +8,7 @@ mỗi giọng có MỘT bản ghi hằng số đo trước; lúc thu máy tự �
 ### Khoá giọng và bảng
 
 Một giọng là `(engine, phiên bản engine, preset, bậc formant)`, khoá bằng chuỗi ổn định
-`vieneu@3.8.1/<preset>/f100` (`voice_balance.voice_key`; `f100` là bậc formant 1,00, `f093` là 0,93).
+`vieneu@3.8.3/<preset>/f100` (`voice_balance.voice_key`; `f100` là bậc formant 1,00, `f093` là 0,93).
 Bảng nằm ở `abook/assets/voice_balance.json`:
 
 | trường | ý nghĩa |
@@ -115,10 +115,10 @@ ghi lại bằng LF. Sau khi thả: chạy `tests/test_voice_balance.py`, ghi ha
 | Trúc Ly | 5.12 | +11.7 ±0.8 | 0.890 | -0.169 | 1 | -19.95 | +0.46 ±0.22 | -5.05 | -5.15 … -4.12 (12 bậc) |
 | Thanh Bình | 5.09 | +11.1 ±3.8 | 0.895 | -0.160 | 1 | -19.36 | +1.05 ±0.33 | -5.64 | -5.64 … -4.14 (11 bậc) |
 | Xuân Vĩnh | 4.99 | +9.1 ±2.5 | 0.913 | -0.131 | 1 | -21.58 | -1.17 ±0.23 | -3.42 | -3.48 … -2.03 (11 bậc) |
-| Minh Quân Pro | 4.97 | +8.6 ±1.2 | 0.917 | -0.124 | 1 | -21.47 | -1.06 ±0.31 | -3.53 | -3.53 … -1.91 (11 bậc) |
-| Anh Khôi | 4.77 | +4.5 ±1.3 | 0.956 | -0.065 | 1 | -20.90 | -0.49 ±0.26 | -4.10 | -4.10 … -2.70 (11 bậc) |
+| Hải Đăng | 4.97 | +8.6 ±1.2 | 0.917 | -0.124 | 1 | -21.47 | -1.06 ±0.31 | -3.53 | -3.53 … -1.91 (11 bậc) |
+| Thiện Minh | 4.77 | +4.5 ±1.3 | 0.956 | -0.065 | 1 | -20.90 | -0.49 ±0.26 | -4.10 | -4.10 … -2.70 (11 bậc) |
 | Ngọc Huyền | 4.76 | +4.4 ±3.3 | 0.957 | -0.063 | 1 | -19.63 | +0.78 ±0.19 | -5.37 | -5.46 … -4.59 (12 bậc) |
-| Mạnh Dũng | 4.73 | +3.8 ±0.9 | 0.963 | -0.054 | 1 | -19.07 | +1.34 ±0.14 | -5.93 | -5.93 … -4.46 (11 bậc) |
+| Quốc Tuấn | 4.73 | +3.8 ±0.9 | 0.963 | -0.054 | 1 | -19.07 | +1.34 ±0.14 | -5.93 | -5.93 … -4.46 (11 bậc) |
 | Adam | 4.67 | +2.4 ±1.0 | 0.976 | -0.035 | 1 | -20.13 | +0.28 ±0.38 | -4.87 | -5.18 … -2.45 (10 bậc) |
 | Quang Sơn | 4.64 | +1.8 ±1.6 | 0.982 | -0.026 | 1 | -20.26 | +0.15 ±0.23 | -4.74 | -4.74 … -3.02 (11 bậc) |
 | Đoan Trang | 4.62 | +1.3 ±1.3 | 0.987 | -0.019 | 1 | -20.07 | +0.34 ±0.18 | -4.93 | -5.20 … -3.88 (12 bậc) |
@@ -293,7 +293,7 @@ Số máy đọc: scratchpad phiên Model `balance/multi_engine/` (`import_rates
 ### Kiểm cảm xúc sau hằng số (emo_check)
 
 Mẫu kiểm:
-- 9 giọng: 5 VieNeu ở f100 (Đức Trí, Thanh Bình, Mạnh Dũng, Ngọc Huyền, Trúc Ly), Supertonic F1, M4, ZeroTTS baotrang, giahuy;
+- 9 giọng: 5 VieNeu ở f100 (Đức Trí, Thanh Bình, Quốc Tuấn, Ngọc Huyền, Trúc Ly), Supertonic F1, M4, ZeroTTS baotrang, giahuy;
 - 6 câu cảm xúc (giận ×2, thì thầm ×2, vui ×2) và 40 câu trung tính; 2 hạt.
 
 Ba cách được so:
@@ -410,8 +410,8 @@ Cách đo:
 **Ở cao độ 0, xếp theo arousal:**
 - Thanh Bình +17,4 (hạng 1);
 - Adam bựa +10,6 (2);
-- Minh Quân Pro +9,6, Trúc Ly +9,4, Quỳnh Anh +7,5;
-- Mạnh Dũng +7,4 (6);
+- Hải Đăng +9,6, Trúc Ly +9,4, Quỳnh Anh +7,5;
+- Quốc Tuấn +7,4 (6);
 - … Thiền Tâm Đức −9,4, Xuân Vĩnh −19,7, Đức Trí −21,1 (thấp nhất).
 - CI ±0,6–1,5.
 - F0 không giải thích thứ hạng: Kim Thanh F0 +6,3 st, arousal +0,2; Trúc Ly F0 +8,3 st, arousal +9,4.
@@ -422,19 +422,19 @@ Cách đo:
 |---|---|---|---|---|---|
 | Thanh Bình | +17,4 | +15,9 | **+12,7** | +9,8 | 1,29 (R² 0,98) |
 | Adam bựa | +10,6 | **+10,4** | +7,6 | | 0,74 (R² 0,80) |
-| Mạnh Dũng | +7,4 | **+5,9** | +3,0 | | 1,09 (R² 0,97) |
+| Quốc Tuấn | +7,4 | **+5,9** | +3,0 | | 1,09 (R² 0,97) |
 
 Hạ cao độ cũng làm valence tăng 2–4 điểm, tức "dễ chịu" hơn.
 
 **Trả lời ba câu hỏi:**
 - (1) ĐÚNG: ở cao độ 0, 3 giọng chủ sách đã hạ đứng hạng 1, 2, 6 về arousal.
-- (2) SAI theo máy: mức chủ sách chọn KHÔNG đưa chúng về gần trung vị. Thanh Bình −4 còn +12,7; Adam bựa −2 còn +10,4; Mạnh Dũng −2 còn +5,9.
+- (2) SAI theo máy: mức chủ sách chọn KHÔNG đưa chúng về gần trung vị. Thanh Bình −4 còn +12,7; Adam bựa −2 còn +10,4; Quốc Tuấn −2 còn +5,9.
 - (3) ĐÚNG: giảm gần thẳng, ~1,1 điểm mỗi bán cung.
 
 **Kết luận:**
 - Vì (2) sai, KHÔNG đề xuất số bán cung cho giọng khác.
 - Muốn về trung vị bằng cao độ thì cần −6 tới −9 (giọng cao) và +7 tới +20 (Đức Trí, Xuân Vĩnh). Như vậy là quá xa vùng an toàn của WORLD và màu giọng.
-- Bán cung của 3 giọng GIỮ NGUYÊN: Thanh Bình −4, Adam bựa −2, Mạnh Dũng −2, chủ sách đã chốt bằng tai.
+- Bán cung của 3 giọng GIỮ NGUYÊN: Thanh Bình −4, Adam bựa −2, Quốc Tuấn −2, chủ sách đã chốt bằng tai.
 - *Ghi chú, giả thuyết chưa kiểm:* theo máy, hạ cao độ chỉ làm giảm hưng phấn một phần. Còn cảm giác "bình tĩnh, truyền cảm hơn" mà tai chủ sách nghe ra có thể đến từ valence tăng (+2–4) và giọng trầm hơn, thứ model dạng chiều này không gọi là arousal.
 
 Số và mã: Corpus/claude/model_lane/voice_balance (emo_check.*, utmos_check.*, tempo_alt.*, arousal.*).
