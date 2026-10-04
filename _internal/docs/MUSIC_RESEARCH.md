@@ -2242,3 +2242,28 @@ Mỗi pha xong: ghi số vào đây, đổi tham số trong app theo kết quả
   - Giám khảo là Sonnet.
   - Tên thư mục Corpus là tên ASCII hoá, có thể khác tên trong file sách.
   - Danh sách `eastern` hiện chỉ 103 phút.
+
+**KẾT QUẢ (04-10 13:4x; Corpus `research/music/listen_genre`, luật khoá 6b041247 trước khi chạy nửa đo):** **THẮNG.**
+- 159 cuốn: phát triển 79, đo 80.
+  - Hai giám khảo đồng thuận 78/79 và 80/80; không cuốn nào có tập chấp nhận rỗng.
+  - Đồng thuận gần trọn: việc này dễ với người đọc, nên trần thật nằm gần 1.
+- Nửa đo:
+  - bộ chọn đúng 0,838; danh sách hằng tốt nhất (`fantasy_adventure`, chọn trên nửa phát triển) 0,600; hơn +0,238.
+  - Luật: ≥ 0,75 và ≥ +0,20.
+
+| nhóm gốc | n | bộ chọn | hằng |
+|---|---|---|---|
+| JP | 52 | 0,865 | 0,558 |
+| KR | 24 | 0,792 | 0,750 |
+| khác | 4 | 0,750 | 0,250 |
+
+- Nửa phát triển 0,937, nửa đo 0,838: tụt khoảng 0,10 vì luật được chỉnh trên nửa phát triển. Con số tin được là của nửa đo.
+- KR chỉ hơn hằng +0,04: truyện Hàn trong kho phần lớn là hồi quy / thợ săn / học viện, vốn đã hợp `fantasy_adventure`.
+- Chỉnh trên nửa phát triển (không thêm tên riêng của cuốn nào):
+  - tên cuốn nặng hơn (`title_weight` 12);
+  - `fantasy_adventure` được cộng sẵn 4 điểm, nên cuốn mơ hồ lùi về đây;
+  - giảm trọng số các từ chung ("hồn ma", "manh mối", "thức tỉnh");
+  - thêm từ tên cuốn cho lãng mạn / dị giới.
+- Chi phí: file luật 5,6 KB; máy tính nạp 0,7 ms, chọn 1,1 ms mỗi cuốn. Điện thoại: đo trên máy ảo sau khi port Kotlin.
+- → Làm vào app: sách chỉ có chữ chưa có lựa chọn → máy chọn danh sách, ghi rõ "máy chọn", đổi / tắt được. Máy tính +
+  điện thoại, cùng file luật, cùng fixture.
