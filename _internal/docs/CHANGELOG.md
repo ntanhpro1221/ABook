@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.27] - 2026-10-04
+
 ### Studio
 
 - "Duyệt trước khi thu": phân tích xong là Studio báo (thông báo Windows, và ngay trong Studio trên máy tính lẫn điện thoại) và mở một màn
