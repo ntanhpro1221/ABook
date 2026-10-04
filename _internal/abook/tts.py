@@ -137,6 +137,7 @@ WORLD_MIN_VOICED_FRAMES = 3
 # pyworld.harvest trên vài mẫu làm hỏng heap native và GIẾT cả tiến trình (Windows 0xc0000374), không ném lỗi: đo 04-10, 2 mẫu
 # sập, 50 mẫu chạy. Không câu nói thật nào ngắn hơn 10 ms; bản ngắn thế để nguyên cho cổng "audio too short" loại.
 WORLD_MIN_SECONDS = 0.010
+WSOLA_FRAME_SECONDS = 0.040
 VOICE_VARIANT_PITCH_FLOOR_HZ = 60.0
 VOICE_VARIANT_PITCH_CEILING_HZ = 600.0
 VOICE_VARIANT_PEAK_CEILING = 0.98
@@ -286,10 +287,16 @@ def apply_pitch_variant(
 def apply_speed_change(audio: Any, sample_rate: int, speed: float) -> np.ndarray:
     """Read the same line `speed` times faster, keeping pitch and spectrum.
 
-    WORLD analysis with the same constants as `apply_pitch_variant`, then synthesis with a frame
-    period `speed` times shorter: every frame keeps its F0 and envelope, it is only played
-    faster. Unlike `apply_pitch_variant` the length changes on purpose, so nothing is trimmed or
-    padded. See `voice_balance.tempo` for where the factor comes from.
+    WSOLA (waveform-similarity overlap-add): 40 ms Hann frames laid down every 20 ms, each taken from
+    the input `speed` times further along, shifted by up to half a frame to the spot whose waveform
+    best continues the previous frame. Pitch and timbre are the input's own samples; only the
+    spacing changes, so the line comes out exactly `1 / speed` as long.
+
+    It replaced a WORLD resynthesis (04-10): over 40 neutral lines at each voice's balance tempo,
+    UTMOSv2 fell by 0.48-1.03 with WORLD and by 0.14-0.32 with WSOLA (Mỹ Duyên x1.306, Kim Thanh
+    x1.322, Trúc Ly x0.890; docs/VOICE_BALANCE.md). Overlap-adding raises the integrated loudness by
+    a few tenths of a dB, so the balance table's reference loudness is measured after this step.
+    See `voice_balance.tempo` for where the factor comes from.
     """
     array = np.asarray(audio, dtype=np.float32).reshape(-1)
     speed = float(speed)
@@ -298,27 +305,31 @@ def apply_speed_change(audio: Any, sample_rate: int, speed: float) -> np.ndarray
     if not SPEED_FACTOR_MIN <= speed <= SPEED_FACTOR_MAX:
         raise ValueError(f"speed factor {speed} is outside [{SPEED_FACTOR_MIN}, {SPEED_FACTOR_MAX}]")
     if sample_rate < 8_000:
-        raise ValueError(f"WORLD speed change requires at least 8000 Hz, got {sample_rate}")
+        raise ValueError(f"speed change requires at least 8000 Hz, got {sample_rate}")
     waveform = np.asarray(array, dtype=np.float64)
-    f0, time_axis = pyworld.harvest(
-        waveform,
-        sample_rate,
-        f0_floor=WORLD_F0_FLOOR_HZ,
-        f0_ceil=WORLD_F0_CEIL_HZ,
-        frame_period=WORLD_FRAME_PERIOD_MS,
+    frame = int(WSOLA_FRAME_SECONDS * sample_rate)
+    synthesis_hop = frame // 2
+    analysis_hop = int(synthesis_hop * speed)
+    tolerance = frame // 2
+    window = 0.5 - 0.5 * np.cos(2.0 * np.pi * np.arange(frame) / frame)
+    frames = int(np.ceil(waveform.size / analysis_hop)) + 1
+    padded = np.concatenate(
+        [np.zeros(tolerance), waveform, np.zeros(frames * analysis_hop + frame + 2 * tolerance + synthesis_hop - waveform.size)]
     )
-    f0 = pyworld.stonemask(waveform, f0, time_axis, sample_rate)
-    if int(np.count_nonzero(f0 > 0.0)) < WORLD_MIN_VOICED_FRAMES:
-        raise ValueError("WORLD could not find enough voiced frames for a speed change")
-    spectral_envelope = pyworld.cheaptrick(waveform, f0, time_axis, sample_rate)
-    aperiodicity = pyworld.d4c(waveform, f0, time_axis, sample_rate)
-    faster = pyworld.synthesize(
-        f0,
-        spectral_envelope,
-        aperiodicity,
-        sample_rate,
-        frame_period=WORLD_FRAME_PERIOD_MS / speed,
-    )
+    out = np.zeros(frames * synthesis_hop + frame)
+    weight = np.zeros_like(out)
+    natural: np.ndarray | None = None
+    for index in range(frames):
+        start = index * analysis_hop
+        region = padded[start:start + frame + 2 * tolerance]
+        if natural is None:
+            shift = tolerance
+        else:
+            shift = int(np.argmax(np.correlate(region, natural, mode="valid")[: 2 * tolerance + 1]))
+        out[index * synthesis_hop:index * synthesis_hop + frame] += window * region[shift:shift + frame]
+        weight[index * synthesis_hop:index * synthesis_hop + frame] += window
+        natural = padded[start + shift + synthesis_hop:start + shift + synthesis_hop + frame]
+    faster = (out / np.maximum(weight, 1e-8))[: int(round(waveform.size / speed))]
     peak = float(np.max(np.abs(waveform))) or 1.0
     faster_peak = float(np.max(np.abs(faster))) or 1.0
     return np.asarray(faster * min(1.0, peak / faster_peak), dtype=np.float32)
@@ -1097,7 +1108,7 @@ class TTSCoordinator:
                     f"vì xử lý pitch lỗi: {exc}"
                 )
             # Tempo = x * r_v (bảng cân bằng giọng), sau cao độ vì hàm cao độ giữ nguyên độ dài, và
-            # trước độ to (WORLD kéo tốc độ làm đổi độ to, nên o_v đo sau bước này). Bỏ qua tiếng
+            # trước độ to (WSOLA chồng cửa sổ nâng độ to vài phần mười dB, nên o_v đo sau bước này). Bỏ qua tiếng
             # cười "ha": đường ấy có bất biến số mẫu thô.
             speed_factor = voice_balance.tempo(voice_constants)
             speed_change_skipped = False
