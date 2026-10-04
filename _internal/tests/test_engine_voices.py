@@ -112,8 +112,11 @@ def test_engine_voices_have_balance_keys_and_a_missing_one_is_an_error() -> None
 
 # --- phân vai tự động không đổi -----------------------------------------------------------------
 
-# sha256 của kịch bản dưới đây chạy trên main 14b4f06a (trước khung nhiều máy đọc).
-ALLOCATOR_ON_MAIN = "fe9c6cbd4189b73cded4eb2f79cbd9559b15b04d6182821d5272e2820ff70fb9"
+# sha256 của kịch bản dưới đây chạy trên main 14b4f06a (trước khung nhiều máy đọc), sau khi đổi tên ba giọng Turbo theo
+# VieNeu 3.8.2 (dev/upgrades-1004): tên là chỗ phân xử cuối của thứ tự bể giọng (`casting_preset_priority`), nên "Thiện Minh"
+# (trước là "Anh Khôi") nay đứng sau "Thiền Tâm Đức" - 2 nhân vật đổi chỗ hai giọng ấy, 1 nhân vật đổi bậc cao độ (2 -> 3).
+# Bản trên main 14b4f06a: fe9c6cbd4189b73cded4eb2f79cbd9559b15b04d6182821d5272e2820ff70fb9.
+ALLOCATOR_ON_MAIN = "2bffd9a02889d1cb634048d7236bdb6f470b872a43c3dac8441a706cd7339339"
 
 
 def test_automatic_casting_is_exactly_what_it_was() -> None:
