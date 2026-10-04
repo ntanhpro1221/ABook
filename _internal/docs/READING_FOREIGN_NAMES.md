@@ -109,6 +109,11 @@ tố khác áp cùng cách]
   (tên nối gạch: mỗi bộ phận viết thường, nối bằng gạch); Lee Myung-bak → li mung-bắc (Myung → mung là ca cố định, hyun / hyung vẫn hi-un / hi-ung; a + k → ắ);
   Cheonggyecheon → che-ong-ghi-che-on (gye → ghi); Kyung → ki-ung, Byung → bi-ung (yu sau phụ âm tách i-u); Gyeong → ghe-ong, Pyeong → pe-ong (yeo sau phụ âm: y mất,
   eo tách e-ong; g + y đọc ghe).
+- Lần 8 (Nhật): Ohto → ô-tô, Ohka → ô-ca ("oh" trước phụ âm / cuối từ là o dài → ô, KỂ CẢ đầu từ; ō đầu từ vẫn o); Sanjyo → xan-giô (jy → j); Hiiraghi → hi-ra-ghi (gh → g);
+  Gesunoh → ghét-xu-nô (tên cố định, KHÔNG suy rộng ge → ghét); Theia → thi-a, Fina → phi-na, Tio → ti-ô (tên kiểu Âu trong truyện Nhật, Hepburn không có ti / fi: cố định trong
+  `_JA_FIXED`, chỉ đúng các tên này, không mở ti / fi cho mọi tên).
+- Lần 8 (Hàn): tokki → tô-ki (alt to-ki; kk là phụ âm đầu căng nên to-kki thắng tok-ki khi RR không phân; chỉ kk, Oppa vẫn không đoán); Gangwon → kang-guôn (cố định gang-won, viết cang
+  theo chính tả vì bộ kiểm âm tiết không nhận kang; w giữa từ → gu theo analogy `ko_w_gu`).
 - Lần 3: Kyouko → Ki-âu-cô, Ryouma → Ri-âu-ma ("ou" viết ra hai chữ → âu; Koutarou → Câu-ta-râu, Satou → Xa-tâu). Nguyên âm dài viết bằng
   dấu (ō) vẫn → ô (Tô-ky-ô); "oo" giữ.
 - Ca sách giáo khoa / Bộ Ngoại giao vênh các phán quyết này (Ya-ma-tô, Cô-bê, Ê-xư-kê…) được ghi lý do ở `EXPLAINED`, không phải lỗi luật.
@@ -159,8 +164,8 @@ Token đi qua bước tiền xử lý trước khi áp bảng mục 2-3 (`romani
 
 Giữ nguyên cần ít nhất một đoạn còn lại đọc theo luật; không thì None. Chữ Việt không dấu (Khoan, Seo) không được giữ vì nhiều tên romaji / RR cũng là âm tiết Việt.
 Cố ý để None: Jinyoon (Jin-yun hay Ji-nyun), Spider-Man, iPhone, YouTube, PD đứng riêng.
-Chưa quyết (liệt kê để chủ sách phán, hiện vẫn None hay sai): Nhật oh -> ô (Ohka, Ohto, Poh-chan, Gesunoh), jy -> j (Sanjyo, Kanjyaka), gh -> g (Hiiraghi), ff (Haffu), ー cuối (Taruー), uya cuối từ
-(Kasuya -> Ca-xuy-a, Kazuya, Himemuya), m trước p (Pimpon), ti / fi / di của tên phương Tây (Tio, Fina, Fii); Hàn nn cuối (Hyunn), Gyu (Ghi-u), Gangwon, Jeongeun, tokki, Oppa (o-pa hay op-pa),
+Chưa quyết (liệt kê để chủ sách phán, hiện vẫn None hay sai; oh, jy, gh, tokki, Gangwon đã chốt ở lần 8): Nhật ff (Haffu), ー cuối (Taruー), uya cuối từ
+(Kasuya -> Ca-xuy-a, Kazuya, Himemuya), m trước p (Pimpon), ti / fi / di của tên phương Tây (Tio, Fina, Fii); Hàn nn cuối (Hyunn), Gyu (Ghi-u), Jeongeun, Oppa (o-pa hay op-pa),
 Luda (l đầu từ).
 
 ## 4. Tên tiếng Anh và phương Tây

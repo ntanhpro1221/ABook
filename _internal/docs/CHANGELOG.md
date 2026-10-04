@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Giọng đọc
+
+- "Nghe ngay" (máy tính và điện thoại) đọc thêm vài kiểu viết tên Nhật / Hàn theo ý chủ sách: "Ohto" thành "Ô-tô", "Ohka" thành "Ô-ca", "Sanjyo" thành "Xan-giô", "Hiiraghi" thành "Hi-ra-ghi", "tokki" thành "tô-ki", "Gangwon" thành "Cang-guôn"; tên "Gesunoh", "Theia", "Fina", "Tio" đọc cố định ("Ghét-xu-nô", "Thi-a", "Phi-na", "Ti-ô"). Chữ hiện trên màn hình không đổi.
+
 ## [0.4.25] - 2026-10-04
 
 ### Giọng đọc
