@@ -45,13 +45,13 @@ def test_a_speed_factor_keeps_the_pitch(speed: float) -> None:
 
 
 @pytest.mark.parametrize("speed", [0.89, 1.30])
-def test_stretching_moves_the_loudness_by_well_under_a_decibel(speed: float) -> None:
-    # Đo trên giọng thật 04-10: +0,34..+0,53 dB. Bảng cân bằng đo độ to SAU bước này nên độ lệch ấy
-    # đã nằm trong gain; test chỉ chặn một bản sửa làm nó lớn tới mức nghe ra giữa hai câu liền nhau.
+def test_stretching_keeps_the_loudness(speed: float) -> None:
+    # Tương quan chuẩn hoá: giọng thật 04-10 lệch -0,21..+0,03 dB. Bản tương quan thô trước đó nghiêng về
+    # đoạn to và nâng +0,4..0,6 dB; bảng cân bằng vẫn đo độ to SAU bước này, test chặn việc quay lại.
     audio = voiced(seconds=3.0)
     before = integrated_loudness_lufs(audio, RATE)
     after = integrated_loudness_lufs(apply_speed_change(audio, RATE, speed), RATE)
-    assert abs(after - before) < 1.0
+    assert abs(after - before) < 0.3
 
 
 def test_a_take_shorter_than_one_frame_still_gets_its_length() -> None:
@@ -64,10 +64,11 @@ def test_a_take_shorter_than_one_frame_still_gets_its_length() -> None:
 
 
 @pytest.mark.parametrize("speed", [0.89, 1.30])
-def test_it_matches_the_reference_wsola_it_was_written_after(speed: float) -> None:
+def test_it_keeps_the_pitch_of_the_reference_wsola_and_the_loudness_better(speed: float) -> None:
     # audiotsm là phụ thuộc DEV, không đóng vào app: chỉ dùng để đối chiếu bản viết tay. Dạng sóng
     # lệch pha nên không so từng mẫu; độ dài cũng không - audiotsm bỏ phần đuôi chưa đủ khung (ngắn hơn
-    # 1/r chừng 2 %), bản của app cắt đúng 1/r. So cao độ và độ to.
+    # 1/r chừng 2 %), bản của app cắt đúng 1/r. audiotsm chọn chỗ nối bằng tương quan THÔ (nghiêng về
+    # đoạn to) nên to hơn bản gốc; bản của app (chuẩn hoá) phải giữ độ to sát bản gốc hơn nó.
     audiotsm = pytest.importorskip("audiotsm")
     from audiotsm.io.array import ArrayReader, ArrayWriter
 
@@ -80,7 +81,8 @@ def test_it_matches_the_reference_wsola_it_was_written_after(speed: float) -> No
     reference = writer.data.reshape(-1).astype(np.float32)
     ours = apply_speed_change(audio, RATE, speed)
     assert median_f0(ours) == pytest.approx(median_f0(reference), rel=0.01)
-    assert integrated_loudness_lufs(ours, RATE) == pytest.approx(integrated_loudness_lufs(reference, RATE), abs=0.5)
+    source = integrated_loudness_lufs(audio, RATE)
+    assert abs(integrated_loudness_lufs(ours, RATE) - source) < abs(integrated_loudness_lufs(reference, RATE) - source)
 
 
 def test_no_factor_means_no_change_at_all() -> None:
