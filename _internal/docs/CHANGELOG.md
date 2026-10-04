@@ -10,6 +10,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Giọng đọc
 
 - "Nghe ngay" (máy tính và điện thoại) đọc thêm vài kiểu viết tên Nhật / Hàn theo ý chủ sách: "Ohto" thành "Ô-tô", "Ohka" thành "Ô-ca", "Sanjyo" thành "Xan-giô", "Hiiraghi" thành "Hi-ra-ghi", "tokki" thành "tô-ki", "Gangwon" thành "Cang-guôn"; tên "Gesunoh", "Theia", "Fina", "Tio" đọc cố định ("Ghét-xu-nô", "Thi-a", "Phi-na", "Ti-ô"). Chữ hiện trên màn hình không đổi.
+- Thêm một lượt tên Nhật / Hàn theo tai chủ sách: "Shinomiya" thành "Si-nô-mi-a", "Futayo" thành "Phu-ta-giô", "Koizumi" thành "Coi-du-mi", "Yejin" thành "Gie-gin",
+  "Chaeyeon" thành "Che-gion", "oppa" thành "óp-pa", "unnie" thành "un-ni".
+- Dạng Việt hoá từ / tên tiếng Anh (dành cho giọng không nói được tiếng Anh; các giọng hiện có vẫn đọc nguyên chữ Anh) theo hơn 150 cách đọc của chủ sách: "William" thành
+  "Guy-li-am", "water" thành "Guốt-tờ", "nation" thành "Nây-sừn", "Scotland" thành "Xờ-cót-lừn", "taxi" thành "tắc-xi".
 
 ## [0.4.25] - 2026-10-04
 

@@ -108,6 +108,8 @@ object VietnameseSyllable {
         if (composed.isEmpty() || composed.length > 8) return false
         val (text, tone) = strip(composed) ?: return false
         if (text.isEmpty() || !text.all { it.isLetter() }) return false
+        // g + âm đệm u trước y: guy, guyu, guyn (chủ sách 04-10: Will, wind); "guy" vào vần như i, nên chỉ nhận những vần i nhận
+        if (text.startsWith("guy") && rhymeOk("g", "i" + text.substring(3), tone, giAbsorbed = true)) return true
         for (onset in ONSETS) {
             if (!text.startsWith(onset)) continue
             val rest = text.substring(onset.length)

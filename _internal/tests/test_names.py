@@ -75,7 +75,7 @@ def test_names_stay_without_an_origin_and_punctuation_around_a_name_is_kept() ->
 
 
 def test_a_korean_book_reads_romanized_korean_names() -> None:
-    assert _said("Seo-yeon gặp Ji-ho và Geun-hye.", "ko") == ["Xeo-gie-on", "gặp", "Gi-hô", "và", "Cưn-hê."]
+    assert _said("Seo-yeon gặp Ji-ho và Geun-hye.", "ko") == ["Xeo-gion", "gặp", "Gi-hô", "và", "Cưn-hê."]
 
 
 def test_the_shown_words_and_their_count_never_change() -> None:

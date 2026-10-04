@@ -50,7 +50,7 @@ VALUES: dict[str, list] = {
     "final_cluster": ["drop", "syllable"],
     "glide_coda": ["drop", "syllable"],
     "th": ["th", "x"],
-    "dh": ["đ", "d"],
+    "dh": ["d", "đ"],
     "tr": ["tr", "split"],
 }
 GROUPS = [

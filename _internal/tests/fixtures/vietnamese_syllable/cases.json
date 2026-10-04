@@ -19,12 +19,12 @@
   "séc", "đa", "đi", "đê", "đô", "đủ", "gi", "gì", "gin", "gìn", "giêng", "giếng", "giết", "gia", "giá", "giu", "gieo", "giữ", "giường", "giông",
   "pin", "pa", "xin", "xếp", "sa", "rô", "vi", "vâng", "lăn", "nhầm", "chữ", "thương", "trường", "phương", "khác",
   "Nam", "Việt", "Nguyễn", "Ghen", "Ghi", "Quyên", "Đức", "ĐÔNG", "NGUYỄN",
-  "cưn", "ưn"
+  "cưn", "ưn", "guy", "guyu", "guyn", "guýt"
  ],
  "invalid": [
   "gen", "Gen", "got", "Got", "ain", "Ain", "mêch", "Mêch", "Mech", "mech", "gii", "giin", "ghu", "gha", "ghô", "ghơ", "ngha", "nghu", "nghô", "ka", "ko", "ku", "kơ", "ci", "ce", "cê", "cy", "cin", "cen",
   "ngi", "nge", "ngê", "ngy", "ge", "gê", "qu", "quo", "quu", "quuy", "quoc", "q", "qa",
-  "ơc", "ớc", "ơng", "ưp", "ứp", "oáp", "oép", "oạp", "uơn", "uơm", "uyn", "uyng", "uýc", "uýp", "quyn", "quýc", "quýp", "tuyn", "uên", "tuên", "uêm", "uếp", "uết",
+  "ơc", "ớc", "ơng", "ưp", "ứp", "oáp", "oép", "oạp", "uơn", "uơm", "uyn", "uyng", "uýc", "uýp", "quyn", "quýc", "quýp", "tuyn", "uên", "tuên", "uêm", "uếp", "uết", "guyc", "guyng", "guyt", "guen", "gue",
   "king", "ring", "ing", "ic", "ich", "ik", "êng", "êc", "ênc", "inc", "ac", "ap", "at", "ach", "ăc", "âp", "ôt", "ơt", "ut", "ut", "bac", "tap", "mat", "lop", "cop", "bat", "xit", "tic", "tec", "sec", "ich",
   "ă", "â", "ăy", "tiê", "yê", "uô", "ươ", "iê", "uâ", "oă", "oo", "boo", "tya", "tyêu", "hyêu", "kyên", "nyê", "iac", "uac", "ưac", "aiu", "aing", "aon", "iuc", "êuc", "oicc",
   "ng", "ngh", "nh", "ch", "gh", "kh", "ph", "th", "tr", "ngg", "nn", "bb", "tt", "cc", "kk", "ss", "dd", "đđ", "dđ",
@@ -34,7 +34,7 @@
  ],
  "spoken_valid": [
   "Ghen", "Mếch", "Ca-ma-tô", "Xờ-lam", "Hi-ra-ghi", "Ghin", "Gin", "Cơ-rít", "Uy-li-am", "Oen-đi", "A-o-i", "O-xa-ca", "Phu-cu-ô-ca", "Xe-óc", "Cưn-hê", "Pắc Cưn-hê", "Quin", "Quích", "Giê-su", "Ghêm", "Le-vồ", "Xan-u-ơm",
-  "Bờ-lếch", "Xờ-kiu", "Guốt", "Ghết", "Mác-xơ-cơ-va", "Phai", "Đoái"
+  "Bờ-lếch", "Xờ-kiu", "Guốt", "Guyu", "Guy-li-am", "Ghết", "Mác-xơ-cơ-va", "Phai", "Đoái"
  ],
  "spoken_invalid": [
   "Gen", "Mêch", "Got", "Ain", "Gen-ghi", "Ghen-ain", "Ca--ma", "-Ca", "Ca-", "Ca ma-", "", " ", "-", "Gêm", "Quyn", "Uên", "Xớc", "Kin-g", "Cờ-líc", "Đao-lôt", "Goép-sai", "Ca-ma-tô2", "Ca_ma", "Ca.ma"

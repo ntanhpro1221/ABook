@@ -15,6 +15,7 @@ from pathlib import Path
 
 import pytest
 
+from abook.vietnamese_syllable import valid_spoken_form, valid_syllable
 from abook.english_vi import (
     OPEN_CHOICES,
     PHONES_PATH,
@@ -28,7 +29,12 @@ ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests" / "fixtures" / "english_vi" / "cases.json"
 # Mọi phán quyết chủ sách (04-10, bốn lần): (chữ, các dạng chủ sách cho là đúng; dạng thứ hai là cách đọc khác cũng được)
 OWNER = [(token, sources) for token, sources, kind in evidence.SOURCED if kind == "owner"] + [("VIP", ("víp",)), ("ID", ("ai-đi",))]
-FIXED_ONLY = {"Kate", "Pete", "guild", "time", "Thomas", "great", "Gate", "Paul", "higher", "Laplace", "Walt", "Dalton", "days", "VIP", "ID"}  # ca riêng: chỉ bảng ghi đè ra được, luật không suy rộng
+# ca riêng: chỉ bảng ghi đè ra được, luật không suy rộng (vòng 9: từ Washington trở đi)
+FIXED_ONLY = {"Kate", "Pete", "guild", "time", "Thomas", "great", "Gate", "higher", "Laplace", "Walt", "Dalton", "days", "VIP", "ID",
+              "Washington", "Damien", "Darius", "Violet", "Forthorthe", "Judge", "Max", "Mikhail", "Blanche", "Reine", "Wolf", "Walker",
+              "Undead", "Hilde", "oldest", "card", "wind", "world", "monster", "brother", "Charlie", "Anne", "Louise", "April"}
+# Chủ sách viết những dạng mà bộ kiểm âm tiết (đúng chính tả) không nhận; không nới bộ kiểm, nên chưa có cách đọc (hỏi lại chủ sách)
+TALLY = {"owner": [120, 156], "official": [2, 4], "textbook": [8, 32], "press": [0, 2], "community": [6, 18]}
 
 
 def _load_script(name: str):
@@ -79,9 +85,9 @@ def test_tally_of_sourced_forms_by_kind():
         entry = tally.setdefault(kind, [0, 0])
         entry[0] += _matches(token, sources)
         entry[1] += 1
-    # (khớp đủ thanh, tổng). Chủ sách: 36 / 49, 13 ca còn lại là ca riêng (bảng ghi đè: Kate, Pete, guild, time, Thomas, great, Gate, Paul,
-    # higher, Laplace, Walt, Dalton, days); Tô-mát, Bốt-tơn, Rốc-ki, Đan-tơn, Oa-sinh-tơn của nguồn đã thành ca chủ sách. Cộng đồng chỉ để xem.
-    assert tally == {"owner": [36, 49], "official": [2, 4], "textbook": [7, 35], "press": [0, 2], "community": [5, 19]}
+    # (khớp đủ thanh, tổng). Chủ sách: TALLY_OWNER, phần còn lại là ca riêng (bảng ghi đè, xem FIXED_ONLY); dạng của nguồn đã thành ca
+    # chủ sách khi chủ sách chốt (Tô-mát, Bốt-tơn, Rốc-ki, Đan-tơn, Oa-xinh-tơn, Xờ-cót-lừn, Xếch-xơ-pia). Cộng đồng chỉ để xem.
+    assert tally == TALLY
 
 
 # ---- từng dòng luật ----------------------------------------------------------------------------------------------------
@@ -90,26 +96,30 @@ def test_tally_of_sourced_forms_by_kind():
     # -əl cuối -> ồ, thanh huyền; l sau ai / ao / oi -> "ồ" không phụ âm đầu; l cuối sau i -> u (chủ sách); l khép khác -> n (Men-bơn)
     ("table", "tây-bồ"), ("Daniel", "Đa-ni-ồ"), ("smile", "xờ-mai-ồ"), ("oil", "oi-ồ"), ("bill", "biu"), ("Melbourne", "Men-bơn"),
     # schwa + n / m giữ phụ âm cuối, thanh ngang (chủ sách: Oa-sinh-tơn, Ê-đi-xơn đúng); schwa theo chữ viết
-    ("Washington", "Oa-sinh-tơn"), ("Philadelphia", "Phi-la-đen-phi-a"), ("Dallas", "Đa-lát"),
+    ("Washington", "Oa-xinh-tơn"), ("Philadelphia", "Phi-la-đen-phi-a"), ("Dallas", "Đa-lát"),
     # cụm phụ âm đầu -> Cờ- thanh huyền (chủ sách: xờ-kiu, bờ-lếch); giữa từ ơ ngang; t + r giữ tr; t đầu từ giữ t
-    ("spell", "xờ-pen"), ("star", "xờ-ta"), ("Brian", "Bờ-rai-an"), ("trust", "trắt"), ("Detroit", "Đi-troi"), ("Tyler", "Tai-lơ"),
+    ("spell", "xờ-peo"), ("star", "xờ-ta"), ("Brian", "Bờ-rai-an"), ("trust", "trắt"), ("Detroit", "Đi-troi"), ("Tyler", "Tai-lờ"),
     # phụ âm tắc nhân đôi sau nguyên âm nhấn chính (máp-pồ)
     ("happy", "háp-pi"), ("ticket", "tích-két"),
     # /eɪ/: mở ây, khép p -> a, khép c -> êch, khép mũi ê; ai + m -> am; ai / ao / oi + phụ âm khác không khép; /æŋk/ -> anh
     ("day", "đây"), ("name", "nêm"), ("make", "mếch"), ("crime", "cờ-ram"), ("five", "phai"), ("town", "tao"), ("Yorktown", "I-oóc-tao"),
     ("rank", "ranh"), ("thank", "thanh"),
     # w / y bán âm, qu, ng không mở âm tiết, r của ơ trước nguyên âm
-    ("William", "Uy-li-am"), ("queen", "quin"), ("you", "iu"), ("Hemingway", "He-minh-uây"), ("Colorado", "Co-lơ-ra-đô"),
+    ("William", "Guy-li-am"), ("queen", "quin"), ("you", "iu"), ("Hemingway", "He-minh-uây"), ("Colorado", "Co-lơ-ra-đô"),
     # phụ âm cuối hữu thanh / xát -> tắc + sắc (Bớt, Tô-mát); r cuối bỏ; cụm cuối giữ một
     ("Bird", "Bớt"), ("bad", "bát"), ("love", "lắp"), ("York", "I-oóc"), ("first", "phớt"),
     # tên ngắn một phụ âm đầu + tắc + e câm theo mặt chữ, chỉ với tên viết hoa
     ("Coke", "Co-ke"), ("Nate", "Na-te"), ("Shake", "Sa-ke"), ("Lace", "La-xe"), ("Cale", "Ca-le"),
     # /eɪ/ + t -> êt, /eɪ/ + s cuối -> ây; /aɪər/ -> ai; /ɔːl/ -> ôn; từ ghép không có trong từ điển đọc từng phần
-    ("gate", "ghết"), ("fire", "phai"), ("call", "côn"), ("sandworm", "xan-u-ơm"), ("water", "guốt-tơ"), ("Walter", "Guôn-tơ"), ("Warrior", "Oa-ri-ơ"),
+    ("gate", "ghết"), ("fire", "phai"), ("call", "côn"), ("sandworm", "xan-u-ơm"), ("water", "guốt-tờ"), ("Walter", "Guôn-tờ"), ("Warrior", "Goa-ri-ơ"),
     # tên ngắn e câm: âm mũi theo âm vị (Dane), g + e cứng (Page); tắc + l / r giữa từ -> Cờ huyền; w đầu từ -> gu
-    ("Dane", "Đên"), ("Page", "Pa-ghe"), ("tablet", "ta-bờ-lét"), ("Andrew", "An-đờ-ru"),
+    ("Dane", "Đên"), ("Page", "Pa-ghe"), ("tablet", "táp-lét"), ("Andrew", "An-riu"),
+    # -land lừn chỉ sau phụ âm chặn + l (địa danh); tên người giữ lan. Từ mượn đã vào từ điển tiếng Việt: taxi -> tắc-xi
+    ("England", "Inh-gơ-lừn"), ("Iceland", "Ai-xơ-lừn"), ("Roland", "Rô-lừn"), ("Garland", "Ga-lừn"), ("taxi", "tắc-xi"),
+    # l cuối sau e -> eo; tắc + r sau nguyên âm nhấn khép; dh -> d; AO + s + t -> ô
+    ("bell", "beo"), ("cobra", "cốp-ra"), ("this", "dít"), ("Austin", "Ô-tin"),
     # đường chính tả (không có trong từ điển)
-    ("Encrid", "En-cờ-rít"), ("Lancel", "Lan-xen"), ("Calian", "Ca-li-an"), ("Litana", "Li-ta-na"),
+    ("Encrid", "En-cờ-rít"), ("Lancel", "Lan-xồ"), ("Calian", "Ca-li-an"), ("Litana", "Li-ta-na"),
     # nối gạch
     ("Jean-Paul", "Gin Pau"),
 ])
@@ -123,22 +133,37 @@ def test_unsure_is_none(token):
 
 
 def test_without_a_dictionary_the_spelling_route_reads():
-    assert vietnamized_english_flags("Washington", {}, overrides=False) == ("Oa-sinh-ton", ("via:spelling",))
-    assert vietnamized_english_flags("Washington", overrides=False) == ("Oa-sinh-tơn", ("via:phonemes",))
+    assert vietnamized_english_flags("Washington", {}, overrides=False) == ("Goa-sinh-ton", ("via:spelling",))
+    assert vietnamized_english_flags("Washington", overrides=False) == ("Goa-sinh-tơn", ("via:phonemes",))
+    assert vietnamized_english_flags("España", {}) == ("Ét-pa-nha", ("via:spelling",))  # ñ -> nh
     assert vietnamized_english("Encrid", {}) == vietnamized_english("Encrid")
     assert vietnamized_english("tank", {}, overrides=False) == "tanh"
 
 
 def test_analogy_points_are_flagged_and_settled_points_are_not():
     assert vietnamized_english_flags("rank") == ("ranh", ("via:phonemes", "analogy:ank"))  # theo tank -> tanh
-    assert "analogy:w_gu" in vietnamized_english_flags("Walter")[1]  # w trước âm o: chỉ có Walt của chủ sách
-    for word in ("William", "Wendy", "Weiss", "Washington", "sandworm"):  # w trước âm khác o, hay ở nửa sau từ ghép: không gu
-        assert "analogy:w_gu" not in vietnamized_english_flags(word, overrides=False)[1], word
+    # w đầu từ -> g + âm đệm đã là luật (vòng 9 chủ sách chốt Will, William, Wendy, Weiss, west, Wood, water): không cờ analogy
+    assert vietnamized_english_flags("Walter") == ("Guôn-tờ", ("via:phonemes",))
+    assert vietnamized_english("sandworm") == "xan-u-ơm"  # w ở nửa sau từ ghép giữ u
     for word in ("Master", "Blake", "Lyle", "Tom", "Tyler", "Zeke", "late", "Grace", "Rose", "fireball", "Cage", "Luce", "Jane", "Laplace"):  # chủ sách đã chốt: không cờ
         assert not [flag for flag in vietnamized_english_flags(word, overrides=False)[1] if not flag.startswith("via:")], word
     assert vietnamized_english_flags("Mike") == ("Mi-ke", ("via:override",))
     assert vietnamized_english_flags("Mike", overrides=False) == ("Mi-ke", ("via:face",))
     assert OPEN_CHOICES == {}
+
+
+def test_the_vowels_without_a_rhyme_are_rewritten_not_waved_through():
+    """ơc / ơch và o + ch không phải vần tiếng Việt: ɜːr + c -> âc (Kirk cấc), o + ch cuối -> óc (George gióc); bộ kiểm không nới."""
+    for form in ("cớc", "bớc", "gióch"):
+        assert not valid_spoken_form(form), form
+    assert vietnamized_english("Kirk", overrides=False) == "Cấc" and vietnamized_english("Burke", overrides=False) == "Bấc"
+    assert vietnamized_english("George", overrides=False) == "Gióc"
+    assert vietnamized_english("Hamburg", overrides=False) == "Ham-bơ"  # ɜːr trước g câm: vẫn ơ
+
+
+def test_the_labialised_g_forms_pass_the_syllable_checker():
+    for syllable in ("guy", "guyu", "guây", "guốt", "goét", "goen"):  # guen không nhận: oe viết goen, cùng âm
+        assert valid_syllable(syllable), syllable
 
 
 def test_the_trial_words_all_read_with_and_without_a_dictionary():

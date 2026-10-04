@@ -60,9 +60,23 @@ class EnglishViTest {
         assertEquals("xờ-kiu", EnglishVi.reading("skill", phones, overrides = false))
         assertEquals("bót", EnglishVi.reading("boss", phones, overrides = false))
         assertEquals("víp", EnglishVi.reading("VIP", phones))
-        assertEquals("Oa-sinh-tơn", EnglishVi.reading("Washington", phones, overrides = false))
-        assertEquals("Guôn-tơ", EnglishVi.reading("Walter", phones))
-        assertEquals("Uy-li-am", EnglishVi.reading("William", phones))
+        assertEquals("Oa-xinh-tơn", EnglishVi.reading("Washington", phones))
+        assertEquals("Goa-sinh-tơn", EnglishVi.reading("Washington", phones, overrides = false))
+        assertEquals("guốt-tờ", EnglishVi.reading("water", phones, overrides = false))
+        assertEquals("Guy-li-am", EnglishVi.reading("William", phones))
+        assertEquals("Guyu", EnglishVi.reading("Will", phones, overrides = false))
+        assertEquals("nây-sừn", EnglishVi.reading("nation", phones, overrides = false))
+        assertEquals("Ét-pa-nha", EnglishVi.reading("España", emptyMap()))
+        assertEquals("Xờ-cót-lừn", EnglishVi.reading("Scotland", phones, overrides = false))
+        assertEquals("Pau", EnglishVi.reading("Paul", phones, overrides = false))
+        assertEquals("Cấc", EnglishVi.reading("Kirk", phones, overrides = false))
+        assertEquals("Gióc", EnglishVi.reading("George", phones, overrides = false))
+        assertEquals("Ô-tin", EnglishVi.reading("Austin", phones, overrides = false))
+        assertEquals("Rô-lừn", EnglishVi.reading("Roland", phones, overrides = false))
+        assertEquals("cốp-ra", EnglishVi.reading("cobra", phones, overrides = false))
+        assertEquals("beo", EnglishVi.reading("bell", phones, overrides = false))
+        assertEquals("pha-dờ", EnglishVi.reading("father", phones, overrides = false))
+        assertEquals("tắc-xi", EnglishVi.reading("taxi", phones))
         assertEquals("La-pờ-lây", EnglishVi.reading("Laplace", phones, overrides = false))
         assertEquals("Ca-ghe", EnglishVi.reading("Cage", phones, overrides = false))
         assertEquals("Đên", EnglishVi.reading("Dane", phones))
@@ -74,7 +88,7 @@ class EnglishViTest {
 
     @Test
     fun withoutADictionaryTheSpellingRouteReads() {
-        assertEquals(EnglishVi.Reading("Oa-sinh-ton", listOf("via:spelling")), EnglishVi.readingWithFlags("Washington", emptyMap(), overrides = false))
+        assertEquals(EnglishVi.Reading("Goa-sinh-ton", listOf("via:spelling")), EnglishVi.readingWithFlags("Washington", emptyMap(), overrides = false))
         assertEquals("En-cờ-rít", EnglishVi.reading("Encrid", emptyMap()))
     }
 
