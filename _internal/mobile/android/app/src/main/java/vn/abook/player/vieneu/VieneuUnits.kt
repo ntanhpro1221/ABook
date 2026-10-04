@@ -48,6 +48,10 @@ object VieneuUnits {
     private val STUTTER = Regex("""([^$W]*)(\p{L}{1,3})-+(\p{L}.*)""", RegexOption.DOT_MATCHES_ALL)
     private val STUTTER_ALONE = Regex("""([^$W]*)(\p{L}{1,3})-+([^$W]*)""")
     private val CENSORED = Regex("""([^$W]*)(\p{L})\*+([^$W]*)""")
+    /** "->", "-->", "=>", "→": sea-g2p reads "sang" / "đến" / "suy ra"; "<->" (both ways) stays. */
+    private val ARROW_FORWARD = Regex("""(?<![<=-])(?:-+|=+)>|[→⇒➜➡➔⟶⟹]""")
+    /** "<-", "<--", "←": no way to say it aloud (sea-g2p reads "nhỏ hơn"), so it goes; "<=" is a comparison and stays. */
+    private val ARROW_BACK = Regex("""<(?:-+|={2,})(?!>)|[←⇐⟵⟸]""")
     /** Chỗ dính liền hai từ trong một chữ hiện (tách để đọc từng từ, mảnh dấu giữ nguyên). */
     private val GLUED = Regex("""(?:\.{2,}|[…—–])+""")
     /** English thousands: 1,500 is "một nghìn năm trăm"; Vietnamese decimals ("1,5") do not match. */
@@ -132,6 +136,32 @@ object VieneuUnits {
                 said = ""
             }
             out[index] = said
+        }
+    }
+
+    private fun arrow(original: String, atStart: Boolean): String {
+        var token = original
+        fun replace(match: MatchResult, wordIn: String): String {
+            val left = token.getOrNull(match.range.first - 1)
+            val right = token.getOrNull(match.range.last + 1)
+            val word = if (left == null && atStart) "" else wordIn // "-> Bước tiếp": an arrow opening a line is only a bullet
+            if (word.isNotEmpty()) return (if (left != null && left.isLetterOrDigit()) " " else "") + word + (if (right != null && right.isLetterOrDigit()) " " else "")
+            return if (left != null && left.isLetterOrDigit() && right != null && right.isLetterOrDigit()) " " else ""
+        }
+        token = ARROW_FORWARD.replace(token) { replace(it, "thành") }
+        return ARROW_BACK.replace(token) { replace(it, "") }
+    }
+
+    /**
+     * Text arrows: "1780 --> 1940", "A -> B", "=>", "→" are "thành" (sea-g2p reads "sang" / "đến" / "suy ra"); a backward arrow "<-", "←" has nothing to say so it goes; an arrow opening
+     * a paragraph or a sentence is a bullet, it goes too - `_arrows`.
+     */
+    private fun arrows(out: MutableList<String>) {
+        for (index in out.indices) {
+            val token = out[index]
+            if (token.none { it in "<>=→⇒➜➡➔⟶⟹←⇐⟵⟸" }) continue
+            val before = if (index > 0) out[index - 1].trimEnd { it in CLOSERS } else ""
+            out[index] = arrow(token, before.isEmpty() || before.last() in SENTENCE_END)
         }
     }
 
@@ -388,6 +418,8 @@ object VieneuUnits {
         }
         romanNumbers(pieces, said)
         Abbreviations.readLevels(pieces, said)
+        Abbreviations.readTitles(pieces, said)
+        Abbreviations.readShoutedHonorifics(pieces, said, origin)
         Abbreviations.spellAbbreviations(pieces, said)
         Names.readNames(pieces, said, origin)
         Names.readHonorifics(pieces, said, origin)
@@ -401,6 +433,7 @@ object VieneuUnits {
     fun readingMarks(out: MutableList<String>) {
         fullwidth(out)
         emoticons(out)
+        arrows(out)
         tildes(out)
         for (index in out.indices) out[index] = THOUSANDS.replace(out[index]) { it.value.replace(",", "") }
         numbers(out)

@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Giọng đọc
+
+- "Nghe ngay" (máy tính và điện thoại, mọi giọng) đọc đúng thêm vài chỗ hay gặp: tiếng gọi viết hoa cả ("ONII-CHAN" thành "o-ni-chan", "OPPA" thành "óp-pa"), "Mr. Lyle" / "Dr. Stone" thành "mister Lyle" / "doctor Stone", mũi tên chữ "1780 --> 1940" hay "A -> B" thành "thành" (mũi tên ngược "<-" thì bỏ).
+
 ## [0.4.26] - 2026-10-04
 
 ### Giọng đọc

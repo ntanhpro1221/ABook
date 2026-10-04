@@ -39,7 +39,7 @@ class SoundsTest {
         for (token in listOf("Hp", "hp", "NPCs", "A", "H", "10KG", "A12-B", "TP.HCM", "PGS.TS", "KIRITO", "X-RAY", "SS2", "ĐH", "CÁC")) assertEquals(token, listOf("Rồi", token, "đến."), said("Rồi $token đến."))
         assertEquals(listOf("“hát pê,”", "(em pê)", "en pê xê!", "3MP", "level 5", "5HP"), said("“HP,” (MP) NPC! 3MP LV5 5HP"))
         assertEquals(listOf("CÚT", "ĐI,", "AI", "ĐÓ"), said("CÚT ĐI, AI ĐÓ"))
-        assertEquals(listOf("ONII-CHAN", "LO", "LẮNG", "CHO", "CON", "KÌA"), said("ONII-CHAN LO LẮNG CHO CON KÌA"))
+        assertEquals(listOf("o-ni-chan", "LO", "LẮNG", "CHO", "CON", "KÌA"), said("ONII-CHAN LO LẮNG CHO CON KÌA"))
         assertEquals(listOf("hát pê", "em pê", "ét pê"), said("HP MP SP"))
         assertEquals(listOf("Chương", "bốn,", "hát pê."), said("Chương IV, HP."))
         assertEquals("i i i i", Abbreviations.spelled("IIII"))
@@ -98,7 +98,7 @@ class SoundsTest {
     fun koreanTermsAreReadAloneAndAfterAName() {
         assertEquals(listOf("“óp-pa,", "un-ni!", "hi-ung", "nu-na”"), said("“Oppa, unnie! hyung noona”"))
         assertEquals(listOf("hi-ung-nim,", "Soleum-xi,", "Minho-óp-pa"), said("Hyung-nim, Soleum-ssi, Minho-oppa"))
-        for (token in listOf("san", "sama", "nim", "ssi", "tan", "nee", "nii", "Kun", "con-sans", "Ra-TAN", "DOT-SAMA")) assertEquals(token, token, said("Rồi $token đến.")[1])
+        for (token in listOf("san", "sama", "nim", "ssi", "tan", "nee", "nii", "Kun", "con-sans", "Ra-TAN")) assertEquals(token, token, said("Rồi $token đến.")[1])
     }
 
     // ---- TN "Nghe ngay" lượt 3 (cùng các ca với tests/test_readaloud_sounds.py) ----
@@ -156,5 +156,32 @@ class SoundsTest {
         assertEquals(listOf("đó.”(giê em)", "xong"), said("đó.”(GM) xong"))
         assertEquals(listOf("rồi…xen-pai.”", "Babi, người"), said("rồi…Senpai.” Babi—người"))
         assertEquals(listOf("Thế", "chiến", "hai, thời", "kỳ"), said("Thế chiến II—thời kỳ"))
+    }
+
+    // ---- TN "Nghe ngay" lượt 4 (cùng các ca với tests/test_readaloud_sounds.py): gọi viết hoa cả, danh xưng viết tắt, mũi tên chữ ----
+    @Test
+    fun aShoutedHonorificIsReadLikeItsLowerCaseForm() {
+        assertEquals("o-ni-chan, o-ni-chan LO LẮNG!", said("ONII-CHAN, ONII-CHAN LO LẮNG!").joinToString(" "))
+        assertEquals("“ne-xan!” và óp-pa, ariel-xa-ma.", said("“NEE-SAN!” và OPPA, ARIEL-SAMA.").joinToString(" "))
+        assertEquals("Kiểm tra ét a en và xen-pai", said("Kiểm tra SAN và SENPAI").joinToString(" "))
+    }
+
+    @Test
+    fun aTitleBeforeANameIsReadInFull() {
+        assertEquals("mister Lyle đến, missus Smith, miss Lee và doctor Stone.", said("Mr. Lyle đến, Mrs. Smith, Ms. Lee và Dr. Stone.").joinToString(" "))
+        assertEquals("mục tiêu của mister lyle thôi, “mister Lyle” và (doctor Stone)", said("mục tiêu của mr.lyle thôi, “Mr.Lyle” và (dr.Stone)").joinToString(" "))
+        assertEquals("saint Louis và doctor Stone, mister Lyle.", said("St. Louis và Dr Stone, Mr Lyle.").joinToString(" "))
+        assertEquals("Main St. dài, Dr. nào, ở số 5St. Mr.", said("Main St. dài, Dr. nào, ở số 5St. Mr.").joinToString(" "))
+    }
+
+    @Test
+    fun aTextArrowIsThanhOrNothing() {
+        fun arrows(text: String) = said(text).filter { it.isNotEmpty() }.joinToString(" ")
+        assertEquals("hát pê: 1780 thành 1940", arrows("HP: 1780 --> 1940"))
+        assertEquals("A thành B, C thành D, E thành F, G thành H.", arrows("A -> B, C => D, E → F, G ⇒ H."))
+        assertEquals("1780 thành 1940 và A thành B", arrows("1780->1940 và A-->B"))
+        assertEquals("A B và C D, E F", arrows("A <- B và C ← D, E<-F"))
+        assertEquals("Bước tiếp. Xong", arrows("-> Bước tiếp. → Xong"))
+        assertEquals("A <-> B, x <= 5, a >= 3, a thành b c", arrows("A <-> B, x <= 5, a >= 3, a -> b <- c"))
     }
 }

@@ -47,7 +47,7 @@ def test_punctuation_around_an_abbreviation_is_kept_and_a_number_before_it_stops
 
 def test_a_shouted_sentence_is_not_a_row_of_abbreviations() -> None:
     assert _said("CÚT ĐI, AI ĐÓ") == ["CÚT", "ĐI,", "AI", "ĐÓ"]
-    assert _said("ONII-CHAN LO LẮNG CHO CON KÌA") == ["ONII-CHAN", "LO", "LẮNG", "CHO", "CON", "KÌA"]
+    assert _said("ONII-CHAN LO LẮNG CHO CON KÌA") == ["o-ni-chan", "LO", "LẮNG", "CHO", "CON", "KÌA"], "chỉ tiếng gọi được đọc, phần gào còn lại để nguyên"
     assert _said("HP MP SP") == ["hát pê", "em pê", "ét pê"], "một dãy toàn viết tắt thì vẫn đọc"
 
 
@@ -127,7 +127,7 @@ def test_korean_terms_are_read_alone_and_after_a_name() -> None:
     assert _said("Hyung-nim, Soleum-ssi, Minho-oppa") == ["hi-ung-nim,", "Soleum-xi,", "Minho-óp-pa"]
 
 
-@pytest.mark.parametrize("token", ["san", "sama", "nim", "ssi", "tan", "nee", "nii", "Kun", "con-sans", "Ra-TAN", "DOT-SAMA"])
+@pytest.mark.parametrize("token", ["san", "sama", "nim", "ssi", "tan", "nee", "nii", "Kun", "con-sans", "Ra-TAN"])
 def test_a_suffix_word_alone_or_a_look_alike_is_left_alone(token: str) -> None:
     assert _said(f"Rồi {token} đến.")[1] == token
 
@@ -203,3 +203,40 @@ def test_a_parenthesised_abbreviation_glued_to_a_word_is_spelled() -> None:
 def test_two_words_glued_by_an_ellipsis_or_a_dash_are_read_one_by_one() -> None:
     assert _said("rồi…Senpai.” Babi—người") == ["rồi…xen-pai.”", "Babi, người"]
     assert _said("Thế chiến II—thời kỳ") == ["Thế", "chiến", "hai, thời", "kỳ"]
+
+
+# ---- TN "Nghe ngay" lượt 4: gọi viết hoa cả, danh xưng viết tắt, mũi tên chữ -----------------------------------------------------------------------
+@pytest.mark.parametrize("text, said", [
+    ("ONII-CHAN, ONII-CHAN LO LẮNG!", "o-ni-chan, o-ni-chan LO LẮNG!"),
+    ("“NEE-SAN!” và OPPA, ARIEL-SAMA.", "“ne-xan!” và óp-pa, ariel-xa-ma."),
+    ("Kiểm tra SAN và SENPAI", "Kiểm tra ét a en và xen-pai"),  # hậu tố đứng một mình không có tên đi trước: SAN vẫn là viết tắt, senpai là từ mượn quen
+])
+def test_a_shouted_honorific_is_read_like_its_lower_case_form(text: str, said: str) -> None:
+    assert " ".join(_said(text)) == said
+    assert _said(text, "ja") == _said(text, None, False)  # gốc Nhật hay không rõ gốc, giọng nào cũng như nhau
+
+
+@pytest.mark.parametrize("text, said", [
+    ("Mr. Lyle đến, Mrs. Smith, Ms. Lee và Dr. Stone.", "mister Lyle đến, missus Smith, miss Lee và doctor Stone."),
+    ("mục tiêu của mr.lyle thôi, “Mr.Lyle” và (dr.Stone)", "mục tiêu của mister lyle thôi, “mister Lyle” và (doctor Stone)"),
+    ("St. Louis và Dr Stone, Mr Lyle.", "saint Louis và doctor Stone, mister Lyle."),
+    ("Main St. dài, Dr. nào, ở số 5St. Mr.", "Main St. dài, Dr. nào, ở số 5St. Mr."),  # không liền trước tên viết hoa: không phải danh xưng
+])
+def test_a_title_before_a_name_is_read_in_full(text: str, said: str) -> None:
+    assert " ".join(_said(text)) == said
+
+
+def test_a_title_is_vietnamised_for_a_voice_that_cannot_say_english() -> None:
+    assert _said("Mr. Lyle", None, False)[0] == (names.english_reading("mister") or "mister")
+
+
+@pytest.mark.parametrize("text, said", [
+    ("HP: 1780 --> 1940", "hát pê: 1780 thành 1940"),
+    ("A -> B, C => D, E → F, G ⇒ H.", "A thành B, C thành D, E thành F, G thành H."),
+    ("1780->1940 và A-->B", "1780 thành 1940 và A thành B"),
+    ("A <- B và C ← D, E<-F", "A B và C D, E F"),  # mũi tên ngược không có lời để đọc
+    ("-> Bước tiếp. → Xong", "Bước tiếp. Xong"),  # đầu đoạn / đầu câu: dấu đầu mục
+    ("A <-> B, x <= 5, a >= 3, a -> b <- c", "A <-> B, x <= 5, a >= 3, a thành b c"),  # hai chiều và so sánh để nguyên
+])
+def test_a_text_arrow_is_thanh_or_nothing(text: str, said: str) -> None:
+    assert " ".join(piece for piece in _said(text) if piece) == said
