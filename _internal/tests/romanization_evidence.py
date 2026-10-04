@@ -141,6 +141,12 @@ SOURCED: list[tuple[str, str, tuple[str, ...], str]] = [
     ("Yejin", "ko", ("gie-gin", "de-din"), "owner"),
     ("Yerin", "ko", ("gie-rin", "de-rin"), "owner"),
     ("Seoyeon", "ko", ("xeo-gion",), "owner"),
+    # lần 9, trả lời nhỏ (04-10 chiều): Hàn nn cuối gộp n (Hyunn), yu mở sau phụ âm là MỘT âm tiết (Gyu -> ghiu; có coda thì tách: Hyun, Kyung, Hyung); Nhật ー cuối bỏ (Taruー),
+    # fi -> phi (Fii; Fina thành luật, không còn trong bảng cố định)
+    ("Hyunn", "ko", ("hi-un",), "owner"),
+    ("Gyu", "ko", ("ghiu",), "owner"),
+    ("Taruー", "ja", ("ta-ru",), "owner"),
+    ("Fii", "ja", ("phi",), "owner"),
     # --- Nhật: địa danh (SGK Địa lí / Lịch sử 11) ---
     ("Hokkaidō", "ja", ("Hô-cai-đô", "Hốc-cai-đô"), "textbook"),
     ("Honshū", "ja", ("Hôn-su",), "textbook"),
@@ -288,7 +294,7 @@ EXPLAINED: dict[str, tuple[str, str]] = {
     "Seokguram": ("Xe-óc-cu-ram", _KS + "; " + _EO + "; nguồn ghi Sớc-kyun / Sớc-kun, không đọc từng âm tiết của Seokguram (Latinh là chỗ dựng lại)"),
     "Bulguksa": ("Bun-cúc-xa", _KS + "; nguồn chỉ ghi Bul-kuc / Bun-kuc (bỏ -sa); b đầu từ -> b, giữa từ Bul-guk -> Bun-cúc (như Busan -> Bu-xan, chủ sách 04-10 lần 5)"),
     "Yongin": ("", "yong-in hay yon-gin: RR viết giống nhau nên không đoán (None); nguồn viết Yông-in, 'yô' không là vần tiếng Việt"),
-    "Hallyu": ("Han-li-u", "yu sau phụ âm tách i-u (" + _KO4 + ": Hyun -> Hi-un, Ryuu -> Ri-u); y không phải chữ tiếng Việt"),
+    "Hallyu": ("Han-liu", "yu mở sau phụ âm là một âm tiết (chủ sách lần 9: Gyu -> Ghiu; có coda mới tách: Hyun -> Hi-un); y không phải chữ tiếng Việt"),
     "Saenuri": ("Xe-nu-ri", "ae -> e (mục 3, Te, He-in); " + _KS + "; nguồn giữ Latinh Sae"),
     "Jeong Hong-won": ("Gie-ong Hông-guôn", _J + "; " + _EO + "; wo -> uô, w đầu từ -> gu (" + _KO4 + ": Won -> Guôn); nguồn viết Chơng Hông Uân" + "; " + _HY),
     "Kim Jong-il": ("Kim Giông-in", "chữ Latinh 'Jong' (RR jeong); đọc theo chữ viết: o -> ô; " + _J + "; " + _HY),

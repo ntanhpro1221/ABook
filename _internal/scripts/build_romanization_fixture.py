@@ -86,7 +86,7 @@ EDGE: list[tuple[str, str | None]] = [
     ("Shinomiya", "ja"), ("Renya", "ja"), ("Kiyoshi", "ja"), ("Miyuki", "ja"), ("Futayo", "ja"), ("Sayo", "ja"), ("Izayoi", "ja"), ("Koichi", "ja"), ("ecchi", "ja"), ("Haffu", "ja"),
     ("Hamsuke", "ja"), ("Shimbun", "ja"), ("Reidi", "ja"), ("Direkuresu", "ja"), ("Kasuya", "ja"), ("Yukinoshita", "ja"),
     ("unnie", "ko"), ("Muyoung", "ko"), ("Young", "ko"), ("Chaeyeon", "ko"), ("Yeeun", "ko"), ("Jeongeun", "ko"), ("Luda", "ko"), ("Leon", "ko"), ("Lena", "ko"), ("Hatta", "ko"), ("Hatta", "ja"), ("Yejin", "ko"), ("Yerin", "ko"), ("Seoyeon", "ko"), ("Sapporo", "ja"),
-    ("Aoi", "ja"), ("Tomoe", "ja"), ("Fumio", "ja"), ("Koizumi", "ja"), ("Nissan", "ja"),
+    ("Aoi", "ja"), ("Tomoe", "ja"), ("Fumio", "ja"), ("Koizumi", "ja"), ("Nissan", "ja"), ("Taruー", "ja"), ("Taruー-san", "ja"), ("Fii", "ja"), ("Fuji", "ja"), ("Hyunn", "ko"), ("Gyu", "ko"), ("Gyuri", "ko"), ("Hyu", "ko"), ("Kyu", "ko"),
 ]
 
 

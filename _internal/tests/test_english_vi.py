@@ -34,7 +34,7 @@ FIXED_ONLY = {"Kate", "Pete", "guild", "time", "Thomas", "great", "Gate", "highe
               "Washington", "Damien", "Darius", "Violet", "Forthorthe", "Judge", "Max", "Mikhail", "Blanche", "Reine", "Wolf", "Walker",
               "Undead", "Hilde", "oldest", "card", "wind", "world", "monster", "brother", "Charlie", "Anne", "Louise", "April"}
 # Chủ sách viết những dạng mà bộ kiểm âm tiết (đúng chính tả) không nhận; không nới bộ kiểm, nên chưa có cách đọc (hỏi lại chủ sách)
-TALLY = {"owner": [120, 156], "official": [2, 4], "textbook": [8, 32], "press": [0, 2], "community": [6, 18]}
+TALLY = {"owner": [121, 157], "official": [2, 4], "textbook": [8, 32], "press": [0, 2], "community": [6, 18]}
 
 
 def _load_script(name: str):

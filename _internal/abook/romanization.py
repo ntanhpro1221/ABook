@@ -154,7 +154,7 @@ _JA_SIMPLE = {"k": "K", "g": "G", "s": "S", "z": "d", "t": "t", "d": "đ", "n": 
 _JA_ALLOWED = {
     "k": "aiueo", "g": "aiueo", "n": "aiueo", "b": "aiueo", "p": "aiueo", "m": "aiueo", "r": "aiueo",
     "s": "aueo", "z": "aueo", "t": "aeo", "d": "aieo", "h": "aieo",  # di: tên kiểu Latin trong truyện Nhật (Reidi, Direkuresu; chủ sách 04-10 lần 9), Hepburn không có
-    "sh": "aiueo", "ch": "aiueo", "j": "aiueo", "ts": "u", "f": "u", "w": "a", "y": "auo",
+    "sh": "aiueo", "ch": "aiueo", "j": "aiueo", "ts": "u", "f": "ui", "w": "a", "y": "auo",
     "ky": "auo", "gy": "auo", "ny": "auo", "hy": "auo", "by": "auo", "py": "auo", "my": "auo", "ry": "auo",
 }
 _JA_ONSETS = ("sh", "ch", "ts", "ky", "gy", "ny", "hy", "by", "py", "my", "ry")
@@ -166,17 +166,17 @@ _JA_FIXED: dict[str, tuple[tuple[str, ...], ...]] = {
     "onigiri": (("", "o"), ("n", "i"), ("gi", "i"), ("r", "i")),
     # chwan: cách viết nũng của -chan (Tenshi-chwan); w giữa ch và a là bán âm oa (analogy theo wa -> oa), khép n
     "chwan": (("ch", "oa", "n"),),
-    # chủ sách 04-10 (lần 8), tên cố định: Gesunoh -> ghét-xu-nô (KHÔNG suy rộng ge -> ghét); Theia -> thi-a, Fina -> phi-na, Tio -> ti-ô là tên kiểu Âu trong truyện Nhật
-    # (Hepburn không có ti / fi, nên không đi qua luật: chỉ đúng các tên này)
+    # chủ sách 04-10 (lần 8), tên cố định: Gesunoh -> ghét-xu-nô (KHÔNG suy rộng ge -> ghét); Theia -> thi-a, Tio -> ti-ô là tên kiểu Âu trong truyện Nhật
+    # (Hepburn không có ti, nên không đi qua luật: chỉ đúng các tên này; fi -> phi thì là luật từ lần 9, Fina -> phi-na)
     "gesunoh": (("G", "e", "t"), ("x", "u"), ("n", "ô")),
     "theia": (("th", "i"), ("", "a")),
-    "fina": (("ph", "i"), ("n", "a")),
     "tio": (("t", "i"), ("", "ô")),
     # chủ sách lần 9, ngoại lệ không có luật: Hatta -> ha-ta (tt KHÔNG khép, khác Sapporo, Nissan, Matcha); Koichi -> co-i-chi (ghép kou + ichi, khác Koizumi -> coi-du-mi)
     "hatta": (("h", "a"), ("t", "a")),
     "koichi": (("K", "o"), ("", "i"), ("ch", "i")),
 }
 
+_JA_PROLONGED = re.compile(r"ー+(?=$|[\s-])")
 _JA_GH = re.compile(r"gh(?=[aiueo])")
 _JA_JY = re.compile(r"jy(?=[aiueo])")
 _JA_OH = re.compile(r"oh(?![aiueo])")
@@ -218,8 +218,8 @@ def _ja_emit(onset: str, vowel: str, syllables: list[_Syl], flags: list[str]) ->
         syllables.append(_Syl("gi", _JA_VOWEL[vowel]))
     elif onset == "ts":  # tsu -> xu ở mọi chỗ (chủ sách 04-10: Tsubasa -> Xu-ba-xa; trước đó chu)
         syllables.append(_Syl("x", "u"))
-    elif onset == "f":  # fu -> phu (chủ sách 04-10: Fukushima -> Phu-cu-si-ma)
-        syllables.append(_Syl("ph", "u"))
+    elif onset == "f":  # fu -> phu (chủ sách 04-10: Fukushima -> Phu-cu-si-ma); fi -> phi (lần 9: Fii -> Phi, Fina -> Phi-na; tên kiểu Âu trong truyện Nhật)
+        syllables.append(_Syl("ph", vowel))
     elif onset == "w":
         syllables.append(_Syl("", "oa"))  # wa -> oa (Ca-oa-xa-ki)
     elif onset == "y":  # y + nguyên âm -> gi + nguyên âm, đầu từ và giữa từ (chủ sách 04-10: Yamato -> Gia-ma-tô, Ayaka -> A-gia-ca); yu, yo theo ya
@@ -383,6 +383,7 @@ def _ko_parses(word: str, start: int, previous_coda: str | None, out: list[list[
 
 _KO_SILENT_H = re.compile(r"ah(?![aeiouy])")
 _KO_FINAL_IE = re.compile(r"(?<=[bcdfghjklmnpqrstvwxz])ie$")
+_KO_FINAL_NN = re.compile(r"nn$")
 
 
 def _ko_spelling(word: str, flags: list[str]) -> str:
@@ -395,6 +396,9 @@ def _ko_spelling(word: str, flags: list[str]) -> str:
     if _KO_FINAL_IE.search(word):
         flags.append("analogy:ko_ie")
         word = _KO_FINAL_IE.sub("i", word)  # unnie -> un-ni (chủ sách lần 9): ie cuối từ sau phụ âm là i dài, như ee -> i
+    if _KO_FINAL_NN.search(word):
+        flags.append("analogy:ko_nn")
+        word = _KO_FINAL_NN.sub("n", word)  # nn cuối từ gộp n (Hyunn -> Hi-un, chủ sách lần 9); nn giữa từ vẫn n + n (Unnie, Hyunnie)
     if "weo" in word:
         flags.append("analogy:ko_weo")
         word = word.replace("weo", "wo")
@@ -523,7 +527,10 @@ def _ko_nucleus(onset: str, vowel: str, closing: str, flags: list[str], initial:
         flags.append("open:ko_rare_vowels")
     if vowel == "yae":
         return None
-    if vowel in ("ya", "yo", "yu"):
+    if vowel == "yu" and not closing and onset:
+        # yu mở sau phụ âm là MỘT âm tiết (chủ sách lần 9: Gyu -> Ghiu); có phụ âm cuối thì tách i- (Hyun -> Hi-un, Kyung -> Ki-ung, Hyung -> Hi-ung)
+        pieces = [_Syl("G" if onset == "K" else onset, "iu")]
+    elif vowel in ("ya", "yo", "yu"):
         # y + nguyên âm -> gi + nguyên âm như tiếng Nhật (chủ sách 04-10: Yoon -> Giun); sau phụ âm tách i- (Hyun -> Hi-un, Hyung -> Hi-ung)
         letter = {"ya": "a", "yo": "ô", "yu": "u"}[vowel]
         pieces = [_Syl("gi", letter)] if onset == "" else [_Syl(onset, "i"), _Syl("", letter)]
@@ -702,6 +709,8 @@ def _word_units(word: str, origin: str, flags: list[str]) -> list[_Unit] | None:
 
 def _read(token: str, origin: str) -> tuple[str, tuple[str, ...]] | None:
     value = unicodedata.normalize("NFC", token.strip()).replace("’", "'")
+    if origin == "ja":
+        value = _JA_PROLONGED.sub("", value)  # ー cuối từ bỏ (Taruー -> Ta-ru, chủ sách lần 9)
     flags: list[str] = []
     words: list[str] = []
     read_any = False  # có ít nhất một đoạn đọc theo luật (toàn đoạn giữ nguyên thì không phải việc của luật này)

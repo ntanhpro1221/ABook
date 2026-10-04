@@ -122,7 +122,7 @@ class RomanizationTest {
             Triple("Sakuya", "ja", "Xa-cu-gia"), Triple("Direkuresu", "ja", "Đi-re-cu-re-xu"), Triple("Hamsuke", "ja", "Ham-xu-ke"), Triple("ecchi", "ja", "ét-chi"),
             Triple("Haffu", "ja", "Ha-phu"), Triple("Reidi", "ja", "Rây-đi"), Triple("Kiyoshi", "ja", "Ki-ô-si"), Triple("Sayo", "ja", "Xa-giô"),
             Triple("unnie", "ko", "un-ni"), Triple("Yeeun", "ko", "Gie-ưn"), Triple("Muyoung", "ko", "Mu-giong"), Triple("Chaeyeon", "ko", "Che-gion"),
-            Triple("Hatta", "ja", "Ha-ta"), Triple("Koichi", "ja", "Co-i-chi"), Triple("Koizumi", "ja", "Coi-du-mi"), Triple("Nissan", "ja", "Nít-xan"), Triple("Yejin", "ko", "Gie-gin"), Triple("Seoyeon", "ko", "Xeo-gion"),
+            Triple("Hatta", "ja", "Ha-ta"), Triple("Koichi", "ja", "Co-i-chi"), Triple("Koizumi", "ja", "Coi-du-mi"), Triple("Taruー", "ja", "Ta-ru"), Triple("Fii", "ja", "Phi"), Triple("Fina", "ja", "Phi-na"), Triple("Hyunn", "ko", "Hi-un"), Triple("Gyu", "ko", "Ghiu"), Triple("Hyung", "ko", "Hi-ung"), Triple("Nissan", "ja", "Nít-xan"), Triple("Yejin", "ko", "Gie-gin"), Triple("Seoyeon", "ko", "Xeo-gion"),
             Triple("Young", "ko", "Giong"), Triple("Jeongeun", "ko", "Châng-gưn"), Triple("Luda", "ko", "Lu-đa"), Triple("Oppa", "ko", "Óp-pa"),
             Triple("Jeong", "ko", "Gie-ong"), Triple("Yeo", "ko", "Gieo"),
         )) {
