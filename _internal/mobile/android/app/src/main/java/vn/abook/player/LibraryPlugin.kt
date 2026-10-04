@@ -61,6 +61,7 @@ class LibraryPlugin : Plugin() {
         val musicStore = DeviceMusic.store(context)
         LocalStudio.musicStore = musicStore
         LocalStudio.catalog = DeviceMusic.catalog(context)
+        LocalStudio.bundledPicker = DeviceMusic.bundledPicker(context)
         // Bộ phân tích nhạc: "Gói nhạc" (model + thư viện ONNX Runtime) tải khi người dùng bấm (không bao giờ tự tải); đã có từ lần trước thì cắm luôn, ở luồng nền.
         val abi = OrtRuntime.deviceAbi()
         val student = MusicStudentSetup(File(context.filesDir, "music/student"), musicStore, { AndroidMusicStudent.open(it, context.cacheDir) },

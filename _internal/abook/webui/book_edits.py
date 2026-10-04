@@ -22,10 +22,10 @@ và độ dài, không ký tự điều khiển - và file sai thì bị từ ch
      "music": {"enabled": false, "levelDb": -24.0, "silenced": ["<mã chương>:<mili giây đầu mốc>"],
                "pins": {"<mã chương>:<mili giây đầu mốc>": "local:<sha1>"},          (đổi bài một mốc sang bài "Nhạc của tôi")
                "tracks": {"<sha1>": {"ext": "mp3", "title": "...", "creator": "...", "duration": 184.0, "lufs": -14.2}},
-               "playlist": "fantasy_calm" | "mine"},                    (nhạc nền của sách KHÔNG có nhạc của người làm sách -
+               "playlist": "fantasy_calm" | "mine" | "off"},            (nhạc nền của sách KHÔNG có nhạc của người làm sách -
                                                                  sách chỉ có chữ nghe bằng "Nghe ngay": một danh sách phát
-                                                                 của danh mục, hay "mine" = "Nhạc của tôi" của máy đang phát;
-                                                                 không có khoá = tắt - music_playlist.py)
+                                                                 của danh mục, "mine" = "Nhạc của tôi" của máy đang phát,
+                                                                 "off" = tắt; không có khoá = máy tự chọn - music_playlist.py)
                                                                 (thông tin các bài được ghim, đúng những sha1 mà `pins` nhắc tới;
                                                                  file nằm ở music/<sha1>.<đuôi> như bài của người làm sách)
      "wishes": {...}}                                           (ý muốn chờ Studio - book_wishes.py: cách đọc tên, người nói,
@@ -893,7 +893,8 @@ def set_music(folder: Path, body: dict[str, Any],
               track: Callable[[str], tuple[dict[str, Any], Path] | None] | None = None) -> dict[str, Any]:
     """Sửa nhạc nền của sách đóng gói: `enabled`, `levelDb` (kẹp -40..-6 như `music_plan.write_overrides`), `silence`
     {khoá mốc: True/False}, `pins` {khoá mốc: "local:<sha1>" | null} (đổi bài một mốc sang bài trong "Nhạc của tôi", null = về
-    bài người làm sách gắn), `playlist` (mã danh sách phát, "mine" hay null = tắt - sách không có nhạc của người làm sách).
+    bài người làm sách gắn), `playlist` (mã danh sách phát, "mine", "off" = tắt, hay null = bỏ lựa chọn để máy tự chọn - sách không
+    có nhạc của người làm sách).
     `track(link)` -> (thông tin, file) của bài trong kho của máy này; file được chép vào thư mục sách
     (music/<sha1>.<đuôi>) để `repack` mang đi. Khoá lạ: `EditsError`. Trả `music_view`."""
     book = _base(folder)

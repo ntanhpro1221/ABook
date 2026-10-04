@@ -1,0 +1,340 @@
+{
+ "version": 1,
+ "cap": 5,
+ "title_weight": 12.0,
+ "min_score": 4.0,
+ "default": "fantasy_adventure",
+ "order": [
+  "fantasy_adventure",
+  "school_light",
+  "eastern",
+  "action",
+  "romance",
+  "horror",
+  "mystery",
+  "scifi",
+  "comedy",
+  "fantasy_calm",
+  "sad"
+ ],
+ "playlists": {
+  "eastern": {
+   "title": [
+    "tien",
+    "tu tien",
+    "kiem",
+    "vo lam",
+    "giang ho",
+    "dao",
+    "thien",
+    "de ton",
+    "tong mon"
+   ],
+   "text": {
+    "tu luyện": 2,
+    "tu tiên": 2,
+    "đan điền": 3,
+    "linh khí": 2,
+    "chân khí": 2,
+    "nội công": 2,
+    "kiếm khí": 2,
+    "võ lâm": 3,
+    "giang hồ": 3,
+    "môn phái": 2,
+    "tông môn": 3,
+    "trưởng lão": 1,
+    "đạo hữu": 3,
+    "cảnh giới": 1,
+    "trúc cơ": 3,
+    "kim đan": 3,
+    "nguyên anh": 3,
+    "đan dược": 2,
+    "linh thạch": 3,
+    "tại hạ": 2,
+    "lão phu": 2,
+    "bổn tọa": 3,
+    "huynh đài": 2,
+    "cô nương": 1,
+    "đại hiệp": 2,
+    "sư huynh": 2,
+    "sư tỷ": 2,
+    "sư phụ": 1,
+    "công tử": 1,
+    "võ công": 2,
+    "kiếm pháp": 2
+   }
+  },
+  "fantasy_adventure": {
+   "title": [
+    "isekai",
+    "maou",
+    "yuusha",
+    "hero",
+    "dungeon",
+    "slayer",
+    "sword",
+    "magic",
+    "demon lord",
+    "tensei",
+    "kenja",
+    "knight",
+    "dragon",
+    "adventurer",
+    "summon",
+    "reincarnat",
+    "goblin",
+    "skeleton",
+    "level",
+    "necromancer",
+    "brave",
+    "shoukan",
+    "guild",
+    "mage",
+    "wizard",
+    "sorcer",
+    "elf",
+    "monster",
+    "quest",
+    "sekai"
+   ],
+   "text": {
+    "mạo hiểm giả": 3,
+    "hội mạo hiểm": 3,
+    "ma vương": 3,
+    "dũng giả": 3,
+    "ma pháp": 2,
+    "ma thuật": 2,
+    "pháp sư": 1,
+    "kiếm sĩ": 1,
+    "hầm ngục": 2,
+    "quái vật": 1,
+    "goblin": 2,
+    "rồng": 1,
+    "elf": 2,
+    "tiên tộc": 2,
+    "triệu hồi": 1,
+    "dị giới": 3,
+    "thế giới khác": 2,
+    "chuyển sinh": 2,
+    "kỹ năng": 1,
+    "cấp độ": 1,
+    "level": 1,
+    "skill": 1,
+    "hiệp sĩ": 1,
+    "vương quốc": 1,
+    "lãnh chúa": 1
+   },
+   "prior": 4.0
+  },
+  "action": {
+   "title": [
+    "hunter",
+    "regress",
+    "return",
+    "player",
+    "war",
+    "battle",
+    "solo",
+    "kill"
+   ],
+   "text": {
+    "chiến đấu": 1,
+    "trận chiến": 1,
+    "tấn công": 1,
+    "thợ săn": 2,
+    "hồi quy": 3,
+    "thức tỉnh": 0.5,
+    "người chơi": 1,
+    "cổng": 1,
+    "chiến tranh": 1,
+    "binh lính": 1,
+    "quân đội": 1,
+    "súng": 1,
+    "đạn": 1,
+    "chém": 1,
+    "giết": 1
+   }
+  },
+  "school_light": {
+   "title": [
+    "school",
+    "classmate",
+    "gakuen",
+    "koukou",
+    "student",
+    "club",
+    "senpai",
+    "kouhai",
+    "hoc duong",
+    "lop"
+   ],
+   "text": {
+    "học sinh": 2,
+    "lớp học": 2,
+    "cao trung": 2,
+    "sơ trung": 2,
+    "câu lạc bộ": 2,
+    "lớp trưởng": 2,
+    "hội học sinh": 3,
+    "giờ học": 2,
+    "bài kiểm tra": 2,
+    "giáo viên": 1,
+    "senpai": 2,
+    "kouhai": 2,
+    "tan học": 2,
+    "nghỉ trưa": 2,
+    "giờ ra chơi": 2,
+    "bạn cùng lớp": 2,
+    "đồng phục": 1,
+    "tiết học": 2
+   }
+  },
+  "romance": {
+   "title": [
+    "love",
+    "tenshi",
+    "girlfriend",
+    "bride",
+    "wife",
+    "kanojo",
+    "romance",
+    "ngon tinh",
+    "yeu",
+    "omiai",
+    "fiance",
+    "ban gai",
+    "nguoi yeu",
+    "vo",
+    "co dau",
+    "childhood friend",
+    "osananajimi",
+    "hanayome",
+    "date",
+    "kiss",
+    "tinh"
+   ],
+   "text": {
+    "bạn gái": 1,
+    "bạn trai": 1,
+    "hẹn hò": 2,
+    "tỏ tình": 3,
+    "người yêu": 2,
+    "nụ hôn": 2,
+    "đỏ mặt": 1,
+    "ngượng ngùng": 1,
+    "vị hôn thê": 2,
+    "hôn ước": 2,
+    "kết hôn": 1,
+    "rung động": 2
+   }
+  },
+  "horror": {
+   "title": [
+    "creepypasta",
+    "horror",
+    "kinh di",
+    "ghost",
+    "zombie",
+    "ma"
+   ],
+   "text": {
+    "oán linh": 3,
+    "hồn ma": 1,
+    "xác chết": 2,
+    "xác sống": 3,
+    "zombie": 3,
+    "rùng mình": 1,
+    "kinh hoàng": 1,
+    "tiếng thét": 2,
+    "nguyền rủa": 2,
+    "quái dị": 1,
+    "ác quỷ": 1,
+    "máu me": 2
+   }
+  },
+  "mystery": {
+   "title": [
+    "detective",
+    "tham tu",
+    "mystery",
+    "case",
+    "murder"
+   ],
+   "text": {
+    "thám tử": 3,
+    "vụ án": 3,
+    "hung thủ": 3,
+    "nạn nhân": 2,
+    "điều tra": 2,
+    "manh mối": 1,
+    "bằng chứng": 0.5,
+    "nghi phạm": 3,
+    "án mạng": 3,
+    "cảnh sát": 1
+   }
+  },
+  "scifi": {
+   "title": [
+    "robot",
+    "cyber",
+    "space",
+    "online",
+    "vrmmo",
+    "android",
+    "mech"
+   ],
+   "text": {
+    "robot": 2,
+    "phi thuyền": 3,
+    "vũ trụ": 2,
+    "hành tinh": 2,
+    "trí tuệ nhân tạo": 3,
+    "thực tế ảo": 3,
+    "game online": 2,
+    "máy chủ": 1,
+    "công nghệ": 1,
+    "tàu vũ trụ": 3
+   }
+  },
+  "comedy": {
+   "title": [
+    "comedy",
+    "baka",
+    "konosuba"
+   ],
+   "text": {
+    "đồ ngốc": 1,
+    "phì cười": 2,
+    "tsukkomi": 3
+   }
+  },
+  "fantasy_calm": {
+   "title": [
+    "slow life",
+    "farm",
+    "cafe",
+    "cooking",
+    "inn"
+   ],
+   "text": {
+    "nông trại": 3,
+    "làm ruộng": 3,
+    "nấu ăn": 1,
+    "quán trọ": 2,
+    "thảnh thơi": 2,
+    "nghỉ hưu": 2
+   }
+  },
+  "sad": {
+   "title": [
+    "tears",
+    "goodbye"
+   ],
+   "text": {
+    "tang lễ": 2,
+    "nước mắt": 1,
+    "mất mát": 1
+   }
+  }
+ }
+}

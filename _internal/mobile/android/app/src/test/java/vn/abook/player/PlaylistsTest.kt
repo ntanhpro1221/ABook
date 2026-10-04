@@ -25,9 +25,15 @@ class PlaylistsTest {
         "https://x/sad.mp3" to JSONObject().put("duration", 240),
     )
 
-    private fun manifest(): JSONObject = JSONObject().put("format", "abook-music-catalog").put("version", 1).put("revision", "r1")
+    /** Luật chọn của mục lục thử: mặc định "calm", không từ khoá nào - cuốn thử nào cũng được chọn "calm". */
+    private val picker = JSONObject("""{"version":1,"cap":5,"title_weight":12.0,"min_score":4.0,"default":"calm","order":["calm","battle"],
+        "playlists":{"calm":{"title":[],"text":{}},"battle":{"title":[],"text":{"trận chiến":1}}}}""")
+
+    private fun manifest(withPicker: Boolean = false): JSONObject = JSONObject().put("format", "abook-music-catalog").put("version", 1).put("revision", "r1")
         .put("shards", JSONArray(tracks.keys.map { MusicCatalog.shardOf(it) }.distinct()))
+        .apply { if (withPicker) put("playlistPicker", picker) }
         .put("playlists", JSONArray()
+            .put(JSONObject().put("id", "off").put("name", "tắt không phải mã danh sách").put("tracks", JSONArray(calm)))
             .put(JSONObject().put("id", "calm").put("name", "Êm  đềm").put("description", "Cho truyện chậm.").put("minutes", 10).put("tracks", JSONArray(calm)))
             .put(JSONObject().put("id", "battle").put("name", "Hành động").put("description", "").put("minutes", 3).put("tracks", JSONArray(listOf("https://x/battle.mp3"))))
             .put(JSONObject().put("id", "Bad Id").put("name", "x").put("tracks", JSONArray(calm)))
@@ -37,9 +43,9 @@ class PlaylistsTest {
             .put("không phải đối tượng"))
 
     /** Danh mục giả trên đĩa: mục lục + mảnh dữ liệu + một file bài (đúng hình như trên mây). */
-    private fun cloud(): File {
+    private fun cloud(withPicker: Boolean = false): File {
         val cloud = File(root, "cloud").apply { mkdirs() }
-        File(cloud, "manifest.json").writeText(manifest().toString())
+        File(cloud, "manifest.json").writeText(manifest(withPicker).toString())
         for ((shard, links) in tracks.keys.groupBy { MusicCatalog.shardOf(it) }) {
             val data = JSONObject()
             for (link in links) data.put(link, tracks.getValue(link))
@@ -58,6 +64,7 @@ class PlaylistsTest {
     fun tearDown() {
         LocalStudio.catalog = null
         LocalStudio.musicStore = null
+        LocalStudio.bundledPicker = null
     }
 
     @Test
@@ -171,5 +178,56 @@ class PlaylistsTest {
         assertEquals("calm", merged.getJSONObject("music").getString("playlist"))
         LocalStudio.handle("PUT", "/api/books/$id/music", JSONObject().put("playlist", JSONObject.NULL))
         assertTrue(!BookEdits.load(Store.bookDir(id)).has("music"))
+    }
+
+    /** Sách chỉ có chữ đã nhập trên máy (một chương chữ, không audio). */
+    private fun textBook(id: String): File {
+        val dir = Store.bookDir(id).apply { mkdirs() }
+        File(dir, "texts").mkdirs()
+        File(dir, "texts/1.txt").writeText("Một câu tự đặt, chẳng có từ khoá nào cả. ".repeat(60))
+        File(dir, "book.json").writeText(JSONObject().put("format", "abook-book/1").put("title", "Sách thử").put("package", JSONObject())
+            .put("chapters", JSONArray().put(JSONObject().put("id", 1).put("state", "text").put("text", "texts/1.txt"))).toString())
+        Store.rememberChapters(id, JSONObject(), imported = true)
+        return dir
+    }
+
+    private fun musicView(id: String): JSONObject = LocalStudio.handle("GET", "/api/books/$id/music", null).second as JSONObject
+
+    @Test
+    fun a_text_book_with_no_choice_shows_the_machines_pick_until_the_listener_chooses_or_turns_it_off() {
+        BookEditsFixtures.useStoreRoot(root)
+        val id = "f-0123456789abcdef01234567"
+        textBook(id)
+        LocalStudio.catalog = MusicCatalog(File(root, "cache"), cloud(withPicker = true).path)
+        val auto = musicView(id)
+        assertEquals("calm", auto.getString("playlist"))
+        assertTrue(auto.getBoolean("playlistAuto"))
+        // "Tắt" là một lựa chọn: lưu "off", không phải mã danh sách, và không còn máy chọn
+        val (_, off) = LocalStudio.handle("PUT", "/api/books/$id/music", JSONObject().put("playlist", "off"))
+        off as JSONObject
+        assertEquals("off", off.getString("playlist"))
+        assertTrue(!off.has("playlistAuto"))
+        assertEquals("""{"playlist":"off"}""", BookEdits.load(Store.bookDir(id)).getJSONObject("music").toString())
+        // null xoá khoá: máy chọn lại, và lời đáp của chính lần xoá đã là màn của máy chọn
+        val (_, again) = LocalStudio.handle("PUT", "/api/books/$id/music", JSONObject().put("playlist", JSONObject.NULL))
+        again as JSONObject
+        assertTrue(again.getBoolean("playlistAuto"))
+        assertTrue(!BookEdits.load(Store.bookDir(id)).has("music"))
+        val (_, chosen) = LocalStudio.handle("PUT", "/api/books/$id/music", JSONObject().put("playlist", "battle"))
+        assertTrue(!(chosen as JSONObject).has("playlistAuto"))
+    }
+
+    @Test
+    fun without_a_downloaded_catalogue_the_machine_picks_with_the_bundled_rules() {
+        BookEditsFixtures.useStoreRoot(root)
+        val id = "f-0123456789abcdef01234567"
+        textBook(id)
+        LocalStudio.catalog = MusicCatalog(File(root, "trong"), File(root, "khong_co").path)
+        LocalStudio.bundledPicker = null
+        assertTrue(!musicView(id).has("playlist"))
+        LocalStudio.bundledPicker = JSONObject(File("../../../abook/webui/assets/playlist_picker.json").readText(Charsets.UTF_8))
+        val view = musicView(id)
+        assertEquals("fantasy_adventure", view.getString("playlist"))
+        assertTrue(view.getBoolean("playlistAuto"))
     }
 }
