@@ -176,7 +176,7 @@
 170 N
 171 D SAMAEL sarcastic,happy 0-1 normal normal m
 172 N NARRATOR neutral,angry 0-1 normal normal u
-173 N,T NARRATOR,SAMAEL neutral,sarcastic 0-1 normal normal u
+173 N,T SAMAEL,NARRATOR neutral,sarcastic 0-1 normal normal u
 174 N NARRATOR neutral,sarcastic 0-1 normal normal u
 175 N
 176 D MICHAEL,MICHAEL GODSWILL angry 1-2 slow soft,normal m

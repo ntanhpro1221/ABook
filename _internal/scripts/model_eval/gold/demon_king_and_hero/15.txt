@@ -22,16 +22,16 @@
 1 N
 2 N
 3 D QUỶ VƯƠNG,YURIA,YURIA ASHRIEN,NPC*~ surprised,excited,neutral 0-2 fast,normal normal,loud m
-4 N,T NARRATOR,YURIA,YURIA ASHRIEN neutral,surprised 0-1 normal normal u
+4 N,T YURIA,YURIA ASHRIEN,NARRATOR neutral,surprised 0-1 normal normal u
 5 D QUỶ VƯƠNG,NPC*~ neutral,tender,sarcastic 0-1 normal normal m
 6 D QUỶ VƯƠNG,NPC*~ afraid,neutral,excited 0-2 fast,normal normal m
-7 N,T NARRATOR,YURIA,YURIA ASHRIEN neutral,sad 0-1 normal normal u
+7 N,T YURIA,YURIA ASHRIEN,NARRATOR neutral,sad 0-1 normal normal u
 8 N
 9 T YURIA,YURIA ASHRIEN neutral,excited 0-2 normal normal f
 10 N
 11 N
 12 D YURIA,YURIA ASHRIEN angry,surprised 1-2 fast loud,normal f
-13 N,T NARRATOR,YURIA,YURIA ASHRIEN angry 1-2 normal normal u
+13 N,T YURIA,YURIA ASHRIEN,NARRATOR angry 1-2 normal normal u
 14 N NARRATOR neutral,angry 0-1 normal normal u
 15 D YURIA,YURIA ASHRIEN angry,surprised 1-2 fast loud,normal f
 16 D QUỶ VƯƠNG,NPC*~ neutral,sarcastic,happy 0-1 normal normal m
@@ -45,7 +45,7 @@
 24 D NARRATOR neutral,sarcastic 0-1 normal normal u
 25 N
 26 N NARRATOR,QUỶ VƯƠNG~ neutral,sarcastic 0-1 normal normal u
-27 T NARRATOR,QUỶ VƯƠNG~ neutral,sarcastic 0-1 normal normal u
+27 T QUỶ VƯƠNG~,NARRATOR~ neutral,sarcastic 0-1 normal normal u
 28 N NARRATOR,QUỶ VƯƠNG~ neutral,sarcastic 0-1 normal normal u
 29 D NPC*:gã áo choàng đen,UNKNOWN~,YURIA~ angry,surprised 1-2 normal normal m
 30 D QUỶ VƯƠNG,NPC*~ sarcastic,neutral 0-1 normal normal m

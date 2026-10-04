@@ -48,7 +48,7 @@
 27 N
 28 D HANNON,HANNON IREY sarcastic,neutral 0-1 normal normal m
 29 D SHARIN,SHARIN SAZARIS happy,neutral,sarcastic 0-1 normal normal f
-30 N,T NARRATOR,HANNON,HANNON IREY neutral,sarcastic 0-1 normal normal u
+30 N,T HANNON,HANNON IREY,NARRATOR neutral,sarcastic 0-1 normal normal u
 31 D HANNON,HANNON IREY neutral,sarcastic,angry 0-1 normal normal m
 32 D SHARIN,SHARIN SAZARIS sarcastic,happy,neutral 0-1 normal normal f
 33 N
@@ -73,8 +73,8 @@
 52 N
 53 D HANNON,HANNON IREY neutral,afraid 0-1 normal normal m
 54 D SHARIN,SHARIN SAZARIS neutral 0-1 normal normal f
-55 N,T NARRATOR,HANNON,HANNON IREY neutral,tender 0-1 normal normal u
-56 N,T NARRATOR,HANNON,HANNON IREY neutral,tender 0-1 normal normal u
+55 N,T HANNON,HANNON IREY,NARRATOR neutral,tender 0-1 normal normal u
+56 N,T HANNON,HANNON IREY,NARRATOR neutral,tender 0-1 normal normal u
 57 D HANNON,HANNON IREY neutral,happy 0-1 normal normal m
 58 D SHARIN,SHARIN SAZARIS neutral,sarcastic 0-1 normal normal f
 59 D HANNON,HANNON IREY surprised,neutral 0-1 normal normal m
@@ -101,14 +101,14 @@
 80 D HANNON,HANNON IREY afraid,neutral 0-1 slow,normal soft,normal m
 81 N
 82 D SHARIN,SHARIN SAZARIS sarcastic,neutral 0-1 normal normal f
-83 N,T NARRATOR,HANNON,HANNON IREY neutral,sarcastic 0-1 normal normal u
-84 N,T NARRATOR,HANNON,HANNON IREY neutral 0-1 normal normal u
+83 N,T HANNON,HANNON IREY,NARRATOR neutral,sarcastic 0-1 normal normal u
+84 N,T HANNON,HANNON IREY,NARRATOR neutral 0-1 normal normal u
 85 D,T HANNON,HANNON IREY neutral 0-1 normal normal m
-86 N,T NARRATOR,HANNON,HANNON IREY neutral 0-1 normal normal u
+86 N,T HANNON,HANNON IREY,NARRATOR neutral 0-1 normal normal u
 87 D SHARIN,SHARIN SAZARIS neutral 0-1 normal normal f
 88 N
 89 D SHARIN,SHARIN SAZARIS neutral 0-1 normal normal f
-90 N,T NARRATOR,HANNON,HANNON IREY neutral,afraid 0-1 normal normal u
+90 N,T HANNON,HANNON IREY,NARRATOR neutral,afraid 0-1 normal normal u
 91 N
 92 N NARRATOR neutral,afraid 0-1 normal normal u
 93 D HANNON,HANNON IREY neutral 0-1 normal normal m
@@ -159,21 +159,21 @@
 138 N
 139 N
 140 D SHARIN,SHARIN SAZARIS neutral 0-1 normal normal f
-141 N,T NARRATOR,HANNON,HANNON IREY neutral,tender 0-1 normal normal u
+141 N,T HANNON,HANNON IREY,NARRATOR neutral,tender 0-1 normal normal u
 142 D SHARIN,SHARIN SAZARIS neutral 0-1 normal normal f
-143 N,T NARRATOR,HANNON,HANNON IREY neutral,sarcastic 0-1 normal normal u
-144 N,T NARRATOR,HANNON,HANNON IREY neutral,sarcastic 0-1 normal normal u
+143 N,T HANNON,HANNON IREY,NARRATOR neutral,sarcastic 0-1 normal normal u
+144 N,T HANNON,HANNON IREY,NARRATOR neutral,sarcastic 0-1 normal normal u
 145 D SHARIN,SHARIN SAZARIS neutral,happy 0-1 normal normal f
 146 N
 147 N
 148 N
 149 D SHARIN,SHARIN SAZARIS happy,sarcastic 0-1 normal normal f
 150 N
-151 N,T NARRATOR,HANNON,HANNON IREY neutral,sarcastic 0-1 normal normal u
+151 N,T HANNON,HANNON IREY,NARRATOR neutral,sarcastic 0-1 normal normal u
 152 N
 153 D HANNON,HANNON IREY neutral,happy 0-1 normal normal m
 154 N
-155 N,T NARRATOR,HANNON,HANNON IREY neutral 0-1 normal normal u
+155 N,T HANNON,HANNON IREY,NARRATOR neutral 0-1 normal normal u
 156 N
 157 N
 158 N

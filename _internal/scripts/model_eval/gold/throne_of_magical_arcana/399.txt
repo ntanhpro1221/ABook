@@ -19,7 +19,7 @@
 16 N NARRATOR neutral,angry 0-1 normal normal u
 17 N
 18 N
-19 N,T NARRATOR,LUCIEN surprised,neutral 0-1 normal normal u
+19 N,T LUCIEN,NARRATOR surprised,neutral 0-1 normal normal u
 20 N
 21 N
 22 N NARRATOR neutral,sad 0-1 normal normal u
@@ -56,7 +56,7 @@
 53 D SOPHIA surprised 0-1 normal normal f
 54 N
 55 D LUCIEN,BEAULAC~ sarcastic 0-1 normal normal m
-56 N,T NARRATOR,LUCIEN sarcastic,neutral 0-1 normal normal u
+56 N,T LUCIEN,NARRATOR sarcastic,neutral 0-1 normal normal u
 57 D SOPHIA surprised 0-1 normal normal f
 58 N
 59 D LUCIEN,BEAULAC~ neutral,sarcastic 0-1 normal normal m
@@ -80,7 +80,7 @@
 77 N
 78 N
 79 N
-80 N,T NARRATOR,LUCIEN~ surprised,neutral 0-1 normal normal u
+80 N,T LUCIEN~,NARRATOR surprised,neutral 0-1 normal normal u
 81 N
 82 N
 83 D SOPHIA angry 2 fast loud f
@@ -117,7 +117,7 @@
 114 N
 115 N NARRATOR neutral,surprised 0-1 normal normal u
 116 D CLAIRE surprised 2 fast loud f
-117 N,T NARRATOR,CLAIRE~ surprised,neutral 0-1 normal normal u
+117 N,T CLAIRE~,NARRATOR surprised,neutral 0-1 normal normal u
 118 N
 119 N
 120 N

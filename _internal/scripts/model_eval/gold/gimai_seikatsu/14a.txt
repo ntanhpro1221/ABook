@@ -26,11 +26,11 @@
 # Tiếng lòng tức thời của "tôi" -> N,T NARRATOR,ASAMURA (quy tắc 4): 2, 4, 16, 24, 37, 50, 71, 116, 147, 157 ("Uầy, mình bất
 # cẩn quá" + 158 "Tôi thầm càu nhàu"). 58 có "nếu bạn hỏi tôi" (nói với người đọc) -> chỉ N.
 0 H
-1 N,T NARRATOR,ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA neutral 0-1 normal normal u
-2 N,T NARRATOR,ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA neutral,surprised 0-1 normal normal u
+1 N,T ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA,NARRATOR neutral 0-1 normal normal u
+2 N,T ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA,NARRATOR neutral,surprised 0-1 normal normal u
 3 N
-4 N,T NARRATOR,ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA neutral,surprised 0-1 normal normal u
-5 T NARRATOR,ASAMURA~,YUUTA~,ASAMURA YUUTA~,YUUTA ASAMURA~ neutral 0-1 normal normal u
+4 N,T ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA,NARRATOR neutral,surprised 0-1 normal normal u
+5 T ASAMURA~,YUUTA~,ASAMURA YUUTA~,YUUTA ASAMURA~,NARRATOR~ neutral 0-1 normal normal u
 6 N
 7 N
 8 D TAICHI,ASAMURA TAICHI neutral,surprised,happy 0-1 normal normal m
@@ -41,7 +41,7 @@
 13 N
 14 D ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA surprised,neutral 0-1 normal normal,soft m
 15 N
-16 N,T NARRATOR,ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA neutral,surprised 0-1 normal normal u
+16 N,T ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA,NARRATOR neutral,surprised 0-1 normal normal u
 17 D AKIKO,AYASE AKIKO neutral,tender 0-1 normal normal f
 18 D ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA surprised,neutral 0-1 normal normal m
 19 D AKIKO,AYASE AKIKO neutral,tender,happy 0-1 normal normal f
@@ -49,7 +49,7 @@
 21 D AKIKO,AYASE AKIKO tired,neutral,tender 0-1 normal normal f
 22 N
 23 D AKIKO,AYASE AKIKO tired,neutral,sarcastic 0-1 normal,slow normal,soft f
-24 N,T NARRATOR,ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA neutral,afraid 0-1 normal normal u
+24 N,T ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA,NARRATOR neutral,afraid 0-1 normal normal u
 25 N
 26 D ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA neutral,afraid 0-1 normal normal m
 27 N
@@ -62,24 +62,24 @@
 34 D ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA,NARRATOR~ neutral,surprised,happy 0-1 normal normal m
 35 D AKIKO,AYASE AKIKO tender,neutral 0-1 normal normal f
 36 D ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA neutral,happy 0-1 normal normal m
-37 N,T NARRATOR,ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA neutral,surprised 0-1 normal normal u
+37 N,T ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA,NARRATOR neutral,surprised 0-1 normal normal u
 38 D TAICHI,ASAMURA TAICHI happy,neutral 0-1 normal normal m
 39 N
 40 D AKIKO,AYASE AKIKO happy,neutral,tender 0-1 normal normal f
 41 N
-42 T NARRATOR,AKIKO~,AYASE AKIKO~,AYASE~,SAKI~,AYASE SAKI~ neutral 0-1 normal normal u
+42 T AKIKO~,AYASE AKIKO~,AYASE~,SAKI~,AYASE SAKI~,NARRATOR~ neutral 0-1 normal normal u
 43 N
 44 N
 45 N NARRATOR neutral,happy 0-1 normal normal u
 46 D ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA happy,surprised 0-1 normal normal m
-47 N,T NARRATOR,ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA neutral,happy 0-1 normal normal u
+47 N,T ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA,NARRATOR neutral,happy 0-1 normal normal u
 48 D AKIKO,AYASE AKIKO happy,tender 0-1 normal normal f
 49 N NARRATOR neutral,happy 0-1 normal normal u
-50 N,T NARRATOR,ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA neutral,sarcastic 0-1 normal normal u
+50 N,T ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA,NARRATOR neutral,sarcastic 0-1 normal normal u
 51 N
 52 N
 53 D AKIKO,AYASE AKIKO neutral,tender 0-1 normal normal f
-54 N,T NARRATOR,ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA neutral 0-1 normal normal u
+54 N,T ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA,NARRATOR neutral 0-1 normal normal u
 55 N
 56 N
 57 N
@@ -96,7 +96,7 @@
 68 N
 69 D ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA afraid,neutral 0-1 slow,normal normal,soft m
 70 D AKIKO,AYASE AKIKO tender,neutral 0-1 normal normal f
-71 N,T NARRATOR,ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA neutral,afraid 0-1 normal normal u
+71 N,T ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA,NARRATOR neutral,afraid 0-1 normal normal u
 72 N
 73 N
 74 N NARRATOR neutral,afraid 0-1 normal normal u
@@ -110,7 +110,7 @@
 82 N
 83 N
 84 N
-85 N,T NARRATOR,ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA neutral 0-1 normal normal u
+85 N,T ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA,NARRATOR neutral 0-1 normal normal u
 86 N
 87 D ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA happy,tired 0-1 normal normal,soft m
 88 N
@@ -141,7 +141,7 @@
 113 N
 114 T NARRATOR neutral 0-1 normal normal u
 115 N
-116 N,T NARRATOR,ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA neutral 0-1 normal normal u
+116 N,T ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA,NARRATOR neutral 0-1 normal normal u
 117 D YOMIURI,SHIORI,YOMIURI SHIORI,SHIORI YOMIURI,YOMIURI-SENPAI~ neutral 0-1 normal normal f
 118 N
 119 D ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA neutral 0-1 normal normal m
@@ -151,10 +151,10 @@
 123 D ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA neutral 0-1 normal normal m
 124 D YOMIURI,SHIORI,YOMIURI SHIORI,SHIORI YOMIURI,YOMIURI-SENPAI~ sad,neutral,tired 0-1 normal,slow normal f
 125 N
-126 T NARRATOR,YOMIURI~,SHIORI~,YOMIURI SHIORI~,SHIORI YOMIURI~,YOMIURI-SENPAI~ neutral 0-1 normal normal u
+126 T YOMIURI~,SHIORI~,YOMIURI SHIORI~,SHIORI YOMIURI~,YOMIURI-SENPAI~,NARRATOR~ neutral 0-1 normal normal u
 127 N
 128 D ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA surprised,neutral 0-1 normal normal m
-129 T NARRATOR,ASAMURA~,YUUTA~,ASAMURA YUUTA~,YUUTA ASAMURA~ neutral 0-1 normal normal u
+129 T ASAMURA~,YUUTA~,ASAMURA YUUTA~,YUUTA ASAMURA~,NARRATOR~ neutral 0-1 normal normal u
 130 N
 131 N
 132 D ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA surprised,neutral 0-1 normal normal m
@@ -172,7 +172,7 @@
 144 N
 145 D YOMIURI,SHIORI,YOMIURI SHIORI,SHIORI YOMIURI,YOMIURI-SENPAI~ sarcastic,happy 0-1 normal normal f
 146 D ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA neutral,sarcastic 0-1 normal normal m
-147 N,T NARRATOR,ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA neutral,sarcastic 0-1 normal normal u
+147 N,T ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA,NARRATOR neutral,sarcastic 0-1 normal normal u
 148 D YOMIURI,SHIORI,YOMIURI SHIORI,SHIORI YOMIURI,YOMIURI-SENPAI~ neutral 0-1 normal normal f
 149 N
 150 D ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA neutral 0-1 normal normal m
@@ -182,7 +182,7 @@
 154 N
 155 D YOMIURI,SHIORI,YOMIURI SHIORI,SHIORI YOMIURI,YOMIURI-SENPAI~,ASAMURA~,YUUTA~,ASAMURA YUUTA~,YUUTA ASAMURA~ happy,neutral 0-1 normal normal f
 156 D ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA,YOMIURI~,SHIORI~,YOMIURI SHIORI~,SHIORI YOMIURI~,YOMIURI-SENPAI~ neutral,surprised,sad 0-1 normal normal m
-157 N,T NARRATOR,ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA neutral,sad 0-1 normal normal u
+157 N,T ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA,NARRATOR neutral,sad 0-1 normal normal u
 158 N
 159 D YOMIURI,SHIORI,YOMIURI SHIORI,SHIORI YOMIURI,YOMIURI-SENPAI~ happy,neutral,tender 0-1 normal normal f
 160 D ASAMURA,YUUTA,ASAMURA YUUTA,YUUTA ASAMURA surprised,neutral 0-1 normal normal m

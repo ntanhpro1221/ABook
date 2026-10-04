@@ -81,7 +81,7 @@
 66 N
 67 N
 68 N
-69 N,T NARRATOR,KENJI~,MATSUDAIRA KENJI~,MACKENZIE~,MATSUDAIRA~ neutral,sarcastic 0-1 normal normal u
+69 N,T KENJI~,MATSUDAIRA KENJI~,MACKENZIE~,MATSUDAIRA~,NARRATOR neutral,sarcastic 0-1 normal normal u
 70 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU happy,sarcastic 0-1 normal normal m
 71 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA sarcastic,afraid 0-1 normal normal m
 72 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU sarcastic,happy 0-1 normal normal m
@@ -198,7 +198,7 @@
 183 N
 184 N
 185 N
-186 N,T NARRATOR,KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU surprised,neutral 0-1 normal normal u
+186 N,T KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU,NARRATOR surprised,neutral 0-1 normal normal u
 187 N
 188 N
 189 D NPC*:cô gái di tích,UNKNOWN~ tender,neutral 0-1 slow,normal normal,soft f

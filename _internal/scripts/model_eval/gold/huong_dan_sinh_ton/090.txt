@@ -81,7 +81,7 @@
 76 N
 77 N
 78 N
-79 N,T NARRATOR,ED ROSTAILER~,ED~ neutral 0-1 normal normal u
+79 N,T ED ROSTAILER~,ED~,NARRATOR neutral 0-1 normal normal u
 80 N
 81 N
 82 N
@@ -103,7 +103,7 @@
 98 N NARRATOR neutral,happy,tender 0-1 normal normal u
 99 D ED ROSTAILER,ED happy,tired 1 normal normal m
 100 N NARRATOR neutral,happy 0-1 normal normal u
-101 N,T NARRATOR,ED ROSTAILER,ED neutral 0-1 normal normal u
+101 N,T ED ROSTAILER,ED,NARRATOR neutral 0-1 normal normal u
 102 N
 103 N
 104 D ED ROSTAILER,ED neutral,surprised 0-1 normal normal m

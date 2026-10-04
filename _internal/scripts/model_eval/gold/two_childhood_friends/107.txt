@@ -14,53 +14,53 @@
 1 D KÝ SINH TRÙNG,CON KÝ SINH TRÙNG,AIDA,AIDA MASAMICHI,NPC*~ neutral 0-1 normal normal m
 2 D YOSHIHITO,KUCHINASHI YOSHIHITO surprised,sarcastic,neutral 0-2 normal,slow normal m
 3 N NARRATOR neutral,surprised 0-1 normal normal u
-4 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO surprised,sarcastic,neutral 0-1 normal normal u
+4 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR surprised,sarcastic,neutral 0-1 normal normal u
 5 N NARRATOR neutral,sarcastic 0-1 normal normal u
-6 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO angry,sarcastic,neutral 0-2 normal normal u
+6 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR angry,sarcastic,neutral 0-2 normal normal u
 7 D KIRAKO,KUROMITSU KIRAKO sarcastic,happy 1-2 normal normal f
 8 D YOSHIHITO,KUCHINASHI YOSHIHITO angry,sarcastic 1-2 normal,fast normal m
 9 D KÝ SINH TRÙNG,CON KÝ SINH TRÙNG,AIDA,AIDA MASAMICHI,NPC*~ sad,neutral,sarcastic 0-1 normal normal m
 10 N NARRATOR neutral,sarcastic,happy 0-1 normal normal u
-11 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO angry,sarcastic,neutral 0-1 normal normal u
+11 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR angry,sarcastic,neutral 0-1 normal normal u
 12 N NARRATOR neutral,sarcastic 0-1 normal normal u
-13 N,T NARRATOR,YOSHIHITO~,KUCHINASHI YOSHIHITO~ sad,sarcastic,neutral 0-1 normal normal u
+13 N,T YOSHIHITO~,KUCHINASHI YOSHIHITO~,NARRATOR sad,sarcastic,neutral 0-1 normal normal u
 14 D KIRAKO,KUROMITSU KIRAKO neutral,surprised 0-1 normal normal f
 15 D KÝ SINH TRÙNG,CON KÝ SINH TRÙNG,AIDA,AIDA MASAMICHI,NPC*~ neutral 0-1 normal normal m
 16 D KIRAKO,KUROMITSU KIRAKO neutral,surprised 0-1 normal normal f
 17 D YOSHIHITO,KUCHINASHI YOSHIHITO,KIRAKO~,KUROMITSU KIRAKO~ angry,sarcastic 1-2 normal normal m
-18 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO neutral,sarcastic 0-1 normal normal u
+18 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR neutral,sarcastic 0-1 normal normal u
 19 D YOSHIHITO,KUCHINASHI YOSHIHITO neutral,surprised,angry 0-1 normal normal m
 20 D KÝ SINH TRÙNG,CON KÝ SINH TRÙNG,AIDA,AIDA MASAMICHI,NPC*~ neutral 0-1 normal normal m
-21 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO neutral,tired 0-1 normal normal u
-22 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO neutral 0-1 normal normal u
-23 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO neutral,sarcastic 0-1 normal normal u
+21 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR neutral,tired 0-1 normal normal u
+22 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR neutral 0-1 normal normal u
+23 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR neutral,sarcastic 0-1 normal normal u
 24 N
 25 N
 26 D KÝ SINH TRÙNG,CON KÝ SINH TRÙNG,AIDA,AIDA MASAMICHI,NPC*~ neutral 0-1 normal normal m
 27 D YOSHIHITO,KUCHINASHI YOSHIHITO neutral,tired 0-1 normal,slow normal m
 28 N
-29 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO neutral,sarcastic,tired 0-1 normal normal u
+29 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR neutral,sarcastic,tired 0-1 normal normal u
 30 D KIRAKO,KUROMITSU KIRAKO neutral 0-1 normal normal f
 31 D YOSHIHITO,KUCHINASHI YOSHIHITO,KIRAKO~,KUROMITSU KIRAKO~ sarcastic,neutral 0-1 normal normal m
 32 D KÝ SINH TRÙNG,CON KÝ SINH TRÙNG,AIDA,AIDA MASAMICHI,NPC*~ sad,angry,surprised 1-2 normal normal,loud m
 33 N NARRATOR neutral,sarcastic 0-1 normal normal u
 34 N
-35 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO,KIRAKO,KUROMITSU KIRAKO neutral,sarcastic 0-1 normal normal u
+35 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,KIRAKO,KUROMITSU KIRAKO,NARRATOR neutral,sarcastic 0-1 normal normal u
 36 N
 37 D KÝ SINH TRÙNG,CON KÝ SINH TRÙNG,AIDA,AIDA MASAMICHI,NPC*~ neutral,sad 0-1 normal normal m
 38 D YOSHIHITO,KUCHINASHI YOSHIHITO tired,sarcastic,neutral 0-1 normal,slow normal,soft m
-39 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO neutral,surprised 0-1 normal normal u
-40 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO neutral,afraid,sarcastic 0-1 normal normal u
-41 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO neutral,sarcastic 0-1 normal normal u
+39 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR neutral,surprised 0-1 normal normal u
+40 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR neutral,afraid,sarcastic 0-1 normal normal u
+41 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,NARRATOR neutral,sarcastic 0-1 normal normal u
 42 D KIRAKO,KUROMITSU KIRAKO neutral,surprised 0-1 normal normal f
 43 N
 44 N
 45 D KÝ SINH TRÙNG,CON KÝ SINH TRÙNG,AIDA,AIDA MASAMICHI,NPC*~ neutral,sad 0-1 normal normal m
 46 D YOSHIHITO,KUCHINASHI YOSHIHITO,KIRAKO~,KUROMITSU KIRAKO~ neutral,surprised 0-1 normal normal m
 47 D KIRAKO,KUROMITSU KIRAKO,YOSHIHITO~,KUCHINASHI YOSHIHITO~ neutral 0-1 normal normal f
-48 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO,KIRAKO,KUROMITSU KIRAKO neutral 0-1 normal normal u
-49 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO,KIRAKO,KUROMITSU KIRAKO neutral 0-1 normal normal u
-50 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO,KIRAKO,KUROMITSU KIRAKO neutral,sad 0-1 normal normal u
+48 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,KIRAKO,KUROMITSU KIRAKO,NARRATOR neutral 0-1 normal normal u
+49 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,KIRAKO,KUROMITSU KIRAKO,NARRATOR neutral 0-1 normal normal u
+50 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,KIRAKO,KUROMITSU KIRAKO,NARRATOR neutral,sad 0-1 normal normal u
 51 N
 52 D KÝ SINH TRÙNG,CON KÝ SINH TRÙNG,AIDA,AIDA MASAMICHI,NPC*~ neutral 0-1 normal normal m
 53 N

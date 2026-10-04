@@ -40,12 +40,12 @@
 37 D ERIC neutral,tender,tired 0-1 normal normal m
 38 N
 39 N
-40 N,T NARRATOR,LEVSKI neutral,excited,sad 0-1 normal normal u
+40 N,T LEVSKI,NARRATOR neutral,excited,sad 0-1 normal normal u
 41 D LEVSKI tender,sad 1 slow soft,normal m
 42 N
 43 N
 44 D ERIC neutral,tender 0-1 normal normal m
-45 N,T NARRATOR,LEVSKI~ neutral,afraid 0-1 normal normal u
+45 N,T LEVSKI~,NARRATOR neutral,afraid 0-1 normal normal u
 46 N
 47 N
 48 D NPC*:giọng máy phân luận án,UNKNOWN~ neutral 0-1 normal normal u
@@ -76,7 +76,7 @@
 73 N
 74 N
 75 D LAZAR neutral 0-1 normal normal m
-76 N,T NARRATOR,LUCIEN~ neutral,tired,sarcastic 0-1 normal normal u
+76 N,T LUCIEN~,NARRATOR neutral,tired,sarcastic 0-1 normal normal u
 77 D LUCIEN neutral 0-1 normal normal m
 78 N
 79 D LAZAR sarcastic,happy 0-1 normal normal m

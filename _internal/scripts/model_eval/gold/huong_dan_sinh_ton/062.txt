@@ -35,7 +35,7 @@
 23 D ED,ED ROSTAILER surprised,neutral 0-1 normal normal m
 24 D LUCY,LUCY MEIRIL neutral,tired 0-1 normal normal f
 25 N
-26 N,T NARRATOR,ED,ED ROSTAILER neutral,tired 0-1 normal normal u
+26 N,T ED,ED ROSTAILER,NARRATOR neutral,tired 0-1 normal normal u
 27 D YENNICA,YENNICA FAILOVER surprised,afraid,neutral 0-1 normal normal f
 28 N
 29 N
@@ -46,7 +46,7 @@
 34 N
 35 N
 36 N
-37 N,T NARRATOR,ED,ED ROSTAILER neutral,afraid 0-1 normal normal u
+37 N,T ED,ED ROSTAILER,NARRATOR neutral,afraid 0-1 normal normal u
 38 N
 39 N
 40 N NARRATOR neutral,sad 0-1 normal normal u
@@ -107,7 +107,7 @@
 95 N
 96 N
 97 N
-98 N,T NARRATOR,ED,ED ROSTAILER neutral,surprised,excited 0-1 normal normal u
+98 N,T ED,ED ROSTAILER,NARRATOR neutral,surprised,excited 0-1 normal normal u
 99 D GLAST,ED~,ED ROSTAILER~ neutral,sarcastic 0-1 slow,normal soft,normal m
 100 N
 101 N
@@ -128,7 +128,7 @@
 116 D GLAST sad,tender,tired 0-1 slow soft m
 117 N NARRATOR neutral,afraid,sad 0-1 normal normal u
 118 N NARRATOR neutral,sad 0-1 normal normal u
-119 N,T NARRATOR,ED,ED ROSTAILER neutral,sad,sarcastic 0-1 normal normal u
+119 N,T ED,ED ROSTAILER,NARRATOR neutral,sad,sarcastic 0-1 normal normal u
 120 N
 121 D GLAST sad,sarcastic,tired 0-1 slow soft m
 122 N NARRATOR neutral,sad 0-1 normal normal u

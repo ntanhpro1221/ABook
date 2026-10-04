@@ -25,7 +25,7 @@
 5 N
 6 N
 7 N
-8 N,T NARRATOR,KRAI,KRAI ANDREY neutral,surprised 0-1 normal normal u
+8 N,T KRAI,KRAI ANDREY,NARRATOR neutral,surprised 0-1 normal normal u
 9 N
 10 N NARRATOR neutral,afraid 0-1 normal normal u
 11 N
@@ -38,8 +38,8 @@
 18 N
 19 N
 20 N NARRATOR neutral,excited,afraid 0-1 normal normal u
-21 N,T NARRATOR,KRAI,KRAI ANDREY neutral,surprised 0-1 normal normal u
-22 N,T NARRATOR,KRAI,KRAI ANDREY neutral,excited,happy 0-1 normal normal u
+21 N,T KRAI,KRAI ANDREY,NARRATOR neutral,surprised 0-1 normal normal u
+22 N,T KRAI,KRAI ANDREY,NARRATOR neutral,excited,happy 0-1 normal normal u
 23 D NPC*,UNKNOWN~ surprised,neutral,sad,excited 0-1 normal normal,soft f
 24 N NARRATOR neutral,surprised 0-1 normal normal u
 25 D LUCIA,LUCIA ROGIER,LUCY angry,surprised 2-3 fast,normal loud f
@@ -49,14 +49,14 @@
 29 D NPC*,UNKNOWN~ sad,neutral 0-1 normal,slow normal f
 30 D KRAI,KRAI ANDREY neutral,surprised,afraid 0-1 normal normal,soft m
 31 D NPC*,UNKNOWN~ neutral,sad 0-1 normal normal f
-32 N,T NARRATOR,KRAI,KRAI ANDREY neutral,surprised 0-1 normal normal u
-33 N,T NARRATOR,KRAI,KRAI ANDREY neutral,afraid 0-1 normal normal u
+32 N,T KRAI,KRAI ANDREY,NARRATOR neutral,surprised 0-1 normal normal u
+33 N,T KRAI,KRAI ANDREY,NARRATOR neutral,afraid 0-1 normal normal u
 34 D NPC*,UNKNOWN~ neutral,sad 0-1 normal normal f
 35 N NARRATOR neutral,tired,sad 0-1 normal normal u
-36 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sarcastic 0-1 normal normal u
+36 N,T KRAI,KRAI ANDREY,NARRATOR neutral,sarcastic 0-1 normal normal u
 37 D NPC*,UNKNOWN~ neutral,sad,angry 0-1 normal normal f
-38 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sad,angry 0-1 normal normal u
-39 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sad 0-1 normal normal u
+38 N,T KRAI,KRAI ANDREY,NARRATOR neutral,sad,angry 0-1 normal normal u
+39 N,T KRAI,KRAI ANDREY,NARRATOR neutral,sad 0-1 normal normal u
 40 N
 41 D LUCIA,LUCIA ROGIER,LUCY angry 2-3 fast,normal loud f
 42 N NARRATOR neutral,angry 0-1 normal normal u
@@ -65,8 +65,8 @@
 45 D NPC*,UNKNOWN~ sad,tender,neutral 0-1 normal,slow normal,soft f
 46 N NARRATOR neutral,sad 0-1 normal normal u
 47 D NPC*,UNKNOWN~ sad,neutral,tender 0-1 normal,slow normal f
-48 N,T NARRATOR,KRAI,KRAI ANDREY neutral 0-1 normal normal u
-49 N,T NARRATOR,KRAI,KRAI ANDREY neutral,happy 0-1 normal normal u
+48 N,T KRAI,KRAI ANDREY,NARRATOR neutral 0-1 normal normal u
+49 N,T KRAI,KRAI ANDREY,NARRATOR neutral,happy 0-1 normal normal u
 50 N NARRATOR neutral,afraid 0-1 normal normal u
 51 D NPC*,UNKNOWN~ neutral,sad,afraid 0-1 slow,normal soft,normal f
 52 N
@@ -74,41 +74,41 @@
 54 D NARRATOR,KRAI,KRAI ANDREY neutral 0-1 normal normal u
 55 D NARRATOR,KRAI,KRAI ANDREY neutral 0-1 normal normal u
 56 D NARRATOR,KRAI,KRAI ANDREY,NPC*~ neutral,sarcastic 0-1 normal normal u
-57 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sarcastic 0-1 normal normal u
+57 N,T KRAI,KRAI ANDREY,NARRATOR neutral,sarcastic 0-1 normal normal u
 58 N
-59 N,T NARRATOR,KRAI,KRAI ANDREY neutral,afraid,surprised 0-1 normal normal u
+59 N,T KRAI,KRAI ANDREY,NARRATOR neutral,afraid,surprised 0-1 normal normal u
 60 N
 61 D NPC*,UNKNOWN~ neutral,sad 0-1 normal normal f
 62 D LUCIA,LUCIA ROGIER,LUCY,KRAI~,KRAI ANDREY~ surprised,angry,afraid 1-3 fast,normal loud,normal f
 63 D NPC*,UNKNOWN~ sad,neutral 0-1 normal normal f
 64 D KRAI,KRAI ANDREY neutral,happy,sarcastic 0-1 normal normal m
 65 N
-66 N,T NARRATOR,KRAI,KRAI ANDREY neutral,happy,surprised 0-1 normal normal u
-67 N,T NARRATOR,KRAI,KRAI ANDREY happy,surprised,neutral 0-1 normal normal u
-68 N,T NARRATOR,KRAI,KRAI ANDREY neutral,surprised 0-1 normal normal u
+66 N,T KRAI,KRAI ANDREY,NARRATOR neutral,happy,surprised 0-1 normal normal u
+67 N,T KRAI,KRAI ANDREY,NARRATOR happy,surprised,neutral 0-1 normal normal u
+68 N,T KRAI,KRAI ANDREY,NARRATOR neutral,surprised 0-1 normal normal u
 69 D NPC*,UNKNOWN~ neutral,sad 0-1 normal normal f
 70 D NPC*,UNKNOWN~ neutral,surprised,sad 0-1 normal normal f
 71 N NARRATOR neutral,angry 0-1 normal normal u
-72 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sarcastic 0-1 normal normal u
+72 N,T KRAI,KRAI ANDREY,NARRATOR neutral,sarcastic 0-1 normal normal u
 73 N
 74 D NPC*,UNKNOWN~ neutral,sad 0-1 normal normal f
 75 D KRAI,KRAI ANDREY surprised,neutral,tired,angry 0-2 fast,normal loud,normal m
 76 N
-77 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sarcastic,angry 0-1 normal normal u
-78 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sad 0-1 normal normal u
-79 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sarcastic 0-1 normal normal u
-80 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sarcastic 0-1 normal normal u
+77 N,T KRAI,KRAI ANDREY,NARRATOR neutral,sarcastic,angry 0-1 normal normal u
+78 N,T KRAI,KRAI ANDREY,NARRATOR neutral,sad 0-1 normal normal u
+79 N,T KRAI,KRAI ANDREY,NARRATOR neutral,sarcastic 0-1 normal normal u
+80 N,T KRAI,KRAI ANDREY,NARRATOR neutral,sarcastic 0-1 normal normal u
 81 D KRAI,KRAI ANDREY neutral 0-1 normal normal m
 82 N
 83 D KRAI,KRAI ANDREY neutral,happy 0-1 normal normal m
 84 N
 85 N
 86 D NPC*,UNKNOWN~ neutral,sad 0-1 normal normal f
-87 N,T NARRATOR,KRAI,KRAI ANDREY neutral,surprised,angry 0-1 normal normal u
-88 N,T NARRATOR,KRAI,KRAI ANDREY neutral,angry,sarcastic 0-1 normal normal u
-89 N,T NARRATOR,KRAI,KRAI ANDREY neutral,angry 0-1 normal normal u
-90 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sarcastic 0-1 normal normal u
-91 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sarcastic 0-1 normal normal u
+87 N,T KRAI,KRAI ANDREY,NARRATOR neutral,surprised,angry 0-1 normal normal u
+88 N,T KRAI,KRAI ANDREY,NARRATOR neutral,angry,sarcastic 0-1 normal normal u
+89 N,T KRAI,KRAI ANDREY,NARRATOR neutral,angry 0-1 normal normal u
+90 N,T KRAI,KRAI ANDREY,NARRATOR neutral,sarcastic 0-1 normal normal u
+91 N,T KRAI,KRAI ANDREY,NARRATOR neutral,sarcastic 0-1 normal normal u
 92 N
 93 N
 94 N
@@ -123,7 +123,7 @@
 103 D KRAI,KRAI ANDREY neutral,tired 0-1 normal,slow soft,normal m
 104 N
 105 N
-106 N,T NARRATOR,KRAI,KRAI ANDREY neutral,surprised 0-1 normal normal u
+106 N,T KRAI,KRAI ANDREY,NARRATOR neutral,surprised 0-1 normal normal u
 107 N
 108 N
 109 N
@@ -141,20 +141,20 @@
 121 D NPC*,UNKNOWN~ neutral,surprised,happy 0-1 normal normal f
 122 N NARRATOR neutral,surprised 0-1 normal normal u
 123 D KRAI,KRAI ANDREY surprised,neutral 0-1 normal normal m
-124 N,T NARRATOR,KRAI,KRAI ANDREY neutral,surprised 0-1 normal normal u
-125 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sarcastic 0-1 normal normal u
-126 N,T NARRATOR,KRAI,KRAI ANDREY neutral,happy,tender 0-1 normal normal u
+124 N,T KRAI,KRAI ANDREY,NARRATOR neutral,surprised 0-1 normal normal u
+125 N,T KRAI,KRAI ANDREY,NARRATOR neutral,sarcastic 0-1 normal normal u
+126 N,T KRAI,KRAI ANDREY,NARRATOR neutral,happy,tender 0-1 normal normal u
 127 D NPC*,UNKNOWN~ surprised,neutral 0-2 normal,slow soft,normal f
 128 N
 129 D NPC*,UNKNOWN~ surprised,neutral 0-1 normal normal f
-130 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sad,sarcastic 0-1 normal normal u
+130 N,T KRAI,KRAI ANDREY,NARRATOR neutral,sad,sarcastic 0-1 normal normal u
 131 D NPC*,UNKNOWN~ neutral 0-1 normal normal f
 132 N
 133 D NPC*,UNKNOWN~ neutral,surprised 0-1 normal normal f
 134 D NPC*,UNKNOWN~ neutral,surprised,tired 0-1 normal normal f
-135 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sarcastic 0-1 normal normal u
-136 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sarcastic 0-1 normal normal u
-137 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sarcastic,angry 0-1 normal normal u
+135 N,T KRAI,KRAI ANDREY,NARRATOR neutral,sarcastic 0-1 normal normal u
+136 N,T KRAI,KRAI ANDREY,NARRATOR neutral,sarcastic 0-1 normal normal u
+137 N,T KRAI,KRAI ANDREY,NARRATOR neutral,sarcastic,angry 0-1 normal normal u
 138 N
 139 D LUCIA,LUCIA ROGIER,LUCY angry 1-2 fast,normal normal,loud f
 140 N
@@ -163,4 +163,4 @@
 143 D NPC*,UNKNOWN~ neutral,sad 0-1 normal normal f
 144 N
 145 D NPC*,UNKNOWN~ sad,tender 0-1 normal,slow soft,normal f
-146 N,T NARRATOR,KRAI,KRAI ANDREY neutral,sad,sarcastic 0-1 normal normal u
+146 N,T KRAI,KRAI ANDREY,NARRATOR neutral,sad,sarcastic 0-1 normal normal u

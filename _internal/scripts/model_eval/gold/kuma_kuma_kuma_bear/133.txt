@@ -35,14 +35,14 @@
 10 D YUNA neutral,surprised 0-1 normal normal f
 11 D MYLENE happy,excited,tender 1-2 normal normal f
 12 N
-13 N,T NARRATOR,YUNA neutral,happy 0-1 normal normal u
+13 N,T YUNA,NARRATOR neutral,happy 0-1 normal normal u
 14 D MYLENE neutral,excited,happy 0-1 normal normal f
-15 N,T NARRATOR,YUNA neutral,happy 0-1 normal normal u
+15 N,T YUNA,NARRATOR neutral,happy 0-1 normal normal u
 16 D TERUMI neutral,surprised 0-1 normal normal f
 17 N
 18 D YUNA neutral 0-1 normal normal f
 19 N
-20 N,T NARRATOR,YUNA neutral 0-1 normal normal u
+20 N,T YUNA,NARRATOR neutral 0-1 normal normal u
 21 D TERUMI happy,neutral,tender 0-1 normal normal f
 22 N NARRATOR neutral,sad 0-1 normal normal u
 23 N
@@ -52,7 +52,7 @@
 27 D FINA,SHURI happy,neutral,excited 0-1 normal normal f
 28 N
 29 N
-30 N,T NARRATOR,YUNA neutral,surprised 0-1 normal normal u
+30 N,T YUNA,NARRATOR neutral,surprised 0-1 normal normal u
 31 N
 32 D NPC*,UNKNOWN~ happy,tender,neutral 0-1 normal normal f
 33 D NPC*,UNKNOWN~ neutral,happy 0-1 normal,slow normal,soft f
@@ -66,25 +66,25 @@
 41 N
 42 N
 43 D MYLENE neutral 0-1 normal normal f
-44 N,T NARRATOR,YUNA neutral 0-1 normal normal u
-45 N,T NARRATOR,YUNA neutral,surprised 0-1 normal normal u
+44 N,T YUNA,NARRATOR neutral 0-1 normal normal u
+45 N,T YUNA,NARRATOR neutral,surprised 0-1 normal normal u
 46 N
 47 D MYLENE neutral 0-1 normal normal f
 48 N
 49 D YUNA neutral 0-1 normal normal f
 50 D ANZU surprised 0-1 normal normal f
 51 N
-52 N,T NARRATOR,YUNA~ neutral 0-1 normal normal u
-53 N,T NARRATOR,YUNA neutral 0-1 normal normal u
+52 N,T YUNA~,NARRATOR neutral 0-1 normal normal u
+53 N,T YUNA,NARRATOR neutral 0-1 normal normal u
 54 D YUNA neutral 0-1 normal normal f
 55 D ANZU neutral 0-1 normal,slow normal f
 56 N
 57 D MYLENE neutral,sarcastic 0-1 normal normal f
 58 D ANZU afraid,sad,neutral 0-1 normal,fast normal f
-59 N,T NARRATOR,YUNA neutral,tired,sad 0-1 normal,slow normal u
-60 N,T NARRATOR,YUNA neutral,tired,sad 0-1 normal,slow normal u
+59 N,T YUNA,NARRATOR neutral,tired,sad 0-1 normal,slow normal u
+60 N,T YUNA,NARRATOR neutral,tired,sad 0-1 normal,slow normal u
 61 N
-62 N,T NARRATOR,YUNA~ neutral 0-1 normal normal u
+62 N,T YUNA~,NARRATOR neutral 0-1 normal normal u
 63 N
 64 D YUNA neutral 0-1 normal normal f
 65 D ANZU neutral,sad 0-1 normal,slow normal,soft f
@@ -94,24 +94,24 @@
 69 D NPC*,UNKNOWN~ neutral,happy 0-1 normal normal f
 70 N
 71 N
-72 N,T NARRATOR,YUNA neutral,sad,sarcastic 0-1 normal normal u
+72 N,T YUNA,NARRATOR neutral,sad,sarcastic 0-1 normal normal u
 73 N
 74 N
 75 N
 76 N
 77 N
-78 N,T NARRATOR,YUNA~ neutral 0-1 normal normal u
-79 N,T NARRATOR,YUNA neutral,sarcastic 0-1 normal normal u
+78 N,T YUNA~,NARRATOR neutral 0-1 normal normal u
+79 N,T YUNA,NARRATOR neutral,sarcastic 0-1 normal normal u
 80 N
 81 N
-82 N,T NARRATOR,YUNA neutral 0-1 normal normal u
-83 N,T NARRATOR,YUNA neutral,tired 0-1 normal,slow normal u
+82 N,T YUNA,NARRATOR neutral 0-1 normal normal u
+83 N,T YUNA,NARRATOR neutral,tired 0-1 normal,slow normal u
 84 N
 85 N
 86 N
 87 N
 88 N
-89 N,T NARRATOR,YUNA~ neutral,surprised 0-1 normal normal u
+89 N,T YUNA~,NARRATOR neutral,surprised 0-1 normal normal u
 90 N
 91 D YUNA neutral 0-1 normal normal f
 92 N
@@ -121,15 +121,15 @@
 96 D YUNA,MYLENE~ neutral,tender 0-1 normal normal f
 97 D SHERRY neutral,afraid 0-1 normal soft,normal f
 98 N NARRATOR neutral,afraid 0-1 normal normal u
-99 N,T NARRATOR,YUNA neutral,sarcastic 0-1 normal normal u
-100 N,T NARRATOR,YUNA neutral,sarcastic 0-1 normal normal u
+99 N,T YUNA,NARRATOR neutral,sarcastic 0-1 normal normal u
+100 N,T YUNA,NARRATOR neutral,sarcastic 0-1 normal normal u
 101 D YUNA,MYLENE~ neutral,tender 0-1 normal normal f
 102 D SHERRY happy,neutral 0-1 normal normal f
 103 N
 104 D YUNA,MYLENE~ neutral,tender 0-1 normal normal f
 105 N
 106 N
-107 N,T NARRATOR,YUNA~ neutral 0-1 normal normal u
+107 N,T YUNA~,NARRATOR neutral 0-1 normal normal u
 108 D YUNA,MYLENE~ surprised,neutral 0-1 normal normal f
 109 D SHERRY neutral,happy 0-1 normal normal f
 110 N
@@ -143,13 +143,13 @@
 118 D MYLENE neutral,tender 0-1 normal normal f
 119 D SHERRY afraid,sad,neutral 0-1 slow,normal soft,normal f
 120 N
-121 N,T NARRATOR,YUNA neutral,tender 0-1 normal normal u
+121 N,T YUNA,NARRATOR neutral,tender 0-1 normal normal u
 122 D YUNA,MYLENE tender,neutral 0-1 normal soft,normal f
 123 D SHERRY afraid,sad,neutral 0-1 slow,normal soft,normal f
 124 D YUNA,MYLENE neutral,tender 0-1 normal normal f
-125 N,T NARRATOR,YUNA neutral,surprised 0-1 normal normal u
+125 N,T YUNA,NARRATOR neutral,surprised 0-1 normal normal u
 126 D SHERRY afraid,sad 1-2 slow,normal soft,normal f
-127 N,T NARRATOR,YUNA neutral,surprised 0-1 normal normal u
+127 N,T YUNA,NARRATOR neutral,surprised 0-1 normal normal u
 128 D SHERRY afraid,sad 1-2 normal,slow normal,soft f
 129 D YUNA tender,neutral 0-1 normal normal,soft f
 130 N
@@ -165,7 +165,7 @@
 140 D YUNA tender,happy 0-1 normal normal f
 141 D SHERRY tender,surprised,happy 0-1 normal,slow soft,normal f
 142 N
-143 N,T NARRATOR,YUNA neutral 0-1 normal normal u
+143 N,T YUNA,NARRATOR neutral 0-1 normal normal u
 144 D YUNA sarcastic,happy,tender 0-1 normal normal f
 145 D MYLENE surprised,angry 1-2 fast,normal normal,loud f
 146 N
@@ -185,7 +185,7 @@
 160 N NARRATOR neutral,afraid 0-1 normal normal u
 161 D YUNA surprised,neutral 0-1 normal normal f
 162 D MYLENE neutral,happy 0-1 normal normal f
-163 N,T NARRATOR,YUNA neutral,sarcastic 0-1 normal normal u
+163 N,T YUNA,NARRATOR neutral,sarcastic 0-1 normal normal u
 164 D SHERRY afraid,surprised 1-2 fast,normal loud,normal f
 165 N
 166 N

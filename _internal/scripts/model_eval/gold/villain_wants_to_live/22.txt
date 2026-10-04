@@ -47,8 +47,8 @@
 19 N
 20 N NARRATOR neutral,angry 0-1 normal normal u
 21 N
-22 N,T NARRATOR,LOUINA~ neutral 0-1 normal normal u
-23 N,T NARRATOR,LOUINA~ neutral 0-1 normal normal u
+22 N,T LOUINA~,NARRATOR neutral 0-1 normal normal u
+23 N,T LOUINA~,NARRATOR neutral 0-1 normal normal u
 24 N
 25 D SOPHIEN,SOPHIEN AEKATER,SOPHIEN EKATER surprised,sarcastic,neutral 0-1 normal normal f
 26 N NARRATOR,LOUINA~ neutral,surprised 0-1 normal normal u
@@ -116,15 +116,15 @@
 88 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
 89 D JEFF neutral,surprised 0-1 normal normal m
 90 N NARRATOR neutral,surprised 0-1 normal normal u
-91 N,T NARRATOR,DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal u
+91 N,T DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~,NARRATOR neutral 0-1 normal normal u
 92 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
 93 D JEFF neutral 0-1 normal normal m
 94 N
 95 N
 96 D NARRATOR,NPC*~,DECULEIN~ neutral,sad 0-1 normal normal u
-97 N,T NARRATOR,DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal u
-98 N,T NARRATOR,DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal u
-99 N,T NARRATOR,DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal u
+97 N,T DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~,NARRATOR neutral 0-1 normal normal u
+98 N,T DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~,NARRATOR neutral 0-1 normal normal u
+99 N,T DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~,NARRATOR neutral 0-1 normal normal u
 100 D,T DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
 101 D JEFF surprised,neutral 0-1 normal normal m
 102 N
@@ -139,7 +139,7 @@
 111 N
 112 N
 113 D,T DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal soft,normal m
-114 N,T NARRATOR,DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal u
+114 N,T DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~,NARRATOR neutral 0-1 normal normal u
 115 N
 116 N
 117 N
@@ -151,7 +151,7 @@
 123 N
 124 N
 125 D GLITHEON neutral,sarcastic 0-1 normal normal m
-126 N,T NARRATOR,GLITHEON~ neutral 0-1 normal normal u
+126 N,T GLITHEON~,NARRATOR neutral 0-1 normal normal u
 127 N
 128 N
 129 N
@@ -306,5 +306,5 @@
 278 D DECULEIN,DECULEIN VON GRAHAN YUKLINE,KIM WOOJIN~ neutral 0-1 normal normal m
 279 N
 280 N
-281 N,T NARRATOR,DECULEIN~ neutral 0-1 normal normal u
+281 N,T DECULEIN~,NARRATOR neutral 0-1 normal normal u
 282 N

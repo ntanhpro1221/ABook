@@ -106,9 +106,9 @@
 92 N
 93 N
 94 N
-95 N,T NARRATOR,KRAI,KRAI ANDREY neutral,surprised 0-1 normal normal u
+95 N,T KRAI,KRAI ANDREY,NARRATOR neutral,surprised 0-1 normal normal u
 96 N
-97 N,T NARRATOR,KRAI,KRAI ANDREY neutral,surprised 0-1 normal normal u
+97 N,T KRAI,KRAI ANDREY,NARRATOR neutral,surprised 0-1 normal normal u
 98 N
 99 N
 100 N
@@ -142,7 +142,7 @@
 128 N
 129 N
 130 N
-131 N,T NARRATOR,MURINA,MURINA ATOLM ZEBRUDIA surprised,neutral 0-1 normal normal u
+131 N,T MURINA,MURINA ATOLM ZEBRUDIA,NARRATOR surprised,neutral 0-1 normal normal u
 132 D ÉCLAIR,ÉCLAIR GLADIS afraid,angry 0-1 normal soft,normal f
 133 N NARRATOR neutral,afraid 0-1 normal normal u
 134 N
@@ -249,9 +249,9 @@
 235 D EVA,EVA RENFIED surprised 0-1 normal normal f
 236 N
 237 N
-238 N,T NARRATOR,KRAI,KRAI ANDREY neutral,surprised 0-1 normal normal u
+238 N,T KRAI,KRAI ANDREY,NARRATOR neutral,surprised 0-1 normal normal u
 239 N
-240 N,T NARRATOR,KRAI,KRAI ANDREY neutral,surprised 0-1 normal normal u
+240 N,T KRAI,KRAI ANDREY,NARRATOR neutral,surprised 0-1 normal normal u
 241 N
 242 N
 243 N
@@ -259,7 +259,7 @@
 245 D KRAI,KRAI ANDREY,NARRATOR~ neutral,sarcastic 0-1 normal normal m
 246 N
 247 N
-248 N,T NARRATOR,KRAI,KRAI ANDREY neutral,surprised 0-1 normal normal u
+248 N,T KRAI,KRAI ANDREY,NARRATOR neutral,surprised 0-1 normal normal u
 249 N
 250 N
 251 N
@@ -295,19 +295,19 @@
 281 N
 282 D EVA,EVA RENFIED surprised 1-2 normal normal f
 283 N
-284 N,T NARRATOR,KRAI,KRAI ANDREY neutral,surprised 0-1 normal normal u
+284 N,T KRAI,KRAI ANDREY,NARRATOR neutral,surprised 0-1 normal normal u
 285 D KRAI,KRAI ANDREY neutral 0-1 normal normal m
 286 N
 287 N
 288 N
 289 D KRAI,KRAI ANDREY neutral,sarcastic 0-1 normal normal m
 290 D EVA,EVA RENFIED neutral,happy 0-1 normal normal f
-291 N,T NARRATOR,KRAI,KRAI ANDREY neutral,surprised 0-1 normal normal u
+291 N,T KRAI,KRAI ANDREY,NARRATOR neutral,surprised 0-1 normal normal u
 292 N
 293 N
 294 D EVA,EVA RENFIED neutral,happy 0-1 normal normal f
 295 N
-296 N,T NARRATOR,KRAI,KRAI ANDREY neutral,surprised 0-1 normal normal u
+296 N,T KRAI,KRAI ANDREY,NARRATOR neutral,surprised 0-1 normal normal u
 297 D EVA,EVA RENFIED happy,neutral 0-1 normal normal f
 298 D KRAI,KRAI ANDREY happy,excited 0-1 normal normal m
 299 N

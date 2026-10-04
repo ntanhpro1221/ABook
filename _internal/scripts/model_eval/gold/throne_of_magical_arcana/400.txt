@@ -22,7 +22,7 @@
 19 D ANDRIS sarcastic,happy 1 normal normal m
 20 N NARRATOR neutral,afraid 0-1 normal normal u
 21 N NARRATOR neutral,afraid 0-1 normal normal u
-22 N,T NARRATOR,DUDA~ afraid,sad,neutral 0-1 slow,normal normal,soft u
+22 N,T DUDA~,NARRATOR afraid,sad,neutral 0-1 slow,normal normal,soft u
 23 D ANDRIS happy 1 slow soft,normal m
 24 N
 25 N
@@ -33,7 +33,7 @@
 30 N
 31 N
 32 N
-33 N,T NARRATOR,BEYER surprised,neutral 0-1 normal normal u
+33 N,T BEYER,NARRATOR surprised,neutral 0-1 normal normal u
 34 D SOPHIA sarcastic,happy 0-1 normal normal f
 35 D SOPHIA sarcastic,happy 0-1 normal normal f
 36 N
@@ -69,7 +69,7 @@
 66 N
 67 D SOPHIA happy,sarcastic 0-1 normal normal f
 68 D SOPHIA happy,sarcastic 0-1 normal normal f
-69 N,T NARRATOR,LUCIEN~ neutral,sarcastic 0-1 normal normal u
+69 N,T LUCIEN~,NARRATOR neutral,sarcastic 0-1 normal normal u
 70 N
 71 D SOPHIA sarcastic 1 normal normal f
 72 N

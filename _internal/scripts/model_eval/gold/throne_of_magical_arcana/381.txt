@@ -66,7 +66,7 @@
 60 N
 61 N
 62 N
-63 N,T NARRATOR,NPC*~ neutral,excited,surprised 0-2 normal normal u
+63 N,T NPC*~,NARRATOR neutral,excited,surprised 0-2 normal normal u
 64 N NARRATOR neutral,excited 0-1 normal normal u
 65 D HAROLD excited,happy 2-3 normal,fast loud,normal m
 66 D MYRNA tender,happy 0-2 slow,normal soft,normal f

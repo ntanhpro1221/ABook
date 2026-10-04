@@ -46,9 +46,9 @@
 36 D KAKERU,KAKERU SORANO,SORANO surprised,neutral 0-1 normal normal m
 37 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI happy,neutral 0-1 normal normal f
 38 N
-39 N,T NARRATOR,KAKERU~,KAKERU SORANO~,SORANO~ neutral,surprised,happy 0-1 normal normal u
+39 N,T KAKERU~,KAKERU SORANO~,SORANO~,NARRATOR neutral,surprised,happy 0-1 normal normal u
 40 N NARRATOR neutral,happy 0-1 normal normal u
-41 N,T NARRATOR,KAKERU,KAKERU SORANO,SORANO neutral,happy 0-1 normal normal u
+41 N,T KAKERU,KAKERU SORANO,SORANO,NARRATOR neutral,happy 0-1 normal normal u
 42 D KAKERU,KAKERU SORANO,SORANO neutral,happy 0-1 normal normal m
 43 N NARRATOR neutral,sad 0-1 normal normal u
 44 N NARRATOR neutral,afraid,sad 0-1 normal normal u
@@ -56,8 +56,8 @@
 46 N NARRATOR neutral,sad 0-1 normal normal u
 47 N NARRATOR neutral,afraid 0-1 normal normal u
 48 N NARRATOR neutral,afraid 0-2 normal,fast normal u
-49 N,T NARRATOR,KAKERU,KAKERU SORANO,SORANO afraid,neutral 0-2 fast,normal normal u
-50 N,T NARRATOR,KAKERU,KAKERU SORANO,SORANO afraid,neutral 0-2 fast,normal normal u
+49 N,T KAKERU,KAKERU SORANO,SORANO,NARRATOR afraid,neutral 0-2 fast,normal normal u
+50 N,T KAKERU,KAKERU SORANO,SORANO,NARRATOR afraid,neutral 0-2 fast,normal normal u
 51 N
 52 D KAKERU,KAKERU SORANO,SORANO afraid,surprised 1-2 fast,normal loud,normal m
 53 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI neutral,surprised,happy 0-1 normal normal f
@@ -177,8 +177,8 @@
 167 N
 168 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI happy,sarcastic 0-1 normal normal f
 169 N
-170 N,T NARRATOR,KAKERU,KAKERU SORANO,SORANO neutral,sad,tender 0-1 normal,slow normal u
-171 N,T NARRATOR,KAKERU,KAKERU SORANO,SORANO neutral,sad 0-1 normal normal u
+170 N,T KAKERU,KAKERU SORANO,SORANO,NARRATOR neutral,sad,tender 0-1 normal,slow normal u
+171 N,T KAKERU,KAKERU SORANO,SORANO,NARRATOR neutral,sad 0-1 normal normal u
 172 N NARRATOR neutral,sad,angry 0-1 normal normal u
 173 N
 174 N
@@ -240,7 +240,7 @@
 230 D KAKERU,KAKERU SORANO,SORANO neutral 0-1 normal normal m
 231 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI surprised,happy,neutral 0-1 normal normal f
 232 D KAKERU,KAKERU SORANO,SORANO neutral,tender 0-1 normal normal m
-233 N,T NARRATOR,KAKERU,KAKERU SORANO,SORANO tender,neutral 0-1 normal normal u
+233 N,T KAKERU,KAKERU SORANO,SORANO,NARRATOR tender,neutral 0-1 normal normal u
 234 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI tender,happy 0-1 normal normal,soft f
 235 N
 236 D FUYUTSUKI,KOHARU,KOHARU FUYUTSUKI neutral,tender 0-1 normal normal f

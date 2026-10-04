@@ -45,7 +45,7 @@
 27 D KARIN afraid,angry,surprised 1-2 fast normal,loud f
 28 N NARRATOR neutral,surprised 0-1 normal normal u
 29 D KARIN angry,afraid 1-2 fast loud,normal f
-30 N,T NARRATOR,NPC*:tiểu thư mời caviar~ neutral,surprised 0-1 normal normal u
+30 N,T NPC*:tiểu thư mời caviar~,NARRATOR neutral,surprised 0-1 normal normal u
 31 N NARRATOR neutral,angry 0-1 normal normal u
 32 D KARIN sarcastic,angry 0-1 normal normal f
 33 D NPC*:tiểu thư trẻ tuổi nhất,UNKNOWN~ neutral,happy 0-1 normal normal f
@@ -65,7 +65,7 @@
 47 N
 48 D CLARA happy,excited 0-1 normal normal f
 49 D KARIN neutral,angry,sarcastic 0-1 normal soft,normal f
-50 N,T NARRATOR,KARIN~ neutral,sarcastic,angry 0-1 normal normal u
+50 N,T KARIN~,NARRATOR neutral,sarcastic,angry 0-1 normal normal u
 51 D NPC*:tiểu thư 9,KARIN~,UNKNOWN~ surprised,neutral 0-1 normal normal f
 52 D CLARA happy,excited 1-2 normal,fast normal f
 53 N
@@ -90,22 +90,22 @@
 72 D KARIN angry,neutral 0-1 normal normal f
 73 D NPC*:tiểu thư phe Karin,UNKNOWN~ afraid,surprised,neutral 0-1 fast,normal normal f
 74 N NARRATOR neutral,angry 0-1 normal normal u
-75 N,T NARRATOR,KARIN~ angry 0-1 normal normal u
-76 N,T NARRATOR,KARIN~ angry,neutral 0-1 normal normal u
+75 N,T KARIN~,NARRATOR angry 0-1 normal normal u
+76 N,T KARIN~,NARRATOR angry,neutral 0-1 normal normal u
 77 N NARRATOR neutral,angry 0-1 normal normal u
 78 N NARRATOR neutral,angry 0-1 normal normal u
 79 N
-80 N,T NARRATOR,ABIGAIL,ABIGAIL FRIEDKIN,ABIGAIL CRONENBERG happy,excited 0-1 normal normal u
+80 N,T ABIGAIL,ABIGAIL FRIEDKIN,ABIGAIL CRONENBERG,NARRATOR happy,excited 0-1 normal normal u
 81 D ABIGAIL,ABIGAIL FRIEDKIN,ABIGAIL CRONENBERG tender,happy,neutral 0-1 normal normal f
 82 D BLANCHE,BLANCHE FRIEDKIN happy,excited 0-1 normal normal f
-83 N,T NARRATOR,ABIGAIL,ABIGAIL FRIEDKIN,ABIGAIL CRONENBERG happy,tender,neutral 0-1 normal normal u
-84 N,T NARRATOR,ABIGAIL,ABIGAIL FRIEDKIN,ABIGAIL CRONENBERG neutral,happy,sad 0-1 normal normal u
+83 N,T ABIGAIL,ABIGAIL FRIEDKIN,ABIGAIL CRONENBERG,NARRATOR happy,tender,neutral 0-1 normal normal u
+84 N,T ABIGAIL,ABIGAIL FRIEDKIN,ABIGAIL CRONENBERG,NARRATOR neutral,happy,sad 0-1 normal normal u
 85 D BLANCHE,BLANCHE FRIEDKIN sad 0-1 normal,slow soft,normal f
 86 N NARRATOR neutral,sad 0-1 normal normal u
 87 N
 88 N
 89 D ABIGAIL,ABIGAIL FRIEDKIN,ABIGAIL CRONENBERG tender,neutral 0-1 normal normal f
-90 N,T NARRATOR,ABIGAIL,ABIGAIL FRIEDKIN,ABIGAIL CRONENBERG neutral,sarcastic,sad 0-1 normal normal u
+90 N,T ABIGAIL,ABIGAIL FRIEDKIN,ABIGAIL CRONENBERG,NARRATOR neutral,sarcastic,sad 0-1 normal normal u
 91 N
 92 D ABIGAIL,ABIGAIL FRIEDKIN,ABIGAIL CRONENBERG tender,neutral 0-1 normal normal f
 93 D BLANCHE,BLANCHE FRIEDKIN surprised,neutral 0-1 normal normal f

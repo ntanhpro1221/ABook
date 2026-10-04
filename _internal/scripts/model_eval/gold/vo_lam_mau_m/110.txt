@@ -23,7 +23,7 @@
 4 N
 5 N
 6 N NARRATOR neutral,excited,happy 0-1 normal normal u
-7 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral,happy,excited 0-1 normal normal u
+7 N,T HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN,NARRATOR neutral,happy,excited 0-1 normal normal u
 8 N
 9 N
 10 N
@@ -33,9 +33,9 @@
 14 N
 15 N
 16 N
-17 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral 0-1 normal normal u
-18 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral 0-1 normal normal u
-19 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral 0-1 normal normal u
+17 N,T HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN,NARRATOR neutral 0-1 normal normal u
+18 N,T HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN,NARRATOR neutral 0-1 normal normal u
+19 N,T HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN,NARRATOR neutral 0-1 normal normal u
 20 N
 21 D,T PHƯƠNG PHI NHIÊN,PHI NHIÊN,NARRATOR~ neutral,happy 0-1 normal normal m
 22 N
@@ -48,18 +48,18 @@
 29 N NARRATOR neutral,excited,surprised 0-1 normal normal u
 30 N
 31 N
-32 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN surprised,neutral 0-1 normal normal u
-33 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral 0-1 normal normal u
+32 N,T HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN,NARRATOR surprised,neutral 0-1 normal normal u
+33 N,T HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN,NARRATOR neutral 0-1 normal normal u
 34 N
 35 N
-36 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral,sarcastic 0-1 normal normal u
-37 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral,surprised 0-1 normal normal u
-38 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral 0-1 normal normal u
+36 N,T HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN,NARRATOR neutral,sarcastic 0-1 normal normal u
+37 N,T HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN,NARRATOR neutral,surprised 0-1 normal normal u
+38 N,T HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN,NARRATOR neutral 0-1 normal normal u
 39 N NARRATOR neutral,happy 0-1 normal normal u
-40 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN happy,excited 0-2 normal normal u
-41 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral,happy 0-1 normal normal u
-42 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN happy,neutral 0-1 normal normal u
-43 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN happy,neutral,excited 0-1 normal normal u
+40 N,T HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN,NARRATOR happy,excited 0-2 normal normal u
+41 N,T HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN,NARRATOR neutral,happy 0-1 normal normal u
+42 N,T HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN,NARRATOR happy,neutral 0-1 normal normal u
+43 N,T HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN,NARRATOR happy,neutral,excited 0-1 normal normal u
 44 N NARRATOR neutral,happy 0-1 normal normal u
 45 N
 46 N
@@ -77,20 +77,20 @@
 58 N
 59 N NARRATOR neutral,angry 0-1 normal normal u
 60 N
-61 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN angry,sarcastic,neutral 0-1 normal normal u
-62 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN angry,neutral 0-1 normal normal u
-63 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN angry,neutral 0-1 normal normal u
-64 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral,angry 0-1 normal normal u
-65 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral,angry,sarcastic 0-1 normal normal u
+61 N,T HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN,NARRATOR angry,sarcastic,neutral 0-1 normal normal u
+62 N,T HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN,NARRATOR angry,neutral 0-1 normal normal u
+63 N,T HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN,NARRATOR angry,neutral 0-1 normal normal u
+64 N,T HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN,NARRATOR neutral,angry 0-1 normal normal u
+65 N,T HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN,NARRATOR neutral,angry,sarcastic 0-1 normal normal u
 66 N
-67 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral 0-1 normal normal u
-68 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral,sarcastic 0-1 normal normal u
+67 N,T HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN,NARRATOR neutral 0-1 normal normal u
+68 N,T HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN,NARRATOR neutral,sarcastic 0-1 normal normal u
 69 N
 70 N
 71 D ĐƯỜNG TỐ LAN,TỐ LAN neutral 0-1 normal normal f
 72 N
 73 N
-74 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral,sarcastic 0-1 normal normal u
+74 N,T HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN,NARRATOR neutral,sarcastic 0-1 normal normal u
 75 N
 76 D NPC*:nhân viên tiêu cục,UNKNOWN~ neutral,happy 0-1 normal normal u
 77 N
@@ -100,7 +100,7 @@
 81 N
 82 N
 83 N
-84 N,T NARRATOR,HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN happy,neutral 0-1 normal normal u
+84 N,T HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN,NARRATOR happy,neutral 0-1 normal normal u
 85 N
 86 D HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral 0-1 normal normal m
 87 D HÀN THỤY TRẤN,THỤY TRẤN,HÀN THUỴ TRẤN,THUỴ TRẤN neutral 0-1 normal normal m
@@ -115,7 +115,7 @@
 96 N NARRATOR neutral,afraid,sad 0-1 normal normal u
 97 D THƯƠNG BA sad,afraid 1-2 slow,normal soft m
 98 N NARRATOR neutral,sad,afraid 0-1 normal normal u
-99 N,T NARRATOR,THƯƠNG BA surprised,afraid,neutral 0-1 normal,slow normal,soft u
+99 N,T THƯƠNG BA,NARRATOR surprised,afraid,neutral 0-1 normal,slow normal,soft u
 100 N NARRATOR neutral,afraid,sad 0-1 normal normal u
 101 N NARRATOR neutral,afraid,sad 0-1 normal normal u
 102 N
@@ -145,13 +145,13 @@
 126 N NARRATOR neutral,afraid 0-1 normal normal u
 127 N
 128 N NARRATOR neutral,afraid 0-1 normal normal u
-129 N,T NARRATOR,THƯƠNG BA neutral,afraid 0-1 normal normal u
-130 N,T NARRATOR,THƯƠNG BA neutral,afraid 0-1 normal normal u
+129 N,T THƯƠNG BA,NARRATOR neutral,afraid 0-1 normal normal u
+130 N,T THƯƠNG BA,NARRATOR neutral,afraid 0-1 normal normal u
 131 N
 132 D THƯƠNG BA afraid,surprised,neutral 0-1 slow,normal soft m
 133 N
 134 N
 135 N
 136 N
-137 N,T NARRATOR,THƯƠNG BA excited,neutral,afraid 0-1 normal,slow normal,soft u
+137 N,T THƯƠNG BA,NARRATOR excited,neutral,afraid 0-1 normal,slow normal,soft u
 138 N

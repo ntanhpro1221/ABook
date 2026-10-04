@@ -41,10 +41,10 @@
 28 D NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ neutral 0-1 normal normal m
 29 D YANAMI,ANNA YANAMI,YANAMI ANNA,ANNA neutral,happy 0-1 normal normal f
 30 N
-31 N,T NARRATOR,NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ angry,tired,sarcastic,neutral 0-2 normal,fast normal u
+31 N,T NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~,NARRATOR angry,tired,sarcastic,neutral 0-2 normal,fast normal u
 32 N
 33 N NARRATOR neutral,happy 0-1 normal normal u
 34 N NARRATOR neutral,tired 0-1 normal normal u
 35 D NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ neutral,tired,sarcastic,surprised 0-1 normal normal m
-36 N,T NARRATOR,NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~ neutral,tired,happy,sarcastic 0-1 normal normal u
+36 N,T NUKUMIZU,KAZUHIKO NUKUMIZU,NUKUMIZU KAZUHIKO,KAZUHIKO,NUKKUN~,NARRATOR neutral,tired,happy,sarcastic 0-1 normal normal u
 37 N NARRATOR neutral,tired,happy 0-1 normal normal u

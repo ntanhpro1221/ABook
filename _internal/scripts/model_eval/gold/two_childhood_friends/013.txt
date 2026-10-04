@@ -121,11 +121,11 @@
 116 N NARRATOR neutral,surprised 0-1 normal normal u
 117 D NPC*:thầy giáo đồng nghiệp,UNKNOWN~ surprised,afraid 2 fast loud m
 118 N NARRATOR neutral,sarcastic 0-1 normal normal u
-119 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO,KIRAKO,KUROMITSU KIRAKO surprised,afraid 0-1 normal normal u
+119 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,KIRAKO,KUROMITSU KIRAKO,NARRATOR surprised,afraid 0-1 normal normal u
 120 N
 121 D YOSHIHITO,KUCHINASHI YOSHIHITO neutral,sarcastic 0-1 normal normal m
 122 D KIRAKO,KUROMITSU KIRAKO neutral,sarcastic 0-1 normal normal f
-123 N,T NARRATOR,YOSHIHITO,KUCHINASHI YOSHIHITO,KIRAKO,KUROMITSU KIRAKO angry 2 fast,normal normal,loud u
+123 N,T YOSHIHITO,KUCHINASHI YOSHIHITO,KIRAKO,KUROMITSU KIRAKO,NARRATOR angry 2 fast,normal normal,loud u
 124 N NARRATOR neutral,sarcastic 0-1 normal normal u
 125 N NARRATOR neutral,sad,sarcastic 0-1 normal normal u
 126 D URAZUMI,URAZUMI SAKUKO neutral,whispering 0-1 slow,normal soft f

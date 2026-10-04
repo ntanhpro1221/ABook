@@ -79,16 +79,16 @@
 58 N
 59 N
 60 D NPC*:cô gái tóc hai màu sad,tired,neutral,sarcastic,whispering 0-1 normal,slow soft,normal f
-61 N,T NARRATOR,NPC*:đội trưởng Black Scripture~,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~ neutral 0-1 normal normal u
+61 N,T NPC*:đội trưởng Black Scripture~,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~,NARRATOR neutral 0-1 normal normal u
 62 N
 63 N
-64 N,T NARRATOR,NPC*:đội trưởng Black Scripture~,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~ neutral 0-1 normal normal u
-65 N,T NARRATOR,NPC*:đội trưởng Black Scripture,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~ surprised,neutral,angry 0-2 normal,fast normal u
+64 N,T NPC*:đội trưởng Black Scripture~,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~,NARRATOR neutral 0-1 normal normal u
+65 N,T NPC*:đội trưởng Black Scripture,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~,NARRATOR surprised,neutral,angry 0-2 normal,fast normal u
 66 N
-67 N,T NARRATOR,NPC*:đội trưởng Black Scripture,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~ neutral,afraid 0-1 normal normal u
-68 N,T NARRATOR,NPC*:đội trưởng Black Scripture~,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~ neutral,afraid,sad 0-1 normal,slow normal u
+67 N,T NPC*:đội trưởng Black Scripture,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~,NARRATOR neutral,afraid 0-1 normal normal u
+68 N,T NPC*:đội trưởng Black Scripture~,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~,NARRATOR neutral,afraid,sad 0-1 normal,slow normal u
 69 T NPC*:đội trưởng Black Scripture,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~ neutral,surprised 0-1 normal normal,soft m
-70 N,T NARRATOR,NPC*:đội trưởng Black Scripture~,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~ neutral 0-1 normal normal u
+70 N,T NPC*:đội trưởng Black Scripture~,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~,NARRATOR neutral 0-1 normal normal u
 71 N NARRATOR neutral,surprised 0-1 normal normal u
 72 D NPC*:cô gái tóc hai màu happy,sarcastic,neutral 0-1 normal normal f
 73 N
@@ -105,5 +105,5 @@
 84 N
 85 D NPC*:cô gái tóc hai màu happy,excited,neutral 0-2 normal normal f
 86 N NARRATOR neutral,happy 0-1 normal normal u
-87 N,T NARRATOR,NPC*:đội trưởng Black Scripture,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~ neutral,afraid 0-1 normal normal u
+87 N,T NPC*:đội trưởng Black Scripture,ĐỘI TRƯỞNG BLACK SCRIPTURE~,ĐỘI TRƯỞNG~,NARRATOR neutral,afraid 0-1 normal normal u
 88 N NARRATOR neutral,afraid 0-1 normal normal u

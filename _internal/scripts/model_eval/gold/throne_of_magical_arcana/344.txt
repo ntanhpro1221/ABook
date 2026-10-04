@@ -6,7 +6,7 @@
 1 N
 2 N NARRATOR neutral,happy 0-1 normal normal u
 3 D ERIC tired,happy,neutral,surprised 0-1 normal normal m
-4 N,T NARRATOR,ERIC neutral,surprised 0-1 normal normal u
+4 N,T ERIC,NARRATOR neutral,surprised 0-1 normal normal u
 5 N
 6 N
 7 D LUCIEN neutral,happy 0-1 normal normal m
@@ -71,7 +71,7 @@
 66 D CHLOE tired,afraid,neutral 0-2 slow,normal soft,normal m
 67 N
 68 D NARRATOR,LUCIEN,CHLOE~ surprised,neutral 0-2 normal,slow normal,soft u
-69 N,T NARRATOR,CHLOE surprised,afraid 1-2 normal,fast normal u
+69 N,T CHLOE,NARRATOR surprised,afraid 1-2 normal,fast normal u
 70 N NARRATOR neutral,afraid 0-1 normal,fast normal u
 71 N
 72 D NARRATOR,LUCIEN,CHLOE~ neutral 0-1 normal,slow normal u

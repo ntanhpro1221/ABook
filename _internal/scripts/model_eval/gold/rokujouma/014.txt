@@ -160,7 +160,7 @@
 145 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU happy,sarcastic 0-1 normal normal m
 146 D KENJI,MATSUDAIRA KENJI,MACKENZIE,MATSUDAIRA surprised,neutral 0-1 normal normal m
 147 N NARRATOR neutral,surprised 0-1 normal normal u
-148 N,T NARRATOR,KENJI~,MATSUDAIRA KENJI~,MACKENZIE~,MATSUDAIRA~ neutral,surprised 0-1 normal normal u
+148 N,T KENJI~,MATSUDAIRA KENJI~,MACKENZIE~,MATSUDAIRA~,NARRATOR neutral,surprised 0-1 normal normal u
 149 D KOUTAROU,SATOMI KOUTAROU,SATOMI,KOU happy 0-1 normal normal m
 150 D SHIZUKA,KASAGI SHIZUKA,KASAGI,SHIZU happy,tender 0-1 normal normal f
 151 N NARRATOR neutral,happy 0-1 normal normal u
