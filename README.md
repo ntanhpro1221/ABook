@@ -18,9 +18,12 @@ Chỉ khi bạn chọn một giọng trực tuyến cho "Nghe ngay" thì chữ c
   đang đọc tới Microsoft), hay giọng của máy, giọng dùng khoá của bạn (Azure, Google, FPT.AI, Viettel), hoặc **Giọng VieNeu** tải
   về chạy ngay trên máy, không cần mạng ("Làm trước" khi đang sạc cho điện thoại tầm trung); trên máy tính còn có **Giọng
   Supertonic** (mười giọng nam nữ, chạy trên máy, đọc kịp trực tiếp). Hết sách thì app mời nghe tiếp cuốn khác; nhạc nền có thể
-  là nhạc của chính bạn, thêm ngay từ menu nhạc. Không bao giờ tự sửa chữ của truyện.
+  là nhạc của chính bạn, thêm ngay từ menu nhạc. Tên Nhật / Hàn đọc theo cách người Việt quen ("Haruto-kun" thành "Ha-ru-tô-cun"),
+  viết tắt đọc bằng tên chữ cái ("HP" thành "hát pê"), tiếng kêu kéo dài thành tiếng ngân ("Aaaa" thành "a… a") - chỉ đổi
+  cách đọc, không bao giờ tự sửa chữ của truyện.
 - **Làm sách nói (Studio)**: đọc cả truyện để nhận ra lời thoại, ai đang nói và cảm xúc từng câu; mỗi nhân vật một giọng
-  riêng giữ nguyên suốt cuốn; thu từng câu rồi tự nghe lại bằng nhận dạng giọng nói và thu lại câu lệch. Truyện kể ngôi
+  riêng giữ nguyên suốt cuốn, các giọng đứng cạnh nhau đều tốc độ và độ to (mỗi giọng một bộ hằng số đo sẵn, cảm xúc từng
+  câu vẫn giữ); thu từng câu rồi tự nghe lại bằng nhận dạng giọng nói và thu lại câu lệch. Truyện kể ngôi
   thứ nhất: Studio hỏi "tôi" là ai. Tạm dừng bất cứ lúc nào - kể cả giữa lúc phân tích - rồi làm tiếp đúng chỗ; máy tính
   xách tay rút sạc thì Studio tự tạm dừng và điện thoại báo "Máy tính đang chạy pin".
 - **Bạn là người duyệt cuối**: hộp **"Việc cần duyệt"** chỉ ra những chỗ máy không chắc (ai nói câu này, hai tên là một
