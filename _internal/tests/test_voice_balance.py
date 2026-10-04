@@ -38,8 +38,8 @@ from abook.voice_catalog import (
 )
 
 RATE = 48_000
-KEY = "vieneu@3.8.1/Phạm Tuyên/f100"
-OTHER_KEY = "vieneu@3.8.1/Đức Trí/f100"
+KEY = "vieneu@3.8.3/Phạm Tuyên/f100"
+OTHER_KEY = "vieneu@3.8.3/Đức Trí/f100"
 
 
 def _tone(amplitude: float, seconds: float = 1.0) -> np.ndarray:
@@ -117,11 +117,11 @@ def test_the_table_covers_exactly_the_castable_and_narrator_voices() -> None:
 
 def test_a_voice_missing_from_the_table_is_an_error_not_a_one() -> None:
     with pytest.raises(VoiceBalanceError, match="chưa có"):
-        voice_balance.constants_for("vieneu", "3.8.1", "Giọng chưa đo", 1.0)
+        voice_balance.constants_for("vieneu", "3.8.3", "Giọng chưa đo", 1.0)
     with pytest.raises(VoiceBalanceError):
         voice_balance.constants_for("vieneu", "9.9.9", "Phạm Tuyên", 1.0)
     with pytest.raises(VoiceBalanceError):
-        voice_balance.constants_for("vieneu", "3.8.1", "Phạm Tuyên", 1.37)  # bậc formant chưa đo
+        voice_balance.constants_for("vieneu", "3.8.3", "Phạm Tuyên", 1.37)  # bậc formant chưa đo
     with pytest.raises(VoiceBalanceError):
         voice_balance.preset_pitch_st("Giọng chưa đo")
     with pytest.raises(VoiceBalanceError):
@@ -146,7 +146,7 @@ def test_a_broken_table_is_refused(monkeypatch) -> None:
 
 def test_profile_key_comes_from_engine_preset_and_formant() -> None:
     profile = {"engine": "vieneu", "preset_name": "Thanh Bình", "formant_ratio": 0.93}
-    assert voice_balance.voice_key_for_profile(profile) == "vieneu@3.8.1/Thanh Bình/f093"
+    assert voice_balance.voice_key_for_profile(profile) == "vieneu@3.8.3/Thanh Bình/f093"
     assert voice_balance.constants_for_profile(profile).pitch_st == -4
     # Hàng thiếu engine/formant (hồ sơ dựng tay) đọc như VieNeu ở bậc gốc.
     assert voice_balance.voice_key_for_profile({"preset_name": "Đức Trí"}) == OTHER_KEY
@@ -283,7 +283,7 @@ def test_a_segment_without_a_voice_cannot_be_levelled() -> None:
     with pytest.raises(VoiceBalanceError, match="voice_balance_key"):
         level_segment(_tone(0.1), RATE, segment, settings)
     with pytest.raises(VoiceBalanceError, match="chưa có"):
-        level_segment(_tone(0.1), RATE, _segment(**{VOICE_BALANCE_FIELD: "vieneu@3.8.1/Giọng chưa đo/f100"}), settings)
+        level_segment(_tone(0.1), RATE, _segment(**{VOICE_BALANCE_FIELD: "vieneu@3.8.3/Giọng chưa đo/f100"}), settings)
 
 
 def test_locked_rms_books_keep_their_per_sentence_policy() -> None:
@@ -352,7 +352,7 @@ def test_at_x_085_the_finished_floor_drops_and_the_raw_floor_does_not(monkeypatc
 
 
 def test_register_keeps_its_old_values() -> None:
-    expected = {"Thanh Bình": -4, "Adam bựa": -2, "Mạnh Dũng": -2}
+    expected = {"Thanh Bình": -4, "Adam bựa": -2, "Quốc Tuấn": -2}
     # Cao độ đọc từ bảng: chỉ giọng có số (phân vai ∪ người kể) mới có; giọng Tin tức không chọn được nên không có.
     for name in voice_balance.balanced_preset_names():
         assert base_pitch_for_preset(name) == expected.get(name, 0), name
@@ -401,7 +401,7 @@ def test_the_import_script_turns_measurements_into_constants() -> None:
     assert table["voices"][OTHER_KEY]["pitch_st"] == 0  # màu giọng không bao giờ bị đổi
     voice_balance._validate(json.loads(script.render(table).decode("utf-8")))
     with pytest.raises(SystemExit):
-        script.merge(table, {"voices": {"vieneu@3.8.1/Giọng mới/f100": {"r": 1.0}}}, {"voices": {}})
+        script.merge(table, {"voices": {"vieneu@3.8.3/Giọng mới/f100": {"r": 1.0}}}, {"voices": {}})
 
 
 def test_world_leaves_a_take_too_short_to_hold_speech_alone() -> None:

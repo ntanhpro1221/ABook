@@ -86,13 +86,6 @@ object BookWishes {
     fun aliasKey(name: String): String =
         collapse(VietnameseReading.casefold(BookEdits.pyStrip(Normalizer.normalize(name, Normalizer.Form.NFC).replace('_', ' '))))
 
-    private val VOICE_LABELS = mapOf("Anh Khôi" to "Thiện Minh", "Minh Quân Pro" to "Hải Đăng", "Mạnh Dũng" to "Quốc Tuấn")
-
-    /** humanize.voice_label / voice_key: tên giọng hiển thị như VieNeu hiện hành, và ngược lại. */
-    fun voiceLabel(name: String): String = VOICE_LABELS[name] ?: name
-
-    fun voiceKey(name: String): String = VOICE_LABELS.entries.firstOrNull { it.value == name }?.key ?: name
-
     private val GENDER_LABELS = mapOf("male" to "Nam", "female" to "Nữ")
 
     private fun cutCodePoints(text: String, limit: Int): String = BookEdits.cut(text, limit)
@@ -290,7 +283,7 @@ object BookWishes {
             val preset = item.optString("preset", "")
             val gender = item.optString("gender", "")
             if (preset.isNotEmpty() || gender.isNotEmpty()) {
-                out[key] = JSONObject().put("preset", voiceLabel(preset)).put("gender", GENDER_LABELS[gender] ?: "")
+                out[key] = JSONObject().put("preset", preset).put("gender", GENDER_LABELS[gender] ?: "")
             }
         }
         return out

@@ -317,6 +317,12 @@ Seeds are the desktop's (`seed_of`), and so are the random streams: `NumpyRandom
   downloaded bytes match the packed SHA-256 pins.
 - Upstream 03-10: vieneu 3.8.3 only renames three Turbo presets (aliases kept) and moves the default to "Hải Đăng" - synthesis code unchanged;
   sea-g2p 0.10.0 gives identical Vietnamese normaliser output, phonemes and units on all fixtures. No upgrade needed for parity.
+- 04-10 (dev/upgrades-1004): desktop Python moves to sea-g2p 0.10.0 and vieneu 3.8.3 (new Turbo names used as keys, no aliases); the
+  phone keeps the JNI built from 0.9.1 on purpose. Checked: `text.json` fixtures regenerate byte-identical under 0.10.0, `sea_g2p.bin`
+  is byte-identical (sha256 4346e690...), `SeaG2pParityTest` 3/3 with both the 0.9.1 and a 0.10.0 host build, `VieneuParityTest`
+  10/10. The 0.10.0 crate changes no Vietnamese logic (C ABI, Thai/Indonesian, PyO3 behind a `python` feature), so a rebuild would
+  only align the version label. If one is ever needed: bump `prepare_sea_g2p_android.py`, drop `strip_pyo3`, set
+  `default-features = false` in `mobile/sea_g2p_jni/Cargo.toml`, rebuild the three ABIs and re-pin the `Part(...)` hashes.
 - VieNeu is one local provider, not the only one (owner 03-10 on ZeroTTS): any local model goes behind `Voice` + the module frame and is
   chosen by the same machine measurements (ASR round-trip CER, naturalness score, RTF desktop/phone, RAM, download size, licence).
 - ZeroTTS 0.1.5 (commit c2bfbd67) vs VieNeu, desktop CPU, 8 threads, 20 paragraphs of 180-226 chars + 4 of 370-441: RTF Nano 0.19 /

@@ -64,7 +64,7 @@ class VieneuModuleTest {
             Part("g2p/libabook_sea_g2p.so", digest(g2pLib), g2pLib.size.toLong(), base + "g2p.gz", Packed(digest(g2pGz), g2pGz.size.toLong()), true),
             Part("g2p/sea_g2p.bin", digest(dictionary), dictionary.size.toLong(), base + "sea.whl", Packed(digest(wheel), wheel.size.toLong(), "sea_g2p/sea_g2p.bin")),
         ),
-        "voices" to listOf(Part("voices/vieneu-3.8.1-py3-none-any.whl", digest(voices), voices.size.toLong(), base + "vieneu.whl")),
+        "voices" to listOf(Part("voices/vieneu-3.8.3-py3-none-any.whl", digest(voices), voices.size.toLong(), base + "vieneu.whl")),
         "turbo" to listOf(Part("turbo/turbo.bin", digest(turbo), turbo.size.toLong(), base + "turbo.bin")),
         "nano" to listOf(Part("nano/nano.bin", digest(nano), nano.size.toLong(), base + "nano.bin")),
     )
