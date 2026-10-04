@@ -2519,3 +2519,21 @@ Mỗi pha xong: ghi số vào đây, đổi tham số trong app theo kết quả
   - (a) Máy ≥ 12 GB RAM: chạy MuQ ở nền lúc nhập, ~3,5 s/bài. Model tải theo yêu cầu, không đóng vào bộ cài.
   - (b) Máy yếu: V CLAP hiệu chỉnh tuyến tính sang thang hợp. Hệ số khớp trên danh mục; báo r của phép hiệu chỉnh; bài gắn cờ `ước lượng`.
   - Phần app do Lead xếp lịch.
+
+**GHI TRƯỚC - TRÒ HỌC LẠI VỚI V HỢP (05-10 07:xx, Lead quyết; trước khi dựng danh mục mới):**
+- **Một đường cho mọi máy:** bài người dùng nhập đã đi qua trò-A (tháp CLAP ONNX + đầu 54 KB).
+  - Học lại đầu trò-A đúng công thức cũ (`export_head_A.py`, không MTG), đích lấy từ danh mục dựng lại với V hợp. E, T không đổi.
+  - Không tải MuQ, không cờ "ước lượng".
+  - Bỏ hai đường (a) / (b) cũ, TRỪ KHI trò thua luật dưới.
+- **Thước:** 1.185 bài MTG-Jamendo nhãn vui / buồn một phía (đúng bộ 86743d0a).
+  - Trò-A không học MTG, nên cả bộ là phần giữ ngoài.
+  - V của trò tính từ nhúng CLAP sẵn có của các bài ấy.
+- **Luật:** ĐẠT nếu r(V trò mới, nhãn ±1) ≥ r(CLAP zero-shot) + 0,08 = **0,591**. Tức giữ ít nhất nửa phần lợi +0,16.
+  - Ghi kèm r của trò cũ.
+  - KHÔNG ĐẠT → xếp đường (a): MuQ chạy nền lúc nhập cho máy ≥ 12 GB RAM.
+- **Thứ tự:**
+  - MuQ danh mục xong (~11:00).
+  - `build_catalog.py` (V hợp; bản cũ giữ ở `catalog_out.v1_clapV`).
+  - `onnx_student/export_head_A.py` (đầu cũ giữ ở `student_head_A.v1.npz`).
+  - `eval_student_mtg.py` → `results/student_mtg.txt`.
+  - Gửi Lead danh mục + đầu trò mới để ký / phát hành.
