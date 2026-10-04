@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.26] - 2026-10-04
+
 ### Giọng đọc
 
 - Studio: hộp "Đổi giọng" của một nhân vật có thêm các giọng chủ sách đã nghe đạt của hai máy đọc khác - năm giọng ZeroTTS (Bảo Trang, Kim Oanh,
