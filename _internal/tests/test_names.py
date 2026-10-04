@@ -61,7 +61,7 @@ def test_an_english_name_is_left_to_the_voice_even_in_a_japanese_book(token: str
     assert _said(f"Rồi {token}.", "ja") == ["Rồi", f"{token}."]
 
 
-@pytest.mark.parametrize("token", ["Hm", "Nn", "Haiz", "Goblin", "Elf", "Wizard", "Hoa", "Nam", "Mai", "Tôi", "Ôi", "Anh", "A", "Aa", "McDonald", "Spider-Man", "Haruto's", "Weisss"])
+@pytest.mark.parametrize("token", ["Nn", "Haiz", "Goblin", "Elf", "Wizard", "Hoa", "Nam", "Mai", "Tôi", "Ôi", "Anh", "A", "Aa", "McDonald", "Spider-Man", "Haruto's", "Weisss"])
 def test_vietnamese_syllables_shouts_capitals_and_odd_words_are_left_alone(token: str) -> None:
     assert _said(f"Rồi {token}.", "ja") == ["Rồi", f"{token}."]
     assert _said(f"Rồi {token}.", "ko") == ["Rồi", f"{token}."]

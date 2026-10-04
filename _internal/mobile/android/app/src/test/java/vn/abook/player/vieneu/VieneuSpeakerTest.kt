@@ -64,7 +64,7 @@ class VieneuSpeakerTest {
     fun aUnitWithNothingToReadKeepsItsWordsInPlace() {
         val tier = FakeTier()
         val text = "*** *** *** *** *** *** ***. Đoạn này có chữ thật để đọc, khá dài để thành một khúc riêng biệt, vì cả đoạn vượt quá giới hạn của giọng Nano, thêm vài chữ."
-        val spoken = VieneuSpeaker { pieces -> if (pieces.joinToString(" ").startsWith("***")) "" else "ʔa1 ʔa1." }.speak("nano", tier, "Adam", preset, text)
+        val spoken = VieneuSpeaker { pieces -> if (pieces.joinToString("").all { it == '.' || it.isWhitespace() }) "" else "ʔa1 ʔa1." }.speak("nano", tier, "Adam", preset, text)
         assertEquals(2, spoken.spans.size)
         assertEquals(WordTokens.count(text), spoken.words.size)
         assertTrue("the silent unit's words sit at its place", spoken.words.take(7).all { it.start == 0L && it.end == 0L })

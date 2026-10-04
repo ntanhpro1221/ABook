@@ -5,6 +5,7 @@ import vn.abook.player.readaloud.Names
 import vn.abook.player.readaloud.Shouts
 import vn.abook.player.readaloud.WordTokens
 import java.text.Normalizer
+import java.util.Locale
 
 /**
  * A paragraph cut into the "units" VieNeu reads one at a time - the phone's copy of `abook/readaloud/vieneu.py` `units` (shared fixture
@@ -19,12 +20,36 @@ object VieneuUnits {
     private const val PHRASE_END = ",;:"
     private const val CLOSERS = "\"'”’)]»"
     private const val OPENERS = "\"'“‘([«"
+    /** Khung của bảng trạng thái / lời thoại kiểu Nhật: chữ La Mã sát trong khung vẫn là số. */
+    private const val FRAMES_OPEN = "【〔「『{"
+    private const val FRAMES_CLOSE = "】〕」』}"
+    /** Khung hệ thống: sea-g2p bỏ khung mà không ngắt, người nghe cần một nhịp ở hai đầu. */
+    private const val SYSTEM_OPEN = "【〔[{"
+    private const val SYSTEM_CLOSE = "】〕]}"
+    private const val DASHES = "—–―"
+    /** Dấu câu CJK: sea-g2p bỏ qua, người nghe mất nhịp. */
+    private val FULLWIDTH = mapOf('，' to ',', '：' to ':', '；' to ';', '。' to '.', '！' to '!', '？' to '?', '、' to ',')
     private const val ANGLE_OPEN = "<《〈"
     private const val ANGLE_CLOSE = ">》〉"
     /** The opening and the closing angle bracket are at most this many shown words apart. */
-    private const val ANGLE_REACH = 12
+    private const val ANGLE_REACH = 24
     private const val PUNCT_MARKS = ".,;:!?…"
     private val TILDES = Regex("~+")
+    private const val W = """\p{L}\p{N}_"""
+    /** 1/3, 3/5: một phần ba (sea-g2p đọc "một trên ba"); 180/300 là thanh chỉ số: để "trên". */
+    private val FRACTION = Regex("""(?<![$W/.,-])([1-9])/([2-9])(?![$W/-]|[.,][0-9])""")
+    /** 3-4000, 1-1, 1-3-1. */
+    private val RANGE = Regex("""(?<![$W/.,-])([0-9]{1,4})((?:-[0-9]{1,4})+)(?![$W/-]|[.,][0-9])""")
+    private val TIMES = Regex("""(?<![$W])[x×]([0-9]+)(?![$W])""")
+    private val DOLLARS = Regex("""[$]\s?([0-9]+(?:[.,][0-9]+)*)""")
+    private val EMOTICON = Regex("""(?:[:;=]['\-^o]?[()dDpP3vV/\\|*]+|>[:;=]['\-^o]?[()]+|<3+|-_-|\^_*\^|[Tt]_[Tt]|>_<|orz|OTZ)""")
+    private val STUTTER_ONSETS = listOf("ngh", "ng", "nh", "kh", "ch", "gh", "gi", "th", "tr", "ph", "qu")
+    private val STUTTER_SOUND = mapOf("k" to "c", "w" to "v", "z" to "d", "j" to "gi", "f" to "ph")
+    private val STUTTER = Regex("""([^$W]*)(\p{L}{1,3})-+(\p{L}.*)""", RegexOption.DOT_MATCHES_ALL)
+    private val STUTTER_ALONE = Regex("""([^$W]*)(\p{L}{1,3})-+([^$W]*)""")
+    private val CENSORED = Regex("""([^$W]*)(\p{L})\*+([^$W]*)""")
+    /** Chỗ dính liền hai từ trong một chữ hiện (tách để đọc từng từ, mảnh dấu giữ nguyên). */
+    private val GLUED = Regex("""(?:\.{2,}|[…—–])+""")
     /** English thousands: 1,500 is "một nghìn năm trăm"; Vietnamese decimals ("1,5") do not match. */
     private val THOUSANDS = Regex("(?<![0-9.,])[0-9]{1,3}(?:,[0-9]{3})+(?![0-9]|[.,][0-9])")
     /** I..XXXIX (the empty string matches too and is rejected apart). */
@@ -120,8 +145,9 @@ object VieneuUnits {
             val body = out[index].trimStart { it in OPENERS }
             val start = out[index].length - body.length
             val next = if (index + 1 < out.size) out[index + 1].trimStart { it in OPENERS } else ""
-            if (body.isEmpty() || body[0] !in ANGLE_OPEN ||
-                (body[0] == '<' && !(body.getOrNull(1)?.isLetter() == true || (body == "<" && next.firstOrNull()?.isLetter() == true)))) {
+            val bracket = body.getOrNull(1)?.isLetter() == true || (body == "<" && next.firstOrNull()?.isLetter() == true) ||
+                (body.getOrNull(1)?.isDigit() == true && '>' in body.drop(2)) // "<50/50>": số trong ngoặc phải đóng ngay trong chữ này ("<3" là trái tim)
+            if (body.isEmpty() || body[0] !in ANGLE_OPEN || (body[0] == '<' && !bracket)) {
                 index++
                 continue
             }
@@ -141,6 +167,9 @@ object VieneuUnits {
                 last++
             }
             if (endToken < 0) {
+                if (body[0] == '<' && (body.getOrNull(1)?.isLetter() == true || next.firstOrNull()?.isUpperCase() == true)) { // "< Thật Tuyệt vời" không có ngoặc đóng: dấu mở chỉ là trang trí
+                    out[index] = out[index].substring(0, start) + out[index].substring(start + run)
+                }
                 index++
                 continue
             }
@@ -170,12 +199,216 @@ object VieneuUnits {
         }
     }
 
+    private fun range(match: MatchResult): String {
+        val parts = listOf(match.groupValues[1]) + match.groupValues[2].split("-").drop(1)
+        if (parts.size == 2) {
+            val (first, second) = parts
+            if (first.toInt() < second.toInt()) return "$first đến $second" // sea-g2p drops "đến" in "3-4000"
+            return if (first == second || (first.length == 1 && second.length == 1)) "$first $second" else match.value // "1-1" (class), "3-1" (score): two numbers in a row
+        }
+        if (parts.all { it.length <= 2 && !it.startsWith("0") }) return parts.joinToString(" ") // "1-3-1": a row of numbers, not a range
+        return match.value // a date "01-10-2026", a phone number "090-123-4567"
+    }
+
+    /** Numbers sea-g2p reads differently from the listener's ear: small fractions "1/3" are "một phần ba", "3-4000" has its "đến", "1-1" / "1-3-1" are numbers in a row, "x2" is "nhân hai", "$5" is "năm đô la" - `_numbers`. */
+    private fun numbers(out: MutableList<String>) {
+        for ((index, original) in out.withIndex()) {
+            if (original.none { it.isDigit() }) continue
+            var token = FRACTION.replace(original) { m -> if (m.groupValues[1].toInt() < m.groupValues[2].toInt()) "${m.groupValues[1]} phần ${m.groupValues[2]}" else m.value }
+            token = RANGE.replace(token) { m -> range(m) }
+            token = TIMES.replace(token) { m -> "nhân ${m.groupValues[1]}" }
+            out[index] = DOLLARS.replace(token) { m -> "${m.groupValues[1]} đô la" }
+        }
+    }
+
+    /** Text smileys (":3", ":))", ">:)", "<3", "-_-", "orz") cannot be read: they go, the punctuation after them stays - `_emoticons`. */
+    private fun emoticons(out: MutableList<String>) {
+        for ((index, token) in out.withIndex()) {
+            val body = token.trimEnd { it in "!?.,\"”’…" }
+            if (body.isNotEmpty() && EMOTICON.matches(body.trimStart { it in "\"“‘" })) out[index] = token.substring(body.length)
+        }
+    }
+
+    /** The sound of a stuttered [frag] at the start of [rest] ("C" before "chuyện" is "chờ", "E" before "em" is "e") - `stutter_sound`. */
+    private fun stutterSound(frag: String, rest: String): String {
+        val lowered = frag.lowercase(Locale.ROOT)
+        val word = Normalizer.normalize(rest, Normalizer.Form.NFC).lowercase(Locale.ROOT)
+        if (Normalizer.normalize(lowered, Normalizer.Form.NFD)[0] in "aeiouy") return lowered
+        val onset = STUTTER_ONSETS.firstOrNull { it.startsWith(lowered) && word.startsWith(it) } ?: lowered
+        return (STUTTER_SOUND[onset] ?: onset) + "ờ"
+    }
+
+    /** "*" is decoration ("*từ*", "(*)"): it goes; a letter before a censoring star ("đ*") is read like a stutter ("đờ…") - `_stars`. */
+    private fun stars(out: MutableList<String>) {
+        for ((index, token) in out.withIndex()) {
+            if ('*' !in token) continue
+            val censored = CENSORED.matchEntire(token)
+            out[index] = if (censored != null) censored.groupValues[1] + stutterSound(censored.groupValues[2], censored.groupValues[2]) + "…" + censored.groupValues[3] else token.replace("*", "")
+        }
+    }
+
+    /** Stuttering "T-tôi", "C-Chuyện", "E-em", "[Kh- Không": the stutter is read as a sound ("tờ… tôi", "chờ… chuyện", "e… em"), the rest of the word as usual - `_stutters`. */
+    private fun stutters(toks: List<String>, out: MutableList<String>, origin: String?) {
+        for ((index, token) in toks.withIndex()) {
+            var match = STUTTER.matchEntire(token)
+            val alone = match == null
+            var tail = ""
+            val rest: String
+            if (match != null) {
+                rest = match.groupValues[3]
+            } else {
+                match = STUTTER_ALONE.matchEntire(token)
+                if (match == null || index + 1 >= toks.size) continue
+                rest = toks[index + 1].trimStart { it in OPENERS }
+                tail = match.groupValues[3]
+            }
+            val before = match.groupValues[1]
+            val frag = match.groupValues[2]
+            if (!Normalizer.normalize(rest, Normalizer.Form.NFC).lowercase(Locale.ROOT).startsWith(frag.lowercase(Locale.ROOT))) continue
+            if (frag.length > 1 && Normalizer.normalize(frag.lowercase(Locale.ROOT), Normalizer.Form.NFD).any { it in "aeiouy" }) continue
+            val sound = stutterSound(frag, rest)
+            out[index] = if (alone) {
+                val next = tail.trimStart { it in CLOSERS }.firstOrNull()
+                before + sound + (if (next != null && next in PUNCT_MARKS) "" else "…") + tail
+            } else {
+                before + sound + "… " + spokenTokens(listOf(rest), origin)[0]
+            }
+        }
+    }
+
+    /** CJK punctuation ("đi，nhà ta", "734：Chúng ta") becomes the ordinary mark; glued to the next word it gets a space - `_fullwidth`. */
+    private fun fullwidth(out: MutableList<String>) {
+        for ((index, token) in out.withIndex()) {
+            if (token.none { it in FULLWIDTH }) continue
+            val said = StringBuilder()
+            for ((at, char) in token.withIndex()) {
+                said.append(FULLWIDTH[char] ?: char)
+                if (char in FULLWIDTH && token.getOrNull(at + 1)?.isLetterOrDigit() == true) said.append(' ')
+            }
+            out[index] = said.toString()
+        }
+    }
+
+    /** A dash glued to words ("Babi—người", "nên— Cảm ơn") is a pause sea-g2p loses (it only pauses at a spaced dash): a comma - `_dashes`. */
+    private fun dashes(out: MutableList<String>) {
+        for ((index, token) in out.withIndex()) {
+            if (token.none { it in DASHES }) continue
+            val said = StringBuilder()
+            var at = 0
+            while (at < token.length) {
+                var end = at
+                while (end < token.length && token[end] in DASHES) end++
+                if (end == at) {
+                    said.append(token[at])
+                    at++
+                    continue
+                }
+                val after = token.getOrNull(end)
+                val glued = at > 0 && token[at - 1].isLetterOrDigit()
+                if (glued && after != null && after.isLetterOrDigit()) said.append(", ")
+                else if (glued && after == null && index + 1 < out.size) said.append(",")
+                else said.append(token, at, end)
+                at = end
+            }
+            out[index] = said.toString()
+        }
+    }
+
+    /** 【Name】, [Notice], 〔..〕 glued to words get a comma at both ends (a pause, like parentheses); a frame holding only a number ("[1]") is a footnote mark and stays - `_frames`. */
+    private fun frames(out: MutableList<String>) {
+        val quotes = "\"'“‘«("
+        for (index in out.indices) {
+            var token = out[index]
+            if (token.none { it in SYSTEM_OPEN || it in SYSTEM_CLOSE }) continue
+            val bare = token.trim { it in SYSTEM_OPEN || it in SYSTEM_CLOSE || it in quotes || it in CLOSERS || it in PUNCT_MARKS }
+            if (bare.isNotEmpty() && bare.all { it.isDigit() }) continue
+            val said = StringBuilder()
+            for ((at, char) in token.withIndex()) {
+                if (char in SYSTEM_OPEN && at > 0 && token[at - 1].isLetterOrDigit()) said.append(',')
+                said.append(char)
+                if (char in SYSTEM_CLOSE && token.getOrNull(at + 1)?.isLetterOrDigit() == true) said.append(',')
+            }
+            token = said.toString()
+            if (token.trimStart { it in quotes }.firstOrNull()?.let { it in SYSTEM_OPEN } == true && index > 0) { // an opening frame at the start of the word: the comma goes on the word before
+                val previous = out[index - 1]
+                val core = previous.trimEnd { it in CLOSERS && it != ']' }
+                if (core.lastOrNull()?.isLetterOrDigit() == true) out[index - 1] = core + "," + previous.substring(core.length)
+            }
+            val core = token.trimEnd { it in "\"'”’»)" }
+            if (core.lastOrNull()?.let { it in SYSTEM_CLOSE } == true && index + 1 < out.size &&
+                out[index + 1].trimStart { it in quotes.replace("(", "") || it in "【〔[{" }.firstOrNull()?.isLetterOrDigit() == true) token = core + "," + token.substring(core.length)
+            out[index] = token
+        }
+    }
+
+    /** Roman numerals standing right become Vietnamese numbers, in place in [out] - see [spokenTokens]. */
+    private fun romanNumbers(toks: List<String>, out: MutableList<String>) {
+        for ((index, token) in toks.withIndex()) {
+            val core = token.trimStart { it in OPENERS || it in FRAMES_OPEN }.trimEnd { it in CLOSERS || it in FRAMES_CLOSE || it in ".,;:!?…" }
+            val value = romanValue(core) ?: continue
+            if (index == 0) {
+                if (toks.size < 2 || token.trimStart { it in OPENERS }.substring(core.length) !in listOf(".", ")")) continue
+            } else {
+                val before = toks[index - 1].trimStart { it in OPENERS }.trimEnd { it in CLOSERS }
+                if (out[index - 1] == toks[index - 1] &&
+                    (!(before.isNotEmpty() && before.all { it.isLetter() } && before.any { it.isLowerCase() }) || (core.length == 1 && !numberedBy(toks, index)))) continue
+            }
+            out[index] = token.replaceFirst(core, vietnameseNumber(value))
+        }
+    }
+
+    private fun splitGlued(token: String): List<String> {
+        val parts = ArrayList<String>()
+        var last = 0
+        for (m in GLUED.findAll(token)) {
+            parts.add(token.substring(last, m.range.first))
+            parts.add(m.value)
+            last = m.range.last + 1
+        }
+        parts.add(token.substring(last))
+        return parts
+    }
+
+    /**
+     * The per-word steps (Roman numerals, level, abbreviations, names, loanwords). A word glued to the next through "…" or "—" ("rồi…Senpai", "Babi—người", "DP?”…Tốn") is split
+     * apart for a moment so each word is judged alone, then put back; a word an earlier step changed stays as it is - `_read_words`.
+     */
+    private fun readWords(toks: List<String>, out: MutableList<String>, origin: String?) {
+        val pieces = ArrayList<String>()
+        val said = ArrayList<String>()
+        val owner = ArrayList<Int>()
+        for ((index, token) in toks.withIndex()) {
+            val unchanged = out[index] == token
+            for (part in if (unchanged) splitGlued(token) else listOf(token)) {
+                pieces.add(part)
+                said.add(if (unchanged) part else out[index])
+                owner.add(index)
+                if (!unchanged) break
+            }
+        }
+        romanNumbers(pieces, said)
+        Abbreviations.readLevels(pieces, said)
+        Abbreviations.spellAbbreviations(pieces, said)
+        Names.readNames(pieces, said, origin)
+        Names.readHonorifics(pieces, said, origin)
+        Names.readLoanwords(pieces, said)
+        val rebuilt = Array(toks.size) { "" }
+        for (k in pieces.indices) rebuilt[owner[k]] += said[k]
+        for (index in toks.indices) out[index] = rebuilt[index]
+    }
+
     /** Marks sea-g2p reads wrongly as words ("~" is "khoảng", "500,000" is "năm trăm"), fixed in place without changing the word count - `reading_marks`. */
     fun readingMarks(out: MutableList<String>) {
+        fullwidth(out)
+        emoticons(out)
         tildes(out)
         for (index in out.indices) out[index] = THOUSANDS.replace(out[index]) { it.value.replace(",", "") }
+        numbers(out)
         angle(out)
         slashes(out)
+        dashes(out)
+        frames(out)
+        stars(out)
         for (index in out.indices) out[index] = out[index].filterNot { it in ANGLE_OPEN.drop(1) || it in ANGLE_CLOSE.drop(1) } // leftover 《》〈〉 without a pair are only a frame
     }
 
@@ -190,22 +423,9 @@ object VieneuUnits {
      */
     fun spokenTokens(toks: List<String>, origin: String? = null): List<String> {
         val out = toks.toMutableList()
-        for ((index, token) in toks.withIndex()) {
-            val core = token.trimStart { it in OPENERS }.trimEnd { it in CLOSERS || it in ".,;:!?…" }
-            val value = romanValue(core) ?: continue
-            if (index == 0) {
-                if (toks.size < 2 || token.trimStart { it in OPENERS }.substring(core.length) !in listOf(".", ")")) continue
-            } else {
-                val before = toks[index - 1].trimStart { it in OPENERS }.trimEnd { it in CLOSERS }
-                if (out[index - 1] == toks[index - 1] &&
-                    (!(before.isNotEmpty() && before.all { it.isLetter() } && before.any { it.isLowerCase() }) || (core.length == 1 && !numberedBy(toks, index)))) continue
-            }
-            out[index] = token.replaceFirst(core, vietnameseNumber(value))
-        }
+        stutters(toks, out, origin)
         Shouts.readShouts(toks, out)
-        Abbreviations.spellAbbreviations(toks, out)
-        Names.readNames(toks, out, origin)
-        Names.readHonorifics(toks, out, origin)
+        readWords(toks, out, origin)
         readingMarks(out)
         return out
     }

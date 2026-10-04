@@ -15,6 +15,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Dạng Việt hoá từ / tên tiếng Anh (dành cho giọng không nói được tiếng Anh; các giọng hiện có vẫn đọc nguyên chữ Anh) theo hơn 150 cách đọc của chủ sách: "William" thành
   "Guy-li-am", "water" thành "Guốt-tờ", "nation" thành "Nây-sừn", "Scotland" thành "Xờ-cót-lừn", "taxi" thành "tắc-xi".
 
+- "Nghe ngay" (máy tính và điện thoại, mọi giọng) đọc đúng thêm nhiều chỗ hay gặp trong truyện dịch: tiếng cười ("haha" thành "ha ha", "fufu" thành "phu phu"), nói lắp ("T-tôi" thành
+  "tờ… tôi", "E-em" thành "e… em"), từ quen đọc như người Việt ("sofa" thành "xô-pha", "anime" thành "a-ni-me", "ninja" thành "nin-gia", "3 triệu won" thành "guôn"), "Lv 5" thành "level 5"
+  (không đi với số thì đọc "lờ vê"), "1/3" thành "một phần ba", "3-4000" thành "ba đến bốn nghìn", "x2" thành "nhân hai", "$5" thành "năm đô la"; dấu "*" và mặt cười ":3" không còn bị đọc
+  ra, gạch ngang dính chữ và khung 【Kỹ năng】 có nhịp ngắt, "Oppa" thành "óp-pa", "ssi" thành "xi". Chữ hiện trên màn hình không đổi.
+
 ## [0.4.25] - 2026-10-04
 
 ### Giọng đọc

@@ -43,10 +43,26 @@ _DIGITS = ("", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "
 # Dấu bộ chuẩn hoá của sea-g2p đọc sai: "~" luôn là "khoảng", "500,000" là "năm trăm", "<Tên>" là "nhỏ hơn ... lớn hơn", "a / b" là "a trên b".
 TILDES = re.compile(r"~+")
 THOUSANDS = re.compile(r"(?<![0-9.,])[0-9]{1,3}(?:,[0-9]{3})+(?![0-9]|[.,][0-9])")  # kiểu Anh: 1,500 là một nghìn rưỡi; thập phân Việt "1,5" thì không khớp
+FRAMES_OPEN = "【〔「『{"  # khung của bảng trạng thái / lời thoại kiểu Nhật: chữ La Mã sát trong khung vẫn là số
+FRAMES_CLOSE = "】〕」』}"
+SYSTEM_OPEN = "【〔[{"  # khung của bảng trạng thái / thông báo hệ thống: sea-g2p bỏ khung mà không ngắt, người nghe cần một nhịp ở hai đầu
+SYSTEM_CLOSE = "】〕]}"
+DASHES = "—–―"
+FULLWIDTH = {"，": ",", "：": ":", "；": ";", "。": ".", "！": "!", "？": "?", "、": ","}  # dấu câu CJK: sea-g2p bỏ qua, người nghe mất nhịp
 ANGLE_OPEN = "<《〈"
 ANGLE_CLOSE = ">》〉"
-ANGLE_REACH = 12  # ngoặc nhọn mở và đóng cách nhau tối đa bấy nhiêu chữ hiện
+ANGLE_REACH = 24  # ngoặc nhọn mở và đóng cách nhau tối đa bấy nhiêu chữ hiện (lời nghĩ trong <...> có thể dài cả câu)
 PUNCT_MARKS = ".,;:!?…"
+FRACTION = re.compile(r"(?<![\w/.,-])([1-9])/([2-9])(?![\w/-]|[.,][0-9])")  # 1/3, 3/5: một phần ba (sea-g2p đọc "một trên ba"); 180/300 là thanh chỉ số: để "trên"
+RANGE = re.compile(r"(?<![\w/.,-])([0-9]{1,4})((?:-[0-9]{1,4})+)(?![\w/-]|[.,][0-9])")  # 3-4000, 1-1, 1-3-1
+TIMES = re.compile(r"(?<![\w])[x×]([0-9]+)(?![\w])")  # x2: nhân hai
+DOLLARS = re.compile(r"\$\s?([0-9]+(?:[.,][0-9]+)*)")  # $5: năm đô la (sea-g2p đọc "u s d" rời)
+EMOTICON = re.compile(r"(?:[:;=]['\-^o]?[()dDpP3vV/\|*]+|>[:;=]['\-^o]?[()]+|<3+|-_-|\^_*\^|[Tt]_[Tt]|>_<|orz|OTZ)")
+GLUED = re.compile(r"((?:\.{2,}|[…—–])+)")  # chỗ dính liền hai từ trong một chữ hiện (tách để đọc từng từ, mảnh dấu giữ nguyên)
+STUTTER_ONSETS = ("ngh", "ng", "nh", "kh", "ch", "gh", "gi", "th", "tr", "ph", "qu")  # phụ âm đầu ghép của tiếng Việt: nói lắp "C-Chuyện" là "chờ… chuyện"
+STUTTER_SOUND = {"k": "c", "w": "v", "z": "d", "j": "gi", "f": "ph"}
+STUTTER = re.compile(r"([^\w]*)([^\W\d_]{1,3})-+([^\W\d_].*)$", re.DOTALL)
+STUTTER_ALONE = re.compile(r"([^\w]*)([^\W\d_]{1,3})-+([^\w]*)$")
 # Số La Mã MỘT chữ (I, V, X) hay là chữ cái ("ông X", "tia X", "điểm V"): chỉ đọc thành số sau danh từ đánh số (hay tên riêng viết hoa kép: "Louis X").
 NUMBERED_NOUNS = frozenset(unicodedata.normalize("NFC", word) for word in (
     "chương", "phần", "tập", "quyển", "hồi", "mục", "khoá", "khóa", "lớp", "cấp", "hạng", "bậc", "đệ", "đời", "kỳ", "kì", "số", "bài", "điều",
@@ -158,7 +174,8 @@ def _angle(out: list[str]) -> None:
         body = out[index].lstrip(OPENERS)
         start = len(out[index]) - len(body)
         nxt = out[index + 1].lstrip(OPENERS) if index + 1 < len(out) else ""
-        if not body or body[0] not in ANGLE_OPEN or (body[0] == "<" and not (body[1:2].isalpha() or (body == "<" and nxt[:1].isalpha()))):
+        bracket = body[1:2].isalpha() or (body == "<" and nxt[:1].isalpha()) or (body[1:2].isdigit() and ">" in body[2:])  # "<50/50>": số trong ngoặc phải đóng ngay trong chữ này ("<3" là trái tim)
+        if not body or body[0] not in ANGLE_OPEN or (body[0] == "<" and not bracket):
             index += 1
             continue
         run = len(body) - len(body.lstrip(ANGLE_OPEN))
@@ -172,6 +189,8 @@ def _angle(out: list[str]) -> None:
             if end:
                 break
         if end is None:
+            if body[0] == "<" and (body[1:2].isalpha() or nxt[:1].isupper()):  # "< Thật Tuyệt vời" không có ngoặc đóng: dấu mở chỉ là trang trí
+                out[index] = out[index][:start] + out[index][start + run:]
             index += 1
             continue
         last, at = end
@@ -197,13 +216,161 @@ def _slashes(out: list[str]) -> None:
             out[index] = ""
 
 
+def _range(match: re.Match) -> str:
+    parts = [match.group(1)] + match.group(2).split("-")[1:]
+    if len(parts) == 2:
+        first, second = parts
+        if int(first) < int(second):
+            return f"{first} đến {second}"  # sea-g2p bỏ mất "đến" ở "3-4000"
+        return f"{first} {second}" if first == second or (len(first) == 1 and len(second) == 1) else match.group()  # "1-1" (lớp), "3-1" (tỉ số): hai số liền
+    if all(len(part) <= 2 and not part.startswith("0") for part in parts):
+        return " ".join(parts)  # "1-3-1": dãy số, không phải khoảng
+    return match.group()  # ngày "01-10-2026", điện thoại "090-123-4567"
+
+
+def _numbers(out: list[str]) -> None:
+    """Số mà sea-g2p đọc chưa đúng ý người nghe: phân số bé "1/3" là "một phần ba" (không phải "một trên ba"; "180/300" là thanh chỉ số, giữ "trên"), "3-4000" là "ba đến bốn nghìn",
+    "1-1" / "1-3-1" là các số liền, "x2" là "nhân hai", "$5" là "năm đô la"."""
+    for index, token in enumerate(out):
+        if not any(char.isdigit() for char in token):
+            continue
+        token = FRACTION.sub(lambda m: f"{m.group(1)} phần {m.group(2)}" if int(m.group(1)) < int(m.group(2)) else m.group(), token)
+        token = RANGE.sub(_range, token)
+        token = TIMES.sub(lambda m: f"nhân {m.group(1)}", token)
+        out[index] = DOLLARS.sub(lambda m: f"{m.group(1)} đô la", token)
+
+
+def _emoticons(out: list[str]) -> None:
+    """Mặt cười chữ (":3", ":))", ">:)", "<3", "-_-", "orz") không đọc được: bỏ, giữ dấu câu theo sau ("nào >:)!" -> "nào !")."""
+    for index, token in enumerate(out):
+        body = token.rstrip("!?.,\"”’…")
+        if body and EMOTICON.fullmatch(body.lstrip("\"“‘")):
+            out[index] = token[len(body):]
+
+
+def stutter_sound(frag: str, rest: str) -> str:
+    """Tiếng nói lắp của `frag` ở đầu `rest` ("C" trước "chuyện" -> "chờ", "T" trước "tôi" -> "tờ"): phụ âm đầu của chữ sau + "ờ"; nguyên âm đứng riêng ("E" trước "em") thì chính nó. Phụ âm đầu
+    ghép (kh, ch, ng...) lấy từ chữ sau khi chữ lắp là phần đầu của nó."""
+    lowered, word = frag.lower(), unicodedata.normalize("NFC", rest).lower()
+    if unicodedata.normalize("NFD", lowered)[0] in "aeiouy":
+        return lowered
+    onset = next((o for o in STUTTER_ONSETS if o.startswith(lowered) and word.startswith(o)), lowered)
+    return STUTTER_SOUND.get(onset, onset) + "ờ"
+
+
+def _stars(out: list[str]) -> None:
+    """"*" là trang trí / nhấn ("*từ*", "(*)", "*Kà-ran*"): bỏ. Chữ cái đứng trước dấu kiểm duyệt ("đ*") đọc như nói lắp ("đờ…")."""
+    for index, token in enumerate(out):
+        if "*" not in token:
+            continue
+        censored = re.fullmatch(r"([^\w]*)([^\W\d_])\*+([^\w]*)", token)
+        out[index] = censored.group(1) + stutter_sound(censored.group(2), censored.group(2)) + "…" + censored.group(3) if censored else token.replace("*", "")
+
+
+def _stutters(toks: list[str], out: list[str], origin: str | None, speaks_english: bool) -> None:
+    """Nói lắp "T-tôi", "C-Chuyện", "Ng-ngài", "E-em", "[Kh- Không": phần lắp đọc bằng âm ("tờ… tôi", "chờ… chuyện", "e… em") thay vì tên chữ cái; phần còn lại của chữ đọc như bình thường
+    (nên "T-Tsukinoki-senpai" vẫn qua luật tên). Chỉ khi phần lắp là phần đầu của chữ sau và không phải một âm tiết đầy đủ ("Hà-Hà")."""
+    for index, token in enumerate(toks):
+        match = STUTTER.fullmatch(token)
+        alone = match is None
+        tail = ""
+        if match:
+            rest = match.group(3)
+        else:
+            match = STUTTER_ALONE.fullmatch(token)  # "Kh-" rồi chữ sau ở token kế
+            if match is None or index + 1 >= len(toks):
+                continue
+            rest, tail = toks[index + 1].lstrip(OPENERS), match.group(3)
+        before, frag = match.group(1), match.group(2)
+        if not unicodedata.normalize("NFC", rest).lower().startswith(frag.lower()):
+            continue
+        if len(frag) > 1 and any(char in "aeiouy" for char in unicodedata.normalize("NFD", frag.lower())):  # đã là một âm tiết: "Hà-Hà"
+            continue
+        sound = stutter_sound(frag, rest)
+        if alone:
+            out[index] = before + sound + ("" if tail.lstrip(CLOSERS)[:1] in tuple(PUNCT_MARKS) else "…") + tail
+        else:
+            out[index] = before + sound + "… " + spoken_tokens([rest], origin, speaks_english)[0]
+
+
+def _fullwidth(out: list[str]) -> None:
+    """Dấu câu CJK ("đi，nhà ta", "734：Chúng ta") thành dấu thường; dính liền chữ sau thì thêm một khoảng trắng."""
+    for index, token in enumerate(out):
+        if not any(char in FULLWIDTH for char in token):
+            continue
+        said = []
+        for at, char in enumerate(token):
+            said.append(FULLWIDTH.get(char, char))
+            if char in FULLWIDTH and token[at + 1:at + 2].isalnum():
+                said.append(" ")
+        out[index] = "".join(said)
+
+
+def _dashes(out: list[str]) -> None:
+    """Gạch ngang dính liền chữ ("Babi—người", "nên— Cảm ơn") là một chỗ ngắt; sea-g2p chỉ ngắt khi gạch cách chữ hai bên nên ở đây mất nhịp: đổi thành dấu phẩy."""
+    for index, token in enumerate(out):
+        if not any(char in token for char in DASHES):
+            continue
+        said: list[str] = []
+        at = 0
+        while at < len(token):
+            end = at
+            while end < len(token) and token[end] in DASHES:
+                end += 1
+            if end == at:
+                said.append(token[at])
+                at += 1
+                continue
+            after = token[end:end + 1]
+            if at and token[at - 1].isalnum() and after.isalnum():
+                said.append(", ")
+            elif at and token[at - 1].isalnum() and not after and index + 1 < len(out):
+                said.append(",")
+            else:
+                said.append(token[at:end])
+            at = end
+        out[index] = "".join(said)
+
+
+def _frames(out: list[str]) -> None:
+    """【Tên kỹ năng】, [Thông báo], 〔..〕 dính liền chữ ("là【Song Kiếm Thuật】rất", hay đứng sát chữ ở token kề) thêm dấu phẩy ở chỗ khung mở và đóng (nhịp ngắt hai đầu, như dấu ngoặc đơn);
+    khung chỉ chứa số ("[1]") là chỉ số chú thích: để nguyên."""
+    quotes = "\"'“‘«("
+    for index in range(len(out)):
+        token = out[index]
+        if not any(char in token for char in SYSTEM_OPEN + SYSTEM_CLOSE) or token.strip(SYSTEM_OPEN + SYSTEM_CLOSE + quotes + CLOSERS + PUNCT_MARKS).isdigit():
+            continue
+        said: list[str] = []
+        for at, char in enumerate(token):
+            if char in SYSTEM_OPEN and at and token[at - 1].isalnum():
+                said.append(",")
+            said.append(char)
+            if char in SYSTEM_CLOSE and at + 1 < len(token) and token[at + 1].isalnum():
+                said.append(",")
+        token = "".join(said)
+        if token.lstrip(quotes)[:1] in SYSTEM_OPEN and index:  # khung mở ở đầu chữ: dấu phẩy gắn vào chữ trước
+            core = out[index - 1].rstrip(CLOSERS.replace("]", ""))
+            if core[-1:].isalnum():
+                out[index - 1] = core + "," + out[index - 1][len(core):]
+        core = token.rstrip("\"'”’»)")
+        if core[-1:] in SYSTEM_CLOSE and index + 1 < len(out) and out[index + 1].lstrip(quotes.replace("(", "") + "【〔[{")[:1].isalnum():
+            token = core + "," + token[len(core):]
+        out[index] = token
+
+
 def reading_marks(out: list[str]) -> None:
     """Dấu câu / ký hiệu mà sea-g2p đọc sai thành lời (nó đọc "~" là "khoảng", "500,000" là "năm trăm"): sửa tại chỗ, số chữ không đổi."""
+    _fullwidth(out)
+    _emoticons(out)
     _tildes(out)
     for index, token in enumerate(out):
         out[index] = THOUSANDS.sub(lambda match: match.group().replace(",", ""), token)
+    _numbers(out)
     _angle(out)
     _slashes(out)
+    _dashes(out)
+    _frames(out)
+    _stars(out)
     for index, token in enumerate(out):  # 《》〈〉 còn sót (không có cặp) cũng chỉ là khung
         out[index] = token.translate({ord(c): None for c in ANGLE_OPEN[1:] + ANGLE_CLOSE[1:]})
 
@@ -218,8 +385,17 @@ def spoken_tokens(toks: list[str], origin: str | None = None, speaks_english: bo
     ("HP" -> "hát pê", `abbreviations`), hậu tố gọi nối gạch ("Ariel-sama" -> "Ariel-xa-ma", `names.honorific_reading`). Sau cùng `reading_marks`
     sửa "~", nghìn kiểu Anh, <ngoặc nhọn>, " / "."""
     out = list(toks)
+    _stutters(toks, out, origin, speaks_english)
+    shouts.read_shouts(toks, out)
+    _read_words(toks, out, origin, speaks_english)
+    reading_marks(out)
+    return out
+
+
+def _roman_numbers(toks: list[str], out: list[str]) -> None:
+    """Số La Mã đứng đúng chỗ thành số tiếng Việt, tại chỗ trong `out` - xem `spoken_tokens`."""
     for index, token in enumerate(toks):
-        core = token.lstrip(OPENERS).rstrip(CLOSERS + ".,;:!?…")
+        core = token.lstrip(OPENERS + FRAMES_OPEN).rstrip(CLOSERS + FRAMES_CLOSE + ".,;:!?…")
         value = roman_value(core)
         if value is None:
             continue
@@ -232,11 +408,30 @@ def spoken_tokens(toks: list[str], origin: str | None = None, speaks_english: bo
                 if not (before.isalpha() and any(c.islower() for c in before)) or (len(core) == 1 and not numbered_by(toks, index)):
                     continue
         out[index] = token.replace(core, vietnamese_number(value), 1)
-    shouts.read_shouts(toks, out)
-    abbreviations.spell_abbreviations(toks, out)
-    names.spoken_names(toks, origin, speaks_english, out)
-    reading_marks(out)
-    return out
+
+
+def _read_words(toks: list[str], out: list[str], origin: str | None, speaks_english: bool) -> None:
+    """Các bước đọc từng chữ (cấp độ, viết tắt, tên, từ mượn). Chữ dính liền hai từ qua "…" hay "—" ("rồi…Senpai", "Babi—người", "DP?”…Tốn") được tách tạm thành từng mảnh để mỗi từ được xét riêng
+    rồi ghép lại; chữ đã bị đổi ở bước trước giữ nguyên."""
+    pieces: list[str] = []
+    said: list[str] = []
+    owner: list[int] = []
+    for index, token in enumerate(toks):
+        parts = GLUED.split(token) if out[index] == token else [token]
+        for part in parts:
+            pieces.append(part)
+            said.append(part if out[index] == token else out[index])
+            owner.append(index)
+            if out[index] != token:
+                break
+    _roman_numbers(pieces, said)
+    abbreviations.read_levels(pieces, said, speaks_english)
+    abbreviations.spell_abbreviations(pieces, said)
+    names.spoken_names(pieces, origin, speaks_english, said)
+    rebuilt = [""] * len(toks)
+    for part, reading, index in zip(pieces, said, owner):
+        rebuilt[index] += reading
+    out[:] = rebuilt
 
 
 def _ends(token: str, marks: str) -> bool:

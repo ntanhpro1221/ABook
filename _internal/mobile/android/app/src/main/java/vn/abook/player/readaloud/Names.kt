@@ -67,6 +67,10 @@ object Names {
 
     private val readings = ConcurrentHashMap<String, String>()
 
+    /** "O-xu-ki-xan" -> "o-xu-ki-xan": một chữ HOA đứng riêng đầu âm tiết của tên nối gạch là âm tiết, không phải viết tắt (sea-g2p đánh vần nó) - `lone_syllable`. */
+    fun loneSyllable(reading: String?): String? =
+        if (reading != null && reading.length >= 2 && reading[1] == '-' && reading[0].isUpperCase()) reading[0].lowercaseChar() + reading.substring(1) else reading
+
     /** Cách đọc nối gạch của `core` (đã bỏ dấu câu quanh) khi nó là tên theo luật của `origin`, null khi để nguyên. */
     fun nameReading(core: String, origin: String?): String? {
         if (origin == null || origin !in ORIGINS) return null
@@ -74,7 +78,7 @@ object Names {
         val hit = readings[key]
         if (hit != null) return hit.ifEmpty { null }
         val head = head(core)
-        val found = if (head == null || knownWord(head)) null else Romanization.reading(core, origin)
+        val found = if (head == null || knownWord(head)) null else loneSyllable(Romanization.reading(core, origin))
         if (readings.size > 8192) readings.clear()
         readings[key] = found ?: ""
         return found
@@ -94,8 +98,17 @@ object Names {
     /** Hậu tố gọi Nhật nối gạch (JA_SUFFIXES còn "tan", "nee", "nii": dễ lẫn với chữ thường nên chỉ đi theo tên đã nhận) - `HONORIFICS` của names.py. */
     private val HONORIFICS = setOf("san", "kun", "chan", "sama", "senpai", "sensei", "dono")
     /** Tiếng gọi Hàn cố định (bộ thử TN) - `KOREAN_TERMS`. */
-    private val KOREAN_TERMS = mapOf("oppa" to "ốp-pa", "unnie" to "un-ni", "noona" to "nu-na", "hyung" to "hi-ung", "ssi" to "si", "nim" to "nim")
+    private val KOREAN_TERMS = mapOf("oppa" to "óp-pa", "unnie" to "un-ni", "noona" to "nu-na", "hyung" to "hi-ung", "ssi" to "xi", "nim" to "nim")
     private val KOREAN_ALONE = setOf("oppa", "unnie", "noona", "hyung")
+    /** Từ đã vào từ điển tiếng Việt: đọc như từ Việt với mọi cuốn - `DICTIONARY_WORDS`. */
+    private val DICTIONARY_WORDS = mapOf("sofa" to "xô-pha", "logic" to "lô-gích", "video" to "vi-đê-ô", "violin" to "vi-ô-lông", "piano" to "pi-a-nô", "sandal" to "xăng-đan",
+        "vali" to "va-li", "robot" to "rô-bốt", "gorilla" to "gô-ri-la")
+    /** Từ Nhật rất quen: đọc theo luật phiên âm với mọi cuốn, dù có trong danh sách từ Anh - `JAPANESE_COMMON`. */
+    private val JAPANESE_COMMON = setOf("anime", "manga", "ninja", "samurai", "bento", "kimono", "sake", "miso", "dango", "takoyaki", "okonomiyaki", "senpai", "sensei",
+        "onii", "onee", "otaku", "eroge", "tsukkomi", "ara", "umu")
+    /** Tiền / cân của truyện Hàn - Nhật, chỉ khi liền sau một số - `CURRENCY`. */
+    private val CURRENCY = mapOf("won" to "guôn", "yen" to "yên", "kwan" to "quan")
+    private val NUMBER_WORDS = setOf("nghìn", "ngàn", "triệu", "tỷ", "tỉ", "trăm", "vạn", "chục", "mươi", "mười", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín")
 
     /**
      * Dấu câu sau chữ, đổi cho vừa với cách đọc: sea-g2p đọc nháy đơn đóng sau MỘT chữ cái ("a’", "nha… a'") là "phẩy", nên khi cách đọc kết thúc bằng một chữ cái đứng riêng
@@ -128,13 +141,37 @@ object Names {
         if (popped.isEmpty() || (segments.isEmpty() && lower(popped[0]) !in KOREAN_ALONE)) return null
         val terms = popped.joinToString("-") { term(it) }
         val head = segments.joinToString("-")
-        if (head.isEmpty()) return terms
+        if (head.isEmpty()) return loneSyllable(terms)
         if (origin != "ko" && popped.all { lower(it) in HONORIFICS }) {
             val whole = if (head[0].isUpperCase()) nameReading(core, "ja")
             else if (head.all { it.code < 128 } && head == lower(head) && !knownWord(head)) Romanization.reading(core, "ja") else null
-            if (whole != null) return whole
+            if (whole != null) return loneSyllable(whole)
         }
         return "$head-$terms"
+    }
+
+    /** Cách đọc của từ đã vào từ điển tiếng Việt hay từ Nhật rất quen, null khi không phải - `loanword_reading`. */
+    fun loanwordReading(core: String): String? {
+        val lowered = lower(core)
+        DICTIONARY_WORDS[lowered]?.let { return it }
+        return if (lowered in JAPANESE_COMMON) Romanization.reading(lowered, "ja") else null
+    }
+
+    private fun afterNumber(toks: List<String>, index: Int): Boolean {
+        val before = if (index > 0) toks[index - 1].trim { it in ".,;:!?…\"'“”‘’()[]" } else ""
+        return before.isNotEmpty() && (before.last().isDigit() || lower(before) in NUMBER_WORDS)
+    }
+
+    /** Thay tại chỗ, trong `out`, token (chưa bị đổi) là từ mượn quen bằng cách đọc của nó, và "won" / "yen" / "kwan" liền sau một số bằng tên đơn vị đọc Việt - `read_loanwords`. */
+    fun readLoanwords(toks: List<String>, out: MutableList<String>) {
+        for ((index, token) in toks.withIndex()) {
+            if (out[index] != token) continue
+            val (before, core, after) = splitToken(token)
+            if (core.isEmpty()) continue
+            var reading = loanwordReading(core)
+            if (reading == null && lower(core) in CURRENCY && core.all { it.isLetter() } && afterNumber(toks, index)) reading = CURRENCY[lower(core)]
+            if (reading != null) out[index] = before + reading + after
+        }
     }
 
     /** Thay tại chỗ, trong `out`, token (chưa bị đổi) mang hậu tố gọi bằng cách đọc của nó ([honorificReading]), giữ dấu câu quanh; số chữ không đổi. */

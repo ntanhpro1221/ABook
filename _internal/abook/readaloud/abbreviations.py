@@ -23,6 +23,8 @@ SPELLED_ENGLISH = frozenset("abc ceo cia dna exp fbi hiv ibm nba usa".split())  
 SHOUT_WORDS = frozenset("no oh ah eh uh um ha ho yo hi he we me my up so to of or on ya ye go do if in is an by at".split())  # từ Anh hai chữ gào lên
 LAUGH = re.compile(r"(?:ha|he|hi|ho)+")  # "HAHA": tiếng cười, không phải viết tắt
 ROMAN_LETTERS = frozenset("ivx")  # "IIII" nằm trong danh sách từ Anh nhưng không phải từ; "IIIII" đọc được như romaji
+PAREN_ABBREVIATION = re.compile(r"(?<=.)\(([A-Z]{2,5})\)")  # "đó.”(GM)": viết tắt trong ngoặc dính vào chữ trước
+LEVEL_NAMES = {"lv": "lờ vê", "lvl": "lờ vê lờ"}  # chủ sách 04-10: Lv không chắc là cấp độ thì đọc tên chữ cái, l = lờ, v = vê
 MIN_LETTERS, MAX_LETTERS = 2, 5
 ROMAJI_FROM = 4  # từ bấy nhiêu chữ, đọc được bằng luật romaji ("BAKA", "SUGOI") thì là chữ Nhật viết hoa, không phải viết tắt
 
@@ -62,6 +64,25 @@ def spelled(core: str) -> str | None:
     return " ".join(LETTERS[ch] for ch in lower)
 
 
+def read_levels(toks: list[str], out: list[str], speaks_english: bool = True) -> None:
+    """"Lv" / "Lvl" / "LV" liền trước một số ("Lv 5", "Lv.5", "Lv5", "Lvl.10") là cấp độ: để chữ "level" (giọng không nói được âm Anh thì Việt hoá như từ Anh khác). Không đi với số thì không
+    chắc nghĩa gì: đọc tên chữ cái ("lờ vê"). Thay tại chỗ, giữ dấu câu quanh; số chữ không đổi."""
+    for index, token in enumerate(toks):
+        if out[index] != token:
+            continue
+        before, core, after = split_token(token)
+        word = core.lower()
+        if word not in LEVEL_NAMES:
+            continue
+        glued = after.lstrip(".:")
+        following = toks[index + 1].lstrip("([“\"'") if index + 1 < len(toks) else ""
+        if glued[:1].isdigit() or (after in ("", ".", ":") and following[:1].isdigit()):
+            level = "level" if speaks_english else names.english_reading("level") or "level"
+            out[index] = before + level + (" " + glued if glued[:1].isdigit() else "")
+        else:
+            out[index] = before + LEVEL_NAMES[word] + names.closing(after, LEVEL_NAMES[word])
+
+
 def spell_abbreviations(toks: list[str], out: list[str]) -> None:
     """Thay tại chỗ, trong `out`, token (chưa bị đổi so với `toks`) là viết tắt TOÀN HOA bằng tên chữ cái, giữ dấu câu quanh; số chữ không đổi."""
     parts = [split_token(token) for token in toks]
@@ -70,6 +91,10 @@ def spell_abbreviations(toks: list[str], out: list[str]) -> None:
         if out[index] != token:
             continue
         before, core, after = parts[index]
+        if "(" in token:
+            out[index] = PAREN_ABBREVIATION.sub(lambda m: "(" + (spelled(m.group(1)) or m.group(1)) + ")", token)
+            if out[index] != token:
+                continue
         if not core or before[-1:].isdigit() or after[:1].isdigit():
             continue
         reading = spelled(core)
