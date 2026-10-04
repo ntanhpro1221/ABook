@@ -52,6 +52,13 @@ object VieneuUnits {
     private val ARROW_FORWARD = Regex("""(?<![<=-])(?:-+|=+)>|[→⇒➜➡➔⟶⟹]""")
     /** "<-", "<--", "←": no way to say it aloud (sea-g2p reads "nhỏ hơn"), so it goes; "<=" is a comparison and stays. */
     private val ARROW_BACK = Regex("""<(?:-+|={2,})(?!>)|[←⇐⟵⟸]""")
+    /** Stat labels: an arrow next to one is a change of value ("thành"). */
+    private val ARROW_STATS = "hp mp sp exp xp lv lvl level cấp hạng rank điểm giá str agi vit int dex luk atk def máu mana tiền vàng tuổi".split(" ").toSet()
+    /** Numbering / route words: the arrow is "đến". */
+    private val ARROW_COUNTED = "trang chương tập bước phần mục tầng ngày tháng năm hồi bài page step chapter từ tuyến đường bay".split(" ").toSet()
+    /** 8h, 8h30, 10g, 8:00. */
+    private val ARROW_TIME = Regex("[0-9]{1,2}(?:[hHgG][0-9]{0,2}|:[0-9]{2})")
+    private val ARROW_TIME_WORDS = "giờ sáng trưa chiều tối khuya".split(" ").toSet()
     /** Chỗ dính liền hai từ trong một chữ hiện (tách để đọc từng từ, mảnh dấu giữ nguyên). */
     private val GLUED = Regex("""(?:\.{2,}|[…—–])+""")
     /** English thousands: 1,500 is "một nghìn năm trăm"; Vietnamese decimals ("1,5") do not match. */
@@ -139,29 +146,66 @@ object VieneuUnits {
         }
     }
 
-    private fun arrow(original: String, atStart: Boolean): String {
+    /** The word with punctuation and brackets trimmed off both ends ("[Cường" -> "Cường", "1940." -> "1940"). */
+    private fun core(token: String) = token.trim { !it.isLetterOrDigit() }
+
+    /**
+     * A forward arrow that changes a value / state ("HP: 1780 --> 1940", "Lv 5 -> Lv 6", "Cân lực : 100 ⇒ 200") is "thành"; one that marks a direction / range / sequence ("Tokyo -> Osaka", "8h -> 10h",
+     * "Bước 1 -> Bước 2", "trang 3 -> 5") is "đến" (owner 04-10: depends on the context). Looks at both sides (the part in the same word, or the neighbouring word) and up to 3 words before the left side, inside the
+     * sentence: a stat label or a stat on either side -> thành; a clock time or a numbering / route word -> đến; a ":" among them (a status field being changed) -> thành; two one-word capitalised names -> đến;
+     * anything else (unclear) -> thành - `_arrow_says`.
+     */
+    private fun arrowSays(plain: List<String>, index: Int, token: String, match: MatchResult): String {
+        var left = core(token.substring(0, match.range.first))
+        val leftAt = if (left.isNotEmpty()) index else index - 1
+        if (left.isEmpty() && leftAt >= 0) left = core(plain[leftAt])
+        var right = core(token.substring(match.range.last + 1))
+        var rightAt = index
+        if (right.isEmpty() && index + 1 < plain.size) { right = core(plain[index + 1]); rightAt = index + 1 }
+        val labels = ArrayList<String>()
+        var colon = false
+        var back = leftAt - 1
+        while (back >= 0 && back > leftAt - 4) {
+            val word = plain[back].trimEnd { it in CLOSERS }
+            if (word.isNotEmpty() && word.last() in SENTENCE_END) break
+            colon = colon || word.endsWith(":")
+            labels.add(core(word).lowercase())
+            back--
+        }
+        fun stat(word: String) = word.lowercase().let { it in ARROW_STATS || it.trimEnd { c -> c in '0'..'9' } in ARROW_STATS } // "Lv5" -> "lv"
+        if (labels.any { stat(it) } || stat(left) || stat(right)) return "thành"
+        fun time(word: String) = ARROW_TIME.matches(word) || word.lowercase() in ARROW_TIME_WORDS
+        if (labels.any { it in ARROW_COUNTED } || time(left) || time(right)) return "đến"
+        if (colon) return "thành"
+        fun named(word: String) = word.length >= 3 && word.all { it.isLetter() } && word[0].isUpperCase() && word.drop(1).all { it.isLowerCase() }
+        val beside = listOf(leftAt - 1, rightAt + 1).map { if (it in plain.indices) plain[it] else "" } // a name of several words ("Tân Thủ -> Pháp Sư") is not surely a place
+        return if (named(left) && named(right) && beside.none { named(core(it)) }) "đến" else "thành"
+    }
+
+    private fun arrow(original: String, atStart: Boolean, says: (MatchResult) -> String): String {
         var token = original
         fun replace(match: MatchResult, wordIn: String): String {
             val left = token.getOrNull(match.range.first - 1)
             val right = token.getOrNull(match.range.last + 1)
             val word = if (left == null && atStart) "" else wordIn // "-> Bước tiếp": an arrow opening a line is only a bullet
-            if (word.isNotEmpty()) return (if (left != null && left.isLetterOrDigit()) " " else "") + word + (if (right != null && right.isLetterOrDigit()) " " else "")
+            if (word.isNotEmpty()) return (if (left != null && (left.isLetterOrDigit() || left in "%)]”’")) " " else "") + word + (if (right != null && (right.isLetterOrDigit() || right in "$([“‘")) " " else "")
             return if (left != null && left.isLetterOrDigit() && right != null && right.isLetterOrDigit()) " " else ""
         }
-        token = ARROW_FORWARD.replace(token) { replace(it, "thành") }
+        token = ARROW_FORWARD.replace(token) { replace(it, says(it)) }
         return ARROW_BACK.replace(token) { replace(it, "") }
     }
 
     /**
-     * Text arrows: "1780 --> 1940", "A -> B", "=>", "→" are "thành" (sea-g2p reads "sang" / "đến" / "suy ra"); a backward arrow "<-", "←" has nothing to say so it goes; an arrow opening
-     * a paragraph or a sentence is a bullet, it goes too - `_arrows`.
+     * Text arrows: "1780 --> 1940", "A -> B", "=>", "→" are "thành" or "đến" by context ([arrowSays]; sea-g2p reads "sang" / "đến" / "suy ra"); a backward arrow "<-", "←" has nothing to say so it goes; an arrow opening
+     * a paragraph or a sentence is a bullet, it goes too. The words around come from [toks] (shown words, not yet readings: "HP" rather than "hát pê") when given - `_arrows`.
      */
-    private fun arrows(out: MutableList<String>) {
+    private fun arrows(out: MutableList<String>, toks: List<String>? = null) {
+        val plain = if (toks != null && toks.size == out.size) toks else out.toList()
         for (index in out.indices) {
             val token = out[index]
             if (token.none { it in "<>=→⇒➜➡➔⟶⟹←⇐⟵⟸" }) continue
             val before = if (index > 0) out[index - 1].trimEnd { it in CLOSERS } else ""
-            out[index] = arrow(token, before.isEmpty() || before.last() in SENTENCE_END)
+            out[index] = arrow(token, before.isEmpty() || before.last() in SENTENCE_END) { arrowSays(plain, index, token, it) }
         }
     }
 
@@ -430,10 +474,10 @@ object VieneuUnits {
     }
 
     /** Marks sea-g2p reads wrongly as words ("~" is "khoảng", "500,000" is "năm trăm"), fixed in place without changing the word count - `reading_marks`. */
-    fun readingMarks(out: MutableList<String>) {
+    fun readingMarks(out: MutableList<String>, toks: List<String>? = null) {
         fullwidth(out)
         emoticons(out)
-        arrows(out)
+        arrows(out, toks)
         tildes(out)
         for (index in out.indices) out[index] = THOUSANDS.replace(out[index]) { it.value.replace(",", "") }
         numbers(out)
@@ -459,7 +503,7 @@ object VieneuUnits {
         stutters(toks, out, origin)
         Shouts.readShouts(toks, out)
         readWords(toks, out, origin)
-        readingMarks(out)
+        readingMarks(out, toks)
         return out
     }
 

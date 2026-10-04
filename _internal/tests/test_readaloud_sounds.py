@@ -230,6 +230,13 @@ def test_a_title_is_vietnamised_for_a_voice_that_cannot_say_english() -> None:
     assert _said("Mr. Lyle", None, False)[0] == (names.english_reading("mister") or "mister")
 
 
+@pytest.mark.parametrize("title, said", [("Mrs.", "mít-xịt"), ("Ms.", "mít"), ("Mr.", "mít-tơ")])  # Mrs. / Ms.: chủ sách 04-10; Mr.: đề xuất theo cùng kiểu, chưa có ca chủ sách
+def test_a_title_has_a_fixed_vietnamised_form_for_a_voice_that_cannot_say_english(title: str, said: str) -> None:
+    assert _said(f"{title} Lyle", None, False)[0] == said
+    assert _said(f"{title} Lyle", "ja", False)[0] == said
+    assert _said(f"{title} Lyle")[0] == {"Mrs.": "missus", "Ms.": "miss", "Mr.": "mister"}[title]  # giọng nói được tiếng Anh giữ âm Anh
+
+
 @pytest.mark.parametrize("text, said", [
     ("HP: 1780 --> 1940", "hát pê: 1780 thành 1940"),
     ("A -> B, C => D, E → F, G ⇒ H.", "A thành B, C thành D, E thành F, G thành H."),
@@ -240,3 +247,40 @@ def test_a_title_is_vietnamised_for_a_voice_that_cannot_say_english() -> None:
 ])
 def test_a_text_arrow_is_thanh_or_nothing(text: str, said: str) -> None:
     assert " ".join(piece for piece in _said(text) if piece) == said
+
+
+@pytest.mark.parametrize("text, word", [
+    # thay đổi giá trị / trạng thái -> "thành" (chủ sách 04-10: tùy ngữ cảnh lúc là thành lúc là đến)
+    ("HP: 1780 --> 1940", "thành"),
+    ("Lv 5 -> Lv 6", "thành"),
+    ("Lv 5 -> 6", "thành"),
+    ("Cấp D => C", "thành"),
+    ("Giá 100 -> 200", "thành"),
+    ("Điểm: 5->6", "thành"),
+    ("Kỹ năng: Lửa -> Băng", "thành"),
+    ("Cân lực : 22000 ⇒ 66000", "thành"),
+    ("Nghề: Tân Thủ -> Pháp Sư", "thành"),
+    ("nước -> băng", "thành"),  # không rõ: như mọi khi
+    ("1780 -> 1940", "thành"),
+    ("A -> B", "thành"),
+    ("Tân Thủ -> Pháp Sư", "thành"),  # tên nhiều chữ: không chắc là nơi chốn
+    ("Xong. 1 -> 2", "thành"),
+    # hướng đi / khoảng / trình tự -> "đến"
+    ("Tokyo -> Osaka", "đến"),
+    ("Họ bay Tokyo → Osaka rồi", "đến"),
+    ("8h -> 10h", "đến"),
+    ("8:00->10:00", "đến"),
+    ("8 giờ -> 10 giờ", "đến"),
+    ("Bước 1 -> Bước 2", "đến"),
+    ("trang 3 -> 5", "đến"),
+    ("từ 1 => 5", "đến"),
+    ("Tuyến Tokyo→Osaka", "đến"),
+])
+def test_a_text_arrow_is_thanh_for_a_change_and_den_for_a_direction(text: str, word: str) -> None:
+    said = " ".join(piece for piece in _said(text) if piece)
+    assert (" thành " in f" {said} ") == (word == "thành")
+    assert (" đến " in f" {said} ") == (word == "đến")
+
+
+def test_an_arrow_next_to_a_percent_sign_keeps_its_space() -> None:
+    assert " ".join(_said("HP 10%->20%")) == "hát pê 10% thành 20%"

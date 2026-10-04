@@ -10,6 +10,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Giọng đọc
 
 - "Nghe ngay" (máy tính và điện thoại, mọi giọng) đọc đúng thêm vài chỗ hay gặp: tiếng gọi viết hoa cả ("ONII-CHAN" thành "o-ni-chan", "OPPA" thành "óp-pa"), "Mr. Lyle" / "Dr. Stone" thành "mister Lyle" / "doctor Stone", mũi tên chữ "1780 --> 1940" hay "A -> B" thành "thành" (mũi tên ngược "<-" thì bỏ).
+- "Nghe ngay": mũi tên chữ đọc theo ngữ cảnh - đổi giá trị thì "thành" ("HP: 1780 --> 1940", "Lv 5 -> Lv 6"), chỉ hướng đi, giờ, trang, bước thì "đến" ("Tokyo -> Osaka", "8h -> 10h", "Bước 1 -> Bước 2"); giọng không nói được tiếng Anh đọc "Mrs." là "mít-xịt", "Ms." là "mít".
 
 ## [0.4.26] - 2026-10-04
 

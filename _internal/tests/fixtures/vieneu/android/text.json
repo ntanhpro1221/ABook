@@ -2376,6 +2376,58 @@
     "Bước tiếp."
    ],
    "phonemes": "ˈaː bˈe vˌaː2 sˈe ɗˈe, ˈɛ ˈɛɜp. bˈyəɜc t̪ˈiɛɜp."
+  },
+  {
+   "sentences": [
+    "level 5 thành level 6.",
+    "Giá 100 thành 200.",
+    "Cấp D thành C.",
+    "Nghề: Tân Thủ thành Pháp Sư.",
+    "Cân lực : 22000 thành 66000.",
+    "Họ bay Tokyo đến Osaka lúc 8h đến 10h.",
+    "Bước 1 đến Bước 2, trang 3 đến 5.",
+    "hát pê 10% thành 20%."
+   ],
+   "phonemes": "lˈɛvəl nˈam tˈe-2ɲ lˈɛvəl sˈaɜw. zˈaːɜ mˈo6t̪ tʃˈam tˈe-2ɲ hˈaːj tʃˈam. kˈəɜp ɗˈe tˈe-2ɲ sˈe. ŋˈe2, t̪ˈən tˈu4 tˈe-2ɲ fˈaːɜp sˈy. kˈən lˈy6c, hˈaːj mˈyəj hˈaːj ŋˈi2n tˈe-2ɲ sˈaɜw mˈyəj sˈaɜw ŋˈi2n. hˈɔ6 bˈeɪ tˈoʊkɪˌoʊ ɗˌeɜn ɑːsˈɑːkə lˌuɜc t̪ˈaːɜm zˈəː2 ɗˌeɜn mˈyə2j zˈəː2. bˈyəɜc mˈo6t̪ ɗˌeɜn bˈyəɜc hˈaːj, tʃˈaːŋ bˈaː ɗˌeɜn nˈam. hˈaːɜt̪ pˈe mˈyə2j fˈə2n tʃˈam tˈe-2ɲ hˈaːj mˈyəj fˈə2n tʃˈam."
+  },
+  {
+   "sentences": [
+    "level 5 thành level 6.",
+    "Giá 100 thành 200.",
+    "Cấp D thành C.",
+    "Nghề: Tân Thủ thành Pháp Sư.",
+    "Cân lực : 22000 thành 66000.",
+    "Họ bay Tokyo đến Osaka lúc 8h đến 10h."
+   ],
+   "phonemes": "lˈɛvəl nˈam tˈe-2ɲ lˈɛvəl sˈaɜw. zˈaːɜ mˈo6t̪ tʃˈam tˈe-2ɲ hˈaːj tʃˈam. kˈəɜp ɗˈe tˈe-2ɲ sˈe. ŋˈe2, t̪ˈən tˈu4 tˈe-2ɲ fˈaːɜp sˈy. kˈən lˈy6c, hˈaːj mˈyəj hˈaːj ŋˈi2n tˈe-2ɲ sˈaɜw mˈyəj sˈaɜw ŋˈi2n. hˈɔ6 bˈeɪ tˈoʊkɪˌoʊ ɗˌeɜn ɑːsˈɑːkə lˌuɜc t̪ˈaːɜm zˈəː2 ɗˌeɜn mˈyə2j zˈəː2."
+  },
+  {
+   "sentences": [
+    "Bước 1 đến Bước 2, trang 3 đến 5.",
+    "hát pê 10% thành 20%."
+   ],
+   "phonemes": "bˈyəɜc mˈo6t̪ ɗˌeɜn bˈyəɜc hˈaːj, tʃˈaːŋ bˈaː ɗˌeɜn nˈam. hˈaːɜt̪ pˈe mˈyə2j fˈə2n tʃˈam tˈe-2ɲ hˈaːj mˈyəj fˈə2n tʃˈam."
+  },
+  {
+   "sentences": [
+    "level 5 thành level 6.",
+    "Giá 100 thành 200."
+   ],
+   "phonemes": "lˈɛvəl nˈam tˈe-2ɲ lˈɛvəl sˈaɜw. zˈaːɜ mˈo6t̪ tʃˈam tˈe-2ɲ hˈaːj tʃˈam."
+  },
+  {
+   "sentences": [
+    "Cấp D thành C.",
+    "Nghề: Tân Thủ thành Pháp Sư."
+   ],
+   "phonemes": "kˈəɜp ɗˈe tˈe-2ɲ sˈe. ŋˈe2, t̪ˈən tˈu4 tˈe-2ɲ fˈaːɜp sˈy."
+  },
+  {
+   "sentences": [
+    "Bước 1 đến Bước 2, trang 3 đến 5.",
+    "hát pê 10% thành 20%."
+   ],
+   "phonemes": "bˈyəɜc mˈo6t̪ ɗˌeɜn bˈyəɜc hˈaːj, tʃˈaːŋ bˈaː ɗˌeɜn nˈam. hˈaːɜt̪ pˈe mˈyə2j fˈə2n tʃˈam tˈe-2ɲ hˈaːj mˈyəj fˈə2n tʃˈam."
   }
  ],
  "normalize": [
@@ -7226,6 +7278,107 @@
      "phonemes": "ˈaː ɲˈɔ4 hˈəːn sˈaːŋ bˈe, ˈiɜc ɲˈɔ4 hˈəːn bˈa2ŋ nˈam, ˈaː tˈe-2ɲ bˈe sˈe."
     }
    ]
+  },
+  {
+   "text": "Lv 5 -> Lv 6. Giá 100 -> 200. Cấp D => C. Nghề: Tân Thủ -> Pháp Sư. Cân lực : 22000 ⇒ 66000. Họ bay Tokyo → Osaka lúc 8h -> 10h. Bước 1 -> Bước 2, trang 3 -> 5. HP 10%->20%.",
+   "max": 256,
+   "tokens": 45,
+   "units": [
+    {
+     "first": 0,
+     "last": 44,
+     "pieces": [
+      "level 5 thành level 6.",
+      "Giá 100 thành 200.",
+      "Cấp D thành C.",
+      "Nghề: Tân Thủ thành Pháp Sư.",
+      "Cân lực : 22000 thành 66000.",
+      "Họ bay Tokyo đến Osaka lúc 8h đến 10h.",
+      "Bước 1 đến Bước 2, trang 3 đến 5.",
+      "hát pê 10% thành 20%."
+     ],
+     "phonemes": "lˈɛvəl nˈam tˈe-2ɲ lˈɛvəl sˈaɜw. zˈaːɜ mˈo6t̪ tʃˈam tˈe-2ɲ hˈaːj tʃˈam. kˈəɜp ɗˈe tˈe-2ɲ sˈe. ŋˈe2, t̪ˈən tˈu4 tˈe-2ɲ fˈaːɜp sˈy. kˈən lˈy6c, hˈaːj mˈyəj hˈaːj ŋˈi2n tˈe-2ɲ sˈaɜw mˈyəj sˈaɜw ŋˈi2n. hˈɔ6 bˈeɪ tˈoʊkɪˌoʊ ɗˌeɜn ɑːsˈɑːkə lˌuɜc t̪ˈaːɜm zˈəː2 ɗˌeɜn mˈyə2j zˈəː2. bˈyəɜc mˈo6t̪ ɗˌeɜn bˈyəɜc hˈaːj, tʃˈaːŋ bˈaː ɗˌeɜn nˈam. hˈaːɜt̪ pˈe mˈyə2j fˈə2n tʃˈam tˈe-2ɲ hˈaːj mˈyəj fˈə2n tʃˈam."
+    }
+   ]
+  },
+  {
+   "text": "Lv 5 -> Lv 6. Giá 100 -> 200. Cấp D => C. Nghề: Tân Thủ -> Pháp Sư. Cân lực : 22000 ⇒ 66000. Họ bay Tokyo → Osaka lúc 8h -> 10h. Bước 1 -> Bước 2, trang 3 -> 5. HP 10%->20%.",
+   "max": 140,
+   "tokens": 45,
+   "units": [
+    {
+     "first": 0,
+     "last": 33,
+     "pieces": [
+      "level 5 thành level 6.",
+      "Giá 100 thành 200.",
+      "Cấp D thành C.",
+      "Nghề: Tân Thủ thành Pháp Sư.",
+      "Cân lực : 22000 thành 66000.",
+      "Họ bay Tokyo đến Osaka lúc 8h đến 10h."
+     ],
+     "phonemes": "lˈɛvəl nˈam tˈe-2ɲ lˈɛvəl sˈaɜw. zˈaːɜ mˈo6t̪ tʃˈam tˈe-2ɲ hˈaːj tʃˈam. kˈəɜp ɗˈe tˈe-2ɲ sˈe. ŋˈe2, t̪ˈən tˈu4 tˈe-2ɲ fˈaːɜp sˈy. kˈən lˈy6c, hˈaːj mˈyəj hˈaːj ŋˈi2n tˈe-2ɲ sˈaɜw mˈyəj sˈaɜw ŋˈi2n. hˈɔ6 bˈeɪ tˈoʊkɪˌoʊ ɗˌeɜn ɑːsˈɑːkə lˌuɜc t̪ˈaːɜm zˈəː2 ɗˌeɜn mˈyə2j zˈəː2."
+    },
+    {
+     "first": 34,
+     "last": 44,
+     "pieces": [
+      "Bước 1 đến Bước 2, trang 3 đến 5.",
+      "hát pê 10% thành 20%."
+     ],
+     "phonemes": "bˈyəɜc mˈo6t̪ ɗˌeɜn bˈyəɜc hˈaːj, tʃˈaːŋ bˈaː ɗˌeɜn nˈam. hˈaːɜt̪ pˈe mˈyə2j fˈə2n tʃˈam tˈe-2ɲ hˈaːj mˈyəj fˈə2n tʃˈam."
+    }
+   ]
+  },
+  {
+   "text": "Lv 5 -> Lv 6. Giá 100 -> 200. Cấp D => C. Nghề: Tân Thủ -> Pháp Sư. Cân lực : 22000 ⇒ 66000. Họ bay Tokyo → Osaka lúc 8h -> 10h. Bước 1 -> Bước 2, trang 3 -> 5. HP 10%->20%.",
+   "max": 40,
+   "tokens": 45,
+   "units": [
+    {
+     "first": 0,
+     "last": 8,
+     "pieces": [
+      "level 5 thành level 6.",
+      "Giá 100 thành 200."
+     ],
+     "phonemes": "lˈɛvəl nˈam tˈe-2ɲ lˈɛvəl sˈaɜw. zˈaːɜ mˈo6t̪ tʃˈam tˈe-2ɲ hˈaːj tʃˈam."
+    },
+    {
+     "first": 9,
+     "last": 18,
+     "pieces": [
+      "Cấp D thành C.",
+      "Nghề: Tân Thủ thành Pháp Sư."
+     ],
+     "phonemes": "kˈəɜp ɗˈe tˈe-2ɲ sˈe. ŋˈe2, t̪ˈən tˈu4 tˈe-2ɲ fˈaːɜp sˈy."
+    },
+    {
+     "first": 19,
+     "last": 24,
+     "pieces": [
+      "Cân lực : 22000 thành 66000."
+     ],
+     "phonemes": "kˈən lˈy6c, hˈaːj mˈyəj hˈaːj ŋˈi2n tˈe-2ɲ sˈaɜw mˈyəj sˈaɜw ŋˈi2n."
+    },
+    {
+     "first": 25,
+     "last": 33,
+     "pieces": [
+      "Họ bay Tokyo đến Osaka lúc 8h đến 10h."
+     ],
+     "phonemes": "hˈɔ6 bˈeɪ tˈoʊkɪˌoʊ ɗˌeɜn ɑːsˈɑːkə lˌuɜc t̪ˈaːɜm zˈəː2 ɗˌeɜn mˈyə2j zˈəː2."
+    },
+    {
+     "first": 34,
+     "last": 44,
+     "pieces": [
+      "Bước 1 đến Bước 2, trang 3 đến 5.",
+      "hát pê 10% thành 20%."
+     ],
+     "phonemes": "bˈyəɜc mˈo6t̪ ɗˌeɜn bˈyəɜc hˈaːj, tʃˈaːŋ bˈaː ɗˌeɜn nˈam. hˈaːɜt̪ pˈe mˈyə2j fˈə2n tʃˈam tˈe-2ɲ hˈaːj mˈyəj fˈə2n tʃˈam."
+    }
+   ]
   }
  ],
  "frames": [
@@ -7273,6 +7426,11 @@
    "phonemes": "bˈe6 hˈaː6 vˈaː6n t̪wˈeɜ, vˈaː6n t̪wˈeɜ, vˈaː6n vˈaː6n t̪wˈeɜ!",
    "syllables": 9,
    "cap": 148
+  },
+  {
+   "phonemes": "bˈyəɜc mˈo6t̪ ɗˌeɜn bˈyəɜc hˈaːj, tʃˈaːŋ bˈaː ɗˌeɜn nˈam. hˈaːɜt̪ pˈe mˈyə2j fˈə2n tʃˈam tˈe-2ɲ hˈaːj mˈyəj fˈə2n tʃˈam.",
+   "syllables": 19,
+   "cap": 264
   },
   {
    "phonemes": "bˈyɜc tʃˈe-ɲ ɗˌyə6c bˈaːɜn vˌəːɜj zˈaːɜ hˈaːj fˈəɪ4 nˈam tʃˈiɛ6w jˈuː ˈɛs dˈiː.",
@@ -7720,6 +7878,11 @@
    "cap": 206
   },
   {
+   "phonemes": "kˈəɜp ɗˈe tˈe-2ɲ sˈe. ŋˈe2, t̪ˈən tˈu4 tˈe-2ɲ fˈaːɜp sˈy.",
+   "syllables": 10,
+   "cap": 138
+  },
+  {
    "phonemes": "kˈəɜp ɗˈo6 kˌuə4 kˈo ˈəɪɜ ɗˌaː5 lˈen t̪ˌəːɜj ˌɛlvˈiː. tʃˈiɜn mˈyəj tʃˈiɜn.",
    "syllables": 13,
    "cap": 172
@@ -7783,6 +7946,21 @@
    "phonemes": "lˈəːɜp mˈyə2j ˈaː mˈo6t̪ kˈɔɜ bˈoɜn mˈyəj lˈam hˈɔ6k sˈiɲ.",
    "syllables": 10,
    "cap": 140
+  },
+  {
+   "phonemes": "lˈɛvəl nˈam tˈe-2ɲ lˈɛvəl sˈaɜw. zˈaːɜ mˈo6t̪ tʃˈam tˈe-2ɲ hˈaːj tʃˈam.",
+   "syllables": 13,
+   "cap": 166
+  },
+  {
+   "phonemes": "lˈɛvəl nˈam tˈe-2ɲ lˈɛvəl sˈaɜw. zˈaːɜ mˈo6t̪ tʃˈam tˈe-2ɲ hˈaːj tʃˈam. kˈəɜp ɗˈe tˈe-2ɲ sˈe. ŋˈe2, t̪ˈən tˈu4 tˈe-2ɲ fˈaːɜp sˈy. kˈən lˈy6c, hˈaːj mˈyəj hˈaːj ŋˈi2n tˈe-2ɲ sˈaɜw mˈyəj sˈaɜw ŋˈi2n. hˈɔ6 bˈeɪ tˈoʊkɪˌoʊ ɗˌeɜn ɑːsˈɑːkə lˌuɜc t̪ˈaːɜm zˈəː2 ɗˌeɜn mˈyə2j zˈəː2.",
+   "syllables": 49,
+   "cap": 568
+  },
+  {
+   "phonemes": "lˈɛvəl nˈam tˈe-2ɲ lˈɛvəl sˈaɜw. zˈaːɜ mˈo6t̪ tʃˈam tˈe-2ɲ hˈaːj tʃˈam. kˈəɜp ɗˈe tˈe-2ɲ sˈe. ŋˈe2, t̪ˈən tˈu4 tˈe-2ɲ fˈaːɜp sˈy. kˈən lˈy6c, hˈaːj mˈyəj hˈaːj ŋˈi2n tˈe-2ɲ sˈaɜw mˈyəj sˈaɜw ŋˈi2n. hˈɔ6 bˈeɪ tˈoʊkɪˌoʊ ɗˌeɜn ɑːsˈɑːkə lˌuɜc t̪ˈaːɜm zˈəː2 ɗˌeɜn mˈyə2j zˈəː2. bˈyəɜc mˈo6t̪ ɗˌeɜn bˈyəɜc hˈaːj, tʃˈaːŋ bˈaː ɗˌeɜn nˈam. hˈaːɜt̪ pˈe mˈyə2j fˈə2n tʃˈam tˈe-2ɲ hˈaːj mˈyəj fˈə2n tʃˈam.",
+   "syllables": 68,
+   "cap": 810
   },
   {
    "phonemes": "lˈɛvəl nˈam, lˈɛvəl mˈyə2j lˈam, lˈɛvəl mˈo6t̪ lˈɛvəl nˈam, lˈəː2 vˈe ˈəːj, lˈəː2 vˈe lˈəː2. lˈɛvəl bˈa4j, lˈɛvəl bˈoɜn mˈyəj.",

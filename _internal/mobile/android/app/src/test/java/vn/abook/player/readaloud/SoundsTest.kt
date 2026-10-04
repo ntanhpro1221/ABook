@@ -184,4 +184,20 @@ class SoundsTest {
         assertEquals("Bước tiếp. Xong", arrows("-> Bước tiếp. → Xong"))
         assertEquals("A <-> B, x <= 5, a >= 3, a thành b c", arrows("A <-> B, x <= 5, a >= 3, a -> b <- c"))
     }
+
+    @Test
+    fun aTextArrowIsThanhForAChangeAndDenForADirection() {
+        val cases = listOf(
+            "HP: 1780 --> 1940" to "thành", "Lv 5 -> Lv 6" to "thành", "Lv 5 -> 6" to "thành", "Cấp D => C" to "thành", "Giá 100 -> 200" to "thành", "Điểm: 5->6" to "thành",
+            "Kỹ năng: Lửa -> Băng" to "thành", "Cân lực : 22000 ⇒ 66000" to "thành", "Nghề: Tân Thủ -> Pháp Sư" to "thành", "nước -> băng" to "thành", "1780 -> 1940" to "thành",
+            "A -> B" to "thành", "Tân Thủ -> Pháp Sư" to "thành", "Xong. 1 -> 2" to "thành",
+            "Tokyo -> Osaka" to "đến", "Họ bay Tokyo → Osaka rồi" to "đến", "8h -> 10h" to "đến", "8:00->10:00" to "đến", "8 giờ -> 10 giờ" to "đến", "Bước 1 -> Bước 2" to "đến",
+            "trang 3 -> 5" to "đến", "từ 1 => 5" to "đến", "Tuyến Tokyo→Osaka" to "đến")
+        for ((text, word) in cases) {
+            val spoken = " " + said(text).filter { it.isNotEmpty() }.joinToString(" ") + " "
+            assertEquals(text, word == "thành", " thành " in spoken)
+            assertEquals(text, word == "đến", " đến " in spoken)
+        }
+        assertEquals("hát pê 10% thành 20%", said("HP 10%->20%").joinToString(" "))
+    }
 }
