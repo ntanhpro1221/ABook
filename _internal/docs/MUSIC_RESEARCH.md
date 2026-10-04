@@ -879,6 +879,18 @@ Mục đích: trả lời dứt điểm hai câu mà bộ 5 (9 chương) và 5B 
 - Quyết định (Lead):
   - THẮNG → làm B với `qwen3.5:4b`: runtime tuỳ chọn tải khi bấm; nạp sau khi model phân tích đã dỡ; không tự nạp lúc resume.
   - THUA → A, giữ nhãn câu. Chỉ xét B với 9b nếu có lý do khác.
+
+**KẾT QUẢ llmVT VỚI qwen3.5:4b GỐC (04-10 09:07; `results/set6_score_qwen3.5_4b.txt`):** **THẮNG.**
+- app+llmVT so app: VET +0,253 so +0,155, tức +0,098; thắng 15/20 chương.
+- V +0,232; T +0,370, cao hơn cả 9b gốc (+0,340). 0 lượt hỏng định dạng.
+- 2,95 giây mỗi lượt; 123 lượt cho 5,54 giờ sách → khoảng 65 giây GPU mỗi giờ sách.
+- Ghi lại: `oracle+llmVT` +0,398 so `oracle` +0,305.
+- → Làm B với `qwen3.5:4b` (Lead duyệt trước):
+  - runtime tuỳ chọn, tải 3,2 GB khi người dùng bấm;
+  - nạp sau khi model phân tích đã dỡ;
+  - không tự nạp lúc resume; lỗi thì lùi về nhãn câu.
+- Chỉ 4B gốc mới giữ được T. Kết hợp với kết quả trên: chính việc tinh chỉnh LoRA (không phải cỡ model) làm mất phán
+  đoán căng thẳng cả đoạn. Đề xuất D (dạy lại V/E/T cả đoạn cho model phân tích) đã gửi Model.
 - **Câu (2): KHÔNG nguồn nào qua cổng → Lớp 2 vẫn TẮT.**
   - Trần cosine A–B 0,904, ngưỡng 0,813. Số nhãn ≥ 0,5 mỗi đoạn: A 1,62, B 1,64, người (TB A/B) 1,47.
   - (a) Nhãn câu app: cosine 0,370 (41% trần); 0,08 nhãn so 1,47 (lệch 95%) → không qua.
