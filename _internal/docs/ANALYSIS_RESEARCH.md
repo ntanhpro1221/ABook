@@ -75,6 +75,12 @@ dàn nhân vật biết trước), (b) dàn nhân vật do 4B v8 xuất cho chư
 - Đã dựng (04-10 18:5x): 767 câu Nhật MỚI + 582 câu Hàn MỚI (LLM_Train/b6/items_*.jsonl); bộ chấm kiểm trên CPU bằng
   Qwen3-0.6B; với điểm ngẫu nhiên độ đúng (a)/(b) là 22-28 % (mốc dưới), v8 trên cùng câu 71,8 % (F1 61,7). Báo ba cách
   chuẩn hoá (PMI - chính, theo độ dài, thô) nhưng ngưỡng chỉ áp cho PMI.
+- **KẾT QUẢ 04-10 19:47: ÂM.** Độ đúng người nói trên cùng câu - Nhật MỚI 767 câu: v8 71,8 %, kênh (a) 43,2 %, (b) 42,4 %
+  (ngẫu nhiên 22-28 %); Hàn MỚI 582 câu: v8 72,2 %, (a) 38,1 %, (b) 37,8 %. Bổ sung (b) = 30 % lỗi v8 ở Nhật, 18 % ở Hàn -
+  ngang mức ngẫu nhiên (~27 %). Kênh không bớt lệch lượt (12,5 % vs 13,0 %) và nhầm "tôi" nhiều hơn (8,6 % vs 3,1 %). Ba cách
+  chuẩn hoá cho cùng lựa chọn (mốc không tên và độ dài câu chung cho mọi ứng viên của một câu). Đọc: LM nền 4B không nhận ra
+  người nói từ văn phong câu thoại bản dịch Việt; quyết định nằm ở cấu trúc đối đáp và lời dẫn, không ở "cách người ấy nói".
+  Số: LLM_Train/b6/result_{jp,kr}_pmi.txt.
 
 ### Bước 1 của Lead (04-10, tài liệu breakthrough_lit.md): chẩn đoán và trần, chỉ tốn suy luận (ghi trước)
 
