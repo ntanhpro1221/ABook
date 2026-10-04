@@ -36,6 +36,7 @@ from .io_utils import stable_int
 from .models import (
     CONTEXTUAL_ENGLISH_NAME_PRONUNCIATION_SOURCE,
     ENGLISH_NAME_PRONUNCIATION_SOURCE,
+    KEEP_ENGLISH_PRONUNCIATION_SOURCE,
 )
 from .resource_manager import trim_process_working_set
 from .text_processing import (
@@ -171,6 +172,14 @@ LOCKED_ENGLISH_NAME_PRONUNCIATION_SOURCES = frozenset(
         CONTEXTUAL_ENGLISH_NAME_PRONUNCIATION_SOURCE,
     }
 )
+
+
+def vietnamized_kept_english(surface: str) -> str:
+    """Chữ đem đọc của một mục `keep_english` cho máy không nói được tiếng Anh: từng chữ Anh Việt hoá như "Nghe ngay" làm cho Supertonic
+    (`readaloud.names.english_reading`, tức `english_vi.vietnamized_english`); chữ luật không chắc hay âm tiết Việt viết sẵn giữ nguyên."""
+    from .readaloud.names import english_reading
+
+    return " ".join(english_reading(word) or word for word in surface.split())
 
 
 def is_fatal_tts_error(error: BaseException) -> bool:
@@ -554,11 +563,15 @@ class EngineAdapter:
     bản thu bằng WSOLA - `generate_one` nhận `speed` và điều phối viên không kéo giãn nữa.
 
     `MAX_CHUNK_CHARS`: câu dài hơn thì đọc thành nhiều lần gọi (`chunks`) rồi nối (`join_chunks`); None = một lần cho cả câu.
+
+    `speaks_english`: máy đọc được chữ Anh để nguyên (docs/READING_FOREIGN_NAMES.md mục 4 và 8, đo 04-10). False thì tên / từ Anh mà bảng cách
+    đọc để nguyên (nguồn `keep_english`) được Việt hoá cho đoạn của máy này (`TTSCoordinator.spoken_text_with_anchors`).
     """
 
     name = ""
     label = ""
     native_tempo = False
+    speaks_english = True
     MAX_CHUNK_CHARS: int | None = None
 
     def __init__(self, settings: dict[str, Any], log: Callable[[str], None]) -> None:
@@ -803,6 +816,7 @@ class SupertonicEngine(EngineAdapter):
     name = "supertonic"
     label = "Supertonic"
     native_tempo = True
+    speaks_english = True  # đo 2040 bản thu (04-10): chữ Anh để nguyên không kém; ASR "Kate", "Michael" để nguyên qua, dạng Việt hoá trượt
     MAX_CHUNK_CHARS = 300
 
     def load(self) -> None:
@@ -870,6 +884,7 @@ class TTSCoordinator:
         self._exact_pronunciation_pattern: re.Pattern[str] | None = None
         self._exact_pronunciation_map: dict[str, str] = {}
         self._exact_pronunciation_metadata: dict[str, Any] = {}
+        self._has_kept_english = False
 
     @property
     def vieneu(self) -> EngineAdapter:
@@ -961,6 +976,9 @@ class TTSCoordinator:
                 " ".join(str(item["surface"]).casefold().split()): item
                 for item in pronunciations
             }
+            self._has_kept_english = any(
+                str(item["source"]) == KEEP_ENGLISH_PRONUNCIATION_SOURCE for item in pronunciations
+            )
             surfaces = [str(item["surface"]) for item in pronunciations]
             self._pronunciation_pattern = (
                 re.compile(
@@ -1010,6 +1028,7 @@ class TTSCoordinator:
         source_text: str,
         anchors: list[dict[str, Any]],
         pronunciation_delivery_variant: str,
+        speaks_english: bool,
     ) -> tuple[str, list[tuple[int, int]], list[frozenset[int]]]:
         output_parts: list[str] = []
         output_origins: list[tuple[int, int]] = []
@@ -1027,6 +1046,12 @@ class TTSCoordinator:
             )
             canonical_replacement = pronunciation_map.get(key, matched_text)
             metadata = metadata_map.get(key)
+            if (
+                not speaks_english
+                and metadata is not None
+                and str(_row_value(metadata, "source", "")) == KEEP_ENGLISH_PRONUNCIATION_SOURCE
+            ):
+                canonical_replacement = vietnamized_kept_english(str(metadata["surface"]))
             locked_english_pronunciation = bool(
                 metadata is not None
                 and int(_row_value(metadata, "locked", 0)) == 1
@@ -1162,6 +1187,13 @@ class TTSCoordinator:
                 raise RuntimeError("Pronunciation anchor marker was lost during normalization")
         return normalized_text
 
+    def _row_speaks_english(self, row: Any) -> bool:
+        """Máy đọc của đoạn có đọc được chữ Anh để nguyên không (`EngineAdapter.speaks_english`). Chỉ hỏi giọng của đoạn khi bảng cách đọc
+        có mục `keep_english` - không có thì câu trả lời không đổi gì."""
+        if not self._has_kept_english:
+            return True
+        return bool(self.engine_for_profile(self._voice_profile_for_row(row)).speaks_english)
+
     def spoken_text_with_anchors(
         self,
         row: Any,
@@ -1190,6 +1222,8 @@ class TTSCoordinator:
         origins = [(index, index + 1) for index in range(len(source_text))]
         anchor_tags = [frozenset() for _character in source_text]
         anchors: list[dict[str, Any]] = []
+        # Đoạn của máy không nói được tiếng Anh nhận dạng Việt hoá của tên Anh để nguyên; khâu chấm ASR so với đúng chữ này.
+        speaks_english = self._row_speaks_english(row)
         text, origins, anchor_tags = self._substitute_pronunciations(
             source_text,
             origins,
@@ -1201,6 +1235,7 @@ class TTSCoordinator:
             source_text=source_text,
             anchors=anchors,
             pronunciation_delivery_variant=normalized_variant,
+            speaks_english=speaks_english,
         )
         text, _origins, anchor_tags = self._substitute_pronunciations(
             text,
@@ -1213,6 +1248,7 @@ class TTSCoordinator:
             source_text=source_text,
             anchors=anchors,
             pronunciation_delivery_variant=normalized_variant,
+            speaks_english=speaks_english,
         )
         text = self._normalize_with_anchor_spans(text, anchor_tags, anchors)
         anchors.sort(

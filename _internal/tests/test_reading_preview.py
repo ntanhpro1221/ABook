@@ -446,8 +446,9 @@ def studio_app(tmp_path: Path, monkeypatch):
         server.stop()
 
 
-def _post(server, paths, body: dict[str, Any], path: str = "pronunciation/preview"):
-    return _request(server.port, "POST", f"/api/books/{book_id(paths.root)}/{path}", headers={"X-Ebook-Token": "t"}, body=body)
+def _post(server, paths, body: dict[str, Any], path: str = "pronunciation/preview", timeout: float = 10):
+    return _request(server.port, "POST", f"/api/books/{book_id(paths.root)}/{path}", headers={"X-Ebook-Token": "t"}, body=body,
+                    timeout=timeout)
 
 
 def test_the_route_returns_a_playable_clip_and_changes_nothing_in_the_book(studio_app) -> None:
@@ -534,13 +535,15 @@ def test_the_real_process_speaks_the_protocol_with_the_fake_voice(tmp_path: Path
     app = App(preferences=preferences, runner=FakeRunner(), token="t", listening=Listening(tmp_path / "prefs" / "l.json"))
     server = Server(app, port=0).start()
     before = _digest(paths.db)
+    # Python thật khởi động rồi đọc câu: lần đầu mất hơn 10 giây khi máy bận (04-10: ~16 giây), nên chờ lâu hơn hạn thường.
+    slow = 180
     try:
-        status, data, _ = _post(server, paths, {"surface": "Natasha", "spokenForm": "Na-ta-xa"})
+        status, data, _ = _post(server, paths, {"surface": "Natasha", "spokenForm": "Na-ta-xa"}, timeout=slow)
         result = json.loads(data)
         assert status == 200, data
-        status, clip, _ = _request(server.port, "GET", result["url"], headers={"X-Ebook-Token": "t"})
+        status, clip, _ = _request(server.port, "GET", result["url"], headers={"X-Ebook-Token": "t"}, timeout=slow)
         assert status == 200 and clip[:4] == b"RIFF" and len(clip) > 1000
-        status, data, _ = _post(server, paths, {"surface": "Natasha", "spokenForm": "Na-ta-xa"})
+        status, data, _ = _post(server, paths, {"surface": "Natasha", "spokenForm": "Na-ta-xa"}, timeout=slow)
         assert json.loads(data)["cached"] is True
         assert _digest(paths.db) == before
     finally:

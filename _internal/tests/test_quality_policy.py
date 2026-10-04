@@ -65,6 +65,9 @@ def test_quality_policy_fingerprints_every_critical_implementation_file() -> Non
     assert "recovery.py" in QUALITY_IMPLEMENTATION_FILES
     assert "runtime_contract.py" in QUALITY_IMPLEMENTATION_FILES
     assert "voice_catalog.py" in QUALITY_IMPLEMENTATION_FILES
+    # Chữ Studio đem đọc và đem chấm (tên theo luật, Việt hoá chữ Anh, bộ kiểm âm tiết).
+    for name in ("romanization.py", "english_vi.py", "vietnamese_syllable.py", "studio_names.py", "readaloud/names.py"):
+        assert name in QUALITY_IMPLEMENTATION_FILES
     assert "../pyproject.toml" in QUALITY_IMPLEMENTATION_FILES
     assert "../uv.lock" in QUALITY_IMPLEMENTATION_FILES
     assert len(quality_implementation_hash()) == 64

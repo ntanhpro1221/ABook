@@ -6,7 +6,7 @@ import pytest
 
 from abook import studio_names
 from abook.analysis import OllamaBookAnalyzer, _cmu_phrase_to_vietnamese
-from abook.asr import _passes_asr_content_thresholds, tone_folded_transcript_metrics
+from abook.asr import _passes_asr_content_thresholds, heard_as_english, soften_english_words, tone_folded_transcript_metrics
 from abook.config import build_settings
 from abook.database import LISTENER_PRONUNCIATION_SOURCE
 from abook.models import KEEP_ENGLISH_PRONUNCIATION_SOURCE, RULE_ROMANIZATION_PRONUNCIATION_SOURCE
@@ -203,12 +203,12 @@ HEARD = [("Kate", "Kết"), ("Kate", "Kat"), ("Shadow", "Sado"), ("Portal", "Por
 
 @pytest.mark.parametrize(("written", "heard"), HEARD)
 def test_whisper_spelling_of_a_kept_english_word_counts_as_that_word(written, heard) -> None:
-    assert studio_names.heard_as_english(written, heard)
+    assert heard_as_english(written, heard)
 
 
 @pytest.mark.parametrize(("written", "heard"), [("Kate", "Bà"), ("Kate", "Mai"), ("Portal", "Phố"), ("Shadow", "Đi")])
 def test_a_different_word_is_still_a_different_word(written, heard) -> None:
-    assert not studio_names.heard_as_english(written, heard)
+    assert not heard_as_english(written, heard)
 
 
 @pytest.mark.parametrize(("expected", "transcript"), [("Kate gật đầu.", "Kết gật đầu."), ("Shadow lao tới.", "Sado lao tới."),
@@ -224,4 +224,4 @@ def test_soft_matching_never_rescues_a_wrong_word() -> None:
     asr = build_settings()["asr"]
     similarity, wer, _evidence = tone_folded_transcript_metrics("Kate gật đầu.", "Bà gật đầu.")
     assert not _passes_asr_content_thresholds(True, similarity, wer, min_similarity=asr["min_similarity"], max_wer=asr["max_wer"])
-    assert studio_names.soften_english_words("ra lao", "ra lao") == "ra lao", "Vietnamese words are never treated as English"
+    assert soften_english_words("ra lao", "ra lao") == "ra lao", "Vietnamese words are never treated as English"
