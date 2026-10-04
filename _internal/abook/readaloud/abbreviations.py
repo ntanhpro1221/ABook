@@ -126,7 +126,7 @@ def read_shouted_honorifics(toks: list[str], out: list[str], origin: str | None)
 
 
 TITLES = {"mr": "mister", "mrs": "missus", "ms": "miss", "dr": "doctor", "st": "saint"}  # danh xưng viết tắt trước tên: đọc đủ chữ Anh (gold_spec: "mr." là "mister")
-VIETNAMISED_TITLES = {"mr": "mít-tơ", "mrs": "mít-xịt", "ms": "mít"}  # giọng KHÔNG nói được tiếng Anh (chủ sách 04-10: Mrs. "mít-xịt", Ms. "mít"; "mít-tơ" theo cùng kiểu, chưa có ca chủ sách); Dr. / St. qua `names.english_reading` ("doctor" là ca chủ sách "đóc-tờ")
+VIETNAMISED_TITLES = {"mr": "mít-tơ", "mrs": "mít-xịt", "ms": "mít", "dr": "đốc-tơ"}  # giọng KHÔNG nói được tiếng Anh (chủ sách 04-10: Mr. "mít-tơ", Mrs. "mít-xịt", Ms. "mít", Dr. "đốc-tơ"); St. qua `names.english_reading`
 TITLE_NEEDS_NAME = frozenset(("dr", "st"))  # "Dr." / "St." chỉ là danh xưng khi liền trước một tên viết hoa ("Dr. Stone", "St. Louis"); "Mr." / "Ms." / "Mrs." thì luôn
 TITLE_GLUED = re.compile(r"(mrs|mr|ms|dr|st)\.(?=[^\W\d_])", re.IGNORECASE)  # "mr.lyle": dấu chấm dính liền tên
 TITLE_OPENERS = "\"'“‘([«"
