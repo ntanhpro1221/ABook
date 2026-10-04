@@ -2357,3 +2357,27 @@ Mỗi pha xong: ghi số vào đây, đổi tham số trong app theo kết quả
   - Bài danh mục được gán nhãn lại, rồi mới đến thước nghe (sau kết quả oracle thứ Bảy).
   - Chưa đổi gì trong app ở bước này.
 - **Chi phí ghi lại:** giây/bài trên CPU, cỡ model.
+
+**KẾT QUẢ (04-10 21:0x; `results/track_embeddings.txt`; 470 trích đoạn nhạc phim + 1.802 bài DEAM):** **MERT KHÔNG THẮNG.**
+
+| Phép đo | CLAP | MERT-v1-95M | chênh |
+|---|---|---|---|
+| nhạc phim → DEAM, V | −0,120 | −0,281 | −0,161 |
+| nhạc phim → DEAM, E | +0,503 | +0,504 | +0,001 |
+| DEAM → nhạc phim, V | −0,184 | −0,081 | +0,103 |
+| DEAM → nhạc phim, E | +0,658 | +0,624 | −0,034 |
+| nhạc phim CV5, T (trong-miền) | +0,845 | +0,837 | −0,008 |
+
+- **Phát hiện chính:** vui/buồn học từ bộ này đoán bộ kia ra tương quan ÂM với CẢ HAI loại nhúng.
+  - Năng lượng thì chuyển tốt (0,50–0,66).
+  - Vui/buồn của nhạc gắn chặt với từng kho (nhạc phim cổ điển so pop / rock của DEAM): mỗi kho có "nghĩa" vui/buồn riêng
+    trong không gian nhúng. Đổi sang nhúng mạnh hơn không gỡ được.
+  - Khớp bài học 02-10 (ridge học nhạc phim, AUC "Somber" 0,34 ngược chiều).
+- **Hệ quả cho nhãn bài:**
+  - Phần âm của thầy / trò giữ CLAP. MERT tốn 5 giây/bài CPU, không đáng.
+  - Vui/buồn của bài trong danh mục đáng tin chủ yếu nhờ phần CHỮ của thầy (người đọc mô tả bài).
+  - Bài ít chữ (OGA / FreePD / Scott Buckley) và nhạc người dùng tự nhập có vui/buồn yếu nhất.
+  - Hướng đáng thử (ghi trước riêng nếu làm):
+    - (a) model nghe có hiểu ngữ nghĩa (Music Flamingo / Omni-7B chấm V) cho bài ít chữ, trên Mac;
+    - (b) cho chọn bài dựa vào E / T nhiều hơn và V ít hơn khi bài thiếu chữ (trọng số theo độ tin cậy V của bài).
+- Kết quả oracle thứ Bảy 10-10 vẫn quyết thứ tự ưu tiên (đoạn hay bài).
