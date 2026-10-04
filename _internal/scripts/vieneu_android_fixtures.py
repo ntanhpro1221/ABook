@@ -285,6 +285,13 @@ PARAGRAPHS = [
     "Đi，nhà ta. 734：Chúng ta nên làm gì？ Xong！ Thế。",
     "Tên <game> <50/50>. Nghĩ <mình vẫn ổn mà, chỉ hơi mệt sau một ngày dài…thôi kệ> hết. < Thật Tuyệt vời. Còn x < y.",
     "Ý tôi chỉ có vậy.”(GM) xong. “Ahhhh…Em hiểu rồi…Senpai.” Thế chiến II—thời kỳ. Bất lợi III】, DP?”…Tốn 20 DP.",
+    # Ký hiệu đọc theo ngữ cảnh (abook/readaloud/symbols.py): bậc 0 (im / ngắt) và bậc 1 (gạch chéo, tiền, độ, nhân, mũi tên, tăng giảm, sao, giới tính).
+    "Anh · em · chúng ta cùng đi. Số 2^10 là 1024, còn ^ lẻ loi thì im. Nếu a < b thì 3 > 2. Số #7 và # đơn độc. Gửi thư tới nam@example.com hoặc nhắn @ đây. Chửi thề kiểu !@#$% cho vui. Cậu cười (^_^) rồi (°ω°) và (=_=) xong. Chuyện hay === hết phần một === rồi. Cô gọi ☎ 0912345678 ngay.",
+    "Hôm nay ngày 5/3 trời đẹp, sinh nhật 12/10 của cô, thứ Hai 3/9 nữa. Mùng 5/3 vui, hạn nộp 15/8 nhé, ngày 2/9/2026 và tỉ lệ 5/3. Tối đa 3/5 rồi. HP 5813/5813 và 15/8 nữa.",
+    "Ngày 3/9 và tỉ lệ 1/3 và 10 người/ngày. Giá $5, 100$ và 30°C. Điểm tăng 2 × 3 lần, 4x3 là mười hai, x5 mạnh hơn. Nhiệt độ -5 độ, từ 7 – 8cm, 3 -> 5 người, A -> B -> C. Hạng 4★ và ★★★☆☆ và ★5,0.",
+    "Nhận được [Quặng sắt x4] và R-Lọ mana x10, rồi 1x Cuộn phép. Chia tiền 7:3 nhé. Hai người đấu 1:1 ở sân sau, rồi đấu 1-1 tiếp. Kèo cược 3.17:1 là cao. Độ thiện cảm: -20, rồi -50% Nhanh nhẹn, [Sức mạnh -5], Mất thêm -15%. Điểm Lv.-1 hiện ra.",
+    "#KHÔNG là thẻ, S#.1 mở màn. Mục Q&A, ban nhạc S&M, kiếm & khiên. Kiếm + khiên thì hợp, +Hỏa cầu. Thầy giáo > Học trò > Sơ sinh, 5 > 3. Vương đô = Thủ đô, 2 + 3 = 5, nhìn =)) xong. Xem tại https://example.org/abc?x=1 nhé.",
+    "★★☆ -> ★★★ rồi. Tộc: Elf ♀, giới: ♂, Ayame♀ xong. Tấn công (↑1), phòng thủ ▲(0.15). Boost 3x, 100x cấp độ, 0.5x tốc độ. Aki × Rin là một cặp, Bảng Nhiệm Vụ × Nhiệm Vụ Phụ mở ra, 3 × 4. Cô ấy ≠ chị ta.",
 ]
 
 # Paragraphs read with a book origin (abook/readaloud/names.py): Japanese / Korean names read by the romanization rules, English names and Vietnamese

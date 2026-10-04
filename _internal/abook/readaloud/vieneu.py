@@ -24,7 +24,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable
 
-from . import abbreviations, names, shouts
+from . import abbreviations, names, shouts, symbols
 from .model import Synthesis, Voice, VoiceError
 
 PREFIX = "vieneu"
@@ -53,10 +53,7 @@ ANGLE_OPEN = "<《〈"
 ANGLE_CLOSE = ">》〉"
 ANGLE_REACH = 24  # ngoặc nhọn mở và đóng cách nhau tối đa bấy nhiêu chữ hiện (lời nghĩ trong <...> có thể dài cả câu)
 PUNCT_MARKS = ".,;:!?…"
-FRACTION = re.compile(r"(?<![\w/.,-])([1-9])/([2-9])(?![\w/-]|[.,][0-9])")  # 1/3, 3/5: một phần ba (sea-g2p đọc "một trên ba"); 180/300 là thanh chỉ số: để "trên"
 RANGE = re.compile(r"(?<![\w/.,-])([0-9]{1,4})((?:-[0-9]{1,4})+)(?![\w/-]|[.,][0-9])")  # 3-4000, 1-1, 1-3-1
-TIMES = re.compile(r"(?<![\w])[x×]([0-9]+)(?![\w])")  # x2: nhân hai
-DOLLARS = re.compile(r"\$\s?([0-9]+(?:[.,][0-9]+)*)")  # $5: năm đô la (sea-g2p đọc "u s d" rời)
 EMOTICON = re.compile(r"(?:[:;=]['\-^o]?[()dDpP3vV/\|*]+|>[:;=]['\-^o]?[()]+|<3+|-_-|\^_*\^|[Tt]_[Tt]|>_<|orz|OTZ)")
 ARROW_FORWARD = re.compile(r"(?<![<=-])(?:-+|=+)>|[→⇒➜➡➔⟶⟹]")  # "->", "-->", "=>", "→": sea-g2p đọc "sang" / "đến" / "suy ra"; "<->" (hai chiều) để nguyên
 ARROW_BACK = re.compile(r"<(?:-+|={2,})(?!>)|[←⇐⟵⟸]")  # "<-", "<--", "←": không có cách đọc thành lời (sea-g2p đọc "nhỏ hơn"): bỏ; "<=" là so sánh, để nguyên
@@ -64,6 +61,8 @@ ARROW_STATS = frozenset("hp mp sp exp xp lv lvl level cấp hạng rank điểm 
 ARROW_COUNTED = frozenset("trang chương tập bước phần mục tầng ngày tháng năm hồi bài page step chapter từ tuyến đường bay".split())  # đánh số / chỉ đường: mũi tên là "đến"
 ARROW_TIME = re.compile(r"[0-9]{1,2}(?:[hHgG][0-9]{0,2}|:[0-9]{2})")  # 8h, 8h30, 10g, 8:00
 ARROW_TIME_WORDS = frozenset("giờ sáng trưa chiều tối khuya".split())
+RANGE_CODES = frozenset("lớp phòng tầng combo feed số thắng thua truyện".split())  # "lớp 1-7", "phòng 4-13": mã, hai số đọc liền không có "đến"
+RANGE_RATIO = frozenset("tỉ tỷ lệ".split())  # "tỉ lệ 3-7"
 GLUED = re.compile(r"((?:\.{2,}|[…—–])+)")  # chỗ dính liền hai từ trong một chữ hiện (tách để đọc từng từ, mảnh dấu giữ nguyên)
 STUTTER_ONSETS = ("ngh", "ng", "nh", "kh", "ch", "gh", "gi", "th", "tr", "ph", "qu")  # phụ âm đầu ghép của tiếng Việt: nói lắp "C-Chuyện" là "chờ… chuyện"
 STUTTER_SOUND = {"k": "c", "w": "v", "z": "d", "j": "gi", "f": "ph"}
@@ -185,8 +184,9 @@ def _core(token: str) -> str:
 def _arrow_says(plain: list[str], index: int, token: str, match: re.Match) -> str:
     """Mũi tên đổi giá trị / trạng thái ("HP: 1780 --> 1940", "Lv 5 -> Lv 6", "Cân lực : 100 ⇒ 200") đọc "thành"; chỉ hướng đi / khoảng / trình tự ("Tokyo -> Osaka", "8h -> 10h",
     "Bước 1 -> Bước 2", "trang 3 -> 5") đọc "đến" (chủ sách 04-10: "tùy ngữ cảnh"). Xét hai vế (phần cùng chữ hay chữ liền trước / sau) và tối đa 3 chữ đứng trước vế trái (trong cùng câu):
-    nhãn chỉ số ("HP", "Lv", "cấp", "điểm", "giá"...) hay vế trái / phải là chỉ số -> thành; giờ giấc ("8h", "8:00", "giờ"), danh từ đánh số / chỉ đường ("trang", "bước", "từ", "tuyến"...) -> đến; dấu ":"
-    trong cùng câu (ô trạng thái đang đổi: "Nghề: A -> B") -> thành; hai tên riêng viết hoa một chữ ("Tokyo -> Osaka") -> đến; còn lại (không rõ) -> thành."""
+    nhãn chỉ số ("HP", "Lv", "cấp", "điểm", "giá"...) hay vế trái / phải là chỉ số -> thành; hai mũi tên trở lên trong câu ("A -> B -> C": chuỗi bước) -> rồi; giờ giấc ("8h", "8:00", "giờ"), danh từ đánh số / chỉ đường
+    ("trang", "bước", "từ", "tuyến"...) -> đến; dấu ":" trong cùng câu (ô trạng thái đang đổi: "Nghề: A -> B") -> thành; hai tên riêng viết hoa một chữ ("Tokyo -> Osaka") -> đến; vế phải bắt đầu chữ thường
+    ("tốn công vô ích -> tạ": kết quả) -> nên; còn lại (không rõ) -> thành."""
     left = _core(token[:match.start()])
     left_at = index if left else index - 1
     if not left and left_at >= 0:
@@ -204,8 +204,14 @@ def _arrow_says(plain: list[str], index: int, token: str, match: re.Match) -> st
         colon = colon or word.endswith(":")
         labels.append(_core(word).lower())
     stat = lambda word: word.lower() in ARROW_STATS or word.lower().rstrip("0123456789") in ARROW_STATS  # "Lv5" -> "lv"
-    if any(stat(word) for word in labels) or stat(left) or stat(right):
+    scale = lambda at: 0 <= at < len(plain) and any(char in "★☆" for char in plain[at])  # "★★★☆☆ -> ★★★★☆": thang sao đổi
+    if any(stat(word) for word in labels) or stat(left) or stat(right) or scale(left_at) or scale(right_at):
         return "thành"
+    numeric = lambda word: any(char.isdigit() for char in word)
+    if (numeric(left) or numeric(right)) and any(":" in word for word in plain[max(0, index - 6):index]):
+        return "thành"  # "Thể lực : 120 ⇒ 240 ⇒ 480": bảng chỉ số đang đổi
+    if _arrow_count(plain, index) >= 2:
+        return "rồi"
     when = lambda word: bool(ARROW_TIME.fullmatch(word)) or word.lower() in ARROW_TIME_WORDS
     if any(word in ARROW_COUNTED for word in labels) or when(left) or when(right):
         return "đến"
@@ -213,15 +219,31 @@ def _arrow_says(plain: list[str], index: int, token: str, match: re.Match) -> st
         return "thành"
     named = lambda word: len(word) >= 3 and word.isalpha() and word[0].isupper() and word[1:].islower()
     beside = [plain[at] if 0 <= at < len(plain) else "" for at in (left_at - 1, right_at + 1)]  # tên nhiều chữ ("Tân Thủ -> Pháp Sư") không chắc là nơi chốn
-    return "đến" if named(left) and named(right) and not any(named(_core(word)) for word in beside) else "thành"
+    if named(left) and named(right) and not any(named(_core(word)) for word in beside):
+        return "đến"
+    clause = sum(1 for word in plain[max(0, index - 4):index] if _core(word).isalpha()) >= 3  # vế trước đủ dài để là một mệnh đề ("tốn công vô ích -> tạ")
+    return "nên" if right[:1].islower() and clause else "thành"
 
 
-def _arrow(token: str, at_start: bool, says: Callable[[re.Match], str]) -> str:
+def _arrow_count(plain: list[str], index: int) -> int:
+    """Số mũi tên quanh `plain[index]` (tới 4 chữ mỗi bên, không qua chữ hết câu): từ hai trở lên là chuỗi bước ("A -> B -> C"), hai mũi tên xa nhau ("64 -> 79, Nhanh nhẹn 59 -> 74") thì không."""
+    ends = lambda word: (bool(word.rstrip(CLOSERS)) and word.rstrip(CLOSERS)[-1] in SENTENCE_END + ",;") or word.lower() in ("và", "hoặc", "and", "or")  # hết câu / vế: mũi tên hai bên là hai việc riêng
+    first, last = index, index
+    while first > max(0, index - 4) and not ends(plain[first - 1]):
+        first -= 1
+    while last < min(len(plain) - 1, index + 4) and not ends(plain[last]):
+        last += 1
+    return len(ARROW_FORWARD.findall(" ".join(plain[first:last + 1])))
+
+
+def _arrow(token: str, at_start: bool, says: Callable[[re.Match], str], at_end: bool = False) -> str:
     def replace(match: re.Match, word: str) -> str:
         left = token[match.start() - 1] if match.start() else ""
         right = token[match.end()] if match.end() < len(token) else ""
         if not left and at_start:
             word = ""  # "-> Bước tiếp": mũi tên đầu dòng chỉ là dấu đầu mục
+        if at_end and not token[match.end():].strip(CLOSERS + PUNCT_MARKS + "〙】」』〕"):
+            word = ""  # "Khu Hẻm Tử Thần→〙": mũi tên cuối đoạn chỉ về phía không có gì
         if word:
             return (" " if left and (left.isalnum() or left in "%)]”’") else "") + word + (" " if right and (right.isalnum() or right in "$([“‘") else "")
         return " " if left.isalnum() and right.isalnum() else ""
@@ -237,7 +259,7 @@ def _arrows(out: list[str], toks: list[str] | None = None) -> None:
         if not any(char in token for char in "<>=→⇒➜➡➔⟶⟹←⇐⟵⟸"):
             continue
         before = out[index - 1].rstrip(CLOSERS) if index else ""
-        out[index] = _arrow(token, not before or before[-1] in SENTENCE_END, lambda match: _arrow_says(plain, index, token, match))
+        out[index] = _arrow(token, not before or before[-1] in SENTENCE_END, lambda match: _arrow_says(plain, index, token, match), index + 1 == len(out))
 
 
 def _angle(out: list[str]) -> None:
@@ -248,11 +270,14 @@ def _angle(out: list[str]) -> None:
         body = out[index].lstrip(OPENERS)
         start = len(out[index]) - len(body)
         nxt = out[index + 1].lstrip(OPENERS) if index + 1 < len(out) else ""
-        bracket = body[1:2].isalpha() or (body == "<" and nxt[:1].isalpha()) or (body[1:2].isdigit() and ">" in body[2:])  # "<50/50>": số trong ngoặc phải đóng ngay trong chữ này ("<3" là trái tim)
-        if not body or body[0] not in ANGLE_OPEN or (body[0] == "<" and not bracket):
+        run = len(body) - len(body.lstrip(ANGLE_OPEN)) if body else 0
+        inner = body[run:]  # "<<Ray Hawk>>" cũng là ngoặc: chữ sau dấu mở
+        bracket = inner[:1].isalpha() or (inner[:1] in "\"“'‘" and inner[1:2].isalpha()) or (not inner and nxt[:1].isalpha()) or (inner[:1].isdigit() and ">" in inner[1:])  # "<50/50>": số trong ngoặc phải đóng ngay trong chữ này ("<3" là trái tim)
+        before = out[index - 1].strip(OPENERS + PUNCT_MARKS + CLOSERS) if index else ""
+        compare = body == "<" and all(len(word) == 1 or word.isdigit() for word in (before, nxt.strip(PUNCT_MARKS + CLOSERS)) if word) and bool(before) and bool(nxt)  # "a < b", "x < 10": so sánh, không phải ngoặc
+        if not body or body[0] not in ANGLE_OPEN or (body[0] == "<" and (not bracket or compare)):
             index += 1
             continue
-        run = len(body) - len(body.lstrip(ANGLE_OPEN))
         end = None
         for last in range(index, min(len(out), index + ANGLE_REACH)):
             text = out[last]
@@ -263,37 +288,32 @@ def _angle(out: list[str]) -> None:
             if end:
                 break
         if end is None:
-            if body[0] == "<" and (body[1:2].isalpha() or nxt[:1].isupper()):  # "< Thật Tuyệt vời" không có ngoặc đóng: dấu mở chỉ là trang trí
+            if body[0] == "<" and (inner[:1].isalpha() or nxt[:1].isupper()):  # "< Thật Tuyệt vời" không có ngoặc đóng: dấu mở chỉ là trang trí
                 out[index] = out[index][:start] + out[index][start + run:]
             index += 1
             continue
         last, at = end
         size = len(out[last][at:]) - len(out[last][at:].lstrip(ANGLE_CLOSE))
-        out[last] = out[last][:at] + out[last][at + size:]
+        head, rest = out[last][:at], out[last][at + size:]  # rest: phần còn lại của chữ sau ngoặc đóng ("Star〉[Cầu" -> "[Cầu")
+        out[last] = head + (" " if head[-1:].isalnum() and rest[:1].isalnum() else "") + rest  # hai chữ dính hai bên ngoặc ("《Water》x1000") được tách
         out[index] = out[index][:start] + out[index][start + run:]
         if last > index:  # tên nhiều chữ: dấu phẩy trước và sau để ngắt
-            rest = out[last][at:]  # phần còn lại của chữ sau ngoặc đóng ("Star〉[Cầu" -> "[Cầu")
-            if at and out[last][at - 1].isalnum() and rest[:1] not in tuple(PUNCT_MARKS) and (rest.lstrip(CLOSERS) or last + 1 < len(out)):
-                out[last] = out[last][:at] + "," + rest
+            if head[-1:].isalnum() and rest[:1] not in tuple(PUNCT_MARKS) and (rest.lstrip(CLOSERS) or last + 1 < len(out)):
+                out[last] = head + "," + rest
             core = out[index - 1].rstrip(CLOSERS) if index else ""
             if core and core[-1].isalnum():
                 out[index - 1] = core + "," + out[index - 1][len(core):]
         index = last + 1
 
 
-def _slashes(out: list[str]) -> None:
-    """"Đóng băng / yếu": gạch chéo đứng riêng giữa hai từ chữ là dấu phẩy gắn vào từ trước (sea-g2p đọc "trên"); giữa hai số (3/5, 15 / 8) để nguyên."""
-    for index in range(1, len(out) - 1):
-        after = out[index + 1].lstrip(OPENERS)
-        if out[index] == "/" and out[index - 1][-1:].isalpha() and after[:1].isalpha():
-            out[index - 1] += ","
-            out[index] = ""
-
-
-def _range(match: re.Match) -> str:
+def _range(match: re.Match, mode: str = "") -> str:
     parts = [match.group(1)] + match.group(2).split("-")[1:]
     if len(parts) == 2:
         first, second = parts
+        if mode == "duel" and first == second == "1":
+            return "1 chọi 1"  # "đấu 1-1": một chọi một
+        if mode == "join":
+            return f"{first} {second}"  # "lớp 1-7", "tỉ lệ 3-7": mã / tỉ số, không phải khoảng
         if int(first) < int(second):
             return f"{first} đến {second}"  # sea-g2p bỏ mất "đến" ở "3-4000"
         return f"{first} {second}" if first == second or (len(first) == 1 and len(second) == 1) else match.group()  # "1-1" (lớp), "3-1" (tỉ số): hai số liền
@@ -302,16 +322,27 @@ def _range(match: re.Match) -> str:
     return match.group()  # ngày "01-10-2026", điện thoại "090-123-4567"
 
 
-def _numbers(out: list[str]) -> None:
-    """Số mà sea-g2p đọc chưa đúng ý người nghe: phân số bé "1/3" là "một phần ba" (không phải "một trên ba"; "180/300" là thanh chỉ số, giữ "trên"), "3-4000" là "ba đến bốn nghìn",
-    "1-1" / "1-3-1" là các số liền, "x2" là "nhân hai", "$5" là "năm đô la"."""
+def _range_mode(plain: list[str], index: int) -> str:
+    """Chữ đứng trước một dãy "a-b" nói nó là khoảng ("" -> "đến"), mã / tỉ số ("join": hai số liền), hay trận đấu ("duel")."""
+    before: list[str] = []
+    for word in plain[max(0, index - 8):index][::-1]:
+        if word.rstrip(CLOSERS)[-1:] in tuple(SENTENCE_END):
+            break
+        before.append(symbols.core(word).lower())
+    if set(before[:1]) & RANGE_CODES or set(before) & RANGE_RATIO or (not before and plain[index].endswith(".")):
+        return "join"
+    return "duel" if set(before[:3]) & symbols.DUEL_WORDS else ""
+
+
+def _numbers(out: list[str], toks: list[str] | None = None) -> None:
+    """Số mà sea-g2p đọc chưa đúng ý người nghe: "3-4000" là "ba đến bốn nghìn", "1-1" / "1-3-1" là các số liền ("lớp 1-7", "tỉ lệ 3-7" cũng liền, "đấu 1-1" là "một chọi một"). Phân số, "x2", "$5"
+    nằm ở `symbols`."""
+    plain = toks if toks is not None and len(toks) == len(out) else out
     for index, token in enumerate(out):
         if not any(char.isdigit() for char in token):
             continue
-        token = FRACTION.sub(lambda m: f"{m.group(1)} phần {m.group(2)}" if int(m.group(1)) < int(m.group(2)) else m.group(), token)
-        token = RANGE.sub(_range, token)
-        token = TIMES.sub(lambda m: f"nhân {m.group(1)}", token)
-        out[index] = DOLLARS.sub(lambda m: f"{m.group(1)} đô la", token)
+        mode = _range_mode(plain, index) if RANGE.search(token) else ""
+        out[index] = RANGE.sub(lambda match: _range(match, mode), token)
 
 
 def _emoticons(out: list[str]) -> None:
@@ -435,19 +466,20 @@ def _frames(out: list[str]) -> None:
 def reading_marks(out: list[str], toks: list[str] | None = None) -> None:
     """Dấu câu / ký hiệu mà sea-g2p đọc sai thành lời (nó đọc "~" là "khoảng", "500,000" là "năm trăm"): sửa tại chỗ, số chữ không đổi. `toks` là chữ hiện tương ứng với `out` (cho `_arrows` xét ngữ cảnh)."""
     _fullwidth(out)
+    symbols.prepare(out)
     _emoticons(out)
     _arrows(out, toks)
     _tildes(out)
     for index, token in enumerate(out):
         out[index] = THOUSANDS.sub(lambda match: match.group().replace(",", ""), token)
-    _numbers(out)
+    _numbers(out, toks)
     _angle(out)
-    _slashes(out)
+    symbols.read_symbols(toks, out)
     _dashes(out)
     _frames(out)
     _stars(out)
-    for index, token in enumerate(out):  # 《》〈〉 còn sót (không có cặp) cũng chỉ là khung
-        out[index] = token.translate({ord(c): None for c in ANGLE_OPEN[1:] + ANGLE_CLOSE[1:]})
+    for index, token in enumerate(out):  # 《》〈〉 còn sót (không có cặp) cũng chỉ là khung; hai chữ dính hai bên khung được tách ("có《Cỏ sạch》là")
+        out[index] = re.sub("[" + ANGLE_OPEN[1:] + ANGLE_CLOSE[1:] + "]+", lambda match: " " if match.start() and token[match.start() - 1].isalnum() and token[match.end():][:1].isalnum() else "", token)
 
 
 def spoken_tokens(toks: list[str], origin: str | None = None, speaks_english: bool = True) -> list[str]:

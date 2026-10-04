@@ -3,6 +3,7 @@ package vn.abook.player.vieneu
 import vn.abook.player.readaloud.Abbreviations
 import vn.abook.player.readaloud.Names
 import vn.abook.player.readaloud.Shouts
+import vn.abook.player.readaloud.Symbols
 import vn.abook.player.readaloud.WordTokens
 import java.text.Normalizer
 import java.util.Locale
@@ -36,12 +37,11 @@ object VieneuUnits {
     private const val PUNCT_MARKS = ".,;:!?…"
     private val TILDES = Regex("~+")
     private const val W = """\p{L}\p{N}_"""
-    /** 1/3, 3/5: một phần ba (sea-g2p đọc "một trên ba"); 180/300 là thanh chỉ số: để "trên". */
-    private val FRACTION = Regex("""(?<![$W/.,-])([1-9])/([2-9])(?![$W/-]|[.,][0-9])""")
     /** 3-4000, 1-1, 1-3-1. */
     private val RANGE = Regex("""(?<![$W/.,-])([0-9]{1,4})((?:-[0-9]{1,4})+)(?![$W/-]|[.,][0-9])""")
-    private val TIMES = Regex("""(?<![$W])[x×]([0-9]+)(?![$W])""")
-    private val DOLLARS = Regex("""[$]\s?([0-9]+(?:[.,][0-9]+)*)""")
+    /** "lớp 1-7", "phòng 4-13": a code, the two numbers are read in a row without "đến". */
+    private val RANGE_CODES = "lớp phòng tầng combo feed số thắng thua truyện".split(" ").toSet()
+    private val RANGE_RATIO = "tỉ tỷ lệ".split(" ").toSet()
     private val EMOTICON = Regex("""(?:[:;=]['\-^o]?[()dDpP3vV/\\|*]+|>[:;=]['\-^o]?[()]+|<3+|-_-|\^_*\^|[Tt]_[Tt]|>_<|orz|OTZ)""")
     private val STUTTER_ONSETS = listOf("ngh", "ng", "nh", "kh", "ch", "gh", "gi", "th", "tr", "ph", "qu")
     private val STUTTER_SOUND = mapOf("k" to "c", "w" to "v", "z" to "d", "j" to "gi", "f" to "ph")
@@ -173,21 +173,41 @@ object VieneuUnits {
             back--
         }
         fun stat(word: String) = word.lowercase().let { it in ARROW_STATS || it.trimEnd { c -> c in '0'..'9' } in ARROW_STATS } // "Lv5" -> "lv"
-        if (labels.any { stat(it) } || stat(left) || stat(right)) return "thành"
+        fun scale(at: Int) = at in plain.indices && plain[at].any { it == '★' || it == '☆' } // "★★★☆☆ -> ★★★★☆": a star scale changes
+        if (labels.any { stat(it) } || stat(left) || stat(right) || scale(leftAt) || scale(rightAt)) return "thành"
+        fun numeric(word: String) = word.any { it.isDigit() }
+        if ((numeric(left) || numeric(right)) && plain.subList(maxOf(0, index - 6), index).any { ':' in it }) return "thành" // "Thể lực : 120 ⇒ 240 ⇒ 480": a stat table changing
+        if (arrowCount(plain, index) >= 2) return "rồi"
         fun time(word: String) = ARROW_TIME.matches(word) || word.lowercase() in ARROW_TIME_WORDS
         if (labels.any { it in ARROW_COUNTED } || time(left) || time(right)) return "đến"
         if (colon) return "thành"
         fun named(word: String) = word.length >= 3 && word.all { it.isLetter() } && word[0].isUpperCase() && word.drop(1).all { it.isLowerCase() }
         val beside = listOf(leftAt - 1, rightAt + 1).map { if (it in plain.indices) plain[it] else "" } // a name of several words ("Tân Thủ -> Pháp Sư") is not surely a place
-        return if (named(left) && named(right) && beside.none { named(core(it)) }) "đến" else "thành"
+        if (named(left) && named(right) && beside.none { named(core(it)) }) return "đến"
+        val clause = plain.subList(maxOf(0, index - 4), index).count { core(it).let { c -> c.isNotEmpty() && c.all { ch -> ch.isLetter() } } } >= 3 // the left side is long enough to be a clause
+        return if (right.firstOrNull()?.isLowerCase() == true && clause) "nên" else "thành"
     }
 
-    private fun arrow(original: String, atStart: Boolean, says: (MatchResult) -> String): String {
+    /** Arrows around `plain[index]` (up to 4 words each side, not across a word that ends a sentence / clause): two or more is a chain of steps ("A -> B -> C") - `_arrow_count`. */
+    private fun arrowCount(plain: List<String>, index: Int): Int {
+        fun ends(word: String): Boolean {
+            val core = word.trimEnd { it in CLOSERS }
+            return (core.isNotEmpty() && core.last() in "$SENTENCE_END,;") || word.lowercase() in setOf("và", "hoặc", "and", "or")
+        }
+        var first = index
+        var last = index
+        while (first > maxOf(0, index - 4) && !ends(plain[first - 1])) first--
+        while (last < minOf(plain.size - 1, index + 4) && !ends(plain[last])) last++
+        return ARROW_FORWARD.findAll(plain.subList(first, last + 1).joinToString(" ")).count()
+    }
+
+    private fun arrow(original: String, atStart: Boolean, atEnd: Boolean = false, says: (MatchResult) -> String): String {
         var token = original
         fun replace(match: MatchResult, wordIn: String): String {
             val left = token.getOrNull(match.range.first - 1)
             val right = token.getOrNull(match.range.last + 1)
-            val word = if (left == null && atStart) "" else wordIn // "-> Bước tiếp": an arrow opening a line is only a bullet
+            var word = if (left == null && atStart) "" else wordIn // "-> Bước tiếp": an arrow opening a line is only a bullet
+            if (atEnd && token.substring(match.range.last + 1).trim { it in CLOSERS || it in PUNCT_MARKS || it in "〙】」』〕" }.isEmpty()) word = "" // "Khu Hẻm Tử Thần→〙": an arrow ending the paragraph points to nothing
             if (word.isNotEmpty()) return (if (left != null && (left.isLetterOrDigit() || left in "%)]”’")) " " else "") + word + (if (right != null && (right.isLetterOrDigit() || right in "$([“‘")) " " else "")
             return if (left != null && left.isLetterOrDigit() && right != null && right.isLetterOrDigit()) " " else ""
         }
@@ -205,7 +225,7 @@ object VieneuUnits {
             val token = out[index]
             if (token.none { it in "<>=→⇒➜➡➔⟶⟹←⇐⟵⟸" }) continue
             val before = if (index > 0) out[index - 1].trimEnd { it in CLOSERS } else ""
-            out[index] = arrow(token, before.isEmpty() || before.last() in SENTENCE_END) { arrowSays(plain, index, token, it) }
+            out[index] = arrow(token, before.isEmpty() || before.last() in SENTENCE_END, index + 1 == out.size) { arrowSays(plain, index, token, it) }
         }
     }
 
@@ -219,13 +239,16 @@ object VieneuUnits {
             val body = out[index].trimStart { it in OPENERS }
             val start = out[index].length - body.length
             val next = if (index + 1 < out.size) out[index + 1].trimStart { it in OPENERS } else ""
-            val bracket = body.getOrNull(1)?.isLetter() == true || (body == "<" && next.firstOrNull()?.isLetter() == true) ||
-                (body.getOrNull(1)?.isDigit() == true && '>' in body.drop(2)) // "<50/50>": số trong ngoặc phải đóng ngay trong chữ này ("<3" là trái tim)
-            if (body.isEmpty() || body[0] !in ANGLE_OPEN || (body[0] == '<' && !bracket)) {
+            val run = if (body.isEmpty()) 0 else body.length - body.trimStart { it in ANGLE_OPEN }.length
+            val inner = body.substring(run) // "<<Ray Hawk>>" is a bracket too: the word after the opening marks
+            val bracket = inner.firstOrNull()?.isLetter() == true || (inner.firstOrNull()?.let { it in "\"“'‘" } == true && inner.getOrNull(1)?.isLetter() == true) ||
+                (inner.isEmpty() && next.firstOrNull()?.isLetter() == true) || (inner.firstOrNull()?.isDigit() == true && '>' in inner.drop(1)) // "<50/50>": số trong ngoặc phải đóng ngay trong chữ này ("<3" là trái tim)
+            val before = if (index > 0) out[index - 1].trim { it in OPENERS || it in PUNCT_MARKS || it in CLOSERS } else ""
+            val compare = body == "<" && listOf(before, next.trim { it in PUNCT_MARKS || it in CLOSERS }).filter { it.isNotEmpty() }.all { it.length == 1 || it.all { c -> c.isDigit() } } && before.isNotEmpty() && next.isNotEmpty() // "a < b", "x < 10": a comparison, not a bracket
+            if (body.isEmpty() || body[0] !in ANGLE_OPEN || (body[0] == '<' && (!bracket || compare))) {
                 index++
                 continue
             }
-            val run = body.length - body.trimStart { it in ANGLE_OPEN }.length
             var endToken = -1
             var endAt = -1
             var last = index
@@ -241,7 +264,7 @@ object VieneuUnits {
                 last++
             }
             if (endToken < 0) {
-                if (body[0] == '<' && (body.getOrNull(1)?.isLetter() == true || next.firstOrNull()?.isUpperCase() == true)) { // "< Thật Tuyệt vời" không có ngoặc đóng: dấu mở chỉ là trang trí
+                if (body[0] == '<' && (inner.firstOrNull()?.isLetter() == true || next.firstOrNull()?.isUpperCase() == true)) { // "< Thật Tuyệt vời" không có ngoặc đóng: dấu mở chỉ là trang trí
                     out[index] = out[index].substring(0, start) + out[index].substring(start + run)
                 }
                 index++
@@ -249,12 +272,13 @@ object VieneuUnits {
             }
             val tail = out[endToken].substring(endAt)
             val size = tail.length - tail.trimStart { it in ANGLE_CLOSE }.length
-            out[endToken] = out[endToken].substring(0, endAt) + out[endToken].substring(endAt + size)
+            val head = out[endToken].substring(0, endAt)
+            val rest = out[endToken].substring(endAt + size) // what is left of the word after the closing bracket ("Star〉[Cầu" -> "[Cầu")
+            out[endToken] = head + (if (head.lastOrNull()?.isLetterOrDigit() == true && rest.firstOrNull()?.isLetterOrDigit() == true) " " else "") + rest // two words glued on both sides of a bracket ("《Water》x1000") are split
             out[index] = out[index].substring(0, start) + out[index].substring(start + run)
             if (endToken > index) { // a name of several words: commas before and after
-                val rest = out[endToken].substring(endAt) // what is left of the word after the closing bracket ("Star〉[Cầu" -> "[Cầu")
-                if (endAt > 0 && out[endToken][endAt - 1].isLetterOrDigit() && rest.firstOrNull()?.let { it !in PUNCT_MARKS } != false &&
-                    (rest.trimStart { it in CLOSERS }.isNotEmpty() || endToken + 1 < out.size)) out[endToken] = out[endToken].substring(0, endAt) + "," + rest
+                if (head.lastOrNull()?.isLetterOrDigit() == true && rest.firstOrNull()?.let { it !in PUNCT_MARKS } != false &&
+                    (rest.trimStart { it in CLOSERS }.isNotEmpty() || endToken + 1 < out.size)) out[endToken] = "$head,$rest"
                 val core = if (index > 0) out[index - 1].trimEnd { it in CLOSERS } else ""
                 if (core.isNotEmpty() && core.last().isLetterOrDigit()) out[index - 1] = core + "," + out[index - 1].substring(core.length)
             }
@@ -262,21 +286,12 @@ object VieneuUnits {
         }
     }
 
-    /** "Đóng băng / yếu": a lone slash between two words is a comma on the word before (sea-g2p reads "trên"); between numbers it stays - `_slashes`. */
-    private fun slashes(out: MutableList<String>) {
-        for (index in 1 until out.size - 1) {
-            val after = out[index + 1].trimStart { it in OPENERS }
-            if (out[index] == "/" && out[index - 1].lastOrNull()?.isLetter() == true && after.firstOrNull()?.isLetter() == true) {
-                out[index - 1] = out[index - 1] + ","
-                out[index] = ""
-            }
-        }
-    }
-
-    private fun range(match: MatchResult): String {
+    private fun range(match: MatchResult, mode: String = ""): String {
         val parts = listOf(match.groupValues[1]) + match.groupValues[2].split("-").drop(1)
         if (parts.size == 2) {
             val (first, second) = parts
+            if (mode == "duel" && first == "1" && second == "1") return "1 chọi 1" // "đấu 1-1": một chọi một
+            if (mode == "join") return "$first $second" // "lớp 1-7", "tỉ lệ 3-7": a code / a score, not a range
             if (first.toInt() < second.toInt()) return "$first đến $second" // sea-g2p drops "đến" in "3-4000"
             return if (first == second || (first.length == 1 && second.length == 1)) "$first $second" else match.value // "1-1" (class), "3-1" (score): two numbers in a row
         }
@@ -284,14 +299,25 @@ object VieneuUnits {
         return match.value // a date "01-10-2026", a phone number "090-123-4567"
     }
 
-    /** Numbers sea-g2p reads differently from the listener's ear: small fractions "1/3" are "một phần ba", "3-4000" has its "đến", "1-1" / "1-3-1" are numbers in a row, "x2" is "nhân hai", "$5" is "năm đô la" - `_numbers`. */
-    private fun numbers(out: MutableList<String>) {
+    /** The word before a run "a-b" says what it is: a range ("" -> "đến"), a code / score ("join": two numbers in a row), or a duel ("duel") - `_range_mode`. */
+    private fun rangeMode(plain: List<String>, index: Int): String {
+        val before = ArrayList<String>()
+        for (word in plain.subList(maxOf(0, index - 8), index).reversed()) {
+            val last = word.trimEnd { it in CLOSERS }.lastOrNull()
+            if (last != null && last in SENTENCE_END) break
+            before.add(Symbols.core(word).lowercase())
+        }
+        if (before.take(1).any { it in RANGE_CODES } || before.any { it in RANGE_RATIO } || (before.isEmpty() && plain[index].endsWith("."))) return "join"
+        return if (before.take(3).any { it in Symbols.DUEL_WORDS }) "duel" else ""
+    }
+
+    /** Numbers sea-g2p reads differently from the listener's ear: "3-4000" has its "đến", "1-1" / "1-3-1" are numbers in a row ("lớp 1-7", "tỉ lệ 3-7" too, "đấu 1-1" is "một chọi một"). Fractions, "x2", "$5" are in [Symbols] - `_numbers`. */
+    private fun numbers(out: MutableList<String>, toks: List<String>? = null) {
+        val plain = if (toks != null && toks.size == out.size) toks else out
         for ((index, original) in out.withIndex()) {
             if (original.none { it.isDigit() }) continue
-            var token = FRACTION.replace(original) { m -> if (m.groupValues[1].toInt() < m.groupValues[2].toInt()) "${m.groupValues[1]} phần ${m.groupValues[2]}" else m.value }
-            token = RANGE.replace(token) { m -> range(m) }
-            token = TIMES.replace(token) { m -> "nhân ${m.groupValues[1]}" }
-            out[index] = DOLLARS.replace(token) { m -> "${m.groupValues[1]} đô la" }
+            val mode = if (RANGE.containsMatchIn(original)) rangeMode(plain, index) else ""
+            out[index] = RANGE.replace(original) { m -> range(m, mode) }
         }
     }
 
@@ -476,17 +502,23 @@ object VieneuUnits {
     /** Marks sea-g2p reads wrongly as words ("~" is "khoảng", "500,000" is "năm trăm"), fixed in place without changing the word count - `reading_marks`. */
     fun readingMarks(out: MutableList<String>, toks: List<String>? = null) {
         fullwidth(out)
+        Symbols.prepare(out)
         emoticons(out)
         arrows(out, toks)
         tildes(out)
         for (index in out.indices) out[index] = THOUSANDS.replace(out[index]) { it.value.replace(",", "") }
-        numbers(out)
+        numbers(out, toks)
         angle(out)
-        slashes(out)
+        Symbols.readSymbols(toks, out)
         dashes(out)
         frames(out)
         stars(out)
-        for (index in out.indices) out[index] = out[index].filterNot { it in ANGLE_OPEN.drop(1) || it in ANGLE_CLOSE.drop(1) } // leftover 《》〈〉 without a pair are only a frame
+        val leftover = ANGLE_OPEN.drop(1) + ANGLE_CLOSE.drop(1)
+        for ((index, token) in out.withIndex()) { // leftover 《》〈〉 without a pair are only a frame; two words glued on both sides of one are split ("có《Cỏ sạch》là")
+            out[index] = Regex("[" + leftover + "]+").replace(token) { m ->
+                if (m.range.first > 0 && token[m.range.first - 1].isLetterOrDigit() && token.getOrNull(m.range.last + 1)?.isLetterOrDigit() == true) " " else ""
+            }
+        }
     }
 
     /**
