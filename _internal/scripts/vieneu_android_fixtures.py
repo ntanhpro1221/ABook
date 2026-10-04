@@ -322,6 +322,8 @@ SOUND_PARAGRAPHS = [
     ("ONII-CHAN, ONII-CHAN LO LẮNG! “NEE-SAN!” và OPPA, ARIEL-SAMA.", "ja"),
     ("Mr. Lyle đến, Mrs. Smith, Ms. Lee và Dr. Stone. Mục tiêu của mr.lyle thôi, “Mr.Lyle” và (dr.Stone). St. Louis và Dr Stone. Main St. dài, Dr. nào.", None),
     ("HP: 1780 --> 1940. A -> B, C => D, E → F. 1780->1940 và A-->B. A <- B và C ← D, E<-F. -> Bước tiếp. A <-> B, x <= 5, a -> b <- c.", None),
+    # TN lượt 5: mũi tên "thành" (đổi giá trị) hay "đến" (hướng đi / khoảng / trình tự) tuỳ ngữ cảnh
+    ("Lv 5 -> Lv 6. Giá 100 -> 200. Cấp D => C. Nghề: Tân Thủ -> Pháp Sư. Cân lực : 22000 ⇒ 66000. Họ bay Tokyo → Osaka lúc 8h -> 10h. Bước 1 -> Bước 2, trang 3 -> 5. HP 10%->20%.", None),
 ]
 JA_NAMES = "Haruto Yuki Sakura Kyouko Takeshi Hiroshi Akira Kenji Yamato Naoki Satoshi Ayaka Reiji Tsubasa Shinji Kaori".split()
 KO_NAMES = "Si-eun So-hye Hwi-min Seo-ram Deok-gu Kang-ho Ha-jin Joo-seon Min-jun Seo-yeon Ji-ho Geun-hye".split()
