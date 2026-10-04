@@ -31,6 +31,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   nhạc, bài nhạc chỉ tải khi có danh mục hợp lệ. Điện thoại cũng đọc nơi đặt danh mục từ cấu hình từ xa có chữ ký như máy tính (làm mới mỗi 6 giờ), nên đổi chỗ đặt danh mục không cần cập nhật app.
   Bản APK nặng thêm khoảng 1 MB.
 
+### Điện thoại
+
+- App điện thoại nhẹ hơn nhiều khi tải về: file cài đặt giảm từ khoảng 9,5 MB xuống khoảng 4 MB (bỏ phần mã và hình ảnh không dùng tới). Mọi việc app làm
+  vẫn như cũ: thêm sách từ file, mở .abook, nghe ngay bằng giọng Edge hay VieNeu, nhạc nền, phát nền và tai nghe.
+
 ## [0.4.25] - 2026-10-04
 
 ### Giọng đọc
