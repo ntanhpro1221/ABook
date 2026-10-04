@@ -106,6 +106,27 @@ def test_a_book_of_romaji_names_is_japanese_and_a_book_of_korean_names_is_korean
     assert names.book_origin([_book(KO)]) == "ko"
 
 
+OTHER = "Cale Bryce Dwight Bernd".split()  # tên luật nào cũng không đọc được, chỉ góp vào tổng
+
+
+def test_the_origin_thresholds_measured_on_the_corpus() -> None:
+    # 04-10 (161 cuốn Corpus/_full, 40 chương đầu): ja từ 0,70; ko từ 0,70, ko_only giữ 0,5 - nhận thêm 3 cuốn Nhật + 2 cuốn
+    # Hàn, 0 cuốn Tây sai. ko_only 0,4 nhận "ko" cho truyện Hàn toàn tên Âu (WEST) và đọc tên Âu theo RR - không hạ.
+    assert (names.JA_SHARE, names.KO_SHARE, names.KO_ONLY_SHARE) == (0.70, 0.70, 0.5)
+    japanese, too_few = _book(JA, 10) + " " + _book(OTHER, 12), _book(JA, 10) + " " + _book(OTHER, 14)
+    assert 0.70 <= names.origin_shares(*names.scan_names([japanese]))["ja"] < 0.75
+    assert names.book_origin([japanese]) == "ja"
+    assert names.origin_shares(*names.scan_names([too_few]))["ja"] < 0.70
+    assert names.book_origin([too_few]) is None
+    korean, mixed = _book(KO, 5) + " " + _book(OTHER, 4), _book(KO, 10) + " " + _book(OTHER, 11)
+    shares = names.origin_shares(*names.scan_names([korean]))
+    assert 0.70 <= shares["ko"] < 0.85 and shares["ko_only"] >= 0.5
+    assert names.book_origin([korean]) == "ko"
+    shares = names.origin_shares(*names.scan_names([mixed]))
+    assert 0.70 <= shares["ko"] < 0.85 and 0.4 <= shares["ko_only"] < 0.5
+    assert names.book_origin([mixed]) is None
+
+
 @pytest.mark.parametrize("texts", [
     [_book(WEST)],
     [_book(WEST + JA[:3])],
