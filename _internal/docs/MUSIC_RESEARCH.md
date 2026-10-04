@@ -836,8 +836,26 @@ Mục đích: trả lời dứt điểm hai câu mà bộ 5 (9 chương) và 5B 
   - Chi phí trên máy chủ sách (RTX 8 GB, Ollama):
     - 123 lượt gọi cho 20 chương, tức khoảng 22 lượt mỗi giờ sách; 3,6 giây mỗi lượt;
     - 441 giây GPU, khoảng 80 giây mỗi giờ sách;
-    - VRAM đỉnh 5,50 GB (`/api/ps`), cùng model với bước phân tích nên không cần tải thêm model.
-  - → Đề xuất đưa `llmVT` vào app (V, T của đoạn lấy từ LLM đọc cả đoạn; E giữ nhãn câu). Lead / chủ sách quyết.
+    - VRAM đỉnh 5,50 GB (`/api/ps`).
+    - **SỬA (04-10 08:4x):** bản trước ghi "cùng model với bước phân tích" là SAI. Bộ 6 đo bằng `qwen3.5:9b` GỐC; model
+      phân tích mặc định của app là `abook-analyzer:v3` (Qwen3-4B LoRA); bản phân tích bộ 6 dùng
+      `qwen35-9b-lora-v8-q4`. Cắm vào app "dùng model đã nạp sẵn" là dùng một model CHƯA đo.
+  - → Lead duyệt đưa `llmVT` vào app (04-10). Trước khi làm, đo lại với model phân tích (ghi trước ngay dưới).
+
+**GHI TRƯỚC - llmVT VỚI MODEL PHÂN TÍCH CỦA APP (04-10 08:4x; trước mọi lượt chạy):**
+- Câu hỏi: mức thắng của llmVT có giữ khi LLM là model phân tích app đã nạp sẵn, thay cho `qwen3.5:9b` gốc không?
+- Cách làm:
+  - `set5_llm.py run` với `SET5_ONLY=vet` (chỉ lượt V/E/T; prompt `segment_mood_llm.PROMPT` không đổi chữ nào), trên đáp
+    án bộ 6, cùng run phân tích `04-10-music6-9bv8`.
+  - Hai model: (i) `abook-analyzer:v3`, mặc định hiện nay; (ii) `qwen35-9b-lora-v8-q4`, ứng viên mặc định.
+  - Chấm bằng `set5_llm.py score`.
+- Luật thắng giữ nguyên như câu (1): `app + llmVT` hơn `app` ≥ 0,05 r VET TB theo chương VÀ thắng ≥ 14/20 chương.
+- Quyết định:
+  - Model nào thắng thì app dùng model phân tích đó cho llmVT, khi nó là model của sách.
+  - Sách dùng model không thắng (hoặc không có LLM) thì giữ nhãn câu.
+  - Cả hai không thắng → llmVT cần nạp `qwen3.5:9b` riêng (thêm 6,3 GB tải + một lần nạp model). Lead / chủ sách quyết lại.
+- Giới hạn: bộ 6 đã được dùng một lần cho câu (1), nhưng luật không đổi và không chỉnh gì theo số, nên vẫn là phép thử
+  sạch cho model mới. 20 chương, phương sai theo truyện lớn.
 - **Câu (2): KHÔNG nguồn nào qua cổng → Lớp 2 vẫn TẮT.**
   - Trần cosine A–B 0,904, ngưỡng 0,813. Số nhãn ≥ 0,5 mỗi đoạn: A 1,62, B 1,64, người (TB A/B) 1,47.
   - (a) Nhãn câu app: cosine 0,370 (41% trần); 0,08 nhãn so 1,47 (lệch 95%) → không qua.
