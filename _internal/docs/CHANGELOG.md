@@ -36,6 +36,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - App điện thoại nhẹ hơn nhiều khi tải về: file cài đặt giảm từ khoảng 9,5 MB xuống khoảng 4 MB (bỏ phần mã và hình ảnh không dùng tới). Mọi việc app làm
   vẫn như cũ: thêm sách từ file, mở .abook, nghe ngay bằng giọng Edge hay VieNeu, nhạc nền, phát nền và tai nghe.
 
+- Widget trình phát trên màn hình chính dùng được trở lại: trước đây không thêm được (khung xem trước xám), và bấm nút trên widget làm app đóng
+  đột ngột. Giờ widget hiện bìa, tên sách, tiến độ; các nút phát / dừng, tua 15 giây và hẹn giờ 30 phút đều chạy.
+
 ## [0.4.25] - 2026-10-04
 
 ### Giọng đọc
