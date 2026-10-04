@@ -46,6 +46,28 @@ def previous_turns(default: int) -> int:
     return int(eval_settings().get("previous_turns", default))
 
 
+# B10 (ABOOK_SCENE_FIRST=1): model viết {"scene": {"present", "pair"}} TRƯỚC "segments" (dữ liệu LLM_Train/b10/build_b10.py,
+# cùng schema); host bỏ "scene" trước mọi kiểm tra. Prompt không đổi - chỉ schema (Ollama `format`).
+SCENE_SCHEMA = {
+    "type": "object",
+    "properties": {"present": {"type": "array", "items": {"type": "string"}, "maxItems": 12},
+                   "pair": {"type": "array", "items": {"type": "string"}, "maxItems": 2}},
+    "required": ["present", "pair"],
+}
+
+
+def scene_first() -> bool:
+    return os.environ.get("ABOOK_SCENE_FIRST", "").strip() not in {"", "0"}
+
+
+def scene_schema(schema: dict[str, Any]) -> dict[str, Any]:
+    """Bản sao schema sinh có thêm khoá "scene" đứng đầu và bắt buộc (khớp build_b10.convert)."""
+    out = dict(schema)
+    out["properties"] = {"scene": SCENE_SCHEMA, **schema.get("properties", {})}
+    out["required"] = ["scene", *[key for key in schema.get("required", []) if key != "scene"]]
+    return out
+
+
 def neighbor_chars() -> int:
     return int(eval_settings().get("neighbor_chars", NEIGHBOR_CHARS_DEFAULT))
 
