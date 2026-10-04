@@ -326,8 +326,10 @@ GENERIC_SPEAKER_TRAITS = {
 GENERIC_CHILD_LABELS = {"trẻ em", "đứa bé", "đứa trẻ", "trẻ nhỏ"}
 # 『 và 』: một dòng nguyên vẹn trong 『…』 là một giọng nói (xem text_processing). Thiếu chúng ở đây thì khoá "thoại
 # nối tiếp cùng người nói" gán hai dòng 『…』 liền nhau cho một người - hai giọng qua loa nói liên tiếp là một ca thật.
-DIALOGUE_OPENERS = frozenset({'"', "'", "“", "‘", "『"})
-DIALOGUE_CLOSERS = frozenset({'"', "'", "”", "’", "』"})
+# Cũng vậy với [ ] và 【 】: dòng nguyên vẹn trong đó là một giọng (lời thoại, bảng thông báo, nội tâm) - "[Bạn nhận được 30 kinh
+# nghiệm]" rồi "[Cấp độ tăng!]" là hai dòng của một bảng, không phải một người đang nói hai đoạn.
+DIALOGUE_OPENERS = frozenset({'"', "'", "“", "‘", "『", "[", "【"})
+DIALOGUE_CLOSERS = frozenset({'"', "'", "”", "’", "』", "]", "】"})
 # Đoạn mở bằng ngoặc đơn là nội tâm - một lượt MỚI, không phải phần tiếp của lời thoại đoạn trước còn để ngỏ (Nise
 # 086:65-67: dấu nháy của người lính không đóng, rồi "(Khôngggggg! Tránh xa ta ra!...)" của Alistar bị chép người nói).
 PAREN_TURN_OPENERS = frozenset({"(", "（"})
