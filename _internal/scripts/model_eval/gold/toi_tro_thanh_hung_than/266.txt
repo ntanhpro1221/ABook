@@ -143,14 +143,14 @@
 125 N
 126 N
 127 T ASH neutral 0-1 normal normal m
-128 N,T NARRATOR,ASH neutral 0-1 normal normal u
-129 N,T NARRATOR,ASH neutral 0-1 normal normal u
-130 N,T NARRATOR,ASH neutral 0-1 normal normal u
-131 N,T NARRATOR,ASH neutral 0-1 normal normal u
-132 N,T NARRATOR,ASH neutral 0-1 normal normal u
-133 N,T NARRATOR,ASH neutral 0-1 normal normal u
-134 N,T NARRATOR,ASH neutral 0-1 normal normal u
-135 N,T NARRATOR,ASH neutral 0-1 normal normal u
+128 N,T ASH,NARRATOR neutral 0-1 normal normal u
+129 N,T ASH,NARRATOR neutral 0-1 normal normal u
+130 N,T ASH,NARRATOR neutral 0-1 normal normal u
+131 N,T ASH,NARRATOR neutral 0-1 normal normal u
+132 N,T ASH,NARRATOR neutral 0-1 normal normal u
+133 N,T ASH,NARRATOR neutral 0-1 normal normal u
+134 N,T ASH,NARRATOR neutral 0-1 normal normal u
+135 N,T ASH,NARRATOR neutral 0-1 normal normal u
 136 N
 137 D NPC*,UNKNOWN~ excited,neutral 1-2 fast loud,normal m
 138 D NPC*,UNKNOWN~ excited,neutral 1-2 fast loud,normal m
@@ -191,7 +191,7 @@
 173 N
 174 D LUNARED angry,excited 1-3 fast,normal loud m
 175 D ASH neutral,sarcastic 0-1 normal,slow normal m
-176 N,T NARRATOR,ASH neutral 0-1 normal normal u
+176 N,T ASH,NARRATOR neutral 0-1 normal normal u
 177 D ASH neutral,sarcastic 0-1 normal,slow normal m
 178 N
 179 D ASH neutral,sarcastic 0-1 normal,slow normal m
@@ -202,15 +202,15 @@
 184 N
 185 D ASH neutral 0-1 normal,slow normal m
 186 D ASH neutral 0-1 normal,slow normal m
-187 N,T NARRATOR,ASH neutral 0-1 normal normal u
-188 N,T NARRATOR,ASH neutral 0-1 normal normal u
+187 N,T ASH,NARRATOR neutral 0-1 normal normal u
+188 N,T ASH,NARRATOR neutral 0-1 normal normal u
 189 D ASH neutral 0-1 normal,slow normal m
 190 D LUNARED surprised,afraid 0-2 normal normal,soft m
 191 D ASH neutral 0-1 normal,slow normal,loud m
-192 N,T NARRATOR,ASH neutral 0-1 normal normal u
-193 N,T NARRATOR,ASH neutral 0-1 normal normal u
-194 N,T NARRATOR,ASH neutral 0-1 normal normal u
-195 N,T NARRATOR,ASH neutral 0-1 normal normal u
+192 N,T ASH,NARRATOR neutral 0-1 normal normal u
+193 N,T ASH,NARRATOR neutral 0-1 normal normal u
+194 N,T ASH,NARRATOR neutral 0-1 normal normal u
+195 N,T ASH,NARRATOR neutral 0-1 normal normal u
 196 D ASH neutral 0-1 normal,slow normal m
 197 N
 198 D ASH neutral 0-1 normal,slow normal m

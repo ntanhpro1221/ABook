@@ -802,3 +802,12 @@ A đã cho nhiều lựa chọn.
 | Hồi quy 09:151 | NPC*:võ sĩ gác cổng | NPC* trơn | theo B | 152 "hai võ sĩ gác cổng" - không biết người nào |
 | Đoàn kết 086:19 | HANNON, NPC*~ | thêm MIDRA~ | giữ A | khẩu ngữ y hệt của Hannon ở 082.txt:135 (B tự nêu) |
 | Đoàn kết 086:92; Hồi quy 09:146; Vô tận 25:131, 196 | N | N,T | giữ A | B tự xếp yếu |
+
+## 04-10 - Nội tâm = giọng chính người đang nghĩ (luật chủ sách 20-09, áp lên MỌI gold)
+
+Dòng có kind T mà lựa chọn đầu là NARRATOR và có tên người nghĩ: tên người nghĩ lên ĐẦU (thứ tự các tên giữ nguyên);
+NARRATOR giữ đủ điểm nếu dòng còn chấp nhận kind N (N,T: đọc như lời kể vẫn được), không thì NARRATOR~ (nửa điểm). F1 giọng
+lấy lựa chọn đầu nên từ nay nội tâm của người kể ngôi 1 là một cụm với chính người ấy - khớp quyết định đọc nội tâm bằng giọng
+người nghĩ. Đổi 1.015 dòng (1.006 N,T + 9 T) trên 94 file. 35 dòng T chỉ có NARRATOR (phần lớn là tên phép / tên game / dòng
+hệ thống trong nháy đơn mà gold cố ý để giọng kể) giữ nguyên. Lý do (A1 04-10): hai thầy Opus độc lập cùng đọc 36 câu nội tâm
+của Gu Yangcheon (zenith 058) bằng giọng Gu theo prompt của app, gold cũ để NARRATOR. Script: LLM_Train/b6/fix_thought_gold.py.

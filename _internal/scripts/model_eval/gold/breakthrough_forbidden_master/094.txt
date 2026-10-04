@@ -22,22 +22,22 @@
 4 N NARRATOR neutral,tired 0-1 normal normal u
 5 N
 6 N
-7 N,T NARRATOR,EARTH LAGANN,EARTH surprised,neutral,afraid 0-1 normal normal u
+7 N,T EARTH LAGANN,EARTH,NARRATOR surprised,neutral,afraid 0-1 normal normal u
 8 N NARRATOR neutral,tired 0-1 normal normal u
-9 N,T NARRATOR,EARTH LAGANN,EARTH surprised,neutral 0-1 normal normal u
+9 N,T EARTH LAGANN,EARTH,NARRATOR surprised,neutral 0-1 normal normal u
 10 D EARTH LAGANN,EARTH surprised,tired,neutral 0-1 slow,normal soft,normal m
 11 N
 12 N
 13 N
-14 N,T NARRATOR,EARTH LAGANN,EARTH surprised,neutral 0-1 normal normal u
+14 N,T EARTH LAGANN,EARTH,NARRATOR surprised,neutral 0-1 normal normal u
 15 D EARTH LAGANN,EARTH afraid,surprised 0-1 slow,normal soft,normal m
-16 N,T NARRATOR,EARTH LAGANN,EARTH afraid,neutral 0-1 normal normal u
+16 N,T EARTH LAGANN,EARTH,NARRATOR afraid,neutral 0-1 normal normal u
 17 N
 18 D TRE’AINAR,TRE'AINAR neutral 0-1 normal normal m
 19 D EARTH LAGANN,EARTH surprised,afraid 1-2 fast loud,normal m
 20 D TRE’AINAR,TRE'AINAR neutral,tired 0-1 normal normal m
 21 N
-22 T NARRATOR,TRE’AINAR~,TRE'AINAR~ tired,neutral 0-1 normal normal u
+22 T TRE’AINAR~,TRE'AINAR~,NARRATOR~ tired,neutral 0-1 normal normal u
 23 D EARTH LAGANN,EARTH surprised,afraid 0-1 fast,normal normal m
 24 D TRE’AINAR,TRE'AINAR tired,neutral 0-1 slow,normal normal,soft m
 25 D EARTH LAGANN,EARTH surprised 0-1 normal normal m
@@ -49,8 +49,8 @@
 31 D TRE’AINAR,TRE'AINAR neutral 0-1 normal normal m
 32 D EARTH LAGANN,EARTH surprised,afraid 1-2 fast normal,loud m
 33 D TRE’AINAR,TRE'AINAR neutral,sarcastic 0-1 normal normal m
-34 N,T NARRATOR,EARTH LAGANN,EARTH surprised,neutral 0-1 normal normal u
-35 N,T NARRATOR,EARTH LAGANN,EARTH surprised,neutral 0-1 normal normal u
+34 N,T EARTH LAGANN,EARTH,NARRATOR surprised,neutral 0-1 normal normal u
+35 N,T EARTH LAGANN,EARTH,NARRATOR surprised,neutral 0-1 normal normal u
 36 D EARTH LAGANN,EARTH sad,afraid 0-1 slow,normal soft,normal m
 37 N NARRATOR neutral,sad,afraid 0-1 normal normal u
 38 D TRE’AINAR,TRE'AINAR neutral 0-1 normal normal m
@@ -60,11 +60,11 @@
 42 D TRE’AINAR,TRE'AINAR neutral,surprised 0-1 normal normal m
 43 D EARTH LAGANN,EARTH surprised 1-2 normal,fast normal m
 44 N
-45 N,T NARRATOR,EARTH LAGANN,EARTH neutral,surprised 0-1 normal normal u
+45 N,T EARTH LAGANN,EARTH,NARRATOR neutral,surprised 0-1 normal normal u
 46 D KARUI,NPC*~ happy,surprised,excited 0-2 fast,normal normal,loud f
 47 D AMAE,NPC*~ neutral 0-1 slow,normal soft f
 48 N
-49 N,T NARRATOR,EARTH LAGANN,EARTH neutral 0-1 normal normal u
+49 N,T EARTH LAGANN,EARTH,NARRATOR neutral 0-1 normal normal u
 50 D KARUI happy,excited 1-2 fast,normal normal,loud f
 51 N
 52 N
@@ -75,9 +75,9 @@
 57 N
 58 D KARUI happy,excited 0-2 fast,normal normal f
 59 N
-60 N,T NARRATOR,EARTH LAGANN,EARTH sarcastic,neutral 0-1 normal normal u
+60 N,T EARTH LAGANN,EARTH,NARRATOR sarcastic,neutral 0-1 normal normal u
 61 D EARTH LAGANN,EARTH surprised,neutral 0-1 normal normal m
-62 N,T NARRATOR,EARTH LAGANN,EARTH neutral 0-1 normal normal u
+62 N,T EARTH LAGANN,EARTH,NARRATOR neutral 0-1 normal normal u
 63 D KARUI happy,neutral 0-1 normal normal f
 64 D EARTH LAGANN,EARTH surprised,afraid 1-2 fast normal,loud m
 65 D KARUI happy,excited 0-1 normal normal f
@@ -87,10 +87,10 @@
 69 N
 70 N
 71 N
-72 N,T NARRATOR,EARTH LAGANN,EARTH afraid,neutral 0-1 normal normal u
+72 N,T EARTH LAGANN,EARTH,NARRATOR afraid,neutral 0-1 normal normal u
 73 D KARUI happy,neutral 0-1 normal normal f
 74 D EARTH LAGANN,EARTH surprised 0-1 normal normal m
-75 N,T NARRATOR,EARTH LAGANN,EARTH surprised,neutral 0-1 normal normal u
+75 N,T EARTH LAGANN,EARTH,NARRATOR surprised,neutral 0-1 normal normal u
 76 D ĐẠI TƯ TẾ,JAMDI’EL~,JAMDI'EL~,NPC*~ neutral,happy 0-1 normal normal f
 77 N NARRATOR,EARTH LAGANN~,EARTH~,KARUI~,AMAE~ surprised 2-3 fast loud u
 78 D ĐẠI TƯ TẾ,JAMDI’EL~,JAMDI'EL~,NPC*~ neutral,sarcastic 0-1 normal normal f
@@ -102,11 +102,11 @@
 84 N
 85 N
 86 N
-87 T NARRATOR,EARTH LAGANN~,EARTH~ neutral 0-1 normal normal u
+87 T EARTH LAGANN~,EARTH~,NARRATOR~ neutral 0-1 normal normal u
 88 N
 89 N NARRATOR neutral,afraid 0-1 normal normal u
 90 D EARTH LAGANN,EARTH afraid,angry 1-2 fast normal,loud m
-91 N,T NARRATOR,EARTH LAGANN,EARTH afraid,neutral 0-2 normal normal u
+91 N,T EARTH LAGANN,EARTH,NARRATOR afraid,neutral 0-2 normal normal u
 92 D ĐẠI TƯ TẾ,JAMDI’EL~,JAMDI'EL~,NPC*~ neutral 0-1 normal normal f
 93 D EARTH LAGANN,EARTH surprised,afraid 0-1 normal normal m
 94 D ĐẠI TƯ TẾ,JAMDI’EL~,JAMDI'EL~,NPC*~ neutral 0-1 normal normal f
@@ -115,24 +115,24 @@
 97 D EARTH LAGANN,EARTH afraid,sad 0-1 slow,normal soft,normal m
 98 D ĐẠI TƯ TẾ,JAMDI’EL~,JAMDI'EL~,NPC*~ neutral 0-1 normal normal f
 99 N
-100 N,T NARRATOR,EARTH LAGANN,EARTH surprised,neutral 0-1 normal normal u
-101 N,T NARRATOR,EARTH LAGANN,EARTH neutral,afraid 0-1 normal normal u
+100 N,T EARTH LAGANN,EARTH,NARRATOR surprised,neutral 0-1 normal normal u
+101 N,T EARTH LAGANN,EARTH,NARRATOR neutral,afraid 0-1 normal normal u
 102 D ĐẠI TƯ TẾ,JAMDI’EL~,JAMDI'EL~,NPC*~ neutral 0-1 normal normal f
 103 D EARTH LAGANN,EARTH surprised 0-1 normal normal m
 104 D ĐẠI TƯ TẾ,JAMDI’EL~,JAMDI'EL~,NPC*~ neutral,surprised 0-1 normal normal f
-105 N,T NARRATOR,EARTH LAGANN,EARTH surprised,neutral 0-1 normal normal u
+105 N,T EARTH LAGANN,EARTH,NARRATOR surprised,neutral 0-1 normal normal u
 106 D KARUI neutral,sad,sarcastic 0-1 normal,fast normal f
 107 D KARUI surprised,angry,afraid 1-2 fast loud,normal f
 108 D ĐẠI TƯ TẾ,JAMDI’EL~,JAMDI'EL~,NPC*~ neutral,happy 0-1 normal normal f
 109 D KARUI surprised,excited 1-2 fast normal,loud f
 110 N NARRATOR neutral,surprised 0-1 normal normal u
-111 N,T NARRATOR,EARTH LAGANN,EARTH surprised 0-1 normal normal u
-112 N,T NARRATOR,EARTH LAGANN,EARTH surprised 0-1 normal normal u
+111 N,T EARTH LAGANN,EARTH,NARRATOR surprised 0-1 normal normal u
+112 N,T EARTH LAGANN,EARTH,NARRATOR surprised 0-1 normal normal u
 113 N
 114 N
 115 D ĐẠI TƯ TẾ,JAMDI’EL~,JAMDI'EL~,NPC*~ neutral,happy 0-1 normal normal f
 116 D EARTH LAGANN,EARTH surprised 1-2 fast loud,normal m
 117 D ĐẠI TƯ TẾ,JAMDI’EL~,JAMDI'EL~,NPC*~ neutral,happy 0-1 normal normal f
-118 N,T NARRATOR,EARTH LAGANN,EARTH surprised,angry,neutral 0-1 normal normal u
-119 N,T NARRATOR,EARTH LAGANN,EARTH angry,neutral,sarcastic 0-1 normal normal u
-120 N,T NARRATOR,EARTH LAGANN,EARTH angry,afraid,neutral 0-1 normal normal u
+118 N,T EARTH LAGANN,EARTH,NARRATOR surprised,angry,neutral 0-1 normal normal u
+119 N,T EARTH LAGANN,EARTH,NARRATOR angry,neutral,sarcastic 0-1 normal normal u
+120 N,T EARTH LAGANN,EARTH,NARRATOR angry,afraid,neutral 0-1 normal normal u

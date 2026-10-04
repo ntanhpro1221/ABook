@@ -86,12 +86,12 @@
 70 D ZIX,ZIX EFFELSTEIN sad,afraid 0-1 slow,normal soft,normal m
 71 N
 72 N
-73 N,T NARRATOR,ED~,ED ROSTAILER~ neutral,sarcastic 0-1 normal normal u
+73 N,T ED~,ED ROSTAILER~,NARRATOR neutral,sarcastic 0-1 normal normal u
 74 N NARRATOR neutral,afraid 0-1 normal normal u
 75 N NARRATOR neutral,surprised 0-1 normal normal u
 76 N NARRATOR neutral,afraid 0-1 normal normal u
 77 N NARRATOR neutral,afraid 0-1 normal normal u
-78 N,T NARRATOR,ED,ED ROSTAILER neutral,sarcastic 0-1 normal normal u
+78 N,T ED,ED ROSTAILER,NARRATOR neutral,sarcastic 0-1 normal normal u
 79 D ZIX,ZIX EFFELSTEIN neutral 0-1 normal normal m
 80 D ED,ED ROSTAILER neutral,surprised 0-1 normal normal m
 81 D ZIX,ZIX EFFELSTEIN neutral,afraid 0-1 normal normal m

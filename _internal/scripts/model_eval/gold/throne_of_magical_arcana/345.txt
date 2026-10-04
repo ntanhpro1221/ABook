@@ -61,7 +61,7 @@
 57 N NARRATOR neutral,sad 0-1 normal normal u
 58 N NARRATOR neutral,sad 0-1 normal normal u
 59 T SONIA sarcastic,sad,tired 0-2 normal normal f
-60 N,T NARRATOR,SONIA sarcastic,sad,neutral 0-1 normal normal u
+60 N,T SONIA,NARRATOR sarcastic,sad,neutral 0-1 normal normal u
 61 N NARRATOR neutral,afraid 0-1 normal normal u
 62 N
 63 D SONIA,NARRATOR neutral 0-1 normal normal f

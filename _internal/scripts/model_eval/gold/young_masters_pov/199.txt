@@ -32,8 +32,8 @@
 26 N NARRATOR neutral,sarcastic 0-1 normal normal u
 27 D SELENE sarcastic,neutral 0-2 normal normal f
 28 N NARRATOR neutral,sarcastic,surprised 0-1 normal normal u
-29 N,T NARRATOR,SAMAEL surprised,sarcastic,neutral,angry 0-2 normal normal u
-30 N,T NARRATOR,SAMAEL angry,sarcastic 1-2 normal,fast normal,loud u
+29 N,T SAMAEL,NARRATOR surprised,sarcastic,neutral,angry 0-2 normal normal u
+30 N,T SAMAEL,NARRATOR angry,sarcastic 1-2 normal,fast normal,loud u
 31 D SELENE neutral 0-1 normal normal,loud f
 32 N
 33 N
@@ -71,7 +71,7 @@
 65 D NPC*:nhân viên cầm loa,UNKNOWN~ neutral 0-1 normal normal,loud u
 66 N NARRATOR neutral,sarcastic 0-1 normal normal u
 67 N NARRATOR neutral,sarcastic 0-1 normal normal u
-68 N,T NARRATOR,SAMAEL sarcastic,neutral 0-1 normal normal u
+68 N,T SAMAEL,NARRATOR sarcastic,neutral 0-1 normal normal u
 69 N
 70 N NARRATOR neutral,sarcastic 0-1 normal normal u
 71 N NARRATOR neutral,sarcastic 0-1 normal normal u
@@ -90,8 +90,8 @@
 84 N
 85 N NARRATOR neutral,angry 0-1 normal normal u
 86 D NPC*:nhỏ tóc xanh,UNKNOWN~ angry,sarcastic 1-2 normal,fast loud,normal f
-87 N,T NARRATOR,SAMAEL surprised,sarcastic 0-2 normal normal u
-88 N,T NARRATOR,SAMAEL neutral,sarcastic,happy 0-1 normal normal u
+87 N,T SAMAEL,NARRATOR surprised,sarcastic 0-2 normal normal u
+88 N,T SAMAEL,NARRATOR neutral,sarcastic,happy 0-1 normal normal u
 89 N
 90 N NARRATOR neutral,sarcastic 0-1 normal,slow normal u
 91 N
@@ -106,8 +106,8 @@
 100 N NARRATOR neutral,surprised 0-2 normal,slow normal u
 101 N
 102 N NARRATOR neutral,surprised 0-1 normal normal u
-103 N,T NARRATOR,SAMAEL neutral,surprised 0-1 normal normal u
-104 N,T NARRATOR,SAMAEL neutral,surprised 0-1 normal normal u
+103 N,T SAMAEL,NARRATOR neutral,surprised 0-1 normal normal u
+104 N,T SAMAEL,NARRATOR neutral,surprised 0-1 normal normal u
 105 N NARRATOR neutral,surprised 0-1 normal normal u
 106 N NARRATOR neutral,surprised 0-1 normal normal u
 107 N NARRATOR neutral,sarcastic,surprised 0-1 normal normal u
