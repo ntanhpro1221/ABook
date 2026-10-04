@@ -10,18 +10,16 @@ Mọi phần ở đây là luật dùng lại của "Nghe ngay"; không chép l�
 """
 from __future__ import annotations
 
-import unicodedata
 from typing import Any
 
 from .models import KEEP_ENGLISH_PRONUNCIATION_SOURCE, RULE_ROMANIZATION_PRONUNCIATION_SOURCE
 from .readaloud import names as readaloud_names
-from .vietnamese_syllable import valid_spoken_form, valid_syllable
+from .vietnamese_syllable import valid_spoken_form
 
-# Máy đọc nói được âm vị tiếng Anh (docs/READING_FOREIGN_NAMES.md mục 4 và 8, đo 04-10): VieNeu, ZeroTTS có; Supertonic nuốt "Rose", "Haruto".
-ENGINE_SPEAKS_ENGLISH = {"vieneu": True, "zerotts": True, "supertonic": False}
-# Studio ở nhánh này chỉ đúc bằng VieNeu (tts.VieNeuEngine từ chối hồ sơ giọng khác), và VieNeuEngine đi qua cùng sea-g2p với "Nghe ngay"
-# (vieneu_utils.phonemize_text) - thử 04-10 trên CPU: "Kate", "Michael", "Washington" để nguyên được Whisper nghe "Kết", "Michael", "Washington".
-STUDIO_ENGINE_SPEAKS_ENGLISH = ENGINE_SPEAKS_ENGLISH["vieneu"]
+# Bảng cách đọc của dự án ghi chữ Anh để nguyên (nguồn `keep_english`) như cho máy đọc nói được tiếng Anh: VieNeu đi qua cùng sea-g2p với
+# "Nghe ngay" (vieneu_utils.phonemize_text) - thử 04-10 trên CPU: "Kate", "Michael", "Washington" để nguyên được Whisper nghe "Kết", "Michael",
+# "Washington". Máy không nói được (cờ `speaks_english` của adapter trong tts.py: Supertonic) Việt hoá mục ấy lúc đúc, theo giọng của từng đoạn.
+STUDIO_ENGINE_SPEAKS_ENGLISH = True
 RULE_READING_CONFIDENCE = 0.95  # luật đã chốt bằng phán quyết chủ sách, không phải đoán: trên ngưỡng tin cậy của pha đọc tên
 # Ví dụ cho prompt LLM: chữ của ca chủ sách (tests/romanization_evidence.py, english_vi.OWNER); cách đọc do chính luật tính, không chép tay.
 PROMPT_EXAMPLES = {
@@ -122,52 +120,6 @@ def rule_word_corrections(pronunciations: list[Any]) -> dict[str, str]:
         if fixed != groups:
             corrections[str(row["surface"])] = " ".join(fixed)
     return corrections
-
-
-# Chữ Anh để nguyên thì Whisper (nghe tiếng Việt) hay viết lại theo âm nó nghe: "Kate" -> "Kết" / "Kat", "Shadow" -> "Sado", "Portal" -> "Porto"
-# (đo 04-10, VieNeu Studio trên CPU). Ở câu ngắn một chữ như thế đủ đánh trượt cả câu ("Kate gật đầu.": WER 0,33), nên khâu so của ASR coi
-# chữ nghe được là khớp khi khung phụ âm của nó gần khung của chữ Anh ở câu mong đợi. Bảng gộp phụ âm cùng âm (c / k / q, s / x / z / sh, ph / f...).
-_SKELETON_DIGRAPHS = (("sh", "s"), ("ch", "c"), ("ph", "f"), ("th", "t"), ("ck", "k"), ("gh", "g"), ("ng", "n"), ("nh", "n"))
-_SKELETON_LETTERS = str.maketrans({"c": "k", "q": "k", "x": "s", "z": "s", "j": "g", "v": "f", "đ": "d"})
-
-
-def _skeleton(word: str) -> str:
-    """Khung phụ âm: bỏ dấu, gộp phụ âm cùng âm, bỏ nguyên âm và h / w / y (bán âm, âm câm), gộp phụ âm lặp."""
-    plain = "".join(ch for ch in unicodedata.normalize("NFD", word.casefold()) if unicodedata.category(ch) != "Mn")
-    for digraph, single in _SKELETON_DIGRAPHS:
-        plain = plain.replace(digraph, single)
-    consonants = [ch for ch in plain.translate(_SKELETON_LETTERS) if ch.isalpha() and ch not in "aeiouhwy"]
-    return "".join(ch for index, ch in enumerate(consonants) if not index or consonants[index - 1] != ch)
-
-
-def heard_as_english(expected: str, heard: str) -> bool:
-    """`heard` (một chữ Whisper viết) có phải là chữ Anh `expected` (để nguyên trong câu) đọc ra không: khung phụ âm trùng, hay lệch một phụ âm khi
-    khung có từ ba phụ âm ("Portal" / "Porto"), và cùng phụ âm đầu."""
-    want, got = _skeleton(expected), _skeleton(heard)
-    if not want or not got or want[0] != got[0]:
-        return False
-    if want == got:
-        return True
-    from .asr import _edit_distance
-
-    return len(want) >= 3 and _edit_distance(list(want), list(got)) <= 1
-
-
-def soften_english_words(expected: str, actual: str) -> str:
-    """Bản nghe (`actual`, đã chuẩn hoá như `asr.normalize_transcript`) với mỗi chữ nghe được của một chữ Anh trong câu mong đợi thay bằng chính chữ
-    Anh ấy; chữ khác giữ nguyên. Chữ Anh: chữ Latin không dấu mà không là âm tiết tiếng Việt."""
-    english = [word for word in expected.split() if word.isascii() and word.isalpha() and not valid_syllable(word)]
-    if not english:
-        return actual
-    present = set(expected.split())
-    words = actual.split()
-    for index, word in enumerate(words):
-        if word in present:
-            continue
-        match = next((candidate for candidate in english if heard_as_english(candidate, word)), None)
-        if match is not None:
-            words[index] = match
-    return " ".join(words)
 
 
 def prompt_context(origin: str | None) -> str:
