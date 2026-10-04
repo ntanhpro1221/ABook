@@ -72,6 +72,24 @@ dàn nhân vật biết trước), (b) dàn nhân vật do 4B v8 xuất cho chư
 - ĐỘT PHÁ: (b) đúng >= 4B v8 + 3 điểm trên cùng câu.
 - HỨA HẸN: (b) trong ±3 của 4B v8 và bổ sung >= 30 % lỗi của v8 -> thử ghép (kênh làm đặc trưng / người phân xử).
 - ÂM: (b) < 4B v8 - 3 và bổ sung < 30 %.
+- Đã dựng (04-10 18:5x): 767 câu Nhật MỚI + 582 câu Hàn MỚI (LLM_Train/b6/items_*.jsonl); bộ chấm kiểm trên CPU bằng
+  Qwen3-0.6B; với điểm ngẫu nhiên độ đúng (a)/(b) là 22-28 % (mốc dưới), v8 trên cùng câu 71,8 % (F1 61,7). Báo ba cách
+  chuẩn hoá (PMI - chính, theo độ dài, thô) nhưng ngưỡng chỉ áp cho PMI.
+
+### Bước 1 của Lead (04-10, tài liệu breakthrough_lit.md): chẩn đoán và trần, chỉ tốn suy luận (ghi trước)
+
+Cùng 11 ch Nhật MỚI (rồi 8 ch Hàn MỚI), cùng 4B v8 (lora29v8), qua bộ phân tích thật (nhánh đo dev/breakthrough-eval: các
+hook tắt mặc định, prompt y hệt khi tắt).
+- **E1 - lỗi do cách SINH hay do HIỂU.** Ép đáp án đúng vào chỗ model đang dựa vào quyết định của chính nó: (i) giữa các lô -
+  "lượt nói trước" lấy người nói GOLD thay vì đầu ra của model, chạy sinh thật; (ii) trong lô - tiền tố JSON các đoạn trước
+  là gold, chấm logprob ứng viên ở vị trí "speaker" (HF + adapter, prompt ghi lại từ lượt thật). Đếm lỗi "lặp người câu
+  trước" (câu sai mà nhãn = người nói gold của câu thoại liền trước). Giảm >= 40 % -> gốc là sinh tự hồi quy (đi hướng chấm
+  ứng viên / quyết định độc lập); giảm < 15 % -> gốc là hiểu.
+- **O1 / O2 - trần của thông tin cảnh và xưng hô.** Chèn vào prompt hiện tại "Nhân vật có mặt trong cảnh này" (O1) và "Cách
+  xưng hô giữa các nhân vật" (O2), cả hai do agent Opus đọc chương viết (không nhìn gold; Lead làm). Hướng nào cho F1 giọng
+  >= +3 trên Nhật MỚI mới đầu tư (O2 dương -> hồ sơ xưng hô tự rút từ câu tường minh).
+- **E2 - độ dài ngữ cảnh/lô.** batch_segments / batch_chars / previous_text-next_text quét về ~256 / 512 / 1.024 token so
+  với hiện tại (~3k token người dùng). Một mức ngắn hơn cho F1 >= hiện tại + 2 và không tụt ở Hàn -> đổi mặc định.
 
 ## 03-10 chiều - Vì sao model to không hơn rõ: tín hiệu khó quá ít, lỗi theo loại, và truyện ĐÃ HỌC vs truyện MỚI
 
