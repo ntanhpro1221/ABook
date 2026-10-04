@@ -193,6 +193,22 @@ Giọng cao nhất ở (c): Quang Sơn 6 %, Thanh Bình 6 %, Thục Đoan 4 %.
 
 Hash chất lượng nhánh dev: trước `fddc4182` (5813112a) → sau `b1333192` (db537cf5: bỏ 4 giọng Tin tức, tập phủ = phân vai ∪ người kể, thả số, chốt WORLD_MIN_SECONDS trong tts.py). pytest toàn bộ: 4511 qua, 2 bỏ qua, 0 hỏng.
 
+#### ZeroTTS với WSOLA chuẩn hoá (04-10, cho casting nhiều máy; 5 giọng chủ sách chọn)
+
+Cùng 40 câu trung tính, kéo bằng `tts.apply_speed_change` của main a84e30b4 (WSOLA chuẩn hoá), x = 1, L = −25; engine
+`zerotts 0.1.2 c2bfbd67`. `ref_lufs` = LUFS trung bình bản thô sau r_v (gain = L − ref_lufs). Bảng cũ phía trên đo khi tốc
+độ còn kéo bằng WORLD - WORLD làm ZeroTTS nhỏ đi tới 2,3 dB tuỳ giọng, nên dùng số dưới đây.
+
+| giọng | r_v | ref_lufs | (bảng WORLD cũ) | nhịp sau r_v so với mốc (kiểm chéo 18 câu) |
+|---|---|---|---|---|
+| baotrang | 1,043 | −22,56 | −23,29 | −0,7 ±2,7 % |
+| giahuy | 1,093 | −20,39 | −22,17 | −1,2 ±1,8 % |
+| huuduc | 1,098 | −17,32 | −19,57 | −0,8 ±1,5 % |
+| kimoanh | 1,171 | −22,10 | −21,89 | −1,0 ±1,9 % |
+| quangminh | 0,911 | −18,70 | −20,24 | +0,8 ±1,9 % |
+
+Số máy đọc: scratchpad phiên Model `balance/zerotts_constants.json`.
+
 ### Kiểm cảm xúc sau hằng số (emo_check)
 
 Mẫu kiểm:
