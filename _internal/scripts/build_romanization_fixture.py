@@ -79,6 +79,9 @@ EDGE: list[tuple[str, str | None]] = [
     ("Shi", "ko"), ("Shinhyun", "ko"), ("Shincheol", "ko"), ("shinkal", "ko"), ("Joo", "ko"), ("Jooseon", "ko"), ("Joo-chul", "ko"), ("Ji-woo", "ko"), ("Jiwoo", "ko"),
     ("Soohyuk", "ko"), ("Jaemoon", "ko"), ("Jahoon", "ko"), ("Tae-hoon", "ko"), ("Ryoon", "ko"), ("Jinyoon", "ko"), ("Jiyoon", "ko"), ("Noona", "ko"), ("Weol-hyun", "ko"),
     ("PD-nim", "ko"), ("Hoẵng-nim", "ko"), ("Gyeong-nim", "ko"), ("Spider-Man", "ko"), ("Takeshi", "ko"),
+    # chủ sách lần 8: oh -> ô dài, jy -> j, gh -> g, tên cố định (Gesunoh, Theia, Fina, Tio); Hàn kk -> k (tie-break), Gangwon
+    ("Ohto", "ja"), ("Ohka", "ja"), ("Poh-chan", "ja"), ("Sanjyo", "ja"), ("Kanjyaka", "ja"), ("Hiiraghi", "ja"), ("Gesunoh", "ja"), ("Gesu", "ja"), ("Theia", "ja"),
+    ("Fina", "ja"), ("Tio", "ja"), ("Tio-san", "ja"), ("Ohayou", "ja"), ("Johan", "ja"), ("Ōsaka", "ja"), ("tokki", "ko"), ("Hakkyo", "ko"), ("Gangwon", "ko"), ("Oppa", "ko"),
 ]
 
 

@@ -80,6 +80,18 @@ SOURCED: list[tuple[str, str, tuple[str, ...], str]] = [
     ("Byung", "ko", ("bi-ung",), "owner"),
     ("Gyeong", "ko", ("ghe-ong",), "owner"),
     ("Pyeong", "ko", ("pe-ong",), "owner"),
+    # phán quyết lần 8 (04-10): oh trước phụ âm / cuối từ -> ô dài kể cả đầu từ (Ohto, Ohka); jy -> j (Sanjyo); gh -> g (Hiiraghi); tên cố định: Gesunoh (ghét-, KHÔNG suy rộng ge),
+    # Theia, Fina, Tio (tên kiểu Âu trong truyện Nhật; Hepburn không có ti / fi); Hàn: kk -> k (tokki), Gangwon -> kang-guôn (luật viết cang theo chính tả, xem EXPLAINED)
+    ("Ohto", "ja", ("ô-tô",), "owner"),
+    ("Ohka", "ja", ("ô-ca",), "owner"),
+    ("Gesunoh", "ja", ("ghét-xu-nô",), "owner"),
+    ("Sanjyo", "ja", ("xan-giô",), "owner"),
+    ("Hiiraghi", "ja", ("hi-ra-ghi",), "owner"),
+    ("Theia", "ja", ("thi-a",), "owner"),
+    ("Fina", "ja", ("phi-na",), "owner"),
+    ("Tio", "ja", ("ti-ô",), "owner"),
+    ("Gangwon", "ko", ("kang-guôn",), "owner"),
+    ("tokki", "ko", ("tô-ki", "to-ki"), "owner"),
     # --- Nhật: địa danh (SGK Địa lí / Lịch sử 11) ---
     ("Hokkaidō", "ja", ("Hô-cai-đô", "Hốc-cai-đô"), "textbook"),
     ("Honshū", "ja", ("Hôn-su",), "textbook"),
@@ -244,4 +256,5 @@ EXPLAINED: dict[str, tuple[str, str]] = {
     "Kim Hyong-o": ("Kim He-ong-ô", "yeo sau phụ âm mất y, eo tách e-ong (" + _KO4 + "); nguồn viết Kim Hiêng Ô" + "; " + _HY),
     "Ōsaka": ("O-xa-ca", _O0 + "; SGK viết Ô-xa-ca (alternative chủ sách chấp nhận)"),
     "Ōita": ("O-i-ta", _O0 + "; SGK viết Ô-i-ta"),
+    "Gangwon": ("Cang-guôn", "g đầu từ -> k, k trước a viết c theo chính tả (luật 1.5; bộ kiểm âm tiết không nhận kang); chủ sách 04-10 lần 8 viết kang-guôn"),
 }

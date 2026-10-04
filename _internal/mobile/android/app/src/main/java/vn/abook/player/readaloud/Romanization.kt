@@ -99,7 +99,7 @@ object Romanization {
     // ---- tiếng Nhật (mục 2) ------------------------------------------------------------------------------------------
 
     private const val JA_VOWELS = "aiueo"
-    private const val JA_VOWELS_LONG = "aiueoô" // ô: o viết bằng dấu (ō), đọc ô
+    private const val JA_VOWELS_LONG = "aiueoôŏ" // ô: o viết bằng dấu (ō), đọc ô; ŏ: "oh" trước phụ âm / cuối từ (nội bộ, jaSpelling), luôn đọc ô kể cả đầu từ
     private val JA_VOWEL = mapOf('a' to "a", 'i' to "i", 'u' to "u", 'e' to "e", 'o' to "ô") // chủ sách 04-10: u -> u và e -> e ở mọi chỗ
     private val JA_SIMPLE = mapOf(
         "k" to "K", "g" to "G", "s" to "x", "z" to "d", "t" to "t", "d" to "đ", "n" to "n", "h" to "h", "b" to "b", "p" to "p", "m" to "m", "r" to "r",
@@ -145,10 +145,42 @@ object Romanization {
         "onigiri" to listOf(Triple("", "o", ""), Triple("n", "i", ""), Triple("gi", "i", ""), Triple("r", "i", "")),
         // chwan: cách viết nũng của -chan (Tenshi-chwan); w giữa ch và a là bán âm oa (analogy theo wa -> oa), khép n
         "chwan" to listOf(Triple("ch", "oa", "n")),
+        // chủ sách 04-10 (lần 8), tên cố định: Gesunoh -> ghét-xu-nô (KHÔNG suy rộng ge -> ghét); Theia -> thi-a, Fina -> phi-na, Tio -> ti-ô là tên kiểu Âu trong truyện Nhật
+        // (Hepburn không có ti / fi, nên không đi qua luật: chỉ đúng các tên này)
+        "gesunoh" to listOf(Triple("G", "e", "t"), Triple("x", "u", ""), Triple("n", "ô", "")),
+        "theia" to listOf(Triple("th", "i", ""), Triple("", "a", "")),
+        "fina" to listOf(Triple("ph", "i", ""), Triple("n", "a", "")),
+        "tio" to listOf(Triple("t", "i", ""), Triple("", "ô", "")),
     )
 
-    private fun jaWord(word: String, flags: MutableList<String>): List<Syl>? {
-        JA_FIXED[word]?.let { fixed -> return fixed.map { (onset, nucleus, coda) -> Syl(onset, nucleus, coda) } }
+    private val JA_GH = Regex("gh(?=[aiueo])")
+    private val JA_JY = Regex("jy(?=[aiueo])")
+    private val JA_OH = Regex("oh(?![aiueo])")
+
+    /**
+     * Cách viết quen của romaji lệch Hepburn (chủ sách 04-10 lần 8, suy từ ca cố định): gh + nguyên âm -> g (Hiiraghi), jy + nguyên âm -> j (Sanjyo), oh trước phụ âm / cuối từ ->
+     * ô dài, kể cả đầu từ (Ohto -> Ô-tô, Ohka -> Ô-ca; "oh" trước nguyên âm là o + h của ha, hi: Ohayou giữ nguyên).
+     */
+    private fun jaSpelling(raw: String, flags: MutableList<String>): String {
+        var word = raw
+        if (JA_GH.containsMatchIn(word)) {
+            flags.add("analogy:ja_gh")
+            word = JA_GH.replace(word, "g")
+        }
+        if (JA_JY.containsMatchIn(word)) {
+            flags.add("analogy:ja_jy")
+            word = JA_JY.replace(word, "j")
+        }
+        if (JA_OH.containsMatchIn(word)) {
+            flags.add("analogy:ja_oh")
+            word = JA_OH.replace(word, "ŏ")
+        }
+        return word
+    }
+
+    private fun jaWord(raw: String, flags: MutableList<String>): List<Syl>? {
+        JA_FIXED[raw]?.let { fixed -> return fixed.map { (onset, nucleus, coda) -> Syl(onset, nucleus, coda) } }
+        val word = jaSpelling(raw, flags)
         val syllables = ArrayList<Syl>()
         var i = 0
         while (i < word.length) {
@@ -184,7 +216,8 @@ object Romanization {
                 if (onset !in JA_ALLOWED) return null
             }
             val vowelText = sub(word, j, j + 1)
-            val longO = vowelText == "ô"
+            val longO = vowelText == "ô" || vowelText == "ŏ"
+            val forcedO = vowelText == "ŏ"
             if (vowelText.isEmpty() || vowelText[0] !in JA_VOWELS_LONG) return null
             val vowel = if (longO) 'o' else vowelText[0]
             if (onset.isNotEmpty() && vowel !in JA_ALLOWED.getValue(onset)) return null
@@ -202,6 +235,7 @@ object Romanization {
                 flags.add("open:y_after_vowel_pair") // Kouya, Raiya: hai nguyên âm rồi ya mà luật ya cuối từ không áp (âu / ai + y không thành vần): hiện y -> gi
             }
             jaEmit(onset, vowel, syllables, flags)
+            if (forcedO) syllables.last().nucleus = "ô" // oh: ô dài, kể cả đầu từ (Ohto -> Ô-tô; ō đầu từ vẫn o: Ōsaka -> O-xa-ca)
             val follow = if (longO) "" else sub(word, j, j + 1)
             if (vowel == 'e' && follow == "i") {
                 syllables.last().nucleus = "ây" // ei -> ây (chủ sách 04-10: Rei -> Rây, sensei -> xen-xây)
@@ -292,8 +326,14 @@ object Romanization {
         return word
     }
 
+    /** Tên cố định mà RR viết giống hai cách tách (gang-won / gan-gwon): chủ sách 04-10 lần 8, Gangwon -> kang-guôn (viết cang theo chính tả). */
+    private val KO_FIXED_PARSES = mapOf(
+        "gangwon" to listOf(Triple("g", "a", "ng"), Triple("", "wo", "n")),
+    )
+
     private fun koBest(raw: String, flags: MutableList<String>): List<Triple<String, String, String>>? {
         val word = koSpelling(raw, flags)
+        KO_FIXED_PARSES[word]?.let { return it }
         if (word.isEmpty() || word.length > 24 || listOf("aa", "ee", "ii", "oo", "uu").any { it in word }) return null
         val parses = ArrayList<List<Triple<String, String, String>>>()
         koParses(word, 0, null, parses, ArrayList())
@@ -301,8 +341,13 @@ object Romanization {
         fun rank(parse: List<Triple<String, String, String>>): Pair<Int, Int> = Pair(parse.size, parse.drop(1).count { it.first.isEmpty() })
         val ranks = parses.map { rank(it) }
         val top = ranks.minWithOrNull(compareBy<Pair<Int, Int>>({ it.first }, { it.second }))!!
-        val best = parses.filterIndexed { index, _ -> ranks[index] == top }
-        if (best.any { it != best[0] }) return null
+        var best = parses.filterIndexed { index, _ -> ranks[index] == top }
+        if (best.any { it != best[0] }) {
+            // kk là phụ âm đầu căng (ㄲ), không phải c khép + k mở: tokki -> to-kki -> tô-ki (chủ sách 04-10 lần 8). Chỉ kk; pp, tt, ss, jj còn để không đoán (Oppa)
+            val tense = best.filter { parse -> parse.any { it.first == "kk" } }
+            if (tense.size != 1) return null
+            best = tense
+        }
         val chosen = best[0]
         for (parse in parses) {
             if (parse != chosen && parse.size == chosen.size) {
