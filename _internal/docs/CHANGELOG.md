@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Giọng đọc
+
+- "Nghe ngay" (máy tính và điện thoại, mọi giọng) đọc ký hiệu theo chỗ nó đứng thay vì một kiểu cố định: "7/9" là ngày, "10 người/ngày" là "mỗi ngày", "x4" là "nhân bốn", "3x" là "gấp ba", "-20" sau "Độ thiện cảm:" là "âm hai mươi" còn "-50% Nhanh nhẹn" là "trừ", "Q&A" là "hỏi đáp", "★★★☆☆" là "ba sao", "Aki × Rin" là "Aki và Rin", đường dẫn gọn thành "đường dẫn"; dấu chấm giữa, "^", "#", "@", mặt cười và dấu "===" trang trí không còn bị đọc ra thành tiếng nữa, chỉ ngắt nhịp.
+
 ## [0.4.27] - 2026-10-04
 
 ### Studio

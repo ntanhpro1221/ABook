@@ -140,8 +140,8 @@ def test_angle_brackets_around_words_are_not_comparisons(text: str, said: str) -
 @pytest.mark.parametrize("text, said", [
     ("Bị 【Đóng băng / yếu】 rồi.", "Bị, 【Đóng băng, yếu】, rồi."),
     ("Chạy / bay.", "Chạy, bay."),
-    ("HP: 5813 / 5813 và 3/5, 15/8, 3 / 5.", "hát pê: 5813 / 5813 và 3 phần 5, 15/8, 3 / 5."),  # giữa hai số: sea-g2p đọc "trên"
-    ("Mở/đóng và km/h.", "Mở/đóng và km/h."),  # dính liền: có thể là đơn vị (triệu/tháng), để nguyên
+    ("HP: 5813 / 5813 và 3/5, 15/8, 3 / 5.", "hát pê: 5813 / 5813 và 3 phần 5, 15/8, 3 / 5."),  # cách nhau hai bên: sea-g2p đọc "trên"; dính liền: phân số bé, còn lại (không có chữ chỉ ngày) để nguyên
+    ("Mở/đóng và km/h.", "Mở, đóng và km/h."),  # hai chữ dính liền bằng gạch chéo: ngắt; đơn vị (km/h) giữ nguyên
 ])
 def test_a_slash_between_two_words_is_a_pause(text: str, said: str) -> None:
     assert _said(text) == said
@@ -565,7 +565,7 @@ def test_the_server_starts_and_stops_preparing(studio) -> None:  # noqa: F811
 
 # ---- TN "Nghe ngay" lượt 3: số, mặt cười, dấu *, gạch ngang dính chữ, khung hệ thống, dấu câu CJK (vieneu.reading_marks) -------------------------------------
 @pytest.mark.parametrize("text, said", [
-    ("Chia 3/5 chai, 1/2 và 180/300, 5/3 và 15/8.", "Chia 3 phần 5 chai, 1 phần 2 và 180/300, 5/3 và 15/8."),  # phân số bé: phần; thanh chỉ số / ngày: để sea-g2p
+    ("Chia 3/5 chai, 1/2 và 180/300, 5/3 và 15/8.", "Chia 3 phần 5 chai, 1 phần 2 và 180/300, 5/3 và 15/8."),  # phân số bé: phần; tỉ lệ / thanh chỉ số / "d/m" không có chữ chỉ ngày: để sea-g2p
     ("Lớp 1-1, được 1-3-1, dài 3-4000 từ, 3-5 người.", "Lớp 1 1, được 1 3 1, dài 3 đến 4000 từ, 3 đến 5 người."),
     ("Ngày 01-10-2026, số 090-123-4567, tỉ số 3-1, giờ 9-5.", "Ngày 01-10-2026, số 090-123-4567, tỉ số 3 1, giờ 9 5."),
     ("Sự kiện x2 và ×3, ($1 USD) và $5.", "Sự kiện nhân 2 và nhân 3, (1 đô la u ét đê) và 5 đô la."),

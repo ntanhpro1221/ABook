@@ -50,7 +50,7 @@ class ReadingMarksTest {
         "Bị 【Đóng băng / yếu】 rồi." to "Bị, 【Đóng băng, yếu】, rồi.",
         "Chạy / bay." to "Chạy, bay.",
         "HP: 5813 / 5813 và 3/5, 15/8, 3 / 5." to "hát pê: 5813 / 5813 và 3 phần 5, 15/8, 3 / 5.",
-        "Mở/đóng và km/h." to "Mở/đóng và km/h.",
+        "Mở/đóng và km/h." to "Mở, đóng và km/h.",
     )
 
     @Test

@@ -100,7 +100,7 @@ def test_a_trailing_dash_of_a_stretch_is_dropped() -> None:
 
 
 def test_a_rank_is_not_a_stretch() -> None:
-    assert _said("hạng AAA và AAA+++, rồi SSS") == ["hạng", "a a a", "và", "a a a+++,", "rồi", "ét ét ét"]
+    assert _said("hạng AAA và AAA+++, rồi SSS") == ["hạng", "a a a", "và", "a a a cộng cộng cộng,", "rồi", "ét ét ét"]
 
 
 def test_a_stretched_roman_numeral_or_x_is_not_a_stretch() -> None:

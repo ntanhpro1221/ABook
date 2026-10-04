@@ -81,7 +81,7 @@ class SoundsTest {
         assertEquals(listOf("“a… a…", "u… u!”", "‘nha… a”", "(hừm…)"), said("“Aaaa… Uuu!” ‘nhaaa’ (Hmmm)"))
         assertEquals(listOf("ừm…Ý", "bạn;", "ha… a…..cuối;", "mà… à, nếu;", "oáp....Hầy;", "-ê....nhìn"), said("Ummm…Ý bạn; Haaa…..cuối; màaaa—nếu; Oáppp~....Hầy; -EH....nhìn"))
         assertEquals(listOf("xoạt…", "vi… i"), said("Xoạttt- *Viiiii*-"))
-        assertEquals(listOf("hạng", "a a a", "và", "a a a+++,", "rồi", "ét ét ét"), said("hạng AAA và AAA+++, rồi SSS"))
+        assertEquals(listOf("hạng", "a a a", "và", "a a a cộng cộng cộng,", "rồi", "ét ét ét"), said("hạng AAA và AAA+++, rồi SSS"))
         assertEquals(listOf("Chương", "ba,", "ba mươi."), said("Chương III, XXX."))
     }
 
