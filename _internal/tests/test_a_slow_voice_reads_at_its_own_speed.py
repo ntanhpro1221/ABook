@@ -116,7 +116,7 @@ def test_the_speed_step_runs_after_pitch_and_skips_the_laugh() -> None:
     from pathlib import Path
 
     source = (Path(__file__).resolve().parent.parent / "abook" / "tts.py").read_text(encoding="utf-8")
-    pitch_at = source.index("pitched_audio = apply_pitch_variant(\n                        audio,\n                        self.vieneu.sample_rate,\n                        pitch_steps,\n                    )")
-    speed_at = source.index("audio = apply_speed_change(audio, self.vieneu.sample_rate, speed_factor)")
+    pitch_at = source.index("pitched_audio = apply_pitch_variant(\n                        audio,\n                        self.sample_rate,\n                        pitch_steps,\n                    )")
+    speed_at = source.index("audio = apply_speed_change(audio, self.sample_rate, speed_factor)")
     assert pitch_at < speed_at
     assert "vocalization_delivery_profile != HA_VOCALIZATION_DELIVERY_PROFILE" in source[pitch_at:speed_at]

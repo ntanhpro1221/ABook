@@ -34,9 +34,10 @@ from ..readaloud import azure as readaloud_azure
 from ..readaloud import keys as readaloud_keys
 from ..readaloud import service as readaloud
 from ..readaloud.model import VoiceError
+from ..voice_catalog import engine_voice
 from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, edits_inbox, ffmpeg_setup, humanize, listen_view,
                music_catalog, music_local, music_module, music_moods, music_plan, music_playlist, music_select, music_student, packages, project_views,
-               projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, vieneu_module, volumes, word_timing, workshop)
+               projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, vieneu_module, volumes, word_timing, workshop, zerotts_module)
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, clean_book_templates, legacy_ids
 from .listening import RECORD_ID, Listening
@@ -46,7 +47,7 @@ from .remote_studio import REMOTE_HEADER, StudioGate
 from .reviews import Reviews, review_view
 from .casting_review import casting_chapter, casting_chapters
 from .name_readings import name_readings
-from .voice_picker import preview_file, voice_choices
+from .voice_picker import engine_installed, engine_module_status, preview_file, start_engine_module, voice_choices
 from .work_items import work_items
 from .cast import CastError, CastPlayers
 from .cast import search as cast_search
@@ -260,6 +261,8 @@ class App:
         # Giọng Supertonic (supertonic_module.py): cùng khung với VieNeu, mười giọng nam nữ, gỡ được.
         supertonic_module.configure(preferences.path.with_name(supertonic_module.FOLDER), benchmark=self.readaloud.supertonic.benchmark,
                                     after_install=self.readaloud.supertonic.forget)
+        # Giọng ZeroTTS (zerotts_module.py): máy đọc khác cho Studio, người nghe chọn tay ở "Đổi giọng"; tải khi bấm.
+        zerotts_module.configure(preferences.path.with_name(zerotts_module.FOLDER))
         if not (isinstance(runner, actions.FakeRunner) or os.environ.get("ABOOK_FAKE_RUNNER") == "1"):
             self.readaloud.warm()
         # Mốc từng chữ khi nghe (word_timing.py): app đóng gói không có numpy nên giao việc căn cho Python của Studio.
@@ -2943,6 +2946,9 @@ class Handler(BaseHTTPRequestHandler):
         avoid = str(body.get("avoid", "") or "").strip()[:200]
         if not character:
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu nhân vật")
+        other_engine = engine_voice(preset) if preset else None
+        if other_engine is not None and not engine_installed(str(other_engine["engine"])):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Giọng này cần tải thêm trước khi chọn")
         if package and not (preset or gender or avoid):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu giọng hoặc giới tính")
         problem = (book_wishes.voice_problem(book_wishes.people(path), character, gender=gender) if package
@@ -3431,6 +3437,26 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
         self._send_json(HTTPStatus.OK, supertonic_module.status())
 
+    def get_studio_engine(self, _query: dict[str, list[str]], engine: str) -> None:
+        # Mô-đun tải thêm của máy đọc khác ở hộp "Đổi giọng" (voice_picker.engine_module_status): ZeroTTS, Supertonic.
+        self._send_json(HTTPStatus.OK, engine_module_status(engine))
+
+    def post_studio_engine(self, _query: dict[str, list[str]], engine: str) -> None:
+        # "Tải giọng" ở hộp "Đổi giọng": tải phần còn thiếu / đã cũ ở luồng nền; hộp hỏi lại trạng thái mỗi giây.
+        self.app._mutating()
+        try:
+            self._send_json(HTTPStatus.OK, start_engine_module(engine))
+        except ValueError as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+
+    def post_studio_zerotts_remove(self, _query: dict[str, list[str]]) -> None:
+        self.app._mutating()
+        try:
+            zerotts_module.remove()
+        except ValueError as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+        self._send_json(HTTPStatus.OK, zerotts_module.status())
+
     def get_readaloud_prepare(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.readaloud.prepare.status())
 
@@ -3618,6 +3644,9 @@ ROUTES: list[Route] = [
     ("GET", re.compile(r"/api/studio/setup"), Handler.get_studio_setup),
     ("POST", re.compile(r"/api/studio/setup"), Handler.post_studio_setup),
     ("POST", re.compile(r"/api/studio/setup/cancel"), Handler.post_studio_setup_cancel),
+    ("GET", re.compile(r"/api/studio/(zerotts|supertonic)"), Handler.get_studio_engine),
+    ("POST", re.compile(r"/api/studio/(zerotts|supertonic)"), Handler.post_studio_engine),
+    ("POST", re.compile(r"/api/studio/zerotts/remove"), Handler.post_studio_zerotts_remove),
     ("DELETE", re.compile(r"/api/studio/setup"), Handler.delete_studio_setup),
     ("GET", re.compile(r"/api/library"), Handler.get_library),
     ("GET", re.compile(r"/api/voices"), Handler.get_voices),
