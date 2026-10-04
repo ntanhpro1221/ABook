@@ -1,3 +1,6 @@
+# B-EVAL HOOKS (nhánh dev/breakthrough-eval, chỉ để đo, không bao giờ gộp): bốn hook đọc biến môi trường ABOOK_PROMPT_DUMP /
+# ABOOK_GOLD_PREVIOUS / ABOOK_ORACLE_DIR (+_GOLD_DIR, _KIND) / ABOOK_EVAL_SETTINGS; chi tiết ở ebook_reader/eval_hooks.py.
+# Không đặt biến nào thì prompt và hành vi y hệt từng byte.
 from __future__ import annotations
 
 import copy
@@ -19,6 +22,7 @@ import requests
 
 from .config import ANALYSIS_RETRY_POLICY_VERSION
 from . import database as _database
+from . import eval_hooks as _eval_hooks
 from .database import (
     INAUDIBLE_DELIVERY_FIELDS,
     critic_delta_fields,
@@ -5178,12 +5182,12 @@ def _original_neighbor_context(rows: list[Any]) -> dict[str, dict[str, Any]]:
         next_row = rows[index + 1] if index + 1 < len(rows) else None
         context_by_id[str(row["stable_id"])] = {
             "previous_text": (
-                str(previous_row["text"])[-500:]
+                str(previous_row["text"])[-_eval_hooks.neighbor_chars():]
                 if previous_row is not None and int(previous_row["chapter_id"]) == chapter_id
                 else ""
             ),
             "next_text": (
-                str(next_row["text"])[:500]
+                str(next_row["text"])[: _eval_hooks.neighbor_chars()]
                 if next_row is not None and int(next_row["chapter_id"]) == chapter_id
                 else ""
             ),
@@ -5259,10 +5263,15 @@ def _neighbor_texts(
     stable_id = str(group[index]["stable_id"])
     if original_context is not None and stable_id in original_context:
         context = original_context[stable_id]
-        return str(context.get("previous_text", "")), str(context.get("next_text", ""))
+        previous_text, next_text = str(context.get("previous_text", "")), str(context.get("next_text", ""))
+        if _eval_hooks.eval_settings().get("neighbor_chars") is not None:  # B-EVAL: chuỗi dựng sẵn có thể dài hơn mức đang đo
+            limit = _eval_hooks.neighbor_chars()
+            previous_text, next_text = previous_text[-limit:], next_text[:limit]
+        return previous_text, next_text
+    limit = _eval_hooks.neighbor_chars()
     return (
-        str(group[index - 1]["text"])[-500:] if index else "",
-        str(group[index + 1]["text"])[:500] if index + 1 < len(group) else "",
+        str(group[index - 1]["text"])[-limit:] if index else "",
+        str(group[index + 1]["text"])[:limit] if index + 1 < len(group) else "",
     )
 
 
@@ -6838,7 +6847,7 @@ class OllamaBookAnalyzer:
         *,
         quality_policy_hash: str | None = None,
     ) -> None:
-        self.settings = settings["analysis"]
+        self.settings = _eval_hooks.apply_settings_override(settings["analysis"])  # B-EVAL: ABOOK_EVAL_SETTINGS
         self.quality_profile = str(settings.get("quality_profile", "balanced"))
         # Who "tôi" is in a first-person book - the same setting the registry uses after the
         # analysis to fold pronoun labels into that character (resolve_first_person_labels).
@@ -7054,6 +7063,22 @@ class OllamaBookAnalyzer:
             f"dùng \"tôi\", NARRATOR hay tên người đang nói chuyện với {narrator}.\n\n"
         )
 
+    def _eval_dump(
+        self, role: str, group: list[Any], request: dict[str, Any], batch_ids: dict[str, str], attempt: int
+    ) -> None:
+        """B-EVAL (ABOOK_PROMPT_DUMP): một dòng JSONL cho mỗi lần gọi model, đúng đầu vào đã gửi và chuỗi thô trả về."""
+        if not _eval_hooks.dump_enabled():
+            return
+        _eval_hooks.dump_call(
+            role=role,
+            chapter=self._chapter_titles.get(int(group[0]["chapter_id"]), ""),
+            seqs=[_eval_hooks.row_seq(row) for row in group],
+            batch_ids=batch_ids,
+            request=request,
+            raw=getattr(self, "_last_raw_response", ""),
+            attempt=attempt,
+        )
+
     def _previous_turns(self, group: list[Any]) -> str:
         """Vài đoạn ngay trước lô (cùng chương, đã phân tích xong) kèm người nói ĐÃ gán - để nối lượt đối đáp qua ranh giới lô.
 
@@ -7075,15 +7100,21 @@ class OllamaBookAnalyzer:
         before = [row for row in chapter_rows if int(row["seq"]) < first_seq][-PREVIOUS_TURNS:]
         if not before or any(str(row["status"]) == SegmentStatus.PENDING.value for row in before):
             return ""
-        if not any(str(row["kind"] or "") in {"dialogue", "thought"} for row in before):
+        # B-EVAL (ABOOK_GOLD_PREVIOUS): kind và người nói theo gold; không đặt biến thì đúng nhãn của model như cũ.
+        chapter_name = self._chapter_titles.get(chapter_id, "")
+        turns = [
+            _eval_hooks.gold_turn(chapter_name, int(row["seq"]), str(row["kind"] or ""), str(row["speaker"] or ""))
+            for row in before
+        ]
+        if not any(kind in {"dialogue", "thought"} for kind, _speaker in turns):
             return ""
         lines = []
-        for row in before:
-            kind = str(row["kind"] or "narration")
+        for row, (row_kind, row_speaker) in zip(before, turns):
+            kind = row_kind or "narration"
             text = " ".join(str(row["text"] or "").split())
             text = text if len(text) <= 160 else text[:157] + "..."
             if kind in {"dialogue", "thought"}:
-                speaker = str(row["speaker"] or "UNKNOWN")
+                speaker = row_speaker or "UNKNOWN"
                 if speaker.startswith("NPC_LOCAL::"):
                     speaker = "NPC_LOCAL:" + speaker.rsplit("::", 1)[-1]
                 lines.append(f"- [{'thoại' if kind == 'dialogue' else 'nội tâm'} · {speaker}] {text}")
@@ -7209,6 +7240,7 @@ class OllamaBookAnalyzer:
                 if response is not None:
                     response.close()
         response_text = "".join(parts) or "{}"
+        self._last_raw_response = response_text  # B-EVAL: ABOOK_PROMPT_DUMP
         if usage is not None:
             options = request.get("options", {})
             request_num_ctx = int(options.get("num_ctx", 0))
@@ -7290,6 +7322,7 @@ class OllamaBookAnalyzer:
             f"Các chương hiện tại: {', '.join(chapter_titles)}\n\n"
             f"{self._narrator_line()}"
             f"Nhân vật đã biết từ các phần trước:\n{self._known_summary()}\n\n"
+            f"{_eval_hooks.oracle_block(group, self._chapter_titles)}"
             f"{self._previous_turns(group)}"
             f"Các đoạn liên tiếp:\n{json.dumps(rows, ensure_ascii=False, indent=2)}"
         )
@@ -7392,12 +7425,16 @@ class OllamaBookAnalyzer:
             },
         }
         self._verify_locked_model_digest("before generator request")
-        payload = self._stream_json_response(
-            request,
-            stop_requested=stop_requested,
-            activity=activity,
-            stop_checked=True,
-        )
+        self._last_raw_response = ""
+        try:
+            payload = self._stream_json_response(
+                request,
+                stop_requested=stop_requested,
+                activity=activity,
+                stop_checked=True,
+            )
+        finally:
+            self._eval_dump("generator", group, request, batch_to_stable, int(request_contract["attempt"]))
         self._verify_locked_model_digest("after generator request")
         segments = payload.get("segments", [])
         if isinstance(segments, list):
@@ -7632,12 +7669,18 @@ class OllamaBookAnalyzer:
         }
         if not preflight_checked:
             self._verify_locked_model_digest("before director critic request")
-        payload = self._stream_json_response(
-            request,
-            stop_requested=stop_requested,
-            activity=activity,
-            stop_checked=True,
-        )
+        self._last_raw_response = ""
+        try:
+            payload = self._stream_json_response(
+                request,
+                stop_requested=stop_requested,
+                activity=activity,
+                stop_checked=True,
+            )
+        finally:
+            self._eval_dump(
+                "critic", group, request, {batch_id: batch_id for batch_id in batch_ids}, int(request_contract["attempt"])
+            )
         self._verify_locked_model_digest("after director critic request")
         return payload, candidate_hash
 
@@ -8071,7 +8114,11 @@ class OllamaBookAnalyzer:
         if not ledger_enabled:
             ensure_llm_ready()
         configured_max_segments = int(self.settings.get("batch_segments", 28))
-        max_segments = min(configured_max_segments, HIGH_QUALITY_ANALYSIS_BATCH_SEGMENTS)
+        max_segments = (
+            configured_max_segments  # B-EVAL: ABOOK_EVAL_SETTINGS đặt batch_segments thì bỏ trần high_quality
+            if _eval_hooks.batch_segments_overridden()
+            else min(configured_max_segments, HIGH_QUALITY_ANALYSIS_BATCH_SEGMENTS)
+        )
         max_chars = int(self.settings.get("batch_chars", 6200))
         stable_groups: list[list[Any]] = []
         current: list[Any] = []
