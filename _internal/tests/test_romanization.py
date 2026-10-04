@@ -48,9 +48,9 @@ def test_every_sourced_form_matches_or_is_explained_by_a_chosen_rule():
     assert not unexplained, f"không khớp mà chưa có lý do: {unexplained}"
     assert not stale, f"cách đọc đổi mà lý do còn viết cho cách đọc cũ: {stale}"
     assert len(matched) + len(evidence.EXPLAINED) == len(evidence.SOURCED)
-    # 134 / 191: 36 / 91 dạng có nguồn + 110 ca của chủ sách (04-10, chín lần; ca của chủ sách thay dạng SGK cùng chữ: Yamato, Osaka; Gangwon viết cang theo chính tả: EXPLAINED);
+    # 138 / 195: 36 / 91 dạng có nguồn + 114 ca của chủ sách (04-10, chín lần; ca của chủ sách thay dạng SGK cùng chữ: Yamato, Osaka; Gangwon viết cang theo chính tả: EXPLAINED);
     # 57 còn lại đều do luật của chủ sách, điểm đã quét hay nguồn tự lệch (EXPLAINED)
-    assert len(matched) == 134
+    assert len(matched) == 138
 
 
 def test_tally_of_sourced_forms_by_kind():
@@ -60,7 +60,7 @@ def test_tally_of_sourced_forms_by_kind():
         entry[0] += _matches(token, origin, sources)
         entry[1] += 1
     # (khớp, tổng). Dạng "community" (Doraemon cũ) chỉ để xem, không là chuẩn.
-    assert tally == {("owner", "ja"): [73, 73], ("owner", "ko"): [36, 37], ("textbook", "ja"): [19, 43], ("official", "ja"): [3, 11], ("community", "ja"): [0, 7],
+    assert tally == {("owner", "ja"): [75, 75], ("owner", "ko"): [38, 39], ("textbook", "ja"): [19, 43], ("official", "ja"): [3, 11], ("community", "ja"): [0, 7],
                      ("official", "ko"): [3, 20]}
 
 
@@ -265,7 +265,7 @@ def test_the_eighth_round_flags_what_it_infers():
     ("Oppa", "ko", "Óp-pa"), ("unnie", "ko", "un-ni"), ("noona", "ko", "nu-na"), ("Ahn", "ko", "An"), ("Yeeun", "ko", "Gie-ưn"), ("Muyoung", "ko", "Mu-giong"), ("Namgung", "ko", "Nam-gung"),
     ("Chaeyeon", "ko", "Che-gion"), ("Young", "ko", "Giong"), ("Hye", "ko", "Hê"), ("Jeongeun", "ko", "Châng-gưn"), ("Luda", "ko", "Lu-đa"), ("won", "ko", "guôn"),
     # điều suy rộng ra: y sau i rơi (yu / yo theo ya), yo / yu cuối từ là gi, Ham + s; yeo mở vẫn gi + eo, Jeong vẫn Gie-ong, Leon không thành tên Hàn
-    ("Kiyoshi", "ja", "Ki-ô-si"), ("Miyuki", "ja", "Mi-u-ki"), ("Sayo", "ja", "Xa-giô"), ("Koichi", "ja", "Co-i-chi"), ("Koizumi", "ja", "Coi-du-mi"), ("Hatta", "ja", "Ha-ta"), ("Nissan", "ja", "Nít-xan"), ("Aoi", "ja", "A-o-i"), ("Shimbun", "ja", "Sim-bun"),
+    ("Kiyoshi", "ja", "Ki-ô-si"), ("Miyuki", "ja", "Mi-u-ki"), ("Sayo", "ja", "Xa-giô"), ("Koichi", "ja", "Co-i-chi"), ("Taruー", "ja", "Ta-ru"), ("Fii", "ja", "Phi"), ("Fina", "ja", "Phi-na"), ("Hyunn", "ko", "Hi-un"), ("Gyu", "ko", "Ghiu"), ("Kyung", "ko", "Ki-ung"), ("Hyung", "ko", "Hi-ung"), ("Koizumi", "ja", "Coi-du-mi"), ("Hatta", "ja", "Ha-ta"), ("Nissan", "ja", "Nít-xan"), ("Aoi", "ja", "A-o-i"), ("Shimbun", "ja", "Sim-bun"),
     ("Yeo", "ko", "Gieo"), ("Jeong", "ko", "Gie-ong"), ("Kim Young-sam", "ko", "Kim Giong-xam"), ("Hakkyo", "ko", "Ha-ki-ô"), ("Hatta", "ko", "Hắt-ta"),
 ])
 def test_owner_ruling_of_the_ninth_round_and_what_it_leaves_alone(token, origin, reading):

@@ -87,6 +87,8 @@ Hệ quả: ABook phải tự chọn một quy ước, neo vào nguồn chính t
 | phụ âm đôi kk, pp, tt, ss, tch | khép âm tiết trước bằng c / p / t + thanh sắc; cch → t + chi (ecchi → ét-chi, alt e-chi); ff → một f (Haffu → ha-phu) | Có nguồn + **Chủ sách** | Hốc-cai-đô, Xáp-pô-rô. Lần 9: "Sapporo => xáp-pô-rô", "Hokkaido => hốc-cai-đô", "Nissan => nít-xan", "Matcha => mát-cha", "ecchi => e-chi / ét-chi", "Haffu => ha-phu". Hatta → ha-ta là ngoại lệ cố định (`_JA_FIXED`), không mở luật gộp |
 | m trước s, b, p | khép m (ん): Hamsuke → ham-xu-ke | **Chủ sách** | Lần 9: "Hamsuke => ham-xu-ke (alt ham-xu-kê)" |
 | di | đi (tên phương Tây trong truyện Nhật) | **Chủ sách** | Lần 9: "Reidi => rây-đi", "Direkuresu => đi-re-ku-re-xu" |
+| fi | **phi** (tên kiểu Âu trong truyện Nhật; fu vẫn phu); Fii → phi (ii gộp), Fina → phi-na (luật, không còn trong bảng cố định) | **Chủ sách** | Lần 9: "Fii => phi", "Fina => phi-na" |
+| ー cuối từ | bỏ (Taruー → ta-ru) | **Chủ sách** | Lần 9: "Taruー => ta-ru" |
 | "u" vô thanh (desu, Matsu…) | vẫn đọc ư / u | Có nguồn | dạng viết không bỏ âm nào |
 
 **Hậu tố gọi** (-san, -kun, -chan, -sama, senpai, sensei, -dono, -tan, -nee, -nii): không có nguồn đọc tiếng Việt. Đọc theo bảng trên: xan, cun, chan, xa-ma,
@@ -113,15 +115,16 @@ tố khác áp cùng cách]
   Cheonggyecheon → che-ong-ghi-che-on (gye → ghi); Kyung → ki-ung, Byung → bi-ung (yu sau phụ âm tách i-u); Gyeong → ghe-ong, Pyeong → pe-ong (yeo sau phụ âm: y mất,
   eo tách e-ong; g + y đọc ghe).
 - Lần 8 (Nhật): Ohto → ô-tô, Ohka → ô-ca ("oh" trước phụ âm / cuối từ là o dài → ô, KỂ CẢ đầu từ; ō đầu từ vẫn o); Sanjyo → xan-giô (jy → j); Hiiraghi → hi-ra-ghi (gh → g);
-  Gesunoh → ghét-xu-nô (tên cố định, KHÔNG suy rộng ge → ghét); Theia → thi-a, Fina → phi-na, Tio → ti-ô (tên kiểu Âu trong truyện Nhật, Hepburn không có ti / fi: cố định trong
-  `_JA_FIXED`, chỉ đúng các tên này, không mở ti / fi cho mọi tên).
+  Gesunoh → ghét-xu-nô (tên cố định, KHÔNG suy rộng ge → ghét); Theia → thi-a, Tio → ti-ô (tên kiểu Âu trong truyện Nhật, Hepburn không có ti: cố định trong
+  `_JA_FIXED`, chỉ đúng các tên này, không mở ti cho mọi tên; Fina → phi-na sau đó thành luật fi → phi).
 - Lần 8 (Hàn): tokki → tô-ki (alt to-ki; kk là phụ âm đầu căng nên to-kki thắng tok-ki khi RR không phân; chỉ kk, Oppa vẫn không đoán); Gangwon → kang-guôn (cố định gang-won, viết cang
   theo chính tả vì bộ kiểm âm tiết không nhận kang; w giữa từ → gu theo analogy `ko_w_gu`).
 - Lần 9 (Nhật, 04-10 trưa): xem các dòng ya / yu / yo, oi, phụ âm đôi, m, di ở bảng trên; thêm Yukinoshita → giu-ki-nô-si-ta, Poh-chan → pô-chan.
   Agent từng suy rộng Hatta thành "gộp mọi phụ âm đôi"; chủ sách bác bằng Sapporo / Hokkaido / Nissan / Matcha - nên một ca lạ là ngoại lệ, đừng suy luật từ nó.
 - Lần 9 (Hàn): oppa → óp-pa, unnie → un-ni (ie cuối → i), noona → nu-na, Ahn → an, Yeeun → de-ưn (= gie-ưn), Yejin → de-din, Yerin → de-rin (**ye đầu từ → gie**,
   e mở), Muyoung → mu-giong, Young → giong, Chaeyeon → che-gion, Seoyeon → xeo-gion (**yeo + phụ âm cuối → gi + o + coda**; "young" viết = yeong), Namgung → nam-gung,
-  Hye → hê, Jeongeun → châng-gưn, Luda → lu-đa, won (tiền) → guôn. Cố định `_KO_FIXED_*`: Jeongeun, Luda (l đầu từ chỉ mở cho tên này), Oppa.
+  Hye → hê, Jeongeun → châng-gưn, Luda → lu-đa, won (tiền) → guôn. Cố định `_KO_FIXED_*`: Jeongeun, Luda (l đầu từ chỉ mở cho tên này), Oppa. Trả lời nhỏ sau đó: Hyunn → hi-un
+  (nn cuối gộp n), Gyu → ghiu (yu mở = một âm tiết); Nhật Taruー → ta-ru (ー cuối bỏ), Fii → phi (fi → phi thành luật, Fina hết cố định); Tiếng Anh well → goeo (luật `w` đầu từ đã ra đúng).
 - Lần 3: Kyouko → Ki-âu-cô, Ryouma → Ri-âu-ma ("ou" viết ra hai chữ → âu; Koutarou → Câu-ta-râu, Satou → Xa-tâu). Nguyên âm dài viết bằng
   dấu (ō) vẫn → ô (Tô-ky-ô); "oo" giữ.
 - Ca sách giáo khoa / Bộ Ngoại giao vênh các phán quyết này (Ya-ma-tô, Cô-bê, Ê-xư-kê…) được ghi lý do ở `EXPLAINED`, không phải lỗi luật.
@@ -135,6 +138,8 @@ Kiơng-chu).
 |---|---|---|---|
 | eo (ㅓ) | **eo** khi âm tiết mở (Seo → xeo); có phụ âm cuối thì tách **e-o** + coda (Jeong → gie-ong, Seoul → xeo-un) | **Chủ sách** | Chủ sách 04-10 (lần 4): "Seojun => xeo-giun", "Jeong => gie-ong". Thay ơ của Bộ Ngoại giao (Xơ-un, Chơng) |
 | yeo (ㅕ) | không phụ âm đầu, âm tiết mở: gi + eo; **có phụ âm cuối: gi + o + coda** (yeon → gion, young / yeong → giong: Chaeyeon → che-gion, Seoyeon → xeo-gion); sau phụ âm **y mất**, eo như thường (gyeong → ghe-ong, pyeong → pe-ong; myung → mung cố định) | **Chủ sách** | Lần 4, 5, 9; cờ `analogy:ko_yeo`. Thay iê của Bộ Ngoại giao (Miêng, Hiêng) |
+| yu (ㅠ) mở sau phụ âm | **MỘT âm tiết**: Gyu → ghiu (g trước i viết gh); có phụ âm cuối thì tách i- (Hyun → hi-un, Kyung → ki-ung, Hyung → hi-ung) | **Chủ sách** | Lần 9: "Gyu => ghiu"; Hyun / Kyung / Hyung giữ. Analogy: Hyu → hiu, Ryu → liu |
+| nn cuối từ | gộp n (Hyunn → hi-un); nn giữa từ vẫn n + n (unnie → un-ni) | **Chủ sách** | Lần 9: "Hyunn => hi-un" |
 | ye (ㅖ) đầu từ | **gie** (e mở): Yejin → gie-gin, Yerin → gie-rin, Yeeun → gie-ưn | **Chủ sách** | Lần 9: "Yejin => de-din", "Yerin => de-rin", "Yeeun => de-ưn" (d = gi giọng Bắc). Hye → hê (sau phụ âm) giữ |
 | eu (ㅡ) | ư | Có nguồn | Cưn, Sưng |
 | ae (ㅐ) | e | Có nguồn | Te, He-in |
@@ -173,8 +178,8 @@ Token đi qua bước tiền xử lý trước khi áp bảng mục 2-3 (`romani
 
 Giữ nguyên cần ít nhất một đoạn còn lại đọc theo luật; không thì None. Chữ Việt không dấu (Khoan, Seo) không được giữ vì nhiều tên romaji / RR cũng là âm tiết Việt.
 Cố ý để None: Jinyoon (Jin-yun hay Ji-nyun), Spider-Man, iPhone, YouTube, PD đứng riêng.
-Chưa quyết (liệt kê để chủ sách phán; oh, jy, gh, tokki, Gangwon chốt ở lần 8; ff, uya, m, di, Jeongeun, Oppa, Luda chốt ở lần 9): Nhật ー cuối (Taruー),
-ti / fi của tên phương Tây ngoài Tio / Fina (Fii); Hàn nn cuối (Hyunn), Gyu (Ghi-u).
+Chưa quyết (liệt kê để chủ sách phán; oh, jy, gh, tokki, Gangwon chốt ở lần 8; ff, uya, m, di, Jeongeun, Oppa, Luda, Taruー, Fii, Hyunn, Gyu chốt ở lần 9): ti của tên
+phương Tây ngoài Tio / Theia (Hepburn không có ti; fi đã thành luật phi).
 
 ## 4. Tên tiếng Anh và phương Tây
 
@@ -243,7 +248,7 @@ Luật rút ra (chung các lần):
   Scotland → xờ-cót-lừn, cobra → cốp-ra); sau âm không nhấn tách "Cờ" huyền, âm tiết trước mở (Laplace → la-pờ-lết). t + r vẫn "tr"
   (Patrick → pa-trích, Đi-troi); d + r trước u → r (Andrew → an-riu). nk + l: k rơi (Franklin → phờ-ranh-lin).
 - w đầu từ → **g + âm đệm** trước mọi nguyên âm (lần 9; lần 7 giới hạn "chỉ trước âm o" là SAI): wi → guy (Will → guyu, William → guy-li-am,
-  wind → guyn), we → goe (Wendy → goen-đi, west → goét), wei → guây (Weiss), wa / wo + phụ âm cuối → guô (water, Wood → guốt, Walt),
+  wind → guyn, well → goeo), we → goe (Wendy → goen-đi, west → goét), wei → guây (Weiss), wa / wo + phụ âm cuối → guô (water, Wood → guốt, Walt),
   wa + c → goắc (Walker), wol → gốp (Wolf), world → gua. Ngoại lệ dạng sách báo: Washington → oa-xinh-tơn. Bộ kiểm âm tiết nhận "guy…" như vần
   của i (chủ sách nghe "guyu" đọc được, 04-10). Nửa sau của từ ghép không áp (sandworm → xan-u-ơm).
 - l cuối: sau i → **iu** (Will guyu, Hilde hiu, Gilbert ghiu, skill xờ-kiu); sau e → **eo** (Elf, bell beo, spell xờ-peo; -iel → i-eo:

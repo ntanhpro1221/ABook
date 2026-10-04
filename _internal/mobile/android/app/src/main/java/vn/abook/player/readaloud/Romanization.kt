@@ -107,7 +107,7 @@ object Romanization {
     private val JA_ALLOWED = mapOf(
         "k" to "aiueo", "g" to "aiueo", "n" to "aiueo", "b" to "aiueo", "p" to "aiueo", "m" to "aiueo", "r" to "aiueo",
         "s" to "aueo", "z" to "aueo", "t" to "aeo", "d" to "aieo", "h" to "aieo", // di: tên kiểu Latin trong truyện Nhật (Reidi, Direkuresu; chủ sách 04-10 lần 9), Hepburn không có
-        "sh" to "aiueo", "ch" to "aiueo", "j" to "aiueo", "ts" to "u", "f" to "u", "w" to "a", "y" to "auo",
+        "sh" to "aiueo", "ch" to "aiueo", "j" to "aiueo", "ts" to "u", "f" to "ui", "w" to "a", "y" to "auo",
         "ky" to "auo", "gy" to "auo", "ny" to "auo", "hy" to "auo", "by" to "auo", "py" to "auo", "my" to "auo", "ry" to "auo",
     )
     private val JA_ONSETS = listOf("sh", "ch", "ts", "ky", "gy", "ny", "hy", "by", "py", "my", "ry")
@@ -125,7 +125,7 @@ object Romanization {
             onset == "ch" -> syllables.add(Syl("ch", if (vowel == 'u') "u" else plain))
             onset == "j" -> syllables.add(Syl("gi", if (vowel == 'u') "u" else plain))
             onset == "ts" -> syllables.add(Syl("x", "u")) // tsu -> xu ở mọi chỗ (chủ sách 04-10)
-            onset == "f" -> syllables.add(Syl("ph", "u"))
+            onset == "f" -> syllables.add(Syl("ph", vowel.toString())) // fu -> phu; fi -> phi (lần 9: Fii -> Phi, Fina -> Phi-na)
             onset == "w" -> syllables.add(Syl("", "oa"))
             onset == "y" -> { // y + nguyên âm -> gi + nguyên âm, đầu từ và giữa từ (chủ sách 04-10); yu, yo theo ya
                 if (vowel != 'a') flags.add("analogy:y_gi")
@@ -145,11 +145,10 @@ object Romanization {
         "onigiri" to listOf(Triple("", "o", ""), Triple("n", "i", ""), Triple("gi", "i", ""), Triple("r", "i", "")),
         // chwan: cách viết nũng của -chan (Tenshi-chwan); w giữa ch và a là bán âm oa (analogy theo wa -> oa), khép n
         "chwan" to listOf(Triple("ch", "oa", "n")),
-        // chủ sách 04-10 (lần 8), tên cố định: Gesunoh -> ghét-xu-nô (KHÔNG suy rộng ge -> ghét); Theia -> thi-a, Fina -> phi-na, Tio -> ti-ô là tên kiểu Âu trong truyện Nhật
-        // (Hepburn không có ti / fi, nên không đi qua luật: chỉ đúng các tên này)
+        // chủ sách 04-10 (lần 8), tên cố định: Gesunoh -> ghét-xu-nô (KHÔNG suy rộng ge -> ghét); Theia -> thi-a, Tio -> ti-ô là tên kiểu Âu trong truyện Nhật
+        // (Hepburn không có ti, nên không đi qua luật: chỉ đúng các tên này; fi -> phi thì là luật từ lần 9, Fina -> phi-na)
         "gesunoh" to listOf(Triple("G", "e", "t"), Triple("x", "u", ""), Triple("n", "ô", "")),
         "theia" to listOf(Triple("th", "i", ""), Triple("", "a", "")),
-        "fina" to listOf(Triple("ph", "i", ""), Triple("n", "a", "")),
         "tio" to listOf(Triple("t", "i", ""), Triple("", "ô", "")),
         // chủ sách lần 9, ngoại lệ không có luật: Hatta -> ha-ta (tt KHÔNG khép); Koichi -> co-i-chi (ghép kou + ichi, khác Koizumi -> coi-du-mi)
         "hatta" to listOf(Triple("h", "a", ""), Triple("t", "a", "")),
@@ -332,6 +331,8 @@ object Romanization {
     }
 
     private val KO_SILENT_H = Regex("ah(?![aeiouy])")
+    private val KO_FINAL_NN = Regex("nn$")
+    private val JA_PROLONGED = Regex("ー+(?=$|[\\s-])")
     private val KO_FINAL_IE = Regex("(?<=[bcdfghjklmnpqrstvwxz])ie$")
 
     /**
@@ -344,6 +345,10 @@ object Romanization {
         if (KO_FINAL_IE.containsMatchIn(word)) {
             flags.add("analogy:ko_ie")
             word = KO_FINAL_IE.replace(word, "i") // unnie -> un-ni (chủ sách lần 9): ie cuối từ sau phụ âm là i dài, như ee -> i
+        }
+        if (KO_FINAL_NN.containsMatchIn(word)) {
+            flags.add("analogy:ko_nn")
+            word = KO_FINAL_NN.replace(word, "n") // nn cuối từ gộp n (Hyunn -> Hi-un, chủ sách lần 9)
         }
         if ("weo" in word) {
             flags.add("analogy:ko_weo")
@@ -447,6 +452,8 @@ object Romanization {
         var pieces: MutableList<Syl>
         var closing = closing
         when {
+            vowel == "yu" && closing.isEmpty() && onset.isNotEmpty() -> // yu mở sau phụ âm là MỘT âm tiết (chủ sách lần 9: Gyu -> Ghiu); có phụ âm cuối thì tách i- (Hyun, Kyung, Hyung)
+                pieces = mutableListOf(Syl(if (onset == "K") "G" else onset, "iu"))
             vowel == "ya" || vowel == "yo" || vowel == "yu" -> { // y + nguyên âm -> gi (chủ sách 04-10: Yoon -> Giun); sau phụ âm tách i- (Hyung -> Hi-ung)
                 val letter = when (vowel) { "ya" -> "a"; "yo" -> "ô"; else -> "u" }
                 pieces = if (onset.isEmpty()) mutableListOf(Syl("gi", letter)) else mutableListOf(Syl(onset, "i"), Syl("", letter))
@@ -637,7 +644,8 @@ object Romanization {
     }
 
     private fun read(token: String, origin: String): Reading? {
-        val value = Normalizer.normalize(BookEdits.pyStrip(token), Normalizer.Form.NFC).replace('’', '\'')
+        var value = Normalizer.normalize(BookEdits.pyStrip(token), Normalizer.Form.NFC).replace('’', '\'')
+        if (origin == "ja") value = JA_PROLONGED.replace(value, "") // ー cuối từ bỏ (Taruー -> Ta-ru, chủ sách lần 9)
         val flags = ArrayList<String>()
         val words = ArrayList<String>()
         var readAny = false // có ít nhất một đoạn đọc theo luật (toàn đoạn giữ nguyên thì không phải việc của luật này)

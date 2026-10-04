@@ -183,6 +183,7 @@ SOURCED: list[tuple[str, tuple[str, ...], str]] = [
     ("Richard", ("Ri-chát",), "owner"),
     ("Roland", ("Rô-lừn",), "owner"),
     ("Austin", ("Ô-tin",), "owner"),
+    ("well", ("goeo",), "owner"),  # lần 9, trả lời nhỏ: w đầu từ -> g + âm đệm (luật ra đúng)
     # --- văn bản nhà nước / Bộ Ngoại giao ---
     ("Edison", ("Ê-đi-xơn",), "official"),
     ("Melbourne", ("Men-bơn",), "official"),
