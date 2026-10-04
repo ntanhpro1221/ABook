@@ -623,32 +623,188 @@ class EngineAdapter:
         raise NotImplementedError
 
     @classmethod
-    def chunks(cls, text: str) -> list[str]:
-        """Các lần gọi của một câu: nguyên câu nếu không quá `MAX_CHUNK_CHARS`, không thì cắt như "Nghe ngay" cắt cho VieNeu
-        (`readaloud.vieneu.units`: gộp câu liền kề tới ngưỡng, câu dài hơn cắt ở dấu phẩy rồi ở từ). Chỉ lấy chỗ cắt - chữ
-        đem đọc vẫn là chữ Studio đã chuẩn bị, không qua các phép đọc riêng của "Nghe ngay"."""
+    def chunk_plan(cls, text: str) -> list[tuple[str, str]]:
+        """Các lần gọi của một câu, mỗi lần kèm dấu câu thô ở cuối mảnh (`.`, `…`, `?`, `!`, `,`... hay "" khi cắt giữa câu ở từ) để
+        `join_chunks` chọn khoảng lặng. Nguyên câu nếu không quá `MAX_CHUNK_CHARS`; không thì cắt theo `plan_chunks`. Chữ đem đọc vẫn là
+        chữ Studio đã chuẩn bị, không qua các phép đọc riêng của "Nghe ngay"."""
         if cls.MAX_CHUNK_CHARS is None or len(text) <= cls.MAX_CHUNK_CHARS:
-            return [text]
-        from .readaloud.vieneu import units
+            return [(text, _end_mark(text.split()[-1]) if text.strip() else "")]
+        return plan_chunks(text, cls.MAX_CHUNK_CHARS) or [(text, "")]
 
-        toks, pieces = units(text, cls.MAX_CHUNK_CHARS)
-        return [piece.text(toks) for piece in pieces] or [text]
-
-
-# Mối nối giữa các lần gọi của một câu dài: lặng cứng, tạm thời (Model đang thử cách nối tốt hơn - đo 04-10: UTMOS thấp hơn
-# 0,15-0,4 so với gọi một lần). Thay cách nối ở `join_chunks`, không ở chỗ gọi.
-CHUNK_JOIN_SILENCE_SECONDS = 0.2
+    @classmethod
+    def chunks(cls, text: str) -> list[str]:
+        """Chữ của các lần gọi trong `chunk_plan`."""
+        return [chunk for chunk, _end in cls.chunk_plan(text)]
 
 
-def join_chunks(waves: list[np.ndarray], sample_rate: int) -> np.ndarray:
-    """Nối bản thu các lần gọi của một câu, theo thứ tự, cách nhau `CHUNK_JOIN_SILENCE_SECONDS` lặng."""
-    gap = np.zeros(int(round(CHUNK_JOIN_SILENCE_SECONDS * sample_rate)), dtype=np.float32)
-    parts: list[np.ndarray] = []
-    for index, wave in enumerate(waves):
-        if index:
-            parts.append(gap)
-        parts.append(np.asarray(wave, dtype=np.float32).reshape(-1))
-    return np.concatenate(parts) if parts else np.zeros(0, dtype=np.float32)
+# ---- chia câu dài thành mảnh, nối mảnh -------------------------------------------------------------------------------------------
+# Đo 04-10 trên ZeroTTS (docs/VOICE_BALANCE.md, join_report: 5 giọng x 13 đoạn 300-450 ký tự, UTMOSv2 + ASR): chia theo ranh giới câu
+# và nối "cắt lặng mép + fade + lặng theo dấu" cho UTMOS không kém cách cũ (+0,022 ± 0,026), nhưng lặng tại chỗ nối 0,25 s thay vì
+# 0,36 s - gần lặng ZeroTTS tự sinh khi đọc một lần (trung vị sau dấu chấm 0,27 s, phẩy 0,20 s, hỏi 0,31 s, than 0,28 s, giữa từ 0,03 s).
+CHUNK_MIN_CHARS = 30
+CHUNK_END_MARKS = ".!?…,;:"
+CHUNK_TRIM_DB = -45.0  # dưới mức này (khung 5 ms) là lặng ở mép trong của mảnh
+CHUNK_TRIM_FRAME_SECONDS = 0.005
+CHUNK_TRIM_KEEP_SECONDS = 0.010  # chừa lại mỗi mép, không cắt vào âm đầu / cuối
+CHUNK_FADE_SECONDS = 0.015  # raised-cosine ở mép trong
+CHUNK_JOIN_GAP_SECONDS = {".": 0.27, "…": 0.27, "?": 0.31, "!": 0.28, ",": 0.20}  # TỔNG lặng giữa hai tiếng, theo dấu cuối mảnh trước
+CHUNK_JOIN_GAP_DEFAULT_SECONDS = 0.20  # dấu khác (`;`, `:`) hay cắt giữa câu ở từ: như dấu phẩy
+CHUNK_PEAK_CEILING = 0.99
+
+
+def _end_mark(token: str) -> str:
+    from .readaloud.vieneu import CLOSERS
+
+    core = token.rstrip(CLOSERS)
+    return core[-1] if core and core[-1] in CHUNK_END_MARKS else ""
+
+
+def _even_split(atoms: list[tuple[str, str]], limit: int) -> list[tuple[str, str]]:
+    """Gộp các nguyên tử (chữ, dấu cuối) liền nhau thành SỐ MẢNH ÍT NHẤT, mỗi mảnh không quá `limit` ký tự, cỡ mảnh đều nhất (tối thiểu
+    tổng bình phương lệch khỏi cỡ trung bình) - quy hoạch động."""
+    count = len(atoms)
+    total = sum(len(text) for text, _mark in atoms) + count - 1
+    prefix = [0]
+    for text, _mark in atoms:
+        prefix.append(prefix[-1] + len(text) + 1)
+
+    def span(i: int, j: int) -> int:  # độ dài ký tự của atoms[i:j] nối bằng khoảng trắng
+        return prefix[j] - prefix[i] - 1
+
+    inf = float("inf")
+    for pieces in range(-(-total // limit), count + 1):
+        target = total / pieces
+        best = [[inf] * (count + 1) for _ in range(pieces + 1)]
+        came = [[0] * (count + 1) for _ in range(pieces + 1)]
+        best[0][0] = 0.0
+        for m in range(1, pieces + 1):
+            for j in range(m, count + 1):
+                for i in range(m - 1, j):
+                    size = span(i, j)
+                    if size > limit or best[m - 1][i] == inf:
+                        continue
+                    cost = best[m - 1][i] + (size - target) ** 2
+                    if cost < best[m][j]:
+                        best[m][j], came[m][j] = cost, i
+        if best[pieces][count] < inf:
+            cuts, j = [], count
+            for m in range(pieces, 0, -1):
+                i = came[m][j]
+                cuts.append((i, j))
+                j = i
+            return [(" ".join(text for text, _mark in atoms[i:j]), atoms[j - 1][1]) for i, j in reversed(cuts)]
+    raise AssertionError("mỗi nguyên tử vừa trần nên chia thành từng nguyên tử luôn được")
+
+
+def plan_chunks(text: str, limit: int) -> list[tuple[str, str]]:
+    """Cắt `text` (dài hơn `limit`) thành các mảnh (chữ, dấu cuối). Cắt ở ranh giới câu, gộp NGUYÊN câu liền kề tới `limit`; câu dài hơn
+    `limit` đứng riêng, cắt ở dấu phẩy thành số mảnh ít nhất và đều (không cắt được ở dấu phẩy thì ở từ; một từ dài hơn `limit` thì cắt
+    cứng), không gộp mẩu của nó với câu kề; mảnh dưới `CHUNK_MIN_CHARS` gộp vào mảnh kề nếu còn vừa `limit`."""
+    from .readaloud.vieneu import PHRASE_END, SENTENCE_END, _groups
+    from .webui.word_timing import tokens
+
+    toks = tokens(text)
+
+    def words(first: int, last: int) -> str:
+        return " ".join(toks[first:last + 1])
+
+    pieces: list[tuple[str, str, bool]] = []  # (chữ, dấu cuối, nguyên câu)
+    for first, last in _groups(toks, 0, len(toks) - 1, SENTENCE_END):
+        if len(words(first, last)) <= limit:
+            pieces.append((words(first, last), _end_mark(toks[last]), True))
+            continue
+        atoms: list[tuple[str, str]] = []
+        for a, b in _groups(toks, first, last, PHRASE_END):
+            if len(words(a, b)) <= limit:
+                atoms.append((words(a, b), _end_mark(toks[b])))
+                continue
+            for index in range(a, b + 1):  # khúc giữa hai dấu phẩy cũng quá trần: cắt ở từ
+                slices = [toks[index][start:start + limit] for start in range(0, len(toks[index]), limit)]
+                atoms += [(piece, "") for piece in slices[:-1]] + [(slices[-1], _end_mark(toks[index]))]
+        pieces += [(chunk, mark, False) for chunk, mark in _even_split(atoms, limit)]
+    merged: list[tuple[str, str, bool]] = []
+    for chunk, mark, whole in pieces:
+        if whole and merged and merged[-1][2] and len(merged[-1][0]) + 1 + len(chunk) <= limit:
+            merged[-1] = (f"{merged[-1][0]} {chunk}", mark, True)
+        else:
+            merged.append((chunk, mark, whole))
+    out = [(chunk, mark) for chunk, mark, _whole in merged]
+    index = 0
+    while index < len(out):  # mảnh mồ côi gộp vào mảnh kề (trước, rồi sau) nếu còn vừa trần
+        if len(out[index][0]) < CHUNK_MIN_CHARS and len(out) > 1:
+            if index > 0 and len(out[index - 1][0]) + 1 + len(out[index][0]) <= limit:
+                out[index - 1:index + 1] = [(f"{out[index - 1][0]} {out[index][0]}", out[index][1])]
+                continue
+            if index + 1 < len(out) and len(out[index][0]) + 1 + len(out[index + 1][0]) <= limit:
+                out[index:index + 2] = [(f"{out[index][0]} {out[index + 1][0]}", out[index + 1][1])]
+                continue
+        index += 1
+    return out
+
+
+def chunk_gap_seconds(end_mark: str) -> float:
+    """Tổng lặng giữa hai tiếng sau mảnh kết thúc bằng `end_mark` (xem CHUNK_JOIN_GAP_SECONDS)."""
+    return CHUNK_JOIN_GAP_SECONDS.get(end_mark, CHUNK_JOIN_GAP_DEFAULT_SECONDS)
+
+
+def _trim_silence(wave: np.ndarray, sample_rate: int, *, head: bool, tail: bool) -> np.ndarray:
+    """Cắt lặng dưới `CHUNK_TRIM_DB` ở đầu / cuối (khung `CHUNK_TRIM_FRAME_SECONDS`), chừa `CHUNK_TRIM_KEEP_SECONDS` mỗi mép."""
+    frame = max(1, int(sample_rate * CHUNK_TRIM_FRAME_SECONDS))
+    count = wave.size // frame
+    if count == 0:
+        return wave
+    rms = np.sqrt((wave[:count * frame].astype(np.float64).reshape(count, frame) ** 2).mean(axis=1))
+    loud = np.flatnonzero(20.0 * np.log10(rms + 1e-9) > CHUNK_TRIM_DB)
+    if loud.size == 0:
+        return wave
+    keep = int(sample_rate * CHUNK_TRIM_KEEP_SECONDS)
+    start = max(0, int(loud[0]) * frame - keep) if head else 0
+    stop = min(wave.size, (int(loud[-1]) + 1) * frame + keep) if tail else wave.size
+    return wave[start:stop]
+
+
+def _fade_ramp(sample_rate: int, limit: int) -> np.ndarray:
+    count = min(int(sample_rate * CHUNK_FADE_SECONDS), limit)
+    return (0.5 - 0.5 * np.cos(np.pi * np.arange(count) / count)).astype(np.float32) if count > 1 else np.zeros(0, dtype=np.float32)
+
+
+def _fade_edges(wave: np.ndarray, sample_rate: int, *, head: bool, tail: bool) -> np.ndarray:
+    ramp = _fade_ramp(sample_rate, wave.size // 2)
+    if not ramp.size:
+        return wave
+    wave = wave.copy()
+    if head:
+        wave[:ramp.size] *= ramp
+    if tail:
+        wave[-ramp.size:] *= ramp[::-1]
+    return wave
+
+
+def join_chunks(waves: list[np.ndarray], sample_rate: int, ends: list[str] | None = None) -> np.ndarray:
+    """Nối bản thu các lần gọi của một câu, theo thứ tự. `ends[i]` = dấu cuối của mảnh i (`chunk_plan`; thiếu thì như dấu phẩy).
+    Mép TRONG mỗi mảnh cắt lặng (ZeroTTS tự mang ~0,1 s lặng cuối mảnh) rồi fade raised-cosine; giữa hai mảnh chèn lặng theo dấu cuối mảnh
+    trước, `chunk_gap_seconds` TRỪ phần mép đã chừa (2 x `CHUNK_TRIM_KEEP_SECONDS`) - tổng không hơn phần chừa thì chồng crossfade. Đầu mảnh
+    đầu và cuối mảnh cuối giữ nguyên. Không cân độ to từng mảnh (đo: không cải thiện); chặn đỉnh `CHUNK_PEAK_CEILING` sau khi nối."""
+    parts = [np.asarray(wave, dtype=np.float32).reshape(-1) for wave in waves]
+    if len(parts) <= 1:
+        return parts[0] if parts else np.zeros(0, dtype=np.float32)
+    last = len(parts) - 1
+    parts = [_fade_edges(_trim_silence(part, sample_rate, head=i > 0, tail=i < last), sample_rate, head=i > 0, tail=i < last)
+             for i, part in enumerate(parts)]
+    kept = 2 * CHUNK_TRIM_KEEP_SECONDS
+    out = parts[0]
+    for index, part in enumerate(parts[1:]):
+        gap = chunk_gap_seconds(ends[index] if ends is not None and index < len(ends) else ",")
+        if gap > kept:
+            out = np.concatenate([out, np.zeros(round((gap - kept) * sample_rate), dtype=np.float32), part])
+        else:  # lặng không đủ chừa mép: chồng hai mép
+            ramp = _fade_ramp(sample_rate, min(out.size, part.size))
+            count = ramp.size
+            out = np.concatenate([out[:out.size - count], out[out.size - count:] * ramp[::-1] + part[:count] * ramp, part[count:]])
+    peak = float(np.max(np.abs(out))) if out.size else 0.0
+    if peak > CHUNK_PEAK_CEILING:
+        out = out * np.float32(CHUNK_PEAK_CEILING / peak)
+    return out.astype(np.float32, copy=False)
 
 
 class VieNeuEngine(EngineAdapter):
@@ -742,16 +898,37 @@ class ZeroTTSEngine(EngineAdapter):
 
     RAM đỉnh tăng theo bình phương độ dài một lần gọi (docs/VOICE_BALANCE.md: 200 ký tự 2,0 GB, 400 ký tự 4,5 GB, 800 ký tự
     14,5 GB và ASR sai 50 %), nên mỗi lần gọi tối đa 170 ký tự (~9 giây tiếng); câu dài hơn đọc thành nhiều lần gọi với cùng
-    chuỗi hạt giống rồi nối (`chunks`, `join_chunks`).
+    chuỗi hạt giống rồi nối (`chunk_plan`, `join_chunks`).
+
+    Tiến trình sống lâu phình RAM dù mỗi lần gọi ngắn (đo 04-10: ~2,4 GB sau ~70 lần gọi mảnh <= 170 ký tự), nên phiên ONNX được nạp
+    lại định kỳ (`recycle_if_due`): bản thu không đổi một byte, vì hạt giống đặt SAU khi nạp lại.
     """
 
     name = "zerotts"
     label = "ZeroTTS"
     MAX_CHUNK_CHARS = 170
+    # Tiến trình sống lâu phình RAM (phiên ONNX giữ lại bộ nhớ đã cấp): nạp lại phiên sau từng này lần gọi `synthesize`. Đo 04-10 (300 lần
+    # gọi, 300 chuỗi 100-170 ký tự khác nhau, 5 giọng, 4 luồng): không nạp lại RSS 2,9 -> 3,1 GB và còn đi lên; mỗi 25 lần RSS 2,0-2,6 GB
+    # phẳng (đỉnh 2,58 GB), mỗi 75 lần đỉnh 2,74 GB. Nạp lại ~7 giây (tới ~18 giây khi máy bận), ~2-5 % thời gian đọc.
+    RECYCLE_AFTER_CALLS: int | None = 25
 
     def __init__(self, settings: dict[str, Any], log: Callable[[str], None]) -> None:
         super().__init__(settings, log)
         self._normalize: Callable[[str], str] = str
+        self._calls = 0
+
+    def recycle_if_due(self) -> bool:
+        """Nạp lại phiên ONNX khi đã gọi `RECYCLE_AFTER_CALLS` lần: bỏ máy cũ (`unload`: thu rác + trả trang về Windows) rồi `load` lại.
+        Gọi giữa hai câu, TRƯỚC khi đặt hạt giống (lúc nạp, warmup có thể bốc số ngẫu nhiên của numpy)."""
+        if self.tts is None or not self.RECYCLE_AFTER_CALLS or self._calls < self.RECYCLE_AFTER_CALLS:
+            return False
+        self.unload()
+        self.load()
+        return True
+
+    def unload(self) -> None:
+        self._calls = 0
+        super().unload()
 
     def load(self) -> None:
         if self.tts is not None:
@@ -780,18 +957,20 @@ class ZeroTTSEngine(EngineAdapter):
         speed: float | None = None,
     ) -> np.ndarray:
         self.load()
+        self.recycle_if_due()
         voice = self.voice_for_profile(profile)
         _set_generation_seed(seed)
         frames = int((sampling or {}).get("max_new_frames") or _max_new_frames(row, self.settings))
         max_frames = max(1, math.ceil(frames * VIENEU_V3_FRAME_SECONDS * float(self.tts.frame_rate)))
+        plan = self.chunk_plan(str(row["text"]))
         try:
-            waves = [
-                np.asarray(self.tts.synthesize(self._normalize(chunk), voice=voice, max_frames=max_frames), dtype=np.float32).reshape(-1)
-                for chunk in self.chunks(str(row["text"]))
-            ]
+            waves = []
+            for chunk, _end in plan:
+                waves.append(np.asarray(self.tts.synthesize(self._normalize(chunk), voice=voice, max_frames=max_frames), dtype=np.float32).reshape(-1))
+                self._calls += 1
         except Exception as exc:  # noqa: BLE001
             raise AudioQualityError(str(exc)) from exc
-        return waves[0] if len(waves) == 1 else join_chunks(waves, self.sample_rate)
+        return waves[0] if len(waves) == 1 else join_chunks(waves, self.sample_rate, [end for _chunk, end in plan])
 
 
 # Câu ngắn ở tốc độ của cả giọng bị nuốt (53-79 % câu ngắn, CER ASR 53 %): tốc độ tăng dần theo số tiếng, gặp tốc độ của giọng
@@ -851,12 +1030,13 @@ class SupertonicEngine(EngineAdapter):
         rng = np.random.RandomState(seed % (2**32))
         try:
             waves = []
-            for chunk in self.chunks(str(row["text"])):
+            plan = self.chunk_plan(str(row["text"]))
+            for chunk, _end in plan:
                 text = supertonic.normalize_pieces([chunk])
                 waves.append(np.asarray(self.tts.infer(text, voice, rng, speed=supertonic_speed(text, speed)), dtype=np.float32).reshape(-1))
         except Exception as exc:  # noqa: BLE001
             raise AudioQualityError(str(exc)) from exc
-        return waves[0] if len(waves) == 1 else join_chunks(waves, self.sample_rate)
+        return waves[0] if len(waves) == 1 else join_chunks(waves, self.sample_rate, [end for _chunk, end in plan])
 
 
 ENGINE_ADAPTERS: dict[str, type[EngineAdapter]] = {
