@@ -2267,3 +2267,29 @@ Mỗi pha xong: ghi số vào đây, đổi tham số trong app theo kết quả
 - Chi phí: file luật 5,6 KB; máy tính nạp 0,7 ms, chọn 1,1 ms mỗi cuốn. Điện thoại: đo trên máy ảo sau khi port Kotlin.
 - → Làm vào app: sách chỉ có chữ chưa có lựa chọn → máy chọn danh sách, ghi rõ "máy chọn", đổi / tắt được. Máy tính +
   điện thoại, cùng file luật, cùng fixture.
+
+## llmVT có chọn bài hợp hơn khi NGHE không (04-10 17:xx, Lead duyệt)
+
+**GHI TRƯỚC (trước mọi lượt chấm):**
+- **Vì sao:**
+  - llmVT (qwen3.5:4b đọc cả đoạn, V/T; main từ 04-10) mới được đo bằng thước ĐỌC: r V/E/T so đáp án.
+  - Trên bộ cảnh 6 với danh mục 8ad5cd60adfb, nó đổi bài ở 115/123 đoạn app (93%), tức là thay gần trọn nhạc người nghe
+    nhận được.
+  - E1 từng cho `vet` (9b, V/E/T của đáp án) thắng `app` theo thước nghe, nhưng chưa phải cấu hình vừa phát hành.
+- **Đoạn:** ranh giới app (`music_scenes.chapter_scenes`) của 20 chương bộ 6, run `04-10-music6-9bv8`.
+  - A = nhạc chọn theo nhãn câu (moods = None).
+  - B = nhạc chọn với llmVT, V/T từ `results/set5_vet_qwen3.5_4b.jsonl`, đúng số app sẽ có.
+  - Cả hai qua `music_select.choose` của main, cùng danh mục 8ad5cd60adfb, `book_key` = chương, không phong cách thể loại.
+  - Chỉ đoạn A ≠ B, và cả hai không im lặng, vào phép đo.
+- **Thước:** thước nghe chính Qwen3-Omni-30B-A3B-EN (Kaggle 2×T4), đúng giao thức E1b:
+  - tóm tắt tiếng Anh của đoạn (agent Sonnet, cùng hướng dẫn tóm tắt E1, chỉ đọc chữ đoạn, không biết nhạc);
+  - 30 giây đầu của clip 40 giây (cắt như `build_e1.clip`: từ 30% bài, −23 LUFS, mờ 1 giây);
+  - prompt a / b, điểm = kỳ vọng 7 chữ số;
+  - điểm clip = trung bình a / b. Cặp lệch < 0,02 thì không phán quyết.
+- **Luật (M2):** B thắng nếu tỉ lệ thắng của B trên các cặp có phán quyết ≥ 0,60 VÀ cận dưới KTC 95% Wilson > 0,5.
+  - Ghi lại: ổn định a/b, tỉ lệ theo nhóm gốc truyện, chênh điểm trung bình.
+- **Quyết định:**
+  - B thắng → ghi bằng chứng; llmVT giữ.
+  - B không thắng mà tỉ lệ < 0,5 với cận trên < 0,5 (A thắng rõ) → báo Lead / chủ sách xét TẮT llmVT mặc định.
+  - Còn lại → "không phân biệt được bằng tai", llmVT giữ vì thước đọc thắng; ghi rõ.
+- **Chi phí:** khoảng 230 clip-đoạn × 2 prompt ≈ 460 lượt, khoảng 1 giờ Kaggle (Model đẩy, trừ sổ tuần).
