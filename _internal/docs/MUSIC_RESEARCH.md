@@ -856,6 +856,20 @@ Mục đích: trả lời dứt điểm hai câu mà bộ 5 (9 chương) và 5B 
   - Cả hai không thắng → llmVT cần nạp `qwen3.5:9b` riêng (thêm 6,3 GB tải + một lần nạp model). Lead / chủ sách quyết lại.
 - Giới hạn: bộ 6 đã được dùng một lần cho câu (1), nhưng luật không đổi và không chỉnh gì theo số, nên vẫn là phép thử
   sạch cho model mới. 20 chương, phương sai theo truyện lớn.
+
+**KẾT QUẢ llmVT VỚI MODEL PHÂN TÍCH (04-10 08:36; `results/set6_score_<model>.txt`):** **cả hai KHÔNG THẮNG.**
+
+| model | app+llmVT so app (VET) | thắng chương | V | T | giây/lượt |
+|---|---|---|---|---|---|
+| qwen3.5:9b gốc (câu 1) | +0,101 | 16/20 | +0,270 | +0,340 | 3,6 |
+| qwen35-9b-lora-v8-q4 | +0,037 | 11/20 | +0,270 | +0,148 | 3,2 |
+| abook-analyzer:v3 (4B LoRA) | −0,026 | 11/20 | +0,152 | +0,078 | 3,1 |
+
+(`app`: V +0,177, T +0,131.) 0 lượt hỏng định dạng ở cả hai.
+- Đọc: LoRA phân tích giữ được V (9B-v8 bằng bản gốc) nhưng mất T căng thẳng. Bản 4B kém nhãn câu ở cả hai trục.
+  Hướng giải thích (chưa kiểm): tinh chỉnh cho việc gán nhãn câu làm model mất phán đoán toàn đoạn.
+- Theo luật ghi trước: không model phân tích nào được dùng cho llmVT. Muốn có llmVT thì phải nạp `qwen3.5:9b` riêng →
+  Lead / chủ sách quyết lại. App vẫn dùng nhãn câu như hiện nay.
 - **Câu (2): KHÔNG nguồn nào qua cổng → Lớp 2 vẫn TẮT.**
   - Trần cosine A–B 0,904, ngưỡng 0,813. Số nhãn ≥ 0,5 mỗi đoạn: A 1,62, B 1,64, người (TB A/B) 1,47.
   - (a) Nhãn câu app: cosine 0,370 (41% trần); 0,08 nhãn so 1,47 (lệch 95%) → không qua.
