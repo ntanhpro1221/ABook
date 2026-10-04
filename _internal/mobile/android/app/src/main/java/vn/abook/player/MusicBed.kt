@@ -166,24 +166,41 @@ object MusicBed {
 
     private fun clockKey() = "playlist:$book:$playlist"
 
-    /** Cuốn không có nhạc của người làm sách: có danh sách phát người nghe đã chọn thì nạp hàng bài ở luồng nền. */
+    /** Cuốn không có nhạc của người làm sách: nạp hàng bài của danh sách phát ở luồng nền - người nghe đã chọn, hay (chưa chọn gì) máy tự chọn
+     *  ([Playlists.autoPlaylist]); "off" là tắt. Máy chọn thì chỉ biết mã sau khi đọc chữ sách, nên danh sách vào việc ở lần nạp xong. */
     private fun openPlaylist(appContext: Context, bookId: String) {
-        val changes = BookEdits.load(Store.bookDir(bookId)).optJSONObject("music") ?: return
-        val choice = changes.optString("playlist").ifEmpty { return }
+        val dir = Store.bookDir(bookId)
+        val changes = BookEdits.load(dir).optJSONObject("music") ?: JSONObject()
+        val stored = changes.optString("playlist")
+        if (stored == Playlists.OFF) return
         val levelDb = changes.optDouble("levelDb", -20.0).takeIf { it.isFinite() } ?: -20.0
-        playlist = choice
-        clockSeconds = prefs(appContext).getFloat(clockKey(), 0f).toDouble()
+        if (stored.isNotEmpty()) {
+            playlist = stored
+            clockSeconds = prefs(appContext).getFloat(clockKey(), 0f).toDouble()
+        }
         val ticket = generation
         worker.execute {
-            val (tracks, found) = runCatching { resolve(appContext, choice, levelDb) }.getOrDefault(emptyList<Playlists.Track>() to emptyMap())
+            val choice = stored.ifEmpty { runCatching { autoChoice(appContext, dir) }.getOrNull() }
+            val (tracks, found) = choice?.let { runCatching { resolve(appContext, it, levelDb) }.getOrNull() } ?: (emptyList<Playlists.Track>() to emptyMap())
             main.post {
                 if (ticket != generation) return@post
+                if (stored.isEmpty()) {
+                    if (choice == null) return@post // máy không chọn được: không nhạc
+                    playlist = choice
+                    clockSeconds = prefs(appContext).getFloat(clockKey(), 0f).toDouble()
+                }
                 infos = found
                 this.tracks = tracks
                 spans = Playlists.timeline(tracks)
                 syncPlaylist(playing)
             }
         }
+    }
+
+    /** Danh sách máy chọn cho cuốn ở `dir` (luồng nền): luật của mục lục danh mục, chưa tải được danh mục thì luật đóng kèm app. */
+    private fun autoChoice(appContext: Context, dir: java.io.File): String? {
+        val manifest = runCatching { DeviceMusic.catalog(appContext).manifest() }.getOrNull()
+        return Playlists.autoPlaylist(dir, manifest, DeviceMusic.bundledPicker(appContext))
     }
 
     /** Hàng bài của lựa chọn `choice` (luồng nền: danh mục cần mạng lần đầu): bài + thông tin bài (để tải / bản sao). */

@@ -37,6 +37,10 @@ object LocalStudio {
     @Volatile
     var catalog: MusicCatalog? = null
 
+    /** Luật chọn danh sách phát đóng kèm app ([DeviceMusic.bundledPicker]): dùng khi chưa có danh mục hay danh mục mang luật hỏng. LibraryPlugin đặt; test JVM đặt từ file asset. */
+    @Volatile
+    var bundledPicker: JSONObject? = null
+
     /** Mô-đun "Phân tích nhạc" (model + thư viện ONNX Runtime; điện thoại tải khi người dùng bấm - MusicStudentSetup). Null: không có việc tải (test JVM); view không kèm `module`. */
     @Volatile
     var student: MusicStudentSetup? = null
@@ -174,7 +178,7 @@ object LocalStudio {
             "PUT" to "/cover" -> ::cover
             "DELETE" to "/cover" -> { dir, _ -> BookEdits.removeCover(dir); JSONObject().put("cover", JSONObject.NULL) }
             "POST" to "/characters/rename" -> ::renameCharacter
-            "GET" to "/music" -> { dir, _ -> BookEdits.musicView(BookEdits.rawBook(dir), BookEdits.load(dir)) }
+            "GET" to "/music" -> { dir, _ -> withAutoPlaylist(dir, BookEdits.musicView(BookEdits.rawBook(dir), BookEdits.load(dir))) }
             "GET" to "/suggestions" -> { dir, _ -> suggestions(dir) }
             "PUT" to "/skip" -> { dir, body -> skipLine(dir, body) }
             "PUT" to "/music" -> ::music
@@ -280,12 +284,22 @@ object LocalStudio {
         return JSONObject().put("skip", BookEdits.setSkipLine(dir, ids.map { (it as Number).toLong() }, line, body.opt("skip") != false))
     }
 
-    /** PUT /music {enabled?, levelDb?, silence?, pins?, playlist?}: sách đã đóng gói chỉ chỉnh được năm thứ ấy. */
+    /** PUT /music {enabled?, levelDb?, silence?, pins?, playlist?}: sách đã đóng gói chỉ chỉnh được năm thứ ấy (playlist: mã, "mine", "off" = tắt, null = để máy chọn). */
     private fun music(dir: java.io.File, body: JSONObject): Any? {
         if (body.keys().asSequence().any { it !in EDITS_ONLY_KEYS }) {
             throw BookEdits.EditsError("Sách đã đóng gói chỉ chỉnh được bật/tắt nhạc, mức nhạc, im lặng từng đoạn, đổi bài và danh sách nhạc nền")
         }
-        return BookEdits.setMusic(dir, body, musicStore?.let { store -> { link: String -> store.track(link) } })
+        return withAutoPlaylist(dir, BookEdits.setMusic(dir, body, musicStore?.let { store -> { link: String -> store.track(link) } }))
+    }
+
+    /** `_with_auto_playlist` của server.py: màn "Nhạc nền" + danh sách máy chọn - sách chưa có lựa chọn nào (`playlist` không có khoá) và không có
+     *  nhạc của người làm sách thì `playlist` là mã máy chọn, kèm `playlistAuto` true. Đã chọn (kể cả "off") thì giữ nguyên. */
+    private fun withAutoPlaylist(dir: java.io.File, view: JSONObject): JSONObject {
+        if (view.has("playlist") || BookEdits.truthy(BookEdits.rawBook(dir).opt("music"))) return view
+        // Mục lục danh mục chưa tải được (máy mới, chưa có mạng) thì dùng luật đóng kèm: chọn được tên danh sách ngay, bài tải sau.
+        val manifest = runCatching { catalog?.manifest() }.getOrNull()
+        val auto = Playlists.autoPlaylist(dir, manifest, bundledPicker) ?: return view
+        return view.put("playlist", auto).put("playlistAuto", true)
     }
 
     /**

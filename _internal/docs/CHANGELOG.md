@@ -20,6 +20,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   (không đi với số thì đọc "lờ vê"), "1/3" thành "một phần ba", "3-4000" thành "ba đến bốn nghìn", "x2" thành "nhân hai", "$5" thành "năm đô la"; dấu "*" và mặt cười ":3" không còn bị đọc
   ra, gạch ngang dính chữ và khung 【Kỹ năng】 có nhịp ngắt, "Oppa" thành "óp-pa", "ssi" thành "xi". Chữ hiện trên màn hình không đổi.
 
+### Nhạc nền
+
+- "Nghe ngay" (máy tính và điện thoại): sách chỉ có chữ giờ TỰ CÓ nhạc nền hợp với truyện, không cần chọn. App đọc tên sách và vài nghìn chữ đầu của phần truyện rồi chọn một danh sách
+  nhạc (tu tiên thì nhạc phương Đông, kinh dị thì nhạc rùng rợn, dị giới thì nhạc phiêu lưu...); trên nửa số sách đo thử, danh sách máy chọn hợp tai hơn danh sách cố định khoảng 24 điểm phần
+  trăm (đúng 84% so với 60%). Menu "Nhạc nền" hiện "Máy chọn: <tên danh sách>"; muốn khác thì chọn một danh sách cụ thể, "Tắt" để không nhạc, hoặc "Để máy chọn" để máy chọn lại. Máy mới
+  chưa tải danh mục nhạc vẫn chọn được ngay (tên danh sách có ngay, bài nhạc tải khi có mạng). Sách đã chọn nhạc từ trước giữ nguyên lựa chọn; sách nhạc do người làm sách gắn không đổi.
+
 ## [0.4.25] - 2026-10-04
 
 ### Giọng đọc

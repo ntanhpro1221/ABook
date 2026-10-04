@@ -1,6 +1,7 @@
 // Nhạc nền cho sách nghe bằng "Nghe ngay" (docs/LISTEN_ANYTHING.md mục 4; máy chủ: webui/music_playlist.py; Android: Playlists.kt +
 // MusicBed.kt). Sách chỉ có chữ không có không khí từng cảnh, nên người nghe chọn một DANH SÁCH PHÁT cho cả cuốn: một danh sách
-// của danh mục, "Nhạc của tôi", hay tắt (mặc định). Lựa chọn nằm ở lớp sửa của sách (`music.playlist`), đi theo sách.
+// của danh mục, "Nhạc của tôi", tắt ("off"), hay - khi chưa chọn gì (mặc định) - để MÁY CHỌN danh sách hợp với cuốn (webui/music_playlist.py
+// `pick`, Playlists.pick). Lựa chọn nằm ở lớp sửa của sách (`music.playlist`), đi theo sách; không có khoá = máy chọn.
 //
 // Các bài nối nhau theo thứ tự trộn sẵn trên MỘT đồng hồ nhạc riêng của cuốn - đếm giây nghe thật, không theo giây của chương
 // - nên sang chương mới nhạc chơi tiếp, không bắt đầu lại; chỗ đang tới nhớ trong máy theo cuốn + danh sách. Phần phát (mờ dần,
@@ -11,6 +12,8 @@ import type { ImportResult } from "@/studio/musicLocal";
 import type { MusicBed, MusicCredit, MusicCue } from "./musicBed";
 
 export const MINE_PLAYLIST = "mine";
+/** `music.playlist` = "off": người nghe tắt nhạc nền (khác với không có khoá = để máy chọn). */
+export const OFF_PLAYLIST = "off";
 /** Bài không biết độ dài: khoảng mặc định trên đồng hồ (bài ngắn hơn thì lặp liền như mọi bài nhạc nền). */
 export const FALLBACK_SECONDS = 180;
 /** Bằng thời gian chuyển mờ của MusicBed: bài sau vào lúc bài trước bắt đầu mờ, bài trước tắt hẳn đúng lúc nó hết. */
@@ -32,10 +35,19 @@ export interface PlaylistTrack {
 /** GET /api/books/<mã>/music/playlist: hàng bài theo thứ tự phát (rỗng = tắt, hay sách có nhạc của người làm sách). */
 export interface PlaylistQueue {
   playlist: string | null;
+  /** true khi `playlist` do máy chọn (người nghe chưa chọn gì). */
+  playlistAuto?: boolean;
   tracks: PlaylistTrack[];
   levelDb: number;
   credits?: Record<string, MusicCredit>;
   error?: string;
+}
+
+/** Phần của màn "Nhạc nền" của cuốn (GET /api/books/<mã>/music) nói về danh sách phát: mã người nghe đã chọn ("mine", "off", mã danh sách), hay -
+ *  khi chưa chọn gì và máy chọn được - mã máy chọn kèm `playlistAuto` true. */
+export interface PlaylistView {
+  playlist?: string;
+  playlistAuto?: boolean;
 }
 
 export interface PlaylistSummary {
@@ -181,12 +193,13 @@ export class PlaylistDriver {
 }
 
 /** Lưu lựa chọn nhạc nền của một cuốn vào lớp sửa của nó (máy tính: máy chủ; điện thoại: lõi native qua cùng đường): mã danh
- *  sách, MINE_PLAYLIST, hay null = tắt. Trả màn "Nhạc nền" mới của cuốn. */
-export function savePlaylistChoice<T = { playlist?: string }>(bookId: string, playlist: string | null): Promise<T> {
+ *  sách, MINE_PLAYLIST, OFF_PLAYLIST = tắt, hay null = xoá lựa chọn để máy tự chọn. Trả màn "Nhạc nền" mới của cuốn. */
+export function savePlaylistChoice<T = PlaylistView>(bookId: string, playlist: string | null): Promise<T> {
   return api<T>(`/api/books/${bookId}/music`, { method: "PUT", body: { playlist } });
 }
 
 export interface PlaylistOption {
+  /** null = "Để máy chọn" (gửi `playlist: null`, server xoá khoá); OFF_PLAYLIST = "Tắt". */
   id: string | null;
   label: string;
   hint: string;
@@ -225,10 +238,44 @@ export function addMusicOutcome(result: Pick<ImportResult, "added" | "existing" 
   return { select: false, kind: "error", title: failed.length > 1 ? "Không thêm được file nào" : "Không thêm được file này", description };
 }
 
-/** Các lựa chọn của menu "Nhạc nền", theo thứ tự hiện: Tắt, các danh sách của danh mục, Nhạc của tôi. `canImport`: máy nhập được nhạc. */
-export function playlistOptions(menu: PlaylistMenu | undefined, canImport = false): PlaylistOption[] {
+export const AUTO_LABEL = "Để máy chọn";
+export const OFF_LABEL = "Tắt";
+
+/** Mã option đang được đánh dấu: null = "Để máy chọn" (chưa chọn gì, kể cả khi máy chưa chọn được gì), còn lại là mã người nghe đã chọn. */
+export function chosenId(view: PlaylistView | undefined): string | null {
+  return view?.playlistAuto ? null : view?.playlist ?? null;
+}
+
+/** Tên danh sách `code` trong menu; menu chưa tải thì "" (không nói mã trần cho người nghe). */
+function nameOf(menu: PlaylistMenu | undefined, code: string): string {
+  return menu?.playlists.find((item) => item.id === code)?.name ?? "";
+}
+
+/** Tên danh sách máy đang chọn cho cuốn; "" khi người nghe đã chọn (hay máy chưa chọn được gì, hay menu chưa tải). */
+export function autoPlaylistName(view: PlaylistView | undefined, menu: PlaylistMenu | undefined): string {
+  return view?.playlistAuto ? nameOf(menu, view.playlist ?? "") : "";
+}
+
+/** Chữ trên nút / thông báo của lựa chọn hiện tại: "Máy chọn: <tên>" khi máy đang chọn, "Tắt", tên danh sách, hay "Nhạc của tôi". */
+export function playlistLabel(view: PlaylistView | undefined, menu: PlaylistMenu | undefined): string {
+  if (view?.playlistAuto) return ["Máy chọn", autoPlaylistName(view, menu)].filter(Boolean).join(": ");
+  if (!view?.playlist) return "Máy chọn";
+  if (view.playlist === OFF_PLAYLIST) return OFF_LABEL;
+  if (view.playlist === MINE_PLAYLIST) return "Nhạc của tôi";
+  return nameOf(menu, view.playlist) || view.playlist;
+}
+
+/** Nhạc đang chạy cho cuốn này hay không (máy chọn được, hay người nghe chọn một danh sách) - để nút "Nhạc nền" sáng lên. */
+export function playlistPlaying(view: PlaylistView | undefined): boolean {
+  return Boolean(view?.playlist) && view?.playlist !== OFF_PLAYLIST;
+}
+
+/** Các lựa chọn của menu "Nhạc nền", theo thứ tự hiện: Để máy chọn, Tắt, các danh sách của danh mục, Nhạc của tôi. `canImport`: máy nhập được
+ *  nhạc. `view`: lựa chọn hiện tại - khi máy đang chọn, dòng "Để máy chọn" nói máy chọn danh sách nào. */
+export function playlistOptions(menu: PlaylistMenu | undefined, canImport = false, view?: PlaylistView): PlaylistOption[] {
   return [
-    { id: null, label: "Tắt", hint: "" },
+    { id: null, label: AUTO_LABEL, hint: autoPlaylistName(view, menu) },
+    { id: OFF_PLAYLIST, label: OFF_LABEL, hint: "" },
     ...(menu?.playlists ?? []).map((item) => ({ id: item.id, label: item.name, hint: hours(item.minutes), description: item.description || undefined })),
     {
       id: MINE_PLAYLIST,

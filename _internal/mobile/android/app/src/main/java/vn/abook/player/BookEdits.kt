@@ -49,7 +49,7 @@ object BookEdits {
     private val MUSIC_KEYS = setOf("enabled", "levelDb", "silenced", "pins", "tracks", "playlist")
     private val TRACK_KEYS = setOf("ext", "title", "creator", "duration", "lufs")
     private val LOCAL_LINK = Regex("local:[0-9a-f]{40}")
-    private val PLAYLIST = Regex("[a-z0-9_]{1,40}") // mã danh sách phát của danh mục, hay [Playlists.MINE] = "Nhạc của tôi"
+    private val PLAYLIST = Regex("[a-z0-9_]{1,40}") // mã danh sách phát của danh mục, [Playlists.MINE] = "Nhạc của tôi", hay [Playlists.OFF] = tắt (không có khoá = máy tự chọn)
     private val CHAPTER_KEYS = setOf("title", "subtitle")
     private val CHAPTER_ID = Regex("[0-9]{1,9}")
     private val CUE_KEY = Regex("[0-9]{1,9}:[0-9]{1,12}")

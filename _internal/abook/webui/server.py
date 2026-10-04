@@ -209,6 +209,8 @@ class App:
         music_student.register()
         self._music_catalog: music_catalog.MusicCatalog | None = None
         self._music_lock = threading.Lock()
+        # Danh sách phát máy tự chọn cho sách chỉ có chữ, đệm theo (mã sách, nguồn luật, version của luật) - music_playlist.pick.
+        self._playlist_auto: dict[tuple[str, str, int], str | None] = {}
         # "Tính lại cảm xúc nhạc" (music_moods.py): việc nền theo từng cuốn {đường dẫn: {running, error}}.
         self._moods_jobs: dict[str, dict[str, Any]] = {}
         self._moods_lock = threading.Lock()
@@ -925,7 +927,7 @@ class App:
         file: các mốc nhạc người làm sách đã gắn + phần người nghe đã sửa (`book_edits.music_view`), không dựng gì."""
         path = self._listenable(value)
         if packages.is_package(path):
-            return book_edits.music_view(packages.manifest(path), book_edits.load(path))
+            return self._with_auto_playlist(value, path, book_edits.music_view(packages.manifest(path), book_edits.load(path)))
         plan = music_plan.read_plan(path)
         error = ""
         if plan is None:
@@ -1087,7 +1089,7 @@ class App:
             extra = set(body) - {"enabled", "levelDb", "silence", "pins", "playlist"}
             if extra:
                 raise ApiError(HTTPStatus.BAD_REQUEST, "Sách đã đóng gói chỉ chỉnh được bật/tắt nhạc, mức nhạc, im lặng từng đoạn, đổi bài và danh sách nhạc nền")
-            return book_edits.set_music(path, body, self._my_track)
+            return self._with_auto_playlist(value, path, book_edits.set_music(path, body, self._my_track))
         music_plan.write_overrides(path, body)
         if music_plan.read_plan(path) is None:
             return self.music_view(value)
@@ -1315,19 +1317,23 @@ class App:
         return {"playlists": playlists, "mine": len(self.my_music.entries()), "error": error}
 
     def music_playlist_queue(self, value: str) -> dict[str, Any]:
-        """Hàng bài của danh sách phát người nghe đã chọn cho cuốn này (`music.playlist` của lớp sửa): [{link, src, duration,
-        gainDb}] theo thứ tự phát, kèm ghi công. Cuốn có nhạc của người làm sách (nhạc theo cảnh thắng), chưa chọn, hay danh
-        mục không còn danh sách ấy: không bài nào. Bài máy này không dùng được (offline chưa có trong bộ đệm, nguồn hỏng) bị bỏ."""
+        """Hàng bài của danh sách phát cho cuốn này: người nghe đã chọn (`music.playlist` của lớp sửa) hay, khi chưa chọn gì, máy
+        tự chọn (`playlistAuto` true - `_auto_playlist`): [{link, src, duration, gainDb}] theo thứ tự phát, kèm ghi công. Cuốn có
+        nhạc của người làm sách (nhạc theo cảnh thắng), đã tắt ("off"), máy không chọn được, hay danh mục không còn danh sách ấy:
+        không bài nào. Bài máy này không dùng được (offline chưa có trong bộ đệm, nguồn hỏng) bị bỏ."""
         path = self._listenable(value)
         result: dict[str, Any] = {"playlist": None, "tracks": [], "levelDb": music_plan.DEFAULT_LEVEL_DB, "credits": {}, "error": ""}
         if not packages.is_package(path) or packages.manifest(path).get("music"):
             return result
         changes = book_edits.load(path).get("music") or {}
         choice = changes.get("playlist")
-        if not choice:
+        auto = not choice
+        if auto:  # chưa chọn gì: máy chọn danh sách hợp với cuốn (không chọn được thì không nhạc)
+            choice = self._auto_playlist(value, path)
+        if not choice or choice == music_playlist.OFF:
             return result
         level = float(changes.get("levelDb", music_plan.DEFAULT_LEVEL_DB))
-        result.update(playlist=choice, levelDb=level)
+        result.update(playlist=choice, levelDb=level, **({"playlistAuto": True} if auto else {}))
         if choice == music_playlist.MINE:
             info = {entry["link"]: entry for entry in reversed(self.my_music.entries())}  # cũ trước: bài mới nhập nối vào cuối
             links = list(info)
@@ -1345,6 +1351,48 @@ class App:
             track["src"] = (f"/api/music/local/{digest}/file" if digest is not None
                             else "/api/music/track?link=" + quote(track["link"], safe=""))
         return {**result, "tracks": tracks, "credits": self._music_credits(tracks, info)}
+
+    def _with_auto_playlist(self, value: str, path: Path, view: dict[str, Any]) -> dict[str, Any]:
+        """Màn "Nhạc nền" của sách đóng gói + danh sách máy chọn: sách chưa có lựa chọn nào (`playlist` không có khoá) và không có nhạc của
+        người làm sách thì `playlist` là mã máy chọn, kèm `playlistAuto` true. Đã chọn (kể cả "off") thì giữ nguyên."""
+        if "playlist" not in view and not packages.manifest(path).get("music"):
+            auto = self._auto_playlist(value, path)
+            if auto is not None:
+                view.update(playlist=auto, playlistAuto=True)
+        return view
+
+    def _auto_playlist(self, value: str, path: Path) -> str | None:
+        """Danh sách phát máy chọn cho sách CHỈ CÓ CHỮ chưa được người nghe chọn gì (`music.playlist` không có khoá): luật của mục lục
+        danh mục nếu hợp lệ, không thì bản đóng kèm (chưa tải được danh mục cũng chọn được); đầu vào là tên sách + chữ các chương.
+        Đệm theo (mã sách, nguồn luật, version luật). Không chọn được (không phải sách chữ, luật hỏng) thì None."""
+        book = packages.manifest(path)
+        if not packages.text_book(book):
+            return None
+        try:
+            manifest = self.music_catalog().manifest()
+        except music_catalog.CatalogError:
+            manifest = None
+        picker, source = music_playlist.usable_picker(manifest)
+        if picker is None:
+            return None
+        key = (value, source, picker["version"])
+        if key in self._playlist_auto:
+            return self._playlist_auto[key]
+        unread = False
+
+        def chapters() -> Iterable[str]:
+            nonlocal unread
+            for chapter in book.get("chapters") or []:
+                text = packages.chapter_text(path, chapter["id"]) if isinstance(chapter, dict) and isinstance(chapter.get("id"), int) else None
+                if text is None:
+                    unread = True  # chữ chưa có ở máy này (sách của máy khác chưa tải): lần sau thử lại, đừng đệm
+                else:
+                    yield text
+
+        code = music_playlist.pick(picker, str(book.get("title") or ""), chapters())
+        if not unread:
+            self._playlist_auto[key] = code
+        return code
 
     def _music_src(self, value: str, link: str) -> str:
         """Đường lấy file bài qua máy này. Bài danh mục: `/api/music/track?link=` (máy chủ chỉ tải bài CÓ trong danh mục); bài
