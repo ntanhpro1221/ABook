@@ -157,6 +157,17 @@ B8 con trỏ, B8 tách việc. E1 (ii) (ép gold trong lô, HF) xếp sau.
 - Lead 05-10: RỘNG = ứng viên mặc định, chốt nếu Hàn (e2wkr, 8 ch) không tụt quá 1 điểm F1. Từ nay B8/B9 đo ở cửa sổ rộng
   (cây ghim ABook_pin_wide a40231f3), mốc a_rộng = e2wv8; dữ liệu huấn luyện giữ hẹp (đã kiểm: v8 train hẹp, đo rộng tốt hơn).
 
+**Kết quả O1+O2 (05-10 03:37, thước 04-10, chạy lại trên cây ghim 1808bdf7 = o12cv8).** Dump prompt + raw khớp TỪNG BYTE với lượt
+nghi ngờ o12v8 (612/612 lô) -> lượt cũ không bị nhiễm. Khối oracle "có mặt" (O1) + "xưng hô" (O2) chèn vào prompt v8: F1 giọng
+59,5 -> 60,2 (+0,7, trong nhiễu hạt), lỗi lặp 69 -> 23, nhưng đúng chặt 71,8 -> 63,0 % (model lấy tên/biến thể tên trong khối
+oracle, lệch tập tên gold - cụm giọng gần như giữ). Kết luận: biết ai có mặt / ai xưng hô thế nào KHÔNG mở khoá người nói cho 4B ->
+B10 (trạng thái cảnh) không chen trước B8; xuống cuối hàng (dữ liệu + hook dev/breakthrough-eval-b10 đã sẵn).
+
+**Chuyên gia cảm xúc VSMEC (05-10, CPU) - ÂM.** visolex phobert-emotion / bartpho-emotion (UIT-VSMEC, 7 lớp, ánh xạ ghi trước) trên
+767 câu thoại/nội tâm Nhật MỚI: thay hẳn 48,8 / 56,8 %, lai (p >= 0,7) 60,1 / 80,6, lai ngược (chỉ đè neutral) 69,0 / 83,8 vs v8 86,7
+("luôn neutral" 70,1). Lệch miền (bình luận mạng xã hội vs LN dịch), tự tin sai (PhoBERT p >= 0,7 trúng 51 %), thiếu 5 nhãn ABook.
+Cảm xúc giữ trong LLM; B8 d trả lời câu tách việc.
+
 ### Ghi trước 04-10 tối: B9 (chưng cất đáp án), B8 bốn nhánh (tách việc), B10 (trạng thái cảnh)
 
 **Bạc A2.** Thầy Opus trả lời prompt THẬT của app qua harness (Ollama giả). So chéo 5 chương trùng: bạc harness MỘT thầy khớp bạc
