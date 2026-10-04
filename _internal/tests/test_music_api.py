@@ -12,6 +12,7 @@ from abook.webui import music_catalog
 from abook.webui.library import book_id
 from tests.test_a_project_can_be_renamed_or_deleted import _call, studio  # noqa: F401 - fixture dùng chung
 from tests.test_music_catalog_and_select import _catalog_dir
+from tests.catalog_signing import TEST_PUBLIC_KEY
 
 
 @pytest.fixture(autouse=True)
@@ -23,7 +24,7 @@ def _no_background_warming(monkeypatch):
 
 
 def _with_catalog(app, tmp_path: Path) -> None:
-    app._music_catalog = music_catalog.MusicCatalog(tmp_path / "music_cache", str(_catalog_dir(tmp_path / "cloud")))
+    app._music_catalog = music_catalog.MusicCatalog(tmp_path / "music_cache", str(_catalog_dir(tmp_path / "cloud")), public_key=TEST_PUBLIC_KEY)
 
 
 def test_the_music_track_is_built_on_first_view_and_follows_the_users_choices(studio, tmp_path: Path) -> None:  # noqa: F811

@@ -11,7 +11,6 @@ App chỉ ghi cứng vài ĐỊA CHỈ KHỞI ĐỘNG (repo GitHub công khai, q
 """
 from __future__ import annotations
 
-import base64
 import json
 import os
 import threading
@@ -20,7 +19,7 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-from .ed25519_verify import verify
+from .ed25519_verify import verify_base64
 
 FORMAT = "abook-remote-config"
 FORMAT_VERSION = 1
@@ -62,7 +61,7 @@ class RemoteConfig:
 
     def _accept(self, raw: bytes, signature: bytes) -> dict[str, Any] | None:
         try:
-            if not verify(self.public_key, raw, base64.b64decode(signature.strip(), validate=True)):
+            if not verify_base64(self.public_key, raw, signature):
                 return None
             value = json.loads(raw.decode("utf-8"))
         except (ValueError, UnicodeDecodeError):

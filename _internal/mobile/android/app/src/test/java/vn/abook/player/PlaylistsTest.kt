@@ -45,13 +45,13 @@ class PlaylistsTest {
     /** Danh mục giả trên đĩa: mục lục + mảnh dữ liệu + một file bài (đúng hình như trên mây). */
     private fun cloud(withPicker: Boolean = false): File {
         val cloud = File(root, "cloud").apply { mkdirs() }
-        File(cloud, "manifest.json").writeText(manifest(withPicker).toString())
         for ((shard, links) in tracks.keys.groupBy { MusicCatalog.shardOf(it) }) {
             val data = JSONObject()
             for (link in links) data.put(link, tracks.getValue(link))
             File(cloud, "tracks").mkdirs()
             File(cloud, "tracks/$shard.json").writeText(data.toString())
         }
+        CatalogSigning.writeManifest(cloud, manifest(withPicker)) // mục lục ký bằng khoá TEST, `files` = sha256 các mảnh vừa ghi
         return cloud
     }
 
@@ -106,13 +106,13 @@ class PlaylistsTest {
     @Test
     fun the_catalogue_reads_playlists_and_track_data_and_keeps_working_from_its_cache() {
         val source = cloud()
-        val catalog = MusicCatalog(File(root, "cache"), source.path)
+        val catalog = MusicCatalog(File(root, "cache"), source.path, publicKey = CatalogSigning.publicKey)
         assertEquals(listOf("calm", "battle"), catalog.playlists().map { it.getString("id") })
         val found = catalog.lookup(calm + "https://khong/co.mp3")
         assertEquals(calm.toSet(), found.keys)
         assertEquals("Calm", found.getValue("https://x/calm.mp3").getString("title"))
         source.deleteRecursively() // mất mạng: mục lục và mảnh đã cất vẫn dùng được
-        val offline = MusicCatalog(File(root, "cache"), source.path)
+        val offline = MusicCatalog(File(root, "cache"), source.path, publicKey = CatalogSigning.publicKey)
         assertEquals(calm.toSet(), offline.lookup(calm).keys)
         val fresh = MusicCatalog(File(root, "khong_co_cache"), source.path)
         val message = runCatching { fresh.playlists() }.exceptionOrNull()?.message
@@ -145,7 +145,7 @@ class PlaylistsTest {
 
     @Test
     fun the_phone_menu_lists_the_playlists_and_counts_my_music() {
-        LocalStudio.catalog = MusicCatalog(File(root, "cache"), cloud().path)
+        LocalStudio.catalog = MusicCatalog(File(root, "cache"), cloud().path, publicKey = CatalogSigning.publicKey)
         LocalStudio.musicStore = MusicStore(File(root, "music"), FakeTags)
         LocalStudio.musicStore!!.importFile(BookEditsFixtures.file("track/tone.wav"))
         val (status, body) = LocalStudio.handle("GET", "/api/music/playlists", null)
@@ -198,7 +198,7 @@ class PlaylistsTest {
         BookEditsFixtures.useStoreRoot(root)
         val id = "f-0123456789abcdef01234567"
         textBook(id)
-        LocalStudio.catalog = MusicCatalog(File(root, "cache"), cloud(withPicker = true).path)
+        LocalStudio.catalog = MusicCatalog(File(root, "cache"), cloud(withPicker = true).path, publicKey = CatalogSigning.publicKey)
         val auto = musicView(id)
         assertEquals("calm", auto.getString("playlist"))
         assertTrue(auto.getBoolean("playlistAuto"))
