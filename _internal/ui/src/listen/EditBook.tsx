@@ -1,6 +1,6 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { FileDown, Globe, ImagePlus, Loader2, Music2, Pencil, Shuffle, Trash2, Volume2, VolumeX, Wrench } from "lucide-react";
+import { FileDown, Globe, ImagePlus, Loader2, Music2, Pencil, Shuffle, Trash2, Wrench } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
@@ -9,6 +9,7 @@ import { CoverSearchDialog } from "@/shared/CoverSearch";
 import { canEditLayer, editBlockedNote, studioNeed, syncsToComputer } from "@/shared/capabilities";
 import { formatClock } from "@/shared/format";
 import { levelOptions } from "@/shared/musicLevels";
+import { Switch } from "@/desktop/PhoneSync";
 import { Button, Dialog, Segmented } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { MUSIC_CHANGED_EVENT } from "./musicBed";
@@ -67,7 +68,7 @@ async function imageToDataUrl(file: Blob): Promise<string> {
   }
 }
 
-interface MusicEditView {
+export interface MusicEditView {
   hasMusic: boolean;
   enabled: boolean;
   levelDb: number;
@@ -86,24 +87,33 @@ interface MusicEditView {
   }[];
 }
 
-/** Nhạc nền của cuốn nhập từ file: người làm sách đã gắn sẵn - người nghe bật/tắt, chỉnh mức, cho im lặng từng đoạn, và đổi một đoạn
- *  sang bài trong "Nhạc của tôi" (bài ấy đi cùng file sách khi lưu). */
-function MusicSection({ book }: { book: ListenBook }) {
+export type MusicChange = { enabled?: boolean; levelDb?: number; silence?: Record<string, boolean>; pins?: Record<string, string | null> };
+
+/** Nhạc nền đã gắn sẵn của cuốn (người làm sách) + cách đổi: dùng chung cho hộp "Sửa sách" và nút nhạc nền của trình phát - một lệnh
+ *  PUT, một khoá nhớ, nên đổi ở đâu thì nơi kia thấy ngay. `onChanged`: việc riêng của chỗ gọi sau khi đổi xong. */
+export function useBookMusic(bookId: string, onChanged?: () => void) {
   const client = useQueryClient();
-  const key = ["listen", "edit-music", book.id];
-  const [swapping, setSwapping] = useState<string | null>(null); // khoá đoạn đang mở "Đổi bài"
-  const { data, isLoading } = useQuery({ queryKey: key, queryFn: () => api<MusicEditView>(`/api/books/${book.id}/music`) });
+  const key = ["listen", "edit-music", bookId];
+  const view = useQuery({ queryKey: key, queryFn: () => api<MusicEditView>(`/api/books/${bookId}/music`), staleTime: 30_000 });
   const change = useMutation({
-    mutationFn: (body: { enabled?: boolean; levelDb?: number; silence?: Record<string, boolean>; pins?: Record<string, string | null> }) =>
-      api<MusicEditView>(`/api/books/${book.id}/music`, { method: "PUT", body }),
-    onSuccess: (view) => {
-      client.setQueryData(key, view);
-      setSwapping(null);
-      refreshAfterEdit(client, book.id);
-      window.dispatchEvent(new CustomEvent(MUSIC_CHANGED_EVENT, { detail: book.id }));
+    mutationFn: (body: MusicChange) => api<MusicEditView>(`/api/books/${bookId}/music`, { method: "PUT", body }),
+    onSuccess: (next) => {
+      client.setQueryData(key, next);
+      onChanged?.();
+      refreshAfterEdit(client, bookId);
+      window.dispatchEvent(new CustomEvent(MUSIC_CHANGED_EVENT, { detail: bookId }));
     },
     onError: (error: Error) => toast.error("Chưa chỉnh được nhạc nền", { description: error.message }),
   });
+  return { view, change };
+}
+
+/** Nhạc nền của cuốn nhập từ file: người làm sách đã gắn sẵn - người nghe bật/tắt, chỉnh mức, cho im lặng từng đoạn, và đổi một đoạn
+ *  sang bài trong "Nhạc của tôi" (bài ấy đi cùng file sách khi lưu). */
+function MusicSection({ book }: { book: ListenBook }) {
+  const [swapping, setSwapping] = useState<string | null>(null); // khoá đoạn đang mở "Đổi bài"
+  const { view, change } = useBookMusic(book.id, () => setSwapping(null));
+  const { data, isLoading } = view;
   if (isLoading || !data) return <p className="text-sm text-fg-2">Đang đọc nhạc nền…</p>;
   if (!data.hasMusic) {
     return <p className="text-sm text-fg-2">Người làm sách không gắn nhạc nền cho cuốn này.</p>;
@@ -112,15 +122,13 @@ function MusicSection({ book }: { book: ListenBook }) {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end gap-3">
-        <Button
-          variant={data.enabled ? "primary" : "secondary"}
-          icon={data.enabled ? Volume2 : VolumeX}
-          loading={change.isPending}
-          aria-pressed={data.enabled}
-          onClick={() => change.mutate({ enabled: !data.enabled })}
-        >
-          {data.enabled ? "Nhạc nền đang bật" : "Nhạc nền đang tắt"}
-        </Button>
+        {/* Công tắc có nhãn hành động rõ ("Nhạc nền: Bật") - nút đổi chữ theo trạng thái khiến không biết chữ là hiện tại hay việc sẽ làm. */}
+        <div className="flex h-9 items-center gap-2.5 text-sm">
+          <Switch id={`music-enabled-${book.id}`} label="Nhạc nền" checked={data.enabled} disabled={change.isPending} onCheckedChange={(enabled) => change.mutate({ enabled })} />
+          <label htmlFor={`music-enabled-${book.id}`}>
+            Nhạc nền: <span className="font-semibold">{data.enabled ? "Bật" : "Tắt"}</span>
+          </label>
+        </div>
         <label className="text-sm">
           <span className="block text-fg-2">Mức nhạc dưới giọng đọc</span>
           <select
