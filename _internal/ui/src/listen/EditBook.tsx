@@ -546,11 +546,7 @@ export function StudioOnlyItem({ book }: { book: ListenBook }) {
       <Wrench className="mt-0.5 size-4 shrink-0" />
       <span className="min-w-0">
         <span className="block">Đổi giọng, sửa lời đọc, thu lại chương</span>
-        <span className="block text-xs text-fg-3">
-          {syncs
-            ? "Làm ở Studio trên máy tính - đổi giới tính, gộp người, cách đọc ghi được ở đây rồi gửi về máy tính chờ duyệt"
-            : `${need} - đổi giới tính, gộp người ghi được ở tab Nhân vật, chờ Studio làm`}
-        </span>
+        <span className="block text-xs text-fg-3">{syncs ? "Làm ở Studio trên máy tính" : need.charAt(0).toUpperCase() + need.slice(1)}</span>
       </span>
     </DropdownMenu.Item>
   );
