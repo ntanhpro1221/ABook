@@ -2728,3 +2728,22 @@ Ba agent đọc-hiểu, không chạy model. File: `Corpus/research/music/` `SCE
 - **Thắng thì:** đề xuất Lead thay prompt llmVT của app (một hằng chuỗi + cách đọc đầu ra). Đồng thời dữ liệu dạy (bản thử 20 chương đang chấm) dùng đầu ra chữ số.
   **Thua thì:** ghi lại, giữ prompt cũ.
 - **Chạy:** `run_prompt_mood.sh` qua hàng GPU của Model (sau B9), khoảng 400 lượt, 25–35 phút. Dấu xong "HẾT NHẠC PROMPT MỐC 05-10" trong `run_prompt_mood.log`.
+
+**Bản thử dữ liệu dạy (05-10 19:xx, Lead duyệt; Corpus `scene_train_pilot/`):**
+- **Cách làm:** 20 chương ngoài mọi bộ đáp án (14 Nhật, 6 Hàn; `chapters.json`). Hai agent Opus chấm mù A/B theo SCENE_GOLD_GUIDE cộng luật bổ sung GOLD_AUDIT 5.2. Mỗi chương một file, có PROGRESS.
+- **Kết quả:** A 94 đoạn, B 68 đoạn (kể cả đoạn chú thích); không chương nào hở hay chồng.
+- **Đồng thuận A–B** (`pilot_agreement.py`, hàm của `gold_audit.py`, bỏ đoạn chú thích), ngang các bộ đáp án (0,81):
+
+| trục | r TB chương | gộp | trái dấu |
+|---|---|---|---|
+| V | 0,77 | 0,91 | 5% |
+| E | 0,85 | 0,86 | 1% |
+| T | 0,75 | 0,93 | 1% |
+
+- **Kết luận:** cách chấm cho dữ liệu dạy dùng được; mỗi chương ~1 lượt agent ~20 phút, ~270k token cho 20 chương mỗi người.
+- **Chỗ hướng dẫn còn mơ hồ** (hai người nêu độc lập):
+  - phản diện đang thắng thế: V theo nỗi lo cho phe thiện hay gần 0;
+  - khúc ngắn khác hẳn giữa cao trào: không có "hạ nhạc thoáng qua" cho văn xuôi; accent bị kéo dài;
+  - dấu chuyển cảnh mà không khí không đổi có bắt buộc cắt không; không có độ dài tối đa;
+  - lời dịch giả ở ĐẦU chương: guide chỉ nói chú thích cuối chương.
+- **Chưa phân xử thành nhãn dạy:** chờ oracle thứ Bảy và phép prompt mốc. Cả hai có thể đổi dạng đầu ra (chữ số) hoặc bỏ hướng này.
