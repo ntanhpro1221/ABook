@@ -7,6 +7,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Studio
+
+- Đổi giọng một nhân vật: ngoài câu mẫu chung, mỗi giọng có thêm nút nghe giọng ấy đọc một câu của chính nhân vật trong sách (máy chọn một câu thoại vừa dài, giọng
+  bình thường) trước khi chọn; nghe rồi thì bấm lại là phát lại ngay. Danh sách giọng lọc được Nam / Nữ / Tất cả, và hộp nói trước đổi giọng sẽ thu lại bao nhiêu câu
+  đã thu, mất chừng bao lâu. Hộp "Áp dụng N thay đổi" cũng có nút "Nghe thử" cho giọng đang chờ áp, và nói rõ khi thời gian chỉ là ước chừng (cuốn chưa xong chương
+  nào để đo). Đang làm sách hay card đồ hoạ bận thì máy báo để nghe thử sau, không chen vào việc đang làm.
+
 ### Nhạc nền
 
 - "Nhạc của tôi" (máy tính) có thêm tuỳ chọn "Đo cảm xúc nhạc chính xác hơn", mặc định tắt: máy nghe kỹ từng bài bạn nhập hơn (tải thêm 1,27 GB một lần, chỉ khi bạn bật, và chỉ hiện ở máy có từ 8 GB RAM) để chọn nhạc nền

@@ -7,6 +7,9 @@ cân nhắc (`PreviewVoiceDB`, ghi y như `apply_listener_pronunciation` sẽ gh
 `overrides.json` không đụng tới. Lần thu thật có thể không trùng từng byte (âm thanh không phải lúc nào cũng tái lập), nên giao
 diện nói đây là "lần thu đầu sẽ nghe như vầy", không hứa hơn.
 
+Cùng đường ấy nghe thử một GIỌNG trước khi đổi giọng nhân vật (`voice_preview`, hộp "Đổi giọng" và "Áp dụng"): một câu của
+chính nhân vật đó, đọc bằng hồ sơ giọng dây chuyền sẽ tạo khi áp (`PreviewVoiceDB` thay hồ sơ của câu, không chồng cách đọc).
+
 Tiến trình: MỘT tiến trình python của Studio (chạy `PREVIEW_SCRIPT` bằng `python -c`), nói chuyện bằng từng dòng JSON qua
 stdin/stdout, giữ model nạp sẵn giữa hai lần nghe thử và tự tắt sau `IDLE_SECONDS` không ai hỏi. Mỗi lúc chỉ một việc (các
 việc khác xếp hàng, tối đa `MAX_WAITING` - quá thì 429). Không bao giờ chạy chung với một cuốn đang làm: `shutdown()` được gọi
@@ -49,6 +52,8 @@ REQUEST_BUDGET = FORWARD_SECONDS - 10.0
 KEEP_PER_BOOK = 50
 LINE_LENGTH = (24, 160)  # câu mẫu mặc định: đủ dài để nghe ngữ điệu, đủ ngắn để đọc nhanh
 MAX_FALLBACK_LENGTH = 400
+# Câu nghe thử một giọng cho nhân vật (`character_line`): đủ dài để nghe ra chất giọng, đủ ngắn để đọc nhanh.
+VOICE_LINE_LENGTH = (40, 160)
 KEY_LENGTH = 32
 # Hạt giống của lần thu đầu một câu: pipeline._process_single_segment ghép "primary" + "_" + số lần thử (0).
 FIRST_TAKE_SALT = "primary_0"
@@ -64,13 +69,26 @@ _LINE_COLUMNS = ("text_sha256", "listener_text", "listener_retakes", "kind", "sp
 # vẫn chạy được. `source` do bên gọi đưa vào (database.LISTENER_PRONUNCIATION_SOURCE) để không chép hằng số.
 _OVERLAY = '''
 class PreviewVoiceDB(ReadOnlyVoiceDB):
-    """Sổ giọng chỉ đọc của sách, thêm hay thay đúng một cách đọc (chưa lưu ở đâu cả)."""
+    """Sổ giọng chỉ đọc của sách, thêm hay thay đúng một cách đọc (chưa lưu ở đâu cả) - `key` None: bảng cách đọc như sách.
+    `voice`: hồ sơ giọng đang cân nhắc cho một nhân vật, đứng thay hồ sơ mang cùng `id` (giọng câu ấy đang đọc)."""
 
-    def __init__(self, path, key, surface, spoken_form, source):
+    def __init__(self, path, key, surface, spoken_form, source, voice=None):
         super().__init__(path)
         self.key, self.surface, self.spoken_form, self.source = key, surface, spoken_form, source
+        self.voice = voice
+
+    def voice_profile(self, profile_id):
+        if self.voice is not None and int(profile_id) == int(self.voice["id"]):
+            return self.voice
+        return super().voice_profile(profile_id)
+
+    def list_voice_profiles(self):
+        rows = list(super().list_voice_profiles())
+        return rows if self.voice is None else rows + [self.voice]
 
     def list_pronunciations(self, minimum_confidence=0.0):
+        if self.key is None:
+            return super().list_pronunciations(minimum_confidence)
         rows = [dict(row) for row in super().list_pronunciations(minimum_confidence)]
         current = next((row for row in rows if row["normalized_surface"] == self.key), None)
         mine = {"id": 0, "created_at": 0.0, "updated_at": 0.0, **(current or {}), "surface": self.surface,
@@ -124,9 +142,10 @@ def fake_voice(db, settings):
 
 
 def run_job(request, state, emit):
-    """Đọc một câu của sách (chỉ đọc), thu nó bằng bảng cách đọc đã chồng dòng đang nghe thử. Trả {"ok", "seed"}."""
-    db = PreviewVoiceDB(Path(request["project"]) / "project.sqlite3", request["key"], request["surface"],
-                        request["spoken"], request["source"])
+    """Đọc một câu của sách (chỉ đọc), thu nó bằng bảng cách đọc đã chồng dòng đang nghe thử, hay bằng giọng đang cân nhắc
+    (`voice`). Trả {"ok", "seed"}."""
+    db = PreviewVoiceDB(Path(request["project"]) / "project.sqlite3", request.get("key"), request.get("surface"),
+                        request.get("spoken"), request.get("source"), request.get("voice"))
     with contextlib.closing(db._connect()) as connection:
         book = connection.execute("SELECT settings_json FROM book WHERE id=1").fetchone()
         row = connection.execute("SELECT * FROM segments WHERE id=?", (int(request["segment"]),)).fetchone()
@@ -263,6 +282,42 @@ def line_text(row: Any) -> str:
     return str((row["listener_text"] if "listener_text" in row.keys() else "") or row["text"] or "")
 
 
+def character_line(connection: sqlite3.Connection, character: str, segment_id: int | None = None) -> sqlite3.Row:
+    """Câu để nghe thử một giọng cho nhân vật `character` (khoá sổ): câu người dùng chỉ (phải của người ấy), không thì câu
+    "đại diện" - lời thoại dài VOICE_LINE_LENGTH, ưu tiên cảm xúc bình thường (nghe giọng chứ không nghe cơn giận), dài gần
+    giữa khoảng nhất, câu sớm nhất khi hoà. Không có thì câu nội tâm của chính người ấy, rồi câu gần khoảng ấy nhất (không quá
+    MAX_FALLBACK_LENGTH). Câu đọc bằng giọng người kể (nội tâm không rõ ai nghĩ) không nghe được giọng nhân vật nên không lấy.
+    Không câu nào: PreviewError "no-line" - giao diện quay về bản nghe thử chung của giọng."""
+    rows = [row for row in connection.execute(
+        "SELECT s.* FROM segments s JOIN characters c ON c.id = s.canonical_character_id"
+        " WHERE c.canonical_name=? AND s.voice_profile_id IS NOT NULL ORDER BY s.chapter_id, s.seq", (character,))
+        if not thought_reads_as_narrator(row["kind"], row["speaker"], row["voice_profile_id"])]
+    if segment_id is not None:
+        chosen = next((row for row in rows if int(row["id"]) == int(segment_id)), None)
+        if chosen is None:
+            raise PreviewError(HTTPStatus.BAD_REQUEST, "Câu này không phải lời của nhân vật ấy.", "no-line")
+        return chosen
+    low, high = VOICE_LINE_LENGTH
+    middle = (low + high) / 2
+
+    def fits(row: sqlite3.Row) -> bool:
+        return low <= len(line_text(row)) <= high
+
+    tiers = (
+        lambda row: row["kind"] == "dialogue" and fits(row) and str(row["emotion"] or "neutral") == "neutral",
+        lambda row: row["kind"] == "dialogue" and fits(row),
+        fits,
+    )
+    for tier in tiers:
+        found = [row for row in rows if tier(row)]
+        if found:
+            return min(found, key=lambda row: abs(len(line_text(row)) - middle))  # min giữ câu sớm nhất khi hoà
+    rest = [row for row in rows if line_text(row).strip() and len(line_text(row)) <= MAX_FALLBACK_LENGTH]
+    if rest:
+        return min(rest, key=lambda row: max(low - len(line_text(row)), len(line_text(row)) - high))
+    raise PreviewError(HTTPStatus.UNPROCESSABLE_ENTITY, "Nhân vật này chưa có câu nào để nghe thử.", "no-line")
+
+
 def name_pattern(surface: str) -> re.Pattern[str]:
     """Phép khớp của TTS (`tts._load_pronunciations`): nguyên từ, không phân biệt hoa thường."""
     return re.compile(r"(?<!\w)" + re.escape(surface) + r"(?!\w)", re.IGNORECASE)
@@ -303,10 +358,7 @@ class ReadingPreviews:
         """Thu thử một câu có `surface` đọc là `spoken`; trả {url, segmentId, text, speaker, cached}. Đã nghe rồi (cùng mọi
         thứ làm đổi tiếng đọc) thì phát lại bản cất - không khởi động gì."""
         started = time.monotonic()
-        fake = bool(self.fake())
-        studio = None if fake else self.studio()
-        if studio is not None and (not studio.installed() or studio.outdated()):
-            raise PreviewError(HTTPStatus.SERVICE_UNAVAILABLE, "Cần cài phần làm sách (Studio) trước khi nghe thử.", "studio")
+        fake, studio = self._engine()
         if not (Path(project) / store.DB_NAME).is_file():
             raise PreviewError(HTTPStatus.UNPROCESSABLE_ENTITY, "Sách này chưa có câu nào để nghe thử.", "no-line")
         key_name = surface_key(surface)
@@ -318,6 +370,50 @@ class ReadingPreviews:
         view = {"segmentId": int(line["id"]), "text": line_text(line),
                 "speaker": speaker_label("NARRATOR" if thought_reads_as_narrator(line["kind"], line["speaker"], line["voice_profile_id"])
                                       else str(line["speaker"] or ""))}
+        job = {"key": key_name, "surface": surface, "spoken": spoken, "source": LISTENER_PRONUNCIATION_SOURCE}
+        return self._produce(studio, fake, code_root, Path(project), book, line, job, key, view, started)
+
+    def voice_preview(self, project: Path, book: str, character: str, *, preset: str = "", gender: str = "", avoid: str = "",
+                      segment_id: int | None = None) -> dict[str, Any]:
+        """"Nghe thử bằng câu của sách" ở hộp "Đổi giọng" và hộp "Áp dụng": thu thử MỘT câu của nhân vật bằng đúng hồ sơ giọng
+        dây chuyền sẽ tạo khi áp yêu cầu ấy (`listener_overrides.voice_target`, cùng phép POST /voice dùng để từ chối), cùng
+        hạt giống của lần thu đầu bằng giọng ấy. Bảng cách đọc là của sách, không chồng gì. Trả {url, segmentId, text, speaker,
+        cached}; bản cất theo (giọng, câu) như cách đọc tên."""
+        from ..listener_overrides import voice_target
+
+        started = time.monotonic()
+        fake, studio = self._engine()
+        project = Path(project)
+        if not (project / store.DB_NAME).is_file():
+            raise PreviewError(HTTPStatus.UNPROCESSABLE_ENTITY, "Sách này chưa có câu nào để nghe thử.", "no-line")
+        with closing(store.connect(project)) as connection:
+            target, problem = voice_target(connection, store.book_voices(project), character=character, preset=preset,
+                                           gender=gender, avoid=avoid)
+            if target is None:
+                raise PreviewError(HTTPStatus.BAD_REQUEST, "Không nghe thử được giọng này cho nhân vật ấy.", str(problem or ""))
+            line = character_line(connection, str(target["canonical_name"]), segment_id)
+        # Không có hồ sơ mới: giọng đang đọc đã là giọng ấy - câu đọc bằng chính hồ sơ của nó.
+        profile = target["profile"]
+        voice = None if profile is None else {
+            **profile, "id": int(line["voice_profile_id"]), "locked": 1, "created_at": 0.0, "updated_at": 0.0}
+        overlay = PreviewVoiceDB(project / store.DB_NAME, None, None, None, None, voice)
+        code_id, code_root = self._code(studio, project)
+        key = self._key(overlay, line, code_id, "voice")
+        view = {"segmentId": int(line["id"]), "text": line_text(line), "speaker": speaker_label(str(line["speaker"] or ""))}
+        return self._produce(studio, fake, code_root, project, book, line, {"voice": voice}, key, view, started)
+
+    def _engine(self) -> tuple[bool, Any]:
+        """(giọng giả?, Studio hay None) - Studio chưa cài / đã cũ thì không nghe thử được."""
+        fake = bool(self.fake())
+        studio = None if fake else self.studio()
+        if studio is not None and (not studio.installed() or studio.outdated()):
+            raise PreviewError(HTTPStatus.SERVICE_UNAVAILABLE, "Cần cài phần làm sách (Studio) trước khi nghe thử.", "studio")
+        return fake, studio
+
+    def _produce(self, studio: Any, fake: bool, code_root: Path, project: Path, book: str, line: sqlite3.Row,
+                 job: dict[str, Any], key: str, view: dict[str, Any], started: float) -> dict[str, Any]:
+        """Bản cất `key` của câu `line`, thu nếu chưa có: không bao giờ chen vào một cuốn đang làm hay một card đang bận -
+        từ chối (409) với lý do, việc đến sau xếp hàng (`_queue`)."""
         url = f"/media/books/{book}/reading-previews/{key}.wav"
         target = self.root / book / f"{key}.wav"
         if self._reuse(target):
@@ -334,7 +430,7 @@ class ReadingPreviews:
                 return {**view, "url": url, "cached": True}
             if self.busy():
                 raise PreviewError(HTTPStatus.CONFLICT, "Đang làm sách - nghe thử khi máy rảnh.", "producing")
-            self._run(studio, fake, code_root, Path(project), line, key_name, surface, spoken, target, started)
+            self._run(studio, fake, code_root, {"project": str(project), "segment": int(line["id"]), **job}, target, started)
             self._tidy(target.parent)
         finally:
             self._lock.release()
@@ -407,9 +503,9 @@ class ReadingPreviews:
         except Exception as error:  # noqa: BLE001 - SetupError: mất bản mã đã làm cuốn này
             raise PreviewError(HTTPStatus.UNPROCESSABLE_ENTITY, str(error), "failed") from error
 
-    def _key(self, overlay: ReadOnlyVoiceDB, line: sqlite3.Row, code_id: str, key_name: str, spoken: str) -> str:
-        """Khoá bản nghe thử: mọi thứ làm đổi tiếng đọc - bản mã, cài đặt đã khoá, câu (chữ, lượt thu lại, giọng), cách đọc
-        đang thử và cả bảng cách đọc (các tên khác trong câu)."""
+    def _key(self, overlay: ReadOnlyVoiceDB, line: sqlite3.Row, code_id: str, *extra: str) -> str:
+        """Khoá bản nghe thử: mọi thứ làm đổi tiếng đọc - bản mã, cài đặt đã khoá, câu (chữ, lượt thu lại, giọng - giọng đang
+        cân nhắc nếu có), điều đang thử (`extra`: cách đọc đang gõ) và cả bảng cách đọc (các tên khác trong câu)."""
         with closing(overlay._connect()) as connection:
             settings_hash = connection.execute("SELECT settings_hash FROM book WHERE id=1").fetchone()
         profiles = [dict(overlay.voice_profile(int(line["voice_profile_id"])))]
@@ -419,7 +515,7 @@ class ReadingPreviews:
             pass
         material = [code_id, str(settings_hash[0]) if settings_hash else "", int(line["id"]),
                     {name: line[name] for name in _LINE_COLUMNS if name in line.keys()},
-                    profiles, key_name, spoken,
+                    profiles, *extra,
                     [[row["surface"], row["spoken_form"], row["source"], row["locked"], row["confidence"]]
                      for row in overlay.list_pronunciations(0.0)]]
         digest = hashlib.sha256(json.dumps(material, ensure_ascii=False, sort_keys=True, default=str).encode("utf-8"))
@@ -489,9 +585,9 @@ class ReadingPreviews:
         offline = {"HF_HUB_OFFLINE": "1", "TRANSFORMERS_OFFLINE": "1", "HF_DATASETS_OFFLINE": "1"}
         return {**os.environ, **base, **offline, **({"ABOOK_PREVIEW_FAKE": "1"} if fake else {})}
 
-    def _run(self, studio: Any, fake: bool, code_root: Path, project: Path, line: sqlite3.Row, key_name: str,
-             surface: str, spoken: str, target: Path, started: float) -> None:
-        """Dưới `_lock`: đưa việc cho tiến trình giọng (khởi động nó nếu chưa có / là bản mã khác), chờ có hạn."""
+    def _run(self, studio: Any, fake: bool, code_root: Path, job: dict[str, Any], target: Path, started: float) -> None:
+        """Dưới `_lock`: đưa việc (`job`: dự án, câu, và điều đang thử) cho tiến trình giọng (khởi động nó nếu chưa có / là
+        bản mã khác), chờ có hạn."""
         python = str(studio.python) if studio is not None else sys.executable
         identity = (python, str(code_root), "fake" if fake else "")
         deadline = started + REQUEST_BUDGET
@@ -516,9 +612,7 @@ class ReadingPreviews:
             self._sequence += 1
             number = self._sequence
             target.parent.mkdir(parents=True, exist_ok=True)
-            child.send({"op": "job", "id": number, "project": str(project), "segment": int(line["id"]), "key": key_name,
-                        "surface": surface, "spoken": spoken, "source": LISTENER_PRONUNCIATION_SOURCE,
-                        "salt": FIRST_TAKE_SALT, "output": str(target)})
+            child.send({"op": "job", "id": number, **job, "salt": FIRST_TAKE_SALT, "output": str(target)})
 
             def mine(message: dict[str, Any]) -> bool:
                 return message.get("id") == number

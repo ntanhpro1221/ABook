@@ -154,6 +154,12 @@ class ApiError(Exception):
         self.extra = extra
 
 
+def _needs_download(preset: str) -> bool:
+    """Giọng của máy đọc khác mà máy này chưa tải (mô-đun tải thêm): chưa chọn, chưa nghe thử được."""
+    other_engine = engine_voice(preset) if preset else None
+    return other_engine is not None and not engine_installed(str(other_engine["engine"]))
+
+
 def _held_record(body: dict[str, Any]) -> str | None:
     """Hồ sơ nghe mà trình phát đang phát (nó ghi vào đúng hồ sơ ấy, xem `Listening._held`); không có thì None."""
     record = body.get("record")
@@ -2921,6 +2927,29 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(error.status, error.message, reason=error.reason) from error
         self._send_json(HTTPStatus.OK, result)
 
+    def post_voice_preview(self, _query: dict[str, list[str]], value: str) -> None:
+        # "Nghe thử bằng câu của sách" (hộp "Đổi giọng", hộp "Áp dụng"): một câu của nhân vật đọc bằng giọng đang cân nhắc -
+        # cùng tiến trình, hàng chờ, phép nhường card cho sách và bản cất như nghe thử cách đọc tên (reading_preview.py).
+        self.app._mutating()
+        path = self.app._book(value)
+        body = self._body()
+        character = str(body.get("character", "")).strip()[:200]
+        preset = str(body.get("preset", "") or "").strip()[:120]
+        if not character:
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu nhân vật")
+        if _needs_download(preset):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Giọng này cần tải thêm trước khi nghe thử")
+        segment = body.get("segmentId")
+        try:
+            result = self.app.previews.voice_preview(
+                path, book_id(path), character, preset=preset, gender=str(body.get("gender", "") or "").strip()[:10],
+                avoid=str(body.get("avoid", "") or "").strip()[:200],
+                segment_id=int(segment) if isinstance(segment, int) and not isinstance(segment, bool) else None)
+        except reading_preview.PreviewError as error:
+            message = VOICE_PROBLEMS.get(error.reason, error.message) if error.status == HTTPStatus.BAD_REQUEST else error.message
+            raise ApiError(error.status, message, reason=error.reason) from error
+        self._send_json(HTTPStatus.OK, result)
+
     def media_reading_preview(self, _query: dict[str, list[str]], value: str, key: str) -> None:
         target = self.app.previews.file(book_id(self.app._book(value)), key)
         if target is None:
@@ -3101,8 +3130,7 @@ class Handler(BaseHTTPRequestHandler):
         avoid = str(body.get("avoid", "") or "").strip()[:200]
         if not character:
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu nhân vật")
-        other_engine = engine_voice(preset) if preset else None
-        if other_engine is not None and not engine_installed(str(other_engine["engine"])):
+        if _needs_download(preset):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Giọng này cần tải thêm trước khi chọn")
         if package and not (preset or gender or avoid):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu giọng hoặc giới tính")
@@ -3895,6 +3923,7 @@ ROUTES: list[Route] = [
     ("POST", re.compile(BOOK + r"/review"), Handler.post_review),
     ("POST", re.compile(BOOK + r"/pronunciation"), Handler.post_pronunciation),
     ("POST", re.compile(BOOK + r"/pronunciation/preview"), Handler.post_pronunciation_preview),
+    ("POST", re.compile(BOOK + r"/voice/preview"), Handler.post_voice_preview),
     ("GET", re.compile(BOOK + r"/shared-readings"), Handler.get_book_shared_readings),
     ("POST", re.compile(BOOK + r"/shared-readings"), Handler.post_book_shared_readings),
     ("GET", re.compile(r"/api/readings"), Handler.get_shared_readings),

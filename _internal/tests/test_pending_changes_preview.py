@@ -39,13 +39,14 @@ def test_every_change_is_named_and_the_retake_is_measured(tmp_path: Path) -> Non
     assert len(details["items"]) == store.pending_changes(project, since), "số mục khớp số trên nút"
     # Câu 2 ("Trời đã sáng.") có từ "sáng"; câu 3 của Lucien (giọng + thu lại) - hai câu, một chương.
     assert details["lines"] == 2 and len(details["chapters"]) == 1
-    # Chương 1 làm 20 giây cho 3 câu -> ~6,7 giây một câu.
-    assert 12 <= details["seconds"] <= 14
+    # Chương 1 làm 20 giây cho 3 câu -> ~6,7 giây một câu: số đo của chính cuốn, không phải số ước.
+    assert 12 <= details["seconds"] <= 14 and details["measured"] is True
 
 
 def test_nothing_waiting_means_nothing_to_redo(tmp_path: Path) -> None:
     project = _project(tmp_path)
-    assert store.pending_details(project, time.time()) == {"items": [], "lines": 0, "chapters": [], "seconds": 0.0}
+    assert store.pending_details(project, time.time()) == {"items": [], "lines": 0, "chapters": [], "seconds": 0.0,
+                                                           "measured": True}
 
 
 def test_people_are_named_as_the_reader_sees_them(tmp_path: Path) -> None:
