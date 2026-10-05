@@ -13,6 +13,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   vui / buồn đúng không khí truyện hơn. Bài nhập vào vẫn dùng được và có số ngay; việc nghe kỹ chạy ngầm vài giây mỗi bài, nhẹ máy, bài chưa tới lượt giữ số cũ, tắt máy giữa chừng thì mở lại làm tiếp.
 - Bài nhập đo vui / buồn khớp thang của nhạc có sẵn hơn: ABook cập nhật bộ nghe nhạc ("Phân tích nhạc" báo có bản mới, chỉ tải phần đổi), bài đã phân tích bằng bản cũ vẫn dùng được và bạn bấm "Phân tích lại" khi muốn. Máy có Studio và điện thoại dùng chung một bộ như nhau.
 
+### Nghe
+
+- Nghe hết một cuốn rồi quay lại nghe một đoạn: trang sách giờ có "Nghe tiếp" đúng chỗ bạn dừng (trước đây chỉ còn "Nghe lại từ đầu"), cuốn ấy trở lại thẻ "Đang nghe dở", và thanh tiến độ theo chỗ đang nghe thay vì đứng ở 100%. Máy tính và điện thoại như nhau.
+- Màn "Đã nghe hết" không còn mời tập kế hai lần.
+
 ## [0.4.28] - 2026-10-05
 
 ### Giọng đọc
