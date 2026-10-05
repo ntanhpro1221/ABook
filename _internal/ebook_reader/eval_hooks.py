@@ -64,6 +64,15 @@ def think_extra_tokens() -> int:
     return int(eval_settings().get("think_extra_tokens", 1024))
 
 
+def think_chat_body(request: dict) -> dict:
+    """E8: Ollama 0.33.2 /api/generate với think + format nhét JSON vào phần "thinking", không nghĩ gì (thăm dò 05-10:
+    21 ký tự, đáp rỗng); /api/chat cùng mẫu chat thì nghĩ rồi mới trả JSON. Đổi system + prompt thành tin nhắn chat."""
+    body = {key: value for key, value in request.items() if key not in ("system", "prompt")}
+    messages = [{"role": "system", "content": request["system"]}] if request.get("system") else []
+    body["messages"] = messages + [{"role": "user", "content": request["prompt"]}]
+    return body
+
+
 # --- dump -------------------------------------------------------------------------------------------------------
 
 
