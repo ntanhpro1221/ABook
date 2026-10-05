@@ -2537,3 +2537,16 @@ Mỗi pha xong: ghi số vào đây, đổi tham số trong app theo kết quả
   - `onnx_student/export_head_A.py` (đầu cũ giữ ở `student_head_A.v1.npz`).
   - `eval_student_mtg.py` → `results/student_mtg.txt`.
   - Gửi Lead danh mục + đầu trò mới để ký / phát hành.
+
+**GHI TRƯỚC - llmVT VỚI qwen3.5:4b-mtp-q8_0 (05-10 10:5x, Lead thêm ứng viên; trước lượt chạy):**
+- **Câu hỏi:** bản Q8 có MTP (digest 477fe1aa30c7) có thay được `qwen3.5:4b` làm model llmVT của app không?
+- **Cách chạy:** y hệt bộ cảnh 6 với 4b.
+  - `MODELS=qwen3.5:4b-mtp-q8_0 bash run_set6_vet_models.sh`, SET5_RUN 04-10-music6-9bv8, chỉ lượt V/E/T.
+  - Ra `results/set5_vet_qwen3.5_4b_mtp_q8_0.jsonl` + `results/set6_score_qwen3.5_4b_mtp_q8_0.txt`.
+  - Chạy qua hàng GPU của Model.
+- **Mốc so (4b, 04-10):** app+llmVT VET 0,253 (thắng app 15/20); tổng 789,8 s cho 273 đoạn.
+- **Luật:** đổi model mặc định sang Q8-MTP nếu MỘT trong hai điều sau đúng:
+  - (i) app+llmVT VET ≥ 0,253 + 0,03 = 0,283, VÀ hỏng định dạng V/E/T = 0;
+  - (ii) VET ≥ 0,253 − 0,01 = 0,243, VÀ tổng thời gian ≤ 70 % của 4b (≤ 553 s), VÀ hỏng định dạng = 0.
+  - Ngoài hai trường hợp ấy: giữ 4b.
+- **Ghi lại, không quyết:** VRAM đỉnh; số chương Q8 hơn 4b.
