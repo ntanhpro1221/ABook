@@ -28,7 +28,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
-from . import music_local, music_mel, music_module, music_student, voice_module
+from . import music_local, music_module, music_student, voice_module
 
 VERSION = "vhop1"
 MIN_RAM_BYTES = int(7.5 * 1024 ** 3)  # máy "8 GB" báo ~7,4-7,9 GiB (một phần RAM dành cho phần cứng)
@@ -153,6 +153,8 @@ class Scorer:
         clap = music_student.clap_embedding(path)
         if clap is None:
             return None
+        from . import music_mel  # numpy: Python nhúng của bản cài không có, chỉ nạp khi đo thật (như music_student)
+
         muq = self.embedding(music_mel.decode(Path(path), MUQ_RATE))
         return None if muq is None else valence_from_embeddings(clap, muq, self.ref)
 

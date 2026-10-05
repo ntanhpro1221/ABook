@@ -12,7 +12,7 @@ import numpy as np
 import pytest
 import soundfile
 
-from abook.webui import music_local, music_student, music_valence
+from abook.webui import music_local, music_mel, music_student, music_valence
 from tests.test_a_project_can_be_renamed_or_deleted import studio  # noqa: F401 - fixture dùng chung
 
 FIXTURES = Path(__file__).parent / "fixtures" / "music_valence"
@@ -324,7 +324,7 @@ def test_the_whole_path_from_mp3_stays_near_the_catalog(golden, monkeypatch) -> 
     scorer = music_valence.Scorer(PACKAGE)
     try:
         for row, path in tracks:
-            muq = scorer.embedding(music_valence.music_mel.decode(path, music_valence.MUQ_RATE))
+            muq = scorer.embedding(music_mel.decode(path, music_valence.MUQ_RATE))
             assert music_valence.muq_raw(muq, scorer.ref) == pytest.approx(row["muq_valence_raw_catalog"], abs=1e-3), row["id"]
             value = scorer.score(path)
             assert value is not None and abs(value - row["catalog_valence"]) <= 0.06, f"{row['id']}: {value} so với {row['catalog_valence']}"
@@ -353,7 +353,7 @@ def test_with_the_catalog_window_cut_the_whole_path_matches_within_0_02(golden, 
                                       "-ac", "1", "-ar", "48000", "-f", "f32le", "-"], capture_output=True, check=False).stdout
                 clips.append(np.frombuffer(raw, dtype=np.float32))
             clap = student.embed(clips)
-            muq = scorer.embedding(music_valence.music_mel.decode(path, music_valence.MUQ_RATE))
+            muq = scorer.embedding(music_mel.decode(path, music_valence.MUQ_RATE))
             value = music_valence.valence_from_embeddings(clap, muq, scorer.ref)
             assert abs(value - row["catalog_valence"]) <= 0.02, f"{row['id']}: {value} so với {row['catalog_valence']}"
     finally:
