@@ -13,3 +13,5 @@
 *.wav binary
 *.mp3 binary
 *.sqlite3 binary
+# Bytes must equal the file the app downloads from Hugging Face (sha256 pinned in music_student.PACKAGE_FILES), CRLF included.
+_internal/tests/fixtures/music_valence/vhop_scale.json -text
