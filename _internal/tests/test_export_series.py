@@ -201,10 +201,38 @@ def test_the_export_dialog_can_ask_how_big_the_book_file_will_be(series: tuple[P
         alone_status, alone = _get(server, parts[1], "export-size")
     finally:
         server.stop()
-    assert (status, whole) == (200, {"bytes": 3 * each, "parts": 3})
-    assert (alone_status, alone) == (200, {"bytes": each, "parts": 1})
+    assert (status, whole) == (200, {"bytes": 3 * each, "parts": 3, "musicPending": 0})
+    assert (alone_status, alone) == (200, {"bytes": each, "parts": 1, "musicPending": 0})
 
 
 def _get(server, project: Path, route: str) -> tuple[int, dict]:
     status, data, _ = _request(server.port, "GET", f"/api/books/{book_id(project)}/{route}", headers={"X-Ebook-Token": "t"})
     return status, json.loads(data)
+
+
+def test_the_estimated_size_counts_the_background_music_that_travels_with_the_book(series: tuple[Path, list[Path]],
+                                                                                  tmp_path: Path) -> None:
+    """Soát UX a8: hộp Xuất ghi "khoảng 0 MB" trong khi file thật 24,9 MB - bài nhạc nền đi kèm không được tính. Bài đã
+    có trong bộ đệm tính theo cỡ file; bài chưa tải được đếm riêng (lúc xuất mới tải)."""
+    import hashlib
+
+    from abook.webui import music_plan
+
+    library, parts = series
+    calm, battle = "https://x/calm.mp3", "https://x/battle.mp3"
+    scenes = [{"chapterId": 1, "start": 0.0, "end": 30.0, "link": calm, "key": "1:1"},
+              {"chapterId": 1, "start": 30.0, "end": 60.0, "link": calm, "key": "1:5"},
+              {"chapterId": 1, "start": 60.0, "end": 90.0, "link": battle, "key": "1:9"}]
+    (parts[1] / music_plan.PLAN_FILE).write_text(
+        json.dumps({"version": music_plan.PLAN_VERSION, "enabled": True, "levelDb": -18.0, "scenes": scenes, "tracks": {}}),
+        encoding="utf-8")
+    app, server = _studio(tmp_path, library)
+    cache = app.music_dir / "files"
+    cache.mkdir(parents=True)
+    (cache / (hashlib.sha1(calm.encode("utf-8")).hexdigest() + ".mp3")).write_bytes(b"ID3" + b"x" * 997)
+    each = (parts[1] / "output" / "chapters" / "00001_645.mp3").stat().st_size
+    try:
+        status, alone = _get(server, parts[1], "export-size")
+    finally:
+        server.stop()
+    assert (status, alone) == (200, {"bytes": each + 1000, "parts": 1, "musicPending": 1})

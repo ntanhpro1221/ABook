@@ -30,12 +30,19 @@ REASONS = {
 }
 
 
+UNNAMED_LABEL = "Vai phụ không tên"
+
+
 def speaker_label(raw: str) -> str:
     """Tên người nói cho người đọc: vai phụ cục bộ "NPC_LOCAL::c00006::r0b2…::người lùn" -> "người lùn"."""
     if not raw:
         return ""
     if raw.upper() == "NARRATOR":
         return "Người kể"
+    # Nhãn dành riêng của máy ("UNKNOWN", "UNNAMED", "ANONYMOUS...") là người nói không tên - tab Kịch bản gọi họ thế; chữ
+    # "Unknown" thô không bao giờ lên mặt người nghe (soát UX a8).
+    if raw.upper() in ("UNKNOWN", "UNNAMED") or raw.upper().startswith("ANONYMOUS"):
+        return UNNAMED_LABEL
     from .humanize import person_name
 
     return person_name(raw)

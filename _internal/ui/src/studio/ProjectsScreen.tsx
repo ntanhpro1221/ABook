@@ -62,8 +62,9 @@ function ProjectRow({ book }: { book: BookSummary }) {
         </div>
         <div className="col-start-2 md:col-start-auto">
           <StatusPill
-            label={book.queuePosition ? `Xếp hàng · thứ ${book.queuePosition}` : book.starting ? "Đang khởi động" : book.statusLabel}
-            tone={book.queuePosition || book.paused || (book.phase === "done" && needs.length) ? "warning" : phaseTone(book.phase, live)}
+            label={book.queuePosition ? `Xếp hàng · thứ ${book.queuePosition}` : book.starting ? "Đang khởi động" : book.paused && book.precast?.held ? "Chờ bạn duyệt" : book.statusLabel}
+            // Cùng trạng thái = cùng màu với chip ở trang dự án (soát UX a8 05-10); việc còn lại của sách xong nói ở dòng tiến độ.
+            tone={book.queuePosition || book.paused ? "warning" : phaseTone(book.phase, live)}
             live={live && !book.paused}
           />
         </div>
@@ -152,13 +153,6 @@ export function ProjectsScreen() {
           <h1 className="mt-1 text-[28px] font-bold tracking-tight">Dự án sách nói</h1>
           <p className="mt-1 text-sm text-fg-2">
             {books.length ? `${books.length} dự án` : "Chưa có dự án"}
-            {/* Chỉ tên thư mục; đường dẫn đủ trong tooltip - đường dẫn dài từng đẩy "Dự án mới" ra ngoài màn điện thoại. */}
-            {data?.root ? (
-              <span className="text-fg-3" title={data.root}>
-                {" · "}
-                {data.root.split(/[\\/]/).filter(Boolean).pop()}
-              </span>
-            ) : null}
           </p>
         </div>
         <div className="flex items-center gap-2">

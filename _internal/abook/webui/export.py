@@ -18,7 +18,7 @@ from typing import Any
 
 from .. import continuation
 from ..io_utils import ffmpeg_executable, run_hidden
-from . import covers, listen_view, store
+from . import covers, listen_view, music_plan, store
 
 _UNSAFE = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 
@@ -126,15 +126,28 @@ def series_split(parts: list[Path]) -> tuple[list[tuple[int, Path]], list[dict[s
     return listed, skipped
 
 
-def audio_bytes(projects: list[Path]) -> int:
-    """Tổng cỡ audio các chương nghe được - ước lượng cỡ file `.abook` (audio chiếm gần hết) trước khi xuất."""
+def audio_bytes(projects: list[Path], music_track: Callable[[str], Path | None] | None = None) -> tuple[int, int]:
+    """(cỡ, số bài nhạc chưa tải) ước lượng của file `.abook` trước khi xuất: audio các chương nghe được + các bài nhạc nền
+    sẽ đóng kèm (đoạn nhạc của các chương ấy trong rãnh nhạc đang bật; mỗi bài một lần dù nhiều đoạn, nhiều phần). Không tải gì:
+    `music_track(link)` chỉ trả bài đã có trong bộ đệm; bài chưa tải được đếm riêng - lúc xuất mới tải và thêm vào."""
     total = 0
+    links: set[str] = set()
     for project in projects:
+        plan = music_plan.read_plan(project) if music_track is not None else None
         for chapter in _listenable(project):
             path = store.chapter_audio_path(project, chapter["id"])
             if path is not None:
                 total += path.stat().st_size
-    return total
+            if plan is not None:
+                links.update(cue["link"] for cue in music_plan.chapter_cues(plan, chapter["id"]))
+    pending = 0
+    for link in links:
+        path = music_track(link) if music_track is not None else None
+        if path is None:
+            pending += 1
+        else:
+            total += path.stat().st_size
+    return total, pending
 
 
 def export_series(parts: list[Path], target_root: Path,
