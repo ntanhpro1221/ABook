@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.29] - 2026-10-06
+
 ### Studio
 
 - Đổi giọng một nhân vật: ngoài câu mẫu chung, mỗi giọng có thêm nút nghe giọng ấy đọc một câu của chính nhân vật trong sách (máy chọn một câu thoại vừa dài, giọng
