@@ -17,6 +17,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Nghe hết một cuốn rồi quay lại nghe một đoạn: trang sách giờ có "Nghe tiếp" đúng chỗ bạn dừng (trước đây chỉ còn "Nghe lại từ đầu"), cuốn ấy trở lại thẻ "Đang nghe dở", và thanh tiến độ theo chỗ đang nghe thay vì đứng ở 100%. Máy tính và điện thoại như nhau.
 - Màn "Đã nghe hết" không còn mời tập kế hai lần.
+- Hộp "Thêm sách từ file…" (máy tính) giờ mở được cả file sách .abook / dự án .abookproj, kể cả khi dán đường dẫn từ trình duyệt; trước đây nó báo "Chưa đọc được file .abook" mà không chỉ sang "Mở file sách".
 
 ## [0.4.28] - 2026-10-05
 
