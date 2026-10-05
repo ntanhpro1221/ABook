@@ -2758,3 +2758,23 @@ Ba agent đọc-hiểu, không chạy model. File: `Corpus/research/music/` `SCE
 - **Lô 2** (`scene_train_v3/`, `pick.py` hạt 20261006, cùng luật chọn lô thử, bỏ mọi truyện của bộ đáp án và lô thử): 20 chương (14 Nhật, 6 Hàn). Hai agent Opus chấm mù A/B theo bản 3, mỗi chương một file + PROGRESS (chịu ngắt).
 - **Thước (CHÍNH):** `scene_train_v3/agreement.py` (= `pilot_agreement.py`), r TB chương A-B so lô thử (V .77 E .85 T .75). Bản 3 CÓ ÍCH nếu ≥ 2 trục tăng ≥ 0,03 và không trục nào giảm > 0,03. Nhiễu lấy mẫu một lô 20 chương ~±0,05 -> trong vùng ấy ghi "không phân biệt được"; bản 3 vẫn giữ vì chỉ lấp chỗ trống. Ghi lại thêm: số chỗ phân vân trong PROGRESS thuộc bốn loại L1-L4 (lô thử: cả hai người, gần mọi chương).
 - **Dù kết quả nào:** lô 2 phân xử thành nhãn dạy, cộng lô thử = 40 chương cho LoRA 4B (làm sau oracle 10-10).
+
+**KẾT QUẢ - Hướng dẫn chấm cảnh bản 3 (05-10, Corpus 9ab0eac4; ghi trước b2e2b39b):**
+- Lô 2 (20 chương mới, 14 Nhật, 6 Hàn) chấm mù A/B theo bản 3. Đồng thuận A-B (`scene_train_v3/agreement.py`, bỏ đoạn chú thích):
+
+| trục | r TB chương lô thử (bản 2+5.2) | r TB chương lô 2 (bản 3) | MAE lô thử | MAE lô 2 |
+|---|---|---|---|---|
+| V | 0,77 | **0,87** | 0,24 | 0,13 |
+| E | 0,85 | 0,84 | 0,20 | 0,16 |
+| T | 0,75 | **0,91** | - | 0,18 |
+
+- **ĐẠT** luật ghi trước: hai trục tăng ≥ 0,03 (V +0,10, T +0,16), E giảm 0,01 (< 0,03). Hai mức tăng vượt nhiễu lấy mẫu ~±0,05. Bản 3 thành hướng dẫn cho mọi lô dữ liệu dạy sau.
+- **Dè dặt:** chương khác nhau giữa hai lô. Lô 2 nhiều chương hằng hơn (V 7 so 5), vì bản 3 bỏ ranh giới ép; r TB chương bỏ những chương này. r gộp gần như không đổi (V 0,93 so 0,91). Nhưng MAE và lệch xa (≥ 1,5: 2 % -> 0–1 %) cũng giảm, nên phần tăng không chỉ do bỏ chương khó.
+- Luật được dùng (người A): L3 ở 16 chương, L4 6, L2 4, L1 3.
+- **Nhãn dạy:** lô 2 phân xử ra 58 đoạn, lệch A-B ≥ 1,5 chỉ ở 2 đoạn (lô thử: 8/104). Hai lô cộng lại 40 chương; `build_mood_sft.py` (P2 chữ số, nhãn mềm A/B) cho 770 mẫu train + 62 val.
+- **Bản 3.1** (đề xuất, chưa đo; cả hai người chấm cùng nêu độc lập), ghi trong `GUIDE_V3.md`:
+  - tiêu đề đứng trước lời người dịch thuộc đoạn chú thích;
+  - khúc < 1 phút trong một đoạn: mạnh hơn -> `accent`, lặng hơn -> `duck`;
+  - lệch đúng 1 bậc ở một trục -> `soft`;
+  - `ramp` không kèm `soft` cho ranh giới bắt buộc mà vị trí mờ.
+- **Tiếp:** kế hoạch LoRA 4B (`scene_train_v3/LORA_PLAN.md`) ghi trước sau phép prompt mốc 06-10 (để chốt dạng đầu ra) và oracle 10-10.
