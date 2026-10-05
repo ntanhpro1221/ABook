@@ -2677,3 +2677,27 @@ Ghi trước:
 - Tham số học trên cả 20 chương (4b): α 0,3, w(llm) V/E/T 0,6/0,4/0,9. Không đưa vào app.
 - Lưu ý rò rỉ 9B-v8 không cần kiểm, vì phép đã thua.
 - Bài học: hậu xử lý không khí đoạn (trộn, mượt) gần hết đất. Muốn tiến phải đọc tốt hơn (model / dữ liệu dạy), và thứ tự đúng vẫn là chờ oracle thứ Bảy xem đoán không khí đoạn có phải nút thắt khi NGHE không.
+
+### Đọc không khí đoạn tốt hơn: ba bản soát (05-10 18:xx, agent Opus, Corpus 28bb0a48)
+
+Ba agent đọc-hiểu, không chạy model. File: `Corpus/research/music/` `SCENE_MOOD_READING_RESEARCH.md`, `GOLD_AUDIT.md`,
+`scene_set6/ERROR_ANALYSIS_4B.md`.
+
+- **Đáp án tin được, khoảng cách nằm ở model.**
+  - A–B khớp r ≈ 0,81 mỗi trục (trong chương, 42 chương bộ 4/5/6). Trần một người chấm so đáp án ≈ 0,85; máy 0,13–0,54.
+  - Dè dặt: A và B cùng là Claude.
+  - Lệch xa chủ yếu do chia đoạn khác nhau (93%).
+  - Trong đáp án, V gần như là T lật ngược (r −0,67), nên thực chất chỉ có khoảng 2 chiều.
+  - Lỗi đo: đoạn lời dịch giả/chú thích vẫn được tính điểm (`eval_scenes`). Cần sửa trước lượt đo sau.
+- **4b gần như trả một bộ số cố định** (hay gặp nhất V 0, E 1, T 2): V = 0 ở 77% thời lượng (đáp án 26%). Ba lỗi lớn nhất theo giây (ranh giới đáp án):
+  1. T bị đẩy lên 2 vì một chữ căng ("chết", "giết"...), kể cả trong câu đùa: 40% lỗi;
+  2. V = 0 ở cảnh ấm/vui/hài, kèm T không xuống âm ở cảnh thư thái;
+  3. V = 0 ở cảnh âm không phải buồn (sợ, giận).
+  - Đề xuất: prompt mới có mốc từng bậc (bản viết sẵn trong file), chấm theo nền phần lớn đoạn, không theo câu căng nhất.
+- **Tài liệu:** model nhỏ học nhãn LLM gần bằng học nhãn người. Đề xuất số 1 là dữ liệu dạy + LoRA 4B (thí nghiệm C: khoảng 160 chương ngoài các bộ đáp án, hai agent chấm mù + phân xử, đợt 40/80/160). Đầu ra mỗi trục một chữ số 1..9, app lấy kỳ vọng theo xác suất.
+  - Kiểm cuối trên bộ 7 mới, vì bộ 6 đã dùng cho nhiều quyết định.
+  - Rẻ, nên làm trước: A (đầu ra một chữ số + kỳ vọng qua logprobs, khoảng 15 phút GPU) và B (prompt có mốc + ngữ cảnh gần). Hai phép này quyết định dạng dữ liệu cho C.
+- **Thứ tự đề xuất:**
+  1. sửa thước (bỏ đoạn chú thích);
+  2. ghi trước A + B (prompt mốc) trên bộ 6 bằng hàng GPU của Model;
+  3. sau oracle thứ Bảy: nếu đoán không khí đoạn là nút thắt khi nghe thì làm C.
