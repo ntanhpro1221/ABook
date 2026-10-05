@@ -38,6 +38,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Bìa tự vẽ co chữ theo cỡ bìa: bìa nhỏ (thẻ "Đang nghe dở", hộp "Sửa sách") hiện đủ tên, không cắt chữ giữa chừng hay đè nhãn "TẬP"; bìa sách chỉ-chữ không còn bị kéo dài thành hình chữ nhật dọc.
 - "Xuất file sách": menu ghi sẵn file sẽ nằm ở đâu (hay "Bạn chọn thư mục lưu ở bước kế"), và lúc đóng gói thông báo đếm thời gian đã trôi để biết máy chưa treo.
 
+### Studio
+
+- Mở Studio trong trình duyệt hay từ điện thoại, bước "Nội dung" của "Tạo sách nói" có nút "Chọn file", "Chọn thư mục" (trình duyệt máy tính) và kéo thả
+  file hay cả thư mục truyện vào khung - thay cho ô dán đường dẫn, ô ấy lui vào "Nâng cao". File gửi lên máy tính, có thanh tiến độ và dung lượng; file không
+  phải truyện hay quá 8 MB được nói rõ tên. Chọn cả thư mục thì tên thư mục thành tên sách gợi ý; thư mục chỉ có các thư mục tập con thì mỗi thư mục là một tập.
+
 ## [0.4.28] - 2026-10-05
 
 ### Giọng đọc
