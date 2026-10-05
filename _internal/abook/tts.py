@@ -31,6 +31,7 @@ from .database import (
     PRONUNCIATION_DELIVERY_SOURCE,
     PRONUNCIATION_DELIVERY_VARIANTS,
     ProjectDB,
+    thought_reads_as_narrator,
 )
 from .io_utils import stable_int
 from .models import (
@@ -1115,9 +1116,17 @@ class TTSCoordinator:
         return stable_int(f"segment::{row['stable_id']}::{profile['voice_key']}::{seed_salt}{suffix}")
 
     def _voice_profile_for_row(self, row: Any) -> Any:
-        if str(_row_value(row, "kind", "narration")) == "thought":
+        if self._thought_reads_as_narrator(row):
             return self.db.voice_profile_by_key("narrator")
         return self.db.voice_profile(int(row["voice_profile_id"]))
+
+    @staticmethod
+    def _thought_reads_as_narrator(row: Any) -> bool:
+        return thought_reads_as_narrator(
+            _row_value(row, "kind", "narration"),
+            _row_value(row, "speaker", ""),
+            _row_value(row, "voice_profile_id", None),
+        )
 
     def locked_voice_provenance(self, row: Any) -> dict[str, int]:
         profile = self._voice_profile_for_row(row)
@@ -1472,7 +1481,7 @@ class TTSCoordinator:
             row,
             pronunciation_delivery_variant=pronunciation_delivery_variant,
         )
-        if str(_row_value(row, "kind", "narration")) == "thought":
+        if self._thought_reads_as_narrator(row):
             narrator_profile = self.db.voice_profile_by_key("narrator")
             result["speaker"] = "NARRATOR"
             result["voice_profile_id"] = int(narrator_profile["id"])

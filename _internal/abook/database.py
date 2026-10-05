@@ -2246,6 +2246,20 @@ CREATE INDEX IF NOT EXISTS idx_analysis_critic_attempts_candidate
 LOCKABLE_AGES = frozenset({"child", "teen", "young", "adult", "elderly"})
 
 
+def thought_reads_as_narrator(kind: Any, speaker: Any, voice_profile_id: Any) -> bool:
+    """The one rule for whose voice an inner thought gets (owner decision 20-09).
+
+    A thought is read in the voice of the person thinking it. Only an unattributed one -
+    speaker NARRATOR/UNKNOWN/empty, or no voice profile of its own - falls back to the
+    narrator. Narration and dialogue are never affected (always False). Synthesis, the
+    perceptual baseline, the candidate voice-lock check and the reading preview all ask
+    this, so they cannot disagree about which profile a thought uses.
+    """
+    if str(kind or "").strip().casefold() != "thought":
+        return False
+    return voice_profile_id is None or str(speaker or "").strip().casefold() in {"", "narrator", "unknown"}
+
+
 def _character_key(name: str) -> str:
     """The one way a character name becomes a key, borrowed rather than re-implemented.
 
@@ -10669,13 +10683,13 @@ class ProjectDB:
         conn: sqlite3.Connection,
         segment: sqlite3.Row,
     ) -> sqlite3.Row:
-        if str(segment["kind"] or "").strip().casefold() == "thought":
+        if thought_reads_as_narrator(segment["kind"], segment["speaker"], segment["voice_profile_id"]):
             profile = conn.execute(
                 "SELECT * FROM voice_profiles WHERE voice_key=? COLLATE NOCASE",
                 ("narrator",),
             ).fetchone()
             if profile is None:
-                raise RuntimeError("thought candidate requires the locked narrator voice profile")
+                raise RuntimeError("unattributed thought candidate requires the locked narrator voice profile")
         else:
             if segment["voice_profile_id"] is None:
                 raise RuntimeError("segment candidate requires an assigned locked voice profile")
