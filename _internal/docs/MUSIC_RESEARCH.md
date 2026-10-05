@@ -2550,3 +2550,20 @@ Mỗi pha xong: ghi số vào đây, đổi tham số trong app theo kết quả
   - (ii) VET ≥ 0,253 − 0,01 = 0,243, VÀ tổng thời gian ≤ 70 % của 4b (≤ 553 s), VÀ hỏng định dạng = 0.
   - Ngoài hai trường hợp ấy: giữ 4b.
 - **Ghi lại, không quyết:** VRAM đỉnh; số chương Q8 hơn 4b.
+
+**KẾT QUẢ DANH MỤC V HỢP + TRÒ HỌC LẠI (05-10 12:15; `results/student_mtg.txt`, `run_vhop_chain.log`):**
+- **Danh mục 33e5202f6cda** (2.430 bài; trước 2.415):
+  - V mới so V cũ trên bài chung: r 0,919. E, T y nguyên (1,000).
+  - Vì V đổi, luật lấp ô (phong cách × V × E) chọn lại bài từ nguồn bổ sung: thêm 88, bỏ 73 (OGA / FMA / FreePD / Scott Buckley).
+  - 67 bài mới chưa có bản sao archive.org → đăng bằng `run_mirrors_s6.sh` (SKIP_MIRRORED), kiểm sha1, dựng lại danh mục.
+  - CHƯA gửi Lead deploy cho tới khi bản sao đủ.
+- **Trò-A học lại:** **KHÔNG ĐẠT** luật f111cd22.
+  - r(V trò, nhãn MTG ±1) = **0,562**. Trò cũ 0,545, CLAP zero-shot 0,511; cần ≥ 0,591.
+  - Trò chỉ giữ được 1/3 phần lợi. Lý do có thể: đích V của trò là w × người đọc chữ + (1 − w) × trục danh mục, nên phần V âm thanh mới
+    bị pha loãng; trò chỉ có đặc trưng CLAP.
+  - Ghi lại: trò mới trên nhạc phim V 0,665 (trò cũ 0,642), E 0,744, T 0,767; AUC tỉ lệ 95,9 % (cũ 96,5 %).
+- **Hệ quả theo luật Lead:**
+  - Xếp đường (a): máy ≥ 12 GB RAM chạy MuQ nền lúc nhập (3,5 s / bài, model tải theo yêu cầu). V bài nhập = 0,5·z(CLAP) + 0,5·z(MuQ),
+    z theo trung bình / độ lệch của danh mục.
+  - Máy yếu: dùng trò mới. Trò học trên thang mới nên cùng thang, chỉ yếu hơn.
+  - Đầu trò mới vẫn tốt hơn đầu cũ ở cả MTG lẫn nhạc phim → đề xuất thay đầu cũ.
