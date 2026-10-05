@@ -2701,3 +2701,6 @@ Ba agent đọc-hiểu, không chạy model. File: `Corpus/research/music/` `SCE
   1. sửa thước (bỏ đoạn chú thích);
   2. ghi trước A + B (prompt mốc) trên bộ 6 bằng hàng GPU của Model;
   3. sau oracle thứ Bảy: nếu đoán không khí đoạn là nút thắt khi nghe thì làm C.
+- **Thước sửa (05-10 18:5x):** `SCORE_SKIP_NOTES=1` (trong `set5_llm.py`, `segment_mix.py` ở LLM_Train/music) cho đoạn đáp án `function=chu_thich` trọng số 0. Mặc định vẫn là thước cũ, để số cũ tái lập được; từ nay các phép ghi trước dùng thước mới.
+  - Bộ 6 chỉ có 6 đoạn như thế, nên số đổi ít: 4b `app+llmVT` 0,253 → 0,258; `oracle+llmVT` 0,398 → 0,385.
+  - Trộn + mượt vẫn không thắng: +0,028, 12/20.
