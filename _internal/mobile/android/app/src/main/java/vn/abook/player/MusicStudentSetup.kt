@@ -194,11 +194,11 @@ class MusicStudentSetup(
         // Ghim đúng như webui/music_student.py (REPO_ID, REVISION, PACKAGE_FILES["onnx"], PACKAGE_HASHES): đổi bên kia thì đổi ở đây
         // (tests/test_music_student_android.py so hai bảng).
         const val REPO_ID = "NGDtuanh/abook-music-student"
-        const val REVISION = "332e7552f61c8b225ea2a97bafe46349ed7c434b"
+        const val REVISION = "143bea3d538587a88d40127103ac72c6501df54d"
         const val BASE = "https://huggingface.co/$REPO_ID/resolve/$REVISION/"
         val PACKAGE = listOf(
             Part("clap_audio_fp16.onnx", "484bebfc9f42d3a22fc75e35c9027d543cc6c191031abf510a55392d5c1dbdd9", 58_989_719),
-            Part("student_head_A.npz", "a63e224fabc58d8d9fb114e8ab22262473d20667b18793967ebdabd2fd5970c8", 53_588),
+            Part("student_head_A.npz", "3fcb54b598dd9b3c42cdacd68bb9938ceb68e65c4895a8133c75066aec7080f7", 53_577),
             Part("preprocessor_config.json", "b089fad772ef3242a3ff8b9e4a6449083253d28d83a1ad8aa346cea116bfe514", 524),
         )
 
