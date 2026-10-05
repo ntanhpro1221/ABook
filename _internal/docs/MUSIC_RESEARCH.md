@@ -2704,3 +2704,27 @@ Ba agent đọc-hiểu, không chạy model. File: `Corpus/research/music/` `SCE
 - **Thước sửa (05-10 18:5x):** `SCORE_SKIP_NOTES=1` (trong `set5_llm.py`, `segment_mix.py` ở LLM_Train/music) cho đoạn đáp án `function=chu_thich` trọng số 0. Mặc định vẫn là thước cũ, để số cũ tái lập được; từ nay các phép ghi trước dùng thước mới.
   - Bộ 6 chỉ có 6 đoạn như thế, nên số đổi ít: 4b `app+llmVT` 0,253 → 0,258; `oracle+llmVT` 0,398 → 0,385.
   - Trộn + mượt vẫn không thắng: +0,028, 12/20.
+
+**GHI TRƯỚC - PROMPT CÓ MỐC + ĐẦU RA CHỮ SỐ cho llmVT (05-10 19:0x, Lead duyệt; trước mọi lượt model):**
+- **Vì sao:** phân tích lỗi bộ 6 (Corpus 28bb0a48) cho thấy 4b gần như trả một bộ số cố định. Hai cách chữa rẻ:
+  - prompt có mốc từng bậc (`ERROR_ANALYSIS_4B.md` 5.1, nguyên văn, không ví dụ mẫu);
+  - đầu ra một chữ số 1..9 mỗi trục, giá trị = kỳ vọng theo xác suất các chữ số (logprobs của Ollama), để bớt dồn về một mức.
+- **Biến thể** (`prompt_mood.py`, LLM_Train/music; `qwen3.5:4b`, think=false, nhiệt độ 0, ranh giới app):
+  - P0 = prompt cũ (JSON);
+  - P1 = prompt mốc (JSON);
+  - P2 = prompt mốc + chữ số/kỳ vọng.
+- **Thước:** như llmVT của app: V, T từ LLM, E từ nhãn câu. r theo thời lượng trong chương, trung bình chương, `SCORE_SKIP_NOTES=1`.
+- **CHÍNH:** P2 so P0 trên các bộ CHƯA dùng để viết prompt: bộ 4 + 5 + 5b, 22 chương. THẮNG nếu VET hơn ≥ 0,05 VÀ hơn ở ≥ 16/22 chương.
+  - Bộ 6 chỉ ghi lại, vì prompt được viết từ chính lỗi của bộ 6.
+- **Ghi lại, không quyết:**
+  - P1 so P0 (phần của prompt);
+  - P2 so P1 (phần của chữ số);
+  - P2 lấy chữ số cao nhất thay kỳ vọng;
+  - E cũng từ LLM;
+  - tỉ lệ đoạn V = 0 (P0 bộ 6: 85%).
+- **Lưu ý trước:**
+  - bộ 4 có một chương 9B-v8 đã học (HDST 090); điều này chỉ ảnh hưởng phần E (nhãn câu), như nhau ở mọi biến thể.
+  - Nếu Ollama không trả logprobs thì P2 lấy chữ số thô, có ghi cờ trong file.
+- **Thắng thì:** đề xuất Lead thay prompt llmVT của app (một hằng chuỗi + cách đọc đầu ra). Đồng thời dữ liệu dạy (bản thử 20 chương đang chấm) dùng đầu ra chữ số.
+  **Thua thì:** ghi lại, giữ prompt cũ.
+- **Chạy:** `run_prompt_mood.sh` qua hàng GPU của Model (sau B9), khoảng 400 lượt, 25–35 phút. Dấu xong "HẾT NHẠC PROMPT MỐC 05-10" trong `run_prompt_mood.log`.
