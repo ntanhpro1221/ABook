@@ -62,6 +62,8 @@ export interface ListeningState {
   chapters: Record<string, ChapterState>;
   rate?: number;
   finished?: boolean;
+  /** Lúc tự đánh dấu (chưa) nghe xong - nghe tiếp sau mốc này nghĩa là đang nghe lại. */
+  finishedAt?: number;
   bookmarks: Bookmark[];
   /** Chỗ đọc dở ở chế độ đọc (câu thứ `index` của chương). */
   reading?: { chapterId: number; index: number; at: number };
@@ -76,6 +78,8 @@ export interface BookProgress {
   finished: boolean;
   /** Sách đang làm dở, đã nghe hết phần đã có - chưa phải "nghe xong". */
   caughtUp?: boolean;
+  /** Đã nghe hết rồi quay lại nghe một đoạn: tiến độ theo chỗ đang nghe, không còn "nghe xong". */
+  rewound?: boolean;
 }
 
 /** Một hồ sơ nghe gắn với cuốn: dữ liệu nghe độc lập với sách, app giữ liên kết - một cuốn nhiều hồ sơ
