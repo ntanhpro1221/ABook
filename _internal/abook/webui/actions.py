@@ -45,24 +45,33 @@ def inside_folder(path: str, root: Path) -> bool:
         return False
 
 
-def upload_source(library_root: Path, folder: str, name: str, data: bytes) -> Path:
-    """Ghi một chương TXT gửi từ máy khác vào `<thư viện>/Nguồn tải lên/<thư mục>/`, trả thư mục ấy.
+def _upload_name(text: str, limit: int) -> str:
+    return " ".join(_UNSAFE_NAME.sub(" ", text).split()).strip(" .")[:limit].strip(" .")
 
-    Chỉ lấy TÊN file (không đường dẫn), chỉ `.txt`, tên thư mục và tên file bỏ ký tự Windows không nhận, không nhận tên
-    thiết bị (CON, NUL, COM1...) - không có cách nào ghi ra ngoài thư mục tải lên. KHÔNG ghi đè: đè lên nguồn của một
-    cuốn đã tạo là cuốn ấy không chạy tiếp được nữa ("Source chapter đã thay đổi nội dung"). Byte giữ nguyên: bảng mã do
-    dây chuyền nhận như với file trên máy."""
+
+def upload_source(library_root: Path, folder: str, name: str, data: bytes) -> Path:
+    """Ghi một chương TXT gửi từ máy khác vào `<thư viện>/Nguồn tải lên/<thư mục>/`, trả file đã ghi.
+
+    `folder` có thể có tới ba tầng cách bằng "/" ("<lần gửi>/<thư mục đã chọn>[/<thư mục con>]"): chọn cả thư mục truyện thì
+    tên thư mục ấy còn nguyên - nó là tên sách máy gợi ý - mà mỗi lần gửi vẫn nằm riêng một chỗ.
+    Chỉ lấy TÊN file (không đường dẫn), chỉ `.txt`, mỗi tầng thư mục và tên file bỏ ký tự Windows không nhận (cả "/" và
+    "\\"), tầng rỗng hay ".." bị bỏ, không nhận tên thiết bị (CON, NUL, COM1...) - không có cách nào ghi ra ngoài thư mục
+    tải lên. KHÔNG ghi đè: đè lên nguồn của một cuốn đã tạo là cuốn ấy không chạy tiếp được nữa ("Source chapter đã thay
+    đổi nội dung"). Byte giữ nguyên: bảng mã do dây chuyền nhận như với file trên máy."""
     if str(library_root) in ("", ".") or not library_root.is_dir():
         raise ValueError("Máy tính chưa có thư mục thư viện")
     if len(data) > MAX_SOURCE_UPLOAD:
-        raise ValueError("File quá lớn - tối đa 8 MB một chương")
-    folder_name = " ".join(_UNSAFE_NAME.sub(" ", folder).split()).strip(" .")[:80] or "Tải lên"
-    file_name = " ".join(_UNSAFE_NAME.sub(" ", name.replace("\\", "/").rsplit("/", 1)[-1]).split()).strip(" .")[:120]
+        raise ValueError(f"File quá lớn - tối đa {MAX_SOURCE_UPLOAD // 2**20} MB một file")
+    parts = [part for part in (_upload_name(piece, 60) for piece in folder.replace("\\", "/").split("/")) if part]
+    parts = parts[:3] or ["Tải lên"]
+    file_name = _upload_name(name.replace("\\", "/").rsplit("/", 1)[-1], 120)
     if not file_name.lower().endswith((".txt", *importers.IMPORT_SUFFIXES)):
         raise ValueError("Chỉ nhận file .txt (mỗi file là một chương) hay một file .epub / .docx / .pdf")
-    if _DEVICE_NAME.match(folder_name) or _DEVICE_NAME.match(file_name):
+    if any(_DEVICE_NAME.match(part) for part in parts) or _DEVICE_NAME.match(file_name):
         raise ValueError("Tên này là tên thiết bị của Windows - đổi tên file rồi gửi lại")
-    target_dir = library_root / UPLOAD_FOLDER / folder_name
+    target_dir = library_root / UPLOAD_FOLDER
+    for part in parts:
+        target_dir /= part
     target_dir.mkdir(parents=True, exist_ok=True)
     target = target_dir / file_name
     if target.exists():
@@ -70,7 +79,7 @@ def upload_source(library_root: Path, folder: str, name: str, data: bytes) -> Pa
     temporary = target_dir / f".{file_name}.part"
     temporary.write_bytes(data)
     os.replace(temporary, target)
-    return target_dir
+    return target
 
 
 class Runner(Protocol):

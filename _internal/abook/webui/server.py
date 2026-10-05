@@ -3495,9 +3495,10 @@ class Handler(BaseHTTPRequestHandler):
             data = base64.b64decode(str(body.get("data", "")), validate=True)
         except (ValueError, binascii.Error) as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, "Dữ liệu file không hợp lệ") from error
-        folder = actions.upload_source(Path(self.app.preferences.get()["libraryRoot"]), str(body.get("folder", "")),
+        target = actions.upload_source(Path(self.app.preferences.get()["libraryRoot"]), str(body.get("folder", "")),
                                        str(body.get("name", "")), data)
-        self._send_json(HTTPStatus.OK, {"folder": str(folder)})
+        # `path`: file lẻ được quét như khi chọn từng file (tách một file cả truyện thì thư mục chương thay chỗ nó).
+        self._send_json(HTTPStatus.OK, {"folder": str(target.parent), "path": str(target)})
 
     def post_first_person(self, _query: dict[str, list[str]]) -> None:
         body = self._body()
