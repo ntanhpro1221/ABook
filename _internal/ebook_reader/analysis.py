@@ -7231,12 +7231,12 @@ class OllamaBookAnalyzer:
             response: requests.Response | None = None
             try:
                 response = self.session.post(
-                    f"{self.base_url}/api/generate",
+                    f"{self.base_url}/api/{'chat' if request.get('think') is True else 'generate'}",  # E8: think qua chat
                     # Không "suy nghĩ": Ollama 0.34.x cho qwen3 suy nghĩ trước khi trả JSON dù request có `format` -
                     # thử Studio 28-09, cùng prompt sinh 360 token thay vì 61 rồi hết ngân sách đầu ra, cuốn hỏng. Mọi
                     # lượt đo và mọi cuốn đã làm chạy không suy nghĩ (Ollama 0.33.2): khoá hành vi ấy ở đây, để Ollama
                     # tự cập nhật trên máy người dùng không đổi được nó.
-                    json={"think": False, **request},
+                    json=_eval_hooks.think_chat_body(request) if request.get("think") is True else {"think": False, **request},
                     timeout=(10.0, min(ANALYSIS_STREAM_IDLE_SECONDS, wall_timeout)),
                     stream=True,
                 )
@@ -7260,8 +7260,9 @@ class OllamaBookAnalyzer:
                         envelope = json.loads(line)
                         if envelope.get("error"):
                             raise RuntimeError(str(envelope["error"]))
-                        parts.append(str(envelope.get("response", "")))
-                        thinking_parts.append(str(envelope.get("thinking", "") or ""))
+                        message = envelope.get("message") or {}  # E8: /api/chat trả trong "message"
+                        parts.append(str(envelope.get("response", message.get("content", ""))))
+                        thinking_parts.append(str(envelope.get("thinking") or message.get("thinking") or ""))
                         completed = bool(envelope.get("done", False))
                         if completed:
                             completion_reason = str(
