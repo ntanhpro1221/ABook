@@ -2644,3 +2644,21 @@ Ghi trước:
 - **Dựng xong (05-10 tối, trước khi chấm):** B dựng lại trùng B cũ ở 115/115 đoạn. D ≠ B ở **89 đoạn**, 22 clip mới (Corpus 24419a00,
   `build_vhop_listen.py`). Dataset Kaggle `abook-music-llmvt-listen` đã lên bản mới; lượt thứ Bảy chấm cả oracle lẫn V hợp:
   192 cặp (đoạn, clip) mới, 384 lượt, khoảng 50 phút (trong `BUDGET_H` 1,45).
+
+## Đoán không khí ĐOẠN: trộn llmVT với nhãn câu + làm mượt theo đoạn kề (05-10 tối, Lead duyệt)
+
+**GHI TRƯỚC (trước mọi số; chỉ CPU, dùng lại đầu ra đã có, không chạy model mới):**
+- **Vì sao:** nút thắt đã chốt là đoán không khí đoạn. Bộ 6 (20 chương, 20 truyện): app hiện nay (`app+llmVT`) VET 0,256.
+  Còn hai nguồn chưa khai thác:
+  - nhãn câu và llmVT sai theo hai kiểu khác nhau (một bên cộng nhãn câu, một bên đọc cả đoạn) → trộn có thể hơn từng bên;
+  - không khí của người chấm đổi chậm giữa các đoạn kề → làm mượt có thể bớt nhiễu.
+- **Dữ liệu:** bộ 6, ranh giới app, llmVT của `qwen3.5:4b` (`results/set5_vet_qwen3.5_4b.jsonl`, đúng model app), nhãn câu của
+  lượt 04-10-music6-9bv8, thước của `set5_llm.score` (r Pearson theo thời lượng, tính TRONG từng chương, trung bình 20 chương).
+- **Cách (`segment_mix.py`):** vì r tính trong chương, mỗi nguồn được chuẩn hoá z trong chương (theo thời lượng) trước khi trộn.
+  - TRỘN: trục a ∈ V/E/T: `x = w_a·z(llm_a) + (1 − w_a)·z(nhãn_a)`, `w_a` ∈ {0; 0,1; …; 1}.
+  - MƯỢT: `x'_i = (1 − α)·x_i + α·trung bình(x_{i−1}, x_{i+1})` (đoạn đầu/cuối chỉ một bên kề), `α` ∈ {0; 0,1; …; 0,5}, chung ba trục.
+  - Tham số chọn bằng bỏ-một-chương: chương nào cũng được chấm bằng tham số học trên 19 chương còn lại. Tham số cuối cùng (cho app) học trên cả 20.
+- **CHÍNH:** `app+mix+mượt` so `app+llmVT`, VET, theo luật nhà (`set5_llm.rule`): THẮNG nếu hơn ≥ 0,05 VÀ hơn ở ≥ 14/20 chương.
+- **Ghi lại, không quyết:** chỉ TRỘN, chỉ MƯỢT; cùng phép với `qwen3.5:9b` (bộ 5 + bộ 6); `oracle` ranh giới làm trần.
+- **Lưu ý trước:** nhãn câu của bộ 6 đến từ 9B-v8. Nếu 9B-v8 đã học chương nào của bộ 6 thì phần nhãn câu ở chương ấy đẹp hơn thật; sẽ ghi số khi bỏ chương ấy.
+- **Thắng thì:** đề xuất Lead đưa vào `music_scenes` (vài dòng, không model mới), mặc định theo tham số học trên 20 chương. **Thua thì:** ghi lại, giữ `app+llmVT`.
