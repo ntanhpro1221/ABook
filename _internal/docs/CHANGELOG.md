@@ -7,6 +7,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nhạc nền
+
+- "Nhạc của tôi" (máy tính) có thêm tuỳ chọn "Đo cảm xúc nhạc chính xác hơn", mặc định tắt: máy nghe kỹ từng bài bạn nhập hơn (tải thêm 1,27 GB một lần, chỉ khi bạn bật, và chỉ hiện ở máy có từ 8 GB RAM) để chọn nhạc nền
+  vui / buồn đúng không khí truyện hơn. Bài nhập vào vẫn dùng được và có số ngay; việc nghe kỹ chạy ngầm vài giây mỗi bài, nhẹ máy, bài chưa tới lượt giữ số cũ, tắt máy giữa chừng thì mở lại làm tiếp.
+- Bài nhập đo vui / buồn khớp thang của nhạc có sẵn hơn: ABook cập nhật bộ nghe nhạc ("Phân tích nhạc" báo có bản mới, chỉ tải phần đổi), bài đã phân tích bằng bản cũ vẫn dùng được và bạn bấm "Phân tích lại" khi muốn. Máy có Studio và điện thoại dùng chung một bộ như nhau.
+
 ### Giọng đọc
 
 - "Nghe ngay" (máy tính và điện thoại, mọi giọng) đọc ký hiệu theo chỗ nó đứng thay vì một kiểu cố định: "sinh nhật 7/9" là ngày, "10 người/ngày" là "mỗi ngày", "x4" là "nhân bốn", "3x" là "gấp ba", "-20" sau "Độ thiện cảm:" là "âm hai mươi" còn "-50% Nhanh nhẹn" là "trừ", "Q&A" là "hỏi đáp", "★★★☆☆" là "ba sao", "Aki × Rin" là "Aki và Rin", đường dẫn gọn thành "đường dẫn"; dấu chấm giữa, "^", "#", "@", mặt cười và dấu "===" trang trí không còn bị đọc ra thành tiếng nữa, chỉ ngắt nhịp.

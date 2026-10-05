@@ -53,6 +53,8 @@ DEFAULT_PREFERENCES: dict[str, Any] = {
     "newBookProfile": "high_quality",
     # Mẫu thiết lập có tên cho sách mới (trình tạo sách): [{name, narrator, profile, analysisModel, startNow}], tối đa 20.
     "bookTemplates": [],
+    # "Đo cảm xúc nhạc chính xác hơn" (music_valence.py): tháp MuQ 1,27 GB chỉ tải khi người dùng bật; mặc định tắt. Đổi qua /api/music/local/precise.
+    "preciseMusicMood": False,
 }
 MAX_RECENTS = 30
 BOOK_PROFILES = ("fast", "balanced", "high_quality")

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  analysisLabel, formatSize, importSummary, isLocal, localDigest, mergeImports, moduleLabel, modulePercent, previewPath,
-  type ImportResult, type LocalTrack, type MusicModuleStatus,
+  analysisLabel, formatSize, importSummary, isLocal, localDigest, mergeImports, moduleLabel, modulePercent, preciseBusy, preciseLabel, preciseOffered, previewPath,
+  type ImportResult, type LocalTrack, type MusicModuleStatus, type PreciseMood,
 } from "./musicLocal";
 
 const digest = "0123456789abcdef0123456789abcdef01234567";
@@ -90,5 +90,39 @@ describe("mô-đun Phân tích nhạc", () => {
     expect(formatSize(512)).toBe("1 KB");
     expect(formatSize(5.5 * 1024 * 1024)).toBe("5,5 MB");
     expect(formatSize(59_000_000)).toBe("56 MB");
+    expect(formatSize(1_273_217_311)).toBe("1,27 GB");
+  });
+});
+
+describe("đo cảm xúc nhạc chính xác hơn", () => {
+  const precise = (over: Partial<PreciseMood> = {}): PreciseMood => ({
+    state: "off", enabled: false, present: false, removable: false, reason: "", bytes: 1_273_217_311, done: 0, total: 0, error: "", working: false, pending: 0, ...over,
+  });
+  const module = (over: Partial<MusicModuleStatus> = {}): MusicModuleStatus => ({
+    state: "ready", done: 0, total: 0, error: "", ready: true, analysing: false, metered: false, precise: precise(), ...over,
+  });
+  it("chỉ mời khi máy đủ sức và đã có bộ phân tích nhạc (điện thoại không có tuỳ chọn này)", () => {
+    expect(preciseOffered(module())).toBe(true);
+    expect(preciseOffered(module({ precise: precise({ state: "unavailable", reason: "cần máy có từ 8 GB RAM" }) }))).toBe(false);
+    expect(preciseOffered(module({ ready: false }))).toBe(false);
+    expect(preciseOffered(module({ precise: undefined }))).toBe(false);
+    expect(preciseOffered(undefined)).toBe(false);
+  });
+  it("nói dung lượng phải tải trước khi bật, và không nhắc tải nếu file đã có", () => {
+    expect(preciseLabel(precise())).toContain("Tải thêm 1,27 GB một lần");
+    expect(preciseLabel(precise({ present: true }))).not.toContain("Tải thêm");
+  });
+  it("nói phần trăm khi tải, việc đang làm khi nghe kỹ lại, và lý do khi hỏng", () => {
+    expect(preciseLabel(precise({ state: "downloading", done: 50, total: 100 }))).toContain("50%");
+    expect(preciseLabel(precise({ state: "ready", enabled: true, present: true, working: true, pending: 4 }))).toContain("4 bài");
+    expect(preciseLabel(precise({ state: "ready", enabled: true, present: true }))).toContain("Đang bật");
+    expect(preciseLabel(precise({ state: "error", error: "Không tải được" }))).toBe("Không tải được");
+    expect(preciseLabel(precise({ state: "missing", enabled: true }))).toContain("chưa tải xong");
+  });
+  it("hỏi lại view mỗi giây khi tải hoặc đang đo", () => {
+    expect(preciseBusy(precise({ state: "downloading" }))).toBe(true);
+    expect(preciseBusy(precise({ state: "ready", working: true }))).toBe(true);
+    expect(preciseBusy(precise({ state: "ready" }))).toBe(false);
+    expect(preciseBusy(undefined)).toBe(false);
   });
 });

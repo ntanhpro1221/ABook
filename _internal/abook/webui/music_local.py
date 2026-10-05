@@ -343,6 +343,30 @@ class LocalMusic:
                 self._save()
         return done
 
+    def valence_pending(self, version: str) -> list[tuple[str, Path]]:
+        """(mã, file) các bài đã phân tích mà valence chưa phải V hợp bản `version` (music_valence): bài mới nhập, bài vừa phân tích lại (mục mới thay
+        mục cũ nên mất dấu `valenceBy`) và bài đo bằng bản V hợp cũ hơn."""
+        with self._lock:
+            return [(digest, path) for digest, entry in self._tracks().items()
+                    if isinstance(entry.get("analysis"), dict) and entry["analysis"].get("valenceBy") != version
+                    and (path := self._path(digest, entry)).is_file()]
+
+    def set_valence(self, digest: str, valence: float, by: str) -> bool:
+        """Ghi V hợp đè lên valence của trò và đánh dấu nguồn (`analysis["valenceBy"]`). V hợp cùng thang với danh mục nên không còn `vetVar.valence`
+        (các trục khác giữ). False nếu bài đã bị xoá hay không còn mục phân tích."""
+        with self._lock:
+            entry = self._tracks().get(digest)
+            analysis = entry.get("analysis") if entry is not None else None
+            if not isinstance(analysis, dict):
+                return False
+            analysis["valence"], analysis["valenceBy"] = _clip(float(valence), -1.0, 1.0), by
+            if isinstance(analysis.get("vetVar"), dict):
+                analysis["vetVar"].pop("valence", None)
+                if not analysis["vetVar"]:
+                    del analysis["vetVar"]
+            self._save()
+            return True
+
     def stale_count(self) -> int:
         """Số bài đã phân tích bằng một bản model khác bản đang cắm (mới cập nhật): kết quả cũ vẫn dùng được, người dùng tự quyết có phân
         tích lại không (`reanalyse`) - không bao giờ tự chạy."""

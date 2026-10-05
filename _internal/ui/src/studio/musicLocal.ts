@@ -51,6 +51,26 @@ export interface MusicModuleStatus {
   metered: boolean;
   /** Thư viện mới chỉ dùng được sau khi mở lại app. */
   restart?: boolean;
+  /** Chỉ máy tính. */
+  precise?: PreciseMood;
+}
+
+/** "Đo cảm xúc nhạc chính xác hơn" (chỉ máy tính, webui/music_valence.py): tuỳ chọn tải thêm một model lớn, người dùng bật mới tải. `unavailable` = máy
+ *  không bật được (ít RAM) - giao diện không mời. `working`: đang nghe kỹ lại các bài đã nhập (`pending` bài còn chờ). */
+export interface PreciseMood {
+  state: "unavailable" | "off" | "missing" | "downloading" | "error" | "ready";
+  enabled: boolean;
+  /** Đã có đủ file trên máy: bật không phải tải. */
+  present: boolean;
+  /** Đã tắt mà file còn trên đĩa: hiện nút "Xoá file". */
+  removable: boolean;
+  reason: string;
+  bytes: number;
+  done: number;
+  total: number;
+  error: string;
+  working: boolean;
+  pending: number;
 }
 
 export interface LocalMusicView {
@@ -61,8 +81,9 @@ export interface LocalMusicView {
   module?: MusicModuleStatus;
 }
 
-/** Dung lượng cho người đọc: dưới 1 MB ghi KB, còn lại MB làm tròn (một chữ số thập phân dưới 10 MB). */
+/** Dung lượng cho người đọc: dưới 1 MB ghi KB, còn lại MB làm tròn (một chữ số thập phân dưới 10 MB); từ 1 GB (như Hugging Face ghi) ghi GB hai chữ số thập phân. */
 export function formatSize(bytes: number): string {
+  if (bytes >= 1e9) return `${(bytes / 1e9).toFixed(2).replace(".", ",")} GB`;
   const megabytes = bytes / (1024 * 1024);
   if (megabytes < 1) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
   return `${megabytes < 10 ? megabytes.toFixed(1).replace(".", ",") : Math.round(megabytes)} MB`;
@@ -85,6 +106,37 @@ export function moduleLabel(module: MusicModuleStatus): string {
     return "";
   }
   return `Máy chưa nghe được nhạc của bạn để hiểu không khí của nó. Tải Phân tích nhạc một lần (${formatSize(module.total)}) để các bài nhập vào được phân tích ngay trên máy này; sau đó không cần mạng. Chưa tải thì bài của bạn vẫn nhập, nghe và ghim tay được.`;
+}
+
+/** Có mời người dùng bật "Đo cảm xúc nhạc chính xác hơn" không: máy đủ sức, và đã có bộ phân tích nhạc (nó dùng lại phần nghe của bộ ấy). */
+export function preciseOffered(module: MusicModuleStatus | undefined): module is MusicModuleStatus & { precise: PreciseMood } {
+  return Boolean(module?.precise && module.precise.state !== "unavailable" && module.ready);
+}
+
+/** Đang tải hay đang nghe kỹ lại: giao diện hỏi lại view mỗi giây. */
+export function preciseBusy(precise: PreciseMood | undefined): boolean {
+  return precise?.state === "downloading" || Boolean(precise?.working);
+}
+
+/** Câu mô tả tuỳ chọn, nói bằng điều người nghe thấy. */
+export function preciseLabel(precise: PreciseMood): string {
+  const size = formatSize(precise.bytes);
+  if (precise.state === "downloading") {
+    const percent = precise.total > 0 ? Math.min(100, Math.floor((precise.done / precise.total) * 100)) : 0;
+    return `Đang tải bộ đo cảm xúc chính xác hơn (${size}, một lần) ${percent}%`;
+  }
+  if (precise.state === "error") return precise.error;
+  if (precise.state === "missing") return "Đã bật nhưng chưa tải xong - bài mới nhập tạm dùng số cũ.";
+  if (precise.state === "ready") {
+    if (precise.working) {
+      return precise.pending > 0
+        ? `Đang nghe kỹ ${precise.pending} bài bạn đã nhập - bài chưa tới lượt vẫn dùng số cũ.`
+        : "Đang nghe kỹ bài vừa nhập…";
+    }
+    return "Đang bật - bài mới nhập sẽ được nghe kỹ ngầm vài giây.";
+  }
+  const how = precise.present ? "Chạy" : `Tải thêm ${size} một lần, sau đó chạy`;
+  return `Máy nghe kỹ hơn từng bài bạn nhập để chọn nhạc nền hợp không khí truyện hơn. ${how} ngầm vài giây mỗi bài, không cần mạng.`;
 }
 
 export interface ImportResult extends LocalMusicView {
