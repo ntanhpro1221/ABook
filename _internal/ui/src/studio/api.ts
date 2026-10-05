@@ -24,6 +24,9 @@ export interface BookSummary {
   statusLabel: string;
   running: boolean;
   interrupted: boolean;
+  /** Phân tích bị ngắt giữa chừng (còn câu chờ, không tiến trình nào đang làm): chạy tiếp ra MỘT CUỐN KHÁC, lối sạch là
+   *  "Làm lại phân tích từ đầu" (store.analysis_unfinished). */
+  analysisInterrupted?: boolean;
   starting: boolean;
   startError: string;
   createdAt: number | null;
@@ -34,7 +37,7 @@ export interface BookSummary {
   /** `analyzer`: model đã phân tích cuốn này (book_settings.json), "" ở sách không ghi. */
   settings: { profile: string; profileLabel: string; narrator: string; analyzer?: string };
   chapters: { total: number; completed: number; missingAudio?: number; failed: number; working: number };
-  segments: { total: number; analyzed: number; recorded: number; finished: number; failed: number };
+  segments: { total: number; analyzed: number; pending?: number; recorded: number; finished: number; failed: number };
   progress: { overall: number; analysis: number; synthesis: number };
   audioSeconds: number;
   eta: { phase: Phase; seconds: number } | null;
@@ -218,6 +221,8 @@ export interface ScanResult {
  *  tạo sách; tạo xong thì cuốn cũ vào Thùng rác. */
 export interface RedoPlan {
   started: boolean;
+  /** Phân tích dở dang: "làm lại" = phân tích lại từ đầu, bản dở vào Thùng rác. */
+  analysisInterrupted?: boolean;
   paths: string[];
   title: string;
   profile: string;

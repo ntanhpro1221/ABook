@@ -528,14 +528,15 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
         </Button>
         <label className="min-w-0 basis-full text-sm sm:basis-auto">
           <span className="block text-fg-2">Thế giới của truyện</span>
+          <span className="block text-xs text-fg-2">Chưa chọn thì nhạc lấy từ mọi phong cách</span>
           <select
             id="music-genre"
             value={overrides.genre ?? ""}
-            title={genres.find(([value]) => value === overrides.genre)?.[1].vi ?? "Chưa chọn (mọi phong cách)"}
+            title={genres.find(([value]) => value === overrides.genre)?.[1].vi ?? "Chưa chọn"}
             onChange={(event) => change.mutate({ genre: event.target.value || null })}
-            className="mt-1 h-9 w-full overflow-hidden text-ellipsis whitespace-nowrap rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-accent sm:w-64"
+            className="mt-1 h-9 w-full rounded-lg border border-line bg-panel px-2.5 text-sm font-normal text-fg outline-none focus-visible:border-accent sm:w-64"
           >
-            <option value="">Chưa chọn (mọi phong cách)</option>
+            <option value="">Chưa chọn</option>
             {genres.map(([value, genre]) => (
               <option key={value} value={value}>
                 {genre.vi}
@@ -550,7 +551,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
             id="music-level"
             value={String(overrides.levelDb)}
             onChange={(event) => change.mutate({ levelDb: Number(event.target.value) })}
-            className="mt-1 h-9 w-full rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-accent sm:w-48"
+            className="mt-1 h-9 w-full rounded-lg border border-line bg-panel px-2.5 text-sm font-normal text-fg outline-none focus-visible:border-accent sm:w-48"
           >
             {LEVELS.map(([value, label]) => (
               <option key={value} value={String(value)}>

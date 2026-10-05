@@ -891,10 +891,23 @@ class App:
         replaces = str(body.get("replaces") or "")
         replaced = self._book(replaces) if replaces else None
         if replaced is not None and (self.runner.running(replaced) or self.jobs.starting(replaced)
-                                     or not store.not_started(replaced)):
-            raise ApiError(HTTPStatus.CONFLICT, "Sách cũ đã bắt đầu chạy - không làm lại được nữa. Tạo sách mới hay dùng "
+                                     or not store.can_redo(replaced)):
+            raise ApiError(HTTPStatus.CONFLICT, "Sách cũ đã bắt đầu chạy và qua bước phân tích - không làm lại được nữa. Tạo sách mới hay dùng "
                                                 "“Làm tiếp cuốn này”.")
+        kept_covers: dict[str, bytes] = {}
+        if replaced is not None and not store.not_started(replaced):
+            # "Làm lại phân tích" (bản dở: phân tích bị ngắt): dự án mới cùng tên, cùng thiết lập sẽ MỞ LẠI đúng thư mục cũ
+            # (project.create_or_open_project) và chạy tiếp bản dở - chính điều phải tránh. Nên bản dở vào Thùng rác TRƯỚC;
+            # không bỏ được thì thôi, chưa tạo gì. Bìa cầm trong bộ nhớ qua lúc ấy.
+            for name in (covers.COVER_FILE, covers.META_FILE):
+                if (replaced / name).is_file():
+                    kept_covers[name] = (replaced / name).read_bytes()
+            self.delete(replaces)
+            replaced = None
         root = self._create_book(body, paths, str(body.get("title", "")), self._first_person_chapters(body))
+        for name, data in kept_covers.items():
+            if not (root / name).exists():
+                (root / name).write_bytes(data)
         replace_error = ""
         unchanged = replaced is not None and root.resolve() == replaced.resolve()
         if unchanged:
@@ -2694,7 +2707,9 @@ class Handler(BaseHTTPRequestHandler):
         from .export import audio_bytes
 
         projects = self._series_parts(value, {"series": (query.get("series") or ["0"])[0] == "1"}) or [self.app._book(value)]
-        self._send_json(HTTPStatus.OK, {"bytes": audio_bytes(projects), "parts": len(projects)})
+        # Cỡ gồm cả nhạc nền đóng kèm (bài đã có trong bộ đệm - không tải trong lượt hỏi); `musicPending` = bài chưa tải.
+        size, pending = audio_bytes(projects, self.app.music_track_cached)
+        self._send_json(HTTPStatus.OK, {"bytes": size, "parts": len(projects), "musicPending": pending})
 
     def post_projectfile(self, _query: dict[str, list[str]], value: str) -> None:
         # Cả dự án trong một file (projectfile.py) - chuyển máy, sao lưu, làm tiếp ở chỗ khác.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { groupByEngine, moduleNote, sharedText, type EngineModuleStatus, type EngineVoice } from "./voiceEngines";
+import { groupByEngine, moduleNote, plainGroupLabels, sharedText, type EngineModuleStatus, type EngineVoice } from "./voiceEngines";
 
 const voice = (over: Partial<EngineVoice> = {}): EngineVoice => ({
   name: "Ngọc Linh", engine: "vieneu", engineLabel: "VieNeu", installed: true, oneStep: false, sharedWith: [], otherUsers: 0, ...over,
@@ -27,6 +27,12 @@ describe("voices grouped by the machine that reads them", () => {
     expect(sharedText(voice(shared))).toContain("máy lấy bậc âm sắc khác");
     expect(sharedText(voice({ ...shared, oneStep: true }))).toContain("nghe giống hệt nhau");
     expect(sharedText(voice())).toBe("Chưa ai dùng");
+  });
+
+  it("never calls the voice in use unused, and names groups plainly instead of by machine", () => {
+    expect(sharedText(voice(), true)).toBe("Giọng đang đọc cho người này");
+    expect(plainGroupLabels([{ engine: "vieneu" }, { engine: "zerotts" }])).toEqual(["Giọng chính", "Giọng thêm"]);
+    expect(plainGroupLabels([{ engine: "zerotts" }, { engine: "vieneu" }, { engine: "supertonic" }])).toEqual(["Giọng thêm 1", "Giọng chính", "Giọng thêm 2"]);
   });
 });
 

@@ -385,19 +385,42 @@ def continuation_plan(project_root: Path) -> dict[str, Any]:
     }
 
 
+def _analysis_begun(connection: sqlite3.Connection) -> bool:
+    """Phân tích đã bắt đầu: có câu được phân tích, hay sổ ứng viên phân tích không trống (AGENTS.md: có ứng viên là phân
+    tích đã bắt đầu)."""
+    if connection.execute("SELECT 1 FROM segments WHERE status != 'pending' LIMIT 1").fetchone():
+        return True
+    return "analysis_candidates" in _table_names(connection) and bool(
+        connection.execute("SELECT 1 FROM analysis_candidates LIMIT 1").fetchone())
+
+
 def not_started(project_root: Path) -> bool:
-    """Sách đã tạo mà CHƯA chạy bước nào: chưa câu nào được phân tích, sổ ứng viên phân tích trống (AGENTS.md: có ứng viên
-    là phân tích đã bắt đầu). Chỉ khi ấy mới được làm lại với thiết lập khác - cài đặt khoá theo sách từ lúc tạo, và chưa
-    có gì để mất."""
+    """Sách đã tạo mà CHƯA chạy bước nào: chưa câu nào được phân tích, sổ ứng viên phân tích trống. Chỉ khi ấy mới được làm
+    lại với thiết lập khác - cài đặt khoá theo sách từ lúc tạo, và chưa có gì để mất."""
     with closing(connect(project_root)) as connection:
         book = connection.execute("SELECT status FROM book WHERE id=1").fetchone()
-        if book is None or str(book["status"]) != "created":
-            return False
-        if connection.execute("SELECT 1 FROM segments WHERE status != 'pending' LIMIT 1").fetchone():
-            return False
-        tables = {row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")}
-        return not ("analysis_candidates" in tables
-                    and connection.execute("SELECT 1 FROM analysis_candidates LIMIT 1").fetchone())
+        return book is not None and str(book["status"]) == "created" and not _analysis_begun(connection)
+
+
+def _analysis_cut(connection: sqlite3.Connection) -> bool:
+    """Phân tích đã bắt đầu mà chưa xong: còn câu `pending` (AGENTS.md: khác 0 nghĩa là phân tích chưa xong), hay chưa câu nào
+    được tách mà đã có ứng viên phân tích."""
+    if not _analysis_begun(connection):
+        return False
+    counted = connection.execute("SELECT COUNT(*) AS total, SUM(status = 'pending') AS pending FROM segments").fetchone()
+    return not counted["total"] or bool(counted["pending"])
+
+
+def analysis_unfinished(project_root: Path) -> bool:
+    """Phân tích đã bắt đầu mà chưa xong. Chạy tiếp từ đó ra MỘT CUỐN SÁCH KHÁC với chạy liền mạch (AGENTS.md "Đừng stop
+    giữa pha phân tích") - lối sạch là phân tích lại từ đầu bằng một dự án mới."""
+    with closing(connect(project_root)) as connection:
+        return _analysis_cut(connection)
+
+
+def can_redo(project_root: Path) -> bool:
+    """Làm lại được bằng "Sửa thiết lập" / "Làm lại phân tích": chưa chạy bước nào, hay phân tích dở dang."""
+    return not_started(project_root) or analysis_unfinished(project_root)
 
 
 def redo_plan(project_root: Path) -> dict[str, Any]:
@@ -413,7 +436,9 @@ def redo_plan(project_root: Path) -> dict[str, Any]:
         book = connection.execute("SELECT title FROM book WHERE id=1").fetchone()
     chapters = voices.get("first_person_chapters")
     return {
-        "started": not not_started(project_root),
+        "started": not can_redo(project_root),
+        # Phân tích dở dang: làm lại = phân tích lại từ đầu (bản dở vào Thùng rác), không phải sửa thiết lập của sách mới tạo.
+        "analysisInterrupted": not not_started(project_root) and analysis_unfinished(project_root),
         "paths": [str(path) for path in continuation._input_paths(project_root)],
         "title": display_title(project_root, str(book["title"]) if book is not None else project_root.name),
         "profile": str(settings.get("quality_profile") or "high_quality"),
@@ -787,6 +812,9 @@ def summarize(project_root: Path, *, running: bool = False, now: float | None = 
                 phase = "casting"
             else:
                 phase = "synthesis"
+        # Phân tích dở dang: đã bắt đầu, còn câu chờ, và không có tiến trình nào đang làm (Dừng, hay chết giữa chừng - pha là
+        # "stopped" / "error" / "analysis" tuỳ cách ngắt). Chạy tiếp ra cuốn khác với chạy liền mạch.
+        analysis_cut = phase != "done" and _analysis_cut(connection)
         eta = None
         if running and phase == "analysis" and total:
             rate = _rate(connection, "status != 'pending'", now)
@@ -817,6 +845,7 @@ def summarize(project_root: Path, *, running: bool = False, now: float | None = 
         "statusLabel": humanize.status_label(phase, stage, active=active),
         "running": bool(active),
         "interrupted": phase in humanize.WORKING_PHASES and not active,
+        "analysisInterrupted": bool(analysis_cut and not active),
         "createdAt": float(book["created_at"] or 0) or None,
         "updatedAt": max(float(book["updated_at"] or 0), touched(project_root)) or None,
         "lastError": str(book["last_error"] or ""),
@@ -842,6 +871,7 @@ def summarize(project_root: Path, *, running: bool = False, now: float | None = 
         "segments": {
             "total": total,
             "analyzed": analyzed,
+            "pending": total - analyzed,
             "recorded": int(segments["recorded"] or 0),
             "finished": finished,
             "failed": int(segments["failed"] or 0),
