@@ -56,6 +56,7 @@ def test_without_a_package_analyze_gives_nothing_and_does_not_register(tmp_path:
     assert music_student.analyze(song) is None and not music_student.available()
     assert music_student.register() is False and not music_local.analyzer_available()
     assert music_local.analyze(song) is None, "không bịa số khi chưa có model"
+    assert music_student.clap_embedding(song) is None
 
 
 def test_an_incomplete_package_is_not_used(tmp_path: Path, monkeypatch) -> None:
@@ -80,6 +81,21 @@ def test_the_model_download_is_pinned_per_file_and_its_pin_follows_every_hash(mo
     monkeypatch.undo()
     monkeypatch.setattr(music_student, "REVISION", "1" * 40)
     assert music_student.model_pin("onnx") != before
+
+
+def test_one_head_serves_every_machine_and_the_muq_files_are_an_optional_part_of_the_same_pin() -> None:
+    """Đầu A MỚI cho cả torch lẫn onnx (đầu torch cũ bỏ); fixture của bài thử là byte-đúng file ghim; tháp MuQ (1,27 GB) thuộc phần tuỳ chọn riêng, không lọt vào đường nào."""
+    import hashlib
+
+    assert "student_head_A.npz" in music_student.PACKAGE_FILES["torch"] and "student_head_A.npz" in music_student.PACKAGE_FILES["onnx"]
+    assert "student_head.npz" not in music_student.PACKAGE_HASHES and "student_head.npz" not in music_student.PACKAGE_FILES["torch"]
+    fixture = (Path(__file__).parent / "fixtures" / "music_student" / "student_head_A.npz").read_bytes()
+    assert (hashlib.sha256(fixture).hexdigest(), len(fixture)) == music_student.PACKAGE_HASHES["student_head_A.npz"]
+    muq = music_student.model_downloads("muq")
+    assert [item.name for item in muq] == ["muq/muq_mulan_audio.onnx", "muq/valence_text.npz", "muq/vhop_scale.json"]
+    assert muq[0].url == f"https://huggingface.co/{music_student.REPO_ID}/resolve/{music_student.REVISION}/muq/muq_mulan_audio.onnx"
+    assert not set(music_student.PACKAGE_FILES["muq"]) & (set(music_student.PACKAGE_FILES["onnx"]) | set(music_student.PACKAGE_FILES["torch"]))
+    assert music_student.model_pin("muq") not in (music_student.model_pin("onnx"), music_student.model_pin("torch"))
 
 
 def test_the_module_may_download_only_when_nothing_forbids_or_provides_it(monkeypatch) -> None:
@@ -119,7 +135,7 @@ def test_too_short_or_unreadable_audio_is_not_analysed(tmp_path: Path, package: 
 
 def _reference_ids(count: int = 3):
     """(ba mã bài Incompetech có audio cạnh bộ dữ liệu nghiên cứu, hàm mã -> tên file); không có bộ ấy thì bỏ qua."""
-    needed = [MUSIC / name for name in ("embedding_ids.json", "embeddings.npy", "acoustic2.jsonl", "student_model.npz", "music_files.py")]
+    needed = [MUSIC / name for name in ("embedding_ids.json", "embeddings.npy", "music_files.py")]
     if not all(path.is_file() for path in needed):
         pytest.skip("không có bộ dữ liệu nghiên cứu nhạc ở " + str(MUSIC))
     import importlib.util
@@ -137,21 +153,14 @@ def _reference_ids(count: int = 3):
 
 
 def _reference(track: str, stem):
-    """Hàng của bài `track` trong bộ dữ liệu nghiên cứu: (nhúng đã chuẩn hoá, âm học, V/E/T mà build_student.predict cho ra)."""
+    """Hàng của bài `track` trong bộ dữ liệu nghiên cứu: (nhúng đã chuẩn hoá CLAP, V/E/T thô của đầu A tính lại bằng numpy từ file đầu ở gói - không gọi code của app)."""
     all_ids = json.loads((MUSIC / "embedding_ids.json").read_text(encoding="utf-8"))
     embeddings = np.load(MUSIC / "embeddings.npy").astype(np.float32)
     embedding = embeddings[all_ids.index(track)]
     embedding = embedding / np.linalg.norm(embedding)
-    acoustic = {}
-    for line in (MUSIC / "acoustic2.jsonl").read_text(encoding="utf-8").splitlines():
-        if line.strip():
-            row = json.loads(line)
-            acoustic[row["id"]] = row
-    model = np.load(MUSIC / "student_model.npz")
-    mu, sd, coef, intercept, names = model["mu"], model["sd"], model["coef"], model["intercept"], [str(n) for n in model["names"]]
-    tail = [float(acoustic[track][n]) if acoustic[track].get(n) is not None else mu[512 + i] for i, n in enumerate(names)]
-    out = ((np.concatenate([embedding, tail]) - mu) / sd) @ coef.T + intercept
-    return embedding, acoustic[track], np.clip(out[13:], -1, 1)  # build_student.predict: V / E / T
+    head = np.load(PACKAGE / "student_head_A.npz")
+    out = ((embedding - head["mu"]) / head["sd"]) @ head["coef"].T + head["intercept"]
+    return embedding, np.clip(out[13:], -1, 1)  # V / E / T thô
 
 
 def _vet(result: dict) -> np.ndarray:
@@ -176,15 +185,15 @@ def _ffmpeg_duration(path: Path) -> float:
 
 
 def test_the_head_and_the_tower_reproduce_the_research_numbers(package: Path) -> None:
-    """Hai nửa của đường chạy, mỗi nửa đối chiếu với bản nghiên cứu ở mức gần như tuyệt đối: (1) đầu trò + âm học cho cùng V/E/T khi
+    """Hai nửa của đường chạy, mỗi nửa đối chiếu với bản nghiên cứu ở mức gần như tuyệt đối: (1) đầu A cho cùng V/E/T khi
     nhận đúng vector nhúng của bản nghiên cứu; (2) tháp fp16 của gói cho gần như đúng vector nhúng ấy khi nhận đúng ba cửa sổ mà
     analyze_clap cắt (ffmpeg nhảy tới chỗ, không giải mã cả bài)."""
     ids, stem = _reference_ids()
     student = music_student._load()
     assert student is not None
     for track in ids:
-        embedding, acoustic, expected = _reference(track, stem)
-        got = student.predict(embedding.astype(np.float64), acoustic)
+        embedding, expected = _reference(track, stem)
+        got = student.predict(embedding.astype(np.float64))
         assert np.abs(_vet(got) - _calibrated(expected, "torch")).max() < 1e-3, track
         path = MUSIC / "audio_incompetech" / (stem(track) + ".mp3")
         duration = _ffmpeg_duration(path)
@@ -203,7 +212,7 @@ def test_the_app_prediction_stays_close_to_build_student_on_catalog_tracks(packa
     ids, stem = _reference_ids()
     worst = 0.0
     for track in ids:
-        expected = _calibrated(_reference(track, stem)[2], music_student.backend())
+        expected = _calibrated(_reference(track, stem)[1], music_student.backend())
         got = music_student.analyze(MUSIC / "audio_incompetech" / (stem(track) + ".mp3"))
         assert got is not None, track
         diff = np.abs(expected - _vet(got))
@@ -240,8 +249,8 @@ def test_the_head_calibrates_the_means_drops_sd_and_reports_the_residual_varianc
 
 
 def test_the_constants_come_from_the_f2_fit() -> None:
-    assert music_student.CALIBRATION["torch"]["valence"] == (-0.055, 1.248, 0.0404)
-    assert music_student.CALIBRATION["onnx"]["tension"] == (0.009, 1.277, 0.0408)
+    assert music_student.CALIBRATION["onnx"] == {"valence": (-0.057, 1.264, 0.0728), "arousal": (-0.012, 1.100, 0.0316), "tension": (0.001, 1.264, 0.0402)}
+    assert music_student.CALIBRATION["torch"] == music_student.CALIBRATION["onnx"], "MỘT bảng cho mọi đường (đầu A cho mọi máy)"
     assert all(len(v) == 3 for table in music_student.CALIBRATION.values() for v in table.values())
     raw = _FakeHead("", (0.1, 0.2, 0.3)).predict(np.eye(512)[0])
     assert (raw["valence"], raw["arousal"], raw["tension"]) == pytest.approx((0.1, 0.2, 0.3)) and "vetVar" not in raw

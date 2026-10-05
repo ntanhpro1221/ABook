@@ -151,13 +151,13 @@ class StudentHead(arrays: Map<String, NpyArray>) {
         val FAMILIES = setOf("eastern", "orchestral", "piano", "ambient", "acoustic", "electronic", "other") // music_plan.FAMILIES
 
         /**
-         * Hiệu chỉnh số của trò cho kho TRỘN, đường onnx (music_student.CALIBRATION["onnx"]): mỗi trục (a, b, var):
+         * Hiệu chỉnh số của trò cho kho TRỘN (music_student.CALIBRATION["onnx"] - một bảng cho mọi đường, đầu A mới 05-10): mỗi trục (a, b, var):
          * v' = kẹp(a + b*v, -1, 1) và `vetVar` = var.
          */
         val CALIBRATION = mapOf(
-            "valence" to Triple(-0.055, 1.251, 0.0412),
-            "arousal" to Triple(0.002, 1.096, 0.0309),
-            "tension" to Triple(0.009, 1.277, 0.0408),
+            "valence" to Triple(-0.057, 1.264, 0.0728),
+            "arousal" to Triple(-0.012, 1.100, 0.0316),
+            "tension" to Triple(0.001, 1.264, 0.0402),
         )
 
         fun load(file: File): StudentHead = StudentHead(Npz.read(file))

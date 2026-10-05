@@ -36,7 +36,7 @@ from ..readaloud import service as readaloud
 from ..readaloud.model import VoiceError
 from ..voice_catalog import engine_voice
 from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, edits_inbox, ffmpeg_setup, humanize, listen_view,
-               music_catalog, music_local, music_module, music_moods, music_plan, music_playlist, music_select, music_student, packages, project_views,
+               music_catalog, music_local, music_module, music_moods, music_plan, music_playlist, music_select, music_student, music_valence, packages, project_views,
                projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, vieneu_module, volumes, word_timing, workshop, zerotts_module)
 from .fingerprints import Fingerprints
 from .library import Library, Preferences, book_id, clean_book_templates, legacy_ids
@@ -221,6 +221,10 @@ class App:
         music_module.configure(self.music_dir, after_install=self._music_module_installed)
         music_student.configure(self.music_dir / music_student.PACKAGE_FOLDER)
         music_student.register()
+        # "Đo cảm xúc nhạc chính xác hơn" (music_valence.py): tuỳ chọn, mặc định tắt; bật rồi thì mở app là làm tiếp các bài chưa đo (không hại nếu đã xong).
+        music_valence.configure(self.my_music, lambda: bool(self.preferences.get().get("preciseMusicMood")),
+                                lambda value: self.preferences.update({"preciseMusicMood": value}))
+        music_valence.kick()
         self._music_catalog: music_catalog.MusicCatalog | None = None
         self._music_lock = threading.Lock()
         # Danh sách phát máy tự chọn cho sách chỉ có chữ, đệm theo (mã sách, nguồn luật, version của luật) - music_playlist.pick.
@@ -1088,7 +1092,22 @@ class App:
         """Danh sách bài đã nhập + có bộ phân tích âm thanh chưa (chưa có thì bài mới nhập ở trạng thái "chưa phân tích") + mô-đun "Phân tích
         nhạc" (tải một lần khi người dùng bấm; giao diện hỏi lại view này mỗi giây trong lúc tải). `stale`: số bài phân tích bằng bản model cũ."""
         return {"tracks": self.my_music.entries(), "analyzer": music_local.analyzer_available(),
-                "module": music_module.status() | {"stale": self.my_music.stale_count()}}
+                "module": music_module.status() | {"stale": self.my_music.stale_count(), "precise": music_valence.status()}}
+
+    def my_music_precise(self, enabled: bool) -> dict[str, Any]:
+        """Người dùng bật / tắt "Đo cảm xúc nhạc chính xác hơn": bật thì tải tháp MuQ (1,27 GB) nếu chưa có rồi đo nền các bài đã nhập; máy không đủ sức
+        (dưới 8 GB RAM) hay chưa có "Phân tích nhạc" thì báo rõ, không bật."""
+        self._mutating()
+        if enabled:
+            if not music_local.analyzer_available():
+                raise ApiError(HTTPStatus.CONFLICT, "Cần tải Phân tích nhạc trước, rồi mới bật được đo cảm xúc chính xác hơn.")
+            try:
+                music_valence.enable()
+            except ValueError as error:
+                raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
+        else:
+            music_valence.disable()
+        return self.my_music_view()
 
     def my_music_module(self) -> dict[str, Any]:
         """Người dùng bấm "Phân tích nhạc": tải (hay cập nhật) mô-đun ở luồng nền rồi trả view. Đã đủ thì không làm gì."""
@@ -1102,6 +1121,7 @@ class App:
         try:
             self.my_music.measure_missing()
             self.my_music.analyze_pending()
+            music_valence.kick()
         except Exception:  # noqa: BLE001 - việc bù không được làm hỏng mô-đun vừa tải xong
             pass
 
@@ -1122,6 +1142,8 @@ class App:
                 failed.append(str(exc))
                 continue
             (existing if duplicate else added).append(track)
+        if added:
+            music_valence.kick()  # số của đầu trò đã ghi rồi; V hợp (nếu người dùng bật) ghi đè sau ở luồng nền
         return {"added": added, "existing": existing, "failed": failed, **self.my_music_view()}
 
     def my_music_remove(self, digest: str) -> dict[str, Any]:
@@ -1136,7 +1158,9 @@ class App:
         if not music_local.analyzer_available():
             raise ApiError(HTTPStatus.CONFLICT, "Chưa có bộ phân tích âm thanh - bài nhập vào vẫn ghim tay được, "
                                                 "nhưng máy chưa tự chọn chúng.")
-        return {"analysed": self.my_music.analyze_pending(), **self.my_music_view()}
+        analysed = self.my_music.analyze_pending()
+        music_valence.kick()
+        return {"analysed": analysed, **self.my_music_view()}
 
     def my_music_reanalyse(self) -> dict[str, Any]:
         """Người dùng bấm "Phân tích lại N bài bằng bản mới" sau khi cập nhật mô-đun: ở luồng nền, không bao giờ tự chạy."""
@@ -1144,7 +1168,16 @@ class App:
         if not music_local.analyzer_available():
             raise ApiError(HTTPStatus.CONFLICT, "Chưa có bộ phân tích âm thanh - bài nhập vào vẫn ghim tay được, "
                                                 "nhưng máy chưa tự chọn chúng.")
-        music_module.run_job(self.my_music.reanalyse)
+        music_module.run_job(lambda: (self.my_music.reanalyse(), music_valence.kick()))
+        return self.my_music_view()
+
+    def my_music_precise_remove(self) -> dict[str, Any]:
+        """Người dùng bấm "Xoá file (1,27 GB)" khi đã tắt tuỳ chọn: xoá file MuQ của gói nhạc, giữ nguyên phần còn lại."""
+        self._mutating()
+        try:
+            music_valence.remove_files()
+        except ValueError as error:
+            raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
         return self.my_music_view()
 
     def my_music_file(self, digest: str) -> Path:
@@ -2794,6 +2827,15 @@ class Handler(BaseHTTPRequestHandler):
     def post_my_music_reanalyse(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.my_music_reanalyse())
 
+    def post_my_music_precise(self, _query: dict[str, list[str]]) -> None:
+        enabled = self._body().get("enabled")
+        if not isinstance(enabled, bool):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu enabled (true / false)")
+        self._send_json(HTTPStatus.OK, self.app.my_music_precise(enabled))
+
+    def post_my_music_precise_remove(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.my_music_precise_remove())
+
     def post_my_music_analyze(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.my_music_analyze())
 
@@ -3827,6 +3869,8 @@ ROUTES: list[Route] = [
     ("POST", re.compile(r"/api/music/local/import"), Handler.post_my_music_import),
     ("POST", re.compile(r"/api/music/local/module"), Handler.post_my_music_module),
     ("POST", re.compile(r"/api/music/local/reanalyse"), Handler.post_my_music_reanalyse),
+    ("POST", re.compile(r"/api/music/local/precise"), Handler.post_my_music_precise),
+    ("POST", re.compile(r"/api/music/local/precise/remove"), Handler.post_my_music_precise_remove),
     ("POST", re.compile(r"/api/music/local/analyze"), Handler.post_my_music_analyze),
     ("DELETE", re.compile(r"/api/music/local/([0-9a-f]{40})"), Handler.delete_my_music),
     ("GET", re.compile(r"/api/music/local/([0-9a-f]{40})/file"), Handler.get_my_music_file),

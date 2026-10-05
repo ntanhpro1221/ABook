@@ -2,20 +2,20 @@
 TRÒ", docs/MUSIC_IMPORT.md "Phân tích"). Không dò "có lời", không chặn bài nào - bài nào cũng ra một mục.
 
 Hai đường chạy, cùng một cách cắt cửa sổ và cùng khoá đầu ra:
-- torch (máy có Studio: torch + transformers + librosa), ba bước y như lúc đầu trò được học (LLM_Train/music/build_student.py):
+- torch (máy có Studio: torch + transformers + librosa):
   1. nhúng CLAP: ba cửa sổ 10 giây ở 20 / 50 / 80% bài (bài ngắn: một cửa sổ) mono 48 kHz -> tháp âm thanh của
      laion/clap-htsat-unfused (Apache-2.0, chỉ tháp âm thanh + phép chiếu) -> chuẩn hoá L2 từng cửa sổ -> trung bình -> chuẩn hoá L2;
-  2. âm học 22.050 Hz (music_acoustic.py, bản chép đúng số của acoustic_features2);
-  3. đầu trò (`student_head.npz`): z-score 512 CLAP + 42 âm học -> hồi quy tuyến tính 16 hàng; 13 cường độ cảm xúc = sigmoid,
-     valence / energy / tension kẹp -1..1 rồi hiệu chỉnh cho kho trộn (CALIBRATION, kèm `vetVar`; không còn `sd`). `fitsUnderNarration` và `family` đọc thẳng từ vector nhúng so với vector chữ đã tính sẵn
-     (app không cần tháp chữ).
-- onnx (bản app chỉ-nghe, Python nhúng chỉ có numpy + onnxruntime): mel numpy (music_mel.py) -> tháp CLAP fp16 ONNX trên CPU -> đầu
-  trò A (`student_head_A.npz`, chỉ 512 chiều CLAP, không âm học). Cùng phép tính của đầu; bỏ `loudness.speechBand` (cần âm học).
-  Lệch so với torch cùng đầu A < 0,001 trên V/E/T (Corpus/research/music/onnx_student/README.md).
+  2. đầu trò A (`student_head_A.npz`, MỘT đầu cho mọi máy từ 05-10): z-score 512 CLAP -> hồi quy tuyến tính 16 hàng; 13 cường độ cảm xúc =
+     sigmoid, valence / energy / tension kẹp -1..1 rồi hiệu chỉnh cho kho trộn (CALIBRATION, kèm `vetVar`; không còn `sd`). `fitsUnderNarration`
+     và `family` đọc thẳng từ vector nhúng so với vector chữ đã tính sẵn (app không cần tháp chữ);
+  3. âm học 22.050 Hz (music_acoustic.py) chỉ còn dùng cho `loudness.speechBand`, không vào đầu.
+- onnx (bản app chỉ-nghe, Python nhúng chỉ có numpy + onnxruntime): mel numpy (music_mel.py) -> tháp CLAP fp16 ONNX trên CPU -> cùng đầu A.
+  Bỏ `loudness.speechBand` (cần âm học). Lệch so với torch cùng đầu A < 0,001 trên V/E/T (Corpus/research/music/onnx_student/README.md).
+Valence còn có đường chính xác hơn, tuỳ chọn (music_valence.py): V hợp CLAP + MuQ chạy nền sau lúc nhập, ghi đè valence của trò.
 Chọn tự động: torch nếu đủ torch + transformers + librosa, không thì onnx nếu đủ numpy + onnxruntime, không thì không có bộ phân tích.
 ABOOK_MUSIC_STUDENT_BACKEND=onnx|torch ép một đường (bài thử trên máy có cả hai).
 
-Gói model (~55 MB torch, ~59 MB onnx) nằm trên Hugging Face, ghim theo commit và SHA-256 từng file. Nó là MỘT phần của mô-đun
+Gói model (~55 MB torch, ~59 MB onnx; thêm 1,27 GB cho đường V hợp, tải riêng khi người dùng bật) nằm trên Hugging Face, ghim theo commit và SHA-256 từng file. Nó là MỘT phần của mô-đun
 "Phân tích nhạc" (music_module.py): người dùng bấm thì mới tải (HTTPS thuần, qua studio_setup.download: .part, kiểm băm, rồi mới đổi
 tên) vào thư mục dữ liệu của app - không bao giờ tự tải, kể cả lúc nhập nhạc. Chưa có gói / thiếu thư viện -> `analyze` trả None và bài
 ở trạng thái "chưa phân tích": KHÔNG BAO GIỜ bịa số. Biến môi trường ABOOK_MUSIC_STUDENT_DIR trỏ tới một thư mục gói có sẵn (bài thử,
@@ -35,22 +35,26 @@ from . import music_plan
 REPO_ID = "NGDtuanh/abook-music-student"
 # Đường tải luôn ghim cứng một commit (như studio_setup.py). Trống thì mô-đun KHÔNG tải gói model, chỉ dùng gói đã có sẵn trong thư mục /
 # ABOOK_MUSIC_STUDENT_DIR. 03-10: gói đầu c6e1485f (tháp âm thanh CLAP fp16 + đầu trò, 97,4% AUC thầy - docs/MUSIC_RESEARCH.md);
-# 60e11bce thêm đường ONNX (tháp .onnx + đầu A); aaa54805 thêm thư viện ONNX Runtime của điện thoại (ort/1.30.0/<abi>/*.so.gz). Các file model ở ba commit trùng từng byte (oid git bằng nhau), nên
-# một ghim cho cả hai đường.
-REVISION = "aaa548055d8f9f2a6093a9680f65fdf94bf8e0ce"
+# 60e11bce thêm đường ONNX (tháp .onnx + đầu A); aaa54805 thêm thư viện ONNX Runtime của điện thoại (ort/1.30.0/<abi>/*.so.gz). 05-10: 332e7552 thay đầu A bằng đầu A mới (thang V có phần
+# MuQ) cho MỌI máy, bỏ đầu torch cũ, thêm muq/ (tháp MuQ ONNX CC BY-NC 4.0 + vector chữ + hằng số, đường V hợp). Các file còn lại trùng từng byte với ba commit đầu, nên một ghim cho mọi đường.
+REVISION = "332e7552f61c8b225ea2a97bafe46349ed7c434b"
 # Mỗi đường cần những file nào; chung preprocessor_config.json (torch đọc, onnx kiểm music_mel còn đúng cấu hình đã chép).
 PACKAGE_FILES = {
-    "torch": ("model.safetensors", "config.json", "preprocessor_config.json", "student_head.npz"),
+    "torch": ("model.safetensors", "config.json", "preprocessor_config.json", "student_head_A.npz"),
     "onnx": ("clap_audio_fp16.onnx", "student_head_A.npz", "preprocessor_config.json"),
+    # Tuỳ chọn "đo cảm xúc nhạc chính xác hơn" (music_valence.py): người dùng bật mới tải, không thuộc đường chạy nào ở trên.
+    "muq": ("muq/muq_mulan_audio.onnx", "muq/valence_text.npz", "muq/vhop_scale.json"),
 }
 # SHA-256 + cỡ từng file ở REVISION (đổi REVISION thì đổi cả bảng này).
 PACKAGE_HASHES = {
     "model.safetensors": ("9ffea52fdfa83741cc1bbc72abe79a54ca40a207a990d6ccb79ac78f34ea97ee", 56_807_712),
     "config.json": ("3ec6edfeb47a45e9e86810eb5a3ba74a0023bd3b7f8db9c3d9e0aaa5ae7cef98", 1_556),
     "preprocessor_config.json": ("b089fad772ef3242a3ff8b9e4a6449083253d28d83a1ad8aa346cea116bfe514", 524),
-    "student_head.npz": ("9a68c59035ec2632760a960da2dfb6cc826f752ab10f1f9645a8ca9e6d1b595e", 57_023),
     "clap_audio_fp16.onnx": ("484bebfc9f42d3a22fc75e35c9027d543cc6c191031abf510a55392d5c1dbdd9", 58_989_719),
-    "student_head_A.npz": ("9025d4fceecb3b67a2d5a7b3ddccec49dc86f747120670e94b360a6a7db08850", 53_589),
+    "student_head_A.npz": ("a63e224fabc58d8d9fb114e8ab22262473d20667b18793967ebdabd2fd5970c8", 53_588),
+    "muq/muq_mulan_audio.onnx": ("5bacc509e048720fe7e45178ce6a4e4d2a15a83d550510818399f4f7e6e9b1c8", 1_273_217_311),
+    "muq/valence_text.npz": ("d07deac228b7b561bac016f610340f1f68ec05321abc813d9cb29478dd50847f", 34_394),
+    "muq/vhop_scale.json": ("7ee6cdb2d3cd52efa24f8a4f104bf06de62724b29af3b278d018334b38767f78", 1_781),
 }
 ENV_DIR = "ABOOK_MUSIC_STUDENT_DIR"
 ENV_BACKEND = "ABOOK_MUSIC_STUDENT_BACKEND"  # "onnx" | "torch" = ép đường ấy; trống = tự chọn
@@ -172,11 +176,11 @@ def register() -> bool:
 
 # Hiệu chỉnh số của trò cho kho TRỘN (nhạc nhập lẫn nhạc danh mục có số của thầy): V/E/T của trò bị nén về giữa nên bài nhập được chọn
 # quá thường. Mỗi trục (a, b, var): v' = kẹp(a + b*v, -1, 1) và `vetVar` = phương sai dư, music_select.z_distance cộng
-# VET_VAR_WEIGHT * var vào tử số. Khớp trên dự đoán chéo (cross-fit) so với số của thầy, từng đường một - docs/MUSIC_RESEARCH.md "F2".
-CALIBRATION = {
-    "torch": {"valence": (-0.055, 1.248, 0.0404), "arousal": (0.002, 1.102, 0.0307), "tension": (0.009, 1.242, 0.0396)},
-    "onnx": {"valence": (-0.055, 1.251, 0.0412), "arousal": (0.002, 1.096, 0.0309), "tension": (0.009, 1.277, 0.0408)},
-}
+# VET_VAR_WEIGHT * var vào tử số. Khớp F2 trên dự đoán chéo 5 phần của đầu A mới so với danh mục 33e5202f6cda (docs/MUSIC_RESEARCH.md "F2"),
+# bằng nhúng torch (lệch onnx < 0,001): một bảng cho mọi đường. Phương sai dư của V (0,073, trước 0,041) lớn hơn vì thang V mới có phần MuQ mà
+# CLAP không thấy - bài nhập ít bị chọn quá đà. Bài mang V hợp (music_valence) bỏ bảng này ở trục V: nó đã cùng thang với danh mục.
+_HEAD_A_CALIBRATION = {"valence": (-0.057, 1.264, 0.0728), "arousal": (-0.012, 1.100, 0.0316), "tension": (0.001, 1.264, 0.0402)}
+CALIBRATION = {"torch": _HEAD_A_CALIBRATION, "onnx": _HEAD_A_CALIBRATION}
 
 
 class _Head:
@@ -237,7 +241,7 @@ class _Head:
 
 
 class _Student(_Head):
-    """Đường torch: tháp CLAP + bộ trích đặc trưng của transformers + đầu trò đầy đủ (có âm học)."""
+    """Đường torch: tháp CLAP + bộ trích đặc trưng của transformers + đầu A (như đường onnx; âm học chỉ để đo `loudness.speechBand`)."""
 
     backend = "torch"
 
@@ -245,7 +249,7 @@ class _Student(_Head):
         import torch
         from transformers import ClapAudioModelWithProjection, ClapFeatureExtractor
 
-        super().__init__(directory / "student_head.npz")
+        super().__init__(directory / "student_head_A.npz")
         self.torch = torch
         self.extractor = ClapFeatureExtractor.from_pretrained(str(directory))
         self.tower = ClapAudioModelWithProjection.from_pretrained(str(directory), dtype=torch.float32).eval()
@@ -323,11 +327,22 @@ def _load() -> _Head | None:
         return _student
 
 
-def _clap_windows(y: Any) -> list[Any]:
-    """Tối đa ba cửa sổ 10 giây ở 20 / 50 / 80% bài (bài không dài hơn 10 giây: cả bài), bỏ cửa sổ ngắn hơn 3 giây."""
-    n, size = len(y), CLAP_RATE * CLAP_WINDOW
+def audio_windows(y: Any, rate: int) -> list[Any]:
+    """Tối đa ba cửa sổ 10 giây ở 20 / 50 / 80% bài (bài không dài hơn 10 giây: cả bài), bỏ cửa sổ ngắn hơn 3 giây. `rate`: tần số lấy mẫu
+    của `y` - CLAP 48 kHz ở đây, MuQ 24 kHz ở music_valence (cùng một cách cắt)."""
+    n, size = len(y), rate * CLAP_WINDOW
     starts = [0] if n <= size else sorted({min(max(int(n * f) - size // 2, 0), n - size) for f in (0.2, 0.5, 0.8)})
-    return [y[s:s + size] for s in starts if len(y[s:s + size]) >= CLAP_RATE * CLAP_MIN]
+    return [y[s:s + size] for s in starts if len(y[s:s + size]) >= rate * CLAP_MIN]
+
+
+def _clap_windows(y: Any) -> list[Any]:
+    return audio_windows(y, CLAP_RATE)
+
+
+def _clips(path: Path) -> list[Any]:
+    from . import music_mel
+
+    return _clap_windows(music_mel.decode(Path(path), CLAP_RATE))
 
 
 def analyze(path: Path) -> dict[str, Any] | None:
@@ -338,15 +353,24 @@ def analyze(path: Path) -> dict[str, Any] | None:
         return None
     from . import music_mel  # numpy: bản app chỉ-nghe cũ chưa có thì available() đã False, tới đây là có
 
-    clips = _clap_windows(music_mel.decode(Path(path), CLAP_RATE))
+    clips = _clips(path)
     if not clips:
         return None
     acoustic = None
-    if student.names:  # đầu đầy đủ (đường torch) cần thêm 42 cột âm học
+    if student.backend == "torch":  # âm học (librosa) chỉ còn để đo loudness.speechBand; không đo được thì bài vẫn có số, chỉ thiếu khoá ấy
         from . import music_acoustic
 
         acoustic = music_acoustic.features(music_mel.decode(Path(path), music_acoustic.RATE))
-        if acoustic is None:
-            return None
     with _run_lock:
         return student.predict(student.embed(clips), acoustic)
+
+
+def clap_embedding(path: Path) -> Any | None:
+    """Vector nhúng CLAP 512 chiều (L2) của bài - đúng cái `analyze` đưa cho đầu trò; music_valence cần nó cho nửa CLAP của V hợp. None khi
+    chưa có gói / thư viện, file không giải mã được hay bài ngắn hơn 3 giây."""
+    student = _load()
+    clips = _clips(path) if student is not None else []
+    if not clips:
+        return None
+    with _run_lock:
+        return student.embed(clips)
