@@ -25,7 +25,7 @@ import { NewProjectScreen } from "@/studio/NewProjectScreen";
 import { ProjectScreen } from "@/studio/ProjectScreen";
 import { ProjectsScreen } from "@/studio/ProjectsScreen";
 import { desktopTextImport, httpSource } from "./httpSource";
-import { exportWhereHint, packingText } from "./bookFileExport";
+import { BookFileExportHost, BookFileMenuItem } from "./ExportBookFileJob";
 import { SettingsScreen } from "./SettingsScreen";
 import { Shell } from "./Shell";
 
@@ -187,59 +187,6 @@ function RemoveImportedHost() {
         </Button>
       </div>
     </Dialog>
-  );
-}
-
-/** Một cuốn trong một file của app (webui/bookfile.py): bìa, chữ có tag, audio, nhân vật - mở bằng app ở máy khác. */
-function BookFileMenuItem({ book }: { book: ListenBook }) {
-  const { data: info } = useAppInfo();
-  const { data: preferences } = usePreferences();
-  const run = async () => {
-    let target = "";
-    if (info?.dialogs) {
-      const picked = await pickFolder("Chọn nơi lưu file sách", "").catch(() => null);
-      if (!picked) return;
-      target = picked;
-    }
-    const pending = toast.loading("Đang đóng gói sách…", { description: packingText(book.chaptersAvailable, 0) });
-    // Máy chủ đóng gói trong một yêu cầu dài và không báo tiến độ từng chương: thông báo đếm thời gian để biết máy vẫn đang làm.
-    const started = Date.now();
-    const ticker = window.setInterval(
-      () => toast.loading("Đang đóng gói sách…", { id: pending, description: packingText(book.chaptersAvailable, (Date.now() - started) / 1000), duration: Infinity }),
-      1000,
-    );
-    try {
-      const result = await api<{ file: string; folder: string; size: number }>(`/api/books/${book.id}/bookfile`, {
-        method: "POST",
-        body: { target },
-      });
-      toast.success("Đã xuất file sách", {
-        id: pending,
-        description: `${result.file} · ${Math.round(result.size / 1048576)} MB`,
-        action: info?.remote ? undefined : {
-          label: "Mở thư mục",
-          onClick: () => void api("/api/reveal-export", { method: "POST", body: { folder: result.folder } }),
-        },
-      });
-    } catch (error) {
-      toast.error("Không xuất được file sách", { id: pending, description: (error as Error).message });
-    } finally {
-      window.clearInterval(ticker);
-    }
-  };
-  return (
-    <DropdownMenu.Item
-      // Chưa có chương nào nghe được thì không có gì để xuất (soát UX 29-09: bấm được rồi nhận lỗi 409).
-      disabled={!book.chaptersAvailable}
-      onSelect={() => void run()}
-      className="flex h-auto cursor-default items-center gap-2 rounded-lg px-2 py-1.5 text-sm outline-none data-[disabled]:opacity-40 data-[highlighted]:bg-hover"
-    >
-      <FileAudio className="mt-0.5 size-4 shrink-0 self-start" />
-      <span className="min-w-0">
-        <span className="block">Xuất file sách (mở bằng app ở máy khác)</span>
-        <span className="block truncate text-xs text-fg-3">{exportWhereHint(Boolean(info?.dialogs), preferences?.libraryRoot)}</span>
-      </span>
-    </DropdownMenu.Item>
   );
 }
 
@@ -514,6 +461,7 @@ export function App() {
               <UpdateListener />
               {!info.remote && <VolumeSaver />}
               {!info.remote && <RemoveImportedHost />}
+              <BookFileExportHost />
               <Shell>
                 <Routes>
                   <Route path="/" element={<LibraryRoute />} />
