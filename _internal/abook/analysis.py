@@ -77,6 +77,7 @@ from .io_utils import run_hidden, sha256_text
 from .models import (
     CONTEXTUAL_ENGLISH_NAME_PRONUNCIATION_SOURCE,
     ENGLISH_NAME_PRONUNCIATION_SOURCE,
+    SegmentStatus,
 )
 from .process_utils import terminate_process_tree
 from . import studio_names
@@ -89,6 +90,10 @@ from .text_processing import (
 
 
 ALLOWED_KINDS = {"narration", "dialogue", "thought"}
+# Số đoạn ĐÃ phân tích ngay trước lô mà prompt nêu kèm người nói (_previous_turns) - đủ nối một lượt đối đáp qua ranh giới lô.
+# 9 (không phải 4 như lúc v8 học): đo 05-10 (E2) cùng model v8 - Nhật +2,3 F1 giọng, lỗi lặp người câu trước -68 %; Hàn +0,9;
+# giá như cũ (docs/ANALYSIS_RESEARCH.md "04-10 Đột phá").
+PREVIOUS_TURNS = 9
 ALLOWED_GENDERS = {"male", "female", "unknown"}
 ALLOWED_AGES = {"child", "teen", "young", "adult", "elderly", "unknown"}
 ALLOWED_EMOTIONS = {
@@ -7140,6 +7145,47 @@ class OllamaBookAnalyzer:
             f"dùng \"tôi\", NARRATOR hay tên người đang nói chuyện với {narrator}.\n\n"
         )
 
+    def _previous_turns(self, group: list[Any]) -> str:
+        """Vài đoạn ngay trước lô (cùng chương, đã phân tích xong) kèm người nói ĐÃ gán - để nối lượt đối đáp qua ranh giới lô.
+
+        Lô chỉ 5 đoạn và đoạn đầu lô không có `previous_text` (_neighbor_texts chỉ nhìn trong lô): đối đáp hai người không
+        lời dẫn vắt qua ranh giới lô thì model phải đoán lại từ đầu "tới lượt ai". Đo 29-09 trên bộ LN (v3): chuỗi đối đáp
+        gọn trong một lô sai 27% câu, vắt qua ranh giới sai 40%. Không có đoạn thoại nào trong số ấy thì không nêu gì (prompt
+        như cũ). Nhãn cục bộ hiện đúng dạng model viết ("NPC_LOCAL:mẹ Kakeru"). Model v8 học với khối này."""
+        try:
+            chapter_id, first_seq = int(group[0]["chapter_id"]), int(group[0]["seq"])
+        except (KeyError, IndexError, TypeError, ValueError):
+            return ""
+        list_segments = getattr(self.db, "list_segments", None)
+        if not callable(list_segments):
+            return ""
+        try:
+            chapter_rows = list_segments(chapter_id=chapter_id)
+        except TypeError:  # sổ giả tối thiểu (test) không lọc theo chương: không nêu gì, prompt như cũ
+            return ""
+        before = [row for row in chapter_rows if int(row["seq"]) < first_seq][-PREVIOUS_TURNS:]
+        if not before or any(str(row["status"]) == SegmentStatus.PENDING.value for row in before):
+            return ""
+        if not any(str(row["kind"] or "") in {"dialogue", "thought"} for row in before):
+            return ""
+        lines = []
+        for row in before:
+            kind = str(row["kind"] or "narration")
+            text = " ".join(str(row["text"] or "").split())
+            text = text if len(text) <= 160 else text[:157] + "..."
+            if kind in {"dialogue", "thought"}:
+                speaker = str(row["speaker"] or "UNKNOWN")
+                if speaker.startswith("NPC_LOCAL::"):
+                    speaker = "NPC_LOCAL:" + speaker.rsplit("::", 1)[-1]
+                lines.append(f"- [{'thoại' if kind == 'dialogue' else 'nội tâm'} · {speaker}] {text}")
+            else:
+                lines.append(f"- [kể] {text}")
+        return (
+            "Các đoạn ngay trước (đã phân tích xong - chỉ để nối lượt đối đáp, KHÔNG trả lời cho chúng):\n"
+            + "\n".join(lines)
+            + "\n\n"
+        )
+
     def _known_summary(self) -> str:
         if not self._speaker_counts:
             return "(Chưa có nhân vật đã biết)"
@@ -7335,6 +7381,7 @@ class OllamaBookAnalyzer:
             f"Các chương hiện tại: {', '.join(chapter_titles)}\n\n"
             f"{self._narrator_line(group)}"
             f"Nhân vật đã biết từ các phần trước:\n{self._known_summary()}\n\n"
+            f"{self._previous_turns(group)}"
             f"Các đoạn liên tiếp:\n{json.dumps(rows, ensure_ascii=False, indent=2)}"
         )
         required_hq_confidence_floor = (
