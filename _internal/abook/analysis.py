@@ -7163,7 +7163,10 @@ class OllamaBookAnalyzer:
             chapter_rows = list_segments(chapter_id=chapter_id)
         except TypeError:  # sổ giả tối thiểu (test) không lọc theo chương: không nêu gì, prompt như cũ
             return ""
-        before = [row for row in chapter_rows if int(row["seq"]) < first_seq][-PREVIOUS_TURNS:]
+        turns = int(os.environ.get("ABOOK_PREVIOUS_TURNS", PREVIOUS_TURNS))  # NHÁNH ĐO 05-10: 0 = app trước nhánh (không khối)
+        if turns <= 0:
+            return ""
+        before = [row for row in chapter_rows if int(row["seq"]) < first_seq][-turns:]
         if not before or any(str(row["status"]) == SegmentStatus.PENDING.value for row in before):
             return ""
         if not any(str(row["kind"] or "") in {"dialogue", "thought"} for row in before):
