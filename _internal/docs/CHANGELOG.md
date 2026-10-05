@@ -18,6 +18,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Nghe hết một cuốn rồi quay lại nghe một đoạn: trang sách giờ có "Nghe tiếp" đúng chỗ bạn dừng (trước đây chỉ còn "Nghe lại từ đầu"), cuốn ấy trở lại thẻ "Đang nghe dở", và thanh tiến độ theo chỗ đang nghe thay vì đứng ở 100%. Máy tính và điện thoại như nhau.
 - Màn "Đã nghe hết" không còn mời tập kế hai lần.
 - Hộp "Thêm sách từ file…" (máy tính) giờ mở được cả file sách .abook / dự án .abookproj, kể cả khi dán đường dẫn từ trình duyệt; trước đây nó báo "Chưa đọc được file .abook" mà không chỉ sang "Mở file sách".
+- Cài đặt gọn hơn trên điện thoại: đầu trang có hàng mục lục bấm nhảy tới từng mục, bốn khung khoá giọng trực tuyến (Azure, Google Cloud, FPT.AI, Viettel AI) gập sẵn - đã dán khoá thì tự mở -, mục "Phím tắt" không hiện trên màn chỉ có cảm ứng. Lời mô tả mục Thư viện nói theo người nghe ("sách thêm vào hay mới làm đều nằm ở đây"), và nút bật kết nối đổi thành "Cho phép thiết bị khác kết nối qua Wi-Fi" - đúng với cả điện thoại lẫn máy tính khác cần ghép.
+- Menu "…" của trang sách: mục "Đổi giọng, sửa lời đọc, thu lại chương" bị mờ chỉ còn một dòng nói thiếu gì ("Cần cài Studio", "Cuốn này chưa có dự án Studio"), không còn ba dòng chữ nội bộ.
+- Tab Nhân vật: "Gộp vào người khác…" nằm trong menu "…" của từng người với chữ rõ ràng thay cho nút chỉ có biểu tượng; "từ Chương 1" không còn gãy dòng giữa chữ và số.
+- Thư viện: hai bản cùng tên không số (bản chỉ-chữ và bản sách nói của một truyện, hay một file nhập hai lần) không còn bị gom thành "4 tập" không số - chỉ cuốn nghe được duy nhất mới tính là Tập 1 của bộ. Tập 1 không đánh số trong tên giờ cũng có nhãn "TẬP 1" trên bìa như Tập 2.
+- Thư viện trên điện thoại: tiêu đề "Thư viện" luôn một dòng, hai nút "Thêm sách từ file…" và "Mở file sách" xuống dòng dưới.
+- Bìa tự vẽ co chữ theo cỡ bìa: bìa nhỏ (thẻ "Đang nghe dở", hộp "Sửa sách") hiện đủ tên, không cắt chữ giữa chừng hay đè nhãn "TẬP"; bìa sách chỉ-chữ không còn bị kéo dài thành hình chữ nhật dọc.
+- "Xuất file sách": menu ghi sẵn file sẽ nằm ở đâu (hay "Bạn chọn thư mục lưu ở bước kế"), và lúc đóng gói thông báo đếm thời gian đã trôi để biết máy chưa treo.
 
 ## [0.4.28] - 2026-10-05
 

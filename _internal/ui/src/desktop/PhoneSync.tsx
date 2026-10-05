@@ -247,13 +247,13 @@ export function PhoneSync() {
     <div className="space-y-5">
       <div className="flex items-start justify-between gap-6">
         <label htmlFor="phone-sync" className="min-w-0 cursor-pointer">
-          <span className="block text-sm font-medium">Cho phép điện thoại kết nối qua Wi-Fi</span>
+          <span className="block text-sm font-medium">Cho phép thiết bị khác kết nối qua Wi-Fi</span>
           <span className={cn("mt-0.5 block text-[13px]", failing ? "text-danger" : "text-fg-2")}>
             {sync.enabled
-              ? `Điện thoại cùng mạng sẽ thấy máy này với tên “${sync.name}”.`
+              ? `Điện thoại và máy tính cùng mạng sẽ thấy máy này với tên “${sync.name}”.`
               : failing
                 ? sync.error || "Chưa mở được cổng đồng bộ."
-                : "Đang tắt - điện thoại không tìm thấy máy này."}
+                : "Đang tắt - điện thoại và máy tính khác không tìm thấy máy này."}
           </span>
         </label>
         <Switch id="phone-sync" checked={wanted} disabled={toggle.isPending} onCheckedChange={(value) => toggle.mutate(value)} />
