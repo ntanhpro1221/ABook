@@ -41,3 +41,13 @@ def test_think_false_or_absent_is_the_plain_request(monkeypatch: pytest.MonkeyPa
     monkeypatch.setenv("ABOOK_EVAL_SETTINGS", json.dumps({"think": False}))
     again, _ = _call(_names_payload())
     assert again == plain
+
+
+def test_think_num_ctx_raises_the_context_only_when_asked(monkeypatch: pytest.MonkeyPatch) -> None:
+    plain, _ = _call(_names_payload())
+    monkeypatch.setenv("ABOOK_EVAL_SETTINGS", json.dumps({"think": True}))
+    same, _ = _call(_names_payload())
+    assert same["options"]["num_ctx"] == plain["options"]["num_ctx"]
+    monkeypatch.setenv("ABOOK_EVAL_SETTINGS", json.dumps({"think": True, "think_num_ctx": 65536}))
+    wide, _ = _call(_names_payload())
+    assert wide["options"]["num_ctx"] == 65536
