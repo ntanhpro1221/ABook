@@ -1538,15 +1538,19 @@ function useContinueIntoNextPart() {
   }, [atEnd, track, next, playBook]);
 }
 
-/** Cuối màn "Đã nghe hết sách": mời nghe cuốn khác (tối đa 3, mỗi cuốn một nút nghe tiếp từ chỗ đã dừng) và đường về thư viện. */
-function AfterTheEnd() {
+/** Cuối màn "Đã nghe hết sách": mời nghe cuốn khác (tối đa 3, mỗi cuốn một nút nghe tiếp từ chỗ đã dừng) và đường về thư viện.
+ *  `skipId`: tập kế đã có nút "Nghe tiếp" riêng ngay trên - không mời lần nữa. */
+function AfterTheEnd({ skipId }: { skipId?: string }) {
   const { track } = usePlayer();
   const { data: books } = useListenLibrary();
   const speaks = (useReadAloudVoices().data?.length ?? 0) > 0;
   const playBook = usePlayListenBook();
   const navigate = useNavigate();
   const { setExpanded } = useNowPlaying();
-  const others = useMemo(() => otherBooksToHear(books ?? [], track?.bookId, speaks), [books, track?.bookId, speaks]);
+  const others = useMemo(
+    () => otherBooksToHear((books ?? []).filter((book) => book.id !== skipId), track?.bookId, speaks),
+    [books, track?.bookId, speaks, skipId],
+  );
   return (
     <div className="mt-3 border-t border-accent/20 pt-2.5 text-left">
       {others.length > 0 && (
@@ -1598,7 +1602,7 @@ function CaughtUpNotice() {
         <button type="button" onClick={() => void playBook(next)} className="mt-1.5 font-semibold text-accent-text underline underline-offset-2">
           Nghe tiếp {nextLabel(next.title)}
         </button>
-        <AfterTheEnd />
+        <AfterTheEnd skipId={next.id} />
       </div>
     );
   }
