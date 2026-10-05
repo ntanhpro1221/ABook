@@ -2629,3 +2629,51 @@ Ghi trước:
 - Hiệu chỉnh F2: V (−0,057, 1,251, 0,0727), E (−0,013, 1,098, 0,0322), T (−0,003, 1,283, 0,0412).
 - Bộ vàng chọn lại (8 bài): CLAP cos 1,00000 cả 8 bài (trước có bài lệch 0,28 điểm thô); `interp` lệch hạng ≤ 0,003.
 - Đăng: danh mục `5880ea7b1098` (chờ Lead deploy), HF `143bea3d`. Đặc tả: Corpus b5539916.
+
+**GHI TRƯỚC - DANH MỤC V HỢP so DANH MỤC CLAP-V bằng thước nghe (05-10 tối; trước khi dựng clip):**
+- **Câu hỏi:** phía bài vừa đổi trục vui/buồn (V hợp CLAP + MuQ, cắt cửa sổ như app: danh mục `5880ea7b1098`). Nhạc chọn có hợp
+  tai hơn danh mục cũ (`8ad5cd60adfb`, V chỉ CLAP) không? Thước đọc (MTG r 0,511 → 0,672) đã thắng; thước nghe chưa đo.
+- **Đoạn:** đúng 115 đoạn của phép llmVT (ranh giới app bộ 6, tóm tắt tiếng Anh đã chốt).
+  - B = nhạc chọn với llmVT trên `8ad5cd60adfb` (đúng B cũ; dựng lại để kiểm, phải trùng bài ở cả 115 đoạn).
+  - D = cùng không khí đoạn (llmVT), cùng `music_select.choose` của main (không đổi từ 4e311875), `book_key` = chương, chỉ khác danh mục `5880ea7b1098`.
+- **Cặp chính:** D so B trên các đoạn D ≠ B, cả hai không im lặng.
+- **Thước:** đúng giao thức llmVT/oracle (Qwen3-Omni-EN, clip cắt như E1, điểm = trung bình prompt a/b, hoà < 0,02). Điểm clip đã chấm được dùng lại.
+- **Luật (M2):** V hợp thắng nếu tỉ lệ thắng ≥ 0,60 VÀ cận dưới Wilson > 0,5. Thua rõ (cận trên < 0,5) → báo Lead xét lùi danh mục.
+  Còn lại → "không phân biệt được bằng tai", giữ V hợp vì thước đọc thắng.
+- **Chạy:** ghép vào lượt Kaggle thứ Bảy 10-10 cùng oracle nếu còn hạn mức; số đoạn D ≠ B ghi ở đây trước khi chấm.
+- **Dựng xong (05-10 tối, trước khi chấm):** B dựng lại trùng B cũ ở 115/115 đoạn. D ≠ B ở **89 đoạn**, 22 clip mới (Corpus 24419a00,
+  `build_vhop_listen.py`). Dataset Kaggle `abook-music-llmvt-listen` đã lên bản mới; lượt thứ Bảy chấm cả oracle lẫn V hợp:
+  192 cặp (đoạn, clip) mới, 384 lượt, khoảng 50 phút (trong `BUDGET_H` 1,45).
+
+## Đoán không khí ĐOẠN: trộn llmVT với nhãn câu + làm mượt theo đoạn kề (05-10 tối, Lead duyệt)
+
+**GHI TRƯỚC (trước mọi số; chỉ CPU, dùng lại đầu ra đã có, không chạy model mới):**
+- **Vì sao:** nút thắt đã chốt là đoán không khí đoạn. Bộ 6 (20 chương, 20 truyện): app hiện nay (`app+llmVT`) VET 0,256.
+  Còn hai nguồn chưa khai thác:
+  - nhãn câu và llmVT sai theo hai kiểu khác nhau (một bên cộng nhãn câu, một bên đọc cả đoạn) → trộn có thể hơn từng bên;
+  - không khí của người chấm đổi chậm giữa các đoạn kề → làm mượt có thể bớt nhiễu.
+- **Dữ liệu:** bộ 6, ranh giới app, llmVT của `qwen3.5:4b` (`results/set5_vet_qwen3.5_4b.jsonl`, đúng model app), nhãn câu của
+  lượt 04-10-music6-9bv8, thước của `set5_llm.score` (r Pearson theo thời lượng, tính TRONG từng chương, trung bình 20 chương).
+- **Cách (`segment_mix.py`):** vì r tính trong chương, mỗi nguồn được chuẩn hoá z trong chương (theo thời lượng) trước khi trộn.
+  - TRỘN: trục a ∈ V/E/T: `x = w_a·z(llm_a) + (1 − w_a)·z(nhãn_a)`, `w_a` ∈ {0; 0,1; …; 1}.
+  - MƯỢT: `x'_i = (1 − α)·x_i + α·trung bình(x_{i−1}, x_{i+1})` (đoạn đầu/cuối chỉ một bên kề), `α` ∈ {0; 0,1; …; 0,5}, chung ba trục.
+  - Tham số chọn bằng bỏ-một-chương: chương nào cũng được chấm bằng tham số học trên 19 chương còn lại. Tham số cuối cùng (cho app) học trên cả 20.
+- **CHÍNH:** `app+mix+mượt` so `app+llmVT`, VET, theo luật nhà (`set5_llm.rule`): THẮNG nếu hơn ≥ 0,05 VÀ hơn ở ≥ 14/20 chương.
+- **Ghi lại, không quyết:** chỉ TRỘN, chỉ MƯỢT; cùng phép với `qwen3.5:9b` (bộ 5 + bộ 6); `oracle` ranh giới làm trần.
+- **Lưu ý trước:** nhãn câu của bộ 6 đến từ 9B-v8. Nếu 9B-v8 đã học chương nào của bộ 6 thì phần nhãn câu ở chương ấy đẹp hơn thật; sẽ ghi số khi bỏ chương ấy.
+- **Thắng thì:** đề xuất Lead đưa vào `music_scenes` (vài dòng, không model mới), mặc định theo tham số học trên 20 chương. **Thua thì:** ghi lại, giữ `app+llmVT`.
+
+**KẾT QUẢ (05-10 tối, `segment_mix.py`, Corpus):** **KHÔNG THẮNG.** Giữ `app+llmVT`.
+
+| | gốc `app+llmVT` | trộn + mượt | chỉ trộn | chỉ mượt |
+|---|---|---|---|---|
+| **4b, bộ 6 (CHÍNH)** | 0,253 | **0,285 (+0,032), 13/20** | 0,278 (+0,025), 13/20 | 0,264 (+0,011), 11/20 |
+| 9b, bộ 6 | 0,256 | 0,222 (−0,034), 6/20 | 0,252 (−0,004), 11/20 | 0,269 (+0,013), 11/20 |
+| 9b, bộ 5 (9 chương) | 0,343 | 0,365 (+0,022), 7/9 | 0,368 (+0,025), 7/9 | 0,332 (−0,010), 0/9 |
+
+- Cần +0,05 và 14/20; đạt +0,032 và 13/20. Bỏ-một-chương nên số trên đã là ngoài mẫu.
+- Không bền: cùng phép với 9b trên bộ 6 thì THUA (−0,034). Lợi nhỏ của trộn ở 4b có lẽ chỉ vì 4b đọc kém hơn 9b, nên nhãn câu bù được phần nào.
+- Ranh giới đáp án (`oracle`): trộn/mượt quanh 0 (−0,011 … +0,033). Làm mượt không giúp: không khí người chấm đổi theo cảnh, không trôi chậm.
+- Tham số học trên cả 20 chương (4b): α 0,3, w(llm) V/E/T 0,6/0,4/0,9. Không đưa vào app.
+- Lưu ý rò rỉ 9B-v8 không cần kiểm, vì phép đã thua.
+- Bài học: hậu xử lý không khí đoạn (trộn, mượt) gần hết đất. Muốn tiến phải đọc tốt hơn (model / dữ liệu dạy), và thứ tự đúng vẫn là chờ oracle thứ Bảy xem đoán không khí đoạn có phải nút thắt khi NGHE không.
