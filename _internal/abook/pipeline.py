@@ -82,6 +82,7 @@ from .database import (
     SEGMENT_PERCEPTUAL_QUALITY_STAGE,
     ProjectDB,
     segment_candidate_split_seed_salt,
+    thought_reads_as_narrator,
 )
 from .io_utils import sha256_file
 from .listener_overrides import (
@@ -1784,10 +1785,13 @@ class BookPipeline:
         )
 
     def _effective_perceptual_profile(self, row: Any) -> tuple[Any, int]:
-        # A thought is read in the thinker's own voice now, so its baseline is that
-        # voice's preview - taking the narrator's would compare a character against a
-        # reference that never spoke the line.
-        profile = self.db.voice_profile(int(row["voice_profile_id"]))
+        # A thought is read in the thinker's own voice, so its baseline is that voice's
+        # preview - taking the narrator's would compare a character against a reference
+        # that never spoke the line. Only an unattributed thought reads as the narrator.
+        if thought_reads_as_narrator(row["kind"], row["speaker"], row["voice_profile_id"]):
+            profile = self.db.voice_profile_by_key("narrator")
+        else:
+            profile = self.db.voice_profile(int(row["voice_profile_id"]))
         # The graded artifact is always the raw take, so the baseline is the preset's own
         # untouched preview. Named in perceptual_contract because the database validator
         # has to agree with this choice and used to contradict it.
