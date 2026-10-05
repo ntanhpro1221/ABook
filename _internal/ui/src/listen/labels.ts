@@ -13,7 +13,9 @@ export function resumeWhere(chapterTitle: string, seconds: number): string {
 
 /** Dòng tiến độ ở màn "Đang nghe": đã nghe bao nhiêu, còn bao lâu ở tốc độ đang chọn.
  *  "Đã nghe 10% phần đã có · còn khoảng 27 phút ở tốc độ 1,5×" (tốc độ thường: "còn 41 phút"). `speed`: nhãn tốc độ đã định dạng. */
-export function bookProgressText(state: { whole: boolean; heard: number; total: number; rate: number; speed: string }): string {
+export function bookProgressText(state: { whole: boolean; heard: number; total: number; rate: number; speed: string; finished?: boolean }): string {
+  // Phát hết chương cuối của cuốn đã đủ: nói là đã hết, không để "98%" (đồng hồ chương cuối dừng trước mốc tròn) đọc như còn dở.
+  if (state.finished) return "Đã nghe hết cả cuốn";
   const left = Math.max(0, state.total - state.heard);
   const scope = state.whole ? "cả cuốn" : "phần đã có";
   const remaining = state.rate !== 1 && left > 60 ? `còn khoảng ${formatLength(left / state.rate)} ở tốc độ ${state.speed}` : `còn ${formatLength(left)}`;
