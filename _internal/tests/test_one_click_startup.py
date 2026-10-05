@@ -98,7 +98,7 @@ def test_one_click_startup_contract() -> None:
     assert "--force-reinstall torch==2.11.0 torchaudio==2.11.0 torchvision==0.26.0" in setup
     assert "--index-url https://download.pytorch.org/whl/cu128" in setup
     assert 'ollama pull qwen3:8b' in setup
-    assert '--install-model abook-analyzer:v3' in setup, "model mặc định của sách mới phải được cài"
+    assert '--install-model abook-analyzer:v4' in setup, "model mặc định của sách mới phải được cài"
     assert "snapshot_download" in setup
     assert "revision='$Wav2Vec2Revision'" in setup
     assert "revision='$TimmBackboneRevision'" in setup
